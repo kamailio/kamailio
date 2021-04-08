@@ -22,7 +22,7 @@ db.getCollection("version").insert({ table_name: "dr_gateways", table_version: N
 db.getCollection("version").insert({ table_name: "dr_groups", table_version: NumberInt(2) });
 db.getCollection("version").insert({ table_name: "dr_gw_lists", table_version: NumberInt(1) });
 db.getCollection("version").insert({ table_name: "dr_rules", table_version: NumberInt(3) });
-db.getCollection("version").insert({ table_name: "globalblacklist", table_version: NumberInt(1) });
+db.getCollection("version").insert({ table_name: "globalblocklist", table_version: NumberInt(1) });
 db.getCollection("version").insert({ table_name: "grp", table_version: NumberInt(2) });
 db.getCollection("version").insert({ table_name: "htable", table_version: NumberInt(2) });
 db.getCollection("version").insert({ table_name: "imc_members", table_version: NumberInt(1) });
@@ -54,8 +54,8 @@ db.getCollection("version").insert({ table_name: "silo", table_version: NumberIn
 db.getCollection("version").insert({ table_name: "sip_trace", table_version: NumberInt(4) });
 db.getCollection("version").insert({ table_name: "speed_dial", table_version: NumberInt(2) });
 db.getCollection("version").insert({ table_name: "subscriber", table_version: NumberInt(7) });
-db.getCollection("version").insert({ table_name: "topos_d", table_version: NumberInt(1) });
-db.getCollection("version").insert({ table_name: "topos_t", table_version: NumberInt(1) });
+db.getCollection("version").insert({ table_name: "topos_d", table_version: NumberInt(2) });
+db.getCollection("version").insert({ table_name: "topos_t", table_version: NumberInt(2) });
 db.getCollection("version").insert({ table_name: "trusted", table_version: NumberInt(6) });
 db.getCollection("version").insert({ table_name: "uacreg", table_version: NumberInt(4) });
 db.getCollection("version").insert({ table_name: "uid_credentials", table_version: NumberInt(7) });
@@ -66,7 +66,7 @@ db.getCollection("version").insert({ table_name: "uid_uri", table_version: Numbe
 db.getCollection("version").insert({ table_name: "uid_uri_attrs", table_version: NumberInt(2) });
 db.getCollection("version").insert({ table_name: "uid_user_attrs", table_version: NumberInt(3) });
 db.getCollection("version").insert({ table_name: "uri", table_version: NumberInt(1) });
-db.getCollection("version").insert({ table_name: "userblacklist", table_version: NumberInt(1) });
+db.getCollection("version").insert({ table_name: "userblocklist", table_version: NumberInt(1) });
 db.getCollection("version").insert({ table_name: "usr_preferences", table_version: NumberInt(2) });
 db.getCollection("version").insert({ table_name: "watchers", table_version: NumberInt(3) });
 db.getCollection("version").insert({ table_name: "xcap", table_version: NumberInt(4) });

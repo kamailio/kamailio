@@ -402,6 +402,7 @@ int init_http_multi(struct event_base *evbase, struct http_m_global *wg)
 	curl_multi_setopt(g->multi, CURLMOPT_SOCKETDATA, g);
 	curl_multi_setopt(g->multi, CURLMOPT_TIMERFUNCTION, multi_timer_cb);
 	curl_multi_setopt(g->multi, CURLMOPT_TIMERDATA, g);
+	curl_multi_setopt(g->multi, CURLMOPT_PIPELINING, CURLPIPE_NOTHING);
 
 	return init_http_m_table(hash_size);
 }
@@ -460,6 +461,9 @@ int new_request(str *query, http_m_params_t *query_params, http_multi_cbe_t cb, 
 	if (curl_verbose) {
 		curl_easy_setopt(cell->easy, CURLOPT_VERBOSE, 1L);
 		curl_easy_setopt(cell->easy, CURLOPT_DEBUGFUNCTION, debug_cb);
+	}
+	if (cell->params.follow_redirect) {
+		curl_easy_setopt(cell->easy, CURLOPT_FOLLOWLOCATION, 1L);
 	}
 	curl_easy_setopt(cell->easy, CURLOPT_ERRORBUFFER, cell->error);
 	curl_easy_setopt(cell->easy, CURLOPT_PRIVATE, cell);

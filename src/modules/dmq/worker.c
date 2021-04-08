@@ -15,57 +15,23 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
 
 #include "dmq.h"
 #include "peer.h"
+#include "message.h"
 #include "worker.h"
 #include "../../core/data_lump_rpl.h"
 #include "../../core/mod_fix.h"
 #include "../../core/sip_msg_clone.h"
 #include "../../core/parser/parse_from.h"
 #include "../../core/parser/parse_to.h"
+#include "../../core/cfg/cfg_struct.h"
 
-/**
- * @brief set the body of a response
- */
-static int set_reply_body(struct sip_msg *msg, str *body, str *content_type)
-{
-	char *buf;
-	int len;
-
-	/* add content-type */
-	len = sizeof("Content-Type: ") - 1 + content_type->len + CRLF_LEN;
-	buf = pkg_malloc(sizeof(char) * (len));
-
-	if(buf == 0) {
-		LM_ERR("out of pkg memory\n");
-		return -1;
-	}
-	memcpy(buf, "Content-Type: ", sizeof("Content-Type: ") - 1);
-	memcpy(buf + sizeof("Content-Type: ") - 1, content_type->s,
-			content_type->len);
-	memcpy(buf + sizeof("Content-Type: ") - 1 + content_type->len, CRLF,
-			CRLF_LEN);
-	if(add_lump_rpl(msg, buf, len, LUMP_RPL_HDR) == 0) {
-		LM_ERR("failed to insert content-type lump\n");
-		pkg_free(buf);
-		return -1;
-	}
-	pkg_free(buf);
-
-	/* add body */
-	if(add_lump_rpl(msg, body->s, body->len, LUMP_RPL_BODY) == 0) {
-		LM_ERR("cannot add body lump\n");
-		return -1;
-	}
-
-	return 1;
-}
 
 /**
  * @brief dmq worker loop
@@ -88,6 +54,7 @@ void worker_loop(int id)
 		} else {
 			sleep_us(dmq_worker_usleep);
 		}
+		cfg_update();
 
 		/* remove from queue until empty */
 		while(job_queue_size(worker->queue) > 0) {

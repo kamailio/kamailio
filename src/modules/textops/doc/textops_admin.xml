@@ -91,6 +91,10 @@ From: medabeda
 		</listitem>
 		</itemizedlist>
 		<para>
+			Note: it performs Posix regex matching and the 're' parameter
+			is compiled with the flags REG_EXTENDED|REG_ICASE|REG_NEWLINE.
+		</para>
+		<para>
 		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
 		FAILURE_ROUTE, BRANCH_ROUTE.
 		</para>
@@ -127,6 +131,42 @@ if ( search("[Ss][Ii][Pp]") ) { /*....*/ };
 		<programlisting format="linespecific">
 ...
 if ( search_body("[Ss][Ii][Pp]") ) { /*....*/ };
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="textops.f.search_str">
+		<title>
+		<function moreinfo="none">search_str(text. re)</function>
+		</title>
+		<para>
+		Searches for the re in the body of the message.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>text</emphasis> - text to perform regex searching
+			over it.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>re</emphasis> - regular expression to match over
+			the 'text' parameter.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+			Both parameters can contain variables.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>search_str</function> usage</title>
+		<programlisting format="linespecific">
+...
+if ( search_str("$ru", ";transport=tcp") ) { /*....*/ };
 ...
 </programlisting>
 		</example>
@@ -262,7 +302,7 @@ search_append_body("[Oo]pen[Ss]er", " SIP Proxy");
 		<title><function>replace</function> usage</title>
 		<programlisting format="linespecific">
 ...
-replace("openser", "&kamailio; SIP Proxy");
+replace("server", "&kamailio; SIP Proxy");
 ...
 </programlisting>
 		</example>
@@ -295,7 +335,7 @@ replace("openser", "&kamailio; SIP Proxy");
 		<title><function>replace_body</function> usage</title>
 		<programlisting format="linespecific">
 ...
-replace_body("openser", "&kamailio; SIP Proxy");
+replace_body("server", "&kamailio; SIP Proxy");
 ...
 </programlisting>
 		</example>
@@ -359,7 +399,7 @@ replace_hdrs("&kamailio;", "&kamailio; SIP Proxy");
 		<title><function>replace_all</function> usage</title>
 		<programlisting format="linespecific">
 ...
-replace_all("openser", "&kamailio; SIP Proxy");
+replace_all("server", "&kamailio; SIP Proxy");
 ...
 </programlisting>
 		</example>
@@ -392,7 +432,7 @@ replace_all("openser", "&kamailio; SIP Proxy");
 		<title><function>replace_body_all</function> usage</title>
 		<programlisting format="linespecific">
 ...
-replace_body_all("openser", "&kamailio; SIP Proxy");
+replace_body_all("server", "&kamailio; SIP Proxy");
 ...
 </programlisting>
 		</example>
@@ -1713,6 +1753,52 @@ if (starts_with("$rU", "+358"))
 ...
 if (ends_with("$rU", "8800"))
 {
+    # do interesting stuff here
+}
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="textops.f.str_find">
+		<title>
+		<function moreinfo="none">str_find(str1, str2)</function>
+		</title>
+		<para>
+			The function returns <emphasis>true</emphasis> (greater than 0) if
+			the str2 string is found in str1, case sensitive comparison.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>str_find</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (str_find("$rU", "8800")) {
+    # do interesting stuff here
+}
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="textops.f.str_ifind">
+		<title>
+		<function moreinfo="none">str_ifind(str1, str2)</function>
+		</title>
+		<para>
+			The function returns <emphasis>true</emphasis> (greater than 0) if
+			the str2 string is found in str1, case insensitive comparison.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>str_ifind</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (str_ifind("$rU", "Alice")) {
     # do interesting stuff here
 }
 ...

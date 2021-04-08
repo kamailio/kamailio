@@ -57,6 +57,20 @@
 #include "dns_cache.h"
 #endif
 
+#define KSR_IPADDR_LIST_SIZE 6
+static ip_addr_t _ksr_ipaddr_list[KSR_IPADDR_LIST_SIZE];
+static int _ksr_ipaddr_list_idx = 0;
+
+static ip_addr_t* get_next_ipaddr_buf(void)
+{
+	ip_addr_t *ipb;
+
+	ipb = &_ksr_ipaddr_list[_ksr_ipaddr_list_idx];
+	_ksr_ipaddr_list_idx = (_ksr_ipaddr_list_idx + 1) % KSR_IPADDR_LIST_SIZE;
+
+	return ipb;
+}
+
 /* counters framework */
 struct dns_counters_h dns_cnts_h;
 counter_def_t dns_cnt_defs[] =  {
@@ -1780,13 +1794,14 @@ error_dots:
    Warning: the result is a pointer to a statically allocated structure */
 ip_addr_t* str2ip(str* st)
 {
-	static ip_addr_t ip;
+	ip_addr_t *ipb;
 
-	if(str2ipbuf(st, &ip)<0) {
+	ipb = get_next_ipaddr_buf();
+	if(str2ipbuf(st, ipb)<0) {
 		return NULL;
 	}
 
-	return &ip;
+	return ipb;
 }
 
 /* converts a str to an ipv6 address struct stored in ipb
@@ -1895,13 +1910,14 @@ error_char:
  * the ip_addr struct is static, so subsequent calls will destroy its content*/
 ip_addr_t* str2ip6(str* st)
 {
-	static ip_addr_t ip;
+	ip_addr_t *ipb;
 
-	if(str2ip6buf(st, &ip)<0) {
+	ipb = get_next_ipaddr_buf();
+	if(str2ip6buf(st, ipb)<0) {
 		return NULL;
 	}
 
-	return &ip;
+	return ipb;
 }
 
 /* converts a str to an ipvv/6 address struct stored in ipb
@@ -1922,13 +1938,14 @@ int str2ipxbuf(str* st, ip_addr_t* ipb)
  * the ip_addr struct is static, so subsequent calls will destroy its content*/
 struct ip_addr* str2ipx(str* st)
 {
-	static ip_addr_t ip;
+	ip_addr_t *ipb;
 
-	if(str2ipbuf(st, &ip)<0) {
-		if(str2ip6buf(st, &ip)<0) {
+	ipb = get_next_ipaddr_buf();
+	if(str2ipbuf(st, ipb)<0) {
+		if(str2ip6buf(st, ipb)<0) {
 			return NULL;
 		}
 	}
 
-	return &ip;
+	return ipb;
 }

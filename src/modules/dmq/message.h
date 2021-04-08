@@ -21,12 +21,19 @@
  */
 
 
-#ifndef _MESSAGE_H_
-#define _MESSAGE_H_
+#ifndef _DMQ_MESSAGE_H_
+#define _DMQ_MESSAGE_H_
+
+int set_reply_body(struct sip_msg *msg, str *body, str *content_type);
 
 int w_dmq_handle_message(struct sip_msg *, char *str1, char *str2);
 int dmq_handle_message(struct sip_msg *, char *str1, char *str2);
 int ki_dmq_handle_message(sip_msg_t *msg);
 int ki_dmq_handle_message_rc(sip_msg_t *msg, int returnval);
+
+int w_dmq_process_message(struct sip_msg *, char *str1, char *str2);
+int dmq_process_message(struct sip_msg *, char *str1, char *str2);
+int ki_dmq_process_message(sip_msg_t *msg);
+int ki_dmq_process_message_rc(sip_msg_t *msg, int returnval);
 
 #endif

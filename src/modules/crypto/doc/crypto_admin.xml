@@ -17,7 +17,11 @@
 	<title>Overview</title>
 	<para>
 		This module provides various cryptography tools for use
-		in &kamailio; configuration file.
+		in &kamailio; configuration file. For compatibility with
+		existing crypto libraries its internal operation mode can
+		be configured as well. This allows the module to be used
+		e.g. with existing Java applications or PostgreSQL DB
+		functions.
 	</para>
 	<para>
 		It relies on OpenSSL libraries for cryptographic operations
@@ -171,6 +175,59 @@ end
 		<programlisting format="linespecific">
 ...
 modparam("crypto", "netio_key", "strong-password-here")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="crypto.p.key_derivation">
+		<title><varname>key_derivation</varname> (str)</title>
+		<para>
+			Specify if the module should use an internal derivation function
+			to generate the initialization vector for encryption operations.
+			This is the default mode. If set to 0 the initialization vector
+			will be generated randomly or read from the configuration file.
+		</para>
+		<para>
+			The source of the initialization vector is configured with the
+			<emphasis>init_vector</emphasis> parameter.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 1 - generate the initialization vector internally
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>key_derivation</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("crypto", "key_derivation", 0)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="crypto.p.init_vector">
+		<title><varname>init_vector</varname> (str)</title>
+		<para>
+			The initialization vector used for the cryptographic operations.
+			This needs to be a Base64 encoded value with 16 bytes lengths.
+		</para>
+		<para>
+			If this parameter is not set and the <emphasis>key_derivation
+			</emphasis> parameter is also set to 0, the module will create
+			a random initialization vector for decryption operations. For
+			encryption operations the initialization vector will be read
+			from the first 16 bytes of the cipher text.
+		</para>
+		<para>
+		<emphasis>
+			Default value is not set.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>init_vector</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("crypto", "init_vector", "MTIzNDU2Nzg5MTIzNDU2Nw==")
 ...
 </programlisting>
 		</example>

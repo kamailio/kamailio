@@ -41,13 +41,14 @@ Federico Cabiddu
               3.5. tls_verify_host (integer)
               3.6. tls_verify_peer (integer)
               3.7. curl_verbose (integer)
-              3.8. memory_manager (string)
-              3.9. tls_client_cert (string)
-              3.10. tls_client_key (string)
-              3.11. tls_ca_path (string)
-              3.12. tcp_keepalive (integer)
-              3.13. tcp_ka_idle (integer)
-              3.14. tcp_ka_interval (integer)
+              3.8. curl_follow_redirect (integer)
+              3.9. memory_manager (string)
+              3.10. tls_client_cert (string)
+              3.11. tls_client_key (string)
+              3.12. tls_ca_path (string)
+              3.13. tcp_keepalive (integer)
+              3.14. tcp_ka_idle (integer)
+              3.15. tcp_ka_interval (integer)
 
         4. Functions
 
@@ -72,16 +73,17 @@ Federico Cabiddu
    1.5. Set tls_verify_host parameter
    1.6. Set tls_verify_peer parameter
    1.7. Set curl_verbose parameter
-   1.8. Set memory_manager parameter
-   1.9. Set tls_client_cert parameter
-   1.10. Set tls_client_key parameter
-   1.11. Set tls_ca_path parameter
-   1.12. Set tcp_keepalive parameter
-   1.13. Set tcp_ka_idle parameter
-   1.14. Set tcp_ka_interval parameter
-   1.15. http_async_query() usage
-   1.16. $http_req_id variable usage
-   1.17. $http_req(key) variable usage
+   1.8. Set curl_follow_redirect parameter
+   1.9. Set memory_manager parameter
+   1.10. Set tls_client_cert parameter
+   1.11. Set tls_client_key parameter
+   1.12. Set tls_ca_path parameter
+   1.13. Set tcp_keepalive parameter
+   1.14. Set tcp_ka_idle parameter
+   1.15. Set tcp_ka_interval parameter
+   1.16. http_async_query() usage
+   1.17. $http_req_id variable usage
+   1.18. $http_req(key) variable usage
 
 Chapter 1. Admin Guide
 
@@ -102,13 +104,14 @@ Chapter 1. Admin Guide
         3.5. tls_verify_host (integer)
         3.6. tls_verify_peer (integer)
         3.7. curl_verbose (integer)
-        3.8. memory_manager (string)
-        3.9. tls_client_cert (string)
-        3.10. tls_client_key (string)
-        3.11. tls_ca_path (string)
-        3.12. tcp_keepalive (integer)
-        3.13. tcp_ka_idle (integer)
-        3.14. tcp_ka_interval (integer)
+        3.8. curl_follow_redirect (integer)
+        3.9. memory_manager (string)
+        3.10. tls_client_cert (string)
+        3.11. tls_client_key (string)
+        3.12. tls_ca_path (string)
+        3.13. tcp_keepalive (integer)
+        3.14. tcp_ka_idle (integer)
+        3.15. tcp_ka_interval (integer)
 
    4. Functions
 
@@ -154,13 +157,14 @@ Chapter 1. Admin Guide
    3.5. tls_verify_host (integer)
    3.6. tls_verify_peer (integer)
    3.7. curl_verbose (integer)
-   3.8. memory_manager (string)
-   3.9. tls_client_cert (string)
-   3.10. tls_client_key (string)
-   3.11. tls_ca_path (string)
-   3.12. tcp_keepalive (integer)
-   3.13. tcp_ka_idle (integer)
-   3.14. tcp_ka_interval (integer)
+   3.8. curl_follow_redirect (integer)
+   3.9. memory_manager (string)
+   3.10. tls_client_cert (string)
+   3.11. tls_client_key (string)
+   3.12. tls_ca_path (string)
+   3.13. tcp_keepalive (integer)
+   3.14. tcp_ka_idle (integer)
+   3.15. tcp_ka_interval (integer)
 
 3.1. workers (integer)
 
@@ -249,7 +253,19 @@ modparam("http_async_client", "tls_verify_peer", 0)
 modparam("http_async_client", "curl_verbose", 1)
 ...
 
-3.8. memory_manager (string)
+3.8. curl_follow_redirect (integer)
+
+   If defined to a non-zero value, will tell curl to follow HTTP 3xx
+   redirects.
+
+   Default value is 0 (disabled).
+
+   Example 1.8. Set curl_follow_redirect parameter
+...
+modparam("http_async_client", "curl_follow_redirect", 1)
+...
+
+3.9. memory_manager (string)
 
    Choose the memory manager used by curl:
      * shm: curl will use kamailio's SHM pool and memory manager
@@ -265,50 +281,50 @@ modparam("http_async_client", "curl_verbose", 1)
 
    Default value "shm"
 
-   Example 1.8. Set memory_manager parameter
+   Example 1.9. Set memory_manager parameter
 ...
 modparam("http_async_client", "memory_manager", "sys")
 ...
 
-3.9. tls_client_cert (string)
+3.10. tls_client_cert (string)
 
    For HTTPS connections, the file path of the TLS client certificate to
    be used. http://curl.haxx.se/libcurl/c/CURLOPT_SSLCERT.html
 
    Default value is NULL (not used). Default type is PEM.
 
-   Example 1.9. Set tls_client_cert parameter
+   Example 1.10. Set tls_client_cert parameter
 ...
 modparam("http_async_client", "tls_client_cert", "/etc/kamailio/ssl/clientcert.p
 em")
 ...
 
-3.10. tls_client_key (string)
+3.11. tls_client_key (string)
 
    For HTTPS connections, the file path of the TLS client certificate key.
    http://curl.haxx.se/libcurl/c/CURLOPT_SSLKEY.html
 
    Default value is NULL (not used).
 
-   Example 1.10. Set tls_client_key parameter
+   Example 1.11. Set tls_client_key parameter
 ...
 modparam("http_async_client", "tls_client_key", "/etc/kamailio/ssl/clientcert.ke
 y")
 ...
 
-3.11. tls_ca_path (string)
+3.12. tls_ca_path (string)
 
    The path of the directory holding the CA certificates.
    http://curl.haxx.se/libcurl/c/CURLOPT_CAPATH.html
 
    Default value is NULL..
 
-   Example 1.11. Set tls_ca_path parameter
+   Example 1.12. Set tls_ca_path parameter
 ...
 modparam("http_async_client", "tls_ca_path", "/etc/kamailio/ssl/ca/")
 ...
 
-3.12. tcp_keepalive (integer)
+3.13. tcp_keepalive (integer)
 
    If defined to a non-zero value, TCP keepalive will be enabled on cURL
    connections.
@@ -317,29 +333,29 @@ modparam("http_async_client", "tls_ca_path", "/etc/kamailio/ssl/ca/")
 
    Default value is 0 (disabled).
 
-   Example 1.12. Set tcp_keepalive parameter
+   Example 1.13. Set tcp_keepalive parameter
 ...
 modparam("http_async_client", "tcp_keepalive", 1)
 ...
 
-3.13. tcp_ka_idle (integer)
+3.14. tcp_ka_idle (integer)
 
    TCP keep-alive idle time wait value (in seconds).
 
    Default value is 0 (use cURL default value, 60s).
 
-   Example 1.13. Set tcp_ka_idle parameter
+   Example 1.14. Set tcp_ka_idle parameter
 ...
 modparam("http_async_client", "tcp_ka_idle", 30)
 ...
 
-3.14. tcp_ka_interval (integer)
+3.15. tcp_ka_interval (integer)
 
    TCP keep-alive interval (in seconds).
 
    Default value is 0 (use cURL default value, 60s).
 
-   Example 1.14. Set tcp_ka_interval parameter
+   Example 1.15. Set tcp_ka_interval parameter
 ...
 modparam("http_async_client", "tcp_ka_interval", 120)
 ...
@@ -371,7 +387,7 @@ modparam("http_async_client", "tcp_ka_interval", 120)
    error are returned in the module-specific $http_* PVs (see below). See
    example on how to retrieve return values.
 
-   Example 1.15. http_async_query() usage
+   Example 1.16. http_async_query() usage
 ...
 # create a transaction to be paused, and resumed in route[HTTP_REPLY]
 t_newtran();
@@ -400,7 +416,7 @@ route[HTTP_REPLY] {
    HTTP callback route to retrive the id of the query the reply belongs
    to. Useful mainly in non-transactional context.
 
-   Example 1.16. $http_req_id variable usage
+   Example 1.17. $http_req_id variable usage
 ...
 $http_req(suspend) = 0;
 
@@ -450,8 +466,11 @@ xlog("L_INFO", "received reply for query $http_req_id\n");
      * tcp_keepalive: enable TCP keepalive
      * tcp_ka_idle: set TCP keepalive idle time wait
      * tcp_ka_interval: set TCP keepalive interval
+     * follow_redirect: if defined to a non-zero value, will tell curl to
+       follow HTTP 3xx redirects. Defaults to curl_follow_redirect global
+       parameter.
 
-   Example 1.17. $http_req(key) variable usage
+   Example 1.18. $http_req(key) variable usage
 ...
 $http_req(all) = $null;                    # reset the parameters
 $http_req(timeout) = 100;                  # 100 ms

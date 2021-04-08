@@ -511,6 +511,30 @@ with unexpected retcode=$var(check_result)\n");
 </programlisting>
 		</example>
 	</section>
+	<section id="pipelimit.f.pl_active">
+		<title>
+		<function moreinfo="none">pl_active(name)</function>
+		</title>
+		<para>
+		Check the pipe 'name' was already created. Return 1 (true) if the pipe
+		is found, -1 (false) if the pipe is not found.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>pl_active</function> usage</title>
+		<programlisting format="linespecific">
+...
+	if (!pl_active("one")) {
+		# pipe does not exist
+		exit;
+	}
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="pipelimit.f.pl_drop">
 		<title>
 		<function moreinfo="none">pl_drop([ [min ], max ])</function>

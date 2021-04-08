@@ -51,17 +51,18 @@ static inline void calc_crc_suffix( struct sip_msg *msg, char *tag_suffix)
 	suffix_source[0]=msg->via1->host;
 	suffix_source[1]=msg->via1->port_str;
 	if (msg->via1->branch) {
-		suffix_source[2]=msg->via1->branch->value;
+		suffix_source[ss_nr++]=msg->via1->branch->value;
 	} else {
 		suffix_source[2].s = NULL;
 		suffix_source[2].len = 0;
 	}
 	crcitt_string_array( tag_suffix, suffix_source, ss_nr );
 
+	ss_nr=2;
 	suffix_source[0]=msg->via1->port_str;
 	suffix_source[1]=msg->via1->host;
 	if (msg->callid) {
-		suffix_source[2]=msg->callid->body;
+		suffix_source[ss_nr++]=msg->callid->body;
 	} else {
 		suffix_source[2].s = NULL;
 		suffix_source[2].len = 0;

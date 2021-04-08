@@ -1,5 +1,5 @@
 [Unit]
-Description=Kamailio (OpenSER) - the Open Source SIP Server
+Description=Kamailio - the Open Source SIP Server
 Wants=network-online.target
 After=network-online.target
 

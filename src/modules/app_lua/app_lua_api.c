@@ -969,7 +969,7 @@ int sr_kemi_lua_exec_func_ex(lua_State* L, sr_kemi_t *ket, int pdelta)
 		return app_lua_return_false(L);
 	}
 
-	if(argc>=SR_KEMI_PARAMS_MAX+pdelta) {
+	if(argc>SR_KEMI_PARAMS_MAX+pdelta) {
 		LM_ERR("too many parameters for: %.*s.%.*s\n",
 				mname->len, mname->s, fname->len, fname->s);
 		return app_lua_return_false(L);
@@ -1605,7 +1605,7 @@ int sr_kemi_lua_exec_func(lua_State* L, int eidx)
 {
 	sr_kemi_t *ket;
 	int ret;
-	struct timeval tvb, tve;
+	struct timeval tvb = {0}, tve = {0};
 	struct timezone tz;
 	unsigned int tdiff;
 	lua_Debug dinfo;

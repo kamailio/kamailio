@@ -40,31 +40,38 @@
 #include "sruid.h"
 
 /* starting polynomials */
-#define MASK_32 0xb4bcd35c
-#define MASK_31 0x7a5bc2e3
+#define SRUID_MASK_32 0xb4bcd35c
+#define SRUID_MASK_31 0x7a5bc2e3
 
-unsigned int lfsr32, lfsr31;
+static unsigned int sruid_lfsr32 = 0;
+static unsigned int sruid_lfsr31 = 0;
 
-int shift_lfsr(unsigned int *lfsr, unsigned int mask){
+static int sruid_shift_lfsr(unsigned int *lfsr, unsigned int mask)
+{
 	int feedback;
+
 	feedback = *lfsr & 0x1;
-	*lfsr >>=1;
-	if (feedback == 1)
+	*lfsr >>= 1;
+	if (feedback == 1) {
 		*lfsr ^= mask;
+	}
+
 	return *lfsr;
 }
 
-void init_lfsr(void){
-	lfsr32 = (unsigned int)time(NULL);
-	lfsr31 = (unsigned int)getpid();
+static void sruid_init_lfsr(void)
+{
+	sruid_lfsr32 = (unsigned int)time(NULL);
+	sruid_lfsr31 = (unsigned int)getpid();
 }
 
-/* 
+/**
  * returns a 32 bit random integer
- * 
- */ 
-int get_random(){
-	return (shift_lfsr(&lfsr32, MASK_32) ^ shift_lfsr(&lfsr31, MASK_31)) & 0xffffffff;
+ *
+ */
+static int sruid_get_random(){
+	return (sruid_shift_lfsr(&sruid_lfsr32, SRUID_MASK_32)
+				^ sruid_shift_lfsr(&sruid_lfsr31, SRUID_MASK_31)) & 0xffffffff;
 }
 
 /**
@@ -74,8 +81,9 @@ int sruid_init(sruid_t *sid, char sep, char *cid, int mode)
 {
 	int i;
 
-	if(sid==NULL)
+	if(sid==NULL) {
 		return -1;
+	}
 	memset(sid, 0, sizeof(sruid_t));
 	memcpy(sid->buf, "srid", 4);
 	if(cid!=NULL)
@@ -101,6 +109,9 @@ int sruid_init(sruid_t *sid, char sep, char *cid, int mode)
 	sid->out = sid->buf + i + 5;
 	sid->uid.s = sid->buf;
 	sid->mode = (sruid_mode_t)mode;
+	if(sid->mode == SRUID_LFSR) {
+		sruid_init_lfsr();
+	}
 	sid->pid = my_pid();
 	LM_DBG("root for sruid is [%.*s] (%u / %d)\n", i+5, sid->uid.s,
 			sid->counter, i+5);
@@ -115,20 +126,22 @@ int sruid_reinit(sruid_t *sid, int mode)
 	int i;
 	char sep;
 
-	if(sid==NULL)
+	if(sid==NULL) {
 		return -1;
+	}
 
 	sep = sid->buf[4];
 	sid->buf[5] = '\0';
 
-	if(server_id!=0)
+	if(server_id!=0) {
 		i = snprintf(sid->buf+5, SRUID_SIZE - 5 /*so far*/ - 8 /* extra int */,
 			"%x%c%x%c%x%c", (unsigned int)server_id, sep,
 			(unsigned int)time(NULL), sep, (unsigned int)my_pid(), sep);
-	else
+	} else {
 		i = snprintf(sid->buf+5, SRUID_SIZE - 5 /*so far*/ - 8 /* extra int */,
 			"%x%c%x%c",
 			(unsigned int)time(NULL), sep, (unsigned int)my_pid(), sep);
+	}
 	if(i<=0 || i>SRUID_SIZE-13)
 	{
 		LM_ERR("could not re-initialize sruid struct - output len: %d\n", i);
@@ -137,6 +150,9 @@ int sruid_reinit(sruid_t *sid, int mode)
 	sid->out = sid->buf + i + 5;
 	sid->uid.s = sid->buf;
 	sid->mode = (sruid_mode_t)mode;
+	if(sid->mode == SRUID_LFSR) {
+		sruid_init_lfsr();
+	}
 	sid->pid = my_pid();
 	LM_DBG("re-init root for sruid is [%.*s] (%u / %d)\n", i+5, sid->uid.s,
 			sid->counter, i+5);
@@ -146,19 +162,25 @@ int sruid_reinit(sruid_t *sid, int mode)
 /**
  *
  */
-int sruid_next(sruid_t *sid)
+int sruid_nextx(sruid_t *sid, str *x)
 {
 	unsigned short digit;
 	int i;
 	unsigned int val;
 
-	if(sid==NULL)
+	if(sid==NULL) {
 		return -1;
+	}
+	if(x!=NULL && x->len>0) {
+		if(sid->out - sid->buf + 1 + x->len >= SRUID_SIZE) {
+			LM_ERR("not enough space for x value\n");
+			return -1;
+		}
+	}
 
 	sid->counter++;
 	if(sid->counter==0) {
-		if(sid->mode == SRUID_INC)
-		{
+		if(sid->mode == SRUID_INC) {
 			/* counter overflow - re-init to have new timestamp */
 			if(sruid_reinit(sid, SRUID_INC)<0)
 				return -1;
@@ -166,16 +188,21 @@ int sruid_next(sruid_t *sid)
 		sid->counter=1;
 	}
 
-	if(sid->mode == SRUID_LFSR)
-		val = get_random();
-	else
+	if(sid->mode == SRUID_LFSR) {
+		val = sruid_get_random();
+	} else {
 		val = sid->counter;
+	}
 	i = 0;
-	while(val!=0)
-	{
+	while(val!=0) {
 		digit =  val & 0x0f;
 		sid->out[i++] = (digit >= 10) ? digit + 'a' - 10 : digit + '0';
 		val >>= 4;
+	}
+	if(x!=NULL && x->len>0) {
+		sid->out[i++] = sid->buf[4]; /* sep */
+		memcpy(sid->out + i, x->s, x->len);
+		i += x->len;
 	}
 	sid->out[i] = '\0';
 	sid->uid.len = sid->out + i - sid->buf;
@@ -187,8 +214,25 @@ int sruid_next(sruid_t *sid)
 /**
  *
  */
+int sruid_next(sruid_t *sid)
+{
+	return sruid_nextx(sid, NULL);
+}
+
+/**
+ *
+ */
+int sruid_nextx_safe(sruid_t *sid, str *x)
+{
+	if(unlikely(sid->pid!=my_pid())) sruid_reinit(sid, sid->mode);
+	return sruid_nextx(sid, x);
+}
+
+/**
+ *
+ */
 int sruid_next_safe(sruid_t *sid)
 {
 	if(unlikely(sid->pid!=my_pid())) sruid_reinit(sid, sid->mode);
-	return sruid_next(sid);
+	return sruid_nextx(sid, NULL);
 }

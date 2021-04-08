@@ -8,7 +8,13 @@ Edited by
 
 Bogdan-Andrei Iancu
 
+Frederic Gaisnon
+
+   <frederic.gaisnon@gmail.com>
+
    Copyright © 2003 FhG FOKUS
+
+   Copyright © 2021 MomentTech
      __________________________________________________________________
 
    Table of Contents
@@ -39,6 +45,8 @@ Bogdan-Andrei Iancu
               3.14. lookup_domain (string)
               3.15. lookup_append_branches (int)
               3.16. use_domain (integer)
+              3.17. redirect_route (string)
+              3.18. ignore3xx (integer)
 
         4. Functions
 
@@ -74,9 +82,11 @@ Bogdan-Andrei Iancu
    1.14. Set lookup_domain parameter
    1.15. Set lookup_append_branches parameter
    1.16. Set use_domain parameter
-   1.17. cpl_run_script usage
-   1.18. cpl_process_register usage
-   1.19. cpl_process_register_norpl usage
+   1.17. Set redirect_route parameter
+   1.18. Set ignore3xx parameter
+   1.19. cpl_run_script usage
+   1.20. cpl_process_register usage
+   1.21. cpl_process_register_norpl usage
 
 Chapter 1. Admin Guide
 
@@ -106,6 +116,8 @@ Chapter 1. Admin Guide
         3.14. lookup_domain (string)
         3.15. lookup_append_branches (int)
         3.16. use_domain (integer)
+        3.17. redirect_route (string)
+        3.18. ignore3xx (integer)
 
    4. Functions
 
@@ -125,7 +137,7 @@ Chapter 1. Admin Guide
 
 1. Overview
 
-   cpl-c modules implements a CPL (Call Processing Language) interpreter.
+   cplc modules implements a CPL (Call Processing Language) interpreter.
    Support for uploading/downloading/removing scripts via SIP REGISTER
    method is present.
 
@@ -175,6 +187,8 @@ Chapter 1. Admin Guide
    3.14. lookup_domain (string)
    3.15. lookup_append_branches (int)
    3.16. use_domain (integer)
+   3.17. redirect_route (string)
+   3.18. ignore3xx (integer)
 
 3.1. db_url (string)
 
@@ -187,7 +201,7 @@ Chapter 1. Admin Guide
 
    Example 1.1. Set db_url parameter
 ...
-modparam("cpl-c","db_url","dbdriver://username:password@dbhost/dbname")
+modparam("cplc","db_url","dbdriver://username:password@dbhost/dbname")
 ...
 
 3.2. db_table (string)
@@ -195,13 +209,13 @@ modparam("cpl-c","db_url","dbdriver://username:password@dbhost/dbname")
    Indicates the name of the table that store the CPL scripts. This table
    must be locate into the database specified by “db_url” parameter. For
    more about the format of the CPL table please see the
-   modules/cpl-c/init.mysql file.
+   modules/cplc/init.mysql file.
 
    Default value is “cpl”.
 
    Example 1.2. Set db_table parameter
 ...
-modparam("cpl-c","cpl_table","cpl")
+modparam("cplc","cpl_table","cpl")
 ...
 
 3.3. username_column (string)
@@ -212,7 +226,7 @@ modparam("cpl-c","cpl_table","cpl")
 
    Example 1.3. Set username_column parameter
 ...
-modparam("cpl-c","username_column","username")
+modparam("cplc","username_column","username")
 ...
 
 3.4. domain_column (string)
@@ -223,7 +237,7 @@ modparam("cpl-c","username_column","username")
 
    Example 1.4. Set domain_column parameter
 ...
-modparam("cpl-c","domain_column","domain")
+modparam("cplc","domain_column","domain")
 ...
 
 3.5. cpl_xml_column (string)
@@ -235,7 +249,7 @@ modparam("cpl-c","domain_column","domain")
 
    Example 1.5. Set cpl_xml_column parameter
 ...
-modparam("cpl-c","cpl_xml_column","cpl_xml")
+modparam("cplc","cpl_xml_column","cpl_xml")
 ...
 
 3.6. cpl_bin_column (string)
@@ -247,7 +261,7 @@ modparam("cpl-c","cpl_xml_column","cpl_xml")
 
    Example 1.6. Set cpl_bin_column parameter
 ...
-modparam("cpl-c","cpl_bin_column","cpl_bin")
+modparam("cplc","cpl_bin_column","cpl_bin")
 ...
 
 3.7. cpl_dtd_file (string)
@@ -261,7 +275,7 @@ modparam("cpl-c","cpl_bin_column","cpl_bin")
 
    Example 1.7. Set cpl_dtd_file parameter
 ...
-modparam("cpl-c","cpl_dtd_file","/etc/kamailio/cpl-06.dtd")
+modparam("cplc","cpl_dtd_file","/etc/kamailio/cpl-06.dtd")
 ...
 
 3.8. log_dir (string)
@@ -275,7 +289,7 @@ modparam("cpl-c","cpl_dtd_file","/etc/kamailio/cpl-06.dtd")
 
    Example 1.8. Set log_dir parameter
 ...
-modparam("cpl-c","log_dir","/var/log/kamailio/cpl")
+modparam("cplc","log_dir","/var/log/kamailio/cpl")
 ...
 
 3.9. proxy_recurse (int)
@@ -290,20 +304,20 @@ modparam("cpl-c","log_dir","/var/log/kamailio/cpl")
 
    Example 1.9. Set proxy_recurse parameter
 ...
-modparam("cpl-c","proxy_recurse",2)
+modparam("cplc","proxy_recurse",2)
 ...
 
 3.10. proxy_route (string)
 
-   Before doing proxy (forward), a script route can be executed. All
-   modifications made by that route will be reflected only for the current
-   branch.
+   Before doing proxy (forward), a script route can be executed. This
+   parameter indicates the name of the route called. All modifications
+   made by that route will be reflected only for the current branch.
 
    Default value of this parameter is NULL (none).
 
    Example 1.10. Set proxy_route parameter
 ...
-modparam("cpl-c","proxy_route","1")
+modparam("cplc","proxy_route","CPL_PROXY")
 ...
 
 3.11. case_sensitive (int)
@@ -316,7 +330,7 @@ modparam("cpl-c","proxy_route","1")
 
    Example 1.11. Set case_sensitive parameter
 ...
-modparam("cpl-c","case_sensitive",1)
+modparam("cplc","case_sensitive",1)
 ...
 
 3.12. realm_prefix (string)
@@ -328,7 +342,7 @@ modparam("cpl-c","case_sensitive",1)
 
    Example 1.12. Set realm_prefix parameter
 ...
-modparam("cpl-c","realm_prefix","sip.")
+modparam("cplc","realm_prefix","sip.")
 ...
 
 3.13. timer_avp (string)
@@ -344,7 +358,7 @@ modparam("cpl-c","realm_prefix","sip.")
 
    Example 1.13. Set timer_avp parameter
 ...
-modparam("cpl-c","timer_avp","$avp(i:14)")
+modparam("cplc","timer_avp","$avp(i:14)")
 ...
 
 3.14. lookup_domain (string)
@@ -360,7 +374,7 @@ modparam("cpl-c","timer_avp","$avp(i:14)")
 
    Example 1.14. Set lookup_domain parameter
 ...
-modparam("cpl-c","lookup_domain","location")
+modparam("cplc","lookup_domain","location")
 ...
 
 3.15. lookup_append_branches (int)
@@ -373,7 +387,7 @@ modparam("cpl-c","lookup_domain","location")
 
    Example 1.15. Set lookup_append_branches parameter
 ...
-modparam("cpl-c","lookup_append_branches",1)
+modparam("cplc","lookup_append_branches",1)
 ...
 
 3.16. use_domain (integer)
@@ -385,7 +399,32 @@ modparam("cpl-c","lookup_append_branches",1)
 
    Example 1.16. Set use_domain parameter
 ...
-modparam("cpl-c","use_domain",1)
+modparam("cplc","use_domain",1)
+...
+
+3.17. redirect_route (string)
+
+   Before doing redirect (deflection), a script route can be executed.
+   This parameter indicates the name of the route called. All
+   modifications made by that route will be reflected only for the current
+   branch.
+
+   Default value of this parameter is NULL (none).
+
+   Example 1.17. Set redirect_route parameter
+...
+modparam("cplc","redirect_route", "CPL_REDIRECT")
+...
+
+3.18. ignore3xx (integer)
+
+   Indicates if 3xx SIP response must be ignored.
+
+   Default value is “0 (disabled)”.
+
+   Example 1.18. Set ignore3xx parameter
+...
+modparam("cplc","ignore3xx",1)
 ...
 
 4. Functions
@@ -446,7 +485,7 @@ modparam("cpl-c","use_domain",1)
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.17. cpl_run_script usage
+   Example 1.19. cpl_run_script usage
 ...
 cpl_run_script("incoming","force_stateful");
 ...
@@ -472,7 +511,7 @@ cpl_run_script("incoming","force_stateful");
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.18. cpl_process_register usage
+   Example 1.20. cpl_process_register usage
 ...
 if (method=="REGISTER") {
     cpl_process_register();
@@ -490,7 +529,7 @@ if (method=="REGISTER") {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.19. cpl_process_register_norpl usage
+   Example 1.21. cpl_process_register_norpl usage
 ...
 if (method=="REGISTER") {
     cpl_process_register();
@@ -556,13 +595,13 @@ kamcmd cpl.get username
 
 6.1. Database setup
 
-   Before running Kamailio with cpl-c, you have to setup the database
-   table where the module will store the CPL scripts. For that, if the
-   table was not created by the installation script or you choose to
-   install everything by yourself you can use the cpc-create.sql SQL
-   script in the database directories in the kamailio/scripts folder as
-   template. Database and table name can be set with module parameters so
-   they can be changed, but the name of the columns must be as they are in
-   the SQL script. You can also find the complete database documentation
-   on the project webpage,
+   Before running Kamailio with cplc, you have to setup the database table
+   where the module will store the CPL scripts. For that, if the table was
+   not created by the installation script or you choose to install
+   everything by yourself you can use the cpc-create.sql SQL script in the
+   database directories in the kamailio/scripts folder as template.
+   Database and table name can be set with module parameters so they can
+   be changed, but the name of the columns must be as they are in the SQL
+   script. You can also find the complete database documentation on the
+   project webpage,
    https://www.kamailio.org/docs/db-tables/kamailio-db-devel.html.

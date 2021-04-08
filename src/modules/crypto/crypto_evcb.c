@@ -183,7 +183,7 @@ int crypto_nio_received(sr_event_param_t *evp)
 
 	/* gen key and iv. init the cipher ctx object */
 	if (crypto_aes_init((unsigned char *)_crypto_netio_key.s, _crypto_netio_key.len,
-				(unsigned char*)crypto_get_salt(), NULL, de)) {
+				(unsigned char*)crypto_get_salt(), NULL, NULL, de)) {
 		EVP_CIPHER_CTX_free(de);
 		LM_ERR("couldn't initialize AES cipher\n");
 		return -1;
@@ -253,7 +253,7 @@ int crypto_nio_sent(sr_event_param_t *evp)
 
 	/* gen key and iv. init the cipher ctx object */
 	if (crypto_aes_init((unsigned char *)_crypto_netio_key.s, _crypto_netio_key.len,
-				(unsigned char*)crypto_get_salt(), en, NULL)) {
+				(unsigned char*)crypto_get_salt(), NULL, en, NULL)) {
 		EVP_CIPHER_CTX_free(en);
 		LM_ERR("couldn't initialize AES cipher\n");
 		return -1;

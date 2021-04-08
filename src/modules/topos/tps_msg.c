@@ -51,6 +51,9 @@ extern int _tps_contact_mode;
 extern str _tps_cparam_name;
 extern int _tps_rr_update;
 
+extern str _tps_context_param;
+extern str _tps_context_value;
+
 str _sr_hname_xbranch = str_init("P-SR-XBranch");
 str _sr_hname_xuuid = str_init("P-SR-XUID");
 
@@ -546,6 +549,11 @@ int tps_pack_message(sip_msg_t *msg, tps_data_t *ptsd)
 			ptsd->bs_contact.len, ZSW(ptsd->bs_contact.s), ptsd->bs_contact.len);
 	ptsd->x_rr = ptsd->a_rr;
 	ptsd->s_method_id = get_cseq(msg)->method_id;
+	if(_tps_context_value.len>0) {
+		ptsd->x_context = _tps_context_value;
+	} else if(_tps_context_param.len>0) {
+		ptsd->x_context = _tps_context_param;
+	}
 	return 0;
 }
 
@@ -905,6 +913,11 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 				goto error;
 			}
 		}
+		if((get_cseq(msg)->method_id)&(METHOD_SUBSCRIBE)) {
+			if(tps_storage_update_dialog(msg, &mtsd, &stsd, TPS_DBU_CONTACT|TPS_DBU_TIME)<0) {
+				goto error;
+			}
+		}
 	}
 	return 0;
 
@@ -925,11 +938,6 @@ int tps_response_received(sip_msg_t *msg)
 	uint32_t direction = TPS_DIR_DOWNSTREAM;
 
 	LM_DBG("handling incoming response\n");
-
-	if(msg->first_line.u.reply.statuscode==100) {
-		/* nothing to do - it should be absorbed */
-		return 0;
-	}
 
 	memset(&mtsd, 0, sizeof(tps_data_t));
 	memset(&stsd, 0, sizeof(tps_data_t));

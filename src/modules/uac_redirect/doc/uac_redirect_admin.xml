@@ -341,6 +341,28 @@ modparam("uac_redirect","flags_hdr_mode",2)
 				</programlisting>
 			</example>
 		</section>
+		<section>
+			<title><varname>q_value</varname> (int)</title>
+			<para>
+			Specifies the q-value to asign to contacts without one. Because
+			Kamailio doesn't support float parameter types, the value in the
+			parameter is divided by 1000 and stored as float. For example, if
+			you want q value to be 0.38, use value 380 here.
+			</para>
+			<para>
+				<emphasis>
+					The default value is 10 (0.01).
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>q_value</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("uac_redirect","q_value",0)
+...
+				</programlisting>
+			</example>
+		</section>
 	</section>
 	<section>
 		<title>Functions</title>

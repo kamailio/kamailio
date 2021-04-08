@@ -54,8 +54,8 @@ dr_gw_lists|
 dr_gw_lists|1
 dr_rules|
 dr_rules|3
-METADATA_DEFAULTS
-NIL|''|0|NULL
+globalblocklist|
+globalblocklist|1
 grp|
 grp|2
 htable|
@@ -119,9 +119,9 @@ speed_dial|2
 subscriber|
 subscriber|7
 topos_d|
-topos_d|1
+topos_d|2
 topos_t|
-topos_t|1
+topos_t|2
 trusted|
 trusted|6
 uacreg|
@@ -142,8 +142,8 @@ uid_user_attrs|
 uid_user_attrs|3
 uri|
 uri|1
-METADATA_DEFAULTS
-NIL|''|''|''|0
+userblocklist|
+userblocklist|1
 usr_preferences|
 usr_preferences|2
 watchers|

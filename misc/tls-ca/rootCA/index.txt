@@ -1,1 +1,1 @@
-V	061028191629Z		01	unknown	/C=IP/ST=SIP/O=OpenSER project/OU=OpenSER TLS tester/CN=OpenSER/emailAddress=team@openser.org
+V	061028191629Z		01	unknown	/C=IP/ST=SIP/O=Kamailio project/OU=Kamailio TLS Tester/CN=Kamailio/emailAddress=team@kamailio.org

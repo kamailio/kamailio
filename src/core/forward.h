@@ -111,7 +111,7 @@ int is_check_self_func_list_set(void);
  *         that generated them; use 0 if you don't want this)
  * buf, len = buffer
  * flags = control internal behavior
- *    * 1 - skip executing event SREV_NET_DATA_OUT
+ *    * 1 - skip executing events: SREV_NET_DATA_OUT, SREV_NET_DATA_SEND
  * returns: 0 if ok, -1 on error*/
 
 static inline int msg_send_buffer(struct dest_info* dst, char* buf, int len,
@@ -331,7 +331,7 @@ done:
 		netinfo.data.len = outb.len;
 		netinfo.dst = dst;
 		evp.data = (void*)&netinfo;
-		sr_event_exec(SREV_NET_DATA_SEND, &evp);
+		sr_event_exec(SREV_NET_DATA_SENT, &evp);
 	}
 
 	if(outb.s != buf)

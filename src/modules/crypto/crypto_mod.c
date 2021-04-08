@@ -39,12 +39,14 @@
 #include "api.h"
 
 #include <openssl/hmac.h>
+#include <openssl/rand.h>
 
 
 MODULE_VERSION
 
 int crypto_aes_init(unsigned char *key_data, int key_data_len,
-		unsigned char *salt, EVP_CIPHER_CTX *e_ctx, EVP_CIPHER_CTX *d_ctx);
+		unsigned char *salt, unsigned char* custom_iv, EVP_CIPHER_CTX *e_ctx,
+		EVP_CIPHER_CTX *d_ctx);
 unsigned char *crypto_aes_encrypt(EVP_CIPHER_CTX *e, unsigned char *plaintext,
 		int *len);
 unsigned char *crypto_aes_decrypt(EVP_CIPHER_CTX *e, unsigned char *ciphertext,
@@ -71,6 +73,10 @@ static char *_crypto_salt_param = "k8hTm4aZ";
 
 static int _crypto_register_callid = 0;
 static int _crypto_register_evcb = 0;
+
+int _crypto_key_derivation = 1;
+/* base64 of 0 IV */
+static str _crypto_init_vector = str_init("");
 
 str _crypto_kevcb_netio = STR_NULL;
 str _crypto_netio_key = STR_NULL;
@@ -100,6 +106,8 @@ static param_export_t params[]={
 	{ "register_evcb",   PARAM_INT, &_crypto_register_evcb },
 	{ "kevcb_netio",     PARAM_STR, &_crypto_kevcb_netio },
 	{ "netio_key",       PARAM_STR, &_crypto_netio_key },
+	{ "key_derivation",  PARAM_INT, &_crypto_key_derivation },
+	{ "init_vector",     PARAM_STR, &_crypto_init_vector },
 
 	{ 0, 0, 0 }
 };
@@ -184,7 +192,10 @@ static int ki_crypto_aes_encrypt_helper(sip_msg_t* msg, str *ins, str *keys,
 {
 	pv_value_t val;
 	EVP_CIPHER_CTX *en = NULL;
-	str etext;
+	str etext, lkey, ttext;
+	str iv = STR_NULL;
+	unsigned char decoded_key[64];
+	unsigned char decoded_iv[16], tmpiv[16];
 
 	en = EVP_CIPHER_CTX_new();
 	if(en==NULL) {
@@ -192,9 +203,46 @@ static int ki_crypto_aes_encrypt_helper(sip_msg_t* msg, str *ins, str *keys,
 		return -1;
 	}
 
+	if (!_crypto_key_derivation){
+		lkey.len = base64_dec((unsigned char *)keys->s, keys->len,
+				(unsigned char *)decoded_key, sizeof(decoded_key));
+		if (lkey.len != 16 && lkey.len != 32) {
+			LM_ERR("base64 key input has wrong length %d, only supports 128 "
+				"or 256 bit keys\n", lkey.len);
+			return -1;
+		}
+		lkey.s = (char *)decoded_key;
+
+		/* custom IV */
+		if (_crypto_init_vector.s != NULL && _crypto_init_vector.len > 0) {
+			iv.s = _crypto_init_vector.s;
+			iv.len = _crypto_init_vector.len;
+
+			iv.len = base64_dec((unsigned char *)iv.s, iv.len,
+				(unsigned char *)decoded_iv, sizeof(decoded_iv));
+			if (iv.len != 16) {
+				LM_ERR("base64 initialization vector input has wrong length %d, needs to be "
+					"16 bytes\n", iv.len);
+				return -1;
+			}
+			iv.s = (char *)decoded_iv;
+		} else { /* random IV */
+			if (RAND_bytes(tmpiv, sizeof(tmpiv)) != 1) {
+				LM_ERR("could not set initialization vector\n");
+				return -1;
+			}
+			iv.s = (char *)tmpiv;
+			iv.len = sizeof(tmpiv);
+		}
+	} else {
+		lkey.s = keys->s;
+		lkey.len = keys->len;
+	}
+
 	/* gen key and iv. init the cipher ctx object */
-	if (crypto_aes_init((unsigned char *)keys->s, keys->len,
-				(unsigned char*)crypto_get_salt(), en, NULL)) {
+	if (crypto_aes_init((unsigned char *)lkey.s, lkey.len,
+				(unsigned char*)crypto_get_salt(),
+				(unsigned char*)iv.s, en, NULL)) {
 		EVP_CIPHER_CTX_free(en);
 		LM_ERR("couldn't initialize AES cipher\n");
 		return -1;
@@ -209,8 +257,23 @@ static int ki_crypto_aes_encrypt_helper(sip_msg_t* msg, str *ins, str *keys,
 
 	memset(&val, 0, sizeof(pv_value_t));
 	val.rs.s = pv_get_buffer();
-	val.rs.len = base64_enc((unsigned char *)etext.s, etext.len,
-					(unsigned char *)val.rs.s, pv_get_buffer_size()-1);
+	/* IV is prefix of cipher text, 128 bits for AES */
+	if (! _crypto_key_derivation) {
+		ttext.s = pkg_malloc(iv.len + etext.len);
+		if (ttext.s == NULL) {
+			PKG_MEM_ERROR;
+			goto error1;
+		}
+		memcpy(ttext.s, iv.s, iv.len);
+		memcpy(ttext.s + iv.len, etext.s, etext.len);
+		ttext.len = iv.len + etext.len;
+	} else {
+		ttext.s = etext.s;
+		ttext.len = etext.len;
+	}
+	val.rs.len = base64_enc((unsigned char *)ttext.s, ttext.len,
+					(unsigned char *)val.rs.s,
+					pv_get_buffer_size()-1);
 	if (val.rs.len < 0) {
 		EVP_CIPHER_CTX_free(en);
 		LM_ERR("base64 output of encrypted value is too large (need %d)\n",
@@ -221,12 +284,19 @@ static int ki_crypto_aes_encrypt_helper(sip_msg_t* msg, str *ins, str *keys,
 	val.flags = PV_VAL_STR;
 	dst->setf(msg, &dst->pvp, (int)EQ_T, &val);
 
+	if (ttext.s != etext.s) {
+		pkg_free(ttext.s);
+	}
 	free(etext.s);
 	EVP_CIPHER_CTX_cleanup(en);
 	EVP_CIPHER_CTX_free(en);
 	return 1;
 
 error:
+	if (ttext.s != etext.s) {
+		pkg_free(ttext.s);
+	}
+error1:
 	free(etext.s);
 	EVP_CIPHER_CTX_cleanup(en);
 	EVP_CIPHER_CTX_free(en);
@@ -407,19 +477,13 @@ static int ki_crypto_aes_decrypt_helper(sip_msg_t* msg, str *ins, str *keys,
 
 	pv_value_t val;
 	EVP_CIPHER_CTX *de=NULL;
-	str etext;
+	str etext, lkey;
+	unsigned char decoded_key[64];
+	char *iv = NULL;
 
 	de = EVP_CIPHER_CTX_new();
 	if(de==NULL) {
 		LM_ERR("cannot get new cipher context\n");
-		return -1;
-	}
-
-	/* gen key and iv. init the cipher ctx object */
-	if (crypto_aes_init((unsigned char *)keys->s, keys->len,
-				(unsigned char*)crypto_get_salt(), NULL, de)) {
-		EVP_CIPHER_CTX_free(de);
-		LM_ERR("couldn't initialize AES cipher\n");
 		return -1;
 	}
 
@@ -433,6 +497,32 @@ static int ki_crypto_aes_decrypt_helper(sip_msg_t* msg, str *ins, str *keys,
 				-etext.len);
 		return -1;
 	}
+        if (!_crypto_key_derivation){
+		lkey.len = base64_dec((unsigned char *)keys->s, keys->len,
+					(unsigned char *)decoded_key, sizeof(decoded_key));
+		if (lkey.len != 16 && lkey.len != 32) {
+			LM_ERR("base64 key input has wrong length %d, only 128 or 256 "
+			" bit keys are supported\n", lkey.len);
+			return -1;
+		}
+		lkey.s = (char *)decoded_key;
+		/* IV is prefix of cipher text, 128 bits for AES */
+		iv = etext.s;
+		etext.s += 16;
+		etext.len -= 16;
+	} else {
+		lkey.s = keys->s;
+		lkey.len = keys->len;
+	}
+	/* gen key and iv. init the cipher ctx object */
+	if (crypto_aes_init((unsigned char *)lkey.s, lkey.len,
+				(unsigned char*)crypto_get_salt(),
+				(unsigned char*)iv, NULL, de)) {
+		EVP_CIPHER_CTX_free(de);
+		LM_ERR("couldn't initialize AES cipher\n");
+		return -1;
+	}
+
 	val.rs.len = etext.len;
 	val.rs.s = (char *)crypto_aes_decrypt(de, (unsigned char *)etext.s,
 			&val.rs.len);
@@ -553,7 +643,7 @@ int crypto_aes_test(void)
 	key_data_len = strlen((const char *)key_data);
 
 	/* gen key and iv. init the cipher ctx object */
-	if (crypto_aes_init(key_data, key_data_len, salt, en, de)) {
+	if (crypto_aes_init(key_data, key_data_len, salt, NULL, en, de)) {
 		LM_ERR("couldn't initialize AES cipher\n");
 		return -1;
 	}

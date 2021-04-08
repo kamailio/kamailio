@@ -208,6 +208,32 @@ modparam("tls", "ca_list", "/usr/local/etc/kamailio/ca_list.pem")
 	</example>
 	</section>
 
+	<section id="tls.p.ca_path">
+	<title><varname>ca_path</varname> (str)</title>
+	<para>
+		Sets the path with the trusted CA files, to be given as parameter
+		SSL_CTX_load_verify_locations(). The certificates in ca_path are only
+		looked up when required, e.g. when building the certificate chain
+		or when actually performing the verification of a peer certificate. They
+		are not given to the client (not loaded to be provided to
+		SSL_CTX_set_client_CA_list()), only the ones in ca_list files are sent
+		to the client. It requires to use c_rehash to generate the hash map
+		for certificate search, for more see the manual of libssl for
+		SSL_CTX_load_verify_locations() function.
+	</para>
+	<para>
+		By default it is not set.
+	</para>
+	<example>
+	    <title>Set <varname>ca_path</varname> parameter</title>
+	    <programlisting>
+...
+modparam("tls", "ca_path", "/usr/local/etc/kamailio/ca")
+...
+	    </programlisting>
+	</example>
+	</section>
+
 	<section id="tls.p.crl">
 	<title><varname>crl</varname> (string)</title>
 	<para>

@@ -91,6 +91,7 @@ struct query_params {
 	unsigned int tls_verify_host:1;
 	unsigned int suspend_transaction:1; /* (create and) suspend the current transaction */
 	unsigned int call_route:1;          /* call script route on reply */
+	unsigned int follow_redirect:1; /* follow any Location header in a 3xx response */
 
 	unsigned int timeout;
 	struct header_list headers;

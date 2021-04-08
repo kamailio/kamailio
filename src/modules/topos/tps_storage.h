@@ -41,6 +41,7 @@
 #define TPS_DBU_RPLATTRS	(1<<1)
 #define TPS_DBU_ARR		(1<<2)
 #define TPS_DBU_BRR		(1<<3)
+#define TPS_DBU_TIME		(1<<4)
 #define TPS_DBU_ALL		(0xffffffff)
 
 #define TPS_DATA_SIZE	8192
@@ -76,9 +77,11 @@ typedef struct tps_data {
 	str x_uri;
 	str s_method;
 	str s_cseq;
+	str x_context;
 	int32_t iflags;
 	int32_t direction;
 	uint32_t s_method_id;
+	int32_t expires;
 } tps_data_t;
 
 int tps_storage_dialog_find(sip_msg_t *msg, tps_data_t *td);

@@ -1498,6 +1498,25 @@ modparam("usrloc", "ka_logmsg", " to-uri: [$tu] remote-addr: [$sas]")
 		</example>
 	</section>
 
+	<section id="usrloc.p.load_rank">
+		<title><varname>load_rank</varname> (int)</title>
+		<para>
+		Allows to set the rank of the child SIP worker to load the location
+		records.
+		</para>
+		<para>
+		Default value is <quote>1</quote> (PROC_SIPINIT).
+		</para>
+		<example>
+		<title><varname>load_rank</varname> parameter usage</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "load_rank", 1)
+...
+		</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 	<section>

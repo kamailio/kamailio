@@ -161,8 +161,8 @@ static int fixup_rms_action_play(void **param, int param_no)
 }
 
 /**
- * @return 0 to continue to load the OpenSER, -1 to stop the loading
- * and abort OpenSER.
+ * @return 0 to continue to load Kamailio, -1 to stop the loading
+ * and abort Kamailio.
  */
 static int mod_init(void)
 {
@@ -199,7 +199,7 @@ static int mod_init(void)
 }
 
 /**
- * Called only once when OpenSER is shuting down to clean up module
+ * Called only once when Kamailio is shuting down to clean up module
  * resources.
  */
 static void mod_destroy()
@@ -339,7 +339,7 @@ static void rms_dialog_manage_loop()
  * PROC_TCP_MAIN -4  TCP main process
  * PROC_UNIXSOCK -5  Unix domain socket server processes
  *
- * If this function returns a nonzero value the loading of OpenSER will
+ * If this function returns a nonzero value the loading of Kamailio will
  * stop.
  */
 static int child_init(int rank)

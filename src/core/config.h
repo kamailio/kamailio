@@ -45,6 +45,7 @@
 #define TLS_PKEY_FILE "cert.pem" 	/*!< The certificate private key file */
 #define TLS_CERT_FILE "cert.pem"	/*!< The certificate file */
 #define TLS_CA_FILE 0			/*!< no CA list file by default */
+#define TLS_CA_PATH 0			/*!< no CA directory path by default */
 #define TLS_CRL_FILE 0 /*!< no CRL by default */
 
 #define CHILD_NO    8			/*!< default number of child processes started */
@@ -95,6 +96,7 @@
 #define MY_BRANCH ";branch="
 #define MY_BRANCH_LEN (sizeof(MY_BRANCH) - 1)
 
+#define MAX_PORT_VAL 65535
 #define MAX_PORT_LEN 7 /* ':' + max 5 letters + \0 */
 
 #define CRLF "\r\n"

@@ -46,9 +46,9 @@ entry in database:
     domain[123]=alpha.org
     domain[124]=beta.org
     domain[125]=gamma.org
-	
+
 The RURI will be updated in the following way"
-sip:12391001@mydomain.com  => sip:91001@alpha.org    
+sip:12391001@mydomain.com  => sip:91001@alpha.org
 </programlisting>
 	</example>
 	<para>
@@ -63,14 +63,14 @@ sip:12391001@mydomain.com  => sip:91001@alpha.org
 		    A sample config file is located in './doc/'.
 		</para>
 		</listitem>
-		
+
 		<listitem>
 		<para>
 			<acronym>MySQL</acronym> script to create the database needed by
 			PDT is located in '../../scripts/mysql/pdt-create.sql'
 		</para>
 		<para>
-			The database is loaded by &kamailio; only at start up time and 
+			The database is loaded by &kamailio; only at start up time and
 			only cache is used to lookup domains. Check the MI Functions for
 			adding/deleting prefix-domain pairs or reloading from database
 			at runtime.
@@ -304,7 +304,7 @@ modparam("pdt", "check_domain", 0)
 	</section>
 
     </section>
-	
+
     <section>
 	<title>Functions</title>
  	<section>
@@ -335,18 +335,18 @@ modparam("pdt", "check_domain", 0)
 		the prefix from user part. The possible values are:
 		</para>
 		<itemizedlist>
-			<listitem>	  
+			<listitem>
 				<para>0: the prefix is removed along with the leading prefix.</para>
-			</listitem>	  
-			<listitem>	  
-				<para>1: only the leading prefix is removed.</para> 
-			</listitem>	  
+			</listitem>
+			<listitem>
+				<para>1: only the leading prefix is removed.</para>
+			</listitem>
 			<listitem>
 				<para>2: the user part of the URI is not changed.</para>
-			</listitem>	  
+			</listitem>
 			<listitem>
 				<para>$PV : any PV holding one of the above values.</para>
-			</listitem>	  
+			</listitem>
 		</itemizedlist>
 		<para>
 		The <quote>multidomain_mode</quote> parameter specifies the kind of multidomain
@@ -355,11 +355,11 @@ modparam("pdt", "check_domain", 0)
 		<itemizedlist>
 			<listitem>
 				<para>0 : Translation of &uri; regardless of source domain.</para>
-			</listitem>	  
+			</listitem>
 			<listitem>
 				<para>1 :  Translation of &uri; using as source domain the domain
 					in From-URI.</para>
-			</listitem>			
+			</listitem>
 			<listitem>
 				<para>2 :  Translation of &uri; using as source domain the domain
 				in From-URI. In case there is no entry for the required sdomain,
@@ -367,8 +367,8 @@ modparam("pdt", "check_domain", 0)
 			</listitem>
 			<listitem>
 				<para>$PV : any PV holding one of the above values.</para>
-			</listitem>	  
-		</itemizedlist>		
+			</listitem>
+		</itemizedlist>
 	    <para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 		</para>
@@ -388,8 +388,8 @@ prefix2domain("$var(a)", "2");
 	    <title>
 		<function moreinfo="none">prefix2domain(rewrite_mode)</function>
 	    </title>
-		<para>The same as prefix2domain(rewrite_mode, "0"), that is without 
-		multidomain support, translation of  &uri; being done regardless of 
+		<para>The same as prefix2domain(rewrite_mode, "0"), that is without
+		multidomain support, translation of  &uri; being done regardless of
 		the source domain.
 		</para>
 		<programlisting format="linespecific">
@@ -398,7 +398,7 @@ prefix2domain("2");
 ...
 </programlisting>
     </section>
-	
+
 	<section>
 	    <title>
 		<function moreinfo="none">prefix2domain()</function>
@@ -410,7 +410,7 @@ prefix2domain();
 ...
 </programlisting>
     </section>
-	
+
 	<section>
 	    <title>
 		<function moreinfo="none">pd_translate(sdomain, rewrite_mode)</function>
@@ -438,7 +438,7 @@ prefix2domain();
 				<para>0: the prefix is removed along with the leading prefix.</para>
 			</listitem>
 			<listitem>
-				<para>1: only the leading prefix is removed.</para> 
+				<para>1: only the leading prefix is removed.</para>
 			</listitem>
 			<listitem>
 				<para>2: the user part of the URI is not changed.</para>
@@ -547,14 +547,6 @@ pd_translate("*", "$var(a)");
 ...
 		</programlisting>
     </section>
-    </section>
-
-    <section>
-	<title>Installation and Running</title>
-    <para>
-	Example shell scripts for MI FIFO commands are placed in './doc/'
-	(pdt_fifo_add.sh, pdt_fifo_delete.sh, pdt_fifo_list.sh).
-	</para>
     </section>
 </chapter>
 

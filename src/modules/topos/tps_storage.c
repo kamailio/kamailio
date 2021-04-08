@@ -37,10 +37,12 @@
 #include "../../core/hashes.h"
 #include "../../core/locking.h"
 #include "../../core/trim.h"
+#include "../../core/xavp.h"
 #include "../../core/parser/parse_uri.h"
 #include "../../core/parser/contact/parse_contact.h"
 #include "../../core/parser/parse_from.h"
 #include "../../core/parser/parse_to.h"
+#include "../../core/parser/parse_expires.h"
 
 #include "../../lib/srdb1/db.h"
 #include "../../core/utils/sruid.h"
@@ -56,10 +58,13 @@ extern db_func_t _tpsdbf;
 extern str _tps_contact_host;
 extern int _tps_contact_mode;
 extern str _tps_cparam_name;
-extern str _tps_acontact_avp;
-extern str _tps_bcontact_avp;
-extern pv_spec_t _tps_acontact_spec;
-extern pv_spec_t _tps_bcontact_spec;
+extern str _tps_xavu_cfg;
+extern str _tps_xavu_field_acontact;
+extern str _tps_xavu_field_bcontact;
+extern str _tps_xavu_field_contact_host;
+
+extern str _tps_context_param;
+extern str _tps_context_value;
 
 #define TPS_STORAGE_LOCK_SIZE	1<<9
 static gen_lock_set_t *_tps_storage_lock_set = NULL;
@@ -211,14 +216,15 @@ int tps_storage_branch_rm(sip_msg_t *msg, tps_data_t *td)
 /**
  *
  */
-int tps_storage_fill_contact(sip_msg_t *msg, tps_data_t *td, str *uuid, int dir, int ctmode)
+int tps_storage_fill_contact(sip_msg_t *msg, tps_data_t *td, str *uuid, int dir,
+		int ctmode)
 {
 	str sv;
 	sip_uri_t puri, curi;
-	pv_value_t pv_val;
 	int i;
 	int contact_len;
 	int cparam_len;
+	sr_xavp_t *vavu = NULL;
 
 	if(dir==TPS_DIR_DOWNSTREAM) {
 		sv = td->bs_contact;
@@ -245,11 +251,12 @@ int tps_storage_fill_contact(sip_msg_t *msg, tps_data_t *td, str *uuid, int dir,
 		cparam_len = 0;
 	}
 
-	if(td->cp + 8 + (2*uuid->len) + cparam_len + contact_len >= td->cbuf + TPS_DATA_SIZE) {
+	if(td->cp + 8 + (2*uuid->len) + cparam_len + contact_len >= td->cbuf
+			+ TPS_DATA_SIZE) {
 		LM_ERR("insufficient data buffer\n");
 		return -1;
 	}
-	// copy uuid
+	/* copy uuid */
 	if(dir==TPS_DIR_DOWNSTREAM) {
 		td->b_uuid.s = td->cp;
 		*td->cp = 'b';
@@ -272,14 +279,14 @@ int tps_storage_fill_contact(sip_msg_t *msg, tps_data_t *td, str *uuid, int dir,
 
 	*td->cp = '<';
 	td->cp++;
-	// look for sip:
+	/* look for sip: */
 	for(i=0; i<sv.len; i++) {
 		*td->cp = sv.s[i];
 		td->cp++;
 		if(sv.s[i]==':') break;
 	}
-	// create new URI parameter for Contact header
 	if (ctmode == 1 || ctmode == 2) {
+		/* create new URI parameter for Contact header */
 		if (ctmode == 1) {
 			if (dir==TPS_DIR_DOWNSTREAM) {
 				/* extract the contact address */
@@ -294,7 +301,7 @@ int tps_storage_fill_contact(sip_msg_t *msg, tps_data_t *td, str *uuid, int dir,
 						return -1;
 					} else {
 						if (parse_uri(((contact_body_t*)msg->contact->parsed)->contacts->uri.s,
-						((contact_body_t*)msg->contact->parsed)->contacts->uri.len, &curi) < 0) {
+							((contact_body_t*)msg->contact->parsed)->contacts->uri.len, &curi) < 0) {
 							LM_ERR("failed to parse the contact uri\n");
 							return -1;
 						}
@@ -318,33 +325,50 @@ int tps_storage_fill_contact(sip_msg_t *msg, tps_data_t *td, str *uuid, int dir,
 		} else if (ctmode == 2) {
 			if (dir==TPS_DIR_DOWNSTREAM) {
 				/* extract the a contact */
-				if ((pv_get_spec_value(msg, &_tps_acontact_spec, &pv_val) != 0)
-						&& (pv_val.flags & PV_VAL_STR) && (pv_val.rs.len <= 0)) {
-					LM_ERR("could not evaluate a_contact AVP\n");
+				vavu = xavu_get_child_with_sval(&_tps_xavu_cfg,
+							&_tps_xavu_field_acontact);
+				if(vavu==NULL || vavu->val.v.s.len<=0) {
+					LM_ERR("could not evaluate a_contact xavu\n");
 					return -1;
 				}
-				memcpy(td->cp, pv_val.rs.s, pv_val.rs.len);
-				td->cp += pv_val.rs.len;
+				memcpy(td->cp, vavu->val.v.s.s, vavu->val.v.s.len);
+				td->cp += vavu->val.v.s.len;
 			} else {
 				/* extract the b contact */
-				if ((pv_get_spec_value(msg, &_tps_bcontact_spec, &pv_val) != 0)
-						&& (pv_val.flags & PV_VAL_STR) && (pv_val.rs.len <= 0)) {
-					LM_ERR("could not evaluate b_contact AVP\n");
+				vavu = xavu_get_child_with_sval(&_tps_xavu_cfg,
+							&_tps_xavu_field_bcontact);
+				if(vavu==NULL || vavu->val.v.s.len<=0) {
+					LM_ERR("could not evaluate b_contact xavu\n");
 					return -1;
 				}
-				memcpy(td->cp, pv_val.rs.s, pv_val.rs.len);
-				td->cp += pv_val.rs.len;
+				memcpy(td->cp, vavu->val.v.s.s, vavu->val.v.s.len);
+				td->cp += vavu->val.v.s.len;
 			}
 		}
-		*td->cp = '@';
-		td->cp++;
 
-		if (_tps_contact_host.len) { // using configured hostname in the contact header
-			memcpy(td->cp, _tps_contact_host.s, _tps_contact_host.len);
-			td->cp += _tps_contact_host.len;
+		if (!((ctmode == 1) && (dir==TPS_DIR_DOWNSTREAM)
+					&& (curi.user.len <= 0))) {
+			*td->cp = '@';
+			td->cp++;
+		}
+
+		/* contact_host xavu takes preference */
+		if (_tps_xavu_cfg.len>0 && _tps_xavu_field_contact_host.len>0) {
+			vavu = xavu_get_child_with_sval(&_tps_xavu_cfg,
+					&_tps_xavu_field_contact_host);
+		}
+		if(vavu!=NULL && vavu->val.v.s.len>0) {
+			memcpy(td->cp, vavu->val.v.s.s, vavu->val.v.s.len);
+			td->cp += vavu->val.v.s.len;
 		} else {
-			memcpy(td->cp, puri.host.s, puri.host.len);
-			td->cp += puri.host.len;
+			if (_tps_contact_host.len) {
+				/* using configured hostname in the contact header */
+				memcpy(td->cp, _tps_contact_host.s, _tps_contact_host.len);
+				td->cp += _tps_contact_host.len;
+			} else {
+				memcpy(td->cp, puri.host.s, puri.host.len);
+				td->cp += puri.host.len;
+			}
 		}
 		if(puri.port.len>0) {
 			*td->cp = ':';
@@ -374,8 +398,8 @@ int tps_storage_fill_contact(sip_msg_t *msg, tps_data_t *td, str *uuid, int dir,
 		memcpy(td->cp, uuid->s, uuid->len);
 		td->cp += uuid->len;
 
-	// create new user part for Contact header URI
 	} else {
+		/* create new user part for Contact header URI */
 		if(dir==TPS_DIR_DOWNSTREAM) {
 			*td->cp = 'b';
 		} else {
@@ -387,7 +411,8 @@ int tps_storage_fill_contact(sip_msg_t *msg, tps_data_t *td, str *uuid, int dir,
 		*td->cp = '@';
 		td->cp++;
 
-		if (_tps_contact_host.len) { // using configured hostname in the contact header
+		if (_tps_contact_host.len) {
+			/* using configured hostname in the contact header */
 			memcpy(td->cp, _tps_contact_host.s, _tps_contact_host.len);
 			td->cp += _tps_contact_host.len;
 		} else {
@@ -465,8 +490,9 @@ int tps_storage_link_msg(sip_msg_t *msg, tps_data_t *td, int dir)
 
 	/* extract the contact address */
 	if(parse_headers(msg, HDR_CONTACT_F, 0)<0 || msg->contact==NULL) {
-		if(td->s_method_id != METHOD_INVITE) {
-			/* no mandatory contact unless is INVITE - done */
+		if((td->s_method_id != METHOD_INVITE)
+				&& (td->s_method_id != METHOD_SUBSCRIBE)){
+			/* no mandatory contact unless is INVITE or SUBSCRIBE - done */
 			return 0;
 		}
 		if(msg->first_line.type==SIP_REPLY) {
@@ -504,6 +530,14 @@ int tps_storage_link_msg(sip_msg_t *msg, tps_data_t *td, int dir)
 		}
 	}
 
+	if  (td->s_method_id == METHOD_SUBSCRIBE) {
+		if(msg->expires && (msg->expires->body.len > 0) && (msg->expires->parsed
+					|| (parse_expires(msg->expires) >= 0))) {
+			td->expires = ((exp_body_t *)msg->expires->parsed)->val;
+		}
+	}
+
+
 	LM_DBG("downstream: %s - acontact: [%.*s] - bcontact: [%.*s]\n",
 			(dir==TPS_DIR_DOWNSTREAM)?"yes":"no",
 			td->a_contact.len, (td->a_contact.len>0)?td->a_contact.s:"",
@@ -522,9 +556,16 @@ int tps_storage_record(sip_msg_t *msg, tps_data_t *td, int dialog, int dir)
 {
 	int ret = -1; /* error if dialog == 0 */
 	str suid;
+	str *sx = NULL;
+
+	if(_tps_context_value.len>0) {
+		sx = &_tps_context_value;
+	} else if(_tps_context_param.len>0) {
+		sx = &_tps_context_param;
+	}
 
 	if(dialog==0) {
-		sruid_next(&_tps_sruid);
+		sruid_nextx(&_tps_sruid, sx);
 		suid = _tps_sruid.uid;
 	} else {
 		if(td->a_uuid.len>0) {
@@ -538,9 +579,11 @@ int tps_storage_record(sip_msg_t *msg, tps_data_t *td, int dialog, int dir)
 		suid.len--;
 	}
 
-	ret = tps_storage_fill_contact(msg, td, &suid, TPS_DIR_DOWNSTREAM, _tps_contact_mode);
+	ret = tps_storage_fill_contact(msg, td, &suid, TPS_DIR_DOWNSTREAM,
+			_tps_contact_mode);
 	if(ret<0) goto error;
-	ret = tps_storage_fill_contact(msg, td, &suid, TPS_DIR_UPSTREAM, _tps_contact_mode);
+	ret = tps_storage_fill_contact(msg, td, &suid, TPS_DIR_UPSTREAM,
+			_tps_contact_mode);
 	if(ret<0) goto error;
 
 	ret = tps_storage_link_msg(msg, td, dir);
@@ -588,6 +631,7 @@ str td_col_a_srcaddr = str_init("a_srcaddr");
 str td_col_b_srcaddr = str_init("b_srcaddr");
 str td_col_s_method = str_init("s_method");
 str td_col_s_cseq = str_init("s_cseq");
+str td_col_x_context = str_init("x_context");
 
 str tt_table_name = str_init("topos_t");
 str tt_col_rectime = str_init("rectime");
@@ -610,6 +654,7 @@ str tt_col_a_tag = str_init("a_tag");
 str tt_col_b_tag = str_init("b_tag");
 str tt_col_s_method = str_init("s_method");
 str tt_col_s_cseq = str_init("s_cseq");
+str tt_col_x_context = str_init("x_context");
 
 #define TPS_NR_KEYS	48
 
@@ -738,6 +783,13 @@ int tps_db_insert_dialog(tps_data_t *td)
 	db_vals[nr_keys].type = DB1_STR;
 	db_vals[nr_keys].val.str_val = TPS_STRZ(td->s_cseq);
 	nr_keys++;
+
+	if(td->x_context.len>0) {
+		db_keys[nr_keys] = &td_col_x_context;
+		db_vals[nr_keys].type = DB1_STR;
+		db_vals[nr_keys].val.str_val = TPS_STRZ(td->x_context);
+		nr_keys++;
+	}
 
 	if (_tpsdbf.use_table(_tps_db_handle, &td_table_name) < 0) {
 		LM_ERR("failed to perform use table\n");
@@ -925,6 +977,13 @@ int tps_db_insert_branch(tps_data_t *td)
 	db_vals[nr_keys].val.str_val = TPS_STRZ(td->b_tag);
 	nr_keys++;
 
+	if(td->x_context.len>0) {
+		db_keys[nr_keys] = &tt_col_x_context;
+		db_vals[nr_keys].type = DB1_STR;
+		db_vals[nr_keys].val.str_val = TPS_STRZ(td->x_context);
+		nr_keys++;
+	}
+
 	if (_tpsdbf.use_table(_tps_db_handle, &tt_table_name) < 0) {
 		LM_ERR("failed to perform use table\n");
 		return -1;
@@ -1030,12 +1089,14 @@ int tps_db_clean_branches(void)
 int tps_db_load_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
 		uint32_t mode)
 {
-	db_key_t db_keys[4];
-	db_op_t  db_ops[4];
-	db_val_t db_vals[4];
+	db_key_t db_keys[5];
+	db_op_t  db_ops[5];
+	db_val_t db_vals[5];
 	db_key_t db_cols[TPS_NR_KEYS];
 	db1_res_t* db_res = NULL;
 	str sinv = str_init("INVITE");
+	str ssub = str_init("SUBSCRIBE");
+	int bInviteDlg = 1;
 	int nr_keys;
 	int nr_cols;
 	int n;
@@ -1046,6 +1107,12 @@ int tps_db_load_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
 
 	nr_keys = 0;
 	nr_cols = 0;
+
+	if((get_cseq(msg)->method_id == METHOD_SUBSCRIBE)
+			|| ((get_cseq(msg)->method_id == METHOD_NOTIFY)
+				&& (msg->event->len > 0))) {
+		bInviteDlg = 0;
+	}
 
 	if(mode==0) {
 		/* load same transaction using Via branch */
@@ -1075,7 +1142,16 @@ int tps_db_load_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
 		db_ops[nr_keys]=OP_EQ;
 		db_vals[nr_keys].type = DB1_STR;
 		db_vals[nr_keys].nul = 0;
-		db_vals[nr_keys].val.str_val = sinv;
+		db_vals[nr_keys].val.str_val = bInviteDlg ? sinv : ssub;
+		nr_keys++;
+	}
+
+	if(md->x_context.len>0) {
+		db_keys[nr_keys]=&tt_col_x_context;
+		db_ops[nr_keys]=OP_EQ;
+		db_vals[nr_keys].type = DB1_STR;
+		db_vals[nr_keys].nul = 0;
+		db_vals[nr_keys].val.str_val = TPS_STRZ(md->x_context);
 		nr_keys++;
 	}
 
@@ -1099,6 +1175,9 @@ int tps_db_load_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
 	db_cols[nr_cols++] = &tt_col_bs_contact;
 	db_cols[nr_cols++] = &tt_col_a_tag;
 	db_cols[nr_cols++] = &tt_col_b_tag;
+	if(md->x_context.len>0) {
+		db_cols[nr_cols++] = &tt_col_x_context;
+	}
 
 	if (_tpsdbf.use_table(_tps_db_handle, &tt_table_name) < 0) {
 		LM_ERR("failed to perform use table\n");
@@ -1147,6 +1226,9 @@ int tps_db_load_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
 	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->bs_contact); n++;
 	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->a_tag); n++;
 	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->b_tag); n++;
+	if(md->x_context.len>0) {
+		TPS_DATA_APPEND_DB(sd, db_res, n, &sd->x_context); n++;
+	}
 
 done:
 	if ((db_res!=NULL) && _tpsdbf.free_result(_tps_db_handle, db_res)<0)
@@ -1175,9 +1257,9 @@ int tps_storage_load_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
  */
 int tps_db_load_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 {
-	db_key_t db_keys[4];
-	db_op_t  db_ops[4];
-	db_val_t db_vals[4];
+	db_key_t db_keys[5];
+	db_op_t  db_ops[5];
+	db_val_t db_vals[5];
 	db_key_t db_cols[TPS_NR_KEYS];
 	db1_res_t* db_res = NULL;
 	int nr_keys;
@@ -1223,6 +1305,15 @@ int tps_db_load_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 	}
 	nr_keys++;
 
+	if(md->x_context.len>0) {
+		db_keys[nr_keys]=&td_col_x_context;
+		db_ops[nr_keys]=OP_EQ;
+		db_vals[nr_keys].type = DB1_STR;
+		db_vals[nr_keys].nul = 0;
+		db_vals[nr_keys].val.str_val = TPS_STRZ(md->x_context);
+		nr_keys++;
+	}
+
 	db_cols[nr_cols++] = &td_col_rectime;
 	db_cols[nr_cols++] = &td_col_a_callid;
 	db_cols[nr_cols++] = &td_col_a_uuid;
@@ -1244,7 +1335,9 @@ int tps_db_load_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 	db_cols[nr_cols++] = &td_col_b_srcaddr;
 	db_cols[nr_cols++] = &td_col_s_method;
 	db_cols[nr_cols++] = &td_col_s_cseq;
-
+	if(md->x_context.len>0) {
+		db_cols[nr_cols++] = &td_col_x_context;
+	}
 
 	if (_tpsdbf.use_table(_tps_db_handle, &td_table_name) < 0) {
 		LM_ERR("failed to perform use table\n");
@@ -1288,6 +1381,9 @@ int tps_db_load_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->b_srcaddr); n++;
 	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->s_method); n++;
 	TPS_DATA_APPEND_DB(sd, db_res, n, &sd->s_cseq); n++;
+	if(md->x_context.len>0) {
+		TPS_DATA_APPEND_DB(sd, db_res, n, &sd->x_context); n++;
+	}
 
 done:
 	if ((db_res!=NULL) && _tpsdbf.free_result(_tps_db_handle, db_res)<0)
@@ -1358,6 +1454,15 @@ int tps_db_update_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
 	}
 	nr_keys++;
 
+	if(sd->x_context.len>0) {
+		db_keys[nr_keys]=&tt_col_x_context;
+		db_ops[nr_keys]=OP_EQ;
+		db_vals[nr_keys].type = DB1_STR;
+		db_vals[nr_keys].nul = 0;
+		db_vals[nr_keys].val.str_val = TPS_STRZ(sd->x_context);
+		nr_keys++;
+	}
+
 	if(mode & TPS_DBU_CONTACT) {
 		TPS_DB_ADD_STRV(db_ucols, db_uvals, nr_ucols,
 				tt_col_a_contact, md->a_contact);
@@ -1407,7 +1512,8 @@ int tps_storage_update_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
 	if(msg==NULL || md==NULL || sd==NULL)
 		return -1;
 
-	if(md->s_method_id != METHOD_INVITE) {
+	if((md->s_method_id != METHOD_INVITE)
+			&& (md->s_method_id != METHOD_SUBSCRIBE)) {
 		return 0;
 	}
 
@@ -1464,6 +1570,15 @@ int tps_db_update_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
 	}
 	nr_keys++;
 
+	if(sd->x_context.len>0) {
+		db_keys[nr_keys]=&td_col_x_context;
+		db_ops[nr_keys]=OP_EQ;
+		db_vals[nr_keys].type = DB1_STR;
+		db_vals[nr_keys].nul = 0;
+		db_vals[nr_keys].val.str_val = TPS_STRZ(sd->x_context);
+		nr_keys++;
+	}
+
 	if(mode & TPS_DBU_CONTACT) {
 		TPS_DB_ADD_STRV(db_ucols, db_uvals, nr_ucols,
 				td_col_a_contact, md->a_contact);
@@ -1493,8 +1608,10 @@ int tps_db_update_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
 		}
 	}
 	if(sd->b_tag.len>0 && ((mode & TPS_DBU_BRR) || (mode & TPS_DBU_ARR))) {
-		if(((md->direction == TPS_DIR_DOWNSTREAM) && (msg->first_line.type==SIP_REPLY)) ||
-					((md->direction == TPS_DIR_UPSTREAM) && (msg->first_line.type==SIP_REQUEST))) {
+		if(((md->direction == TPS_DIR_DOWNSTREAM)
+					&& (msg->first_line.type==SIP_REPLY))
+				|| ((md->direction == TPS_DIR_UPSTREAM)
+					 && (msg->first_line.type==SIP_REQUEST))) {
 			if(((sd->iflags&TPS_IFLAG_DLGON) == 0) && (mode & TPS_DBU_BRR)) {
 				db_ucols[nr_ucols] = &td_col_b_rr;
 				db_uvals[nr_ucols].type = DB1_STR;
@@ -1513,6 +1630,15 @@ int tps_db_update_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
 				nr_ucols++;
 			}
 		}
+	}
+	if ((mode & TPS_DBU_TIME) && ((sd->b_tag.len > 0)
+			&& ((md->direction == TPS_DIR_UPSTREAM)
+				&& (msg->first_line.type==SIP_REQUEST))
+			&& (msg->first_line.u.request.method_value == METHOD_SUBSCRIBE))) {
+		db_ucols[nr_ucols] = &td_col_rectime;
+		db_uvals[nr_ucols].type = DB1_DATETIME;
+		db_uvals[nr_ucols].val.time_val = time(NULL);
+		nr_ucols++;
 	}
 
 	if(nr_ucols==0) {
@@ -1543,7 +1669,7 @@ int tps_storage_update_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
 	if(msg==NULL || md==NULL || sd==NULL)
 		return -1;
 
-	if(md->s_method_id != METHOD_INVITE) {
+	if((md->s_method_id != METHOD_INVITE) && (md->s_method_id != METHOD_SUBSCRIBE)) {
 		return 0;
 	}
 	if(msg->first_line.type==SIP_REPLY) {
@@ -1575,7 +1701,8 @@ int tps_db_end_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 	if(msg==NULL || md==NULL || sd==NULL || _tps_db_handle==NULL)
 		return -1;
 
-	if(md->s_method_id != METHOD_BYE) {
+	if((md->s_method_id != METHOD_BYE) && !((md->s_method_id == METHOD_SUBSCRIBE)
+				&& (md->expires == 0))) {
 		return 0;
 	}
 
@@ -1599,6 +1726,15 @@ int tps_db_end_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 		db_vals[nr_keys].val.str_val = TPS_STRZ(sd->b_uuid);
 	}
 	nr_keys++;
+
+	if(sd->x_context.len>0) {
+		db_keys[nr_keys]=&td_col_x_context;
+		db_ops[nr_keys]=OP_EQ;
+		db_vals[nr_keys].type = DB1_STR;
+		db_vals[nr_keys].nul = 0;
+		db_vals[nr_keys].val.str_val = TPS_STRZ(sd->x_context);
+		nr_keys++;
+	}
 
 	db_ucols[nr_ucols] = &td_col_rectime;
 	db_uvals[nr_ucols].type = DB1_DATETIME;

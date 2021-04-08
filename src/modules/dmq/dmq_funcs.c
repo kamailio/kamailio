@@ -74,8 +74,9 @@ void dmq_tm_callback(struct cell *t, int type, struct tmcb_params *ps)
 
 int build_uri_str(str *username, struct sip_uri *uri, str *from)
 {
-	/* sip:user@host:port */
+	/* sip:user@host:port;transport=abcd */
 	int from_len;
+	str sproto = STR_NULL;
 
 	if(!uri->host.s || !uri->host.len) {
 		LM_ERR("no host in uri\n");
@@ -86,7 +87,8 @@ int build_uri_str(str *username, struct sip_uri *uri, str *from)
 		return -1;
 	}
 
-	from_len = username->len + uri->host.len + uri->port.len + 10;
+	from_len = username->len + uri->host.len + uri->port.len + 12
+				+ TRANSPORT_PARAM_LEN;
 	from->s = pkg_malloc(from_len);
 	if(from->s == NULL) {
 		LM_ERR("no more pkg\n");
@@ -112,6 +114,21 @@ int build_uri_str(str *username, struct sip_uri *uri, str *from)
 		memcpy(from->s + from->len, uri->port.s, uri->port.len);
 		from->len += uri->port.len;
 	}
+
+	if(uri->proto!=PROTO_NONE && uri->proto!=PROTO_UDP
+			&& uri->proto!=PROTO_OTHER) {
+		if(get_valid_proto_string(uri->proto, 1, 0, &sproto)<0) {
+			LM_WARN("unknown transport protocol - fall back to udp\n");
+			sproto.s = "udp";
+			sproto.len = 3;
+		}
+		memcpy(from->s + from->len, TRANSPORT_PARAM, TRANSPORT_PARAM_LEN);
+		from->len += TRANSPORT_PARAM_LEN;
+		memcpy(from->s + from->len, sproto.s, sproto.len);
+		from->len += sproto.len;
+	}
+	from->s[from->len] = '\0';
+
 	return 0;
 }
 
@@ -509,12 +526,12 @@ void ping_servers(unsigned int ticks, void *param)
 		LM_DBG("node list is empty - attempt to rebuild from notification "
 			   "address\n");
 		*dmq_init_callback_done = 0;
-		if(dmq_notification_address.s) {
+		if(dmq_notification_address_list) {
 			dmq_notification_node =
-					add_server_and_notify(&dmq_notification_address);
+					add_server_and_notify(dmq_notification_address_list);
 			if(!dmq_notification_node) {
-				LM_ERR("cannot retrieve initial nodelist from %.*s\n",
-						STR_FMT(&dmq_notification_address));
+				LM_ERR("cannot retrieve initial nodelist, first list entry%.*s\n",
+						STR_FMT(&dmq_notification_address_list->s));
 			}
 		} else {
 			LM_ERR("no notification address");

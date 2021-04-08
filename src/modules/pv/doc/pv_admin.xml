@@ -56,7 +56,7 @@
 	<section id="pv.p.shvset">
 		<title><varname>shvset</varname> (string)</title>
 		<para>
-		Set the value of a shared variable ($shv(name)). The parameter
+		Set the initial value of a shared variable ($shv(name)). The parameter
 		can be set many times.
 		</para>
 		<para>
@@ -75,6 +75,11 @@
 
 			<listitem><para>_value_: value to be set</para></listitem>
 		</itemizedlist>
+		<para>
+		Note: this is special useful for usage with KEMI scripts, the $shv(...)
+		variables must be defined during Kamailio initialization in order to
+		become available in all worker processes.
+		</para>
 		<para>
 		Default value is <quote>NULL</quote>.
 		</para>

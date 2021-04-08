@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -54,7 +54,7 @@ struct tcp_child{
 int init_tcp(void);
 void destroy_tcp(void);
 int tcp_init(struct socket_info* sock_info);
-int tcp_init_children(void);
+int tcp_init_children(int *woneinit);
 void tcp_main_loop(void);
 void tcp_receive_loop(int unix_sock);
 int tcp_fix_child_sockets(int* fd);

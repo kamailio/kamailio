@@ -467,6 +467,9 @@ VERBOSE_STARTUP		"verbose_startup"
 
 SERVER_ID     "server_id"
 ROUTE_LOCKS_SIZE     "route_locks_size"
+WAIT_WORKER1_MODE     "wait_worker1_mode"
+WAIT_WORKER1_TIME     "wait_worker1_time"
+WAIT_WORKER1_USLEEP   "wait_worker1_usleep"
 
 KEMI     "kemi"
 ONSEND_ROUTE_CALLBACK	"onsend_route_callback"
@@ -989,6 +992,9 @@ IMPORTFILE      "import_file"
 <INITIAL>{VERBOSE_STARTUP}		{	count(); yylval.strval=yytext;
 									return VERBOSE_STARTUP; }
 <INITIAL>{ROUTE_LOCKS_SIZE}  { count(); yylval.strval=yytext; return ROUTE_LOCKS_SIZE; }
+<INITIAL>{WAIT_WORKER1_MODE}  { count(); yylval.strval=yytext; return WAIT_WORKER1_MODE; }
+<INITIAL>{WAIT_WORKER1_TIME}  { count(); yylval.strval=yytext; return WAIT_WORKER1_TIME; }
+<INITIAL>{WAIT_WORKER1_USLEEP}  { count(); yylval.strval=yytext; return WAIT_WORKER1_USLEEP; }
 <INITIAL>{SERVER_ID}  { count(); yylval.strval=yytext; return SERVER_ID;}
 <INITIAL>{KEMI}  { count(); yylval.strval=yytext; return KEMI;}
 <INITIAL>{REPLY_ROUTE_CALLBACK}  { count(); yylval.strval=yytext; return REPLY_ROUTE_CALLBACK;}
@@ -1587,7 +1593,7 @@ static char* addchar(struct str_buf* dst, char c)
 
 static char* addstr(struct str_buf* dst_b, char* src, int len)
 {
-	char *tmp;
+	char *tmp = NULL;
 	unsigned size;
 	unsigned used;
 
@@ -1605,6 +1611,10 @@ static char* addstr(struct str_buf* dst_b, char* src, int len)
 		dst_b->s=tmp;
 		dst_b->crt=dst_b->s+used;
 		dst_b->left=size-used;
+	}
+	if(dst_b->crt==NULL) {
+		LM_CRIT("unexpected null dst buffer\n");
+		ksr_exit(-1);
 	}
 	memcpy(dst_b->crt, src, len);
 	dst_b->crt+=len;
@@ -1792,13 +1802,14 @@ static int sr_push_yy_state(char *fin, int mode)
 		fp = fopen(newf, "r" );
 		if ( fp==NULL )
 		{
-			pkg_free(newf);
 			if(mode==0)
 			{
 				LM_CRIT("cannot open included file: %s (%s)\n", fbuf, newf);
+				pkg_free(newf);
 				return -1;
 			} else {
 				LM_DBG("importing file ignored: %s (%s)\n", fbuf, newf);
+				pkg_free(newf);
 				return 0;
 			}
 		}
@@ -1917,10 +1928,15 @@ ksr_ppdefine_t* pp_get_define(int idx)
 	return &pp_defines[idx];
 }
 
-static int pp_lookup(int len, const char * text)
+static int pp_lookup(int len, const char *text)
 {
 	str var = {(char *)text, len};
 	int i;
+
+	if(len<=0 || text==NULL) {
+		LM_ERR("invalid parameters");
+		return -1;
+	}
 
 	for (i=0; i<pp_num_defines; i++)
 		if (STR_EQ(pp_defines[i].name, var))
@@ -1935,9 +1951,14 @@ int pp_define_set_type(int type)
 	return 0;
 }
 
-int pp_define(int len, const char * text)
+int pp_define(int len, const char *text)
 {
 	int ppos;
+
+	if(len<=0 || text==NULL) {
+		LM_ERR("invalid parameters");
+		return -1;
+	}
 
 	LM_DBG("defining id: %.*s\n", len, text);
 
@@ -2000,7 +2021,7 @@ int pp_define_set(int len, char *text)
 		LM_BUG("BUG: the index in define table not set yet\n");
 		return -1;
 	}
-	if(len<=0) {
+	if(len<=0 || text==NULL) {
 		LM_DBG("no define value - ignoring\n");
 		return 0;
 	}
@@ -2036,7 +2057,7 @@ int pp_define_set(int len, char *text)
 	return 0;
 }
 
-int pp_define_env(const char * text, int len)
+int pp_define_env(const char *text, int len)
 {
 	char *r;
 	str defname;
@@ -2077,7 +2098,7 @@ int pp_define_env(const char * text, int len)
 	return 0;
 }
 
-str *pp_define_get(int len, const char * text)
+str *pp_define_get(int len, const char *text)
 {
 	str var = {(char *)text, len};
 	int i;
@@ -2119,7 +2140,7 @@ static int pp_ifdef_type(int type)
  * ifndef defined   -> 0
  * ifndef undefined -> 1
  */
-static void pp_ifdef_var(int len, const char * text)
+static void pp_ifdef_var(int len, const char *text)
 {
 	pp_ifdef_stack[pp_sptr] ^= (pp_lookup(len, text) < 0);
 }

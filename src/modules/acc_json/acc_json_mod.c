@@ -64,6 +64,8 @@ int acc_output_syslog = -1;
 char *acc_output_mqueue_str = 0; /* see mqueue module queue name */
 str acc_q_name = {0, 0};
 static char *acc_log_facility_str = 0;
+static char *acc_json_pre_encoded_prefix_str = 0;
+str acc_json_pre_encoded_prefix = {0, 0};
 
 int cdr_enable  = 0;
 static char *cdr_extra_str = 0;
@@ -73,6 +75,8 @@ int cdr_output_syslog = -1;
 char *cdr_output_mqueue_str = 0; /* see mqueue module queue name */
 str cdr_q_name = {0, 0};
 static char *cdr_log_facility_str = 0;
+static char *cdr_json_pre_encoded_prefix_str = 0;
+str cdr_json_pre_encoded_prefix = {0, 0};
 
 static cmd_export_t cmds[] = {{0, 0, 0, 0, 0, 0}};
 
@@ -80,6 +84,7 @@ static cmd_export_t cmds[] = {{0, 0, 0, 0, 0, 0}};
 static param_export_t params[] = {{"acc_flag", INT_PARAM, &acc_flag},
 		{"acc_missed_flag", INT_PARAM, &acc_missed_flag},
 		{"acc_extra", PARAM_STRING, &acc_extra_str},
+		{"acc_pre_encoded_prefix", PARAM_STRING, &acc_json_pre_encoded_prefix_str},
 		{"acc_time_mode", INT_PARAM, &acc_time_mode},
 		{"acc_time_format", PARAM_STRING, &acc_time_format},
 		{"acc_log_level", INT_PARAM, &acc_log_level},
@@ -87,6 +92,7 @@ static param_export_t params[] = {{"acc_flag", INT_PARAM, &acc_flag},
 		{"acc_output_mqueue", PARAM_STRING, &acc_output_mqueue_str},
 		{"acc_output_syslog", INT_PARAM, &acc_output_syslog},
 		{"cdr_extra", PARAM_STRING, &cdr_extra_str},
+		{"cdr_pre_encoded_prefix", PARAM_STRING, &cdr_json_pre_encoded_prefix_str},
 		{"cdr_enable", INT_PARAM, &cdr_enable},
 		{"cdr_expired_dlg_enable", INT_PARAM, &cdr_expired_dlg_enable},
 		{"cdr_log_level", INT_PARAM, &cdr_log_level},
@@ -149,6 +155,15 @@ static int mod_init(void)
 			LM_ERR("invalid log facility configured");
 			return -1;
 		}
+	}
+	/* prefix to handle pre-encoded json fields */
+	if (acc_json_pre_encoded_prefix_str) {
+		acc_json_pre_encoded_prefix.s = acc_json_pre_encoded_prefix_str;
+		acc_json_pre_encoded_prefix.len = strlen(acc_json_pre_encoded_prefix_str);
+	}
+	if (cdr_json_pre_encoded_prefix_str) {
+		cdr_json_pre_encoded_prefix.s = cdr_json_pre_encoded_prefix_str;
+		cdr_json_pre_encoded_prefix.len = strlen(cdr_json_pre_encoded_prefix_str);
 	}
 
 	/* load the MQUEUE API */
@@ -315,9 +330,23 @@ int acc_json_send_request(struct sip_msg *req, acc_info_t *inf)
 		LM_DBG("[%d][%s][%.*s]\n", i, extra->name.s, inf->varr[i].len,
 				inf->varr[i].s);
 		char *tmp = strndup(inf->varr[i].s, inf->varr[i].len);
-		json_t *value = json_string(tmp);
-		if(!value)
-			value = json_string("NON-UTF8");
+		json_t *value;
+		if (acc_json_pre_encoded_prefix.len && inf->varr[i].len
+				&& extra->name.len>=acc_json_pre_encoded_prefix.len
+				&& strncmp(extra->name.s,acc_json_pre_encoded_prefix.s, sizeof(char)*acc_json_pre_encoded_prefix.len) == 0) {
+			LM_DBG("[%d][%s] json content \n", i, extra->name.s);
+			json_error_t jerr;
+			value = json_loads(tmp, 0, &jerr);
+			if (!value) {
+				LM_ERR("error loading json in[%s]: %s:%d:%d: %s\n", extra->name.s,
+				jerr.source, jerr.line, jerr.column, jerr.text);
+				value = json_string("INVALID_JSON");
+			}
+		} else {
+			value = json_string(tmp);
+			if(!value)
+				value = json_string("NON-UTF8");
+		}
 		json_object_set_new(object, extra->name.s, value);
 		free(tmp);
 		extra = extra->next;
@@ -439,9 +468,23 @@ int cdr_json_write(struct dlg_cell *dlg, struct sip_msg *req, cdr_info_t *inf)
 		LM_DBG("[%d][%s][%.*s]\n", i, extra->name.s, inf->varr[i].len,
 						inf->varr[i].s);
 		char *tmp = strndup(inf->varr[i].s, inf->varr[i].len);
-		json_t *value = json_string(tmp);
-		if(!value)
-			value = json_string("NON-UTF8");
+		json_t *value;
+		if (cdr_json_pre_encoded_prefix.len && inf->varr[i].len
+				&& extra->name.len>=cdr_json_pre_encoded_prefix.len
+				&& strncmp(extra->name.s,cdr_json_pre_encoded_prefix.s, sizeof(char)*cdr_json_pre_encoded_prefix.len) == 0) {
+			LM_DBG("[%d][%s] json content \n", i, extra->name.s);
+			json_error_t jerr;
+			value = json_loads(tmp, 0, &jerr);
+			if (!value) {
+				LM_ERR("error loading json in[%s]: %s:%d:%d: %s\n", extra->name.s,
+				jerr.source, jerr.line, jerr.column, jerr.text);
+				value = json_string("INVALID_JSON");
+			}
+		} else {
+			value = json_string(tmp);
+			if(!value)
+				value = json_string("NON-UTF8");
+		}
 		json_object_set_new(object, extra->name.s, value);
 		free(tmp);
 		extra = extra->next;

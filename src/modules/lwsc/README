@@ -1,0 +1,269 @@
+LWSC Module
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+Edited by
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+   Copyright © 2021 asipto.com
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. protocol (str)
+              3.2. timeout_init (int)
+              3.3. timeout_read (int)
+              3.4. verbosity (int)
+
+        4. Functions
+
+              4.1. lwsc_notify(wsurl, data)
+              4.2. lwsc_notify_proto(wsurl, wsproto, data)
+              4.3. lwsc_request(wsurl, data)
+              4.4. lwsc_request_proto(wsurl, wsproto, data)
+
+        5. Variables
+
+              5.1. $lwsc(key)
+
+   List of Examples
+
+   1.1. Set protocol parameter
+   1.2. Set timeout_init parameter
+   1.3. Set timeout_read parameter
+   1.4. Set verbosity parameter
+   1.5. lwsc_notify usage
+   1.6. lwsc_notify_proto usage
+   1.7. lwsc_request usage
+   1.8. lwsc_request_proto usage
+   1.9. $lwsc(name) usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. protocol (str)
+        3.2. timeout_init (int)
+        3.3. timeout_read (int)
+        3.4. verbosity (int)
+
+   4. Functions
+
+        4.1. lwsc_notify(wsurl, data)
+        4.2. lwsc_notify_proto(wsurl, wsproto, data)
+        4.3. lwsc_request(wsurl, data)
+        4.4. lwsc_request_proto(wsurl, wsproto, data)
+
+   5. Variables
+
+        5.1. $lwsc(key)
+
+1. Overview
+
+   This module provides a websocket client implementation to interact with
+   external systems, similar to http client. It is not for routing SIP
+   traffic.
+
+   It relies on libwebsockets (tested with v3.1.0) library
+   (https://libwebsockets.org/).
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * none.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * libwebsockets - probably v3.1.0 or newer.
+
+3. Parameters
+
+   3.1. protocol (str)
+   3.2. timeout_init (int)
+   3.3. timeout_read (int)
+   3.4. verbosity (int)
+
+3.1. protocol (str)
+
+   The websocket sub-protocol.
+
+   Default value is "kmsg".
+
+   Example 1.1. Set protocol parameter
+...
+modparam("lwsc", "protocol", "ksr")
+...
+
+3.2. timeout_init (int)
+
+   The interval in microseconds to wait for websocket connection to be
+   initialized.
+
+   Default value is 2000000 (2 seconds).
+
+   Example 1.2. Set timeout_init parameter
+...
+modparam("lwsc", "timeout_init", 4000000)
+...
+
+3.3. timeout_read (int)
+
+   The interval in microseconds to wait for the response of the
+   lwsc_request() group of functions.
+
+   Default value is 2000000 (2 seconds).
+
+   Example 1.3. Set timeout_read parameter
+...
+modparam("lwsc", "timeout_init", 1000000)
+...
+
+3.4. verbosity (int)
+
+   Control the verbosity of debug messages on libwebsockets events, higher
+   value means more debug messages. It has to be a positive number,
+   currently 2 or higher results in maximum verbosity.
+
+   Default value is 0.
+
+   Example 1.4. Set verbosity parameter
+...
+modparam("lwsc", "verbosity", 1)
+...
+
+4. Functions
+
+   4.1. lwsc_notify(wsurl, data)
+   4.2. lwsc_notify_proto(wsurl, wsproto, data)
+   4.3. lwsc_request(wsurl, data)
+   4.4. lwsc_request_proto(wsurl, wsproto, data)
+
+4.1.  lwsc_notify(wsurl, data)
+
+   Send data via websockets to the address specified by wsurl. No response
+   is expected. Transmission is not guaranteed (e.g., cannot connect to
+   target).
+
+   The parameters are:
+     * wsurl - websocket url
+     * data - what to send
+
+   The parameters can contain pseudo-variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.5. lwsc_notify usage
+...
+    jwt_notify("ws://10.1.1.10:8080/log",
+        "caller=$fU;callee=$tU;callid=$ci");
+...
+
+4.2.  lwsc_notify_proto(wsurl, wsproto, data)
+
+   Send data via websockets to the address specified by wsurl, providing
+   websocket protocol. No response is expected. Transmission is not
+   guaranteed (e.g., cannot connect to target).
+
+   The parameters are:
+     * wsurl - websocket url
+     * wsproto - websocket protocol
+     * data - what to send
+
+   The parameters can contain pseudo-variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.6. lwsc_notify_proto usage
+...
+    jwt_notify_proto("ws://10.1.1.10:8080/log", "kmsg"
+        "caller=$fU;callee=$tU;callid=$ci");
+...
+
+4.3.  lwsc_request(wsurl, data)
+
+   Send data via websockets to the address specified by wsurl, a response
+   is expected and made available in $lwsc(rdata).
+
+   The parameters are:
+     * wsurl - websocket url
+     * data - what to send
+
+   The parameters can contain pseudo-variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.7. lwsc_request usage
+...
+    jwt_request("ws://10.1.1.10:8080/log",
+        "caller=$fU;callee=$tU;srcip=$si");
+...
+
+4.4.  lwsc_request_proto(wsurl, wsproto, data)
+
+   Send data via websockets to the address specified by wsurl, providing
+   websocket protocol. A response is expected and made available in
+   $lwsc(rdata).
+
+   The parameters are:
+     * wsurl - websocket url
+     * wsproto - websocket protocol
+     * data - what to send
+
+   The parameters can contain pseudo-variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.8. lwsc_request_proto usage
+...
+    jwt_request_proto("ws://10.1.1.10:8080/log", "kmsg",
+        "caller=$fU;callee=$tU;srcip=$si");
+...
+
+5. Variables
+
+   5.1. $lwsc(key)
+
+5.1.  $lwsc(key)
+
+   Get the values and attributes after using LWSC functions.
+
+   The key can be:
+     * rdata - the response retrieved after lwsc_request().
+     * status - the status of verification after a failed jwt_verify().
+
+   Example 1.9. $lwsc(name) usage
+...
+  jwt_request("ws://10.1.1.10:8080/log",
+        "caller=$fU;callee=$tU;srcip=$si");
+  xinfo("jwt is: $lwsc(rdata)");
+...

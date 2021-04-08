@@ -152,7 +152,7 @@
     <title><varname>disable</varname> (int)</title>
       <para>
         Boolean flag that specifies if mediaproxy should be disabled. This
-        is useful when you want to use the same openser configuration in
+        is useful when you want to use the same kamailio configuration in
         two different context, one using mediaproxy, the other not. In the
         case mediaproxy is disabled, calls to its functions will have no
         effect, allowing you to use the same configuration without changes.

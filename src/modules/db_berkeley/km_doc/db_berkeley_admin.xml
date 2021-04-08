@@ -9,9 +9,9 @@
 ]>
 
 <chapter>
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
@@ -35,7 +35,7 @@
 			</itemizedlist>
 		</para>
 	</section>
-	
+
 	<section>
 		<title>External Libraries or Applications</title>
 		<para>
@@ -199,7 +199,7 @@ modparam("db_berkeley", "journal_roll_interval", 3600)
 		Installation of Kamailio is performed by simply running make install
 		as root user of the main directory. This will install the binaries 
 		in /usr/local/sbin/.
-		If this was successful, openser control engine files should now 
+		If this was successful, kamailio control engine files should now 
 		be installed as /usr/local/sbin/kamdbctl.
 		</para>
 		
@@ -212,7 +212,7 @@ modparam("db_berkeley", "journal_roll_interval", 3600)
 		
 		<para>
 		Edit &ctltool;rc - There are two parameters in this file that should be 
-		configured before openserctrdb script can work properly: DBENGINE and DB_PATH.
+		configured before kamdbctl script can work properly: DBENGINE and DB_PATH.
 		Edit file: '/usr/local/etc/kamailio/&ctltool;rc'
 		</para>
 	        <programlisting  format="linespecific">
@@ -228,7 +228,7 @@ modparam("db_berkeley", "journal_roll_interval", 3600)
 		The DB files are initially seeded with necessary meta-data. 
 		This is a good time to review the meta-data section details,
 		before making modifications to your tables dbschema.
-		By default, the files are installed in '/usr/local/share/kamailio/db_berkeley/openser'
+		By default, the files are installed in '/usr/local/share/kamailio/db_berkeley/kamailio'
 		By default these tables are created Read/Write and without any journalling as 
 		shown. These settings can be modified on a per table basis.
 		Note: If you plan to use kambdb_recover, you must change the LOGFLAGS.

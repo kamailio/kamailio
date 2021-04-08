@@ -74,6 +74,7 @@ int tls_version = 0; // Use default SSL version in HTTPS requests (see curl/curl
 int tls_verify_host = 1; // By default verify host in HTTPS requests
 int tls_verify_peer = 1; // By default verify peer in HTTPS requests
 int curl_verbose = 0;
+int curl_follow_redirect = 0;
 char* tls_client_cert = NULL; // client SSL certificate path, defaults to NULL
 char* tls_client_key = NULL; // client SSL certificate key path, defaults to NULL
 char* tls_ca_path = NULL; // certificate authority dir path, defaults to NULL
@@ -127,7 +128,7 @@ enum http_req_name_t {
 	E_HRN_TLS_CLIENT_CERT, E_HRN_SUSPEND,
 	E_HRN_BODY, E_HRN_AUTHMETHOD, E_HRN_USERNAME,
 	E_HRN_PASSWORD, E_HRN_TCP_KA, E_HRN_TCP_KA_IDLE,
-	E_HRN_TCP_KA_INTERVAL
+	E_HRN_TCP_KA_INTERVAL, E_HRN_FOLLOW_REDIRECT
 };
 
 enum http_time_name_t {
@@ -150,6 +151,7 @@ static param_export_t params[]={
 	{"tls_verify_host",		INT_PARAM,		&tls_verify_host},
 	{"tls_verify_peer",		INT_PARAM,		&tls_verify_peer},
 	{"curl_verbose",		INT_PARAM,		&curl_verbose},
+	{"curl_follow_redirect",	INT_PARAM,		&curl_follow_redirect},
 	{"tls_client_cert",		PARAM_STRING,	&tls_client_cert},
 	{"tls_client_key",		PARAM_STRING,	&tls_client_key},
 	{"tls_ca_path",			PARAM_STRING,	&tls_ca_path},
@@ -644,6 +646,8 @@ static int ah_parse_req_name(pv_spec_p sp, str *in) {
 		case 15:
 			if(strncmp(in->s, "tls_client_cert", 15)==0)
 				sp->pvp.pvn.u.isname.name.n = E_HRN_TLS_CLIENT_CERT;
+			else if(strncmp(in->s, "follow_redirect", 15)==0)
+				sp->pvp.pvn.u.isname.name.n = E_HRN_FOLLOW_REDIRECT;
 			else goto error;
 			break;
 		default:
@@ -871,6 +875,17 @@ static int ah_set_req(struct sip_msg* msg, pv_param_t *param,
 			ah_params.tcp_ka_interval = tval->ri;
 		} else {
 			ah_params.tcp_ka_interval = tcp_ka_interval;
+		}
+		break;
+  case E_HRN_FOLLOW_REDIRECT:
+		if (tval) {
+			if (!(tval->flags & PV_VAL_INT)) {
+				LM_ERR("invalid value type for $http_req(follow_redirect)\n");
+				return -1;
+			}
+			ah_params.follow_redirect = tval->ri?1:0;
+		} else {
+			ah_params.follow_redirect = curl_follow_redirect;
 		}
 		break;
 	}

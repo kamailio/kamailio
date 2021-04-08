@@ -44,6 +44,7 @@ struct cfg_group_tls default_tls_cfg = {
 	STR_STATIC_INIT("off"), /* verify_client */
 	STR_NULL, /* private_key (default value set in fix_tls_cfg) */
 	STR_NULL, /* ca_list (default value set in fix_tls_cfg) */
+	STR_NULL, /* ca_path (default value set in fix_tls_cfg) */
 	STR_NULL, /* crl (default value set in fix_tls_cfg) */
 	STR_NULL, /* certificate (default value set in fix_tls_cfg) */
 	STR_NULL, /* cipher_list (default value set in fix_tls_cfg) */
@@ -163,6 +164,8 @@ cfg_def_t	tls_cfg_def[] = {
 		" contained in the certificate file" },
 	{"ca_list", CFG_VAR_STR | CFG_READONLY, 0, 0, 0, 0,
 		"name of the file containing the trusted CA list (pem format)" },
+	{"ca_path", CFG_VAR_STR | CFG_READONLY, 0, 0, 0, 0,
+		"name of the directory containing the trusted CA files (pem format)" },
 	{"crl", CFG_VAR_STR | CFG_READONLY, 0, 0, 0, 0,
 		"name of the file containing the CRL  (certificare revocation list"
 			" in pem format)" },
@@ -266,7 +269,7 @@ static int fix_initial_pathname(str* path, char* def)
 int fix_tls_cfg(struct cfg_group_tls* cfg)
 {
 	cfg->con_lifetime = S_TO_TICKS(cfg->con_lifetime);
-	fix_timeout("tls_connection_timeout", &cfg->con_lifetime, 
+	fix_timeout("tls_connection_timeout", &cfg->con_lifetime,
 						MAX_TLS_CON_LIFETIME, MAX_TLS_CON_LIFETIME);
 	/* Update relative paths of files configured through modparams, relative
 	 * pathnames will be converted to absolute and the directory of the main
@@ -278,11 +281,13 @@ int fix_tls_cfg(struct cfg_group_tls* cfg)
 		return -1;
 	if (fix_initial_pathname(&cfg->ca_list, TLS_CA_FILE) < 0 )
 		return -1;
+	if (fix_initial_pathname(&cfg->ca_path, TLS_CA_PATH) < 0 )
+		return -1;
 	if (fix_initial_pathname(&cfg->crl, TLS_CRL_FILE) < 0 )
 		return -1;
 	if (fix_initial_pathname(&cfg->certificate, TLS_CERT_FILE) < 0)
 		return -1;
-	
+
 	return 0;
 }
 

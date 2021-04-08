@@ -156,7 +156,6 @@
 #endif
 
 
-
 static char help_msg[]= "\
 Usage: " NAME " [options]\n\
 Options:\n\
@@ -540,6 +539,11 @@ static int *_sr_instance_started = NULL;
 
 int ksr_cfg_print_mode = 0;
 int ksr_atexit_mode = 1;
+
+int ksr_wait_worker1_mode = 0;
+int ksr_wait_worker1_time = 4000000;
+int ksr_wait_worker1_usleep = 100000;
+int *ksr_wait_worker1_done = NULL;
 
 /**
  * return 1 if all child processes were forked
@@ -1256,14 +1260,15 @@ static struct name_lst* parse_phostport_mh(char* s, char** host, int* hlen,
 
 
 
-/** Update \c cfg_file variable to contain full pathname. The function updates
+/** Update \c cfg_file variable to contain full pathname or '-' (for stdin)
+ * allocated in system memory. The function updates
  * the value of \c cfg_file global variable to contain full absolute pathname
- * to the main configuration file of SER. The function uses CFG_FILE macro to
+ * to the main configuration file. The function uses CFG_FILE macro to
  * determine the default path to the configuration file if the user did not
  * specify one using the command line option. If \c cfg_file contains an
- * absolute pathname then it is used unmodified, if it contains a relative
+ * absolute pathname then it is cloned unmodified, if it contains a relative
  * pathanme than the value returned by \c getcwd function will be added at the
- * beginning. This function must be run before SER changes its current working
+ * beginning. This function must be run before changing its current working
  * directory to / (in daemon mode).
  * @return Zero on success, negative number
  * on error.
@@ -1272,34 +1277,55 @@ int fix_cfg_file(void)
 {
 	char* res = NULL;
 	size_t max_len, cwd_len, cfg_len;
-	
+
 	if (cfg_file == NULL) cfg_file = CFG_FILE;
-	if (cfg_file[0] == '/') return 0;
-	if (cfg_file[0] == '-' && strlen(cfg_file)==1) return 0;
-	
+	if (cfg_file[0] == '/') {
+		cfg_len = strlen(cfg_file);
+		if(cfg_len < 2) {
+			/* do not accept only '/' */
+			fprintf(stderr, "ERROR: invalid cfg file value\n");
+			return -1;
+		}
+		if ((res = malloc(cfg_len + 1)) == NULL) goto error;
+		memcpy(res, cfg_file, cfg_len);
+		cfg_file[cfg_len] = 0;
+		cfg_file = res;
+		return 0;
+	}
+	if (cfg_file[0] == '-') {
+		cfg_len = strlen(cfg_file);
+		if(cfg_len == 1) {
+			if ((res = malloc(2)) == NULL) goto error;
+			res[0] = '-';
+			res[1] = '\0';
+			cfg_file = res;
+			return 0;
+		}
+	}
+
 	/* cfg_file contains a relative pathname, get the current
 	 * working directory and add it at the beginning
 	 */
 	cfg_len = strlen(cfg_file);
-	
+
 	max_len = pathmax();
 	if ((res = malloc(max_len)) == NULL) goto error;
-	
+
 	if (getcwd(res, max_len) == NULL) goto error;
 	cwd_len = strlen(res);
-	
+
 	/* Make sure that the buffer is big enough */
 	if (cwd_len + 1 + cfg_len >= max_len) goto error;
-	
+
 	res[cwd_len] = '/';
 	memcpy(res + cwd_len + 1, cfg_file, cfg_len);
-	
+
 	res[cwd_len + 1 + cfg_len] = '\0'; /* Add terminating zero */
 	cfg_file = res;
 	return 0;
-	
+
  error:
-	fprintf(stderr, "ERROR: Unable to fix cfg_file to contain full pathname\n");
+	fprintf(stderr, "ERROR: Unable to fix cfg file to contain full pathname\n");
 	if (res) free(res);
 	return -1;
 }
@@ -1651,6 +1677,14 @@ int main_loop(void)
 
 
 		woneinit = 0;
+		if(ksr_wait_worker1_mode!=0) {
+			ksr_wait_worker1_done=(int*)shm_malloc(sizeof(int));
+			if(ksr_wait_worker1_done==0) {
+				SHM_MEM_ERROR;
+				goto error;
+			}
+			*ksr_wait_worker1_done = 0;
+		}
 		/* udp processes */
 		for(si=udp_listen; si; si=si->next){
 			nrprocs = (si->workers>0)?si->workers:children_no;
@@ -1689,7 +1723,26 @@ int main_loop(void)
 						if(run_child_one_init_route()<0)
 							goto error;
 					}
+					if(ksr_wait_worker1_mode!=0) {
+						*ksr_wait_worker1_done = 1;
+						LM_DBG("child one finished initialization\n");
+					}
 					return udp_rcv_loop();
+				}
+				/* main process */
+				if(woneinit==0 && ksr_wait_worker1_mode!=0) {
+					int wcount=0;
+					while(*ksr_wait_worker1_done==0) {
+						sleep_us(ksr_wait_worker1_usleep);
+						wcount++;
+						if(ksr_wait_worker1_time<=wcount*ksr_wait_worker1_usleep) {
+							LM_ERR("waiting for child one too long - wait time: %d\n",
+									ksr_wait_worker1_time);
+							goto error;
+						}
+					}
+					LM_DBG("child one initialized after %d wait steps\n",
+							wcount);
 				}
 				woneinit = 1;
 			}
@@ -1720,8 +1773,32 @@ int main_loop(void)
 						/* child */
 						bind_address=si; /* shortcut */
 
+						if(woneinit==0) {
+							if(run_child_one_init_route()<0)
+								goto error;
+						}
+						if(ksr_wait_worker1_mode!=0) {
+							*ksr_wait_worker1_done = 1;
+							LM_DBG("child one finished initialization\n");
+						}
 						return sctp_core_rcv_loop();
 					}
+					/* main process */
+					if(woneinit==0 && ksr_wait_worker1_mode!=0) {
+						int wcount=0;
+						while(*ksr_wait_worker1_done==0) {
+							sleep_us(ksr_wait_worker1_usleep);
+							wcount++;
+							if(ksr_wait_worker1_time<=wcount*ksr_wait_worker1_usleep) {
+								LM_ERR("waiting for child one too long - wait time: %d\n",
+										ksr_wait_worker1_time);
+								goto error;
+							}
+						}
+						LM_DBG("child one initialized after %d wait steps\n",
+								wcount);
+					}
+					woneinit = 1;
 				}
 			/*parent*/
 			/*close(sctp_sock)*/; /*if closed=>sendto invalid fd errors?*/
@@ -1777,7 +1854,7 @@ int main_loop(void)
 #ifdef USE_TCP
 		if (!tcp_disable){
 				/* start tcp  & tls receivers */
-			if (tcp_init_children()<0) goto error;
+			if (tcp_init_children(&woneinit)<0) goto error;
 				/* start tcp+tls main attendant proc */
 			pid = fork_process(PROC_TCP_MAIN, "tcp main process", 0);
 			if (pid<0){
@@ -2085,6 +2162,10 @@ int main(int argc, char** argv)
 					/* ignore, they were parsed immediately after startup */
 					break;
 			case 'f':
+					if (optarg == NULL) {
+						fprintf(stderr, "bad -f parameter\n");
+						goto error;
+					}
 					cfg_file=optarg;
 					break;
 			case 'c':
@@ -2092,10 +2173,18 @@ int main(int argc, char** argv)
 					log_stderr=1; /* force stderr logging */
 					break;
 			case 'L':
+					if (optarg == NULL) {
+						fprintf(stderr, "bad -L parameter\n");
+						goto error;
+					}
 					mods_dir = optarg;
 					mods_dir_cmd = 1;
 					break;
 			case 'm':
+					if (optarg == NULL) {
+						fprintf(stderr, "bad shared mem size\n");
+						goto error;
+					}
 					shm_mem_size=strtol(optarg, &tmp, 10) * 1024 * 1024;
 					if (tmp &&(*tmp)){
 						fprintf(stderr, "bad shmem size number: -m %s\n",
@@ -2133,6 +2222,10 @@ int main(int argc, char** argv)
 					/* ignore it, was parsed immediately after startup */
 					break;
 			case 'O':
+					if (optarg == NULL) {
+						fprintf(stderr, "bad -O parameter\n");
+						goto error;
+					}
 					scr_opt_lev=strtol(optarg, &tmp, 10);
 					if (tmp &&(*tmp)){
 						fprintf(stderr, "bad optimization level: -O %s\n",
@@ -2145,18 +2238,23 @@ int main(int argc, char** argv)
 					user=optarg;
 					break;
 			case 'A':
+					if (optarg == NULL) {
+						fprintf(stderr, "bad -A parameter\n");
+						goto error;
+					}
 					p = strchr(optarg, '=');
 					if(p) {
-						*p = '\0';
+						tmp_len = p - optarg;
+					} else {
+						tmp_len = strlen(optarg);
 					}
 					pp_define_set_type(0);
-					if(pp_define(strlen(optarg), optarg)<0) {
+					if(pp_define(tmp_len, optarg)<0) {
 						fprintf(stderr, "error at define param: -A %s\n",
 								optarg);
 						goto error;
 					}
 					if(p) {
-						*p = '=';
 						p++;
 						if(pp_define_set(strlen(p), p)<0) {
 							fprintf(stderr, "error at define value: -A %s\n",
@@ -2395,6 +2493,10 @@ try_again:
 									   takes priority over config */
 					break;
 			case 'b':
+					if (optarg == NULL) {
+						fprintf(stderr, "bad -b parameter\n");
+						goto error;
+					}
 					maxbuffer=strtol(optarg, &tmp, 10);
 					if (tmp &&(*tmp)){
 						fprintf(stderr, "bad max buffer size number: -b %s\n",
@@ -2417,6 +2519,10 @@ try_again:
 				#endif
 					break;
 			case 'l':
+					if (optarg == NULL) {
+						fprintf(stderr, "bad -l parameter\n");
+						goto error;
+					}
 					p = strrchr(optarg, '/');
 					if(p==NULL) {
 						p = optarg;
@@ -2466,6 +2572,10 @@ try_again:
 					free_name_lst(n_lst);
 					break;
 			case 'n':
+					if (optarg == NULL) {
+						fprintf(stderr, "bad -n parameter\n");
+						goto error;
+					}
 					children_no=strtol(optarg, &tmp, 10);
 					if ((tmp==0) ||(*tmp)){
 						fprintf(stderr, "bad process number: -n %s\n",
@@ -2492,6 +2602,10 @@ try_again:
  									"TCP support disabled\n", optarg);
 						goto error;
 					}
+					if (optarg == NULL) {
+						fprintf(stderr, "bad -N parameter\n");
+						goto error;
+					}
 					tcp_cfg_children_no=strtol(optarg, &tmp, 10);
 					if ((tmp==0) ||(*tmp)){
 						fprintf(stderr, "bad process number: -N %s\n",
@@ -2504,6 +2618,10 @@ try_again:
 					break;
 			case 'W':
 				#ifdef USE_TCP
+					if (optarg == NULL) {
+						fprintf(stderr, "bad -W parameter\n");
+						goto error;
+					}
 					tcp_poll_method=get_poll_type(optarg);
 					if (tcp_poll_method==POLL_NONE){
 						fprintf(stderr, "bad poll method name: -W %s\ntry "
@@ -2519,6 +2637,10 @@ try_again:
 					if (sctp_disable) {
 						fprintf(stderr, "could not configure SCTP children: -Q %s\n"
 									"SCTP support disabled\n", optarg);
+						goto error;
+					}
+					if (optarg == NULL) {
+						fprintf(stderr, "bad -Q parameter\n");
 						goto error;
 					}
 					sctp_children_no=strtol(optarg, &tmp, 10);

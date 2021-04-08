@@ -31,7 +31,8 @@ int crypto_set_salt(char *psalt);
 char *crypto_get_salt(void);
 
 int crypto_aes_init(unsigned char *key_data, int key_data_len,
-		unsigned char *salt, EVP_CIPHER_CTX *e_ctx, EVP_CIPHER_CTX *d_ctx);
+		unsigned char *salt, unsigned char *custom_iv, EVP_CIPHER_CTX *e_ctx,
+		EVP_CIPHER_CTX *d_ctx);
 
 unsigned char *crypto_aes_encrypt(EVP_CIPHER_CTX *e, unsigned char *plaintext,
 		int *len);

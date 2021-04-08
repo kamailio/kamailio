@@ -10,7 +10,13 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
+Frederic Gaisnon
+
+   <frederic.gaisnon@gmail.com>
+
    Copyright © 2016 FhG FOKUS
+
+   Copyright © 2021 MomentTech
      __________________________________________________________________
 
    Table of Contents
@@ -37,14 +43,23 @@ Daniel-Constantin Mierla
               3.10. contact_host (str)
               3.11. contact_mode (int)
               3.12. cparam_name (int)
-              3.13. a_contact_avp (str)
-              3.14. b_contact_avp (str)
-              3.15. rr_update (int)
+              3.13. xavu_cfg (str)
+              3.14. xavu_filed_a_contact (str)
+              3.15. xavu_filed_b_contact (str)
+              3.16. xavu_field_contact_host (str)
+              3.17. rr_update (int)
+              3.18. context (str)
 
-        4. Event Routes
+        4. Functions
 
-              4.1. event_route[topos:msg-outgoing]
-              4.2. event_route[topos:msg-sending]
+              4.1. tps_set_context(ctx)
+
+        5. Event Routes
+
+              5.1. event_route[topos:msg-outgoing]
+              5.2. event_route[topos:msg-sending]
+              5.3. event_route[topos:msg-incoming]
+              5.4. event_route[topos:msg-receiving]
 
    List of Examples
 
@@ -60,11 +75,17 @@ Daniel-Constantin Mierla
    1.10. Set contact_host parameter
    1.11. Set contact_mode parameter
    1.12. Set cparam_name parameter
-   1.13. Set a_contact_avp parameter
-   1.14. Set b_contact_avp parameter
-   1.15. Set rr_update parameter
-   1.16. Usage of event_route[topos:msg-outgoing]
-   1.17. Usage of event_route[topos:msg-sending]
+   1.13. Set xavu_cfg parameter
+   1.14. Set xavu_filed_a_contact parameter
+   1.15. Set xavu_filed_b_contact parameter
+   1.16. Set xavu_field_contact_host parameter
+   1.17. Set rr_update parameter
+   1.18. Set context parameter
+   1.19. tps_set_context usage
+   1.20. Usage of event_route[topos:msg-outgoing]
+   1.21. Usage of event_route[topos:msg-sending]
+   1.22. Usage of event_route[topos:msg-incoming]
+   1.23. Usage of event_route[topos:msg-receoving]
 
 Chapter 1. Admin Guide
 
@@ -90,14 +111,23 @@ Chapter 1. Admin Guide
         3.10. contact_host (str)
         3.11. contact_mode (int)
         3.12. cparam_name (int)
-        3.13. a_contact_avp (str)
-        3.14. b_contact_avp (str)
-        3.15. rr_update (int)
+        3.13. xavu_cfg (str)
+        3.14. xavu_filed_a_contact (str)
+        3.15. xavu_filed_b_contact (str)
+        3.16. xavu_field_contact_host (str)
+        3.17. rr_update (int)
+        3.18. context (str)
 
-   4. Event Routes
+   4. Functions
 
-        4.1. event_route[topos:msg-outgoing]
-        4.2. event_route[topos:msg-sending]
+        4.1. tps_set_context(ctx)
+
+   5. Event Routes
+
+        5.1. event_route[topos:msg-outgoing]
+        5.2. event_route[topos:msg-sending]
+        5.3. event_route[topos:msg-incoming]
+        5.4. event_route[topos:msg-receiving]
 
 1. Overview
 
@@ -112,8 +142,8 @@ Chapter 1. Admin Guide
    It also works for SIP MESSAGE or other requests that do not create a
    dialog -- record_route() must be used for them as well, the headers are
    not going to be in the messages sent to the network, they are needed to
-   know local addresses used to communicate with each side. At this moment
-   it is not designed to work for presence (SUBSCRIBE-based) dialogs. The
+   know local addresses used to communicate with each side. This module is
+   designed to work for presence (SUBSCRIBE-based) dialogs too. The
    REGISTER and PUBLISH requests are skipped from processing by this
    module, expected to be terminated on a local SIP server.
 
@@ -151,9 +181,12 @@ Chapter 1. Admin Guide
    3.10. contact_host (str)
    3.11. contact_mode (int)
    3.12. cparam_name (int)
-   3.13. a_contact_avp (str)
-   3.14. b_contact_avp (str)
-   3.15. rr_update (int)
+   3.13. xavu_cfg (str)
+   3.14. xavu_filed_a_contact (str)
+   3.15. xavu_filed_b_contact (str)
+   3.16. xavu_field_contact_host (str)
+   3.17. rr_update (int)
+   3.18. context (str)
 
 3.1. storage (str)
 
@@ -225,7 +258,10 @@ modparam("topos", "branch_expire", 300)
    mind that the module does not update the dialog timestamp after the
    initial call setup on re-INVITEs or other in-dialog messages. So set a
    large enough value (according your longest call duration) to prevent
-   problems in re-writing messages.
+   problems in re-writing messages. This key is only relevant for INVITE
+   dialog. SUBSCRIBE dialog records lifetime are based on value set in
+   expires header. Moreover each re-SUBSCRIBEs update the dialog
+   timestamp.
 
    Default value is 10800 (3 hours).
 
@@ -270,7 +306,9 @@ end
 
    Control what event_route blocks to be executed. It is a bitmask of: 1 -
    execute event_route[topos:msg-outgoing]; 2 - execute
-   event_route[topos:msg-sending].
+   event_route[topos:msg-sending]; 4 execute
+   event_route[topos:msg-incoming]; 8 execute
+   event_route[topos:msg-receiving];.
 
    Default value is 3 (execute both event_route blocks).
 
@@ -282,7 +320,8 @@ modparam("topos", "event_mode", 2)
 3.10. contact_host (str)
 
    You may need to control the host part of the Contact header added by
-   topos. For example when using TLS with TOPOS the remote UAS must be
+   topos. If the xavu_filed_contact_host parameter is set, this value is
+   ignored. For example when using TLS with TOPOS the remote UAS must be
    able to open a new TLS socket to the contact header. In this case, the
    contact header must contain a domain name with a trusted CA signed
    certitificate.
@@ -307,9 +346,9 @@ modparam("topos", "contact_host", "proxy.domain.com")
    the b-side contact user from the Contact header of the processed
    initial SIP request.
 
-   If you use the mode (2), you need to configure the a_contact_avp and
-   b_contact_avp parameter. Furthermore you need to assign values to them
-   during the processing of the initial SIP request.
+   If you use the mode (2), you need to configure the xavu_field_a_contact
+   and xavu_field_b_contact parameter. Furthermore you need to assign
+   values to them during the processing of the initial SIP request.
 
    The name of the Contact URI parameter can be customized with the
    cparam_name parameter.
@@ -336,48 +375,130 @@ modparam("topos", "contact_mode", 1)
 modparam("topos", "cparam_name", "xyz")
 ...
 
-3.13. a_contact_avp (str)
+3.13. xavu_cfg (str)
 
-   Name of the AVP parameter to evaluate for the A-side Contact Header
-   user part. This parameter is only necessary in contact_mode (2).
+   Name of root XAVU to hold config-specific values to be used by module
+   at runtime.
 
-   Default value is “NULL” (disabled).
-
-   Example 1.13. Set a_contact_avp parameter
-...
-modparam("topos", "a_contact_avp", "$avp(tps-act)")
-...
-
-3.14. b_contact_avp (str)
-
-   Name of the AVP parameter to evaluate for the B-side Contact Header
-   user part. This parameter is only necessary in contact_mode (2).
+   Note: this parameter must be set if any other parameter prefixed with
+   `xavu_field_` is used.
 
    Default value is “NULL” (disabled).
 
-   Example 1.14. Set b_contact_avp parameter
+   Example 1.13. Set xavu_cfg parameter
 ...
-modparam("topos", "b_contact_avp", "$avp(tps-bct)")
+modparam("topos", "xavu_cfg", "_tps_")
+modparam("topos", "xavu_filed_a_contact", "a_contact")
+...
+    $xavu(_tps_=>a_contact) = "...";
 ...
 
-3.15. rr_update (int)
+3.14. xavu_filed_a_contact (str)
+
+   Name of the field inside root XAVU specifed by `xavu_cfg` to evaluate
+   for the A-side Contact Header user part. This parameter is only
+   necessary in contact_mode (2).
+
+   Default value is “NULL” (disabled).
+
+   Example 1.14. Set xavu_filed_a_contact parameter
+...
+modparam("topos", "xavu_cfg", "_tps_")
+modparam("topos", "xavu_filed_a_contact", "a_contact")
+...
+    $xavu(_tps_=>a_contact) = "...";
+...
+
+3.15. xavu_filed_b_contact (str)
+
+   Name of the field inside root XAVU specifed by `xavu_cfg` to evaluate
+   for the B-side Contact Header user part. This parameter is only
+   necessary in contact_mode (2).
+
+   Default value is “NULL” (disabled).
+
+   Example 1.15. Set xavu_filed_b_contact parameter
+...
+modparam("topos", "xavu_cfg", "_tps_")
+modparam("topos", "xavu_filed_b_contact", "b_contact")
+...
+    $xavu(_tps_=>b_contact) = "...";
+
+...
+
+3.16. xavu_field_contact_host (str)
+
+   Control from where to take the host part of the Contact header added by
+   topos. This parameter allows to take the value from an XAVU during
+   run-time, it specifies the field inside XAVU "xavu_cfg". If this
+   parameter is set, the contact_host parameter is ignored. For example
+   when using TLS with TOPOS the remote UAS must be able to open a new TLS
+   socket to the contact header. In this case, the contact header must
+   contain a domain name with a trusted CA signed certitificate.
+
+   Default value is empty, not set.
+
+   Example 1.16. Set xavu_field_contact_host parameter
+...
+modparam("topos", "xavu_cfg", "_tps_")
+modparam("topos", "xavu_contact_host", "contact_host")
+...
+    $xavu(_tps_=>contact_host) = "kamailio.org";
+...
+
+3.17. rr_update (int)
 
    If set to 1, topos module will track and update record route changes on
    re-invite.
 
    Default value is 0 (do not update record route changes within dialog).
 
-   Example 1.15. Set rr_update parameter
+   Example 1.17. Set rr_update parameter
 ...
 modparam("topos", "rr_update", 1)
 ...
 
-4. Event Routes
+3.18. context (str)
 
-   4.1. event_route[topos:msg-outgoing]
-   4.2. event_route[topos:msg-sending]
+   Set the global context for topos instance.
 
-4.1. event_route[topos:msg-outgoing]
+   The value has to be maximum 12 characters.
+
+   Default value is “NULL” (disabled).
+
+   Example 1.18. Set context parameter
+...
+modparam("topos", "context", "srvone")
+...
+
+4. Functions
+
+   4.1. tps_set_context(ctx)
+
+4.1.  tps_set_context(ctx)
+
+   Update the context at runtime. If the value is emtpy string, then the
+   runtime context is reset.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.19. tps_set_context usage
+...
+request_route {
+    ...
+    tps_set_context("srvone");
+    ...
+}
+...
+
+5. Event Routes
+
+   5.1. event_route[topos:msg-outgoing]
+   5.2. event_route[topos:msg-sending]
+   5.3. event_route[topos:msg-incoming]
+   5.4. event_route[topos:msg-receiving]
+
+5.1. event_route[topos:msg-outgoing]
 
    It is executed before doing topology stripping processing for an
    outgoing SIP message. If 'drop' is executed inside the event route,
@@ -389,7 +510,7 @@ modparam("topos", "rr_update", 1)
    reparsing the outgoing SIP message for the cases when topology hiding
    is not wanted.
 
-   Example 1.16. Usage of event_route[topos:msg-outgoing]
+   Example 1.20. Usage of event_route[topos:msg-outgoing]
 ...
 event_route[topos:msg-outgoing] {
   if($sndto(ip)=="10.1.1.10") {
@@ -398,7 +519,7 @@ event_route[topos:msg-outgoing] {
 }
 ...
 
-4.2. event_route[topos:msg-sending]
+5.2. event_route[topos:msg-sending]
 
    It is executed before doing topology stripping processing for a SIP
    message to be sent out, being executed after
@@ -408,9 +529,47 @@ event_route[topos:msg-outgoing] {
    $sndto(proto) point to the destination. The SIP message is the one to
    be sent out.
 
-   Example 1.17. Usage of event_route[topos:msg-sending]
+   Example 1.21. Usage of event_route[topos:msg-sending]
 ...
 event_route[topos:msg-sending] {
+  if(is_request() and $fU=="alice") {
+    drop;
+  }
+}
+...
+
+5.3. event_route[topos:msg-incoming]
+
+   It is executed before doing topology stripping processing for an
+   incoming SIP message. If 'drop' is executed inside the event route,
+   then the module skips doing the topology hiding.
+
+   Inside the event route the variables $si, $sp and $proto point to the
+   source address. The SIP message is not the one to be sent out, but an
+   internally generated one at startup, to avoid reparsing the outgoing
+   SIP message for the cases when topology hiding is not wanted.
+
+   Example 1.22. Usage of event_route[topos:msg-incoming]
+...
+event_route[topos:msg-incoming] {
+  if($si=="10.1.1.10") {
+    drop;
+  }
+}
+...
+
+5.4. event_route[topos:msg-receiving]
+
+   It is executed before doing topology stripping processing for a SIP
+   message that was received, being executed after
+   event_route[topos:msg-incoing].
+
+   Inside the event route the variables $si, $sp and $proto point to the
+   source address. The SIP message is the one to be sent out.
+
+   Example 1.23. Usage of event_route[topos:msg-receoving]
+...
+event_route[topos:msg-receiving] {
   if(is_request() and $fU=="alice") {
     drop;
   }
