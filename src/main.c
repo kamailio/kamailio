@@ -1237,14 +1237,15 @@ static struct name_lst* parse_phostport_mh(char* s, char** host, int* hlen,
 
 
 
-/** Update \c cfg_file variable to contain full pathname. The function updates
+/** Update \c cfg_file variable to contain full pathname or '-' (for stdin)
+ * allocated in system memory. The function updates
  * the value of \c cfg_file global variable to contain full absolute pathname
- * to the main configuration file of SER. The function uses CFG_FILE macro to
+ * to the main configuration file. The function uses CFG_FILE macro to
  * determine the default path to the configuration file if the user did not
  * specify one using the command line option. If \c cfg_file contains an
- * absolute pathname then it is used unmodified, if it contains a relative
+ * absolute pathname then it is cloned unmodified, if it contains a relative
  * pathanme than the value returned by \c getcwd function will be added at the
- * beginning. This function must be run before SER changes its current working
+ * beginning. This function must be run before changing its current working
  * directory to / (in daemon mode).
  * @return Zero on success, negative number
  * on error.
@@ -1253,34 +1254,55 @@ int fix_cfg_file(void)
 {
 	char* res = NULL;
 	size_t max_len, cwd_len, cfg_len;
-	
+
 	if (cfg_file == NULL) cfg_file = CFG_FILE;
-	if (cfg_file[0] == '/') return 0;
-	if (cfg_file[0] == '-' && strlen(cfg_file)==1) return 0;
-	
+	if (cfg_file[0] == '/') {
+		cfg_len = strlen(cfg_file);
+		if(cfg_len < 2) {
+			/* do not accept only '/' */
+			fprintf(stderr, "ERROR: invalid cfg file value\n");
+			return -1;
+		}
+		if ((res = malloc(cfg_len + 1)) == NULL) goto error;
+		memcpy(res, cfg_file, cfg_len);
+		cfg_file[cfg_len] = 0;
+		cfg_file = res;
+		return 0;
+	}
+	if (cfg_file[0] == '-') {
+		cfg_len = strlen(cfg_file);
+		if(cfg_len == 1) {
+			if ((res = malloc(2)) == NULL) goto error;
+			res[0] = '-';
+			res[1] = '\0';
+			cfg_file = res;
+			return 0;
+		}
+	}
+
 	/* cfg_file contains a relative pathname, get the current
 	 * working directory and add it at the beginning
 	 */
 	cfg_len = strlen(cfg_file);
-	
+
 	max_len = pathmax();
 	if ((res = malloc(max_len)) == NULL) goto error;
-	
+
 	if (getcwd(res, max_len) == NULL) goto error;
 	cwd_len = strlen(res);
-	
+
 	/* Make sure that the buffer is big enough */
 	if (cwd_len + 1 + cfg_len >= max_len) goto error;
-	
+
 	res[cwd_len] = '/';
 	memcpy(res + cwd_len + 1, cfg_file, cfg_len);
-	
+
 	res[cwd_len + 1 + cfg_len] = '\0'; /* Add terminating zero */
 	cfg_file = res;
 	return 0;
-	
+
  error:
-	fprintf(stderr, "ERROR: Unable to fix cfg_file to contain full pathname\n");
+	fprintf(stderr, "ERROR: Unable to fix cfg file to contain full pathname\n");
 	if (res) free(res);
 	return -1;
 }
