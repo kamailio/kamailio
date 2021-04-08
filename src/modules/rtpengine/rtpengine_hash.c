@@ -221,15 +221,15 @@ int rtpengine_hash_table_insert(str callid, str viabranch, struct rtpengine_hash
 	// get entry list
 	hash_index = str_hash(callid);
 	entry = rtpengine_hash_table->row_entry_list[hash_index];
-	last_entry = entry;
 
-	// lock
-	if (rtpengine_hash_table->row_locks[hash_index]) {
-		lock_get(rtpengine_hash_table->row_locks[hash_index]);
-	} else {
-		LM_ERR("NULL rtpengine_hash_table->row_locks[%d]\n", hash_index);
+	if (entry==NULL || rtpengine_hash_table->row_locks[hash_index]==NULL) {
+		LM_ERR("NULL entry or lock for hash table slot[%d]\n", hash_index);
 		return 0;
 	}
+
+	last_entry = entry;
+	// lock
+	lock_get(rtpengine_hash_table->row_locks[hash_index]);
 
 	while (entry) {
 		// if found, don't add new entry
