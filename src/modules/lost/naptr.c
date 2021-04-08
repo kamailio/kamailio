@@ -2,6 +2,8 @@
  * lost module naptr functions
  * thankfully taken over from the enum module
  *
+ * Copyright (C) 2002-2010 Juha Heinanen
+ * 
  * Copyright (C) 2021 Wolfgang Kampichler
  * DEC112, FREQUENTIS AG
  *

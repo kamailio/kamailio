@@ -214,11 +214,11 @@ int is_urn(char *search)
  * lost_new_response(void)
  * creates a new response object in private memory and returns a pointer
  */
-p_fsr_t lost_new_response(void)
+p_lost_fsr_t lost_new_response(void)
 {
-	p_fsr_t res;
+	p_lost_fsr_t res;
 
-	res = (p_fsr_t)pkg_malloc(sizeof(s_fsr_t));
+	res = (p_lost_fsr_t)pkg_malloc(sizeof(s_lost_fsr_t));
 	if(res == NULL) {
 		return NULL;
 	}
@@ -239,11 +239,11 @@ p_fsr_t lost_new_response(void)
  * lost_new_response_type(void)
  * creates a new response type object in private memory and returns a pointer
  */
-p_type_t lost_new_response_type(void)
+p_lost_type_t lost_new_response_type(void)
 {
-	p_type_t res;
+	p_lost_type_t res;
 
-	res = (p_type_t)pkg_malloc(sizeof(s_type_t));
+	res = (p_lost_type_t)pkg_malloc(sizeof(s_lost_type_t));
 	if(res == NULL) {
 		PKG_MEM_ERROR;
 		return NULL;
@@ -252,7 +252,7 @@ p_type_t lost_new_response_type(void)
 	res->target = NULL;
 	res->source = NULL;
 
-	res->info = (p_info_t)pkg_malloc(sizeof(s_info_t));
+	res->info = (p_lost_info_t)pkg_malloc(sizeof(s_lost_info_t));
 	if(res->info == NULL) {
 		PKG_MEM_ERROR;
 	} else {
@@ -269,11 +269,11 @@ p_type_t lost_new_response_type(void)
  * lost_new_response_issues(void)
  * creates a new issues object in private memory and returns a pointer
  */
-p_issue_t lost_new_response_issues(void)
+p_lost_issue_t lost_new_response_issues(void)
 {
-	p_issue_t res = NULL;
+	p_lost_issue_t res = NULL;
 
-	res = (p_issue_t)pkg_malloc(sizeof(s_issue_t));
+	res = (p_lost_issue_t)pkg_malloc(sizeof(s_lost_issue_t));
 	if(res == NULL) {
 		PKG_MEM_ERROR;
 		return NULL;
@@ -290,11 +290,11 @@ p_issue_t lost_new_response_issues(void)
  * lost_new_response_data(void)
  * creates a new response data object in private memory and returns a pointer
  */
-p_data_t lost_new_response_data(void)
+p_lost_data_t lost_new_response_data(void)
 {
-	p_data_t res;
+	p_lost_data_t res;
 
-	res = (p_data_t)pkg_malloc(sizeof(s_data_t));
+	res = (p_lost_data_t)pkg_malloc(sizeof(s_lost_data_t));
 	if(res == NULL) {
 		PKG_MEM_ERROR;
 		return NULL;
@@ -316,11 +316,11 @@ p_data_t lost_new_response_data(void)
  * lost_new_response_list(void)
  * creates a new response list object in private memory and returns a pointer
  */
-p_list_t lost_new_response_list(void)
+p_lost_list_t lost_new_response_list(void)
 {
-	p_list_t list;
+	p_lost_list_t list;
 
-	list = (p_list_t)pkg_malloc(sizeof(s_list_t));
+	list = (p_lost_list_t)pkg_malloc(sizeof(s_lost_list_t));
 	if(list == NULL) {
 		PKG_MEM_ERROR;
 		return NULL;
@@ -338,11 +338,11 @@ p_list_t lost_new_response_list(void)
  * lost_reverse_response_list(list)
  * reverses list order of a list object
  */
-void lost_reverse_response_list(p_list_t *head)
+void lost_reverse_response_list(p_lost_list_t *head)
 {
-	p_list_t prev = NULL;
-	p_list_t next = NULL;
-	p_list_t current = *head;
+	p_lost_list_t prev = NULL;
+	p_lost_list_t next = NULL;
+	p_lost_list_t current = *head;
 
 	while(current != NULL) {
 		next = current->next;
@@ -357,9 +357,9 @@ void lost_reverse_response_list(p_list_t *head)
  * lost_delete_response_list(list)
  * removes response list from private memory
  */
-void lost_delete_response_list(p_list_t *list)
+void lost_delete_response_list(p_lost_list_t *list)
 {
-	p_list_t cur;
+	p_lost_list_t cur;
 
 	if(*list == NULL)
 		return;
@@ -383,9 +383,9 @@ void lost_delete_response_list(p_list_t *list)
  * lost_delete_response_msg(msg)
  * removes response info from private memory
  */
-void lost_delete_response_info(p_info_t *info)
+void lost_delete_response_info(p_lost_info_t *info)
 {
-	p_info_t ptr;
+	p_lost_info_t ptr;
 
 	if(*info == NULL)
 		return;
@@ -411,9 +411,9 @@ void lost_delete_response_info(p_info_t *info)
  * lost_delete_response_msg(type)
  * removes response type from private memory
  */
-void lost_delete_response_type(p_type_t *type)
+void lost_delete_response_type(p_lost_type_t *type)
 {
-	p_type_t ptr;
+	p_lost_type_t ptr;
 
 	if(*type == NULL)
 		return;
@@ -445,9 +445,9 @@ void lost_delete_response_type(p_type_t *type)
  * lost_delete_response_issue(list)
  * removes response issue object from private memory
  */
-void lost_delete_response_issues(p_issue_t *list)
+void lost_delete_response_issues(p_lost_issue_t *list)
 {
-	p_issue_t cur;
+	p_lost_issue_t cur;
 
 	while((cur = *list) != NULL) {
 		*list = cur->next;
@@ -468,9 +468,9 @@ void lost_delete_response_issues(p_issue_t *list)
  * lost_delete_response_issue(mapping)
  * removes respone data object from private memory
  */
-void lost_delete_response_data(p_data_t *m)
+void lost_delete_response_data(p_lost_data_t *m)
 {
-	p_data_t ptr;
+	p_lost_data_t ptr;
 
 	if(*m == NULL)
 		return;
@@ -511,9 +511,9 @@ void lost_delete_response_data(p_data_t *m)
  * lost_free_findServiceResponse(response)
  * removes findServiceResponse object from private memory
  */
-void lost_free_findServiceResponse(p_fsr_t *res)
+void lost_free_findServiceResponse(p_lost_fsr_t *res)
 {
-	p_fsr_t ptr;
+	p_lost_fsr_t ptr;
 
 	if(*res == NULL)
 		return;
@@ -552,13 +552,13 @@ void lost_free_findServiceResponse(p_fsr_t *res)
  * parses response issue (errors, warnings) and writes 
  * results to issue object
  */
-p_issue_t lost_get_response_issues(xmlNodePtr node)
+p_lost_issue_t lost_get_response_issues(xmlNodePtr node)
 {
 	xmlNodePtr cur = NULL;
 
-	p_issue_t list = NULL;
-	p_issue_t new = NULL;
-	p_type_t issue = NULL;
+	p_lost_issue_t list = NULL;
+	p_lost_issue_t new = NULL;
+	p_lost_type_t issue = NULL;
 
 	str tmp = STR_NULL;
 
@@ -620,13 +620,13 @@ p_issue_t lost_get_response_issues(xmlNodePtr node)
  * lost_get_response_list(node, name, property)
  * parses response list and writes results to list object
  */
-p_list_t lost_get_response_list(
+p_lost_list_t lost_get_response_list(
 		xmlNodePtr node, const char *name, const char *prop)
 {
 	xmlNodePtr cur = NULL;
 
-	p_list_t list = NULL;
-	p_list_t new = NULL;
+	p_lost_list_t list = NULL;
+	p_lost_list_t new = NULL;
 
 	str tmp = STR_NULL;
 	int len = 0;
@@ -695,9 +695,9 @@ char *lost_get_response_element(xmlNodePtr node, const char *name)
  * lost_get_response_type(node, name)
  * parses response type and writes results to type object
  */
-p_type_t lost_get_response_type(xmlNodePtr node, const char *name)
+p_lost_type_t lost_get_response_type(xmlNodePtr node, const char *name)
 {
-	p_type_t res = NULL;
+	p_lost_type_t res = NULL;
 
 	str tmp = STR_NULL;
 
@@ -735,10 +735,10 @@ p_type_t lost_get_response_type(xmlNodePtr node, const char *name)
  * lost_get_response_info(node, name, property)
  * parses response info (text, language) and writes results to info object
  */
-p_info_t lost_get_response_info(
+p_lost_info_t lost_get_response_info(
 		xmlNodePtr node, const char *name, const char *prop)
 {
-	p_info_t res = NULL;
+	p_lost_info_t res = NULL;
 
 	str tmp = STR_NULL;
 
@@ -750,7 +750,7 @@ p_info_t lost_get_response_info(
 
 	LM_DBG("### LOST %s\n", node->name);
 
-	res = (p_info_t)pkg_malloc(sizeof(s_info_t));
+	res = (p_lost_info_t)pkg_malloc(sizeof(s_lost_info_t));
 	if(res == NULL) {
 		PKG_MEM_ERROR;
 		return NULL;
@@ -782,17 +782,17 @@ p_info_t lost_get_response_info(
  * lost_print_findServiceResponse(response)
  * prints/logs response elements
  */
-void lost_print_findServiceResponse(p_fsr_t res)
+void lost_print_findServiceResponse(p_lost_fsr_t res)
 {
 	if(res == NULL) {
 		return;
 	}
-	p_data_t m = NULL;
-	p_type_t r = NULL;
-	p_issue_t e = NULL;
-	p_issue_t w = NULL;
-	p_type_t t = NULL;
-	p_list_t list = NULL;
+	p_lost_data_t m = NULL;
+	p_lost_type_t r = NULL;
+	p_lost_issue_t e = NULL;
+	p_lost_issue_t w = NULL;
+	p_lost_type_t t = NULL;
+	p_lost_list_t list = NULL;
 
 	switch(res->category) {
 		case RESPONSE:
@@ -871,15 +871,15 @@ void lost_print_findServiceResponse(p_fsr_t res)
  * lost_parse_findServiceResponse(str)
  * read and parse the findServiceResponse xml string
  */
-p_fsr_t lost_parse_findServiceResponse(str ret)
+p_lost_fsr_t lost_parse_findServiceResponse(str ret)
 {
 	xmlDocPtr doc = NULL;
 	xmlNodePtr root = NULL;
 	xmlNodePtr node = NULL;
 
-	p_fsr_t res = NULL;
-	p_data_t m = NULL;
-	p_type_t r = NULL;
+	p_lost_fsr_t res = NULL;
+	p_lost_data_t m = NULL;
+	p_lost_type_t r = NULL;
 
 	int len = 0;
 

@@ -56,19 +56,19 @@
 
 #define ERRORS_NODE (const char *)"errors"
 
-typedef struct LIST
+typedef struct lost_list
 {
 	char *value;
-	struct LIST *next;
-} s_list_t, *p_list_t;
+	struct lost_list *next;
+} s_lost_list_t, *p_lost_list_t;
 
-typedef struct INFO
+typedef struct lost_info
 {
 	char *text;
 	char *lang;
-} s_info_t, *p_info_t;
+} s_lost_info_t, *p_lost_info_t;
 
-typedef struct DATA
+typedef struct lost_data
 {
 	char *expires;
 	char *updated;
@@ -76,48 +76,48 @@ typedef struct DATA
 	char *sourceid;
 	char *urn;
 	char *number;
-	p_info_t name;
-} s_data_t, *p_data_t;
+	p_lost_info_t name;
+} s_lost_data_t, *p_lost_data_t;
 
-typedef struct TYPE
+typedef struct lost_type
 {
 	char *type;
 	char *target;
 	char *source;
-	p_info_t info;
-} s_type_t, *p_type_t;
+	p_lost_info_t info;
+} s_lost_type_t, *p_lost_type_t;
 
-typedef struct ISSUE
+typedef struct lost_issue
 {
-	p_type_t issue;
-	struct ISSUE *next;
-} s_issue_t, *p_issue_t;
+	p_lost_type_t issue;
+	struct lost_issue *next;
+} s_lost_issue_t, *p_lost_issue_t;
 
-typedef enum CAT
+typedef enum lost_cat
 {
 	RESPONSE,
 	ERROR,
 	REDIRECT,
 	OTHER = -1
-} cat_t;
+} lost_cat_t;
 
-typedef struct FSR
+typedef struct lost_fsr
 {
-	cat_t category;
-	p_data_t mapping;
-	p_issue_t warnings;
-	p_issue_t errors;
-	p_type_t redirect;
-	p_list_t path;
-	p_list_t uri;
-} s_fsr_t, *p_fsr_t;
+	lost_cat_t category;
+	p_lost_data_t mapping;
+	p_lost_issue_t warnings;
+	p_lost_issue_t errors;
+	p_lost_type_t redirect;
+	p_lost_list_t path;
+	p_lost_list_t uri;
+} s_lost_fsr_t, *p_lost_fsr_t;
 
 /* read and parse response data */
-p_fsr_t lost_parse_findServiceResponse(str);
+p_lost_fsr_t lost_parse_findServiceResponse(str);
 /* print the response */
-void lost_print_findServiceResponse(p_fsr_t);
+void lost_print_findServiceResponse(p_lost_fsr_t);
 /* remove response data from memory */
-void lost_free_findServiceResponse(p_fsr_t *);
+void lost_free_findServiceResponse(p_lost_fsr_t *);
 
 /* uri scheme parsing */
 int is_urn(char *);

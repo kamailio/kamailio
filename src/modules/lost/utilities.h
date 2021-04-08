@@ -79,7 +79,7 @@
 #define BUFSIZE 128	   /* temporary buffer to hold geolocation */
 #define RANDSTRSIZE 16 /* temporary id in a findService request */
 
-typedef struct LOC
+typedef struct lost_loc
 {
 	char *identity;	 /* location idendity (findServiceRequest) */
 	char *urn;		 /* service URN (findServiceRequest) */
@@ -93,7 +93,7 @@ typedef struct LOC
 	int boundary;	 /* boundary ref|value (findServiceRequest)*/
 } s_lost_loc_t, *p_lost_loc_t;
 
-typedef struct HELD
+typedef struct lost_held
 {
 	char *identity; /* location idendity (locationRequest) */
 	char *type;		/* location type (locationRequest) */
@@ -101,7 +101,7 @@ typedef struct HELD
 	int exact;		/* exact true|false (locationRequest)*/
 } s_lost_held_t, *p_lost_held_t;
 
-typedef enum GEOTYPE
+typedef enum lost_geotype
 {
 	ANY,		 /* any type */
 	CID,		 /* content-indirection */
@@ -110,12 +110,12 @@ typedef enum GEOTYPE
 	UNKNOWN = -1 /* unknown */
 } lost_geotype_t;
 
-typedef struct GEOLIST
+typedef struct lost_geolist
 {
 	char *value;		 /* geolocation header value */
 	char *param;		 /* value parameter */
 	lost_geotype_t type; /* type */
-	struct GEOLIST *next;
+	struct lost_geolist *next;
 } s_lost_geolist_t, *p_lost_geolist_t;
 
 void lost_rand_str(char *, size_t);

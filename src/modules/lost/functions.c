@@ -761,7 +761,7 @@ int lost_function(struct sip_msg *_m, char *_con, char *_uri, char *_name,
 
 	p_lost_loc_t loc = NULL;
 	p_lost_geolist_t geolist = NULL;
-	p_fsr_t fsrdata = NULL;
+	p_lost_fsr_t fsrdata = NULL;
 
 	str name = STR_NULL; /* return value displayName */
 	str uri = STR_NULL;	 /* return value uri */
