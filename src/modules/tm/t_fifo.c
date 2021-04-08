@@ -214,6 +214,7 @@ int parse_tw_append( modparam_t type, void* val)
 	app->name.s = (char*)pkg_malloc( foo.len+1 );
 	if (app->name.s==0) {
 		PKG_MEM_ERROR;
+		pkg_free(app);
 		goto error;
 	}
 	memcpy( app->name.s, foo.s, foo.len);
