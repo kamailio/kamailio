@@ -4012,7 +4012,7 @@ static struct dns_hash_entry *dns_cache_clone_entry(struct dns_hash_entry *e,
 	size = e->total_size;
 	if (rdata_size) {
 		/* we have to extend the entry */
-		rounded_size = ROUND_POINTER(size); /* size may not have been 
+		rounded_size = ROUND_POINTER(size); /* size may not have been
 												rounded previously */
 		switch (e->type) {
 			case T_A:
@@ -4064,7 +4064,7 @@ static struct dns_hash_entry *dns_cache_clone_entry(struct dns_hash_entry *e,
 	/* fix the pointers inside the rr structures */
 	last_rr = NULL;
 	for (rr=new->rr_lst; rr; rr=rr->next) {
-		rr->rdata = (void*)translate_pointer((char*)new, (char*)e, 
+		rr->rdata = (void*)translate_pointer((char*)new, (char*)e,
 												(char*)rr->rdata);
 		if (rr->next)
 			rr->next = (struct dns_rr*)translate_pointer((char*)new, (char*)e,
@@ -4074,6 +4074,10 @@ static struct dns_hash_entry *dns_cache_clone_entry(struct dns_hash_entry *e,
 
 		switch(e->type){
 			case T_NAPTR:
+				if(rr->rdata==NULL) {
+					LM_WARN("null rdata filed for type: %u\n", e->type);
+					break;
+				}
 				/* there are pointers inside the NAPTR rdata stucture */
 				((struct naptr_rdata*)rr->rdata)->flags =
 					translate_pointer((char*)new, (char*)e,
@@ -4092,6 +4096,10 @@ static struct dns_hash_entry *dns_cache_clone_entry(struct dns_hash_entry *e,
 						((struct naptr_rdata*)rr->rdata)->repl);
 				break;
 			case T_TXT:
+				if(rr->rdata==NULL) {
+					LM_WARN("null rdata filed for type: %u\n", e->type);
+					break;
+				}
 				/* there are pointers inside the TXT structure */
 				for (i=0; i<((struct txt_rdata*)rr->rdata)->cstr_no; i++){
 					((struct txt_rdata*)rr->rdata)->txt[i].cstr=
@@ -4100,6 +4108,10 @@ static struct dns_hash_entry *dns_cache_clone_entry(struct dns_hash_entry *e,
 				}
 				break;
 			case T_EBL:
+				if(rr->rdata==NULL) {
+					LM_WARN("null rdata filed for type: %u\n", e->type);
+					break;
+				}
 				/* there are pointers inside the EBL structure */
 				((struct ebl_rdata*)rr->rdata)->separator =
 					translate_pointer((char*)new, (char*)e,
@@ -4140,7 +4152,7 @@ static struct dns_hash_entry *dns_cache_clone_entry(struct dns_hash_entry *e,
  * If there is an existing record with the same name and value
  * (ip address in case of A/AAAA record, name in case of SRV record)
  * only the remaining fields are updated.
- * 
+ *
  * Note that permanent records cannot be overwritten unless
  * the new record is also permanent. A permanent record
  * completely replaces a non-permanent one.
