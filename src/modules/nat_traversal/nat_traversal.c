@@ -1554,6 +1554,11 @@ static void send_keepalive(NAT_Contact *contact)
 	unsigned short lport;
 	char lproto;
 
+	if(contact==NULL || contact->socket==NULL) {
+		LM_ERR("invalid parameters\n");
+		return;
+	}
+
 	if(keepalive_params.from == NULL) {
 		if(contact->socket != last_socket) {
 			memcpy(from_ip, contact->socket->address_str.s,
