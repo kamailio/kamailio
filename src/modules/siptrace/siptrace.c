@@ -2150,6 +2150,7 @@ int siptrace_net_data_sent(sr_event_param_t *evp)
 	dest_info_t new_dst;
 	siptrace_data_t sto;
 	sip_msg_t tmsg;
+	int proto;
 
 	if(evp->data == 0)
 		return -1;
@@ -2177,6 +2178,7 @@ int siptrace_net_data_sent(sr_event_param_t *evp)
 		LM_WARN("no sending socket found\n");
 		strcpy(sto.fromip_buff, SIPTRACE_ANYADDR);
 		sto.fromip.len = SIPTRACE_ANYADDR_LEN;
+		proto = PROTO_UDP;
 	} else {
 		if(new_dst.send_sock->sock_str.len>=SIPTRACE_ADDR_MAX-1) {
 			LM_ERR("socket string is too large: %d\n",
@@ -2186,11 +2188,12 @@ int siptrace_net_data_sent(sr_event_param_t *evp)
 		strncpy(sto.fromip_buff, new_dst.send_sock->sock_str.s,
 				new_dst.send_sock->sock_str.len);
 		sto.fromip.len = new_dst.send_sock->sock_str.len;
+		proto = new_dst.send_sock->proto;
 	}
 	sto.fromip.s = sto.fromip_buff;
 
 	sto.toip.len = snprintf(sto.toip_buff, SIPTRACE_ADDR_MAX, "%s:%s:%d",
-			siptrace_proto_name(new_dst.send_sock->proto),
+			siptrace_proto_name(proto),
 			suip2a(&new_dst.to, sizeof(new_dst.to)),
 			(int)su_getport(&new_dst.to));
 	if(sto.toip.len<0 || sto.toip.len>=SIPTRACE_ADDR_MAX) {
