@@ -222,7 +222,7 @@ static inline struct dlg_tl* get_expired_dlgs(unsigned int time)
 	lock_get( d_timer->lock);
 
 	if (d_timer->first.next==&(d_timer->first)
-	|| d_timer->first.next->timeout > time ) {
+			|| d_timer->first.next->timeout > time ) {
 		lock_release( d_timer->lock);
 		return 0;
 	}
@@ -247,7 +247,9 @@ static inline struct dlg_tl* get_expired_dlgs(unsigned int time)
 		ret = 0;
 	} else {
 		ret = d_timer->first.next;
-		tl->prev->next = 0;
+		if(tl->prev) {
+			tl->prev->next = 0;
+		}
 		d_timer->first.next = tl;
 		tl->prev = &d_timer->first;
 	}
