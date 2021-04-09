@@ -1,7 +1,9 @@
 /*
- * lost module functions
+ * lost module naptr functions
  *
- * Copyright (C) 2019 Wolfgang Kampichler
+ * Copyright (C) 2002-2010 Juha Heinanen
+ * 
+ * Copyright (C) 2021 Wolfgang Kampichler
  * DEC112, FREQUENTIS AG
  *
  * This file is part of Kamailio, a free SIP server.
@@ -24,23 +26,15 @@
 
 /*!
  * \file
- * \brief Kamailio lost :: functions
+ * \brief Kamailio lost :: naptr
  * \ingroup lost
  * Module: \ref lost
  */
 
-#ifndef LOST_FUNCTIONS_H
-#define LOST_FUNCTIONS_H
+#ifndef LOST_NAPTR_H
+#define LOST_NAPTR_H
 
-char *lost_held_type(char *, int *, int *);
-
-int lost_held_dereference(
-		struct sip_msg *, char *, char *, char *, char *, char *);
-
-int lost_held_function(
-		struct sip_msg *, char *, char *, char *, char *, char *);
-
-int lost_function(
-		struct sip_msg *, char *, char *, char *, char *, char *, char *);
+/* NAPTR lookup and host string replacement */
+int lost_naptr_lookup(str, str *, str *);
 
 #endif
