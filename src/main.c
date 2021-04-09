@@ -2095,6 +2095,10 @@ int main(int argc, char** argv)
 					ksr_cfg_print_mode = 1;
 					break;
 			case KARGOPTVAL+10:
+					if (optarg == NULL) {
+						fprintf(stderr, "bad atexit value\n");
+						goto error;
+					}
 					if(optarg[0]=='y' || optarg[0]=='1') {
 						ksr_atexit_mode = 1;
 					} else if(optarg[0]=='n' || optarg[0]=='0') {
@@ -2234,6 +2238,10 @@ int main(int argc, char** argv)
 					};
 					break;
 			case 'u':
+					if (optarg == NULL) {
+						fprintf(stderr, "bad -u parameter\n");
+						goto error;
+					}
 					/* user needed for possible shm. pre-init */
 					user=optarg;
 					break;
@@ -2293,6 +2301,10 @@ int main(int argc, char** argv)
 
 			/* long options */
 			case KARGOPTVAL:
+					if (optarg == NULL) {
+						fprintf(stderr, "bad alias parameter\n");
+						goto error;
+					}
 					if(parse_phostport(optarg, &tmp, &tmp_len,
 											&port, &proto)!=0) {
 						fprintf(stderr, "Invalid alias value '%s'\n", optarg);
@@ -2304,24 +2316,40 @@ int main(int argc, char** argv)
 					}
 					break;
 			case KARGOPTVAL+1:
+					if (optarg == NULL) {
+						fprintf(stderr, "bad subst parameter\n");
+						goto error;
+					}
 					if(pp_subst_add(optarg)<0) {
 						LM_ERR("failed to add subst expression: %s\n", optarg);
 						goto error;
 					}
 					break;
 			case KARGOPTVAL+2:
+					if (optarg == NULL) {
+						fprintf(stderr, "bad substdef parameter\n");
+						goto error;
+					}
 					if(pp_substdef_add(optarg, 0)<0) {
 						LM_ERR("failed to add substdef expression: %s\n", optarg);
 						goto error;
 					}
 					break;
 			case KARGOPTVAL+3:
+					if (optarg == NULL) {
+						fprintf(stderr, "bad substdefs parameter\n");
+						goto error;
+					}
 					if(pp_substdef_add(optarg, 1)<0) {
 						LM_ERR("failed to add substdefs expression: %s\n", optarg);
 						goto error;
 					}
 					break;
 			case KARGOPTVAL+4:
+					if (optarg == NULL) {
+						fprintf(stderr, "bad server if parameter\n");
+						goto error;
+					}
 					server_id=(int)strtol(optarg, &tmp, 10);
 					if ((tmp==0) || (*tmp)){
 						LM_ERR("bad server_id value: %s\n", optarg);
@@ -2383,12 +2411,20 @@ int main(int argc, char** argv)
 	while((c=getopt_long(argc, argv, options, long_options, &option_index))!=-1) {
 		switch(c) {
 			case KARGOPTVAL+5:
+					if (optarg == NULL) {
+						fprintf(stderr, "bad load module parameter\n");
+						goto error;
+					}
 					if (load_module(optarg)!=0) {
 						LM_ERR("failed to load the module: %s\n", optarg);
 						goto error;
 					}
 					break;
 			case KARGOPTVAL+6:
+					if (optarg == NULL) {
+						fprintf(stderr, "bad modparam parameter\n");
+						goto error;
+					}
 					if(set_mod_param_serialized(optarg) < 0) {
 						LM_ERR("failed to set modparam: %s\n", optarg);
 						goto error;
