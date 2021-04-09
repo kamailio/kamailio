@@ -262,7 +262,7 @@ __dialog_sendpublish(struct dlg_cell *dlg, int type, struct dlg_cb_params *_para
 	}
 
 	/* skip requests that do not control call state */
-	if((request->REQ_METHOD)&(METHOD_PRACK|METHOD_UPDATE)) {
+	if(request && (request->REQ_METHOD)&(METHOD_PRACK|METHOD_UPDATE)) {
 		return;
 	}
 	if(include_req_uri) {
