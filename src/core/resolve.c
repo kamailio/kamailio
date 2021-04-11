@@ -1261,7 +1261,7 @@ struct hostent* srv_sip_resolvehost(str* name, int zt, unsigned short* port,
 	if (is_srv){
 		/* skip directly to srv resolving */
 		srv_proto=(proto)?*proto:0;
-		*port=(srv_proto==PROTO_TLS)?SIPS_PORT:SIP_PORT;
+		if(port) *port=(srv_proto==PROTO_TLS)?SIPS_PORT:SIP_PORT;
 		if (zt){
 			srv_target=name->s; /* name.s must be 0 terminated in
 								  this case */
