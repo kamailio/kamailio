@@ -162,6 +162,27 @@ modparam("secsipid", "modproc", "secsipid_proc2.so")
 </programlisting>
 		</example>
 	</section>
+	<section id="secsipid.p.libopt">
+		<title><varname>libopt</varname> (str)</title>
+		<para>
+			Set a libsecsipid option. The value has to be name=value. The
+			parameter can be set many times.
+		</para>
+		<para>
+		<emphasis>
+			Default value is "" (not set).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>libopt</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("secsipid", "libopt", "CacheExpires=0")
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 	<section>
