@@ -55,7 +55,7 @@ Daniel-Constantin Mierla
    1.8. secsipid_check_identity_pubkey usage
    1.9. secsipid_get_url usage
    1.10. secsipid_add_identity usage
-   1.11. Libsecsipid usage
+   1.11. Libsecsipid Usage
 
 Chapter 1. Admin Guide
 
@@ -299,25 +299,32 @@ request_route {
 
 5. Installation
 
-   The module depends on "libsecsipid", which is a component of
-   "sipsecidx" project from https://github.com/asipto/secsipidx/. The
-   library is implemented in Go language, with generated C API and
-   library. Until the libsecsipid is going to be packaged in OS
-   distributions, the secsipid module can be compiled by copying
-   secsipid.h libsecsipid.h and libsecsipid.a files in the folder of the
-   module.
+   The module needs "secsipdi_proc.so" module thatdepends on
+   "libsecsipid", which is a component of "sipsecidx" project from
+   https://github.com/asipto/secsipidx/. The library is implemented in Go
+   language, with generated C API and library. Until the libsecsipid is
+   going to be packaged in OS distributions, the secsipid_proc module can
+   be compiled by copying secsipid.h libsecsipid.h and libsecsipid.a files
+   in the folder of the module.
 
    To generate the libsecsipid.a file, it requires to have Go language
    installed and its environment configured, then run the following
    commands:
 
-   Example 1.11. Libsecsipid usage
+   Example 1.11. Libsecsipid Usage
 ...
 go get https://github.com/asipto/secsipidx
 cd $GOPATH/src/github.com/asipto/secsipidx/csecsipid/
 make liba
 cp secsipid.h libsecsipid.h libsecsipid.a \
-    /path/to/kamailio/src/modules/secsipid/
+    /path/to/kamailio/src/modules/secsipid_proc/
+
 cd /path/to/kamailio/
-make modules modules=src/modules/secsipid/
+make include_modules="secsipid secsipid_proc ..." cfg
+make all
+make install
+
+## or compiling individual modules for use inside source tree
+# make modules modules=src/modules/secsipid_proc
+# make modules modules=src/modules/secsipid
 ...
