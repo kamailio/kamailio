@@ -45,6 +45,12 @@ typedef struct secsipid_papi {
 	int (*SecSIPIDGetURLContent)(char* urlVal, int timeoutVal, char** outPtr,
 			int* outLen);
 
+	int (*SecSIPIDOptSetS)(char* optName, char* optVal);
+
+	int (*SecSIPIDOptSetN)(char* optName, int optVal);
+
+	int (*SecSIPIDOptSetV)(char* optNameVal);
+
 } secsipid_papi_t;
 
 typedef int (*secsipid_proc_bind_f)(secsipid_papi_t *papi);
