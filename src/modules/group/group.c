@@ -54,7 +54,7 @@ int get_username_domain(struct sip_msg *msg, group_check_p gcp,
 {
 	struct sip_uri puri;
 	struct sip_uri *turi;
-	struct hdr_field* h;
+	struct hdr_field* h = 0;
 	struct auth_body* c = 0;
 	pv_value_t value;
 
@@ -89,15 +89,20 @@ int get_username_domain(struct sip_msg *msg, group_check_p gcp,
 				get_authorized_cred( msg->proxy_auth, &h);
 				if (!h) {
 					LM_ERR("no authorized credentials found "
-							"(error in scripts)\n");
+							"(error in script)\n");
 					return -1;
 				}
+			}
+			if(!h->parsed) {
+				LM_ERR("no parsed authorized credentials found "
+						"(error in script)\n");
+				return -1;
 			}
 			c = (auth_body_t*)(h->parsed);
 			break;
 
 		case 5: /* AVP spec */
-			if(pv_get_spec_value( msg, &gcp->sp, &value)!=0 
+			if(pv_get_spec_value( msg, &gcp->sp, &value)!=0
 				|| value.flags&PV_VAL_NULL || value.rs.len<=0)
 			{
 				LM_ERR("no AVP found (error in scripts)\n");
