@@ -184,6 +184,7 @@ void sca_rpc_deactivate_all_subscriptions(rpc_t *rpc, void *ctx)
 
 	if((ht = sca->subscriptions) == NULL) {
 		rpc->fault(ctx, 500, "Empty subscription table!");
+		return;
 	}
 
 	for(i = 0; i < ht->size; i++) {
