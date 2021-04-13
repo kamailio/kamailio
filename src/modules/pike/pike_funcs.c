@@ -211,8 +211,10 @@ void clean_routine(unsigned int ticks , void *param)
 
 			/* unlink the node -> the list will get shorter and it will be
 			 * faster for the next branches to process it */
-			ll->prev->prev->next = ll;
-			ll->prev = ll->prev->prev;
+			if(ll) {
+				ll->prev->prev->next = ll;
+				ll->prev = ll->prev->prev;
+			}
 			node->expires = 0;
 			node->timer_ll.prev = node->timer_ll.next = 0;
 			if ( node->flags&NODE_EXPIRED_FLAG )
