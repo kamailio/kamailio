@@ -915,7 +915,7 @@ dbt_row_p dbt_result_extract_results(dbt_table_p _dtp, dbt_row_p* pRows, int _nr
 	dbt_row_p pPrvRow=NULL;
 	int i, n, r;
 
-	if(!_dtp || !pRows || _ncols<=0)
+	if(!_dtp || !pRows || _ncols<=0 || !_lres)
 		return NULL;
 
 	for(r=0; r < _nrows; r++) {
