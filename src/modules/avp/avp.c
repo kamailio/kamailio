@@ -1359,7 +1359,7 @@ cont:
 				}
 			};
 		}
-		if (s.len && s.s[0] == header->field_delimiter) {
+		if (s.len && s.s && s.s[0] == header->field_delimiter) {
 			s.s++;
 			s.len--;
 		}
