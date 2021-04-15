@@ -47,6 +47,7 @@ Build-Depends:
  libssl-dev,
  libsystemd-dev,
  libunistring-dev,
+ libwebsockets-dev,
  libxml2-dev,
  openssl,
  pkg-config,
@@ -840,6 +841,23 @@ Description: contains the secsipid module
  per second even on low-budget hardware.
  .
  This package contains the secsipid Module.
+
+Package: kamailio-lwsc-modules
+Architecture: linux-any
+Multi-Arch: same
+Pre-Depends:
+ ${misc:Pre-Depends},
+Depends:
+ kamailio (= ${binary:Version}),
+ ${misc:Depends},
+ ${shlibs:Depends},
+Description: Libwebsockets module for the Kamailio SIP server
+ Kamailio is a very fast and flexible SIP (RFC3261)
+ server. Written entirely in C, Kamailio can handle thousands calls
+ per second even on low-budget hardware.
+ .
+ This package contains the lwcs module, which provides a client-side WebSockets
+ API through libwebsockets.
 
 Package: kamailio-extra-modules
 Architecture: linux-any
