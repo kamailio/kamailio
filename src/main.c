@@ -1265,7 +1265,7 @@ int fix_cfg_file(void)
 		}
 		if ((res = malloc(cfg_len + 1)) == NULL) goto error;
 		memcpy(res, cfg_file, cfg_len);
-		cfg_file[cfg_len] = 0;
+		res[cfg_len] = 0;
 		cfg_file = res;
 		return 0;
 	}
