@@ -41,7 +41,6 @@
 #include "../../core/dprint.h"
 
 #include "../../core/script_cb.h"
-#include "../../core/re.h"
 
 #include "functions.h"
 #include "lost_select.h"
@@ -169,7 +168,6 @@ static int mod_init(void)
 
 	return 0;
 }
-
 
 /* Child initialization function */
 static int child_init(int rank)
