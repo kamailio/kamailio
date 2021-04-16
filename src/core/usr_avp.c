@@ -148,16 +148,11 @@ avp_t *create_avp (avp_flags_t flags, avp_name_t name, avp_value_t val)
 	struct str_str_data *ssd;
 	int len;
 
-	if (name.s.s == NULL || name.s.len == 0) {
-		LM_ERR("0 ID or NULL NAME AVP!");
-		goto error;
-	}
-
 	/* compute the required mem size */
 	len = sizeof(struct usr_avp);
 	if (flags&AVP_NAME_STR) {
 		if ( name.s.s==0 || name.s.len==0) {
-			LM_ERR("EMPTY NAME AVP!");
+			LM_ERR("NULL or EMPTY NAME AVP!");
 			goto error;
 		}
 		if (flags&AVP_VAL_STR) {
@@ -168,8 +163,14 @@ avp_t *create_avp (avp_flags_t flags, avp_name_t name, avp_value_t val)
 			len += sizeof(struct str_int_data)-sizeof(union usr_avp_data)
 				+ name.s.len + 1; /* Terminating zero for regex search */
 		}
-	} else if (flags&AVP_VAL_STR) {
-		len += sizeof(str)-sizeof(union usr_avp_data) + val.s.len + 1;
+	} else {
+		if(name.n==0) {
+			LM_ERR("0 ID AVP!");
+			goto error;
+		}
+		if (flags&AVP_VAL_STR) {
+			len += sizeof(str)-sizeof(union usr_avp_data) + val.s.len + 1;
+		}
 	}
 
 	avp = (struct usr_avp*)shm_malloc( len );
