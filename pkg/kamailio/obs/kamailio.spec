@@ -277,6 +277,18 @@ Requires:  systemd
 BuildRequires:  systemd-devel
 %endif
 
+%if 0%{?rhel} == 7
+# we want to use more recent GCC
+# yum install centos-release-scl && yum install devtoolset-9
+BuildRequires: devtoolset-9
+%endif
+
+%if 0%{?rhel} == 8
+# we want to use more recent GCC
+# dnf install gcc-toolset-9
+BuildRequires: gcc-toolset-9
+%endif
+
 %if 0%{?suse_version} == 1315 || 0%{?suse_version} == 1330
 Requires:  filesystem
 BuildRequires:  shadow
@@ -1136,6 +1148,16 @@ sed -i -e 's|/usr/sbin/kamailio|/usr/sbin/kamailio --atexit=no|' pkg/kamailio/ob
 
 
 %build
+%if 0%{?rhel} == 7
+# we want to use more recent GCC
+. /opt/rh/devtoolset-9/enable
+%endif
+
+%if 0%{?rhel} == 8
+# we want to use more recent GCC
+. /opt/rh/gcc-toolset-9/enable
+%endif
+
 ln -s ../obs pkg/kamailio/%{dist_name}/%{dist_version}
 %if 0%{?fedora} || 0%{?suse_version} || 0%{?rhel} == 8
 export FREERADIUS=1
@@ -1237,6 +1259,16 @@ make utils
 
 
 %install
+%if 0%{?rhel} == 7
+# we want to use more recent GCC
+. /opt/rh/devtoolset-9/enable
+%endif
+
+%if 0%{?rhel} == 8
+# we want to use more recent GCC
+. /opt/rh/gcc-toolset-9/enable
+%endif
+
 rm -rf %{buildroot}
 
 make install
