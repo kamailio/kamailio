@@ -176,6 +176,7 @@ static void destroy(void)
 {
 	if(held_loc_type.s != NULL && held_loc_type.len > 0) {
 		pkg_free(held_loc_type.s);
+		held_loc_type.s = NULL;
 		held_loc_type.len = 0;
 	}
 	/* do nothing */
@@ -211,8 +212,7 @@ static int fixup_lost_held_query(void **param, int param_no)
 static int fixup_free_lost_held_query(void **param, int param_no)
 {
 	if(param_no == 1) {
-		/* char strings don't need freeing */
-		return 0;
+		return fixup_spve_null(param, 1);	
 	}
 	if((param_no == 2) || (param_no == 3) || (param_no == 4)) {
 		return fixup_free_pvar_null(param, 1);

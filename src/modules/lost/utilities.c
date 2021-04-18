@@ -232,6 +232,10 @@ void lost_free_loc(p_lost_loc_t *loc)
 
 	pkg_free(ptr);
 	*loc = NULL;
+
+	LM_DBG("### location object removed\n");
+
+	return;
 }
 
 /*
@@ -242,7 +246,7 @@ void lost_free_held(p_lost_held_t *held)
 {
 	p_lost_held_t ptr;
 
-	if(held == NULL)
+	if(*held == NULL)
 		return;
 
 	ptr = *held;
@@ -254,6 +258,10 @@ void lost_free_held(p_lost_held_t *held)
 
 	pkg_free(ptr);
 	*held = NULL;
+
+	LM_DBG("### location-request object removed\n");
+
+	return;
 }
 
 /*
@@ -275,7 +283,7 @@ char *lost_copy_string(str src, int *lgth)
 		*lgth = 0;
 	} else {
 		memset(res, 0, src.len + 1);
-		memcpy(res, src.s, src.len + 1);
+		memcpy(res, src.s, src.len);
 		res[src.len] = '\0';
 		*lgth = (int)strlen(res);
 	}
@@ -298,6 +306,9 @@ void lost_free_string(str *string)
 
 	if(ptr.s != NULL && ptr.len > 0) {
 		pkg_free(ptr.s);
+
+		LM_DBG("### string object removed\n");
+	
 	}
 
 	string->s = NULL;
@@ -683,6 +694,8 @@ void lost_free_geoheader_list(p_lost_geolist_t *list)
 	}
 
 	*list = NULL;
+
+	LM_DBG("### geoheader list removed\n");
 
 	return;
 }
