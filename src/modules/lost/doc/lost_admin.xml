@@ -211,7 +211,7 @@
                     <emphasis>0</emphasis> - takes the first location of any type
                 </para></listitem>
                 <listitem><para>
-                    <emphasis>1</emphasis> - takes the last last of any type
+                    <emphasis>1</emphasis> - takes the last location of any type
                 </para></listitem>
                 <listitem><para>
                     <emphasis>2</emphasis> - takes the first geodetic location
