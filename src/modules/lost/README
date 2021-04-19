@@ -239,7 +239,7 @@ Chapter 1. Admin Guide
    findService contains only one location, which is selected via this
    parameter as follows:
      * 0 - takes the first location of any type
-     * 1 - takes the last last of any type
+     * 1 - takes the last location of any type
      * 2 - takes the first geodetic location
      * 3 - takes the first civic location
 
