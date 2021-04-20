@@ -548,6 +548,14 @@ int tps_pack_message(sip_msg_t *msg, tps_data_t *ptsd)
 			ptsd->as_contact.len, ZSW(ptsd->as_contact.s), ptsd->as_contact.len,
 			ptsd->bs_contact.len, ZSW(ptsd->bs_contact.s), ptsd->bs_contact.len);
 	ptsd->x_rr = ptsd->a_rr;
+	if(isreq==0) {
+		if(msg->first_line.u.reply.statuscode >= 180
+				&& msg->first_line.u.reply.statuscode < 199) {
+			/* provisional replies that create early dialogs
+			 * - skip 199 Early Dialog Terminated */
+			ptsd->y_rr = ptsd->b_rr;
+		}
+	}
 	ptsd->s_method_id = get_cseq(msg)->method_id;
 	if(_tps_context_value.len>0) {
 		ptsd->x_context = _tps_context_value;
