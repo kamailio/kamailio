@@ -725,7 +725,7 @@ modparam("lcr", "lcr_count", 10)
 
    Example 1.29. Setting gw_uri_avp module parameter
 ...
-modparam("lcr", "gw_uri_avp", "$avp(i:709)")
+modparam("lcr", "gw_uri_avp", "$avp(lcr_gwuri)")
 ...
 
 3.30. ruri_user_avp (AVP string)
@@ -738,7 +738,7 @@ modparam("lcr", "gw_uri_avp", "$avp(i:709)")
 
    Example 1.30. Setting ruri_user_avp module parameter
 ...
-modparam("lcr", "ruri_user_avp", "$avp(i:500)")
+modparam("lcr", "ruri_user_avp", "$avp(lcr_ruri_user)")
 ...
 
 3.31. tag_avp (AVP string)
@@ -764,7 +764,7 @@ modparam("lcr", "tag_avp", "$avp(lcr_tag)")
 
    Example 1.32. Setting flags_avp module parameter
 ...
-modparam("lcr", "flags_avp", "$avp(i:712)")
+modparam("lcr", "flags_avp", "$avp(lcr_flags)")
 ...
 
 3.33. rule_id_avp (AVP string)
@@ -776,9 +776,9 @@ modparam("lcr", "flags_avp", "$avp(i:712)")
    not stored anywhere.
 
    Example 1.33. Setting rule_id_avp module parameter
-                                ...
-                                modparam("lcr", "rule_id_avp", "$avp(i:712)")
-                                ...
+...
+modparam("lcr", "rule_id_avp", "$avp(lcr_ruleid)")
+...
 
 3.34. mt_pv_values (AVP string)
 
@@ -792,7 +792,7 @@ modparam("lcr", "flags_avp", "$avp(i:712)")
 
    Example 1.34. Setting tag_avp module parameter
 ...
-modparam("lcr", "mt_pv_values", "$avp(mt_values)")
+modparam("lcr", "mt_pv_values", "$avp(lcr_mt_values)")
 ...
 
 3.35. mtree (string)
@@ -828,7 +828,7 @@ modparam("lcr", "defunct_capability", 1)
 
    Example 1.37. Setting lcr_id_avp module parameter
 ...
-modparam("lcr", "lcr_id_avp", "$avp(s:lcr_id_avp)")
+modparam("lcr", "lcr_id_avp", "$avp(lcr_id)")
 ...
 
 3.38. defunct_gw_avp (AVP string)
@@ -841,7 +841,7 @@ modparam("lcr", "lcr_id_avp", "$avp(s:lcr_id_avp)")
 
    Example 1.38. Setting defunct_gw_avp module parameter
 ...
-modparam("lcr", "defunct_gw_avp", "$avp(s:defunct_gw_avp)")
+modparam("lcr", "defunct_gw_avp", "$avp(lcr_defunct_gw)")
 ...
 
 3.39. lcr_rule_hash_size (integer)
@@ -1122,7 +1122,7 @@ defunct_gw(60);
 
    Example 1.54. from_gw usage
 ...
-if (from_gw(1, $avp(s:real_source_addr), 2) {
+if (from_gw(1, $avp(real_source_addr), 2) {
         ...
 };
 ...
