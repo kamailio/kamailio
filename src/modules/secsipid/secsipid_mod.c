@@ -223,7 +223,7 @@ static int ki_secsipid_check_identity(sip_msg_t *msg, str *keypath)
 	}
 
 	LM_DBG("identity check: failed\n");
-	return -1;
+	return ret;
 }
 
 /**
@@ -281,7 +281,7 @@ static int ki_secsipid_check_identity_pubkey(sip_msg_t *msg, str *keyval)
 	}
 
 	LM_DBG("identity check: failed\n");
-	return -1;
+	return ret;
 }
 
 /**
@@ -466,7 +466,7 @@ static sr_kemi_xval_t* ki_secsipid_get_url(sip_msg_t *msg, str *surl)
  */
 static int w_secsipid_get_url(sip_msg_t *msg, char *purl, char *povar)
 {
-	int r;
+	int ret;
 	pv_spec_t *ovar;
 	pv_value_t val;
 	str surl = {NULL, 0};
@@ -484,10 +484,10 @@ static int w_secsipid_get_url(sip_msg_t *msg, char *purl, char *povar)
 		_secsipid_papi.SecSIPIDSetFileCacheOptions(secsipid_cache_dir.s,
 				secsipid_cache_expire);
 	}
-	r = _secsipid_papi.SecSIPIDGetURLContent(surl.s, secsipid_timeout,
+	ret = _secsipid_papi.SecSIPIDGetURLContent(surl.s, secsipid_timeout,
 			&_secsipid_get_url_val.s, &_secsipid_get_url_val.len);
-	if(r!=0) {
-		return -1;
+	if(ret!=0) {
+		return ret;
 	}
 	ovar = (pv_spec_t *)povar;
 
