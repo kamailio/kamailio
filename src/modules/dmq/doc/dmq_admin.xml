@@ -121,7 +121,12 @@ sip:192.168.40.17:5060;status=active
 	<section id="dmq.p.server_address">
 		<title><varname>server_address</varname>(str)</title>
 		<para>
-		The local server address. This is the interface over which the DMQ engine will send/receive messages.
+			The local server address. This is the addres with which the local DMQ
+			node joins the servers group to send/receive messages.
+		</para>
+		<para>
+			Note: if server_socket is not set, then this address has to match a
+			local socket, which will be used to send/receive messages.
 		</para>
 		<para>
 		<emphasis>Default value is <quote>NULL</quote>.</emphasis>
@@ -133,6 +138,28 @@ sip:192.168.40.17:5060;status=active
 modparam("dmq", "server_address", "sip:10.0.0.20:5060")
 ...
 modparam("dmq", "server_address", "sip:10.0.0.20:5061;transport=tls")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="dmq.p.server_socket">
+		<title><varname>server_socket</varname>(str)</title>
+		<para>
+			The local listen address. This is the interface over which the DMQ
+			engine will send/receive messages.
+		</para>
+		<para>
+			Note: if this parameter is not set, the socket to send/receice
+			messages is built from server_address parameter.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>NULL</quote>.</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>server_socket</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dmq", "server_socket", "udp:10.0.0.20:5060")
 ...
 </programlisting>
 		</example>
