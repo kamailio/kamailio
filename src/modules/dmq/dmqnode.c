@@ -351,6 +351,22 @@ int del_dmq_node(dmq_node_list_t *list, dmq_node_t *node)
 }
 
 /**
+ * @brief delete dmq node by uri
+ */
+int dmq_node_del_by_uri(dmq_node_list_t *list, str *suri)
+{
+	dmq_node_t dnode;
+
+	memset(&dnode, 0, sizeof(dmq_node_t));
+	if(parse_uri(suri->s, suri->len, &dnode.uri) < 0) {
+		LM_ERR("error parsing uri [%.*s]\n", suri->len, suri->s);
+		return -1;
+	}
+
+	return del_dmq_node(list, &dnode);
+}
+
+/**
  * @brief add dmq node
  */
 dmq_node_t *add_dmq_node(dmq_node_list_t *list, str *uri)

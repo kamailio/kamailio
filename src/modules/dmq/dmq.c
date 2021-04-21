@@ -430,8 +430,29 @@ error:
 
 static const char *dmq_rpc_list_nodes_doc[2] = {"Print all nodes", 0};
 
+void rpc_dmq_remove(rpc_t* rpc, void* ctx)
+{
+	str taddr = STR_NULL;
+
+	if (rpc->scan(ctx, ".S", &taddr) < 1) {
+		rpc->fault(ctx, 500, "Invalid Parameters");
+		return;
+	}
+	if(dmq_node_del_by_uri(dmq_node_list, &taddr)<0) {
+		rpc->fault(ctx, 500, "Failure");
+		return;
+	}
+}
+
+static const char* rpc_dmq_remove_doc[3] = {
+	"Remove a DMQ node",
+	"address - the DMQ node address",
+	0
+};
+
 static rpc_export_t rpc_methods[] = {
 	{"dmq.list_nodes", dmq_rpc_list_nodes, dmq_rpc_list_nodes_doc, RET_ARRAY},
+	{"dmq.remove",     rpc_dmq_remove,     rpc_dmq_remove_doc, 0},
 	{0, 0, 0, 0}
 };
 
