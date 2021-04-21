@@ -56,6 +56,7 @@ Charles Chance
         5. RPC Commands
 
               5.1. dmq.list_nodes
+              5.2. dmq.remove
 
    2. Developer Guide
 
@@ -87,6 +88,7 @@ Charles Chance
    1.14. dmq_t_replicate usage
    1.15. dmq_is_from_node usage
    1.16. dmq.list_nodes usage
+   1.17. dmq.remove usage
    2.1. dmq_api_t structure
    2.2. register_dmq_peer usage
    2.3. bcast_message usage
@@ -125,6 +127,7 @@ Chapter 1. Admin Guide
    5. RPC Commands
 
         5.1. dmq.list_nodes
+        5.2. dmq.remove
 
 1. Overview
 
@@ -464,6 +467,7 @@ ext/plain");
 5. RPC Commands
 
    5.1. dmq.list_nodes
+   5.2. dmq.remove
 
 5.1. dmq.list_nodes
 
@@ -472,6 +476,18 @@ ext/plain");
    Example 1.16. dmq.list_nodes usage
 ...
 kamcmd dmq.list_nodes
+...
+
+5.2. dmq.remove
+
+   Remove a DMQ node by address.
+
+   Parameters:
+     * address - the SIP address of the DMQ node to remove.
+
+   Example 1.17. dmq.remove usage
+...
+kamctl rpc dmq.remove sip:1.2.3.4:5060
 ...
 
 Chapter 2. Developer Guide
