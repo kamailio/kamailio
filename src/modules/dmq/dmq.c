@@ -118,6 +118,7 @@ static param_export_t params[] = {
 	{"num_workers", INT_PARAM, &dmq_num_workers},
 	{"ping_interval", INT_PARAM, &dmq_ping_interval},
 	{"server_address", PARAM_STR, &dmq_server_address},
+	{"server_socket", PARAM_STR, &dmq_server_socket},
 	{"notification_address", PARAM_STR|USE_FUNC_PARAM, dmq_add_notification_address},
 	{"notification_channel", PARAM_STR, &dmq_notification_channel},
 	{"multi_notify", INT_PARAM, &dmq_multi_notify},
@@ -229,10 +230,12 @@ static int mod_init(void)
 		return -1;
 	}
 
-	/* create socket string out of the server_uri */
-	if(make_socket_str_from_uri(&dmq_server_uri, &dmq_server_socket) < 0) {
-		LM_ERR("failed to create socket out of server_uri\n");
-		return -1;
+	if(dmq_server_socket.s==NULL || dmq_server_socket.len<=0) {
+		/* create socket string out of the server_uri */
+		if(make_socket_str_from_uri(&dmq_server_uri, &dmq_server_socket) < 0) {
+			LM_ERR("failed to create socket out of server_uri\n");
+			return -1;
+		}
 	}
 	if(lookup_local_socket(&dmq_server_socket) == NULL) {
 		LM_ERR("server_uri is not a socket the proxy is listening on\n");
@@ -353,9 +356,6 @@ static void destroy(void)
 		LM_DBG("unregistering node %.*s\n", STR_FMT(&dmq_self_node->orig_uri));
 		dmq_self_node->status = DMQ_NODE_DISABLED;
 		request_nodelist(dmq_notification_node, 1);
-	}
-	if(dmq_server_socket.s) {
-		pkg_free(dmq_server_socket.s);
 	}
 	if(dmq_init_callback_done) {
 		shm_free(dmq_init_callback_done);
