@@ -522,6 +522,30 @@ modparam("dmq", "ping_interval", 90)
                 </programlisting>
                 </example>
         </section>
+        <section id="dmq.r.list_nodes">
+            <title>dmq.remove</title>
+			<para>
+				Remove a DMQ node by address.
+			</para>
+			<para>Parameters:</para>
+			<itemizedlist>
+					<listitem>
+					<para>
+						<emphasis>address</emphasis> - the SIP address
+						of the DMQ node to remove.
+					</para>
+					</listitem>
+			</itemizedlist>
+
+               <example>
+                <title>dmq.remove usage</title>
+                <programlisting format="linespecific">
+...
+&kamctl; rpc dmq.remove sip:1.2.3.4:5060
+...
+                </programlisting>
+                </example>
+        </section>
 	</section>
 </chapter>
 
