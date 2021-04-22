@@ -409,7 +409,7 @@ static int ki_ro_ccr_stop(sip_msg_t *msg, str* p_direction, int p_code, str* p_r
     struct ro_session* ro_session;
     struct ro_session_entry *ro_session_entry;
     unsigned int h_entry;
-    str s_code, s_reason;
+    str s_reason;
     unsigned int code;
     int dir = 0; /*any side*/
     char *c_direction;
@@ -527,7 +527,7 @@ static int ki_ro_ccr(sip_msg_t *msg, str* s_route_name, str* s_direction, int re
         return RO_RETURN_ERROR;
     }
     
-    dir = get_direction_as_int(&s_direction);
+    dir = get_direction_as_int(s_direction);
     
     if (dir == RO_ORIG_DIRECTION) {
         //get caller IMPU from asserted identity
@@ -610,7 +610,7 @@ send_ccr:
         goto done;
     }
     
-    ret = Ro_Send_CCR(msg, dlg, dir, reservation_units, &s_incoming_trunk_id, &s_outgoing_trunk_id, &pani, cfg_action, tindex, tlabel);
+    ret = Ro_Send_CCR(msg, dlg, dir, reservation_units, s_incoming_trunk_id, s_outgoing_trunk_id, &pani, cfg_action, tindex, tlabel);
     
     if(ret < 0){
         LM_ERR("Failed to send CCR\n");
@@ -669,6 +669,7 @@ static int ki_ro_set_session_id_avp(sip_msg_t *msg) {
     res = create_response_avp_string("ro_session_id", &ro_session->ro_session_id);
     dlgb.release_dlg(dlg);
     unref_ro_session(ro_session, 1, 1);
+    return res;
 }
 
 static int ro_fixup_stop(void **param, int param_no) {
