@@ -286,7 +286,10 @@ int ki_diameter_request(struct sip_msg * msg, str* s_peer, int i_appid, int i_co
                 session = 0;
         }
 
-	if (!req) goto error1;
+	if (!req) {
+		LM_ERR("Error occurred trying to send request\n");
+		return -1;
+	}
 
 	if (!addAVPsfromJSON(req, s_message)) {
 		LM_ERR("Failed to parse JSON Request\n");
@@ -325,12 +328,6 @@ int ki_diameter_request(struct sip_msg * msg, str* s_peer, int i_appid, int i_co
 			}
 		}
 	}
-error1:
-	//Only free UAR IFF it has not been passed to CDP
-	if (req) cdpb.AAAFreeMessage(&req);
-	LM_ERR("Error occurred trying to send request\n");
-	return -1;
-
 }
 
 int diameter_request(struct sip_msg * msg, char* peer, char* appid, char* commandcode, char* message, int async) {
