@@ -432,6 +432,8 @@ int tps_msg_received(sr_event_param_t *evp)
 	int dialog;
 	int ret;
 
+	ki_tps_set_context(NULL, NULL);
+
 	obuf = (str*)evp->data;
 
 	if(tps_execute_event_route(NULL, evp, TPS_EVENTRT_INCOMING,
