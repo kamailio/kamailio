@@ -1146,7 +1146,7 @@ int tps_db_load_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
 		nr_keys++;
 	}
 
-	if(md->x_context.len>0) {
+	if(msg->first_line.type==SIP_REQUEST && md->x_context.len>0) {
 		db_keys[nr_keys]=&tt_col_x_context;
 		db_ops[nr_keys]=OP_EQ;
 		db_vals[nr_keys].type = DB1_STR;
