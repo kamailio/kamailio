@@ -272,20 +272,19 @@ void lost_free_held(p_lost_held_t *held)
 char *lost_copy_string(str src, int *lgth)
 {
 	char *res = NULL;
+	*lgth = 0;
 
-	if(src.s == NULL && src.len == 0) {
-		*lgth = 0;
-		return NULL;
-	}
-	res = (char *)pkg_malloc((src.len + 1) * sizeof(char));
-	if(res == NULL) {
-		PKG_MEM_ERROR;
-		*lgth = 0;
-	} else {
-		memset(res, 0, src.len + 1);
-		memcpy(res, src.s, src.len);
-		res[src.len] = '\0';
-		*lgth = (int)strlen(res);
+	/* only copy a valid string */
+	if(src.s != NULL && src.len > 0) {
+		res = (char *)pkg_malloc((src.len + 1) * sizeof(char));
+		if(res == NULL) {
+			PKG_MEM_ERROR;
+		} else {
+			memset(res, 0, src.len + 1);
+			memcpy(res, src.s, src.len);
+			res[src.len] = '\0';
+			*lgth = (int)strlen(res);
+		}
 	}
 
 	return res;
@@ -590,7 +589,7 @@ int lost_parse_host(const char *uri, str *host, int *flag)
 	host->len = end - search;
 
 	if(ip6) {
-		*flag = AF_INET;
+		*flag = AF_INET6;
 	} else {
 		*flag = AF_INET;
 	}
@@ -1194,7 +1193,7 @@ int lost_xpath_location(xmlDocPtr doc, char *path, p_lost_loc_t loc)
 				/* nothing found */
 				if((select < 0) && (i == size - 1)) {
 					LM_ERR("could not find proper location-info element\n");
-					xmlFree(xmlbuff);
+					xmlFree(xmlbuff); /* clean up */
 					xmlFreeDoc(new);
 					xmlXPathFreeObject(result);
 					return -1;
@@ -1202,22 +1201,28 @@ int lost_xpath_location(xmlDocPtr doc, char *path, p_lost_loc_t loc)
 
 				if(i == select) {
 					/* return the current profile */
-					loc->profile = (char *)pkg_malloc(strlen(s_profile) + 1);
-					if(loc->profile == NULL) {
-						xmlFree(xmlbuff);
+					if(s_profile != NULL) {
+						loc->profile = (char *)pkg_malloc(strlen(s_profile) + 1);
+						if(loc->profile == NULL) {
+							xmlFree(xmlbuff); /* clean up */
+							xmlFreeDoc(new);
+							xmlXPathFreeObject(result);
+							goto err;
+						}
+						memset(loc->profile, 0, strlen(s_profile) + 1);
+						memcpy(loc->profile, s_profile, strlen(s_profile));
+					} else {
+						xmlFree(xmlbuff); /* clean up */
 						xmlFreeDoc(new);
 						xmlXPathFreeObject(result);
 						goto err;
 					}
-					memset(loc->profile, 0, strlen(s_profile) + 1);
-					memcpy(loc->profile, s_profile, strlen(s_profile));
-
 					/* remove xml header from location element */
 					remove = strlen("<?xml version='1.0'?>\n");
 					buffersize = buffersize - remove;
 					ptr = (char *)pkg_malloc((buffersize + 1) * sizeof(char));
 					if(ptr == NULL) {
-						xmlFree(xmlbuff);
+						xmlFree(xmlbuff); /* clean up */
 						xmlFreeDoc(new);
 						xmlXPathFreeObject(result);
 						goto err;
@@ -1233,7 +1238,7 @@ int lost_xpath_location(xmlDocPtr doc, char *path, p_lost_loc_t loc)
 					/* return the location DOM */
 					loc->xpath = (char *)pkg_malloc(len + 1);
 					if(loc->xpath == NULL) {
-						pkg_free(ptr);
+						pkg_free(ptr); /* clean up */
 						ptr = NULL;
 						xmlFree(xmlbuff);
 						xmlFreeDoc(new);
@@ -1242,8 +1247,7 @@ int lost_xpath_location(xmlDocPtr doc, char *path, p_lost_loc_t loc)
 					}
 					memset(loc->xpath, 0, len + 1);
 					memcpy(loc->xpath, tmp, len);
-					/* free memory */
-					pkg_free(ptr);
+					pkg_free(ptr); /* clean up */
 					ptr = NULL;
 				} else {
 					LM_WARN("xpath location-info element(%d) ignored\n", i + 1);
