@@ -566,7 +566,6 @@ p_lost_issue_t lost_get_response_issues(xmlNodePtr node)
 
 	if(node == NULL) {
 		return NULL;
-		;
 	}
 
 	LM_DBG("### LOST\t%s\n", node->name);
@@ -574,19 +573,13 @@ p_lost_issue_t lost_get_response_issues(xmlNodePtr node)
 	cur = node->children;
 	while(cur) {
 		if(cur->type == XML_ELEMENT_NODE) {
-			/* get a new list element */
-			new = lost_new_response_issues();
-			if(new == NULL) {
-				return NULL;
-			}
-			/* parse the element */
+			/* get a new response type element */
 			issue = lost_new_response_type();
 			if(issue == NULL) {
-				PKG_MEM_ERROR;
-				pkg_free(list);
-				pkg_free(new);
-				return NULL;
+				/* didn't get it ... return */
+				break;
 			}
+			/* parse properties */
 			issue->source = lost_get_property(cur->parent, MAPP_PROP_SRC, &len);
 			tmp.s = (char *)cur->name;
 			tmp.len = strlen((char *)cur->name);
@@ -601,12 +594,17 @@ p_lost_issue_t lost_get_response_issues(xmlNodePtr node)
 					issue->info->text = lost_get_property(cur, PROP_MSG, &len);
 					issue->info->lang = lost_get_property(cur, PROP_LANG, &len);
 				}
+				/* get a new list element */
+				new = lost_new_response_issues();
+				if(new == NULL) {
+					/* didn't get it, delete response type element ... return */
+					lost_delete_response_type(&issue); /* clean up */
+					break;
+				}
 				/* append to list */
 				new->issue = issue;
 				new->next = list;
 				list = new;
-			} else {
-				lost_delete_response_issues(&new); /* clean up */
 			}
 			/* get next element */
 			cur = cur->next;

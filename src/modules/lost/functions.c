@@ -92,6 +92,9 @@ char *lost_held_type(char *type, int *exact, int *lgth)
 	int len = 0;
 
 	ret = (char *)pkg_malloc(1);
+	if(ret == NULL)
+		goto err;
+
 	memset(ret, 0, 1);
 	*lgth = 0;
 
@@ -269,7 +272,6 @@ int lost_held_function(struct sip_msg *_m, char *_con, char *_pidf, char *_url,
 	held = lost_new_held(did, rtype, held_resp_time, held_exact_type);
 	if(held == NULL) {
 		LM_ERR("held object allocation failed\n");
-		lost_free_string(&idhdr); /* clean up */
 		goto err;
 	}
 	que.s = lost_held_location_request(held, &que.len);
@@ -303,7 +305,7 @@ int lost_held_function(struct sip_msg *_m, char *_con, char *_pidf, char *_url,
 			/* is it a name or ip ... check nameinfo (reverse lookup) */
 			len = 0;
 			ipstr = lost_copy_string(host, &len);
-			if(ipstr != NULL && len > 0) {
+			if(ipstr != NULL) {
 				name.s = &(istr[0]);
 				name.len = NI_MAXHOST;
 				if(lost_get_nameinfo(ipstr, &name, flag) > 0) {
@@ -320,20 +322,18 @@ int lost_held_function(struct sip_msg *_m, char *_con, char *_pidf, char *_url,
 				}
 				pkg_free(ipstr); /* clean up */
 				ipstr = NULL;
+			} else {
+				LM_ERR("could not copy host info\n");
 			}
 			url.s = &(ustr[0]);
 			url.len = MAX_URI_SIZE;
 			if((naptr = lost_naptr_lookup(host, &sheld, &url)) == 0) {
 				LM_ERR("NAPTR failed on [%.*s]\n", host.len, host.s);
-				lost_free_string(&que); /* clean up */
-				lost_free_string(&idhdr);
 				goto err;
 			}
 		} else {
 			LM_ERR("failed to get location service for [%.*s]\n", did.len,
 					did.s);
-			lost_free_string(&que); /* clean up */
-			lost_free_string(&idhdr);
 			goto err;
 		}
 
@@ -342,21 +342,20 @@ int lost_held_function(struct sip_msg *_m, char *_con, char *_pidf, char *_url,
 		/* curl doesn't like str */
 		len = 0;
 		lisurl = lost_copy_string(url, &len);
-		/* send to service */
-		if(lisurl != NULL && len > 0) {
-			curl = httpapi.http_client_query_c(
-					_m, lisurl, &res, que.s, mtheld, ACCEPT_HDR);
-			pkg_free(lisurl); /*clean up */
-			lisurl = NULL;
-		} else {
+		if(lisurl == NULL) {
 			LM_ERR("could not copy POST url\n");
 			goto err;
 		}
+		/* send to service */
+		curl = httpapi.http_client_query_c(
+					_m, lisurl, &res, que.s, mtheld, ACCEPT_HDR);
+		pkg_free(lisurl); /*clean up */
+		lisurl = NULL;
 	}
 	/* only HTTP 2xx responses are accepted */
 	if(curl >= 300 || curl < 100) {
 		if(con.s != NULL && con.len > 0) {
-			LM_ERR("POST [%.*s] failed with error: %d\n", con.len, con.s, curl);
+			LM_ERR("[%.*s] failed with error: %d\n", con.len, con.s, curl);
 		} else {
 			LM_ERR("POST [%.*s] failed with error: %d\n", url.len, url.s, curl);
 		}
@@ -436,26 +435,22 @@ int lost_held_function(struct sip_msg *_m, char *_con, char *_pidf, char *_url,
 			} else {
 				len = 0;
 				heldreq = lost_held_post_request(&len, 0, NULL);
-				if(len > 0) {
-
-					LM_DBG("held POST request: [%.*s]\n", len, heldreq);
-
-					curl = httpapi.http_client_query_c(
-							_m, geo.s, &pidfurl, heldreq, mtheld, ACCEPT_HDR);
-					pkg_free(heldreq); /* clean up */
-					heldreq = NULL;
-				} else {
+				if(heldreq == NULL) {
 					LM_ERR("could not create POST request\n");
-					lost_free_string(&pidfurl); /* clean up */
 					goto err;
 				}
+				
+				LM_DBG("held POST request: [%.*s]\n", len, heldreq);
+
+				curl = httpapi.http_client_query_c(
+							_m, geo.s, &pidfurl, heldreq, mtheld, ACCEPT_HDR);
+				pkg_free(heldreq); /* clean up */
+				heldreq = NULL;
 			}
 			/* only HTTP 2xx responses are accepted */
 			if(curl >= 300 || curl < 100) {
 				LM_ERR("GET [%.*s] failed with error: %d\n", pidfurl.len,
 						pidfurl.s, curl);
-				/* clean up */
-				lost_free_string(&pidfurl);
 				goto err;
 			}
 			if(pidfurl.len == 0) {
@@ -470,7 +465,7 @@ int lost_held_function(struct sip_msg *_m, char *_con, char *_pidf, char *_url,
 				res.len = pidfurl.len;
 			}
 		}
-		/* error received */
+	/* error received */
 	} else if(xmlStrcmp(root->name, (const xmlChar *)"error") == 0) {
 
 		LM_DBG("HELD error response [%.*s]\n", res.len, res.s);
@@ -522,10 +517,15 @@ int lost_held_function(struct sip_msg *_m, char *_con, char *_pidf, char *_url,
 	return (err.len > 0) ? LOST_SERVER_ERROR : LOST_SUCCESS;
 
 err:
-	/* clean up */
+	/* clean up pointer */
+	lost_free_string(&que);
+    lost_free_string(&idhdr);
+	lost_free_string(&pidfurl);
+	/* clean up xml */
 	if(doc != NULL) {
 		xmlFreeDoc(doc);
 	}
+	/* clean up string */
 	if(res.s != NULL && res.len > 0) {
 		lost_free_string(&res);
 	}
@@ -600,10 +600,24 @@ int lost_held_dereference(struct sip_msg *_m, char *_url, char *_pidf,
 			goto err;
 		}
 		if(rtm.len == 0) {
+			/* default: rtime = 0 */
 			LM_WARN("no response time found\n");
-			ltime = 0;
 		} else {
 			ltime = strtol(rtm.s, &ptr, 10);
+			/* look for a number ... */
+			if((ltime > 0) && (strlen(ptr) == 0)) {
+				/* responseTime: milliseconds */
+				rtime = ltime;
+			/* or a string */ 
+			} else if((ltime == 0) && (strlen(ptr) > 0)) {
+				if(strncasecmp(ptr, HELD_ED, strlen(HELD_ED)) == 0) {
+					/* responseTime: emergencyDispatch */
+					rtime = -1;
+				} else if(strncasecmp(ptr, HELD_ER, strlen(HELD_ER)) == 0) {
+					/* responseTime: emergencyRouting */
+					rtime = 0;
+				}
+			}
 		}
 	}
 
@@ -620,23 +634,10 @@ int lost_held_dereference(struct sip_msg *_m, char *_url, char *_pidf,
 			len = 0;
 			/* response type string sanity check */
 			rtype = lost_held_type(rtp.s, &exact, &len);
-			if(len == 0) {
+			/* default value will be used if nothing was returned */
+			if(rtype == NULL) {
 				LM_WARN("cannot normalize [%.*s]\n", rtp.len, rtp.s);
-				rtype = NULL;
 			}
-		}
-	}
-
-	if((ltime > 0) && (strlen(ptr) == 0)) {
-		/* responseTime: milliseconds */
-		rtime = ltime;
-	} else if((ltime == 0) && (strlen(ptr) > 0)) {
-		if(strncasecmp(ptr, HELD_ED, strlen(HELD_ED)) == 0) {
-			/* responseTime: emergencyDispatch */
-			rtime = -1;
-		} else if(strncasecmp(ptr, HELD_ER, strlen(HELD_ER)) == 0) {
-			/* responseTime: emergencyRouting */
-			rtime = 0;
 		}
 	}
 
@@ -649,7 +650,7 @@ int lost_held_dereference(struct sip_msg *_m, char *_url, char *_pidf,
 		rtype = NULL;
 	}
 
-	if(heldreq != NULL && len == 0) {
+	if(heldreq == NULL) {
 		LM_ERR("could not create POST request\n");
 		goto err;
 	}
@@ -659,22 +660,21 @@ int lost_held_dereference(struct sip_msg *_m, char *_url, char *_pidf,
 	/* curl doesn't like str */
 	len = 0;
 	lisurl = lost_copy_string(url, &len);
-	if(lisurl != NULL && len > 0) {
-
-		LM_DBG("POST url: [%.*s]\n", len, lisurl);
-
-		curl = httpapi.http_client_query_c(
-				_m, lisurl, &res, heldreq, mtheld, ACCEPT_HDR);
-		pkg_free(lisurl); /* clean up */
-		lisurl = NULL;
-		pkg_free(heldreq);
-		heldreq = NULL;
-	} else {
+	if(lisurl == NULL) {
 		LM_ERR("could not copy POST url\n");
 		pkg_free(heldreq); /* clean up */
 		heldreq = NULL;
 		goto err;
 	}
+
+	LM_DBG("POST url: [%.*s]\n", len, lisurl);
+
+	curl = httpapi.http_client_query_c(
+				_m, lisurl, &res, heldreq, mtheld, ACCEPT_HDR);
+	pkg_free(lisurl); /* clean up */
+	lisurl = NULL;
+	pkg_free(heldreq);
+	heldreq = NULL;
 
 	/* only HTTP 2xx responses are accepted */
 	if(curl >= 300 || curl < 100) {
@@ -757,10 +757,11 @@ int lost_held_dereference(struct sip_msg *_m, char *_url, char *_pidf,
 	return (err.len > 0) ? LOST_SERVER_ERROR : LOST_SUCCESS;
 
 err:
-	/* clean up */
+	/* clean up xml */
 	if(doc != NULL) {
 		xmlFreeDoc(doc);
 	}
+	/* clean up string */
 	if(res.s != NULL && res.len > 0) {
 		lost_free_string(&res);
 	}
@@ -989,18 +990,17 @@ int lost_function(struct sip_msg *_m, char *_con, char *_uri, char *_name,
 			} else {
 				len = 0;
 				heldreq = lost_held_post_request(&len, 0, NULL);
-				if(len > 0) {
-
-					LM_DBG("POST request: [%.*s]\n", len, heldreq);
-
-					curl = httpapi.http_client_query_c(
-							_m, url.s, &ret, heldreq, mtheld, ACCEPT_HDR);
-					pkg_free(heldreq); /* clean up */
-					heldreq = NULL;
-				} else {
+				if(heldreq == NULL) {
 					LM_ERR("could not create POST request\n");
 					goto err;
 				}
+
+				LM_DBG("POST request: [%.*s]\n", len, heldreq);
+
+				curl = httpapi.http_client_query_c(
+							_m, url.s, &ret, heldreq, mtheld, ACCEPT_HDR);
+				pkg_free(heldreq); /* clean up */
+				heldreq = NULL;
 			}
 			/* only HTTP 2xx responses are accepted */
 			if(curl >= 300 || curl < 100) {
@@ -1059,15 +1059,14 @@ int lost_function(struct sip_msg *_m, char *_con, char *_uri, char *_name,
 		/* copy url */
 		len = 0;
 		urlrep = lost_copy_string(url, &len);
-		if(urlrep != NULL && len > 0) {
-			/* send request */
-			curl = httpapi.http_client_query(_m, urlrep, &ret, req.s, mtlost);
-			pkg_free(urlrep); /* clean up */
-			urlrep = NULL;
-		} else {
+		if(urlrep == NULL) {
 			LM_ERR("could not copy POST url\n");
 			goto err;
 		}
+		/* send request */
+		curl = httpapi.http_client_query(_m, urlrep, &ret, req.s, mtlost);
+		pkg_free(urlrep); /* clean up */
+		urlrep = NULL;
 	} else {
 		curl = httpapi.http_connect(_m, &con, NULL, &ret, mtlost, &req);
 	}
@@ -1076,7 +1075,7 @@ int lost_function(struct sip_msg *_m, char *_con, char *_uri, char *_name,
 		if(naptr) {
 			LM_ERR("POST [%.*s] failed with error: %d\n", url.len, url.s, curl);
 		} else {
-			LM_ERR("POST [%.*s] failed with error: %d\n", con.len, con.s, curl);
+			LM_ERR("[%.*s] failed with error: %d\n", con.len, con.s, curl);
 		}
 		lost_free_string(&ret);
 		goto err;
@@ -1160,11 +1159,13 @@ int lost_function(struct sip_msg *_m, char *_con, char *_uri, char *_name,
 						tmp.len = strlen(fsrdata->redirect->target);
 						url.s = &(ustr[0]);
 						url.len = MAX_URI_SIZE;
+						/* get url string via NAPTR */
 						naptr = lost_naptr_lookup(tmp, &shttps, &url);
 						if(naptr == 0) {
 							/* fallback to http */
 							naptr = lost_naptr_lookup(tmp, &shttp, &url);
 						}
+						/* nothing found ... return */
 						if(naptr == 0) {
 							LM_ERR("NAPTR failed on [%.*s]\n", tmp.len, tmp.s);
 							goto err;
@@ -1192,24 +1193,24 @@ int lost_function(struct sip_msg *_m, char *_con, char *_uri, char *_name,
 						/* copy url */
 						len = 0;
 						urlrep = lost_copy_string(url, &len);
-						if(urlrep != NULL && len > 0) {
-							/* send request */
-							curl = httpapi.http_client_query(
-									_m, urlrep, &ret, req.s, mtlost);
-							url.s = NULL;
-							url.len = 0;
-							pkg_free(urlrep); /*clean up */
-							urlrep = NULL;
-							/* only HTTP 2xx responses are accepted */
-							if(curl >= 300 || curl < 100) {
-								LM_ERR("POST [%.*s] failed with error: %d\n",
-									url.len, url.s, curl);
-								goto err;
-							}
-						} else {
+						if(urlrep == NULL) {
 							LM_ERR("could not copy POST url\n");
 							goto err;
 						}
+						/* send request */
+						curl = httpapi.http_client_query(
+								_m, urlrep, &ret, req.s, mtlost);
+						pkg_free(urlrep); /*clean up */
+						urlrep = NULL;
+						/* only HTTP 2xx responses are accepted */
+						if(curl >= 300 || curl < 100) {
+							LM_ERR("POST [%.*s] failed with error: %d\n",
+								url.len, url.s, curl);
+							goto err;
+						}
+						/* reset url string */
+						url.s = NULL;
+						url.len = 0;
 						/* once more ... we got a redirect */
 						redirect = 1;
 					}
@@ -1268,6 +1269,7 @@ err:
 	lost_free_findServiceResponse(&fsrdata);
 	lost_free_geoheader_list(&geolist);
 	lost_free_loc(&loc);
+	/* clean up string */
 	if(oldurl.s != NULL && oldurl.len > 0) {
 		lost_free_string(&oldurl);
 	}
