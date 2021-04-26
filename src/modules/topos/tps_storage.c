@@ -1149,17 +1149,21 @@ int tps_db_load_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
 			if(md->a_uuid.s[0]=='a') {
 				db_keys[nr_keys]=&tt_col_a_uuid;
 				db_vals[nr_keys].val.str_val = TPS_STRZ(md->a_uuid);
+				nr_keys++;
 			} else if(md->a_uuid.s[0]=='b') {
 				db_keys[nr_keys]=&tt_col_b_uuid;
 				db_vals[nr_keys].val.str_val = TPS_STRZ(md->a_uuid);
+				nr_keys++;
 			}
 		} else if(md->b_uuid.len>0) {
 			if(md->b_uuid.s[0]=='a') {
 				db_keys[nr_keys]=&tt_col_a_uuid;
 				db_vals[nr_keys].val.str_val = TPS_STRZ(md->b_uuid);
+				nr_keys++;
 			} else if(md->b_uuid.s[0]=='b') {
 				db_keys[nr_keys]=&tt_col_b_uuid;
 				db_vals[nr_keys].val.str_val = TPS_STRZ(md->b_uuid);
+				nr_keys++;
 			}
 		}
 	}

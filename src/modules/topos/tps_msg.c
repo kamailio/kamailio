@@ -826,6 +826,9 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 	}
 
 	lkey = msg->callid->body;
+	LM_DBG("callid [%.*s] - a_uuid [%.*s] - b_uuid [%.*s]\n", lkey.len, lkey.s,
+			mtsd.a_uuid.len, ((mtsd.a_uuid.len>0)?mtsd.a_uuid.s:""),
+			mtsd.b_uuid.len, ((mtsd.b_uuid.len>0)?mtsd.b_uuid.s:""));
 
 	tps_storage_lock_get(&lkey);
 
