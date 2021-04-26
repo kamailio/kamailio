@@ -1110,7 +1110,7 @@ int tps_db_load_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
 
 	if((get_cseq(msg)->method_id == METHOD_SUBSCRIBE)
 			|| ((get_cseq(msg)->method_id == METHOD_NOTIFY)
-				&& (msg->event->len > 0))) {
+				&& (msg->event && msg->event->len > 0))) {
 		bInviteDlg = 0;
 	}
 
