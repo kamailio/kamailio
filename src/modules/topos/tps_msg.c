@@ -309,17 +309,18 @@ int tps_dlg_message_update(sip_msg_t *msg, tps_data_t *ptsd, int ctmode)
 	str tuuid = STR_NULL;
 	int ret;
 
+#define TPS_TUUID_MIN_LEN 10
+
 	if(parse_sip_msg_uri(msg)<0) {
 		LM_ERR("failed to parse r-uri\n");
 		return -1;
 	}
 
-	if(msg->parsed_uri.sip_params.len<10) {
-		LM_DBG("not an expected %s format\n", (ctmode==0)?"user":"param");
-		return 1;
-	}
-
 	if (ctmode == 1 || ctmode == 2) {
+		if(msg->parsed_uri.sip_params.len<TPS_TUUID_MIN_LEN) {
+			LM_DBG("not an expected param format\n");
+			return 1;
+		}
 		/* find the r-uri parameter */
 		ret = tps_get_param_value(&msg->parsed_uri.params,
 			&_tps_cparam_name, &tuuid);
@@ -332,6 +333,10 @@ int tps_dlg_message_update(sip_msg_t *msg, tps_data_t *ptsd, int ctmode)
 			return 1;
 		}
 	} else {
+		if(msg->parsed_uri.user.len<TPS_TUUID_MIN_LEN) {
+			LM_DBG("not an expected user format\n");
+			return 1;
+		}
 		tuuid = msg->parsed_uri.user;
 	}
 
