@@ -306,7 +306,7 @@ error:
  */
 int tps_dlg_message_update(sip_msg_t *msg, tps_data_t *ptsd, int ctmode)
 {
-	str tmp;
+	str tuuid = STR_NULL;
 	int ret;
 
 	if(parse_sip_msg_uri(msg)<0) {
@@ -314,14 +314,15 @@ int tps_dlg_message_update(sip_msg_t *msg, tps_data_t *ptsd, int ctmode)
 		return -1;
 	}
 
+	if(msg->parsed_uri.sip_params.len<10) {
+		LM_DBG("not an expected %s format\n", (ctmode==0)?"user":"param");
+		return 1;
+	}
+
 	if (ctmode == 1 || ctmode == 2) {
-		if(msg->parsed_uri.sip_params.len<10) {
-			LM_DBG("not an expected param format\n");
-			return 1;
-		}
-		// find parameter, there might be others
+		/* find the r-uri parameter */
 		ret = tps_get_param_value(&msg->parsed_uri.params,
-			&_tps_cparam_name, &tmp);
+			&_tps_cparam_name, &tuuid);
 		if (ret < 0) {
 			LM_ERR("failed to parse param\n");
 			return -1;
@@ -330,31 +331,20 @@ int tps_dlg_message_update(sip_msg_t *msg, tps_data_t *ptsd, int ctmode)
 			LM_DBG("prefix para not found\n");
 			return 1;
 		}
-		if(memcmp(tmp.s, "atpsh-", 6)==0) {
-			ptsd->a_uuid = tmp;
-			return 0;
-		}
-		if(memcmp(tmp.s, "btpsh-", 6)==0) {
-			ptsd->a_uuid = tmp;
-			ptsd->b_uuid = tmp;
-			return 0;
-		}
-
 	} else {
-		if(msg->parsed_uri.user.len<10) {
-			LM_DBG("not an expected user format\n");
-			return 1;
-		}
-		if(memcmp(msg->parsed_uri.user.s, "atpsh-", 6)==0) {
-			ptsd->a_uuid = msg->parsed_uri.user;
-			return 0;
-		}
-		if(memcmp(msg->parsed_uri.user.s, "btpsh-", 6)==0) {
-			ptsd->a_uuid = msg->parsed_uri.user;
-			ptsd->b_uuid = msg->parsed_uri.user;
-			return 0;
-		}
+		tuuid = msg->parsed_uri.user;
 	}
+
+	if(memcmp(tuuid.s, "atpsh-", 6)==0) {
+		ptsd->a_uuid = tuuid;
+		return 0;
+	}
+	if(memcmp(tuuid.s, "btpsh-", 6)==0) {
+		ptsd->a_uuid = tuuid;
+		ptsd->b_uuid = tuuid;
+		return 0;
+	}
+
 	LM_DBG("not an expected prefix\n");
 
 	return 1;
@@ -840,7 +830,6 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 	if(((get_cseq(msg)->method_id) & (METHOD_BYE|METHOD_PRACK|METHOD_UPDATE))
 			&& stsd.b_contact.len <= 0) {
 		/* no B-side contact, look for INVITE transaction record */
-		memset(&stsd, 0, sizeof(tps_data_t));
 		if((get_cseq(msg)->method_id) & (METHOD_UPDATE)) {
 			/* detect direction - via from-tag */
 			if(tps_dlg_detect_direction(msg, &stsd, &direction) < 0) {
@@ -850,6 +839,8 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 		if(tps_storage_link_msg(msg, &mtsd, direction) < 0) {
 			goto error;
 		}
+		mtsd.direction = direction;
+		memset(&stsd, 0, sizeof(tps_data_t));
 		if(tps_storage_load_branch(msg, &mtsd, &stsd, 1) < 0) {
 			goto error;
 		}
@@ -859,9 +850,9 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 		if(tps_dlg_detect_direction(msg, &stsd, &direction) < 0) {
 			goto error;
 		}
+		mtsd.direction = direction;
 	}
 
-	mtsd.direction = direction;
 
 	tps_storage_lock_release(&lkey);
 
