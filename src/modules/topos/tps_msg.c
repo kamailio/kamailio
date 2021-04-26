@@ -834,34 +834,30 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 
 	tps_storage_lock_get(&lkey);
 
-	if((get_cseq(msg)->method_id)&(METHOD_PRACK)) {
-		if(tps_storage_link_msg(msg, &mtsd, TPS_DIR_DOWNSTREAM)<0) {
-			goto error;
-		}
-		if(tps_storage_load_branch(msg, &mtsd, &stsd, 1)<0) {
-			goto error;
-		}
-		use_branch = 1;
-	} else {
-		if(tps_storage_load_dialog(msg, &mtsd, &stsd) < 0) {
-			goto error;
-		}
-		if(((get_cseq(msg)->method_id) & (METHOD_BYE))
-				&& stsd.b_contact.len <= 0) {
-			/* BYE but not B-side contact, look for INVITE transaction record */
-			memset(&stsd, 0, sizeof(tps_data_t));
-			if(tps_storage_link_msg(msg, &mtsd, TPS_DIR_DOWNSTREAM) < 0) {
-				goto error;
-			}
-			if(tps_storage_load_branch(msg, &mtsd, &stsd, 1) < 0) {
-				goto error;
-			}
-			use_branch = 1;
-		} else {
+	if(tps_storage_load_dialog(msg, &mtsd, &stsd) < 0) {
+		goto error;
+	}
+	if(((get_cseq(msg)->method_id) & (METHOD_BYE|METHOD_PRACK|METHOD_UPDATE))
+			&& stsd.b_contact.len <= 0) {
+		/* no B-side contact, look for INVITE transaction record */
+		memset(&stsd, 0, sizeof(tps_data_t));
+		if((get_cseq(msg)->method_id) & (METHOD_UPDATE)) {
 			/* detect direction - via from-tag */
 			if(tps_dlg_detect_direction(msg, &stsd, &direction) < 0) {
 				goto error;
 			}
+		}
+		if(tps_storage_link_msg(msg, &mtsd, direction) < 0) {
+			goto error;
+		}
+		if(tps_storage_load_branch(msg, &mtsd, &stsd, 1) < 0) {
+			goto error;
+		}
+		use_branch = 1;
+	} else {
+		/* detect direction - via from-tag */
+		if(tps_dlg_detect_direction(msg, &stsd, &direction) < 0) {
+			goto error;
 		}
 	}
 
