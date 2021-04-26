@@ -1144,6 +1144,24 @@ int tps_db_load_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
 		db_vals[nr_keys].nul = 0;
 		db_vals[nr_keys].val.str_val = bInviteDlg ? sinv : ssub;
 		nr_keys++;
+
+		if(md->a_uuid.len>0) {
+			if(md->a_uuid.s[0]=='a') {
+				db_keys[nr_keys]=&tt_col_a_uuid;
+				db_vals[nr_keys].val.str_val = TPS_STRZ(md->a_uuid);
+			} else if(md->a_uuid.s[0]=='b') {
+				db_keys[nr_keys]=&tt_col_b_uuid;
+				db_vals[nr_keys].val.str_val = TPS_STRZ(md->a_uuid);
+			}
+		} else if(md->b_uuid.len>0) {
+			if(md->b_uuid.s[0]=='a') {
+				db_keys[nr_keys]=&tt_col_a_uuid;
+				db_vals[nr_keys].val.str_val = TPS_STRZ(md->b_uuid);
+			} else if(md->b_uuid.s[0]=='b') {
+				db_keys[nr_keys]=&tt_col_b_uuid;
+				db_vals[nr_keys].val.str_val = TPS_STRZ(md->b_uuid);
+			}
+		}
 	}
 
 	if(msg->first_line.type==SIP_REQUEST && md->x_context.len>0) {
