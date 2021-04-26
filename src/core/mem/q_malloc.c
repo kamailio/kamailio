@@ -509,7 +509,7 @@ void qm_free(void* qmp, void* p)
 
 #ifdef DBG_QM_MALLOC
 	qm_debug_frag(qm, f, file, line);
-	if (f->u.is_free){
+	if (unlikely(f->u.is_free)){
 		if(likely(cfg_get(core, core_cfg, mem_safety)==0)) {
 			LM_CRIT("BUG: freeing already freed pointer (%p),"
 				" called from %s: %s(%d), first free %s: %s(%ld) - aborting\n",
@@ -524,12 +524,13 @@ void qm_free(void* qmp, void* p)
 	}
 	MDBG("freeing frag. %p alloc'ed from %s: %s(%ld)\n",
 			f, f->file, f->func, f->line);
-#endif
+#else
 	if (unlikely(f->u.is_free)){
 		LM_INFO("freeing a free fragment (%p/%p) - ignore\n",
 				f, p);
 		return;
 	}
+#endif
 
 	size=f->size;
 	qm->used-=size;
