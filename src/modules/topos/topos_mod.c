@@ -602,11 +602,14 @@ static int tps_execute_event_route(sip_msg_t *msg, sr_event_param_t *evp,
 	struct run_act_ctx ctx;
 	int rtb;
 	sr_kemi_eng_t *keng = NULL;
-	struct onsend_info onsnd_info = {0};
+	onsend_info_t onsnd_info = {0};
+	onsend_info_t *p_onsend_bak;
 
 	if(!(_tps_eventrt_mode & evtype)) {
 		return 0;
 	}
+
+	p_onsend_bak = p_onsend;
 
 	if(evidx<0) {
 		if(_tps_eventrt_callback.s!=NULL || _tps_eventrt_callback.len>0) {
@@ -627,8 +630,10 @@ static int tps_execute_event_route(sip_msg_t *msg, sr_event_param_t *evp,
 			evidx);
 	fmsg = faked_msg_next();
 
-	onsnd_info.to = &evp->dst->to;
-	onsnd_info.send_sock = evp->dst->send_sock;
+	if(evp->dst) {
+		onsnd_info.to = &evp->dst->to;
+		onsnd_info.send_sock = evp->dst->send_sock;
+	}
 	if(msg!=NULL) {
 		onsnd_info.buf = msg->buf;
 		onsnd_info.len = msg->len;
@@ -650,7 +655,7 @@ static int tps_execute_event_route(sip_msg_t *msg, sr_event_param_t *evp,
 			if(sr_kemi_ctx_route(keng, &ctx, (msg)?msg:fmsg, EVENT_ROUTE,
 						&_tps_eventrt_callback, evname)<0) {
 				LM_ERR("error running event route kemi callback\n");
-				p_onsend=NULL;
+				p_onsend=p_onsend_bak;
 				return -1;
 			}
 		}
@@ -658,12 +663,12 @@ static int tps_execute_event_route(sip_msg_t *msg, sr_event_param_t *evp,
 	set_route_type(rtb);
 	if(ctx.run_flags&DROP_R_F) {
 		LM_DBG("exit due to 'drop' in event route\n");
-		p_onsend=NULL;
+		p_onsend=p_onsend_bak;
 		return 1;
 	}
 
 done:
-	p_onsend=NULL;
+	p_onsend=p_onsend_bak;
 	return 0;
 }
 
