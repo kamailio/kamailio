@@ -36,6 +36,7 @@
 #include "../../core/parser/parse_content.h"
 #include "../../core/parser/parse_param.h"
 #include "../../core/parser/parse_uri.h"
+#include "../../core/parser/parse_body.h"
 #include "../../core/strutils.h"
 #include "../../core/trim.h"
 #include "../../core/msg_translator.h"
@@ -122,12 +123,7 @@ static char* strstri(char* string, int len, char* substring)
 }
 
 static int sel_lost(str* res, select_t* s, struct sip_msg* msg)
-{
-	// test
-	static char buf[128];
-	strcpy(buf, "Lost module root selector\n");
-	res->s = buf;
-	res->len = strlen(buf);
+{ /* dummy */
 	return 0;
 }
 
@@ -291,7 +287,6 @@ static int sel_hdrs(str* res, select_t* s, struct sip_msg* msg, char *prps, char
 	}
 	memcpy(res->s, ts.s, res->len);
 	pkg_free(buf);
-
 	return cnt;
 }
 
@@ -404,34 +399,6 @@ static int sel_provider_info_uri_type(str* res, select_t* s, struct sip_msg* msg
 	return err;
 }
 
-static int GetNextBodyPart(str* body, str* boundary, str* bodypart)
-{
-	char *start = body->s;
-	int len = body->len;
-
-	if (bodypart->len > 0)
-	{
-		start = bodypart->s + bodypart->len;
-		len -= start - body->s;
-	}
-	if (len > 0)
-	{
-		char* pos = strstri(start, len, "Content-Type:");
-		if (pos)
-		{
-			len -= pos - start;
-			start = pos;
-			pos = strstrin(start, len, boundary->s, boundary->len);
-			if (pos) len = pos - start;
-			bodypart->s = start;
-			bodypart->len = len;
-			return 1;
-		}
-	}
-
-	return 0;	// no more parts
-}
-
 static int GetNextBodyPartHdr(str *bodypart, str *bhr)
 {
 	str ts = *bodypart;
@@ -467,60 +434,25 @@ static int sel_uri_raw(str* res, select_t* s, struct sip_msg* msg)
 	char* pos = strstri(res->s, res->len, "cid:");
 	if (pos)
 	{
-		str boundary = {0, 0};
-		str body = {0, 0};
-		str bodypart = {0, 0};
-		str cid, bhr;
+		int content_length;
+		char *d;
+		str cid;
+		char *buf;
 		int l = strlen("cid:");
-
-		// get message body
-		body.len = 0;
-		body.s = get_body(msg);
-		if (!body.s)
-		{
-			LM_ERR("failed to get the content message body\n");
-			res->len = 0;
-			return -1;
-		}
-		body.len = msg->buf + msg->len - body.s;
-		if (body.len <= 0)
-		{
-			LM_DBG("empty body in the message\n");
-			res->len = 0;
-			return 1;
-		}
-
+		
 		// get Content-Id:
 		cid.len = res->len - l - (pos - res->s);
 		cid.s = pos + l;
-
-		// find relevant to Content-Id multipart part
-		if (get_boundary(msg, &boundary))
-		{
-			// Content is not multipart
-			boundary.len = 0;
-		}
-
-		res->len = 0;
-		while (!res->len && GetNextBodyPart(&body, &boundary, &bodypart))
-		{
-			bhr.len = 0;
-			while (!res->len && GetNextBodyPartHdr(&bodypart, &bhr))
-			{
-				if (!strncasecmp(bhr.s, "Content-Id:", strlen("Content-Id:")))
-				{
-					// check Content-Id in cid->s
-					pos = strstrin(bhr.s, bhr.len, cid.s, cid.len);
-					if (pos)	//the cid found
-					{
-						res->len = bodypart.len;
-						res->s = bodypart.s;
-					}
-				}
-			}
-		}
-
-		if(boundary.s) pkg_free(boundary.s);
+		buf = pkg_malloc(cid.len + 1);
+		memcpy(buf, cid.s, cid.len);
+		buf[cid.len] = 0;
+		
+		// get body part - filter => Content-Id
+		d = get_body_part_by_filter(msg, 0, 0, buf, NULL, &content_length);
+		if (!d) content_length = 0;
+		res->len = content_length;
+		res->s = d;
+		pkg_free(buf);
 	}
 	else res->len = 0;
 	return 0;
