@@ -522,7 +522,7 @@ modparam("dmq", "ping_interval", 90)
                 </programlisting>
                 </example>
         </section>
-        <section id="dmq.r.list_nodes">
+        <section id="dmq.r.remove">
             <title>dmq.remove</title>
 			<para>
 				Remove a DMQ node by address.
