@@ -54,8 +54,12 @@ extern EVP_PKEY * tls_engine_private_key(const char* key_id);
  * ECDHE is enabled only on OpenSSL 1.0.0e and later.
  * See http://www.openssl.org/news/secadv_20110906.txt
  * for details.
+ * Also, copied from _ssl.c of Python for correct initialization.
+ * Allow automatic ECDH curve selection (on OpenSSL 1.0.2+), or use
+ * prime256v1 by default.  This is Apache mod_ssl's initialization
+ * policy, so we should be safe. OpenSSL 1.1 has it enabled by default.
  */
-#ifndef OPENSSL_NO_ECDH
+#if !defined(OPENSSL_NO_ECDH) && !defined(OPENSSL_VERSION_1_1)
 static void setup_ecdh(SSL_CTX *ctx)
 {
    EC_KEY *ecdh;
@@ -64,11 +68,15 @@ static void setup_ecdh(SSL_CTX *ctx)
       return;
    }
 
+#if defined(SSL_CTX_set_ecdh_auto)
+   SSL_CTX_set_ecdh_auto(ctx, 1);
+#else
    ecdh = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
    SSL_CTX_set_options(ctx, SSL_OP_SINGLE_ECDH_USE);
    SSL_CTX_set_tmp_ecdh(ctx, ecdh);
 
    EC_KEY_free(ecdh);
+#endif
 }
 #endif
 
@@ -665,7 +673,7 @@ static int set_cipher_list(tls_domain_t* d)
 					tls_domain_str(d), cipher_list);
 			return -1;
 		}
-#ifndef OPENSSL_NO_ECDH
+#if !defined(OPENSSL_NO_ECDH) && !defined(OPENSSL_VERSION_1_1)
                 setup_ecdh(d->ctx[i]);
 #endif
 #ifndef OPENSSL_NO_DH
