@@ -2143,6 +2143,11 @@ static int sr_kemi_hdr_insert(sip_msg_t *msg, str *txt)
 	if(txt==NULL || txt->s==NULL || msg==NULL)
 		return -1;
 
+	if ((parse_headers(msg, HDR_EOH_F, 0) == -1) || (msg->headers == NULL)) {
+		LM_ERR("error while parsing message\n");
+		return -1;
+	}
+
 	LM_DBG("insert hf: %.*s\n", txt->len, txt->s);
 	hdr = (char*)pkg_malloc(txt->len);
 	if(hdr==NULL) {
@@ -2188,7 +2193,7 @@ static int sr_kemi_hdr_insert_before(sip_msg_t *msg, str *txt, str *hname)
 		return -1;
 	}
 
-	if (parse_headers(msg, HDR_EOH_F, 0) == -1) {
+	if ((parse_headers(msg, HDR_EOH_F, 0) == -1) || (msg->headers == NULL)) {
 		LM_ERR("error while parsing message\n");
 		return -1;
 	}
