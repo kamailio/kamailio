@@ -573,39 +573,53 @@ p_lost_issue_t lost_get_response_issues(xmlNodePtr node)
 	cur = node->children;
 	while(cur) {
 		if(cur->type == XML_ELEMENT_NODE) {
-			/* get a new response type element */
+			/* get a new response type object */
 			issue = lost_new_response_type();
 			if(issue == NULL) {
 				/* didn't get it ... return */
 				break;
 			}
-			/* parse properties */
-			issue->source = lost_get_property(cur->parent, MAPP_PROP_SRC, &len);
+			/* get issue type */
 			tmp.s = (char *)cur->name;
 			tmp.len = strlen((char *)cur->name);
+			/* copy issue type to object */
+			len = 0;
 			if(tmp.len > 0 && tmp.s != NULL) {
 				issue->type = lost_copy_string(tmp, &len);
 			}
-			if(len > 0) {
-
-				LM_DBG("###\t[%s]\n", issue->type);
-
-				if(issue->info != NULL) {
-					issue->info->text = lost_get_property(cur, PROP_MSG, &len);
-					issue->info->lang = lost_get_property(cur, PROP_LANG, &len);
-				}
-				/* get a new list element */
-				new = lost_new_response_issues();
-				if(new == NULL) {
-					/* didn't get it, delete response type element ... return */
-					lost_delete_response_type(&issue); /* clean up */
-					break;
-				}
-				/* append to list */
-				new->issue = issue;
-				new->next = list;
-				list = new;
+			if(len == 0) {
+				/* issue type not found, clean up and return */
+				lost_delete_response_type(&issue); /* clean up */
+				break;
 			}
+			/* parse source property */
+			len = 0;
+			issue->source = lost_get_property(cur->parent, MAPP_PROP_SRC, &len);
+			if(len == 0) {
+				/* source property not found, clean up and return */
+				lost_delete_response_type(&issue); /* clean up */
+				break;
+			}			
+
+			LM_DBG("###\t[%s]\n", issue->type);
+
+			/* type and source property found ... parse text and copy */ 
+			if(issue->info != NULL) {
+				issue->info->text = lost_get_property(cur, PROP_MSG, &len);
+				issue->info->lang = lost_get_property(cur, PROP_LANG, &len);
+			}
+			/* get a new list element */
+			new = lost_new_response_issues();
+			if(new == NULL) {
+				/* didn't get it, clean up and return */
+				lost_delete_response_type(&issue); /* clean up */
+				break;
+			}
+			/* parsing done, append object to list */
+			new->issue = issue;
+			new->next = list;
+			list = new;
+
 			/* get next element */
 			cur = cur->next;
 		}
