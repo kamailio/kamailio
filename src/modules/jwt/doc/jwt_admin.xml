@@ -111,6 +111,11 @@ modparam("jwt", "key_mode", 1)
 			"name1=value1;name2=value2;..." (same as the SIP parameters format).
 			</para>
 			</listitem>
+			<listitem>
+			<para>
+			validity - the token validity period (number of seconds)
+			</para>
+			</listitem>
 		</itemizedlist>
 		<para>
 		This function can be used from ANY_ROUTE.

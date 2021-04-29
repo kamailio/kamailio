@@ -41,7 +41,7 @@ static int  mod_init(void);
 static int  child_init(int);
 static void mod_destroy(void);
 
-static int w_jwt_generate(sip_msg_t* msg, char* pkey, char* palg, char* pclaims);
+static int w_jwt_generate(sip_msg_t* msg, char* pkey, char* palg, char* pclaims, int validity);
 static int w_jwt_verify(sip_msg_t* msg, char* pkey, char* palg, char* pclaims,
 		char *pjwtval);
 
@@ -171,13 +171,14 @@ static int jwt_fcache_add(str *key, str *kdata)
 /**
  *
  */
-static int ki_jwt_generate(sip_msg_t* msg, str *key, str *alg, str *claims)
+static int ki_jwt_generate(sip_msg_t* msg, str *key, str *alg, str *claims, int validity)
 {
 	str dupclaims = STR_NULL;
 	str sparams = STR_NULL;
 	str kdata = STR_NULL;
 	jwt_alg_t valg = JWT_ALG_NONE;
 	time_t iat;
+	time_t exp;
 	FILE *fpk = NULL;
 	unsigned char keybuf[10240];
 	size_t keybuf_len = 0;
@@ -241,7 +242,15 @@ static int ki_jwt_generate(sip_msg_t* msg, str *key, str *alg, str *claims)
 
 	iat = time(NULL);
 
+	if (validity > 0) {
+		exp = time(NULL) + validity;
+	}
+	else if (validity < 0) {
+		LM_ERR("negative validity value is not authorized, so token has no expiration\n");
+	}
+
 	ret = jwt_add_grant_int(jwt, "iat", iat);
+	ret = jwt_add_grant_int(jwt, "exp", exp);
 	for (pit = params_list; pit; pit=pit->next) {
 		if(pit->name.len>0 && pit->body.len>0) {
 			pit->name.s[pit->name.len] = '\0';
@@ -281,7 +290,7 @@ error:
 /**
  *
  */
-static int w_jwt_generate(sip_msg_t* msg, char* pkey, char* palg, char* pclaims)
+static int w_jwt_generate(sip_msg_t* msg, char* pkey, char* palg, char* pclaims, int validity)
 {
 	str skey = STR_NULL;
 	str salg = STR_NULL;
@@ -301,7 +310,7 @@ static int w_jwt_generate(sip_msg_t* msg, char* pkey, char* palg, char* pclaims)
 		return -1;
 	}
 
-	return ki_jwt_generate(msg, &skey, &salg, &sclaims);
+	return ki_jwt_generate(msg, &skey, &salg, &sclaims, validity);
 }
 
 /**
