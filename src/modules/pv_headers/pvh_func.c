@@ -174,6 +174,10 @@ int pvh_apply_headers(struct sip_msg *msg)
 		return -1;
 	}
 	keys_count = pvh_xavi_keys_count(&sub);
+	if(keys_count <= 0) {
+		LM_ERR("no keys found: %.*s\n", xavi_name.len, xavi_name.s);
+		return -1;
+	}
 	if(str_hash_alloc(&rm_hdrs, keys_count) < 0) {
 		PKG_MEM_ERROR;
 		return -1;
@@ -294,7 +298,7 @@ int pvh_apply_headers(struct sip_msg *msg)
 	res = 1;
 
 err:
-	if(rm_hdrs.size)
+	if(rm_hdrs.table)
 		pvh_str_hash_free(&rm_hdrs);
 	return res;
 }

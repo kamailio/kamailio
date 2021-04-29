@@ -171,6 +171,26 @@ modparam("path", "received_format", 1)
 </programlisting>
 		</example>
 	</section>
+	<section id="path.p.received_name">
+		<title><varname>received_name</varname> (str)</title>
+		<para>
+			Set the name of the header parameter to add the
+			<quote>received</quote> value.
+		</para>
+		<para>
+		<emphasis>
+			Default value is "received".
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>received_name</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("path", "received_name", "rcv")
+...
+</programlisting>
+		</example>
+	</section>
 	<section id="path.p.enable_r2">
 		<title><varname>enable_r2</varname> (int)</title>
 		<para>

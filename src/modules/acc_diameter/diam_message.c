@@ -188,11 +188,11 @@ AAAReturnCode  AAASetMessageResultCode(
 AAAMessage* AAATranslateMessage( unsigned char* source, unsigned int sourceLen,
 															int attach_buf)
 {
-	unsigned char *ptr;
-	AAAMessage    *msg;
+	unsigned char *ptr = NULL;
+	AAAMessage    *msg = NULL;
 	unsigned char version;
 	unsigned int  msg_len;
-	AAA_AVP       *avp;
+	AAA_AVP       *avp = NULL;
 	unsigned int  avp_code;
 	unsigned char avp_flags;
 	unsigned int  avp_len;

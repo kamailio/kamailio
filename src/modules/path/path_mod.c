@@ -1,6 +1,4 @@
 /*
- * $Id$ 
- *
  * Path handling for intermediate proxies
  *
  * Copyright (C) 2006 Inode GmbH (Andreas Granig <andreas.granig@inode.info>)
@@ -17,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -69,6 +67,7 @@ int path_use_received = 0;
 int path_received_format = 0;
 int path_enable_r2 = 0;
 int path_sockname_mode = 0;
+str path_received_name = str_init("received");
 
 /*! \brief
  * Module initialization function prototype
@@ -113,6 +112,7 @@ static param_export_t params[] = {
 	{"received_format", INT_PARAM, &path_received_format },
 	{"enable_r2",       INT_PARAM, &path_enable_r2 },
 	{"sockname_mode",   INT_PARAM, &path_sockname_mode },
+	{"received_name",   PARAM_STR, &path_received_name },
 	{ 0, 0, 0 }
 };
 

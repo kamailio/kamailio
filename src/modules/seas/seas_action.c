@@ -1329,8 +1329,12 @@ int extract_allowed_headers(struct sip_msg *my_msg,int strip_top_vias,int allow_
 	 }else{
 	    assert(rtcnt>0);
 	    rb=hf->parsed;
-	    while(--rtcnt)
+	    while(rb && --rtcnt)
 	       rb=rb->next;
+		if(!rb) {
+			LM_ERR("no rr\n");
+			goto error;
+		}
 	    k= (((rb->nameaddr.name.s) + rb->len)-hf->name.s) ;
 	    if(len+k+CRLF_LEN<headers_len){
 	       memcpy(headers+len,hf->name.s,k);

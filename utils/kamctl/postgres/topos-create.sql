@@ -1,6 +1,7 @@
 CREATE TABLE topos_d (
     id SERIAL PRIMARY KEY NOT NULL,
     rectime TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+    x_context VARCHAR(64) DEFAULT '' NOT NULL,
     s_method VARCHAR(64) DEFAULT '' NOT NULL,
     s_cseq VARCHAR(64) DEFAULT '' NOT NULL,
     a_callid VARCHAR(255) DEFAULT '' NOT NULL,
@@ -30,11 +31,12 @@ CREATE INDEX topos_d_a_callid_idx ON topos_d (a_callid);
 CREATE INDEX topos_d_a_uuid_idx ON topos_d (a_uuid);
 CREATE INDEX topos_d_b_uuid_idx ON topos_d (b_uuid);
 
-INSERT INTO version (table_name, table_version) values ('topos_d','1');
+INSERT INTO version (table_name, table_version) values ('topos_d','2');
 
 CREATE TABLE topos_t (
     id SERIAL PRIMARY KEY NOT NULL,
     rectime TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+    x_context VARCHAR(64) DEFAULT '' NOT NULL,
     s_method VARCHAR(64) DEFAULT '' NOT NULL,
     s_cseq VARCHAR(64) DEFAULT '' NOT NULL,
     a_callid VARCHAR(255) DEFAULT '' NOT NULL,
@@ -65,5 +67,5 @@ CREATE INDEX topos_t_a_callid_idx ON topos_t (a_callid);
 CREATE INDEX topos_t_x_vbranch_idx ON topos_t (x_vbranch);
 CREATE INDEX topos_t_a_uuid_idx ON topos_t (a_uuid);
 
-INSERT INTO version (table_name, table_version) values ('topos_t','1');
+INSERT INTO version (table_name, table_version) values ('topos_t','2');
 

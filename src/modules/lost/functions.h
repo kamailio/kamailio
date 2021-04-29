@@ -34,6 +34,9 @@
 
 char *lost_held_type(char *, int *, int *);
 
+int lost_held_dereference(
+		struct sip_msg *, char *, char *, char *, char *, char *);
+
 int lost_held_function(
 		struct sip_msg *, char *, char *, char *, char *, char *);
 

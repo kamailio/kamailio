@@ -119,7 +119,7 @@ static int  trace_add_info_xavp(siptrace_info_t* info);
 static inline int trace_parse_raw_uri(siptrace_info_t* info);
 
 int siptrace_net_data_recv(sr_event_param_t *evp);
-int siptrace_net_data_send(sr_event_param_t *evp);
+int siptrace_net_data_sent(sr_event_param_t *evp);
 
 #define SIPTRACE_INIT_MODE_ALL 0
 #define SIPTRACE_INIT_MODE_CORECB 1
@@ -319,7 +319,7 @@ static int mod_init(void)
 	}
 
 	if(hep_version != 1 && hep_version != 2 && hep_version != 3) {
-		LM_ERR("unsupported version of HEP");
+		LM_ERR("unsupported version of HEP\n");
 		return -1;
 	}
 
@@ -481,7 +481,7 @@ static int mod_init(void)
 			|| _siptrace_init_mode==SIPTRACE_INIT_MODE_CORECB) {
 		if(_siptrace_mode != SIPTRACE_MODE_NONE) {
 			sr_event_register_cb(SREV_NET_DATA_RECV, siptrace_net_data_recv);
-			sr_event_register_cb(SREV_NET_DATA_SEND, siptrace_net_data_send);
+			sr_event_register_cb(SREV_NET_DATA_SENT, siptrace_net_data_sent);
 		} else if(_siptrace_init_mode==SIPTRACE_INIT_MODE_CORECB) {
 			LM_ERR("invalid config options for core callbacks tracing\n");
 			return -1;
@@ -2154,7 +2154,7 @@ int siptrace_net_data_recv(sr_event_param_t *evp)
 		tmsg.len = sto.body.len;
 
 		if (parse_msg(tmsg.buf, tmsg.len, &tmsg)!=0) {
-			LM_DBG("msg buffer parsing failed!");
+			LM_DBG("msg buffer parsing failed!\n");
 			goto afterdb;
 		}
 
@@ -2205,12 +2205,13 @@ afterdb:
 /**
  *
  */
-int siptrace_net_data_send(sr_event_param_t *evp)
+int siptrace_net_data_sent(sr_event_param_t *evp)
 {
 	sr_net_info_t *nd;
 	dest_info_t new_dst;
 	siptrace_data_t sto;
 	sip_msg_t tmsg;
+	int proto;
 
 	if(evp->data == 0)
 		return -1;
@@ -2238,6 +2239,7 @@ int siptrace_net_data_send(sr_event_param_t *evp)
 		LM_WARN("no sending socket found\n");
 		strcpy(sto.fromip_buff, SIPTRACE_ANYADDR);
 		sto.fromip.len = SIPTRACE_ANYADDR_LEN;
+		proto = PROTO_UDP;
 	} else {
 		if(new_dst.send_sock->sock_str.len>=SIPTRACE_ADDR_MAX-1) {
 			LM_ERR("socket string is too large: %d\n",
@@ -2247,11 +2249,12 @@ int siptrace_net_data_send(sr_event_param_t *evp)
 		strncpy(sto.fromip_buff, new_dst.send_sock->sock_str.s,
 				new_dst.send_sock->sock_str.len);
 		sto.fromip.len = new_dst.send_sock->sock_str.len;
+		proto = new_dst.send_sock->proto;
 	}
 	sto.fromip.s = sto.fromip_buff;
 
 	sto.toip.len = snprintf(sto.toip_buff, SIPTRACE_ADDR_MAX, "%s:%s:%d",
-			siptrace_proto_name(new_dst.send_sock->proto),
+			siptrace_proto_name(proto),
 			suip2a(&new_dst.to, sizeof(new_dst.to)),
 			(int)su_getport(&new_dst.to));
 	if(sto.toip.len<0 || sto.toip.len>=SIPTRACE_ADDR_MAX) {
@@ -2279,7 +2282,7 @@ int siptrace_net_data_send(sr_event_param_t *evp)
 		tmsg.len = sto.body.len;
 
 		if (parse_msg(tmsg.buf, tmsg.len, &tmsg)!=0) {
-			LM_DBG("msg buffer parsing failed!");
+			LM_DBG("msg buffer parsing failed!\n");
 			goto afterdb;
 		}
 

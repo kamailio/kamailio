@@ -10,9 +10,9 @@
 <!-- Module User's Guide -->
 
 <chapter xmlns:xi="http://www.w3.org/2001/XInclude">
-	
+
 	<title>&adminguide;</title>
-	
+
 	<section>
 	<title>Overview</title>
 	<para>
@@ -416,7 +416,7 @@
 			Converts SIP messages to XMPP(jabber) messages, in order to be relayed
 			to a XMPP(jabber) client.
 		</para>
-		
+
 		<example>
 		<title><function>xmpp_send_message()</function> usage</title>
 		<programlisting format="linespecific">
@@ -438,7 +438,7 @@ xmpp_send_message();
 		</para>
 		<programlisting format="linespecific">
 ....
-<xi:include href="openser-xmpp.cfg" parse="text"/>
+<xi:include href="kamailio-xmpp.cfg" parse="text"/>
 ....
 </programlisting>
 

@@ -51,6 +51,9 @@ extern int _tps_contact_mode;
 extern str _tps_cparam_name;
 extern int _tps_rr_update;
 
+extern str _tps_context_param;
+extern str _tps_context_value;
+
 str _sr_hname_xbranch = str_init("P-SR-XBranch");
 str _sr_hname_xuuid = str_init("P-SR-XUID");
 
@@ -303,8 +306,10 @@ error:
  */
 int tps_dlg_message_update(sip_msg_t *msg, tps_data_t *ptsd, int ctmode)
 {
-	str tmp;
+	str tuuid = STR_NULL;
 	int ret;
+
+#define TPS_TUUID_MIN_LEN 10
 
 	if(parse_sip_msg_uri(msg)<0) {
 		LM_ERR("failed to parse r-uri\n");
@@ -312,13 +317,13 @@ int tps_dlg_message_update(sip_msg_t *msg, tps_data_t *ptsd, int ctmode)
 	}
 
 	if (ctmode == 1 || ctmode == 2) {
-		if(msg->parsed_uri.sip_params.len<10) {
+		if(msg->parsed_uri.sip_params.len<TPS_TUUID_MIN_LEN) {
 			LM_DBG("not an expected param format\n");
 			return 1;
 		}
-		// find parameter, there might be others
+		/* find the r-uri parameter */
 		ret = tps_get_param_value(&msg->parsed_uri.params,
-			&_tps_cparam_name, &tmp);
+			&_tps_cparam_name, &tuuid);
 		if (ret < 0) {
 			LM_ERR("failed to parse param\n");
 			return -1;
@@ -327,31 +332,24 @@ int tps_dlg_message_update(sip_msg_t *msg, tps_data_t *ptsd, int ctmode)
 			LM_DBG("prefix para not found\n");
 			return 1;
 		}
-		if(memcmp(tmp.s, "atpsh-", 6)==0) {
-			ptsd->a_uuid = tmp;
-			return 0;
-		}
-		if(memcmp(tmp.s, "btpsh-", 6)==0) {
-			ptsd->a_uuid = tmp;
-			ptsd->b_uuid = tmp;
-			return 0;
-		}
-
 	} else {
-		if(msg->parsed_uri.user.len<10) {
+		if(msg->parsed_uri.user.len<TPS_TUUID_MIN_LEN) {
 			LM_DBG("not an expected user format\n");
 			return 1;
 		}
-		if(memcmp(msg->parsed_uri.user.s, "atpsh-", 6)==0) {
-			ptsd->a_uuid = msg->parsed_uri.user;
-			return 0;
-		}
-		if(memcmp(msg->parsed_uri.user.s, "btpsh-", 6)==0) {
-			ptsd->a_uuid = msg->parsed_uri.user;
-			ptsd->b_uuid = msg->parsed_uri.user;
-			return 0;
-		}
+		tuuid = msg->parsed_uri.user;
 	}
+
+	if(memcmp(tuuid.s, "atpsh-", 6)==0) {
+		ptsd->a_uuid = tuuid;
+		return 0;
+	}
+	if(memcmp(tuuid.s, "btpsh-", 6)==0) {
+		ptsd->a_uuid = tuuid;
+		ptsd->b_uuid = tuuid;
+		return 0;
+	}
+
 	LM_DBG("not an expected prefix\n");
 
 	return 1;
@@ -545,7 +543,20 @@ int tps_pack_message(sip_msg_t *msg, tps_data_t *ptsd)
 			ptsd->as_contact.len, ZSW(ptsd->as_contact.s), ptsd->as_contact.len,
 			ptsd->bs_contact.len, ZSW(ptsd->bs_contact.s), ptsd->bs_contact.len);
 	ptsd->x_rr = ptsd->a_rr;
+	if(isreq==0) {
+		if(msg->first_line.u.reply.statuscode >= 180
+				&& msg->first_line.u.reply.statuscode < 199) {
+			/* provisional replies that create early dialogs
+			 * - skip 199 Early Dialog Terminated */
+			ptsd->y_rr = ptsd->b_rr;
+		}
+	}
 	ptsd->s_method_id = get_cseq(msg)->method_id;
+	if(_tps_context_value.len>0) {
+		ptsd->x_context = _tps_context_value;
+	} else if(_tps_context_param.len>0) {
+		ptsd->x_context = _tps_context_param;
+	}
 	return 0;
 }
 
@@ -815,41 +826,41 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 	}
 
 	lkey = msg->callid->body;
+	LM_DBG("callid [%.*s] - a_uuid [%.*s] - b_uuid [%.*s]\n", lkey.len, lkey.s,
+			mtsd.a_uuid.len, ((mtsd.a_uuid.len>0)?mtsd.a_uuid.s:""),
+			mtsd.b_uuid.len, ((mtsd.b_uuid.len>0)?mtsd.b_uuid.s:""));
 
 	tps_storage_lock_get(&lkey);
 
-	if((get_cseq(msg)->method_id)&(METHOD_PRACK)) {
-		if(tps_storage_link_msg(msg, &mtsd, TPS_DIR_DOWNSTREAM)<0) {
-			goto error;
-		}
-		if(tps_storage_load_branch(msg, &mtsd, &stsd, 1)<0) {
-			goto error;
-		}
-		use_branch = 1;
-	} else {
-		if(tps_storage_load_dialog(msg, &mtsd, &stsd) < 0) {
-			goto error;
-		}
-		if(((get_cseq(msg)->method_id) & (METHOD_BYE))
-				&& stsd.b_contact.len <= 0) {
-			/* BYE but not B-side contact, look for INVITE transaction record */
-			memset(&stsd, 0, sizeof(tps_data_t));
-			if(tps_storage_link_msg(msg, &mtsd, TPS_DIR_DOWNSTREAM) < 0) {
-				goto error;
-			}
-			if(tps_storage_load_branch(msg, &mtsd, &stsd, 1) < 0) {
-				goto error;
-			}
-			use_branch = 1;
-		} else {
+	if(tps_storage_load_dialog(msg, &mtsd, &stsd) < 0) {
+		goto error;
+	}
+	if(((get_cseq(msg)->method_id) & (METHOD_BYE|METHOD_PRACK|METHOD_UPDATE))
+			&& stsd.b_contact.len <= 0) {
+		/* no B-side contact, look for INVITE transaction record */
+		if((get_cseq(msg)->method_id) & (METHOD_UPDATE)) {
 			/* detect direction - via from-tag */
 			if(tps_dlg_detect_direction(msg, &stsd, &direction) < 0) {
 				goto error;
 			}
 		}
+		if(tps_storage_link_msg(msg, &mtsd, direction) < 0) {
+			goto error;
+		}
+		mtsd.direction = direction;
+		memset(&stsd, 0, sizeof(tps_data_t));
+		if(tps_storage_load_branch(msg, &mtsd, &stsd, 1) < 0) {
+			goto error;
+		}
+		use_branch = 1;
+	} else {
+		/* detect direction - via from-tag */
+		if(tps_dlg_detect_direction(msg, &stsd, &direction) < 0) {
+			goto error;
+		}
+		mtsd.direction = direction;
 	}
 
-	mtsd.direction = direction;
 
 	tps_storage_lock_release(&lkey);
 

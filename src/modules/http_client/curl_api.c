@@ -31,6 +31,7 @@ int bind_httpc_api(httpc_api_t *api)
 	}
 	api->http_connect = curl_con_query_url;
 	api->http_client_query = http_client_query;
+	api->http_client_query_c = http_client_query_c;
 	api->http_connection_exists = http_connection_exists;
 	api->http_get_content_type = http_get_content_type;
 

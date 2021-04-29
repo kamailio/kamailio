@@ -36,44 +36,46 @@ Olle E. Johansson
               10.2. certificate (string)
               10.3. private_key (string)
               10.4. ca_list (string)
-              10.5. crl (string)
-              10.6. verify_certificate (boolean)
-              10.7. verify_depth (integer)
-              10.8. require_certificate (boolean)
-              10.9. cipher_list (string)
-              10.10. server_name (string)
-              10.11. send_timeout (int)
-              10.12. handshake_timeout (int)
-              10.13. connection_timeout (int)
-              10.14. tls_disable_compression (boolean)
-              10.15. ssl_release_buffers (integer)
-              10.16. ssl_freelist_max_len (integer)
-              10.17. ssl_max_send_fragment (integer)
-              10.18. ssl_read_ahead (boolean)
-              10.19. send_close_notify (boolean)
-              10.20. con_ct_wq_max (integer)
-              10.21. ct_wq_max (integer)
-              10.22. ct_wq_blk_size (integer)
-              10.23. tls_log (int)
-              10.24. tls_debug (int)
-              10.25. low_mem_threshold1 (integer)
-              10.26. low_mem_threshold2 (integer)
-              10.27. tls_force_run (boolean)
-              10.28. session_cache (boolean)
-              10.29. session_id (str)
-              10.30. renegotiation (boolean)
-              10.31. config (string)
-              10.32. xavp_cfg (string)
-              10.33. event_callback (str)
-              10.34. rand_engine (str)
-              10.35. engine (string)
-              10.36. engine_config (string)
-              10.37. engine_algorithms (string)
-              10.38. verify_client (string)
+              10.5. ca_path (str)
+              10.6. crl (string)
+              10.7. verify_certificate (boolean)
+              10.8. verify_depth (integer)
+              10.9. require_certificate (boolean)
+              10.10. cipher_list (string)
+              10.11. server_name (string)
+              10.12. send_timeout (int)
+              10.13. handshake_timeout (int)
+              10.14. connection_timeout (int)
+              10.15. tls_disable_compression (boolean)
+              10.16. ssl_release_buffers (integer)
+              10.17. ssl_freelist_max_len (integer)
+              10.18. ssl_max_send_fragment (integer)
+              10.19. ssl_read_ahead (boolean)
+              10.20. send_close_notify (boolean)
+              10.21. con_ct_wq_max (integer)
+              10.22. ct_wq_max (integer)
+              10.23. ct_wq_blk_size (integer)
+              10.24. tls_log (int)
+              10.25. tls_debug (int)
+              10.26. low_mem_threshold1 (integer)
+              10.27. low_mem_threshold2 (integer)
+              10.28. tls_force_run (boolean)
+              10.29. session_cache (boolean)
+              10.30. session_id (str)
+              10.31. renegotiation (boolean)
+              10.32. config (string)
+              10.33. xavp_cfg (string)
+              10.34. event_callback (str)
+              10.35. rand_engine (str)
+              10.36. engine (string)
+              10.37. engine_config (string)
+              10.38. engine_algorithms (string)
+              10.39. verify_client (string)
 
         11. Functions
 
               11.1. is_peer_verified()
+              11.2. tls_set_connect_server_id(srvid)
 
         12. RPC Commands
 
@@ -101,49 +103,51 @@ Olle E. Johansson
    1.4. Set certificate parameter
    1.5. Set private_key parameter
    1.6. Set ca_list parameter
-   1.7. Set crl parameter
-   1.8. Set verify_certificate parameter
-   1.9. Set verify_depth parameter
-   1.10. Set require_certificate parameter
-   1.11. Set cipher_list parameter
-   1.12. Set server_name parameter
-   1.13. Set connection_timeout parameter
-   1.14. Set tls.connection_timeout at runtime
-   1.15. Set tls_disable_compression parameter
-   1.16. Set ssl_release_buffers parameter
-   1.17. Set ssl_freelist_max_len parameter
-   1.18. Set ssl_max_send_fragment parameter
-   1.19. Set ssl_read_ahead parameter
-   1.20. Set send_close_notify parameter
-   1.21. Set tls.send_close_notify at runtime
-   1.22. Set con_ct_wq_max parameter
-   1.23. Set tls.con_ct_wq_max at runtime
-   1.24. Set ct_wq_max parameter
-   1.25. Set tls.ct_wq_max at runtime
-   1.26. Set ct_wq_blk_size parameter
-   1.27. Set tls.ct_wq_max at runtime
-   1.28. Set tls_log parameter
-   1.29. Set tls.log at runtime
-   1.30. Set tls_debug parameter
-   1.31. Set tls.debug at runtime
-   1.32. Set low_mem_threshold1 parameter
-   1.33. Set tls.low_mem_threshold1 at runtime
-   1.34. Set tls.low_mem_threshold2 parameter
-   1.35. Set tls.low_mem_threshold2 at runtime
-   1.36. Set tls_force_run parameter
-   1.37. Set session_cache parameter
-   1.38. Set session_id parameter
-   1.39. Set renegotiation parameter
-   1.40. Sample TLS Config File
-   1.41. Set config parameter
-   1.42. Change and reload the TLS configuration at runtime
-   1.43. Set xavp_cfg parameter
-   1.44. Set event_callback parameter
-   1.45. Set rand_engine parameter
-   1.46. Set verify_client modparam parameter
-   1.47. Set verify_client tls.cfg parameter
-   1.48. is_peer_verified usage
-   1.49. Use of event_route[tls:connection-out]
+   1.7. Set ca_path parameter
+   1.8. Set crl parameter
+   1.9. Set verify_certificate parameter
+   1.10. Set verify_depth parameter
+   1.11. Set require_certificate parameter
+   1.12. Set cipher_list parameter
+   1.13. Set server_name parameter
+   1.14. Set connection_timeout parameter
+   1.15. Set tls.connection_timeout at runtime
+   1.16. Set tls_disable_compression parameter
+   1.17. Set ssl_release_buffers parameter
+   1.18. Set ssl_freelist_max_len parameter
+   1.19. Set ssl_max_send_fragment parameter
+   1.20. Set ssl_read_ahead parameter
+   1.21. Set send_close_notify parameter
+   1.22. Set tls.send_close_notify at runtime
+   1.23. Set con_ct_wq_max parameter
+   1.24. Set tls.con_ct_wq_max at runtime
+   1.25. Set ct_wq_max parameter
+   1.26. Set tls.ct_wq_max at runtime
+   1.27. Set ct_wq_blk_size parameter
+   1.28. Set tls.ct_wq_max at runtime
+   1.29. Set tls_log parameter
+   1.30. Set tls.log at runtime
+   1.31. Set tls_debug parameter
+   1.32. Set tls.debug at runtime
+   1.33. Set low_mem_threshold1 parameter
+   1.34. Set tls.low_mem_threshold1 at runtime
+   1.35. Set tls.low_mem_threshold2 parameter
+   1.36. Set tls.low_mem_threshold2 at runtime
+   1.37. Set tls_force_run parameter
+   1.38. Set session_cache parameter
+   1.39. Set session_id parameter
+   1.40. Set renegotiation parameter
+   1.41. Sample TLS Config File
+   1.42. Set config parameter
+   1.43. Change and reload the TLS configuration at runtime
+   1.44. Set xavp_cfg parameter
+   1.45. Set event_callback parameter
+   1.46. Set rand_engine parameter
+   1.47. Set verify_client modparam parameter
+   1.48. Set verify_client tls.cfg parameter
+   1.49. is_peer_verified usage
+   1.50. tls_set_connect_server_id usage
+   1.51. Use of event_route[tls:connection-out]
 
 Chapter 1. Admin Guide
 
@@ -164,44 +168,46 @@ Chapter 1. Admin Guide
         10.2. certificate (string)
         10.3. private_key (string)
         10.4. ca_list (string)
-        10.5. crl (string)
-        10.6. verify_certificate (boolean)
-        10.7. verify_depth (integer)
-        10.8. require_certificate (boolean)
-        10.9. cipher_list (string)
-        10.10. server_name (string)
-        10.11. send_timeout (int)
-        10.12. handshake_timeout (int)
-        10.13. connection_timeout (int)
-        10.14. tls_disable_compression (boolean)
-        10.15. ssl_release_buffers (integer)
-        10.16. ssl_freelist_max_len (integer)
-        10.17. ssl_max_send_fragment (integer)
-        10.18. ssl_read_ahead (boolean)
-        10.19. send_close_notify (boolean)
-        10.20. con_ct_wq_max (integer)
-        10.21. ct_wq_max (integer)
-        10.22. ct_wq_blk_size (integer)
-        10.23. tls_log (int)
-        10.24. tls_debug (int)
-        10.25. low_mem_threshold1 (integer)
-        10.26. low_mem_threshold2 (integer)
-        10.27. tls_force_run (boolean)
-        10.28. session_cache (boolean)
-        10.29. session_id (str)
-        10.30. renegotiation (boolean)
-        10.31. config (string)
-        10.32. xavp_cfg (string)
-        10.33. event_callback (str)
-        10.34. rand_engine (str)
-        10.35. engine (string)
-        10.36. engine_config (string)
-        10.37. engine_algorithms (string)
-        10.38. verify_client (string)
+        10.5. ca_path (str)
+        10.6. crl (string)
+        10.7. verify_certificate (boolean)
+        10.8. verify_depth (integer)
+        10.9. require_certificate (boolean)
+        10.10. cipher_list (string)
+        10.11. server_name (string)
+        10.12. send_timeout (int)
+        10.13. handshake_timeout (int)
+        10.14. connection_timeout (int)
+        10.15. tls_disable_compression (boolean)
+        10.16. ssl_release_buffers (integer)
+        10.17. ssl_freelist_max_len (integer)
+        10.18. ssl_max_send_fragment (integer)
+        10.19. ssl_read_ahead (boolean)
+        10.20. send_close_notify (boolean)
+        10.21. con_ct_wq_max (integer)
+        10.22. ct_wq_max (integer)
+        10.23. ct_wq_blk_size (integer)
+        10.24. tls_log (int)
+        10.25. tls_debug (int)
+        10.26. low_mem_threshold1 (integer)
+        10.27. low_mem_threshold2 (integer)
+        10.28. tls_force_run (boolean)
+        10.29. session_cache (boolean)
+        10.30. session_id (str)
+        10.31. renegotiation (boolean)
+        10.32. config (string)
+        10.33. xavp_cfg (string)
+        10.34. event_callback (str)
+        10.35. rand_engine (str)
+        10.36. engine (string)
+        10.37. engine_config (string)
+        10.38. engine_algorithms (string)
+        10.39. verify_client (string)
 
    11. Functions
 
         11.1. is_peer_verified()
+        11.2. tls_set_connect_server_id(srvid)
 
    12. RPC Commands
 
@@ -584,40 +590,41 @@ Place holder
    10.2. certificate (string)
    10.3. private_key (string)
    10.4. ca_list (string)
-   10.5. crl (string)
-   10.6. verify_certificate (boolean)
-   10.7. verify_depth (integer)
-   10.8. require_certificate (boolean)
-   10.9. cipher_list (string)
-   10.10. server_name (string)
-   10.11. send_timeout (int)
-   10.12. handshake_timeout (int)
-   10.13. connection_timeout (int)
-   10.14. tls_disable_compression (boolean)
-   10.15. ssl_release_buffers (integer)
-   10.16. ssl_freelist_max_len (integer)
-   10.17. ssl_max_send_fragment (integer)
-   10.18. ssl_read_ahead (boolean)
-   10.19. send_close_notify (boolean)
-   10.20. con_ct_wq_max (integer)
-   10.21. ct_wq_max (integer)
-   10.22. ct_wq_blk_size (integer)
-   10.23. tls_log (int)
-   10.24. tls_debug (int)
-   10.25. low_mem_threshold1 (integer)
-   10.26. low_mem_threshold2 (integer)
-   10.27. tls_force_run (boolean)
-   10.28. session_cache (boolean)
-   10.29. session_id (str)
-   10.30. renegotiation (boolean)
-   10.31. config (string)
-   10.32. xavp_cfg (string)
-   10.33. event_callback (str)
-   10.34. rand_engine (str)
-   10.35. engine (string)
-   10.36. engine_config (string)
-   10.37. engine_algorithms (string)
-   10.38. verify_client (string)
+   10.5. ca_path (str)
+   10.6. crl (string)
+   10.7. verify_certificate (boolean)
+   10.8. verify_depth (integer)
+   10.9. require_certificate (boolean)
+   10.10. cipher_list (string)
+   10.11. server_name (string)
+   10.12. send_timeout (int)
+   10.13. handshake_timeout (int)
+   10.14. connection_timeout (int)
+   10.15. tls_disable_compression (boolean)
+   10.16. ssl_release_buffers (integer)
+   10.17. ssl_freelist_max_len (integer)
+   10.18. ssl_max_send_fragment (integer)
+   10.19. ssl_read_ahead (boolean)
+   10.20. send_close_notify (boolean)
+   10.21. con_ct_wq_max (integer)
+   10.22. ct_wq_max (integer)
+   10.23. ct_wq_blk_size (integer)
+   10.24. tls_log (int)
+   10.25. tls_debug (int)
+   10.26. low_mem_threshold1 (integer)
+   10.27. low_mem_threshold2 (integer)
+   10.28. tls_force_run (boolean)
+   10.29. session_cache (boolean)
+   10.30. session_id (str)
+   10.31. renegotiation (boolean)
+   10.32. config (string)
+   10.33. xavp_cfg (string)
+   10.34. event_callback (str)
+   10.35. rand_engine (str)
+   10.36. engine (string)
+   10.37. engine_config (string)
+   10.38. engine_algorithms (string)
+   10.39. verify_client (string)
 
 10.1. tls_method (string)
 
@@ -733,7 +740,26 @@ for f in trusted_cas/*.pem ; do cat "$f" >> ca_list.pem ; done
 modparam("tls", "ca_list", "/usr/local/etc/kamailio/ca_list.pem")
 ...
 
-10.5. crl (string)
+10.5. ca_path (str)
+
+   Sets the path with the trusted CA files, to be given as parameter
+   SSL_CTX_load_verify_locations(). The certificates in ca_path are only
+   looked up when required, e.g. when building the certificate chain or
+   when actually performing the verification of a peer certificate. They
+   are not given to the client (not loaded to be provided to
+   SSL_CTX_set_client_CA_list()), only the ones in ca_list files are sent
+   to the client. It requires to use c_rehash to generate the hash map for
+   certificate search, for more see the manual of libssl for
+   SSL_CTX_load_verify_locations() function.
+
+   By default it is not set.
+
+   Example 1.7. Set ca_path parameter
+...
+modparam("tls", "ca_path", "/usr/local/etc/kamailio/ca")
+...
+
+10.6. crl (string)
 
    Sets the certificate revocation list (CRL) file name. This file
    contains a list of revoked certificates. Any attempt to verify a
@@ -775,12 +801,12 @@ Note
    See also ca_list, verify_certificate, verify_depth and
    require_certificate.
 
-   Example 1.7. Set crl parameter
+   Example 1.8. Set crl parameter
 ...
 modparam("tls", "crl", "/usr/local/etc/kamailio/crl.pem")
 ...
 
-10.6. verify_certificate (boolean)
+10.7. verify_certificate (boolean)
 
    If enabled it will force certificate verification when connecting to
    other SIP servers.. For more information see the verify(1) OpenSSL man
@@ -793,12 +819,12 @@ modparam("tls", "crl", "/usr/local/etc/kamailio/crl.pem")
 
    By default the certificate verification is off.
 
-   Example 1.8. Set verify_certificate parameter
+   Example 1.9. Set verify_certificate parameter
 ...
 modparam("tls", "verify_certificate", 1)
 ...
 
-10.7. verify_depth (integer)
+10.8. verify_depth (integer)
 
    Sets how far up the certificate chain will the certificate verification
    go in the search for a trusted CA.
@@ -807,12 +833,12 @@ modparam("tls", "verify_certificate", 1)
 
    The default value is 9.
 
-   Example 1.9. Set verify_depth parameter
+   Example 1.10. Set verify_depth parameter
 ...
 modparam("tls", "verify_depth", 9)
 ...
 
-10.8. require_certificate (boolean)
+10.9. require_certificate (boolean)
 
    When enabled Kamailio will require a certificate from a client
    connecting to the TLS port. If the client does not offer a certificate
@@ -820,12 +846,12 @@ modparam("tls", "verify_depth", 9)
 
    The default value is off.
 
-   Example 1.10. Set require_certificate parameter
+   Example 1.11. Set require_certificate parameter
 ...
 modparam("tls", "require_certificate", 1)
 ...
 
-10.9. cipher_list (string)
+10.10. cipher_list (string)
 
    Sets the list of accepted ciphers. The list consists of cipher strings
    separated by colons. For more information on the cipher list format see
@@ -834,12 +860,12 @@ modparam("tls", "require_certificate", 1)
    The default value is not set (all the OpenSSL supported ciphers are
    enabled).
 
-   Example 1.11. Set cipher_list parameter
+   Example 1.12. Set cipher_list parameter
 ...
 modparam("tls", "cipher_list", "HIGH")
 ...
 
-10.10. server_name (string)
+10.11. server_name (string)
 
    Sets the Server Name Indication (SNI) value.
 
@@ -848,24 +874,24 @@ modparam("tls", "cipher_list", "HIGH")
 
    The default value is empty (not set).
 
-   Example 1.12. Set server_name parameter
+   Example 1.13. Set server_name parameter
 ...
 modparam("tls", "server_name", "kamailio.org")
 ...
 
-10.11. send_timeout (int)
+10.12. send_timeout (int)
 
    This parameter is obsolete and cannot be used in newer TLS versions (>
    Kamailio 3.0). In these versions the send_timeout is replaced by
    tcp_send_timeout (common with all the tcp connections).
 
-10.12. handshake_timeout (int)
+10.13. handshake_timeout (int)
 
    This parameter is obsolete and cannot be used in newer TLS versions (>
    Kamailio 3.0). In these versions the handshake_timeout is replaced by
    tcp_connect_timeout (common with all the tcp connections).
 
-10.13. connection_timeout (int)
+10.14. connection_timeout (int)
 
    Sets the amount of time after which an idle TLS connection will be
    closed, if no I/O ever occurred after the initial open. If an I/O event
@@ -879,15 +905,15 @@ modparam("tls", "server_name", "kamailio.org")
    This setting can be changed also at runtime, via the RPC interface and
    config framework. The config variable name is tls.connection_timeout.
 
-   Example 1.13. Set connection_timeout parameter
+   Example 1.14. Set connection_timeout parameter
 ...
 modparam("tls", "connection_timeout", 60)
 ...
 
-   Example 1.14. Set tls.connection_timeout at runtime
+   Example 1.15. Set tls.connection_timeout at runtime
  $ kamcmd cfg.set_now_int tls connection_timeout 180
 
-10.14. tls_disable_compression (boolean)
+10.15. tls_disable_compression (boolean)
 
    If set compression over TLS will be disabled. Note that compression
    uses a lot of memory (about 10x more then with the compression
@@ -897,12 +923,12 @@ modparam("tls", "connection_timeout", 60)
 
    By default TLS compression is disabled.
 
-   Example 1.15. Set tls_disable_compression parameter
+   Example 1.16. Set tls_disable_compression parameter
 ...
 modparam("tls", "tls_disable_compression", 0) # enable
 ...
 
-10.15. ssl_release_buffers (integer)
+10.16. ssl_release_buffers (integer)
 
    Release internal OpenSSL read or write buffers as soon as they are no
    longer needed. Combined with ssl_freelist_max_len has the potential of
@@ -921,10 +947,10 @@ Note
    This option is supported only for OpenSSL versions >= 1.0.0. On all the
    other versions attempting to change the default will trigger an error.
 
-   Example 1.16. Set ssl_release_buffers parameter
+   Example 1.17. Set ssl_release_buffers parameter
 modparam("tls", "ssl_release_buffers", 1)
 
-10.16. ssl_freelist_max_len (integer)
+10.17. ssl_freelist_max_len (integer)
 
    Sets the maximum number of free memory chunks, that OpenSSL will keep
    per connection. Setting it to 0 would cause any unused memory chunk to
@@ -944,10 +970,10 @@ Note
    This option is supported only for OpenSSL versions >= 1.0.0. On all the
    other versions attempting to change the default will trigger an error.
 
-   Example 1.17. Set ssl_freelist_max_len parameter
+   Example 1.18. Set ssl_freelist_max_len parameter
 modparam("tls", "ssl_freelist_max_len", 0)
 
-10.17. ssl_max_send_fragment (integer)
+10.18. ssl_max_send_fragment (integer)
 
    Sets the maximum number of bytes (from the clear text) sent into one
    TLS record. Valid values are between 512 and 16384. Note however that
@@ -979,10 +1005,10 @@ Note
    This option is supported only for OpenSSL versions >= 0.9.9. On all the
    other versions attempting to change the default will trigger an error.
 
-   Example 1.18. Set ssl_max_send_fragment parameter
+   Example 1.19. Set ssl_max_send_fragment parameter
 modparam("tls", "ssl_max_send_fragment", 4096)
 
-10.18. ssl_read_ahead (boolean)
+10.19. ssl_read_ahead (boolean)
 
    Enables read ahead, reducing the number of internal OpenSSL BIO read()
    calls. This option has only debugging value, in normal circumstances it
@@ -1001,10 +1027,10 @@ modparam("tls", "ssl_max_send_fragment", 4096)
 
    By default the value is 0 (disabled).
 
-   Example 1.19. Set ssl_read_ahead parameter
+   Example 1.20. Set ssl_read_ahead parameter
 modparam("tls", "ssl_read_ahead", 1)
 
-10.19. send_close_notify (boolean)
+10.20. send_close_notify (boolean)
 
    Enables/disables sending close notify alerts prior to closing the
    corresponding TCP connection. Sending the close notify prior to TCP
@@ -1017,15 +1043,15 @@ modparam("tls", "ssl_read_ahead", 1)
    It can be changed also at runtime, via the RPC interface and config
    framework. The config variable name is tls.send_close_notify.
 
-   Example 1.20. Set send_close_notify parameter
+   Example 1.21. Set send_close_notify parameter
 ...
 modparam("tls", "send_close_notify", 1)
 ...
 
-   Example 1.21. Set tls.send_close_notify at runtime
+   Example 1.22. Set tls.send_close_notify at runtime
  $ kamcmd cfg.set_now_int tls send_close_notify 1
 
-10.20. con_ct_wq_max (integer)
+10.21. con_ct_wq_max (integer)
 
    Sets the maximum allowed per connection clear-text send queue size in
    bytes. This queue is used when data cannot be encrypted and sent
@@ -1036,15 +1062,15 @@ modparam("tls", "send_close_notify", 1)
    It can be changed also at runtime, via the RPC interface and config
    framework. The config variable name is tls.con_ct_wq_max.
 
-   Example 1.22. Set con_ct_wq_max parameter
+   Example 1.23. Set con_ct_wq_max parameter
 ...
 modparam("tls", "con_ct_wq_max", 1048576)
 ...
 
-   Example 1.23. Set tls.con_ct_wq_max at runtime
+   Example 1.24. Set tls.con_ct_wq_max at runtime
  $ kamcmd cfg.set_now_int tls con_ct_wq_max 1048576
 
-10.21. ct_wq_max (integer)
+10.22. ct_wq_max (integer)
 
    Sets the maximum total number of bytes queued in all the clear-text
    send queues. These queues are used when data cannot be encrypted and
@@ -1055,15 +1081,15 @@ modparam("tls", "con_ct_wq_max", 1048576)
    It can be changed also at runtime, via the RPC interface and config
    framework. The config variable name is tls.ct_wq_max.
 
-   Example 1.24. Set ct_wq_max parameter
+   Example 1.25. Set ct_wq_max parameter
 ...
 modparam("tls", "ct_wq_max", 4194304)
 ...
 
-   Example 1.25. Set tls.ct_wq_max at runtime
+   Example 1.26. Set tls.ct_wq_max at runtime
  $ kamcmd cfg.set_now_int tls ct_wq_max 4194304
 
-10.22. ct_wq_blk_size (integer)
+10.23. ct_wq_blk_size (integer)
 
    Minimum block size for the internal clear-text send queues (debugging /
    advanced tuning). Good values are multiple of typical datagram sizes.
@@ -1073,15 +1099,15 @@ modparam("tls", "ct_wq_max", 4194304)
    It can be changed also at runtime, via the RPC interface and config
    framework. The config variable name is tls.ct_wq_blk_size.
 
-   Example 1.26. Set ct_wq_blk_size parameter
+   Example 1.27. Set ct_wq_blk_size parameter
 ...
 modparam("tls", "ct_wq_blk_size", 2048)
 ...
 
-   Example 1.27. Set tls.ct_wq_max at runtime
+   Example 1.28. Set tls.ct_wq_max at runtime
  $ kamcmd cfg.set_now_int tls ct_wq_blk_size 2048
 
-10.23. tls_log (int)
+10.24. tls_log (int)
 
    Sets the log level at which TLS related messages will be logged.
 
@@ -1090,16 +1116,16 @@ modparam("tls", "ct_wq_blk_size", 2048)
    It can be changed also at runtime, via the RPC interface and config
    framework. The config variable name is tls.log.
 
-   Example 1.28. Set tls_log parameter
+   Example 1.29. Set tls_log parameter
 ...
 # ignore TLS messages if Kamailio is started with debug less than 10
 modparam("tls", "tls_log", 10)
 ...
 
-   Example 1.29. Set tls.log at runtime
+   Example 1.30. Set tls.log at runtime
  $ kamcmd cfg.set_now_int tls log 10
 
-10.24. tls_debug (int)
+10.25. tls_debug (int)
 
    Sets the log level at which TLS debug messages will be logged. Note
    that TLS debug messages are enabled only if the TLS module is compiled
@@ -1111,16 +1137,16 @@ modparam("tls", "tls_log", 10)
    It can be changed also at runtime, via the RPC interface and config
    framework. The config variable name is tls.debug.
 
-   Example 1.30. Set tls_debug parameter
+   Example 1.31. Set tls_debug parameter
 ...
 # ignore TLS debug messages if Kamailio is started with debug less than 10
 modparam("tls", "tls_debug", 10)
 ...
 
-   Example 1.31. Set tls.debug at runtime
+   Example 1.32. Set tls.debug at runtime
  $ kamcmd cfg.set_now_int tls debug 10
 
-10.25. low_mem_threshold1 (integer)
+10.26. low_mem_threshold1 (integer)
 
    Sets the minimal free memory from which attempts to open or accept new
    TLS connections will start to fail. The value is expressed in KB.
@@ -1143,15 +1169,15 @@ modparam("tls", "tls_debug", 10)
 
    See also tls.low_mem_threshold2.
 
-   Example 1.32. Set low_mem_threshold1 parameter
+   Example 1.33. Set low_mem_threshold1 parameter
 ...
 modparam("tls", "low_mem_threshold1", -1)
 ...
 
-   Example 1.33. Set tls.low_mem_threshold1 at runtime
+   Example 1.34. Set tls.low_mem_threshold1 at runtime
  $ kamcmd cfg.set_now_int tls low_mem_threshold1 2048
 
-10.26. low_mem_threshold2 (integer)
+10.27. low_mem_threshold2 (integer)
 
    Sets the minimal free memory from which TLS operations on already
    established TLS connections will start to fail preemptively. The value
@@ -1175,15 +1201,15 @@ modparam("tls", "low_mem_threshold1", -1)
 
    See also tls.low_mem_threshold1.
 
-   Example 1.34. Set tls.low_mem_threshold2 parameter
+   Example 1.35. Set tls.low_mem_threshold2 parameter
 ...
 modparam("tls", "low_mem_threshold2", -1)
 ...
 
-   Example 1.35. Set tls.low_mem_threshold2 at runtime
+   Example 1.36. Set tls.low_mem_threshold2 at runtime
  $ kamcmd cfg.set_now_int tls low_mem_threshold2 1024
 
-10.27. tls_force_run (boolean)
+10.28. tls_force_run (boolean)
 
    If enabled Kamailio will start even if some of the OpenSSL sanity
    checks fail (turn it on at your own risk).
@@ -1198,36 +1224,36 @@ modparam("tls", "low_mem_threshold2", -1)
 
    By default tls_force_run is disabled.
 
-   Example 1.36. Set tls_force_run parameter
+   Example 1.37. Set tls_force_run parameter
 ...
 modparam("tls", "tls_force_run", 11)
 ...
 
-10.28. session_cache (boolean)
+10.29. session_cache (boolean)
 
    If enabled Kamailio will do caching of the TLS sessions data,
    generation a session_id and sending it back to client.
 
    By default TLS session caching is disabled (0).
 
-   Example 1.37. Set session_cache parameter
+   Example 1.38. Set session_cache parameter
 ...
 modparam("tls", "session_cache", 1)
 ...
 
-10.29. session_id (str)
+10.30. session_id (str)
 
    The value for session ID context, making sense when session caching is
    enabled.
 
    By default TLS session_id is "kamailio-tls-5.x.y".
 
-   Example 1.38. Set session_id parameter
+   Example 1.39. Set session_id parameter
 ...
 modparam("tls", "session_id", "my-session-id-context")
 ...
 
-10.30. renegotiation (boolean)
+10.31. renegotiation (boolean)
 
    If enabled Kamailio will allow renegotiations of TLS connection
    initiated by the client. This may expose to a security risk if the
@@ -1236,12 +1262,12 @@ modparam("tls", "session_id", "my-session-id-context")
 
    By default TLS renegotiation is disabled (0).
 
-   Example 1.39. Set renegotiation parameter
+   Example 1.40. Set renegotiation parameter
 ...
 modparam("tls", "renegotiation", 1)
 ...
 
-10.31. config (string)
+10.32. config (string)
 
    Sets the name of the TLS specific configuration file or configuration
    directory.
@@ -1318,7 +1344,7 @@ modparam("tls", "renegotiation", 1)
    SNI is provided, then the profile definition is searched again to match
    on 'server_name'.
 
-   Example 1.40. Sample TLS Config File
+   Example 1.41. Sample TLS Config File
 ...
 [server:default]
 method = TLSv1
@@ -1371,7 +1397,7 @@ server_name_mode = 1
    For a more complete example check the tls.cfg distributed with the
    Kamailio source (kamailio/modules/tls/tls.cfg).
 
-   Example 1.41. Set config parameter
+   Example 1.42. Set config parameter
 ...
 modparam("tls", "config", "/usr/local/etc/kamailio/tls.cfg")
 ...
@@ -1379,11 +1405,11 @@ modparam("tls", "config", "/usr/local/etc/kamailio/tls.cfg")
    The file can be changed at runtime. The new config will not be loaded
    immediately, but after the first tls.reload RPC call.
 
-   Example 1.42. Change and reload the TLS configuration at runtime
+   Example 1.43. Change and reload the TLS configuration at runtime
  $ kamcmd cfg.set_now_string tls config "/usr/local/etc/kamailio/new_tls.cfg"
  $ kamcmd tls.reload
 
-10.32. xavp_cfg (string)
+10.33. xavp_cfg (string)
 
    Sets the name of XAVP that stores attributes for TLS connections.
 
@@ -1398,7 +1424,7 @@ modparam("tls", "config", "/usr/local/etc/kamailio/tls.cfg")
 
    The default value is empty (not set).
 
-   Example 1.43. Set xavp_cfg parameter
+   Example 1.44. Set xavp_cfg parameter
 ...
   modparam("tls", "xavp_cfg", "tls")
  ...
@@ -1408,7 +1434,7 @@ modparam("tls", "config", "/usr/local/etc/kamailio/tls.cfg")
   route(RELAY);
 ...
 
-10.33. event_callback (str)
+10.34. event_callback (str)
 
    The name of the function in the kemi configuration file (embedded
    scripting language such as Lua, Python, ...) to be executed instead of
@@ -1419,7 +1445,7 @@ modparam("tls", "config", "/usr/local/etc/kamailio/tls.cfg")
 
    Default value is 'empty' (no function is executed for events).
 
-   Example 1.44. Set event_callback parameter
+   Example 1.45. Set event_callback parameter
 ...
 modparam("tls", "event_callback", "ksr_tls_event")
 ...
@@ -1430,7 +1456,7 @@ function ksr_tls_event(evname)
 end
 ...
 
-10.34. rand_engine (str)
+10.35. rand_engine (str)
 
    Set the random number generator engine for libssl.
 
@@ -1453,12 +1479,12 @@ end
    The default value is empty (not set) for libssl v1.0.x or older, and
    "cryptorand" for libssl v1.1.x or newer.
 
-   Example 1.45. Set rand_engine parameter
+   Example 1.46. Set rand_engine parameter
 ...
 modparam("tls", "rand_engine", "fastrand")
 ...
 
-10.35. engine (string)
+10.36. engine (string)
 
    If OpenSSL is compiled with engine support this will allow algorithms
    to be offloaded and private keys from HSM to be used. Currently only a
@@ -1484,13 +1510,13 @@ modparam("tls", "engine_algorithms", "ALL")
    By default OpenSSL engine support is disabled (NONE). This global param
    is not supported in the tls config file.
 
-10.36. engine_config (string)
+10.37. engine_config (string)
 
    A OpenSSL configuration file to initialize the engine. Typically used
    to send PIN to HSMs to unlock private keys. See the HSM howto for an
    example. This global param is not supported in the tls config file.
 
-10.37. engine_algorithms (string)
+10.38. engine_algorithms (string)
 
    A list of cryptographic methods to be set as default in the engine.
    This is a comma-separated list of values from ALL RSA DSA DH EC RAND
@@ -1500,7 +1526,7 @@ modparam("tls", "engine_algorithms", "ALL")
    The default is not to set any methods as default. This global param is
    not supported in the tls config file.
 
-10.38. verify_client (string)
+10.39. verify_client (string)
 
    Provides an alternative to verify_certificate and require_certificate
    modparam and tls.cfg parameters, and creates an additional
@@ -1532,12 +1558,12 @@ modparam("tls", "engine_algorithms", "ALL")
        verify_client="optional"
      * verify_certificate=1, require_certificate=1 => verify_client="on"
 
-   Example 1.46. Set verify_client modparam parameter
+   Example 1.47. Set verify_client modparam parameter
 ...
 modparam("tls", "verify_client", "on")
 ...
 
-   Example 1.47. Set verify_client tls.cfg parameter
+   Example 1.48. Set verify_client tls.cfg parameter
 ...
 [server:1.2.3.4:5061]
 method = TLSv1
@@ -1552,6 +1578,7 @@ verify_client = optional_no_ca
 11. Functions
 
    11.1. is_peer_verified()
+   11.2. tls_set_connect_server_id(srvid)
 
 11.1. is_peer_verified()
 
@@ -1561,11 +1588,29 @@ verify_client = optional_no_ca
 
    It can be used only in a request route.
 
-   Example 1.48. is_peer_verified usage
+   Example 1.49. is_peer_verified usage
+...
         if (proto==TLS && !is_peer_verified()) {
                 sl_send_reply("400", "No certificate or verification failed");
                 exit;
         }
+...
+
+11.2. tls_set_connect_server_id(srvid)
+
+   Set the server id of the tls profile to be used by next client connect,
+   being reset after use. It is an alternative to the use of xavp to
+   specify server id of a client profile for the cases when xavps are no
+   longer available (e.g., after event_route[tm:local-request]).
+
+   If the parameter is an empty string, then the value is reset.
+
+   It can be used only in ANY_ROUTE.
+
+   Example 1.50. tls_set_connect_server_id usage
+...
+    tls_set_connect_server_id("clientone");
+...
 
 12. RPC Commands
 
@@ -1638,7 +1683,7 @@ verify_client = optional_no_ca
    If drop() is executed in the event route, then the data is no longer
    sent over the connection.
 
-   Example 1.49. Use of event_route[tls:connection-out]
+   Example 1.51. Use of event_route[tls:connection-out]
 ...
 event_route[tls:connection-out] {
   if($sndto(ip)=="1.2.3.4") {

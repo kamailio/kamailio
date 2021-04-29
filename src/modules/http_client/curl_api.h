@@ -37,6 +37,8 @@ typedef int (*httpcapi_httpconnect_f)(struct sip_msg *msg,
 		const char *contenttype, const str *_post);
 typedef int (*httpcapi_httpquery_f)(
 		struct sip_msg *_m, char *_url, str *_dst, char *_post, char *_hdrs);
+typedef int (*httpcapi_httpquery_c_f)(
+		struct sip_msg *_m, char *_url, str *_dst, char *_post, char *_ctype, char *_hdrs);
 typedef int (*httpcapi_curlcon_exists_f)(str *_name);
 typedef char *(*httpcapi_res_content_type_f)(const str *_name);
 
@@ -45,6 +47,7 @@ typedef struct httpc_api
 {
 	httpcapi_httpconnect_f http_connect;
 	httpcapi_httpquery_f http_client_query;
+	httpcapi_httpquery_c_f http_client_query_c;
 	httpcapi_curlcon_exists_f http_connection_exists;
 	httpcapi_res_content_type_f http_get_content_type;
 } httpc_api_t;

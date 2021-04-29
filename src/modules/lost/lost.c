@@ -1,7 +1,7 @@
 /*
  * lost module
  *
- * Copyright (C) 2020 Wolfgang Kampichler
+ * Copyright (C) 2021 Wolfgang Kampichler
  * DEC112, FREQUENTIS AG
  *
  * This file is part of Kamailio, a free SIP server.
@@ -53,10 +53,18 @@ httpc_api_t httpapi;
 int lost_geoloc_type = 0;
 /* lost: Geolocation header value order: first (0) or last (1) (default: 0) */
 int lost_geoloc_order = 0;
-/* held request: response time (default: 0 = no timeout) */
+/* lost: Recursion allowed: yes (1) or no (0) (default: 1 = allowed) */
+int lost_recursion = 1;
+/* lost geo profile: first (0), last (1), geo (2) or civic (3) (default: 0) */
+int lost_profile = 0;
+/* lost verbose report: no (0), yes (1) (default: 0) */
+int lost_verbose = 0;
+/* held request: response time (default: 0 = "emergencyRouting") */
 int held_resp_time = 0;
 /* held request: exact is true (1) or false (0) (default: false) */
 int held_exact_type = 0;
+/* held request: POST to deref. location: yes (1) or no (0) (default: 0 = no) */
+int held_post_req = 0;
 /* held request: location type */
 str held_loc_type = STR_NULL;
 
@@ -70,6 +78,8 @@ static int fixup_lost_held_query(void **param, int param_no);
 static int fixup_free_lost_held_query(void **param, int param_no);
 static int fixup_lost_held_query_id(void **param, int param_no);
 static int fixup_free_lost_held_query_id(void **param, int param_no);
+static int fixup_lost_held_deref(void **param, int param_no);
+static int fixup_free_lost_held_deref(void **param, int param_no);
 
 static int fixup_lost_query(void **param, int param_no);
 static int fixup_free_lost_query(void **param, int param_no);
@@ -81,6 +91,8 @@ static int w_lost_held_query(
 		struct sip_msg *_m, char *_con, char *_pidf, char *_url, char *_err);
 static int w_lost_held_query_id(struct sip_msg *_m, char *_con, char *_id,
 		char *_pidf, char *_url, char *_err);
+static int w_lost_held_deref(struct sip_msg *_m, char *_url, char *_rtime,
+		char *_rtype, char *_pidf, char *_err);
 static int w_lost_query(
 		struct sip_msg *_m, char *_con, char *_uri, char *_name, char *_err);
 static int w_lost_query_all(struct sip_msg *_m, char *_con, char *_pidf,
@@ -94,6 +106,9 @@ static cmd_export_t cmds[] = {
 		{"lost_held_query", (cmd_function)w_lost_held_query_id, 5,
 				fixup_lost_held_query_id, fixup_free_lost_held_query_id,
 				REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
+		{"lost_held_dereference", (cmd_function)w_lost_held_deref, 5,
+				fixup_lost_held_deref, fixup_free_lost_held_deref,
+				REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
 		{"lost_query", (cmd_function)w_lost_query, 4, fixup_lost_query,
 				fixup_free_lost_query,
 				REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
@@ -105,7 +120,11 @@ static cmd_export_t cmds[] = {
 /* Exported parameters */
 static param_export_t params[] = {{"exact_type", PARAM_INT, &held_exact_type},
 		{"response_time", PARAM_INT, &held_resp_time},
+		{"post_request", PARAM_INT, &held_post_req},
 		{"location_type", PARAM_STR, &held_loc_type},
+		{"recursion", PARAM_INT, &lost_recursion},
+		{"location_profile", PARAM_INT, &lost_profile},
+		{"verbose", PARAM_INT, &lost_verbose},
 		{"geoheader_type", PARAM_INT, &lost_geoloc_type},
 		{"geoheader_order", PARAM_INT, &lost_geoloc_order}, {0, 0, 0}};
 
@@ -155,7 +174,11 @@ static int child_init(int rank)
 
 static void destroy(void)
 {
-	pkg_free(held_loc_type.s);
+	if(held_loc_type.s != NULL && held_loc_type.len > 0) {
+		pkg_free(held_loc_type.s);
+		held_loc_type.s = NULL;
+		held_loc_type.len = 0;
+	}
 	/* do nothing */
 }
 
@@ -189,8 +212,7 @@ static int fixup_lost_held_query(void **param, int param_no)
 static int fixup_free_lost_held_query(void **param, int param_no)
 {
 	if(param_no == 1) {
-		/* char strings don't need freeing */
-		return 0;
+		return fixup_spve_null(param, 1);	
 	}
 	if((param_no == 2) || (param_no == 3) || (param_no == 4)) {
 		return fixup_free_pvar_null(param, 1);
@@ -200,15 +222,12 @@ static int fixup_free_lost_held_query(void **param, int param_no)
 }
 
 /*
- * Fix 5 lost_held_query_id params: con (string/pvar) id (string that may contain
- * pvars) and pidf, url, err (writable pvar).
+ * Fix 5 lost_held_query_id params: con (string/pvar) id (string that may
+ * contain pvars) and pidf, url, err (writable pvar).
  */
 static int fixup_lost_held_query_id(void **param, int param_no)
 {
-	if(param_no == 1) {
-		return fixup_spve_null(param, 1);
-	}
-	if(param_no == 2) {
+	if((param_no == 1) || (param_no == 2)) {
 		return fixup_spve_null(param, 1);
 	}
 	if((param_no == 3) || (param_no == 4) || (param_no == 5)) {
@@ -231,13 +250,49 @@ static int fixup_lost_held_query_id(void **param, int param_no)
  */
 static int fixup_free_lost_held_query_id(void **param, int param_no)
 {
-	if(param_no == 1) {
-		return fixup_free_spve_null(param, 1);
-	}
-	if(param_no == 2) {
+	if((param_no == 1) || (param_no == 2)) {
 		return fixup_free_spve_null(param, 1);
 	}
 	if((param_no == 3) || (param_no == 4) || (param_no == 5)) {
+		return fixup_free_pvar_null(param, 1);
+	}
+	LM_ERR("invalid parameter number <%d>\n", param_no);
+	return -1;
+}
+
+/*
+ * Fix 5 lost_held_dereference params: url (string/pvar), rtime (string/pvar),
+ * rtype (string/pvar) and pidf, err (writable pvar).
+ */
+static int fixup_lost_held_deref(void **param, int param_no)
+{
+	if((param_no == 1) || (param_no == 2) || (param_no == 3)) {
+		return fixup_spve_null(param, 1);
+	}
+	if((param_no == 4) || (param_no == 5)) {
+		if(fixup_pvar_null(param, 1) != 0) {
+			LM_ERR("failed to fixup result pvar\n");
+			return -1;
+		}
+		if(((pv_spec_t *)(*param))->setf == NULL) {
+			LM_ERR("result pvar is not writable\n");
+			return -1;
+		}
+		return 0;
+	}
+	LM_ERR("invalid parameter number <%d>\n", param_no);
+	return -1;
+}
+
+/*
+ * Free lost_held_dereference params.
+ */
+static int fixup_free_lost_held_deref(void **param, int param_no)
+{
+	if((param_no == 1) || (param_no == 2) || (param_no == 3)) {
+		return fixup_free_spve_null(param, 1);
+	}
+	if((param_no == 4) || (param_no == 5)) {
 		return fixup_free_pvar_null(param, 1);
 	}
 	LM_ERR("invalid parameter number <%d>\n", param_no);
@@ -347,7 +402,16 @@ static int w_lost_held_query_id(struct sip_msg *_m, char *_con, char *_id,
 }
 
 /*
- * Wrapper for lost_query w/o pudf, urn
+ * Wrapper for lost_held_dereference
+ */
+static int w_lost_held_deref(struct sip_msg *_m, char *_url, char *_rtime,
+		char *_rtype, char *_pidf, char *_err)
+{
+	return lost_held_dereference(_m, _url, _pidf, _err, _rtime, _rtype);
+}
+
+/*
+ * Wrapper for lost_query w/o pidf, urn
  */
 static int w_lost_query(
 		struct sip_msg *_m, char *_con, char *_uri, char *_name, char *_err)

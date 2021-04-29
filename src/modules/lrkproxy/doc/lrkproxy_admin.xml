@@ -17,14 +17,16 @@
 	<section>
 	<title>Overview</title>
 	<para>
-		This is a module that enables media streams to be relayed via an
- 		lrkproxy. This module works with py_lrkproxy engine in:
+		This is a module that enables media streams to be relayed via
+ 		pylrkproxy engine that exist in:
 		https://github.com/mojtabaesfandiari/pylrkproxy
-		This module does relaying audio streams between peers in
+		It does relaying audio streams between peers in
 		PREROUTING netfilter-hooking section in kernel-space linux.
 		The LRKProxy architecture is composed of two
 		different layers. These layers are independent of each
 		other.
+		For more information about LRKProxy architecture, please visit our paper in ieeexplore:
+		https://ieeexplore.ieee.org/document/9303608
 	</para>
 	</section>
 
@@ -38,7 +40,7 @@
 			access and manipulate cache data
 			buffer and packet buffer in Kernel-Space. This layer
 			gets all information about creating new sessions,
-			active sessions and tear-down sessions which is
+			active sessions and teardown sessions which is
 	       		gotten from SDP body during signaling plan and relay
 			them to the LRKP-Transport Stateful Layer (LRKP-
 			TSL).

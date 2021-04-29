@@ -31,7 +31,8 @@ Daniel-Constantin Mierla
               3.4. rotate (int)
               3.5. folder (str)
               3.6. fprefix (str)
-              3.7. event_callback (str)
+              3.7. fage (int)
+              3.8. event_callback (str)
 
         4. Functions
 
@@ -55,9 +56,10 @@ Daniel-Constantin Mierla
    1.4. Set rotate parameter
    1.5. Set folder parameter
    1.6. Set fprefix parameter
-   1.7. Set event_callback parameter
-   1.8. sipdump_send usage
-   1.9. sipdump.enable usage
+   1.7. Set fage parameter
+   1.8. Set event_callback parameter
+   1.9. sipdump_send usage
+   1.10. sipdump.enable usage
 
 Chapter 1. Admin Guide
 
@@ -77,7 +79,8 @@ Chapter 1. Admin Guide
         3.4. rotate (int)
         3.5. folder (str)
         3.6. fprefix (str)
-        3.7. event_callback (str)
+        3.7. fage (int)
+        3.8. event_callback (str)
 
    4. Functions
 
@@ -138,7 +141,8 @@ Chapter 1. Admin Guide
    3.4. rotate (int)
    3.5. folder (str)
    3.6. fprefix (str)
-   3.7. event_callback (str)
+   3.7. fage (int)
+   3.8. event_callback (str)
 
 3.1. enable (int)
 
@@ -215,13 +219,26 @@ modparam("sipdump", "folder", "/run/kamailio")
 modparam("sipdump", "fprefix", "ksipdump-")
 ...
 
-3.7. event_callback (str)
+3.7. fage (int)
+
+   Age of created files (in seconds) to be removed if they become older.
+   Cleanup is done on a timer routine running every 600 seconds.
+
+   Default value is 0 (no cleanup of created files).
+
+   Example 1.7. Set fage parameter
+...
+# cleanup files older than two days
+modparam("sipdump", "fage", 172800)
+...
+
+3.8. event_callback (str)
 
    Name of the KEMI function to be executed instead of the event route.
 
    Default value is not set.
 
-   Example 1.7. Set event_callback parameter
+   Example 1.8. Set event_callback parameter
 ...
 modparam("sipdump", "event_callback", "ksr_sipdump_event")
 ...
@@ -246,7 +263,7 @@ end
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.8. sipdump_send usage
+   Example 1.9. sipdump_send usage
 ...
 sipdump_send("cfg");
 ...
@@ -264,7 +281,7 @@ sipdump_send("cfg");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.9. sipdump.enable usage
+   Example 1.10. sipdump.enable usage
 ...
 kamcmd sipdump.enable
 kamcmd sipdump.enable 1

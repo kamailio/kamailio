@@ -138,7 +138,7 @@ xlog("L_INFO", "foo is $var(n)");
    'false', or 'null'.
 
    Note: If you want to insert a JSON-Integer value exceeding the
-   C-Integer boundaries (e.g. C-type long), the a the number can be
+   C-Integer boundaries (e.g. C-type long), then the number can be
    provided as a string.
 
    Example 1.2. jansson_set usage

@@ -77,6 +77,7 @@ typedef struct tps_data {
 	str x_uri;
 	str s_method;
 	str s_cseq;
+	str x_context;
 	int32_t iflags;
 	int32_t direction;
 	uint32_t s_method_id;

@@ -30,6 +30,7 @@
 #include "../../core/dprint.h"
 #include "../../core/mod_fix.h"
 #include "../../core/data_lump.h"
+#include "../../core/str_list.h"
 #include "../../core/lvalue.h"
 #include "../../core/kemi.h"
 
@@ -54,6 +55,11 @@ static int w_secsipid_add_identity(sip_msg_t *msg, char *porigtn, char *pdesttn,
 			char *pattest, char *porigid, char *px5u, char *pkeypath);
 static int w_secsipid_get_url(sip_msg_t *msg, char *purl, char *pout);
 
+static int secsipid_libopt_param(modparam_t type, void *val);
+
+static str_list_t *secsipid_libopt_list = NULL;
+static int secsipid_libopt_list_used = 0;
+
 secsipid_papi_t _secsipid_papi = {0};
 
 /* clang-format off */
@@ -75,6 +81,9 @@ static param_export_t params[]={
 	{"cache_expire",  PARAM_INT,   &secsipid_cache_expire},
 	{"cache_dir",     PARAM_STR,   &secsipid_cache_dir},
 	{"modproc",       PARAM_STR,   &secsipid_modproc},
+	{"libopt",        PARAM_STR|USE_FUNC_PARAM,
+		(void*)secsipid_libopt_param},
+
 	{0, 0, 0}
 };
 
@@ -198,6 +207,13 @@ static int ki_secsipid_check_identity(sip_msg_t *msg, str *keypath)
 		_secsipid_papi.SecSIPIDSetFileCacheOptions(secsipid_cache_dir.s,
 				secsipid_cache_expire);
 	}
+	if(secsipid_libopt_list_used==0) {
+		str_list_t *sit;
+		for(sit=secsipid_libopt_list; sit!=NULL; sit=sit->next) {
+			_secsipid_papi.SecSIPIDOptSetV(sit->s.s);
+		}
+		secsipid_libopt_list_used = 1;
+	}
 	ret = _secsipid_papi.SecSIPIDCheckFull(ibody.s, ibody.len, secsipid_expire,
 			keypath->s, secsipid_timeout);
 
@@ -207,7 +223,7 @@ static int ki_secsipid_check_identity(sip_msg_t *msg, str *keypath)
 	}
 
 	LM_DBG("identity check: failed\n");
-	return -1;
+	return ret;
 }
 
 /**
@@ -246,6 +262,14 @@ static int ki_secsipid_check_identity_pubkey(sip_msg_t *msg, str *keyval)
 		return -1;
 	}
 
+	if(secsipid_libopt_list_used==0) {
+		str_list_t *sit;
+		for(sit=secsipid_libopt_list; sit!=NULL; sit=sit->next) {
+			_secsipid_papi.SecSIPIDOptSetV(sit->s.s);
+		}
+		secsipid_libopt_list_used = 1;
+	}
+
 	ibody = hf->body;
 
 	ret = _secsipid_papi.SecSIPIDCheckFullPubKey(ibody.s, ibody.len,
@@ -257,7 +281,7 @@ static int ki_secsipid_check_identity_pubkey(sip_msg_t *msg, str *keyval)
 	}
 
 	LM_DBG("identity check: failed\n");
-	return -1;
+	return ret;
 }
 
 /**
@@ -285,6 +309,14 @@ static int ki_secsipid_add_identity(sip_msg_t *msg, str *origtn, str *desttn,
 	str ibody = STR_NULL;
 	str hdr = STR_NULL;
 	sr_lump_t *anchor = NULL;
+
+	if(secsipid_libopt_list_used==0) {
+		str_list_t *sit;
+		for(sit=secsipid_libopt_list; sit!=NULL; sit=sit->next) {
+			_secsipid_papi.SecSIPIDOptSetV(sit->s.s);
+		}
+		secsipid_libopt_list_used = 1;
+	}
 
 	ibody.len = _secsipid_papi.SecSIPIDGetIdentity(origtn->s, desttn->s,
 			attest->s, origid->s, x5u->s, keypath->s, &ibody.s);
@@ -408,6 +440,13 @@ static sr_kemi_xval_t* ki_secsipid_get_url(sip_msg_t *msg, str *surl)
 		_secsipid_papi.SecSIPIDSetFileCacheOptions(secsipid_cache_dir.s,
 				secsipid_cache_expire);
 	}
+	if(secsipid_libopt_list_used==0) {
+		str_list_t *sit;
+		for(sit=secsipid_libopt_list; sit!=NULL; sit=sit->next) {
+			_secsipid_papi.SecSIPIDOptSetV(sit->s.s);
+		}
+		secsipid_libopt_list_used = 1;
+	}
 	r = _secsipid_papi.SecSIPIDGetURLContent(surl->s, secsipid_timeout,
 			&_secsipid_get_url_val.s,
 			&_secsipid_get_url_val.len);
@@ -427,7 +466,7 @@ static sr_kemi_xval_t* ki_secsipid_get_url(sip_msg_t *msg, str *surl)
  */
 static int w_secsipid_get_url(sip_msg_t *msg, char *purl, char *povar)
 {
-	int r;
+	int ret;
 	pv_spec_t *ovar;
 	pv_value_t val;
 	str surl = {NULL, 0};
@@ -445,10 +484,10 @@ static int w_secsipid_get_url(sip_msg_t *msg, char *purl, char *povar)
 		_secsipid_papi.SecSIPIDSetFileCacheOptions(secsipid_cache_dir.s,
 				secsipid_cache_expire);
 	}
-	r = _secsipid_papi.SecSIPIDGetURLContent(surl.s, secsipid_timeout,
+	ret = _secsipid_papi.SecSIPIDGetURLContent(surl.s, secsipid_timeout,
 			&_secsipid_get_url_val.s, &_secsipid_get_url_val.len);
-	if(r!=0) {
-		return -1;
+	if(ret!=0) {
+		return ret;
 	}
 	ovar = (pv_spec_t *)povar;
 
@@ -462,6 +501,32 @@ static int w_secsipid_get_url(sip_msg_t *msg, char *purl, char *povar)
 	}
 
 	return 1;
+}
+
+/**
+ *
+ */
+static int secsipid_libopt_param(modparam_t type, void *val)
+{
+	str_list_t *sit;
+
+	if(val==NULL || ((str*)val)->s==NULL || ((str*)val)->len==0) {
+		LM_ERR("invalid parameter\n");
+		return -1;
+	}
+
+	sit = (str_list_t*)pkg_mallocxz(sizeof(str_list_t));
+	if(sit==NULL) {
+		PKG_MEM_ERROR;
+		return -1;
+	}
+	sit->s = *((str*)val);
+	if(secsipid_libopt_list!=NULL) {
+		sit->next = secsipid_libopt_list;
+	}
+	secsipid_libopt_list = sit;
+
+	return 0;
 }
 
 /**

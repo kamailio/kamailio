@@ -9,7 +9,7 @@
 
 <table id="topos_t" xmlns:db="http://docbook.org/ns/docbook">
     <name>topos_t</name>
-    <version>1</version>
+    <version>2</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
 		<db:para>This table is used to store topos structures in database. More
@@ -36,6 +36,14 @@
         <name>rectime</name>
         <type>datetime</type>
         <description>Date and time when this record was written.</description>
+    </column>
+
+   <column id="x_context">
+        <name>x_context</name>
+        <type>string</type>
+        <size>64</size>
+        <default/>
+        <description>Context value</description>
     </column>
 
     <column id="s_method">

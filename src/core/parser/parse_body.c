@@ -475,8 +475,9 @@ int part_multipart_headers_cmp (char *buffer,
 					;
 				}
 			} else {
+				/* Nothing matched */
 				error = -9;
-				error_msg = "We reached the end of the buffer";
+				error_msg = "Unsuccessfully reached the end of the buffer";
 			}
 			found = found_content_type * found_content_id * found_content_length;
 			if ((!found) && (!error)) {
@@ -504,7 +505,7 @@ int part_multipart_headers_cmp (char *buffer,
 	}
 
 	if (error < 0) {
-		if(error == -2) {
+		if ((error == -2) || (error == -9)) {
 			LM_DBG("result code: \"%i\" text: \"%s\".\n", error, error_msg);
 		} else {
 			LM_ERR("error code: \"%i\" error text: \"%s\".\n", error, error_msg);

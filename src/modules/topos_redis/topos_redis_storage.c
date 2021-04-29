@@ -1171,15 +1171,14 @@ int tps_redis_update_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
 	argc++;
 
 	if(mode & TPS_DBU_CONTACT) {
-		TPS_REDIS_SET_ARGS(&md->b_contact, argc, &tt_key_b_contact,
+		TPS_REDIS_SET_ARGS(&md->a_contact, argc, &tt_key_a_contact,
 				argv, argvlen);
 		TPS_REDIS_SET_ARGS(&md->b_contact, argc, &tt_key_b_contact,
 				argv, argvlen);
 	}
 
 	if((mode & TPS_DBU_RPLATTRS) && msg->first_line.type==SIP_REPLY) {
-		if(sd->b_tag.len<=0
-				&& msg->first_line.u.reply.statuscode>=180
+		if(msg->first_line.u.reply.statuscode>=180
 				&& msg->first_line.u.reply.statuscode<200) {
 
 			TPS_REDIS_SET_ARGS(&md->b_rr, argc, &tt_key_y_rr, argv, argvlen);

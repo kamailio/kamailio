@@ -121,7 +121,12 @@ sip:192.168.40.17:5060;status=active
 	<section id="dmq.p.server_address">
 		<title><varname>server_address</varname>(str)</title>
 		<para>
-		The local server address. This is the interface over which the DMQ engine will send/receive messages.
+			The local server address. This is the addres with which the local DMQ
+			node joins the servers group to send/receive messages.
+		</para>
+		<para>
+			Note: if server_socket is not set, then this address has to match a
+			local socket, which will be used to send/receive messages.
 		</para>
 		<para>
 		<emphasis>Default value is <quote>NULL</quote>.</emphasis>
@@ -132,6 +137,30 @@ sip:192.168.40.17:5060;status=active
 ...
 modparam("dmq", "server_address", "sip:10.0.0.20:5060")
 ...
+modparam("dmq", "server_address", "sip:10.0.0.20:5061;transport=tls")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="dmq.p.server_socket">
+		<title><varname>server_socket</varname>(str)</title>
+		<para>
+			The local listen address. This is the interface over which the DMQ
+			engine will send/receive messages.
+		</para>
+		<para>
+			Note: if this parameter is not set, the socket to send/receice
+			messages is built from server_address parameter.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>NULL</quote>.</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>server_socket</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dmq", "server_socket", "udp:10.0.0.20:5060")
+...
 </programlisting>
 		</example>
 	</section>
@@ -139,6 +168,9 @@ modparam("dmq", "server_address", "sip:10.0.0.20:5060")
 		<title><varname>notification_address</varname>(str)</title>
 		<para>
 		The address of another DMQ node from which the local node should retrieve initial information about all other nodes.
+		This parameter can be specified multiple times in the configuration, to configure multiple notification servers.
+		If you configure multiple notification servers, the <emphasis>multi_notify</emphasis> parameter needs to be
+		disabled.
 		</para>
 		<para>
 		<emphasis>Default value is <quote>NULL</quote>.</emphasis>
@@ -148,6 +180,8 @@ modparam("dmq", "server_address", "sip:10.0.0.20:5060")
 		<programlisting format="linespecific">
 ...
 modparam("dmq", "notification_address", "sip:10.0.0.21:5060")
+...
+modparam("dmq", "notification_address", "sip:10.0.0.21:5061;transport=tls")
 ...
 </programlisting>
 		</example>
@@ -173,7 +207,8 @@ modparam("dmq", "notification_channel", "peers")
 		<title><varname>multi_notify</varname>(int)</title>
 		<para>
 		Enables the ability to resolve multiple IPv4/IPv6 addresses for
-		a single notification address.
+		a single notification address. Please note that this mode is not
+		supported if you specify multiple notification address parameter.
 		</para>
 		<para>
 		A value of zero resolves to the first IP address found.
@@ -283,6 +318,41 @@ modparam("dmq", "ping_interval", 90)
 ...
     if(is_method("KDMQ")) {
         dmq_handle_message();
+    }
+...
+</programlisting>
+                </example>
+        </section>
+        <section id="dmq.f.dmq_process_message">
+                <title>
+                <function moreinfo="none">dmq_process_message([continue])</function>
+                </title>
+                <para>
+					Similar to dmq_handle_message, but the processing is happening
+					immediately, no longer cloning the request in shared memory
+					to be passed to a DMQ worker process.
+                </para>
+                <para>Meaning of parameters:</para>
+                <itemizedlist>
+                    <listitem>
+                    <para>
+                    <emphasis>continue</emphasis> - by default, dmq_process_message() will end
+					execution of routing script by returning 0. If this optional parameter
+					is set to "1", dmq_process_message() will continue executing the routing
+					script after it is been executed, returning 1.
+                    </para>
+                    </listitem>
+                </itemizedlist>
+                <para>
+                This function can be used from REQUEST_ROUTE.
+                </para>
+
+                <example>
+                <title><function>dmq_process_message</function> usage</title>
+                <programlisting format="linespecific">
+...
+    if(is_method("KDMQ")) {
+        dmq_process_message();
     }
 ...
 </programlisting>
@@ -448,6 +518,30 @@ modparam("dmq", "ping_interval", 90)
                 <programlisting format="linespecific">
 ...
 &kamcmd; dmq.list_nodes
+...
+                </programlisting>
+                </example>
+        </section>
+        <section id="dmq.r.remove">
+            <title>dmq.remove</title>
+			<para>
+				Remove a DMQ node by address.
+			</para>
+			<para>Parameters:</para>
+			<itemizedlist>
+					<listitem>
+					<para>
+						<emphasis>address</emphasis> - the SIP address
+						of the DMQ node to remove.
+					</para>
+					</listitem>
+			</itemizedlist>
+
+               <example>
+                <title>dmq.remove usage</title>
+                <programlisting format="linespecific">
+...
+&kamctl; rpc dmq.remove sip:1.2.3.4:5060
 ...
                 </programlisting>
                 </example>

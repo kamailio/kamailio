@@ -1,6 +1,6 @@
 {
   "name": "topos_d",
-  "version": 1,
+  "version": 2,
   "columns": [
     "id": {
       "type": "int",
@@ -10,6 +10,11 @@
     "rectime": {
       "type": "datetime",
       "default": null,
+      "null": false
+    },
+    "x_context": {
+      "type": "string",
+      "default": "",
       "null": false
     },
     "s_method": {

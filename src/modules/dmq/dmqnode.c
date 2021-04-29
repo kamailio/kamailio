@@ -87,7 +87,8 @@ int cmp_dmq_node(dmq_node_t *node, dmq_node_t *cmpnode)
 		return -1;
 	}
 	return STR_EQ(node->uri.host, cmpnode->uri.host)
-		   && STR_EQ(node->uri.port, cmpnode->uri.port);
+		   && STR_EQ(node->uri.port, cmpnode->uri.port)
+		   && (node->uri.proto == cmpnode->uri.proto);
 }
 
 /**
@@ -327,9 +328,12 @@ void pkg_free_node(dmq_node_t *node)
 }
 
 /**
- * @brief delete dmq node
+ * @brief delete dmq node with filter rules
+ * - list - the list of nodes
+ * - node - the structure with characteristics of the node to be deleted
+ * - filter - if 0: delete node always; if 1: delete node if not local
  */
-int del_dmq_node(dmq_node_list_t *list, dmq_node_t *node)
+int dmq_node_del_filter(dmq_node_list_t *list, dmq_node_t *node, int filter)
 {
 	dmq_node_t *cur, **prev;
 	lock_get(&list->lock);
@@ -337,8 +341,10 @@ int del_dmq_node(dmq_node_list_t *list, dmq_node_t *node)
 	prev = &list->nodes;
 	while(cur) {
 		if(cmp_dmq_node(cur, node)) {
-			*prev = cur->next;
-			destroy_dmq_node(cur, 1);
+			if(filter==0 || cur->local==0) {
+				*prev = cur->next;
+				destroy_dmq_node(cur, 1);
+			}
 			lock_release(&list->lock);
 			return 1;
 		}
@@ -347,6 +353,30 @@ int del_dmq_node(dmq_node_list_t *list, dmq_node_t *node)
 	}
 	lock_release(&list->lock);
 	return 0;
+}
+
+/**
+ * @brief delete dmq node
+ */
+int del_dmq_node(dmq_node_list_t *list, dmq_node_t *node)
+{
+	return  dmq_node_del_filter(list, node, 0);
+}
+
+/**
+ * @brief delete dmq node by uri
+ */
+int dmq_node_del_by_uri(dmq_node_list_t *list, str *suri)
+{
+	dmq_node_t dnode;
+
+	memset(&dnode, 0, sizeof(dmq_node_t));
+	if(parse_uri(suri->s, suri->len, &dnode.uri) < 0) {
+		LM_ERR("error parsing uri [%.*s]\n", suri->len, suri->s);
+		return -1;
+	}
+
+	return dmq_node_del_filter(list, &dnode, 1);
 }
 
 /**
@@ -397,8 +427,10 @@ int update_dmq_node_status(dmq_node_list_t *list, dmq_node_t *node, int status)
  */
 int build_node_str(dmq_node_t *node, char *buf, int buflen)
 {
-	/* sip:host:port;status=[status] */
+	/* sip:host:port;protocol=abcd;status=[status] */
 	int len = 0;
+	str sproto = STR_NULL;
+
 	if(buflen < node->orig_uri.len + 32) {
 		LM_ERR("no more space left for node string\n");
 		return -1;
@@ -411,6 +443,18 @@ int build_node_str(dmq_node_t *node, char *buf, int buflen)
 	len += 1;
 	memcpy(buf + len, node->uri.port.s, node->uri.port.len);
 	len += node->uri.port.len;
+	if(node->uri.proto!=PROTO_NONE && node->uri.proto!=PROTO_UDP
+			&& node->uri.proto!=PROTO_OTHER) {
+		if(get_valid_proto_string(node->uri.proto, 1, 0, &sproto)<0) {
+			LM_WARN("unknown transport protocol - fall back to udp\n");
+			sproto.s = "udp";
+			sproto.len = 3;
+		}
+		memcpy(buf + len, TRANSPORT_PARAM, TRANSPORT_PARAM_LEN);
+		len += TRANSPORT_PARAM_LEN;
+		memcpy(buf + len, sproto.s, sproto.len);
+		len += sproto.len;
+	}
 	memcpy(buf + len, ";", 1);
 	len += 1;
 	memcpy(buf + len, "status=", 7);

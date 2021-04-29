@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-19 Robert Boisvert
+ * Copyright (C) 2013-21 Robert Boisvert
  *
  * This file is part of the mohqueue module for Kamailio, a free SIP server.
  *
@@ -32,7 +32,7 @@
 #define ALLOWHDR "Allow: INVITE, ACK, BYE, CANCEL, NOTIFY, PRACK"
 #define CLENHDR "Content-Length"
 #define SIPEOL  "\r\n"
-#define USRAGNT "Kamailio MOH Queue v1.6"
+#define USRAGNT "Kamailio MOH Queue v1.7"
 
 /**********
 * local constants
@@ -122,17 +122,6 @@ char prefermsg [] =
   "Referred-By: <%s>" SIPEOL
   };
 
-char preinvitemsg [] =
-  {
-  "%s"
-  "Max-Forwards: 70" SIPEOL
-  "Contact: <%s>" SIPEOL
-  ALLOWHDR SIPEOL
-  "Supported: 100rel" SIPEOL
-  "Accept-Language: en" SIPEOL
-  "Content-Type: application/sdp" SIPEOL
-  };
-
 char prtpsdp [] =
   {
   "v=0" SIPEOL
@@ -185,7 +174,6 @@ void ack_msg (sip_msg_t *pmsg, call_lst *pcall)
 char *pfncname = "ack_msg: ";
 struct cell *ptrans;
 tm_api_t *ptm = pmod_data->ptm;
-tm_cell_t *t = 0;
 if (pcall->call_state != CLSTA_INVITED)
   {
   /**********
@@ -203,9 +191,7 @@ if (pcall->call_state != CLSTA_INVITED)
   }
 
 /**********
-* o release INVITE transaction
-* o save SDP address info
-* o put in queue
+* release INVITE transaction
 **********/
 
 if (ptm->t_lookup_ident (&ptrans, pcall->call_hash, pcall->call_label) < 0)
@@ -216,28 +202,39 @@ if (ptm->t_lookup_ident (&ptrans, pcall->call_hash, pcall->call_label) < 0)
   }
 else
   {
-  t = ptm->t_gett();
-  if (t==NULL || t==T_UNDEFINED)
+  /**********
+  * create new transaction if current missing
+  **********/
+
+  tm_cell_t *ptcell;
+  ptcell = ptm->t_gett ();
+  if ((ptcell == NULL) || (ptcell == T_UNDEFINED))
     {
-      if (ptm->t_newtran(pmsg)<0)
-        {
-          LM_ERR("cannot create the transaction\n");
-          return;
-        }
-      t = ptm->t_gett();
-      if (t==NULL || t==T_UNDEFINED)
-        {
-          LM_ERR("cannot lookup the transaction\n");
-          return;
-        }
+    if (ptm->t_newtran (pmsg) < 0)
+      {
+      LM_ERR ("%sUnable to create temporary transaction!\n", pfncname);
+      return;
+      }
+    ptcell = ptm->t_gett ();
+  if ((ptcell == NULL) || (ptcell == T_UNDEFINED))
+      {
+      LM_ERR ("%sUnable to find temporary transaction!\n", pfncname);
+      return;
+      }
     }
-  if (ptm->t_release_transaction(t) < 0)
+  if (ptm->t_release_transaction (ptcell) < 0)
     {
     LM_ERR ("%sRelease transaction failed for call (%s)!\n",
       pfncname, pcall->call_from);
     return;
     }
   }
+
+/**********
+* o save SDP address info
+* o put in queue
+**********/
+
 pcall->call_hash = pcall->call_label = 0;
 sprintf (pcall->call_addr, "%s %s",
   pmsg->rcv.dst_ip.af == AF_INET ? "IP4" : "IP6",
@@ -538,14 +535,19 @@ int
 create_call (sip_msg_t *pmsg, call_lst *pcall, int ncall_idx, int mohq_idx)
 
 {
+char *pfncname = "create_call: ";
+char *pbuf;
+str *pstr;
+
 /**********
 * add values to new entry
+* o call ID
+* o from
 **********/
 
-char *pfncname = "create_call: ";
 pcall->pmohq = &pmod_data->pmohq_lst [mohq_idx];
-str *pstr = &pmsg->callid->body;
-char *pbuf = pcall->call_buffer;
+pstr = &pmsg->callid->body;
+pbuf = pcall->call_buffer;
 pcall->call_buflen = sizeof (pcall->call_buffer);
 pcall->call_id = pbuf;
 if (!addstrbfr (pstr->s, pstr->len, &pbuf, &pcall->call_buflen, 1))
@@ -1036,7 +1038,6 @@ char *pfncname = "first_invite_msg: ";
 /**********
 * o SDP exists?
 * o accepts REFER?
-* o send RTP offer
 **********/
 
 if (!(pmsg->msg_flags & FL_SDP_BODY))
@@ -1069,6 +1070,11 @@ if (pmsg->allow)
     return;
     }
   }
+
+/**********
+* send RTP offer
+**********/
+
 mohq_debug (pcall->pmohq,
   "%sMaking offer for RTP link for call (%s) from queue (%s)",
   pfncname, pcall->call_from, pcall->pmohq->mohq_name);
@@ -2147,6 +2153,40 @@ build_sip_msg_from_buf (pnmsg, pbuf->s, pbuf->len, 0);
 memcpy (&pnmsg->rcv, &pmsg->rcv, sizeof (struct receive_info));
 
 /**********
+* ptime set?
+**********/
+
+int nsession;
+sdp_session_cell_t *psession;
+char pflagbuf [5];
+strcpy (pflagbuf, "z20");
+fparam_t pzflag [1] = {
+    {"", FPARAM_STRING, {pflagbuf}, 0}
+};
+for (nsession = 0; (psession = get_sdp_session (pmsg, nsession)); nsession++)
+  {
+  int nstream;
+  sdp_stream_cell_t *pstream;
+  for (nstream = 0; (pstream = get_sdp_stream (pmsg, nsession, nstream));
+    nstream++)
+    {
+    /**********
+    * ptime set?
+    **********/
+
+    if ((pstream->ptime.len < 1) || (pstream->ptime.len > 3))
+      { continue; }
+    strncpy (&pzflag->v.asciiz [1], pstream->ptime.s, pstream->ptime.len);
+    pzflag->v.asciiz [pstream->ptime.len + 1] = 0;
+    mohq_debug (pcall->pmohq,
+      "%sSet ptime (%s) for RTP link for call (%s) from queue (%s)",
+      pfncname,
+      &pzflag->v.asciiz [1], pcall->call_from, pcall->pmohq->mohq_name);
+    break;
+    }
+  }
+
+/**********
 * o send RTP answer
 * o form stream file
 * o send stream
@@ -2154,7 +2194,7 @@ memcpy (&pnmsg->rcv, &pmsg->rcv, sizeof (struct receive_info));
 
 mohq_debug (pcall->pmohq, "%sAnswering RTP link for call (%s)",
   pfncname, pcall->call_from);
-if (pmod_data->fn_rtp_answer (pnmsg, 0, 0) != 1)
+if (pmod_data->fn_rtp_answer (pnmsg, (char *) pzflag, 0) != 1)
   {
   LM_ERR ("%srtpproxy_answer refused for call (%s)!\n",
     pfncname, pcall->call_from);

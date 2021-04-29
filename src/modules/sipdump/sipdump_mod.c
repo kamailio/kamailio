@@ -26,6 +26,10 @@
 #include <string.h>
 #include <time.h>
 #include <sys/time.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <dirent.h>
+#include <errno.h>
 
 #include "../../core/sr_module.h"
 #include "../../core/dprint.h"
@@ -49,8 +53,11 @@ static str sipdump_folder = str_init("/tmp");
 static str sipdump_fprefix = str_init("kamailio-sipdump-");
 int sipdump_mode = SIPDUMP_MODE_WTEXT;
 static str sipdump_event_callback = STR_NULL;
+static int sipdump_fage = 0;
 
 static int sipdump_event_route_idx = -1;
+
+static void sipdump_storage_clean(unsigned int ticks, void* param);
 
 static int mod_init(void);
 static int child_init(int);
@@ -78,6 +85,7 @@ static param_export_t params[]={
 	{"rotate",         PARAM_INT,   &sipdump_rotate},
 	{"folder",         PARAM_STR,   &sipdump_folder},
 	{"fprefix",        PARAM_STR,   &sipdump_fprefix},
+	{"fage",           PARAM_INT,   &sipdump_fage},
 	{"mode",           PARAM_INT,   &sipdump_mode},
 	{"event_callback", PARAM_STR,   &sipdump_event_callback},
 
@@ -146,6 +154,12 @@ static int mod_init(void)
 
 	if(sipdump_mode & (SIPDUMP_MODE_WTEXT|SIPDUMP_MODE_WPCAP)) {
 		register_basic_timers(1);
+	}
+
+	if(sipdump_fage>0) {
+		if(sr_wtimer_add(sipdump_storage_clean, NULL, 600)<0) {
+			return -1;
+		}
 	}
 
 	sr_event_register_cb(SREV_NET_DATA_IN, sipdump_msg_received);
@@ -428,6 +442,79 @@ int sipdump_msg_sent(sr_event_param_t *evp)
 		return -1;
 	}
 	return 0;
+}
+
+/**
+ *
+ */
+static void sipdump_storage_clean(unsigned int ticks, void* param)
+{
+	DIR *dlist = NULL;
+	struct stat fstatbuf;
+	struct dirent *dentry = NULL;
+	str fname = STR_NULL;
+	char *cwd = NULL;
+	time_t tnow;
+	int fcount = 0;
+
+	if(sipdump_folder.s==NULL || sipdump_folder.len<=0
+			|| sipdump_fprefix.s==NULL || sipdump_fprefix.len<=0) {
+		return;
+	}
+	cwd = getcwd(NULL, 0);
+	if(cwd==NULL) {
+		LM_ERR("getcwd failed\n");
+		return;
+	}
+	if ((chdir(sipdump_folder.s)==-1)) {
+		LM_ERR("chdir to [%s] failed\n", sipdump_folder.s);
+		free(cwd);
+		return;
+	}
+
+	dlist = opendir(sipdump_folder.s);
+	if (dlist==NULL) {
+		LM_ERR("unable to read directory [%s]\n", sipdump_folder.s);
+		goto done;
+	}
+
+	tnow = time(NULL);
+	while ((dentry = readdir(dlist))) {
+		fname.s = dentry->d_name;
+		fname.len = strlen(fname.s);
+
+		/* ignore '.' and '..' */
+		if(fname.len==1 && strcmp(fname.s, ".")==0) { continue; }
+		if(fname.len==2 && strcmp(fname.s, "..")==0) { continue; }
+
+		if(fname.len<=sipdump_fprefix.len
+				|| strncmp(fname.s, sipdump_fprefix.s, sipdump_fprefix.len)!=0) {
+			continue;
+		}
+		if(lstat(fname.s, &fstatbuf) == -1) {
+			LM_ERR("stat failed on [%s]\n", fname.s);
+			continue;
+		}
+		if (S_ISREG(fstatbuf.st_mode)) {
+			/* check last modification time */
+			if ((tnow - sipdump_fage) > fstatbuf.st_mtime) {
+				LM_DBG("deleting [%s]\n", fname.s);
+				unlink (fname.s);
+				fcount++;
+			}
+		}
+	}
+	closedir(dlist);
+	if(fcount>0) {
+		LM_DBG("deleted %d files\n", fcount);
+	}
+
+done:
+	if((chdir(cwd)==-1)) {
+		LM_ERR("chdir to [%s] failed\n", cwd);
+		goto done;
+	}
+	free(cwd);
 }
 
 /**

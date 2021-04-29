@@ -118,7 +118,7 @@ static int pdu_7bit_encode(str sin) {
 	nleft = 1;
 	j = 0;
 	for(i = 0; i < sin.len; i++) {
-		hex = *(sin.s) >> (nleft - 1);
+		hex = (unsigned char)(*(sin.s)) >> (nleft - 1);
 		fill = *(sin.s+1) << (8-nleft);
 		hex = hex | fill;
 		_tr_buffer[j++] = HexTbl[hex >> 4];
@@ -292,7 +292,7 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 			j = 0;
 			for(i=0; i<val->rs.len; i++)
 			{
-				_tr_buffer[j++] = fourbits2char[val->rs.s[i] >> 4];
+				_tr_buffer[j++] = fourbits2char[(unsigned char)val->rs.s[i] >> 4];
 				_tr_buffer[j++] = fourbits2char[val->rs.s[i] & 0xf];
 			}
 			_tr_buffer[j] = '\0';
@@ -2327,6 +2327,59 @@ done:
 	return 0;
 }
 
+/*!
+ * \brief Evaluate urialias transformations
+ * \param msg SIP message
+ * \param tp transformation
+ * \param subtype transformation type
+ * \param val pseudo-variable
+ * \return 0 on success, -1 on error
+ */
+int tr_eval_urialias(struct sip_msg *msg, tr_param_t *tp, int subtype,
+		pv_value_t *val)
+{
+	str sv;
+
+	if(val==NULL || (!(val->flags&PV_VAL_STR)) || val->rs.len<=0)
+		return -1;
+
+	switch(subtype)
+	{
+		case TR_URIALIAS_ENCODE:
+			tr_set_crt_buffer();
+			sv.s = _tr_buffer;
+			sv.len = TR_BUFFER_SIZE;
+			if(ksr_uri_alias_encode(&val->rs, &sv)<0) {
+				LM_WARN("error converting uri to alias [%.*s]\n",
+						val->rs.len, val->rs.s);
+				val->rs = _tr_empty;
+				break;
+			}
+			val->rs = sv;
+			break;
+		case TR_URIALIAS_DECODE:
+			tr_set_crt_buffer();
+			sv.s = _tr_buffer;
+			sv.len = TR_BUFFER_SIZE;
+			if(ksr_uri_alias_decode(&val->rs, &sv)<0) {
+				LM_WARN("error converting uri to alias [%.*s]\n",
+						val->rs.len, val->rs.s);
+				val->rs = _tr_empty;
+				break;
+			}
+			val->rs = sv;
+			break;
+
+		default:
+			LM_ERR("unknown subtype %d\n",
+					subtype);
+			return -1;
+	}
+
+	val->flags = PV_VAL_STR;
+	return 0;
+}
+
 
 #define _tr_parse_nparam(_p, _p0, _tp, _spec, _n, _sign, _in, _s) \
 	while(is_in_str(_p, _in) && (*_p==' ' || *_p=='\t' || *_p=='\n')) _p++; \
@@ -3442,6 +3495,55 @@ char* tr_parse_line(str* in, trans_t *t)
 			name.len, name.s, name.len);
 error:
 	return NULL;
+done:
+	t->name = name;
+	return p;
+}
+
+/*!
+ * \brief Helper fuction to parse urialias transformation
+ * \param in parsed string
+ * \param t transformation
+ * \return pointer to the end of the transformation in the string - '}', null on error
+ */
+char* tr_parse_urialias(str* in, trans_t *t)
+{
+	char *p;
+	str name;
+
+
+	if(in==NULL || t==NULL)
+		return NULL;
+
+	p = in->s;
+	name.s = in->s;
+	t->type = TR_URIALIAS;
+	t->trf = tr_eval_urialias;
+
+	/* find next token */
+	while(is_in_str(p, in) && *p!=TR_PARAM_MARKER && *p!=TR_RBRACKET) p++;
+	if(*p=='\0') {
+		LM_ERR("invalid transformation: %.*s\n",
+				in->len, in->s);
+		goto error;
+	}
+	name.len = p - name.s;
+	trim(&name);
+
+	if(name.len==6 && strncasecmp(name.s, "encode", 6)==0) {
+		t->subtype = TR_URIALIAS_ENCODE;
+		goto done;
+	} else if(name.len==6 && strncasecmp(name.s, "decode", 6)==0) {
+		t->subtype = TR_URIALIAS_DECODE;
+		goto done;
+	}
+
+
+	LM_ERR("unknown transformation: %.*s/%.*s/%d!\n", in->len, in->s,
+			name.len, name.s, name.len);
+error:
+	return NULL;
+
 done:
 	t->name = name;
 	return p;

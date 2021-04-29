@@ -1449,6 +1449,56 @@ sr_xavp_t *xavu_set_child_sval(str *rname, str *cname, str *sval)
 }
 
 /**
+ * return child node of an xavp
+ * - $xavu(rname=>cname)
+ */
+sr_xavp_t* xavu_get_child(str *rname, str *cname)
+{
+	sr_xavp_t *ravp=NULL;
+
+	ravp = xavu_get(rname, NULL);
+	if(ravp==NULL || ravp->val.type!=SR_XTYPE_XAVP)
+		return NULL;
+
+	return xavu_get(cname, ravp->val.v.xavp);
+}
+
+
+/**
+ * return child node of an xavp if it has int value
+ * - $xavu(rname=>cname)
+ */
+sr_xavp_t* xavu_get_child_with_ival(str *rname, str *cname)
+{
+	sr_xavp_t *vavp=NULL;
+
+	vavp = xavu_get_child(rname, cname);
+
+	if(vavp==NULL || vavp->val.type!=SR_XTYPE_INT)
+		return NULL;
+
+	return vavp;
+}
+
+
+/**
+ * return child node of an xavp if it has string value
+ * - $xavu(rname=>cname)
+ */
+sr_xavp_t* xavu_get_child_with_sval(str *rname, str *cname)
+{
+	sr_xavp_t *vavp=NULL;
+
+	vavp = xavu_get_child(rname, cname);
+
+	if(vavp==NULL || vavp->val.type!=SR_XTYPE_STR)
+		return NULL;
+
+	return vavp;
+}
+
+
+/**
  * serialize the values in subfields of an xavu in name=value; format
  * - rname - name of the root list xavu
  * - obuf - buffer were to write the output

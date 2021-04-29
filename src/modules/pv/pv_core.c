@@ -615,20 +615,22 @@ int pv_get_flag(struct sip_msg *msg, pv_param_t *param,
 	return pv_get_uintval(msg, param, res, (msg->flags & (1<<param->pvn.u.isname.name.n)) ? 1 : 0);
 }
 
-static inline char* int_to_8hex(int val)
+static inline char* int_to_8hex(int sval)
 {
 	unsigned short digit;
 	int i;
 	static char outbuf[9];
+	unsigned int uval;
 
+	uval = (unsigned int)sval;
 	outbuf[8] = '\0';
 	for(i=0; i<8; i++)
 	{
-		if(val!=0)
+		if(uval!=0)
 		{
-			digit =  val & 0x0f;
+			digit =  uval & 0x0f;
 			outbuf[7-i] = digit >= 10 ? digit + 'a' - 10 : digit + '0';
-			val >>= 4;
+			uval >>= 4;
 		}
 		else
 			outbuf[7-i] = '0';

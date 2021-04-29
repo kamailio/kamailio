@@ -4,7 +4,7 @@ Mojtaba Esfandiari.S
 
    Nasim Telecom
 
-   Copyright � 2020 Nasim Telecom Inc.
+   Copyright © 2020 Nasim Telecom Inc.
      __________________________________________________________________
 
    Table of Contents
@@ -81,12 +81,14 @@ Chapter 1. Admin Guide
 
 1. Overview
 
-   This is a module that enables media streams to be relayed via an
-   lrkproxy. This module works with py_lrkproxy engine in:
-   https://github.com/mojtabaesfandiari/pylrkproxy This module does
-   relaying audio streams between peers in PREROUTING netfilter-hooking
-   section in kernel-space linux. The LRKProxy architecture is composed of
-   two different layers. These layers are independent of each other.
+   This is a module that enables media streams to be relayed via
+   pylrkproxy engine that exist in:
+   https://github.com/mojtabaesfandiari/pylrkproxy It does relaying audio
+   streams between peers in PREROUTING netfilter-hooking section in
+   kernel-space linux. The LRKProxy architecture is composed of two
+   different layers. These layers are independent of each other. For more
+   information about LRKProxy architecture, please visit our paper in
+   ieeexplore: https://ieeexplore.ieee.org/document/9303608
 
 2. LRKProxy Architecture
 
@@ -98,7 +100,7 @@ Chapter 1. Admin Guide
    The first layer is developed as User-Space application that allows
    User-Space to directly access and manipulate cache data buffer and
    packet buffer in Kernel-Space. This layer gets all information about
-   creating new sessions, active sessions and tear-down sessions which is
+   creating new sessions, active sessions and teardown sessions which is
    gotten from SDP body during signaling plan and relay them to the
    LRKP-Transport Stateful Layer (LRKP- TSL).
 
@@ -167,7 +169,7 @@ Chapter 1. Admin Guide
    insert sockets into a single set with default value set ID '0'. To
    define multiple LRKP_TSL, just add the instances in each modparam.
 
-   Default value is "NONE" (disabled).
+   Default value is “NONE” (disabled).
 
    Example 1.1. Set lrkproxy_sock parameter
 ...
@@ -186,7 +188,7 @@ modparam("lrkproxy", "lrkproxy_sock", "udp:192.168.122.109:8080")
    module will not attempt to establish communication to LRKP_TSL for
    lrkproxy_disable_tout seconds.
 
-   Default value is "60".
+   Default value is “60”.
 
    Example 1.2. Set lrkproxy_disable_tout parameter
 ...
@@ -197,7 +199,7 @@ modparam("lrkproxy", "lrkproxy_disable_tout", 20)
 
    Timeout value in waiting for reply from LRKP_TSL.
 
-   Default value is "1".
+   Default value is “1”.
 
    Example 1.3. Set lrkproxy_tout parameter
 ...
@@ -209,7 +211,7 @@ modparam("lrkproxy", "lrkproxy_tout", 2)
    How many times the LRKP_CL should retry to send and receive after
    timeout was generated.
 
-   Default value is "5".
+   Default value is “5”.
 
    Example 1.4. Set lrkproxy_retr parameter
 ...
@@ -221,7 +223,7 @@ modparam("lrkproxy", "lrkproxy_retr", 2)
    This parameter set the algorithm of LRKP_TSL selection. lrk_LINER=0,
    lrk_RR=1
 
-   Default value is "0".
+   Default value is “0”.
 
    Example 1.5. Set lrkp_alg parameter
 ...
@@ -246,7 +248,7 @@ modparam("lrkproxy", "lrkp_alg", 1)
    NOTE: When configuring this parameter, one should consider maximum call
    time VS share memory for unfinished calls.
 
-   Default value is "3600".
+   Default value is “3600”.
 
    Example 1.6. Set hash_table_tout parameter
 ...
@@ -257,7 +259,7 @@ modparam("lrkproxy", "hash_table_tout", "3600")
 
    Size of the hash table. Default value is 128.
 
-   Default value is "128".
+   Default value is “128”.
 
    Example 1.7. Set hash_table_size parameter
 ...
@@ -266,7 +268,7 @@ modparam("lrkproxy", "hash_table_size", 256)
 
 4.4. Functions
 
-4.4.1. set_lrkproxy_set(setid)
+4.4.1.  set_lrkproxy_set(setid)
 
    Sets the Id of the lrkproxy set to be used for the next
    lrkproxy_manage() command. The parameter can be an integer or a config
@@ -281,7 +283,7 @@ set_lrkproxy_set("0");
 lrkproxy_manage();
 ...
 
-4.4.2. lrkproxy_manage([flags [, ip_address]])
+4.4.2.  lrkproxy_manage([flags [, ip_address]])
 
    Manage the LRKProxy session - it combines the functionality of
    lrkproxy_offer(), lrkproxy_answer() and unforce_lrkproxy(), detecting

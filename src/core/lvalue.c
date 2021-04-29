@@ -380,7 +380,7 @@ int lval_assign(struct run_act_ctx* h, struct sip_msg* msg,
 	struct rvalue* rv;
 	int ret;
 
-	ret=0;
+	ret=-1;
 	rv=rval_expr_eval(h, msg, rve);
 	if (unlikely(rv==0)){
 		LM_ERR("rval expression evaluation failed (%d,%d-%d,%d)\n",
@@ -404,9 +404,7 @@ int lval_assign(struct run_act_ctx* h, struct sip_msg* msg,
 		LM_ERR("assignment failed at pos: (%d,%d-%d,%d)\n",
 			rve->fpos.s_line, rve->fpos.s_col,
 			rve->fpos.e_line, rve->fpos.e_col);
-	}
-	else
-	{
+	} else {
 		if(unlikely(_log_assign_action!=NULL))
 			_log_assign_action(msg, lv);
 	}
@@ -414,5 +412,5 @@ int lval_assign(struct run_act_ctx* h, struct sip_msg* msg,
 	return ret;
 error:
 	if (rv) rval_destroy(rv);
-	return -1;
+	return ret;
 }

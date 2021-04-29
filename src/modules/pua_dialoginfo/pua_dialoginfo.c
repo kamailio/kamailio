@@ -100,6 +100,8 @@ char * pubruri_caller_avp  = DEF_PUBRURI_CALLER_AVP;
 char * pubruri_callee_avp  = DEF_PUBRURI_CALLEE_AVP;
 int publish_dialog_req_within = DEF_PUBLISH_DIALOG_REQ_WITHIN;
 
+int puadinfo_attribute_display = 0;
+
 send_publish_t pua_send_publish;
 /** module functions */
 
@@ -129,6 +131,7 @@ static param_export_t params[]={
 	{"caller_entity_when_publish_disabled",  PARAM_STR, &caller_entity_when_publish_disabled },
 	{"callee_entity_when_publish_disabled",  PARAM_STR, &callee_entity_when_publish_disabled },
 	{"publish_dialog_req_within",      INT_PARAM, &publish_dialog_req_within },
+	{"attribute_display",   PARAM_INT, &puadinfo_attribute_display },
 	{0, 0, 0 }
 };
 
@@ -265,6 +268,11 @@ __dialog_sendpublish(struct dlg_cell *dlg, int type, struct dlg_cb_params *_para
 	if(dlg==NULL || dlginfo==NULL) {
 		LM_WARN("execution with null parameters - type %d, dlg %p, info %p\n",
 				type, dlg, dlginfo);
+		return;
+	}
+
+	/* skip requests that do not control call state */
+	if(request && (request->REQ_METHOD)&(METHOD_PRACK|METHOD_UPDATE)) {
 		return;
 	}
 	if(include_req_uri) {

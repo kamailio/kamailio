@@ -681,8 +681,8 @@ static int delete_unused_sa_cb(const struct nlmsghdr *nlh, void *data)
     void  *cp;
     str received_host;
     ip_addr_t received_host_addr;
-    ipsec_t ipsec;
-    
+    ipsec_t ipsec = {0};
+
     cp = ((struct del_tunnels*)data)->contacts;
     while (1) {
         memcpy(&(received_host.len), cp, sizeof(received_host.len));
