@@ -2573,12 +2573,14 @@ int ds_mark_dst(struct sip_msg *msg, int state)
 	return (ret == 0) ? 1 : -1;
 }
 
+#define _VOR1(v) ((v)?(v):1)
+
 static inline void latency_stats_update(ds_latency_stats_t *latency_stats, int latency) {
 	/* after 2^21 ~24 days at 1s interval, the average becomes a weighted average */
 	if (latency_stats->count < 2097152) {
 		latency_stats->count++;
 	} else { /* We adjust the sum of squares used by the oneline algorithm proportionally */
-		latency_stats->m2 -= latency_stats->m2/latency_stats->count;
+		latency_stats->m2 -= latency_stats->m2/_VOR1(latency_stats->count);
 	}
 	if (latency_stats->count == 1) {
 		latency_stats->stdev = 0.0f;
@@ -2601,10 +2603,10 @@ static inline void latency_stats_update(ds_latency_stats_t *latency_stats, int l
 		float delta;
 		float delta2;
 		delta = latency - latency_stats->average;
-		latency_stats->average += delta/latency_stats->count;
+		latency_stats->average += delta/_VOR1(latency_stats->count);
 		delta2 = latency - latency_stats->average;
 		latency_stats->m2 += ((double)delta)*delta2;
-		latency_stats->stdev = sqrt(latency_stats->m2 / (latency_stats->count-1));
+		latency_stats->stdev = sqrt(latency_stats->m2 / _VOR1(latency_stats->count-1));
 	}
 	/* exponentialy weighted moving average */
 	if (latency_stats->count < 10) {
@@ -2697,7 +2699,7 @@ int ds_update_latency(int group, str *address, int code)
 			ds_latency_stats_t *latency_stats = &ds_dest->latency_stats;
 			congestion_ms = latency_stats->estimate - latency_stats->average;
 			/* We multiply by 2^4 to keep enough precision */
-			active_weight = (total_congestion_ms << 4) / congestion_ms;
+			active_weight = (total_congestion_ms << 4) / _VOR1(congestion_ms);
 			if (ds_dest->attrs.rweight != active_weight) {
 				apply_rweights = 1;
 				ds_dest->attrs.rweight = active_weight;
