@@ -716,6 +716,11 @@ int msrp_parse_hdr_uri_list(msrp_hdr_t *hdr)
 	s = hdr->body;
 	trim(&s);
 	arr->size = msrp_explode_strz(&arr->list, &s, " ");
+	if(arr->size<0)
+	{
+		LM_ERR("failed to explode\n");
+		return -1;
+	}
 	hdr->parsed.flags |= MSRP_DATA_SET;
 	hdr->parsed.free_fn = msrp_str_array_destroy;
 	hdr->parsed.data = arr;
