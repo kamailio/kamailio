@@ -198,6 +198,27 @@ modparam("sipdump", "fprefix", "ksipdump-")
 </programlisting>
 		</example>
 	</section>
+	<section id="sipdump.p.fage">
+		<title><varname>fage</varname> (int)</title>
+		<para>
+			Age of created files (in seconds) to be removed if they become older.
+			Cleanup is done on a timer routine running every 600 seconds.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0 (no cleanup of created files).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>fage</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+# cleanup files older than two days
+modparam("sipdump", "fage", 172800)
+...
+</programlisting>
+		</example>
+	</section>
 	<section id="sipdump.p.event_callback">
 		<title><varname>event_callback</varname> (str)</title>
 		<para>
