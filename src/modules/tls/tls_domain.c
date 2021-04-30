@@ -62,7 +62,9 @@ extern EVP_PKEY * tls_engine_private_key(const char* key_id);
 #if !defined(OPENSSL_NO_ECDH) && !defined(OPENSSL_VERSION_1_1)
 static void setup_ecdh(SSL_CTX *ctx)
 {
+#if !defined(SSL_CTX_set_ecdh_auto)
    EC_KEY *ecdh;
+#endif
 
    if (SSLeay() < 0x1000005fL) {
       return;
