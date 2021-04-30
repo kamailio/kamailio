@@ -401,6 +401,12 @@ int t_continue_helper(unsigned int hash_index, unsigned int label,
 			exec_post_script_cb(t->uac[branch].reply, cb_type);
 		}
 
+		if (t->flags & T_ASYNC_SUSPENDED) {
+			LM_DBG("The transaction is suspended, so not continuing\n");
+			set_t(backup_T, backup_T_branch);
+			return 0;
+		}
+
 		LM_DBG("restoring previous environment\n");
 		faked_env( t, 0, 1);
 
