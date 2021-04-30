@@ -610,7 +610,7 @@ msrp_hdr_t *msrp_get_hdr_by_id(msrp_frame_t *mf, int hdrid)
 /**
  *
  */
-int msrp_explode_str(str **arr, str *in, str *del)
+int msrp_explode_str(str_array_t *arr, str *in, str *del)
 {
 	str *larr;
 	int i;
@@ -633,20 +633,20 @@ int msrp_explode_str(str **arr, str *in, str *del)
 	}
 	n++;
 
-	larr = pkg_malloc(n * sizeof(str));
+	larr = pkg_mallocxz(n * sizeof(str));
 	if(larr==NULL)
 	{
 		LM_ERR("no more pkg\n");
 		return -1;
 	}
-	memset(larr, 0, n * sizeof(str));
 
 	k = 0;
 	if(n==1)
 	{
 		larr[k].s = in->s;
 		larr[k].len = in->len;
-		*arr = larr;
+		arr->list = larr;
+		arr->size = n;
 		return n;
 	}
 
@@ -657,19 +657,23 @@ int msrp_explode_str(str **arr, str *in, str *del)
 		{
 			if(in->s[i]==del->s[j])
 			{
-				if(k<n)
+				if(k<n) {
 					larr[k].len = in->s + i - larr[k].s;
+				}
 				k++;
-				if(k<n)
+				if(k<n) {
 					larr[k].s = in->s + i + 1;
+				}
 				break;
 			}
 		}
 	}
-	if(k<n)
+	if(k<n) {
 		larr[k].len = in->s + i - larr[k].s;
+	}
 
-	*arr = larr;
+	arr->list = larr;
+	arr->size = n;
 
 	return n;
 }
@@ -677,7 +681,7 @@ int msrp_explode_str(str **arr, str *in, str *del)
 /**
  *
  */
-int msrp_explode_strz(str **arr, str *in, char *del)
+int msrp_explode_strz(str_array_t *arr, str *in, char *del)
 {
 	str s;
 
@@ -693,7 +697,7 @@ void msrp_str_array_destroy(void *data)
 		return;
 	arr = (str_array_t*)data;
 	if(arr->list!=NULL)
-			pkg_free(arr->list);
+		pkg_free(arr->list);
 	pkg_free(arr);
 }
 
@@ -705,20 +709,19 @@ int msrp_parse_hdr_uri_list(msrp_hdr_t *hdr)
 	str_array_t *arr;
 	str s;
 
-	arr = pkg_malloc(sizeof(str_array_t));
+	arr = pkg_mallocxz(sizeof(str_array_t));
 	if(arr==NULL)
 	{
 		LM_ERR("no more pkg\n");
 		return -1;
 	}
-	memset(arr, 0, sizeof(str_array_t));
 
 	s = hdr->body;
 	trim(&s);
-	arr->size = msrp_explode_strz(&arr->list, &s, " ");
-	if(arr->size<0)
+	if(msrp_explode_strz(arr, &s, " ")<0)
 	{
 		LM_ERR("failed to explode\n");
+		msrp_str_array_destroy(arr);
 		return -1;
 	}
 	hdr->parsed.flags |= MSRP_DATA_SET;
