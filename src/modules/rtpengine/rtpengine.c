@@ -2477,17 +2477,19 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
 
 	memset(&ng_flags, 0, sizeof(ng_flags));
 
-	if (get_callid(msg, &ng_flags.call_id) == -1 || ng_flags.call_id.len == 0) {
-		LM_ERR("can't get Call-Id field\n");
-		return NULL;
-	}
-	if (get_to_tag(msg, &ng_flags.to_tag) == -1) {
-		LM_ERR("can't get To tag\n");
-		return NULL;
-	}
-	if (get_from_tag(msg, &ng_flags.from_tag) == -1 || ng_flags.from_tag.len == 0) {
-		LM_ERR("can't get From tag\n");
-		return NULL;
+	if(IS_SIP(msg) || IS_SIP_REPLY(msg)) {
+		if (get_callid(msg, &ng_flags.call_id) == -1 || ng_flags.call_id.len == 0) {
+			LM_ERR("can't get Call-Id field\n");
+			return NULL;
+		}
+		if (get_to_tag(msg, &ng_flags.to_tag) == -1) {
+			LM_ERR("can't get To tag\n");
+			return NULL;
+		}
+		if (get_from_tag(msg, &ng_flags.from_tag) == -1 || ng_flags.from_tag.len == 0) {
+			LM_ERR("can't get From tag\n");
+			return NULL;
+		}
 	}
 	if (bencode_buffer_init(bencbuf)) {
 		LM_ERR("could not initialize bencode_buffer_t\n");
@@ -2534,6 +2536,18 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
 
 	if (parse_flags(&ng_flags, msg, &op, flags_str))
 		goto error;
+
+	if(!IS_SIP(msg) && !IS_SIP_REPLY(msg)) {
+		/* check required values */
+		if (ng_flags.call_id.len == 0) {
+			LM_ERR("can't get Call-Id field\n");
+			return NULL;
+		}
+		if (ng_flags.from_tag.len == 0) {
+			LM_ERR("can't get From tag\n");
+			return NULL;
+		}
+	}
 
 	/* trickle ice sdp fragment? */
 	if (cont_type == 3)
