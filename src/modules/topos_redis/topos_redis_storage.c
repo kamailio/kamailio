@@ -314,6 +314,7 @@ int tps_redis_insert_initial_method_branch(tps_data_t *td)
 	redisc_server_t *rsrv = NULL;
 	redisReply *rrpl = NULL;
 	unsigned long lval = 0;
+	str xuuid = str_init("");
 
 	if(td->x_vbranch1.len<=0) {
 		LM_INFO("no via branch for this message\n");
@@ -331,13 +332,22 @@ int tps_redis_insert_initial_method_branch(tps_data_t *td)
 	memset(argvlen, 0, TPS_REDIS_NR_KEYS * sizeof(size_t));
 	argc = 0;
 
+	if(td->a_uuid.len>1) {
+		xuuid.s = td->a_uuid.s + 1;
+		xuuid.len = td->a_uuid.len - 1;
+	} else if(td->b_uuid.len>1) {
+		xuuid.s = td->b_uuid.s + 1;
+		xuuid.len = td->b_uuid.len - 1;
+	}
+
 	rp = _tps_redis_cbuf;
 	rkey.len = snprintf(rp, TPS_REDIS_DATA_SIZE-128,
-					"%.*s%.*s:%.*s:%.*s",
+					"%.*s%.*s:%.*s:%.*s:x%.*s",
 					_tps_redis_bprefix.len, _tps_redis_bprefix.s,
 					td->s_method.len, td->s_method.s,
 					td->a_callid.len, td->a_callid.s,
-					td->b_tag.len, td->b_tag.s);
+					td->b_tag.len, td->b_tag.s,
+					xuuid.len, xuuid.s);
 	if(rkey.len<0 || rkey.len>=TPS_REDIS_DATA_SIZE-128) {
 		LM_ERR("error or insufficient buffer size: %d\n", rkey.len);
 		return -1;
@@ -571,6 +581,7 @@ int tps_redis_load_initial_method_branch(sip_msg_t *msg, tps_data_t *md, tps_dat
 	redisReply *rrpl = NULL;
 	str skey = STR_NULL;
 	str sval = STR_NULL;
+	str xuuid = str_init("");
 
 	if(msg==NULL || md==NULL || sd==NULL)
 		return -1;
@@ -591,14 +602,23 @@ int tps_redis_load_initial_method_branch(sip_msg_t *msg, tps_data_t *md, tps_dat
 	memset(argvlen, 0, TPS_REDIS_NR_KEYS * sizeof(size_t));
 	argc = 0;
 
+	if(md->a_uuid.len>1) {
+		xuuid.s = md->a_uuid.s + 1;
+		xuuid.len = md->a_uuid.len - 1;
+	} else if(md->b_uuid.len>1) {
+		xuuid.s = md->b_uuid.s + 1;
+		xuuid.len = md->b_uuid.len - 1;
+	}
+
 	rp = _tps_redis_cbuf;
 
 	rkey.len = snprintf(rp, TPS_REDIS_DATA_SIZE,
-					"%.*s%.*s:%.*s:%.*s",
+					"%.*s%.*s:%.*s:%.*s:x%.*s",
 					_tps_redis_bprefix.len, _tps_redis_bprefix.s,
 					md->s_method.len, md->s_method.s,
 					md->a_callid.len, md->a_callid.s,
-					md->b_tag.len, md->b_tag.s);
+					md->b_tag.len, md->b_tag.s,
+					xuuid.len, xuuid.s);
 	if(rkey.len<0 || rkey.len>=TPS_REDIS_DATA_SIZE) {
 		LM_ERR("error or insufficient buffer size: %d\n", rkey.len);
 		return -1;
