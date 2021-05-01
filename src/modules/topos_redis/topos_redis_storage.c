@@ -302,7 +302,7 @@ int tps_redis_clean_dialogs(void)
 /**
  *
  */
-int tps_redis_insert_initial_method_branch(tps_data_t *td)
+int tps_redis_insert_initial_method_branch(tps_data_t *md, tps_data_t *sd)
 {
 	char* argv[TPS_REDIS_NR_KEYS];
 	size_t argvlen[TPS_REDIS_NR_KEYS];
@@ -316,7 +316,7 @@ int tps_redis_insert_initial_method_branch(tps_data_t *td)
 	unsigned long lval = 0;
 	str xuuid = str_init("");
 
-	if(td->x_vbranch1.len<=0) {
+	if(md->x_vbranch1.len<=0) {
 		LM_INFO("no via branch for this message\n");
 		return -1;
 	}
@@ -332,21 +332,27 @@ int tps_redis_insert_initial_method_branch(tps_data_t *td)
 	memset(argvlen, 0, TPS_REDIS_NR_KEYS * sizeof(size_t));
 	argc = 0;
 
-	if(td->a_uuid.len>1) {
-		xuuid.s = td->a_uuid.s + 1;
-		xuuid.len = td->a_uuid.len - 1;
-	} else if(td->b_uuid.len>1) {
-		xuuid.s = td->b_uuid.s + 1;
-		xuuid.len = td->b_uuid.len - 1;
+	if(md->a_uuid.len>1) {
+		xuuid.s = md->a_uuid.s + 1;
+		xuuid.len = md->a_uuid.len - 1;
+	} else if(md->b_uuid.len>1) {
+		xuuid.s = md->b_uuid.s + 1;
+		xuuid.len = md->b_uuid.len - 1;
+	} else if(sd->a_uuid.len>1) {
+		xuuid.s = sd->a_uuid.s + 1;
+		xuuid.len = sd->a_uuid.len - 1;
+	} else if(sd->b_uuid.len>1) {
+		xuuid.s = sd->b_uuid.s + 1;
+		xuuid.len = sd->b_uuid.len - 1;
 	}
 
 	rp = _tps_redis_cbuf;
 	rkey.len = snprintf(rp, TPS_REDIS_DATA_SIZE-128,
 					"%.*s%.*s:%.*s:%.*s:x%.*s",
 					_tps_redis_bprefix.len, _tps_redis_bprefix.s,
-					td->s_method.len, td->s_method.s,
-					td->a_callid.len, td->a_callid.s,
-					td->b_tag.len, td->b_tag.s,
+					md->s_method.len, md->s_method.s,
+					md->a_callid.len, md->a_callid.s,
+					md->b_tag.len, md->b_tag.s,
 					xuuid.len, xuuid.s);
 	if(rkey.len<0 || rkey.len>=TPS_REDIS_DATA_SIZE-128) {
 		LM_ERR("error or insufficient buffer size: %d\n", rkey.len);
@@ -366,7 +372,7 @@ int tps_redis_insert_initial_method_branch(tps_data_t *td)
 	lval = (unsigned long)time(NULL);
 	TPS_REDIS_SET_ARGN(lval, rp, &rval, argc, &tt_key_rectime,
 			argv, argvlen);
-	TPS_REDIS_SET_ARGS(&td->x_vbranch1, argc, &tt_key_x_vbranch, argv, argvlen);
+	TPS_REDIS_SET_ARGS(&md->x_vbranch1, argc, &tt_key_x_vbranch, argv, argvlen);
 
 	rrpl = _tps_redis_api.exec_argv(rsrv, argc, (const char **)argv, argvlen);
 	if(rrpl==NULL) {
@@ -376,8 +382,8 @@ int tps_redis_insert_initial_method_branch(tps_data_t *td)
 		}
 		return -1;
 	}
-	LM_DBG("inserting %.*s branch record for [%.*s] with argc %d\n",
-			td->s_method.len, td->s_method.s,rkey.len, rkey.s, argc);
+	LM_DBG("inserting initial %.*s branch record for [%.*s] with argc %d\n",
+			md->s_method.len, md->s_method.s,rkey.len, rkey.s, argc);
 
 	freeReplyObject(rrpl);
 
@@ -608,6 +614,12 @@ int tps_redis_load_initial_method_branch(sip_msg_t *msg, tps_data_t *md, tps_dat
 	} else if(md->b_uuid.len>1) {
 		xuuid.s = md->b_uuid.s + 1;
 		xuuid.len = md->b_uuid.len - 1;
+	} else if(sd->a_uuid.len>1) {
+		xuuid.s = sd->a_uuid.s + 1;
+		xuuid.len = sd->a_uuid.len - 1;
+	} else if(sd->b_uuid.len>1) {
+		xuuid.s = sd->b_uuid.s + 1;
+		xuuid.len = sd->b_uuid.len - 1;
 	}
 
 	rp = _tps_redis_cbuf;
@@ -634,7 +646,8 @@ int tps_redis_load_initial_method_branch(sip_msg_t *msg, tps_data_t *md, tps_dat
 	argvlen[argc] = rkey.len;
 	argc++;
 
-	LM_DBG("loading invite branch record for [%.*s]\n", rkey.len, rkey.s);
+	LM_DBG("loading initial %.*s branch record for [%.*s]\n",
+			md->s_method.len, md->s_method.s, rkey.len, rkey.s);
 
 	rrpl = _tps_redis_api.exec_argv(rsrv, argc, (const char **)argv, argvlen);
 	if(rrpl==NULL) {
@@ -1149,13 +1162,13 @@ int tps_redis_update_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
 	}
 
 	if(md->s_method.len==6 && strncmp(md->s_method.s, "INVITE", 6)==0) {
-		if(tps_redis_insert_initial_method_branch(md)<0) {
+		if(tps_redis_insert_initial_method_branch(md, sd)<0) {
 			LM_ERR("failed to insert INVITE extra branch data\n");
 			return -1;
 		}
 	}
 	if(md->s_method.len==9 && strncmp(md->s_method.s, "SUBSCRIBE", 9)==0) {
-		if(tps_redis_insert_initial_method_branch(md)<0) {
+		if(tps_redis_insert_initial_method_branch(md, sd)<0) {
 			LM_ERR("failed to insert SUBSCRIBE extra branch data\n");
 			return -1;
 		}
