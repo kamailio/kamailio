@@ -211,6 +211,7 @@ int lost_held_function(struct sip_msg *_m, char *_con, char *_pidf, char *_url,
 	int flag = 0;
 	int naptr = 0;
 	int presence = 0;
+	int res_error = 0;
 
 	if(_pidf == NULL || _url == NULL || _err == NULL) {
 		LM_ERR("invalid parameter\n");
@@ -505,6 +506,10 @@ int lost_held_function(struct sip_msg *_m, char *_con, char *_pidf, char *_url,
 	psurl->setf(_m, &psurl->pvp, (int)EQ_T, &pvurl);
 	lost_free_string(&geo); /* clean up */
  
+ 	/* return error code in case of response error */
+	if(err.len > 0) {
+		res_error = 1;
+	}
 	pverr.rs = err;
 	pverr.rs.s = err.s;
 	pverr.rs.len = err.len;
@@ -514,7 +519,7 @@ int lost_held_function(struct sip_msg *_m, char *_con, char *_pidf, char *_url,
 	pserr->setf(_m, &pserr->pvp, (int)EQ_T, &pverr);
 	lost_free_string(&err); /* clean up */
 
-	return (err.len > 0) ? LOST_SERVER_ERROR : LOST_SUCCESS;
+	return (res_error > 0) ? LOST_SERVER_ERROR : LOST_SUCCESS;
 
 err:
 	/* clean up pointer */
@@ -574,6 +579,7 @@ int lost_held_dereference(struct sip_msg *_m, char *_url, char *_pidf,
 	int len = 0;
 	int curl = 0;
 	int exact = 0;
+	int ret = LOST_SUCCESS;
 
 	if(_url == NULL || _rtime == NULL || _pidf == NULL || _rtype == NULL
 			|| _err == NULL) {
@@ -709,12 +715,20 @@ int lost_held_dereference(struct sip_msg *_m, char *_url, char *_pidf,
 		goto err;
 	}
 
-	/* check the root element ... shall be locationResponse, or error */
-	if(xmlStrcmp(root->name, (const xmlChar *)"presence") == 0) {
+	/* check root element ... shall be presence|locationResponse, or error */
+	if((!xmlStrcmp(root->name, (const xmlChar *)"presence"))
+			|| (!xmlStrcmp(root->name, (const xmlChar *)"locationResponse"))) {
 
 		LM_DBG("HELD location response [%.*s]\n", res.len, res.s);
 
-		/* error received */
+		/* check content and set response code
+		 * + 0 nothing found: return 200
+		 * + 1 value found: return 201
+		 * + 2 reference found: return 202
+		 * + 3 value and reference found: return 203
+		 */
+		ret += lost_check_HeldResponse(root);
+	/* error received */
 	} else if(xmlStrcmp(root->name, (const xmlChar *)"error") == 0) {
 
 		LM_DBG("HELD error response [%.*s]\n", res.len, res.s);
@@ -745,6 +759,10 @@ int lost_held_dereference(struct sip_msg *_m, char *_url, char *_pidf,
 	pspidf->setf(_m, &pspidf->pvp, (int)EQ_T, &pvpidf);
 	lost_free_string(&res); /* clean up */
 
+	/* return error code in case of response error */
+	if(err.len > 0) {
+		ret = LOST_SERVER_ERROR;
+	}
 	pverr.rs = err;
 	pverr.rs.s = err.s;
 	pverr.rs.len = err.len;
@@ -754,7 +772,7 @@ int lost_held_dereference(struct sip_msg *_m, char *_url, char *_pidf,
 	pserr->setf(_m, &pserr->pvp, (int)EQ_T, &pverr);
 	lost_free_string(&err); /* clean up */
 
-	return (err.len > 0) ? LOST_SERVER_ERROR : LOST_SUCCESS;
+	return ret;
 
 err:
 	/* clean up xml */
@@ -822,6 +840,7 @@ int lost_function(struct sip_msg *_m, char *_con, char *_uri, char *_name,
 	int len = 0;
 	int naptr = 0;
 	int geoitems = 0;
+	int res_error = 0;
 
 	if(_con == NULL || _uri == NULL || _name == NULL || _err == NULL) {
 		LM_ERR("invalid parameter\n");
@@ -1253,6 +1272,10 @@ int lost_function(struct sip_msg *_m, char *_con, char *_uri, char *_name,
 	psuri->setf(_m, &psuri->pvp, (int)EQ_T, &pvuri);
 	lost_free_string(&uri); /* clean up */
 
+	/* return error code in case of response error */
+	if(err.len > 0) {
+		res_error = 1;
+	}
 	pverr.rs = err;
 	pverr.rs.s = err.s;
 	pverr.rs.len = err.len;
@@ -1262,7 +1285,7 @@ int lost_function(struct sip_msg *_m, char *_con, char *_uri, char *_name,
 	pserr->setf(_m, &pserr->pvp, (int)EQ_T, &pverr);
 	lost_free_string(&err); /* clean up */
 
-	return (err.len > 0) ? LOST_SERVER_ERROR : LOST_SUCCESS;
+	return (res_error > 0) ? LOST_SERVER_ERROR : LOST_SUCCESS;
 
 err:
 	/* clean up */

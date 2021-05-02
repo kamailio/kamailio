@@ -1001,3 +1001,33 @@ p_lost_fsr_t lost_parse_findServiceResponse(str ret)
 
 	return res;
 }
+
+/*
+ * lost_check_HeldResponse(node)
+ * does a quick check of HELD dereference response and returns ...
+ * 0: neither location value nor reference found
+ * 1: location value found
+ * 2: location reference found
+ * 3: location value and reference found
+ * multiple occurences are ignored
+ */
+int lost_check_HeldResponse(xmlNodePtr node)
+{
+	char *tmp = NULL;
+
+	int ret = 0; /* response error */
+
+	tmp = xmlNodeGetNodeContentByName(node, "location-info", NULL);
+	if(tmp != NULL) {
+		ret += HELD_RESPONSE_VALUE; /* LocByVal: civic or geodetic */
+	}
+	xmlFree(tmp); /* clean up */
+
+	tmp = xmlNodeGetNodeContentByName(node, "locationURI", NULL);
+	if(tmp != NULL) {
+		ret += HELD_RESPONSE_REFERENCE; /* LocByRef: reference */
+	}
+	xmlFree(tmp); /* clean up */
+
+	return ret;
+}

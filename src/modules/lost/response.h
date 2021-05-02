@@ -56,6 +56,9 @@
 
 #define ERRORS_NODE (const char *)"errors"
 
+#define HELD_RESPONSE_VALUE 1
+#define HELD_RESPONSE_REFERENCE 2
+
 typedef struct lost_list
 {
 	char *value;
@@ -114,6 +117,8 @@ typedef struct lost_fsr
 
 /* read and parse response data */
 p_lost_fsr_t lost_parse_findServiceResponse(str);
+/* check response to dereferece request */
+int lost_check_HeldResponse(xmlNodePtr); 
 /* print the response */
 void lost_print_findServiceResponse(p_lost_fsr_t);
 /* remove response data from memory */
