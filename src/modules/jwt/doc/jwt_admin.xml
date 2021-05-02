@@ -109,6 +109,10 @@ modparam("jwt", "key_mode", 1)
 			<para>
 			claims - the list of claims to be added to JWT, in the format
 			"name1=value1;name2=value2;..." (same as the SIP parameters format).
+			The string values can be enclosed in single or double quotes. If a
+			value is not eclosed in between quotes, it is added as numeric
+			value if it is successfully converted to a long value, otherwise is
+			added as string value.
 			</para>
 			</listitem>
 		</itemizedlist>
@@ -120,7 +124,7 @@ modparam("jwt", "key_mode", 1)
 		<programlisting format="linespecific">
 ...
   jwt_generate("/path/to/prvkey.pem", "RS256",
-        "caller=$fU;callee=$tU;callid=$ci");
+        "caller='$fU';callee='$tU';callid='$ci';index=100");
 ...
 </programlisting>
 	    </example>
@@ -151,7 +155,8 @@ modparam("jwt", "key_mode", 1)
 			<listitem>
 			<para>
 			claims - the list of claims to be checked they are in the JWT, in the format
-			"name1=value1;name2=value2;..." (same as the SIP parameters format).
+			"name1=value1;name2=value2;..." (same as the SIP parameters format,
+			see also the description of claims parameter for jwt_generate()).
 			</para>
 			</listitem>
 			<listitem>
@@ -168,7 +173,7 @@ modparam("jwt", "key_mode", 1)
 		<programlisting format="linespecific">
 ...
   if(!jwt_verify("/path/to/pubkey.pem", "RS256",
-         "caller=$fU;callee=$tU;callid=$ci",
+         "caller='$fU';callee='$tU';callid='$ci';index=100",
         "$var(jwt)") {
     xwarn("failed to verify jwt\n");
   }
@@ -206,7 +211,7 @@ modparam("jwt", "key_mode", 1)
 		<programlisting format="linespecific">
 ...
   jwt_generate("/path/to/prvkey.pem", "RS256",
-        "caller=$fU;callee=$tU;callid=$ci");
+        "caller='$fU';callee='$tU';callid='$ci';index=100");
   xinfo("jwt is: $jwt(val)");
 ...
 </programlisting>
