@@ -628,69 +628,88 @@ static inline void strlower(str* _s)
 }
 
 
+#define str2unval(_s, _r) do { \
+		int i; \
+		if (_r == NULL) return -1; \
+		*_r = 0; \
+		if (_s == NULL) return -1; \
+		if (_s->len < 0) return -1; \
+		if (_s->s == NULL) return -1; \
+		for(i = 0; i < _s->len; i++) { \
+			if ((_s->s[i] >= '0') && (_s->s[i] <= '9')) { \
+				*_r *= 10; \
+				*_r += _s->s[i] - '0'; \
+			} else { \
+				return -1; \
+			} \
+		} \
+		return 0; \
+	} while(0)
+
 /*
- * Convert a str into integer
+ * Convert an str to unsigned long
+ */
+static inline int str2ulong(str* _s, unsigned long* _r)
+{
+	str2unval(_s, _r);
+}
+
+/*
+ * Convert an str to unsigned integer
  */
 static inline int str2int(str* _s, unsigned int* _r)
 {
-	int i;
-
-	if (_r == NULL) return -1;
-	*_r = 0;
-	if (_s == NULL) return -1;
-	if (_s->len < 0) return -1;
-	if (_s->s == NULL) return -1;
-
-	for(i = 0; i < _s->len; i++) {
-		if ((_s->s[i] >= '0') && (_s->s[i] <= '9')) {
-			*_r *= 10;
-			*_r += _s->s[i] - '0';
-		} else {
-			return -1;
-		}
-	}
-
-	return 0;
+	str2unval(_s, _r);
 }
+
+#define str2snval(_s, _r) do { \
+		int i; \
+		int sign; \
+		if (_s == NULL) return -1; \
+		if (_r == NULL) return -1; \
+		if (_s->len < 0) return -1; \
+		if (_s->s == NULL) return -1; \
+		*_r = 0; \
+		sign = 1; \
+		i = 0; \
+		if (_s->s[0] == '+') { \
+			i++; \
+		} else if (_s->s[0] == '-') { \
+			sign = -1; \
+			i++; \
+		} \
+		for(; i < _s->len; i++) { \
+			if ((_s->s[i] >= '0') && (_s->s[i] <= '9')) { \
+				*_r *= 10; \
+				*_r += _s->s[i] - '0'; \
+			} else { \
+				return -1; \
+			} \
+		} \
+		*_r *= sign; \
+		return 0; \
+	} while(0)
+
+/*
+ * Convert an str to signed long
+ */
+static inline int str2slong(str* _s, long* _r)
+{
+	str2snval(_s, _r);
+}
+
 
 /*
  * Convert an str to signed integer
  */
 static inline int str2sint(str* _s, int* _r)
 {
-	int i;
-	int sign;
-
-	if (_s == NULL) return -1;
-	if (_r == NULL) return -1;
-	if (_s->len < 0) return -1;
-	if (_s->s == NULL) return -1;
-
-	*_r = 0;
-	sign = 1;
-	i = 0;
-	if (_s->s[0] == '+') {
-		i++;
-	} else if (_s->s[0] == '-') {
-		sign = -1;
-		i++;
-	}
-	for(; i < _s->len; i++) {
-		if ((_s->s[i] >= '0') && (_s->s[i] <= '9')) {
-			*_r *= 10;
-			*_r += _s->s[i] - '0';
-		} else {
-			return -1;
-		}
-	}
-	*_r *= sign;
-
-	return 0;
+	str2snval(_s, _r);
 }
 
 
 /*
- * Convert a str into integer
+ * Convert an strz to integer
  */
 static inline int strz2int(char* _s, unsigned int* _r)
 {
@@ -713,7 +732,7 @@ static inline int strz2int(char* _s, unsigned int* _r)
 }
 
 /*
- * Convert an str to signed integer
+ * Convert an strz to signed integer
  */
 static inline int strz2sint(char* _s, int* _r)
 {
