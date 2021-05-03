@@ -1006,8 +1006,8 @@ p_lost_fsr_t lost_parse_findServiceResponse(str ret)
  * lost_check_HeldResponse(node)
  * does a quick check of HELD dereference response and returns ...
  * 0: neither location value nor reference found
- * 1: location value found
- * 2: location reference found
+ * 1: location reference found
+ * 2: location value found
  * 3: location value and reference found
  * multiple occurences are ignored
  */
