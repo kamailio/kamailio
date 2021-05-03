@@ -376,8 +376,15 @@ r(pidf)\n");
      * pidf-lo - the PIDF-LO returned in the HELD locationRequest response
      * error - any error code returned in the HELD response
 
-   The return value is 200 on success, 400 if an internal error occured,
-   or 500 if an error code is returned in the HELD response.
+   The return value is 200..203 on success, 400 if an internal error
+   occured, or 500 if an error code is returned in the HELD response.
+   Success codes in detail are as follows:
+     * 200 - received 200 OK, but neither location-info nor locationURI
+       element found
+     * 201 - received 200 OK with locationURI (aka Location-by-Reference)
+     * 202 - received 200 OK with location-info element (aka
+       Location-by-Value)
+     * 203 - received 200 OK with location-info and locationURI element
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, and BRANCH_ROUTE.
