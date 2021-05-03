@@ -56,8 +56,8 @@
 
 #define ERRORS_NODE (const char *)"errors"
 
-#define HELD_RESPONSE_VALUE 1
-#define HELD_RESPONSE_REFERENCE 2
+#define HELD_RESPONSE_REFERENCE 1
+#define HELD_RESPONSE_VALUE 2
 
 typedef struct lost_list
 {
