@@ -723,8 +723,8 @@ int lost_held_dereference(struct sip_msg *_m, char *_url, char *_pidf,
 
 		/* check content and set response code
 		 * + 0 nothing found: return 200
-		 * + 1 value found: return 201
-		 * + 2 reference found: return 202
+		 * + 1 reference found: return 201
+		 * + 2 value found: return 202
 		 * + 3 value and reference found: return 203
 		 */
 		ret += lost_check_HeldResponse(root);
