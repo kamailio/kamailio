@@ -78,6 +78,7 @@ str td_key_a_srcaddr = str_init("a_srcaddr");
 str td_key_b_srcaddr = str_init("b_srcaddr");
 str td_key_s_method = str_init("s_method");
 str td_key_s_cseq = str_init("s_cseq");
+str td_key_x_context = str_init("x_context");
 
 str tt_key_rectime = str_init("rectime");
 str tt_key_a_callid = str_init("a_callid");
@@ -99,6 +100,7 @@ str tt_key_a_tag = str_init("a_tag");
 str tt_key_b_tag = str_init("b_tag");
 str tt_key_s_method = str_init("s_method");
 str tt_key_s_cseq = str_init("s_cseq");
+str tt_key_x_context = str_init("x_context");
 
 #define TPS_REDIS_SET_ARGSV(sval, argc, argv, argvlen) \
 	do { \
@@ -241,6 +243,8 @@ int tps_redis_insert_dialog(tps_data_t *td)
 
 	TPS_REDIS_SET_ARGS(&td->s_method, argc, &td_key_s_method, argv, argvlen);
 	TPS_REDIS_SET_ARGS(&td->s_cseq, argc, &td_key_s_cseq, argv, argvlen);
+
+	TPS_REDIS_SET_ARGS(&td->x_context, argc, &td_key_x_context, argv, argvlen);
 
 	rrpl = _tps_redis_api.exec_argv(rsrv, argc, (const char **)argv, argvlen);
 	if(rrpl==NULL) {
@@ -501,6 +505,8 @@ int tps_redis_insert_branch(tps_data_t *td)
 
 	TPS_REDIS_SET_ARGS(&td->a_tag, argc, &tt_key_a_tag, argv, argvlen);
 	TPS_REDIS_SET_ARGS(&td->b_tag, argc, &tt_key_b_tag, argv, argvlen);
+
+	TPS_REDIS_SET_ARGS(&td->x_context, argc, &tt_key_x_context, argv, argvlen);
 
 	rrpl = _tps_redis_api.exec_argv(rsrv, argc, (const char **)argv, argvlen);
 	if(rrpl==NULL) {
@@ -929,6 +935,9 @@ int tps_redis_load_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
 		} else if(skey.len==tt_key_b_tag.len
 				&& strncmp(skey.s, tt_key_b_tag.s, skey.len)==0) {
 			TPS_REDIS_DATA_APPEND(sd, &skey, &sval, &sd->b_tag);
+		} else if(skey.len==tt_key_x_context.len
+				&& strncmp(skey.s, tt_key_x_context.s, skey.len)==0) {
+			TPS_REDIS_DATA_APPEND(sd, &skey, &sval, &sd->x_context);
 		} else {
 			LM_WARN("unknown key[%.*s]\n", skey.len, skey.s);
 		}
@@ -1134,6 +1143,9 @@ int tps_redis_load_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 		} else if(skey.len==td_key_s_cseq.len
 				&& strncmp(skey.s, td_key_s_cseq.s, skey.len)==0) {
 			TPS_REDIS_DATA_APPEND(sd, &skey, &sval, &sd->s_cseq);
+		} else if(skey.len==td_key_x_context.len
+				&& strncmp(skey.s, td_key_x_context.s, skey.len)==0) {
+			TPS_REDIS_DATA_APPEND(sd, &skey, &sval, &sd->x_context);
 		} else {
 			LM_WARN("unknown key[%.*s]\n", skey.len, skey.s);
 		}
