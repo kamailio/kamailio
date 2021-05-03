@@ -40,6 +40,7 @@
 #include "../../core/rpc_lookup.h"
 #include "../../core/cfg/cfg.h"
 #include "../../core/dprint.h"
+#include "../../core/mod_fix.h"
 #include "../../core/kemi.h"
 #include "tls_init.h"
 #include "tls_server.h"
@@ -80,6 +81,7 @@ static int mod_child(int rank);
 static void destroy(void);
 
 static int w_is_peer_verified(struct sip_msg* msg, char* p1, char* p2);
+static int w_tls_set_connect_server_id(sip_msg_t* msg, char* psrvid, char* p2);
 
 int ksr_rand_engine_param(modparam_t type, void* val);
 
@@ -199,6 +201,8 @@ int sr_tls_renegotiation = 0;
 static cmd_export_t cmds[] = {
 	{"is_peer_verified", (cmd_function)w_is_peer_verified,   0, 0, 0,
 			REQUEST_ROUTE},
+	{"tls_set_connect_server_id", (cmd_function)w_tls_set_connect_server_id,
+		1, fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
 	{0,0,0,0,0,0}
 };
 
@@ -550,6 +554,27 @@ static int w_is_peer_verified(struct sip_msg* msg, char* foo, char* foo2)
 	return ki_is_peer_verified(msg);
 }
 
+static int ki_tls_set_connect_server_id(sip_msg_t* msg, str* srvid)
+{
+	if(ksr_tls_set_connect_server_id(srvid)<0) {
+		return -1;
+	}
+
+	return 1;
+}
+
+static int w_tls_set_connect_server_id(sip_msg_t* msg, char* psrvid, char* p2)
+{
+	str ssrvid = STR_NULL;
+
+	if(fixup_get_svalue(msg, (gparam_t*)psrvid, &ssrvid)<0) {
+		LM_ERR("failed to get server id parameter\n");
+		return -1;
+	}
+
+	return ki_tls_set_connect_server_id(msg, &ssrvid);
+}
+
 /**
  *
  */
@@ -566,6 +591,11 @@ static sr_kemi_t sr_kemi_tls_exports[] = {
 	{ str_init("tls"), str_init("is_peer_verified"),
 		SR_KEMIP_INT, ki_is_peer_verified,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tls"), str_init("set_connect_server_id"),
+		SR_KEMIP_INT, ki_tls_set_connect_server_id,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("tls"), str_init("cget"),

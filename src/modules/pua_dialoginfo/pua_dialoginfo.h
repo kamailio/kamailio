@@ -45,6 +45,9 @@ struct dlginfo_cell {
 	struct str_list* pubruris_caller;
 	struct str_list* pubruris_callee;
 	unsigned int lifetime;
+        /*dialog module does not always resend all flags, so we use flags set on first request*/
+        int disable_caller_publish;
+        int disable_callee_publish;
 };
 
 

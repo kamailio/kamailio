@@ -285,7 +285,7 @@ pike_ip_node_t* mark_node(unsigned char *ip,int ip_len,
 	int    byte_pos;
 
 	kid = pike_root->entries[ ip[0] ].node;
-	node = 0;
+	node = NULL;
 	byte_pos = 0;
 
 	LM_DBG("search on branch %d (top=%p)\n", ip[0],kid);
@@ -299,6 +299,10 @@ pike_ip_node_t* mark_node(unsigned char *ip,int ip_len,
 			kid = kid->kids;
 			byte_pos++;
 		}
+	}
+
+	if(node==NULL) {
+		return NULL;
 	}
 
 	LM_DBG("only first %d were matched!\n",byte_pos);

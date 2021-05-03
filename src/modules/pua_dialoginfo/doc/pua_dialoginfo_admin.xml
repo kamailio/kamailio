@@ -536,7 +536,92 @@ modparam("pua_dialoginfo", "callee_trying", 1)
 </programlisting>
 		</example>
 		</section>
-	</section>
+
+                <section>
+                <title><varname>caller_entity_when_publish_disabled</varname> (int)</title>
+                <para>
+                        Must be a valid sip uri.
+                        If this parameter is set, this uri is used as caller entity in
+                        publish xml body if associated dialog has the flag
+                        disable_caller_publish_flag set.
+                        Note only the flag received on dialog creation is used to activate
+                        this feature.
+                </para>
+                <para>
+                        <emphasis>Default value is <quote>NULL</quote>.</emphasis>
+                </para>
+                <example>
+                        <title>Set <varname>caller_entity_when_publish_disabled</varname> parameter</title>
+                        <programlisting format="linespecific">
+...
+modparam("pua_dialoginfo", "caller_entity_when_publish_disabled", "sip:caller@publish.disabled.com")
+...
+			</programlisting>
+                </example>
+                </section>
+
+                <section>
+                <title><varname>callee_entity_when_publish_disabled</varname> (int)</title>
+                <para>
+                        Must be a valid sip uri.
+                        If this parameter is set, this uri is used as callee entity in
+                        publish xml body if associated dialog has the flag
+                        disable_callee_publish_flag set.
+                        Note only the flag received on dialog creation is used to activate
+                        this feature.
+                </para>
+                <para>
+                        <emphasis>Default value is <quote>NULL</quote>.</emphasis>
+                </para>
+                <example>
+                        <title>Set <varname>callee_entity_when_publish_disabled</varname> parameter</title>
+                        <programlisting format="linespecific">
+...
+modparam("pua_dialoginfo", "callee_entity_when_publish_disabled", "sip:callee@publish.disabled.com")
+...
+			</programlisting>
+                </example>
+                </section>
+
+                <section>
+                <title><varname>publish_dialog_req_within</varname> (int)</title>
+                <para>
+                        If this parameter is set to 1, subsequents requests received in dialog generate
+                        corresponding publish request.
+                </para>
+                <para>
+                        <emphasis>Default value is <quote>1</quote>.</emphasis>
+                </para>
+                <example>
+                        <title>Set <varname>publish_dialog_req_within</varname> parameter</title>
+                        <programlisting format="linespecific">
+...
+modparam("pua_dialoginfo", "publish_dialog_req_within", 0)
+...
+			</programlisting>
+                </example>
+                </section>
+
+        <section id="pua_dialoginfo.p.attribute_display">
+            <title><varname>attribute_display</varname> (int)</title>
+            <para>
+            If set to 1, the display name attribute is added with user part of the
+            URI for local and remote targets.
+            </para>
+            <para>
+                <emphasis>Default value is <quote>0</quote>.</emphasis>
+            </para>
+            <example>
+                <title>Set <varname>attribute_display</varname> parameter</title>
+                <programlisting format="linespecific">
+...
+modparam("pua_dialoginfo", "attribute_display", 1)
+...
+</programlisting>
+            </example>
+        </section>
+
+    </section>
 
 	<section>
 	<title>Functions</title>

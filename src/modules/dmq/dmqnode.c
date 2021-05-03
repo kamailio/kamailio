@@ -328,9 +328,12 @@ void pkg_free_node(dmq_node_t *node)
 }
 
 /**
- * @brief delete dmq node
+ * @brief delete dmq node with filter rules
+ * - list - the list of nodes
+ * - node - the structure with characteristics of the node to be deleted
+ * - filter - if 0: delete node always; if 1: delete node if not local
  */
-int del_dmq_node(dmq_node_list_t *list, dmq_node_t *node)
+int dmq_node_del_filter(dmq_node_list_t *list, dmq_node_t *node, int filter)
 {
 	dmq_node_t *cur, **prev;
 	lock_get(&list->lock);
@@ -338,8 +341,10 @@ int del_dmq_node(dmq_node_list_t *list, dmq_node_t *node)
 	prev = &list->nodes;
 	while(cur) {
 		if(cmp_dmq_node(cur, node)) {
-			*prev = cur->next;
-			destroy_dmq_node(cur, 1);
+			if(filter==0 || cur->local==0) {
+				*prev = cur->next;
+				destroy_dmq_node(cur, 1);
+			}
 			lock_release(&list->lock);
 			return 1;
 		}
@@ -348,6 +353,30 @@ int del_dmq_node(dmq_node_list_t *list, dmq_node_t *node)
 	}
 	lock_release(&list->lock);
 	return 0;
+}
+
+/**
+ * @brief delete dmq node
+ */
+int del_dmq_node(dmq_node_list_t *list, dmq_node_t *node)
+{
+	return  dmq_node_del_filter(list, node, 0);
+}
+
+/**
+ * @brief delete dmq node by uri
+ */
+int dmq_node_del_by_uri(dmq_node_list_t *list, str *suri)
+{
+	dmq_node_t dnode;
+
+	memset(&dnode, 0, sizeof(dmq_node_t));
+	if(parse_uri(suri->s, suri->len, &dnode.uri) < 0) {
+		LM_ERR("error parsing uri [%.*s]\n", suri->len, suri->s);
+		return -1;
+	}
+
+	return dmq_node_del_filter(list, &dnode, 1);
 }
 
 /**

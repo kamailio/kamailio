@@ -78,6 +78,7 @@ str td_key_a_srcaddr = str_init("a_srcaddr");
 str td_key_b_srcaddr = str_init("b_srcaddr");
 str td_key_s_method = str_init("s_method");
 str td_key_s_cseq = str_init("s_cseq");
+str td_key_x_context = str_init("x_context");
 
 str tt_key_rectime = str_init("rectime");
 str tt_key_a_callid = str_init("a_callid");
@@ -99,6 +100,7 @@ str tt_key_a_tag = str_init("a_tag");
 str tt_key_b_tag = str_init("b_tag");
 str tt_key_s_method = str_init("s_method");
 str tt_key_s_cseq = str_init("s_cseq");
+str tt_key_x_context = str_init("x_context");
 
 #define TPS_REDIS_SET_ARGSV(sval, argc, argv, argvlen) \
 	do { \
@@ -242,6 +244,8 @@ int tps_redis_insert_dialog(tps_data_t *td)
 	TPS_REDIS_SET_ARGS(&td->s_method, argc, &td_key_s_method, argv, argvlen);
 	TPS_REDIS_SET_ARGS(&td->s_cseq, argc, &td_key_s_cseq, argv, argvlen);
 
+	TPS_REDIS_SET_ARGS(&td->x_context, argc, &td_key_x_context, argv, argvlen);
+
 	rrpl = _tps_redis_api.exec_argv(rsrv, argc, (const char **)argv, argvlen);
 	if(rrpl==NULL) {
 		LM_ERR("failed to execute redis command\n");
@@ -302,7 +306,7 @@ int tps_redis_clean_dialogs(void)
 /**
  *
  */
-int tps_redis_insert_initial_method_branch(tps_data_t *td)
+int tps_redis_insert_initial_method_branch(tps_data_t *md, tps_data_t *sd)
 {
 	char* argv[TPS_REDIS_NR_KEYS];
 	size_t argvlen[TPS_REDIS_NR_KEYS];
@@ -314,8 +318,9 @@ int tps_redis_insert_initial_method_branch(tps_data_t *td)
 	redisc_server_t *rsrv = NULL;
 	redisReply *rrpl = NULL;
 	unsigned long lval = 0;
+	str xuuid = str_init("");
 
-	if(td->x_vbranch1.len<=0) {
+	if(md->x_vbranch1.len<=0) {
 		LM_INFO("no via branch for this message\n");
 		return -1;
 	}
@@ -331,13 +336,28 @@ int tps_redis_insert_initial_method_branch(tps_data_t *td)
 	memset(argvlen, 0, TPS_REDIS_NR_KEYS * sizeof(size_t));
 	argc = 0;
 
+	if(md->a_uuid.len>1) {
+		xuuid.s = md->a_uuid.s + 1;
+		xuuid.len = md->a_uuid.len - 1;
+	} else if(md->b_uuid.len>1) {
+		xuuid.s = md->b_uuid.s + 1;
+		xuuid.len = md->b_uuid.len - 1;
+	} else if(sd->a_uuid.len>1) {
+		xuuid.s = sd->a_uuid.s + 1;
+		xuuid.len = sd->a_uuid.len - 1;
+	} else if(sd->b_uuid.len>1) {
+		xuuid.s = sd->b_uuid.s + 1;
+		xuuid.len = sd->b_uuid.len - 1;
+	}
+
 	rp = _tps_redis_cbuf;
 	rkey.len = snprintf(rp, TPS_REDIS_DATA_SIZE-128,
-					"%.*s%.*s:%.*s:%.*s",
+					"%.*s%.*s:%.*s:%.*s:x%.*s",
 					_tps_redis_bprefix.len, _tps_redis_bprefix.s,
-					td->s_method.len, td->s_method.s,
-					td->a_callid.len, td->a_callid.s,
-					td->b_tag.len, td->b_tag.s);
+					md->s_method.len, md->s_method.s,
+					md->a_callid.len, md->a_callid.s,
+					md->b_tag.len, md->b_tag.s,
+					xuuid.len, xuuid.s);
 	if(rkey.len<0 || rkey.len>=TPS_REDIS_DATA_SIZE-128) {
 		LM_ERR("error or insufficient buffer size: %d\n", rkey.len);
 		return -1;
@@ -356,7 +376,7 @@ int tps_redis_insert_initial_method_branch(tps_data_t *td)
 	lval = (unsigned long)time(NULL);
 	TPS_REDIS_SET_ARGN(lval, rp, &rval, argc, &tt_key_rectime,
 			argv, argvlen);
-	TPS_REDIS_SET_ARGS(&td->x_vbranch1, argc, &tt_key_x_vbranch, argv, argvlen);
+	TPS_REDIS_SET_ARGS(&md->x_vbranch1, argc, &tt_key_x_vbranch, argv, argvlen);
 
 	rrpl = _tps_redis_api.exec_argv(rsrv, argc, (const char **)argv, argvlen);
 	if(rrpl==NULL) {
@@ -366,8 +386,8 @@ int tps_redis_insert_initial_method_branch(tps_data_t *td)
 		}
 		return -1;
 	}
-	LM_DBG("inserting %.*s branch record for [%.*s] with argc %d\n",
-			td->s_method.len, td->s_method.s,rkey.len, rkey.s, argc);
+	LM_DBG("inserting initial %.*s branch record for [%.*s] with argc %d\n",
+			md->s_method.len, md->s_method.s,rkey.len, rkey.s, argc);
 
 	freeReplyObject(rrpl);
 
@@ -486,6 +506,8 @@ int tps_redis_insert_branch(tps_data_t *td)
 	TPS_REDIS_SET_ARGS(&td->a_tag, argc, &tt_key_a_tag, argv, argvlen);
 	TPS_REDIS_SET_ARGS(&td->b_tag, argc, &tt_key_b_tag, argv, argvlen);
 
+	TPS_REDIS_SET_ARGS(&td->x_context, argc, &tt_key_x_context, argv, argvlen);
+
 	rrpl = _tps_redis_api.exec_argv(rsrv, argc, (const char **)argv, argvlen);
 	if(rrpl==NULL) {
 		LM_ERR("failed to execute redis command\n");
@@ -571,6 +593,8 @@ int tps_redis_load_initial_method_branch(sip_msg_t *msg, tps_data_t *md, tps_dat
 	redisReply *rrpl = NULL;
 	str skey = STR_NULL;
 	str sval = STR_NULL;
+	str xuuid = str_init("");
+	str smethod = str_init("INVITE");
 
 	if(msg==NULL || md==NULL || sd==NULL)
 		return -1;
@@ -591,14 +615,34 @@ int tps_redis_load_initial_method_branch(sip_msg_t *msg, tps_data_t *md, tps_dat
 	memset(argvlen, 0, TPS_REDIS_NR_KEYS * sizeof(size_t));
 	argc = 0;
 
+	if(md->a_uuid.len>1) {
+		xuuid.s = md->a_uuid.s + 1;
+		xuuid.len = md->a_uuid.len - 1;
+	} else if(md->b_uuid.len>1) {
+		xuuid.s = md->b_uuid.s + 1;
+		xuuid.len = md->b_uuid.len - 1;
+	} else if(sd->a_uuid.len>1) {
+		xuuid.s = sd->a_uuid.s + 1;
+		xuuid.len = sd->a_uuid.len - 1;
+	} else if(sd->b_uuid.len>1) {
+		xuuid.s = sd->b_uuid.s + 1;
+		xuuid.len = sd->b_uuid.len - 1;
+	}
+
+	if(md->s_method_id & (METHOD_SUBSCRIBE|METHOD_NOTIFY)) {
+		smethod.s = "SUBSCRIBE";
+		smethod.len =9;
+	}
+
 	rp = _tps_redis_cbuf;
 
 	rkey.len = snprintf(rp, TPS_REDIS_DATA_SIZE,
-					"%.*s%.*s:%.*s:%.*s",
+					"%.*s%.*s:%.*s:%.*s:x%.*s",
 					_tps_redis_bprefix.len, _tps_redis_bprefix.s,
-					md->s_method.len, md->s_method.s,
+					smethod.len, smethod.s,
 					md->a_callid.len, md->a_callid.s,
-					md->b_tag.len, md->b_tag.s);
+					md->b_tag.len, md->b_tag.s,
+					xuuid.len, xuuid.s);
 	if(rkey.len<0 || rkey.len>=TPS_REDIS_DATA_SIZE) {
 		LM_ERR("error or insufficient buffer size: %d\n", rkey.len);
 		return -1;
@@ -614,7 +658,8 @@ int tps_redis_load_initial_method_branch(sip_msg_t *msg, tps_data_t *md, tps_dat
 	argvlen[argc] = rkey.len;
 	argc++;
 
-	LM_DBG("loading invite branch record for [%.*s]\n", rkey.len, rkey.s);
+	LM_DBG("loading initial %.*s branch record for [%.*s]\n",
+			md->s_method.len, md->s_method.s, rkey.len, rkey.s);
 
 	rrpl = _tps_redis_api.exec_argv(rsrv, argc, (const char **)argv, argvlen);
 	if(rrpl==NULL) {
@@ -890,6 +935,9 @@ int tps_redis_load_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
 		} else if(skey.len==tt_key_b_tag.len
 				&& strncmp(skey.s, tt_key_b_tag.s, skey.len)==0) {
 			TPS_REDIS_DATA_APPEND(sd, &skey, &sval, &sd->b_tag);
+		} else if(skey.len==tt_key_x_context.len
+				&& strncmp(skey.s, tt_key_x_context.s, skey.len)==0) {
+			TPS_REDIS_DATA_APPEND(sd, &skey, &sval, &sd->x_context);
 		} else {
 			LM_WARN("unknown key[%.*s]\n", skey.len, skey.s);
 		}
@@ -1095,6 +1143,9 @@ int tps_redis_load_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd)
 		} else if(skey.len==td_key_s_cseq.len
 				&& strncmp(skey.s, td_key_s_cseq.s, skey.len)==0) {
 			TPS_REDIS_DATA_APPEND(sd, &skey, &sval, &sd->s_cseq);
+		} else if(skey.len==td_key_x_context.len
+				&& strncmp(skey.s, td_key_x_context.s, skey.len)==0) {
+			TPS_REDIS_DATA_APPEND(sd, &skey, &sval, &sd->x_context);
 		} else {
 			LM_WARN("unknown key[%.*s]\n", skey.len, skey.s);
 		}
@@ -1128,15 +1179,11 @@ int tps_redis_update_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
 		return -1;
 	}
 
-	if(md->s_method.len==6 && strncmp(md->s_method.s, "INVITE", 6)==0) {
-		if(tps_redis_insert_initial_method_branch(md)<0) {
-			LM_ERR("failed to insert INVITE extra branch data\n");
-			return -1;
-		}
-	}
-	if(md->s_method.len==9 && strncmp(md->s_method.s, "SUBSCRIBE", 9)==0) {
-		if(tps_redis_insert_initial_method_branch(md)<0) {
-			LM_ERR("failed to insert SUBSCRIBE extra branch data\n");
+	if(md->s_method_id==METHOD_INVITE
+			|| md->s_method_id==METHOD_SUBSCRIBE) {
+		if(tps_redis_insert_initial_method_branch(md, sd)<0) {
+			LM_ERR("failed to insert %.*s extra initial branch data\n",
+					md->s_method.len, md->s_method.s);
 			return -1;
 		}
 	}
@@ -1171,15 +1218,14 @@ int tps_redis_update_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
 	argc++;
 
 	if(mode & TPS_DBU_CONTACT) {
-		TPS_REDIS_SET_ARGS(&md->b_contact, argc, &tt_key_b_contact,
+		TPS_REDIS_SET_ARGS(&md->a_contact, argc, &tt_key_a_contact,
 				argv, argvlen);
 		TPS_REDIS_SET_ARGS(&md->b_contact, argc, &tt_key_b_contact,
 				argv, argvlen);
 	}
 
 	if((mode & TPS_DBU_RPLATTRS) && msg->first_line.type==SIP_REPLY) {
-		if(sd->b_tag.len<=0
-				&& msg->first_line.u.reply.statuscode>=180
+		if(msg->first_line.u.reply.statuscode>=180
 				&& msg->first_line.u.reply.statuscode<200) {
 
 			TPS_REDIS_SET_ARGS(&md->b_rr, argc, &tt_key_y_rr, argv, argvlen);

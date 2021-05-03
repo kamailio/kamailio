@@ -9,7 +9,7 @@ Edited by
 
 Wolfgang Kampichler
 
-   Copyright © 2018-2020 Wolfgang Kampichler
+   Copyright © 2018-2021 Wolfgang Kampichler
      __________________________________________________________________
 
    Table of Contents
@@ -27,13 +27,20 @@ Wolfgang Kampichler
               3.1. exact_type (int)
               3.2. response_time (int)
               3.3. location_type (string)
-              3.4. geoheader_type (int)
-              3.5. geoheader_order (int)
+              3.4. post_request (int)
+              3.5. location_profile (int)
+              3.6. geoheader_type (int)
+              3.7. geoheader_order (int)
+              3.8. recursion (int)
+              3.9. verbose (int)
 
         4. Functions
 
               4.1. lost_held_query(con, [id,] pidf-lo, url, error)
-              4.2. lost_query(con, [pidf-lo, urn,] uri, name, error)
+              4.2. lost_held_dereference(url, rtime, rtype, pidf-lo,
+                      error)
+
+              4.3. lost_query(con, [pidf-lo, urn,] uri, name, error)
 
         5. Counters
         6. Remarks
@@ -43,10 +50,15 @@ Wolfgang Kampichler
    1.1. Set exact_type parameter
    1.2. Set response_time parameter
    1.3. Set location_type parameter
-   1.4. Set geoheader_type parameter
-   1.5. Set geoheader_order parameter
-   1.6. lost_held_query() usage
-   1.7. lost() usage
+   1.4. Set post_request parameter
+   1.5. Set location_profile parameter
+   1.6. Set geoheader_type parameter
+   1.7. Set geoheader_order parameter
+   1.8. Set recursion parameter
+   1.9. Set verbose parameter
+   1.10. lost_held_query() usage
+   1.11. lost_held_dereference() usage
+   1.12. lost() usage
 
 Chapter 1. Admin Guide
 
@@ -63,13 +75,18 @@ Chapter 1. Admin Guide
         3.1. exact_type (int)
         3.2. response_time (int)
         3.3. location_type (string)
-        3.4. geoheader_type (int)
-        3.5. geoheader_order (int)
+        3.4. post_request (int)
+        3.5. location_profile (int)
+        3.6. geoheader_type (int)
+        3.7. geoheader_order (int)
+        3.8. recursion (int)
+        3.9. verbose (int)
 
    4. Functions
 
         4.1. lost_held_query(con, [id,] pidf-lo, url, error)
-        4.2. lost_query(con, [pidf-lo, urn,] uri, name, error)
+        4.2. lost_held_dereference(url, rtime, rtype, pidf-lo, error)
+        4.3. lost_query(con, [pidf-lo, urn,] uri, name, error)
 
    5. Counters
    6. Remarks
@@ -97,6 +114,13 @@ Chapter 1. Admin Guide
    P-Asserted-Identity or From header. The locationRequest response is
    parsed and represented as PIDF-LO and location URI to dereference
    location via HTTP(S).
+
+   The function lost_held_dereference allows Kamailio to assemble a HELD
+   dereference request as defined in RFC6155
+   (https://tools.ietf.org/html/rfc6753) to dereference location
+   information represented as PIDF-LO for a given URL. Required parameters
+   are an URL, responseTime, and responseType. The response is represented
+   as PIDF-LO.
 
    The function lost_query allows Kamailio to assemble a LOST findService
    request as defined in RFC5222 (https://tools.ietf.org/html/rfc5255) to
@@ -137,8 +161,12 @@ Chapter 1. Admin Guide
    3.1. exact_type (int)
    3.2. response_time (int)
    3.3. location_type (string)
-   3.4. geoheader_type (int)
-   3.5. geoheader_order (int)
+   3.4. post_request (int)
+   3.5. location_profile (int)
+   3.6. geoheader_type (int)
+   3.7. geoheader_order (int)
+   3.8. recursion (int)
+   3.9. verbose (int)
 
    Besides parameters listed, this module uses http_client therefore
    according parameters may apply.
@@ -161,14 +189,15 @@ Chapter 1. Admin Guide
    A time value indicating to the location server how long the client is
    prepared to wait for a response.
 
-   The value is expressed as a non-negative integer in units of
+   The value is expressed as integer, either -1 'emergencyDispatch', 0
+   'emergencyRouting', a non-negative integer (>0) in units of
    milliseconds. Note: The time value is indicative only.
 
-   Default: 0 (response time not set)
+   Default: 0 ('emergencyRouting')
 
    Example 1.2. Set response_time parameter
     ...
-    modparam("lost", "response_time", 5000)
+    modparam("lost", "response_time", 0)
     ...
 
 3.3. location_type (string)
@@ -187,10 +216,41 @@ Chapter 1. Admin Guide
 
    Example 1.3. Set location_type parameter
     ...
-    modparam("lost", "location_type, "civic geodetic locationURI")
+    modparam("lost", "location_type", "civic geodetic locationURI")
     ...
 
-3.4. geoheader_type (int)
+3.4. post_request (int)
+
+   Dereferencing the location can be done using either the HTTP GET or
+   POST method. This parameter globally defines whether only HTTP POST
+   method should be used. Values are 0 (GET) or 1 (POST).
+
+   Default: 0 (GET)
+
+   Example 1.4. Set post_request parameter
+    ...
+    modparam("lost", "post_request", 1)
+    ...
+
+3.5. location_profile (int)
+
+   A Presence Information Data Format Location Object (PIDF-LO) may
+   contain geodetic or civic location profile or combinations. A LoST
+   findService contains only one location, which is selected via this
+   parameter as follows:
+     * 0 - takes the first location of any type
+     * 1 - takes the last location of any type
+     * 2 - takes the first geodetic location
+     * 3 - takes the first civic location
+
+   Default: 0 (first).
+
+   Example 1.5. Set location_profile parameter
+    ...
+    modparam("lost", "location_profile, 2)
+    ...
+
+3.6. geoheader_type (int)
 
    A Geolocation header may include a list of locationValues pointing to
    either a Presence Information Data Format Location Object (PIDF-LO) in
@@ -205,12 +265,12 @@ Chapter 1. Admin Guide
 
    Default: 0 (any)
 
-   Example 1.4. Set geoheader_type parameter
+   Example 1.6. Set geoheader_type parameter
     ...
     modparam("lost", "geoheader_type", 1)
     ...
 
-3.5. geoheader_order (int)
+3.7. geoheader_order (int)
 
    A Geolocation header may include a list of locationValues. This
    parameter sets the order of the URI used to retrieve location
@@ -219,15 +279,51 @@ Chapter 1. Admin Guide
 
    Default: 0 (first)
 
-   Example 1.5. Set geoheader_order parameter
+   Example 1.7. Set geoheader_order parameter
     ...
     modparam("lost", "geoheader_order", 0)
+    ...
+
+3.8. recursion (int)
+
+   A Geolocation header may include a list of locationValues. This
+   parameter sets the order of the URI used to retrieve location
+   information, either the first element of a certain type or the last.
+   Values are 0 (first) or 1 (last).
+
+   Default: 1 (allowed)
+
+   Example 1.8. Set recursion parameter
+    ...
+    modparam("lost", "recursion", 0)
+    ...
+
+3.9. verbose (int)
+
+   Detailed output of LoST findService, redirect or error response as
+   shown below. Values are 0 (disabled) or 1 (enabled).
+    ### LOST expires:   [2031-01-27T14:54:21+00:00]
+    ### LOST lastUpdated:       [2021-01-29T14:54:21+00:00]
+    ### LOST source:    [ecrf.demo.gridgears.xx]
+    ### LOST sourceId:  [06ac5b1c-d6c8-42bd-a667-5d1b90bb3d95]
+    ### LOST displayName:       [Polizeinotruf (de)]
+    ### LOST serviceNumber:     [112]
+    ### LOST service:   [urn:service:sos]
+    ### LOST uri:       [sip:112@demo.dec112.xx]
+    ### LOST via:       [ecrf.demo.gridgears.xx]
+
+   Default: 0
+
+   Example 1.9. Set verbose parameter
+    ...
+    modparam("lost", "verbose", 1)
     ...
 
 4. Functions
 
    4.1. lost_held_query(con, [id,] pidf-lo, url, error)
-   4.2. lost_query(con, [pidf-lo, urn,] uri, name, error)
+   4.2. lost_held_dereference(url, rtime, rtype, pidf-lo, error)
+   4.3. lost_query(con, [pidf-lo, urn,] uri, name, error)
 
 4.1.  lost_held_query(con, [id,] pidf-lo, url, error)
 
@@ -242,8 +338,7 @@ Chapter 1. Admin Guide
        response - this reference may be added as Geolocation header value
        and forwarded downstream. Note: to work properly, it is required to
        include "locationURI" in the location_type parameter.
-     * error - any error code returned in the HELD locationRequest
-       response
+     * error - any error code returned in the HELD response
 
    The return value is 200 on success, 400 if an internal error occured,
    or 500 if an error code is returned in the HELD locationRequest
@@ -252,7 +347,7 @@ Chapter 1. Admin Guide
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, and BRANCH_ROUTE.
 
-   Example 1.6. lost_held_query() usage
+   Example 1.10. lost_held_query() usage
 ...
 modparam("http_client", "httpcon", "heldsrv=>http://service.org/api/held");
 ...
@@ -268,7 +363,45 @@ xlog("L_INFO", "HELD locationRequest: Result code $var(res)\nUrl: $var(url)\n$va
 r(pidf)\n");
 ...
 
-4.2.  lost_query(con, [pidf-lo, urn,] uri, name, error)
+4.2.  lost_held_dereference(url, rtime, rtype, pidf-lo, error)
+
+   Sends a HELD POST locationRequest to a given URL. Attributes are
+   responseTime and resposeType. The locationType property "exact" is set
+   to "false".
+     * url - a URL received via Geolocation header to dereference location
+     * rtime - the response time as defined in Section 3.2, “response_time
+       (int)”
+     * rtype - the response type (location) as defined in Section 3.3,
+       “location_type (string)”
+     * pidf-lo - the PIDF-LO returned in the HELD locationRequest response
+     * error - any error code returned in the HELD response
+
+   The return value is 200..203 on success, 400 if an internal error
+   occured, or 500 if an error code is returned in the HELD response.
+   Success codes in detail are as follows:
+     * 200 - received 200 OK, but neither location-info nor locationURI
+       element found
+     * 201 - received 200 OK with locationURI (aka Location-by-Reference)
+     * 202 - received 200 OK with location-info element (aka
+       Location-by-Value)
+     * 203 - received 200 OK with location-info and locationURI element
+
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
+   FAILURE_ROUTE, and BRANCH_ROUTE.
+
+   Example 1.11. lost_held_dereference() usage
+...
+# HELD location dereference
+if ($hdr(Geolocation)=~"^<http.*$") {
+    $var(url) = $(hdr(Geolocation){s.select,0,;});
+    $var(res) = lost_held_dereference("$(var(url){s.unbracket})", "emergencyDisp
+atch", "civic geodetic", "$var(pidf)", "$var(err)");
+    xlog("L_INFO", "HELD location dereference: Result code $var(res)\n$var(pidf)
+");
+...
+}
+
+4.3.  lost_query(con, [pidf-lo, urn,] uri, name, error)
 
    Sends a LOST findService request to a given connection. PIDF-LO and URN
    are either specified, or, if omitted, parsed from the message body
@@ -288,7 +421,7 @@ r(pidf)\n");
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, and BRANCH_ROUTE.
 
-   Example 1.7. lost() usage
+   Example 1.12. lost() usage
 ...
 modparam("http_client", "httpcon", "heldsrv=>http://service.org/api/held");
 modparam("http_client", "httpcon", "lostsrv=>http://service.org/api/lost");

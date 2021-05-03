@@ -258,7 +258,7 @@ int dbt_query(db1_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 
 		dbt_column_p pPrevCol = NULL;
 		_tbc_temp->colv = (dbt_column_p*) shm_malloc(_nc*sizeof(dbt_column_p));
-		for(i=0; i < _nc; i++) {
+		for(i=0; lres && i < _nc; i++) {
 			dbt_column_p pCol = dbt_column_new(_tbc->colv[ lres[i] ]->name.s, _tbc->colv[ lres[i] ]->name.len);
 			pCol->type = _tbc->colv[ lres[i] ]->type;
 			pCol->flag = _tbc->colv[ lres[i] ]->flag;

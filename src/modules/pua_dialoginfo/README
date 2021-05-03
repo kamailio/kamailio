@@ -19,9 +19,15 @@ Klaus Darilion
 
 Phil Lavin
 
+Frederic Gaisnon
+
+   <frederic.gaisnon@gmail.com>
+
    Copyright © 2006 Voice Sistem SRL
 
    Copyright © 2008 Klaus Darilion IPCom
+
+   Copyright © 2021 MomentTech
      __________________________________________________________________
 
    Table of Contents
@@ -53,6 +59,10 @@ Phil Lavin
               5.13. pubruri_caller_dlg_var (str)
               5.14. pubruri_callee_dlg_var (str)
               5.15. callee_trying (int)
+              5.16. caller_entity_when_publish_disabled (int)
+              5.17. callee_entity_when_publish_disabled (int)
+              5.18. publish_dialog_req_within (int)
+              5.19. attribute_display (int)
 
         6. Functions
 
@@ -73,6 +83,10 @@ Phil Lavin
    1.13. Set pubruri_caller_avp parameter
    1.14. Set pubruri_callee_dlg_var parameter
    1.15. Set callee_trying parameter
+   1.16. Set caller_entity_when_publish_disabled parameter
+   1.17. Set callee_entity_when_publish_disabled parameter
+   1.18. Set publish_dialog_req_within parameter
+   1.19. Set attribute_display parameter
 
 Chapter 1. Admin Guide
 
@@ -103,6 +117,10 @@ Chapter 1. Admin Guide
         5.13. pubruri_caller_dlg_var (str)
         5.14. pubruri_callee_dlg_var (str)
         5.15. callee_trying (int)
+        5.16. caller_entity_when_publish_disabled (int)
+        5.17. callee_entity_when_publish_disabled (int)
+        5.18. publish_dialog_req_within (int)
+        5.19. attribute_display (int)
 
    6. Functions
 
@@ -286,6 +304,10 @@ Chapter 1. Admin Guide
    5.13. pubruri_caller_dlg_var (str)
    5.14. pubruri_callee_dlg_var (str)
    5.15. callee_trying (int)
+   5.16. caller_entity_when_publish_disabled (int)
+   5.17. callee_entity_when_publish_disabled (int)
+   5.18. publish_dialog_req_within (int)
+   5.19. attribute_display (int)
 
 5.1. include_callid (int)
 
@@ -492,6 +514,60 @@ modparam("pua_dialoginfo", "pubruri_callee_dlg_var", "pubruri_callee")
    Example 1.15. Set callee_trying parameter
 ...
 modparam("pua_dialoginfo", "callee_trying", 1)
+...
+
+5.16. caller_entity_when_publish_disabled (int)
+
+   Must be a valid sip uri. If this parameter is set, this uri is used as
+   caller entity in publish xml body if associated dialog has the flag
+   disable_caller_publish_flag set. Note only the flag received on dialog
+   creation is used to activate this feature.
+
+   Default value is “NULL”.
+
+   Example 1.16. Set caller_entity_when_publish_disabled parameter
+...
+modparam("pua_dialoginfo", "caller_entity_when_publish_disabled", "sip:caller@pu
+blish.disabled.com")
+...
+
+5.17. callee_entity_when_publish_disabled (int)
+
+   Must be a valid sip uri. If this parameter is set, this uri is used as
+   callee entity in publish xml body if associated dialog has the flag
+   disable_callee_publish_flag set. Note only the flag received on dialog
+   creation is used to activate this feature.
+
+   Default value is “NULL”.
+
+   Example 1.17. Set callee_entity_when_publish_disabled parameter
+...
+modparam("pua_dialoginfo", "callee_entity_when_publish_disabled", "sip:callee@pu
+blish.disabled.com")
+...
+
+5.18. publish_dialog_req_within (int)
+
+   If this parameter is set to 1, subsequents requests received in dialog
+   generate corresponding publish request.
+
+   Default value is “1”.
+
+   Example 1.18. Set publish_dialog_req_within parameter
+...
+modparam("pua_dialoginfo", "publish_dialog_req_within", 0)
+...
+
+5.19. attribute_display (int)
+
+   If set to 1, the display name attribute is added with user part of the
+   URI for local and remote targets.
+
+   Default value is “0”.
+
+   Example 1.19. Set attribute_display parameter
+...
+modparam("pua_dialoginfo", "attribute_display", 1)
 ...
 
 6. Functions

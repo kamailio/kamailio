@@ -31,6 +31,7 @@ Daniel-Constantin Mierla
               3.3. cache_dir (str)
               3.4. cache_expire (int)
               3.5. modproc (str)
+              3.6. libopt (str)
 
         4. Functions
 
@@ -49,11 +50,12 @@ Daniel-Constantin Mierla
    1.3. Set cache_dir parameter
    1.4. Set cache_expire parameter
    1.5. Set modproc parameter
-   1.6. secsipid_check_identity usage
-   1.7. secsipid_check_identity_pubkey usage
-   1.8. secsipid_get_url usage
-   1.9. secsipid_add_identity usage
-   1.10. Libsecsipid usage
+   1.6. Set libopt parameter
+   1.7. secsipid_check_identity usage
+   1.8. secsipid_check_identity_pubkey usage
+   1.9. secsipid_get_url usage
+   1.10. secsipid_add_identity usage
+   1.11. Libsecsipid Usage
 
 Chapter 1. Admin Guide
 
@@ -72,6 +74,7 @@ Chapter 1. Admin Guide
         3.3. cache_dir (str)
         3.4. cache_expire (int)
         3.5. modproc (str)
+        3.6. libopt (str)
 
    4. Functions
 
@@ -121,6 +124,7 @@ Chapter 1. Admin Guide
    3.3. cache_dir (str)
    3.4. cache_expire (int)
    3.5. modproc (str)
+   3.6. libopt (str)
 
 3.1. expire (int)
 
@@ -181,6 +185,18 @@ modparam("secsipid", "cache_expire", 7200)
 modparam("secsipid", "modproc", "secsipid_proc2.so")
 ...
 
+3.6. libopt (str)
+
+   Set a libsecsipid option. The value has to be name=value. The parameter
+   can be set many times.
+
+   Default value is "" (not set).
+
+   Example 1.6. Set libopt parameter
+...
+modparam("secsipid", "libopt", "CacheExpires=0")
+...
+
 4. Functions
 
    4.1. secsipid_check_identity(keyPath)
@@ -202,7 +218,7 @@ modparam("secsipid", "modproc", "secsipid_proc2.so")
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.6. secsipid_check_identity usage
+   Example 1.7. secsipid_check_identity usage
 ...
 request_route {
     ...
@@ -226,7 +242,7 @@ request_route {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.7. secsipid_check_identity_pubkey usage
+   Example 1.8. secsipid_check_identity_pubkey usage
 ...
 request_route {
   ...
@@ -247,7 +263,7 @@ request_route {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.8. secsipid_get_url usage
+   Example 1.9. secsipid_get_url usage
 ...
 request_route {
   ...
@@ -271,7 +287,7 @@ request_route {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.9. secsipid_add_identity usage
+   Example 1.10. secsipid_add_identity usage
 ...
 request_route {
     ...
@@ -283,25 +299,32 @@ request_route {
 
 5. Installation
 
-   The module depends on "libsecsipid", which is a component of
-   "sipsecidx" project from https://github.com/asipto/secsipidx/. The
-   library is implemented in Go language, with generated C API and
-   library. Until the libsecsipid is going to be packaged in OS
-   distributions, the secsipid module can be compiled by copying
-   secsipid.h libsecsipid.h and libsecsipid.a files in the folder of the
-   module.
+   The module needs "secsipdi_proc.so" module thatdepends on
+   "libsecsipid", which is a component of "sipsecidx" project from
+   https://github.com/asipto/secsipidx/. The library is implemented in Go
+   language, with generated C API and library. Until the libsecsipid is
+   going to be packaged in OS distributions, the secsipid_proc module can
+   be compiled by copying secsipid.h libsecsipid.h and libsecsipid.a files
+   in the folder of the module.
 
    To generate the libsecsipid.a file, it requires to have Go language
    installed and its environment configured, then run the following
    commands:
 
-   Example 1.10. Libsecsipid usage
+   Example 1.11. Libsecsipid Usage
 ...
 go get https://github.com/asipto/secsipidx
 cd $GOPATH/src/github.com/asipto/secsipidx/csecsipid/
 make liba
 cp secsipid.h libsecsipid.h libsecsipid.a \
-    /path/to/kamailio/src/modules/secsipid/
+    /path/to/kamailio/src/modules/secsipid_proc/
+
 cd /path/to/kamailio/
-make modules modules=src/modules/secsipid/
+make include_modules="secsipid secsipid_proc ..." cfg
+make all
+make install
+
+## or compiling individual modules for use inside source tree
+# make modules modules=src/modules/secsipid_proc
+# make modules modules=src/modules/secsipid
 ...

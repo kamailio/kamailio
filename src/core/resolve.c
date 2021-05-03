@@ -1225,7 +1225,7 @@ change:
  *   and *proto!=0 or port==0 && proto==0)
  * when performing SRV lookup (*port==0) it will use *proto to look for
  * tcp or udp hosts, otherwise proto is unused; if proto==0 => no SRV lookup
- * If zt is set, name will be assumed to be 0 terminated and some copy 
+ * If zt is set, name will be assumed to be 0 terminated and some copy
  * operations will be avoided.
  * If is_srv is set it will assume name has the srv prefixes for sip already
  *  appended and it's already 0-term'ed; if not it will append them internally.
@@ -1261,7 +1261,7 @@ struct hostent* srv_sip_resolvehost(str* name, int zt, unsigned short* port,
 	if (is_srv){
 		/* skip directly to srv resolving */
 		srv_proto=(proto)?*proto:0;
-		*port=(srv_proto==PROTO_TLS)?SIPS_PORT:SIP_PORT;
+		if(port) *port=(srv_proto==PROTO_TLS)?SIPS_PORT:SIP_PORT;
 		if (zt){
 			srv_target=name->s; /* name.s must be 0 terminated in
 								  this case */
@@ -1313,7 +1313,7 @@ struct hostent* srv_sip_resolvehost(str* name, int zt, unsigned short* port,
 do_srv:
 			/* try to find the SRV records inside previous ARs  first*/
 			for (l=ars; l; l=l->next){
-				if (l->type!=T_SRV) continue; 
+				if (l->type!=T_SRV) continue;
 				srv=(struct srv_rdata*) l->rdata;
 				if (srv==0){
 					LM_CRIT("null rdata\n");
@@ -1325,7 +1325,7 @@ do_srv:
 					/* we found it*/
 					LM_DBG("found SRV(%s) = %s:%d in AR\n",
 							srv_target, srv->name, srv->port);
-					*port=srv->port;
+					if(port) *port=srv->port;
 					/* cleanup on exit */
 					goto end;
 				}
@@ -1344,7 +1344,7 @@ do_srv:
 					/* we found it*/
 					LM_DBG("SRV(%s) = %s:%d\n",
 							srv_target, srv->name, srv->port);
-					*port=srv->port;
+					if(port) *port=srv->port;
 					/* cleanup on exit */
 					goto end;
 				}
@@ -1356,7 +1356,7 @@ do_srv:
 				goto end;
 			}
 			/* cleanup on exit */
-			LM_DBG("no SRV record found for %.*s," 
+			LM_DBG("no SRV record found for %.*s,"
 					" trying 'normal' lookup...\n", name->len, name->s);
 		}
 	}

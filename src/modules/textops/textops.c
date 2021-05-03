@@ -3401,7 +3401,7 @@ int add_hf_helper(struct sip_msg* msg, str *str1, str *str2,
 	int len;
 	str s0;
 
-	if (parse_headers(msg, HDR_EOH_F, 0) == -1) {
+	if ((parse_headers(msg, HDR_EOH_F, 0) == -1) || (msg->headers == NULL)) {
 		LM_ERR("error while parsing message\n");
 		return -1;
 	}

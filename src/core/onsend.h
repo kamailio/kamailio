@@ -57,7 +57,9 @@ extern onsend_info_t* p_onsend;
  * WARNING: buf must be 0 terminated (to allow regex matches on it) */
 int run_onsend(sip_msg_t* orig_msg, dest_info_t* dst, char* buf, int len);
 
-#define onsend_route_enabled(rtype) (onsend_rt.rlist[DEFAULT_RT]?((rtype==SIP_REPLY)?onsend_route_reply:1):0)
+#define onsend_route_enabled(rtype) ((onsend_rt.rlist[DEFAULT_RT]? \
+			((rtype==SIP_REPLY)?onsend_route_reply:1):0) \
+			|| (kemi_onsend_route_callback.len>0 && sr_kemi_eng_get()))
 
 int run_onsend_evroute(onsend_info_t *sndinfo, int evrt, str *evcb, str *evname);
 

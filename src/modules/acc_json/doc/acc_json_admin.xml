@@ -121,6 +121,27 @@ modparam("acc_json", "acc_extra", "via=$hdr(Via[*]); email=$avp(s:email)")
 		</example>
 	</section>
 
+	<section id="acc_json.p.acc_json_pre_encoded_prefix">
+		<title><varname>acc_json_pre_encoded_prefix</varname> (string)</title>
+		<para>
+		Prefix to identify values that will be considered to be already json encoded.
+		</para>
+		<para>
+		Default value is NULL.
+		</para>
+		<example>
+		<title>acc_json_pre_encoded_prefix example</title>
+		<programlisting format="linespecific">
+...
+modparam("acc_json", "acc_extra", "json_data=$avp(json_data);")
+modparam("acc_json", "acc_json_pre_encoded_prefix", "json_")
+...
+$avp(json_data) = '{"b":2, "c":3}';
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="acc_json.p.acc_time_mode">
 	<title><varname>acc_time_mode</varname> (integer)</title>
 		<para>
@@ -338,7 +359,27 @@ modparam("acc_json", "cdr_extra", "ci=$dlg_var(call_id);ft=$dlg_var(from_tag)")
 		</example>
 	</section>
 
-	
+	<section id="acc.p.cdr_json_pre_encoded_prefix">
+		<title><varname>cdr_json_pre_encoded_prefix</varname> (string)</title>
+		<para>
+		Prefix to identify values that will be considered to be already json encoded.
+		</para>
+		<para>
+		Default value is NULL.
+		</para>
+		<example>
+		<title>cdr_json_pre_encoded_prefix example</title>
+		<programlisting format="linespecific">
+...
+modparam("acc_json", "cdr_extra", "json_data=$avp(json_data);")
+modparam("acc_json", "cdr_json_pre_encoded_prefix", "json_")
+...
+$avp(json_data) = '{"b":2, "c":3}';
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="acc.p.cdr_expired_dlg_enable">
 		<title><varname>cdr_expired_dlg_enable</varname> (str)</title>
 		<para>

@@ -462,6 +462,9 @@ int new_request(str *query, http_m_params_t *query_params, http_multi_cbe_t cb, 
 		curl_easy_setopt(cell->easy, CURLOPT_VERBOSE, 1L);
 		curl_easy_setopt(cell->easy, CURLOPT_DEBUGFUNCTION, debug_cb);
 	}
+	if (cell->params.follow_redirect) {
+		curl_easy_setopt(cell->easy, CURLOPT_FOLLOWLOCATION, 1L);
+	}
 	curl_easy_setopt(cell->easy, CURLOPT_ERRORBUFFER, cell->error);
 	curl_easy_setopt(cell->easy, CURLOPT_PRIVATE, cell);
 	curl_easy_setopt(cell->easy, CURLOPT_SSL_VERIFYPEER, cell->params.tls_verify_peer);

@@ -186,6 +186,7 @@ static int ki_jwt_generate(sip_msg_t* msg, str *key, str *alg, str *claims)
 	param_t *pit = NULL;
 	int ret = 0;
 	jwt_t *jwt = NULL;
+	long lval = 0;
 
 	if(key==NULL || key->s==NULL || alg==NULL || alg->s==NULL
 			|| claims==NULL || claims->s==NULL || claims->len<=0) {
@@ -242,16 +243,30 @@ static int ki_jwt_generate(sip_msg_t* msg, str *key, str *alg, str *claims)
 	iat = time(NULL);
 
 	ret = jwt_add_grant_int(jwt, "iat", iat);
+	if(ret != 0) {
+		LM_ERR("failed to add iat grant\n");
+		goto error;
+	}
 	for (pit = params_list; pit; pit=pit->next) {
 		if(pit->name.len>0 && pit->body.len>0) {
 			pit->name.s[pit->name.len] = '\0';
 			pit->body.s[pit->body.len] = '\0';
-			jwt_add_grant(jwt, pit->name.s, pit->body.s);
+			if(pit->body.s[-1] == '\"' || pit->body.s[-1] == '\'') {
+				ret = jwt_add_grant(jwt, pit->name.s, pit->body.s);
+			} else if(str2slong(&pit->body, &lval)==0) {
+				ret = jwt_add_grant_int(jwt, pit->name.s, lval);
+			} else {
+				ret = jwt_add_grant(jwt, pit->name.s, pit->body.s);
+			}
+			if(ret != 0) {
+				LM_ERR("failed to add %s grant\n", pit->name.s);
+				goto error;
+			}
 		}
 	}
 
 	ret = jwt_set_alg(jwt, valg, (unsigned char*)kdata.s, (size_t)kdata.len);
-	if (ret < 0) {
+	if (ret != 0) {
 		LM_ERR("failed to set algorithm and key\n");
 		goto error;
 	}
@@ -324,6 +339,7 @@ static int ki_jwt_verify(sip_msg_t* msg, str *key, str *alg, str *claims,
 	jwt_t *jwt = NULL;
 	jwt_valid_t *jwt_valid = NULL;
 	str sparams = STR_NULL;
+	long lval = 0;
 
 	if(key==NULL || key->s==NULL || alg==NULL || alg->s==NULL
 			|| claims==NULL || claims->s==NULL || claims->len<=0
@@ -384,7 +400,17 @@ static int ki_jwt_verify(sip_msg_t* msg, str *key, str *alg, str *claims,
 		if(pit->name.len>0 && pit->body.len>0) {
 			pit->name.s[pit->name.len] = '\0';
 			pit->body.s[pit->body.len] = '\0';
-			jwt_valid_add_grant(jwt_valid, pit->name.s, pit->body.s);
+			if(pit->body.s[-1] == '\"' || pit->body.s[-1] == '\'') {
+				ret = jwt_valid_add_grant(jwt_valid, pit->name.s, pit->body.s);
+			} else if(str2slong(&pit->body, &lval)==0) {
+				ret = jwt_valid_add_grant_int(jwt_valid, pit->name.s, lval);
+			} else {
+				ret = jwt_valid_add_grant(jwt_valid, pit->name.s, pit->body.s);
+			}
+			if(ret != 0) {
+				LM_ERR("failed to add %s valid grant\n", pit->name.s);
+				goto error;
+			}
 		}
 	}
 

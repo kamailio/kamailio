@@ -31,7 +31,7 @@
 
 #include "../../core/str.h"
 
-#define SRUID_SIZE	40
+#define SRUID_SIZE	64
 
 typedef enum {SRUID_INC=0, SRUID_LFSR=1} sruid_mode_t;
 
@@ -47,5 +47,8 @@ typedef struct sruid {
 int sruid_init(sruid_t *sid, char sep, char *cid, int mode);
 int sruid_next(sruid_t *sid);
 int sruid_next_safe(sruid_t *sid);
+
+int sruid_nextx(sruid_t *sid, str *x);
+int sruid_nextx_safe(sruid_t *sid, str *x);
 
 #endif

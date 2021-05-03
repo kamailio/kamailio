@@ -22,7 +22,7 @@ id(int,auto) table_name(string) table_version(int)
 0:dr_groups:2
 0:dr_gw_lists:1
 0:dr_rules:3
-id(int,auto) prefix(string) whitelist(int) description(string,null) 
+0:globalblocklist:1
 0:grp:2
 0:htable:2
 0:imc_members:1
@@ -54,8 +54,8 @@ id(int,auto) prefix(string) whitelist(int) description(string,null)
 0:sip_trace:4
 0:speed_dial:2
 0:subscriber:7
-0:topos_d:1
-0:topos_t:1
+0:topos_d:2
+0:topos_t:2
 0:trusted:6
 0:uacreg:4
 0:uid_credentials:7
@@ -66,7 +66,7 @@ id(int,auto) prefix(string) whitelist(int) description(string,null)
 0:uid_uri_attrs:2
 0:uid_user_attrs:3
 0:uri:1
-id(int,auto) username(string) domain(string) prefix(string) whitelist(int) 
+0:userblocklist:1
 0:usr_preferences:2
 0:watchers:3
 0:xcap:4

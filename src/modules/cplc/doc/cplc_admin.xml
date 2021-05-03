@@ -17,7 +17,7 @@
 
 	<section>
 		<title>Overview</title>
-		<para>cpl-c modules implements a CPL (Call Processing Language)
+		<para>cplc modules implements a CPL (Call Processing Language)
 		interpreter. Support for uploading/downloading/removing scripts via
 		SIP REGISTER method is present.
 		</para>
@@ -106,7 +106,7 @@
 				<title>Set <varname>db_url</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("cpl-c","db_url","&exampledb;")
+modparam("cplc","db_url","&exampledb;")
 ...
 </programlisting>
 			</example>
@@ -117,7 +117,7 @@ modparam("cpl-c","db_url","&exampledb;")
 				Indicates the name of the table that store the CPL scripts.
 				This table must be locate into the database specified by
 				<quote>db_url</quote> parameter. For more about the format of the CPL
-				table please see the modules/cpl-c/init.mysql file.
+				table please see the modules/cplc/init.mysql file.
 			</para>
 			<para>
 			<emphasis>
@@ -128,7 +128,7 @@ modparam("cpl-c","db_url","&exampledb;")
 				<title>Set <varname>db_table</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("cpl-c","cpl_table","cpl")
+modparam("cplc","cpl_table","cpl")
 ...
 </programlisting>
 			</example>
@@ -147,7 +147,7 @@ modparam("cpl-c","cpl_table","cpl")
 				<title>Set <varname>username_column</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("cpl-c","username_column","username")
+modparam("cplc","username_column","username")
 ...
 </programlisting>
 			</example>
@@ -166,7 +166,7 @@ modparam("cpl-c","username_column","username")
 				<title>Set <varname>domain_column</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("cpl-c","domain_column","domain")
+modparam("cplc","domain_column","domain")
 ...
 </programlisting>
 			</example>
@@ -186,7 +186,7 @@ modparam("cpl-c","domain_column","domain")
 				<title>Set <varname>cpl_xml_column</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("cpl-c","cpl_xml_column","cpl_xml")
+modparam("cplc","cpl_xml_column","cpl_xml")
 ...
 </programlisting>
 			</example>
@@ -206,7 +206,7 @@ modparam("cpl-c","cpl_xml_column","cpl_xml")
 				<title>Set <varname>cpl_bin_column</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("cpl-c","cpl_bin_column","cpl_bin")
+modparam("cplc","cpl_bin_column","cpl_bin")
 ...
 </programlisting>
 			</example>
@@ -228,7 +228,7 @@ modparam("cpl-c","cpl_bin_column","cpl_bin")
 				<title>Set <varname>cpl_dtd_file</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("cpl-c","cpl_dtd_file","/etc/kamailio/cpl-06.dtd")
+modparam("cplc","cpl_dtd_file","/etc/kamailio/cpl-06.dtd")
 ...
 </programlisting>
 			</example>
@@ -250,7 +250,7 @@ modparam("cpl-c","cpl_dtd_file","/etc/kamailio/cpl-06.dtd")
 				<title>Set <varname>log_dir</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("cpl-c","log_dir","/var/log/kamailio/cpl")
+modparam("cplc","log_dir","/var/log/kamailio/cpl")
 ...
 </programlisting>
 			</example>
@@ -274,7 +274,7 @@ modparam("cpl-c","log_dir","/var/log/kamailio/cpl")
 				<title>Set <varname>proxy_recurse</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("cpl-c","proxy_recurse",2)
+modparam("cplc","proxy_recurse",2)
 ...
 </programlisting>
 			</example>
@@ -283,6 +283,7 @@ modparam("cpl-c","proxy_recurse",2)
 			<title><varname>proxy_route</varname> (string)</title>
 			<para>
 				Before doing proxy (forward), a script route can be executed.
+                                This parameter indicates the name of the route called.
 				All modifications made by that route will be reflected only for
 				the current branch.
 			</para>
@@ -295,7 +296,7 @@ modparam("cpl-c","proxy_recurse",2)
 				<title>Set <varname>proxy_route</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("cpl-c","proxy_route","1")
+modparam("cplc","proxy_route","CPL_PROXY")
 ...
 </programlisting>
 			</example>
@@ -316,7 +317,7 @@ modparam("cpl-c","proxy_route","1")
 				<title>Set <varname>case_sensitive</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("cpl-c","case_sensitive",1)
+modparam("cplc","case_sensitive",1)
 ...
 </programlisting>
 			</example>
@@ -336,7 +337,7 @@ modparam("cpl-c","case_sensitive",1)
 				<title>Set <varname>realm_prefix</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("cpl-c","realm_prefix","sip.")
+modparam("cplc","realm_prefix","sip.")
 ...
 </programlisting>
 			</example>
@@ -361,7 +362,7 @@ modparam("cpl-c","realm_prefix","sip.")
 				<title>Set <varname>timer_avp</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("cpl-c","timer_avp","$avp(i:14)")
+modparam("cplc","timer_avp","$avp(i:14)")
 ...
 </programlisting>
 			</example>
@@ -386,7 +387,7 @@ modparam("cpl-c","timer_avp","$avp(i:14)")
 				<title>Set <varname>lookup_domain</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("cpl-c","lookup_domain","location")
+modparam("cplc","lookup_domain","location")
 ...
 </programlisting>
 			</example>
@@ -409,7 +410,7 @@ modparam("cpl-c","lookup_domain","location")
 					parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("cpl-c","lookup_append_branches",1)
+modparam("cplc","lookup_append_branches",1)
 ...
 </programlisting>
 			</example>
@@ -430,10 +431,52 @@ modparam("cpl-c","lookup_append_branches",1)
 				<title>Set <varname>use_domain</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("cpl-c","use_domain",1)
+modparam("cplc","use_domain",1)
 ...
 </programlisting>
-			</example>
+                        </example>
+                </section>
+                <section id="cplc.p.redirect_route">
+                        <title><varname>redirect_route</varname> (string)</title>
+                        <para>
+                                Before doing redirect (deflection), a script route can be executed.
+                                This parameter indicates the name of the route called.
+                                All modifications made by that route will be reflected only for
+                                the current branch.
+                        </para>
+                        <para>
+                                <emphasis>
+                                        Default value of this parameter is NULL (none).
+                                </emphasis>
+                        </para>
+                        <example>
+                                <title>Set <varname>redirect_route</varname> parameter</title>
+                                <programlisting format="linespecific">
+...
+modparam("cplc","redirect_route", "CPL_REDIRECT")
+...
+				</programlisting>
+                        </example>
+                </section>
+
+                <section id="cplc.p.ignore3xx">
+                        <title><varname>ignore3xx</varname> (integer)</title>
+                        <para>
+                                Indicates if 3xx SIP response must be ignored.
+                        </para>
+                        <para>
+                                <emphasis>
+                                        Default value is <quote>0 (disabled)</quote>.
+                                </emphasis>
+                        </para>
+                        <example>
+                                <title>Set <varname>ignore3xx</varname> parameter</title>
+                                <programlisting format="linespecific">
+...
+modparam("cplc","ignore3xx",1)
+...
+				</programlisting>
+                        </example>
 		</section>
 
 	</section>
@@ -690,7 +733,7 @@ if (method=="REGISTER") {
 		<section>
 			<title>Database setup</title>
 			<para>
-			Before running &kamailio; with cpl-c, you have to setup the database 
+			Before running &kamailio; with cplc, you have to setup the database 
 			table where the module will store the CPL scripts. For that, if
 			the table was not created by the installation script or you choose
 			to install everything by yourself you can use the cpc-create.sql

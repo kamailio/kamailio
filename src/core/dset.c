@@ -860,7 +860,6 @@ int msg_get_src_addr(sip_msg_t *msg, str *uri, int mode)
 		p += TRANSPORT_PARAM_LEN;
 
 		memcpy(p, proto.s, proto.len);
-		p += proto.len;
 	}
 
 	uri->s = buf;
@@ -1111,6 +1110,130 @@ int uri_trim_rcv_alias(str *uri, str *nuri)
 
 	LM_DBG("decoded <%.*s> => [%.*s]\n", uri->len, uri->s, nuri->len, nuri->s);
 	return 1;
+}
+
+/**
+ * encode sip uri to uri alias parameter format
+ * - param: iuri - input sip uri
+ * - param: ualias - output uri alias value in format: address~port~proto
+ *   * ualias->s must point to a buffer of size ualias->len, at least iuri->len
+ *   * ualias->len is adjusted to the output value length
+ * - return 0 on success, negative on error
+ */
+int ksr_uri_alias_encode(str *iuri, str *ualias)
+{
+	sip_uri_t puri;
+	char *p;
+
+	if (parse_uri (iuri->s, iuri->len, &puri) < 0) {
+		LM_ERR("failed to parse uri [%.*s]\n", iuri->len, iuri->s);
+		return -1;
+	}
+
+	/*host~port~proto*/
+	if(puri.host.len + 16 >= ualias->len) {
+		LM_ERR("not enough space to build uri alias - buf size: %d\n",
+				ualias->len);
+		return -1;
+	}
+	p = ualias->s;
+	memcpy(p, puri.host.s, puri.host.len);
+	p += puri.host.len;
+	*p++ = '~';
+	if(puri.port.len>0) {
+		memcpy(p, puri.port.s, puri.port.len);
+		p += puri.port.len;
+	} else {
+		if(puri.proto==PROTO_TLS || puri.proto==PROTO_WSS) {
+			memcpy(p, "5061", 4);
+		} else {
+			memcpy(p, "5060", 4);
+		}
+		p += 4;
+	}
+	*p++ = '~';
+	*p++ = ((puri.proto)?puri.proto:1) + '0';
+	ualias->len = p - ualias->s;
+	ualias->s[ualias->len] = '\0';
+
+	LM_DBG("encoded <%.*s> => [%.*s]\n",
+			iuri->len, iuri->s, ualias->len, ualias->s);
+
+	return 0;
+}
+
+/**
+ * decode uri alias parameter to a sip uri
+ * - param: ualias - uri alias value in format: address~port~proto
+ * - param: ouri - output uri - ouri->s must point to a buffer of size ouri->len
+ *   * ouri->len is adjusted to the output value length
+ * - return 0 on success, negative on error
+ */
+int ksr_uri_alias_decode(str *ualias, str *ouri)
+{
+	int n;
+	char *p;
+	int nproto;
+	str sproto;
+
+	/* 24 => sip:...;transport=sctp */
+	if(ualias->len + 24 >= ouri->len) {
+		LM_ERR("received uri alias is too long: %d\n", ualias->len);
+		return -1;
+	}
+
+	/* received=ip~port~proto */
+	memcpy(ouri->s, "sip:", 4);
+	memcpy(ouri->s + 4, ualias->s, ualias->len);
+	ouri->s[4 + ualias->len] = '\0';
+	p = ouri->s + 4;
+	n = 0;
+	while(*p!='\0') {
+		if(*p=='~') {
+			n++;
+			if(n==1) {
+				/* port */
+				*p = ':';
+			} else if(n==2) {
+				/* proto */
+				*p = ';';
+				p++;
+				if(*p=='\0') {
+					LM_ERR("invalid received format\n");
+					goto error;
+				}
+				nproto = *p - '0';
+				if(nproto == PROTO_NONE) {
+					nproto = PROTO_UDP;
+				}
+				if (nproto != PROTO_UDP) {
+					proto_type_to_str(nproto, &sproto);
+					if (sproto.len == 0) {
+						LM_ERR("unknown proto in received param\n");
+						goto error;
+					}
+					memcpy(p, "transport=", 10);
+					p += 10;
+					memcpy(p, sproto.s, sproto.len);
+					p += sproto.len;
+				} else {
+					/* go back one byte to overwrite ';' */
+					p--;
+				}
+				ouri->len = (int)(p - ouri->s);
+				ouri->s[ouri->len] = '\0';
+				break;
+			} else {
+				LM_ERR("invalid number of separators (%d)\n", n);
+				goto error;
+			}
+		}
+		p++;
+	}
+	return 0;
+
+error:
+	return -1;
 }
 
 /* address of record (aor) management */

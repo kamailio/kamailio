@@ -661,6 +661,16 @@ Lua extensions for Kamailio.
 %endif
 
 
+%package    lwsc
+Summary:    Websocket client implementation to interact with external systems, similar to http client
+Group:      %{PKGGROUP}
+Requires:   libwebsockets, kamailio = %ver
+BuildRequires:  libwebsockets-devel
+
+%description    lwsc
+Websocket client implementation to interact with external systems, similar to http client.
+
+
 %if %{with memcached}
 %package    memcached
 Summary:    Memcached configuration file support for Kamailio
@@ -1178,6 +1188,7 @@ make every-module skip_modules="app_mono db_cassandra db_oracle iptrtpproxy \
 %if %{with lua}
     klua \
 %endif
+    klwsc \
 %if %{with memcached}
     kmemcached \
 %endif
@@ -1270,6 +1281,7 @@ make install-modules-all skip_modules="app_mono db_cassandra db_oracle \
 %if %{with lua}
     klua \
 %endif
+    klwsc \
 %if %{with memcached}
     kmemcached \
 %endif
@@ -1931,6 +1943,11 @@ fi
 %{_libdir}/kamailio/modules/app_lua_sr.so
 %endif
 
+
+%files      lwsc
+%defattr(-,root,root)
+%doc %{_docdir}/kamailio/modules/README.lwsc
+%{_libdir}/kamailio/modules/lwsc.so
 
 %if %{with memcached}
 %files      memcached

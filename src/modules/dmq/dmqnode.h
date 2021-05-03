@@ -69,6 +69,7 @@ dmq_node_t *find_dmq_node(dmq_node_list_t *list, dmq_node_t *node);
 dmq_node_t *find_dmq_node_uri(dmq_node_list_t *list, str *uri);
 dmq_node_t *find_dmq_node_uri2(str *uri);
 int del_dmq_node(dmq_node_list_t *list, dmq_node_t *node);
+int dmq_node_del_by_uri(dmq_node_list_t *list, str *suri);
 int cmp_dmq_node(dmq_node_t *node, dmq_node_t *cmpnode);
 int update_dmq_node_status(dmq_node_list_t *list, dmq_node_t *node, int status);
 dmq_node_t *shm_dup_node(dmq_node_t *node);

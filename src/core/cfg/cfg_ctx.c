@@ -284,7 +284,11 @@ static int cfg_update_defaults(cfg_group_meta_t	*meta,
 				meta->array = array;
 				clone_done = 1;
 			}
-			memcpy(ginst->vars + var->offset, new_val, cfg_var_size(var));
+			if(ginst->vars + var->offset) {
+				memcpy(ginst->vars + var->offset, new_val, cfg_var_size(var));
+			} else {
+				LM_ERR("invalid variable offset\n");
+			}
 		}
 	}
 	return 0;
@@ -1121,6 +1125,10 @@ int cfg_commit(cfg_ctx_t *ctx)
 				goto error;
 			}
 			p = group_inst->vars + changed->var->offset;
+		}
+		if(p==NULL) {
+			LM_ERR("failed to resolve valid variable offset\n");
+			goto error;
 		}
 
 		if (((changed->group_id_set && !changed->del_value

@@ -39,6 +39,13 @@
         location via HTTP(S).
         </para>
         <para>
+        The function lost_held_dereference allows &kamailio; to assemble a HELD
+        dereference request as defined in RFC6155
+        (<ulink url="https://tools.ietf.org/html/rfc6753"/>) to dereference location
+        information represented as PIDF-LO for a given URL. Required parameters are
+        an URL, responseTime, and responseType. The response is represented as PIDF-LO.
+        </para>
+        <para>
         The function lost_query allows &kamailio; to assemble a LOST
         findService request  as defined in RFC5222
         (<ulink url="https://tools.ietf.org/html/rfc5255"/>) to query 
@@ -126,17 +133,18 @@
             prepared to wait for a response.
             </para>
             <para>
-            The value is expressed as a non-negative integer in units of
-            milliseconds. Note: The time value is indicative only. 
+            The value is expressed as integer, either -1 'emergencyDispatch', 0 'emergencyRouting',
+            a non-negative integer (>0) in units of milliseconds.
+            Note: The time value is indicative only. 
             </para>
             <para>
-            Default: 0 (response time not set)
+            Default: 0 ('emergencyRouting')
             </para>
             <example>
             <title>Set <varname>response_time</varname> parameter</title>
                 <programlisting format="linespecific">
     ...
-    modparam("lost", "response_time", 5000)
+    modparam("lost", "response_time", 0)
     ...
                 </programlisting>
             </example>
@@ -168,7 +176,58 @@
             <title>Set <varname>location_type</varname> parameter</title>
                 <programlisting format="linespecific">
     ...
-    modparam("lost", "location_type, "civic geodetic locationURI")
+    modparam("lost", "location_type", "civic geodetic locationURI")
+    ...
+                </programlisting>
+            </example>
+        </section>
+        <section id="lost.p.post_request">
+            <title><varname>post_request</varname> (int)</title>
+            <para>
+            Dereferencing the location can be done using either the HTTP GET or POST method. This parameter
+            globally defines whether only HTTP POST method should be used. Values are 0 (GET) or 1 (POST).
+            </para>
+            <para>
+            Default: 0 (GET)
+            </para>
+            <example>
+            <title>Set <varname>post_request</varname> parameter</title>
+                <programlisting format="linespecific">
+    ...
+    modparam("lost", "post_request", 1)
+    ...
+                </programlisting>
+            </example>
+        </section>
+        <section id="lost.p.location_profile">
+            <title><varname>location_profile</varname> (int)</title>
+            <para>
+            A Presence Information Data Format Location Object (PIDF-LO) may contain geodetic or civic location
+            profile or combinations. A LoST <emphasis>findService</emphasis> contains only one location, which
+            is selected via this parameter as follows:
+            </para>
+			<itemizedlist>
+                <listitem><para>
+                    <emphasis>0</emphasis> - takes the first location of any type
+                </para></listitem>
+                <listitem><para>
+                    <emphasis>1</emphasis> - takes the last location of any type
+                </para></listitem>
+                <listitem><para>
+                    <emphasis>2</emphasis> - takes the first geodetic location
+                </para></listitem>
+                <listitem><para>
+                    <emphasis>3</emphasis> - takes the first civic location
+                </para></listitem>
+            </itemizedlist>
+            <para>
+            Default: 0 (first).
+            </para>
+            <example>
+            <title>Set <varname>location_profile</varname> parameter</title>
+                <programlisting format="linespecific">
+    ...
+    modparam("lost", "location_profile, 2)
     ...
                 </programlisting>
             </example>
@@ -229,6 +288,55 @@
                 </programlisting>
             </example>
         </section>
+        <section id="lost.p.recursion">
+            <title><varname>recursion</varname> (int)</title>
+            <para>
+            A Geolocation header may include a list of locationValues. This
+            parameter sets the order of the URI used to retrieve location
+            information, either the first element of a certain type or the
+            last. Values are 0 (first) or 1 (last).
+            </para>
+            <para>
+            Default: 1 (allowed)
+            </para>
+            <example>
+            <title>Set <varname>recursion</varname> parameter</title>
+                <programlisting format="linespecific">
+    ...
+    modparam("lost", "recursion", 0)
+    ...
+                </programlisting>
+            </example>
+        </section>
+        <section id="lost.p.verbose">
+            <title><varname>verbose</varname> (int)</title>
+            <para>
+            Detailed output of LoST findService, redirect or error response as shown below.
+            Values are 0 (disabled) or 1 (enabled).
+            <programlisting format="linespecific">
+    ### LOST expires:   [2031-01-27T14:54:21+00:00]
+    ### LOST lastUpdated:       [2021-01-29T14:54:21+00:00]
+    ### LOST source:    [ecrf.demo.gridgears.xx]
+    ### LOST sourceId:  [06ac5b1c-d6c8-42bd-a667-5d1b90bb3d95]
+    ### LOST displayName:       [Polizeinotruf (de)]
+    ### LOST serviceNumber:     [112]
+    ### LOST service:   [urn:service:sos]
+    ### LOST uri:       [sip:112@demo.dec112.xx]
+    ### LOST via:       [ecrf.demo.gridgears.xx]
+            </programlisting>
+            </para>
+            <para>
+            Default: 0
+            </para>
+            <example>
+            <title>Set <varname>verbose</varname> parameter</title>
+                <programlisting format="linespecific">
+    ...
+    modparam("lost", "verbose", 1)
+    ...
+                </programlisting>
+            </example>
+        </section>
 	</section>
 	<section>
 	    <title>Functions</title>
@@ -262,7 +370,7 @@
                     </para></listitem>
                     <listitem><para>
 						<emphasis>error</emphasis> - any error code returned in the
-                        HELD locationRequest response
+                        HELD response
                     </para></listitem>
 			    </itemizedlist>
 			<para>
@@ -287,6 +395,72 @@ xlog("L_INFO", "HELD locationRequest: Result code $var(res)\nUrl: $var(url)\n$va
 $var(res) = lost_held_query("heldsrv", "$var(pidf)", "$var(url)", "$var(err)");
 xlog("L_INFO", "HELD locationRequest: Result code $var(res)\nUrl: $var(url)\n$var(pidf)\n");
 ...
+				</programlisting>
+			</example>
+		</section>
+		<section id="lost.f.lost_held_dereference">
+			<title>
+				<function moreinfo="none">lost_held_dereference(url, rtime, rtype, pidf-lo, error)</function>
+			</title>
+			<para>
+			Sends a HELD POST locationRequest to a given URL. Attributes are responseTime and resposeType.
+            The <emphasis>locationType</emphasis> property "exact" is set to "false".
+	    	</para>
+			    <itemizedlist>
+                    <listitem><para>
+						<emphasis>url</emphasis> - a URL received via Geolocation header to dereference
+                        location
+                    </para></listitem>
+				    <listitem><para>
+						<emphasis>rtime</emphasis> - the response time as defined
+                        in <xref linkend="lost.p.response_time"/>
+				    </para></listitem>
+                    <listitem><para>
+						<emphasis>rtype</emphasis> - the response type (location) as defined
+                        in <xref linkend="lost.p.location_type"/>
+                    </para></listitem>
+                    <listitem><para>
+						<emphasis>pidf-lo</emphasis> - the PIDF-LO returned in the
+                        HELD locationRequest response
+                    </para></listitem>
+                    <listitem><para>
+						<emphasis>error</emphasis> - any error code returned in the
+                        HELD response
+                    </para></listitem>
+			    </itemizedlist>
+			<para>
+			The return value is 200..203 on success, 400 if an internal error occured, or 500 if an
+            error code is returned in the HELD response. Success codes in detail are as follows:
+	    	</para>
+			<itemizedlist>
+                <listitem><para>
+                    <emphasis>200</emphasis> - received 200 OK, but neither location-info nor locationURI element found
+                </para></listitem>
+                <listitem><para>
+                    <emphasis>201</emphasis> - received 200 OK with locationURI (aka Location-by-Reference)
+                </para></listitem>
+                <listitem><para>
+                    <emphasis>202</emphasis> - received 200 OK with location-info element (aka Location-by-Value)
+                </para></listitem>
+                <listitem><para>
+                    <emphasis>203</emphasis> - received 200 OK with location-info and locationURI element
+                </para></listitem>
+            </itemizedlist>            
+			<para>
+			This function can be used from REQUEST_ROUTE,
+			ONREPLY_ROUTE, FAILURE_ROUTE, and BRANCH_ROUTE.
+			</para>
+			<example>
+				<title><function>lost_held_dereference()</function> usage</title>
+				<programlisting format="linespecific">
+...
+# HELD location dereference
+if ($hdr(Geolocation)=~"^&lt;http.*$") {
+    $var(url) = $(hdr(Geolocation){s.select,0,;});
+    $var(res) = lost_held_dereference("$(var(url){s.unbracket})", "emergencyDispatch", "civic geodetic", "$var(pidf)", "$var(err)");
+    xlog("L_INFO", "HELD location dereference: Result code $var(res)\n$var(pidf)");
+...
+}
 				</programlisting>
 			</example>
 		</section>

@@ -201,6 +201,26 @@ modparam("http_async_client", "curl_verbose", 1)
 		</example>
 	</section>
 	<section>
+		<title><varname>curl_follow_redirect</varname> (integer)</title>
+        <para>
+		    If defined to a non-zero value, will tell curl to follow HTTP 3xx redirects.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0 (disabled).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>curl_follow_redirect</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("http_async_client", "curl_follow_redirect", 1)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
 		<title><varname>memory_manager</varname> (string)</title>
         <para>
 			Choose the memory manager used by curl:
@@ -462,6 +482,7 @@ xlog("L_INFO", "received reply for query $http_req_id\n");
 		<listitem><para><emphasis>tcp_keepalive</emphasis>: enable TCP keepalive</para></listitem>
 		<listitem><para><emphasis>tcp_ka_idle</emphasis>: set TCP keepalive idle time wait</para></listitem>
 		<listitem><para><emphasis>tcp_ka_interval</emphasis>: set TCP keepalive interval</para></listitem>
+		<listitem><para><emphasis>follow_redirect</emphasis>: if defined to a non-zero value, will tell curl to follow HTTP 3xx redirects. Defaults to curl_follow_redirect global parameter.</para></listitem>
 	</itemizedlist>
 	<example>
 		<title><literal>$http_req(key)</literal> variable usage</title>

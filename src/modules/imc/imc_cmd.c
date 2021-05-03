@@ -349,8 +349,12 @@ int imc_handle_create(struct sip_msg* msg, imc_cmd_t *cmd,
 
 	memset(&room, '\0', sizeof(room));
 
-	if (cmd->param[0].s) params++;
-	if (cmd->param[1].s) params++;
+	if (cmd->param[0].s) {
+		params++;
+		if (cmd->param[1].s) {
+			params++;
+		}
+	}
 
 	switch(params) {
 	case 0:
@@ -361,7 +365,9 @@ int imc_handle_create(struct sip_msg* msg, imc_cmd_t *cmd,
 		/* With one parameter, if the value is "private", it indicates
 		 * a private room, otherwise it is the URI of the room and we
 		 * create a public room. */
-		if (cmd->param[0].len == IMC_ROOM_PRIVATE_LEN && !strncasecmp(cmd->param[0].s, IMC_ROOM_PRIVATE, cmd->param[0].len)) {
+		if (cmd->param[0].len == IMC_ROOM_PRIVATE_LEN
+				&& !strncasecmp(cmd->param[0].s, IMC_ROOM_PRIVATE,
+					cmd->param[0].len)) {
 			ps = cmd->param[0];
 		} else {
 			rs = cmd->param[0];
@@ -384,7 +390,8 @@ int imc_handle_create(struct sip_msg* msg, imc_cmd_t *cmd,
 		goto error;
 
 	if (ps.s) {
-		if (ps.len == IMC_ROOM_PRIVATE_LEN && !strncasecmp(ps.s, IMC_ROOM_PRIVATE, ps.len)) {
+		if (ps.len == IMC_ROOM_PRIVATE_LEN
+				&& !strncasecmp(ps.s, IMC_ROOM_PRIVATE, ps.len)) {
 			flag_room |= IMC_ROOM_PRIV;
 			LM_DBG("Room with private flag on\n");
 		} else {
@@ -443,10 +450,12 @@ int imc_handle_create(struct sip_msg* msg, imc_cmd_t *cmd,
 		LM_ERR("Failed to add member [%.*s]\n", STR_FMT(&src->uri));
 		goto error;
 	}
-	LM_DBG("Added [%.*s] as member to room [%.*s]\n", STR_FMT(&member->uri), STR_FMT(&rm->uri));
+	LM_DBG("Added [%.*s] as member to room [%.*s]\n", STR_FMT(&member->uri),
+			STR_FMT(&rm->uri));
 
 	body.s = imc_body_buf;
-	body.len = snprintf(body.s, sizeof(imc_body_buf), msg_user_joined.s, STR_FMT(format_uri(member->uri)));
+	body.len = snprintf(body.s, sizeof(imc_body_buf), msg_user_joined.s,
+			STR_FMT(format_uri(member->uri)));
 
 	if (body.len < 0) {
 		LM_ERR("Error while building response\n");
@@ -478,6 +487,10 @@ int imc_handle_join(struct sip_msg* msg, imc_cmd_t *cmd,
 	int flag_member = 0;
 	str body;
 	struct imc_uri room;
+
+	if(cmd==NULL || src==NULL || dst==NULL) {
+		return -1;
+	}
 
 	memset(&room, '\0', sizeof(room));
 	if (build_imc_uri(&room, cmd->param[0].s ? cmd->param[0] : dst->parsed.user, &dst->parsed))
@@ -528,12 +541,14 @@ int imc_handle_join(struct sip_msg* msg, imc_cmd_t *cmd,
 			goto error;
 		}
 
-		body.len = snprintf(body.s, sizeof(imc_body_buf), msg_user_joined.s, STR_FMT(format_uri(src->uri)));
+		body.len = snprintf(body.s, sizeof(imc_body_buf), msg_user_joined.s,
+				STR_FMT(format_uri(src->uri)));
 	} else {
 		LM_DBG("Attept to join private room [%.*s] by [%.*s]\n",
 			STR_FMT(&rm->uri), STR_FMT(&src->uri));
 
-		body.len = snprintf(body.s, sizeof(imc_body_buf), msg_join_attempt_bcast.s, STR_FMT(format_uri(src->uri)));
+		body.len = snprintf(body.s, sizeof(imc_body_buf), msg_join_attempt_bcast.s,
+				STR_FMT(format_uri(src->uri)));
 		imc_send_message(&rm->uri, &src->uri, build_headers(msg), &msg_join_attempt_ucast);
 	}
 
@@ -554,7 +569,7 @@ done:
 
 	rv = 0;
 error:
-	if (room.uri.s) pkg_free(room.uri.s);
+	if (room.uri.s != NULL) pkg_free(room.uri.s);
 	if (rm != NULL) imc_release_room(rm);
 	return rv;
 }

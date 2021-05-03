@@ -710,6 +710,12 @@ static inline char *run_redirect( struct cpl_interpreter *intr )
 		intr->flags |= CPL_IS_STATEFUL;
 	}
 
+	/* run what redirect route is set */
+	if (cpl_env.redirect_route) {
+		/* do not alter route type - it might be REQUEST or FAILURE */
+		run_top_route( main_rt.rlist[cpl_env.redirect_route], intr->msg, 0);
+	}
+
 	/* add the lump to the reply */
 	lump = add_lump_rpl( intr->msg, lump_str.s , lump_str.len , LUMP_RPL_HDR);
 	if(!lump) {

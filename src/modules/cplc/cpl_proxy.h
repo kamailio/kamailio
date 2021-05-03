@@ -179,6 +179,11 @@ static void reply_callback( struct cell* t, int type, struct tmcb_params* ps)
 		return;
 	}
 
+	if ( (1 == cpl_env.ignore3xx) && (ps->code)/100==3) {
+		//do not handle 3XX response
+		goto exit;
+	}
+
 	/* if it's a redirect-> do I have to added to the location set ? */
 	if (intr->proxy.recurse && (ps->code)/100==3) {
 		LM_DBG("recurse level %d processing..\n",intr->proxy.recurse);

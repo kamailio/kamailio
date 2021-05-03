@@ -316,13 +316,14 @@ int parse_headers(struct sip_msg* const msg, const hdr_flags_t flags, const int 
 	if (unlikely(next)) {
 		orig_flag = msg->parsed_flag;
 		msg->parsed_flag &= ~flags;
-	}else
+	} else {
 		orig_flag=0;
+	}
 
 #ifdef EXTRA_DEBUG
 	DBG("flags=%llx\n", (unsigned long long)flags);
 #endif
-	while( tmp<end && (flags & msg->parsed_flag) != flags){
+	while(tmp<end && (flags & msg->parsed_flag) != flags) {
 		prefetch_loc_r(tmp+64, 1);
 		hf=pkg_malloc(sizeof(struct hdr_field));
 		if (unlikely(hf==0)){
@@ -619,18 +620,25 @@ int parse_headers(struct sip_msg* const msg, const hdr_flags_t flags, const int 
 #endif
 		tmp=rest;
 	}
+
 skip:
 	msg->unparsed=tmp;
+	if(msg->headers==NULL) {
+		/* nothing parsed - invalid input sip message */
+		goto error1;
+	}
 	/* restore original flags */
 	msg->parsed_flag |= orig_flag;
 	return 0;
 
 error:
-	ser_error=E_BAD_REQ;
 	if (hf) {
 		clean_hdr_field(hf);
 		pkg_free(hf);
 	}
+
+error1:
+	ser_error=E_BAD_REQ;
 	/* restore original flags */
 	msg->parsed_flag |= orig_flag;
 	return -1;

@@ -95,6 +95,10 @@ static cmd_export_t cmds[] = {
 		0, 0, REQUEST_ROUTE},
 	{"dmq_handle_message", (cmd_function)w_dmq_handle_message, 1,
 		fixup_int_1, 0, REQUEST_ROUTE},
+	{"dmq_process_message", (cmd_function)dmq_process_message, 0,
+		0, 0, REQUEST_ROUTE},
+	{"dmq_process_message", (cmd_function)w_dmq_process_message, 1,
+		fixup_int_1, 0, REQUEST_ROUTE},
 	{"dmq_send_message", (cmd_function)cfg_dmq_send_message, 4,
 		fixup_spve_all, 0, ANY_ROUTE},
 	{"dmq_bcast_message", (cmd_function)cfg_dmq_bcast_message, 3,
@@ -114,6 +118,7 @@ static param_export_t params[] = {
 	{"num_workers", INT_PARAM, &dmq_num_workers},
 	{"ping_interval", INT_PARAM, &dmq_ping_interval},
 	{"server_address", PARAM_STR, &dmq_server_address},
+	{"server_socket", PARAM_STR, &dmq_server_socket},
 	{"notification_address", PARAM_STR|USE_FUNC_PARAM, dmq_add_notification_address},
 	{"notification_channel", PARAM_STR, &dmq_notification_channel},
 	{"multi_notify", INT_PARAM, &dmq_multi_notify},
@@ -225,10 +230,12 @@ static int mod_init(void)
 		return -1;
 	}
 
-	/* create socket string out of the server_uri */
-	if(make_socket_str_from_uri(&dmq_server_uri, &dmq_server_socket) < 0) {
-		LM_ERR("failed to create socket out of server_uri\n");
-		return -1;
+	if(dmq_server_socket.s==NULL || dmq_server_socket.len<=0) {
+		/* create socket string out of the server_uri */
+		if(make_socket_str_from_uri(&dmq_server_uri, &dmq_server_socket) < 0) {
+			LM_ERR("failed to create socket out of server_uri\n");
+			return -1;
+		}
 	}
 	if(lookup_local_socket(&dmq_server_socket) == NULL) {
 		LM_ERR("server_uri is not a socket the proxy is listening on\n");
@@ -350,9 +357,6 @@ static void destroy(void)
 		dmq_self_node->status = DMQ_NODE_DISABLED;
 		request_nodelist(dmq_notification_node, 1);
 	}
-	if(dmq_server_socket.s) {
-		pkg_free(dmq_server_socket.s);
-	}
 	if(dmq_init_callback_done) {
 		shm_free(dmq_init_callback_done);
 	}
@@ -361,14 +365,14 @@ static void destroy(void)
 static int dmq_add_notification_address(modparam_t type, void * val)
 {
 	str tmp_str;
-	tmp_str.s = ((str*) val)->s;
-	tmp_str.len = ((str*) val)->len;
 	int total_list = 0; /* not used */
 
 	if(val==NULL) {
 		LM_ERR("invalid notification address parameter value\n");
 		return -1;
 	}
+	tmp_str.s = ((str*) val)->s;
+	tmp_str.len = ((str*) val)->len;
 	if(parse_uri(tmp_str.s,  tmp_str.len, &dmq_notification_uri) < 0) {
 		LM_ERR("could not parse notification address\n");
 		return -1;
@@ -383,6 +387,7 @@ static int dmq_add_notification_address(modparam_t type, void * val)
 		}
 		dmq_tmp_list = dmq_notification_address_list;
 		dmq_tmp_list->s = tmp_str;
+		dmq_tmp_list->next = NULL;
 	} else {
 		dmq_tmp_list = append_str_list(tmp_str.s, tmp_str.len, &dmq_tmp_list, &total_list);
 		if (dmq_tmp_list == NULL) {
@@ -425,8 +430,29 @@ error:
 
 static const char *dmq_rpc_list_nodes_doc[2] = {"Print all nodes", 0};
 
+void rpc_dmq_remove(rpc_t* rpc, void* ctx)
+{
+	str taddr = STR_NULL;
+
+	if (rpc->scan(ctx, ".S", &taddr) < 1) {
+		rpc->fault(ctx, 500, "Invalid Parameters");
+		return;
+	}
+	if(dmq_node_del_by_uri(dmq_node_list, &taddr)<0) {
+		rpc->fault(ctx, 500, "Failure");
+		return;
+	}
+}
+
+static const char* rpc_dmq_remove_doc[3] = {
+	"Remove a DMQ node",
+	"address - the DMQ node address",
+	0
+};
+
 static rpc_export_t rpc_methods[] = {
 	{"dmq.list_nodes", dmq_rpc_list_nodes, dmq_rpc_list_nodes_doc, RET_ARRAY},
+	{"dmq.remove",     rpc_dmq_remove,     rpc_dmq_remove_doc, 0},
 	{0, 0, 0, 0}
 };
 
@@ -442,6 +468,16 @@ static sr_kemi_t sr_kemi_dmq_exports[] = {
 	},
 	{ str_init("dmq"), str_init("handle_message_rc"),
 		SR_KEMIP_INT, ki_dmq_handle_message_rc,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dmq"), str_init("process_message"),
+		SR_KEMIP_INT, ki_dmq_process_message,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dmq"), str_init("process_message_rc"),
+		SR_KEMIP_INT, ki_dmq_process_message_rc,
 		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
