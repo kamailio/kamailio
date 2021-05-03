@@ -122,14 +122,17 @@ modparam("jwt", "key_mode", 1)
        libjwt (e.g., RS256, HS256, ES256, ...)
      * claims - the list of claims to be added to JWT, in the format
        "name1=value1;name2=value2;..." (same as the SIP parameters
-       format).
+       format). The string values can be enclosed in single or double
+       quotes. If a value is not eclosed in between quotes, it is added as
+       numeric value if it is successfully converted to a long value,
+       otherwise is added as string value.
 
    This function can be used from ANY_ROUTE.
 
    Example 1.2. jwt_generate usage
 ...
   jwt_generate("/path/to/prvkey.pem", "RS256",
-        "caller=$fU;callee=$tU;callid=$ci");
+        "caller='$fU';callee='$tU';callid='$ci';index=100");
 ...
 
 4.2.  jwt_verify(pubkey, alg, claims, jwtval)
@@ -142,7 +145,8 @@ modparam("jwt", "key_mode", 1)
        libjwt (e.g., RS256, HS256, ES256, ...)
      * claims - the list of claims to be checked they are in the JWT, in
        the format "name1=value1;name2=value2;..." (same as the SIP
-       parameters format).
+       parameters format, see also the description of claims parameter for
+       jwt_generate()).
      * jwtval - the value of the JWT to verify
 
    This function can be used from ANY_ROUTE.
@@ -150,7 +154,7 @@ modparam("jwt", "key_mode", 1)
    Example 1.3. jwt_verify usage
 ...
   if(!jwt_verify("/path/to/pubkey.pem", "RS256",
-         "caller=$fU;callee=$tU;callid=$ci",
+         "caller='$fU';callee='$tU';callid='$ci';index=100",
         "$var(jwt)") {
     xwarn("failed to verify jwt\n");
   }
@@ -171,6 +175,6 @@ modparam("jwt", "key_mode", 1)
    Example 1.4. $jwt(name) usage
 ...
   jwt_generate("/path/to/prvkey.pem", "RS256",
-        "caller=$fU;callee=$tU;callid=$ci");
+        "caller='$fU';callee='$tU';callid='$ci';index=100");
   xinfo("jwt is: $jwt(val)");
 ...
