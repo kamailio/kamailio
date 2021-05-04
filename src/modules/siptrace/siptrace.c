@@ -2141,8 +2141,11 @@ int siptrace_net_data_recv(sr_event_param_t *evp)
 
 	if(siptrace_exec_evcb_msg(&sto) == DROP_R_F) {
 		/* drop() used in event_route - all done */
+		LM_DBG("skipping processing message due to drop\n");
 		return 0;
 	}
+
+	LM_DBG("processing message mode %d\n", _siptrace_mode);
 
 	if(_siptrace_mode & SIPTRACE_MODE_HEP) {
 		trace_send_hep_duplicate(&sto.body, &sto.fromip, &sto.toip, NULL, NULL);
@@ -2269,8 +2272,11 @@ int siptrace_net_data_sent(sr_event_param_t *evp)
 
 	if(siptrace_exec_evcb_msg(&sto) == DROP_R_F) {
 		/* drop() used in event_route - all done */
+		LM_DBG("skipping processing message due to drop\n");
 		return 0;
 	}
+
+	LM_DBG("processing message mode %d\n", _siptrace_mode);
 
 	if(_siptrace_mode & SIPTRACE_MODE_HEP) {
 		trace_send_hep_duplicate(&sto.body, &sto.fromip, &sto.toip, NULL, NULL);
