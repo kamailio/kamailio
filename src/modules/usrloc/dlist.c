@@ -960,7 +960,9 @@ int synchronize_all_udomains(int istart, int istep)
 				res |= db_timer_udomain(ptr->d);
 			}
 		}
-		ul_ka_db_records((unsigned int)istart);
+		if (ul_ka_mode != ULKA_NONE) {
+			ul_ka_db_records((unsigned int)istart);
+		}
 	} else {
 		for( ptr=_ksr_ul_root ; ptr ; ptr=ptr->next) {
 			mem_timer_udomain(ptr->d, istart, istep);
