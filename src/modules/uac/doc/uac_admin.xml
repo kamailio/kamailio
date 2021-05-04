@@ -459,6 +459,26 @@ modparam("uac", "reg_random_delay", 300)
 			</example>
 		</section>
 
+		<section id="uac.p.reg_hash_size">
+			<title><varname>reg_hash_size</varname> (int)</title>
+			<para>
+			 The number of entries of the hash table used by uac_reg to store the
+			 registration records is 2^hash_size. For hash_size=4, the number of
+			 slots of the hash table is 16.
+			</para>
+			<para>
+				<emphasis>Default value is <quote>4</quote> (16 slots).</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>reg_hash_size</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("uac", "reg_hash_size", 10)
+...
+				</programlisting>
+			</example>
+		</section>
+
 		<section id="uac.p.reg_db_table">
 			<title><varname>reg_db_table</varname> (string)</title>
 			<para>
