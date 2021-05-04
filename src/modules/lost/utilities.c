@@ -442,9 +442,10 @@ p_lost_geolist_t lost_get_geolocation_header(struct sip_msg *msg, int *items)
 	str hdr = STR_NULL;
 	p_lost_geolist_t list = NULL;
 
+	*items = 0;
+
 	if(parse_headers(msg, HDR_EOH_F, 0) == -1) {
 		LM_ERR("failed to parse SIP headers\n");
-		*items = 0;
 		return list;
 	}
 
@@ -481,8 +482,8 @@ char *lost_get_pai_header(struct sip_msg *msg, int *lgth)
 
 	*lgth = 0;
 
-	if(parse_headers(msg, HDR_PAI_F, 0) == -1) {
-		LM_ERR("could not parse P-A-I header\n");
+	if(parse_headers(msg, HDR_EOH_F, 0) == -1) {
+		LM_ERR("failed to parse SIP headers\n");
 		return res;
 	}
 
@@ -640,34 +641,53 @@ int lost_get_nameinfo(char *ip, str *name, int flag)
  */
 char *lost_get_from_header(struct sip_msg *msg, int *lgth)
 {
-	to_body_t *f_body;
+	struct hdr_field *hf;
+	to_body_t *from_body;
 	char *res = NULL;
 
 	*lgth = 0;
 
-	if(parse_headers(msg, HDR_FROM_F, 0) == -1) {
-		LM_ERR("failed to parse From header\n");
+	if(parse_headers(msg, HDR_EOH_F, 0) == -1) {
+		LM_ERR("failed to parse SIP headers\n");
 		return res;
 	}
 
-	if(msg->from == NULL || get_from(msg) == NULL) {
-		LM_ERR("From header not found\n");
-		return res;
-	}
-	f_body = get_from(msg);
+	for(hf = msg->headers; hf; hf = hf->next) {
+		if(hf->type == HDR_FROM_T) {
 
-	LM_DBG("From body:  [%.*s]\n", f_body->body.len, f_body->body.s);
+			LM_DBG("From body:  [%.*s]\n", hf->body.len, hf->body.s);
 
-	res = (char *)pkg_malloc((f_body->uri.len + 1) * sizeof(char));
-	if(res == NULL) {
-		PKG_MEM_ERROR;
-		return res;
-	} else {
-		memset(res, 0, f_body->uri.len + 1);
-		memcpy(res, f_body->uri.s, f_body->uri.len + 1);
-		res[f_body->uri.len] = '\0';
+			/* first, get some memory */
+			from_body = pkg_malloc(sizeof(to_body_t));
+			if(from_body == NULL) {
+				PKG_MEM_ERROR;
+				return res;
+			}
+			/* parse From body */
+			memset(from_body, 0, sizeof(to_body_t));
+			parse_to(hf->body.s, hf->body.s + hf->body.len + 1, from_body);
+			if(from_body->error == PARSE_ERROR) {
+				LM_ERR("bad From header\n");
+				pkg_free(from_body);
+				return res;
+			}
+			if(from_body->error == PARSE_OK) {
+				res = (char *)pkg_malloc(
+						(from_body->uri.len + 1) * sizeof(char));
+				if(res == NULL) {
+					PKG_MEM_ERROR;
+					pkg_free(from_body);
+					return res;
+				} else {
+					memset(res, 0, from_body->uri.len + 1);
+					memcpy(res, from_body->uri.s, from_body->uri.len + 1);
+					res[from_body->uri.len] = '\0';
+					pkg_free(from_body);
 
-		*lgth = strlen(res);
+					*lgth = strlen(res);
+				}
+			}
+		}
 	}
 
 	return res;
