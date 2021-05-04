@@ -1094,8 +1094,10 @@ int db_timer_udomain(udomain_t* _d)
 	db_val_t vals[3];
 	int key_num = 2;
 
-	/* call contact expired call back for a domain before deleting database rows */
-	udomain_contact_expired_cb(ul_dbh, _d);
+	/* If contact-expired callback exists, run it for a domain before deleting database rows */
+	if (exists_ulcb_type(UL_CONTACT_EXPIRE)) {
+		udomain_contact_expired_cb(ul_dbh, _d);
+	}
 
 	keys[0] = &ul_expires_col;
 	ops[0] = "<";
