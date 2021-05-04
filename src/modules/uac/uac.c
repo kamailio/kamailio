@@ -181,6 +181,7 @@ static param_export_t params[] = {
 	{"reg_random_delay",	INT_PARAM,			&reg_random_delay      },
 	{"reg_active",	INT_PARAM,			&reg_active_param      },
 	{"reg_gc_interval",		INT_PARAM,	&_uac_reg_gc_interval	},
+	{"reg_hash_size",	INT_PARAM,			&reg_htable_size      },
 	{"default_socket",	PARAM_STR, &uac_default_socket},
 	{"event_callback",	PARAM_STR,	&uac_event_callback},
 	{0, 0, 0}
