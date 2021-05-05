@@ -1,6 +1,117 @@
-===================== 2021-05-03 Version 5.5.0 Pre-Release =====================
+===================== 2021-05-05 Version 5.5.0 Released =====================
 
 ===================== Changes Since Version 5.4.0 ===========================
+
+commit 8fda0163b93d4f94b0398c529a90db300a1187f8
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Wed May 5 10:33:42 2021 +0200
+
+    pkg/kamailio/deb: version set 5.5.0
+
+commit 03339e971ed3c9a9d79812d346805db6eeb2c98a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed May 5 10:29:41 2021 +0200
+
+    Makefile.defs: version set to 5.5.0
+
+commit cbdf8d8c4c142dba78fd767986f54620a306e077
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed May 5 10:23:47 2021 +0200
+
+    pkg: version set to 5.5.0 for rpm and alpine specs
+
+commit b2d6fefef14d20fc9291bfff5f959860895a7bff
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed May 5 09:23:15 2021 +0200
+
+    ndb_cassandra: update include paths as expected by thrift lib package
+    
+    (cherry picked from commit 3511e0a975395a14f48fe5b6d60435315f7638dc)
+
+commit 06921b71ee42a8c88229595a619d3390d0090b75
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed May 5 09:12:25 2021 +0200
+
+    ndb_cassandra: Makefile - use pkg-config if available
+    
+    (cherry picked from commit 4b9fe7b72f8d9b53dbae24eb7bd269d527642f71)
+
+commit ff2ff19af7087e188d3b7c100f80db2c8c534ca9
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue May 4 14:08:59 2021 +0200
+
+    siptrace: debug messages on net data callbacks
+    
+    (cherry picked from commit 95f3b4dea5d3f0d57ba79c8e8cd34d2ab30c7193)
+
+commit 2d259465de5224dae4afe533d6ed7b104c59762e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue May 4 13:30:21 2021 +0200
+
+    tcpops: use fixup function from core, remove internal wrapper
+    
+    - set also fixup free function in cmd exports
+    
+    (cherry picked from commit 12fca1c369b6698cace66de171dcb166be8ae831)
+
+commit 2b9dc4713d85b1367631871205547aaf25a822a1
+Author: Ovidiu Sas <osas@voipembedded.com>
+Date:   Mon May 3 18:20:05 2021 -0400
+
+    siputils: update docs for encode/decode_contact functions
+    
+    (cherry picked from commit bf73b0d72177828e3c35f0fe318f7ef654c89b6b)
+
+commit 29edc5113c5e398e427026f88bea2877cdb94fab
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon May 3 17:44:23 2021 +0200
+
+    pkg/kamailio/deb: version set 5.5.0~rc1
+
+commit 27520fa3293d45d9e407bc42f39d1d31e94c69d6
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon May 3 16:46:12 2021 +0200
+
+    pkg/kamailio/deb: version set 5.5.0~rc0
+
+commit d69c03625fad8c41eb18e23ee928b9f679140ef6
+Author: Wolfgang Kampichler <dev@kampichler.info>
+Date:   Mon May 3 11:00:41 2021 +0200
+
+    lost: lost_held_dereference() documentation added and code comment corrected
+    
+    (cherry picked from commit ae13686c80b03693ee2195d38a8c8eb0ede0d0dc)
+
+commit e7b17ec5e334ac07303f341e3128645aa569069a
+Author: Wolfgang Kampichler <dev@kampichler.info>
+Date:   Mon May 3 09:24:15 2021 +0200
+
+    lost: response code fix in lost_held_dereference()
+    
+    - HELD response check returning
+       200: received 200OK but nothing found (shall not happen)
+       201: received 200OK and loc reference found
+       202: received 200OK and value found (pidf-lo)
+       203: receiced 200OK and value + reference found (pidf-lo)
+    
+    (cherry picked from commit 79c6bae4af6c9c9c392b05928ca72afb14ccfbf6)
+
+commit 39143255145ba6387cb001be4c70decfd3811aec
+Author: Wolfgang Kampichler <dev@kampichler.info>
+Date:   Sun May 2 17:28:44 2021 +0200
+
+    lost: error response fix in lost_function(), lost_held_dereference() and lost_held_function()
+    
+    - error variable was set to 0 (clean up) before return. Lost functions now returns 500
+      in case of LOST/HELD server error, or 400 in case of internal error, otherwise 2xx.
+    
+    (cherry picked from commit 201c219a5496924e701cc2b17fb0a439ee530813)
+
+commit 6c6d4cb2823c5d9f1c02bbde695d8769cb87fb6c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon May 3 10:21:41 2021 +0200
+
+    ChangeLog: updated content to prepare for 5.5.x series
 
 commit b5044dfea4202b10040b42fa478177cbc3b0f2d0
 Author: Daniel-Constantin Mierla <miconda@gmail.com>
