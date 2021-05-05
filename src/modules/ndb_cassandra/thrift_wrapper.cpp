@@ -1,11 +1,11 @@
-#include "Thrift.h"
-#include "transport/TSocket.h"
-#include "transport/TTransport.h"
-#include "transport/TBufferTransports.h"
-#include "protocol/TProtocol.h"
-#include "protocol/TBinaryProtocol.h"
-#include "Cassandra.h"
+#include <thrift/Thrift.h>
+#include <thrift/transport/TSocket.h>
+#include <thrift/transport/TTransport.h>
+#include <thrift/transport/TBufferTransports.h>
+#include <thrift/protocol/TProtocol.h>
+#include <thrift/protocol/TBinaryProtocol.h>
 
+#include "Cassandra.h"
 #include "thrift_wrapper.h"
 
 using namespace std;
