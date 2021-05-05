@@ -2653,6 +2653,11 @@ int reply_received( struct sip_msg  *p_msg )
 		}
 #endif
 
+	if (t->flags & T_ASYNC_SUSPENDED) {
+		LM_DBG("Reply for suspended transaction, done.\n");
+		goto done;
+	}
+
 	if (unlikely(p_msg->msg_flags&FL_RPL_SUSPENDED)) {
 		/* suspended the reply (async) - no error */
 		goto done;
