@@ -529,7 +529,7 @@ static lwsc_endpoint_t* lwsc_get_endpoint(str *wsurl, str *wsproto)
 	ep->crtinfo.protocols = ep->protocols;
 	ep->crtinfo.gid = -1;
 	ep->crtinfo.uid = -1;
-#if LWS_LIBRARY_VERSION_MAJOR >= 3
+#if LWS_LIBRARY_VERSION_MAJOR == 3
 	ep->crtinfo.ws_ping_pong_interval = 5; /*secs*/
 #endif
 	/* 1 internal and 1 (+ 1 http2 nwsi) */
