@@ -271,6 +271,12 @@ void dlg_ka_cb_all(struct cell* t, int type, struct tmcb_params* ps, int dir)
 			LM_DBG("skip updating non-confirmed dialogs\n");
 			goto done;
 		}
+		if(ps->code==408 && (dlg->cseq[dir].len==0
+					|| (dlg->cseq[dir].len==1 && dlg->cseq[dir].s[0]=='\0'))) {
+			LM_DBG("ignore 408 for %s cseq 0\n",
+					((dir==DLG_CALLER_LEG)?"caller":"callee"));
+			goto done;
+		}
 		tend = 0;
 		if(dir==DLG_CALLER_LEG) {
 			dlg->ka_src_counter++;
