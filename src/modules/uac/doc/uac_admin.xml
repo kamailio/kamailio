@@ -1009,6 +1009,31 @@ if(uac_reg_lookup("$rU", "$ru"))
 				</programlisting>
 			</example>
 		</section>
+		<section id="uac.f.uac_reg_lookup_uri">
+			<title>
+				<function moreinfo="none">uac_reg_lookup_uri(uri, dst)</function>
+			</title>
+			<para>
+			This function sets the PV dst to SIP URI that correspond to the URI user
+			in uac registrations table. The uri can contain pseudo-variables and
+			dst must be the name of a pseudo-variable.
+			</para>
+			<para>
+			This function can be used from ANY_ROUTE.
+			</para>
+			<example>
+				<title><function>uac_reg_lookup_uri</function> usage</title>
+				<programlisting format="linespecific">
+...
+
+if(uac_reg_lookup("$var(uri)", "$ru"))
+{
+    lookup("location");
+}
+...
+				</programlisting>
+			</example>
+		</section>
 		<section id="uac.f.uac_reg_status">
 			<title>
 				<function moreinfo="none">uac_reg_status(uuid)</function>
