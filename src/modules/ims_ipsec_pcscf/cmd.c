@@ -435,29 +435,29 @@ static int create_ipsec_tunnel(const struct ip_addr *remote_addr, ipsec_t* s)
         return -1;
     }
 
-    LM_DBG("Creating security associations: Local IP: %.*s port_pc: %d port_ps: %d; UE IP: %s; port_uc %d port_us %d; spi_pc %u, spi_ps %u, spi_uc %u, spi_us %u\n",
+    LM_DBG("Creating security associations: Local IP: %.*s port_pc: %d port_ps: %d; UE IP: %s; port_uc %d port_us %d; spi_pc %u, spi_ps %u, spi_uc %u, spi_us %u, alg %.*s, ealg %.*s\n",
             remote_addr->af == AF_INET ? ipsec_listen_addr.len : ipsec_listen_addr6.len,
             remote_addr->af == AF_INET ? ipsec_listen_addr.s : ipsec_listen_addr6.s,
-            s->port_pc, s->port_ps, remote_addr_str, s->port_uc, s->port_us, s->spi_pc, s->spi_ps, s->spi_uc, s->spi_us);
+            s->port_pc, s->port_ps, remote_addr_str, s->port_uc, s->port_us, s->spi_pc, s->spi_ps, s->spi_uc, s->spi_us, s->r_alg.len, s->r_alg.s, s->r_ealg.len, s->r_ealg.s);
 
     // SA1 UE client to P-CSCF server
     //               src adrr     dst addr     src port    dst port
-    add_sa    (sock, remote_addr, ipsec_addr, s->port_uc, s->port_ps, s->spi_ps, s->ck, s->ik, s->r_alg);
+    add_sa    (sock, remote_addr, ipsec_addr, s->port_uc, s->port_ps, s->spi_ps, s->ck, s->ik, s->r_alg, s->r_ealg);
     add_policy(sock, remote_addr, ipsec_addr, s->port_uc, s->port_ps, s->spi_ps, IPSEC_POLICY_DIRECTION_IN);
 
     // SA2 P-CSCF client to UE server
     //               src adrr     dst addr     src port           dst port
-    add_sa    (sock, ipsec_addr, remote_addr, s->port_pc, s->port_us, s->spi_us, s->ck, s->ik, s->r_alg);
+    add_sa    (sock, ipsec_addr, remote_addr, s->port_pc, s->port_us, s->spi_us, s->ck, s->ik, s->r_alg, s->r_ealg);
     add_policy(sock, ipsec_addr, remote_addr, s->port_pc, s->port_us, s->spi_us, IPSEC_POLICY_DIRECTION_OUT);
 
     // SA3 P-CSCF server to UE client
     //               src adrr     dst addr     src port           dst port
-    add_sa    (sock, ipsec_addr, remote_addr, s->port_ps, s->port_uc, s->spi_uc, s->ck, s->ik, s->r_alg);
+    add_sa    (sock, ipsec_addr, remote_addr, s->port_ps, s->port_uc, s->spi_uc, s->ck, s->ik, s->r_alg, s->r_ealg);
     add_policy(sock, ipsec_addr, remote_addr, s->port_ps, s->port_uc, s->spi_uc, IPSEC_POLICY_DIRECTION_OUT);
 
     // SA4 UE server to P-CSCF client
     //               src adrr     dst addr     src port    dst port
-    add_sa    (sock, remote_addr, ipsec_addr, s->port_us, s->port_pc, s->spi_pc, s->ck, s->ik, s->r_alg);
+    add_sa    (sock, remote_addr, ipsec_addr, s->port_us, s->port_pc, s->spi_pc, s->ck, s->ik, s->r_alg, s->r_ealg);
     add_policy(sock, remote_addr, ipsec_addr, s->port_us, s->port_pc, s->spi_pc, IPSEC_POLICY_DIRECTION_IN);
 
     close_mnl_socket(sock);
@@ -846,11 +846,20 @@ int ipsec_forward(struct sip_msg* m, udomain_t* d, int _cflags)
         // for Reply get the dest proto from the received request
         dst_proto = req->rcv.proto;
 
-        // for Reply and TCP sends from P-CSCF server port, for Reply and UDP sends from P-CSCF client port
-        src_port = dst_proto == PROTO_TCP ? s->port_ps : s->port_pc;
+        // Check send socket
+        struct socket_info * client_sock = grep_sock_info(via_host.af == AF_INET ? &ipsec_listen_addr : &ipsec_listen_addr6, src_port, dst_proto);
+        if(client_sock) {
+            // for Reply and TCP sends from P-CSCF server port, for Reply and UDP sends from P-CSCF client port
+            src_port = dst_proto == PROTO_TCP ? s->port_ps : s->port_pc;
 
-        // for Reply and TCP sends to UE client port, for Reply and UDP sends to UE server port
-        dst_port = dst_proto == PROTO_TCP ? s->port_uc : s->port_us;
+            // for Reply and TCP sends to UE client port, for Reply and UDP sends to UE server port
+            dst_port = dst_proto == PROTO_TCP ? s->port_uc : s->port_us;
+        }
+        else
+        {
+            src_port = s->port_pc;
+            dst_port = s->port_us;
+        }
     }else{
         // for Request get the dest proto from the saved contact
         dst_proto = pcontact->received_proto;
