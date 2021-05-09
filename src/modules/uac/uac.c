@@ -684,7 +684,7 @@ static int w_uac_reg_lookup_uri(struct sip_msg* msg, char* src, char* dst)
 	return uac_reg_lookup(msg, &sval, dpv, 1);
 }
 
-static int ki_uac_reg_lookup_uri(sip_msg_t* msg, str* userid, str* sdst)
+static int ki_uac_reg_lookup_uri(sip_msg_t* msg, str* suri, str* sdst)
 {
 	pv_spec_t *dpv = NULL;
 	dpv = pv_cache_get(sdst);
@@ -692,7 +692,7 @@ static int ki_uac_reg_lookup_uri(sip_msg_t* msg, str* userid, str* sdst)
 		LM_ERR("cannot get pv spec for [%.*s]\n", sdst->len, sdst->s);
 		return -1;
 	}
-	return uac_reg_lookup(msg, userid, dpv, 1);
+	return uac_reg_lookup(msg, suri, dpv, 1);
 }
 
 static int w_uac_reg_status(struct sip_msg* msg, char* src, char* p2)
