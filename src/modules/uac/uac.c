@@ -114,6 +114,7 @@ static int child_init(int rank);
 
 extern int reg_timer_interval;
 extern int _uac_reg_gc_interval;
+extern int _uac_reg_use_domain;
 
 static pv_export_t mod_pvs[] = {
 	{ {"uac_req", sizeof("uac_req")-1}, PVT_OTHER, pv_get_uac_req, pv_set_uac_req,
@@ -184,7 +185,8 @@ static param_export_t params[] = {
 	{"reg_random_delay",	INT_PARAM,			&reg_random_delay      },
 	{"reg_active",	INT_PARAM,			&reg_active_param      },
 	{"reg_gc_interval",		INT_PARAM,	&_uac_reg_gc_interval	},
-	{"reg_hash_size",	INT_PARAM,			&reg_htable_size      },
+	{"reg_hash_size",	INT_PARAM,		&reg_htable_size      },
+	{"reg_use_domain",	PARAM_INT,		&_uac_reg_use_domain  },
 	{"default_socket",	PARAM_STR, &uac_default_socket},
 	{"event_callback",	PARAM_STR,	&uac_event_callback},
 	{0, 0, 0}

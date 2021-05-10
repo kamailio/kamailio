@@ -116,7 +116,7 @@ static reg_ht_t *_reg_htable = NULL;
 static reg_ht_t *_reg_htable_gc = NULL;
 static gen_lock_t *_reg_htable_gc_lock = NULL;
 
-int reg_use_domain = 0;
+int _uac_reg_use_domain = 0;
 int reg_timer_interval = 90;
 int reg_retry_interval = 0;
 int reg_htable_size = 4;
@@ -1630,7 +1630,7 @@ int  uac_reg_lookup(struct sip_msg *msg, str *src, pv_spec_t *dst, int mode)
 			LM_ERR("failed to parse uri\n");
 			return -2;
 		}
-		reg = reg_ht_get_byuser(&puri.user, (reg_use_domain)?&puri.host:NULL);
+		reg = reg_ht_get_byuser(&puri.user, (_uac_reg_use_domain)?&puri.host:NULL);
 		if(reg==NULL)
 		{
 			LM_DBG("no user: %.*s\n", src->len, src->s);
@@ -1673,7 +1673,7 @@ int uac_reg_status(struct sip_msg *msg, str *src, int mode)
 			LM_ERR("failed to parse uri\n");
 			return -1;
 		}
-		reg = reg_ht_get_byuser(&puri.user, (reg_use_domain)?&puri.host:NULL);
+		reg = reg_ht_get_byuser(&puri.user, (_uac_reg_use_domain)?&puri.host:NULL);
 		if(reg==NULL)
 		{
 			LM_DBG("no user: %.*s\n", src->len, src->s);
@@ -1717,7 +1717,7 @@ int uac_reg_request_to(struct sip_msg *msg, str *src, unsigned int mode)
 			reg = reg_ht_get_byuuid(src);
 			break;
 		case 1:
-			if(reg_use_domain)
+			if(_uac_reg_use_domain)
 			{
 				if (parse_uri(src->s, src->len, &puri)!=0)
 				{
