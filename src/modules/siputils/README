@@ -449,8 +449,9 @@ modparam("auth", "rpid_avp", "$avp(myrpid)")
 
    Inserting the call-id in the internal list, which is checked when
    further replies arrive. Any 183 reply that is received during the
-   timeout value will be converted to a 180 message. Please note that you
-   need to set a positive timeout value in order to use this function.
+   timeout value will be converted to a 180 message with removed SDP body.
+   Please note that you need to set a positive ring_timeout value in order
+   to use this function.
 
    The function returns TRUE on success, and FALSE during processing
    failures.
