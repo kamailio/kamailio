@@ -40,5 +40,7 @@ int w_is_gruu(sip_msg_t *msg, char *uri1, char *p2);
 int w_is_supported(sip_msg_t *msg, char *_option, char *p2);
 int w_is_first_hop(sip_msg_t *msg, char *p1, char *p2);
 int is_first_hop(sip_msg_t *msg);
+int w_is_first_hop_mode(sip_msg_t *msg, char *p1mode, char *p2);
+int is_first_hop_mode(sip_msg_t *msg, int mode);
 
 #endif

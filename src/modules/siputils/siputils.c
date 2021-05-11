@@ -185,6 +185,8 @@ static cmd_export_t cmds[]={
 		0, ANY_ROUTE},
 	{"is_first_hop",  (cmd_function)w_is_first_hop,          0, 0,
 		0, ANY_ROUTE},
+	{"is_first_hop",  (cmd_function)w_is_first_hop,          1, fixup_igp_null,
+		fixup_free_igp_null, ANY_ROUTE},
 	{"is_tel_number", (cmd_function)is_tel_number,           1, fixup_spve_null,
 		0, ANY_ROUTE},
 	{"is_numeric", (cmd_function)is_numeric,                 1, fixup_spve_null,
@@ -569,6 +571,11 @@ static sr_kemi_t sr_kemi_siputils_exports[] = {
 	{ str_init("siputils"), str_init("is_first_hop"),
 		SR_KEMIP_INT, is_first_hop,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("siputils"), str_init("is_first_hop_mode"),
+		SR_KEMIP_INT, is_first_hop_mode,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("siputils"), str_init("is_uri"),
