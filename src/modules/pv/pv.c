@@ -538,6 +538,8 @@ static pv_export_t mod_pvs[] = {
 		pv_parse_msg_attrs_name, 0, 0, 0 },
 	{ {"ksr", (sizeof("ksr")-1)}, PVT_OTHER, pv_get_ksr_attrs, 0,
 		pv_parse_ksr_attrs_name, 0, 0, 0 },
+	{{"rpl", (sizeof("rpl")-1)}, PVT_OTHER, pv_get_rpl_attrs, 0,
+		pv_parse_rpl_attrs_name, 0, 0, 0},
 
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };

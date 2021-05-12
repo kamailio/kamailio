@@ -3751,3 +3751,146 @@ int pv_get_ksr_attrs(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 			return pv_get_null(msg, param, res);
 	}
 }
+
+
+/**
+ *
+ */
+int pv_parse_rpl_attrs_name(pv_spec_p sp, str *in)
+{
+	if(sp==NULL || in==NULL || in->len<=0)
+		return -1;
+
+	/* attributes not related to dst of reply get an id starting with 20 */
+	switch(in->len) {
+		case 4:
+			if(strncmp(in->s, "duri", 4)==0)
+				sp->pvp.pvn.u.isname.name.n = 0;
+			else goto error;
+		break;
+		case 5:
+			if(strncmp(in->s, "dhost", 5)==0)
+				sp->pvp.pvn.u.isname.name.n = 1;
+			else if(strncmp(in->s, "dport", 5)==0)
+				sp->pvp.pvn.u.isname.name.n = 2;
+			else goto error;
+		break;
+		case 6:
+			if(strncmp(in->s, "dproto", 6)==0)
+				sp->pvp.pvn.u.isname.name.n = 3;
+			else if(strncmp(in->s, "cntvia", 6)==0)
+				sp->pvp.pvn.u.isname.name.n = 20;
+			else goto error;
+		break;
+		case 8:
+			if(strncmp(in->s, "dprotoid", 8)==0)
+				sp->pvp.pvn.u.isname.name.n = 4;
+			else goto error;
+		break;
+
+		default:
+			goto error;
+	}
+	sp->pvp.pvn.type = PV_NAME_INTSTR;
+	sp->pvp.pvn.u.isname.type = 0;
+
+	return 0;
+
+error:
+	LM_ERR("unknown PV rpl key: %.*s\n", in->len, in->s);
+	return -1;
+}
+
+
+/**
+ *
+ */
+int pv_get_rpl_attrs(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
+{
+	static char rpluribuf[MAX_URI_SIZE];
+	str suri = STR_NULL;
+	str host = STR_NULL;
+	str sproto = STR_NULL;
+	unsigned int port = 0;
+	hdr_field_t *hf = NULL;
+
+	if(param==NULL) {
+		return pv_get_null(msg, param, res);
+	}
+
+	if(!IS_SIP_REPLY(msg)) {
+		return pv_get_null(msg, param, res);
+	}
+	if(param->pvn.u.isname.name.n<20) {
+		if(parse_headers( msg, HDR_VIA2_F, 0)==-1) {
+			LM_DBG("no 2nd via parsed\n");
+			return pv_get_null(msg, param, res);
+		}
+		if((msg->via2==0) || (msg->via2->error!=PARSE_OK)) {
+			return pv_get_null(msg, param, res);
+		}
+		if(msg->via2->rport && msg->via2->rport->value.s) {
+			LM_DBG("using 'rport'\n");
+			if(str2int(&msg->via2->rport->value, &port)<0) {
+				LM_ERR("invalid rport value\n");
+				return pv_get_null(msg, param, res);
+			}
+		}
+		if(msg->via2->received) {
+			LM_DBG("using 'received'\n");
+			host = msg->via2->received->value;
+		} else {
+			LM_DBG("using via host\n");
+			host = msg->via2->host;
+		}
+		if(port==0) {
+			port = (msg->via2->port)?msg->via2->port:SIP_PORT;
+		}
+	}
+	switch(param->pvn.u.isname.name.n) {
+		case 0: /* dst uri */
+			if(get_valid_proto_string(msg->via2->proto, 1, 0, &sproto)<0) {
+				sproto.s = "udp";
+				sproto.len = 3;
+			}
+			suri.len = snprintf(rpluribuf, MAX_URI_SIZE, "sip:%.*s:%u;transport=%.*s",
+					host.len, host.s, port, sproto.len, sproto.s);
+			if(suri.len<=0 || suri.len>=MAX_URI_SIZE) {
+				LM_DBG("building the dst uri failed (%d)\n", suri.len);
+				return pv_get_null(msg, param, res);
+			}
+			suri.s = rpluribuf;
+			return pv_get_strval(msg, param, res, &suri);
+		case 1: /* dst host */
+			return pv_get_strval(msg, param, res, &host);
+		case 2: /* dst port */
+			return pv_get_uintval(msg, param, res, port);
+		case 3: /* dst proto */
+			if(get_valid_proto_string(msg->via2->proto, 0, 0, &sproto)<0) {
+				sproto.s = "udp";
+				sproto.len = 3;
+			}
+			return pv_get_strintval(msg, param, res, &sproto,
+					(int)msg->via2->proto);
+		case 4: /* dst protoid */
+			return pv_get_uintval(msg, param, res, msg->via2->proto);
+		case 20: /* count of via */
+			if (parse_headers(msg, HDR_EOH_F, 0)<0) {
+				LM_DBG("failed to parse sip headers\n");
+				return pv_get_uintval(msg, param, res, 0);
+			}
+			port = 0;
+			for(hf=msg->h_via1; hf!=NULL; hf=hf->next) {
+				if(hf->type==HDR_VIA_T) {
+					via_body_t *vb;
+					for(vb=(via_body_t*)hf->parsed; vb!=NULL; vb=vb->next) {
+						port++;
+					}
+				}
+			}
+			return pv_get_uintval(msg, param, res, port);
+
+		default:
+			return pv_get_null(msg, param, res);
+	}
+}
