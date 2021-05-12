@@ -824,7 +824,7 @@ static int db_redis_scan_query_keys_pattern(km_redis_con_t *con,
 	int l;
 
 
-#undef USE_SCAN
+#define USE_SCAN
 
 #ifdef USE_SCAN
 
@@ -832,6 +832,8 @@ static int db_redis_scan_query_keys_pattern(km_redis_con_t *con,
 	unsigned long cursor = 0;
 	unsigned int match_count = match_count_start_val;
 	char match_count_str[16];
+	struct timeval start_tv, end_tv;
+	long tv_diff;
 
 	do {
 		snprintf(cursor_str, sizeof(cursor_str), "%lu", cursor);
@@ -869,8 +871,12 @@ static int db_redis_scan_query_keys_pattern(km_redis_con_t *con,
 			LM_ERR("Failed to add count value to scan query\n");
 			goto err;
 		}
-
+		gettimeofday(&start_tv, NULL);
 		reply = db_redis_command_argv(con, query_v);
+		gettimeofday(&end_tv, NULL);
+		tv_diff = ((long long)end_tv.tv_sec * 1000LL + end_tv.tv_usec / 1000L)
+				  - ((long long)start_tv.tv_sec * 1000LL
+						  + start_tv.tv_usec / 1000L);
 		db_redis_key_free(&query_v);
 		db_redis_check_reply(con, reply, err);
 		if(reply->type != REDIS_REPLY_ARRAY) {
@@ -966,11 +972,15 @@ static int db_redis_scan_query_keys_pattern(km_redis_con_t *con,
 		}
 
 #ifdef USE_SCAN
-		// exponential increase and falloff, hovering around 1000 results
-		if(keys_list->elements > 1300 && match_count > 500)
+		// exponential increase and falloff, not to exceed ~100 ms query run time
+		if(tv_diff > 50 && match_count > 10)
 			match_count /= 2;
-		else if(keys_list->elements < 700 && match_count < 500000)
+		else if(tv_diff < 25 && match_count < 1000000)
 			match_count *= 2;
+		if(cursor > 0) {
+			// give other queries some time to run
+			usleep(100000);
+		}
 #endif
 
 		db_redis_free_reply(&reply);
