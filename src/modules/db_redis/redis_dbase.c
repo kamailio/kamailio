@@ -700,6 +700,9 @@ static int db_redis_build_query_keys(km_redis_con_t *con, const str *table_name,
 		LM_DBG("no direct entry key found, checking type keys\n");
 		for(type = table->types; type; type = type->next) {
 			key = type->keys;
+			/* skip value-less master keys */
+			if(!key)
+				continue;
 			LM_DBG("checking type '%.*s'\n", type->type.len, type->type.s);
 			if(db_redis_find_query_key(key, table_name, table, &type->type, _k,
 					   _v, _op, _n, &keyname, &key_found, ts_scan_start)
