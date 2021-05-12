@@ -318,7 +318,7 @@ request_route {
 	<section id="secsipid.s.installation">
 	<title>Installation</title>
 	<para>
-		The module needs "secsipdi_proc.so" module thatdepends on "libsecsipid",
+		The module needs "secsipdi_proc.so" module that depends on "libsecsipid",
 		which is a component of "sipsecidx" project from
 		https://github.com/asipto/secsipidx/. The library is
 		implemented in Go language, with generated C API and library. Until the
@@ -334,6 +334,7 @@ request_route {
 		<title>Libsecsipid Usage</title>
 		<programlisting format="linespecific">
 ...
+export GO111MODULE=off
 go get https://github.com/asipto/secsipidx
 cd $GOPATH/src/github.com/asipto/secsipidx/csecsipid/
 make liba
@@ -351,6 +352,10 @@ make install
 ...
 </programlisting>
 		</example>
+	<para>
+		For more details about compilation and installation of libsecsipid, see:
+		<ulink url="https://github.com/asipto/secsipidx">https://github.com/asipto/secsipidx</ulink>.
+	</para>
 	</section>
 
 </chapter>
