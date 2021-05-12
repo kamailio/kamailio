@@ -234,7 +234,7 @@ static param_export_t params[]={
 	{ "fetch_rows",             INT_PARAM, &pres_fetch_rows},
 	{ "db_table_lock_type",     INT_PARAM, &db_table_lock_type},
 	{ "local_log_level",        PARAM_INT, &pres_local_log_level},
-	{ "local_log_facility",     PARAM_STR, &pres_log_facility_str},
+	{ "local_log_facility",     PARAM_STRING, &pres_log_facility_str},
 	{ "subs_remove_match",      PARAM_INT, &pres_subs_remove_match},
 	{ "xavp_cfg",               PARAM_STR, &pres_xavp_cfg},
 	{ "retrieve_order",         PARAM_INT, &pres_retrieve_order},
