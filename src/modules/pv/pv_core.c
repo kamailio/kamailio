@@ -41,6 +41,7 @@
 #include "../../core/parser/parse_hname2.h"
 #include "../../core/parser/parse_content.h"
 #include "../../core/parser/parse_refer_to.h"
+#include "../../core/parser/parse_rr.h"
 #include "../../core/parser/parse_rpid.h"
 #include "../../core/parser/parse_diversion.h"
 #include "../../core/parser/parse_ppi_pai.h"
@@ -3773,6 +3774,8 @@ int pv_parse_rpl_attrs_name(pv_spec_p sp, str *in)
 				sp->pvp.pvn.u.isname.name.n = 1;
 			else if(strncmp(in->s, "dport", 5)==0)
 				sp->pvp.pvn.u.isname.name.n = 2;
+			else if(strncmp(in->s, "cntrr", 5)==0)
+				sp->pvp.pvn.u.isname.name.n = 21;
 			else goto error;
 		break;
 		case 6:
@@ -3813,6 +3816,7 @@ int pv_get_rpl_attrs(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 	str sproto = STR_NULL;
 	unsigned int port = 0;
 	hdr_field_t *hf = NULL;
+	unsigned int hcnt = 0;
 
 	if(param==NULL) {
 		return pv_get_null(msg, param, res);
@@ -3877,18 +3881,37 @@ int pv_get_rpl_attrs(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 		case 20: /* count of via */
 			if (parse_headers(msg, HDR_EOH_F, 0)<0) {
 				LM_DBG("failed to parse sip headers\n");
-				return pv_get_uintval(msg, param, res, 0);
+				return pv_get_null(msg, param, res);
 			}
-			port = 0;
+			hcnt = 0;
 			for(hf=msg->h_via1; hf!=NULL; hf=hf->next) {
 				if(hf->type==HDR_VIA_T) {
 					via_body_t *vb;
 					for(vb=(via_body_t*)hf->parsed; vb!=NULL; vb=vb->next) {
-						port++;
+						hcnt++;
 					}
 				}
 			}
-			return pv_get_uintval(msg, param, res, port);
+			return pv_get_uintval(msg, param, res, hcnt);
+		case 21: /* count of record-route */
+			if (parse_headers(msg, HDR_EOH_F, 0)<0) {
+				LM_DBG("failed to parse sip headers\n");
+				return pv_get_null(msg, param, res);
+			}
+			hcnt = 0;
+			for(hf=msg->h_via1; hf!=NULL; hf=hf->next) {
+				if(hf->type == HDR_RECORDROUTE_T) {
+					rr_t *rrb;
+					if(parse_rr(hf) == -1) {
+						LM_ERR("failed parsing rr header\n");
+						return pv_get_null(msg, param, res);
+					}
+					for(rrb=(rr_t*)hf->parsed; rrb!=NULL; rrb=rrb->next) {
+						hcnt++;
+					}
+				}
+			}
+			return pv_get_uintval(msg, param, res, hcnt);
 
 		default:
 			return pv_get_null(msg, param, res);
