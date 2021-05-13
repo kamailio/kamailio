@@ -107,13 +107,13 @@ str _tps_contact_host = str_init("");
 int _tps_contact_mode = 0;
 str _tps_cparam_name = str_init("tps");
 
-str _tps_xavu_cfg = str_init("");
-str _tps_xavu_field_acontact = str_init("");
-str _tps_xavu_field_bcontact = str_init("");
-str _tps_xavu_field_contact_host = str_init("");
+str _tps_xavu_cfg = STR_NULL;
+str _tps_xavu_field_acontact = STR_NULL;
+str _tps_xavu_field_bcontact = STR_NULL;
+str _tps_xavu_field_contact_host = STR_NULL;
 
-str _tps_context_param = str_init("");
-str _tps_context_value = str_init("");
+str _tps_context_param = STR_NULL;
+str _tps_context_value = STR_NULL;
 
 sanity_api_t scb;
 
@@ -247,7 +247,8 @@ static int mod_init(void)
 	if(sruid_init(&_tps_sruid, '-', "tpsh", SRUID_INC)<0)
 		return -1;
 
-	if (_tps_contact_mode == 2 && (_tps_xavu_field_acontact.len <= 0
+	if (_tps_contact_mode == 2 && (_tps_xavu_cfg.len <= 0
+				|| _tps_xavu_field_acontact.len <= 0
 				|| _tps_xavu_field_bcontact.len <= 0)) {
 		LM_ERR("contact_mode parameter is 2,"
 				" but a_contact or b_contact xavu fields not defined\n");
