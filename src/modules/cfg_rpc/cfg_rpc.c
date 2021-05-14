@@ -54,34 +54,7 @@ static int mod_init(void)
  * *group_id is set to null in the former case.
  * Warning: changes the group string
  */
-static int get_group_id(str *group, unsigned int **group_id)
-{
-	static unsigned int	id;
-	str	s;
-
-	if (!group->s || (group->s[group->len-1] != ']')) {
-		*group_id = NULL;
-		return 0;
-	}
-
-	s.s = group->s + group->len - 2;
-	s.len = 0;
-	while ((s.s > group->s) && (*s.s != '[')) {
-		s.s--;
-		s.len++;
-	}
-	if (s.s == group->s) /* '[' not found */
-		return -1;
-	group->len = s.s - group->s;
-	s.s++;
-	if (!group->len || !s.len)
-		return -1;
-	if (str2int(&s, &id))
-		return -1;
-
-	*group_id = &id;
-	return 0;
-}
+#define get_group_id(group, group_id) cfg_get_group_id(group, group_id)
 
 static const char* rpc_set_now_doc[2] = {
         "Set the value of a configuration variable and commit the change immediately",
