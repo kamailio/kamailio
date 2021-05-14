@@ -102,4 +102,7 @@ int cfg_new_ginst(char *group_name, unsigned int group_id);
 /*! \brief returns the handle of a cfg group */
 void **cfg_get_handle(char *gname);
 
+/*! \brief get the id of a cfg group */
+int cfg_get_group_id(str *group, unsigned int **group_id);
+
 #endif /* _CFG_H */
