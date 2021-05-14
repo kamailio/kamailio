@@ -35,6 +35,8 @@
 #include "../../core/ppcfg.h"
 #include "../../core/trim.h"
 #include "../../core/msg_translator.h"
+#include "../../core/cfg/cfg.h"
+#include "../../core/cfg/cfg_ctx.h"
 
 #include "../../core/parser/parse_from.h"
 #include "../../core/parser/parse_uri.h"
@@ -3916,4 +3918,142 @@ int pv_get_rpl_attrs(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 		default:
 			return pv_get_null(msg, param, res);
 	}
+}
+
+
+/**
+ *
+ */
+static cfg_ctx_t *_pv_ccp_ctx = NULL;
+
+/**
+ *
+ */
+int pv_ccp_ctx_init(void)
+{
+	if (cfg_register_ctx(&_pv_ccp_ctx, NULL)) {
+		LM_ERR("failed to register cfg context\n");
+		return -1;
+	}
+
+	return 0;
+}
+
+/**
+ *
+ */
+void pv_free_ccp_attrs_name(void *p)
+{
+	pv_name_t *pn;
+
+	if(p==NULL) {
+		return;
+	}
+
+	pn = (pv_name_t*)p;
+	if(pn->u.isname.name.s.s) {
+		pkg_free(pn->u.isname.name.s.s);
+		pn->u.isname.name.s.s = 0;
+		pn->u.isname.name.s.len = 0;
+	}
+}
+
+/**
+ *
+ */
+int pv_parse_ccp_attrs_name(pv_spec_p sp, str *in)
+{
+	int i;
+
+	if(sp==NULL || in==NULL || in->len<=0) {
+		return -1;
+	}
+
+	for(i=0; i<in->len; i++) {
+		if(in->s[i] == '.') {
+			break;
+		}
+	}
+	if(i==0 || i>=in->len-1) {
+		LM_ERR("invalid PV ccp key: %.*s\n", in->len, in->s);
+		goto error;
+	}
+
+	sp->pvp.pvn.u.isname.name.s.s = (char*)pkg_malloc(in->len+1);
+	if(sp->pvp.pvn.u.isname.name.s.s==NULL) {
+		PKG_MEM_ERROR;
+		goto error;
+	}
+
+	memcpy(sp->pvp.pvn.u.isname.name.s.s, in->s, in->len);
+	sp->pvp.pvn.u.isname.name.s.s[in->len] = '\0';
+	sp->pvp.pvn.u.isname.name.s.len = in->len;
+
+	sp->pvp.pvn.nfree = pv_free_ccp_attrs_name;
+
+	sp->pvp.pvn.type = PV_NAME_INTSTR;
+	sp->pvp.pvn.u.isname.type = 0;
+
+	return 0;
+
+error:
+	return -1;
+}
+
+/**
+ *
+ */
+int pv_get_ccp_attrs(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
+{
+	str gname = STR_NULL;
+	str vname = STR_NULL;
+	unsigned int *grpid = NULL;
+	str s = STR_NULL;
+	char *sep = NULL;
+	void *val = NULL;
+	unsigned int vtype = 0;
+	int ret = 0;
+
+	s = param->pvn.u.isname.name.s;
+
+	sep = q_memrchr(s.s, '.', s.len);
+	if(sep==NULL) {
+		LM_ERR("invalid pv name [%.*s]\n", s.len, s.s);
+		return pv_get_null(msg, param, res);
+	}
+	gname.s = s.s;
+	gname.len = sep - s.s;
+	vname.s = sep + 1;
+	vname.len = s.s + s.len - sep - 1;
+
+	if (cfg_get_group_id(&gname, &grpid)) {
+		LM_ERR("wrong group syntax. Use either 'group', or 'group[id]'\n");
+		return pv_get_null(msg, param, res);;
+	}
+
+	LM_DBG("getting value for variable: %.*s.%.*s\n", gname.len, gname.s,
+				vname.len, vname.s);
+	ret = cfg_get_by_name(_pv_ccp_ctx, &gname, grpid, &vname,
+			&val, &vtype);
+	if (ret < 0) {
+		LM_ERR("failed to get the variable [%.*s]\n", s.len, s.s);
+		return pv_get_null(msg, param, res);
+	} else if (ret > 0) {
+		LM_ERR("variable exists, but it is not readable: %.*s\n", s.len, s.s);
+		return pv_get_null(msg, param, res);
+	}
+	switch (vtype) {
+		case CFG_VAR_INT:
+			return pv_get_sintval(msg, param, res, (int)(long)val);
+		case CFG_VAR_STRING:
+			return pv_get_strzval(msg, param, res, (char*)val);
+		case CFG_VAR_STR:
+			return pv_get_strval(msg, param, res, (str*)val);
+		case CFG_VAR_POINTER:
+			LM_ERR("pointer value for variable [%.*s]\n", s.len, s.s);
+			return pv_get_null(msg, param, res);
+	}
+
+	LM_ERR("unknown type for variable [%.*s]\n", s.len, s.s);
+	return pv_get_null(msg, param, res);
 }

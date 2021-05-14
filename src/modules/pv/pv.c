@@ -540,6 +540,8 @@ static pv_export_t mod_pvs[] = {
 		pv_parse_ksr_attrs_name, 0, 0, 0 },
 	{{"rpl", (sizeof("rpl")-1)}, PVT_OTHER, pv_get_rpl_attrs, 0,
 		pv_parse_rpl_attrs_name, 0, 0, 0},
+	{{"ccp", (sizeof("ccp")-1)}, PVT_OTHER, pv_get_ccp_attrs, 0,
+		pv_parse_ccp_attrs_name, 0, 0, 0},
 
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };
@@ -690,6 +692,10 @@ static int mod_init(void)
 	if(pv_init_rpc()!=0)
 	{
 		LM_ERR("failed to register RPC commands\n");
+		return -1;
+	}
+	if(pv_ccp_ctx_init()!=0) {
+		LM_ERR("failed to initialize var ccp context\n");
 		return -1;
 	}
 	pv_init_sbranch();

@@ -398,5 +398,10 @@ int pv_parse_rpl_attrs_name(pv_spec_p sp, str *in);
 int pv_get_rpl_attrs(sip_msg_t *msg, pv_param_t *param,
 		pv_value_t *res);
 
+int pv_ccp_ctx_init(void);
+int pv_parse_ccp_attrs_name(pv_spec_p sp, str *in);
+int pv_get_ccp_attrs(sip_msg_t *msg, pv_param_t *param,
+		pv_value_t *res);
+
 #endif
 
