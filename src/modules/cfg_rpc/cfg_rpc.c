@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (C) 2007 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
@@ -24,9 +22,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * History
- * -------
- *  2007-12-03	Initial version (Miklos)
  */
 
 #include "../../core/sr_module.h"
