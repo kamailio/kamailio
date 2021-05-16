@@ -402,6 +402,8 @@ int pv_ccp_ctx_init(void);
 int pv_parse_ccp_attrs_name(pv_spec_p sp, str *in);
 int pv_get_ccp_attrs(sip_msg_t *msg, pv_param_t *param,
 		pv_value_t *res);
+int pv_set_ccp_attrs(struct sip_msg* msg, pv_param_t *param,
+		int op, pv_value_t *val);
 
 #endif
 

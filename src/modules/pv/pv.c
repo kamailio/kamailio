@@ -540,7 +540,7 @@ static pv_export_t mod_pvs[] = {
 		pv_parse_ksr_attrs_name, 0, 0, 0 },
 	{{"rpl", (sizeof("rpl")-1)}, PVT_OTHER, pv_get_rpl_attrs, 0,
 		pv_parse_rpl_attrs_name, 0, 0, 0},
-	{{"ccp", (sizeof("ccp")-1)}, PVT_OTHER, pv_get_ccp_attrs, 0,
+	{{"ccp", (sizeof("ccp")-1)}, PVT_OTHER, pv_get_ccp_attrs, pv_set_ccp_attrs,
 		pv_parse_ccp_attrs_name, 0, 0, 0},
 
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }

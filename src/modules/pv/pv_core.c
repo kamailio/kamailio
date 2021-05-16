@@ -4057,3 +4057,54 @@ int pv_get_ccp_attrs(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 	LM_ERR("unknown type for variable [%.*s]\n", s.len, s.s);
 	return pv_get_null(msg, param, res);
 }
+
+/**
+ *
+ */
+int pv_set_ccp_attrs(struct sip_msg* msg, pv_param_t *param,
+		int op, pv_value_t *val)
+{
+	str gname = STR_NULL;
+	str vname = STR_NULL;
+	unsigned int *grpid = NULL;
+	str s = STR_NULL;
+	char *sep = NULL;
+
+	if(val == NULL || (val->flags&PV_VAL_NULL)) {
+		LM_WARN("ignoring null asignment\n");
+		return 0;
+	}
+
+	s = param->pvn.u.isname.name.s;
+
+	sep = q_memrchr(s.s, '.', s.len);
+	if(sep==NULL) {
+		LM_ERR("invalid pv name [%.*s]\n", s.len, s.s);
+		return -1;
+	}
+	gname.s = s.s;
+	gname.len = sep - s.s;
+	vname.s = sep + 1;
+	vname.len = s.s + s.len - sep - 1;
+
+	if (cfg_get_group_id(&gname, &grpid)) {
+		LM_ERR("wrong group syntax. Use either 'group', or 'group[id]'\n");
+		return -1;
+	}
+
+	LM_DBG("setting value for variable: %.*s.%.*s\n", gname.len, gname.s,
+				vname.len, vname.s);
+
+	if(val->flags&PV_TYPE_INT) {
+		if(cfg_set_now_int(_pv_ccp_ctx, &gname, grpid, &vname, val->ri)) {
+			LM_ERR("failed to set int to the variable: [%.*s]\n", s.len, s.s);
+			return -1;
+		}
+	} else {
+		if(cfg_set_now_str(_pv_ccp_ctx, &gname, grpid, &vname, &val->rs)) {
+			LM_ERR("failed to set str to the variable: [%.*s]\n", s.len, s.s);
+			return -1;
+		}
+	}
+	return 0;
+}
