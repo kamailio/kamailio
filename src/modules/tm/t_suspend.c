@@ -404,6 +404,14 @@ int t_continue_helper(unsigned int hash_index, unsigned int label,
 		LM_DBG("restoring previous environment\n");
 		faked_env( t, 0, 1);
 
+		if (t->flags & T_ASYNC_SUSPENDED) {
+			LM_DBG("The transaction is suspended, so not continuing\n");
+			t->flags &= ~T_ASYNC_CONTINUE;
+			UNLOCK_ASYNC_CONTINUE(t);
+			set_t(backup_T, backup_T_branch);
+			return 0;
+		}
+
 		/*lock transaction replies - will be unlocked when reply is relayed*/
 		LOCK_REPLIES( t );
 		if ( is_local(t) ) {
