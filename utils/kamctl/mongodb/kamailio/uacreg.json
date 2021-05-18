@@ -1,6 +1,6 @@
 {
   "name": "uacreg",
-  "version": 4,
+  "version": 5,
   "columns": [
     "id": {
       "type": "int",

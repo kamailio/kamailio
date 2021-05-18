@@ -57,7 +57,7 @@ id(int,auto) table_name(string) table_version(int)
 0:topos_d:2
 0:topos_t:2
 0:trusted:6
-0:uacreg:4
+0:uacreg:5
 0:uid_credentials:7
 0:uid_domain:2
 0:uid_domain_attrs:1
