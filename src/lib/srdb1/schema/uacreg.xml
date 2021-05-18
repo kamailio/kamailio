@@ -9,7 +9,7 @@
 
 <table id="uacreg" xmlns:db="http://docbook.org/ns/docbook">
     <name>uacreg</name>
-    <version>4</version>
+    <version>5</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
 		<db:para>
