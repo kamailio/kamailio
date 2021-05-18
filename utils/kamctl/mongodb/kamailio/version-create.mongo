@@ -57,7 +57,7 @@ db.getCollection("version").insert({ table_name: "subscriber", table_version: Nu
 db.getCollection("version").insert({ table_name: "topos_d", table_version: NumberInt(2) });
 db.getCollection("version").insert({ table_name: "topos_t", table_version: NumberInt(2) });
 db.getCollection("version").insert({ table_name: "trusted", table_version: NumberInt(6) });
-db.getCollection("version").insert({ table_name: "uacreg", table_version: NumberInt(4) });
+db.getCollection("version").insert({ table_name: "uacreg", table_version: NumberInt(5) });
 db.getCollection("version").insert({ table_name: "uid_credentials", table_version: NumberInt(7) });
 db.getCollection("version").insert({ table_name: "uid_domain", table_version: NumberInt(2) });
 db.getCollection("version").insert({ table_name: "uid_domain_attrs", table_version: NumberInt(1) });
