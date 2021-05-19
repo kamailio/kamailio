@@ -2858,6 +2858,47 @@ static sr_kemi_xval_t* sr_kemi_pv_getvn (sip_msg_t *msg, str *pvn, int xival)
 /**
  *
  */
+static int sr_kemi_pv_geti (sip_msg_t *msg, str *pvn)
+{
+	pv_spec_t *pvs;
+	pv_value_t val;
+	int vi;
+
+	LM_DBG("pv get: %.*s\n", pvn->len, pvn->s);
+	vi = pv_locate_name(pvn);
+	if(vi != pvn->len) {
+		LM_WARN("invalid pv [%.*s] (%d/%d)\n", pvn->len, pvn->s, vi, pvn->len);
+		return 0;
+	}
+	pvs = pv_cache_get(pvn);
+	if(pvs==NULL) {
+		LM_WARN("cannot get pv spec for [%.*s]\n", pvn->len, pvn->s);
+		return 0;
+	}
+
+	memset(&val, 0, sizeof(pv_value_t));
+	if(pv_get_spec_value(msg, pvs, &val) != 0) {
+		LM_WARN("unable to get pv value for [%.*s]\n", pvn->len, pvn->s);
+		return 0;
+	}
+	if(val.flags&PV_VAL_NULL) {
+		return 0;
+	}
+	if(val.flags&(PV_TYPE_INT|PV_VAL_INT)) {
+		return val.ri;
+	}
+	if(val.ri!=0) {
+		return val.ri;
+	}
+	vi = 0;
+	str2sint(&val.rs, &vi);
+
+	return vi;
+}
+
+/**
+ *
+ */
 static int sr_kemi_pv_seti (sip_msg_t *msg, str *pvn, int ival)
 {
 	pv_spec_t *pvs;
@@ -3000,6 +3041,11 @@ static sr_kemi_t _sr_kemi_pv[] = {
 	},
 	{ str_init("pv"), str_init("gete"),
 		SR_KEMIP_XVAL, sr_kemi_pv_gete,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pv"), str_init("geti"),
+		SR_KEMIP_INT, sr_kemi_pv_geti,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},

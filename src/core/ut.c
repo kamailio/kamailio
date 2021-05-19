@@ -32,6 +32,11 @@
 #include <sys/utsname.h> /* uname() */
 #include <libgen.h>
 
+#ifdef __OS_darwin
+/* portable clock_gettime() */
+#include <mach/clock.h>
+#include <mach/mach.h>
+#endif
 
 #include "ut.h"
 #include "mem/mem.h"
@@ -149,6 +154,27 @@ time_t utc2local(time_t in)
 #endif
 }
 
+
+/**
+ * portable implementation for clock_gettime(CLOCK_REALTIME, ts)
+ */
+int ksr_clock_gettime(struct timespec *ts)
+{
+#ifdef __OS_darwin
+	clock_serv_t cclock;
+	mach_timespec_t mts;
+
+	/* OS X does not have clock_gettime, use clock_get_time */
+	host_get_clock_service(mach_host_self(), CALENDAR_CLOCK, &cclock);
+	clock_get_time(cclock, &mts);
+	mach_port_deallocate(mach_task_self(), cclock);
+	ts->tv_sec = mts.tv_sec;
+	ts->tv_nsec = mts.tv_nsec;
+	return 0;
+#else
+	return clock_gettime(CLOCK_REALTIME, ts);
+#endif
+}
 
 /*
  * Return str as zero terminated string allocated

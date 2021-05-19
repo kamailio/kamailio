@@ -140,12 +140,12 @@ int w_is_supported(sip_msg_t *msg, char *_option, char *p2)
 }
 
 
-int is_first_hop(sip_msg_t *msg)
+int is_first_hop_mode(sip_msg_t *msg, int mode)
 {
 	int ret;
 	rr_t* r = NULL;
 	sip_uri_t puri;
-	struct ip_addr *ip;
+	struct ip_addr *ip = NULL;
 
 	if(msg==NULL)
 		return -1;
@@ -180,10 +180,12 @@ int is_first_hop(sip_msg_t *msg)
 			LM_DBG("failed to parse uri in first record-route header\n");
 			return -1;
 		}
-		if (((ip = str2ip(&(puri.host))) == NULL)
-				&& ((ip = str2ip6(&(puri.host))) == NULL)) {
-			LM_DBG("uri host is not an ip address\n");
-			return -1;
+		if(mode==0) {
+			if (((ip = str2ip(&(puri.host))) == NULL)
+					&& ((ip = str2ip6(&(puri.host))) == NULL)) {
+				LM_DBG("uri host is not an ip address\n");
+				return -1;
+			}
 		}
 		ret = check_self(&puri.host, (puri.port.s)?puri.port_no:0,
 				(puri.transport_val.s)?puri.proto:0);
@@ -191,19 +193,38 @@ int is_first_hop(sip_msg_t *msg)
 			LM_DBG("top record route uri is not myself\n");
 			return -1;
 		}
-		if (ip_addr_cmp(ip, &(msg->rcv.src_ip))
-				&& ((msg->rcv.src_port == puri.port_no)
-					|| ((puri.port.len == 0) && (msg->rcv.src_port == 5060)))
-				&& (puri.proto==msg->rcv.proto
-					|| (puri.proto==0 && msg->rcv.proto==PROTO_UDP)) ) {
-			LM_DBG("source address matches top record route uri - loop\n");
-			return -1;
+		if(mode==0) {
+			if (ip_addr_cmp(ip, &(msg->rcv.src_ip))
+					&& ((msg->rcv.src_port == puri.port_no)
+						|| ((puri.port.len == 0) && (msg->rcv.src_port == 5060)))
+					&& (puri.proto==msg->rcv.proto
+						|| (puri.proto==0 && msg->rcv.proto==PROTO_UDP)) ) {
+				LM_DBG("source address matches top record route uri - loop\n");
+				return -1;
+			}
 		}
 		/* todo - check spirals */
 		return 1;
 	} else {
 		return -1;
 	}
+}
+
+int w_is_first_hop_mode(sip_msg_t *msg, char *p1mode, char *p2)
+{
+	int mode = 0;
+
+	if(fixup_get_ivalue(msg, (gparam_t*)p1mode, &mode)<0) {
+		LM_ERR("failed to get mode parameter\n");
+		return -1;
+	}
+
+	return is_first_hop_mode(msg, mode);
+}
+
+int is_first_hop(sip_msg_t *msg)
+{
+	return is_first_hop_mode(msg, 0);
 }
 
 int w_is_first_hop(sip_msg_t *msg, char *p1, char *p2)

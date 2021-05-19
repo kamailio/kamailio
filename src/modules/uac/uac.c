@@ -114,6 +114,7 @@ static int child_init(int rank);
 
 extern int reg_timer_interval;
 extern int _uac_reg_gc_interval;
+extern int _uac_reg_use_domain;
 
 static pv_export_t mod_pvs[] = {
 	{ {"uac_req", sizeof("uac_req")-1}, PVT_OTHER, pv_get_uac_req, pv_set_uac_req,
@@ -184,7 +185,8 @@ static param_export_t params[] = {
 	{"reg_random_delay",	INT_PARAM,			&reg_random_delay      },
 	{"reg_active",	INT_PARAM,			&reg_active_param      },
 	{"reg_gc_interval",		INT_PARAM,	&_uac_reg_gc_interval	},
-	{"reg_hash_size",	INT_PARAM,			&reg_htable_size      },
+	{"reg_hash_size",	INT_PARAM,		&reg_htable_size      },
+	{"reg_use_domain",	PARAM_INT,		&_uac_reg_use_domain  },
 	{"default_socket",	PARAM_STR, &uac_default_socket},
 	{"event_callback",	PARAM_STR,	&uac_event_callback},
 	{0, 0, 0}
@@ -684,7 +686,7 @@ static int w_uac_reg_lookup_uri(struct sip_msg* msg, char* src, char* dst)
 	return uac_reg_lookup(msg, &sval, dpv, 1);
 }
 
-static int ki_uac_reg_lookup_uri(sip_msg_t* msg, str* userid, str* sdst)
+static int ki_uac_reg_lookup_uri(sip_msg_t* msg, str* suri, str* sdst)
 {
 	pv_spec_t *dpv = NULL;
 	dpv = pv_cache_get(sdst);
@@ -692,7 +694,7 @@ static int ki_uac_reg_lookup_uri(sip_msg_t* msg, str* userid, str* sdst)
 		LM_ERR("cannot get pv spec for [%.*s]\n", sdst->len, sdst->s);
 		return -1;
 	}
-	return uac_reg_lookup(msg, userid, dpv, 1);
+	return uac_reg_lookup(msg, suri, dpv, 1);
 }
 
 static int w_uac_reg_status(struct sip_msg* msg, char* src, char* p2)

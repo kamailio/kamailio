@@ -1065,6 +1065,9 @@ time_t local2utc(time_t in);
 /* Convert time_t value in UTC to to value relative to local time zone */
 time_t utc2local(time_t in);
 
+/* Portable clock_gettime() */
+int ksr_clock_gettime(struct timespec *ts);
+
 /*
  * Return str as zero terminated string allocated
  * using pkg_malloc

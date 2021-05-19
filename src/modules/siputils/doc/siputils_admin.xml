@@ -281,8 +281,9 @@ modparam("auth", "rpid_avp", "$avp(myrpid)")
 			<para>
 			Inserting the call-id in the internal list, which is checked when
 			further replies arrive. Any 183 reply that is received during the
-			timeout value will be converted to a 180 message. Please note that you
-			need to set a positive timeout value in order to use this function.
+			timeout value will be converted to a 180 message with removed SDP body.
+			Please note that you need to set a positive ring_timeout value in order
+			to use this function.
 			</para>
 			<para>
 			The function returns TRUE on success, and FALSE during processing failures.
@@ -1169,20 +1170,33 @@ if (is_supported("outbound")) { ... }
 	</section>
 	<section id="siputils.f.is_first_hop">
 		<title>
-			<function moreinfo="none">is_first_hop()</function>
+			<function moreinfo="none">is_first_hop([mode])</function>
 		</title>
 		<para>
 		The function returns true if the proxy is first hop after the
-		original sender. For incoming SIP requests, it means there is only
-		one Via header. For incoming SIP replies, it means that top
-		Record-Route URI is 'myself' and source address is not matching it
-		(to avoid detecting in case of local loops). The detection is done
-		only when Record-Route has an IP address in its URI (for a domain,
-		it returns -1/false).
+		original sender based on a best effort estimation by checking Via
+		and Record-Route headers.
+		</para>
+		<para>
+		For incoming SIP requests, it means there is only one Via header.
+		</para>
+		<para>
+		For incoming SIP replies, if mode==0, it means that top Record-Route
+		URI is 'myself' and source address is not matching local IP (to avoid
+		detecting in case of local loops). Therefore for mode==0 the detection
+		is done only when Record-Route has an IP address in its URI (for a domain,
+		it returns -1/false). If mode==1, then the check of local IP is no
+		longer done, only if top Record-Route is myself, returning true also if
+		there is a domain, assuming that is expected no looping can happen
+		based on config rules.
 		</para>
 		<para>
 		Note that it does not detect spirals, which can have the condition
 		for replies true also in the case of additional SIP reply reception.
+		</para>
+		<para>
+		Parameter mode is optional and can be an integer or a varaible holding
+		an integer. If not provided, the behaviour is like mode==0.
 		</para>
 		<para>
 		This function can be used from ANY_ROUTE.
@@ -1192,6 +1206,8 @@ if (is_supported("outbound")) { ... }
 		<programlisting format="linespecific">
 ...
 if(is_first_hop()) { ... }
+...
+if(is_first_hop_mode("1")) { ... }
 ...
 </programlisting>
 		</example>

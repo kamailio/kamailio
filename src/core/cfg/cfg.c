@@ -285,3 +285,39 @@ void **cfg_get_handle(char *gname)
 
 	return group->handle;
 }
+
+
+/* Set the group_id pointer based on the group string.
+ * The string is either "group_name", or "group_name[group_id]"
+ * *group_id is set to null in the former case.
+ * Warning: changes the group string
+ */
+int cfg_get_group_id(str *group, unsigned int **group_id)
+{
+	static unsigned int	id;
+	str	s;
+
+	if (!group->s || (group->s[group->len-1] != ']')) {
+		*group_id = NULL;
+		return 0;
+	}
+
+	s.s = group->s + group->len - 2;
+	s.len = 0;
+	while ((s.s > group->s) && (*s.s != '[')) {
+		s.s--;
+		s.len++;
+	}
+	if (s.s == group->s) /* '[' not found */
+		return -1;
+	group->len = s.s - group->s;
+	s.s++;
+	if (!group->len || !s.len)
+		return -1;
+	if (str2int(&s, &id))
+		return -1;
+
+	*group_id = &id;
+	return 0;
+}
+
