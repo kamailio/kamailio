@@ -32,7 +32,7 @@
 #define ALLOWHDR "Allow: INVITE, ACK, BYE, CANCEL, NOTIFY, PRACK"
 #define CLENHDR "Content-Length"
 #define SIPEOL  "\r\n"
-#define USRAGNT "Kamailio MOH Queue v1.7"
+#define USRAGNT "Kamailio MOH Queue v1.8"
 
 /**********
 * local constants
@@ -1075,10 +1075,11 @@ if (pmsg->allow)
 * send RTP offer
 **********/
 
+fparam_t rflag = {.orig="", .type=FPARAM_STRING, {.asciiz="r"}, .fixed=0};
 mohq_debug (pcall->pmohq,
   "%sMaking offer for RTP link for call (%s) from queue (%s)",
   pfncname, pcall->call_from, pcall->pmohq->mohq_name);
-if (pmod_data->fn_rtp_offer (pmsg, 0, 0) != 1)
+if (pmod_data->fn_rtp_offer (pmsg, (char *) &rflag, 0) != 1)
   {
   if (pmod_data->psl->freply (pmsg, 486, presp_busy) < 0)
     {
@@ -2160,9 +2161,8 @@ int nsession;
 sdp_session_cell_t *psession;
 char pflagbuf [5];
 strcpy (pflagbuf, "z20");
-fparam_t pzflag [1] = {
-    {"", FPARAM_STRING, {pflagbuf}, 0}
-};
+fparam_t zflag = {.orig="", .type=FPARAM_STRING, {.asciiz=pflagbuf}, .fixed=0};
+fparam_t *pzflag = &zflag;
 for (nsession = 0; (psession = get_sdp_session (pmsg, nsession)); nsession++)
   {
   int nstream;
