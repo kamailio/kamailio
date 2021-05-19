@@ -104,7 +104,7 @@ static uint choose_nlmsg_seq (void)
 {
     static double Tini=0;
     struct timespec ts;
-    clock_gettime(CLOCK_REALTIME, &ts);
+    ksr_clock_gettime(&ts);
     return(1000*(ts.tv_sec - Tini + (ts.tv_nsec * 1E-9))); // us
 }
 
