@@ -34,11 +34,6 @@
  *
  */
 
-#ifdef __OS_darwin
-#include <mach/clock.h>
-#include <mach/mach.h>
-#endif
-
 #include "routing.h"
 #include "config.h"
 #include "peermanager.h"
@@ -50,26 +45,6 @@
 extern dp_config *config; /**< Configuration for this diameter peer 	*/
 int gcount = 0;
 
-/**
- * portable implementation for clock_gettime(CLOCK_REALTIME, ts)
- */
-int ser_clock_gettime(struct timespec *ts)
-{
-#ifdef __OS_darwin
-	clock_serv_t cclock;
-	mach_timespec_t mts;
-
-	/* OS X does not have clock_gettime, use clock_get_time */
-	host_get_clock_service(mach_host_self(), CALENDAR_CLOCK, &cclock);
-	clock_get_time(cclock, &mts);
-	mach_port_deallocate(mach_task_self(), cclock);
-	ts->tv_sec = mts.tv_sec;
-	ts->tv_nsec = mts.tv_nsec;
-	return 0;
-#else
-	return clock_gettime(CLOCK_REALTIME, ts);
-#endif
-}
 
 /**
  * Returns if the peer advertised support for an Application ID
@@ -156,7 +131,7 @@ peer* get_first_connected_route(cdp_session_t* cdp_session, routing_entry *r, in
 		}
 	}
 
-	ser_clock_gettime(&time_spec);
+	ksr_clock_gettime(&time_spec);
 
 	p->last_selected = (time_spec.tv_sec*1000000) + round(time_spec.tv_nsec / 1.0e3); // Convert nanoseconds to microseconds
 	LM_DBG("chosen peer [%.*s]\n", p->fqdn.len, p->fqdn.s);
