@@ -603,7 +603,6 @@ int xavp_slist_explode(str *slist, str *sep, str *mode, str *xname)
 
 	s.s = slist->s;
 	for(i=0; i<slist->len; i++) {
-		LM_DBG("==== %d = %c\n", i, slist->s[i]);
 		sfound = 0;
 		for(j=0; j<sep->len; j++) {
 			if(slist->s[i]==sep->s[j]) {
