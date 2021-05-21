@@ -191,6 +191,7 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 {
 	int i, j, max;
 	char *p, *s;
+	char c;
 	str st, st2;
 	pv_value_t v, w;
 	time_t t;
@@ -731,6 +732,28 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 				}
 				i = v.ri;
 			}
+			if(tp->next->v.s.len>1) {
+				switch(tp->next->v.s.s[1]) {
+					case '\\':
+						c = '\\';
+					break;
+					case 'n':
+						c = '\n';
+					break;
+					case 'r':
+						c = '\r';
+					break;
+					case 't':
+						c = '\t';
+					break;
+					default:
+						LM_ERR("invalid select escape char (cfg line: %d)\n",
+							get_cfg_crt_line());
+						return -1;
+				}
+			} else {
+				c = tp->next->v.s.s[0];
+			}
 			val->flags = PV_VAL_STR;
 			val->ri = 0;
 			if(i<0)
@@ -741,7 +764,7 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 				i--;
 				while(p>=val->rs.s)
 				{
-					if(*p==tp->next->v.s.s[0])
+					if(*p==c)
 					{
 						if(i==0)
 							break;
@@ -762,7 +785,7 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 				p = s;
 				while(p<val->rs.s+val->rs.len)
 				{
-					if(*p==tp->next->v.s.s[0])
+					if(*p==c)
 					{
 						if(i==0)
 							break;
@@ -2728,6 +2751,15 @@ char* tr_parse_string(str* in, trans_t *t)
 		tp->type = TR_PARAM_STRING;
 		tp->v.s.s = p;
 		tp->v.s.len = 1;
+		if(*p=='\\') {
+			if(*p=='\\' || *p=='n' || *p=='r' || *p=='t') {
+				p++;
+				tp->v.s.len = 2;
+			} else {
+				LM_ERR("unexpected escape char: %c\n", *p);
+				goto error;
+			}
+		}
 		t->params->next = tp;
 		tp = 0;
 		p++;
