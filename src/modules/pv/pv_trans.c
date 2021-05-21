@@ -2440,8 +2440,8 @@ char* tr_parse_string(str* in, trans_t *t)
 		while(*p && (*p==' ' || *p=='\t' || *p=='\n')) p++;
 		if(*p!=TR_RBRACKET)
 		{
-			LM_ERR("invalid select transformation: %.*s!!\n",
-					in->len, in->s);
+			LM_ERR("invalid select transformation: %.*s (c:%c/%d - p:%d)!!\n",
+					in->len, in->s, *p, *p, (int)(p - in->s));
 			goto error;
 		}
 		goto done;
