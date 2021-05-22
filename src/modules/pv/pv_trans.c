@@ -2752,8 +2752,8 @@ char* tr_parse_string(str* in, trans_t *t)
 		tp->v.s.s = p;
 		tp->v.s.len = 1;
 		if(*p=='\\') {
+			p++;
 			if(*p=='\\' || *p=='n' || *p=='r' || *p=='t') {
-				p++;
 				tp->v.s.len = 2;
 			} else {
 				LM_ERR("unexpected escape char: %c\n", *p);
