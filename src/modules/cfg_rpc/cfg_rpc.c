@@ -44,13 +44,6 @@ static int mod_init(void)
 	return 0;
 }
 
-/* Set the group_id pointer based on the group string.
- * The string is either "group_name", or "group_name[group_id]"
- * *group_id is set to null in the former case.
- * Warning: changes the group string
- */
-#define get_group_id(group, group_id) cfg_get_group_id(group, group_id)
-
 static const char *rpc_set_now_doc[2] = {
 		"Set the value of a configuration variable and commit the change "
 		"immediately",
@@ -65,7 +58,7 @@ static void rpc_set_now_int(rpc_t *rpc, void *c)
 	if(rpc->scan(c, "SSd", &group, &var, &i) < 3)
 		return;
 
-	if(get_group_id(&group, &group_id)) {
+	if(cfg_get_group_id(&group, &group_id)) {
 		rpc->fault(c, 400,
 				"Wrong group syntax. Use either \"group\", or \"group[id]\"");
 		return;
@@ -86,7 +79,7 @@ static void rpc_set_now_string(rpc_t *rpc, void *c)
 	if(rpc->scan(c, "SSs", &group, &var, &ch) < 3)
 		return;
 
-	if(get_group_id(&group, &group_id)) {
+	if(cfg_get_group_id(&group, &group_id)) {
 		rpc->fault(c, 400,
 				"Wrong group syntax. Use either \"group\", or \"group[id]\"");
 		return;
@@ -108,7 +101,7 @@ static void rpc_set(rpc_t *rpc, void *c)
 	if(rpc->scan(c, "SS", &group, &var) < 2)
 		return;
 
-	if(get_group_id(&group, &group_id)) {
+	if(cfg_get_group_id(&group, &group_id)) {
 		rpc->fault(c, 400,
 				"Wrong group syntax. Use either \"group\", or \"group[id]\"");
 		return;
@@ -140,7 +133,7 @@ static void rpc_del(rpc_t *rpc, void *c)
 	if(rpc->scan(c, "SS", &group, &var) < 2)
 		return;
 
-	if(get_group_id(&group, &group_id) || !group_id) {
+	if(cfg_get_group_id(&group, &group_id) || !group_id) {
 		rpc->fault(c, 400, "Wrong group syntax. Use \"group[id]\"");
 		return;
 	}
@@ -165,7 +158,7 @@ static void rpc_set_delayed_int(rpc_t *rpc, void *c)
 	if(rpc->scan(c, "SSd", &group, &var, &i) < 3)
 		return;
 
-	if(get_group_id(&group, &group_id)) {
+	if(cfg_get_group_id(&group, &group_id)) {
 		rpc->fault(c, 400,
 				"Wrong group syntax. Use either \"group\", or \"group[id]\"");
 		return;
@@ -186,7 +179,7 @@ static void rpc_set_delayed_string(rpc_t *rpc, void *c)
 	if(rpc->scan(c, "SSs", &group, &var, &ch) < 3)
 		return;
 
-	if(get_group_id(&group, &group_id)) {
+	if(cfg_get_group_id(&group, &group_id)) {
 		rpc->fault(c, 400,
 				"Wrong group syntax. Use either \"group\", or \"group[id]\"");
 		return;
@@ -208,7 +201,7 @@ static void rpc_set_delayed(rpc_t *rpc, void *c)
 	if(rpc->scan(c, "SS", &group, &var) < 2)
 		return;
 
-	if(get_group_id(&group, &group_id)) {
+	if(cfg_get_group_id(&group, &group_id)) {
 		rpc->fault(c, 400,
 				"Wrong group syntax. Use either \"group\", or \"group[id]\"");
 		return;
@@ -240,7 +233,7 @@ static void rpc_del_delayed(rpc_t *rpc, void *c)
 	if(rpc->scan(c, "SS", &group, &var) < 2)
 		return;
 
-	if(get_group_id(&group, &group_id) || !group_id) {
+	if(cfg_get_group_id(&group, &group_id) || !group_id) {
 		rpc->fault(c, 400, "Wrong group syntax. Use \"group[id]\"");
 		return;
 	}
@@ -296,7 +289,7 @@ static void rpc_get(rpc_t *rpc, void *c)
 		var.s = NULL;
 		var.len = 0;
 	}
-	if(get_group_id(&group, &group_id)) {
+	if(cfg_get_group_id(&group, &group_id)) {
 		rpc->fault(c, 400,
 				"Wrong group syntax. Use either \"group\", or \"group[id]\"");
 		return;
@@ -412,7 +405,7 @@ static void rpc_cfg_var_reset(rpc_t *rpc, void *c)
 	if(rpc->scan(c, "S", &group) < 1)
 		return;
 
-	if(get_group_id(&group, &group_id)) {
+	if(cfg_get_group_id(&group, &group_id)) {
 		rpc->fault(c, 400,
 				"Wrong group syntax. Use either \"group\", or \"group[id]\"");
 		return;
@@ -579,7 +572,7 @@ static void rpc_add_group_inst(rpc_t *rpc, void *c)
 	if(rpc->scan(c, "S", &group) < 1)
 		return;
 
-	if(get_group_id(&group, &group_id) || !group_id) {
+	if(cfg_get_group_id(&group, &group_id) || !group_id) {
 		rpc->fault(c, 400, "Wrong group syntax. Use \"group[id]\"");
 		return;
 	}
@@ -601,7 +594,7 @@ static void rpc_del_group_inst(rpc_t *rpc, void *c)
 	if(rpc->scan(c, "S", &group) < 1)
 		return;
 
-	if(get_group_id(&group, &group_id) || !group_id) {
+	if(cfg_get_group_id(&group, &group_id) || !group_id) {
 		rpc->fault(c, 400, "Wrong group syntax. Use \"group[id]\"");
 		return;
 	}
