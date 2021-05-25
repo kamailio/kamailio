@@ -143,20 +143,14 @@ found_repl:
 		LM_ERR("cannot set define name\n");
 		goto error;
 	}
-	if(mode==1) {
-		/* define the value enclosed in double quotes */
-		*(defvalue.s-1) = '"';
-		defvalue.s[defvalue.len] = '"';
-		defvalue.s--;
-		defvalue.len += 2;
-	}
 	if(memchr(defvalue.s, '$', defvalue.len) != NULL) {
 		fmsg = faked_msg_get_next();
 		if(pv_eval_str(fmsg, &newval, &defvalue)>=0) {
 			defvalue = newval;
 		}
 	}
-	if(pp_define_set(defvalue.len, defvalue.s)<0) {
+	if(pp_define_set(defvalue.len, defvalue.s,
+				(mode==1)?KSR_PPDEF_QUOTED:KSR_PPDEF_NORMAL)<0) {
 		LM_ERR("cannot set define value\n");
 		goto error;
 	}

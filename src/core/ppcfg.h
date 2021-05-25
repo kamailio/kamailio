@@ -25,6 +25,9 @@
 
 #include "str.h"
 
+#define KSR_PPDEF_NORMAL (0)     /* define normal value */
+#define KSR_PPDEF_QUOTED (1<<0)  /* define quoted value */
+
 typedef struct ksr_ppdefine {
 	str name;
 	str value;
@@ -39,7 +42,7 @@ int pp_substdef_add(char *data, int mode);
 int pp_subst_run(char **data);
 
 int  pp_define(int len, const char *text);
-int  pp_define_set(int len, char *text);
+int  pp_define_set(int len, char *text, int mode);
 int  pp_define_set_type(int type);
 str *pp_define_get(int len, const char * text);
 int  pp_define_env(const char * text, int len);

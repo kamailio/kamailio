@@ -2264,7 +2264,7 @@ int main(int argc, char** argv)
 					}
 					if(p) {
 						p++;
-						if(pp_define_set(strlen(p), p)<0) {
+						if(pp_define_set(strlen(p), p, KSR_PPDEF_NORMAL)<0) {
 							fprintf(stderr, "error at define value: -A %s\n",
 								optarg);
 							goto error;

@@ -1337,7 +1337,7 @@ IMPORTFILE      "import_file"
 <DEFINE_DATA>\\{CR}		{	count(); ksr_cfg_print_part(yytext); } /* eat the escaped CR */
 <DEFINE_DATA>{CR}		{	count();
 							ksr_cfg_print_part(yytext);
-							if (pp_define_set(strlen(s_buf.s), s_buf.s)) return 1;
+							if (pp_define_set(strlen(s_buf.s), s_buf.s, KSR_PPDEF_NORMAL)) return 1;
 							memset(&s_buf, 0, sizeof(s_buf));
 							state = INITIAL;
 							ksr_cfg_print_initial_state();
@@ -2007,7 +2007,7 @@ int pp_define(int len, const char *text)
 	return 0;
 }
 
-int pp_define_set(int len, char *text)
+int pp_define_set(int len, char *text, int mode)
 {
 	int ppos;
 
@@ -2090,7 +2090,7 @@ int pp_define_env(const char *text, int len)
 		LM_ERR("cannot set define name [%s]\n", (char*)text);
 		return -1;
 	}
-	if(pp_define_set(defvalue.len, defvalue.s)<0) {
+	if(pp_define_set(defvalue.len, defvalue.s, KSR_PPDEF_NORMAL)<0) {
 		LM_ERR("cannot set define value [%s]\n", (char*)text);
 		return -1;
 	}
