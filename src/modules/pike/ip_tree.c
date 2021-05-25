@@ -301,10 +301,6 @@ pike_ip_node_t* mark_node(unsigned char *ip,int ip_len,
 		}
 	}
 
-	if(node==NULL) {
-		return NULL;
-	}
-
 	LM_DBG("only first %d were matched!\n",byte_pos);
 	*flag = 0;
 	*father = 0;
