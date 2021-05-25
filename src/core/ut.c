@@ -327,7 +327,7 @@ char *stre_search_strz(char *vstart, char *vend, char *needlez)
 char *str_casesearch(str *text, str *needle)
 {
 	int i,j;
-	for(i=0;i<text->len-needle->len;i++) {
+	for(i=0;i<=text->len-needle->len;i++) {
 		for(j=0;j<needle->len;j++) {
 			if ( !((text->s[i+j]==needle->s[j]) ||
 					( isalpha((int)text->s[i+j])
@@ -337,7 +337,7 @@ char *str_casesearch(str *text, str *needle)
 		if (j==needle->len)
 			return text->s+i;
 	}
-	return 0;
+	return NULL;
 }
 
 /**
