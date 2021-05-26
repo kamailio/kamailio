@@ -1497,6 +1497,44 @@ if(remove_hf_exp_pv("^$var(match)", "^$var(keep)"))
 		</example>
 	</section>
 
+	<section id="textops.f.remove_hf_idx">
+		<title>
+		<function moreinfo="none">remove_hf_idx(hname, idx)</function>
+		</title>
+		<para>
+			Remove from message the headers matching by name 'hname' with
+			the index 'idx'.
+		</para>
+		<para>
+		Returns true if the header is removed.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>hname</emphasis> - header name.</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>idx</emphasis> - index of the header, starting
+			from 0 with first header; negative values count from the end of
+			the headers, -1 being the last header matching the name.</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+			The parameters can be config variables.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>remove_hf_idx</function> usage</title>
+		<programlisting format="linespecific">
+...
+remove_hf_idx("X-My-Header", "-1");
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="textops.f.has_body">
 		<title>
 		<function moreinfo="none">has_body()</function>,
