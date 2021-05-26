@@ -143,6 +143,7 @@ static int remove_hf_re_f(struct sip_msg* msg, char* key, char* foo);
 static int remove_hf_exp_f(sip_msg_t* msg, char* ematch, char* eskip);
 static int is_present_hf_re_f(struct sip_msg* msg, char* key, char* foo);
 static int remove_hf_pv_f(sip_msg_t* msg, char* phf, char* foo);
+static int remove_hf_idx_f(sip_msg_t* msg, char* phname, char* pidx);
 static int remove_hf_re_pv_f(sip_msg_t* msg, char* key, char* foo);
 static int remove_hf_exp_pv_f(sip_msg_t* msg, char* ematch, char* eskip);
 static int is_present_hf_pv_f(sip_msg_t* msg, char* key, char* foo);
@@ -238,6 +239,9 @@ static cmd_export_t cmds[]={
 		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
 	{"remove_hf",        (cmd_function)remove_hf_f,       1,
 		hname_fixup, free_hname_fixup,
+		ANY_ROUTE},
+	{"remove_hf_idx",    (cmd_function)remove_hf_idx_f,   2,
+		fixup_spve_igp,  fixup_free_spve_igp,
 		ANY_ROUTE},
 	{"remove_hf_re",     (cmd_function)remove_hf_re_f,    1,
 		fixup_regexp_null, fixup_free_regexp_null,
@@ -1745,6 +1749,84 @@ int remove_hf_f(struct sip_msg* msg, char* str_hf, char* foo)
 		cnt++;
 	}
 	return cnt==0 ? -1 : 1;
+}
+
+static int ki_remove_hf_idx(sip_msg_t* msg, str* hname, int idx)
+{
+	hdr_field_t hfm = {0};
+	hdr_field_t *hfi = NULL;
+	sr_lump_t *anchor = NULL;
+	int i = 0;
+	int rm = 0;
+	int pos = 0;
+
+	/* ensure all headers are parsed */
+	if(parse_headers(msg, HDR_EOH_F, 0)<0) {
+		LM_ERR("error parsing headers\n");
+		return -1;
+	}
+
+	if(parse_hname2_str(hname, &hfm)==NULL) {
+		LM_ERR("failed to parse header name [%.*s]\n", hname->len, hname->s);
+		return -1;
+	}
+
+	LM_DBG("trying to remove hf: %.*s - index: %d\n", hname->len, hname->s, idx);
+	if(idx>=0) {
+		rm = 1;
+	}
+	pos = idx;
+
+again:
+	for (hfi=msg->headers; hfi; hfi=hfi->next) {
+		if (hfm.type!=HDR_OTHER_T && hfm.type!=HDR_ERROR_T) {
+			if (hfm.type!=hfi->type) {
+				continue;
+			}
+		} else {
+			if (hfi->name.len!=hname->len) {
+				continue;
+			}
+			if(strncasecmp(hfi->name.s, hname->s, hname->len)!=0) {
+				continue;
+			}
+		}
+		if(rm==1 && i==pos) {
+			anchor=del_lump(msg, hfi->name.s - msg->buf, hfi->len, 0);
+			if (anchor==0) {
+				LM_ERR("cannot remove hdr %.*s\n", hname->len, hname->s);
+				return -1;
+			}
+			return 1;
+		}
+		i++;
+	}
+	if(rm==1) {
+		/* header not found */
+		return 2;
+	}
+	pos = i + idx;
+	if(pos>=0) {
+		rm = 1;
+		goto again;
+	}
+	return 1;
+}
+
+static int remove_hf_idx_f(sip_msg_t* msg, char* phname, char* pidx)
+{
+	str hname = STR_NULL;
+	int idx = 0;
+
+	if(fixup_get_svalue(msg, (gparam_t*)phname, &hname)<0) {
+		LM_ERR("failed to get header name\n");
+		return -1;
+	}
+	if(fixup_get_ivalue(msg, (gparam_t*)pidx, &idx)<0) {
+		LM_ERR("failed to get header index\n");
+		return -1;
+	}
+	return  ki_remove_hf_idx(msg, &hname, idx);
 }
 
 static int remove_hf_re(sip_msg_t* msg, regex_t *re)
@@ -4982,6 +5064,11 @@ static sr_kemi_t sr_kemi_textops_exports[] = {
 	{ str_init("textops"), str_init("remove_hf_re"),
 		SR_KEMIP_INT, ki_remove_hf_re,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("remove_hf_idx"),
+		SR_KEMIP_INT, ki_remove_hf_idx,
+		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("textops"), str_init("remove_hf_exp"),
