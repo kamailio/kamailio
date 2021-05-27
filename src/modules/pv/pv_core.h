@@ -249,9 +249,11 @@ int pv_get_branches(struct sip_msg *msg, pv_param_t *param,
 
 int pv_get_avp(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res);
 
-int pv_get_hdr(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res);
+int pv_get_hdr(sip_msg_t *msg,  pv_param_t *param, pv_value_t *res);
 
 int pv_get_hdrc(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res);
+
+int pv_get_hfl(sip_msg_t *msg,  pv_param_t *param, pv_value_t *res);
 
 int pv_get_scriptvar(struct sip_msg *msg,  pv_param_t *param,
 		pv_value_t *res);
@@ -358,6 +360,8 @@ int pv_parse_scriptvar_name(pv_spec_p sp, str *in);
 int pv_parse_scriptvarnull_name(pv_spec_p sp, str *in);
 
 int pv_parse_hdr_name(pv_spec_p sp, str *in);
+
+int pv_parse_hfl_name(pv_spec_p sp, str *in);
 
 int pv_parse_cnt_name(pv_spec_p sp, str *in);
 

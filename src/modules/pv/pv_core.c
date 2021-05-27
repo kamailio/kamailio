@@ -1959,91 +1959,55 @@ int pv_get_avp(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res)
 	return pv_get_null(msg, param, res);
 }
 
-int pv_get_hdr(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res)
+int pv_get_hdr_helper(sip_msg_t *msg, pv_param_t *param, pv_value_t *res,
+		pv_value_t *tv, int idx, int idxf)
 {
-	int idx;
-	int idxf;
-	pv_value_t tv;
 	struct hdr_field *hf;
 	struct hdr_field *hf0;
 	char *p, *p_ini;
 	int n, p_size;
 
-	if(msg==NULL || res==NULL || param==NULL)
-		return -1;
-
-	/* get the name */
-	if(param->pvn.type == PV_NAME_PVAR)
-	{
-		if(pv_get_spec_name(msg, param, &tv)!=0 || (!(tv.flags&PV_VAL_STR)))
-		{
-			LM_ERR("invalid name\n");
-			return -1;
-		}
-	} else {
-		if(param->pvn.u.isname.type == AVP_NAME_STR)
-		{
-			tv.flags = PV_VAL_STR;
-			tv.rs = param->pvn.u.isname.name.s;
-		} else {
-			tv.flags = 0;
-			tv.ri = param->pvn.u.isname.name.n;
-		}
-	}
 	/* we need to be sure we have parsed all headers */
-	if(parse_headers(msg, HDR_EOH_F, 0)<0)
-	{
+	if(parse_headers(msg, HDR_EOH_F, 0)<0) {
 		LM_ERR("error parsing headers\n");
 		return pv_get_null(msg, param, res);
 	}
 
-	for (hf=msg->headers; hf; hf=hf->next)
-	{
-		if(tv.flags == 0)
-		{
-			if (tv.ri==hf->type)
+	for (hf=msg->headers; hf; hf=hf->next) {
+		if(tv->flags == 0) {
+			if (tv->ri==hf->type)
 				break;
 		} else {
-			if(tv.rs.len==1 && tv.rs.s[0]=='*')
+			if(tv->rs.len==1 && tv->rs.s[0]=='*')
 				break;
-			if (cmp_hdrname_str(&hf->name, &tv.rs)==0)
+			if (cmp_hdrname_str(&hf->name, &tv->rs)==0)
 				break;
 		}
 	}
-	if(hf==NULL)
+	if(hf==NULL) {
 		return pv_get_null(msg, param, res);
-	/* get the index */
-	if(pv_get_spec_index(msg, param, &idx, &idxf)!=0)
-	{
-		LM_ERR("invalid index\n");
-		return -1;
 	}
 
 	/* get the value */
 	res->flags = PV_VAL_STR;
-	if(idx==0 && (idxf==PV_IDX_INT || idxf==PV_IDX_NONE))
-	{
+	if(idx==0 && (idxf==PV_IDX_INT || idxf==PV_IDX_NONE)) {
 		res->rs  = hf->body;
 		return 0;
 	}
-	if(idxf==PV_IDX_ALL)
-	{
+	if(idxf==PV_IDX_ALL) {
 		p_ini = pv_get_buffer();
 		p = p_ini;
 		p_size = pv_get_buffer_size();
 		do {
-			if(p!=p_ini)
-			{
-				if(p-p_ini+PV_FIELD_DELIM_LEN+1>p_size)
-				{
+			if(p!=p_ini) {
+				if(p-p_ini+PV_FIELD_DELIM_LEN+1>p_size) {
 					LM_ERR("local buffer length exceeded\n");
 					return pv_get_null(msg, param, res);
 				}
 				memcpy(p, PV_HDR_DELIM, PV_HDR_DELIM_LEN);
 				p += PV_HDR_DELIM_LEN;
 			}
-			if(p-p_ini+hf->body.len+1>p_size)
-			{
+			if(p-p_ini+hf->body.len+1>p_size) {
 				LM_ERR("local buffer length exceeded [%d/%d]!\n",
 						(int)(p-p_ini+hf->body.len+1),
 						hf->body.len);
@@ -2052,16 +2016,14 @@ int pv_get_hdr(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res)
 			memcpy(p, hf->body.s, hf->body.len);
 			p += hf->body.len;
 			/* next hf */
-			for (hf=hf->next; hf; hf=hf->next)
-			{
-				if(tv.flags == 0)
-				{
-					if (tv.ri==hf->type)
+			for (hf=hf->next; hf; hf=hf->next) {
+				if(tv->flags == 0) {
+					if (tv->ri==hf->type)
 						break;
 				} else {
-					if(tv.rs.len==1 && tv.rs.s[0]=='*')
+					if(tv->rs.len==1 && tv->rs.s[0]=='*')
 						break;
-					if (cmp_hdrname_str(&hf->name, &tv.rs)==0)
+					if (cmp_hdrname_str(&hf->name, &tv->rs)==0)
 						break;
 				}
 			}
@@ -2073,50 +2035,42 @@ int pv_get_hdr(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res)
 
 	/* we have a numeric index */
 	hf0 = 0;
-	if(idx<0)
-	{
+	if(idx<0) {
 		n = 1;
 		/* count headers */
-		for (hf0=hf->next; hf0; hf0=hf0->next)
-		{
-			if(tv.flags == 0)
-			{
-				if (tv.ri==hf0->type)
+		for (hf0=hf->next; hf0; hf0=hf0->next) {
+			if(tv->flags == 0) {
+				if (tv->ri==hf0->type)
 					n++;
 			} else {
-				if(tv.rs.len==1 && tv.rs.s[0]=='*') {
+				if(tv->rs.len==1 && tv->rs.s[0]=='*') {
 					n++;
-				} else if (cmp_hdrname_str(&hf0->name, &tv.rs)==0) {
+				} else if (cmp_hdrname_str(&hf0->name, &tv->rs)==0) {
 					n++;
 				}
 			}
 		}
 		idx = -idx;
-		if(idx>n)
-		{
+		if(idx>n) {
 			LM_DBG("index out of range\n");
 			return pv_get_null(msg, param, res);
 		}
 		idx = n - idx;
-		if(idx==0)
-		{
+		if(idx==0) {
 			res->rs  = hf->body;
 			return 0;
 		}
 	}
 	n=0;
-	while(n<idx)
-	{
-		for (hf0=hf->next; hf0; hf0=hf0->next)
-		{
-			if(tv.flags == 0)
-			{
-				if (tv.ri==hf0->type)
+	while(n<idx) {
+		for (hf0=hf->next; hf0; hf0=hf0->next) {
+			if(tv->flags == 0) {
+				if (tv->ri==hf0->type)
 					n++;
 			} else {
-				if(tv.rs.len==1 && tv.rs.s[0]=='*') {
+				if(tv->rs.len==1 && tv->rs.s[0]=='*') {
 					n++;
-				} else if (cmp_hdrname_str(&hf0->name, &tv.rs)==0) {
+				} else if (cmp_hdrname_str(&hf0->name, &tv->rs)==0) {
 					n++;
 				}
 			}
@@ -2127,15 +2081,48 @@ int pv_get_hdr(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res)
 			break;
 	}
 
-	if(hf0!=0)
-	{
+	if(hf0!=0) {
 		res->rs  = hf0->body;
 		return 0;
 	}
 
 	LM_DBG("index out of range\n");
 	return pv_get_null(msg, param, res);
+}
 
+/**
+ *
+ */
+int pv_get_hdr(sip_msg_t *msg,  pv_param_t *param, pv_value_t *res)
+{
+	int idx;
+	int idxf;
+	pv_value_t tv = {0};
+
+	if(msg==NULL || res==NULL || param==NULL)
+		return -1;
+
+	/* get the name */
+	if(param->pvn.type == PV_NAME_PVAR) {
+		if(pv_get_spec_name(msg, param, &tv)!=0 || (!(tv.flags&PV_VAL_STR))) {
+			LM_ERR("invalid name\n");
+			return -1;
+		}
+	} else {
+		if(param->pvn.u.isname.type == AVP_NAME_STR) {
+			tv.flags = PV_VAL_STR;
+			tv.rs = param->pvn.u.isname.name.s;
+		} else {
+			tv.flags = 0;
+			tv.ri = param->pvn.u.isname.name.n;
+		}
+	}
+	/* get the index */
+	if(pv_get_spec_index(msg, param, &idx, &idxf)!=0) {
+		LM_ERR("invalid index\n");
+		return -1;
+	}
+	return pv_get_hdr_helper(msg, param, res, &tv, idx, idxf);
 }
 
 /**
@@ -2192,6 +2179,98 @@ int pv_get_hdrc(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res)
 		}
 	}
 	return pv_get_sintval(msg, param, res, hcount);
+}
+
+/**
+ *
+ */
+int pv_get_hfl(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
+{
+	int idx = 0;
+	int idxf = 0;
+	pv_value_t tv = {0};
+	via_body_t *vb = NULL;
+	hdr_field_t *hf = NULL;
+	int n = 0;
+	str sval = STR_NULL;
+
+	if(msg==NULL || res==NULL || param==NULL)
+		return -1;
+
+	/* get the name */
+	if(param->pvn.type == PV_NAME_PVAR) {
+		if(pv_get_spec_name(msg, param, &tv)!=0 || (!(tv.flags&PV_VAL_STR))) {
+			LM_ERR("invalid name\n");
+			return -1;
+		}
+	} else {
+		if(param->pvn.u.isname.type == AVP_NAME_STR) {
+			tv.flags = PV_VAL_STR;
+			tv.rs = param->pvn.u.isname.name.s;
+		} else {
+			tv.flags = 0;
+			tv.ri = param->pvn.u.isname.name.n;
+		}
+	}
+	/* get the index */
+	if(pv_get_spec_index(msg, param, &idx, &idxf)!=0) {
+		LM_ERR("invalid index\n");
+		return -1;
+	}
+	if((tv.flags != 0) || (idxf==PV_IDX_ALL)) {
+		return pv_get_hdr_helper(msg, param, res, &tv, idx, idxf);
+	}
+	if (parse_headers(msg, HDR_EOH_F, 0)<0) {
+		LM_DBG("failed to parse sip headers\n");
+		return pv_get_null(msg, param, res);
+	}
+
+	if((tv.flags == 0) && (tv.ri==HDR_VIA_T)) {
+		if(idx<0) {
+			n = 1;
+			/* count Vua header bodies */
+			for(hf=msg->h_via1; hf!=NULL; hf=hf->next) {
+				if(hf->type==HDR_VIA_T) {
+					for(vb=(via_body_t*)hf->parsed; vb!=NULL; vb=vb->next) {
+						n++;
+					}
+				}
+			}
+
+			idx = -idx;
+			if(idx>n) {
+				LM_DBG("index out of range\n");
+				return pv_get_null(msg, param, res);
+			}
+			idx = n - idx;
+		}
+		if(idx==0) {
+			vb = (via_body_t*)(msg->h_via1->parsed);
+			sval.s = vb->name.s;
+			sval.len = vb->bsize;
+			trim(&sval);
+			res->rs = sval;
+			return 0;
+		}
+		n=0;
+		for(hf=msg->h_via1; hf!=NULL; hf=hf->next) {
+			if(hf->type==HDR_VIA_T) {
+				for(vb=(via_body_t*)hf->parsed; vb!=NULL; vb=vb->next) {
+					if(n==idx) {
+						sval.s = vb->name.s;
+						sval.len = vb->bsize;
+						trim(&sval);
+						res->rs = sval;
+						return 0;
+					}
+					n++;
+				}
+			}
+		}
+		LM_DBG("unexpected via index out of range\n");
+		return pv_get_null(msg, param, res);
+	}
+	return pv_get_hdr_helper(msg, param, res, &tv, idx, idxf);
 }
 
 /**
@@ -3296,6 +3375,11 @@ int pv_parse_hdr_name(pv_spec_p sp, str *in)
 	return 0;
 error:
 	return -1;
+}
+
+int pv_parse_hfl_name(pv_spec_t *sp, str *in)
+{
+	return pv_parse_hdr_name(sp, in);
 }
 
 int pv_parse_cnt_name(pv_spec_p sp, str *in)
