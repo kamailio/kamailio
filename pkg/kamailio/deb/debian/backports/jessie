@@ -51,8 +51,8 @@ sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ secsipid/' ${DIST}/rules
 # libwebsockets >= 3.1
 sed -i -e '/libwebsockets-dev/d' -e '/^Package: kamailio-lwsc-modules/,/^$/d' \
 	${DIST}/control
-sed -i -e 's/ lwcs[ ,$]*/ /' ${DIST}/rules
-sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ lwcs/' ${DIST}/rules
+sed -i -e 's/ lwsc[ ,$]*/ /' ${DIST}/rules
+sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ lwsc/' ${DIST}/rules
 
 wrap-and-sort -sat -d ${DIST}
 
