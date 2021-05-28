@@ -175,37 +175,37 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if(pv_parse_spec(&value_param, &pv_value)<00
+	if(pv_parse_spec(&value_param, &pv_value) < 0
 			|| !(pv_is_w(&pv_value)))
 	{
-		LM_ERR("cannot parse value pv or is read only\n");
+		LM_ERR("cannot parse value pv or pv is read-only\n");
 		return -1;
 	}
 
-	if (pv_parse_spec(&values_param, &pv_values) <0
+	if (pv_parse_spec(&values_param, &pv_values) < 0
 			|| pv_values.type != PVT_AVP) {
 		LM_ERR("cannot parse values avp\n");
 		return -1;
 	}
 
-	if(pv_parse_spec(&dstid_param, &pv_dstid)<0
+	if(pv_parse_spec(&dstid_param, &pv_dstid) < 0
 			|| pv_dstid.type!=PVT_AVP)
 	{
 		LM_ERR("cannot parse dstid avp\n");
 		return -1;
 	}
 
-	if(pv_parse_spec(&weight_param, &pv_weight)<0
+	if(pv_parse_spec(&weight_param, &pv_weight) < 0
 			|| pv_weight.type!=PVT_AVP)
 	{
-		LM_ERR("cannot parse dstid avp\n");
+		LM_ERR("cannot parse weight avp\n");
 		return -1;
 	}
 
-	if(pv_parse_spec(&count_param, &pv_count)<0
+	if(pv_parse_spec(&count_param, &pv_count) < 0
 			|| !(pv_is_w(&pv_weight)))
 	{
-		LM_ERR("cannot parse count pv or is read-only\n");
+		LM_ERR("cannot parse count pv or pv is read-only\n");
 		return -1;
 	}
 
@@ -220,7 +220,7 @@ static int mod_init(void)
 	LM_DBG("mt_char_list=%s \n", mt_char_list.s);
 	mt_char_table_init();
 
-	/* binding to mysql module */
+	/* binding to database module */
 	if(db_bind_mod(&db_url, &mt_dbf))
 	{
 		LM_ERR("database module not found\n");
@@ -614,7 +614,7 @@ static int mt_load_db(m_tree_t *pt)
 		if(RES_ROWS(db_res)[0].values[0].type != DB1_STRING
 				|| RES_ROWS(db_res)[0].values[1].type != DB1_STRING)
 		{
-			LM_ERR("wrond column types in db table (%d / %d)\n",
+			LM_ERR("wrong column types in db table (%d / %d)\n",
 					RES_ROWS(db_res)[0].values[0].type,
 					RES_ROWS(db_res)[0].values[1].type);
 			goto error;
@@ -1029,7 +1029,7 @@ again:
 	if(tr==NULL)
 	{
 		/* no tree with such name*/
-		rpc->fault(ctx, 404, "Not found tree");
+		rpc->fault(ctx, 404, "Tree not found");
 		goto error;
 	}
 
@@ -1038,7 +1038,7 @@ again:
 		LM_DBG("no prefix found in [%.*s] for [%.*s]\n",
 				tname.len, tname.s,
 				tomatch.len, tomatch.s);
-		rpc->fault(ctx, 404, "Not found");
+		rpc->fault(ctx, 404, "Prefix not found");
 	}
 
 error:
