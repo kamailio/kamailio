@@ -203,7 +203,7 @@ static int mod_init(void)
 	}
 
 	if(pv_parse_spec(&count_param, &pv_count) < 0
-			|| !(pv_is_w(&pv_weight)))
+			|| !(pv_is_w(&pv_count)))
 	{
 		LM_ERR("cannot parse count pv or pv is read-only\n");
 		return -1;
