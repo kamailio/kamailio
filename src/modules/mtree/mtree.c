@@ -44,6 +44,7 @@ extern pv_spec_t pv_value;
 extern pv_spec_t pv_values;
 extern pv_spec_t pv_dstid;
 extern pv_spec_t pv_weight;
+extern pv_spec_t pv_count;
 extern int _mt_tree_type;
 extern int _mt_ignore_duplicates;
 extern int _mt_allow_duplicates;
@@ -598,6 +599,13 @@ int mt_match_prefix(struct sip_msg *msg, m_tree_t *it,
 			avp_value.n = (int)tmp_list[2*i];
 			add_avp(dstid_name_type, dstid_avp_name, avp_value);
 		}
+	}
+	memset(&val, 0, sizeof(pv_value_t));
+	val.flags = PV_VAL_INT;
+	val.ri = n;
+	if(pv_value.setf(msg, &pv_count.pvp, (int)EQ_T, &val)<0) {
+		LM_ERR("setting PV count failed\n");
+		return -2;
 	}
 
 	return 0;
