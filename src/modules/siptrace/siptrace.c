@@ -195,6 +195,10 @@ static str trace_local_ip = {NULL, 0};
 static db1_con_t *db_con = NULL; /*!< database connection */
 static db_func_t db_funcs;		  /*!< Database functions */
 
+int pv_parse_siptrace_name(pv_spec_t *sp, str *in);
+int pv_get_siptrace(sip_msg_t *msg, pv_param_t *param,
+		pv_value_t *res);
+
 /*! \brief
  * Exported functions
  */
@@ -276,6 +280,14 @@ stat_export_t siptrace_stats[] = {
 /* clang-format on */
 #endif
 
+static pv_export_t mod_pvs[] = {
+
+	{ {"siptrace", (sizeof("siptrace")-1)}, PVT_OTHER, pv_get_siptrace, 0,
+		pv_parse_siptrace_name, 0, 0, 0 },
+
+	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
+};
+
 /*! \brief module exports */
 /* clang-format off */
 struct module_exports exports = {
@@ -283,9 +295,9 @@ struct module_exports exports = {
 	DEFAULT_DLFLAGS, /*!< dlopen flags */
 	cmds,			/*!< exported functions */
 	params,			/*!< exported parameters */
-	0,				/*!< exported rpc functions */
-	0,				/*!< exported pseudo-variables */
-	0,				/*!< response function */
+	0,			/*!< exported rpc functions */
+	mod_pvs,		/*!< exported pseudo-variables */
+	0,			/*!< response function */
 	mod_init,		/*!< module initialization function */
 	child_init,		/*!< child initialization function */
 	destroy			/*!< destroy function */
@@ -2039,6 +2051,8 @@ static void trace_free_info(void* trace_info)
 	shm_free(trace_info);
 }
 
+static siptrace_data_t* siptrace_event_data = NULL;
+
 static int siptrace_exec_evcb_msg(siptrace_data_t *sto)
 {
 	int backup_rt;
@@ -2068,6 +2082,7 @@ static int siptrace_exec_evcb_msg(siptrace_data_t *sto)
 	set_route_type(EVENT_ROUTE);
 	init_run_actions_ctx(&ctx);
 
+	siptrace_event_data = sto;
 	if(_siptrace_evrt_msg_idx>=0) {
 		run_top_route(event_rt.rlist[_siptrace_evrt_msg_idx], &msg, &ctx);
 	} else {
@@ -2080,6 +2095,7 @@ static int siptrace_exec_evcb_msg(siptrace_data_t *sto)
 			sr_kemi_act_ctx_set(bctx);
 		}
 	}
+	siptrace_event_data = NULL;
 
 	free_sip_msg(&msg);
 	set_route_type(backup_rt);
@@ -2482,6 +2498,56 @@ static sr_kemi_t sr_kemi_siptrace_exports[] = {
 
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };
+
+/**
+ *
+ */
+int pv_get_siptrace(sip_msg_t *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	if (siptrace_event_data==NULL) {
+		return pv_get_null(msg, param, res);
+	}
+
+	switch(param->pvn.u.isname.name.n) {
+		case 1: /* dst_uri*/
+			return pv_get_strval(msg, param, res, &siptrace_event_data->toip);
+		default:
+			/* 0 - src_uri */
+			return pv_get_strval(msg, param, res, &siptrace_event_data->fromip);
+	}
+}
+
+/**
+ *
+ */
+int pv_parse_siptrace_name(pv_spec_t *sp, str *in)
+{
+	if(sp==NULL || in==NULL || in->len<=0)
+		return -1;
+
+	switch(in->len)
+	{
+		case 7:
+			if(strncmp(in->s, "src_uri", 7)==0)
+				sp->pvp.pvn.u.isname.name.n = 0;
+			else if(strncmp(in->s, "dst_uri", 7)==0)
+				sp->pvp.pvn.u.isname.name.n = 1;
+			else goto error;
+		break;
+		default:
+			goto error;
+	}
+	sp->pvp.pvn.type = PV_NAME_INTSTR;
+	sp->pvp.pvn.u.isname.type = 0;
+
+	return 0;
+
+error:
+	LM_ERR("unknown PV snd name %.*s\n", in->len, in->s);
+	return -1;
+}
+
 /* clang-format on */
 
 /**
