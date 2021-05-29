@@ -139,9 +139,18 @@ modparam("mtree", "db_table", "mtrees")
 		</listitem>
 		<listitem>
 			<para>
-				type - the  type of tree elements (0 = string, 2 = integer).
-				It is valid only when the (tprefix, tvalue) pairs are loaded
+				type - the  type of tree elements (0 = string, 1 = d:w, 2 = integer).
+				None-zero is valid only when the (tprefix, tvalue) pairs are loaded
 				(not for multi-column values).
+			</para>
+			<para>
+				When the type is 1, the value in database has to be two integers
+				separated by colon, the first one (d - dstid) will be stored in
+				pv_dstid AVP and the second (w - weight) will be stored in
+				pv_weight AVP. If in the matching records are many with the same
+				dstid, it will keep only the one with the longest prefix. Then
+				the records are ordered by the weight and stored in the specified
+				AVPs. The number of stored records is saved in pv_count variable.
 			</para>
 		</listitem>
 		<listitem>
@@ -319,6 +328,67 @@ modparam("mtree", "pv_values", "$avp(mtvals)")
 	</section>
 
 	<section>
+	    <title><varname>pv_dstid</varname> (string)</title>
+	    <para>
+		The AVP name where to store the first integer value when tree type is 1.
+		</para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>$avp(tdstid)</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>pv_dstid</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("mtree", "pv_dstid", "$var(dstid)")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>pv_weight</varname> (string)</title>
+	    <para>
+		The AVP name where to store the second integer value when tree type is 1.
+		</para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>$avp(tweight)</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>pv_weight</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("mtree", "pv_dstid", "$var(weight)")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>pv_count</varname> (string)</title>
+	    <para>
+		The PV spec where to store the count of matched values when tree type
+		is 1. It can be any writable PV.
+		</para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>$avp(tcount)</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>pv_count</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("mtree", "pv_count", "$var(count)")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
 	    <title><varname>mt_tree_type</varname> (integer)</title>
 	    <para>
 		Default payload type for trees data stored in 'db_table'. Documented
@@ -389,8 +459,8 @@ modparam("mtree", "mt_allow_duplicates", 1)
 	    </title>
 	    <para>
 		Match 'pv' value against 'mtree'. If 'mtree' type is 0 or 2 and value
-		of 'mode' is NOT 2, sets a value of the longest matching prefix to
-		pseudo variable specified by pv_value parameter. If 'mtree' type is 
+		of 'mode' is NOT 2, sets associated value of the longest matching prefix
+		to pseudo variable specified by pv_value parameter. If 'mtree' type is
 		0 or 2 and value of 'mode' is 2, sets values of all matching prefixes
 		to avp specified by pv_values parameter so that a value of longest
 		matching prefix is in avp index 0.  Parameter 'mode' can be an integer
