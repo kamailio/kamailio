@@ -159,6 +159,8 @@ static inline struct via_body* via_body_cloner( char* new_buf,
 
 		/* hdr (str type) */
 		new_via->hdr.s=translate_pointer(new_buf,org_buf,org_via->hdr.s);
+		/* bstart (char* type) */
+		new_via->bstart=translate_pointer(new_buf,org_buf,org_via->bstart);
 		/* name (str type) */
 		new_via->name.s=translate_pointer(new_buf,org_buf,org_via->name.s);
 		/* version (str type) */

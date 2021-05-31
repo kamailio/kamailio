@@ -2667,6 +2667,7 @@ endofpacket:
 	/*DBG("parse_via: rest=<%s>\n", tmp);*/
 
 	vb->error = PARSE_OK;
+	vb->bstart = buffer;
 	vb->bsize = tmp - buffer;
 	if(vb->port_str.s) {
 		vb->port = str2s(vb->port_str.s, vb->port_str.len, &err);
@@ -2680,6 +2681,7 @@ endofpacket:
 nextvia:
 	DBG("parsing via: next via\n");
 	vb->error = PARSE_OK;
+	vb->bstart = buffer;
 	vb->bsize = tmp - buffer;
 	if(vb->port_str.s) {
 		vb->port = str2s(vb->port_str.s, vb->port_str.len, &err);

@@ -76,6 +76,7 @@ typedef struct via_body {
 	str port_str;
 	str params;
 	str comment;
+	char *bstart;                 /* body content, not including hdr */
 	int bsize;                    /* body size, not including hdr */
 	struct via_param* param_lst;  /* list of parameters*/
 	struct via_param* last_param; /*last via parameter, internal use*/
