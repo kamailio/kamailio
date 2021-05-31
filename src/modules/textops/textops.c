@@ -1597,6 +1597,52 @@ static inline int find_line_start(char *text, unsigned int text_len,
 	return 0;
 }
 
+static inline int find_hdr_line_start(char *hname, unsigned int hname_len,
+		char **buf, unsigned int *buf_len)
+{
+	hdr_field_t h1;
+	hdr_field_t h2;
+	str sname;
+	char *ch, *start;
+	unsigned int len;
+
+	sname.s = hname;
+	sname.len = hname_len;
+
+	start = *buf;
+	len = *buf_len;
+	if(parse_hname2_str(&sname, &h1)==NULL) {
+		LM_ERR("not a header name: %.*s\n", hname_len, hname);
+		return 0;
+	}
+
+	while (hname_len <= len) {
+		if(parse_hname2(start, start + hname_len, &h2)!=NULL) {
+			if(h1.type>0 && h1.type==h2.type) {
+				*buf = start;
+				*buf_len = len;
+				return 1;
+			} else if(cmp_hdrname_str(&h1.name, &h2.name)==0) {
+				*buf = start;
+				*buf_len = len;
+				return 1;
+			}
+		}
+		if ((ch = memchr(start, 13, len - 1))) {
+			if (*(ch + 1) != 10) {
+				LM_ERR("No LF after CR\n");
+				return 0;
+			}
+			len = len - (ch - start + 2);
+			start = ch + 2;
+		} else {
+			LM_ERR("No CRLF found\n");
+			return 0;
+		}
+	}
+	return 0;
+}
+
 /**
  * return:
  *  1: multipart
@@ -1645,7 +1691,7 @@ static int ki_filter_body(struct sip_msg* msg, str *content_type)
 	start = body.s;
 	len = body.len;
 
-	while (find_line_start("Content-Type: ", 14, &start, &len))
+	while (find_hdr_line_start("Content-Type: ", 14, &start, &len))
 	{
 		start = start + 14;
 		len = len - 14;
@@ -3187,7 +3233,7 @@ static int ki_remove_multibody(sip_msg_t* msg, str* content_type)
 	start = body.s;
 	len = body.len;
 
-	while (find_line_start("Content-Type: ", 14, &start, &len))
+	while (find_hdr_line_start("Content-Type: ", 14, &start, &len))
 	{
 		end = start + 14;
 		len = len - 14;
@@ -3293,7 +3339,7 @@ static int ki_get_body_part_helper(sip_msg_t* msg, str* ctype, pv_spec_t *dst,
 	len = body.len;
 
 	/* note: header body can follow just after name: - fixit */
-	while (find_line_start("Content-Type: ", 14, &start, &len))
+	while (find_hdr_line_start("Content-Type: ", 14, &start, &len))
 	{
 		end = start + 14;
 		len = len - 14;
