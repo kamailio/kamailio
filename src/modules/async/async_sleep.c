@@ -370,6 +370,10 @@ int async_ms_sleep(sip_msg_t *msg, int milliseconds, cfg_action_t *act, str *cbn
 	async_task_param_t *atp;
 	async_task_t *at;
 
+	if (_async_ms_list==NULL) {
+		LM_ERR("async timer list not initialized - check modparams\n");
+		return -1;
+	}
 	if(milliseconds <= 0) {
 		LM_ERR("negative or zero sleep time (%d)\n", milliseconds);
 		return -1;
