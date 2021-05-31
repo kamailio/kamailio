@@ -19,4 +19,6 @@ ifeq ($(OS),solaris)
        LIBS=-L$(LOCALBASE)/lib -L/usr/sfw/lib -L/usr/local/lib -L/opt/sfw/lib -I/opt/csw/lib -lldap 
 endif
 
+DEFS+=-DLDAP_DEPRECATED=1
+
 include ../../Makefile.modules
