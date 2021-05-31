@@ -327,6 +327,7 @@ static int ki_secsipid_add_identity(sip_msg_t *msg, str *origtn, str *desttn,
 			attest->s, origid->s, x5u->s, keypath->s, &ibody.s);
 
 	if(ibody.len<=0) {
+		LM_ERR("failed to get identity header body (%d)\n", ibody.len);
 		goto error;
 	}
 
@@ -526,9 +527,7 @@ static int secsipid_libopt_param(modparam_t type, void *val)
 		return -1;
 	}
 	sit->s = *((str*)val);
-	if(secsipid_libopt_list!=NULL) {
-		sit->next = secsipid_libopt_list;
-	}
+	sit->next = secsipid_libopt_list;
 	secsipid_libopt_list = sit;
 
 	return 0;
