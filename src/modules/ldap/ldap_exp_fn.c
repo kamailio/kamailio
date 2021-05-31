@@ -79,40 +79,19 @@ int ldap_search_impl(struct sip_msg *_msg, str *ldap_url)
 	return ld_result_count;
 }
 
-int ldap_write_result(struct sip_msg *_msg, struct ldap_result_params *_lrp,
-		struct subst_expr *_se)
+int ldap_result_toavp(sip_msg_t *_msg, str *attrname, struct subst_expr *_se,
+		int_str *dst_avp_name, int dst_avp_type, int dst_avp_val_type)
 {
-	int_str dst_avp_name, dst_avp_val;
-	unsigned short dst_avp_type;
+	int_str dst_avp_val;
 	int nmatches, rc, i, added_avp_count = 0;
 	struct berval **attr_vals;
 	str avp_val_str, *subst_result = NULL;
 	int avp_val_int;
 
 	/*
-	* get dst AVP name (dst_avp_name)
-	*/
-
-	if(pv_get_avp_name(
-			   _msg, &(_lrp->dst_avp_spec.pvp), &dst_avp_name, &dst_avp_type)
-			!= 0) {
-		LM_ERR("error getting dst AVP name\n");
-		return -2;
-	}
-	if(dst_avp_type & AVP_NAME_STR) {
-		if(dst_avp_name.s.len >= STR_BUF_SIZE) {
-			LM_ERR("dst AVP name too long\n");
-			return -2;
-		}
-		strncpy(str_buf, dst_avp_name.s.s, dst_avp_name.s.len);
-		str_buf[dst_avp_name.s.len] = '\0';
-		dst_avp_name.s.s = str_buf;
-	}
-
-	/*
 	* get LDAP attr values
 	*/
-	if((rc = ldap_get_attr_vals(&_lrp->ldap_attr_name, &attr_vals)) != 0) {
+	if((rc = ldap_get_attr_vals(attrname, &attr_vals)) != 0) {
 		if(rc > 0) {
 			return -1;
 		} else {
@@ -136,18 +115,18 @@ int ldap_write_result(struct sip_msg *_msg, struct ldap_result_params *_lrp,
 			avp_val_str = *subst_result;
 		}
 
-		if(_lrp->dst_avp_val_type == 1) {
+		if(dst_avp_val_type == 1) {
 			/* try to convert ldap value to integer */
 			if(!str2sint(&avp_val_str, &avp_val_int)) {
 				dst_avp_val.n = avp_val_int;
-				rc = add_avp(dst_avp_type, dst_avp_name, dst_avp_val);
+				rc = add_avp(dst_avp_type, *dst_avp_name, dst_avp_val);
 			} else {
 				continue;
 			}
 		} else {
 			/* save ldap value as string */
 			dst_avp_val.s = avp_val_str;
-			rc = add_avp(dst_avp_type | AVP_VAL_STR, dst_avp_name, dst_avp_val);
+			rc = add_avp(dst_avp_type | AVP_VAL_STR, *dst_avp_name, dst_avp_val);
 		}
 
 		if(subst_result != NULL) {
@@ -172,6 +151,35 @@ int ldap_write_result(struct sip_msg *_msg, struct ldap_result_params *_lrp,
 	} else {
 		return -1;
 	}
+}
+
+int ldap_write_result(struct sip_msg *_msg, struct ldap_result_params *_lrp,
+		struct subst_expr *_se)
+{
+	int_str dst_avp_name;
+	unsigned short dst_avp_type;
+
+	/*
+	* get dst AVP name (dst_avp_name)
+	*/
+	if(pv_get_avp_name(
+			   _msg, &(_lrp->dst_avp_spec.pvp), &dst_avp_name, &dst_avp_type)
+			!= 0) {
+		LM_ERR("error getting dst AVP name\n");
+		return -2;
+	}
+	if(dst_avp_type & AVP_NAME_STR) {
+		if(dst_avp_name.s.len >= STR_BUF_SIZE) {
+			LM_ERR("dst AVP name too long\n");
+			return -2;
+		}
+		strncpy(str_buf, dst_avp_name.s.s, dst_avp_name.s.len);
+		str_buf[dst_avp_name.s.len] = '\0';
+		dst_avp_name.s.s = str_buf;
+	}
+
+	return ldap_result_toavp(_msg, &_lrp->ldap_attr_name, _se,
+			&dst_avp_name, dst_avp_type, _lrp->dst_avp_val_type);
 }
 
 int ldap_result_next(void)
