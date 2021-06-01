@@ -66,7 +66,7 @@ Ovidiu Sas
               5.5. nat_uac_test(flags)
               5.6. is_rfc1918(ip_address)
               5.7. add_contact_alias([ip_addr, port, proto])
-              5.8. handle_ruri_alias()
+              5.8. handle_ruri_alias([mode])
               5.9. set_contact_alias([trim])
               5.10. set_alias_to_pv(target_avp)
 
@@ -157,7 +157,7 @@ Chapter 1. Admin Guide
         5.5. nat_uac_test(flags)
         5.6. is_rfc1918(ip_address)
         5.7. add_contact_alias([ip_addr, port, proto])
-        5.8. handle_ruri_alias()
+        5.8. handle_ruri_alias([mode])
         5.9. set_contact_alias([trim])
         5.10. set_alias_to_pv(target_avp)
 
@@ -497,7 +497,7 @@ modparam("nathelper", "nat_addr_mode", 0)
    5.5. nat_uac_test(flags)
    5.6. is_rfc1918(ip_address)
    5.7. add_contact_alias([ip_addr, port, proto])
-   5.8. handle_ruri_alias()
+   5.8. handle_ruri_alias([mode])
    5.9. set_contact_alias([trim])
    5.10. set_alias_to_pv(target_avp)
 
@@ -668,7 +668,7 @@ if(is_rfc1918("$rd")) {
     };
 ...
 
-5.8.  handle_ruri_alias()
+5.8.  handle_ruri_alias([mode])
 
    Checks if the Request URI has an “alias” parameter and if so, removes
    it and sets the “$du” based on its value. Note that this means that
@@ -676,6 +676,10 @@ if(is_rfc1918("$rd")) {
    URI rather than the Request URI itself. If you call handle_ruri_alias()
    on a request, make sure that you screen the alias parameter value of
    Request URI the same way as you would screen the Request URI itself.
+
+   The optional parameter mode can be 0 to consume first alias parameter,
+   otherwise it consumes the last alias parameter. If the parameter mode
+   is not provided, it consumes the first parameter.
 
    Returns 1 if “;alias” parameter was found and “$du” was set and the
    “$ru” rewritten, 2 if the alias parameter was not found and nothing was
