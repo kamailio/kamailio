@@ -3203,6 +3203,28 @@ char* tr_parse_paramlist(str* in, trans_t *t)
 		goto unknown;
 	}
 
+	if(t->subtype == TR_PL_COUNT) {
+		if(*p==TR_PARAM_MARKER) {
+			start_pos = ++p;
+			_tr_parse_sparamx(p, p0, tp, spec, ps, in, s, 1);
+			t->params = tp;
+			tp = 0;
+			if (t->params->type != TR_PARAM_SPEC && p - start_pos != 1) {
+				LM_ERR("invalid separator in transformation: "
+						"%.*s\n", in->len, in->s);
+				goto error;
+			}
+			while(*p && (*p==' ' || *p=='\t' || *p=='\n')) p++;
+			if(*p!=TR_RBRACKET) {
+				LM_ERR("invalid name transformation: %.*s!\n",
+						in->len, in->s);
+				goto error;
+			}
+		}
+		goto done;
+	}
+
+	/* now transformations with mandatory parameters */
 	if(*p!=TR_PARAM_MARKER)
 	{
 		LM_ERR("invalid %.*s transformation: %.*s\n",
@@ -3223,29 +3245,15 @@ char* tr_parse_paramlist(str* in, trans_t *t)
 		while(is_in_str(p, in) && (*p==' ' || *p=='\t' || *p=='\n')) p++;
 	}
 
-	if(t->subtype == TR_PL_COUNT) {
-		if(*p==TR_PARAM_MARKER) {
-			start_pos = ++p;
-			_tr_parse_sparamx(p, p0, tp, spec, ps, in, s, 1);
-			t->params = tp;
-			tp = 0;
-			if (tp->type != TR_PARAM_SPEC && p - start_pos != 1) {
-				LM_ERR("invalid separator in transformation: "
-						"%.*s\n", in->len, in->s);
-				goto error;
-			}
-		}
-	} else {
-		if(*p==TR_PARAM_MARKER) {
-			start_pos = ++p;
-			_tr_parse_sparam(p, p0, tp, spec, ps, in, s);
-			t->params->next = tp;
-			tp = 0;
-			if (p - start_pos != 1) {
-				LM_ERR("invalid separator in transformation: "
-						"%.*s\n", in->len, in->s);
-				goto error;
-			}
+	if(*p==TR_PARAM_MARKER) {
+		start_pos = ++p;
+		_tr_parse_sparam(p, p0, tp, spec, ps, in, s);
+		t->params->next = tp;
+		tp = 0;
+		if (p - start_pos != 1) {
+			LM_ERR("invalid separator in transformation: "
+					"%.*s\n", in->len, in->s);
+			goto error;
 		}
 	}
 
@@ -3256,6 +3264,7 @@ char* tr_parse_paramlist(str* in, trans_t *t)
 		goto error;
 	}
 
+done:
 	t->name = name;
 	return p;
 
