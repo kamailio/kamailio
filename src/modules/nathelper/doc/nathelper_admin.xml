@@ -794,17 +794,21 @@ if(is_rfc1918("$rd")) {
 
 	<section id="nathelper.f.handle_ruri_alias">
 		<title>
-		<function moreinfo="none">handle_ruri_alias()</function>
+		<function moreinfo="none">handle_ruri_alias([mode])</function>
 		</title>
 		<para>
 		Checks if the Request URI has an <quote>alias</quote>
 		parameter and if so, removes it and sets the <quote>$du</quote> based
-		on its value.  Note that this means that routing of request is based on 
-		<quote>;alias</quote> parameter value of the Request URI rather than 
+		on its value. Note that this means that routing of request is based on
+		<quote>;alias</quote> parameter value of the Request URI rather than
 		the Request URI itself. If you call <function>handle_ruri_alias()</function>
 		on a request, make sure that you screen the alias parameter value of
-		Request URI the same way as you would screen the
-		Request URI itself.
+		Request URI the same way as you would screen the Request URI itself.
+		</para>
+		<para>
+		The optional parameter mode can be 0 to consume first alias parameter,
+		otherwise it consumes the last alias parameter. If the parameter mode is
+		not provided, it consumes the first parameter.
 		</para>
 		<para>
 		Returns <emphasis>1</emphasis> if <quote>;alias</quote> parameter was
