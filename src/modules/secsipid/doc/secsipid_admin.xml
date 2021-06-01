@@ -30,6 +30,17 @@
 		loads "secsipid_proc.so" in child init callback in order to initialize
 		the "libsecsipid" per child process.
 	</para>
+	<para>
+		The libsecsipid is provided by secsipidx project:
+		<ulink url="https://github.com/asipto/secsipidx">https://github.com/asipto/secsipidx</ulink>.
+	</para>
+	<para>
+		In case of failure, the functions in this module return error codes
+		(the negative values) listed in the code of libsecsipid, pretty much
+		at the top of:
+		<ulink url="https://github.com/asipto/secsipidx/blob/main/secsipid/secsipid.go"
+			>https://github.com/asipto/secsipidx/blob/main/secsipid/secsipid.go</ulink>.
+	</para>
 	</section>
 	<section>
 	<title>Dependencies</title>
