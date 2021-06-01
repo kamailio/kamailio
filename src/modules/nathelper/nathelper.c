@@ -112,6 +112,7 @@ static int add_contact_alias_3_f(struct sip_msg *, char *, char *, char *);
 static int set_contact_alias_f(struct sip_msg *msg, char *str1, char *str2);
 static int w_set_contact_alias_f(struct sip_msg *msg, char *str1, char *str2);
 static int handle_ruri_alias_f(struct sip_msg *, char *, char *);
+static int handle_ruri_alias_mode_f(sip_msg_t *msg, char *pmode, char *p2);
 static int pv_get_rr_count_f(struct sip_msg *, pv_param_t *, pv_value_t *);
 static int pv_get_rr_top_count_f(struct sip_msg *, pv_param_t *, pv_value_t *);
 static int fix_nated_sdp_f(struct sip_msg *, char *, char *);
@@ -217,6 +218,9 @@ static cmd_export_t cmds[] = {
 		fixup_int_1, 0, REQUEST_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
 	{"handle_ruri_alias",  (cmd_function)handle_ruri_alias_f,    0,
 		0, 0,
+		REQUEST_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
+	{"handle_ruri_alias",  (cmd_function)handle_ruri_alias_mode_f, 1,
+		fixup_igp_null, fixup_free_igp_null,
 		REQUEST_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
 	{"fix_nated_sdp",      (cmd_function)fix_nated_sdp_f,        1,
 		fixup_fix_sdp,  0,
@@ -1117,14 +1121,14 @@ static int add_contact_alias_3_f(
 #define ALIAS_LEN (sizeof(ALIAS) - 1)
 
 /*
- * Checks if r-uri has alias param and if so, removes it and sets $du
- * based on its value.
+ * Checks if r-uri has alias param and if so, removes the first (mode==0)
+ * or the last one (mode!=0) and sets $du based on its value.
  */
-static int handle_ruri_alias(struct sip_msg *msg)
+static int ki_handle_ruri_alias_mode(struct sip_msg *msg, int mode)
 {
 	str uri, proto;
 	char buf[MAX_URI_SIZE], *val, *sep, *at, *next, *cur_uri, *rest, *port,
-			*trans;
+			*trans, *start;
 	unsigned int len, rest_len, val_len, alias_len, proto_type, cur_uri_len,
 			ip_port_len;
 
@@ -1138,11 +1142,20 @@ static int handle_ruri_alias(struct sip_msg *msg)
 		LM_DBG("no params\n");
 		return 2;
 	}
-	while(rest_len >= ALIAS_LEN) {
-		if(strncmp(rest, ALIAS, ALIAS_LEN) == 0)
-			break;
+	start = NULL;
+	/* locate last alias parameter */
+	while(rest_len > ALIAS_LEN + 4) {
+		if(strncmp(rest, ALIAS, ALIAS_LEN) == 0) {
+			start = rest;
+			if(mode==0) {
+				/* use first alias parameter */
+				break;
+			}
+			rest = rest + ALIAS_LEN;
+			rest_len = rest_len - ALIAS_LEN;
+		}
 		sep = memchr(rest, 59 /* ; */, rest_len);
-		if(sep == NULL) {
+		if(sep == NULL && start == NULL) {
 			LM_DBG("no alias param\n");
 			return 2;
 		} else {
@@ -1151,10 +1164,11 @@ static int handle_ruri_alias(struct sip_msg *msg)
 		}
 	}
 
-	if(rest_len < ALIAS_LEN) {
+	if(start == NULL) {
 		LM_DBG("no alias param\n");
 		return 2;
 	}
+	rest = start;
 
 	/* set dst uri based on alias param value */
 	val = rest + ALIAS_LEN;
@@ -1225,9 +1239,36 @@ static int handle_ruri_alias(struct sip_msg *msg)
 	return rewrite_uri(msg, &uri);
 }
 
+/*
+ * Checks if r-uri has alias param and if so, removes the first one and sets $du
+ * based on its value.
+ */
+static int ki_handle_ruri_alias(struct sip_msg *msg)
+{
+	return ki_handle_ruri_alias_mode(msg, 0);
+}
+
+/*
+ * Checks if r-uri has alias param and if so, removes the first one and sets $du
+ * based on its value.
+ */
 static int handle_ruri_alias_f(struct sip_msg *msg, char *str1, char *str2)
 {
-	return handle_ruri_alias(msg);
+	return ki_handle_ruri_alias_mode(msg, 0);
+}
+
+/*
+ * Checks if r-uri has alias param and if so, removes the first or the last one
+ * and sets $du based on its value.
+ */
+static int handle_ruri_alias_mode_f(struct sip_msg *msg, char *pmode, char *str2)
+{
+	int mode = 0;
+	if(fixup_get_ivalue(msg, (gparam_t*)pmode, &mode)<0) {
+		LM_ERR("failed to get the value for mode parameter\n");
+		return -1;
+	}
+	return ki_handle_ruri_alias_mode(msg, mode);
 }
 
 /*
@@ -2745,8 +2786,13 @@ static sr_kemi_t sr_kemi_nathelper_exports[] = {
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("nathelper"), str_init("handle_ruri_alias"),
-		SR_KEMIP_INT, handle_ruri_alias,
+		SR_KEMIP_INT, ki_handle_ruri_alias,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("nathelper"), str_init("handle_ruri_alias_mode"),
+		SR_KEMIP_INT, ki_handle_ruri_alias_mode,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("nathelper"), str_init("is_rfc1918"),
