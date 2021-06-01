@@ -100,6 +100,14 @@ Chapter 1. Admin Guide
    module loads "secsipid_proc.so" in child init callback in order to
    initialize the "libsecsipid" per child process.
 
+   The libsecsipid is provided by secsipidx project:
+   https://github.com/asipto/secsipidx.
+
+   In case of failure, the functions in this module return error codes
+   (the negative values) listed in the code of libsecsipid, pretty much at
+   the top of:
+   https://github.com/asipto/secsipidx/blob/main/secsipid/secsipid.go.
+
 2. Dependencies
 
    2.1. Kamailio Modules
