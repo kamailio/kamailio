@@ -55,7 +55,8 @@ enum _tr_uri_subtype {
 	TR_URI_SURI
 };
 enum _tr_param_subtype {
-	TR_PL_NONE=0, TR_PL_VALUE, TR_PL_VALUEAT, TR_PL_NAME, TR_PL_COUNT
+	TR_PL_NONE=0, TR_PL_VALUE, TR_PL_VALUEAT, TR_PL_NAME, TR_PL_COUNT,
+	TR_PL_IN
 };
 enum _tr_nameaddr_subtype {
 	TR_NA_NONE=0, TR_NA_NAME, TR_NA_URI, TR_NA_LEN
