@@ -40,6 +40,7 @@ bootstrap Kamailio;
 
 BEGIN {
 	$SIG{'__DIE__'} = sub {
+		die @_ if( $^S or not defined $^S );
 		Kamailio::Message::log(undef, L_ERR, "perl error: $_[0]\n");
         };
 	$SIG{'__WARN__'} = sub {
