@@ -1816,7 +1816,8 @@ static int ki_remove_hf_idx(sip_msg_t* msg, str* hname, int idx)
 		return -1;
 	}
 
-	if(parse_hname2_str(hname, &hfm)==NULL) {
+	parse_hname2_str(hname, &hfm);
+	if(hfm.type==HDR_ERROR_T) {
 		LM_ERR("failed to parse header name [%.*s]\n", hname->len, hname->s);
 		return -1;
 	}
@@ -2098,12 +2099,13 @@ static int ki_hname_gparam(str *hname, gparam_t *gp)
 
 	gp->v.str = *hname;
 
-	if (parse_hname2_short(hbuf, hbuf + gp->v.str.len + 1, &hdr)==0) {
+	parse_hname2_short(hbuf, hbuf + gp->v.str.len + 1, &hdr);
+	if(hdr.type==HDR_ERROR_T) {
 		LM_ERR("error parsing header name: %.*s\n", hname->len, hname->s);
 		return -1;
 	}
 
-	if (hdr.type!=HDR_OTHER_T && hdr.type!=HDR_ERROR_T) {
+	if (hdr.type!=HDR_OTHER_T) {
 		LM_DBG("using hdr type (%d) instead of <%.*s>\n",
 				hdr.type, gp->v.str.len, gp->v.str.s);
 		gp->v.str.s = NULL;
@@ -3713,17 +3715,19 @@ static int hname_fixup(void** param, int param_no)
 	gp->v.str.s[gp->v.str.len] = ':';
 	gp->v.str.len++;
 
-	if (parse_hname2_short(gp->v.str.s, gp->v.str.s + gp->v.str.len, &hdr)==0)
+	parse_hname2_short(gp->v.str.s, gp->v.str.s + gp->v.str.len, &hdr);
+
+	gp->v.str.len--;
+	gp->v.str.s[gp->v.str.len] = c;
+
+	if(hdr.type==HDR_ERROR_T)
 	{
 		LM_ERR("error parsing header name\n");
 		pkg_free(gp);
 		return E_UNSPEC;
 	}
 
-	gp->v.str.len--;
-	gp->v.str.s[gp->v.str.len] = c;
-
-	if (hdr.type!=HDR_OTHER_T && hdr.type!=HDR_ERROR_T)
+	if (hdr.type!=HDR_OTHER_T)
 	{
 		LM_DBG("using hdr type (%d) instead of <%.*s>\n",
 				hdr.type, gp->v.str.len, gp->v.str.s);
