@@ -219,21 +219,25 @@ int ksr_hname_init_config(void)
  * - fills hdr structure (must not be null)
  * - set hdr->type=HDR_ERROR_T in case of parsing error
  * - if emode==1, then parsing does not expect : after header name
+ * - if logmode==1, then print error log messages on parsing failure
  * - returns pointer after : if emode==0 or after header name if emode==1
+ *   in case of parsing error, returns begin and sets hdr->type to HDR_ERROR_T
  */
 char *parse_sip_header_name(char* const begin, const char* const end,
-		hdr_field_t* const hdr, int emode)
+		hdr_field_t* const hdr, int emode, int logmode)
 {
 	char *p;
 	int i;
 
-	if (end <= begin) {
+	if (begin == NULL || end == NULL || end <= begin) {
 		hdr->type = HDR_ERROR_T;
 		return begin;
 	}
 	if(_ksr_hname_chars_idx[(unsigned char)(*begin)] == 0) {
-		LM_ERR("invalid start of header name for [%.*s]\n",
-				(int)(end-begin), begin);
+		if(likely(logmode)) {
+			LM_ERR("invalid start of header name for [%.*s]\n",
+					(int)(end-begin), begin);
+		}
 		hdr->type = HDR_ERROR_T;
 		return begin;
 	}
@@ -262,8 +266,10 @@ char *parse_sip_header_name(char* const begin, const char* const end,
 		}
 		if(*p != ' ' && *p != '\t') {
 			/* no white space - bad header name format */
-			LM_ERR("invalid header name for [%.*s]\n",
-					(int)(end-begin), begin);
+			if(likely(logmode)) {
+				LM_ERR("invalid header name for [%.*s]\n",
+						(int)(end-begin), begin);
+			}
 			hdr->type = HDR_ERROR_T;
 			return begin;
 		}
@@ -271,8 +277,10 @@ char *parse_sip_header_name(char* const begin, const char* const end,
 
 	if(p == end) {
 		/* no : found - emode==0 */
-		LM_ERR("invalid end of header name for [%.*s]\n",
-				(int)(end-begin), begin);
+		if(likely(logmode)) {
+			LM_ERR("invalid end of header name for [%.*s]\n",
+					(int)(end-begin), begin);
+		}
 		hdr->type = HDR_ERROR_T;
 		return begin;
 	}
@@ -298,7 +306,7 @@ done:
 
 char* parse_hname2(char* const begin, const char* const end, struct hdr_field* const hdr)
 {
-	return parse_sip_header_name(begin, end, hdr, 0);
+	return parse_sip_header_name(begin, end, hdr, 0, 1);
 }
 
 /**
@@ -307,11 +315,11 @@ char* parse_hname2(char* const begin, const char* const end, struct hdr_field* c
  */
 char* parse_hname2_short(char* const begin, const char* const end, struct hdr_field* const hdr)
 {
-	return parse_sip_header_name(begin, end, hdr, 0);
+	return parse_sip_header_name(begin, end, hdr, 0, 1);
 }
 
 char* parse_hname2_str (str* const hbuf, hdr_field_t* const hdr)
 {
-	return parse_sip_header_name(hbuf->s, hbuf->s + hbuf->len, hdr, 1);
+	return parse_sip_header_name(hbuf->s, hbuf->s + hbuf->len, hdr, 1, 1);
 }
 
