@@ -118,18 +118,23 @@ int t_suspend(struct sip_msg *msg,
 			LM_ERR("failed find UAC branch\n");
 			return -1;
 		}
-		LM_DBG("found a a match with branch id [%d] - "
+
+		if (!t->uac[branch].reply) {
+			sip_msg_len = 0;
+			LM_DBG("found a match with branch id [%d] - "
 				"cloning reply message to t->uac[branch].reply\n", branch);
+			t->uac[branch].reply = sip_msg_cloner( msg, &sip_msg_len );
 
-		sip_msg_len = 0;
-		t->uac[branch].reply = sip_msg_cloner( msg, &sip_msg_len );
-
-		if (! t->uac[branch].reply ) {
-			LM_ERR("can't alloc' clone memory\n");
-			return -1;
+			if (! t->uac[branch].reply ) {
+				LM_ERR("can't alloc' clone memory\n");
+				return -1;
+			}
+			t->uac[branch].end_reply = ((char*)t->uac[branch].reply) + sip_msg_len;
+		} else {
+			LM_DBG("found a match with branch id [%d] - "
+				"message already cloned to t->uac[branch].reply\n", branch);
+			// This can happen when suspending more than once in a reply.
 		}
-		t->uac[branch].end_reply = ((char*)t->uac[branch].reply) + sip_msg_len;
-
 		LM_DBG("saving transaction data\n");
 		t->uac[branch].reply->flags = msg->flags;
 		t->flags |= T_ASYNC_SUSPENDED;
