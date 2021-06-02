@@ -1619,7 +1619,7 @@ static inline int find_hdr_line_start(char *hname, unsigned int hname_len,
 
 	while (hname_len <= len) {
 		/* attempt to find a header name */
-		parse_sip_header_name(start, start + hname_len, &h2, 1, 0);
+		parse_sip_header_name(start, start + hname_len, &h2, 0, 0);
 		if(h2.type!=HDR_ERROR_T) {
 			if(h1.type>0 && h1.type==h2.type) {
 				*buf = start;
