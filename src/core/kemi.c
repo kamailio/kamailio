@@ -1988,7 +1988,8 @@ static int sr_kemi_hdr_append_after(sip_msg_t *msg, str *txt, str *hname)
 	hbuf[hname->len] = ':';
 	hbuf[hname->len+1] = '\0';
 
-	if (parse_hname2_short(hbuf, hbuf+hname->len+1, &hfm)==0) {
+	parse_hname2_short(hbuf, hbuf+hname->len+1, &hfm);
+	if(hfm.type==HDR_ERROR_T) {
 		LM_ERR("error parsing header name [%.*s]\n", hname->len, hname->s);
 		return -1;
 	}
@@ -2056,7 +2057,8 @@ int sr_kemi_hdr_remove(sip_msg_t *msg, str *hname)
 	hbuf[hname->len] = ':';
 	hbuf[hname->len+1] = '\0';
 
-	if (parse_hname2_short(hbuf, hbuf+hname->len+1, &hfm)==0) {
+	parse_hname2_short(hbuf, hbuf+hname->len+1, &hfm);
+	if(hfm.type==HDR_ERROR_T) {
 		LM_ERR("error parsing header name [%.*s]\n", hname->len, hname->s);
 		return -1;
 	}
@@ -2106,7 +2108,8 @@ static int sr_kemi_hdr_is_present(sip_msg_t *msg, str *hname)
 	hbuf[hname->len] = ':';
 	hbuf[hname->len+1] = '\0';
 
-	if (parse_hname2_short(hbuf, hbuf+hname->len+1, &hfm)==0) {
+	parse_hname2_short(hbuf, hbuf+hname->len+1, &hfm);
+	if(hfm.type==HDR_ERROR_T) {
 		LM_ERR("error parsing header name [%.*s]\n", hname->len, hname->s);
 		return -1;
 	}
@@ -2188,7 +2191,8 @@ static int sr_kemi_hdr_insert_before(sip_msg_t *msg, str *txt, str *hname)
 	hbuf[hname->len] = ':';
 	hbuf[hname->len+1] = '\0';
 
-	if (parse_hname2_short(hbuf, hbuf+hname->len+1, &hfm)==0) {
+	parse_hname2_short(hbuf, hbuf+hname->len+1, &hfm);
+	if(hfm.type==HDR_ERROR_T) {
 		LM_ERR("error parsing header name [%.*s]\n", hname->len, hname->s);
 		return -1;
 	}
@@ -2305,7 +2309,8 @@ static sr_kemi_xval_t* sr_kemi_hdr_get_mode(sip_msg_t *msg, str *hname, int idx,
 		sr_kemi_xval_null(&_sr_kemi_xval, rmode);
 		return &_sr_kemi_xval;
 	}
-	if (parse_hname2_str(hname, &shdr)==0) {
+	parse_hname2_str(hname, &shdr);
+	if(shdr.type==HDR_ERROR_T) {
 		LM_ERR("error parsing header name [%.*s]\n", hname->len, hname->s);
 		sr_kemi_xval_null(&_sr_kemi_xval, rmode);
 		return &_sr_kemi_xval;
@@ -2426,7 +2431,8 @@ static int sr_kemi_hdr_match_content(sip_msg_t *msg, str *hname, str *op,
 		return SR_KEMI_FALSE;
 	}
 
-	if (parse_hname2_str(hname, &hfm)==0) {
+	parse_hname2_str(hname, &hfm);
+	if(hfm.type==HDR_ERROR_T) {
 		LM_ERR("error parsing header name [%.*s]\n", hname->len, hname->s);
 		return SR_KEMI_FALSE;
 	}
