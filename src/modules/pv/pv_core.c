@@ -2227,6 +2227,10 @@ int pv_get_hfl(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 	}
 
 	if((tv.flags == 0) && (tv.ri==HDR_VIA_T)) {
+		if(msg->h_via1==NULL) {
+			LM_WARN("no Via header\n");
+			return pv_get_null(msg, param, res);
+		}
 		if(idx<0) {
 			n = 1;
 			/* count Via header bodies */
@@ -2271,17 +2275,28 @@ int pv_get_hfl(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 		LM_DBG("unexpected via index out of range\n");
 		return pv_get_null(msg, param, res);
 	}
-	if((tv.flags == 0) && (tv.ri==HDR_RECORDROUTE_T)) {
+	if((tv.flags == 0) && (tv.ri==HDR_RECORDROUTE_T || tv.ri==HDR_ROUTE_T)) {
+		if(tv.ri==HDR_RECORDROUTE_T) {
+			hf=msg->record_route;
+		} else {
+			hf=msg->route;
+		}
+		if(hf==NULL) {
+			LM_DBG("no %s header\n", (tv.ri==HDR_ROUTE_T)?"route":"record-route");
+			return pv_get_null(msg, param, res);
+		}
+
 		if(idx<0) {
 			n = 1;
-			/* count Record-Route header bodies */
-			for(hf=msg->record_route; hf!=NULL; hf=hf->next) {
-				if(hf->type==HDR_RECORDROUTE_T) {
+			/* count Record-Route/Route header bodies */
+			for(; hf!=NULL; hf=hf->next) {
+				if(hf->type==tv.ri) {
 					if(parse_rr(hf) == -1) {
-						LM_ERR("failed parsing rr header\n");
+						LM_ERR("failed parsing %s header\n",
+								(tv.ri==HDR_ROUTE_T)?"route":"record-route");
 						return pv_get_null(msg, param, res);
 					}
-					for(rrb=(rr_t*)hf->parsed; vb!=NULL; rrb=rrb->next) {
+					for(rrb=(rr_t*)hf->parsed; rrb!=NULL; rrb=rrb->next) {
 						n++;
 					}
 				}
@@ -2289,17 +2304,24 @@ int pv_get_hfl(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 
 			idx = -idx;
 			if(idx>n) {
-				LM_DBG("index out of rr headers range\n");
+				LM_DBG("index out of %s headers range\n",
+						(tv.ri==HDR_ROUTE_T)?"route":"record-route");
 				return pv_get_null(msg, param, res);
 			}
 			idx = n - idx;
 		}
 		if(idx==0) {
-			if(parse_rr(msg->record_route) == -1) {
-				LM_ERR("failed parsing rr header\n");
+			if(tv.ri==HDR_RECORDROUTE_T) {
+				hf=msg->record_route;
+			} else {
+				hf=msg->route;
+			}
+			if(parse_rr(hf) == -1) {
+				LM_ERR("failed parsing %s header\n",
+						(tv.ri==HDR_ROUTE_T)?"route":"record-route");
 				return pv_get_null(msg, param, res);
 			}
-			rrb = (rr_t*)(msg->record_route->parsed);
+			rrb = (rr_t*)(hf->parsed);
 			sval.s = rrb->nameaddr.name.s;
 			sval.len = rrb->len;
 			trim(&sval);
@@ -2307,13 +2329,19 @@ int pv_get_hfl(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 			return 0;
 		}
 		n=0;
-		for(hf=msg->record_route; hf!=NULL; hf=hf->next) {
-			if(hf->type==HDR_RECORDROUTE_T) {
+		if(tv.ri==HDR_RECORDROUTE_T) {
+			hf=msg->record_route;
+		} else {
+			hf=msg->route;
+		}
+		for(; hf!=NULL; hf=hf->next) {
+			if(hf->type==tv.ri) {
 				if(parse_rr(hf) == -1) {
-					LM_ERR("failed parsing rr header\n");
+					LM_ERR("failed parsing %s header\n",
+							(tv.ri==HDR_ROUTE_T)?"route":"record-route");
 					return pv_get_null(msg, param, res);
 				}
-				for(rrb=(rr_t*)hf->parsed; vb!=NULL; rrb=rrb->next) {
+				for(rrb=(rr_t*)hf->parsed; rrb!=NULL; rrb=rrb->next) {
 					if(n==idx) {
 						sval.s = rrb->nameaddr.name.s;
 						sval.len = rrb->len;
@@ -2325,7 +2353,8 @@ int pv_get_hfl(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 				}
 			}
 		}
-		LM_DBG("unexpected record-route index out of range\n");
+		LM_DBG("unexpected %s index out of range\n",
+				(tv.ri==HDR_ROUTE_T)?"route":"record-route");
 		return pv_get_null(msg, param, res);
 	}
 
