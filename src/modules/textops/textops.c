@@ -1611,13 +1611,16 @@ static inline int find_hdr_line_start(char *hname, unsigned int hname_len,
 
 	start = *buf;
 	len = *buf_len;
-	if(parse_hname2_str(&sname, &h1)==NULL) {
+	parse_hname2_str(&sname, &h1);
+	if(h1.type!=HDR_ERROR_T) {
 		LM_ERR("not a header name: %.*s\n", hname_len, hname);
 		return 0;
 	}
 
 	while (hname_len <= len) {
-		if(parse_hname2(start, start + hname_len, &h2)!=NULL) {
+		/* attempt to find a header name */
+		parse_sip_header_name(start, start + hname_len, &h2, 1, 0);
+		if(h2.type!=HDR_ERROR_T) {
 			if(h1.type>0 && h1.type==h2.type) {
 				*buf = start;
 				*buf_len = len;
@@ -1628,6 +1631,7 @@ static inline int find_hdr_line_start(char *hname, unsigned int hname_len,
 				return 1;
 			}
 		}
+		/* jump to next line */
 		if ((ch = memchr(start, 13, len - 1))) {
 			if (*(ch + 1) != 10) {
 				LM_ERR("No LF after CR\n");
