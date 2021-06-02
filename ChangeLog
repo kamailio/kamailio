@@ -1,3 +1,238 @@
+===================== 2021-06-02 Version 5.4.6 Released =====================
+
+===================== Changes Since Version 5.4.5 ===========================
+
+commit 0546511ed7eb47004c2df2f0806dff413468a1c4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jun 2 11:23:35 2021 +0200
+
+    pkg/kamailio/deb: version set 5.4.6
+
+commit a2b34363aa5e97f171d933b08dc57f8e7a1b3d58
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jun 2 10:44:48 2021 +0200
+
+    Makefile.defs: version set to 5.4.6
+
+commit aaa556f2d5a80e7a0bfa609d2478a9b75a530d0b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jun 2 10:12:15 2021 +0200
+
+    pkg: version set to 5.4.6 for rpms and apline
+
+commit 30b33f772739c593f1b58a2b871e127effd12f58
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon May 31 17:23:42 2021 +0200
+
+    async: safety check for async ms list
+    
+    (cherry picked from commit 5b0e74c1832d2d09fe36424e1e1aaaacde920b31)
+    (cherry picked from commit 93dc038f3f1f854b1e0987ec28e49d8a70293e19)
+
+commit b5ae51af479d4e54e5d8c3f5e85908e68183e9d4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon May 31 12:05:01 2021 +0200
+
+    core: parse via - fixed whitespacing
+    
+    (cherry picked from commit 01664d1d82dcfe952fce29033b4fcd5e44cf2319)
+    (cherry picked from commit 19901d0cdb6cf06a84315c19a27986bca7a05025)
+
+commit df8fb404c1f3d016f97872d78fe07d604de6ef8b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri May 28 13:54:08 2021 +0200
+
+    mtree: check if pv_count var is r/w
+    
+    - reported by GH #2750
+    
+    (cherry picked from commit 63b0345207ba67fcc6290d6dfc55f99ba58b13c9)
+    (cherry picked from commit 7323d812dc4a39c0e60f11668e09a50ef586a8f7)
+
+commit 00d7187532b87507367b00110f22bd8e0e14db7c
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Fri May 28 09:38:31 2021 +0200
+
+    mtree: Fix some typos, adjust some formatting
+    
+    (cherry picked from commit 316c80607243387015e35ac423238c5a32401a44)
+    (cherry picked from commit 3bfb1773c01731177824b907180a7eeb7e43d3af)
+
+commit 2c501f4d7b9678f0cfad3afec5e3095fd61e1763
+Author: Olle E. Johansson <oej@edvina.net>
+Date:   Mon May 24 08:26:18 2021 +0200
+
+    snmpstats: Fix typo in MIB
+    
+    Reported by arkadiam on Github
+    
+    (cherry picked from commit 7f017707c91659641ce9ca87ee4149b2e39379f7)
+    (cherry picked from commit dbd8e3899335eb8795763fd52b1f91aebfad1c92)
+
+commit 34ee120ab555b9aab364af4570033c3a08451fda
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri May 21 08:40:21 2021 +0200
+
+    pv: more details in err log message for s.select parsing
+    
+    (cherry picked from commit 02ad9e1b87f89b9456d0d85e16c2fe0cda67ab64)
+    (cherry picked from commit 2273d7d856b5c1fca1ec24fbb6ee249793ea6719)
+
+commit affe55c269f77e280f8400fc6c2a5dee61a2b877
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Sat May 29 20:41:53 2021 +0300
+
+    sipdump: fixed typo
+    
+    (cherry picked from commit 7f226f5b08c93ed0a43113d7947730329ff7db38)
+
+commit dd09c233417129694ffb7481b03d465defae447d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu May 13 17:41:40 2021 +0200
+
+    core: xavp - safety checks for name len
+    
+    (cherry picked from commit d22d812da1c3b2a2f65f142ef5ed5fa07e8ab072)
+    (cherry picked from commit 6a5a61bfab80116338f6a9c91ed7ec5f7b98923b)
+
+commit 0675c3eb0fa95e19532cf812585f1eb021829dbc
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed May 12 18:14:29 2021 +0200
+
+    presence: set correct type for local_log_facility modparam
+    
+    (cherry picked from commit 5f4662a95a97d5224bf03745a9a354a41925706c)
+    (cherry picked from commit 5bc7e1d636b617839f697838e326347b19cb0fcc)
+
+commit 1b517a7e560f20331aa94accca813825e0e0ff0b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu May 6 12:27:05 2021 +0200
+
+    dialog: ignore 408 on keepalive with cseq 0
+    
+    - some UAs do not reply at all
+    
+    (cherry picked from commit 7aa8056a5e3a9804133cb9ff79640d8116be63da)
+    (cherry picked from commit 6d71c9399027f2ed41cd6eae576d862440bd4fd4)
+
+commit 078c6f861fc52c28546dae5ce335002e5d5df99f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Apr 30 08:53:47 2021 +0200
+
+    tls: declare variable based on SSL_CTX_set_ecdh_auto
+    
+    - fix unused variable warning introduced in previous commit
+    
+    (cherry picked from commit 41b5e9473d79409712d46fdbb5a0b943ab880aa7)
+    (cherry picked from commit 52c7d2f4d6704c7ea232808110fc09c17c90c4db)
+
+commit cd8a871c5a4c6446eddc48bd89bfe5cde89a6c21
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Apr 30 08:03:10 2021 +0200
+
+    msrp: destroy str array on error
+    
+    - some code reformatting
+    
+    (cherry picked from commit 4695b48b23e22135049f67a6ef362e933a0cf337)
+    (cherry picked from commit 33cf417e59b4c7f0e45b6258644bae364ad2e912)
+
+commit 1142d5470d40801743af2fd9e27213bae6c394f4
+Author: SPChan <shihping.chan@gmail.com>
+Date:   Wed Apr 28 00:51:22 2021 +0800
+
+    [tls] Don't use OpenSSL<1.0.2 fallback on 1.1+
+    
+    Address GH #2716. Also see https://bugs.python.org/issue29697.
+    
+    (cherry picked from commit 27904530d1f8efd26e2b96fa5f18a3aad887919b)
+    (cherry picked from commit 1c7a8459f1a5b0f4d96f3908a301b599d5e24dc3)
+
+commit bde591dc9507eaea0b744112d49ea01fbdf8f555
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Apr 29 06:56:50 2021 +0200
+
+    msrp: check return code for str explode
+    
+    (cherry picked from commit addb6a88d0266a0bb0545077fb0b5b8a3fdcca8e)
+    (cherry picked from commit e55ecc6412997b55569f3b626a681eae0ca312df)
+
+commit b95e319d006a38fcc6385d704de82e553f7c2236
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Apr 26 11:22:20 2021 +0200
+
+    core/mem: q_malloc - use #else with DBG_QM_MALLOC for debug on freed fragments
+    
+    (cherry picked from commit 764d5be0c44036bb4b86f841588fb0df3b4bb834)
+    (cherry picked from commit fc90e4c06c5df8c8a9d5cd615923c09a93b5a810)
+
+commit cf1f5043fd346a1106071cad2f5e294ce7e32fd9
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Apr 27 09:59:29 2021 +0200
+
+    dispatcher: docs - set xmlns for include tags
+    
+    (cherry picked from commit 3f25ef01c5cc3adb02dd1bfecdfd4c3ce80cef47)
+    (cherry picked from commit 6b9ecb0856a881144546fea6d3cbd8a3dc668b81)
+
+commit 0ef00531926d77351f1202d18b5ffe1c071aef12
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Tue May 18 21:31:33 2021 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit f2dc57a75ddad30205dadc59c435e423e3ee669f
+Author: Ovidiu Sas <osas@voipembedded.com>
+Date:   Tue May 18 15:00:23 2021 -0400
+
+    xhttp_prom: fix small copy/paste typo in documentation
+    
+    (cherry picked from commit 2967a41f5537df81745a71226ba9e793ccbdd453)
+
+commit 0572c8192d26702fc0ac21ae76cbf81fbad91126
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed May 5 18:56:04 2021 +0200
+
+    tm: lw parser - fix matching To header in lw_get_hf_name()
+    
+    (cherry picked from commit 4ab6e05df56afb7802a2cd125e89b9282a1c6c85)
+    (cherry picked from commit 33db4ffc558b7a9d4c291c929b9e73b3cf8b16f0)
+
+commit e0c60cf12d465323bcf06899683b2b59dba7295c
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Tue May 4 01:01:22 2021 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit ea1239e57190da34b3043de3c8266a004554146e
+Author: Ovidiu Sas <osas@voipembedded.com>
+Date:   Mon May 3 18:20:05 2021 -0400
+
+    siputils: update docs for encode/decode_contact functions
+    
+    (cherry picked from commit bf73b0d72177828e3c35f0fe318f7ef654c89b6b)
+
+commit 9e7c22a21d57230180fd7c135128a30f47ea427d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Apr 29 14:50:12 2021 +0200
+
+    dispatcher: safety to avoid division by 0 for latency operations
+    
+    - manual backporting of cf105d5af78963759825f5eaf9feb767c047a49c
+
+commit 967dd294ba424bf66e27bebe4d6261e0c8a66471
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Apr 16 09:44:24 2021 +0200
+
+    core: usr avp - fix detection of invalid name and ids
+    
+    - use the fields designated for str name or int id, code analyzers can
+    follow properly the execution path
+    - regression introduced in ca1821837dfe7dd6630f628d968ed4d1178c7040
+    
+    (cherry picked from commit e4506385ca5a56d4861f36e85c1049599cba398f)
+
+
 ===================== 2021-04-15 Version 5.4.5 Released =====================
 
 ===================== Changes Since Version 5.4.4 ===========================
