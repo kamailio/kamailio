@@ -2190,6 +2190,7 @@ int pv_get_hfl(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 	int idxf = 0;
 	pv_value_t tv = {0};
 	via_body_t *vb = NULL;
+	rr_t *rrb = NULL;
 	hdr_field_t *hf = NULL;
 	int n = 0;
 	str sval = STR_NULL;
@@ -2228,7 +2229,7 @@ int pv_get_hfl(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 	if((tv.flags == 0) && (tv.ri==HDR_VIA_T)) {
 		if(idx<0) {
 			n = 1;
-			/* count Vua header bodies */
+			/* count Via header bodies */
 			for(hf=msg->h_via1; hf!=NULL; hf=hf->next) {
 				if(hf->type==HDR_VIA_T) {
 					for(vb=(via_body_t*)hf->parsed; vb!=NULL; vb=vb->next) {
@@ -2270,6 +2271,64 @@ int pv_get_hfl(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 		LM_DBG("unexpected via index out of range\n");
 		return pv_get_null(msg, param, res);
 	}
+	if((tv.flags == 0) && (tv.ri==HDR_RECORDROUTE_T)) {
+		if(idx<0) {
+			n = 1;
+			/* count Record-Route header bodies */
+			for(hf=msg->record_route; hf!=NULL; hf=hf->next) {
+				if(hf->type==HDR_RECORDROUTE_T) {
+					if(parse_rr(hf) == -1) {
+						LM_ERR("failed parsing rr header\n");
+						return pv_get_null(msg, param, res);
+					}
+					for(rrb=(rr_t*)hf->parsed; vb!=NULL; rrb=rrb->next) {
+						n++;
+					}
+				}
+			}
+
+			idx = -idx;
+			if(idx>n) {
+				LM_DBG("index out of rr headers range\n");
+				return pv_get_null(msg, param, res);
+			}
+			idx = n - idx;
+		}
+		if(idx==0) {
+			if(parse_rr(msg->record_route) == -1) {
+				LM_ERR("failed parsing rr header\n");
+				return pv_get_null(msg, param, res);
+			}
+			rrb = (rr_t*)(msg->record_route->parsed);
+			sval.s = rrb->nameaddr.name.s;
+			sval.len = rrb->len;
+			trim(&sval);
+			res->rs = sval;
+			return 0;
+		}
+		n=0;
+		for(hf=msg->record_route; hf!=NULL; hf=hf->next) {
+			if(hf->type==HDR_RECORDROUTE_T) {
+				if(parse_rr(hf) == -1) {
+					LM_ERR("failed parsing rr header\n");
+					return pv_get_null(msg, param, res);
+				}
+				for(rrb=(rr_t*)hf->parsed; vb!=NULL; rrb=rrb->next) {
+					if(n==idx) {
+						sval.s = rrb->nameaddr.name.s;
+						sval.len = rrb->len;
+						trim(&sval);
+						res->rs = sval;
+						return 0;
+					}
+					n++;
+				}
+			}
+		}
+		LM_DBG("unexpected record-route index out of range\n");
+		return pv_get_null(msg, param, res);
+	}
+
 	return pv_get_hdr_helper(msg, param, res, &tv, idx, idxf);
 }
 
