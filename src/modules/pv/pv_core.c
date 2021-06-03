@@ -147,6 +147,9 @@ int pv_get_method(struct sip_msg *msg, pv_param_t *param,
 				(int)msg->first_line.u.request.method_value);
 	}
 
+	if (IS_HTTP_REPLY(msg))
+		return pv_get_null(msg, param, res);
+
 	if(msg->cseq==NULL && ((parse_headers(msg, HDR_CSEQ_F, 0)==-1) ||
 				(msg->cseq==NULL)))
 	{
