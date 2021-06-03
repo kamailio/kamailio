@@ -3248,8 +3248,8 @@ int pv_parse_hdr_name(pv_spec_p sp, str *in)
 	s.s = p;
 	s.len = in->len+1;
 
-	if (parse_hname2_short(s.s, s.s + s.len, &hdr)==0)
-	{
+	parse_hname2_short(s.s, s.s + s.len, &hdr);
+	if(hdr.type==HDR_ERROR_T) {
 		LM_ERR("error parsing header name [%.*s]\n", s.len, s.s);
 		goto error;
 	}
