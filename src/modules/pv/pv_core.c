@@ -2191,6 +2191,7 @@ int pv_get_hfl(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 	pv_value_t tv = {0};
 	via_body_t *vb = NULL;
 	rr_t *rrb = NULL;
+	contact_t *cb = NULL;
 	hdr_field_t *hf = NULL;
 	int n = 0;
 	str sval = STR_NULL;
@@ -2355,6 +2356,62 @@ int pv_get_hfl(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 		}
 		LM_DBG("unexpected %s index out of range\n",
 				(tv.ri==HDR_ROUTE_T)?"route":"record-route");
+		return pv_get_null(msg, param, res);
+	}
+
+	if((tv.flags == 0) && (tv.ri==HDR_CONTACT_T)) {
+		if(msg->contact==NULL) {
+			LM_DBG("no Contact header\n");
+			return pv_get_null(msg, param, res);
+		}
+		if(parse_contact_headers(msg) < 0) {
+			LM_DBG("failed to parse Contact headers\n");
+			return pv_get_null(msg, param, res);
+		}
+		if(idx<0) {
+			n = 1;
+			/* count Contact header bodies */
+			for(hf=msg->contact; hf!=NULL; hf=hf->next) {
+				if(hf->type==HDR_CONTACT_T) {
+					for(cb=(((contact_body_t*)hf->parsed)->contacts);
+							cb!=NULL; cb=cb->next) {
+						n++;
+					}
+				}
+			}
+
+			idx = -idx;
+			if(idx>n) {
+				LM_DBG("index out of range\n");
+				return pv_get_null(msg, param, res);
+			}
+			idx = n - idx;
+		}
+		if(idx==0) {
+			cb = ((contact_body_t*)msg->contact->parsed)->contacts;
+			sval.s = cb->name.s;
+			sval.len = cb->len;
+			trim(&sval);
+			res->rs = sval;
+			return 0;
+		}
+		n=0;
+		for(hf=msg->contact; hf!=NULL; hf=hf->next) {
+			if(hf->type==HDR_CONTACT_T) {
+				for(cb=(((contact_body_t*)hf->parsed)->contacts);
+						cb!=NULL; cb=cb->next) {
+					if(n==idx) {
+						sval.s = cb->name.s;
+						sval.len = cb->len;
+						trim(&sval);
+						res->rs = sval;
+						return 0;
+					}
+					n++;
+				}
+			}
+		}
+		LM_DBG("unexpected contact index out of range\n");
 		return pv_get_null(msg, param, res);
 	}
 
