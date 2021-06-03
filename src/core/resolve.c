@@ -978,6 +978,7 @@ again:
 				last=&(rd->next);
 				break;
 			case T_OPT:
+			case 41:
 				/* skip DNS extensions, e.g. EDNS0 */
 				rd->rdata=0;
 				*last=rd;
