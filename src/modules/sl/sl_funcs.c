@@ -210,7 +210,11 @@ int sl_reply_helper(struct sip_msg *msg, int code, char *reason, str *tag)
 	dst.comp=msg->via1->comp_no;
 #endif
 	dst.send_flags=msg->rpl_send_flags;
-	ret = msg_send(&dst, buf.s, buf.len);
+	if(sip_check_fline(buf.s, buf.len) == 0)
+		ret = msg_send_buffer(&dst, buf.s, buf.len, 0);
+	else
+		ret = msg_send_buffer(&dst, buf.s, buf.len, 1);
+
 	mhomed=backup_mhomed;
 
 	keng = sr_kemi_eng_get();
