@@ -32,6 +32,7 @@
 #include "ip_addr.h"
 
 int receive_msg(char* buf, unsigned int len, struct receive_info *ri);
+int sip_check_fline(char *buf, unsigned int len);
 unsigned int inc_msg_no(void);
 void ksr_msg_env_reset(void);
 
