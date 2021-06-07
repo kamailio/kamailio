@@ -454,7 +454,7 @@ modparam("mtree", "mt_allow_duplicates", 1)
     <section>
 	<title>Functions</title>
  	<section>
-	    <title>
+	    <title id="mtree.f.mt_match">
 		<function moreinfo="none">mt_match(mtree, pv, mode)</function>
 	    </title>
 	    <para>
