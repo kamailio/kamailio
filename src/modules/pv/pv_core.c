@@ -2424,6 +2424,70 @@ int pv_get_hfl(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 /**
  *
  */
+int pv_get_hflc(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
+{
+	pv_value_t tv = {0};
+	via_body_t *vb = NULL;
+	hdr_field_t *hf = NULL;
+	int n = 0;
+
+	if(msg==NULL || res==NULL || param==NULL)
+		return -1;
+
+	/* get the name */
+	if(param->pvn.type == PV_NAME_PVAR) {
+		if(pv_get_spec_name(msg, param, &tv)!=0 || (!(tv.flags&PV_VAL_STR))) {
+			LM_ERR("invalid name\n");
+			return pv_get_sintval(msg, param, res, 0);
+		}
+	} else {
+		if(param->pvn.u.isname.type == AVP_NAME_STR) {
+			tv.flags = PV_VAL_STR;
+			tv.rs = param->pvn.u.isname.name.s;
+		} else {
+			tv.flags = 0;
+			tv.ri = param->pvn.u.isname.name.n;
+		}
+	}
+
+	if (parse_headers(msg, HDR_EOH_F, 0)<0) {
+		LM_DBG("failed to parse sip headers\n");
+		return pv_get_sintval(msg, param, res, 0);
+	}
+
+	if((tv.flags == 0) && (tv.ri==HDR_VIA_T)) {
+		if(msg->h_via1==NULL) {
+			LM_WARN("no Via header\n");
+			return pv_get_sintval(msg, param, res, 0);
+		}
+		/* count Via header bodies */
+		for(hf=msg->h_via1; hf!=NULL; hf=hf->next) {
+			if(hf->type==HDR_VIA_T) {
+				for(vb=(via_body_t*)hf->parsed; vb!=NULL; vb=vb->next) {
+					n++;
+				}
+			}
+		}
+		return pv_get_sintval(msg, param, res, n);
+	}
+
+	for (hf=msg->headers; hf; hf=hf->next) {
+		if(tv.flags == 0) {
+			if (tv.ri==hf->type) {
+				n++;
+			}
+		} else {
+			if (cmp_hdrname_str(&hf->name, &tv.rs)==0) {
+				n++;
+			}
+		}
+	}
+	return pv_get_sintval(msg, param, res, n);
+}
+
+/**
+ *
+ */
 int pv_get_scriptvar(struct sip_msg *msg,  pv_param_t *param,
 		pv_value_t *res)
 {

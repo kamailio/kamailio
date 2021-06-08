@@ -255,6 +255,8 @@ int pv_get_hdrc(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res);
 
 int pv_get_hfl(sip_msg_t *msg,  pv_param_t *param, pv_value_t *res);
 
+int pv_get_hflc(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res);
+
 int pv_get_scriptvar(struct sip_msg *msg,  pv_param_t *param,
 		pv_value_t *res);
 

@@ -110,6 +110,8 @@ static pv_export_t mod_pvs[] = {
 		0, 0, 0},
 	{{"hfl", (sizeof("hfl")-1)}, PVT_HDR, pv_get_hfl, 0, pv_parse_hfl_name,
 		pv_parse_index, 0, 0},
+	{{"hflc", (sizeof("hflc")-1)}, PVT_HDRC, pv_get_hflc, 0, pv_parse_hfl_name,
+		0, 0, 0},
 	{{"var", (sizeof("var")-1)}, PVT_SCRIPTVAR, pv_get_scriptvar,
 		pv_set_scriptvar, pv_parse_scriptvar_name, 0, 0, 0},
 	{{"vz", (sizeof("vz")-1)}, PVT_SCRIPTVAR, pv_get_scriptvar,
