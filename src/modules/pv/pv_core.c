@@ -2428,6 +2428,7 @@ int pv_get_hflc(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 {
 	pv_value_t tv = {0};
 	via_body_t *vb = NULL;
+	rr_t *rrb = NULL;
 	hdr_field_t *hf = NULL;
 	int n = 0;
 
@@ -2464,6 +2465,33 @@ int pv_get_hflc(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 		for(hf=msg->h_via1; hf!=NULL; hf=hf->next) {
 			if(hf->type==HDR_VIA_T) {
 				for(vb=(via_body_t*)hf->parsed; vb!=NULL; vb=vb->next) {
+					n++;
+				}
+			}
+		}
+		return pv_get_sintval(msg, param, res, n);
+	}
+
+	if((tv.flags == 0) && (tv.ri==HDR_RECORDROUTE_T || tv.ri==HDR_ROUTE_T)) {
+		if(tv.ri==HDR_RECORDROUTE_T) {
+			hf=msg->record_route;
+		} else {
+			hf=msg->route;
+		}
+		if(hf==NULL) {
+			LM_DBG("no %s header\n", (tv.ri==HDR_ROUTE_T)?"route":"record-route");
+			return pv_get_sintval(msg, param, res, 0);
+		}
+
+		/* count Record-Route/Route header bodies */
+		for(; hf!=NULL; hf=hf->next) {
+			if(hf->type==tv.ri) {
+				if(parse_rr(hf) == -1) {
+					LM_ERR("failed parsing %s header\n",
+							(tv.ri==HDR_ROUTE_T)?"route":"record-route");
+					return pv_get_sintval(msg, param, res, 0);
+				}
+				for(rrb=(rr_t*)hf->parsed; rrb!=NULL; rrb=rrb->next) {
 					n++;
 				}
 			}
