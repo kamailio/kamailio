@@ -1158,6 +1158,18 @@ static int sr_kemi_core_is_proto_wss(sip_msg_t *msg)
 /**
  *
  */
+static int sr_kemi_core_is_proto_wsx(sip_msg_t *msg)
+{
+	if (msg->rcv.proto == PROTO_WSS) return SR_KEMI_TRUE;
+	if (msg->rcv.proto == PROTO_WS) return SR_KEMI_TRUE;
+
+	return SR_KEMI_FALSE;
+}
+
+
+/**
+ *
+ */
 static int sr_kemi_core_is_proto_sctp(sip_msg_t *msg)
 {
 	return (msg->rcv.proto == PROTO_SCTP)?SR_KEMI_TRUE:SR_KEMI_FALSE;
@@ -1885,6 +1897,11 @@ static sr_kemi_t _sr_kemi_core[] = {
 	},
 	{ str_init(""), str_init("is_WSS"),
 		SR_KEMIP_BOOL, sr_kemi_core_is_proto_wss,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("is_WSX"),
+		SR_KEMIP_BOOL, sr_kemi_core_is_proto_wsx,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
