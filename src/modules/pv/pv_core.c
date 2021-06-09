@@ -3632,6 +3632,7 @@ int pv_parse_K_name(pv_spec_p sp, str *in)
 			if(strncmp(in->s, "WS", 2)==0)
 				sp->pvp.pvn.u.isname.name.n = 6;
 			else goto error;
+		break;
 		case 3:
 			if(strncmp(in->s, "UDP", 3)==0)
 				sp->pvp.pvn.u.isname.name.n = 2;
@@ -3646,10 +3647,17 @@ int pv_parse_K_name(pv_spec_p sp, str *in)
 		case 4:
 			if(strncmp(in->s, "IPv4", 4)==0)
 				sp->pvp.pvn.u.isname.name.n = 0;
+			else if(strncmp(in->s, "INET", 4)==0)
+				sp->pvp.pvn.u.isname.name.n = 0;
 			else if(strncmp(in->s, "IPv6", 4)==0)
 				sp->pvp.pvn.u.isname.name.n = 1;
 			else if(strncmp(in->s, "SCTP", 4)==0)
 				sp->pvp.pvn.u.isname.name.n = 5;
+			else goto error;
+		break;
+		case 5:
+			if(strncmp(in->s, "INET6", 5)==0)
+				sp->pvp.pvn.u.isname.name.n = 1;
 			else goto error;
 		break;
 		default:
