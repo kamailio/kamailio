@@ -2528,10 +2528,10 @@ int pv_parse_siptrace_name(pv_spec_t *sp, str *in)
 
 	switch(in->len)
 	{
-		case 7:
-			if(strncmp(in->s, "src_uri", 7)==0)
+		case 8:
+			if(strncmp(in->s, "src_addr", 8)==0)
 				sp->pvp.pvn.u.isname.name.n = 0;
-			else if(strncmp(in->s, "dst_uri", 7)==0)
+			else if(strncmp(in->s, "dst_addr", 8)==0)
 				sp->pvp.pvn.u.isname.name.n = 1;
 			else goto error;
 		break;
