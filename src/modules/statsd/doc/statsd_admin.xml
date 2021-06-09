@@ -114,7 +114,7 @@ failure_route[tryagain] {
                 The statsd server collects gauges under the stats.gauges prefix.
             </para>
             <example>
-                <title><function>statsd_set</function> usage</title>
+                <title><function>statsd_gauge</function> usage</title>
                 <programlisting format="linespecific">
 ...
 route [gauge_method]{
@@ -126,6 +126,29 @@ route [gauge_method]{
             </example>
         </section>
 
+        <section id="statsd.f.statsd_histogram">
+            <title>
+                <function moreinfo="none">statsd_histogram(key, value)</function>
+            </title>
+            <para>
+		    The histograms are a measure of time, but they are calculated at the server side.
+		    As the data exported by the client is the same, this is just an alias for the Timer type.
+            </para>
+            <para>
+                This function can be used in ALL ROUTES.
+            </para>
+            <para>
+                The statsd server collects histograms under the stats.histograms prefix.
+            </para>
+            <example>
+                <title><function>statsd_histogram</function> usage</title>
+                <programlisting format="linespecific">
+...
+    statsd_histogram("latency", 1000);
+...
+                </programlisting>
+            </example>
+        </section>
         <section id="statsd.f.statsd_start">
             <title>
                 <function moreinfo="none">statsd_start(key)</function>

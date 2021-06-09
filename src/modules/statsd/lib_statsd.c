@@ -91,6 +91,12 @@ bool statsd_gauge(char *key, char *value){
    return send_command(command);
 }
 
+bool statsd_histogram(char *key, char *value){
+   char command[254];
+   snprintf(command, sizeof command, "%s:%s|h\n", key, value);
+   return send_command(command);
+}
+
 bool statsd_count(char *key, char *value){
    char* end = 0;
    char command[254];
