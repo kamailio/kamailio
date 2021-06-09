@@ -669,6 +669,81 @@ error:
 	return -1;
 }
 
+/**
+ *
+ */
+int pv_get_nh_reply(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	static char rpluribuf[MAX_URI_SIZE];
+	str suri = STR_NULL;
+	str host = STR_NULL;
+	str sproto = STR_NULL;
+	unsigned int port = 0;
+
+	if(parse_headers( msg, HDR_VIA2_F, 0)==-1) {
+		LM_DBG("no 2nd via parsed\n");
+		return pv_get_null(msg, param, res);
+	}
+	if((msg->via2==0) || (msg->via2->error!=PARSE_OK)) {
+		return pv_get_null(msg, param, res);
+	}
+	if(msg->via2->rport && msg->via2->rport->value.s) {
+		LM_DBG("using 'rport'\n");
+		if(str2int(&msg->via2->rport->value, &port)<0) {
+			LM_ERR("invalid rport value\n");
+			return pv_get_null(msg, param, res);
+		}
+	}
+	if(msg->via2->received) {
+		LM_DBG("using 'received'\n");
+		host = msg->via2->received->value;
+	} else {
+		LM_DBG("using via host\n");
+		host = msg->via2->host;
+	}
+	if(port==0) {
+		port = (msg->via2->port)?msg->via2->port:SIP_PORT;
+	}
+
+	switch(param->pvn.u.isname.name.n) {
+		case 0: /* uri */
+			if(get_valid_proto_string(msg->via2->proto, 1, 0, &sproto)<0) {
+				sproto.s = "udp";
+				sproto.len = 3;
+			}
+			suri.len = snprintf(rpluribuf, MAX_URI_SIZE, "sip:%.*s:%u;transport=%.*s",
+					host.len, host.s, port, sproto.len, sproto.s);
+			if(suri.len<=0 || suri.len>=MAX_URI_SIZE) {
+				LM_DBG("building the dst uri failed (%d)\n", suri.len);
+				return pv_get_null(msg, param, res);
+			}
+			suri.s = rpluribuf;
+			return pv_get_strval(msg, param, res, &suri);
+		case 1: /* user - not in Via */
+			return pv_get_null(msg, param, res);
+		case 2: /* domain/host */
+			return pv_get_strval(msg, param, res, &host);
+		case 3: /* port */
+			return pv_get_uintval(msg, param, res, port);
+		case 4: /* proto */
+			if(get_valid_proto_string(msg->via2->proto, 0, 0, &sproto)<0) {
+				/* default to udp */
+				sproto.s = "udp";
+				sproto.len = 3;
+				return pv_get_strintval(msg, param, res, &sproto, PROTO_UDP);
+			}
+			return pv_get_strintval(msg, param, res, &sproto,
+					(int)msg->via2->proto);
+	}
+
+	LM_ERR("unknown specifier\n");
+	return pv_get_null(msg, param, res);
+}
+
+/**
+ *
+ */
 int pv_get_nh(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
 {
@@ -678,8 +753,10 @@ int pv_get_nh(struct sip_msg *msg, pv_param_t *param,
 	if(msg==NULL || res==NULL)
 		return -1;
 
-	if(msg->first_line.type == SIP_REPLY)	/* REPLY doesnt have r/d-uri */
-		return pv_get_null(msg, param, res);
+	if(msg->first_line.type == SIP_REPLY) {
+		/* REPLY doesnt have r/d-uri - use second Via */
+		return pv_get_nh_reply(msg, param, res);
+	}
 
     if (msg->dst_uri.s != NULL && msg->dst_uri.len>0)
 	{
