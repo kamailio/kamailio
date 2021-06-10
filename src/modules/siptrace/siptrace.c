@@ -2061,7 +2061,7 @@ int siptrace_net_data_recv(sr_event_param_t *evp)
 
 	sto.fromip.len = snprintf(sto.fromip_buff, SIPTRACE_ADDR_MAX, "%s:%s:%d",
 			siptrace_proto_name(nd->rcv->proto),
-			ip_addr2a(&nd->rcv->src_ip), (int)nd->rcv->src_port);
+			ip_addr2strz(&nd->rcv->src_ip), (int)nd->rcv->src_port);
 	if(sto.fromip.len<0 || sto.fromip.len>=SIPTRACE_ADDR_MAX) {
 		LM_ERR("failed to format toip buffer (%d)\n", sto.fromip.len);
 		sto.fromip.s = SIPTRACE_ANYADDR;
@@ -2071,7 +2071,7 @@ int siptrace_net_data_recv(sr_event_param_t *evp)
 	}
 
 	sto.toip.len = snprintf(sto.toip_buff, SIPTRACE_ADDR_MAX, "%s:%s:%d",
-			siptrace_proto_name(nd->rcv->proto), ip_addr2a(&nd->rcv->dst_ip),
+			siptrace_proto_name(nd->rcv->proto), ip_addr2strz(&nd->rcv->dst_ip),
 			(int)nd->rcv->dst_port);
 	if(sto.toip.len<0 || sto.toip.len>=SIPTRACE_ADDR_MAX) {
 		LM_ERR("failed to format toip buffer (%d)\n", sto.toip.len);
