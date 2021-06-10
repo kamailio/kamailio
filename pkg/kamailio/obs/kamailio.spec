@@ -217,6 +217,11 @@
 %define _rundir %{_localstatedir}/run
 %endif
 
+# build with openssl 1.1.1 on RHEL 7 based dists
+%if 0%{?rhel} == 7
+%bcond_with openssl11
+%endif
+
 # redefine buggy openSUSE Leap _sharedstatedir macro. More info at https://bugzilla.redhat.com/show_bug.cgi?id=183370
 %if 0%{?suse_version} == 1315
 %define _sharedstatedir /var/lib
@@ -324,8 +329,13 @@ Account transaction information in a JSON dictionary.
 %package    auth-ephemeral
 Summary:    Functions for authentication using ephemeral credentials
 Group:      %{PKGGROUP}
+%if 0%{?rhel} == 7 && %{with openssl11}
+Requires:   openssl11, kamailio = %ver
+BuildRequires:  openssl11-devel
+%else
 Requires:   openssl, kamailio = %ver
 BuildRequires:  openssl-devel
+%endif
 
 %description    auth-ephemeral
 Functions for authentication using ephemeral credentials.
@@ -410,8 +420,13 @@ Requires:   openssl
 BuildRequires:  openssl-devel
 %endif
 %if 0%{?rhel} == 7
+%if %{with openssl11}
+Requires:   openssl11-libs
+BuildRequires:  openssl11-devel
+%else
 Requires:   openssl-libs
 BuildRequires:  openssl-devel
+%endif
 %endif
 %if 0%{?fedora}
 Requires:   openssl-libs
@@ -706,8 +721,13 @@ MySQL database connectivity for Kamailio.
 %package    outbound
 Summary:    Outbound (RFC 5626) support for Kamailio
 Group:      %{PKGGROUP}
+%if 0%{?rhel} == 7 && %{with openssl11}
+Requires:   openssl11, kamailio = %ver
+BuildRequires:  openssl11-devel
+%else
 Requires:   openssl, kamailio = %ver
 BuildRequires:  openssl-devel
+%endif
 
 %description    outbound
 RFC 5626, "Managing Client-Initiated Connections in the Session Initiation
@@ -985,8 +1005,13 @@ SQLite database connectivity for Kamailio.
 %package    tls
 Summary:    TLS transport for Kamailio
 Group:      %{PKGGROUP}
+%if 0%{?rhel} == 7 && %{with openssl11}
+Requires:   openssl11, kamailio = %ver
+BuildRequires:  openssl11-devel
+%else
 Requires:   openssl, kamailio = %ver
 BuildRequires:  openssl-devel
+%endif
 
 %description    tls
 TLS transport for Kamailio.
@@ -1041,8 +1066,13 @@ Non-SIP utitility functions for Kamailio.
 %package    websocket
 Summary:    WebSocket transport for Kamailio
 Group:      %{PKGGROUP}
+%if 0%{?rhel} == 7 && %{with openssl11}
+Requires:   libunistring, openssl11, kamailio = %ver
+BuildRequires:  libunistring-devel, openssl11-devel
+%else
 Requires:   libunistring, openssl, kamailio = %ver
 BuildRequires:  libunistring-devel, openssl-devel
+%endif
 
 %description    websocket
 WebSocket transport for Kamailio.
@@ -1139,6 +1169,9 @@ make cfg prefix=/usr \
 make
 make every-module skip_modules="app_mono db_cassandra db_oracle iptrtpproxy \
     jabber ndb_cassandra osp" \
+%if %{with openssl11}
+    SSL_BUILDER="pkg-config libssl11" \
+%endif
 %if 0%{?fedora} || 0%{?suse_version} || 0%{?rhel} == 8
     FREERADIUS=1 \
 %endif
@@ -1231,6 +1264,9 @@ rm -rf %{buildroot}
 make install
 make install-modules-all skip_modules="app_mono db_cassandra db_oracle \
     iptrtpproxy jabber osp" \
+%if %{with openssl11}
+    SSL_BUILDER="pkg-config libssl11" \
+%endif
 %if 0%{?fedora} || 0%{?suse_version} || 0%{?rhel} == 8
     FREERADIUS=1 \
 %endif
