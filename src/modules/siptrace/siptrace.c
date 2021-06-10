@@ -2505,16 +2505,82 @@ static sr_kemi_t sr_kemi_siptrace_exports[] = {
 int pv_get_siptrace(sip_msg_t *msg, pv_param_t *param,
 		pv_value_t *res)
 {
+	str host;
+	int port;
+	int proto;
+	str sproto;
 	if (siptrace_event_data==NULL) {
 		return pv_get_null(msg, param, res);
 	}
 
 	switch(param->pvn.u.isname.name.n) {
-		case 1: /* dst_uri*/
-			return pv_get_strval(msg, param, res, &siptrace_event_data->toip);
-		default:
-			/* 0 - src_uri */
+		case 2: /* src_host */
+		case 4: /* src_port */
+		case 6: /* src_proto */
+		case 8: /* src_hostip */
+			if (parse_phostport(siptrace_event_data->fromip.s, &host.s, &host.len, &port, &proto)!=0) {
+				LM_ERR("invalid src_addr: %.*s\n", siptrace_event_data->fromip.len, siptrace_event_data->fromip.s);
+				return pv_get_null(msg, param, res);
+			}
+		break;
+		case 3: /* dst_host */
+		case 5: /* dst_port */
+		case 7: /* dst_proto */
+		case 9: /* dst_hostip */
+			if (parse_phostport(siptrace_event_data->toip.s, &host.s, &host.len, &port, &proto)!=0) {
+				LM_ERR("invalid dst_addr: %.*s\n", siptrace_event_data->toip.len, siptrace_event_data->toip.s);
+				return pv_get_null(msg, param, res);
+			}
+		break;
+	}
+
+	switch(param->pvn.u.isname.name.n) {
+		case 6: /* src_proto */
+		case 7: /* dst_proto */
+			if(get_valid_proto_string(proto, 0, 0, &sproto)<0)
+			{
+				sproto.s = "none";
+				sproto.len = 4;
+			}
+		break;
+	}
+
+	switch(param->pvn.u.isname.name.n) {
+		case 8: /* src_hostip */
+		case 9: /* dst_hostip */
+
+			/* now IPv6 address has brakets that not wanted in IP address operations */
+			if(host.s[0] == '[' && host.s[host.len-1] == ']') {
+				host.s++;
+				host.len = host.len - 2;
+			}
+		break;
+	}
+
+	switch(param->pvn.u.isname.name.n) {
+		case 0: /* src_addr */
 			return pv_get_strval(msg, param, res, &siptrace_event_data->fromip);
+		case 1: /* dst_addr */
+			return pv_get_strval(msg, param, res, &siptrace_event_data->toip);
+		case 2: /* src_host */
+			return pv_get_strval(msg, param, res, &host);
+		case 3: /* dst_host */
+			return pv_get_strval(msg, param, res, &host);
+		case 4: /* src_port */
+			return pv_get_sintval(msg, param, res, port);
+		case 5: /* dst_port */
+			return pv_get_sintval(msg, param, res, port);
+		case 6: /* src_proto */
+			return pv_get_strintval(msg, param, res, &sproto, proto);
+		case 7: /* dst_proto */
+			return pv_get_strintval(msg, param, res, &sproto, proto);
+		case 8: /* src_hostip */
+			return pv_get_strval(msg, param, res, &host);
+		case 9: /* dst_hostip */
+			return pv_get_strval(msg, param, res, &host);
+		default:
+			LM_ERR("unexpected config param\n");
+			return pv_get_null(msg, param, res);
 	}
 }
 
@@ -2533,6 +2599,28 @@ int pv_parse_siptrace_name(pv_spec_t *sp, str *in)
 				sp->pvp.pvn.u.isname.name.n = 0;
 			else if(strncmp(in->s, "dst_addr", 8)==0)
 				sp->pvp.pvn.u.isname.name.n = 1;
+			else if(strncmp(in->s, "src_host", 8)==0)
+				sp->pvp.pvn.u.isname.name.n = 2;
+			else if(strncmp(in->s, "dst_host", 8)==0)
+				sp->pvp.pvn.u.isname.name.n = 3;
+			else if(strncmp(in->s, "src_port", 8)==0)
+				sp->pvp.pvn.u.isname.name.n = 4;
+			else if(strncmp(in->s, "dst_port", 8)==0)
+				sp->pvp.pvn.u.isname.name.n = 5;
+			else goto error;
+		break;
+		case 9:
+			if(strncmp(in->s, "src_proto", 9)==0)
+				sp->pvp.pvn.u.isname.name.n = 6;
+			else if(strncmp(in->s, "dst_proto", 9)==0)
+				sp->pvp.pvn.u.isname.name.n = 7;
+			else goto error;
+		break;
+		case 10:
+			if(strncmp(in->s, "src_hostip", 10)==0)
+				sp->pvp.pvn.u.isname.name.n = 8;
+			else if(strncmp(in->s, "dst_hostip", 10)==0)
+				sp->pvp.pvn.u.isname.name.n = 9;
 			else goto error;
 		break;
 		default:
