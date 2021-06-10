@@ -34,6 +34,7 @@ MODULE_VERSION
 static int mod_init(void);
 void mod_destroy(void);
 static int func_gauge(struct sip_msg *msg, char *key, char* val);
+static int func_histogram(struct sip_msg *msg, char *key, char* val);
 static int func_set(struct sip_msg *msg, char *key, char* val);
 static int func_time_start(struct sip_msg *msg, char *key);
 static int func_time_end(struct sip_msg *msg, char *key);
@@ -50,6 +51,7 @@ static StatsdParams statsd_params= {};
 
 static cmd_export_t commands[] = {
 	{"statsd_gauge", (cmd_function)func_gauge, 2, 0, 0, ANY_ROUTE},
+	{"statsd_histogram", (cmd_function)func_histogram, 2, 0, 0, ANY_ROUTE},
 	{"statsd_start", (cmd_function)func_time_start, 1, 0, 0, ANY_ROUTE},
 	{"statsd_stop", (cmd_function)func_time_end, 1, 0, 0, ANY_ROUTE},
 	{"statsd_incr", (cmd_function)func_incr, 1, 0, 0, ANY_ROUTE},
@@ -117,9 +119,19 @@ static int func_gauge(struct sip_msg* msg, char* key, char* val)
     return statsd_gauge(key, val);
 }
 
+static int func_histogram(struct sip_msg* msg, char* key, char* val)
+{
+    return statsd_histogram(key, val);
+}
+
 static int ki_statsd_gauge(sip_msg_t* msg, str* key, str* val)
 {
     return statsd_gauge(key->s, val->s);
+}
+
+static int ki_statsd_histogram(sip_msg_t* msg, str* key, str* val)
+{
+    return statsd_histogram(key->s, val->s);
 }
 
 static int func_set(struct sip_msg* msg, char* key, char* val)
@@ -237,6 +249,11 @@ char* get_milliseconds(char *dst){
 static sr_kemi_t sr_kemi_statsd_exports[] = {
 	{ str_init("statsd"), str_init("statsd_gauge"),
 		SR_KEMIP_INT, ki_statsd_gauge,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("statsd"), str_init("statsd_histogram"),
+		SR_KEMIP_INT, ki_statsd_histogram,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
