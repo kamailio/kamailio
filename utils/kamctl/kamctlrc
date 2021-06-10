@@ -123,7 +123,7 @@
 #                   dialplan"
 
 ## Kamailio extra modules
-# EXTRA_MODULES="imc cpl siptrace domainpolicy carrierroute userblacklist htable purple sca"
+# EXTRA_MODULES="imc cpl siptrace domainpolicy carrierroute userblocklist htable purple sca"
 
 
 ## type of aliases used: DB - database aliases; UL - usrloc aliases

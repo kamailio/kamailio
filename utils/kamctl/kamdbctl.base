@@ -40,7 +40,7 @@ STANDARD_TABLES=${STANDARD_TABLES:-'version acc dbaliases domain domain_attrs
 		acc_cdrs topos_d topos_t'}
 EXTRA_TABLES=${EXTRA_TABLES:-'imc_members imc_rooms cpl sip_trace domainpolicy
 		carrierroute carrier_name domain_name carrierfailureroute userblocklist
-		globalblacklist htable purplemap uacreg pl_pipes mtree mtrees
+		globalblocklist htable purplemap uacreg pl_pipes mtree mtrees
 		sca_subscriptions mohqcalls mohqueues rtpproxy rtpengine
 		dr_gateways dr_rules dr_gw_lists dr_groups secfilter'}
 PRESENCE_TABLES=${PRESENCE_TABLES:-'presentity active_watchers watchers xcap
