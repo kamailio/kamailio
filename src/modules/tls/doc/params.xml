@@ -416,26 +416,6 @@ modparam("tls", "server_name", "kamailio.org")
 	</example>
 	</section>
 
-	<section id="tls.p.send_timeout">
-	<title><varname>send_timeout</varname> (int)</title>
-	<para>
-		This parameter is <emphasis>obsolete</emphasis> and cannot be used
-		in newer TLS versions (&gt; &kamailio; 3.0). In these versions the
-		send_timeout is replaced by <varname>tcp_send_timeout</varname>
-		(common with all the tcp connections).
-	</para>
-	</section>
-
-	<section id="tls.p.handshake_timeout">
-	<title><varname>handshake_timeout</varname> (int)</title>
-	<para>
-		This parameter is <emphasis>obsolete</emphasis> and cannot be used
-		in newer TLS versions (&gt; &kamailio; 3.0). In these versions the
-		handshake_timeout is replaced by <varname>tcp_connect_timeout</varname>
-		(common with all the tcp connections).
-	</para>
-	</section>
-
 	<section id="tls.p.connection_timeout">
 	<title><varname>connection_timeout</varname> (int)</title>
 	<para>
