@@ -43,34 +43,32 @@ Olle E. Johansson
               10.9. require_certificate (boolean)
               10.10. cipher_list (string)
               10.11. server_name (string)
-              10.12. send_timeout (int)
-              10.13. handshake_timeout (int)
-              10.14. connection_timeout (int)
-              10.15. tls_disable_compression (boolean)
-              10.16. ssl_release_buffers (integer)
-              10.17. ssl_freelist_max_len (integer)
-              10.18. ssl_max_send_fragment (integer)
-              10.19. ssl_read_ahead (boolean)
-              10.20. send_close_notify (boolean)
-              10.21. con_ct_wq_max (integer)
-              10.22. ct_wq_max (integer)
-              10.23. ct_wq_blk_size (integer)
-              10.24. tls_log (int)
-              10.25. tls_debug (int)
-              10.26. low_mem_threshold1 (integer)
-              10.27. low_mem_threshold2 (integer)
-              10.28. tls_force_run (boolean)
-              10.29. session_cache (boolean)
-              10.30. session_id (str)
-              10.31. renegotiation (boolean)
-              10.32. config (string)
-              10.33. xavp_cfg (string)
-              10.34. event_callback (str)
-              10.35. rand_engine (str)
-              10.36. engine (string)
-              10.37. engine_config (string)
-              10.38. engine_algorithms (string)
-              10.39. verify_client (string)
+              10.12. connection_timeout (int)
+              10.13. tls_disable_compression (boolean)
+              10.14. ssl_release_buffers (integer)
+              10.15. ssl_freelist_max_len (integer)
+              10.16. ssl_max_send_fragment (integer)
+              10.17. ssl_read_ahead (boolean)
+              10.18. send_close_notify (boolean)
+              10.19. con_ct_wq_max (integer)
+              10.20. ct_wq_max (integer)
+              10.21. ct_wq_blk_size (integer)
+              10.22. tls_log (int)
+              10.23. tls_debug (int)
+              10.24. low_mem_threshold1 (integer)
+              10.25. low_mem_threshold2 (integer)
+              10.26. tls_force_run (boolean)
+              10.27. session_cache (boolean)
+              10.28. session_id (str)
+              10.29. renegotiation (boolean)
+              10.30. config (string)
+              10.31. xavp_cfg (string)
+              10.32. event_callback (str)
+              10.33. rand_engine (str)
+              10.34. engine (string)
+              10.35. engine_config (string)
+              10.36. engine_algorithms (string)
+              10.37. verify_client (string)
 
         11. Functions
 
@@ -175,34 +173,32 @@ Chapter 1. Admin Guide
         10.9. require_certificate (boolean)
         10.10. cipher_list (string)
         10.11. server_name (string)
-        10.12. send_timeout (int)
-        10.13. handshake_timeout (int)
-        10.14. connection_timeout (int)
-        10.15. tls_disable_compression (boolean)
-        10.16. ssl_release_buffers (integer)
-        10.17. ssl_freelist_max_len (integer)
-        10.18. ssl_max_send_fragment (integer)
-        10.19. ssl_read_ahead (boolean)
-        10.20. send_close_notify (boolean)
-        10.21. con_ct_wq_max (integer)
-        10.22. ct_wq_max (integer)
-        10.23. ct_wq_blk_size (integer)
-        10.24. tls_log (int)
-        10.25. tls_debug (int)
-        10.26. low_mem_threshold1 (integer)
-        10.27. low_mem_threshold2 (integer)
-        10.28. tls_force_run (boolean)
-        10.29. session_cache (boolean)
-        10.30. session_id (str)
-        10.31. renegotiation (boolean)
-        10.32. config (string)
-        10.33. xavp_cfg (string)
-        10.34. event_callback (str)
-        10.35. rand_engine (str)
-        10.36. engine (string)
-        10.37. engine_config (string)
-        10.38. engine_algorithms (string)
-        10.39. verify_client (string)
+        10.12. connection_timeout (int)
+        10.13. tls_disable_compression (boolean)
+        10.14. ssl_release_buffers (integer)
+        10.15. ssl_freelist_max_len (integer)
+        10.16. ssl_max_send_fragment (integer)
+        10.17. ssl_read_ahead (boolean)
+        10.18. send_close_notify (boolean)
+        10.19. con_ct_wq_max (integer)
+        10.20. ct_wq_max (integer)
+        10.21. ct_wq_blk_size (integer)
+        10.22. tls_log (int)
+        10.23. tls_debug (int)
+        10.24. low_mem_threshold1 (integer)
+        10.25. low_mem_threshold2 (integer)
+        10.26. tls_force_run (boolean)
+        10.27. session_cache (boolean)
+        10.28. session_id (str)
+        10.29. renegotiation (boolean)
+        10.30. config (string)
+        10.31. xavp_cfg (string)
+        10.32. event_callback (str)
+        10.33. rand_engine (str)
+        10.34. engine (string)
+        10.35. engine_config (string)
+        10.36. engine_algorithms (string)
+        10.37. verify_client (string)
 
    11. Functions
 
@@ -597,34 +593,32 @@ Place holder
    10.9. require_certificate (boolean)
    10.10. cipher_list (string)
    10.11. server_name (string)
-   10.12. send_timeout (int)
-   10.13. handshake_timeout (int)
-   10.14. connection_timeout (int)
-   10.15. tls_disable_compression (boolean)
-   10.16. ssl_release_buffers (integer)
-   10.17. ssl_freelist_max_len (integer)
-   10.18. ssl_max_send_fragment (integer)
-   10.19. ssl_read_ahead (boolean)
-   10.20. send_close_notify (boolean)
-   10.21. con_ct_wq_max (integer)
-   10.22. ct_wq_max (integer)
-   10.23. ct_wq_blk_size (integer)
-   10.24. tls_log (int)
-   10.25. tls_debug (int)
-   10.26. low_mem_threshold1 (integer)
-   10.27. low_mem_threshold2 (integer)
-   10.28. tls_force_run (boolean)
-   10.29. session_cache (boolean)
-   10.30. session_id (str)
-   10.31. renegotiation (boolean)
-   10.32. config (string)
-   10.33. xavp_cfg (string)
-   10.34. event_callback (str)
-   10.35. rand_engine (str)
-   10.36. engine (string)
-   10.37. engine_config (string)
-   10.38. engine_algorithms (string)
-   10.39. verify_client (string)
+   10.12. connection_timeout (int)
+   10.13. tls_disable_compression (boolean)
+   10.14. ssl_release_buffers (integer)
+   10.15. ssl_freelist_max_len (integer)
+   10.16. ssl_max_send_fragment (integer)
+   10.17. ssl_read_ahead (boolean)
+   10.18. send_close_notify (boolean)
+   10.19. con_ct_wq_max (integer)
+   10.20. ct_wq_max (integer)
+   10.21. ct_wq_blk_size (integer)
+   10.22. tls_log (int)
+   10.23. tls_debug (int)
+   10.24. low_mem_threshold1 (integer)
+   10.25. low_mem_threshold2 (integer)
+   10.26. tls_force_run (boolean)
+   10.27. session_cache (boolean)
+   10.28. session_id (str)
+   10.29. renegotiation (boolean)
+   10.30. config (string)
+   10.31. xavp_cfg (string)
+   10.32. event_callback (str)
+   10.33. rand_engine (str)
+   10.34. engine (string)
+   10.35. engine_config (string)
+   10.36. engine_algorithms (string)
+   10.37. verify_client (string)
 
 10.1. tls_method (string)
 
@@ -879,19 +873,7 @@ modparam("tls", "cipher_list", "HIGH")
 modparam("tls", "server_name", "kamailio.org")
 ...
 
-10.12. send_timeout (int)
-
-   This parameter is obsolete and cannot be used in newer TLS versions (>
-   Kamailio 3.0). In these versions the send_timeout is replaced by
-   tcp_send_timeout (common with all the tcp connections).
-
-10.13. handshake_timeout (int)
-
-   This parameter is obsolete and cannot be used in newer TLS versions (>
-   Kamailio 3.0). In these versions the handshake_timeout is replaced by
-   tcp_connect_timeout (common with all the tcp connections).
-
-10.14. connection_timeout (int)
+10.12. connection_timeout (int)
 
    Sets the amount of time after which an idle TLS connection will be
    closed, if no I/O ever occurred after the initial open. If an I/O event
@@ -913,7 +895,7 @@ modparam("tls", "connection_timeout", 60)
    Example 1.15. Set tls.connection_timeout at runtime
  $ kamcmd cfg.set_now_int tls connection_timeout 180
 
-10.15. tls_disable_compression (boolean)
+10.13. tls_disable_compression (boolean)
 
    If set compression over TLS will be disabled. Note that compression
    uses a lot of memory (about 10x more then with the compression
@@ -928,7 +910,7 @@ modparam("tls", "connection_timeout", 60)
 modparam("tls", "tls_disable_compression", 0) # enable
 ...
 
-10.16. ssl_release_buffers (integer)
+10.14. ssl_release_buffers (integer)
 
    Release internal OpenSSL read or write buffers as soon as they are no
    longer needed. Combined with ssl_freelist_max_len has the potential of
@@ -950,7 +932,7 @@ Note
    Example 1.17. Set ssl_release_buffers parameter
 modparam("tls", "ssl_release_buffers", 1)
 
-10.17. ssl_freelist_max_len (integer)
+10.15. ssl_freelist_max_len (integer)
 
    Sets the maximum number of free memory chunks, that OpenSSL will keep
    per connection. Setting it to 0 would cause any unused memory chunk to
@@ -973,7 +955,7 @@ Note
    Example 1.18. Set ssl_freelist_max_len parameter
 modparam("tls", "ssl_freelist_max_len", 0)
 
-10.18. ssl_max_send_fragment (integer)
+10.16. ssl_max_send_fragment (integer)
 
    Sets the maximum number of bytes (from the clear text) sent into one
    TLS record. Valid values are between 512 and 16384. Note however that
@@ -1008,7 +990,7 @@ Note
    Example 1.19. Set ssl_max_send_fragment parameter
 modparam("tls", "ssl_max_send_fragment", 4096)
 
-10.19. ssl_read_ahead (boolean)
+10.17. ssl_read_ahead (boolean)
 
    Enables read ahead, reducing the number of internal OpenSSL BIO read()
    calls. This option has only debugging value, in normal circumstances it
@@ -1030,7 +1012,7 @@ modparam("tls", "ssl_max_send_fragment", 4096)
    Example 1.20. Set ssl_read_ahead parameter
 modparam("tls", "ssl_read_ahead", 1)
 
-10.20. send_close_notify (boolean)
+10.18. send_close_notify (boolean)
 
    Enables/disables sending close notify alerts prior to closing the
    corresponding TCP connection. Sending the close notify prior to TCP
@@ -1051,7 +1033,7 @@ modparam("tls", "send_close_notify", 1)
    Example 1.22. Set tls.send_close_notify at runtime
  $ kamcmd cfg.set_now_int tls send_close_notify 1
 
-10.21. con_ct_wq_max (integer)
+10.19. con_ct_wq_max (integer)
 
    Sets the maximum allowed per connection clear-text send queue size in
    bytes. This queue is used when data cannot be encrypted and sent
@@ -1070,7 +1052,7 @@ modparam("tls", "con_ct_wq_max", 1048576)
    Example 1.24. Set tls.con_ct_wq_max at runtime
  $ kamcmd cfg.set_now_int tls con_ct_wq_max 1048576
 
-10.22. ct_wq_max (integer)
+10.20. ct_wq_max (integer)
 
    Sets the maximum total number of bytes queued in all the clear-text
    send queues. These queues are used when data cannot be encrypted and
@@ -1089,7 +1071,7 @@ modparam("tls", "ct_wq_max", 4194304)
    Example 1.26. Set tls.ct_wq_max at runtime
  $ kamcmd cfg.set_now_int tls ct_wq_max 4194304
 
-10.23. ct_wq_blk_size (integer)
+10.21. ct_wq_blk_size (integer)
 
    Minimum block size for the internal clear-text send queues (debugging /
    advanced tuning). Good values are multiple of typical datagram sizes.
@@ -1107,7 +1089,7 @@ modparam("tls", "ct_wq_blk_size", 2048)
    Example 1.28. Set tls.ct_wq_max at runtime
  $ kamcmd cfg.set_now_int tls ct_wq_blk_size 2048
 
-10.24. tls_log (int)
+10.22. tls_log (int)
 
    Sets the log level at which TLS related messages will be logged.
 
@@ -1125,7 +1107,7 @@ modparam("tls", "tls_log", 10)
    Example 1.30. Set tls.log at runtime
  $ kamcmd cfg.set_now_int tls log 10
 
-10.25. tls_debug (int)
+10.23. tls_debug (int)
 
    Sets the log level at which TLS debug messages will be logged. Note
    that TLS debug messages are enabled only if the TLS module is compiled
@@ -1146,7 +1128,7 @@ modparam("tls", "tls_debug", 10)
    Example 1.32. Set tls.debug at runtime
  $ kamcmd cfg.set_now_int tls debug 10
 
-10.26. low_mem_threshold1 (integer)
+10.24. low_mem_threshold1 (integer)
 
    Sets the minimal free memory from which attempts to open or accept new
    TLS connections will start to fail. The value is expressed in KB.
@@ -1177,7 +1159,7 @@ modparam("tls", "low_mem_threshold1", -1)
    Example 1.34. Set tls.low_mem_threshold1 at runtime
  $ kamcmd cfg.set_now_int tls low_mem_threshold1 2048
 
-10.27. low_mem_threshold2 (integer)
+10.25. low_mem_threshold2 (integer)
 
    Sets the minimal free memory from which TLS operations on already
    established TLS connections will start to fail preemptively. The value
@@ -1209,7 +1191,7 @@ modparam("tls", "low_mem_threshold2", -1)
    Example 1.36. Set tls.low_mem_threshold2 at runtime
  $ kamcmd cfg.set_now_int tls low_mem_threshold2 1024
 
-10.28. tls_force_run (boolean)
+10.26. tls_force_run (boolean)
 
    If enabled Kamailio will start even if some of the OpenSSL sanity
    checks fail (turn it on at your own risk).
@@ -1229,7 +1211,7 @@ modparam("tls", "low_mem_threshold2", -1)
 modparam("tls", "tls_force_run", 11)
 ...
 
-10.29. session_cache (boolean)
+10.27. session_cache (boolean)
 
    If enabled Kamailio will do caching of the TLS sessions data,
    generation a session_id and sending it back to client.
@@ -1241,7 +1223,7 @@ modparam("tls", "tls_force_run", 11)
 modparam("tls", "session_cache", 1)
 ...
 
-10.30. session_id (str)
+10.28. session_id (str)
 
    The value for session ID context, making sense when session caching is
    enabled.
@@ -1253,7 +1235,7 @@ modparam("tls", "session_cache", 1)
 modparam("tls", "session_id", "my-session-id-context")
 ...
 
-10.31. renegotiation (boolean)
+10.29. renegotiation (boolean)
 
    If enabled Kamailio will allow renegotiations of TLS connection
    initiated by the client. This may expose to a security risk if the
@@ -1267,7 +1249,7 @@ modparam("tls", "session_id", "my-session-id-context")
 modparam("tls", "renegotiation", 1)
 ...
 
-10.32. config (string)
+10.30. config (string)
 
    Sets the name of the TLS specific configuration file or configuration
    directory.
@@ -1409,7 +1391,7 @@ modparam("tls", "config", "/usr/local/etc/kamailio/tls.cfg")
  $ kamcmd cfg.set_now_string tls config "/usr/local/etc/kamailio/new_tls.cfg"
  $ kamcmd tls.reload
 
-10.33. xavp_cfg (string)
+10.31. xavp_cfg (string)
 
    Sets the name of XAVP that stores attributes for TLS connections.
 
@@ -1434,7 +1416,7 @@ modparam("tls", "config", "/usr/local/etc/kamailio/tls.cfg")
   route(RELAY);
 ...
 
-10.34. event_callback (str)
+10.32. event_callback (str)
 
    The name of the function in the kemi configuration file (embedded
    scripting language such as Lua, Python, ...) to be executed instead of
@@ -1456,7 +1438,7 @@ function ksr_tls_event(evname)
 end
 ...
 
-10.35. rand_engine (str)
+10.33. rand_engine (str)
 
    Set the random number generator engine for libssl.
 
@@ -1484,7 +1466,7 @@ end
 modparam("tls", "rand_engine", "fastrand")
 ...
 
-10.36. engine (string)
+10.34. engine (string)
 
    If OpenSSL is compiled with engine support this will allow algorithms
    to be offloaded and private keys from HSM to be used. Currently only a
@@ -1510,13 +1492,13 @@ modparam("tls", "engine_algorithms", "ALL")
    By default OpenSSL engine support is disabled (NONE). This global param
    is not supported in the tls config file.
 
-10.37. engine_config (string)
+10.35. engine_config (string)
 
    A OpenSSL configuration file to initialize the engine. Typically used
    to send PIN to HSMs to unlock private keys. See the HSM howto for an
    example. This global param is not supported in the tls config file.
 
-10.38. engine_algorithms (string)
+10.36. engine_algorithms (string)
 
    A list of cryptographic methods to be set as default in the engine.
    This is a comma-separated list of values from ALL RSA DSA DH EC RAND
@@ -1526,7 +1508,7 @@ modparam("tls", "engine_algorithms", "ALL")
    The default is not to set any methods as default. This global param is
    not supported in the tls config file.
 
-10.39. verify_client (string)
+10.37. verify_client (string)
 
    Provides an alternative to verify_certificate and require_certificate
    modparam and tls.cfg parameters, and creates an additional
