@@ -23,6 +23,7 @@
 #include "../../core/dset.h"
 #include "../../core/onsend.h"
 #include "../../core/socket_info.h"
+#include "../../core/resolve.h"
 
 #include "pv_core.h"
 #include "pv_branch.h"
@@ -735,6 +736,14 @@ int pv_get_nh_reply(struct sip_msg *msg, pv_param_t *param,
 			}
 			return pv_get_strintval(msg, param, res, &sproto,
 					(int)msg->via2->proto);
+		case 5: /* ip family */
+			if(str2ip(&host)!=NULL) {
+				return pv_get_uintval(msg, param, res, 4);
+			}
+			if(str2ip6(&host)!=NULL) {
+				return pv_get_uintval(msg, param, res, 6);
+			}
+			return pv_get_uintval(msg, param, res, 0);
 	}
 
 	LM_ERR("unknown specifier\n");
@@ -797,6 +806,17 @@ int pv_get_nh(struct sip_msg *msg, pv_param_t *param,
 			return pv_get_udp(msg, param, res);
 		return pv_get_strintval(msg, param, res, &parsed_uri.transport_val,
 				(int)parsed_uri.proto);
+	} else if(param->pvn.u.isname.name.n==5) /* ip family */ {
+		if(parsed_uri.host.s==NULL || parsed_uri.host.len<=0) {
+			return pv_get_uintval(msg, param, res, 0);
+		}
+		if(str2ip(&parsed_uri.host)!=NULL) {
+			return pv_get_uintval(msg, param, res, 4);
+		}
+		if(str2ip6(&parsed_uri.host)!=NULL) {
+			return pv_get_uintval(msg, param, res, 6);
+		}
+		return pv_get_uintval(msg, param, res, 0);
 	}
 	LM_ERR("unknown specifier\n");
 	return pv_get_null(msg, param, res);
@@ -820,6 +840,8 @@ int pv_parse_nh_name(pv_spec_p sp, str *in)
 				sp->pvp.pvn.u.isname.name.n = 3;
 			else if(strncmp(in->s, "P", 1)==0)
 				sp->pvp.pvn.u.isname.name.n = 4;
+			else if(strncmp(in->s, "i", 1)==0)
+				sp->pvp.pvn.u.isname.name.n = 5;
 			else goto error;
 		break;
 		default:
