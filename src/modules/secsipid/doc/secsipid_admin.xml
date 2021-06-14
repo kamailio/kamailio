@@ -19,7 +19,7 @@
 		The module implements secure SIP identity specifications - STIR
 		(Secure Telephony Identity Revisited) and SHAKEN
 		(Signature-based Handling of Asserted information using toKENs)
-		IETF extensions for SIP (RFC8224, RFC8588).
+		IETF extensions for SIP (RFC8224, RFC8588), known together as STIR/SHAKEN.
 	</para>
 	<para>
 		It exports the functions to check and generate SIP Identity header.
