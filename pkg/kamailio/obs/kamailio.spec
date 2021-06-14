@@ -14,6 +14,7 @@
 %bcond_without jansson
 %bcond_without json
 %bcond_without lua
+%bcond_without lwsc
 %bcond_without kazoo
 %bcond_without memcached
 %bcond_without mongodb
@@ -46,6 +47,7 @@
 %bcond_without jansson
 %bcond_without json
 %bcond_without lua
+%bcond_with lwsc
 %bcond_without kazoo
 %bcond_without memcached
 %bcond_with mongodb
@@ -79,6 +81,7 @@
 %bcond_without jansson
 %bcond_without json
 %bcond_without lua
+%bcond_without lwsc
 %bcond_without kazoo
 %bcond_without memcached
 %bcond_without mongodb
@@ -122,6 +125,7 @@
 %bcond_without jansson
 %bcond_without json
 %bcond_without lua
+%bcond_without lwsc
 %bcond_without kazoo
 %bcond_without memcached
 %bcond_without mongodb
@@ -148,6 +152,7 @@
 %bcond_without jansson
 %bcond_without json
 %bcond_without lua
+%bcond_without lwsc
 %bcond_with kazoo
 %bcond_without memcached
 %bcond_with mongodb
@@ -611,6 +616,7 @@ Lua extensions for Kamailio.
 %endif
 
 
+%if %{with lwsc}
 %package    lwsc
 Summary:    Websocket client implementation to interact with external systems, similar to http client
 Group:      %{PKGGROUP}
@@ -619,6 +625,7 @@ BuildRequires:  libwebsockets-devel
 
 %description    lwsc
 Websocket client implementation to interact with external systems, similar to http client.
+%endif
 
 
 %if %{with memcached}
@@ -1138,7 +1145,9 @@ make every-module skip_modules="app_mono db_cassandra db_oracle iptrtpproxy \
 %if %{with lua}
     klua \
 %endif
+%if %{with lwsc}
     klwsc \
+%endif
 %if %{with memcached}
     kmemcached \
 %endif
@@ -1231,7 +1240,9 @@ make install-modules-all skip_modules="app_mono db_cassandra db_oracle \
 %if %{with lua}
     klua \
 %endif
+%if %{with lwsc}
     klwsc \
+%endif
 %if %{with memcached}
     kmemcached \
 %endif
@@ -1894,10 +1905,12 @@ fi
 %endif
 
 
+%if %{with lwsc}
 %files      lwsc
 %defattr(-,root,root)
 %doc %{_docdir}/kamailio/modules/README.lwsc
 %{_libdir}/kamailio/modules/lwsc.so
+%endif
 
 %if %{with memcached}
 %files      memcached
