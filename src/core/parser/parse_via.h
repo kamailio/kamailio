@@ -72,6 +72,7 @@ typedef struct via_body {
 	unsigned short port;
 #ifdef USE_COMP
 	short comp_no;
+	short comp_no_pad; /* padding to align to 32bit */
 #endif
 	str port_str;
 	str params;
