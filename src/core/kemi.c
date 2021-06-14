@@ -1539,6 +1539,57 @@ static int sr_kemi_core_route(sip_msg_t *msg, str *route)
 /**
  *
  */
+static int sr_kemi_core_to_proto_helper(sip_msg_t *msg)
+{
+	sip_uri_t parsed_uri;
+	str uri;
+
+	if(msg==NULL) {
+		return -1;
+	}
+	if(msg->first_line.type == SIP_REPLY) {
+		/* REPLY doesnt have r/d-uri - use second Via */
+		if(parse_headers( msg, HDR_VIA2_F, 0)==-1) {
+			LM_DBG("no 2nd via parsed\n");
+			return -1;
+		}
+		if((msg->via2==0) || (msg->via2->error!=PARSE_OK)) {
+			return -1;
+		}
+		return (int)msg->via2->proto;
+	}
+	if (msg->dst_uri.s != NULL && msg->dst_uri.len>0) {
+		uri = msg->dst_uri;
+	} else {
+		if (msg->new_uri.s!=NULL && msg->new_uri.len>0)
+		{
+			uri = msg->new_uri;
+		} else {
+			uri = msg->first_line.u.request.uri;
+		}
+	}
+	if(parse_uri(uri.s, uri.len, &parsed_uri)!=0) {
+		LM_ERR("failed to parse nh uri [%.*s]\n", uri.len, uri.s);
+		return -1;
+	}
+	return (int)parsed_uri.proto;
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_to_proto_udp(sip_msg_t *msg)
+{
+	int proto;
+
+	proto = sr_kemi_core_to_proto_helper(msg);
+	return (proto == PROTO_UDP)?SR_KEMI_TRUE:SR_KEMI_FALSE;
+}
+
+
+/**
+ *
+ */
 static sr_kemi_t _sr_kemi_core[] = {
 	{ str_init(""), str_init("dbg"),
 		SR_KEMIP_NONE, sr_kemi_core_dbg,
@@ -1922,6 +1973,11 @@ static sr_kemi_t _sr_kemi_core[] = {
 	},
 	{ str_init(""), str_init("is_IPv6"),
 		SR_KEMIP_BOOL, sr_kemi_core_is_af_ipv6,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("to_UDP"),
+		SR_KEMIP_BOOL, sr_kemi_core_to_proto_udp,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
