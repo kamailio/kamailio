@@ -939,54 +939,6 @@ isnulladdr(str *sx, int pf)
 #define	AOLDMEDPRT_LEN	(sizeof(AOLDMEDPRT) - 1)
 
 
-	static inline int
-replace_sdp_ip(struct sip_msg* msg, str *org_body, char *line, str *ip)
-{
-	str body1, oldip, newip;
-	str body = *org_body;
-	unsigned hasreplaced = 0;
-	int pf, pf1 = 0;
-	str body2;
-	char *bodylimit = body.s + body.len;
-
-	/* Iterate all lines and replace ips in them. */
-	if (!ip) {
-		newip.s = ip_addr2a(&msg->rcv.src_ip);
-		newip.len = strlen(newip.s);
-	} else {
-		newip = *ip;
-	}
-	body1 = body;
-	for(;;) {
-		if (rp_extract_mediaip(&body1, &oldip, &pf,line) == -1)
-			break;
-		if (pf != AF_INET) {
-			LM_ERR("not an IPv4 address in '%s' SDP\n",line);
-			return -1;
-		}
-		if (!pf1)
-			pf1 = pf;
-		else if (pf != pf1) {
-			LM_ERR("mismatching address families in '%s' SDP\n",line);
-			return -1;
-		}
-		body2.s = oldip.s + oldip.len;
-		body2.len = bodylimit - body2.s;
-		if (alter_mediaip(msg, &body1, &oldip, pf, &newip, pf,1) == -1) {
-			LM_ERR("can't alter '%s' IP\n",line);
-			return -1;
-		}
-		hasreplaced = 1;
-		body1 = body2;
-	}
-	if (!hasreplaced) {
-		LM_ERR("can't extract '%s' IP from the SDP\n",line);
-		return -1;
-	}
-
-	return 0;
-}
-
 	static int
 rp_extract_mediaip(str *body, str *mediaip, int *pf, char *line)
 {
