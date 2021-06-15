@@ -1,3 +1,9 @@
+kamailio (5.5.1) unstable; urgency=medium
+
+  * version set 5.5.1
+
+ -- Victor Seva <vseva@debian.org>  Tue, 15 Jun 2021 11:18:08 +0200
+
 kamailio (5.5.0) unstable; urgency=medium
 
   * version set 5.5.0
