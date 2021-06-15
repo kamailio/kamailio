@@ -2024,6 +2024,25 @@ int main(int argc, char** argv)
 		{0, 0, 0, 0 }
 	};
 
+	if (argc > 1) {
+		/* checks for common wrong arguments */
+		if(strcasecmp(argv[1], "start")==0) {
+			fprintf(stderr, "error: 'start' is not a supported argument\n");
+			fprintf(stderr, "error: stopping " NAME " ...\n\n");
+			exit(-1);
+		}
+		if(strcasecmp(argv[1], "stop")==0) {
+			fprintf(stderr, "error: 'stop' is not a supported argument\n");
+			fprintf(stderr, "error: stopping " NAME " ...\n\n");
+			exit(-1);
+		}
+		if(strcasecmp(argv[1], "restart")==0) {
+			fprintf(stderr, "error: 'restart' is not a supported argument\n");
+			fprintf(stderr, "error: stopping " NAME " ...\n\n");
+			exit(-1);
+		}
+	}
+
 	/*init*/
 	time(&up_since);
 	creator_pid = getpid();
