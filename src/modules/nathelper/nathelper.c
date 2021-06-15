@@ -1696,7 +1696,7 @@ static inline int replace_sdp_ip(
 		hasreplaced = 1;
 		body1 = body2;
 	}
-	if(!hasreplaced && memcmp("a=rtcp", line, 6) != 0) {
+	if(!hasreplaced && linelen>=6 && memcmp("a=rtcp", line, 6)!=0) {
 		LM_ERR("can't extract '%s' IP from the SDP\n", line);
 		return -1;
 	}
