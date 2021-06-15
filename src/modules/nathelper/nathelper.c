@@ -1650,13 +1650,12 @@ static int is_rfc1918_f(struct sip_msg *msg, char *str1, char *str2)
 #define AOLDMEDPRT_LEN (sizeof(AOLDMEDPRT) - 1)
 
 
-/* replace ip addresses in SDP and return umber of replacements */
+/* replace ip addresses in SDP and return number of replacements */
 static inline int replace_sdp_ip(
-		struct sip_msg *msg, str *org_body, char *line, str *ip, int linelen)
+		struct sip_msg *msg, str *org_body, char *line, str *ip, int linelen, int can_omit)
 {
 	str body1, oldip, newip;
 	str body = *org_body;
-	unsigned hasreplaced = 0;
 	int pf, pf1 = 0;
 	str body2;
 	char *bodylimit = body.s + body.len;
@@ -1672,10 +1671,17 @@ static inline int replace_sdp_ip(
 	}
 	body1 = body;
 	for(;;) {
-		if(nh_extract_mediaip(&body1, &oldip, &pf, line, linelen) == -1)
+		ret = nh_extract_mediaip(&body1, &oldip, &pf, line, linelen);
+		if(ret == 0)
 			break;
-		if(pf != AF_INET) {
-			LM_ERR("not an IPv4 address in '%s' SDP\n", line);
+		if(ret == -1) {
+			if(can_omit) {
+				body2.s = body1.s + linelen;
+				body2.len = bodylimit - body2.s;
+				body1 = body2;
+				continue;
+			}
+			LM_ERR("no `IP[4|6]' in `%s' field\n", line);
 			return -1;
 		}
 		if(!pf1)
@@ -1693,12 +1699,7 @@ static inline int replace_sdp_ip(
 			return -1;
 		}
 		count += ret;
-		hasreplaced = 1;
 		body1 = body2;
-	}
-	if(!hasreplaced && linelen>=6 && memcmp("a=rtcp", line, 6)!=0) {
-		LM_ERR("can't extract '%s' IP from the SDP\n", line);
-		return -1;
 	}
 
 	return count;
@@ -1778,15 +1779,14 @@ static int ki_fix_nated_sdp_ip(sip_msg_t *msg, int level, str *ip)
 	if(level & (FIX_MEDIP | FIX_ORGIP)) {
 
 		/* Iterate all a=rtcp and replace ips in them. rfc3605 */
-		ret = replace_sdp_ip(msg, &body, "a=rtcp", (ip && ip->len>0) ? ip : 0, 6);
+		ret = replace_sdp_ip(msg, &body, "a=rtcp", (ip && ip->len>0) ? ip : 0, 6, 1);
 		if(ret == -1)
-			LM_DBG("a=rtcp parameter does not exist. nothing to do.\n");
-		else 
-			count += ret;
+			return -1;
+		count += ret;
 
 		if(level & FIX_MEDIP) {
 			/* Iterate all c= and replace ips in them. */
-			ret = replace_sdp_ip(msg, &body, "c=", (ip && ip->len>0) ? ip : 0, 2);
+			ret = replace_sdp_ip(msg, &body, "c=", (ip && ip->len>0) ? ip : 0, 2, 0);
 			if(ret == -1)
 				return -1;
 			count += ret;
@@ -1794,7 +1794,7 @@ static int ki_fix_nated_sdp_ip(sip_msg_t *msg, int level, str *ip)
 
 		if(level & FIX_ORGIP) {
 			/* Iterate all o= and replace ips in them. */
-			ret = replace_sdp_ip(msg, &body, "o=",  (ip && ip->len>0) ? ip : 0, 2);
+			ret = replace_sdp_ip(msg, &body, "o=",  (ip && ip->len>0) ? ip : 0, 2, 0);
 			if(ret == -1)
 				return -1;
 			count += ret;
@@ -1841,7 +1841,7 @@ static int nh_extract_mediaip(str *body, str *mediaip, int *pf, char *line,
 		cp = cp1 + linelen;
 	}
 	if(cp1 == NULL)
-		return -1;
+		return 0;
 
 	mediaip->s = cp1 + linelen;
 	mediaip->len =
@@ -1876,7 +1876,6 @@ static int nh_extract_mediaip(str *body, str *mediaip, int *pf, char *line,
 		cp = eat_space_end(cp + len, mediaip->s + mediaip->len);
 	}
 	if(nextisip != 2 || mediaip->len == 0) {
-		LM_ERR("no `IP[4|6]' in `%s' field\n", line);
 		return -1;
 	}
 	return 1;
