@@ -1612,8 +1612,8 @@ static inline int find_hdr_line_start(char *hname, unsigned int hname_len,
 	start = *buf;
 	len = *buf_len;
 	parse_hname2_str(&sname, &h1);
-	if(h1.type!=HDR_ERROR_T) {
-		LM_ERR("not a header name: %.*s\n", hname_len, hname);
+	if(h1.type==HDR_ERROR_T) {
+		LM_ERR("failed to parse header name: '%.*s'\n", hname_len, hname);
 		return 0;
 	}
 
