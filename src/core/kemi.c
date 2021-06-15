@@ -1586,6 +1586,72 @@ static int sr_kemi_core_to_proto_udp(sip_msg_t *msg)
 	return (proto == PROTO_UDP)?SR_KEMI_TRUE:SR_KEMI_FALSE;
 }
 
+/**
+ *
+ */
+static int sr_kemi_core_to_proto_tcp(sip_msg_t *msg)
+{
+	int proto;
+
+	proto = sr_kemi_core_to_proto_helper(msg);
+	return (proto == PROTO_TCP)?SR_KEMI_TRUE:SR_KEMI_FALSE;
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_to_proto_tls(sip_msg_t *msg)
+{
+	int proto;
+
+	proto = sr_kemi_core_to_proto_helper(msg);
+	return (proto == PROTO_TLS)?SR_KEMI_TRUE:SR_KEMI_FALSE;
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_to_proto_sctp(sip_msg_t *msg)
+{
+	int proto;
+
+	proto = sr_kemi_core_to_proto_helper(msg);
+	return (proto == PROTO_SCTP)?SR_KEMI_TRUE:SR_KEMI_FALSE;
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_to_proto_ws(sip_msg_t *msg)
+{
+	int proto;
+
+	proto = sr_kemi_core_to_proto_helper(msg);
+	return (proto == PROTO_WS)?SR_KEMI_TRUE:SR_KEMI_FALSE;
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_to_proto_wss(sip_msg_t *msg)
+{
+	int proto;
+
+	proto = sr_kemi_core_to_proto_helper(msg);
+	return (proto == PROTO_WSS)?SR_KEMI_TRUE:SR_KEMI_FALSE;
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_to_proto_wsx(sip_msg_t *msg)
+{
+	int proto;
+
+	proto = sr_kemi_core_to_proto_helper(msg);
+	if (proto == PROTO_WSS) { return SR_KEMI_TRUE; }
+	return (proto == PROTO_WS)?SR_KEMI_TRUE:SR_KEMI_FALSE;
+}
 
 /**
  *
@@ -1976,8 +2042,33 @@ static sr_kemi_t _sr_kemi_core[] = {
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
-	{ str_init(""), str_init("to_UDP"),
-		SR_KEMIP_BOOL, sr_kemi_core_to_proto_udp,
+	{ str_init(""), str_init("to_TCP"),
+		SR_KEMIP_BOOL, sr_kemi_core_to_proto_tcp,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("to_TLS"),
+		SR_KEMIP_BOOL, sr_kemi_core_to_proto_tls,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("to_SCTP"),
+		SR_KEMIP_BOOL, sr_kemi_core_to_proto_sctp,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("to_WS"),
+		SR_KEMIP_BOOL, sr_kemi_core_to_proto_ws,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("to_WSS"),
+		SR_KEMIP_BOOL, sr_kemi_core_to_proto_wss,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("to_WSX"),
+		SR_KEMIP_BOOL, sr_kemi_core_to_proto_wsx,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
