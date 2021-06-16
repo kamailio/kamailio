@@ -102,6 +102,7 @@ Gabriel Vasile
               4.36. contact_param_decode(pname)
               4.37. contact_param_decode_uri(pname)
               4.38. contact_param_rm(pname)
+              4.39. hdr_date_check(tdiff)
 
         5. Exported pseudo-variables
 
@@ -160,6 +161,7 @@ Gabriel Vasile
    1.45. contact_param_decode usage
    1.46. contact_param_decode_ruri usage
    1.47. contact_param_rm usage
+   1.48. hdr_date_check usage
 
 Chapter 1. Admin Guide
 
@@ -223,6 +225,7 @@ Chapter 1. Admin Guide
         4.36. contact_param_decode(pname)
         4.37. contact_param_decode_uri(pname)
         4.38. contact_param_rm(pname)
+        4.39. hdr_date_check(tdiff)
 
    5. Exported pseudo-variables
 
@@ -444,6 +447,7 @@ modparam("auth", "rpid_avp", "$avp(myrpid)")
    4.36. contact_param_decode(pname)
    4.37. contact_param_decode_uri(pname)
    4.38. contact_param_rm(pname)
+   4.39. hdr_date_check(tdiff)
 
 4.1.  ring_insert_callid()
 
@@ -1109,6 +1113,25 @@ if (is_method("INVITE") and src_ip == 1.2.3.4) {
 ...
 if (is_method("REGISTER") and src_ip == 1.2.3.4) {
     contact_param_rm("myparam");
+}
+...
+
+4.39.  hdr_date_check(tdiff)
+
+   Returns true if sip message has Date header and its value is lower than
+   'NOW() - tdiff'.
+
+   Meaning of the parameters is as follows:
+     * tdiff - time difference in seconds, it can be a variable or static
+       integer value.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.48. hdr_date_check usage
+...
+if (!hdr_date_check("10")) {
+    sl_send_reply("403", "Outdated date");
+    exit;
 }
 ...
 
