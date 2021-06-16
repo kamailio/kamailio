@@ -1357,6 +1357,37 @@ if (is_method("REGISTER") and src_ip == 1.2.3.4) {
 </programlisting>
 		</example>
 	</section>
+	<section id="siputils.f.hdr_date_check">
+		<title>
+		<function moreinfo="none">hdr_date_check(tdiff)</function>
+		</title>
+		<para>
+		Returns true if sip message has Date header and its value is lower
+		than 'NOW() - tdiff'.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>tdiff</emphasis> - time difference in seconds,
+			it can be a variable or static integer value.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>hdr_date_check</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (!hdr_date_check("10")) {
+    sl_send_reply("403", "Outdated date");
+    exit;
+}
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>
