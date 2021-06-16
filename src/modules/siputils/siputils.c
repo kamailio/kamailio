@@ -66,6 +66,7 @@
 #include "../../core/kemi.h"
 #include "../../core/parser/parse_option_tags.h"
 #include "../../core/parser/parse_uri.h"
+#include "../../core/parser/parse_date.h"
 
 #include "ring.h"
 #include "options.h"
@@ -112,6 +113,8 @@ static int w_contact_param_encode(sip_msg_t *msg, char *pnparam, char *psaddr);
 static int w_contact_param_decode(sip_msg_t *msg, char *pnparam, char *p2);
 static int w_contact_param_decode_ruri(sip_msg_t *msg, char *pnparam, char *p2);
 static int w_contact_param_rm(sip_msg_t *msg, char *pnparam, char *p2);
+
+static int w_hdr_date_check(sip_msg_t *msg, char *ptdiff, char *p2);
 
 /* Fixup functions to be defined later */
 static int fixup_set_uri(void** param, int param_no);
@@ -205,6 +208,8 @@ static cmd_export_t cmds[]={
 		fixup_spve_null, fixup_free_spve_null, REQUEST_ROUTE},
 	{"contact_param_rm",      (cmd_function)w_contact_param_rm,    1,
 		fixup_spve_null, fixup_free_spve_null, REQUEST_ROUTE|ONREPLY_ROUTE},
+	{"hdr_date_check",  (cmd_function)w_hdr_date_check,      1, fixup_igp_null,
+		fixup_free_igp_null, ANY_ROUTE},
 
 	{"bind_siputils",       (cmd_function)bind_siputils,           1, 0,
 		0, 0},
@@ -548,6 +553,66 @@ static int ki_is_uri(sip_msg_t* msg, str* suri)
 	return 1;
 }
 
+/*
+ * Check date header value with time difference
+ */
+static int ki_hdr_date_check(sip_msg_t* msg, int tdiff)
+{
+	time_t tnow, tmsg;
+
+	if ((!msg->date) && (parse_headers(msg, HDR_DATE_F, 0) == -1)) {
+		LM_ERR("failed parsing Date header\n");
+		return -1;
+	}
+	if (!msg->date) {
+		LM_ERR("Date header field is not found\n");
+		return -1;
+	}
+	if ((!(msg->date)->parsed) && (parse_date_header(msg) < 0)) {
+		LM_ERR("failed parsing DATE body\n");
+		return -1;
+	}
+
+#ifdef HAVE_TIMEGM
+	tmsg=timegm(&get_date(msg)->date);
+#else
+	tmsg=_timegm(&get_date(msg)->date);
+#endif
+	if (tmsg < 0) {
+		LM_ERR("timegm error\n");
+		return -2;
+	}
+
+	if ((tnow=time(0)) < 0) {
+		LM_ERR("time error %s\n", strerror(errno));
+		return -3;
+	}
+
+	if (tnow > tmsg + tdiff) {
+		LM_ERR("autdated date header value (%ld sec)\n", tnow - tmsg + tdiff);
+		return -4;
+	} else {
+		LM_ERR("Date header value OK\n");
+	}
+
+	return 1;
+
+}
+
+/**
+ *
+ */
+static int w_hdr_date_check(sip_msg_t *msg, char *ptdiff, char *p2)
+{
+	int tdiff = 0;
+
+	if(fixup_get_ivalue(msg, (gparam_t*)ptdiff, &tdiff)<0) {
+		LM_ERR("failed to get time diff parameter\n");
+		return -1;
+	}
+	return ki_hdr_date_check(msg, tdiff);
+}
+
 /**
  *
  */
@@ -666,6 +731,11 @@ static sr_kemi_t sr_kemi_siputils_exports[] = {
 	{ str_init("siputils"), str_init("contact_param_rm"),
 		SR_KEMIP_INT, ki_contact_param_rm,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("siputils"), str_init("hdr_date_check"),
+		SR_KEMIP_INT, ki_hdr_date_check,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
