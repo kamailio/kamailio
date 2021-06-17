@@ -325,6 +325,42 @@ request_route {
 </programlisting>
 		</example>
 	</section>
+	<section id="secsipid.f.secsipid_build_identity">
+		<title>
+		<function moreinfo="none">secsipid_build_identity(origTN, destTN, attest, origID, x5u, keyPath)</function>
+		</title>
+		<para>
+			Build Identity value using the key specified by "keyPath" to sign the JWT body.
+			If origID is empty, a UUID string is generated to fill the field. The origTN
+			represents the origination telephone number; destTN represents the destination
+			telephone number; x5u is the HTTP URL referencing to the public key that
+			should be used to verify the signature; attest represents the attestation
+			level (should be "A", "B" or "C"). On success, the Indentity value is
+			stored in variable $secsipid(val). It also sets $secsipid(ret) to
+			the return value of the libsecsipid functions.
+		</para>
+		<para>
+		The parameters can contain pseudo-variables.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>secsipid_build_identity</function> usage</title>
+		<programlisting format="linespecific">
+...
+request_route {
+    ...
+    if(secsipid_build_identity("$fU", "$rU", "A", "",
+            "https://kamailio.org/stir/$rd/cert.pem", "/secsipid/$rd/key.pem")) {
+        xinfo("Identity value: $secsipid(val)\n");
+    }
+    ...
+}
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 	<section id="secsipid.s.installation">
 	<title>Installation</title>
