@@ -41,6 +41,9 @@ Daniel-Constantin Mierla
               4.4. secsipid_add_identity(origTN, destTN, attest, origID,
                       x5u, keyPath)
 
+              4.5. secsipid_build_identity(origTN, destTN, attest, origID,
+                      x5u, keyPath)
+
         5. Installation
 
    List of Examples
@@ -55,7 +58,8 @@ Daniel-Constantin Mierla
    1.8. secsipid_check_identity_pubkey usage
    1.9. secsipid_get_url usage
    1.10. secsipid_add_identity usage
-   1.11. Libsecsipid Usage
+   1.11. secsipid_build_identity usage
+   1.12. Libsecsipid Usage
 
 Chapter 1. Admin Guide
 
@@ -82,6 +86,9 @@ Chapter 1. Admin Guide
         4.2. secsipid_check_identity(pubkeyVal)
         4.3. secsipid_get_url(url, ovar)
         4.4. secsipid_add_identity(origTN, destTN, attest, origID, x5u,
+                keyPath)
+
+        4.5. secsipid_build_identity(origTN, destTN, attest, origID, x5u,
                 keyPath)
 
    5. Installation
@@ -213,6 +220,9 @@ modparam("secsipid", "libopt", "CacheExpires=0")
    4.4. secsipid_add_identity(origTN, destTN, attest, origID, x5u,
           keyPath)
 
+   4.5. secsipid_build_identity(origTN, destTN, attest, origID, x5u,
+          keyPath)
+
 4.1.  secsipid_check_identity(keyPath)
 
    Check the validity of the Identity header using the keys stored in the
@@ -305,6 +315,35 @@ request_route {
 }
 ...
 
+4.5.  secsipid_build_identity(origTN, destTN, attest, origID, x5u, keyPath)
+
+   Build Identity value using the key specified by "keyPath" to sign the
+   JWT body. If origID is empty, a UUID string is generated to fill the
+   field. The origTN represents the origination telephone number; destTN
+   represents the destination telephone number; x5u is the HTTP URL
+   referencing to the public key that should be used to verify the
+   signature; attest represents the attestation level (should be "A", "B"
+   or "C"). On success, the Indentity value is stored in variable
+   $secsipid(val). It also sets $secsipid(ret) to the return value of the
+   libsecsipid functions.
+
+   The parameters can contain pseudo-variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.11. secsipid_build_identity usage
+...
+request_route {
+    ...
+    if(secsipid_build_identity("$fU", "$rU", "A", "",
+            "https://kamailio.org/stir/$rd/cert.pem", "/secsipid/$rd/key.pem"))
+{
+        xinfo("Identity value: $secsipid(val)\n");
+    }
+    ...
+}
+...
+
 5. Installation
 
    The module needs "secsipdi_proc.so" module that depends on
@@ -319,7 +358,7 @@ request_route {
    installed and its environment configured, then run the following
    commands:
 
-   Example 1.11. Libsecsipid Usage
+   Example 1.12. Libsecsipid Usage
 ...
 export GO111MODULE=off
 go get https://github.com/asipto/secsipidx
