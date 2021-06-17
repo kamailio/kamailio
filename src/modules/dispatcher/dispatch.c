@@ -325,7 +325,7 @@ int ds_set_attrs(ds_dest_t *dest, str *vattrs)
 				dest->attrs.weight = tmp_ival;
 			} else {
 				dest->attrs.weight = 0;
-				LM_ERR("weight %d not in 1-100 range - ignoring destination",
+				LM_ERR("weight %d not in 1-100 range - ignoring destination\n",
 						tmp_ival);
 			}
 		} else if(pit->name.len == 7
@@ -350,7 +350,7 @@ int ds_set_attrs(ds_dest_t *dest, str *vattrs)
 				dest->attrs.rweight = tmp_ival;
 			} else {
 				dest->attrs.rweight = 0;
-				LM_WARN("rweight %d not in 1-100 range - ignoring", tmp_ival);
+				LM_WARN("rweight %d not in 1-100 range - ignoring\n", tmp_ival);
 			}
 		} else if(pit->name.len == 9
 				&& strncasecmp(pit->name.s, "ping_from", 9) == 0) {
