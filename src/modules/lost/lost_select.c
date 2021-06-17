@@ -277,15 +277,19 @@ static int sel_hdrs(str* res, select_t* s, struct sip_msg* msg, char *prps, char
 	}
 
 	res->len = ts.len;
-	res->s = get_static_buffer(res->len);
-	if(!res->s)
+	res->s = NULL;
+	if (res->len > 0)
 	{
-		pkg_free(buf);
-		res->len = 0;
-		LM_ERR("cannot allocate static buffer\n");
-		return E_OUT_OF_MEM;
+		res->s = get_static_buffer(res->len);
+		if(!res->s)
+		{
+			res->len = 0;
+			LM_ERR("cannot allocate static buffer\n");
+			cnt = E_OUT_OF_MEM;
+		}
+		else
+			memcpy(res->s, ts.s, res->len);
 	}
-	memcpy(res->s, ts.s, res->len);
 	pkg_free(buf);
 	return cnt;
 }
