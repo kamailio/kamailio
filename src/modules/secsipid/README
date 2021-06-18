@@ -37,11 +37,12 @@ Daniel-Constantin Mierla
 
               4.1. secsipid_check_identity(keyPath)
               4.2. secsipid_check_identity(pubkeyVal)
-              4.3. secsipid_get_url(url, ovar)
-              4.4. secsipid_add_identity(origTN, destTN, attest, origID,
+              4.3. secsipid_check(sIdentity, keyPath)
+              4.4. secsipid_get_url(url, ovar)
+              4.5. secsipid_add_identity(origTN, destTN, attest, origID,
                       x5u, keyPath)
 
-              4.5. secsipid_build_identity(origTN, destTN, attest, origID,
+              4.6. secsipid_build_identity(origTN, destTN, attest, origID,
                       x5u, keyPath)
 
         5. Installation
@@ -56,10 +57,11 @@ Daniel-Constantin Mierla
    1.6. Set libopt parameter
    1.7. secsipid_check_identity usage
    1.8. secsipid_check_identity_pubkey usage
-   1.9. secsipid_get_url usage
-   1.10. secsipid_add_identity usage
-   1.11. secsipid_build_identity usage
-   1.12. Libsecsipid Usage
+   1.9. secsipid_check usage
+   1.10. secsipid_get_url usage
+   1.11. secsipid_add_identity usage
+   1.12. secsipid_build_identity usage
+   1.13. Libsecsipid Usage
 
 Chapter 1. Admin Guide
 
@@ -84,11 +86,12 @@ Chapter 1. Admin Guide
 
         4.1. secsipid_check_identity(keyPath)
         4.2. secsipid_check_identity(pubkeyVal)
-        4.3. secsipid_get_url(url, ovar)
-        4.4. secsipid_add_identity(origTN, destTN, attest, origID, x5u,
+        4.3. secsipid_check(sIdentity, keyPath)
+        4.4. secsipid_get_url(url, ovar)
+        4.5. secsipid_add_identity(origTN, destTN, attest, origID, x5u,
                 keyPath)
 
-        4.5. secsipid_build_identity(origTN, destTN, attest, origID, x5u,
+        4.6. secsipid_build_identity(origTN, destTN, attest, origID, x5u,
                 keyPath)
 
    5. Installation
@@ -216,11 +219,12 @@ modparam("secsipid", "libopt", "CacheExpires=0")
 
    4.1. secsipid_check_identity(keyPath)
    4.2. secsipid_check_identity(pubkeyVal)
-   4.3. secsipid_get_url(url, ovar)
-   4.4. secsipid_add_identity(origTN, destTN, attest, origID, x5u,
+   4.3. secsipid_check(sIdentity, keyPath)
+   4.4. secsipid_get_url(url, ovar)
+   4.5. secsipid_add_identity(origTN, destTN, attest, origID, x5u,
           keyPath)
 
-   4.5. secsipid_build_identity(origTN, destTN, attest, origID, x5u,
+   4.6. secsipid_build_identity(origTN, destTN, attest, origID, x5u,
           keyPath)
 
 4.1.  secsipid_check_identity(keyPath)
@@ -272,7 +276,35 @@ request_route {
 }
 ...
 
-4.3.  secsipid_get_url(url, ovar)
+4.3.  secsipid_check(sIdentity, keyPath)
+
+   Check the validity of the "sIdentity" parameter using the keys stored
+   in the file specified by "keyPath". If the keyPath parameter is empty,
+   the function is downloading the key using the URL from "info" parameter
+   of the sIdentity, using the value of "timeout" parameter to limit the
+   download time. The validity of the JWT in the sIdentity value is also
+   checked against the "expire" parameter.
+
+   The parameters can contain pseudo-variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.9. secsipid_check usage
+...
+request_route {
+    ...
+        if(secsipid_check_identity("...", "/secsipid/$si/cert.pem")) { ... }
+    ...
+        if(secsipid_check_identity("...", "")) { ... }
+    ...
+}
+...
+
+   Further checks can be done with config operations, decoding the JWT
+   header and payload using {s.select} and {s.decode.base64t}
+   transformations together with jansson module.
+
+4.4.  secsipid_get_url(url, ovar)
 
    Get the content of a URL and store the result in a variable.
 
@@ -281,7 +313,7 @@ request_route {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.9. secsipid_get_url usage
+   Example 1.10. secsipid_get_url usage
 ...
 request_route {
   ...
@@ -291,7 +323,7 @@ request_route {
 }
 ...
 
-4.4.  secsipid_add_identity(origTN, destTN, attest, origID, x5u, keyPath)
+4.5.  secsipid_add_identity(origTN, destTN, attest, origID, x5u, keyPath)
 
    Add Identity header using the key specified by "keyPath" to sign the
    JWT body. If origID is empty, a UUID string is generated to fill the
@@ -305,7 +337,7 @@ request_route {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.10. secsipid_add_identity usage
+   Example 1.11. secsipid_add_identity usage
 ...
 request_route {
     ...
@@ -315,7 +347,7 @@ request_route {
 }
 ...
 
-4.5.  secsipid_build_identity(origTN, destTN, attest, origID, x5u, keyPath)
+4.6.  secsipid_build_identity(origTN, destTN, attest, origID, x5u, keyPath)
 
    Build Identity value using the key specified by "keyPath" to sign the
    JWT body. If origID is empty, a UUID string is generated to fill the
@@ -331,7 +363,7 @@ request_route {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.11. secsipid_build_identity usage
+   Example 1.12. secsipid_build_identity usage
 ...
 request_route {
     ...
@@ -358,7 +390,7 @@ request_route {
    installed and its environment configured, then run the following
    commands:
 
-   Example 1.12. Libsecsipid Usage
+   Example 1.13. Libsecsipid Usage
 ...
 export GO111MODULE=off
 go get https://github.com/asipto/secsipidx
