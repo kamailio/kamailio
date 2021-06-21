@@ -55,6 +55,8 @@ struct cfg_group_tls {
 	str cipher_list;
 	int session_cache;
 	str session_id;
+	int session_keylog_enable;   /* enable logging of TLS/DTLS session keys*/
+	str session_keylog_filename; /* TLS/DTLS session keys filename */
 	str config_file;
 	int log;
 	int debug;

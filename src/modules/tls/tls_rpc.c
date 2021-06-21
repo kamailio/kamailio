@@ -233,6 +233,8 @@ static void tls_options(rpc_t* rpc, void* c)
 		"cipher_list",		&cfg_get(tls, tls_cfg, cipher_list),
 		"session_cache",	cfg_get(tls, tls_cfg, session_cache),
 		"session_id",		&cfg_get(tls, tls_cfg, session_id),
+		"session_keylog_enable",	&cfg_get(tls, tls_cfg, session_keylog_enable),
+		"session_keylog_filename",	&cfg_get(tls, tls_cfg, session_keylog_filename),
 		"config",			&cfg_get(tls, tls_cfg, config_file),
 		"log",				cfg_get(tls, tls_cfg, log),
 		"debug",			cfg_get(tls, tls_cfg, debug),

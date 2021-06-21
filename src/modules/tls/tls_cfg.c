@@ -50,6 +50,8 @@ struct cfg_group_tls default_tls_cfg = {
 	STR_NULL, /* cipher_list (default value set in fix_tls_cfg) */
 	0, /* session_cache */
 	STR_STATIC_INIT("kamailio-tls-5.x.y"), /* session_id */
+	0, /* session_keylog_enable */
+	STR_STATIC_INIT("/var/lib/kamailio/session_keylog"), /* session_keylog_filename */
 	STR_NULL, /* config_file */
 	3, /* log  (L_DBG)*/
 	3, /* debug (L_DBG) */
@@ -177,6 +179,10 @@ cfg_def_t	tls_cfg_def[] = {
 		"enables or disables the session cache" },
 	{"session_id", CFG_VAR_STR | CFG_READONLY, 0, 0, 0, 0,
 		"string used for the session id" },
+	{"session_keylog_enable", CFG_VAR_INT, 0, 1, 0, 0,
+		"enables export TLS/DTLS session keys" },
+	{"session_keylog_filename", CFG_VAR_STR | CFG_READONLY, 0, 0, 0, 0,
+		"TLS/DTLS session filename" },
 	{"config", CFG_VAR_STR, 0, 0, fix_rel_pathname, 0,
 		"tls config file name (used for the per domain options)" },
 	{"log", CFG_VAR_INT | CFG_ATOMIC, 0, 1000, 0, 0,

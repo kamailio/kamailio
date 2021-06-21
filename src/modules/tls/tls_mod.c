@@ -233,6 +233,8 @@ static param_export_t params[] = {
 	{"tls_debug",           PARAM_INT,    &default_tls_cfg.debug        },
 	{"session_cache",       PARAM_INT,    &default_tls_cfg.session_cache},
 	{"session_id",          PARAM_STR,    &default_tls_cfg.session_id   },
+	{"session_keylog_enable", PARAM_INT, &default_tls_cfg.session_keylog_enable},
+	{"session_keylog_filename", PARAM_STR, &default_tls_cfg.session_keylog_filename},
 	{"config",              PARAM_STR,    &default_tls_cfg.config_file  },
 	{"tls_disable_compression", PARAM_INT,
 										&default_tls_cfg.disable_compression},
