@@ -465,6 +465,7 @@ int tls_accept(struct tcp_connection *c, int* error)
 	if (pkey)
 		SSL_use_PrivateKey(ssl, pkey);
 #endif
+	set_keylog_callback(ssl);
 	ret = SSL_accept(ssl);
 	if (unlikely(ret == 1)) {
 		DBG("TLS accept successful\n");

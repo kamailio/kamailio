@@ -89,4 +89,6 @@ int tls_h_init_si_f(struct socket_info *si);
  */
 int tls_check_sockets(tls_domains_cfg_t* cfg);
 
+void set_keylog_callback(const SSL *ssl);
+
 #endif /* _TLS_INIT_H */
