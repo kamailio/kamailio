@@ -400,6 +400,39 @@ request_route {
 </programlisting>
 		</example>
 	</section>
+	<section id="secsipid.f.secsipid_sign">
+		<title>
+		<function moreinfo="none">secsipid_sign(sheaders, spaypload, keyPath)</function>
+		</title>
+		<para>
+			Build Identity value using the key specified by "keyPath" to sign the JWT body.
+			The sheaders and spayload have to be string representation of JSON
+			headers and payload to be signed. On success, the Indentity value is
+			stored in variable $secsipid(val). It also sets $secsipid(ret) to
+			the return value of the libsecsipid functions.
+		</para>
+		<para>
+		The parameters can contain pseudo-variables.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>secsipid_sign</function> usage</title>
+		<programlisting format="linespecific">
+...
+request_route {
+    ...
+    if(secsipid_sign("_JSON_HEADERS_", "_JSON_PAYLOAD_",
+            "/secsipid/$rd/key.pem")) {
+        xinfo("Identity value: $secsipid(val)\n");
+    }
+    ...
+}
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 	<section id="secsipid.s.installation">
 	<title>Installation</title>
