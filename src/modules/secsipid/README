@@ -45,6 +45,8 @@ Daniel-Constantin Mierla
               4.6. secsipid_build_identity(origTN, destTN, attest, origID,
                       x5u, keyPath)
 
+              4.7. secsipid_sign(sheaders, spaypload, keyPath)
+
         5. Installation
 
    List of Examples
@@ -61,7 +63,8 @@ Daniel-Constantin Mierla
    1.10. secsipid_get_url usage
    1.11. secsipid_add_identity usage
    1.12. secsipid_build_identity usage
-   1.13. Libsecsipid Usage
+   1.13. secsipid_sign usage
+   1.14. Libsecsipid Usage
 
 Chapter 1. Admin Guide
 
@@ -93,6 +96,8 @@ Chapter 1. Admin Guide
 
         4.6. secsipid_build_identity(origTN, destTN, attest, origID, x5u,
                 keyPath)
+
+        4.7. secsipid_sign(sheaders, spaypload, keyPath)
 
    5. Installation
 
@@ -226,6 +231,8 @@ modparam("secsipid", "libopt", "CacheExpires=0")
 
    4.6. secsipid_build_identity(origTN, destTN, attest, origID, x5u,
           keyPath)
+
+   4.7. secsipid_sign(sheaders, spaypload, keyPath)
 
 4.1.  secsipid_check_identity(keyPath)
 
@@ -376,6 +383,30 @@ request_route {
 }
 ...
 
+4.7.  secsipid_sign(sheaders, spaypload, keyPath)
+
+   Build Identity value using the key specified by "keyPath" to sign the
+   JWT body. The sheaders and spayload have to be string representation of
+   JSON headers and payload to be signed. On success, the Indentity value
+   is stored in variable $secsipid(val). It also sets $secsipid(ret) to
+   the return value of the libsecsipid functions.
+
+   The parameters can contain pseudo-variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.13. secsipid_sign usage
+...
+request_route {
+    ...
+    if(secsipid_sign("_JSON_HEADERS_", "_JSON_PAYLOAD_",
+            "/secsipid/$rd/key.pem")) {
+        xinfo("Identity value: $secsipid(val)\n");
+    }
+    ...
+}
+...
+
 5. Installation
 
    The module needs "secsipdi_proc.so" module that depends on
@@ -390,7 +421,7 @@ request_route {
    installed and its environment configured, then run the following
    commands:
 
-   Example 1.13. Libsecsipid Usage
+   Example 1.14. Libsecsipid Usage
 ...
 export GO111MODULE=off
 go get https://github.com/asipto/secsipidx
