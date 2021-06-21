@@ -603,11 +603,13 @@ int prepare_keylog_file(str session_keylog_filename)
 
 	if (cfg_get(tls, tls_cfg, session_keylog_enable) == 0) {
 		/* Keylogging is disabled. */
+		LOG(tls_log, "Session keylog disabled\n");
 		return 0;
 	}
 
 	if (session_keylog_filename.len == 0) {
 		/* Keylogging filename is not specified. */
+		LOG(tls_log, "Session keylog filename is emptry, keylog disabled\n");
 		return 0;
 	}
 
