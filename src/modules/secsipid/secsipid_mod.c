@@ -815,6 +815,23 @@ error:
 
 }
 
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_secsipid_get_val(sip_msg_t *msg)
+{
+	memset(&_sr_kemi_secsipid_xval, 0, sizeof(sr_kemi_xval_t));
+	if(_secsipid_data.value.s==NULL || _secsipid_data.value.len<=0) {
+		sr_kemi_xval_null(&_sr_kemi_secsipid_xval, SR_KEMI_XVAL_NULL_EMPTY);
+		return &_sr_kemi_secsipid_xval;
+	}
+	_sr_kemi_secsipid_xval.vtype = SR_KEMIP_STR;
+	_sr_kemi_secsipid_xval.v.s = _secsipid_data.value;
+
+	return &_sr_kemi_secsipid_xval;
+}
+
 /**
  *
  */
@@ -844,6 +861,11 @@ static sr_kemi_t sr_kemi_secsipid_exports[] = {
 		SR_KEMIP_INT, ki_secsipid_build_identity,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR }
+	},
+	{ str_init("secsipid"), str_init("secsipid_get_val"),
+		SR_KEMIP_XVAL, ki_secsipid_get_val,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("secsipid"), str_init("secsipid_get_url"),
 		SR_KEMIP_XVAL, ki_secsipid_get_url,
