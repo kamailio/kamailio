@@ -446,7 +446,7 @@ modparam("http_client", "keep_connections", 1)
 			Valid values are:
 				<itemizedlist>
 				<listitem><para>0 - Return the entire HTTP result body</para></listitem>
-				<listitem><para>1 - Return the first oine from HTTP result body</para></listitem>
+				<listitem><para>1 - Return the first line from HTTP result body</para></listitem>
 				</itemizedlist>
 			</para>
 			<para>
