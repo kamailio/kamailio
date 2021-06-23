@@ -320,6 +320,7 @@ static int tls_complete_init(struct tcp_connection* c)
 
 	/* link the extra data struct inside ssl connection*/
 	SSL_set_app_data(data->ssl, data);
+	set_keylog_callback(data->ssl);
 	return 0;
 
 error:
