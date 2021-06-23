@@ -2042,6 +2042,11 @@ static sr_kemi_t _sr_kemi_core[] = {
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init(""), str_init("to_UDP"),
+		SR_KEMIP_BOOL, sr_kemi_core_to_proto_udp,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ str_init(""), str_init("to_TCP"),
 		SR_KEMIP_BOOL, sr_kemi_core_to_proto_tcp,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
