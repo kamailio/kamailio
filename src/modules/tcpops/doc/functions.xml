@@ -375,4 +375,40 @@ event_route[tcp:closed] {
 			]]></programlisting>
 		</example>
 	</section>
+	<section id="tcpops.f.tcp_close_connection">
+		<title>
+			<function>tcp_close_connection([conid])</function>
+		</title>
+		<para>
+			Trigger a close of the connection corresponding to current SIP
+			message or to connection id 'conid'.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+			<listitem>
+				<para><emphasis>conid</emphasis> - the value of tcp connection id.
+				It can be an integer number or a variable holding an interver value.
+				</para>
+			</listitem>
+		</itemizedlist>
+		<para>Return values:</para>
+		<itemizedlist>
+			<listitem>
+			<para>1: success</para>
+			</listitem>
+			<listitem>
+			<para>-1 (or other negative values): failure</para>
+			</listitem>
+		</itemizedlist>
+		<example>
+			<title><function>tcp_close_connection</function> usage</title>
+			<programlisting><![CDATA[
+...
+	$var(conid) = 10;
+	tcp_close_connection("$var(conid)");
+...
+			]]></programlisting>
+		</example>
+	</section>
+
 </section>
