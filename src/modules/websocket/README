@@ -162,6 +162,8 @@ Chapter 1. Admin Guide
 
    Example 1.1. event_route[xhttp:request]
 ...
+tcp_accept_no_cl=yes
+...
 loadmodule "sl.so"
 loadmodule "xhttp.so"
 loadmodule "msrp.so"  # Only required if using MSRP over WebSockets

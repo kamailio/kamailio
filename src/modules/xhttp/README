@@ -220,6 +220,11 @@ event_route[xhttp:request] {
 
    The event route is executed when a new HTTP request is received.
 ...
+tcp_accept_no_cl=yes
+...
+loadmodule "sl.so"
+loadmodule "xhttp.so
+...
 event_route[xhttp:request] {
     xhttp_reply("200", "OK", "text/html",
         "<html><body>OK - [$si:$sp]</body></html>");

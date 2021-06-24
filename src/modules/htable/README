@@ -1065,7 +1065,7 @@ kamcmd htable.sets test x[0] abc
 kamcmd htable.seti test x 123
 
 # Set first entry in array key x $sht(test=>x[0]) as integer
-kamcmd htable.sets test x[0] 123
+kamcmd htable.seti test x[0] 123
 ...
 
 6.5.  htable.dump htable
