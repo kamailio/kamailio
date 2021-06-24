@@ -39,6 +39,8 @@ endif # ifneq ($(CRYPTO_BUILDER),)
 
 else # $(LIBSSL_STATIC),yes)
 
+	DEFS += -DKSR_LIBSSL_STATIC
+
 ifneq ($(LIBSSL_STATIC_SRCLIB),yes)
 	## when static libs (*.a) from packages are compiled with -fPIC
 	DEFS += $(shell $(SSL_BUILDER) --cflags)
