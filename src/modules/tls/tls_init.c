@@ -589,6 +589,10 @@ int tls_pre_init(void)
 	void (*ff)(void *, const char *, int) = NULL;
 #endif
 
+#ifdef KSR_LIBSSL_STATIC
+	LM_INFO("libssl linked mode: static\n");
+#endif
+
 	/*
 	 * this has to be called before any function calling CRYPTO_malloc,
 	 * CRYPTO_malloc will set allow_customize in openssl to 0
