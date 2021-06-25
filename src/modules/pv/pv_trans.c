@@ -189,7 +189,7 @@ static int getNumericValue(str sin) {
 int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 		pv_value_t *val)
 {
-	int i, j, max;
+	int i, j, n, m, max;
 	char *p, *s;
 	char c;
 	str st, st2;
@@ -1443,6 +1443,88 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 			}
 			val->flags = PV_VAL_STR;
 			val->rs.s = _tr_buffer;
+			val->rs.s[val->rs.len] = '\0';
+			break;
+
+		case TR_S_FMTLINES:
+		case TR_S_FMTLINET:
+			if(tp==NULL || tp->next==NULL)
+			{
+				LM_ERR("substr invalid parameters (cfg line: %d)\n",
+						get_cfg_crt_line());
+				return -1;
+			}
+			if(!(val->flags&PV_VAL_STR))
+				val->rs.s = int2str(val->ri, &val->rs.len);
+			if(tp->type==TR_PARAM_NUMBER)
+			{
+				n = tp->v.n;
+			} else {
+				if(pv_get_spec_value(msg, (pv_spec_p)tp->v.data, &v)!=0
+						|| (!(v.flags&PV_VAL_INT)))
+				{
+					LM_ERR("fmtline cannot get p1 (cfg line: %d)\n",
+							get_cfg_crt_line());
+					return -1;
+				}
+				n = v.ri;
+			}
+			if(tp->next->type==TR_PARAM_NUMBER)
+			{
+				m = tp->next->v.n;
+			} else {
+				if(pv_get_spec_value(msg, (pv_spec_p)tp->next->v.data, &v)!=0
+						|| (!(v.flags&PV_VAL_INT)))
+				{
+					LM_ERR("fmt cannot get p2 (cfg line: %d)\n",
+							get_cfg_crt_line());
+					return -1;
+				}
+				m = v.ri;
+			}
+			if(n<0 || m<0) {
+				LM_ERR("substr negative offset (cfg line: %d)\n",
+						get_cfg_crt_line());
+				return -1;
+			}
+			if(n==0 || m>=val->rs.len) {
+				if(val->rs.len>TR_BUFFER_SIZE-2) {
+					LM_ERR("value too large: %d\n", val->rs.len);
+					return -1;
+				}
+
+				memcpy(_tr_buffer, val->rs.s, val->rs.len);
+				val->flags = PV_VAL_STR;
+				val->rs.s = _tr_buffer;
+				val->rs.s[val->rs.len] = '\0';
+			}
+			if(val->rs.len + (((val->rs.len)/n)*(2+m)) > TR_BUFFER_SIZE-2) {
+				LM_ERR("value too large: %d\n", val->rs.len);
+				return -1;
+			}
+
+			p = _tr_buffer;
+			for(i=0; i<val->rs.len; i++) {
+				if(i!=0 && (i/n)==0) {
+					*p = '\r';
+					p++;
+					*p = '\n';
+					p++;
+					for(j=0; j<m; j++) {
+						if(subtype==TR_S_FMTLINES) {
+							*p = ' ';
+						} else {
+							*p = '\t';
+						}
+						p++;
+					}
+				}
+				*p = val->rs.s[i];
+				p++;
+			}
+			val->flags = PV_VAL_STR;
+			val->rs.s = _tr_buffer;
+			val->rs.len = p - _tr_buffer;
 			val->rs.s[val->rs.len] = '\0';
 			break;
 
@@ -3068,6 +3150,53 @@ char* tr_parse_string(str* in, trans_t *t)
 		{
 			LM_ERR("invalid rafter transformation: %.*s!!\n",
 					in->len, in->s);
+			goto error;
+		}
+		goto done;
+	} else if(name.len==8 && (strncasecmp(name.s, "fmtlines", 8)==0
+				|| strncasecmp(name.s, "fmtlinet", 8)==0)) {
+		if(name.s[7]=='s' || name.s[7]=='S') {
+			t->subtype = TR_S_FMTLINES;
+		} else {
+			t->subtype = TR_S_FMTLINET;
+		}
+		if(*p!=TR_PARAM_MARKER)
+		{
+			LM_ERR("invalid fmtline%c transformation: %.*s!\n", name.s[7],
+					in->len, in->s);
+			goto error;
+		}
+		p++;
+		_tr_parse_nparam(p, p0, tp, spec, n, sign, in, s);
+		if(tp->type==TR_PARAM_NUMBER && tp->v.n<0)
+		{
+			LM_ERR("fmtline%c negative line length value\n", name.s[7]);
+			goto error;
+		}
+
+		t->params = tp;
+		tp = 0;
+		while(*p && (*p==' ' || *p=='\t' || *p=='\n')) p++;
+		if(*p!=TR_PARAM_MARKER)
+		{
+			LM_ERR("invalid fmtline%c transformation: %.*s!\n",
+					 name.s[7], in->len, in->s);
+			goto error;
+		}
+		p++;
+		_tr_parse_nparam(p, p0, tp, spec, n, sign, in, s);
+		if(tp->type==TR_PARAM_NUMBER && tp->v.n<0)
+		{
+			LM_ERR("fmtline%c negative padding lenght value\n", name.s[7]);
+			goto error;
+		}
+		t->params->next = tp;
+		tp = 0;
+		while(is_in_str(p, in) && (*p==' ' || *p=='\t' || *p=='\n')) p++;
+		if(*p!=TR_RBRACKET)
+		{
+			LM_ERR("invalid fmtline%c transformation: %.*s!!\n",
+					name.s[7], in->len, in->s);
 			goto error;
 		}
 		goto done;
