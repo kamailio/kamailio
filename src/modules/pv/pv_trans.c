@@ -1340,6 +1340,7 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 			break;
 
 		case TR_S_BEFORE:
+		case TR_S_RBEFORE:
 			if(tp==NULL)
 			{
 				LM_ERR("invalid parameters (cfg line: %d)\n",
@@ -1366,11 +1367,20 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 				}
 				st = v.rs;
 			}
-			for(i=0; i<val->rs.len; i++) {
-				if(val->rs.s[i]==st.s[0]) {
-					break;
+			if(subtype==TR_S_BEFORE) {
+				for(i=0; i<val->rs.len; i++) {
+					if(val->rs.s[i]==st.s[0]) {
+						break;
+					}
+				}
+			} else {
+				for(i=val->rs.len-1; i>=0; i++) {
+					if(val->rs.s[i]==st.s[0]) {
+						break;
+					}
 				}
 			}
+
 			if(i==0) {
 				_tr_buffer[0] = '\0';
 				val->rs.len = 0;
@@ -1384,6 +1394,7 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 			break;
 
 		case TR_S_AFTER:
+		case TR_S_RAFTER:
 			if(tp==NULL)
 			{
 				LM_ERR("invalid parameters (cfg line: %d)\n",
@@ -1410,9 +1421,17 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 				}
 				st = v.rs;
 			}
-			for(i=0; i<val->rs.len; i++) {
-				if(val->rs.s[i]==st.s[0]) {
-					break;
+			if(subtype==TR_S_AFTER) {
+				for(i=0; i<val->rs.len; i++) {
+					if(val->rs.s[i]==st.s[0]) {
+						break;
+					}
+				}
+			} else {
+				for(i=val->rs.len-1; i>=0; i++) {
+					if(val->rs.s[i]==st.s[0]) {
+						break;
+					}
 				}
 			}
 			if(i>=val->rs.len-1) {
@@ -3008,6 +3027,46 @@ char* tr_parse_string(str* in, trans_t *t)
 		if(*p!=TR_RBRACKET)
 		{
 			LM_ERR("invalid after transformation: %.*s!!\n",
+					in->len, in->s);
+			goto error;
+		}
+		goto done;
+	} else if(name.len==7 && strncasecmp(name.s, "rbefore", 7)==0) {
+		t->subtype = TR_S_RBEFORE;
+		if(*p!=TR_PARAM_MARKER)
+		{
+			LM_ERR("invalid rbefore transformation: %.*s!\n",
+					in->len, in->s);
+			goto error;
+		}
+		p++;
+		_tr_parse_sparamx(p, p0, tp, spec, ps, in, s, 1);
+		t->params = tp;
+		tp = 0;
+		while(*p && (*p==' ' || *p=='\t' || *p=='\n')) p++;
+		if(*p!=TR_RBRACKET)
+		{
+			LM_ERR("invalid rbefore transformation: %.*s!!\n",
+					in->len, in->s);
+			goto error;
+		}
+		goto done;
+	} else if(name.len==6 && strncasecmp(name.s, "rafter", 6)==0) {
+		t->subtype = TR_S_RAFTER;
+		if(*p!=TR_PARAM_MARKER)
+		{
+			LM_ERR("invalid rafter transformation: %.*s!\n",
+					in->len, in->s);
+			goto error;
+		}
+		p++;
+		_tr_parse_sparamx(p, p0, tp, spec, ps, in, s, 1);
+		t->params = tp;
+		tp = 0;
+		while(*p && (*p==' ' || *p=='\t' || *p=='\n')) p++;
+		if(*p!=TR_RBRACKET)
+		{
+			LM_ERR("invalid rafter transformation: %.*s!!\n",
 					in->len, in->s);
 			goto error;
 		}
