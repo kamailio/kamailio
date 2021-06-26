@@ -114,7 +114,6 @@ static str DEFAULT_RTPP_SET_ID_STR = str_init("0");
 #define	PTL_CPROTOVER	"20081102"
 
 #define	CPORT		"22222"
-static int rp_extract_mediaip(str *, str *, int *, char *);
 static int alter_mediaip(struct sip_msg *, str *, str *, int, str *, int, int);
 static int alter_mediaport(struct sip_msg *, str *, str *, str *, int);
 static int alter_rtcp(struct sip_msg *msg, str *body, str *oldport, str *newport);
@@ -938,61 +937,6 @@ isnulladdr(str *sx, int pf)
 #define	AOLDMEDPRT	"a=oldmediaport:"
 #define	AOLDMEDPRT_LEN	(sizeof(AOLDMEDPRT) - 1)
 
-
-	static int
-rp_extract_mediaip(str *body, str *mediaip, int *pf, char *line)
-{
-	char *cp, *cp1;
-	int len, nextisip;
-
-	cp1 = NULL;
-	for (cp = body->s; (len = body->s + body->len - cp) > 0;) {
-		cp1 = ser_memmem(cp, line, len, 2);
-		if (cp1 == NULL || cp1[-1] == '\n' || cp1[-1] == '\r')
-			break;
-		cp = cp1 + 2;
-	}
-	if (cp1 == NULL)
-		return -1;
-
-	mediaip->s = cp1 + 2;
-	mediaip->len = eat_line(mediaip->s, body->s + body->len - mediaip->s)
-						- mediaip->s;
-	trim_len(mediaip->len, mediaip->s, *mediaip);
-
-	nextisip = 0;
-	for (cp = mediaip->s; cp < mediaip->s + mediaip->len;) {
-		len = eat_token_end(cp, mediaip->s + mediaip->len) - cp;
-		if (nextisip == 1) {
-			mediaip->s = cp;
-			mediaip->len = len;
-			nextisip++;
-			break;
-		}
-		if (len == 3 && memcmp(cp, "IP", 2) == 0) {
-			switch (cp[2]) {
-				case '4':
-					nextisip = 1;
-					*pf = AF_INET;
-					break;
-
-				case '6':
-					nextisip = 1;
-					*pf = AF_INET6;
-					break;
-
-				default:
-					break;
-			}
-		}
-		cp = eat_space_end(cp + len, mediaip->s + mediaip->len);
-	}
-	if (nextisip != 2 || mediaip->len == 0) {
-		LM_ERR("no `IP[4|6]' in `%s' field\n",line);
-		return -1;
-	}
-	return 1;
-}
 
 	static int
 alter_mediaip(struct sip_msg *msg, str *body, str *oldip, int oldpf,
