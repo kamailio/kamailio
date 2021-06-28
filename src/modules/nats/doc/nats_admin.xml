@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN" "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+	<!-- Include general documentation entities -->
+	<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+	%docentities;
+]>
+<!-- Module User's Guide -->
+
+<chapter xmlns:xi="http://www.w3.org/2001/XInclude">
+	<title>&adminguide;</title>
+
+
+	<section>
+		<title>Overview</title>
+		<para>
+			The module provides an NATS consumer for &kamailio;.
+			NATS is a real time distributed messaging platform, more details about it
+			can be found at
+			<ulink url="https://nats.io">nats.io</ulink>
+			.
+		</para>
+		<para>
+			From a high-level perspective, the module may be used for:
+			<itemizedlist>
+				<listitem>
+					<para>
+						Provide a real-time distributed messaging layer in &kamailio;
+					</para>
+				</listitem>
+			</itemizedlist>
+		</para>
+
+
+		<para>
+			Supported NATS operations are:
+			<itemizedlist>
+				<listitem>
+					<para>
+						Subscribe to a Subject and Queue Group
+					</para>
+				</listitem>
+			</itemizedlist>
+		</para>
+
+	</section>
+	<section>
+		<title>How it works</title>
+		<para>
+			The module creates invokes a consumer process for each defined `subject_queue_group`. The messages are visible in event routes matching the "subject" name.
+		</para>
+	</section>
+
+	<section>
+		<title>Dependencies</title>
+		<section>
+			<title>&kamailio; Modules</title>
+			<para>
+				The following modules must be loaded before this module:
+				<itemizedlist>
+					<listitem>
+						<para>
+							<emphasis>none</emphasis>
+							.
+						</para>
+					</listitem>
+				</itemizedlist>
+			</para>
+		</section>
+		<section>
+			<title>External Libraries or Applications</title>
+			<para>
+				The following libraries or applications must be installed
+				<itemizedlist>
+					<listitem>
+						<para>
+							<emphasis>libuv</emphasis>
+						</para>
+					</listitem>
+					<listitem>
+						<para>
+							<emphasis>nats.c</emphasis>
+							-
+							<ulink url="https://github.com/nats-io/nats.c/releases">https://github.com/nats-io/nats.c/releases</ulink>
+						</para>
+					</listitem>
+				</itemizedlist>
+			</para>
+		</section>
+	</section>
+
+
+	<section>
+		<title>Parameters</title>
+		<section>
+			<title>
+				<varname>nats_url</varname>
+				(str)
+			</title>
+			<para>
+				The nats url.
+			</para>
+			<para>
+				Usage: nats related.
+			</para>
+			<para>
+				<emphasis>Default value is nats://127.0.0.1:4222</emphasis>
+			</para>
+			<example>
+				<title>
+					Set
+					<varname>nats_url</varname>
+					parameter
+				</title>
+				<programlisting format="linespecific">
+...
+modparam("nats", "nats_url", "nats://127.0.0.1:4222")
+modparam("nats", "nats_url", "nats://user1:pass1127.0.1.2:4222") // with auth
+modparam("nats", "nats_url", "nats://127.1.2.3:4222")
+...
+</programlisting>
+			</example>
+		</section>
+		<section>
+			<title>
+				<varname>subject_queue_group</varname>
+				(str)
+			</title>
+			<para>
+				The NATS Subject and Queue Group. Separated by ":"
+			</para>
+			<para>
+				Usage: nats related.
+			</para>
+			<para>
+				<emphasis>Default value is not set.</emphasis>
+			</para>
+			<example>
+				<title>
+					Set
+					<varname>subject_queue_group</varname>
+					parameter
+				</title>
+				<programlisting format="linespecific">
+...
+modparam("nats", "subject_queue_group", "Kamailio-World:2020")
+modparam("nats", "subject_queue_group", "Kamailio-World:2021") // this will create two processes for the Kamailio-World subject
+modparam("nats", "subject_queue_group", "MyQueue1:2021")
+modparam("nats", "subject_queue_group", "MyQueue2:2021")
+...
+				</programlisting>
+			</example>
+		</section>
+	</section>
+	<section>
+		<title>Pseudo Variables</title>
+		<itemizedlist>
+			<listitem>
+				<para>
+					<emphasis>$natsData</emphasis>
+					Contains the payload of a consumed message
+				</para>
+			</listitem>
+			<example>
+				<title>Example usage of $natsData pseudo variable</title>
+				<programlisting format="linespecific">
+	...
+	xlog("L_INFO", "received payload $natsData");
+}
+
+</programlisting>
+			</example>
+		</itemizedlist>
+	</section>
+
+	<section>
+		<title>Event Routes</title>
+		<para>
+				The worker process issues an event-route where we can act on the received payload. The name of the event-route name must match the subject of the message.
+			</para>
+		<example>
+			<title>Define the event routes</title>
+			<programlisting format="linespecific">
+...
+modparam("nats", "subject_queue_group", "Kamailio-World:2021")
+modparam("nats", "subject_queue_group", "MyQueue1:2021")
+...
+
+event_route[nats:Kamailio-World]
+{
+	if ($(natsData{json.parse,Event-Package}) == "dialog") {
+		xlog("L_INFO", "received $(natsData{json.parse,Event-Package}) update for $(natsData{json.parse,From})");
+		pua_json_publish($natsData);
+	}
+}
+
+event_route[nats:MyQueue1]
+{
+	xlog("L_INFO", "received $(natsData{json.parse,Event-Package}) update for $(natsData{json.parse,From})");
+	...
+}
+
+</programlisting>
+		</example>
+	</section>
+
+
+</chapter>
