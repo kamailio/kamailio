@@ -305,7 +305,8 @@ void *db_redis_command_argv(km_redis_con_t *con, redis_key_t *query) {
     LM_DBG("query has %d args\n", argc);
 
     redisReply *reply = redisCommandArgv(con->con, argc, (const char**)argv, NULL);
-    if (con->con->err == REDIS_ERR_EOF) {
+    if (con->con->err != REDIS_OK) {
+        LM_DBG("redis connection is gone, try reconnect. (%d:%s)\n", con->con->err, con->con->errstr);
         if (db_redis_connect(con) != 0) {
             LM_ERR("Failed to reconnect to redis db\n");
             pkg_free(argv);
@@ -344,7 +345,8 @@ int db_redis_append_command_argv(km_redis_con_t *con, redis_key_t *query, int qu
     // this should actually never happen, because if all replies
     // are properly consumed for the previous command, it won't send
     // out a new query until redisGetReply is called
-    if (con->con->err == REDIS_ERR_EOF) {
+    if (con->con->err != REDIS_OK) {
+        LM_DBG("redis connection is gone, try reconnect. (%d:%s)\n", con->con->err, con->con->errstr);
         if (db_redis_connect(con) != 0) {
             LM_ERR("Failed to reconnect to redis db\n");
             pkg_free(argv);
@@ -374,8 +376,8 @@ int db_redis_get_reply(km_redis_con_t *con, void **reply) {
 
     *reply = NULL;
     ret = redisGetReply(con->con, reply);
-    if (con->con->err == REDIS_ERR_EOF) {
-        LM_DBG("redis connection is gone, try reconnect\n");
+    if (con->con->err != REDIS_OK) {
+        LM_DBG("redis connection is gone, try reconnect. (%d:%s)\n", con->con->err, con->con->errstr);
         con->append_counter = 0;
         if (db_redis_connect(con) != 0) {
             LM_ERR("Failed to reconnect to redis db\n");
@@ -396,7 +398,7 @@ int db_redis_get_reply(km_redis_con_t *con, void **reply) {
             db_redis_key_free(&query);
         }
         ret = redisGetReply(con->con, reply);
-        if (con->con->err != REDIS_ERR_EOF) {
+        if (con->con->err == REDIS_OK) {
             con->append_counter--;
         }
     } else {
