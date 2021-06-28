@@ -245,6 +245,10 @@ int init_worker(
 		if(s0->url != NULL && num_servers < NATS_MAX_SERVERS) {
 			len = strlen(s0->url);
 			sc = shm_malloc(len + 1);
+			if(!sc) {
+				LM_ERR("no shm memory left\n");
+				return -1;
+			}
 			strcpy(sc, s0->url);
 			sc[len] = '\0';
 			worker->init_nats_servers[num_servers++] = sc;
@@ -368,30 +372,38 @@ int nats_destroy_workers()
 	nats_consumer_worker_t *worker;
 	for(i = 0; i < _nats_proc_count; i++) {
 		worker = &nats_workers[i];
-		natsSubscription_Unsubscribe(worker->subscription);
-		natsSubscription_Destroy(worker->subscription);
-		natsConnection_Close(worker->conn);
-		natsConnection_Destroy(worker->conn);
-		natsOptions_Destroy(worker->opts);
-		if(worker->uvLoop != NULL) {
-			uv_loop_close(worker->uvLoop);
-		}
-		nats_Close();
-		if(worker->subject != NULL) {
-			shm_free(worker->subject);
-		}
-		if(worker->queue_group != NULL) {
-			shm_free(worker->queue_group);
-		}
-		if(worker->on_message != NULL) {
-			shm_free(worker->on_message);
-		}
-		for(s = 0; s < NATS_MAX_SERVERS; s++) {
-			if(worker->init_nats_servers[s]) {
-				shm_free(worker->init_nats_servers[s]);
+		if(worker != NULL) {
+			if(worker->subscription != NULL) {
+				natsSubscription_Unsubscribe(worker->subscription);
+				natsSubscription_Destroy(worker->subscription);
 			}
+			if(worker->conn != NULL) {
+				natsConnection_Close(worker->conn);
+				natsConnection_Destroy(worker->conn);
+			}
+			if(worker->opts != NULL) {
+				natsOptions_Destroy(worker->opts);
+			}
+			if(worker->uvLoop != NULL) {
+				uv_loop_close(worker->uvLoop);
+			}
+			nats_Close();
+			if(worker->subject != NULL) {
+				shm_free(worker->subject);
+			}
+			if(worker->queue_group != NULL) {
+				shm_free(worker->queue_group);
+			}
+			if(worker->on_message != NULL) {
+				shm_free(worker->on_message);
+			}
+			for(s = 0; s < NATS_MAX_SERVERS; s++) {
+				if(worker->init_nats_servers[s]) {
+					shm_free(worker->init_nats_servers[s]);
+				}
+			}
+			shm_free(worker);
 		}
-		shm_free(worker);
 	}
 	return 0;
 }
@@ -420,6 +432,10 @@ int _init_nats_server_url_add(modparam_t type, void *val)
 		return -1;
 	}
 	value = pkg_malloc(len + 1);
+	if(!value) {
+		LM_ERR("no pkg memory left\n");
+		return -1;
+	}
 	strcpy(value, url);
 	value[len] = '\0';
 	if(init_nats_server_url_add(url) < 0) {
@@ -434,6 +450,11 @@ int _init_nats_sub_add(modparam_t type, void *val)
 	char *sub = (char *)val;
 	int len = strlen(sub);
 	char *s = pkg_malloc(len + 1);
+	if(!s) {
+		LM_ERR("no pkg memory left\n");
+		return -1;
+	}
+
 	strcpy(s, sub);
 	s[len] = '\0';
 	if(init_nats_sub_add(s) < 0) {
@@ -529,6 +550,10 @@ int init_nats_sub_add(char *sc)
 
 	len = strlen(sc);
 	s = pkg_malloc(len + 1);
+	if(!s) {
+		LM_ERR("no pkg memory left\n");
+		return -1;
+	}
 	strcpy(s, sc);
 	s[len] = '\0';
 
