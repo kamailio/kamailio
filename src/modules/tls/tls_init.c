@@ -627,8 +627,9 @@ int prepare_keylog_file(str session_keylog_filename)
 	* the tool is run multiple times.
 	*/
 	bio_keylog = BIO_new_file(keylog_file, "a");
+	pkg_free(keylog_file);
 	if (bio_keylog == NULL) {
-		LOG(tls_log, "Error writing keylog file: %s\n", keylog_file);
+		LOG(tls_log, "Error writing keylog file: %.*s\n", session_keylog_filename.len, session_keylog_filename.s);
 		return 1;
 	}
 
