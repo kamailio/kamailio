@@ -51,4 +51,16 @@ typedef struct str_list {
  */
 struct str_list *append_str_list(char *s, int len, struct str_list **last, int *total);
 
+/**
+ * @brief Add a new allocated list element with cloned block value to an existing list
+ *
+ * Add a new allocated list element with cloned value in block to an existing list,
+ * the allocation is done from the private memory pool
+ * @param head existing list
+ * @param s input character
+ * @param len length of input character
+ * @return extended list
+ */
+str_list_t *str_list_block_add(str_list_t **head, char *s, int len);
+
 #endif
