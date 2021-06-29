@@ -91,7 +91,7 @@ enum connection_status
 typedef struct _curl_con
 {
 	str name;						  /*!< Connection name */
-	unsigned int conid;				  /*!< Connection ID */
+	unsigned int conid;				  /*!< Connection hash ID */
 	enum connection_status connstate; /*!< Connection status */
 	str url;		/*!< The URL without schema (host + base URL)*/
 	str schema;		/*!< The URL schema */
@@ -123,7 +123,8 @@ typedef struct _curl_con
 /*! Per-process copy of connection object -stored in pkg memory */
 typedef struct _curl_con_pkg
 {
-	unsigned int conid; /*!< Connection ID (referring to core connection id */
+	str name; /*!< Connection name */
+	unsigned int conid; /*!< Connection hash ID */
 	char redirecturl
 			[512]; /*!< Last redirect URL - to use for $curlredirect(curlcon) pv */
 	unsigned int last_result; /*!< Last result of accessing this connection */
