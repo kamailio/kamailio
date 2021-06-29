@@ -113,7 +113,7 @@ static cfg_option_t http_client_options[] = {
 		{"keepconnections", .f = cfg_parse_int_opt},					/* 17 */
 		{0}};
 
-/*! Count the number of connections 
+/*! Count the number of connections
  */
 unsigned int curl_connection_count()
 {
@@ -136,7 +136,7 @@ int http_connection_exists(str *name)
 		return 1;
 	}
 
-	LM_DBG("curl_connection_exists no success in looking for httpcon: [%.*s]\n",
+	LM_DBG("no success in looking for httpcon: [%.*s]\n",
 			name->len, name->s);
 	return 0;
 }
@@ -149,7 +149,7 @@ curl_con_t *curl_get_connection(str *name)
 	unsigned int conid;
 
 	conid = core_case_hash(name, 0, 0);
-	LM_DBG("curl_get_connection looking for httpcon: [%.*s] ID %u\n", name->len,
+	LM_DBG("looking for httpcon: [%.*s] ID %u\n", name->len,
 			name->s, conid);
 
 	cc = _curl_con_root;
@@ -160,8 +160,8 @@ curl_con_t *curl_get_connection(str *name)
 		}
 		cc = cc->next;
 	}
-	LM_DBG("curl_get_connection no success in looking for httpcon: [%.*s]\n",
-			name->len, name->s);
+	LM_DBG("no success in looking for httpcon: [%.*s] (list: %p)\n",
+			name->len, name->s, _curl_con_root);
 	return NULL;
 }
 
@@ -178,7 +178,7 @@ curl_con_pkg_t *curl_get_pkg_connection(curl_con_t *con)
 		}
 		ccp = ccp->next;
 	}
-	LM_ERR("curl_get_pkg_connection no success in looking for pkg memory for "
+	LM_ERR("no success in looking for pkg memory for "
 		   "httpcon: [%.*s]\n",
 			con->name.len, con->name.s);
 	return NULL;
