@@ -45,6 +45,7 @@
 #include "fmsg.h"
 #include "async_task.h"
 #include "shm_init.h"
+#include "str_list.h"
 #include "daemonize.h"
 
 #include <sys/stat.h>
@@ -57,6 +58,8 @@
 
 
 struct sr_module* modules=0;
+static str_list_t *_ksr_loadmod_strlist = NULL;
+
 
 /*We need to define this symbol on Solaris becuase libcurl relies on libnspr which looks for this symbol.
   If it is not defined, dynamic module loading (dlsym) fails */
@@ -656,6 +659,7 @@ int load_modulex(char* mod_path)
 	str sfmt;
 	sip_msg_t *fmsg;
 	char* emod;
+	str_list_t *sb;
 
 	emod = mod_path;
 	if(strchr(mod_path, '$') != NULL) {
@@ -663,7 +667,12 @@ int load_modulex(char* mod_path)
 		sfmt.s = mod_path;
 		sfmt.len = strlen(sfmt.s);
 		if(pv_eval_str(fmsg, &seval, &sfmt)>=0) {
-			emod = seval.s;
+			sb = str_list_block_add(&_ksr_loadmod_strlist, seval.s, seval.len);
+			if(sb==NULL) {
+				LM_ERR("failed to handle load module: %s\n", mod_path);
+				return -1;
+			}
+			emod = sb->s.s;
 		}
 	}
 
