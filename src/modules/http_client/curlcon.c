@@ -32,6 +32,7 @@
 #include "../../core/dprint.h"
 #include "../../core/parser/parse_param.h"
 #include "../../core/usr_avp.h"
+#include "../../core/shm_init.h"
 #include "../../core/cfg_parser.h"
 #include "http_client.h"
 #include "curlcon.h"
@@ -236,6 +237,11 @@ int curl_parse_param(char *val)
 
 	LM_DBG("modparam httpcon: %s\n", val);
 	LM_DBG(" *** Default httproxy: %s\n", http_proxy.s);
+
+	if(!shm_initialized()) {
+		LM_ERR("shared memory was not initialized\n");
+		return -1;
+	}
 
 	/* parse: name=>http_url*/
 	in.s = val;
