@@ -30,6 +30,7 @@
 #include "ut.h"
 #include "re.h"
 #include "pvar.h"
+#include "pvapi.h"
 #include "str_list.h"
 #include "dprint.h"
 
@@ -149,24 +150,39 @@ found_repl:
 	if(memchr(defvalue.s, '$', defvalue.len) != NULL) {
 		fmsg = faked_msg_get_next();
 		if(pv_eval_str(fmsg, &newval, &defvalue)>=0) {
-			sb = str_list_block_add(&_ksr_substdef_strlist, newval.s, newval.len);
-			if(sb==NULL) {
-				LM_ERR("failed to handle substdef: [%s]\n", data);
-				return -1;
+			if(mode!=KSR_PPDEF_QUOTED) {
+				sb = str_list_block_add(&_ksr_substdef_strlist, newval.s, newval.len);
+				if(sb==NULL) {
+					LM_ERR("failed to handle substdef: [%s]\n", data);
+					return -1;
+				}
+				defvalue = sb->s;
+			} else {
+				defvalue = newval;
 			}
-			defvalue = sb->s;
 		}
 	}
-	if(pp_define_set(defvalue.len, defvalue.s,
-				(mode==1)?KSR_PPDEF_QUOTED:KSR_PPDEF_NORMAL)<0) {
+	if(mode==KSR_PPDEF_QUOTED) {
+		if(pv_get_buffer_size() < defvalue.len + 4) {
+			LM_ERR("defined value is too large\n");
+			return -1;
+		}
+		newval.s = pv_get_buffer();
+		newval.s[0] = '"';
+		memcpy(newval.s + 1, defvalue.s, defvalue.len);
+		newval.s[defvalue.len + 1] = '"';
+		newval.s[defvalue.len + 2] = '\0';
+		newval.len = defvalue.len + 2;
+		sb = str_list_block_add(&_ksr_substdef_strlist, newval.s, newval.len);
+		if(sb==NULL) {
+			LM_ERR("failed to handle substdef: [%s]\n", data);
+			return -1;
+		}
+		defvalue = sb->s;
+	}
+	if(pp_define_set(defvalue.len, defvalue.s, KSR_PPDEF_QUOTED)<0) {
 		LM_ERR("cannot set define value\n");
 		goto error;
-	}
-	if(mode==1) {
-		defvalue.s++;
-		defvalue.len -= 2;
-		*(defvalue.s-1) = c;
-		defvalue.s[defvalue.len] = c;
 	}
 
 	LM_DBG("### added substdef: [%.*s]=[%.*s] (%d)\n", defname.len, defname.s,

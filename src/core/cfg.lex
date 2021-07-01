@@ -2049,11 +2049,12 @@ int pp_define_set(int len, char *text, int mode)
 
 	pp_defines[ppos].value.len = len;
 	pp_defines[ppos].value.s = text;
-	LM_DBG("### setting define ID [%.*s] value [%.*s]\n",
+	LM_DBG("### setting define ID [%.*s] value [%.*s] (mode: %d)\n",
 			pp_defines[ppos].name.len,
 			pp_defines[ppos].name.s,
 			pp_defines[ppos].value.len,
-			pp_defines[ppos].value.s);
+			pp_defines[ppos].value.s,
+			mode);
 	return 0;
 }
 

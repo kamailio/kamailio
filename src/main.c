@@ -2330,7 +2330,7 @@ int main(int argc, char** argv)
 						fprintf(stderr, "bad substdef parameter\n");
 						goto error;
 					}
-					if(pp_substdef_add(optarg, 0)<0) {
+					if(pp_substdef_add(optarg, KSR_PPDEF_NORMAL)<0) {
 						LM_ERR("failed to add substdef expression: %s\n", optarg);
 						goto error;
 					}
@@ -2340,7 +2340,7 @@ int main(int argc, char** argv)
 						fprintf(stderr, "bad substdefs parameter\n");
 						goto error;
 					}
-					if(pp_substdef_add(optarg, 1)<0) {
+					if(pp_substdef_add(optarg, KSR_PPDEF_QUOTED)<0) {
 						LM_ERR("failed to add substdefs expression: %s\n", optarg);
 						goto error;
 					}
