@@ -36,7 +36,7 @@ Daniel-Constantin Mierla
         4. Functions
 
               4.1. secsipid_check_identity(keyPath)
-              4.2. secsipid_check_identity(pubkeyVal)
+              4.2. secsipid_check_identity_pubkey(pubkeyVal)
               4.3. secsipid_check(sIdentity, keyPath)
               4.4. secsipid_get_url(url, ovar)
               4.5. secsipid_add_identity(origTN, destTN, attest, origID,
@@ -88,7 +88,7 @@ Chapter 1. Admin Guide
    4. Functions
 
         4.1. secsipid_check_identity(keyPath)
-        4.2. secsipid_check_identity(pubkeyVal)
+        4.2. secsipid_check_identity_pubkey(pubkeyVal)
         4.3. secsipid_check(sIdentity, keyPath)
         4.4. secsipid_get_url(url, ovar)
         4.5. secsipid_add_identity(origTN, destTN, attest, origID, x5u,
@@ -223,7 +223,7 @@ modparam("secsipid", "libopt", "CacheExpires=0")
 4. Functions
 
    4.1. secsipid_check_identity(keyPath)
-   4.2. secsipid_check_identity(pubkeyVal)
+   4.2. secsipid_check_identity_pubkey(pubkeyVal)
    4.3. secsipid_check(sIdentity, keyPath)
    4.4. secsipid_get_url(url, ovar)
    4.5. secsipid_add_identity(origTN, destTN, attest, origID, x5u,
@@ -262,7 +262,7 @@ request_route {
    header and payload using {s.select} and {s.decode.base64t}
    transformations together with jansson module.
 
-4.2.  secsipid_check_identity(pubkeyVal)
+4.2.  secsipid_check_identity_pubkey(pubkeyVal)
 
    Similar to secsipid_check_identity() with the public key value provided
    in the parameter.
@@ -300,9 +300,9 @@ request_route {
 ...
 request_route {
     ...
-        if(secsipid_check_identity("...", "/secsipid/$si/cert.pem")) { ... }
+        if(secsipid_check("...", "/secsipid/$si/cert.pem")) { ... }
     ...
-        if(secsipid_check_identity("...", "")) { ... }
+        if(secsipid_check("...", "")) { ... }
     ...
 }
 ...
