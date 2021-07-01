@@ -2213,9 +2213,9 @@ event_route_stm:
 preprocess_stm:
 	SUBST STRING { if(pp_subst_add($2)<0) YYERROR; }
 	| SUBST error { yyerror("invalid subst preprocess statement"); }
-	| SUBSTDEF STRING { if(pp_substdef_add($2, 0)<0) YYERROR; }
+	| SUBSTDEF STRING { if(pp_substdef_add($2, KSR_PPDEF_NORMAL)<0) YYERROR; }
 	| SUBSTDEF error { yyerror("invalid substdef preprocess statement"); }
-	| SUBSTDEFS STRING { if(pp_substdef_add($2, 1)<0) YYERROR; }
+	| SUBSTDEFS STRING { if(pp_substdef_add($2, KSR_PPDEF_QUOTED)<0) YYERROR; }
 	| SUBSTDEFS error { yyerror("invalid substdefs preprocess statement"); }
 	;
 
