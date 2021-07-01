@@ -239,7 +239,7 @@ request_route {
 	</section>
 	<section id="secsipid.f.secsipid_check_identity_pubkey">
 		<title>
-		<function moreinfo="none">secsipid_check_identity(pubkeyVal)</function>
+		<function moreinfo="none">secsipid_check_identity_pubkey(pubkeyVal)</function>
 		</title>
 		<para>
 			Similar to secsipid_check_identity() with the public key value
