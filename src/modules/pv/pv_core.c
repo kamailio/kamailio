@@ -4473,3 +4473,124 @@ int pv_set_ccp_attrs(struct sip_msg* msg, pv_param_t *param,
 	}
 	return 0;
 }
+
+/**
+ *
+ */
+int pv_parse_via_name(pv_spec_p sp, str *in)
+{
+	if(sp==NULL || in==NULL || in->len<=0)
+		return -1;
+
+	/* attributes not related to dst of reply get an id starting with 20 */
+	switch(in->len) {
+		case 1:
+			if(in->s[0]=='i')
+				sp->pvp.pvn.u.isname.name.n = 7;
+			else goto error;
+		case 4:
+			if(strncmp(in->s, "host", 4)==0)
+				sp->pvp.pvn.u.isname.name.n = 0;
+			else if(strncmp(in->s, "port", 4)==0)
+				sp->pvp.pvn.u.isname.name.n = 1;
+			else goto error;
+		break;
+		case 5:
+			if(strncmp(in->s, "proto", 5)==0)
+				sp->pvp.pvn.u.isname.name.n = 2;
+			else if(strncmp(in->s, "rport", 5)==0)
+				sp->pvp.pvn.u.isname.name.n = 5;
+			else goto error;
+		break;
+		case 6:
+			if(strncmp(in->s, "branch", 6)==0)
+				sp->pvp.pvn.u.isname.name.n = 4;
+			else goto error;
+		break;
+		case 7:
+			if(strncmp(in->s, "protoid", 7)==0)
+				sp->pvp.pvn.u.isname.name.n = 3;
+			else goto error;
+		case 8:
+			if(strncmp(in->s, "received", 8)==0)
+				sp->pvp.pvn.u.isname.name.n = 6;
+			else goto error;
+		break;
+
+		default:
+			goto error;
+	}
+	sp->pvp.pvn.type = PV_NAME_INTSTR;
+	sp->pvp.pvn.u.isname.type = 0;
+
+	return 0;
+
+error:
+	LM_ERR("unknown PV rpl key: %.*s\n", in->len, in->s);
+	return -1;
+}
+
+/**
+ *
+ */
+int pv_get_via_attr(sip_msg_t *msg, via_body_t *vb, pv_param_t *param,
+		pv_value_t *res)
+{
+	if(vb==NULL) {
+		LM_DBG("invalid via header\n");
+		return pv_get_null(msg, param, res);
+	}
+
+	switch(param->pvn.u.isname.name.n) {
+		case 0: /* host */
+			if(vb->host.s!=NULL && vb->host.len>0) {
+				return pv_get_strval(msg, param, res, &vb->host);
+			}
+			break;
+		case 1: /* port */
+			return pv_get_uintval(msg, param, res, (vb->port)?vb->port:SIP_PORT);
+		case 2: /* proto */
+			return pv_get_strval(msg, param, res, &vb->transport);
+		case 3: /* protoid */
+			return pv_get_sintval(msg, param, res, (int)vb->proto);
+		case 4: /* branch */
+			if(vb->branch!=NULL && vb->branch->value.len>0) {
+				return pv_get_strval(msg, param, res, &vb->branch->value);
+			}
+			break;
+		case 5: /* rport */
+			if(vb->rport!=NULL && vb->rport->value.len>0) {
+				return pv_get_strval(msg, param, res, &vb->rport->value);
+			}
+			break;
+		case 6: /* received */
+			if(vb->received!=NULL && vb->received->value.len>0) {
+				return pv_get_strval(msg, param, res, &vb->received->value);
+			}
+			break;
+		case 7: /* i */
+			if(vb->i!=NULL && vb->i->value.len>0) {
+				return pv_get_strval(msg, param, res, &vb->i->value);
+			}
+			break;
+
+		default:
+			return pv_get_null(msg, param, res);
+	}
+
+	return pv_get_null(msg, param, res);
+}
+
+
+/**
+ *
+ */
+int pv_get_via0(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
+{
+	if (parse_headers(msg, HDR_EOH_F, 0)<0) {
+		LM_DBG("failed to parse sip headers\n");
+		return pv_get_null(msg, param, res);
+	}
+
+	return pv_get_via_attr(msg, msg->via1, param, res);
+}

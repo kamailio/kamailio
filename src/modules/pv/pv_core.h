@@ -411,5 +411,8 @@ int pv_get_ccp_attrs(sip_msg_t *msg, pv_param_t *param,
 int pv_set_ccp_attrs(struct sip_msg* msg, pv_param_t *param,
 		int op, pv_value_t *val);
 
+int pv_parse_via_name(pv_spec_p sp, str *in);
+int pv_get_via0(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
+
 #endif
 
