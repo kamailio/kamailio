@@ -4537,7 +4537,7 @@ int pv_get_via_attr(sip_msg_t *msg, via_body_t *vb, pv_param_t *param,
 		pv_value_t *res)
 {
 	if(vb==NULL) {
-		LM_DBG("invalid via header\n");
+		LM_DBG("null via header\n");
 		return pv_get_null(msg, param, res);
 	}
 
@@ -4593,4 +4593,30 @@ int pv_get_via0(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 	}
 
 	return pv_get_via_attr(msg, msg->via1, param, res);
+}
+
+/**
+ *
+ */
+int pv_get_viaZ(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
+{
+	hdr_field_t *hf = NULL;
+	via_body_t *vb = NULL;
+	via_body_t *vbZ = NULL;
+
+	if (parse_headers(msg, HDR_EOH_F, 0)<0) {
+		LM_DBG("failed to parse sip headers\n");
+		return pv_get_null(msg, param, res);
+	}
+
+	vbZ = msg->via1;
+	for(hf=msg->h_via1; hf!=NULL; hf=hf->next) {
+		if(hf->type==HDR_VIA_T) {
+			for(vb=(via_body_t*)hf->parsed; vb!=NULL; vb=vb->next) {
+				vbZ = vb;
+			}
+		}
+	}
+
+	return pv_get_via_attr(msg, vbZ, param, res);
 }
