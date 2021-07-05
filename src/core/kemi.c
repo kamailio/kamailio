@@ -34,6 +34,7 @@
 #include "select_buf.h"
 #include "pvar.h"
 #include "trim.h"
+#include "resolve.h"
 #include "mem/shm.h"
 #include "parser/parse_uri.h"
 #include "parser/parse_from.h"
@@ -1656,6 +1657,88 @@ static int sr_kemi_core_to_proto_wsx(sip_msg_t *msg)
 /**
  *
  */
+static int sr_kemi_core_to_af_helper(sip_msg_t *msg)
+{
+	sip_uri_t parsed_uri;
+	str uri;
+	str host;
+
+	if(msg==NULL) {
+		return -1;
+	}
+	if(msg->first_line.type == SIP_REPLY) {
+		/* REPLY doesnt have r/d-uri - use second Via */
+		if(parse_headers( msg, HDR_VIA2_F, 0)==-1) {
+			LM_DBG("no 2nd via parsed\n");
+			return -1;
+		}
+		if((msg->via2==0) || (msg->via2->error!=PARSE_OK)) {
+			return -1;
+		}
+		if(msg->via2->received) {
+			LM_DBG("using 'received'\n");
+			host = msg->via2->received->value;
+		} else {
+			LM_DBG("using via host\n");
+			host = msg->via2->host;
+		}
+	} else {
+		if (msg->dst_uri.s != NULL && msg->dst_uri.len>0) {
+			uri = msg->dst_uri;
+		} else {
+			if (msg->new_uri.s!=NULL && msg->new_uri.len>0)
+			{
+				uri = msg->new_uri;
+			} else {
+				uri = msg->first_line.u.request.uri;
+			}
+		}
+		if(parse_uri(uri.s, uri.len, &parsed_uri)!=0) {
+			LM_ERR("failed to parse nh uri [%.*s]\n", uri.len, uri.s);
+			return -1;
+		}
+		host = parsed_uri.host;
+	}
+
+	if(host.len<=0) {
+		return 0;
+	}
+	if(str2ip(&host)!=NULL) {
+		return 4;
+	}
+	if(str2ip6(&host)!=NULL) {
+		return 6;
+	}
+	return 0;
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_to_af_ipv4(sip_msg_t *msg)
+{
+	int af;
+
+	af = sr_kemi_core_to_af_helper(msg);
+	if (af == 4) { return SR_KEMI_TRUE; }
+	return SR_KEMI_FALSE;
+}
+
+/**
+ *
+ */
+static int sr_kemi_core_to_af_ipv6(sip_msg_t *msg)
+{
+	int af;
+
+	af = sr_kemi_core_to_af_helper(msg);
+	if (af == 6) { return SR_KEMI_TRUE; }
+	return SR_KEMI_FALSE;
+}
+
+/**
+ *
+ */
 static sr_kemi_t _sr_kemi_core[] = {
 	{ str_init(""), str_init("dbg"),
 		SR_KEMIP_NONE, sr_kemi_core_dbg,
@@ -2074,6 +2157,16 @@ static sr_kemi_t _sr_kemi_core[] = {
 	},
 	{ str_init(""), str_init("to_WSX"),
 		SR_KEMIP_BOOL, sr_kemi_core_to_proto_wsx,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("to_IPv4"),
+		SR_KEMIP_BOOL, sr_kemi_core_to_af_ipv4,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init(""), str_init("to_IPv6"),
+		SR_KEMIP_BOOL, sr_kemi_core_to_af_ipv6,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
