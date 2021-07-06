@@ -184,6 +184,15 @@ if (  (*tmp==(firstchar) || *tmp==((firstchar) | 32)) &&                  \
 (((m)->new_uri.s && (m)->new_uri.len) ? (&(m)->new_uri) : (&(m)->first_line.u.request.uri))
 
 
+/*! \brief
+ * Return the SIP port.
+ * - _port if _port!=0
+ * - 5061 for _proto == TLS or WSS
+ * - 5060 for the other _proto
+ */
+#define GET_SIP_PORT(_port, _proto) ((_port==0)?((_proto==PROTO_TLS \
+					|| _proto==PROTO_WSS)?5061:5060):_port)
+
 enum _uri_type{ERROR_URI_T=0, SIP_URI_T, SIPS_URI_T, TEL_URI_T, TELS_URI_T, URN_URI_T};
 typedef enum _uri_type uri_type;
 enum _uri_flags{
