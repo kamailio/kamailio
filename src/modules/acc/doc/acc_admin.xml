@@ -23,10 +23,9 @@
 	</para>
 	<para>
 		There is some very early support of the <acronym>Diameter</acronym>
-		protocol in the <quote>acc_diameter</quote> module which will be deleted
-		in coming releases. This support is not up to date with the current
-		Diameter protocols. If you need Diameter support, please use the
-		<acronym>ims_charging</acronym> module.
+		protocol in the <quote>acc_diameter</quote> module, but is not up to date
+		with the current Diameter protocols. If you need Diameter support,
+		please use the <acronym>ims_charging</acronym> module.
 	</para>
 	<para>
 		To account a transaction and to choose which set of backends to be
@@ -1554,37 +1553,6 @@ acc_db_request("$var(code) Error: $avp(reason)", "SomeTable");
 acc_request("100 Received", "acc");
 acc_request("100 Received", "acc_$time(year)_$time(mon)");
 acc_db_request("$var(code) $avp(reason)", "acc");
-...
-</programlisting>
-		</example>
-	</section>
-	<section id="acc.f.acc_diam_request">
-		<title>
-			<function moreinfo="none">acc_diam_request(comment)</function>
-		</title>
-		<para>
-		Like <function moreinfo="none">acc_log_request</function>,
-		<function moreinfo="none">acc_diam_request</function> reports on
-		a request. It reports to the configured Diameter server.
-		</para>
-		<para>
-		Meaning of the parameters is as follows:</para>
-		<itemizedlist>
-		<listitem>
-			<para><emphasis>comment</emphasis> - Comment to be appended.
-			The string can contain any number of pseudo-variables.
-			</para>
-		</listitem>
-		</itemizedlist>
-		<para>
-		This function can be used from ANY_ROUTE.
-		</para>
-		<example>
-		<title>acc_diam_request usage</title>
-		<programlisting format="linespecific">
-...
-acc_diam_request("Some comment");
-acc_diam_request("$var(code) Error: $avp(reason)");
 ...
 </programlisting>
 		</example>
