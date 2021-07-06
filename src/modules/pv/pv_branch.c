@@ -704,7 +704,7 @@ int pv_get_nh_reply(struct sip_msg *msg, pv_param_t *param,
 		host = msg->via2->host;
 	}
 	if(port==0) {
-		port = (msg->via2->port)?msg->via2->port:SIP_PORT;
+		port = GET_SIP_PORT(msg->via2->port, msg->via2->proto);
 	}
 
 	switch(param->pvn.u.isname.name.n) {
