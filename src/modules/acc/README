@@ -131,7 +131,6 @@ Sven Knoblich
               7.1. acc_log_request(comment)
               7.2. acc_db_request(comment, table)
               7.3. acc_request(comment, table)
-              7.4. acc_diam_request(comment)
 
    2. Frequently Asked Questions
 
@@ -188,7 +187,6 @@ Sven Knoblich
    1.49. acc_log_request usage
    1.50. acc_db_request usage
    1.51. acc_db_request usage
-   1.52. acc_diam_request usage
 
 Chapter 1. Admin Guide
 
@@ -287,7 +285,6 @@ Chapter 1. Admin Guide
         7.1. acc_log_request(comment)
         7.2. acc_db_request(comment, table)
         7.3. acc_request(comment, table)
-        7.4. acc_diam_request(comment)
 
 1. Overview
 
@@ -298,9 +295,9 @@ Chapter 1. Admin Guide
    support for radius is enabled.
 
    There is some very early support of the Diameter protocol in the
-   “acc_diameter” module which will be deleted in coming releases. This
-   support is not up to date with the current Diameter protocols. If you
-   need Diameter support, please use the ims_charging module.
+   “acc_diameter” module, but is not up to date with the current Diameter
+   protocols. If you need Diameter support, please use the ims_charging
+   module.
 
    To account a transaction and to choose which set of backends to be
    used, the script writer just has to set some flags (see the module
@@ -1326,7 +1323,6 @@ modparam("acc", "cdr_on_failed", 0)
    7.1. acc_log_request(comment)
    7.2. acc_db_request(comment, table)
    7.3. acc_request(comment, table)
-   7.4. acc_diam_request(comment)
 
 7.1.  acc_log_request(comment)
 
@@ -1392,23 +1388,6 @@ acc_db_request("$var(code) Error: $avp(reason)", "SomeTable");
 acc_request("100 Received", "acc");
 acc_request("100 Received", "acc_$time(year)_$time(mon)");
 acc_db_request("$var(code) $avp(reason)", "acc");
-...
-
-7.4.  acc_diam_request(comment)
-
-   Like acc_log_request, acc_diam_request reports on a request. It reports
-   to the configured Diameter server.
-
-   Meaning of the parameters is as follows:
-     * comment - Comment to be appended. The string can contain any number
-       of pseudo-variables.
-
-   This function can be used from ANY_ROUTE.
-
-   Example 1.52. acc_diam_request usage
-...
-acc_diam_request("Some comment");
-acc_diam_request("$var(code) Error: $avp(reason)");
 ...
 
 Chapter 2. Frequently Asked Questions
