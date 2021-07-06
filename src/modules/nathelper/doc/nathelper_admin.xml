@@ -717,6 +717,13 @@ fix_nated_register();
 			from source IP address. It will work also with multiple connection address
 			lines.
 			</para></listitem>
+			<listitem><para>
+			<emphasis>512</emphasis> -  Test if the target addresses are different
+			or over websocket. For requests, it compares host and port in R-URI ($rU)
+			and D-URI ($du). For replies, it compares host and port in 2nd Via
+			with received and rport parameters.
+			</para></listitem>
+			<listitem><para>
 			</itemizedlist>
 		<para>
 		All flags can be bitwise combined, the test returns true if any of 
