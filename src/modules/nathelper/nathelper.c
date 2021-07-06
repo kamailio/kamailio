@@ -101,6 +101,7 @@ MODULE_VERSION
 #define NAT_UAC_TEST_WS 0x40
 #define NAT_UAC_TEST_C_PORT 0x80
 #define NAT_UAC_TEST_SDP_CLINE 0x100
+#define NAT_UAC_TEST_DEST 0x200
 
 #define DEFAULT_NATPING_STATE 1
 
@@ -1540,6 +1541,125 @@ static int via_1918(struct sip_msg *msg)
 	return (is1918addr(&(msg->via1->host)) == 1) ? 1 : 0;
 }
 
+/*
+ * test if destination address is different than R-URI/2nd Via
+ * - ws/wss target is true
+ */
+static int nh_test_destination(sip_msg_t *msg)
+{
+	str rhost = STR_NULL;
+	int rport = 0;
+	str dhost = STR_NULL;
+	int dport = 0;
+	sip_uri_t pduri;
+	ip_addr_t *rhostip = NULL;
+	ip_addr_t *dhostip = NULL;
+
+	if(msg==NULL)
+		return -1;
+
+	if(msg->first_line.type == SIP_REPLY) {
+		if(parse_headers(msg, HDR_VIA2_F, 0)==-1) {
+			LM_DBG("no 2nd via parsed\n");
+			return 0;
+		}
+		if((msg->via2==0) || (msg->via2->error!=PARSE_OK)) {
+			return -1;
+		}
+		if(msg->via2->proto==PROTO_WSS || msg->via2->proto==PROTO_WS) {
+			/* going to ws/wss */
+			return 1;
+		}
+		if(msg->via2->rport && msg->via2->rport->value.s
+				 && msg->via2->rport->value.len>0) {
+			if(str2sint(&msg->via2->rport->value, &dport)<0) {
+				LM_ERR("invalid rport value\n");
+				return -1;
+			}
+		}
+		if(dport!=0) {
+			rport = GET_SIP_PORT(msg->via2->port, msg->via2->proto);
+			if(dport != rport) {
+				/* ports are different */
+				return 1;
+			}
+		}
+		if(!msg->via2->received) {
+			/* no received param - going to Via host */
+			return 0;
+		}
+		dhost = msg->via2->received->value;
+		rhost = msg->via2->host;
+	} else {
+		if(msg->dst_uri.s==NULL || msg->dst_uri.len<=0) {
+			/* no destination uri - target is r-uri */
+			if(msg->parsed_uri_ok==0 /* R-URI not parsed*/
+					&& parse_sip_msg_uri(msg)<0) {
+				LM_ERR("failed to parse the R-URI\n");
+				return -1;
+			}
+			if(msg->parsed_uri.proto==PROTO_WSS
+					|| msg->parsed_uri.proto==PROTO_WS) {
+				/* going to ws/wss */
+				return 1;
+			}
+			return 0;
+		}
+		if(parse_uri(msg->dst_uri.s, msg->dst_uri.len, &pduri)!=0) {
+			LM_ERR("failed to parse dst uri [%.*s]\n",
+					msg->dst_uri.len, msg->dst_uri.s);
+			return -1;
+		}
+		if(pduri.proto==PROTO_WSS || pduri.proto==PROTO_WS) {
+			/* going to ws/wss */
+			return 1;
+		}
+		if(msg->parsed_uri_ok==0 /* R-URI not parsed*/
+				&& parse_sip_msg_uri(msg)<0) {
+			LM_ERR("failed to parse the R-URI\n");
+			return -1;
+		}
+		dport = GET_SIP_PORT(pduri.port_no, pduri.proto);
+		rport = GET_SIP_PORT(msg->parsed_uri.port_no, msg->parsed_uri.proto);
+		if(dport != rport) {
+			/* ports are different */
+			return 1;
+		}
+		dhost = pduri.host;
+		rhost = msg->parsed_uri.host;
+	}
+	if(dhost.s==NULL || dhost.len<=0) {
+		return 0;
+	}
+	dhostip = str2ipx(&dhost);
+	rhostip = str2ipx(&rhost);
+	if(dhostip==NULL && rhostip==NULL) {
+		/* both are hostnames - do str comparison */
+		if(rhost.s==NULL || rhost.len<=0) {
+			return 0;
+		}
+		if(rhost.len != dhost.len) {
+			/* different in length */
+			return 1;
+		}
+		if(memcmp(rhost.s, dhost.s, dhost.len)!=0) {
+			/* different in content */
+			return 1;
+		}
+		return 0;
+	}
+	if(dhostip==NULL || rhostip==NULL) {
+		/* different in content */
+		return 1;
+	}
+	if(ip_addr_cmp(dhostip, rhostip)) {
+		/* same ip addresses */
+		return 0;
+	}
+	/* different ip addresses */
+	return 1;
+}
+
 static int nat_uac_test(struct sip_msg *msg, int tests)
 {
 	/* return true if any of the NAT-UAC tests holds */
@@ -1597,6 +1717,13 @@ static int nat_uac_test(struct sip_msg *msg, int tests)
 	* test if sdp c line ip address matches with sip source address
 	*/
 	if((tests & NAT_UAC_TEST_SDP_CLINE) && (test_sdp_cline(msg) > 0))
+		return 1;
+
+	/**
+	* test if destination address is different than R-URI/2ndVia
+	* - ws/wss target is true
+	*/
+	if((tests & NAT_UAC_TEST_DEST) && (nh_test_destination(msg) > 0))
 		return 1;
 
 	/* no test succeeded */
