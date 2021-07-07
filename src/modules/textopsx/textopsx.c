@@ -93,7 +93,7 @@ static int pv_get_hf_iterator_hbody(sip_msg_t *msg, pv_param_t *param,
 static pv_export_t mod_pvs[] = {
 	{ {"hfitname", sizeof("hfitname")-1}, PVT_OTHER, pv_get_hf_iterator_hname, 0,
 		pv_parse_hf_iterator_name, 0, 0, 0 },
-	{ {"hfitbody", sizeof("hfitname")-1}, PVT_OTHER, pv_get_hf_iterator_hbody, 0,
+	{ {"hfitbody", sizeof("hfitbody")-1}, PVT_OTHER, pv_get_hf_iterator_hbody, 0,
 		pv_parse_hf_iterator_name, 0, 0, 0 },
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };
@@ -1924,6 +1924,10 @@ static int ki_hf_iterator_next(sip_msg_t *msg, str *iname)
 		LM_ERR("iterator not available [%.*s]\n", iname->len, iname->s);
 		return -1;
 	}
+	if(_hf_iterators[k].eoh == 1) {
+		return -1;
+	}
+
 	if(_hf_iterators[k].it == NULL) {
 		_hf_iterators[k].it = msg->headers;
 	} else {
@@ -1931,6 +1935,7 @@ static int ki_hf_iterator_next(sip_msg_t *msg, str *iname)
 	}
 	if(_hf_iterators[k].it == NULL) {
 		_hf_iterators[k].eoh = 1;
+		return -1;
 	}
 	return 1;
 }
