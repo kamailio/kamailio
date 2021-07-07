@@ -723,7 +723,6 @@ fix_nated_register();
 			and D-URI ($du). For replies, it compares host and port in 2nd Via
 			with received and rport parameters.
 			</para></listitem>
-			<listitem><para>
 			</itemizedlist>
 		<para>
 		All flags can be bitwise combined, the test returns true if any of 
