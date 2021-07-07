@@ -482,5 +482,87 @@ if (@hf_value_exists.supported.path == "1") {
 	    </programlisting>
 	</example>
     </section>
+	<section id="textopsx.f.hf_iterator_start">
+		<title>
+		<function moreinfo="none">hf_iterator_start(iname)</function>
+		</title>
+		<para>
+			Start an iterator for headers in the current SIP message.
+			The parameter iname is used to identify the iterator. There
+			can be up to 4 iterators at the same time, with different name.
+		</para>
+		<para>
+			The parameter can be a dynamic string with variables.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>hf_iterator_start</function> usage</title>
+		<programlisting format="linespecific">
+...
+hf_iterator_start("i1");
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="textopsx.f.hf_iterator_end">
+		<title>
+		<function moreinfo="none">hf_iterator_end(iname)</function>
+		</title>
+		<para>
+			Close the iterator identified by iname parameter. The iname value
+			must be the same used for sht_iterator_start().
+		</para>
+		<para>
+			The parameter can be dynamic string with variables.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>hf_iterator_end</function> usage</title>
+		<programlisting format="linespecific">
+...
+hf_iterator_end("i1");
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="textopsx.f.hf_iterator_next">
+		<title>
+		<function moreinfo="none">textopsx.f.hf_iterator_next(iname)</function>
+		</title>
+		<para>
+			Move the iterator to the next header. It must
+			be called also after sht_iterator_start() to get the first
+			header.
+		</para>
+		<para>
+			The return code is false when there is no other header in the list.
+		</para>
+		<para>
+			The item name and value are accessible via variables:
+			$hfitname(iname) and $hfitbody(iname).
+		</para>
+		<para>
+			The parameter can be dynamic string with variables.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>hf_iterator_next</function> usage</title>
+		<programlisting format="linespecific">
+...
+    hf_iterator_start("i1");
+    while(hf_iterator_next("i1")) {
+        xlog("hdr[$hfitname(i1)] is: $hfitbody(i1)\n");
+    }
+    hf_iterator_end("i1");
+...
+</programlisting>
+		</example>
+	</section>
 
 </section>
