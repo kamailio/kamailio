@@ -34,6 +34,9 @@ Daniel-Constantin Mierla
               2.13. include_hf_value(hf, hvalue)
               2.14. exclude_hf_value(hf, hvalue)
               2.15. hf_value_exists(hf, hvalue)
+              2.16. hf_iterator_start(iname)
+              2.17. hf_iterator_end(iname)
+              2.18. textopsx.f.hf_iterator_next(iname)
 
         3. Selects
 
@@ -58,7 +61,10 @@ Daniel-Constantin Mierla
    1.13. include_hf_value usage
    1.14. exclude_hf_value usage
    1.15. hf_value_exists usage
-   1.16. @hf_value select usage
+   1.16. hf_iterator_start usage
+   1.17. hf_iterator_end usage
+   1.18. hf_iterator_next usage
+   1.19. @hf_value select usage
 
 Chapter 1. Admin Guide
 
@@ -82,6 +88,9 @@ Chapter 1. Admin Guide
         2.13. include_hf_value(hf, hvalue)
         2.14. exclude_hf_value(hf, hvalue)
         2.15. hf_value_exists(hf, hvalue)
+        2.16. hf_iterator_start(iname)
+        2.17. hf_iterator_end(iname)
+        2.18. textopsx.f.hf_iterator_next(iname)
 
    3. Selects
 
@@ -116,6 +125,9 @@ Chapter 1. Admin Guide
    2.13. include_hf_value(hf, hvalue)
    2.14. exclude_hf_value(hf, hvalue)
    2.15. hf_value_exists(hf, hvalue)
+   2.16. hf_iterator_start(iname)
+   2.17. hf_iterator_end(iname)
+   2.18. textopsx.f.hf_iterator_next(iname)
 
 2.1.  msg_apply_changes()
 
@@ -406,6 +418,58 @@ if (@hf_value_exists.supported.path == "1") {
 }
 ...
 
+2.16.  hf_iterator_start(iname)
+
+   Start an iterator for headers in the current SIP message. The parameter
+   iname is used to identify the iterator. There can be up to 4 iterators
+   at the same time, with different name.
+
+   The parameter can be a dynamic string with variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.16. hf_iterator_start usage
+...
+hf_iterator_start("i1");
+...
+
+2.17.  hf_iterator_end(iname)
+
+   Close the iterator identified by iname parameter. The iname value must
+   be the same used for sht_iterator_start().
+
+   The parameter can be dynamic string with variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.17. hf_iterator_end usage
+...
+hf_iterator_end("i1");
+...
+
+2.18.  textopsx.f.hf_iterator_next(iname)
+
+   Move the iterator to the next header. It must be called also after
+   sht_iterator_start() to get the first header.
+
+   The return code is false when there is no other header in the list.
+
+   The item name and value are accessible via variables: $hfitname(iname)
+   and $hfitbody(iname).
+
+   The parameter can be dynamic string with variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.18. hf_iterator_next usage
+...
+    hf_iterator_start("i1");
+    while(hf_iterator_next("i1")) {
+        xlog("hdr[$hfitname(i1)] is: $hfitbody(i1)\n");
+    }
+    hf_iterator_end("i1");
+...
+
 3. Selects
 
    3.1. @hf_value
@@ -441,7 +505,7 @@ if (@hf_value_exists.supported.path == "1") {
      * IDX - Value index, negative value counts from bottom
      * PARAM_NAME - name of parameter
 
-   Example 1.16. @hf_value select usage
+   Example 1.19. @hf_value select usage
 ...
 $a = @hf_value.my_header[1].my_param;
 xplog("L_ERR", "$sel(@hf_value.via[-1]), $sel(@hf_value.from.tag)\n");
