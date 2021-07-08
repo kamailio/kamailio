@@ -411,13 +411,23 @@ int tps_storage_fill_contact(sip_msg_t *msg, tps_data_t *td, str *uuid, int dir,
 		*td->cp = '@';
 		td->cp++;
 
-		if (_tps_contact_host.len) {
-			/* using configured hostname in the contact header */
-			memcpy(td->cp, _tps_contact_host.s, _tps_contact_host.len);
-			td->cp += _tps_contact_host.len;
+		/* contact_host xavu takes preference */
+		if (_tps_xavu_cfg.len>0 && _tps_xavu_field_contact_host.len>0) {
+			vavu = xavu_get_child_with_sval(&_tps_xavu_cfg,
+					&_tps_xavu_field_contact_host);
+		}
+		if(vavu!=NULL && vavu->val.v.s.len>0) {
+			memcpy(td->cp, vavu->val.v.s.s, vavu->val.v.s.len);
+			td->cp += vavu->val.v.s.len;
 		} else {
-			memcpy(td->cp, puri.host.s, puri.host.len);
-			td->cp += puri.host.len;
+			if (_tps_contact_host.len) {
+				/* using configured hostname in the contact header */
+				memcpy(td->cp, _tps_contact_host.s, _tps_contact_host.len);
+				td->cp += _tps_contact_host.len;
+			} else {
+				memcpy(td->cp, puri.host.s, puri.host.len);
+				td->cp += puri.host.len;
+			}
 		}
 		if(puri.port.len>0) {
 			*td->cp = ':';
