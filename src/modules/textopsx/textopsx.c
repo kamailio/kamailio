@@ -76,6 +76,7 @@ static int assign_hf_value2_fixup(void **param, int param_no);
 static int w_hf_iterator_start(sip_msg_t *msg, char *piname, char *p2);
 static int w_hf_iterator_next(sip_msg_t *msg, char *piname, char *p2);
 static int w_hf_iterator_end(sip_msg_t *msg, char *piname, char *p2);
+static int w_hf_iterator_rm(sip_msg_t *msg, char *piname, char *p2);
 
 static int bind_textopsx(textopsx_api_t *tob);
 
@@ -135,6 +136,8 @@ static cmd_export_t cmds[] = {
 	{"hf_iterator_next", w_hf_iterator_next, 1, fixup_spve_null,
 			fixup_free_spve_null, ANY_ROUTE},
 	{"hf_iterator_end", w_hf_iterator_end, 1, fixup_spve_null,
+			fixup_free_spve_null, ANY_ROUTE},
+	{"hf_iterator_rm", w_hf_iterator_rm, 1, fixup_spve_null,
 			fixup_free_spve_null, ANY_ROUTE},
 
 	{"bind_textopsx", (cmd_function)bind_textopsx, 1, 0, 0, ANY_ROUTE},
@@ -1996,6 +1999,67 @@ static int w_hf_iterator_end(sip_msg_t *msg, char *piname, char *p2)
 /**
  *
  */
+static int ki_hf_iterator_index(sip_msg_t *msg, str *iname)
+{
+	int i;
+	int k;
+
+	k = -1;
+	for(i=0; i<HF_ITERATOR_SIZE; i++) {
+		if(_hf_iterators[i].name.len>0) {
+			if(_hf_iterators[i].name.len==iname->len
+					&& strncmp(_hf_iterators[i].name.s, iname->s, iname->len)==0) {
+				k = i;
+				break;
+			}
+		}
+	}
+	if(k==-1) {
+		LM_ERR("iterator not available [%.*s]\n", iname->len, iname->s);
+		return -1;
+	}
+
+	return k;
+}
+
+/**
+ *
+ */
+static int ki_hf_iterator_rm(sip_msg_t *msg, str *iname)
+{
+	int k;
+	sr_lump_t *anchor;
+
+	k = ki_hf_iterator_index(msg, iname);
+	if(k<0 || _hf_iterators[k].it==NULL) {
+		return -1;
+	}
+	anchor = del_lump(msg, _hf_iterators[k].it->name.s - msg->buf,
+			_hf_iterators[k].it->len, 0);
+	if (anchor==0) {
+		LM_ERR("cannot remove hdr %.*s\n", _hf_iterators[k].it->name.len,
+				_hf_iterators[k].it->name.s);
+		return -1;
+	}
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_hf_iterator_rm(sip_msg_t *msg, char *piname, char *p2)
+{
+	str iname = STR_NULL;
+	if(fixup_get_svalue(msg, (gparam_t*)piname, &iname)<0) {
+		LM_ERR("failed to get iterator name\n");
+		return -1;
+	}
+	return ki_hf_iterator_rm(msg, &iname);
+}
+
+/**
+ *
+ */
 static int pv_parse_hf_iterator_name(pv_spec_t *sp, str *in)
 {
 	if(in->len<=0) {
@@ -2603,6 +2667,11 @@ static sr_kemi_t sr_kemi_textopsx_exports[] = {
 	},
 	{ str_init("textopsx"), str_init("hf_iterator_next"),
 		SR_KEMIP_INT, ki_hf_iterator_next,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textopsx"), str_init("hf_iterator_rm"),
+		SR_KEMIP_INT, ki_hf_iterator_rm,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
