@@ -564,5 +564,33 @@ hf_iterator_end("i1");
 </programlisting>
 		</example>
 	</section>
+	<section id="textopsx.f.hf_iterator_rm">
+		<title>
+		<function moreinfo="none">hf_iterator_rm(iname)</function>
+		</title>
+		<para>
+			Remove the header at the current iterator position.
+		</para>
+		<para>
+			The parameter can be dynamic string with variables.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>hf_iterator_rm</function> usage</title>
+		<programlisting format="linespecific">
+...
+    hf_iterator_start("i1");
+    while(hf_iterator_next("i1")) {
+        if($hfitname(i1)=="My-Header") {
+            hf_iterator_rm("i1");
+        }
+    }
+    hf_iterator_end("i1");
+...
+</programlisting>
+		</example>
+	</section>
 
 </section>
