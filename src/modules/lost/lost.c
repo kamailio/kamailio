@@ -43,6 +43,7 @@
 #include "../../core/script_cb.h"
 
 #include "functions.h"
+#include "lost_select.h"
 
 MODULE_VERSION
 
@@ -160,6 +161,8 @@ static int mod_init(void)
 	}
 
 	LM_DBG("**** init lost: held response time: %d \n", held_resp_time);
+
+	register_select_table(lost_sel);
 
 	LM_DBG("**** init lost module done.\n");
 
