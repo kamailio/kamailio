@@ -3343,11 +3343,12 @@ select_rtpp_node(str callid, str viabranch, int do_test, struct rtpp_node **quer
 		if (node->rn_recheck_ticks == RTPENGINE_MAX_RECHECK_TICKS) {
 			LM_DBG("node=%.*s for calllen=%d callid=%.*s is disabled(permanent) (probably still UP)! Return it\n",
 				node->rn_url.len, node->rn_url.s, callid.len, callid.len, callid.s);
+			return node;
 		} else {
 			LM_DBG("node=%.*s for calllen=%d callid=%.*s is disabled, either broke or timeout disabled! Return it\n",
 				node->rn_url.len, node->rn_url.s, callid.len, callid.len, callid.s);
 		}
-		return node;
+		/*return node;*/
 	}
 
 	return NULL;
