@@ -1205,7 +1205,7 @@ int uac_reg_update(reg_uac_t *reg, time_t tn)
 		reg->flags |= UAC_REG_INIT;
 	}
 
-	if(reg->timer_expires > tn + reg_timer_interval + 3)
+	if ((reg->expires/2) < reg->timer_expires - tn)
 		return 3;
 
 	return uac_reg_send(reg, tn);
