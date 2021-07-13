@@ -648,9 +648,11 @@ modparam("rtpengine", "rtpengine_tout_ms", 2000)
 4.5. rtpengine_allow_op (integer)
 
    Enable this setting to allow finishing the current sessions while
-   denying new sessions for the manually deactivated nodes via kamctl
-   command i.e. "disabled(permanent)" nodes. Probably the manually
-   deactivated machine is still running(did not crash).
+   denying new sessions for deactivated nodes.
+
+   Nodes can be manually deactivated via kamctl command i.e.
+   "disabled(permanent)" nodes. Probably the manually deactivated machine
+   is still running(did not crash).
 
    This is useful when deactivating a node for maintenance and reject new
    sessions but allow current ones to finish.
@@ -663,6 +665,12 @@ modparam("rtpengine", "rtpengine_tout_ms", 2000)
    re-displayed.
 
    Default value is “0” to keep the current behaviour.
+
+   If value set to “1” it will send commands to all disabled nodes for the
+   existing call.
+
+   If value set to “2” it will send commands only to manually disabled
+   nodes. (Not when timeout is disabled or node broken)
 
    Example 1.5. Set rtpengine_allow_op parameter
 ...
