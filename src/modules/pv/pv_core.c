@@ -4598,6 +4598,19 @@ int pv_get_via0(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 /**
  *
  */
+int pv_get_via1(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
+{
+	if (parse_headers(msg, HDR_EOH_F, 0)<0) {
+		LM_DBG("failed to parse sip headers\n");
+		return pv_get_null(msg, param, res);
+	}
+
+	return pv_get_via_attr(msg, msg->via2, param, res);
+}
+
+/**
+ *
+ */
 int pv_get_viaZ(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 {
 	hdr_field_t *hf = NULL;

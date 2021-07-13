@@ -548,6 +548,8 @@ static pv_export_t mod_pvs[] = {
 		pv_parse_ccp_attrs_name, 0, 0, 0},
 	{{"via0", (sizeof("via0")-1)}, PVT_OTHER, pv_get_via0, 0,
 		pv_parse_via_name, 0, 0, 0},
+	{{"via1", (sizeof("via1")-1)}, PVT_OTHER, pv_get_via1, 0,
+		pv_parse_via_name, 0, 0, 0},
 	{{"viaZ", (sizeof("viaZ")-1)}, PVT_OTHER, pv_get_viaZ, 0,
 		pv_parse_via_name, 0, 0, 0},
 
