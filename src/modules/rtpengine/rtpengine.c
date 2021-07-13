@@ -3347,8 +3347,10 @@ select_rtpp_node(str callid, str viabranch, int do_test, struct rtpp_node **quer
 		} else {
 			LM_DBG("node=%.*s for calllen=%d callid=%.*s is disabled, either broke or timeout disabled! Return it\n",
 				node->rn_url.len, node->rn_url.s, callid.len, callid.len, callid.s);
+			if (rtpengine_allow_op == 1) {
+				return node;
+			}
 		}
-		/*return node;*/
 	}
 
 	return NULL;
