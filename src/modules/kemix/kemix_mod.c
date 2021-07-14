@@ -1141,6 +1141,36 @@ static int ki_kx_get_defn(sip_msg_t *msg, str *dname)
 /**
  *
  */
+static int ki_kx_ifdef(sip_msg_t *msg, str *dname)
+{
+	str *val;
+
+	val = pp_define_get(dname->len, dname->s);
+
+	if (val!=NULL) {
+		return SR_KEMI_TRUE;
+	}
+	return SR_KEMI_FALSE;
+}
+
+/**
+ *
+ */
+static int ki_kx_ifndef(sip_msg_t *msg, str *dname)
+{
+	str *val;
+
+	val = pp_define_get(dname->len, dname->s);
+
+	if (val==NULL) {
+		return SR_KEMI_TRUE;
+	}
+	return SR_KEMI_FALSE;
+}
+
+/**
+ *
+ */
 static sr_kemi_xval_t* ki_kx_get_env(sip_msg_t *msg, str *envname)
 {
 	char *val;
@@ -1502,6 +1532,16 @@ static sr_kemi_t sr_kemi_kx_exports[] = {
 	},
 	{ str_init("kx"), str_init("get_defn"),
 		SR_KEMIP_INT, ki_kx_get_defn,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("kx"), str_init("ifdef"),
+		SR_KEMIP_BOOL, ki_kx_ifdef,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("kx"), str_init("ifndef"),
+		SR_KEMIP_BOOL, ki_kx_ifndef,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
