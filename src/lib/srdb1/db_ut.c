@@ -598,7 +598,7 @@ int db_val2pv_spec(struct sip_msg* msg, db_val_t *dbval, pv_spec_t *pvs)
 				db_longlong2str(dbval->val.ll_val, ll_buf, &pv.rs.len);
 				pv.rs.s = ll_buf;
 				/* if it fits, also store as 32 bit integer*/
-				if (! ((unsigned long long)dbval->val.ll_val & 0xffffffff00000000ULL)) {
+				if (! ((unsigned long long)dbval->val.ll_val & 0xffffffff80000000ULL)) {
 					pv.flags |= PV_VAL_INT | PV_TYPE_INT;
 					pv.ri = (int)dbval->val.ll_val;
 				}
