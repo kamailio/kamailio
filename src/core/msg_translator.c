@@ -237,6 +237,31 @@ int received_via_test( struct sip_msg *msg )
 	return rcvd;
 }
 
+int received_in_via( struct sip_msg *msg ){
+	struct hdr_field *p;
+	struct via_body *pp = NULL;
+	int rcvd;
+
+	if(!msg->eoh
+	   && (parse_headers(msg, HDR_EOH_F, 0) == -1 || !msg->eoh)) {
+		ERR("bad msg while parsing to EOH \n");
+		return -1;
+	}
+
+	p = msg->h_via1;
+	while (p->type == HDR_VIA_T){
+
+		pp = p->parsed;
+//		LM_INFO("Step-1\n");
+//		LM_INFO("Via:<%.*s>\n", pp->host.len, pp->host.s);
+		rcvd = (check_via_address(&msg->rcv.src_ip, &pp->host, pp->port, received_dns)!=0);
+		if (!rcvd)		//the match is found. return.
+			return 1;
+		p = p->next;
+	}
+	return 0;
+}
+
 static char * warning_builder( struct sip_msg *msg, unsigned int *returned_len)
 {
 	static char buf[MAX_WARNING_LEN];
