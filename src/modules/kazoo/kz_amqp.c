@@ -2498,24 +2498,24 @@ void kz_amqp_fire_connection_event(char *event, char* host, char* zone)
 
 void kz_amqp_cb_ok(kz_amqp_cmd_ptr cmd)
 {
-	int n = route_lookup(&main_rt, cmd->cb_route);
+	int n = route_lookup(&onreply_rt, cmd->cb_route);
 	if(n==-1) {
 		/* route block not found in the configuration file */
 		return;
 	}
-	struct action *a = main_rt.rlist[n];
+	struct action *a = onreply_rt.rlist[n];
 	tmb.t_continue(cmd->t_hash, cmd->t_label, a);
 	ksr_msg_env_reset();
 }
 
 void kz_amqp_cb_error(kz_amqp_cmd_ptr cmd)
 {
-	int n = route_lookup(&main_rt, cmd->err_route);
+	int n = route_lookup(&failure_rt, cmd->err_route);
 	if(n==-1) {
 		/* route block not found in the configuration file */
 		return;
 	}
-	struct action *a = main_rt.rlist[n];
+	struct action *a = failure_rt.rlist[n];
 	tmb.t_continue(cmd->t_hash, cmd->t_label, a);
 	ksr_msg_env_reset();
 }
