@@ -226,6 +226,9 @@ mod_list_mqtt=mqtt
 # - modules depending on nats and ev library
 mod_list_nats=nats
 
+# - modules depending on ruxc library
+mod_list_ruxc=ruxc
+
 # - modules depending on secsipid library
 mod_list_secsipid=secsipid secsipid_proc
 
@@ -268,6 +271,7 @@ mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
 			   $(mod_list_kafka) \
 			   $(mod_list_mqtt) \
 			   $(mod_list_nats) \
+			   $(mod_list_ruxc) \
 			   $(mod_list_secsipid) \
 			   $(mod_list_jwt) \
 			   $(mod_list_lwsc) \
@@ -503,6 +507,9 @@ module_group_kmqtt=$(mod_list_mqtt)
 
 # K nats modules
 module_group_knats=$(mod_list_nats)
+
+# K ruxc modules
+module_group_kruxc=$(mod_list_ruxc)
 
 # K secsipid modules
 module_group_ksecsipid=$(mod_list_secsipid)
