@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+
+	<title>&adminguide;</title>
+
+	<section>
+	<title>Overview</title>
+	<para>
+		The module exports utility functions based on libruxc.
+	</para>
+	<para>
+		Among them are function to perform HTTP GET and POST queries.
+	</para>
+	<para>
+		The ruxc project is available at:
+		<ulink url="https://github.com/miconda/ruxc">https://github.com/miconda/ruxc</ulink>.
+	</para>
+	</section>
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be installed (but not loaded) to use this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>none</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>libruxc</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Parameters</title>
+	<section id="ruxc.p.http_timeout">
+		<title><varname>http_timeout</varname> (int)</title>
+		<para>
+		The interval in miliseconds after which the HTTP GET or POST query
+		times out.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 5000 (5 secs).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>http_timeout</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("ruxc", "http_timeout", 2000)
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+
+	<section>
+	<title>Functions</title>
+		<section id="ruxc.f.ruxc_http_get">
+			<title>
+				<function moreinfo="none">ruxc_http_get(url, hdrs, respv)</function>
+			</title>
+			<para>
+				Perform a HTTP GET request to "url", storing the response body
+				in the "respv" variable. The "hdrs" can be empty string
+				to skip setting them. The first two parameters can contain
+				variables that are evaluated at runtime. The "respv" has to be
+				the name of a writable variable.
+			</para>
+			<para>
+			The function returns response code of HTTP reply or negative value
+			if something went wrong.
+			</para>
+			<para>
+			This function can be used from ANY_ROUTE.
+			</para>
+			<example>
+				<title><function>ruxc_http_get()</function> usage</title>
+				<programlisting format="linespecific">
+...
+http_client_get("http://api.com/index.php?r_uri=$(ru{s.escape.param})&amp;f_uri=$(fu{s.escape.param})",
+	   "", "X-Token: abc", "$var(result)");
+switch ($rc) {
+    ...
+}
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="ruxc.f.ruxc_http_post">
+			<title>
+				<function moreinfo="none">ruxc_http_post(url, body, hdrs, respv)</function>
+			</title>
+			<para>
+				Perform a HTTP POST request to "url", storing the response body
+				in the "respv" variable. The "body" and "hdrs" can be empty strings
+				to skip setting them. The first three parameters can contain
+				variables that are evaluated at runtime. The "respv" has to be
+				the name of a writable variable.
+			</para>
+			<para>
+			The function returns response code of HTTP reply or negative value
+			if something went wrong.
+			</para>
+			<para>
+			This function can be used from ANY_ROUTE.
+			</para>
+			<example>
+				<title><function>ruxc_http_post()</function> usage</title>
+				<programlisting format="linespecific">
+...
+ruxc_http_post("http://api.com/index.php?r_uri=$(ru{s.escape.param})&amp;f_uri=$(fu{s.escape.param})",
+	   "", "X-Token: abc", "$var(result)");
+switch ($rc) {
+    ...
+}
+...
+				</programlisting>
+			</example>
+		</section>
+	</section>
+	<section id="ruxc.s.installation">
+	<title>Installation</title>
+	<para>
+		The module needs "libruxc" library, which is provided by "ruxc" project
+		from https://github.com/miconda/ruxc/. The library is
+		implemented in Rust language, with generated C API and library. Until the
+		libruxc is going to be packaged in OS distributions, the ruxc
+		module can be compiled by copying ruxc.h and libruxc.a
+		files in the folder of the module.
+	</para>
+	<para>
+		To generate the libruxc.a file, it requires to have Rust language
+		installed and its environment configured, then run the following commands:
+	</para>
+		<example>
+		<title>Libruxc Usage</title>
+		<programlisting format="linespecific">
+...
+git clone https://github.com/miconda/ruxc
+cd ruxc
+cargo build --release
+cp include/ruxc.h target/release/libruxc.a \
+    /path/to/kamailio/src/modules/ruxc/
+
+cd /path/to/kamailio/
+make include_modules="ruxc ..." cfg
+make all
+make install
+
+## or compiling individual module for use inside source tree
+# make modules modules=src/modules/ruxc
+...
+</programlisting>
+		</example>
+	<para>
+		For more details about compilation and installation of libruxc, see:
+		<ulink url="https://github.com/miconda/ruxc">https://github.com/miconda/ruxc</ulink>.
+	</para>
+	</section>
+
+</chapter>
+

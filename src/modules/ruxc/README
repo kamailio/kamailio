@@ -1,0 +1,188 @@
+RUXC Module
+
+Daniel-Constantin Mierla
+
+   asipto.com
+   <miconda@gmail.com>
+
+Edited by
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+   Copyright © 2021 http://www.asipto.com
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. http_timeout (int)
+
+        4. Functions
+
+              4.1. ruxc_http_get(url, hdrs, respv)
+              4.2. ruxc_http_post(url, body, hdrs, respv)
+
+        5. Installation
+
+   List of Examples
+
+   1.1. Set http_timeout parameter
+   1.2. ruxc_http_get() usage
+   1.3. ruxc_http_post() usage
+   1.4. Libruxc Usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. http_timeout (int)
+
+   4. Functions
+
+        4.1. ruxc_http_get(url, hdrs, respv)
+        4.2. ruxc_http_post(url, body, hdrs, respv)
+
+   5. Installation
+
+1. Overview
+
+   The module exports utility functions based on libruxc.
+
+   Among them are function to perform HTTP GET and POST queries.
+
+   The ruxc project is available at: https://github.com/miconda/ruxc.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be installed (but not loaded) to use this
+   module:
+     * none.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * libruxc.
+
+3. Parameters
+
+   3.1. http_timeout (int)
+
+3.1. http_timeout (int)
+
+   The interval in miliseconds after which the HTTP GET or POST query
+   times out.
+
+   Default value is 5000 (5 secs).
+
+   Example 1.1. Set http_timeout parameter
+...
+modparam("ruxc", "http_timeout", 2000)
+...
+
+4. Functions
+
+   4.1. ruxc_http_get(url, hdrs, respv)
+   4.2. ruxc_http_post(url, body, hdrs, respv)
+
+4.1. ruxc_http_get(url, hdrs, respv)
+
+   Perform a HTTP GET request to "url", storing the response body in the
+   "respv" variable. The "hdrs" can be empty string to skip setting them.
+   The first two parameters can contain variables that are evaluated at
+   runtime. The "respv" has to be the name of a writable variable.
+
+   The function returns response code of HTTP reply or negative value if
+   something went wrong.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.2. ruxc_http_get() usage
+...
+http_client_get("http://api.com/index.php?r_uri=$(ru{s.escape.param})&f_uri=$(fu
+{s.escape.param})",
+           "", "X-Token: abc", "$var(result)");
+switch ($rc) {
+    ...
+}
+...
+
+4.2. ruxc_http_post(url, body, hdrs, respv)
+
+   Perform a HTTP POST request to "url", storing the response body in the
+   "respv" variable. The "body" and "hdrs" can be empty strings to skip
+   setting them. The first three parameters can contain variables that are
+   evaluated at runtime. The "respv" has to be the name of a writable
+   variable.
+
+   The function returns response code of HTTP reply or negative value if
+   something went wrong.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.3. ruxc_http_post() usage
+...
+ruxc_http_post("http://api.com/index.php?r_uri=$(ru{s.escape.param})&f_uri=$(fu{
+s.escape.param})",
+           "", "X-Token: abc", "$var(result)");
+switch ($rc) {
+    ...
+}
+...
+
+5. Installation
+
+   The module needs "libruxc" library, which is provided by "ruxc" project
+   from https://github.com/miconda/ruxc/. The library is implemented in
+   Rust language, with generated C API and library. Until the libruxc is
+   going to be packaged in OS distributions, the ruxc module can be
+   compiled by copying ruxc.h and libruxc.a files in the folder of the
+   module.
+
+   To generate the libruxc.a file, it requires to have Rust language
+   installed and its environment configured, then run the following
+   commands:
+
+   Example 1.4. Libruxc Usage
+...
+git clone https://github.com/miconda/ruxc
+cd ruxc
+cargo build --release
+cp include/ruxc.h target/release/libruxc.a \
+    /path/to/kamailio/src/modules/ruxc/
+
+cd /path/to/kamailio/
+make include_modules="ruxc ..." cfg
+make all
+make install
+
+## or compiling individual module for use inside source tree
+# make modules modules=src/modules/ruxc
+...
+
+   For more details about compilation and installation of libruxc, see:
+   https://github.com/miconda/ruxc.
