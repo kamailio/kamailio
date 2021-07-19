@@ -11,7 +11,7 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright © 2021 http://www.asipto.com
+   Copyright Â© 2021 http://www.asipto.com
      __________________________________________________________________
 
    Table of Contents
@@ -109,7 +109,7 @@ modparam("ruxc", "http_timeout", 2000)
    4.1. ruxc_http_get(url, hdrs, respv)
    4.2. ruxc_http_post(url, body, hdrs, respv)
 
-4.1. ruxc_http_get(url, hdrs, respv)
+4.1.  ruxc_http_get(url, hdrs, respv)
 
    Perform a HTTP GET request to "url", storing the response body in the
    "respv" variable. The "hdrs" can be empty string to skip setting them.
@@ -123,15 +123,15 @@ modparam("ruxc", "http_timeout", 2000)
 
    Example 1.2. ruxc_http_get() usage
 ...
-http_client_get("http://api.com/index.php?r_uri=$(ru{s.escape.param})&f_uri=$(fu
-{s.escape.param})",
+ruxc_http_get("http://api.com/index.php?r_uri=$(ru{s.escape.param})&f_uri=$(fu{s
+.escape.param})",
            "", "X-Token: abc", "$var(result)");
 switch ($rc) {
     ...
 }
 ...
 
-4.2. ruxc_http_post(url, body, hdrs, respv)
+4.2.  ruxc_http_post(url, body, hdrs, respv)
 
    Perform a HTTP POST request to "url", storing the response body in the
    "respv" variable. The "body" and "hdrs" can be empty strings to skip
