@@ -104,7 +104,7 @@ modparam("ruxc", "http_timeout", 2000)
 				<title><function>ruxc_http_get()</function> usage</title>
 				<programlisting format="linespecific">
 ...
-http_client_get("http://api.com/index.php?r_uri=$(ru{s.escape.param})&amp;f_uri=$(fu{s.escape.param})",
+ruxc_http_get("http://api.com/index.php?r_uri=$(ru{s.escape.param})&amp;f_uri=$(fu{s.escape.param})",
 	   "", "X-Token: abc", "$var(result)");
 switch ($rc) {
     ...
