@@ -122,6 +122,7 @@ static int ki_ruxc_http_get_helper(sip_msg_t *_msg, str *url, str *hdrs,
 {
 	RuxcHTTPRequest v_http_request = {0};
 	RuxcHTTPResponse v_http_response = {0};
+	pv_value_t val = {0};
 	int ret;
 
     v_http_request.timeout = _ruxc_http_timeout;
@@ -147,6 +148,14 @@ static int ki_ruxc_http_get_helper(sip_msg_t *_msg, str *url, str *hdrs,
 			LM_DBG("response code: %d - data len: %d - data: [%.*s]\n",
 					v_http_response.rescode, v_http_response.resdata_len,
 					v_http_response.resdata_len, v_http_response.resdata);
+			val.rs.s = v_http_response.resdata;
+			val.rs.len = v_http_response.resdata_len;
+			val.flags = PV_VAL_STR;
+			if(dst->setf) {
+				dst->setf(_msg, &dst->pvp, (int)EQ_T, &val);
+			} else {
+				LM_WARN("target pv is not writable\n");
+			}
 		}
 		ret = v_http_response.rescode;
 	}
@@ -209,6 +218,7 @@ static int ki_ruxc_http_post_helper(sip_msg_t *_msg, str *url, str *body, str *h
 {
 	RuxcHTTPRequest v_http_request = {0};
 	RuxcHTTPResponse v_http_response = {0};
+	pv_value_t val = {0};
 	int ret;
 
     v_http_request.timeout = _ruxc_http_timeout;
@@ -239,6 +249,14 @@ static int ki_ruxc_http_post_helper(sip_msg_t *_msg, str *url, str *body, str *h
 			LM_DBG("response code: %d - data len: %d - data: [%.*s]\n",
 					v_http_response.rescode, v_http_response.resdata_len,
 					v_http_response.resdata_len, v_http_response.resdata);
+			val.rs.s = v_http_response.resdata;
+			val.rs.len = v_http_response.resdata_len;
+			val.flags = PV_VAL_STR;
+			if(dst->setf) {
+				dst->setf(_msg, &dst->pvp, (int)EQ_T, &val);
+			} else {
+				LM_WARN("target pv is not writable\n");
+			}
 		}
 		ret = v_http_response.rescode;
 	}
