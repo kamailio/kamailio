@@ -78,6 +78,26 @@ modparam("ruxc", "http_timeout", 2000)
 </programlisting>
 		</example>
 	</section>
+	<section id="ruxc.p.http_tlsmode">
+		<title><varname>http_tlsmode</varname> (int)</title>
+		<para>
+		The mode to connect over TLS to HTTPS sites: 0 accept all certificates;
+		1 - accept trusted certificates.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0 (accept all certificates).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>http_tlsmode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("ruxc", "http_tlsmode", 1)
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>
