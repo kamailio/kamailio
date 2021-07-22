@@ -27,6 +27,7 @@ Daniel-Constantin Mierla
         3. Parameters
 
               3.1. http_timeout (int)
+              3.2. http_tlsmode (int)
 
         4. Functions
 
@@ -38,9 +39,10 @@ Daniel-Constantin Mierla
    List of Examples
 
    1.1. Set http_timeout parameter
-   1.2. ruxc_http_get() usage
-   1.3. ruxc_http_post() usage
-   1.4. Libruxc Usage
+   1.2. Set http_tlsmode parameter
+   1.3. ruxc_http_get() usage
+   1.4. ruxc_http_post() usage
+   1.5. Libruxc Usage
 
 Chapter 1. Admin Guide
 
@@ -55,6 +57,7 @@ Chapter 1. Admin Guide
    3. Parameters
 
         3.1. http_timeout (int)
+        3.2. http_tlsmode (int)
 
    4. Functions
 
@@ -91,6 +94,7 @@ Chapter 1. Admin Guide
 3. Parameters
 
    3.1. http_timeout (int)
+   3.2. http_tlsmode (int)
 
 3.1. http_timeout (int)
 
@@ -102,6 +106,18 @@ Chapter 1. Admin Guide
    Example 1.1. Set http_timeout parameter
 ...
 modparam("ruxc", "http_timeout", 2000)
+...
+
+3.2. http_tlsmode (int)
+
+   The mode to connect over TLS to HTTPS sites: 0 accept all certificates;
+   1 - accept trusted certificates.
+
+   Default value is 0 (accept all certificates).
+
+   Example 1.2. Set http_tlsmode parameter
+...
+modparam("ruxc", "http_tlsmode", 1)
 ...
 
 4. Functions
@@ -121,7 +137,7 @@ modparam("ruxc", "http_timeout", 2000)
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.2. ruxc_http_get() usage
+   Example 1.3. ruxc_http_get() usage
 ...
 ruxc_http_get("http://api.com/index.php?r_uri=$(ru{s.escape.param})&f_uri=$(fu{s
 .escape.param})",
@@ -144,7 +160,7 @@ switch ($rc) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.3. ruxc_http_post() usage
+   Example 1.4. ruxc_http_post() usage
 ...
 ruxc_http_post("http://api.com/index.php?r_uri=$(ru{s.escape.param})&f_uri=$(fu{
 s.escape.param})",
@@ -167,7 +183,7 @@ switch ($rc) {
    installed and its environment configured, then run the following
    commands:
 
-   Example 1.4. Libruxc Usage
+   Example 1.5. Libruxc Usage
 ...
 git clone https://github.com/miconda/ruxc
 cd ruxc
