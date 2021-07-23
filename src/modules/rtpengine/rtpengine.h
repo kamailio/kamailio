@@ -42,6 +42,8 @@ enum rtpe_operation {
         OP_UNBLOCK_DTMF,
         OP_BLOCK_MEDIA,
         OP_UNBLOCK_MEDIA,
+        OP_SILENCE_MEDIA,
+        OP_UNSILENCE_MEDIA,
         OP_START_FORWARDING,
         OP_STOP_FORWARDING,
         OP_PLAY_MEDIA,

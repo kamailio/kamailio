@@ -3038,6 +3038,52 @@ unblock_media("all");
 		</example>
 	</section>
 
+	<section id="rtpengine.f.silence_media">
+		<title>
+		<function moreinfo="none">silence_media([flags])</function>
+		</title>
+		<para>
+		Identical to <quote>block_media</quote> except that media &rtp; packets are not
+		simply blocked, but instead have their audio payload replaced by silence audio.
+		This is only supported for certain trivial audio codecs (e.g. G.711, G.722).
+		</para>
+		<para>
+		See <quote>block_dtmf</quote> for a description of the flags that can be used.
+		</para>
+		<example>
+		<title><function>silence_media</function> usage</title>
+		<programlisting format="linespecific">
+...
+silence_media();
+silence_media("directional");
+silence_media("address=192.168.42.42");
+...
+		</programlisting>
+		</example>
+	</section>
+
+	<section id="rtpengine.f.unsilence_media">
+		<title>
+		<function moreinfo="none">unsilence_media([flags])</function>
+		</title>
+		<para>
+		Identical to <quote>unblock_media</quote> except that it's the counterpart to
+		<quote>silence_media</quote>.
+		</para>
+		<para>
+		See <quote>unblock_dtmf</quote> for a description of the flags that can be used.
+		</para>
+		<example>
+		<title><function>unsilence_media</function> usage</title>
+		<programlisting format="linespecific">
+...
+unsilence_media();
+unsilence_media("all");
+...
+		</programlisting>
+		</example>
+	</section>
+
 	<section id="rtpengine.f.start_forwarding">
 		<title>
 		<function moreinfo="none">start_forwarding([flags])</function>
