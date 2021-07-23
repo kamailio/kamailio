@@ -618,7 +618,7 @@ int pvh_set_header(
 
 	if(val == NULL || (val->flags & PV_VAL_NULL)) {
 		if(idxf == PV_IDX_ALL) {
-			cnt = xavi_rm_by_name(hname, 1, &xavi);
+			cnt = xavi_rm_by_name(hname, 1, &avi);
 			LM_DBG("removed %d values of %.*s=>%.*s, set $null\n", cnt,
 					xavi->name.len, xavi->name.s, hname->len, hname->s);
 			if(pvh_set_xavi(msg, &xavi_name, hname, NULL, SR_XTYPE_NULL, 0, 0)
@@ -649,7 +649,7 @@ int pvh_set_header(
 				goto err;
 		} else if(idxf == PV_IDX_ALL) {
 			if(hname_cnt > 1) {
-				cnt = xavi_rm_by_name(hname, 1, &xavi);
+				cnt = xavi_rm_by_name(hname, 1, &avi);
 				LM_DBG("removed %d values of %.*s=>%.*s\n", cnt, xavi->name.len,
 						xavi->name.s, hname->len, hname->s);
 			}
