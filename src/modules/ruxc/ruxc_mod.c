@@ -40,6 +40,7 @@ MODULE_VERSION
 
 static int _ruxc_http_timeout = 5000;
 static int _ruxc_http_tlsmode = 0;
+static int _ruxc_http_reuse = 0;
 
 static int mod_init(void);
 static int child_init(int);
@@ -73,6 +74,7 @@ static cmd_export_t cmds[]={
 static param_export_t params[]={
 	{"http_timeout",       PARAM_INT,   &_ruxc_http_timeout},
 	{"http_tlsmode",       PARAM_INT,   &_ruxc_http_tlsmode},
+	{"http_reuse",         PARAM_INT,   &_ruxc_http_reuse},
 
 	{0, 0, 0}
 };
@@ -132,6 +134,7 @@ static int ki_ruxc_http_get_helper(sip_msg_t *_msg, str *url, str *hdrs,
     v_http_request.timeout_read = _ruxc_http_timeout;
     v_http_request.timeout_write = _ruxc_http_timeout;
 	v_http_request.tlsmode = _ruxc_http_tlsmode;
+	v_http_request.reuse = _ruxc_http_reuse;
 
 	v_http_request.url = url->s;
 	v_http_request.url_len = url->len;
@@ -229,6 +232,7 @@ static int ki_ruxc_http_post_helper(sip_msg_t *_msg, str *url, str *body, str *h
     v_http_request.timeout_read = _ruxc_http_timeout;
     v_http_request.timeout_write = _ruxc_http_timeout;
 	v_http_request.tlsmode = _ruxc_http_tlsmode;
+	v_http_request.reuse = _ruxc_http_reuse;
 
 	v_http_request.url = url->s;
 	v_http_request.url_len = url->len;

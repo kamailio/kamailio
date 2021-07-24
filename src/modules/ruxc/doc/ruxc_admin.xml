@@ -98,6 +98,27 @@ modparam("ruxc", "http_tlsmode", 1)
 </programlisting>
 		</example>
 	</section>
+	<section id="ruxc.p.http_reuse">
+		<title><varname>http_reuse</varname> (int)</title>
+		<para>
+		Set to 1 in order to reuse the connection for all requests (each &kamailio;
+		process has its own connection). Useful to avoid TCP connect (and TLS
+		handshake) when all requests are performed against the same HTTP/S server.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0 (new connection for each request).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>http_reuse</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("ruxc", "http_reuse", 1)
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>
