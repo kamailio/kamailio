@@ -552,6 +552,8 @@ static pv_export_t mod_pvs[] = {
 		pv_parse_via_name, 0, 0, 0},
 	{{"viaZ", (sizeof("viaZ")-1)}, PVT_OTHER, pv_get_viaZ, 0,
 		pv_parse_via_name, 0, 0, 0},
+	{{"msgbuf", (sizeof("msgbuf")-1)}, PVT_OTHER, pv_get_msgbuf, pv_set_msgbuf,
+		pv_parse_msgbuf_name, 0, 0, 0},
 
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };

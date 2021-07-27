@@ -4633,3 +4633,115 @@ int pv_get_viaZ(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 
 	return pv_get_via_attr(msg, vbZ, param, res);
 }
+
+/**
+ *
+ */
+int pv_parse_msgbuf_name(pv_spec_t *sp, str *in)
+{
+	int n;
+	char *p;
+	pv_spec_t *nsp = 0;
+
+	if(in==NULL || in->s==NULL || in->len<=0 || sp==NULL) {
+		return -1;
+	}
+
+	p = in->s;
+	if(*p==PV_MARKER) {
+		nsp = (pv_spec_p)pkg_malloc(sizeof(pv_spec_t));
+		if(nsp==NULL) {
+			LM_ERR("no more memory\n");
+			return -1;
+		}
+		p = pv_parse_spec(in, nsp);
+		if(p==NULL) {
+			LM_ERR("invalid variable [%.*s]\n", in->len, in->s);
+			pv_spec_free(nsp);
+			return -1;
+		}
+		//LM_ERR("dynamic name [%.*s]\n", in->len, in->s);
+		//pv_print_spec(nsp);
+		sp->pvp.pvn.type = PV_NAME_PVAR;
+		sp->pvp.pvn.u.dname = (void*)nsp;
+		return 0;
+	}
+
+	if (str2sint(in, &n) != 0) {
+		LM_ERR("bad index value: [%.*s]\n", in->len, in->s);
+		return -1;
+	}
+
+	sp->pvp.pvn.u.isname.name.n = n;
+	sp->pvp.pvn.type = PV_NAME_INTSTR;
+	sp->pvp.pvn.u.isname.type = 0;
+
+	return 0;
+}
+
+/**
+ *
+ */
+int pv_get_vparam_ival(sip_msg_t *msg, pv_param_t *param)
+{
+	pv_value_t vval;
+
+	if(param->pvn.type==PV_NAME_PVAR) {
+		/* pvar */
+		if(pv_get_spec_value(msg, (pv_spec_t*)(param->pvn.u.dname), &vval)!=0) {
+			LM_ERR("cannot get name value\n");
+			return -1;
+		}
+		return vval.ri;
+	} else {
+		return param->pvn.u.isname.name.n;
+	}
+}
+
+/**
+ *
+ */
+int pv_get_msgbuf(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
+{
+	int n;
+	static char outmsgbuf[4];
+
+	n = pv_get_vparam_ival(msg, param);
+
+	if(n<0 || n>=msg->len) {
+		LM_ERR("index out of range\n");
+		return pv_get_null(msg, param, res);
+	}
+	outmsgbuf[0] = msg->buf[n];
+	outmsgbuf[1] = '\0';
+	return pv_get_strlval(msg, param, res, outmsgbuf, 2);
+}
+
+/**
+ *
+ */
+int pv_set_msgbuf(sip_msg_t *msg, pv_param_t *param,
+		int op, pv_value_t *val)
+{
+	int n;
+
+	n = pv_get_vparam_ival(msg, param);
+
+	if(n<0 || n>=msg->len) {
+		LM_ERR("index out of range\n");
+		return -1;
+	}
+
+	if((val==NULL) || (val->flags&PV_VAL_NULL)) {
+		LM_ERR("null value - skipping\n");
+		return 1;
+	}
+	if(!(val->flags&PV_VAL_STR) || val->rs.len<=0) {
+		LM_ERR("error - str value required\n");
+		return -1;
+	}
+
+	msg->buf[n] = val->rs.s[0];
+
+	return 0;
+}

@@ -416,5 +416,11 @@ int pv_get_via0(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
 int pv_get_via1(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
 int pv_get_viaZ(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
 
+int pv_parse_msgbuf_name(pv_spec_t *sp, str *in);
+int pv_get_msgbuf(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
+int pv_set_msgbuf(sip_msg_t *msg, pv_param_t *param,
+		int op, pv_value_t *val);
+
+
 #endif
 
