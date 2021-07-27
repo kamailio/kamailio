@@ -2147,6 +2147,7 @@ int pv_init_buffer(void)
 			_pv_print_buffer_slots, _pv_print_buffer_size);
 	_pv_print_buffer_slots_active = _pv_print_buffer_slots;
 	_pv_print_buffer_size_active = _pv_print_buffer_size;
+	_pv_print_buffer_index = 0;
 
 	return 0;
 }
@@ -2168,6 +2169,7 @@ void pv_destroy_buffer(void)
 	pkg_free(_pv_print_buffer);
 	_pv_print_buffer_slots_active = 0;
 	_pv_print_buffer_size_active = 0;
+	_pv_print_buffer_index = 0;
 	_pv_print_buffer = NULL;
 }
 
@@ -2177,8 +2179,9 @@ void pv_destroy_buffer(void)
 int pv_reinit_buffer(void)
 {
 	if(_pv_print_buffer_size==_pv_print_buffer_size_active
-			&& _pv_print_buffer_slots==_pv_print_buffer_slots_active)
+			&& _pv_print_buffer_slots==_pv_print_buffer_slots_active) {
 		return 0;
+	}
 	pv_destroy_buffer();
 	return pv_init_buffer();
 }
