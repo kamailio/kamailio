@@ -115,7 +115,7 @@ request_route {
    that, 'drop' must be used so processing of the message does not
    continue to request_route or reply_route in the same process, it is
    going to be done by the delegated group of workers. It returns -1
-   (false) in case there was a proble delegating the processing.
+   (false) in case there was a problem delegating the processing.
 
    This function can be used from REQUEST_ROUTE|CORE_REPLY_ROUTE.
 
