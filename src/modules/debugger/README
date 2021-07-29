@@ -26,22 +26,23 @@ Daniel-Constantin Mierla
         3. Parameters
 
               3.1. cfgtrace (int)
-              3.2. breakpoint (int)
-              3.3. log_level (int)
-              3.4. log_level_name (str)
-              3.5. log_facility (str)
-              3.6. log_prefix (str)
-              3.7. step_usleep (int)
-              3.8. step_loops (int)
-              3.9. mod_hash_size (int)
-              3.10. mod_level_mode (int)
-              3.11. mod_level (str)
-              3.12. mod_facility_mode (int)
-              3.13. mod_facility (str)
-              3.14. log_assign (int)
-              3.15. cfgpkgcheck (int)
-              3.16. reset_msgid (int)
-              3.17. cfgtest (int)
+              3.2. cfgtrace_format (int)
+              3.3. breakpoint (int)
+              3.4. log_level (int)
+              3.5. log_level_name (str)
+              3.6. log_facility (str)
+              3.7. log_prefix (str)
+              3.8. step_usleep (int)
+              3.9. step_loops (int)
+              3.10. mod_hash_size (int)
+              3.11. mod_level_mode (int)
+              3.12. mod_level (str)
+              3.13. mod_facility_mode (int)
+              3.14. mod_facility (str)
+              3.15. log_assign (int)
+              3.16. cfgpkgcheck (int)
+              3.17. reset_msgid (int)
+              3.18. cfgtest (int)
 
         4. Functions
 
@@ -66,25 +67,26 @@ Daniel-Constantin Mierla
    List of Examples
 
    1.1. Set cfgtrace parameter
-   1.2. Set breakpoint parameter
-   1.3. Set log_level parameter
-   1.4. Set log_level_name parameter
-   1.5. Set log_facility parameter
-   1.6. Set log_prefix parameter
-   1.7. Set step_usleep parameter
-   1.8. Set step_loops parameter
-   1.9. Set mod_hash_size parameter
-   1.10. Set mod_level_mode parameter
-   1.11. Set mod_level parameter
-   1.12. Set mod_facility_mode parameter
-   1.13. Set mod_facility parameter
-   1.14. Set log_assign parameter
-   1.15. Set cfgpkgcheck parameter
-   1.16. Set reset_msgid parameter
-   1.17. Set cfgtest parameter
-   1.18. dbg_breakpoint usage
-   1.19. dbg_pv_dump usage
-   1.20. dbg_sip_msg usage
+   1.2. Set cfgtrace_format parameter
+   1.3. Set breakpoint parameter
+   1.4. Set log_level parameter
+   1.5. Set log_level_name parameter
+   1.6. Set log_facility parameter
+   1.7. Set log_prefix parameter
+   1.8. Set step_usleep parameter
+   1.9. Set step_loops parameter
+   1.10. Set mod_hash_size parameter
+   1.11. Set mod_level_mode parameter
+   1.12. Set mod_level parameter
+   1.13. Set mod_facility_mode parameter
+   1.14. Set mod_facility parameter
+   1.15. Set log_assign parameter
+   1.16. Set cfgpkgcheck parameter
+   1.17. Set reset_msgid parameter
+   1.18. Set cfgtest parameter
+   1.19. dbg_breakpoint usage
+   1.20. dbg_pv_dump usage
+   1.21. dbg_sip_msg usage
 
 Chapter 1. Admin Guide
 
@@ -99,22 +101,23 @@ Chapter 1. Admin Guide
    3. Parameters
 
         3.1. cfgtrace (int)
-        3.2. breakpoint (int)
-        3.3. log_level (int)
-        3.4. log_level_name (str)
-        3.5. log_facility (str)
-        3.6. log_prefix (str)
-        3.7. step_usleep (int)
-        3.8. step_loops (int)
-        3.9. mod_hash_size (int)
-        3.10. mod_level_mode (int)
-        3.11. mod_level (str)
-        3.12. mod_facility_mode (int)
-        3.13. mod_facility (str)
-        3.14. log_assign (int)
-        3.15. cfgpkgcheck (int)
-        3.16. reset_msgid (int)
-        3.17. cfgtest (int)
+        3.2. cfgtrace_format (int)
+        3.3. breakpoint (int)
+        3.4. log_level (int)
+        3.5. log_level_name (str)
+        3.6. log_facility (str)
+        3.7. log_prefix (str)
+        3.8. step_usleep (int)
+        3.9. step_loops (int)
+        3.10. mod_hash_size (int)
+        3.11. mod_level_mode (int)
+        3.12. mod_level (str)
+        3.13. mod_facility_mode (int)
+        3.14. mod_facility (str)
+        3.15. log_assign (int)
+        3.16. cfgpkgcheck (int)
+        3.17. reset_msgid (int)
+        3.18. cfgtest (int)
 
    4. Functions
 
@@ -184,22 +187,23 @@ Chapter 1. Admin Guide
 3. Parameters
 
    3.1. cfgtrace (int)
-   3.2. breakpoint (int)
-   3.3. log_level (int)
-   3.4. log_level_name (str)
-   3.5. log_facility (str)
-   3.6. log_prefix (str)
-   3.7. step_usleep (int)
-   3.8. step_loops (int)
-   3.9. mod_hash_size (int)
-   3.10. mod_level_mode (int)
-   3.11. mod_level (str)
-   3.12. mod_facility_mode (int)
-   3.13. mod_facility (str)
-   3.14. log_assign (int)
-   3.15. cfgpkgcheck (int)
-   3.16. reset_msgid (int)
-   3.17. cfgtest (int)
+   3.2. cfgtrace_format (int)
+   3.3. breakpoint (int)
+   3.4. log_level (int)
+   3.5. log_level_name (str)
+   3.6. log_facility (str)
+   3.7. log_prefix (str)
+   3.8. step_usleep (int)
+   3.9. step_loops (int)
+   3.10. mod_hash_size (int)
+   3.11. mod_level_mode (int)
+   3.12. mod_level (str)
+   3.13. mod_facility_mode (int)
+   3.14. mod_facility (str)
+   3.15. log_assign (int)
+   3.16. cfgpkgcheck (int)
+   3.17. reset_msgid (int)
+   3.18. cfgtest (int)
 
 3.1. cfgtrace (int)
 
@@ -214,41 +218,55 @@ Chapter 1. Admin Guide
 modparam("debugger", "cfgtrace", 1)
 ...
 
-3.2. breakpoint (int)
+3.2. cfgtrace_format (int)
+
+   Control what is printer in the cfgtrace log message. If it is set to 1,
+   then the configuration file path is not printed, making the log
+   messages shorter when not including other configuration files in the
+   main one.
+
+   Default value is “0”.
+
+   Example 1.2. Set cfgtrace_format parameter
+...
+modparam("debugger", "cfgtrace_format", 1)
+...
+
+3.3. breakpoint (int)
 
    Control whether every line (global) breakpoint is enabled or disabled
    at startup.
 
    Default value is “0” (disabled).
 
-   Example 1.2. Set breakpoint parameter
+   Example 1.3. Set breakpoint parameter
 ...
 modparam("debugger", "breakpoint", 1)
 ...
 
-3.3. log_level (int)
+3.4. log_level (int)
 
    What log level is to be used to print module-specific messages.
 
    Default value is “-1” (L_ERR).
 
-   Example 1.3. Set log_level parameter
+   Example 1.4. Set log_level parameter
 ...
 modparam("debugger", "log_level", 1)
 ...
 
-3.4. log_level_name (str)
+3.5. log_level_name (str)
 
    What log level name is to be used to print cfg trace messages.
 
    Default value is “NULL” (use default log names).
 
-   Example 1.4. Set log_level_name parameter
+   Example 1.5. Set log_level_name parameter
 ...
 modparam("debugger", "log_level_name", "exec")
 ...
 
-3.5. log_facility (str)
+3.6. log_facility (str)
 
    Which log facility is to be used to print module-specific messages. By
    using this setting, you can configure syslog to send debug messages to
@@ -256,35 +274,35 @@ modparam("debugger", "log_level_name", "exec")
 
    Default value is “NULL” (default from core).
 
-   Example 1.5. Set log_facility parameter
+   Example 1.6. Set log_facility parameter
 ...
 modparam("debugger", "log_facility", "LOG_DAEMON")
 ...
 
-3.6. log_prefix (str)
+3.7. log_prefix (str)
 
    String to print before any module-specific messages.
 
    Default value is “*** cfgtrace:”.
 
-   Example 1.6. Set log_prefix parameter
+   Example 1.7. Set log_prefix parameter
 ...
 modparam("debugger", "log_prefix", "from-debugger-with-love:")
 ...
 
-3.7. step_usleep (int)
+3.8. step_usleep (int)
 
    Microseconds to sleep before checking for new commands when waiting at
    a breakpoint.
 
    Default value is “100000” (that is 0.1 sec).
 
-   Example 1.7. Set step_usleep parameter
+   Example 1.8. Set step_usleep parameter
 ...
 modparam("debugger", "step_usleep", 500000)
 ...
 
-3.8. step_loops (int)
+3.9. step_loops (int)
 
    How many sleeps of 'step_usleep' the RPC process performs when waiting
    for a reply from a worker process before responding to RPC. This avoids
@@ -293,12 +311,12 @@ modparam("debugger", "step_usleep", 500000)
 
    Default value is “200”.
 
-   Example 1.8. Set step_loops parameter
+   Example 1.9. Set step_loops parameter
 ...
 modparam("debugger", "step_loops", 100)
 ...
 
-3.9. mod_hash_size (int)
+3.10. mod_hash_size (int)
 
    Used to compute power of two as size of internal hash table to store
    levels per module (e.g., if its set to 4, internal hash table has 16
@@ -309,12 +327,12 @@ modparam("debugger", "step_loops", 100)
 
    Default value is “0” - feature disabled.
 
-   Example 1.9. Set mod_hash_size parameter
+   Example 1.10. Set mod_hash_size parameter
 ...
 modparam("debugger", "mod_hash_size", 5)
 ...
 
-3.10. mod_level_mode (int)
+3.11. mod_level_mode (int)
 
    Enable or disable per module log level (0 - disabled, 1 - enabled).
    This parameter is tunable via the Kamailio config framework. To use per
@@ -322,25 +340,25 @@ modparam("debugger", "mod_hash_size", 5)
 
    Default value is “0”.
 
-   Example 1.10. Set mod_level_mode parameter
+   Example 1.11. Set mod_level_mode parameter
 ...
 modparam("debugger", "mod_level_mode", 1)
 ...
 
-3.11. mod_level (str)
+3.12. mod_level (str)
 
    Specify module log level - the value must be in the format:
    modulename=level. The parameter can be set many times. For core log
    level, use module name 'core'. You also must enable mod_level_mode and
    mod_hash_size.
 
-   Example 1.11. Set mod_level parameter
+   Example 1.12. Set mod_level parameter
 ...
 modparam("debugger", "mod_level", "core=3")
 modparam("debugger", "mod_level", "tm=3")
 ...
 
-3.12. mod_facility_mode (int)
+3.13. mod_facility_mode (int)
 
    Enable or disable per module log facility (0 - disabled, 1 - enabled).
    This parameter is tunable via the Kamailio config framework. To use per
@@ -348,12 +366,12 @@ modparam("debugger", "mod_level", "tm=3")
 
    Default value is “0”.
 
-   Example 1.12. Set mod_facility_mode parameter
+   Example 1.13. Set mod_facility_mode parameter
 ...
 modparam("debugger", "mod_facility_mode", 1)
 ...
 
-3.13. mod_facility (str)
+3.14. mod_facility (str)
 
    Specify module log facility - the value must be in the format:
    modulename=facility. The parameter can be set many times. For core log
@@ -364,56 +382,56 @@ modparam("debugger", "mod_facility_mode", 1)
    (http://linux.die.net/man/3/syslog). The most used facilities are
    LOG_LOCAL[0-7].
 
-   Example 1.13. Set mod_facility parameter
+   Example 1.14. Set mod_facility parameter
 ...
 modparam("debugger", "mod_facility", "core=LOG_LOCAL0")
 modparam("debugger", "mod_facility", "debugger=LOG_LOCAL1")
 ...
 
-3.14. log_assign (int)
+3.15. log_assign (int)
 
    Enable or disable log assign actions on config (0 - disabled, 1 -
    enabled).
 
    Default value is “0”.
 
-   Example 1.14. Set log_assign parameter
+   Example 1.15. Set log_assign parameter
 ...
 modparam("debugger", "log_assign", 1)
 ...
 
-3.15. cfgpkgcheck (int)
+3.16. cfgpkgcheck (int)
 
    If set, before each config action is done pkg memory check, useful to
    detect buffer overflows.
 
    Default value is “0” (disabled).
 
-   Example 1.15. Set cfgpkgcheck parameter
+   Example 1.16. Set cfgpkgcheck parameter
 ...
 modparam("debugger", "cfgpkgcheck", 1)
 ...
 
-3.16. reset_msgid (int)
+3.17. reset_msgid (int)
 
    Used to enable or disable the ability to reset the msgid ($mi) through
    the dbg.reset_msgid RPC command. (0 - disabled, 1 - enabled).
 
    Default value is “0” - feature disabled.
 
-   Example 1.16. Set reset_msgid parameter
+   Example 1.17. Set reset_msgid parameter
 ...
 modparam("debugger", "reset_msgid", 1)
 ...
 
-3.17. cfgtest (int)
+3.18. cfgtest (int)
 
    Control whether the cfgt module is enabled or disabled at startup.
    Module cfgt needs to be loaded before.
 
    Default value is “0” (disabled).
 
-   Example 1.17. Set cfgtest parameter
+   Example 1.18. Set cfgtest parameter
 ...
 loadmodule "cfgt.so"
 modparam("debugger", "cfgtest", 1)
@@ -434,7 +452,7 @@ modparam("debugger", "cfgtest", 1)
    Note that this version of the module does not export this anchors to
    RPC for interactive debugging (temporarily disabled).
 
-   Example 1.18. dbg_breakpoint usage
+   Example 1.19. dbg_breakpoint usage
 ...
 if($si=="10.0.0.10")
         dbg_breakpoint("1");
@@ -462,7 +480,7 @@ if($si=="10.0.0.10")
      * L_INFO - log level 2
      * L_DBG - log level 3
 
-   Example 1.19. dbg_pv_dump usage
+   Example 1.20. dbg_pv_dump usage
 ...
 $var(temp) = 1;
 $avp(s:more_avp) = 2;
@@ -505,7 +523,7 @@ x":0,"$var(empty)":0}
    force the lump application using msg_apply_changes() function from
    textopsx module.
 
-   Example 1.20. dbg_sip_msg usage
+   Example 1.21. dbg_sip_msg usage
 ...
     dbg_sip_msg();
     dbg_sip_msg("L_ERR");
