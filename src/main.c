@@ -293,22 +293,6 @@ void print_internals(void)
 	printf("Thank you for flying %s!\n", NAME);
 }
 
-/* debugging function */
-/*
-void receive_stdin_loop(void)
-{
-	#define BSIZE 1024
-	char buf[BSIZE+1];
-	int len;
-
-	while(1){
-		len=fread(buf,1,BSIZE,stdin);
-		buf[len+1]=0;
-		receive_msg(buf, len);
-		printf("-------------------------\n");
-	}
-}
-*/
 
 /* global vars */
 
@@ -323,7 +307,7 @@ unsigned int maxbuffer = MAX_RECV_BUFFER_SIZE; /* maximum buffer size we do
 												  not want to exceed during the
 												  auto-probing procedure; may
 												  be re-configured */
-unsigned int sql_buffer_size = 65535; /* Size for the SQL buffer. Defaults to 64k. 
+unsigned int sql_buffer_size = 65535; /* Size for the SQL buffer. Defaults to 64k.
                                          This may be re-configured */
 int socket_workers = 0;		/* number of workers processing requests for a socket
 							   - it's reset everytime with a new listen socket */
