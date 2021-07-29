@@ -621,5 +621,34 @@ hf_iterator_end("i1");
 </programlisting>
 		</example>
 	</section>
+	<section id="textopsx.f.hf_iterator_insert">
+		<title>
+		<function moreinfo="none">hf_iterator_insert(iname, htext)</function>
+		</title>
+		<para>
+			Add headers before the one at the current iterator possition.
+		</para>
+		<para>
+			The parameters can be dynamic strings with variables.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>hf_iterator_insert</function> usage</title>
+		<programlisting format="linespecific">
+...
+    hf_iterator_start("i1");
+    while(hf_iterator_next("i1")) {
+        if($hfitname(i1)=="My-Header") {
+            hf_iterator_insert("i1", "My-New-Header: abc\r\n");
+            break;
+        }
+    }
+    hf_iterator_end("i1");
+...
+</programlisting>
+		</example>
+	</section>
 
 </section>
