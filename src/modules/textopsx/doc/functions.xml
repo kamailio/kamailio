@@ -754,8 +754,8 @@ bl_iterator_end("b1");
 		<programlisting format="linespecific">
 ...
     bl_iterator_start("b1");
-    while(hf_iterator_next("b1")) {
-        xlog("body line: hdr[$hfitname(b1)]\n");
+    while(bl_iterator_next("b1")) {
+        xlog("body line: $blitval(b1)");
     }
     bl_iterator_end("b1");
 ...
