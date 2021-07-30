@@ -512,7 +512,7 @@ hf_iterator_start("i1");
 		</title>
 		<para>
 			Close the iterator identified by iname parameter. The iname value
-			must be the same used for sht_iterator_start().
+			must be the same used for hf_iterator_start().
 		</para>
 		<para>
 			The parameter can be dynamic string with variables.
@@ -535,7 +535,7 @@ hf_iterator_end("i1");
 		</title>
 		<para>
 			Move the iterator to the next header. It must
-			be called also after sht_iterator_start() to get the first
+			be called also after bl_iterator_start() to get the first
 			header.
 		</para>
 		<para>
@@ -570,7 +570,7 @@ hf_iterator_end("i1");
 		</title>
 		<para>
 			Move the iterator to the previous header. It must
-			be called also after sht_iterator_start() and sht_iterator_next().
+			be called also after hf_iterator_start() and hf_iterator_next().
 		</para>
 		<para>
 			The parameter can be dynamic string with variables.
@@ -676,6 +676,116 @@ hf_iterator_end("i1");
         }
     }
     hf_iterator_end("i1");
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="textopsx.f.bl_iterator_start">
+		<title>
+		<function moreinfo="none">bl_iterator_start(iname)</function>
+		</title>
+		<para>
+			Start an iterator for lines in the body of the current SIP message.
+			The parameter iname is used to identify the iterator. There
+			can be up to 4 iterators at the same time, with different name.
+		</para>
+		<para>
+			The parameter can be a dynamic string with variables.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>bl_iterator_start</function> usage</title>
+		<programlisting format="linespecific">
+...
+bl_iterator_start("b1");
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="textopsx.f.bl_iterator_end">
+		<title>
+		<function moreinfo="none">bl_iterator_end(iname)</function>
+		</title>
+		<para>
+			Close the iterator identified by iname parameter. The iname value
+			must be the same used for bl_iterator_start().
+		</para>
+		<para>
+			The parameter can be dynamic string with variables.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>bl_iterator_end</function> usage</title>
+		<programlisting format="linespecific">
+...
+bl_iterator_end("b1");
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="textopsx.f.bl_iterator_next">
+		<title>
+		<function moreinfo="none">textopsx.f.bl_iterator_next(iname)</function>
+		</title>
+		<para>
+			Move the iterator to the next line in the body. It must
+			be called also after bl_iterator_start() to get the first
+			header.
+		</para>
+		<para>
+			The return code is false when there is no other header in the list.
+		</para>
+		<para>
+			The body line accessible via variable $blitval(iname) - it contains
+			also the EOL chars.
+		</para>
+		<para>
+			The parameter can be dynamic string with variables.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>bl_iterator_next</function> usage</title>
+		<programlisting format="linespecific">
+...
+    bl_iterator_start("b1");
+    while(hf_iterator_next("b1")) {
+        xlog("body line: hdr[$hfitname(b1)]\n");
+    }
+    bl_iterator_end("b1");
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="textopsx.f.bl_iterator_rm">
+		<title>
+		<function moreinfo="none">bl_iterator_rm(iname)</function>
+		</title>
+		<para>
+			Remove the body line at the current iterator position.
+		</para>
+		<para>
+			The parameter can be dynamic string with variables.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>bl_iterator_rm</function> usage</title>
+		<programlisting format="linespecific">
+...
+    bl_iterator_start("b1");
+    while(bl_iterator_next("b1")) {
+        if($blitval(b1)=~"abc") {
+            bl_iterator_rm("b1");
+        }
+    }
+    bl_iterator_end("b1");
 ...
 </programlisting>
 		</example>
