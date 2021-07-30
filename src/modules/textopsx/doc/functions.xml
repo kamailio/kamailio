@@ -564,6 +564,36 @@ hf_iterator_end("i1");
 </programlisting>
 		</example>
 	</section>
+	<section id="textopsx.f.hf_iterator_prev">
+		<title>
+		<function moreinfo="none">textopsx.f.hf_iterator_prev(iname)</function>
+		</title>
+		<para>
+			Move the iterator to the previous header. It must
+			be called also after sht_iterator_start() and sht_iterator_next().
+		</para>
+		<para>
+			The parameter can be dynamic string with variables.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>hf_iterator_prev</function> usage</title>
+		<programlisting format="linespecific">
+...
+    hf_iterator_start("i1");
+    hf_iterator_next("i1");
+...
+    hf_iterator_next("i1");
+...
+    hf_iterator_prev("i1");
+...
+    hf_iterator_end("i1");
+...
+</programlisting>
+		</example>
+	</section>
 	<section id="textopsx.f.hf_iterator_rm">
 		<title>
 		<function moreinfo="none">hf_iterator_rm(iname)</function>

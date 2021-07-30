@@ -75,6 +75,7 @@ static int assign_hf_value2_fixup(void **param, int param_no);
 
 static int w_hf_iterator_start(sip_msg_t *msg, char *piname, char *p2);
 static int w_hf_iterator_next(sip_msg_t *msg, char *piname, char *p2);
+static int w_hf_iterator_prev(sip_msg_t *msg, char *piname, char *p2);
 static int w_hf_iterator_end(sip_msg_t *msg, char *piname, char *p2);
 static int w_hf_iterator_rm(sip_msg_t *msg, char *piname, char *p2);
 static int w_hf_iterator_append(sip_msg_t *msg, char *piname, char *phtext);
@@ -136,6 +137,8 @@ static cmd_export_t cmds[] = {
 	{"hf_iterator_start", w_hf_iterator_start, 1, fixup_spve_null,
 			fixup_free_spve_null, ANY_ROUTE},
 	{"hf_iterator_next", w_hf_iterator_next, 1, fixup_spve_null,
+			fixup_free_spve_null, ANY_ROUTE},
+	{"hf_iterator_prev", w_hf_iterator_prev, 1, fixup_spve_null,
 			fixup_free_spve_null, ANY_ROUTE},
 	{"hf_iterator_end", w_hf_iterator_end, 1, fixup_spve_null,
 			fixup_free_spve_null, ANY_ROUTE},
@@ -1836,6 +1839,7 @@ typedef struct hf_iterator {
 	str name;
 	char bname[HF_ITERATOR_NAME_SIZE];
 	hdr_field_t *it;
+	hdr_field_t *prev;
 	int eoh;
 } hf_iterator_t;
 
@@ -1886,6 +1890,7 @@ static int ki_hf_iterator_start(sip_msg_t *msg, str *iname)
 		_hf_iterators[k].name.s = _hf_iterators[k].bname;
 	}
 	_hf_iterators[k].it = NULL;
+	_hf_iterators[k].prev = NULL;
 	_hf_iterators[k].eoh = 0;
 	if(parse_headers(msg, HDR_EOH_F, 0) == -1) {
 		LM_ERR("failed parsing message\n");
@@ -1940,6 +1945,7 @@ static int ki_hf_iterator_next(sip_msg_t *msg, str *iname)
 	if(_hf_iterators[k].it == NULL) {
 		_hf_iterators[k].it = msg->headers;
 	} else {
+		_hf_iterators[k].prev = _hf_iterators[k].it;
 		_hf_iterators[k].it = _hf_iterators[k].it->next;
 	}
 	if(_hf_iterators[k].it == NULL) {
@@ -1960,6 +1966,74 @@ static int w_hf_iterator_next(sip_msg_t *msg, char *piname, char *p2)
 		return -1;
 	}
 	return ki_hf_iterator_next(msg, &iname);
+}
+
+/**
+ *
+ */
+static int ki_hf_iterator_prev(sip_msg_t *msg, str *iname)
+{
+	hdr_field_t *hf;
+	int i;
+	int k;
+
+	k = -1;
+	for(i=0; i<HF_ITERATOR_SIZE; i++) {
+		if(_hf_iterators[i].name.len>0) {
+			if(_hf_iterators[i].name.len==iname->len
+					&& strncmp(_hf_iterators[i].name.s, iname->s, iname->len)==0) {
+				k = i;
+				break;
+			}
+		}
+	}
+	if(k==-1) {
+		LM_ERR("iterator not available [%.*s]\n", iname->len, iname->s);
+		return -1;
+	}
+	if(_hf_iterators[k].eoh == 1) {
+		return -1;
+	}
+
+	if(_hf_iterators[k].prev==NULL) {
+		return ki_hf_iterator_start(msg, iname);
+	}
+
+	if(_hf_iterators[k].prev!=_hf_iterators[k].it) {
+		_hf_iterators[k].it = _hf_iterators[k].prev;
+		return 1;
+	}
+	for(hf=msg->headers; hf; hf=hf->next) {
+		if(hf->next) {
+			if(hf->next->next) {
+				if(_hf_iterators[k].it==hf->next->next) {
+					_hf_iterators[k].it = hf->next;
+					_hf_iterators[k].prev = it;
+					return 1;
+				}
+			} else {
+				if(_hf_iterators[k].it==hf->next) {
+					_hf_iterators[k].it = hf;
+					_hf_iterators[k].prev = NULL;
+					return 1;
+				}
+			}
+		}
+	}
+	return ki_hf_iterator_start(msg, iname);
+}
+
+/**
+ *
+ */
+static int w_hf_iterator_prev(sip_msg_t *msg, char *piname, char *p2)
+{
+	str iname = STR_NULL;
+	if(fixup_get_svalue(msg, (gparam_t*)piname, &iname)<0) {
+		LM_ERR("failed to get iterator name\n");
+		return -1;
+	}
+	return ki_hf_iterator_prev(msg, &iname);
 }
 
 /**
@@ -2786,6 +2860,11 @@ static sr_kemi_t sr_kemi_textopsx_exports[] = {
 	},
 	{ str_init("textopsx"), str_init("hf_iterator_next"),
 		SR_KEMIP_INT, ki_hf_iterator_next,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textopsx"), str_init("hf_iterator_prev"),
+		SR_KEMIP_INT, ki_hf_iterator_prev,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
