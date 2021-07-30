@@ -37,9 +37,10 @@ Daniel-Constantin Mierla
               2.16. hf_iterator_start(iname)
               2.17. hf_iterator_end(iname)
               2.18. textopsx.f.hf_iterator_next(iname)
-              2.19. hf_iterator_rm(iname)
-              2.20. hf_iterator_append(iname, htext)
-              2.21. hf_iterator_insert(iname, htext)
+              2.19. textopsx.f.hf_iterator_prev(iname)
+              2.20. hf_iterator_rm(iname)
+              2.21. hf_iterator_append(iname, htext)
+              2.22. hf_iterator_insert(iname, htext)
 
         3. Selects
 
@@ -67,10 +68,11 @@ Daniel-Constantin Mierla
    1.16. hf_iterator_start usage
    1.17. hf_iterator_end usage
    1.18. hf_iterator_next usage
-   1.19. hf_iterator_rm usage
-   1.20. hf_iterator_append usage
-   1.21. hf_iterator_insert usage
-   1.22. @hf_value select usage
+   1.19. hf_iterator_prev usage
+   1.20. hf_iterator_rm usage
+   1.21. hf_iterator_append usage
+   1.22. hf_iterator_insert usage
+   1.23. @hf_value select usage
 
 Chapter 1. Admin Guide
 
@@ -97,9 +99,10 @@ Chapter 1. Admin Guide
         2.16. hf_iterator_start(iname)
         2.17. hf_iterator_end(iname)
         2.18. textopsx.f.hf_iterator_next(iname)
-        2.19. hf_iterator_rm(iname)
-        2.20. hf_iterator_append(iname, htext)
-        2.21. hf_iterator_insert(iname, htext)
+        2.19. textopsx.f.hf_iterator_prev(iname)
+        2.20. hf_iterator_rm(iname)
+        2.21. hf_iterator_append(iname, htext)
+        2.22. hf_iterator_insert(iname, htext)
 
    3. Selects
 
@@ -137,9 +140,10 @@ Chapter 1. Admin Guide
    2.16. hf_iterator_start(iname)
    2.17. hf_iterator_end(iname)
    2.18. textopsx.f.hf_iterator_next(iname)
-   2.19. hf_iterator_rm(iname)
-   2.20. hf_iterator_append(iname, htext)
-   2.21. hf_iterator_insert(iname, htext)
+   2.19. textopsx.f.hf_iterator_prev(iname)
+   2.20. hf_iterator_rm(iname)
+   2.21. hf_iterator_append(iname, htext)
+   2.22. hf_iterator_insert(iname, htext)
 
 2.1.  msg_apply_changes()
 
@@ -482,7 +486,28 @@ hf_iterator_end("i1");
     hf_iterator_end("i1");
 ...
 
-2.19.  hf_iterator_rm(iname)
+2.19.  textopsx.f.hf_iterator_prev(iname)
+
+   Move the iterator to the previous header. It must be called also after
+   sht_iterator_start() and sht_iterator_next().
+
+   The parameter can be dynamic string with variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.19. hf_iterator_prev usage
+...
+    hf_iterator_start("i1");
+    hf_iterator_next("i1");
+...
+    hf_iterator_next("i1");
+...
+    hf_iterator_prev("i1");
+...
+    hf_iterator_end("i1");
+...
+
+2.20.  hf_iterator_rm(iname)
 
    Remove the header at the current iterator position.
 
@@ -490,7 +515,7 @@ hf_iterator_end("i1");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.19. hf_iterator_rm usage
+   Example 1.20. hf_iterator_rm usage
 ...
     hf_iterator_start("i1");
     while(hf_iterator_next("i1")) {
@@ -501,7 +526,7 @@ hf_iterator_end("i1");
     hf_iterator_end("i1");
 ...
 
-2.20.  hf_iterator_append(iname, htext)
+2.21.  hf_iterator_append(iname, htext)
 
    Add headers after the one at the current iterator possition.
 
@@ -509,7 +534,7 @@ hf_iterator_end("i1");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.20. hf_iterator_append usage
+   Example 1.21. hf_iterator_append usage
 ...
     hf_iterator_start("i1");
     while(hf_iterator_next("i1")) {
@@ -521,7 +546,7 @@ hf_iterator_end("i1");
     hf_iterator_end("i1");
 ...
 
-2.21.  hf_iterator_insert(iname, htext)
+2.22.  hf_iterator_insert(iname, htext)
 
    Add headers before the one at the current iterator possition.
 
@@ -529,7 +554,7 @@ hf_iterator_end("i1");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.21. hf_iterator_insert usage
+   Example 1.22. hf_iterator_insert usage
 ...
     hf_iterator_start("i1");
     while(hf_iterator_next("i1")) {
@@ -576,7 +601,7 @@ hf_iterator_end("i1");
      * IDX - Value index, negative value counts from bottom
      * PARAM_NAME - name of parameter
 
-   Example 1.22. @hf_value select usage
+   Example 1.23. @hf_value select usage
 ...
 $a = @hf_value.my_header[1].my_param;
 xplog("L_ERR", "$sel(@hf_value.via[-1]), $sel(@hf_value.from.tag)\n");
