@@ -41,6 +41,10 @@ Daniel-Constantin Mierla
               2.20. hf_iterator_rm(iname)
               2.21. hf_iterator_append(iname, htext)
               2.22. hf_iterator_insert(iname, htext)
+              2.23. bl_iterator_start(iname)
+              2.24. bl_iterator_end(iname)
+              2.25. textopsx.f.bl_iterator_next(iname)
+              2.26. bl_iterator_rm(iname)
 
         3. Selects
 
@@ -72,7 +76,11 @@ Daniel-Constantin Mierla
    1.20. hf_iterator_rm usage
    1.21. hf_iterator_append usage
    1.22. hf_iterator_insert usage
-   1.23. @hf_value select usage
+   1.23. bl_iterator_start usage
+   1.24. bl_iterator_end usage
+   1.25. bl_iterator_next usage
+   1.26. bl_iterator_rm usage
+   1.27. @hf_value select usage
 
 Chapter 1. Admin Guide
 
@@ -103,6 +111,10 @@ Chapter 1. Admin Guide
         2.20. hf_iterator_rm(iname)
         2.21. hf_iterator_append(iname, htext)
         2.22. hf_iterator_insert(iname, htext)
+        2.23. bl_iterator_start(iname)
+        2.24. bl_iterator_end(iname)
+        2.25. textopsx.f.bl_iterator_next(iname)
+        2.26. bl_iterator_rm(iname)
 
    3. Selects
 
@@ -144,6 +156,10 @@ Chapter 1. Admin Guide
    2.20. hf_iterator_rm(iname)
    2.21. hf_iterator_append(iname, htext)
    2.22. hf_iterator_insert(iname, htext)
+   2.23. bl_iterator_start(iname)
+   2.24. bl_iterator_end(iname)
+   2.25. textopsx.f.bl_iterator_next(iname)
+   2.26. bl_iterator_rm(iname)
 
 2.1.  msg_apply_changes()
 
@@ -452,7 +468,7 @@ hf_iterator_start("i1");
 2.17.  hf_iterator_end(iname)
 
    Close the iterator identified by iname parameter. The iname value must
-   be the same used for sht_iterator_start().
+   be the same used for hf_iterator_start().
 
    The parameter can be dynamic string with variables.
 
@@ -466,7 +482,7 @@ hf_iterator_end("i1");
 2.18.  textopsx.f.hf_iterator_next(iname)
 
    Move the iterator to the next header. It must be called also after
-   sht_iterator_start() to get the first header.
+   bl_iterator_start() to get the first header.
 
    The return code is false when there is no other header in the list.
 
@@ -489,7 +505,7 @@ hf_iterator_end("i1");
 2.19.  textopsx.f.hf_iterator_prev(iname)
 
    Move the iterator to the previous header. It must be called also after
-   sht_iterator_start() and sht_iterator_next().
+   hf_iterator_start() and hf_iterator_next().
 
    The parameter can be dynamic string with variables.
 
@@ -566,6 +582,77 @@ hf_iterator_end("i1");
     hf_iterator_end("i1");
 ...
 
+2.23.  bl_iterator_start(iname)
+
+   Start an iterator for lines in the body of the current SIP message. The
+   parameter iname is used to identify the iterator. There can be up to 4
+   iterators at the same time, with different name.
+
+   The parameter can be a dynamic string with variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.23. bl_iterator_start usage
+...
+bl_iterator_start("b1");
+...
+
+2.24.  bl_iterator_end(iname)
+
+   Close the iterator identified by iname parameter. The iname value must
+   be the same used for bl_iterator_start().
+
+   The parameter can be dynamic string with variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.24. bl_iterator_end usage
+...
+bl_iterator_end("b1");
+...
+
+2.25.  textopsx.f.bl_iterator_next(iname)
+
+   Move the iterator to the next line in the body. It must be called also
+   after bl_iterator_start() to get the first header.
+
+   The return code is false when there is no other header in the list.
+
+   The body line accessible via variable $blitval(iname) - it contains
+   also the EOL chars.
+
+   The parameter can be dynamic string with variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.25. bl_iterator_next usage
+...
+    bl_iterator_start("b1");
+    while(hf_iterator_next("b1")) {
+        xlog("body line: hdr[$hfitname(b1)]\n");
+    }
+    bl_iterator_end("b1");
+...
+
+2.26.  bl_iterator_rm(iname)
+
+   Remove the body line at the current iterator position.
+
+   The parameter can be dynamic string with variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.26. bl_iterator_rm usage
+...
+    bl_iterator_start("b1");
+    while(bl_iterator_next("b1")) {
+        if($blitval(b1)=~"abc") {
+            bl_iterator_rm("b1");
+        }
+    }
+    bl_iterator_end("b1");
+...
+
 3. Selects
 
    3.1. @hf_value
@@ -601,7 +688,7 @@ hf_iterator_end("i1");
      * IDX - Value index, negative value counts from bottom
      * PARAM_NAME - name of parameter
 
-   Example 1.23. @hf_value select usage
+   Example 1.27. @hf_value select usage
 ...
 $a = @hf_value.my_header[1].my_param;
 xplog("L_ERR", "$sel(@hf_value.via[-1]), $sel(@hf_value.from.tag)\n");
