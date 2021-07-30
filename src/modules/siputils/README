@@ -87,22 +87,23 @@ Gabriel Vasile
               4.21. decode_contact_header()
               4.22. cmp_uri(str1, str2)
               4.23. cmp_aor(str1, str2)
-              4.24. append_rpid_hf()
-              4.25. append_rpid_hf(prefix, suffix)
-              4.26. is_rpid_user_e164()
-              4.27. set_uri_user(uri, user)
-              4.28. set_uri_host(uri, host)
-              4.29. is_request()
-              4.30. is_reply()
-              4.31. is_gruu([uri])
-              4.32. is_supported(option)
-              4.33. is_first_hop([mode])
-              4.34. sip_p_charging_vector(flags)
-              4.35. contact_param_encode(pname, saddr)
-              4.36. contact_param_decode(pname)
-              4.37. contact_param_decode_uri(pname)
-              4.38. contact_param_rm(pname)
-              4.39. hdr_date_check(tdiff)
+              4.24. cmp_hdr_name(str1, str2)
+              4.25. append_rpid_hf()
+              4.26. append_rpid_hf(prefix, suffix)
+              4.27. is_rpid_user_e164()
+              4.28. set_uri_user(uri, user)
+              4.29. set_uri_host(uri, host)
+              4.30. is_request()
+              4.31. is_reply()
+              4.32. is_gruu([uri])
+              4.33. is_supported(option)
+              4.34. is_first_hop([mode])
+              4.35. sip_p_charging_vector(flags)
+              4.36. contact_param_encode(pname, saddr)
+              4.37. contact_param_decode(pname)
+              4.38. contact_param_decode_uri(pname)
+              4.39. contact_param_rm(pname)
+              4.40. hdr_date_check(tdiff)
 
         5. Exported pseudo-variables
 
@@ -146,22 +147,23 @@ Gabriel Vasile
    1.30. decode_contact_header usage
    1.31. cmp_uri usage
    1.32. cmp_aor usage
-   1.33. append_rpid_hf usage
-   1.34. append_rpid_hf(prefix, suffix) usage
-   1.35. is_rpid_user_e164 usage
-   1.36. set_uri_user usage
-   1.37. set_uri_host usage
-   1.38. is_request usage
-   1.39. is_reply usage
-   1.40. is_gruu() usage
-   1.41. is_supported() usage
-   1.42. is_first_hop() usage
-   1.43. sip_p_charging_vector() usage
-   1.44. contact_param_encode usage
-   1.45. contact_param_decode usage
-   1.46. contact_param_decode_ruri usage
-   1.47. contact_param_rm usage
-   1.48. hdr_date_check usage
+   1.33. cmp_hdr_name usage
+   1.34. append_rpid_hf usage
+   1.35. append_rpid_hf(prefix, suffix) usage
+   1.36. is_rpid_user_e164 usage
+   1.37. set_uri_user usage
+   1.38. set_uri_host usage
+   1.39. is_request usage
+   1.40. is_reply usage
+   1.41. is_gruu() usage
+   1.42. is_supported() usage
+   1.43. is_first_hop() usage
+   1.44. sip_p_charging_vector() usage
+   1.45. contact_param_encode usage
+   1.46. contact_param_decode usage
+   1.47. contact_param_decode_ruri usage
+   1.48. contact_param_rm usage
+   1.49. hdr_date_check usage
 
 Chapter 1. Admin Guide
 
@@ -210,22 +212,23 @@ Chapter 1. Admin Guide
         4.21. decode_contact_header()
         4.22. cmp_uri(str1, str2)
         4.23. cmp_aor(str1, str2)
-        4.24. append_rpid_hf()
-        4.25. append_rpid_hf(prefix, suffix)
-        4.26. is_rpid_user_e164()
-        4.27. set_uri_user(uri, user)
-        4.28. set_uri_host(uri, host)
-        4.29. is_request()
-        4.30. is_reply()
-        4.31. is_gruu([uri])
-        4.32. is_supported(option)
-        4.33. is_first_hop([mode])
-        4.34. sip_p_charging_vector(flags)
-        4.35. contact_param_encode(pname, saddr)
-        4.36. contact_param_decode(pname)
-        4.37. contact_param_decode_uri(pname)
-        4.38. contact_param_rm(pname)
-        4.39. hdr_date_check(tdiff)
+        4.24. cmp_hdr_name(str1, str2)
+        4.25. append_rpid_hf()
+        4.26. append_rpid_hf(prefix, suffix)
+        4.27. is_rpid_user_e164()
+        4.28. set_uri_user(uri, user)
+        4.29. set_uri_host(uri, host)
+        4.30. is_request()
+        4.31. is_reply()
+        4.32. is_gruu([uri])
+        4.33. is_supported(option)
+        4.34. is_first_hop([mode])
+        4.35. sip_p_charging_vector(flags)
+        4.36. contact_param_encode(pname, saddr)
+        4.37. contact_param_decode(pname)
+        4.38. contact_param_decode_uri(pname)
+        4.39. contact_param_rm(pname)
+        4.40. hdr_date_check(tdiff)
 
    5. Exported pseudo-variables
 
@@ -432,22 +435,23 @@ modparam("auth", "rpid_avp", "$avp(myrpid)")
    4.21. decode_contact_header()
    4.22. cmp_uri(str1, str2)
    4.23. cmp_aor(str1, str2)
-   4.24. append_rpid_hf()
-   4.25. append_rpid_hf(prefix, suffix)
-   4.26. is_rpid_user_e164()
-   4.27. set_uri_user(uri, user)
-   4.28. set_uri_host(uri, host)
-   4.29. is_request()
-   4.30. is_reply()
-   4.31. is_gruu([uri])
-   4.32. is_supported(option)
-   4.33. is_first_hop([mode])
-   4.34. sip_p_charging_vector(flags)
-   4.35. contact_param_encode(pname, saddr)
-   4.36. contact_param_decode(pname)
-   4.37. contact_param_decode_uri(pname)
-   4.38. contact_param_rm(pname)
-   4.39. hdr_date_check(tdiff)
+   4.24. cmp_hdr_name(str1, str2)
+   4.25. append_rpid_hf()
+   4.26. append_rpid_hf(prefix, suffix)
+   4.27. is_rpid_user_e164()
+   4.28. set_uri_user(uri, user)
+   4.29. set_uri_host(uri, host)
+   4.30. is_request()
+   4.31. is_reply()
+   4.32. is_gruu([uri])
+   4.33. is_supported(option)
+   4.34. is_first_hop([mode])
+   4.35. sip_p_charging_vector(flags)
+   4.36. contact_param_encode(pname, saddr)
+   4.37. contact_param_decode(pname)
+   4.38. contact_param_decode_uri(pname)
+   4.39. contact_param_rm(pname)
+   4.40. hdr_date_check(tdiff)
 
 4.1.  ring_insert_callid()
 
@@ -858,7 +862,22 @@ if(cmp_aor("$rU@KaMaIlIo.org", "sip:kamailio@$fd"))
 }
 ...
 
-4.24.  append_rpid_hf()
+4.24.  cmp_hdr_name(str1, str2)
+
+   The function returns true (return code 1) if the two parameters matches
+   as header names.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.33. cmp_hdr_name usage
+...
+if(cmp_hdr_name("$var(hname)", "From"))
+{
+    # do interesting stuff here
+}
+...
+
+4.25.  append_rpid_hf()
 
    Appends to the message a Remote-Party-ID header that contains header
    'Remote-Party-ID: ' followed by the saved value of the SIP URI received
@@ -869,14 +888,14 @@ if(cmp_aor("$rU@KaMaIlIo.org", "sip:kamailio@$fd"))
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE.
 
-   Example 1.33. append_rpid_hf usage
+   Example 1.34. append_rpid_hf usage
 ...
 append_rpid_hf();  # Append Remote-Party-ID header field
 ...
 
-4.25.  append_rpid_hf(prefix, suffix)
+4.26.  append_rpid_hf(prefix, suffix)
 
-   This function is the same as Section 4.24, “ append_rpid_hf()”. The
+   This function is the same as Section 4.25, “ append_rpid_hf()”. The
    only difference is that it accepts two parameters--prefix and suffix to
    be added to Remote-Party-ID header field. This function ignores
    rpid_prefix and rpid_suffix parameters, instead of that allows to set
@@ -893,13 +912,13 @@ append_rpid_hf();  # Append Remote-Party-ID header field
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE.
 
-   Example 1.34. append_rpid_hf(prefix, suffix) usage
+   Example 1.35. append_rpid_hf(prefix, suffix) usage
 ...
 # Append Remote-Party-ID header field
 append_rpid_hf("", ";party=calling;id-type=subscriber;screen=yes");
 ...
 
-4.26.  is_rpid_user_e164()
+4.27.  is_rpid_user_e164()
 
    The function checks if the SIP URI received from the database or radius
    server and will potentially be used in Remote-Party-ID header field
@@ -909,68 +928,68 @@ append_rpid_hf("", ";party=calling;id-type=subscriber;screen=yes");
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.35. is_rpid_user_e164 usage
+   Example 1.36. is_rpid_user_e164 usage
 ...
 if (is_rpid_user_e164()) {
     # do something here
 };
 ...
 
-4.27.  set_uri_user(uri, user)
+4.28.  set_uri_user(uri, user)
 
    Sets userpart of SIP URI stored in writable pseudo variable 'uri' to
    value of pseudo variable 'user'.
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.36. set_uri_user usage
+   Example 1.37. set_uri_user usage
 ...
 $var(uri) = "sip:user@host";
 $var(user) = "new_user";
 set_uri_user("$var(uri)", "$var(user)");
 ...
 
-4.28.  set_uri_host(uri, host)
+4.29.  set_uri_host(uri, host)
 
    Sets hostpart of SIP URI stored in writable pseudo variable 'uri' to
    value of pseudo variable 'host'.
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.37. set_uri_host usage
+   Example 1.38. set_uri_host usage
 ...
 $var(uri) = "sip:user@host";
 $var(host) = "new_host";
 set_uri_host("$var(uri)", "$var(host)");
 ...
 
-4.29.  is_request()
+4.30.  is_request()
 
    Return true if the SIP message is a request.
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.38. is_request usage
+   Example 1.39. is_request usage
 ...
 if (is_request()) {
         ...
 }
 ...
 
-4.30.  is_reply()
+4.31.  is_reply()
 
    Return true if the SIP message is a reply.
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.39. is_reply usage
+   Example 1.40. is_reply usage
 ...
 if (is_reply()) {
         ...
 }
 ...
 
-4.31.  is_gruu([uri])
+4.32.  is_gruu([uri])
 
    The function returns true if the uri is GRUU ('gr' parameter is
    present): 1 - pub-gruu; 2 - temp-gruu.
@@ -981,12 +1000,12 @@ if (is_reply()) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.40. is_gruu() usage
+   Example 1.41. is_gruu() usage
 ...
 if(is_gruu()) { ... }
 ...
 
-4.32.  is_supported(option)
+4.33.  is_supported(option)
 
    Function returns true if given option is listed in Supported header(s)
    (if any) of the request. Currently the following options are known:
@@ -994,12 +1013,12 @@ if(is_gruu()) { ... }
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.41. is_supported() usage
+   Example 1.42. is_supported() usage
 ...
 if (is_supported("outbound")) { ... }
 ...
 
-4.33.  is_first_hop([mode])
+4.34.  is_first_hop([mode])
 
    The function returns true if the proxy is first hop after the original
    sender based on a best effort estimation by checking Via and
@@ -1024,26 +1043,26 @@ if (is_supported("outbound")) { ... }
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.42. is_first_hop() usage
+   Example 1.43. is_first_hop() usage
 ...
 if(is_first_hop()) { ... }
 ...
 if(is_first_hop_mode("1")) { ... }
 ...
 
-4.34.  sip_p_charging_vector(flags)
+4.35.  sip_p_charging_vector(flags)
 
    Manage the P-Charging-Vector header (RFC7315). The flags can be: 'r' -
    remove; 'g' - generate; 'f' - force (remove + generate).
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.43. sip_p_charging_vector() usage
+   Example 1.44. sip_p_charging_vector() usage
 ...
 sip_p_charging_vector("g");
 ...
 
-4.35.  contact_param_encode(pname, saddr)
+4.36.  contact_param_encode(pname, saddr)
 
    This function encodes URI inside Contact headers by building a new URI
    from 'saddr' parameter and adding a parameter with the name 'pname'
@@ -1056,14 +1075,14 @@ sip_p_charging_vector("g");
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE.
 
-   Example 1.44. contact_param_encode usage
+   Example 1.45. contact_param_encode usage
 ...
 if (is_method("REGISTER") and src_ip == 10.0.0.0/8) {
     contact_param_encode("ksu", "sip:1.2.3.4:5060;transport=tcp");
 }
 ...
 
-4.36.  contact_param_decode(pname)
+4.37.  contact_param_decode(pname)
 
    This function decodes URI inside Contact headers by building a new URI
    from 'pname' parameter, decoding its value from Base64URL.
@@ -1074,14 +1093,14 @@ if (is_method("REGISTER") and src_ip == 10.0.0.0/8) {
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE.
 
-   Example 1.45. contact_param_decode usage
+   Example 1.46. contact_param_decode usage
 ...
 if (is_method("REGISTER") and src_ip == 1.2.3.4) {
     contact_param_decode("ksu");
 }
 ...
 
-4.37.  contact_param_decode_uri(pname)
+4.38.  contact_param_decode_uri(pname)
 
    This function decodes R-URI (request URI) by building a new R-URI from
    'pname' parameter, decoding its value from Base64URL.
@@ -1092,14 +1111,14 @@ if (is_method("REGISTER") and src_ip == 1.2.3.4) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.46. contact_param_decode_ruri usage
+   Example 1.47. contact_param_decode_ruri usage
 ...
 if (is_method("INVITE") and src_ip == 1.2.3.4) {
     contact_param_decode_ruri("ksu");
 }
 ...
 
-4.38.  contact_param_rm(pname)
+4.39.  contact_param_rm(pname)
 
    This function removes the parameter from the URIs inside the Contact
    headers.
@@ -1109,14 +1128,14 @@ if (is_method("INVITE") and src_ip == 1.2.3.4) {
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE.
 
-   Example 1.47. contact_param_rm usage
+   Example 1.48. contact_param_rm usage
 ...
 if (is_method("REGISTER") and src_ip == 1.2.3.4) {
     contact_param_rm("myparam");
 }
 ...
 
-4.39.  hdr_date_check(tdiff)
+4.40.  hdr_date_check(tdiff)
 
    Returns true if sip message has Date header and its value is lower than
    'NOW() - tdiff'.
@@ -1127,7 +1146,7 @@ if (is_method("REGISTER") and src_ip == 1.2.3.4) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.48. hdr_date_check usage
+   Example 1.49. hdr_date_check usage
 ...
 if (!hdr_date_check("10")) {
     sl_send_reply("403", "Outdated date");
