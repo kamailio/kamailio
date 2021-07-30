@@ -36,6 +36,8 @@
 
 int w_cmp_uri(struct sip_msg *msg, char *uri1, char *uri2);
 int w_cmp_aor(struct sip_msg *msg, char *uri1, char *uri2);
+int ki_cmp_hdr_name(sip_msg_t *msg, str *shname1, str *shname2);
+int w_cmp_hdr_name(sip_msg_t *msg, char *hname1, char *hname2);
 int w_is_gruu(sip_msg_t *msg, char *uri1, char *p2);
 int w_is_supported(sip_msg_t *msg, char *_option, char *p2);
 int w_is_first_hop(sip_msg_t *msg, char *p1, char *p2);

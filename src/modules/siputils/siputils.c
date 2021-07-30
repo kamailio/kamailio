@@ -166,6 +166,8 @@ static cmd_export_t cmds[]={
 		0, ANY_ROUTE},
 	{"cmp_aor",  (cmd_function)w_cmp_aor,                   2, fixup_spve_spve,
 		0, ANY_ROUTE},
+	{"cmp_hdr_name",  (cmd_function)w_cmp_hdr_name,         2, fixup_spve_spve,
+		0, ANY_ROUTE},
 	{"is_rpid_user_e164",   (cmd_function)is_rpid_user_e164, 0, 0,
 		0, REQUEST_ROUTE},
 	{"append_rpid_hf",      (cmd_function)append_rpid_hf,    0, 0,
@@ -736,6 +738,11 @@ static sr_kemi_t sr_kemi_siputils_exports[] = {
 	{ str_init("siputils"), str_init("hdr_date_check"),
 		SR_KEMIP_INT, ki_hdr_date_check,
 		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("siputils"), str_init("cmp_hdr_name"),
+		SR_KEMIP_INT, ki_cmp_hdr_name,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 

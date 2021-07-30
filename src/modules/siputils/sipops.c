@@ -88,6 +88,34 @@ int w_cmp_aor(struct sip_msg *msg, char *uri1, char *uri2)
 	return -2;
 }
 
+int ki_cmp_hdr_name(sip_msg_t *msg, str *shname1, str *shname2)
+{
+	int ret;
+
+	ret = cmp_hdrname_str(shname1, shname2);
+	if(ret==0)
+		return 1;
+	if(ret>0)
+		return -1;
+	return -2;
+}
+
+int w_cmp_hdr_name(sip_msg_t *msg, char *hname1, char *hname2)
+{
+	str shname1;
+	str shname2;
+
+	if(fixup_get_svalue(msg, (gparam_p)hname1, &shname1)!=0) {
+		LM_ERR("cannot get first parameter\n");
+		return -8;
+	}
+	if(fixup_get_svalue(msg, (gparam_p)hname2, &shname2)!=0) {
+		LM_ERR("cannot get second parameter\n");
+		return -8;
+	}
+	return ki_cmp_hdr_name(msg, &shname1, &shname2);
+}
+
 int w_is_gruu(sip_msg_t *msg, char *uri1, char *p2)
 {
 	str s1, *s2;

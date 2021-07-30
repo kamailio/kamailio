@@ -921,7 +921,7 @@ if(cmp_uri("$ru", "sip:kamailio@kamailio.org"))
 		<function moreinfo="none">cmp_aor(str1, str2)</function>
 		</title>
 		<para>
-		The function returns <emphasis>true</emphasis> if 
+		The function returns <emphasis>true</emphasis> if
 		the two parameters matches as AoR. The parameters have to be SIP
 		URIs.
 		</para>
@@ -933,6 +933,29 @@ if(cmp_uri("$ru", "sip:kamailio@kamailio.org"))
 		<programlisting format="linespecific">
 ...
 if(cmp_aor("$rU@KaMaIlIo.org", "sip:kamailio@$fd"))
+{
+    # do interesting stuff here
+}
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="siputils.f.cmp_hdr_name">
+		<title>
+		<function moreinfo="none">cmp_hdr_name(str1, str2)</function>
+		</title>
+		<para>
+		The function returns <emphasis>true</emphasis> (return code 1) if
+		the two parameters matches as header names.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>cmp_hdr_name</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(cmp_hdr_name("$var(hname)", "From"))
 {
     # do interesting stuff here
 }
