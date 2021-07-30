@@ -199,6 +199,17 @@ static int w_sworker_task(sip_msg_t *msg, char *pgname, char *p2)
 /**
  *
  */
+static int ki_sworker_active(sip_msg_t *msg)
+{
+	if(_sworker_active==0) {
+		return -1;
+	}
+	return 1;
+}
+
+/**
+ *
+ */
 static int w_sworker_active(sip_msg_t *msg, char *p1, char *p2)
 {
 	if(_sworker_active==0) {
@@ -215,6 +226,11 @@ static sr_kemi_t sr_kemi_sworker_exports[] = {
 	{ str_init("sworker"), str_init("task"),
 		SR_KEMIP_INT, ki_sworker_task,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("sworker"), str_init("active"),
+		SR_KEMIP_INT, ki_sworker_active,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
