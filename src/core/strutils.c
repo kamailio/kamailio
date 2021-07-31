@@ -25,6 +25,7 @@
 
 #include "parser/parse_uri.h"
 #include "parser/parse_param.h"
+#include "parser/parse_hname2.h"
 
 #include "dprint.h"
 #include "ut.h"
@@ -455,22 +456,61 @@ int cmpi_str(str *s1, str *s2)
 int cmp_hdrname_str(str *s1, str *s2)
 {
 	str n1, n2;
+	hdr_field_t hf1, hf2;
+
 	n1 = *s1;
 	n2 = *s2;
 	trim_trailing(&n1);
 	trim_trailing(&n2);
-	/* todo: parse hdr name and compare with short/long alternative */
+
+	parse_hname2_str(&n1, &hf1);
+	parse_hname2_str(&n2, &hf2);
+	if(hf1.type==HDR_ERROR_T || hf2.type==HDR_ERROR_T) {
+		LM_ERR("error parsing header names [%.*s] [%.*s]\n", n1.len, n1.s,
+				n2.len, n2.s);
+		return -4;
+	}
+
+	if(hf1.type!=HDR_OTHER_T) {
+		if(hf1.type==hf2.type) {
+			return 0;
+		} else {
+			return 2;
+		}
+	} else if(hf1.type!=HDR_OTHER_T) {
+		return 2;
+	}
 	return cmpi_str(&n1, &n2);
 }
 
 int cmp_hdrname_strzn(str *s1, char *s2, size_t len)
 {
 	str n1, n2;
+	hdr_field_t hf1, hf2;
+
 	n1 = *s1;
 	n2.s = s2;
 	n2.len = len;
 	trim_trailing(&n1);
 	trim_trailing(&n2);
+
+	parse_hname2_str(&n1, &hf1);
+	parse_hname2_str(&n2, &hf2);
+	if(hf1.type==HDR_ERROR_T || hf2.type==HDR_ERROR_T) {
+		LM_ERR("error parsing header names [%.*s] [%.*s]\n", n1.len, n1.s,
+				n2.len, n2.s);
+		return -4;
+	}
+
+	if(hf1.type!=HDR_OTHER_T) {
+		if(hf1.type==hf2.type) {
+			return 0;
+		} else {
+			return 2;
+		}
+	} else if(hf1.type!=HDR_OTHER_T) {
+		return 2;
+	}
 	return cmpi_str(&n1, &n2);
 }
 
