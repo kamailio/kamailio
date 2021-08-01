@@ -923,8 +923,8 @@ ifeq ($(use_fast_lock), yes)
 	found_lock_method=yes
 endif
 
-CFLAGS=
-LDFLAGS=
+CFLAGS=-g
+LDFLAGS=-g
 C_INCLUDES=
 # setting CFLAGS
 ifeq ($(mode), release)
@@ -934,7 +934,7 @@ ifeq	($(ARCH), i386)
 ifeq		($(CC_NAME), gcc)
 				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
-				CFLAGS=-g $(CC_OPT) -funroll-loops  -Wcast-align $(PROFILE)
+				CFLAGS+=$(CC_OPT) -funroll-loops  -Wcast-align $(PROFILE)
 			#if gcc 9.0+ 8.0+, 7.0+, 6.0+, 5.0+, 4.5+ or 4.2+
 ifeq (,$(strip $(filter-out 4.2+ 4.5+ 5.0+ 6.0+ 7.0+ 8.0+ 9.0+,$(CC_SHORTVER))))
 $(call				set_if_empty,CPUTYPE,generic)
@@ -991,12 +991,12 @@ else		# CC_NAME, gcc
 ifeq		($(CC_NAME), clang)
 $(call                          set_if_empty,CPUTYPE,athlon64)
 					C_DEFS+=-DCC_GCC_LIKE_ASM
-					CFLAGS+=-g -m32 $(CC_OPT) -mtune=$(CPUTYPE)
+					CFLAGS+=-m32 $(CC_OPT) -mtune=$(CPUTYPE)
 					LDFLAGS+=-m32
 else			# CC_NAME, clang
 ifeq		($(CC_NAME), icc)
 			C_DEFS+=-DCC_GCC_LIKE_ASM
-			CFLAGS=-g -O3  -ipo -ipo_obj -unroll  $(PROFILE) \
+			CFLAGS+=-O3  -ipo -ipo_obj -unroll  $(PROFILE) \
 					 -tpp6 -xK  #-openmp  #optimize for PIII
 				# -prefetch doesn't seem to work
 				#( ty to inline acroos files, unroll loops,prefetch,
@@ -1010,13 +1010,13 @@ endif		#CC_NAME, clang
 endif		#CC_NAME, gcc
 endif	#ARCH, i386
 
-#x86_64
+	#x86_64
 ifeq	($(ARCH), x86_64)
 		# if gcc
 ifeq		($(CC_NAME), gcc)
 				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
-				CFLAGS=-g $(CC_OPT) -funroll-loops  -Wcast-align $(PROFILE)
+				CFLAGS+=$(CC_OPT) -funroll-loops  -Wcast-align $(PROFILE)
 			#if gcc 4.5+
 ifeq			($(CC_SHORTVER),$(filter $(CC_SHORTVER),4.2+ 4.5+ 5.0+ 6.0+ 7.0+ 8.0+ 9.0+))
 $(call				set_if_empty,CPUTYPE,generic)
@@ -1073,13 +1073,13 @@ else		# CC_NAME, gcc
 ifeq            ($(CC_NAME), clang)
 $(call                          set_if_empty,CPUTYPE,opteron)
 					C_DEFS+=-DCC_GCC_LIKE_ASM
-                                        CFLAGS+=-g -m64 \
+                                        CFLAGS+=-m64 \
                                                 $(CC_OPT)
                                         LDFLAGS+=-m64
 else      	# CC_NAME, clang
 ifeq		($(CC_NAME), icc)
 			C_DEFS+=-DCC_GCC_LIKE_ASM
-			CFLAGS=-g -O3  -ipo -ipo_obj -unroll  $(PROFILE) \
+			CFLAGS+=-O3  -ipo -ipo_obj -unroll  $(PROFILE) \
 					 -tpp6 -xK  #-openmp  #optimize for PIII
 				# -prefetch doesn't seem to work
 				#( ty to inline acroos files, unroll loops,prefetch,
@@ -1099,7 +1099,7 @@ ifeq	($(ARCH), sparc64)
 ifeq		($(CC_NAME), gcc)
 				C_DEFS+=-DCC_GCC_LIKE_ASM -DSPARC64_MODE
 				#common stuff
-				CFLAGS=-g $(CC_OPT) -funroll-loops  $(PROFILE) \
+				CFLAGS+=$(CC_OPT) -funroll-loops  $(PROFILE) \
 					#-Wcast-align \
 					#-Wmissing-prototypes
 				#if gcc 9.0+ 8.0+, 7.0+, 6.0+, 5.0+, 4.5+ or 4.2+
@@ -1175,7 +1175,7 @@ else		#CC_NAME, gcc
 ifeq		($(CC_NAME), suncc)
 			C_DEFS+=-DCC_GCC_LIKE_ASM
 			C_DEFS+=-DSPARC64_MODE
-			CFLAGS+= -m64 -g -xO3 -xtarget=native -xmemalign=8i \
+			CFLAGS+= -m64 -xO3 -xtarget=native -xmemalign=8i \
 					-fma=fused -fns=yes \
 					-xc99 # C99 support
 			LDFLAGS+=-m64
@@ -1193,7 +1193,7 @@ ifeq	($(ARCH), sparc)
 ifeq		($(CC_NAME), gcc)
 				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
-				CFLAGS=-g $(CC_OPT) -funroll-loops  $(PROFILE) \
+				CFLAGS+=$(CC_OPT) -funroll-loops  $(PROFILE) \
 					#-Wcast-align \
 					#-Wmissing-prototypes
 				#if gcc 5.0+, 4.5+ or 4.2+
@@ -1243,7 +1243,7 @@ endif			#CC_SHORTVER, 9.0+ 8.0+, 7.0+, 6.0+, 5.0+, 4.5+ or 4.2+
 else		#CC_NAME, gcc
 ifeq		($(CC_NAME), suncc)
 			C_DEFS+=-DCC_GCC_LIKE_ASM
-			CFLAGS+= -g -xO3 -xtarget=native -xmemalign=4i \
+			CFLAGS+=-xO3 -xtarget=native -xmemalign=4i \
 					-fma=fused -fns=yes \
 					-xc99 # C99 support
 			# -Dinline="" # add this if cc < 5.3 (define inline as null)
@@ -1260,7 +1260,7 @@ ifeq	($(ARCH), arm)
 ifeq		($(CC_NAME), gcc)
 				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
-				CFLAGS=-marm -march=armv5t $(CC_OPT) -funroll-loops -fsigned-char $(PROFILE)
+				CFLAGS+=-marm -march=armv5t $(CC_OPT) -funroll-loops -fsigned-char $(PROFILE)
 			#if gcc 4.5+ or 4.2+
 ifeq (,$(strip $(filter-out 4.2+ 4.5+ 5.0+ 6.0+ 7.0+ 8.0+ 9.0+,$(CC_SHORTVER))))
 					CFLAGS+= -ftree-vectorize -fno-strict-overflow
@@ -1308,7 +1308,7 @@ ifeq	($(ARCH), arm6)
 ifeq		($(CC_NAME), gcc)
 				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
-				CFLAGS=-march=armv6 $(CC_OPT) -funroll-loops -fsigned-char \
+				CFLAGS+=-march=armv6 $(CC_OPT) -funroll-loops -fsigned-char \
 						$(PROFILE)
 			#if gcc 7.0+, 6.0+, 5.0+, 4.5+ or 4.2+
 ifeq (,$(strip $(filter-out 4.2+ 4.5+ 5.0+ 6.0+ 7.0+ 8.0+ 9.0+,$(CC_SHORTVER))))
@@ -1355,7 +1355,7 @@ ifeq	($(ARCH), arm7)
 ifeq		($(CC_NAME), gcc)
 				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff, use armv7-a as lowest common architecture
-				CFLAGS=-march=armv7-a $(CC_OPT) -funroll-loops -fsigned-char \
+				CFLAGS+=-march=armv7-a $(CC_OPT) -funroll-loops -fsigned-char \
 						$(PROFILE)
 			#if gcc 7.0+, 6.0+, 5.0+, 4.5+ or 4.2+
 ifeq (,$(strip $(filter-out 4.2+ 4.5+ 5.0+ 6.0+ 7.0+ 8.0+ 9.0+,$(CC_SHORTVER))))
@@ -1402,7 +1402,7 @@ ifeq	($(ARCH), mips)
 ifeq		($(CC_NAME), gcc)
 				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
-				CFLAGS=$(CC_OPT) -funroll-loops  $(PROFILE)
+				CFLAGS+=$(CC_OPT) -funroll-loops  $(PROFILE)
 			#if gcc 9.0+ 8.0+, 7.0+, 6.0, 5.0+, 4.5+ or 4.2+
 ifeq (,$(strip $(filter-out 4.2+ 4.5+ 5.0+ 6.0+ 7.0+ 8.0+ 9.0+,$(CC_SHORTVER))))
 					CFLAGS+=-mfp32 -march=r3000 \
@@ -1451,7 +1451,7 @@ ifeq	($(ARCH), mips2)
 ifeq		($(CC_NAME), gcc)
 				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
-				CFLAGS= $(CC_OPT) -funroll-loops $(PROFILE)
+				CFLAGS+= $(CC_OPT) -funroll-loops $(PROFILE)
 			#if gcc 9.0+ 8.0+, 7.0+, 6.0+, 5.0+, 4.5+ or 4.2+
 ifeq (,$(strip $(filter-out 4.2+ 4.5+ 5.0+ 6.0+ 7.0+ 8.0+ 9.0+,$(CC_SHORTVER))))
 					CFLAGS+=-ftree-vectorize -fno-strict-overflow
@@ -1491,13 +1491,13 @@ $(error 			Unsupported compiler ($(CC):$(CC_NAME)), try gcc)
 endif		#CC_NAME, gcc
 endif	#ARCH, mips2
 
-#if  >=mips64
+	#if  >=mips64
 ifeq	($(ARCH), mips64)
 		# if gcc
 ifeq		($(CC_NAME), gcc)
 				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
-				CFLAGS= $(CC_OPT) -funroll-loops $(PROFILE)
+				CFLAGS+= $(CC_OPT) -funroll-loops $(PROFILE)
 			#if gcc 9.0+ 8.0+, 7.0+, 6.0+, 5.0+, 4.5+ or 4.2+
 ifeq (,$(strip $(filter-out 4.2+ 4.5+ 5.0+ 6.0+ 7.0+ 8.0+ 9.0+,$(CC_SHORTVER))))
 					CFLAGS+=-ftree-vectorize -fno-strict-overflow
@@ -1538,13 +1538,13 @@ $(error 			Unsupported compiler ($(CC):$(CC_NAME)), try gcc)
 endif		#CC_NAME, gcc
 endif	#ARCH, mips64
 
-#if  alpha
+	#if  alpha
 ifeq	($(ARCH), alpha)
 		# if gcc
 ifeq		($(CC_NAME), gcc)
 				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
-				CFLAGS= $(CC_OPT) -funroll-loops $(PROFILE)
+				CFLAGS+= $(CC_OPT) -funroll-loops $(PROFILE)
 			#if gcc 5.0+, 4.5 or 4.2+
 ifeq (,$(strip $(filter-out 4.2+ 4.5+ 5.0+ 6.0+ 7.0+ 8.0+ 9.0+,$(CC_SHORTVER))))
 					CFLAGS+= -fno-strict-overflow
@@ -1584,13 +1584,13 @@ $(error 			Unsupported compiler ($(CC):$(CC_NAME)), try gcc)
 endif		#CC_NAME, gcc
 endif	#ARCH, alpha
 
-#if  ppc
+	#if  ppc
 ifeq	($(ARCH), ppc)
 		# if gcc
 ifeq		($(CC_NAME), gcc)
 				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
-				CFLAGS=
+				CFLAGS+=
 			#if gcc 9.0+ 8.0+, 7.0+, 6.0+, 5.0+, 4.5+ or 4.2+
 ifeq (,$(strip $(filter-out 4.2+ 4.5+ 5.0+ 6.0+ 7.0+ 8.0+ 9.0+,$(CC_SHORTVER))))
 $(call				set_if_empty,CPUTYPE,powerpc)
@@ -1641,13 +1641,13 @@ $(error 			Unsupported compiler ($(CC):$(CC_NAME)), try gcc)
 endif		#CC_NAME, gcc
 endif	#ARCH, ppc
 
-#if  ppc64
+	#if  ppc64
 ifeq	($(ARCH), ppc64)
 		# if gcc
 ifeq		($(CC_NAME), gcc)
 				C_DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
-				CFLAGS= $(CC_OPT) -funroll-loops -fsigned-char $(PROFILE)
+				CFLAGS+= $(CC_OPT) -funroll-loops -fsigned-char $(PROFILE)
 			#if gcc 9.0+ 8.0+, 7.0+, 6.0+, 5.0+, 4.5+ or 4.2+
 ifeq (,$(strip $(filter-out 4.2+ 4.5+ 5.0+ 6.0+ 7.0+ 8.0+ 9.0+,$(CC_SHORTVER))))
 $(call				set_if_empty,CPUTYPE,powerpc64)
@@ -1745,7 +1745,7 @@ LIB_LDFLAGS+= $(LD_EXTRA_OPTS) $(LD_PMUTEX_OPTS)
 
 else	#mode,release
 ifeq	($(CC_NAME), gcc)
-		CFLAGS=-g -Wcast-align $(PROFILE)
+		CFLAGS+=-Wcast-align $(PROFILE)
 		C_DEFS+=-DCC_GCC_LIKE_ASM
 ifeq		($(ARCH), sparc64)
 			C_DEFS+=SPARC64_MODE
@@ -1754,14 +1754,14 @@ ifeq		($(ARCH), sparc64)
 endif
 ifeq		($(LDTYPE), solaris)
 			#solaris ld
-			LDFLAGS+=-g $(PROFILE)
+			LDFLAGS+=$(PROFILE)
 			MOD_LDFLAGS:=-G $(LDFLAGS)
 			LIB_LDFLAGS:=-G $(LDFLAGS)
 			LIB_SONAME=-Wl,-h,
 			LD_RPATH=-Wl,-R,
 else
 			#gnu or other ld type
-			LDFLAGS+=-g -Wl,-E $(PROFILE)
+			LDFLAGS+=-Wl,-E $(PROFILE)
 			MOD_LDFLAGS:=-shared $(LDFLAGS)
 			LIB_LDFLAGS:=-shared $(LDFLAGS)
 			LIB_SONAME=-Wl,-soname,
@@ -1770,16 +1770,16 @@ endif
 endif
 ifeq	($(CC_NAME), icc)
 		C_DEFS+=-DCC_GCC_LIKE_ASM
-		CFLAGS=-g  $(PROFILE)
-		LDFLAGS+=-g -Wl,-E $(PROFILE)
+		CFLAGS+=$(PROFILE)
+		LDFLAGS+=-Wl,-E $(PROFILE)
 		MOD_LDFLAGS:=-shared $(LDFLAGS)
 		LIB_LDFLAGS:=-shared $(LDFLAGS)
 		LIB_SONAME=-Wl,-soname,
 		LD_RPATH=-Wl,-rpath,
 endif
 ifeq	($(CC_NAME), suncc)
-		CFLAGS= -g $(PROFILE)
-		LDFLAGS+=-g $(PROFILE)
+		CFLAGS+=$(PROFILE)
+		LDFLAGS+=$(PROFILE)
 		MOD_LDFLAGS:=-G $(LDFLAGS)
 		LIB_LDFLAGS:=-G $(LDFLAGS)
 		LIB_SONAME=-Wl,-h,
