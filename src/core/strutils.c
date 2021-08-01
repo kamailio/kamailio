@@ -477,7 +477,7 @@ int cmp_hdrname_str(str *s1, str *s2)
 		} else {
 			return 2;
 		}
-	} else if(hf1.type!=HDR_OTHER_T) {
+	} else if(hf2.type!=HDR_OTHER_T) {
 		return 2;
 	}
 	return cmpi_str(&n1, &n2);
@@ -508,7 +508,7 @@ int cmp_hdrname_strzn(str *s1, char *s2, size_t len)
 		} else {
 			return 2;
 		}
-	} else if(hf1.type!=HDR_OTHER_T) {
+	} else if(hf2.type!=HDR_OTHER_T) {
 		return 2;
 	}
 	return cmpi_str(&n1, &n2);
