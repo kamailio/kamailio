@@ -256,12 +256,15 @@ static param_export_t params[] = {
 	{0, 0, 0}
 };
 
+#ifndef MOD_NAME
+#define MOD_NAME "tls"
+#endif
 
 /*
  * Module interface
  */
 struct module_exports exports = {
-	"tls",           /* module name */
+	MOD_NAME,        /* module name */
 	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,            /* exported functions */
 	params,          /* exported parameters */
