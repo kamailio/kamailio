@@ -65,6 +65,13 @@
 			be recompiled every time a new libssl version is installed and it
 			is wanted to be used by tlsa module.
 		</para>
+		<para>
+			NOTE: the module is known to work to be compiled with GCC on Linux
+			(tested on Debian Stable 10.x). Other compilers (e.g., clang, icc)
+			may not support same static linking options. Also, some operating
+			systems may provide only dynamic libssl and libcrypto libraries
+			via their packages.
+		</para>
 	</section>
 	</chapter>
 </book>
