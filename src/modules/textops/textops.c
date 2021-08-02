@@ -1598,7 +1598,7 @@ static inline int find_line_start(char *text, unsigned int text_len,
 }
 
 static inline int find_hdr_line_start(char *hname, unsigned int hname_len,
-		char **buf, unsigned int *buf_len)
+		char **buf, unsigned int *buf_len, char **bstart)
 {
 	hdr_field_t h1;
 	hdr_field_t h2;
@@ -1624,11 +1624,11 @@ static inline int find_hdr_line_start(char *hname, unsigned int hname_len,
 			if(h1.type>0 && h1.type==h2.type) {
 				*buf = start;
 				*buf_len = len;
-				return 1;
-			} else if(cmp_hdrname_str(&h1.name, &h2.name)==0) {
+				goto found;
+			} else if(cmpi_str(&h1.name, &h2.name)==0) {
 				*buf = start;
 				*buf_len = len;
-				return 1;
+				goto found;
 			}
 		}
 		/* jump to next line */
@@ -1645,6 +1645,21 @@ static inline int find_hdr_line_start(char *hname, unsigned int hname_len,
 		}
 	}
 	return 0;
+
+found:
+	ch = memchr(start, ':', len - 1);
+	if(ch==NULL) {
+		LM_ERR("weird - no ':' found\n");
+		return 0;
+	}
+	ch++;
+	while((ch < start + len) && (*ch==' ' || *ch=='\t')) ch++;
+	if(ch==start + len) {
+		LM_ERR("no header body content\n");
+		return 0;
+	}
+	*bstart = ch;
+	return 1;
 }
 
 /**
@@ -1670,6 +1685,7 @@ static int check_multipart(struct sip_msg *msg)
 static int ki_filter_body(struct sip_msg* msg, str *content_type)
 {
 	char *start;
+	char *end;
 	unsigned int len;
 	str body;
 	str boundary = {0,0};
@@ -1695,11 +1711,11 @@ static int ki_filter_body(struct sip_msg* msg, str *content_type)
 	start = body.s;
 	len = body.len;
 
-	while (find_hdr_line_start("Content-Type: ", 14, &start, &len))
+	while (find_hdr_line_start("Content-Type: ", 14, &start, &len, &end))
 	{
-		start = start + 14;
-		len = len - 14;
+		len = len - (end - start);
 		LM_DBG("line: [%.*s]\n", len, start);
+		start = end;
 		if (len > content_type->len + 2) {
 			if (strncasecmp(start, content_type->s, content_type->len)== 0)
 			{
@@ -3239,10 +3255,9 @@ static int ki_remove_multibody(sip_msg_t* msg, str* content_type)
 	start = body.s;
 	len = body.len;
 
-	while (find_hdr_line_start("Content-Type: ", 14, &start, &len))
+	while (find_hdr_line_start("Content-Type: ", 14, &start, &len, &end))
 	{
-		end = start + 14;
-		len = len - 14;
+		len = len - (end - start);
 		if (len > (content_type->len + 2)) {
 			if (strncasecmp(end, content_type->s, content_type->len)== 0)
 			{
@@ -3345,10 +3360,9 @@ static int ki_get_body_part_helper(sip_msg_t* msg, str* ctype, pv_spec_t *dst,
 	len = body.len;
 
 	/* note: header body can follow just after name: - fixit */
-	while (find_hdr_line_start("Content-Type: ", 14, &start, &len))
+	while (find_hdr_line_start("Content-Type: ", 14, &start, &len, &end))
 	{
-		end = start + 14;
-		len = len - 14;
+		len = len - (end - start);
 		if (len > (ctype->len + 2)) {
 			if (strncasecmp(end, ctype->s, ctype->len)== 0)
 			{
