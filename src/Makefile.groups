@@ -91,6 +91,9 @@ mod_list_tlsdeps=crypto tls
 # - modules depending on openssl (+curl) library
 mod_list_tlsdeps_curl=auth_identity
 
+# - modules depending on static openssl library
+mod_list_tlsa=tlsa
+
 # - modules depending on openssl library
 mod_list_outbound=outbound
 
@@ -276,6 +279,7 @@ mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
 			   $(mod_list_jwt) \
 			   $(mod_list_lwsc) \
 			   $(mod_list_stirshaken) \
+			   $(mod_list_tlsa) \
 			   $(mod_list_rtp_media_server)
 
 
@@ -393,6 +397,9 @@ module_group_ktls_basic=$(mod_list_tlsdeps)
 
 # pkg tls module with curl
 module_group_ktls=$(mod_list_tlsdeps) $(mod_list_tlsdeps_curl)
+
+# pkg tlsa module
+module_group_ktlsa=$(mod_list_tlsa)
 
 # pkg websocket module
 module_group_kwebsocket=$(mod_list_websocket)
