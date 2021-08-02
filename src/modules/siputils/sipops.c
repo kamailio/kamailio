@@ -40,6 +40,18 @@
 
 #include "sipops.h"
 
+int ki_cmp_uri(sip_msg_t *msg, str *uri1, str *uri2)
+{
+	int ret;
+
+	ret = cmp_uri_str(uri1, uri2);
+	if(ret==0)
+		return 1;
+	if(ret>0)
+		return -1;
+	return -2;
+}
+
 int w_cmp_uri(struct sip_msg *msg, char *uri1, char *uri2)
 {
 	str s1;
@@ -57,6 +69,18 @@ int w_cmp_uri(struct sip_msg *msg, char *uri1, char *uri2)
 		return -8;
 	}
 	ret = cmp_uri_str(&s1, &s2);
+	if(ret==0)
+		return 1;
+	if(ret>0)
+		return -1;
+	return -2;
+}
+
+int ki_cmp_aor(sip_msg_t *msg, str *uri1, str *uri2)
+{
+	int ret;
+
+	ret = cmp_aor_str(uri1, uri2);
 	if(ret==0)
 		return 1;
 	if(ret>0)

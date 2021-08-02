@@ -34,7 +34,9 @@
 
 #include "../../core/parser/msg_parser.h"
 
+int ki_cmp_uri(sip_msg_t *msg, str *uri1, str *uri2);
 int w_cmp_uri(struct sip_msg *msg, char *uri1, char *uri2);
+int ki_cmp_aor(sip_msg_t *msg, str *uri1, str *uri2);
 int w_cmp_aor(struct sip_msg *msg, char *uri1, char *uri2);
 int ki_cmp_hdr_name(sip_msg_t *msg, str *shname1, str *shname2);
 int w_cmp_hdr_name(sip_msg_t *msg, char *hname1, char *hname2);
