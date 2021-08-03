@@ -584,7 +584,8 @@ static int parse_sdp_session(str *sdp_body, int session_num, str *cnt_disp, sdp_
 				a1p = stream->path.s + stream->path.len;
 			} else {
 				/* unknown a= line, ignore -- jump over it */
-				LM_DBG("ignoring unknown type in a= line: `%.*s'\n", tmpstr1.len, tmpstr1.s);
+				LM_DBG("ignoring unknown type in a= line: `%.*s...'\n",
+						(tmpstr1.len>20)?20:tmpstr1.len, tmpstr1.s);
 				a1p += 2;
 			}
 
