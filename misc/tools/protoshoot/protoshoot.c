@@ -1,4 +1,3 @@
-/* $Id$ */
 /*
  *
  * Copyright (C) 2001-2003 FhG Fokus
@@ -20,13 +19,9 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- */
-/*
- * History:
- *  2005-09-09  basic tcp support added (andrei)
  */
 
 
@@ -50,7 +45,6 @@
 #include <signal.h>
 
 
-static char *id="$Id$";
 static char *version="protoshoot 0.4";
 static char* help_msg="\
 Usage: protoshoot -f file -d address -p port -c count [-v]\n\
@@ -87,7 +81,7 @@ int main (int argc, char** argv)
 	char buf[BUF_SIZE];
 	struct hostent* he;
 	struct sockaddr_in addr;
-	
+
 	int count;
 	int verbose;
 	char *fname;
@@ -104,7 +98,7 @@ int main (int argc, char** argv)
 	struct linger t_linger;
 	int k;
 	int err;
-	
+
 	/* init */
 	count=1;
 	verbose=0;
@@ -190,7 +184,6 @@ int main (int argc, char** argv)
 				break;
 			case 'V':
 				printf("version: %s\n", version);
-				printf("%s\n",id);
 				exit(0);
 				break;
 			case 'h':
@@ -213,7 +206,7 @@ int main (int argc, char** argv)
 					abort();
 		}
 	}
-	
+
 	/* check if all the required params are present */
 	if (fname==0){
 		fprintf(stderr, "Missing -f file\n");
@@ -238,13 +231,13 @@ int main (int argc, char** argv)
 		exit(-1);
 	}
 	if (proto==PROTO_UDP || (proto==PROTO_SCTP && !sctp_o2o)) con_no=1;
-	
+
 	/* ignore sigpipe */
 	if (signal(SIGPIPE, SIG_IGN)==SIG_ERR){
 		fprintf(stderr, "failed to ignore SIGPIPE: %s\n", strerror(errno));
 		exit(-1);
 	}
-	
+
 	/* open packet file */
 	fd=open(fname, O_RDONLY);
 	if (fd<0){
@@ -274,7 +267,7 @@ int main (int argc, char** argv)
 	addr.sin_len=sizeof(struct sockaddr_in);
 #endif
 	memcpy(&addr.sin_addr.s_addr, he->h_addr_list[0], he->h_length);
-	
+
 	for (k=0; k<con_no; k++){
 		switch(proto){
 			case PROTO_UDP:
@@ -285,7 +278,7 @@ int main (int argc, char** argv)
 				break;
 #ifdef USE_SCTP
 			case PROTO_SCTP:
-				sock = socket(he->h_addrtype, 
+				sock = socket(he->h_addrtype,
 								sctp_o2o?SOCK_STREAM:SOCK_SEQPACKET,
 								IPPROTO_SCTP);
 				break;
@@ -333,8 +326,7 @@ int main (int argc, char** argv)
 			fprintf(stderr, "ERROR: connect: %s\n", strerror(errno));
 			goto error;
 		}
-		
-		
+
 		/* flood loop */
 		t=throttle;
 		for (r=0; r<count; r++){
@@ -366,7 +358,7 @@ int main (int argc, char** argv)
 				}
 			}
 		}
-		
+
 		close(sock);
 		if ((verbose) && (k%1000==999)) { putchar('#'); fflush(stdout); }
 	}
