@@ -790,5 +790,63 @@ bl_iterator_end("b1");
 </programlisting>
 		</example>
 	</section>
+	<section id="textopsx.f.bl_iterator_append">
+		<title>
+		<function moreinfo="none">bl_iterator_append(iname, text)</function>
+		</title>
+		<para>
+			Add text after the line at the current iterator possition.
+		</para>
+		<para>
+			The parameters can be dynamic strings with variables.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>bl_iterator_append</function> usage</title>
+		<programlisting format="linespecific">
+...
+    bl_iterator_start("b1");
+    while(bl_iterator_next("b1")) {
+        if($blitval(b1)=~"^a=info:xyz") {
+            bl_iterator_append("b1", "a=info:abc\r\n");
+            break;
+        }
+    }
+    bl_iterator_end("b1");
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="textopsx.f.bl_iterator_insert">
+		<title>
+		<function moreinfo="none">bl_iterator_insert(iname, text)</function>
+		</title>
+		<para>
+			Add text before the line at the current iterator possition.
+		</para>
+		<para>
+			The parameters can be dynamic strings with variables.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>bl_iterator_insert</function> usage</title>
+		<programlisting format="linespecific">
+...
+    bl_iterator_start("b1");
+    while(bl_iterator_next("b1")) {
+        if($blitval(b1)=~"^a=info:xyz") {
+            bl_iterator_insert("b1", "a=info:abc\r\n");
+            break;
+        }
+    }
+    bl_iterator_end("b1");
+...
+</programlisting>
+		</example>
+	</section>
 
 </section>

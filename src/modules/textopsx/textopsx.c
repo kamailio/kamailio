@@ -85,6 +85,8 @@ static int w_bl_iterator_start(sip_msg_t *msg, char *piname, char *p2);
 static int w_bl_iterator_next(sip_msg_t *msg, char *piname, char *p2);
 static int w_bl_iterator_end(sip_msg_t *msg, char *piname, char *p2);
 static int w_bl_iterator_rm(sip_msg_t *msg, char *piname, char *p2);
+static int w_bl_iterator_append(sip_msg_t *msg, char *piname, char *ptext);
+static int w_bl_iterator_insert(sip_msg_t *msg, char *piname, char *ptext);
 
 static int bind_textopsx(textopsx_api_t *tob);
 
@@ -168,6 +170,10 @@ static cmd_export_t cmds[] = {
 			fixup_free_spve_null, ANY_ROUTE},
 	{"bl_iterator_rm", w_bl_iterator_rm, 1, fixup_spve_null,
 			fixup_free_spve_null, ANY_ROUTE},
+	{"bl_iterator_append", w_bl_iterator_append, 2, fixup_spve_spve,
+			fixup_free_spve_spve, ANY_ROUTE},
+	{"bl_iterator_insert", w_bl_iterator_insert, 2, fixup_spve_spve,
+			fixup_free_spve_spve, ANY_ROUTE},
 
 	{"bind_textopsx", (cmd_function)bind_textopsx, 1, 0, 0, ANY_ROUTE},
 
@@ -2602,6 +2608,120 @@ static int w_bl_iterator_rm(sip_msg_t *msg, char *piname, char *p2)
 /**
  *
  */
+static int ki_bl_iterator_append(sip_msg_t *msg, str *iname, str *text)
+{
+	int k;
+	sr_lump_t *anchor;
+	str sval = STR_NULL;
+
+	k = ki_bl_iterator_index(msg, iname);
+	if(k<0 || _bl_iterators[k].it.s==NULL || _bl_iterators[k].it.len<=0) {
+		return -1;
+	}
+	anchor = anchor_lump(msg, _bl_iterators[k].it.s
+			+ _bl_iterators[k].it.len - msg->buf, 0, 0);
+	if (anchor==0) {
+		LM_ERR("cannot append text after %.*s\n", _bl_iterators[k].it.len,
+				_bl_iterators[k].it.s);
+		return -1;
+	}
+	sval.s = (char*)pkg_malloc(text->len + 1);
+	if(sval.s==NULL) {
+		LM_ERR("failed append text after %.*s\n", _bl_iterators[k].it.len,
+				_bl_iterators[k].it.s);
+		return -1;
+	}
+	memcpy(sval.s, text->s, text->len);
+	sval.len = text->len;
+	sval.s[sval.len] = '\0';
+
+	if (insert_new_lump_before(anchor, sval.s, sval.len, 0) == 0) {
+		LM_ERR("cannot insert lump\n");
+		pkg_free(sval.s);
+		return -1;
+	}
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_bl_iterator_append(sip_msg_t *msg, char *piname, char *ptext)
+{
+	str iname = STR_NULL;
+	str text = STR_NULL;
+	if(fixup_get_svalue(msg, (gparam_t*)piname, &iname)<0) {
+		LM_ERR("failed to get iterator name\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)ptext, &text)<0) {
+		LM_ERR("failed to get text\n");
+		return -1;
+	}
+
+	return ki_bl_iterator_append(msg, &iname, &text);
+}
+
+/**
+ *
+ */
+static int ki_bl_iterator_insert(sip_msg_t *msg, str *iname, str *text)
+{
+	int k;
+	sr_lump_t *anchor;
+	str sval = STR_NULL;
+
+	k = ki_bl_iterator_index(msg, iname);
+	if(k<0 || _bl_iterators[k].it.s==NULL || _bl_iterators[k].it.len<=0) {
+		return -1;
+	}
+	anchor = anchor_lump(msg, _bl_iterators[k].it.s - msg->buf, 0, 0);
+	if (anchor==0) {
+		LM_ERR("cannot insert text after %.*s\n", _bl_iterators[k].it.len,
+				_bl_iterators[k].it.s);
+		return -1;
+	}
+	sval.s = (char*)pkg_malloc(text->len + 1);
+	if(sval.s==NULL) {
+		LM_ERR("failed to insert text after %.*s\n", _bl_iterators[k].it.len,
+				_bl_iterators[k].it.s);
+		return -1;
+	}
+	memcpy(sval.s, text->s, text->len);
+	sval.len = text->len;
+	sval.s[sval.len] = '\0';
+
+	if (insert_new_lump_before(anchor, sval.s, sval.len, 0) == 0) {
+		LM_ERR("cannot insert lump\n");
+		pkg_free(sval.s);
+		return -1;
+	}
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_bl_iterator_insert(sip_msg_t *msg, char *piname, char *ptext)
+{
+	str iname = STR_NULL;
+	str text = STR_NULL;
+	if(fixup_get_svalue(msg, (gparam_t*)piname, &iname)<0) {
+		LM_ERR("failed to get iterator name\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)ptext, &text)<0) {
+		LM_ERR("failed to get text\n");
+		return -1;
+	}
+
+	return ki_bl_iterator_insert(msg, &iname, &text);
+}
+
+
+/**
+ *
+ */
 static int pv_parse_bl_iterator_name(pv_spec_t *sp, str *in)
 {
 	if(in->len<=0) {
@@ -3219,6 +3339,16 @@ static sr_kemi_t sr_kemi_textopsx_exports[] = {
 	{ str_init("textopsx"), str_init("bl_iterator_rm"),
 		SR_KEMIP_INT, ki_bl_iterator_rm,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textopsx"), str_init("bl_iterator_append"),
+		SR_KEMIP_INT, ki_bl_iterator_append,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textopsx"), str_init("bl_iterator_insert"),
+		SR_KEMIP_INT, ki_bl_iterator_insert,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
