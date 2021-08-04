@@ -109,7 +109,7 @@ static int mod_init(void)
 	if(flow_token_secret.s) {
 		assert(ob_key.len == SHA_DIGEST_LENGTH);
 		LM_DBG("flow_token_secret mod param set. use persistent ob_key");
-		SHA1(flow_token_secret.s, flow_token_secret.len, ob_key.s);
+		SHA1((const unsigned char *)flow_token_secret.s, flow_token_secret.len, (unsigned char *)ob_key.s);
 	} else {
 		if (RAND_bytes((unsigned char *) ob_key.s, ob_key.len) == 0)
 		{
