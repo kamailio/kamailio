@@ -453,6 +453,18 @@ static int parse_sdp_session(str *sdp_body, int session_num, str *cnt_disp, sdp_
 		extract_bwidth(&tmpstr1, &session->bw_type, &session->bw_width);
 	}
 
+	/* Find sendrecv_mode between session begin and first media.
+	 * parse session attributes to check is_on_hold for a= for all medias. */
+	a1p = find_first_sdp_line(o1p, m1p, 'a', NULL);
+	while (a1p) {
+		tmpstr1.s = a1p;
+		tmpstr1.len = m1p - a1p;
+		if (extract_sendrecv_mode(&tmpstr1, &session->sendrecv_mode, &session->is_on_hold) == 0) {
+			break;
+		}
+		a1p = find_next_sdp_line(a1p, m1p, 'a', NULL);
+	}
+
 	/* Have session. Iterate media descriptions in session */
 	m2p = m1p;
 	stream_num = 0;
