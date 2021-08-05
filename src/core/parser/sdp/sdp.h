@@ -111,6 +111,8 @@ typedef struct sdp_session_cell {
 				AS - application specific */
 	str bw_width;     /**< The <bandwidth> is interpreted as kilobits per second by default */
 	int streams_num;  /**< number of streams inside a session */
+	str sendrecv_mode;
+	int is_on_hold; /**< flag indicating if this session is on hold */
 	struct sdp_stream_cell*  streams;
 } sdp_session_cell_t;
 
