@@ -131,6 +131,10 @@ modparam("ruxc", "http_tlsmode", 1)
    (and TLS handshake) when all requests are performed against the same
    HTTP/S server.
 
+   Set to 2 in order to keep connections per base URL (scheme://host:port)
+   indexed in a hash map. Useful when doing HTTP/S requests to many
+   servers.
+
    Default value is 0 (new connection for each request).
 
    Example 1.3. Set http_reuse parameter
