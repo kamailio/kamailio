@@ -18,8 +18,8 @@ endif
 endif
 
 ifeq ($(BUILDER),)
-	DEFS+= -I.
-	LIBS = -L. -lruxc
+	DEFS+= -I. -I$(LOCALBASE)/include -I$(SYSBASE)/include
+	LIBS = -L. -L$(LOCALBASE)/lib -lruxc
 else
 	DEFS+= $(shell pkg-config --cflags libruxc)
 	LIBS = $(shell pkg-config --libs libruxc)
