@@ -2718,6 +2718,32 @@ static int w_bl_iterator_insert(sip_msg_t *msg, char *piname, char *ptext)
 	return ki_bl_iterator_insert(msg, &iname, &text);
 }
 
+/**
+ *
+ */
+static sr_kemi_xval_t _sr_kemi_bl_iterator_xval = {0};
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_bl_iterator_value(sip_msg_t *msg, str *iname)
+{
+	int k;
+
+	memset(&_sr_kemi_bl_iterator_xval, 0, sizeof(sr_kemi_xval_t));
+	k = ki_bl_iterator_index(msg, iname);
+	if(k<0 || _bl_iterators[k].it.s==NULL || _bl_iterators[k].it.len<=0) {
+		sr_kemi_xval_null(&_sr_kemi_bl_iterator_xval, 0);
+		return &_sr_kemi_bl_iterator_xval;
+	}
+	if(_bl_iterators[k].it.s==NULL) {
+		sr_kemi_xval_null(&_sr_kemi_bl_iterator_xval, 0);
+		return &_sr_kemi_bl_iterator_xval;
+	}
+	_sr_kemi_bl_iterator_xval.vtype = SR_KEMIP_STR;
+	_sr_kemi_bl_iterator_xval.v.s = _bl_iterators[k].it;
+	return &_sr_kemi_bl_iterator_xval;
+}
 
 /**
  *
@@ -3349,6 +3375,11 @@ static sr_kemi_t sr_kemi_textopsx_exports[] = {
 	{ str_init("textopsx"), str_init("bl_iterator_insert"),
 		SR_KEMIP_INT, ki_bl_iterator_insert,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textopsx"), str_init("bl_iterator_value"),
+		SR_KEMIP_XVAL, ki_bl_iterator_value,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
