@@ -95,7 +95,7 @@ If you found a solution or workaround for the issue, describe it. Ideally, provi
 
 <!--
 Details about the operating system, the type: Linux (e.g.,: Debian 8.4, Ubuntu 16.04, CentOS 7.1, ...), MacOS, xBSD, Solaris, ...;
-Kernel details (output of `uname -a`)
+Kernel details (output of `lsb_release -a` and `uname -a`)
 -->
 
 ```
