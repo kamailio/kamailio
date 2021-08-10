@@ -1818,6 +1818,9 @@ int t_set_fr(struct sip_msg* msg, unsigned int fr_inv_to, unsigned int fr_to)
 		set_msgid_val(user_fr_inv_timeout, msg->id, int, (int)fr_inv);
 		set_msgid_val(user_fr_timeout, msg->id, int, (int)fr);
 	}else{
+#ifdef TIMER_DEBUG
+		LM_DBG("changing default FR timeout values: (\"fr_inv_timeout\": %d, \"fr_timeout\": %d)", fr_inv, fr);
+#endif
 		change_fr(t, fr_inv, fr); /* change running uac timers */
 	}
 	return 1;
@@ -1880,6 +1883,9 @@ int t_set_retr(struct sip_msg* msg, unsigned int t1_ms, unsigned int t2_ms)
 		set_msgid_val(user_rt_t1_timeout_ms, msg->id, int, (int)t1_ms);
 		set_msgid_val(user_rt_t2_timeout_ms, msg->id, int, (int)t2_ms);
 	}else{
+#ifdef TIMER_DEBUG
+		LM_DBG("changing default RETR timeout values to: (\"retr_t1_interval\": %d, \"retr_t2_interval\": %d)", t1_ms, t2_ms);
+#endif
 		change_retr(t, 1, t1_ms, t2_ms); /* change running uac timers */
 	}
 	return 1;

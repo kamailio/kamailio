@@ -2718,6 +2718,9 @@ int reply_received( struct sip_msg  *p_msg )
 				( (last_uac_status<msg_status) &&
 					((msg_status>=180) || (last_uac_status==0)) )
 			) ) { /* provisional now */
+#ifdef TIMER_DEBUG
+		LM_DBG("updating FR/RETR timers, \"fr_inv_timeout\": %d", t->fr_inv_timeout);
+#endif
 		restart_rb_fr(& uac->request, t->fr_inv_timeout);
 		uac->request.flags|=F_RB_FR_INV; /* mark fr_inv */
 	} /* provisional replies */
