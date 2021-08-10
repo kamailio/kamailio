@@ -3460,8 +3460,6 @@ unknown:
 	LM_ERR("unknown transformation: %.*s/%.*s!\n",
 			in->len, in->s, name.len, name.s);
 error:
-	if(tp)
-		tr_param_free(tp);
 	if(spec)
 		pv_spec_free(spec);
 	return NULL;
