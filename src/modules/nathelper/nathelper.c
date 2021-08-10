@@ -1156,9 +1156,9 @@ static int ki_handle_ruri_alias_mode(struct sip_msg *msg, int mode)
 			rest_len = rest_len - ALIAS_LEN;
 		}
 		sep = memchr(rest, 59 /* ; */, rest_len);
-		if(sep == NULL && start == NULL) {
-			LM_DBG("no alias param\n");
-			return 2;
+		if(sep == NULL) {
+			/* no other parameters */
+			break;
 		} else {
 			rest_len = rest_len - (sep - rest + 1);
 			rest = sep + 1;
