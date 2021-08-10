@@ -510,6 +510,13 @@ ticks_t retr_buf_handler(ticks_t ticks, struct timer_ln *tl, void *p)
 							  a little race risk, but
 							  nothing bad would happen */
 		rbuf->flags |= F_RB_TIMEOUT;
+#ifdef TIMER_DEBUG
+		if (rbuf->flags & F_RB_FR_INV) {
+			LM_DBG("reached the \"fr_inv_timeout\"\n");
+		} else {
+			LM_DBG("reached the \"fr_timeout\"\n");
+		}
+#endif
 		/* WARNING:  the next line depends on taking care not to start the
 		 *           wait timer before finishing with t (if this is not
 		 *           guaranteed then comment the timer_allow_del() line) */
