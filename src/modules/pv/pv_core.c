@@ -4488,6 +4488,7 @@ int pv_parse_via_name(pv_spec_p sp, str *in)
 			if(in->s[0]=='i')
 				sp->pvp.pvn.u.isname.name.n = 7;
 			else goto error;
+		break;
 		case 4:
 			if(strncmp(in->s, "host", 4)==0)
 				sp->pvp.pvn.u.isname.name.n = 0;
@@ -4511,6 +4512,7 @@ int pv_parse_via_name(pv_spec_p sp, str *in)
 			if(strncmp(in->s, "protoid", 7)==0)
 				sp->pvp.pvn.u.isname.name.n = 3;
 			else goto error;
+		break;
 		case 8:
 			if(strncmp(in->s, "received", 8)==0)
 				sp->pvp.pvn.u.isname.name.n = 6;
