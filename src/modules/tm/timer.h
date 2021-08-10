@@ -168,6 +168,10 @@ inline static int _set_fr_retr(struct retr_buf *rb, unsigned retr_ms)
 	ticks_t retr_ticks;
 	int ret;
 
+#ifdef TIMER_DEBUG
+	LM_DBG("starting FR/RETR timers\n");
+#endif
+
 	ticks = get_ticks_raw();
 	timeout = rb->my_T->fr_timeout;
 	eol = rb->my_T->end_of_life;
