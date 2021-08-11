@@ -300,10 +300,6 @@ static inline int t_run_local_req(
 	set_route_type( backup_route_type );
 	p_onsend=0;
 
-	/* restore original environment */
-	tm_xdata_swap(new_cell, &backup_xd, 1);
-	setsflagsval(sflag_bk);
-
 	if (unlikely(ra_ctx.run_flags&DROP_R_F)) {
 		LM_DBG("tm:local-request dropped msg. to %.*s\n", 
 				lreq.dst_uri.len, lreq.dst_uri.s);
@@ -365,6 +361,10 @@ normal_update:
 	}
 
 clean:
+	/* restore original environment */
+	tm_xdata_swap(new_cell, &backup_xd, 1);
+	setsflagsval(sflag_bk);
+
 	/* clean local msg structure */
 	if (unlikely(lreq.new_uri.s))
 	{
