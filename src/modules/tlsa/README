@@ -53,3 +53,8 @@ Chapter 1. Admin Guide
    not support same static linking options. Also, some operating systems
    may provide only dynamic libssl and libcrypto libraries via their
    packages.
+
+   NOTE: edit the Makefile in the module folder and update it accordingly
+   to set the path to libssl and libcrypto libraries specific to own
+   system when not wanting to use "pkg-config" (e.g., when having these
+   libraries compiled from sources).
