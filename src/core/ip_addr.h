@@ -510,8 +510,20 @@ int hostent2su(union sockaddr_union* su,
 
 
 /* maximum size of a str returned by ip_addr2str */
-#define IP6_MAX_STR_SIZE 39 /*1234:5678:9012:3456:7890:1234:5678:9012*/
-#define IP4_MAX_STR_SIZE 15 /*123.456.789.012*/
+/* POSIX INET6_ADDRSTRLEN (RFC 4291 section 2.2) - IPv6 with IPv4 tunneling
+ * (39): 1234:5678:9012:3456:7890:1234:5678:9012
+ * (45): ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255 */
+#ifdef INET6_ADDRSTRLEN
+#define IP6_MAX_STR_SIZE (INET6_ADDRSTRLEN-1)
+#else
+#define IP6_MAX_STR_SIZE 45
+#endif
+/*123.456.789.123*/
+#ifdef INET_ADDRSTRLEN
+#define IP4_MAX_STR_SIZE (INET_ADDRSTRLEN-1)
+#else
+#define IP4_MAX_STR_SIZE 15
+#endif
 
 /* converts a raw ipv6 addr (16 bytes) to ascii */
 int ip6tosbuf(unsigned char* ip6, char* buff, int len);
