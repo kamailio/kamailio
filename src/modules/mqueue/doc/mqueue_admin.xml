@@ -150,6 +150,64 @@ modparam("mqueue", "mqueue", "name=qaz")
 	    </example>
 	</section>
 
+
+	<section id="mqueue.p.mqueue_name">
+	    <title><varname>mqueue_name</varname> (string)</title>
+	    <para>
+		Definition of a memory queue, just by name.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>none</quote>.
+		</emphasis>
+	    </para>
+	    <para>
+		Value must be a string.
+	    </para>
+	    <para>
+		The parameter can be set many times, each holding the definition of one queue.
+
+		The max size of each queue defined this way will be equal to mqueue_size(if mqueue_size configured),
+		or limitless (if mqueue_size not configured).
+	    </para>
+	    <example>
+		<title>Set <varname>mqueue_name</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("mqueue", "mqueue_name", "my_own_queue")
+...
+		</programlisting>
+	    </example>
+	</section>
+
+	<section id="mqueue.p.mqueue_size">
+	    <title><varname>mqueue_size</varname> (int)</title>
+	    <para>
+		Definition of the size of all memory queues defined via "mqueue_name" parameter.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>0</quote>.
+		</emphasis>
+	    </para>
+	    <para>
+		Value must be an int.
+	    </para>
+	    <para>
+		The parameter should be set before defining any "mqueue_name".
+		If not set, the queues defined via "mqueue_name" will be limitless.
+	    </para>
+	    <example>
+		<title>Set <varname>mqueue_size</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("mqueue", "mqueue_size", 1024)
+...
+		</programlisting>
+	    </example>
+	</section>
+
+
 	</section>
 
     <section>
