@@ -50,10 +50,13 @@ static int w_mq_size(struct sip_msg *msg, char *mq, char *str2);
 static int w_mq_add(struct sip_msg* msg, char* mq, char* key, char* val);
 static int w_mq_pv_free(struct sip_msg* msg, char* mq, char* str2);
 int mq_param(modparam_t type, void *val);
+int mq_param_name(modparam_t type, void *val);
 static int fixup_mq_add(void** param, int param_no);
 static int bind_mq(mq_api_t* api);
 
 static int mqueue_rpc_init(void);
+
+static int mqueue_size = 0;
 
 
 static pv_export_t mod_pvs[] = {
@@ -84,6 +87,8 @@ static cmd_export_t cmds[]={
 static param_export_t params[]={
 	{"db_url",          PARAM_STR, &mqueue_db_url},
 	{"mqueue",          PARAM_STRING|USE_FUNC_PARAM, (void*)mq_param},
+	{"mqueue_name",     PARAM_STRING|USE_FUNC_PARAM, (void*)mq_param_name},
+	{"mqueue_size",     INT_PARAM, &mqueue_size },
 	{0, 0, 0}
 };
 
@@ -265,6 +270,39 @@ int mq_param(modparam_t type, void *val)
 	}
 	mq_set_dbmode(&qname, dbmode);
 	free_params(params_list);
+	return 0;
+}
+
+int mq_param_name(modparam_t type, void *val)
+{
+	str qname = {0, 0};
+	int msize = 0;
+
+	if(val==NULL)
+		return -1;
+
+	if(!shm_initialized())
+	{
+		LM_ERR("shm not initialized - cannot define mqueue now\n");
+		return 0;
+	}
+
+	qname.s = (char*)val;
+	qname.len = strlen(qname.s);
+
+	msize = mqueue_size;
+
+	if(qname.len<=0)
+	{
+		LM_ERR("mqueue name not defined: %.*s\n", qname.len, qname.s);
+		return -1;
+	}
+	if(mq_head_add(&qname, msize)<0)
+	{
+		LM_ERR("cannot add mqueue: %.*s\n", qname.len, qname.s);
+		return -1;
+	}
+	LM_INFO("mqueue param: [%.*s|%d]\n", qname.len, qname.s, msize);
 	return 0;
 }
 
