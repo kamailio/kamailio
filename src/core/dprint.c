@@ -27,6 +27,7 @@
  */
 
 
+#include <pthread.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -451,6 +452,33 @@ static pv_elem_t *log_prefix_pvs = NULL;
 static char log_prefix_buf[LOG_PREFIX_SIZE];
 static str log_prefix_str = STR_NULL;
 
+void log_init(void)
+{
+	struct addrinfo hints, *info;
+	int gai_result;
+	char hostname[1024];
+
+	hostname[1023] = '\0';
+	gethostname (hostname, 1023);
+
+	memset (&hints, 0, sizeof (hints));
+	hints.ai_family = AF_UNSPEC;    /*either IPV4 or IPV6 */
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_flags = AI_CANONNAME;
+
+	if ((gai_result = getaddrinfo (hostname, 0, &hints, &info)) != 0) {
+		log_fqdn = "?";
+	} else if (info == NULL) {
+		log_fqdn = "?";
+	} else {
+		log_fqdn = strdup (info->ai_canonname);
+	}
+
+	freeaddrinfo (info);
+
+	dprint_init_colors();
+}
+
 void log_prefix_init(void)
 {
 	str s;
@@ -611,6 +639,10 @@ static void ksr_slog_json_str_escape(str *s_in, str *s_out, int *emode)
 	" \"" NAME ".line\": %d, \"" NAME ".function\": \"%s\", \"" NAME ".callid\": \"%.*s\", \"" NAME ".logprefix\": \"%.*s\"," \
 	" \"%smessage\": \"%.*s\" }%s"
 
+#define KSR_SLOG_JSON_CEEFMT "{\"time\":\"%s.%09luZ\",\"proc!id\":\"%d\",\"proc!tid\":%ju,\"pri\":\"%s\",\"subsys\":\"%s\"," \
+        "\"file!name\":\"%s\",\"file!line\":%d,\"native!function\":\"%s\",\"msg\":\"%s\"," \
+        "\"pname\":\"%s\",\"appname\":\"%s\",\"hostname\":\"%s\"}%s"
+
 void ksr_slog_json(ksr_logdata_t *kld, const char *format, ...)
 {
 	va_list arglist;
@@ -623,6 +655,10 @@ void ksr_slog_json(ksr_logdata_t *kld, const char *format, ...)
 	char *prefmsg;
 	const char *efmt;
 	const char *sfmt;
+#define ISO8601_BUF_SIZE 32
+	char iso8601buf[ISO8601_BUF_SIZE + 1];
+	struct timespec _tp;
+	struct tm _tm;
 
 	va_start(arglist, format);
 	n = vsnprintf(obuf + s_in.len, KSR_SLOG_MAX_SIZE - s_in.len, format, arglist);
@@ -668,7 +704,17 @@ void ksr_slog_json(ksr_logdata_t *kld, const char *format, ...)
 			sfmt = KSR_SLOG_SYSLOG_JSON_FMT;
 		}
 	}
+	ksr_clock_gettime (&_tp);
+	gmtime_r (&_tp.tv_sec, &_tm);
+	strftime (iso8601buf, ISO8601_BUF_SIZE, "%FT%T", &_tm);
 	if (unlikely(log_stderr)) {
+		if (unlikely(log_cee)) {
+			fprintf(stderr, KSR_SLOG_JSON_CEEFMT,
+			iso8601buf, _tp.tv_nsec, my_pid(), pthread_self(), kld->v_lname,
+			kld->v_mname, kld->v_fname, kld->v_fline, kld->v_func, s_out.s,
+			"kamailio", log_name!=0?log_name:"kamailio", log_fqdn,
+			(_ksr_slog_json_flags & KSR_SLOGJSON_FL_NOLOGNL)?"":"\n");
+		} else {
 		if (unlikely(log_color)) dprint_color(kld->v_level);
 		fprintf(stderr,
 				efmt, process_no, my_pid(),
@@ -677,13 +723,22 @@ void ksr_slog_json(ksr_logdata_t *kld, const char *format, ...)
 				LOGV_PREFIX_LEN, LOGV_PREFIX_STR, prefmsg, s_out.len, s_out.s,
 				(_ksr_slog_json_flags & KSR_SLOGJSON_FL_NOLOGNL)?"":"\n");
 		if (unlikely(log_color)) dprint_color_reset();
+		}
 	} else {
+		if (unlikely(log_cee)) {
+			_km_log_func(kld->v_facility, KSR_SLOG_JSON_CEEFMT,
+			iso8601buf, _tp.tv_nsec, my_pid(), pthread_self(), kld->v_lname,
+			kld->v_mname, kld->v_fname, kld->v_fline, kld->v_func, s_out.s,
+			"kamailio", log_name!=0?log_name:"kamailio", log_fqdn,
+			(_ksr_slog_json_flags & KSR_SLOGJSON_FL_NOLOGNL)?"":"\n");
+		} else {
 		_km_log_func(kld->v_facility,
 				sfmt,
 				kld->v_lname, kld->v_mname, kld->v_fname, kld->v_fline,
 				kld->v_func, LOGV_CALLID_LEN, LOGV_CALLID_STR,
 				LOGV_PREFIX_LEN, LOGV_PREFIX_STR, prefmsg, s_out.len, s_out.s,
 				(_ksr_slog_json_flags & KSR_SLOGJSON_FL_NOLOGNL)?"":"\n");
+		}
 	}
 	if(emode && s_out.s) {
 		free(s_out.s);
@@ -730,6 +785,9 @@ void ksr_slog_init(char *ename)
 					break;
 					case 'c':
 						_ksr_slog_json_flags |= KSR_SLOGJSON_FL_CALLID;
+					break;
+					case 'U':
+						log_cee = 1;
 					break;
 				}
 				p++;
