@@ -124,6 +124,25 @@ modparam("ruxc", "http_reuse", 1)
 </programlisting>
 		</example>
 	</section>
+	<section id="ruxc.p.http_retry">
+		<title><varname>http_retry</varname> (int)</title>
+		<para>
+		How many times to retry if the HTTP request does not get a 200ok response.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0 (no retry).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>http_retry</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("ruxc", "http_retry", 2)
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>
