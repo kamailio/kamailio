@@ -29,6 +29,7 @@ Daniel-Constantin Mierla
               3.1. http_timeout (int)
               3.2. http_tlsmode (int)
               3.3. http_reuse (int)
+              3.4. http_retry (int)
 
         4. Functions
 
@@ -42,9 +43,10 @@ Daniel-Constantin Mierla
    1.1. Set http_timeout parameter
    1.2. Set http_tlsmode parameter
    1.3. Set http_reuse parameter
-   1.4. ruxc_http_get() usage
-   1.5. ruxc_http_post() usage
-   1.6. Libruxc Usage
+   1.4. Set http_retry parameter
+   1.5. ruxc_http_get() usage
+   1.6. ruxc_http_post() usage
+   1.7. Libruxc Usage
 
 Chapter 1. Admin Guide
 
@@ -61,6 +63,7 @@ Chapter 1. Admin Guide
         3.1. http_timeout (int)
         3.2. http_tlsmode (int)
         3.3. http_reuse (int)
+        3.4. http_retry (int)
 
    4. Functions
 
@@ -99,6 +102,7 @@ Chapter 1. Admin Guide
    3.1. http_timeout (int)
    3.2. http_tlsmode (int)
    3.3. http_reuse (int)
+   3.4. http_retry (int)
 
 3.1. http_timeout (int)
 
@@ -142,6 +146,18 @@ modparam("ruxc", "http_tlsmode", 1)
 modparam("ruxc", "http_reuse", 1)
 ...
 
+3.4. http_retry (int)
+
+   How many times to retry if the HTTP request does not get a 200ok
+   response.
+
+   Default value is 0 (no retry).
+
+   Example 1.4. Set http_retry parameter
+...
+modparam("ruxc", "http_retry", 2)
+...
+
 4. Functions
 
    4.1. ruxc_http_get(url, hdrs, respv)
@@ -159,7 +175,7 @@ modparam("ruxc", "http_reuse", 1)
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.4. ruxc_http_get() usage
+   Example 1.5. ruxc_http_get() usage
 ...
 ruxc_http_get("http://api.com/index.php?r_uri=$(ru{s.escape.param})&f_uri=$(fu{s
 .escape.param})",
@@ -182,7 +198,7 @@ switch ($rc) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.5. ruxc_http_post() usage
+   Example 1.6. ruxc_http_post() usage
 ...
 ruxc_http_post("http://api.com/index.php?r_uri=$(ru{s.escape.param})&f_uri=$(fu{
 s.escape.param})",
@@ -205,7 +221,7 @@ switch ($rc) {
    installed and its environment configured, then run the following
    commands:
 
-   Example 1.6. Libruxc Usage
+   Example 1.7. Libruxc Usage
 ...
 git clone https://github.com/miconda/ruxc
 cd ruxc
