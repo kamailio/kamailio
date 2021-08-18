@@ -54,7 +54,7 @@ typedef struct _ac_maxval
 	int mweek;
 	int mday;
 	int mwday;
-} ac_maxval_t, *ac_maxval_p;
+} dr_ac_maxval_t, *dr_ac_maxval_p;
 
 typedef struct _ac_tm
 {
@@ -64,22 +64,22 @@ typedef struct _ac_tm
 	int yweek;
 	int ywday;
 	int mwday;
-	ac_maxval_p mv;
-} ac_tm_t, *ac_tm_p;
+	dr_ac_maxval_p mv;
+} dr_ac_tm_t, *dr_ac_tm_p;
 
-ac_tm_p ac_tm_new();
+dr_ac_tm_p dr_ac_tm_new();
 
-int ac_tm_set_time(ac_tm_p, time_t);
+int dr_ac_tm_set_time(dr_ac_tm_p, time_t);
 
-int ac_tm_reset(ac_tm_p);
-int ac_tm_free(ac_tm_p);
+int dr_ac_tm_reset(dr_ac_tm_p);
+int dr_ac_tm_free(dr_ac_tm_p);
 
-int ac_get_mweek(struct tm *);
-int ac_get_yweek(struct tm *);
-ac_maxval_p ac_get_maxval(ac_tm_p, int);
-int ac_get_wkst();
+int dr_ac_get_mweek(struct tm *);
+int dr_ac_get_yweek(struct tm *);
+dr_ac_maxval_p dr_ac_get_maxval(dr_ac_tm_p, int);
+int dr_ac_get_wkst();
 
-int ac_print(ac_tm_p);
+int dr_ac_print(dr_ac_tm_p);
 
 
 /************************ imported from "tmrec.h"  ***************************/
@@ -103,14 +103,14 @@ int ac_print(ac_tm_p);
 #define TSW_TSET 1
 #define TSW_RSET 2
 
-typedef struct _tr_byxxx
+typedef struct _dr_tr_byxxx
 {
 	int nr;
 	int *xxx;
 	int *req;
-} tr_byxxx_t, *tr_byxxx_p;
+} dr_tr_byxxx_t, *dr_tr_byxxx_p;
 
-typedef struct _tmrec
+typedef struct _dr_tmrec
 {
 	time_t dtstart;
 	struct tm ts;
@@ -119,49 +119,49 @@ typedef struct _tmrec
 	time_t until;
 	int freq;
 	int interval;
-	tr_byxxx_p byday;
-	tr_byxxx_p bymday;
-	tr_byxxx_p byyday;
-	tr_byxxx_p bymonth;
-	tr_byxxx_p byweekno;
+	dr_tr_byxxx_p byday;
+	dr_tr_byxxx_p bymday;
+	dr_tr_byxxx_p byyday;
+	dr_tr_byxxx_p bymonth;
+	dr_tr_byxxx_p byweekno;
 	int wkst;
-} tmrec_t, *tmrec_p;
+} dr_tmrec_t, *dr_tmrec_p;
 
-typedef struct _tr_res
+typedef struct _dr_tr_res
 {
 	int flag;
 	time_t rest;
-} tr_res_t, *tr_res_p;
+} dr_tr_res_t, *dr_tr_res_p;
 
-tr_byxxx_p tr_byxxx_new();
-int tr_byxxx_init(tr_byxxx_p, int);
-int tr_byxxx_free(tr_byxxx_p);
+dr_tr_byxxx_p dr_tr_byxxx_new();
+int dr_tr_byxxx_init(dr_tr_byxxx_p, int);
+int dr_tr_byxxx_free(dr_tr_byxxx_p);
 
-tmrec_p tmrec_new();
-int tmrec_free(tmrec_p);
+dr_tmrec_p dr_tmrec_new();
+int dr_tmrec_free(dr_tmrec_p);
 
-int tr_parse_dtstart(tmrec_p, char *);
-int tr_parse_dtend(tmrec_p, char *);
-int tr_parse_duration(tmrec_p, char *);
-int tr_parse_until(tmrec_p, char *);
-int tr_parse_freq(tmrec_p, char *);
-int tr_parse_interval(tmrec_p, char *);
-int tr_parse_byday(tmrec_p, char *);
-int tr_parse_bymday(tmrec_p, char *);
-int tr_parse_byyday(tmrec_p, char *);
-int tr_parse_bymonth(tmrec_p, char *);
-int tr_parse_byweekno(tmrec_p, char *);
-int tr_parse_wkst(tmrec_p, char *);
+int dr_tr_parse_dtstart(dr_tmrec_p, char *);
+int dr_tr_parse_dtend(dr_tmrec_p, char *);
+int dr_tr_parse_duration(dr_tmrec_p, char *);
+int dr_tr_parse_until(dr_tmrec_p, char *);
+int dr_tr_parse_freq(dr_tmrec_p, char *);
+int dr_tr_parse_interval(dr_tmrec_p, char *);
+int dr_tr_parse_byday(dr_tmrec_p, char *);
+int dr_tr_parse_bymday(dr_tmrec_p, char *);
+int dr_tr_parse_byyday(dr_tmrec_p, char *);
+int dr_tr_parse_bymonth(dr_tmrec_p, char *);
+int dr_tr_parse_byweekno(dr_tmrec_p, char *);
+int dr_tr_parse_wkst(dr_tmrec_p, char *);
 
-int tr_print(tmrec_p);
-time_t ic_parse_datetime(char *, struct tm *);
-time_t ic_parse_duration(char *);
+int dr_tr_print(dr_tmrec_p);
+time_t dr_ic_parse_datetime(char *, struct tm *);
+time_t dr_ic_parse_duration(char *);
 
-tr_byxxx_p ic_parse_byday(char *);
-tr_byxxx_p ic_parse_byxxx(char *);
-int ic_parse_wkst(char *);
+dr_tr_byxxx_p dr_ic_parse_byday(char *);
+dr_tr_byxxx_p dr_ic_parse_byxxx(char *);
+int dr_ic_parse_wkst(char *);
 
-int check_tmrec(tmrec_p, ac_tm_p, tr_res_p);
+int dr_check_tmrec(dr_tmrec_p, dr_ac_tm_p, dr_tr_res_p);
 
 
 #endif

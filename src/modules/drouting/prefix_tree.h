@@ -80,7 +80,7 @@ typedef struct pgw_list_
 typedef struct rt_info_
 {
 	unsigned int priority;
-	tmrec_t *time_rec;
+	dr_tmrec_t *time_rec;
 	/* array of pointers into the PSTN gw list */
 	pgw_list_t *pgwl;
 	/* length of the PSTN gw array */
