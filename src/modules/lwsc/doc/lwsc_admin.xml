@@ -20,7 +20,7 @@
 		external systems, similar to http client. It is not for routing SIP traffic.
 	</para>
 	<para>
-		It relies on libwebsockets (tested with v3.1.0) library (https://libwebsockets.org/).
+		It relies on libwebsockets library (https://libwebsockets.org/).
 	</para>
 	</section>
 
@@ -47,7 +47,7 @@
 			<itemizedlist>
 			<listitem>
 			<para>
-				<emphasis>libwebsockets</emphasis> - probably v3.1.0 or newer.
+				<emphasis>libwebsockets</emphasis> - probably v2.0 or newer.
 			</para>
 			</listitem>
 			</itemizedlist>
