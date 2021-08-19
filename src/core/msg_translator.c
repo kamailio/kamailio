@@ -492,8 +492,9 @@ static inline int lump_check_opt(	struct lump *l,
 		case COND_IF_DIFF_REALMS:
 			get_ip_port_proto;
 			/* faster tests first */
-			if ((port==snd_i->send_sock->port_no) && 
+			if ((port==snd_i->send_sock->port_no) &&
 					(proto==snd_i->send_sock->proto) &&
+					(msg->rcv.proto==snd_i->proto) &&
 #ifdef USE_COMP
 					(msg->rcv.comp==snd_i->comp) &&
 #endif
