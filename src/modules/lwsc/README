@@ -87,8 +87,7 @@ Chapter 1. Admin Guide
    external systems, similar to http client. It is not for routing SIP
    traffic.
 
-   It relies on libwebsockets (tested with v3.1.0) library
-   (https://libwebsockets.org/).
+   It relies on libwebsockets library (https://libwebsockets.org/).
 
 2. Dependencies
 
@@ -104,7 +103,7 @@ Chapter 1. Admin Guide
 
    The following libraries or applications must be installed before
    running Kamailio with this module loaded:
-     * libwebsockets - probably v3.1.0 or newer.
+     * libwebsockets - probably v2.0 or newer.
 
 3. Parameters
 
