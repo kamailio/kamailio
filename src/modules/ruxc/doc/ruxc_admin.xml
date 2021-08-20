@@ -143,6 +143,45 @@ modparam("ruxc", "http_retry", 2)
 </programlisting>
 		</example>
 	</section>
+	<section id="ruxc.p.http_logtype">
+		<title><varname>http_logtype</varname> (int)</title>
+		<para>
+		Set the log type for libruxc http functions: 0 - stdout; 1 - syslog.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>http_logtype</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("ruxc", "http_logtype", 1)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="ruxc.p.http_debug">
+		<title><varname>http_debug</varname> (int)</title>
+		<para>
+		Set the debug mode for libruxc http functions: 0 - no debug; 1 - errors;
+		2 - debug.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>http_debug</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("ruxc", "http_debug", 1)
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>

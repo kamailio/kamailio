@@ -42,6 +42,8 @@ static int _ruxc_http_timeout = 5000;
 static int _ruxc_http_tlsmode = 0;
 static int _ruxc_http_reuse = 0;
 static int _ruxc_http_retry = 0;
+static int _ruxc_http_logtype = 0;
+static int _ruxc_http_debug = 0;
 
 static int mod_init(void);
 static int child_init(int);
@@ -77,6 +79,8 @@ static param_export_t params[]={
 	{"http_tlsmode",       PARAM_INT,   &_ruxc_http_tlsmode},
 	{"http_reuse",         PARAM_INT,   &_ruxc_http_reuse},
 	{"http_retry",         PARAM_INT,   &_ruxc_http_retry},
+	{"http_logtype",       PARAM_INT,   &_ruxc_http_logtype},
+	{"http_debug",         PARAM_INT,   &_ruxc_http_debug},
 
 	{0, 0, 0}
 };
@@ -101,6 +105,13 @@ struct module_exports exports = {
  */
 static int mod_init(void)
 {
+	if(_ruxc_http_logtype==1 && log_stderr==1) {
+		LM_INFO("setting http logtype to 0\n");
+		_ruxc_http_logtype = 0;
+	} else if(_ruxc_http_logtype==0 && log_stderr==0) {
+		LM_INFO("setting http logtype to 1\n");
+		_ruxc_http_logtype = 1;
+	}
 	return 0;
 }
 
@@ -138,6 +149,8 @@ static int ki_ruxc_http_get_helper(sip_msg_t *_msg, str *url, str *hdrs,
 	v_http_request.tlsmode = _ruxc_http_tlsmode;
 	v_http_request.reuse = _ruxc_http_reuse;
 	v_http_request.retry = _ruxc_http_retry;
+	v_http_request.logtype = _ruxc_http_logtype;
+	v_http_request.debug = _ruxc_http_debug;
 
 	v_http_request.url = url->s;
 	v_http_request.url_len = url->len;
@@ -237,6 +250,8 @@ static int ki_ruxc_http_post_helper(sip_msg_t *_msg, str *url, str *body, str *h
 	v_http_request.tlsmode = _ruxc_http_tlsmode;
 	v_http_request.reuse = _ruxc_http_reuse;
 	v_http_request.retry = _ruxc_http_retry;
+	v_http_request.logtype = _ruxc_http_logtype;
+	v_http_request.debug = _ruxc_http_debug;
 
 	v_http_request.url = url->s;
 	v_http_request.url_len = url->len;
