@@ -512,7 +512,8 @@ static inline int lump_check_opt(	struct lump *l,
 			} else return 0;
 		case COND_IF_DIFF_PROTO:
 			get_ip_port_proto;
-			if (proto!=snd_i->send_sock->proto) {
+			if ((proto!=snd_i->send_sock->proto)
+					|| (msg->rcv.proto!=snd_i->proto)) {
 				LUMP_SET_COND_TRUE(l);
 				return 1;
 			} else return 0;
