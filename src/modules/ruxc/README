@@ -30,6 +30,8 @@ Daniel-Constantin Mierla
               3.2. http_tlsmode (int)
               3.3. http_reuse (int)
               3.4. http_retry (int)
+              3.5. http_logtype (int)
+              3.6. http_debug (int)
 
         4. Functions
 
@@ -44,9 +46,11 @@ Daniel-Constantin Mierla
    1.2. Set http_tlsmode parameter
    1.3. Set http_reuse parameter
    1.4. Set http_retry parameter
-   1.5. ruxc_http_get() usage
-   1.6. ruxc_http_post() usage
-   1.7. Libruxc Usage
+   1.5. Set http_logtype parameter
+   1.6. Set http_debug parameter
+   1.7. ruxc_http_get() usage
+   1.8. ruxc_http_post() usage
+   1.9. Libruxc Usage
 
 Chapter 1. Admin Guide
 
@@ -64,6 +68,8 @@ Chapter 1. Admin Guide
         3.2. http_tlsmode (int)
         3.3. http_reuse (int)
         3.4. http_retry (int)
+        3.5. http_logtype (int)
+        3.6. http_debug (int)
 
    4. Functions
 
@@ -103,6 +109,8 @@ Chapter 1. Admin Guide
    3.2. http_tlsmode (int)
    3.3. http_reuse (int)
    3.4. http_retry (int)
+   3.5. http_logtype (int)
+   3.6. http_debug (int)
 
 3.1. http_timeout (int)
 
@@ -158,6 +166,29 @@ modparam("ruxc", "http_reuse", 1)
 modparam("ruxc", "http_retry", 2)
 ...
 
+3.5. http_logtype (int)
+
+   Set the log type for libruxc http functions: 0 - stdout; 1 - syslog.
+
+   Default value is 0.
+
+   Example 1.5. Set http_logtype parameter
+...
+modparam("ruxc", "http_logtype", 1)
+...
+
+3.6. http_debug (int)
+
+   Set the debug mode for libruxc http functions: 0 - no debug; 1 -
+   errors; 2 - debug.
+
+   Default value is 0.
+
+   Example 1.6. Set http_debug parameter
+...
+modparam("ruxc", "http_debug", 1)
+...
+
 4. Functions
 
    4.1. ruxc_http_get(url, hdrs, respv)
@@ -175,7 +206,7 @@ modparam("ruxc", "http_retry", 2)
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.5. ruxc_http_get() usage
+   Example 1.7. ruxc_http_get() usage
 ...
 ruxc_http_get("http://api.com/index.php?r_uri=$(ru{s.escape.param})&f_uri=$(fu{s
 .escape.param})",
@@ -198,7 +229,7 @@ switch ($rc) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.6. ruxc_http_post() usage
+   Example 1.8. ruxc_http_post() usage
 ...
 ruxc_http_post("http://api.com/index.php?r_uri=$(ru{s.escape.param})&f_uri=$(fu{
 s.escape.param})",
@@ -221,7 +252,7 @@ switch ($rc) {
    installed and its environment configured, then run the following
    commands:
 
-   Example 1.7. Libruxc Usage
+   Example 1.9. Libruxc Usage
 ...
 git clone https://github.com/miconda/ruxc
 cd ruxc
