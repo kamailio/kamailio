@@ -7,8 +7,8 @@ CREATE TABLE sip_trace (
     msg TEXT NOT NULL,
     method VARCHAR(50) DEFAULT '' NOT NULL,
     status VARCHAR(255) DEFAULT '' NOT NULL,
-    fromip VARCHAR(50) DEFAULT '' NOT NULL,
-    toip VARCHAR(50) DEFAULT '' NOT NULL,
+    fromip VARCHAR(64) DEFAULT '' NOT NULL,
+    toip VARCHAR(64) DEFAULT '' NOT NULL,
     fromtag VARCHAR(128) DEFAULT '' NOT NULL,
     totag VARCHAR(128) DEFAULT '' NOT NULL,
     direction VARCHAR(4) DEFAULT '' NOT NULL
