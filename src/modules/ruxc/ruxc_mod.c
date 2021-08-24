@@ -134,6 +134,22 @@ static void mod_destroy(void)
 /**
  *
  */
+static void ruxc_request_params_init(RuxcHTTPRequest *v_http_request)
+{
+    v_http_request->timeout = _ruxc_http_timeout;
+    v_http_request->timeout_connect = _ruxc_http_timeout;
+    v_http_request->timeout_read = _ruxc_http_timeout;
+    v_http_request->timeout_write = _ruxc_http_timeout;
+	v_http_request->tlsmode = _ruxc_http_tlsmode;
+	v_http_request->reuse = _ruxc_http_reuse;
+	v_http_request->retry = _ruxc_http_retry;
+	v_http_request->logtype = _ruxc_http_logtype;
+	v_http_request->debug = _ruxc_http_debug;
+}
+
+/**
+ *
+ */
 static int ki_ruxc_http_get_helper(sip_msg_t *_msg, str *url, str *hdrs,
 		pv_spec_t *dst)
 {
@@ -142,15 +158,7 @@ static int ki_ruxc_http_get_helper(sip_msg_t *_msg, str *url, str *hdrs,
 	pv_value_t val = {0};
 	int ret;
 
-    v_http_request.timeout = _ruxc_http_timeout;
-    v_http_request.timeout_connect = _ruxc_http_timeout;
-    v_http_request.timeout_read = _ruxc_http_timeout;
-    v_http_request.timeout_write = _ruxc_http_timeout;
-	v_http_request.tlsmode = _ruxc_http_tlsmode;
-	v_http_request.reuse = _ruxc_http_reuse;
-	v_http_request.retry = _ruxc_http_retry;
-	v_http_request.logtype = _ruxc_http_logtype;
-	v_http_request.debug = _ruxc_http_debug;
+	ruxc_request_params_init(&v_http_request);
 
 	v_http_request.url = url->s;
 	v_http_request.url_len = url->len;
@@ -243,15 +251,7 @@ static int ki_ruxc_http_post_helper(sip_msg_t *_msg, str *url, str *body, str *h
 	pv_value_t val = {0};
 	int ret;
 
-    v_http_request.timeout = _ruxc_http_timeout;
-    v_http_request.timeout_connect = _ruxc_http_timeout;
-    v_http_request.timeout_read = _ruxc_http_timeout;
-    v_http_request.timeout_write = _ruxc_http_timeout;
-	v_http_request.tlsmode = _ruxc_http_tlsmode;
-	v_http_request.reuse = _ruxc_http_reuse;
-	v_http_request.retry = _ruxc_http_retry;
-	v_http_request.logtype = _ruxc_http_logtype;
-	v_http_request.debug = _ruxc_http_debug;
+	ruxc_request_params_init(&v_http_request);
 
 	v_http_request.url = url->s;
 	v_http_request.url_len = url->len;
