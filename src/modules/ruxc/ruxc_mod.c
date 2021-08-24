@@ -39,6 +39,9 @@
 MODULE_VERSION
 
 static int _ruxc_http_timeout = 5000;
+static int _ruxc_http_timeout_connect = 5000;
+static int _ruxc_http_timeout_read = 5000;
+static int _ruxc_http_timeout_write = 5000;
 static int _ruxc_http_tlsmode = 0;
 static int _ruxc_http_reuse = 0;
 static int _ruxc_http_retry = 0;
@@ -75,12 +78,15 @@ static cmd_export_t cmds[]={
 };
 
 static param_export_t params[]={
-	{"http_timeout",       PARAM_INT,   &_ruxc_http_timeout},
-	{"http_tlsmode",       PARAM_INT,   &_ruxc_http_tlsmode},
-	{"http_reuse",         PARAM_INT,   &_ruxc_http_reuse},
-	{"http_retry",         PARAM_INT,   &_ruxc_http_retry},
-	{"http_logtype",       PARAM_INT,   &_ruxc_http_logtype},
-	{"http_debug",         PARAM_INT,   &_ruxc_http_debug},
+	{"http_timeout",         PARAM_INT,   &_ruxc_http_timeout},
+	{"http_timeout_connect", PARAM_INT,   &_ruxc_http_timeout_connect},
+	{"http_timeout_read",    PARAM_INT,   &_ruxc_http_timeout_read},
+	{"http_timeout_write",   PARAM_INT,   &_ruxc_http_timeout_write},
+	{"http_tlsmode",         PARAM_INT,   &_ruxc_http_tlsmode},
+	{"http_reuse",           PARAM_INT,   &_ruxc_http_reuse},
+	{"http_retry",           PARAM_INT,   &_ruxc_http_retry},
+	{"http_logtype",         PARAM_INT,   &_ruxc_http_logtype},
+	{"http_debug",           PARAM_INT,   &_ruxc_http_debug},
 
 	{0, 0, 0}
 };
@@ -136,10 +142,10 @@ static void mod_destroy(void)
  */
 static void ruxc_request_params_init(RuxcHTTPRequest *v_http_request)
 {
-    v_http_request->timeout = _ruxc_http_timeout;
-    v_http_request->timeout_connect = _ruxc_http_timeout;
-    v_http_request->timeout_read = _ruxc_http_timeout;
-    v_http_request->timeout_write = _ruxc_http_timeout;
+	v_http_request->timeout = _ruxc_http_timeout;
+	v_http_request->timeout_connect = _ruxc_http_timeout_connect;
+	v_http_request->timeout_read = _ruxc_http_timeout_read;
+	v_http_request->timeout_write = _ruxc_http_timeout_write;
 	v_http_request->tlsmode = _ruxc_http_tlsmode;
 	v_http_request->reuse = _ruxc_http_reuse;
 	v_http_request->retry = _ruxc_http_retry;
