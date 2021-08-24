@@ -62,7 +62,15 @@
 		<title><varname>http_timeout</varname> (int)</title>
 		<para>
 		The interval in miliseconds after which the HTTP GET or POST query
-		times out.
+		times out. It is the overall timeout, including DNS resolution, connecting
+		time, redirects, and reading the response body. Slow DNS resolution
+		may cause a request to exceed the timeout, because the DNS request
+		cannot be interrupted with the available APIs. It takes precedence over
+		http_timeout_read() and http_timeout_write(), but not http_timeout_connect.
+		See also the comments in 'https://github.com/algesten/ureq/blob/main/src/agent.rs'.
+		</para>
+		<para>
+		Use 0 to disable setting it in the library.
 		</para>
 		<para>
 		<emphasis>
@@ -74,6 +82,76 @@
 		<programlisting format="linespecific">
 ...
 modparam("ruxc", "http_timeout", 2000)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="ruxc.p.http_timeout_connect">
+		<title><varname>http_timeout_connect</varname> (int)</title>
+		<para>
+		The interval in miliseconds after which to give up on connecting to the
+		HTTP/S server. If http_timeout is set, this one takes precedence. The
+		library beneath has a default 30 seconds connect timeout.
+		</para>
+		<para>
+		Use 0 to disable setting it in the library.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 5000 (5 secs).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>http_timeout_connect</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("ruxc", "http_timeout_connect", 2000)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="ruxc.p.http_timeout_read">
+		<title><varname>http_timeout_read</varname> (int)</title>
+		<para>
+		The interval in miliseconds after which the read on HTTP/S connection
+		socket timeouts. If http_timeout is set, it takes precedence.
+		</para>
+		<para>
+		Use 0 to disable setting it in the library.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 5000 (5 secs).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>http_timeout_read</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("ruxc", "http_timeout_read", 2000)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="ruxc.p.http_timeout_write">
+		<title><varname>http_timeout_write</varname> (int)</title>
+		<para>
+		The interval in miliseconds after which the write on HTTP/S connection
+		socket timeouts. If http_timeout is set, it takes precedence.
+		</para>
+		<para>
+		Use 0 to disable setting it in the library.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 5000 (5 secs).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>http_timeout_write</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("ruxc", "http_timeout_write", 2000)
 ...
 </programlisting>
 		</example>
