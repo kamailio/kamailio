@@ -3093,9 +3093,9 @@ static int ki_from_gw_addr(
 		return -1;
 	}
 
-	/* src_port set to 0 means we don't want to check it */
-	if((src_port < 0) || (src_port > 65535)) {
-		LM_ERR("invalid port parameter value %d\n", transport);
+	/* src_port set to 0 is allowed and means we don't want to check it */
+	if(src_port > 65535) {
+		LM_ERR("invalid port parameter value %d\n", src_port);
 		return -1;
 	}
 
@@ -3215,9 +3215,9 @@ static int ki_from_any_gw_addr(sip_msg_t *_m, str *addr_str, int transport, unsi
 		return -1;
 	}
 
-	/* src_port set to 0 means we don't want to check it */
-	if((src_port < 0) || (src_port > 65535)) {
-		LM_ERR("invalid port parameter value %d\n", transport);
+	/* src_port set to 0 is allowed and means we don't want to check it */
+	if(src_port > 65535) {
+		LM_ERR("invalid port parameter value %d\n", src_port);
 		return -1;
 	}
 
