@@ -1,4 +1,528 @@
-===================== 2021-55-06 Version 5.5.1 Released =====================
+===================== 2021-08-25 Version 5.5.2 Released =====================
+
+===================== Changes Since Version 5.5.2 ===========================
+
+commit 0d6832949e5e3e554d7a492f32448281d4988053
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Aug 25 08:29:41 2021 +0200
+
+    Makefile.defs: version set to 5.5.2
+
+commit cd816b80b20cd9560a643d016094ca2975911c34
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Aug 25 08:21:18 2021 +0200
+
+    pkg: version set to 5.5.2 for rpm and alpine specs
+
+commit e67094ccdf0288b54c6808bf7bd2469ba2bfc97e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Aug 25 08:16:58 2021 +0200
+
+    pkg/kamailio/deb: version set 5.5.2
+
+commit 087167c034afff943c217b832b9689cb61133188
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Aug 23 20:45:38 2021 +0200
+
+    kamctl: regenerate db creation scripts
+    
+    (cherry picked from commit 5ad81a45bb28ca419d9285cc59816db0fa1afefd)
+
+commit ab86966aca142eeca5435f8567fe8cc698500cd2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Aug 23 20:43:28 2021 +0200
+
+    lib/srdb1/schema: use proto_addr_len from sip_trace from/to ip fields
+    
+    - size of fields is now 64
+    - they store proto:addr:port
+    - GH #2831
+    
+    (cherry picked from commit 4decc7ca50089f94d4fcc2ad4af2b4e1089986e7)
+
+commit d4ea970ecbb4688cdd30890229db4418cb0cff29
+Author: Luis Martin Gil <luismartingil@zaleos.net>
+Date:   Thu Jul 23 10:04:04 2020 +0200
+
+    tm - remove not used route_mode var
+    
+    (cherry picked from commit 6619be46249dfe0b2f2cbc863cb8b2f44716122b)
+
+commit b102e101747aba371639616d8520fe979f705206
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Fri Aug 20 10:01:33 2021 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit cf93317b4252fbae7bbc640dcc150fc52e5a196e
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Thu Jul 29 10:46:31 2021 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 139890860907e4f2fc55e05e2e9fe490fc76c4e1
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Thu Jun 24 18:46:33 2021 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 494354527e2cbe180dfad3a42e3f89fed28e866c
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Tue Jun 15 15:46:25 2021 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 345e57ec3852bb0e9b3a11f35c4d56098aba1fb6
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Tue May 18 21:16:31 2021 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 8f14c0838912c18b8e244a904f96146c610fca91
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Wed May 12 16:16:33 2021 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 446e716ff4c7e853ac9239cff8784cd30b7b8e8a
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Tue May 4 00:46:15 2021 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 9bb2c11de3966c40d84896cf7077131f0bc14f28
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Mon May 3 12:46:23 2021 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit a629760eaff8cac4679482f616c8288623c88ec4
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Mon May 3 10:16:38 2021 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit de84b32eb42e19f8626947da1c567eea2d0869fb
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Aug 20 07:03:45 2021 +0200
+
+    core: check message snd and rcv proto for COND_IF_DIFF_PROTO lumps
+    
+    - besides comparing the protos of rcv and snd sockets
+    
+    (cherry picked from commit 31377b160df563a222bec5a1bf92590635429240)
+
+commit 52978a0873eb068be31ca0688e64c88e4872efac
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Aug 19 18:11:04 2021 +0200
+
+    core: check message rcv and snd proto for diff realms lump conditions
+    
+    - in addition to receive socket and send socket protos, which may be the
+    same in cases of tcp/tls+ws/wss using same ports
+    
+    (cherry picked from commit 871f8113612148a49e69218e70ed7f475fb665db)
+
+commit 6b1fb350458ad19192327e0dcedafa4749b6eb7c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Aug 19 14:56:50 2021 +0200
+
+    lwsc: docs - updated references to libwebsockets version
+    
+    - GH #2749
+    
+    (cherry picked from commit 01afcc7fb2468c21a8e1cfb1a717fa96299794fa)
+
+commit 7e3e0a81bf458bd90bc1454c81bf21d64ed9212c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Aug 18 18:08:38 2021 +0200
+
+    cplc: use cpl_ prefix for internal time recurrence functions
+    
+    - avoid global symbol conflicts with core tmrec.c
+    - GH #2827
+    
+    (cherry picked from commit 431544864c97d1848db1c0c42a03251a214f04cd)
+
+commit b49f23af03d5e2f0364610739e7ef6e07cfd54a5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Aug 18 17:39:25 2021 +0200
+
+    drouting: added dr_ prefix to internal time recurrence functions
+    
+    - avoids symbol conflicts with the core tmrec.c
+    - GH #2828
+    
+    (cherry picked from commit 33ea38f35f9911a26a757dbfa22065eb80a9a24a)
+
+commit d8ff1845c34a7f9d8e6911ae3d2055b122eb3b79
+Author: Alan Evans <alan@kageds.com>
+Date:   Thu Jun 24 10:24:39 2021 +0000
+
+    kazoo : fix routing of reply events
+    
+    success events should be routed to onreply_route[]
+    failure events should be routed to failure_route[]
+    
+    (cherry picked from commit fb2eee3e175040fef5e76cbed11430976f62df32)
+
+commit 680d98caccc0216f43c2b5de83935dbc4853ab9d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Aug 13 08:57:10 2021 +0200
+
+    core: ip addr - use POSIX INET6_ADDRSTRLEN and INET_ADDRSTRLEN to define sizes
+    
+    - set the values of IP4_MAX_STR_SIZE and IP6_MAX_STR_SIZE based on them,
+    if defined, or to 15 and 45
+    - cope with IPv6 with IPv4 tunneling representation (RFC 4291 section 2.2)
+    - cover the requirements of using inet_ntop()
+    - GH #2823
+    
+    (cherry picked from commit 22a72f3a7725d56f00e22bdc52d44bd53da7c091)
+
+commit ad5f0f522f43a69e0f7f930cac5aefc3f21607df
+Author: lazedo <luis.azedo@factorlusitano.com>
+Date:   Wed Aug 11 15:42:24 2021 +0100
+
+    tm: restore xavps & flags after rebuilding message
+    
+    (cherry picked from commit 7ee642c58991e594f38247ab0751fadd07ce758c)
+
+commit dadac04b0153a29ed7c1ebb48e887c06989fa49c
+Author: Luis Azedo <luis.azedo@factorlusitano.com>
+Date:   Thu Aug 5 12:32:32 2021 +0100
+
+    textops: check session sendrecv_mode in is_audio_on_hold
+    
+    - if sendrecv_mode is not set in media, check if its set in session
+    
+    (cherry picked from commit cbcc27ef8b1674448bd8b1c45f03388e36f65f51)
+
+commit 01ab21c4ba28259be72fd704afd389132260e258
+Author: Luis Azedo <luis.azedo@factorlusitano.com>
+Date:   Thu Aug 5 12:28:04 2021 +0100
+
+    core: parse session sendrecv_mode in sdp
+    
+    - some user agents send a=sendonly as session attribute which apply to all media streams
+    
+    (cherry picked from commit 8da4477fd6d9590b9946071b9ac2a778b1d55d01)
+
+commit 105b15422f611ba1dcc59be30f7f4d474b294d03
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Aug 4 14:15:09 2021 +0200
+
+    misc/tools/protoshoot: removed svn id and history
+    
+    (cherry picked from commit e3875c01adf576f179374a926e69e99c0094e5b4)
+
+commit 96f24caed768b1b382b166eea835e555eac5e933
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Aug 3 08:52:19 2021 +0200
+
+    sdpops: refactored sdp_remove_str_codec_id_attrs()
+    
+    - line oriented matching of codec addributes
+    - support to remove a=rtcp-fb per codec, GH #2755
+    
+    (cherry picked from commit 1a15a18eacd5764e9ba6240acbe37e645368f825)
+
+commit ede5a8399662903c2aa081b7010603398a598e94
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Aug 3 08:51:11 2021 +0200
+
+    core: parser sdp - shorten debug message with sdp line
+    
+    - was printing the rest of the body, print now max 20 chars
+    
+    (cherry picked from commit 4191a8193025499df64f13d59f5716563e573161)
+
+commit 48eb41654859e6130c82c46400b529f2af9ce908
+Author: FredWH <wh720@139.com>
+Date:   Mon Jun 28 14:46:25 2021 +0800
+
+    db_redis: fix broken pipe issue, if redis server with timeout setting.
+    
+    - issue #2764
+    
+    (cherry picked from commit 7cec977f8e12bbeb0309d903e02461d1ccbf41a8)
+
+commit ba8a06d2988e41b09947d3ae3386a13e3d8415b9
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Sun Aug 1 11:40:26 2021 +0000
+
+    core: enables compilation with debug symbols by default for other architectures
+    
+    - enables compilation with debug symbols by default for other architectures in core
+    - pull request GH #2811
+    - closes GH #2789
+    
+    (cherry picked from commit ed46adad82e7b6569eb42704c5460263d2af75f7)
+
+commit 5ecf17bc2d308141534bdaf3a312704daf0db850
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jul 30 13:31:30 2021 +0200
+
+    sworker: KSR.sworker.active() exported to kemi
+    
+    - equivalent to existing sworker_active() config function
+    
+    (cherry picked from commit 9f140ce93b1f6db649cd0e8eda26444d6b186231)
+
+commit 75571e1739470877365e7c25548ef282e81283a1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jul 27 16:52:12 2021 +0200
+
+    core: pvapi - reinitialize _pv_print_buffer_index when adjusting the slots
+    
+    - GH #2798
+    
+    (cherry picked from commit 61cbb5e861aeb9b7f69ebb8d284e3ded0ede9cd8)
+
+commit 044a2e665ce5612980b203c705f75ee786be5316
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 22 15:34:25 2021 +0200
+
+    sworker: docs - fixed small typo
+    
+    (cherry picked from commit fc62ceeb6d625acda6952486031efa1fe2945768)
+
+commit d20841db501fbc1a4053a6cb7293d3fa3f3fee94
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Jul 27 10:52:21 2021 +0200
+
+    pv_headers: pvh_set_header, remove values to set null when necessary
+    
+    * fix pvh_set_xavi for SR_XTYPE_NULL
+    
+    (cherry picked from commit af926514ac3e70dff51408baf326b29bce4eecfc)
+
+commit e18c24b88403e61461feace3b13fa59f948f1082
+Author: Victor Seva <vseva@sipwise.com>
+Date:   Fri Jul 23 15:56:11 2021 +0200
+
+    pv_headers: fix removal of all values when using PV_IDX_ALL
+    
+    $(x_hdr(whatever)[*]) = "hello" was just removing the first value
+    
+    (cherry picked from commit 9ad96c08e0deb759297b2d402295691d8dd657d5)
+
+commit 1f9f6fff6e0ab21e460538ffd1e54b6c60f54f7e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jul 12 14:01:40 2021 +0200
+
+    core: set MAX_WARNING_LEN to 1024
+    
+    - 256 can be too short
+    - close GH #2799
+    
+    (cherry picked from commit 0d06e164efa720d91d49995585e80c9082ce3b21)
+
+commit 304ac124e6ad86b60071b6c5ecf861e03b7e492b
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Thu Jul 8 14:57:27 2021 +0000
+
+    topos: fix missing xavu_field_contact_host evaluation for contact_mode 0
+    
+    - fix missing xavu_field_contact_host evaluation for contact_mode 0
+    - it works currently only for contact_mode 1 and 2, but not for default mode
+    
+    (cherry picked from commit 4c6abaf9066aebbd304391dd6730cad7ee592611)
+
+commit 65249c184f5fd54b3ea16edbda518ac7ff442d86
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 1 11:17:56 2021 +0200
+
+    core: fix building quoted value for #!subsdefs
+    
+    (cherry picked from commit 879f8c4e52ab7f7f489107f18e2c80795c788bdd)
+
+commit 6bf1c6af774f6b26597e639e90ce7cb584b626a3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 1 10:19:08 2021 +0200
+
+    core: ppcfg - clone value for substdef
+    
+    - GH #2788
+    
+    (cherry picked from commit 56d41f6238f39d0046c97527abcb23b8dd7924be)
+
+commit 6751ccf10f7860098cfc080e492aa2e35107fdf2
+Author: Ovidiu Sas <osas@voipembedded.com>
+Date:   Thu Jul 1 10:04:10 2021 -0400
+
+    secsipid: fix documentation for secsipid_check_identity_pubkey
+    
+    (cherry picked from commit 1e4911d8a92e9e2ff25457d76d47bee111433947)
+
+commit abbe78aec28d46b74f59d14334b6e4871915ea4a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jun 29 09:25:30 2021 +0200
+
+    core: clone value for loadmodulex
+    
+    (cherry picked from commit e04890fe90d6e5ce879f968eb689e8616b318d54)
+
+commit 9dc2e9b4e723f865fa92ed03f9c9b90473c83e94
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jun 29 09:18:05 2021 +0200
+
+    core: clone modparamx evaluated values
+    
+    (cherry picked from commit 68db24577dae35de1e9045f994d9a751b50ad14d)
+
+commit 557ac56a6ec6b4ca3d76a57ff8b21c64027791f2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jun 29 08:55:32 2021 +0200
+
+    core: str list - added function to insert a block string in list
+    
+    (cherry picked from commit b92b931c26c199b756fd08e9c80cc9305469fd2b)
+
+commit 2dbf48822451433f4ee8863a954a4c40da0eb2bf
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jun 29 08:23:56 2021 +0200
+
+    http_client: removed function names from logs
+    
+    (cherry picked from commit 84d245fb4eda7690a89b4057301f81685a9452d8)
+
+commit 459f40b52a8a6f8b2ef70a6986c686448ea572a8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jun 29 08:09:22 2021 +0200
+
+    http_client: clone name in http connection structures
+    
+    - use name to lookup private memory structure, hash id is not unique,
+    can be collisions for different names
+    
+    (cherry picked from commit 9429083c87b1323e31983cc71551676c199bf640)
+
+commit b27dc141ccddfb3e0f77399ead8b2b158942de69
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jun 29 07:31:10 2021 +0200
+
+    http_client: check if shm is initialized in curl_parse_param()
+    
+    (cherry picked from commit 7741ad7979d54fb4ee1247760d8d5c3666353a96)
+
+commit a7007532ff6d351629bf1467a1e74b29c0125917
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jun 24 14:24:06 2021 +0200
+
+    tls: info log when libssl is linked static
+    
+    (cherry picked from commit 365e7e46dfb4f605bafe43b57e37e1ff68077567)
+
+commit 1ff0d8bce7a84a2afca206cd5efee781edc264d6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jun 24 11:29:40 2021 +0200
+
+    tls: debug messages with memory management functions
+    
+    (cherry picked from commit 81ace1c94369fb98081918acb55a6a13686784e3)
+
+commit 390c668e03d3347dbf429e395f7e5de230523629
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jun 24 10:15:23 2021 +0200
+
+    tls: Makefile - pkg-config for libcrypto
+    
+    - some distros have it separate of libssl
+    
+    (cherry picked from commit 2a9e8b9d5c5556a10229813c8878a81933325a01)
+
+commit 6a527503a653d554ffb38f8bd7a40fd75441ff4d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jun 23 13:05:44 2021 +0200
+
+    http_client: docs - fixed small typo
+    
+    (cherry picked from commit 1f67ac5a62b58b35df52aedbd1a3d2234a72817e)
+
+commit cf6c70f00fda196ac9eba4a2ccd24b382d41b240
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jun 23 08:48:10 2021 +0200
+
+    xhttp: warning log if tcp_accept_no_cl is not set
+    
+    (cherry picked from commit b8fbf5e8c199b8277053f9c15231695a16058d6e)
+
+commit 9d7301652ca7f051df4a23b6be3a83d3f21baa5d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jun 21 09:43:55 2021 +0200
+
+    websocket: docs - added tcp_accept_no_cl=yes to example
+    
+    (cherry picked from commit a05b4d7c2e413032b1a63f3d017243446a0bc6ec)
+
+commit 42df0f0b58a2b5780a9bf613a5a29d4af27b4f67
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jun 21 09:42:28 2021 +0200
+
+    xhttp: extended example for event_route[xhttp:request]
+    
+    (cherry picked from commit 195de260f102f1a016ad7bd1021571c1dd8a983f)
+
+commit 5ebbb557729df2f888f288ac21f61a662f7d8aa8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jun 17 16:40:39 2021 +0200
+
+    dispatcher: print eol in some log messages
+    
+    (cherry picked from commit e6f4e929efb61a1a51aa1b4b5587999acc8dc55d)
+
+commit 2ea0baf9cf2cb0b30e6474cc150eb3580d8cdf5b
+Author: Ovidiu Sas <osas@voipembedded.com>
+Date:   Tue Jun 15 13:03:07 2021 -0400
+
+    htable: fix documentation
+     - reported by arkadiam on Github
+    
+    (cherry picked from commit ee9c2bc2046103f0f7888c078b1f88d0befd6f7d)
+
+commit efe83bb89e9582b5c58a85626cc45d87dc124205
+Author: SPChan <shihping.chan@gmail.com>
+Date:   Fri Jun 11 07:51:11 2021 +0800
+
+    pkg: enable RHEL7-like distros to build with OpenSSL 1.1.1 [skip ci]
+    
+    (cherry picked from commit ecc2cc69b08e797ca954af233c229ed44475ce33)
+
+commit 01d43e2d6f78fff7fca8d6fc00adfab7f62a5320
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Mon Jun 14 15:31:32 2021 +0300
+
+    pkg/kamailio/obs: disabled lwsc build on CentOS 6 dist
+    
+    (cherry picked from commit 03c2ea28767106333ee04c5e19ee490c010dfb58)
+
+commit 0e8bb2fc46b74b5171edeb64776d280c35739ce9
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Mon Jun 14 08:05:41 2021 +0300
+
+    pkg/kamailio/obs: simlifid module definition for RHEL dist
+    
+    (cherry picked from commit e7a14f37c98e2bbfcf234165dc5dfd4121db5b5b)
+
+commit 0f0e7e8f139042e2dd03e01a6ac66d32727dc69a
+Author: SPChan <shihping.chan@gmail.com>
+Date:   Fri Jun 11 11:23:55 2021 +0800
+
+    pkg: add support for AlmaLinux and Rocky Linux
+    
+    (cherry picked from commit b3d3cb366b67941ecebd297038522580114e3a0b)
+
+commit 307af87b17fdadce2d38794b85933f6b202d1313
+Author: Henning Westerholt <hw@skalatan.de>
+Date:   Tue Jun 15 09:59:00 2021 +0000
+
+    topos: documentation fixed for contact_host xavu parameter
+    
+    (cherry picked from commit 40073c9975ee256cebbfe60f27d1b07c977395d0)
+
+
+===================== 2021-06-15 Version 5.5.1 Released =====================
 
 ===================== Changes Since Version 5.5.0 ===========================
 
