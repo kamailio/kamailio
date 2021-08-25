@@ -84,8 +84,8 @@ Ovidiu Sas
               4.2. next_gw()
               4.3. inactivate_gw()
               4.4. defunct_gw(period)
-              4.5. from_gw(lcr_id[, ip_addr, proto])
-              4.6. from_any_gw([ip_addr, proto])
+              4.5. from_gw(lcr_id[, ip_addr, proto[, src_port]])
+              4.6. from_any_gw([ip_addr, proto[, src_port]])
               4.7. to_gw(lcr_id[, ip_addr, proto])
               4.8. to_any_gw([ip_addr, proto])
 
@@ -231,8 +231,8 @@ Chapter 1. Admin Guide
         4.2. next_gw()
         4.3. inactivate_gw()
         4.4. defunct_gw(period)
-        4.5. from_gw(lcr_id[, ip_addr, proto])
-        4.6. from_any_gw([ip_addr, proto])
+        4.5. from_gw(lcr_id[, ip_addr, proto[, src_port]])
+        4.6. from_any_gw([ip_addr, proto[, src_port]])
         4.7. to_gw(lcr_id[, ip_addr, proto])
         4.8. to_any_gw([ip_addr, proto])
 
@@ -981,8 +981,8 @@ modparam("lcr", "ping_socket", "192.98.102.10:5060")
    4.2. next_gw()
    4.3. inactivate_gw()
    4.4. defunct_gw(period)
-   4.5. from_gw(lcr_id[, ip_addr, proto])
-   4.6. from_any_gw([ip_addr, proto])
+   4.5. from_gw(lcr_id[, ip_addr, proto[, src_port]])
+   4.6. from_any_gw([ip_addr, proto[, src_port]])
    4.7. to_gw(lcr_id[, ip_addr, proto])
    4.8. to_any_gw([ip_addr, proto])
 
@@ -1091,20 +1091,21 @@ failure_route [GW_FAILURE] {
 defunct_gw(60);
 ...
 
-4.5.  from_gw(lcr_id[, ip_addr, proto])
+4.5.  from_gw(lcr_id[, ip_addr, proto[, src_port]])
 
-   Checks if request comes from IP address and transport protocol
-   specified for a gateway in LCR instance lcr_id. Fails if the LCR
-   instance includes one or more gateways without IP address. IP address
-   and transport protocol to be checked are either taken from source IP
-   address of the request or (if present) from ip_addr and proto
-   arguments.
+   Checks if request comes from IP address, transport protocol and source
+   port specified for a gateway in LCR instance lcr_id. Fails if the LCR
+   instance includes one or more gateways without IP address. IP address,
+   transport protocol and source port to be checked are either taken from
+   source IP address and port of the request or (if present) from ip_addr,
+   proto and src_port arguments.
 
    lcr_id can be an integer constant or a pseudo variable holding an
    integer value. ip_addr can be a string or a pseudo variable holding a
    string value. proto can be an integer constant (0 = ANY, 1 = UDP, 2 =
    TCP, 3 = TLS, 4 = SCTP) or a pseudo variable holding such an integer
-   value.
+   value. src_port can be an integer or a pseudo variable holding such an
+   integer value.
 
    If request comes from a gateway, gateway's tag and flags are stored as
    a side effect to tag_avp and flags_avp, respectively, if the
@@ -1122,23 +1123,24 @@ defunct_gw(60);
 
    Example 1.54. from_gw usage
 ...
-if (from_gw(1, $avp(real_source_addr), 2) {
+if (from_gw(1, $avp(real_source_addr), 2, 5060) {
         ...
 };
 ...
 
-4.6.  from_any_gw([ip_addr, proto])
+4.6.  from_any_gw([ip_addr, proto[, src_port]])
 
-   Checks if request comes from IP address and transport protocol
-   specified for any gateway. Only LCR instances, where all gateways have
-   IP address, are included in the test. IP address and transport protocol
-   to be checked are either taken from source IP address and transport
-   protocol of the request or (if present) from ip_addr and proto
-   arguments. See from_gw() function for more info about the arguments.
+   Checks if request comes from IP address, transport protocol and source
+   port specified for any gateway. Only LCR instances, where all gateways
+   have IP address, are included in the test. IP address, transport
+   protocol and source port to be checked are either taken from source IP
+   address, transport protocol and source port of the request or (if
+   present) from ip_addr, proto and src_port arguments. See from_gw()
+   function for more info about the arguments.
 
-   If any gateway has the IP address and transport protocol, function
-   returns LCR identifier of the gateway. Returns -1 on error or if the
-   request does not come from a gateway.
+   If any gateway has the IP address, transport protocol and source port,
+   function returns LCR identifier of the gateway. Returns -1 on error or
+   if the request does not come from a gateway.
 
    If request comes from a gateway, gateway's tag and flags are stored as
    a side effect to tag_avp and flags_avp, respectively, if the
@@ -1154,7 +1156,7 @@ if (from_gw(1, $avp(real_source_addr), 2) {
 
    Example 1.55. from_gw usage
 ...
-$var(lcr_id) = from_any_gw("192.168.1.1", 3);
+$var(lcr_id) = from_any_gw("192.168.1.1", 3, 5061);
 ...
 
 4.7.  to_gw(lcr_id[, ip_addr, proto])
