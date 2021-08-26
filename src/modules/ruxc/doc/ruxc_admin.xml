@@ -326,6 +326,37 @@ switch ($rc) {
 				</programlisting>
 			</example>
 		</section>
+		<section id="ruxc.f.ruxc_http_delete">
+			<title>
+				<function moreinfo="none">ruxc_http_delete(url, body, hdrs, respv)</function>
+			</title>
+			<para>
+				Perform a HTTP DELETE request to "url", storing the response body
+				in the "respv" variable. The "body" and "hdrs" can be empty strings
+				to skip setting them. The first three parameters can contain
+				variables that are evaluated at runtime. The "respv" has to be
+				the name of a writable variable.
+			</para>
+			<para>
+			The function returns response code of HTTP reply or negative value
+			if something went wrong.
+			</para>
+			<para>
+			This function can be used from ANY_ROUTE.
+			</para>
+			<example>
+				<title><function>ruxc_http_delete()</function> usage</title>
+				<programlisting format="linespecific">
+...
+ruxc_http_delete("http://api.com/index.php?r_uri=$(ru{s.escape.param})&amp;f_uri=$(fu{s.escape.param})",
+	   "", "X-Token: abc", "$var(result)");
+switch ($rc) {
+    ...
+}
+...
+				</programlisting>
+			</example>
+		</section>
 	</section>
 	<section id="ruxc.s.installation">
 	<title>Installation</title>
