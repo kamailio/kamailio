@@ -40,6 +40,7 @@ Daniel-Constantin Mierla
 
               4.1. ruxc_http_get(url, hdrs, respv)
               4.2. ruxc_http_post(url, body, hdrs, respv)
+              4.3. ruxc_http_delete(url, body, hdrs, respv)
 
         5. Installation
 
@@ -56,7 +57,8 @@ Daniel-Constantin Mierla
    1.9. Set http_debug parameter
    1.10. ruxc_http_get() usage
    1.11. ruxc_http_post() usage
-   1.12. Libruxc Usage
+   1.12. ruxc_http_delete() usage
+   1.13. Libruxc Usage
 
 Chapter 1. Admin Guide
 
@@ -84,6 +86,7 @@ Chapter 1. Admin Guide
 
         4.1. ruxc_http_get(url, hdrs, respv)
         4.2. ruxc_http_post(url, body, hdrs, respv)
+        4.3. ruxc_http_delete(url, body, hdrs, respv)
 
    5. Installation
 
@@ -256,6 +259,7 @@ modparam("ruxc", "http_debug", 1)
 
    4.1. ruxc_http_get(url, hdrs, respv)
    4.2. ruxc_http_post(url, body, hdrs, respv)
+   4.3. ruxc_http_delete(url, body, hdrs, respv)
 
 4.1.  ruxc_http_get(url, hdrs, respv)
 
@@ -302,6 +306,29 @@ switch ($rc) {
 }
 ...
 
+4.3.  ruxc_http_delete(url, body, hdrs, respv)
+
+   Perform a HTTP DELETE request to "url", storing the response body in
+   the "respv" variable. The "body" and "hdrs" can be empty strings to
+   skip setting them. The first three parameters can contain variables
+   that are evaluated at runtime. The "respv" has to be the name of a
+   writable variable.
+
+   The function returns response code of HTTP reply or negative value if
+   something went wrong.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.12. ruxc_http_delete() usage
+...
+ruxc_http_delete("http://api.com/index.php?r_uri=$(ru{s.escape.param})&f_uri=$(f
+u{s.escape.param})",
+           "", "X-Token: abc", "$var(result)");
+switch ($rc) {
+    ...
+}
+...
+
 5. Installation
 
    The module needs "libruxc" library, which is provided by "ruxc" project
@@ -315,7 +342,7 @@ switch ($rc) {
    installed and its environment configured, then run the following
    commands:
 
-   Example 1.12. Libruxc Usage
+   Example 1.13. Libruxc Usage
 ...
 git clone https://github.com/miconda/ruxc
 cd ruxc
