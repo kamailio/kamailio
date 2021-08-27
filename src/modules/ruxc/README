@@ -27,24 +27,38 @@ Daniel-Constantin Mierla
         3. Parameters
 
               3.1. http_timeout (int)
-              3.2. http_tlsmode (int)
-              3.3. http_reuse (int)
+              3.2. http_timeout_connect (int)
+              3.3. http_timeout_read (int)
+              3.4. http_timeout_write (int)
+              3.5. http_tlsmode (int)
+              3.6. http_reuse (int)
+              3.7. http_retry (int)
+              3.8. http_logtype (int)
+              3.9. http_debug (int)
 
         4. Functions
 
               4.1. ruxc_http_get(url, hdrs, respv)
               4.2. ruxc_http_post(url, body, hdrs, respv)
+              4.3. ruxc_http_delete(url, body, hdrs, respv)
 
         5. Installation
 
    List of Examples
 
    1.1. Set http_timeout parameter
-   1.2. Set http_tlsmode parameter
-   1.3. Set http_reuse parameter
-   1.4. ruxc_http_get() usage
-   1.5. ruxc_http_post() usage
-   1.6. Libruxc Usage
+   1.2. Set http_timeout_connect parameter
+   1.3. Set http_timeout_read parameter
+   1.4. Set http_timeout_write parameter
+   1.5. Set http_tlsmode parameter
+   1.6. Set http_reuse parameter
+   1.7. Set http_retry parameter
+   1.8. Set http_logtype parameter
+   1.9. Set http_debug parameter
+   1.10. ruxc_http_get() usage
+   1.11. ruxc_http_post() usage
+   1.12. ruxc_http_delete() usage
+   1.13. Libruxc Usage
 
 Chapter 1. Admin Guide
 
@@ -59,13 +73,20 @@ Chapter 1. Admin Guide
    3. Parameters
 
         3.1. http_timeout (int)
-        3.2. http_tlsmode (int)
-        3.3. http_reuse (int)
+        3.2. http_timeout_connect (int)
+        3.3. http_timeout_read (int)
+        3.4. http_timeout_write (int)
+        3.5. http_tlsmode (int)
+        3.6. http_reuse (int)
+        3.7. http_retry (int)
+        3.8. http_logtype (int)
+        3.9. http_debug (int)
 
    4. Functions
 
         4.1. ruxc_http_get(url, hdrs, respv)
         4.2. ruxc_http_post(url, body, hdrs, respv)
+        4.3. ruxc_http_delete(url, body, hdrs, respv)
 
    5. Installation
 
@@ -97,13 +118,27 @@ Chapter 1. Admin Guide
 3. Parameters
 
    3.1. http_timeout (int)
-   3.2. http_tlsmode (int)
-   3.3. http_reuse (int)
+   3.2. http_timeout_connect (int)
+   3.3. http_timeout_read (int)
+   3.4. http_timeout_write (int)
+   3.5. http_tlsmode (int)
+   3.6. http_reuse (int)
+   3.7. http_retry (int)
+   3.8. http_logtype (int)
+   3.9. http_debug (int)
 
 3.1. http_timeout (int)
 
    The interval in miliseconds after which the HTTP GET or POST query
-   times out.
+   times out. It is the overall timeout, including DNS resolution,
+   connecting time, redirects, and reading the response body. Slow DNS
+   resolution may cause a request to exceed the timeout, because the DNS
+   request cannot be interrupted with the available APIs. It takes
+   precedence over http_timeout_read() and http_timeout_write(), but not
+   http_timeout_connect. See also the comments in
+   'https://github.com/algesten/ureq/blob/main/src/agent.rs'.
+
+   Use 0 to disable setting it in the library.
 
    Default value is 5000 (5 secs).
 
@@ -112,19 +147,62 @@ Chapter 1. Admin Guide
 modparam("ruxc", "http_timeout", 2000)
 ...
 
-3.2. http_tlsmode (int)
+3.2. http_timeout_connect (int)
+
+   The interval in miliseconds after which to give up on connecting to the
+   HTTP/S server. If http_timeout is set, this one takes precedence. The
+   library beneath has a default 30 seconds connect timeout.
+
+   Use 0 to disable setting it in the library.
+
+   Default value is 5000 (5 secs).
+
+   Example 1.2. Set http_timeout_connect parameter
+...
+modparam("ruxc", "http_timeout_connect", 2000)
+...
+
+3.3. http_timeout_read (int)
+
+   The interval in miliseconds after which the read on HTTP/S connection
+   socket timeouts. If http_timeout is set, it takes precedence.
+
+   Use 0 to disable setting it in the library.
+
+   Default value is 5000 (5 secs).
+
+   Example 1.3. Set http_timeout_read parameter
+...
+modparam("ruxc", "http_timeout_read", 2000)
+...
+
+3.4. http_timeout_write (int)
+
+   The interval in miliseconds after which the write on HTTP/S connection
+   socket timeouts. If http_timeout is set, it takes precedence.
+
+   Use 0 to disable setting it in the library.
+
+   Default value is 5000 (5 secs).
+
+   Example 1.4. Set http_timeout_write parameter
+...
+modparam("ruxc", "http_timeout_write", 2000)
+...
+
+3.5. http_tlsmode (int)
 
    The mode to connect over TLS to HTTPS sites: 0 accept all certificates;
    1 - accept trusted certificates.
 
    Default value is 0 (accept all certificates).
 
-   Example 1.2. Set http_tlsmode parameter
+   Example 1.5. Set http_tlsmode parameter
 ...
 modparam("ruxc", "http_tlsmode", 1)
 ...
 
-3.3. http_reuse (int)
+3.6. http_reuse (int)
 
    Set to 1 in order to reuse the connection for all requests (each
    Kamailio process has its own connection). Useful to avoid TCP connect
@@ -137,15 +215,51 @@ modparam("ruxc", "http_tlsmode", 1)
 
    Default value is 0 (new connection for each request).
 
-   Example 1.3. Set http_reuse parameter
+   Example 1.6. Set http_reuse parameter
 ...
 modparam("ruxc", "http_reuse", 1)
+...
+
+3.7. http_retry (int)
+
+   How many times to retry if the HTTP request does not get a 200ok
+   response.
+
+   Default value is 0 (no retry).
+
+   Example 1.7. Set http_retry parameter
+...
+modparam("ruxc", "http_retry", 2)
+...
+
+3.8. http_logtype (int)
+
+   Set the log type for libruxc http functions: 0 - stdout; 1 - syslog.
+
+   Default value is 0.
+
+   Example 1.8. Set http_logtype parameter
+...
+modparam("ruxc", "http_logtype", 1)
+...
+
+3.9. http_debug (int)
+
+   Set the debug mode for libruxc http functions: 0 - no debug; 1 -
+   errors; 2 - debug.
+
+   Default value is 0.
+
+   Example 1.9. Set http_debug parameter
+...
+modparam("ruxc", "http_debug", 1)
 ...
 
 4. Functions
 
    4.1. ruxc_http_get(url, hdrs, respv)
    4.2. ruxc_http_post(url, body, hdrs, respv)
+   4.3. ruxc_http_delete(url, body, hdrs, respv)
 
 4.1.  ruxc_http_get(url, hdrs, respv)
 
@@ -159,7 +273,7 @@ modparam("ruxc", "http_reuse", 1)
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.4. ruxc_http_get() usage
+   Example 1.10. ruxc_http_get() usage
 ...
 ruxc_http_get("http://api.com/index.php?r_uri=$(ru{s.escape.param})&f_uri=$(fu{s
 .escape.param})",
@@ -182,10 +296,33 @@ switch ($rc) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.5. ruxc_http_post() usage
+   Example 1.11. ruxc_http_post() usage
 ...
 ruxc_http_post("http://api.com/index.php?r_uri=$(ru{s.escape.param})&f_uri=$(fu{
 s.escape.param})",
+           "", "X-Token: abc", "$var(result)");
+switch ($rc) {
+    ...
+}
+...
+
+4.3.  ruxc_http_delete(url, body, hdrs, respv)
+
+   Perform a HTTP DELETE request to "url", storing the response body in
+   the "respv" variable. The "body" and "hdrs" can be empty strings to
+   skip setting them. The first three parameters can contain variables
+   that are evaluated at runtime. The "respv" has to be the name of a
+   writable variable.
+
+   The function returns response code of HTTP reply or negative value if
+   something went wrong.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.12. ruxc_http_delete() usage
+...
+ruxc_http_delete("http://api.com/index.php?r_uri=$(ru{s.escape.param})&f_uri=$(f
+u{s.escape.param})",
            "", "X-Token: abc", "$var(result)");
 switch ($rc) {
     ...
@@ -205,7 +342,7 @@ switch ($rc) {
    installed and its environment configured, then run the following
    commands:
 
-   Example 1.6. Libruxc Usage
+   Example 1.13. Libruxc Usage
 ...
 git clone https://github.com/miconda/ruxc
 cd ruxc

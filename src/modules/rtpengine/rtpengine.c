@@ -78,6 +78,7 @@
 #include "../../core/rpc_lookup.h"
 #include "../../core/kemi.h"
 #include "../../core/char_msg_val.h"
+#include "../../core/utils/srjson.h"
 #include "../../modules/tm/tm_load.h"
 #include "../../modules/crypto/api.h"
 #include "../../modules/lwsc/api.h"
@@ -216,6 +217,10 @@ static int rtpengine_manage1_f(struct sip_msg *, char *, char *);
 static int rtpengine_query1_f(struct sip_msg *, char *, char *);
 static int rtpengine_info1_f(struct sip_msg *, char *, char *);
 
+static int w_rtpengine_query_v(sip_msg_t *msg, char *pfmt, char *pvar);
+static int fixup_rtpengine_query_v(void **param, int param_no);
+static int fixup_free_rtpengine_query_v(void **param, int param_no);
+
 static int parse_flags(struct ng_flags_parse *, struct sip_msg *, enum rtpe_operation *, const char *);
 
 static int rtpengine_offer_answer(struct sip_msg *msg, const char *flags, enum rtpe_operation op, int more);
@@ -245,7 +250,7 @@ static int add_rtpp_node_info(void *ptrs, struct rtpp_node *crt_rtpp, struct rtp
 static int rtpp_test_ping(struct rtpp_node *node);
 
 /* Pseudo-Variables */
-static int pv_get_rtpstat_f(struct sip_msg *, pv_param_t *, pv_value_t *);
+static int pv_get_rtpestat_f(struct sip_msg *, pv_param_t *, pv_value_t *);
 static int set_rtp_inst_pvar(struct sip_msg *msg, const str * const uri);
 static int pv_parse_var(str *inp, pv_elem_t **outp, int *got_any);
 static int mos_label_stats_parse(struct minmax_mos_label_stats *mmls);
@@ -443,12 +448,17 @@ static cmd_export_t cmds[] = {
 	{"rtpengine_query",	(cmd_function)rtpengine_query1_f,	1,
 		fixup_spve_null, 0,
 		ANY_ROUTE},
+	{"rtpengine_query_v",	(cmd_function)w_rtpengine_query_v,	2,
+		fixup_rtpengine_query_v, fixup_free_rtpengine_query_v,
+		ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
 static pv_export_t mod_pvs[] = {
 	{{"rtpstat", (sizeof("rtpstat")-1)}, /* RTP-Statistics */
-	PVT_OTHER, pv_get_rtpstat_f, 0, 0, 0, 0, 0},
+	PVT_OTHER, pv_get_rtpestat_f, 0, 0, 0, 0, 0},
+	{{"rtpestat", (sizeof("rtpestat")-1)}, /* RTP-Statistics */
+	PVT_OTHER, pv_get_rtpestat_f, 0, 0, 0, 0, 0},
 	{{0, 0}, 0, 0, 0, 0, 0, 0, 0}
 };
 
@@ -4153,7 +4163,7 @@ error:
  * Returns the current RTP-Statistics from the RTP-Proxy
  */
 static int
-pv_get_rtpstat_f(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
+pv_get_rtpestat_f(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	void *parms[2];
 
@@ -4161,6 +4171,241 @@ pv_get_rtpstat_f(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 	parms[1] = res;
 
 	return rtpengine_rtpp_set_wrap(msg, rtpengine_rtpstat_wrap, parms, 1, OP_ANY);
+}
+
+/**
+ *
+ */
+static srjson_t *rtpengine_query_v_build_json(srjson_doc_t *jdoc,
+		bencode_item_t *dict)
+{
+	srjson_t *vnode;
+	srjson_t *tnode;
+	bencode_item_t *it;
+	str sval;
+
+	if(jdoc==NULL || dict==NULL) {
+		LM_ERR("invalid parameters\n");
+		return NULL;
+	}
+
+	switch (dict->type) {
+		case BENCODE_STRING:
+			return srjson_CreateStr(jdoc, dict->iov[1].iov_base, dict->iov[1].iov_len);
+
+		case BENCODE_INTEGER:
+			return srjson_CreateNumber(jdoc, dict->value);
+
+		case BENCODE_LIST:
+			vnode = srjson_CreateArray(jdoc);
+			if(vnode==NULL) {
+				LM_ERR("failed to create the array node\n");
+				return NULL;
+			}
+			for (it = dict->child; it; it = it->sibling) {
+				tnode = rtpengine_query_v_build_json(jdoc, it);
+				if (!tnode) {
+					srjson_Delete(jdoc, vnode);
+					return NULL;
+				}
+				srjson_AddItemToArray(jdoc, vnode, tnode);
+			}
+			return vnode;
+
+		case BENCODE_DICTIONARY:
+			vnode = srjson_CreateObject(jdoc);
+			if(vnode==NULL) {
+				LM_ERR("failed to create the object node\n");
+				return NULL;
+			}
+			for (it = dict->child; it; it = it->sibling) {
+				/* name of the item */
+				sval.s = it->iov[1].iov_base;
+				sval.len = it->iov[1].iov_len;
+				/* value of the item */
+				it = it->sibling;
+				tnode = rtpengine_query_v_build_json(jdoc, it);
+				if (!tnode) {
+					srjson_Delete(jdoc, vnode);
+					return NULL;
+				}
+				srjson_AddStrItemToObject(jdoc, vnode, sval.s, sval.len, tnode);
+			}
+			return vnode;
+
+		default:
+			LM_ERR("unsupported bencode item type %d\n", dict->type);
+			return NULL;
+	}
+}
+
+/**
+ *
+ */
+static int rtpengine_query_v_print(bencode_item_t *dict, str *fmt,
+		str *bout)
+{
+	srjson_doc_t jdoc;
+
+	if(fmt==NULL || fmt->s==NULL || fmt->len<=0) {
+		LM_ERR("invalid format parameter\n");
+		return -1;
+	}
+	if(fmt->s[0]!='j' && fmt->s[0]!='J') {
+		LM_ERR("invalid format parameter value: %.*s\n", fmt->len, fmt->s);
+		return -1;
+	}
+
+	srjson_InitDoc(&jdoc, NULL);
+	jdoc.root = rtpengine_query_v_build_json(&jdoc, dict);
+
+	if(jdoc.root==NULL) {
+		LM_ERR("failed to build json document\n");
+		return -1;
+	}
+
+	if(fmt->len>1 && (fmt->s[1]=='p' || fmt->s[1]=='P')) {
+		bout->s = srjson_Print(&jdoc, jdoc.root);
+	} else {
+		bout->s = srjson_PrintUnformatted(&jdoc, jdoc.root);
+	}
+	if(bout->s==NULL) {
+		LM_ERR("unable to serialize json document\n");
+		srjson_DestroyDoc(&jdoc);
+		return -1;
+	}
+	bout->len = strlen(bout->s);
+	srjson_DestroyDoc(&jdoc);
+
+	return 0;
+}
+
+/**
+ *
+ */
+static int rtpengine_query_v_wrap(struct sip_msg *msg, void *d, int more,
+		enum rtpe_operation op)
+{
+	void **parms;
+	str *fmt = NULL;
+	pv_spec_t *dst = NULL;
+	pv_value_t val = {0};
+	bencode_buffer_t bencbuf;
+	bencode_item_t *dict;
+
+	parms = d;
+	fmt = parms[0];
+	dst = parms[1];
+
+	dict = rtpp_function_call_ok(&bencbuf, msg, OP_QUERY, NULL, NULL);
+	if (!dict) {
+		return -1;
+	}
+	if(rtpengine_query_v_print(dict, fmt, &val.rs)<0) {
+		goto error;
+	}
+
+	val.flags = PV_VAL_STR;
+	if(dst->setf) {
+		dst->setf(msg, &dst->pvp, (int)EQ_T, &val);
+	} else {
+		LM_WARN("target pv is not writable\n");
+	}
+
+	/* val.rs.s is allocated by srjson print */
+	free(val.rs.s);
+
+	bencode_buffer_free(&bencbuf);
+	return 1;
+
+error:
+	bencode_buffer_free(&bencbuf);
+	return -1;
+}
+
+/**
+ *
+ */
+static int ki_rtpengine_query_v(sip_msg_t *msg, str *fmt, str *dpv)
+{
+	void *parms[2];
+	pv_spec_t *dst;
+
+	dst = pv_cache_get(dpv);
+	if(dst==NULL) {
+		LM_ERR("failed to get pv spec for: %.*s\n", dpv->len, dpv->s);
+		return -1;
+	}
+	if(dst->setf==NULL) {
+		LM_ERR("target pv is not writable: %.*s\n", dpv->len, dpv->s);
+		return -1;
+	}
+	parms[0] = fmt;
+	parms[1] = dst;
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_query_v_wrap, parms, 1, OP_ANY);
+}
+
+/*
+ * Store the cmd QUERY result to variable
+ */
+static int w_rtpengine_query_v(sip_msg_t *msg, char *pfmt, char *pvar)
+{
+	void *parms[2];
+	str fmt = {NULL, 0};
+	pv_spec_t *dst;
+
+	if(fixup_get_svalue(msg, (gparam_t*)pfmt, &fmt) < 0 || fmt.len <= 0) {
+		LM_ERR("fmt has no value\n");
+		return -1;
+	}
+	dst = (pv_spec_t *)pvar;
+
+	parms[0] = &fmt;
+	parms[1] = dst;
+
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_query_v_wrap, parms, 1, OP_ANY);
+}
+
+/**
+ *
+ */
+static int fixup_rtpengine_query_v(void **param, int param_no)
+{
+	if(param_no == 1) {
+		return fixup_spve_null(param, 1);
+	}
+
+	if(param_no == 2) {
+		if(fixup_pvar_null(param, 1) != 0) {
+			LM_ERR("failed to fixup result pvar\n");
+			return -1;
+		}
+		if(((pv_spec_t *)(*param))->setf == NULL) {
+			LM_ERR("result pvar is not writeble\n");
+			return -1;
+		}
+		return 0;
+	}
+
+	LM_ERR("invalid parameter number <%d>\n", param_no);
+	return -1;
+}
+
+/**
+ *
+ */
+static int fixup_free_rtpengine_query_v(void **param, int param_no)
+{
+	if(param_no == 1) {
+		return fixup_free_spve_null(param, 1);
+	}
+
+	if(param_no == 2) {
+		return fixup_free_pvar_null(param, 1);
+	}
+
+	LM_ERR("invalid parameter number <%d>\n", param_no);
+	return -1;
 }
 
 static int
@@ -4525,6 +4770,11 @@ static sr_kemi_t sr_kemi_rtpengine_exports[] = {
     { str_init("rtpengine"), str_init("rtpengine_query"),
         SR_KEMIP_INT, ki_rtpengine_query,
         { SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+            SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+    },
+   { str_init("rtpengine"), str_init("rtpengine_query_v"),
+        SR_KEMIP_INT, ki_rtpengine_query_v,
+        { SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
             SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
     },
 

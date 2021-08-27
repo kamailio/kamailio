@@ -34,9 +34,9 @@ extern int inode;
 extern int unode;
 
 
-static inline int check_time(tmrec_t *time_rec)
+static inline int check_time(dr_tmrec_t *time_rec)
 {
-	ac_tm_t att;
+	dr_ac_tm_t att;
 
 	/* shortcut: if there is no dstart, timerec is valid */
 	if(time_rec->dtstart == 0)
@@ -45,11 +45,11 @@ static inline int check_time(tmrec_t *time_rec)
 	memset(&att, 0, sizeof(att));
 
 	/* set current time */
-	if(ac_tm_set_time(&att, time(0)))
+	if(dr_ac_tm_set_time(&att, time(0)))
 		return 0;
 
 	/* does the recv_time match the specified interval?  */
-	if(check_tmrec(time_rec, &att, 0) != 0)
+	if(dr_check_tmrec(time_rec, &att, 0) != 0)
 		return 0;
 
 	return 1;
@@ -249,7 +249,7 @@ void free_rt_info(rt_info_t *rl)
 	if(NULL != rl->pgwl)
 		shm_free(rl->pgwl);
 	if(NULL != rl->time_rec)
-		tmrec_free(rl->time_rec);
+		dr_tmrec_free(rl->time_rec);
 	shm_free(rl);
 	return;
 }
