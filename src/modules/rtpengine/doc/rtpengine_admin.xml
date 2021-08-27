@@ -2792,6 +2792,36 @@ rtpengine_query();
 </programlisting>
 		</example>
 	</section>
+	<section id="rtpengine.f.rtpengine_query_v">
+		<title>
+		<function moreinfo="none">rtpengine_query_v(fmt, var)</function>
+		</title>
+		<para>
+		Queries the &rtp; proxy about the current status and statistics of a running
+		call, converts the response to JSON according to fmt and sets the variable
+		var with the result.
+		</para>
+		<para>
+		The fmt parameter can be 'j' for compacted JSON and 'jp' for pretty-formatted
+		JSON.
+		</para>
+		<para>
+		The var parameter has to be the name of a writable variable.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>rtpengine_query_v</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(rtpengine_query_v("j", "$var(rdata)")) {
+    xinfo("rtpengine query response: $var(rdata)\n");
+}
+...
+</programlisting>
+		</example>
+	</section>
 
 	<section id="rtpengine.f.rtpengine_manage">
 	<title>
