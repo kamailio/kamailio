@@ -856,25 +856,31 @@ start_recording();
 	</section>
 
 	<section>
-		<title>Exported Pseudo Variables</title>
-		<section id="rtpproxy.pv.rtpstat">
-			<title><function moreinfo="none">$rtpstat</function></title>
+		<title>Exported Variables</title>
+		<section id="rtpproxy.pv.rtppstat">
+			<title><function moreinfo="none">$rtppstat</function></title>
 			<para>
 			Returns the RTP-Statistics from the RTP-Proxy. The RTP-Statistics from the RTP-Proxy
 			are provided as a string and it does contain several packet-counters. The statistics
 			must be retrieved before the session is deleted	(before <function>unforce_rtpproxy()</function>).
+			It is the output of RTPProxy 'Q' command.
 			</para>
 
 		<example>
-		<title>$rtpstat-Usage</title>
+		<title>$rtppstat Usage</title>
 		<programlisting format="linespecific">
 ...
-    append_hf("X-RTP-Statistics: $rtpstat\r\n");
+    append_hf("X-RTP-Statistics: $rtppstat\r\n");
 ...
 		</programlisting>
 		</example>
 	        </section>
-
+		<section id="rtpproxy.pv.rtpstat">
+			<title><function moreinfo="none">$rtpstat</function></title>
+			<para>
+			Same as $rtppstat.
+			</para>
+	        </section>
 	</section>
 
 	<section>

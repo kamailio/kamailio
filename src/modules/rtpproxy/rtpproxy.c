@@ -144,7 +144,7 @@ static int child_init(int);
 static void mod_destroy(void);
 
 /* Pseudo-Variables */
-static int pv_get_rtpstat_f(struct sip_msg *, pv_param_t *, pv_value_t *);
+static int pv_get_rtppstat_f(struct sip_msg *, pv_param_t *, pv_value_t *);
 
 static int rtpproxy_disable_tout = 60;
 static int rtpproxy_retr = 5;
@@ -250,7 +250,9 @@ static cmd_export_t cmds[] = {
 
 static pv_export_t mod_pvs[] = {
 	{{"rtpstat", (sizeof("rtpstat")-1)}, /* RTP-Statistics */
-		PVT_OTHER, pv_get_rtpstat_f, 0, 0, 0, 0, 0},
+		PVT_OTHER, pv_get_rtppstat_f, 0, 0, 0, 0, 0},
+	{{"rtppstat", (sizeof("rtppstat")-1)}, /* RTP-Statistics */
+		PVT_OTHER, pv_get_rtppstat_f, 0, 0, 0, 0, 0},
 	{{0, 0}, 0, 0, 0, 0, 0, 0, 0}
 };
 
@@ -2729,7 +2731,7 @@ static int start_recording_f(struct sip_msg* msg, char *foo, char *bar)
  * Returns the current RTP-Statistics from the RTP-Proxy
  */
 	static int
-pv_get_rtpstat_f(struct sip_msg *msg, pv_param_t *param,
+pv_get_rtppstat_f(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
 {
 	str ret_val = {0, 0};
