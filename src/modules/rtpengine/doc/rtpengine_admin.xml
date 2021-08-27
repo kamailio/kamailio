@@ -3223,22 +3223,30 @@ play_dtmf("code=1 volume=5 duration=300 pause=150");
 
 	<section>
 		<title>Exported Pseudo Variables</title>
-		<section>
-			<title><function moreinfo="none">$rtpstat</function></title>
+		<section id="rtpengine.pv.rtpestat">
+			<title><function moreinfo="none">$rtpestat</function></title>
 			<para>
-			Returns the &rtp; statistics from the &rtp; proxy. The &rtp; statistics from the &rtp; proxy
+			Returns the &rtp; statistics from the &rtp; relay. The &rtp; statistics from the &rtp; relay
 			are provided as a string and it does contain several packet counters. The statistics
 			must be retrieved before the session is deleted	(before <function>rtpengine_delete()</function>).
 			</para>
 
 		<example>
-		<title>$rtpstat Usage</title>
+		<title>$rtpestat Usage</title>
 		<programlisting format="linespecific">
 ...
-    append_hf("X-RTP-Statistics: $rtpstat\r\n");
+    append_hf("X-RTP-Statistics: $rtpestat\r\n");
+...
+    # $rtpestat = RTP: 54846 bytes, 1447 packets, 0 errors; RTCP: 336 bytes, 3 packets, 0 errors
 ...
 		</programlisting>
 		</example>
+	        </section>
+		<section id="rtpengine.pv.rtpstat">
+			<title><function moreinfo="none">$rtpstat</function></title>
+			<para>
+				Same as $rtpestat.
+			</para>
 	        </section>
 
 	</section>

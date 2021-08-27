@@ -245,7 +245,7 @@ static int add_rtpp_node_info(void *ptrs, struct rtpp_node *crt_rtpp, struct rtp
 static int rtpp_test_ping(struct rtpp_node *node);
 
 /* Pseudo-Variables */
-static int pv_get_rtpstat_f(struct sip_msg *, pv_param_t *, pv_value_t *);
+static int pv_get_rtpestat_f(struct sip_msg *, pv_param_t *, pv_value_t *);
 static int set_rtp_inst_pvar(struct sip_msg *msg, const str * const uri);
 static int pv_parse_var(str *inp, pv_elem_t **outp, int *got_any);
 static int mos_label_stats_parse(struct minmax_mos_label_stats *mmls);
@@ -448,7 +448,9 @@ static cmd_export_t cmds[] = {
 
 static pv_export_t mod_pvs[] = {
 	{{"rtpstat", (sizeof("rtpstat")-1)}, /* RTP-Statistics */
-	PVT_OTHER, pv_get_rtpstat_f, 0, 0, 0, 0, 0},
+	PVT_OTHER, pv_get_rtpestat_f, 0, 0, 0, 0, 0},
+	{{"rtpestat", (sizeof("rtpestat")-1)}, /* RTP-Statistics */
+	PVT_OTHER, pv_get_rtpestat_f, 0, 0, 0, 0, 0},
 	{{0, 0}, 0, 0, 0, 0, 0, 0, 0}
 };
 
@@ -4153,7 +4155,7 @@ error:
  * Returns the current RTP-Statistics from the RTP-Proxy
  */
 static int
-pv_get_rtpstat_f(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
+pv_get_rtpestat_f(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	void *parms[2];
 
