@@ -70,9 +70,10 @@ Carsten Bock
               5.10. rtpproxy_stop_stream2uas()
               5.11. start_recording()
 
-        6. Exported Pseudo Variables
+        6. Exported Variables
 
-              6.1. $rtpstat
+              6.1. $rtppstat
+              6.2. $rtpstat
 
         7. RPC Commands
 
@@ -103,7 +104,7 @@ Carsten Bock
    1.18. rtpproxy_stream2xxx usage
    1.19. rtpproxy_stop_stream2uas usage
    1.20. start_recording usage
-   1.21. $rtpstat-Usage
+   1.21. $rtppstat Usage
    1.22. rtpproxy.enable usage
    1.23. rtpproxy.list usage
 
@@ -146,9 +147,10 @@ Chapter 1. Admin Guide
         5.10. rtpproxy_stop_stream2uas()
         5.11. start_recording()
 
-   6. Exported Pseudo Variables
+   6. Exported Variables
 
-        6.1. $rtpstat
+        6.1. $rtppstat
+        6.2. $rtpstat
 
    7. RPC Commands
 
@@ -736,21 +738,27 @@ rtpproxy_manage();
 start_recording();
 ...
 
-6. Exported Pseudo Variables
+6. Exported Variables
 
-   6.1. $rtpstat
+   6.1. $rtppstat
+   6.2. $rtpstat
 
-6.1. $rtpstat
+6.1. $rtppstat
 
    Returns the RTP-Statistics from the RTP-Proxy. The RTP-Statistics from
    the RTP-Proxy are provided as a string and it does contain several
    packet-counters. The statistics must be retrieved before the session is
-   deleted (before unforce_rtpproxy()).
+   deleted (before unforce_rtpproxy()). It is the output of RTPProxy 'Q'
+   command.
 
-   Example 1.21. $rtpstat-Usage
+   Example 1.21. $rtppstat Usage
 ...
-    append_hf("X-RTP-Statistics: $rtpstat\r\n");
+    append_hf("X-RTP-Statistics: $rtppstat\r\n");
 ...
+
+6.2. $rtpstat
+
+   Same as $rtppstat.
 
 7. RPC Commands
 

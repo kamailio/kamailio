@@ -155,7 +155,8 @@ Richard Fuchs
 
         6. Exported Pseudo Variables
 
-              6.1. $rtpstat
+              6.1. $rtpestat
+              6.2. $rtpstat
 
         7. RPC Commands
 
@@ -269,7 +270,7 @@ Richard Fuchs
    1.98. play_media usage
    1.99. stop_media usage
    1.100. play_dtmf usage
-   1.101. $rtpstat Usage
+   1.101. $rtpestat Usage
    1.102. rtpengine.reload usage
    1.103. rtpengine.enable usage
    1.104. rtpengine.show usage
@@ -394,7 +395,8 @@ Chapter 1. Admin Guide
 
    6. Exported Pseudo Variables
 
-        6.1. $rtpstat
+        6.1. $rtpestat
+        6.2. $rtpstat
 
    7. RPC Commands
 
@@ -2682,19 +2684,27 @@ play_dtmf("code=1 volume=5 duration=300 pause=150");
 
 6. Exported Pseudo Variables
 
-   6.1. $rtpstat
+   6.1. $rtpestat
+   6.2. $rtpstat
 
-6.1. $rtpstat
+6.1. $rtpestat
 
-   Returns the RTP statistics from the RTP proxy. The RTP statistics from
-   the RTP proxy are provided as a string and it does contain several
+   Returns the RTP statistics from the RTP relay. The RTP statistics from
+   the RTP relay are provided as a string and it does contain several
    packet counters. The statistics must be retrieved before the session is
    deleted (before rtpengine_delete()).
 
-   Example 1.101. $rtpstat Usage
+   Example 1.101. $rtpestat Usage
 ...
-    append_hf("X-RTP-Statistics: $rtpstat\r\n");
+    append_hf("X-RTP-Statistics: $rtpestat\r\n");
 ...
+    # $rtpestat = RTP: 54846 bytes, 1447 packets, 0 errors; RTCP: 336 bytes, 3 p
+ackets, 0 errors
+...
+
+6.2. $rtpstat
+
+   Same as $rtpestat.
 
 7. RPC Commands
 
