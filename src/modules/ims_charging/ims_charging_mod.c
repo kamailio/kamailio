@@ -498,7 +498,7 @@ static int ki_ro_ccr(sip_msg_t *msg, str* s_route_name, str* s_direction, int re
     contact = {0, 0};
     struct hdr_field *h=0;
     
-    cfg_action_t* cfg_action;
+    void* cfg_action;
     tm_cell_t *t;
     unsigned int tindex = 0,
                  tlabel = 0;
@@ -573,18 +573,22 @@ send_ccr:
     
     LM_DBG("Looking for route block [%.*s]\n", s_route_name->len, s_route_name->s);
 
-    int ri = route_get(&main_rt, s_route_name->s);
-    if (ri < 0) {
-        LM_ERR("unable to find route block [%.*s]\n", s_route_name->len, s_route_name->s);
-        ret = RO_RETURN_ERROR;
-        goto done;
-    }
-    
-    cfg_action = main_rt.rlist[ri];
-    if (!cfg_action) {
-        LM_ERR("empty action lists in route block [%.*s]\n", s_route_name->len, s_route_name->s);
-        ret = RO_RETURN_ERROR;
-        goto done;
+    if (!sr_kemi_eng_get()) {
+        int ri = route_get(&main_rt, s_route_name->s);
+        if (ri < 0) {
+            LM_ERR("unable to find route block [%.*s]\n", s_route_name->len, s_route_name->s);
+            ret = RO_RETURN_ERROR;
+            goto done;
+        }
+        
+        cfg_action = main_rt.rlist[ri];
+        if (!cfg_action) {
+            LM_ERR("empty action lists in route block [%.*s]\n", s_route_name->len, s_route_name->s);
+            ret = RO_RETURN_ERROR;
+            goto done;
+        }
+    } else {
+        cfg_action = s_route_name;
     }
 
     //before we send lets suspend the transaction

@@ -33,6 +33,7 @@
 #include "ro_avp.h"
 #include "ro_db_handler.h"
 #include "ims_charging_stats.h"
+#include "../../core/str.h"
 
 static pv_spec_t *custom_user_avp;		/*!< AVP for custom_user setting */
 static pv_spec_t *app_provided_party_avp;	/*!< AVP for app_provided_party setting */
@@ -50,7 +51,7 @@ extern int vendor_specific_chargeinfo;
 
 struct session_setup_data {
     struct ro_session *ro_session;
-    cfg_action_t* action;
+    void* action;
     unsigned int tindex;
     unsigned int tlabel;
 };
@@ -1077,7 +1078,7 @@ error:
  * @returns #CSCF_RETURN_BREAK if OK, #CSCF_RETURN_ERROR on error
  */
 int Ro_Send_CCR(struct sip_msg *msg, struct dlg_cell *dlg, int dir, int reservation_units, str* incoming_trunk_id, str* outgoing_trunk_id,
-        str* pani, cfg_action_t* action, unsigned int tindex, unsigned int tlabel) {
+        str* pani, void* action, unsigned int tindex, unsigned int tlabel) {
     str session_id = {0, 0},
     called_asserted_identity = {0, 0},
     subscription_id = {0, 0},
@@ -1217,7 +1218,24 @@ int Ro_Send_CCR(struct sip_msg *msg, struct dlg_cell *dlg, int dir, int reservat
     }
     LM_DBG("new session created\n");
 
-    ssd->action = action;
+    if (sr_kemi_eng_get())
+    {
+        str *tmp = shm_malloc(sizeof(str));
+        if (tmp == NULL) {
+            SHM_MEM_ERROR;
+            goto error;
+        }
+        if (shm_str_dup(tmp, (str *) action) != 0) {
+            SHM_MEM_ERROR;
+            shm_free(tmp);
+            goto error;
+        } else {
+            ssd->action = tmp;
+        }
+    } else {
+        ssd->action = action;
+    }
+
     ssd->tindex = tindex;
     ssd->tlabel = tlabel;
     ssd->ro_session = new_session;
@@ -1464,7 +1482,16 @@ static void resume_on_initial_ccr(int is_timeout, void *param, AAAMessage *cca, 
     if (t)
         tmb.unref_cell(t);
 
-    tmb.t_continue(ssd->tindex, ssd->tlabel, ssd->action);
+    if (sr_kemi_eng_get())
+    {
+        str cb_param = str_init("ccr:continue");
+        tmb.t_continue_cb(ssd->tindex, ssd->tlabel, ssd->action, &cb_param);
+        str_free(*((str *)ssd->action), shm);
+        shm_free(ssd->action);
+    } else {
+        tmb.t_continue(ssd->tindex, ssd->tlabel, ssd->action);
+    }
+
     shm_free(ssd);
 
     counter_inc(ims_charging_cnts_h.successful_initial_ccrs);
