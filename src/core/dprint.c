@@ -27,7 +27,10 @@
  */
 
 
+#ifdef KSR_PTHREAD_MUTEX_SHARED
+#define HAVE_PTHREAD
 #include <pthread.h>
+#endif
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -639,7 +642,12 @@ static void ksr_slog_json_str_escape(str *s_in, str *s_out, int *emode)
 	" \"" NAME ".line\": %d, \"" NAME ".function\": \"%s\", \"" NAME ".callid\": \"%.*s\", \"" NAME ".logprefix\": \"%.*s\"," \
 	" \"%smessage\": \"%.*s\" }%s"
 
-#define KSR_SLOG_JSON_CEEFMT "{\"time\":\"%s.%09luZ\",\"proc\":{\"id\":\"%d\",\"tid\":%ju},\"pri\":\"%s\",\"subsys\":\"%s\"," \
+#ifdef HAVE_PTHREAD
+#define KSR_SLOG_JSON_CEEFMT_TID ",\"tid\":%ju"
+#else
+#define KSR_SLOG_JSON_CEEFMT_TID ""
+#endif
+#define KSR_SLOG_JSON_CEEFMT "{\"time\":\"%s.%09luZ\",\"proc\":{\"id\":\"%d\"" KSR_SLOG_JSON_CEEFMT_TID "},\"pri\":\"%s\",\"subsys\":\"%s\"," \
         "\"file\":{\"name\":\"%s\",\"line\":%d},\"native\":{\"function\":\"%s\"},\"msg\":\"%s\"," \
         "\"pname\":\"%s\",\"appname\":\"%s\",\"hostname\":\"%s\"}%s"
 
@@ -710,7 +718,11 @@ void ksr_slog_json(ksr_logdata_t *kld, const char *format, ...)
 	if (unlikely(log_stderr)) {
 		if (unlikely(log_cee)) {
 			fprintf(stderr, KSR_SLOG_JSON_CEEFMT,
-			iso8601buf, _tp.tv_nsec, my_pid(), pthread_self(), kld->v_lname,
+			iso8601buf, _tp.tv_nsec, my_pid(),
+#ifdef HAVE_PTHREAD
+                        pthread_self(),
+#endif
+                        kld->v_lname,
 			kld->v_mname, kld->v_fname, kld->v_fline, kld->v_func, s_out.s,
 			"kamailio", log_name!=0?log_name:"kamailio", log_fqdn,
 			(_ksr_slog_json_flags & KSR_SLOGJSON_FL_NOLOGNL)?"":"\n");
@@ -727,7 +739,11 @@ void ksr_slog_json(ksr_logdata_t *kld, const char *format, ...)
 	} else {
 		if (unlikely(log_cee)) {
 			_km_log_func(kld->v_facility, KSR_SLOG_JSON_CEEFMT,
-			iso8601buf, _tp.tv_nsec, my_pid(), pthread_self(), kld->v_lname,
+			iso8601buf, _tp.tv_nsec, my_pid(),
+#ifdef HAVE_PTHREAD
+                        pthread_self(),
+#endif
+                        kld->v_lname,
 			kld->v_mname, kld->v_fname, kld->v_fline, kld->v_func, s_out.s,
 			"kamailio", log_name!=0?log_name:"kamailio", log_fqdn,
 			(_ksr_slog_json_flags & KSR_SLOGJSON_FL_NOLOGNL)?"":"\n");
