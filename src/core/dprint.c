@@ -639,8 +639,8 @@ static void ksr_slog_json_str_escape(str *s_in, str *s_out, int *emode)
 	" \"" NAME ".line\": %d, \"" NAME ".function\": \"%s\", \"" NAME ".callid\": \"%.*s\", \"" NAME ".logprefix\": \"%.*s\"," \
 	" \"%smessage\": \"%.*s\" }%s"
 
-#define KSR_SLOG_JSON_CEEFMT "{\"time\":\"%s.%09luZ\",\"proc!id\":\"%d\",\"proc!tid\":%ju,\"pri\":\"%s\",\"subsys\":\"%s\"," \
-        "\"file!name\":\"%s\",\"file!line\":%d,\"native!function\":\"%s\",\"msg\":\"%s\"," \
+#define KSR_SLOG_JSON_CEEFMT "{\"time\":\"%s.%09luZ\",\"proc\":{\"id\":\"%d\",\"tid\":%ju},\"pri\":\"%s\",\"subsys\":\"%s\"," \
+        "\"file\":{\"name\":\"%s\",\"line\":%d},\"native\":{\"function\":\"%s\"},\"msg\":\"%s\"," \
         "\"pname\":\"%s\",\"appname\":\"%s\",\"hostname\":\"%s\"}%s"
 
 void ksr_slog_json(ksr_logdata_t *kld, const char *format, ...)
