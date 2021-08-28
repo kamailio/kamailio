@@ -342,9 +342,11 @@ int dont_fork = 0;
 int dont_daemonize = 0;
 int log_stderr = 0;
 int log_color = 0;
+int log_cee = 0;
 /* set custom app name for syslog printing */
 char *log_name = 0;
 char *log_prefix_fmt = 0;
+char *log_fqdn = 0;
 pid_t creator_pid = (pid_t) -1;
 int config_check = 0;
 /* check if reply first via host==us */
@@ -2039,7 +2041,7 @@ int main(int argc, char** argv)
 	sr_cfgenv_init();
 	daemon_status_init();
 
-	dprint_init_colors();
+	log_init();
 
 	/* command line options */
 	options=  ":f:cm:M:dVIhEeb:l:L:n:vKrRDTN:W:w:t:u:g:P:G:SQ:O:a:A:x:X:Y:";
