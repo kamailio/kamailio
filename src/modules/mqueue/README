@@ -43,6 +43,8 @@ Julien Chavanton
 
               3.1. db_url (str)
               3.2. mqueue (string)
+              3.3. mqueue_name (string)
+              3.4. mqueue_size (int)
 
         4. Functions
 
@@ -62,13 +64,15 @@ Julien Chavanton
 
    1.1. Set db_url parameter
    1.2. Set mqueue parameter
-   1.3. mq_add usage
-   1.4. mq_fetch usage
-   1.5. mq_pv_free usage
-   1.6. mq_size usage
-   1.7. mqueue.get_size usage
-   1.8. mqueue.fetch usage
-   1.9. mqueue.get_sizes usage
+   1.3. Set mqueue_name parameter
+   1.4. Set mqueue_size parameter
+   1.5. mq_add usage
+   1.6. mq_fetch usage
+   1.7. mq_pv_free usage
+   1.8. mq_size usage
+   1.9. mqueue.get_size usage
+   1.10. mqueue.fetch usage
+   1.11. mqueue.get_sizes usage
 
 Chapter 1. Admin Guide
 
@@ -84,6 +88,8 @@ Chapter 1. Admin Guide
 
         3.1. db_url (str)
         3.2. mqueue (string)
+        3.3. mqueue_name (string)
+        3.4. mqueue_size (int)
 
    4. Functions
 
@@ -130,6 +136,8 @@ Chapter 1. Admin Guide
 
    3.1. db_url (str)
    3.2. mqueue (string)
+   3.3. mqueue_name (string)
+   3.4. mqueue_size (int)
 
 3.1. db_url (str)
 
@@ -180,6 +188,41 @@ modparam("mqueue", "mqueue", "name=myq;size=20;")
 modparam("mqueue", "mqueue", "name=qaz")
 ...
 
+3.3. mqueue_name (string)
+
+   Definition of a memory queue, just by name.
+
+   Default value is “none”.
+
+   Value must be a string.
+
+   The parameter can be set many times, each holding the definition of one
+   queue. The max size of each queue defined this way will be equal to
+   mqueue_size(if mqueue_size configured), or limitless (if mqueue_size
+   not configured).
+
+   Example 1.3. Set mqueue_name parameter
+...
+modparam("mqueue", "mqueue_name", "my_own_queue")
+...
+
+3.4. mqueue_size (int)
+
+   Definition of the size of all memory queues defined via "mqueue_name"
+   parameter.
+
+   Default value is “0”.
+
+   Value must be an int.
+
+   The parameter should be set before defining any "mqueue_name". If not
+   set, the queues defined via "mqueue_name" will be limitless.
+
+   Example 1.4. Set mqueue_size parameter
+...
+modparam("mqueue", "mqueue_size", 1024)
+...
+
 4. Functions
 
    4.1. mq_add(queue, key, value)
@@ -192,7 +235,7 @@ modparam("mqueue", "mqueue", "name=qaz")
    Add a new item (key, value) in the queue. If max size of queue is
    exceeded, the oldest one is removed.
 
-   Example 1.3. mq_add usage
+   Example 1.5. mq_add usage
 ...
 mq_add("myq", "$rU", "call from $fU");
 ...
@@ -205,7 +248,7 @@ mq_add("myq", "$rU", "call from $fU");
    Return: true on success (1); false on failure (-1) or no item fetched
    (-2).
 
-   Example 1.4. mq_fetch usage
+   Example 1.6. mq_fetch usage
 ...
 while(mq_fetch("myq"))
 {
@@ -218,7 +261,7 @@ while(mq_fetch("myq"))
    Free the item fetched in pseudo-variables. It is optional, a new fetch
    frees the previous values.
 
-   Example 1.5. mq_pv_free usage
+   Example 1.7. mq_pv_free usage
 ...
 mq_pv_free("myq");
 ...
@@ -230,7 +273,7 @@ mq_pv_free("myq");
    If the mqueue is empty, the function returns -1. If the mqueue is not
    found, the function returns -2.
 
-   Example 1.6. mq_size usage
+   Example 1.8. mq_size usage
 ...
 $var(q_size) = mq_size("queue");
 xlog("L_INFO", "Size of queue is: $var(q_size)\n");
@@ -260,7 +303,7 @@ xlog("L_INFO", "Size of queue is: $var(q_size)\n");
    Parameters:
      * name - the name of memory queue
 
-   Example 1.7. mqueue.get_size usage
+   Example 1.9. mqueue.get_size usage
 ...
 kamcmd mqueue.get_size xyz
 ...
@@ -272,7 +315,7 @@ kamcmd mqueue.get_size xyz
    Parameters:
      * name - the name of memory queue
 
-   Example 1.8. mqueue.fetch usage
+   Example 1.10. mqueue.fetch usage
 ...
 kamcmd mqueue.fetch xyz
 ...
@@ -283,7 +326,7 @@ kamcmd mqueue.fetch xyz
 
    Parameters: none
 
-   Example 1.9. mqueue.get_sizes usage
+   Example 1.11. mqueue.get_sizes usage
 ...
 kamcmd mqueue.get_sizes
 ...
