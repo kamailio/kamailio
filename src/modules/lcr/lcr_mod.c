@@ -3068,7 +3068,7 @@ static int from_gw_1(struct sip_msg *_m, char *_lcr_id, char *_s2)
  * address, transport protocol and source port from parameters.
  */
 static int ki_from_gw_addr_port(
-		sip_msg_t *_m, int lcr_id, str *addr_str, int transport, unsigned int src_port)
+		sip_msg_t *_m, int lcr_id, str *addr_str, int transport, int src_port)
 {
 	struct ip_addr src_addr;
 	struct ip_addr *ip;
@@ -3147,7 +3147,7 @@ static int from_gw_4(
 	str addr_str;
 	char *tmp;
 	uri_transport transport;
-	unsigned int src_port;
+	int src_port;
 
 	/* Get and check parameter values */
 	lcr_id = strtol(_lcr_id, &tmp, 10);
@@ -3206,7 +3206,7 @@ static int from_any_gw_0(struct sip_msg *_m, char *_s1, char *_s2)
  * IP address, transport protocol and source port from parameters.
  */
 static int ki_from_any_gw_addr_port(sip_msg_t *_m, str *addr_str, int transport,
-		unsigned int src_port)
+		int src_port)
 {
 	unsigned int i;
 	struct ip_addr *ip, src_addr;
@@ -3273,7 +3273,7 @@ static int from_any_gw_3(struct sip_msg *_m, char *_addr, char *_transport, char
 {
 	str addr_str;
 	uri_transport transport;
-	unsigned int src_port;
+	int src_port;
 	char *tmp;
 
 	/* Get and check parameter values */
