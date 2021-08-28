@@ -3067,7 +3067,7 @@ static int from_gw_1(struct sip_msg *_m, char *_lcr_id, char *_s2)
  * Checks if request comes from ip address of a gateway taking source
  * address, transport protocol and source port from parameters.
  */
-static int ki_from_gw_addr(
+static int ki_from_gw_addr_port(
 		sip_msg_t *_m, int lcr_id, str *addr_str, int transport, unsigned int src_port)
 {
 	struct ip_addr src_addr;
@@ -3103,6 +3103,16 @@ static int ki_from_gw_addr(
 	return do_from_gw(_m, lcr_id, &src_addr, transport, src_port);
 }
 
+/*
+ * Checks if request comes from ip address of a gateway taking source
+ * address and transport protocol from parameters.
+ */
+static int ki_from_gw_addr(
+		sip_msg_t *_m, int lcr_id, str *addr_str, int transport)
+{
+	return ki_from_gw_addr_port(_m, lcr_id, addr_str, transport, 0);
+}
+
 static int from_gw_3(
 		struct sip_msg *_m, char *_lcr_id, char *_addr, char *_transport)
 {
@@ -3127,7 +3137,7 @@ static int from_gw_3(
 		return -1;
 	}
 
-	return ki_from_gw_addr(_m, lcr_id, &addr_str, transport, 0);
+	return ki_from_gw_addr_port(_m, lcr_id, &addr_str, transport, 0);
 }
 
 static int from_gw_4(
@@ -3161,7 +3171,7 @@ static int from_gw_4(
 		return -1;
 	}
 
-	return ki_from_gw_addr(_m, lcr_id, &addr_str, transport, src_port);
+	return ki_from_gw_addr_port(_m, lcr_id, &addr_str, transport, src_port);
 }
 
 /*
@@ -3195,7 +3205,8 @@ static int from_any_gw_0(struct sip_msg *_m, char *_s1, char *_s2)
  * Checks if request comes from ip address of a a gateway taking source
  * IP address, transport protocol and source port from parameters.
  */
-static int ki_from_any_gw_addr(sip_msg_t *_m, str *addr_str, int transport, unsigned int src_port)
+static int ki_from_any_gw_addr_port(sip_msg_t *_m, str *addr_str, int transport,
+		unsigned int src_port)
 {
 	unsigned int i;
 	struct ip_addr *ip, src_addr;
@@ -3230,6 +3241,15 @@ static int ki_from_any_gw_addr(sip_msg_t *_m, str *addr_str, int transport, unsi
 	return -1;
 }
 
+/*
+ * Checks if request comes from ip address of a a gateway taking source
+ * IP address, transport protocol and source port from parameters.
+ */
+static int ki_from_any_gw_addr(sip_msg_t *_m, str *addr_str, int transport)
+{
+	return ki_from_any_gw_addr_port(_m, addr_str, transport, 0);
+}
+
 static int from_any_gw_2(struct sip_msg *_m, char *_addr, char *_transport)
 {
 	str addr_str;
@@ -3246,7 +3266,7 @@ static int from_any_gw_2(struct sip_msg *_m, char *_addr, char *_transport)
 		return -1;
 	}
 
-	return ki_from_any_gw_addr(_m, &addr_str, transport, 0);
+	return ki_from_any_gw_addr_port(_m, &addr_str, transport, 0);
 }
 
 static int from_any_gw_3(struct sip_msg *_m, char *_addr, char *_transport, char *_src_port)
@@ -3272,7 +3292,7 @@ static int from_any_gw_3(struct sip_msg *_m, char *_addr, char *_transport, char
 		return -1;
 	}
 
-	return ki_from_any_gw_addr(_m, &addr_str, transport, src_port);
+	return ki_from_any_gw_addr_port(_m, &addr_str, transport, src_port);
 }
 
 /*
@@ -3566,6 +3586,11 @@ static sr_kemi_t sr_kemi_lcr_exports[] = {
 		{ SR_KEMIP_INT, SR_KEMIP_STR, SR_KEMIP_INT,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("lcr"), str_init("from_gw_addr_port"),
+		SR_KEMIP_INT, ki_from_gw_addr_port,
+		{ SR_KEMIP_INT, SR_KEMIP_STR, SR_KEMIP_INT,
+			SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ str_init("lcr"), str_init("from_any_gw"),
 		SR_KEMIP_INT, ki_from_any_gw,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
@@ -3574,6 +3599,11 @@ static sr_kemi_t sr_kemi_lcr_exports[] = {
 	{ str_init("lcr"), str_init("from_any_gw_addr"),
 		SR_KEMIP_INT, ki_from_any_gw_addr,
 		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("lcr"), str_init("from_any_gw_addr_port"),
+		SR_KEMIP_INT, ki_from_any_gw_addr_port,
+		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_INT,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("lcr"), str_init("to_gw"),
