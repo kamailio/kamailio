@@ -31,6 +31,9 @@ typedef struct secsipid_papi {
 	int (*SecSIPIDGetIdentity)(char* origTN, char* destTN, char* attestVal,
 			char* origID, char* x5uVal, char* prvkeyPath, char** outPtr);
 
+	int (*SecSIPIDGetIdentityPrvKey)(char* origTN, char* destTN, char* attestVal,
+			char* origID, char* x5uVal, char* prvkeyData, char** outPtr);
+
 	int (*SecSIPIDCheck)(char* identityVal, int identityLen, int expireVal,
 			char* pubkeyPath, int timeoutVal);
 

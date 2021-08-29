@@ -382,6 +382,10 @@ static int w_secsipid_check(sip_msg_t *msg, char *pidentity, char *pkeypath)
 	return ki_secsipid_check(msg, &sidentity, &keypath);
 }
 
+#define SECSIPID_MODE_VALHDR (1<<0)
+#define SECSIPID_MODE_VALVAR (1<<1)
+#define SECSIPID_MODE_KEYPATH (1<<2)
+#define SECSIPID_MODE_KEYDATA (1<<3)
 
 /**
  *
@@ -404,7 +408,7 @@ static int ki_secsipid_add_identity_mode(sip_msg_t *msg, str *origtn, str *destt
 	ibody.len = _secsipid_papi.SecSIPIDGetIdentity(origtn->s, desttn->s,
 			attest->s, origid->s, x5u->s, keypath->s, &ibody.s);
 
-	if(mode==1) {
+	if(mode&SECSIPID_MODE_VALVAR) {
 		_secsipid_data.ret = ibody.len;
 	}
 
@@ -415,7 +419,7 @@ static int ki_secsipid_add_identity_mode(sip_msg_t *msg, str *origtn, str *destt
 
 	LM_DBG("identity value: %.*s\n", ibody.len, ibody.s);
 
-	if(mode==1) {
+	if(mode&SECSIPID_MODE_VALVAR) {
 		if(_secsipid_data.value.s) {
 			free(_secsipid_data.value.s);
 		}
@@ -470,7 +474,8 @@ static int ki_secsipid_add_identity(sip_msg_t *msg, str *origtn, str *desttn,
 			str *attest, str *origid, str *x5u, str *keypath)
 {
 	return ki_secsipid_add_identity_mode(msg, origtn, desttn,
-			attest, origid, x5u, keypath, 0);
+			attest, origid, x5u, keypath,
+			SECSIPID_MODE_VALHDR|SECSIPID_MODE_KEYPATH);
 }
 
 /**
@@ -512,7 +517,8 @@ static int w_secsipid_add_identity(sip_msg_t *msg, char *porigtn, char *pdesttn,
 	}
 
 	return ki_secsipid_add_identity_mode(msg, &origtn, &desttn,
-			&attest, &origid, &x5u, &keypath, 0);
+			&attest, &origid, &x5u, &keypath,
+			SECSIPID_MODE_VALHDR|SECSIPID_MODE_KEYPATH);
 }
 
 /**
@@ -527,7 +533,8 @@ static int ki_secsipid_build_identity(sip_msg_t *msg, str *origtn, str *desttn,
 	memset(&_secsipid_data, 0, sizeof(secsipid_data_t));
 
 	return ki_secsipid_add_identity_mode(msg, origtn, desttn,
-			attest, origid, x5u, keypath, 1);
+			attest, origid, x5u, keypath,
+			SECSIPID_MODE_VALVAR|SECSIPID_MODE_KEYPATH);
 }
 
 /**
@@ -574,7 +581,8 @@ static int w_secsipid_build_identity(sip_msg_t *msg, char *porigtn, char *pdestt
 	}
 
 	return ki_secsipid_add_identity_mode(msg, &origtn, &desttn,
-			&attest, &origid, &x5u, &keypath, 1);
+			&attest, &origid, &x5u, &keypath,
+			SECSIPID_MODE_VALVAR|SECSIPID_MODE_KEYPATH);
 }
 
 /**
