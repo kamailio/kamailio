@@ -1,0 +1,468 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>Slack Module</title>
+    <link rel="stylesheet" type="text/css" href="/css/sr-doc.css" />
+    <meta name="generator" content="DocBook XSL Stylesheets V1.79.1" />
+    <link rel="home" href="#idm1" title="Slack Module" />
+    <link rel="next" href="#idm14" title="Chapter 1. Admin Guide" />
+  </head>
+  <body>
+    <div class="book">
+      <div class="titlepage">
+        <div>
+          <div>
+            <h1 class="title"><a id="idm1"></a>Slack Module</h1>
+          </div>
+          <div>
+            <div class="authorgroup">
+              <div class="author">
+                <h3 class="author"><span class="firstname">Arsen</span> <span class="surname">Semenov</span></h3>
+                <code class="email">&lt;<a class="email" href="mailto:arsperger@gmail.com">arsperger@gmail.com</a>&gt;</code>
+              </div>
+            </div>
+          </div>
+          <div>
+            <p class="copyright">Copyright © 2021 arsperger.com</p>
+          </div>
+        </div>
+        <hr />
+      </div>
+      <div class="toc">
+        <p>
+          <strong>Table of Contents</strong>
+        </p>
+        <dl class="toc">
+          <dt>
+            <span class="chapter">
+              <a href="#idm14">1. Admin Guide</a>
+            </span>
+          </dt>
+          <dd>
+            <dl>
+              <dt>
+                <span class="section">
+                  <a href="#idm16">1. Overview</a>
+                </span>
+              </dt>
+              <dt>
+                <span class="section">
+                  <a href="#idm20">2. Dependencies</a>
+                </span>
+              </dt>
+              <dd>
+                <dl>
+                  <dt>
+                    <span class="section">
+                      <a href="#idm22">2.1. Kamailio Modules</a>
+                    </span>
+                  </dt>
+                  <dt>
+                    <span class="section">
+                      <a href="#idm29">2.2. External Libraries or Applications</a>
+                    </span>
+                  </dt>
+                </dl>
+              </dd>
+              <dt>
+                <span class="section">
+                  <a href="#idm36">3. Parameters</a>
+                </span>
+              </dt>
+              <dd>
+                <dl>
+                  <dt>
+                    <span class="section">
+                      <a href="#slack.p.url">3.1. <code class="varname">slack url</code> (str)</a>
+                    </span>
+                  </dt>
+                  <dt>
+                    <span class="section">
+                      <a href="#slack.p.channel">3.2. <code class="varname">channel</code> (str)</a>
+                    </span>
+                  </dt>
+                  <dt>
+                    <span class="section">
+                      <a href="#lwsc.p.username">3.3. <code class="varname">username</code> (str)</a>
+                    </span>
+                  </dt>
+                  <dt>
+                    <span class="section">
+                      <a href="#slack.p.icon_emogi">3.4. <code class="varname">icon_emogi</code> (str)</a>
+                    </span>
+                  </dt>
+                </dl>
+              </dd>
+              <dt>
+                <span class="section">
+                  <a href="#idm78">4. Functions</a>
+                </span>
+              </dt>
+              <dd>
+                <dl>
+                  <dt>
+                    <span class="section">
+                      <a href="#slack.f.slack_send">4.1. 
+		<code class="function">slack_send(format)</code>
+	    </a>
+                    </span>
+                  </dt>
+                </dl>
+              </dd>
+            </dl>
+          </dd>
+        </dl>
+      </div>
+      <div class="list-of-examples">
+        <p>
+          <strong>List of Examples</strong>
+        </p>
+        <dl>
+          <dt>1.1. <a href="#idm44">Set <code class="varname">slack webhook URL</code> parameter</a></dt>
+          <dt>1.2. <a href="#idm54">Set <code class="varname">channel</code> parameter</a></dt>
+          <dt>1.3. <a href="#idm64">Set <code class="varname">username</code> parameter</a></dt>
+          <dt>1.4. <a href="#idm74">Set <code class="varname">icon_emogi</code> parameter</a></dt>
+          <dt>1.5. <a href="#idm90"><code class="function">slack_send</code> usage</a></dt>
+        </dl>
+      </div>
+      <div class="chapter">
+        <div class="titlepage">
+          <div>
+            <div>
+              <h1 class="title"><a id="idm14"></a>Chapter 1. Admin Guide</h1>
+            </div>
+          </div>
+        </div>
+        <div class="toc">
+          <p>
+            <strong>Table of Contents</strong>
+          </p>
+          <dl class="toc">
+            <dt>
+              <span class="section">
+                <a href="#idm16">1. Overview</a>
+              </span>
+            </dt>
+            <dt>
+              <span class="section">
+                <a href="#idm20">2. Dependencies</a>
+              </span>
+            </dt>
+            <dd>
+              <dl>
+                <dt>
+                  <span class="section">
+                    <a href="#idm22">2.1. Kamailio Modules</a>
+                  </span>
+                </dt>
+                <dt>
+                  <span class="section">
+                    <a href="#idm29">2.2. External Libraries or Applications</a>
+                  </span>
+                </dt>
+              </dl>
+            </dd>
+            <dt>
+              <span class="section">
+                <a href="#idm36">3. Parameters</a>
+              </span>
+            </dt>
+            <dd>
+              <dl>
+                <dt>
+                  <span class="section">
+                    <a href="#slack.p.url">3.1. <code class="varname">slack url</code> (str)</a>
+                  </span>
+                </dt>
+                <dt>
+                  <span class="section">
+                    <a href="#slack.p.channel">3.2. <code class="varname">channel</code> (str)</a>
+                  </span>
+                </dt>
+                <dt>
+                  <span class="section">
+                    <a href="#lwsc.p.username">3.3. <code class="varname">username</code> (str)</a>
+                  </span>
+                </dt>
+                <dt>
+                  <span class="section">
+                    <a href="#slack.p.icon_emogi">3.4. <code class="varname">icon_emogi</code> (str)</a>
+                  </span>
+                </dt>
+              </dl>
+            </dd>
+            <dt>
+              <span class="section">
+                <a href="#idm78">4. Functions</a>
+              </span>
+            </dt>
+            <dd>
+              <dl>
+                <dt>
+                  <span class="section">
+                    <a href="#slack.f.slack_send">4.1. 
+		<code class="function">slack_send(format)</code>
+	    </a>
+                  </span>
+                </dt>
+              </dl>
+            </dd>
+          </dl>
+        </div>
+        <div class="section">
+          <div class="titlepage">
+            <div>
+              <div>
+                <h2 class="title"><a id="idm16"></a>1. Overview</h2>
+              </div>
+            </div>
+          </div>
+          <p>
+		This module provides integration with Slack over webhooks.
+		Slack integration (https://api.slack.com/messaging/webhooks)
+	</p>
+          <p>
+		It relays on libcurl. library (https://curl.se/libcurl).
+	</p>
+        </div>
+        <div class="section">
+          <div class="titlepage">
+            <div>
+              <div>
+                <h2 class="title"><a id="idm20"></a>2. Dependencies</h2>
+              </div>
+            </div>
+          </div>
+          <div class="section">
+            <div class="titlepage">
+              <div>
+                <div>
+                  <h3 class="title"><a id="idm22"></a>2.1. Kamailio Modules</h3>
+                </div>
+              </div>
+            </div>
+            <p>
+		The following modules must be loaded before this module:
+			</p>
+            <div class="itemizedlist">
+              <ul class="itemizedlist" type="disc">
+                <li class="listitem">
+                  <p>
+				<span class="emphasis"><em>none</em></span>.
+			</p>
+                </li>
+              </ul>
+            </div>
+            <p>
+		</p>
+          </div>
+          <div class="section">
+            <div class="titlepage">
+              <div>
+                <div>
+                  <h3 class="title"><a id="idm29"></a>2.2. External Libraries or Applications</h3>
+                </div>
+              </div>
+            </div>
+            <p>
+		The following libraries or applications must be installed before running
+		Kamailio with this module loaded:
+			</p>
+            <div class="itemizedlist">
+              <ul class="itemizedlist" type="disc">
+                <li class="listitem">
+                  <p>
+				<span class="emphasis"><em>libcurl</em></span>
+			</p>
+                </li>
+              </ul>
+            </div>
+            <p>
+		</p>
+          </div>
+        </div>
+        <div class="section">
+          <div class="titlepage">
+            <div>
+              <div>
+                <h2 class="title"><a id="idm36"></a>3. Parameters</h2>
+              </div>
+            </div>
+          </div>
+          <div class="section">
+            <div class="titlepage">
+              <div>
+                <div>
+                  <h3 class="title"><a id="slack.p.url"></a>3.1. <code class="varname">slack url</code> (str)</h3>
+                </div>
+              </div>
+            </div>
+            <p>
+			Slack webhook url
+		</p>
+            <p>
+		<span class="emphasis"><em>
+			Default value is not set (empty)
+		</em></span>
+		</p>
+            <div class="example">
+              <a id="idm44"></a>
+              <p class="title">
+                <strong>Example 1.1. Set <code class="varname">slack webhook URL</code> parameter</strong>
+              </p>
+              <div class="example-contents">
+                <pre class="programlisting">...
+modparam("slack", "slack_url", "https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX")
+...</pre>
+              </div>
+            </div>
+            <br class="example-break" />
+          </div>
+          <div class="section">
+            <div class="titlepage">
+              <div>
+                <div>
+                  <h3 class="title"><a id="slack.p.channel"></a>3.2. <code class="varname">channel</code> (str)</h3>
+                </div>
+              </div>
+            </div>
+            <p>
+			Slack channel name
+		</p>
+            <p>
+		<span class="emphasis"><em>
+			Default value is #kamailio
+		</em></span>
+		</p>
+            <div class="example">
+              <a id="idm54"></a>
+              <p class="title">
+                <strong>Example 1.2. Set <code class="varname">channel</code> parameter</strong>
+              </p>
+              <div class="example-contents">
+                <pre class="programlisting">...
+modparam("slack", "channel", "#kamailio")
+...</pre>
+              </div>
+            </div>
+            <br class="example-break" />
+          </div>
+          <div class="section">
+            <div class="titlepage">
+              <div>
+                <div>
+                  <h3 class="title"><a id="lwsc.p.username"></a>3.3. <code class="varname">username</code> (str)</h3>
+                </div>
+              </div>
+            </div>
+            <p>
+			Specify the username for the published message
+		</p>
+            <p>
+		<span class="emphasis"><em>
+			Default value is webhookbot.
+		</em></span>
+		</p>
+            <div class="example">
+              <a id="idm64"></a>
+              <p class="title">
+                <strong>Example 1.3. Set <code class="varname">username</code> parameter</strong>
+              </p>
+              <div class="example-contents">
+                <pre class="programlisting">...
+modparam("slack", "username", "webhookbot")
+...</pre>
+              </div>
+            </div>
+            <br class="example-break" />
+          </div>
+          <div class="section">
+            <div class="titlepage">
+              <div>
+                <div>
+                  <h3 class="title"><a id="slack.p.icon_emogi"></a>3.4. <code class="varname">icon_emogi</code> (str)</h3>
+                </div>
+              </div>
+            </div>
+            <p>
+			specify an emoji (using colon shortcodes, eg. :white_check_mark:)
+			to use as the profile photo alongside the message.
+		</p>
+            <p>
+		<span class="emphasis"><em>
+			Default value is :ghost:
+		</em></span>
+		</p>
+            <div class="example">
+              <a id="idm74"></a>
+              <p class="title">
+                <strong>Example 1.4. Set <code class="varname">icon_emogi</code> parameter</strong>
+              </p>
+              <div class="example-contents">
+                <pre class="programlisting">...
+modparam("slack", "icon_emogi", ":ghost:")
+...</pre>
+              </div>
+            </div>
+            <br class="example-break" />
+          </div>
+        </div>
+        <div class="section">
+          <div class="titlepage">
+            <div>
+              <div>
+                <h2 class="title"><a id="idm78"></a>4. Functions</h2>
+              </div>
+            </div>
+          </div>
+          <div class="section">
+            <div class="titlepage">
+              <div>
+                <div>
+                  <h3 class="title"><a id="slack.f.slack_send"></a>4.1. 
+		<code class="function">slack_send(format)</code>
+	    </h3>
+                </div>
+              </div>
+            </div>
+            <p>
+		Send a formatted message to slack channel.
+		</p>
+            <p>
+		The parameters are:
+		</p>
+            <div class="itemizedlist">
+              <ul class="itemizedlist" type="disc">
+                <li class="listitem">
+                  <p>
+			format - The formatted string to be send.
+			</p>
+                </li>
+              </ul>
+            </div>
+            <p>
+		The parameters can contain pseudo-variables.
+		</p>
+            <p>
+		This function can be used from ANY_ROUTE.
+		</p>
+            <div class="example">
+              <a id="idm90"></a>
+              <p class="title">
+                <strong>Example 1.5. <code class="function">slack_send</code> usage</strong>
+              </p>
+              <div class="example-contents">
+                <pre class="programlisting">...
+    slack_send("Hello from Kamailio! caller=$fU;callee=$tU;callid=$ci");
+...</pre>
+              </div>
+            </div>
+            <br class="example-break" />
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
