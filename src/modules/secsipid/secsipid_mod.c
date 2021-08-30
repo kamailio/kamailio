@@ -58,6 +58,8 @@ static int w_secsipid_add_identity(sip_msg_t *msg, char *porigtn, char *pdesttn,
 			char *pattest, char *porigid, char *px5u, char *pkeypath);
 static int w_secsipid_build_identity(sip_msg_t *msg, char *porigtn, char *pdesttn,
 			char *pattest, char *porigid, char *px5u, char *pkeypath);
+static int w_secsipid_build_identity_prvkey(sip_msg_t *msg, char *porigtn, char *pdesttn,
+			char *pattest, char *porigid, char *px5u, char *pkeydata);
 static int w_secsipid_sign(sip_msg_t *msg, char *phdrs, char *ppayload, char *pkeypath);
 static int w_secsipid_get_url(sip_msg_t *msg, char *purl, char *pout);
 
@@ -89,6 +91,8 @@ static cmd_export_t cmds[]={
 	{"secsipid_add_identity", (cmd_function)w_secsipid_add_identity, 6,
 		fixup_spve_all, fixup_free_spve_all, ANY_ROUTE},
 	{"secsipid_build_identity", (cmd_function)w_secsipid_build_identity, 6,
+		fixup_spve_all, fixup_free_spve_all, ANY_ROUTE},
+	{"secsipid_build_identity_prvkey", (cmd_function)w_secsipid_build_identity_prvkey, 6,
 		fixup_spve_all, fixup_free_spve_all, ANY_ROUTE},
 	{"secsipid_sign", (cmd_function)w_secsipid_sign, 3,
 		fixup_spve_all, fixup_free_spve_all, ANY_ROUTE},
@@ -391,7 +395,7 @@ static int w_secsipid_check(sip_msg_t *msg, char *pidentity, char *pkeypath)
  *
  */
 static int ki_secsipid_add_identity_mode(sip_msg_t *msg, str *origtn, str *desttn,
-			str *attest, str *origid, str *x5u, str *keypath, int mode)
+			str *attest, str *origid, str *x5u, str *keyinfo, int mode)
 {
 	str ibody = STR_NULL;
 	str hdr = STR_NULL;
@@ -405,8 +409,13 @@ static int ki_secsipid_add_identity_mode(sip_msg_t *msg, str *origtn, str *destt
 		secsipid_libopt_list_used = 1;
 	}
 
-	ibody.len = _secsipid_papi.SecSIPIDGetIdentity(origtn->s, desttn->s,
-			attest->s, origid->s, x5u->s, keypath->s, &ibody.s);
+	if(mode&SECSIPID_MODE_KEYDATA) {
+		ibody.len = _secsipid_papi.SecSIPIDGetIdentityPrvKey(origtn->s, desttn->s,
+				attest->s, origid->s, x5u->s, keyinfo->s, &ibody.s);
+	} else {
+		ibody.len = _secsipid_papi.SecSIPIDGetIdentity(origtn->s, desttn->s,
+				attest->s, origid->s, x5u->s, keyinfo->s, &ibody.s);
+	}
 
 	if(mode&SECSIPID_MODE_VALVAR) {
 		_secsipid_data.ret = ibody.len;
@@ -583,6 +592,70 @@ static int w_secsipid_build_identity(sip_msg_t *msg, char *porigtn, char *pdestt
 	return ki_secsipid_add_identity_mode(msg, &origtn, &desttn,
 			&attest, &origid, &x5u, &keypath,
 			SECSIPID_MODE_VALVAR|SECSIPID_MODE_KEYPATH);
+}
+
+/**
+ *
+ */
+static int ki_secsipid_build_identity_prvkey(sip_msg_t *msg, str *origtn, str *desttn,
+			str *attest, str *origid, str *x5u, str *keydata)
+{
+	if(_secsipid_data.value.s) {
+		free(_secsipid_data.value.s);
+	}
+	memset(&_secsipid_data, 0, sizeof(secsipid_data_t));
+
+	return ki_secsipid_add_identity_mode(msg, origtn, desttn,
+			attest, origid, x5u, keydata,
+			SECSIPID_MODE_VALVAR|SECSIPID_MODE_KEYDATA);
+}
+
+/**
+ *
+ */
+static int w_secsipid_build_identity_prvkey(sip_msg_t *msg, char *porigtn, char *pdesttn,
+			char *pattest, char *porigid, char *px5u, char *pkeydata)
+{
+	str origtn = STR_NULL;
+	str desttn = STR_NULL;
+	str attest = STR_NULL;
+	str origid = STR_NULL;
+	str x5u = STR_NULL;
+	str keydata = STR_NULL;
+
+	if(_secsipid_data.value.s) {
+		free(_secsipid_data.value.s);
+	}
+	memset(&_secsipid_data, 0, sizeof(secsipid_data_t));
+
+	if(fixup_get_svalue(msg, (gparam_t*)porigtn, &origtn)<0) {
+		LM_ERR("failed to get origtn parameter\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)pdesttn, &desttn)<0) {
+		LM_ERR("failed to get desttn parameter\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)pattest, &attest)<0) {
+		LM_ERR("failed to get attest parameter\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)porigid, &origid)<0) {
+		LM_ERR("failed to get origid parameter\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)px5u, &x5u)<0) {
+		LM_ERR("failed to get x5u parameter\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)pkeydata, &keydata)<0) {
+		LM_ERR("failed to get keydata parameter\n");
+		return -1;
+	}
+
+	return ki_secsipid_add_identity_mode(msg, &origtn, &desttn,
+			&attest, &origid, &x5u, &keydata,
+			SECSIPID_MODE_VALVAR|SECSIPID_MODE_KEYDATA);
 }
 
 /**
@@ -867,6 +940,11 @@ static sr_kemi_t sr_kemi_secsipid_exports[] = {
 	},
 	{ str_init("secsipid"), str_init("secsipid_build_identity"),
 		SR_KEMIP_INT, ki_secsipid_build_identity,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR }
+	},
+	{ str_init("secsipid"), str_init("secsipid_build_identity_prvkey"),
+		SR_KEMIP_INT, ki_secsipid_build_identity_prvkey,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR }
 	},
