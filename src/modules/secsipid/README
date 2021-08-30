@@ -45,7 +45,10 @@ Daniel-Constantin Mierla
               4.6. secsipid_build_identity(origTN, destTN, attest, origID,
                       x5u, keyPath)
 
-              4.7. secsipid_sign(sheaders, spaypload, keyPath)
+              4.7. secsipid_build_identity_prvkey(origTN, destTN, attest,
+                      origID, x5u, keyData)
+
+              4.8. secsipid_sign(sheaders, spaypload, keyPath)
 
         5. Installation
 
@@ -63,8 +66,9 @@ Daniel-Constantin Mierla
    1.10. secsipid_get_url usage
    1.11. secsipid_add_identity usage
    1.12. secsipid_build_identity usage
-   1.13. secsipid_sign usage
-   1.14. Libsecsipid Usage
+   1.13. secsipid_build_identity_prvkey usage
+   1.14. secsipid_sign usage
+   1.15. Libsecsipid Usage
 
 Chapter 1. Admin Guide
 
@@ -97,7 +101,10 @@ Chapter 1. Admin Guide
         4.6. secsipid_build_identity(origTN, destTN, attest, origID, x5u,
                 keyPath)
 
-        4.7. secsipid_sign(sheaders, spaypload, keyPath)
+        4.7. secsipid_build_identity_prvkey(origTN, destTN, attest,
+                origID, x5u, keyData)
+
+        4.8. secsipid_sign(sheaders, spaypload, keyPath)
 
    5. Installation
 
@@ -232,7 +239,10 @@ modparam("secsipid", "libopt", "CacheExpires=0")
    4.6. secsipid_build_identity(origTN, destTN, attest, origID, x5u,
           keyPath)
 
-   4.7. secsipid_sign(sheaders, spaypload, keyPath)
+   4.7. secsipid_build_identity_prvkey(origTN, destTN, attest, origID,
+          x5u, keyData)
+
+   4.8. secsipid_sign(sheaders, spaypload, keyPath)
 
 4.1.  secsipid_check_identity(keyPath)
 
@@ -383,7 +393,29 @@ request_route {
 }
 ...
 
-4.7.  secsipid_sign(sheaders, spaypload, keyPath)
+4.7.  secsipid_build_identity_prvkey(origTN, destTN, attest, origID, x5u,
+keyData)
+
+   Similar to secsipid_build_identity(), but the private key data is
+   provided as parameter instead to the file path.
+
+   The parameters can contain pseudo-variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.13. secsipid_build_identity_prvkey usage
+...
+request_route {
+    ...
+    if(secsipid_build_identity_prvkey("$fU", "$rU", "A", "",
+            "https://kamailio.org/stir/$rd/cert.pem", "$var(prvkey)")) {
+        xinfo("Identity value: $secsipid(val)\n");
+    }
+    ...
+}
+...
+
+4.8.  secsipid_sign(sheaders, spaypload, keyPath)
 
    Build Identity value using the key specified by "keyPath" to sign the
    JWT body. The sheaders and spayload have to be string representation of
@@ -395,7 +427,7 @@ request_route {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.13. secsipid_sign usage
+   Example 1.14. secsipid_sign usage
 ...
 request_route {
     ...
@@ -421,7 +453,7 @@ request_route {
    installed and its environment configured, then run the following
    commands:
 
-   Example 1.14. Libsecsipid Usage
+   Example 1.15. Libsecsipid Usage
 ...
 export GO111MODULE=off
 go get https://github.com/asipto/secsipidx
