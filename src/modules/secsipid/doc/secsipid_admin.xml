@@ -400,6 +400,36 @@ request_route {
 </programlisting>
 		</example>
 	</section>
+	<section id="secsipid.f.secsipid_build_identity_prvkey">
+		<title>
+		<function moreinfo="none">secsipid_build_identity_prvkey(origTN, destTN, attest, origID, x5u, keyData)</function>
+		</title>
+		<para>
+			Similar to secsipid_build_identity(), but the private key data is
+			provided as parameter instead to the file path.
+		</para>
+		<para>
+		The parameters can contain pseudo-variables.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>secsipid_build_identity_prvkey</function> usage</title>
+		<programlisting format="linespecific">
+...
+request_route {
+    ...
+    if(secsipid_build_identity_prvkey("$fU", "$rU", "A", "",
+            "https://kamailio.org/stir/$rd/cert.pem", "$var(prvkey)")) {
+        xinfo("Identity value: $secsipid(val)\n");
+    }
+    ...
+}
+...
+</programlisting>
+		</example>
+	</section>
 	<section id="secsipid.f.secsipid_sign">
 		<title>
 		<function moreinfo="none">secsipid_sign(sheaders, spaypload, keyPath)</function>
