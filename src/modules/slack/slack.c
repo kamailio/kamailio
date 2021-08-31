@@ -116,7 +116,7 @@ static int _curl_send(const char* uri, str *post_data)
 		LM_ERR("Error: snprintf error in calculating buffer size\n");
         return -1;
 	}
-	send_data = (char*)pkg_malloc((datasz+1)*sizeof(char));
+	send_data = (char*)pkg_mallocxz((datasz+1)*sizeof(char));
 	if(send_data==NULL) {
         LM_ERR("Error: can not allocate pkg memory [%d] bytes\n", datasz);
         return -1;
