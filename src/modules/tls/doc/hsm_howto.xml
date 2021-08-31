@@ -22,17 +22,17 @@
 		</para>
 		<para>
 		<programlisting>
-AWS CloudHSM Example
+Thales Luna Example
 --------------------
 
 ...
-# Example for AWS CloudHSM (SafeNet Luna)
+# Example for Thales Luna
 modparam("tls", "engine", "gem")
-modparam("tls", "engine_config", "/usr/local/etc/kamailio/luna.conf")
-modparam("tls", "engine_algorithms", "ALL)
+modparam("tls", "engine_config", "/usr/local/etc/kamailio/thales.cnf")
+modparam("tls", "engine_algorithms", "EC")
 ...
 
-/usr/local/etc/kamailio/luna.cnf is a OpenSSL config format file used to
+/usr/local/etc/kamailio/thales.cnf is a OpenSSL config format file used to
 bootstrap the engine, e.g., pass the PIN.
 
 ...
@@ -43,11 +43,12 @@ kamailio = openssl_init
 engines = engine_section
 
 [ engine_section ]
-# gem is the name of the SafeNet Luna OpenSSL engine
+# gem is the name of the Thales Luna OpenSSL engine
 gem = gem_section
 
 [ gem_section ]
-# from SafeNet documentation
+# from Thales documentation
+dynamic_path = /usr/lib64/engines-1.1/gem.so
 ENGINE_INIT = 0:20:21:password=1234-ABCD-5678-EFGH
 ...
 
