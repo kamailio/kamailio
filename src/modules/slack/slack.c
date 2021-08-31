@@ -52,7 +52,7 @@ static param_export_t mod_params[] = {
 	{ "slack_url", 			PARAM_STRING|USE_FUNC_PARAM, (void*)_slack_url_param},
 	{ "channel",			PARAM_STRING, &slack_channel }, // channel starts with #
 	{ "username",			PARAM_STRING, &slack_username },
-	{ "icon_emogi",			PARAM_STRING, &slack_icon },
+	{ "icon_emoji",			PARAM_STRING, &slack_icon },
 	{0, 0, 0}
 };
 
@@ -112,6 +112,10 @@ static int _curl_send(const char* uri, str *post_data)
 	// LM_DBG("sending to[%s]\n", uri);
 
 	datasz = snprintf(NULL, 0, BODY_FMT, slack_channel, slack_username, post_data->s, slack_icon);
+	if (datasz == -1) {
+		LM_ERR("Error: snprintf error in calculating buffer size\n");
+        return -1;
+	}
 	send_data = (char*)pkg_malloc((datasz+1)*sizeof(char));
 	if(send_data==NULL) {
         LM_ERR("Error: can not allocate pkg memory [%d] bytes\n", datasz);
@@ -155,7 +159,7 @@ static int _curl_send(const char* uri, str *post_data)
  */
 static int _slack_parse_url_param(char *val)
 {
-	int len;
+	size_t len;
 	len = strlen(val);
 	if(len > SLACK_URL_MAX_SIZE) {
 		LM_ERR("webhook url max size exceeded %d\n", SLACK_URL_MAX_SIZE);
@@ -174,7 +178,7 @@ static int _slack_parse_url_param(char *val)
 		PKG_MEM_ERROR;
 		return -1;
 	}
-	strcpy(slack_url, val);
+	strncpy(slack_url, val, len);
 	slack_url[len] = '\0';
 
 	return 0;
