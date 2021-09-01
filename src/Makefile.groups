@@ -77,7 +77,7 @@ mod_list_xmpp=xmpp
 mod_list_berkeley=db_berkeley
 
 # - modules depending on curl library
-mod_list_utils=utils http_client lost
+mod_list_utils=utils http_client lost slack
 
 # - modules depending on curl and libevent2 library
 mod_list_http_async=http_async_client
