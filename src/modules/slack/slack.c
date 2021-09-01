@@ -112,13 +112,13 @@ static int _curl_send(const char* uri, str *post_data)
 	// LM_DBG("sending to[%s]\n", uri);
 
 	datasz = snprintf(NULL, 0, BODY_FMT, slack_channel, slack_username, post_data->s, slack_icon);
-	if (datasz == -1) {
-		LM_ERR("Error: snprintf error in calculating buffer size\n");
+	if (datasz < 0) {
+		LM_ERR("snprintf error in calculating buffer size\n");
         return -1;
 	}
 	send_data = (char*)pkg_mallocxz((datasz+1)*sizeof(char));
 	if(send_data==NULL) {
-        LM_ERR("Error: can not allocate pkg memory [%d] bytes\n", datasz);
+        LM_ERR("can not allocate pkg memory [%d] bytes\n", datasz);
         return -1;
     }
     snprintf(send_data, datasz+1, BODY_FMT, slack_channel, slack_username, post_data->s, slack_icon);
@@ -126,7 +126,7 @@ static int _curl_send(const char* uri, str *post_data)
 	curl_global_init(CURL_GLOBAL_ALL);
 
 	if((curl_handle=curl_easy_init())==NULL) {
-    	LM_ERR("Error: Unable to init cURL library\n");
+    	LM_ERR("Unable to init cURL library\n");
 		curl_global_cleanup();
         return -1;
     }
@@ -271,7 +271,7 @@ static int ki_slack_send(sip_msg_t *msg, str *slmsg)
 		return -1;
 	}
 	if(pv_printf_s(msg, xmodel, &txt)!=0) {
-		LM_ERR("Error: cannot eval reparsed value\n");
+		LM_ERR("cannot eval reparsed value\n");
 		pv_elem_free_all(xmodel);
 		return -1;
 	}
