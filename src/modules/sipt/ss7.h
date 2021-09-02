@@ -197,7 +197,9 @@ int isup_get_hop_counter(unsigned char *buf, int len);
 int isup_get_event_info(unsigned char *buf, int len);
 int isup_get_cpc(unsigned char *buf, int len);
 int isup_get_calling_party_nai(unsigned char *buf, int len);
+int isup_get_calling_party(unsigned char *buf, int len, char* sb_buf);
 int isup_get_called_party_nai(unsigned char *buf, int len);
+int isup_get_called_party(unsigned char *buf, int len, char* sb_buf);
 int isup_get_screening(unsigned char *buf, int len);
 int isup_get_presentation(unsigned char *buf, int len);
 int isup_get_charging_indicator(unsigned char *buf, int len);
@@ -209,5 +211,17 @@ int isup_update_forwarding(struct sdp_mangler * mangle, char * forwardn, int nai
 int isup_get_redirection_info(unsigned char *buf, int len);
 int isup_get_redirection_number_nai(unsigned char *buf, int len);
 int isup_get_redirection_number(unsigned char *buf, int len, char* sb_buf);
+
+int isup_get_redirection_reason(unsigned char *buf, int len);
+int isup_get_original_redirection_reason(unsigned char *buf, int len);
+
+int isup_get_redirecting_number_nai(unsigned char *buf, int len);
+int isup_get_redirecting_number(unsigned char *buf, int len, char* sb_buf);
+
+int isup_get_generic_number_nai(unsigned char *buf, int len);
+int isup_get_generic_number(unsigned char *buf, int len, char* sb_buf);
+
+int isup_get_original_called_number_nai(unsigned char *buf, int len);
+int isup_get_original_called_number(unsigned char *buf, int len, char* sb_buf);
 
 #endif
