@@ -7,6 +7,8 @@ Project Website:
 
   * http://www.kamailio.org
 
+[20 Years Of Kamailio Development: Sep 3, 2001 - Sep 3, 2021](https://www.kamailio.org/w/2021/09/kamailio-20-years-of-development/)
+
 ## Overview
 
 Kamailio is an open source implementation of a SIP Signaling Server. SIP is an open standard protocol specified by the IETF. The core specification document is [RFC3261](https://tools.ietf.org/html/rfc3261).
