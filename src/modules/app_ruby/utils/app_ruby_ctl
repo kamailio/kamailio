@@ -2,7 +2,7 @@
 
 # generate the .h file
 
-KEMI_MAX_SIZE=1024
+KEMI_MAX_SIZE=1536
 
 cat > ../app_ruby_kemi_export.h <<EOF
 /**
