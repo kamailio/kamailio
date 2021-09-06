@@ -12,6 +12,25 @@
 	</sectioninfo>
 	<title>Parameters</title>
 
+	<section id="misctest.p.memory">
+		<title><varname>memory</varname></title>
+		<para>
+			Initialize for memory testing. Set it to 1 to prepare the memory
+			testing.
+		</para>
+		<para>
+			Default: 0 (off).
+		</para>
+		<example>
+			<title>
+				Set <varname>memory</varname> in the config file
+			</title>
+			<programlisting>
+modparam("misctest", "memory", 1)
+			</programlisting>
+		</example>
+	</section>
+
 	<section id="misctest.p.mem_check_content">
 		<title><varname>mem_check_content</varname></title>
 		<para>

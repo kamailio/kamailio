@@ -37,6 +37,7 @@ static int mt_mem_free_f(struct sip_msg *, char *, char *);
 static int mod_init(void);
 static void mod_destroy(void);
 
+static int misctest_memory = 0;
 
 /* clang-format off */
 static cmd_export_t cmds[]={
@@ -87,6 +88,7 @@ static rpc_export_t mt_rpc[];
 
 /* clang-format off */
 static param_export_t params[]={
+	{"memory", PARAM_INT, &misctest_memory},
 	{"mem_check_content", PARAM_INT, &default_mt_cfg.mem_check_content},
 	{0,0,0}
 };
@@ -172,21 +174,23 @@ static int mod_init(void)
 		goto error;
 	}
 
-	alloc_lst = shm_malloc(sizeof(*alloc_lst));
-	if(alloc_lst == 0)
-		goto error;
-	alloc_lst->chunks = 0;
-	atomic_set_long(&alloc_lst->size, 0);
-	atomic_set_int(&alloc_lst->no, 0);
-	if(lock_init(&alloc_lst->lock) == 0)
-		goto error;
-	rndt_lst = shm_malloc(sizeof(*rndt_lst));
-	if(rndt_lst == 0)
-		goto error;
-	rndt_lst->tests = 0;
-	atomic_set_int(&rndt_lst->last_id, 0);
-	if(lock_init(&rndt_lst->lock) == 0)
-		goto error;
+	if(misctest_memory!=0) {
+		alloc_lst = shm_malloc(sizeof(*alloc_lst));
+		if(alloc_lst == 0)
+			goto error;
+		alloc_lst->chunks = 0;
+		atomic_set_long(&alloc_lst->size, 0);
+		atomic_set_int(&alloc_lst->no, 0);
+		if(lock_init(&alloc_lst->lock) == 0)
+			goto error;
+		rndt_lst = shm_malloc(sizeof(*rndt_lst));
+		if(rndt_lst == 0)
+			goto error;
+		rndt_lst->tests = 0;
+		atomic_set_int(&rndt_lst->last_id, 0);
+		if(lock_init(&rndt_lst->lock) == 0)
+			goto error;
+	}
 	return 0;
 error:
 	return -1;
@@ -195,17 +199,19 @@ error:
 
 static void mod_destroy()
 {
-	if(rndt_lst) {
-		mem_destroy_all_tests();
-		lock_destroy(&rndt_lst->lock);
-		shm_free(rndt_lst);
-		rndt_lst = 0;
-	}
-	if(alloc_lst) {
-		mem_unleak(-1);
-		lock_destroy(&alloc_lst->lock);
-		shm_free(alloc_lst);
-		alloc_lst = 0;
+	if(misctest_memory!=0) {
+		if(rndt_lst) {
+			mem_destroy_all_tests();
+			lock_destroy(&rndt_lst->lock);
+			shm_free(rndt_lst);
+			rndt_lst = 0;
+		}
+		if(alloc_lst) {
+			mem_unleak(-1);
+			lock_destroy(&alloc_lst->lock);
+			shm_free(alloc_lst);
+			alloc_lst = 0;
+		}
 	}
 }
 
