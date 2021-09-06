@@ -233,6 +233,10 @@ char* parse_content_length(char* const buffer, const char* const end,
 	size = 0;
 	number = 0;
 	while (p<end && *p>='0' && *p<='9') {
+		if(number >= INT_MAX/10) {
+			LM_ERR("content lenght value is too large\n");
+			goto error;
+		}
 		number = number*10 + (*p)-'0';
 		size ++;
 		p++;
