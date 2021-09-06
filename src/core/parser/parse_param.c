@@ -584,7 +584,7 @@ int parse_params2(
 		memset(_h, 0, sizeof(param_hooks_t));
 	*_p = 0;
 
-	if(!_s->s) { /* no parameters at all -- we're done */
+	if(!_s->s || _s->len<=0) { /* no parameters at all -- we're done */
 		LM_DBG("empty uri params, skipping\n");
 		return 0;
 	}
