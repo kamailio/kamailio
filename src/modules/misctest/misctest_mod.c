@@ -50,17 +50,17 @@ static cmd_export_t cmds[]={
 
 
 /* clang-format off */
-struct cfg_group_malloc_test {
-	int check_content;
-	int realloc_p; /* realloc probability */
+struct cfg_group_misctest {
+	int mem_check_content;
+	int mem_realloc_p; /* realloc probability */
 };
 /* clang-format on */
 
 
 /* clang-format off */
-static struct cfg_group_malloc_test default_mt_cfg = {
-	0, /* check_content, off by default */
-	0  /* realloc probability, 0 by default */
+static struct cfg_group_misctest default_mt_cfg = {
+	0, /* mem_check_content, off by default */
+	0  /* mem realloc probability, 0 by default */
 };
 /* clang-format on */
 
@@ -68,13 +68,13 @@ static void *mt_cfg = &default_mt_cfg;
 
 
 /* clang-format off */
-static cfg_def_t malloc_test_cfg_def[] = {
-	{"check_content", CFG_VAR_INT | CFG_ATOMIC, 0, 1, 0, 0,
+static cfg_def_t misctest_cfg_def[] = {
+	{"mem_check_content", CFG_VAR_INT | CFG_ATOMIC, 0, 1, 0, 0,
 		"check if allocated memory was overwritten by filling it with "
 		"a special pattern and checking it on free."},
-	{"realloc_p", CFG_VAR_INT | CFG_ATOMIC, 0, 90, 0, 0,
+	{"mem_realloc_p", CFG_VAR_INT | CFG_ATOMIC, 0, 90, 0, 0,
 		"realloc probability in percents. During tests and mem_rnd_alloc"
-		" realloc_p percents of the allocations will be made by realloc'ing"
+		" mem_realloc_p percents of the allocations will be made by realloc'ing"
 		" and existing chunk. The maximum value is limited to 90, to avoid"
 		" very long mem_rnd_alloc runs (a realloc might also free memory)." },
 	{0, 0, 0, 0, 0, 0}
@@ -87,7 +87,7 @@ static rpc_export_t mt_rpc[];
 
 /* clang-format off */
 static param_export_t params[]={
-	{"check_content", PARAM_INT, &default_mt_cfg.check_content},
+	{"mem_check_content", PARAM_INT, &default_mt_cfg.mem_check_content},
 	{0,0,0}
 };
 /* clang-format on */
@@ -95,7 +95,7 @@ static param_export_t params[]={
 
 /* clang-format off */
 struct module_exports exports = {
-	"malloc_test",
+	"misctest",
 	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,
 	params,
@@ -166,8 +166,8 @@ static int mod_init(void)
 {
 	WARN("This is a test/debugging module, don't use it in production\n");
 	/* declare configuration */
-	if(cfg_declare("malloc_test", malloc_test_cfg_def, &default_mt_cfg,
-			   cfg_sizeof(malloc_test), &mt_cfg)) {
+	if(cfg_declare("misctest", misctest_cfg_def, &default_mt_cfg,
+			   cfg_sizeof(misctest), &mt_cfg)) {
 		ERR("failed to register the configuration\n");
 		goto error;
 	}
@@ -227,7 +227,7 @@ static int mem_track(void *addr, unsigned long size)
 	mc->addr = addr;
 	mc->size = size;
 	mc->flags = 0;
-	if(cfg_get(malloc_test, mt_cfg, check_content)) {
+	if(cfg_get(misctest, mt_cfg, mem_check_content)) {
 		mc->flags |= MC_F_CHECK_CONTENTS;
 		d = addr;
 		for(r = 0; r < size / sizeof(*d); r++) {
@@ -280,7 +280,7 @@ static int _mem_chunk_realloc_unsafe(struct mem_chunk *c, unsigned long size)
 
 	d = shm_realloc(c->addr, size);
 	if(d) {
-		if(cfg_get(malloc_test, mt_cfg, check_content)
+		if(cfg_get(misctest, mt_cfg, mem_check_content)
 				&& c->flags & MC_F_CHECK_CONTENTS) {
 			/* re-fill the test patterns (the address might have changed
 			   and they depend on it) */
@@ -305,7 +305,7 @@ static void mem_chunk_free(struct mem_chunk *c)
 	unsigned long r, i;
 	int err;
 
-	if(cfg_get(malloc_test, mt_cfg, check_content)
+	if(cfg_get(misctest, mt_cfg, mem_check_content)
 			&& c->flags & MC_F_CHECK_CONTENTS) {
 		d = c->addr;
 		err = 0;
@@ -445,7 +445,7 @@ static int mem_rnd_leak(
 	while(size) {
 		crt_min = MIN_ulong(min, size);
 		crt_size = fastrand_max(MIN_ulong(max, size) - crt_min) + crt_min;
-		p = cfg_get(malloc_test, mt_cfg, realloc_p);
+		p = cfg_get(misctest, mt_cfg, mem_realloc_p);
 		if(p && ((fastrand_max(99) + 1) <= p)) {
 			if(mem_rnd_realloc(crt_size, &diff) == 0) {
 				size -= diff;
@@ -482,7 +482,7 @@ static ticks_t tst_timer(ticks_t ticks, struct timer_ln *tl, void *data)
 	remaining = tst->total - tst->crt;
 	crt_min = MIN_ulong(tst->min, remaining);
 	crt_size = fastrand_max(MIN_ulong(tst->max, remaining) - crt_min) + crt_min;
-	p = cfg_get(malloc_test, mt_cfg, realloc_p);
+	p = cfg_get(misctest, mt_cfg, mem_realloc_p);
 	if(p && ((fastrand_max(99) + 1) <= p)) {
 		if(mem_rnd_realloc(crt_size, &diff) == 0) {
 			tst->crt -= diff;
@@ -763,7 +763,7 @@ static void rpc_mt_realloc(rpc_t *rpc, void *c)
 static const char *rpc_mt_free_doc[2] = {
 		"Frees the specified number of bytes, previously allocated by one of "
 		"the"
-		" other malloc_test functions (e.g. mt.mem_alloc or the script "
+		" other misctest functions (e.g. mt.mem_alloc or the script "
 		"mt_mem_alloc). Use b|k|m|g to specify the desired size unit."
 		"Returns the number of bytes freed (can be higher or"
 		" smaller then the requested size)",

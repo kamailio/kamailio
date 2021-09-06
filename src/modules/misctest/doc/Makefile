@@ -1,4 +1,4 @@
-docs = malloc_test.xml
+docs = misctest.xml
 
 docbook_dir = ../../../../doc/docbook
 include $(docbook_dir)/Makefile.module

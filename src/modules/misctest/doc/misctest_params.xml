@@ -7,13 +7,13 @@
 	]
 >
 
-<section id="malloc_test.parameters" xmlns:xi="http://www.w3.org/2001/XInclude">
+<section id="misctest.parameters" xmlns:xi="http://www.w3.org/2001/XInclude">
 	<sectioninfo>
 	</sectioninfo>
 	<title>Parameters</title>
 
-	<section id="check_content">
-		<title><varname>check_content</varname></title>
+	<section id="misctest.p.mem_check_content">
+		<title><varname>mem_check_content</varname></title>
 		<para>
 			When doing the tests, check also for the possibility of the
 			memory being overwritten. When activated, the allocated memory
@@ -28,18 +28,18 @@
 		</para>
 		<example>
 			<title>
-				Set <varname>check_content</varname> in the config file
+				Set <varname>mem_check_content</varname> in the config file
 			</title>
 			<programlisting>
-modparam("malloc_test", "check_content", 1)
+modparam("misctest", "mem_check_content", 1)
 			</programlisting>
 		</example>
 		<example>
 			<title>
-				Set <varname>check_content</varname> at runtime via kamcmd
+				Set <varname>mem_check_content</varname> at runtime via kamcmd
 			</title>
 			<programlisting>
-$ &kamcmd; cfg.set_now_int malloc_test check_content 1
+$ &kamcmd; cfg.seti misctest mem_check_content 1
 			</programlisting>
 		</example>
 	</section>

@@ -1,10 +1,10 @@
-The malloc_test Module
+The misctest Module
 
 Andrei Pelinescu-Onciul
 
    iptelorg GmbH
 
-   Copyright Â© 2010 iptelorg GmbH
+   Copyright © 2010 iptelorg GmbH
      __________________________________________________________________
 
    Table of Contents
@@ -14,7 +14,7 @@ Andrei Pelinescu-Onciul
         1. Overview
         2. Parameters
 
-              2.1. check_content
+              2.1. mem_check_content
 
         3. Functions
 
@@ -37,8 +37,8 @@ Andrei Pelinescu-Onciul
 
    List of Examples
 
-   1.1. Set check_content in the config file
-   1.2. Set check_content at runtime via kamcmd
+   1.1. Set mem_check_content in the config file
+   1.2. Set mem_check_content at runtime via kamcmd
    1.3. men_alloc usage
    1.4. mem_free usage
    1.5. mt.mem_alloc usage
@@ -58,7 +58,7 @@ Chapter 1. Admin Guide
    1. Overview
    2. Parameters
 
-        2.1. check_content
+        2.1. mem_check_content
 
    3. Functions
 
@@ -91,9 +91,9 @@ Warning
 
 2. Parameters
 
-   2.1. check_content
+   2.1. mem_check_content
 
-2.1. check_content
+2.1. mem_check_content
 
    When doing the tests, check also for the possibility of the memory
    being overwritten. When activated, the allocated memory will be filled
@@ -103,11 +103,11 @@ Warning
 
    It can be changed also at runtime, via the rpc interface.
 
-   Example 1.1.  Set check_content in the config file
-modparam("malloc_test", "check_content", 1)
+   Example 1.1. Set mem_check_content in the config file
+modparam("misctest", "mem_check_content", 1)
 
-   Example 1.2.  Set check_content at runtime via kamcmd
-$ kamcmd cfg.set_now_int malloc_test check_content 1
+   Example 1.2. Set mem_check_content at runtime via kamcmd
+$ kamcmd cfg.seti misctest mem_check_content 1
 
 3. Functions
 
@@ -168,8 +168,8 @@ mem_free();
 
 4.2.  mt.mem_free [size] [unit]
 
-   Frees at least size bytes from the memory allocated by other
-   malloc_test functions (e.g. mt.mem_alloc).
+   Frees at least size bytes from the memory allocated by other misctest
+   functions (e.g. mt.mem_alloc).
 
    size is optional. If missing, everything will be freed.
 
@@ -206,7 +206,7 @@ mem_free();
    Example 1.8. mt.mem_rnd_alloc usage
  $ kamcmd mt.mem_rnd_alloc 1 64 10240 k
 
-4.5.  mt.mem_test_start min max total min_int max_int total_time [unit]
+4.5. mt.mem_test_start min max total min_int max_int total_time [unit]
 
    Starts a malloc test that will take total_time to execute. Memory
    allocations will be performed at intervals randomly chosen between

@@ -7,7 +7,7 @@
 	]
 >
 
-<section id="malloc_test.rpcs" xmlns:xi="http://www.w3.org/2001/XInclude">
+<section id="misctest.rpcs" xmlns:xi="http://www.w3.org/2001/XInclude">
 	<sectioninfo>
 	</sectioninfo>
 	<title>RPC Commands</title>
@@ -36,7 +36,7 @@
 		<title> <function>mt.mem_free [size] [unit]</function></title>
 		<para>
 			Frees at least <varname>size</varname> bytes from the memory
-			allocated by other malloc_test functions (e.g. mt.mem_alloc).
+			allocated by other misctest functions (e.g. mt.mem_alloc).
 		</para>
 		<para>
 			<varname>size</varname> is optional. If missing, everything will

@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
-<section id="malloc_test.functions" xmlns:xi="http://www.w3.org/2001/XInclude">
+<section id="misctest.functions" xmlns:xi="http://www.w3.org/2001/XInclude">
 	<sectioninfo>
 	</sectioninfo>
 
 	<title>Functions</title>
 
-	<section id="malloc_test.mt_mem_alloc">
+	<section id="misctest.mt_mem_alloc">
 		<title><function>mt_mem_alloc(size)</function></title>
 		<para>
 			Allocates size bytes.
@@ -27,7 +27,7 @@ mem_alloc(1048576); # 1MB
 		</example>
 	</section>
 
-	<section id="malloc_test.mt_mem_free">
+	<section id="misctest.mt_mem_free">
 		<title><function>mt_mem_free()</function></title>
 		<para>
 			Frees all the memory allocated with mem_alloc() up to this

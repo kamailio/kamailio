@@ -9,9 +9,9 @@
 	]
 >
 
-<book id="malloc_test" xmlns:xi="http://www.w3.org/2001/XInclude">
+<book id="misctest" xmlns:xi="http://www.w3.org/2001/XInclude">
 	<bookinfo>
-		<title>The malloc_test Module</title>
+		<title>The misctest Module</title>
 		<authorgroup>
 			<author>
 				<firstname>Andrei</firstname>
@@ -31,7 +31,7 @@
 
 	<chapter>
 	<title>Admin Guide</title>
-	<section id="malloc_test.overview">
+	<section id="misctest.overview">
 		<title>Overview</title>
 		<para>
 			This is a debugging/test module. It implements functions (both
@@ -42,8 +42,8 @@
 			This module should never be used in a production environment.
 		</para></warning>
 	</section>
-	<xi:include href="malloc_test_params.xml"/>
-	<xi:include href="malloc_test_functions.xml"/>
-	<xi:include href="malloc_test_rpc.xml"/>
+	<xi:include href="misctest_params.xml"/>
+	<xi:include href="misctest_functions.xml"/>
+	<xi:include href="misctest_rpc.xml"/>
 	</chapter>
 </book>
