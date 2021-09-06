@@ -4517,13 +4517,10 @@ static int ki_is_audio_on_hold(sip_msg_t *msg)
 				if(!sdp_stream) break;
 				if(sdp_stream->media.len==AUDIO_STR_LEN &&
 					strncmp(sdp_stream->media.s,AUDIO_STR,AUDIO_STR_LEN)==0 &&
-					sdp_stream->sendrecv_mode.len &&
 					sdp_stream->is_on_hold)
 					return sdp_stream->is_on_hold;
 				if(sdp_stream->media.len==AUDIO_STR_LEN &&
 					strncmp(sdp_stream->media.s,AUDIO_STR,AUDIO_STR_LEN)==0 &&
-					!sdp_stream->sendrecv_mode.len &&
-					sdp_session->sendrecv_mode.len &&
 					sdp_session->is_on_hold)
 					return sdp_session->is_on_hold;
 				sdp_stream_num++;
