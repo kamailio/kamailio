@@ -35,6 +35,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <strings.h>
+#include <stdint.h>
 
 #include "globals.h"
 #include "dprint.h"
