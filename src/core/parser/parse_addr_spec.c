@@ -555,6 +555,9 @@ endofheader:
 					saved_status, (int)(tmp - buffer), ZSW(buffer));
 			goto error;
 	}
+	if(newparam) {
+		pkg_free(newparam);
+	}
 	*returned_status = saved_status;
 	return tmp;
 
