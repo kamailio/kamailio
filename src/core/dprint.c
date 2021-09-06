@@ -720,7 +720,7 @@ void ksr_slog_json(ksr_logdata_t *kld, const char *format, ...)
 			fprintf(stderr, KSR_SLOG_JSON_CEEFMT,
 			iso8601buf, _tp.tv_nsec, my_pid(),
 #ifdef HAVE_PTHREAD
-                        pthread_self(),
+                        (uintmax_t)pthread_self(),
 #endif
                         kld->v_lname,
 			kld->v_mname, kld->v_fname, kld->v_fline, kld->v_func, s_out.s,
