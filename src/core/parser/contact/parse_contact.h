@@ -75,4 +75,9 @@ int contact_iterator(contact_t** c, struct sip_msg* msg, contact_t* prev);
  */
 int parse_contact_headers(sip_msg_t *msg);
 
+/*
+ * parse first Contact header
+ */
+int parse_contact_header(sip_msg_t *msg);
+
 #endif /* PARSE_CONTACT_H */

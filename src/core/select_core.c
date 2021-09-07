@@ -221,18 +221,6 @@ SELECT_uri_header(from)
 SELECT_uri_header(refer_to)
 SELECT_uri_header(rpid)
 
-int parse_contact_header( struct sip_msg *msg)
-{
-        if ( !msg->contact && ( parse_headers(msg,HDR_CONTACT_F,0)==-1 || !msg->contact)) {
-                LM_DBG("bad msg or missing CONTACT header\n");
-                return -1;
-        }
-
-        if (msg->contact->parsed)
-                return 0;
-
-	return parse_contact(msg->contact);
-}
 
 #define get_contact(msg) ((contact_body_t*)(msg->contact->parsed))
 

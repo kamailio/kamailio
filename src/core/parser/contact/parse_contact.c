@@ -228,7 +228,7 @@ int contact_iterator(contact_t** c, struct sip_msg* msg, contact_t* prev)
 }
 
 /**
- *
+ * Parse all contact headers
  */
 int parse_contact_headers(sip_msg_t *msg)
 {
@@ -253,4 +253,21 @@ int parse_contact_headers(sip_msg_t *msg)
 	}
 
 	return 0;
+}
+
+/**
+ * Parse first contact header
+ */
+int parse_contact_header(sip_msg_t *msg)
+{
+	if ( !msg->contact && ( parse_headers(msg,HDR_CONTACT_F,0)==-1
+				|| !msg->contact)) {
+		LM_DBG("bad msg or missing CONTACT header\n");
+		return -1;
+	}
+
+	if (msg->contact->parsed)
+		return 0;
+
+	return parse_contact(msg->contact);
 }
