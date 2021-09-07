@@ -439,6 +439,32 @@ modparam("snmpstats", "snmpCommunity", "customCommunityString")
 		</example>
 	</section>
 
+	<section id ="snmpstats.p.snmpVersion">
+		<title><varname>snmpVersion</varname> (String)</title>
+
+		<para>
+		The SNMPStats module provides the kamailioSIPServiceStartTime scalar.
+		This scalar requires the SNMPStats module to perform a snmpget query
+		to the master agent.  You can use this parameter to set specific
+		SNMP version.
+		</para>
+
+		<para>
+		<emphasis>
+			Default value is <quote>3</quote>.
+		</emphasis>
+		</para>
+
+		<example>
+		<title>Setting the <varname>snmpVersion</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("snmpstats", "snmpVersion", "2c")
+...
+		</programlisting>
+		</example>
+	</section>
+
 	<section id ="snmpstats.p.export_registrar">
 		<title><varname>export_registrar</varname> (int)</title>
 
