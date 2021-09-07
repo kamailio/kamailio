@@ -147,10 +147,10 @@ static inline int skip_name(str* _s)
 					return 0;
 				}
 
-				if (*p == ':') {
+				if (*p == ':' || *p == ';') {
 					if (last_wsp) {
-						_s->s = last_wsp;
 						_s->len -= last_wsp - _s->s + 1;
+						_s->s = last_wsp;
 					}
 					return 0;
 				}
@@ -224,7 +224,7 @@ int parse_contacts(str* _s, contact_t** _c)
 
 		trim(&c->uri);
 		if((c->uri.len <= 0) || (c->uri.s + c->uri.len > sv.s + sv.len)) {
-			LM_ERR("invlid contact uri\n");
+			LM_ERR("invalid contact uri\n");
 			goto error;
 		}
 
