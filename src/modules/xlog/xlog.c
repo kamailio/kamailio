@@ -60,6 +60,9 @@ MODULE_VERSION
 
 char *_xlog_buf = NULL;
 char *_xlog_prefix = "<script>: ";
+int _xlog_prefix_mode = 0;
+char *_xlog_prefix_buf = NULL;
+pv_elem_t *_xlog_prefix_pvs = NULL;
 
 /** parameters */
 static int buf_size=4096;
@@ -170,6 +173,7 @@ static param_export_t params[]={
 	{"log_facility", PARAM_STRING, &xlog_facility_name},
 	{"log_colors",   PARAM_STRING|USE_FUNC_PARAM, (void*)xlog_log_colors_param},
 	{"methods_filter",  PARAM_INT, &xlog_default_cfg.methods_filter},
+	{"prefix_mode",     INT_PARAM, &_xlog_prefix_mode},
 	{0,0,0}
 };
 
@@ -215,6 +219,27 @@ static int mod_init(void)
 		PKG_MEM_ERROR;
 		return -1;
 	}
+
+	if (_xlog_prefix_mode) {
+		str s;
+		s.s = _xlog_prefix;
+		s.len = strlen(s.s);
+
+		if(pv_parse_format(&s, &_xlog_prefix_pvs)<0)
+		{
+			LM_ERR("wrong format[%s]\n", s.s);
+			return -1;
+		}
+
+		_xlog_prefix_buf = (char*)pkg_malloc((buf_size+1)*sizeof(char));
+		if(_xlog_prefix_buf==NULL)
+		{
+			PKG_MEM_ERROR;
+			return -1;
+		}
+
+	}
+
 	return 0;
 }
 
@@ -222,12 +247,23 @@ static inline int xlog_helper(struct sip_msg* msg, xl_msg_t *xm,
 		int level, int line, int facility)
 {
 	str txt;
+	char * _xlog_prefix_val = _xlog_prefix;
 
 	txt.len = buf_size;
+	txt.s = _xlog_buf;
 
 	if(xl_print_log(msg, xm->m, _xlog_buf, &txt.len)<0)
 		return -1;
-	txt.s = _xlog_buf;
+
+	if (_xlog_prefix_mode) {
+		str _xlog_prefix_str;
+		_xlog_prefix_str.s = _xlog_prefix_buf;
+		_xlog_prefix_str.len = buf_size;
+		if(pv_printf(msg, _xlog_prefix_pvs, _xlog_prefix_str.s, &_xlog_prefix_str.len) == 0 && _xlog_prefix_str.len > 0) {
+			_xlog_prefix_val = _xlog_prefix_buf;
+		}
+	}
+
 	/* if facility is not explicitely defined use the xlog default facility */
 	if (facility==NOFACILITY) {
 		facility = xlog_facility;
@@ -235,7 +271,7 @@ static inline int xlog_helper(struct sip_msg* msg, xl_msg_t *xm,
 
 	if(line>0)
 		if(long_format==1)
-			LOG_FN(facility, level, _xlog_prefix,
+			LOG_FN(facility, level, _xlog_prefix_val,
 				"%s:%d:%.*s",
 				(xm->a)?(((xm->a->cfile)?xm->a->cfile:"")):"",
 				(xm->a)?xm->a->cline:0, txt.len, txt.s);
@@ -243,7 +279,7 @@ static inline int xlog_helper(struct sip_msg* msg, xl_msg_t *xm,
 			LOG_FN(facility, level, _xlog_prefix,
 				"%d:%.*s", (xm->a)?xm->a->cline:0, txt.len, txt.s);
 	else
-		LOG_FN(facility, level, _xlog_prefix,
+		LOG_FN(facility, level, _xlog_prefix_val,
 			"%.*s", txt.len, txt.s);
 	return 1;
 }
@@ -488,6 +524,10 @@ static void destroy(void)
 {
 	if(_xlog_buf)
 		pkg_free(_xlog_buf);
+	if(_xlog_prefix_buf)
+		pkg_free(_xlog_prefix_buf);
+	if(_xlog_prefix_pvs)
+		pv_elem_free_all(_xlog_prefix_pvs);
 }
 
 static int xdbg_fixup_helper(void** param, int param_no, int mode)
