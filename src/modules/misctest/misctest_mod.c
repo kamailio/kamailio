@@ -18,6 +18,11 @@
  */
 
 
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <string.h>
+
 #include "../../core/sr_module.h"
 #include "../../core/mem/mem.h"
 #include "../../core/str.h"
@@ -30,6 +35,15 @@
 #include "../../core/timer.h"
 #include "../../core/mod_fix.h"
 
+#include "../../core/parser/sdp/sdp.h"
+#include "../../core/parser/parse_uri.c"
+#include "../../core/parser/parse_hname2.h"
+#include "../../core/parser/contact/parse_contact.h"
+#include "../../core/parser/parse_refer_to.h"
+#include "../../core/parser/parse_ppi_pai.h"
+#include "../../core/parser/parse_privacy.h"
+#include "../../core/parser/parse_diversion.h"
+
 MODULE_VERSION
 
 static int mt_mem_alloc_f(struct sip_msg *, char *, char *);
@@ -37,7 +51,13 @@ static int mt_mem_free_f(struct sip_msg *, char *, char *);
 static int mod_init(void);
 static void mod_destroy(void);
 
+static int misctest_memory_init(void);
+static int misctest_message_init(void);
+
 static int misctest_memory = 0;
+static int misctest_message = 0;
+static str misctest_message_data = STR_NULL;
+static str misctest_message_file = STR_NULL;
 
 /* clang-format off */
 static cmd_export_t cmds[]={
@@ -89,6 +109,9 @@ static rpc_export_t mt_rpc[];
 /* clang-format off */
 static param_export_t params[]={
 	{"memory", PARAM_INT, &misctest_memory},
+	{"message", PARAM_INT, &misctest_message},
+	{"message_data", PARAM_STR, &misctest_message_data},
+	{"message_file", PARAM_STR, &misctest_message_file},
 	{"mem_check_content", PARAM_INT, &default_mt_cfg.mem_check_content},
 	{0,0,0}
 };
@@ -129,7 +152,7 @@ struct allocated_list
 	volatile int no;
 };
 
-struct allocated_list *alloc_lst;
+struct allocated_list *alloc_lst = NULL;
 
 
 struct rnd_time_test
@@ -159,7 +182,7 @@ struct rnd_time_test_lst
 };
 
 
-struct rnd_time_test_lst *rndt_lst;
+struct rnd_time_test_lst *rndt_lst = NULL;
 
 static unsigned long mem_unleak(unsigned long size);
 static void mem_destroy_all_tests();
@@ -175,22 +198,18 @@ static int mod_init(void)
 	}
 
 	if(misctest_memory!=0) {
-		alloc_lst = shm_malloc(sizeof(*alloc_lst));
-		if(alloc_lst == 0)
+		if(misctest_memory_init()<0) {
 			goto error;
-		alloc_lst->chunks = 0;
-		atomic_set_long(&alloc_lst->size, 0);
-		atomic_set_int(&alloc_lst->no, 0);
-		if(lock_init(&alloc_lst->lock) == 0)
-			goto error;
-		rndt_lst = shm_malloc(sizeof(*rndt_lst));
-		if(rndt_lst == 0)
-			goto error;
-		rndt_lst->tests = 0;
-		atomic_set_int(&rndt_lst->last_id, 0);
-		if(lock_init(&rndt_lst->lock) == 0)
-			goto error;
+		}
 	}
+
+	if(misctest_message!=0) {
+		if(misctest_message_init()<0) {
+			goto error;
+		}
+		return -1;
+	}
+
 	return 0;
 error:
 	return -1;
@@ -215,6 +234,113 @@ static void mod_destroy()
 	}
 }
 
+static int misctest_memory_init(void)
+{
+	alloc_lst = shm_malloc(sizeof(*alloc_lst));
+	if(alloc_lst == 0)
+		goto error;
+	alloc_lst->chunks = 0;
+	atomic_set_long(&alloc_lst->size, 0);
+	atomic_set_int(&alloc_lst->no, 0);
+	if(lock_init(&alloc_lst->lock) == 0)
+		goto error;
+	rndt_lst = shm_malloc(sizeof(*rndt_lst));
+	if(rndt_lst == 0)
+		goto error;
+	rndt_lst->tests = 0;
+	atomic_set_int(&rndt_lst->last_id, 0);
+	if(lock_init(&rndt_lst->lock) == 0)
+		goto error;
+
+	return 0;
+error:
+	return -1;
+}
+
+static int misctest_message_init(void)
+{
+	char tbuf[BUF_SIZE];
+	FILE *f;
+	long fsize;
+    sip_msg_t tmsg = { };
+
+	if(misctest_message_data.s!=0 && misctest_message_data.len>0) {
+		if(misctest_message_data.len>=BUF_SIZE-2) {
+			LM_ERR("the data is too big\n");
+			return -1;
+		}
+		memcpy(tbuf, misctest_message_data.s, misctest_message_data.len);
+		tbuf[misctest_message_data.len] = '\0';
+		tmsg.len = misctest_message_data.len;
+	} else if(misctest_message_file.s!=0 && misctest_message_file.len>0) {
+		LM_DBG("reading data from file: %.*s\n", misctest_message_file.len,
+				misctest_message_file.s);
+		f = fopen(misctest_message_file.s, "r");
+		if(f==NULL) {
+			LM_ERR("cannot open file: %.*s\n", misctest_message_file.len,
+					misctest_message_file.s);
+			return -1;
+		}
+		fseek(f, 0, SEEK_END);
+		fsize = ftell(f);
+		if(fsize<0) {
+			LM_ERR("ftell failed on file: %.*s\n", misctest_message_file.len,
+					misctest_message_file.s);
+			fclose(f);
+			return -1;
+		}
+		fseek(f, 0, SEEK_SET);
+
+		if(fsize>=BUF_SIZE-2) {
+			LM_ERR("the file data is too big\n");
+			return -1;
+
+		}
+		if(fread(tbuf, fsize, 1, f) != fsize) {
+			if(ferror(f)) {
+				LM_ERR("error reading from file: %.*s\n",
+					misctest_message_file.len, misctest_message_file.s);
+			}
+		}
+		fclose(f);
+
+		tbuf[fsize] = 0;
+		tmsg.len = (int)fsize;
+	} else {
+		LM_ERR("no input data\n");
+		return -1;
+	}
+
+    tmsg.buf = tbuf;
+
+    LM_INFO("using data: [[%.*s]]\n", tmsg.len, tmsg.buf);
+
+    if (parse_msg(tmsg.buf, tmsg.len, &tmsg) < 0) {
+        goto cleanup;
+    }
+
+    parse_sdp(&tmsg);
+
+    parse_headers(&tmsg, HDR_TO_F, 0);
+
+    parse_contact_header(&tmsg);
+
+    parse_refer_to_header(&tmsg);
+
+    parse_to_header(&tmsg);
+
+    parse_pai_header(&tmsg);
+
+    parse_diversion_header(&tmsg);
+
+    parse_privacy(&tmsg);
+
+cleanup:
+    free_sip_msg(&tmsg);
+
+    return 0;
+
+}
 
 /** record a memory chunk list entry.
  * @param addr - address of the newly allocated memory
@@ -399,7 +525,7 @@ static unsigned long mem_unleak(unsigned long size)
 
 
 /** realloc randomly size bytes.
- * Chooses randomly a previously allocated chunk and realloc's it.
+ * Chooses randomly a previously allocated chunk and realloc')s it.
  * @param size - size.
  * @param diff - filled with difference, >= 0 means more bytes were alloc.,
  *               < 0 means bytes were freed.

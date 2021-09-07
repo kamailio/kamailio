@@ -13,7 +13,7 @@
 	<title>Parameters</title>
 
 	<section id="misctest.p.memory">
-		<title><varname>memory</varname></title>
+		<title><varname>memory</varname> (int)</title>
 		<para>
 			Initialize for memory testing. Set it to 1 to prepare the memory
 			testing.
@@ -26,13 +26,15 @@
 				Set <varname>memory</varname> in the config file
 			</title>
 			<programlisting>
+...
 modparam("misctest", "memory", 1)
+...
 			</programlisting>
 		</example>
 	</section>
 
 	<section id="misctest.p.mem_check_content">
-		<title><varname>mem_check_content</varname></title>
+		<title><varname>mem_check_content</varname> (int)</title>
 		<para>
 			When doing the tests, check also for the possibility of the
 			memory being overwritten. When activated, the allocated memory
@@ -50,7 +52,9 @@ modparam("misctest", "memory", 1)
 				Set <varname>mem_check_content</varname> in the config file
 			</title>
 			<programlisting>
+...
 modparam("misctest", "mem_check_content", 1)
+...
 			</programlisting>
 		</example>
 		<example>
@@ -58,7 +62,69 @@ modparam("misctest", "mem_check_content", 1)
 				Set <varname>mem_check_content</varname> at runtime via kamcmd
 			</title>
 			<programlisting>
+...
 $ &kamcmd; cfg.seti misctest mem_check_content 1
+...
+			</programlisting>
+		</example>
+	</section>
+
+	<section id="misctest.p.message">
+		<title><varname>message</varname> (int)</title>
+		<para>
+			Initialize and perform message testing.
+		</para>
+		<para>
+			Default: 0 (off).
+		</para>
+		<example>
+			<title>
+				Set <varname>message</varname> in the config file
+			</title>
+			<programlisting>
+...
+modparam("misctest", "message", 1)
+...
+			</programlisting>
+		</example>
+	</section>
+
+	<section id="misctest.p.message_data">
+		<title><varname>message_data</varname> (str)</title>
+		<para>
+			Set SIP message data for testing.
+		</para>
+		<para>
+			Default: NULL (not set).
+		</para>
+		<example>
+			<title>
+				Set <varname>message_data</varname> in the config file
+			</title>
+			<programlisting>
+...
+modparam("misctest", "message_data", "...")
+...
+			</programlisting>
+		</example>
+	</section>
+
+	<section id="misctest.p.message_file">
+		<title><varname>message_file</varname> (str)</title>
+		<para>
+			Set path to file from where to read SIP message data for testing.
+		</para>
+		<para>
+			Default: NULL (not set).
+		</para>
+		<example>
+			<title>
+				Set <varname>message_file</varname> in the config file
+			</title>
+			<programlisting>
+...
+modparam("misctest", "message_file", "/tmp/sip-data.txt")
+...
 			</programlisting>
 		</example>
 	</section>
