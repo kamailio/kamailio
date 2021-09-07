@@ -262,13 +262,14 @@ int parse_contacts(str* _s, contact_t** _c)
 		_s->len--;
 		trim_leading(_s);
 
+		c->next = *_c;
+		*_c = c;
+		c = NULL;
+
 		if (_s->len == 0) {
 			LM_ERR("text after comma missing\n");
 			goto error;
 		}
-
-		c->next = *_c;
-		*_c = c;
 	}
 
 error:
