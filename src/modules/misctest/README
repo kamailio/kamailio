@@ -14,8 +14,11 @@ Andrei Pelinescu-Onciul
         1. Overview
         2. Parameters
 
-              2.1. memory
-              2.2. mem_check_content
+              2.1. memory (int)
+              2.2. mem_check_content (int)
+              2.3. message (int)
+              2.4. message_data (str)
+              2.5. message_file (str)
 
         3. Functions
 
@@ -41,17 +44,20 @@ Andrei Pelinescu-Onciul
    1.1. Set memory in the config file
    1.2. Set mem_check_content in the config file
    1.3. Set mem_check_content at runtime via kamcmd
-   1.4. men_alloc usage
-   1.5. mem_free usage
-   1.6. mt.mem_alloc usage
-   1.7. mt.mem_free usage
-   1.8. mt.mem_used usage
-   1.9. mt.mem_rnd_alloc usage
-   1.10. mt.mem_test_start usage
-   1.11. mt.mem_test_stop usage
-   1.12. mt.mem_test_destroy usage
-   1.13. mt.mem_test_destroy_all usage
-   1.14. mt.mem_test_list usage
+   1.4. Set message in the config file
+   1.5. Set message_data in the config file
+   1.6. Set message_file in the config file
+   1.7. men_alloc usage
+   1.8. mem_free usage
+   1.9. mt.mem_alloc usage
+   1.10. mt.mem_free usage
+   1.11. mt.mem_used usage
+   1.12. mt.mem_rnd_alloc usage
+   1.13. mt.mem_test_start usage
+   1.14. mt.mem_test_stop usage
+   1.15. mt.mem_test_destroy usage
+   1.16. mt.mem_test_destroy_all usage
+   1.17. mt.mem_test_list usage
 
 Chapter 1. Admin Guide
 
@@ -60,8 +66,11 @@ Chapter 1. Admin Guide
    1. Overview
    2. Parameters
 
-        2.1. memory
-        2.2. mem_check_content
+        2.1. memory (int)
+        2.2. mem_check_content (int)
+        2.3. message (int)
+        2.4. message_data (str)
+        2.5. message_file (str)
 
    3. Functions
 
@@ -94,10 +103,13 @@ Warning
 
 2. Parameters
 
-   2.1. memory
-   2.2. mem_check_content
+   2.1. memory (int)
+   2.2. mem_check_content (int)
+   2.3. message (int)
+   2.4. message_data (str)
+   2.5. message_file (str)
 
-2.1. memory
+2.1. memory (int)
 
    Initialize for memory testing. Set it to 1 to prepare the memory
    testing.
@@ -105,9 +117,11 @@ Warning
    Default: 0 (off).
 
    Example 1.1.  Set memory in the config file
+...
 modparam("misctest", "memory", 1)
+...
 
-2.2. mem_check_content
+2.2. mem_check_content (int)
 
    When doing the tests, check also for the possibility of the memory
    being overwritten. When activated, the allocated memory will be filled
@@ -118,10 +132,47 @@ modparam("misctest", "memory", 1)
    It can be changed also at runtime, via the rpc interface.
 
    Example 1.2.  Set mem_check_content in the config file
+...
 modparam("misctest", "mem_check_content", 1)
+...
 
    Example 1.3.  Set mem_check_content at runtime via kamcmd
+...
 $ kamcmd cfg.seti misctest mem_check_content 1
+...
+
+2.3. message (int)
+
+   Initialize and perform message testing.
+
+   Default: 0 (off).
+
+   Example 1.4.  Set message in the config file
+...
+modparam("misctest", "message", 1)
+...
+
+2.4. message_data (str)
+
+   Set SIP message data for testing.
+
+   Default: NULL (not set).
+
+   Example 1.5.  Set message_data in the config file
+...
+modparam("misctest", "message_data", "...")
+...
+
+2.5. message_file (str)
+
+   Set path to file from where to read SIP message data for testing.
+
+   Default: NULL (not set).
+
+   Example 1.6.  Set message_file in the config file
+...
+modparam("misctest", "message_file", "/tmp/sip-data.txt")
+...
 
 3. Functions
 
@@ -137,7 +188,7 @@ Note
    This is a debugging function for simulating memory leaks or stressing
    the memory allocator. It should not be used in production setups
 
-   Example 1.4. men_alloc usage
+   Example 1.7. men_alloc usage
 ...
 mem_alloc(1048576); # 1MB
 ...
@@ -151,7 +202,7 @@ Note
    This is a debugging function for simulating memory leaks or stressing
    the memory allocator. It should not be used in production setups
 
-   Example 1.5. mem_free usage
+   Example 1.8. mem_free usage
 ...
 mem_free();
 ...
@@ -177,7 +228,7 @@ mem_free();
      * m - MB
      * g - GB
 
-   Example 1.6. mt.mem_alloc usage
+   Example 1.9. mt.mem_alloc usage
  $ kamcmd mt.mem_alloc 10 k
 
 4.2.  mt.mem_free [size] [unit]
@@ -193,7 +244,7 @@ mem_free();
      * m - MB
      * g - GB
 
-   Example 1.7. mt.mem_free usage
+   Example 1.10. mt.mem_free usage
  $ kamcmd mt.mem_free 1 m
 
 4.3.  mt.mem_used [unit]
@@ -207,7 +258,7 @@ mem_free();
      * m - MB
      * g - GB
 
-   Example 1.8. mt.mem_used usage
+   Example 1.11. mt.mem_used usage
  $ kamcmd mt.mem_used
 9221460
 
@@ -217,7 +268,7 @@ mem_free();
    max (inclusive). unit is optional and represents the unit for all the
    given sizes (see above).
 
-   Example 1.9. mt.mem_rnd_alloc usage
+   Example 1.12. mt.mem_rnd_alloc usage
  $ kamcmd mt.mem_rnd_alloc 1 64 10240 k
 
 4.5.  mt.mem_test_start min max total min_int max_int total_time [unit]
@@ -234,7 +285,7 @@ mem_free();
 
    Returns the test id.
 
-   Example 1.10. mt.mem_test_start usage
+   Example 1.13. mt.mem_test_start usage
  $ kamcmd mt.mem_test_start 15 64 25000 128 1500 3600000 k
 1
 
@@ -242,7 +293,7 @@ mem_free();
 
    Stops the test identified by id.
 
-   Example 1.11. mt.mem_test_stop usage
+   Example 1.14. mt.mem_test_stop usage
  $ kamcmd mt.mem_test_stop 1
 
 4.7.  mt.mem_test_destroy id
@@ -250,14 +301,14 @@ mem_free();
    Destroys the test identified by id (besides stopping it, it also frees
    all the data, including the statistics).
 
-   Example 1.12. mt.mem_test_destroy usage
+   Example 1.15. mt.mem_test_destroy usage
  $ kamcmd mt.mem_test_destroy 1
 
 4.8.  mt.mem_test_destroy_all id
 
    Destroys all the running or stopped tests.
 
-   Example 1.13. mt.mem_test_destroy_all usage
+   Example 1.16. mt.mem_test_destroy_all usage
  $ kamcmd mt.mem_test_destroy_all
 
 4.9.  mt.mem_test_list [id] [unit]
@@ -268,7 +319,7 @@ mem_free();
    unit is optional. The default is is bytes (for all the possible units
    see above).
 
-   Example 1.14. mt.mem_test_list usage
+   Example 1.17. mt.mem_test_list usage
  $ kamcmd mt.mem_test_list
 {
         ID           : 2
