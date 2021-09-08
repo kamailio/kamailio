@@ -2706,7 +2706,7 @@ static void rpc_dlg_set_state(rpc_t *rpc,void *c){
 		dlg->init_ts = (unsigned int)(time(0));
 		dlg->end_ts = (unsigned int)(time(0));
 	}
-	dlg->dflags |= DLG_FLAG_NEW;
+	dlg->dflags |= DLG_FLAG_CHANGED;
 
 	dlg_unref(dlg, unref);
 
