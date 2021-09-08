@@ -514,7 +514,7 @@ static inline int parse_param2(
 		goto ok; /* To be able to parse URI parameters */
 
 	if(_s->s[0] != separator) {
-		LM_ERR("Invalid character, %c expected\n", separator);
+		LM_ERR("Invalid character '%c' - expected '%c'\n", _s->s[0], separator);
 		goto error;
 	}
 
