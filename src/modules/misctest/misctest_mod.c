@@ -53,6 +53,7 @@ static void mod_destroy(void);
 
 static int misctest_memory_init(void);
 static int misctest_message_init(void);
+int misctest_hexprint(void *data, size_t length, int linelen, int split);
 
 static int misctest_memory = 0;
 static int misctest_message = 0;
@@ -313,7 +314,9 @@ static int misctest_message_init(void)
 
     tmsg.buf = tbuf;
 
-    LM_INFO("using data: [[%.*s]]\n", tmsg.len, tmsg.buf);
+    LM_INFO("using data: [[%.*s]] (%d)\n", tmsg.len, tmsg.buf, tmsg.len);
+
+	misctest_hexprint(tmsg.buf, tmsg.len, 20, 10);
 
     if (parse_msg(tmsg.buf, tmsg.len, &tmsg) < 0) {
         goto cleanup;
@@ -340,6 +343,90 @@ cleanup:
 
     return 0;
 
+}
+
+/**
+ *	misctest_hexprint - output a hex dump of a buffer
+ *
+ *	data - pointer to the buffer
+ *	length - length of buffer to write
+ *	linelen - number of chars to output per line
+ *	split - number of chars in each chunk on a line
+ */
+
+int misctest_hexprint(void *data, size_t length, int linelen, int split)
+{
+	char buffer[512];
+	char *ptr;
+	const void *inptr;
+	int pos;
+	int remaining = length;
+
+	inptr = data;
+
+	if(sizeof(buffer) <= (3 + (4 * (linelen / split)) + (linelen * 4))) {
+		LM_ERR("buffer size is too small\n");
+		return -1;
+	}
+
+	while (remaining > 0) {
+		int lrem;
+		int splitcount;
+		ptr = buffer;
+
+		lrem = remaining;
+		splitcount = 0;
+		for (pos = 0; pos < linelen; pos++) {
+
+			if (split == splitcount++) {
+				sprintf(ptr, "  ");
+				ptr += 2;
+				splitcount = 1;
+			}
+
+			if (lrem) {
+				sprintf(ptr, "%0.2x ", *((unsigned char *) inptr + pos));
+				lrem--;
+			} else {
+				sprintf(ptr, "   ");
+			}
+			ptr += 3;
+		}
+
+		*ptr++ = ' ';
+		*ptr++ = ' ';
+
+		lrem = remaining;
+		splitcount = 0;
+		for (pos = 0; pos < linelen; pos++) {
+			unsigned char c;
+
+			if (split == splitcount++) {
+				sprintf(ptr, "  ");
+				ptr += 2;
+				splitcount = 1;
+			}
+
+			if (lrem) {
+				c = *((unsigned char *) inptr + pos);
+				if (c > 31 && c < 127) {
+					sprintf(ptr, "%c", c);
+				} else {
+					sprintf(ptr, ".");
+				}
+				lrem--;
+			}
+			ptr++;
+		}
+
+		*ptr = '\0';
+		LM_INFO("%s\n", buffer);
+
+		inptr += linelen;
+		remaining -= linelen;
+	}
+
+	return 0;
 }
 
 /** record a memory chunk list entry.
