@@ -205,7 +205,7 @@ sca_hash_entry *sca_hash_table_slot_kv_find_entry(sca_hash_slot *slot, str *key)
 	sca_hash_entry *e;
 
 	lock_get(&slot->lock);
-	e = sca_hash_table_slot_kv_find_entry(slot, key);
+	e = sca_hash_table_slot_kv_find_entry_unsafe(slot, key);
 	lock_release(&slot->lock);
 
 	return (e);
