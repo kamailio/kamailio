@@ -281,6 +281,10 @@ static char *parse_to_param(char *const buffer, const char *const end,
 					semicolon_add_param:
 						add_param(param, to_b, newparam);
 					case E_PARA_VALUE:
+						if(newparam) {
+							pkg_free(newparam);
+							newparam = NULL;
+						}
 						param = (struct to_param *)pkg_malloc(
 								sizeof(struct to_param));
 						if(!param) {
