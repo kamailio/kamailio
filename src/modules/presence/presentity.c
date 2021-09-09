@@ -737,6 +737,7 @@ static int ps_db_update_presentity(sip_msg_t *msg, presentity_t *presentity,
 	result_cols[rez_ruid_col = n_result_cols++] = &str_ruid_col;
 
 	if(new_t) {
+		/* new_t!=0 */
 		LM_DBG("new presentity with etag %.*s\n", presentity->etag.len,
 				presentity->etag.s);
 
@@ -888,6 +889,7 @@ static int ps_db_update_presentity(sip_msg_t *msg, presentity_t *presentity,
 			*sent_reply = 1;
 		goto send_notify;
 	} else {
+		/* new_t==0 */
 		LM_DBG("updating existing presentity with etag %.*s\n",
 				presentity->etag.len, presentity->etag.s);
 
@@ -1206,7 +1208,7 @@ static int ps_db_update_presentity(sip_msg_t *msg, presentity_t *presentity,
 		update_vals[n_update_cols].val.int_val = presentity->priority;
 		n_update_cols++;
 
-		if(body && body->s) {
+		if(body && body->s && body->len>0) {
 			update_keys[n_update_cols] = &str_body_col;
 			update_vals[n_update_cols].type = DB1_BLOB;
 			update_vals[n_update_cols].nul = 0;
@@ -1748,7 +1750,7 @@ after_etag_generation:
 		ptc.expires = presentity->expires + (int)time(NULL);
 		ptc.received_time = presentity->received_time;
 		ptc.priority = presentity->priority;
-		if(body && body->s) {
+		if(body && body->s && body->len>0) {
 			ptc.body = *body;
 		}
 		if(presentity->sender) {
