@@ -225,6 +225,12 @@ static char *parse_to_param(char *const buffer, const char *const end,
 			case '\\':
 				switch(status) {
 					case PARA_VALUE_QUOTED:
+						if(tmp+1>=end) {
+							LM_ERR("unexpected end of data in status %d - start: %p"
+									" - end: %p - crt: %p\n",
+								status, buffer, end , tmp);
+							goto error;
+						}
 						switch(*(tmp + 1)) {
 							case '\r':
 							case '\n':
@@ -241,6 +247,12 @@ static char *parse_to_param(char *const buffer, const char *const end,
 			case '"':
 				switch(status) {
 					case S_PARA_VALUE:
+						if(tmp+1>=end) {
+							LM_ERR("unexpected end of data in status %d - start: %p"
+									" - end: %p - crt: %p\n",
+								status, buffer, end , tmp);
+							goto error;
+						}
 						param->value.s = tmp + 1;
 						status = PARA_VALUE_QUOTED;
 						break;
