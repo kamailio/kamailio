@@ -1632,7 +1632,7 @@ char* build_uac_req(str* method, str* headers, str* body, dlg_t* dialog,
 			memapp(w, CRLF, CRLF_LEN);
 	}
 	memapp(w, CRLF, CRLF_LEN);
-	if (body) memapp(w, body->s, body->len);
+	if (body && body->s && body->len>0) memapp(w, body->s, body->len);
 
 #ifdef EXTRA_DEBUG
 	assert(w-buf == *len);
