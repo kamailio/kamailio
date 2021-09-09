@@ -678,6 +678,7 @@ static void ul_rpc_add(rpc_t* rpc, void* ctx)
 	}
 	ci.ruid = _ul_sruid.uid;
 	ci.server_id = server_id;
+	ci.tcpconn_id = -1;
 
 	lock_udomain(dom, &aor);
 
