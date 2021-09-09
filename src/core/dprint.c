@@ -652,6 +652,10 @@ static void ksr_slog_json_str_escape(str *s_in, str *s_out, int *emode)
         "\"file\":{\"name\":\"%s\",\"line\":%d},\"native\":{\"function\":\"%s\"},\"msg\":\"%s\"," \
         "\"pname\":\"%s\",\"appname\":\"%s\",\"hostname\":\"%s\"}%s"
 
+#define KSR_SLOG_SYSLOG_JSON_CEEFMT "@cee: " KSR_SLOG_JSON_CEEFMT
+
+#define KSR_SLOG_STDERR_JSON_CEEFMT KSR_SLOG_JSON_CEEFMT
+
 void ksr_slog_json(ksr_logdata_t *kld, const char *format, ...)
 {
 	va_list arglist;
@@ -718,7 +722,7 @@ void ksr_slog_json(ksr_logdata_t *kld, const char *format, ...)
 	strftime (iso8601buf, ISO8601_BUF_SIZE, "%FT%T", &_tm);
 	if (unlikely(log_stderr)) {
 		if (unlikely(log_cee)) {
-			fprintf(stderr, KSR_SLOG_JSON_CEEFMT,
+			fprintf(stderr, KSR_SLOG_STDERR_JSON_CEEFMT,
 			iso8601buf, _tp.tv_nsec, my_pid(),
 #ifdef HAVE_PTHREAD
                         (uintmax_t)pthread_self(),
@@ -739,7 +743,7 @@ void ksr_slog_json(ksr_logdata_t *kld, const char *format, ...)
 		}
 	} else {
 		if (unlikely(log_cee)) {
-			_km_log_func(kld->v_facility, KSR_SLOG_JSON_CEEFMT,
+			_km_log_func(kld->v_facility, KSR_SLOG_SYSLOG_JSON_CEEFMT,
 			iso8601buf, _tp.tv_nsec, my_pid(),
 #ifdef HAVE_PTHREAD
                         pthread_self(),
