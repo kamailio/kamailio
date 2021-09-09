@@ -371,9 +371,9 @@ static int sipt_get_redirection_info(struct sip_msg *msg, pv_param_t *param, pv_
 		return -1;
 	}
 
-	if((body.s[0] != ISUP_ACM) && (body.s[0] != ISUP_CPG) && (body.s[0] != ISUP_IAM))
+	if((body.s[0] != ISUP_ACM) && (body.s[0] != ISUP_CPG))
 	{
-		LM_DBG("message not an ACM or CPG or IAM\n");
+		LM_DBG("message not an ACM or CPG\n");
 		return -1;
 	}
 	
