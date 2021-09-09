@@ -1700,7 +1700,8 @@ jump_over_body:
 	}
 
 	/* build extra headers */
-	if(build_str_hdr(subs, notify_body ? 1 : 0, &str_hdr) < 0) {
+	if(build_str_hdr(subs, (notify_body && notify_body->len>0) ? 1 : 0,
+				&str_hdr) < 0) {
 		LM_ERR("while building headers\n");
 		goto error;
 	}
