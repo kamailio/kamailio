@@ -312,37 +312,38 @@ static int misctest_message_init(void)
 		return -1;
 	}
 
-    tmsg.buf = tbuf;
+	tmsg.buf = tbuf;
 
-    LM_INFO("using data: [[%.*s]] (%d)\n", tmsg.len, tmsg.buf, tmsg.len);
+	LM_INFO("data - start: %p - end: %p - len: %d\n", tmsg.buf,
+			tmsg.buf + tmsg.len, tmsg.len);
+	LM_INFO("data - content: [[%.*s]]\n", tmsg.len, tmsg.buf);
 
 	misctest_hexprint(tmsg.buf, tmsg.len, 20, 10);
 
-    if (parse_msg(tmsg.buf, tmsg.len, &tmsg) < 0) {
-        goto cleanup;
-    }
+	if (parse_msg(tmsg.buf, tmsg.len, &tmsg) < 0) {
+		goto cleanup;
+	}
 
-    parse_sdp(&tmsg);
+	parse_sdp(&tmsg);
 
-    parse_headers(&tmsg, HDR_TO_F, 0);
+	parse_headers(&tmsg, HDR_TO_F, 0);
 
-    parse_contact_header(&tmsg);
+	parse_contact_header(&tmsg);
 
-    parse_refer_to_header(&tmsg);
+	parse_refer_to_header(&tmsg);
 
-    parse_to_header(&tmsg);
+	parse_to_header(&tmsg);
 
-    parse_pai_header(&tmsg);
+	parse_pai_header(&tmsg);
 
-    parse_diversion_header(&tmsg);
+	parse_diversion_header(&tmsg);
 
-    parse_privacy(&tmsg);
+	parse_privacy(&tmsg);
 
 cleanup:
-    free_sip_msg(&tmsg);
+	free_sip_msg(&tmsg);
 
-    return 0;
-
+	return 0;
 }
 
 /**
