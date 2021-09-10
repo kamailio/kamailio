@@ -935,6 +935,9 @@ end
        with branch flags matching at least one set inside xavp specified
        by xavp_cfg parameter with inner name rlf_bflags - e.g.,
        $xavp(reg=>rlf_bflags).
+     * 2 - apply the active tcp connection filter - return only contact
+       records that have the associated TCP/TLS/WSS connection active. UDP
+       and SCTP contacts are not filtered, all are returned.
 
    Default value is NULL (disabled).
 
