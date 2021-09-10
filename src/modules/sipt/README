@@ -24,6 +24,7 @@ Torrey Searle
 
               3.3. sipt_set_calling(origin, nai, presentation, screening)
               3.4. sipt_forwarding(origin, nai)
+              3.5. sipt_has_isup_body()
 
         4. Exported pseudo-variables
 
@@ -37,16 +38,27 @@ Torrey Searle
                       $sipt.(calling_party_number.nai) /
                       $sipt_calling_party_nai
 
-              4.6. $sipt(called_party_number.nature_of_address) /
+              4.6. $sipt(calling_party_number)
+              4.7. $sipt(called_party_number.nature_of_address) /
                       $sipt(called_party_number.nai) /
                       $sipt_called_party_nai
 
-              4.7. $sipt(event_info)
-              4.8. $sipt(backward_call_indicator.charge_indicator)
-              4.9. $sipt(redirection_info) / $sipt_redirection_info
-              4.10. $sipt(redirection_number) / $sipt_redirection_number
-              4.11. $sipt(redirection_number.nai) /
+              4.8. $sipt(called_party_number)
+              4.9. $sipt(event_info)
+              4.10. $sipt(backward_call_indicator.charge_indicator)
+              4.11. $sipt(redirection_info) / $sipt_redirection_info
+              4.12. $sipt(redirection_number) / $sipt_redirection_number
+              4.13. $sipt(redirection_number.nai) /
                       $sipt_redirection_number_nai
+
+              4.14. $sipt(redirection_information.reason)
+              4.15. $sipt(redirection_information.original_reason)
+              4.16. $sipt(redirecting_number.nai)
+              4.17. $sipt(redirecting_number)
+              4.18. $sipt(original_called_number.nai)
+              4.19. $sipt(original_called_number)
+              4.20. $sipt(generic_number.nai)
+              4.21. $sipt(generic_number)
 
    List of Tables
 
@@ -65,13 +77,14 @@ Torrey Searle
    1.2. sipt_destination(destination, hops, nai) usage
    1.3. sipt_set_calling(origin, nai, presentation, screening) usage
    1.4. sipt_set_calling(origin, nai) usage
-   1.5. sipt_presentation pseudo-variable usage
-   1.6. sipt_screening pseudo-variable usage
-   1.7. sipt_hop_counter pseudo-variable usage
-   1.8. sipt_cpc pseudo-variable usage
-   1.9. sipt_calling_party_nai pseudo-variable usage
-   1.10. sipt_called_party_nai pseudo-variable usage
-   1.11. sipt_redirection_number usage
+   1.5. sipt_has_isup_body() usage
+   1.6. sipt_presentation pseudo-variable usage
+   1.7. sipt_screening pseudo-variable usage
+   1.8. sipt_hop_counter pseudo-variable usage
+   1.9. sipt_cpc pseudo-variable usage
+   1.10. sipt_calling_party_nai pseudo-variable usage
+   1.11. sipt_called_party_nai pseudo-variable usage
+   1.12. sipt_redirection_number usage
 
 Chapter 1. Admin Guide
 
@@ -87,6 +100,7 @@ Chapter 1. Admin Guide
 
         3.3. sipt_set_calling(origin, nai, presentation, screening)
         3.4. sipt_forwarding(origin, nai)
+        3.5. sipt_has_isup_body()
 
    4. Exported pseudo-variables
 
@@ -97,14 +111,24 @@ Chapter 1. Admin Guide
         4.5. $sipt(calling_party_number.nature_of_address) /
                 $sipt.(calling_party_number.nai) / $sipt_calling_party_nai
 
-        4.6. $sipt(called_party_number.nature_of_address) /
+        4.6. $sipt(calling_party_number)
+        4.7. $sipt(called_party_number.nature_of_address) /
                 $sipt(called_party_number.nai) / $sipt_called_party_nai
 
-        4.7. $sipt(event_info)
-        4.8. $sipt(backward_call_indicator.charge_indicator)
-        4.9. $sipt(redirection_info) / $sipt_redirection_info
-        4.10. $sipt(redirection_number) / $sipt_redirection_number
-        4.11. $sipt(redirection_number.nai) / $sipt_redirection_number_nai
+        4.8. $sipt(called_party_number)
+        4.9. $sipt(event_info)
+        4.10. $sipt(backward_call_indicator.charge_indicator)
+        4.11. $sipt(redirection_info) / $sipt_redirection_info
+        4.12. $sipt(redirection_number) / $sipt_redirection_number
+        4.13. $sipt(redirection_number.nai) / $sipt_redirection_number_nai
+        4.14. $sipt(redirection_information.reason)
+        4.15. $sipt(redirection_information.original_reason)
+        4.16. $sipt(redirecting_number.nai)
+        4.17. $sipt(redirecting_number)
+        4.18. $sipt(original_called_number.nai)
+        4.19. $sipt(original_called_number)
+        4.20. $sipt(generic_number.nai)
+        4.21. $sipt(generic_number)
 
 1. Overview
 
@@ -127,6 +151,7 @@ Chapter 1. Admin Guide
 
    3.3. sipt_set_calling(origin, nai, presentation, screening)
    3.4. sipt_forwarding(origin, nai)
+   3.5. sipt_has_isup_body()
 
 3.1. sipt_destination(destination, hops, nai[, terminator=1])
 
@@ -186,6 +211,18 @@ sipt_set_calling($fU, 4, 0, 3);
 sipt_forwarfing($avp(s:forwarding_number), 3);
 ...
 
+3.5. sipt_has_isup_body()
+
+   The function returns true if the SIP message has a ISUP body attached.
+
+   Example 1.5. sipt_has_isup_body() usage
+...
+if(sipt_has_isup_body())
+{
+    # do interesting stuff here
+}
+...
+
 4. Exported pseudo-variables
 
    4.1. $sipt(calling_party_number.presentation) / $sipt_presentation
@@ -195,14 +232,24 @@ sipt_forwarfing($avp(s:forwarding_number), 3);
    4.5. $sipt(calling_party_number.nature_of_address) /
           $sipt.(calling_party_number.nai) / $sipt_calling_party_nai
 
-   4.6. $sipt(called_party_number.nature_of_address) /
+   4.6. $sipt(calling_party_number)
+   4.7. $sipt(called_party_number.nature_of_address) /
           $sipt(called_party_number.nai) / $sipt_called_party_nai
 
-   4.7. $sipt(event_info)
-   4.8. $sipt(backward_call_indicator.charge_indicator)
-   4.9. $sipt(redirection_info) / $sipt_redirection_info
-   4.10. $sipt(redirection_number) / $sipt_redirection_number
-   4.11. $sipt(redirection_number.nai) / $sipt_redirection_number_nai
+   4.8. $sipt(called_party_number)
+   4.9. $sipt(event_info)
+   4.10. $sipt(backward_call_indicator.charge_indicator)
+   4.11. $sipt(redirection_info) / $sipt_redirection_info
+   4.12. $sipt(redirection_number) / $sipt_redirection_number
+   4.13. $sipt(redirection_number.nai) / $sipt_redirection_number_nai
+   4.14. $sipt(redirection_information.reason)
+   4.15. $sipt(redirection_information.original_reason)
+   4.16. $sipt(redirecting_number.nai)
+   4.17. $sipt(redirecting_number)
+   4.18. $sipt(original_called_number.nai)
+   4.19. $sipt(original_called_number)
+   4.20. $sipt(generic_number.nai)
+   4.21. $sipt(generic_number)
 
 4.1. $sipt(calling_party_number.presentation) / $sipt_presentation
 
@@ -216,7 +263,7 @@ sipt_forwarfing($avp(s:forwarding_number), 3);
    2 address not avail (national use)
    3 spare
 
-   Example 1.5. sipt_presentation pseudo-variable usage
+   Example 1.6. sipt_presentation pseudo-variable usage
 ...
 # add privacy header if restriction is requested
 if($sipt(calling_party_number.presentation) == 1)
@@ -239,7 +286,7 @@ if($sipt(calling_party_number.presentation) == 1)
    2 Reserved (user provided, verified and failed)
    3 Network provided
 
-   Example 1.6. sipt_screening pseudo-variable usage
+   Example 1.7. sipt_screening pseudo-variable usage
 ...
 
 # remove P-Asserted-Identity header if the screening isn't verified
@@ -257,7 +304,7 @@ if($avp(s:screening) != 1 && $avp(s:screening) != 3)
    Returns the value of the Hop Counter for the IAM message if it exists.
    Returns -1 if there isn't a hop counter.
 
-   Example 1.7. sipt_hop_counter pseudo-variable usage
+   Example 1.8. sipt_hop_counter pseudo-variable usage
 ...
 # get the hop counter and update the Max-Forwards header if it exists
 $avp(s:hop) = $sipt(hop_counter);
@@ -274,7 +321,7 @@ if($avp(s:hop) > 0)
    Returns the value of the Calling Party Category for the IAM message.
    Returns -1 if there is a parsing error.
 
-   Example 1.8. sipt_cpc pseudo-variable usage
+   Example 1.9. sipt_cpc pseudo-variable usage
 ...
 # get the Cpc code and set put it in a custom sip header
 append_hf("X-CPC: $sipt(cpc)\r\n");
@@ -295,7 +342,7 @@ $sipt.(calling_party_number.nai) / $sipt_calling_party_nai
    3 National (significant) number (national use)
    4 International use
 
-   Example 1.9. sipt_calling_party_nai pseudo-variable usage
+   Example 1.10. sipt_calling_party_nai pseudo-variable usage
 ...
 # get the Calling Nai and add country code if national
 if($sipt(calling_party_number.nai) == 3)
@@ -305,7 +352,13 @@ if($sipt(calling_party_number.nai) == 3)
 
 ...
 
-4.6. $sipt(called_party_number.nature_of_address) /
+4.6. $sipt(calling_party_number)
+
+   Returns the value (Address signal) of the Calling Party for the IAM
+   message. Returns -1 if there is a parsing error or if the Calling Party
+   Number is not present.
+
+4.7. $sipt(called_party_number.nature_of_address) /
 $sipt(called_party_number.nai) / $sipt_called_party_nai
 
    Returns the value of the Nature of Address Indicator of the Called
@@ -319,7 +372,7 @@ $sipt(called_party_number.nai) / $sipt_called_party_nai
    4 International use
    5 Network-specific number (national use)
 
-   Example 1.10. sipt_called_party_nai pseudo-variable usage
+   Example 1.11. sipt_called_party_nai pseudo-variable usage
 ...
 # get the Called Nai and add country code if national
 if($sipt(called_party_number.nai) == 3)
@@ -329,7 +382,13 @@ if($sipt(called_party_number.nai) == 3)
 
 ...
 
-4.7. $sipt(event_info)
+4.8. $sipt(called_party_number)
+
+   Returns the value (Address signal) of the Called Party for the IAM
+   message. Returns -1 if there is a parsing error or if the Called Party
+   Number is not present.
+
+4.9. $sipt(event_info)
 
    Returns the value of the Event Info header of the CPG message. Returns
    -1 if there is a parsing error.
@@ -343,7 +402,7 @@ if($sipt(called_party_number.nai) == 3)
    5 Call forward on no reply
    6 Call forward unconditional
 
-4.8. $sipt(backward_call_indicator.charge_indicator)
+4.10. $sipt(backward_call_indicator.charge_indicator)
 
    Returns the value of the charge indication of the backward call
    indicator header in the ACM or COT message. Returns -1 if there is a
@@ -355,10 +414,10 @@ if($sipt(called_party_number.nai) == 3)
    2 charge
    3 spare
 
-4.9. $sipt(redirection_info) / $sipt_redirection_info
+4.11. $sipt(redirection_info) / $sipt_redirection_info
 
-   Returns redirection info header from ISUP Returns "Redirecting reason"
-   or -1 if no redirection info found.
+   Returns call diversion information header from ISUP Returns
+   "Redirecting reason" or -1 if no call diversion information found.
 
    Table 1.7. Redirecting reason Values
    0 Unknown
@@ -369,19 +428,19 @@ if($sipt(called_party_number.nai) == 3)
    5 deflection immediate response
    6 mobile subscriber not reachable
 
-4.10. $sipt(redirection_number) / $sipt_redirection_number
+4.12. $sipt(redirection_number) / $sipt_redirection_number
 
    Returns number to which redirection will trigered Returns -1 if there
    is a parsing error.
 
-   Example 1.11. sipt_redirection_number usage
+   Example 1.12. sipt_redirection_number usage
 ...
 # get the redirection number
 $avp(s:redir_num) = $sipt(redirection_number);
 
 ...
 
-4.11. $sipt(redirection_number.nai) / $sipt_redirection_number_nai
+4.13. $sipt(redirection_number.nai) / $sipt_redirection_number_nai
 
    Returns NAI for redirection number from ISUP Returns NAI for
    redirection number or -1 if no info found.
@@ -392,3 +451,42 @@ $avp(s:redir_num) = $sipt(redirection_number);
    2 Unknown (national use)
    3 National (significant) number (national use)
    4 International use
+
+4.14. $sipt(redirection_information.reason)
+
+   Returns redirection reason from Redirection information from ISUP or -1
+   if no Redirection information found.
+
+4.15. $sipt(redirection_information.original_reason)
+
+   Returns original redirection reason from Redirection information from
+   ISUP or -1 if no Redirection information found.
+
+4.16. $sipt(redirecting_number.nai)
+
+   Returns NAI for redirecting number from ISUP or -1 if no redirecting
+   number found.
+
+4.17. $sipt(redirecting_number)
+
+   Returns redirecting number from ISUP or -1 if no redirecting number
+   found.
+
+4.18. $sipt(original_called_number.nai)
+
+   Returns NAI for original called number from ISUP or -1 if no original
+   called number found.
+
+4.19. $sipt(original_called_number)
+
+   Returns original called number from ISUP or -1 if no original called
+   number found.
+
+4.20. $sipt(generic_number.nai)
+
+   Returns NAI for generic number from ISUP or -1 if no generic number
+   found.
+
+4.21. $sipt(generic_number)
+
+   Returns generic number from ISUP or -1 if no generic number found.
