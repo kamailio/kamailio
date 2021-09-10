@@ -1517,6 +1517,29 @@ modparam("usrloc", "load_rank", 1)
 		</example>
 	</section>
 
+	<section id="usrloc.p.db_clean_tcp">
+		<title><varname>db_clean_tcp</varname> (int)</title>
+		<para>
+			If set to 1, when &kamailio; starts it removes the contacts with
+			transport TCP, TLS or WSS, no longer loading them. Useful when
+			end points do not listen for incoming connections on contact address,
+			which is quite common (end point use only tcp client connections).
+			On restart, connections are lost, therefore the corresponding
+			contact records become useless.
+		</para>
+		<para>
+		Default value is <quote>0</quote> (do not clean tcp contacts).
+		</para>
+		<example>
+		<title><varname>db_clean_tcp</varname> parameter usage</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "db_clean_tcp", 1)
+...
+		</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 	<section>

@@ -176,6 +176,7 @@ int ul_desc_time_order = 0;				/*!< By default do not enable timestamp ordering 
 int ul_handle_lost_tcp = 0;				/*!< By default do not remove contacts before expiration time */
 int ul_close_expired_tcp = 0;				/*!< By default do not close TCP connections for expired contacts */
 int ul_skip_remote_socket = 0;				/*!< By default do not skip remote socket */
+int ul_db_clean_tcp = 0;				/*!< Clean TCP/TLS/WSS contacts in DB before loading records */
 
 int ul_fetch_rows = 2000;				/*!< number of rows to fetch from result */
 int ul_hash_size = 10;
@@ -263,6 +264,7 @@ static param_export_t params[] = {
 	{"ka_loglevel",         PARAM_INT, &ul_ka_loglevel},
 	{"ka_logmsg",           PARAM_STR, &ul_ka_logmsg},
 	{"load_rank",           PARAM_INT, &ul_load_rank},
+	{"db_clean_tcp",        PARAM_INT, &ul_db_clean_tcp},
 	{0, 0, 0}
 };
 

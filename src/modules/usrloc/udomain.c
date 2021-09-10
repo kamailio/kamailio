@@ -45,6 +45,7 @@
 #include "urecord.h"
 
 extern int ul_rm_expired_delay;
+extern int ul_db_clean_tcp;
 
 #ifdef STATISTICS
 static char *build_stat_name( str* domain, char *var_name)
@@ -372,6 +373,52 @@ static inline ucontact_info_t* dbrow2info(db_val_t *vals, str *contact, int rcon
 	return &ci;
 }
 
+/*!
+ * \brief Delete all location records with tcp connection
+ *
+ * \param _c database connection
+ * \param _d loaded domain
+ * \return 0 on success, -1 on failure
+ */
+int uldb_delete_tcp_records(db1_con_t* _c, udomain_t* _d)
+{
+	db_key_t keys[2];
+	db_op_t  ops[2];
+	db_val_t vals[2];
+	int nr_keys = 0;
+
+	LM_DBG("delete location tcp records\n");
+
+	keys[nr_keys] = &ul_con_id_col;;
+	ops[nr_keys] = OP_GT;
+	vals[nr_keys].type = DB1_INT;
+	vals[nr_keys].nul = 0;
+	vals[nr_keys].val.int_val = 0;
+	nr_keys++;
+
+	if (ul_db_srvid != 0) {
+		keys[nr_keys] = &ul_srv_id_col;
+		ops[nr_keys] = OP_EQ;
+		vals[nr_keys].type = DB1_INT;
+		vals[nr_keys].nul = 0;
+		vals[nr_keys].val.int_val = server_id;
+		nr_keys++;
+	}
+
+	if (ul_dbf.use_table(_c, _d->name) < 0) {
+		LM_ERR("sql use_table failed\n");
+		return -1;
+	}
+
+
+	if (ul_dbf.delete(_c, keys, ops, vals, nr_keys) < 0) {
+		LM_ERR("deleting from database failed\n");
+		return -1;
+	}
+
+	return 0;
+}
+
 
 /*!
  * \brief Load all records from a udomain
@@ -399,6 +446,10 @@ int preload_udomain(db1_con_t* _c, udomain_t* _d)
 
 	urecord_t* r;
 	ucontact_t* c;
+
+	if(ul_db_clean_tcp!=0) {
+		uldb_delete_tcp_records(_c, _d);
+	}
 
 	columns[0] = &ul_user_col;
 	columns[1] = &ul_contact_col;
