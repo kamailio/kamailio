@@ -1109,6 +1109,14 @@ end
 				rlf_bflags - e.g., $xavp(reg=&gt;rlf_bflags).
 			</para>
 		</listitem>
+		<listitem>
+			<para>
+				<emphasis>2</emphasis> - apply the active tcp connection filter
+				- return only contact records that have the associated TCP/TLS/WSS
+				connection active. UDP and SCTP contacts are not filtered, all
+				are returned.
+			</para>
+		</listitem>
 	</itemizedlist>
 		<para>
 		<emphasis>
