@@ -128,6 +128,7 @@ static int _curl_send(const char* uri, str *post_data)
 	if((curl_handle=curl_easy_init())==NULL) {
     	LM_ERR("Unable to init cURL library\n");
 		curl_global_cleanup();
+		pkg_free(send_data);
         return -1;
     }
 
@@ -139,18 +140,14 @@ static int _curl_send(const char* uri, str *post_data)
 		LM_ERR("slack request send error: %s\n", curl_easy_strerror(res));
 		curl_easy_cleanup(curl_handle);
 		curl_global_cleanup();
-		if(send_data) {
-			pkg_free(send_data);
-		}
+		pkg_free(send_data);
 		return -1;
 	}
 
 	LM_INFO("slack request sent [%d]\n", datasz);
 	curl_easy_cleanup(curl_handle);
 	curl_global_cleanup();
-	if (send_data) {
-		pkg_free(send_data);
-	}
+	pkg_free(send_data);
 	return 0;
 }
 
