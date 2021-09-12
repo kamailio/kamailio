@@ -294,6 +294,7 @@ static int misctest_message_init(void)
 
 		if(fsize>=BUF_SIZE-2) {
 			LM_ERR("the file data is too big\n");
+			fclose(f);
 			return -1;
 
 		}
