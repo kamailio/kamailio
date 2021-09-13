@@ -263,7 +263,7 @@ static int misctest_message_init(void)
 	char tbuf[BUF_SIZE];
 	FILE *f;
 	long fsize;
-    sip_msg_t tmsg = { };
+	sip_msg_t tmsg = { };
 
 	if(misctest_message_data.s!=0 && misctest_message_data.len>0) {
 		if(misctest_message_data.len>=BUF_SIZE-2) {
@@ -387,7 +387,7 @@ int misctest_hexprint(void *data, size_t length, int linelen, int split)
 			}
 
 			if (lrem) {
-				sprintf(ptr, "%0.2x ", *((unsigned char *) inptr + pos));
+				sprintf(ptr, "%02x ", *((unsigned char *) inptr + pos));
 				lrem--;
 			} else {
 				sprintf(ptr, "   ");
