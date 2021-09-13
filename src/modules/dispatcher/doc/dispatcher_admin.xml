@@ -1735,6 +1735,46 @@ if(ds_is_from_list("10", "3", "sip:127.0.0.1:5080")) {
 </programlisting>
 		</example>
 	</section>
+	<section  id="dispatcher.f.ds_is_active">
+		<title>
+		<function moreinfo="none">ds_is_active(groupid [, uri])</function>
+		</title>
+		<para>
+		This function returns true, if there is an active URI in the destination
+		group; otherwise false. If the uri parameter is provided, then the
+		corresponding destination has to be active.
+		</para>
+		<para>Description of parameters:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>groupid</emphasis> - the group id. The parameter
+				can be an integer or a variable holding an integer value.
+			</para>
+		</listitem>
+        <listitem>
+			<para><emphasis>uri</emphasis> (optional) - the URI of the destination.
+			if parameter is empty or missing, the any destination is matched.
+            </para>
+        </listitem>
+		</itemizedlist>
+
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>ds_is_active</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(ds_is_active("10")) {
+    ...
+}
+if(ds_is_active("10", "sip:127.0.0.1:5080")) {
+    ...
+}
+...
+</programlisting>
+		</example>
+	</section>
 	<section id="dispatcher.f.ds_load_update">
 		<title>
 		<function moreinfo="none">ds_load_update()</function>
