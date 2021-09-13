@@ -6,6 +6,8 @@
 #include "../parser/parse_ppi_pai.h"
 #include "../parser/parse_privacy.h"
 #include "../parser/parse_diversion.h"
+#include "../parser/parse_identityinfo.h"
+#include "../parser/parse_disposition.h"
 
 int LLVMFuzzerInitialize(int *argc, char ***argv) {
     ksr_hname_init_index();
@@ -36,6 +38,16 @@ LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
     parse_diversion_header(&orig_inv);
 
     parse_privacy(&orig_inv);
+
+    parse_content_disposition(&orig_inv);
+
+    parse_identityinfo_header(&orig_inv);
+
+    str uri;
+    get_src_uri(&orig_inv, 0, &uri);
+
+    str ssock;
+    get_src_address_socket(&orig_inv, &ssock);
 
 cleanup:
     free_sip_msg(&orig_inv);
