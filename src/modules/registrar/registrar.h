@@ -49,11 +49,12 @@ extern int contact_max_size; /* configurable using module parameter "contact_max
 #define PATH_MODE_LAZY		1
 #define PATH_MODE_OFF		0
 
-#define REG_SAVE_MEM_FL     	(1<<0)
-#define REG_SAVE_NORPL_FL   	(1<<1)
-#define REG_SAVE_REPL_FL    	(1<<2)
-#define REG_SAVE_NOVARIATION_FL (1<<3)
-#define REG_SAVE_ALL_FL     ((1<<4)-1)
+#define REG_SAVE_MEM_FL     	(1<<0) /* save in memory only */
+#define REG_SAVE_NORPL_FL   	(1<<1) /* do not send reply internally */
+#define REG_SAVE_REPL_FL    	(1<<2) /* replace contacts - one contact per user */
+#define REG_SAVE_NOVARIATION_FL (1<<3) /* do not apply expire range */
+#define REG_SAVE_PREPRPL_FL   	(1<<4) /* prepare headers for reply */
+#define REG_SAVE_ALL_FL     ((1<<5)-1)
 
 #define REG_OUTBOUND_NONE	0
 #define REG_OUTBOUND_SUPPORTED	1

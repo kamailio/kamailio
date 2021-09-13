@@ -1236,6 +1236,11 @@ kamcmd cfg.set_now_int registrar use_expired_contacts 0
 					registration.
 					</para>
 				</listitem>
+				<listitem>
+					<para><emphasis>0x10</emphasis> - prepare the headers for
+					reply, used only if flag 0x02 is set.
+					</para>
+				</listitem>
 			</itemizedlist>
 			<para>The flags may be given in decimal or hexadecimal format.</para>
 		</listitem>

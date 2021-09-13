@@ -1015,10 +1015,18 @@ int save(struct sip_msg* _m, udomain_t* _d, int _cflags, str *_uri)
 
 	update_stat(accepted_registrations, 1);
 
-	/* Only send reply upon request, not upon reply */
-	if ((is_route_type(REQUEST_ROUTE) || is_route_type(FAILURE_ROUTE))
-			&& !is_cflag_set(REG_SAVE_NORPL_FL) && (reg_send_reply(_m) < 0))
-		return -1;
+	if(!is_cflag_set(REG_SAVE_NORPL_FL)) {
+		/* Only send reply upon request, not upon reply */
+		if (is_route_type(REQUEST_ROUTE) || is_route_type(FAILURE_ROUTE)) {
+			if (reg_send_reply(_m) < 0) {
+				return -1;
+			}
+		}
+	} else if (is_cflag_set(REG_SAVE_PREPRPL_FL)) {
+		if (reg_prepare_reply(_m) < 0) {
+			return -1;
+		}
+	}
 
 	if (path_enabled && path_mode != PATH_MODE_OFF) {
 		reset_path_vector(_m);
