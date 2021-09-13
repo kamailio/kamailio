@@ -1009,6 +1009,8 @@ kamcmd cfg.set_now_int registrar use_expired_contacts 0
             AoR (user).
           + 0x08 - Do not apply expires_range or default_expires_range to
             this registration.
+          + 0x10 - prepare the headers for reply, used only if flag 0x02
+            is set.
        The flags may be given in decimal or hexadecimal format.
      * uri (optional - flags param has to be set and can be 0 for default
        behavior) - SIP URI to do be used instead of To header URI. It can
