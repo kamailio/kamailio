@@ -3455,6 +3455,32 @@ int ds_is_from_list(struct sip_msg *_m, int group)
 	return ds_is_addr_from_list(_m, group, NULL, DS_MATCH_NOPROTO);
 }
 
+/**
+ * Check if the a group has any or a specific active uri
+ */
+int ds_is_active_uri(sip_msg_t *msg, int group, str *uri)
+{
+	ds_set_t *list;
+	int j;
+
+	list = ds_avl_find(_ds_list, group);
+	if(list) {
+		for(j = 0; j < list->nr; j++) {
+			if(!ds_skip_dst(list->dlist[j].flags)) {
+				if(uri==NULL || uri->s==NULL || uri->len<=0) {
+					return 1;
+				}
+				if((list->dlist[j].uri.len==uri->len)
+						&& (memcmp(list->dlist[j].uri.s, uri->s, uri->len)==0)) {
+					return 1;
+				}
+			}
+		}
+	}
+
+	return -1;
+}
+
 /*! \brief
  * Callback-Function for the OPTIONS-Request
  * This Function is called, as soon as the Transaction is finished

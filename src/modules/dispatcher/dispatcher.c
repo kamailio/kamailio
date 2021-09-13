@@ -178,6 +178,9 @@ static int w_ds_is_from_list3(struct sip_msg*, char*, char*, char*);
 static int w_ds_list_exist(struct sip_msg*, char*, char*);
 static int w_ds_reload(struct sip_msg* msg, char*, char*);
 
+static int w_ds_is_active(sip_msg_t *msg, char *pset, char *p2);
+static int w_ds_is_active_uri(sip_msg_t *msg, char *pset, char *puri);
+
 static int fixup_ds_is_from_list(void** param, int param_no);
 static int fixup_ds_list_exist(void** param,int param_no);
 
@@ -240,6 +243,10 @@ static cmd_export_t cmds[]={
 		0, 0, ANY_ROUTE},
 	{"ds_load_update",   (cmd_function)w_ds_load_update,  0,
 		0, 0, ANY_ROUTE},
+	{"ds_is_active",  (cmd_function)w_ds_is_active, 1,
+		fixup_igp_null, fixup_free_igp_null, ANY_ROUTE},
+	{"ds_is_active",  (cmd_function)w_ds_is_active_uri, 2,
+		fixup_igp_spve, fixup_free_igp_spve, ANY_ROUTE},
 	{"bind_dispatcher",   (cmd_function)bind_dispatcher,  0,
 		0, 0, 0},
 	{"ds_reload", (cmd_function)w_ds_reload, 0,
@@ -1065,6 +1072,45 @@ static int fixup_ds_list_exist(void **param, int param_no)
 	return fixup_igp_null(param, param_no);
 }
 
+static int ki_ds_is_active(sip_msg_t *msg, int set)
+{
+	return ds_is_active_uri(msg, set, NULL);
+}
+
+static int w_ds_is_active(sip_msg_t *msg, char *pset, char *p2)
+{
+	int vset;
+
+	if(fixup_get_ivalue(msg, (gparam_t *)pset, &vset) != 0) {
+		LM_ERR("cannot get set id value\n");
+		return -1;
+	}
+
+	return ds_is_active_uri(msg, vset, NULL);
+}
+
+static int ki_ds_is_active_uri(sip_msg_t *msg, int set, str *uri)
+{
+	return ds_is_active_uri(msg, set, uri);
+}
+
+static int w_ds_is_active_uri(sip_msg_t *msg, char *pset, char *puri)
+{
+	int vset;
+	str suri;
+
+	if(fixup_get_ivalue(msg, (gparam_t *)pset, &vset) != 0) {
+		LM_ERR("cannot get set id value\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t *)puri, &suri) != 0) {
+		LM_ERR("cannot get uri value\n");
+		return -1;
+	}
+
+	return ki_ds_is_active_uri(msg, vset, &suri);
+}
+
 static int ds_parse_reply_codes()
 {
 	param_t *params_list = NULL;
@@ -1453,7 +1499,16 @@ static sr_kemi_t sr_kemi_dispatcher_exports[] = {
 		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
-
+	{ str_init("dispatcher"), str_init("ds_is_active"),
+		SR_KEMIP_INT, ki_ds_is_active,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dispatcher"), str_init("ds_is_active_uri"),
+		SR_KEMIP_INT, ki_ds_is_active_uri,
+		{ SR_KEMIP_INT, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };
 /* clang-format on */

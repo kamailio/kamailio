@@ -151,6 +151,7 @@ int ds_mark_dst(struct sip_msg *msg, int mode);
 int ds_print_list(FILE *fout);
 int ds_log_sets(void);
 int ds_list_exist(int set);
+int ds_is_active_uri(sip_msg_t *msg, int group, str *uri);
 
 
 int ds_load_unset(struct sip_msg *msg);
