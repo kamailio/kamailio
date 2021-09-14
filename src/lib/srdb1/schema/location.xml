@@ -237,6 +237,10 @@
         <colref linkend="expires"/>
     </index>
     <index>
+        <name>tcpcon_idx</name>
+        <colref linkend="connection_id"/>
+    </index>
+    <index>
         <name>connection_idx</name>
         <colref linkend="server_id"/>
         <colref linkend="connection_id"/>
