@@ -940,7 +940,7 @@ static /*inline*/ char *parse_via_param(char *const p, const char *const end,
 
 find_value:
 	tmp++;
-	for(; *tmp; tmp++) {
+	for(; tmp<end && *tmp; tmp++) {
 		switch(*tmp) {
 			case ' ':
 			case '\t':
@@ -2064,7 +2064,7 @@ main_via:
 	tmp++;
 	c_nest = 0;
 	/*state should always be F_HOST here*/;
-	for(; *tmp; tmp++) {
+	for(; tmp<end && *tmp; tmp++) {
 		switch(*tmp) {
 			case ' ':
 			case '\t':
