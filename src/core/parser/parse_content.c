@@ -237,7 +237,7 @@ char* parse_content_length(char* const buffer, const char* const end,
 			LM_ERR("content lenght value is too large\n");
 			goto error;
 		}
-		number = number*10 + (*p)-'0';
+		number = number*10 + ((*p) - '0');
 		size ++;
 		p++;
 	}
