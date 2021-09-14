@@ -35,6 +35,7 @@ BEGIN map2users('location'); END;
 /
 CREATE INDEX location_account_contact_idx  ON location (username, domain, contact);
 CREATE INDEX location_expires_idx  ON location (expires);
+CREATE INDEX location_tcpcon_idx  ON location (connection_id);
 CREATE INDEX location_connection_idx  ON location (server_id, connection_id);
 
 INSERT INTO version (table_name, table_version) values ('location','9');
