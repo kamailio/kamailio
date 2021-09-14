@@ -264,6 +264,25 @@ static inline int sipt_check_IAM(struct sip_msg *msg, str *body)
 	return 1;
 }
 
+static inline int sipt_check_ACM_CPG(struct sip_msg *msg, str *body)
+{
+	body->s = get_body_part(msg, TYPE_APPLICATION,SUBTYPE_ISUP, &body->len);
+
+	if(body->s == NULL)
+	{
+		LM_INFO("No ISUP Message Found");
+		return -1;
+	}
+
+	if((body->s[0] != ISUP_ACM) && (body->s[0] != ISUP_CPG))
+	{
+		LM_DBG("message not an ACM or CPG\n");
+		return -1;
+	}
+	return 1;
+}
+
+
 static int sipt_get_hop_counter(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	str body;
@@ -353,17 +372,9 @@ static int sipt_get_calling_party(struct sip_msg *msg, pv_param_t *param, pv_val
 static int sipt_get_redirection_info(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	str body;
-	body.s = get_body_part(msg, TYPE_APPLICATION,SUBTYPE_ISUP,&body.len);
-
-	if(body.s == NULL)
+	if(sipt_check_ACM_CPG(msg, &body) != 1)
 	{
-		LM_INFO("No ISUP Message Found");
-		return -1;
-	}
-
-	if((body.s[0] != ISUP_ACM) && (body.s[0] != ISUP_CPG))
-	{
-		LM_DBG("message not an ACM or CPG\n");
+		LM_INFO("could not check ACM or CPG\n");
 		return -1;
 	}
 	
@@ -374,17 +385,9 @@ static int sipt_get_redirection_info(struct sip_msg *msg, pv_param_t *param, pv_
 static int sipt_get_redirection_number_nai(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	str body;
-	body.s = get_body_part(msg, TYPE_APPLICATION,SUBTYPE_ISUP,&body.len);
-
-	if(body.s == NULL)
+	if(sipt_check_ACM_CPG(msg, &body) != 1)
 	{
-		LM_INFO("No ISUP Message Found");
-		return -1;
-	}
-
-	if((body.s[0] != ISUP_ACM) && (body.s[0] != ISUP_CPG))
-	{
-		LM_DBG("message not an ACM or CPG\n");
+		LM_INFO("could not check ACM or CPG\n");
 		return -1;
 	}
 	
@@ -396,18 +399,10 @@ static int sipt_get_redirection_number(struct sip_msg *msg, pv_param_t *param, p
 {
 	static char sb_s_buf[26];
 	str body;
-	body.s = get_body_part(msg, TYPE_APPLICATION,SUBTYPE_ISUP,&body.len);
-
 	memset(sb_s_buf, 0, 26);
-	if(body.s == NULL)
+	if(sipt_check_ACM_CPG(msg, &body) != 1)
 	{
-		LM_INFO("No ISUP Message Found");
-		return -1;
-	}
-
-	if((body.s[0] != ISUP_ACM) && (body.s[0] != ISUP_CPG))
-	{
-		LM_DBG("message not an ACM or CPG\n");
+		LM_INFO("could not check ACM or CPG\n");
 		return -1;
 	}
 
