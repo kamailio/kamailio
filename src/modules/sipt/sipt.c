@@ -246,23 +246,34 @@ struct module_exports exports = {
 	mod_destroy      /* destroy function */
 };
 
-static int sipt_get_hop_counter(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
+static inline int sipt_check_IAM(struct sip_msg *msg, str *body)
 {
-	str body;
-	body.s = get_body_part(msg, TYPE_APPLICATION,SUBTYPE_ISUP,&body.len);
+	body->s = get_body_part(msg, TYPE_APPLICATION,SUBTYPE_ISUP, &body->len);
 
-	if(body.s == NULL)
+	if(body->s == NULL)
 	{
 		LM_INFO("No ISUP Message Found");
 		return -1;
 	}
 
-	if(body.s[0] != ISUP_IAM)
+	if(body->s[0] != ISUP_IAM)
 	{
 		LM_DBG("message not an IAM\n");
 		return -1;
 	}
-	
+	return 1;
+}
+
+static int sipt_get_hop_counter(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
+{
+	str body;
+
+	if(sipt_check_IAM(msg, &body) != 1)
+	{
+		LM_INFO("could not check IAM\n");
+		return -1;
+	}
+
 	pv_get_sintval(msg, param, res, isup_get_hop_counter((unsigned char*)body.s, body.len));
 	return 0;
 }
@@ -291,17 +302,10 @@ static int sipt_get_event_info(struct sip_msg *msg, pv_param_t *param, pv_value_
 static int sipt_get_cpc(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	str body;
-	body.s = get_body_part(msg, TYPE_APPLICATION,SUBTYPE_ISUP,&body.len);
 
-	if(body.s == NULL)
+	if(sipt_check_IAM(msg, &body) != 1)
 	{
-		LM_INFO("No ISUP Message Found");
-		return -1;
-	}
-
-	if(body.s[0] != ISUP_IAM)
-	{
-		LM_DBG("message not an IAM\n");
+		LM_INFO("could not check IAM\n");
 		return -1;
 	}
 	
@@ -312,17 +316,10 @@ static int sipt_get_cpc(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 static int sipt_get_calling_party_nai(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	str body;
-	body.s = get_body_part(msg, TYPE_APPLICATION,SUBTYPE_ISUP,&body.len);
 
-	if(body.s == NULL)
+	if(sipt_check_IAM(msg, &body) != 1)
 	{
-		LM_INFO("No ISUP Message Found");
-		return -1;
-	}
-
-	if(body.s[0] != ISUP_IAM)
-	{
-		LM_DBG("message not an IAM\n");
+		LM_INFO("could not check IAM\n");
 		return -1;
 	}
 	
@@ -334,18 +331,11 @@ static int sipt_get_calling_party(struct sip_msg *msg, pv_param_t *param, pv_val
 {
 	static char sb_s_buf[26];
 	str body;
-	body.s = get_body_part(msg, TYPE_APPLICATION,SUBTYPE_ISUP,&body.len);
-
 	memset(sb_s_buf, 0, 26);
-	if(body.s == NULL)
-	{
-		LM_INFO("No ISUP Message Found");
-		return -1;
-	}
 
-	if((body.s[0] != ISUP_IAM))
+	if(sipt_check_IAM(msg, &body) != 1)
 	{
-		LM_DBG("message not an IAM\n");
+		LM_INFO("could not check IAM\n");
 		return -1;
 	}
 
@@ -435,17 +425,10 @@ static int sipt_get_redirection_number(struct sip_msg *msg, pv_param_t *param, p
 static int sipt_get_redirection_reason(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	str body;
-	body.s = get_body_part(msg, TYPE_APPLICATION,SUBTYPE_ISUP,&body.len);
 
-	if(body.s == NULL)
+	if(sipt_check_IAM(msg, &body) != 1)
 	{
-		LM_INFO("No ISUP Message Found");
-		return -1;
-	}
-
-	if((body.s[0] != ISUP_IAM))
-	{
-		LM_DBG("message not an IAM\n");
+		LM_INFO("could not check IAM\n");
 		return -1;
 	}
 
@@ -456,17 +439,10 @@ static int sipt_get_redirection_reason(struct sip_msg *msg, pv_param_t *param, p
 static int sipt_get_original_redirection_reason(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	str body;
-	body.s = get_body_part(msg, TYPE_APPLICATION,SUBTYPE_ISUP,&body.len);
 
-	if(body.s == NULL)
+	if(sipt_check_IAM(msg, &body) != 1)
 	{
-		LM_INFO("No ISUP Message Found");
-		return -1;
-	}
-
-	if((body.s[0] != ISUP_IAM))
-	{
-		LM_DBG("message not an IAM\n");
+		LM_INFO("could not check IAM\n");
 		return -1;
 	}
 
@@ -477,17 +453,10 @@ static int sipt_get_original_redirection_reason(struct sip_msg *msg, pv_param_t 
 static int sipt_get_redirecting_number_nai(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	str body;
-	body.s = get_body_part(msg, TYPE_APPLICATION,SUBTYPE_ISUP,&body.len);
 
-	if(body.s == NULL)
+	if(sipt_check_IAM(msg, &body) != 1)
 	{
-		LM_INFO("No ISUP Message Found");
-		return -1;
-	}
-
-	if((body.s[0] != ISUP_IAM))
-	{
-		LM_DBG("message not an IAM\n");
+		LM_INFO("could not check IAM\n");
 		return -1;
 	}
 	
@@ -499,18 +468,11 @@ static int sipt_get_redirecting_number(struct sip_msg *msg, pv_param_t *param, p
 {
 	static char sb_s_buf[26];
 	str body;
-	body.s = get_body_part(msg, TYPE_APPLICATION,SUBTYPE_ISUP,&body.len);
-
 	memset(sb_s_buf, 0, 26);
-	if(body.s == NULL)
-	{
-		LM_INFO("No ISUP Message Found");
-		return -1;
-	}
 
-	if((body.s[0] != ISUP_IAM))
+	if(sipt_check_IAM(msg, &body) != 1)
 	{
-		LM_DBG("message not an IAM\n");
+		LM_INFO("could not check IAM\n");
 		return -1;
 	}
 
@@ -528,17 +490,10 @@ static int sipt_get_redirecting_number(struct sip_msg *msg, pv_param_t *param, p
 static int sipt_get_original_called_number_nai(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	str body;
-	body.s = get_body_part(msg, TYPE_APPLICATION,SUBTYPE_ISUP,&body.len);
 
-	if(body.s == NULL)
+	if(sipt_check_IAM(msg, &body) != 1)
 	{
-		LM_INFO("No ISUP Message Found");
-		return -1;
-	}
-
-	if((body.s[0] != ISUP_IAM))
-	{
-		LM_DBG("message not an IAM\n");
+		LM_INFO("could not check IAM\n");
 		return -1;
 	}
 
@@ -550,18 +505,11 @@ static int sipt_get_original_called_number(struct sip_msg *msg, pv_param_t *para
 {
 	static char sb_s_buf[26];
 	str body;
-	body.s = get_body_part(msg, TYPE_APPLICATION,SUBTYPE_ISUP,&body.len);
-
 	memset(sb_s_buf, 0, 26);
-	if(body.s == NULL)
-	{
-		LM_INFO("No ISUP Message Found");
-		return -1;
-	}
 
-	if((body.s[0] != ISUP_IAM))
+	if(sipt_check_IAM(msg, &body) != 1)
 	{
-		LM_DBG("message not an IAM\n");
+		LM_INFO("could not check IAM\n");
 		return -1;
 	}
 
@@ -579,17 +527,10 @@ static int sipt_get_original_called_number(struct sip_msg *msg, pv_param_t *para
 static int sipt_get_generic_number_nai(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	str body;
-	body.s = get_body_part(msg, TYPE_APPLICATION,SUBTYPE_ISUP,&body.len);
 
-	if(body.s == NULL)
+	if(sipt_check_IAM(msg, &body) != 1)
 	{
-		LM_INFO("No ISUP Message Found");
-		return -1;
-	}
-
-	if((body.s[0] != ISUP_IAM))
-	{
-		LM_DBG("message not an IAM\n");
+		LM_INFO("could not check IAM\n");
 		return -1;
 	}
 
@@ -601,21 +542,12 @@ static int sipt_get_generic_number(struct sip_msg *msg, pv_param_t *param, pv_va
 {
 	static char sb_s_buf[26];
 	str body;
-	body.s = get_body_part(msg, TYPE_APPLICATION,SUBTYPE_ISUP,&body.len);
-
 	memset(sb_s_buf, 0, 26);
-	if(body.s == NULL)
+	if(sipt_check_IAM(msg, &body) != 1)
 	{
-		LM_INFO("No ISUP Message Found");
+		LM_INFO("could not check IAM\n");
 		return -1;
 	}
-
-	if((body.s[0] != ISUP_IAM))
-	{
-		LM_DBG("message not an IAM\n");
-		return -1;
-	}
-
 	isup_get_generic_number((unsigned char*)body.s, body.len, sb_s_buf);
 
 	if (strlen(sb_s_buf) > 0)
@@ -630,17 +562,9 @@ static int sipt_get_generic_number(struct sip_msg *msg, pv_param_t *param, pv_va
 static int sipt_get_presentation(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	str body;
-	body.s = get_body_part(msg, TYPE_APPLICATION,SUBTYPE_ISUP,&body.len);
-
-	if(body.s == NULL)
+	if(sipt_check_IAM(msg, &body) != 1)
 	{
-		LM_INFO("No ISUP Message Found");
-		return -1;
-	}
-
-	if(body.s[0] != ISUP_IAM)
-	{
-		LM_DBG("message not an IAM\n");
+		LM_INFO("could not check IAM\n");
 		return -1;
 	}
 	
@@ -651,19 +575,12 @@ static int sipt_get_presentation(struct sip_msg *msg, pv_param_t *param, pv_valu
 static int sipt_get_screening(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	str body;
-	body.s = get_body_part(msg, TYPE_APPLICATION,SUBTYPE_ISUP,&body.len);
-
-	if(body.s == NULL)
+	if(sipt_check_IAM(msg, &body) != 1)
 	{
-		LM_INFO("No ISUP Message Found");
+		LM_INFO("could not check IAM\n");
 		return -1;
 	}
 
-	if(body.s[0] != ISUP_IAM)
-	{
-		LM_DBG("message not an IAM\n");
-		return -1;
-	}
 	LM_DBG("about to get screening\n");
 	
 	pv_get_sintval(msg, param, res, isup_get_screening((unsigned char*)body.s, body.len));
@@ -695,17 +612,9 @@ static int sipt_get_charge_indicator(struct sip_msg *msg, pv_param_t *param, pv_
 static int sipt_get_called_party_nai(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	str body;
-	body.s = get_body_part(msg, TYPE_APPLICATION,SUBTYPE_ISUP,&body.len);
-
-	if(body.s == NULL)
+	if(sipt_check_IAM(msg, &body) != 1)
 	{
-		LM_INFO("No ISUP Message Found");
-		return -1;
-	}
-
-	if(body.s[0] != ISUP_IAM)
-	{
-		LM_DBG("message not an IAM\n");
+		LM_INFO("could not check IAM\n");
 		return -1;
 	}
 	
@@ -717,18 +626,10 @@ static int sipt_get_called_party(struct sip_msg *msg, pv_param_t *param, pv_valu
 {
 	static char sb_s_buf[26];
 	str body;
-	body.s = get_body_part(msg, TYPE_APPLICATION,SUBTYPE_ISUP,&body.len);
-
 	memset(sb_s_buf, 0, 26);
-	if(body.s == NULL)
+	if(sipt_check_IAM(msg, &body) != 1)
 	{
-		LM_INFO("No ISUP Message Found");
-		return -1;
-	}
-
-	if((body.s[0] != ISUP_IAM))
-	{
-		LM_DBG("message not an IAM\n");
+		LM_INFO("could not check IAM\n");
 		return -1;
 	}
 
