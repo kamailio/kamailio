@@ -113,9 +113,10 @@ Federico Cabiddu
               4.9. ds_mark_dst([state])
               4.10. ds_list_exists(groupid)
               4.11. ds_is_from_list([groupid [, mode [, uri] ] ])
-              4.12. ds_load_update()
-              4.13. ds_load_unset()
-              4.14. ds_reload()
+              4.12. ds_is_active(groupid [, uri])
+              4.13. ds_load_update()
+              4.14. ds_load_unset()
+              4.15. ds_reload()
 
         5. RPC Commands
 
@@ -197,9 +198,10 @@ Federico Cabiddu
    1.49. ds_mark_dst usage
    1.50. ds_list_exists usage
    1.51. ds_is_from_list usage
-   1.52. ds_load_unset usage
-   1.53. dispatcher list file
-   1.54. Kamailio config script - sample dispatcher usage
+   1.52. ds_is_active usage
+   1.53. ds_load_unset usage
+   1.54. dispatcher list file
+   1.55. Kamailio config script - sample dispatcher usage
 
 Chapter 1. Admin Guide
 
@@ -267,9 +269,10 @@ Chapter 1. Admin Guide
         4.9. ds_mark_dst([state])
         4.10. ds_list_exists(groupid)
         4.11. ds_is_from_list([groupid [, mode [, uri] ] ])
-        4.12. ds_load_update()
-        4.13. ds_load_unset()
-        4.14. ds_reload()
+        4.12. ds_is_active(groupid [, uri])
+        4.13. ds_load_update()
+        4.14. ds_load_unset()
+        4.15. ds_reload()
 
    5. RPC Commands
 
@@ -1025,9 +1028,10 @@ modparam("dispatcher", "reload_delta", 1)
    4.9. ds_mark_dst([state])
    4.10. ds_list_exists(groupid)
    4.11. ds_is_from_list([groupid [, mode [, uri] ] ])
-   4.12. ds_load_update()
-   4.13. ds_load_unset()
-   4.14. ds_reload()
+   4.12. ds_is_active(groupid [, uri])
+   4.13. ds_load_update()
+   4.14. ds_load_unset()
+   4.15. ds_reload()
 
 4.1.  ds_select_dst(set, alg[, limit])
 
@@ -1436,7 +1440,31 @@ if(ds_is_from_list("10", "3", "sip:127.0.0.1:5080")) {
 }
 ...
 
-4.12.  ds_load_update()
+4.12.  ds_is_active(groupid [, uri])
+
+   This function returns true, if there is an active URI in the
+   destination group; otherwise false. If the uri parameter is provided,
+   then the corresponding destination has to be active.
+
+   Description of parameters:
+     * groupid - the group id. The parameter can be an integer or a
+       variable holding an integer value.
+     * uri (optional) - the URI of the destination. if parameter is empty
+       or missing, the any destination is matched.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.52. ds_is_active usage
+...
+if(ds_is_active("10")) {
+    ...
+}
+if(ds_is_active("10", "sip:127.0.0.1:5080")) {
+    ...
+}
+...
+
+4.13.  ds_load_update()
 
    Updates the load state:
      * if it is a BYE or CANCEL - remove the load from destination address
@@ -1447,14 +1475,14 @@ if(ds_is_from_list("10", "3", "sip:127.0.0.1:5080")) {
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE and ONREPLY_ROUTE.
 
-4.13.  ds_load_unset()
+4.14.  ds_load_unset()
 
    Remove the call load for the destination that routed the call.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE and ONREPLY_ROUTE.
 
-   Example 1.52. ds_load_unset usage
+   Example 1.53. ds_load_unset usage
 ...
 route {
     ...
@@ -1478,7 +1506,7 @@ onreply_route {
 }
 ...
 
-4.14.  ds_reload()
+4.15.  ds_reload()
 
    Reloads the groups and included destinations.
 
@@ -1760,7 +1788,7 @@ setid(int) destination(sip uri) flags(int,opt) priority(int,opt) attrs(str,opt)
    For database, each element of a line resides in a different column.
    Next is a dispatcher.list file example:
 
-   Example 1.53. dispatcher list file
+   Example 1.54. dispatcher list file
 ...
 #
 # dispatcher destination sets (groups)
@@ -1785,7 +1813,7 @@ r,opt)
 
    Next listing shows a sample config for using the dispatcher module.
 
-   Example 1.54. Kamailio config script - sample dispatcher usage
+   Example 1.55. Kamailio config script - sample dispatcher usage
 ...
 #!KAMAILIO
 #
