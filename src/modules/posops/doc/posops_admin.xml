@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+
+	<title>&adminguide;</title>
+
+	<section>
+	<title>Overview</title>
+	<para>
+		The module exports utility functions to work with position inside the
+		SIP message buffer.
+	</para>
+	<para>
+		Among them are function to add or remove content at a specific position.
+	</para>
+	</section>
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be installed (but not loaded) to use this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>none</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>none</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+
+	<section>
+	<title>Functions</title>
+		<section id="posops.f.pos_append">
+			<title>
+				<function moreinfo="none">pos_append(idx, val)</function>
+			</title>
+			<para>
+			Append the value val after the position idx in the SIP message buffer.
+			</para>
+			<para>
+			The idx can be an integer value or a variable holding an integer. If
+			the value is negative, the position is counted from the end of the buffer.
+			</para>
+			<para>
+			The val can be a static string or variables.
+			</para>
+			<para>
+			This function can be used from ANY_ROUTE.
+			</para>
+			<example>
+				<title><function>pos_append()</function> usage</title>
+				<programlisting format="linespecific">
+...
+pos_append("100", "kamailio-$si");
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="posops.f.pos_insert">
+			<title>
+				<function moreinfo="none">pos_insert(idx, val)</function>
+			</title>
+			<para>
+			Insert the value val at the position idx in the SIP message buffer.
+			</para>
+			<para>
+			The idx can be an integer value or a variable holding an integer. If
+			the value is negative, the position is counted from the end of the buffer.
+			</para>
+			<para>
+			The val can be a static string or variables.
+			</para>
+			<para>
+			This function can be used from ANY_ROUTE.
+			</para>
+			<example>
+				<title><function>pos_insert()</function> usage</title>
+				<programlisting format="linespecific">
+...
+pos_insert("100", "kamailio-$si");
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="posops.f.pos_rm">
+			<title>
+				<function moreinfo="none">pos_rm(idx, len)</function>
+			</title>
+			<para>
+			Remove len characters starting at the position idx in the SIP message buffer.
+			</para>
+			<para>
+			The idx can be an integer value or a variable holding an integer. If
+			the value is negative, the position is counted from the end of the buffer.
+			</para>
+			<para>
+			The idx can be a positive integer value or a variable holding a positive
+			integer.
+			</para>
+			<para>
+			This function can be used from ANY_ROUTE.
+			</para>
+			<example>
+				<title><function>pos_rm()</function> usage</title>
+				<programlisting format="linespecific">
+...
+pos_insert("100", "10");
+...
+				</programlisting>
+			</example>
+		</section>
+	</section>
+
+</chapter>
+
