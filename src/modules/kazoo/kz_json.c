@@ -276,6 +276,11 @@ struct json_object* kz_json_parse(const char *str)
     struct json_tokener* tok;
     struct json_object* obj;
 
+    if (str == NULL || str[0] == 0) {
+      LM_ERR("Error parsing json: empty string\n");
+      return NULL;
+    }
+
     tok = json_tokener_new();
     if (!tok) {
       LM_ERR("Error parsing json: could not allocate tokener\n");
