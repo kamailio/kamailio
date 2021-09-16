@@ -42,13 +42,13 @@
 	  Prometheus URLs:
 	  <itemizedlist>
 		<listitem>
-		  <ulink url="https://prometheus.io/">https://prometheus.io/</ulink>
+		  <para><ulink url="https://prometheus.io/">https://prometheus.io/</ulink></para>
 		</listitem>
 		<listitem>
-		  <ulink url="https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels">https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels</ulink>
+		  <para><ulink url="https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels">https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels</ulink></para>
 		</listitem>
 		<listitem>
-		<ulink url="https://prometheus.io/docs/instrumenting/exposition_formats/">https://prometheus.io/docs/instrumenting/exposition_formats/</ulink>
+		  <para><ulink url="https://prometheus.io/docs/instrumenting/exposition_formats/">https://prometheus.io/docs/instrumenting/exposition_formats/</ulink></para>
 		</listitem>
 	  </itemizedlist>
 	</para>
