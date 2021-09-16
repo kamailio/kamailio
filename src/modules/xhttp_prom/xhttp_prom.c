@@ -2108,7 +2108,7 @@ static void rpc_prom_counter_reset(rpc_t *rpc, void *ct)
 	return;
 }
 
-static void rpc_prom_counter_inc(rpc_t *rpc, void *ct)
+static void rpc_prom_counter_update(rpc_t *rpc, void *ct, operation operation)
 {
 	str s_name;
 
@@ -2137,60 +2137,102 @@ static void rpc_prom_counter_inc(rpc_t *rpc, void *ct)
 	res = rpc->scan(ct, "*SSS", &l1, &l2, &l3);
 	if (res == 0) {
 		/* No labels */
-		if (prom_counter_update(&s_name, INCREMENT, number, NULL, NULL, NULL)) {
-			LM_ERR("Cannot add %d to counter: %.*s\n", number, s_name.len, s_name.s);
-			rpc->fault(ct, 500, "Failed to add %d to counter: %.*s", number,
+		if (prom_counter_update(&s_name, operation, number, NULL, NULL, NULL)) {
+			LM_ERR("Cannot %s %d %s counter: %.*s\n",
+				   operation == INCREMENT? "add" : "decrement",
+				   number,
+				   operation == INCREMENT? "to" : "from",
+				   s_name.len, s_name.s);
+			rpc->fault(ct, 500, "Failed to %s %d %s counter: %.*s",
+					   operation == INCREMENT? "add" : "decrement",
+					   number,
+					   operation == INCREMENT? "to" : "from",
 					   s_name.len, s_name.s);
 			return;
 		}
-		LM_DBG("Added %d to counter: (%.*s)\n", number, s_name.len, s_name.s);
+		LM_DBG("%s %d %s counter: (%.*s)\n",
+			   operation == INCREMENT? "Added" : "Decremented",
+			   number,
+			   operation == INCREMENT? "to" : "from",
+			   s_name.len, s_name.s);
 		
 	} else if (res == 1) {
-		if (prom_counter_update(&s_name, INCREMENT, number, &l1, NULL, NULL)) {
-			LM_ERR("Cannot add %d to counter: %.*s (%.*s)\n", number, s_name.len, s_name.s,
+		if (prom_counter_update(&s_name, operation, number, &l1, NULL, NULL)) {
+			LM_ERR("Cannot %s %d %s counter: %.*s (%.*s)\n",
+				   operation == INCREMENT? "add" : "decrement",
+				   number,
+				   operation == INCREMENT? "to" : "from",
+				   s_name.len, s_name.s,
 				   l1.len, l1.s);
-			rpc->fault(ct, 500, "Failed to add %d to counter: %.*s (%.*s)",
-					   number, s_name.len, s_name.s,
+			rpc->fault(ct, 500, "Failed to %s %d %s counter: %.*s (%.*s)",
+					   operation == INCREMENT? "add" : "decrement",
+					   number,
+					   operation == INCREMENT? "to" : "from",
+					   s_name.len, s_name.s,
 					   l1.len, l1.s);
 			return;
 		}
-		LM_DBG("Added %d to counter: %.*s (%.*s)\n", number, s_name.len, s_name.s,
+		LM_DBG("%s %d %s counter: %.*s (%.*s)\n",
+			   operation == INCREMENT? "Added" : "Decremented",
+			   number,
+			   operation == INCREMENT? "to" : "from",
+			   s_name.len, s_name.s,
 			   l1.len, l1.s);
 
 	} else if (res == 2) {
-		if (prom_counter_update(&s_name, INCREMENT, number, &l1, &l2, NULL)) {
-			LM_ERR("Cannot add %d to counter: %.*s (%.*s, %.*s)\n", number,
+		if (prom_counter_update(&s_name, operation, number, &l1, &l2, NULL)) {
+			LM_ERR("Cannot %s %d %s counter: %.*s (%.*s, %.*s)\n",
+				   operation == INCREMENT? "add" : "decrement",
+				   number,
+				   operation == INCREMENT? "to" : "from",
 				   s_name.len, s_name.s,
 				   l1.len, l1.s,
 				   l2.len, l2.s);
-			rpc->fault(ct, 500, "Failed to add %d to counter: %.*s (%.*s, %.*s)",
-					   number, s_name.len, s_name.s,
+			rpc->fault(ct, 500, "Failed to %s %d %s counter: %.*s (%.*s, %.*s)",
+					   operation == INCREMENT? "add" : "decrement",
+					   number,
+					   operation == INCREMENT? "to" : "from",
+					   s_name.len, s_name.s,
 					   l1.len, l1.s,
 					   l2.len, l2.s
 				);
 			return;
 		}
-		LM_DBG("Added %d to counter: %.*s (%.*s, %.*s)\n", number, s_name.len, s_name.s,
+		LM_DBG("%s %d %s counter: %.*s (%.*s, %.*s)\n",
+			   operation == INCREMENT? "Added" : "Decremented",
+			   number,
+			   operation == INCREMENT? "to" : "from",
+			   s_name.len, s_name.s,
 			   l1.len, l1.s,
 			   l2.len, l2.s);
 
 	} else if (res == 3) {
-		if (prom_counter_update(&s_name, INCREMENT, number, &l1, &l2, &l3)) {
-			LM_ERR("Cannot add %d to counter: %.*s (%.*s, %.*s, %.*s)\n",
-				   number, s_name.len, s_name.s,
+		if (prom_counter_update(&s_name, operation, number, &l1, &l2, &l3)) {
+			LM_ERR("Cannot %s %d %s counter: %.*s (%.*s, %.*s, %.*s)\n",
+				   operation == INCREMENT? "add" : "decrement",
+				   number,
+				   operation == INCREMENT? "to" : "from",
+				   s_name.len, s_name.s,
 				   l1.len, l1.s,
 				   l2.len, l2.s,
 				   l3.len, l3.s
 				);
-			rpc->fault(ct, 500, "Failed to add %d to counter: %.*s (%.*s, %.*s, %.*s)",
-					   number, s_name.len, s_name.s,
+			rpc->fault(ct, 500, "Failed to $s %d %s counter: %.*s (%.*s, %.*s, %.*s)",
+					   operation == INCREMENT? "add" : "decrement",
+					   number,
+					   operation == INCREMENT? "to" : "from",
+					   s_name.len, s_name.s,
 					   l1.len, l1.s,
 					   l2.len, l2.s,
 					   l3.len, l3.s
 				);
 			return;
 		}
-		LM_DBG("Added %d to counter: %.*s (%.*s, %.*s, %.*s)\n", number, s_name.len, s_name.s,
+		LM_DBG("%s %d %s counter: %.*s (%.*s, %.*s, %.*s)\n",
+			   operation == INCREMENT? "Added" : "Decremented",
+			   number,
+			   operation == INCREMENT? "to" : "from",
+			   s_name.len, s_name.s,
 			   l1.len, l1.s,
 			   l2.len, l2.s,
 			   l3.len, l3.s
@@ -2203,6 +2245,16 @@ static void rpc_prom_counter_inc(rpc_t *rpc, void *ct)
 	} /* if res == 0 */
 
 	return;
+}
+
+static void rpc_prom_counter_inc(rpc_t *rpc, void *ct)
+{
+    rpc_prom_counter_update(rpc, ct, INCREMENT);
+}
+
+static void rpc_prom_counter_dec(rpc_t *rpc, void *ct)
+{
+    rpc_prom_counter_update(rpc, ct, DECREMENT);
 }
 
 static void rpc_prom_gauge_reset(rpc_t *rpc, void *ct)
@@ -2520,6 +2572,10 @@ static const char* rpc_prom_counter_inc_doc[2] = {
 	0
 };
 
+static const char* rpc_prom_counter_dec_doc[2] = {
+	"Decrement a number (greater or equal to zero) from a counter based on its identifier",
+	0
+};
 static const char* rpc_prom_gauge_reset_doc[2] = {
 	"Reset a gauge based on its identifier",
 	0
@@ -2543,6 +2599,7 @@ static const char* rpc_prom_metric_list_print_doc[2] = {
 static rpc_export_t rpc_cmds[] = {
 	{"xhttp_prom.counter_reset", rpc_prom_counter_reset, rpc_prom_counter_reset_doc, 0},
 	{"xhttp_prom.counter_inc", rpc_prom_counter_inc, rpc_prom_counter_inc_doc, 0},
+	{"xhttp_prom.counter_dec", rpc_prom_counter_dec, rpc_prom_counter_dec_doc, 0},
 	{"xhttp_prom.gauge_reset", rpc_prom_gauge_reset, rpc_prom_gauge_reset_doc, 0},
 	{"xhttp_prom.gauge_set", rpc_prom_gauge_set, rpc_prom_gauge_set_doc, 0},
 	{"xhttp_prom.histogram_observe", rpc_prom_histogram_observe, rpc_prom_histogram_observe_doc, 0},
