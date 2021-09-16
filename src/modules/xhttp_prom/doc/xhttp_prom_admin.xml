@@ -407,6 +407,43 @@ kamailio_cnt01 {method="push", IP="192.168.0.1"} 0 1234567890
 		</programlisting>
 			</example>
 		</section>
+		<section id="xhttp_prom.f.prom_counter_dec">
+			<title>
+				<function moreinfo="none">prom_counter_dec(name, number, l0, l1, l2)</function>
+			</title>
+			<para>Get a counter identified by its name and labels and deccrease its value by a
+				number. If counter does not exist it creates the counter, initializes it to zero. If
+				after decrement resulted value lower then 0, then function return error</para>
+			<para>Name is mandatory, number is mandatory. Number has to be positive or zero
+				(integer). l0, l1, l2 are values of labels and are optional.</para>
+			<para>name value and number of labels have to match a previous counter definition with
+				prom_counter.</para>
+			<para>This function accepts pseudovariables on its parameters.</para>
+			<para>Available via KEMI framework as <emphasis>counter_dec_l0</emphasis>,
+					<emphasis>counter_dec_l1</emphasis>, <emphasis>counter_dec_l2</emphasis> and
+					<emphasis>counter_dec_l3</emphasis>.</para>
+			<example>
+				<title><function>prom_counter_dec</function> usage</title>
+				<programlisting format="linespecific">
+...
+# Definition of cnt01 counter with no labels.
+modparam("xhttp_prom", "prom_counter", "name=cnt01;");
+...
+# Decrement 10 from value of cnt01 counter (with no labels) If counter does not exist it gets created.
+prom_counter_dec("cnt01", "10");
+...
+
+# Definition of cnt02 counter with two labels method and IP
+modparam("xhttp_prom", "prom_counter", "name=cnt02; label=method:IP;");
+...
+# Decrement 15 from value of cnt02 counter with labels method and IP. It creates the counter if it does not exist.
+prom_counter_dec("cnt02", "15", "push", "192.168.0.1");
+# When listed the metric it will show a line like this:
+kamailio_cnt02 {method="push", IP="192.168.0.1"} 15 1234567890
+...
+		</programlisting>
+			</example>
+		</section>
 		<section id="xhttp_prom.f.prom_counter_inc">
 			<title>
 				<function moreinfo="none">prom_counter_inc(name, number, l0, l1, l2)</function>
