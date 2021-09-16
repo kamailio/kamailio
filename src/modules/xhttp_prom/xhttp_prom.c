@@ -77,6 +77,10 @@ static int w_prom_counter_inc_l0(struct sip_msg* msg, char *pname, char* pnumber
 static int w_prom_counter_inc_l1(struct sip_msg* msg, char *pname, char* pnumber, char *l1);
 static int w_prom_counter_inc_l2(struct sip_msg* msg, char *pname, char* pnumber, char *l1, char *l2);
 static int w_prom_counter_inc_l3(struct sip_msg* msg, char *pname, char* pnumber, char *l1, char *l2, char *l3);
+static int w_prom_counter_dec_l0(struct sip_msg* msg, char *pname, char* pnumber);
+static int w_prom_counter_dec_l1(struct sip_msg* msg, char *pname, char* pnumber, char *l1);
+static int w_prom_counter_dec_l2(struct sip_msg* msg, char *pname, char* pnumber, char *l1, char *l2);
+static int w_prom_counter_dec_l3(struct sip_msg* msg, char *pname, char* pnumber, char *l1, char *l2, char *l3);
 static int w_prom_gauge_set_l0(struct sip_msg* msg, char *pname, char* pnumber);
 static int w_prom_gauge_set_l1(struct sip_msg* msg, char *pname, char* pnumber, char *l1);
 static int w_prom_gauge_set_l2(struct sip_msg* msg, char *pname, char* pnumber, char *l1, char *l2);
@@ -150,6 +154,14 @@ static cmd_export_t cmds[] = {
 	{"prom_counter_inc", (cmd_function)w_prom_counter_inc_l2, 4, fixup_counter_inc,
 	 0, ANY_ROUTE},
 	{"prom_counter_inc", (cmd_function)w_prom_counter_inc_l3, 5, fixup_counter_inc,
+	 0, ANY_ROUTE},
+	{"prom_counter_dec", (cmd_function)w_prom_counter_dec_l0, 2, fixup_counter_inc,
+	 0, ANY_ROUTE},
+	{"prom_counter_dec", (cmd_function)w_prom_counter_dec_l1, 3, fixup_counter_inc,
+	 0, ANY_ROUTE},
+	{"prom_counter_dec", (cmd_function)w_prom_counter_dec_l2, 4, fixup_counter_inc,
+	 0, ANY_ROUTE},
+	{"prom_counter_dec", (cmd_function)w_prom_counter_dec_l3, 5, fixup_counter_inc,
 	 0, ANY_ROUTE},
 	{"prom_gauge_set", (cmd_function)w_prom_gauge_set_l0, 2, fixup_metric_reset,
 	 0, ANY_ROUTE},
@@ -1232,6 +1244,41 @@ static int w_prom_counter_inc_l3(struct sip_msg* msg, char *pname, char* pnumber
 								 char *l1, char *l2, char *l3)
 {
 	return w_prom_counter_operation(msg, INCREMENT, pname, pnumber, l1, l2, l3);
+}
+
+/**
+ * @brief Decrement an integer from a counter (no labels)
+ */
+static int w_prom_counter_dec_l0(struct sip_msg* msg, char *pname, char* pnumber)
+{
+	return w_prom_counter_operation(msg, DECREMENT, pname, pnumber, NULL, NULL, NULL);
+}
+
+/**
+ * @brief Decrement an integer from a counter (1 labels)
+ */
+static int w_prom_counter_dec_l1(struct sip_msg* msg, char *pname, char* pnumber,
+								 char *l1)
+{
+	return w_prom_counter_operation(msg, DECREMENT, pname, pnumber, l1, NULL, NULL);
+}
+
+/**
+ * @brief Decrement an integer from a counter (2 labels)
+ */
+static int w_prom_counter_dec_l2(struct sip_msg* msg, char *pname, char* pnumber,
+								 char *l1, char *l2)
+{
+	return w_prom_counter_operation(msg, DECREMENT, pname, pnumber, l1, l2, NULL);
+}
+
+/**
+ * @brief Decrement an integer from a counter (3 labels)
+ */
+static int w_prom_counter_dec_l3(struct sip_msg* msg, char *pname, char* pnumber,
+								 char *l1, char *l2, char *l3)
+{
+	return w_prom_counter_operation(msg, DECREMENT, pname, pnumber, l1, l2, l3);
 }
 
 /**
