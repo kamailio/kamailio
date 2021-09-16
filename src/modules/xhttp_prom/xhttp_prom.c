@@ -971,9 +971,9 @@ static int fixup_counter_inc(void** param, int param_no)
 /* } */
 
 /**
- * @brief Add an integer to a counter (No labels).
+ * @brief Updates counter (No labels).
  */
-static int ki_xhttp_prom_counter_inc_l0(struct sip_msg* msg, str *s_name, int number)
+static int ki_xhttp_prom_counter_update_l0(struct sip_msg* msg, operation operation, str *s_name, int number)
 {
 	if (s_name == NULL || s_name->s == NULL || s_name->len == 0) {
 		LM_ERR("Invalid name string\n");
@@ -986,18 +986,26 @@ static int ki_xhttp_prom_counter_inc_l0(struct sip_msg* msg, str *s_name, int nu
 	}
 
 	if (prom_counter_update(s_name, INCREMENT, number, NULL, NULL, NULL)) {
-		LM_ERR("Cannot add number: %d to counter: %.*s\n", number, s_name->len, s_name->s);
+		LM_ERR("Cannot %s number: %d %s counter: %.*s\n",
+			   operation == INCREMENT? "add" : "decrement",
+			   number,
+			   operation == INCREMENT? "to" : "from",
+			   s_name->len, s_name->s);
 		return -1;
 	}
 
-	LM_DBG("Added %d to counter %.*s\n", number, s_name->len, s_name->s);
+	LM_DBG("%s %d %s counter %.*s\n",
+		   operation == INCREMENT? "Added" : "Decremented",
+		   number,
+		   operation == INCREMENT? "to" : "from",
+		   s_name->len, s_name->s);
 	return 1;
 }
 
 /**
- * @brief Add an integer to a counter (1 label).
+ * @brief Updates counter (1 label).
  */
-static int ki_xhttp_prom_counter_inc_l1(struct sip_msg* msg, str *s_name, int number, str *l1)
+static int ki_xhttp_prom_counter_update_l1(struct sip_msg* msg, operation operation, str *s_name, int number, str *l1)
 {
 	if (s_name == NULL || s_name->s == NULL || s_name->len == 0) {
 		LM_ERR("Invalid name string\n");
@@ -1015,14 +1023,20 @@ static int ki_xhttp_prom_counter_inc_l1(struct sip_msg* msg, str *s_name, int nu
 	}
 
 	if (prom_counter_update(s_name, INCREMENT, number, l1, NULL, NULL)) {
-		LM_ERR("Cannot add number: %d to counter: %.*s (%.*s)\n",
-			   number, s_name->len, s_name->s,
+		LM_ERR("Cannot %s number: %d %s counter: %.*s (%.*s)\n",
+			   operation == INCREMENT? "add" : "decrement",
+			   number,
+			   operation == INCREMENT? "to" : "from",
+			   s_name->len, s_name->s,
 			   l1->len, l1->s
 			);
 		return -1;
 	}
 
-	LM_DBG("Added %d to counter %.*s (%.*s)\n", number,
+	LM_DBG("%s %d %s counter %.*s (%.*s)\n",
+		   operation == INCREMENT? "Added" : "Decremented",
+		   number,
+		   operation == INCREMENT? "to" : "from",
 		   s_name->len, s_name->s,
 		   l1->len, l1->s
 		);
@@ -1031,9 +1045,9 @@ static int ki_xhttp_prom_counter_inc_l1(struct sip_msg* msg, str *s_name, int nu
 }
 
 /**
- * @brief Add an integer to a counter (2 labels).
+ * @brief Updates counter (2 labels).
  */
-static int ki_xhttp_prom_counter_inc_l2(struct sip_msg* msg, str *s_name, int number,
+static int ki_xhttp_prom_counter_update_l2(struct sip_msg* msg, operation operation, str *s_name, int number,
 										str *l1, str *l2)
 {
 	if (s_name == NULL || s_name->s == NULL || s_name->len == 0) {
@@ -1057,15 +1071,21 @@ static int ki_xhttp_prom_counter_inc_l2(struct sip_msg* msg, str *s_name, int nu
 	}
 
 	if (prom_counter_update(s_name, INCREMENT, number, l1, l2, NULL)) {
-		LM_ERR("Cannot add number: %d to counter: %.*s (%.*s, %.*s)\n",
-			   number, s_name->len, s_name->s,
+		LM_ERR("Cannot %s number: %d %s counter: %.*s (%.*s, %.*s)\n",
+			   operation == INCREMENT? "add" : "decrement",
+			   number,
+			   operation == INCREMENT? "to" : "from",
+			   s_name->len, s_name->s,
 			   l1->len, l1->s,
 			   l2->len, l2->s
 			);
 		return -1;
 	}
 
-	LM_DBG("Added %d to counter %.*s (%.*s, %.*s)\n", number,
+	LM_DBG("%s %d %s counter %.*s (%.*s, %.*s)\n",
+		   operation == INCREMENT? "Added" : "Decremented",
+		   number,
+		   operation == INCREMENT? "to" : "from",
 		   s_name->len, s_name->s,
 		   l1->len, l1->s,
 		   l2->len, l2->s
@@ -1075,9 +1095,9 @@ static int ki_xhttp_prom_counter_inc_l2(struct sip_msg* msg, str *s_name, int nu
 }
 
 /**
- * @brief Add an integer to a counter (3 labels).
+ * @brief Updates counter (3 labels).
  */
-static int ki_xhttp_prom_counter_inc_l3(struct sip_msg* msg, str *s_name, int number,
+static int ki_xhttp_prom_counter_update_l3(struct sip_msg* msg, operation operation, str *s_name, int number,
 										str *l1, str *l2, str *l3)
 {
 	if (s_name == NULL || s_name->s == NULL || s_name->len == 0) {
@@ -1105,9 +1125,12 @@ static int ki_xhttp_prom_counter_inc_l3(struct sip_msg* msg, str *s_name, int nu
 		return -1;
 	}
 
-	if (prom_counter_update(s_name, INCREMENT, number, l1, l2, l3)) {
-		LM_ERR("Cannot add number: %d to counter: %.*s (%.*s, %.*s, %.*s)\n",
-			   number, s_name->len, s_name->s,
+	if (prom_counter_update(s_name, operation, number, l1, l2, l3)) {
+		LM_ERR("Cannot %s number: %d %s counter: %.*s (%.*s, %.*s, %.*s)\n",
+			   operation == INCREMENT? "add" : "decrement",
+			   number,
+			   operation == INCREMENT? "to" : "from",
+			   s_name->len, s_name->s,
 			   l1->len, l1->s,
 			   l2->len, l2->s,
 			   l3->len, l3->s
@@ -1115,7 +1138,10 @@ static int ki_xhttp_prom_counter_inc_l3(struct sip_msg* msg, str *s_name, int nu
 		return -1;
 	}
 
-	LM_DBG("Added %d to counter %.*s (%.*s, %.*s, %.*s)\n", number,
+	LM_DBG("%s %d %s counter %.*s (%.*s, %.*s, %.*s)\n",
+		   operation == INCREMENT? "Added" : "Decremented",
+		   number,
+		   operation == INCREMENT? "to" : "from",
 		   s_name->len, s_name->s,
 		   l1->len, l1->s,
 		   l2->len, l2->s,
@@ -1123,6 +1149,74 @@ static int ki_xhttp_prom_counter_inc_l3(struct sip_msg* msg, str *s_name, int nu
 		);
 
 	return 1;
+}
+
+/**
+ * @brief Add an integer to a counter (No labels).
+ */
+static int ki_xhttp_prom_counter_inc_l0(struct sip_msg* msg, str *s_name, int number)
+{
+	return ki_xhttp_prom_counter_update_l0(msg, INCREMENT, s_name, number);
+}
+
+/**
+ * @brief Add an integer to a counter (1 labels).
+ */
+static int ki_xhttp_prom_counter_inc_l1(struct sip_msg* msg, str *s_name, int number, str *l1)
+{
+	return ki_xhttp_prom_counter_update_l1(msg, INCREMENT, s_name, number, l1);
+}
+
+/**
+ * @brief Add an integer to a counter (2 labels).
+ */
+static int ki_xhttp_prom_counter_inc_l2(struct sip_msg* msg, str *s_name, int number,
+										str *l1, str *l2)
+{
+	return ki_xhttp_prom_counter_update_l2(msg, INCREMENT, s_name, number, l1, l2);
+}
+
+/**
+ * @brief Add an integer to a counter (3 labels).
+ */
+static int ki_xhttp_prom_counter_inc_l3(struct sip_msg* msg, str *s_name, int number,
+										str *l1, str *l2, str *l3)
+{
+	return ki_xhttp_prom_counter_update_l3(msg, INCREMENT, s_name, number, l1, l2, l3);
+}
+
+/**
+ * @brief Decrement an integer from a counter (No labels).
+ */
+static int ki_xhttp_prom_counter_dec_l0(struct sip_msg* msg, str *s_name, int number)
+{
+	return ki_xhttp_prom_counter_update_l0(msg, DECREMENT, s_name, number);
+}
+
+/**
+ * @brief Decrement an integer from a counter (1 labels).
+ */
+static int ki_xhttp_prom_counter_dec_l1(struct sip_msg* msg, str *s_name, int number, str *l1)
+{
+	return ki_xhttp_prom_counter_update_l1(msg, DECREMENT, s_name, number, l1);
+}
+
+/**
+ * @brief Decrement an integer from a counter (2 labels).
+ */
+static int ki_xhttp_prom_counter_dec_l2(struct sip_msg* msg, str *s_name, int number,
+										str *l1, str *l2)
+{
+	return ki_xhttp_prom_counter_update_l2(msg, DECREMENT, s_name, number, l1, l2);
+}
+
+/**
+ * @brief Decrement an integer from a counter (3 labels).
+ */
+static int ki_xhttp_prom_counter_dec_l3(struct sip_msg* msg, str *s_name, int number,
+										str *l1, str *l2, str *l3)
+{
+	return ki_xhttp_prom_counter_update_l3(msg, DECREMENT, s_name, number, l1, l2, l3);
 }
 
 /**
@@ -1964,6 +2058,26 @@ static sr_kemi_t sr_kemi_xhttp_prom_exports[] = {
 	},
 	{ str_init("xhttp_prom"), str_init("counter_inc_l3"),
 	    SR_KEMIP_INT, ki_xhttp_prom_counter_inc_l3,
+		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_STR,
+			SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE }
+	},
+	{ str_init("xhttp_prom"), str_init("counter_dec_l0"),
+	    SR_KEMIP_INT, ki_xhttp_prom_counter_dec_l0,
+		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("xhttp_prom"), str_init("counter_dec_l1"),
+	    SR_KEMIP_INT, ki_xhttp_prom_counter_dec_l1,
+		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("xhttp_prom"), str_init("counter_dec_l2"),
+	    SR_KEMIP_INT, ki_xhttp_prom_counter_dec_l2,
+		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_STR,
+			SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("xhttp_prom"), str_init("counter_dec_l3"),
+	    SR_KEMIP_INT, ki_xhttp_prom_counter_dec_l3,
 		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_STR,
 			SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE }
 	},
