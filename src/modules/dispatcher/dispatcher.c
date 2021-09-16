@@ -1854,7 +1854,7 @@ static void dispatcher_rpc_add(rpc_t *rpc, void *ctx)
 {
 	int group, flags, nparams;
 	str dest;
-	str attrs;
+	str attrs = STR_NULL;
 
 	flags = 0;
 
@@ -1862,7 +1862,7 @@ static void dispatcher_rpc_add(rpc_t *rpc, void *ctx)
 	if(nparams < 2) {
 		rpc->fault(ctx, 500, "Invalid Parameters");
 		return;
-	} else if (nparams < 3) {
+	} else if (nparams <= 3) {
 		attrs.s = 0;
 		attrs.len = 0;
 	}
