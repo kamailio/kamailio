@@ -78,6 +78,11 @@ struct module_exports exports = {
 static int mod_init(void) {
 	LM_INFO("slack module init\n");
 
+	if(httpc_load_api(&httpapi) != 0) {
+		LM_ERR("can not bind to http_client API \n");
+		return -1;
+	}
+
 	_slmsg_buf = (char*)pkg_malloc((buf_size+1)*sizeof(char));
 	if(_slmsg_buf==NULL)
 	{
@@ -99,17 +104,34 @@ static void mod_destroy() {
 	return;
 }
 
+/* free and reset str */
+static void slack_free_str(str *string)
+{
+	str ptr = STR_NULL;
+	if (string->s == NULL)
+		return;
+
+	ptr = *string;
+
+	if(ptr.s != NULL && ptr.len > 0)
+		pkg_free(ptr.s);
+
+	string->s = NULL;
+	string->len = 0;
+
+	return;
+}
+
 /**
- * send message with curl
+ * send slack message using http_client api
  * @return 0 on success, -1 on error
  */
-static int _curl_send(const char* uri, str *post_data)
+static int slack_curl_send(struct sip_msg* msg, char* uri, str *post_data)
 {
 	int datasz;
 	char* send_data;
-	CURL *curl_handle;
-	CURLcode res;
-	// LM_DBG("sending to[%s]\n", uri);
+	str ret = STR_NULL;
+	int curl = 0;
 
 	datasz = snprintf(NULL, 0, BODY_FMT, slack_channel, slack_username, post_data->s, slack_icon);
 	if (datasz < 0) {
@@ -123,31 +145,19 @@ static int _curl_send(const char* uri, str *post_data)
     }
     snprintf(send_data, datasz+1, BODY_FMT, slack_channel, slack_username, post_data->s, slack_icon);
 
-	curl_global_init(CURL_GLOBAL_ALL);
+	/* send request */
+	curl = httpapi.http_client_query(msg, uri, &ret, send_data, NULL);
+	pkg_free(send_data);
 
-	if((curl_handle=curl_easy_init())==NULL) {
-    	LM_ERR("Unable to init cURL library\n");
-		curl_global_cleanup();
-		pkg_free(send_data);
-        return -1;
-    }
-
-	curl_easy_setopt(curl_handle, CURLOPT_URL, uri);
-	curl_easy_setopt(curl_handle, CURLOPT_POSTFIELDS, send_data);
-	res = curl_easy_perform(curl_handle);
-
-	if (res != CURLE_OK) {
-		LM_ERR("slack request send error: %s\n", curl_easy_strerror(res));
-		curl_easy_cleanup(curl_handle);
-		curl_global_cleanup();
-		pkg_free(send_data);
+	if(curl >= 300 || curl < 100) {
+		LM_ERR("request failed with error: %d\n", curl);
+		slack_free_str(&ret);
 		return -1;
 	}
 
-	LM_INFO("slack request sent [%d]\n", datasz);
-	curl_easy_cleanup(curl_handle);
-	curl_global_cleanup();
-	pkg_free(send_data);
+	LM_DBG("slack send response: [%.*s]\n", ret.len, ret.s);
+	slack_free_str(&ret);
+
 	return 0;
 }
 
@@ -243,7 +253,7 @@ static inline int slack_helper(struct sip_msg* msg, sl_msg_t *sm)
 
 	txt.s = _slmsg_buf;
 
-	return _curl_send(slack_url, &txt);
+	return slack_curl_send(msg, slack_url, &txt);
 }
 
 static int slack_send1(struct sip_msg* msg, char* frm, char* str2)
@@ -273,7 +283,7 @@ static int ki_slack_send(sip_msg_t *msg, str *slmsg)
 		return -1;
 	}
 
-	res = _curl_send(slack_url, &txt);
+	res = slack_curl_send(msg, slack_url, &txt);
 	pv_elem_free_all(xmodel);
 	return res;
 }

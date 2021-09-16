@@ -22,6 +22,8 @@
 #ifndef slack_h
 #define slack_h
 
+#include "../../modules/http_client/curl_api.h"
+
 #include "../../core/sr_module.h"
 #include "../../core/dprint.h"
 #include "../../core/parser/parse_content.h"
@@ -29,7 +31,6 @@
 #include "../../core/kemi.h"
 
 #include <string.h>
-#include <curl/curl.h>
 
 #define BODY_FMT "{\"channel\": \"%s\", \"username\": \"%s\", \"text\": \"%s\", \"icon_emoji\": \"%s\" }"
 #define SLACK_URL_MAX_SIZE 128
@@ -42,7 +43,11 @@ static int _slack_print_log(struct sip_msg* msg, pv_elem_p list, char *buf, int 
 	return pv_printf(msg, list, buf, len);
 }
 
-static int _curl_send(const char* uri, str *post_data );
+/* http_client api */
+httpc_api_t httpapi;
+
+static void slack_free_str(str *str);
+static int slack_curl_send(struct sip_msg* msg, char* uri, str *post_data );
 static int _slack_parse_url_param(char *val);
 static int _slack_url_param(modparam_t type, void *val);
 
