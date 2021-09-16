@@ -377,8 +377,8 @@ the metric.
 		  <para>Every bucket value has to increase in the list.</para>
 		  <para>
 			If no buckets specified, default bucket list is set to these values:
-			<para>[0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10]</para>
 		  </para>
+		  <para>[0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10]</para>
 		</listitem>
 	  </itemizedlist>
 	  <example>
