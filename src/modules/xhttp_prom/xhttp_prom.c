@@ -973,7 +973,7 @@ static int ki_xhttp_prom_counter_inc_l0(struct sip_msg* msg, str *s_name, int nu
 		return -1;
 	}
 
-	if (prom_counter_inc(s_name, number, NULL, NULL, NULL)) {
+	if (prom_counter_update(s_name, INCREMENT, number, NULL, NULL, NULL)) {
 		LM_ERR("Cannot add number: %d to counter: %.*s\n", number, s_name->len, s_name->s);
 		return -1;
 	}
@@ -1002,7 +1002,7 @@ static int ki_xhttp_prom_counter_inc_l1(struct sip_msg* msg, str *s_name, int nu
 		return -1;
 	}
 
-	if (prom_counter_inc(s_name, number, l1, NULL, NULL)) {
+	if (prom_counter_update(s_name, INCREMENT, number, l1, NULL, NULL)) {
 		LM_ERR("Cannot add number: %d to counter: %.*s (%.*s)\n",
 			   number, s_name->len, s_name->s,
 			   l1->len, l1->s
@@ -1044,7 +1044,7 @@ static int ki_xhttp_prom_counter_inc_l2(struct sip_msg* msg, str *s_name, int nu
 		return -1;
 	}
 
-	if (prom_counter_inc(s_name, number, l1, l2, NULL)) {
+	if (prom_counter_update(s_name, INCREMENT, number, l1, l2, NULL)) {
 		LM_ERR("Cannot add number: %d to counter: %.*s (%.*s, %.*s)\n",
 			   number, s_name->len, s_name->s,
 			   l1->len, l1->s,
@@ -1093,7 +1093,7 @@ static int ki_xhttp_prom_counter_inc_l3(struct sip_msg* msg, str *s_name, int nu
 		return -1;
 	}
 
-	if (prom_counter_inc(s_name, number, l1, l2, l3)) {
+	if (prom_counter_update(s_name, INCREMENT, number, l1, l2, l3)) {
 		LM_ERR("Cannot add number: %d to counter: %.*s (%.*s, %.*s, %.*s)\n",
 			   number, s_name->len, s_name->s,
 			   l1->len, l1->s,
@@ -2090,7 +2090,7 @@ static void rpc_prom_counter_inc(rpc_t *rpc, void *ct)
 	res = rpc->scan(ct, "*SSS", &l1, &l2, &l3);
 	if (res == 0) {
 		/* No labels */
-		if (prom_counter_inc(&s_name, number, NULL, NULL, NULL)) {
+		if (prom_counter_update(&s_name, INCREMENT, number, NULL, NULL, NULL)) {
 			LM_ERR("Cannot add %d to counter: %.*s\n", number, s_name.len, s_name.s);
 			rpc->fault(ct, 500, "Failed to add %d to counter: %.*s", number,
 					   s_name.len, s_name.s);
@@ -2099,7 +2099,7 @@ static void rpc_prom_counter_inc(rpc_t *rpc, void *ct)
 		LM_DBG("Added %d to counter: (%.*s)\n", number, s_name.len, s_name.s);
 		
 	} else if (res == 1) {
-		if (prom_counter_inc(&s_name, number, &l1, NULL, NULL)) {
+		if (prom_counter_update(&s_name, INCREMENT, number, &l1, NULL, NULL)) {
 			LM_ERR("Cannot add %d to counter: %.*s (%.*s)\n", number, s_name.len, s_name.s,
 				   l1.len, l1.s);
 			rpc->fault(ct, 500, "Failed to add %d to counter: %.*s (%.*s)",
@@ -2111,7 +2111,7 @@ static void rpc_prom_counter_inc(rpc_t *rpc, void *ct)
 			   l1.len, l1.s);
 
 	} else if (res == 2) {
-		if (prom_counter_inc(&s_name, number, &l1, &l2, NULL)) {
+		if (prom_counter_update(&s_name, INCREMENT, number, &l1, &l2, NULL)) {
 			LM_ERR("Cannot add %d to counter: %.*s (%.*s, %.*s)\n", number,
 				   s_name.len, s_name.s,
 				   l1.len, l1.s,
@@ -2128,7 +2128,7 @@ static void rpc_prom_counter_inc(rpc_t *rpc, void *ct)
 			   l2.len, l2.s);
 
 	} else if (res == 3) {
-		if (prom_counter_inc(&s_name, number, &l1, &l2, &l3)) {
+		if (prom_counter_update(&s_name, INCREMENT, number, &l1, &l2, &l3)) {
 			LM_ERR("Cannot add %d to counter: %.*s (%.*s, %.*s, %.*s)\n",
 				   number, s_name.len, s_name.s,
 				   l1.len, l1.s,

@@ -1133,29 +1133,6 @@ error:
 }
 
 /**
- * @brief Add some positive amount to a counter.
- */
-int prom_counter_inc(str *s_name, int number, str *l1, str *l2, str *l3)
-{
-	lock_get(prom_lock);
-
-	/* Find a lvalue based on its metric name and labels. */
-	prom_lvalue_t *p = NULL;
-	p = prom_metric_lvalue_get(s_name, M_COUNTER, l1, l2, l3);
-	if (!p) {
-		LM_ERR("Cannot find counter: %.*s\n", s_name->len, s_name->s);
-		lock_release(prom_lock);
-		return -1;
-	}
-
-	/* Add to counter value. */
-	p->m.cval += number;
-	
-	lock_release(prom_lock);
-	return 0;
-}
-
-/**
  * @brief Updates a counter.
  */
 int prom_counter_update(str *s_name, operation operation, int number, str *l1, str *l2, str *l3)

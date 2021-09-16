@@ -76,11 +76,6 @@ int prom_counter_reset(str *s_name, str *l1, str *l2, str *l3);
 int prom_gauge_reset(str *s_name, str *l1, str *l2, str *l3);
 
 /**
- * @brief Add some positive amount to a counter.
- */
-int prom_counter_inc(str *s_name, int number, str *l1, str *l2, str *l3);
-
-/**
  * @brief Updates a counter.
  */
 int prom_counter_update(str *s_name, operation operation, int number, str *l1, str *l2, str *l3);
