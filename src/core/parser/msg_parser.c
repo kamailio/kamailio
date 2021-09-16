@@ -1289,8 +1289,10 @@ char* get_body(sip_msg_t* const msg)
 				(*(msg->unparsed)=='\n' || *(msg->unparsed)=='\r' ) ) {
 		offset = 1;
 	} else {
-		LM_ERR("failed to locate end of headers (%p %p - %d %d [%s])\n",
-				msg->buf, msg->unparsed, msg->len, len, msg->unparsed);
+		LM_ERR("failed to locate end of headers (%p %p - %d %d [%.*s])\n",
+				msg->buf, msg->unparsed, msg->len, len,
+				(len<msg->len)?(msg->len-len):0,
+				(len<msg->len)?msg->unparsed:"");
 		return 0;
 	}
 
