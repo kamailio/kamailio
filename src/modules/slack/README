@@ -4,7 +4,7 @@ Arsen Semenov
 
    <arsperger@gmail.com>
 
-   Copyright © 2021 arsperger.com
+   Copyright Â© 2021 arsperger.com
      __________________________________________________________________
 
    Table of Contents
@@ -22,7 +22,7 @@ Arsen Semenov
               3.1. slack url (str)
               3.2. channel (str)
               3.3. username (str)
-              3.4. icon_emogi (str)
+              3.4. icon_emoji (str)
 
         4. Functions
 
@@ -33,7 +33,7 @@ Arsen Semenov
    1.1. Set slack webhook URL parameter
    1.2. Set channel parameter
    1.3. Set username parameter
-   1.4. Set icon_emogi parameter
+   1.4. Set icon_emoji parameter
    1.5. slack_send usage
 
 Chapter 1. Admin Guide
@@ -51,7 +51,7 @@ Chapter 1. Admin Guide
         3.1. slack url (str)
         3.2. channel (str)
         3.3. username (str)
-        3.4. icon_emogi (str)
+        3.4. icon_emoji (str)
 
    4. Functions
 
@@ -62,7 +62,7 @@ Chapter 1. Admin Guide
    This module provides integration with Slack over webhooks. Slack
    integration (https://api.slack.com/messaging/webhooks)
 
-   It relays on libcurl. library (https://curl.se/libcurl).
+   It relays on libcurl through http_client module.
 
 2. Dependencies
 
@@ -72,7 +72,7 @@ Chapter 1. Admin Guide
 2.1. Kamailio Modules
 
    The following modules must be loaded before this module:
-     * none.
+     * HTTP_CLIENT - the http_client module should be loaded first.
 
 2.2. External Libraries or Applications
 
@@ -85,7 +85,7 @@ Chapter 1. Admin Guide
    3.1. slack url (str)
    3.2. channel (str)
    3.3. username (str)
-   3.4. icon_emogi (str)
+   3.4. icon_emoji (str)
 
 3.1. slack url (str)
 
@@ -121,16 +121,16 @@ modparam("slack", "channel", "#kamailio")
 modparam("slack", "username", "webhookbot")
 ...
 
-3.4. icon_emogi (str)
+3.4. icon_emoji (str)
 
    specify an emoji (using colon shortcodes, eg. :white_check_mark:) to
    use as the profile photo alongside the message.
 
    Default value is :ghost:
 
-   Example 1.4. Set icon_emogi parameter
+   Example 1.4. Set icon_emoji parameter
 ...
-modparam("slack", "icon_emogi", ":ghost:")
+modparam("slack", "icon_emoji", ":ghost:")
 ...
 
 4. Functions
