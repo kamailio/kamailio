@@ -39,10 +39,14 @@
 #include "../../core/parser/parse_uri.c"
 #include "../../core/parser/parse_hname2.h"
 #include "../../core/parser/contact/parse_contact.h"
+#include "../../core/parser/parse_to.h"
+#include "../../core/parser/parse_from.h"
 #include "../../core/parser/parse_refer_to.h"
 #include "../../core/parser/parse_ppi_pai.h"
 #include "../../core/parser/parse_privacy.h"
 #include "../../core/parser/parse_diversion.h"
+#include "../../core/parser/parse_identityinfo.h"
+#include "../../core/parser/parse_disposition.h"
 
 MODULE_VERSION
 
@@ -325,21 +329,37 @@ static int misctest_message_init(void)
 		goto cleanup;
 	}
 
+	parse_headers(&tmsg, HDR_EOH_F, 0);
+
 	parse_sdp(&tmsg);
 
-	parse_headers(&tmsg, HDR_TO_F, 0);
+	parse_from_header(&tmsg);
+
+	parse_from_uri(&tmsg);
+
+	parse_to_header(&tmsg);
+
+	parse_to_uri(&tmsg);
 
 	parse_contact_header(&tmsg);
 
 	parse_refer_to_header(&tmsg);
-
-	parse_to_header(&tmsg);
 
 	parse_pai_header(&tmsg);
 
 	parse_diversion_header(&tmsg);
 
 	parse_privacy(&tmsg);
+
+	parse_content_disposition(&tmsg);
+
+	parse_identityinfo_header(&tmsg);
+
+	str uri;
+	get_src_uri(&tmsg, 0, &uri);
+
+	str ssock;
+	get_src_address_socket(&tmsg, &ssock);
 
 cleanup:
 	free_sip_msg(&tmsg);
