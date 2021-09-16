@@ -954,7 +954,7 @@ int sqlops_do_xquery(sip_msg_t *msg, str *scon, str *squery, str *xavp)
 	if(sql_exec_xquery(msg, con, squery, xavp)<0)
 		goto error;
 
-	return 0;
+	return 1;
 error:
 	return -1;
 }
