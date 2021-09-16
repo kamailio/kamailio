@@ -11,161 +11,130 @@
 
 <chapter>
 
-  <title>&adminguide;</title>
-  
-  <section>
-	<title>Overview</title>
-	<para>
-	  This module generates suitable metrics for a Prometheus monitoring platform.
-	</para>
-	<para>
-	  It answers Prometheus pull requests (HTTP requests to /metrics URL).
-	</para>
-	<para>
-	  The module generates metrics based on &kamailio; statistics, and also the user
-	  can create his own metrics (currently counters, gauges and histograms).
-	</para>
-	<para>
-	  The xHTTP_PROM module uses the xHTTP module to handle HTTP requests.
-	  Read the documentation of the xHTTP module for more details.
-	</para>
-	<para>
-	  NOTE: This module is based on xHTTP_RPC one.
-	</para>
-	<para>
-	  <emphasis>IMPORTANT</emphasis>: This module uses private memory to generate HTTP
-	  responses, and shared memory to store all the metrics.
-	  Remember to increase size of private and shared memory if you use a huge amount
-	  of metrics.
-	</para>
-	<para>
-	  Prometheus URLs:
-	  <itemizedlist>
-		<listitem>
-		  <para><ulink url="https://prometheus.io/">https://prometheus.io/</ulink></para>
-		</listitem>
-		<listitem>
-		  <para><ulink url="https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels">https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels</ulink></para>
-		</listitem>
-		<listitem>
-		  <para><ulink url="https://prometheus.io/docs/instrumenting/exposition_formats/">https://prometheus.io/docs/instrumenting/exposition_formats/</ulink></para>
-		</listitem>
-	  </itemizedlist>
-	</para>
-  </section>
-  <section>
-	<title>Dependencies</title>
+	<title>&adminguide;</title>
+
 	<section>
-	  <title>&kamailio; Modules</title>
-	  <para>
-		The following modules must be loaded before this module:
-		<itemizedlist>
-		  <listitem>
-			<para>
-			  <emphasis>xhttp</emphasis> -- xHTTP.
-			</para>
-		  </listitem>
-		</itemizedlist>
-	  </para>
+		<title>Overview</title>
+		<para>This module generates suitable metrics for a Prometheus monitoring platform.</para>
+		<para>It answers Prometheus pull requests (HTTP requests to /metrics URL).</para>
+		<para>The module generates metrics based on &kamailio; statistics, and also the user can
+			create his own metrics (currently counters, gauges and histograms).</para>
+		<para>The xHTTP_PROM module uses the xHTTP module to handle HTTP requests. Read the
+			documentation of the xHTTP module for more details.</para>
+		<para>NOTE: This module is based on xHTTP_RPC one.</para>
+		<para>
+			<emphasis>IMPORTANT</emphasis>: This module uses private memory to generate HTTP
+			responses, and shared memory to store all the metrics. Remember to increase size of
+			private and shared memory if you use a huge amount of metrics.</para>
+		<para>Prometheus URLs: <itemizedlist>
+				<listitem>
+					<para><ulink url="https://prometheus.io/">https://prometheus.io/</ulink></para>
+				</listitem>
+				<listitem>
+					<para><ulink
+							url="https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels"
+							>https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels</ulink></para>
+				</listitem>
+				<listitem>
+					<para><ulink url="https://prometheus.io/docs/instrumenting/exposition_formats/"
+							>https://prometheus.io/docs/instrumenting/exposition_formats/</ulink></para>
+				</listitem>
+			</itemizedlist>
+		</para>
 	</section>
 	<section>
-	  <title>External Libraries or Applications</title>
-	  <para>
-		The following libraries or applications must be installed before running
-		&kamailio; with this module loaded:
-		<itemizedlist>
-		  <listitem>
-			<para>
-			  <emphasis>None</emphasis>
+		<title>Dependencies</title>
+		<section>
+			<title>&kamailio; Modules</title>
+			<para>The following modules must be loaded before this module: <itemizedlist>
+					<listitem>
+						<para>
+							<emphasis>xhttp</emphasis> -- xHTTP.</para>
+					</listitem>
+				</itemizedlist>
 			</para>
-		  </listitem>
-		</itemizedlist>
-	  </para>
+		</section>
+		<section>
+			<title>External Libraries or Applications</title>
+			<para>The following libraries or applications must be installed before running
+				&kamailio; with this module loaded: <itemizedlist>
+					<listitem>
+						<para>
+							<emphasis>None</emphasis>
+						</para>
+					</listitem>
+				</itemizedlist>
+			</para>
+		</section>
 	</section>
-  </section>
-  <section>
-	<title>Parameters</title>
-	<section id="xhttp_prom.p.xhttp_prom_buf_size">
-	  <title><varname>xhttp_prom_buf_size</varname> (integer)</title>
-	  <para>
-		Specifies the maximum length of the buffer (in bytes) used
-		to write the metric reply information in order to
-		build the HTML response.
-	  </para>
-	  <para>
-		<emphasis>
-		  Default value is 0 (auto set to 1/3 of the size of the configured pkg mem).
-		</emphasis>
-	  </para>
-	  <example>
-		<title>Set <varname>xhttp_prom_buf_size</varname> parameter</title>
-		<programlisting format="linespecific">
+	<section>
+		<title>Parameters</title>
+		<section id="xhttp_prom.p.xhttp_prom_buf_size">
+			<title><varname>xhttp_prom_buf_size</varname> (integer)</title>
+			<para>Specifies the maximum length of the buffer (in bytes) used to write the metric
+				reply information in order to build the HTML response.</para>
+			<para>
+				<emphasis> Default value is 0 (auto set to 1/3 of the size of the configured pkg
+					mem). </emphasis>
+			</para>
+			<example>
+				<title>Set <varname>xhttp_prom_buf_size</varname> parameter</title>
+				<programlisting format="linespecific">
 ...
 modparam("xhttp_prom", "xhttp_prom_buf_size", 1024)
 ...
 		</programlisting>
-	  </example>
-	</section>
-	<section id="xhttp_prom.p.xhttp_prom_timeout">
-	  <title><varname>xhttp_prom_timeout</varname> (integer)</title>
-	  <para>
-		Specifies a timeout in minutes. A metric not used during this timeout is
-		automatically deleted. Listing metrics does not count as using them.
-	  </para>
-	  <para>
-		<emphasis>If set to 0 timeout is disabled.</emphasis>
- 		Negative values are not allowed.
-	  </para>
-	  <para>
-		<emphasis>
-		  Default value is 60 minutes.
-		</emphasis>
-	  </para>
-	  <example>
-		<title>Set <varname>xhttp_prom_timeout</varname> parameter</title>
-		<programlisting format="linespecific">
+			</example>
+		</section>
+		<section id="xhttp_prom.p.xhttp_prom_timeout">
+			<title><varname>xhttp_prom_timeout</varname> (integer)</title>
+			<para>Specifies a timeout in minutes. A metric not used during this timeout is
+				automatically deleted. Listing metrics does not count as using them.</para>
+			<para>
+				<emphasis>If set to 0 timeout is disabled.</emphasis> Negative values are not
+				allowed.</para>
+			<para>
+				<emphasis> Default value is 60 minutes. </emphasis>
+			</para>
+			<example>
+				<title>Set <varname>xhttp_prom_timeout</varname> parameter</title>
+				<programlisting format="linespecific">
 ...
 # Set timeout to 10 hours		  
 modparam("xhttp_prom", "xhttp_prom_timeout", 600)
 ...
 		</programlisting>
-	  </example>
-	</section>
-	<section id="xhttp_prom.p.xhttp_prom_stats">
-	  <title><varname>xhttp_prom_stats</varname> (str)</title>
-	  <para>
-		Specifies which internal statistics from &kamailio; to show.
-		
-		Possible values:
-		<itemizedlist>
-		  <listitem>
-			<para><emphasis>all</emphasis> - Show whole &kamailio; statistics</para>
-		  </listitem>
-		  <listitem>
-			<para><emphasis>group_name:</emphasis> - Show all statistics for a group</para>
-		  </listitem>
-		  <listitem>
-			<para><emphasis>statistic_name</emphasis> - Show a specific statistic.
-			It automatically finds the group.</para>
-		  </listitem>
-		</itemizedlist>
-	  </para>
-	  <para>
-		<emphasis>
-		  Default value is "", meaning do not display any &kamailio; statistics.
-		</emphasis>
-	  </para>
-	  <para>
-		<emphasis>
-		  IMPORTANT: &kamailio; internal statistics are parsed to convert - into _, so they
-		  accomplish with Prometheus guidelines for metric names.
-		  <ulink url="https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels">https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels</ulink>
-		</emphasis>
-		User generated statistics and label names are not parsed.
-	  </para>
-	  <example>
-		<title>Set <varname>xhttp_prom_stats</varname> parameter</title>
-		<programlisting format="linespecific">
+			</example>
+		</section>
+		<section id="xhttp_prom.p.xhttp_prom_stats">
+			<title><varname>xhttp_prom_stats</varname> (str)</title>
+			<para>Specifies which internal statistics from &kamailio; to show. Possible values: <itemizedlist>
+					<listitem>
+						<para><emphasis>all</emphasis> - Show whole &kamailio; statistics</para>
+					</listitem>
+					<listitem>
+						<para><emphasis>group_name:</emphasis> - Show all statistics for a
+							group</para>
+					</listitem>
+					<listitem>
+						<para><emphasis>statistic_name</emphasis> - Show a specific statistic. It
+							automatically finds the group.</para>
+					</listitem>
+				</itemizedlist>
+			</para>
+			<para>
+				<emphasis> Default value is "", meaning do not display any &kamailio; statistics.
+				</emphasis>
+			</para>
+			<para>
+				<emphasis> IMPORTANT: &kamailio; internal statistics are parsed to convert - into _,
+					so they accomplish with Prometheus guidelines for metric names. <ulink
+						url="https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels"
+						>https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels</ulink>
+				</emphasis> User generated statistics and label names are not parsed.</para>
+			<example>
+				<title>Set <varname>xhttp_prom_stats</varname> parameter</title>
+				<programlisting format="linespecific">
 ...
 # show all kamailio statistics.
 modparam("xhttp_prom", "xhttp_prom_stats", "all")
@@ -180,24 +149,19 @@ modparam("xhttp_prom", "xhttp_prom_stats", "200_replies")
 modparam("xhttp_prom", "xhttp_prom_stats", "")
 ...
 		</programlisting>
-	  </example>
-	</section>
-	<section id="xhttp_prom.p.xhttp_prom_beginning">
-	  <title><varname>xhttp_prom_beginning</varname> (str)</title>
-	  <para>
-		Specifies beginning of string the metrics are build with.
-	  </para>
-	  <para>
-		<emphasis>It defaults to "kamailio_"</emphasis>, so if not specified every
-		metric will start with "kamailio_".
-	  </para>
-	  <para>
-		Void string "" is also allowed, meaning no prefix string for every metric
-		name.
-	  </para>
-	  <example>
-		<title>Set <varname>xhttp_prom_beginning</varname> parameter</title>
-		<programlisting format="linespecific">
+			</example>
+		</section>
+		<section id="xhttp_prom.p.xhttp_prom_beginning">
+			<title><varname>xhttp_prom_beginning</varname> (str)</title>
+			<para>Specifies beginning of string the metrics are build with.</para>
+			<para>
+				<emphasis>It defaults to "kamailio_"</emphasis>, so if not specified every metric
+				will start with "kamailio_".</para>
+			<para>Void string "" is also allowed, meaning no prefix string for every metric
+				name.</para>
+			<example>
+				<title>Set <varname>xhttp_prom_beginning</varname> parameter</title>
+				<programlisting format="linespecific">
 ...
 # All metrics will start with "my_metric_".
 modparam("xhttp_prom", "xhttp_prom_beginning", "my_metric_")
@@ -206,49 +170,42 @@ modparam("xhttp_prom", "xhttp_prom_beginning", "my_metric_")
 modparam("xhttp_prom", "xhttp_prom_beginning", "");
 ...
 		</programlisting>
-	  </example>
-	</section>
-	<section id="xhttp_prom.p.prom_counter">
-	  <title><varname>prom_counter</varname> (str)</title>
-	  <para>
-		Create a counter metric.
-	  </para>
-	  <para>
-		This function declares a counter but the actual counter is only created
-		when using it (by adding to or resetting it)
-	  </para>
-	  <para>
-		It takes a list of attribute=value separated by semicolon, the attributes can
-		be name and label.
-	  </para>
-	  <itemizedlist>
-		<listitem>
-		  <para>
-			<emphasis>name</emphasis> - name of the counter. This attribute is mandatory.
-			It is used to generate the metric name. Each name is unique, no metric shall
-			repeat a name.
-		  </para>
-		</listitem>
-		<listitem>
-		  <para>
-			<emphasis>label</emphasis> - names of labels in the counter. Optional.
-			Only one label parameter at most allowed in counters.
-			Each label name is separated by <emphasis>:</emphasis> without spaces.
-			At most only three label names allowed in each label parameter.
-			<example><title><varname>prom_counter</varname> label example</title>
-			<programlisting format="linespecific">
+			</example>
+		</section>
+		<section id="xhttp_prom.p.prom_counter">
+			<title><varname>prom_counter</varname> (str)</title>
+			<para>Create a counter metric.</para>
+			<para>This function declares a counter but the actual counter is only created when using
+				it (by adding to or resetting it)</para>
+			<para>It takes a list of attribute=value separated by semicolon, the attributes can be
+				name and label.</para>
+			<itemizedlist>
+				<listitem>
+					<para>
+						<emphasis>name</emphasis> - name of the counter. This attribute is
+						mandatory. It is used to generate the metric name. Each name is unique, no
+						metric shall repeat a name.</para>
+				</listitem>
+				<listitem>
+					<para>
+						<emphasis>label</emphasis> - names of labels in the counter. Optional. Only
+						one label parameter at most allowed in counters. Each label name is
+						separated by <emphasis>:</emphasis> without spaces. At most only three label
+						names allowed in each label parameter. <example>
+							<title><varname>prom_counter</varname> label example</title>
+							<programlisting format="linespecific">
 # Create two labels called method and handler
 label = method:handler
 This would generate  {method="whatever", handler="whatever2"} when building
 the metric.
 			</programlisting>
-			</example>
-		  </para>
-		</listitem>
-	  </itemizedlist>
-	  <example>
-		<title>Set <varname>prom_counter</varname> parameter</title>
-		<programlisting format="linespecific">
+						</example>
+					</para>
+				</listitem>
+			</itemizedlist>
+			<example>
+				<title>Set <varname>prom_counter</varname> parameter</title>
+				<programlisting format="linespecific">
 ...
 		  
 # Create cnt_first counter with no labels.
@@ -266,49 +223,42 @@ using it by prom_counter_inc or prom_counter_reset functions.
 
 ...
 		</programlisting>
-	  </example>
-	</section>
-	<section id="xhttp_prom.p.prom_gauge">
-	  <title><varname>prom_gauge</varname> (str)</title>
-	  <para>
-		Create a gauge metric.
-	  </para>
-	  <para>
-		This function declares the gauge but the actual gauge is only created
-		when using it (by setting or resetting it)
-	  </para>
-	  <para>
-		It takes a list of attribute=value separated by semicolon, the attributes can
-		be name and value.
-	  </para>
-	  <itemizedlist>
-		<listitem>
-		  <para>
-			<emphasis>name</emphasis> - name of the gauge. This attribute is mandatory.
-			It is used to generate the metric name. Each name is unique, no metric shall
-			repeat a name.
-		  </para>
-		</listitem>
-		<listitem>
-		  <para>
-			<emphasis>label</emphasis> - names of labels in the gauge. Optional.
-			Only one label parameter at most allowed in gauges.
-			Each label name is separated by <emphasis>:</emphasis> without spaces.
-			At most only three label names allowed inside each label parameter.
-			<example><title><varname>prom_gauge</varname> label example</title>
-			<programlisting format="linespecific">
+			</example>
+		</section>
+		<section id="xhttp_prom.p.prom_gauge">
+			<title><varname>prom_gauge</varname> (str)</title>
+			<para>Create a gauge metric.</para>
+			<para>This function declares the gauge but the actual gauge is only created when using
+				it (by setting or resetting it)</para>
+			<para>It takes a list of attribute=value separated by semicolon, the attributes can be
+				name and value.</para>
+			<itemizedlist>
+				<listitem>
+					<para>
+						<emphasis>name</emphasis> - name of the gauge. This attribute is mandatory.
+						It is used to generate the metric name. Each name is unique, no metric shall
+						repeat a name.</para>
+				</listitem>
+				<listitem>
+					<para>
+						<emphasis>label</emphasis> - names of labels in the gauge. Optional. Only
+						one label parameter at most allowed in gauges. Each label name is separated
+						by <emphasis>:</emphasis> without spaces. At most only three label names
+						allowed inside each label parameter. <example>
+							<title><varname>prom_gauge</varname> label example</title>
+							<programlisting format="linespecific">
 # Create two labels called method and handler
 label = method:handler
 This would generate  {method="whatever", handler="whatever2"} when building
 the metric.
 			</programlisting>
-			</example>
-		  </para>
-		</listitem>
-	  </itemizedlist>
-	  <example>
-		<title>Set <varname>prom_gauge</varname> parameter</title>
-		<programlisting format="linespecific">
+						</example>
+					</para>
+				</listitem>
+			</itemizedlist>
+			<example>
+				<title>Set <varname>prom_gauge</varname> parameter</title>
+				<programlisting format="linespecific">
 ...
 
 # Create gg_first gauge with no labels
@@ -323,67 +273,54 @@ modparam("xhttp_prom", "prom_gauge", "name=gg_third; label=method:handler;");
 
 ...
 		</programlisting>
-	  </example>
-	</section>
-	<section id="xhttp_prom.p.prom_histogram">
-	  <title><varname>prom_histogram</varname> (str)</title>
-	  <para>
-		Create a histogram metric.
-	  </para>
-	  <para>
-		This function declares a histogram but the actual histogram is only created
-		when observing it.
-	  </para>
-	  <para>
-		It takes a list of attribute=value separated by semicolon, the attributes can
-		be name, label and buckets.
-	  </para>
-	  <itemizedlist>
-		<listitem>
-		  <para>
-			<emphasis>name</emphasis> - name of the histogram. This attribute is mandatory.
-			It is used to generate the metric name. Each name is unique, no metric shall
-			repeat a name.
-		  </para>
-		</listitem>
-		<listitem>
-		  <para>
-			<emphasis>label</emphasis> - names of labels in the histogram. Optional.
-			Only one label parameter at most allowed in histograms.
-			Each label name is separated by <emphasis>:</emphasis> without spaces.
-			At most only three label names allowed in each label parameter.
-			<example><title><varname>prom_histogram</varname> label example</title>
-			<programlisting format="linespecific">
+			</example>
+		</section>
+		<section id="xhttp_prom.p.prom_histogram">
+			<title><varname>prom_histogram</varname> (str)</title>
+			<para>Create a histogram metric.</para>
+			<para>This function declares a histogram but the actual histogram is only created when
+				observing it.</para>
+			<para>It takes a list of attribute=value separated by semicolon, the attributes can be
+				name, label and buckets.</para>
+			<itemizedlist>
+				<listitem>
+					<para>
+						<emphasis>name</emphasis> - name of the histogram. This attribute is
+						mandatory. It is used to generate the metric name. Each name is unique, no
+						metric shall repeat a name.</para>
+				</listitem>
+				<listitem>
+					<para>
+						<emphasis>label</emphasis> - names of labels in the histogram. Optional.
+						Only one label parameter at most allowed in histograms. Each label name is
+						separated by <emphasis>:</emphasis> without spaces. At most only three label
+						names allowed in each label parameter. <example>
+							<title><varname>prom_histogram</varname> label example</title>
+							<programlisting format="linespecific">
 # Create two labels called method and handler
 label = method:handler
 This would generate  {method="whatever", handler="whatever2"} when building
 the metric.
 			</programlisting>
-			</example>
-		  </para>
-		</listitem>
-		<listitem>
-		  <para>
-			<emphasis>buckets</emphasis> - specifies upper bounds for buckets in the
-			histogram. This attribute is optional.
-		  </para>
-		  <para>
-			Bucket values are separated by ":". Each value has to be a number.
-		  </para>
-		  <para>
-			"+Inf" upper bucket is always automatically included.
-		  </para>
-		  <para>At least one bucket value is needed (other than +Inf).</para>
-		  <para>Every bucket value has to increase in the list.</para>
-		  <para>
-			If no buckets specified, default bucket list is set to these values:
-		  </para>
-		  <para>[0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10]</para>
-		</listitem>
-	  </itemizedlist>
-	  <example>
-		<title>Set <varname>prom_histogram</varname> parameter</title>
-		<programlisting format="linespecific">
+						</example>
+					</para>
+				</listitem>
+				<listitem>
+					<para>
+						<emphasis>buckets</emphasis> - specifies upper bounds for buckets in the
+						histogram. This attribute is optional.</para>
+					<para>Bucket values are separated by ":". Each value has to be a number.</para>
+					<para>"+Inf" upper bucket is always automatically included.</para>
+					<para>At least one bucket value is needed (other than +Inf).</para>
+					<para>Every bucket value has to increase in the list.</para>
+					<para>If no buckets specified, default bucket list is set to these
+						values:</para>
+					<para>[0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10]</para>
+				</listitem>
+			</itemizedlist>
+			<example>
+				<title>Set <varname>prom_histogram</varname> parameter</title>
+				<programlisting format="linespecific">
 ...
 		  
 # Create my_histo histogram with no labels and default buckets.
@@ -403,34 +340,28 @@ using it by prom_histogram_observe function.
 
 ...
 		</programlisting>
-	  </example>
+			</example>
+		</section>
 	</section>
-  </section>
-  <section>
-	<title>Functions</title>
-	<section id="xhttp_prom.f.prom_counter_reset">
-	  <title>
-		<function moreinfo="none">prom_counter_reset(name, l0, l1, l2)</function>
-	  </title>
-	  <para>
-		Get a counter based on its name and labels and reset its value to 0.
-		Name parameter is mandatory. Values of labels are optional (from none up to three).
-		Name in prom_counter_reset has to match same name in prom_counter parameter.
-		Number of labels in prom_counter_reset has to match number of labels in prom_counter parameter.
-		First time a counter is used with this reset function the counter is created if it does not exist already.
-	  </para>
-	  <para>
-		This function accepts pseudovariables on its parameters.
-	  </para>
-	  <para>
-		Available via KEMI framework as <emphasis>counter_reset_l0</emphasis>,
-		<emphasis>counter_reset_l1</emphasis>,
-		<emphasis>counter_reset_l2</emphasis> and
-		<emphasis>counter_reset_l3</emphasis>.
-	  </para>
-	  <example>
-		<title><function>prom_counter_reset</function> usage</title>
-		<programlisting format="linespecific">
+	<section>
+		<title>Functions</title>
+		<section id="xhttp_prom.f.prom_counter_reset">
+			<title>
+				<function moreinfo="none">prom_counter_reset(name, l0, l1, l2)</function>
+			</title>
+			<para>Get a counter based on its name and labels and reset its value to 0. Name
+				parameter is mandatory. Values of labels are optional (from none up to three). Name
+				in prom_counter_reset has to match same name in prom_counter parameter. Number of
+				labels in prom_counter_reset has to match number of labels in prom_counter
+				parameter. First time a counter is used with this reset function the counter is
+				created if it does not exist already.</para>
+			<para>This function accepts pseudovariables on its parameters.</para>
+			<para>Available via KEMI framework as <emphasis>counter_reset_l0</emphasis>,
+					<emphasis>counter_reset_l1</emphasis>, <emphasis>counter_reset_l2</emphasis> and
+					<emphasis>counter_reset_l3</emphasis>.</para>
+			<example>
+				<title><function>prom_counter_reset</function> usage</title>
+				<programlisting format="linespecific">
 ...
 # Definition of counter with prom_counter with labels method and IP
 modparam("xhttp_prom", "prom_counter", "name=cnt01; label=method:IP;");
@@ -443,31 +374,25 @@ prom_counter_reset("cnt01", "push", "192.168.0.1");
 kamailio_cnt01 {method="push", IP="192.168.0.1"} 0 1234567890
 ...
 		</programlisting>
-	  </example>
-	</section>
-	<section id="xhttp_prom.f.prom_gauge_reset">
-	  <title>
-		<function moreinfo="none">prom_gauge_reset(name, l0, l1, l2)</function>
-	  </title>
-	  <para>
-		Get a gauge based on its name and labels and reset its value to 0.
-		Name parameter is mandatory. Values of labels are optional (from none up to three).
-		Name in prom_gauge_reset has to match same name in prom_gauge parameter.
-		Number of labels in prom_gauge_reset has to match number of labels in prom_gauge parameter.
-		First time a gauge is used with this reset function the gauge is created if it does not exist already.
-	  </para>
-	  <para>
-		This function accepts pseudovariables on its parameters.
-	  </para>
-	  <para>
-		Available via KEMI framework as <emphasis>gauge_reset_l0</emphasis>,
-		<emphasis>gauge_reset_l1</emphasis>,
-		<emphasis>gauge_reset_l2</emphasis> and
-		<emphasis>gauge_reset_l3</emphasis>.
-	  </para>
-	  <example>
-		<title><function>prom_gauge_reset</function> usage</title>
-		<programlisting format="linespecific">
+			</example>
+		</section>
+		<section id="xhttp_prom.f.prom_gauge_reset">
+			<title>
+				<function moreinfo="none">prom_gauge_reset(name, l0, l1, l2)</function>
+			</title>
+			<para>Get a gauge based on its name and labels and reset its value to 0. Name parameter
+				is mandatory. Values of labels are optional (from none up to three). Name in
+				prom_gauge_reset has to match same name in prom_gauge parameter. Number of labels in
+				prom_gauge_reset has to match number of labels in prom_gauge parameter. First time a
+				gauge is used with this reset function the gauge is created if it does not exist
+				already.</para>
+			<para>This function accepts pseudovariables on its parameters.</para>
+			<para>Available via KEMI framework as <emphasis>gauge_reset_l0</emphasis>,
+					<emphasis>gauge_reset_l1</emphasis>, <emphasis>gauge_reset_l2</emphasis> and
+					<emphasis>gauge_reset_l3</emphasis>.</para>
+			<example>
+				<title><function>prom_gauge_reset</function> usage</title>
+				<programlisting format="linespecific">
 ...
 # Definition of gauge with prom_gauge with labels method and IP
 modparam("xhttp_prom", "prom_gauge", "name=cnt01; label=method:IP;");
@@ -480,36 +405,26 @@ prom_gauge_reset("cnt01", "push", "192.168.0.1");
 kamailio_cnt01 {method="push", IP="192.168.0.1"} 0 1234567890
 ...
 		</programlisting>
-	  </example>
-	</section>
-	<section id="xhttp_prom.f.prom_counter_inc">
-	  <title>
-		<function moreinfo="none">prom_counter_inc(name, number, l0, l1, l2)</function>
-	  </title>
-	  <para>
-		Get a counter identified by its name and labels and increase its value by a number.
-		If counter does not exist it creates the counter, initializes it to zero and adds the number.
-	  </para>
-	  <para>
-		Name is mandatory, number is mandatory.
-		Number has to be positive or zero (integer).
-		l0, l1, l2 are values of labels and are optional.
-	  </para>
-	  <para>
-		name value and number of labels have to match a previous counter definition with prom_counter.
-	  </para>
-	  <para>
-		This function accepts pseudovariables on its parameters.
-	  </para>
-	  <para>
-		Available via KEMI framework as <emphasis>counter_inc_l0</emphasis>,
-		<emphasis>counter_inc_l1</emphasis>,
-		<emphasis>counter_inc_l2</emphasis> and
-		<emphasis>counter_inc_l3</emphasis>.
-	  </para>
-	  <example>
-		<title><function>prom_counter_inc</function> usage</title>
-		<programlisting format="linespecific">
+			</example>
+		</section>
+		<section id="xhttp_prom.f.prom_counter_inc">
+			<title>
+				<function moreinfo="none">prom_counter_inc(name, number, l0, l1, l2)</function>
+			</title>
+			<para>Get a counter identified by its name and labels and increase its value by a
+				number. If counter does not exist it creates the counter, initializes it to zero and
+				adds the number.</para>
+			<para>Name is mandatory, number is mandatory. Number has to be positive or zero
+				(integer). l0, l1, l2 are values of labels and are optional.</para>
+			<para>name value and number of labels have to match a previous counter definition with
+				prom_counter.</para>
+			<para>This function accepts pseudovariables on its parameters.</para>
+			<para>Available via KEMI framework as <emphasis>counter_inc_l0</emphasis>,
+					<emphasis>counter_inc_l1</emphasis>, <emphasis>counter_inc_l2</emphasis> and
+					<emphasis>counter_inc_l3</emphasis>.</para>
+			<example>
+				<title><function>prom_counter_inc</function> usage</title>
+				<programlisting format="linespecific">
 ...
 # Definition of cnt01 counter with no labels.
 modparam("xhttp_prom", "prom_counter", "name=cnt01;");
@@ -527,36 +442,25 @@ prom_counter_inc("cnt02", "15", "push", "192.168.0.1");
 kamailio_cnt02 {method="push", IP="192.168.0.1"} 15 1234567890
 ...
 		</programlisting>
-	  </example>
-	</section>
-	<section id="xhttp_prom.f.prom_gauge_set">
-	  <title>
-		<function moreinfo="none">prom_gauge_set(name, number, l0, l1, l2)</function>
-	  </title>
-	  <para>
-		Get a gauge identified by its name and labels and set its value to a number.
-		If gauge does not exist it creates the gauge and assigns the value to it.
-	  </para>
-	  <para>
-		Name is mandatory, number is mandatory.
-		Number is a string that will be parsed as a float.
-		l0, l1, l2 are values of labels and are optional.
-	  </para>
-	  <para>
-		name value and number of labels have to match a previous gauge definition with prom_gauge.
-	  </para>
-	  <para>
-		This function accepts pseudovariables on its parameters.
-	  </para>
-	  <para>
-		Available via KEMI framework as <emphasis>gauge_set_l0</emphasis>,
-		<emphasis>gauge_set_l1</emphasis>,
-		<emphasis>gauge_set_l2</emphasis> and
-		<emphasis>gauge_set_l3</emphasis>.
-	  </para>
-	  <example>
-		<title><function>prom_gauge_set</function> usage</title>
-		<programlisting format="linespecific">
+			</example>
+		</section>
+		<section id="xhttp_prom.f.prom_gauge_set">
+			<title>
+				<function moreinfo="none">prom_gauge_set(name, number, l0, l1, l2)</function>
+			</title>
+			<para>Get a gauge identified by its name and labels and set its value to a number. If
+				gauge does not exist it creates the gauge and assigns the value to it.</para>
+			<para>Name is mandatory, number is mandatory. Number is a string that will be parsed as
+				a float. l0, l1, l2 are values of labels and are optional.</para>
+			<para>name value and number of labels have to match a previous gauge definition with
+				prom_gauge.</para>
+			<para>This function accepts pseudovariables on its parameters.</para>
+			<para>Available via KEMI framework as <emphasis>gauge_set_l0</emphasis>,
+					<emphasis>gauge_set_l1</emphasis>, <emphasis>gauge_set_l2</emphasis> and
+					<emphasis>gauge_set_l3</emphasis>.</para>
+			<example>
+				<title><function>prom_gauge_set</function> usage</title>
+				<programlisting format="linespecific">
 ...
 # Definition of gg01 gauge with no labels.
 modparam("xhttp_prom", "prom_gauge", "name=gg01;");
@@ -574,37 +478,28 @@ prom_gauge_set("gg02", "2.8", "push", "192.168.0.1");
 kamailio_gg02 {method="push", IP="192.168.0.1"} 2.8 1234567890
 ...
 		</programlisting>
-	  </example>
-	</section>
-	<section id="xhttp_prom.f.prom_histogram_observe">
-	  <title>
-		<function moreinfo="none">prom_histogram_observe(name, number, l0, l1, l2)</function>
-	  </title>
-	  <para>
-		Get a histogram identified by its name and labels and observe a value in it.
-		If histogram does not exist it creates the histogram and accumulate the value in its
-		buckets, counter and sum.
-	  </para>
-	  <para>
-		Name is mandatory, number is mandatory.
-		Number is a string that will be parsed as a float.
-		l0, l1, l2 are values of labels and are optional.
-	  </para>
-	  <para>
-		name value and number of labels have to match a previous histogram definition with prom_histogram.
-	  </para>
-	  <para>
-		This function accepts pseudovariables on its parameters.
-	  </para>
-	  <para>
-		Available via KEMI framework as <emphasis>histogram_observe_l0</emphasis>,
-		<emphasis>histogram_observe_l1</emphasis>,
-		<emphasis>histogram_observe_l2</emphasis> and
-		<emphasis>histogram_observe_l3</emphasis>.
-	  </para>
-	  <example>
-		<title><function>prom_histogram_observe</function> usage</title>
-		<programlisting format="linespecific">
+			</example>
+		</section>
+		<section id="xhttp_prom.f.prom_histogram_observe">
+			<title>
+				<function moreinfo="none">prom_histogram_observe(name, number, l0, l1,
+					l2)</function>
+			</title>
+			<para>Get a histogram identified by its name and labels and observe a value in it. If
+				histogram does not exist it creates the histogram and accumulate the value in its
+				buckets, counter and sum.</para>
+			<para>Name is mandatory, number is mandatory. Number is a string that will be parsed as
+				a float. l0, l1, l2 are values of labels and are optional.</para>
+			<para>name value and number of labels have to match a previous histogram definition with
+				prom_histogram.</para>
+			<para>This function accepts pseudovariables on its parameters.</para>
+			<para>Available via KEMI framework as <emphasis>histogram_observe_l0</emphasis>,
+					<emphasis>histogram_observe_l1</emphasis>,
+					<emphasis>histogram_observe_l2</emphasis> and
+					<emphasis>histogram_observe_l3</emphasis>.</para>
+			<example>
+				<title><function>prom_histogram_observe</function> usage</title>
+				<programlisting format="linespecific">
 ...
 # Definition of hist01 histogram with no labels and default buckets.
 modparam("xhttp_prom", "prom_histogram", "name=hist01;");
@@ -628,21 +523,18 @@ hist02_count{method="push", IP="192.168.0.1"} 1 1592574659768
 
 ...
 		</programlisting>
-	  </example>
-	</section>
-	<section id="xhttp_prom.f.prom_dispatch">
-	  <title>
-		<function moreinfo="none">prom_dispatch()</function>
-	  </title>
-	  <para>
-		Handle the HTTP request and generate a response.
-	  </para>
-	  <para>
-		Available via KEMI framework as <emphasis>xhttp_prom.dispatch</emphasis>
-	  </para>
-	  <example>
-		<title><function>prom_dispatch</function> usage</title>
-		<programlisting format="linespecific">
+			</example>
+		</section>
+		<section id="xhttp_prom.f.prom_dispatch">
+			<title>
+				<function moreinfo="none">prom_dispatch()</function>
+			</title>
+			<para>Handle the HTTP request and generate a response.</para>
+			<para>Available via KEMI framework as <emphasis>xhttp_prom.dispatch</emphasis>
+			</para>
+			<example>
+				<title><function>prom_dispatch</function> usage</title>
+				<programlisting format="linespecific">
 ...
 # Needed to use SIP frames as HTTP ones.
 tcp_accept_no_cl=yes
@@ -665,11 +557,11 @@ event_route[xhttp:request] {
 }
 ...
 		</programlisting>
-	  </example>
-	  <example>
-		<title><function>prom_dispatch</function> usage (more complete)</title>
-		<para>Another example with counters and gauge:</para>
-		<programlisting format="linespecific">
+			</example>
+			<example>
+				<title><function>prom_dispatch</function> usage (more complete)</title>
+				<para>Another example with counters and gauge:</para>
+				<programlisting format="linespecific">
 ...
 # Needed to use SIP frames as HTTP ones.
 tcp_accept_no_cl=yes
@@ -737,23 +629,20 @@ kamailio_sl_sent_replies 15 1554839325427
 kamailio_sl_xxx_replies 0 1554839325461
 ...
 		</programlisting>
-	  </example>
-	</section>
-	<section id="xhttp_prom.f.prom_check_uri">
-	  <title>
-		<function moreinfo="none">prom_check_uri()</function>
-	  </title>
-	  <para>
-		Check if path of HTTP URL equals /metrics. This avoids us to check hu variable
-		from xHTTP module.
-	  </para>
-	  <para>NOTE: Remember not to block /metrics URL in xHTTP module</para>
-	  <para>
-		Available via KEMI framework as <emphasis>xhttp_prom.check_uri</emphasis>
-	  </para>
-	  <example>
-		<title><function>prom_check_uri</function> usage</title>
-		<programlisting format="linespecific">
+			</example>
+		</section>
+		<section id="xhttp_prom.f.prom_check_uri">
+			<title>
+				<function moreinfo="none">prom_check_uri()</function>
+			</title>
+			<para>Check if path of HTTP URL equals /metrics. This avoids us to check hu variable
+				from xHTTP module.</para>
+			<para>NOTE: Remember not to block /metrics URL in xHTTP module</para>
+			<para>Available via KEMI framework as <emphasis>xhttp_prom.check_uri</emphasis>
+			</para>
+			<example>
+				<title><function>prom_check_uri</function> usage</title>
+				<programlisting format="linespecific">
 ...
 # Needed to use SIP frames as HTTP ones.
 tcp_accept_no_cl=yes
@@ -775,155 +664,186 @@ event_route[xhttp:request] {
 }
 ...
 		</programlisting>
-	  </example>
+			</example>
+		</section>
 	</section>
-  </section>
-  <section>
-	<title><acronym>RPC</acronym> Commands</title>
-	<section  id="xhttp_prom.rpc.counter_reset">
-	  <title><function moreinfo="none">xhttp_prom.counter_reset</function></title>
-	  <para>
-		Set a counter to zero.
-	  </para>
-      <para>
-        Name: <emphasis>xhttp_prom.counter_reset</emphasis>
-      </para>
-      <para>Parameters:</para>
-	  <itemizedlist>
-		<listitem><para><emphasis>name</emphasis>: name of the counter (mandatory)</para></listitem>
-		<listitem><para><emphasis>l0</emphasis>: value of the first label (optional)</para></listitem>
-		<listitem><para><emphasis>l1</emphasis>: value of second label (optional)</para></listitem>
-		<listitem><para><emphasis>l2</emphasis>: value of the third label (optional)</para></listitem>
-	  </itemizedlist>
-	  <example>
-		<title><function>xhttp_prom.counter_reset</function> usage</title>
-		<programlisting format="linespecific">
+	<section>
+		<title><acronym>RPC</acronym> Commands</title>
+		<section id="xhttp_prom.rpc.counter_reset">
+			<title><function moreinfo="none">xhttp_prom.counter_reset</function></title>
+			<para>Set a counter to zero.</para>
+			<para>Name: <emphasis>xhttp_prom.counter_reset</emphasis>
+			</para>
+			<para>Parameters:</para>
+			<itemizedlist>
+				<listitem>
+					<para><emphasis>name</emphasis>: name of the counter (mandatory)</para>
+				</listitem>
+				<listitem>
+					<para><emphasis>l0</emphasis>: value of the first label (optional)</para>
+				</listitem>
+				<listitem>
+					<para><emphasis>l1</emphasis>: value of second label (optional)</para>
+				</listitem>
+				<listitem>
+					<para><emphasis>l2</emphasis>: value of the third label (optional)</para>
+				</listitem>
+			</itemizedlist>
+			<example>
+				<title><function>xhttp_prom.counter_reset</function> usage</title>
+				<programlisting format="linespecific">
 		  ...
 		  &kamcmd; xhttp_prom.counter_reset "cnt01" "push" "192.168.0.1"
 		  ...
 		</programlisting>
-	  </example>
-    </section>
-	<section  id="xhttp_prom.rpc.counter_inc">
-	  <title><function moreinfo="none">xhttp_prom.counter_inc</function></title>
-	  <para>
-		Add a number to a counter based on its name and labels.
-	  </para>
-      <para>
-        Name: <emphasis>xhttp_prom.counter_inc</emphasis>
-      </para>
-      <para>Parameters:</para>
-	  <itemizedlist>
-		<listitem><para><emphasis>name</emphasis>: name of the counter (mandatory)</para></listitem>
-		<listitem><para><emphasis>number</emphasis>: integer to add to counter value. Negative values not allowed.</para></listitem>
-		<listitem><para><emphasis>l0</emphasis>: value of the first label (optional)</para></listitem>
-		<listitem><para><emphasis>l1</emphasis>: value of second label (optional)</para></listitem>
-		<listitem><para><emphasis>l2</emphasis>: value of the third label (optional)</para></listitem>
-	  </itemizedlist>
-	  <example>
-		<title><function>xhttp_prom.counter_inc</function> usage</title>
-		<programlisting format="linespecific">
+			</example>
+		</section>
+		<section id="xhttp_prom.rpc.counter_inc">
+			<title><function moreinfo="none">xhttp_prom.counter_inc</function></title>
+			<para>Add a number to a counter based on its name and labels.</para>
+			<para>Name: <emphasis>xhttp_prom.counter_inc</emphasis>
+			</para>
+			<para>Parameters:</para>
+			<itemizedlist>
+				<listitem>
+					<para><emphasis>name</emphasis>: name of the counter (mandatory)</para>
+				</listitem>
+				<listitem>
+					<para><emphasis>number</emphasis>: integer to add to counter value. Negative
+						values not allowed.</para>
+				</listitem>
+				<listitem>
+					<para><emphasis>l0</emphasis>: value of the first label (optional)</para>
+				</listitem>
+				<listitem>
+					<para><emphasis>l1</emphasis>: value of second label (optional)</para>
+				</listitem>
+				<listitem>
+					<para><emphasis>l2</emphasis>: value of the third label (optional)</para>
+				</listitem>
+			</itemizedlist>
+			<example>
+				<title><function>xhttp_prom.counter_inc</function> usage</title>
+				<programlisting format="linespecific">
 		  ...
 		  &kamcmd; xhttp_prom.counter_inc "cnt01" 15 "push" "192.168.0.1"
 		  ...
 		</programlisting>
-	  </example>
-    </section>
-	<section  id="xhttp_prom.rpc.gauge_reset">
-	  <title><function moreinfo="none">xhttp_prom.gauge_reset</function></title>
-	  <para>
-		Set gauge value to zero. Select gauge based on its name and labels.
-	  </para>
-      <para>
-        Name: <emphasis>xhttp_prom.gauge_reset</emphasis>
-      </para>
-      <para>Parameters:</para>
-	  <itemizedlist>
-		<listitem><para><emphasis>name</emphasis>: name of the gauge (mandatory)</para></listitem>
-		<listitem><para><emphasis>l0</emphasis>: value of the first label (optional)</para></listitem>
-		<listitem><para><emphasis>l1</emphasis>: value of second label (optional)</para></listitem>
-		<listitem><para><emphasis>l2</emphasis>: value of the third label (optional)</para></listitem>
-	  </itemizedlist>
-	  <example>
-		<title><function>xhttp_prom.gauge_reset</function> usage</title>
-		<programlisting format="linespecific">
+			</example>
+		</section>
+		<section id="xhttp_prom.rpc.gauge_reset">
+			<title><function moreinfo="none">xhttp_prom.gauge_reset</function></title>
+			<para>Set gauge value to zero. Select gauge based on its name and labels.</para>
+			<para>Name: <emphasis>xhttp_prom.gauge_reset</emphasis>
+			</para>
+			<para>Parameters:</para>
+			<itemizedlist>
+				<listitem>
+					<para><emphasis>name</emphasis>: name of the gauge (mandatory)</para>
+				</listitem>
+				<listitem>
+					<para><emphasis>l0</emphasis>: value of the first label (optional)</para>
+				</listitem>
+				<listitem>
+					<para><emphasis>l1</emphasis>: value of second label (optional)</para>
+				</listitem>
+				<listitem>
+					<para><emphasis>l2</emphasis>: value of the third label (optional)</para>
+				</listitem>
+			</itemizedlist>
+			<example>
+				<title><function>xhttp_prom.gauge_reset</function> usage</title>
+				<programlisting format="linespecific">
 		  ...
 		  &kamcmd; xhttp_prom.gauge_reset "gg01" "push" "192.168.0.1"
 		  ...
 		</programlisting>
-	  </example>
-    </section>
-	<section  id="xhttp_prom.rpc.gauge_set">
-	  <title><function moreinfo="none">xhttp_prom.gauge_set</function></title>
-	  <para>
-		Set a gauge to a number. Select the gauge by its name and labels.
-	  </para>
-      <para>
-        Name: <emphasis>xhttp_prom.gauge_set</emphasis>
-      </para>
-      <para>Parameters:</para>
-	  <itemizedlist>
-				<listitem><para><emphasis>name</emphasis>: name of the gauge (mandatory)</para></listitem>
-		<listitem><para><emphasis>number</emphasis>: float value to set the gauge to (mandatory)</para></listitem>
-		<listitem><para><emphasis>l0</emphasis>: value of the first label (optional)</para></listitem>
-		<listitem><para><emphasis>l1</emphasis>: value of second label (optional)</para></listitem>
-		<listitem><para><emphasis>l2</emphasis>: value of the third label (optional)</para></listitem>
-	  </itemizedlist>
-	  <example>
-		<title><function>xhttp_prom.gauge_set</function> usage</title>
-		<programlisting format="linespecific">
+			</example>
+		</section>
+		<section id="xhttp_prom.rpc.gauge_set">
+			<title><function moreinfo="none">xhttp_prom.gauge_set</function></title>
+			<para>Set a gauge to a number. Select the gauge by its name and labels.</para>
+			<para>Name: <emphasis>xhttp_prom.gauge_set</emphasis>
+			</para>
+			<para>Parameters:</para>
+			<itemizedlist>
+				<listitem>
+					<para><emphasis>name</emphasis>: name of the gauge (mandatory)</para>
+				</listitem>
+				<listitem>
+					<para><emphasis>number</emphasis>: float value to set the gauge to
+						(mandatory)</para>
+				</listitem>
+				<listitem>
+					<para><emphasis>l0</emphasis>: value of the first label (optional)</para>
+				</listitem>
+				<listitem>
+					<para><emphasis>l1</emphasis>: value of second label (optional)</para>
+				</listitem>
+				<listitem>
+					<para><emphasis>l2</emphasis>: value of the third label (optional)</para>
+				</listitem>
+			</itemizedlist>
+			<example>
+				<title><function>xhttp_prom.gauge_set</function> usage</title>
+				<programlisting format="linespecific">
 		  ...
 		  &kamcmd; xhttp_prom.gauge_set "gg01" -- -5.2
 		  ...
 		</programlisting>
-	  </example>
-    </section>
-	<section  id="xhttp_prom.rpc.histogram_observe">
-	  <title><function moreinfo="none">xhttp_prom.histogram_observe</function></title>
-	  <para>
-		Observe a number in a histogram. Select the histogram by its name and labels.
-	  </para>
-      <para>
-        Name: <emphasis>xhttp_prom.histogram_observe</emphasis>
-      </para>
-      <para>Parameters:</para>
-	  <itemizedlist>
-		<listitem><para><emphasis>name</emphasis>: name of the histogram (mandatory)</para></listitem>
-		<listitem><para><emphasis>number</emphasis>: float value to observe in the histogram (mandatory)</para></listitem>
-		<listitem><para><emphasis>l0</emphasis>: value of the first label (optional)</para></listitem>
-		<listitem><para><emphasis>l1</emphasis>: value of second label (optional)</para></listitem>
-		<listitem><para><emphasis>l2</emphasis>: value of the third label (optional)</para></listitem>
-	  </itemizedlist>
-	  <example>
-		<title><function>xhttp_prom.histogram_observe</function> usage</title>
-		<programlisting format="linespecific">
+			</example>
+		</section>
+		<section id="xhttp_prom.rpc.histogram_observe">
+			<title><function moreinfo="none">xhttp_prom.histogram_observe</function></title>
+			<para>Observe a number in a histogram. Select the histogram by its name and
+				labels.</para>
+			<para>Name: <emphasis>xhttp_prom.histogram_observe</emphasis>
+			</para>
+			<para>Parameters:</para>
+			<itemizedlist>
+				<listitem>
+					<para><emphasis>name</emphasis>: name of the histogram (mandatory)</para>
+				</listitem>
+				<listitem>
+					<para><emphasis>number</emphasis>: float value to observe in the histogram
+						(mandatory)</para>
+				</listitem>
+				<listitem>
+					<para><emphasis>l0</emphasis>: value of the first label (optional)</para>
+				</listitem>
+				<listitem>
+					<para><emphasis>l1</emphasis>: value of second label (optional)</para>
+				</listitem>
+				<listitem>
+					<para><emphasis>l2</emphasis>: value of the third label (optional)</para>
+				</listitem>
+			</itemizedlist>
+			<example>
+				<title><function>xhttp_prom.histogram_observe</function> usage</title>
+				<programlisting format="linespecific">
 		  ...
 		  &kamcmd; xhttp_prom.histogram_observe "hist01" -- -5.2
 		  ...
 		</programlisting>
-	  </example>
-    </section>
-	<section  id="xhttp_prom.rpc.metric_list_print">
-	  <title><function moreinfo="none">xhttp_prom.metric_list_print</function></title>
-	  <para>
-		List of all user defined metrics.
-	  </para>
-      <para>
-        Name: <emphasis>xhttp_prom.metric_list_print</emphasis>
-      </para>
-      <para>Parameters:<emphasis>none</emphasis></para>
-	  <para>
-		<emphasis>NOTE:</emphasis>: If you list a lot of metrics you may need to increase
-		buffer size of your RPC transport layer.
-	  </para>
-	  <example>
-		<title><function>xhttp_prom.metric_list_print</function> usage</title>
-		<programlisting format="linespecific">
+			</example>
+		</section>
+		<section id="xhttp_prom.rpc.metric_list_print">
+			<title><function moreinfo="none">xhttp_prom.metric_list_print</function></title>
+			<para>List of all user defined metrics.</para>
+			<para>Name: <emphasis>xhttp_prom.metric_list_print</emphasis>
+			</para>
+			<para>Parameters:<emphasis>none</emphasis></para>
+			<para>
+				<emphasis>NOTE:</emphasis>: If you list a lot of metrics you may need to increase
+				buffer size of your RPC transport layer.</para>
+			<example>
+				<title><function>xhttp_prom.metric_list_print</function> usage</title>
+				<programlisting format="linespecific">
 		  ...
 		  &kamcmd; xhttp_prom.metric_list_print
 		  ...
 		</programlisting>
-	  </example>
+			</example>
+		</section>
 	</section>
-  </section>
-</chapter>	
+</chapter>
