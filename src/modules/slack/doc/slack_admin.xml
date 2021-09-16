@@ -20,7 +20,7 @@
 		Slack integration (https://api.slack.com/messaging/webhooks)
 	</para>
 	<para>
-		It relays on libcurl. library (https://curl.se/libcurl).
+		It relays on libcurl through http_client module.
 	</para>
 	</section>
 
@@ -29,15 +29,14 @@
 	<section>
 		<title>&kamailio; Modules</title>
 		<para>
-		The following modules must be loaded before this module:
+			The following modules must be loaded before this module:
 			<itemizedlist>
-			<listitem>
-			<para>
-				<emphasis>none</emphasis>.
-			</para>
-			</listitem>
+			<listitem><para>
+			HTTP_CLIENT - the http_client module should be
+			loaded first.
+			</para></listitem>
 			</itemizedlist>
-		</para>
+        </para>
 	</section>
 	<section>
 		<title>External Libraries or Applications</title>
@@ -47,7 +46,7 @@
 			<itemizedlist>
 			<listitem>
 			<para>
-				<emphasis>libcurl</emphasis>
+				<emphasis>&libcurl;</emphasis>
 			</para>
 			</listitem>
 			</itemizedlist>
