@@ -72,6 +72,15 @@ typedef struct prom_ctx {
 } prom_ctx_t;
 
 /**
+ * @brief The enum for increment and decrement operations
+ *
+ */
+typedef enum operation {
+	INCREMENT,
+	DECREMENT
+} operation;
+
+/**
  * @brief string for beginning of metrics.
  */
 extern str xhttp_prom_beginning;

@@ -1114,9 +1114,9 @@ static int ki_xhttp_prom_counter_inc_l3(struct sip_msg* msg, str *s_name, int nu
 }
 
 /**
- * @brief Add an integer to a counter.
+ * @brief Updates a counter.
  */
-static int w_prom_counter_inc(struct sip_msg* msg, char *pname, char* pnumber,
+static int w_prom_counter_operation(struct sip_msg* msg, operation operation, char *pname, char* pnumber,
 							  char *l1, char *l2, char *l3)
 {
 	int number;
@@ -1186,16 +1186,16 @@ static int w_prom_counter_inc(struct sip_msg* msg, char *pname, char* pnumber,
 		l3 = NULL;
 	} /* if l1 != NULL */
 
-	if (prom_counter_inc(&s_name, number,
+	if (prom_counter_update(&s_name, operation, number,
 						   (l1!=NULL)?&l1_str:NULL,
 						   (l2!=NULL)?&l2_str:NULL,
 						   (l3!=NULL)?&l3_str:NULL
 						 )) {
-		LM_ERR("Cannot add number: %d to counter: %.*s\n", number, s_name.len, s_name.s);
+		LM_ERR("Cannot %s number: %d %s counter: %.*s\n", operation == INCREMENT? "add" : "decrement", number, operation == INCREMENT? "to" : "from", s_name.len, s_name.s);
 		return -1;
 	}
 
-	LM_DBG("Added %d to counter %.*s\n", number, s_name.len, s_name.s);
+	LM_DBG("%s %d %s counter %.*s\n", operation == INCREMENT? "Added" : "Decremented", number, operation == INCREMENT? "to" : "from", s_name.len, s_name.s);
 	return 1;
 }
 
@@ -1204,7 +1204,7 @@ static int w_prom_counter_inc(struct sip_msg* msg, char *pname, char* pnumber,
  */
 static int w_prom_counter_inc_l0(struct sip_msg* msg, char *pname, char* pnumber)
 {
-	return w_prom_counter_inc(msg, pname, pnumber, NULL, NULL, NULL);
+	return w_prom_counter_operation(msg, INCREMENT, pname, pnumber, NULL, NULL, NULL);
 }
 
 /**
@@ -1213,7 +1213,7 @@ static int w_prom_counter_inc_l0(struct sip_msg* msg, char *pname, char* pnumber
 static int w_prom_counter_inc_l1(struct sip_msg* msg, char *pname, char* pnumber,
 								 char *l1)
 {
-	return w_prom_counter_inc(msg, pname, pnumber, l1, NULL, NULL);
+	return w_prom_counter_operation(msg, INCREMENT, pname, pnumber, l1, NULL, NULL);
 }
 
 /**
@@ -1222,7 +1222,7 @@ static int w_prom_counter_inc_l1(struct sip_msg* msg, char *pname, char* pnumber
 static int w_prom_counter_inc_l2(struct sip_msg* msg, char *pname, char* pnumber,
 								 char *l1, char *l2)
 {
-	return w_prom_counter_inc(msg, pname, pnumber, l1, l2, NULL);
+	return w_prom_counter_operation(msg, INCREMENT, pname, pnumber, l1, l2, NULL);
 }
 
 /**
@@ -1231,7 +1231,7 @@ static int w_prom_counter_inc_l2(struct sip_msg* msg, char *pname, char* pnumber
 static int w_prom_counter_inc_l3(struct sip_msg* msg, char *pname, char* pnumber,
 								 char *l1, char *l2, char *l3)
 {
-	return w_prom_counter_inc(msg, pname, pnumber, l1, l2, l3);
+	return w_prom_counter_operation(msg, INCREMENT, pname, pnumber, l1, l2, l3);
 }
 
 /**
