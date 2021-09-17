@@ -421,9 +421,13 @@ int receive_msg(char *buf, unsigned int len, receive_info_t *rcv_info)
 	if(msg->first_line.type == SIP_REQUEST) {
 		ruri_mark_new(); /* ruri is usable for forking (not consumed yet) */
 		if(!IS_SIP(msg)) {
+			LM_DBG("handling non-sip request message\n");
 			if((ret = nonsip_msg_run_hooks(msg)) != NONSIP_MSG_ACCEPT) {
-				if(unlikely(ret == NONSIP_MSG_ERROR))
+				if(unlikely(ret == NONSIP_MSG_ERROR)) {
+					LM_DBG("failed handling non-sip request message\n");
 					goto error03;
+				}
+				LM_DBG("finished handling non-sip request message\n");
 				goto end; /* drop the message */
 			}
 		}
@@ -432,6 +436,14 @@ int receive_msg(char *buf, unsigned int len, receive_info_t *rcv_info)
 			/* no via, send back error ? */
 			LOG(cfg_get(core, core_cfg, sip_parser_log),
 					"no via found in request\n");
+			STATS_BAD_MSG();
+			goto error02;
+		}
+		if(unlikely((msg->callid == 0) || (msg->cseq == 0) || (msg->from == 0)
+					|| (msg->to == 0))) {
+			/* no required headers -- send back error ? */
+			LOG(cfg_get(core, core_cfg, sip_parser_log),
+					"required headers not found in request\n");
 			STATS_BAD_MSG();
 			goto error02;
 		}
@@ -523,6 +535,14 @@ int receive_msg(char *buf, unsigned int len, receive_info_t *rcv_info)
 		if((msg->via1 == 0) || (msg->via1->error != PARSE_OK)) {
 			/* no via, send back error ? */
 			LM_ERR("no via found in reply\n");
+			STATS_BAD_RPL();
+			goto error02;
+		}
+		if(unlikely((msg->callid == 0) || (msg->cseq == 0) || (msg->from == 0)
+					|| (msg->to == 0))) {
+			/* no required headers -- send back error ? */
+			LOG(cfg_get(core, core_cfg, sip_parser_log),
+					"required headers not found in reply\n");
 			STATS_BAD_RPL();
 			goto error02;
 		}
