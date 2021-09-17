@@ -921,6 +921,30 @@ static int comp_gws(const void *_g1, const void *_g2)
 	return memcmp(g1->ip_addr.u.addr, g2->ip_addr.u.addr, g1->ip_addr.len);
 }
 
+/*
+ * Compare gateways based on their IP address and port
+ */
+static int comp_gws_include_port(const void *_g1, const void *_g2)
+{
+	struct gw_info *g1 = (struct gw_info *)_g1;
+	struct gw_info *g2 = (struct gw_info *)_g2;
+
+	/* first address family comparison */
+	if(g1->ip_addr.af < g2->ip_addr.af)
+		return -1;
+	if(g1->ip_addr.af > g2->ip_addr.af)
+		return 1;
+	if(g1->ip_addr.len < g2->ip_addr.len)
+		return -1;
+	if(g1->ip_addr.len > g2->ip_addr.len)
+		return 1;
+
+	/* secondly ports comparison */
+	if(g1->port != g2->port)
+		return -1;
+
+	return memcmp(g1->ip_addr.u.addr, g2->ip_addr.u.addr, g1->ip_addr.len);
+}
 
 /* 
  * Insert gw info into index i or gws table
@@ -2997,10 +3021,17 @@ static int do_from_gw(struct sip_msg *_m, unsigned int lcr_id,
 		return -1;
 	}
 
-	/* Search for gw ip address */
 	gw.ip_addr = *src_addr;
-	res = (struct gw_info *)bsearch(&gw, &(gws[1]), gws[0].ip_addr.u.addr32[0],
-			sizeof(struct gw_info), comp_gws);
+	if (src_port != 0) {
+		/* Search for gw based on its ip address and port */
+		gw.port = src_port;
+		res = (struct gw_info *)bsearch(&gw, &(gws[1]), gws[0].ip_addr.u.addr32[0],
+				sizeof(struct gw_info), comp_gws_include_port);
+	} else {
+		/* Search for gw based on its ip address */
+		res = (struct gw_info *)bsearch(&gw, &(gws[1]), gws[0].ip_addr.u.addr32[0],
+				sizeof(struct gw_info), comp_gws);
+	}
 
 	/* Store tag and flags and return result */
 	if((res != NULL)
