@@ -135,6 +135,82 @@ pos_insert("100", "10");
 				</programlisting>
 			</example>
 		</section>
+		<section id="posops.f.pos_headers_start">
+			<title>
+				<function moreinfo="none">pos_headers_start()</function>
+			</title>
+			<para>
+			Return the position in the message buffer where headers start.
+			</para>
+			<para>
+			This function can be used from ANY_ROUTE.
+			</para>
+			<example>
+				<title><function>pos_headers_start()</function> usage</title>
+				<programlisting format="linespecific">
+...
+$var(pos) = pos_headers_start();
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="posops.f.pos_headers_end">
+			<title>
+				<function moreinfo="none">pos_headers_end()</function>
+			</title>
+			<para>
+			Return the position in the message buffer where headers end.
+			</para>
+			<para>
+			This function can be used from ANY_ROUTE.
+			</para>
+			<example>
+				<title><function>pos_headers_end()</function> usage</title>
+				<programlisting format="linespecific">
+...
+$var(pos) = pos_headers_end();
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="posops.f.pos_body_start">
+			<title>
+				<function moreinfo="none">pos_body_start()</function>
+			</title>
+			<para>
+			Return the position in the message buffer where body starts.
+			</para>
+			<para>
+			This function can be used from ANY_ROUTE.
+			</para>
+			<example>
+				<title><function>pos_body_start()</function> usage</title>
+				<programlisting format="linespecific">
+...
+$var(pos) = pos_body_start();
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="posops.f.pos_body_end">
+			<title>
+				<function moreinfo="none">pos_body_end()</function>
+			</title>
+			<para>
+			Return the position in the message buffer where body ends.
+			</para>
+			<para>
+			This function can be used from ANY_ROUTE.
+			</para>
+			<example>
+				<title><function>pos_body_end()</function> usage</title>
+				<programlisting format="linespecific">
+...
+$var(pos) = pos_body_end();
+...
+				</programlisting>
+			</example>
+		</section>
 	</section>
 
 </chapter>

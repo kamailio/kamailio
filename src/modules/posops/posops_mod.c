@@ -41,11 +41,20 @@ static void mod_destroy(void);
 static int w_posops_pos_append(sip_msg_t* msg, char* p1idx, char* p2val);
 static int w_posops_pos_insert(sip_msg_t* msg, char* p1idx, char* p2val);
 static int w_posops_pos_rm(sip_msg_t* msg, char* p1idx, char* p2len);
+static int w_posops_pos_headers_start(sip_msg_t* msg, char* p1, char* p2);
+static int w_posops_pos_headers_end(sip_msg_t* msg, char* p1, char* p2);
+static int w_posops_pos_body_start(sip_msg_t* msg, char* p1, char* p2);
+static int w_posops_pos_body_end(sip_msg_t* msg, char* p1, char* p2);
 
 typedef struct posops_data {
 	int ret;
 	int idx;
 } pospos_data_t;
+
+/**
+ *
+ */
+static pospos_data_t _pospos_data = {0};
 
 /* clang-format off */
 static cmd_export_t cmds[]={
@@ -55,6 +64,14 @@ static cmd_export_t cmds[]={
 		fixup_free_igp_spve, ANY_ROUTE},
 	{"pos_rm", (cmd_function)w_posops_pos_rm, 2, fixup_igp_igp,
 		fixup_free_igp_igp, ANY_ROUTE},
+	{"pos_headers_start", (cmd_function)w_posops_pos_headers_start, 0, 0,
+		0, ANY_ROUTE},
+	{"pos_headers_end", (cmd_function)w_posops_pos_headers_end, 0, 0,
+		0, ANY_ROUTE},
+	{"pos_body_start", (cmd_function)w_posops_pos_body_start, 0, 0,
+		0, ANY_ROUTE},
+	{"pos_body_end", (cmd_function)w_posops_pos_body_end, 0, 0,
+		0, ANY_ROUTE},
 
 	{0, 0, 0, 0, 0, 0}
 };
@@ -273,6 +290,126 @@ static int w_posops_pos_rm(sip_msg_t* msg, char* p1idx, char* p2len)
 /**
  *
  */
+static int ki_posops_pos_headers_start(sip_msg_t* msg)
+{
+	int ret = 0;
+
+	memset(&_pospos_data, 0, sizeof(pospos_data_t));
+	if (parse_headers(msg, HDR_EOH_F, 0) == -1) {
+		LM_ERR("failed to parse headers\n");
+		return -1;
+	}
+
+	ret = msg->first_line.len;
+	_pospos_data.idx = ret;
+
+	return (ret==0)?-255:ret;
+}
+
+/**
+ *
+ */
+static int w_posops_pos_headers_start(sip_msg_t* msg, char* p1, char* p2)
+{
+	return ki_posops_pos_headers_start(msg);
+}
+
+/**
+ *
+ */
+static int ki_posops_pos_headers_end(sip_msg_t* msg)
+{
+	int ret = 0;
+
+	memset(&_pospos_data, 0, sizeof(pospos_data_t));
+	if (parse_headers(msg, HDR_EOH_F, 0) == -1) {
+		LM_ERR("failed to parse headers\n");
+		return -1;
+	}
+
+	ret = msg->unparsed - msg->buf;
+	_pospos_data.idx = ret;
+
+	return (ret==0)?-255:ret;
+}
+
+/**
+ *
+ */
+static int w_posops_pos_headers_end(sip_msg_t* msg, char* p1, char* p2)
+{
+	return ki_posops_pos_headers_end(msg);
+}
+
+/**
+ *
+ */
+static int ki_posops_pos_body_start(sip_msg_t* msg)
+{
+	int ret = 0;
+	char *body = 0;
+
+	memset(&_pospos_data, 0, sizeof(pospos_data_t));
+	if (parse_headers(msg, HDR_EOH_F, 0) == -1) {
+		LM_ERR("failed to parse headers\n");
+		return -1;
+	}
+
+	body = get_body(msg);
+	if(body == NULL) {
+		LM_DBG("no body\n");
+		return -1;
+	}
+	ret = body - msg->buf;
+	_pospos_data.idx = ret;
+
+	return (ret==0)?-255:ret;
+}
+
+/**
+ *
+ */
+static int w_posops_pos_body_start(sip_msg_t* msg, char* p1, char* p2)
+{
+	return ki_posops_pos_body_start(msg);
+}
+
+/**
+ *
+ */
+static int ki_posops_pos_body_end(sip_msg_t* msg)
+{
+	int ret = 0;
+
+	memset(&_pospos_data, 0, sizeof(pospos_data_t));
+	if (parse_headers(msg, HDR_EOH_F, 0) == -1) {
+		LM_ERR("failed to parse headers\n");
+		return -1;
+	}
+
+	if(get_body(msg) == NULL) {
+		LM_DBG("no body\n");
+		return -1;
+	}
+
+	ret = msg->len;
+	_pospos_data.idx = ret;
+
+	return (ret==0)?-255:ret;
+}
+
+/**
+ *
+ */
+static int w_posops_pos_body_end(sip_msg_t* msg, char* p1, char* p2)
+{
+	return  ki_posops_pos_body_end(msg);
+}
+
+
+/**
+ *
+ */
 /* clang-format off */
 static sr_kemi_t sr_kemi_posops_exports[] = {
 	{ str_init("posops"), str_init("pos_append"),
@@ -288,6 +425,26 @@ static sr_kemi_t sr_kemi_posops_exports[] = {
 	{ str_init("posops"), str_init("pos_rm"),
 		SR_KEMIP_INT, ki_posops_pos_rm,
 		{ SR_KEMIP_INT, SR_KEMIP_INT, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("posops"), str_init("pos_headers_start"),
+		SR_KEMIP_INT, ki_posops_pos_headers_start,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("posops"), str_init("pos_headers_end"),
+		SR_KEMIP_INT, ki_posops_pos_headers_end,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("posops"), str_init("pos_body_start"),
+		SR_KEMIP_INT, ki_posops_pos_body_start,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("posops"), str_init("pos_body_end"),
+		SR_KEMIP_INT, ki_posops_pos_body_end,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
