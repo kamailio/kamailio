@@ -49,12 +49,22 @@ static int w_posops_pos_body_end(sip_msg_t* msg, char* p1, char* p2);
 typedef struct posops_data {
 	int ret;
 	int idx;
-} pospos_data_t;
+} posops_data_t;
+
+static int pv_posops_get_pos(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
+static int pv_posops_parse_pos_name(pv_spec_t *sp, str *in);
+
+static pv_export_t mod_pvs[] = {
+	{ {"pos", (sizeof("pos")-1)}, PVT_OTHER, pv_posops_get_pos, 0,
+		pv_posops_parse_pos_name, 0, 0, 0 },
+
+	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
+};
 
 /**
  *
  */
-static pospos_data_t _pospos_data = {0};
+static posops_data_t _posops_data = {0};
 
 /* clang-format off */
 static cmd_export_t cmds[]={
@@ -82,16 +92,16 @@ static param_export_t params[]={
 };
 
 struct module_exports exports = {
-	"posops",
+	"posops",        /* module name */
 	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,
-	params,
-	0,              /* exported RPC methods */
-	0,              /* exported pseudo-variables */
-	0,              /* response function */
-	mod_init,       /* module initialization function */
-	child_init,     /* per child init function */
-	mod_destroy    	/* destroy function */
+	cmds,            /* cmd (cfg function) exports */
+	params,          /* param exports */
+	0,               /* exported RPC methods */
+	mod_pvs,         /* exported pseudo-variables */
+	0,               /* response function */
+	mod_init,        /* module initialization function */
+	child_init,      /* per child init function */
+	mod_destroy      /* destroy function */
 };
 /* clang-format on */
 
@@ -292,18 +302,16 @@ static int w_posops_pos_rm(sip_msg_t* msg, char* p1idx, char* p2len)
  */
 static int ki_posops_pos_headers_start(sip_msg_t* msg)
 {
-	int ret = 0;
-
-	memset(&_pospos_data, 0, sizeof(pospos_data_t));
+	memset(&_posops_data, 0, sizeof(posops_data_t));
 	if (parse_headers(msg, HDR_EOH_F, 0) == -1) {
 		LM_ERR("failed to parse headers\n");
 		return -1;
 	}
 
-	ret = msg->first_line.len;
-	_pospos_data.idx = ret;
+	_posops_data.idx = msg->first_line.len;
+	_posops_data.ret = (_posops_data.idx==0)?-255:_posops_data.idx;
 
-	return (ret==0)?-255:ret;
+	return _posops_data.ret;
 }
 
 /**
@@ -319,18 +327,16 @@ static int w_posops_pos_headers_start(sip_msg_t* msg, char* p1, char* p2)
  */
 static int ki_posops_pos_headers_end(sip_msg_t* msg)
 {
-	int ret = 0;
-
-	memset(&_pospos_data, 0, sizeof(pospos_data_t));
+	memset(&_posops_data, 0, sizeof(posops_data_t));
 	if (parse_headers(msg, HDR_EOH_F, 0) == -1) {
 		LM_ERR("failed to parse headers\n");
 		return -1;
 	}
 
-	ret = msg->unparsed - msg->buf;
-	_pospos_data.idx = ret;
+	_posops_data.idx = msg->unparsed - msg->buf;
+	_posops_data.ret = (_posops_data.idx==0)?-255:_posops_data.idx;
 
-	return (ret==0)?-255:ret;
+	return _posops_data.ret;
 }
 
 /**
@@ -346,10 +352,9 @@ static int w_posops_pos_headers_end(sip_msg_t* msg, char* p1, char* p2)
  */
 static int ki_posops_pos_body_start(sip_msg_t* msg)
 {
-	int ret = 0;
 	char *body = 0;
 
-	memset(&_pospos_data, 0, sizeof(pospos_data_t));
+	memset(&_posops_data, 0, sizeof(posops_data_t));
 	if (parse_headers(msg, HDR_EOH_F, 0) == -1) {
 		LM_ERR("failed to parse headers\n");
 		return -1;
@@ -360,10 +365,11 @@ static int ki_posops_pos_body_start(sip_msg_t* msg)
 		LM_DBG("no body\n");
 		return -1;
 	}
-	ret = body - msg->buf;
-	_pospos_data.idx = ret;
+	_posops_data.idx = body - msg->buf;
 
-	return (ret==0)?-255:ret;
+	_posops_data.ret = (_posops_data.idx==0)?-255:_posops_data.idx;
+
+	return _posops_data.ret;
 }
 
 /**
@@ -379,9 +385,7 @@ static int w_posops_pos_body_start(sip_msg_t* msg, char* p1, char* p2)
  */
 static int ki_posops_pos_body_end(sip_msg_t* msg)
 {
-	int ret = 0;
-
-	memset(&_pospos_data, 0, sizeof(pospos_data_t));
+	memset(&_posops_data, 0, sizeof(posops_data_t));
 	if (parse_headers(msg, HDR_EOH_F, 0) == -1) {
 		LM_ERR("failed to parse headers\n");
 		return -1;
@@ -392,10 +396,10 @@ static int ki_posops_pos_body_end(sip_msg_t* msg)
 		return -1;
 	}
 
-	ret = msg->len;
-	_pospos_data.idx = ret;
+	_posops_data.idx = msg->len;
+	_posops_data.ret = (_posops_data.idx==0)?-255:_posops_data.idx;
 
-	return (ret==0)?-255:ret;
+	return _posops_data.ret;
 }
 
 /**
@@ -404,6 +408,47 @@ static int ki_posops_pos_body_end(sip_msg_t* msg)
 static int w_posops_pos_body_end(sip_msg_t* msg, char* p1, char* p2)
 {
 	return  ki_posops_pos_body_end(msg);
+}
+
+/**
+ *
+ */
+static int pv_posops_get_pos(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
+{
+	switch(param->pvn.u.isname.name.n) {
+		case 0: /* idx */
+			return pv_get_sintval(msg, param, res, _posops_data.idx);
+		case 1: /* ret */
+			return pv_get_sintval(msg, param, res, _posops_data.ret);
+	}
+	return pv_get_null(msg, param, res);
+}
+
+/**
+ *
+ */
+static int pv_posops_parse_pos_name(pv_spec_t *sp, str *in)
+{
+	switch(in->len) {
+		case 3:
+			if(strncmp(in->s, "idx", 3)==0)
+				sp->pvp.pvn.u.isname.name.n = 0;
+			else if(strncmp(in->s, "ret", 3)==0)
+				sp->pvp.pvn.u.isname.name.n = 1;
+			else goto error;
+		break;
+
+		default:
+			goto error;
+	}
+	sp->pvp.pvn.type = PV_NAME_INTSTR;
+	sp->pvp.pvn.u.isname.type = 0;
+
+	return 0;
+
+error:
+	LM_ERR("unknown pv pos key: %.*s\n", in->len, in->s);
+	return -1;
 }
 
 
