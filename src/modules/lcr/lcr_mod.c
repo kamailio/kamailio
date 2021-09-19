@@ -3035,8 +3035,7 @@ static int do_from_gw(struct sip_msg *_m, unsigned int lcr_id,
 
 	/* Store tag and flags and return result */
 	if((res != NULL)
-					&& ((transport == PROTO_NONE) || (res->transport_code == transport))
-					&& ((src_port == 0) || (res->port == src_port))) {
+					&& ((transport == PROTO_NONE) || (res->transport_code == transport))) {
 		LM_DBG("request came from gw\n");
 		if(tag_avp_param) {
 			val.s.s = res->tag;
