@@ -224,8 +224,8 @@ char* parse_content_length(char* const buffer, const char* const end,
 		goto error;
 	}
 	/* search the begining of the number */
-	while ( p<end && (*p==' ' || *p=='\t' ||
-	(*p=='\n' && (*(p+1)==' '||*(p+1)=='\t')) ))
+	while ( p<end && (*p==' ' || *p=='\t'
+				|| (*p=='\n' && p+1<end && (*(p+1)==' ' || *(p+1)=='\t')) ) )
 		p++;
 	if (p==end)
 		goto error;
