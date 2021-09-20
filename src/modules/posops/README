@@ -11,7 +11,7 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright © 2021 http://www.asipto.com
+   Copyright Â© 2021 http://www.asipto.com
      __________________________________________________________________
 
    Table of Contents
@@ -29,12 +29,20 @@ Daniel-Constantin Mierla
               3.1. pos_append(idx, val)
               3.2. pos_insert(idx, val)
               3.3. pos_rm(idx, len)
+              3.4. pos_headers_start()
+              3.5. pos_headers_end()
+              3.6. pos_body_start()
+              3.7. pos_body_end()
 
    List of Examples
 
    1.1. pos_append() usage
    1.2. pos_insert() usage
    1.3. pos_rm() usage
+   1.4. pos_headers_start() usage
+   1.5. pos_headers_end() usage
+   1.6. pos_body_start() usage
+   1.7. pos_body_end() usage
 
 Chapter 1. Admin Guide
 
@@ -51,6 +59,10 @@ Chapter 1. Admin Guide
         3.1. pos_append(idx, val)
         3.2. pos_insert(idx, val)
         3.3. pos_rm(idx, len)
+        3.4. pos_headers_start()
+        3.5. pos_headers_end()
+        3.6. pos_body_start()
+        3.7. pos_body_end()
 
 1. Overview
 
@@ -82,8 +94,12 @@ Chapter 1. Admin Guide
    3.1. pos_append(idx, val)
    3.2. pos_insert(idx, val)
    3.3. pos_rm(idx, len)
+   3.4. pos_headers_start()
+   3.5. pos_headers_end()
+   3.6. pos_body_start()
+   3.7. pos_body_end()
 
-3.1. pos_append(idx, val)
+3.1.  pos_append(idx, val)
 
    Append the value val after the position idx in the SIP message buffer.
 
@@ -100,7 +116,7 @@ Chapter 1. Admin Guide
 pos_append("100", "kamailio-$si");
 ...
 
-3.2. pos_insert(idx, val)
+3.2.  pos_insert(idx, val)
 
    Insert the value val at the position idx in the SIP message buffer.
 
@@ -117,7 +133,7 @@ pos_append("100", "kamailio-$si");
 pos_insert("100", "kamailio-$si");
 ...
 
-3.3. pos_rm(idx, len)
+3.3.  pos_rm(idx, len)
 
    Remove len characters starting at the position idx in the SIP message
    buffer.
@@ -134,4 +150,48 @@ pos_insert("100", "kamailio-$si");
    Example 1.3. pos_rm() usage
 ...
 pos_insert("100", "10");
+...
+
+3.4.  pos_headers_start()
+
+   Return the position in the message buffer where headers start.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.4. pos_headers_start() usage
+...
+$var(pos) = pos_headers_start();
+...
+
+3.5.  pos_headers_end()
+
+   Return the position in the message buffer where headers end.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.5. pos_headers_end() usage
+...
+$var(pos) = pos_headers_end();
+...
+
+3.6.  pos_body_start()
+
+   Return the position in the message buffer where body starts.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.6. pos_body_start() usage
+...
+$var(pos) = pos_body_start();
+...
+
+3.7.  pos_body_end()
+
+   Return the position in the message buffer where body ends.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.7. pos_body_end() usage
+...
+$var(pos) = pos_body_end();
 ...
