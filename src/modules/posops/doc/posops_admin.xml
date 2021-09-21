@@ -55,6 +55,31 @@
 	</section>
 
 	<section>
+	<title>Parameters</title>
+	<section id="posops.p.idx0">
+		<title><varname>idx0</varname> (int)</title>
+		<para>
+			The value to return by functions seeking a position when the index
+			is 0 (note: returning 0 is stopping the execution of configuration
+			file like 'exit', but for KEMI usage it is ok).
+		</para>
+		<para>
+		<emphasis>
+			Default value is -255.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>idx0</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("posops", "idx0", -200)
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+
+	<section>
 	<title>Functions</title>
 		<section id="posops.f.pos_append">
 			<title>

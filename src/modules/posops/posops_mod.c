@@ -51,6 +51,8 @@ typedef struct posops_data {
 	int idx;
 } posops_data_t;
 
+static int posops_idx0 = -255;
+
 static int pv_posops_get_pos(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
 static int pv_posops_parse_pos_name(pv_spec_t *sp, str *in);
 
@@ -87,6 +89,7 @@ static cmd_export_t cmds[]={
 };
 
 static param_export_t params[]={
+	{"idx0",     PARAM_INT,   &posops_idx0},
 
 	{0, 0, 0}
 };
@@ -309,7 +312,7 @@ static int ki_posops_pos_headers_start(sip_msg_t* msg)
 	}
 
 	_posops_data.idx = msg->first_line.len;
-	_posops_data.ret = (_posops_data.idx==0)?-255:_posops_data.idx;
+	_posops_data.ret = (_posops_data.idx==0)?posops_idx0:_posops_data.idx;
 
 	return _posops_data.ret;
 }
@@ -334,7 +337,7 @@ static int ki_posops_pos_headers_end(sip_msg_t* msg)
 	}
 
 	_posops_data.idx = msg->unparsed - msg->buf;
-	_posops_data.ret = (_posops_data.idx==0)?-255:_posops_data.idx;
+	_posops_data.ret = (_posops_data.idx==0)?posops_idx0:_posops_data.idx;
 
 	return _posops_data.ret;
 }
@@ -367,7 +370,7 @@ static int ki_posops_pos_body_start(sip_msg_t* msg)
 	}
 	_posops_data.idx = body - msg->buf;
 
-	_posops_data.ret = (_posops_data.idx==0)?-255:_posops_data.idx;
+	_posops_data.ret = (_posops_data.idx==0)?posops_idx0:_posops_data.idx;
 
 	return _posops_data.ret;
 }
@@ -397,7 +400,7 @@ static int ki_posops_pos_body_end(sip_msg_t* msg)
 	}
 
 	_posops_data.idx = msg->len;
-	_posops_data.ret = (_posops_data.idx==0)?-255:_posops_data.idx;
+	_posops_data.ret = (_posops_data.idx==0)?posops_idx0:_posops_data.idx;
 
 	return _posops_data.ret;
 }
