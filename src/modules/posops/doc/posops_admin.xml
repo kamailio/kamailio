@@ -236,6 +236,61 @@ $var(pos) = pos_body_end();
 				</programlisting>
 			</example>
 		</section>
+		<section id="posops.f.pos_find_str">
+			<title>
+				<function moreinfo="none">pos_find_str(idx, val)</function>
+			</title>
+			<para>
+			Return the position of the val in message buffer starting at idx. In
+			case of not finding it or error, the return code is negative. If
+			val is at index 0, it returns the value specified by modparam idx0.
+			</para>
+			<para>
+			The idx can be an integer value or a variable holding an integer.
+			</para>
+			<para>
+			The val can be a static string or variables.
+			</para>
+			<para>
+			This function can be used from ANY_ROUTE.
+			</para>
+			<example>
+				<title><function>pos_find_str()</function> usage</title>
+				<programlisting format="linespecific">
+...
+$var(idx) = pos_find_str("100", "kamailio");
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="posops.f.pos_find_str">
+			<title>
+				<function moreinfo="none">pos_findi_str(idx, val)</function>
+			</title>
+			<para>
+			Return the position of the val (matching case insensitive) in message
+			buffer starting at idx. In case of not finding it or error, the return
+			code is negative. If val is at index 0, it returns the value specified
+			by modparam idx0.
+			</para>
+			<para>
+			The idx can be an integer value or a variable holding an integer.
+			</para>
+			<para>
+			The val can be a static string or variables.
+			</para>
+			<para>
+			This function can be used from ANY_ROUTE.
+			</para>
+			<example>
+				<title><function>pos_findi_str()</function> usage</title>
+				<programlisting format="linespecific">
+...
+$var(idx) = pos_findi_str("100", "kamailio");
+...
+				</programlisting>
+			</example>
+		</section>
 	</section>
 
 </chapter>
