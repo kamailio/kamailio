@@ -745,15 +745,41 @@ modparam("registrar", "reg_callid_avp", "$avp(s:avp)")
 		<itemizedlist>
 		<listitem>
 			<para>
-				<emphasis>expires</emphasis> - the number of maximum
-				contacts to be stored for the current registration AoR. It
-				overwrites the 'max_contacts' module parameter value.
+				<emphasis>match_callid</emphasis> - filter contacts by callid.
+				Used in registered().
 			</para>
 		</listitem>
 		<listitem>
 			<para>
-				<emphasis>q</emphasis> - the expires value, to overwrite the
+				<emphasis>match_contact</emphasis> - filter contacts by contact.
+				Used in registered().
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				<emphasis>match_received</emphasis> - filter contacts by received.
+				Used in registered().
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				<emphasis>rlf_bflags</emphasis> - filter contacts by branch flags.
+				Used in lookup().
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				<emphasis>q</emphasis> - q value of contact
+				(integer 0-1000). It overrides q value given in
+				contact header and default_q parameter.
+				Used in save().
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				<emphasis>expires</emphasis> - the expires value, to overwrite the
 				value from SIP headers.
+				Used in save().
 			</para>
 		</listitem>
 		<listitem>
@@ -761,6 +787,7 @@ modparam("registrar", "reg_callid_avp", "$avp(s:avp)")
 				<emphasis>max_contacts</emphasis> - the number of maximum
 				contacts to be stored for the current registration AoR. It
 				overwrites the 'max_contacts' module parameter value.
+				Used in save().
 			</para>
 		</listitem>
 		<listitem>
@@ -768,6 +795,7 @@ modparam("registrar", "reg_callid_avp", "$avp(s:avp)")
 				<emphasis>socket</emphasis> - the string representing the
 				socket on which the register request was received, as alternative
 				to using the sock_hdr.
+				Used in save().
 			</para>
 		</listitem>
 		</itemizedlist>
@@ -1117,7 +1145,7 @@ end
 				are returned.
 			</para>
 		</listitem>
-	</itemizedlist>
+		</itemizedlist>
 		<para>
 		<emphasis>
 			Default value is NULL (disabled).
@@ -1451,7 +1479,7 @@ lookup_branches("location");
 		<listitem>
 			<para>
 			<emphasis>match_option</emphasis> (optional) - flag parameter to restrict
-			contact search. use reg_xavp_cfg to set the values to compare to.
+			contact search. use xavp_cfg to set the values to compare to.
 			</para>
             <para>flag values is as follows:</para>
 			<itemizedlist>
