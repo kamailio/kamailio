@@ -725,15 +725,20 @@ modparam("registrar", "reg_callid_avp", "$avp(s:avp)")
    Defines the name of XAVP class to store runtime module config values.
    The values are stored as inner XAVPs, like $xavp(class=>attribute).
    Valid inner XAVP names:
-     * expires - the number of maximum contacts to be stored for the
-       current registration AoR. It overwrites the 'max_contacts' module
-       parameter value.
-     * q - the expires value, to overwrite the value from SIP headers.
+     * match_callid - filter contacts by callid. Used in registered().
+     * match_contact - filter contacts by contact. Used in registered().
+     * match_received - filter contacts by received. Used in registered().
+     * rlf_bflags - filter contacts by branch flags. Used in lookup().
+     * q - q value of contact (integer 0-1000). It overrides q value given
+       in contact header and default_q parameter. Used in save().
+     * expires - the expires value, to overwrite the value from SIP
+       headers. Used in save().
      * max_contacts - the number of maximum contacts to be stored for the
        current registration AoR. It overwrites the 'max_contacts' module
-       parameter value.
+       parameter value. Used in save().
      * socket - the string representing the socket on which the register
-       request was received, as alternative to using the sock_hdr.
+       request was received, as alternative to using the sock_hdr. Used in
+       save().
 
    For example. if this parameter is set to 'reg', then the number of
    maximum contacts can be set in $xavp(reg=>max_contacts).
@@ -1120,7 +1125,7 @@ lookup_branches("location");
      * uri (optional) - SIP URI to do be used instead of Request/To-URI.
        It can be a dynamic string with pseudo-variables.
      * match_option (optional) - flag parameter to restrict contact
-       search. use reg_xavp_cfg to set the values to compare to.
+       search. use xavp_cfg to set the values to compare to.
        flag values is as follows:
           + 1 - match_callid
           + 2 - match_received
