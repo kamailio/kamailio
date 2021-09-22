@@ -153,7 +153,7 @@ static int ki_posops_pos_append(sip_msg_t *msg, int idx, str *val)
 	}
 
 	if(idx<0) {
-		offset = msg->len + idx + 1;
+		offset = msg->len + idx;
 	} else {
 		offset = idx;
 	}
@@ -206,7 +206,7 @@ static int ki_posops_pos_insert(sip_msg_t *msg, int idx, str *val)
 	}
 
 	if(idx<0) {
-		offset = msg->len + idx + 1;
+		offset = msg->len + idx;
 	} else {
 		offset = idx;
 	}
@@ -259,7 +259,7 @@ static int ki_posops_pos_rm(sip_msg_t *msg, int idx, int len)
 		return -1;
 	}
 	if(idx<0) {
-		offset = msg->len + idx + 1;
+		offset = msg->len + idx;
 	} else {
 		offset = idx;
 	}
