@@ -443,9 +443,9 @@ modparam("kazoo", "amqp_connection", "kazoo://guest:guest@otherhost:5672")
    handles control to the next sub-loop.
 ...
 while(true) // main  loop
- while(ACK or timeout)  // acknowledge from worker process
- while(SEND or timeout) // anything to send ?
- while(CONSUME or timeout) // any data on consumed exchanges ?
+while(ACK or timeout)  // acknowledge from worker process
+while(SEND or timeout) // anything to send ?
+while(CONSUME or timeout) // any data on consumed exchanges ?
 ...
 
 4.2.1. amqp_consumer_loop_count(int)
@@ -652,11 +652,11 @@ modparam("kazoo", "pua_mode", 0)
 
    Example 1.22. kazoo_publish usage
 ...
-$var(amqp_payload_request) = "{'Event-Category' : 'directory', 'Event-Name' : 'r
-eg_success', 'Contact' : '" + $var(fs_contact) + "', 'Call-ID' : '" + $ci + "',
-'Realm' : '" + $fd +"', 'Username' : '" + $fU + "', 'From-User' : '" + $fU + "',
- 'From-Host' : '" + $fd + "', 'To-User' : '" + $tU +"', 'To-Host' : '" + $td + "
-', 'User-Agent' : '" + $ua +"' ," + $var(register_contants)+ " }";
+$var(amqp_payload_request) = $_s({"Event-Category" : "directory", "Event-Name" :
+ "reg_success", "Contact" : "$(ct{s.escape.common}{s.replace,\','}{s.replace,$$,
+})", "Call-ID" : "$ci", "Realm" : "$fd", "Username" : "$fU", "From-User" : "$fU"
+, "From-Host" : "$fd", "To-User" : "$tU", "To-Host" : "$td", "User-Agent" : "$(u
+a{s.escape.common}{s.replace,\','}{s.replace,$$,})" });
 $var(amqp_routing_key) = "registration.success." + $(fd{kz.encode}) + "." + $fU;
 kazoo_publish("callmgr", $var(amqp_routing_key), $var(amqp_payload_request));
 ...
