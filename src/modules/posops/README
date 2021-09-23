@@ -39,6 +39,8 @@ Daniel-Constantin Mierla
               4.7. pos_body_end()
               4.8. pos_find_str(idx, val)
               4.9. pos_findi_str(idx, val)
+              4.10. pos_rfind_str(idx, val)
+              4.11. pos_rfindi_str(idx, val)
 
    List of Examples
 
@@ -52,6 +54,8 @@ Daniel-Constantin Mierla
    1.8. pos_body_end() usage
    1.9. pos_find_str() usage
    1.10. pos_findi_str() usage
+   1.11. pos_find_str() usage
+   1.12. pos_rfindi_str() usage
 
 Chapter 1. Admin Guide
 
@@ -78,6 +82,8 @@ Chapter 1. Admin Guide
         4.7. pos_body_end()
         4.8. pos_find_str(idx, val)
         4.9. pos_findi_str(idx, val)
+        4.10. pos_rfind_str(idx, val)
+        4.11. pos_rfindi_str(idx, val)
 
 1. Overview
 
@@ -132,6 +138,8 @@ modparam("posops", "idx0", -200)
    4.7. pos_body_end()
    4.8. pos_find_str(idx, val)
    4.9. pos_findi_str(idx, val)
+   4.10. pos_rfind_str(idx, val)
+   4.11. pos_rfindi_str(idx, val)
 
 4.1.  pos_append(idx, val)
 
@@ -236,7 +244,9 @@ $var(pos) = pos_body_end();
    case of not finding it or error, the return code is negative. If val is
    at index 0, it returns the value specified by modparam idx0.
 
-   The idx can be an integer value or a variable holding an integer.
+   The idx can be an integer value or a variable holding an integer. If
+   the value is negative, the position is counted from the end of the
+   buffer.
 
    The val can be a static string or variables.
 
@@ -254,7 +264,9 @@ $var(idx) = pos_find_str("100", "kamailio");
    code is negative. If val is at index 0, it returns the value specified
    by modparam idx0.
 
-   The idx can be an integer value or a variable holding an integer.
+   The idx can be an integer value or a variable holding an integer. If
+   the value is negative, the position is counted from the end of the
+   buffer.
 
    The val can be a static string or variables.
 
@@ -263,4 +275,44 @@ $var(idx) = pos_find_str("100", "kamailio");
    Example 1.10. pos_findi_str() usage
 ...
 $var(idx) = pos_findi_str("100", "kamailio");
+...
+
+4.10.  pos_rfind_str(idx, val)
+
+   Return the last position of the val in message buffer starting at idx
+   (reverse search). In case of not finding it or error, the return code
+   is negative. If val is at index 0, it returns the value specified by
+   modparam idx0.
+
+   The idx can be an integer value or a variable holding an integer. If
+   the value is negative, the position is counted from the end of the
+   buffer.
+
+   The val can be a static string or variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.11. pos_find_str() usage
+...
+$var(idx) = pos_rfind_str("100", "kamailio");
+...
+
+4.11.  pos_rfindi_str(idx, val)
+
+   Return the last position of the val (matching case insensitive) in
+   message buffer starting at idx (reverse search). In case of not finding
+   it or error, the return code is negative. If val is at index 0, it
+   returns the value specified by modparam idx0.
+
+   The idx can be an integer value or a variable holding an integer. If
+   the value is negative, the position is counted from the end of the
+   buffer.
+
+   The val can be a static string or variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.12. pos_rfindi_str() usage
+...
+$var(idx) = pos_rfindi_str("100", "kamailio");
 ...
