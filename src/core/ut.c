@@ -392,6 +392,49 @@ char *str_casesearch_strz(str *text, char *needlez)
 	return str_casesearch(text, &needle);
 }
 
+/**
+ * @brief search for last occurence of needle in text (reverse search)
+ * @return pointer to start of needle in text or NULL if the needle
+ *	is not found
+ */
+char *str_rsearch(str *text, str *needle)
+{
+    char *p;
+
+    if(text==NULL || text->s==NULL || needle==NULL || needle->s==NULL
+			|| text->len<needle->len)
+        return NULL;
+
+    for (p = text->s + text->len - needle->len; p >= text->s; p--) {
+        if (*p == *needle->s && memcmp(p, needle->s, needle->len)==0) {
+            return p;
+        }
+    }
+
+    return NULL;
+}
+
+/**
+ * @brief case insensitive search for last occurence of needle in text (reverse search)
+ * @return pointer to start of needle in text or NULL if the needle
+ *	is not found
+ */
+char *str_rcasesearch(str *text, str *needle)
+{
+	int i,j;
+	for(i=text->len-needle->len;i>=0;i--) {
+		for(j=0;j<needle->len;j++) {
+			if ( !((text->s[i+j]==needle->s[j]) ||
+					( isalpha((int)text->s[i+j])
+						&& ((text->s[i+j])^(needle->s[j]))==0x20 )) )
+				break;
+		}
+		if (j==needle->len)
+			return text->s+i;
+	}
+	return NULL;
+}
+
 /*
  * ser_memmem() returns the location of the first occurrence of data
  * pattern b2 of size len2 in memory block b1 of size len1 or

@@ -1110,6 +1110,10 @@ char *strz_casesearch_strz(char *textz, char *needlez);
 
 char *str_casesearch_strz(str *text, char *needlez);
 
+char *str_rsearch(str *text, str *needle);
+
+char *str_rcasesearch(str *text, str *needle);
+
 /*
  * ser_memmem() returns the location of the first occurrence of data
  * pattern b2 of size len2 in memory block b1 of size len1 or
