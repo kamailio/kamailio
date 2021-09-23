@@ -47,6 +47,8 @@ static int w_posops_pos_body_start(sip_msg_t* msg, char* p1, char* p2);
 static int w_posops_pos_body_end(sip_msg_t* msg, char* p1, char* p2);
 static int w_posops_pos_find_str(sip_msg_t* msg, char* p1idx, char* p2val);
 static int w_posops_pos_findi_str(sip_msg_t* msg, char* p1idx, char* p2val);
+static int w_posops_pos_rfind_str(sip_msg_t* msg, char* p1idx, char* p2val);
+static int w_posops_pos_rfindi_str(sip_msg_t* msg, char* p1idx, char* p2val);
 
 typedef struct posops_data {
 	int ret;
@@ -89,6 +91,10 @@ static cmd_export_t cmds[]={
 	{"pos_find_str", (cmd_function)w_posops_pos_find_str, 2, fixup_igp_spve,
 		fixup_free_igp_spve, ANY_ROUTE},
 	{"pos_findi_str", (cmd_function)w_posops_pos_findi_str, 2, fixup_igp_spve,
+		fixup_free_igp_spve, ANY_ROUTE},
+	{"pos_rfind_str", (cmd_function)w_posops_pos_rfind_str, 2, fixup_igp_spve,
+		fixup_free_igp_spve, ANY_ROUTE},
+	{"pos_rfindi_str", (cmd_function)w_posops_pos_rfindi_str, 2, fixup_igp_spve,
 		fixup_free_igp_spve, ANY_ROUTE},
 
 	{0, 0, 0, 0, 0, 0}
@@ -522,6 +528,111 @@ static int w_posops_pos_findi_str(sip_msg_t* msg, char* p1idx, char* p2val)
 	return ki_posops_pos_findi_str(msg, idx, &val);
 }
 
+
+
+/**
+ *
+ */
+static int ki_posops_pos_rfind_str(sip_msg_t *msg, int idx, str *val)
+{
+	char *p;
+	str text;
+
+	if(val==NULL || val->s==NULL || val->len<=0) {
+		return -1;
+	}
+	if(idx<0) {
+		idx += msg->len;
+	}
+	if(idx<0 || idx > msg->len - val->len) {
+		return -1;
+	}
+	text.s = msg->buf + idx;
+	text.len = msg->len - idx;
+	p = str_rsearch(&text, val);
+	if(p==NULL) {
+		return -1;
+	}
+
+	_posops_data.idx = (int)(p - msg->buf);
+	_posops_data.ret = (_posops_data.idx==0)?posops_idx0:_posops_data.idx;
+
+	return _posops_data.ret;
+}
+
+/**
+ *
+ */
+static int w_posops_pos_rfind_str(sip_msg_t* msg, char* p1idx, char* p2val)
+{
+	int idx = 0;
+	str val = STR_NULL;
+
+	if(fixup_get_ivalue(msg, (gparam_t*)p1idx, &idx)!=0) {
+		LM_ERR("unable to get idx parameter\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_t*)p2val, &val)!=0) {
+		LM_ERR("unable to get val parameter\n");
+		return -1;
+	}
+
+	return ki_posops_pos_rfind_str(msg, idx, &val);
+}
+
+/**
+ *
+ */
+static int ki_posops_pos_rfindi_str(sip_msg_t *msg, int idx, str *val)
+{
+	char *p;
+	str text;
+
+	if(val==NULL || val->s==NULL || val->len<=0) {
+		return -1;
+	}
+	if(idx<0) {
+		idx += msg->len;
+	}
+	if(idx<0 || idx > msg->len - val->len) {
+		return -1;
+	}
+
+	text.s = msg->buf + idx;
+	text.len = msg->len - idx;
+	p = str_rcasesearch(&text, val);
+	if(p==NULL) {
+		return -1;
+	}
+
+	_posops_data.idx = (int)(p - msg->buf);
+	_posops_data.ret = (_posops_data.idx==0)?posops_idx0:_posops_data.idx;
+
+	return _posops_data.ret;
+}
+
+/**
+ *
+ */
+static int w_posops_pos_rfindi_str(sip_msg_t* msg, char* p1idx, char* p2val)
+{
+	int idx = 0;
+	str val = STR_NULL;
+
+	if(fixup_get_ivalue(msg, (gparam_t*)p1idx, &idx)!=0) {
+		LM_ERR("unable to get idx parameter\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_t*)p2val, &val)!=0) {
+		LM_ERR("unable to get val parameter\n");
+		return -1;
+	}
+
+	return ki_posops_pos_rfindi_str(msg, idx, &val);
+}
+
 /**
  *
  */
@@ -611,6 +722,16 @@ static sr_kemi_t sr_kemi_posops_exports[] = {
 	},
 	{ str_init("posops"), str_init("pos_findi_str"),
 		SR_KEMIP_INT, ki_posops_pos_findi_str,
+		{ SR_KEMIP_INT, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("posops"), str_init("pos_rfind_str"),
+		SR_KEMIP_INT, ki_posops_pos_rfind_str,
+		{ SR_KEMIP_INT, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("posops"), str_init("pos_rfindi_str"),
+		SR_KEMIP_INT, ki_posops_pos_rfindi_str,
 		{ SR_KEMIP_INT, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
