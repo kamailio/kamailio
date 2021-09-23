@@ -427,13 +427,15 @@ static int ki_posops_pos_find_str(sip_msg_t *msg, int idx, str *val)
 	char *p;
 	str text;
 
-	if(idx<0 || val==NULL || val->s==NULL || val->len<=0) {
+	if(val==NULL || val->s==NULL || val->len<=0) {
 		return -1;
 	}
-	if(idx > msg->len - val->len) {
+	if(idx<0) {
+		idx += msg->len;
+	}
+	if(idx<0 || idx > msg->len - val->len) {
 		return -1;
 	}
-
 	text.s = msg->buf + idx;
 	text.len = msg->len - idx;
 	p = str_search(&text, val);
@@ -476,10 +478,13 @@ static int ki_posops_pos_findi_str(sip_msg_t *msg, int idx, str *val)
 	char *p;
 	str text;
 
-	if(idx<0 || val==NULL || val->s==NULL || val->len<=0) {
+	if(val==NULL || val->s==NULL || val->len<=0) {
 		return -1;
 	}
-	if(idx > msg->len - val->len) {
+	if(idx<0) {
+		idx += msg->len;
+	}
+	if(idx<0 || idx > msg->len - val->len) {
 		return -1;
 	}
 
