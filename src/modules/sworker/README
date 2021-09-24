@@ -23,15 +23,20 @@ Daniel-Constantin Mierla
               2.1. Kamailio Modules
               2.2. External Libraries or Applications
 
-        3. Functions
+        3. Parameters
 
-              3.1. sworker_active()
-              3.2. swork_task(gname)
+              3.1. xdata (str)
+
+        4. Functions
+
+              4.1. sworker_active()
+              4.2. swork_task(gname)
 
    List of Examples
 
-   1.1. sworker_active() usage
-   1.2. sworker_task() usage
+   1.1. xdata usage
+   1.2. sworker_active() usage
+   1.3. sworker_task() usage
 
 Chapter 1. Admin Guide
 
@@ -43,10 +48,14 @@ Chapter 1. Admin Guide
         2.1. Kamailio Modules
         2.2. External Libraries or Applications
 
-   3. Functions
+   3. Parameters
 
-        3.1. sworker_active()
-        3.2. swork_task(gname)
+        3.1. xdata (str)
+
+   4. Functions
+
+        4.1. sworker_active()
+        4.2. swork_task(gname)
 
 1. Overview
 
@@ -81,19 +90,39 @@ Chapter 1. Admin Guide
    running Kamailio with this module loaded:
      * None
 
-3. Functions
+3. Parameters
 
-   3.1. sworker_active()
-   3.2. swork_task(gname)
+   3.1. xdata (str)
 
-3.1.  sworker_active()
+3.1.  xdata (str)
+
+   Name of a script variable from where to take additional data to be
+   passed to special worker along with the SIP message. Same variable will
+   be set by the special worker, therefore it has to be a writable
+   variable. Moreover, it must be a variable that can be set without the
+   SIP message structure, like $var(name), otherwise it can lead to a
+   crash.
+
+   Default value: not set.
+
+   Example 1.1. xdata usage
+...
+modparam("sworker", "xdata", "$var(xdata)")
+...
+
+4. Functions
+
+   4.1. sworker_active()
+   4.2. swork_task(gname)
+
+4.1.  sworker_active()
 
    Return 1 (true) if the processing happens in an asyn process, or -1
    (false) if the processing is happening in a SIP receiving process.
 
    This function can be used from REQUEST_ROUTE|CORE_REPLY_ROUTE.
 
-   Example 1.1. sworker_active() usage
+   Example 1.2. sworker_active() usage
 ...
 request_route {
     ...
@@ -103,7 +132,7 @@ request_route {
 }
 ...
 
-3.2.  swork_task(gname)
+4.2.  swork_task(gname)
 
    Delegate the processing of SIP message to a group of async workers. The
    function is restricted to be used inside event_route[core:pre-routing].
@@ -119,7 +148,7 @@ request_route {
 
    This function can be used from REQUEST_ROUTE|CORE_REPLY_ROUTE.
 
-   Example 1.2. sworker_task() usage
+   Example 1.3. sworker_task() usage
 ...
 event_route[core:pre-routing] {
         if(sworker_task("default")) {
