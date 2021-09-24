@@ -46,6 +46,7 @@
 MODULE_VERSION
 
 static int msg_apply_changes_f(sip_msg_t *msg, char *str1, char *str2);
+static int msg_set_buffer_f(sip_msg_t *msg, char *p1data, char *p2);
 
 static int change_reply_status_f(sip_msg_t *, char *, char *);
 static int change_reply_status_fixup(void **param, int param_no);
@@ -120,6 +121,9 @@ static pv_export_t mod_pvs[] = {
 /* clag-format off */
 static cmd_export_t cmds[] = {
 	{"msg_apply_changes", (cmd_function)msg_apply_changes_f, 0, 0, 0,
+			REQUEST_ROUTE | ONREPLY_ROUTE},
+	{"msg_set_buffer", (cmd_function)msg_set_buffer_f, 1,
+			fixup_spve_null, fixup_free_spve_null,
 			REQUEST_ROUTE | ONREPLY_ROUTE},
 	{"change_reply_status", change_reply_status_f, 2,
 			change_reply_status_fixup, 0, ONREPLY_ROUTE},
@@ -240,6 +244,21 @@ static int ki_msg_set_buffer(sip_msg_t *msg, str *obuf)
 	}
 
 	return ki_msg_update_buffer(msg, obuf);
+}
+
+/**
+ *
+ */
+static int msg_set_buffer_f(sip_msg_t *msg, char *p1data, char *p2)
+{
+	str data = STR_NULL;
+
+	if(fixup_get_svalue(msg, (gparam_t*)p1data, &data) < 0) {
+		LM_ERR("could not get string param value\n");
+		return -1;
+	}
+
+	return ki_msg_set_buffer(msg, &data);
 }
 
 /**

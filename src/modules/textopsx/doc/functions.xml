@@ -50,6 +50,34 @@ if(msg_apply_changes())
 		</example>
 	</section>
 
+	<section id="textopsx.f.msg_set_buffer">
+		<title>
+			<function moreinfo="none">msg_set_buffer(data)</function>
+		</title>
+		<para>
+		Set the content of the SIP message buffer, replacing the exiting data.
+		The parameter can contain variables, its value must be a valid SIP
+		request or reply, a matter of what the old message is.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE or core REPLY_ROUTE.
+		</para>
+		<para>
+		Note: It must be used before the transaction is created in
+		request_route and not inside the onreply_route[name] executed by tm
+		module. Also, do not use after resuming a suspended request or reply,
+		at that moment the transaction is already created.
+		</para>
+		<example>
+		<title><function>msg_set_buffer()</function> usage</title>
+		<programlisting format="linespecific">
+...
+msg_set_buffer("INVITE sip:...");
+...
+</programlisting>
+		</example>
+	</section>
+
     <section id="textopsx.f.change_reply_status">
 	<title>
 	    <function>change_reply_status(code, reason)</function>
