@@ -494,6 +494,7 @@ static char *parse_to_param(char *const buffer, const char *const end,
 					}
 					LM_ERR("invalid character ',' in status %d: [%.*s]\n",
 							status, (int)(tmp - buffer), ZSW(buffer));
+					goto error;
 				}
 			default:
 				switch(status) {
