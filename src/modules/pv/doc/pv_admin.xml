@@ -399,6 +399,9 @@ xavp_params_explode("a=b;c=d;e=d", "x");
 				Serialize the subfields in an XAVP to a parameters string format.
 			</para>
 			<para>
+				Number values are serialized as unsigned integer string format.
+			</para>
+			<para>
 				The first parameter has to be the name of XAVP (only the string
 				name, not the in $xavp(name)). The second parameter
 				is the name of output variable (in full name, like $var(output)).
@@ -417,6 +420,71 @@ $xavp(x=&gt;e) = "f";
 $xavp(x[0]=&gt;c) = "d";
 $xavp(x[0]=&gt;a) = "b";
 xavp_params_implode("x", "$var(out)");
+# results in: $var(out) is "a=b;c=d;e=f;"
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="pv.f.xavu_params_explode">
+			<title>
+				<function moreinfo="none">xavu_params_explode(sparams, xname)</function>
+			</title>
+			<para>
+				Convert a parameters string in xavu atributes.
+			</para>
+			<para>
+				The first parameter has to be a string in the format of SIP header
+				parameters (name1=value1;...;nameN=valueN). The second parameter
+				is the name of the root xavu to hold the pairs (nameX,valueX).
+			</para>
+			<para>
+				The values are stored as string type.
+			</para>
+			<para>
+			Function can be used from ANY ROUTE.
+			</para>
+			<example>
+				<title><function>xavu_params_explode</function> usage</title>
+				<programlisting format="linespecific">
+...
+xavu_params_explode("a=b;c=d;e=d", "x");
+# results in:
+#    $xavu(x=&gt;a) = "b";
+#    $xavu(x=&gt;c) = "d";
+#    $xavu(x=&gt;e) = "f";
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="pv.f.xavu_params_implode">
+			<title>
+				<function moreinfo="none">xavu_params_implode(xname, pvname)</function>
+			</title>
+			<para>
+				Serialize the subfields in an XAUP to a parameters string format.
+			</para>
+			<para>
+				Number values are serialized as unsigned integer string format.
+			</para>
+			<para>
+				The first parameter has to be the name of XAVU (only the string
+				name, not the in $xavu(name)). The second parameter
+				is the name of output variable (in full name, like $var(output)).
+			</para>
+			<para>
+				The value is stored as string type.
+			</para>
+			<para>
+			Function can be used from ANY ROUTE.
+			</para>
+			<example>
+				<title><function>xavu_params_implode</function> usage</title>
+				<programlisting format="linespecific">
+...
+$xavu(x=&gt;e) = "f";
+$xavu(x=&gt;c) = "d";
+$xavu(x=&gt;a) = "b";
+xavu_params_implode("x", "$var(out)");
 # results in: $var(out) is "a=b;c=d;e=f;"
 ...
 				</programlisting>
