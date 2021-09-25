@@ -68,7 +68,7 @@
 	</section>
 	<section>
 	<title>Parameters</title>
-	<section>
+	<section id="async.p.workers">
 		<title><varname>workers</varname> (int)</title>
 		<para>
 			Number of worker processes to be started to handle the asynchronous
@@ -88,7 +88,7 @@ modparam("async", "workers", 2)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="async.p.ms_timer">
 		<title><varname>ms_timer</varname> (int)</title>
 		<para>
 			Enables millisecond timer for async_ms_sleep() and async_ms_route() functions.
