@@ -49,6 +49,7 @@ static int w_posops_pos_find_str(sip_msg_t* msg, char* p1idx, char* p2val);
 static int w_posops_pos_findi_str(sip_msg_t* msg, char* p1idx, char* p2val);
 static int w_posops_pos_rfind_str(sip_msg_t* msg, char* p1idx, char* p2val);
 static int w_posops_pos_rfindi_str(sip_msg_t* msg, char* p1idx, char* p2val);
+static int w_posops_pos_search(sip_msg_t* msg, char* p1idx, char* p2re);
 
 typedef struct posops_data {
 	int ret;
@@ -96,6 +97,8 @@ static cmd_export_t cmds[]={
 		fixup_free_igp_spve, ANY_ROUTE},
 	{"pos_rfindi_str", (cmd_function)w_posops_pos_rfindi_str, 2, fixup_igp_spve,
 		fixup_free_igp_spve, ANY_ROUTE},
+	{"pos_search",    (cmd_function)w_posops_pos_search, 2, fixup_igp_regexp,
+		fixup_free_igp_regexp, ANY_ROUTE},
 
 	{0, 0, 0, 0, 0, 0}
 };
@@ -636,6 +639,68 @@ static int w_posops_pos_rfindi_str(sip_msg_t* msg, char* p1idx, char* p2val)
 /**
  *
  */
+static int ki_posops_pos_search_helper(sip_msg_t *msg, int idx, regex_t *re)
+{
+	regmatch_t pmatch;
+
+	if(idx<0) {
+		idx += msg->len;
+	}
+	if(idx<0 || idx >= msg->len) {
+		return -1;
+	}
+
+	if (regexec(re, msg->buf + idx, 1, &pmatch, 0)!=0) {
+		return -1;
+	}
+	if (pmatch.rm_so==-1) {
+		return -1;
+	}
+
+	_posops_data.idx = (int)(msg->buf + idx + pmatch.rm_so);
+	_posops_data.ret = (_posops_data.idx==0)?posops_idx0:_posops_data.idx;
+
+	return _posops_data.ret;
+}
+
+static int ki_posops_pos_search(sip_msg_t* msg, int idx, str* sre)
+{
+	regex_t mre;
+	int ret;
+
+	memset(&mre, 0, sizeof(regex_t));
+	if (regcomp(&mre, sre->s, REG_EXTENDED|REG_ICASE|REG_NEWLINE)!=0) {
+		LM_ERR("failed to compile regex: %.*s\n", sre->len, sre->s);
+		return -1;
+	}
+
+	ret = ki_posops_pos_search_helper(msg, idx, &mre);
+
+	regfree(&mre);
+
+	return ret;
+}
+
+/**
+ *
+ */
+static int w_posops_pos_search(sip_msg_t* msg, char* p1idx, char* p2re)
+{
+	int idx = 0;
+	regex_t *re = NULL;
+
+	if(fixup_get_ivalue(msg, (gparam_t*)p1idx, &idx)!=0) {
+		LM_ERR("unable to get idx parameter\n");
+		return -1;
+	}
+	re = (regex_t*)p2re;
+
+	return ki_posops_pos_search_helper(msg, idx, re);
+}
+
+/**
+ *
+ */
 static int pv_posops_get_pos(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 {
 	switch(param->pvn.u.isname.name.n) {
@@ -732,6 +797,11 @@ static sr_kemi_t sr_kemi_posops_exports[] = {
 	},
 	{ str_init("posops"), str_init("pos_rfindi_str"),
 		SR_KEMIP_INT, ki_posops_pos_rfindi_str,
+		{ SR_KEMIP_INT, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("posops"), str_init("pos_search"),
+		SR_KEMIP_INT, ki_posops_pos_search,
 		{ SR_KEMIP_INT, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
