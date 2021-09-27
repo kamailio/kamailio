@@ -251,6 +251,50 @@ int fixup_free_regexp_regexp(void** param, int param_no)
 	return fixup_free_regexp_null(param, 1);
 }
 
+int fixup_igp_regexp(void** param, int param_no)
+{
+	struct regex_fixup* re;
+
+	if (param_no == 1) {
+		return fixup_igp_null(param, param_no);
+	}
+	if (param_no == 2) {
+		if ((re=pkg_malloc(sizeof(*re))) ==0) {
+			PKG_MEM_ERROR;
+			goto error;
+		}
+		if (regcomp(&re->regex, *param,
+					REG_EXTENDED|REG_ICASE|REG_NEWLINE))
+			goto error;
+		re->orig = *param;
+		*param = re;
+	}
+	return 0;
+error:
+	if (re)
+		pkg_free(re);
+	return E_UNSPEC;
+}
+
+int fixup_free_igp_regexp(void** param, int param_no)
+{
+	struct regex_fixup* re;
+
+	if (param_no == 1) {
+		return fixup_free_igp_null(param, param_no);
+	}
+	if (param_no == 2) {
+		if (*param) {
+			re = *param;
+			*param = re->orig;
+			regfree(&re->regex);
+			pkg_free(re);
+		}
+	}
+	return 0;
+}
+
+
 /* fixup_pvar_*() has to be written "by hand", since
    it needs to save the original pointer (the fixup users expects
    a pointer to the pv_spec_t in *param and hence the original value
