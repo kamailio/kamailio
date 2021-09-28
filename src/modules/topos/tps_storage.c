@@ -352,7 +352,8 @@ int tps_storage_fill_contact(sip_msg_t *msg, tps_data_t *td, str *uuid, int dir,
 			td->cp++;
 		}
 
-		/* contact_host xavu takes preference */
+		/* contact_host xavu takes preference, reset vavu */
+		vavu = NULL;
 		if (_tps_xavu_cfg.len>0 && _tps_xavu_field_contact_host.len>0) {
 			vavu = xavu_get_child_with_sval(&_tps_xavu_cfg,
 					&_tps_xavu_field_contact_host);
