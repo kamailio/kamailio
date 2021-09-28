@@ -3285,7 +3285,7 @@ play_dtmf("code=1 volume=5 duration=300 pause=150");
 		<title>RPC Commands</title>
 
 	<section id="rtpengine.r.reload">
-			<title>rtpengine.reload</title>
+			<title><function moreinfo="none">rtpengine.reload</function></title>
 			<para>
 				Reloads the database node table content <emphasis>if configured</emphasis>.
 				Returns specific message related to success, failure and no db_url configured.
@@ -3294,6 +3294,9 @@ play_dtmf("code=1 volume=5 duration=300 pause=150");
 				NOTE: The current behaviour updates the nodes state or creates new ones or
 				hides old ones, based on the database content. If allow_op modparam is enabled,
 				the sessions are still allowed to finish for the hidden old nodes.
+			</para>
+			<para>
+				The execution of this command is limited to 10 seconds intervals.
 			</para>
 			<example>
 			<title>
