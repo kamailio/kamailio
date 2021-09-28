@@ -2748,6 +2748,8 @@ ackets, 0 errors
    is enabled, the sessions are still allowed to finish for the hidden old
    nodes.
 
+   The execution of this command is limited to 10 seconds intervals.
+
    Example 1.103.  rtpengine.reload usage
 ...
 $ kamcmd rtpengine.reload
