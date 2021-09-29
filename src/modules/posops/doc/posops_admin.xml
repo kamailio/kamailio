@@ -382,5 +382,17 @@ $var(idx) = pos_search("100", "[0-9]+");
 		</section>
 	</section>
 
+	<section id="posops.pvs">
+		<title>Pseudo Variables</title>
+		<para>
+			The module exports a pseudo-variable class, $pos(key), to access
+			attributes upon specific function execution.
+		</para>
+		<para>
+			These are documented in the appropriate Wiki pages hosted on the
+			project web site.
+		</para>
+	</section>
+
 </chapter>
 
