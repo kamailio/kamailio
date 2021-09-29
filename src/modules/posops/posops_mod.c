@@ -54,6 +54,7 @@ static int w_posops_pos_search(sip_msg_t* msg, char* p1idx, char* p2re);
 typedef struct posops_data {
 	int ret;
 	int idx;
+	int len;
 } posops_data_t;
 
 static int posops_idx0 = -255;
@@ -659,6 +660,7 @@ static int ki_posops_pos_search_helper(sip_msg_t *msg, int idx, regex_t *re)
 
 	_posops_data.idx = (int)(msg->buf + idx + pmatch.rm_so);
 	_posops_data.ret = (_posops_data.idx==0)?posops_idx0:_posops_data.idx;
+	_posops_data.len = pmatch.rm_eo-pmatch.rm_so;
 
 	return _posops_data.ret;
 }
@@ -708,6 +710,8 @@ static int pv_posops_get_pos(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 			return pv_get_sintval(msg, param, res, _posops_data.idx);
 		case 1: /* ret */
 			return pv_get_sintval(msg, param, res, _posops_data.ret);
+		case 2: /* len */
+			return pv_get_sintval(msg, param, res, _posops_data.len);
 	}
 	return pv_get_null(msg, param, res);
 }
@@ -723,6 +727,8 @@ static int pv_posops_parse_pos_name(pv_spec_t *sp, str *in)
 				sp->pvp.pvn.u.isname.name.n = 0;
 			else if(strncmp(in->s, "ret", 3)==0)
 				sp->pvp.pvn.u.isname.name.n = 1;
+			else if(strncmp(in->s, "len", 3)==0)
+				sp->pvp.pvn.u.isname.name.n = 2;
 			else goto error;
 		break;
 
