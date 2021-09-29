@@ -43,6 +43,8 @@ Daniel-Constantin Mierla
               4.11. pos_rfindi_str(idx, val)
               4.12. pos_search(idx, re)
 
+        5. Pseudo Variables
+
    List of Examples
 
    1.1. Set idx0 parameter
@@ -87,6 +89,8 @@ Chapter 1. Admin Guide
         4.10. pos_rfind_str(idx, val)
         4.11. pos_rfindi_str(idx, val)
         4.12. pos_search(idx, re)
+
+   5. Pseudo Variables
 
 1. Overview
 
@@ -340,3 +344,11 @@ $var(idx) = pos_rfindi_str("100", "kamailio");
 ...
 $var(idx) = pos_search("100", "[0-9]+");
 ...
+
+5. Pseudo Variables
+
+   The module exports a pseudo-variable class, $pos(key), to access
+   attributes upon specific function execution.
+
+   These are documented in the appropriate Wiki pages hosted on the
+   project web site.
