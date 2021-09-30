@@ -42,6 +42,7 @@ Daniel-Constantin Mierla
               4.10. pos_rfind_str(idx, val)
               4.11. pos_rfindi_str(idx, val)
               4.12. pos_search(idx, re)
+              4.13. pos_rsearch(idx, re)
 
         5. Pseudo Variables
 
@@ -60,6 +61,7 @@ Daniel-Constantin Mierla
    1.11. pos_find_str() usage
    1.12. pos_rfindi_str() usage
    1.13. pos_search() usage
+   1.14. pos_rsearch() usage
 
 Chapter 1. Admin Guide
 
@@ -89,6 +91,7 @@ Chapter 1. Admin Guide
         4.10. pos_rfind_str(idx, val)
         4.11. pos_rfindi_str(idx, val)
         4.12. pos_search(idx, re)
+        4.13. pos_rsearch(idx, re)
 
    5. Pseudo Variables
 
@@ -148,6 +151,7 @@ modparam("posops", "idx0", -200)
    4.10. pos_rfind_str(idx, val)
    4.11. pos_rfindi_str(idx, val)
    4.12. pos_search(idx, re)
+   4.13. pos_rsearch(idx, re)
 
 4.1.  pos_append(idx, val)
 
@@ -343,6 +347,26 @@ $var(idx) = pos_rfindi_str("100", "kamailio");
    Example 1.13. pos_search() usage
 ...
 $var(idx) = pos_search("100", "[0-9]+");
+...
+
+4.13.  pos_rsearch(idx, re)
+
+   Return the position of last match that starts matching the regular
+   expression re in message buffer starting at idx. In case of not finding
+   it or error, the return code is negative. If val is at index 0, it
+   returns the value specified by modparam idx0.
+
+   The idx can be an integer value or a variable holding an integer. If
+   the value is negative, the position is counted from the end of the
+   buffer.
+
+   The re can be a static regular expression string.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.14. pos_rsearch() usage
+...
+$var(idx) = pos_rsearch("100", "[0-9]+");
 ...
 
 5. Pseudo Variables
