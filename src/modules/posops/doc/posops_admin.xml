@@ -380,6 +380,35 @@ $var(idx) = pos_search("100", "[0-9]+");
 				</programlisting>
 			</example>
 		</section>
+		<section id="posops.f.pos_rsearch">
+			<title>
+				<function moreinfo="none">pos_rsearch(idx, re)</function>
+			</title>
+			<para>
+			Return the position of last match that starts matching the regular
+			expression re in message buffer starting at idx. In case of not
+			finding it or error, the return code is negative. If val is at
+			index 0, it returns the value specified by modparam idx0.
+			</para>
+			<para>
+			The idx can be an integer value or a variable holding an integer. If
+			the value is negative, the position is counted from the end of the buffer.
+			</para>
+			<para>
+			The re can be a static regular expression string.
+			</para>
+			<para>
+			This function can be used from ANY_ROUTE.
+			</para>
+			<example>
+				<title><function>pos_rsearch()</function> usage</title>
+				<programlisting format="linespecific">
+...
+$var(idx) = pos_rsearch("100", "[0-9]+");
+...
+				</programlisting>
+			</example>
+		</section>
 	</section>
 
 	<section id="posops.pvs">
