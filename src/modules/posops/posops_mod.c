@@ -684,7 +684,7 @@ static int ki_posops_pos_search_helper(sip_msg_t *msg, int idx, regex_t *re)
 		return -1;
 	}
 
-	_posops_data.idx = (int)(msg->buf + idx + pmatch.rm_so);
+	_posops_data.idx = idx + pmatch.rm_so;
 	_posops_data.ret = (_posops_data.idx==0)?posops_idx0:_posops_data.idx;
 	_posops_data.len = pmatch.rm_eo-pmatch.rm_so;
 
@@ -757,7 +757,7 @@ static int ki_posops_pos_rsearch_helper(sip_msg_t *msg, int idx, regex_t *re)
 		return -1;
 	}
 
-	_posops_data.idx = (int)(msg->buf + i + pmatch.rm_so);
+	_posops_data.idx = i + pmatch.rm_so;
 	_posops_data.ret = (_posops_data.idx==0)?posops_idx0:_posops_data.idx;
 	_posops_data.len = pmatch.rm_eo-pmatch.rm_so;
 
