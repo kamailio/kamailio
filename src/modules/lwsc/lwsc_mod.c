@@ -144,6 +144,7 @@ typedef struct lwsc_endpoint {
 	/* first LWS_PRE bytes must preserved for headers */
 	str wbuf;
 	str rbuf;
+	int rdone;
 	int tlson;
 	struct lws_protocols protocols[2];
 	struct lws_context_creation_info crtinfo;
@@ -226,6 +227,7 @@ static int ksr_lwsc_callback(struct lws *wsi, enum lws_callback_reasons reason,
 	lwsc_endpoint_t *ep = NULL;
 	str rbuf = STR_NULL;
 	str wbuf = STR_NULL;
+	int blen = 0;
 
 	if(_lwsc_verbosity>1) {
 		LM_DBG("callback called with reason %d\n", reason);
@@ -349,28 +351,35 @@ static int ksr_lwsc_callback(struct lws *wsi, enum lws_callback_reasons reason,
 			LM_DBG("LWS_CALLBACK_RECEIVE - wsi: %p len: %lu\n", wsi,
 					(unsigned long)len);
 #endif
+			ep = lwsc_get_endpoint_by_wsi(wsi);
+			if(ep==NULL) {
+				LM_ERR("no endpoint for wsi %p\n", wsi);
+				goto done;
+			}
+			pthread_mutex_lock(&ep->wslock);
 			if(len>0) {
-				ep = lwsc_get_endpoint_by_wsi(wsi);
-				if(ep==NULL) {
-					LM_ERR("no endpoint for wsi %p\n", wsi);
-					goto done;
-				}
-				rbuf.s = (char*)pkg_malloc(len + 1);
+				blen = ep->rbuf.len + len;
+				rbuf.s = (char*)pkg_malloc(blen + 1);
 				if(rbuf.s==NULL) {
 					PKG_MEM_ERROR;
 				} else {
-					memcpy(rbuf.s, in, len);
-					rbuf.len = len;
-					rbuf.s[rbuf.len] = '\0';
-					pthread_mutex_lock(&ep->wslock);
 					if(ep->rbuf.s!=NULL) {
-						LM_ERR("losing read buffer of %d bytes\n", ep->rbuf.len);
+						LM_DBG("append to read buffer of %d bytes more %d bytes\n",
+								ep->rbuf.len, (int)len);
+						memcpy(rbuf.s, ep->rbuf.s, ep->rbuf.len);
 						pkg_free(ep->rbuf.s);
+						ep->rbuf.s = NULL;
 					}
+					memcpy(rbuf.s + ep->rbuf.len, in, len);
+					rbuf.len = blen;
+					rbuf.s[rbuf.len] = '\0';
 					ep->rbuf = rbuf;
-					pthread_mutex_unlock(&ep->wslock);
 				}
 			}
+			if (lws_is_final_fragment(wsi)) {
+				ep->rdone = 1;
+			}
+			pthread_mutex_unlock(&ep->wslock);
 			break;
 
 		case LWS_CALLBACK_WS_PEER_INITIATED_CLOSE:
@@ -646,6 +655,7 @@ static int lwsc_api_request(str* wsurl, str *wsproto, str* sdata,
 		ep->rbuf.s = NULL;
 		ep->rbuf.len = 0;
 	}
+	ep->rdone = 0;
 	if(ep->wbuf.s!=NULL) {
 		LM_ERR("losing write buffer content of %d bytes\n", ep->wbuf.len);
 		pkg_free(ep->wbuf.s);
@@ -659,10 +669,13 @@ static int lwsc_api_request(str* wsurl, str *wsproto, str* sdata,
 
 	do {
 		pthread_mutex_lock(&ep->wslock);
-		if(ep->rbuf.s!=NULL) {
-			*rdata = ep->rbuf;
-			ep->rbuf.s = NULL;
-			ep->rbuf.len = 0;
+		if(ep->rdone==1) {
+			if(ep->rbuf.s!=NULL) {
+				*rdata = ep->rbuf;
+				ep->rbuf.s = NULL;
+				ep->rbuf.len = 0;
+			}
+			ep->rdone = 0;
 		}
 		pthread_mutex_unlock(&ep->wslock);
 		if(rdata->s==NULL) {
