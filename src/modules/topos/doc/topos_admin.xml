@@ -294,7 +294,7 @@ modparam("topos", "event_mode", 2)
 		<title><varname>contact_host</varname> (str)</title>
 		<para>
 			You may need to control the host part of the Contact header added
-			by topos. If the xavu_filed_contact_host parameter is set, this value is
+			by topos. If the xavu_field_contact_host parameter is set, this value is
 			ignored.
 
 			For example when using TLS with TOPOS the remote UAS must be able to open
@@ -397,7 +397,7 @@ modparam("topos", "cparam_name", "xyz")
 		<programlisting format="linespecific">
 ...
 modparam("topos", "xavu_cfg", "_tps_")
-modparam("topos", "xavu_filed_a_contact", "a_contact")
+modparam("topos", "xavu_field_a_contact", "a_contact")
 ...
     $xavu(_tps_=>a_contact) = "...";
 ...
@@ -405,7 +405,7 @@ modparam("topos", "xavu_filed_a_contact", "a_contact")
 		</example>
 	</section>
 	<section id="topos.p.xavu_field_a_contact">
-		<title><varname>xavu_filed_a_contact</varname> (str)</title>
+		<title><varname>xavu_field_a_contact</varname> (str)</title>
 		<para>
 			Name of the field inside root XAVU specifed by `xavu_cfg`
 			to evaluate for the A-side Contact Header user part. This parameter
@@ -417,11 +417,11 @@ modparam("topos", "xavu_filed_a_contact", "a_contact")
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>xavu_filed_a_contact</varname> parameter</title>
+		<title>Set <varname>xavu_field_a_contact</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("topos", "xavu_cfg", "_tps_")
-modparam("topos", "xavu_filed_a_contact", "a_contact")
+modparam("topos", "xavu_field_a_contact", "a_contact")
 ...
     $xavu(_tps_=>a_contact) = "...";
 ...
@@ -429,7 +429,7 @@ modparam("topos", "xavu_filed_a_contact", "a_contact")
 		</example>
 	</section>
 	<section id="topos.p.xavu_field_b_contact">
-		<title><varname>xavu_filed_b_contact</varname> (str)</title>
+		<title><varname>xavu_field_b_contact</varname> (str)</title>
 		<para>
 			Name of the field inside root XAVU specifed by `xavu_cfg`
 			to evaluate for the B-side Contact Header user part. This parameter
@@ -441,11 +441,11 @@ modparam("topos", "xavu_filed_a_contact", "a_contact")
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>xavu_filed_b_contact</varname> parameter</title>
+		<title>Set <varname>xavu_field_b_contact</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("topos", "xavu_cfg", "_tps_")
-modparam("topos", "xavu_filed_b_contact", "b_contact")
+modparam("topos", "xavu_field_b_contact", "b_contact")
 ...
     $xavu(_tps_=>b_contact) = "...";
 
