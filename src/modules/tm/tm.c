@@ -432,6 +432,7 @@ static param_export_t params[]={
 	{"ruri_matching",       PARAM_INT, &default_tm_cfg.ruri_matching         },
 	{"via1_matching",       PARAM_INT, &default_tm_cfg.via1_matching         },
 	{"callid_matching",     PARAM_INT, &default_tm_cfg.callid_matching       },
+	{"callid_cseq_matching",PARAM_INT, &default_tm_cfg.callid_cseq_matching  },
 	{"fr_timer",            PARAM_INT, &default_tm_cfg.fr_timeout            },
 	{"fr_inv_timer",        PARAM_INT, &default_tm_cfg.fr_inv_timeout        },
 	{"wt_timer",            PARAM_INT, &default_tm_cfg.wait_timeout          },

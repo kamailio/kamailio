@@ -922,8 +922,27 @@ int t_reply_matching( struct sip_msg *p_msg , int *p_branch )
 	/* all the transactions from the entry are compared */
 	clist_foreach(hash_bucket, p_cell, next_c){
 		prefetch_loc_r(p_cell->next_c, 1);
-		if ( memcmp(p_cell->md5, loopi,MD5_LEN)!=0)
-			continue;
+
+		if (cfg_get(tm, tm_cfg, callid_cseq_matching)) {
+			if (memcmp(p_cell->callid.s + strlen("Call-ID: "), p_msg->callid->body.s, p_msg->callid->body.len) != 0) {
+				LM_ERR("t_reply_matching: failed callid matching (instead of md5): %d p_cell=%.*s p_msg=%.*s",
+					p_msg->first_line.u.reply.statuscode,
+					p_cell->callid.len, p_cell->callid.s,
+					p_msg->callid->body.len, p_msg->callid->body.s);
+				continue;
+			}
+
+			if (memcmp(p_cell->cseq_n.s + strlen("CSeq: "), get_cseq(p_msg)->number.s, get_cseq(p_msg)->number.len) != 0) {
+				LM_ERR("t_reply_matching: failed cseq matching (instead of md5): %d p_cell=%.*s p_msg=%.*s",
+					p_msg->first_line.u.reply.statuscode,
+					p_cell->cseq_n.len, p_cell->cseq_n.s,
+					get_cseq(p_msg)->number.len, get_cseq(p_msg)->number.s);
+				continue;
+			}
+		} else {
+			if ( memcmp(p_cell->md5, loopi,MD5_LEN)!=0)
+				continue;
+		}
 
 		/* sanity check ... too high branch ? */
 		if (unlikely(branch_id>=p_cell->nr_of_outgoings))

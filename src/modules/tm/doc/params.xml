@@ -997,6 +997,29 @@ modparam("tm", "callid_matching", 1)
 	</example>
 	</section>
 
+	<section id="tm.p.callid_cseq_matching">
+		<title><varname>callid_cseq_matching</varname> (int)</title>
+		<para>
+			If set to something other than 0, will do transaction matching 
+			using callid and cseq header values instead of via branch md5 value.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>callid_cseq_matching</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("tm", "callid_cseq_matching", 0)
+...
+
+kamcmd cfg.set_now_int tm callid_cseq_matching 1
+		</programlisting>
+		</example>
+	</section>
+
 	<section id="tm.p.pass_provisional_replies">
 	<title><varname>pass_provisional_replies</varname> (integer)</title>
 	<para>

@@ -47,6 +47,7 @@ struct cfg_group_tm	default_tm_cfg = {
 	1,	/* ruri_matching */
 	1,	/* via1_matching */
 	0,	/* callid_matching */
+	0,	/* callid_cseq_matching */
 	FR_TIME_OUT,	/* fr_timeout */
 	INV_FR_TIME_OUT,	/* fr_inv_timeout */
 	INV_FR_TIME_OUT_NEXT, /* fr_inv_timeout_next */
@@ -115,6 +116,8 @@ cfg_def_t	tm_cfg_def[] = {
 		"perform first Via header check in transaction matching"},
 	{"callid_matching",	CFG_VAR_INT | CFG_ATOMIC,	0, 0, 0, 0,
 		"perform callid check in transaction matching"},
+	{"callid_cseq_matching",CFG_VAR_INT | CFG_ATOMIC,	0, 0, 0, 0,
+		"perform callid+cseq instead of md5 in transaction matching"},
 	{"fr_timer",		CFG_VAR_INT | CFG_ATOMIC,	0, 0, timer_fixup, 0,
 		"timer which hits if no final reply for a request "
 		"or ACK for a negative INVITE reply arrives "
