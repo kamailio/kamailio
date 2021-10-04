@@ -44,8 +44,8 @@ Frederic Gaisnon
               3.11. contact_mode (int)
               3.12. cparam_name (int)
               3.13. xavu_cfg (str)
-              3.14. xavu_filed_a_contact (str)
-              3.15. xavu_filed_b_contact (str)
+              3.14. xavu_field_a_contact (str)
+              3.15. xavu_field_b_contact (str)
               3.16. xavu_field_contact_host (str)
               3.17. rr_update (int)
               3.18. context (str)
@@ -76,8 +76,8 @@ Frederic Gaisnon
    1.11. Set contact_mode parameter
    1.12. Set cparam_name parameter
    1.13. Set xavu_cfg parameter
-   1.14. Set xavu_filed_a_contact parameter
-   1.15. Set xavu_filed_b_contact parameter
+   1.14. Set xavu_field_a_contact parameter
+   1.15. Set xavu_field_b_contact parameter
    1.16. Set xavu_field_contact_host parameter
    1.17. Set rr_update parameter
    1.18. Set context parameter
@@ -112,8 +112,8 @@ Chapter 1. Admin Guide
         3.11. contact_mode (int)
         3.12. cparam_name (int)
         3.13. xavu_cfg (str)
-        3.14. xavu_filed_a_contact (str)
-        3.15. xavu_filed_b_contact (str)
+        3.14. xavu_field_a_contact (str)
+        3.15. xavu_field_b_contact (str)
         3.16. xavu_field_contact_host (str)
         3.17. rr_update (int)
         3.18. context (str)
@@ -182,8 +182,8 @@ Chapter 1. Admin Guide
    3.11. contact_mode (int)
    3.12. cparam_name (int)
    3.13. xavu_cfg (str)
-   3.14. xavu_filed_a_contact (str)
-   3.15. xavu_filed_b_contact (str)
+   3.14. xavu_field_a_contact (str)
+   3.15. xavu_field_b_contact (str)
    3.16. xavu_field_contact_host (str)
    3.17. rr_update (int)
    3.18. context (str)
@@ -320,7 +320,7 @@ modparam("topos", "event_mode", 2)
 3.10. contact_host (str)
 
    You may need to control the host part of the Contact header added by
-   topos. If the xavu_filed_contact_host parameter is set, this value is
+   topos. If the xavu_field_contact_host parameter is set, this value is
    ignored. For example when using TLS with TOPOS the remote UAS must be
    able to open a new TLS socket to the contact header. In this case, the
    contact header must contain a domain name with a trusted CA signed
@@ -388,12 +388,12 @@ modparam("topos", "cparam_name", "xyz")
    Example 1.13. Set xavu_cfg parameter
 ...
 modparam("topos", "xavu_cfg", "_tps_")
-modparam("topos", "xavu_filed_a_contact", "a_contact")
+modparam("topos", "xavu_field_a_contact", "a_contact")
 ...
     $xavu(_tps_=>a_contact) = "...";
 ...
 
-3.14. xavu_filed_a_contact (str)
+3.14. xavu_field_a_contact (str)
 
    Name of the field inside root XAVU specifed by `xavu_cfg` to evaluate
    for the A-side Contact Header user part. This parameter is only
@@ -401,15 +401,15 @@ modparam("topos", "xavu_filed_a_contact", "a_contact")
 
    Default value is “NULL” (disabled).
 
-   Example 1.14. Set xavu_filed_a_contact parameter
+   Example 1.14. Set xavu_field_a_contact parameter
 ...
 modparam("topos", "xavu_cfg", "_tps_")
-modparam("topos", "xavu_filed_a_contact", "a_contact")
+modparam("topos", "xavu_field_a_contact", "a_contact")
 ...
     $xavu(_tps_=>a_contact) = "...";
 ...
 
-3.15. xavu_filed_b_contact (str)
+3.15. xavu_field_b_contact (str)
 
    Name of the field inside root XAVU specifed by `xavu_cfg` to evaluate
    for the B-side Contact Header user part. This parameter is only
@@ -417,10 +417,10 @@ modparam("topos", "xavu_filed_a_contact", "a_contact")
 
    Default value is “NULL” (disabled).
 
-   Example 1.15. Set xavu_filed_b_contact parameter
+   Example 1.15. Set xavu_field_b_contact parameter
 ...
 modparam("topos", "xavu_cfg", "_tps_")
-modparam("topos", "xavu_filed_b_contact", "b_contact")
+modparam("topos", "xavu_field_b_contact", "b_contact")
 ...
     $xavu(_tps_=>b_contact) = "...";
 
