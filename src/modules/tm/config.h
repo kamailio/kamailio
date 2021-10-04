@@ -99,6 +99,7 @@ struct cfg_group_tm {
 	int	ruri_matching;
 	int	via1_matching;
 	int	callid_matching;
+	int	callid_cseq_matching;
 	unsigned int	fr_timeout;
 	unsigned int	fr_inv_timeout;
 	unsigned int    fr_inv_timeout_next;
