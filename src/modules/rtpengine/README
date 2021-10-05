@@ -2669,6 +2669,8 @@ play_dtmf("code=1 volume=5 duration=300 pause=150");
    is enabled, the sessions are still allowed to finish for the hidden old
    nodes.
 
+   The execution of this command is limited to 10 seconds intervals.
+
    Example 1.100.  rtpengine.reload usage
 ...
 $ kamcmd rtpengine.reload
