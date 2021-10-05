@@ -1002,6 +1002,10 @@ modparam("tm", "callid_matching", 1)
 		<para>
 			If set to something other than 0, will do transaction matching 
 			using callid and cseq header values instead of via branch md5 value.
+
+		<emphasis>
+			Note that this behavior is non-RFC conpliant!
+		</emphasis>
 		</para>
 		<para>
 		<emphasis>
