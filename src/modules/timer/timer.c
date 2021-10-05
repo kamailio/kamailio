@@ -159,7 +159,7 @@ static unsigned int timer_msg_no = 0;
 static ticks_t timer_handler(ticks_t ticks, struct timer_ln* tl, void* data)
 {
 	/*?min length of first line of message is 16 char!?*/
-#define MSG "GET /timer HTTP/0.9\n\n"
+#define MSG "GET /timer HTTP/0.9\r\nUser-Agent: internal\r\n\r\n"
 	sip_msg_t* msg;
 	timer_action_t *a;
 	run_act_ctx_t ra_ctx;
