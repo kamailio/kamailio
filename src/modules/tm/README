@@ -1376,7 +1376,8 @@ modparam("tm", "callid_matching", 1)
 3.33. callid_cseq_matching (int)
 
    If set to something other than 0, will do transaction matching using
-   callid and cseq header values instead of via branch md5 value.
+   callid and cseq header values instead of via branch md5 value. Note
+   that this behavior is non-RFC conpliant!
 
    Default value is 0.
 
