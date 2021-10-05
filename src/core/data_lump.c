@@ -299,7 +299,7 @@ struct lump* del_lump(struct sip_msg* msg, int offset, int len,
 		return 0;
 	}
 	if (len==0){
-		LM_WARN("0 len (offset=%d)\n", offset);
+		LM_DBG("0 len (offset=%d)\n", offset);
 	}
 
 	tmp=pkg_malloc(sizeof(struct lump));

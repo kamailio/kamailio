@@ -440,10 +440,6 @@ struct replace_lst* subst_run(struct subst_expr* se, const char* input,
 				LM_ERR("Unknown offset?\n");
 				goto error;
 			}
-			if (pmatch[0].rm_so==pmatch[0].rm_eo) {
-				LM_ERR("Matched string is empty, invalid regexp?\n");
-				goto error;
-			}
 			*crt=pkg_malloc(sizeof(struct replace_lst));
 			if (*crt==0){
 				PKG_MEM_ERROR;
