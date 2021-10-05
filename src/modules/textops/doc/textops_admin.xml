@@ -19,9 +19,15 @@
 		The module implements text based operations over the SIP message
 		processed by &kamailio;. SIP is a text based protocol and the module
 		provides a large set of very useful functions to manipulate the
-		message at text level, e.g., regular expression search and replace,
-		Perl-like substitutions, checks for method type, header presence,
-		insert of new header and date, etc.
+		message at text level, e.g., regular expression search, replace
+		or substitutions, checks for method type, header presence,
+		insert of new header and date, string comparisons, multi-part body
+		operations, etc.
+	</para>
+	<para>
+		If not stated otherwise, the regular expressions parameters for search,
+		replace or substitute have to be in POSIX format. For PCRE regular
+		expression matching, see the pcre or dialplan modules.
 	</para>
 	</section>
 	<section>
@@ -591,7 +597,7 @@ replace_hdrs_str("&kamailio;", "&kamailio; SIP Proxy", "a");
 		<function moreinfo="none">subst('/re/repl/flags')</function>
 		</title>
 		<para>
-		Replaces re with repl (sed or perl like).
+		Replaces re with repl.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
@@ -728,7 +734,7 @@ if (subst_user('/(.*)3642$/$avp(user_prefix)\13642/')){$
 		<function moreinfo="none">subst_body('/re/repl/flags')</function>
 		</title>
 		<para>
-		Replaces re with repl (sed or perl like) in the body of the message.
+		Replaces re with repl in the body of the message.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
@@ -768,7 +774,7 @@ if ( subst_body('/^o=(.*) /o=$fU /') ) {};
 		<function moreinfo="none">subst_hf(hf, subexp, flags)</function>
 		</title>
 		<para>
-		Perl-like substitutions in the body of a header field.
+		Substitutions in the body of a header field.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
