@@ -1330,10 +1330,10 @@ ssl_read_skipped:
 			TLS_ERR(err_src);
 			memset(ip_buf, 0, sizeof(ip_buf));
 			ip_addr2sbuf(&(c->rcv.src_ip), ip_buf, sizeof(ip_buf));
-			ERR("source IP: %s\n", ip_buf);
+			ERR("src IP: %s:%d\n", ip_buf, c->rcv.src_port);
 			memset(ip_buf, 0, sizeof(ip_buf));
 			ip_addr2sbuf(&(c->rcv.dst_ip), ip_buf, sizeof(ip_buf));
-			ERR("destination IP: %s\n", ip_buf);
+			ERR("dst IP: %s:%d\n", ip_buf, c->rcv.dst_port);
 
 			goto error;
 #if OPENSSL_VERSION_NUMBER >= 0x00907000L /*0.9.7*/
