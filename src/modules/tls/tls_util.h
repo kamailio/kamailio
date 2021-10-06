@@ -39,7 +39,11 @@ static inline int tls_err_ret(char *s, tls_domains_cfg_t **tls_domains_cfg) {
 	{
 		while((err = ERR_get_error())) {
 			ret = 1;
-			ERR("%s%s\n", s ? s : "", ERR_error_string(err, 0));
+			char *errbuf = (char*)malloc(sizeof(char)*((*tls_domains_cfg)->srv_default->server_name.len+1));
+			memcpy(errbuf, (*tls_domains_cfg)->srv_default->server_name.s, (*tls_domains_cfg)->srv_default->server_name.len);
+			errbuf[(*tls_domains_cfg)->srv_default->server_name.len] = '\0';
+			ERR("%s%s -> %s -> verify_client is:%d\n", s ? s : "", ERR_error_string(err, 0), errbuf, (*tls_domains_cfg)->srv_default->verify_client);
+			free(errbuf);
 		}
 	}
 	return ret;
