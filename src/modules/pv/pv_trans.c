@@ -2435,17 +2435,20 @@ int tr_eval_line(struct sip_msg *msg, tr_param_t *tp, int subtype,
 			break;
 
 		case TR_LINE_COUNT:
-			n=0;
-			for(i=0; i<val->rs.len; i++)
-				if(val->rs.s[i]=='\n')
+			n = 0;
+			if(val->rs.len>0) {
+				for(i=0; i<val->rs.len; i++) {
+					if(val->rs.s[i]=='\n') {
+						n++;
+					}
+				}
+				if(val->rs.s[val->rs.len-1]!='\n') {
 					n++;
-			if(n==0 && val->rs.len>0)
-				n = 1;
+				}
+			}
 			val->flags = PV_TYPE_INT|PV_VAL_INT|PV_VAL_STR;
 			val->ri = n;
 			val->rs.s = int2str(val->ri, &val->rs.len);
-			break;
-
 			break;
 
 		default:
