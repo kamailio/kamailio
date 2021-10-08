@@ -922,28 +922,24 @@ static int comp_gws(const void *_g1, const void *_g2)
 }
 
 /*
- * Compare gateways based on their IP address and port
+ * Compare a gateway using IP address and the src port
  */
-static int comp_gws_include_port(const void *_g1, const void *_g2)
-{
-	struct gw_info *g1 = (struct gw_info *)_g1;
-	struct gw_info *g2 = (struct gw_info *)_g2;
+static struct gw_info * find_gateway_by_ip_and_port(struct gw_info * gw, struct gw_info * gws) {
+	int tmp = 0, gw_index = 0;
 
-	/* first address family comparison */
-	if(g1->ip_addr.af < g2->ip_addr.af)
-		return -1;
-	if(g1->ip_addr.af > g2->ip_addr.af)
-		return 1;
-	if(g1->ip_addr.len < g2->ip_addr.len)
-		return -1;
-	if(g1->ip_addr.len > g2->ip_addr.len)
-		return 1;
+	for (int i = 1; i <= gws[0].ip_addr.u.addr32[0]; i++) {
+		tmp = memcmp(gws[i].ip_addr.u.addr, gw->ip_addr.u.addr, gws[i].ip_addr.len);
+		if (gws[i].ip_addr.af == gw->ip_addr.af &&
+			gws[i].ip_addr.len == gw->ip_addr.len &&
+			tmp == 0 &&	/* a comparison of the IP address value */
+			gws[i].port == gw->port) {
+				gw_index = i;
+				break;
+		}
+	}
+	if (gw_index != 0) return &(gws[gw_index]);
 
-	/* secondly ports comparison */
-	if(g1->port != g2->port)
-		return -1;
-
-	return memcmp(g1->ip_addr.u.addr, g2->ip_addr.u.addr, g1->ip_addr.len);
+	return NULL;
 }
 
 /* 
@@ -3025,8 +3021,7 @@ static int do_from_gw(struct sip_msg *_m, unsigned int lcr_id,
 	if (src_port != 0) {
 		/* Search for gw based on its ip address and port */
 		gw.port = src_port;
-		res = (struct gw_info *)bsearch(&gw, &(gws[1]), gws[0].ip_addr.u.addr32[0],
-				sizeof(struct gw_info), comp_gws_include_port);
+		res = find_gateway_by_ip_and_port(&gw, gws);
 	} else {
 		/* Search for gw based on its ip address */
 		res = (struct gw_info *)bsearch(&gw, &(gws[1]), gws[0].ip_addr.u.addr32[0],
