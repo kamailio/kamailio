@@ -1084,6 +1084,41 @@ sht_iterator_end("i1");
 </programlisting>
 		</example>
 	</section>
+	<section id="htable.f.sht_iterator_rm">
+		<title>
+		<function moreinfo="none">sht_iterator_rm(iname)</function>
+		</title>
+		<para>
+			Remove the current item in the iterator and move the iterator to
+			the next one.
+		</para>
+		<para>
+			The return code is 1 (true) if the item was removed and next item
+			exists; -2 (false) if the item was removed and there is no next item
+			(end of items); other negative value (false) can be returned on
+			error (e.g., iterator or item not found).
+		</para>
+		<para>
+			The parameter can be dynamic string with variables.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>sht_iterator_rm</function> usage</title>
+		<programlisting format="linespecific">
+...
+    sht_iterator_start("i1", "h1");
+    while(sht_iterator_next("i1")) {
+        while($shtitkey(i1) =~ "xyz" and sht_iterator_rm("i1")) {
+            xdbg("item removed\n");
+        }
+    }
+    sht_iterator_end("i1");
+...
+</programlisting>
+		</example>
+	</section>
 	<section id="htable.f.sht_match_name">
 		<title>
 		<function moreinfo="none">sht_match_name(htable, op, mval)</function>

@@ -80,6 +80,7 @@ static int ht_reset(struct sip_msg* msg, char* htname, char* foo);
 static int w_ht_iterator_start(struct sip_msg* msg, char* iname, char* hname);
 static int w_ht_iterator_next(struct sip_msg* msg, char* iname, char* foo);
 static int w_ht_iterator_end(struct sip_msg* msg, char* iname, char* foo);
+static int w_ht_iterator_rm(struct sip_msg* msg, char* iname, char* foo);
 
 int ht_param(modparam_t type, void* val);
 
@@ -139,6 +140,8 @@ static cmd_export_t cmds[]={
 	{"sht_iterator_next",	(cmd_function)w_ht_iterator_next,	1, fixup_spve_null, 0,
 		ANY_ROUTE},
 	{"sht_iterator_end",	(cmd_function)w_ht_iterator_end,	1, fixup_spve_null, 0,
+		ANY_ROUTE},
+	{"sht_iterator_rm",	(cmd_function)w_ht_iterator_rm,	1, fixup_spve_null, 0,
 		ANY_ROUTE},
 	{"bind_htable",     (cmd_function)bind_htable,     0, 0, 0,
 		ANY_ROUTE},
@@ -788,6 +791,32 @@ static int ki_ht_iterator_end(sip_msg_t *msg, str *iname)
 	if(ht_iterator_end(iname)<0)
 		return -1;
 	return 1;
+}
+
+static int w_ht_iterator_rm(struct sip_msg* msg, char* iname, char* foo)
+{
+	str siname;
+	int ret;
+
+	if(fixup_get_svalue(msg, (gparam_t*)iname, &siname)<0 || siname.len<=0)
+	{
+		LM_ERR("cannot get iterator name\n");
+		return -1;
+	}
+	ret = ht_iterator_rm(&siname);
+	return (ret==0)?1:ret;
+}
+
+static int ki_ht_iterator_rm(sip_msg_t *msg, str *iname)
+{
+	int ret;
+
+	if(iname==NULL || iname->s==NULL || iname->len<=0) {
+		LM_ERR("invalid parameters\n");
+		return -1;
+	}
+	ret = ht_iterator_rm(iname);
+	return (ret==0)?1:ret;
 }
 
 static int ki_ht_slot_xlock(sip_msg_t *msg, str *htname, str *skey, int lmode)
@@ -1870,6 +1899,11 @@ static sr_kemi_t sr_kemi_htable_exports[] = {
 	},
 	{ str_init("htable"), str_init("sht_iterator_end"),
 		SR_KEMIP_INT, ki_ht_iterator_end,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("htable"), str_init("sht_iterator_rm"),
+		SR_KEMIP_INT, ki_ht_iterator_rm,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},

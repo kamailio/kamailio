@@ -644,6 +644,17 @@ int ht_set_cell(ht_t *ht, str *name, int type, int_str *val, int mode)
 	return ht_set_cell_ex(ht, name, type, val, mode, 0);
 }
 
+static void ht_cell_unlink(ht_t *ht, int idx, ht_cell_t *it)
+{
+	if(it->prev==NULL)
+		ht->entries[idx].first = it->next;
+	else
+		it->prev->next = it->next;
+	if(it->next)
+		it->next->prev = it->prev;
+	ht->entries[idx].esize--;
+}
+
 int ht_del_cell(ht_t *ht, str *name)
 {
 	unsigned int idx;
@@ -675,13 +686,7 @@ int ht_del_cell(ht_t *ht, str *name)
 				&& strncmp(name->s, it->name.s, name->len)==0)
 		{
 			/* found */
-			if(it->prev==NULL)
-				ht->entries[idx].first = it->next;
-			else
-				it->prev->next = it->next;
-			if(it->next)
-				it->next->prev = it->prev;
-			ht->entries[idx].esize--;
+			ht_cell_unlink(ht, idx, it);
 			ht_slot_unlock(ht, idx);
 			ht_cell_free(it);
 			return 0;
@@ -1827,6 +1832,50 @@ int ht_iterator_end(str *iname)
 	}
 	memset(&_ht_iterators[k], 0, sizeof(ht_iterator_t));
 	return 0;
+}
+
+int ht_iterator_rm(str *iname)
+{
+	int k;
+	ht_cell_t *itb;
+
+	k = ht_iterator_find(iname);
+	if(k==-1) {
+		LM_ERR("iterator not found [%.*s]\n", iname->len, iname->s);
+		return -1;
+	}
+	if(_ht_iterators[k].ht==NULL) {
+		LM_ERR("iterator not initialized [%.*s]\n", iname->len, iname->s);
+		return -1;
+	}
+	if(_ht_iterators[k].it==NULL) {
+		LM_ERR("iterator not used [%.*s]\n", iname->len, iname->s);
+		return -1;
+	}
+
+	itb = _ht_iterators[k].it;
+	_ht_iterators[k].it = _ht_iterators[k].it->next;
+
+	ht_cell_unlink(_ht_iterators[k].ht, _ht_iterators[k].slot, itb);
+	ht_cell_free(itb);
+
+	if(_ht_iterators[k].it!=NULL) {
+		/* next item is in the same slot */
+		return 0;
+	}
+	/* next is not in the same slot - release and go to next slot */
+	ht_slot_unlock(_ht_iterators[k].ht, _ht_iterators[k].slot);
+	_ht_iterators[k].slot++;
+
+	for( ; _ht_iterators[k].slot<_ht_iterators[k].ht->htsize; _ht_iterators[k].slot++) {
+		ht_slot_lock(_ht_iterators[k].ht, _ht_iterators[k].slot);
+		if(_ht_iterators[k].ht->entries[_ht_iterators[k].slot].first!=NULL) {
+			_ht_iterators[k].it = _ht_iterators[k].ht->entries[_ht_iterators[k].slot].first;
+			return 0;
+		}
+		ht_slot_unlock(_ht_iterators[k].ht, _ht_iterators[k].slot);
+	}
+	return -2;
 }
 
 ht_cell_t* ht_iterator_get_current(str *iname)
