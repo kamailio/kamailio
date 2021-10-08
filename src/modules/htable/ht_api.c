@@ -1700,19 +1700,16 @@ void ht_iterator_init(void)
 	memset(_ht_iterators, 0, HT_ITERATOR_SIZE*sizeof(ht_iterator_t));
 }
 
-int ht_iterator_start(str *iname, str *hname)
+static inline int ht_iterator_find(str *iname)
 {
 	int i;
 	int k;
 
 	k = -1;
-	for(i=0; i<HT_ITERATOR_SIZE; i++)
-	{
-		if(_ht_iterators[i].name.len>0)
-		{
+	for(i=0; i<HT_ITERATOR_SIZE; i++) {
+		if(_ht_iterators[i].name.len>0) {
 			if(_ht_iterators[i].name.len==iname->len
-					&& strncmp(_ht_iterators[i].name.s, iname->s, iname->len)==0)
-			{
+					&& strncmp(_ht_iterators[i].name.s, iname->s, iname->len)==0) {
 				k = i;
 				break;
 			}
@@ -1720,6 +1717,14 @@ int ht_iterator_start(str *iname, str *hname)
 			if(k==-1) k = i;
 		}
 	}
+	return k;
+}
+
+int ht_iterator_start(str *iname, str *hname)
+{
+	int k;
+
+	k = ht_iterator_find(iname);
 	if(k==-1)
 	{
 		LM_ERR("no iterator available - max number is %d\n", HT_ITERATOR_SIZE);
@@ -1759,24 +1764,9 @@ int ht_iterator_start(str *iname, str *hname)
 
 int ht_iterator_next(str *iname)
 {
-	int i;
 	int k;
 
-	k = -1;
-	for(i=0; i<HT_ITERATOR_SIZE; i++)
-	{
-		if(_ht_iterators[i].name.len>0)
-		{
-			if(_ht_iterators[i].name.len==iname->len
-					&& strncmp(_ht_iterators[i].name.s, iname->s, iname->len)==0)
-			{
-				k = i;
-				break;
-			}
-		} else {
-			if(k==-1) k = i;
-		}
-	}
+	k = ht_iterator_find(iname);
 	if(k==-1)
 	{
 		LM_ERR("iterator not found [%.*s]\n", iname->len, iname->s);
@@ -1819,47 +1809,38 @@ int ht_iterator_next(str *iname)
 
 int ht_iterator_end(str *iname)
 {
-	int i;
+	int k;
 
-	for(i=0; i<HT_ITERATOR_SIZE; i++)
+	k = ht_iterator_find(iname);
+	if(k==-1 || _ht_iterators[k].name.len<=0)
 	{
-		if(_ht_iterators[i].name.len>0)
-		{
-			if(_ht_iterators[i].name.len==iname->len
-					&& strncmp(_ht_iterators[i].name.s, iname->s, iname->len)==0)
-			{
-				if(_ht_iterators[i].ht!=NULL && _ht_iterators[i].it!=NULL)
-				{
-					if(_ht_iterators[i].slot>=0 && _ht_iterators[i].slot<_ht_iterators[i].ht->htsize)
-					{
-						ht_slot_unlock(_ht_iterators[i].ht, _ht_iterators[i].slot);
-					}
-				}
-				memset(&_ht_iterators[i], 0, sizeof(ht_iterator_t));
-				return 0;
-			}
-		}
+		LM_ERR("iterator not found [%.*s]\n", iname->len, iname->s);
+		return -1;
 	}
 
-	return -1;
+	if(_ht_iterators[k].ht!=NULL && _ht_iterators[k].it!=NULL)
+	{
+		if(_ht_iterators[k].slot>=0 && _ht_iterators[k].slot<_ht_iterators[k].ht->htsize)
+		{
+			ht_slot_unlock(_ht_iterators[k].ht, _ht_iterators[k].slot);
+		}
+	}
+	memset(&_ht_iterators[k], 0, sizeof(ht_iterator_t));
+	return 0;
 }
 
 ht_cell_t* ht_iterator_get_current(str *iname)
 {
-	int i;
+	int k;
+
 	if(iname==NULL || iname->len<=0)
 		return NULL;
 
-	for(i=0; i<HT_ITERATOR_SIZE; i++)
-	{
-		if(_ht_iterators[i].name.len>0)
-		{
-			if(_ht_iterators[i].name.len==iname->len
-					&& strncmp(_ht_iterators[i].name.s, iname->s, iname->len)==0)
-			{
-				return _ht_iterators[i].it;
-			}
-		}
+	k = ht_iterator_find(iname);
+	if(k==-1 || _ht_iterators[k].name.len<=0) {
+		LM_DBG("iterator not found [%.*s]\n", iname->len, iname->s);
+		return NULL;
 	}
-	return NULL;
+
+	return _ht_iterators[k].it;
 }
