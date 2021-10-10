@@ -3267,6 +3267,7 @@ int build_sip_msg_from_buf(struct sip_msg *msg, char *buf, int len,
 int sip_msg_update_buffer(sip_msg_t *msg, str *obuf)
 {
 	sip_msg_t tmp;
+	int res;
 
 	if(obuf==NULL || obuf->s==NULL || obuf->len<=0) {
 		LM_ERR("invalid buffer parameter\n");
@@ -3326,6 +3327,13 @@ int sip_msg_update_buffer(sip_msg_t *msg, str *obuf)
 		LM_ERR("parsing new sip message failed [[%.*s]]\n", msg->len, msg->buf);
 		/* exit config execution - sip_msg_t structure is no longer
 		 * valid/safe for config */
+		return 0;
+	}
+
+	//parse all the headers again
+	res = parse_headers(msg, HDR_EOH_F, 0);
+	if (res == -1) {
+		LM_ERR("Error while parsing headers (%d)\n", res);
 		return 0;
 	}
 
