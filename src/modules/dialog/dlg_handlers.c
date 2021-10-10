@@ -1319,13 +1319,21 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 
 			dlg = dlg_lookup(h_entry, h_id);
 			if (dlg==0) {
+
+				char *callid_s = "(no-call-id)";
+				int callid_len = 12; 
+				if (req->callid != 0) {
+					callid_s = req->callid->body.s; 
+					callid_len = req->callid->body.len;
+				}
+
 				LM_WARN("unable to find dialog for %.*s "
 					"with route param '%.*s' [%u:%u] "
 					"and call-id '%.*s'\n",
 					req->first_line.u.request.method.len,
 					req->first_line.u.request.method.s,
 					val.len,val.s, h_entry, h_id,
-					req->callid->body.len, req->callid->body.s);
+					callid_len, callid_s);
 				if (seq_match_mode==SEQ_MATCH_STRICT_ID )
 					return;
 			} else {
