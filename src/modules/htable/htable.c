@@ -81,6 +81,8 @@ static int w_ht_iterator_start(struct sip_msg* msg, char* iname, char* hname);
 static int w_ht_iterator_next(struct sip_msg* msg, char* iname, char* foo);
 static int w_ht_iterator_end(struct sip_msg* msg, char* iname, char* foo);
 static int w_ht_iterator_rm(struct sip_msg* msg, char* iname, char* foo);
+static int w_ht_iterator_sets(struct sip_msg* msg, char* iname, char* val);
+static int w_ht_iterator_seti(struct sip_msg* msg, char* iname, char* val);
 
 int ht_param(modparam_t type, void* val);
 
@@ -143,6 +145,11 @@ static cmd_export_t cmds[]={
 		ANY_ROUTE},
 	{"sht_iterator_rm",	(cmd_function)w_ht_iterator_rm,	1, fixup_spve_null, 0,
 		ANY_ROUTE},
+	{"sht_iterator_sets",	(cmd_function)w_ht_iterator_sets,	2, fixup_spve_spve,
+		fixup_free_spve_spve, ANY_ROUTE},
+	{"sht_iterator_seti",	(cmd_function)w_ht_iterator_seti,	2, fixup_spve_igp,
+		fixup_free_spve_igp, ANY_ROUTE},
+
 	{"bind_htable",     (cmd_function)bind_htable,     0, 0, 0,
 		ANY_ROUTE},
 	{0,0,0,0,0,0}
@@ -817,6 +824,70 @@ static int ki_ht_iterator_rm(sip_msg_t *msg, str *iname)
 	}
 	ret = ht_iterator_rm(iname);
 	return (ret==0)?1:ret;
+}
+
+static int ki_ht_iterator_sets(sip_msg_t *msg, str *iname, str *sval)
+{
+	int ret;
+
+	if(iname==NULL || iname->s==NULL || iname->len<=0) {
+		LM_ERR("invalid parameters\n");
+		return -1;
+	}
+
+	ret = ht_iterator_sets(iname, sval);
+	return (ret==0)?1:ret;
+}
+
+static int w_ht_iterator_sets(struct sip_msg* msg, char* iname, char* val)
+{
+	str siname;
+	str sval;
+
+	if(fixup_get_svalue(msg, (gparam_t*)iname, &siname)<0)
+	{
+		LM_ERR("cannot get iterator name\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)val, &sval)<0)
+	{
+		LM_ERR("cannot get value\n");
+		return -1;
+	}
+
+	return ki_ht_iterator_sets(msg, &siname, &sval);
+}
+
+static int ki_ht_iterator_seti(sip_msg_t *msg, str *iname, int ival)
+{
+	int ret;
+
+	if(iname==NULL || iname->s==NULL || iname->len<=0) {
+		LM_ERR("invalid parameters\n");
+		return -1;
+	}
+
+	ret = ht_iterator_seti(iname, ival);
+	return (ret==0)?1:ret;
+}
+
+static int w_ht_iterator_seti(struct sip_msg* msg, char* iname, char* val)
+{
+	str siname;
+	int ival;
+
+	if(fixup_get_svalue(msg, (gparam_t*)iname, &siname)<0 || siname.len<=0)
+	{
+		LM_ERR("cannot get iterator name\n");
+		return -1;
+	}
+	if(fixup_get_ivalue(msg, (gparam_t*)val, &ival)<0)
+	{
+		LM_ERR("cannot get value\n");
+		return -1;
+	}
+
+	return ki_ht_iterator_seti(msg, &siname, ival);
 }
 
 static int ki_ht_slot_xlock(sip_msg_t *msg, str *htname, str *skey, int lmode)
@@ -1905,6 +1976,16 @@ static sr_kemi_t sr_kemi_htable_exports[] = {
 	{ str_init("htable"), str_init("sht_iterator_rm"),
 		SR_KEMIP_INT, ki_ht_iterator_rm,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("htable"), str_init("sht_iterator_sets"),
+		SR_KEMIP_INT, ki_ht_iterator_sets,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("htable"), str_init("sht_iterator_seti"),
+		SR_KEMIP_INT, ki_ht_iterator_seti,
+		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("htable"), str_init("sht_rm"),

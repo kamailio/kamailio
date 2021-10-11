@@ -1878,6 +1878,106 @@ int ht_iterator_rm(str *iname)
 	return -2;
 }
 
+int ht_iterator_sets(str *iname, str *sval)
+{
+	int k;
+	ht_cell_t *itb;
+	unsigned int hid;
+	ht_cell_t *cell;
+	int_str isvalue;
+
+	k = ht_iterator_find(iname);
+	if(k==-1) {
+		LM_ERR("iterator not found [%.*s]\n", iname->len, iname->s);
+		return -1;
+	}
+	if(_ht_iterators[k].ht==NULL) {
+		LM_ERR("iterator not initialized [%.*s]\n", iname->len, iname->s);
+		return -1;
+	}
+	if(_ht_iterators[k].it==NULL) {
+		LM_ERR("iterator not used [%.*s]\n", iname->len, iname->s);
+		return -1;
+	}
+
+	itb = _ht_iterators[k].it;
+
+	/* update value */
+	if(itb->flags&AVP_VAL_STR) {
+		if(itb->value.s.len >= sval->len) {
+			/* copy */
+			itb->value.s.len = sval->len;
+			memcpy(itb->value.s.s, sval->s, sval->len);
+			itb->value.s.s[itb->value.s.len] = '\0';
+
+			if(_ht_iterators[k].ht->updateexpire) {
+				itb->expire = time(NULL) + _ht_iterators[k].ht->htexpire;
+			}
+			return 0;
+		}
+	}
+	/* new */
+	hid = ht_compute_hash(&itb->name);
+
+	isvalue.s = *sval;
+
+	cell = ht_cell_new(&itb->name, AVP_VAL_STR, &isvalue, hid);
+	if(cell == NULL) {
+		LM_ERR("cannot create new cell\n");
+		return -1;
+	}
+	cell->next = itb->next;
+	cell->prev = itb->prev;
+	if(_ht_iterators[k].ht->updateexpire) {
+		cell->expire = time(NULL) + _ht_iterators[k].ht->htexpire;
+	} else {
+		cell->expire = itb->expire;
+	}
+	if(itb->prev)
+		itb->prev->next = cell;
+	else
+		_ht_iterators[k].ht->entries[_ht_iterators[k].slot].first = cell;
+	if(itb->next)
+		itb->next->prev = cell;
+	ht_cell_free(itb);
+	_ht_iterators[k].it = cell;
+
+	return 0;
+}
+
+int ht_iterator_seti(str *iname, int ival)
+{
+	int k;
+	ht_cell_t *itb;
+
+	k = ht_iterator_find(iname);
+	if(k==-1) {
+		LM_ERR("iterator not found [%.*s]\n", iname->len, iname->s);
+		return -1;
+	}
+	if(_ht_iterators[k].ht==NULL) {
+		LM_ERR("iterator not initialized [%.*s]\n", iname->len, iname->s);
+		return -1;
+	}
+	if(_ht_iterators[k].it==NULL) {
+		LM_ERR("iterator not used [%.*s]\n", iname->len, iname->s);
+		return -1;
+	}
+
+	itb = _ht_iterators[k].it;
+
+	/* update value */
+	if(itb->flags&AVP_VAL_STR) {
+		itb->flags &= ~AVP_VAL_STR;
+	}
+	itb->value.n = ival;
+
+	if(_ht_iterators[k].ht->updateexpire) {
+		itb->expire = time(NULL) + _ht_iterators[k].ht->htexpire;
+	}
+	return 0;
+}
+
 ht_cell_t* ht_iterator_get_current(str *iname)
 {
 	int k;
