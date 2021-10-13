@@ -3315,7 +3315,13 @@ int sip_msg_update_buffer(sip_msg_t *msg, str *obuf)
 		 * valid/safe for config */
 		return 0;
 	}
-
+	if(parse_headers(msg, HDR_FROM_F|HDR_TO_F|HDR_CALLID_F|HDR_CSEQ_F, 0) < 0) {
+		LM_ERR("parsing main headers of new sip message failed [[%.*s]]\n",
+				msg->len, msg->buf);
+		/* exit config execution - sip_msg_t structure is no longer
+		 * valid/safe for config */
+		return 0;
+	}
 	return 1;
 }
 
