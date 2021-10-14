@@ -344,10 +344,7 @@ static int ki_dlgs_tags_count(sip_msg_t *msg, str *vtags)
 	int ret;
 
 	ret = dlgs_tags_count(msg, vtags);
-	if(ret<=0) {
-		return (ret-1);
-	}
-	return 1;
+	return (ret<=0)?(ret-1):ret;
 }
 
 /**
