@@ -925,9 +925,9 @@ static int comp_gws(const void *_g1, const void *_g2)
  * Compare a gateway using IP address and the src port
  */
 static struct gw_info * find_gateway_by_ip_and_port(struct gw_info * gw, struct gw_info * gws) {
-	int tmp = 0, gw_index = 0;
+	int tmp = 0, gw_index = 0, i;
 
-	for (int i = 1; i <= gws[0].ip_addr.u.addr32[0]; i++) {
+	for (i = 1; i <= gws[0].ip_addr.u.addr32[0]; i++) {
 		tmp = memcmp(gws[i].ip_addr.u.addr, gw->ip_addr.u.addr, gws[i].ip_addr.len);
 		if (gws[i].ip_addr.af == gw->ip_addr.af &&
 			gws[i].ip_addr.len == gw->ip_addr.len &&
