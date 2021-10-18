@@ -1478,7 +1478,12 @@ inline static struct tcp_connection*  tcpconn_add(struct tcp_connection *c)
 		 * the second alias is for (peer_ip, peer_port, local_addr, 0) -- for
 		 *  finding any conenction to peer_ip, peer_port from local_addr 
 		 * the third alias is for (peer_ip, peer_port, local_addr, local_port) 
-		 *   -- for finding if a fully specified connection exists */
+		 *   -- for finding if a fully specified connection exists 
+		 * the fourth alias is for (peer_ip, peer_port, cinfo_addr, 0) -- for
+		 *  finding any connection to peer_ip, peer_port from address stored into cinfo (e.g. when proxy protocol is used)
+		 * the fifth alias is for (peer_ip, peer_port, cinfo_addr, cinfo_port) 
+		 *   -- for finding if a fully specified connection exists using address
+		 *      and port stored into cinfo*/
 		_tcpconn_add_alias_unsafe(c, c->rcv.src_port, &zero_ip, 0,
 													new_conn_alias_flags);
 		if (likely(c->rcv.dst_ip.af && ! ip_addr_any(&c->rcv.dst_ip))){
@@ -1487,6 +1492,14 @@ inline static struct tcp_connection*  tcpconn_add(struct tcp_connection *c)
 			_tcpconn_add_alias_unsafe(c, c->rcv.src_port, &c->rcv.dst_ip,
 									c->rcv.dst_port, new_conn_alias_flags);
 		}
+		if (unlikely(c->cinfo.dst_ip.af && ! ip_addr_any(&c->cinfo.dst_ip) &&
+									! ip_addr_cmp(&c->rcv.dst_ip, &c->cinfo.dst_ip))){
+			_tcpconn_add_alias_unsafe(c, c->rcv.src_port, &c->cinfo.dst_ip, 0,
+													new_conn_alias_flags);
+			_tcpconn_add_alias_unsafe(c, c->rcv.src_port, &c->cinfo.dst_ip, c->cinfo.dst_port,
+													new_conn_alias_flags);
+		}
+
 		/* ignore add_alias errors, there are some valid cases when one
 		 *  of the add_alias would fail (e.g. first add_alias for 2 connections
 		 *   with the same destination but different src. ip*/
@@ -1604,7 +1617,8 @@ struct tcp_connection* _tcpconn_find(int id, struct ip_addr* ip, int port,
 					((l_port==0) || (l_port==a->parent->rcv.dst_port)) &&
 					(ip_addr_cmp(ip, &a->parent->rcv.src_ip)) &&
 					(is_local_ip_any ||
-						ip_addr_cmp(l_ip, &a->parent->rcv.dst_ip))
+						ip_addr_cmp(l_ip, &a->parent->rcv.dst_ip) ||
+						ip_addr_cmp(l_ip, &a->parent->cinfo.dst_ip))
 			   ) {
 				LM_DBG("found connection by peer address (id: %d)\n",
 						a->parent->id);
