@@ -2707,7 +2707,8 @@ select_node:
 		}
 
 		cp = send_rtpp_command(node, ng_flags.dict, &ret);
-		if (cp == NULL) {
+		/* if node is disabled permanent, don't recheck it later */
+		if (cp == NULL && node->rn_recheck_ticks != RTPENGINE_MAX_RECHECK_TICKS) {
 			node->rn_disabled = 1;
 			node->rn_recheck_ticks = get_ticks() + cfg_get(rtpengine,rtpengine_cfg,rtpengine_disable_tout);
 		}
