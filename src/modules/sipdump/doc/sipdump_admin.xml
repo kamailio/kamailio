@@ -339,8 +339,8 @@ event_route[sipdump:msg] {
 		</para>
 <programlisting  format="linespecific">
 ...
-loadmodule "rtimer.so
-loadmodule "exec.so
+loadmodule "rtimer.so"
+loadmodule "exec.so"
 ...
 modparam("rtimer", "timer", "name=tjobs;interval=300;mode=1;")
 modparam("rtimer", "exec", "timer=tjobs;route=TCLEAN")
