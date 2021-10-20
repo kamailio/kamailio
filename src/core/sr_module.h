@@ -138,7 +138,7 @@ typedef int (*param_func_t)( modparam_t type, void* val);
 	((fixup) ? (fixup)(param, param_no) : 0)
 
 /* Macros - used as rank in child_init function */
-#define PROC_MAIN      0  /**< Main ser process */
+#define PROC_MAIN      0  /**< Main process */
 #define PROC_TIMER    -1  /**< Timer attendant process */
 #define PROC_RPC      -2  /**< RPC type process */
 #define PROC_FIFO      PROC_RPC  /**< FIFO attendant process */

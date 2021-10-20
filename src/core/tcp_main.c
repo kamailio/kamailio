@@ -3717,9 +3717,9 @@ error:
 
 
 
-/* handles io from a "generic" ser process (get fd or new_fd from a tcp_send)
+/* handles io from a "generic" process (get fd or new_fd from a tcp_send)
  * 
- * params: p     - pointer in the ser processes array (pt[]), to the entry for
+ * params: p     - pointer in the processes array (pt[]), to the entry for
  *                 which an io event was detected
  *         fd_i  - fd index in the fd_array (useful for optimizing
  *                 io_watch_deletes)
@@ -4636,7 +4636,7 @@ static inline void tcp_timer_run(void)
 
 /* keep in sync with tcpconn_destroy, the "delete" part should be
  * the same except for io_watch_del..
- * Note: this function is called only on shutdown by the main ser process via
+ * Note: this function is called only on shutdown by the main process via
  * cleanup(). However it's also safe to call it from the tcp_main process.
  * => with the ser shutdown exception, it cannot execute in parallel
  * with tcpconn_add() or tcpconn_destroy()*/
@@ -4750,7 +4750,7 @@ void tcp_main_loop()
 		}
 	}
 #endif
-	/* add all the unix sockets used for communcation with other ser processes
+	/* add all the unix sockets used for communcation with other processes
 	 *  (get fd, new connection a.s.o) */
 	for (r=1; r<process_no; r++){
 		if (pt[r].unix_sock>0) /* we can't have 0, we never close it!*/
