@@ -2881,6 +2881,16 @@ tls_ca() {
 		minfo "Certificate is locate at $USER_DIR/$USER-cert.pem "
 		minfo "CA-List is locate at $USER_DIR/$USER-calist.pem "
 
+	elif [ "$1" = "gen-certs" ] ; then
+		mecho "Generating self signed certificates"
+		if [ -z "$CERTDAYS" ] ; then
+			CERTDAYS=365
+		fi
+		if [ -n "$2" ] ; then
+			openssl req -x509 -newkey rsa:4096 -nodes -subj "/CN=${2}" -keyout kamailio-selfsigned.key -out kamailio-selfsigned.pem -days ${CERTDAYS}
+		else
+			openssl req -x509 -newkey rsa:4096 -nodes -keyout kamailio-selfsigned.key -out kamailio-selfsigned.pem -days ${CERTDAYS}
+		fi
 	else
 		merr "unknown TLS command $1"
 		usage_tls

@@ -381,9 +381,10 @@ usage_tls() {
 	mecho " -- command 'tls'"
 	echo
 cat <<EOF
- tls rootCA [<etcdir>] .......... creates new rootCA
+ tls rootCA [<etcdir>] ............ creates new rootCA
  tls userCERT <user> [<etcdir>] ... creates user certificate
- default <etcdir> is $ETCDIR/tls
+ * default <etcdir> is $ETCDIR/tls
+ tls gen-certs [<domain>] ......... generate self signed certificate
 EOF
 }
 
