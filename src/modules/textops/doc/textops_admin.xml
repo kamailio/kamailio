@@ -901,7 +901,7 @@ set_reply_body("test", "text/plain");
 		<programlisting format="linespecific">
 ...
 if (has_body("multipart/mixed")) {
-    if (filter_body("application/sdp") {
+    if (filter_body("application/sdp")) {
         remove_hf("Content-Type");
         append_hf("Content-Type: application/sdp\r\n");
     } else {
