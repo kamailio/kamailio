@@ -72,6 +72,8 @@
  */
 #define FL_REQ_UPSTREAM (1<<29)
 
+extern int acc_extra_size;
+
 void acc_log_init(void);
 int  acc_log_request( struct sip_msg *req);
 
@@ -87,5 +89,8 @@ int  acc_get_db_handlers(void **vf, void **vh);
 
 int  is_eng_acc_on(sip_msg_t *msg);
 int  is_eng_mc_on(sip_msg_t *msg);
+
+int acc_arrays_alloc(void);
+void acc_arrays_free(void);
 
 #endif

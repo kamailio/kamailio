@@ -75,10 +75,10 @@ static char time_buffer[ TIME_BUFFER_LENGTH];
 static const str empty_string = { "", 0};
 
 // buffers which are used to collect the crd data for writing
-static str cdr_attrs[ MAX_CDR_CORE + MAX_CDR_EXTRA];
-static str cdr_value_array[ MAX_CDR_CORE + MAX_CDR_EXTRA];
-static int cdr_int_array[ MAX_CDR_CORE + MAX_CDR_EXTRA];
-static char cdr_type_array[ MAX_CDR_CORE + MAX_CDR_EXTRA];
+static str *cdr_attrs = NULL;
+static str *cdr_value_array = NULL;
+static int *cdr_int_array = NULL;
+static char *cdr_type_array = NULL;
 
 extern struct tm_binds tmb;
 extern str cdr_start_str;
@@ -123,8 +123,8 @@ int cdr_core2strar( struct dlg_cell* dlg,
 }
 
 /* caution: keys need to be aligned to core format */
-static db_key_t db_cdr_keys[ MAX_CDR_CORE + MAX_CDR_EXTRA];
-static db_val_t db_cdr_vals[ MAX_CDR_CORE + MAX_CDR_EXTRA];
+static db_key_t *db_cdr_keys = NULL;
+static db_val_t *db_cdr_vals = NULL;
 
 /* collect all crd data and write it to a syslog */
 static int db_write_cdr( struct dlg_cell* dialog,
@@ -996,4 +996,66 @@ void cdr_api_set_arrays(cdr_info_t *inf)
 	inf->varr = cdr_value_array;
 	inf->iarr = cdr_int_array;
 	inf->tarr = cdr_type_array;
+}
+
+int cdr_arrays_alloc(void) {
+	if ((cdr_attrs = pkg_malloc((MAX_CDR_CORE + cdr_extra_size) * sizeof(str))) == NULL) {
+		LM_ERR("failed to alloc cdr_attrs\n");
+		return -1;
+	}
+
+	if ((cdr_value_array = pkg_malloc((MAX_CDR_CORE + cdr_extra_size) * sizeof(str))) == NULL) {
+		LM_ERR("failed to alloc cdr_value_array\n");
+		return -1;
+	}
+
+	if ((cdr_int_array = pkg_malloc((MAX_CDR_CORE + cdr_extra_size) * sizeof(int))) == NULL) {
+		LM_ERR("failed to alloc cdr_int_array\n");
+		return -1;
+	}
+
+	if ((cdr_type_array = pkg_malloc((MAX_CDR_CORE + cdr_extra_size) * sizeof(char))) == NULL) {
+		LM_ERR("failed to alloc cdr_type_array\n");
+		return -1;
+	}
+
+	if ((db_cdr_keys = pkg_malloc((MAX_CDR_CORE + cdr_extra_size) * sizeof(db_key_t))) == NULL) {
+		LM_ERR("failed to alloc db_cdr_keys\n");
+		return -1;
+	}
+
+	if ((db_cdr_vals = pkg_malloc((MAX_CDR_CORE + cdr_extra_size) * sizeof(db_val_t))) == NULL) {
+		LM_ERR("failed to alloc db_cdr_vals\n");
+		return -1;
+	}
+
+	return 1;
+}
+
+void cdr_arrays_free(void) {
+	if (cdr_attrs) {
+		pkg_free(cdr_attrs);
+	}
+
+	if (cdr_value_array) {
+		pkg_free(cdr_value_array);
+	}
+
+	if (cdr_int_array) {
+		pkg_free(cdr_int_array);
+	}
+
+	if (cdr_type_array) {
+		pkg_free(cdr_type_array);
+	}
+
+	if (db_cdr_keys) {
+		pkg_free(db_cdr_keys);
+	}
+
+	if (db_cdr_vals) {
+		pkg_free(db_cdr_vals);
+	}
+
+	return ;
 }

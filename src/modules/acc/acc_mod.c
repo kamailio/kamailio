@@ -95,6 +95,9 @@ str acc_time_exten  = str_init("time_exten");
 int _acc_clone_msg  = 1;
 int _acc_cdr_on_failed = 1;
 
+int acc_extra_size = MAX_ACC_EXTRA;
+int cdr_extra_size = MAX_CDR_EXTRA;
+
 /*@}*/
 
 /* ----- SYSLOG acc variables ----------- */
@@ -242,6 +245,8 @@ static param_export_t params[] = {
 	{"time_format",          PARAM_STRING, &acc_time_format   },
 	{"clone_msg",            PARAM_INT, &_acc_clone_msg       },
 	{"cdr_on_failed",        PARAM_INT, &_acc_cdr_on_failed   },
+	{"acc_extra_size",       PARAM_INT, &acc_extra_size},
+	{"cdr_extra_size",       PARAM_INT, &cdr_extra_size},
 	{0,0,0}
 };
 
@@ -369,6 +374,19 @@ static int parse_failed_filter(char *s, unsigned short *failed_filter)
 
 static int mod_init( void )
 {
+	/* arrays alloc */
+	if (acc_arrays_alloc() < 0) {
+		return -1;
+	}
+
+	if (acc_extra_arrays_alloc() < 0) {
+		return -1;
+	}
+
+	if (cdr_arrays_alloc() < 0) {
+		return -1;
+	}
+
 	if (db_url.s) {
 		if(db_url.len<=0) {
 			db_url.s = NULL;
@@ -600,6 +618,11 @@ static void destroy(void)
 	acc_db_close();
 	if (db_extra)
 		destroy_extras( db_extra);
+
+	/* arrays free */
+	acc_arrays_free();
+	acc_extra_arrays_free();
+	cdr_arrays_free();
 }
 
 
