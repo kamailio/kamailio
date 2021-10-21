@@ -83,9 +83,14 @@ int dbcl_init_dbf(dbcl_cls_t *cls);
 int dbcl_init_connections(dbcl_cls_t *cls);
 int dbcl_close_connections(dbcl_cls_t *cls);
 dbcl_cls_t *dbcl_get_cluster(str *name);
+dbcl_con_t *dbcl_get_connection(str *name);
+dbcl_cls_t *dbcl_get_cluster_root();
+dbcl_con_t *dbcl_get_connection_root();
 
 int dbcl_valid_con(dbcl_con_t *sc);
 int dbcl_inactive_con(dbcl_con_t *sc);
+int dbcl_disable_con(dbcl_con_t *sc, int seconds);
+int dbcl_enable_con(dbcl_con_t *sc);
 
 int dbcl_parse_con_param(char *val);
 int dbcl_parse_cls_param(char *val);
