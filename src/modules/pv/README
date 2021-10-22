@@ -158,8 +158,8 @@ Chapter 1. Admin Guide
 
 3.1. shvset (string)
 
-   Set the value of a shared variable ($shv(name)). The parameter can be
-   set many times.
+   Set the initial value of a shared variable ($shv(name)). The parameter
+   can be set many times.
 
    The value of the parameter has the format: _name_ '=' _type_ ':'
    _value_
@@ -168,6 +168,10 @@ Chapter 1. Admin Guide
           + “i”: integer value
           + “s”: string value
      * _value_: value to be set
+
+   Note: this is special useful for usage with KEMI scripts, the $shv(...)
+   variables must be defined during Kamailio initialization in order to
+   become available in all worker processes.
 
    Default value is “NULL”.
 

@@ -515,9 +515,9 @@ record_route_advertised_address("1.2.3.4:5080");
 
    Adds a parameter to the Record-Route URI (param must be in
    “;name=value” format. The function may be called also before or after
-   the record_route() or record_route_advertised_address() calls (see
-   Section 5.2, “record_route([sparams])” or Section 5.5,
-   “record_route_advertised_address(address)”)).
+   the record_route(), record_route_advertised_address(), and
+   record_route_preset() calls (see Section 5.2, “record_route([sparams])”
+   or Section 5.5, “record_route_advertised_address(address)”)).
 
    Meaning of the parameters is as follows:
      * param - String containing the URI parameter to be added. It must
