@@ -1169,6 +1169,31 @@ sht_iterator_end("i1");
 </programlisting>
 		</example>
 	</section>
+	<section id="htable.f.sht_iterator_setex">
+		<title>
+		<function moreinfo="none">sht_iterator_setex(iname, exval)</function>
+		</title>
+		<para>
+			Set the expire of the current item to the integer in the exval.
+		</para>
+		<para>
+			The parameters can be dynamic strings or integers with variables.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>sht_iterator_setex</function> usage</title>
+		<programlisting format="linespecific">
+...
+    sht_iterator_start("i1", "h1");
+    sht_iterator_next("i1");
+    sht_iterator_setex("i1", "120");
+    sht_iterator_end("i1");
+...
+</programlisting>
+		</example>
+	</section>
 	<section id="htable.f.sht_match_name">
 		<title>
 		<function moreinfo="none">sht_match_name(htable, op, mval)</function>

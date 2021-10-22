@@ -1978,6 +1978,33 @@ int ht_iterator_seti(str *iname, int ival)
 	return 0;
 }
 
+int ht_iterator_setex(str *iname, int exval)
+{
+	int k;
+	ht_cell_t *itb;
+
+	k = ht_iterator_find(iname);
+	if(k==-1) {
+		LM_ERR("iterator not found [%.*s]\n", iname->len, iname->s);
+		return -1;
+	}
+	if(_ht_iterators[k].ht==NULL) {
+		LM_ERR("iterator not initialized [%.*s]\n", iname->len, iname->s);
+		return -1;
+	}
+	if(_ht_iterators[k].it==NULL) {
+		LM_ERR("iterator not used [%.*s]\n", iname->len, iname->s);
+		return -1;
+	}
+
+	itb = _ht_iterators[k].it;
+
+	/* update expire */
+	itb->expire = time(NULL) + exval;
+
+	return 0;
+}
+
 ht_cell_t* ht_iterator_get_current(str *iname)
 {
 	int k;

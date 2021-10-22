@@ -132,6 +132,7 @@ int ht_iterator_end(str *iname);
 int ht_iterator_rm(str *iname);
 int ht_iterator_sets(str *iname, str *sval);
 int ht_iterator_seti(str *iname, int ival);
+int ht_iterator_setex(str *iname, int exval);
 ht_cell_t* ht_iterator_get_current(str *iname);
 
 void ht_slot_lock(ht_t *ht, int idx);
