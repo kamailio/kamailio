@@ -35,6 +35,8 @@
 #include "compiler_opt.h"
 #include "cfg_core.h"
 
+#define TIME_T_FMT "lld"
+#define TIME_T_CAST(x) ((long long)(x))
 
 /** dicover the function name */
 /* C >= 99 has __func__, older gcc versions have __FUNCTION__ */
