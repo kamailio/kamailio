@@ -91,8 +91,11 @@ inline static void destroy_rlist(struct route_list* rt)
 		rt->entries=0;
 	}
 	if (rt->names.table){
-		clist_foreach_safe(rt->names.table, e, tmp, next){
-			pkg_free(e);
+		int i;
+		for(i = 0; i < RT_HASH_SIZE; i++) {
+			clist_foreach_safe(&rt->names.table[i], e, tmp, next) {
+				pkg_free(e);
+			}
 		}
 		pkg_free(rt->names.table);
 		rt->names.table=0;
