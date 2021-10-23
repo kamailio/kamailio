@@ -69,10 +69,11 @@ Ovidiu Sas
               4.13. sht_iterator_rm(iname)
               4.14. sht_iterator_sets(iname, sval)
               4.15. sht_iterator_seti(iname, ival)
-              4.16. sht_match_name(htable, op, mval)
-              4.17. sht_has_name(htable, op, mval)
-              4.18. sht_match_str_value(htable, op, mval)
-              4.19. sht_has_str_value(htable, op, mval)
+              4.16. sht_iterator_setex(iname, exval)
+              4.17. sht_match_name(htable, op, mval)
+              4.18. sht_has_name(htable, op, mval)
+              4.19. sht_match_str_value(htable, op, mval)
+              4.20. sht_has_str_value(htable, op, mval)
 
         5. Exported pseudo-variables
         6. RPC Commands
@@ -129,8 +130,9 @@ Ovidiu Sas
    1.32. sht_iterator_rm usage
    1.33. sht_iterator_sets usage
    1.34. sht_iterator_seti usage
-   1.35. sht_match_name usage
+   1.35. sht_iterator_setex usage
    1.36. sht_match_name usage
+   1.37. sht_match_name usage
 
 Chapter 1. Admin Guide
 
@@ -179,10 +181,11 @@ Chapter 1. Admin Guide
         4.13. sht_iterator_rm(iname)
         4.14. sht_iterator_sets(iname, sval)
         4.15. sht_iterator_seti(iname, ival)
-        4.16. sht_match_name(htable, op, mval)
-        4.17. sht_has_name(htable, op, mval)
-        4.18. sht_match_str_value(htable, op, mval)
-        4.19. sht_has_str_value(htable, op, mval)
+        4.16. sht_iterator_setex(iname, exval)
+        4.17. sht_match_name(htable, op, mval)
+        4.18. sht_has_name(htable, op, mval)
+        4.19. sht_match_str_value(htable, op, mval)
+        4.20. sht_has_str_value(htable, op, mval)
 
    5. Exported pseudo-variables
    6. RPC Commands
@@ -730,10 +733,11 @@ modparam("htable", "event_callback_mode", 1)
    4.13. sht_iterator_rm(iname)
    4.14. sht_iterator_sets(iname, sval)
    4.15. sht_iterator_seti(iname, ival)
-   4.16. sht_match_name(htable, op, mval)
-   4.17. sht_has_name(htable, op, mval)
-   4.18. sht_match_str_value(htable, op, mval)
-   4.19. sht_has_str_value(htable, op, mval)
+   4.16. sht_iterator_setex(iname, exval)
+   4.17. sht_match_name(htable, op, mval)
+   4.18. sht_has_name(htable, op, mval)
+   4.19. sht_match_str_value(htable, op, mval)
+   4.20. sht_has_str_value(htable, op, mval)
 
 4.1.  sht_print()
 
@@ -980,7 +984,23 @@ sht_iterator_end("i1");
     sht_iterator_end("i1");
 ...
 
-4.16.  sht_match_name(htable, op, mval)
+4.16.  sht_iterator_setex(iname, exval)
+
+   Set the expire of the current item to the integer in the exval.
+
+   The parameters can be dynamic strings or integers with variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.35. sht_iterator_setex usage
+...
+    sht_iterator_start("i1", "h1");
+    sht_iterator_next("i1");
+    sht_iterator_setex("i1", "120");
+    sht_iterator_end("i1");
+...
+
+4.17.  sht_match_name(htable, op, mval)
 
    Return greater than 0 (true) if the htable has an item that matches the
    name against the mval parameter.
@@ -995,18 +1015,18 @@ sht_iterator_end("i1");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.35. sht_match_name usage
+   Example 1.36. sht_match_name usage
 ...
 if(sht_match_name("ha", "eq", "alice")) {
   ...
 }
 ...
 
-4.17.  sht_has_name(htable, op, mval)
+4.18.  sht_has_name(htable, op, mval)
 
    Alias for sht_match_name().
 
-4.18.  sht_match_str_value(htable, op, mval)
+4.19.  sht_match_str_value(htable, op, mval)
 
    Return greater than 0 (true) if the htable has an item that matches the
    string value against the mval parameter.
@@ -1021,14 +1041,14 @@ if(sht_match_name("ha", "eq", "alice")) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.36. sht_match_name usage
+   Example 1.37. sht_match_name usage
 ...
 if(sht_match_str_value("ha", "eq", "alice")) {
   ...
 }
 ...
 
-4.19.  sht_has_str_value(htable, op, mval)
+4.20.  sht_has_str_value(htable, op, mval)
 
    Alias for sht_match_str_value().
 
