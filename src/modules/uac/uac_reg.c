@@ -1011,6 +1011,20 @@ void uac_reg_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 		uac_r.cb  = uac_reg_tm_callback;
 		/* Callback parameter */
 		uac_r.cbp = (void*)uuid;
+
+		if(ri->socket.s != NULL && ri->socket.len > 0) {
+                        /* custom socket */
+                        LM_DBG("using custom socket %.*s to send request\n",
+                                ri->socket.len, ri->socket.s);
+                        uac_r.ssock = &ri->socket;
+                } else {
+                        /* default socket */
+                        if(uac_default_socket.s != NULL && uac_default_socket.len > 0) {
+                                LM_DBG("using configured default_socket to send request\n");
+                                uac_r.ssock = &uac_default_socket;
+                        }
+                }
+
 		ret = uac_tmb.t_request_within(&uac_r);
 
 		if(ret<0) {
