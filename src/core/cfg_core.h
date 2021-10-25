@@ -103,6 +103,7 @@ struct cfg_group_core {
 	int mem_safety; /*!< memory safety control option */
 	int mem_join; /*!< memory free fragments join option */
 	int mem_status_mode; /*!< memory status printed for free/all fragments */
+	int sip_parser_log_oneline; /*!< sip msg on one line */
 	int sip_parser_log; /*!< sip msg parser error log level*/
 	int corelog; /*!< log level for non-critcal core error messages */
 	int latency_cfg_log; /*!< log level for printing latency of routing blocks */

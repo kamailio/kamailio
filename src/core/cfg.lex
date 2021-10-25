@@ -373,6 +373,7 @@ MEMSAFETY	"mem_safety"
 MEMJOIN		"mem_join"
 MEMSTATUSMODE		"mem_status_mode"
 CORELOG		"corelog"|"core_log"
+SIP_PARSER_LOG_ONELINE "sip_parser_log_oneline"
 SIP_PARSER_LOG "sip_parser_log"
 SIP_PARSER_MODE "sip_parser_mode"
 SIP_WARNING sip_warning
@@ -835,6 +836,7 @@ IMPORTFILE      "import_file"
 <INITIAL>{MEMSAFETY}	{ count(); yylval.strval=yytext; return MEMSAFETY; }
 <INITIAL>{MEMJOIN}	{ count(); yylval.strval=yytext; return MEMJOIN; }
 <INITIAL>{MEMSTATUSMODE}	{ count(); yylval.strval=yytext; return MEMSTATUSMODE; }
+<INITIAL>{SIP_PARSER_LOG_ONELINE}  { count(); yylval.strval=yytext; return SIP_PARSER_LOG_ONELINE; }
 <INITIAL>{SIP_PARSER_LOG}  { count(); yylval.strval=yytext; return SIP_PARSER_LOG; }
 <INITIAL>{SIP_PARSER_MODE}  { count(); yylval.strval=yytext; return SIP_PARSER_MODE; }
 <INITIAL>{CORELOG}	{ count(); yylval.strval=yytext; return CORELOG; }
