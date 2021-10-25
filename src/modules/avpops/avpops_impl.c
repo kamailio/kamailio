@@ -214,38 +214,6 @@ static int dbrow2avp(struct db_row *row, struct db_param *dbp, int_str attr,
 	return add_avp( (unsigned short)db_flags, avp_attr, avp_val);
 }
 
-
-inline static str* get_source_uri(struct sip_msg* msg,int source)
-{
-	/* which uri will be used? */
-	if (source&AVPOPS_USE_FROM)
-	{ /* from */
-		if (parse_from_header( msg )<0 )
-		{
-			LM_ERR("failed to parse from\n");
-			goto error;
-		}
-		return &(get_from(msg)->uri);
-	} else if (source&AVPOPS_USE_TO)
-	{  /* to */
-		if (parse_headers( msg, HDR_TO_F, 0)<0)
-		{
-			LM_ERR("failed to parse to\n");
-			goto error;
-		}
-		return &(get_to(msg)->uri);
-	} else if (source&AVPOPS_USE_RURI) {  /* RURI */
-		if(msg->new_uri.s!=NULL && msg->new_uri.len>0)
-			return &(msg->new_uri);
-		return &(msg->first_line.u.request.uri);
-	} else {
-		LM_ERR("unknown source <%d>\n", source);
-		goto error;
-	}
-error:
-	return 0;
-}
-
 static inline void int_str2db_val( int_str is_val, str *val, int is_s)
 {
 	if (is_s)
