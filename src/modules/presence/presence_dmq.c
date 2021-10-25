@@ -102,7 +102,7 @@ static int pres_dmq_init_proc()
 		}
 	}
 
-	if(publ_cache_mode==PS_PCACHE_RECORD && pres_subs_dbmode==NO_DB) {
+	if(publ_cache_enabled && subs_dbmode==NO_DB) {
 		goto finish;
 	}
 
