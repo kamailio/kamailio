@@ -37,14 +37,14 @@ Daniel-Constantin Mierla
               2.16. hf_value_exists(hf, hvalue)
               2.17. hf_iterator_start(iname)
               2.18. hf_iterator_end(iname)
-              2.19. textopsx.f.hf_iterator_next(iname)
-              2.20. textopsx.f.hf_iterator_prev(iname)
+              2.19. hf_iterator_next(iname)
+              2.20. hf_iterator_prev(iname)
               2.21. hf_iterator_rm(iname)
               2.22. hf_iterator_append(iname, htext)
               2.23. hf_iterator_insert(iname, htext)
               2.24. bl_iterator_start(iname)
               2.25. bl_iterator_end(iname)
-              2.26. textopsx.f.bl_iterator_next(iname)
+              2.26. bl_iterator_next(iname)
               2.27. bl_iterator_rm(iname)
               2.28. bl_iterator_append(iname, text)
               2.29. bl_iterator_insert(iname, text)
@@ -113,14 +113,14 @@ Chapter 1. Admin Guide
         2.16. hf_value_exists(hf, hvalue)
         2.17. hf_iterator_start(iname)
         2.18. hf_iterator_end(iname)
-        2.19. textopsx.f.hf_iterator_next(iname)
-        2.20. textopsx.f.hf_iterator_prev(iname)
+        2.19. hf_iterator_next(iname)
+        2.20. hf_iterator_prev(iname)
         2.21. hf_iterator_rm(iname)
         2.22. hf_iterator_append(iname, htext)
         2.23. hf_iterator_insert(iname, htext)
         2.24. bl_iterator_start(iname)
         2.25. bl_iterator_end(iname)
-        2.26. textopsx.f.bl_iterator_next(iname)
+        2.26. bl_iterator_next(iname)
         2.27. bl_iterator_rm(iname)
         2.28. bl_iterator_append(iname, text)
         2.29. bl_iterator_insert(iname, text)
@@ -161,14 +161,14 @@ Chapter 1. Admin Guide
    2.16. hf_value_exists(hf, hvalue)
    2.17. hf_iterator_start(iname)
    2.18. hf_iterator_end(iname)
-   2.19. textopsx.f.hf_iterator_next(iname)
-   2.20. textopsx.f.hf_iterator_prev(iname)
+   2.19. hf_iterator_next(iname)
+   2.20. hf_iterator_prev(iname)
    2.21. hf_iterator_rm(iname)
    2.22. hf_iterator_append(iname, htext)
    2.23. hf_iterator_insert(iname, htext)
    2.24. bl_iterator_start(iname)
    2.25. bl_iterator_end(iname)
-   2.26. textopsx.f.bl_iterator_next(iname)
+   2.26. bl_iterator_next(iname)
    2.27. bl_iterator_rm(iname)
    2.28. bl_iterator_append(iname, text)
    2.29. bl_iterator_insert(iname, text)
@@ -509,10 +509,10 @@ hf_iterator_start("i1");
 hf_iterator_end("i1");
 ...
 
-2.19.  textopsx.f.hf_iterator_next(iname)
+2.19.  hf_iterator_next(iname)
 
    Move the iterator to the next header. It must be called also after
-   bl_iterator_start() to get the first header.
+   hf_iterator_start() to get the first header.
 
    The return code is false when there is no other header in the list.
 
@@ -532,7 +532,7 @@ hf_iterator_end("i1");
     hf_iterator_end("i1");
 ...
 
-2.20.  textopsx.f.hf_iterator_prev(iname)
+2.20.  hf_iterator_prev(iname)
 
    Move the iterator to the previous header. It must be called also after
    hf_iterator_start() and hf_iterator_next().
@@ -641,7 +641,7 @@ bl_iterator_start("b1");
 bl_iterator_end("b1");
 ...
 
-2.26.  textopsx.f.bl_iterator_next(iname)
+2.26.  bl_iterator_next(iname)
 
    Move the iterator to the next line in the body. It must be called also
    after bl_iterator_start() to get the first header.
