@@ -33,8 +33,8 @@
 typedef int (cb_function)(struct sip_msg *msg, unsigned int flags, void *param);
 
 
-#define PRE_SCRIPT_CB    (1<<30)
-#define POST_SCRIPT_CB   (1<<31)
+#define PRE_SCRIPT_CB    (1u<<30)
+#define POST_SCRIPT_CB   (1u<<31)
 
 /* Pre- and post-script callback flags. Use these flags to register
  * for the callbacks, and to check the type of the callback from the

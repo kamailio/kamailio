@@ -78,11 +78,11 @@ int register_script_cb( cb_function f, unsigned int flags, void *param )
 	int	i;
 
 	/* type checkings */
-	if ( (flags&((1<<SCRIPT_CB_NUM)-1))==0 ) {
+	if ( (flags&((1u<<SCRIPT_CB_NUM)-1))==0 ) {
 		LM_BUG("callback flag not specified\n");
 		return -1;
 	}
-	if ( (flags&(~(PRE_SCRIPT_CB|POST_SCRIPT_CB))) >= 1<<SCRIPT_CB_NUM ) {
+	if ( (flags&(~(PRE_SCRIPT_CB|POST_SCRIPT_CB))) >= 1u<<SCRIPT_CB_NUM ) {
 		LM_BUG("unsupported callback flags: %u\n",
 			flags);
 		return -1;
@@ -102,7 +102,7 @@ int register_script_cb( cb_function f, unsigned int flags, void *param )
 	 * (as many times as many flags are set)
 	 */
 	for (i=0; i<SCRIPT_CB_NUM; i++) {
-		if ((flags&(1<<i)) == 0)
+		if ((flags&(1u<<i)) == 0)
 			continue;
 		if (add_callback(&cb_array[i], f, param) < 0)
 			goto add_error;
@@ -155,7 +155,7 @@ int exec_pre_script_cb( struct sip_msg *msg, enum script_cb_type type)
 		return 0;
 	}
 
-	flags = PRE_SCRIPT_CB | (1<<(type-1));
+	flags = PRE_SCRIPT_CB | (1u<<(type-1));
 	for (cb=pre_script_cb[type-1]; cb ; cb=cb->next ) {
 		/* stop on error */
 		if (cb->cbf(msg, flags, cb->param)==0)
@@ -177,7 +177,7 @@ int exec_post_script_cb( struct sip_msg *msg, enum script_cb_type type)
 		return 1;
 	}
 
-	flags = POST_SCRIPT_CB | (1<<(type-1));
+	flags = POST_SCRIPT_CB | (1u<<(type-1));
 	for (cb=post_script_cb[type-1]; cb ; cb=cb->next){
 		cb->cbf(msg, flags, cb->param);
 	}
