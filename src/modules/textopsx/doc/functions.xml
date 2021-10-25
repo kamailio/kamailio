@@ -559,11 +559,11 @@ hf_iterator_end("i1");
 	</section>
 	<section id="textopsx.f.hf_iterator_next">
 		<title>
-		<function moreinfo="none">textopsx.f.hf_iterator_next(iname)</function>
+		<function moreinfo="none">hf_iterator_next(iname)</function>
 		</title>
 		<para>
 			Move the iterator to the next header. It must
-			be called also after bl_iterator_start() to get the first
+			be called also after hf_iterator_start() to get the first
 			header.
 		</para>
 		<para>
@@ -594,7 +594,7 @@ hf_iterator_end("i1");
 	</section>
 	<section id="textopsx.f.hf_iterator_prev">
 		<title>
-		<function moreinfo="none">textopsx.f.hf_iterator_prev(iname)</function>
+		<function moreinfo="none">hf_iterator_prev(iname)</function>
 		</title>
 		<para>
 			Move the iterator to the previous header. It must
@@ -757,7 +757,7 @@ bl_iterator_end("b1");
 	</section>
 	<section id="textopsx.f.bl_iterator_next">
 		<title>
-		<function moreinfo="none">textopsx.f.bl_iterator_next(iname)</function>
+		<function moreinfo="none">bl_iterator_next(iname)</function>
 		</title>
 		<para>
 			Move the iterator to the next line in the body. It must
