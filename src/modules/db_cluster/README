@@ -10,6 +10,10 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
+Frits Wiersma
+
+   <frits.wiersma@isp.solcon.nl>
+
    Copyright © 2012 asipto.com
      __________________________________________________________________
 
@@ -31,6 +35,12 @@ Daniel-Constantin Mierla
               3.4. max_query_length (int)
 
         4. Usage
+        5. RPC Commands
+
+              5.1. dbcl.list_clusters
+              5.2. dbcl.list_connections
+              5.3. dbcl.disable_connection
+              5.4. dbcl.enable_connection
 
    List of Examples
 
@@ -58,6 +68,12 @@ Chapter 1. Admin Guide
         3.4. max_query_length (int)
 
    4. Usage
+   5. RPC Commands
+
+        5.1. dbcl.list_clusters
+        5.2. dbcl.list_connections
+        5.3. dbcl.disable_connection
+        5.4. dbcl.enable_connection
 
 1. Overview
 
@@ -203,4 +219,59 @@ modparam("db_cluster", "cluster", "k1=>c1=9r9p;c2=9r9p")
 modparam("acc", "db_url", "cluster://k1")
 
 modparam("sqlops", "sqlcon", "ca=>cluster://k1")
+...
+
+5. RPC Commands
+
+   5.1. dbcl.list_clusters
+   5.2. dbcl.list_connections
+   5.3. dbcl.disable_connection
+   5.4. dbcl.enable_connection
+
+5.1. dbcl.list_clusters
+
+   Lists all database clusters.
+
+   Name: dbcl.list_clusters
+
+   RPC Command Format:
+...
+kamcmd dbcl.list_clusters
+...
+
+5.2. dbcl.list_connections
+
+   Lists all database connections of a specific cluster.
+
+   Name: dbcl.list_connections
+
+   RPC Command Format:
+...
+kamcmd dbcl.list_connections clustername
+...
+
+5.3. dbcl.disable_connection
+
+   Disable a database connection of a specific cluster for a period. The
+   database connection remains open but will not be used for the specified
+   period (seconds). The command does not allow to close all database
+   connections of the specific cluster. If the database connection is
+   already disabled than the new period will overwrite the old period.
+
+   Name: dbcl.disable_connection
+
+   RPC Command Format:
+...
+kamcmd dbcl.disable_connection clustername connectionname period
+...
+
+5.4. dbcl.enable_connection
+
+   Enable a database connection of a specific cluster.
+
+   Name: dbcl.enable_connection
+
+   RPC Command Format:
+...
+kamcmd dbcl.enable_connection clustername connectionname
 ...
