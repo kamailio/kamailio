@@ -7,6 +7,7 @@
 #include "../../core/socket_info.h"
 #include "../../core/timer.h"
 #include "../../core/locking.h"
+#include "../../core/kemi.h"
 #include "../../modules/tm/tm_load.h"
 
 #include "../../modules/ims_dialog/dlg_hash.h"
