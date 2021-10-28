@@ -438,7 +438,7 @@
 
     <section>
       <title><function moreinfo="none">save(async_reply_route,
-      domain)</function></title>
+      domain, mode, flags)</function></title>
 
       <para>The function processes a REGISTER message. It can add, remove or
       modify usrloc records depending on Contact and Expires HFs in the
@@ -461,6 +461,16 @@
         <listitem>
           <para><emphasis>domain</emphasis>- Logical domain within
           registrar.</para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis>mode</emphasis>- Optional and unused legacy parameter.</para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis>flags</emphasis>- Optional parameter. Valid values:
+          0x01 - Realm is not used when extracting Private Identity from the
+          Authorization header.</para>
         </listitem>
       </itemizedlist>
 

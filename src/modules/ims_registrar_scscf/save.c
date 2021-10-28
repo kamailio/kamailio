@@ -84,6 +84,8 @@ extern int store_data_on_dereg; /**< should we store SAR user data on de-registr
 extern int ue_unsubscribe_on_dereg;
 extern int user_data_always;
 
+#define DO_NOT_USE_REALM_FOR_PRIVATE_IDENTITY         0x01
+
 /* \brief
  * Return randomized expires between expires-range% and expires.
  * RFC allows only value less or equal to the one provided by UAC.
@@ -1276,13 +1278,13 @@ error:
  */
 //int save(struct sip_msg* msg, udomain_t* _d) {
 
-int save(struct sip_msg* msg, char* str1, char *route) {
+int save(struct sip_msg* msg, char* str1, char *route, int _cflags) {
     int expires;
     int require_user_data = 0;
     int data_available;
     contact_t* c;
     int st;
-    str public_identity, private_identity, realm;
+    str public_identity, private_identity, realm={0,0};
     int sar_assignment_type = AVP_IMS_SAR_NO_ASSIGNMENT;
     str route_name;
 
@@ -1342,12 +1344,15 @@ int save(struct sip_msg* msg, char* str1, char *route) {
         rerrno = R_SAR_FAILED;
         goto error;
     }
-    realm = cscf_get_realm_from_uri(public_identity);
-    if (realm.len <= 0 || !realm.s) {
-        LM_ERR("can't get realm\n");
-        rerrno = R_SAR_FAILED;
-        goto error;
-    }
+
+    if (!(_cflags & DO_NOT_USE_REALM_FOR_PRIVATE_IDENTITY)) {
+        realm = cscf_get_realm_from_uri(public_identity);
+        if (realm.len <= 0 || !realm.s) {
+            LM_ERR("can't get realm\n");
+            rerrno = R_SAR_FAILED;
+            goto error;
+        }
+     }
 
     private_identity = cscf_get_private_identity(msg, realm);
     if (private_identity.len <= 0 || !private_identity.s) {
