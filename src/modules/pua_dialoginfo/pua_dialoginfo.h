@@ -29,7 +29,7 @@ extern send_publish_t pua_send_publish;
 
 void dialog_publish_multi(char *state, struct str_list* ruris, str *entity, str *peer, str *callid,
 	unsigned int initiator, unsigned int lifetime, str *localtag, str *remotetag,
-	str *localtarget, str *remotetarget, unsigned short do_pubruri_localcheck);
+	str *localtarget, str *remotetarget, unsigned short do_pubruri_localcheck, str *uuid);
 
 /* store the important data locally to avoid reading the data from the
  * dlg_cell during the callback (as this could create a race condition
@@ -45,9 +45,10 @@ struct dlginfo_cell {
 	struct str_list* pubruris_caller;
 	struct str_list* pubruris_callee;
 	unsigned int lifetime;
-        /*dialog module does not always resend all flags, so we use flags set on first request*/
-        int disable_caller_publish;
-        int disable_callee_publish;
+	/*dialog module does not always resend all flags, so we use flags set on first request*/
+	int disable_caller_publish;
+	int disable_callee_publish;
+	str uuid;
 };
 
 

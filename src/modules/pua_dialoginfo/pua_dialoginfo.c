@@ -41,6 +41,7 @@
 #include "../../core/str_list.h"
 #include "../../core/mem/mem.h"
 #include "../../core/pt.h"
+#include "../../core/utils/sruid.h"
 #include "../dialog/dlg_load.h"
 #include "../dialog/dlg_hash.h"
 #include "../pua/pua_bind.h"
@@ -78,6 +79,7 @@ unsigned short pubruri_caller_avp_type;
 int_str pubruri_caller_avp_name;
 unsigned short pubruri_callee_avp_type;
 int_str pubruri_callee_avp_name;
+sruid_t _puadi_sruid;
 
 static str caller_dlg_var = {0, 0}; /* pubruri_caller */
 static str callee_dlg_var = {0, 0}; /* pubruri_callee */
@@ -302,14 +304,14 @@ __dialog_sendpublish(struct dlg_cell *dlg, int type, struct dlg_cb_params *_para
 				dialog_publish_multi("terminated", dlginfo->pubruris_caller,
 						&identity_local, &uri, &(dlginfo->callid), 1,
 						10, 0, 0, &(dlginfo->from_contact),
-						&target, send_publish_flag==-1?1:0);
+						&target, send_publish_flag==-1?1:0,&(dlginfo->uuid));
 			}
 			if ((!dlginfo->disable_callee_publish) && (disable_callee_publish_flag == -1 || !(request
 						&& (request->flags & (1<<disable_callee_publish_flag))))) {
 				dialog_publish_multi("terminated", dlginfo->pubruris_callee,
 						&uri, &identity_local, &(dlginfo->callid), 0,
 						10, 0, 0, &target, &(dlginfo->from_contact),
-						send_publish_flag==-1?1:0);
+						send_publish_flag==-1?1:0,&(dlginfo->uuid));
 			}
 			break;
 		case DLGCB_CONFIRMED:
@@ -322,14 +324,14 @@ __dialog_sendpublish(struct dlg_cell *dlg, int type, struct dlg_cb_params *_para
 				dialog_publish_multi("confirmed", dlginfo->pubruris_caller,
 						&identity_local, &uri, &(dlginfo->callid), 1,
 						dlginfo->lifetime, 0, 0, &(dlginfo->from_contact), &target,
-						send_publish_flag==-1?1:0);
+						send_publish_flag==-1?1:0,&(dlginfo->uuid));
 			}
 			if ((!dlginfo->disable_callee_publish) && (disable_callee_publish_flag == -1 || !(request
 						&& (request->flags & (1<<disable_callee_publish_flag))))) {
 				dialog_publish_multi("confirmed", dlginfo->pubruris_callee, &uri,
 						&identity_local, &(dlginfo->callid), 0,
 						dlginfo->lifetime, 0, 0, &target, &(dlginfo->from_contact),
-						send_publish_flag==-1?1:0);
+						send_publish_flag==-1?1:0,&(dlginfo->uuid));
 			}
 			break;
 		case DLGCB_EARLY:
@@ -370,13 +372,13 @@ __dialog_sendpublish(struct dlg_cell *dlg, int type, struct dlg_cb_params *_para
 								&identity_local, &uri, &(dlginfo->callid), 1,
 								dlginfo->lifetime, &(dlginfo->from_tag), &tag,
 								&(dlginfo->from_contact), &target,
-								send_publish_flag==-1?1:0);
+								send_publish_flag==-1?1:0,&(dlginfo->uuid));
 					} else {
 						dialog_publish_multi("early", dlginfo->pubruris_caller,
 								&identity_local, &uri, &(dlginfo->callid), 1,
 								dlginfo->lifetime, &(dlginfo->from_tag), &tag,
 								&(dlginfo->from_contact), &target,
-								send_publish_flag==-1?1:0);
+								send_publish_flag==-1?1:0,&(dlginfo->uuid));
 					}
 				}
 				if ((!dlginfo->disable_callee_publish) && (disable_callee_publish_flag == -1 || !(request
@@ -384,7 +386,7 @@ __dialog_sendpublish(struct dlg_cell *dlg, int type, struct dlg_cb_params *_para
 					dialog_publish_multi("early", dlginfo->pubruris_callee, &uri,
 							&identity_local, &(dlginfo->callid), 0,
 							dlginfo->lifetime, &tag, &(dlginfo->from_tag), &target,
-							&(dlginfo->from_contact), send_publish_flag==-1?1:0);
+							&(dlginfo->from_contact), send_publish_flag==-1?1:0,&(dlginfo->uuid));
 				}
 
 			} else {
@@ -394,22 +396,22 @@ __dialog_sendpublish(struct dlg_cell *dlg, int type, struct dlg_cb_params *_para
 						dialog_publish_multi("confirmed", dlginfo->pubruris_caller,
 								&identity_local, &uri, &(dlginfo->callid), 1,
 								dlginfo->lifetime, 0, 0, &(dlginfo->from_contact),
-								&target, send_publish_flag==-1?1:0);
+								&target, send_publish_flag==-1?1:0,&(dlginfo->uuid));
 
 					} else {
 						dialog_publish_multi("early", dlginfo->pubruris_caller,
 								&identity_local, &uri, &(dlginfo->callid), 1,
 								dlginfo->lifetime, 0, 0, &(dlginfo->from_contact),
-								&target, send_publish_flag==-1?1:0);
+								&target, send_publish_flag==-1?1:0,&(dlginfo->uuid));
 					}
 				}
-                                if ((!dlginfo->disable_callee_publish) && (disable_callee_publish_flag == -1 || !(request
-                                                && (request->flags & (1<<disable_callee_publish_flag)))))
+				if ((!dlginfo->disable_callee_publish) && (disable_callee_publish_flag == -1 || !(request
+					&& (request->flags & (1<<disable_callee_publish_flag)))))
 				{
 					dialog_publish_multi("early", dlginfo->pubruris_callee, &uri,
 							&identity_local, &(dlginfo->callid), 0,
 							dlginfo->lifetime, 0, 0, &target,
-							&(dlginfo->from_contact), send_publish_flag==-1?1:0);
+							&(dlginfo->from_contact), send_publish_flag==-1?1:0,&(dlginfo->uuid));
 				}
 			}
 			break;
@@ -421,14 +423,14 @@ __dialog_sendpublish(struct dlg_cell *dlg, int type, struct dlg_cb_params *_para
 				dialog_publish_multi("terminated", dlginfo->pubruris_caller,
 						&identity_local, &uri, &(dlginfo->callid), 1,
 						10, 0, 0, &(dlginfo->from_contact), &target,
-						send_publish_flag==-1?1:0);
+						send_publish_flag==-1?1:0,&(dlginfo->uuid));
 			}
 			if ((!dlginfo->disable_callee_publish) && (disable_callee_publish_flag == -1 || !(request
 					&& (request->flags & (1<<disable_callee_publish_flag))))) {
 				dialog_publish_multi("terminated", dlginfo->pubruris_callee, &uri,
 						&identity_local, &(dlginfo->callid), 0,
 						10, 0, 0, &target, &(dlginfo->from_contact),
-						send_publish_flag==-1?1:0);
+						send_publish_flag==-1?1:0,&(dlginfo->uuid));
 			}
 	}
 }
@@ -495,7 +497,8 @@ struct dlginfo_cell* get_dialog_data(struct dlg_cell *dlg, int type, int disable
 		+ dlg->callid.len
 		+ dlg->tag[0].len
 		+ dlg->req_uri.len
-		+ dlg->contact[0].len;
+		+ dlg->contact[0].len
+		+ SRUID_SIZE;
 
 	dlginfo = (struct dlginfo_cell*)shm_malloc( len );
 	if (dlginfo==0) {
@@ -520,6 +523,8 @@ struct dlginfo_cell* get_dialog_data(struct dlg_cell *dlg, int type, int disable
 	dlginfo->req_uri.len  = dlg->req_uri.len;
 	dlginfo->from_contact.s   = dlginfo->req_uri.s + dlginfo->req_uri.len;
 	dlginfo->from_contact.len = dlg->contact[0].len;
+	dlginfo->uuid.s = dlginfo->from_contact.s + dlginfo->from_contact.len;
+	dlginfo->uuid.len = SRUID_SIZE;
 
 	memcpy(dlginfo->from_uri.s, dlg->from_uri.s, dlg->from_uri.len);
 	memcpy(dlginfo->to_uri.s, dlg->to_uri.s, dlg->to_uri.len);
@@ -527,6 +532,13 @@ struct dlginfo_cell* get_dialog_data(struct dlg_cell *dlg, int type, int disable
 	memcpy(dlginfo->from_tag.s, dlg->tag[0].s, dlg->tag[0].len);
 	memcpy(dlginfo->req_uri.s, dlg->req_uri.s, dlg->req_uri.len);
 	memcpy(dlginfo->from_contact.s, dlg->contact[0].s, dlg->contact[0].len);
+
+	// generate new random uuid
+	sruid_next_safe(&_puadi_sruid);
+	strcpy(dlginfo->uuid.s, _puadi_sruid.uid.s);
+	dlginfo->uuid.len = _puadi_sruid.uid.len;
+	LM_DBG("uuid generated: '%.*s'\n",
+		dlginfo->uuid.len, dlginfo->uuid.s);
 
 	if (use_pubruri_avps) {
 		if(type==DLGCB_CREATED) {
@@ -675,7 +687,7 @@ __dialog_created(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
 		disable_callee_publish=1;
 	}
 
-        dlginfo=get_dialog_data(dlg, type, disable_caller_publish, disable_callee_publish);
+	dlginfo=get_dialog_data(dlg, type, disable_caller_publish, disable_callee_publish);
 	if(dlginfo==NULL)
 		return;
 
@@ -697,7 +709,7 @@ __dialog_created(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
 				&identity_local,
 				&identity_remote,
 				&(dlg->callid), 1, dlginfo->lifetime,
-				0, 0, 0, 0, (send_publish_flag==-1)?1:0);
+				0, 0, 0, 0, (send_publish_flag==-1)?1:0,&(dlginfo->uuid));
 	}
 
 	if (callee_trying && ((!disable_callee_publish) && (disable_callee_publish_flag == -1 || !(request
@@ -706,7 +718,7 @@ __dialog_created(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
 				&identity_remote,
 				&identity_local,
 				&(dlg->callid), 0, dlginfo->lifetime,
-				0, 0, 0, 0, (send_publish_flag==-1)?1:0);
+				0, 0, 0, 0, (send_publish_flag==-1)?1:0,&(dlginfo->uuid));
 	}
 }
 
@@ -737,6 +749,10 @@ static int mod_init(void)
 	str s;
 	pv_spec_t avp_spec;
         struct sip_uri ruri_uri;
+
+	if(sruid_init(&_puadi_sruid, (char)'-', "padi", SRUID_INC)<0) {
+		return -1;
+	}
 
 	if(caller_dlg_var.len<=0) {
 		LM_WARN("pubruri_caller_dlg_var is not set"
