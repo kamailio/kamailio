@@ -273,7 +273,7 @@ static inline unsigned int core_hash(const str *s1, const str *s2,
 
 	end=s1->s+s1->len;
 	for ( p=s1->s ; p<=(end-4) ; p+=4 ){
-		v=(*p<<24)+(p[1]<<16)+(p[2]<<8)+p[3];
+		v=((unsigned int)p[0]<<24)+(p[1]<<16)+(p[2]<<8)+p[3];
 		ch_h_inc;
 	}
 	v=0;
@@ -283,11 +283,11 @@ static inline unsigned int core_hash(const str *s1, const str *s2,
 	if (s2) {
 		end=s2->s+s2->len;
 		for (p=s2->s; p<=(end-4); p+=4){
-			v=(*p<<24)+(p[1]<<16)+(p[2]<<8)+p[3];
+			v=((unsigned int)p[0]<<24)+(p[1]<<16)+(p[2]<<8)+p[3];
 			ch_h_inc;
 		}
 		v=0;
-		for (; p<end ; p++){ v<<=8; v+=*p;}
+		for (; p<end ; p++){ v<<=8; v+=p[0];}
 		ch_h_inc;
 	}
 	h=((h)+(h>>11))+((h>>13)+(h>>23));
