@@ -214,6 +214,7 @@ Conflicts:  kamailio-auth-ephemeral < %ver, kamailio-bdb < %ver
 Conflicts:  kamailio-carrierroute < %ver, kamailio-cpl < %ver
 Conflicts:  kamailio-dialplan < %ver, kamailio-dnssec < %ver
 Conflicts:  kamailio-geoip < %ver, kamailio-gzcompress < %ver
+Conflicts:  kamailio-http_client < %ver
 Conflicts:  kamailio-ims < %ver, kamailio-java < %ver, kamailio-json < %ver
 Conflicts:  kamailio-lcr < %ver, kamailio-ldap < %ver, kamailio-lost < %ver, kamailio-lua < %ver
 Conflicts:  kamailio-kazoo < %ver
@@ -225,6 +226,7 @@ Conflicts:  kamailio-python < %ver
 Conflicts:  kamailio-radius < %ver, kamailio-redis < %ver
 Conflicts:  kamailio-regex < %ver, kamailio-ruby < %ver
 Conflicts:  kamailio-sctp < %ver, kamailio-secfilter < %ver, kamailio-sipdump < %ver
+Conflicts:  kamailio-slack < %ver
 Conflicts:  kamailio-snmpstats < %ver, kamailio-sqlang < %ver, kamailio-sqlite < %ver
 Conflicts:  kamailio-tls < %ver, kamailio-unixodbc < %ver
 Conflicts:  kamailio-utils < %ver, kamailio-websocket < %ver
@@ -906,6 +908,23 @@ Requires:   kamailio = %ver
 This module serializes SIP message attributes into a JSON document
 
 
+%package    slack
+Summary:    Slack integration module for Kamailio
+Group:      %{PKGGROUP}
+
+Requires:   kamailio = %ver, kamailio-http_client = %ver
+%if 0%{?suse_version}
+Requires:   libcurl4
+BuildRequires:  libcurl-devel
+%else
+Requires:   libcurl
+BuildRequires:  libcurl-devel
+%endif
+
+%description    slack
+This module provides integration with Slack over webhooks. 
+
+
 %package    smsops
 Summary:    Tools for handling SMS packets in SIP messages
 Group:      %{PKGGROUP}
@@ -1458,11 +1477,11 @@ fi
 %doc %{_docdir}/kamailio/modules/README.kemix
 %doc %{_docdir}/kamailio/modules/README.kex
 %doc %{_docdir}/kamailio/modules/README.lrkproxy
-%doc %{_docdir}/kamailio/modules/README.malloc_test
 %doc %{_docdir}/kamailio/modules/README.mangler
 %doc %{_docdir}/kamailio/modules/README.matrix
 %doc %{_docdir}/kamailio/modules/README.maxfwd
 %doc %{_docdir}/kamailio/modules/README.mediaproxy
+%doc %{_docdir}/kamailio/modules/README.misctest
 %doc %{_docdir}/kamailio/modules/README.mohqueue
 %doc %{_docdir}/kamailio/modules/README.mqueue
 %doc %{_docdir}/kamailio/modules/README.msilo
@@ -1477,6 +1496,7 @@ fi
 %doc %{_docdir}/kamailio/modules/README.permissions
 %doc %{_docdir}/kamailio/modules/README.pike
 %doc %{_docdir}/kamailio/modules/README.pipelimit
+%doc %{_docdir}/kamailio/modules/README.posops
 %doc %{_docdir}/kamailio/modules/README.prefix_route
 %doc %{_docdir}/kamailio/modules/README.print
 %doc %{_docdir}/kamailio/modules/README.print_lib
@@ -1617,11 +1637,11 @@ fi
 %{_libdir}/kamailio/modules/kemix.so
 %{_libdir}/kamailio/modules/kex.so
 %{_libdir}/kamailio/modules/lrkproxy.so
-%{_libdir}/kamailio/modules/malloc_test.so
 %{_libdir}/kamailio/modules/mangler.so
 %{_libdir}/kamailio/modules/matrix.so
 %{_libdir}/kamailio/modules/maxfwd.so
 %{_libdir}/kamailio/modules/mediaproxy.so
+%{_libdir}/kamailio/modules/misctest.so
 %{_libdir}/kamailio/modules/mohqueue.so
 %{_libdir}/kamailio/modules/mqueue.so
 %{_libdir}/kamailio/modules/msilo.so
@@ -1636,6 +1656,7 @@ fi
 %{_libdir}/kamailio/modules/permissions.so
 %{_libdir}/kamailio/modules/pike.so
 %{_libdir}/kamailio/modules/pipelimit.so
+%{_libdir}/kamailio/modules/posops.so
 %{_libdir}/kamailio/modules/prefix_route.so
 %{_libdir}/kamailio/modules/print.so
 %{_libdir}/kamailio/modules/print_lib.so
@@ -2180,6 +2201,12 @@ fi
 %defattr(-,root,root)
 %doc %{_docdir}/kamailio/modules/README.sipjson
 %{_libdir}/kamailio/modules/sipjson.so
+
+
+%files      slack
+%defattr(-,root,root)
+%doc %{_docdir}/kamailio/modules/README.slack
+%{_libdir}/kamailio/modules/slack.so
 
 
 %files      snmpstats
