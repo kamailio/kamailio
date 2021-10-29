@@ -120,6 +120,10 @@
 				<emphasis>tm module</emphasis> - (optional) if you want to
 				have rtpengine_manage() fully functional
 			</para>
+			<para>
+				<emphasis>lwsc module</emphasis> - (optional) if you plan to use
+				<quote>wsapi</quote>	parameter
+			</para>
 			</listitem>
 			</itemizedlist>
 		</para>
