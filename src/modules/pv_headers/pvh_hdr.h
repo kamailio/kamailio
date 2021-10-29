@@ -38,7 +38,6 @@ void pvh_hdrs_set_applied(struct sip_msg *msg);
 void pvh_hdrs_reset_flags(struct sip_msg *msg);
 
 int pvh_real_hdr_append(struct sip_msg *msg, str *hname, str *hvalue);
-int pvh_real_hdr_replace(struct sip_msg *msg, str *hname, str *hvalue);
 int pvh_real_hdr_del_by_name(struct sip_msg *msg, str *hname);
 int pvh_real_hdr_remove_display(struct sip_msg *msg, str *hname);
 int pvh_real_replace_reply_reason(struct sip_msg *msg, str *value);
