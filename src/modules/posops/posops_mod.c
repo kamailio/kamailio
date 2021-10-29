@@ -186,6 +186,10 @@ static int ki_posops_pos_append(sip_msg_t *msg, int idx, str *val)
 	}
 
 	anchor = anchor_lump(msg, offset, 0, 0);
+	if(anchor == NULL) {
+		LM_ERR("failed to create the anchor\n");
+		return -1;
+	}
 	if (insert_new_lump_after(anchor, val->s, val->len, 0) == 0) {
 		LM_ERR("unable to add lump\n");
 		return -1;
@@ -241,6 +245,10 @@ static int ki_posops_pos_insert(sip_msg_t *msg, int idx, str *val)
 	}
 
 	anchor = anchor_lump(msg, offset, 0, 0);
+	if(anchor == NULL) {
+		LM_ERR("failed to create the anchor\n");
+		return -1;
+	}
 	if (insert_new_lump_before(anchor, val->s, val->len, 0) == 0) {
 		LM_ERR("unable to add lump\n");
 		return -1;
