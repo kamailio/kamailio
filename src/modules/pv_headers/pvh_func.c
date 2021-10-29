@@ -272,12 +272,6 @@ int pvh_apply_headers(struct sip_msg *msg)
 		}
 
 		if(!str_hash_case_get(&rm_hdrs, sub->name.s, sub->name.len)) {
-			if(!pvh_avp_is_null(sub) && xavi_count(&sub->name, &sub) == 1) {
-				LM_DBG("replace header[%s]: %s\n", sub->name.s, sub->val.v.s.s);
-				pvh_real_hdr_replace(msg, &sub->name, &sub->val.v.s);
-				pvh_str_hash_add_key(&rm_hdrs, &sub->name);
-				continue;
-			}
 			LM_DBG("remove header[%s]: %s\n", sub->name.s, sub->val.v.s.s);
 			pvh_real_hdr_del_by_name(msg, &sub->name);
 			pvh_str_hash_add_key(&rm_hdrs, &sub->name);
