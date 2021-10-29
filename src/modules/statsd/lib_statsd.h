@@ -2,10 +2,11 @@
 
 #define BUFFER_SIZE 8192
 
-typedef struct StatsConnection{
-    char *ip;
-    char *port;
-    int sock;
+typedef struct StatsConnection
+{
+	char *ip;
+	char *port;
+	int sock;
 } StatsConnection;
 
 bool statsd_connect(void);
