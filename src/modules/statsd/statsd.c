@@ -85,20 +85,20 @@ static int mod_init(void)
 {
 	int rc = 0;
 	if(!statsd_params.ip) {
-		LM_INFO("Statsd init ip value is null. use default 127.0.0.1\r\n");
+		LM_INFO("Statsd init ip value is null. use default 127.0.0.1\n");
 	} else {
-		LM_INFO("Statsd init ip value %s \r\n", statsd_params.ip);
+		LM_INFO("Statsd init ip value %s\n", statsd_params.ip);
 	}
 
 	if(!statsd_params.port) {
-		LM_INFO("Statsd init port value is null. use default 8125\r\n");
+		LM_INFO("Statsd init port value is null. use default 8125\n");
 	} else {
-		LM_INFO("Statsd init port value %s\r\n", statsd_params.port);
+		LM_INFO("Statsd init port value %s\n", statsd_params.port);
 	}
 
 	rc = statsd_init(statsd_params.ip, statsd_params.port);
 	if(rc < 0) {
-		LM_ERR("Statsd connection failed (ERROR_CODE: %i) \n", rc);
+		LM_ERR("Statsd connection failed (ERROR_CODE: %i)\n", rc);
 		return -1;
 	} else {
 		LM_INFO("Statsd: success connection to statsd server\n");
