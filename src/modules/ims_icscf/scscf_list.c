@@ -586,15 +586,16 @@ void ims_icscf_timer_routine() {
             sl = l->list;
             while (sl) {
 
-                LM_DBG("INF: Score:[%4d] Start_time [%ld] S-CSCF: <%.*s> \n",
+                LM_DBG("INF: Score:[%4d] Start_time [%" TIME_T_FMT "] S-CSCF: <%.*s> \n",
                         sl->score,
-                        sl->start_time,
+                        TIME_T_CAST(sl->start_time),
                         sl->scscf_name.len, sl->scscf_name.s);
                 time_t now = time(0);
                 time_t time_elapsed = now - sl->start_time;
                 if (time_elapsed > scscf_entry_expiry) {
 
-                    LM_DBG("Scscf entry expired: Time now %ld Start time %ld - elapsed %ld\n", now, sl->start_time, time_elapsed);
+                    LM_DBG("Scscf entry expired: Time now %" TIME_T_FMT " Start time %" TIME_T_FMT " - elapsed %" TIME_T_FMT "\n",
+                            TIME_T_CAST(now), TIME_T_CAST(sl->start_time), TIME_T_CAST(time_elapsed));
                     delete_list = 1; //if any of the entries in this list have expired remove the whole list!
 
                 }
