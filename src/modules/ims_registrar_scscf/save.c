@@ -547,7 +547,7 @@ static inline int update_contacts_helper(struct sip_msg* msg, impurecord_t* impu
                         LM_DBG("Need to update contact: <%.*s>: "
                                 "q_value [%d],"
                                 "sos: [%d],"
-                                "expires [%ld]\n", chi->uri.len, chi->uri.s, qvalue, sos, expires - time(NULL));
+                                "expires [%" TIME_T_FMT "]\n", chi->uri.len, chi->uri.s, qvalue, sos, TIME_T_CAST(expires - time(NULL)));
 
                         LM_DBG("packing contact information\n");
                         if ((ci = pack_ci(msg, chi, expires, 0)) == 0) {
