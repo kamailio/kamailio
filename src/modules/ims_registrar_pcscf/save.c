@@ -223,8 +223,9 @@ static inline int update_contacts(struct sip_msg *req,struct sip_msg *rpl, udoma
 						}
                                                 //TODO_LATEST replace above
 					} else { //update contact
-						LM_DBG("Updating contact: <%.*s>, old expires: %li, new expires: %i which is in %i seconds\n", c->uri.len, c->uri.s,
-								pcontact->expires-local_time_now,
+						LM_DBG("Updating contact: <%.*s>, old expires: %" TIME_T_FMT ", new expires: %i which is in %i seconds\n",
+								c->uri.len, c->uri.s,
+								TIME_T_CAST(pcontact->expires-local_time_now),
 								expires,
 								expires-local_time_now);
 						ci.reg_state = PCONTACT_REGISTERED;
