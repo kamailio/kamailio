@@ -121,10 +121,10 @@ peer* get_first_connected_route(cdp_session_t* cdp_session, routing_entry *r, in
 	}
 
 	least_recent_time = peers[0]->last_selected;
-	LM_DBG("peer [%.*s] was last used @ %ld\n", peers[0]->fqdn.len, peers[0]->fqdn.s, peers[0]->last_selected);
+	LM_DBG("peer [%.*s] was last used @ %" TIME_T_FMT "\n", peers[0]->fqdn.len, peers[0]->fqdn.s, TIME_T_CAST(peers[0]->last_selected));
 	p = peers[0];
 	for (j = 1; j < peer_count; j++) {
-		LM_DBG("Peer [%.*s] was last used at [%ld]\n", peers[j]->fqdn.len, peers[j]->fqdn.s, peers[j]->last_selected);
+		LM_DBG("Peer [%.*s] was last used at [%" TIME_T_FMT "]\n", peers[j]->fqdn.len, peers[j]->fqdn.s, TIME_T_CAST(peers[j]->last_selected));
 		if (peers[j]->last_selected < least_recent_time) {
 			least_recent_time = peers[j]->last_selected;
 			p = peers[j];
