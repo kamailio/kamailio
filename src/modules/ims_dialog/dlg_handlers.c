@@ -1867,7 +1867,7 @@ void internal_print_all_dlg(struct dlg_cell *dlg) {
 
     LM_DBG("----------------------------");
     LM_DBG("Dialog h_entry:h_id = [%u : %u]\n", dlg->h_entry, dlg->h_id);
-	LM_DBG("Dialog age: %ld\n", act_time - dlg->init_ts);
+    LM_DBG("Dialog age: %" TIME_T_FMT "\n", TIME_T_CAST(act_time - dlg->init_ts));
     LM_DBG("Dialog call-id: %.*s\n", dlg->callid.len, dlg->callid.s);
     LM_DBG("Dialog state: %d\n", dlg->state);
     LM_DBG("Dialog ref counter: %d\n", dlg->ref);
