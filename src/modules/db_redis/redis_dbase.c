@@ -142,7 +142,7 @@ static int db_redis_val2str(const db_val_t *v, str *_str) {
             _str->s[_str->len] = '\0';
             break;
         case DB1_DATETIME:
-            LM_DBG("converting datetime value %ld to str\n", VAL_TIME(v));
+            LM_DBG("converting datetime value %" TIME_T_FMT " to str\n", TIME_T_CAST(VAL_TIME(v)));
             _str->s = (char*)pkg_malloc(_str->len);
             if (!_str->s) goto memerr;
             localtime_r(&(VAL_TIME(v)), &_time);
