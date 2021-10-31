@@ -591,7 +591,7 @@ static int check_date(struct sip_msg* msg, char* srt1, char* str2)
 	}
 
 	if (tnow > tmsg + glb_iauthval) {
-		LOG(L_INFO, "AUTH_IDENTITY VERIFIER: Outdated date header value (%ld sec)\n", tnow - tmsg + glb_iauthval);
+		LOG(L_INFO, "AUTH_IDENTITY VERIFIER: Outdated date header value (%" TIME_T_FMT " sec)\n", TIME_T_CAST(tnow - tmsg + glb_iauthval));
 		return -4;
 	} else
 		LOG(AUTH_DBG_LEVEL, "AUTH_IDENTITY VERIFIER: Date header value OK\n");
