@@ -54,6 +54,7 @@
 #include "../../core/parser/parse_from.h"
 #include "../../core/parser/parse_content.h"
 #include "../../core/parser/parse_uri.h"
+#include "../../core/dprint.h" /* TIME_T_FMT */
 #include <libxml/parser.h>
 
 #include "../../lib/ims/useful_defs.h"
@@ -1517,8 +1518,8 @@ void create_notifications(udomain_t* _t, impurecord_t* r_passed, ucontact_t* c_p
             subscription_state.len = 0;
             if (subscription_state.s) {
 
-                sprintf(subscription_state.s, "%.*s%ld", subs_active.len,
-                        subs_active.s, s->expires - act_time);
+                sprintf(subscription_state.s, "%.*s%" TIME_T_FMT, subs_active.len,
+                        subs_active.s, TIME_T_CAST(s->expires - act_time));
                 subscription_state.len = strlen(subscription_state.s);
             }
 
