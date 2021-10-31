@@ -857,7 +857,8 @@ void send_ccr_stop_with_param(struct ro_session *ro_session, unsigned int code, 
         LM_DBG("Final used number of seconds for session is %ld\n", used);
     }
 
-    LM_DBG("Call started at %ld and ended at %ld and lasted %d seconds and so far we have billed for %ld seconds\n", ro_session->start_time, stop_time,
+    LM_DBG("Call started at %" TIME_T_FMT " and ended at %" TIME_T_FMT " and lasted %d seconds and so far we have billed for %ld seconds\n",
+            TIME_T_CAST(ro_session->start_time), TIME_T_CAST(stop_time),
             actual_time_seconds, ro_session->billed + used);
     if (ro_session->billed + used < actual_time_seconds) {
         LM_DBG("Making adjustment by adding %ld seconds\n", actual_time_seconds - (ro_session->billed + used));
