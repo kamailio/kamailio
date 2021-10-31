@@ -244,7 +244,7 @@ void print_impurecord(FILE* _f, impurecord_t* _r) {
             header = 1;
         }
         fprintf(_f, "\t\twatcher uri: <%.*s> and presentity uri: <%.*s>\n", subscriber->watcher_uri.len, subscriber->watcher_uri.s, subscriber->presentity_uri.len, subscriber->presentity_uri.s);
-        fprintf(_f, "\t\tExpires: %ld\n", subscriber->expires);
+        fprintf(_f, "\t\tExpires: %" TIME_T_FMT "\n", TIME_T_CAST(subscriber->expires));
         subscriber = subscriber->next;
     }
 
@@ -405,8 +405,9 @@ static inline void process_impurecord(impurecord_t* _r) {
 				hascontacts = 1;
 			}
 		} else {
-			LM_DBG("\t\tContact #%i - %.*s, Ref [%d] (expires in %ld seconds) (State: %d)\n", 
-					k, ptr->c.len, ptr->c.s, ptr->ref_count, ptr->expires - act_time, ptr->state);
+			LM_DBG("\t\tContact #%i - %.*s, Ref [%d] (expires in %" TIME_T_FMT " seconds) (State: %d)\n",
+					k, ptr->c.len, ptr->c.s, ptr->ref_count,
+					TIME_T_CAST(ptr->expires - act_time), ptr->state);
 			mustdeleteimpu = 0;
 			hascontacts = 1;
 		}
