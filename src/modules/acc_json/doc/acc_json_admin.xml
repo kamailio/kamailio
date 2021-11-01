@@ -324,12 +324,19 @@ modparam("acc_json", "acc_log_level", 2) # Set acc_log_level to 2 (L_INFO)
 	</section>
 	
 	<section id="acc.p.cdr_enable">
-		<title><varname>cdr_enable</varname> (str)</title>
+		<title><varname>cdr_enable</varname> (int)</title>
 		<para>
-		Enable Call Data Record generation.
+		Enable CDR reporting - one record per call is reported,
+		relying on dialog module.
 		</para>
 		<para>
-		Default value is 0 (disabled).
+		The value can be:
+		<itemizedlist>
+		<listitem>
+			<para>0 - off (default).</para>
+			<para>1 - on.</para>
+		</listitem>
+		</itemizedlist>
 		</para>
 		<example>
 		<title>cdr_enable example</title>
