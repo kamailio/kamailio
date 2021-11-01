@@ -47,7 +47,7 @@ Richard Good
 
         4. Functions
 
-              4.1. save(async_reply_route, domain)
+              4.1. save(async_reply_route, domain, mode, flags)
               4.2. lookup(domain)
               4.3. lookup_path_to_contact(uri)
               4.4. unregister(domain)
@@ -143,7 +143,7 @@ Chapter 1. Admin Guide
 
    4. Functions
 
-        4.1. save(async_reply_route, domain)
+        4.1. save(async_reply_route, domain, mode, flags)
         4.2. lookup(domain)
         4.3. lookup_path_to_contact(uri)
         4.4. unregister(domain)
@@ -487,7 +487,7 @@ om")
 
 4. Functions
 
-   4.1. save(async_reply_route, domain)
+   4.1. save(async_reply_route, domain, mode, flags)
    4.2. lookup(domain)
    4.3. lookup_path_to_contact(uri)
    4.4. unregister(domain)
@@ -501,7 +501,7 @@ om")
    4.12. can_publish_reg(domain)
    4.13. publish_reg(domain)
 
-4.1. save(async_reply_route, domain)
+4.1. save(async_reply_route, domain, mode, flags)
 
    The function processes a REGISTER message. It can add, remove or modify
    usrloc records depending on Contact and Expires HFs in the REGISTER
@@ -517,6 +517,9 @@ om")
        completed. This is required because the save function is executed
        asynchronously (Diameter).
      * domain- Logical domain within registrar.
+     * mode- Optional and unused legacy parameter.
+     * flags- Optional parameter. Valid values: 0x01 - Realm is not used
+       when extracting Private Identity from the Authorization header.
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE
 
