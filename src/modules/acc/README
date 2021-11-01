@@ -1071,9 +1071,12 @@ modparam("acc", "db_insert_mode", 1)
 
 6.30. cdr_enable (integer)
 
-   Should CDR-based logging be enabled?
+   Enable CDR reporting - one record per call reported to "acc_cdrs"
+   table, relying on dialog module.
 
-   0 - off (default). 1 - on.
+   The value can be:
+     * 0 - off (default).
+       1 - on.
 
    Example 1.30. cdr_enable example
 ...
