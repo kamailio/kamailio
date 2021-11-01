@@ -1044,11 +1044,17 @@ modparam("acc", "db_insert_mode", 1)
 	<section id="acc.p.cdr_enable">
 		<title><varname>cdr_enable</varname> (integer)</title>
 		<para>
-		Should CDR-based logging be enabled?
+		Enable CDR reporting - one record per call reported to "acc_cdrs" table,
+		relying on dialog module.
 		</para>
 		<para>
-		0 - off (default).
-		1 - on.
+		The value can be:
+		<itemizedlist>
+		<listitem>
+			<para>0 - off (default).</para>
+			<para>1 - on.</para>
+		</listitem>
+		</itemizedlist>
 		</para>
 		<example>
 		<title>cdr_enable example</title>
