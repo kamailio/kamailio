@@ -32,6 +32,10 @@ nats_consumer_worker_t *nats_workers = NULL;
 int _nats_proc_count;
 char *eventData = NULL;
 
+static int nats_publish_1_f(struct sip_msg * msg, char *payload);
+static int nats_publish_2_f(struct sip_msg * msg, char *payload, char *url);
+static int nats_publish_3_f(struct sip_msg * msg, char *payload, char *url, char *subj);
+
 static pv_export_t nats_mod_pvs[] = {
 		{{"natsData", (sizeof("natsData") - 1)}, PVT_OTHER,
 				nats_pv_get_event_payload, 0, 0, 0, 0, 0},
@@ -42,9 +46,15 @@ static param_export_t params[] = {{"nats_url", PARAM_STRING | USE_FUNC_PARAM,
 		{"subject_queue_group", PARAM_STRING | USE_FUNC_PARAM,
 				(void *)_init_nats_sub_add}};
 
+static cmd_export_t functions [] = {
+        {"nats_publish", (cmd_function)nats_publish_1_f, 1, 0, 0, ANY_ROUTE},
+        {"nats_publish", (cmd_function)nats_publish_2_f, 2, 0, 0, ANY_ROUTE},
+        {"nats_publish", (cmd_function)nats_publish_3_f, 3, 0, 0, ANY_ROUTE},
+};
+
 struct module_exports exports = {
 		"nats", DEFAULT_DLFLAGS, /* dlopen flags */
-		0,						 /* Exported functions */
+		functions,					 /* Exported functions */
 		params,					 /* Exported parameters */
 		0,						 /* exported MI functions */
 		nats_mod_pvs,			 /* exported pseudo-variables */
@@ -301,12 +311,6 @@ static int mod_child_init(int rank)
 			n = n->next;
 			i++;
 		}
-		if(nats_cleanup_init_sub() < 0) {
-			LM_INFO("could not cleanup init data\n");
-		}
-		if(nats_cleanup_init_servers() < 0) {
-			LM_INFO("could not cleanup init server data\n");
-		}
 		return 0;
 	}
 
@@ -358,9 +362,19 @@ int nats_cleanup_init_servers()
 		if(s0->url != NULL) {
 			shm_free(s0->url);
 		}
+
+		if(s0->conn != NULL) {
+			// Destroy all our objects to avoid report of memory leak
+			natsConnection_Destroy(s0->conn);
+		}
+
 		shm_free(s0);
 		s0 = s1;
 	}
+
+	// To silence reports of memory still in used with valgrind
+	nats_Close();
+
 	_init_nats_srv = NULL;
 	return 0;
 }
@@ -415,6 +429,14 @@ static void mod_destroy(void)
 {
 	if(nats_destroy_workers() < 0) {
 		LM_ERR("could not cleanup workers\n");
+	}
+
+	if(nats_cleanup_init_sub() < 0) {
+		LM_INFO("could not cleanup init data\n");
+	}
+
+	if(nats_cleanup_init_servers() < 0) {
+		LM_INFO("could not cleanup init server data\n");
 	}
 }
 
@@ -511,6 +533,79 @@ init_nats_server_ptr _init_nats_server_list_new(char *url)
 	return p;
 }
 
+void _init_nats_server_conn (init_nats_server_ptr p)
+{
+	natsOptions *opts  = NULL;
+	natsStatus s = NATS_OK;
+	const char *servers[1];
+	bool closed = false;
+
+	// nats create options
+	if ((s = natsOptions_Create(&opts)) != NATS_OK) {
+		LM_ERR("could not create nats options for %s [%s]\n", p->url, natsStatus_GetText(s));
+		return ;
+	}
+
+	// use these defaults
+	natsOptions_SetAllowReconnect(opts, true);
+	natsOptions_SetSecure(opts, false);
+	natsOptions_SetMaxReconnect(opts, 10000);
+	natsOptions_SetReconnectWait(opts, 2 * 1000); // 2s
+	natsOptions_SetPingInterval(opts, 2 * 60 * 1000); // 2m
+	natsOptions_SetMaxPingsOut(opts, 2);
+	natsOptions_SetIOBufSize(opts, 32 * 1024); // 32 KB
+	natsOptions_SetMaxPendingMsgs(opts, 65536);
+	natsOptions_SetTimeout(opts, 2 * 1000); // 2s
+	natsOptions_SetReconnectBufSize(opts, 8 * 1024 * 1024); // 8 MB;
+	natsOptions_SetReconnectJitter(opts, 100, 1000); // 100ms, 1s;
+
+	// nats set servers and options
+	servers[0] = p->url;
+	if ((s = natsOptions_SetServers(opts, servers, 1)) != NATS_OK)
+	{
+		LM_ERR("could not set nats server %s [%s]\n",
+			p->url, natsStatus_GetText(s));
+		return ;
+	}
+
+	// nats set publisher callbacks
+	s = natsOptions_SetDisconnectedCB(opts, disconnectedCb, NULL);
+	if(s != NATS_OK) {
+		LM_ERR("could not set disconnect callback for %s [%s]\n",
+				p->url, natsStatus_GetText(s));
+	}
+
+	s = natsOptions_SetReconnectedCB(opts, reconnectedCb, NULL);
+	if(s != NATS_OK) {
+		LM_ERR("could not set reconnect callback for %s [%s]\n",
+				p->url, natsStatus_GetText(s));
+	}
+
+	s = natsOptions_SetRetryOnFailedConnect(
+			opts, true, connectedCB, NULL);
+	if(s != NATS_OK) {
+		LM_ERR("could not set retry on failed callback for %s [%s]\n",
+				p->url, natsStatus_GetText(s));
+	}
+
+	s = natsOptions_SetClosedCB(opts, closedCB, (void *)&closed);
+	if(s != NATS_OK) {
+		LM_ERR("could not set closed callback for %s [%s]\n",
+				p->url, natsStatus_GetText(s));
+	}
+
+	// nats connect to the server
+	if ((s = natsConnection_Connect(&p->conn, opts)) != NATS_OK)
+	{
+		LM_ERR("could not connect to nats server %s [%s]\n",
+				p->url, natsStatus_GetText(s));
+	}
+
+	natsOptions_Destroy(opts);
+	return ;
+}
+
+
 int init_nats_server_url_add(char *url)
 {
 	init_nats_server_ptr n;
@@ -519,6 +614,7 @@ int init_nats_server_url_add(char *url)
 		n = n->next;
 	}
 	n = _init_nats_server_list_new(url);
+	_init_nats_server_conn(n);
 	n->next = _init_nats_srv;
 	_init_nats_srv = n;
 	return 0;
@@ -591,4 +687,61 @@ int nats_pv_get_event_payload(
 {
 	return eventData == NULL ? pv_get_null(msg, param, res)
 							 : pv_get_strzval(msg, param, res, eventData);
+}
+
+static int nats_publish_1_f(struct sip_msg *msg, char *payload)
+{
+	return nats_publish_3_f(msg, payload, "", "");
+}
+
+static int nats_publish_2_f(struct sip_msg *msg, char *payload, char *url)
+{
+	return nats_publish_3_f(msg, payload, url, "");
+}
+
+static int nats_publish_3_f(struct sip_msg *msg, char *payload, char *url, char *subj)
+{
+	natsStatus status = NATS_OK;
+	init_nats_server_ptr n;
+	init_nats_sub_ptr s;
+
+	int dataLen = 0;
+	dataLen = (int) strlen(payload);
+
+	n = _init_nats_srv;
+	while (n) {
+		// publish to specific url only
+		if (strcmp(url, "") != 0) {
+			if (strcmp(n->url, url) != 0) {
+				n = n->next;
+				continue;
+			}
+		}
+		
+		// publish to specific subject queue only
+		if (strcmp(subj, "") != 0) {
+			if ((status = natsConnection_Publish(n->conn, subj, (const void*) payload, dataLen)) != NATS_OK)
+			{
+				LM_ERR("could not publish to nats server %s [%s]\n", n->url, natsStatus_GetText(status));
+			}
+
+			n = n->next;
+			continue;
+		}
+
+		// publish to all configured subject queues
+		s = _init_nats_sc;
+		while (s) {
+			if ((status = natsConnection_Publish(n->conn, s->sub, (const void*) payload, dataLen)) != NATS_OK)
+			{
+				LM_ERR("could not publish to nats server %s [%s]\n", n->url, natsStatus_GetText(status));
+			}
+
+			s = s->next;
+		}
+
+		n = n->next;
+	}
+
+	return 1;
 }

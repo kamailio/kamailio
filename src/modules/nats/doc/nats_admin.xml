@@ -151,6 +151,43 @@ modparam("nats", "subject_queue_group", "MyQueue2:2021")
 			</example>
 		</section>
 	</section>
+
+	<section>
+		<title>Functions</title>
+		<section id="nats.f.nats_publish">
+			<title>
+				<function moreinfo="none">nats_publish(payload[, url, subject])</function>
+			</title>
+			<para>
+				Publishes the payload text to all configured nats urls, to all configured subject queues.
+			</para>
+			<para>
+				If "url" optional parameter is specified, will publish just to that url. Note that the url must be configured in the first place.
+			</para>
+			<para>
+				If "subject" optional parameter is specified, will publish just to that subject. Note that the subject must be configured in the first place.
+			</para>
+			<para>
+				Mixing of optional parameters are allowed, as in the example below.
+			</para>
+			<example>
+				<title><function>nats_publish</function> usage</title>
+				<programlisting format="linespecific">
+...
+$var(my_info)="$ci=" + $ci + " $fU=" + $fU;
+
+nats_publish($var(my_info));					# publish to all configured urls, all configured subjects
+nats_publish($var(my_info), "", "");				# same as the above ^
+
+nats_publish($var(my_info), "nats://127.0.0.3:4222", "foo");	# publish to "nats://127.0.0.3:4222" url, "foo" subject
+nats_publish($var(my_info), "", "foo");				# publish to all configured urls, "foo" subject
+nats_publish($var(my_info), "nats://127.0.0.3:4222", "");	# publish to "nats://127.0.0.3:4222" url, all configured subjects
+...
+				</programlisting>
+			</example>
+		</section>
+	</section>
+
 	<section>
 		<title>Pseudo Variables</title>
 		<itemizedlist>

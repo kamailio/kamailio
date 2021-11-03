@@ -53,6 +53,7 @@ typedef struct _init_nats_sub
 typedef struct _init_nats_server
 {
 	char *url;
+	natsConnection *conn;
 	struct _init_nats_server *next;
 } init_nats_server, *init_nats_server_ptr;
 
