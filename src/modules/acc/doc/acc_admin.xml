@@ -1443,6 +1443,43 @@ modparam("acc", "cdr_on_failed", 0)
 </programlisting>
 		</example>
 	</section>
+
+	<section id="acc.p.acc_extra_size">
+		<title><varname>acc_extra_size</varname> (int)</title>
+		<para>
+		This parameter is meant to replace MAX_ACC_EXTRA fixed size with desired size.
+		</para>
+		<para>
+		Default value is 64 (MAX_ACC_EXTRA).
+		</para>
+		<example>
+		<title>acc_extra_size</title>
+		<programlisting format="linespecific">
+...
+modparam("acc", "acc_extra_size", 100)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="acc.p.cdr_extra_size">
+		<title><varname>cdr_extra_size</varname> (int)</title>
+		<para>
+		This parameter is meant to replace MAX_CDR_EXTRA fixed size with desired size.
+		</para>
+		<para>
+		Default value is 64 (MAX_CDR_EXTRA).
+		</para>
+		<example>
+		<title>cdr_extra_size</title>
+		<programlisting format="linespecific">
+...
+modparam("acc", "cdr_extra_size", 100)
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 	<section>

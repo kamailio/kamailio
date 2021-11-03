@@ -37,6 +37,8 @@
 #include "../../core/parser/msg_parser.h"
 #include "../dialog/dlg_load.h"
 
+extern int acc_extra_size;
+
 void init_acc_extra(void);
 
 struct acc_extra *parse_acc_extra(char *extra);
@@ -67,5 +69,9 @@ static inline void free_strar_mem( char* type_arr, str* alloc_arr, int dim_arr, 
 		}
 	}
 }
+
+int acc_extra_arrays_alloc(void);
+void acc_extra_arrays_free(void);
+
 #endif
 
