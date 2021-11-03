@@ -2703,11 +2703,11 @@ nextvia:
 
 error:
 	if(end > buffer) {
-		LM_ERR("parsing via on: <%.*s>\n", (int)(end - buffer), ZSW(buffer));
+		LM_ERR("parsing via on: <%.*s>\n", (int)(end - buffer), ZSW(ksr_buf_oneline(buffer, (int)(end - buffer))));
 	}
 	if((tmp > buffer) && (tmp < end)) {
 		LM_ERR("parse error, parsed so far:<%.*s>\n", (int)(tmp - buffer),
-				ZSW(buffer));
+				ZSW(ksr_buf_oneline(buffer, (int)(tmp - buffer))));
 	} else {
 		LM_ERR("via parse error\n");
 	}

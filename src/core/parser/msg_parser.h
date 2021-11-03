@@ -522,6 +522,11 @@ int msg_set_time(sip_msg_t* const msg);
 void msg_ldata_reset(sip_msg_t*);
 
 /**
+ * replace \r\n with . and space
+ */
+char *ksr_buf_oneline(char *inbuf, int inlen);
+
+/**
  * get source ip, port and protocol in SIP URI format
  */
 int get_src_uri(sip_msg_t *m, int tmode, str *uri);

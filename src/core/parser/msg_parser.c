@@ -745,7 +745,7 @@ int parse_msg(char* const buf, const unsigned int len, struct sip_msg* const msg
 error:
 	/* more debugging, msg->orig is/should be null terminated*/
 	LOG(cfg_get(core, core_cfg, sip_parser_log), "ERROR: parse_msg: message=<%.*s>\n",
-			(int)msg->len, ZSW(msg->buf));
+			(int)msg->len, ZSW(ksr_buf_oneline(msg->buf, (int)msg->len)));
 	return -1;
 }
 
@@ -1091,6 +1091,42 @@ int msg_set_time(sip_msg_t* const msg)
 	if(msg->tval.tv_sec!=0)
 		return 0;
 	return gettimeofday(&msg->tval, NULL);
+}
+
+/**
+ * replace \r\n with . and space
+ */
+char *ksr_buf_oneline(char *inbuf, int inlen)
+{
+	static char outbuf[BUF_SIZE];
+	int outlen;
+	int i = 0;
+
+	if (cfg_get(core, core_cfg, sip_parser_log_oneline) == 0) {
+		return inbuf;
+	}
+
+	if (inbuf == NULL) {
+		outbuf[0] = '\0';
+		return outbuf;
+	}
+
+	outlen = (inlen < BUF_SIZE) ? inlen : BUF_SIZE - 1;
+	memcpy(outbuf, inbuf, outlen);
+	outbuf[outlen] = '\0';
+
+	for (i = 0; i < outlen;  i++) {
+		if (outbuf[i] == '\r')
+		{
+			outbuf[i] = '.';
+		}
+		else if (outbuf[i] == '\n')
+		{
+			outbuf[i] = ' ';
+		}
+	}
+
+	return outbuf;
 }
 
 /**
