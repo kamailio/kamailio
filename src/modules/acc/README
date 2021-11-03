@@ -125,6 +125,8 @@ Sven Knoblich
               6.46. reason_from_hf (int)
               6.47. clone_msg (int)
               6.48. cdr_on_failed (int)
+              6.49. acc_extra_size (int)
+              6.50. cdr_extra_size (int)
 
         7. Functions
 
@@ -184,9 +186,11 @@ Sven Knoblich
    1.46. reason_from_hf
    1.47. clone_msg
    1.48. cdr_on_failed
-   1.49. acc_log_request usage
-   1.50. acc_db_request usage
-   1.51. acc_db_request usage
+   1.49. acc_extra_size
+   1.50. cdr_extra_size
+   1.51. acc_log_request usage
+   1.52. acc_db_request usage
+   1.53. acc_db_request usage
 
 Chapter 1. Admin Guide
 
@@ -279,6 +283,8 @@ Chapter 1. Admin Guide
         6.46. reason_from_hf (int)
         6.47. clone_msg (int)
         6.48. cdr_on_failed (int)
+        6.49. acc_extra_size (int)
+        6.50. cdr_extra_size (int)
 
    7. Functions
 
@@ -674,6 +680,8 @@ $dlg_var(callee) = $avp(callee); #callee='C'
    6.46. reason_from_hf (int)
    6.47. clone_msg (int)
    6.48. cdr_on_failed (int)
+   6.49. acc_extra_size (int)
+   6.50. cdr_extra_size (int)
 
 6.1. early_media (integer)
 
@@ -1321,6 +1329,30 @@ modparam("acc", "clone_msg", 0)
 modparam("acc", "cdr_on_failed", 0)
 ...
 
+6.49. acc_extra_size (int)
+
+   This parameter is meant to replace MAX_ACC_EXTRA fixed size with
+   desired size.
+
+   Default value is 64 (MAX_ACC_EXTRA).
+
+   Example 1.49. acc_extra_size
+...
+modparam("acc", "acc_extra_size", 100)
+...
+
+6.50. cdr_extra_size (int)
+
+   This parameter is meant to replace MAX_CDR_EXTRA fixed size with
+   desired size.
+
+   Default value is 64 (MAX_CDR_EXTRA).
+
+   Example 1.50. cdr_extra_size
+...
+modparam("acc", "cdr_extra_size", 100)
+...
+
 7. Functions
 
    7.1. acc_log_request(comment)
@@ -1340,7 +1372,7 @@ modparam("acc", "cdr_on_failed", 0)
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.49. acc_log_request usage
+   Example 1.51. acc_log_request usage
 ...
 acc_log_request("Some comment");
 $var(code) = 404;
@@ -1362,7 +1394,7 @@ acc_log_request("$var(code) Error: $avp(reason)");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.50. acc_db_request usage
+   Example 1.52. acc_db_request usage
 ...
 acc_db_request("Some comment", "SomeTable");
 acc_db_request("Some comment", "acc_$time(year)_$time(mon)");
@@ -1386,7 +1418,7 @@ acc_db_request("$var(code) Error: $avp(reason)", "SomeTable");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.51. acc_db_request usage
+   Example 1.53. acc_db_request usage
 ...
 acc_request("100 Received", "acc");
 acc_request("100 Received", "acc_$time(year)_$time(mon)");
