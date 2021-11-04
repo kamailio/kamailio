@@ -166,6 +166,7 @@ int reload_trusted_table(void)
 	return 1;
 }
 
+void perm_ht_timer(unsigned int ticks, void *);
 
 /*
  * Initialize data structures
@@ -224,6 +225,9 @@ int init_trusted(void)
 			goto error;
 		}
 
+		if(register_timer(perm_ht_timer, NULL, perm_trusted_table_interval) < 0)
+			goto error;
+
 		perm_dbf.close(perm_db_handle);
 		perm_db_handle = 0;
 	}
@@ -279,6 +283,22 @@ int init_child_trusted(int rank)
 	return 0;
 }
 
+
+void perm_ht_timer(unsigned int ticks, void *param) {
+	if(perm_rpc_reload_time == NULL)
+		return;
+
+	if(*perm_rpc_reload_time != 0
+			&& *perm_rpc_reload_time > time(NULL) - perm_trusted_table_interval)
+			return;
+
+	LM_DBG("cleaning old trusted table\n");
+	if (*perm_trust_table == perm_trust_table_1) {
+		empty_hash_table(perm_trust_table_2);
+	} else {
+		empty_hash_table(perm_trust_table_1);
+	}
+}
 
 /*
  * Close connections and release memory

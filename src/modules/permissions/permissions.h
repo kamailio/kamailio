@@ -60,6 +60,7 @@ extern str perm_mask_col;      /* Name of mask column */
 extern str perm_port_col;      /* Name of port column */
 extern int perm_peer_tag_mode; /* Matching mode */
 extern int perm_reload_delta;  /* seconds between RPC reloads */
+extern int perm_trusted_table_interval; /* interval of timer to clean old trusted data */
 
 /* backends to be loaded */
 #define PERM_LOAD_ADDRESSDB	(1<<0)
