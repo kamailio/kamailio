@@ -61,6 +61,7 @@ static char* perm_deny_suffix = ".deny";
 /* for allow_trusted and allow_address function */
 str perm_db_url = {NULL, 0};                    /* Don't connect to the database by default */
 int perm_reload_delta = 5;
+int perm_trusted_table_interval = 60;
 
 /* for allow_trusted function */
 int perm_db_mode = DISABLE_CACHE;               /* Database usage mode: 0=no cache, 1=cache */
@@ -188,6 +189,7 @@ static param_export_t params[] = {
 	{"max_subnets",        PARAM_INT, &_perm_max_subnets    },
 	{"load_backends",      PARAM_INT, &_perm_load_backends  },
 	{"reload_delta",       PARAM_INT, &perm_reload_delta    },
+	{"trusted_cleanup_interval", PARAM_INT, &perm_trusted_table_interval },
 	{0, 0, 0}
 };
 
