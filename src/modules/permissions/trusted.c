@@ -59,7 +59,6 @@ int reload_trusted_table(void)
 	db_val_t* val;
 
 	struct trusted_list **new_hash_table;
-	struct trusted_list **old_hash_table;
 	int i;
 	int priority;
 
@@ -160,9 +159,7 @@ int reload_trusted_table(void)
 
 	perm_dbf.free_result(perm_db_handle, res);
 
-	old_hash_table = *perm_trust_table;
 	*perm_trust_table = new_hash_table;
-	empty_hash_table(old_hash_table);
 
 	LM_DBG("trusted table reloaded successfully.\n");
 
