@@ -363,7 +363,7 @@ void dialog_publish(char *state, str* ruri, str *entity, str *peer, str *callid,
 	}
 	publ->id.s= (char*)publ+ size;
 	memcpy(publ->id.s, "DIALOG_PUBLISH.", 15);
-	memcpy(publ->id.s+15, uuid->s, callid->len);
+	memcpy(publ->id.s+15, uuid->s, uuid->len);
 	publ->id.len= 15+ uuid->len;
 	size+= publ->id.len;
 

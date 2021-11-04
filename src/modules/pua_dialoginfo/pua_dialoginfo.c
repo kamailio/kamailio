@@ -108,7 +108,7 @@ send_publish_t pua_send_publish;
 /** module functions */
 
 static int mod_init(void);
-
+static int child_init(int rank);
 
 static cmd_export_t cmds[]={
 	{0, 0, 0, 0, 0, 0}
@@ -146,7 +146,7 @@ struct module_exports exports= {
 	0,					/* exported pseudo-variables */
 	0,					/* response handling function */
 	mod_init,			/* module initialization function */
-	0,					/* per-child init function */
+	child_init,		/* per-child init function */
 	0					/* module destroy function */
 };
 
@@ -490,6 +490,13 @@ struct dlginfo_cell* get_dialog_data(struct dlg_cell *dlg, int type, int disable
 	int len;
 	str* s=NULL;
 
+	// generate new random uuid
+	if(sruid_next_safe(&_puadi_sruid) < 0) {
+		return NULL;
+	}
+	LM_DBG("uuid generated: '%.*s'\n",
+		_puadi_sruid.uid.len, _puadi_sruid.uid.s);
+
 	/* create dlginfo structure to store important data inside the module*/
 	len = sizeof(struct dlginfo_cell)
 		+ dlg->from_uri.len
@@ -498,7 +505,7 @@ struct dlginfo_cell* get_dialog_data(struct dlg_cell *dlg, int type, int disable
 		+ dlg->tag[0].len
 		+ dlg->req_uri.len
 		+ dlg->contact[0].len
-		+ SRUID_SIZE;
+		+ _puadi_sruid.uid.len;
 
 	dlginfo = (struct dlginfo_cell*)shm_malloc( len );
 	if (dlginfo==0) {
@@ -524,7 +531,7 @@ struct dlginfo_cell* get_dialog_data(struct dlg_cell *dlg, int type, int disable
 	dlginfo->from_contact.s   = dlginfo->req_uri.s + dlginfo->req_uri.len;
 	dlginfo->from_contact.len = dlg->contact[0].len;
 	dlginfo->uuid.s = dlginfo->from_contact.s + dlginfo->from_contact.len;
-	dlginfo->uuid.len = SRUID_SIZE;
+	dlginfo->uuid.len = _puadi_sruid.uid.len;
 
 	memcpy(dlginfo->from_uri.s, dlg->from_uri.s, dlg->from_uri.len);
 	memcpy(dlginfo->to_uri.s, dlg->to_uri.s, dlg->to_uri.len);
@@ -532,13 +539,7 @@ struct dlginfo_cell* get_dialog_data(struct dlg_cell *dlg, int type, int disable
 	memcpy(dlginfo->from_tag.s, dlg->tag[0].s, dlg->tag[0].len);
 	memcpy(dlginfo->req_uri.s, dlg->req_uri.s, dlg->req_uri.len);
 	memcpy(dlginfo->from_contact.s, dlg->contact[0].s, dlg->contact[0].len);
-
-	// generate new random uuid
-	sruid_next_safe(&_puadi_sruid);
-	strcpy(dlginfo->uuid.s, _puadi_sruid.uid.s);
-	dlginfo->uuid.len = _puadi_sruid.uid.len;
-	LM_DBG("uuid generated: '%.*s'\n",
-		dlginfo->uuid.len, dlginfo->uuid.s);
+	memcpy(dlginfo->uuid.s, _puadi_sruid.uid.s, _puadi_sruid.uid.len);
 
 	if (use_pubruri_avps) {
 		if(type==DLGCB_CREATED) {
@@ -853,6 +854,22 @@ static int mod_init(void)
 		}
 	} else {
 		LM_DBG("configured to use headers for uri values\n");
+	}
+
+	return 0;
+}
+
+/**
+ * @brief Initialize module children
+ */
+static int child_init(int rank)
+{
+	if(sruid_init(&_puadi_sruid, (char)'-', "padi", SRUID_INC)<0) {
+		return -1;
+	}
+
+	if(rank != PROC_MAIN) {
+		return 0;
 	}
 
 	return 0;
