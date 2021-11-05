@@ -1331,10 +1331,11 @@ modparam("acc", "cdr_on_failed", 0)
 
 6.49. acc_extra_size (int)
 
-   This parameter is meant to replace MAX_ACC_EXTRA fixed size with
-   desired size.
+   Set the maximum number of extra attributes that can be stored in the
+   accounting record (event accounting record). It is related to log_extra
+   and db_extra module parameters.
 
-   Default value is 64 (MAX_ACC_EXTRA).
+   Default value is 64.
 
    Example 1.49. acc_extra_size
 ...
@@ -1343,10 +1344,11 @@ modparam("acc", "acc_extra_size", 100)
 
 6.50. cdr_extra_size (int)
 
-   This parameter is meant to replace MAX_CDR_EXTRA fixed size with
-   desired size.
+   Set the maximum number of extra attributes that can be stored in the
+   call data record (cdr by dialog module). It is related to cdr_extra
+   module parameter.
 
-   Default value is 64 (MAX_CDR_EXTRA).
+   Default value is 64.
 
    Example 1.50. cdr_extra_size
 ...
