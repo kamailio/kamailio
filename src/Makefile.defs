@@ -308,7 +308,9 @@ ifneq (,$(findstring gcc, $(CC_LONGVER)))
 					-e 's/9\.[0-9]\..*/9.0+/' \
 					-e 's/9\.[0-9]$$/9.0+/' \
 					-e 's/10\.[0-9]\..*/9.0+/' \
-					-e 's/10\.[0-9]$$/9.0+/')
+					-e 's/10\.[0-9]$$/9.0+/' \
+					-e 's/11\.[0-9]\..*/9.0+/' \
+					-e 's/11\.[0-9]$$/9.0+/')
 ifeq (,$(strip $(filter-out 3.0 3.4 4.x 4.2+ 4.5+ 5.0+ 6.0+ 7.0+ 8.0+ 9.0+,$(CC_SHORTVER))))
 	# dependencies can be generated on-the-fly while compiling *.c
 	CC_MKDEP_OPTS=-MMD -MP
