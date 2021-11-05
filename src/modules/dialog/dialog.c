@@ -2858,16 +2858,21 @@ static void rpc_dlg_stats_active(rpc_t *rpc, void *c)
 {
 	dlg_cell_t *dlg;
 	unsigned int i;
+	int dlg_own = 0;
 	int dlg_starting = 0;
 	int dlg_connecting = 0;
 	int dlg_answering = 0;
 	int dlg_ongoing = 0;
 	void *h;
 
+	if(rpc->scan(c, "*d", &dlg_own) < 1)
+		dlg_own = 0;
 	for( i=0 ; i<d_table->size ; i++ ) {
 		dlg_lock( d_table, &(d_table->entries[i]) );
 
 		for( dlg=d_table->entries[i].first ; dlg ; dlg=dlg->next ) {
+			if(dlg_own != 0 && dlg->bind_addr[0] == NULL)
+				continue;
 			switch(dlg->state) {
 				case DLG_STATE_UNCONFIRMED:
 					dlg_starting++;
