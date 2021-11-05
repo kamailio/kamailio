@@ -97,7 +97,7 @@
 				(str)
 			</title>
 			<para>
-				The nats url.
+				The nats url. More than one url can be configured. For each url, there will be one separate nats connection, either for subscriber or publisher.
 			</para>
 			<para>
 				Usage: nats related.

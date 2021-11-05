@@ -66,7 +66,7 @@ struct nats_consumer_worker
 	char *subject;
 	char *queue_group;
 	int pid;
-	natsConnection *conn;
+	natsConnection *conn[NATS_MAX_SERVERS];
 	natsOptions *opts;
 	natsSubscription *subscription;
 	uv_loop_t *uvLoop;

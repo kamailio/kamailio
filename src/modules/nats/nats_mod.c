@@ -107,6 +107,7 @@ void nats_consumer_worker_proc(
 {
 	natsStatus s;
 	bool closed = false;
+	int i;
 
 	LM_INFO("nats worker connecting to subject [%s] queue group [%s]\n",
 			worker->subject, worker->queue_group);
@@ -128,10 +129,6 @@ void nats_consumer_worker_proc(
 	natsOptions_SetTimeout(worker->opts, 2 * 1000);					// 2s
 	natsOptions_SetReconnectBufSize(worker->opts, 8 * 1024 * 1024); // 8 MB;
 	natsOptions_SetReconnectJitter(worker->opts, 100, 1000); // 100ms, 1s;
-	s = natsOptions_SetServers(worker->opts, servers, 1);
-	if(s != NATS_OK) {
-		LM_ERR("could not set nats server [%s]\n", natsStatus_GetText(s));
-	}
 	s = natsOptions_SetDisconnectedCB(worker->opts, disconnectedCb, NULL);
 	if(s != NATS_OK) {
 		LM_ERR("could not set disconnect callback [%s]\n",
@@ -153,9 +150,17 @@ void nats_consumer_worker_proc(
 		LM_ERR("could not set closed callback [%s]\n", natsStatus_GetText(s));
 	}
 
-	s = natsConnection_Connect(&worker->conn, worker->opts);
-	if(s != NATS_OK) {
-		LM_ERR("could not connect [%s]\n", natsStatus_GetText(s));
+	i = 0;
+	while (servers[i] != NULL) {
+		s = natsOptions_SetServers(worker->opts, &servers[i], 1);
+		if(s != NATS_OK) {
+			LM_ERR("could not set nats server %s [%s]\n", servers[i], natsStatus_GetText(s));
+		}
+		s = natsConnection_Connect(&worker->conn[i], worker->opts);
+		if(s != NATS_OK) {
+			LM_ERR("could not connect %s [%s]\n", servers[i], natsStatus_GetText(s));
+		}
+		i++;
 	}
 	// create a loop
 	natsLibuv_Init();
@@ -177,10 +182,14 @@ void nats_consumer_worker_proc(
 		LM_ERR("error setting options [%s]\n", natsStatus_GetText(s));
 	}
 
-	s = natsConnection_QueueSubscribe(&worker->subscription, worker->conn,
-			worker->subject, worker->queue_group, onMsg, worker->on_message);
-	if(s != NATS_OK) {
-		LM_ERR("could not subscribe [%s]\n", natsStatus_GetText(s));
+	i = 0;
+	while (servers[i] != NULL) {
+		s = natsConnection_QueueSubscribe(&worker->subscription, worker->conn[i],
+				worker->subject, worker->queue_group, onMsg, worker->on_message);
+		if(s != NATS_OK) {
+			LM_ERR("could not subscribe %s [%s]\n", servers[i], natsStatus_GetText(s));
+		}
+		i++;
 	}
 
 	s = natsSubscription_SetPendingLimits(worker->subscription, -1, -1);
@@ -367,7 +376,7 @@ int nats_cleanup_init_servers()
 
 int nats_destroy_workers()
 {
-	int i;
+	int i, j;
 	int s;
 	nats_consumer_worker_t *worker;
 	for(i = 0; i < _nats_proc_count; i++) {
@@ -377,9 +386,11 @@ int nats_destroy_workers()
 				natsSubscription_Unsubscribe(worker->subscription);
 				natsSubscription_Destroy(worker->subscription);
 			}
-			if(worker->conn != NULL) {
-				natsConnection_Close(worker->conn);
-				natsConnection_Destroy(worker->conn);
+			j = 0;
+			while (worker->conn[j] != NULL) {
+				natsConnection_Close(worker->conn[j]);
+				natsConnection_Destroy(worker->conn[j]);
+				j++;
 			}
 			if(worker->opts != NULL) {
 				natsOptions_Destroy(worker->opts);
