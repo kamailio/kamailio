@@ -1489,6 +1489,14 @@ int main_loop(void)
 			goto error;
 		}
 
+
+		/* call it also w/ PROC_POST_FORK to make sure modules that cleanup
+		 * post-fork get a chance to run */
+		if (init_child(PROC_POST_FORK) < 0) {
+			LM_ERR("init_child(PROC_POST_FORK) -- exiting\n");
+			goto error;
+		}
+
 		/* We will call child_init even if we
 		 * do not fork - and it will be called with rank 1 because
 		 * in fact we behave like a child, not like main process
@@ -1856,6 +1864,13 @@ int main_loop(void)
 		}
 #endif
 		/* main */
+
+		/* hook for modules(in main process only) to do post-fork cleanup */
+		if (init_child(PROC_POST_FORK) < 0) {
+			LM_ERR("init_child(PROC_POST_FORK) -- exiting\n");
+			goto error;
+		}
+
 		strncpy(pt[0].desc, "main process - attendant", MAX_PT_DESC );
 #ifdef USE_TCP
 		close_extra_socks(PROC_ATTENDANT, get_proc_no());
