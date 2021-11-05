@@ -175,6 +175,17 @@ static int mod_init(void)
 static int child_init(int rank)
 {
 	if(rank==PROC_INIT) {
+		/*
+		 * this is called before any process is forked
+		 * so the Python internal state handler
+		 * should be called now.
+		 *
+		 * TODO: is PyOS_AfterFork_Parent() necesary
+		 * in the main process?
+		 */
+#if PY_VERSION_HEX >= 0x03070000
+		PyOS_BeforeFork() ;
+#endif
 		return 0;
 	}
 	_apy_process_rank = rank;
