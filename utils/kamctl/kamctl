@@ -1799,6 +1799,11 @@ ksr_srv() {
 				ctl_cmd_run corex.debug $2
 			fi
 			;;
+		modules)
+			require_ctlengine
+			mecho "list loaded modules"
+			ctl_cmd_run core.modules
+			;;
 		version)
 			require_ctlengine
 			mecho "list server version"
