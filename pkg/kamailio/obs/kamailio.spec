@@ -18,6 +18,7 @@
 %bcond_without kazoo
 %bcond_without memcached
 %bcond_without mongodb
+%bcond_without nats
 %bcond_without perl
 %bcond_without phonenum
 %bcond_without python3
@@ -51,6 +52,7 @@
 %bcond_without kazoo
 %bcond_without memcached
 %bcond_with mongodb
+%bcond_with nats
 %bcond_without perl
 %bcond_with phonenum
 %bcond_with python3
@@ -85,6 +87,7 @@
 %bcond_without kazoo
 %bcond_without memcached
 %bcond_without mongodb
+%bcond_with nats
 %bcond_without perl
 %bcond_without phonenum
 %bcond_without python3
@@ -129,6 +132,7 @@
 %bcond_without kazoo
 %bcond_without memcached
 %bcond_without mongodb
+%bcond_without nats
 %bcond_without perl
 %bcond_without phonenum
 %bcond_without python3
@@ -156,6 +160,7 @@
 %bcond_with kazoo
 %bcond_without memcached
 %bcond_with mongodb
+%bcond_with nats
 %bcond_without perl
 %bcond_with phonenum
 %bcond_without python3
@@ -216,8 +221,9 @@ Conflicts:  kamailio-dialplan < %ver, kamailio-dnssec < %ver
 Conflicts:  kamailio-geoip < %ver, kamailio-gzcompress < %ver
 Conflicts:  kamailio-http_client < %ver
 Conflicts:  kamailio-ims < %ver, kamailio-java < %ver, kamailio-json < %ver
-Conflicts:  kamailio-lcr < %ver, kamailio-ldap < %ver, kamailio-lost < %ver, kamailio-lua < %ver
 Conflicts:  kamailio-kazoo < %ver
+Conflicts:  kamailio-lcr < %ver, kamailio-ldap < %ver, kamailio-lost < %ver, kamailio-lua < %ver
+Conflicts:  kamailio-nats < %ver
 Conflicts:  kamailio-rabbitmq < %ver
 Conflicts:  kamailio-memcached < %ver, kamailio-mongodb < %ver, kamailio-mysql < %ver
 Conflicts:  kamailio-outbound < %ver, kamailio-perl < %ver
@@ -685,6 +691,18 @@ BuildRequires:  mysql-devel
 
 %description    mysql
 MySQL database connectivity for Kamailio.
+
+
+%if %{with nats}
+%package    nats
+Summary:    NATS consumer for Kamailio
+Group:      %{PKGGROUP}
+Requires:   libnats, kamailio = %ver
+BuildRequires:    libnats-devel
+
+%description    nats
+The module provides an NATS consumer for Kamailio. NATS is a real time distributed messaging platform, more details about it can be found at nats.io.
+%endif
 
 
 %package    outbound
@@ -1210,6 +1228,9 @@ make every-module skip_modules="app_mono db_cassandra db_oracle iptrtpproxy \
     kmongodb \
 %endif
     kmysql koutbound \
+%if %{with nats}
+    knats \
+%endif
 %if %{with perl}
     kperl \
 %endif
@@ -1308,6 +1329,9 @@ make install-modules-all skip_modules="app_mono db_cassandra db_oracle \
     kmongodb \
 %endif
     kmysql koutbound \
+%if %{with nats}
+    knats \
+%endif
 %if %{with perl}
     kperl \
 %endif
@@ -1995,6 +2019,14 @@ fi
 %{_libdir}/kamailio/kamctl/kamdbctl.mysql
 %dir %{_datadir}/kamailio/mysql
 %{_datadir}/kamailio/mysql/*
+
+
+%if %{with nats}
+%files      nats
+%defattr(-,root,root)
+%doc %{_docdir}/kamailio/modules/README.nats
+%{_libdir}/kamailio/modules/nats.so
+%endif
 
 
 %files      outbound
