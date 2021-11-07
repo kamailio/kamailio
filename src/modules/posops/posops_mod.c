@@ -41,6 +41,7 @@ static void mod_destroy(void);
 static int w_posops_pos_append(sip_msg_t* msg, char* p1idx, char* p2val);
 static int w_posops_pos_insert(sip_msg_t* msg, char* p1idx, char* p2val);
 static int w_posops_pos_rm(sip_msg_t* msg, char* p1idx, char* p2len);
+static int w_posops_pos_set_char(sip_msg_t* msg, char* p1idx, char* p2val);
 static int w_posops_pos_headers_start(sip_msg_t* msg, char* p1, char* p2);
 static int w_posops_pos_headers_end(sip_msg_t* msg, char* p1, char* p2);
 static int w_posops_pos_body_start(sip_msg_t* msg, char* p1, char* p2);
@@ -83,6 +84,8 @@ static cmd_export_t cmds[]={
 		fixup_free_igp_spve, ANY_ROUTE},
 	{"pos_rm", (cmd_function)w_posops_pos_rm, 2, fixup_igp_igp,
 		fixup_free_igp_igp, ANY_ROUTE},
+	{"pos_set_char", (cmd_function)w_posops_pos_set_char, 2, fixup_igp_spve,
+		fixup_free_igp_spve, ANY_ROUTE},
 	{"pos_headers_start", (cmd_function)w_posops_pos_headers_start, 0, 0,
 		0, ANY_ROUTE},
 	{"pos_headers_end", (cmd_function)w_posops_pos_headers_end, 0, 0,
@@ -340,6 +343,56 @@ static int w_posops_pos_rm(sip_msg_t* msg, char* p1idx, char* p2len)
 	}
 
 	return ki_posops_pos_rm(msg, idx, len);
+}
+
+/**
+ *
+ */
+static int ki_posops_pos_set_char(sip_msg_t *msg, int idx, str *val)
+{
+	int offset;
+
+	posops_data_init();
+	if(val==NULL || val->s==NULL || val->len<=0) {
+		LM_ERR("invalid val parameter\n");
+		return -1;
+	}
+
+	if(idx<0) {
+		offset = msg->len + idx;
+	} else {
+		offset = idx;
+	}
+	if(offset>msg->len) {
+		LM_ERR("offset invalid: %d (msg-len: %d)\n", offset, msg->len);
+		return -1;
+	}
+
+	msg->buf[offset] = val->s[0];
+
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_posops_pos_set_char(sip_msg_t* msg, char* p1idx, char* p2val)
+{
+	int idx = 0;
+	str val = STR_NULL;
+
+	posops_data_init();
+	if(fixup_get_ivalue(msg, (gparam_t*)p1idx, &idx)!=0) {
+		LM_ERR("unable to get idx parameter\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_t*)p2val, &val)!=0) {
+		LM_ERR("unable to get val parameter\n");
+		return -1;
+	}
+
+	return ki_posops_pos_set_char(msg, idx, &val);
 }
 
 /**
@@ -876,6 +929,11 @@ static sr_kemi_t sr_kemi_posops_exports[] = {
 	{ str_init("posops"), str_init("pos_rm"),
 		SR_KEMIP_INT, ki_posops_pos_rm,
 		{ SR_KEMIP_INT, SR_KEMIP_INT, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("posops"), str_init("pos_set_char"),
+		SR_KEMIP_INT, ki_posops_pos_set_char,
+		{ SR_KEMIP_INT, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("posops"), str_init("pos_headers_start"),
