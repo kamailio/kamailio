@@ -160,6 +160,32 @@ pos_insert("100", "10");
 				</programlisting>
 			</example>
 		</section>
+		<section id="posops.f.pos_set_char">
+			<title>
+				<function moreinfo="none">pos_set_char(idx, val)</function>
+			</title>
+			<para>
+			Set the char at position index to first character in val.
+			</para>
+			<para>
+			The idx can be an integer value or a variable holding an integer. If
+			the value is negative, the position is counted from the end of the buffer.
+			</para>
+			<para>
+			The val can be a static string or variables.
+			</para>
+			<para>
+			This function can be used from ANY_ROUTE.
+			</para>
+			<example>
+				<title><function>pos_set_char()</function> usage</title>
+				<programlisting format="linespecific">
+...
+pos_set_char("100", "x");
+...
+				</programlisting>
+			</example>
+		</section>
 		<section id="posops.f.pos_headers_start">
 			<title>
 				<function moreinfo="none">pos_headers_start()</function>
