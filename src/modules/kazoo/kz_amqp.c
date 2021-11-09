@@ -352,6 +352,8 @@ void kz_amqp_free_pipe_cmd(kz_amqp_cmd_ptr cmd)
 		shm_free(cmd->cb_route);
 	if (cmd->err_route)
 		shm_free(cmd->err_route);
+	if (cmd->headers)
+		shm_free(cmd->headers);
 	lock_release(&cmd->lock);
 	lock_destroy(&cmd->lock);
 	shm_free(cmd);
@@ -1035,7 +1037,7 @@ void kz_amqp_add_payload_common_properties(json_obj_ptr json_obj, char* server_i
 
 }
 
-int kz_amqp_pipe_send(str *str_exchange, str *str_routing_key, str *str_payload)
+int kz_amqp_pipe_send(str *str_exchange, str *str_routing_key, str *str_payload, str *str_headers)
 {
 	int ret = 1;
     json_obj_ptr json_obj = NULL;
@@ -1109,6 +1111,9 @@ int kz_amqp_pipe_send(str *str_exchange, str *str_routing_key, str *str_payload)
 	lock_get(&cmd->lock);
 	cmd->type = KZ_AMQP_CMD_PUBLISH;
 	cmd->consumer = getpid();
+	if (str_headers != NULL) {
+		cmd->headers = kz_amqp_str_dup(str_headers);
+	}
 	if (write(kz_cmd_pipe, &cmd, sizeof(cmd)) != sizeof(cmd)) {
 		LM_ERR("failed to publish message to amqp in process %d, write to command pipe: %s\n", getpid(), strerror(errno));
 	} else {
@@ -1130,7 +1135,7 @@ int kz_amqp_pipe_send(str *str_exchange, str *str_routing_key, str *str_payload)
 	return ret;
 }
 
-int kz_amqp_pipe_send_receive(str *str_exchange, str *str_routing_key, str *str_payload, struct timeval* kz_timeout, json_obj_ptr* json_ret )
+int kz_amqp_pipe_send_receive(str *str_exchange, str *str_routing_key, str *str_payload, struct timeval* kz_timeout, json_obj_ptr* json_ret , str* str_headers )
 {
 	int ret = 1;
     json_obj_ptr json_obj = NULL;
@@ -1171,6 +1176,10 @@ int kz_amqp_pipe_send_receive(str *str_exchange, str *str_routing_key, str *str_
 	cmd->reply_routing_key = kz_amqp_string_dup(serverid);
 	cmd->payload = kz_amqp_string_dup(payload);
 	cmd->message_id = kz_str_dup(&unique_string);
+
+	if (str_headers != NULL) {
+		cmd->headers = kz_amqp_str_dup(str_headers);
+	}
 
 	cmd->timeout = *kz_timeout;
 
@@ -1216,11 +1225,12 @@ int kz_amqp_pipe_send_receive(str *str_exchange, str *str_routing_key, str *str_
     return ret;
 }
 
-int kz_amqp_publish_ex(struct sip_msg* msg, char* exchange, char* routing_key, char* payload, char* _pub_flags)
+int kz_amqp_publish_ex(struct sip_msg* msg, char* exchange, char* routing_key, char* payload, char* headers)
 {
 	  str pl_s;
 	  str exchange_s;
 	  str routing_key_s;
+	  str headers_s;
 
 		if (fixup_get_svalue(msg, (gparam_p)exchange, &exchange_s) != 0) {
 			LM_ERR("cannot get exchange string value\n");
@@ -1242,10 +1252,20 @@ int kz_amqp_publish_ex(struct sip_msg* msg, char* exchange, char* routing_key, c
 			return -1;
 		}
 
-		return ki_kz_amqp_publish(msg, &exchange_s, &routing_key_s, &pl_s);
+		if (headers != NULL) {
+			if (fixup_get_svalue(msg, (gparam_p)headers, &headers_s) != 0) {
+				LM_ERR("cannot get amqp_headers string value\n");
+				return -1;
+			}
+		} else {
+			headers_s.len = 0;
+			headers_s.s = "";
+		}
+
+		return ki_kz_amqp_publish(msg, &exchange_s, &routing_key_s, &pl_s, &headers_s);
 };
 
-int ki_kz_amqp_publish(sip_msg_t* msg, str* exchange, str* routing_key, str* payload)
+int ki_kz_amqp_publish(sip_msg_t* msg, str* exchange, str* routing_key, str* payload, str* headers)
 {
 	  char *pl = ((str*)payload)->s;
 	  struct json_object *j = json_tokener_parse(pl);
@@ -1256,7 +1276,7 @@ int ki_kz_amqp_publish(sip_msg_t* msg, str* exchange, str* routing_key, str* pay
 	  }
 
 	  json_object_put(j);
-	  return kz_amqp_pipe_send(exchange, routing_key, payload);
+	  return kz_amqp_pipe_send(exchange, routing_key, payload, headers);
 }
 
 int kz_amqp_publish(struct sip_msg* msg, char* exchange, char* routing_key, char* payload)
@@ -1438,11 +1458,12 @@ void kz_amqp_set_last_result(char* json)
 	last_payload_result = value;
 }
 
-int kz_amqp_query_ex(struct sip_msg* msg, char* exchange, char* routing_key, char* payload)
+int kz_amqp_query_ex(struct sip_msg* msg, char* exchange, char* routing_key, char* payload, char* headers)
 {
 	  str json_s;
 	  str exchange_s;
 	  str routing_key_s;
+	  str headers_s;
 	  struct timeval kz_timeout = kz_qtimeout_tv;
 
 	  if(last_payload_result)
@@ -1479,6 +1500,16 @@ int kz_amqp_query_ex(struct sip_msg* msg, char* exchange, char* routing_key, cha
 
 		json_object_put(j);
 
+		if (headers != NULL) {
+			if (fixup_get_svalue(msg, (gparam_p)headers, &headers_s) != 0) {
+				LM_ERR("cannot get amqp_headers string value\n");
+				return -1;
+			}
+		} else {
+			headers_s.len = 0;
+			headers_s.s = "";
+		}
+
 		if(kz_query_timeout_spec.type != PVT_NONE) {
 			pv_value_t pv_val;
 			if(pv_get_spec_value( msg, &kz_query_timeout_spec, &pv_val) == 0) {
@@ -1491,7 +1522,7 @@ int kz_amqp_query_ex(struct sip_msg* msg, char* exchange, char* routing_key, cha
 		}
 
 		json_obj_ptr ret = NULL;
-		int res = kz_amqp_pipe_send_receive(&exchange_s, &routing_key_s, &json_s, &kz_timeout, &ret );
+		int res = kz_amqp_pipe_send_receive(&exchange_s, &routing_key_s, &json_s, &kz_timeout, &ret , &headers_s);
 
 		if(res != 0) {
 			return -1;
@@ -1508,13 +1539,13 @@ int kz_amqp_query_ex(struct sip_msg* msg, char* exchange, char* routing_key, cha
 		return 1;
 };
 
-int kz_amqp_query(struct sip_msg* msg, char* exchange, char* routing_key, char* payload, char* dst)
+int kz_amqp_query(struct sip_msg* msg, char* exchange, char* routing_key, char* payload, char* dst, char* headers)
 {
 
 	  pv_spec_t *dst_pv;
 	  pv_value_t dst_val;
 
-	  int result = kz_amqp_query_ex(msg, exchange, routing_key, payload);
+	  int result = kz_amqp_query_ex(msg, exchange, routing_key, payload, headers);
 	  if(result == -1)
 		  return result;
 
@@ -2243,6 +2274,11 @@ int kz_amqp_send_ex(kz_amqp_server_ptr srv, kz_amqp_cmd_ptr cmd, kz_amqp_channel
     routing_key = amqp_bytes_malloc_dup(amqp_cstring_bytes(cmd->routing_key));
     payload = amqp_bytes_malloc_dup(amqp_cstring_bytes(cmd->payload));
 
+    int num_headers = 0;
+    if ( (cmd->headers != NULL) &&  (strlen (cmd->headers) > 0 ) ) {
+        num_headers = add_amqp_headers(cmd->headers, &props);
+    }
+    
     json_obj = kz_json_parse(cmd->payload);
     if (json_obj == NULL) {
 	    LM_ERR("error parsing json when publishing %s\n", cmd->payload);
@@ -2284,8 +2320,69 @@ error:
 		amqp_bytes_free(routing_key);
 	if(payload.bytes)
 		amqp_bytes_free(payload);
+	if (num_headers > 0) {
+		shm_free(props.headers.entries);
+	}
 
 	return ret;
+}
+
+int add_amqp_headers (char * headers, amqp_basic_properties_t * props )
+{
+	int num_headers = 0;
+	const char headers_delim[2] = ";"; // several key/val-pairs separated by ";"
+	const char val_delim[2] = "=";     // key/value separated by "="
+	char * headers_buffer;
+
+	char * kv_pair_str, * header_name, * header_value;
+	char * header_saveptr, * val_saveptr; // savepointers for strtok_r
+
+	headers_buffer = pkg_malloc(strlen(headers) + 1);
+	strcpy(headers_buffer, headers);
+
+	//count correct header/value-pairs
+	kv_pair_str = strtok_r(headers_buffer, headers_delim, &header_saveptr);
+	while( kv_pair_str != NULL) {
+		header_name = strtok_r (kv_pair_str, val_delim, &val_saveptr);
+		if (header_name != NULL) {
+			header_value = strtok_r (NULL, val_delim, &val_saveptr);
+			if (header_value != NULL) {
+				num_headers++;
+			} else {
+				LM_ERR("Header-Value cant be parsed - skipping!\n");
+			}
+		} else {
+			LM_ERR("Header-Name cant be parsed - skipping!\n");
+		}
+		kv_pair_str = strtok_r(NULL, headers_delim, &header_saveptr);
+	}
+	pkg_free(headers_buffer);
+
+	if (num_headers > 0) {
+		headers_buffer = pkg_malloc(strlen(headers) + 1);
+		strcpy(headers_buffer, headers);
+		//allocate size
+		props->headers.num_entries=num_headers;
+		props->headers.entries=shm_malloc(props->headers.num_entries * sizeof(amqp_table_entry_t));
+		num_headers = 0;
+		kv_pair_str = strtok_r(headers_buffer, headers_delim, &header_saveptr);
+		while( kv_pair_str != NULL) {
+			header_name = strtok_r (kv_pair_str, val_delim, &val_saveptr);
+			if (header_name != NULL) {
+				header_value = strtok_r (NULL, val_delim, &val_saveptr);
+				if (header_value != NULL) {
+					props->headers.entries[num_headers].key =  amqp_cstring_bytes(header_name);
+					props->headers.entries[num_headers].value.kind=AMQP_FIELD_KIND_UTF8;
+					props->headers.entries[num_headers].value.value.bytes=amqp_cstring_bytes(header_value);
+					num_headers++;
+				}
+			}
+			kv_pair_str = strtok_r(NULL, headers_delim, &header_saveptr);
+		}
+		props->_flags |= AMQP_BASIC_HEADERS_FLAG;
+		pkg_free(headers_buffer);
+	}
+	return num_headers;
 }
 
 int kz_amqp_send(kz_amqp_server_ptr srv, kz_amqp_cmd_ptr cmd)
