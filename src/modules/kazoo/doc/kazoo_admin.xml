@@ -560,10 +560,10 @@ modparam("kazoo", "pua_mode", 0)
 			<section>
 				<title>
 					<function moreinfo="none">kazoo_publish(exchange, routing_key,
-						json_payload)</function>
+						json_payload [, amqp_headers])</function>
 				</title>
 				<para>The function publishes a json payload to rabbitmq. The routing_key parameter
-					should be encoded.</para>
+					should be encoded. Optional AMQP-Headers are specified in the format key1=value1;key2=value2</para>
 				<para>This function can be used from ANY ROUTE.</para>
 
 				<example>
@@ -581,12 +581,12 @@ kazoo_publish("callmgr", $var(amqp_routing_key), $var(amqp_payload_request));
 			<section>
 				<title>
 					<function moreinfo="none">kazoo_query(exchange, routing_key, json_payload [,
-						target_var])</function>
+						target_var] [, amqp_headers])</function>
 				</title>
 				<para>The function publishes a json payload to rabbitmq, waits for a correlated
 					messageand puts the result in target_var. The routing_key parameter should be
 					encoded. target_var is optional as the function also puts the result in
-					pseudo-variable $kzR.</para>
+					pseudo-variable $kzR. Optional AMQP-Headers are specified in the format key1=value1;key2=value2</para>
 				<para>This function can be used from ANY ROUTE.</para>
 
 				<example>
