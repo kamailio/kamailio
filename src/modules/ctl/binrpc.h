@@ -188,7 +188,7 @@ struct binrpc_val{
 inline static int binrpc_get_int_len(int i)
 {
 	int size;
-	for (size=4; size && ((i & (0xff<<24))==0); i<<=8, size--);
+	for (size=4; size && ((i & (0xffu<<24))==0); i<<=8, size--);
 	return size;
 }
 
@@ -216,7 +216,7 @@ inline static unsigned char* binrpc_write_int(	unsigned char* p,
 {
 	int size;
 
-	for (size=4; size && ((i & (0xff<<24))==0); i<<=8, size--);
+	for (size=4; size && ((i & (0xffu<<24))==0); i<<=8, size--);
 	*len=size;
 	for(; (p<end) && (size); p++, size--){
 		*p=(unsigned char)(i>>24);
