@@ -792,7 +792,7 @@ modparam("presence", "subs_remove_match", 1)
 			so newer documents have higher priority.</para>
         </listitem>
         <listitem>
-			<para><emphasis>delete_subscription</emphasis> - integer value to 
+			<para><emphasis>delete_subscription</emphasis> - integer value to
 			give extra control of deleting the subscription after processing of
 			event_route[presence:notify-reply]. If value = 1, it deletes the subscription.
 			If xavp_cfg parameter is set but this attribute is not in the avp,
@@ -975,6 +975,29 @@ modparam("presence", "delete_same_subs", 1)
 		<programlisting format="linespecific">
 ...
 modparam("presence", "timer_mode", 0)
+...
+</programlisting>
+	</example>
+</section>
+
+<section id="presence.p.subs_respond_200">
+	<title><varname>subs_respond_200</varname> (integer)</title>
+	<para>
+	Specify the response code for accepted SUBSCRIBE requests.
+	If set to 0, 202 Accepted will be returned.
+	If set to 1, 200 OK will be returned instead, in conformance to RFC6665
+	which prohibits 202 responses.
+	</para>
+	<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+	</para>
+	<example>
+		<title>Set <varname>subs_respond_200</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("presence", "subs_respond_200", 1)
 ...
 </programlisting>
 	</example>
