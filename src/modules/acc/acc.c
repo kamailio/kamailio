@@ -429,18 +429,19 @@ int acc_db_request( struct sip_msg *rq)
 	for(i=0; i<m; i++)
 		VAL_STR(db_vals+i) = val_arr[i];
 	/* time value */
-	VAL_TIME(db_vals+(m++)) = acc_env.ts;
+	VAL_TIME(db_vals+m) = acc_env.ts;
+	m++;
 	/* extra time value */
 	if(acc_time_mode==1) {
-		VAL_INT(db_vals+(m++)) = (int)acc_env.tv.tv_sec;
-		i++;
-		VAL_INT(db_vals+(m++)) = (int)acc_env.tv.tv_usec;
-		i++;
+		VAL_INT(db_vals+m) = (int)acc_env.tv.tv_sec;
+		m++;
+		VAL_INT(db_vals+m) = (int)acc_env.tv.tv_usec;
+		m++;
 	} else if(acc_time_mode==2) {
 		dtime = (double)acc_env.tv.tv_usec;
 		dtime = (dtime / 1000000) + (double)acc_env.tv.tv_sec;
-		VAL_DOUBLE(db_vals+(m++)) = dtime;
-		i++;
+		VAL_DOUBLE(db_vals+m) = dtime;
+		m++;
 	} else if(acc_time_mode==3 || acc_time_mode==4) {
 		if(acc_time_mode==3) {
 			localtime_r(&acc_env.ts, &t);
@@ -451,19 +452,21 @@ int acc_db_request( struct sip_msg *rq)
 					acc_time_format, &t)<=0) {
 			acc_time_format_buf[0] = '\0';
 		}
-		VAL_STRING(db_vals+(m++)) = acc_time_format_buf;
-		i++;
+		VAL_STRING(db_vals+m) = acc_time_format_buf;
+		m++;
 	}
+	i = m;
 
 	/* extra columns */
 	o = extra2strar( db_extra, rq, val_arr+m, int_arr+m, type_arr+m);
 	m += o;
 
-	for( i++ ; i<m; i++) {
+	for( ; i<m; i++) {
 		if (acc_extra_nullable == 1 && type_arr[i] == TYPE_NULL) {
 			LM_DBG("attr[%d] is NULL\n", i);
 			VAL_NULL(db_vals + i) = 1;
 		} else {
+			LM_DBG("attr[%d] is STR\n", i);
 			VAL_STR(db_vals+i) = val_arr[i];
 		}
 	}
