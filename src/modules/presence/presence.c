@@ -166,6 +166,7 @@ int pres_retrieve_order = 0;
 str pres_retrieve_order_by = str_init("priority");
 int pres_enable_dmq = 0;
 int pres_delete_same_subs = 0;
+int pres_subs_respond_200 = 0;
 
 int pres_db_table_lock_type = 1;
 db_locking_t pres_db_table_lock = DB_LOCKING_WRITE;
@@ -243,6 +244,7 @@ static param_export_t params[]={
 	{ "pres_subs_mode",         PARAM_INT, &_pres_subs_mode},
 	{ "delete_same_subs",       PARAM_INT, &pres_delete_same_subs},
 	{ "timer_mode",             PARAM_INT, &pres_timer_mode},
+	{ "subs_respond_200",       PARAM_INT, &pres_subs_respond_200},
 
 	{0,0,0}
 };

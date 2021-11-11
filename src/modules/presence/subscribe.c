@@ -56,6 +56,10 @@ static str pu_500_rpl = str_init("Server Internal Error");
 static str pu_489_rpl = str_init("Bad Event");
 static str pu_423_rpl = str_init("Interval Too Brief");
 
+static int get_ok_reply_code() {
+	return pres_subs_respond_200 ? 200 : 202;
+}
+
 static int send_2XX_reply(sip_msg_t *msg, int reply_code, unsigned int lexpire,
 		str *local_contact)
 {
@@ -498,6 +502,7 @@ int update_subscription_notifier(
 		struct sip_msg *msg, subs_t *subs, int to_tag_gen, int *sent_reply)
 {
 	int num_peers = 0;
+	int reply_code;
 
 	*sent_reply = 0;
 
@@ -539,11 +544,9 @@ int update_subscription_notifier(
 		}
 	}
 
-	if(send_2XX_reply(msg, subs->event->type & PUBL_TYPE ? 202 : 200,
-			   subs->expires, &subs->local_contact)
-			< 0) {
-		LM_ERR("sending %d response\n",
-				subs->event->type & PUBL_TYPE ? 202 : 200);
+	reply_code = subs->event->type & PUBL_TYPE ? get_ok_reply_code() : 200;
+	if(send_2XX_reply(msg, reply_code, subs->expires, &subs->local_contact) < 0) {
+		LM_ERR("sending %d response\n", reply_code);
 		goto error;
 	}
 	*sent_reply = 1;
@@ -558,6 +561,7 @@ int update_subscription(
 		struct sip_msg *msg, subs_t *subs, int to_tag_gen, int *sent_reply)
 {
 	unsigned int hash_code;
+	int reply_code;
 
 	LM_DBG("update subscription\n");
 	printf_subs(subs);
@@ -573,9 +577,10 @@ int update_subscription(
 					&subs->from_tag, &subs->callid);
 
 			if(subs->event->type & PUBL_TYPE) {
-				if(send_2XX_reply(msg, 202, subs->expires, &subs->local_contact)
+				reply_code = get_ok_reply_code();
+				if(send_2XX_reply(msg, reply_code, subs->expires, &subs->local_contact)
 						< 0) {
-					LM_ERR("sending 202 OK\n");
+					LM_ERR("sending %d OK\n", reply_code);
 					goto error;
 				}
 				*sent_reply = 1;
@@ -656,8 +661,9 @@ int update_subscription(
 	/* reply_and_notify  */
 
 	if(subs->event->type & PUBL_TYPE) {
-		if(send_2XX_reply(msg, 202, subs->expires, &subs->local_contact) < 0) {
-			LM_ERR("sending 202 OK reply\n");
+		reply_code = get_ok_reply_code();
+		if(send_2XX_reply(msg, reply_code, subs->expires, &subs->local_contact) < 0) {
+			LM_ERR("sending %d OK\n", reply_code);
 			goto error;
 		}
 		*sent_reply = 1;

@@ -99,6 +99,7 @@ extern str pres_xavp_cfg;
 extern int pres_retrieve_order;
 extern str pres_retrieve_order_by;
 extern int pres_enable_dmq;
+extern int pres_subs_respond_200;
 
 extern int phtable_size;
 extern phtable_t *pres_htable;
