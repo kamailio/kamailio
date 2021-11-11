@@ -258,6 +258,7 @@ int extra2strar(struct acc_extra *extra, struct sip_msg *rq, str *val_arr,
 				type_arr[n] = TYPE_STR;
 			}
 		}
+		LM_DBG("type of the extra attr[%d] set to: %d\n", n, type_arr[n]);
 		n++;
 
 		extra = extra->next;
