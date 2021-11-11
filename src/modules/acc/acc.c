@@ -461,6 +461,7 @@ int acc_db_request( struct sip_msg *rq)
 
 	for( i++ ; i<m; i++) {
 		if (acc_extra_nullable == 1 && type_arr[i] == TYPE_NULL) {
+			LM_DBG("attr[%d] is NULL\n", i);
 			VAL_NULL(db_vals + i) = 1;
 		} else {
 			VAL_STR(db_vals+i) = val_arr[i];
