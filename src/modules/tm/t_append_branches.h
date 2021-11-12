@@ -34,4 +34,8 @@
 int t_append_branches(void);
 typedef int (*t_append_branches_f)(void);
 
+/* append a new transaction based on desired Contact hf value */
+int t_append_branch_by_contact(str * contact);
+typedef int (*t_append_branch_by_contact_f)(str * contact);
+
 #endif
