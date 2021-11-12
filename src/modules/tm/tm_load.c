@@ -134,6 +134,7 @@ int load_tm( struct tm_binds *tmb)
 	tmb->tm_ctx_get = tm_ctx_get;
 #endif
 	tmb->t_append_branches = t_append_branches;
+	tmb->t_append_branch_by_contact = t_append_branch_by_contact;
 	tmb->t_load_contacts = t_load_contacts;
 	tmb->t_next_contacts = t_next_contacts;
 	tmb->set_fr = t_set_fr;
