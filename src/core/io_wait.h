@@ -371,7 +371,7 @@ inline static int io_watch_add(	io_wait_h* h,
 		LM_CRIT("maximum fd number exceeded: %d/%d\n", h->fd_no, h->max_fd_no);
 		goto error;
 	}
-	DBG("DBG: io_watch_add(%p, %d, %d, %p), fd_no=%d\n",
+	DBG("processing io_watch_add(%p, %d, %d, %p) - fd_no=%d\n",
 			h, fd, type, data, h->fd_no);
 	/*  hash sanity check */
 	e=get_fd_map(h, fd);
