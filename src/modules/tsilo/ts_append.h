@@ -24,5 +24,7 @@
 
 int ts_append(struct sip_msg* msg, str *ruri, char *table);
 int ts_append_to(struct sip_msg* msg, int tindex, int tlabel, char *table, str *uri);
+int ts_append_by_contact(struct sip_msg* msg, str *ruri, str *contact, char *table);
+int ts_append_by_contact_to(struct sip_msg* msg, int tindex, int tlabel, char *table, str *uri, str *contact);
 
 #endif

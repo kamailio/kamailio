@@ -184,6 +184,60 @@ if (is_method("REGISTER")) {
 </programlisting>
 		</example>
 	</section>
+	<section id="tsilo.f.ts_append_by_contact">
+		<title><function moreinfo="none">ts_append_by_contact(domain, ruri [, contact])</function></title>
+		<para>
+		Has almost the same intention as the ts_append(),
+		but gives a possibility to append branches
+		only for a specific location record (Contact URI).
+		The contact's URI value can be either taken from the currently processed REGISTER
+		or (optionally) given as a third parameter.
+		If the Contact URI for a lookup is given as the parameter,
+		it is possible to provide it as a pseudo-variable.
+
+		The contact lookup is performed on the table specified by the domain parameter.
+		The method should be called when a REGISTER request is received.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+			<emphasis>domain</emphasis> - Name of table that should be used for looking
+			up new contacts for r-uri.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			<emphasis>ruri</emphasis> - The r-uri for which we want to check existing
+			transactions and add them new branches. Can be a static string value or a
+			dynamic string with pseudo-variables.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			<emphasis>contact</emphasis> - Optional, a value of the location record
+			(contact URI) based on which to perform the branch appending.
+			If not given, the value will be taken from the currently processed REGISTER.
+			If a location lookup based on this Contact URI fails (no location record found),
+			then the branch append will not happen.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function>ts_append_by_contact</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (is_method("REGISTER")) {
+	$var(formated_ct) = $(x_hdr(Contact){nameaddr.uri});
+	ts_append_by_contact("location", "$tu", "$var(formated_ct)");
+}
+...
+</programlisting>
+		</example>
+	</section>
 	<section id="tsilo.f.ts_append_to">
 		<title><function moreinfo="none">ts_append_to(tindex, tlabel, domain, [uri])</function></title>
 		<para>
