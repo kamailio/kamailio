@@ -466,7 +466,9 @@ int acc_db_request( struct sip_msg *rq)
 			LM_DBG("attr[%d] is NULL\n", i);
 			VAL_NULL(db_vals + i) = 1;
 		} else {
-			LM_DBG("attr[%d] is STR\n", i);
+			LM_DBG("attr[%d] is STR len=%d\n", i, val_arr[i].len);
+			VAL_NULL(db_vals+i) = 0;
+			VAL_TYPE(db_vals+i)=DB1_STR;
 			VAL_STR(db_vals+i) = val_arr[i];
 		}
 	}
@@ -502,6 +504,8 @@ int acc_db_request( struct sip_msg *rq)
 			if (acc_extra_nullable == 1 && type_arr[i] == TYPE_NULL) {
 					VAL_NULL(db_vals + i) = 1;
 				} else {
+					VAL_NULL(db_vals+i) = 0;
+					VAL_TYPE(db_vals+i)=DB1_STR;
 					VAL_STR(db_vals+i)=val_arr[i];
 				}
 			}
