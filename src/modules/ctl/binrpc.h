@@ -215,12 +215,15 @@ inline static unsigned char* binrpc_write_int(	unsigned char* p,
 												int i, int *len)
 {
 	int size;
+	unsigned int u;
 
-	for (size=4; size && ((i & (0xffu<<24))==0); i<<=8, size--);
+	u = (unsigned int)i;
+
+	for (size=4; size && ((u & (0xffu<<24))==0); u<<=8, size--);
 	*len=size;
 	for(; (p<end) && (size); p++, size--){
-		*p=(unsigned char)(i>>24);
-		i<<=8;
+		*p=(unsigned char)(u>>24);
+		u<<=8;
 	}
 	return p;
 }
@@ -515,24 +518,28 @@ static inline int binrpc_addfault(	struct binrpc_pkt* pkt,
 
 static inline unsigned char* binrpc_read_int(	int* i,
 												int len,
-												unsigned char* s, 
+												unsigned char* s,
 												unsigned char* end,
 												int *err
 												)
 {
 	unsigned char* start;
-	
+	unsigned int u;
+
 	start=s;
 	*i=0;
+	u = 0;
 	*err=0;
 	for(;len>0; len--, s++){
 		if (s>=end){
 			*err=E_BINRPC_MORE_DATA;
+			*i = (int)u;
 			return start;
 		}
-		*i<<=8;
-		*i|=*s;
+		u<<=8;
+		u|=*s;
 	};
+	*i = (int)u;
 	return s;
 }
 
