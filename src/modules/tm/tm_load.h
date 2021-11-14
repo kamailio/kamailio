@@ -117,7 +117,6 @@ struct tm_binds {
 	void* reserved5;
 #endif
 	t_append_branches_f	t_append_branches;
-	t_append_branch_by_contact_f	t_append_branch_by_contact;
 	cmd_function	t_load_contacts;
 	cmd_function	t_next_contacts;
 	tset_fr_f set_fr;
