@@ -89,6 +89,10 @@ int ts_append_to(struct sip_msg* msg, int tindex, int tlabel, char *table, str *
 	int ret;
 	str stable;
 
+	str contact;       /* needed for usage of TM's API, t_append_branches() */
+	contact.s = NULL;  /* must be emptied */
+	contact.len = 0;
+
 	orig_t = _tmb.t_gett();
 
 	if(_tmb.t_lookup_ident(&t, tindex, tlabel) < 0)
@@ -129,7 +133,7 @@ int ts_append_to(struct sip_msg* msg, int tindex, int tlabel, char *table, str *
 		goto done;
 	}
 
-	ret = _tmb.t_append_branches();
+	ret = _tmb.t_append_branches(&contact);
 
 done:
 	/* unref the transaction which had been referred by t_lookup_ident() call.
@@ -245,7 +249,7 @@ int ts_append_by_contact_to(struct sip_msg* msg, int tindex, int tlabel, char *t
 
 	/* start the transaction only for the desired contact
 		contact must be of syntax: sip:<user>@<host>:<port> with no parameters list*/
-	ret = _tmb.t_append_branch_by_contact(contact);
+	ret = _tmb.t_append_branches(contact);
 
 done:
 	/* unref the transaction which had been referred by t_lookup_ident() call.
