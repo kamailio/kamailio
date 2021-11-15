@@ -873,6 +873,27 @@ modparam("permissions", "reload_delta", 1)
 		</programlisting>
 		</example>
 	</section>
+	<section id ="permissions.p.trusted_cleanup_interval">
+		<title><varname>trusted_cleanup_interval</varname> (int)</title>
+		<para>
+		If module parameter <varname>db_mode</varname> is set to 1 a cleanup timer
+		is set to the trusted_cleanup_interval value in seconds.
+		This process will cleanup the previous values from memory after a RPC reload.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>60</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>trusted_cleanup_interval</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("permissions", "trusted_cleanup_interval", 120)
+...
+		</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>
