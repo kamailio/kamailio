@@ -68,6 +68,7 @@ Juha Heinanen
               3.35. pres_subs_mode (integer)
               3.36. delete_same_subs (integer)
               3.37. timer_mode (integer)
+              3.38. subs_respond_200 (integer)
 
         4. Functions
 
@@ -157,15 +158,16 @@ Juha Heinanen
    1.35. Set pres_subs_mode parameter
    1.36. Set delete_same_subs parameter
    1.37. Set timer_mode parameter
-   1.38. handle_publish usage
-   1.39. handle_subscribe usage
-   1.40. pres_auth_status usage
-   1.41. pres_has_subscribers usage
-   1.42. pres_refresh_watchers usage
-   1.43. pres_update_watchers usage
-   1.44. $subs(name) usage
-   1.45. $notify_reply(name) usage
+   1.38. Set subs_respond_200 parameter
+   1.39. handle_publish usage
+   1.40. handle_subscribe usage
+   1.41. pres_auth_status usage
+   1.42. pres_has_subscribers usage
+   1.43. pres_refresh_watchers usage
+   1.44. pres_update_watchers usage
+   1.45. $subs(name) usage
    1.46. $notify_reply(name) usage
+   1.47. $notify_reply(name) usage
    2.1. presence_api_t structure
 
 Chapter 1. Admin Guide
@@ -217,6 +219,7 @@ Chapter 1. Admin Guide
         3.35. pres_subs_mode (integer)
         3.36. delete_same_subs (integer)
         3.37. timer_mode (integer)
+        3.38. subs_respond_200 (integer)
 
    4. Functions
 
@@ -328,6 +331,7 @@ Chapter 1. Admin Guide
    3.35. pres_subs_mode (integer)
    3.36. delete_same_subs (integer)
    3.37. timer_mode (integer)
+   3.38. subs_respond_200 (integer)
 
 3.1. db_url(str)
 
@@ -892,6 +896,19 @@ modparam("presence", "delete_same_subs", 1)
 modparam("presence", "timer_mode", 0)
 ...
 
+3.38. subs_respond_200 (integer)
+
+   Specify the response code for accepted SUBSCRIBE requests. If set to 0,
+   202 Accepted will be returned. If set to 1, 200 OK will be returned
+   instead, in conformance to RFC6665 which prohibits 202 responses.
+
+   Default value is 0.
+
+   Example 1.38. Set subs_respond_200 parameter
+...
+modparam("presence", "subs_respond_200", 1)
+...
+
 4. Functions
 
    4.1. handle_publish([sender_uri])
@@ -921,7 +938,7 @@ modparam("presence", "timer_mode", 0)
 
    The module sends an appropriate stateless reply in all cases.
 
-   Example 1.38. handle_publish usage
+   Example 1.39. handle_publish usage
 ...
         if(is_method("PUBLISH"))
         {
@@ -952,7 +969,7 @@ modparam("presence", "timer_mode", 0)
 
    The module sends an appropriate stateless reply in all cases.
 
-   Example 1.39. handle_subscribe usage
+   Example 1.40. handle_subscribe usage
 ...
 if(method=="SUBSCRIBE")
     handle_subscribe();
@@ -971,7 +988,7 @@ if(method=="SUBSCRIBE")
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.40. pres_auth_status usage
+   Example 1.41. pres_auth_status usage
 ...
 if (method=="MESSAGE") {
     pres_auth_status("$fu", $ru");
@@ -989,7 +1006,7 @@ if (method=="MESSAGE") {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.41. pres_has_subscribers usage
+   Example 1.42. pres_has_subscribers usage
 ...
 if(pres_has_subscribers($var(uri), "message-summary"))
     # do something...;
@@ -1019,7 +1036,7 @@ if(pres_has_subscribers($var(uri), "message-summary"))
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.42. pres_refresh_watchers usage
+   Example 1.43. pres_refresh_watchers usage
 ...
 pres_refresh_watchers("sip:test@kamailio.org", "presence", 1);
 ...
@@ -1037,7 +1054,7 @@ pres_refresh_watchers("sip:test@kamailio.org", "presence", 1);
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.43. pres_update_watchers usage
+   Example 1.44. pres_update_watchers usage
 ...
 pres_update_watchers("sip:test@kamailio.org", "presence");
 ...
@@ -1164,7 +1181,7 @@ kamctl rpc presence.presentity_list full
      * flags
      * user_agent
 
-   Example 1.44. $subs(name) usage
+   Example 1.45. $subs(name) usage
 ...
 if(handle_subscription())
 {
@@ -1180,7 +1197,7 @@ if(handle_subscription())
 
    The “attr” can be any pseudo var that accesses attributes of msg
 
-   Example 1.45. $notify_reply(name) usage
+   Example 1.46. $notify_reply(name) usage
 ...
 event_route[presence:notify-reply]
 {
@@ -1196,7 +1213,7 @@ event_route[presence:notify-reply]
 
    Fired after notify reply is received or timeout.
 
-   Example 1.46. $notify_reply(name) usage
+   Example 1.47. $notify_reply(name) usage
 ...
 event_route[presence:notify-reply]
 {
