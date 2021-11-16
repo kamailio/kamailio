@@ -530,6 +530,7 @@ static int _ksr_slog_json_flags = 0;
 #define KSR_SLOGJSON_FL_NOAPPPREFIXMSG (1<<3)
 #define KSR_SLOGJSON_FL_CALLID (1<<4)
 #define KSR_SLOGJSON_FL_MSGJSON (1<<5)
+#define KSR_SLOGJSON_FL_PRFJSONFLD (1<<6)
 
 
 #define LOGV_CALLID_STR (((_ksr_slog_json_flags & KSR_SLOGJSON_FL_CALLID) \
@@ -615,33 +616,33 @@ static void ksr_slog_json_str_escape(str *s_in, str *s_out, int *emode)
 }
 
 #define KSR_SLOG_SYSLOG_JSON_FMT "{ \"level\": \"%s\", \"module\": \"%s\", \"file\": \"%s\"," \
-	" \"line\": %d, \"function\": \"%s\", %.*s\"logprefix\": %s%.*s%s, \"%smessage\": %s%.*s%s }%s"
+	" \"line\": %d, \"function\": \"%s\"%.*s%s%s%.*s%s, \"%smessage\": %s%.*s%s }%s"
 
 #define KSR_SLOG_SYSLOG_JSON_CFMT "{ \"level\": \"%s\", \"module\": \"%s\", \"file\": \"%s\"," \
-	" \"line\": %d, \"function\": \"%s\", \"callid\": \"%.*s\", \"logprefix\": %s%.*s%s, \"%smessage\": %s%.*s%s }%s"
+	" \"line\": %d, \"function\": \"%s\", \"callid\": \"%.*s\"%s%s%.*s%s, \"%smessage\": %s%.*s%s }%s"
 
 #define KSR_SLOG_SYSLOG_JSON_PFMT "{ \"" NAME ".level\": \"%s\", \"" NAME ".module\": \"%s\", \"" NAME ".file\": \"%s\"," \
-	" \"" NAME ".line\": %d, \"" NAME ".function\": \"%s\", %.*s\"" NAME ".logprefix\": %s%.*s%s, \"%smessage\": %s%.*s%s }%s"
+	" \"" NAME ".line\": %d, \"" NAME ".function\": \"%s\"%.*s%s%s%.*s%s, \"%smessage\": %s%.*s%s }%s"
 
 #define KSR_SLOG_SYSLOG_JSON_CPFMT "{ \"" NAME ".level\": \"%s\", \"" NAME ".module\": \"%s\", \"" NAME ".file\": \"%s\"," \
-	" \"" NAME ".line\": %d, \"" NAME ".function\": \"%s\", \"" NAME ".callid\": \"%.*s\", \"" NAME ".logprefix\": %s%.*s%s," \
+	" \"" NAME ".line\": %d, \"" NAME ".function\": \"%s\", \"" NAME ".callid\": \"%.*s\"%s%s%.*s%s," \
 	" \"%smessage\": %s%.*s%s }%s"
 
 #define KSR_SLOG_STDERR_JSON_FMT "{ \"idx\": %d, \"pid\": %d, \"level\": \"%s\"," \
 	" \"module\": \"%s\", \"file\": \"%s\"," \
-	" \"line\": %d, \"function\": \"%s\", %.*s\"logprefix\": %s%.*s%s, \"%smessage\": %s%.*s%s }%s"
+	" \"line\": %d, \"function\": \"%s\"%.*s%s%s%.*s%s, \"%smessage\": %s%.*s%s }%s"
 
 #define KSR_SLOG_STDERR_JSON_CFMT "{ \"idx\": %d, \"pid\": %d, \"level\": \"%s\"," \
 	" \"module\": \"%s\", \"file\": \"%s\"," \
-	" \"line\": %d, \"function\": \"%s\", \"callid\": \"%.*s\", \"logprefix\": %s%.*s%s, \"%smessage\": %s%.*s%s }%s"
+	" \"line\": %d, \"function\": \"%s\", \"callid\": \"%.*s\"%s%s%.*s%s, \"%smessage\": %s%.*s%s }%s"
 
 #define KSR_SLOG_STDERR_JSON_PFMT "{ \"" NAME ".idx\": %d, \"" NAME ".pid\": %d, \"" NAME ".level\": \"%s\"," \
 	" \"" NAME ".module\": \"%s\", \"" NAME ".file\": \"%s\"," \
-	" \"" NAME ".line\": %d, \"" NAME ".function\": \"%s\", %.*s\"" NAME ".logprefix\": %s%.*s%s, \"%smessage\": %s%.*s%s }%s"
+	" \"" NAME ".line\": %d, \"" NAME ".function\": \"%s\"%.*s\"%s%s%.*s%s, \"%smessage\": %s%.*s%s }%s"
 
 #define KSR_SLOG_STDERR_JSON_CPFMT "{ \"" NAME ".idx\": %d, \"" NAME ".pid\": %d, \"" NAME ".level\": \"%s\"," \
 	" \"" NAME ".module\": \"%s\", \"" NAME ".file\": \"%s\"," \
-	" \"" NAME ".line\": %d, \"" NAME ".function\": \"%s\", \"" NAME ".callid\": \"%.*s\", \"" NAME ".logprefix\": %s%.*s%s," \
+	" \"" NAME ".line\": %d, \"" NAME ".function\": \"%s\", \"" NAME ".callid\": \"%.*s\"%s%s%.*s%s," \
 	" \"%smessage\": %s%.*s%s }%s"
 
 #ifdef HAVE_PTHREAD
@@ -677,6 +678,7 @@ void ksr_slog_json(ksr_logdata_t *kld, const char *format, ...)
 	char *sme = "\"";
 	char *pmb = "\"";
 	char *pme = "\"";
+	char *prname = ", \"" NAME ".logprefix\": ";
 
 	va_start(arglist, format);
 	n = vsnprintf(obuf + s_in.len, KSR_SLOG_MAX_SIZE - s_in.len, format, arglist);
@@ -727,6 +729,7 @@ void ksr_slog_json(ksr_logdata_t *kld, const char *format, ...)
 		} else {
 			prefmsg = NAME ".";
 		}
+		prname = ", \"" NAME ".logprefix\": ";
 		if(_ksr_slog_json_flags & KSR_SLOGJSON_FL_CALLID) {
 			efmt = KSR_SLOG_STDERR_JSON_CPFMT;
 			sfmt = KSR_SLOG_SYSLOG_JSON_CPFMT;
@@ -736,12 +739,21 @@ void ksr_slog_json(ksr_logdata_t *kld, const char *format, ...)
 		}
 	} else {
 		prefmsg = "";
+		prname = ", \"logprefix\": ";
 		if(_ksr_slog_json_flags & KSR_SLOGJSON_FL_CALLID) {
 			efmt = KSR_SLOG_STDERR_JSON_CFMT;
 			sfmt = KSR_SLOG_SYSLOG_JSON_CFMT;
 		} else {
 			efmt = KSR_SLOG_STDERR_JSON_FMT;
 			sfmt = KSR_SLOG_SYSLOG_JSON_FMT;
+		}
+	}
+	if ((!log_cee) && (_ksr_slog_json_flags & KSR_SLOGJSON_FL_PRFJSONFLD)) {
+		if( (log_prefix_val==NULL) || (log_prefix_val->len<=0)
+				|| ((log_prefix_val->len>1) && (log_prefix_val->s[0] == ','))) {
+			prname = "";
+			pmb = "";
+			pme = "";
 		}
 	}
 	ksr_clock_gettime (&_tp);
@@ -764,7 +776,7 @@ void ksr_slog_json(ksr_logdata_t *kld, const char *format, ...)
 				efmt, process_no, my_pid(),
 				kld->v_lname, kld->v_mname, kld->v_fname, kld->v_fline,
 				kld->v_func, LOGV_CALLID_LEN, LOGV_CALLID_STR,
-				pmb, LOGV_PREFIX_LEN, LOGV_PREFIX_STR, pme,
+				prname, pmb, LOGV_PREFIX_LEN, LOGV_PREFIX_STR, pme,
 				prefmsg, smb, s_out.len, s_out.s, sme,
 				(_ksr_slog_json_flags & KSR_SLOGJSON_FL_NOLOGNL)?"":"\n");
 			if (unlikely(log_color)) dprint_color_reset();
@@ -785,7 +797,7 @@ void ksr_slog_json(ksr_logdata_t *kld, const char *format, ...)
 				sfmt,
 				kld->v_lname, kld->v_mname, kld->v_fname, kld->v_fline,
 				kld->v_func, LOGV_CALLID_LEN, LOGV_CALLID_STR,
-				pmb, LOGV_PREFIX_LEN, LOGV_PREFIX_STR, pme,
+				prname, pmb, LOGV_PREFIX_LEN, LOGV_PREFIX_STR, pme,
 				prefmsg, smb, s_out.len, s_out.s, sme,
 				(_ksr_slog_json_flags & KSR_SLOGJSON_FL_NOLOGNL)?"":"\n");
 		}
@@ -821,12 +833,6 @@ void ksr_slog_init(char *ename)
 			_km_log_engine_data = p + 1;
 			while (*p) {
 				switch (*p) {
-					case 'M':
-						_ksr_slog_json_flags |= KSR_SLOGJSON_FL_STRIPMSGNL;
-					break;
-					case 'N':
-						_ksr_slog_json_flags |= KSR_SLOGJSON_FL_NOLOGNL;
-					break;
 					case 'a':
 						_ksr_slog_json_flags |= KSR_SLOGJSON_FL_APPPREFIX;
 					break;
@@ -838,6 +844,15 @@ void ksr_slog_init(char *ename)
 					break;
 					case 'j':
 						_ksr_slog_json_flags |= KSR_SLOGJSON_FL_MSGJSON;
+					break;
+					case 'M':
+						_ksr_slog_json_flags |= KSR_SLOGJSON_FL_STRIPMSGNL;
+					break;
+					case 'N':
+						_ksr_slog_json_flags |= KSR_SLOGJSON_FL_NOLOGNL;
+					break;
+					case 'p':
+						_ksr_slog_json_flags |= KSR_SLOGJSON_FL_PRFJSONFLD;
 					break;
 					case 'U':
 						log_cee = 1;
