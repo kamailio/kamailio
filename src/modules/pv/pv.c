@@ -379,6 +379,9 @@ static pv_export_t mod_pvs[] = {
 	{{"rs", (sizeof("rs")-1)}, /* */
 		PVT_OTHER, pv_get_status, 0,
 		0, 0, 0, 0},
+	{{"rsi", (sizeof("rsi")-1)}, /* */
+		PVT_OTHER, pv_get_statusi, 0,
+		0, 0, 0, 0},
 	{{"rt", (sizeof("rt")-1)}, /* */
 		PVT_OTHER, pv_get_refer_to, 0,
 		0, 0, 0, 0},

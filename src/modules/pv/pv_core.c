@@ -248,6 +248,20 @@ int pv_get_status(struct sip_msg *msg, pv_param_t *param,
 			&msg->first_line.u.reply.status);
 }
 
+int pv_get_statusi(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	if(msg==NULL)
+		return -1;
+
+	if(msg->first_line.type != SIP_REPLY)
+		return pv_get_sintval(msg, param, res, 0);
+
+	return pv_get_intstrval(msg, param, res,
+			(int)msg->first_line.u.reply.statuscode,
+			&msg->first_line.u.reply.status);
+}
+
 int pv_get_reason(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
 {
