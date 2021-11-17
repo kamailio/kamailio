@@ -1499,3 +1499,36 @@ int pv_set_xavi(struct sip_msg* msg, pv_param_t *param,
 
 	return 0;
 }
+
+/**
+ * Get the number of rows stored in an xavp.
+ */
+int pv_get_xavp_count(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
+{
+	if (msg == NULL || param == NULL || param->pvn.type != PV_NAME_INTSTR) {
+		LM_ERR("Invalid parameters\n");
+		return -1;
+	}
+
+	int c = xavp_count(&param->pvn.u.isname.name.s, NULL);
+
+	return pv_get_sintval(msg, param, res, c);
+}
+
+int pv_parse_xavp_count_name(pv_spec_p sp, str *in)
+{
+	if (sp == NULL || in == NULL || in->len <= 0) {
+		LM_ERR("Invalid parameters\n");
+		return -1;
+	}
+
+	str pvs;
+	pvs = *in;
+	trim(&pvs);
+
+	sp->pvp.pvn.type = PV_NAME_INTSTR;
+	sp->pvp.pvn.u.isname.type = AVP_NAME_STR;
+	sp->pvp.pvn.u.isname.name.s = pvs;
+
+	return 0;
+}

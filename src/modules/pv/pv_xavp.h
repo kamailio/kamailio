@@ -49,4 +49,7 @@ int xavu_params_explode(str *params, str *xname);
 int pv_var_to_xavp(str *varname, str *xname);
 int pv_xavp_to_var(str *xname);
 
+int pv_get_xavp_count(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
+int pv_parse_xavp_count_name(pv_spec_p sp, str *in);
+
 #endif
