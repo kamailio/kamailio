@@ -2521,6 +2521,76 @@ int tr_eval_urialias(struct sip_msg *msg, tr_param_t *tp, int subtype,
 }
 
 
+/*!
+ * \brief Evaluate val transformations
+ * \param msg SIP message
+ * \param tp transformation
+ * \param subtype transformation type
+ * \param val pseudo-variable
+ * \return 0 on success, -1 on error
+ */
+int tr_eval_val(struct sip_msg *msg, tr_param_t *tp, int subtype,
+		pv_value_t *val)
+{
+	str sv;
+	int emode = 0;
+
+	if(val==NULL)
+		return -1;
+
+	switch(subtype)
+	{
+		case TR_VAL_N0:
+			if(val->flags&PV_VAL_NULL) {
+				val->ri = 0;
+				tr_set_crt_buffer();
+				val->rs.s = _tr_buffer;
+				val->rs.s[0] = '0';
+				val->rs.s[1] = '\0';
+				val->rs.len = 1;
+				val->flags = PV_TYPE_INT|PV_VAL_INT|PV_VAL_STR;
+			}
+			break;
+		case TR_VAL_JSON:
+			if(val->flags&PV_VAL_NULL) {
+				val->ri = 0;
+				tr_set_crt_buffer();
+				val->rs.s = _tr_buffer;
+				val->rs.s[0] = '\0';
+				val->rs.len = 0;
+				val->flags = PV_VAL_STR;
+			} else if(val->flags&PV_VAL_STR) {
+				ksr_str_json_escape(&val->rs, &sv, &emode);
+				if(sv.s==NULL) {
+					LM_ERR("failed to escape the value\n");
+					return -1;
+				}
+				if(emode==0) {
+					/* no escape was needed */
+					return 0;
+				}
+				if(sv.len >= TR_BUFFER_SIZE - 1) {
+					LM_ERR("escaped value is too long\n");
+					return -1;
+				}
+				tr_set_crt_buffer();
+				memcpy(_tr_buffer, sv.s, sv.len);
+				_tr_buffer[sv.len] = '\0';
+				val->rs.s = _tr_buffer;
+				val->rs.len = sv.len;
+			}
+			break;
+
+		default:
+			LM_ERR("unknown subtype %d\n",
+					subtype);
+			return -1;
+	}
+
+	return 0;
+}
+
+
 #define _tr_parse_nparam(_p, _p0, _tp, _spec, _n, _sign, _in, _s) \
 	while(is_in_str(_p, _in) && (*_p==' ' || *_p=='\t' || *_p=='\n')) _p++; \
 	if(*_p==PV_MARKER) \
@@ -3713,6 +3783,56 @@ char* tr_parse_urialias(str* in, trans_t *t)
 		goto done;
 	} else if(name.len==6 && strncasecmp(name.s, "decode", 6)==0) {
 		t->subtype = TR_URIALIAS_DECODE;
+		goto done;
+	}
+
+
+	LM_ERR("unknown transformation: %.*s/%.*s/%d!\n", in->len, in->s,
+			name.len, name.s, name.len);
+error:
+	return NULL;
+
+done:
+	t->name = name;
+	return p;
+}
+
+
+/*!
+ * \brief Helper fuction to parse val transformation
+ * \param in parsed string
+ * \param t transformation
+ * \return pointer to the end of the transformation in the string - '}', null on error
+ */
+char* tr_parse_val(str* in, trans_t *t)
+{
+	char *p;
+	str name;
+
+
+	if(in==NULL || t==NULL)
+		return NULL;
+
+	p = in->s;
+	name.s = in->s;
+	t->type = TR_VAL;
+	t->trf = tr_eval_val;
+
+	/* find next token */
+	while(is_in_str(p, in) && *p!=TR_PARAM_MARKER && *p!=TR_RBRACKET) p++;
+	if(*p=='\0') {
+		LM_ERR("invalid transformation: %.*s\n",
+				in->len, in->s);
+		goto error;
+	}
+	name.len = p - name.s;
+	trim(&name);
+
+	if(name.len==2 && strncasecmp(name.s, "n0", 2)==0) {
+		t->subtype = TR_VAL_N0;
+		goto done;
+	} else if(name.len==4 && strncasecmp(name.s, "json", 4)==0) {
+		t->subtype = TR_VAL_JSON;
 		goto done;
 	}
 

@@ -31,7 +31,7 @@
 
 
 enum _tr_type { TR_NONE=0, TR_STRING, TR_URI, TR_PARAMLIST, TR_NAMEADDR,
-				TR_TOBODY, TR_LINE, TR_URIALIAS};
+				TR_TOBODY, TR_LINE, TR_URIALIAS, TR_VAL};
 enum _tr_s_subtype {
 	TR_S_NONE=0, TR_S_LEN, TR_S_INT, TR_S_MD5, TR_S_SHA256, TR_S_SHA384,
 	TR_S_SHA512, TR_S_SUBSTR, TR_S_SELECT, TR_S_ENCODEHEXA, TR_S_DECODEHEXA,
@@ -72,6 +72,10 @@ enum _tr_urialias_subtype {
 	TR_URIALIAS_NONE=0, TR_URIALIAS_ENCODE, TR_URIALIAS_DECODE
 };
 
+enum _tr_val_subtype {
+	TR_VAL_NONE=0, TR_VAL_N0, TR_VAL_JSON
+};
+
 
 char* tr_parse_string(str *in, trans_t *tr);
 char* tr_parse_uri(str *in, trans_t *tr);
@@ -80,6 +84,7 @@ char* tr_parse_nameaddr(str *in, trans_t *tr);
 char* tr_parse_tobody(str* in, trans_t *t);
 char* tr_parse_line(str* in, trans_t *t);
 char* tr_parse_urialias(str* in, trans_t *t);
+char* tr_parse_val(str* in, trans_t *t);
 
 int tr_init_buffers(void);
 
