@@ -20,6 +20,7 @@
 
 #include <sys/types.h>
 #include <string.h>
+#include <stdlib.h>
 #include <regex.h>
 #include <ctype.h>
 
@@ -873,4 +874,84 @@ int urldecode(str *sin, str *sout)
 
 	LM_DBG("urldecoded string is <%s>\n", sout->s);
 	return 0;
+}
+
+/*! \brief
+ *  escape input string to prepare it for use as json value
+ */
+void ksr_str_json_escape(str *s_in, str *s_out, int *emode)
+{
+	char *p1, *p2;
+	int len = 0;
+	char token;
+	int i;
+
+	s_out->len = 0;
+	if (!s_in || !s_in->s) {
+		s_out->s = strdup("");
+		*emode = 1;
+		return;
+	}
+	for(i = 0; i < s_in->len; i++) {
+		if (strchr("\"\\\b\f\n\r\t", s_in->s[i])) {
+			len += 2;
+		} else if (s_in->s[i] < 32) {
+			len += 6;
+		} else {
+			len++;
+		}
+	}
+	if(len == s_in->len) {
+		s_out->s = s_in->s;
+		s_out->len = s_in->len;
+		*emode = 0;
+		return;
+	}
+
+	s_out->s = (char*)malloc(len + 2);
+	if (!s_out->s) {
+		return;
+	}
+	*emode = 1;
+
+	p2 = s_out->s;
+	p1 = s_in->s;
+	while (p1 < s_in->s + s_in->len) {
+		if ((unsigned char) *p1 > 31 && *p1 != '\"' && *p1 != '\\') {
+			*p2++ = *p1++;
+		} else {
+			*p2++ = '\\';
+			switch (token = *p1++) {
+			case '\\':
+				*p2++ = '\\';
+				break;
+			case '\"':
+				*p2++ = '\"';
+				break;
+			case '\b':
+				*p2++ = 'b';
+				break;
+			case '\f':
+				*p2++ = 'f';
+				break;
+			case '\n':
+				*p2++ = 'n';
+				break;
+			case '\r':
+				*p2++ = 'r';
+				break;
+			case '\t':
+				*p2++ = 't';
+				break;
+			default:
+				/* escape and print */
+				snprintf(p2, 6, "u%04x", token);
+				p2 += 5;
+				break;
+			}
+		}
+	}
+	*p2++ = 0;
+	s_out->len = len;
+	return;
 }

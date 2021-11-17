@@ -66,4 +66,6 @@ char hex_to_char(char hex_code);
 char char_to_hex(char char_code);
 int urlencode(str *sin, str *sout);
 int urldecode(str *sin, str *sout);
+
+void ksr_str_json_escape(str *s_in, str *s_out, int *emode);
 #endif
