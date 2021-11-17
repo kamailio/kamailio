@@ -275,6 +275,9 @@ static int w_ts_append(struct sip_msg* _msg, char *_table, char *_ruri)
 	str ruri = STR_NULL;
 	int rc;
 
+	/* we do not want to do append by particular location */
+	str contact = STR_NULL;
+
 	if(_ruri==NULL || (fixup_get_svalue(_msg, (gparam_p)_ruri, &tmp)!=0 || tmp.len<=0)) {
 		LM_ERR("invalid ruri parameter\n");
 		return -1;
@@ -285,7 +288,7 @@ static int w_ts_append(struct sip_msg* _msg, char *_table, char *_ruri)
 	if (pkg_str_dup(&ruri, &tmp) < 0)
 		return -1;
 
-	rc = ts_append(_msg, &ruri, _table);
+	rc = ts_append(_msg, &ruri, &contact, _table);
 
 	pkg_free(ruri.s);
 
@@ -300,13 +303,16 @@ static int ki_ts_append(sip_msg_t* _msg, str *_table, str *_ruri)
 	str ruri = STR_NULL;
 	int rc;
 
+	/* we do not want to do append by particular location */
+	str contact = STR_NULL;
+
 	if(ts_check_uri(_ruri)<0)
 		return -1;
 
 	if (pkg_str_dup(&ruri, _ruri) < 0)
 		return -1;
 
-	rc = ts_append(_msg, &ruri, _table->s);
+	rc = ts_append(_msg, &ruri, &contact, _table->s);
 
 	pkg_free(ruri.s);
 
@@ -321,6 +327,9 @@ static int w_ts_append_to(struct sip_msg* msg, char *idx, char *lbl, char *table
 	unsigned int tindex;
 	unsigned int tlabel;
 
+	/* we do not want to do append by particular location */
+	str contact = STR_NULL;
+
 	if(fixup_get_ivalue(msg, (gparam_p)idx, (int*)&tindex)<0) {
 		LM_ERR("cannot get transaction index\n");
 		return -1;
@@ -331,7 +340,8 @@ static int w_ts_append_to(struct sip_msg* msg, char *idx, char *lbl, char *table
 		return -1;
 	}
 
-	return ts_append_to(msg, tindex, tlabel, table, 0);
+	/* we do not want to do append by particular location here */
+	return ts_append_to(msg, tindex, tlabel, table, 0, &contact);
 }
 
 /**
@@ -339,8 +349,12 @@ static int w_ts_append_to(struct sip_msg* msg, char *idx, char *lbl, char *table
  */
 static int ki_ts_append_to(sip_msg_t* _msg, int tindex, int tlabel, str *_table)
 {
+	/* we do not want to do append by particular location */
+	str contact = STR_NULL;
+
+	/* we do not want to do append by particular location here */
 	return ts_append_to(_msg, (unsigned int)tindex, (unsigned int)tlabel,
-			_table->s, 0);
+			_table->s, 0, &contact);
 }
 
 /**
@@ -351,6 +365,9 @@ static int w_ts_append_to2(struct sip_msg* msg, char *idx, char *lbl, char *tabl
 	unsigned int tindex;
 	unsigned int tlabel;
 	str suri;
+
+	/* we do not want to do append by particular location */
+	str contact = STR_NULL;
 
 	if(fixup_get_ivalue(msg, (gparam_p)idx, (int*)&tindex)<0) {
 		LM_ERR("cannot get transaction index\n");
@@ -369,7 +386,8 @@ static int w_ts_append_to2(struct sip_msg* msg, char *idx, char *lbl, char *tabl
 	if(ts_check_uri(&suri)<0)
 		return -1;
 
-	return ts_append_to(msg, tindex, tlabel, table, &suri);
+	/* we do not want to do append by particular location here */
+	return ts_append_to(msg, tindex, tlabel, table, &suri, &contact);
 }
 
 /**
@@ -378,8 +396,12 @@ static int w_ts_append_to2(struct sip_msg* msg, char *idx, char *lbl, char *tabl
 static int ki_ts_append_to_uri(sip_msg_t* _msg, int tindex, int tlabel,
 		str *_table, str *_uri)
 {
+	/* we do not want to do append by particular location */
+	str contact = STR_NULL;
+
+	/* we do not want to do append by particular location here */
 	return ts_append_to(_msg, (unsigned int)tindex, (unsigned int)tlabel,
-			_table->s, _uri);
+			_table->s, _uri, &contact);
 }
 
 /**
@@ -455,7 +477,7 @@ static int w_ts_append_by_contact2(struct sip_msg* _msg, char *_table, char *_ru
 	}
 
 	/* contact must be of syntax: sip:<user>@<host>:<port> with no parameters list */
-	rc = ts_append_by_contact(_msg, &ruri, &contact, _table);
+	rc = ts_append(_msg, &ruri, &contact, _table);
 
 	/* free previously used memory */
 	pkg_free(ruri.s);
@@ -512,7 +534,7 @@ static int ki_ts_append_by_contact(sip_msg_t* _msg, str *_table, str *_ruri) {
 	}
 
 	/* contact must be of syntax: sip:<user>@<host>:<port> with no parameters list */
-	rc = ts_append_by_contact(_msg, &ruri, &contact, _table->s);
+	rc = ts_append(_msg, &ruri, &contact, _table->s);
 
 	pkg_free(ruri.s);
 	pkg_free(contact.s);
@@ -576,7 +598,7 @@ static int w_ts_append_by_contact3(struct sip_msg* _msg, char *_table, char *_ru
 	}
 
 	/* contact must be of syntax: sip:<user>@<host>:<port> with no parameters list */
-	rc = ts_append_by_contact(_msg, &ruri, &contact, _table);
+	rc = ts_append(_msg, &ruri, &contact, _table);
 
 	pkg_free(ruri.s);
 	pkg_free(contact.s);
@@ -606,7 +628,7 @@ static int ki_ts_append_by_contact_uri(sip_msg_t* _msg, str *_table, str *_ruri,
 		return -1;
 
 	/* contact must be of syntax: sip:<user>@<host>:<port> with no parameters list */
-	rc = ts_append_by_contact(_msg, &ruri, &contact, _table->s);
+	rc = ts_append(_msg, &ruri, &contact, _table->s);
 
 	pkg_free(ruri.s);
 	pkg_free(contact.s);
