@@ -32,6 +32,7 @@
 #include "../../core/strutils.h"
 #include "../../core/tcp_conn.h"
 #include "../../core/pvapi.h"
+#include "../../core/xavp.h"
 #include "../../core/ppcfg.h"
 #include "../../core/trim.h"
 #include "../../core/msg_translator.h"
@@ -2607,15 +2608,148 @@ int pv_get_cnt(struct sip_msg *msg, pv_param_t *param,
 	if(pv==NULL)
 		return pv_get_null(msg, param, res);
 
-	if(pv_get_avp_name(0, &pv->pvp, &avp_name, &avp_type)!=0)
-	{
-		LM_ERR("invalid AVP definition\n");
-		return pv_get_null(msg, param, res);
-	}
-	avp=search_first_avp(avp_type, avp_name, NULL, &state);
-	while(avp) {
-		n++;
-		avp=search_next_avp(&state, NULL);
+	switch(pv->type) {
+		case PVT_AVP:
+			if(pv_get_avp_name(0, &pv->pvp, &avp_name, &avp_type)!=0)
+			{
+				LM_ERR("invalid AVP definition\n");
+				return pv_get_null(msg, param, res);
+			}
+			avp=search_first_avp(avp_type, avp_name, NULL, &state);
+			while(avp) {
+				n++;
+				avp=search_next_avp(&state, NULL);
+			}
+		break;
+
+		case PVT_XAVP:
+		{
+			/* Usage:
+			 *
+			 * $cnt($xavp(key[*])) : number of XAVPs "key".
+			 * $cnt($xavp(key[n]=>sub[*])) : number of children "sub" in XAVP "key[n]".
+			 * $cnt($xavp(key[*]=>sub[*])) : total number of children "sub" in all XAVPs "key".
+			 *
+			 * $cnt($xavp(key[n])) : 1 or 0 (if this index exists or not).
+			 * $cnt($xavp(key[-n])) : same but with reverse indexing (-1 is the last index).
+			 *
+			 * $cnt($xavp(key[*]=>sub[n] : number of children "sub[n]" that exist in all XAPVs "key".
+			 *
+			 * $cnt($xavp(key)) is the same as $cnt($xavp(key[*])).
+			 * $cnt($xavp(key=>sub)) is the same as $cnt($xavp(key[*]=>sub[*])).
+			 *
+			 * Note: Usually for a XAVP no index means "index 0", not all.
+			 * But this would be less intuitive in our case for counting.
+			 */
+			pv_xavp_name_t *xname, *xname_sub;
+			sr_xavp_t *ravp, *sub_avp;
+			int root_idxf, root_idx_spec, root_idx;
+			int sub_idxf, sub_idx_spec, sub_idx;
+			int count;
+
+			xname = pv->pvp.pvn.u.dname;
+			if (xname == NULL) {
+				LM_ERR("invalid XAVP definition\n");
+				return pv_get_null(msg, param, res);
+			}
+			xname_sub = xname->next; /* NULL if no sub-key is provided */
+
+			/* No index or index * means: count all entries */
+			int root_all = 1;
+			if (xname->index.type == PVT_EXTRA) {
+				/* Get root index */
+				if (pv_get_spec_index(msg, &xname->index.pvp, &root_idx_spec, &root_idxf) != 0) {
+					LM_ERR("invalid XAVP root index\n");
+					return pv_get_null(msg, param, res);
+				}
+				if (!(root_idxf == PV_IDX_ALL)) root_all = 0;
+			}
+			if (!root_all) {
+				/* Fix root index (if negative) */
+				if (root_idx_spec >= 0) {
+					root_idx = root_idx_spec;
+				} else {
+					count = xavp_count(&xname->name, NULL);
+					root_idx = count + root_idx_spec;
+				}
+				ravp = xavp_get_by_index(&xname->name, root_idx, NULL);
+			}
+
+			if (xname_sub == NULL) {
+				/* No XAVP sub-key */
+				if (root_all) {
+					/* Count all root XAVP */
+					n = xavp_count(&xname->name, NULL);
+				} else {
+					/* Check if specific root XAVP index exists */
+					if (ravp) n = 1;
+				}
+
+			} else {
+				/* Having a XAVP sub-key */
+				/* No index or index * means: count all entries */
+				int sub_all = 1;
+				if (xname_sub->index.type == PVT_EXTRA) {
+					/* Get sub index */
+					if (pv_get_spec_index(msg, &xname_sub->index.pvp, &sub_idx_spec, &sub_idxf) != 0) {
+						LM_ERR("invalid XAVP sub index\n");
+						return pv_get_null(msg, param, res);
+					}
+					if (!(sub_idxf == PV_IDX_ALL)) sub_all = 0;
+				}
+
+				if (!root_all) {
+					/* If the root XAVP value is not of type XAVP then nothing to count */
+					if (ravp && ravp->val.type == SR_XTYPE_XAVP) {
+						if (sub_all) {
+							/* Count all sub XAVP within root XAVP */
+							n = xavp_count(&xname_sub->name, &ravp->val.v.xavp);
+						} else {
+							/* Check if specific sub XAVP index exists within root XAVP */
+							/* Fix sub index (if negative) */
+							if (sub_idx_spec >= 0) {
+								sub_idx = sub_idx_spec;
+							} else {
+								count = xavp_count(&xname_sub->name, &ravp->val.v.xavp);
+								sub_idx = count + sub_idx_spec;
+							}
+							sub_avp = xavp_get_by_index(&xname_sub->name, sub_idx, &ravp->val.v.xavp);
+							if (sub_avp) n = 1;
+						}
+					}
+
+				} else {
+					/* Iterate on root XAVP. For each, count the sub XAVP. */
+					ravp = xavp_get(&xname->name, NULL);
+					while (ravp) {
+						/* If the root XAVP value is not of type XAVP then nothing to count */
+						if (ravp->val.type == SR_XTYPE_XAVP) {
+							if (sub_all) {
+								/* Count all sub XAVP within root XAVP */
+								n += xavp_count(&xname_sub->name, &ravp->val.v.xavp);
+							} else {
+								/* Check if specific sub XAVP index exists within root XAVP */
+								/* Fix sub index (if negative) */
+								if (sub_idx_spec >= 0) {
+									sub_idx = sub_idx_spec;
+								} else {
+									count = xavp_count(&xname_sub->name, &ravp->val.v.xavp);
+									sub_idx = count + sub_idx_spec;
+								}
+								sub_avp = xavp_get_by_index(&xname_sub->name, sub_idx, &ravp->val.v.xavp);
+								if (sub_avp) n += 1;
+							}
+						}
+						ravp = xavp_get_next(ravp);
+					}
+				}
+			}
+		}
+		break;
+
+		default:
+			LM_ERR("invalid type: neither AVP nor XAVP\n");
+			return pv_get_null(msg, param, res);
 	}
 
 	return pv_get_uintval(msg, param, res, n);
@@ -3672,8 +3806,8 @@ int pv_parse_cnt_name(pv_spec_p sp, str *in)
 		return -1;
 	}
 
-	if(pv->type!=PVT_AVP) {
-		LM_ERR("expected avp name instead of [%.*s]\n", in->len, in->s);
+	if(pv->type!=PVT_AVP && pv->type!=PVT_XAVP) {
+		LM_ERR("expected avp or xavp name instead of [%.*s]\n", in->len, in->s);
 		return -1;
 	}
 
