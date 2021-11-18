@@ -1498,6 +1498,12 @@ int main_loop(void)
 			LM_ERR("init_child failed\n");
 			goto error;
 		}
+
+		if (init_child(PROC_POSTCHILDINIT) < 0) {
+			LM_ERR("error in init_child for rank PROC_POSTCHILDINIT\n");
+			goto error;
+		}
+
 		*_sr_instance_started = 1;
 		return udp_rcv_loop();
 	}else{ /* fork: */
@@ -1864,6 +1870,11 @@ int main_loop(void)
 			unix_tcp_sock=-1;
 		}
 #endif
+		if (init_child(PROC_POSTCHILDINIT) < 0) {
+			LM_ERR("error in init_child for rank PROC_POSTCHILDINIT\n");
+			goto error;
+		}
+
 		/* init cfg, but without per child callbacks support */
 		cfg_child_no_cb_init();
 		cfg_ok=1;

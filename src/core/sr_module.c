@@ -862,21 +862,30 @@ void destroy_modules()
 
 static int init_mod_child( struct sr_module* m, int rank )
 {
+	int ret;
 	if (m) {
 		/* iterate through the list; if error occurs,
 		 * propagate it up the stack
 		 */
 		if (init_mod_child(m->next, rank)!=0) return -1;
 		if (m->exports.init_child_f) {
-			LM_DBG("idx %d rank %d: %s [%s]\n", process_no, rank,
-					m->exports.name, my_desc());
-			if (m->exports.init_child_f(rank)<0) {
-				LM_ERR("error while initializing module %s (%s)"
-						" (idx: %d rank: %d desc: [%s])\n",
-						m->exports.name, m->path, process_no, rank, my_desc());
-				return -1;
+			ret = 0;
+			if(rank!=PROC_POSTCHILDINIT
+					|| (m->modflags&KSRMOD_FLAG_POSTCHILDINIT)) {
+				LM_DBG("idx %d rank %d: %s [%s]\n", process_no, rank,
+						m->exports.name, my_desc());
+				ret = m->exports.init_child_f(rank);
+				if(ret<0) {
+					LM_ERR("error while initializing module %s (%s)"
+							" (idx: %d rank: %d desc: [%s])\n",
+							m->exports.name, m->path, process_no, rank, my_desc());
+					return -1;
+				} else {
+					/* module correctly initialized */
+					return 0;
+				}
 			} else {
-				/* module correctly initialized */
+				/* module does not want execution for this rank */
 				return 0;
 			}
 		}
@@ -898,25 +907,29 @@ int init_child(int rank)
 	char* type;
 
 	switch(rank) {
-	case PROC_MAIN:       type = "PROC_MAIN";       break;
-	case PROC_TIMER:      type = "PROC_TIMER";      break;
-	case PROC_RPC:        type = "PROC_RPC";        break;
-	case PROC_TCP_MAIN:   type = "PROC_TCP_MAIN";   break;
-	case PROC_UNIXSOCK:   type = "PROC_UNIXSOCK";   break;
-	case PROC_ATTENDANT:  type = "PROC_ATTENDANT";  break;
-	case PROC_INIT:       type = "PROC_INIT";       break;
-	case PROC_NOCHLDINIT: type = "PROC_NOCHLDINIT"; break;
-	case PROC_SIPINIT:    type = "PROC_SIPINIT";    break;
-	case PROC_SIPRPC:     type = "PROC_SIPRPC";     break;
-	default:              type = "CHILD";           break;
+	case PROC_MAIN:          type = "PROC_MAIN";       break;
+	case PROC_TIMER:         type = "PROC_TIMER";      break;
+	case PROC_RPC:           type = "PROC_RPC";        break;
+	case PROC_TCP_MAIN:      type = "PROC_TCP_MAIN";   break;
+	case PROC_UNIXSOCK:      type = "PROC_UNIXSOCK";   break;
+	case PROC_ATTENDANT:     type = "PROC_ATTENDANT";  break;
+	case PROC_INIT:          type = "PROC_INIT";       break;
+	case PROC_NOCHLDINIT:    type = "PROC_NOCHLDINIT"; break;
+	case PROC_SIPINIT:       type = "PROC_SIPINIT";    break;
+	case PROC_SIPRPC:        type = "PROC_SIPRPC";     break;
+	case PROC_POSTCHILDINIT: type = "PROC_POSTCHILDINIT"; break;
+	default:                 type = "CHILD";           break;
 	}
 	LM_DBG("initializing %s with rank %d\n", type, rank);
 
-	if(async_task_child_init(rank)<0)
-		return -1;
+	if(rank!=PROC_POSTCHILDINIT) {
+		if(async_task_child_init(rank)<0) {
+			return -1;
+		}
+	}
 
 	ret = init_mod_child(modules, rank);
-	if(rank!=PROC_INIT) {
+	if(rank!=PROC_INIT && rank!=PROC_POSTCHILDINIT) {
 		pt[process_no].status = 1;
 	}
 	return ret;
@@ -924,21 +937,37 @@ int init_child(int rank)
 
 
 
+static sr_module_t *ksr_module_init_ptr = NULL;
+
+/**
+ * set module flags when mod_init() is executed
+ */
+void ksr_module_set_flag(unsigned int flag)
+{
+	if(ksr_module_init_ptr==NULL) {
+		return;
+	}
+	ksr_module_init_ptr->modflags |= flag;
+}
+
 /* recursive module initialization; (recursion is used to
  * process the module linear list in the same order in
  * which modules are loaded in config file
 */
-
 static int init_mod( struct sr_module* m )
 {
+	int ret;
 	if (m) {
 		/* iterate through the list; if error occurs,
 		 * propagate it up the stack
 		 */
 		if (init_mod(m->next)!=0) return -1;
-			if (m->exports.init_mod_f) {
+			if(m->exports.init_mod_f) {
 				LM_DBG("%s\n", m->exports.name);
-				if (m->exports.init_mod_f()!=0) {
+				ksr_module_init_ptr = m;
+				ret = m->exports.init_mod_f();
+				ksr_module_init_ptr = NULL;
+				if(ret!=0) {
 					LM_ERR("Error while initializing module %s (%s)\n",
 								m->exports.name, m->path);
 					return -1;
