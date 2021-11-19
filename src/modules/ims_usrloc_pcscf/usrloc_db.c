@@ -341,7 +341,7 @@ int db_insert_pcontact(struct pcontact* _c)
 		return -1;
 	}
 
-	if (ul_dbf.insert(ul_dbh, keys, values, 15) < 0) {
+	if (ul_dbf.insert(ul_dbh, keys, values, 16) < 0) {
 		LM_ERR("inserting contact in db failed\n");
 		return -1;
 	}

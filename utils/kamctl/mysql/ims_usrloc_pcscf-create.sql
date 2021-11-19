@@ -17,7 +17,7 @@ CREATE TABLE `location` (
   `socket` varchar(64) DEFAULT NULL,
   `public_ids` varchar(2048) DEFAULT NULL,
   `security_type` int(11) DEFAULT NULL,
-  `protocol` char(5) DEFAULT NULL,
+  `protocol` int(10) DEFAULT NULL,
   `mode` char(10) DEFAULT NULL,
   `ck` varchar(100) DEFAULT NULL,
   `ik` varchar(100) DEFAULT NULL,
