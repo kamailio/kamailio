@@ -339,8 +339,10 @@ static int replace_build(const char* match, int nmatch, regmatch_t* pmatch,
 		LM_ERR("Buffer too small\n");			\
 		goto error;											\
 	}														\
-	memcpy((dst), (src), (size));							\
-	(dst) += (size);
+	if(likely(src)) {							\
+		memcpy((dst), (src), (size));			\
+		(dst) += (size);						\
+	}
 
 	p=se->replacement.s;
 	end=p+se->replacement.len;
