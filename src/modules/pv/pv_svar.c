@@ -90,7 +90,7 @@ script_var_t* set_var_value(script_var_t* var, int_str *value, int flags)
 {
 	if(var==0)
 		return 0;
-	if((value==NULL) || ((flags&VAR_VAL_STR) && (value->s.s==NULL)))
+	if((value==NULL) || ((flags&VAR_VAL_STR) && (var->v.value.s.s==NULL)))
 	{
 		if(var->v.flags&VAR_VAL_STR)
 		{
