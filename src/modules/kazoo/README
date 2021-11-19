@@ -67,10 +67,10 @@ Luis Azedo
               5.1. amqp related
 
                     5.1.1. kazoo_publish(exchange, routing_key,
-                            json_payload)
+                            json_payload [, amqp_headers])
 
                     5.1.2. kazoo_query(exchange, routing_key, json_payload
-                            [, target_var])
+                            [, target_var] [, amqp_headers])
 
                     5.1.3. kazoo_subscribe(exchange, exchange_type, queue,
                             routing_key)
@@ -175,9 +175,11 @@ Chapter 1. Admin Guide
 
         5.1. amqp related
 
-              5.1.1. kazoo_publish(exchange, routing_key, json_payload)
+              5.1.1. kazoo_publish(exchange, routing_key, json_payload [,
+                      amqp_headers])
+
               5.1.2. kazoo_query(exchange, routing_key, json_payload [,
-                      target_var])
+                      target_var] [, amqp_headers])
 
               5.1.3. kazoo_subscribe(exchange, exchange_type, queue,
                       routing_key)
@@ -623,9 +625,11 @@ modparam("kazoo", "pua_mode", 0)
 
    5.1. amqp related
 
-        5.1.1. kazoo_publish(exchange, routing_key, json_payload)
+        5.1.1. kazoo_publish(exchange, routing_key, json_payload [,
+                amqp_headers])
+
         5.1.2. kazoo_query(exchange, routing_key, json_payload [,
-                target_var])
+                target_var] [, amqp_headers])
 
         5.1.3. kazoo_subscribe(exchange, exchange_type, queue,
                 routing_key)
@@ -643,10 +647,11 @@ modparam("kazoo", "pua_mode", 0)
 
 5.1. amqp related
 
-5.1.1.  kazoo_publish(exchange, routing_key, json_payload)
+5.1.1.  kazoo_publish(exchange, routing_key, json_payload [, amqp_headers])
 
    The function publishes a json payload to rabbitmq. The routing_key
-   parameter should be encoded.
+   parameter should be encoded. Optional AMQP-Headers are specified in the
+   format key1=value1;key2=value2
 
    This function can be used from ANY ROUTE.
 
@@ -661,12 +666,14 @@ $var(amqp_routing_key) = "registration.success." + $(fd{kz.encode}) + "." + $fU;
 kazoo_publish("callmgr", $var(amqp_routing_key), $var(amqp_payload_request));
 ...
 
-5.1.2.  kazoo_query(exchange, routing_key, json_payload [, target_var])
+5.1.2.  kazoo_query(exchange, routing_key, json_payload [, target_var] [,
+amqp_headers])
 
    The function publishes a json payload to rabbitmq, waits for a
    correlated messageand puts the result in target_var. The routing_key
    parameter should be encoded. target_var is optional as the function
-   also puts the result in pseudo-variable $kzR.
+   also puts the result in pseudo-variable $kzR. Optional AMQP-Headers are
+   specified in the format key1=value1;key2=value2
 
    This function can be used from ANY ROUTE.
 
