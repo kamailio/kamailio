@@ -106,9 +106,9 @@ uint32_t acquire_spi()
 			spi_data->spi_val = spi_data->min_spi;
         }
 
-		if(spi_data->spi_val == initial_val){ //there are no free SPIs
-			pthread_mutex_unlock(&spi_data->spis_mut);
-            return ret;
+
+		pthread_mutex_unlock(&spi_data->spis_mut);
+		return ret;
         }
 
     }
