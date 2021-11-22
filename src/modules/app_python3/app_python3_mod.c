@@ -104,7 +104,13 @@ static int mod_init(void)
 	char *dname_src, *bname_src;
 	int i;
 
-	if(apy_sr_init_mod()<0) {
+	/*
+	 * register the need to be called post-fork of all children
+	 * with the special rank PROC_POSTCHILDINIT
+	 */
+	ksr_module_set_flag(KSRMOD_FLAG_POSTCHILDINIT);
+
+	if (apy_sr_init_mod()<0) {
 		LM_ERR("failed to init the sr mod\n");
 		return -1;
 	}
@@ -185,6 +191,16 @@ static int child_init(int rank)
 		 */
 #if PY_VERSION_HEX >= 0x03070000
 		PyOS_BeforeFork() ;
+#endif
+		return 0;
+	}
+	if(rank==PROC_POSTCHILDINIT) {
+		/*
+		 * this is called after forking of all child
+		 * processes
+		 */
+#if PY_VERSION_HEX >= 0x03070000
+		PyOS_AfterFork_Parent() ;
 #endif
 		return 0;
 	}
