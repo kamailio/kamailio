@@ -89,6 +89,10 @@ static void setup_ecdh(SSL_CTX *ctx)
 
 #ifndef OPENSSL_NO_DH
 
+/*
+ * not needed for OpenSSL 1.1.0+ and LibreSSL
+ */
+#if !defined(SSL_CTX_set_dh_auto)
 static unsigned char dh3072_p[] = {
    0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xC9,0x0F,0xDA,0xA2,
    0x21,0x68,0xC2,0x34,0xC4,0xC6,0x62,0x8B,0x80,0xDC,0x1C,0xD1,
@@ -126,9 +130,15 @@ static unsigned char dh3072_p[] = {
 };
 
 static unsigned char dh3072_g[] = { 0x02 };
+#endif
 
 static void setup_dh(SSL_CTX *ctx)
 {
+/*
+ * not needed for OpenSSL 1.1.0+ and LibreSSL
+ * DH_new() is deprecated in OpenSSL 3
+ */
+#if !defined(SSL_CTX_set_dh_auto)
 	DH *dh;
 	BIGNUM *p;
 	BIGNUM *g;
@@ -146,19 +156,17 @@ static void setup_dh(SSL_CTX *ctx)
 		return;
 	}
 
-#if (OPENSSL_VERSION_NUMBER >= 0x1010000fL) && !defined(LIBRESSL_VERSION_NUMBER)
-	/* libssl >= v1.1.0 */
-	DH_set0_pqg(dh, p, NULL, g);
-#else
 	dh->p = p;
 	dh->g = g;
-#endif
 
 
    SSL_CTX_set_options(ctx, SSL_OP_SINGLE_DH_USE);
    SSL_CTX_set_tmp_dh(ctx, dh);
 
    DH_free(dh);
+#else
+   SSL_CTX_set_dh_auto(ctx, 1);
+#endif
 }
 #endif
 
