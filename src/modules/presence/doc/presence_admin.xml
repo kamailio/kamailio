@@ -990,14 +990,14 @@ modparam("presence", "timer_mode", 0)
 	</para>
 	<para>
 		<emphasis>
-			Default value is 0.
+			Default value is 1.
 		</emphasis>
 	</para>
 	<example>
 		<title>Set <varname>subs_respond_200</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("presence", "subs_respond_200", 1)
+modparam("presence", "subs_respond_200", 0)
 ...
 </programlisting>
 	</example>
