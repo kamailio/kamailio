@@ -62,7 +62,7 @@ extern EVP_PKEY * tls_engine_private_key(const char* key_id);
  * prime256v1 by default.  This is Apache mod_ssl's initialization
  * policy, so we should be safe. OpenSSL 1.1 has it enabled by default.
  */
-#if !defined(OPENSSL_NO_ECDH) && !defined(OPENSSL_VERSION_1_1)
+#if !defined(OPENSSL_NO_ECDH) && OPENSSL_VERSION_NUMBER < 0x10100000L
 static void setup_ecdh(SSL_CTX *ctx)
 {
 #if !defined(SSL_CTX_set_ecdh_auto)
@@ -701,7 +701,7 @@ static int set_cipher_list(tls_domain_t* d)
 					tls_domain_str(d), cipher_list);
 			return -1;
 		}
-#if !defined(OPENSSL_NO_ECDH) && !defined(OPENSSL_VERSION_1_1)
+#if !defined(OPENSSL_NO_ECDH) && OPENSSL_VERSION_NUMBER < 0x10100000L
                 setup_ecdh(d->ctx[i]);
 #endif
 #ifndef OPENSSL_NO_DH
