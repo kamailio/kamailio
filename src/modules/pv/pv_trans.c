@@ -2551,6 +2551,16 @@ int tr_eval_val(struct sip_msg *msg, tr_param_t *tp, int subtype,
 				val->flags = PV_TYPE_INT|PV_VAL_INT|PV_VAL_STR;
 			}
 			break;
+		case TR_VAL_NE:
+			if(val->flags&PV_VAL_NULL) {
+				val->ri = 0;
+				tr_set_crt_buffer();
+				val->rs.s = _tr_buffer;
+				val->rs.s[0] = '\0';
+				val->rs.len = 0;
+				val->flags = PV_VAL_STR;
+			}
+			break;
 		case TR_VAL_JSON:
 			if(val->flags&PV_VAL_NULL) {
 				val->ri = 0;
@@ -3830,6 +3840,9 @@ char* tr_parse_val(str* in, trans_t *t)
 
 	if(name.len==2 && strncasecmp(name.s, "n0", 2)==0) {
 		t->subtype = TR_VAL_N0;
+		goto done;
+	} else if(name.len==2 && strncasecmp(name.s, "ne", 2)==0) {
+		t->subtype = TR_VAL_NE;
 		goto done;
 	} else if(name.len==4 && strncasecmp(name.s, "json", 4)==0) {
 		t->subtype = TR_VAL_JSON;
