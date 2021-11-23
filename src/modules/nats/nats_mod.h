@@ -61,17 +61,21 @@ typedef struct _nats_on_message
 	int rt;
 } nats_on_message, *nats_on_message_ptr;
 
+typedef struct _nats_connection
+{
+	natsOptions *opts;
+	char *servers[NATS_MAX_SERVERS];
+} nats_connection, *nats_connection_ptr;
+
 struct nats_consumer_worker
 {
 	char *subject;
 	char *queue_group;
 	int pid;
 	natsConnection *conn;
-	natsOptions *opts;
 	natsSubscription *subscription;
 	uv_loop_t *uvLoop;
 	nats_on_message_ptr on_message;
-	char *init_nats_servers[NATS_MAX_SERVERS];
 };
 typedef struct nats_consumer_worker nats_consumer_worker_t;
 
@@ -86,14 +90,17 @@ int _init_nats_server_url_add(modparam_t type, void *val);
 init_nats_server_ptr _init_nats_server_list_new(char *url);
 int init_nats_server_url_add(char *url);
 int nats_cleanup_init_servers();
+int nats_init_connection(nats_connection_ptr c);
+int nats_cleanup_connection(nats_connection_ptr c);
 
 int _init_nats_sub_add(modparam_t type, void *val);
+nats_connection_ptr _init_nats_connection();
 init_nats_sub_ptr _init_nats_sub_new(char *sub, char *queue_group);
 int init_nats_sub_add(char *sub);
 int nats_cleanup_init_sub();
 
 void nats_consumer_worker_proc(
-		nats_consumer_worker_t *worker, const char *init_nats_servers[]);
+		nats_consumer_worker_t *worker, nats_connection_ptr c);
 int nats_pv_get_event_payload(struct sip_msg *, pv_param_t *, pv_value_t *);
 
 #endif
