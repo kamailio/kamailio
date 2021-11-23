@@ -143,15 +143,15 @@ int probe_max_receive_buffer( int udp_sock )
 	if (getsockopt( udp_sock, SOL_SOCKET, SO_RCVBUF, (void*) &ioptval,
 		    &ioptvallen) == -1 )
 	{
-		LM_ERR("getsockopt: %s\n", strerror(errno));
+		LM_ERR("fd: %d getsockopt: %s\n", udp_sock, strerror(errno));
 		return -1;
 	}
 	if ( ioptval==0 )
 	{
-		LM_DBG("SO_RCVBUF initially set to 0; resetting to %d\n",
-			BUFFER_INCREMENT );
+		LM_DBG("SO_RCVBUF initially set to 0 for fd %d; resetting to %d\n",
+				udp_sock, BUFFER_INCREMENT);
 		ioptval=BUFFER_INCREMENT;
-	} else LM_INFO("SO_RCVBUF is initially %d\n", ioptval );
+	} else LM_INFO("SO_RCVBUF is initially %d for fd %d\n", ioptval, udp_sock);
 	for (optval=ioptval; ;  ) {
 		/* increase size; double in initial phase, add linearly later */
 		if (phase==0) optval <<= 1; else optval+=BUFFER_INCREMENT;
@@ -160,11 +160,12 @@ int probe_max_receive_buffer( int udp_sock )
 			else { phase=1; optval >>=1; continue; }
 		}
 		if(ksr_verbose_startup)
-			LM_DBG("trying SO_RCVBUF: %d\n", optval);
+			LM_DBG("trying SO_RCVBUF: %d on fd: %d\n", optval, udp_sock);
 		if (setsockopt( udp_sock, SOL_SOCKET, SO_RCVBUF,
 			(void*)&optval, sizeof(optval)) ==-1){
 			/* Solaris returns -1 if asked size too big; Linux ignores */
-			LM_DBG("SOL_SOCKET failed for %d, phase %d: %s\n", optval, phase, strerror(errno));
+			LM_DBG("SOL_SOCKET failed for val %d on fd %d, phase %d: %s\n",
+					optval, udp_sock, phase, strerror(errno));
 			/* if setting buffer size failed and still in the aggressive
 			   phase, try less aggressively; otherwise give up
 			*/
@@ -179,14 +180,14 @@ int probe_max_receive_buffer( int udp_sock )
 		if (getsockopt( udp_sock, SOL_SOCKET, SO_RCVBUF, (void*) &voptval,
 		    &voptvallen) == -1 )
 		{
-			LM_ERR("getsockopt: %s\n", strerror(errno));
+			LM_ERR("fd: %d getsockopt: %s\n", udp_sock, strerror(errno));
 			return -1;
 		} else {
 			if(ksr_verbose_startup)
-				LM_DBG("setting SO_RCVBUF; set=%d,verify=%d\n",
-						optval, voptval);
+				LM_DBG("setting SO_RCVBUF on fd %d; val=%d, verify=%d\n",
+						udp_sock, optval, voptval);
 			if (voptval<optval) {
-				LM_DBG("setting SO_RCVBUF has no effect\n");
+				LM_DBG("setting SO_RCVBUF on fd %d has no effect\n", udp_sock);
 				/* if setting buffer size failed and still in the aggressive
 				phase, try less aggressively; otherwise give up
 				*/
@@ -200,10 +201,10 @@ int probe_max_receive_buffer( int udp_sock )
 	if (getsockopt( udp_sock, SOL_SOCKET, SO_RCVBUF, (void*) &foptval,
 		    &foptvallen) == -1 )
 	{
-		LM_ERR("getsockopt: %s\n", strerror(errno));
+		LM_ERR("fd: %d getsockopt: %s\n", udp_sock, strerror(errno));
 		return -1;
 	}
-	LM_INFO("SO_RCVBUF is finally %d\n", foptval );
+	LM_INFO("SO_RCVBUF is finally %d on fd %d\n", foptval, udp_sock);
 
 	return 0;
 
