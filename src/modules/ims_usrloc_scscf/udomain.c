@@ -79,6 +79,9 @@ extern int subs_hash_size;
 
 extern int contact_delete_delay;
 
+extern char* cscf_realm;
+extern int skip_cscf_realm;
+
 /*!
  * \brief Create a new domain structure
  * \param  _n is pointer to str representing name of the domain, the string is
@@ -706,6 +709,7 @@ int get_impus_from_subscription_as_string(udomain_t* _d, impurecord_t* impu_rec,
     ims_public_identity* impi;
     int bytes_needed = 0;
     int len = 0;
+    char* p = NULL;
 
     LM_DBG("getting IMPU subscription set\n");
 
@@ -723,18 +727,30 @@ int get_impus_from_subscription_as_string(udomain_t* _d, impurecord_t* impu_rec,
     for (i = 0; i < impu_rec->s->service_profiles_cnt; i++) {
         for (j = 0; j < impu_rec->s->service_profiles[i].public_identities_cnt; j++) {
             impi = &(impu_rec->s->service_profiles[i].public_identities[j]);
-            LM_DBG("Got Record %.*s (%i)\n", impi->public_identity.len,
-              impi->public_identity.s, impi->public_identity.len);
 
-            if (barring < 0) {
-                //get all records
-                bytes_needed += impi->public_identity.len;
-                (*num_impus)++;
+            if (skip_cscf_realm && cscf_realm) {
+                p = strstr(impi->public_identity.s, cscf_realm);
             } else {
-                if (impi->barring == barring) {
-                    //add the record to the list
+                p = NULL;
+            }
+
+            if (p) {
+                LM_DBG("Skip Record %.*s (%i)\n", impi->public_identity.len,
+              impi->public_identity.s, impi->public_identity.len);
+            } else {
+                LM_DBG("Got Record %.*s (%i)\n", impi->public_identity.len,
+                impi->public_identity.s, impi->public_identity.len);
+
+                if (barring < 0) {
+                    //get all records
                     bytes_needed += impi->public_identity.len;
                     (*num_impus)++;
+                } else {
+                    if (impi->barring == barring) {
+                        //add the record to the list
+                        bytes_needed += impi->public_identity.len;
+                        (*num_impus)++;
+                    }
                 }
             }
         }
@@ -761,21 +777,30 @@ int get_impus_from_subscription_as_string(udomain_t* _d, impurecord_t* impu_rec,
     for (i = 0; i < impu_rec->s->service_profiles_cnt; i++) {
         for (j = 0; j < impu_rec->s->service_profiles[i].public_identities_cnt; j++) {
             impi = &(impu_rec->s->service_profiles[i].public_identities[j]);
-            if (barring < 0) {
-                //get all records
-                (*impus)[count].s = ptr;
-                memcpy(ptr, impi->public_identity.s, impi->public_identity.len);
-                (*impus)[count].len = impi->public_identity.len;
-                ptr += impi->public_identity.len;
-                count++;
+
+            if (skip_cscf_realm && cscf_realm) {
+                p = strstr(impi->public_identity.s, cscf_realm);
             } else {
-                if (impi->barring == barring) {
-                    //add the record to the list
+                p = NULL;
+            }
+
+            if (p == NULL) {
+                if (barring < 0) {
+                    //get all records
                     (*impus)[count].s = ptr;
                     memcpy(ptr, impi->public_identity.s, impi->public_identity.len);
                     (*impus)[count].len = impi->public_identity.len;
                     ptr += impi->public_identity.len;
                     count++;
+                } else {
+                    if (impi->barring == barring) {
+                        //add the record to the list
+                        (*impus)[count].s = ptr;
+                        memcpy(ptr, impi->public_identity.s, impi->public_identity.len);
+                        (*impus)[count].len = impi->public_identity.len;
+                        ptr += impi->public_identity.len;
+                        count++;
+                    }
                 }
             }
         }
