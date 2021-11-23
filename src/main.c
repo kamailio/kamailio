@@ -170,8 +170,8 @@ Options:\n\
                   default is yes.\n\
     -A define    Add config pre-processor define (e.g., -A WITH_AUTH,\n\
                   -A 'FLT_ACC=1', -A 'DEFVAL=\"str-val\"')\n\
-    -b nr        Maximum receive buffer size which will not be exceeded by\n\
-                  auto-probing procedure even if  OS allows\n\
+    -b nr        Maximum OS UDP receive buffer size which will not be exceeded by\n\
+                  auto-probing-and-increase procedure even if OS allows\n\
     -c           Check configuration file for syntax errors\n\
     -d           Debugging level control (multiple -d to increase the level from 0)\n\
     --debug=val  Debugging level value\n\
