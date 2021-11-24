@@ -319,6 +319,10 @@ module_group_mysql=$(module_group_mysql_driver) $(module_group_db)
 module_group_postgres_driver=$(mod_list_postgres)
 module_group_postgres=$(module_group_postgres_driver) $(module_group_db)
 
+# For sqlite
+module_group_sqlite_driver=$(mod_list_sqlite)
+module_group_sqlite=$(module_group_sqlite_driver) $(module_group_db)
+
 # For radius
 module_group_radius=$(mod_list_radius)
 
