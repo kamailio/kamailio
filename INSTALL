@@ -102,6 +102,7 @@ Requirements:
 - python and devel headers for the Python module
 - jdk and gcj for Java module
 - the jansson library for the jansson module used for JSON document handling
+- libsqlite3 if you need SQLite support (the db_sqlite module)
 
 Some modules have other requirements on third-party libraries. This is documented
 in the README for the specific module.
@@ -120,6 +121,7 @@ OS Notes:
   - expat-1.95.8 (/usr/ports/textproc/expat2) for libexpat
   - libxml2-2.6.18 (/usr/ports/textproc/libxml2) for libxml2
   - radiusclient-0.4.7 (/usr/ports/net/radiusclient) for libradiusclient-ng
+  - sqlite3-3.35.5 (/usr/ports/databases/sqlite3) for libsqlite3
   NOTE: you'll need to add radiusclient_ng=4 to the gmake command line if you
   use the 0.4.* version.
 
@@ -135,6 +137,7 @@ OS Notes:
    http://download.berlios.de/radiusclient-ng/radiusclient-ng-0.5.1.tar.gz
    (you need to download and install it, since there is no "official"
    openbsd port for it) for libradiusclient-ng
+  - sqlite3-3.35.5 (/usr/ports/databases/sqlite3) for libsqlite3
 
   Compile example (all the modules and SIP server core in a tar.gz):
      gmake bin include_modules="mysql jabber cpl-c auth_radius group_radius uri_radius pa"
@@ -145,6 +148,7 @@ OS Notes:
   - expat-1.95.8nb2 (/usr/pkgsrc/textproc/expat) for libexpat
   - libxml2-2.6.19 (/usr/pkgsrc/textproc/libxml2) for libxml2
   - radiusclient-ng-0.5.1 (see OpenBSD)
+  - sqlite3-3.36.0 (/usr/pkgsrc/databases/sqlite3) for libsqlite
 
   Compile example (all the modules and SIP server in a tar.gz):
      gmake bin include_modules="mysql jabber cpl-c auth_radius group_radius uri_radius pa"
@@ -172,6 +176,7 @@ OS Notes:
       - libexpat1-dev for libexpat
       - libxml2-dev for libxml2
       - libradiusclient-ng-dev for libradiusclient
+      - libsqlite3-dev for libsqlite
 	  - other libraries are needed for some other modules,
 	    see README of the module you want to use
     Kamailio have APT deb repositories that allow you to
@@ -258,8 +263,8 @@ Including groups of modules:
 
   - db - Modules in this group use databases and need a database driver to run.
     Included are drivers for the text mode db (dbtext) and for dumping
-    large amount of data to files (db_flatstore). See also the mysql or
-    postgres groups.
+    large amount of data to files (db_flatstore). See also the mysql, 
+    postgres, or sqlite groups.
 
   - standard_dep -  Modules in this group are considered a standard part of Kamailio
     (due to widespread usage) but they have dependencies that must be satisfied
@@ -290,6 +295,7 @@ are grouped based on Debian packaging rules. For example:
 
 	mysql 		- Include all the db modules dependent and the MySQL db driver
 	postgres 	- Include all the db modules and the PostgreSQL db driver
+	sqlite	 	- Include all the db modules and the SQLite db driver
 	radius 		- Include all modules on radiusclient
 	presence 	- Include all the presence modules
 
