@@ -39,6 +39,7 @@
 #include "../../core/tcp_server.h"
 #include "../../core/tcp_conn.h"
 #include "../../core/ut.h"
+#include "../../core/pvapi.h"
 #include "../../core/cfg/cfg.h"
 #include "../../core/dprint.h"
 #include "../../core/strutils.h"
@@ -1256,8 +1257,84 @@ static int pv_tlsext_sn(sip_msg_t* msg, pv_param_t* param, pv_value_t* res)
 }
 
 
+int pv_parse_tls_name(pv_spec_p sp, str *in)
+{
+	if(sp==NULL || in==NULL || in->len<=0)
+		return -1;
+
+	switch(in->len) {
+		case 14:
+			if(strncmp(in->s, "m_subject_line", 14)==0)
+				sp->pvp.pvn.u.isname.name.n = 1000;
+			else if(strncmp(in->s, "p_subject_line", 14)==0)
+				sp->pvp.pvn.u.isname.name.n = 5000;
+			else goto error;
+		break;
+		default:
+			goto error;
+	}
+	sp->pvp.pvn.type = PV_NAME_INTSTR;
+	sp->pvp.pvn.u.isname.type = 0;
+
+	return 0;
+
+error:
+	LM_ERR("unknown PV tls name %.*s\n", in->len, in->s);
+	return -1;
+}
 
 
+int pv_get_tls(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	SSL *ssl = NULL;
+	tcp_connection_t *c = NULL;
+	X509 *cert = NULL;
+	str sv = STR_NULL;
+
+	if(msg==NULL || param==NULL) {
+		return -1;
+	}
+
+	c = get_cur_connection(msg);
+	if (c == NULL) {
+		LM_DBG("TLS connection not found\n");
+		return pv_get_null(msg, param, res);
+	}
+	ssl = get_ssl(c);
+	if (ssl == NULL) {
+		goto error;
+	}
+	cert = (param->pvn.u.isname.name.n < 5000) ? SSL_get_certificate(ssl)
+					: SSL_get_peer_certificate(ssl);
+	if (cert == NULL) {
+		if (param->pvn.u.isname.name.n < 5000) {
+			LM_ERR("Unable to retrieve my TLS certificate from SSL structure\n");
+		} else {
+			LM_ERR("Unable to retrieve peer TLS certificate from SSL structure\n");
+		}
+		goto error;
+	}
+
+	switch(param->pvn.u.isname.name.n)
+	{
+		case 1000:
+		case 5000:
+			sv.s = pv_get_buffer();
+			sv.len = pv_get_buffer_size() - 1;
+			if(X509_NAME_oneline(X509_get_subject_name(cert), sv.s, sv.len)==NULL) {
+				goto error;
+			}
+			return pv_get_strzval(msg, param, res, sv.s);
+		break;
+		default:
+			goto error;
+	}
+
+error:
+	tcpconn_put(c);
+	return pv_get_null(msg, param, res);
+}
 
 select_row_t tls_sel[] = {
 	/* Current cipher parameters */
@@ -1544,6 +1621,8 @@ pv_export_t tls_pv[] = {
 	{{"tls_peer_server_name", sizeof("tls_peer_server_name")-1},
 		PVT_OTHER, pv_tlsext_sn, 0,
 		0, 0, pv_init_iname, PV_TLSEXT_SNI },
+	{ {"tls", (sizeof("tls")-1)}, PVT_OTHER, pv_get_tls,
+		0, pv_parse_tls_name, 0, 0, 0},
 
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 
