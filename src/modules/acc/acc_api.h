@@ -146,8 +146,16 @@ typedef acc_extra_t* (*parse_extra_f)(char *extra_str);
 typedef int (*register_cdr_engine_f)(cdr_engine_t *eng);
 typedef int (*cdr_api_exec_f)(struct dlg_cell *dlg, struct sip_msg *rq, cdr_engine_t *eng, acc_param_t* comment);
 
+typedef int (*acc_log_request_f)(sip_msg_t *msg, str *comment);
+typedef int (*acc_db_request_f)(sip_msg_t *msg, str *comment, str *dbtable);
+typedef int (*acc_request_f)(sip_msg_t *msg, str *comment, str *dbtable);
+
+
 /* the acc API */
 typedef struct acc_api {
+	acc_log_request_f acc_log_request;
+	acc_db_request_f  acc_db_request;
+	acc_request_f     acc_request;
 	leg_info_f    get_leg_info;
 	core2strar_f  get_core_attrs;
 	extra2strar_f get_extra_attrs;

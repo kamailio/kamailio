@@ -644,6 +644,12 @@ static int bind_acc(acc_api_t* api)
 		return -1;
 	}
 
+	memset(api, 0, sizeof(acc_api_t));
+
+	api->acc_log_request = ki_acc_log_request;
+	api->acc_db_request  = ki_acc_db_request;
+	api->acc_request     = ki_acc_request;
+
 	api->register_engine = acc_register_engine;
 	api->get_leg_info    = get_leg_info;
 	api->get_core_attrs  = core2strar;
