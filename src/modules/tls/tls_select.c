@@ -1263,6 +1263,13 @@ int pv_parse_tls_name(pv_spec_p sp, str *in)
 		return -1;
 
 	switch(in->len) {
+		case 13:
+			if(strncmp(in->s, "m_issuer_line", 13)==0)
+				sp->pvp.pvn.u.isname.name.n = 1001;
+			else if(strncmp(in->s, "p_issuer_line", 13)==0)
+				sp->pvp.pvn.u.isname.name.n = 5001;
+			else goto error;
+		break;
 		case 14:
 			if(strncmp(in->s, "m_subject_line", 14)==0)
 				sp->pvp.pvn.u.isname.name.n = 1000;
@@ -1309,9 +1316,9 @@ int pv_get_tls(struct sip_msg *msg, pv_param_t *param,
 					: SSL_get_peer_certificate(ssl);
 	if (cert == NULL) {
 		if (param->pvn.u.isname.name.n < 5000) {
-			LM_ERR("Unable to retrieve my TLS certificate from SSL structure\n");
+			LM_ERR("failed to retrieve my TLS certificate from SSL structure\n");
 		} else {
-			LM_ERR("Unable to retrieve peer TLS certificate from SSL structure\n");
+			LM_ERR("failed to retrieve peer TLS certificate from SSL structure\n");
 		}
 		goto error;
 	}
@@ -1325,8 +1332,21 @@ int pv_get_tls(struct sip_msg *msg, pv_param_t *param,
 			if(X509_NAME_oneline(X509_get_subject_name(cert), sv.s, sv.len)==NULL) {
 				goto error;
 			}
+			tcpconn_put(c);
 			return pv_get_strzval(msg, param, res, sv.s);
 		break;
+
+		case 1001:
+		case 5001:
+			sv.s = pv_get_buffer();
+			sv.len = pv_get_buffer_size() - 1;
+			if(X509_NAME_oneline(X509_get_issuer_name(cert), sv.s, sv.len)==NULL) {
+				goto error;
+			}
+			tcpconn_put(c);
+			return pv_get_strzval(msg, param, res, sv.s);
+		break;
+
 		default:
 			goto error;
 	}
