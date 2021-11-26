@@ -212,8 +212,7 @@ modparam("uac_redirect","accept_filter",".*@siphub\.net")
    Its values may be:
      * acc_log_request
      * acc_db_request
-     * acc_rad_request
-     * acc_diam_request
+     * acc_request
 
    The default value is “acc_log_request”.
 
