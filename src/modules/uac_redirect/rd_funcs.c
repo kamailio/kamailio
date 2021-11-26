@@ -38,11 +38,11 @@ extern int _redirect_q_value;
 #define MAX_CONTACTS_PER_REPLY   16
 
 static int shmcontact2dset(struct sip_msg *req, struct sip_msg *shrpl,
-		long max, struct acc_param *reason, unsigned int bflags);
+		long max, str *reason, unsigned int bflags);
 
 
 int get_redirect( struct sip_msg *msg , int maxt, int maxb,
-									struct acc_param *reason, unsigned int bflags)
+									str *reason, unsigned int bflags)
 {
 	struct cell *t;
 	str backup_uri;
@@ -51,7 +51,6 @@ int get_redirect( struct sip_msg *msg , int maxt, int maxb,
 	int n;
 	int i;
 	int first_branch;
-	char code_buf[INT2STR_MAX_LEN];
 
 	/* get transaction */
 	t = rd_tmb.t_gett();
@@ -90,12 +89,6 @@ int get_redirect( struct sip_msg *msg , int maxt, int maxb,
 		}
 		if (max==0)
 			continue;
-		if(reason!=NULL)
-		{
-			/* put the response code into the acc_param reason struct */
-			reason->code = t->uac[i].last_received;
-			reason->code_s.s = int2bstr((unsigned long)reason->code, code_buf, &reason->code_s.len);
-		}
 		/* get the contact from it */
 		n = shmcontact2dset( msg, t->uac[i].reply, max, reason, bflags);
 		if ( n<0 ) {
@@ -187,7 +180,7 @@ static int sort_contacts(hdr_field_t *chdr, contact_t **ct_array,
  *            n - ok and n contacts added
  */
 static int shmcontact2dset(struct sip_msg *req, struct sip_msg *sh_rpl,
-								long max, struct acc_param *reason, unsigned int bflags)
+								long max, str *reason, unsigned int bflags)
 {
 	static struct sip_msg  dup_rpl;
 	static contact_t *scontacts[MAX_CONTACTS_PER_REPLY];
@@ -307,11 +300,23 @@ static int shmcontact2dset(struct sip_msg *req, struct sip_msg *sh_rpl,
 				LM_ERR("failed to add contact to dset\n");
 			} else {
 				added++;
-				if (rd_acc_fct!=0 && reason) {
+				if (_uacred_accb.acc_request!=NULL && reason) {
 					/* log the redirect */
 					req->new_uri =  scontacts[i]->uri;
 					//FIXME
-					rd_acc_fct( req, (char*)reason, acc_db_table);
+					if(uacred_acc_fct_s.len==11
+							&& strncmp(uacred_acc_fct_s.s,
+								"acc_request", 11)==0) {
+						_uacred_accb.acc_request(req, reason, &uacred_acc_db_table);
+					} else if(uacred_acc_fct_s.len==15
+							&& strncmp(uacred_acc_fct_s.s,
+								"acc_log_request", 15)==0) {
+						_uacred_accb.acc_log_request(req, reason);
+					} else if(uacred_acc_fct_s.len==14
+							&& strncmp(uacred_acc_fct_s.s,
+								"acc_db_request", 14)==0) {
+						_uacred_accb.acc_db_request(req, reason, &uacred_acc_db_table);
+					}
 				}
 			}
 		} else {

@@ -228,10 +228,7 @@ modparam("uac_redirect","accept_filter",".*@siphub\.net")
 				<para><emphasis>acc_db_request</emphasis></para>
 				</listitem>
 				<listitem>
-				<para><emphasis>acc_rad_request</emphasis></para>
-				</listitem>
-				<listitem>
-				<para><emphasis>acc_diam_request</emphasis></para>
+				<para><emphasis>acc_request</emphasis></para>
 				</listitem>
 			</itemizedlist>
 			<para>

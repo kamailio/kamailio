@@ -27,7 +27,9 @@
 #include "../../core/dprint.h"
 #include "../../core/mem/mem.h"
 #include "../../core/utils/sruid.h"
+#include "../../modules/acc/acc_api.h"
 #include "../../modules/tm/tm_load.h"
+#include "../../core/mod_fix.h"
 #include "../../core/kemi.h"
 #include "rd_funcs.h"
 #include "rd_filter.h"
@@ -36,11 +38,10 @@ MODULE_VERSION
 
 /* internal global variables */
 struct tm_binds rd_tmb;           /*imported functions from tm */
-cmd_function    rd_acc_fct = 0;   /*imported function from acc */
 
 /* global parameter variables */
-char *acc_db_table = "acc";
-char *acc_fct_s    = "acc_log_request";
+str uacred_acc_db_table = str_init("acc");
+str uacred_acc_fct_s    = str_init("acc_log_request");
 
 /* private parameter variables */
 char *deny_filter_s = 0;
@@ -58,6 +59,8 @@ int _redirect_q_value = DEFAULT_Q_VALUE;
 
 /* sruid to get internal uid */
 sruid_t _redirect_sruid;
+
+acc_api_t _uacred_accb = {0};
 
 
 static int redirect_init(void);
@@ -87,8 +90,8 @@ static param_export_t params[] = {
 	{"deny_filter",     PARAM_STRING,  &deny_filter_s    },
 	{"accept_filter",   PARAM_STRING,  &accept_filter_s  },
 	{"default_filter",  PARAM_STRING,  &def_filter_s     },
-	{"acc_function",    PARAM_STRING,  &acc_fct_s        },
-	{"acc_db_table",    PARAM_STRING,  &acc_db_table     },
+	{"acc_function",    PARAM_STR,  &uacred_acc_fct_s        },
+	{"acc_db_table",    PARAM_STR,  &uacred_acc_db_table     },
 	{"bflags",    		INT_PARAM,  &bflags			  },
 	{"flags_hdr_mode",	INT_PARAM,  &flags_hdr_mode	  },
 	{"q_value",         INT_PARAM,  &_redirect_q_value   },
@@ -141,8 +144,6 @@ int get_nr_max(char *s, unsigned char *max)
 static int get_redirect_fixup(void** param, int param_no)
 {
 	unsigned char maxb,maxt;
-	struct acc_param *accp;
-	cmd_function fct;
 	char *p;
 	char *s;
 
@@ -165,37 +166,14 @@ static int get_redirect_fixup(void** param, int param_no)
 		*param=(void*)(long)( (((unsigned short)maxt)<<8) | maxb);
 	} else if (param_no==2) {
 		/* acc function loaded? */
-		if (rd_acc_fct==0) {
-			/* must import the acc stuff */
-			if (acc_fct_s==0 || acc_fct_s[0]==0) {
-				LM_ERR("acc support enabled, but no acc function defined\n");
+		if (_uacred_accb.acc_request==NULL) {
+			/* bind the ACC API */
+			if(acc_load_api(&_uacred_accb) < 0) {
+				LM_ERR("cannot bind to ACC API\n");
 				return E_UNSPEC;
 			}
-			fct = find_export(acc_fct_s, 2, REQUEST_ROUTE);
-			if ( fct==0 )
-				fct = find_export(acc_fct_s, 1, REQUEST_ROUTE);
-			if ( fct==0 ) {
-				LM_ERR("cannot import %s function; is acc loaded and proper "
-					"compiled?\n", acc_fct_s);
-				return E_UNSPEC;
-			}
-			rd_acc_fct = fct;
 		}
-		/* set the reason str */
-		accp = (struct acc_param*)pkg_malloc(sizeof(struct acc_param));
-		if (accp==0) {
-			PKG_MEM_ERROR;
-			return E_UNSPEC;
-		}
-		memset( accp, 0, sizeof(struct acc_param));
-		if (s!=0 && *s!=0) {
-			accp->reason.s = s;
-			accp->reason.len = strlen(s);
-		} else {
-			accp->reason.s = "n/a";
-			accp->reason.len = 3;
-		}
-		*param=(void*)accp;
+		return fixup_spve_null(param, 1);
 	}
 
 	return 0;
@@ -264,8 +242,6 @@ static int regexp_compile(char *re_s, regex_t **re)
 static int redirect_init(void)
 {
 	regex_t *filter;
-	void *p;
-	cmd_function fct;
 
 	/* load the TM API */
 	if (load_tm_api(&rd_tmb)!=0) {
@@ -273,13 +249,11 @@ static int redirect_init(void)
 		goto error;
 	}
 
-	p = (void*)acc_db_table;
-	/* fixup table name */
-	if(fixup_var_pve_str_12(&p, 1)<0) {
-		LM_ERR("failed to fixup acc db table\n");
-		goto error;
+	/* bind the ACC API */
+	if(acc_load_api(&_uacred_accb) < 0) {
+		LM_ERR("cannot bind to ACC API\n");
+		return -1;
 	}
-	acc_db_table = p;
 
 	/* init filter */
 	init_filters();
@@ -311,21 +285,6 @@ static int redirect_init(void)
 
 	if(sruid_init(&_redirect_sruid, '-', "rdir", SRUID_INC)<0)
 		return -1;
-
-	if(rd_acc_fct == 0) {
-		/* import the acc stuff */
-		if(acc_fct_s != 0 && acc_fct_s[0] == '\0') {
-			fct = find_export(acc_fct_s, 2, REQUEST_ROUTE);
-			if(fct == 0)
-				fct = find_export(acc_fct_s, 1, REQUEST_ROUTE);
-			if(fct == 0) {
-				LM_ERR("cannot import %s function; is acc loaded and"
-						" configured\n", acc_fct_s);
-				return E_UNSPEC;
-			}
-			rd_acc_fct = fct;
-		}
-	}
 
 	return 0;
 error:
@@ -379,11 +338,17 @@ static int w_get_redirect2(struct sip_msg* msg, char *max_c, char *reason)
 {
 	int n;
 	unsigned short max;
+	str sreason;
+
+	if(fixup_get_svalue(msg, (gparam_t*)reason, &sreason)<0) {
+		LM_ERR("failed to get reason parameter\n");
+		return -1;
+	}
 
 	msg_tracer( msg, 0);
 	/* get the contacts */
 	max = (unsigned short)(long)max_c;
-	n = get_redirect(msg , (max>>8)&0xff, max&0xff, (struct acc_param*)reason, bflags);
+	n = get_redirect(msg , (max>>8)&0xff, max&0xff, &sreason, bflags);
 	reset_filters();
 	/* reset the tracer */
 	msg_tracer( msg, 1);
@@ -401,16 +366,10 @@ static int ki_get_redirects_acc(sip_msg_t* msg, int max_c, int max_b,
 		str *reason)
 {
 	int n;
-	acc_param_t accp;
 
-	if(reason && reason->len>0) {
-		memset(&accp, 0, sizeof(acc_param_t));
-		accp.reason.s = reason->s;
-		accp.reason.len = reason->len;
-	}
 	msg_tracer(msg, 0);
 	/* get the contacts */
-	n = get_redirect(msg, max_c, max_b, (reason && reason->len>0)?&accp:NULL,
+	n = get_redirect(msg, max_c, max_b, (reason && reason->len>0)?reason:NULL,
 			bflags);
 	reset_filters();
 	/* reset the tracer */

@@ -32,14 +32,16 @@
 typedef int (*tm_get_trans_f)( struct sip_msg*, struct cell**);
 
 extern struct tm_binds rd_tmb;
-extern cmd_function   rd_acc_fct;
 
-extern char *acc_db_table;
+extern str uacred_acc_db_table;
+extern str uacred_acc_fct_s;
+
+extern acc_api_t _uacred_accb;
 
 extern int flags_hdr_mode;
 
 int get_redirect( struct sip_msg *msg , int maxt, int maxb,
-		struct acc_param *reason, unsigned int bflags);
+		str *reason, unsigned int bflags);
 
 #endif
 
