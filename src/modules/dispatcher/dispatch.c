@@ -3503,6 +3503,11 @@ static void ds_options_callback(
 		}
 	}
 
+	/* Check if in the meantime someone disabled probing of the target through RPC, MI or reload */
+	if(ds_probing_mode == DS_PROBE_ONLYFLAGGED && !(ds_get_state(group, &uri) & DS_PROBING_DST)) {
+		return;
+	}
+
 	/* ps->code contains the result-code of the request.
 	 *
 	 * We accept both a "200 OK" or the configured reply as a valid response */
