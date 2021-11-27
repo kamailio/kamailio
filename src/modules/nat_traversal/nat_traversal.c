@@ -85,7 +85,7 @@ MODULE_VERSION
 
 
 /* WARNING: Keep this aligned with parser/msg_parser.h! */
-#define FL_DO_KEEPALIVE (1 << 31)
+#define FL_DO_KEEPALIVE (1u << 31)
 
 #define HASH_SIZE 512
 
