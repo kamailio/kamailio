@@ -876,7 +876,7 @@ modparam("tm", "fr_inv_timer_avp", "my_fr_inv_timer")
 	</section>
 
 	<section id="tm.p.unmatched_cancel">
-		<title><varname>unmatched_cancel</varname> (string)</title>
+		<title><varname>unmatched_cancel</varname> (integer)</title>
 		<para>
 			This parameter selects between forwarding CANCELs
 			that do not match any transaction statefully (0,
@@ -899,7 +899,7 @@ modparam("tm", "fr_inv_timer_avp", "my_fr_inv_timer")
 			<title>Set <varname>unmatched_cancel</varname> parameter</title>
 			<programlisting>
 ...
-modparam("tm", "unmatched_cancel", "2")
+modparam("tm", "unmatched_cancel", 2)
 ...
 			</programlisting>
 		</example>
