@@ -662,9 +662,10 @@ static inline int str2int(str* _s, unsigned int* _r)
 	str2unval(_s, _r);
 }
 
-#define str2snval(_s, _r) do { \
+#define str2snval(_s, _r, _vmin, _vmax) do { \
 		int i; \
 		int sign; \
+		long long ll; \
 		if (_s == NULL) return -1; \
 		if (_r == NULL) return -1; \
 		if (_s->len < 0) return -1; \
@@ -680,13 +681,25 @@ static inline int str2int(str* _s, unsigned int* _r)
 		} \
 		for(; i < _s->len; i++) { \
 			if ((_s->s[i] >= '0') && (_s->s[i] <= '9')) { \
+				if(*_r > _vmax/10) { \
+					return -1; \
+				} \
 				*_r *= 10; \
+				if(*_r > _vmax - (_s->s[i] - '0')) { \
+					return -1; \
+				} \
 				*_r += _s->s[i] - '0'; \
 			} else { \
 				return -1; \
 			} \
 		} \
-		*_r *= sign; \
+		if(sign < 0) { \
+			ll = (long long)(*_r) * sign; \
+			if(ll < _vmin) { \
+				return -1; \
+			} \
+			*_r *= sign; \
+		} \
 		return 0; \
 	} while(0)
 
@@ -695,7 +708,7 @@ static inline int str2int(str* _s, unsigned int* _r)
  */
 static inline int str2slong(str* _s, long* _r)
 {
-	str2snval(_s, _r);
+	str2snval(_s, _r, LONG_MIN, LONG_MAX);
 }
 
 
@@ -704,7 +717,7 @@ static inline int str2slong(str* _s, long* _r)
  */
 static inline int str2sint(str* _s, int* _r)
 {
-	str2snval(_s, _r);
+	str2snval(_s, _r, INT_MIN, INT_MAX);
 }
 
 
