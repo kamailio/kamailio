@@ -43,12 +43,12 @@ static flag_t sflags = 0;
 
 
 int setflag( struct sip_msg* msg, flag_t flag ) {
-	msg->flags |= 1 << flag;
+	msg->flags |= 1u << flag;
 	return 1;
 }
 
 int resetflag( struct sip_msg* msg, flag_t flag ) {
-	msg->flags &= ~ (1 << flag);
+	msg->flags &= ~ (1u << flag);
 	return 1;
 }
 
@@ -58,7 +58,7 @@ int resetflags( struct sip_msg* msg, flag_t flags ) {
 }
 
 int isflagset( struct sip_msg* msg, flag_t flag ) {
-	return (msg->flags & (1<<flag)) ? 1 : -1;
+	return (msg->flags & (1u<<flag)) ? 1 : -1;
 }
 
 int flag_in_range( flag_t flag ) {
@@ -79,21 +79,21 @@ int setsflagsval(flag_t val)
 
 int setsflag(flag_t flag)
 {
-	sflags |= 1 << flag;
+	sflags |= 1u << flag;
 	return 1;
 }
 
 
 int resetsflag(flag_t flag)
 {
-	sflags &= ~ (1 << flag);
+	sflags &= ~ (1u << flag);
 	return 1;
 }
 
 
 int issflagset(flag_t flag)
 {
-	return (sflags & (1<<flag)) ? 1 : -1;
+	return (sflags & (1u<<flag)) ? 1 : -1;
 }
 
 
@@ -126,7 +126,7 @@ static unsigned char registered_flags[MAX_FLAG+1];
 void init_named_flags()
 {
 	int r;
-	
+
 	for (r=0; r<FLAGS_NAME_HASH_ENTRIES; r++)
 		clist_init(&name2flags[r], next, prev);
 }
@@ -149,7 +149,7 @@ inline static struct flag_entry* flag_search(struct flag_hash_head* lst,
 												char* name, int len)
 {
 	struct flag_entry* fe;
-	
+
 	clist_foreach(lst, fe, next){
 		if ((fe->name.len==len) && (memcmp(fe->name.s, name, len)==0)){
 			/* found */
@@ -176,7 +176,7 @@ inline static struct flag_entry* get_flag_entry(char* name, int len)
 int get_flag_no(char* name, int len)
 {
 	struct flag_entry* fe;
-	
+
 	fe=get_flag_entry(name, len);
 	return (fe)?fe->no:-1;
 }
@@ -184,7 +184,7 @@ int get_flag_no(char* name, int len)
 
 
 /* resgiter a new flag name and associates it with pos
- * pos== -1 => any position will do 
+ * pos== -1 => any position will do
  * returns flag pos on success (>=0)
  *         -1  flag is an alias for an already existing flag
  *         -2  flag already registered
@@ -199,7 +199,7 @@ int register_flag(char* name, int pos)
 	static unsigned int crt_flag=0;
 	unsigned int last_flag;
 	unsigned int h;
-	
+
 	len=strlen(name);
 	h=get_hash1_raw(name, len) & (FLAGS_NAME_HASH_ENTRIES-1);
 	/* check if the name already exists */
@@ -235,7 +235,7 @@ int register_flag(char* name, int pos)
 		}
 	}
 	registered_flags[pos]++;
-	
+
 	e=pkg_malloc(sizeof(struct flag_entry));
 	if (e==0){
 		PKG_MEM_ERROR;
@@ -259,7 +259,7 @@ int setxflag(struct sip_msg* msg, flag_t flag)
 	uint32_t fb;
 	fi = flag / (sizeof(flag_t)*CHAR_BIT);
 	fb = flag % (sizeof(flag_t)*CHAR_BIT);
-	msg->xflags[fi] |= 1 << fb;
+	msg->xflags[fi] |= 1u << fb;
 	return 1;
 }
 
@@ -272,7 +272,7 @@ int resetxflag(struct sip_msg* msg, flag_t flag)
 	uint32_t fb;
 	fi = flag / (sizeof(flag_t)*CHAR_BIT);
 	fb = flag % (sizeof(flag_t)*CHAR_BIT);
-	msg->xflags[fi] &= ~ (1 << fb);
+	msg->xflags[fi] &= ~ (1u << fb);
 	return 1;
 }
 
@@ -285,5 +285,5 @@ int isxflagset(struct sip_msg* msg, flag_t flag)
 	uint32_t fb;
 	fi = flag / (sizeof(flag_t)*CHAR_BIT);
 	fb = flag % (sizeof(flag_t)*CHAR_BIT);
-	return (msg->xflags[fi] & (1<<fb)) ? 1 : -1;
+	return (msg->xflags[fi] & (1u<<fb)) ? 1 : -1;
 }
