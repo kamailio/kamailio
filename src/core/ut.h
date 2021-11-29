@@ -628,7 +628,7 @@ static inline void strlower(str* _s)
 }
 
 
-#define str2unval(_s, _r) do { \
+#define str2unval(_s, _r, _vmax) do { \
 		int i; \
 		if (_r == NULL) return -1; \
 		*_r = 0; \
@@ -637,7 +637,13 @@ static inline void strlower(str* _s)
 		if (_s->s == NULL) return -1; \
 		for(i = 0; i < _s->len; i++) { \
 			if ((_s->s[i] >= '0') && (_s->s[i] <= '9')) { \
+				if(*_r > _vmax/10) { \
+					return -1; \
+				} \
 				*_r *= 10; \
+				if(*_r > _vmax - (_s->s[i] - '0')) { \
+					return -1; \
+				} \
 				*_r += _s->s[i] - '0'; \
 			} else { \
 				return -1; \
@@ -651,7 +657,7 @@ static inline void strlower(str* _s)
  */
 static inline int str2ulong(str* _s, unsigned long* _r)
 {
-	str2unval(_s, _r);
+	str2unval(_s, _r, ULONG_MAX);
 }
 
 /*
@@ -659,7 +665,7 @@ static inline int str2ulong(str* _s, unsigned long* _r)
  */
 static inline int str2int(str* _s, unsigned int* _r)
 {
-	str2unval(_s, _r);
+	str2unval(_s, _r, UINT_MAX);
 }
 
 #define str2snval(_s, _r, _vmin, _vmax) do { \
