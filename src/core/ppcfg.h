@@ -45,7 +45,7 @@ int  pp_define(int len, const char *text);
 int  pp_define_set(int len, char *text, int mode);
 int  pp_define_set_type(int type);
 str *pp_define_get(int len, const char * text);
-int  pp_define_env(const char * text, int len);
+int  pp_define_env(const char * text, int len, int qmode);
 
 void pp_ifdef_level_update(int val);
 int pp_ifdef_level_check(void);
