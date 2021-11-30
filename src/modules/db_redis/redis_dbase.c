@@ -2249,6 +2249,7 @@ static int db_redis_perform_update(const db1_con_t* _h, km_redis_con_t *con, con
 
     db_redis_key_free(&all_type_keys);
     db_redis_key_free(&new_type_keys);
+    db_redis_consume_replies(con);
     return 0;
 
 error:
@@ -2260,6 +2261,7 @@ error:
     db_redis_key_free(&type_keys);
     db_redis_key_free(&set_keys);
     db_redis_key_free(&new_type_keys);
+    db_redis_consume_replies(con);
     return -1;
 }
 
