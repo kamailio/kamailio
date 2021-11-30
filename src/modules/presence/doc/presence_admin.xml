@@ -983,10 +983,10 @@ modparam("presence", "timer_mode", 0)
 <section id="presence.p.subs_respond_200">
 	<title><varname>subs_respond_200</varname> (integer)</title>
 	<para>
-	Specify the response code for accepted SUBSCRIBE requests.
-	If set to 0, 202 Accepted will be returned.
-	If set to 1, 200 OK will be returned instead, in conformance to RFC6665
-	which prohibits 202 responses.
+	Specify the response code for accepted SUBSCRIBE requests. If set to 0,
+	"202 Accepted" will be returned (default behaviour till version 5.5). If set
+	to 1, "200 OK" will be returned instead, in conformance to RFC6665, which
+	prohibits 202 responses.
 	</para>
 	<para>
 		<emphasis>
