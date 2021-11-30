@@ -902,11 +902,11 @@ modparam("presence", "timer_mode", 0)
    202 Accepted will be returned. If set to 1, 200 OK will be returned
    instead, in conformance to RFC6665 which prohibits 202 responses.
 
-   Default value is 0.
+   Default value is 1.
 
    Example 1.38. Set subs_respond_200 parameter
 ...
-modparam("presence", "subs_respond_200", 1)
+modparam("presence", "subs_respond_200", 0)
 ...
 
 4. Functions
