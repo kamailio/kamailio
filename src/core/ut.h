@@ -627,37 +627,43 @@ static inline void strlower(str* _s)
 	}
 }
 
-
-#define str2unval(_s, _r, _vmax) do { \
-		int i; \
-		if (_r == NULL) return -1; \
+#define str2unval(_s, _r, _vtype, _vmax) do { \
+		_vtype limitmul; \
+		int i, c, limitrst; \
+		if((_s == NULL) || (_r == NULL) || (_s->len < 0) || (_s->s == NULL)) { \
+			return -1; \
+		} \
 		*_r = 0; \
-		if (_s == NULL) return -1; \
-		if (_s->len < 0) return -1; \
-		if (_s->s == NULL) return -1; \
-		for(i = 0; i < _s->len; i++) { \
-			if ((_s->s[i] >= '0') && (_s->s[i] <= '9')) { \
-				if(*_r > _vmax/10) { \
-					return -1; \
-				} \
-				*_r *= 10; \
-				if(*_r > _vmax - (_s->s[i] - '0')) { \
-					return -1; \
-				} \
-				*_r += _s->s[i] - '0'; \
-			} else { \
+		i = 0; \
+		if (_s->s[0] == '+') { \
+			i++; \
+		} \
+		limitmul = _vmax / 10; \
+		limitrst = _vmax % 10; \
+		for(; i < _s->len; i++) { \
+			c = (unsigned char)_s->s[i]; \
+			if (c < '0' || c > '9') { \
 				return -1; \
+			} \
+			c -= '0'; \
+			if (*_r > limitmul || (*_r == limitmul && c > limitrst)) { \
+				*_r = _vmax; \
+				return -1; \
+			} else { \
+				*_r *= 10; \
+				*_r += c; \
 			} \
 		} \
 		return 0; \
 	} while(0)
+
 
 /*
  * Convert an str to unsigned long
  */
 static inline int str2ulong(str* _s, unsigned long* _r)
 {
-	str2unval(_s, _r, ULONG_MAX);
+	str2unval(_s, _r, long, ULONG_MAX);
 }
 
 /*
@@ -665,56 +671,69 @@ static inline int str2ulong(str* _s, unsigned long* _r)
  */
 static inline int str2int(str* _s, unsigned int* _r)
 {
-	str2unval(_s, _r, UINT_MAX);
+	str2unval(_s, _r, int, UINT_MAX);
 }
 
-#define str2snval(_s, _r, _vmin, _vmax) do { \
-		int i; \
-		int sign; \
-		long long ll; \
-		if (_s == NULL) return -1; \
-		if (_r == NULL) return -1; \
-		if (_s->len < 0) return -1; \
-		if (_s->s == NULL) return -1; \
+
+#define str2snval(_s, _r, _vtype, _vmin, _vmax) do { \
+		_vtype limitmul; \
+		int i, c, neg, limitrst; \
+		if((_s == NULL) || (_r == NULL) || (_s->len < 0) || (_s->s == NULL)) { \
+			return -1; \
+		} \
 		*_r = 0; \
-		sign = 1; \
+		neg = 0; \
 		i = 0; \
 		if (_s->s[0] == '+') { \
 			i++; \
 		} else if (_s->s[0] == '-') { \
-			sign = -1; \
+			neg = 1; \
 			i++; \
 		} \
-		for(; i < _s->len; i++) { \
-			if ((_s->s[i] >= '0') && (_s->s[i] <= '9')) { \
-				if(*_r > _vmax/10) { \
-					return -1; \
-				} \
-				*_r *= 10; \
-				if(*_r > _vmax - (_s->s[i] - '0')) { \
-					return -1; \
-				} \
-				*_r += _s->s[i] - '0'; \
-			} else { \
-				return -1; \
+		limitmul = neg ? _vmin : _vmax; \
+		limitrst = limitmul % 10; \
+		limitmul /= 10; \
+		if (neg) { \
+			if (limitrst > 0) { \
+				limitrst -= 10; \
+				limitmul += 1; \
 			} \
+			limitrst = -limitrst; \
 		} \
-		if(sign < 0) { \
-			ll = (long long)(*_r) * sign; \
-			if(ll < _vmin) { \
+		for(; i < _s->len; i++) { \
+			c = (unsigned char)_s->s[i]; \
+			if (c < '0' || c > '9') { \
 				return -1; \
 			} \
-			*_r *= sign; \
+			c -= '0'; \
+			if (neg) { \
+				if (*_r < limitmul || (*_r == limitmul && c > limitrst)) { \
+					*_r = _vmin; \
+					return -1; \
+				} else { \
+					*_r *= 10; \
+					*_r -= c; \
+				} \
+			} else { \
+				if (*_r > limitmul || (*_r == limitmul && c > limitrst)) { \
+					*_r = _vmax; \
+					return -1; \
+				} else { \
+					*_r *= 10; \
+					*_r += c; \
+				} \
+			} \
 		} \
 		return 0; \
 	} while(0)
+
 
 /*
  * Convert an str to signed long
  */
 static inline int str2slong(str* _s, long* _r)
 {
-	str2snval(_s, _r, LONG_MIN, LONG_MAX);
+	str2snval(_s, _r, long, LONG_MIN, LONG_MAX);
 }
 
 
@@ -723,7 +742,7 @@ static inline int str2slong(str* _s, long* _r)
  */
 static inline int str2sint(str* _s, int* _r)
 {
-	str2snval(_s, _r, INT_MIN, INT_MAX);
+	str2snval(_s, _r, int, INT_MIN, INT_MAX);
 }
 
 
