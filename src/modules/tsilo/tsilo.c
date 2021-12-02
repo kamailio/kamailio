@@ -407,7 +407,8 @@ static int ki_ts_append_to_uri(sip_msg_t* _msg, int tindex, int tlabel,
 /**
  *
  */
-static int w_ts_append_by_contact2(struct sip_msg* _msg, char *_table, char *_ruri) {
+static int w_ts_append_by_contact2(struct sip_msg* _msg, char *_table, char *_ruri)
+{
 	str ruri = STR_NULL;
 	str ruri_fixed = STR_NULL;
 
@@ -417,14 +418,19 @@ static int w_ts_append_by_contact2(struct sip_msg* _msg, char *_table, char *_ru
 
 	int rc;
 
+	if (_ruri==NULL) {
+		LM_ERR("invalid ruri parameter\n");
+		return -1;
+	}
+
 	/* parse R-URI */
 	if (fixup_get_svalue(_msg, (gparam_t*)_ruri, &ruri_fixed)!=0) {
 		LM_ERR("failed to convert r-uri parameter\n");
 		return -1;
 	}
 
-	if (_ruri==NULL || strlen(_ruri) <= 0 || ruri_fixed.len <= 0) {
-		LM_ERR("tsilo: invalid ruri parameter (empty or zero length).\n");
+	if (ruri_fixed.s == NULL || ruri_fixed.len <= 0) {
+		LM_ERR("invalid ruri parameter - empty or negative length\n");
 		return -1;
 	}
 
@@ -434,19 +440,19 @@ static int w_ts_append_by_contact2(struct sip_msg* _msg, char *_table, char *_ru
 	}
 
 	if (ts_check_uri(&ruri) < 0) {
-		LM_ERR("tsilo: failed to parse R-URI.\n");
+		LM_ERR("failed to parse R-URI.\n");
 		return -1;
 	}
 
 	/* parse Contact header */
 	if ((!_msg->contact && parse_headers(_msg, HDR_CONTACT_F, 0) != 0)
 			|| !_msg->contact) {
-		LM_WARN("tsilo: missing contact header or the value is empty/malformed.\n");
+		LM_WARN("missing contact header or the value is empty/malformed.\n");
 		return -1;
 	}
 	if (_msg->contact) {
 		if (parse_contact(_msg->contact) < 0) {
-			LM_WARN("tsilo: failed to parse Contact header.\n");
+			LM_WARN("failed to parse Contact header.\n");
 			return -1;
 		}
 		if (parse_uri(
@@ -454,7 +460,7 @@ static int w_ts_append_by_contact2(struct sip_msg* _msg, char *_table, char *_ru
 						((struct contact_body*)_msg->contact->parsed)->contacts->uri.len,
 						&curi) != 0 ) {
 			if (ts_check_uri(&_msg->contact->body) < 0) {	/* one more attempt */
-				LM_WARN("tsilo: failed to parse Contact header.\n");
+				LM_WARN("failed to parse Contact header.\n");
 				return -1;
 			}
 		}
@@ -470,7 +476,7 @@ static int w_ts_append_by_contact2(struct sip_msg* _msg, char *_table, char *_ru
 
 		if (pkg_str_dup(&contact, &tmp_contact) < 0) {
 			if (pkg_str_dup(&contact, &_msg->contact->body) < 0) { /* one more attempt */
-				LM_ERR("tsilo: problems when calling ts_append_contact(), cannot copy Contact parameter.\n");
+				LM_ERR("problems when calling ts_append_contact(), cannot copy Contact parameter.\n");
 				return -1;
 			}
 		}
@@ -490,7 +496,8 @@ static int w_ts_append_by_contact2(struct sip_msg* _msg, char *_table, char *_ru
 /**
  *
  */
-static int ki_ts_append_by_contact(sip_msg_t* _msg, str *_table, str *_ruri) {
+static int ki_ts_append_by_contact(sip_msg_t* _msg, str *_table, str *_ruri)
+{
 	str ruri = STR_NULL;
 	str contact = STR_NULL;
 	str tmp_contact = STR_NULL;
@@ -546,7 +553,9 @@ static int ki_ts_append_by_contact(sip_msg_t* _msg, str *_table, str *_ruri) {
 /**
  *
  */
-static int w_ts_append_by_contact3(struct sip_msg* _msg, char *_table, char *_ruri, char *_contact) {
+static int w_ts_append_by_contact3(struct sip_msg* _msg, char *_table,
+		char *_ruri, char *_contact)
+{
 	str ruri = STR_NULL;
 	str ruri_fixed = STR_NULL;
 
@@ -555,14 +564,18 @@ static int w_ts_append_by_contact3(struct sip_msg* _msg, char *_table, char *_ru
 
 	int rc;
 
+	if (_ruri==NULL || _contact==NULL) {
+		LM_ERR("invalid ruri or contact parameters\n");
+		return -1;
+	}
 	/* parse R-URI */
 	if (fixup_get_svalue(_msg, (gparam_t*)_ruri, &ruri_fixed)!=0) {
 		LM_ERR("failed to convert r-uri parameter\n");
 		return -1;
 	}
 
-	if (_ruri==NULL || strlen(_ruri) <= 0 || ruri_fixed.len <= 0) {
-		LM_ERR("tsilo: invalid ruri parameter.\n");
+	if (ruri_fixed.s == NULL || ruri_fixed.len <= 0) {
+		LM_ERR("invalid ruri parameter - empty or negative length\n");
 		return -1;
 	}
 
@@ -572,7 +585,7 @@ static int w_ts_append_by_contact3(struct sip_msg* _msg, char *_table, char *_ru
 	}
 
 	if (ts_check_uri(&ruri) < 0) {
-		LM_ERR("tsilo: failed to parse R-URI.\n");
+		LM_ERR("failed to parse R-URI.\n");
 		return -1;
 	}
 
@@ -582,8 +595,8 @@ static int w_ts_append_by_contact3(struct sip_msg* _msg, char *_table, char *_ru
 		return -1;
 	}
 
-	if (_contact==NULL || strlen(_contact) <= 0 || contact_fixed.len <= 0) {
-		LM_ERR("tsilo: invalid contact parameter.\n");
+	if (contact_fixed.s == NULL || contact_fixed.len <= 0) {
+		LM_ERR("invalid contact parameter value\n");
 		return -1;
 	}
 
@@ -593,7 +606,7 @@ static int w_ts_append_by_contact3(struct sip_msg* _msg, char *_table, char *_ru
 	}
 
 	if (ts_check_uri(&contact) < 0) {
-		LM_ERR("tsilo: failed to parse Contact parameter.\n");
+		LM_ERR("failed to parse Contact parameter.\n");
 		return -1;
 	}
 
@@ -609,7 +622,9 @@ static int w_ts_append_by_contact3(struct sip_msg* _msg, char *_table, char *_ru
 /**
  *
  */
-static int ki_ts_append_by_contact_uri(sip_msg_t* _msg, str *_table, str *_ruri, str *_contact) {
+static int ki_ts_append_by_contact_uri(sip_msg_t* _msg, str *_table, str *_ruri,
+		str *_contact)
+{
 	str ruri = STR_NULL;
 	str contact = STR_NULL;
 
