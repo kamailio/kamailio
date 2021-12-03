@@ -96,6 +96,8 @@ int db_postgres_bind_api(db_func_t *dbb)
 	dbb->end_transaction = db_postgres_end_transaction;
 	dbb->abort_transaction = db_postgres_abort_transaction;
 	dbb->query_lock = db_postgres_query_lock;
+	dbb->raw_query_async  = db_postgres_raw_query_async;
+	dbb->insert_async     = db_postgres_insert_async;
 
 	return 0;
 }
