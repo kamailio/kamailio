@@ -365,7 +365,12 @@ int lrkproxy_hash_table_remove(str callid, str viabranch, enum lrk_operation op)
     while (entry) {
         // if callid found, delete entry
         if ((str_equal(entry->callid, callid) && str_equal(entry->viabranch, viabranch)) ||
-            (str_equal(entry->callid, callid) && viabranch.len == 0 && op == OP_DELETE)) {
+            (str_equal(entry->callid, callid) && viabranch.len == 0 && op == OP_DELETE) ||
+            str_equal(entry->callid, callid)){
+            //if ((str_equal(entry->callid, callid) && str_equal(entry->viabranch, viabranch)) ||
+            //    (str_equal(entry->callid, callid) && viabranch.len == 0 && op == OP_DELETE)) {
+            // set pointers; exclude entry
+
             // set pointers; exclude entry
             last_entry->next = entry->next;
 
