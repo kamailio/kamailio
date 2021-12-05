@@ -18,7 +18,7 @@
 		<title>Overview</title>
 		<para>
 			This is a module that enables media streams to be relayed via
-			pylrkproxy engine that exist in:
+			pylrkproxy engine. This engine can be found at:
 			https://github.com/mojtabaesfandiari/pylrkproxy
 			It does relaying audio streams between peers in
 			PREROUTING netfilter-hooking section in kernel-space linux.
@@ -77,7 +77,7 @@
 		</para>
 		<para>
 			IMPORTANT: This module does not support balancing inside a set like as is done RTPProxy module based on
-			the weight of each rtpproxy from the set. The balancing would be run on different machine
+			the weight of each rtpproxy from the set. The balancing would be run on different machine.
 		</para>
 	</section>
 
