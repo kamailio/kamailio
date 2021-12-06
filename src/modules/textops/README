@@ -222,9 +222,13 @@ Chapter 1. Admin Guide
    The module implements text based operations over the SIP message
    processed by Kamailio. SIP is a text based protocol and the module
    provides a large set of very useful functions to manipulate the message
-   at text level, e.g., regular expression search and replace, Perl-like
+   at text level, e.g., regular expression search, replace or
    substitutions, checks for method type, header presence, insert of new
-   header and date, etc.
+   header and date, string comparisons, multi-part body operations, etc.
+
+   If not stated otherwise, the regular expressions parameters for search,
+   replace or substitute have to be in POSIX format. For PCRE regular
+   expression matching, see the pcre or dialplan modules.
 
 2. Known Limitations
 
@@ -545,7 +549,7 @@ replace_hdrs_str("Kamailio", "Kamailio SIP Proxy", "a");
 
 4.15.  subst('/re/repl/flags')
 
-   Replaces re with repl (sed or perl like).
+   Replaces re with repl.
 
    Meaning of the parameters is as follows:
      * '/re/repl/flags' - sed like regular expression. flags can be a
@@ -626,7 +630,7 @@ if (subst_user('/(.*)3642$/$avp(user_prefix)\13642/')){$
 
 4.18.  subst_body('/re/repl/flags')
 
-   Replaces re with repl (sed or perl like) in the body of the message.
+   Replaces re with repl in the body of the message.
 
    Meaning of the parameters is as follows:
      * '/re/repl/flags' - sed like regular expression. flags can be a
@@ -647,7 +651,7 @@ if ( subst_body('/^o=(.*) /o=$fU /') ) {};
 
 4.19.  subst_hf(hf, subexp, flags)
 
-   Perl-like substitutions in the body of a header field.
+   Substitutions in the body of a header field.
 
    Meaning of the parameters is as follows:
      * hf - header field name.
@@ -713,7 +717,7 @@ set_reply_body("test", "text/plain");
    Example 1.22. filter_body usage
 ...
 if (has_body("multipart/mixed")) {
-    if (filter_body("application/sdp") {
+    if (filter_body("application/sdp")) {
         remove_hf("Content-Type");
         append_hf("Content-Type: application/sdp\r\n");
     } else {
