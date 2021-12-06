@@ -55,7 +55,7 @@ Daniel-Constantin Mierla
               3.26. contact_flows_avp (string)
               3.27. fr_timer_avp (string)
               3.28. fr_inv_timer_avp (string)
-              3.29. unmatched_cancel (string)
+              3.29. unmatched_cancel (integer)
               3.30. ruri_matching (integer)
               3.31. via1_matching (integer)
               3.32. callid_matching (integer)
@@ -317,7 +317,7 @@ Chapter 1. Admin Guide
         3.26. contact_flows_avp (string)
         3.27. fr_timer_avp (string)
         3.28. fr_inv_timer_avp (string)
-        3.29. unmatched_cancel (string)
+        3.29. unmatched_cancel (integer)
         3.30. ruri_matching (integer)
         3.31. via1_matching (integer)
         3.32. callid_matching (integer)
@@ -693,7 +693,7 @@ failure_route["serial"]
    3.26. contact_flows_avp (string)
    3.27. fr_timer_avp (string)
    3.28. fr_inv_timer_avp (string)
-   3.29. unmatched_cancel (string)
+   3.29. unmatched_cancel (integer)
    3.30. ruri_matching (integer)
    3.31. via1_matching (integer)
    3.32. callid_matching (integer)
@@ -1290,7 +1290,7 @@ modparam("tm", "fr_inv_timer_avp", "$avp(my_fr_inv_timer)")
 modparam("tm", "fr_inv_timer_avp", "my_fr_inv_timer")
 ...
 
-3.29. unmatched_cancel (string)
+3.29. unmatched_cancel (integer)
 
    This parameter selects between forwarding CANCELs that do not match any
    transaction statefully (0, default value), statelessly (1) or dropping
@@ -1307,7 +1307,7 @@ modparam("tm", "fr_inv_timer_avp", "my_fr_inv_timer")
 
    Example 1.29. Set unmatched_cancel parameter
 ...
-modparam("tm", "unmatched_cancel", "2")
+modparam("tm", "unmatched_cancel", 2)
 ...
 
 3.30. ruri_matching (integer)
