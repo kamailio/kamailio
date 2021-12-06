@@ -72,7 +72,7 @@ extern int dbcl_max_query_length;
 							cls->usedcon = cls->rlist[i].clist[j];\
 							return 0;\
 						} else {\
-							LM_DBG("serial operation - failre on cluster"\
+							LM_DBG("serial operation - failure on cluster"\
 									" [%.*s] (%d/%d)\n",\
 									cls->name.len, cls->name.s, i, j);\
 							sec = get_ticks() - sec;\
@@ -105,7 +105,7 @@ extern int dbcl_max_query_length;
 							cls->rlist[i].crt = (j+1) % cls->rlist[i].clen;\
 							return 0;\
 						} else {\
-							LM_DBG("round robin operation - failre on cluster"\
+							LM_DBG("round robin operation - failure on cluster"\
 									" [%.*s] (%d/%d)\n",\
 									cls->name.len, cls->name.s, i, j);\
 							sec = get_ticks() - sec;\
@@ -409,7 +409,7 @@ db1_con_t* db_cluster_init(const str* _dburl)
 	LM_DBG("initializing with cluster [%.*s]\n", _dburl->len, _dburl->s);
 	if(_dburl->len<10 || strncmp(_dburl->s, "cluster://", 10)!=0)
 	{
-		LM_ERR("invlaid url for cluster module [%.*s]\n",
+		LM_ERR("invalid url for cluster module [%.*s]\n",
 				_dburl->len, _dburl->s);
 		return NULL;
 	}
@@ -433,7 +433,7 @@ db1_con_t* db_cluster_init(const str* _dburl)
 	cls->ref++;
 	h = (db1_con_t*)pkg_malloc(sizeof(db1_con_t));
 	if (h==NULL) {
-		LM_ERR("out of pkg\n");
+		LM_ERR("out of pkg memory\n");
 		return NULL;
 	}
 	memset(h, 0, sizeof(db1_con_t));
