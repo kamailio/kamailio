@@ -265,7 +265,7 @@ int dbcl_cls_set_connections(dbcl_cls_t *cls, str *cons)
 					pit->name.len, pit->name.s, i, cls->rlist[i].clen);
 			cls->rlist[i].clen++;
 		} else {
-			LM_WARN("too many read connections in cluster - con-id [%.*s]\n",
+			LM_WARN("too many read connections in cluster - connection id [%.*s]\n",
 					pit->name.len, pit->name.s);
 		}
 		if(s.s[2]<'0' || s.s[2]>'9')
