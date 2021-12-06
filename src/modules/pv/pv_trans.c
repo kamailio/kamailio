@@ -2590,6 +2590,41 @@ int tr_eval_val(struct sip_msg *msg, tr_param_t *tp, int subtype,
 				val->rs.len = sv.len;
 			}
 			break;
+		case TR_VAL_JSONQE:
+			if(val->flags&PV_VAL_NULL) {
+				val->ri = 0;
+				tr_set_crt_buffer();
+				val->rs.s = _tr_buffer;
+				val->rs.s[0] = '"';
+				val->rs.s[1] = '"';
+				val->rs.s[2] = '\0';
+				val->rs.len = 2;
+				val->flags = PV_VAL_STR;
+			} else if(val->flags&PV_TYPE_INT) {
+				break;
+			} else if(val->flags&PV_VAL_STR) {
+				ksr_str_json_escape(&val->rs, &sv, &emode);
+				if(sv.s==NULL) {
+					LM_ERR("failed to escape the value\n");
+					return -1;
+				}
+				if(emode==0) {
+					/* no escape was needed */
+					return 0;
+				}
+				if(sv.len >= TR_BUFFER_SIZE - 3) {
+					LM_ERR("escaped value is too long\n");
+					return -1;
+				}
+				tr_set_crt_buffer();
+				_tr_buffer[0] = '"';
+				memcpy(_tr_buffer + 1, sv.s, sv.len);
+				_tr_buffer[sv.len + 1] = '"';
+				_tr_buffer[sv.len + 2] = '\0';
+				val->rs.s = _tr_buffer;
+				val->rs.len = sv.len + 2;
+			}
+			break;
 
 		default:
 			LM_ERR("unknown subtype %d\n",
@@ -3846,6 +3881,9 @@ char* tr_parse_val(str* in, trans_t *t)
 		goto done;
 	} else if(name.len==4 && strncasecmp(name.s, "json", 4)==0) {
 		t->subtype = TR_VAL_JSON;
+		goto done;
+	} else if(name.len==6 && strncasecmp(name.s, "jsonqe", 6)==0) {
+		t->subtype = TR_VAL_JSONQE;
 		goto done;
 	}
 

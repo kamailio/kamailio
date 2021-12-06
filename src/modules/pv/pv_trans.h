@@ -73,7 +73,7 @@ enum _tr_urialias_subtype {
 };
 
 enum _tr_val_subtype {
-	TR_VAL_NONE=0, TR_VAL_N0, TR_VAL_NE, TR_VAL_JSON
+	TR_VAL_NONE=0, TR_VAL_N0, TR_VAL_NE, TR_VAL_JSON, TR_VAL_JSONQE
 };
 
 
