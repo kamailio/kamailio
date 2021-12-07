@@ -655,14 +655,33 @@ static void ht_cell_unlink(ht_t *ht, int idx, ht_cell_t *it)
 	ht->entries[idx].esize--;
 }
 
-/* Delete htable entry
+
+/* Delete entry in htable.
+Return:
+  - 1 on error in argument
+  0 otherwise
+*/
+int ht_del_cell(ht_t *ht, str *name)
+{
+	int ret;
+
+	ret = ht_del_cell_confirm(ht, name);
+	if (ret == -1)
+		return -1;
+	return 0;
+}
+
+/* Delete htable entry with confirmation
+
+oldapi = 1 means to always return 0
+oldapi = 0 means to return 1 on successful deletion
 
 Return:
 	-1 on error in argument
 	0 on entry not found
 	1 on entry found and deleted
 */
-int ht_del_cell(ht_t *ht, str *name)
+int ht_del_cell_confirm(ht_t *ht, str *name)
 {
 	unsigned int idx;
 	unsigned int hid;

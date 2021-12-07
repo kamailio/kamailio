@@ -410,6 +410,10 @@ error:
 	return -1;
 }
 
+/* Replay DMQ action
+
+Return 0 for non-error. Allt other returns are parsed as error.
+*/
 int ht_dmq_replay_action(ht_dmq_action_t action, str* htname, str* cname,
 		int type, int_str* val, int mode) {
 

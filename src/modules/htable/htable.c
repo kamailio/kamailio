@@ -1454,7 +1454,7 @@ static void htable_rpc_delete(rpc_t* rpc, void* c) {
 		LM_ERR("dmq replication failed\n");
 	}
 
-	res = ht_del_cell(ht, &keyname);
+	res = ht_del_cell_confirm(ht, &keyname);
 
 	if (res  == -1) {
 		rpc->fault(c, 500, "Internal error");
