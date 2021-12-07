@@ -310,9 +310,9 @@
     <section id="ims_usrloc_scscf.p.user_data_xsd">
       <title>user_data_xsd (string)</title>
       <para> </para>
-      <para><emphasis> Default value is NULL </emphasis></para>
+      <para><emphasis> Default value is 1800 </emphasis></para>
       <example>
-        <title>Set <varname>user_data_xsd</varname> parameter</title>
+        <title>Set <varname>unreg_validity</varname> parameter</title>
         <programlisting format="linespecific">
         modparam("ims_usrloc_scscf", "user_data_xsd", "/usr/local/etc/kamailio/CxDataType_Rel6.xsd")
         </programlisting>
