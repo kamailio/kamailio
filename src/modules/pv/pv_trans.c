@@ -2580,6 +2580,7 @@ int tr_eval_val(struct sip_msg *msg, tr_param_t *tp, int subtype,
 					return 0;
 				}
 				if(sv.len >= TR_BUFFER_SIZE - 1) {
+					free(sv.s);
 					LM_ERR("escaped value is too long\n");
 					return -1;
 				}
@@ -2588,6 +2589,7 @@ int tr_eval_val(struct sip_msg *msg, tr_param_t *tp, int subtype,
 				_tr_buffer[sv.len] = '\0';
 				val->rs.s = _tr_buffer;
 				val->rs.len = sv.len;
+				free(sv.s);
 			}
 			break;
 		case TR_VAL_JSONQE:
@@ -2601,7 +2603,8 @@ int tr_eval_val(struct sip_msg *msg, tr_param_t *tp, int subtype,
 				val->rs.len = 2;
 				val->flags = PV_VAL_STR;
 			} else if(val->flags&PV_TYPE_INT) {
-				break;
+				/* no change needed */
+				return 0;
 			} else if(val->flags&PV_VAL_STR) {
 				ksr_str_json_escape(&val->rs, &sv, &emode);
 				if(sv.s==NULL) {
@@ -2613,6 +2616,7 @@ int tr_eval_val(struct sip_msg *msg, tr_param_t *tp, int subtype,
 					return 0;
 				}
 				if(sv.len >= TR_BUFFER_SIZE - 3) {
+					free(sv.s);
 					LM_ERR("escaped value is too long\n");
 					return -1;
 				}
@@ -2623,6 +2627,7 @@ int tr_eval_val(struct sip_msg *msg, tr_param_t *tp, int subtype,
 				_tr_buffer[sv.len + 2] = '\0';
 				val->rs.s = _tr_buffer;
 				val->rs.len = sv.len + 2;
+				free(sv.s);
 			}
 			break;
 
