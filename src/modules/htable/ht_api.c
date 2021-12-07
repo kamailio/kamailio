@@ -314,7 +314,7 @@ int ht_add_table(str *name, int autoexp, str *dbtable, str *dbcols, int size,
 	if(dbcols!=NULL && dbcols->s!=NULL && dbcols->len>0) {
 		ht->scols[0].s = (char*)shm_malloc((1+dbcols->len)*sizeof(char));
 		if(ht->scols[0].s==NULL) {
-			LM_ERR("no more shm memory\n");
+			LM_ERR("no more shared memory\n");
 			shm_free(ht);
 			return -1;
 		}
@@ -394,7 +394,7 @@ int ht_init_tables(void)
 		ht->entries = (ht_entry_t*)shm_malloc(ht->htsize*sizeof(ht_entry_t));
 		if(ht->entries==NULL)
 		{
-			LM_ERR("no more shm for [%.*s]\n", ht->name.len, ht->name.s);
+			LM_ERR("no more shared memory for [%.*s]\n", ht->name.len, ht->name.s);
 			shm_free(ht);
 			return -1;
 		}
@@ -472,7 +472,7 @@ int ht_set_cell_ex(ht_t *ht, str *name, int type, int_str *val, int mode,
 	time_t now;
 
 	if(ht==NULL || ht->entries==NULL) {
-		LM_WARN("invalid ht parameter\n");
+		LM_WARN("invalid htable parameter\n");
 		return -1;
 	}
 	if(name==NULL || name->s==NULL) {
@@ -935,7 +935,7 @@ int ht_dbg(void)
 	ht = _ht_root;
 	while(ht)
 	{
-		LM_ERR("===== htable[%.*s] hid: %u exp: %u>\n", ht->name.len,
+		LM_ERR("htable[%.*s] hid: %u exp: %u>\n", ht->name.len,
 				ht->name.s, ht->htid, ht->htexpire);
 		for(i=0; i<ht->htsize; i++)
 		{
@@ -1081,7 +1081,7 @@ int ht_db_sync_tables(void)
 					ht->name.len, ht->name.s);
 			ht_db_delete_records(&ht->dbtable);
 			if(ht_db_save_table(ht, &ht->dbtable)!=0)
-				LM_ERR("failed sync'ing hash table [%.*s] to db\n",
+				LM_ERR("failed syncing hash table [%.*s] to db\n",
 					ht->name.len, ht->name.s);
 		}
 		ht = ht->next;
