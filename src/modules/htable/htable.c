@@ -1438,6 +1438,7 @@ static const char* htable_store_doc[2] = {
 static void htable_rpc_delete(rpc_t* rpc, void* c) {
 	str htname, keyname;
 	ht_t *ht;
+	int res;
 
 	if (rpc->scan(c, "SS", &htname, &keyname) < 2) {
 		rpc->fault(c, 500, "Not enough parameters (htable name & key name");
@@ -1453,7 +1454,17 @@ static void htable_rpc_delete(rpc_t* rpc, void* c) {
 		LM_ERR("dmq replication failed\n");
 	}
 
-	ht_del_cell(ht, &keyname);
+	res = ht_del_cell(ht, &keyname);
+
+	if (res  == -1) {
+		rpc->fault(c, 500, "Internal error");
+		return;
+	} else if (res == 0) {
+		rpc->fault(c, 404, "Key not found in htable.");
+		return;
+	}
+	rpc->rpl_printf(c, "Ok. Key deleted.");
+	return;
 }
 
 /*! \brief RPC htable.get command to get one item */
@@ -1561,7 +1572,7 @@ static void htable_rpc_sets(rpc_t* rpc, void* c) {
 		rpc->fault(c, 500, "Failed to set the item");
 		return;
 	}
-
+	rpc->rpl_printf(c, "Ok. Key set to new value.");
 	return;
 }
 
@@ -1596,7 +1607,7 @@ static void htable_rpc_seti(rpc_t* rpc, void* c) {
 		rpc->fault(c, 500, "Failed to set the item");
 		return;
 	}
-
+	rpc->rpl_printf(c, "Ok. Key set to new value.");
 	return;
 }
 

@@ -655,6 +655,13 @@ static void ht_cell_unlink(ht_t *ht, int idx, ht_cell_t *it)
 	ht->entries[idx].esize--;
 }
 
+/* Delete htable entry
+
+Return:
+	-1 on error in argument
+	0 on entry not found
+	1 on entry found and deleted
+*/
 int ht_del_cell(ht_t *ht, str *name)
 {
 	unsigned int idx;
@@ -689,7 +696,7 @@ int ht_del_cell(ht_t *ht, str *name)
 			ht_cell_unlink(ht, idx, it);
 			ht_slot_unlock(ht, idx);
 			ht_cell_free(it);
-			return 0;
+			return 1;
 		}
 		it = it->next;
 	}
