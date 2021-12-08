@@ -1888,6 +1888,13 @@ ifeq ($(OS), linux)
 	ifeq ($(NO_SELECT),)
 		C_DEFS+=-DHAVE_SELECT
 	endif
+	ifeq ($(CC_NAME), gcc)
+		# link librt for glibc <= 2.17
+		GLIBCVER:=$(shell ldd --version | head -1 | awk '{ sub(/\./, "", $NF); print $NF }' )
+		ifeq ($(shell [ $(GLIBCVER) -le 217 ] && echo librt), librt)
+			LIBS+=-lrt
+		endif
+	endif
 endif
 
 ifeq ($(OS), gnu_kfreebsd)
