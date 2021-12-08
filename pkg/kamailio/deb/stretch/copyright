@@ -48,22 +48,10 @@ License: ISC
 Files: src/modules/tls/tls_select.* src/modules/tls/tls_dump_vf.*
 Copyright: 2005-2010 iptelorg GmbH
 License: GPL-2 + OpenSSL exception
- On Debian systems, the full text of the GNU General Public
- License version 2 can be found in the file `/usr/share/common-licenses/GPL-2'.
- * Exception: permission to copy, modify, propagate, and distribute a work
- * formed by combining OpenSSL toolkit software and the code in this file,
- * such as linking with software components and libraries released under
- * OpenSSL project license.
 
 Files: src/modules/websocket/* src/modules/outbound/* src/modules/auth_ephemeral/*
 Copyright: 2012-2013 Crocodile RCS Ltd
 License: GPL-2 + OpenSSL exception
- On Debian systems, the full text of the GNU General Public
- License version 2 can be found in the file `/usr/share/common-licenses/GPL-2'.
- * Exception: permission to copy, modify, propagate, and distribute a work
- * formed by combining OpenSSL toolkit software and the code in this file,
- * such as linking with software components and libraries released under
- * OpenSSL project license.
 
 Files: src/core/daemonize.* src/core/fastlock.h src/core/lock_ops.h
  src/core/mem/mem.* src/core/mem/f_malloc.h
@@ -265,6 +253,14 @@ License: MIT
  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  THE SOFTWARE.
+
+License: GPL-2 + OpenSSL exception
+ On Debian systems, the full text of the GNU General Public
+ License version 2 can be found in the file `/usr/share/common-licenses/GPL-2'.
+ * Exception: permission to copy, modify, propagate, and distribute a work
+ * formed by combining OpenSSL toolkit software and the code in this file,
+ * such as linking with software components and libraries released under
+ * OpenSSL project license.
 
 License: BSD-3-clause
  Redistribution and use in source and binary forms, with or without
