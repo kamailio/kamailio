@@ -4114,6 +4114,8 @@ int pv_parse_msg_attrs_name(pv_spec_p sp, str *in)
 				sp->pvp.pvn.u.isname.name.n = 4;
 			else if(strncmp(in->s, "fpart", 5)==0)
 				sp->pvp.pvn.u.isname.name.n = 7;
+			else if(strncmp(in->s, "lpart", 5)==0)
+				sp->pvp.pvn.u.isname.name.n = 9;
 			else goto error;
 		break;
 		case 8:
@@ -4210,6 +4212,12 @@ int pv_get_msg_attrs(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 			s.len = msg->unparsed - s.s;
 			trim(&s);
 			return pv_get_sintval(msg, param, res, s.len);
+		case 9: /* last part - headers + body */
+			if(msg->headers==NULL || msg->headers->name.s==NULL)
+				return pv_get_null(msg, param, res);
+			s.s = msg->headers->name.s;
+			s.len = msg->buf + msg->len - s.s;
+			return pv_get_strval(msg, param, res, &s);
 
 		default:
 			return pv_get_null(msg, param, res);
