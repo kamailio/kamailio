@@ -1810,6 +1810,7 @@ mod_init(void)
 
 	/* select the default set */
 	default_rtpp_set = select_rtpp_set(setid_default);
+	active_rtpp_set = default_rtpp_set;
 	if (!default_rtpp_set) {
 		LM_NOTICE("Default rtpp set %u NOT found\n", setid_default);
 	} else {
@@ -2689,9 +2690,6 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
 		LM_ERR("out of memory - bencode failed\n");
 		goto error;
 	}
-
-	if(msg->id != current_msg_id)
-		active_rtpp_set = default_rtpp_set;
 
 select_node:
 	do {
