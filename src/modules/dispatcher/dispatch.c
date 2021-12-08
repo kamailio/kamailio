@@ -2201,7 +2201,7 @@ int ds_manage_route_algo13(ds_set_t *idx, ds_select_state_t *rstate) {
 	}
 
 	for(y=0; y<idx->nr ;y++) {
-		int latency_proirity_handicap = 0;
+		int latency_priority_handicap = 0;
 		ds_dest_t * ds_dest = &idx->dlist[z];
 		int gw_priority = ds_dest->priority;
 		int gw_latency = ds_dest->latency_stats.estimate;
@@ -2211,19 +2211,15 @@ int ds_manage_route_algo13(ds_set_t *idx, ds_select_state_t *rstate) {
 			gw_latency = ds_dest->latency_stats.estimate - ds_dest->latency_stats.average;
 		if(!gw_inactive) {
 			if(gw_latency > gw_priority && gw_priority > 0)
-				latency_proirity_handicap = gw_latency / gw_priority;
-			ds_dest->attrs.rpriority = gw_priority - latency_proirity_handicap;
+				latency_priority_handicap = gw_latency / gw_priority;
+			ds_dest->attrs.rpriority = gw_priority - latency_priority_handicap;
 			if(ds_dest->attrs.rpriority < 1 && gw_priority > 0)
 				ds_dest->attrs.rpriority = 1;
-			if(ds_dest->attrs.rpriority > active_priority) {
-				hash = z;
-				active_priority = ds_dest->attrs.rpriority;
-			}
 			ds_sorted[y].idx = z;
 			ds_sorted[y].priority = ds_dest->attrs.rpriority;
 			LM_DBG("[active]idx[%d]uri[%.*s]priority[%d-%d=%d]latency[%dms]flag[%d]\n",
 				z, ds_dest->uri.len, ds_dest->uri.s,
-				gw_priority, latency_proirity_handicap,
+				gw_priority, latency_priority_handicap,
 				ds_dest->attrs.rpriority, gw_latency, ds_dest->flags);
 		} else {
 			ds_sorted[y].idx = -1;
@@ -2237,10 +2233,15 @@ int ds_manage_route_algo13(ds_set_t *idx, ds_select_state_t *rstate) {
 		else
 			z = (z + 1) % idx->nr;
 	}
+	ds_sorted_by_priority(ds_sorted, idx->nr);
+	// the list order might have changed after sorting - update hash
+	if(idx->nr > 0) {
+		hash = ds_sorted[0].idx;
+		active_priority = ds_sorted[0].priority;
+	}
+	ds_manage_routes_fill_reodered_xavp(ds_sorted, idx, rstate);
 	idx->last = (hash + 1) % idx->nr;
 	LM_DBG("priority[%d]gateway_selected[%d]next_index[%d]\n", active_priority, hash, idx->last);
-	ds_sorted_by_priority(ds_sorted, idx->nr);
-	ds_manage_routes_fill_reodered_xavp(ds_sorted, idx, rstate);
 	pkg_free(ds_sorted);
 	return hash;
 }
