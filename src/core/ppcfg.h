@@ -34,6 +34,8 @@ typedef struct ksr_ppdefine {
 	int dtype;
 } ksr_ppdefine_t;
 
+int pp_def_qvalue(str *defval, str *outval);
+
 str* pp_get_define_name(int idx);
 ksr_ppdefine_t* pp_get_define(int idx);
 

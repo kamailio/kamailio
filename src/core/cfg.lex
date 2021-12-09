@@ -2087,6 +2087,7 @@ int pp_define_env(const char *text, int len, int qmode)
 	char *r;
 	str defname;
 	str defvalue;
+	str newval;
 
 	r = strchr(text, '=');
 
@@ -2114,6 +2115,13 @@ int pp_define_env(const char *text, int len, int qmode)
 	if(pp_define(defname.len, defname.s)<0) {
 		LM_ERR("cannot set define name [%s]\n", (char*)text);
 		return -1;
+	}
+	if(qmode==KSR_PPDEF_QUOTED) {
+		if(pp_def_qvalue(&defvalue, &newval) < 0) {
+			LM_ERR("failed to enclose in quotes the value\n");
+			return -1;
+		}
+		defvalue = newval;
 	}
 	if(pp_define_set(defvalue.len, defvalue.s, qmode)<0) {
 		LM_ERR("cannot set define value [%s]\n", (char*)text);

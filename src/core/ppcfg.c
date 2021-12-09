@@ -48,6 +48,31 @@ static pp_subst_rule_t *pp_subst_rules_tail = NULL;
 static int _pp_ifdef_level = 0;
 static str_list_t *_ksr_substdef_strlist = NULL;
 
+int pp_def_qvalue(str *defval, str *outval)
+{
+	str newval;
+	str_list_t *sb;
+
+	if(pv_get_buffer_size() < defval->len + 4) {
+		LM_ERR("defined value is too large\n");
+		return -1;
+	}
+	newval.s = pv_get_buffer();
+	newval.s[0] = '"';
+	memcpy(newval.s + 1, defval->s, defval->len);
+	newval.s[defval->len + 1] = '"';
+	newval.s[defval->len + 2] = '\0';
+	newval.len = defval->len + 2;
+	sb = str_list_block_add(&_ksr_substdef_strlist, newval.s, newval.len);
+	if(sb==NULL) {
+		LM_ERR("failed to link quoted value [%.*s]\n", defval->len, defval->s);
+		return -1;
+	}
+	*outval = sb->s;
+
+	return 0;
+}
+
 int pp_subst_add(char *data)
 {
 	struct subst_expr* se;
@@ -163,22 +188,11 @@ found_repl:
 		}
 	}
 	if(mode==KSR_PPDEF_QUOTED) {
-		if(pv_get_buffer_size() < defvalue.len + 4) {
-			LM_ERR("defined value is too large\n");
+		if(pp_def_qvalue(&defvalue, &newval) < 0) {
+			LM_ERR("failed to enclose in quotes the value\n");
 			return -1;
 		}
-		newval.s = pv_get_buffer();
-		newval.s[0] = '"';
-		memcpy(newval.s + 1, defvalue.s, defvalue.len);
-		newval.s[defvalue.len + 1] = '"';
-		newval.s[defvalue.len + 2] = '\0';
-		newval.len = defvalue.len + 2;
-		sb = str_list_block_add(&_ksr_substdef_strlist, newval.s, newval.len);
-		if(sb==NULL) {
-			LM_ERR("failed to handle substdef: [%s]\n", data);
-			return -1;
-		}
-		defvalue = sb->s;
+		defvalue = newval;
 	}
 	if(pp_define_set(defvalue.len, defvalue.s, KSR_PPDEF_QUOTED)<0) {
 		LM_ERR("cannot set define value\n");
