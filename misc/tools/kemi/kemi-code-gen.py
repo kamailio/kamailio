@@ -4,7 +4,7 @@
 
 PRINTPARAMS=3
 # - print mode: typedefs, js, lua, python, pythonparams, ruby, sqlang
-PRINTMODE="lua"
+PRINTMODE="js"
 # - two tabs for python params, three for the other cases
 # PRINTTABS="\t\t"
 PRINTTABS="\t\t\t"
@@ -31,33 +31,42 @@ def printCodeIfEnd(sretfunc):
 
 def printCodeIfJS(prefix):
 	global PRINTELSE
-	sfunc = PRINTTABS + "\tret = ((sr_kemi_fm" + prefix + "_f)(ket->func))(env_J->msg,\n" + PRINTTABS + "\t\t\t"
+	sparams = ""
 	for i, c in enumerate(prefix):
 		if i==0:
 			if c == 's':
 				print(PRINTTABS + PRINTELSE + "if(ket->ptypes[0]==SR_KEMIP_STR")
-				sfunc += "&vps[" + str(i) +"].s, "
+				sparams += "&vps[" + str(i) +"].s, "
 			else:
 				print(PRINTTABS + PRINTELSE + "if(ket->ptypes[0]==SR_KEMIP_INT")
-				sfunc += "vps[" + str(i) +"].n, "
+				sparams += "vps[" + str(i) +"].n, "
 			PRINTELSE = "} else "
 		elif i==PRINTPARAMS-1:
 			if c == 's':
 				print(PRINTTABS + "\t\t&& ket->ptypes[" + str(i) + "]==SR_KEMIP_STR) {")
-				sfunc += "&vps[" + str(i) +"].s);"
+				sparams += "&vps[" + str(i) +"].s);"
 			else:
 				print(PRINTTABS + "\t\t&& ket->ptypes[" + str(i) + "]==SR_KEMIP_INT) {")
-				sfunc += "vps[" + str(i) +"].n);"
+				sparams += "vps[" + str(i) +"].n);"
 		else:
 			if c == 's':
 				print(PRINTTABS + "\t\t&& ket->ptypes[" + str(i) + "]==SR_KEMIP_STR")
-				sfunc += "&vps[" + str(i) +"].s, "
+				sparams += "&vps[" + str(i) +"].s, "
 			else:
 				print(PRINTTABS + "\t\t&& ket->ptypes[" + str(i) + "]==SR_KEMIP_INT")
-				sfunc += "vps[" + str(i) +"].n, "
+				sparams += "vps[" + str(i) +"].n, "
 
-	print(sfunc)
-	print(PRINTTABS + "\treturn sr_kemi_jsdt_return_int(J, ket, ret);")
+	print("\t\t\t\tif(ket->rtype==SR_KEMIP_XVAL) {")
+	sfunc = PRINTTABS + "\t\txret = ((sr_kemi_xfm" + prefix + "_f)(ket->func))(env_J->msg,\n" + PRINTTABS + "\t\t\t"
+	print(sfunc + sparams)
+	print(PRINTTABS + "\t\treturn sr_kemi_jsdt_return_xval(J, ket, xret);")
+
+	print("\t\t\t\t} else {")
+	sfunc = PRINTTABS + "\t\tret = ((sr_kemi_fm" + prefix + "_f)(ket->func))(env_J->msg,\n" + PRINTTABS + "\t\t\t"
+
+	print(sfunc + sparams)
+	print(PRINTTABS + "\t\treturn sr_kemi_jsdt_return_int(J, ket, ret);")
+	print("\t\t\t\t}")
 
 
 def printCodeIfLua(prefix):
