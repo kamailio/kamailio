@@ -4,7 +4,7 @@
 
 PRINTPARAMS=3
 # - print mode: typedefs, js, lua, python, pythonparams, ruby, sqlang
-PRINTMODE="lua"
+PRINTMODE="ruby"
 # - two tabs for python params, three for the other cases
 # PRINTTABS="\t\t"
 PRINTTABS="\t\t\t"
@@ -155,33 +155,16 @@ def printCodeIfPythonParams(prefix):
 
 def printCodeIfRuby(prefix):
 	global PRINTELSE
-	sfunc = PRINTTABS + "\tret = ((sr_kemi_fm" + prefix + "_f)(ket->func))(env_R->msg,\n" + PRINTTABS + "\t\t\t"
-	for i, c in enumerate(prefix):
-		if i==0:
-			if c == 's':
-				print(PRINTTABS + PRINTELSE + "if(ket->ptypes[0]==SR_KEMIP_STR")
-				sfunc += "&vps[" + str(i) +"].s, "
-			else:
-				print(PRINTTABS + PRINTELSE + "if(ket->ptypes[0]==SR_KEMIP_INT")
-				sfunc += "vps[" + str(i) +"].n, "
-			PRINTELSE = "} else "
-		elif i==PRINTPARAMS-1:
-			if c == 's':
-				print(PRINTTABS + "\t\t&& ket->ptypes[" + str(i) + "]==SR_KEMIP_STR) {")
-				sfunc += "&vps[" + str(i) +"].s);"
-			else:
-				print(PRINTTABS + "\t\t&& ket->ptypes[" + str(i) + "]==SR_KEMIP_INT) {")
-				sfunc += "vps[" + str(i) +"].n);"
-		else:
-			if c == 's':
-				print(PRINTTABS + "\t\t&& ket->ptypes[" + str(i) + "]==SR_KEMIP_STR")
-				sfunc += "&vps[" + str(i) +"].s, "
-			else:
-				print(PRINTTABS + "\t\t&& ket->ptypes[" + str(i) + "]==SR_KEMIP_INT")
-				sfunc += "vps[" + str(i) +"].n, "
-
-	print(sfunc)
-	print(PRINTTABS + "\treturn sr_kemi_ruby_return_int(ket, ret);")
+	sparams = printCodeIfParams(prefix)
+	print("\t\t\t\tif(ket->rtype==SR_KEMIP_XVAL) {")
+	sfunc = PRINTTABS + "\t\txret = ((sr_kemi_xfm" + prefix + "_f)(ket->func))(env_R->msg,\n" + PRINTTABS + "\t\t\t"
+	print(sfunc + sparams)
+	print(PRINTTABS + "\t\treturn sr_kemi_ruby_return_xval(ket, xret);")
+	print("\t\t\t\t} else {")
+	sfunc = PRINTTABS + "\t\tret = ((sr_kemi_fm" + prefix + "_f)(ket->func))(env_R->msg,\n" + PRINTTABS + "\t\t\t"
+	print(sfunc + sparams)
+	print(PRINTTABS + "\t\treturn sr_kemi_ruby_return_int(ket, ret);")
+	print("\t\t\t\t}")
 
 
 def printCodeIfSQLang(prefix):
