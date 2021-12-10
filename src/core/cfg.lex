@@ -1453,7 +1453,7 @@ IMPORTFILE      "import_file"
 <DEFENV_ID>[^ \t\r\n]+   { /* get the define id of environment variable */
 				count();
 				ksr_cfg_print_part(yytext);
-				if(pp_define_env(yytext, yyleng, KSR_PPDEF_NORMAL, KSR_PPDEF_NONULL) < 0) {
+				if(pp_define_env(yytext, yyleng, KSR_PPDEF_NORMAL, KSR_PPDEF_VALREQ) < 0) {
 					LM_CRIT("error at %s line %d\n", (finame)?finame:"cfg", line);
 					ksr_exit(-1);
 				}
@@ -1474,7 +1474,7 @@ IMPORTFILE      "import_file"
 <DEFENVS_ID>[^ \t\r\n]+   { /* get the define id of environment variable */
 				count();
 				ksr_cfg_print_part(yytext);
-				if(pp_define_env(yytext, yyleng, KSR_PPDEF_QUOTED, KSR_PPDEF_NONULL) < 0) {
+				if(pp_define_env(yytext, yyleng, KSR_PPDEF_QUOTED, KSR_PPDEF_VALREQ) < 0) {
 					LM_CRIT("error at %s line %d\n", (finame)?finame:"cfg", line);
 					ksr_exit(-1);
 				}
@@ -1482,7 +1482,7 @@ IMPORTFILE      "import_file"
 				ksr_cfg_print_initial_state();
 }
 
-<INITIAL,CFGPRINTMODE>{PREP_START}{TRYDEFENV}  { count(); 
+<INITIAL,CFGPRINTMODE>{PREP_START}{TRYDEFENV}  { count();
 			ksr_cfg_print_part(yytext);
 			state = DEFINE_S;
 			BEGIN(TRYDEFENV_ID);
@@ -1495,7 +1495,7 @@ IMPORTFILE      "import_file"
 <TRYDEFENV_ID>[^ \t\r\n]+   { /* get the define id of environment variable */
 				count();
 				ksr_cfg_print_part(yytext);
-				if(pp_define_env(yytext, yyleng, KSR_PPDEF_NORMAL, KSR_PPDEF_NULLABLE) < 0) {
+				if(pp_define_env(yytext, yyleng, KSR_PPDEF_NORMAL, KSR_PPDEF_VALTRY) < 0) {
 					LM_CRIT("error at %s line %d\n", (finame)?finame:"cfg", line);
 					ksr_exit(-1);
 				}
@@ -1503,7 +1503,7 @@ IMPORTFILE      "import_file"
 				ksr_cfg_print_initial_state();
 }
 
-<INITIAL,CFGPRINTMODE>{PREP_START}{TRYDEFENVS}  { count(); 
+<INITIAL,CFGPRINTMODE>{PREP_START}{TRYDEFENVS}  { count();
 			ksr_cfg_print_part(yytext);
 			state = DEFINE_S;
 			BEGIN(TRYDEFENVS_ID);
@@ -1516,7 +1516,7 @@ IMPORTFILE      "import_file"
 <TRYDEFENVS_ID>[^ \t\r\n]+   { /* get the define id of environment variable */
 				count();
 				ksr_cfg_print_part(yytext);
-				if(pp_define_env(yytext, yyleng, KSR_PPDEF_QUOTED, KSR_PPDEF_NULLABLE) < 0) {
+				if(pp_define_env(yytext, yyleng, KSR_PPDEF_QUOTED, KSR_PPDEF_VALTRY) < 0) {
 					LM_CRIT("error at %s line %d\n", (finame)?finame:"cfg", line);
 					ksr_exit(-1);
 				}
@@ -2127,7 +2127,7 @@ int pp_define_set(int len, char *text, int mode)
 	return 0;
 }
 
-int pp_define_env(const char *text, int len, int qmode, int nullable )
+int pp_define_env(const char *text, int len, int qmode, int vmode)
 {
 	char *r;
 	str defname;
@@ -2151,7 +2151,7 @@ int pp_define_env(const char *text, int len, int qmode, int nullable )
 	defvalue.s = getenv(r);
 
 	if(defvalue.s == NULL) {
-        if( nullable == KSR_PPDEF_NULLABLE ) {
+        if(vmode == KSR_PPDEF_VALTRY) {
             return 0;
         }
 		LM_ERR("env variable not defined [%s]\n", (char*)text);
