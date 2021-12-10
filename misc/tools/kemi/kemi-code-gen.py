@@ -4,7 +4,7 @@
 
 PRINTPARAMS=3
 # - print mode: typedefs, js, lua, python, pythonparams, ruby, sqlang
-PRINTMODE="python"
+PRINTMODE="lua"
 # - two tabs for python params, three for the other cases
 # PRINTTABS="\t\t"
 PRINTTABS="\t\t\t"
@@ -29,7 +29,7 @@ def printCodeIfEnd(sretfunc):
 	print(PRINTTABS + "}")
 
 
-def printCodeIfJS(prefix):
+def printCodeIfParams(prefix):
 	global PRINTELSE
 	sparams = ""
 	for i, c in enumerate(prefix):
@@ -55,7 +55,12 @@ def printCodeIfJS(prefix):
 			else:
 				print(PRINTTABS + "\t\t&& ket->ptypes[" + str(i) + "]==SR_KEMIP_INT")
 				sparams += "vps[" + str(i) +"].n, "
+	return sparams
 
+
+def printCodeIfJS(prefix):
+	global PRINTELSE
+	sparams = printCodeIfParams(prefix)
 	print("\t\t\t\tif(ket->rtype==SR_KEMIP_XVAL) {")
 	sfunc = PRINTTABS + "\t\txret = ((sr_kemi_xfm" + prefix + "_f)(ket->func))(env_J->msg,\n" + PRINTTABS + "\t\t\t"
 	print(sfunc + sparams)
@@ -69,31 +74,7 @@ def printCodeIfJS(prefix):
 
 def printCodeIfLua(prefix):
 	global PRINTELSE
-	sparams = ""
-	for i, c in enumerate(prefix):
-		if i==0:
-			if c == 's':
-				print(PRINTTABS + PRINTELSE + "if(ket->ptypes[0]==SR_KEMIP_STR")
-				sparams += "&vps[" + str(i) +"].s, "
-			else:
-				print(PRINTTABS + PRINTELSE + "if(ket->ptypes[0]==SR_KEMIP_INT")
-				sparams += "vps[" + str(i) +"].n, "
-			PRINTELSE = "} else "
-		elif i==PRINTPARAMS-1:
-			if c == 's':
-				print(PRINTTABS + "\t\t&& ket->ptypes[" + str(i) + "]==SR_KEMIP_STR) {")
-				sparams += "&vps[" + str(i) +"].s);"
-			else:
-				print(PRINTTABS + "\t\t&& ket->ptypes[" + str(i) + "]==SR_KEMIP_INT) {")
-				sparams += "vps[" + str(i) +"].n);"
-		else:
-			if c == 's':
-				print(PRINTTABS + "\t\t&& ket->ptypes[" + str(i) + "]==SR_KEMIP_STR")
-				sparams += "&vps[" + str(i) +"].s, "
-			else:
-				print(PRINTTABS + "\t\t&& ket->ptypes[" + str(i) + "]==SR_KEMIP_INT")
-				sparams += "vps[" + str(i) +"].n, "
-
+	sparams = printCodeIfParams(prefix)
 	print("\t\t\t\tif(ket->rtype==SR_KEMIP_XVAL) {")
 	sfunc = PRINTTABS + "\t\txret = ((sr_kemi_xfm" + prefix + "_f)(ket->func))(env_L->msg,\n" + PRINTTABS + "\t\t\t"
 	print(sfunc + sparams)
@@ -107,31 +88,7 @@ def printCodeIfLua(prefix):
 
 def printCodeIfPython(prefix):
 	global PRINTELSE
-	sparams = ""
-	for i, c in enumerate(prefix):
-		if i==0:
-			if c == 's':
-				print(PRINTTABS + PRINTELSE + "if(ket->ptypes[0]==SR_KEMIP_STR")
-				sparams += "&vps[" + str(i) +"].s, "
-			else:
-				print(PRINTTABS + PRINTELSE + "if(ket->ptypes[0]==SR_KEMIP_INT")
-				sparams += "vps[" + str(i) +"].n, "
-			PRINTELSE = "} else "
-		elif i==PRINTPARAMS-1:
-			if c == 's':
-				print(PRINTTABS + "\t\t&& ket->ptypes[" + str(i) + "]==SR_KEMIP_STR) {")
-				sparams += "&vps[" + str(i) +"].s);"
-			else:
-				print(PRINTTABS + "\t\t&& ket->ptypes[" + str(i) + "]==SR_KEMIP_INT) {")
-				sparams += "vps[" + str(i) +"].n);"
-		else:
-			if c == 's':
-				print(PRINTTABS + "\t\t&& ket->ptypes[" + str(i) + "]==SR_KEMIP_STR")
-				sparams += "&vps[" + str(i) +"].s, "
-			else:
-				print(PRINTTABS + "\t\t&& ket->ptypes[" + str(i) + "]==SR_KEMIP_INT")
-				sparams += "vps[" + str(i) +"].n, "
-
+	sparams = printCodeIfParams(prefix)
 	print("\t\t\t\tif(ket->rtype==SR_KEMIP_XVAL) {")
 	sfunc = PRINTTABS + "\t\txret = ((sr_kemi_xfm" + prefix + "_f)(ket->func))(lmsg,\n" + PRINTTABS + "\t\t\t"
 	print(sfunc + sparams)
