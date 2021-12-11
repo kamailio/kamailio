@@ -313,7 +313,7 @@ void parse_identityinfo(char *buffer, char *end, struct identityinfo_body *ii_b)
 parseerror:
 	if(p<end) {
 		LM_ERR("unexpected char [%c] in status %d: <<%.*s>> .\n",
-				*p, status, (int)(p-buffer), ZSW(p));
+				*p, status, (int)(p-buffer), buffer);
 	} else {
 		LM_ERR("unexpected end of buffer - status %d\n", status);
 	}
