@@ -52,7 +52,10 @@ static struct {
 
 
 #define READ(val) \
-	(*(val + 0) + (*(val + 1) << 8) + (*(val + 2) << 16) + (*(val + 3) << 24))
+	((unsigned int)(*(val + 0)) \
+	 + ((unsigned int)(*(val + 1)) << 8) \
+	 + ((unsigned int)(*(val + 2)) << 16) \
+	 + ((unsigned int)(*(val + 3)) << 24))
 #define advance(_ptr,_n,_str,_error) \
 	do{\
 		if ((_ptr)+(_n)>(_str).s+(_str).len)\
