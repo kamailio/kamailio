@@ -794,12 +794,12 @@ char *find_sdp_line_delimiter(char* p, char* plimit, str delimiter)
 				return NULL;
 			/* We matched '--',
 			 * now let's match the boundary delimiter */
+			if(cp1+2+delimiter.len >= plimit)
+				return NULL;
 			if (strncmp(cp1+2, delimiter.s, delimiter.len) == 0)
 				break;
 			else
 				cp = cp1 + 2 + delimiter.len;
-			if (cp >= plimit)
-				return NULL;
 		}
 		if (cp1[-1] == '\n' || cp1[-1] == '\r')
 			return cp1;
