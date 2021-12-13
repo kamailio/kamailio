@@ -2198,7 +2198,10 @@ kamcmd dlg.bridge_dlg _from_ _to_ _op_
 
    Name: dlg.stats_active
 
-   Parameters: none.
+   Parameters:
+     * local_only (optional) - if not 0 then filter out non local dialogs
+       (the receiving socket is not found locally, from C code point of
+       view, the bind_addr info is not set).
 
    Returned fields
      * starting - initial INVITE has been processed, no ringing or 1xx has
