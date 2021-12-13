@@ -908,6 +908,8 @@ int tcpconn_read_haproxy(struct tcp_connection *c) {
 	uint32_t size, port;
 	char *p, *end;
 	struct ip_addr *src_ip, *dst_ip;
+	int twaitms = 0;
+	int tsleepus = 0;
 
 	const char v2sig[12] = "\x0D\x0A\x0D\x0A\x00\x0D\x0A\x51\x55\x49\x54\x0A";
 
@@ -949,10 +951,35 @@ int tcpconn_read_haproxy(struct tcp_connection *c) {
 
 	} hdr;
 
+	if(cfg_get(tcp, tcp_cfg, wait_data_ms) > 10000) {
+		tsleepus = 100000;
+	} else if (cfg_get(tcp, tcp_cfg, wait_data_ms) < 1000) {
+		tsleepus = 50000;
+	} else {
+		tsleepus = 10 * cfg_get(tcp, tcp_cfg, wait_data_ms);
+	}
+
+	twaitms = 0;
 	do {
 		bytes = recv(c->s, &hdr, sizeof(hdr), MSG_PEEK);
-	} while (bytes == -1 && (errno == EINTR || errno == EAGAIN));
+		if(bytes==-1 && (errno == EINTR || errno == EAGAIN)) {
+			if(twaitms <= cfg_get(tcp, tcp_cfg, wait_data_ms)) {
+				/* LM_DBG("bytes: %d - errno: %d (%d/%d) - twait: %dms\n", bytes,
+						errno, EINTR, EAGAIN, twaitms); */
+				sleep_us(tsleepus);
+				twaitms += tsleepus/1000;
+			} else {
+				break;
+			}
+		} else {
+			break;
+		}
+	} while (1);
 
+	if(bytes == -1) {
+		/* no data received during tcp_wait_data */
+		return -1;
+	}
 	/* copy original tunnel address details */
 	memcpy(&c->cinfo.src_ip, &c->rcv.src_ip, sizeof(ip_addr_t));
 	memcpy(&c->cinfo.dst_ip, &c->rcv.dst_ip, sizeof(ip_addr_t));
@@ -1115,8 +1142,21 @@ int tcpconn_read_haproxy(struct tcp_connection *c) {
 
 done:
 	/* we need to consume the appropriate amount of data from the socket */
+	twaitms = 0;
 	do {
 		bytes = recv(c->s, &hdr, size, 0);
+		if(bytes==-1 && errno == EINTR)) {
+			if(twaitms <= cfg_get(tcp, tcp_cfg, wait_data_ms)) {
+				/* LM_DBG("bytes: %d - errno: %d (%d/%d) - twait: %dms\n", bytes,
+						errno, EINTR, EAGAIN, twaitms); */
+				sleep_us(tsleepus);
+				twaitms += tsleepus/1000;
+			} else {
+				break;
+			}
+		} else {
+			break;
+		}
 	} while (bytes == -1 && errno == EINTR);
 
 	return (bytes >= 0) ? retval : -1;
