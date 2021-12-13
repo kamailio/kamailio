@@ -2330,9 +2330,9 @@ static inline void internal_rpc_print_dlg(rpc_t *rpc, void *c, dlg_cell_t *dlg,
 	if (rpc->add(c, "{", &h) < 0) goto error;
 
 	tnow = time(NULL);
-	if(dlg->end_ts) {
+	if (dlg->end_ts) {
 		tdur = (int)(dlg->end_ts - dlg->start_ts);
-	} if(dlg->start_ts) {
+	} else if (dlg->start_ts) {
 		tdur = (int)(tnow - dlg->start_ts);
 	} else {
 		tdur = 0;
