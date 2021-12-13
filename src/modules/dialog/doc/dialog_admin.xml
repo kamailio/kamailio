@@ -2805,7 +2805,8 @@ dlg_reset_property("timeout-noreset");
 		<itemizedlist>
 			<listitem><para>
 				<emphasis>local_only</emphasis> (optional) - if not 0 then filter out
-				non local dialogues. No bind_addr info in memory.
+				non local dialogs (the receiving socket is not found locally,
+				from C code point of view, the bind_addr info is not set).
 			</para></listitem>
 		</itemizedlist>
 		<para>Returned fields</para>
