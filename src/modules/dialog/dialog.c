@@ -2324,10 +2324,20 @@ static inline void internal_rpc_print_dlg(rpc_t *rpc, void *c, dlg_cell_t *dlg,
 	void *h, *sh, *ssh;
 	dlg_profile_link_t *pl;
 	dlg_var_t *var;
+	time_t tnow;
+	int tdur;
 
 	if (rpc->add(c, "{", &h) < 0) goto error;
 
-	rpc->struct_add(h, "dddSSSddddddddd",
+	tnow = time(NULL);
+	if(dlg->end_ts) {
+		tdur = (int)(dlg->end_ts - dlg->start_ts);
+	} if(dlg->start_ts) {
+		tdur = (int)(tnow - dlg->start_ts);
+	} else {
+		tdur = 0;
+	}
+	rpc->struct_add(h, "dddSSSdddddddddd",
 		"h_entry", dlg->h_entry,
 		"h_id", dlg->h_id,
 		"ref", dlg->ref,
@@ -2338,7 +2348,8 @@ static inline void internal_rpc_print_dlg(rpc_t *rpc, void *c, dlg_cell_t *dlg,
 		"start_ts", dlg->start_ts,
 		"init_ts", dlg->init_ts,
 		"end_ts", dlg->end_ts,
-		"timeout", dlg->tl.timeout ? time(0) + dlg->tl.timeout - get_ticks() : 0,
+		"duration", tdur,
+		"timeout", dlg->tl.timeout ? tnow + dlg->tl.timeout - get_ticks() : 0,
 		"lifetime", dlg->lifetime,
 		"dflags", dlg->dflags,
 		"sflags", dlg->sflags,
