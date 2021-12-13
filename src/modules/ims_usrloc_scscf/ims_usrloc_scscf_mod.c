@@ -125,6 +125,9 @@ shtable_t sub_dialog_table;
 
 int contact_delete_delay = 30;   //If contact is put into delay delete state this is how long we delay before deleting
 
+char* cscf_realm = 0;
+int skip_cscf_realm = 0;
+
 new_shtable_t pres_new_shtable;
 insert_shtable_t pres_insert_shtable;
 search_shtable_t pres_search_shtable;
@@ -170,6 +173,8 @@ static param_export_t params[] = {
     {"db_mode",				INT_PARAM, &db_mode},
     {"db_url", 				PARAM_STR, &db_url},
     {"timer_procs",             INT_PARAM, &ul_timer_procs},
+	{"realm",               PARAM_STRING, &cscf_realm},
+	{"skip_realm",          INT_PARAM, &skip_cscf_realm},
 	{0, 0, 0}
 };
 

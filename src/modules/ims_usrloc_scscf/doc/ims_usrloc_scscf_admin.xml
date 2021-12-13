@@ -318,6 +318,30 @@
         </programlisting>
       </example>
     </section>
+
+    <section id="ims_usrloc_scscf.p.realm">
+      <title>realm (string)</title>
+      <para> </para>
+      <para><emphasis> Default value is NULL </emphasis></para>
+      <example>
+        <title>Set <varname>realm</varname> parameter</title>
+        <programlisting format="linespecific">
+        modparam("ims_usrloc_scscf", "realm", "kamailio-ims.org")
+        </programlisting>
+      </example>
+    </section>
+
+    <section id="ims_usrloc_scscf.p.skip_realm">
+      <title>skip_realm (int)</title>
+      <para>Skipping defined network name in the <varname>realm</varname> for NOTIFY's Message body reginfo tag. </para>
+      <para><emphasis> Default value is 0 </emphasis></para>
+      <example>
+        <title>Set <varname>skip_realm</varname> parameter</title>
+        <programlisting format="linespecific">
+        modparam("ims_usrloc_scscf", "skip_realm", 1)
+        </programlisting>
+      </example>
+    </section>
   </section>
 
   <section>
