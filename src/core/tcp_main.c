@@ -1145,7 +1145,7 @@ done:
 	twaitms = 0;
 	do {
 		bytes = recv(c->s, &hdr, size, 0);
-		if(bytes==-1 && errno == EINTR)) {
+		if(bytes==-1 && errno == EINTR) {
 			if(twaitms <= cfg_get(tcp, tcp_cfg, wait_data_ms)) {
 				/* LM_DBG("bytes: %d - errno: %d (%d/%d) - twait: %dms\n", bytes,
 						errno, EINTR, EAGAIN, twaitms); */
