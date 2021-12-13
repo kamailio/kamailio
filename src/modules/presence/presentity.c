@@ -1369,10 +1369,10 @@ done:
 send_412:
 
 	if(!ruid) {
-		LM_ERR("No E_Tag match %*s\n", presentity->etag.len,
+		LM_INFO("No E-Tag match %*s\n", presentity->etag.len,
 				presentity->etag.s);
 	} else {
-		LM_ERR("No ruid match %*s\n", ruid->len, ruid->s);
+		LM_INFO("No ruid match %*s\n", ruid->len, ruid->s);
 	}
 
 	if(msg != NULL) {
