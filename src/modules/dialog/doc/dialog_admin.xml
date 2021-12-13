@@ -2801,7 +2801,13 @@ dlg_reset_property("timeout-noreset");
 			(not relying on core stats framework).
 		</para>
 		<para>Name: <emphasis>dlg.stats_active</emphasis></para>
-		<para>Parameters: none.</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>local_only</emphasis> (optional) - if not 0 then filter out
+				non local dialogues. No bind_addr info in memory.
+			</para></listitem>
+		</itemizedlist>
 		<para>Returned fields</para>
 		<itemizedlist>
 			<listitem><para>
