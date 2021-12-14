@@ -276,6 +276,7 @@ int kz_amqp_add_connection(modparam_t type, void* val);
 int kz_amqp_publish(struct sip_msg* msg, char* exchange, char* routing_key, char* payload);
 int kz_amqp_publish_ex(struct sip_msg* msg, char* exchange, char* routing_key, char* payload, char* headers);
 int ki_kz_amqp_publish(sip_msg_t* msg, str* exchange, str* routing_key, str* payload, str* headers);
+int ki_kz_amqp_publish_hdrs(sip_msg_t* msg, str* exchange, str* routing_key, str* payload);
 int kz_amqp_query(struct sip_msg* msg, char* exchange, char* routing_key, char* payload, char* dst, char* headers);
 int kz_amqp_query_ex(struct sip_msg* msg, char* exchange, char* routing_key, char* payload, char* headers);
 int kz_amqp_subscribe(struct sip_msg* msg, char* payload);

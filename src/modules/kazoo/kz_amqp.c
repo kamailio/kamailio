@@ -1262,10 +1262,10 @@ int kz_amqp_publish_ex(struct sip_msg* msg, char* exchange, char* routing_key, c
 			headers_s.s = "";
 		}
 
-		return ki_kz_amqp_publish(msg, &exchange_s, &routing_key_s, &pl_s, &headers_s);
+		return ki_kz_amqp_publish_hdrs(msg, &exchange_s, &routing_key_s, &pl_s, &headers_s);
 };
 
-int ki_kz_amqp_publish(sip_msg_t* msg, str* exchange, str* routing_key, str* payload, str* headers)
+int ki_kz_amqp_publish_hdrs(sip_msg_t* msg, str* exchange, str* routing_key, str* payload, str* headers)
 {
 	  char *pl = ((str*)payload)->s;
 	  struct json_object *j = json_tokener_parse(pl);
@@ -1277,6 +1277,11 @@ int ki_kz_amqp_publish(sip_msg_t* msg, str* exchange, str* routing_key, str* pay
 
 	  json_object_put(j);
 	  return kz_amqp_pipe_send(exchange, routing_key, payload, headers);
+}
+
+int ki_kz_amqp_publish(sip_msg_t* msg, str* exchange, str* routing_key, str* payload)
+{
+	return ki_kz_amqp_publish_hdrs(msg, exchange, routing_key, payload, NULL);
 }
 
 int kz_amqp_publish(struct sip_msg* msg, char* exchange, char* routing_key, char* payload)
