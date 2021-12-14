@@ -64,6 +64,15 @@
 			that uses libssl (OpenSSL library). A safe option is to have the tls module
 			loaded first (be in the first "loadmodule" in &kamailio;.cfg).
 		</para>
+		<para>
+			IMPORTANT: using this module compiled with newer versions of libssl
+			(e.g., v1.1+) may require &kamailio; to be started with
+			<emphasis>--atexit=no</emphasis> command line parameters to avoid
+			calling C atexit callbacks inside the process ending during
+			daemonize procedure as well as during shut down, which can lead
+			to crashes because it destroys and then accesses shared memory. For
+			example, such case has been reported for Ubuntu 20.04 or RedHat 8.
+		</para>
 	</section>
 	<section id="tls.quick_start">
 		<title>Quick Start</title>
