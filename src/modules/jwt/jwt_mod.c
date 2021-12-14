@@ -174,7 +174,8 @@ static int jwt_fcache_add(str *key, str *kdata)
 /**
  *
  */
-static int ki_jwt_generate_hdrs(sip_msg_t* msg, str *key, str *alg, str *claims, str *headers)
+static int ki_jwt_generate_hdrs(sip_msg_t* msg, str *key, str *alg, str *claims,
+		str *headers)
 {
 	str dupclaims = STR_NULL;
 	str sparams = STR_NULL;
@@ -187,7 +188,7 @@ static int ki_jwt_generate_hdrs(sip_msg_t* msg, str *key, str *alg, str *claims,
 	unsigned char keybuf[10240];
 	size_t keybuf_len = 0;
 	param_t* params_list = NULL;
-    param_t* headers_list = NULL;
+	param_t* headers_list = NULL;
 	param_hooks_t phooks;
 	param_t *pit = NULL;
 	param_t *header = NULL;
@@ -323,7 +324,7 @@ static int ki_jwt_generate_hdrs(sip_msg_t* msg, str *key, str *alg, str *claims,
 	free_params(params_list);
 	pkg_free(dupclaims.s);
 	free_params(headers_list);
-	pkg_free(dupheaders.s);	
+	pkg_free(dupheaders.s);
 	jwt_free(jwt);
 
 	return 1;
@@ -404,7 +405,7 @@ static int w_jwt_generate_4(sip_msg_t* msg, char* pkey, char* palg, char* pclaim
 		LM_ERR("cannot get claims value\n");
 		return -1;
 	}
-	
+
 	if (fixup_get_svalue(msg, (gparam_t*)pheaders, &sheaders) != 0) {
 		LM_ERR("cannot get headers value\n");
 		return -1;
@@ -616,6 +617,11 @@ static sr_kemi_t sr_kemi_jwt_exports[] = {
 		SR_KEMIP_INT, ki_jwt_generate,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("jwt"), str_init("jwt_generate_hdrs"),
+		SR_KEMIP_INT, ki_jwt_generate_hdrs,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("jwt"), str_init("jwt_verify"),
 		SR_KEMIP_INT, ki_jwt_verify,
