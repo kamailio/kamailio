@@ -166,7 +166,7 @@ static int child_init(int rank)
 			return -1;
 		}
 
-		if(ldap_connect(ld_name) != 0) {
+		if(oldap_connect(ld_name) != 0) {
 			LM_ERR("[%s]: failed to connect to LDAP host(s)\n", ld_name);
 			ldap_disconnect(ld_name);
 			return -1;
