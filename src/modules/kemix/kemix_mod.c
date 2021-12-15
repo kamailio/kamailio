@@ -1103,6 +1103,39 @@ static sr_kemi_xval_t* ki_kx_get_srcuri(sip_msg_t *msg)
 /**
  *
  */
+static sr_kemi_xval_t* ki_kx_get_sas(sip_msg_t *msg)
+{
+	str ssock;
+
+	if(msg==NULL) {
+		sr_kemi_xval_null(&_sr_kemi_kx_xval, SR_KEMI_XVAL_NULL_EMPTY);
+		return &_sr_kemi_kx_xval;
+
+	}
+
+	if(get_src_address_socket(msg, &ssock)<0) {
+		sr_kemi_xval_null(&_sr_kemi_kx_xval, SR_KEMI_XVAL_NULL_EMPTY);
+		return &_sr_kemi_kx_xval;
+	}
+
+	if (ssock.len + 1 >= pv_get_buffer_size()) {
+		LM_ERR("local buffer size exceeded\n");
+		sr_kemi_xval_null(&_sr_kemi_kx_xval, SR_KEMI_XVAL_NULL_EMPTY);
+		return &_sr_kemi_kx_xval;
+	}
+
+	_sr_kemi_kx_xval.v.s.s = pv_get_buffer();
+	strncpy(_sr_kemi_kx_xval.v.s.s, ssock.s, ssock.len);
+	_sr_kemi_kx_xval.v.s.len = ssock.len;
+	_sr_kemi_kx_xval.v.s.s[_sr_kemi_kx_xval.v.s.len] = '\0';
+
+	_sr_kemi_kx_xval.vtype = SR_KEMIP_STR;
+	return &_sr_kemi_kx_xval;
+}
+
+/**
+ *
+ */
 static sr_kemi_xval_t* ki_kx_get_def(sip_msg_t *msg, str *dname)
 {
 	str *val;
@@ -1367,6 +1400,11 @@ static sr_kemi_t sr_kemi_kx_exports[] = {
 	},
 	{ str_init("kx"), str_init("get_srcuri"),
 		SR_KEMIP_XVAL, ki_kx_get_srcuri,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("kx"), str_init("get_sas"),
+		SR_KEMIP_XVAL, ki_kx_get_sas,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
