@@ -195,7 +195,7 @@ function ksr_route_reqinit()
 	end
 
 	if KSR.sanity.sanity_check(1511, 7)<0 then
-		KSR.err("Malformed SIP message from "
+		KSR.err("malformed SIP message from "
 				.. KSR.kx.get_srcip() .. ":" .. KSR.kx.get_srcport() .."\n");
 		KSR.x.exit();
 	end
@@ -418,6 +418,11 @@ end
 -- SIP response handling
 -- equivalent of reply_route{}
 function ksr_reply_route()
-	KSR.info("===== response - from kamailio lua script\n");
+	KSR.dbg("response - from kamailio lua script\n");
+	if KSR.sanity.sanity_check(17604, 6)<0 then
+		KSR.err("malformed SIP response from "
+				.. KSR.kx.get_srcip() .. ":" .. KSR.kx.get_srcport() .."\n");
+		KSR.x.drop();
+	end
 	return 1;
 end
