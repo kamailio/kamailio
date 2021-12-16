@@ -645,12 +645,16 @@ static int parse_mixed_content(str *mixed_body, str delimiter, sdp_info_t* _sdp)
 		d1p = d2p;
 		if (d1p == NULL || d1p >= bodylimit)
 			break; /* No applications left */
+		if(d1p + delimiter.len + 2 > bodylimit) {
+			LM_ERR("failed parsing [%.*s]\n", mixed_body->len, mixed_body->s);
+			return -1;
+		}
 		d2p = find_next_sdp_line_delimiter(d1p, bodylimit, delimiter, bodylimit);
 		/* d2p is text limit for application parsing */
-		memset(&hf,0, sizeof(struct hdr_field));
+		memset(&hf, 0, sizeof(struct hdr_field));
 		rest = eat_line(d1p + delimiter.len + 2, d2p - d1p - delimiter.len - 2);
 		if ( rest > d2p ) {
-			LM_ERR("Unparsable <%.*s>\n", (int)(d2p-d1p), d1p);
+			LM_ERR("unparsable [%.*s]\n", (int)(d2p-d1p), d1p);
 			return -1;
 		}
 		no_eoh_found = 1;
