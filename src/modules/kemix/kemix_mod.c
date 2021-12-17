@@ -588,6 +588,38 @@ static sr_kemi_xval_t* ki_kx_get_rcv_sock_name(sip_msg_t *msg)
 /**
  *
  */
+static sr_kemi_xval_t* ki_kx_get_rcvaddr_sock(sip_msg_t *msg)
+{
+	if(msg==NULL) {
+		sr_kemi_xval_null(&_sr_kemi_kx_xval, SR_KEMI_XVAL_NULL_EMPTY);
+		return &_sr_kemi_kx_xval;
+
+	}
+
+	if(msg->rcv.bind_address==NULL || msg->rcv.bind_address->sock_str.s==NULL) {
+		sr_kemi_xval_null(&_sr_kemi_kx_xval, SR_KEMI_XVAL_NULL_EMPTY);
+		return &_sr_kemi_kx_xval;
+	}
+
+	if (msg->rcv.bind_address->sock_str.len + 1 >= pv_get_buffer_size()) {
+		LM_ERR("local buffer size exceeded\n");
+		sr_kemi_xval_null(&_sr_kemi_kx_xval, SR_KEMI_XVAL_NULL_EMPTY);
+		return &_sr_kemi_kx_xval;
+	}
+
+	_sr_kemi_kx_xval.v.s.s = pv_get_buffer();
+	strncpy(_sr_kemi_kx_xval.v.s.s, msg->rcv.bind_address->sock_str.s,
+			msg->rcv.bind_address->sock_str.len);
+	_sr_kemi_kx_xval.v.s.len = msg->rcv.bind_address->sock_str.len;
+	_sr_kemi_kx_xval.v.s.s[_sr_kemi_kx_xval.v.s.len] = '\0';
+
+	_sr_kemi_kx_xval.vtype = SR_KEMIP_STR;
+	return &_sr_kemi_kx_xval;
+}
+
+/**
+ *
+ */
 static sr_kemi_xval_t* ki_kx_get_rcvadvip(sip_msg_t *msg)
 {
 	memset(&_sr_kemi_kx_xval, 0, sizeof(sr_kemi_xval_t));
@@ -1470,6 +1502,11 @@ static sr_kemi_t sr_kemi_kx_exports[] = {
 	},
 	{ str_init("kx"), str_init("get_rcvadvport"),
 		SR_KEMIP_XVAL, ki_kx_get_rcvadvport,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("kx"), str_init("get_rcvaddr_sock"),
+		SR_KEMIP_XVAL, ki_kx_get_rcvaddr_sock,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
