@@ -1103,7 +1103,7 @@ static sr_kemi_xval_t* ki_kx_get_srcuri(sip_msg_t *msg)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_get_sas(sip_msg_t *msg)
+static sr_kemi_xval_t* ki_kx_get_srcaddr_sock(sip_msg_t *msg)
 {
 	str ssock;
 
@@ -1403,8 +1403,8 @@ static sr_kemi_t sr_kemi_kx_exports[] = {
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
-	{ str_init("kx"), str_init("get_sas"),
-		SR_KEMIP_XVAL, ki_kx_get_sas,
+	{ str_init("kx"), str_init("get_srcaddr_sock"),
+		SR_KEMIP_XVAL, ki_kx_get_srcaddr_sock,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
