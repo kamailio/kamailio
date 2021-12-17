@@ -932,6 +932,18 @@ int pv_get_rcvaddr_uri_full(struct sip_msg *msg, pv_param_t *param,
 	return pv_get_rcvaddr_uri_helper(msg, param, 1, res);
 }
 
+int pv_get_rcvaddr_socket(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	if(msg==NULL)
+		return -1;
+
+	if(msg->rcv.bind_address==NULL || msg->rcv.bind_address->sock_str.s==NULL) {
+		return pv_get_null(msg, param, res);
+	}
+	return pv_get_strval(msg, param, res, &msg->rcv.bind_address->sock_str);
+}
+
 int pv_get_rcv_advertised_ip(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
 {

@@ -406,6 +406,9 @@ static pv_export_t mod_pvs[] = {
 	{{"rz", (sizeof("rz")-1)}, /* */
 		PVT_OTHER, pv_get_ruri_attr, 0,
 		0, 0, pv_init_iname, 5},
+	{{"Ras", (sizeof("Ras")-1)}, /* */
+		PVT_OTHER, pv_get_rcvaddr_socket, 0,
+		0, 0, 0, 0},
 	{{"Ri", (sizeof("Ri")-1)}, /* */
 		PVT_OTHER, pv_get_rcvip, 0,
 		0, 0, 0, 0},

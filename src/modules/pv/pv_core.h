@@ -166,6 +166,9 @@ int pv_get_rcvaddr_uri(struct sip_msg *msg, pv_param_t *param,
 int pv_get_rcvaddr_uri_full(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 
+int pv_get_rcvaddr_socket(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
 int pv_get_rcvsname(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 
