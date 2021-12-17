@@ -174,11 +174,7 @@ static int ki_dlgs_init(sip_msg_t *msg, str *src, str *dst, str *data)
 
 	if(msg->first_line.type == SIP_REQUEST) {
 		rtype = SIP_REQUEST;
-		if(msg->first_line.u.request.method_value == METHOD_INVITE) {
-			rmethod = METHOD_INVITE;
-		} else {
-			rmethod = msg->first_line.u.request.method_value;
-		}
+		rmethod = msg->first_line.u.request.method_value;
 	} else {
 		rtype = SIP_REPLY;
 		if(msg->cseq==NULL && ((parse_headers(msg, HDR_CSEQ_F, 0)==-1) ||
