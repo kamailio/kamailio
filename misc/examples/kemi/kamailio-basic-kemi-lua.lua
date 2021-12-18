@@ -80,17 +80,19 @@ function ksr_request_route()
 		return 1;
 	end
 
+	-- handle retransmissions
+	if not KSR.is_ACK() then
+		if KSR.tmx.t_precheck_trans()>0 then
+			KSR.tm.t_check_trans();
+			return 1;
+		end
+		if KSR.tm.t_check_trans()==0 then return 1 end
+	end
+
 	-- handle requests within SIP dialogs
 	ksr_route_withindlg();
 
 	-- -- only initial requests (no To tag)
-
-	-- handle retransmissions
-	if KSR.tmx.t_precheck_trans()>0 then
-		KSR.tm.t_check_trans();
-		return 1;
-	end
-	if KSR.tm.t_check_trans()==0 then return 1 end
 
 	-- authentication
 	ksr_route_auth();
@@ -158,6 +160,11 @@ end
 
 -- Per SIP request initial checks
 function ksr_route_reqinit()
+	-- no connect for sending replies
+	KSR.set_reply_no_connect();
+	-- enforce symmetric signaling
+	-- send back replies to the source address of request
+	KSR.force_rport();
 	if not KSR.is_myself_srcip() then
 		local srcip = KSR.kx.get_srcip();
 		if KSR.htable.sht_match_name("ipban", "eq", srcip) > 0 then
@@ -194,7 +201,7 @@ function ksr_route_reqinit()
 		KSR.x.exit();
 	end
 
-	if KSR.sanity.sanity_check(1511, 7)<0 then
+	if KSR.sanity.sanity_check(17895, 7)<0 then
 		KSR.err("malformed SIP message from "
 				.. KSR.kx.get_srcip() .. ":" .. KSR.kx.get_srcport() .."\n");
 		KSR.x.exit();
@@ -319,7 +326,6 @@ function ksr_route_natdetect()
 	if not KSR.nathelper then
 		return 1;
 	end
-	KSR.force_rport();
 	if KSR.nathelper.nat_uac_test(19)>0 then
 		if KSR.is_REGISTER() then
 			KSR.nathelper.fix_nated_register();
