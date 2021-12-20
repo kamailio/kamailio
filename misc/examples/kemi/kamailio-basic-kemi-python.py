@@ -172,7 +172,7 @@ class kamailio:
             KSR.sl.sl_send_reply(200,"Keepalive")
             return -255
 
-        if KSR.sanity.sanity_check(1511, 7)<0 :
+        if KSR.sanity.sanity_check(17895, 7)<0 :
             KSR.err("Malformed SIP message from "
                     + KSR.pv.get("$si") + ":" + str(KSR.pv.get("$sp")) +"\n")
             return -255
@@ -372,7 +372,14 @@ class kamailio:
     # SIP response handling
     # -- equivalent of reply_route{}
     def ksr_reply_route(self, msg):
-        KSR.info("===== response - from kamailio python script\n")
+        KSR.dbg("response handling - python script\n")
+
+        if KSR.sanity.sanity_check(17604, 6)<0 :
+            KSR.err("Malformed SIP response from "
+                    + KSR.pv.get("$si") + ":" + str(KSR.pv.get("$sp")) +"\n")
+            KSR.set_drop()
+            return -255
+
         return 1
 
 
