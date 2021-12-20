@@ -53,6 +53,8 @@ extern          "C"
 #define SRJSON_GET_UINT(sj)	((unsigned int)((sj)->valuedouble))
 #define SRJSON_GET_LONG(sj)	((long)((sj)->valuedouble))
 #define SRJSON_GET_ULONG(sj)	((unsigned long)((sj)->valuedouble))
+#define SRJSON_GET_LLONG(sj)	((long long)((sj)->valuedouble))
+#define SRJSON_GET_ULLONG(sj)	((unsigned long long)((sj)->valuedouble))
 
 /* The srjson node structure: */
 typedef struct srjson {
