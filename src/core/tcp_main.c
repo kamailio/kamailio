@@ -79,6 +79,7 @@
 #include "tcp_stats.h"
 #include "tcp_ev.h"
 #include "tsend.h"
+#include "events.h"
 #include "timer_ticks.h"
 #include "local_timer.h"
 #ifdef CORE_TLS
@@ -3548,6 +3549,26 @@ again:
 }
 
 
+static int tcp_emit_closed_event(struct tcp_connection *con, enum tcp_closed_reason reason)
+{
+	int ret;
+	tcp_closed_event_info_t tev;
+	sr_event_param_t evp = {0};
+
+	ret = 0;
+	LM_DBG("TCP closed event creation triggered (reason: %d)\n", reason);
+	if(likely(sr_event_enabled(SREV_TCP_CLOSED))) {
+		memset(&tev, 0, sizeof(tcp_closed_event_info_t));
+		tev.reason = reason;
+		tev.con = con;
+		evp.data = (void*)(&tev);
+		ret = sr_event_exec(SREV_TCP_CLOSED, &evp);
+	} else {
+		LM_DBG("no callback registering for handling TCP closed event\n");
+	}
+	return ret;
+}
+
 
 /* handles io from a tcp child process
  * params: tcp_c - pointer in the tcp_children array, to the entry for
@@ -3628,6 +3649,7 @@ inline static int handle_tcp_child(struct tcp_child* tcp_c, int fd_i)
 				/* if refcnt was 1 => it was used only in the
 				   tcp reader => it's not hashed or watched for IO
 				   anymore => no need to io_watch_del() */
+				tcp_emit_closed_event(c, TCP_CLOSED_EOF);
 				tcpconn_destroy(tcpconn);
 				break;
 			}
@@ -3639,6 +3661,7 @@ inline static int handle_tcp_child(struct tcp_child* tcp_c, int fd_i)
 						tcpconn->flags &= ~F_CONN_WRITE_W;
 					}
 #endif /* TCP_ASYNC */
+					tcp_emit_closed_event(c, TCP_CLOSED_EOF);
 					tcpconn_put_destroy(tcpconn);
 				}
 #ifdef TCP_ASYNC
@@ -3690,6 +3713,7 @@ inline static int handle_tcp_child(struct tcp_child* tcp_c, int fd_i)
 							io_watch_del(&io_h, tcpconn->s, -1, IO_FD_CLOSING);
 							tcpconn->flags&=~F_CONN_WRITE_W;
 						}
+						tcp_emit_closed_event(c, TCP_CLOSED_EOF);
 						tcpconn_put_destroy(tcpconn);
 					} else if (unlikely(tcpconn->flags & F_CONN_WRITE_W)){
 						BUG("unhashed connection watched for write\n");
@@ -3726,6 +3750,7 @@ inline static int handle_tcp_child(struct tcp_child* tcp_c, int fd_i)
 						tcpconn->flags&=~F_CONN_WRITE_W;
 					}
 #endif /* TCP_ASYNC */
+					tcp_emit_closed_event(c, TCP_CLOSED_EOF);
 					tcpconn_put_destroy(tcpconn);
 				}
 #ifdef TCP_ASYNC
@@ -3757,6 +3782,7 @@ inline static int handle_tcp_child(struct tcp_child* tcp_c, int fd_i)
 #endif /* TCP_ASYNC */
 				if (tcpconn_try_unhash(tcpconn))
 					tcpconn_put(tcpconn);
+				tcp_emit_closed_event(c, TCP_CLOSED_EOF);
 				tcpconn_put_destroy(tcpconn); /* deref & delete if refcnt==0 */
 				break;
 		default:
