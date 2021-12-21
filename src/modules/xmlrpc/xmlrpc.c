@@ -1046,6 +1046,55 @@ static int print_value(struct xmlrpc_reply* res,
 			}
 			break;
 
+		case 'l':
+			/* no value type 'long' in xmlrpc specs - store it in double */
+			prefix = double_prefix;
+			suffix = double_suffix;
+			body.s = buf;
+			body.len = snprintf(buf, 256, "%ld", va_arg(*ap, long));
+			if (body.len < 0) {
+				set_fault(err_reply, 400, "Error While Converting long");
+				ERR("Error while converting long\n");
+				goto err;
+			}
+			break;
+
+		case 'j':
+			prefix = double_prefix;
+			suffix = double_suffix;
+			body.s = buf;
+			body.len = snprintf(buf, 256, "%lu", va_arg(*ap, unsigned long));
+			if (body.len < 0) {
+				set_fault(err_reply, 400, "Error While Converting unsigned long");
+				ERR("Error while converting unsigned long\n");
+				goto err;
+			}
+			break;
+
+		case 'L':
+			prefix = double_prefix;
+			suffix = double_suffix;
+			body.s = buf;
+			body.len = snprintf(buf, 256, "%lld", va_arg(*ap, long long));
+			if (body.len < 0) {
+				set_fault(err_reply, 400, "Error While Converting long long");
+				ERR("Error while converting long\n");
+				goto err;
+			}
+			break;
+
+		case 'J':
+			prefix = double_prefix;
+			suffix = double_suffix;
+			body.s = buf;
+			body.len = snprintf(buf, 256, "%llu", va_arg(*ap, unsigned long long));
+			if (body.len < 0) {
+				set_fault(err_reply, 400, "Error While Converting unsigned long long");
+				ERR("Error while converting unsigned long long\n");
+				goto err;
+			}
+			break;
+
 		case 'b':
 			prefix = bool_prefix;
 			suffix = bool_suffix;
@@ -1539,9 +1588,14 @@ static int rpc_scan(rpc_ctx_t* ctx, char* fmt, ...)
 	int ival;
 	int* int_ptr;
 	unsigned int* uint_ptr;
+	long* long_ptr;
+	unsigned long* ulong_ptr;
+	long long* llong_ptr;
+	unsigned long long* ullong_ptr;
 	char** char_ptr;
 	str* str_ptr;
 	double* double_ptr;
+	double double_val;
 	void** void_ptr;
 	xmlNodePtr value;
 	struct xmlrpc_reply* reply;
@@ -1603,6 +1657,38 @@ static int rpc_scan(rpc_ctx_t* ctx, char* fmt, ...)
 				if (get_double(double_ptr, reply, ctx->doc, value, f) < 0) {
 					goto error;
 				}
+				break;
+
+			case 'l': /* long - convert it from a double */
+				long_ptr = va_arg(ap, long*);
+				if (get_double(&double_val, reply, ctx->doc, value, f) < 0) {
+					goto error;
+				}
+				*long_ptr = (long)double_val;
+				break;
+
+			case 'j': /* unsigned long - convert it from a double */
+				ulong_ptr = va_arg(ap, unsigned long*);
+				if (get_double(&double_val, reply, ctx->doc, value, f) < 0) {
+					goto error;
+				}
+				*ulong_ptr = (unsigned long)double_val;
+				break;
+
+			case 'L': /* long long - convert it from a double */
+				llong_ptr = va_arg(ap, long long*);
+				if (get_double(&double_val, reply, ctx->doc, value, f) < 0) {
+					goto error;
+				}
+				*llong_ptr = (long long)double_val;
+				break;
+
+			case 'J': /* unsigned long long - convert it from a double */
+				ullong_ptr = va_arg(ap, unsigned long long*);
+				if (get_double(&double_val, reply, ctx->doc, value, f) < 0) {
+					goto error;
+				}
+				*ullong_ptr = (unsigned long long)double_val;
 				break;
 
 			case 's': /* zero terminated string */
@@ -1954,6 +2040,11 @@ static int rpc_struct_scan(struct rpc_struct* s, char* fmt, ...)
 	int* int_ptr;
 	unsigned int* uint_ptr;
 	double* double_ptr;
+	double double_val;
+	long* long_ptr;
+	unsigned long* ulong_ptr;
+	long long* llong_ptr;
+	unsigned long long* ullong_ptr;
 	char** char_ptr;
 	str* str_ptr;
 	xmlNodePtr value;
@@ -1992,6 +2083,34 @@ static int rpc_struct_scan(struct rpc_struct* s, char* fmt, ...)
 				double_ptr = va_arg(ap, double*);
 				if (get_double(double_ptr, reply, s->doc, value, f) < 0)
 					goto error;
+				break;
+
+			case 'l': /* long - convert it from double */
+				long_ptr = va_arg(ap, long*);
+				if (get_double(&double_val, reply, s->doc, value, f) < 0)
+					goto error;
+				*long_ptr = (long)double_val;
+				break;
+
+			case 'j': /* unsigned long - convert it from double */
+				ulong_ptr = va_arg(ap, unsigned long*);
+				if (get_double(&double_val, reply, s->doc, value, f) < 0)
+					goto error;
+				*ulong_ptr = (unsigned long)double_val;
+				break;
+
+			case 'L': /* long long - convert it from double */
+				llong_ptr = va_arg(ap, long long*);
+				if (get_double(&double_val, reply, s->doc, value, f) < 0)
+					goto error;
+				*llong_ptr = (long long)double_val;
+				break;
+
+			case 'J': /* unsigned long long - convert it from double */
+				ullong_ptr = va_arg(ap, unsigned long long*);
+				if (get_double(&double_val, reply, s->doc, value, f) < 0)
+					goto error;
+				*ullong_ptr = (unsigned long long)double_val;
 				break;
 
 			case 's': /* zero terminated string */
