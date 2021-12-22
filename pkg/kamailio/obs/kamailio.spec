@@ -1065,7 +1065,7 @@ UUID module for Kamailio.
 
 
 %prep
-%setup -n %{name}-%{ver}
+%autosetup
 
 # on latest dist need to add --atexit=no for Kamailio options. More details GH #2616
 %if 0%{?fedora} || 0%{?suse_version} || 0%{?rhel} == 8
@@ -2272,7 +2272,7 @@ fi
 * Sat Sep 02 2017 Sergey Safarov <s.safarov@gmail.com>
   - added packaging for Fedora 26 and openSUSE Leap 42.3
   - removed packaging for Fedora 24 and openSUSE Leap 42.1 as End Of Life
-  - rewrited SPEC file to support Fedora, RHEL, CentOS, openSUSE distrs
+  - rewrited SPEC file to support Fedora, RHEL, CentOS, openSUSE distros
 * Mon Jul 31 2017 Mititelu Stefan <stefan.mititelu92@gmail.com>
   - added rabbitmq module
 * Wed Apr 26 2017 Carsten Bock <carsten@ng-voice.co,>
