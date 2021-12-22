@@ -131,6 +131,21 @@ int pvh_real_hdr_append(struct sip_msg *msg, str *hname, str *hvalue)
 	return 1;
 }
 
+int pvh_real_hdr_del_by_name(struct sip_msg *msg, str *hname)
+{
+	hdr_field_t *hf = NULL;
+
+	for(hf = msg->headers; hf; hf = hf->next) {
+		if(hf->name.len == hname->len
+				&& strncasecmp(hf->name.s, hname->s, hname->len) == 0) {
+			LM_DBG("remove header[%.*s]: %.*s\n", hf->name.len, hf->name.s,
+					hf->body.len, hf->body.s);
+			del_lump(msg, hf->name.s - msg->buf, hf->len, 0);
+		}
+	}
+	return 1;
+}
+
 int pvh_real_hdr_remove_display(struct sip_msg *msg, str *hname)
 {
 	hdr_field_t *hf = NULL;
