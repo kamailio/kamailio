@@ -955,10 +955,11 @@ static void core_sockets_list(rpc_t* rpc, void* c)
 				for (ai=si->addr_info_lst; ai; ai=ai->next)
 					rpc->struct_add(ha, "ss",
 						"address", ai->address_str.s);
-				rpc->struct_add(ha, "sss",
+				rpc->struct_add(ha, "ssss",
 						"port", si->port_no_str.s,
 						"mcast", si->flags & SI_IS_MCAST ? "yes" : "no",
-						"mhomed", si->flags & SI_IS_MHOMED ? "yes" : "no");
+						"mhomed", si->flags & SI_IS_MHOMED ? "yes" : "no",
+						"virtual", si->flags & SI_IS_VIRTUAL ? "yes" : "no");
 			} else {
 				printf("             %s: %s",
 						get_proto_name(proto),
@@ -969,10 +970,11 @@ static void core_sockets_list(rpc_t* rpc, void* c)
 				if (!(si->flags & SI_IS_IP))
 					rpc->struct_add(ha, "s",
 						"ipaddress", si->address_str.s);
-				rpc->struct_add(ha, "sss",
+				rpc->struct_add(ha, "ssss",
 						"port", si->port_no_str.s,
 						"mcast", si->flags & SI_IS_MCAST ? "yes" : "no",
-						"mhomed", si->flags & SI_IS_MHOMED ? "yes" : "no");
+						"mhomed", si->flags & SI_IS_MHOMED ? "yes" : "no",
+						"virtual", si->flags & SI_IS_VIRTUAL ? "yes" : "no");
 			}
 		}
 	} while((proto=next_proto(proto)));
