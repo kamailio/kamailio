@@ -95,10 +95,11 @@ static void corex_rpc_list_sockets(rpc_t* rpc, void* ctx)
 				}
 			}
 
-			if(rpc->struct_add(th, "sssss",
+			if(rpc->struct_add(th, "ssssss",
 					"PORT", si->port_no_str.s,
 					"MCAST", si->flags & SI_IS_MCAST ? "yes" : "no",
-					"MHOMED", si->flags & SI_IS_MHOMED? "yes" : "no",
+					"MHOMED", si->flags & SI_IS_MHOMED ? "yes" : "no",
+					"VIRTUAL", si->flags & SI_IS_VIRTUAL ? "yes" : "no",
 					"SOCKNAME", si->sockname.s? si->sockname.s : "-",
 					"ADVERTISE", si->useinfo.name.s?si->useinfo.name.s:"-")<0)
 			{
