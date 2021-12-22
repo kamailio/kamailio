@@ -738,7 +738,7 @@ void uac_send_tm_callback(struct cell *t, int type, struct tmcb_params *ps)
 	struct hdr_field *hdr;
 	HASHHEX response;
 	str *new_auth_hdr = NULL;
-	static authenticate_body_t auth;
+	static uac_authenticate_body_t auth;
 	uac_credential_t cred;
 	char  b_hdrs[MAX_UACH_SIZE];
 	str   s_hdrs;
