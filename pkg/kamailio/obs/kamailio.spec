@@ -30,40 +30,6 @@
 %bcond_without xmlrpc
 %endif
 
-%if 0%{?rhel} == 6
-%if 0%{?centos_ver}
-%define dist_name centos
-%define dist_version %{?centos}
-%endif
-%if 0%{?centos_ver} == 0
-%define dist_name rhel
-%define dist_version %{?rhel}
-%endif
-%bcond_with cnxcc
-%bcond_without dnssec
-%bcond_without evapi
-%bcond_without geoip
-%bcond_without http_async_client
-%bcond_without ims
-%bcond_without jansson
-%bcond_without json
-%bcond_without lua
-%bcond_with lwsc
-%bcond_without kazoo
-%bcond_without memcached
-%bcond_with mongodb
-%bcond_with nats
-%bcond_without perl
-%bcond_with phonenum
-%bcond_with python3
-%bcond_with rabbitmq
-%bcond_with redis
-%bcond_with ruby
-%bcond_without sctp
-%bcond_without websocket
-%bcond_without xmlrpc
-%endif
-
 %if 0%{?rhel} == 7
 %if 0%{?centos_ver}
 %define dist_name centos
@@ -172,11 +138,6 @@
 %bcond_without xmlrpc
 %endif
 
-# Defining missing macros on RHEL/CentOS 6
-%if 0%{?rhel} == 6
-%define _rundir %{_localstatedir}/run
-%endif
-
 # build with openssl 1.1.1 on RHEL 7 based dists
 %if 0%{?rhel} == 7
 %bcond_with openssl11
@@ -239,11 +200,8 @@ Conflicts:  kamailio-utils < %ver, kamailio-websocket < %ver
 Conflicts:  kamailio-xhttp-pi < %ver, kamailio-xmlops < %ver
 Conflicts:  kamailio-xmlrpc < %ver, kamailio-xmpp < %ver
 Conflicts:  kamailio-uuid < %ver
-BuildRequires:  bison, flex, which, make, gcc, gcc-c++, pkgconfig
-%if 0%{?rhel} != 6
+BuildRequires:  bison, flex, which, make, gcc, gcc-c++, pkgconfig, systemd-devel
 Requires:  systemd
-BuildRequires:  systemd-devel
-%endif
 
 %if 0%{?suse_version} == 1315 || 0%{?suse_version} == 1330
 Requires:  filesystem
@@ -268,14 +226,8 @@ like Asterisk™, FreeSWITCH™ or SEMS.
 %package    acc_json
 Summary:    Account transaction information in a JSON dictionary
 Group:      %{PKGGROUP}
-Requires:   kamailio = %ver
-%if 0%{?rhel} == 6
-Requires:   libevent2
-BuildRequires:  libevent2-devel
-%else
-Requires:   libevent
+Requires:   libevent, kamailio = %ver
 BuildRequires:  libevent-devel
-%endif
 %if 0%{?suse_version}
 Requires:   libjansson
 BuildRequires:  libjansson-devel
@@ -321,13 +273,8 @@ Requires:   kamailio = %ver
 Requires:   libdb-4_8
 BuildRequires:  libdb-4_8-devel
 %else
-%if 0%{?rhel} == 6
-Requires:   db4
-BuildRequires:  db4-devel
-%else
 Requires:   libdb
 BuildRequires:  libdb-devel
-%endif
 %endif
 
 %description    bdb
@@ -378,10 +325,6 @@ CPL (Call Processing Language) interpreter for Kamailio.
 Summary:    Module to support cryptographic extensions
 Group:      %{PKGGROUP}
 Requires:   kamailio = %ver
-%if 0%{?rhel} == 6
-Requires:   openssl
-BuildRequires:  openssl-devel
-%endif
 %if 0%{?rhel} == 7
 %if %{with openssl11}
 Requires:   openssl11-libs
@@ -476,14 +419,8 @@ Compressed body (SIP and HTTP) handling for kamailio.
 %package    http_async_client
 Summary:    Async HTTP client module for Kamailio
 Group:      %{PKGGROUP}
-Requires:   kamailio = %ver
-%if 0%{?rhel} == 6
-Requires:   libevent2
-BuildRequires:  libevent2-devel
-%else
-Requires:   libevent
+Requires:   libevent, kamailio = %ver
 BuildRequires:  libevent-devel
-%endif
 %if 0%{?suse_version}
 Requires:   libcurl4
 BuildRequires:  libcurl-devel
@@ -528,14 +465,8 @@ IMS modules and extensions module for Kamailio.
 %package    jansson
 Summary:    JSON string handling and RPC modules for Kamailio using JANSSON library
 Group:      %{PKGGROUP}
-Requires:   kamailio = %ver
-%if 0%{?rhel} == 6
-Requires:   libevent2
-BuildRequires:  libevent2-devel
-%else
-Requires:   libevent
+Requires:   libevent, kamailio = %ver
 BuildRequires:  libevent-devel
-%endif
 %if 0%{?suse_version}
 Requires:   libjson-c2
 BuildRequires:  libjansson-devel
@@ -553,14 +484,8 @@ JSON string handling and RPC modules for Kamailio using JANSSON library.
 %package    json
 Summary:    JSON string handling and RPC modules for Kamailio
 Group:      %{PKGGROUP}
-Requires:   kamailio = %ver
-%if 0%{?rhel} == 6
-Requires:   libevent2
-BuildRequires:  libevent2-devel
-%else
-Requires:   libevent
+Requires:   libevent, kamailio = %ver
 BuildRequires:  libevent-devel
-%endif
 %if 0%{?suse_version}
 Requires:   libjson-c2
 BuildRequires:  libjson-c-devel
@@ -578,15 +503,8 @@ JSON string handling and RPC modules for Kamailio.
 %package    kazoo
 Summary:    Kazoo middle layer connector support for Kamailio
 Group:      %{PKGGROUP}
-Requires:   libuuid, librabbitmq, json-c, kamailio = %ver
-BuildRequires:  libuuid-devel, librabbitmq-devel, json-c-devel
-%if 0%{?rhel} == 6
-Requires:   libevent2
-BuildRequires:  libevent2-devel
-%else
-Requires:   libevent
-BuildRequires:  libevent-devel
-%endif
+Requires:   libuuid, librabbitmq, libevent, json-c, kamailio = %ver
+BuildRequires:  libuuid-devel, librabbitmq-devel, libevent-devel, json-c-devel
 
 %description    kazoo
 Kazoo module for Kamailio.
@@ -1148,10 +1066,6 @@ UUID module for Kamailio.
 
 %prep
 %setup -n %{name}-%{ver}
-# python3 does not exist in RHEL 6 and similar dist.
-%if 0%{?rhel} == 6
-sed -i -e 's/python3/python2/' utils/kamctl/dbtextdb/dbtextdb.py
-%endif
 
 # on latest dist need to add --atexit=no for Kamailio options. More details GH #2616
 %if 0%{?fedora} || 0%{?suse_version} || 0%{?rhel} == 8
