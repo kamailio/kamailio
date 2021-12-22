@@ -140,9 +140,9 @@ static void ipsec_print_all_socket_lists()
 				}
 
 				if(si->port_no_str.s){
-					sprintf(buf + cnt, "):%s%s%s", si->port_no_str.s, si->flags & SI_IS_MCAST ? " mcast" : "", si->flags & SI_IS_MHOMED? " mhomed" : "");
+					sprintf(buf + cnt, "):%s%s%s%s", si->port_no_str.s, si->flags & SI_IS_MCAST ? " mcast" : "", si->flags & SI_IS_MHOMED ? " mhomed" : "", si->flags & SI_IS_VIRTUAL ? " virtual" : "");
 				}else{
-					sprintf(buf + cnt, "):%u%s%s", si->port_no, si->flags & SI_IS_MCAST ? " mcast" : "", si->flags & SI_IS_MHOMED? " mhomed" : "");
+					sprintf(buf + cnt, "):%u%s%s%s", si->port_no, si->flags & SI_IS_MCAST ? " mcast" : "", si->flags & SI_IS_MHOMED ? " mhomed" : "", si->flags & SI_IS_VIRTUAL ? " virtual" : "");
 				}
 				cnt = strlen(buf);
 			}else{
@@ -157,9 +157,9 @@ static void ipsec_print_all_socket_lists()
 				}
 
 				if(si->port_no_str.s){
-					sprintf(buf + cnt, ":%s%s%s", si->port_no_str.s, si->flags & SI_IS_MCAST ? " mcast" : "", si->flags & SI_IS_MHOMED? " mhomed" : "");
+					sprintf(buf + cnt, ":%s%s%s%s", si->port_no_str.s, si->flags & SI_IS_MCAST ? " mcast" : "", si->flags & SI_IS_MHOMED ? " mhomed" : "", si->flags & SI_IS_VIRTUAL ? " virtual" : "");
 				}else{
-					sprintf(buf + cnt, ":%u%s%s", si->port_no, si->flags & SI_IS_MCAST ? " mcast" : "", si->flags & SI_IS_MHOMED? " mhomed" : "");
+					sprintf(buf + cnt, ":%u%s%s%s", si->port_no, si->flags & SI_IS_MCAST ? " mcast" : "", si->flags & SI_IS_MHOMED ? " mhomed" : "", si->flags & SI_IS_VIRTUAL ? " virtual" : "");
 				}
 				cnt = strlen(buf);
 
