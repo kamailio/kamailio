@@ -43,6 +43,8 @@
 #include "uac_send.h"
 #include "uac_reg.h"
 
+#define UAC_SEND_FL_HA1 (1<<0)
+
 #define MAX_UACH_SIZE 2048
 #define MAX_UACB_SIZE 32768
 #define MAX_UACD_SIZE 128
@@ -492,6 +494,19 @@ int pv_set_uac_req(struct sip_msg* msg, pv_param_t *param,
 			}
 			_uac_req.evtype = tval->ri;
 			break;
+		case 17:
+			if(tval==NULL)
+			{
+				_uac_req.flags = 0;
+				return 0;
+			}
+			if(!(tval->flags&PV_VAL_INT))
+			{
+				LM_ERR("Invalid value type\n");
+				return -1;
+			}
+			_uac_req.flags = tval->ri;
+			break;
 	}
 	return 0;
 }
@@ -528,6 +543,8 @@ int pv_parse_uac_req_name(pv_spec_p sp, str *in)
 		case 5:
 			if(strncmp(in->s, "auser", 5)==0)
 				sp->pvp.pvn.u.isname.name.n = 9;
+			else if(strncmp(in->s, "flags", 5)==0)
+				sp->pvp.pvn.u.isname.name.n = 17;
 			else goto error;
 		break;
 		case 6:
@@ -721,8 +738,8 @@ void uac_send_tm_callback(struct cell *t, int type, struct tmcb_params *ps)
 	struct hdr_field *hdr;
 	HASHHEX response;
 	str *new_auth_hdr = NULL;
-	static struct authenticate_body auth;
-	struct uac_credential cred;
+	static authenticate_body_t auth;
+	uac_credential_t cred;
 	char  b_hdrs[MAX_UACH_SIZE];
 	str   s_hdrs;
 	uac_req_t uac_r;
@@ -771,6 +788,9 @@ void uac_send_tm_callback(struct cell *t, int type, struct tmcb_params *ps)
 	cred.realm  = auth.realm;
 	cred.user   = tp->s_auser;
 	cred.passwd = tp->s_apasswd;
+	if(tp->flags & UAC_SEND_FL_HA1) {
+		cred.aflags = UAC_FLCRED_HA1;
+	}
 
 	do_uac_auth(&tp->s_method, &tp->s_ruri, &cred, &auth, response);
 	new_auth_hdr=build_authorization_hdr(ps->code, &tp->s_ruri, &cred,
