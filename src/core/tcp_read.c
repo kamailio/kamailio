@@ -268,6 +268,11 @@ again:
 						ip_addr2a(&c->rcv.src_ip), c->rcv.src_port);
 				LOG(cfg_get(core, core_cfg, corelog),"-> [%s]:%u)\n",
 						ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port);
+				if (errno == ETIMEDOUT) {
+					c->event = TCP_CLOSED_TIMEOUT;
+				} else if (errno == ECONNRESET) {
+					c->event = TCP_CLOSED_RESET;
+				}
 				return -1;
 			}
 		}else if (unlikely((bytes_read==0) ||
@@ -279,6 +284,7 @@ again:
 					ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port);
 			c->state=S_CONN_EOF;
 			*flags|=RD_CONN_EOF;
+			c->event=TCP_CLOSED_EOF;
 		}else{
 			if (unlikely(c->state==S_CONN_CONNECT || c->state==S_CONN_ACCEPT)){
 				TCP_STATS_ESTABLISHED(c->state);
@@ -1670,6 +1676,7 @@ static ticks_t tcpconn_read_timeout(ticks_t t, struct timer_ln* tl, void* data)
 	}
 	if(tcp_conn_lst!=NULL) {
 		tcpconn_listrm(tcp_conn_lst, c, c_next, c_prev);
+		c->event = TCP_CLOSED_TIMEOUT;
 		release_tcpconn(c, (c->state<0)?CONN_ERROR:CONN_RELEASE, tcpmain_sock);
 	}
 	return 0;
