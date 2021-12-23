@@ -3549,11 +3549,18 @@ again:
 }
 
 
-static int tcp_emit_closed_event(struct tcp_connection *con, enum tcp_closed_reason reason)
+static int tcp_emit_closed_event(struct tcp_connection *con)
 {
 	int ret;
 	tcp_closed_event_info_t tev;
 	sr_event_param_t evp = {0};
+	enum tcp_closed_reason reason;
+
+	if (con->event) {
+		reason = con->event;
+	} else {
+		reason = TCP_CLOSED_EOF;
+	}
 
 	ret = 0;
 	LM_DBG("TCP closed event creation triggered (reason: %d)\n", reason);
@@ -3649,7 +3656,7 @@ inline static int handle_tcp_child(struct tcp_child* tcp_c, int fd_i)
 				/* if refcnt was 1 => it was used only in the
 				   tcp reader => it's not hashed or watched for IO
 				   anymore => no need to io_watch_del() */
-				tcp_emit_closed_event(tcpconn, TCP_CLOSED_EOF);
+				tcp_emit_closed_event(tcpconn);
 				tcpconn_destroy(tcpconn);
 				break;
 			}
@@ -3661,7 +3668,7 @@ inline static int handle_tcp_child(struct tcp_child* tcp_c, int fd_i)
 						tcpconn->flags &= ~F_CONN_WRITE_W;
 					}
 #endif /* TCP_ASYNC */
-					tcp_emit_closed_event(tcpconn, TCP_CLOSED_EOF);
+					tcp_emit_closed_event(tcpconn);
 					tcpconn_put_destroy(tcpconn);
 				}
 #ifdef TCP_ASYNC
@@ -3713,7 +3720,8 @@ inline static int handle_tcp_child(struct tcp_child* tcp_c, int fd_i)
 							io_watch_del(&io_h, tcpconn->s, -1, IO_FD_CLOSING);
 							tcpconn->flags&=~F_CONN_WRITE_W;
 						}
-						tcp_emit_closed_event(tcpconn, TCP_CLOSED_EOF);
+						tcpconn->event = TCP_CLOSED_TIMEOUT;
+						tcp_emit_closed_event(tcpconn);
 						tcpconn_put_destroy(tcpconn);
 					} else if (unlikely(tcpconn->flags & F_CONN_WRITE_W)){
 						BUG("unhashed connection watched for write\n");
@@ -3750,7 +3758,7 @@ inline static int handle_tcp_child(struct tcp_child* tcp_c, int fd_i)
 						tcpconn->flags&=~F_CONN_WRITE_W;
 					}
 #endif /* TCP_ASYNC */
-					tcp_emit_closed_event(tcpconn, TCP_CLOSED_EOF);
+					tcp_emit_closed_event(tcpconn);
 					tcpconn_put_destroy(tcpconn);
 				}
 #ifdef TCP_ASYNC
@@ -3782,7 +3790,7 @@ inline static int handle_tcp_child(struct tcp_child* tcp_c, int fd_i)
 #endif /* TCP_ASYNC */
 				if (tcpconn_try_unhash(tcpconn))
 					tcpconn_put(tcpconn);
-				tcp_emit_closed_event(tcpconn, TCP_CLOSED_EOF);
+				tcp_emit_closed_event(tcpconn);
 				tcpconn_put_destroy(tcpconn); /* deref & delete if refcnt==0 */
 				break;
 		default:
