@@ -575,8 +575,8 @@ struct socket_info** get_sock_info_list(unsigned short proto)
  */
 static int check_local_addresses(struct socket_info* si)
 {
-	struct hostent* he;
-	struct utsname myname;
+	int match = 0;
+	struct ifaddrs *ifap, *ifa;
 
 	if (si == NULL) {
 		LM_ERR("Socket info is NULL. Returning no match.\n");
@@ -589,39 +589,40 @@ static int check_local_addresses(struct socket_info* si)
 		return 1;
 	}
 
-	if (uname(&myname) <0){
-		LM_ERR("Cannot determine hostname. Guessing a not local virtual IP.\n");
+	if (getifaddrs(&ifap) != 0) {
+		LM_ERR("getifaddrs failed. Assuming no match.\n");
 		return 0;
 	}
-	
-	//Should return a list of local IPs
-	he = _resolvehost(myname.nodename);
-	if (he == NULL) {
-		LM_ERR("Cannot get list of local IPs. Guessing not a local virtual IP.\n");
-		return 0;
-	}
-	char** paddrlist = he->h_addr_list;
-	int i = 0;
-	while (*paddrlist != NULL)
+
+	for (ifa = ifap; ifa; ifa = ifa->ifa_next)
 	{
+		/* skip if no IP addr associated with the interface */
+		if (ifa->ifa_addr==0)
+			continue;
+#ifdef AF_PACKET
+		/* skip AF_PACKET addr family since it is of no use later on */
+		if (ifa->ifa_addr->sa_family == AF_PACKET)
+			continue;
+#endif
 		struct ip_addr local_addr;
-		hostent2ip_addr(&local_addr, he, i);
+		sockaddr2ip_addr(&local_addr, (struct sockaddr*)ifa->ifa_addr);
 
 		LM_DBG("Checking local address: %s\n", ip_addr2a(&local_addr));
 		if (ip_addr_cmp(&si->address, &local_addr)) {
-			LM_DBG("Found matching local IP for virtual socket: %s\n", ip_addr2a(&local_addr));
-			return 1;
+			match = 1;
+			LM_DBG("Found matching local IP %s for virtual socket %s\n", ip_addr2a(&local_addr), si->name.s);
+			break;
 		}
-
-		i++;
-		paddrlist++;
 	}
-
+	freeifaddrs(ifap);
 	//Default to not local if no match is found
-	LM_DBG("No matching local IP found.\n");
-	return 0;
+	if (!match) {
+		LM_DBG("No matching local IP found for socket %s.\n", si->name.s);
+		return 0;
+	} else {
+		return 1;
+	}
 }
-
 
 /* helper function for grep_sock_info
  * params:
