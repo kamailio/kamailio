@@ -757,7 +757,8 @@ char* get_sdp_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 		if (match){
 			match++;
 		}else {
-			LM_ERR("bad body for <%s>(%d)\n", hdr->name.s, hdr->type);
+			LM_ERR("bad body for <%.*s>(%d)\n", hdr->name.len, hdr->name.s,
+					hdr->type);
 			tmp=end;
 			goto error;
 		}
