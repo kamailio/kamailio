@@ -286,6 +286,12 @@ modparam("auth", "rpid_avp", "$avp(myrpid)")
 			to use this function.
 			</para>
 			<para>
+			Note: the change of sip reply can be done only in cases when it is not
+			parsed too much before config execution, otherwise it fails. For
+			example, setting global parameter "log_prefix" can cause this function
+			to fail changing the replies.
+			</para>
+			<para>
 			The function returns TRUE on success, and FALSE during processing failures.
 			</para>
 			<para>
