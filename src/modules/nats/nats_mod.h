@@ -26,62 +26,19 @@
 #define __NATS_MOD_H_
 
 #include <stdio.h>
-#include <nats/nats.h>
 #include <nats/adapters/libuv.h>
 #include "../json/api.h"
 #include "../../core/cfg/cfg_struct.h"
 #include "../../core/fmsg.h"
 
-#define NATS_DEFAULT_URL "nats://localhost:4222"
-#define NATS_MAX_SERVERS 10
-#define NATS_URL_MAX_SIZE 256
-
-typedef struct _nats_evroutes
-{
-	int connected;
-	int disconnected;
-} nats_evroutes_t;
-static nats_evroutes_t _nats_rts;
-
-typedef struct _init_nats_sub
-{
-	char *sub;
-	char *queue_group;
-	struct _init_nats_sub *next;
-} init_nats_sub, *init_nats_sub_ptr;
-
-typedef struct _init_nats_server
-{
-	char *url;
-	struct _init_nats_server *next;
-} init_nats_server, *init_nats_server_ptr;
-
-typedef struct _nats_on_message
-{
-	int rt;
-} nats_on_message, *nats_on_message_ptr;
-
-typedef struct _nats_connection
-{
-	natsOptions *opts;
-	char *servers[NATS_MAX_SERVERS];
-} nats_connection, *nats_connection_ptr;
-
-struct nats_consumer_worker
-{
-	char *subject;
-	char *queue_group;
-	int pid;
-	natsConnection *conn;
-	natsSubscription *subscription;
-	uv_loop_t *uvLoop;
-	nats_on_message_ptr on_message;
-};
-typedef struct nats_consumer_worker nats_consumer_worker_t;
-
 static int mod_init(void);
 static int mod_child_init(int);
 static void mod_destroy(void);
+
+extern int w_nats_publish_f(sip_msg_t *msg, char *subj, char *payload);
+extern int fixup_publish_get_value(void **param, int param_no);
+extern int fixup_publish_get_value_free(void **param, int param_no);
+extern void _nats_pub_worker_cb(uv_poll_t *handle, int status, int events);
 
 int nats_run_cfg_route(int rt);
 void nats_init_environment();
@@ -100,7 +57,8 @@ int init_nats_sub_add(char *sub);
 int nats_cleanup_init_sub();
 
 void nats_consumer_worker_proc(
-		nats_consumer_worker_t *worker, nats_connection_ptr c);
+		nats_consumer_worker_t *worker);
 int nats_pv_get_event_payload(struct sip_msg *, pv_param_t *, pv_value_t *);
+
 
 #endif

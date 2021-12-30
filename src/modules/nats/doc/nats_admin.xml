@@ -122,6 +122,33 @@ modparam("nats", "nats_url", "nats://127.1.2.3:4222")
 		</section>
 		<section>
 			<title>
+				<varname>num_publish_workers</varname>
+				(int)
+			</title>
+			<para>
+				The number of worker threads for publishing messages.
+			</para>
+			<para>
+				Usage: nats related.
+			</para>
+			<para>
+				<emphasis>Default value is <quote>2</quote>.</emphasis>
+			</para>
+			<example>
+				<title>
+					Set
+					<varname>num_publish_workers</varname>
+					parameter
+				</title>
+				<programlisting format="linespecific">
+...
+modparam("nats", "num_publish_workers", 4)
+...
+</programlisting>
+			</example>
+		</section>
+		<section>
+			<title>
 				<varname>subject_queue_group</varname>
 				(str)
 			</title>
@@ -146,6 +173,29 @@ modparam("nats", "subject_queue_group", "Kamailio-World:2020")
 modparam("nats", "subject_queue_group", "Kamailio-World:2021") // this will create two processes for the Kamailio-World subject
 modparam("nats", "subject_queue_group", "MyQueue1:2021")
 modparam("nats", "subject_queue_group", "MyQueue2:2021")
+...
+				</programlisting>
+			</example>
+		</section>
+	</section>
+	<section>
+		<title>Functions</title>
+		<section id="nats.f.nats_publish">
+			<title>
+				<function moreinfo="none">nats_publish(subject, payload)</function>
+			</title>
+			<para>
+				Publishes the payload to subject.
+			</para>
+			<example>
+				<title>
+					<function>nats_publish</function>
+					usage
+				</title>
+				<programlisting format="linespecific">
+...
+$var(my_info) = "$ci=" + $ci + " $fU=" + $fU;
+nats_publish("mysubject", "$var(my_info)"); # publish $var(my_info) to "mysubject"
 ...
 				</programlisting>
 			</example>

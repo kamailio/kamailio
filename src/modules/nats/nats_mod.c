@@ -22,6 +22,7 @@
  *
  */
 
+#include "defs.h"
 #include "nats_mod.h"
 
 MODULE_VERSION
@@ -29,23 +30,34 @@ MODULE_VERSION
 init_nats_sub_ptr _init_nats_sc = NULL;
 init_nats_server_ptr _init_nats_srv = NULL;
 nats_consumer_worker_t *nats_workers = NULL;
-nats_connection_ptr _nats_connection = NULL;
+nats_pub_worker_t *nats_pub_workers = NULL;
+int nats_pub_workers_num = DEFAULT_NUM_PUB_WORKERS;
+
 int _nats_proc_count;
 char *eventData = NULL;
+
+int *nats_pub_worker_pipes_fds = NULL;
+int *nats_pub_worker_pipes = NULL;
 
 static pv_export_t nats_mod_pvs[] = {
 		{{"natsData", (sizeof("natsData") - 1)}, PVT_OTHER,
 				nats_pv_get_event_payload, 0, 0, 0, 0, 0},
 		{{0, 0}, 0, 0, 0, 0, 0, 0, 0}};
 
-static param_export_t params[] = {{"nats_url", PARAM_STRING | USE_FUNC_PARAM,
-										  (void *)_init_nats_server_url_add},
+static param_export_t params[] = {
+		{"nats_url", PARAM_STRING | USE_FUNC_PARAM, (void *)_init_nats_server_url_add},
+		{"num_publish_workers", INT_PARAM, &nats_pub_workers_num},
 		{"subject_queue_group", PARAM_STRING | USE_FUNC_PARAM,
 				(void *)_init_nats_sub_add}};
 
+static cmd_export_t cmds[] = {{"nats_publish", (cmd_function)w_nats_publish_f,
+									  2, fixup_publish_get_value,
+									  fixup_publish_get_value_free, ANY_ROUTE},
+		{0, 0, 0, 0, 0, 0}};
+
 struct module_exports exports = {
 		"nats", DEFAULT_DLFLAGS, /* dlopen flags */
-		0,						 /* Exported functions */
+		cmds,					 /* Exported functions */
 		params,					 /* Exported parameters */
 		0,						 /* exported MI functions */
 		nats_mod_pvs,			 /* exported pseudo-variables */
@@ -104,12 +116,13 @@ static void closedCB(natsConnection *nc, void *closure)
 }
 
 void nats_consumer_worker_proc(
-		nats_consumer_worker_t *worker, nats_connection_ptr c)
+		nats_consumer_worker_t *worker)
 {
 	natsStatus s = NATS_OK;
 
 	// create a loop
 	natsLibuv_Init();
+
 	worker->uvLoop = uv_default_loop();
 	if(worker->uvLoop != NULL) {
 		natsLibuv_SetThreadLocalLoop(worker->uvLoop);
@@ -119,23 +132,20 @@ void nats_consumer_worker_proc(
 	if(s != NATS_OK) {
 		LM_ERR("could not set event loop [%s]\n", natsStatus_GetText(s));
 	}
-	if((s = natsConnection_Connect(&worker->conn, c->opts)) != NATS_OK) {
+	if((s = natsConnection_Connect(&worker->nc->conn, worker->nc->opts))
+			!= NATS_OK) {
 		LM_ERR("could not connect to nats servers [%s]\n",
 				natsStatus_GetText(s));
 	}
 
-	s = natsOptions_SetEventLoop(c->opts, (void *)worker->uvLoop,
+	s = natsOptions_SetEventLoop(worker->nc->opts, (void *)worker->uvLoop,
 			natsLibuv_Attach, natsLibuv_Read, natsLibuv_Write,
 			natsLibuv_Detach);
 	if(s != NATS_OK) {
 		LM_ERR("could not set event loop [%s]\n", natsStatus_GetText(s));
 	}
 
-	if(s) {
-		LM_ERR("error setting options [%s]\n", natsStatus_GetText(s));
-	}
-
-	s = natsConnection_QueueSubscribe(&worker->subscription, worker->conn,
+	s = natsConnection_QueueSubscribe(&worker->subscription, worker->nc->conn,
 			worker->subject, worker->queue_group, onMsg, worker->on_message);
 	if(s != NATS_OK) {
 		LM_ERR("could not subscribe [%s]\n", natsStatus_GetText(s));
@@ -159,17 +169,30 @@ void nats_consumer_worker_proc(
 
 static int mod_init(void)
 {
+	int i = 0;
+	int total_procs = _nats_proc_count + nats_pub_workers_num;
 	if(faked_msg_init() < 0) {
 		LM_ERR("failed to init faked sip message\n");
 		return -1;
 	}
-	nats_init_environment();
-	_nats_connection = _init_nats_connection();
-	if(nats_init_connection(_nats_connection) < 0) {
-		LM_ERR("failed to init nat connections\n");
-		return -1;
+	register_procs(total_procs);
+
+	nats_pub_worker_pipes_fds =
+			(int *)shm_malloc(sizeof(int) * (nats_pub_workers_num)*2);
+	nats_pub_worker_pipes =
+			(int *)shm_malloc(sizeof(int) * nats_pub_workers_num);
+	for(i = 0; i < nats_pub_workers_num; i++) {
+		nats_pub_worker_pipes_fds[i * 2] =
+				nats_pub_worker_pipes_fds[i * 2 + 1] = -1;
+		if(pipe(&nats_pub_worker_pipes_fds[i * 2]) < 0) {
+			LM_ERR("worker pipe(%d) failed\n", i);
+			return -1;
+		}
 	}
-	register_procs(_nats_proc_count);
+	for(i = 0; i < nats_pub_workers_num; i++) {
+		nats_pub_worker_pipes[i] = nats_pub_worker_pipes_fds[i * 2 + 1];
+	}
+
 	nats_workers =
 			shm_malloc(_nats_proc_count * sizeof(nats_consumer_worker_t));
 	if(nats_workers == NULL) {
@@ -177,6 +200,15 @@ static int mod_init(void)
 		return -1;
 	}
 	memset(nats_workers, 0, _nats_proc_count * sizeof(nats_consumer_worker_t));
+
+	nats_pub_workers =
+			shm_malloc(nats_pub_workers_num * sizeof(nats_pub_worker_t));
+	if(nats_pub_workers == NULL) {
+		LM_ERR("error in shm_malloc\n");
+		return -1;
+	}
+	memset(nats_pub_workers, 0,
+			nats_pub_workers_num * sizeof(nats_pub_worker_t));
 	return 0;
 }
 
@@ -186,6 +218,14 @@ int init_worker(
 	int buffsize = strlen(subject) + 6;
 	char routename[buffsize];
 	int rt;
+	nats_connection_ptr nc = NULL;
+
+	nats_init_environment();
+	nc = _init_nats_connection();
+	if(nats_init_connection(nc) < 0) {
+		LM_ERR("failed to init nat connections\n");
+		return -1;
+	}
 
 	memset(worker, 0, sizeof(*worker));
 	worker->subject = shm_malloc(strlen(subject) + 1);
@@ -208,16 +248,75 @@ int init_worker(
 		return 0;
 	}
 	worker->on_message->rt = rt;
+	worker->nc = nc;
 	return 0;
 }
 
-void worker_loop(int id, nats_connection_ptr c)
+int init_pub_worker(
+		nats_pub_worker_t *worker)
+{
+	nats_connection_ptr nc = NULL;
+	nc = _init_nats_connection();
+	if(nats_init_connection(nc) < 0) {
+		LM_ERR("failed to init nat connections\n");
+		return -1;
+	}
+	memset(worker, 0, sizeof(*worker));
+	worker->nc = nc;
+	return 0;
+}
+
+void worker_loop(int id)
 {
 	nats_consumer_worker_t *worker = &nats_workers[id];
-	nats_consumer_worker_proc(worker, c);
+	nats_consumer_worker_proc(worker);
 	for(;;) {
 		sleep(1000);
 	}
+}
+
+int _nats_pub_worker_proc(
+		nats_pub_worker_t *worker, int fd)
+{
+	natsStatus s = NATS_OK;
+
+	natsLibuv_Init();
+	worker->fd = fd;
+	worker->uvLoop = uv_default_loop();
+	if(worker->uvLoop != NULL) {
+		natsLibuv_SetThreadLocalLoop(worker->uvLoop);
+	} else {
+		s = NATS_ERR;
+	}
+	if(s != NATS_OK) {
+		LM_ERR("could not set event loop [%s]\n", natsStatus_GetText(s));
+	}
+
+	if((s = natsConnection_Connect(&worker->nc->conn, worker->nc->opts))
+			!= NATS_OK) {
+		LM_ERR("could not connect to nats servers [%s]\n",
+				natsStatus_GetText(s));
+	}
+	s = natsOptions_SetEventLoop(worker->nc->opts, (void *)worker->uvLoop,
+			natsLibuv_Attach, natsLibuv_Read, natsLibuv_Write,
+			natsLibuv_Detach);
+	if(s != NATS_OK) {
+		LM_ERR("could not set event loop [%s]\n", natsStatus_GetText(s));
+	}
+
+	uv_pipe_init(worker->uvLoop, &worker->pipe, 0);
+	uv_pipe_open(&worker->pipe, worker->fd);
+	if(uv_poll_init(worker->uvLoop, &worker->poll, worker->fd) < 0) {
+		LM_ERR("uv_poll_init failed\n");
+		return 0;
+	}
+	uv_handle_set_data((uv_handle_t *)&worker->poll, (nats_pub_worker_t *)worker);
+	if(uv_poll_start(&worker->poll, UV_READABLE | UV_DISCONNECT, _nats_pub_worker_cb)
+			< 0) {
+		LM_ERR("uv_poll_start failed\n");
+		return 0;
+	}
+	return uv_run(worker->uvLoop, UV_RUN_DEFAULT);
 }
 
 /**
@@ -233,28 +332,51 @@ static int mod_child_init(int rank)
 		n = _init_nats_sc;
 		while(n) {
 			if(init_worker(&nats_workers[i], n->sub, n->queue_group) < 0) {
-				LM_ERR("failed to init struct for worker[%d]\n", i);
+				LM_ERR("failed to init struct for worker [%d]\n", i);
 				return -1;
 			}
 			n = n->next;
 			i++;
 		}
+
+		for(i = 0; i < nats_pub_workers_num; i++) {
+			if(init_pub_worker(&nats_pub_workers[i]) < 0) {
+				LM_ERR("failed to init struct for pub worker[%d]\n", i);
+				return -1;
+			}
+		}
+
 		return 0;
 	}
 
 	if(rank == PROC_MAIN) {
 		for(i = 0; i < _nats_proc_count; i++) {
-			newpid = fork_process(PROC_RPC, "NATS WORKER", 1);
+			newpid = fork_process(PROC_RPC, "NATS Subscriber", 1);
 			if(newpid < 0) {
 				LM_ERR("failed to fork worker process %d\n", i);
 				return -1;
 			} else if(newpid == 0) {
-				worker_loop(i, _nats_connection);
+				worker_loop(i);
 			} else {
 				nats_workers[i].pid = newpid;
 			}
 		}
-		return 0;
+
+		for(i = 0; i < nats_pub_workers_num; i++) {
+			newpid = fork_process(PROC_NOCHLDINIT, "NATS Publisher", 1);
+			if(newpid < 0) {
+				LM_ERR("failed to fork worker process %d\n", i);
+				return -1;
+			} else if(newpid == 0) {
+				if(cfg_child_init())
+					return -1;
+				close(nats_pub_worker_pipes_fds[i * 2 + 1]);
+				cfg_update();
+				return (_nats_pub_worker_proc(&nats_pub_workers[i], nats_pub_worker_pipes_fds[i * 2]));
+			} else {
+				nats_pub_workers[i].pid = newpid;
+			}
+		}
 	}
 
 	return 0;
@@ -395,6 +517,10 @@ int nats_cleanup_init_servers()
 
 int nats_cleanup_connection(nats_connection_ptr c)
 {
+	if(c->conn != NULL) {
+		natsConnection_Close(c->conn);
+		natsConnection_Destroy(c->conn);
+	}
 	if(c->opts != NULL) {
 		natsOptions_Destroy(c->opts);
 	}
@@ -411,16 +537,13 @@ int nats_destroy_workers()
 {
 	int i;
 	nats_consumer_worker_t *worker;
+	nats_pub_worker_t *pub_worker;
 	for(i = 0; i < _nats_proc_count; i++) {
 		worker = &nats_workers[i];
 		if(worker != NULL) {
 			if(worker->subscription != NULL) {
 				natsSubscription_Unsubscribe(worker->subscription);
 				natsSubscription_Destroy(worker->subscription);
-			}
-			if(worker->conn != NULL) {
-				natsConnection_Close(worker->conn);
-				natsConnection_Destroy(worker->conn);
 			}
 			if(worker->uvLoop != NULL) {
 				uv_loop_close(worker->uvLoop);
@@ -431,10 +554,28 @@ int nats_destroy_workers()
 			if(worker->queue_group != NULL) {
 				shm_free(worker->queue_group);
 			}
+			if(worker->nc != NULL) {
+				if(nats_cleanup_connection(worker->nc) < 0) {
+					LM_ERR("could not cleanup worker connection\n");
+				}
+			}
 			if(worker->on_message != NULL) {
 				shm_free(worker->on_message);
 			}
 			shm_free(worker);
+		}
+	}
+
+	for(i = 0; i < nats_pub_workers_num; i++) {
+		pub_worker = &nats_pub_workers[i];
+		if(pub_worker != NULL) {
+			if(pub_worker->nc != NULL) {
+				if(nats_cleanup_connection(pub_worker->nc) < 0) {
+					LM_ERR("could not cleanup worker connection\n");
+				}
+			}
+			uv_poll_stop(&pub_worker->poll);
+			shm_free(pub_worker);
 		}
 	}
 	return 0;
@@ -451,11 +592,14 @@ static void mod_destroy(void)
 	if(nats_cleanup_init_sub() < 0) {
 		LM_INFO("could not cleanup init data\n");
 	}
-	if(nats_cleanup_connection(_nats_connection) < 0) {
-		LM_INFO("could not cleanup connection\n");
-	}
 	if(nats_cleanup_init_servers() < 0) {
 		LM_INFO("could not cleanup init server data\n");
+	}
+	if(nats_pub_worker_pipes_fds) {
+		shm_free(nats_pub_worker_pipes_fds);
+	}
+	if(nats_pub_worker_pipes) {
+		shm_free(nats_pub_worker_pipes);
 	}
 }
 
