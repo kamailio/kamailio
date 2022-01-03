@@ -283,7 +283,7 @@ static str body_intermediate;
 static str rtp_inst_pv_param = {NULL, 0};
 static pv_spec_t *rtp_inst_pvar = NULL;
 
-/* array with the sockets used by rtpporxy (per process)*/
+/* array with the sockets used by rtpproxy (per process)*/
 static unsigned int *rtpp_no = 0;
 static gen_lock_t *rtpp_no_lock = 0;
 static int *rtpp_socks = 0;
@@ -1341,6 +1341,7 @@ static void rtpengine_rpc_reload(rpc_t* rpc, void* ctx)
 	LM_DBG("current rtpengines list version: %d (%u)\n",
 			_rtpe_list_version->vernum,
 			(unsigned int)_rtpe_list_version->vertime);
+	rpc->rpl_printf(c, "Ok. Reload successful.");
 }
 
 static int rtpengine_rpc_iterate(rpc_t* rpc, void* ctx, const str *rtpp_url,
