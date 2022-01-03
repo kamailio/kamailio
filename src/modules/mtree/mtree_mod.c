@@ -929,61 +929,59 @@ void rpc_mtree_reload(rpc_t* rpc, void* c)
 {
 	str tname = {0, 0};
 	m_tree_t *pt = NULL;
-	int treloaded = 0;
+	int treeloaded = 0;
 
 	if(db_table.len>0)
 	{
 		/* re-loading all information from database */
 		if(mt_load_db_trees()!=0)
 		{
-			LM_ERR("cannot re-load mtrees from database\n");
-			goto error;
+			rpc->fault(c, 500, "Can not reload Mtrees from database.");
+			return;
 		}
-	} else {
-		if(!mt_defined_trees())
-		{
-			LM_ERR("empty mtree list\n");
-			goto error;
-		}
+		rpc->rpl_printf(c, "Ok. Mtrees reloaded.");
+		return;
+	} 
+	if(!mt_defined_trees())
+	{
+		rpc->fault(c, 500, "No Mtrees defined.");
+		return;
+	}
 
-		/* read tree name */
-		if (rpc->scan(c, "S", &tname) != 1) {
+	/* read tree name */
+	if (rpc->scan(c, "S", &tname) != 1) {
+		tname.s = 0;
+		tname.len = 0;
+	} else {
+		if(*tname.s=='.') {
 			tname.s = 0;
 			tname.len = 0;
-		} else {
-			if(*tname.s=='.') {
-				tname.s = 0;
-				tname.len = 0;
-			}
-		}
-
-		pt = mt_get_first_tree();
-
-		while(pt!=NULL)
-		{
-			if(tname.s==NULL
-					|| (tname.s!=NULL && pt->tname.len>=tname.len
-						&& strncmp(pt->tname.s, tname.s, tname.len)==0))
-			{
-				/* re-loading table from database */
-				if(mt_load_db(pt)!=0)
-				{
-					LM_ERR("cannot re-load mtree from database\n");
-					goto error;
-				}
-				treloaded = 1;
-			}
-			pt = pt->next;
-		}
-		if(treloaded == 0) {
-			rpc->fault(c, 500, "No Mtree Name Matching");
 		}
 	}
 
-	return;
+	pt = mt_get_first_tree();
 
-error:
-	rpc->fault(c, 500, "Mtree Reload Failed");
+	while(pt!=NULL)
+	{
+		if(tname.s==NULL
+				|| (tname.s!=NULL && pt->tname.len>=tname.len
+					&& strncmp(pt->tname.s, tname.s, tname.len)==0))
+		{
+			/* re-loading table from database */
+			if(mt_load_db(pt)!=0)
+			{
+				rpc->fault(c, 500, "Mtree Reload Failed");
+				return;
+			}
+			treeloaded = 1;
+		}
+		pt = pt->next;
+	}
+	if(treeloaded == 0) {
+		rpc->fault(c, 500, "Can not find specified Mtree");
+	}
+	rpc->rpl_printf(c, "Ok. Mtree reloaded.");
+	return;
 }
 
 static const char* rpc_mtree_reload_doc[2] = {
