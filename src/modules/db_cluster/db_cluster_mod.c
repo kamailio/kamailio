@@ -309,6 +309,7 @@ static void dbcl_rpc_enable_connection(rpc_t *rpc, void *c)
 	if(cls==NULL)
 	{   
 		LM_INFO("cluster not found [%.*s]\n", cluster.len, cluster.s);
+		rpc->fault(c, 500, "Cluster not found");
 		return;
 	}
 
@@ -317,11 +318,14 @@ static void dbcl_rpc_enable_connection(rpc_t *rpc, void *c)
 	if(con==NULL)
 	{   
 		LM_INFO("connection not found [%.*s]\n", connection.len, connection.s);
+		rpc->fault(c, 500, "Cluster connection not found");
 		return;
 	}
-
-	dbcl_enable_con(con);
-
+	if(dbcl_enable_con(con) < 0) {
+		rpc->fault(c, 500, "Failed to enable cluster connection.");
+		return;
+	}
+	rpc->rpl_printf(c, "Ok. Cluster connection enabled.");
 	return;
 }
 
