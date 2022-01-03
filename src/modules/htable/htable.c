@@ -1912,6 +1912,7 @@ static void htable_rpc_reload(rpc_t* rpc, void* c)
 	}
 	free(nht.entries);
 	ht_db_close_con();
+	rpc->rpl_printf(c, "Ok. Htable reloaded.");
 	return;
 }
 
