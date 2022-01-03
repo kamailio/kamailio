@@ -1872,7 +1872,7 @@ static void dispatcher_rpc_add(rpc_t *rpc, void *ctx)
 		rpc->fault(ctx, 500, "Adding dispatcher dst failed");
 		return;
 	}
-
+	rpc->rpl_printf(ctx, "Ok. Dispatcher destination added.");
 	return;
 }
 
