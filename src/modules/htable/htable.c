@@ -1809,7 +1809,11 @@ static void  htable_rpc_flush(rpc_t* rpc, void* c)
 		rpc->fault(c, 500, "No such htable");
 		return;
 	}
-	ht_reset_content(ht);
+	if(ht_reset_content(ht) < 0) {
+		rpc->fault(c, 500, "Htable flush failed.");
+		return;
+	}
+	rpc->rpl_printf(c, "Ok. Htable flushed.");
 }
 
 /*! \brief RPC htable.reload command to reload content of a hash table */
