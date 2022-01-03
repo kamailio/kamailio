@@ -526,11 +526,12 @@ static void matrix_rpc_reload(rpc_t* rpc, void* c)
 	if(db_reload_matrix() < 0) {
 		rpc->fault(c, 500, "Reload failed");
 	}
+	rpc->rpl_printf(c, "Ok. Reload successful.");
 	matrix_db_close();
 }
 
 static const char *matrix_rpc_reload_doc[2] = {
-	"reload matrix records from database",
+	"Reload matrix records from database",
 	0
 };
 
