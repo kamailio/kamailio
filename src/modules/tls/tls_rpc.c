@@ -87,7 +87,7 @@ static void tls_reload(rpc_t* rpc, void* ctx)
 	*tls_domains_cfg = cfg;
 
 	lock_release(tls_domains_cfg_lock);
-
+	rpc->rpl_printf(ctx, "Ok. TLS configuration reloaded.");
 	return;
 
  error:
