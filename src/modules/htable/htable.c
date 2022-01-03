@@ -1963,6 +1963,7 @@ static void htable_rpc_store(rpc_t* rpc, void* c)
 		return;
 	}
 	ht_db_close_con();
+	rpc->rpl_printf(c, "Ok. Htable successfully stored to DB.");
 	return;
 }
 
