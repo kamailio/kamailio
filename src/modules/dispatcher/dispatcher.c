@@ -1557,6 +1557,7 @@ static void dispatcher_rpc_reload(rpc_t *rpc, void *ctx)
 			return;
 		}
 	}
+	rpc->rpl_printf(ctx, "Ok. Dispatcher successfully reloaded.");
 	return;
 }
 
