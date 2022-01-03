@@ -442,6 +442,7 @@ void rpc_dmq_remove(rpc_t* rpc, void* ctx)
 		rpc->fault(ctx, 500, "Failure");
 		return;
 	}
+	rpc->rpl_printf(ctx, "Ok. DMQ node removed.");
 }
 
 static const char* rpc_dmq_remove_doc[3] = {
