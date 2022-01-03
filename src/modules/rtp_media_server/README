@@ -85,11 +85,9 @@ Chapter 1. Admin Guide
 
 1. Overview
 
-   rtp_media_server module is adding RTP and media processing
-   functionalities to Kamailio
-
-   Kamailio is providing SIP signaling including and enpoint with Dialog
-   state, SDP parsing and scripting language
+   rtp_media_server module adds RTP and media processing functionalities
+   to Kamailio. Kamailio is providing SIP signaling including an endpoint
+   with Dialog state, SDP parsing and scripting language.
 
    oRTP: is providing Real-time Transport Protocol (RFC 3550)
 
@@ -106,10 +104,11 @@ Chapter 1. Admin Guide
 
 2.1. Building on Debian, Dockerfile and docker image
 
-   The module includes Dockerfile that can also be use as a reference on
-   how to build everything from source on Debian, the of libmediastreamer
-   on Linux is usually outdated. A docker image is also available from
-   dockerhub https://hub.docker.com/r/jchavanton/rtp_media_server
+   The module includes Dockerfile that can also be used as a reference on
+   how to build everything from source on Debian, the package of
+   libmediastreamer on Linux is usually outdated. A Docker image is also
+   available from dockerhub
+   https://hub.docker.com/r/jchavanton/rtp_media_server
 
 3. Dependencies
 
@@ -118,9 +117,9 @@ Chapter 1. Admin Guide
 
 3.1. Kamailio Modules
 
-   The module depends on the following modules (in the other words the
-   listed modules must be loaded before this module):
-     * tm - accounting module
+   The module depends on the following modules (in other words the listed
+   modules must be loaded before this module):
+     * tm - transaction module
 
 3.2. External Libraries or Applications
 
@@ -129,7 +128,7 @@ Chapter 1. Admin Guide
 
    If you want to build oRTP and mediastreamer from source, you can use
    the provided script for Debian "install_bc.sh".
-     * oRTP git://git.linphone.org/ortp.git
+     * oRTP git clone git://git.linphone.org/ortp.git
        oRTP is a library implemeting Real-time Transport Protocol (RFC
        3550), distributed under GNU GPLv2 or proprietary license.
      * mediastreamer2 git clone git://git.linphone.org/mediastreamer2.git
@@ -167,7 +166,7 @@ modparam("rtp_media_server", "log_file_name", "/var/log/rms/rms_ortp.log")
 
 5.1. rms_answer (event_route)
 
-   Create a call leg : with a SIP dialog and an RTP session call the
+   Create a call leg with a SIP dialog and an RTP session call the
    event_route
 
    This function can be used from REQUEST_ROUTE, REPLY_ROUTE and
@@ -201,7 +200,7 @@ route {
 
 5.2. rms_hangup ()
 
-   Send a BYE, delete the RTP session and the media ressources.
+   Send a BYE, delete the RTP session and the media resources.
 
    This function can be used from EVENT_ROUTE.
 
@@ -245,7 +244,7 @@ e in-dialog request needs to be handled by it.
 5.4. rms_dialog_check ()
 
    Returns true if the current SIP message it handled/known by the RMS
-   module, else it may be handle in any other way by Kamailio.
+   module, else it may be handled in any other way by Kamailio.
 
    This function can be used from REQUEST_ROUTE, REPLY_ROUTE and
    FAILURE_ROUTE.
