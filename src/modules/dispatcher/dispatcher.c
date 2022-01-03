@@ -1897,7 +1897,7 @@ static void dispatcher_rpc_remove(rpc_t *rpc, void *ctx)
 		rpc->fault(ctx, 500, "Removing dispatcher dst failed");
 		return;
 	}
-
+	rpc->rpl_printf(ctx, "Ok. Dispatcher destination removed.");
 	return;
 }
 
