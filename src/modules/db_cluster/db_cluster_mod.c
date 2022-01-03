@@ -189,6 +189,7 @@ static void dbcl_rpc_list_connections(rpc_t *rpc, void *c)
 	if(cls==NULL)
 	{
 		LM_ERR("cluster not found [%.*s]\n", cluster.len, cluster.s);
+		rpc->fault(c, 500, "Cluster not found");
 		return;
 	}
 
