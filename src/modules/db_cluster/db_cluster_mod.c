@@ -339,6 +339,7 @@ static void dbcl_rpc_list_clusters(rpc_t *rpc, void *c)
 	if(cls==NULL)
 	{
 		LM_ERR("root not set\n");
+		rpc->fault(c, 500, "Clusters not found");
 		return;
 	}
 
