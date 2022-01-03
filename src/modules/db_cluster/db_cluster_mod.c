@@ -250,6 +250,7 @@ static void dbcl_rpc_disable_connection(rpc_t *rpc, void *c)
 	if(cls==NULL)
 	{
 		LM_INFO("cluster not found [%.*s]\n", cluster.len, cluster.s);
+		rpc->fault(c, 500, "Cluster not found");
 		return;
 	}
 
@@ -258,16 +259,22 @@ static void dbcl_rpc_disable_connection(rpc_t *rpc, void *c)
 	if(con==NULL)
 	{
 		LM_INFO("connection not found [%.*s]\n", connection.len, connection.s);
+		rpc->fault(c, 500, "Cluster connection not found");
 		return;
 	}
 
 	if(con->sinfo==NULL)
+		rpc->fault(c, 500, "Cluster state info missing.");
 		return;
 
 	/* Overwrite the number of seconds if the connection is already disabled. */
 	if (con->sinfo->state & DBCL_CON_INACTIVE)
 	{
-		dbcl_disable_con(con, seconds);
+		if(dbcl_disable_con(con, seconds) < 0) {
+			rpc->fault(c, 500, "Failed disabling cluster connection.");
+			return;
+		}
+		rpc->rpl_printf(c, "Ok. Cluster connection re-disabled.");
 		return;
 	}
 
@@ -277,8 +284,11 @@ static void dbcl_rpc_disable_connection(rpc_t *rpc, void *c)
 		return;
 	}
 
-	dbcl_disable_con(con, seconds);
-
+	if(dbcl_disable_con(con, seconds) < 0) {
+		rpc->fault(c, 500, "Failed disabling cluster connection.");
+		return;
+	};
+	rpc->rpl_printf(c, "Ok. Cluster connection disabled.");
 	return;
 }
 
