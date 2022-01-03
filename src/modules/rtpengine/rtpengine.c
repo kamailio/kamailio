@@ -1341,7 +1341,7 @@ static void rtpengine_rpc_reload(rpc_t* rpc, void* ctx)
 	LM_DBG("current rtpengines list version: %d (%u)\n",
 			_rtpe_list_version->vernum,
 			(unsigned int)_rtpe_list_version->vertime);
-	rpc->rpl_printf(c, "Ok. Reload successful.");
+	rpc->rpl_printf(ctx, "Ok. Reload successful.");
 }
 
 static int rtpengine_rpc_iterate(rpc_t* rpc, void* ctx, const str *rtpp_url,
