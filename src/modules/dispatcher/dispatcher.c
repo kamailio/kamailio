@@ -1775,7 +1775,7 @@ static void dispatcher_rpc_set_state_helper(rpc_t *rpc, void *ctx, int mattr)
 			}
 		}
 	}
-
+	rpc->rpl_printf(ctx, "Ok. Dispatcher state updated.");
 	return;
 }
 
