@@ -14,10 +14,9 @@
 <section>
 	<title>Overview</title>
 	<para>
-		rtp_media_server module is adding RTP and media processing functionalities to Kamailio
-	</para>
-	<para>
-		Kamailio is providing SIP signaling including and enpoint with Dialog state, SDP parsing and scripting language
+		rtp_media_server module adds RTP and media processing functionalities to Kamailio.
+		Kamailio is providing SIP signaling including an endpoint with Dialog state,
+		SDP parsing and scripting language.
 	</para><para>
 		oRTP: is providing Real-time Transport Protocol (RFC 3550)
 	</para><para>
@@ -33,10 +32,11 @@
 	<section>
 		<title>Building on Debian, Dockerfile and docker image</title>
 		<para>
-		The module includes Dockerfile that can also be use as a reference on how to build everything
-		from source on Debian, the of libmediastreamer on Linux is usually outdated.
+		The module includes Dockerfile that can also be used as a reference on how to build everything
+		from source on Debian, the package of libmediastreamer on Linux is usually outdated.
 		
-		A docker image is also available from dockerhub https://hub.docker.com/r/jchavanton/rtp_media_server
+		A Docker image is also available from dockerhub 
+		<ulink url="https://hub.docker.com/r/jchavanton/rtp_media_server">https://hub.docker.com/r/jchavanton/rtp_media_server</ulink>
 		</para>
 	</section>
 </section>
@@ -46,11 +46,11 @@
 	<section>
 		<title>&kamailio; Modules</title>
 		<para>
-		The module depends on the following modules (in the other words
+		The module depends on the following modules (in other words
 		the listed modules must be loaded before this module):
 		<itemizedlist>
 			<listitem>
-			<para><emphasis>tm</emphasis> - accounting module</para>
+			<para><emphasis>tm</emphasis> - transaction module</para>
 			</listitem>
 		</itemizedlist>
 		</para>
@@ -66,7 +66,7 @@
 		<itemizedlist>
 			<listitem>
 			<para>
-				<emphasis>oRTP</emphasis> git://git.linphone.org/ortp.git
+				<emphasis>oRTP</emphasis> git clone <ulink url="git://git.linphone.org/ortp.git">git://git.linphone.org/ortp.git</ulink>
 			</para>
 			<para>
 				oRTP is a library implemeting Real-time Transport Protocol (RFC 3550), distributed under GNU GPLv2 or proprietary license.
@@ -74,7 +74,8 @@
 			</listitem>
 			<listitem>
 			<para>
-				<emphasis>mediastreamer2</emphasis> git clone git://git.linphone.org/mediastreamer2.git
+				<emphasis>mediastreamer2</emphasis> git clone 
+				<ulink url="git://git.linphone.org/mediastreamer2.git">git://git.linphone.org/mediastreamer2.git</ulink>
 			</para>
 			<para>
 				Mediastreamer2 is a powerful and lightweight streaming engine specialized for voice/video telephony applications.
@@ -82,7 +83,8 @@
 			</listitem>
 			<listitem>
 			<para>
-				<emphasis>bcunit</emphasis> git clone https://github.com/BelledonneCommunications/bcunit.git
+				<emphasis>bcunit</emphasis> git clone
+				<ulink url="https://github.com/BelledonneCommunications/bcunit.git">https://github.com/BelledonneCommunications/bcunit.git</ulink>
 			</para>
 			<para>
 				fork of the defunct project CUnit, with several fixes and patches applied.
@@ -122,7 +124,7 @@ modparam("rtp_media_server", "log_file_name", "/var/log/rms/rms_ortp.log")
 	<section id="rtp_media_server.f.rms_answer">
 		<title><varname>rms_answer</varname> (event_route)</title>
 		<para>
-		Create a call leg : with a SIP dialog and an RTP session call the event_route
+		Create a call leg with a SIP dialog and an RTP session call the event_route
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, REPLY_ROUTE and FAILURE_ROUTE.
@@ -160,7 +162,7 @@ route {
 	<section id="rtp_media_server.f.rms_hangup">
 		<title><varname>rms_hangup</varname> ()</title>
 		<para>
-		Send a BYE, delete the RTP session and the media ressources.
+		Send a BYE, delete the RTP session and the media resources.
 		</para>
 		<para>
 		This function can be used from EVENT_ROUTE.
@@ -215,7 +217,7 @@ route {
 		<title><varname>rms_dialog_check</varname> ()</title>
 		<para>
 		Returns true if the current SIP message it handled/known by
-		the RMS module, else it may be handle in any other way by
+		the RMS module, else it may be handled in any other way by
 		Kamailio.
 		</para>
 		<para>
