@@ -937,6 +937,7 @@ void rpc_mtree_reload(rpc_t* rpc, void* c)
 		if(mt_load_db_trees()!=0)
 		{
 			rpc->fault(c, 500, "Can not reload Mtrees from database.");
+			LM_ERR("RPC failed: cannot reload mtrees from database\n");
 			return;
 		}
 		rpc->rpl_printf(c, "Ok. Mtrees reloaded.");
@@ -945,6 +946,7 @@ void rpc_mtree_reload(rpc_t* rpc, void* c)
 	if(!mt_defined_trees())
 	{
 		rpc->fault(c, 500, "No Mtrees defined.");
+		LM_ERR("RPC failed: No Mtrees defined\n");
 		return;
 	}
 
@@ -971,6 +973,7 @@ void rpc_mtree_reload(rpc_t* rpc, void* c)
 			if(mt_load_db(pt)!=0)
 			{
 				rpc->fault(c, 500, "Mtree Reload Failed");
+				LM_ERR("RPC failed: cannot reload mtrees from database\n");
 				return;
 			}
 			treeloaded = 1;
@@ -978,7 +981,7 @@ void rpc_mtree_reload(rpc_t* rpc, void* c)
 		pt = pt->next;
 	}
 	if(treeloaded == 0) {
-		rpc->fault(c, 500, "Can not find specified Mtree");
+		rpc->fault(c, 500, "Can not find specified Mtree");	
 	}
 	rpc->rpl_printf(c, "Ok. Mtree reloaded.");
 	return;
