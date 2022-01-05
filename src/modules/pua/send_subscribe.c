@@ -971,7 +971,7 @@ int send_subscribe(subs_info_t* subs)
 		subs->source_flag= XMPP_SUBSCRIBE;
 
 	if(subs->expires< 0)
-		expires= 3600;
+		expires= pua_default_expires;
 	else
 		expires= subs->expires;
 
