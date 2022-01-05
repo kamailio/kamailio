@@ -832,10 +832,23 @@ static int db_redis_scan_query_keys_pattern(km_redis_con_t *con, const str *matc
         goto err;
     }
 
-    reply = db_redis_command_argv(con, query_v);
-    db_redis_key_free(&query_v);
-    db_redis_check_reply(con, reply, err);
+#ifdef WITH_HIREDIS_CLUSTER
+nodeIterator niter;
+cluster_node *node;
+initNodeIterator(&niter, con->con);
+while ((node = nodeNext(&niter)) != NULL) {
+    if (node->role != REDIS_ROLE_MASTER)
+        continue;
+    reply = db_redis_command_argv_to_node(con, query_v, node);
+    if (!reply) {
+        LM_ERR("Invalid null reply from node %s\n", node->addr);
+        goto err;
+    }
 
+#else
+    reply = db_redis_command_argv(con, query_v);
+#endif
+    db_redis_check_reply(con, reply, err);
     keys_list = reply;
 
 #endif
@@ -880,6 +893,10 @@ static int db_redis_scan_query_keys_pattern(km_redis_con_t *con, const str *matc
     } while (cursor > 0);
 #endif
 
+#ifdef WITH_HIREDIS_CLUSTER
+    }
+#endif    
+
     // for full table scans, we have to manually match all given keys
     // but only do this once for repeated invocations
     if (!*manual_keys) {
@@ -898,6 +915,8 @@ static int db_redis_scan_query_keys_pattern(km_redis_con_t *con, const str *matc
     if (reply) {
         db_redis_free_reply(&reply);
     }
+    
+    db_redis_key_free(&query_v);
 
     LM_DBG("got %lu entries by scan\n", (unsigned long) i);
     return 0;
@@ -1636,6 +1655,10 @@ static int db_redis_perform_delete(const db1_con_t* _h, km_redis_con_t *con, con
     redis_key_t *type_key;
     redis_key_t *set_key;
 
+#ifdef WITH_HIREDIS_CLUSTER
+    long long scard;
+#endif
+
     if (!*keys_count && do_table_scan) {
         if (!ts_scan_start)
             LM_WARN("performing full table scan on table '%.*s' while performing delete\n",
@@ -1806,6 +1829,57 @@ static int db_redis_perform_delete(const db1_con_t* _h, km_redis_con_t *con, con
         for (type_key = type_keys, set_key = set_keys; type_key;
                 type_key = type_key->next, set_key = set_key->next) {
 
+#ifdef WITH_HIREDIS_CLUSTER
+            if (db_redis_key_add_string(&query_v, "SREM", 4) != 0) {
+                LM_ERR("Failed to add srem command to post-delete query\n");
+                goto error;
+            }
+            if (db_redis_key_add_str(&query_v, &type_key->key) != 0) {
+                LM_ERR("Failed to add key to delete query\n");
+                goto error;
+            }
+            if (db_redis_key_add_str(&query_v, key) != 0) {
+                LM_ERR("Failed to add key to delete query\n");
+                goto error;
+            }
+            reply = db_redis_command_argv(con, query_v);
+            db_redis_key_free(&query_v);
+            db_redis_check_reply(con, reply, error);
+            db_redis_free_reply(&reply);
+
+            if (db_redis_key_add_string(&query_v, "SCARD", 5) != 0) {
+                LM_ERR("Failed to add scard command to post-delete query\n");
+                goto error;
+            }
+            if (db_redis_key_add_str(&query_v, &type_key->key) != 0) {
+                LM_ERR("Failed to add key to delete query\n");
+                goto error;
+            }
+            reply = db_redis_command_argv(con, query_v);
+            db_redis_key_free(&query_v);
+            db_redis_check_reply(con, reply, error);
+            scard = reply->integer;
+            db_redis_free_reply(&reply);
+
+            if (scard != 0)
+                continue;
+            
+            if (db_redis_key_add_string(&query_v, "SREM", 4) != 0) {
+                LM_ERR("Failed to add srem command to post-delete query\n");
+                goto error;
+            }
+            if (db_redis_key_add_str(&query_v, &set_key->key) != 0) {
+                LM_ERR("Failed to add key to delete query\n");
+                goto error;
+            }
+            if (db_redis_key_add_str(&query_v, &type_key->key) != 0) {
+                LM_ERR("Failed to add key to delete query\n");
+                goto error;
+            }
+            reply = db_redis_command_argv(con, query_v);
+            db_redis_key_free(&query_v);
+            db_redis_check_reply(con, reply, error);
+#else
             if (db_redis_key_add_string(&query_v, "EVALSHA", 7) != 0) {
                 LM_ERR("Failed to add srem command to post-delete query\n");
                 goto error;
@@ -1834,6 +1908,7 @@ static int db_redis_perform_delete(const db1_con_t* _h, km_redis_con_t *con, con
             db_redis_key_free(&query_v);
             db_redis_check_reply(con, reply, error);
             db_redis_free_reply(&reply);
+#endif
         }
         LM_DBG("done with loop '%.*s'\n", k->key.len, k->key.s);
         db_redis_key_free(&type_keys);
@@ -1883,6 +1958,9 @@ static int db_redis_perform_update(const db1_con_t* _h, km_redis_con_t *con, con
     redis_key_t *new_type_keys = NULL;
     int new_type_keys_count = 0;
     redis_key_t *all_type_key;
+#ifdef WITH_HIREDIS_CLUSTER
+    long long scard;
+#endif
 
     if (!(*keys_count) && do_table_scan) {
         LM_WARN("performing full table scan on table '%.*s' while performing update\n",
@@ -2194,6 +2272,58 @@ static int db_redis_perform_update(const db1_con_t* _h, km_redis_con_t *con, con
 
                 db_redis_key_free(&query_v);
 
+#ifdef WITH_HIREDIS_CLUSTER
+                if (db_redis_key_add_string(&query_v, "SREM", 4) != 0) {
+                    LM_ERR("Failed to add srem command to post-delete query\n");
+                    goto error;
+                }
+                if (db_redis_key_add_str(&query_v, &type_key->key) != 0) {
+                    LM_ERR("Failed to add key to delete query\n");
+                    goto error;
+                }
+                if (db_redis_key_add_str(&query_v, key) != 0) {
+                    LM_ERR("Failed to add key to delete query\n");
+                    goto error;
+                }
+                reply = db_redis_command_argv(con, query_v);
+                db_redis_key_free(&query_v);
+                db_redis_check_reply(con, reply, error);
+                db_redis_free_reply(&reply);
+
+                if (db_redis_key_add_string(&query_v, "SCARD", 5) != 0) {
+                    LM_ERR("Failed to add scard command to post-delete query\n");
+                    goto error;
+                }
+                if (db_redis_key_add_str(&query_v, &type_key->key) != 0) {
+                    LM_ERR("Failed to add key to delete query\n");
+                    goto error;
+                }
+                reply = db_redis_command_argv(con, query_v);
+                db_redis_key_free(&query_v);
+                db_redis_check_reply(con, reply, error);
+                scard = reply->integer;
+                db_redis_free_reply(&reply);
+
+                if (scard != 0)
+                    continue;
+                
+                if (db_redis_key_add_string(&query_v, "SREM", 4) != 0) {
+                    LM_ERR("Failed to add srem command to post-delete query\n");
+                    goto error;
+                }
+                if (db_redis_key_add_str(&query_v, &set_key->key) != 0) {
+                    LM_ERR("Failed to add key to delete query\n");
+                    goto error;
+                }
+                if (db_redis_key_add_str(&query_v, &type_key->key) != 0) {
+                    LM_ERR("Failed to add key to delete query\n");
+                    goto error;
+                }
+                reply = db_redis_command_argv(con, query_v);
+                db_redis_key_free(&query_v);
+                db_redis_check_reply(con, reply, error);
+                update_queries++;
+#else
                 if (db_redis_key_add_string(&query_v, "EVAL", 4) != 0) {
                     LM_ERR("Failed to add srem command to post-delete query\n");
                     goto error;
@@ -2226,6 +2356,7 @@ static int db_redis_perform_update(const db1_con_t* _h, km_redis_con_t *con, con
                 }
 
                 db_redis_key_free(&query_v);
+#endif
             }
         }
 
