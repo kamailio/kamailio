@@ -263,9 +263,10 @@ static void dbcl_rpc_disable_connection(rpc_t *rpc, void *c)
 		return;
 	}
 
-	if(con->sinfo==NULL)
+	if(con->sinfo==NULL) {
 		rpc->fault(c, 500, "Cluster state info missing.");
 		return;
+	}
 
 	/* Overwrite the number of seconds if the connection is already disabled. */
 	if (con->sinfo->state & DBCL_CON_INACTIVE)
