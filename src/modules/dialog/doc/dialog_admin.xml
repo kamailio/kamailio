@@ -2500,12 +2500,16 @@ dlg_reset_property("timeout-noreset");
 				<emphasis>mkey</emphasis> - matching key. It can be: 'ruri' -
 				match against R-URI of the dialog; 'furi' - match against From
 				header URI of the dialog; 'turi' - match against the To header
-				URI of the dialog; 'callid' - match against Call-Id value.
+				URI of the dialog; 'callid' - match against Call-Id value;
+				'start_ts' - match against start timestamp.
 			</para></listitem>
 			<listitem><para>
 				<emphasis>mop</emphasis> - matching operator. It can be: 'eq' -
 				match using string comparison; 're' - match using regular
-				expression; 'sw' - match using starts-with (prefix) comparison.
+				expression; 'sw' - match using starts-with (prefix) comparison;
+				'gt' - match using integer greater comparison; 'lt' - match
+				using integer lesser comparison. Integer comparison can be used
+				only with 'start_ts' key.
 			</para></listitem>
 			<listitem><para>
 				<emphasis>mval</emphasis> - matching value.
@@ -2517,6 +2521,8 @@ dlg_reset_property("timeout-noreset");
 &kamcmd; dlg.list_match furi eq sip:alice@test.com 2
 ...
 &kamcmd; dlg.list_match furi sw sip:alice@
+...
+&kamcmd; dlg.list_match start_ts gt s:1641550904
 ...
 		</programlisting>
 		</section>
