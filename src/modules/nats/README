@@ -14,9 +14,9 @@ Emmanuel Schmidbauer
 
    <eschmidbauer@gmail.com>
 
-   Copyright � 2021 Voxcom Inc
+   Copyright © 2021 Voxcom Inc
 
-   Copyright � 2021 VOXO
+   Copyright © 2021 VOXO
      __________________________________________________________________
 
    Table of Contents
@@ -33,17 +33,24 @@ Emmanuel Schmidbauer
         4. Parameters
 
               4.1. nats_url (str)
-              4.2. subject_queue_group (str)
+              4.2. num_publish_workers (int)
+              4.3. subject_queue_group (str)
 
-        5. Pseudo Variables
-        6. Event Routes
+        5. Functions
+
+              5.1. nats_publish(subject, payload)
+
+        6. Pseudo Variables
+        7. Event Routes
 
    List of Examples
 
    1.1. Set nats_url parameter
-   1.2. Set subject_queue_group parameter
-   1.3. Example usage of $natsData pseudo variable
-   1.4. Define the event routes
+   1.2. Set num_publish_workers parameter
+   1.3. Set subject_queue_group parameter
+   1.4. nats_publish usage
+   1.5. Example usage of $natsData pseudo variable
+   1.6. Define the event routes
 
 Chapter 1. Admin Guide
 
@@ -59,10 +66,15 @@ Chapter 1. Admin Guide
    4. Parameters
 
         4.1. nats_url (str)
-        4.2. subject_queue_group (str)
+        4.2. num_publish_workers (int)
+        4.3. subject_queue_group (str)
 
-   5. Pseudo Variables
-   6. Event Routes
+   5. Functions
+
+        5.1. nats_publish(subject, payload)
+
+   6. Pseudo Variables
+   7. Event Routes
 
 1. Overview
 
@@ -101,9 +113,10 @@ Chapter 1. Admin Guide
 4. Parameters
 
    4.1. nats_url (str)
-   4.2. subject_queue_group (str)
+   4.2. num_publish_workers (int)
+   4.3. subject_queue_group (str)
 
-4.1. nats_url (str)
+4.1.  nats_url (str)
 
    The nats url.
 
@@ -111,14 +124,27 @@ Chapter 1. Admin Guide
 
    Default value is nats://127.0.0.1:4222
 
-   Example 1.1. Set nats_url parameter
+   Example 1.1.  Set nats_url parameter
 ...
 modparam("nats", "nats_url", "nats://127.0.0.1:4222")
 modparam("nats", "nats_url", "nats://user1:pass1127.0.1.2:4222") // with auth
 modparam("nats", "nats_url", "nats://127.1.2.3:4222")
 ...
 
-4.2. subject_queue_group (str)
+4.2.  num_publish_workers (int)
+
+   The number of worker threads for publishing messages.
+
+   Usage: nats related.
+
+   Default value is “2”.
+
+   Example 1.2.  Set num_publish_workers parameter
+...
+modparam("nats", "num_publish_workers", 4)
+...
+
+4.3.  subject_queue_group (str)
 
    The NATS Subject and Queue Group. Separated by ":"
 
@@ -126,7 +152,7 @@ modparam("nats", "nats_url", "nats://127.1.2.3:4222")
 
    Default value is not set.
 
-   Example 1.2. Set subject_queue_group parameter
+   Example 1.3.  Set subject_queue_group parameter
 ...
 modparam("nats", "subject_queue_group", "Kamailio-World:2020")
 modparam("nats", "subject_queue_group", "Kamailio-World:2021") // this will crea
@@ -135,22 +161,37 @@ modparam("nats", "subject_queue_group", "MyQueue1:2021")
 modparam("nats", "subject_queue_group", "MyQueue2:2021")
 ...
 
-5. Pseudo Variables
+5. Functions
 
-   Example 1.3. Example usage of $natsData pseudo variable
+   5.1. nats_publish(subject, payload)
+
+5.1.  nats_publish(subject, payload)
+
+   Publishes the payload to subject.
+
+   Example 1.4.  nats_publish usage
+...
+$var(my_info) = "$ci=" + $ci + " $fU=" + $fU;
+nats_publish("mysubject", "$var(my_info)"); # publish $var(my_info) to "mysubjec
+t"
+...
+
+6. Pseudo Variables
+
+   Example 1.5. Example usage of $natsData pseudo variable
         ...
         xlog("L_INFO", "received payload $natsData");
 }
 
      * $natsData Contains the payload of a consumed message
 
-6. Event Routes
+7. Event Routes
 
    The worker process issues an event-route where we can act on the
    received payload. The name of the event-route name must match the
    subject of the message.
 
-   Example 1.4. Define the event routes
+   Example 1.6. Define the event routes
 ...
 modparam("nats", "subject_queue_group", "Kamailio-World:2021")
 modparam("nats", "subject_queue_group", "MyQueue1:2021")
