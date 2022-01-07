@@ -2932,6 +2932,8 @@ static void rpc_dlg_list_match_ex(rpc_t *rpc, void *c, int with_context)
 	str mop = {NULL, 0};
 	str mval = {NULL, 0};
 	str sval = {NULL, 0};
+	unsigned int ival = 0;
+	unsigned int mival = 0;
 	int n = 0;
 	int m = 0;
 	int vkey = 0;
@@ -2960,6 +2962,8 @@ static void rpc_dlg_list_match_ex(rpc_t *rpc, void *c, int with_context)
 		vkey = 2;
 	} else if(mkey.len==6 && strncmp(mkey.s, "callid", mkey.len)==0) {
 		vkey = 3;
+	} else if(mkey.len==8 && strncmp(mkey.s, "start_ts", mkey.len)==0) {
+		vkey = 4;
 	} else {
 		LM_ERR("invalid key %.*s\n", mkey.len, mkey.s);
 		rpc->fault(c, 500, "Invalid matching key parameter");
@@ -2983,6 +2987,10 @@ static void rpc_dlg_list_match_ex(rpc_t *rpc, void *c, int with_context)
 		}
 	} else if(strncmp(mop.s, "sw", 2)==0) {
 		vop = 2;
+	} else if(strncmp(mop.s, "gt", 2)==0) {
+		vop = 3;
+	} else if(strncmp(mop.s, "lt", 2)==0) {
+		vop = 4;
 	} else {
 		LM_ERR("invalid matching operator %.*s\n", mop.len, mop.s);
 		rpc->fault(c, 500, "Invalid matching operator parameter");
@@ -2990,6 +2998,18 @@ static void rpc_dlg_list_match_ex(rpc_t *rpc, void *c, int with_context)
 	}
 	if(rpc->scan(c, "*d", &n)<1) {
 		n = 0;
+	}
+
+	if (vkey == 4  && vop <= 2) {
+		LM_ERR("Matching operator %.*s not supported with start_ts key\n", mop.len, mop.s);
+		rpc->fault(c, 500, "Matching operator not supported with start_ts key");
+		return;
+	}
+
+	if (vkey != 4  && vop >= 3) {
+		LM_ERR("Matching operator %.*s not supported with key %.*s\n", mop.len, mop.s, mkey.len, mkey.s);
+		rpc->fault(c, 500, "Matching operator not supported");
+		return;
 	}
 
 	for(i=0; i<d_table->size; i++) {
@@ -3008,6 +3028,9 @@ static void rpc_dlg_list_match_ex(rpc_t *rpc, void *c, int with_context)
 				break;
 				case 3:
 					sval = dlg->callid;
+				break;
+				case 4:
+					ival = dlg->start_ts;
 				break;
 			}
 			switch(vop) {
@@ -3028,6 +3051,17 @@ static void rpc_dlg_list_match_ex(rpc_t *rpc, void *c, int with_context)
 					/* starts with */
 					if(mval.len<=sval.len
 							&& strncmp(mval.s, sval.s, mval.len)==0) {
+						matched = 1;
+					}
+				break;
+				case 3:		
+					/* greater than */
+					if (str2int(&mval, &mival) == 0 && ival > mival) {
+						matched = 1;
+					}
+				break;
+				case 4:
+					if (str2int(&mval, &mival) == 0 && ival < mival) {
 						matched = 1;
 					}
 				break;
