@@ -45,7 +45,7 @@
 #include "../../core/dprint.h"
 #include "../../core/rpc_lookup.h"
 #include "../../core/timer_proc.h"
-#include "../../core/globals.h"   /* is_main */
+#include "../../core/globals.h"
 #include "../../core/ut.h"        /* str_init */
 #include "udomain.h"         /* {insert,delete,get,release}_urecord */
 #include "urecord.h"         /* {insert,delete,get}_ucontact */
