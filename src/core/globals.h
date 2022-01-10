@@ -159,7 +159,7 @@ extern char *avp_db_url;  /* db url used by user preferences (AVPs) */
 
 extern int reply_to_via;
 
-extern int is_main;
+extern int _ksr_is_main;
 extern int fixup_complete;
 
 /* debugging level for dumping memory status */

@@ -262,7 +262,7 @@ int fork_process(int child_id, char *desc, int make_sock)
 	#ifdef USE_TCP
 		sockfd[0]=sockfd[1]=-1;
 		if(make_sock && !tcp_disable){
-			if (!is_main){
+			if (!_ksr_is_main){
 				LM_CRIT("called from a non "
 						"\"main\" process! If forking from a module's "
 						"child_init() fork only if rank==PROC_MAIN or"
@@ -297,7 +297,7 @@ int fork_process(int child_id, char *desc, int make_sock)
 		goto error;
 	}else if (pid==0){
 		/* child */
-		is_main=0; /* a forked process cannot be the "main" one */
+		_ksr_is_main=0; /* a forked process cannot be the "main" one */
 		process_no=child_process_no;
 		daemon_status_on_fork_cleanup();
 		/* close tcp unix sockets if this is not tcp main */
@@ -401,8 +401,8 @@ int fork_tcp_process(int child_id, char *desc, int r, int *reader_fd_1)
 	reader_fd[0]=reader_fd[1]=-1;
 	ret=-1;
 
-	if (!is_main){
-		LM_CRIT("called from a non \"main\" process\n");
+	if (!_ksr_is_main){
+		LM_CRIT("called from a non \"main\" process (%d)\n", _ksr_is_main);
 		goto error;
 	}
 	if (tcp_main_pid){
@@ -441,7 +441,7 @@ int fork_tcp_process(int child_id, char *desc, int r, int *reader_fd_1)
 		goto end;
 	}
 	if (pid==0){
-		is_main=0; /* a forked process cannot be the "main" one */
+		_ksr_is_main=0; /* a forked process cannot be the "main" one */
 		process_no=child_process_no;
 		/* close unneeded unix sockets */
 		close_extra_socks(child_id, process_no);
