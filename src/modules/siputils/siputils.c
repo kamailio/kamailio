@@ -34,12 +34,6 @@
  *  This module implement various functions and checks related to
  *  SIP message handling and URI handling.
  *
- *  It offers some functions related to handle ringing. In a
- *  parallel forking scenario you get several 183s with SDP. You
- *  don't want that your customers hear more than one ringtone or
- *  answer machine in parallel on the phone. So its necessary to
- *  drop the 183 in this cases and send a 180 instead.
- *
  *  This module provides a function to answer OPTIONS requests
  *  which are directed to the server itself. This means an OPTIONS
  *  request which has the address of the server in the request
@@ -68,7 +62,6 @@
 #include "../../core/parser/parse_uri.h"
 #include "../../core/parser/parse_date.h"
 
-#include "ring.h"
 #include "options.h"
 
 #include "checks.h"
@@ -96,8 +89,6 @@ str rpid_suffix = {DEF_RPID_SUFFIX, sizeof(DEF_RPID_SUFFIX) - 1};
 /*! Definition of AVP containing rpid value */
 char* rpid_avp_param = DEF_RPID_AVP;
 
-gen_lock_t *ring_lock = NULL;
-unsigned int ring_timeout = 0;
 /* for options functionality */
 str opt_accept = str_init(ACPT_DEF);
 str opt_accept_enc = str_init(ACPT_ENC_DEF);
@@ -128,8 +119,6 @@ static int fixup_option(void** param, int param_no);
 char *contact_flds_separator = DEFAULT_SEPARATOR;
 
 static cmd_export_t cmds[]={
-	{"ring_insert_callid", (cmd_function)ring_insert_callid, 0, ring_fixup,
-		0, REQUEST_ROUTE|FAILURE_ROUTE},
 	{"options_reply",      (cmd_function)opt_reply,         0, 0,
 		0, REQUEST_ROUTE},
 	{"is_user",            (cmd_function)is_user,           1, fixup_spve_null,
@@ -220,7 +209,6 @@ static cmd_export_t cmds[]={
 };
 
 static param_export_t params[] = {
-	{"ring_timeout",            INT_PARAM, &default_siputils_cfg.ring_timeout},
 	{"options_accept",          PARAM_STR, &opt_accept},
 	{"options_accept_encoding", PARAM_STR, &opt_accept_enc},
 	{"options_accept_language", PARAM_STR, &opt_accept_lang},
@@ -256,21 +244,6 @@ struct module_exports exports= {
 
 static int mod_init(void)
 {
-	if(default_siputils_cfg.ring_timeout > 0) {
-		ring_init_hashtable();
-
-		ring_lock = lock_alloc();
-		assert(ring_lock);
-		if (lock_init(ring_lock) == 0) {
-			LM_CRIT("cannot initialize lock.\n");
-			return -1;
-		}
-		if (register_script_cb(ring_filter, PRE_SCRIPT_CB|ONREPLY_CB, 0) != 0) {
-			LM_ERR("could not insert callback");
-			return -1;
-		}
-	}
-
 	/* bind the SL API */
 	if (sl_load_api(&opt_slb)!=0) {
 		LM_ERR("cannot bind to SL API\n");
@@ -293,13 +266,7 @@ static int mod_init(void)
 
 static void mod_destroy(void)
 {
-	if (ring_lock) {
-		lock_destroy(ring_lock);
-		lock_dealloc((void *)ring_lock);
-		ring_lock = NULL;
-	}
 
-	ring_destroy_hashtable();
 }
 
 

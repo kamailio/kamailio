@@ -20,12 +20,6 @@
 	handling and URI handling.
 	</para>
 	<para>
-	It offers some functions related to handle ringing. In a parallel forking
-	scenario you get several 183s with SDP. You don't want that your customers
-	hear more than one ringtone or answer machine in parallel on the phone.
-	So its necessary to drop the 183 in this cases and send a 180 instead.
-	</para>
-	<para>
 	This module also provides a function to answer OPTIONS requests which
 	are directed to the server itself. This means an OPTIONS request
 	which has the address of the server in the request URI, and no
@@ -72,26 +66,6 @@
 
 	<section>
 		<title>Parameters</title>
-		<section id="siputils.p.ring_timeout">
-			<title><varname>ring_timeout</varname> (int)</title>
-			<para>
-			Timeout value in seconds, define how long the call-id is stored in the internal list kept for replacing 183 messages  with 180.
-			A reasonable value is <quote>30</quote>.
-			</para>
-			<para>
-			<emphasis>
-				Default value is <quote>0</quote>. This means functionality is disabled.
-			</emphasis>
-			</para>
-			<example>
-			<title>Set <varname>ring_timeout</varname> parameter</title>
-				<programlisting format="linespecific">
-...
-modparam("siputils", "ring_timeout", 30)
-...
-				</programlisting>
-			</example>
-		</section>
 		<section id="siputils.p.options_accept">
 		<title><varname>options_accept</varname> (string)</title>
 		<para>
@@ -274,38 +248,6 @@ modparam("auth", "rpid_avp", "$avp(myrpid)")
 
 	<section>
 	<title>Functions</title>
-		<section id="siputils.f.ring_insert_callid">
-			<title>
-				<function moreinfo="none">ring_insert_callid()</function>
-			</title>
-			<para>
-			Inserting the call-id in the internal list, which is checked when
-			further replies arrive. Any 183 reply that is received during the
-			timeout value will be converted to a 180 message with removed SDP body.
-			Please note that you need to set a positive ring_timeout value in order
-			to use this function.
-			</para>
-			<para>
-			Note: the change of sip reply can be done only in cases when it is not
-			parsed too much before config execution, otherwise it fails. For
-			example, setting global parameter "log_prefix" can cause this function
-			to fail changing the replies.
-			</para>
-			<para>
-			The function returns TRUE on success, and FALSE during processing failures.
-			</para>
-			<para>
-			This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
-			</para>
-			<example>
-				<title><function>ring_insert_callid()</function> usage</title>
-				<programlisting format="linespecific">
-...
-ring_insert_callid();
-...
-				</programlisting>
-			</example>
-	</section>
 	<section id="siputils.f.options_reply">
 		<title>
 		<function moreinfo="none">options_reply()</function>
