@@ -40,7 +40,7 @@ static gen_lock_t *_dbt_cachesem = NULL;
 
 static dbt_tbl_cachel_p _dbt_cachetbl = NULL;
 
-extern int is_main;
+extern int _ksr_is_main;
 
 #define DBT_CACHETBL_SIZE	16
 
@@ -267,7 +267,7 @@ dbt_table_p dbt_db_get_table(dbt_cache_p _dc, const str *_s)
 	hash = core_hash(&_dc->name, _s, DBT_CACHETBL_SIZE);
 	hashidx = hash % DBT_CACHETBL_SIZE;
 
-	if(!is_main)
+	if(!_ksr_is_main)
 	lock_get(&_dbt_cachetbl[hashidx].sem);
 
 	_tbc = _dbt_cachetbl[hashidx].dtp;
@@ -429,8 +429,8 @@ int dbt_cache_print2(int _f, int _lock)
 
 int dbt_cache_print(int _f)
 {
-	return dbt_cache_print2(_f, !is_main);
-}	
+	return dbt_cache_print2(_f, !_ksr_is_main);
+}
 
 int dbt_is_neq_type(db_type_t _t0, db_type_t _t1)
 {
