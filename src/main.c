@@ -508,7 +508,7 @@ extern FILE* yyin;
 extern int yyparse(void);
 
 
-int is_main=1; /* flag = is this the  "main" process? */
+int _ksr_is_main=1; /* flag = is this the  "main" process? */
 int fixup_complete=0; /* flag = is the fixup complete ? */
 
 char* pid_file = 0; /* filename as asked by use */
@@ -649,7 +649,7 @@ static void kill_all_children(int signum)
 		  * (only main can add processes, so from main is safe not to lock
 		  *  and moreover it avoids the lock-holding suicidal children problem)
 		  */
-		if (!is_main) lock_get(process_lock);
+		if (!_ksr_is_main) lock_get(process_lock);
 		for (r=1; r<*process_count; r++){
 			if (r==process_no) continue; /* try not to be suicidal */
 			if (pt[r].pid) {
@@ -658,7 +658,7 @@ static void kill_all_children(int signum)
 			else LM_CRIT("killing: %s > %d no pid!!!\n",
 							pt[r].desc, pt[r].pid);
 		}
-		if (!is_main) lock_release(process_lock);
+		if (!_ksr_is_main) lock_release(process_lock);
 	}
 }
 
@@ -832,7 +832,7 @@ void sig_usr(int signo)
 #endif
 #endif
 
-	if (is_main){
+	if (_ksr_is_main){
 		if (sig_flag==0) sig_flag=signo;
 		else /*  previous sig. not processed yet, ignoring? */
 			return; ;
@@ -3070,7 +3070,7 @@ try_again:
 	if (ret < 0)
 		goto error;
 	/*kill everything*/
-	if (is_main) shutdown_children(SIGTERM, 0);
+	if (_ksr_is_main) shutdown_children(SIGTERM, 0);
 	if (!dont_daemonize) {
 		if (daemon_status_send(0) < 0)
 			fprintf(stderr, "error sending exit status: %s [%d]\n",
@@ -3081,7 +3081,7 @@ try_again:
 
 error:
 	/*kill everything*/
-	if (is_main) shutdown_children(SIGTERM, 0);
+	if (_ksr_is_main) shutdown_children(SIGTERM, 0);
 	if (!dont_daemonize) {
 		if (daemon_status_send((char)-1) < 0)
 			fprintf(stderr, "error sending exit status: %s [%d]\n",
