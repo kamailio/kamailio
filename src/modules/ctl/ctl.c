@@ -332,7 +332,7 @@ static int mod_child(int rank)
 			goto error;
 		}
 		if (pid == 0){ /* child */
-			is_main=0;
+			_ksr_is_main=0;
 			DBG("ctl: %d io_listen_loop(%d, %p)\n",
 					rank, fd_no, ctrl_sock_lst);
 			io_listen_loop(fd_no, ctrl_sock_lst);
