@@ -47,7 +47,7 @@
 #include "../../core/dprint.h"
 #include "../../core/rpc_lookup.h"
 #include "../../core/timer.h"     /* register_timer */
-#include "../../core/globals.h"   /* is_main */
+#include "../../core/globals.h"
 #include "../../core/ut.h"        /* str_init */
 #include "dlist.h"           /* register_udomain */
 #include "udomain.h"         /* {insert,delete,get,release}_urecord */
