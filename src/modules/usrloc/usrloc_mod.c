@@ -46,7 +46,7 @@
 #include "../../core/rpc_lookup.h"
 #include "../../core/timer.h"     /* register_timer */
 #include "../../core/timer_proc.h" /* register_sync_timer */
-#include "../../core/globals.h"   /* is_main */
+#include "../../core/globals.h"
 #include "../../core/ut.h"        /* str_init */
 #include "../../core/utils/sruid.h"
 #include "dlist.h"           /* register_udomain */
