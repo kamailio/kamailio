@@ -505,7 +505,7 @@ int ops_dbstore_avps (struct sip_msg* msg, struct fis_param *sp,
 	avp_list_t avp_list;
 	struct usr_avp   *avp;
 	unsigned short   name_type;
-	int_str          avp_name;
+	int_str          avp_name = {0};
 	int_str          i_s;
 	str              uuid;
 	int              keys_nr;
