@@ -87,7 +87,7 @@ dbt_table_p dbt_load_file(const str *tbn, const str *dbn)
 	char path[512];
 	char *buf;
 	int c, crow, ccol, bp, sign, max_auto;
-	dbt_val_t dtval;
+	dbt_val_t dtval = {0};
 	dbt_table_p dtp = NULL;
 	dbt_column_p colp, colp0 = NULL;
 	dbt_row_p rowp, rowp0 = NULL;
