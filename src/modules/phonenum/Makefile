@@ -5,13 +5,11 @@ include ../../Makefile.defs
 auto_gen=
 NAME=phonenum.so
 
-CXX=g++
-LD=g++
-LIB_DIR = /opt/local/lib
+CXX?=g++
+LD?=g++
 
-LIBS= -L${LIB_DIR} cphonenumber.o -lphonenumber -lgeocoding
-
-DEFS+= -I/opt/local/include
+LIBS+=-L$(LOCALBASE)/lib cphonenumber.o -lphonenumber -lgeocoding
+DEFS+=-I$(LOCALBASE)/include
 
 CXXFLAGS=$(CFLAGS:-Wno-deprecated option=)
 CXXFLAGS+=-Wno-write-strings -Wno-deprecated -Wno-unused-function -Wno-sign-compare -Wno-strict-aliasing
