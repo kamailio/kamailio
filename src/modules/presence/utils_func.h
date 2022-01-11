@@ -137,7 +137,7 @@ static inline int ps_fill_local_contact(struct sip_msg *msg, str *contact)
 		contact->len += 1;
 		p += 1;
 	}
-	strncpy(p, ip.s, ip.len);
+	memcpy(p, ip.s, ip.len);
 	contact->len += ip.len;
 	p += ip.len;
 	if(msg->rcv.bind_address->address.af == AF_INET6) {
@@ -145,7 +145,7 @@ static inline int ps_fill_local_contact(struct sip_msg *msg, str *contact)
 		contact->len += 1;
 		p += 1;
 	}
-	if(contact->len > LCONTACT_BUF_SIZE - 21) {
+	if(contact->len > LCONTACT_BUF_SIZE - 22) {
 		LM_ERR("buffer overflow\n");
 		goto error;
 	}
@@ -156,8 +156,9 @@ static inline int ps_fill_local_contact(struct sip_msg *msg, str *contact)
 	}
 	contact->len += len;
 	p += len;
-	strncpy(p, proto, plen);
+	memcpy(p, proto, plen);
 	contact->len += plen;
+	contact->s[contact->len] = '\0';
 
 	return 0;
 error:
