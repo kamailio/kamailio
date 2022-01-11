@@ -2900,6 +2900,8 @@ static int ki_next_gw(sip_msg_t *_m)
 	struct ip_addr addr;
 
 	tag_str.s = &(tag[0]);
+	r_uri[0] = '\0';
+	dst_uri[0] = '\0';
 
 	ru_avp = search_first_avp(
 			ruri_user_avp_type, ruri_user_avp, &ruri_user_val, 0);
