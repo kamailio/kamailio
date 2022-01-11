@@ -39,7 +39,8 @@ endif
 LIBS+= $(TLS_EXTRA_LIBS)
 
 ifeq ($(EMBEDDED_UTF8_DECODE),0)
-	LIBS+= -lunistring
+	DEFS += -I$(LOCALBASE)/include
+	LIBS += -lunistring
 else
 	DEFS += -DEMBEDDED_UTF8_DECODE
 endif
