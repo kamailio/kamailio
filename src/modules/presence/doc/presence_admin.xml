@@ -1229,7 +1229,7 @@ pres_refresh_watchers("sip:test@kamailio.org", "presence", 1);
 		</example>
 	</section>
 
-	<section id="presence.f.pres_update_whatchers">
+	<section id="presence.f.pres_update_watchers">
 		<title>
 		<function moreinfo="none">pres_update_watchers(uri, event)</function>
 		</title>
