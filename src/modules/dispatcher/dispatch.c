@@ -1169,7 +1169,7 @@ unsigned int ds_get_hash(str *x, str *y)
 	if(!x && !y)
 		return 0;
 	h = 0;
-	if(x) {
+	if(x && x->s) {
 		p = x->s;
 		if(x->len >= 4) {
 			for(; p <= (x->s + x->len - 4); p += 4) {
@@ -1184,7 +1184,7 @@ unsigned int ds_get_hash(str *x, str *y)
 		}
 		h += v ^ (v >> 3);
 	}
-	if(y) {
+	if(y && y->s) {
 		p = y->s;
 		if(y->len >= 4) {
 			for(; p <= (y->s + y->len - 4); p += 4) {
