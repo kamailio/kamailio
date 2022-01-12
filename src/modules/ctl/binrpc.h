@@ -205,6 +205,31 @@ inline static int binrpc_add_tag(struct binrpc_pkt* pkt, int type, int end)
 
 
 
+/*  writes a minimal long long, returns the new offset and sets
+ * len to the number of bytes written (<=8)
+ * to check for oveflow use:  returned_value-p != *len
+ * (Note: if *len==0 using the test above succeeds even if p>=end)
+ */
+inline static unsigned char* binrpc_write_llong(	unsigned char* p,
+												unsigned char* end,
+												long long i, int *len)
+{
+	int size;
+	unsigned long long u;
+
+	u = (unsigned long long)i;
+
+	for (size=8; size && ((u & (0xffull<<56))==0); u<<=8, size--);
+	*len=size;
+	for(; (p<end) && (size); p++, size--){
+		*p=(unsigned char)(u>>56);
+		u<<=8;
+	}
+	return p;
+}
+
+
+
 /*  writes a minimal int, returns the new offset and sets
  * len to the number of bytes written (<=4)
  * to check for oveflow use:  returned_value-p != *len
@@ -330,6 +355,23 @@ inline static int binrpc_hdr_change_len(unsigned char* hdr, int hdr_len,
 }
 
 
+/* int format:     size TYPE <val>  */
+inline static int binrpc_add_llong_type(struct binrpc_pkt* pkt, long long i, int type)
+{
+
+	unsigned char* p;
+	int size;
+
+	p=binrpc_write_llong(pkt->crt+1, pkt->end, i, &size);
+	if ((pkt->crt>=pkt->end) || ((int)(p-pkt->crt-1)!=size))
+		goto error_len;
+	*(pkt->crt)=(size<<4) | type;
+	pkt->crt=p;
+	return 0;
+error_len:
+	return E_BINRPC_OVERFLOW;
+}
+
 
 /* int format:     size BINRPC_T_INT <val>  */
 inline static int binrpc_add_int_type(struct binrpc_pkt* pkt, int i, int type)
@@ -351,9 +393,9 @@ error_len:
 
 
 /* double format:  FIXME: for now a hack: fixed point represented in
- *  an int (=> max 3 decimals, < MAX_INT/1000) */
+ *  a long long (=> max 3 decimals, < MAX_LLONG/1000) */
 #define binrpc_add_double_type(pkt, f, type)\
-	binrpc_add_int_type((pkt), (int)((f)*1000), (type))
+	binrpc_add_llong_type((pkt), (long long)((f)*1000), (type))
 
 
 
@@ -516,6 +558,35 @@ static inline int binrpc_addfault(	struct binrpc_pkt* pkt,
 /* parsing incoming messages */
 
 
+static inline unsigned char* binrpc_read_llong(	long long* i,
+												int len,
+												unsigned char* s,
+												unsigned char* end,
+												int *err
+												)
+{
+	unsigned char* start;
+	unsigned long long u;
+
+	start=s;
+	*i=0;
+	u = 0;
+	*err=0;
+	for(;len>0; len--, s++){
+		if (s>=end){
+			*err=E_BINRPC_MORE_DATA;
+			*i = (long long)u;
+			return start;
+		}
+		u<<=8;
+		u|=*s;
+	};
+	*i = (long long)u;
+	return s;
+}
+
+
+
 static inline unsigned char* binrpc_read_int(	int* i,
 												int len,
 												unsigned char* s,
@@ -638,8 +709,8 @@ inline static unsigned char* binrpc_read_record(struct binrpc_parse_ctx* ctx,
 	int end_tag;
 	int tmp;
 	unsigned char* p;
-	int i;
-	
+	long long ll;
+
 	p=buf;
 	end_tag=0;
 	*err=0;
@@ -758,10 +829,10 @@ inline static unsigned char* binrpc_read_record(struct binrpc_parse_ctx* ctx,
 			}
 			break;
 		case BINRPC_T_DOUBLE: /* FIXME: hack: represented as fixed point
-		                                      inside an int */
+		                                      inside an long long */
 			if (ctx->in_struct && smode==0) goto error_record;
-			p=binrpc_read_int(&i, len, p, end, err);
-			v->u.fval=((double)i)/1000;
+			p=binrpc_read_llong(&ll, len, p, end, err);
+			v->u.fval=((double)ll)/1000;
 			break;
 		default:
 			if (ctx->in_struct){
