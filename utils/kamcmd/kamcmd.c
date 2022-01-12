@@ -427,7 +427,11 @@ void print_binrpc_val(struct binrpc_val* v, int ident)
 			printf("%c", (v->u.end)?'}':'{');
 			break;
 		case BINRPC_T_DOUBLE:
-			printf("%f", v->u.fval);
+			if(v->u.fval == (double)((long long int)v->u.fval)) {
+				printf("%lld", (long long int)v->u.fval);
+			} else {
+				printf("%f", v->u.fval);
+			}
 			break;
 		default:
 			printf("ERROR: unknown type %d\n", v->type);
