@@ -46,9 +46,9 @@ static void corex_rpc_shm_info(rpc_t* rpc, void* ctx)
 		rpc->fault(ctx, 500, "Internal error creating rpc");
 		return;
 	}
-	if(rpc->struct_add(th, "su",
+	if(rpc->struct_add(th, "sj",
 			"name", (_shm_root.mname)?_shm_root.mname:"unknown",
-			"size", (unsigned int)shm_mem_size) <0) {
+			"size", shm_mem_size) <0) {
 		rpc->fault(ctx, 500, "Internal error adding fields");
 		return;
 	}
@@ -69,13 +69,13 @@ static void corex_rpc_shm_stats(rpc_t* rpc, void* c)
 
 	shm_info(&mi);
 	rpc->add(c, "{", &th);
-	rpc->struct_add(th, "uuuuuu",
-			"total", (unsigned int)(mi.total_size),
-			"free", (unsigned int)(mi.free),
-			"used", (unsigned int)(mi.used),
-			"real_used",(unsigned int)(mi.real_used),
-			"max_used", (unsigned int)(mi.max_used),
-			"fragments", (unsigned int)mi.total_frags
+	rpc->struct_add(th, "jjjjjj",
+			"total", mi.total_size,
+			"free", mi.free,
+			"used", mi.used,
+			"real_used", mi.real_used,
+			"max_used", mi.max_used,
+			"fragments", mi.total_frags
 		);
 }
 
