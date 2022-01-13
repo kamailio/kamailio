@@ -732,7 +732,7 @@ void save_peer_applications(peer *p,AAAMessage *msg)
 				total_cnt += supported_vendor_id_avp_cnt;
 				break;
 			case AVP_Vendor_Specific_Application_Id:
-				total_cnt+=2;/* wasteful, but let's skip decoding */
+				total_cnt+=6;/* wasteful, but let's skip decoding */
 				break;
 		}
 	LM_DBG("Total count of applications is %d\n", total_cnt);
