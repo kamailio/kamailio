@@ -160,9 +160,9 @@ static inline unsigned int dlg2hash( dlg_t* dlg )
 }
 
 /**
- * refresh hdr shortcuts inside new buffer
+ * refresh r-uri and hdr shortcuts inside new buffer
  */
-int uac_refresh_hdr_shortcuts(tm_cell_t *tcell, char *buf, int buf_len)
+int uac_refresh_shortcuts(tm_cell_t *tcell, int branch, char *buf, int buf_len)
 {
 	sip_msg_t lreq;
 	struct cseq_body *cs;
@@ -175,6 +175,7 @@ int uac_refresh_hdr_shortcuts(tm_cell_t *tcell, char *buf, int buf_len)
 		LM_ERR("failed to parse headers in new message\n");
 		goto error;
 	}
+	tcell->uac[branch].uri = *GET_RURI(&lreq);
 	tcell->from.s = lreq.from->name.s;
 	tcell->from.len = lreq.from->len;
 	tcell->to.s = lreq.to->name.s;
@@ -541,7 +542,7 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 		if (unlikely(refresh_shortcuts==E_DROP)) {
 			ret=E_DROP;
 			goto error1;
-		}			
+		}
 	}
 #endif
 
@@ -576,7 +577,7 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 	request->buffer = buf;
 	request->buffer_len = buf_len;
 	if(unlikely(refresh_shortcuts==1)) {
-		if(uac_refresh_hdr_shortcuts(new_cell, buf, buf_len)<0) {
+		if(uac_refresh_shortcuts(new_cell, 0, buf, buf_len)<0) {
 			LM_ERR("failed to refresh header shortcuts\n");
 			goto error1;
 		}
