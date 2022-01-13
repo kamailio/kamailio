@@ -252,6 +252,8 @@ void db_unixodbc_close(db1_con_t* _h)
  */
 static int db_unixodbc_store_result(const db1_con_t* _h, db1_res_t** _r)
 {
+	SQLSMALLINT cols = 0;
+
 	if ((!_h) || (!_r))
 	{
 		LM_ERR("invalid parameter value\n");
@@ -264,6 +266,14 @@ static int db_unixodbc_store_result(const db1_con_t* _h, db1_res_t** _r)
 	{
 		LM_ERR("no memory left\n");
 		return -2;
+	}
+
+	SQLNumResultCols(CON_RESULT(_h), &cols);
+	if(cols==0) {
+		/* no result */
+		(*_r)->col.n = 0;
+		(*_r)->n = 0;
+		return 0;
 	}
 
 	if (db_unixodbc_convert_result(_h, *_r) < 0)
