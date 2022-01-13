@@ -50,58 +50,54 @@ void destroy_list(spi_list_t* lst)
 	lst->tail = NULL;
 }
 
-int spi_add(spi_list_t* list, uint32_t id)
+int spi_add(spi_list_t* list, uint32_t spi_cid , uint32_t spi_sid , uint16_t sport , uint16_t cport)
 {
 	if(!list){
-		return 1;
+        return 0;
 	}
 
 	// create new node
 	spi_node_t* n = shm_malloc(sizeof(spi_node_t));
     if(!n)
-        return 1;
+        return 0;
 
     n->next = NULL;
-    n->id = id;
+    n->spi_cid = spi_cid;
+    n->spi_sid = spi_sid;
+    n->sport = sport;
+    n->cport = cport;
 
     //when list is empty
     if(!list->head) {
         list->head = n;
         list->tail = n;
+        return 1;
+    }
+
+    list->tail->next = n;
+    list->tail = n;
+    return 1;
+
+}
+
+int spi_remove_head(spi_list_t* list)
+{
+    if(!list){
         return 0;
     }
 
-    //all other cases - list should be sorted
-    spi_node_t* c = list->head;
-    spi_node_t* p = NULL;
-    while(c && (n->id > c->id)) {
-        p = c;
-        c = c->next;
+    //when list is empty
+    if(!list->head) {
+        return 0;
     }
 
-
-    if(c == NULL) { //first of all - at the end of the list?
-        list->tail->next = n;
-        list->tail = n;
-    }
-    else if(n->id == c->id) { //c is not NULL, so check for duplicates
-        shm_free(n);
-        return 1;
-    }
-    else if(c == list->head) { //at the start of the list?
-        n->next = list->head;
-        list->head = n;
-    }
-    else {  //not a special case - just add it
-        p->next = n;
-        n->next = c;
-    }
-
-    return 0;
+    spi_node_t* t = list->head;
+    list->head = t->next;
+    shm_free(t);
+    return 1;
 }
 
-
-int spi_remove(spi_list_t* list, uint32_t id)
+int spi_remove(spi_list_t* list, uint32_t spi_cid, uint32_t spi_sid)
 {
 	if(!list){
 		return 0;
@@ -113,7 +109,7 @@ int spi_remove(spi_list_t* list, uint32_t id)
     }
 
     //when target is head
-    if(list->head->id == id) {
+    if(list->head->spi_cid == spi_cid && list->head->spi_sid == spi_sid) {
         spi_node_t* t = list->head;
         list->head = t->next;
 
@@ -123,7 +119,7 @@ int spi_remove(spi_list_t* list, uint32_t id)
         }
 
 		shm_free(t);
-        return 0;
+        return 1;
     }
 
 
@@ -131,7 +127,7 @@ int spi_remove(spi_list_t* list, uint32_t id)
     spi_node_t* curr = list->head->next;
 
     while(curr) {
-        if(curr->id == id) {
+        if(curr->spi_cid == spi_cid && curr->spi_sid == spi_sid) {
             spi_node_t* t = curr;
 
             //detach node
@@ -143,7 +139,7 @@ int spi_remove(spi_list_t* list, uint32_t id)
             }
 
 			shm_free(t);
-            return 0;
+            return 1;
         }
 
         prev = curr;
@@ -153,7 +149,7 @@ int spi_remove(spi_list_t* list, uint32_t id)
     return -1; // out of scope
 }
 
-int spi_in_list(spi_list_t* list, uint32_t id)
+int spi_in_list(spi_list_t* list, uint32_t spi_cid , uint32_t spi_sid)
 {
 	if(!list){
 		return 0;
@@ -162,14 +158,10 @@ int spi_in_list(spi_list_t* list, uint32_t id)
     if(!list->head)
         return 0;
 
-    if(id < list->head->id || id > list->tail->id)
-        return 0;
-
     spi_node_t* n = list->head;
     while(n) {
-        if (n->id == id)
-            return 1;
-        
+        if (n->spi_cid == spi_cid && n->spi_sid == spi_sid)
+            return 1;        
         n = n->next;
     }
 

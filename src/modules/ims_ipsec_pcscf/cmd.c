@@ -50,7 +50,6 @@
 
 #include "ipsec.h"
 #include "spi_gen.h"
-#include "port_gen.h"
 #include "cmd.h"
 #include "sec_agree.h"
 
@@ -352,7 +351,20 @@ static int update_contact_ipsec_params(ipsec_t* s, const struct sip_msg* m, ipse
     s->ik.len = ik.len;
 
     // Generate SPI
-    if((s->spi_pc = acquire_spi()) == 0) {
+    if(s_old)
+    {
+        if(s_old->spi_pc && s_old->spi_ps && s_old->port_pc && s_old->port_ps)
+        {
+            LM_ERR("Error using old IPSEC tunnel creation\n");
+            s->spi_pc = s_old->spi_pc;
+            s->spi_ps = s_old->spi_ps;
+            s->port_pc = s_old->port_pc;
+            s->port_ps = s_old->port_ps;
+            return 0;
+        }
+    }
+
+    if(acquire_spi(&s->spi_pc , &s->spi_ps , &s->port_pc , &s->port_ps) == 0) {
         LM_ERR("Error generating client SPI for IPSEC tunnel creation\n");
         shm_free(s->ck.s);
         s->ck.s = NULL; s->ck.len = 0;
@@ -360,48 +372,6 @@ static int update_contact_ipsec_params(ipsec_t* s, const struct sip_msg* m, ipse
         s->ik.s = NULL; s->ik.len = 0;
         return -1;
     }
-
-    if((s->spi_ps = acquire_spi()) == 0) {
-        LM_ERR("Error generating server SPI for IPSEC tunnel creation\n");
-        shm_free(s->ck.s);
-        s->ck.s = NULL; s->ck.len = 0;
-        shm_free(s->ik.s);
-        s->ik.s = NULL; s->ik.len = 0;
-
-		release_spi(s->spi_pc);
-        return -1;
-    }
-
-    if((s->port_pc = acquire_cport()) == 0){
-        LM_ERR("No free client port for IPSEC tunnel creation\n");
-		shm_free(s->ck.s);
-		s->ck.s = NULL; s->ck.len = 0;
-		shm_free(s->ik.s);
-		s->ik.s = NULL; s->ik.len = 0;
-
-		release_spi(s->spi_pc);
-		release_spi(s->spi_ps);
-        return -1;
-    }
-
-	// use the same P-CSCF server port if it is present
-	if(s_old){
-		s->port_ps = s_old->port_ps;
-	}else{
-		if((s->port_ps = acquire_sport()) == 0){
-			LM_ERR("No free server port for IPSEC tunnel creation\n");
-			shm_free(s->ck.s);
-			s->ck.s = NULL; s->ck.len = 0;
-			shm_free(s->ik.s);
-			s->ik.s = NULL; s->ik.len = 0;
-
-			release_cport(s->port_pc);
-
-			release_spi(s->spi_pc);
-			release_spi(s->spi_ps);
-			return -1;
-		}
-	}
 
 	return 0;
 }
@@ -509,12 +479,7 @@ static int destroy_ipsec_tunnel(str remote_addr, ipsec_t* s, unsigned short rece
     remove_policy(sock, remote_addr, ipsec_addr, s->port_us, s->port_pc, s->spi_pc, ip_addr.af, IPSEC_POLICY_DIRECTION_IN);
 
     // Release SPIs
-    release_spi(s->spi_pc);
-    release_spi(s->spi_ps);
-
-    // Release the client and the server ports
-    release_cport(s->port_pc);
-    release_sport(s->port_ps);
+    release_spi(s->spi_pc , s->spi_ps , s->port_pc , s->port_ps);
 
     close_mnl_socket(sock);
     return 0;
@@ -652,6 +617,9 @@ int ipsec_create(struct sip_msg* m, udomain_t* d, int _cflags)
     struct pcontact_info ci;
     int ret = IPSEC_CMD_FAIL;   // FAIL by default
 
+    ci.reg_state = PCONTACT_ANY;
+    ci.num_service_routes = 0;
+
     // Find the contact
     if(fill_contact(&ci, m) != 0) {
         LM_ERR("Error filling in contact data\n");
@@ -670,13 +638,8 @@ int ipsec_create(struct sip_msg* m, udomain_t* d, int _cflags)
     }
 
     // Get security parameters
-    if(pcontact->security_temp == NULL) {
+    if(pcontact->security_temp == NULL || pcontact->security_temp->type != SECURITY_IPSEC) {
         LM_ERR("No security parameters found in contact\n");
-        goto cleanup;
-    }
-
-    if(pcontact->security_temp->type != SECURITY_IPSEC ) {
-        LM_ERR("Unsupported security type: %d\n", pcontact->security_temp->type);
         goto cleanup;
     }
 
@@ -689,8 +652,13 @@ int ipsec_create(struct sip_msg* m, udomain_t* d, int _cflags)
 
     struct sip_msg* req = t->uas.request;
 
+
+        security_t* req_sec_params = NULL;
+        req_sec_params = cscf_get_security(req);
+
+
     // Update contacts only for initial registration, for re-registration the existing contacts shouldn't be updated.
-    if(ci.via_port == SIP_PORT){
+    if(ci.via_port == SIP_PORT && req_sec_params == NULL){
         LM_DBG("Registration for contact with AOR [%.*s], VIA [%d://%.*s:%d], received_host [%d://%.*s:%d]\n",
                 ci.aor.len, ci.aor.s, ci.via_prot, ci.via_host.len, ci.via_host.s, ci.via_port,
                 ci.received_proto, ci.received_host.len, ci.received_host.s, ci.received_port);
@@ -742,11 +710,16 @@ int ipsec_create(struct sip_msg* m, udomain_t* d, int _cflags)
         }
 
 		// for Re-Registration use the same P-CSCF server port if 'ipsec reuse server port' is enabled
-        if(update_contact_ipsec_params(req_sec_params->data.ipsec, m, ipsec_reuse_server_port ? pcontact->security_temp->data.ipsec : NULL) != 0) {
+        if(update_contact_ipsec_params(req_sec_params->data.ipsec, m, (ipsec_reuse_server_port && pcontact->security_temp) ? pcontact->security_temp->data.ipsec : NULL) != 0) {
             goto cleanup;
         }
 
         if(create_ipsec_tunnel(&req->rcv.src_ip, req_sec_params->data.ipsec) != 0){
+            goto cleanup;
+        }
+
+        if (ul.update_pcontact(d, &ci, pcontact) != 0){
+            LM_ERR("Error updating contact\n");
             goto cleanup;
         }
 
@@ -778,6 +751,9 @@ int ipsec_forward(struct sip_msg* m, udomain_t* d, int _cflags)
     unsigned short dst_port = 0;
     unsigned short src_port = 0;
     ip_addr_t via_host;
+    
+    ci.reg_state = PCONTACT_ANY;
+    ci.num_service_routes = 0;
     
     struct sip_msg* req = NULL;
     if(m->first_line.type == SIP_REPLY) {
@@ -843,6 +819,19 @@ int ipsec_forward(struct sip_msg* m, udomain_t* d, int _cflags)
 
     char buf[1024];
     if(m->first_line.type == SIP_REPLY){
+/*
+        // for Reply get the dest proto from the received request
+        dst_proto = req->rcv.proto;
+
+        // Check send socket
+        struct socket_info * client_sock = grep_sock_info(via_host.af == AF_INET ? &ipsec_listen_addr : &ipsec_listen_addr6, src_port, dst_proto);
+        if(client_sock) {
+            // for Reply and TCP sends from P-CSCF server port, for Reply and UDP sends from P-CSCF client port
+            src_port = dst_proto == PROTO_TCP ? s->port_ps : s->port_pc;
+
+        // for Reply and TCP sends to UE client port, for Reply and UDP sends to UE server port
+        dst_port = dst_proto == PROTO_TCP ? s->port_uc : s->port_us;
+*/
         // for Reply get the dest proto from the received request
         dst_proto = req->rcv.proto;
 
@@ -988,11 +977,6 @@ int ipsec_reconfig()
 	if(ul.get_number_of_contacts() != 0){
 		return 0;
 	}
-
-	clean_spi_list();
-	clean_port_lists();
-
-	LM_DBG("Clean all ipsec tunnels\n");
 
 	return ipsec_cleanall();
 }

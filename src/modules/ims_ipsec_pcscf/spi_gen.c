@@ -26,23 +26,31 @@
 #include <pthread.h>
 #include "../../core/mem/shm_mem.h"
 
+#define MAX_HASH_SPI            10000
+
 typedef struct spi_generator{
 	pthread_mutex_t	spis_mut;
-	spi_list_t		used_spis;
+    spi_list_t		used_spis[MAX_HASH_SPI];
+    spi_list_t      free_spi;
 	uint32_t		spi_val;
 	uint32_t		min_spi;
 	uint32_t		max_spi;
+
 } spi_generator_t;
 
 spi_generator_t* spi_data = NULL;
 
-int init_spi_gen(uint32_t start_val, uint32_t range)
+int init_spi_gen(uint32_t spi_start_val , uint32_t spi_range , uint32_t sport_start_val, uint32_t cport_start_val, uint32_t port_range)
 {
-    if(start_val < 1) {
+    //save the initial value for the highly unlikely case where there are no free SPIs
+    uint32_t sport = sport_start_val;
+    uint32_t cport = cport_start_val;
+    uint32_t j = 0;
+    if(spi_start_val < 1) {
         return 1;
     }
 
-    if(UINT32_MAX - range < start_val) {
+    if(UINT32_MAX - spi_range < spi_start_val) {
         return 2;
     }
 
@@ -64,67 +72,74 @@ int init_spi_gen(uint32_t start_val, uint32_t range)
 		return 6;
 	}
 
-    spi_data->used_spis = create_list();
+    for(j = 0 ; j < MAX_HASH_SPI; j++)
+        spi_data->used_spis[j] = create_list();
 
-    spi_data->spi_val = spi_data->min_spi = start_val;
-    spi_data->max_spi = start_val + range;
+    spi_data->free_spi = create_list();
+    spi_data->spi_val = spi_data->min_spi = spi_start_val;
+    spi_data->max_spi = spi_start_val + spi_range;
+
+    LM_ERR("spi_data:%p init free spi for IPSEC tunnel min_spi:%u max_api:%u\n" , spi_data , spi_data->min_spi ,  spi_data->max_spi);
+
+    for(j = spi_data->min_spi ; j < spi_data->max_spi; j+=2)
+    {
+        spi_add(&spi_data->free_spi, j , j+1 , cport , sport);
+        LM_ERR("spi_data:%p add element to spi free list head:%p\n" ,  spi_data , spi_data->free_spi.head);
+        cport++;
+        sport++;
+
+        if(cport >= cport_start_val + port_range)
+            cport = cport_start_val;
+
+        if(sport >= sport_start_val + port_range)
+            sport = sport_start_val;
+
+
+    }
 
 	pthread_mutex_unlock(&spi_data->spis_mut);
 
     return 0;
 }
 
-uint32_t acquire_spi()
+uint32_t acquire_spi(uint32_t* spi_cid , uint32_t* spi_sid , uint16_t* cport , uint16_t* sport)
 {
+    //save the initial value for the highly unlikely case where there are no free SPIs
+    //uint32_t initial_val = spi_data->spi_val;
+    // uint32_t ret = 0; // by default return invalid SPI
+
 	if(!spi_data){
+    		LM_ERR("free spi is NULL\n");
 		return 0;
 	}
 
 	if(pthread_mutex_lock(&spi_data->spis_mut) != 0){
+    		LM_ERR("free spi fail lock\n");
 		return 0;
 	}
 
-    //save the initial value for the highly unlikely case where there are no free SPIs
-	uint32_t initial_val = spi_data->spi_val;
-    uint32_t ret = 0; // by default return invalid SPI
-
-    while(1) {
-		if(spi_in_list(&spi_data->used_spis, spi_data->spi_val) == 0){
-			ret = spi_data->spi_val;
-			spi_data->spi_val++;
-
-			if(spi_data->spi_val >= spi_data->max_spi) { //reached the top of the range - reset
-				spi_data->spi_val = spi_data->min_spi;
-			}
-
-            break;
-        }
-
-		spi_data->spi_val++; //the current SPI is not available - increment
-
-		if(spi_data->spi_val >= spi_data->max_spi){ //reached the top of the range - reset
-			spi_data->spi_val = spi_data->min_spi;
-        }
-
-		if(spi_data->spi_val == initial_val){ //there are no free SPIs
-			pthread_mutex_unlock(&spi_data->spis_mut);
-            return ret;
-        }
-
+    if(!spi_data->free_spi.head)
+    {
+    	LM_ERR("spi_data:%p spi_data->free_spi.head %p\n" , spi_data, spi_data->free_spi.head);
+        pthread_mutex_unlock(&spi_data->spis_mut);
+        return 0;
     }
 
-    //found unused SPI - add it to the used list
-	if(spi_add(&spi_data->used_spis, ret) != 0){
-        ret = 0;
-    }
+    *spi_cid = spi_data->free_spi.head->spi_cid;
+    *spi_sid = spi_data->free_spi.head->spi_sid;
+    *sport = spi_data->free_spi.head->sport;
+    *cport = spi_data->free_spi.head->cport;
+    spi_remove_head(&spi_data->free_spi);
+    spi_add(&spi_data->used_spis[*spi_cid % MAX_HASH_SPI], *spi_cid , *spi_sid , *cport , *sport);
+    pthread_mutex_unlock(&spi_data->spis_mut);
+    LM_ERR("free spi allocate spic:%u spis:%u cport:%u sport:%u \n" ,  *spi_cid , *spi_sid , *sport , *cport);
+    return 1;
 
-	pthread_mutex_unlock(&spi_data->spis_mut);
-
-    return ret;
 }
 
-int release_spi(uint32_t id)
+int release_spi(uint32_t spi_cid , uint32_t spi_sid , uint16_t cport , uint16_t sport)
 {
+    LM_ERR("release spi spi_data:%p spic:%u spis:%u cport:%u sport:%u\n" , spi_data , spi_cid , spi_sid , cport , sport );
 	if(!spi_data){
 		return 1;
 	}
@@ -133,15 +148,21 @@ int release_spi(uint32_t id)
         return 1;
     }
 
-	spi_remove(&spi_data->used_spis, id);
+    // if we success remove from used spi we will insert into free spi
+    if(spi_remove(&spi_data->used_spis[spi_cid % MAX_HASH_SPI] , spi_cid , spi_sid))
+    {
+        spi_add(&spi_data->free_spi , spi_cid , spi_sid , cport , sport);
+    }
 
 	pthread_mutex_unlock(&spi_data->spis_mut);
-
     return 0;
 }
 
 int clean_spi_list()
 {
+	
+    LM_ERR("clean spi list spi_data:%p\n" , spi_data );
+    uint32_t j = 0;
 	if(!spi_data){
 		return 1;
 	}
@@ -150,7 +171,10 @@ int clean_spi_list()
 		return 1;
 	}
 
-	destroy_list(&spi_data->used_spis);
+    for(j = 0; j < MAX_HASH_SPI; j++)
+        destroy_list(&spi_data->used_spis[j]);
+    destroy_list(&spi_data->free_spi);
+
 	spi_data->spi_val = spi_data->min_spi;
 
 	pthread_mutex_unlock(&spi_data->spis_mut);
@@ -160,11 +184,12 @@ int clean_spi_list()
 
 int destroy_spi_gen()
 {
+        LM_ERR("destroy spi list \n" );
 	if(!spi_data){
 		return 1;
 	}
 
-	destroy_list(&spi_data->used_spis);
+    clean_spi_list();
 
 	int ret = pthread_mutex_destroy(&spi_data->spis_mut);
 	shm_free(spi_data);

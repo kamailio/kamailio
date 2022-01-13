@@ -305,32 +305,32 @@ void case14()
     spi_add(&list, 5);
     spi_add(&list, 6);
 
-    if(spi_in_list(&list, 1) != 0) {
+    if(spi_in_list(&list, 1,1) != 0) {
         printf("%s: failed. 1 is not in list, but spi_in_list() returns true.\n", __func__);
         return;
     }
 
-    if(spi_in_list(&list, 4) != 0) {
+    if(spi_in_list(&list, 4,4) != 0) {
         printf("%s: failed. 4 is not in list, but spi_in_list() returns true.\n", __func__);
         return;
     }
 
-    if(spi_in_list(&list, 7) != 0) {
+    if(spi_in_list(&list, 7,7) != 0) {
         printf("%s: failed. 7 is not in list, but spi_in_list() returns true.\n", __func__);
         return;
     }
 
-    if(spi_in_list(&list, 2) != 1) {
+    if(spi_in_list(&list, 2,2) != 1) {
         printf("%s: failed. 2 is in list, but spi_in_list() returns false.\n", __func__);
         return;
     }
 
-    if(spi_in_list(&list, 3) != 1) {
+    if(spi_in_list(&list, 3,3) != 1) {
         printf("%s: failed. 3 is in list, but spi_in_list() returns false.\n", __func__);
         return;
     }
 
-    if(spi_in_list(&list, 6) != 1) {
+    if(spi_in_list(&list, 6,6) != 1) {
         printf("%s: failed. 6 is in list, but spi_in_list() returns false.\n", __func__);
         return;
     }

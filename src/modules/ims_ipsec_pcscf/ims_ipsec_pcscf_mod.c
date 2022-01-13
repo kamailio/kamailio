@@ -28,8 +28,6 @@
 
 #include "cmd.h"
 #include "spi_gen.h"
-#include "port_gen.h"
-
 
 MODULE_VERSION
 
@@ -302,18 +300,12 @@ static int mod_init(void) {
 	}
 
 	int res = 0;
-	if((res = init_spi_gen(spi_id_start, spi_id_range)) != 0) {
+    if((res = init_spi_gen(spi_id_start, spi_id_range, ipsec_server_port, ipsec_client_port,ipsec_max_connections)) != 0) {
 		LM_ERR("Error initialising spi generator. Error: %d\n", res);
 		return -1;
 	}
 
-	if((res = init_port_gen(ipsec_server_port, ipsec_client_port, ipsec_max_connections)) != 0) {
-		LM_ERR("Error initialising port generator. Error: %d\n", res);
-		return -1;
-	}
-
 	init_flag = 1;
-
 	return 0;
 }
 
@@ -327,9 +319,6 @@ static void mod_destroy(void)
 		LM_ERR("Error destroying spi generator\n");
 	}
 
-	if(destroy_port_gen() != 0){
-		LM_ERR("Error destroying port generator\n");
-	}
 }
 
 static int child_init(int rank)
