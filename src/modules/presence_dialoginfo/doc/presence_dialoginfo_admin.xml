@@ -248,6 +248,26 @@ modparam("presence_dialoginfo", "force_dummy_dialog", 1)
         </example>
         </section>
 
+<section id="presence_dialoginfo.p.default_expires">
+               <title><varname>default_expires</varname> (int)</title>
+               <para>
+               The default expires value used when missing from SUBSCRIBE
+               message (in seconds).
+               </para>
+               <para>
+               <emphasis>Default value is <quote>3600</quote>.
+               </emphasis>
+               </para>
+               <example>
+               <title>Set <varname>default_expires</varname> parameter</title>
+               <programlisting format="linespecific">
+...
+modparam("presence_dialoginfo", "default_expires", 3600)
+...
+</programlisting>
+	</example>
+</section>
+
 	</section>
 
 	<section>
