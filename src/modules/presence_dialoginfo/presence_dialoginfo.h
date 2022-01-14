@@ -26,5 +26,6 @@
 #define _PRES_DLGINFO_H_
 
 extern add_event_t pres_add_event;
+extern unsigned int pres_dlginfo_default_expires;
 
 #endif
