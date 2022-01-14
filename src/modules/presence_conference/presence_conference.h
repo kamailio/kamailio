@@ -26,5 +26,6 @@
 #define _PRES_CONFERENCE_H_
 
 extern add_event_t pres_add_event;
+extern unsigned int pres_conf_default_expires;
 
 #endif
