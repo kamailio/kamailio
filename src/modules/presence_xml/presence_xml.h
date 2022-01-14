@@ -53,4 +53,6 @@ extern int pxml_integrated_xcap_server;
 extern xcap_serv_t *xs_list;
 extern xcapGetNewDoc_t xcap_GetNewDoc;
 
+extern unsigned int pxml_default_expires;
+
 #endif
