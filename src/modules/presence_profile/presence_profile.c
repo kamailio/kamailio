@@ -56,13 +56,22 @@ static int mod_init(void);
 /* module variables */
 add_event_t pres_add_event;
 
+/* module parameters */
+unsigned int pres_profile_default_expires = 3600;
+
+/* module exported paramaters */
+static param_export_t params[] = {
+	{ "default_expires", INT_PARAM, &pres_profile_default_expires },
+	{0, 0, 0}
+};
+
 /* module exports */
 /* clang-format off */
 struct module_exports exports= {
 	"presence_profile",	/* module name */
 	DEFAULT_DLFLAGS,	/* dlopen flags */
 	0,					/* exported functions */
-	0,					/* exported parameters */
+	params,				/* exported parameters */
 	0,					/* RPC method exports */
 	0,					/* exported pseudo-variables */
 	0,					/* response handling function */
