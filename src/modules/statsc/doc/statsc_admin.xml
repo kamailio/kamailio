@@ -82,6 +82,9 @@ modparam("statsc", "interval", 300)
 			How many items to store for each statistic.
 		</para>
 		<para>
+			Note: it must be set before any 'track' parameter.
+		</para>
+		<para>
 		<emphasis>
 			Default value is 100.
 		</emphasis>
