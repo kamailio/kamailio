@@ -59,6 +59,9 @@ static int mod_init(void);
 /* module variables */
 add_event_t pres_add_event;
 
+/* module parameters */
+unsigned int pres_mwi_default_expires = 3600;
+
 /* module exported commands */
 static cmd_export_t cmds[] =
 {
@@ -67,6 +70,7 @@ static cmd_export_t cmds[] =
 
 /* module exported paramaters */
 static param_export_t params[] = {
+	{ "default_expires", INT_PARAM, &pres_mwi_default_expires },
 	{0, 0, 0}
 };
 
