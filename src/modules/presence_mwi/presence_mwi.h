@@ -34,5 +34,6 @@
 #define _PRES_MWI_H_
 
 extern add_event_t pres_add_event;
+extern unsigned int pres_mwi_default_expires;
 
 #endif
