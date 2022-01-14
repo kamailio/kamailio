@@ -33,6 +33,7 @@
 #include "../../core/parser/parse_content.h"
 #include "../../core/data_lump_rpl.h"
 #include "../../core/ut.h"
+#include "../presence/presence.h"
 #include "xcap_auth.h"
 #include "notify_body.h"
 #include "add_events.h"
@@ -65,7 +66,7 @@ int xml_add_events(void)
 		event.agg_nbody = pres_agg_nbody;
 		event.evs_publ_handl = xml_publ_handl;
 		event.free_body = free_xml_body;
-		event.default_expires = 3600;
+		event.default_expires = pxml_default_expires;
 		event.get_rules_doc = pres_get_rules_doc;
 		event.get_pidf_doc = pres_get_pidf_doc;
 		if(psapi.add_event(&event) < 0) {
@@ -85,7 +86,7 @@ int xml_add_events(void)
 		event.content_type.len = 27;
 		event.type = WINFO_TYPE;
 		event.free_body = free_xml_body;
-		event.default_expires = 3600;
+		event.default_expires = pxml_default_expires;
 
 		if(psapi.add_event(&event) < 0) {
 			LM_ERR("while adding event presence.winfo\n");
@@ -106,7 +107,7 @@ int xml_add_events(void)
 		event.content_type.len = 27;
 		event.type = PUBL_TYPE;
 		event.free_body = free_xml_body;
-		event.default_expires = 3600;
+		event.default_expires = pxml_default_expires;
 		if(psapi.add_event(&event) < 0) {
 			LM_ERR("while adding event dialog;sla\n");
 			return -1;
@@ -124,7 +125,7 @@ int xml_add_events(void)
 		event.content_type.len = 25;
 
 		event.type = PUBL_TYPE;
-		event.default_expires = 3600;
+		event.default_expires = pxml_default_expires;
 		if(psapi.add_event(&event) < 0) {
 			LM_ERR("while adding event xcap-diff\n");
 			return -1;

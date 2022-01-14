@@ -98,6 +98,8 @@ int pxml_force_single_body = 0;
 str pxml_single_body_priorities = str_init("Available|Ringing|On the Phone");
 str pxml_single_body_lookup_element = str_init("note");
 
+unsigned int pxml_default_expires = 3600;
+
 /** SL API structure */
 sl_api_t slb;
 
@@ -138,6 +140,7 @@ static param_export_t params[]={
 	{ "force_presence_single_body", INT_PARAM, &pxml_force_single_body },
 	{ "presence_single_body_priorities",  PARAM_STR, &pxml_single_body_priorities },
 	{ "presence_single_body_lookup_element", PARAM_STR, &pxml_single_body_lookup_element },
+	{ "default_expires", INT_PARAM, &pxml_default_expires },
 	{ 0, 0, 0}
 };
 /* clang-format on */
