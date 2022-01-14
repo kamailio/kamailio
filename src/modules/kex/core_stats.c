@@ -496,7 +496,7 @@ static void rpc_fetch_add_stat(rpc_t* rpc, void* ctx, void* hst, char* g, char* 
 
 	snprintf(nbuf, 127, "%s.%s", g, n);
 	if (numeric) {
-		res = rpc->struct_add(hst, "d", nbuf, val);
+		res = rpc->struct_add(hst, "j", nbuf, val);
 	} else {
 		res = rpc->struct_printf(hst, nbuf, "%lu", val);
 	}
