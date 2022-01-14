@@ -354,7 +354,8 @@ static void statsc_rpc_report(rpc_t* rpc, void* ctx)
 	int cmode;
 	str sname;
 	int range;
-	int k, m, n, v;
+	int k, m, n;
+	int64_t v;
 	time_t tn;
 	void* th;
 	void* ts;
@@ -433,7 +434,7 @@ static void statsc_rpc_report(rpc_t* rpc, void* ctx)
 					rpc->fault(ctx, 500, "Error creating rpc (5)");
 					return;
 				}
-				v = (int)sm->vals[k];
+				v = sm->vals[k];
 				switch(cmode) {
 					case 1:
 						break;
@@ -442,13 +443,13 @@ static void statsc_rpc_report(rpc_t* rpc, void* ctx)
 							continue;
 						}
 						if(k==0) {
-							v -= (int)sm->vals[statsc_items-1];
+							v -= sm->vals[statsc_items-1];
 						} else {
-							v -= (int)sm->vals[k-1];
+							v -= sm->vals[k-1];
 						}
 						break;
 				}
-				if(rpc->struct_add(ti, "udd",
+				if(rpc->struct_add(ti, "uLd",
 						"timestamp", (unsigned int)_statsc_info->slist->vals[k],
 						"value", v,
 						"index", m++)<0) {
@@ -464,7 +465,7 @@ static void statsc_rpc_report(rpc_t* rpc, void* ctx)
 					rpc->fault(ctx, 500, "Error creating rpc (7)");
 					return;
 				}
-				v = (int)sm->vals[k];
+				v = sm->vals[k];
 				switch(cmode) {
 					case 1:
 						break;
@@ -472,10 +473,10 @@ static void statsc_rpc_report(rpc_t* rpc, void* ctx)
 						if(n==k-1) {
 							continue;
 						}
-						v -= (int)sm->vals[k-1];
+						v -= sm->vals[k-1];
 						break;
 				}
-				if(rpc->struct_add(ti, "udd",
+				if(rpc->struct_add(ti, "uLd",
 						"timestamp", (unsigned int)_statsc_info->slist->vals[k],
 						"value", v,
 						"index", m++)<0) {
