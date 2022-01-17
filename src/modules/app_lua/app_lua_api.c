@@ -187,6 +187,34 @@ int sr_lua_reload_module(unsigned int reload)
 /**
  *
  */
+void ksr_luaL_openlib_mode(lua_State *L, const char *libname,
+			     const luaL_Reg *lfuncs, int nup, int mode)
+{
+	if(mode) {
+		lua_getglobal(L, libname);
+		if (lua_isnil(L, -1)) {
+			lua_pop(L, 1);
+			lua_newtable(L);
+		}
+	} else {
+		lua_newtable(L);
+	}
+	luaL_setfuncs(L, lfuncs, 0);
+	lua_setglobal(L, libname);
+}
+
+/**
+ *
+ */
+void ksr_luaL_openlib(lua_State *L, const char *libname,
+			     const luaL_Reg *lfuncs, int nup)
+{
+	ksr_luaL_openlib_mode(L, libname, lfuncs, nup, 0);
+}
+
+/**
+ *
+ */
 void lua_sr_openlibs(lua_State *L)
 {
 	if(app_lua_openlibs_cb!=NULL) {
