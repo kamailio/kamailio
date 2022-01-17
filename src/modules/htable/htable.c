@@ -910,20 +910,20 @@ static int ki_ht_iterator_setex(sip_msg_t *msg, str *iname, int exval)
 static int w_ht_iterator_setex(struct sip_msg* msg, char* iname, char* val)
 {
 	str siname;
-	int ival;
+	int exval;
 
 	if(fixup_get_svalue(msg, (gparam_t*)iname, &siname)<0 || siname.len<=0)
 	{
 		LM_ERR("cannot get iterator name\n");
 		return -1;
 	}
-	if(fixup_get_ivalue(msg, (gparam_t*)val, &ival)<0)
+	if(fixup_get_ivalue(msg, (gparam_t*)val, &exval)<0)
 	{
 		LM_ERR("cannot get value\n");
 		return -1;
 	}
 
-	return ki_ht_iterator_seti(msg, &siname, ival);
+	return ki_ht_iterator_setex(msg, &siname, exval);
 }
 
 static int ki_ht_slot_xlock(sip_msg_t *msg, str *htname, str *skey, int lmode)
