@@ -28,7 +28,14 @@ Alex Balashov
               2.2. External Libraries or Applications
 
         3. Exported Parameters
+
+              3.1. default_expires (int)
+
         4. Exported Functions
+
+   List of Examples
+
+   1.1. Set default_expires parameter
 
 Chapter 1. Admin Guide
 
@@ -41,6 +48,9 @@ Chapter 1. Admin Guide
         2.2. External Libraries or Applications
 
    3. Exported Parameters
+
+        3.1. default_expires (int)
+
    4. Exported Functions
 
 1. Overview
@@ -78,7 +88,19 @@ Chapter 1. Admin Guide
 
 3. Exported Parameters
 
-   None.
+   3.1. default_expires (int)
+
+3.1. default_expires (int)
+
+   The default expires value used when missing from SUBSCRIBE message (in
+   seconds).
+
+   Default value is “3600”.
+
+   Example 1.1. Set default_expires parameter
+            ...
+            modparam("presence_profile", "default_expires", 3600)
+            ...
 
 4. Exported Functions
 

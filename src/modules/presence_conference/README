@@ -22,6 +22,7 @@ Marius-Ovidiu Bucur
         3. Parameters
 
               3.1. use_partial_states (int)
+              3.2. default_expires (int)
 
         4. MI Commands
 
@@ -30,6 +31,7 @@ Marius-Ovidiu Bucur
    List of Examples
 
    1.1. Set use_partial_states parameter
+   1.2. Set default_expires parameter
 
 Chapter 1. Admin Guide
 
@@ -44,6 +46,7 @@ Chapter 1. Admin Guide
    3. Parameters
 
         3.1. use_partial_states (int)
+        3.2. default_expires (int)
 
    4. MI Commands
 
@@ -76,6 +79,7 @@ Chapter 1. Admin Guide
 3. Parameters
 
    3.1. use_partial_states (int)
+   3.2. default_expires (int)
 
 3.1. use_partial_states (int)
 
@@ -86,6 +90,18 @@ Chapter 1. Admin Guide
    Example 1.1. Set use_partial_states parameter
 ...
 modparam("presence_conference", "use_partial_states", 0)
+...
+
+3.2. default_expires (int)
+
+   The default expires value used when missing from SUBSCRIBE message (in
+   seconds).
+
+   Default value is “3600”.
+
+   Example 1.2. Set default_expires parameter
+...
+modparam("presence_conference", "default_expires", 3600)
 ...
 
 4. MI Commands
