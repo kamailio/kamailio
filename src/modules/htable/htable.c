@@ -923,7 +923,7 @@ static int w_ht_iterator_setex(struct sip_msg* msg, char* iname, char* val)
 		return -1;
 	}
 
-	return ki_ht_iterator_seti(msg, &siname, ival);
+	return ki_ht_iterator_setex(msg, &siname, ival);
 }
 
 static int ki_ht_slot_xlock(sip_msg_t *msg, str *htname, str *skey, int lmode)
