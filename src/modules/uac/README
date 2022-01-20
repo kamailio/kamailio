@@ -1295,7 +1295,7 @@ event_route[uac:reply] {
 
      * contact_addr - contact address to be used for this record instead
        of reg_contact_addr module parameter, e.g.:, 192.168.0.125:5060. It
-       can be set to '.' (dot) to skip setting it and then
+       can be set to '' (empty string) to skip setting it and then
        reg_contact_addr modparam is used.
 
      * socket - Used socket for sending out registration requests, e.g.:,
