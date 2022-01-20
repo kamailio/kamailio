@@ -522,7 +522,12 @@ ifeq ($(OS), darwin)
 	doc_dir = share/doc/$(MAIN_NAME)/
 	man_dir = man/
 	data_dir = share/$(MAIN_NAME)/
+	MACPORTS = $(shell which port 2>/dev/null)
+ifeq ($(MACPORTS),)
 	LOCALBASE ?= /usr/local
+else
+	LOCALBASE ?= /opt/local
+endif
 endif
 
 LOCALBASE ?= /usr/local
