@@ -40,7 +40,7 @@ LIBS+= $(TLS_EXTRA_LIBS)
 
 ifeq ($(EMBEDDED_UTF8_DECODE),0)
 	DEFS += -I$(LOCALBASE)/include
-	LIBS += -lunistring
+	LIBS += -L$(LOCALBASE)/lib -lunistring
 else
 	DEFS += -DEMBEDDED_UTF8_DECODE
 endif
