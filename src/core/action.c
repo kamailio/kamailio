@@ -366,6 +366,9 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 						goto error;
 				}
 				h->run_flags|=(unsigned int)a->val[1].u.number;
+				if(unlikely((ret==0) && (h->run_flags&RETURN_R_F))) {
+					h->run_flags |= EXIT_R_F;
+				}
 			break;
 		case FORWARD_T:
 #ifdef USE_TCP
