@@ -2418,6 +2418,100 @@ dlg_reset_property("timeout-noreset");
 </programlisting>
 		</example>
 	</section>
+
+        <section id="dialog.f.dlg_get_matches">
+                <title>
+                <function moreinfo="none">dlg_get_matches(key, op, value, xavp_name[, max_results])</function>
+                </title>
+                <para>
+			Returns a list of matching dialog entries into a given XAVP name. The return value of the function
+			is -1 if there is an error, or otherwise the number of matches found.
+
+			Matches are based on the specified dialog field (key), match type (op) and matching value.
+			Matches can optionally be limited to a specified value, or unlimited if the value is 0 or
+			not specified.
+                </para>
+                <para>Meaning of the parameters is as follows:</para>
+                <itemizedlist>
+                <listitem>
+                        <para>
+				<emphasis>key</emphasis> - the name of the dialog field to match against.
+				It can be:
+					<itemizedlist>
+						<listitem>
+							'ruri' - R-URI of dialog
+						</listitem>
+						<listitem>
+							'turi' - To Header of dialog
+						</listitem>
+						<listitem>
+							'furi' - From Header of dialog
+						</listitem>
+						<listitem>
+							'callid' - Call-Id of dialog
+						</listitem>
+						<listitem>
+							'start_ts' - match against start timestamp of dialog. Only works with gt, lt.
+						</listitem>
+					</itemizedlist>
+
+                        </para>
+                </listitem>
+                <listitem>
+                        <para>
+				<emphasis>op</emphasis> - the type of match operation to use. It can be:
+					<itemizedlist>
+						<listitem>
+							'eq' - Match if string comparison equals.
+						</listitem>
+						<listitem>
+							're' - Match using regular expression.
+						</listitem>
+						<listitem>
+							'sw' - Match using string starts with (prefix) comparison.
+						</listitem>
+						<listitem>
+							'gt' - Match using integer greater than comparison. Only works with 'start_ts' key.
+						</listitem>
+                                                <listitem>
+                                                        'lt' - Match using integer less than comparison. Only works with 'start_ts' key.
+                                                </listitem>
+					</itemizedlist>
+                        </para>
+                </listitem>
+                <listitem>
+                        <para>
+                                <emphasis>value</emphasis> - value to match dialog against. 
+                                This can be a pvar.
+                        </para>
+                </listitem>
+                <listitem>
+                        <para>
+                                <emphasis>xavp_name</emphasis> - the name of the xavp to store
+                                results in. This can be a pvar.
+                        </para>
+		</listitem>
+		<listitem>
+			<para>
+				<emphasis>max_results</emphasis> - the max number of results to return
+				in the xavp. If the value is 0 or not provided, there is no limit. This can be a pvar.
+			</para>
+		</listitem>
+                </itemizedlist>
+		<para>
+                        This function can be used from ANY_ROUTE.
+                </para>
+                <example>
+                <title><function>dlg_get_matches</function> usage</title>
+                <programlisting format="linespecific">
+...
+dlg_get_matches("furi", "sw", "sip:$var(ext)@", "dlg_matches");
+dlg_get_matches("furi", "sw", "sip:$var(ext)@", "$var(name)", 2);
+...
+
+</programlisting>
+                </example>
+        </section>
 	</section>
 
 
