@@ -162,6 +162,11 @@ typedef struct dlg_ka {
 	struct dlg_ka *next;
 } dlg_ka_t;
 
+typedef struct dlg_cell_match {
+        struct dlg_cell *dlg;
+        unsigned int entry;
+} dlg_cell_match_t;
+
 /*! global dialog table */
 extern dlg_table_t *d_table;
 

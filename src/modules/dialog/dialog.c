@@ -460,8 +460,9 @@ static int fixup_dlg_get_matches(void **param, int param_no)
 		if(strncmp(s.s, "ruri", s.len) != 0 
 				&& strncmp(s.s, "turi", s.len) != 0
 				&& strncmp(s.s, "furi", s.len) != 0
-				&& strncmp(s.s, "callid", s.len) != 0) {
-			LM_ERR("param %d must be 'ruri', 'turi', 'furi' or 'callid'.\n",
+				&& strncmp(s.s, "callid", s.len) != 0
+				&& strncmp(s.s, "start_ts", s.len) != 0) {
+			LM_ERR("param %d must be 'ruri', 'turi', 'furi', 'callid' or 'start_ts'.\n",
 					param_no);
 			return E_CFG;
 		}
@@ -477,7 +478,7 @@ static int fixup_dlg_get_matches(void **param, int param_no)
 		}
 	//No extra validation for param 3
 
-	//VAXP result variable
+	//XAVP result variable
 	} else if(param_no == 4) {
 		/* We don't to evaluate the variable, just accept a string name to use as the XAVP class name.
 		 * no further validation needed.
@@ -2616,11 +2617,192 @@ static int w_dlg_set_ruri(sip_msg_t *msg, char *p1, char *p2)
 }
 
 /*!
+ * \brief Helper function that outputs ptrs to matching dialogs in an array to be used elsewhere.
+ *
+ * \param list Ptr to hold array of dlg_cell_match_t struct ptrs to return results in.
+ * \param mkey The dlg field to match against
+ * \param mop The matching operation to use
+ * \param mval The value to match against
+ * \param max_results The max amount of results to return, or 0 if no limit
+ * 
+ * \return -1 if error, or otherwise the number of matches returned in the array.
+ */
+static int dlg_list_matches(dlg_cell_match_t **list, str mkey, str mop, str mval, int max_results)
+{
+	dlg_cell_t *dlg = NULL;
+	int i = 0;
+	str sval = {NULL, 0};
+	unsigned int ival = 0;
+	unsigned int mival = 0;
+	int matches = 0;
+	int vkey = 0;
+	int vop = 0;
+	int matched = 0;
+	regex_t mre;
+	regmatch_t pmatch;
+	size_t arr_size = 0; //Start at 0 as shm for array is allocated below.
+
+	if(mkey.s==NULL || mkey.len<=0 || mop.s==NULL || mop.len<=0
+			|| mval.s==NULL || mval.len<=0) {
+		LM_ERR("invalid parameters\n");
+		return -1;
+	}
+	if(mkey.len==4 && strncmp(mkey.s, "ruri", mkey.len)==0) {
+		vkey = 0;
+	} else if(mkey.len==4 && strncmp(mkey.s, "furi", mkey.len)==0) {
+		vkey = 1;
+	} else if(mkey.len==4 && strncmp(mkey.s, "turi", mkey.len)==0) {
+		vkey = 2;
+	} else if(mkey.len==6 && strncmp(mkey.s, "callid", mkey.len)==0) {
+		vkey = 3;
+	} else if(mkey.len==8 && strncmp(mkey.s, "start_ts", mkey.len)==0) {
+		vkey = 4;
+	} else {
+		LM_ERR("invalid key %.*s\n", mkey.len, mkey.s);
+		return -1;
+	}
+	if(mop.len!=2) {
+		LM_ERR("invalid matching operator %.*s\n", mop.len, mop.s);
+		return -1;
+
+	}
+	if(strncmp(mop.s, "eq", 2)==0) {
+		vop = 0;
+	} else if(strncmp(mop.s, "re", 2)==0) {
+		vop = 1;
+		memset(&mre, 0, sizeof(regex_t));
+		if (regcomp(&mre, mval.s, REG_EXTENDED|REG_ICASE|REG_NEWLINE)!=0) {
+			LM_ERR("failed to compile regex: %.*s\n", mval.len, mval.s);
+			return -1;
+		}
+	} else if(strncmp(mop.s, "sw", 2)==0) {
+		vop = 2;
+	} else if(strncmp(mop.s, "gt", 2)==0) {
+		vop = 3;
+	} else if(strncmp(mop.s, "lt", 2)==0) {
+		vop = 4;
+	} else {
+		LM_ERR("invalid matching operator %.*s\n", mop.len, mop.s);
+		return -1;
+	}
+
+	if (vkey == 4  && vop <= 2) {
+		LM_ERR("Matching operator %.*s not supported with start_ts key\n", mop.len, mop.s);
+		goto error;
+	}
+
+	if (vkey != 4  && vop >= 3) {
+		LM_ERR("Matching operator %.*s not supported with key %.*s\n", mop.len, mop.s, mkey.len, mkey.s);
+		return -1;
+	}
+
+	for(i=0; i<d_table->size; i++) {
+		dlg_lock(d_table, &(d_table->entries[i]));
+		for(dlg=d_table->entries[i].first; dlg!=NULL; dlg=dlg->next) {
+			matched = 0;
+			switch(vkey) {
+				case 0:
+					sval = dlg->req_uri;
+					break;
+				case 1:
+					sval = dlg->from_uri;
+					break;
+				case 2:
+					sval = dlg->to_uri;
+					break;
+				case 3:
+					sval = dlg->callid;
+					break;
+				case 4:
+					ival = dlg->start_ts;
+					break;
+			}
+			switch(vop) {
+				case 0:
+					/* string comparison */
+					if(mval.len==sval.len
+							&& strncmp(mval.s, sval.s, mval.len)==0) {
+						matched = 1;
+					}
+					break;
+				case 1:
+					/* regexp matching */
+					if(regexec(&mre, sval.s, 1, &pmatch, 0)==0) {
+						matched = 1;
+					}
+					break;
+				case 2:
+					/* starts with */
+					if(mval.len<=sval.len
+							&& strncmp(mval.s, sval.s, mval.len)==0) {
+						matched = 1;
+					}
+					break;
+				case 3:
+					/* greater than */
+					if (str2int(&mval, &mival) == 0 && ival > mival) {
+						matched = 1;
+					}
+					break;
+				case 4:
+					if (str2int(&mval, &mival) == 0 && ival < mival) {
+						matched = 1;
+					}
+					break;
+			}
+			if (matched==1) {
+				matches++;
+				if (matches > arr_size) {
+					arr_size = (arr_size == 0 ? 1 : arr_size * 2);
+					if (arr_size == 1) {
+						*list = (dlg_cell_match_t *)shm_malloc(arr_size * sizeof(dlg_cell_match_t));
+					} else {
+						*list = (dlg_cell_match_t *)shm_realloc(*list, arr_size * sizeof(dlg_cell_match_t));
+					}
+					if (*list == NULL) {
+						LM_ERR("no more shm mem (%ld)\n", arr_size * sizeof(dlg_cell_match_t));
+						dlg_unlock(d_table, &(d_table->entries[i]));
+						goto error;
+					}
+					LM_DBG("Re-sized matches array in shm (%ld): %p\n", arr_size * sizeof(dlg_cell_match_t), *list);
+				}
+				LM_DBG("Adding dlg match[%d] at %p = dlg ptr %p with entry %u\n", matches-1, (*list + (matches - 1)), dlg, i);
+				dlg_cell_match_t *dlg_match = (*list + (matches-1));
+				dlg_match->dlg = dlg;
+				dlg_match->entry = i;
+
+				if(max_results > 0 && matches == max_results) {
+					break;
+				}
+			}
+		}
+		dlg_unlock(d_table, &(d_table->entries[i]));
+		if(max_results > 0 && matches == max_results) {
+			break;
+		}
+	}
+	if(vop == 1) {
+		regfree(&mre);
+	}
+
+	return matches;
+
+error:
+	if (vop == 1) {
+		regfree(&mre);
+	}
+	return -1;
+}
+
+
+
+
+/*!
  * \brief Helper function that adds a given dialog's values to a given XAVP.
  *
  * \param xavp XAVP array to add dialog values
  * \param dlg Pointer to a dialog to get values from
- * \returns Returns 1 on success or 0 on failure.
+ * \return Returns 1 on success or 0 on failure.
  */
 static int dlg_get_matches_xavp_helper(sr_xavp_t **xavp, dlg_cell_t *dlg)
 {
@@ -2652,10 +2834,8 @@ static int dlg_get_matches_xavp_helper(sr_xavp_t **xavp, dlg_cell_t *dlg)
 	str xname_callee_socket = str_init("callee_socket");
 
 	sr_xval_t xval;
-
 	dlg_profile_link_t *pl;
 	dlg_var_t *var;
-
 
 	if(dlg == NULL) {
 		LM_ERR("Null dialog was passed.\n");
@@ -2834,7 +3014,6 @@ static int dlg_get_matches_xavp_helper(sr_xavp_t **xavp, dlg_cell_t *dlg)
 					   : empty_str;
 	xavp_add_value(&xname_callee_socket, &xval, xavp);
 
-
 	for(pl = dlg->profile_links; pl && (dlg->state < DLG_STATE_DELETED); pl = pl->next) {
 		//Prefix profile XAVPs with prf_
 		//prefix + name + NULL
@@ -2885,23 +3064,25 @@ static int dlg_get_matches_xavp_helper(sr_xavp_t **xavp, dlg_cell_t *dlg)
  * \param mval String value to match against, can contain  a pvar.
  * \param xavp_name String name of an XAVP variable to store results in.
  * \param max_results Integer with max results to return, returns all if 0.
- * \returns Count of matching dialogs, or -1 if no matches found.
+ * \return Count of matching dialogs, or -1 if no matches found.
  */
 static int internal_dlg_get_matches(struct sip_msg *msg, char *mkey, char *mop,
 		char *mval, char *xavp_name, int max_results)
 {
-	dlg_cell_t *dlg = NULL;
+	dlg_cell_match_t *dlg_matches = NULL; //Ptr for array to store dlg matches.
 	int i = 0;
+	int matches = 0;				//Count of matches returned.
 	sr_xavp_t **xavp = NULL; //XAVP to store fields
 	sr_xavp_t *list = NULL; //Ptr to existing XAVP with "xavp_name" if one exists.
 	sr_xavp_t *new_xavp = NULL;
-	str sval = {NULL, 0};
-	int m = 0; //Number of matches.
-	int vkey = 0;
-	int vop = 0;
-	int matched = 0;
-	regex_t mre;
-	regmatch_t pmatch;
+
+	str mkey_s;
+	mkey_s.s = mkey;
+	mkey_s.len = strlen(mkey);
+
+	str mop_s;
+	mop_s.s = mop;
+	mop_s.len = strlen(mop);
 
 	str mval_sraw;
 	mval_sraw.s = mval;
@@ -2911,19 +3092,6 @@ static int internal_dlg_get_matches(struct sip_msg *msg, char *mkey, char *mop,
 	str xavp_name_sraw;
 	xavp_name_sraw.s = xavp_name;
 	xavp_name_sraw.len = strlen(xavp_name);
-
-	if(strcmp(mkey, "ruri") == 0) {
-		vkey = 0;
-	} else if(strcmp(mkey, "furi") == 0) {
-		vkey = 1;
-	} else if(strcmp(mkey, "turi") == 0) {
-		vkey = 2;
-	} else if(strcmp(mkey, "callid") == 0) {
-		vkey = 3;
-	} else {
-		LM_ERR("invalid key %s\n", mkey);
-		return -1;
-	}
 
 	LM_DBG("Looking for matches against: %s\n", mval_sraw.s);
 	//Convert the mval with any PVs to a string.
@@ -2943,35 +3111,18 @@ static int internal_dlg_get_matches(struct sip_msg *msg, char *mkey, char *mop,
 	pv_elem_free_all(xmodel);
 	LM_DBG("Evaluated mval to: %s\n", mval_s.s);
 
-        if(pv_parse_format(&xavp_name_sraw, &xmodel) < 0) {
-                LM_ERR("error in parsing evaluated xavp_name parameter\n");
-                return -1;
-        }
-
-        if(pv_printf_s(msg, xmodel, &xavp_name_s) != 0) {
-                LM_ERR("cannot eval reparsed value of xavp_name parameter\n");
-                pv_elem_free_all(xmodel);
-                return -1;
-        }
-        pv_elem_free_all(xmodel);
-        LM_DBG("Evaluated xavp_name to: %s\n", xavp_name_s.s);
-
-	if(strcmp(mop, "eq") == 0) {
-		vop = 0;
-	} else if(strcmp(mop, "re") == 0) {
-		vop = 1;
-		memset(&mre, 0, sizeof(regex_t));
-		if(regcomp(&mre, mval_s.s, REG_EXTENDED | REG_ICASE | REG_NEWLINE)
-				!= 0) {
-			LM_ERR("failed to compile regex: %s\n", mval_s.s);
-			return -1;
-		}
-	} else if(strcmp(mop, "sw") == 0) {
-		vop = 2;
-	} else {
-		LM_ERR("invalid matching operator %s\n", mop);
+	if(pv_parse_format(&xavp_name_sraw, &xmodel) < 0) {
+		LM_ERR("error in parsing evaluated xavp_name parameter\n");
 		return -1;
 	}
+
+	if(pv_printf_s(msg, xmodel, &xavp_name_s) != 0) {
+		LM_ERR("cannot eval reparsed value of xavp_name parameter\n");
+		pv_elem_free_all(xmodel);
+		return -1;
+	}
+	pv_elem_free_all(xmodel);
+	LM_DBG("Evaluated xavp_name to: %s\n", xavp_name_s.s);
 
 	if(xavp_name_s.s == NULL || xavp_name_s.len <= 0) {
 		LM_ERR("XAVP name not provided.\n");
@@ -2985,71 +3136,36 @@ static int internal_dlg_get_matches(struct sip_msg *msg, char *mkey, char *mop,
 	list = xavp_get(&xavp_name_s, NULL);
 	xavp = list ? &list->val.v.xavp : &new_xavp;
 
-	for(i = 0; i < d_table->size; i++) {
-		dlg_lock(d_table, &(d_table->entries[i]));
-		for(dlg = d_table->entries[i].first; dlg != NULL; dlg = dlg->next) {
-			matched = 0;
-			switch(vkey) {
-				case 0:
-					sval = dlg->req_uri;
-					break;
-				case 1:
-					sval = dlg->from_uri;
-					break;
-				case 2:
-					sval = dlg->to_uri;
-					break;
-				case 3:
-					sval = dlg->callid;
-					break;
-			}
-			switch(vop) {
-				case 0:
-					/* string comparison */
-					if(mval_s.len == sval.len
-							&& strncmp(mval_s.s, sval.s, mval_s.len) == 0) {
-						matched = 1;
-					}
-					break;
-				case 1:
-					/* regexp matching */
-					if(regexec(&mre, sval.s, 1, &pmatch, 0) == 0) {
-						matched = 1;
-					}
-					break;
-				case 2:
-					/* starts with */
-					if(mval_s.len <= sval.len
-							&& strncmp(mval_s.s, sval.s, mval_s.len) == 0) {
-						matched = 1;
-					}
-					break;
-			}
-			if(matched == 1) {
-				m++;
-				//Add fields to XAVP for this dialog.
-				//The XAVP structure is such that multiple calls to this
-				//will add each set of fields under their own index on
-				//the XAVP list.
-				dlg_get_matches_xavp_helper(xavp, dlg);
+	//Get list of matches
+	matches = dlg_list_matches(&dlg_matches, mkey_s, mop_s, mval_s, max_results);
 
-				if(max_results > 0 && m == max_results) {
-					break;
-				}
-			}
-		}
-		dlg_unlock(d_table, &(d_table->entries[i]));
-		if(max_results > 0 && m == max_results) {
-			break;
-		}
+	if (matches < 0) {
+		LM_ERR("dlg_list_matches returned an error.\n");
+		return -1;
 	}
-	if(vop == 1) {
-		regfree(&mre);
+
+	for (i = 0; i < matches; i++) {
+		//Add fields to XAVP for this dialog.
+		//The XAVP structure is such that multiple calls to this
+		//will add each set of fields under their own index on
+		//the XAVP list.
+		unsigned int entry = dlg_matches[i].entry;
+
+		dlg_lock(d_table, &(d_table->entries[entry]));
+		if (!dlg_get_matches_xavp_helper(xavp, dlg_matches[i].dlg)) {
+			shm_free(dlg_matches);
+			dlg_unlock(d_table, &(d_table->entries[entry]));
+			LM_ERR("Failed to add matching dialog to XAVP.\n");
+			return -1;
+		}
+		dlg_unlock(d_table, &(d_table->entries[entry]));
 	}
+
+	shm_free(dlg_matches);
 
 	//Add to root list at the end, so the xavp points to last
 	//field added before adding to root list.
-	if(list == NULL && m > 0) {
+	if(list == NULL && matches > 0) {
 		// If list is null there was no xavp of name xavp_name in root list - add it
 		LM_DBG("Adding new xavp to root list: %s\n", xavp_name_s.s);
 		sr_xval_t xval;
@@ -3063,12 +3179,12 @@ static int internal_dlg_get_matches(struct sip_msg *msg, char *mkey, char *mop,
 		}
 	}
 
-	if(m == 0) {
+	if(matches == 0) {
 		LM_DBG("No matches found.\n");
 		//Apparently returning 0 will stop execution of the calling script. So return -1.
 		return -1;
 	}
-	return m;
+	return matches;
 }
 
 static int w_dlg_get_matches1(
@@ -3464,21 +3580,13 @@ static void rpc_dlg_stats_active(rpc_t *rpc, void *c)
  */
 static void rpc_dlg_list_match_ex(rpc_t *rpc, void *c, int with_context)
 {
-	dlg_cell_t *dlg = NULL;
+	dlg_cell_match_t *dlg_matches = NULL;
 	int i = 0;
 	str mkey = {NULL, 0};
 	str mop = {NULL, 0};
 	str mval = {NULL, 0};
-	str sval = {NULL, 0};
-	unsigned int ival = 0;
-	unsigned int mival = 0;
 	int n = 0;
 	int m = 0;
-	int vkey = 0;
-	int vop = 0;
-	int matched = 0;
-	regex_t mre;
-	regmatch_t pmatch;
 
 	i = rpc->scan(c, "SSS", &mkey, &mop, &mval);
 	if (i < 3) {
@@ -3492,134 +3600,25 @@ static void rpc_dlg_list_match_ex(rpc_t *rpc, void *c, int with_context)
 		rpc->fault(c, 500, "Invalid parameters");
 		return;
 	}
-	if(mkey.len==4 && strncmp(mkey.s, "ruri", mkey.len)==0) {
-		vkey = 0;
-	} else if(mkey.len==4 && strncmp(mkey.s, "furi", mkey.len)==0) {
-		vkey = 1;
-	} else if(mkey.len==4 && strncmp(mkey.s, "turi", mkey.len)==0) {
-		vkey = 2;
-	} else if(mkey.len==6 && strncmp(mkey.s, "callid", mkey.len)==0) {
-		vkey = 3;
-	} else if(mkey.len==8 && strncmp(mkey.s, "start_ts", mkey.len)==0) {
-		vkey = 4;
-	} else {
-		LM_ERR("invalid key %.*s\n", mkey.len, mkey.s);
-		rpc->fault(c, 500, "Invalid matching key parameter");
-		return;
-	}
-	if(mop.len!=2) {
-		LM_ERR("invalid matching operator %.*s\n", mop.len, mop.s);
-		rpc->fault(c, 500, "Invalid matching operator parameter");
-		return;
-
-	}
-	if(strncmp(mop.s, "eq", 2)==0) {
-		vop = 0;
-	} else if(strncmp(mop.s, "re", 2)==0) {
-		vop = 1;
-		memset(&mre, 0, sizeof(regex_t));
-		if (regcomp(&mre, mval.s, REG_EXTENDED|REG_ICASE|REG_NEWLINE)!=0) {
-			LM_ERR("failed to compile regex: %.*s\n", mval.len, mval.s);
-			rpc->fault(c, 500, "Invalid matching value parameter");
-			return;
-		}
-	} else if(strncmp(mop.s, "sw", 2)==0) {
-		vop = 2;
-	} else if(strncmp(mop.s, "gt", 2)==0) {
-		vop = 3;
-	} else if(strncmp(mop.s, "lt", 2)==0) {
-		vop = 4;
-	} else {
-		LM_ERR("invalid matching operator %.*s\n", mop.len, mop.s);
-		rpc->fault(c, 500, "Invalid matching operator parameter");
-		return;
-	}
 	if(rpc->scan(c, "*d", &n)<1) {
 		n = 0;
 	}
 
-	if (vkey == 4  && vop <= 2) {
-		LM_ERR("Matching operator %.*s not supported with start_ts key\n", mop.len, mop.s);
-		rpc->fault(c, 500, "Matching operator not supported with start_ts key");
+	m = dlg_list_matches(&dlg_matches, mkey, mop, mval, n);
+
+	if (m < 0) {
+		LM_ERR("invalid parameters, see earlier log entry.\n");
+		rpc->fault(c, 500, "Invalid parameters, see logs for details.");
 		return;
 	}
 
-	if (vkey != 4  && vop >= 3) {
-		LM_ERR("Matching operator %.*s not supported with key %.*s\n", mop.len, mop.s, mkey.len, mkey.s);
-		rpc->fault(c, 500, "Matching operator not supported");
-		return;
+	for (i = 0; i < m; i++) {
+		unsigned int entry = dlg_matches[i].entry;
+		dlg_lock(d_table, &(d_table->entries[entry]));
+		internal_rpc_print_dlg(rpc, c, dlg_matches[i].dlg, with_context);
+		dlg_unlock(d_table, &(d_table->entries[entry]));
 	}
-
-	for(i=0; i<d_table->size; i++) {
-		dlg_lock(d_table, &(d_table->entries[i]));
-		for(dlg=d_table->entries[i].first; dlg!=NULL; dlg=dlg->next) {
-			matched = 0;
-			switch(vkey) {
-				case 0:
-					sval = dlg->req_uri;
-				break;
-				case 1:
-					sval = dlg->from_uri;
-				break;
-				case 2:
-					sval = dlg->to_uri;
-				break;
-				case 3:
-					sval = dlg->callid;
-				break;
-				case 4:
-					ival = dlg->start_ts;
-				break;
-			}
-			switch(vop) {
-				case 0:
-					/* string comparison */
-					if(mval.len==sval.len
-							&& strncmp(mval.s, sval.s, mval.len)==0) {
-						matched = 1;
-					}
-				break;
-				case 1:
-					/* regexp matching */
-					if(regexec(&mre, sval.s, 1, &pmatch, 0)==0) {
-						matched = 1;
-					}
-				break;
-				case 2:
-					/* starts with */
-					if(mval.len<=sval.len
-							&& strncmp(mval.s, sval.s, mval.len)==0) {
-						matched = 1;
-					}
-				break;
-				case 3:		
-					/* greater than */
-					if (str2int(&mval, &mival) == 0 && ival > mival) {
-						matched = 1;
-					}
-				break;
-				case 4:
-					if (str2int(&mval, &mival) == 0 && ival < mival) {
-						matched = 1;
-					}
-				break;
-			}
-			if (matched==1) {
-				m++;
-				internal_rpc_print_dlg(rpc, c, dlg, with_context);
-				if(n>0 && m==n) {
-					break;
-				}
-			}
-		}
-		dlg_unlock(d_table, &(d_table->entries[i]));
-		if(n>0 && m==n) {
-			break;
-		}
-	}
-	if(vop == 1) {
-		regfree(&mre);
-	}
+	shm_free(dlg_matches);
 
 	if(m==0) {
 		rpc->fault(c, 404, "Not found");
