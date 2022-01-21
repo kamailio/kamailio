@@ -167,6 +167,7 @@ void dlg_clean_timer_exec(unsigned int ticks, void* param);
 static int fixup_profile(void** param, int param_no);
 static int fixup_get_profile2(void** param, int param_no);
 static int fixup_get_profile3(void** param, int param_no);
+static int fixup_dlg_get_matches(void** param, int param_no);
 static int w_set_dlg_profile(struct sip_msg*, char*, char*);
 static int w_unset_dlg_profile(struct sip_msg*, char*, char*);
 static int w_is_in_profile(struct sip_msg*, char*, char*);
@@ -191,6 +192,8 @@ static int fixup_dlg_bridge(void** param, int param_no);
 static int w_dlg_get(struct sip_msg*, char*, char*, char*);
 static int w_is_known_dlg(struct sip_msg *);
 static int w_dlg_set_ruri(sip_msg_t *, char *, char *);
+static int w_dlg_get_matches1(struct sip_msg*, char*, char*, char*, char*);
+static int w_dlg_get_matches2(struct sip_msg*, char*, char*, char*, char*, char*);
 static int w_dlg_db_load_callid(sip_msg_t *msg, char *ci, char *p2);
 static int w_dlg_db_load_extra(sip_msg_t *msg, char *p1, char *p2);
 
@@ -250,6 +253,10 @@ static cmd_export_t cmds[]={
 	{"dlg_remote_profile", (cmd_function)w_dlg_remote_profile, 5, fixup_dlg_remote_profile,
 			0, ANY_ROUTE },
 	{"dlg_set_ruri",       (cmd_function)w_dlg_set_ruri,  0, NULL,
+			0, ANY_ROUTE },
+	{"dlg_get_matches",    (cmd_function)w_dlg_get_matches1,   4, fixup_dlg_get_matches,
+		        0, ANY_ROUTE },
+	{"dlg_get_matches",    (cmd_function)w_dlg_get_matches2,   5, fixup_dlg_get_matches,
 			0, ANY_ROUTE },
 	{"dlg_db_load_callid", (cmd_function)w_dlg_db_load_callid, 1, fixup_spve_null,
 			0, ANY_ROUTE },
@@ -437,6 +444,47 @@ static int fixup_get_profile3(void** param, int param_no)
 	return 0;
 }
 
+static int fixup_dlg_get_matches(void **param, int param_no)
+{
+	str s;
+
+	s.s = (char *)(*param);
+	s.len = strlen(s.s);
+	if(s.len == 0) {
+		LM_ERR("param %d is empty string!\n", param_no);
+		return E_CFG;
+	}
+
+	//Match key
+	if(param_no == 1) {
+		if(strncmp(s.s, "ruri", s.len) != 0 
+				&& strncmp(s.s, "turi", s.len) != 0
+				&& strncmp(s.s, "furi", s.len) != 0
+				&& strncmp(s.s, "callid", s.len) != 0) {
+			LM_ERR("param %d must be 'ruri', 'turi', 'furi' or 'callid'.\n",
+					param_no);
+			return E_CFG;
+		}
+	// Match operator
+	} else if(param_no == 2) {
+		if(strncmp(s.s, "eq", s.len) != 0 
+				&& strncmp(s.s, "sw", s.len) != 0
+				&& strncmp(s.s, "re", s.len) != 0
+				&& strncmp(s.s, "gt", s.len) != 0
+				&& strncmp(s.s, "lt", s.len) != 0) {
+			LM_ERR("param %d must be 'eq', 'sw', 're', 'gt' or 'lt'.\n", param_no);
+			return E_CFG;
+		}
+	//No extra validation for param 3
+
+	//VAXP result variable
+	} else if(param_no == 4) {
+		/* We don't to evaluate the variable, just accept a string name to use as the XAVP class name.
+		 * no further validation needed.
+		 */
+	}
+	return 0;
+}
 
 
 int load_dlg( struct dlg_binds *dlgb )
@@ -2565,6 +2613,496 @@ static int w_is_known_dlg(sip_msg_t *msg) {
 static int w_dlg_set_ruri(sip_msg_t *msg, char *p1, char *p2)
 {
 	return	dlg_set_ruri(msg);
+}
+
+/*!
+ * \brief Helper function that adds a given dialog's values to a given XAVP.
+ *
+ * \param xavp XAVP array to add dialog values
+ * \param dlg Pointer to a dialog to get values from
+ * \returns Returns 1 on success or 0 on failure.
+ */
+static int dlg_get_matches_xavp_helper(sr_xavp_t **xavp, dlg_cell_t *dlg)
+{
+	str xname_h_entry = str_init("h_entry");
+	str xname_h_id = str_init("h_id");
+	str xname_ref = str_init("ref");
+	str xname_callid = str_init("callid");
+	str xname_from_uri = str_init("from_uri");
+	str xname_to_uri = str_init("to_uri");
+	str xname_state = str_init("state");
+	str xname_start_ts = str_init("start_ts");
+	str xname_init_ts = str_init("init_ts");
+	str xname_end_ts = str_init("end_ts");
+	str xname_duration = str_init("duration");
+	str xname_timeout = str_init("timeout");
+	str xname_lifetime = str_init("lifetime");
+	str xname_dflags = str_init("dflags");
+	str xname_sflags = str_init("sflags");
+	str xname_iflags = str_init("iflags");
+	str xname_caller_tag = str_init("caller_tag");
+	str xname_caller_contact = str_init("caller_contact");
+	str xname_caller_cseq = str_init("caller_cseq");
+	str xname_caller_route_set = str_init("caller_route_set");
+	str xname_caller_socket = str_init("caller_socket");
+	str xname_callee_tag = str_init("callee_tag");
+	str xname_callee_contact = str_init("callee_contact");
+	str xname_callee_cseq = str_init("callee_cseq");
+	str xname_callee_route_set = str_init("callee_route_set");
+	str xname_callee_socket = str_init("callee_socket");
+
+	sr_xval_t xval;
+
+	dlg_profile_link_t *pl;
+	dlg_var_t *var;
+
+
+	if(dlg == NULL) {
+		LM_ERR("Null dialog was passed.\n");
+		return 0;
+	}
+
+	time_t tnow;
+	int tdur;
+
+	tnow = time(NULL);
+	if(dlg->end_ts) {
+		tdur = (int)(dlg->end_ts - dlg->start_ts);
+	} else if(dlg->start_ts) {
+		tdur = (int)(tnow - dlg->start_ts);
+	} else {
+		tdur = 0;
+	}
+
+	//h_entry
+	memset(&xval, 0, sizeof(sr_xval_t));
+	xval.type = SR_XTYPE_INT;
+	xval.v.i = dlg->h_entry;
+	xavp_add_value(&xname_h_entry, &xval, xavp);
+
+	//h_id
+	memset(&xval, 0, sizeof(sr_xval_t));
+	xval.type = SR_XTYPE_INT;
+	xval.v.i = dlg->h_id;
+	xavp_add_value(&xname_h_id, &xval, xavp);
+
+	//ref
+	memset(&xval, 0, sizeof(sr_xval_t));
+	xval.type = SR_XTYPE_INT;
+	xval.v.i = dlg->ref;
+	xavp_add_value(&xname_ref, &xval, xavp);
+
+	//callid
+	memset(&xval, 0, sizeof(sr_xval_t));
+	xval.type = SR_XTYPE_STR;
+	xval.v.s = dlg->callid;
+	xavp_add_value(&xname_callid, &xval, xavp);
+
+	//from_uri
+	memset(&xval, 0, sizeof(sr_xval_t));
+	xval.type = SR_XTYPE_STR;
+	xval.v.s = dlg->from_uri;
+	xavp_add_value(&xname_from_uri, &xval, xavp);
+
+	//to_uri
+	memset(&xval, 0, sizeof(sr_xval_t));
+	xval.type = SR_XTYPE_STR;
+	xval.v.s = dlg->to_uri;
+	xavp_add_value(&xname_to_uri, &xval, xavp);
+
+	//state
+	memset(&xval, 0, sizeof(sr_xval_t));
+	xval.type = SR_XTYPE_INT;
+	xval.v.i = dlg->state;
+	xavp_add_value(&xname_state, &xval, xavp);
+
+	//start_ts
+	memset(&xval, 0, sizeof(sr_xval_t));
+	xval.type = SR_XTYPE_INT;
+	xval.v.i = dlg->start_ts;
+	xavp_add_value(&xname_start_ts, &xval, xavp);
+
+	//init_ts
+	memset(&xval, 0, sizeof(sr_xval_t));
+	xval.type = SR_XTYPE_INT;
+	xval.v.i = dlg->init_ts;
+	xavp_add_value(&xname_init_ts, &xval, xavp);
+
+	//end_ts
+	memset(&xval, 0, sizeof(sr_xval_t));
+	xval.type = SR_XTYPE_INT;
+	xval.v.i = dlg->end_ts;
+	xavp_add_value(&xname_end_ts, &xval, xavp);
+
+	//duration
+	memset(&xval, 0, sizeof(sr_xval_t));
+	xval.type = SR_XTYPE_INT;
+	xval.v.i = tdur;
+	xavp_add_value(&xname_duration, &xval, xavp);
+
+	//timeout
+	memset(&xval, 0, sizeof(sr_xval_t));
+	xval.type = SR_XTYPE_INT;
+	xval.v.i = dlg->tl.timeout ? tnow + dlg->tl.timeout - get_ticks() : 0;
+	xavp_add_value(&xname_timeout, &xval, xavp);
+
+	//lifetime
+	memset(&xval, 0, sizeof(sr_xval_t));
+	xval.type = SR_XTYPE_INT;
+	xval.v.i = dlg->lifetime;
+	xavp_add_value(&xname_lifetime, &xval, xavp);
+
+	//dflags
+	memset(&xval, 0, sizeof(sr_xval_t));
+	xval.type = SR_XTYPE_INT;
+	xval.v.i = dlg->dflags;
+	xavp_add_value(&xname_dflags, &xval, xavp);
+
+	//sflags
+	memset(&xval, 0, sizeof(sr_xval_t));
+	xval.type = SR_XTYPE_INT;
+	xval.v.i = dlg->sflags;
+	xavp_add_value(&xname_sflags, &xval, xavp);
+
+	//iflags
+	memset(&xval, 0, sizeof(sr_xval_t));
+	xval.type = SR_XTYPE_INT;
+	xval.v.i = dlg->iflags;
+	xavp_add_value(&xname_iflags, &xval, xavp);
+
+	//caller_tag
+	memset(&xval, 0, sizeof(sr_xval_t));
+	xval.type = SR_XTYPE_STR;
+	xval.v.s = dlg->tag[DLG_CALLER_LEG];
+	xavp_add_value(&xname_caller_tag, &xval, xavp);
+
+	//caller_contact
+	memset(&xval, 0, sizeof(sr_xval_t));
+	xval.type = SR_XTYPE_STR;
+	xval.v.s = dlg->contact[DLG_CALLER_LEG];
+	xavp_add_value(&xname_caller_contact, &xval, xavp);
+
+	//caller_cseq
+	memset(&xval, 0, sizeof(sr_xval_t));
+	xval.type = SR_XTYPE_STR;
+	xval.v.s = dlg->cseq[DLG_CALLER_LEG];
+	xavp_add_value(&xname_caller_cseq, &xval, xavp);
+
+	//caller_route_set
+	memset(&xval, 0, sizeof(sr_xval_t));
+	xval.type = SR_XTYPE_STR;
+	xval.v.s = dlg->route_set[DLG_CALLER_LEG];
+	xavp_add_value(&xname_caller_route_set, &xval, xavp);
+
+	//caller_socket
+	memset(&xval, 0, sizeof(sr_xval_t));
+	xval.type = SR_XTYPE_STR;
+	xval.v.s = dlg->bind_addr[DLG_CALLER_LEG]
+					   ? dlg->bind_addr[DLG_CALLER_LEG]->sock_str
+					   : empty_str;
+	xavp_add_value(&xname_caller_socket, &xval, xavp);
+
+	//callee_tag
+	memset(&xval, 0, sizeof(sr_xval_t));
+	xval.type = SR_XTYPE_STR;
+	xval.v.s = dlg->tag[DLG_CALLEE_LEG];
+	xavp_add_value(&xname_callee_tag, &xval, xavp);
+
+	//callee_contact
+	memset(&xval, 0, sizeof(sr_xval_t));
+	xval.type = SR_XTYPE_STR;
+	xval.v.s = dlg->contact[DLG_CALLEE_LEG];
+	xavp_add_value(&xname_callee_contact, &xval, xavp);
+
+	//callee_cseq
+	memset(&xval, 0, sizeof(sr_xval_t));
+	xval.type = SR_XTYPE_STR;
+	xval.v.s = dlg->cseq[DLG_CALLEE_LEG];
+	xavp_add_value(&xname_callee_cseq, &xval, xavp);
+
+	//callee_route_set
+	memset(&xval, 0, sizeof(sr_xval_t));
+	xval.type = SR_XTYPE_STR;
+	xval.v.s = dlg->route_set[DLG_CALLEE_LEG];
+	xavp_add_value(&xname_callee_route_set, &xval, xavp);
+
+	//callee_socket
+	memset(&xval, 0, sizeof(sr_xval_t));
+	xval.type = SR_XTYPE_STR;
+	xval.v.s = dlg->bind_addr[DLG_CALLEE_LEG]
+					   ? dlg->bind_addr[DLG_CALLEE_LEG]->sock_str
+					   : empty_str;
+	xavp_add_value(&xname_callee_socket, &xval, xavp);
+
+
+	for(pl = dlg->profile_links; pl && (dlg->state < DLG_STATE_DELETED); pl = pl->next) {
+		//Prefix profile XAVPs with prf_
+		//prefix + name + NULL
+		int buflen = 4 + pl->profile->name.len + 1;
+		char buf[buflen];
+		snprintf(buf, buflen, "prf_%s", pl->profile->name.s);
+		str s;
+		s.s = buf;
+		s.len = strlen(buf);
+
+		memset(&xval, 0, sizeof(sr_xval_t));
+		xval.type = SR_XTYPE_STR;
+
+		if(pl->profile->has_value) {
+			xval.v.s = pl->hash_linker.value;
+		} else {
+			xval.v.s = empty_str;
+		}
+		xavp_add_value(&s, &xval, xavp);
+	}
+
+	for(var = dlg->vars; var && (dlg->state < DLG_STATE_DELETED); var = var->next) {
+		//Prefix dlg var XAVPs with var_
+		//prefix + key + NULL
+		int buflen = 4 + var->key.len + 1;
+		char buf[buflen];
+		snprintf(buf, buflen, "var_%s", var->key.s);
+		str s;
+		s.s = buf;
+		s.len = strlen(buf);
+
+		memset(&xval, 0, sizeof(sr_xval_t));
+		xval.type = SR_XTYPE_STR;
+		xval.v.s = var->value;
+		xavp_add_value(&s, &xval, xavp);
+	}
+	return 1;
+}
+
+
+/*!
+ * \brief Function matches against dialogs based on the provided mkey, mop and mval,
+ * then stores results in an XAVP variable.
+ *
+ * \param msg SIP message
+ * \param mkey Field of dialogs to match against
+ * \param mop Type of matching to perform
+ * \param mval String value to match against, can contain  a pvar.
+ * \param xavp_name String name of an XAVP variable to store results in.
+ * \param max_results Integer with max results to return, returns all if 0.
+ * \returns Count of matching dialogs, or -1 if no matches found.
+ */
+static int internal_dlg_get_matches(struct sip_msg *msg, char *mkey, char *mop,
+		char *mval, char *xavp_name, int max_results)
+{
+	dlg_cell_t *dlg = NULL;
+	int i = 0;
+	sr_xavp_t **xavp = NULL; //XAVP to store fields
+	sr_xavp_t *list = NULL; //Ptr to existing XAVP with "xavp_name" if one exists.
+	sr_xavp_t *new_xavp = NULL;
+	str sval = {NULL, 0};
+	int m = 0; //Number of matches.
+	int vkey = 0;
+	int vop = 0;
+	int matched = 0;
+	regex_t mre;
+	regmatch_t pmatch;
+
+	str mval_sraw;
+	mval_sraw.s = mval;
+	mval_sraw.len = strlen(mval);
+
+	str xavp_name_s = {0, 0};
+	str xavp_name_sraw;
+	xavp_name_sraw.s = xavp_name;
+	xavp_name_sraw.len = strlen(xavp_name);
+
+	if(strcmp(mkey, "ruri") == 0) {
+		vkey = 0;
+	} else if(strcmp(mkey, "furi") == 0) {
+		vkey = 1;
+	} else if(strcmp(mkey, "turi") == 0) {
+		vkey = 2;
+	} else if(strcmp(mkey, "callid") == 0) {
+		vkey = 3;
+	} else {
+		LM_ERR("invalid key %s\n", mkey);
+		return -1;
+	}
+
+	LM_DBG("Looking for matches against: %s\n", mval_sraw.s);
+	//Convert the mval with any PVs to a string.
+	pv_elem_t *xmodel = NULL;
+	str mval_s = {0, 0};
+
+	if(pv_parse_format(&mval_sraw, &xmodel) < 0) {
+		LM_ERR("error in parsing evaluated mval parameter\n");
+		return -1;
+	}
+
+	if(pv_printf_s(msg, xmodel, &mval_s) != 0) {
+		LM_ERR("cannot eval reparsed value of mval parameter\n");
+		pv_elem_free_all(xmodel);
+		return -1;
+	}
+	pv_elem_free_all(xmodel);
+	LM_DBG("Evaluated mval to: %s\n", mval_s.s);
+
+        if(pv_parse_format(&xavp_name_sraw, &xmodel) < 0) {
+                LM_ERR("error in parsing evaluated xavp_name parameter\n");
+                return -1;
+        }
+
+        if(pv_printf_s(msg, xmodel, &xavp_name_s) != 0) {
+                LM_ERR("cannot eval reparsed value of xavp_name parameter\n");
+                pv_elem_free_all(xmodel);
+                return -1;
+        }
+        pv_elem_free_all(xmodel);
+        LM_DBG("Evaluated xavp_name to: %s\n", xavp_name_s.s);
+
+	if(strcmp(mop, "eq") == 0) {
+		vop = 0;
+	} else if(strcmp(mop, "re") == 0) {
+		vop = 1;
+		memset(&mre, 0, sizeof(regex_t));
+		if(regcomp(&mre, mval_s.s, REG_EXTENDED | REG_ICASE | REG_NEWLINE)
+				!= 0) {
+			LM_ERR("failed to compile regex: %s\n", mval_s.s);
+			return -1;
+		}
+	} else if(strcmp(mop, "sw") == 0) {
+		vop = 2;
+	} else {
+		LM_ERR("invalid matching operator %s\n", mop);
+		return -1;
+	}
+
+	if(xavp_name_s.s == NULL || xavp_name_s.len <= 0) {
+		LM_ERR("XAVP name not provided.\n");
+		return -1;
+	}
+
+	LM_DBG("Storing name for XAVP: %s\n", xavp_name_s.s);
+	//Find existing XAVP for this xavp_name, if there is one.
+	//Use the existing XAVP to append new XAVPs to the list.
+	//If none exists, we'll add it to the root list later.
+	list = xavp_get(&xavp_name_s, NULL);
+	xavp = list ? &list->val.v.xavp : &new_xavp;
+
+	for(i = 0; i < d_table->size; i++) {
+		dlg_lock(d_table, &(d_table->entries[i]));
+		for(dlg = d_table->entries[i].first; dlg != NULL; dlg = dlg->next) {
+			matched = 0;
+			switch(vkey) {
+				case 0:
+					sval = dlg->req_uri;
+					break;
+				case 1:
+					sval = dlg->from_uri;
+					break;
+				case 2:
+					sval = dlg->to_uri;
+					break;
+				case 3:
+					sval = dlg->callid;
+					break;
+			}
+			switch(vop) {
+				case 0:
+					/* string comparison */
+					if(mval_s.len == sval.len
+							&& strncmp(mval_s.s, sval.s, mval_s.len) == 0) {
+						matched = 1;
+					}
+					break;
+				case 1:
+					/* regexp matching */
+					if(regexec(&mre, sval.s, 1, &pmatch, 0) == 0) {
+						matched = 1;
+					}
+					break;
+				case 2:
+					/* starts with */
+					if(mval_s.len <= sval.len
+							&& strncmp(mval_s.s, sval.s, mval_s.len) == 0) {
+						matched = 1;
+					}
+					break;
+			}
+			if(matched == 1) {
+				m++;
+				//Add fields to XAVP for this dialog.
+				//The XAVP structure is such that multiple calls to this
+				//will add each set of fields under their own index on
+				//the XAVP list.
+				dlg_get_matches_xavp_helper(xavp, dlg);
+
+				if(max_results > 0 && m == max_results) {
+					break;
+				}
+			}
+		}
+		dlg_unlock(d_table, &(d_table->entries[i]));
+		if(max_results > 0 && m == max_results) {
+			break;
+		}
+	}
+	if(vop == 1) {
+		regfree(&mre);
+	}
+
+	//Add to root list at the end, so the xavp points to last
+	//field added before adding to root list.
+	if(list == NULL && m > 0) {
+		// If list is null there was no xavp of name xavp_name in root list - add it
+		LM_DBG("Adding new xavp to root list: %s\n", xavp_name_s.s);
+		sr_xval_t xval;
+		memset(&xval, 0, sizeof(sr_xval_t));
+		xval.type = SR_XTYPE_XAVP;
+		xval.v.xavp = *xavp;
+		if(xavp_add_value(&xavp_name_s, &xval, NULL) == NULL) {
+			LM_ERR("cannot add xavp to root list\n");
+			xavp_destroy_list(xavp);
+			return -1;
+		}
+	}
+
+	if(m == 0) {
+		LM_DBG("No matches found.\n");
+		//Apparently returning 0 will stop execution of the calling script. So return -1.
+		return -1;
+	}
+	return m;
+}
+
+static int w_dlg_get_matches1(
+		struct sip_msg *msg, char *mkey, char *mop, char *mval, char *xavp_name)
+{
+	return internal_dlg_get_matches(msg, mkey, mop, mval, xavp_name, 0);
+}
+
+static int w_dlg_get_matches2(struct sip_msg *msg, char *mkey, char *mop,
+		char *mval, char *xavp_name, char *max_results)
+{
+	//Convert the max_results with any PVs to a string.
+	pv_elem_t *xmodel = NULL;
+	str max_results_s;
+	max_results_s.s = max_results;
+	max_results_s.len = strlen(max_results);
+	str val = {0, 0};
+
+	if(pv_parse_format(&max_results_s, &xmodel) < 0) {
+		LM_ERR("error in parsing evaluated max_results parameter\n");
+		return -1;
+	}
+
+	if(pv_printf_s(msg, xmodel, &val) != 0) {
+		LM_ERR("cannot eval reparsed value of max_results parameter\n");
+		pv_elem_free_all(xmodel);
+		return -1;
+	}
+	pv_elem_free_all(xmodel);
+	LM_DBG("Evaluated max_results to: %s\n", val.s);
+
+	int max = atoi(val.s);
+
+	return internal_dlg_get_matches(msg, mkey, mop, mval, xavp_name, max);
 }
 
 static const char *rpc_print_dlgs_doc[2] = {
