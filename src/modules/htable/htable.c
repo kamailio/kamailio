@@ -1413,6 +1413,10 @@ static const char* htable_seti_doc[2] = {
 	"Set one key in a hash table to an integer value.",
 	0
 };
+static const char* htable_setex_doc[2] = {
+	"Set expire in a hash table for the item referenced by key.",
+	0
+};
 static const char* htable_list_doc[2] = {
 	"List all htables.",
 	0
@@ -1608,6 +1612,35 @@ static void htable_rpc_seti(rpc_t* rpc, void* c) {
 		return;
 	}
 	rpc->rpl_printf(c, "Ok. Key set to new value.");
+	return;
+}
+
+/*! \brief RPC htable.setex command to set expire for one item */
+static void htable_rpc_setex(rpc_t* rpc, void* c) {
+	str htname, itname;
+	int exval;
+	ht_t *ht;
+
+	if (rpc->scan(c, "SS.d", &htname, &itname, &exval) < 3) {
+		rpc->fault(c, 500,
+				"Not enough parameters (htable name, item name and expire)");
+		return;
+	}
+
+	/* check if htable exists */
+	ht = ht_get_table(&htname);
+	if (!ht) {
+		rpc->fault(c, 500, "No such htable");
+		return;
+	}
+
+
+	if(ki_ht_setex(NULL, &htname, &itname, exval)<0) {
+		rpc->fault(c, 500, "Failed to set the item");
+		return;
+	}
+
+	rpc->rpl_printf(c, "Ok");
 	return;
 }
 
@@ -1973,6 +2006,7 @@ rpc_export_t htable_rpc[] = {
 	{"htable.get", htable_rpc_get, htable_get_doc, 0},
 	{"htable.sets", htable_rpc_sets, htable_sets_doc, 0},
 	{"htable.seti", htable_rpc_seti, htable_seti_doc, 0},
+	{"htable.setex", htable_rpc_setex, htable_setex_doc, 0},
 	{"htable.listTables", htable_rpc_list, htable_list_doc, RET_ARRAY},
 	{"htable.reload", htable_rpc_reload, htable_reload_doc, 0},
 	{"htable.store", htable_rpc_store, htable_store_doc, 0},
