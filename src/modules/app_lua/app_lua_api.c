@@ -188,6 +188,7 @@ int sr_lua_reload_module(unsigned int reload)
 	return 0;
 }
 
+#if defined(LUA_VERSION_NUM) && LUA_VERSION_NUM >= 504
 /**
  *
  */
@@ -241,6 +242,7 @@ void ksr_luaL_openlib(lua_State *L, const char *libname,
 {
 	ksr_luaL_openlib_mode(L, libname, lfuncs, nup, 1);
 }
+#endif
 
 /**
  *
