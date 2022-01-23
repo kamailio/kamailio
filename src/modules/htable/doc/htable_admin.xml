@@ -1477,7 +1477,6 @@ kamcmd htable.seti test x[0] 123
 ...
 </programlisting>
 	</section>
-	</section>
        <section id="htable.rpc.setex">
                 <title>
                 <function moreinfo="none">htable.setex htable key expire</function>
