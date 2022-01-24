@@ -370,6 +370,45 @@ static void core_info(rpc_t* rpc, void* c)
 
 
 
+static const char* core_runinfo_doc[] = {
+	"Runtime info - binary name, version, uptime, ...", /* Documentation string */
+	0                             /* Method signature(s) */
+};
+
+static void core_runinfo(rpc_t* rpc, void* c)
+{
+	void* s;
+	time_t now;
+	char buf[MAX_CTIME_LEN];
+	str snow;
+	snow.s = buf;
+	int uptime;
+
+	time(&now);
+
+	if (rpc->add(c, "{", &s) < 0) {
+		rpc->fault(c, 500, "Server failure");
+		return;
+	}
+	rpc->struct_add(s, "s", "name", ver_name);
+	rpc->struct_add(s, "s", "version", ver_version);
+	rpc->struct_add(s, "s", "sourceid", ver_id);
+	rpc->struct_add(s, "s", "compiler", ver_compiler);
+	rpc->struct_add(s, "s", "compiled", ver_compiled_time);
+	if(ctime_r(&now, snow.s)) {
+		snow.len = strlen(snow.s);
+		if(snow.len>2 && snow.s[snow.len-1]=='\n') snow.len--;
+		rpc->struct_add(s, "S", "time_now", &snow);
+	}
+	rpc->struct_add(s, "s", "time_started", up_since_ctime);
+	uptime = (int)(now-up_since);
+	rpc->struct_add(s, "d", "uptime_secs", uptime);
+	rpc->struct_printf(s, "utime_days", "%dd %dh %dm %ds",
+			uptime/86400, (uptime%86400)/3600,  ((uptime%86400)%3600)/60,
+			((uptime%86400)%3600)%60);
+
+}
+
 static const char* core_uptime_doc[] = {
 	"Returns uptime of SIP server.",  /* Documentation string */
 	0                                 /* Method signature(s) */
@@ -1078,6 +1117,8 @@ static rpc_export_t core_rpc_methods[] = {
 	{"core.flags",             core_flags,             core_flags_doc,
 		0        },
 	{"core.info",              core_info,              core_info_doc,
+		0        },
+	{"core.runinfo",           core_runinfo,           core_runinfo_doc,
 		0        },
 	{"core.uptime",            core_uptime,            core_uptime_doc,            0        },
 	{"core.ps",                core_ps,                core_ps_doc,                RET_ARRAY},
