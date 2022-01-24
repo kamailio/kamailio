@@ -5,6 +5,8 @@ include ../../Makefile.defs
 auto_gen=
 NAME=app_lua.so
 
+LUALIB=lua
+
 ifeq ($(LUAJIT),)
 	ifeq ($(CROSS_COMPILE),)
 		BUILDER = $(shell which lua-config)
@@ -15,78 +17,53 @@ ifeq ($(LUAJIT),)
 			BUILDER = $(shell which pkg-config)
 		endif
 		ifeq ($(BUILDER),)
-			LUA51 = $(shell ls $(LOCALBASE)/lib/liblua* | grep liblua5.1)
-			DEFS+= -I$(LOCALBASE)/include
-			LIBS+= -L$(LOCALBASE)/lib -lm
-			ifneq ($(LUA51),)
-				DEFS+= -I$(LOCALBASE)/include/lua5.1
-				LIBS+= -llua5.1
-			else
-				LUA52 = $(shell ls $(LOCALBASE)/lib/liblua* | grep liblua5.2)
-				ifneq ($(LUA52),)
-					DEFS+= -DLUA_COMPAT_MODULE -I$(LOCALBASE)/include/lua5.2
-					LIBS+= -llua5.2
-				else
-					DEFS+= -DLUA_COMPAT_MODULE -I$(LOCALBASE)/include/lua
-					LIBS+= -llua
-				endif
+			ifneq ($(shell ls $(LOCALBASE)/lib/liblua* | grep liblua5.1),)
+				LUALIB=lua5.1
+			else ifneq ($(shell ls $(LOCALBASE)/lib/liblua* | grep liblua5.2),)
+				LUALIB=lua5.2
+			else ifneq ($(shell ls $(LOCALBASE)/lib/liblua* | grep liblua5.3),)
+				LUALIB=lua5.3
+			else ifneq ($(shell ls $(LOCALBASE)/lib/liblua* | grep liblua5.4),)
+				LUALIB=lua5.4
 			endif
+			DEFS+= -I$(LOCALBASE)/include -DLUA_COMPAT_MODULE -I$(LOCALBASE)/include/$(LUALIB)
+			LIBS+= -L$(LOCALBASE)/lib -l$(LUALIB) -lm
 		else
-			LUAVER=XX
-			LUALIBS = $(shell pkg-config --silence-errors --libs lua-5.1)
-			ifeq ($(LUALIBS),)
-				LUALIBS = $(shell pkg-config --silence-errors --libs lua5.1)
-				ifeq ($(LUALIBS),)
-					LUALIBS = $(shell pkg-config --silence-errors --libs lua5.2)
-					ifeq ($(LUALIBS),)
-						LUALIBS = $(shell pkg-config --silence-errors --libs lua)
-						ifneq ($(LUALIBS),)
-							LUAVER=5X
-						endif
-					else
-						LUAVER=52
-					endif
-				else
-					LUAVER=51
-				endif
+			ifneq ($(shell pkg-config --silence-errors --libs lua-5.1),)
+				LUALIB=lua-5.1
+			else ifneq ($(shell pkg-config --silence-errors --libs lua5.1),)
+				LUALIB=lua5.1
+			else ifneq ($(shell pkg-config --silence-errors --libs lua5.2),)
+				LUALIB=lua5.2
+			else ifneq ($(shell pkg-config --silence-errors --libs lua5.3),)
+				LUALIB=lua5.3
+			else ifneq ($(shell pkg-config --silence-errors --libs lua5.4),)
+				LUALIB=lua5.4
+			else ifneq ($(shell pkg-config --silence-errors --libs lua),)
+				LUALIB=lua
 			else
-				LUAVER=51X
+				LUALIB=
 			endif
-			ifeq ($(LUAVER),XX)
-				LUA51 = $(shell ls /usr/lib/liblua* | grep liblua5.1)
-				ifneq ($(LUA51),)
-					DEFS+= -I/usr/include/lua5.1
-					LIBS = -llua5.1 -lm
-				else
-					LUA52 = $(shell ls /usr/lib/liblua* | grep liblua5.2)
-					ifneq ($(LUA51),)
-						DEFS+= -DLUA_COMPAT_MODULE -I/usr/include/lua5.2
-						LIBS = -llua5.2 -lm
-					else
-						DEFS+= -DLUA_COMPAT_MODULE -I/usr/include/lua
-						LIBS = -llua -lm
-					endif
-				endif
+			ifeq ($(LUALIB),lua5.1)
+				DEFS+= $(shell pkg-config --cflags lua5.1 | sed -e "s/\\\\/'/" -e "s/\\\\\"/\"'/")
+				LIBS = $(shell pkg-config --libs lua5.1)
+			else ifneq ($(LUALIB),)
+				DEFS+= -DLUA_COMPAT_MODULE
+				DEFS+= $(shell pkg-config --cflags $(LUALIB))
+				LIBS = $(shell pkg-config --libs $(LUALIB))
 			else
-				ifeq ($(LUAVER),51)
-					DEFS+= $(shell pkg-config --cflags lua5.1 | sed -e "s/\\\\/'/" -e "s/\\\\\"/\"'/")
-					LIBS = $(shell pkg-config --libs lua5.1)
-				else
-					ifeq ($(LUAVER),51X)
-						DEFS+= $(shell pkg-config --cflags lua-5.1)
-						LIBS = $(shell pkg-config --libs lua-5.1)
-					else
-						ifeq ($(LUAVER),52)
-							DEFS+= -DLUA_COMPAT_MODULE
-							DEFS+= $(shell pkg-config --cflags lua5.2)
-							LIBS = $(shell pkg-config --libs lua5.2)
-						else
-							DEFS+= -DLUA_COMPAT_MODULE
-							DEFS+= $(shell pkg-config --cflags lua)
-							LIBS = $(shell pkg-config --libs lua)
-						endif
-					endif
+				LUALIB=lua
+				ifneq ($(shell ls $(LOCALBASE)/lib/liblua* | grep liblua5.1),)
+					LUALIB=lua5.1
+				else ifneq ($(shell ls $(LOCALBASE)/lib/liblua* | grep liblua5.2),)
+					LUALIB=lua5.2
+				else ifneq ($(shell ls $(LOCALBASE)/lib/liblua* | grep liblua5.3),)
+					LUALIB=lua5.3
+				else ifneq ($(shell ls $(LOCALBASE)/lib/liblua* | grep liblua5.4),)
+					LUALIB=lua5.4
 				endif
+				DEFS+= -I$(LOCALBASE)/include -DLUA_COMPAT_MODULE -I$(LOCALBASE)/include/$(LUALIB)
+				LIBS+= -L$(LOCALBASE)/lib -l$(LUALIB) -lm
 			endif
 		endif
 	else
