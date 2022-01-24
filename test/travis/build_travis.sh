@@ -7,7 +7,7 @@
 
 set -e
 
-DIST=${DIST:-buster}
+DIST=${DIST:-bullseye}
 CC=${CC:-gcc}
 
 if ! [ -d /code/pkg/kamailio/deb/"${DIST}" ] ; then
