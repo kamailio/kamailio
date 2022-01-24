@@ -945,6 +945,16 @@ static int ds_warn_fixup(void **param, int param_no)
 
 static int ds_reload(sip_msg_t *msg)
 {
+	if(ds_rpc_reload_time==NULL) {
+		LM_ERR("not ready for reload\n");
+		return -1;
+	}
+	if(*ds_rpc_reload_time!=0 && *ds_rpc_reload_time > time(NULL) - ds_reload_delta) {
+		LM_ERR("ongoing reload\n");
+		return -1;
+	}
+	*ds_rpc_reload_time = time(NULL);
+
 	if(!ds_db_url.s) {
 		if(ds_load_list(dslistfile) != 0)
 			LM_ERR("Error reloading from list\n");
@@ -1801,6 +1811,18 @@ static void dispatcher_rpc_add(rpc_t *rpc, void *ctx)
 	str dest;
 	str attrs = STR_NULL;
 
+	if(ds_rpc_reload_time==NULL) {
+		LM_ERR("Not ready for rebuilding destinations list\n");
+		rpc->fault(ctx, 500, "Not ready for reload");
+		return;
+	}
+	if(*ds_rpc_reload_time!=0 && *ds_rpc_reload_time > time(NULL) - ds_reload_delta) {
+		LM_ERR("ongoing reload\n");
+		rpc->fault(ctx, 500, "Ongoing reload");
+		return;
+	}
+	*ds_rpc_reload_time = time(NULL);
+
 	flags = 0;
 
 	nparams = rpc->scan(ctx, "dS*dS", &group, &dest, &flags, &attrs);
@@ -1831,6 +1853,18 @@ static void dispatcher_rpc_remove(rpc_t *rpc, void *ctx)
 {
 	int group;
 	str dest;
+
+	if(ds_rpc_reload_time==NULL) {
+		LM_ERR("Not ready for rebuilding destinations list\n");
+		rpc->fault(ctx, 500, "Not ready for reload");
+		return;
+	}
+	if(*ds_rpc_reload_time!=0 && *ds_rpc_reload_time > time(NULL) - ds_reload_delta) {
+		LM_ERR("ongoing reload\n");
+		rpc->fault(ctx, 500, "Ongoing reload");
+		return;
+	}
+	*ds_rpc_reload_time = time(NULL);
 
 	if(rpc->scan(ctx, "dS", &group, &dest) < 2) {
 		rpc->fault(ctx, 500, "Invalid Parameters");
