@@ -17,6 +17,7 @@ ifeq ($(LUAJIT),)
 			BUILDER = $(shell which pkg-config)
 		endif
 		ifeq ($(BUILDER),)
+			# no pkg-config - try finding by path
 			ifneq ($(shell ls $(LOCALBASE)/lib/liblua* | grep liblua5.1),)
 				LUALIB=lua5.1
 			else ifneq ($(shell ls $(LOCALBASE)/lib/liblua* | grep liblua5.2),)
@@ -26,7 +27,7 @@ ifeq ($(LUAJIT),)
 			else ifneq ($(shell ls $(LOCALBASE)/lib/liblua* | grep liblua5.4),)
 				LUALIB=lua5.4
 			endif
-			DEFS+= -I$(LOCALBASE)/include -DLUA_COMPAT_MODULE -I$(LOCALBASE)/include/$(LUALIB)
+			DEFS+= -DLUA_COMPAT_MODULE -I$(LOCALBASE)/include -I$(LOCALBASE)/include/$(LUALIB)
 			LIBS+= -L$(LOCALBASE)/lib -l$(LUALIB) -lm
 		else
 			ifneq ($(shell pkg-config --silence-errors --libs lua-5.1),)
@@ -52,6 +53,7 @@ ifeq ($(LUAJIT),)
 				DEFS+= $(shell pkg-config --cflags $(LUALIB))
 				LIBS = $(shell pkg-config --libs $(LUALIB))
 			else
+				# pkg-config with no lua library detected - try finding by path
 				LUALIB=lua
 				ifneq ($(shell ls $(LOCALBASE)/lib/liblua* | grep liblua5.1),)
 					LUALIB=lua5.1
@@ -62,7 +64,7 @@ ifeq ($(LUAJIT),)
 				else ifneq ($(shell ls $(LOCALBASE)/lib/liblua* | grep liblua5.4),)
 					LUALIB=lua5.4
 				endif
-				DEFS+= -I$(LOCALBASE)/include -DLUA_COMPAT_MODULE -I$(LOCALBASE)/include/$(LUALIB)
+				DEFS+= -DLUA_COMPAT_MODULE -I$(LOCALBASE)/include -I$(LOCALBASE)/include/$(LUALIB)
 				LIBS+= -L$(LOCALBASE)/lib -l$(LUALIB) -lm
 			endif
 		endif
@@ -71,8 +73,10 @@ ifeq ($(LUAJIT),)
 		LIBS = $(shell lua-config --libs)
 	endif
 else
-	# Build using LuaJIT
-	BUILDER = $(shell which pkg-config)
+	# build using LuaJIT
+	ifeq ($(CROSS_COMPILE),)
+		BUILDER = $(shell which pkg-config)
+	endif
 	ifeq ($(BUILDER),)
 		DEFS+= -I/usr/include/luajit-2.1
 		LIBS = -lluajit-5.1
