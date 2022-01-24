@@ -1466,7 +1466,7 @@ static int lua_sr_xavp_get(lua_State *L)
 
 	env_L = _app_lua_api.env_get_f();
 	num_param = lua_gettop(L);
-	if(num_param<2 && num_param>3)
+	if(num_param<2 || num_param>3)
 	{
 		LM_ERR("wrong number of parameters [%d]\n", num_param);
 		return 0;
