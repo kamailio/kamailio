@@ -45,7 +45,69 @@
 #include "app_lua_sr_api.h"
 #include "app_lua_sr_exp.h"
 
+#if defined(LUA_VERSION_NUM) && LUA_VERSION_NUM >= 504
+#define luaL_openlib ksr_luaL_openlib
+#endif
+
+
 extern app_lua_api_t _app_lua_api;
+
+
+#if defined(LUA_VERSION_NUM) && LUA_VERSION_NUM >= 504
+/**
+ *
+ */
+void ksr_luaL_openlib_mode(lua_State *L, const char *libname,
+			     const luaL_Reg *lfuncs, int nup, int mode)
+{
+	char modname[256];
+	char *submod = NULL;
+	int tidx = 0;
+	if(mode) {
+		/* support for registering 'module.submodule' functions
+		 * - 'module' functions must be registered first  */
+		if(strlen(libname)>254) {
+			LM_ERR("module name is too long [%s]\n", libname);
+			return;
+		}
+		strcpy(modname, libname);
+		submod = strchr(modname, '.');
+		if(submod != NULL) {
+			*submod = '\0';
+			submod++;
+		}
+		lua_getglobal(L, modname);
+		if (lua_isnil(L, -1)) {
+			if(submod != NULL) {
+				LM_ERR("main module not registered yet [%s]\n", libname);
+				return;
+			}
+			lua_pop(L, 1);
+			lua_newtable(L);
+			luaL_setfuncs(L, lfuncs, 0);
+			lua_setglobal(L, modname);
+			return;
+		}
+		tidx = lua_gettop(L);
+		lua_newtable(L);
+		luaL_setfuncs(L, lfuncs, 0);
+		lua_setfield(L, tidx, submod);
+		return;
+	}
+	lua_newtable(L);
+	luaL_setfuncs(L, lfuncs, 0);
+	lua_setglobal(L, libname);
+}
+
+/**
+ *
+ */
+void ksr_luaL_openlib(lua_State *L, const char *libname,
+			     const luaL_Reg *lfuncs, int nup)
+{
+	ksr_luaL_openlib_mode(L, libname, lfuncs, nup, 1);
+}
+#endif
 
 /**
  *
