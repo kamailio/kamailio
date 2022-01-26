@@ -71,7 +71,9 @@ enum SMS_DATA {
 	SMS_UDH_CONCATSM_MAX_NUM_SM,
 	SMS_UDH_CONCATSM_SEQ,
 	SMS_TPDU_ORIGINATING_ADDRESS_FLAGS,
-	SMS_TPDU_DESTINATION_FLAGS
+	SMS_TPDU_DESTINATION_FLAGS,
+	SMS_RPDATA_ORIGINATOR_FLAGS,
+	SMS_RPDATA_DESTINATION_FLAGS
 };
 
 // Types of the PDU-Message
@@ -140,6 +142,8 @@ typedef struct _sms_rp_data {
 	str destination;
 	unsigned char pdu_len;
 	sms_pdu_t pdu;
+	unsigned char originator_flags;
+	unsigned char destination_flags;
 } sms_rp_data_t;
 
 // Pointer to current parsed rp_data/tpdu
@@ -906,7 +910,9 @@ int dumpRPData(sms_rp_data_t * rpdata, int level) {
 		LOG(level, "RP-Data\n");
 		LOG(level, "  Type:                       %x\n", rpdata->msg_type);
 		LOG(level, "  Reference:                  %x (%i)\n", rpdata->reference, rpdata->reference);
+		LOG(level, "  Originator flags:           %x (%i)\n", rpdata->originator_flags, rpdata->originator_flags);
 		LOG(level, "  Originator:                 %.*s (%i)\n", rpdata->originator.len, rpdata->originator.s, rpdata->originator.len);
+		LOG(level, "  Destination flags:          %x (%i)\n", rpdata->destination_flags, rpdata->destination_flags);
 		LOG(level, "  Destination:                %.*s (%i)\n", rpdata->destination.len, rpdata->destination.s, rpdata->destination.len);
 		LOG(level, "T-PDU\n");
 		LOG(level, "  Type:                       %x\n", rpdata->pdu.msg_type);
@@ -996,7 +1002,7 @@ int pv_sms_body(struct sip_msg *msg, pv_param_t *param, pv_value_t *res) {
 	lenpos = sms_body.len;
 	sms_body.s[sms_body.len++] = 0x00;
 	if (rp_send_data->originator.len > 0) {
-		sms_body.s[sms_body.len++] = 0x91; // Type of number: ISDN/Telephony Numbering (E164), no extension
+		sms_body.s[sms_body.len++] = rp_send_data->originator_flags; // Type of number: ISDN/Telephony Numbering (E164), no extension
 		i = EncodePhoneNumber(rp_send_data->originator, &sms_body.s[sms_body.len], buffer_size - sms_body.len);
 		sms_body.s[lenpos] = i + 1;
 		sms_body.len += i;
@@ -1004,7 +1010,7 @@ int pv_sms_body(struct sip_msg *msg, pv_param_t *param, pv_value_t *res) {
 	lenpos = sms_body.len;
 	sms_body.s[sms_body.len++] = 0x00;
 	if (rp_send_data->destination.len > 0) {
-		sms_body.s[sms_body.len++] = 0x91; // Type of number: ISDN/Telephony Numbering (E164), no extension
+		sms_body.s[sms_body.len++] = rp_send_data->destination_flags; // Type of number: ISDN/Telephony Numbering (E164), no extension
 		i = EncodePhoneNumber(rp_send_data->destination, &sms_body.s[sms_body.len], buffer_size - sms_body.len);
 		sms_body.s[lenpos] = i + 1;
 		sms_body.len += i;
@@ -1152,6 +1158,10 @@ int pv_get_sms(struct sip_msg *msg, pv_param_t *param, pv_value_t *res) {
 			return pv_get_sintval(msg, param, res, (int)rp_data->pdu.originating_address_flags);
 		case SMS_TPDU_DESTINATION_FLAGS:
 			return pv_get_sintval(msg, param, res, (int)rp_data->pdu.destination_flags);
+		case SMS_RPDATA_ORIGINATOR_FLAGS:
+			return pv_get_sintval(msg, param, res, (int)rp_data->originator_flags);
+		case SMS_RPDATA_DESTINATION_FLAGS:
+			return pv_get_sintval(msg, param, res, (int)rp_data->destination_flags);
 	}
 	return 0;
 }
@@ -1170,6 +1180,8 @@ int pv_set_sms(struct sip_msg* msg, pv_param_t *param, int op, pv_value_t *val) 
 		memset(rp_send_data, 0, sizeof(struct _sms_rp_data));
 		rp_send_data->pdu.originating_address_flags = 0x91; // Type of number: ISDN/Telephony Numbering (E164), no extension
 		rp_send_data->pdu.destination_flags = 0x91;
+		rp_send_data->originator_flags = 0x91;
+		rp_send_data->destination_flags = 0x91;
 	}
 
 	switch(param->pvn.u.isname.name.n) {
@@ -1179,6 +1191,8 @@ int pv_set_sms(struct sip_msg* msg, pv_param_t *param, int op, pv_value_t *val) 
 			memset(rp_send_data, 0, sizeof(struct _sms_rp_data));
 			rp_send_data->pdu.originating_address_flags = 0x91; // Type of number: ISDN/Telephony Numbering (E164), no extension
 			rp_send_data->pdu.destination_flags = 0x91;
+			rp_send_data->originator_flags = 0x91;
+			rp_send_data->destination_flags = 0x91;
 			break;
 		case SMS_RPDATA_TYPE:
 			if (val == NULL) {
@@ -1435,6 +1449,30 @@ int pv_set_sms(struct sip_msg* msg, pv_param_t *param, int op, pv_value_t *val) 
 			rp_send_data->pdu.destination_flags = (unsigned char)val->ri;
 			break;
 		}
+		case SMS_RPDATA_ORIGINATOR_FLAGS: {
+			if (val == NULL) {
+				rp_send_data->originator_flags = 0;
+				return 0;
+			}
+			if (!(val->flags & PV_VAL_INT)) {
+				LM_ERR("Invalid value type\n");
+				return -1;
+			}
+			rp_send_data->originator_flags = (unsigned char)val->ri;
+			break;
+		}
+		case SMS_RPDATA_DESTINATION_FLAGS: {
+			if (val == NULL) {
+				rp_send_data->destination_flags = 0;
+				return 0;
+			}
+			if (!(val->flags & PV_VAL_INT)) {
+				LM_ERR("Invalid value type\n");
+				return -1;
+			}
+			rp_send_data->destination_flags = (unsigned char)val->ri;
+			break;
+		}
 	}
 	return 0;
 }
@@ -1461,6 +1499,14 @@ int pv_parse_rpdata_name(pv_spec_p sp, str *in) {
 			break;
 		case 11:
 			if (strncmp(in->s, "destination", 11) == 0) sp->pvp.pvn.u.isname.name.n = SMS_RPDATA_DESTINATION;
+			else goto error;
+			break;
+		case 12:
+			if (strncmp(in->s, "origen_flags", 12) == 0) sp->pvp.pvn.u.isname.name.n = SMS_RPDATA_ORIGINATOR_FLAGS;
+			else goto error;
+			break;
+		case 17:
+			if (strncmp(in->s, "destination_flags", 17) == 0) sp->pvp.pvn.u.isname.name.n = SMS_RPDATA_DESTINATION_FLAGS;
 			else goto error;
 			break;
 		default:
