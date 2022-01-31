@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -56,7 +56,7 @@
 #define FLAGS_PARAM ";flags="
 #define FLAGS_PARAM_LEN (sizeof(FLAGS_PARAM) - 1)
 
-/* 
+/*
  * Where we store URIs of additional transaction branches
  * (sr_dst_max_branches - 1 : because of the default branch for r-uri, #0 in tm)
  */
@@ -77,6 +77,10 @@ static qvalue_t ruri_q = Q_UNSPECIFIED;
 /* Branch flags of the Request-URI */
 static flag_t ruri_bflags;
 
+/* alias parameter for contact uri/r-uri with surrounding semicolon or =
+ * - used for set_contact_alias()/handle_ruri_alias() */
+str _ksr_contact_alias = str_init("alias=");
+str _ksr_contact_salias = str_init(";alias=");
 
 int init_dst_set(void)
 {
@@ -890,7 +894,7 @@ int uri_add_rcv_alias(sip_msg_t *msg, str *uri, str *nuri)
 	port.s = int2str(msg->rcv.src_port, &port.len);
 
 	/*uri;alias=[ip]~port~proto*/
-	len = uri->len+ip.len+port.len+12;
+	len = uri->len + _ksr_contact_salias.len + ip.len + port.len + 6;
 	if(len>=nuri->len) {
 		LM_ERR("not enough space - new uri len: %d (buf size: %d)\n",
 				len, nuri->len);
@@ -899,8 +903,8 @@ int uri_add_rcv_alias(sip_msg_t *msg, str *uri, str *nuri)
 	p = nuri->s;
 	memcpy(p, uri->s, uri->len);
 	p += uri->len;
-	memcpy(p, ";alias=", 7);
-	p += 7;
+	memcpy(p, _ksr_contact_salias.s, _ksr_contact_salias.len);
+	p += _ksr_contact_salias.len;
 	if (msg->rcv.src_ip.af == AF_INET6)
 		*p++ = '[';
 	memcpy(p, ip.s, ip.len);
@@ -938,14 +942,14 @@ int uri_restore_rcv_alias(str *uri, str *nuri, str *suri)
 	}
 
 	/* sip:x;alias=1.1.1.1~0~0 */
-	if(uri->len < 23) {
+	if(uri->len < _ksr_contact_salias.len + 16) {
 		/* no alias possible */
 		return -2;
 	}
-	p = uri->s + uri->len-18;
+	p = uri->s + uri->len - _ksr_contact_salias.len - 11;
 	skip.s = 0;
 	while(p>uri->s+5) {
-		if(strncmp(p, ";alias=", 7)==0) {
+		if(strncmp(p, _ksr_contact_salias.s, _ksr_contact_salias.len)==0) {
 			skip.s = p;
 			break;
 		}
@@ -955,7 +959,7 @@ int uri_restore_rcv_alias(str *uri, str *nuri, str *suri)
 		/* alias parameter not found */
 		return -2;
 	}
-	p += 7;
+	p += _ksr_contact_salias.len;
 	ip.s = p;
 	p = (char*)memchr(ip.s, '~', (size_t)(uri->s+uri->len-ip.s));
 	if(p==NULL) {
@@ -1045,14 +1049,14 @@ int uri_trim_rcv_alias(str *uri, str *nuri)
 	}
 
 	/* sip:x;alias=1.1.1.1~0~0 */
-	if(uri->len < 23) {
+	if(uri->len < _ksr_contact_salias.len + 16) {
 		/* no alias possible */
 		return 0;
 	}
-	p = uri->s + uri->len - 18;
+	p = uri->s + uri->len - _ksr_contact_salias.len - 11;
 	skip.s = 0;
 	while(p > uri->s + 5) {
-		if(strncmp(p, ";alias=", 7) == 0) {
+		if(strncmp(p, _ksr_contact_salias.s, _ksr_contact_salias.len) == 0) {
 			skip.s = p;
 			break;
 		}
@@ -1062,7 +1066,7 @@ int uri_trim_rcv_alias(str *uri, str *nuri)
 		/* alias parameter not found */
 		return 0;
 	}
-	p += 7;
+	p += _ksr_contact_salias.len;
 	ip.s = p;
 	p = (char *)memchr(ip.s, '~', (size_t)(uri->s + uri->len - ip.s));
 	if(p == NULL) {
