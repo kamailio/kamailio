@@ -201,6 +201,7 @@ static int nh_filter_srvid = 0;
 /*0-> disabled, 1 ->enabled*/
 unsigned int *natping_state = NULL;
 
+
 /* clang-format off */
 static cmd_export_t cmds[] = {
 	{"fix_nated_contact",  (cmd_function)fix_nated_contact_f,    0,
@@ -812,9 +813,6 @@ static int w_set_contact_alias_f(struct sip_msg *msg, char *str1, char *str2)
 	return set_contact_alias(msg, i);
 }
 
-#define SALIAS ";alias="
-#define SALIAS_LEN (sizeof(SALIAS) - 1)
-
 /*
  * Adds ;alias=ip~port~proto param to contact uri containing received ip,
  * port, and transport proto if contact uri ip and port do not match
@@ -888,7 +886,7 @@ static int add_contact_alias_0(struct sip_msg *msg)
 	}
 
 	/* Create  ;alias param */
-	param_len = SALIAS_LEN + 1 /* [ */ + IP6_MAX_STR_SIZE
+	param_len = _ksr_contact_salias.len + 1 /* [ */ + IP6_MAX_STR_SIZE
 				+ 1 /* ] */ + 1 /* ~ */ + 5 /* port */ + 1 /* ~ */
 				+ 1 /* proto */ + 1 /* > */;
 	param = (char *)pkg_malloc(param_len);
@@ -898,10 +896,10 @@ static int add_contact_alias_0(struct sip_msg *msg)
 	}
 	at = param;
 	/* ip address */
-	append_str(at, SALIAS, SALIAS_LEN);
+	append_str(at, _ksr_contact_salias.s, _ksr_contact_salias.len);
 	if(msg->rcv.src_ip.af == AF_INET6)
 		append_chr(at, '[');
-	ip_len = ip_addr2sbuf(&(msg->rcv.src_ip), at, param_len - SALIAS_LEN);
+	ip_len = ip_addr2sbuf(&(msg->rcv.src_ip), at, param_len - _ksr_contact_salias.len);
 	if(ip_len <= 0) {
 		LM_ERR("failed to copy source ip\n");
 		goto err;
@@ -1048,7 +1046,7 @@ static int add_contact_alias_3(
 	}
 
 	/* Create  ;alias param */
-	param_len = SALIAS_LEN + IP6_MAX_STR_SIZE + 1 /* ~ */ + 5 /* port */
+	param_len = _ksr_contact_salias.len + IP6_MAX_STR_SIZE + 1 /* ~ */ + 5 /* port */
 				+ 1 /* ~ */ + 1 /* proto */ + 1 /* closing > */;
 	param = (char *)pkg_malloc(param_len);
 	if(!param) {
@@ -1057,7 +1055,7 @@ static int add_contact_alias_3(
 	}
 	at = param;
 	/* ip address */
-	append_str(at, SALIAS, SALIAS_LEN);
+	append_str(at, _ksr_contact_salias.s, _ksr_contact_salias.len);
 	append_str(at, ip_str->s, ip_str->len);
 	/* port */
 	append_chr(at, '~');
@@ -1118,9 +1116,6 @@ static int add_contact_alias_3_f(
 	return add_contact_alias_3(msg, &ip_str, &port_str, &proto_str);
 }
 
-#define ALIAS "alias="
-#define ALIAS_LEN (sizeof(ALIAS) - 1)
-
 /*
  * Checks if r-uri has alias param and if so, removes the first (mode==0)
  * or the last one (mode!=0) and sets $du based on its value.
@@ -1145,15 +1140,15 @@ static int ki_handle_ruri_alias_mode(struct sip_msg *msg, int mode)
 	}
 	start = NULL;
 	/* locate last alias parameter */
-	while(rest_len > ALIAS_LEN + 4) {
-		if(strncmp(rest, ALIAS, ALIAS_LEN) == 0) {
+	while(rest_len > _ksr_contact_alias.len + 4) {
+		if(strncmp(rest, _ksr_contact_alias.s, _ksr_contact_alias.len) == 0) {
 			start = rest;
 			if(mode==0) {
 				/* use first alias parameter */
 				break;
 			}
-			rest = rest + ALIAS_LEN;
-			rest_len = rest_len - ALIAS_LEN;
+			rest = rest + _ksr_contact_alias.len;
+			rest_len = rest_len - _ksr_contact_alias.len;
 		}
 		sep = memchr(rest, 59 /* ; */, rest_len);
 		if(sep == NULL) {
@@ -1172,8 +1167,8 @@ static int ki_handle_ruri_alias_mode(struct sip_msg *msg, int mode)
 	rest = start;
 
 	/* set dst uri based on alias param value */
-	val = rest + ALIAS_LEN;
-	val_len = rest_len - ALIAS_LEN;
+	val = rest + _ksr_contact_alias.len;
+	val_len = rest_len - _ksr_contact_alias.len;
 	port = memchr(val, 126 /* ~ */, val_len);
 	if(port == NULL) {
 		LM_ERR("no '~' in alias param value\n");
@@ -1188,7 +1183,7 @@ static int ki_handle_ruri_alias_mode(struct sip_msg *msg, int mode)
 	at = &(buf[0]);
 	append_str(at, "sip:", 4);
 	ip_port_len = trans - val;
-	alias_len = SALIAS_LEN + ip_port_len + 2 /* ~n */;
+	alias_len = _ksr_contact_salias.len + ip_port_len + 2 /* ~n */;
 	memcpy(at, val, ip_port_len);
 	at = at + ip_port_len;
 	trans = trans + 1;
@@ -2796,6 +2791,7 @@ static int nh_write_to_pv(struct sip_msg *msg, str *data, str *pvname)
 	pvresult->setf(msg, &pvresult->pvp, (int)EQ_T, &valx);
 	return 1;
 }
+
 /*!
 * @function nh_alias_to_uri
 * @abstract select alias paramter from contact_header
@@ -2818,8 +2814,8 @@ static int nh_alias_to_uri(str *contact_header, str *alias_uri)
 	LM_DBG("Contact header [%.*s] \r\n",contact_header->len,contact_header->s);
 
 	for(i=0; i<contact_header->len  ;i++){
-		if(strncmp(&contact_header->s[i], SALIAS, SALIAS_LEN) == 0){
-			i=i+SALIAS_LEN;
+		if(strncmp(&contact_header->s[i], _ksr_contact_salias.s, _ksr_contact_salias.len) == 0){
+			i=i+_ksr_contact_salias.len;
 			host.s = &contact_header->s[i];
 			memchr_pointer = memchr(host.s , 126 /* ~ */,contact_header->len-i);
 				if(memchr_pointer == NULL) {
