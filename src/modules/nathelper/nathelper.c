@@ -201,6 +201,7 @@ static int nh_filter_srvid = 0;
 /*0-> disabled, 1 ->enabled*/
 unsigned int *natping_state = NULL;
 
+static str nh_alias_name = str_init("");
 
 /* clang-format off */
 static cmd_export_t cmds[] = {
@@ -275,6 +276,7 @@ static param_export_t params[] = {
 	{"append_sdp_oldmediaip", INT_PARAM, &sdp_oldmediaip        },
 	{"filter_server_id",      INT_PARAM, &nh_filter_srvid },
 	{"nat_addr_mode",         INT_PARAM, &nh_nat_addr_mode },
+	{"alias_name",            PARAM_STR, &nh_alias_name    },
 
 	{0, 0, 0}
 };
@@ -448,6 +450,12 @@ static int mod_init(void)
 	if(nathelper_rpc_init() < 0) {
 		LM_ERR("failed to register RPC commands\n");
 		return -1;
+	}
+	if(nh_alias_name.s != NULL && nh_alias_name.len > 0) {
+		if(ksr_contact_alias_set_name(&nh_alias_name) < 0) {
+			LM_ERR("failed to set contact alias parameter name\n");
+			return -1;
+		}
 	}
 
 	if(rcv_avp_param && *rcv_avp_param) {
