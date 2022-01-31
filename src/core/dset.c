@@ -873,6 +873,30 @@ int msg_get_src_addr(sip_msg_t *msg, str *uri, int mode)
 	return 0;
 }
 
+
+/**
+ * set name of alias parameter used for contact/r-uri src/rcv address encoding
+ */
+int ksr_contact_alias_set_name(str *aname)
+{
+	_ksr_contact_salias.s = (char*)pkg_malloc(aname->len + 3);
+	if(_ksr_contact_salias.s==NULL) {
+		PKG_MEM_ERROR;
+		return -1;
+	}
+	_ksr_contact_salias.s[0] = ';';
+	memcpy(_ksr_contact_salias.s + 1, aname->s, aname->len);
+	_ksr_contact_salias.s[aname->len+1] = '=';
+	_ksr_contact_salias.s[aname->len+2] = '\0';
+	_ksr_contact_salias.len = aname->len + 2;
+	_ksr_contact_alias.s = _ksr_contact_salias.s + 1;
+	_ksr_contact_alias.len = _ksr_contact_salias.len - 1;
+	LM_DBG("new contact alias parameter expression [%.*s]\n",
+			_ksr_contact_salias.len, _ksr_contact_salias.s);
+
+	return 0;
+}
+
 /**
  * add alias parameter with encoding of source address
  * - nuri->s must point to a buffer of nuri->len size

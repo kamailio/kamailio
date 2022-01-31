@@ -285,6 +285,7 @@ int getbflagsval(unsigned int branch, flag_t* res);
  */
 int setbflagsval(unsigned int branch, flag_t val);
 
+int ksr_contact_alias_set_name(str *aname);
 int uri_add_rcv_alias(sip_msg_t *msg, str *uri, str *nuri);
 int uri_restore_rcv_alias(str *uri, str *nuri, str *suri);
 int uri_trim_rcv_alias(str *uri, str *nuri);
