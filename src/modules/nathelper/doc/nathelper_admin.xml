@@ -511,6 +511,27 @@ modparam("nathelper", "nat_addr_mode", 0)
 </programlisting>
 		</example>
 	</section>
+	<section id="nathelper.p.alias_name">
+		<title><varname>alias_name</varname> (string)</title>
+		<para>
+			The parameter sets the name of the Contact URI parameter set by
+			set_contact_alias() or add_contact_alias() and processed by
+			handle_ruri_alias() in R-URI.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>alias</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>alias_name</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("nathelper", "alias_name", "saddr")
+...
+</programlisting>
+		</example>
+	</section>
 
 	</section>
 
