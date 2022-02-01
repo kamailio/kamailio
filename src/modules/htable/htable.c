@@ -84,6 +84,10 @@ static int w_ht_iterator_rm(struct sip_msg* msg, char* iname, char* foo);
 static int w_ht_iterator_sets(struct sip_msg* msg, char* iname, char* val);
 static int w_ht_iterator_seti(struct sip_msg* msg, char* iname, char* val);
 static int w_ht_iterator_setex(struct sip_msg* msg, char* iname, char* val);
+static int w_ht_setxs(sip_msg_t *msg, char *htname, char *itname,
+		char *itval, char *exval);
+static int w_ht_setxi(sip_msg_t *msg, char *htname, char *itname,
+		char *itval, char *exval);
 
 int ht_param(modparam_t type, void* val);
 
@@ -152,6 +156,10 @@ static cmd_export_t cmds[]={
 		fixup_free_spve_igp, ANY_ROUTE},
 	{"sht_iterator_setex",	(cmd_function)w_ht_iterator_setex,	2, fixup_spve_igp,
 		fixup_free_spve_igp, ANY_ROUTE},
+	{"sht_setxs",	(cmd_function)w_ht_setxs,	4, fixup_sssi,
+		fixup_free_sssi, ANY_ROUTE},
+	{"sht_setxi",	(cmd_function)w_ht_setxi,	4, fixup_ssii,
+		fixup_free_ssii, ANY_ROUTE},
 
 	{"bind_htable",     (cmd_function)bind_htable,     0, 0, 0,
 		ANY_ROUTE},
@@ -1305,6 +1313,37 @@ static int ki_ht_setxs(sip_msg_t *msg, str *htname, str *itname, str *itval,
 /**
  *
  */
+static int w_ht_setxs(sip_msg_t *msg, char *htname, char *itname,
+		char *itval, char *exval)
+{
+	str shtname;
+	str sitname;
+	str sitval;
+	int iexval;
+
+	if(fixup_get_svalue(msg, (gparam_t*)htname, &shtname)<0 || shtname.len<=0) {
+		LM_ERR("cannot get htable name\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)itname, &sitname)<0 || sitname.len<=0) {
+		LM_ERR("cannot get item name\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)itval, &sitval)<0) {
+		LM_ERR("cannot get item value\n");
+		return -1;
+	}
+	if(fixup_get_ivalue(msg, (gparam_t*)exval, &iexval)<0) {
+		LM_ERR("cannot get expire value\n");
+		return -1;
+	}
+
+	return ki_ht_setxs(msg, &shtname, &sitname, &sitval, iexval);
+}
+
+/**
+ *
+ */
 static int ki_ht_setxi(sip_msg_t *msg, str *htname, str *itname, int itval,
 	int exval)
 {
@@ -1343,6 +1382,37 @@ static int ki_ht_setxi(sip_msg_t *msg, str *htname, str *itname, int itval,
 	}
 
 	return 0;
+}
+
+/**
+ *
+ */
+static int w_ht_setxi(sip_msg_t *msg, char *htname, char *itname,
+		char *itval, char *exval)
+{
+	str shtname;
+	str sitname;
+	int nitval;
+	int iexval;
+
+	if(fixup_get_svalue(msg, (gparam_t*)htname, &shtname)<0 || shtname.len<=0) {
+		LM_ERR("cannot get htable name\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)itname, &sitname)<0 || sitname.len<=0) {
+		LM_ERR("cannot get item name\n");
+		return -1;
+	}
+	if(fixup_get_ivalue(msg, (gparam_t*)itval, &nitval)<0) {
+		LM_ERR("cannot get item value\n");
+		return -1;
+	}
+	if(fixup_get_ivalue(msg, (gparam_t*)exval, &iexval)<0) {
+		LM_ERR("cannot get expire value\n");
+		return -1;
+	}
+
+	return ki_ht_setxi(msg, &shtname, &sitname, nitval, iexval);
 }
 
 #define KSR_HT_KEMI_NOINTVAL -255
