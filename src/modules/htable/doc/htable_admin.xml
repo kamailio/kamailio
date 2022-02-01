@@ -929,6 +929,52 @@ sht_rm_value("ha", "re", ".*");
 </programlisting>
 		</example>
 	</section>
+	<section id="htable.f.sht_setxs">
+		<title>
+		<function moreinfo="none">sht_setxs(htname, itname, itval, exval)</function>
+		</title>
+		<para>
+			Set the item with the name 'itname' from hash table 'htname' to string
+			value 'itval' and expire property to 'exval'.
+		</para>
+		<para>
+			The parameters can be with variables.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>sht_setxs</function> usage</title>
+		<programlisting format="linespecific">
+...
+sht_setxs("ha", "test", "abc", "10");
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="htable.f.sht_setxi">
+		<title>
+		<function moreinfo="none">sht_setxi(htname, itname, itval, exval)</function>
+		</title>
+		<para>
+			Set the item with the name 'itname' from hash table 'htname' to integer
+			value 'itval' and expire property to 'exval'.
+		</para>
+		<para>
+			The parameters can be with variables.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>sht_setxi</function> usage</title>
+		<programlisting format="linespecific">
+...
+sht_setxs("ha", "test", "100", "10");
+...
+</programlisting>
+		</example>
+	</section>
 	<section id="htable.f.sht_reset">
 		<title>
 		<function moreinfo="none">sht_reset(htable)</function>
