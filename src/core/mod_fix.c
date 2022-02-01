@@ -788,6 +788,7 @@ int fixup_free_vstr_all(void** param, int param_no)
 	pv_elem_free_all((pv_elem_t*)(*param));
 	return 0;
 }
+
 /**
  *
  */
@@ -798,4 +799,72 @@ int fixup_get_vstr_buf(sip_msg_t *msg, pv_elem_t *p, char *buf, int blen)
 		return -1;
 	}
 	return -1;
+}
+
+/**
+ *
+ */
+int fixup_sssi(void** param, int param_no)
+{
+	switch(param_no) {
+		case 1:
+		case 2:
+		case 3:
+			return fixup_spve_null(param, 1);
+		case 4:
+			return fixup_igp_null(param, 1);
+		default:
+			return E_UNSPEC;
+	}
+}
+
+/**
+ *
+ */
+int fixup_free_sssi(void** param, int param_no)
+{
+	switch(param_no) {
+		case 1:
+		case 2:
+		case 3:
+			return fixup_free_spve_null(param, 1);
+		case 4:
+			return fixup_free_igp_null(param, 1);
+		default:
+			return E_UNSPEC;
+	}
+}
+
+/**
+ *
+ */
+int fixup_ssii(void** param, int param_no)
+{
+	switch(param_no) {
+		case 1:
+		case 2:
+			return fixup_spve_null(param, 1);
+		case 3:
+		case 4:
+			return fixup_igp_null(param, 1);
+		default:
+			return E_UNSPEC;
+	}
+}
+
+/**
+ *
+ */
+int fixup_free_ssii(void** param, int param_no)
+{
+	switch(param_no) {
+		case 1:
+		case 2:
+			return fixup_free_spve_null(param, 1);
+		case 3:
+		case 4:
+			return fixup_free_igp_null(param, 1);
+		default:
+			return E_UNSPEC;
+	}
 }
