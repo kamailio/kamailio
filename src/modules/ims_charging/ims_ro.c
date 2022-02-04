@@ -1604,23 +1604,23 @@ static int create_cca_result_code(int result) {
 
 static int create_cca_fui_avps(int action, str* redirecturi) {
 	int_str action_avp_val, action_avp_name, redirecturi_avp_val, redirecturi_avp_name;
-    action_avp_name.s.s = RO_AVP_CCA_FUI_ACTION;
-    action_avp_name.s.len = RO_AVP_CCA_FUI_ACTION_LENGTH;
+	action_avp_name.s.s = RO_AVP_CCA_FUI_ACTION;
+	action_avp_name.s.len = RO_AVP_CCA_FUI_ACTION_LENGTH;
 	redirecturi_avp_name.s.s = RO_AVP_CCA_FUI_REDIRECT_URI;
-    redirecturi_avp_name.s.len = RO_AVP_CCA_FUI_REDIRECT_URI_LENGTH;
-    char buf[10];
+	redirecturi_avp_name.s.len = RO_AVP_CCA_FUI_REDIRECT_URI_LENGTH;
+	char buf[10];
 	int rc;
 
-    action_avp_val.n = action;
-    action_avp_val.s.len = snprintf(buf, 10, "%i", action);
-    action_avp_val.s.s = buf;
+	action_avp_val.n = action;
+	action_avp_val.s.len = snprintf(buf, 10, "%i", action);
+	action_avp_val.s.s = buf;
 
-    rc = add_avp(AVP_NAME_STR|AVP_VAL_STR, action_avp_name, action_avp_val);
+	rc = add_avp(AVP_NAME_STR|AVP_VAL_STR, action_avp_name, action_avp_val);
 
-    if (rc < 0)
-        LM_ERR("Couldn't create ["RO_AVP_CCA_FUI_ACTION"] AVP\n");
-    else
-        LM_DBG("Created AVP ["RO_AVP_CCA_FUI_ACTION"] successfully: value=[%d]\n", action);
+	if (rc < 0)
+		LM_ERR("Couldn't create ["RO_AVP_CCA_FUI_ACTION"] AVP\n");
+	else
+		LM_DBG("Created AVP ["RO_AVP_CCA_FUI_ACTION"] successfully: value=[%d]\n", action);
 
 	if (redirecturi && redirecturi->len >0 && redirecturi->s) {
 		redirecturi_avp_val.s.len = redirecturi->len;
@@ -1634,7 +1634,7 @@ static int create_cca_fui_avps(int action, str* redirecturi) {
 			LM_DBG("Created AVP ["RO_AVP_CCA_FUI_REDIRECT_URI"] successfully: value=[%.*s]\n", redirecturi->len, redirecturi->s);
 	}
 
-    return 1;
+	return 1;
 }
 
 static int get_mac_avp_value(struct sip_msg *msg, str *value) {
