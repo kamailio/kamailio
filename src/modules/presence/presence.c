@@ -566,8 +566,8 @@ static int child_init(int rank)
 		int i;
 
 		for(i = 0; i < pres_notifier_processes; i++) {
-			char tmp[21];
-			snprintf(tmp, 21, "PRESENCE NOTIFIER %d", i);
+			char tmp[30];
+			snprintf(tmp, 30, "PRESENCE NOTIFIER %d", i);
 			pres_notifier_id[i] = i;
 
 			if(fork_basic_utimer(PROC_TIMER, tmp, 1, pres_timer_send_notify,
