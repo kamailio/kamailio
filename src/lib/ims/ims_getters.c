@@ -99,7 +99,6 @@ contact_body_t *cscf_parse_contacts(struct sip_msg *msg)
 							ptr->body.s);
 				}
 			}
-			ptr = ptr->next;
 		}
 
 		return msg->contact->parsed;
