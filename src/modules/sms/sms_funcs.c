@@ -883,21 +883,22 @@ void modem_process(struct modem *mdm)
 		/* if any, let's get them */
 		if (used_mem)
 			LM_DBG("%d new SMS on modem\n",used_mem);
-			for(i=1,k=1;k<=used_mem && i<=max_mem;i++) {
-				if (getsms(&sms,mdm,i)!=-1) {
-					k++;
-					LM_DBG("SMS Get from location %d\n",i);
-					/*for test ;-) ->  to be remove*/
-					LM_DBG("SMS RECEIVED:\n\rFrom: %s %s\n\r%.*s %.*s"
-						"\n\r\"%.*s\"\n\r",sms.sender,sms.name,
-						DATE_LEN,sms.date,TIME_LEN,sms.time,
-						sms.userdatalength,sms.ascii);
-					if (!sms.is_statusreport)
-						_send_sms_as_sip(&sms, mdm);
-					else 
-						check_sms_report(&sms);
-				}
+
+		for(i=1,k=1;k<=used_mem && i<=max_mem;i++) {
+			if (getsms(&sms,mdm,i)!=-1) {
+				k++;
+				LM_DBG("SMS Get from location %d\n",i);
+				/*for test ;-) ->  to be remove*/
+				LM_DBG("SMS RECEIVED:\n\rFrom: %s %s\n\r%.*s %.*s"
+					"\n\r\"%.*s\"\n\r",sms.sender,sms.name,
+					DATE_LEN,sms.date,TIME_LEN,sms.time,
+					sms.userdatalength,sms.ascii);
+				if (!sms.is_statusreport)
+					_send_sms_as_sip(&sms, mdm);
+				else
+					check_sms_report(&sms);
 			}
+		}
 
 		/* if reports are used, checks for expired records in report queue */
 		if (sms_report_type!=NO_REPORT)
