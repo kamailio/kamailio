@@ -89,23 +89,26 @@ contact_body_t *cscf_parse_contacts(struct sip_msg *msg)
 		LM_ERR("Error parsing headers \n");
 		return 0;
 	}
+
 	if(msg->contact) {
-		ptr = msg->contact;
-		while(ptr) {
+		for (ptr = msg->contact; ptr; ptr = ptr->next) {
 			if(ptr->type == HDR_CONTACT_T) {
-				if(ptr->parsed == 0) {
-					if(parse_contact(ptr) < 0) {
-						LM_DBG("error parsing contacts [%.*s]\n", ptr->body.len,
-								ptr->body.s);
-					}
+				ptr->parsed = NULL;
+				if(parse_contact(ptr) < 0) {
+					LM_ERR("error parsing contacts [%.*s]\n", ptr->body.len,
+							ptr->body.s);
 				}
 			}
 			ptr = ptr->next;
 		}
+
+		return msg->contact->parsed;
 	}
-	if(!msg->contact)
+	else
+	{
+		LM_DBG("No contact header!\n");
 		return 0;
-	return msg->contact->parsed;
+	}
 }
 
 /**
