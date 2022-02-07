@@ -110,7 +110,7 @@ struct cfg_group_core default_core_cfg = {
 	-1,  /**< udp4_raw_ttl (auto detect by default) */
 	0,  /*!< force_rport */
 	L_DBG+1, /*!< memlog */
-	3, /*!< mem_summary -flags: 0 off, 1 pkg_status, 2 shm_status,
+	12, /*!< mem_summary -flags: 0 off, 1 pkg_status, 2 shm_status,
 		4 pkg_sums, 8 shm_sums, 16 short_status */
 	1, /*!< mem_safety - 0 disabled; 1 enabled */
 	1, /*!< mem_join - 1 enabled */
