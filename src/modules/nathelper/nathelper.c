@@ -2802,7 +2802,7 @@ static int nh_write_to_pv(struct sip_msg *msg, str *data, str *pvname)
 
 /*!
 * @function nh_alias_to_uri
-* @abstract select alias paramter from contact_header
+* @abstract select alias parameter from contact_header
 * 					then writes to alias_uri
 * @param contact_header  Source contact header
 * @param alias_uri Destination string
@@ -2814,43 +2814,44 @@ static int nh_alias_to_uri(str *contact_header, str *alias_uri)
 	str host={0,0};
 	str port={0,0};
 	str proto={0,0};
-	char *memchr_pointer=0;
+	char *memchr_pointer=NULL;
 
 	if(!contact_header)
 		return -1;
 
-	LM_DBG("Contact header [%.*s] \r\n",contact_header->len,contact_header->s);
+	LM_DBG("Contact header [%.*s]\n", contact_header->len, contact_header->s);
 
-	for(i=0; i<contact_header->len  ;i++){
-		if(strncmp(&contact_header->s[i], _ksr_contact_salias.s, _ksr_contact_salias.len) == 0){
+	for(i=0; i<contact_header->len-_ksr_contact_salias.len-5/* a~b~c */; i++) {
+		if(strncmp(&contact_header->s[i], _ksr_contact_salias.s,
+					_ksr_contact_salias.len) == 0) {
 			i=i+_ksr_contact_salias.len;
 			host.s = &contact_header->s[i];
-			memchr_pointer = memchr(host.s , 126 /* ~ */,contact_header->len-i);
-				if(memchr_pointer == NULL) {
-					LM_ERR("No alias parameter found for host\n");
-					return -1;
-				} else {
-					host.len = memchr_pointer - &contact_header->s[i];
-					i=i+host.len;
-				}
-			break;
+			memchr_pointer = memchr(host.s, 126 /* ~ */, contact_header->len-i);
+			if(memchr_pointer == NULL) {
+				LM_ERR("No alias parameter found for host\n");
+				return -1;
+			} else {
+				host.len = memchr_pointer - &contact_header->s[i];
+				i=i+host.len;
 			}
+			break;
+		}
 	}
 
-	if(!memchr_pointer){
-		LM_ERR("Alias couldn't be found \n");
+	if(!memchr_pointer) {
+		LM_ERR("Alias sign couldn't be found\n");
 		return -1;
 	}
-	if(&memchr_pointer[1]){
+	if(memchr_pointer[1]) {
 		port.s=&memchr_pointer[1];
-	}else{
-		LM_ERR("Alias sign couldn't be found for port \n");
+	} else {
+		LM_ERR("Alias port is not set\n");
 		return -1;
 	}
 
-	memchr_pointer = memchr(port.s , 126 /* ~ */,contact_header->len-i);
+	memchr_pointer = memchr(port.s, 126 /* ~ */, contact_header->len-i);
 	if(memchr_pointer == NULL) {
-		LM_ERR("Alias sign couldn't be found for proto \n");
+		LM_ERR("Alias sign couldn't be found for proto\n");
 		return -1;
 	} else {
 		port.len = memchr_pointer - port.s;
@@ -2860,11 +2861,12 @@ static int nh_alias_to_uri(str *contact_header, str *alias_uri)
 	proto.s= &port.s[port.len+1];
 	proto_type_to_str((unsigned short)atoi(proto.s), &proto);
 
-	LM_DBG("Host [%.*s][port: %.*s][proto: %.*s] \r\n",host.len,host.s,port.len,port.s,proto.len,proto.s);
+	LM_DBG("Host [%.*s][port: %.*s][proto: %.*s]\n",
+			host.len,host.s,port.len,port.s,proto.len,proto.s);
 
 	//sip:host:port;transport=udp
-	alias_uri->s =(char *) pkg_malloc(port.len+host.len+proto.len+16);
-	if(!alias_uri->s){
+	alias_uri->s =(char*)pkg_malloc(port.len+host.len+proto.len+16);
+	if(!alias_uri->s) {
 		LM_ERR("Allocation ERROR\n");
 		return -1;
 	}
@@ -2880,7 +2882,8 @@ static int nh_alias_to_uri(str *contact_header, str *alias_uri)
 	memcpy(&alias_uri->s[4+host.len+1+port.len+11],proto.s,proto.len);
 
 	alias_uri->len=port.len+host.len+16+proto.len;
-	LM_DBG("Alias uri [%.*s][len: %d] \r\n",alias_uri->len,alias_uri->s,alias_uri->len);
+	LM_DBG("Alias uri [%.*s][len: %d]\n",
+			alias_uri->len,alias_uri->s,alias_uri->len);
 
 	return 1;
 }
