@@ -57,9 +57,8 @@ AV *conds2perlarray(const db_key_t* keys, const db_op_t* ops, const db_val_t* va
 
 	for (i = 0; i < n; i++) {
 		if (ops) {
-			if (ops + i)
-				if (*(ops + i))
-					element = cond2perlcond(*(keys + i),
+			if (*(ops + i))
+				element = cond2perlcond(*(keys + i),
 							*(ops + i), vals + i);
 		} else {
 /* OP_EQ is defined in Kamailio _and_ perl. Includes collide :( */
