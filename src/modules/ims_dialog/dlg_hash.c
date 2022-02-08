@@ -253,7 +253,7 @@ void destroy_dlg(struct dlg_cell *dlg) {
         shm_free(var);
     }
 
-    if (&(dlg->dlg_entry_out)) {
+    if (dlg->dlg_entry_out.first) {
         lock_get(dlg->dlg_out_entries_lock);
         destroy_entry_out(&(dlg->dlg_entry_out));
         lock_release(dlg->dlg_out_entries_lock);
