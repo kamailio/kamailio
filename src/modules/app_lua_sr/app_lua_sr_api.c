@@ -45,10 +45,6 @@
 #include "app_lua_sr_api.h"
 #include "app_lua_sr_exp.h"
 
-#if defined(LUA_VERSION_NUM) && LUA_VERSION_NUM >= 504
-#define luaL_openlib ksr_luaL_openlib
-#endif
-
 
 extern app_lua_api_t _app_lua_api;
 
