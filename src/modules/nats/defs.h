@@ -46,7 +46,6 @@ typedef struct _nats_evroutes
 	int connected;
 	int disconnected;
 } nats_evroutes_t;
-static nats_evroutes_t _nats_rts;
 
 typedef struct _init_nats_sub
 {

@@ -39,6 +39,8 @@ char *eventData = NULL;
 int *nats_pub_worker_pipes_fds = NULL;
 int *nats_pub_worker_pipes = NULL;
 
+static nats_evroutes_t _nats_rts;
+
 static pv_export_t nats_mod_pvs[] = {
 		{{"natsData", (sizeof("natsData") - 1)}, PVT_OTHER,
 				nats_pv_get_event_payload, 0, 0, 0, 0, 0},
