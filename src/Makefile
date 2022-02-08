@@ -202,7 +202,7 @@ cmodules=$(foreach mods,$(modules_dirs), $($(mods)))
 
 
 # list of utils directories that should be compiled by make utils
-C_COMPILE_UTILS=	../utils/kamcmd
+C_COMPILE_UTILS= # kamcmd is now installed by ctl
 # list of binaries that should be installed alongside
 # (they should be created after make utils, see C_COMPILE_UTILS)
 C_INSTALL_BIN=	# kamcmd is now installed by ctl
