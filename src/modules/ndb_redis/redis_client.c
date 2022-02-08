@@ -39,8 +39,10 @@
 
 #include "redis_client.h"
 
-#define redisCommandNR(a...) (int)({ void *__tmp; __tmp = redisCommand(a); \
-		if (__tmp) freeReplyObject(__tmp); __tmp ? 0 : -1;})
+#define redisCommandNR(a...) (int)({ \
+		void *__tmp; __tmp = redisCommand(a); \
+		if (__tmp) { freeReplyObject(__tmp); }; \
+		__tmp ? 0 : -1;})
 
 static redisc_server_t * _redisc_srv_list=NULL;
 
