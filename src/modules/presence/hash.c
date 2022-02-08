@@ -1247,6 +1247,11 @@ ps_presentity_t *ps_ptable_search(ps_presentity_t *ptm, int mmode, int rmode)
 	uint32_t idx = 0;
 	int pmax = 0;
 
+	if(ptm->user.s==NULL || ptm->domain.s==NULL) {
+		LM_WARN("no user or domain for presentity\n");
+		return NULL;
+	}
+
 	ptm->hashid = core_case_hash(&ptm->user, &ptm->domain, 0);
 	idx = core_hash_idx(ptm->hashid, _ps_ptable->ssize);
 
