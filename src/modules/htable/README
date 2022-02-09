@@ -85,12 +85,14 @@ Ovidiu Sas
               6.3. htable.sets htable key value
               6.4. htable.seti htable key value
               6.5. htable.setex htable key expire
-              6.6. htable.dump htable
-              6.7. htable.reload htable
-              6.8. htable.store htable
-              6.9. htable.flush htable
-              6.10. htable.listTables
-              6.11. htable.stats
+              6.6. htable.setxs htable key value expire
+              6.7. htable.setxi htable key value expire
+              6.8. htable.dump htable
+              6.9. htable.reload htable
+              6.10. htable.store htable
+              6.11. htable.flush htable
+              6.12. htable.listTables
+              6.13. htable.stats
 
         7. Event routes
 
@@ -202,12 +204,14 @@ Chapter 1. Admin Guide
         6.3. htable.sets htable key value
         6.4. htable.seti htable key value
         6.5. htable.setex htable key expire
-        6.6. htable.dump htable
-        6.7. htable.reload htable
-        6.8. htable.store htable
-        6.9. htable.flush htable
-        6.10. htable.listTables
-        6.11. htable.stats
+        6.6. htable.setxs htable key value expire
+        6.7. htable.setxi htable key value expire
+        6.8. htable.dump htable
+        6.9. htable.reload htable
+        6.10. htable.store htable
+        6.11. htable.flush htable
+        6.12. htable.listTables
+        6.13. htable.stats
 
    7. Event routes
 
@@ -1111,12 +1115,14 @@ if(sht_match_str_value("ha", "eq", "alice")) {
    6.3. htable.sets htable key value
    6.4. htable.seti htable key value
    6.5. htable.setex htable key expire
-   6.6. htable.dump htable
-   6.7. htable.reload htable
-   6.8. htable.store htable
-   6.9. htable.flush htable
-   6.10. htable.listTables
-   6.11. htable.stats
+   6.6. htable.setxs htable key value expire
+   6.7. htable.setxi htable key value expire
+   6.8. htable.dump htable
+   6.9. htable.reload htable
+   6.10. htable.store htable
+   6.11. htable.flush htable
+   6.12. htable.listTables
+   6.13. htable.stats
 
 6.1.  htable.get htable key
 
@@ -1213,7 +1219,43 @@ kamcmd htable.seti test x[0] 123
 kamctl rpc htable.seti test x 120
 ...
 
-6.6.  htable.dump htable
+6.6.  htable.setxs htable key value expire
+
+   Set the string value and expire for an item in hash table.
+
+   Name: htable.setxs
+
+   Parameters:
+     * htable : name of the hash table
+     * key : key name in the hash table
+     * value : string value for the item
+     * expire : integer value for the expire (seconds)
+
+   Example:
+...
+# set value to 'abc' and expire for $sht(test=>x) to 120 secs
+kamctl rpc htable.setxs test x abc 120
+...
+
+6.7.  htable.setxi htable key value expire
+
+   Set the integer value and expire for an item in hash table.
+
+   Name: htable.setxi
+
+   Parameters:
+     * htable : name of the hash table
+     * key : key name in the hash table
+     * value : integer value for the item
+     * expire : integer value for the expire (seconds)
+
+   Example:
+...
+# set value to 10 and expire for $sht(test=>x) to 120 secs
+kamctl rpc htable.setxi test x 10 120
+...
+
+6.8.  htable.dump htable
 
    Lists all the values in a hash table
 
@@ -1227,7 +1269,7 @@ kamctl rpc htable.seti test x 120
 kamcmd htable.dump ipban
 ...
 
-6.7.  htable.reload htable
+6.9.  htable.reload htable
 
    Reload hash table from database.
 
@@ -1241,7 +1283,7 @@ kamcmd htable.dump ipban
 kamcmd htable.reload ipban
 ...
 
-6.8.  htable.store htable
+6.10.  htable.store htable
 
    Store hash table to database.
 
@@ -1255,7 +1297,7 @@ kamcmd htable.reload ipban
 kamcmd htable.store ipban
 ...
 
-6.9.  htable.flush htable
+6.11.  htable.flush htable
 
    Empty the hash table
 
@@ -1269,7 +1311,7 @@ kamcmd htable.store ipban
 kamcmd htable.flush ipban
 ...
 
-6.10.  htable.listTables
+6.12.  htable.listTables
 
    Lists all defined tables
 
@@ -1283,7 +1325,7 @@ kamcmd htable.flush ipban
 kamcmd htable.listTables
 ...
 
-6.11.  htable.stats
+6.13.  htable.stats
 
    Get statistics for hash tables - name, number of slots, number of
    items, max number of items per slot, min number of items per slot.
