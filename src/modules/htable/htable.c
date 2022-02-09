@@ -1487,6 +1487,14 @@ static const char* htable_setex_doc[2] = {
 	"Set expire in a hash table for the item referenced by key.",
 	0
 };
+static const char* htable_setxs_doc[2] = {
+	"Set one key in a hash table to a string value and its expire value.",
+	0
+};
+static const char* htable_setxi_doc[2] = {
+	"Set one key in a hash table to an integer value and its expire value.",
+	0
+};
 static const char* htable_list_doc[2] = {
 	"List all htables.",
 	0
@@ -1711,6 +1719,49 @@ static void htable_rpc_setex(rpc_t* rpc, void* c) {
 	}
 
 	rpc->rpl_printf(c, "Ok");
+	return;
+}
+
+/*! \brief RPC htable.setxs command to set one item to string value and its expire value */
+static void htable_rpc_setxs(rpc_t* rpc, void* c) {
+	str htname, keyname;
+	str sval;
+	int exval;
+
+	if (rpc->scan(c, "SS.Sd", &htname, &keyname, &sval, &exval) < 4) {
+		rpc->fault(c, 500,
+				"Not enough parameters (htable name, key name, value and expire)");
+		return;
+	}
+
+	if(ki_ht_setxs(NULL, &htname, &keyname, &sval, exval)<0) {
+		LM_ERR("cannot set $sht(%.*s=>%.*s)\n", htname.len, htname.s,
+				keyname.len, keyname.s);
+		rpc->fault(c, 500, "Failed to set the item");
+		return;
+	}
+	rpc->rpl_printf(c, "Ok. Key set to new value.");
+	return;
+}
+
+/*! \brief RPC htable.setxi command to set one item to integer value and its expire value */
+static void htable_rpc_setxi(rpc_t* rpc, void* c) {
+	str htname, keyname;
+	int ival;
+	int exval;
+
+	if (rpc->scan(c, "SS.dd", &htname, &keyname, &ival, &exval) < 4) {
+		rpc->fault(c, 500,
+				"Not enough parameters (htable name, key name, value and expire)");
+		return;
+	}
+	if(ki_ht_setxi(NULL, &htname, &keyname, ival, exval)<0) {
+		LM_ERR("cannot set $sht(%.*s=>%.*s)\n", htname.len, htname.s,
+				keyname.len, keyname.s);
+		rpc->fault(c, 500, "Failed to set the item");
+		return;
+	}
+	rpc->rpl_printf(c, "Ok. Key set to new value.");
 	return;
 }
 
@@ -2077,6 +2128,8 @@ rpc_export_t htable_rpc[] = {
 	{"htable.sets", htable_rpc_sets, htable_sets_doc, 0},
 	{"htable.seti", htable_rpc_seti, htable_seti_doc, 0},
 	{"htable.setex", htable_rpc_setex, htable_setex_doc, 0},
+	{"htable.setxs", htable_rpc_setxs, htable_setxs_doc, 0},
+	{"htable.setxi", htable_rpc_setxi, htable_setxi_doc, 0},
 	{"htable.listTables", htable_rpc_list, htable_list_doc, RET_ARRAY},
 	{"htable.reload", htable_rpc_reload, htable_reload_doc, 0},
 	{"htable.store", htable_rpc_store, htable_store_doc, 0},
