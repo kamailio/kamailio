@@ -1581,6 +1581,16 @@ void dlg_ontimeout(struct dlg_tl *tl)
 	dlg = ((struct dlg_cell*)((char *)(tl) -
 			(unsigned long)(&((struct dlg_cell*)0)->tl)));
 
+	if (dlg->bind_addr[0] == NULL) {
+		LM_DBG("skipping dialog without bind address\n");
+		return 0;
+	}
+
+	if (lookup_local_socket(&(dlg->bind_addr[0]->sock_str)) == NULL) {
+		LM_DBG("skipping non local dialog\n");
+		return 0;
+	}
+	
 	/* mark dialog as expired */
 	dlg->dflags |= DLG_FLAG_EXPIRED;
 
