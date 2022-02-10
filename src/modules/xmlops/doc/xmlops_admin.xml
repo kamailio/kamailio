@@ -68,7 +68,8 @@ modparam("xmlops", "buf_size", 8192)
 		<title><varname>xml_ns</varname> (str)</title>
 		<para>
 		Register xml namespace prefix. Parameter value must have the format:
-		'prefix=uri'.
+		'prefix=uri'. It can be set many times to cope with multiple namespaces
+		without prefix.
 		</para>
 		<para>
 		This is useful when it is needed to access XML documents that specify
@@ -80,6 +81,7 @@ modparam("xmlops", "buf_size", 8192)
 		<programlisting format="linespecific">
 <![CDATA[
 ...
+modparam("xmlops", "xml_ns", "rpid=urn:ietf:params:xml:ns:pidf:rpid")
 modparam("xmlops", "xml_ns", "pidf=urn:ietf:params:xml:ns:pidf")
 ...
 $xml(x=>doc) = '<?xml version="1.0" encoding="utf-8"?>
