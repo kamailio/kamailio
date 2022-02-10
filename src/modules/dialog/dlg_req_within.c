@@ -452,6 +452,16 @@ int dlg_send_ka(dlg_cell_t *dlg, int dir)
 	int result;
 	dlg_iuid_t *iuid = NULL;
 
+	if (dlg->bind_addr[dir] == NULL) {
+		LM_DBG("skipping dialog without bind address\n");
+		return 0;
+	}
+
+	if (lookup_local_socket(&(dlg->bind_addr[dir]->sock_str)) == NULL) {
+		LM_DBG("skipping non local dialog\n");
+		return 0;
+	}
+
 	/* do not send KA request for non-confirmed dialogs (not supported) */
 	if (dlg->state != DLG_STATE_CONFIRMED) {
 		LM_DBG("skipping non-confirmed dialogs\n");
