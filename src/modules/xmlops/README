@@ -93,11 +93,28 @@ modparam("xmlops", "buf_size", 8192)
 3.2. xml_ns (str)
 
    Register xml namespace prefix. Parameter value must have the format:
-   'prefix=uri'.
+   'prefix=uri'. It can be set many times to cope with multiple namespaces
+   without prefix.
+
+   This is useful when it is needed to access XML documents that specify
+   xmlns without prefix, which is not XML-standard compliant, but it comes
+   with SIP SIMPLE presence bodies.
 
    Example 1.2. Set xml_ns parameter
 ...
 modparam("xmlops", "xml_ns", "rpid=urn:ietf:params:xml:ns:pidf:rpid")
+modparam("xmlops", "xml_ns", "pidf=urn:ietf:params:xml:ns:pidf")
+...
+$xml(x=>doc) = '<?xml version="1.0" encoding="utf-8"?>
+    <presence xmlns="urn:ietf:params:xml:ns:pidf" entity="sip:test@mydomain.com"
+>
+        <tuple id="86ae65b7-42de-4399-b635-295caad13aac">
+            <status><basic>none</basic></status>
+        </tuple>
+    </presence>';
+
+xinfo("status: $xml(x=>xpath:/pidf:presence/pidf:tuple/pidf:status/pidf:basic)\n
+");
 ...
 
 4. Pseudo-Variables
