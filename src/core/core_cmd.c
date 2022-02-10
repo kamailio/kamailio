@@ -439,7 +439,7 @@ static void core_psx(rpc_t* rpc, void* c)
 }
 
 static const char* core_psa_doc[] = {
-	"Return all the attributes of running.",
+	"Return all the attributes of running processes.",
 		/* Documentation string */
 	0	/* Method signature(s) */
 };
