@@ -1299,22 +1299,29 @@ modparam("dialog", "send_bye", 1)
 </programlisting>
 		</example>
 	</section>
-	<section id="dialog.p.ignore_non_local_dlg">
-		<title><varname>ignore_non_local_dlg</varname> (int)</title>
+	<section id="dialog.p.dlg_filter_mode">
+		<title><varname>dlg_filter_mode</varname> (int)</title>
 		<para>
-			If set to 1, don't send keepalives and
-			do nothing on timeout if dialog is non local.
+			Set dialog fitering mode, which can specify what dialogs are processed.
+			Its value can be a combination (the sum) of following flags:
 		</para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>1</emphasis> - do not send keepalives and do not
+				execute timeout function if dialog is not local (if the
+				associated bind address is not a local socket).
+			</para></listitem>
+		</itemizedlist>
 		<para>
 		<emphasis>
 			Default value is <quote>0</quote>.
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>ignore_non_local_dlg</varname> parameter</title>
+		<title>Set <varname>dlg_filter_mode</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("dialog", "ignore_non_local_dlg", 1)
+modparam("dialog", "dlg_filter_mode", 1)
 ...
 </programlisting>
 		</example>
