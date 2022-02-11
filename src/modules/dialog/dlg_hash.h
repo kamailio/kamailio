@@ -92,6 +92,9 @@
 #define DLG_EVENTRT_FAILED   2
 #define DLG_EVENTRT_MAX      3
 
+/* flags for filtering dialogs processing */
+#define DLG_FILTER_LOCALONLY (1<<0) /*!< processing only local dialogs */
+
 /*! internal unique ide per dialog */
 typedef struct dlg_iuid {
 	unsigned int         h_id;		/*!< id in the hash table entry (seq nr in slot) */

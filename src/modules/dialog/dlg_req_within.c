@@ -53,7 +53,7 @@
 extern str dlg_extra_hdrs;
 extern str dlg_lreq_callee_headers;
 extern int dlg_ka_failed_limit;
-extern int dlg_ignore_non_local_dlg;
+extern int dlg_filter_mode;
 
 /**
  *
@@ -453,7 +453,7 @@ int dlg_send_ka(dlg_cell_t *dlg, int dir)
 	int result;
 	dlg_iuid_t *iuid = NULL;
 
-	if (dlg_ignore_non_local_dlg) {
+	if (dlg_filter_mode & DLG_FILTER_LOCALONLY) {
 		if (dlg->bind_addr[dir] == NULL) {
 			LM_DBG("skipping dialog without bind address\n");
 			return 0;

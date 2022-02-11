@@ -71,7 +71,7 @@ extern int       dlg_send_bye;
 extern int       dlg_event_rt[DLG_EVENTRT_MAX];
 extern int       dlg_wait_ack;
 extern int       dlg_enable_dmq;
-extern int       dlg_ignore_non_local_dlg;
+extern int       dlg_filter_mode;
 int              spiral_detected = -1;
 
 extern struct rr_binds d_rrb;		/*!< binding to record-routing module */
@@ -1582,7 +1582,7 @@ void dlg_ontimeout(struct dlg_tl *tl)
 	dlg = ((struct dlg_cell*)((char *)(tl) -
 			(unsigned long)(&((struct dlg_cell*)0)->tl)));
 
-	if (dlg_ignore_non_local_dlg) {
+	if (dlg_filter_mode & DLG_FILTER_LOCALONLY) {
 		if (dlg->bind_addr[0] == NULL) {
 			LM_DBG("skipping dialog without bind address\n");
 			return;
@@ -1593,7 +1593,7 @@ void dlg_ontimeout(struct dlg_tl *tl)
 			return;
 		}
 	}
-	
+
 	/* mark dialog as expired */
 	dlg->dflags |= DLG_FLAG_EXPIRED;
 
