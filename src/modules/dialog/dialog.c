@@ -104,6 +104,7 @@ str dlg_extra_hdrs = {NULL,0};
 static int db_fetch_rows = 200;
 static int db_skip_load = 0;
 static int dlg_keep_proxy_rr = 0;
+int dlg_ignore_non_local_dlg = 0;
 int initial_cbs_inscript = 1;
 int dlg_wait_ack = 1;
 static int dlg_timer_procs = 0;
@@ -327,6 +328,7 @@ static param_export_t mod_params[]={
 	{ "h_id_start",            PARAM_INT, &dlg_h_id_start           },
 	{ "h_id_step",             PARAM_INT, &dlg_h_id_step            },
 	{ "keep_proxy_rr",         INT_PARAM, &dlg_keep_proxy_rr        },
+	{ "ignore_non_local_dlg",  INT_PARAM, &dlg_ignore_non_local_dlg },
 	{ 0,0,0 }
 };
 
