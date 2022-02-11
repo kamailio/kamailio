@@ -99,7 +99,7 @@ Julien Klingenmeyer
               6.47. bridge_contact (string)
               6.48. initial_cbs_inscript (int)
               6.49. send_bye (int)
-              6.50. ignore_non_local_dlg (int)
+              6.50. dlg_filter_mode (int)
               6.51. wait_ack (int)
               6.52. ka_timer (int)
               6.53. ka_interval (int)
@@ -241,7 +241,7 @@ Julien Klingenmeyer
    1.47. Set bridge_contact parameter
    1.48. Set initial_cbs_inscript parameter
    1.49. Set send_bye parameter
-   1.50. Set ignore_non_local_dlg parameter
+   1.50. Set dlg_filter_mode parameter
    1.51. Set wait_ack parameter
    1.52. Set ka_timer parameter
    1.53. Set ka_interval parameter
@@ -341,7 +341,7 @@ Chapter 1. Admin Guide
         6.47. bridge_contact (string)
         6.48. initial_cbs_inscript (int)
         6.49. send_bye (int)
-        6.50. ignore_non_local_dlg (int)
+        6.50. dlg_filter_mode (int)
         6.51. wait_ack (int)
         6.52. ka_timer (int)
         6.53. ka_interval (int)
@@ -573,7 +573,7 @@ Chapter 1. Admin Guide
    6.47. bridge_contact (string)
    6.48. initial_cbs_inscript (int)
    6.49. send_bye (int)
-   6.50. ignore_non_local_dlg (int)
+   6.50. dlg_filter_mode (int)
    6.51. wait_ack (int)
    6.52. ka_timer (int)
    6.53. ka_interval (int)
@@ -1230,16 +1230,19 @@ modparam("dialog", "initial_cbs_inscript", 0)
 modparam("dialog", "send_bye", 1)
 ...
 
-6.50. ignore_non_local_dlg (int)
+6.50. dlg_filter_mode (int)
 
-   If set to 1, don't send keepalives and do nothing on timeout if dialog
-   is non local.
+   Set dialog fitering mode, which can specify what dialogs are processed.
+   Its value can be a combination (the sum) of following flags:
+     * 1 - do not send keepalives and do not execute timeout function if
+       dialog is not local (if the associated bind address is not a local
+       socket).
 
    Default value is “0”.
 
-   Example 1.50. Set ignore_non_local_dlg parameter
+   Example 1.50. Set dlg_filter_mode parameter
 ...
-modparam("dialog", "ignore_non_local_dlg", 1)
+modparam("dialog", "dlg_filter_mode", 1)
 ...
 
 6.51. wait_ack (int)
