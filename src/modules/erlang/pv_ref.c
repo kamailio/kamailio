@@ -54,6 +54,9 @@ int pv_ref_parse_name(pv_spec_t *sp, str *in)
 
 	name.s = p;
 
+	/*pvi.type now defaults to 4, breaking the erlang module's type management*/
+	sp->pvp.pvi.type = 0;
+
 	while (is_in_str(p, in)) {
 		if (*p == '[' || *p== '=')
 			break;
