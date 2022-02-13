@@ -86,10 +86,14 @@ sr_xavp_t *xbuff_new(str *name)
 
 	if(!xbuffs_root)
 	{
-		xbuff = xavp_add_xavp_value(&xbuff_list,name,&xbuff_val,xavp_get_crt_list());
-	} else {
-		xbuff = xavp_get_child(&xbuff_list, name);
+		xbuffs_root = xavp_add_xavp_value(&xbuff_list,name,&xbuff_val,xavp_get_crt_list());
+		if (!xbuffs_root){
+				LM_ERR("cannot create xbuffs_root \n");
+				return NULL;
+			}
 	}
+
+	xbuff = xavp_get_child(&xbuff_list, name);
 
 	if (!xbuff) {
 
