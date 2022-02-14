@@ -103,6 +103,7 @@ extern int tls_max_connections; /* maximum tls connections, hard limit */
 #endif
 extern int ksr_tcp_accept_hep3;
 extern int ksr_tcp_accept_haproxy;
+extern int ksr_tcp_script_mode;
 #ifdef USE_TLS
 extern int tls_disable;
 extern unsigned short tls_port_no;

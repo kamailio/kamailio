@@ -94,6 +94,10 @@ int is_msg_complete(struct tcp_req* r);
 
 int ksr_tcp_accept_hep3=0;
 int ksr_tcp_accept_haproxy=0;
+
+#define TCP_SCRIPT_MODE_CONTINUE (1<<0)
+int ksr_tcp_script_mode=0;
+
 /**
  * control cloning of TCP receive buffer
  * - needed for operations working directly inside the buffer
@@ -1342,6 +1346,7 @@ static int hep3_process_msg(char* tcpbuf, unsigned int len,
 int receive_tcp_msg(char* tcpbuf, unsigned int len,
 		struct receive_info* rcv_info, struct tcp_connection* con)
 {
+	int ret = 0;
 #ifdef TCP_CLONE_RCVBUF
 	static char *buf = NULL;
 	static unsigned int bsize = 0;
@@ -1360,7 +1365,11 @@ int receive_tcp_msg(char* tcpbuf, unsigned int len,
 		if(unlikely(con->req.flags&F_TCP_REQ_HEP3))
 			return hep3_process_msg(tcpbuf, len, rcv_info, con);
 
-		return receive_msg(tcpbuf, len, rcv_info);
+		ret = receive_msg(tcpbuf, len, rcv_info);
+		if (ksr_tcp_script_mode&TCP_SCRIPT_MODE_CONTINUE) {
+			return 0;
+		}
+		return ret;
 	}
 
 	/* min buffer size is BUF_SIZE */
@@ -1401,7 +1410,11 @@ int receive_tcp_msg(char* tcpbuf, unsigned int len,
 #endif
 	if(unlikely(con->req.flags&F_TCP_REQ_HEP3))
 		return hep3_process_msg(tcpbuf, len, rcv_info, con);
-	return receive_msg(buf, len, rcv_info);
+	ret = receive_msg(buf, len, rcv_info);
+	if (ksr_tcp_script_mode&TCP_SCRIPT_MODE_CONTINUE) {
+		return 0;
+	}
+	return ret;
 #else /* TCP_CLONE_RCVBUF */
 #ifdef READ_MSRP
 	if(unlikely(con->req.flags&F_TCP_REQ_MSRP_FRAME))
@@ -1413,7 +1426,11 @@ int receive_tcp_msg(char* tcpbuf, unsigned int len,
 #endif
 	if(unlikely(con->req.flags&F_TCP_REQ_HEP3))
 		return hep3_process_msg(tcpbuf, len, rcv_info, con);
-	return receive_msg(tcpbuf, len, rcv_info);
+	ret = receive_msg(tcpbuf, len, rcv_info);
+	if (ksr_tcp_script_mode&TCP_SCRIPT_MODE_CONTINUE) {
+		return 0;
+	}
+	return ret;
 #endif /* TCP_CLONE_RCVBUF */
 }
 

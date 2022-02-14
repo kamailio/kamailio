@@ -453,6 +453,7 @@ extern char *default_routename;
 %token TCP_CLONE_RCVBUF
 %token TCP_REUSE_PORT
 %token TCP_WAIT_DATA
+%token TCP_SCRIPT_MODE
 %token DISABLE_TLS
 %token ENABLE_TLS
 %token TLSLOG
@@ -1329,6 +1330,14 @@ assign_stm:
 		#endif
 	}
 	| TCP_WAIT_DATA EQUAL error { yyerror("number expected"); }
+	| TCP_SCRIPT_MODE EQUAL intno {
+		#ifdef USE_TCP
+			ksr_tcp_script_mode=$3;
+		#else
+			warn("tcp support not compiled in");
+		#endif
+	}
+	| TCP_SCRIPT_MODE EQUAL error { yyerror("number expected"); }
 	| DISABLE_TLS EQUAL NUMBER {
 		#ifdef USE_TLS
 			tls_disable=$3;

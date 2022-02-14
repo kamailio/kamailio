@@ -424,6 +424,7 @@ TCP_OPT_ACCEPT_HAPROXY	"tcp_accept_haproxy"
 TCP_CLONE_RCVBUF	"tcp_clone_rcvbuf"
 TCP_REUSE_PORT		"tcp_reuse_port"
 TCP_WAIT_DATA	"tcp_wait_data"
+TCP_SCRIPT_MODE	"tcp_script_mode"
 DISABLE_TLS		"disable_tls"|"tls_disable"
 ENABLE_TLS		"enable_tls"|"tls_enable"
 TLSLOG			"tlslog"|"tls_log"
@@ -921,6 +922,7 @@ IMPORTFILE      "import_file"
 <INITIAL>{TCP_REUSE_PORT}	{ count(); yylval.strval=yytext; return TCP_REUSE_PORT; }
 <INITIAL>{TCP_WAIT_DATA}	{ count(); yylval.strval=yytext;
 									return TCP_WAIT_DATA; }
+<INITIAL>{TCP_SCRIPT_MODE}	{ count(); yylval.strval=yytext; return TCP_SCRIPT_MODE; }
 <INITIAL>{DISABLE_TLS}	{ count(); yylval.strval=yytext; return DISABLE_TLS; }
 <INITIAL>{ENABLE_TLS}	{ count(); yylval.strval=yytext; return ENABLE_TLS; }
 <INITIAL>{TLSLOG}		{ count(); yylval.strval=yytext; return TLS_PORT_NO; }
