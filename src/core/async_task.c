@@ -46,6 +46,7 @@
 #include "async_task.h"
 
 static async_wgroup_t *_async_wgroup_list = NULL;
+static async_wgroup_t *_async_wgroup_crt = NULL;
 
 int async_task_run(async_wgroup_t *awg, int idx);
 
@@ -66,6 +67,14 @@ int async_task_workers_active(void)
 		return 0;
 
 	return 1;
+}
+
+/**
+ *
+ */
+async_wgroup_t *async_task_workers_get_crt(void)
+{
+	return _async_wgroup_crt;
 }
 
 /**
@@ -445,6 +454,8 @@ int async_task_run(async_wgroup_t *awg, int idx)
 
 	LM_DBG("async task worker [%.*s] idx [%d] ready\n", awg->name.len,
 			awg->name.s, idx);
+
+	_async_wgroup_crt = awg;
 
 	for( ; ; ) {
 		if(unlikely(awg->usleep)) sleep_us(awg->usleep);
