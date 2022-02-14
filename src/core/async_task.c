@@ -186,7 +186,8 @@ int async_task_child_init(int rank)
 	}
 
 	if(rank>0) {
-		async_task_close_sockets_parent();
+		/* no need to close the socket from sip workers */
+		/* async_task_close_sockets_parent(); */
 		return 0;
 	}
 	if (rank!=PROC_MAIN)
