@@ -1055,7 +1055,7 @@ modparam("dispatcher", "reload_delta", 1)
           + “0” - hash over callid
           + “1” - hash over from URI.
           + “2” - hash over to URI.
-          + “3” - hash over request-URI.
+          + “3” - hash over request-URI user.
           + “4” - round-robin (next destination).
           + “5” - hash over authorization-username (Proxy-Authorization or
             "normal" authorization). If no username is found, round robin
