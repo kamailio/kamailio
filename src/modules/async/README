@@ -35,6 +35,7 @@ Daniel-Constantin Mierla
               4.3. async_sleep(seconds)
               4.4. async_ms_sleep(milliseconds)
               4.5. async_task_route(routename)
+              4.6. async_task_group_route(routename, groupname)
 
    List of Examples
 
@@ -46,6 +47,7 @@ Daniel-Constantin Mierla
    1.6. async_ms_sleep usage
    1.7. async_workers usage
    1.8. async_task_route usage
+   1.9. async_task_group_route usage
 
 Chapter 1. Admin Guide
 
@@ -69,6 +71,7 @@ Chapter 1. Admin Guide
         4.3. async_sleep(seconds)
         4.4. async_ms_sleep(milliseconds)
         4.5. async_task_route(routename)
+        4.6. async_task_group_route(routename, groupname)
 
 1. Overview
 
@@ -139,6 +142,7 @@ modparam("async", "ms_timer", 10)
    4.3. async_sleep(seconds)
    4.4. async_ms_sleep(milliseconds)
    4.5. async_task_route(routename)
+   4.6. async_task_group_route(routename, groupname)
 
 4.1.  async_route(routename, seconds)
 
@@ -266,10 +270,11 @@ route[REQUESTSHAPER] {
 4.5.  async_task_route(routename)
 
    Continue the processing of the SIP request with the route[routename] in
-   one of the processes from core asynchronous framework. The core
-   parameter async_workers has to be set to enable asynchronous framework.
-   The task is executed as soon as a process from asynchronous framework
-   is idle, there is no wait time for the task like for async_route(...).
+   one of the processes from first group of core asynchronous framework.
+   The core parameter async_workers has to be set to enable asynchronous
+   framework. The task is executed as soon as a process from asynchronous
+   framework is idle, there is no wait time for the task like for
+   async_route(...).
 
    To enable the core asynchronous framework, you need to set the
    async_workers core parameter in the configuration file. See the core
@@ -300,6 +305,29 @@ async_workers=8
 request_route {
     ...
     async_task_route("RESUME");
+    ...
+}
+route[RESUME] {
+   t_relay();
+   exit;
+}
+...
+
+4.6.  async_task_group_route(routename, groupname)
+
+   Similar to async_task_route(), but allows to specify the name of the
+   group for asynchronous workers. See also 'async_workers_group' core
+   global parameter.
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1.9. async_task_group_route usage
+...
+async_workers_group="name=abc;workers=4;nonblock=0;usleep=0"
+...
+request_route {
+    ...
+    async_task_route("RESUME", "abc");
     ...
 }
 route[RESUME] {
