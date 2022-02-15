@@ -56,6 +56,7 @@ static int w_async_ms_route(sip_msg_t *msg, char *rt, char *sec);
 static int fixup_async_route(void **param, int param_no);
 
 static int w_async_task_route(sip_msg_t *msg, char *rt, char *p2);
+static int w_async_task_group_route(sip_msg_t *msg, char *rt, char *gr);
 static int fixup_async_task_route(void **param, int param_no);
 
 /* tm */
@@ -72,6 +73,8 @@ static cmd_export_t cmds[]={
 	{"async_ms_sleep", (cmd_function)w_async_ms_sleep, 1, fixup_async_sleep,
 		0, REQUEST_ROUTE|FAILURE_ROUTE},
 	{"async_task_route", (cmd_function)w_async_task_route, 1, fixup_async_task_route,
+		0, REQUEST_ROUTE|FAILURE_ROUTE},
+	{"async_task_group_route", (cmd_function)w_async_task_group_route, 2, fixup_async_task_route,
 		0, REQUEST_ROUTE|FAILURE_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
@@ -426,7 +429,7 @@ static int fixup_async_route(void **param, int param_no)
 /**
  *
  */
-int ki_async_task_route(sip_msg_t *msg, str *rn)
+int ki_async_task_group_route(sip_msg_t *msg, str *rn, str *gn)
 {
 	cfg_action_t *act = NULL;
 	int ri;
@@ -453,7 +456,7 @@ int ki_async_task_route(sip_msg_t *msg, str *rn)
 		}
 	}
 
-	if(async_send_task(msg, act, rn) < 0)
+	if(async_send_task(msg, act, rn, gn) < 0)
 		return -1;
 	/* force exit in config */
 	return 0;
@@ -462,7 +465,15 @@ int ki_async_task_route(sip_msg_t *msg, str *rn)
 /**
  *
  */
-static int w_async_task_route(sip_msg_t *msg, char *rt, char *sec)
+int ki_async_task_route(sip_msg_t *msg, str *rn)
+{
+	return  ki_async_task_group_route(msg, rn, NULL);
+}
+
+/**
+ *
+ */
+static int w_async_task_route(sip_msg_t *msg, char *rt, char *p2)
 {
 	str rn;
 
@@ -479,6 +490,29 @@ static int w_async_task_route(sip_msg_t *msg, char *rt, char *sec)
 /**
  *
  */
+static int w_async_task_group_route(sip_msg_t *msg, char *rt, char *gr)
+{
+	str rn;
+	str gn;
+
+	if(msg == NULL)
+		return -1;
+
+	if(fixup_get_svalue(msg, (gparam_t *)rt, &rn) != 0) {
+		LM_ERR("no async route block name\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t *)gr, &gn) != 0) {
+		LM_ERR("no async group name\n");
+		return -1;
+	}
+
+	return ki_async_task_group_route(msg, &rn, &gn);
+}
+
+/**
+ *
+ */
 static int fixup_async_task_route(void **param, int param_no)
 {
 	if(!async_task_initialized()) {
@@ -487,7 +521,7 @@ static int fixup_async_task_route(void **param, int param_no)
 		return -1;
 	}
 
-	if(param_no == 1) {
+	if(param_no == 1 || param_no == 2) {
 		if(fixup_spve_null(param, 1) < 0)
 			return -1;
 		return 0;
@@ -513,6 +547,11 @@ static sr_kemi_t sr_kemi_async_exports[] = {
 	{ str_init("async"), str_init("task_route"),
 		SR_KEMIP_INT, ki_async_task_route,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("async"), str_init("task_group_route"),
+		SR_KEMIP_INT, ki_async_task_group_route,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 

@@ -451,7 +451,7 @@ int async_ms_sleep(sip_msg_t *msg, int milliseconds, cfg_action_t *act, str *cbn
 /**
  *
  */
-int async_send_task(sip_msg_t *msg, cfg_action_t *act, str *cbname)
+int async_send_task(sip_msg_t *msg, cfg_action_t *act, str *cbname, str *gname)
 {
 	async_task_t *at;
 	tm_cell_t *t = 0;
@@ -501,9 +501,16 @@ int async_send_task(sip_msg_t *msg, cfg_action_t *act, str *cbname)
 		atp->cbname_len = cbname->len;
 	}
 
-	if (async_task_push(at)<0) {
-		shm_free(at);
-		return -1;
+	if (gname!=NULL && gname->len>0) {
+		if (async_task_group_push(gname, at)<0) {
+			shm_free(at);
+			return -1;
+		}
+	} else {
+		if (async_task_push(at)<0) {
+			shm_free(at);
+			return -1;
+		}
 	}
 
 	return 0;
