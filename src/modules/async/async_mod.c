@@ -57,6 +57,8 @@ static int fixup_async_route(void **param, int param_no);
 
 static int w_async_task_route(sip_msg_t *msg, char *rt, char *p2);
 static int w_async_task_group_route(sip_msg_t *msg, char *rt, char *gr);
+static int w_async_task_data(sip_msg_t *msg, char *rt, char *pdata);
+static int w_async_task_group_data(sip_msg_t *msg, char *rt, char *gr, char *pdata);
 static int fixup_async_task_route(void **param, int param_no);
 
 /* tm */
@@ -76,6 +78,11 @@ static cmd_export_t cmds[]={
 		0, REQUEST_ROUTE|FAILURE_ROUTE},
 	{"async_task_group_route", (cmd_function)w_async_task_group_route, 2, fixup_async_task_route,
 		0, REQUEST_ROUTE|FAILURE_ROUTE},
+	{"async_task_data", (cmd_function)w_async_task_data, 2, fixup_async_task_route,
+		0, REQUEST_ROUTE|FAILURE_ROUTE},
+	{"async_task_group_data", (cmd_function)w_async_task_group_data, 3, fixup_async_task_route,
+		0, REQUEST_ROUTE|FAILURE_ROUTE},
+
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -105,6 +112,12 @@ struct module_exports exports = {
  */
 static int mod_init(void)
 {
+	/* init faked sip msg */
+	if(faked_msg_init()<0) {
+		LM_ERR("failed to iit local sip msg\n");
+		return -1;
+	}
+
 	if(load_tm_api(&tmb) == -1) {
 		LM_ERR("cannot load the TM-functions. Missing TM module?\n");
 		return -1;
@@ -521,12 +534,103 @@ static int fixup_async_task_route(void **param, int param_no)
 		return -1;
 	}
 
-	if(param_no == 1 || param_no == 2) {
+	if(param_no == 1 || param_no == 2 || param_no == 2) {
 		if(fixup_spve_null(param, 1) < 0)
 			return -1;
 		return 0;
 	}
 	return 0;
+}
+
+/**
+ *
+ */
+int ki_async_task_group_data(sip_msg_t *msg, str *rn, str *gn, str *sdata)
+{
+	cfg_action_t *act = NULL;
+	int ri;
+	sr_kemi_eng_t *keng = NULL;
+
+	keng = sr_kemi_eng_get();
+	if(keng == NULL) {
+		ri = route_lookup(&main_rt, rn->s);
+		if(ri >= 0) {
+			act = main_rt.rlist[ri];
+			if(act == NULL) {
+				LM_ERR("empty action lists in route block [%.*s]\n", rn->len,
+						rn->s);
+				return -1;
+			}
+		} else {
+			LM_ERR("route block not found: %.*s\n", rn->len, rn->s);
+			return -1;
+		}
+	}
+
+	if(async_send_data(msg, act, rn, gn, sdata) < 0)
+		return -1;
+	/* ok */
+	return 1;
+}
+
+/**
+ *
+ */
+int ki_async_task_data(sip_msg_t *msg, str *rn, str *sdata)
+{
+	return  ki_async_task_group_data(msg, rn, NULL, sdata);
+}
+
+
+/**
+ *
+ */
+static int w_async_task_data(sip_msg_t *msg, char *rt, char *pdata)
+{
+	str rn;
+	str sdata;
+
+	if(msg == NULL)
+		return -1;
+
+	if(fixup_get_svalue(msg, (gparam_t *)rt, &rn) != 0) {
+		LM_ERR("no async route block name\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t *)pdata, &sdata) != 0) {
+		LM_ERR("no async data\n");
+		return -1;
+	}
+
+	return ki_async_task_data(msg, &rn, &sdata);
+}
+
+/**
+ *
+ */
+static int w_async_task_group_data(sip_msg_t *msg, char *rt, char *gr, char *pdata)
+{
+	str rn;
+	str gn;
+	str sdata;
+
+	if(msg == NULL)
+		return -1;
+
+	if(fixup_get_svalue(msg, (gparam_t *)rt, &rn) != 0) {
+		LM_ERR("no async route block name\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t *)gr, &gn) != 0) {
+		LM_ERR("no async group name\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t *)pdata, &sdata) != 0) {
+		LM_ERR("no async data\n");
+		return -1;
+	}
+
+	return ki_async_task_group_data(msg, &rn, &gn, &sdata);
 }
 
 /**
@@ -552,6 +656,16 @@ static sr_kemi_t sr_kemi_async_exports[] = {
 	{ str_init("async"), str_init("task_group_route"),
 		SR_KEMIP_INT, ki_async_task_group_route,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("async"), str_init("task_data"),
+		SR_KEMIP_INT, ki_async_task_data,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("async"), str_init("task_group_data"),
+		SR_KEMIP_INT, ki_async_task_group_data,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 

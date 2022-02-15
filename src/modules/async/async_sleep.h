@@ -36,6 +36,7 @@ typedef struct async_param {
 		gparam_t *proute;
 	} u;
 } async_param_t;
+
 /* clang-format on */
 
 int async_init_timer_list(void);
@@ -49,5 +50,7 @@ int async_ms_sleep(sip_msg_t *msg, int milliseconds, cfg_action_t *act, str *cbn
 void async_mstimer_exec(unsigned int ticks, void *param);
 
 int async_send_task(sip_msg_t *msg, cfg_action_t *act, str *cbname, str *gname);
+int async_send_data(sip_msg_t *msg, cfg_action_t *act, str *cbname, str *gname,
+		str *sdata);
 
 #endif
