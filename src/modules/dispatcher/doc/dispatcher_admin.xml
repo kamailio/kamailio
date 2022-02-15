@@ -1154,7 +1154,7 @@ modparam("dispatcher", "reload_delta", 1)
 			</listitem>
 			<listitem>
 				<para>
-				<quote>3</quote> - hash over request-URI.
+				<quote>3</quote> - hash over request-URI user.
 				</para>
 			</listitem>
 			<listitem>
