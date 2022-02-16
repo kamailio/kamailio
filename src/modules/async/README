@@ -36,6 +36,8 @@ Daniel-Constantin Mierla
               4.4. async_ms_sleep(milliseconds)
               4.5. async_task_route(routename)
               4.6. async_task_group_route(routename, groupname)
+              4.7. async_task_data(routename, data)
+              4.8. async_task_group_data(routename, groupname, data)
 
    List of Examples
 
@@ -48,6 +50,8 @@ Daniel-Constantin Mierla
    1.7. async_workers usage
    1.8. async_task_route usage
    1.9. async_task_group_route usage
+   1.10. async_task_data usage
+   1.11. async_task_group_data usage
 
 Chapter 1. Admin Guide
 
@@ -72,6 +76,8 @@ Chapter 1. Admin Guide
         4.4. async_ms_sleep(milliseconds)
         4.5. async_task_route(routename)
         4.6. async_task_group_route(routename, groupname)
+        4.7. async_task_data(routename, data)
+        4.8. async_task_group_data(routename, groupname, data)
 
 1. Overview
 
@@ -143,6 +149,8 @@ modparam("async", "ms_timer", 10)
    4.4. async_ms_sleep(milliseconds)
    4.5. async_task_route(routename)
    4.6. async_task_group_route(routename, groupname)
+   4.7. async_task_data(routename, data)
+   4.8. async_task_group_data(routename, groupname, data)
 
 4.1.  async_route(routename, seconds)
 
@@ -332,6 +340,57 @@ request_route {
 }
 route[RESUME] {
    t_relay();
+   exit;
+}
+...
+
+4.7.  async_task_data(routename, data)
+
+   Send the data to a asynchronous task process (in the first group) that
+   executes the route[rountename] and makes the data available via
+   $async(data).
+
+   The current SIP message is not suspended and it is not available in the
+   asynchronous task process, a local faked SIP request is used there.
+
+   The parameters can contain variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.10. async_task_data usage
+...
+async_workers_group="name=abc;workers=4;nonblock=0;usleep=0"
+...
+request_route {
+    ...
+    async_task_data("RESUME", "caller: $fU - callee: $tU");
+    ...
+}
+route[RESUME] {
+   xinfo("$async(data)\n");
+   exit;
+}
+...
+
+4.8.  async_task_group_data(routename, groupname, data)
+
+   Similar to async_task_route(), but allows to specify the name of the
+   group for asynchronous workers. See also 'async_workers_group' core
+   global parameter.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.11. async_task_group_data usage
+...
+async_workers_group="name=abc;workers=4;nonblock=0;usleep=0"
+...
+request_route {
+    ...
+    async_task_data("RESUME", "abc", "caller: $fU - callee: $tU");
+    ...
+}
+route[RESUME] {
+   xinfo("$async(data)\n");
    exit;
 }
 ...
