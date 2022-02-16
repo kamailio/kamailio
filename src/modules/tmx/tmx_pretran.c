@@ -243,7 +243,7 @@ int tmx_check_pretran(sip_msg_t *msg)
 	sftag = get_from(msg)->tag_value;
 	trim(&sftag);
 
-	chid = get_hash1_raw(msg->callid->body.s, msg->callid->body.len);
+	chid = get_hash1_raw(scallid.s, scallid.len);
 	slotid = chid & (_tmx_ptran_size-1);
 
 	if(unlikely(_tmx_proc_ptran == NULL)) {
