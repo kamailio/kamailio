@@ -373,5 +373,73 @@ route[RESUME] {
 </programlisting>
 	</example>
 	</section>
+	<section id="async.f.async_task_data">
+		<title>
+			<function moreinfo="none">async_task_data(routename, data)</function>
+		</title>
+		<para>
+		Send the data to a asynchronous task process (in the first group) that
+		executes the route[rountename] and makes the data available via $async(data).
+		</para>
+		<para>
+		The current SIP message is not suspended and it is not available in
+		the asynchronous task process, a local faked SIP request is used there.
+		</para>
+		<para>
+		The parameters can contain variables.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>async_task_data</function> usage</title>
+		<programlisting format="linespecific">
+...
+async_workers_group="name=abc;workers=4;nonblock=0;usleep=0"
+...
+request_route {
+    ...
+    async_task_data("RESUME", "caller: $fU - callee: $tU");
+    ...
+}
+route[RESUME] {
+   xinfo("$async(data)\n");
+   exit;
+}
+...
+</programlisting>
+	</example>
+	</section>
+	<section id="async.f.async_task_group_data">
+		<title>
+			<function moreinfo="none">async_task_group_data(routename, groupname, data)</function>
+		</title>
+		<para>
+		Similar to async_task_route(), but allows to specify the name of the group
+		for asynchronous workers. See also 'async_workers_group' core global
+		parameter.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>async_task_group_data</function> usage</title>
+		<programlisting format="linespecific">
+...
+async_workers_group="name=abc;workers=4;nonblock=0;usleep=0"
+...
+request_route {
+    ...
+    async_task_data("RESUME", "abc", "caller: $fU - callee: $tU");
+    ...
+}
+route[RESUME] {
+   xinfo("$async(data)\n");
+   exit;
+}
+...
+</programlisting>
+	</example>
+	</section>
 	</section>
 </chapter>
