@@ -36,6 +36,9 @@
 #include "../../core/dprint.h"
 #include "../../core/globals.h"
 #include "../../core/pt.h"
+#include "../../core/ut.h"
+#include "../../core/trim.h"
+#include "../../core/hashes.h"
 
 #include "sruid.h"
 
@@ -214,6 +217,25 @@ int sruid_nextx(sruid_t *sid, str *x)
 /**
  *
  */
+int sruid_nexthid(sruid_t *sid, str *sval)
+{
+	char buf_int[INT2STR_MAX_LEN];
+	str hval = str_init("0");
+	unsigned int hid = 0;
+
+	if(sval==NULL || sval->s==NULL || sval->len<=0) {
+		return sruid_nextx(sid, &hval);
+	}
+	hval = *sval;
+	trim(&hval);
+	hid = get_hash1_raw(hval.s, hval.len);
+	hval.s = int2strbuf(hid, buf_int, INT2STR_MAX_LEN, &hval.len);
+	return sruid_nextx(sid, &hval);
+}
+
+/**
+ *
+ */
 int sruid_next(sruid_t *sid)
 {
 	return sruid_nextx(sid, NULL);
@@ -226,6 +248,15 @@ int sruid_nextx_safe(sruid_t *sid, str *x)
 {
 	if(unlikely(sid->pid!=my_pid())) sruid_reinit(sid, sid->mode);
 	return sruid_nextx(sid, x);
+}
+
+/**
+ *
+ */
+int sruid_nexthid_safe(sruid_t *sid, str *sval)
+{
+	if(unlikely(sid->pid!=my_pid())) sruid_reinit(sid, sid->mode);
+	return sruid_nexthid(sid, sval);
 }
 
 /**

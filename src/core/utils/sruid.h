@@ -51,4 +51,7 @@ int sruid_next_safe(sruid_t *sid);
 int sruid_nextx(sruid_t *sid, str *x);
 int sruid_nextx_safe(sruid_t *sid, str *x);
 
+int sruid_nexthid(sruid_t *sid, str *sval);
+int sruid_nexthid_safe(sruid_t *sid, str *sval);
+
 #endif
