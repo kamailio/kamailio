@@ -79,9 +79,9 @@ static cmd_export_t cmds[]={
 	{"async_task_group_route", (cmd_function)w_async_task_group_route, 2, fixup_async_task_route,
 		0, REQUEST_ROUTE|FAILURE_ROUTE},
 	{"async_task_data", (cmd_function)w_async_task_data, 2, fixup_async_task_route,
-		0, REQUEST_ROUTE|FAILURE_ROUTE},
+		0, ANY_ROUTE},
 	{"async_task_group_data", (cmd_function)w_async_task_group_data, 3, fixup_async_task_route,
-		0, REQUEST_ROUTE|FAILURE_ROUTE},
+		0, ANY_ROUTE},
 
 	{0, 0, 0, 0, 0, 0}
 };
@@ -104,7 +104,7 @@ struct module_exports exports = {
 	cmds,
 	params,
 	0,              /* exported RPC methods */
-	0,              /* exported pseudo-variables */
+	mod_pvs,        /* exported pseudo-variables */
 	0,              /* response function */
 	mod_init,       /* module initialization function */
 	child_init,     /* per child init function */
