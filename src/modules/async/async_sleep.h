@@ -56,4 +56,7 @@ int async_send_data(sip_msg_t *msg, cfg_action_t *act, str *cbname, str *gname,
 int pv_get_async(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
 int pv_parse_async_name(pv_spec_t *sp, str *in);
 
+sr_kemi_xval_t* ki_async_get_gname(sip_msg_t *msg);
+sr_kemi_xval_t* ki_async_get_data(sip_msg_t *msg);
+
 #endif

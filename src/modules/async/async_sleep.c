@@ -675,3 +675,44 @@ error:
 	LM_ERR("unknown PV time name %.*s\n", in->len, in->s);
 	return -1;
 }
+
+/**
+ *
+ */
+static sr_kemi_xval_t _ksr_kemi_async_xval = {0};
+
+/**
+ *
+ */
+sr_kemi_xval_t* ki_async_get_gname(sip_msg_t *msg)
+{
+	async_wgroup_t *awg = NULL;
+
+	memset(&_ksr_kemi_async_xval, 0, sizeof(sr_kemi_xval_t));
+
+	awg = async_task_workers_get_crt();
+	if(awg==NULL || awg->name.s==NULL || awg->name.len<0) {
+		sr_kemi_xval_null(&_ksr_kemi_async_xval, SR_KEMI_XVAL_NULL_EMPTY);
+		return &_ksr_kemi_async_xval;
+	}
+	_ksr_kemi_async_xval.vtype = SR_KEMIP_STR;
+	_ksr_kemi_async_xval.v.s = awg->name;
+	return &_ksr_kemi_async_xval;
+}
+
+/**
+ *
+ */
+sr_kemi_xval_t* ki_async_get_data(sip_msg_t *msg)
+{
+	memset(&_ksr_kemi_async_xval, 0, sizeof(sr_kemi_xval_t));
+
+	if(_ksr_async_data_param==NULL || _ksr_async_data_param->sval.s==NULL
+			|| _ksr_async_data_param->sval.len<0) {
+		sr_kemi_xval_null(&_ksr_kemi_async_xval, SR_KEMI_XVAL_NULL_EMPTY);
+		return &_ksr_kemi_async_xval;
+	}
+	_ksr_kemi_async_xval.vtype = SR_KEMIP_STR;
+	_ksr_kemi_async_xval.v.s = _ksr_async_data_param->sval;
+	return &_ksr_kemi_async_xval;
+}
