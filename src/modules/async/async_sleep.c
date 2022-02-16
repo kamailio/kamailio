@@ -619,3 +619,59 @@ int async_send_data(sip_msg_t *msg, cfg_action_t *act, str *cbname, str *gname,
 
 	return 0;
 }
+
+
+/**
+ *
+ */
+int pv_get_async(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
+{
+	async_wgroup_t *awg = NULL;
+
+	switch(param->pvn.u.isname.name.n) {
+		case 0:
+			if(_ksr_async_data_param==NULL || _ksr_async_data_param->sval.s==NULL
+					|| _ksr_async_data_param->sval.len<0) {
+				return pv_get_null(msg, param, res);
+			}
+			return pv_get_strval(msg, param, res, &_ksr_async_data_param->sval);
+		case 1:
+			awg = async_task_workers_get_crt();
+			if(awg==NULL || awg->name.s==NULL || awg->name.len<0) {
+				return pv_get_null(msg, param, res);
+			}
+			return pv_get_strval(msg, param, res, &awg->name);
+		default:
+			return pv_get_null(msg, param, res);
+	}
+}
+
+/**
+ *
+ */
+int pv_parse_geoip_name(pv_spec_t *sp, str *in)
+{
+	if(sp==NULL || in==NULL || in->len<=0)
+		return -1;
+
+	switch(in->len) {
+		case 4:
+			if(strncmp(in->s, "data", 4)==0)
+				sp->pvp.pvn.u.isname.name.n = 0;
+		break;
+		case 5:
+			if(strncmp(in->s, "gname", 5)==0)
+				sp->pvp.pvn.u.isname.name.n = 1;
+		break;
+		default:
+			goto error;
+	}
+	sp->pvp.pvn.type = PV_NAME_INTSTR;
+	sp->pvp.pvn.u.isname.type = 0;
+
+	return 0;
+
+error:
+	LM_ERR("unknown PV time name %.*s\n", in->len, in->s);
+	return -1;
+}

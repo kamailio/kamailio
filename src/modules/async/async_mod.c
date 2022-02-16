@@ -92,6 +92,12 @@ static param_export_t params[]={
 	{0, 0, 0}
 };
 
+static pv_export_t mod_pvs[] = {
+	{ {"async", sizeof("async")-1}, PVT_OTHER, pv_get_async, 0,
+		pv_parse_async_name, 0, 0, 0 },
+	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
+};
+
 struct module_exports exports = {
 	"async",
 	DEFAULT_DLFLAGS, /* dlopen flags */
