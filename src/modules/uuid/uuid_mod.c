@@ -34,12 +34,18 @@
 
 MODULE_VERSION
 
+#ifdef UUID_LEN_STR
+#define KSR_UUID_BSIZE (UUID_LEN_STR + 4)
+#else
+#define KSR_UUID_BSIZE 40
+#endif
+
 static int  mod_init(void);
 static int  child_init(int);
 static void mod_destroy(void);
 
 static uuid_t _k_uuid_val;
-static char   _k_uuid_str[40];
+static char   _k_uuid_str[KSR_UUID_BSIZE];
 
 int pv_get_uuid(sip_msg_t *msg, pv_param_t *param,
 		pv_value_t *res);
@@ -162,8 +168,10 @@ int pv_get_uuid(sip_msg_t *msg, pv_param_t *param,
 		break;
 		case 3:
 #ifndef __OS_darwin
-			if(uuid_generate_time_safe(_k_uuid_val))
+			if(uuid_generate_time_safe(_k_uuid_val)!=0) {
+				LM_ERR("uuid not generated in a safe mode\n");
 				return pv_get_null(msg, param, res);
+			}
 #else
 			uuid_generate_time(_k_uuid_val);
 #endif
