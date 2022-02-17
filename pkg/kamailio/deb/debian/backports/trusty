@@ -80,6 +80,13 @@ sed -i -e '/libwebsockets-dev/d' -e '/^Package: kamailio-lwsc-modules/,/^$/d' \
 sed -i -e 's/ lwsc[ ,$]*/ /' ${DIST}/rules
 sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ lwsc/' ${DIST}/rules
 
+# no libnats-dev
+sed -i -e '/^ libnats-dev,/d' \
+  -e '/^Package: kamailio-nats-modules/,/^$/d' \
+  ${DIST}/control
+sed -i -e 's/ nats [ ,$]*//' ${DIST}/rules
+sed -i -e '/^EXCLUDED_MODULES=/s/$/ nats/' ${DIST}/rules
+
 wrap-and-sort -sat -d ${DIST}
 
 # clean backports scripts

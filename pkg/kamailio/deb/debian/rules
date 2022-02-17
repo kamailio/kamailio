@@ -38,7 +38,7 @@ PACKAGE_GROUPS=mysql postgres berkeley unixodbc radius presence \
 			   snmpstats carrierroute xmpp cpl redis python geoip geoip2 \
 			   sqlite json mono ruby ims sctp java \
 			   tls outbound websocket autheph dnssec kazoo cnxcc \
-			   erlang systemd phonenum mongodb rabbitmq python3 mqtt secsipid lwsc
+			   erlang systemd phonenum mongodb rabbitmq python3 mqtt secsipid lwsc nats
 
 # module groups to be packaged onto kamailio-extra-modules
 EXTRA_GROUPS=gzcompress uuid ev jansson http_async

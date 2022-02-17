@@ -22,7 +22,7 @@ export JAVA_HOME=/usr/lib/jvm/java-gcj
 export FREERADIUS=1
 
 # modules not in the "main" kamailio package
-EXCLUDED_MODULES=
+EXCLUDED_MODULES= nats
 
 # extra modules to skip, because they are not compilable now
 # - regardless if they go to the main kamailio package or to some module package,
@@ -38,7 +38,7 @@ PACKAGE_GROUPS=mysql postgres berkeley unixodbc radius presence \
 			   snmpstats carrierroute xmpp cpl redis python geoip \
 			   sqlite json mono ims sctp java \
 			   tls outbound websocket autheph dnssec kazoo cnxcc \
-			   erlang rabbitmq python3 
+			   erlang rabbitmq python3 nats
 
 # module groups to be packaged onto kamailio-extra-modules
 EXTRA_GROUPS=gzcompress uuid ev jansson http_async

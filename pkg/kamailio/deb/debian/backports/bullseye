@@ -28,6 +28,13 @@ sed -i -e '/^EXCLUDED_MODULES=/s/$/ java/' ${DIST}/rules
 # No dh-systemd
 sed -i -e '/dh-systemd/d' ${DIST}/control
 
+# no libnats-dev
+sed -i -e '/^ libnats-dev,/d' \
+  -e '/^Package: kamailio-nats-modules/,/^$/d' \
+  ${DIST}/control
+sed -i -e 's/ nats [ ,$]*//' ${DIST}/rules
+sed -i -e '/^EXCLUDED_MODULES=/s/$/ nats/' ${DIST}/rules
+
 wrap-and-sort -sat -d ${DIST}
 
 # clean backports scripts

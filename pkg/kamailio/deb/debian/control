@@ -31,6 +31,7 @@ Build-Depends:
  libmongoc-dev,
  libmono-2.0-dev [amd64 armel armhf i386 mipsel kfreebsd-amd64 kfreebsd-i386 ppc64 ppc64el s390x],
  libmosquitto-dev,
+ libnats-dev,
  libncurses5-dev,
  libpcre3-dev,
  libperl-dev,
@@ -898,6 +899,24 @@ Description: Libwebsockets module for the Kamailio SIP server
  .
  This package contains the lwcs module, which provides a client-side WebSockets
  API through libwebsockets.
+
+Package: kamailio-nats-modules
+Architecture: any
+Multi-Arch: same
+Pre-Depends:
+ ${misc:Pre-Depends},
+Depends:
+ kamailio (= ${binary:Version}),
+ ${misc:Depends},
+ ${shlibs:Depends},
+Description: Nats module for the Kamailio SIP server
+ Kamailio is a very fast and flexible SIP (RFC3261)
+ server. Written entirely in C, Kamailio can handle thousands calls
+ per second even on low-budget hardware.
+ .
+ This package contains the nats module, which provides a NATS consumer for Kamailio.
+ NATS is a real time distributed messaging platform, more details about it can be
+ found at nats.io.
 
 Package: kamailio-extra-modules
 Architecture: any
