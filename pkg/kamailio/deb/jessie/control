@@ -4,7 +4,6 @@ Priority: optional
 Maintainer: Debian VoIP Team <pkg-voip-maintainers@lists.alioth.debian.org>
 Uploaders:
  Victor Seva <vseva@debian.org>,
- Tzafrir Cohen <tzafrir@debian.org>,
 Build-Depends:
  bison,
  debhelper (>= 9),
@@ -28,7 +27,7 @@ Build-Depends:
  liblua5.1-0-dev,
  libmemcached-dev,
  libmnl-dev,
- libmono-2.0-dev,
+ libmono-2.0-dev [amd64 armel armhf i386 mipsel kfreebsd-amd64 kfreebsd-i386 ppc64 ppc64el s390x],
  libmosquitto-dev,
  libmysqlclient-dev,
  libncurses5-dev,
@@ -38,7 +37,7 @@ Build-Depends:
  librabbitmq-dev,
  libreadline-dev,
  libsasl2-dev,
- libsctp-dev,
+ libsctp-dev [any],
  libsnmp-dev,
  libsqlite3-dev,
  libssl-dev,
@@ -57,13 +56,14 @@ Build-Depends:
  uuid-dev,
  xsltproc,
  zlib1g-dev,
-Standards-Version: 3.9.5
+Standards-Version: 4.6.0.1
 Homepage: http://www.kamailio.org/
-Vcs-git: git://anonscm.debian.org/pkg-voip/kamailio.git
-Vcs-Browser: http://anonscm.debian.org/gitweb/?p=pkg-voip/kamailio.git
+Vcs-Git: https://salsa.debian.org/pkg-voip-team/kamailio.git
+Vcs-Browser: https://salsa.debian.org/pkg-voip-team/kamailio/
+Rules-Requires-Root: no
 
 Package: kamailio
-Architecture: linux-any
+Architecture: any
 Multi-Arch: foreign
 Pre-Depends:
  ${misc:Pre-Depends},
@@ -92,6 +92,9 @@ Suggests:
  kamailio-unixodbc-modules,
  kamailio-xml-modules,
  kamailio-xmpp-modules,
+ stun-server | turn-server,
+Provides:
+ sip-router,
 Description: very fast, dynamic and configurable SIP server
  Kamailio is a very fast and flexible SIP (RFC3261)
  server. Written entirely in C, kamailio can handle thousands requests
@@ -120,7 +123,7 @@ Description: very fast, dynamic and configurable SIP server
 Package: kamailio-dbg
 Priority: extra
 Section: debug
-Architecture: linux-any
+Architecture: any
 Multi-Arch: same
 Pre-Depends:
  ${misc:Pre-Depends},
@@ -136,7 +139,7 @@ Description: very fast and configurable SIP server [debug symbols]
  modules. You only need to install it if you need to debug Kamailio.
 
 Package: kamailio-geoip-modules
-Architecture: linux-any
+Architecture: any
 Multi-Arch: same
 Pre-Depends:
  ${misc:Pre-Depends},
@@ -153,7 +156,7 @@ Description: The geoip module for the Kamailio SIP Server
  usage of the GeoIP API within the Kamailio configuration file.
 
 Package: kamailio-sqlite-modules
-Architecture: linux-any
+Architecture: any
 Multi-Arch: same
 Pre-Depends:
  ${misc:Pre-Depends},
@@ -171,7 +174,7 @@ Description: SQLite database connectivity module for the Kamailio SIP server
  This package provides the SQLite database driver for Kamailio.
 
 Package: kamailio-json-modules
-Architecture: linux-any
+Architecture: any
 Multi-Arch: same
 Pre-Depends:
  ${misc:Pre-Depends},
@@ -188,7 +191,7 @@ Description: Json parser and Json-RPC modules for the Kamailio SIP server
  configuration file and the JSON-RPC client over netstrings.
 
 Package: kamailio-memcached-modules
-Architecture: linux-any
+Architecture: any
 Multi-Arch: same
 Pre-Depends:
  ${misc:Pre-Depends},
@@ -207,7 +210,7 @@ Description: interface to the memcached server, for the Kamailio SIP server
  server, a high-performance, distributed memory object caching system.
 
 Package: kamailio-lua-modules
-Architecture: linux-any
+Architecture: any
 Multi-Arch: same
 Pre-Depends:
  ${misc:Pre-Depends},
@@ -225,7 +228,7 @@ Description: The app_lua module for Kamailio Lua support
  well as writing the entire configuration file in Lua.
 
 Package: kamailio-mono-modules
-Architecture: linux-any
+Architecture: any
 Multi-Arch: same
 Pre-Depends:
  ${misc:Pre-Depends},
@@ -242,7 +245,7 @@ Description: The app_mono module for the Kamailio SIP server
  execute embedded Mono applications within the Kamailio SIP routing script.
 
 Package: kamailio-python-modules
-Architecture: linux-any
+Architecture: any
 Multi-Arch: same
 Pre-Depends:
  ${misc:Pre-Depends},
@@ -260,7 +263,7 @@ Description: The app_python module for the Kamailio SIP server
  execute embedded Python applications within the Kamailio SIP routing script.
 
 Package: kamailio-python3-modules
-Architecture: linux-any
+Architecture: any
 Multi-Arch: same
 Pre-Depends:
  ${misc:Pre-Depends},
@@ -278,7 +281,7 @@ Description: The app_python3 module for the Kamailio SIP server
  execute embedded Python applications within the Kamailio SIP routing script.
 
 Package: kamailio-ruby-modules
-Architecture: linux-any
+Architecture: any
 Multi-Arch: same
 Pre-Depends:
  ${misc:Pre-Depends},
@@ -295,7 +298,7 @@ Description: The app_ruby module for Kamailio Ruby support
  execute embedded Ruby applications within the Kamailio SIP routing script.
 
 Package: kamailio-redis-modules
-Architecture: linux-any
+Architecture: any
 Multi-Arch: same
 Pre-Depends:
  ${misc:Pre-Depends},
@@ -311,7 +314,7 @@ Description: Redis database connectivity module for the Kamailio SIP server
  This package provides the Redis NOSQL database driver for Kamailio.
 
 Package: kamailio-mysql-modules
-Architecture: linux-any
+Architecture: any
 Multi-Arch: same
 Pre-Depends:
  ${misc:Pre-Depends},
@@ -328,7 +331,7 @@ Description: MySQL database connectivity module for Kamailio
  This package provides the MySQL database driver for Kamailio.
 
 Package: kamailio-postgres-modules
-Architecture: linux-any
+Architecture: any
 Multi-Arch: same
 Pre-Depends:
  ${misc:Pre-Depends},
@@ -345,7 +348,7 @@ Description: PostgreSQL database connectivity module for the Kamailio SIP server
  This package provides the PostgreSQL database driver for Kamailio.
 
 Package: kamailio-cpl-modules
-Architecture: linux-any
+Architecture: any
 Multi-Arch: same
 Pre-Depends:
  ${misc:Pre-Depends},
@@ -362,7 +365,7 @@ Description: CPL module (CPL interpreter engine) for the Kamailio SIP server
  Kamailio, turning Kamailio into a CPL server (storage and interpreter).
 
 Package: kamailio-radius-modules
-Architecture: linux-any
+Architecture: any
 Multi-Arch: same
 Breaks:
  kamailio (<<5.1),
@@ -384,7 +387,7 @@ Description: RADIUS modules for the Kamailio SIP server
  RADIUS server.
 
 Package: kamailio-unixodbc-modules
-Architecture: linux-any
+Architecture: any
 Multi-Arch: same
 Pre-Depends:
  ${misc:Pre-Depends},
@@ -400,7 +403,7 @@ Description: unixODBC database connectivity module for the Kamailio SIP server
  This package provides the unixODBC database driver for Kamailio.
 
 Package: kamailio-presence-modules
-Architecture: linux-any
+Architecture: any
 Multi-Arch: same
 Pre-Depends:
  ${misc:Pre-Depends},
@@ -419,7 +422,7 @@ Description: SIP presence modules for Kamailio
  set of other SIP event packages..
 
 Package: kamailio-perl-modules
-Architecture: linux-any
+Architecture: any
 Multi-Arch: same
 Pre-Depends:
  ${misc:Pre-Depends},
@@ -436,7 +439,7 @@ Description: Perl extensions and database driver for the Kamailio SIP server
  the perlvdb database driver for Kamailio.
 
 Package: kamailio-snmpstats-modules
-Architecture: linux-any
+Architecture: any
 Multi-Arch: same
 Pre-Depends:
  ${misc:Pre-Depends},
@@ -455,7 +458,7 @@ Description: SNMP AgentX subagent module for the Kamailio SIP server
  included.
 
 Package: kamailio-xmpp-modules
-Architecture: linux-any
+Architecture: any
 Multi-Arch: same
 Pre-Depends:
  ${misc:Pre-Depends},
@@ -471,7 +474,7 @@ Description: XMPP gateway module for the Kamailio SIP server
  This package provides the SIP to XMPP IM translator module for Kamailio.
 
 Package: kamailio-xml-modules
-Architecture: linux-any
+Architecture: any
 Multi-Arch: same
 Pre-Depends:
  ${misc:Pre-Depends},
@@ -495,7 +498,7 @@ Description: XML based extensions for Kamailio's Management Interface
  - xmlops module for XPath operations in configuration file
 
 Package: kamailio-berkeley-modules
-Architecture: linux-any
+Architecture: any
 Multi-Arch: same
 Pre-Depends:
  ${misc:Pre-Depends},
@@ -514,7 +517,7 @@ Description: Berkeley database module for the Kamailio SIP server
  in files, no additional server is necessary.
 
 Package: kamailio-berkeley-bin
-Architecture: linux-any
+Architecture: any
 Multi-Arch: foreign
 Pre-Depends:
  ${misc:Pre-Depends},
@@ -531,7 +534,7 @@ Description: Berkeley database module for Kamailio - helper program
  install kamailio-berkeley-modules and not this package directly.
 
 Package: kamailio-ldap-modules
-Architecture: linux-any
+Architecture: any
 Multi-Arch: same
 Pre-Depends:
  ${misc:Pre-Depends},
@@ -549,7 +552,7 @@ Description: LDAP modules for the Kamailio SIP server
  directory.
 
 Package: kamailio-ims-modules
-Architecture: linux-any
+Architecture: any
 Multi-Arch: same
 Pre-Depends:
  ${misc:Pre-Depends},
@@ -566,7 +569,7 @@ Description: IMS module for the Kamailio SIP server
  to run as an IMS core.
 
 Package: kamailio-utils-modules
-Architecture: linux-any
+Architecture: any
 Multi-Arch: same
 Pre-Depends:
  ${misc:Pre-Depends},
@@ -584,7 +587,7 @@ Description: Utility functions for the Kamailio SIP server
  http_client module.
 
 Package: kamailio-sctp-modules
-Architecture: linux-any
+Architecture: any
 Multi-Arch: same
 Pre-Depends:
  ${misc:Pre-Depends},
@@ -600,7 +603,7 @@ Description: SCTP SIP transport module for the Kamailio SIP server
  This package provides the SCTP SIP transport module for Kamailio.
 
 Package: kamailio-java-modules
-Architecture: linux-any
+Architecture: any
 Multi-Arch: same
 Pre-Depends:
  ${misc:Pre-Depends},
@@ -618,7 +621,7 @@ Description: The app_java module - JAVA support for the Kamailio SIP server
  execute embedded Java applications within the Kamailio routing script.
 
 Package: kamailio-tls-modules
-Architecture: linux-any
+Architecture: any
 Multi-Arch: same
 Pre-Depends:
  ${misc:Pre-Depends},
@@ -635,7 +638,7 @@ Description: TLS support for the Kamailio SIP server (authentication, transport)
  SIP connections as well as generic TLS support for many Kamailio modules.
 
 Package: kamailio-outbound-modules
-Architecture: linux-any
+Architecture: any
 Multi-Arch: same
 Pre-Depends:
  ${misc:Pre-Depends},
@@ -651,7 +654,7 @@ Description: SIP Outbound module for the Kamailio SIP server
  This package contains the "outbound" module implementing SIP outbound extension.
 
 Package: kamailio-websocket-modules
-Architecture: linux-any
+Architecture: any
 Multi-Arch: same
 Pre-Depends:
  ${misc:Pre-Depends},
@@ -668,7 +671,7 @@ Description: WebSocket module for the Kamailio SIP server
  for use in SIP over WebSockets, in combination with WebRTC media sessions..
 
 Package: kamailio-dnssec-modules
-Architecture: linux-any
+Architecture: any
 Multi-Arch: same
 Pre-Depends:
  ${misc:Pre-Depends},
@@ -684,7 +687,7 @@ Description: DNSsec support for the Kamailio SIP server
  This package provides the DNSsec module for Kamailio.
 
 Package: kamailio-autheph-modules
-Architecture: linux-any
+Architecture: any
 Multi-Arch: same
 Pre-Depends:
  ${misc:Pre-Depends},
@@ -701,7 +704,7 @@ Description: authentication using ephemeral credentials for the Kamailio SIP ser
  enabling authentication using a Restful HTTP API.
 
 Package: kamailio-kazoo-modules
-Architecture: linux-any
+Architecture: any
 Multi-Arch: same
 Pre-Depends:
  ${misc:Pre-Depends},
@@ -717,7 +720,7 @@ Description: kazoo modules for the Kamailio SIP server
  This package provides the Kazoo application server integration module for Kamailio.
 
 Package: kamailio-rabbitmq-modules
-Architecture: linux-any
+Architecture: any
 Multi-Arch: same
 Pre-Depends:
  ${misc:Pre-Depends},
@@ -735,7 +738,7 @@ Description: RabbitMQ and AMQP integration modules for the Kamailio SIP server
  support.
 
 Package: kamailio-cnxcc-modules
-Architecture: linux-any
+Architecture: any
 Multi-Arch: same
 Pre-Depends:
  ${misc:Pre-Depends},
@@ -751,7 +754,7 @@ Description: cnxcc modules for the Kamailio SIP server
  This package provides the cnxcc call charging control module for Kamailio.
 
 Package: kamailio-erlang-modules
-Architecture: linux-any
+Architecture: any
 Multi-Arch: same
 Pre-Depends:
  ${misc:Pre-Depends},
@@ -769,7 +772,7 @@ Description: Erlang modules for the Kamailio SIP server
  and RPC calls between each other.
 
 Package: kamailio-systemd-modules
-Architecture: linux-any
+Architecture: any
 Multi-Arch: same
 Pre-Depends:
  ${misc:Pre-Depends},
@@ -786,7 +789,7 @@ Description: systemd logging modules for the Kamailio SIP server
  Kamailio configuration and routing scripts.
 
 Package: kamailio-mqtt-modules
-Architecture: linux-any
+Architecture: any
 Multi-Arch: same
 Pre-Depends:
  ${misc:Pre-Depends},
@@ -806,7 +809,7 @@ Description: MQTT modules for the Kamailio SIP Server
  the subscriptions can be fully controlled by scripting commands.
 
 Package: kamailio-extra-modules
-Architecture: linux-any
+Architecture: any
 Multi-Arch: same
 Pre-Depends:
  ${misc:Pre-Depends},
