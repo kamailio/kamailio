@@ -242,7 +242,6 @@ Pre-Depends:
  ${misc:Pre-Depends},
 Depends:
  kamailio (= ${binary:Version}),
- python-dev,
  ${misc:Depends},
  ${shlibs:Depends},
 Description: The app_python module for the Kamailio SIP server
