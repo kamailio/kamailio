@@ -93,9 +93,9 @@ modparam("async", "workers", 2)
 		<para>
 			Enables millisecond timer for async_ms_sleep() and async_ms_route() functions.
 			The integer value is the timer resolution in milliseconds. A smaller timer
-			resultion will generate a higher load on the system. If you set ms_timer
-			to 1 you will get a timer with 1 millisecond resultion, a setting of 20
-			provides a resultion of 20ms.
+			resolution will generate a higher load on the system. If you set ms_timer
+			to 1 you will get a timer with 1 millisecond resolution, a setting of 20
+			provides a resolution of 20ms.
 		</para>
 		<para>
 		<emphasis>
