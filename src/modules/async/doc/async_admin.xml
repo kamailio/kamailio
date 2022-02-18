@@ -111,6 +111,29 @@ modparam("async", "ms_timer", 10)
 </programlisting>
 		</example>
 	</section>
+	<section>
+	<title>Parameters</title>
+	<section id="async.p.return">
+		<title><varname>return</varname> (int)</title>
+		<para>
+			The value to be returned by async functions on success. It does
+			not apply for async data functions, only for those that suspend
+			the SIP transaction.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>workers</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("async", "return", 1)
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>
