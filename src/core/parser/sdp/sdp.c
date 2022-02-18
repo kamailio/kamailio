@@ -853,7 +853,8 @@ void free_sdp(sdp_info_t** _sdp)
 	sdp_session_cell_t *session, *l_session;
 	sdp_stream_cell_t *stream, *l_stream;
 	sdp_payload_attr_t *payload, *l_payload;
-        sdp_ice_attr_t *tmp;
+	sdp_ice_attr_t *ice_attr, *l_ice_attr;
+	sdp_ice_opt_t *ice_opt, *l_ice_opt;
 
 	LM_DBG("_sdp = %p\n", _sdp);
 	if (sdp == NULL) return;
@@ -876,10 +877,17 @@ void free_sdp(sdp_info_t** _sdp)
 			if (l_stream->p_payload_attr) {
 				pkg_free(l_stream->p_payload_attr);
 			}
-			while (l_stream->ice_attr) {
-			    tmp = l_stream->ice_attr->next;
-			    pkg_free(l_stream->ice_attr);
-			    l_stream->ice_attr = tmp;
+			ice_attr = l_stream->ice_attr;
+			while (ice_attr) {
+				l_ice_attr = ice_attr;
+				ice_attr = ice_attr->next;
+				pkg_free(l_ice_attr);
+			}
+			ice_opt = l_stream->ice_opt;
+			while (ice_opt) {
+				l_ice_opt = ice_opt;
+				ice_opt = ice_opt->next;
+				pkg_free(l_ice_opt);
 			}
 			pkg_free(l_stream);
 		}
@@ -893,7 +901,8 @@ void free_sdp(sdp_info_t** _sdp)
 void print_sdp_stream(sdp_stream_cell_t *stream, int log_level)
 {
 	sdp_payload_attr_t *payload;
-        sdp_ice_attr_t *ice_attr;
+	sdp_ice_attr_t *ice_attr;
+	sdp_ice_opt_t *ice_opt;
 
 	LOG(log_level , "....stream[%d]:%p=>%p {%p} '%.*s' '%.*s:%.*s:%.*s' '%.*s' [%d] '%.*s' '%.*s:%.*s' (%d)=>%p (%d)=>%p '%.*s' '%.*s' '%.*s' '%.*s' '%.*s' '%.*s' '%.*s'\n",
 		stream->stream_num, stream, stream->next,
@@ -911,8 +920,9 @@ void print_sdp_stream(sdp_stream_cell_t *stream, int log_level)
 		stream->path.len, stream->path.s,
 		stream->max_size.len, stream->max_size.s,
 		stream->accept_types.len, stream->accept_types.s,
-	        stream->accept_wrapped_types.len, stream->accept_wrapped_types.s,
-	    	stream->remote_candidates.len, stream->remote_candidates.s);
+		stream->accept_wrapped_types.len, stream->accept_wrapped_types.s,
+		stream->remote_candidates.len, stream->remote_candidates.s);
+
 	payload = stream->payload_attr;
 	while (payload) {
 		LOG(log_level, "......payload[%d]:%p=>%p p_payload_attr[%d]:%p '%.*s' '%.*s' '%.*s' '%.*s' '%.*s'\n",
@@ -925,12 +935,19 @@ void print_sdp_stream(sdp_stream_cell_t *stream, int log_level)
 			payload->fmtp_string.len, payload->fmtp_string.s);
 		payload=payload->next;
 	}
+
 	ice_attr = stream->ice_attr;
 	while (ice_attr) {
-	    LOG(log_level, "......'%.*s' %u\n",
-		ice_attr->foundation.len, ice_attr->foundation.s,
-		ice_attr->component_id);
-	    ice_attr = ice_attr->next;
+		LOG(log_level, "......ice candidate foundation '%.*s' component id '%u'\n",
+			ice_attr->foundation.len, ice_attr->foundation.s,
+			ice_attr->component_id);
+		ice_attr = ice_attr->next;
+	}
+
+	ice_opt = stream->ice_opt;
+	while (ice_opt) {
+		LOG(log_level, "......ice option '%.*s'\n", ice_opt->option.len, ice_opt->option.s);
+		ice_opt = ice_opt->next;
 	}
 }
 
@@ -983,6 +1000,8 @@ void free_cloned_sdp_stream(sdp_stream_cell_t *_stream)
 {
 	sdp_stream_cell_t *stream, *l_stream;
 	sdp_payload_attr_t *payload, *l_payload;
+	sdp_ice_attr_t *ice_attr, *l_ice_attr;
+	sdp_ice_opt_t *ice_opt, *l_ice_opt;
 
 	stream = _stream;
 	while (stream) {
@@ -996,6 +1015,18 @@ void free_cloned_sdp_stream(sdp_stream_cell_t *_stream)
 		}
 		if (l_stream->p_payload_attr) {
 			shm_free(l_stream->p_payload_attr);
+		}
+		ice_attr = l_stream->ice_attr;
+		while (ice_attr) {
+			l_ice_attr = ice_attr;
+			ice_attr = ice_attr->next;
+			shm_free(l_ice_attr);
+		}
+		ice_opt = l_stream->ice_opt;
+		while (ice_opt) {
+			l_ice_opt = ice_opt;
+			ice_opt = ice_opt->next;
+			shm_free(l_ice_opt);
 		}
 		shm_free(l_stream);
 	}
@@ -1088,10 +1119,114 @@ sdp_payload_attr_t * clone_sdp_payload_attr(sdp_payload_attr_t *attr)
 	return clone_attr;
 }
 
+sdp_ice_attr_t * clone_sdp_ice_attr(sdp_ice_attr_t *ice_attr)
+{
+	sdp_ice_attr_t * clone_ice_attr;
+	int len;
+	char *p;
+
+	if (ice_attr == NULL) return NULL;
+
+	len = sizeof(sdp_ice_attr_t) +
+			ice_attr->foundation.len +
+			ice_attr->transport.len +
+			ice_attr->connection_addr.len +
+			ice_attr->port.len +
+			ice_attr->candidate_type.len;
+
+	clone_ice_attr = (sdp_ice_attr_t*)shm_malloc(len);
+	if (clone_ice_attr == NULL) {
+		SHM_MEM_ERROR;
+		return NULL;
+	}
+	memset(clone_ice_attr, 0, len);
+
+	p = (char*)(clone_ice_attr); /* beginning of the struct */
+
+	/* foundation */
+	if (ice_attr->foundation.len) {
+		clone_ice_attr->foundation.s = p;
+		clone_ice_attr->foundation.len = ice_attr->foundation.len;
+		memcpy( p, ice_attr->foundation.s, ice_attr->foundation.len);
+		p += ice_attr->foundation.len;
+	}
+
+	/* skip component_id and just copy it int to int directly */
+	p++;
+	clone_ice_attr->component_id = ice_attr->component_id;
+
+	/* transport */
+	if (ice_attr->transport.len) {
+		clone_ice_attr->transport.s = p;
+		clone_ice_attr->transport.len = ice_attr->transport.len;
+		memcpy( p, ice_attr->transport.s, ice_attr->transport.len);
+		p += ice_attr->transport.len;
+	}
+
+	/* connection_addr */
+	if (ice_attr->connection_addr.len) {
+		clone_ice_attr->connection_addr.s = p;
+		clone_ice_attr->connection_addr.len = ice_attr->connection_addr.len;
+		memcpy( p, ice_attr->connection_addr.s, ice_attr->connection_addr.len);
+		p += ice_attr->connection_addr.len;
+	}
+
+	/* port */
+	if (ice_attr->port.len) {
+		clone_ice_attr->port.s = p;
+		clone_ice_attr->port.len = ice_attr->port.len;
+		memcpy( p, ice_attr->port.s, ice_attr->port.len);
+		p += ice_attr->port.len;
+	}
+
+	/* candidate_type */
+	if (ice_attr->candidate_type.len) {
+		clone_ice_attr->candidate_type.s = p;
+		clone_ice_attr->candidate_type.len = ice_attr->candidate_type.len;
+		memcpy( p, ice_attr->candidate_type.s, ice_attr->candidate_type.len);
+		p += ice_attr->candidate_type.len;
+	}
+
+	/* candidateType */
+	clone_ice_attr->candidateType = ice_attr->candidateType;
+
+	return clone_ice_attr;
+}
+
+sdp_ice_opt_t * clone_sdp_opt_attr(sdp_ice_opt_t *ice_opt)
+{
+	sdp_ice_opt_t * clone_ice_opt;
+	int len;
+	char *p;
+
+	if (ice_opt == NULL) return NULL;
+	len = sizeof(sdp_ice_opt_t) + ice_opt->option.len;
+
+	clone_ice_opt = (sdp_ice_opt_t*)shm_malloc(len);
+	if (clone_ice_opt == NULL) {
+		SHM_MEM_ERROR;
+		return NULL;
+	}
+	memset(clone_ice_opt, 0, len);
+	p = (char*)(clone_ice_opt); /* beginning of the struct */
+
+	/* ice option */
+	if (ice_opt->option.len) {
+		clone_ice_opt->option.s = p;
+		clone_ice_opt->option.len = ice_opt->option.len;
+		memcpy( p, ice_opt->option.s, ice_opt->option.len);
+	}
+
+	return clone_ice_opt;
+}
+
 sdp_stream_cell_t * clone_sdp_stream_cell(sdp_stream_cell_t *stream)
 {
 	sdp_stream_cell_t *clone_stream;
 	sdp_payload_attr_t *clone_payload_attr, *payload_attr;
+	sdp_ice_attr_t *clone_ice_attr, *tmp_ice_attr, *prev_ice_attr;
+	sdp_ice_opt_t *clone_ice_opt, *tmp_ice_opt, *prev_ice_opt;
+
 	int len, i;
 	char *p;
 
@@ -1111,7 +1246,10 @@ sdp_stream_cell_t * clone_sdp_stream_cell(sdp_stream_cell_t *stream)
 			stream->payloads.len +
 			stream->bw_type.len +
 			stream->bw_width.len +
-			stream->rtcp_port.len;
+			stream->rtcp_port.len +
+			stream->raw_stream.len +
+			stream->remote_candidates.len;
+
 	clone_stream = (sdp_stream_cell_t*)shm_malloc(len);
 	if (clone_stream == NULL) {
 		SHM_MEM_ERROR;
@@ -1130,14 +1268,75 @@ sdp_stream_cell_t * clone_sdp_stream_cell(sdp_stream_cell_t *stream)
 		clone_payload_attr->next = payload_attr;
 		payload_attr = clone_payload_attr;
 	}
-	clone_stream->payload_attr = payload_attr;
 
+	clone_stream->payload_attr = payload_attr;
 	clone_stream->payloads_num = stream->payloads_num;
+
 	if (clone_stream->payloads_num) {
 		if (NULL == init_p_payload_attr(clone_stream, SDP_USE_SHM_MEM)) {
 			goto error;
 		}
 	}
+
+	/* clone ICE candidate attributes */
+	if (stream->ice_attrs_num) {
+		tmp_ice_attr = stream->ice_attr;
+		clone_ice_attr = clone_sdp_ice_attr(tmp_ice_attr);
+
+		if (clone_ice_attr == NULL) {
+			LM_ERR("unable to clone ice attributes for component[%d]\n",
+			tmp_ice_attr->component_id);
+			goto error;
+		}
+		clone_stream->ice_attr = clone_ice_attr;
+		prev_ice_attr = clone_ice_attr;
+		tmp_ice_attr = stream->ice_attr->next;
+
+		clone_ice_attr->next = NULL;
+
+		for (i=1; i<stream->ice_attrs_num; i++) {
+			clone_ice_attr = clone_sdp_ice_attr(tmp_ice_attr);
+
+			if (clone_ice_attr == NULL) {
+				LM_ERR("unable to clone ice attributes for component[%d]\n",
+					tmp_ice_attr->component_id);
+				goto error;
+			}
+			prev_ice_attr->next = clone_ice_attr;
+			prev_ice_attr = clone_ice_attr;
+			tmp_ice_attr = stream->ice_attr->next;
+		}
+	}
+	clone_stream->ice_attrs_num = stream->ice_attrs_num;
+
+	/* clone media level ICE options */
+	if (stream->ice_opt_num) {
+		tmp_ice_opt = stream->ice_opt;
+		clone_ice_opt = clone_sdp_opt_attr(tmp_ice_opt);
+
+		if (clone_ice_opt == NULL) {
+			LM_ERR("unable to clone ice option for option[%d]\n", i);
+			goto error;
+		}
+		clone_stream->ice_opt = clone_ice_opt;
+		prev_ice_opt = clone_ice_opt;
+		tmp_ice_opt = stream->ice_opt->next;
+
+		clone_ice_opt->next = NULL;
+
+		for (i=1; i<stream->ice_opt_num; i++) {
+			clone_ice_opt = clone_sdp_opt_attr(tmp_ice_opt);
+
+			if (clone_ice_opt == NULL) {
+				LM_ERR("unable to clone ice option for option[%d]\n", i);
+				goto error;
+			}
+			prev_ice_opt->next = clone_ice_opt;
+			prev_ice_opt = clone_ice_opt;
+			tmp_ice_opt = stream->ice_opt->next;
+		}
+	}
+	clone_stream->ice_opt_num = stream->ice_opt_num;
 
 	clone_stream->stream_num = stream->stream_num;
 	clone_stream->pf = stream->pf;
@@ -1241,7 +1440,9 @@ sdp_session_cell_t * clone_sdp_session_cell(sdp_session_cell_t *session)
 		session->ip_addr.len +
 		session->o_ip_addr.len +
 		session->bw_type.len +
-		session->bw_width.len;
+		session->bw_width.len +
+		session->sendrecv_mode.len;
+
 	clone_session = (sdp_session_cell_t*)shm_malloc(len);
 	if (clone_session == NULL) {
 		SHM_MEM_ERROR;
