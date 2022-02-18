@@ -52,6 +52,7 @@ int extract_mediaip(str *body, str *mediaip, int *pf, char *line);
 int extract_media_attr(str *body, str *mediamedia, str *mediaport, str *mediatransport, str *mediapayload, int *is_rtp);
 int extract_bwidth(str *body, str *bwtype, str *bwwitdth);
 int extract_candidate(str *body, sdp_stream_cell_t *stream);
+int extract_ice_option(str *body, sdp_stream_cell_t *stream);
 int extract_sess_version(str* oline, str* sess_version);
 
 /* RFC3605 attributes */

@@ -38,9 +38,6 @@
 #define SDP_USE_PKG_MEM 0
 #define SDP_USE_SHM_MEM 1
 
-#define HOLD_IP_STR "0.0.0.0"
-#define HOLD_IP_LEN 7
-
 /**
  * Creates and initialize a new sdp_info structure
  */
@@ -371,7 +368,8 @@ static int parse_sdp_session(str *sdp_body, int session_num, str *cnt_disp, sdp_
 	sdp_session_cell_t *session;
 	sdp_stream_cell_t *stream;
 	sdp_payload_attr_t *payload_attr;
-	int parse_payload_attr;
+	sdp_ice_opt_t *ice_opt; /* media lvl ice options */
+	int parse_payload_attr, ice_trickle = 0;
 	str fmtp_string;
 	str remote_candidates = {"a:remote-candidates:", 20};
 
@@ -582,10 +580,12 @@ static int parse_sdp_session(str *sdp_body, int session_num, str *cnt_disp, sdp_
 				payload_attr = (sdp_payload_attr_t*)get_sdp_payload4payload(stream, &rtp_payload);
 				set_sdp_payload_fmtp(payload_attr, &fmtp_string);
 			} else if (parse_payload_attr && extract_candidate(&tmpstr1, stream) == 0) {
-			        a1p += 2;
+				a1p += 2;
+			} else if (parse_payload_attr && extract_ice_option(&tmpstr1, stream) == 0) {
+				a1p += 2;
 			} else if (parse_payload_attr && extract_field(&tmpstr1, &stream->remote_candidates,
 								       remote_candidates) == 0) {
-			        a1p += 2;
+				a1p += 2;
 			} else if (extract_accept_types(&tmpstr1, &stream->accept_types) == 0) {
 				a1p = stream->accept_types.s + stream->accept_types.len;
 			} else if (extract_accept_wrapped_types(&tmpstr1, &stream->accept_wrapped_types) == 0) {
@@ -606,14 +606,49 @@ static int parse_sdp_session(str *sdp_body, int session_num, str *cnt_disp, sdp_
 		/* Let's detect if the media is on hold by checking
 		 * the good old "0.0.0.0" connection address */
 		if (!stream->is_on_hold) {
+			/* But, exclude the cases with ICE trickle re-negotiation (RFC8840),
+			 * which are not the on hold (RFC2543) case actually */
+			ice_opt = stream->ice_opt;
+			while(ice_opt)
+			{
+				if (ice_opt->option.len == ICE_OPT_TRICKLE_LEN &&
+					strncmp(ice_opt->option.s, ICE_OPT_TRICKLE_STR, ICE_OPT_TRICKLE_LEN)==0) {
+					ice_trickle = 1;
+					ice_opt = NULL; /* break */
+				} else {
+					ice_opt = ice_opt->next;
+				}
+			}
+
+			/* SDP stream level */
 			if (stream->ip_addr.s && stream->ip_addr.len) {
-				if (stream->ip_addr.len == HOLD_IP_LEN &&
-					strncmp(stream->ip_addr.s, HOLD_IP_STR, HOLD_IP_LEN)==0)
-					stream->is_on_hold = RFC2543_HOLD;
+				if (stream->pf == AF_INET &&
+					stream->ip_addr.len == HOLD_IP_LEN &&
+					strncmp(stream->ip_addr.s, HOLD_IP_STR, HOLD_IP_LEN)==0) {
+
+					/* make sure it's not ICE trickle re-negotiation */
+					if (ice_trickle &&
+						stream->port.len==HOLD_PORT_ICE_TRICKLE_LEN && /* port=9 */
+						strncmp(stream->port.s,HOLD_PORT_ICE_TRICKLE_STR,HOLD_PORT_ICE_TRICKLE_LEN)==0)
+						LM_DBG("Not a zeroed on-hold (RFC2543), because is ICE re-negotiaion (RFC8840)\n");
+					else
+						stream->is_on_hold = RFC2543_HOLD;
+				}
+
+			/* SDP session level */
 			} else if (session->ip_addr.s && session->ip_addr.len) {
-				if (session->ip_addr.len == HOLD_IP_LEN &&
-					strncmp(session->ip_addr.s, HOLD_IP_STR, HOLD_IP_LEN)==0)
-					stream->is_on_hold = RFC2543_HOLD;
+				if (session->pf == AF_INET &&
+					session->ip_addr.len == HOLD_IP_LEN &&
+					strncmp(session->ip_addr.s, HOLD_IP_STR, HOLD_IP_LEN)==0) {
+
+					/* make sure it's not ICE trickle re-negotiation */
+					if (ice_trickle &&
+						stream->port.len==HOLD_PORT_ICE_TRICKLE_LEN && /* port=9 */
+						strncmp(stream->port.s,HOLD_PORT_ICE_TRICKLE_STR,HOLD_PORT_ICE_TRICKLE_LEN)==0)
+						LM_DBG("Not a zeroed on-hold (RFC2543), because is ICE re-negotiaion (RFC8840)\n");
+					else
+						stream->is_on_hold = RFC2543_HOLD;
+				}
 			}
 		}
 		++stream_num;
