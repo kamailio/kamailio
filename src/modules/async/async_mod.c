@@ -42,6 +42,7 @@ MODULE_VERSION
 
 static int async_workers = 1;
 static int async_ms_timer = 0;
+static int async_return = 0;
 
 static int mod_init(void);
 static int child_init(int);
@@ -89,6 +90,7 @@ static cmd_export_t cmds[]={
 static param_export_t params[]={
 	{"workers",     INT_PARAM,   &async_workers},
 	{"ms_timer",    INT_PARAM,   &async_ms_timer},
+	{"return",      INT_PARAM,   &async_return},
 	{0, 0, 0}
 };
 
@@ -231,7 +233,7 @@ static int w_async_sleep(sip_msg_t *msg, char *sec, char *str2)
 		if(async_sleep(msg, s, ap->u.paction->next, NULL) < 0)
 			return -1;
 		/* force exit in config */
-		return 0;
+		return async_return;
 	}
 
 	return -1;
@@ -271,7 +273,7 @@ static int w_async_ms_sleep(sip_msg_t *msg, char *sec, char *str2)
 		if(async_ms_sleep(msg, s, ap->u.paction->next, NULL) < 0)
 			return -1;
 		/* force exit in config */
-		return 0;
+		return async_return;
 	}
 
 	return -1;
@@ -334,7 +336,7 @@ int ki_async_route(sip_msg_t *msg, str *rn, int s)
 	if(async_sleep(msg, s, act, rn) < 0)
 		return -1;
 	/* force exit in config */
-	return 0;
+	return async_return;
 }
 
 /**
@@ -370,7 +372,7 @@ int ki_async_ms_route(sip_msg_t *msg, str *rn, int s)
 	if(async_ms_sleep(msg, s, act, rn) < 0)
 		return -1;
 	/* force exit in config */
-	return 0;
+	return async_return;
 }
 
 /**
@@ -478,7 +480,7 @@ int ki_async_task_group_route(sip_msg_t *msg, str *rn, str *gn)
 	if(async_send_task(msg, act, rn, gn) < 0)
 		return -1;
 	/* force exit in config */
-	return 0;
+	return async_return;
 }
 
 /**
