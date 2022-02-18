@@ -279,6 +279,26 @@ static inline sdp_ice_attr_t *add_sdp_ice(sdp_stream_cell_t* _stream)
 	return ice_attr;
 }
 
+static inline sdp_ice_opt_t *add_sdp_ice_opt(sdp_stream_cell_t* _stream)
+{
+	sdp_ice_opt_t *ice_opt;
+	int len;
+
+	len = sizeof(sdp_ice_opt_t);
+	ice_opt = (sdp_ice_opt_t *)pkg_malloc(len);
+	if (ice_opt == NULL) {
+	    PKG_MEM_ERROR;
+	    return NULL;
+	}
+	memset( ice_opt, 0, len);
+
+	/* Insert the new ice option */
+	ice_opt->next = _stream->ice_opt;
+	_stream->ice_opt = ice_opt;
+	_stream->ice_opt_num++;
+
+	return ice_opt;
+}
 
 int extract_candidate(str *body, sdp_stream_cell_t *stream)
 {
@@ -343,6 +363,46 @@ int extract_field(str *body, str *value, str field)
 	return 0;
 }
 
+int extract_ice_option(str *body, sdp_stream_cell_t *stream)
+{
+	sdp_ice_opt_t *ice_opt;
+
+	char * ptr_src;
+	int max_options = 10; /* protection - max options can be listed in one line */
+	int length = 0;       /* each option length */
+
+	/* a=ice-options: */
+	if ((body->len < 14) || (strncasecmp(body->s, ICE_OPTIONS, 14) != 0))
+		return -1;
+
+	ptr_src = body->s + 14;
+	if (ptr_src == 32) ptr_src++; /* if starts with a space, skip it */
+
+	/* identify all existing ICE options, if they are listed in one row */
+	while (*ptr_src && *ptr_src != '\r' && *ptr_src != '\n' && max_options-->0)
+	{
+		while (*ptr_src != 32 && *ptr_src && *ptr_src != '\r' && *ptr_src != '\n')
+		{
+			length++;
+			ptr_src++;
+		}
+
+		ice_opt = add_sdp_ice_opt(stream);
+		if (ice_opt == NULL) {
+			LM_ERR("failed to add ice option\n");
+			return -1;
+		}
+
+		ice_opt->option.s = ptr_src-length;
+		ice_opt->option.len = length;
+		trim_len(ice_opt->option.len, ice_opt->option.s, ice_opt->option);
+
+		length = 0;
+		if (*ptr_src == 32) ptr_src++; /* skip space */
+	}
+
+	return 0;
+}
 
 int extract_ptime(str *body, str *ptime)
 {
