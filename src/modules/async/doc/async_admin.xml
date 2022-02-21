@@ -111,8 +111,6 @@ modparam("async", "ms_timer", 10)
 </programlisting>
 		</example>
 	</section>
-	<section>
-	<title>Parameters</title>
 	<section id="async.p.return">
 		<title><varname>return</varname> (int)</title>
 		<para>
