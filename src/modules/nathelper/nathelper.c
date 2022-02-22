@@ -1786,7 +1786,7 @@ static inline int replace_sdp_ip(
 {
 	str body1, oldip, newip;
 	str body = *org_body;
-	int pf, pf1 = 0;
+	int pf = 0, pf1 = 0;
 	str body2;
 	char *bodylimit = body.s + body.len;
 	int ret;
@@ -2145,6 +2145,7 @@ static int send_raw(const char *buf, int buf_len, union sockaddr_union *to,
 	ip->ip_off = 0;
 	ip->ip_ttl = 69;
 	ip->ip_p = 17;
+	ip->ip_sum = 0;
 	ip->ip_src.s_addr = s_ip;
 	ip->ip_dst.s_addr = to->sin.sin_addr.s_addr;
 
