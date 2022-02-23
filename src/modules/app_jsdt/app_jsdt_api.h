@@ -43,4 +43,7 @@ int app_jsdt_dostring(sip_msg_t *msg, char *script);
 int app_jsdt_dofile(sip_msg_t *msg, char *script);
 
 int app_jsdt_init_rpc(void);
+
+duk_ret_t cb_resolve_module(duk_context *JJ);
+duk_ret_t cb_load_module(duk_context *JJ);
 #endif
