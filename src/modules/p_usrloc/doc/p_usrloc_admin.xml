@@ -757,6 +757,28 @@ kamcmd cfg.get p_usrloc matching_mode
 		</example>
 	</section>
 
+	<section>
+		<title><varname>UTC_timestamps</varname>(int)</title>
+		<para>
+			<emphasis>
+				Enables UTC timestamps for expires and last_modified columns.
+			</emphasis>
+		</para>
+		<para>
+			<emphasis>
+				Default value is 0 (disabled).
+			</emphasis>
+		</para>
+		<example>
+			<title>Set <varname>UTC_timestamps</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("p_usrloc", "UTC_timestamps", 1)
+...
+			</programlisting>
+		</example>
+	</section>
+
 </section>
 
     <section>

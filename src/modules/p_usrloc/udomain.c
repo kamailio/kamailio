@@ -237,7 +237,7 @@ static inline ucontact_info_t* dbrow2info( db_val_t *vals, str *contact)
 		LM_CRIT("empty expire\n");
 		return 0;
 	}
-	ci.expires = VAL_TIME(vals+1);
+	ci.expires = ul_db_datetime_get(VAL_TIME(vals+1));
 
 	if (VAL_NULL(vals+2)) {
 		LM_CRIT("empty q\n");
@@ -323,7 +323,7 @@ static inline ucontact_info_t* dbrow2info( db_val_t *vals, str *contact)
 
 	/* last modified time */
 	if (!VAL_NULL(vals+12)) {
-		ci.last_modified = VAL_TIME(vals+12);
+		ci.last_modified = ul_db_datetime_get(VAL_TIME(vals+12));
 	}
 
 	/* record internal uid */
