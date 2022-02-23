@@ -33,6 +33,7 @@
 #include "../../core/rpc_lookup.h"
 
 #include "duktape.h"
+#include "duk_module_node.h"
 #include "app_jsdt_kemi_export.h"
 #include "app_jsdt_api.h"
 
@@ -451,6 +452,7 @@ int jsdt_kemi_load_script(void)
 	duk_pop(_sr_J_env.JJ);  /* ignore result */
 	return 0;
 }
+
 /**
  *
  */
@@ -469,6 +471,12 @@ int jsdt_sr_init_child(void)
 			LM_ERR("cannot create load JS context (load)\n");
 			return -1;
 		}
+		duk_push_object(_sr_J_env.JJ);
+		duk_push_c_function(_sr_J_env.JJ, cb_resolve_module, DUK_VARARGS);
+		duk_put_prop_string(_sr_J_env.JJ, -2, "resolve");
+		duk_push_c_function(_sr_J_env.JJ, cb_load_module, DUK_VARARGS);
+		duk_put_prop_string(_sr_J_env.JJ, -2, "load");
+		duk_module_node_init(_sr_J_env.JJ);
 		jsdt_sr_kemi_register_libs(_sr_J_env.JJ);
 		LM_DBG("loading js script file: %.*s\n",
 				_sr_jsdt_load_file.len, _sr_jsdt_load_file.s);
@@ -1627,4 +1635,61 @@ int app_jsdt_init_rpc(void)
 		return -1;
 	}
 	return 0;
+}
+
+/**
+*  Duktape - duk_module_node - resolve
+*/
+duk_ret_t cb_resolve_module(duk_context *JJ) {
+	const char *requested_id = duk_get_string(JJ, 0);
+	const char *parent_id = duk_get_string(JJ, 1);
+
+	char requested_path[PATH_MAX];
+	if (requested_id[0] == '/') {
+		// absolute
+		strcpy(requested_path, requested_id);
+	} else if (strncmp(requested_id, "./", 2)
+			  || strncmp(requested_id, "../", 3)) {
+		if (strlen(parent_id)) {
+			// relative to parent
+			strcpy(requested_path, parent_id);
+		} else {
+			// no parent so relative to jsdt_load_file
+			strcpy(requested_path, _sr_jsdt_load_file.s);
+		}
+		char *ptr = strrchr(requested_path, '/');
+		if (ptr) {
+			ptr++;
+			*ptr = '\0';
+		}
+		strcat(requested_path, requested_id);
+	} else {
+		LM_INFO("cb_resolve_module - TODO resolve pathless module names");
+		goto error;
+	}
+	// if missing add .js ext
+	if (strcmp(strrchr(requested_path, '\0') - 3, ".js")){
+		strcat(requested_path, ".js");
+	}
+	char resolved_id[PATH_MAX];
+	if (realpath(requested_path, resolved_id)) {
+		duk_push_string(JJ, resolved_id);
+		return 1;  /*nrets*/
+	} else {
+		goto error;
+	}
+
+error:
+	return duk_generic_error(JJ, "Could not resolve module '%s'", requested_id);
+}
+
+/**
+*  Duktape - duk_module_node - node
+*/
+duk_ret_t cb_load_module(duk_context *JJ) {
+	const char *resolved_id = duk_get_string(JJ, 0);
+	if (0 > jsdt_load_file(JJ, resolved_id)) {
+		return duk_generic_error(JJ, "Could not load module '%s'", resolved_id);
+	}
+	return 1;  /*nrets*/
 }
