@@ -92,6 +92,7 @@ extern int desc_time_order;
 extern int cseq_delay;
 extern int ul_fetch_rows;
 extern int ul_hash_size;
+extern int ul_UTC_timestamps;
 
 
 extern str default_db_url;
@@ -125,5 +126,8 @@ extern int alg_location;
 extern int  max_loc_nr;
 extern int * mdb_w_available;
 extern int mdb_availability_control;
+
+time_t ul_db_datetime_set(time_t v);
+time_t ul_db_datetime_get(time_t v);
 
 #endif /* UL_MOD_H */
