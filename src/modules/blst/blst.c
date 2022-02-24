@@ -119,11 +119,10 @@ static int ki_blst_add(sip_msg_t* msg, int t)
 									S_TO_TICKS(t));
 		return 1;
 	}else{
-		LOG(L_WARN, "WARNING: blst: blst_add: blocklist support disabled\n");
+		LM_WARN("blocklist support disabled\n");
 	}
 #else /* USE_DST_BLOCKLIST */
-	LOG(L_WARN, "WARNING: blst: blst_add: blocklist support not compiled-in"
-			" - no effect -\n");
+	LM_WARN("blocklist support not compiled-in - no effect\n");
 #endif /* USE_DST_BLOCKLIST */
 	return 1;
 }
@@ -193,12 +192,10 @@ static int ki_blst_add_retry_after(sip_msg_t* msg, int t_min, int t_max)
 										S_TO_TICKS(t));
 		return 1;
 	}else{
-		LOG(L_WARN, "WARNING: blst: blst_add_retry_after:"
-					" blocklist support disabled\n");
+		LM_WARN("blocklist support disabled\n");
 	}
 #else /* USE_DST_BLOCKLIST */
-	LOG(L_WARN, "WARNING: blst: blst_add_retry_after:"
-			" blocklist support not compiled-in - no effect -\n");
+	LM_WARN("blocklist support not compiled-in - no effect -\n");
 #endif /* USE_DST_BLOCKLIST */
 	return 1;
 }
@@ -241,11 +238,10 @@ static int ki_blst_del(sip_msg_t* msg)
 		if (dst_blocklist_del(&src, msg))
 			return 1;
 	}else{
-		LOG(L_WARN, "WARNING: blst: blst_del: blocklist support disabled\n");
+		LM_WARN("blocklist support disabled\n");
 	}
 #else /* USE_DST_BLOCKLIST */
-	LOG(L_WARN, "WARNING: blst: blst_del: blocklist support not compiled-in"
-			" - no effect -\n");
+	LM_WARN("blocklist support not compiled-in - no effect -\n");
 #endif /* USE_DST_BLOCKLIST */
 	return -1;
 }
@@ -281,8 +277,7 @@ static int ki_blst_is_blocklisted(sip_msg_t* msg)
 					" blocklist support disabled\n");
 	}
 #else /* USE_DST_BLOCKLIST */
-	LOG(L_WARN, "WARNING: blst: blst_is_blocklisted:"
-				" blocklist support not compiled-in - no effect -\n");
+	LM_WARN("blocklist support not compiled-in - no effect -\n");
 #endif /* USE_DST_BLOCKLIST */
 	return -1;
 }
@@ -309,8 +304,7 @@ static int ki_blst_set_ignore(sip_msg_t* msg, int mask)
 	msg->fwd_send_flags.blst_imask|=blst_imask;
 	return 1;
 #else /* USE_DST_BLOCKLIST */
-	LOG(L_WARN, "WARNING: blst: blst_ignore_req: blocklist support"
-				" not compiled-in - no effect -\n");
+	LM_WARN("blocklist support not compiled-in - no effect -\n");
 #endif /* USE_DST_BLOCKLIST */
 	return 1;
 }
@@ -349,8 +343,7 @@ static int ki_blst_clear_ignore(sip_msg_t* msg, int mask)
 	msg->fwd_send_flags.blst_imask&=~blst_imask;
 	return 1;
 #else /* USE_DST_BLOCKLIST */
-	LOG(L_WARN, "WARNING: blst: blst_ignore_req: blocklist support"
-				" not compiled-in - no effect -\n");
+	LM_WARN("blocklist support not compiled-in - no effect -\n");
 #endif /* USE_DST_BLOCKLIST */
 	return 1;
 }
@@ -390,8 +383,7 @@ static int ki_blst_rpl_set_ignore(sip_msg_t* msg, int mask)
 	msg->rpl_send_flags.blst_imask|=blst_imask;
 	return 1;
 #else /* USE_DST_BLOCKLIST */
-	LOG(L_WARN, "WARNING: blst: blst_ignore_req: blocklist support"
-				" not compiled-in - no effect -\n");
+	LM_WARN("blocklist support not compiled-in - no effect -\n");
 #endif /* USE_DST_BLOCKLIST */
 	return 1;
 }
@@ -432,8 +424,7 @@ static int ki_blst_rpl_clear_ignore(sip_msg_t* msg, int mask)
 	msg->rpl_send_flags.blst_imask&=~blst_imask;
 	return 1;
 #else /* USE_DST_BLOCKLIST */
-	LOG(L_WARN, "WARNING: blst: blst_ignore_req: blocklist support"
-				" not compiled-in - no effect -\n");
+	LM_WARN("blocklist support not compiled-in - no effect -\n");
 #endif /* USE_DST_BLOCKLIST */
 	return 1;
 }
