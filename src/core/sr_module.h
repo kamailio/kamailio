@@ -160,7 +160,7 @@ void ksr_module_set_flag(unsigned int flag);
 							  @warning child_init(PROC_MAIN) is again called
 							 in the same process (main), but latter
 							 (before tcp), so make sure you don't init things
-							 twice, bot in PROC_MAIN and PROC_INT */
+							 twice, both in PROC_MAIN and PROC_INT */
 #define PROC_NOCHLDINIT -128 /**< no child init functions will be called
                                 if this rank is used in fork_process() */
 
