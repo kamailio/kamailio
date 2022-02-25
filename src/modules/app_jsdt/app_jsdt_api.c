@@ -54,6 +54,7 @@ typedef struct _sr_jsdt_env
 static sr_jsdt_env_t _sr_J_env = {0};
 
 str _sr_jsdt_load_file = STR_NULL;
+int _sr_jsdt_mode = 1;
 
 static int *_sr_jsdt_reload_version = NULL;
 static int _sr_jsdt_local_version = 0;
@@ -471,12 +472,14 @@ int jsdt_sr_init_child(int rank)
 			LM_ERR("cannot create load JS context (load)\n");
 			return -1;
 		}
-		duk_push_object(_sr_J_env.JJ);
-		duk_push_c_function(_sr_J_env.JJ, cb_resolve_module, DUK_VARARGS);
-		duk_put_prop_string(_sr_J_env.JJ, -2, "resolve");
-		duk_push_c_function(_sr_J_env.JJ, cb_load_module, DUK_VARARGS);
-		duk_put_prop_string(_sr_J_env.JJ, -2, "load");
-		duk_module_node_init(_sr_J_env.JJ);
+		if(_sr_jsdt_mode == 1) {
+			duk_push_object(_sr_J_env.JJ);
+			duk_push_c_function(_sr_J_env.JJ, cb_resolve_module, DUK_VARARGS);
+			duk_put_prop_string(_sr_J_env.JJ, -2, "resolve");
+			duk_push_c_function(_sr_J_env.JJ, cb_load_module, DUK_VARARGS);
+			duk_put_prop_string(_sr_J_env.JJ, -2, "load");
+			duk_module_node_init(_sr_J_env.JJ);
+		}
 		jsdt_sr_kemi_register_libs(_sr_J_env.JJ);
 		LM_DBG("loading js script file: %.*s\n",
 				_sr_jsdt_load_file.len, _sr_jsdt_load_file.s);
