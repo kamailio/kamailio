@@ -17,7 +17,7 @@
     <section>
 	<title>Overview</title>
 	<para>
-		This module allows executing JavaScript scripts from the Kamailio 
+		This module allows executing JavaScript scripts from the Kamailio
 		configuration file.
 		It exports all KEMI functions to JavaScript in order to access the
 		currently processed SIP message. These functions are named within
@@ -107,7 +107,26 @@ modparam("app_jsdt", "load", "/usr/local/etc/kamailio/js/myscript.js")
 </programlisting>
 	    </example>
 	</section>
-
+	<section id="app_jsdt.p.mode">
+	    <title><varname>mode</varname> (int)</title>
+	    <para>
+			Control if the API to load JavaScript module (nodejs interface) is
+			initialized or not.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>1</quote> (initialize).
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("app_jsdt", "mode", 0)
+...
+</programlisting>
+	    </example>
+	</section>
 	</section>
 
     <section>
