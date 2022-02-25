@@ -456,7 +456,7 @@ int jsdt_kemi_load_script(void)
 /**
  *
  */
-int jsdt_sr_init_child(void)
+int jsdt_sr_init_child(int rank)
 {
 	memset(&_sr_J_env, 0, sizeof(sr_jsdt_env_t));
 	_sr_J_env.J = duk_create_heap_default();

@@ -117,7 +117,10 @@ static int mod_init(void)
  */
 static int child_init(int rank)
 {
-	return jsdt_sr_init_child();
+	if(rank==PROC_INIT) {
+		return 0;
+	}
+	return jsdt_sr_init_child(rank);
 }
 
 /**

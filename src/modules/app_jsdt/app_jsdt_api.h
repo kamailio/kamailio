@@ -27,7 +27,7 @@
 #include "duktape.h"
 
 int jsdt_sr_init_mod(void);
-int jsdt_sr_init_child(void);
+int jsdt_sr_init_child(int rank);
 void jsdt_sr_destroy(void);
 
 int jsdt_sr_initialized(void);
