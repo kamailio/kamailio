@@ -109,7 +109,7 @@ modparam("corex", "alias_subdomains", "udp:sip-router.org:5060")
 		<itemizedlist>
 		<listitem>
 			<para>
-			<emphasis>type</emphasis> - it can be "A" (IPv4) or "AAAA" (IPv6)
+			<emphasis>type</emphasis> - it can be "A" (IPv4), "AAAA" (IPv6) or "SRV"
 			</para>
 		</listitem>
 		<listitem>
@@ -125,6 +125,21 @@ modparam("corex", "alias_subdomains", "udp:sip-router.org:5060")
 		<listitem>
 			<para>
 			<emphasis>ttl</emphasis> - TTL value
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			<emphasis>priority</emphasis> - priority value for SRV record
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			<emphasis>weight</emphasis> - weight value for SRV record
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			<emphasis>port</emphasis> - port value for SRV record
 			</para>
 		</listitem>
 		<listitem>
