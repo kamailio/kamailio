@@ -383,6 +383,10 @@ static int corex_dns_cache_param_add(str *pval)
 	unsigned short dns_type = 0;
 	int dns_ttl = 0;
 	int dns_flags = 0;
+	int dns_priority = 0;
+	int dns_weight = 0;
+	int dns_port = 0;
+
 
 	if(pval==NULL) {
 		LM_ERR("invalid parameter\n");
@@ -414,8 +418,11 @@ static int corex_dns_cache_param_add(str *pval)
 						|| (pit->body.s[0]=='A'))) {
 				dns_type = T_A;
 			} else if((pit->body.len == 4)
-					&& strncasecmp(pit->name.s, "aaaa", 4)==0) {
+					&& strncasecmp(pit->body.s, "aaaa", 4)==0) {
 				dns_type = T_AAAA;
+			} else if((pit->body.len == 3)
+					&& strncasecmp(pit->body.s, "srv", 3)==0) {
+				dns_type = T_SRV;
 			}
 		} else if(pit->name.len==3
 				&& strncasecmp(pit->name.s, "ttl", 3)==0) {
@@ -433,6 +440,30 @@ static int corex_dns_cache_param_add(str *pval)
 					return -1;
 				}
 			}
+		} else if(pit->name.len==8
+				&& strncasecmp(pit->name.s, "priority", 8)==0) {
+			if(dns_flags==0) {
+				if (str2sint(&pit->body, &dns_priority) < 0) {
+					LM_ERR("invalid priority: %.*s\n", pit->body.len, pit->body.s);
+					return -1;
+				}
+			}
+		} else if(pit->name.len==6
+				&& strncasecmp(pit->name.s, "weight", 6)==0) {
+			if(dns_flags==0) {
+				if (str2sint(&pit->body, &dns_weight) < 0) {
+					LM_ERR("invalid weight: %.*s\n", pit->body.len, pit->body.s);
+					return -1;
+				}
+			}
+		} else if(pit->name.len==4
+				&& strncasecmp(pit->name.s, "port", 4)==0) {
+			if(dns_flags==0) {
+				if (str2sint(&pit->body, &dns_port) < 0) {
+					LM_ERR("invalid port: %.*s\n", pit->body.len, pit->body.s);
+					return -1;
+				}
+			}
 		}
 	}
 
@@ -440,9 +471,9 @@ static int corex_dns_cache_param_add(str *pval)
 				&dns_name,
 				dns_ttl,
 				&dns_addr,
-				0 /* priority */,
-				0 /* weight */,
-				0 /* port */,
+				dns_priority, /* priority */
+				dns_weight, /* weight */
+				dns_port, /* port */
 				dns_flags) == 0) {
 		return 0;
 	}
