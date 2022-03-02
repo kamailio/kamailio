@@ -349,7 +349,7 @@ int trace_send_duplicate(char *buf, int len, dest_info_t *dst2)
 		}
 	}
 
-	if(msg_send(pdst, buf, len) < 0) {
+	if(msg_send_buffer(pdst, buf, len, 1) < 0) {
 		LM_ERR("cannot send duplicate message\n");
 		goto error;
 	}
