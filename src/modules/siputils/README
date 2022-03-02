@@ -452,6 +452,11 @@ modparam("auth", "rpid_avp", "$avp(myrpid)")
    timeout value will be converted to a 180 message. Please note that you
    need to set a positive timeout value in order to use this function.
 
+   Note: the change of sip reply can be done only in cases when it is not
+   parsed too much before config execution, otherwise it fails. For
+   example, setting global parameter "log_prefix" can cause this function
+   to fail changing the replies.
+
    The function returns TRUE on success, and FALSE during processing
    failures.
 
