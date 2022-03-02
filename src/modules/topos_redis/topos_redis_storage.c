@@ -1260,7 +1260,7 @@ int tps_redis_update_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
 	argc++;
 
 	if(mode & TPS_DBU_CONTACT) {
-		TPS_REDIS_SET_ARGS(&md->b_contact, argc, &td_key_b_contact,
+		TPS_REDIS_SET_ARGS(&md->a_contact, argc, &td_key_a_contact,
 				argv, argvlen);
 		TPS_REDIS_SET_ARGS(&md->b_contact, argc, &td_key_b_contact,
 				argv, argvlen);
