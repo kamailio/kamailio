@@ -475,7 +475,7 @@ int gsm_to_ascii(char* buffer, int buffer_length, str sms, const int fill_bits) 
 int ucs2_to_utf8 (int ucs2, char * utf8) {
 	if (ucs2 < 0x80) {
 		utf8[0] = ucs2;
-	utf8[1] = 0;
+		utf8[1] = 0;
 		return 1;
 	}
 	if (ucs2 >= 0x80  && ucs2 < 0x800) {
@@ -884,7 +884,7 @@ int decode_3gpp_sms(struct sip_msg *msg) {
 							// Length is worst-case 2 * len (UCS2 is 2 Bytes, UTF8 is worst-case 4 Bytes)
 							rp_data->pdu.payload.sm.len = 0;
 							while (len > 0) {
-								j = (body.s[p] << 8) + body.s[p + 1];
+								j = ((unsigned char)body.s[p] << 8) + (unsigned char)body.s[p + 1];
 								p += 2;
 								rp_data->pdu.payload.sm.len += ucs2_to_utf8(j, &rp_data->pdu.payload.sm.s[rp_data->pdu.payload.sm.len]);
 								len -= 2;
