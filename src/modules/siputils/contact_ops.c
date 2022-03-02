@@ -724,105 +724,104 @@ int ki_contact_param_decode(sip_msg_t *msg, str *nparam)
 	param_t* params = NULL;
 	param_hooks_t phooks;
 	param_t* pit;
-	hdr_field_t *hf = NULL;
 	char boval[MAX_URI_SIZE];
 	char bnval[MAX_URI_SIZE];
 	str oval;
 	str nval;
 	int i;
 
-	if(parse_contact_headers(msg)<0 || msg->contact==NULL
-			|| msg->contact->parsed == NULL) {
+	if((msg->contact == NULL)
+			&& ((parse_headers(msg, HDR_CONTACT_F, 0) == -1)
+					|| (msg->contact == NULL))) {
 		LM_DBG("no Contact header present\n");
 		return 1;
 	}
 
-	hf = msg->contact;
-	while(hf) {
-		if(hf->type != HDR_CONTACT_T) {
-			hf = hf->next;
+	if(msg->contact->parsed == NULL) {
+		if(parse_contact(msg->contact) < 0 || msg->contact->parsed == NULL) {
+			LM_ERR("contact parsing failed\n");
+			return -1;
+		}
+	}
+
+	cb = (contact_body_t *)msg->contact->parsed;
+	for(c = cb->contacts; c != NULL; c = c->next) {
+		if(c->uri.len<4) {
 			continue;
 		}
-		cb = (contact_body_t *)hf->parsed;
-		for(c = cb->contacts; c != NULL; c = c->next) {
-			if(c->uri.len<4) {
-				continue;
-			}
-			if (parse_uri(c->uri.s, c->uri.len, &puri) < 0) {
-				LM_ERR("failed to parse contact uri [%.*s]\n", c->uri.len, c->uri.s);
-				return -1;
-			}
-			if(puri.sip_params.len>0) {
-				sparams = puri.sip_params;
-			} else if(puri.params.len>0) {
-				sparams = puri.params;
-			} else {
-				continue;
-			}
+		if (parse_uri(c->uri.s, c->uri.len, &puri) < 0) {
+			LM_ERR("failed to parse contact uri [%.*s]\n", c->uri.len, c->uri.s);
+			return -1;
+		}
+		if(puri.sip_params.len>0) {
+			sparams = puri.sip_params;
+		} else if(puri.params.len>0) {
+			sparams = puri.params;
+		} else {
+			continue;
+		}
 
-			if (parse_params2(&sparams, CLASS_ANY, &phooks, &params, ';')<0) {
-				LM_ERR("failed to parse uri params [%.*s]\n", c->uri.len, c->uri.s);
-				continue;
-			}
+		if (parse_params2(&sparams, CLASS_ANY, &phooks, &params, ';')<0) {
+			LM_ERR("failed to parse uri params [%.*s]\n", c->uri.len, c->uri.s);
+			continue;
+		}
 
-			pit = params;
-			while(pit!=NULL) {
-				if(pit->name.len==nparam->len
-						&& strncasecmp(pit->name.s, nparam->s, nparam->len)==0) {
-					break;
-				}
-				pit=pit->next;
+		pit = params;
+		while(pit!=NULL) {
+			if(pit->name.len==nparam->len
+					&& strncasecmp(pit->name.s, nparam->s, nparam->len)==0) {
+				break;
 			}
-			if(pit==NULL || pit->body.len<=0) {
-				free_params(params);
-				params = NULL;
-				continue;
-			}
-
-			oval = pit->body;
-			if(oval.len % 4) {
-				if(oval.len + 4 >= MAX_URI_SIZE-1) {
-					LM_ERR("not enough space to insert padding [%.*s]\n",
-							c->uri.len, c->uri.s);
-					free_params(params);
-					return -1;
-				}
-				memcpy(boval, oval.s, oval.len);
-				for(i=0; i < (4 - (oval.len % 4)); i++) {
-					boval[oval.len + i] = '=';
-				}
-				oval.s = boval;
-				oval.len += (4 - (oval.len % 4));
-				/* move to next buffer */
-			}
-			nval.len = base64url_dec(oval.s, oval.len, bnval, MAX_URI_SIZE-1);
-			if (nval.len <= 0) {
-				free_params(params);
-				LM_ERR("failed to decode contact uri [%.*s]\n",
-							c->uri.len, c->uri.s);
-				return -1;
-			}
-			nval.s = (char*)pkg_malloc((nval.len+1)*sizeof(char));
-			if(nval.s==NULL) {
-				free_params(params);
-				PKG_MEM_ERROR;
-				return -1;
-			}
-			memcpy(nval.s, bnval, nval.len);
-			nval.s[nval.len] = '\0';
-
-			LM_DBG("decoded new uri [%.*s] (%d)\n", nval.len, nval.s, nval.len);
-			if(patch(msg, c->uri.s, c->uri.len, nval.s, nval.len) < 0) {
-				LM_ERR("failed to update contact uri [%.*s]\n",
-						c->uri.len, c->uri.s);
-				free_params(params);
-				pkg_free(nval.s);
-				return -2;
-			}
+			pit=pit->next;
+		}
+		if(pit==NULL || pit->body.len<=0) {
 			free_params(params);
 			params = NULL;
+			continue;
 		}
-		hf = hf->next;
+
+		oval = pit->body;
+		if(oval.len % 4) {
+			if(oval.len + 4 >= MAX_URI_SIZE-1) {
+				LM_ERR("not enough space to insert padding [%.*s]\n",
+						c->uri.len, c->uri.s);
+				free_params(params);
+				return -1;
+			}
+			memcpy(boval, oval.s, oval.len);
+			for(i=0; i < (4 - (oval.len % 4)); i++) {
+				boval[oval.len + i] = '=';
+			}
+			oval.s = boval;
+			oval.len += (4 - (oval.len % 4));
+			/* move to next buffer */
+		}
+		nval.len = base64url_dec(oval.s, oval.len, bnval, MAX_URI_SIZE-1);
+		if (nval.len <= 0) {
+			free_params(params);
+			LM_ERR("failed to decode contact uri [%.*s]\n",
+						c->uri.len, c->uri.s);
+			return -1;
+		}
+		nval.s = (char*)pkg_malloc((nval.len+1)*sizeof(char));
+		if(nval.s==NULL) {
+			free_params(params);
+			PKG_MEM_ERROR;
+			return -1;
+		}
+		memcpy(nval.s, bnval, nval.len);
+		nval.s[nval.len] = '\0';
+
+		LM_DBG("decoded new uri [%.*s] (%d)\n", nval.len, nval.s, nval.len);
+		if(patch(msg, c->uri.s, c->uri.len, nval.s, nval.len) < 0) {
+			LM_ERR("failed to update contact uri [%.*s]\n",
+					c->uri.len, c->uri.s);
+			free_params(params);
+			pkg_free(nval.s);
+			return -2;
+		}
+		free_params(params);
+		params = NULL;
 	}
 
 	return 1;
@@ -930,91 +929,90 @@ int ki_contact_param_rm(sip_msg_t *msg, str *nparam)
 	sip_uri_t puri;
 	str sparams;
 	str rms;
-	hdr_field_t *hf = NULL;
 	param_t* params = NULL;
 	param_hooks_t phooks;
 	param_t* pit;
 	int offset;
 
-	if(parse_contact_headers(msg)<0 || msg->contact==NULL
-			|| msg->contact->parsed == NULL) {
+	if((msg->contact == NULL)
+			&& ((parse_headers(msg, HDR_CONTACT_F, 0) == -1)
+					|| (msg->contact == NULL))) {
 		LM_DBG("no Contact header present\n");
 		return 1;
 	}
 
-	hf = msg->contact;
-	while(hf) {
-		if(hf->type != HDR_CONTACT_T) {
-			hf = hf->next;
+	if(msg->contact->parsed == NULL) {
+		if(parse_contact(msg->contact) < 0 || msg->contact->parsed == NULL) {
+			LM_ERR("contact parsing failed\n");
+			return -1;
+		}
+	}
+
+	cb = (contact_body_t *)msg->contact->parsed;
+	for(c = cb->contacts; c != NULL; c = c->next) {
+		if(c->uri.len<4) {
 			continue;
 		}
-		cb = (contact_body_t *)hf->parsed;
-		for(c = cb->contacts; c != NULL; c = c->next) {
-			if(c->uri.len<4) {
-				continue;
-			}
-			if (parse_uri(c->uri.s, c->uri.len, &puri) < 0) {
-				LM_ERR("failed to parse contact uri [%.*s]\n", c->uri.len, c->uri.s);
-				return -1;
-			}
-			if(puri.sip_params.len>0) {
-				sparams = puri.sip_params;
-			} else if(puri.params.len>0) {
-				sparams = puri.params;
-			} else {
-				continue;
-			}
+		if (parse_uri(c->uri.s, c->uri.len, &puri) < 0) {
+			LM_ERR("failed to parse contact uri [%.*s]\n", c->uri.len, c->uri.s);
+			return -1;
+		}
+		if(puri.sip_params.len>0) {
+			sparams = puri.sip_params;
+		} else if(puri.params.len>0) {
+			sparams = puri.params;
+		} else {
+			continue;
+		}
 
-			if (parse_params2(&sparams, CLASS_ANY, &phooks, &params, ';')<0) {
-				LM_ERR("failed to parse uri params [%.*s]\n", c->uri.len, c->uri.s);
-				continue;
-			}
+		if (parse_params2(&sparams, CLASS_ANY, &phooks, &params, ';')<0) {
+			LM_ERR("failed to parse uri params [%.*s]\n", c->uri.len, c->uri.s);
+			continue;
+		}
 
-			pit = params;
-			while(pit!=NULL) {
-				if(pit->name.len==nparam->len
-						&& strncasecmp(pit->name.s, nparam->s, nparam->len)==0) {
-					break;
-				}
-				pit=pit->next;
+		pit = params;
+		while(pit!=NULL) {
+			if(pit->name.len==nparam->len
+					&& strncasecmp(pit->name.s, nparam->s, nparam->len)==0) {
+				break;
 			}
-			if(pit==NULL) {
-				free_params(params);
-				params = NULL;
-				continue;
-			}
-			rms.s = pit->name.s;
-			while(rms.s>c->uri.s && *rms.s!=';') {
-				rms.s--;
-			}
-			if(*rms.s!=';') {
-				LM_ERR("failed to find start of the parameter delimiter [%.*s]\n",
-						c->uri.len, c->uri.s);
-				free_params(params);
-				params = NULL;
-				continue;
-			}
-			if(pit->body.len>0) {
-				rms.len = (int)(pit->body.s + pit->body.len - rms.s);
-			} else {
-				rms.len = (int)(pit->name.s + pit->name.len - rms.s);
-			}
-			offset = rms.s - msg->buf;
-			if (offset < 0) {
-				LM_ERR("negative offset - contact uri [%.*s]\n", c->uri.len, c->uri.s);
-				free_params(params);
-				continue;
-			}
-			if (del_lump (msg, offset, rms.len, 0) == 0) {
-				LM_ERR("failed to remove param from message - contact uri [%.*s]\n",
-						c->uri.len, c->uri.s);
-				free_params(params);
-				continue;
-			}
+			pit=pit->next;
+		}
+		if(pit==NULL) {
 			free_params(params);
 			params = NULL;
+			continue;
 		}
-		hf= hf->next;
+		rms.s = pit->name.s;
+		while(rms.s>c->uri.s && *rms.s!=';') {
+			rms.s--;
+		}
+		if(*rms.s!=';') {
+			LM_ERR("failed to find start of the parameter delimiter [%.*s]\n",
+					c->uri.len, c->uri.s);
+			free_params(params);
+			params = NULL;
+			continue;
+		}
+		if(pit->body.len>0) {
+			rms.len = (int)(pit->body.s + pit->body.len - rms.s);
+		} else {
+			rms.len = (int)(pit->name.s + pit->name.len - rms.s);
+		}
+		offset = rms.s - msg->buf;
+		if (offset < 0) {
+			LM_ERR("negative offset - contact uri [%.*s]\n", c->uri.len, c->uri.s);
+			free_params(params);
+			continue;
+		}
+		if (del_lump (msg, offset, rms.len, 0) == 0) {
+			LM_ERR("failed to remove param from message - contact uri [%.*s]\n",
+					c->uri.len, c->uri.s);
+			free_params(params);
+			continue;
+		}
+		free_params(params);
+		params = NULL;
 	}
 
 	return 1;
