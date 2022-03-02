@@ -1,1 +1,186 @@
+JWT Module
 
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+Edited by
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+   Copyright © 2021 asipto.com
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. key_mode (int)
+
+        4. Functions
+
+              4.1. jwt_generate(prvkey, alg, claims, [headers])
+              4.2. jwt_verify(pubkey, alg, claims, jwtval)
+
+        5. Variables
+
+              5.1. $jwt(key)
+
+   List of Examples
+
+   1.1. Set key_mode parameter
+   1.2. jwt_generate usage
+   1.3. jwt_verify usage
+   1.4. $jwt(name) usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. key_mode (int)
+
+   4. Functions
+
+        4.1. jwt_generate(prvkey, alg, claims, [headers])
+        4.2. jwt_verify(pubkey, alg, claims, jwtval)
+
+   5. Variables
+
+        5.1. $jwt(key)
+
+1. Overview
+
+   This module provides JWT (JSON Web Token) functions to be used in
+   Kamailio configuration file.
+
+   It relies on libjwt (at least v1.12.0) library
+   (https://github.com/benmcollins/libjwt).
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * none.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * libjwt - minimum version 1.12.0.
+
+3. Parameters
+
+   3.1. key_mode (int)
+
+3.1. key_mode (int)
+
+   Mode to use the private and public keys. If set to 0, they are read
+   always from the disk. If set to 1, they are cached in memory with the
+   first use (no reload support yet).
+
+   Default value is 0.
+
+   Example 1.1. Set key_mode parameter
+...
+modparam("jwt", "key_mode", 1)
+...
+
+4. Functions
+
+   4.1. jwt_generate(prvkey, alg, claims, [headers])
+   4.2. jwt_verify(pubkey, alg, claims, jwtval)
+
+4.1.  jwt_generate(prvkey, alg, claims, [headers])
+
+   Generate the JWT, its value can be retrieved in the variable $jwt(val).
+
+   The parameters are:
+     * prvkey - path to private key
+     * alg - the algoritm to build the signature, as supported by the
+       libjwt (e.g., RS256, HS256, ES256, ...)
+     * claims - the list of claims to be added to JWT, in the format
+       "name1=value1;name2=value2;..." (same as the SIP parameters
+       format). The string values can be enclosed in single or double
+       quotes. If a value is not eclosed in between quotes, it is added as
+       numeric value if it is successfully converted to a long value,
+       otherwise is added as string value.
+     * headers - the list of headers to be added to JWT, in the format
+       "name1=value1;name2=value2;..." (same as the SIP parameters
+       format). The string values can be enclosed in single or double
+       quotes. If a value is not eclosed in between quotes, it is added as
+       numeric value if it is successfully converted to a long value,
+       otherwise is added as string value.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.2. jwt_generate usage
+...
+  jwt_generate("/path/to/prvkey.pem", "RS256",
+        "caller='$fU';callee='$tU';callid='$ci';index=100");
+...
+
+4.2.  jwt_verify(pubkey, alg, claims, jwtval)
+
+   Verify the JWT.
+
+   The parameters are:
+     * pubkey - path to public key
+     * alg - the algoritm to build the signature, as supported by the
+       libjwt (e.g., RS256, HS256, ES256, ...)
+     * claims - the list of claims to be checked they are in the JWT, in
+       the format "name1=value1;name2=value2;..." (same as the SIP
+       parameters format, see also the description of claims parameter for
+       jwt_generate()).
+     * jwtval - the value of the JWT to verify
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.3. jwt_verify usage
+...
+  if(!jwt_verify("/path/to/pubkey.pem", "RS256",
+         "caller='$fU';callee='$tU';callid='$ci';index=100",
+        "$var(jwt)") {
+    xwarn("failed to verify jwt\n");
+  }
+...
+
+5. Variables
+
+   5.1. $jwt(key)
+
+5.1.  $jwt(key)
+
+   Get the values and attributes after using JWT functions.
+
+   The key can be:
+     * val - the value of JWT after a successful jwt_generate().
+     * status - the status of verification after a failed jwt_verify().
+
+   Example 1.4. $jwt(name) usage
+...
+  jwt_generate("/path/to/prvkey.pem", "RS256",
+        "caller='$fU';callee='$tU';callid='$ci';index=100");
+  xinfo("jwt is: $jwt(val)");
+...
