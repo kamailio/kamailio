@@ -115,6 +115,7 @@ modparam("jwt", "key_mode", 1)
 			added as string value.
 			</para>
 			</listitem>
+			<listitem>
 			<para>
 			headers - the list of headers to be added to JWT, in the format
 			"name1=value1;name2=value2;..." (same as the SIP parameters format).
