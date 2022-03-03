@@ -815,7 +815,7 @@ static inline char *run_time_switch( struct cpl_interpreter *intr )
 				/* does the recv_time match the specified interval?  */
 				j = cpl_check_tmrec( &trt, &att, 0);
 				/* restore the orig TZ */
-				if ( flags&(1<<7) )
+                                if ((flags&(1<<7)) && cpl_env.orig_tz.s && (cpl_env.orig_tz.len > 3))
 					set_TZ(cpl_env.orig_tz.s);
 				/* free structs that I don't need any more */
 				cpl_ac_tm_free( &att );
@@ -848,7 +848,7 @@ static inline char *run_time_switch( struct cpl_interpreter *intr )
 	cpl_tmrec_free( &trt );
 	return DEFAULT_ACTION;
 runtime_error:
-	if ( flags&(1<<7) )
+        if ((flags&(1<<7)) && cpl_env.orig_tz.s && (cpl_env.orig_tz.len > 3))
 		set_TZ(cpl_env.orig_tz.s);
 	cpl_ac_tm_free( &att );
 	cpl_tmrec_free( &trt );
@@ -857,7 +857,7 @@ parse_err:
 	LM_ERR("error parsing attr [%d][%s]\n",
 		attr_name,attr_str?(char*)attr_str:"NULL");
 script_error:
-	if ( flags&(1<<7) )
+        if ((flags&(1<<7)) && cpl_env.orig_tz.s && (cpl_env.orig_tz.len > 3))
 		set_TZ(cpl_env.orig_tz.s);
 	cpl_ac_tm_free( &att );
 	cpl_tmrec_free( &trt );
