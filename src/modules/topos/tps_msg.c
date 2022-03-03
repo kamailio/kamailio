@@ -835,8 +835,9 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 	if(tps_storage_load_dialog(msg, &mtsd, &stsd) < 0) {
 		goto error;
 	}
-	if(((get_cseq(msg)->method_id) & (METHOD_BYE|METHOD_PRACK|METHOD_UPDATE))
-			&& stsd.b_contact.len <= 0) {
+        if(((((get_cseq(msg)->method_id) & (METHOD_PRACK|METHOD_UPDATE))
+			&& stsd.b_contact.len <= 0)) || (((get_cseq(msg)->method_id) 
+                        & (METHOD_BYE) && stsd.b_contact.len <= 0) && (0 == dialog))) {
 		/* no B-side contact, look for INVITE transaction record */
 		if((get_cseq(msg)->method_id) & (METHOD_UPDATE)) {
 			/* detect direction - via from-tag */
