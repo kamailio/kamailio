@@ -273,8 +273,7 @@ static int ki_blst_is_blocklisted(sip_msg_t* msg)
 		if (dst_is_blocklisted(&src, msg))
 			return 1;
 	}else{
-		LOG(L_WARN, "WARNING: blst: blst_is_blocklisted:"
-					" blocklist support disabled\n");
+		LM_WARN("blocklist support disabled\n");
 	}
 #else /* USE_DST_BLOCKLIST */
 	LM_WARN("blocklist support not compiled-in - no effect -\n");
