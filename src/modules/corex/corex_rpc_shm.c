@@ -71,8 +71,8 @@ static void corex_rpc_shm_stats(rpc_t* rpc, void* c)
 	rpc->add(c, "{", &th);
 	rpc->struct_add(th, "jjjjjj",
 			"total", mi.total_size,
-			"free", mi.free,
-			"used", mi.used,
+			"free", mi.free_size,
+			"used", mi.used_size,
 			"real_used", mi.real_used,
 			"max_used", mi.max_used,
 			"fragments", mi.total_frags
