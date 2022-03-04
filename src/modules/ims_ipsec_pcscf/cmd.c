@@ -846,17 +846,15 @@ int ipsec_forward(struct sip_msg* m, udomain_t* d, int _cflags)
         // for Reply get the dest proto from the received request
         dst_proto = req->rcv.proto;
 
+        // for Reply and TCP sends from P-CSCF server port, for Reply and UDP sends from P-CSCF client port
+        src_port = dst_proto == PROTO_TCP ? s->port_ps : s->port_pc;
+
+        // for Reply and TCP sends to UE client port, for Reply and UDP sends to UE server port
+        dst_port = dst_proto == PROTO_TCP ? s->port_uc : s->port_us;
+
         // Check send socket
         struct socket_info * client_sock = grep_sock_info(via_host.af == AF_INET ? &ipsec_listen_addr : &ipsec_listen_addr6, src_port, dst_proto);
-        if(client_sock) {
-            // for Reply and TCP sends from P-CSCF server port, for Reply and UDP sends from P-CSCF client port
-            src_port = dst_proto == PROTO_TCP ? s->port_ps : s->port_pc;
-
-            // for Reply and TCP sends to UE client port, for Reply and UDP sends to UE server port
-            dst_port = dst_proto == PROTO_TCP ? s->port_uc : s->port_us;
-        }
-        else
-        {
+        if(!client_sock) {
             src_port = s->port_pc;
             dst_port = s->port_us;
         }
