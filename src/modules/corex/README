@@ -72,7 +72,8 @@ Muhammad Shahzad Shafi
               5.5. corex.shm_summary
               5.6. corex.pkg_summary
               5.7. corex.shm.info
-              5.8. corex.shm.stats
+              5.8. corex.shm.report
+              5.9. corex.shm.stats
 
         6. Event Routes
 
@@ -171,7 +172,8 @@ Chapter 1. Admin Guide
         5.5. corex.shm_summary
         5.6. corex.pkg_summary
         5.7. corex.shm.info
-        5.8. corex.shm.stats
+        5.8. corex.shm.report
+        5.9. corex.shm.stats
 
    6. Event Routes
 
@@ -751,7 +753,8 @@ event_route[dispatcher:dst-down] {
    5.5. corex.shm_summary
    5.6. corex.pkg_summary
    5.7. corex.shm.info
-   5.8. corex.shm.stats
+   5.8. corex.shm.report
+   5.9. corex.shm.stats
 
 5.1.  corex.debug
 
@@ -811,7 +814,14 @@ event_route[dispatcher:dst-down] {
    Example:
                 kamcli rpc shm.info
 
-5.8.  corex.shm.stats
+5.8.  corex.shm.report
+
+   Return shared memory manager usage report.
+
+   Example:
+                kamcli rpc shm.report
+
+5.9.  corex.shm.stats
 
    Return shared memory statistics (values are in bytes).
 
