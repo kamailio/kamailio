@@ -376,7 +376,7 @@ int extract_ice_option(str *body, sdp_stream_cell_t *stream)
 		return -1;
 
 	ptr_src = body->s + 14;
-	if (ptr_src == 32) ptr_src++; /* if starts with a space, skip it */
+	if (*ptr_src == 32) ptr_src++; /* if starts with a space, skip it */
 
 	/* identify all existing ICE options, if they are listed in one row */
 	while (*ptr_src && *ptr_src != '\r' && *ptr_src != '\n' && max_options-->0)
