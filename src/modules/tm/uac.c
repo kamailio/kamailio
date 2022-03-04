@@ -548,7 +548,7 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 
 #ifdef USE_DNS_FAILOVER
 	/* Set the outgoing message as UAS, so the failover code has something to work with */
-	if(cfg_get(core, core_cfg, use_dns_failover)) {
+	if(cfg_get(core, core_cfg, use_dns_failover) || cfg_get(tm, tm_cfg, enable_uac_fr)) {
 		if(likely(t_build_msg_from_buf(&lreq, buf, buf_len, uac_r, &dst) == 0)) {
 			if (parse_headers(&lreq, HDR_EOH_F, 0) == -1) {
 				LM_ERR("failed to parse headers on uas for failover\n");
