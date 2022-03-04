@@ -886,9 +886,21 @@ int uac_req_send(void)
 			return -1;
 		}
 
-		uac_r.cb_flags = TMCB_LOCAL_COMPLETED;
-		/* Callback function */
-		uac_r.cb  = uac_send_tm_callback;
+		switch (_uac_req.evroute)
+		{
+
+			case 2: 
+				uac_r.cb_flags = TMCB_ON_FAILURE;
+				/* Callback function */
+				uac_r.cb  = uac_resend_tm_callback;
+				break;
+			case 1:
+			default:
+				uac_r.cb_flags = TMCB_LOCAL_COMPLETED;
+				/* Callback function */
+				uac_r.cb  = uac_send_tm_callback;
+				break;
+		}
 		/* Callback parameter */
 		uac_r.cbp = (void*)tp;
 	}
