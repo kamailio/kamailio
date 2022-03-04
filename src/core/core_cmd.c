@@ -598,8 +598,8 @@ static void core_shmmem(rpc_t* rpc, void* c)
 	rpc->add(c, "{", &handle);
 	rpc->struct_add(handle, "dddddd",
 		"total", (unsigned int)(mi.total_size>>rs),
-		"free", (unsigned int)(mi.free>>rs),
-		"used", (unsigned int)(mi.used>>rs),
+		"free", (unsigned int)(mi.free_size>>rs),
+		"used", (unsigned int)(mi.used_size>>rs),
 		"real_used",(unsigned int)(mi.real_used>>rs),
 		"max_used", (unsigned int)(mi.max_used>>rs),
 		"fragments", (unsigned int)mi.total_frags

@@ -19,7 +19,7 @@
 /**
  * \file
  * \brief Memory manager (malloc) informations and statistics
- * 
+ *
  * Memory manager (malloc) informations and statistics, like the used memory,
  * fragmentations etc..
  * \ingroup mem
@@ -34,8 +34,8 @@
 /** Memory information structure */
 struct mem_info{
 	unsigned long total_size; /** total size of memory pool */
-	unsigned long free; /** free memory */
-	unsigned long used; /** allocated size */
+	unsigned long free_size; /** free memory */
+	unsigned long used_size; /** allocated size */
 	unsigned long real_used; /** used size plus overhead from malloc */
 	unsigned long max_used; /** maximum used size since server start? */
 	unsigned long min_frag; /** minimum number of fragmentations? */

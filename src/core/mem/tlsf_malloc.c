@@ -1178,11 +1178,11 @@ void tlsf_meminfo(tlsf_t pool, struct mem_info *info)
 {
 	control_t* control = tlsf_cast(control_t*, pool);
 	memset(info, 0, sizeof(*info));
-	info->free = control->total_size - control->real_used;
+	info->free_size = control->total_size - control->real_used;
 	info->max_used = control->max_used;
 	info->real_used = control->real_used;
 	info->total_frags = control->fragments;
-	info->used = control->allocated;
+	info->used_size = control->allocated;
 	info->total_size = control->total_size;
 }
 

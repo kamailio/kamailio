@@ -942,8 +942,8 @@ void qm_info(void* qmp, struct mem_info* info)
 	memset(info,0, sizeof(*info));
 	info->total_size=qm->size;
 	info->min_frag=MIN_FRAG_SIZE;
-	info->free=qm->size-qm->real_used;
-	info->used=qm->used;
+	info->free_size=qm->size-qm->real_used;
+	info->used_size=qm->used;
 	info->real_used=qm->real_used;
 	info->max_used=qm->max_real_used;
 	info->total_frags=qm->ffrags;
