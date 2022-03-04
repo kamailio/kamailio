@@ -76,6 +76,7 @@ extern sr_shm_api_t _shm_root;
 
 #	define shm_status()    _shm_root.xstatus(_shm_root.mem_block)
 #	define shm_info(mi)    _shm_root.xinfo(_shm_root.mem_block, mi)
+#	define shm_report(mr)  _shm_root.xreport(_shm_root.mem_block, mr)
 #	define shm_available() _shm_root.xavailable(_shm_root.mem_block)
 #	define shm_sums()      _shm_root.xsums(_shm_root.mem_block)
 #	define shm_mod_get_stats(x)     _shm_root.xmodstats(_shm_root.mem_block, x)

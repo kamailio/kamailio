@@ -241,6 +241,7 @@ int shm_init_api(sr_shm_api_t *ap)
 	_shm_root.xresize        = ap->xresize;
 	_shm_root.xstatus        = ap->xstatus;
 	_shm_root.xinfo          = ap->xinfo;
+	_shm_root.xreport        = ap->xreport;
 	_shm_root.xavailable     = ap->xavailable;
 	_shm_root.xsums          = ap->xsums;
 	_shm_root.xdestroy       = ap->xdestroy;
