@@ -184,7 +184,7 @@ int add_sa(struct mnl_socket* nl_sock, const struct ip_addr *src_addr_param, con
     if(strncasecmp(r_alg.s, "hmac-md5-96", r_alg.len) == 0) {
         strcpy(l_auth_algo->alg_name,"md5");
     }
-    else if(strncasecmp(r_alg.s, "hmac-sha1-96", r_alg.len) == 0) {
+    else if(strncasecmp(r_alg.s, "hmac-sha-1-96", r_alg.len) == 0) {
         strcpy(l_auth_algo->alg_name,"sha1");
     } else {
         // set default algorithm to sha1
