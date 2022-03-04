@@ -869,7 +869,7 @@ unsigned long shm_stats_get_size(void)
 unsigned long shm_stats_get_used(void)
 {
 	stats_shm_update();
-	return _stats_shm_rpc.used;
+	return _stats_shm_rpc.used_size;
 }
 
 unsigned long shm_stats_get_rused(void)
@@ -887,7 +887,7 @@ unsigned long shm_stats_get_mused(void)
 unsigned long shm_stats_get_free(void)
 {
 	stats_shm_update();
-	return _stats_shm_rpc.free;
+	return _stats_shm_rpc.free_size;
 }
 
 unsigned long shm_stats_get_frags(void)
