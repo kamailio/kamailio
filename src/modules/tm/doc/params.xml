@@ -1607,4 +1607,20 @@ modparam("tm", "reply_relay_mode", 0)
 		</example>
 	</section>
 
+	<section id="tm.p.enable_uac_fr">
+		<title><varname>enable_uac_fr</varname> (int)</title>
+		<para>
+			Enable failure route trigger, for uac. This will copy the tm uac into uas.
+			Thus, failure route can be triggered even for uac messages.
+		</para>
+		<example>
+			<title>enable_uac_fr example</title>
+			<programlisting>
+...
+modparam("tm", "enable_uac_fr", 1)
+....
+			</programlisting>
+		</example>
+	</section>
+
 </section>

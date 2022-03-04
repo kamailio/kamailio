@@ -95,7 +95,8 @@ struct cfg_group_tm	default_tm_cfg = {
 		  CANCELs; on by default */
 	1,  /* e2e_cancel_reason -- copy the Reason headers from incoming CANCELs
 		  into the corresp. hop-by-hop CANCELs, on by default */
-	0   /* relay_100 -- by default, assume stateful proxy and do not relay SIP 100 */
+	0,   /* relay_100 -- by default, assume stateful proxy and do not relay SIP 100 */
+	0  /* enable_uac_fr */
 };
 
 void	*tm_cfg = &default_tm_cfg;
@@ -206,5 +207,7 @@ cfg_def_t	tm_cfg_def[] = {
 		" the corresponding generated hop-by-hop CANCELs"},
 	{"relay_100",		CFG_VAR_INT | CFG_ATOMIC,	0, 1, 0, 0,
 		"if set to 1, relay SIP 100 messages as a stateless proxy"},
+	{"enable_uac_fr",		CFG_VAR_INT | CFG_ATOMIC,	0, 1, 0, 0,
+		"if set, enables failure route for UAC messages"},
 	{0, 0, 0, 0, 0, 0}
 };

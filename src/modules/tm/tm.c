@@ -486,6 +486,7 @@ static param_export_t params[]={
 	{"event_callback_lres_sent", PARAM_STR, &_tm_event_callback_lres_sent    },
 	{"exec_time_check" ,    PARAM_INT, &tm_exec_time_check_param             },
 	{"reply_relay_mode",    PARAM_INT, &tm_reply_relay_mode                  },
+	{"enable_uac_fr",       PARAM_INT, &default_tm_cfg.enable_uac_fr         },
 	{0,0,0}
 };
 
