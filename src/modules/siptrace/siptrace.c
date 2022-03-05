@@ -2070,6 +2070,11 @@ static int siptrace_exec_evcb_msg(siptrace_data_t *sto)
 		return -1;
 	}
 
+	if(_siptrace_mode & SIPTRACE_MODE_URI) {
+		if(sip_trace_xheaders_write(sto) != 0)
+			return -1;
+	}
+
 	memset(&msg, 0, sizeof(sip_msg_t));
 	msg.buf = sto->body.s;
 	msg.len = sto->body.len;
