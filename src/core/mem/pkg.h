@@ -61,6 +61,7 @@ void pkg_print_manager(void);
 
 #	define pkg_status()    _pkg_root.xstatus(_pkg_root.mem_block)
 #	define pkg_info(mi)    _pkg_root.xinfo(_pkg_root.mem_block, mi)
+#	define pkg_report(mr)  _pkg_root.xreport(_pkg_root.mem_block, mr)
 #	define pkg_available() _pkg_root.xavailable(_pkg_root.mem_block)
 #	define pkg_sums()      _pkg_root.xsums(_pkg_root.mem_block)
 #	define pkg_mod_get_stats(x)     _pkg_root.xmodstats(_pkg_root.mem_block, x)
@@ -107,6 +108,7 @@ void pkg_print_manager(void);
 #	endif
 #	define pkg_status() do{}while(0)
 #	define pkg_info(mi) do{ memset((mi),0, sizeof(*(mi))); } while(0)
+#	define pkg_report(mr) do{ memset((mr),0, sizeof(*(mr))); } while(0)
 #	define pkg_available() 0
 #	define pkg_sums() do{}while(0)
 #	define pkg_mod_get_stats(x)     do{}while(0)

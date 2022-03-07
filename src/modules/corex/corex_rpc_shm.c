@@ -79,9 +79,45 @@ static void corex_rpc_shm_stats(rpc_t* rpc, void* c)
 		);
 }
 
+static const char* corex_rpc_shm_report_doc[2] = {
+	"Return shared memory report",
+	0
+};
+
+/*
+ * RPC command to return shm report
+ */
+static void corex_rpc_shm_report(rpc_t* rpc, void* ctx)
+{
+	mem_report_t mrep;
+	void *th;
+
+	if(_shm_root.xreport==NULL) {
+		rpc->fault(ctx, 500, "No report callback function");
+		return;
+	}
+	shm_report(&mrep);
+	rpc->add(ctx, "{", &th);
+	rpc->struct_add(th, "jjjjjjjjjjjj",
+			"total_size", mrep.total_size,
+			"free_size_s", mrep.free_size_s,
+			"used_size_s", mrep.used_size_s,
+			"real_used_s", mrep.real_used_s,
+			"max_used_s", mrep.max_used_s,
+			"free_frags", mrep.free_frags,
+			"used_frags", mrep.used_frags,
+			"total_frags", mrep.total_frags,
+			"max_free_frag_size", mrep.max_free_frag_size,
+			"max_used_frag_size", mrep.max_used_frag_size,
+			"min_free_frag_size", mrep.min_free_frag_size,
+			"min_used_frag_size", mrep.min_used_frag_size
+		);
+}
+
 rpc_export_t corex_rpc_shm_cmds[] = {
-	{"shm.info",  corex_rpc_shm_info,  corex_rpc_shm_info_doc,  0},
-	{"shm.stats", corex_rpc_shm_stats, corex_rpc_shm_stats_doc, 0},
+	{"shm.info",   corex_rpc_shm_info,   corex_rpc_shm_info_doc,   0},
+	{"shm.report", corex_rpc_shm_report, corex_rpc_shm_report_doc, 0},
+	{"shm.stats",  corex_rpc_shm_stats,  corex_rpc_shm_stats_doc,  0},
 	{0, 0, 0, 0}
 };
 

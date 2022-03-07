@@ -1028,6 +1028,63 @@ void qm_sums(void* qmp)
 			"-----------------------------\n");
 }
 
+void qm_report(void* qmp, mem_report_t *mrep)
+{
+	struct qm_block* qm;
+	struct qm_frag* f;
+
+	qm = (struct qm_block*)qmp;
+
+	memset(mrep, 0, sizeof(mem_report_t));
+	if (!qm) return;
+
+	mrep->total_size=qm->size;
+	mrep->free_size_s=qm->size - qm->real_used;
+	mrep->used_size_s=qm->used;
+	mrep->real_used_s=qm->real_used;
+	mrep->max_used_s=qm->max_real_used;
+
+	for (f=qm->first_frag; (char*)f<(char*)qm->last_frag_end; f=FRAG_NEXT(f)) {
+		mrep->total_frags++;
+		if (f->u.is_free) {
+			mrep->free_frags++;
+			mrep->free_size_m += f->size;
+			if(mrep->max_free_frag_size==0) {
+				mrep->max_free_frag_size = f->size;
+			} else {
+				if(f->size > mrep->max_free_frag_size) {
+					mrep->max_free_frag_size = f->size;
+				}
+			}
+			if(mrep->min_free_frag_size==0) {
+				mrep->min_free_frag_size = f->size;
+			} else {
+				if(f->size < mrep->min_free_frag_size) {
+					mrep->min_free_frag_size = f->size;
+				}
+			}
+		} else {
+			mrep->used_frags++;
+			mrep->used_size_m += f->size;
+			if(mrep->max_used_frag_size==0) {
+				mrep->max_used_frag_size = f->size;
+			} else {
+				if(f->size > mrep->max_used_frag_size) {
+					mrep->max_used_frag_size = f->size;
+				}
+			}
+			if(mrep->min_used_frag_size==0) {
+				mrep->min_used_frag_size = f->size;
+			} else {
+				if(f->size < mrep->min_used_frag_size) {
+					mrep->min_used_frag_size = f->size;
+				}
+			}
+		}
+	}
+}
+
+
 void qm_mod_get_stats(void *qmp, void **qm_rootp)
 {
 	if (!qm_rootp) {
@@ -1143,6 +1200,7 @@ int qm_malloc_init_pkg_manager(void)
 	ma.xreallocxf = qm_reallocxf;
 	ma.xstatus = qm_status;
 	ma.xinfo = qm_info;
+	ma.xreport = qm_report;
 	ma.xavailable = qm_available;
 	ma.xsums = qm_sums;
 	ma.xdestroy = qm_malloc_destroy_pkg_manager;
@@ -1337,6 +1395,12 @@ void qm_shm_info(void* qmp, struct mem_info* info)
 	qm_info(qmp, info);
 	qm_shm_unlock();
 }
+void qm_shm_report(void* qmp, mem_report_t* mrep)
+{
+	qm_shm_lock();
+	qm_report(qmp, mrep);
+	qm_shm_unlock();
+}
 unsigned long qm_shm_available(void* qmp)
 {
 	unsigned long r;
@@ -1403,6 +1467,7 @@ int qm_malloc_init_shm_manager(void)
 	ma.xresize        = qm_shm_resize;
 	ma.xstatus        = qm_shm_status;
 	ma.xinfo          = qm_shm_info;
+	ma.xreport        = qm_shm_report;
 	ma.xavailable     = qm_shm_available;
 	ma.xsums          = qm_shm_sums;
 	ma.xdestroy       = qm_malloc_destroy_shm_manager;
