@@ -916,7 +916,7 @@ static ims_subscription* parse_ims_subscription(xmlDocPtr doc, xmlNodePtr root)
 
 /**
  * Parses the user data XML and copies data into a new ims_subscription structure.
- * @param xml - the input xml (NB must be null terminated)
+ * @param xml - the input xml
  * @returns the ims_subscription* on success or NULL on error
  */
 ims_subscription *parse_user_data(str xml)
@@ -927,7 +927,7 @@ ims_subscription *parse_user_data(str xml)
 	if (!ctxtInit) parser_init(scscf_user_data_dtd,scscf_user_data_xsd);	
 	doc=0;
 	
-	doc = xmlParseDoc((unsigned char *)xml.s);
+	doc = xmlParseMemory((unsigned char *)xml.s, xml.len);
 	if (!doc){
 		LM_ERR("This is not a valid XML <%.*s>\n", xml.len,xml.s);
 		goto error;
