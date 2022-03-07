@@ -190,7 +190,7 @@ int handle_kamailioSrvFreeMemory(netsnmp_mib_handler *handler,
 		netsnmp_agent_request_info *reqinfo, netsnmp_request_info *requests)
 {
 	stats_shm_update();
-	int freememory = (int)_stats_shm_mi.free;
+	int freememory = (int)_stats_shm_mi.free_size;
 
 	switch(reqinfo->mode) {
 
