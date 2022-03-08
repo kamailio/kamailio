@@ -101,7 +101,7 @@ void mq_destroy(void)
 /**
  *
  */
-int mq_head_add(str *name, int msize)
+int mq_head_add(str *name, int msize, int addmode)
 {
 	mq_head_t *mh = NULL;
 	mq_pv_t *mp = NULL;
@@ -155,6 +155,7 @@ int mq_head_add(str *name, int msize)
 	mh->name.len = name->len;
 	mh->name.s[name->len] = '\0';
 	mh->msize = msize;
+	mh->addmode = addmode;
 	mh->next = _mq_head_list;
 	_mq_head_list = mh;
 
@@ -290,6 +291,8 @@ int mq_item_add(str *qname, str *key, str *val)
 {
 	mq_head_t *mh = NULL;
 	mq_item_t *mi = NULL;
+	mq_item_t *miter = NULL;
+	mq_item_t *miter_prev = NULL;
 	int len;
 
 	mh = mq_head_get(qname);
@@ -298,11 +301,50 @@ int mq_item_add(str *qname, str *key, str *val)
 		LM_ERR("mqueue not found: %.*s\n", qname->len, qname->s);
 		return -1;
 	}
+	
+	lock_get(&mh->lock);
+	if (mh->addmode == 1 || mh->addmode == 2) {
+		miter = mh->ifirst;
+		miter_prev = mh->ifirst;
+		while (miter) {
+			// found mqueue item
+			if (miter->key.len == key->len && strncmp(miter->key.s, key->s, key->len) == 0) {
+				// mode unique and keep oldest: just return
+				if (mh->addmode == 1) {
+					lock_release(&mh->lock);
+					return 0;
+				}
+
+				// mode unique and keep newest: free oldest and further add newest
+				if (miter == mh->ifirst && miter == mh->ilast) {
+					mh->ifirst = NULL;
+					mh->ilast = NULL;
+				} else if (miter == mh->ifirst) {
+					mh->ifirst = miter->next;
+				} else if (miter == mh->ilast) {
+					mh->ilast = miter_prev;
+					mh->ilast->next = NULL;
+				} else {
+					miter_prev->next = miter->next;
+				}
+
+				shm_free(miter);
+				mh->csize--;
+
+				break;
+			}
+			miter_prev = miter;
+			miter = miter->next;
+		}
+	}
+
+	// mode default
 	len = sizeof(mq_item_t) + key->len + val->len + 2;
 	mi = (mq_item_t*)shm_malloc(len);
 	if(mi==NULL)
 	{
 		LM_ERR("no more shm to add to: %.*s\n", qname->len, qname->s);
+		lock_release(&mh->lock);
 		return -1;
 	}
 	memset(mi, 0, len);
@@ -315,8 +357,7 @@ int mq_item_add(str *qname, str *key, str *val)
 	memcpy(mi->val.s, val->s, val->len);
 	mi->val.len = val->len;
 	mi->val.s[val->len] = '\0';
-	
-	lock_get(&mh->lock);
+
 	if(mh->ifirst==NULL)
 	{
 		mh->ifirst = mi;
