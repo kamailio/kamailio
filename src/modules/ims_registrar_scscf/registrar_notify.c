@@ -495,6 +495,7 @@ int event_reg(udomain_t* _d, impurecord_t* r_passed, ucontact_t* c_passed, int e
 
             //richard: we only use reg unreg expired and refresh
         case IMS_REGISTRAR_CONTACT_UNREGISTERED:
+        case IMS_REGISTRAR_CONTACT_DEREGISTERED:
         case IMS_REGISTRAR_CONTACT_UNREGISTERED_IMPLICIT:
         case IMS_REGISTRAR_CONTACT_REGISTERED:
         case IMS_REGISTRAR_CONTACT_REFRESHED:
@@ -1967,7 +1968,8 @@ str get_reginfo_partial(impurecord_t *r, ucontact_t *c, int event_type, unsigned
 
         if (//richard we only use expired and unregistered
                 (event_type == IMS_REGISTRAR_CONTACT_EXPIRED ||
-                event_type == IMS_REGISTRAR_CONTACT_UNREGISTERED)
+                event_type == IMS_REGISTRAR_CONTACT_UNREGISTERED ||
+                event_type == IMS_REGISTRAR_CONTACT_DEREGISTERED)
                 ) {
             //check if impu record has any other active contacts - if not then set this to terminated - if so then keep this active
             //check if asserted is present in any of the path headers
@@ -2011,6 +2013,7 @@ str get_reginfo_partial(impurecord_t *r, ucontact_t *c, int event_type, unsigned
                     event = r_expired;
                     expires = 0;
                     break;
+                case IMS_REGISTRAR_CONTACT_DEREGISTERED:
                 case IMS_REGISTRAR_CONTACT_UNREGISTERED:
                     state = r_terminated;
                     event = r_unregistered;
