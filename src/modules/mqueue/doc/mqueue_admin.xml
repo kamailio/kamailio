@@ -131,6 +131,31 @@ val character varying(4096) DEFAULT "" NOT NULL
 				Default value is 0 (no db table interaction).
 				</para>
 			</listitem>
+			<listitem>
+				<para>
+				<emphasis>addmode</emphasis>: how to add new (key,value) pairs.
+					<itemizedlist>
+					<listitem>
+						<para>
+						<emphasis>0</emphasis>:
+							Will push all new (key,value) pairs at the end of the queue. (default)
+						</para>
+					</listitem>
+					<listitem>
+						<para>
+						<emphasis>1</emphasis>:
+							Will keep oldest (key,value) pair in the queue, based on the key.
+						</para>
+					</listitem>
+					<listitem>
+						<para>
+						<emphasis>2</emphasis>:
+							Will keep newest (key,value) pair in the queue, based on the key.
+						</para>
+					</listitem>
+					</itemizedlist>
+				</para>
+			</listitem>
 			</itemizedlist>
 		</listitem>
 		</itemizedlist>
@@ -144,7 +169,9 @@ val character varying(4096) DEFAULT "" NOT NULL
 		<programlisting format="linespecific">
 ...
 modparam("mqueue", "mqueue", "name=myq;size=20;")
+modparam("mqueue", "mqueue", "name=myq;size=10000;addmode=2")
 modparam("mqueue", "mqueue", "name=qaz")
+modparam("mqueue", "mqueue", "name=qaz;addmode=1")
 ...
 </programlisting>
 	    </example>
@@ -202,6 +229,50 @@ modparam("mqueue", "mqueue_name", "my_own_queue")
 		<programlisting format="linespecific">
 ...
 modparam("mqueue", "mqueue_size", 1024)
+...
+		</programlisting>
+	    </example>
+	</section>
+
+	<section id="mqueue.p.mqueue_addmode">
+	    <title><varname>mqueue_addmode</varname> (int)</title>
+	    <para>
+		Sets the mode to be used when adding a new (key,value) pair in the mqueue.
+	    </para>
+		<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>0</emphasis> Add all new (key,value) at the end of mqueue
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <emphasis>1</emphasis> Unique key, keep oldest (key,value)
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <emphasis>2</emphasis> Unique key, keep newest(key,value)
+			</para>
+		    </listitem>
+		</itemizedlist>
+	    <para>
+		<emphasis>
+		    Default value is <quote>0</quote>.
+		</emphasis>
+	    </para>
+	    <para>
+		Value must be an int.
+	    </para>
+	    <para>
+		The parameter should be set before defining any "mqueue_name".
+		If not set, the queues defined via "mqueue_name" will have default addmode 0.
+	    </para>
+	    <example>
+		<title>Set <varname>mqueue_addmode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("mqueue", "mqueue_addmode", 2)
 ...
 		</programlisting>
 	    </example>
