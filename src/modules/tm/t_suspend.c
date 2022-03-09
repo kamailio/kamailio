@@ -163,8 +163,8 @@ int t_suspend(struct sip_msg *msg,
  * 	0  - success
  * 	<0 - failure
  */
-int t_continue_helper(unsigned int hash_index, unsigned int label,
-		struct action *rtact, str *cbname, str *cbparam)
+static int t_continue_helper(unsigned int hash_index, unsigned int label,
+		struct action *rtact, str *cbname, str *cbparam, int skip_timer)
 {
 	tm_cell_t *t;
 	tm_cell_t *backup_T = T_UNDEFINED;
@@ -192,7 +192,7 @@ int t_continue_helper(unsigned int hash_index, unsigned int label,
 	backup_T = get_t();
 	backup_T_branch = get_t_branch();
 
-	if (t_lookup_ident_filter(&t, hash_index, label, 1) < 0) {
+	if (t_lookup_ident_filter(&t, hash_index, label, skip_timer) < 0) {
 		set_t(backup_T, backup_T_branch);
 		LM_WARN("active transaction not found\n");
 		return -1;
@@ -592,13 +592,18 @@ kill_trans:
 int t_continue(unsigned int hash_index, unsigned int label,
 		struct action *route)
 {
-	return t_continue_helper(hash_index, label, route, NULL, NULL);
+	return t_continue_helper(hash_index, label, route, NULL, NULL, 1);
+}
+int t_continue_skip_timer(unsigned int hash_index, unsigned int label,
+		struct action *route)
+{
+	return t_continue_helper(hash_index, label, route, NULL, NULL, 0);
 }
 
 int t_continue_cb(unsigned int hash_index, unsigned int label,
 		str *cbname, str *cbparam)
 {
-	return t_continue_helper(hash_index, label, NULL, cbname, cbparam);
+	return t_continue_helper(hash_index, label, NULL, cbname, cbparam, 0);
 }
 
 /* Revoke the suspension of the SIP request, i.e.
