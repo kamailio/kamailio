@@ -115,6 +115,7 @@ int load_tm( struct tm_binds *tmb)
 	tmb->t_get_canceled_ident = t_get_canceled_ident;
 	tmb->t_suspend = t_suspend;
 	tmb->t_continue = t_continue;
+	tmb->t_continue_skip_timer = t_continue_skip_timer;
 	tmb->t_continue_cb = t_continue_cb;
 	tmb->t_cancel_suspend = t_cancel_suspend;
 	tmb->t_get_reply_totag = t_get_reply_totag;

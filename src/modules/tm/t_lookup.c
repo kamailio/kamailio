@@ -1587,7 +1587,7 @@ int t_get_canceled_ident(struct sip_msg* msg, unsigned int* hash_index,
  *                0).
  * @param hash_index - searched transaction hash_index (part of the ident).
  * @param label - searched transaction label (part of the ident).
- * @param filter - if 1, skip transaction put on-wait (terminated state).
+ * @param filter - if 1, filter out transactions put on-wait (terminated state).
  * @return -1 on error/not found, 1 on success (found)
  * Side-effects: sets T and T_branch (T_branch always to T_BR_UNDEFINED).
  */
