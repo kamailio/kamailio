@@ -1051,16 +1051,32 @@ void qm_report(void* qmp, mem_report_t *mrep)
 			mrep->free_size_m += f->size;
 			if(mrep->max_free_frag_size==0) {
 				mrep->max_free_frag_size = f->size;
+				mrep->max_free_frag_file = f->file;
+				mrep->max_free_frag_func = f->func;
+				mrep->max_free_frag_mname = f->mname;
+				mrep->max_free_frag_line = f->line;
 			} else {
 				if(f->size > mrep->max_free_frag_size) {
 					mrep->max_free_frag_size = f->size;
+					mrep->max_free_frag_file = f->file;
+					mrep->max_free_frag_func = f->func;
+					mrep->max_free_frag_mname = f->mname;
+					mrep->max_free_frag_line = f->line;
 				}
 			}
 			if(mrep->min_free_frag_size==0) {
 				mrep->min_free_frag_size = f->size;
+				mrep->min_free_frag_file = f->file;
+				mrep->min_free_frag_func = f->func;
+				mrep->min_free_frag_mname = f->mname;
+				mrep->min_free_frag_line = f->line;
 			} else {
 				if(f->size < mrep->min_free_frag_size) {
 					mrep->min_free_frag_size = f->size;
+					mrep->min_free_frag_file = f->file;
+					mrep->min_free_frag_func = f->func;
+					mrep->min_free_frag_mname = f->mname;
+					mrep->min_free_frag_line = f->line;
 				}
 			}
 		} else {
@@ -1068,16 +1084,33 @@ void qm_report(void* qmp, mem_report_t *mrep)
 			mrep->used_size_m += f->size;
 			if(mrep->max_used_frag_size==0) {
 				mrep->max_used_frag_size = f->size;
+				mrep->max_used_frag_file = f->file;
+				mrep->max_used_frag_func = f->func;
+				mrep->max_used_frag_mname = f->mname;
+				mrep->max_used_frag_line = f->line;
 			} else {
 				if(f->size > mrep->max_used_frag_size) {
 					mrep->max_used_frag_size = f->size;
+					mrep->max_used_frag_size = f->size;
+					mrep->max_used_frag_file = f->file;
+					mrep->max_used_frag_func = f->func;
+					mrep->max_used_frag_mname = f->mname;
+					mrep->max_used_frag_line = f->line;
 				}
 			}
 			if(mrep->min_used_frag_size==0) {
 				mrep->min_used_frag_size = f->size;
+				mrep->min_used_frag_file = f->file;
+				mrep->min_used_frag_func = f->func;
+				mrep->min_used_frag_mname = f->mname;
+				mrep->min_used_frag_line = f->line;
 			} else {
 				if(f->size < mrep->min_used_frag_size) {
 					mrep->min_used_frag_size = f->size;
+					mrep->min_used_frag_file = f->file;
+					mrep->min_used_frag_func = f->func;
+					mrep->min_used_frag_mname = f->mname;
+					mrep->min_used_frag_line = f->line;
 				}
 			}
 		}

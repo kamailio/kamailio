@@ -56,20 +56,40 @@ typedef struct _mem_counter{
 
 /** Memory report structure */
 typedef struct mem_report {
-	unsigned long total_size; /** total size of memory pool */
+	unsigned long total_size;  /** total size of memory pool */
 	unsigned long free_size_s; /** free memory (stats) */
 	unsigned long free_size_m; /** free memory (measured) */
 	unsigned long used_size_s; /** allocated size (stats) */
 	unsigned long used_size_m; /** allocated size (measured) */
 	unsigned long real_used_s; /** used size plus overhead from malloc */
-	unsigned long max_used_s; /** maximum used size since server start? */
-	unsigned long free_frags; /** number of total free memory fragments */
-	unsigned long used_frags; /** number of total used memory fragments */
+	unsigned long max_used_s;  /** maximum used size since server start? */
+	unsigned long free_frags;  /** number of total free memory fragments */
+	unsigned long used_frags;  /** number of total used memory fragments */
 	unsigned long total_frags; /** number of total memory fragments */
+
 	unsigned long max_free_frag_size;
+	const char   *max_free_frag_file;
+	const char   *max_free_frag_func;
+	const char   *max_free_frag_mname;
+	unsigned long max_free_frag_line;
+
 	unsigned long min_free_frag_size;
+	const char   *min_free_frag_file;
+	const char   *min_free_frag_func;
+	const char   *min_free_frag_mname;
+	unsigned long min_free_frag_line;
+
 	unsigned long max_used_frag_size;
+	const char   *max_used_frag_file;
+	const char   *max_used_frag_func;
+	const char   *max_used_frag_mname;
+	unsigned long max_used_frag_line;
+
 	unsigned long min_used_frag_size;
+	const char   *min_used_frag_file;
+	const char   *min_used_frag_func;
+	const char   *min_used_frag_mname;
+	unsigned long min_used_frag_line;
 } mem_report_t;
 
 #endif
