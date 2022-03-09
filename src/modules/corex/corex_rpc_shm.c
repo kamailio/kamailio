@@ -98,7 +98,7 @@ static void corex_rpc_shm_report(rpc_t* rpc, void* ctx)
 	}
 	shm_report(&mrep);
 	rpc->add(ctx, "{", &th);
-	rpc->struct_add(th, "jjjjjjjjjjjj",
+	rpc->struct_add(th, "jjjjjjjjjsssjjsssjjsssjjsssj",
 			"total_size", mrep.total_size,
 			"free_size_s", mrep.free_size_s,
 			"used_size_s", mrep.used_size_s,
@@ -108,9 +108,25 @@ static void corex_rpc_shm_report(rpc_t* rpc, void* ctx)
 			"used_frags", mrep.used_frags,
 			"total_frags", mrep.total_frags,
 			"max_free_frag_size", mrep.max_free_frag_size,
+			"max_free_frag_file", mrep.max_free_frag_file,
+			"max_free_frag_func", mrep.max_free_frag_func,
+			"max_free_frag_mname", mrep.max_free_frag_mname,
+			"max_free_frag_line", mrep.max_free_frag_line,
 			"max_used_frag_size", mrep.max_used_frag_size,
+			"max_used_frag_file", mrep.max_used_frag_file,
+			"max_used_frag_func", mrep.max_used_frag_func,
+			"max_used_frag_mname", mrep.max_used_frag_mname,
+			"max_used_frag_line", mrep.max_used_frag_line,
 			"min_free_frag_size", mrep.min_free_frag_size,
-			"min_used_frag_size", mrep.min_used_frag_size
+			"min_free_frag_file", mrep.min_free_frag_file,
+			"min_free_frag_func", mrep.min_free_frag_func,
+			"min_free_frag_mname", mrep.min_free_frag_mname,
+			"min_free_frag_line", mrep.min_free_frag_line,
+			"min_used_frag_size", mrep.min_used_frag_size,
+			"min_used_frag_file", mrep.min_used_frag_file,
+			"min_used_frag_func", mrep.min_used_frag_func,
+			"min_used_frag_mname", mrep.min_used_frag_mname,
+			"min_used_frag_line", mrep.min_used_frag_line
 		);
 }
 
