@@ -1067,11 +1067,17 @@ failure_route[REMOTE_AUTH] {
 
 6.1.  event_route[uac:reply]
 
-   Event route executed for the final reply of the branch for the request
-   sent with uac_req_send(). The associated $uac_req(evroute) has to be
-   set to 1. If the request is challenged for authentication with 401/407,
-   then the event_route is executed twice, first for 401/407 and second
-   for final reply of the transaction.
+   The associated $uac_req(evroute) can have either of the following
+   values:
+     * 1 : event route executed for the final reply of the branch for the
+       request sent with uac_req_send(). If the request is challenged for
+       authentication with 401/407, then the event_route is executed
+       twice, first for 401/407 and second for final reply of the
+       transaction.
+     * 2 : event route executed for failure of the branch for the request
+       sent with uac_req_send(). event route will execute also for
+       timeout. In order for this to work, please also enable TM module
+       "enable_uac_fr" modparam.
 
    Example 1.41. event_route[uac:reply] usage
 ...
