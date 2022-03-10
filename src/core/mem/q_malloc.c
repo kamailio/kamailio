@@ -1028,6 +1028,14 @@ void qm_sums(void* qmp)
 			"-----------------------------\n");
 }
 
+#define QM_REPORT_SET(MREP, FRAG, FIELD) do { \
+		MREP->FIELD ## _size = FRAG->size; \
+		MREP->FIELD ## _file = FRAG->file; \
+		MREP->FIELD ## _func = FRAG->func; \
+		MREP->FIELD ## _mname = FRAG->mname; \
+		MREP->FIELD ## _line = FRAG->line; \
+	} while(0)
+
 void qm_report(void* qmp, mem_report_t *mrep)
 {
 	struct qm_block* qm;
@@ -1050,67 +1058,34 @@ void qm_report(void* qmp, mem_report_t *mrep)
 			mrep->free_frags++;
 			mrep->free_size_m += f->size;
 			if(mrep->max_free_frag_size==0) {
-				mrep->max_free_frag_size = f->size;
-				mrep->max_free_frag_file = f->file;
-				mrep->max_free_frag_func = f->func;
-				mrep->max_free_frag_mname = f->mname;
-				mrep->max_free_frag_line = f->line;
+				QM_REPORT_SET(mrep, f, max_free_frag);
 			} else {
 				if(f->size > mrep->max_free_frag_size) {
-					mrep->max_free_frag_size = f->size;
-					mrep->max_free_frag_file = f->file;
-					mrep->max_free_frag_func = f->func;
-					mrep->max_free_frag_mname = f->mname;
-					mrep->max_free_frag_line = f->line;
+					QM_REPORT_SET(mrep, f, max_free_frag);
 				}
 			}
 			if(mrep->min_free_frag_size==0) {
-				mrep->min_free_frag_size = f->size;
-				mrep->min_free_frag_file = f->file;
-				mrep->min_free_frag_func = f->func;
-				mrep->min_free_frag_mname = f->mname;
-				mrep->min_free_frag_line = f->line;
+				QM_REPORT_SET(mrep, f, min_free_frag);
 			} else {
 				if(f->size < mrep->min_free_frag_size) {
-					mrep->min_free_frag_size = f->size;
-					mrep->min_free_frag_file = f->file;
-					mrep->min_free_frag_func = f->func;
-					mrep->min_free_frag_mname = f->mname;
-					mrep->min_free_frag_line = f->line;
+					QM_REPORT_SET(mrep, f, min_free_frag);
 				}
 			}
 		} else {
 			mrep->used_frags++;
 			mrep->used_size_m += f->size;
 			if(mrep->max_used_frag_size==0) {
-				mrep->max_used_frag_size = f->size;
-				mrep->max_used_frag_file = f->file;
-				mrep->max_used_frag_func = f->func;
-				mrep->max_used_frag_mname = f->mname;
-				mrep->max_used_frag_line = f->line;
+				QM_REPORT_SET(mrep, f, max_used_frag);
 			} else {
 				if(f->size > mrep->max_used_frag_size) {
-					mrep->max_used_frag_size = f->size;
-					mrep->max_used_frag_size = f->size;
-					mrep->max_used_frag_file = f->file;
-					mrep->max_used_frag_func = f->func;
-					mrep->max_used_frag_mname = f->mname;
-					mrep->max_used_frag_line = f->line;
+					QM_REPORT_SET(mrep, f, max_used_frag);
 				}
 			}
 			if(mrep->min_used_frag_size==0) {
-				mrep->min_used_frag_size = f->size;
-				mrep->min_used_frag_file = f->file;
-				mrep->min_used_frag_func = f->func;
-				mrep->min_used_frag_mname = f->mname;
-				mrep->min_used_frag_line = f->line;
+				QM_REPORT_SET(mrep, f, min_used_frag);
 			} else {
 				if(f->size < mrep->min_used_frag_size) {
-					mrep->min_used_frag_size = f->size;
-					mrep->min_used_frag_file = f->file;
-					mrep->min_used_frag_func = f->func;
-					mrep->min_used_frag_mname = f->mname;
-					mrep->min_used_frag_line = f->line;
+					QM_REPORT_SET(mrep, f, min_used_frag);
 				}
 			}
 		}
