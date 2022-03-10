@@ -515,8 +515,6 @@ int pvh_clone_branch_xavi(struct sip_msg *msg, str *xname)
 	}
 
 	do {
-		if(pvh_skip_header(&sub->name))
-			continue;
 		if(sub->val.type == SR_XTYPE_DATA)
 			continue;
 		if(pvh_xavi_append_value(&sub->name, &sub->val, &br_xavi->val.v.xavp)
