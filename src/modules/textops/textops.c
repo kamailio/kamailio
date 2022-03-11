@@ -2243,7 +2243,7 @@ static int ki_remove_hf_match(sip_msg_t* msg, str* hname, str *op, str *expr)
 	regex_t mre;
 	regmatch_t pmatch;
 	char c;
-	int ret = -1;
+	int ret = -2;
 
 	memset(&mre, 0, sizeof(regex_t));
 
@@ -2329,9 +2329,6 @@ static int ki_remove_hf_match(sip_msg_t* msg, str* hname, str *op, str *expr)
 			}
 			ret = 1;
 		}
-	}
-	if(ret==-1) {
-		ret = 2;
 	}
 
 done:
