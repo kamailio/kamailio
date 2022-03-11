@@ -1541,6 +1541,50 @@ remove_hf_idx("X-My-Header", "-1");
 		</example>
 	</section>
 
+	<section id="textops.f.remove_hf_match">
+		<title>
+		<function moreinfo="none">remove_hf_match(hname, op, expr)</function>
+		</title>
+		<para>
+			Remove from message all headers with name 'hname' matching the body
+			with expression <quote>expr</quote>, based on operator
+			<quote>op</quote>.
+		</para>
+		<para>
+		Returns true if at least one header is found and removed.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>hanem</emphasis> - name of the header.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>op</emphasis> - operator - it can be: 'eq' - equal;
+			'ne' - not equal; 'in' - include; 're' - regular expression match.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>expr</emphasis> - expression to match.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>remove_hf_match</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(remove_hf_match("X-Info", "in", "^data")) {
+    # all headers with name "X-Info" that have the body matching regular
+    # expression "^data" are removed
+}
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="textops.f.has_body">
 		<title>
 		<function moreinfo="none">has_body()</function>,
