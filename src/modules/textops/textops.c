@@ -1845,6 +1845,7 @@ static int ki_remove_hf_idx(sip_msg_t* msg, str* hname, int idx)
 	pos = idx;
 
 again:
+	i = 0;
 	for (hfi=msg->headers; hfi; hfi=hfi->next) {
 		if (hfm.type!=HDR_OTHER_T && hfm.type!=HDR_ERROR_T) {
 			if (hfm.type!=hfi->type) {
