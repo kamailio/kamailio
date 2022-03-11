@@ -650,8 +650,7 @@ static int parse_mixed_content(str *mixed_body, str delimiter, sdp_info_t* _sdp)
 			return -1;
 		}
 		d2p = find_next_sdp_line_delimiter(d1p, bodylimit, delimiter, bodylimit);
-		if((d1p + delimiter.len + 2 > bodylimit)
-				|| (d2p - d1p < delimiter.len + 2)) {
+		if(d2p - d1p < delimiter.len + 2) {
 			LM_ERR("invalid format [%.*s]\n", (int)(d2p-d1p), d1p);
 			return -1;
 		}
