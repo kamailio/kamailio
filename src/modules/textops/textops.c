@@ -146,6 +146,7 @@ static int remove_hf_pv_f(sip_msg_t* msg, char* phf, char* foo);
 static int remove_hf_idx_f(sip_msg_t* msg, char* phname, char* pidx);
 static int remove_hf_re_pv_f(sip_msg_t* msg, char* key, char* foo);
 static int remove_hf_exp_pv_f(sip_msg_t* msg, char* ematch, char* eskip);
+static int remove_hf_match_f(sip_msg_t* msg, char* phname, char* pop, char* pexp);
 static int is_present_hf_pv_f(sip_msg_t* msg, char* key, char* foo);
 static int is_present_hf_re_pv_f(sip_msg_t* msg, char* key, char* foo);
 static int is_audio_on_hold_f(struct sip_msg *msg, char *str1, char *str2 );
@@ -263,6 +264,9 @@ static cmd_export_t cmds[]={
 		ANY_ROUTE},
 	{"remove_hf_exp_pv", (cmd_function)remove_hf_exp_pv_f,2,
 		fixup_spve_spve, fixup_free_spve_spve,
+		ANY_ROUTE},
+	{"remove_hf_match", (cmd_function)remove_hf_match_f, 3,
+		fixup_spve_all, fixup_free_spve_all,
 		ANY_ROUTE},
 	{"is_present_hf_pv", (cmd_function)is_present_hf_pv_f,1,
 		fixup_spve_null, fixup_free_spve_null,
@@ -2227,6 +2231,136 @@ static int remove_hf_exp_pv_f(sip_msg_t* msg, char* pematch, char* peskip)
 		return -1;
 	}
 	return ki_remove_hf_exp(msg, &ematch, &eskip);
+}
+
+static int ki_remove_hf_match(sip_msg_t* msg, str* hname, str *op, str *expr)
+{
+	hdr_field_t hfm = {0};
+	hdr_field_t *hfi = NULL;
+	sr_lump_t *anchor = NULL;
+	int vop = 0;
+	int vrm = 0;
+	regex_t mre;
+	regmatch_t pmatch;
+	char c;
+	int ret = -1;
+
+	memset(&mre, 0, sizeof(regex_t));
+
+	/* ensure all headers are parsed */
+	if(parse_headers(msg, HDR_EOH_F, 0)<0) {
+		LM_ERR("error parsing headers\n");
+		return -1;
+	}
+
+	parse_hname2_str(hname, &hfm);
+	if(hfm.type==HDR_ERROR_T) {
+		LM_ERR("failed to parse header name [%.*s]\n", hname->len, hname->s);
+		return -1;
+	}
+
+	LM_DBG("trying to remove hf: [%.*s] - op: [%.*s] - exp: [%.*s]\n",
+			hname->len, hname->s, op->len, op->s, expr->len, expr->s);
+
+	if(op->len==2 && strncasecmp(op->s, "eq", op->len)==0) {
+		vop = 1;
+	} else if(op->len==2 && strncasecmp(op->s, "ne", op->len)==0) {
+		vop = 2;
+	} else if(op->len==2 && strncasecmp(op->s, "in", op->len)==0) {
+		vop = 3;
+	} else if(op->len==2 && strncasecmp(op->s, "re", op->len)==0) {
+		memset(&mre, 0, sizeof(regex_t));
+		if (regcomp(&mre, expr->s, REG_EXTENDED|REG_ICASE|REG_NEWLINE)!=0) {
+			LM_ERR("failed to compile regex: [%.*s]\n", expr->len, expr->s);
+			return -1;
+		}
+		vop = 4;
+	} else {
+		LM_ERR("unknown operator [%.*s]\n", op->len, op->s);
+		return -1;
+	}
+
+	for (hfi=msg->headers; hfi; hfi=hfi->next) {
+		if (hfm.type!=HDR_OTHER_T && hfm.type!=HDR_ERROR_T) {
+			if (hfm.type!=hfi->type) {
+				continue;
+			}
+		} else {
+			if (hfi->name.len!=hname->len) {
+				continue;
+			}
+			if(strncasecmp(hfi->name.s, hname->s, hname->len)!=0) {
+				continue;
+			}
+		}
+		vrm = 0;
+		switch(vop) {
+			case 1:
+				if(expr->len==hfi->body.len
+						&& strncmp(expr->s, hfi->body.s, expr->len)==0) {
+					vrm = 1;
+				}
+				break;
+			case 2:
+				if(expr->len!=hfi->body.len
+						|| strncmp(expr->s, hfi->body.s, expr->len)!=0) {
+					vrm = 1;
+				}
+				break;
+			case 3:
+				if(str_search(&hfi->body, expr)!=NULL) {
+					vrm = 1;
+				}
+				break;
+			case 4:
+				STR_VTOZ(hfi->body.s[hfi->body.len], c);
+				if (regexec(&mre, hfi->body.s, 1, &pmatch, 0)==0) {
+					vrm = 1;
+				}
+				STR_ZTOV(hfi->body.s[hfi->body.len], c);
+				break;
+		}
+		if(vrm==1) {
+			anchor=del_lump(msg, hfi->name.s - msg->buf, hfi->len, 0);
+			if (anchor==0) {
+				LM_ERR("cannot remove hdr %.*s\n", hname->len, hname->s);
+				ret = -1;
+				goto done;
+			}
+			ret = 1;
+		}
+	}
+	if(ret==-1) {
+		ret = 2;
+	}
+
+done:
+	if(vop==4) {
+		regfree(&mre);
+	}
+	return ret;
+}
+
+static int remove_hf_match_f(sip_msg_t* msg, char* phname, char* pop, char* pexp)
+{
+	str hname = STR_NULL;
+	str op = STR_NULL;
+	str expr = STR_NULL;
+
+	if(fixup_get_svalue(msg, (gparam_t*)phname, &hname)!=0) {
+		LM_ERR("unable to get hdr name parameter\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)pop, &op)!=0) {
+		LM_ERR("unable to get op parameter\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)pexp, &expr)!=0) {
+		LM_ERR("unable to get exp parameter\n");
+		return -1;
+	}
+
+	return ki_remove_hf_match(msg, &hname, &op, &expr);
 }
 
 static int fixup_substre(void** param, int param_no)
@@ -5147,6 +5281,11 @@ static sr_kemi_t sr_kemi_textops_exports[] = {
 	{ str_init("textops"), str_init("remove_hf_exp"),
 		SR_KEMIP_INT, ki_remove_hf_exp,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("remove_hf_match"),
+		SR_KEMIP_INT, ki_remove_hf_match,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("textops"), str_init("replace"),
