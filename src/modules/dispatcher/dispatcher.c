@@ -963,13 +963,15 @@ static int ds_reload(sip_msg_t *msg)
 	*ds_rpc_reload_time = time(NULL);
 
 	if(!ds_db_url.s) {
-		if(ds_load_list(dslistfile) != 0)
+		if(ds_load_list(dslistfile) != 0) {
 			LM_ERR("Error reloading from list\n");
-		return -1;
+			return -1;
+		}
 	} else {
-		if(ds_reload_db() < 0)
+		if(ds_reload_db() < 0) {
 			LM_ERR("Error reloading from db\n");
-		return -1;
+			return -1;
+		}
 	}
 	LM_DBG("reloaded dispatcher\n");
 	return 1;
