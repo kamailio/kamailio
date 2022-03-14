@@ -52,6 +52,10 @@ LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
 
     parse_identityinfo_header(&orig_inv);
 
+    parse_record_route_headers(&orig_inv);
+
+    parse_route_headers(&orig_inv);
+
     str uri;
     get_src_uri(&orig_inv, 0, &uri);
 
