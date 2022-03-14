@@ -1145,6 +1145,14 @@ void qm_mod_free_stats(void *qm_rootp)
 
 void qm_sums(void *qmp)
 {
+	LM_WARN("Enable DBG_QM_MALLOC for getting the status summary\n");
+	return;
+}
+
+void qm_report(void* qmp, mem_report_t *mrep)
+{
+	LM_WARN("Enable DBG_QM_MALLOC for getting the report\n");
+	memset(mrep, 0, sizeof(mem_report_t));
 	return;
 }
 
