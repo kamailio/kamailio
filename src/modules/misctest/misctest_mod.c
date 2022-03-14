@@ -40,6 +40,7 @@
 #include "../../core/parser/parse_hname2.h"
 #include "../../core/parser/contact/parse_contact.h"
 #include "../../core/parser/parse_to.h"
+#include "../../core/parser/parse_rr.h"
 #include "../../core/parser/parse_from.h"
 #include "../../core/parser/parse_refer_to.h"
 #include "../../core/parser/parse_ppi_pai.h"
@@ -341,7 +342,7 @@ static int misctest_message_init(void)
 
 	parse_to_uri(&tmsg);
 
-	parse_contact_header(&tmsg);
+	parse_contact_headers(&tmsg);
 
 	parse_refer_to_header(&tmsg);
 
@@ -354,6 +355,10 @@ static int misctest_message_init(void)
 	parse_content_disposition(&tmsg);
 
 	parse_identityinfo_header(&tmsg);
+
+	parse_record_route_headers(&tmsg);
+
+	parse_route_headers(&tmsg);
 
 	str uri;
 	get_src_uri(&tmsg, 0, &uri);
