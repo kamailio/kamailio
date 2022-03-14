@@ -38,7 +38,7 @@ LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
 
     parse_to_uri(&orig_inv);
 
-    parse_contact_header(&orig_inv);
+    parse_contact_headers(&orig_inv);
 
     parse_refer_to_header(&orig_inv);
 
