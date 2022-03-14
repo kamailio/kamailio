@@ -753,7 +753,6 @@ int check_proxy_require(sip_msg_t* msg) {
 /* check if the typical URI's are parseable */
 int check_parse_uris(sip_msg_t* msg, int checks) {
 
-	struct to_body *ft_body = NULL;
 	struct sip_uri uri;
 
 	LM_DBG("check_parse_uris entered\n");
@@ -775,9 +774,8 @@ int check_parse_uris(sip_msg_t* msg, int checks) {
 	/* check From URI */
 	if (SANITY_URI_CHECK_FROM & checks) {
 		LM_DBG("looking up From header\n");
-		if ((!msg->from && parse_headers(msg, HDR_FROM_F, 0) != 0)
-				|| !msg->from) {
-			LM_WARN("invalid from header\n");
+		if(parse_from_uri(msg)==NULL) {
+			LM_WARN("invalid From header or uri\n");
 			if(!msg->from || !msg->from->body.s) {
 				msg->msg_flags |= FL_MSG_NOREPLY;
 			} else {
@@ -787,55 +785,12 @@ int check_parse_uris(sip_msg_t* msg, int checks) {
 			}
 			return SANITY_CHECK_FAILED;
 		}
-		if (!msg->from->parsed) {
-			LM_DBG("parsing From header\n");
-			ft_body = pkg_malloc(sizeof(struct to_body));
-			if (!ft_body) {
-				LM_ERR("out of pkg_memory (From)\n");
-				if (sanity_reply(msg, 500, "Invalid Resources") < 0) {
-					LM_WARN("failed to send 500 reply\n");
-				}
-				return SANITY_CHECK_ERROR;
-			}
-			memset(ft_body, 0, sizeof(struct to_body));
-			parse_to(msg->from->body.s, msg->from->body.s + \
-					msg->from->body.len + 1, ft_body);
-			if (ft_body->error == PARSE_ERROR) {
-				LM_WARN("failed to parse From header [%.*s]\n",
-						msg->from->body.len, msg->from->body.s);
-				free_to(ft_body);
-				if (sanity_reply(msg, 400, "Bad From header") < 0) {
-					LM_WARN("failed to send 400 via sl reply"
-							" (bad from header)\n");
-				}
-				return SANITY_CHECK_FAILED;
-			}
-			msg->from->parsed = ft_body;
-			ft_body = NULL;
-		}
-		if (((struct to_body*)msg->from->parsed)->uri.s) {
-			LM_DBG("parsing From URI\n");
-			if (parse_uri(((struct to_body*)msg->from->parsed)->uri.s,
-						((struct to_body*)msg->from->parsed)->uri.len, &uri) != 0) {
-				LM_WARN("failed to parse From uri\n");
-				if (sanity_reply(msg, 400, "Bad From URI") < 0) {
-					LM_WARN("failed to send 400 via sl reply"
-							" (bad from uri)\n");
-				}
-				return SANITY_CHECK_FAILED;
-			}
-			/* FIXME: we should store this parsed struct somewhere so that
-			 * it could be re-used */
-			/* FIXME 2: would it make sense to check here for "mandatory"
-			 * or "requested" parts of the URI? */
-		}
 	}
 	/* check To URI */
 	if (SANITY_URI_CHECK_TO & checks) {
 		LM_DBG("looking up To header\n");
-		if ((!msg->to && parse_headers(msg, HDR_TO_F, 0) != 0)
-				|| !msg->to) {
-			LM_WARN("invalid To header\n");
+		if(parse_to_uri(msg)==NULL) {
+			LM_WARN("invalid To header or uri\n");
 			if(!msg->to || !msg->to->body.s) {
 				msg->msg_flags |= FL_MSG_NOREPLY;
 			} else {
@@ -845,36 +800,16 @@ int check_parse_uris(sip_msg_t* msg, int checks) {
 			}
 			return SANITY_CHECK_FAILED;
 		}
-		/* parse_to is automatically called for HDR_TO_F */
-		if (!msg->to->parsed) {
-			LM_WARN("failed to parse To header\n");
-			if (sanity_reply(msg, 400, "Bad To URI") < 0) {
-				LM_WARN("failed to send 400 via sl reply (bad to uri)\n");
-			}
-			return SANITY_CHECK_FAILED;
-		}
-		if (((struct to_body*)msg->to->parsed)->uri.s) {
-			DBG("check_parse_uris(): parsing To URI\n");
-			if (parse_uri(((struct to_body*)msg->to->parsed)->uri.s,
-						((struct to_body*)msg->to->parsed)->uri.len, &uri) != 0) {
-				LM_WARN("failed to parse To uri\n");
-				if (sanity_reply(msg, 400, "Bad To URI") < 0) {
-					LM_WARN("failed to send 400 via sl reply (bad to uri)\n");
-				}
-				return SANITY_CHECK_FAILED;
-			}
-			/* FIXME: we should store this parsed struct somewhere so that
-			 * it could be re-used */
-			/* FIXME 2: would it make sense to check here for "mandatory"
-			 * or "requested" parts of the URI? */
-		}
 	}
 	/* check Contact URI */
 	if (SANITY_URI_CHECK_CONTACT & checks) {
 		LM_DBG("looking up Contact header\n");
-		if ((!msg->contact && parse_headers(msg, HDR_CONTACT_F, 0) != 0)
-				|| !msg->contact) {
-			LM_WARN("missing contact header\n");
+		if(parse_contact_headers(msg) < 0) {
+			LM_WARN("failed to parse Contact headers\n");
+			if (sanity_reply(msg, 400, "Bad Contact Header") < 0) {
+				LM_WARN("failed to send 400 via send_reply (bad Contact)\n");
+			}
+			return SANITY_CHECK_FAILED;
 		}
 		if (msg->contact) {
 			LM_DBG("parsing Contact header\n");
