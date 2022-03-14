@@ -167,6 +167,7 @@ void  qm_check(struct qm_block*);
 
 void  qm_status(void*);
 void  qm_info(void*, struct mem_info*);
+void qm_report(void* qmp, mem_report_t *mrep);
 
 unsigned long qm_available(void* qm);
 
