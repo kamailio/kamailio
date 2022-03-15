@@ -239,6 +239,7 @@ int process_body(str notify_body, udomain_t * domain) {
 	/* Temporary */
 	int mem_only = 1;
 
+	uri[0] = '\0';
 	doc = xmlParseMemory(notify_body.s, notify_body.len);
 	if(doc== NULL)  {
 		LM_ERR("Error while parsing the xml body message, Body is:\n%.*s\n",
