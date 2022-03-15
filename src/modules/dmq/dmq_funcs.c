@@ -283,8 +283,8 @@ int ki_dmq_send_message(sip_msg_t *msg, str *peer_str, str *to_str,
 
 	dmq_peer_t *destination_peer = find_peer(*peer_str);
 	if(!destination_peer) {
+		dmq_peer_t new_peer = {0};
 		LM_INFO("cannot find peer %.*s\n", peer_str->len, peer_str->s);
-		dmq_peer_t new_peer;
 		new_peer.callback = empty_peer_callback;
 		new_peer.description.s = "";
 		new_peer.description.len = 0;
@@ -353,9 +353,9 @@ int ki_dmq_bcast_message(sip_msg_t *msg, str *peer_str, str *body_str,
 
 	dmq_peer_t *destination_peer = find_peer(*peer_str);
 	if(!destination_peer) {
+		dmq_peer_t new_peer = {0};
 		LM_INFO("cannot find peer %.*s - adding it.\n", peer_str->len,
 				peer_str->s);
-		dmq_peer_t new_peer;
 		new_peer.callback = empty_peer_callback;
 		new_peer.description.s = "";
 		new_peer.description.len = 0;
