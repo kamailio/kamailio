@@ -2580,6 +2580,8 @@ int receive_logging_json_msg(char *buf, unsigned int len,
 		return -1;
 	}
 
+	ipstr_dst[0] = '\0';
+	ipstr_src[0] = '\0';
 	memset(&sco, 0, sizeof(struct _sipcapture_object));
 	gettimeofday(&tvb, &tz);
 
