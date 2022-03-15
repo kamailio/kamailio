@@ -1278,7 +1278,7 @@ int extract_allowed_headers(struct sip_msg *my_msg,int strip_top_vias,int allow_
    vb=NULL;
 
    for(hf=my_msg->headers;hf;hf=hf->next){
-      if(forbidden_hdrs & HDR_T2F(hf->type)){
+      if((hf->type>0) && (forbidden_hdrs & HDR_T2F(hf->type))){
 	 LM_DBG("Skipping header (%.*s)\n",hf->name.len,hf->name.s);
 	 continue;
       }else if(hf->type==HDR_VIA_T && strip_top_vias > 0){
