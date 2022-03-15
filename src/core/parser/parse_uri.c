@@ -1236,8 +1236,16 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 			break; /* do nothing, avoids a compilation warning */
 	}
 
-	if(uri->port.len>5)
+	/* common sanity checks */
+	if(uri->port.len>5) {
+		/* port value to large */
 		goto error_invalid_port;
+	}
+	if(uri->host.len>0 && uri->host.s>buf && *(uri->host.s-1)=='@'
+			&& uri->user.len<=0) {
+		/* '@' before host, but no user part */
+		goto error_bad_uri;
+	}
 
 #ifdef EXTRA_DEBUG
 	/* do stuff */
