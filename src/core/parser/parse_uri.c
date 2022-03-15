@@ -434,6 +434,10 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 						/* found the user*/
 						uri->user.s=s;
 						uri->user.len=p-s;
+						if(uri->user.len<=0) {
+							/* at '@' and no user part */
+							goto error_bad_char;
+						}
 						state=URI_HOST;
 						found_user=1;
 						s=p+1; /* skip '@' */
