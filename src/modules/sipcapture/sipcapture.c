@@ -2569,6 +2569,8 @@ int receive_logging_json_msg(char *buf, unsigned int len,
 	str corrtmp = STR_NULL;
 	_capture_mode_data_t *c = NULL;
 
+	ipstr_dst[0] = '\0';
+	ipstr_src[0] = '\0';
 	c = capture_def;
 	if(!c) {
 		LM_ERR("no connection mode available to store data\n");
