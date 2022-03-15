@@ -1012,10 +1012,14 @@ hdr_field_t* get_hdr(const sip_msg_t* const msg, const enum _hdr_types_t ht)
 {
 	hdr_field_t *hdr;
 
-	if (msg->parsed_flag & HDR_T2F(ht))
+	if (ht == HDR_ERROR_T || ht == HDR_EOH_T) {
+		return NULL;
+	}
+	if (msg->parsed_flag & HDR_T2F(ht)) {
 		for(hdr = msg->headers; hdr; hdr = hdr->next) {
 			if(hdr->type == ht) return hdr;
 		}
+	}
 	return NULL;
 }
 
