@@ -94,28 +94,22 @@ dbt_table_p dbt_load_file(const str *tbn, const str *dbn)
 
 	enum {DBT_FLINE_ST, DBT_NLINE_ST, DBT_DATA_ST} state;
 
-	if(!tbn || !tbn->s || tbn->len<=0 || tbn->len>=255)
+	if(!tbn || !tbn->s || tbn->len<=0 || tbn->len>=255) {
+		LM_ERR("invalid table name\n");
 		return NULL;
+	}
+	if(!dbn || !dbn->s || dbn->len<=0 || dbn->len>=255) {
+		LM_ERR("invalid database name\n");
+		return NULL;
+	}
 
 	LM_DBG("request for table [%.*s] (len: %d)\n", tbn->len, tbn->s, tbn->len);
+	LM_DBG("database is [%.*s] (len: %d)\n", dbn->len, dbn->s, dbn->len);
 
-	path[0] = 0;
-	if(dbn && dbn->s && dbn->len>0)
-	{
-		LM_DBG("db is [%.*s] (len: %d)\n", dbn->len, dbn->s, dbn->len);
-		if(dbn->len+tbn->len<511)
-		{
-			strncpy(path, dbn->s, dbn->len);
-			path[dbn->len] = '/';
-			strncpy(path+dbn->len+1, tbn->s, tbn->len);
-			path[dbn->len+tbn->len+1] = 0;
-		}
-	}
-	if(path[0] == 0)
-	{
-		strncpy(path, tbn->s, tbn->len);
-		path[tbn->len] = 0;
-	}
+	strncpy(path, dbn->s, dbn->len);
+	path[dbn->len] = '/';
+	strncpy(path+dbn->len+1, tbn->s, tbn->len);
+	path[dbn->len+tbn->len+1] = 0;
 
 	LM_DBG("loading file [%s]\n", path);
 	fin = fopen(path, "rt");
