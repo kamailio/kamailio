@@ -1238,7 +1238,7 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 
 	/* common sanity checks */
 	if(uri->port.len>5) {
-		/* port value to large */
+		/* port value too large */
 		goto error_invalid_port;
 	}
 	if(uri->host.len>0 && uri->host.s>buf && *(uri->host.s-1)=='@'
