@@ -1333,6 +1333,7 @@ static int build_iface_list(void)
 					case IFA_LABEL:
 						LM_DBG("iface name is %s\n", (char*)RTA_DATA(rtap));
 						strncpy(name, (char*)RTA_DATA(rtap), MAX_IF_LEN-1);
+						name[MAX_IF_LEN-1] = '\0';
 						break;
 					case IFA_BROADCAST:
 					case IFA_ANYCAST:
