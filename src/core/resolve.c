@@ -841,7 +841,7 @@ again:
 #endif
 		p+=skip;
 		rec_name_len=strlen(rec_name);
-		if (unlikely(rec_name_len>255)){
+		if (unlikely(rec_name_len>MAX_DNS_NAME-2)){
 			LM_ERR("dn_expand(rec_name): name too long (%d)\n",
 					rec_name_len);
 			goto error;
