@@ -1241,14 +1241,15 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 		/* port value too large */
 		goto error_invalid_port;
 	}
-	if(uri->host.len>0 && uri->host.s>buf && *(uri->host.s-1)=='@'
-			&& uri->user.len<=0) {
+	if(uri->host.len>0 && uri->user.len<=0 &&uri->host.s>buf && (*(uri->host.s-1)=='@'
+			|| *uri->host.s=='@')) {
 		/* '@' before host, but no user part */
 		goto error_bad_uri;
 	}
 
 #ifdef EXTRA_DEBUG
 	/* do stuff */
+	LM_DBG("state=%d\n", state);
 	LM_DBG("parsed uri:\n type=%d user=<%.*s>(%d)\n passwd=<%.*s>(%d)\n"
 			" host=<%.*s>(%d)\n port=<%.*s>(%d): %d\n params=<%.*s>(%d)\n"
 			" headers=<%.*s>(%d)\n",
