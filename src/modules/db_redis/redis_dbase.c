@@ -1783,7 +1783,7 @@ static int db_redis_perform_delete(const db1_con_t* _h, km_redis_con_t *con, con
             db_keys[j] = &tmp->key;
         }
 
-        db_vals = (db_val_t*) pkg_malloc(all_type_keys_count * sizeof(db_val_t));
+        db_vals = (db_val_t*) pkg_mallocxz(all_type_keys_count * sizeof(db_val_t));
         if (!db_vals) {
             LM_ERR("Failed to allocate memory for manual db vals\n");
             goto error;
