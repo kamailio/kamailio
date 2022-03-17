@@ -346,6 +346,7 @@ static int receive_fd(int pipe_fd, int* fd,peer **p)
 		char control[CMSG_SPACE(sizeof(new_fd))];
 	}control_un;
 
+	memset(&msg, 0, sizeof(struct msghdr));
 	msg.msg_control=control_un.control;
 	msg.msg_controllen=sizeof(control_un.control);
 #else
