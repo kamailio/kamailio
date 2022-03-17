@@ -649,10 +649,13 @@ uint16_t check_ip_version(str ip)
 				return 0;
 		}
 		if (res->ai_family == AF_INET) {
+				freeaddrinfo(res);
 				return AF_INET;
 		} else if (res->ai_family == AF_INET6) {
+				freeaddrinfo(res);
 				return AF_INET6;
 		} else {
+				freeaddrinfo(res);
 				LM_ERR("unknown IP format \n");
 				return 0;
 		}
