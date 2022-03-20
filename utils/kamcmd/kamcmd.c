@@ -2102,6 +2102,7 @@ int main(int argc, char** argv)
 			fprintf(stderr, "ERROR: Bad socket type for %s\n", sock_name);
 			goto error;
 	}
+	free(sock_id->buf); /* not needed anymore */
 	free(sock_id); /* not needed anymore */
 	sock_id=0;
 
