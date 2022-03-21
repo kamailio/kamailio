@@ -2118,6 +2118,8 @@ int siptrace_net_data_recv(sr_event_param_t *evp)
 	sr_net_info_t *nd;
 	siptrace_data_t sto;
 	sip_msg_t tmsg;
+	int evcb_ret;
+	int ret = 0;
 
 	if(evp->data == 0)
 		return -1;
@@ -2160,10 +2162,15 @@ int siptrace_net_data_recv(sr_event_param_t *evp)
 
 	sto.dir = "in";
 
-	if(siptrace_exec_evcb_msg(&sto) == DROP_R_F) {
+	evcb_ret=siptrace_exec_evcb_msg(&sto);
+	if(evcb_ret < 0) {
+		ret = -1;
+		goto finish;
+	}
+	if(evcb_ret == DROP_R_F) {
 		/* drop() used in event_route - all done */
 		LM_DBG("skipping processing message due to drop\n");
-		return 0;
+		goto finish;
 	}
 
 	LM_DBG("processing message mode %d\n", _siptrace_mode);
@@ -2223,7 +2230,11 @@ afterdb:
 		trace_send_duplicate(sto.body.s, sto.body.len, NULL);
 	}
 
-	return 0;
+finish:
+	if(sip_trace_xheaders_free(&sto) != 0)
+		return -1;
+
+	return ret;
 }
 
 /**
@@ -2236,6 +2247,8 @@ int siptrace_net_data_sent(sr_event_param_t *evp)
 	siptrace_data_t sto;
 	sip_msg_t tmsg;
 	int proto;
+	int evcb_ret;
+	int ret = 0;
 
 	if(evp->data == 0)
 		return -1;
@@ -2268,7 +2281,7 @@ int siptrace_net_data_sent(sr_event_param_t *evp)
 		if(new_dst.send_sock->sock_str.len>=SIPTRACE_ADDR_MAX-1) {
 			LM_ERR("socket string is too large: %d\n",
 					new_dst.send_sock->sock_str.len);
-			goto error;
+			return -1;
 		}
 		strncpy(sto.fromip_buff, new_dst.send_sock->sock_str.s,
 				new_dst.send_sock->sock_str.len);
@@ -2291,10 +2304,15 @@ int siptrace_net_data_sent(sr_event_param_t *evp)
 
 	sto.dir = "out";
 
-	if(siptrace_exec_evcb_msg(&sto) == DROP_R_F) {
+	evcb_ret=siptrace_exec_evcb_msg(&sto);
+	if(evcb_ret < 0) {
+		ret = -1;
+		goto finish;
+	}
+	if(evcb_ret == DROP_R_F) {
 		/* drop() used in event_route - all done */
 		LM_DBG("skipping processing message due to drop\n");
-		return 0;
+		goto finish;
 	}
 
 	LM_DBG("processing message mode %d\n", _siptrace_mode);
@@ -2353,11 +2371,11 @@ afterdb:
 	if(_siptrace_mode & SIPTRACE_MODE_URI) {
 		trace_send_duplicate(sto.body.s, sto.body.len, NULL);
 	}
+finish:
+	if(sip_trace_xheaders_free(&sto) != 0)
+		return -1;
 
-	return 0;
-
-error:
-	return -1;
+	return ret;
 }
 
 /**
