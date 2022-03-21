@@ -40,6 +40,7 @@ typedef struct _siptrace_data
 	int_str avp_value;
 	struct search_state state;
 	str body;
+	int alloc_body;
 	str callid;
 	str method;
 	str status;
@@ -48,6 +49,7 @@ typedef struct _siptrace_data
 	str fromip;
 	str totag;
 	str toip;
+	int alloc_headers;
 	char toip_buff[SIPTRACE_ADDR_MAX];
 	char fromip_buff[SIPTRACE_ADDR_MAX];
 	struct timeval tv;
