@@ -567,7 +567,7 @@ modparam("uac", "reg_active", 0)
 			Timer interval (in seconds) at which remote registrations are cleaned
 			up in case of failure or removed. When setting it take in consideration
 			the maximum value for retransmission timeout, this param should be greater
-			than it. This value also impacts how ofter the reload for remote
+			than it. This value also impacts how often the reload for remote
 			registrations table can be executed -- the RPC command will fail if
 			executed in less than reg_gc_interval value since the last reload.
 			</para>
