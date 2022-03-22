@@ -2601,6 +2601,8 @@ int pv_get_siptrace(sip_msg_t *msg, pv_param_t *param,
 			return pv_get_strval(msg, param, res, &host);
 		case 9: /* dst_hostip */
 			return pv_get_strval(msg, param, res, &host);
+		case 10: /* direction */
+			return pv_get_strzval(msg, param, res, siptrace_event_data->dir);
 		default:
 			LM_ERR("unexpected config param\n");
 			return pv_get_null(msg, param, res);
@@ -2644,6 +2646,8 @@ int pv_parse_siptrace_name(pv_spec_t *sp, str *in)
 				sp->pvp.pvn.u.isname.name.n = 8;
 			else if(strncmp(in->s, "dst_hostip", 10)==0)
 				sp->pvp.pvn.u.isname.name.n = 9;
+			else if(strncmp(in->s, "direction", 10)==0)
+				sp->pvp.pvn.u.isname.name.n = 10;
 			else goto error;
 		break;
 		default:
