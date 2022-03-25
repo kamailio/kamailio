@@ -717,14 +717,16 @@ void uac_resend_tm_callback(struct cell *t, int type, struct tmcb_params *ps)
 	}
 	tp = (uac_send_info_t*)(*ps->param);
 
-	if(tp->evroute!=0) {
+	if(tp->evroute!=0 && ps->code > 0) {
 		uac_req_run_event_route((ps->rpl==FAKED_REPLY)?NULL:ps->rpl,
 				tp, ps->code);
 	}
 
 done:
-	if(tp!=NULL)
+	if(tp!=NULL){
 		shm_free(tp);
+		*ps->param = NULL;
+	}
 	return;
 
 }
@@ -755,7 +757,7 @@ void uac_send_tm_callback(struct cell *t, int type, struct tmcb_params *ps)
 	}
 	tp = (uac_send_info_t*)(*ps->param);
 
-	if(tp->evroute!=0) {
+	if(tp->evroute!=0 && ps->code > 0) {
 		uac_req_run_event_route((ps->rpl==FAKED_REPLY)?NULL:ps->rpl,
 				tp, ps->code);
 	}
@@ -829,7 +831,7 @@ void uac_send_tm_callback(struct cell *t, int type, struct tmcb_params *ps)
 	uac_r.body = (tp->s_body.len <= 0) ? NULL : &tp->s_body;
 	uac_r.ssock = (tp->s_sock.len <= 0) ? NULL : &tp->s_sock;
 	uac_r.dialog = &tmdlg;
-	uac_r.cb_flags = TMCB_LOCAL_COMPLETED;
+	uac_r.cb_flags = TMCB_LOCAL_COMPLETED|TMCB_DESTROY;
 	if(tp->evroute!=0) {
 		/* Callback function */
 		uac_r.cb  = uac_resend_tm_callback;
@@ -849,8 +851,10 @@ void uac_send_tm_callback(struct cell *t, int type, struct tmcb_params *ps)
 
 done:
 error:
-	if(tp!=NULL)
+	if(tp!=NULL){
 		shm_free(tp);
+		*ps->param = NULL;
+	}
 	return;
 }
 
@@ -890,13 +894,13 @@ int uac_req_send(void)
 		{
 
 			case 2: 
-				uac_r.cb_flags = TMCB_ON_FAILURE;
+				uac_r.cb_flags = TMCB_ON_FAILURE|TMCB_DESTROY;
 				/* Callback function */
 				uac_r.cb  = uac_resend_tm_callback;
 				break;
 			case 1:
 			default:
-				uac_r.cb_flags = TMCB_LOCAL_COMPLETED;
+				uac_r.cb_flags = TMCB_LOCAL_COMPLETED|TMCB_DESTROY;
 				/* Callback function */
 				uac_r.cb  = uac_send_tm_callback;
 				break;
