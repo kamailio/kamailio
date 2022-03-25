@@ -147,7 +147,14 @@ str rx_forced_peer = str_init("");
 
 /* P-CSCF IP address to generate the flows for the UE<->PCSCF signaling path */
 str af_signaling_ip = str_init("127.0.0.1");
+/* P-CSCF IPv6 address to generate the flows for the UE<->PCSCF signaling path */
+str af_signaling_ip6 = str_init("");
 
+str component_media_type = str_init("control");
+str flow_protocol = str_init("IP");
+int omit_flow_ports = 0;
+int rs_default_bandwidth = 0;
+int rr_default_bandwidth = 0;
 
 /* commands wrappers and fixups */
 static int w_rx_aar(struct sip_msg *msg, char *route, char* dir, char *id, int id_type);
@@ -199,6 +206,12 @@ static param_export_t params[] = {
 		{ "rx_forced_peer", PARAM_STR, &rx_forced_peer},
 		{ "rx_auth_expiry", INT_PARAM, &rx_auth_expiry},
 		{ "af_signaling_ip", PARAM_STR, &af_signaling_ip}, /* IP of this P-CSCF, to be used in the flow for the AF-signaling */
+		{ "af_signaling_ip6", PARAM_STR, &af_signaling_ip6}, /* IPv6 of this P-CSCF, to be used in the flow for the AF-signaling */
+		{ "media_type", PARAM_STR, &component_media_type}, /*  */
+		{ "flow_protocol", PARAM_STR, &flow_protocol}, /*  */
+		{ "omit_flow_ports", INT_PARAM, &omit_flow_ports}, /*  */
+		{ "rs_default_bandwidth", INT_PARAM, &rs_default_bandwidth}, /*  */
+		{ "rr_default_bandwidth", INT_PARAM, &rr_default_bandwidth}, /*  */
 		{ "cdp_event_latency", INT_PARAM, &cdp_event_latency}, /*flag: report slow processing of CDP callback events or not */
 		{ "cdp_event_threshold", INT_PARAM, &cdp_event_threshold}, /*time in ms above which we should report slow processing of CDP callback event*/
 		{ "cdp_event_latency_log", INT_PARAM, &cdp_event_latency_loglevel}, /*log-level to use to report slow processing of CDP callback event*/
