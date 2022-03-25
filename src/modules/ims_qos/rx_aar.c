@@ -78,6 +78,9 @@ extern struct ims_qos_counters_h ims_qos_cnts_h;
 extern int authorize_video_flow;
 
 extern str af_signaling_ip;
+extern str af_signaling_ip6;
+extern str component_media_type;
+extern str flow_protocol;
 
 str IMS_Serv_AVP_val = {"IMS Services", 12};
 str IMS_Em_Serv_AVP_val = {"Emergency IMS Call", 18};
@@ -952,10 +955,10 @@ int rx_send_aar_register(struct sip_msg *msg, AAASession* auth, saved_transactio
     AAA_AVP* avp = 0;
     char x[4];
     str identifier;
-    str media;
 
     str ip;
     uint16_t ip_version;
+    str via_host;
 
     //we get ip and identifier for the auth session data
     rx_authsessiondata_t* p_session_data = 0;
@@ -998,8 +1001,6 @@ int rx_send_aar_register(struct sip_msg *msg, AAASession* auth, saved_transactio
 
     /* Create flow description for AF-Signaling */
     //add this to auth session data
-    media.s = "control";
-    media.len = strlen("control");
     str raw_stream;
     raw_stream.s = 0;
     raw_stream.len = 0;
@@ -1014,16 +1015,26 @@ int rx_send_aar_register(struct sip_msg *msg, AAASession* auth, saved_transactio
     port_to.len = snprintf(c_port_to, 10, "%u", saved_t_data->recv_port);
     port_to.s = c_port_to;
 
-    str protocol;
-    protocol.s = "IP";
-    protocol.len = strlen("IP");
+    via_host.len = saved_t_data->via_host.len;
+    via_host.s = saved_t_data->via_host.s;
+
+    if (ip_version == AF_INET6 && via_host.len && via_host.s[0]=='[') {
+        /* skip over [ ] */
+        if (via_host.s[via_host.len - 1]!=']') {
+            LM_ERR("Invalid IPv6 format %.*s\n", via_host.len, via_host.s);
+                goto error;
+        }
+
+        via_host.s++;
+        via_host.len -= 2;
+    }
 
     //rx_add_media_component_description_avp_register(aar);
     /* Add media component description avp for register*/
     rx_add_media_component_description_avp(aar, 1,
-               &media, &saved_t_data->via_host,
-               &port_from, &af_signaling_ip,
-               &port_to, &protocol,
+               &component_media_type, &via_host,
+               &port_from, ip_version == AF_INET ? &af_signaling_ip : &af_signaling_ip6,
+               &port_to, &flow_protocol,
                &raw_stream,
                &raw_stream, DLG_MOBILE_REGISTER, AVP_EPC_Flow_Usage_AF_Signaling);
 

@@ -68,6 +68,10 @@ extern str regex_sdp_ip_prefix_to_maintain_in_fd;
 
 extern int include_rtcp_fd;
 
+extern int omit_flow_ports;
+extern int rs_default_bandwidth;
+extern int rr_default_bandwidth;
+
 static const int prefix_length_ipv6 = 128;
 
 /**
@@ -426,7 +430,7 @@ inline int rx_add_media_component_description_avp(AAAMessage *msg, int number, s
 		}
 
 		/*media-sub-component*/
-		if (dlg_direction != DLG_MOBILE_ORIGINATING) {
+		if (dlg_direction != DLG_MOBILE_ORIGINATING && dlg_direction != DLG_MOBILE_REGISTER) {
 				media_sub_component[media_sub_component_number] = rx_create_media_subcomponent_avp(number, transport, ipA, portA, ipB, portB, flow_usage_type);
 				if (media_sub_component[media_sub_component_number])
 					cdpb.AAAAddAVPToList(&list, media_sub_component[media_sub_component_number]);
@@ -508,6 +512,11 @@ inline int rx_add_media_component_description_avp(AAAMessage *msg, int number, s
 
 				// Get A=RS-bandwidth from SDP-Reply:
 				bandwidth = sdp_b_value(rpl_raw_payload, "RS");
+
+				if (bandwidth == 0) {
+					bandwidth = rs_default_bandwidth;
+				}
+
 				LM_DBG("Answer: Got bandwidth %i from b=RS-Line\n", bandwidth);
 				if (bandwidth > 0) {
 						// Add AVP
@@ -520,6 +529,11 @@ inline int rx_add_media_component_description_avp(AAAMessage *msg, int number, s
 				}
 				// Get A=RS-bandwidth from SDP-Reply:
 				bandwidth = sdp_b_value(rpl_raw_payload, "RR");
+
+				if (bandwidth == 0) {
+					bandwidth = rr_default_bandwidth;
+				}
+
 				LM_DBG("Answer: Got bandwidth %i from b=RR-Line\n", bandwidth);
 				if (bandwidth > 0) {
 						// Add AVP
@@ -639,10 +653,12 @@ static str from_s = {" from ", 6};
 static str to_s = {" to ", 4};
 //removed final %s - this is options which Rx 29.214 says will not be used for flow-description AVP
 static char * permit_out_with_ports = "permit out %s from %.*s %u to %.*s %u";
+static char * permit_out_without_ports = "permit out %s from %.*s to %.*s";
 static char * permit_out_with_any_as_dst = "permit out %s from %.*s %u to any";
 //static char * permit_out_with_any_as_src = "permit out %s from any to %.*s %u";
 //static char * permit_out_with_ports = "permit out %s from %.*s %u to %.*s %u %s";
 static char * permit_in_with_ports = "permit in %s from %.*s %u to %.*s %u";
+static char * permit_in_without_ports = "permit in %s from %.*s to %.*s";
 static char * permit_in_with_any_as_src = "permit in %s from any to %.*s %u";
 //static char * permit_in_with_any_as_dst = "permit in %s from %.*s %u to any";
 //static char * permit_in_with_ports = "permit in %s from %.*s %u to %.*s %u %s";
@@ -692,7 +708,7 @@ AAA_AVP *rx_create_media_subcomponent_avp(int number, str* proto,
 		char *proto_nr = 0;
 		if (proto->len == 2 && strncasecmp(proto->s,"IP", proto->len) == 0) {
 			proto_nr = "ip";
-		} else if (proto->len == 2 && strncasecmp(proto->s,"UDP", proto->len) == 0) {
+		} else if (proto->len == 3 && strncasecmp(proto->s,"UDP", proto->len) == 0) {
 			proto_nr = "17";
 		} else if (proto->len == 3 && strncasecmp(proto->s,"TCP", proto->len) == 0) {
 			proto_nr = "6";
@@ -720,9 +736,14 @@ AAA_AVP *rx_create_media_subcomponent_avp(int number, str* proto,
 				
 		/*IMS Flow descriptions*/
 		/*first flow is the receive flow*/
-		
-		len = (permit_out.len + from_s.len + to_s.len + ipB->len + ipA->len + 4 +
+
+		if (omit_flow_ports) {
+			len = (permit_out.len + from_s.len + to_s.len + ipB->len + ipA->len + 4 +
+						proto_len + 1/*nul terminator*/) * sizeof(char);
+		}else{
+			len = (permit_out.len + from_s.len + to_s.len + ipB->len + ipA->len + 4 +
 						proto_len + portA->len + portB->len + 1/*nul terminator*/) * sizeof(char);
+		}
 		
 		if (!flowdata_buf.s || flowdata_buflen < len) {
 				if (flowdata_buf.s)
@@ -735,10 +756,16 @@ AAA_AVP *rx_create_media_subcomponent_avp(int number, str* proto,
 				}
 				flowdata_buflen = len;
 		}
-		
-		flowdata_buf.len = snprintf(flowdata_buf.s, len, permit_out_with_ports, proto_nr,
-						ipA->len, ipA->s, intportA,
-						ipB->len, ipB->s, intportB);
+
+		if (omit_flow_ports) {
+			flowdata_buf.len = snprintf(flowdata_buf.s, len, permit_out_without_ports, proto_nr,
+							ipA->len, ipA->s,
+							ipB->len, ipB->s);
+		}else{
+			flowdata_buf.len = snprintf(flowdata_buf.s, len, permit_out_with_ports, proto_nr,
+							ipA->len, ipA->s, intportA,
+							ipB->len, ipB->s, intportB);
+		}
 		
 		flowdata_buf.len = strlen(flowdata_buf.s);
 		flow_description1 = cdpb.AAACreateAVP(AVP_IMS_Flow_Description,
@@ -748,8 +775,14 @@ AAA_AVP *rx_create_media_subcomponent_avp(int number, str* proto,
 		cdpb.AAAAddAVPToList(&list, flow_description1);
 		
 		/*second flow*/
-		len2 = (permit_in.len + from_s.len + to_s.len + ipB->len + ipA->len + 4 +
-						proto_len + portA->len + portB->len + 1/*nul terminator*/) * sizeof(char);		
+		if (omit_flow_ports) {
+			len2 = (permit_in.len + from_s.len + to_s.len + ipB->len + ipA->len + 4 +
+						proto_len + 1/*nul terminator*/) * sizeof(char);
+		}else{
+			len2 = (permit_in.len + from_s.len + to_s.len + ipB->len + ipA->len + 4 +
+						proto_len + portA->len + portB->len + 1/*nul terminator*/) * sizeof(char);
+		}
+
 		if (!flowdata_buf.s || len < len2) {
 				len = len2;
 				if (flowdata_buf.s)
@@ -762,10 +795,16 @@ AAA_AVP *rx_create_media_subcomponent_avp(int number, str* proto,
 				}
 				flowdata_buflen = len;
 		}
-		
-		flowdata_buf.len = snprintf(flowdata_buf.s, len, permit_in_with_ports, proto_nr,
-						ipB->len, ipB->s, intportB,
-						ipA->len, ipA->s, intportA);
+
+		if (omit_flow_ports) {
+			flowdata_buf.len = snprintf(flowdata_buf.s, len, permit_in_without_ports, proto_nr,
+							ipB->len, ipB->s,
+							ipA->len, ipA->s);
+		}else{
+			flowdata_buf.len = snprintf(flowdata_buf.s, len, permit_in_with_ports, proto_nr,
+							ipB->len, ipB->s, intportB,
+							ipA->len, ipA->s, intportA);
+		}
 		
 		flowdata_buf.len = strlen(flowdata_buf.s);
 		flow_description2 = cdpb.AAACreateAVP(AVP_IMS_Flow_Description,
