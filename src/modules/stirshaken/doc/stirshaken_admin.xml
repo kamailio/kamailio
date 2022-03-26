@@ -276,8 +276,7 @@ modparam("stirshaken", "vs_certsubject_pvname", "$vn(certsubject)")
 </programlisting>
 		</example>
 	</section>
-		</section>
-		<section>
+	<section>
 		<title><varname>vs_pptgrants_pvname</varname> (str)</title>
 		<para>
 		If vs_pptgrants_pvname is set then the JSON string of the authenticated PASSporT's grants will be written to this pseudo-variable when
@@ -423,7 +422,7 @@ request_route {
 		</para>
 		<para>
 		The parameters can contain pseudo-variables.
-		If origid is empty, an unique identifier will be generated wih libuuid, e.g. "3f31bd2b-9fc4-4084-b0b0-566506c46292".
+		If origid is empty, an unique identifier will be generated with libuuid, e.g. "3f31bd2b-9fc4-4084-b0b0-566506c46292".
 		</para>
 		<para>
 		This function can be used from ANY_ROUTE.
