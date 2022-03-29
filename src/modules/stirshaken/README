@@ -1,1 +1,560 @@
+Stirshaken Module
 
+Piotr Gregor
+
+   signalwire.com
+   <piotr@signalwire.com>
+
+Edited by
+
+Piotr Gregor
+
+   <piotr@signalwire.com>
+
+   Copyright © 2021 https://www.signalwire.com
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+              2.3. Parameters
+
+                    2.3.1. as_default_key (str)
+                    2.3.2. vs_verify_x509_cert_path (int)
+                    2.3.3. vs_ca_dir (str)
+                    2.3.4. vs_crl_dir (str)
+                    2.3.5. vs_identity_expire_s (int)
+                    2.3.6. vs_connect_timeout_s (int)
+                    2.3.7. vs_cache_certificates (int)
+                    2.3.8. vs_cache_dir (str)
+                    2.3.9. vs_cache_expire_s (int)
+                    2.3.10. vs_certsubject_pvname (str)
+
+              2.4. vs_pptgrants_pvname (str)
+
+        3. Functions
+
+              3.1. stirshaken_check_identity()
+              3.2. stirshaken_check_identity_with_key(keyPath)
+              3.3. stirshaken_check_identity_with_cert(certPath)
+              3.4. stirshaken_add_identity(x5u, attest, origtn_val,
+                      desttn_val, origid)
+
+              3.5. stirshaken_add_identity_with_key(x5u, attest,
+                      origtn_val, desttn_val, origid, keyPath)
+
+        4. Installation
+
+   List of Examples
+
+   1.1. Set as_default_key parameter
+   1.2. Set vs_verify_x509_cert_path parameter
+   1.3. Set vs_ca_dir parameter
+   1.4. Set vs_crl_dir parameter
+   1.5. Set vs_identity_expire_s parameter
+   1.6. Set vs_connect_timeout_s parameter
+   1.7. Set vs_cache_certificates parameter
+   1.8. Set vs_cache_dir parameter
+   1.9. Set vs_cache_expire_s parameter
+   1.10. Set vs_certsubject_pvname parameter
+   1.11. Set vs_pptgrants_pvname parameter
+   1.12. stirshaken_check_identity usage
+   1.13. stirshaken_check_identity_with_key usage
+   1.14. stirshaken_check_identity_with_cert usage
+   1.15. stirshaken_add_identity with origid usage
+   1.16. stirshaken_add_identity with auto generated uuid as origid usage
+   1.17. stirshaken_add_identity_with_key usage
+   1.18. libstirshaken installation
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+        2.3. Parameters
+
+              2.3.1. as_default_key (str)
+              2.3.2. vs_verify_x509_cert_path (int)
+              2.3.3. vs_ca_dir (str)
+              2.3.4. vs_crl_dir (str)
+              2.3.5. vs_identity_expire_s (int)
+              2.3.6. vs_connect_timeout_s (int)
+              2.3.7. vs_cache_certificates (int)
+              2.3.8. vs_cache_dir (str)
+              2.3.9. vs_cache_expire_s (int)
+              2.3.10. vs_certsubject_pvname (str)
+
+        2.4. vs_pptgrants_pvname (str)
+
+   3. Functions
+
+        3.1. stirshaken_check_identity()
+        3.2. stirshaken_check_identity_with_key(keyPath)
+        3.3. stirshaken_check_identity_with_cert(certPath)
+        3.4. stirshaken_add_identity(x5u, attest, origtn_val, desttn_val,
+                origid)
+
+        3.5. stirshaken_add_identity_with_key(x5u, attest, origtn_val,
+                desttn_val, origid, keyPath)
+
+   4. Installation
+
+1. Overview
+
+   This module implements STIR (Secure Telephony Identity Revisited) and
+   SHAKEN (Signature-based Handling of Asserted information using toKENs)
+   (RFC8224, RFC8588), with X509 certificate path check (ATIS
+   "Signature-based Handling of Asserted information using toKENs
+   (SHAKEN)", RFC5280 "6. Certification Path Validation").
+
+   stirshaken module exports the functions to check and to generate
+   PASSporT, wrapped into SIP Identity header. For call authentication two
+   functions are available: stirshaken_add_identity(...) and
+   stirshaken_add_identity_with_key(key). stirshaken_add_identity() uses
+   default key (through Authentication Service),
+   stirshaken_add_identity_with_key(..., key) uses key specified as
+   argument. For call verification three methods are available:
+   stirshaken_check_identity() (through Verification Service),
+   stirshaken_check_identity_with_key(key) and
+   stirshaken_check_identity_with_cert(cert). stirshaken_check_identity()
+   offers the most comprehensive check as only this method may download
+   certificate (if needed), cache it, and check it with X509 certificate
+   path check algorithm. This method is therefore to be used as a default
+   verification mechanism, while stirshaken_check_identity_with_key(key)
+   and stirshaken_check_identity_with_cert(cert) are only for
+   completeness.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+   2.3. Parameters
+
+        2.3.1. as_default_key (str)
+        2.3.2. vs_verify_x509_cert_path (int)
+        2.3.3. vs_ca_dir (str)
+        2.3.4. vs_crl_dir (str)
+        2.3.5. vs_identity_expire_s (int)
+        2.3.6. vs_connect_timeout_s (int)
+        2.3.7. vs_cache_certificates (int)
+        2.3.8. vs_cache_dir (str)
+        2.3.9. vs_cache_expire_s (int)
+        2.3.10. vs_certsubject_pvname (str)
+
+   2.4. vs_pptgrants_pvname (str)
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * No dependencies on other Kamailio modules.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * libstirshaken - https://github.com/signalwire/libstirshaken.
+
+2.3. Parameters
+
+2.3.1. as_default_key (str)
+
+   SSL private key to be used as default. Default key must be set if calls
+   to stirshaken_add_identity() are executed. When set, module starts
+   Authentication Service which makes each call to
+   stirshaken_add_identity() using this key. Default key doesn't need to
+   be set (Authentication Service doesn't need to be running) for the
+   stirshaken_add_identity_with_key(..., key) to be available. This param
+   has no meaning for calls to stirshaken_add_identity_with_key(..., key).
+
+   Default value is "" (not set).
+
+   Example 1.1. Set as_default_key parameter
+...
+modparam("stirshaken", "as_default_key", "/path/to/key")
+...
+
+2.3.2. vs_verify_x509_cert_path (int)
+
+   If set, then stirshaken_check_identity() will execute X509 certificate
+   path check on certificate referenced in PASSporT. This param has no
+   meaning for calls to stirshaken_check_identity_with_key(key) and
+   stirshaken_check_identity_with_cert(cert).
+
+   Default value is 1, (turned on).
+
+   Example 1.2. Set vs_verify_x509_cert_path parameter
+...
+modparam("stirshaken", "vs_verify_x509_cert_path", 1)
+...
+
+2.3.3. vs_ca_dir (str)
+
+   The path to folder containing CA root certificates with names hashed.
+   If set then must point to existing directory. This must be set when
+   enabled X509 certificate path check, otherwise no end entity
+   certificate will pass that check. This param has no meaning for calls
+   to stirshaken_check_identity_with_key(key) and
+   stirshaken_check_identity_with_cert(cert).
+
+   Default value is "" (not set).
+
+   Example 1.3. Set vs_ca_dir parameter
+...
+modparam("stirshaken", "vs_ca_dir", "/path/to/ca_dir")
+...
+
+2.3.4. vs_crl_dir (str)
+
+   The path to folder containing CRLs. If set, then must point to existing
+   directory. This is optional when X509 certificate path check is
+   enabled, only vs_ca_dir is mandatory. If X509 certificate path check is
+   enabled, and vs_crl_dir is set, then CRLs are loaded from this
+   directory, which renders revoked certificates invalid (not trusted).
+   This param has no meaning for calls to
+   stirshaken_check_identity_with_key(key) and
+   stirshaken_check_identity_with_cert(cert).
+
+   Default value is "" (not set).
+
+   Example 1.4. Set vs_crl_dir parameter
+...
+modparam("stirshaken", "vs_crl_dir", "/path/to/crl_dir")
+...
+
+2.3.5. vs_identity_expire_s (int)
+
+   This parameter defines a maximum time in seconds for which PASSporT is
+   considered valid.
+
+   Default value is 60 seconds.
+
+   Example 1.5. Set vs_identity_expire_s parameter
+...
+modparam("stirshaken", "vs_identity_expire_s", 20)
+...
+
+2.3.6. vs_connect_timeout_s (int)
+
+   During a call verification with stirshaken_check_identity() a blocking
+   HTTP(s) call is executed to download certificate referneced in PASSporT
+   (unless certificate caching is turned on and a valid cert is found in
+   cache). This parameter defines a maximum time in seconds for this
+   blocking HTTP(s) connection to be established. After this time had
+   passed and connection did not succeed (could not resolve host, address
+   unreachable or other network errors) a call to
+   stirshaken_check_identity() will return with error. This param has no
+   meaning for calls to stirshaken_check_identity_with_key(key) and
+   stirshaken_check_identity_with_cert(cert).
+
+   Default value is 5 seconds.
+
+   Example 1.6. Set vs_connect_timeout_s parameter
+...
+modparam("stirshaken", "vs_connect_timeout_s", 10)
+...
+
+2.3.7. vs_cache_certificates (int)
+
+   If set, then certificates caching is turned on. This means that
+   certificates downloaded during call verification with
+   stirshaken_check_identity() are cached inside vs_cache_dir, and will be
+   loaded from that cache as long as they are not there for more than
+   vs_cache_expire_s seconds (see vs_cache_expire_s). If
+   vs_cache_certificates is set then vs_cache_dir must be set too and
+   pointing to existing directory. This param has no meaning for calls to
+   stirshaken_check_identity_with_key(key) and
+   stirshaken_check_identity_with_cert(cert).
+
+   Default value is 0 (turned off).
+
+   Example 1.7. Set vs_cache_certificates parameter
+...
+modparam("stirshaken", "vs_cache_certificates", 1)
+...
+
+2.3.8. vs_cache_dir (str)
+
+   If vs_cache_certificates is set then vs_cache_dir must be set too and
+   pointing to existing directory. Cached certificates are saved in this
+   directory and loaded from there when needed during a call verification
+   executed with stirshaken_check_identity(), as long as they are not
+   there for more than vs_cache_expire_s seconds. This param has no
+   meaning for calls to stirshaken_check_identity_with_key(key) and
+   stirshaken_check_identity_with_cert(cert).
+
+   Default value is "" (not set).
+
+   Example 1.8. Set vs_cache_dir parameter
+...
+modparam("stirshaken", "vs_cache_dir", "/tmp/cert_cache")
+...
+
+2.3.9. vs_cache_expire_s (int)
+
+   If vs_cache_certificates is set then cached certificates are saved in
+   vs_cache_dir directory and loaded from there when needed during a call
+   verification executed with stirshaken_check_identity(), as long as they
+   are not there for more than vs_cache_expire_s seconds. If they are in
+   cache for more than vs_cache_expire_s seconds, then a blocking HTTP(s)
+   call is executed to download a new version of (expired) certificate. If
+   this is successful then old version is removed and new version is saved
+   in cache. This param has no meaning for calls to
+   stirshaken_check_identity_with_key(key) and
+   stirshaken_check_identity_with_cert(cert).
+
+   Default value is 120 seconds.
+
+   Example 1.9. Set vs_cache_expire_s parameter
+...
+modparam("stirshaken", "vs_cache_expire_s", 15)
+...
+
+2.3.10. vs_certsubject_pvname (str)
+
+   If vs_certsubject_pvname is set then the Subject of the authenticated
+   x509 certificate will be written to this pseudo-variable when
+   stirshaken_check_identity() is executed. If the Identity header cannot
+   be fully authenticated the pseudo-variable will be set to $null.
+
+   Default value is blank (disabled).
+
+   Example 1.10. Set vs_certsubject_pvname parameter
+...
+modparam("stirshaken", "vs_certsubject_pvname", "$vn(certsubject)")
+...
+
+2.4. vs_pptgrants_pvname (str)
+
+   If vs_pptgrants_pvname is set then the JSON string of the authenticated
+   PASSporT's grants will be written to this pseudo-variable when
+   stirshaken_check_identity() is executed. If the Identity header cannot
+   be fully authenticated the pseudo-variable will be set to $null.
+
+   Default value is blank (disabled).
+
+   Example 1.11. Set vs_pptgrants_pvname parameter
+...
+modparam("stirshaken", "vs_pptgrants_pvname", "$vn(grants)")
+...
+
+3. Functions
+
+   3.1. stirshaken_check_identity()
+   3.2. stirshaken_check_identity_with_key(keyPath)
+   3.3. stirshaken_check_identity_with_cert(certPath)
+   3.4. stirshaken_add_identity(x5u, attest, origtn_val, desttn_val,
+          origid)
+
+   3.5. stirshaken_add_identity_with_key(x5u, attest, origtn_val,
+          desttn_val, origid, keyPath)
+
+3.1.  stirshaken_check_identity()
+
+   Check the validity of the Identity header by decoding PASSporT's
+   signature with a certificate referenced in it's x5u header and
+   (optionally) checking that certificate for being trusted by X509
+   certificate check with CA root certificates in vs_ca_dir (and
+   optionally CRLs in vs_crl_dir). PASSporT's iat grant is also checked
+   for being too fresh or expired against vs_identity_expire_s seconds.
+   This function executes a call to a callback which may supply
+   certificates from cache (see vs_cache_certificates param). If
+   certificate needs to be downloaded this call will block for a maximum
+   of vs_connect_timeout_s seconds (see vs_connect_timeout_s param);
+
+   This function takes no parameters (only SIP message is passed
+   implicitly).
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.12. stirshaken_check_identity usage
+...
+modparam("stirshaken", "vs_verify_x509_cert_path", 1)
+modparam("stirshaken", "vs_ca_dir", "/path/to/ca")
+modparam("stirshaken", "vs_cache_certificates", 1)
+modparam("stirshaken", "vs_cache_dir", "/path/to/cert_cache")
+modparam("stirshaken", "vs_cache_expire_s", 100)
+
+request_route {
+    ...
+                if (1 == stirshaken_check_identity()) {
+                        xlog("Shaken Identity is OK\n");
+                } else {
+                        xlog("Shaken Identity is invalid\n");
+                }
+    ...
+}
+...
+
+3.2.  stirshaken_check_identity_with_key(keyPath)
+
+   Check the validity of the Identity header by decoding PASSporT's
+   signature with a key read from the location provided. PASSporT's iat
+   grant is also checked for being too fresh or expired against
+   vs_identity_expire_s seconds. This method does not involve HTTP(s)
+   transcations. This method does not execute a call to a callback
+   (vs_cache_certificates param has no meaning for this method). WARNING:
+   This method only checks if SIP Identity Header was signed by a key
+   corresponding to specified public key. This method doesn't attempt to
+   obtain certificate referenced in PASSporT (but PASSporT should be
+   checked with key corresponding to that certificate). Therefore it is
+   possible that this check will be successful, while PASSporT is not
+   valid (could be signed with key that doesn't match certificate
+   referenced in x5u header). If you want a complete Shaken check or if
+   you are not sure what you're doing, then you should execute
+   w_stirshaken_check_identity() instead (and configure Verification
+   Service to perform X509 certificate path verification with
+   stirshaken_vs_verify_x509_cert_path param set to 1).
+
+   The parameters can contain pseudo-variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.13. stirshaken_check_identity_with_key usage
+...
+request_route {
+        ...
+                if (1 == stirshaken_check_identity_with_key("/path/to/key")) {
+                        xlog("Shaken Identity is OK\n");
+                } else {
+                        xlog("Shaken Identity is invalid\n");
+                }
+        ...
+}
+...
+
+3.3.  stirshaken_check_identity_with_cert(certPath)
+
+   Same as stirshaken_check_identity_with_key(keyPath) but the key is read
+   from the certificate which is read from the location provided.
+
+   The parameters can contain pseudo-variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.14. stirshaken_check_identity_with_cert usage
+...
+request_route {
+        ...
+                if (1 == stirshaken_check_identity_with_cert("/path/to/cert")) {
+                        xlog("Shaken Identity is OK\n");
+                } else {
+                        xlog("Shaken Identity is invalid\n");
+                }
+        ...
+}
+...
+
+3.4.  stirshaken_add_identity(x5u, attest, origtn_val, desttn_val, origid)
+
+   Add SIP Identity Header to the call using default private key (see
+   as_default_key param). Authenticate call with STIR-Shaken. If origID is
+   empty, a UUID string is generated to fill the field. The origtn_val
+   represents the origination telephone number; desttn_val, represents the
+   destination telephone number; x5u is the HTTP(s) URL referencing to the
+   public key that should be used to verify the signature; attest
+   represents the attestation level (should be "A", "B" or "C").
+
+   The parameters can contain pseudo-variables. If origid is empty, an
+   unique identifier will be generated wih libuuid, e.g.
+   "3f31bd2b-9fc4-4084-b0b0-566506c46292".
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.15. stirshaken_add_identity with origid usage
+...
+request_route {
+        ...
+                if (1 == stirshaken_add_identity("https://sp.com/sp.pem", "B", "
++44100", "+44200", "origid")) {
+                        xlog("Shaken authentication added (SIP Identity Header c
+reated)\n");
+                } else {
+                        xlog("Failed\n");
+                }
+        ...
+}
+...
+
+   Example 1.16. stirshaken_add_identity with auto generated uuid as
+   origid usage
+
+   If origid is empty, an unique identifier will be generated with
+   libuuid, e.g. "3f31bd2b-9fc4-4084-b0b0-566506c46292".
+...
+request_route {
+        ...
+                if (1 == stirshaken_add_identity("https://sp.com/sp.pem", "B", "
++44100", "+44200", "")) {
+                        xlog("Shaken authentication added (SIP Identity Header c
+reated)\n");
+                } else {
+                        xlog("Failed\n");
+                }
+        ...
+}
+...
+
+3.5.  stirshaken_add_identity_with_key(x5u, attest, origtn_val, desttn_val,
+origid, keyPath)
+
+   Same as stirshaken_add_identity() but using the key read from the
+   location provided as a last parameter.
+
+   The parameters can contain pseudo-variables. If origid is empty, an
+   unique identifier will be generated with libuuid, e.g.
+   "3f31bd2b-9fc4-4084-b0b0-566506c46292".
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.17. stirshaken_add_identity_with_key usage
+...
+request_route {
+        ...
+                if (1 == stirshaken_add_identity_with_key("https://sp.com/sp.pem
+", "B", "+44100", "+44200", uuid, "/path/to/key")) {
+                        xlog("Shaken authentication added (SIP Identity Header c
+reated)\n");
+                } else {
+                        xlog("Failed\n");
+                }
+        ...
+}
+...
+
+4. Installation
+
+   The module depends on "libstirshaken", which is an open source C
+   library from SignalWire. It can be downloaded from
+   https://github.com/signalwire/libstirshaken. Until the libstirshaken is
+   packaged in OS distributions, libstirshaken must be compiled and
+   installed before the stirshaken module can be compiled.
+
+   Installling libstirshaken is easy:
+
+   Example 1.18. libstirshaken installation
+...
+                git clone git@github.com:signalwire/libstirshaken.git
+                cd libstirshaken
+                ./bootstrap.sh
+                ./configure
+                make
+                make check
+                sudo make install
+...
+
+   After libstirshaken had been installed, Kamailio's stirshaken module
+   can then be built with
+...
+                cd /path/to/kamailio/
+                make modules modules=src/modules/stirshaken/
+...
