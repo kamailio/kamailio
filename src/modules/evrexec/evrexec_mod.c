@@ -223,6 +223,8 @@ void evrexec_process_socket(evrexec_task_t *it, int idx)
 	socklen_t src_addr_len;
 	ssize_t count;
 	str evr_data = STR_NULL;
+	char srchostval[NI_MAXHOST];
+	char srcportval[NI_MAXSERV];
 
 	if(parse_protohostport(&it->sockaddr, &phostp)<0 || phostp.port==0
 			|| phostp.host.len>62 || phostp.sport.len>5) {
@@ -272,6 +274,13 @@ void evrexec_process_socket(evrexec_task_t *it, int idx)
 			LM_WARN("datagram too large for buffer - truncated\n");
 		}
 		rcvbuf[count] = '\0';
+
+		ret = getnameinfo((struct sockaddr *)&src_addr, src_addr_len, srchostval,
+				sizeof(srchostval), srcportval, sizeof(srcportval),
+				NI_NUMERICHOST | NI_NUMERICSERV);
+		if(ret == 0) {
+			LM_DBG("received data from %s port %s\n", srchostval, srcportval);
+		}
 
 		evr_data.s = rcvbuf;
 		evr_data.len = (int)count;
