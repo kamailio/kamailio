@@ -151,8 +151,10 @@ inline static struct socket_info* get_first_socket(void)
 
 /* structure to break down 'proto:host:port' */
 typedef struct _sr_phostp {
+	str sproto;
 	int proto;
 	str host;
+	str sport;
 	int port;
 } sr_phostp_t;
 

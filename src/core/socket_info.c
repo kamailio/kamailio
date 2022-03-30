@@ -2271,11 +2271,14 @@ int parse_protohostport(str* ins, sr_phostp_t *r)
 	if (second) { /* 2 ':' found => check if valid */
 		if (parse_proto((unsigned char*)ins->s, first-ins->s, &r->proto)<0)
 			goto error_proto;
+		r->sproto.s = ins->s;
+		r->sproto.len = first-ins->s;
 
 		tmp.s=second+1;
 		tmp.len=(ins->s + ins->len) - tmp.s;
 
 		if (str2int(&tmp, (unsigned int *)&(r->port))<0) goto error_port;
+		r->sport = tmp;
 
 		r->host.s=first+1;
 		r->host.len=(int)(second-r->host.s);
@@ -2288,10 +2291,13 @@ int parse_protohostport(str* ins, sr_phostp_t *r)
 		/* invalid port => it's proto:host */
 		if (parse_proto((unsigned char*)ins->s, first-ins->s, &r->proto)<0)
 			goto error_proto;
+		r->sproto.s = ins->s;
+		r->sproto.len = first-ins->s;
 		r->host.s=first+1;
 		r->host.len=(int)(p-r->host.s);
 	}else{
 		/* valid port => its host:port */
+		r->sport = tmp;
 		r->host.s=ins->s;
 		r->host.len=(int)(first-r->host.s);
 	}
