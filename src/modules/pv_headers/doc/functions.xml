@@ -11,7 +11,7 @@
 
 <section id="pv_headers.funtions" xmlns:xi="http://www.w3.org/2001/XInclude">
     <sectioninfo>
-    </sectioninfo>\
+    </sectioninfo>
 
     <title>Functions</title>
 	<section id="pv_headers.f.pvh_collect_headers">
@@ -128,4 +128,37 @@
 		pvh_collect_headers()</link> or with <quote>auto_msg</quote> parameter enabled.
 		</para>
 	</section>
+	<section id="pv_headers.f.pvh_header_param_exists">
+		<title>
+			<function moreinfo="none">pvh_value_exists(hname, hparameter)</function>
+		</title>
+		<para>
+			Checks if the parameter <quote>hparameter</quote> is present in the header <quote>hname</quote> from XAVP.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE but only after <link linked="pv_headers.f.pvh_collect_headers">
+			pvh_collect_headers()</link> have been called or with <quote>auto_msg</quote> parameter enabled.
+		</para>
 	</section>
+	<section id="pv_headers.f.pvh_remove_header_param">
+		<title>
+			<function moreinfo="none">pvh_remove_header_param(hname, hparameter)</function>
+		</title>
+		<para>
+			Removes an existing parameter <quote>hparameter</quote> in the header <quote>hname</quote> from the XAVP.
+		</para>
+		<para>
+			If there are multiple headers, only the one containing the parameter will be modified.
+		</para>
+		<para>
+			The parameter can be located in any position (begining, middle or end) of the list of parameters.
+		</para>
+		<para>
+			If the parameter is the only one present, the header will be removed.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE but only after <link linked="pv_headers.f.pvh_collect_headers">
+			pvh_collect_headers()</link> have been called or with <quote>auto_msg</quote> parameter enabled.
+		</para>
+ 	</section>
+</section>
