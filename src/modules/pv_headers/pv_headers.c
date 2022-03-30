@@ -205,6 +205,53 @@ static int w_pvh_remove_header(
 	return pvh_remove_header(msg, &hname, indx);
 }
 
+static int w_pvh_header_param_exists(
+		struct sip_msg *msg, char *p1, char *p2)
+{
+	str hname = STR_NULL;
+	str value = STR_NULL;
+
+	if(fixup_get_svalue(msg, (gparam_p)p1, &hname) < 0)
+		return -1;
+
+	if(p2 && fixup_get_svalue(msg, (gparam_p)p2, &value) < 0)
+		return -1;
+
+	return pvh_header_param_exists(msg, &hname, &value);
+}
+
+static int w_pvh_remove_header_param(struct sip_msg *msg, char *p1, char *p2)
+{
+	int ret = -1;
+	int idx = 0;
+	str hname = STR_NULL;
+	str value = STR_NULL;
+	sr_xavp_t *avi=NULL;
+	char tt[header_name_size];
+	str br_xname = {tt, header_name_size};
+
+	if(fixup_get_svalue(msg, (gparam_p)p1, &hname) < 0)
+		return -1;
+
+	if(p2 && fixup_get_svalue(msg, (gparam_p)p2, &value) < 0)
+		return -1;
+
+	pvh_get_branch_xname(msg, &xavi_name, &br_xname);
+
+	avi = xavi_get_child(&br_xname, &hname);
+
+	while(avi)
+	{
+		if (avi->val.type == SR_XTYPE_STR && avi->val.v.s.s != NULL && _strnstr(avi->val.v.s.s, value.s, avi->val.v.s.len) != NULL) {
+			ret = pvh_remove_header_param(msg, idx, &hname, &avi->val.v.s, &value) && ret;
+		}
+		idx++;
+		avi = xavi_get_next(avi);
+	}
+
+	return ret;
+}
+
 /* clang-format off */
 static cmd_export_t cmds[] = {
 	{"pvh_collect_headers", (cmd_function)w_pvh_collect_headers, 0, 0, 0,
@@ -224,6 +271,10 @@ static cmd_export_t cmds[] = {
 	{"pvh_remove_header", (cmd_function)w_pvh_remove_header, 1,
 			fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
 	{"pvh_remove_header", (cmd_function)w_pvh_remove_header, 2,
+			fixup_spve_spve, fixup_free_spve_spve, ANY_ROUTE},
+	{"pvh_header_param_exists", (cmd_function)w_pvh_header_param_exists, 2,
+			fixup_spve_spve, fixup_free_spve_spve, ANY_ROUTE},
+	{"pvh_remove_header_param", (cmd_function)w_pvh_remove_header_param, 2,
 			fixup_spve_spve, fixup_free_spve_spve, ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
@@ -534,6 +585,16 @@ static sr_kemi_t pvh_kemi_exports[] = {
 	},
 	{ str_init("pv_headers"), str_init("pvh_remove_header"),
 		SR_KEMIP_INT, pvh_remove_header,
+			{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE,
+				SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE}
+	},
+	{ str_init("pv_headers"), str_init("pvh_header_param_exists"),
+		SR_KEMIP_INT, pvh_header_param_exists,
+			{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE,
+				SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE}
+	},
+	{ str_init("pv_headers"), str_init("pvh_remove_header_param"),
+		SR_KEMIP_INT, pvh_remove_header_param,
 			{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE,
 				SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE}
 	},
