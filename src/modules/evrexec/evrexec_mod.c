@@ -52,7 +52,14 @@ typedef struct evrexec_task {
 
 evrexec_task_t *_evrexec_list = NULL;
 
-static str *pv_evr_data = NULL;
+typedef struct evrexec_info {
+	str data;
+	str srcip;
+	str srcport;
+	int srcportno;
+} evrexec_info_t;
+
+static evrexec_info_t _evrexec_info = { 0 };
 
 /** module functions */
 static int mod_init(void);
@@ -222,7 +229,6 @@ void evrexec_process_socket(evrexec_task_t *it, int idx)
 	struct sockaddr_storage src_addr;
 	socklen_t src_addr_len;
 	ssize_t count;
-	str evr_data = STR_NULL;
 	char srchostval[NI_MAXHOST];
 	char srcportval[NI_MAXSERV];
 
@@ -282,9 +288,8 @@ void evrexec_process_socket(evrexec_task_t *it, int idx)
 			LM_DBG("received data from %s port %s\n", srchostval, srcportval);
 		}
 
-		evr_data.s = rcvbuf;
-		evr_data.len = (int)count;
-		pv_evr_data = &evr_data;
+		_evrexec_info.data.s = rcvbuf;
+		_evrexec_info.data.len = (int)count;
 
 		fmsg = faked_msg_next();
 		set_route_type(LOCAL_ROUTE);
@@ -302,7 +307,7 @@ void evrexec_process_socket(evrexec_task_t *it, int idx)
 				LM_ERR("error running event route kemi callback\n");
 			}
 		}
-		pv_evr_data = NULL;
+		memset(&_evrexec_info, 0, sizeof(evrexec_info_t));
 	}
 	/* avoid exiting the process */
 	while(1) { sleep(3600); }
@@ -412,13 +417,13 @@ int evrexec_param(modparam_t type, void *val)
  */
 static int pv_get_evr(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 {
-	if(param==NULL || pv_evr_data==NULL) {
+	if(param==NULL || _evrexec_info.data.s==NULL) {
 		return pv_get_null(msg, param, res);
 	}
 
 	switch(param->pvn.u.isname.name.n) {
 		case 0: /* data */
-			return pv_get_strval(msg, param, res, pv_evr_data);
+			return pv_get_strval(msg, param, res, &_evrexec_info.data);
 		default:
 			return pv_get_null(msg, param, res);
 	}
@@ -489,12 +494,12 @@ void rpc_evr_run(rpc_t *rpc, void *c)
 		evr_data.len = strlen(evr_data.s);
 	}
 
-	pv_evr_data = &evr_data;
+	_evrexec_info.data = evr_data;
 	keng = sr_kemi_eng_get();
 	if(keng==NULL) {
 		evr_id = route_lookup(&event_rt, evr_name.s);
 		if(evr_id == -1) {
-			pv_evr_data = NULL;
+			memset(&_evrexec_info, 0, sizeof(evrexec_info_t));
 			LM_ERR("event route not found: %.*s\n", evr_name.len, evr_name.s);
 			rpc->fault(c, 500, "Event route not found");
 			return;
@@ -522,7 +527,7 @@ void rpc_evr_run(rpc_t *rpc, void *c)
 		}
 	}
 	set_route_type(rtbk);
-	pv_evr_data = NULL;
+	memset(&_evrexec_info, 0, sizeof(evrexec_info_t));
 }
 
 /**
