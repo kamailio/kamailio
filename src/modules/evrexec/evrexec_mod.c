@@ -286,6 +286,11 @@ void evrexec_process_socket(evrexec_task_t *it, int idx)
 				NI_NUMERICHOST | NI_NUMERICSERV);
 		if(ret == 0) {
 			LM_DBG("received data from %s port %s\n", srchostval, srcportval);
+			_evrexec_info.srcip.s = srchostval;
+			_evrexec_info.srcip.len = strlen(_evrexec_info.srcip.s);
+			_evrexec_info.srcport.s = srcportval;
+			_evrexec_info.srcport.len = strlen(_evrexec_info.srcport.s);
+			str2sint(&_evrexec_info.srcport, &_evrexec_info.srcportno);
 		}
 
 		_evrexec_info.data.s = rcvbuf;
@@ -424,6 +429,19 @@ static int pv_get_evr(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 	switch(param->pvn.u.isname.name.n) {
 		case 0: /* data */
 			return pv_get_strval(msg, param, res, &_evrexec_info.data);
+		case 1: /* srcpip */
+			if(_evrexec_info.srcip.s==NULL) {
+				return pv_get_null(msg, param, res);
+			}
+			return pv_get_strval(msg, param, res, &_evrexec_info.srcip);
+		case 2: /* srcport */
+			if(_evrexec_info.srcport.s==NULL) {
+				return pv_get_null(msg, param, res);
+			}
+			return pv_get_strval(msg, param, res, &_evrexec_info.srcport);
+		case 3: /* srcportno */
+			return pv_get_sintval(msg, param, res, _evrexec_info.srcportno);
+
 		default:
 			return pv_get_null(msg, param, res);
 	}
@@ -441,6 +459,27 @@ static int pv_parse_evr_name(pv_spec_p sp, str *in)
 		case 4:
 			if(strncmp(in->s, "data", 4)==0) {
 				sp->pvp.pvn.u.isname.name.n = 0;
+			} else {
+				goto error;
+			}
+		break;
+		case 5:
+			if(strncmp(in->s, "srcip", 5)==0) {
+				sp->pvp.pvn.u.isname.name.n = 1;
+			} else {
+				goto error;
+			}
+		break;
+		case 7:
+			if(strncmp(in->s, "srcport", 7)==0) {
+				sp->pvp.pvn.u.isname.name.n = 2;
+			} else {
+				goto error;
+			}
+		break;
+		case 9:
+			if(strncmp(in->s, "srcportno", 9)==0) {
+				sp->pvp.pvn.u.isname.name.n = 3;
 			} else {
 				goto error;
 			}
