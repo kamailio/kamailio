@@ -388,7 +388,7 @@ modparam("ims_qos", "include_rtcp_fd", 1)
     <section>
       <title><varname>af_signaling_ip</varname> (String)</title>
 
-      <para>Set P-CSCF IPv4 address to generate the flows for the UE<->PCSCF signaling path. Used only for AAR register, Flow-Description AVP (507)</para>
+      <para>Set P-CSCF IPv4 address to generate the flows for the UE - PCSCF signaling path. Used only for AAR register, Flow-Description AVP (507)</para>
 
       <para><emphasis> Default value is 127.0.0.1</emphasis></para>
 
@@ -407,7 +407,7 @@ modparam("ims_qos", "af_signaling_ip", "127.0.0.1")
     <section>
       <title><varname>af_signaling_ip6</varname> (String)</title>
 
-      <para>Set P-CSCF IPv6 address to generate the flows for the UE<->PCSCF signaling path. Used only for AAR register, Flow-Description AVP (507)</para>
+      <para>Set P-CSCF IPv6 address to generate the flows for the UE - PCSCF signaling path. Used only for AAR register, Flow-Description AVP (507)</para>
 
       <para><emphasis> Default value is ""</emphasis></para>
 
