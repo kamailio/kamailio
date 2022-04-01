@@ -104,7 +104,8 @@ Chapter 1. Admin Guide
      * wait - timer interval in micro-seconds to wait inside the dedicated
        process before executing the task.
      * sockaddr - full UDP socket address in format 'udp:ip:port'
-       (example: 'udp:127.0.0.1:54321').
+       (example: 'udp:127.0.0.1:54321'). Received data is made available
+       in the event route via $evr(data).
 
    Default value is NULL.
 
@@ -124,7 +125,7 @@ event_route[evrexec:timer] {
 }
 
 event_route[evrexec:udp] {
-  xinfo("udp socket data: [$evr(data)]\n");
+  xinfo("udp socket data: [$evr(data)] from [$evr(srcip)]\n");
 }
 
 ...
