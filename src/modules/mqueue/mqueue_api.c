@@ -293,6 +293,7 @@ int mq_item_add(str *qname, str *key, str *val)
 	mq_item_t *mi = NULL;
 	mq_item_t *miter = NULL;
 	mq_item_t *miter_prev = NULL;
+	int oplock = 0;
 	int len;
 
 	mh = mq_head_get(qname);
@@ -301,9 +302,10 @@ int mq_item_add(str *qname, str *key, str *val)
 		LM_ERR("mqueue not found: %.*s\n", qname->len, qname->s);
 		return -1;
 	}
-	
-	lock_get(&mh->lock);
+
 	if (mh->addmode == 1 || mh->addmode == 2) {
+		lock_get(&mh->lock);
+		oplock = 1;
 		miter = mh->ifirst;
 		miter_prev = mh->ifirst;
 		while (miter) {
@@ -344,7 +346,9 @@ int mq_item_add(str *qname, str *key, str *val)
 	if(mi==NULL)
 	{
 		LM_ERR("no more shm to add to: %.*s\n", qname->len, qname->s);
-		lock_release(&mh->lock);
+		if(oplock) {
+			lock_release(&mh->lock);
+		}
 		return -1;
 	}
 	memset(mi, 0, len);
@@ -352,12 +356,15 @@ int mq_item_add(str *qname, str *key, str *val)
 	memcpy(mi->key.s, key->s, key->len);
 	mi->key.len = key->len;
 	mi->key.s[key->len] = '\0';
-	
+
 	mi->val.s = mi->key.s + mi->key.len + 1;
 	memcpy(mi->val.s, val->s, val->len);
 	mi->val.len = val->len;
 	mi->val.s[val->len] = '\0';
 
+	if(oplock==0) {
+		lock_get(&mh->lock);
+	}
 	if(mh->ifirst==NULL)
 	{
 		mh->ifirst = mi;
