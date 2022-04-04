@@ -210,6 +210,7 @@ void latency_stats_init(ds_latency_stats_t *latency_stats, int latency, int coun
 
 typedef struct _ds_dest {
 	str uri;          /*!< address/uri */
+	str host;         /*!< shortcut to host part */
 	int flags;        /*!< flags */
 	int priority;     /*!< priority */
 	int dload;        /*!< load */

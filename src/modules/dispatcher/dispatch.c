@@ -80,6 +80,12 @@
 #define DS_ALG_PARALLEL 12
 #define DS_ALG_LATENCY 13
 
+#define DS_HN_SIZE 256
+
+#define DS_DNS_MODE_INIT   0
+#define DS_DNS_MODE_ALWAYS 1
+#define DS_DNS_MODE_CACHE  2
+
 /* increment call load */
 #define DS_LOAD_INC(dgrp, didx) do { \
 		lock_get(&(dgrp)->lock); \
@@ -109,6 +115,7 @@ extern float ds_latency_estimator_alpha;
 extern int ds_attrs_none;
 extern param_t *ds_db_extra_attrs_list;
 extern int ds_load_mode;
+extern int ds_dns_mode;
 
 static db_func_t ds_dbf;
 static db1_con_t *ds_db_handle = NULL;
@@ -372,7 +379,7 @@ ds_dest_t *pack_dest(str iuri, int flags, int priority, str *attrs, int dload)
 {
 	ds_dest_t *dp = NULL;
 	/* For DNS-Lookups */
-	static char hn[256];
+	static char hn[DS_HN_SIZE];
 	char ub[512];
 	struct hostent *he;
 	struct sip_uri puri;
@@ -403,7 +410,7 @@ ds_dest_t *pack_dest(str iuri, int flags, int priority, str *attrs, int dload)
 		}
 	}
 
-	if(puri.host.len > 254) {
+	if(puri.host.len > (DS_HN_SIZE-2)) {
 		LM_ERR("hostname in uri is too long [%.*s]\n", uri.len, uri.s);
 		goto err;
 	}
@@ -477,10 +484,13 @@ ds_dest_t *pack_dest(str iuri, int flags, int priority, str *attrs, int dload)
 	strncpy(hn, puri.host.s, puri.host.len);
 	hn[puri.host.len] = '\0';
 
+	dp->host.s = dp->uri.s + (puri.host.s - uri.s);
+	dp->host.len = puri.host.len;
+
 	/* Do a DNS-Lookup for the Host-Name, if not disabled via dst flags */
 	if(dp->flags & DS_NODNSARES_DST) {
 		dp->irmode |= DS_IRMODE_NOIPADDR;
-	} else {
+	} else if (ds_dns_mode==DS_DNS_MODE_INIT || ds_dns_mode==DS_DNS_MODE_CACHE) {
 		he = resolvehost(hn);
 		if(he == 0) {
 			LM_ERR("could not resolve %.*s (missing no-probing flag?!?)\n",
@@ -3335,13 +3345,34 @@ int ds_is_addr_from_set(sip_msg_t *_m, struct ip_addr *pipaddr,
 		int export_set_pv)
 {
 	pv_value_t val;
+	ip_addr_t *ipa;
+	ip_addr_t ipaddress;
+	static char hn[DS_HN_SIZE];
+	struct hostent *he;
 	int j;
+
 	for(j = 0; j < node->nr; j++) {
 		if(node->dlist[j].irmode & DS_IRMODE_NOIPADDR) {
 			/* dst record using hotname with dns not done - no ip to match */
 			continue;
 		}
-		if(ip_addr_cmp(pipaddr, &node->dlist[j].ip_address)
+		if(ds_dns_mode != DS_DNS_MODE_ALWAYS) {
+			ipa = &node->dlist[j].ip_address;
+		} else {
+			memcpy(hn, node->dlist[j].host.s, node->dlist[j].host.len);
+			hn[node->dlist[j].host.len] = '\0';
+			he = resolvehost(hn);
+			if(he == 0) {
+				LM_WARN("could not resolve %.*s (skipping)\n",
+						node->dlist[j].host.len, node->dlist[j].host.s);
+				continue;
+			} else {
+				/* Store hostent in the dispatcher structure */
+				hostent2ip_addr(&ipaddress, he, 0);
+				ipa = &ipaddress;
+			}
+		}
+		if(ip_addr_cmp(pipaddr, ipa)
 				&& ((mode & DS_MATCH_NOPORT) || node->dlist[j].port == 0
 						   || tport == node->dlist[j].port)
 				&& ((mode & DS_MATCH_NOPROTO)
@@ -3410,7 +3441,7 @@ int ds_is_addr_from_list(sip_msg_t *_m, int group, str *uri, int mode)
 	unsigned short tport;
 	unsigned short tproto;
 	sip_uri_t puri;
-	static char hn[256];
+	static char hn[DS_HN_SIZE];
 	struct hostent *he;
 	int rc = -1;
 
@@ -3419,7 +3450,7 @@ int ds_is_addr_from_list(sip_msg_t *_m, int group, str *uri, int mode)
 		tport = _m->rcv.src_port;
 		tproto = _m->rcv.proto;
 	} else {
-		if(parse_uri(uri->s, uri->len, &puri) != 0 || puri.host.len > 255) {
+		if(parse_uri(uri->s, uri->len, &puri) != 0 || puri.host.len > (DS_HN_SIZE-2)) {
 			LM_ERR("bad uri [%.*s]\n", uri->len, uri->s);
 			return -1;
 		}
