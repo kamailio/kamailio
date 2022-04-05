@@ -73,8 +73,12 @@
 #define DS_XAVP_CTX_SKIP_CNT	1
 
 #define DS_IRMODE_NOIPADDR	1
-/* clang-format on */
 
+#define DS_DNS_MODE_INIT   0
+#define DS_DNS_MODE_ALWAYS 1
+#define DS_DNS_MODE_TIMER  2
+
+/* clang-format on */
 typedef struct ds_rctx {
 	int flags;
 	int code;

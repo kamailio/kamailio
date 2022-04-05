@@ -327,6 +327,12 @@ static int mod_init(void)
 	param_hooks_t phooks;
 	param_t *pit = NULL;
 
+	if(ds_dns_mode!=DS_DNS_MODE_INIT && ds_dns_mode!=DS_DNS_MODE_ALWAYS
+			&& ds_dns_mode!=DS_DNS_MODE_TIMER) {
+		LM_ERR("invalid dns mode %d\n", ds_dns_mode);
+		return -1;
+	}
+
 	if(ds_ping_active_init() < 0) {
 		return -1;
 	}

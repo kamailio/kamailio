@@ -82,10 +82,6 @@
 
 #define DS_HN_SIZE 256
 
-#define DS_DNS_MODE_INIT   0
-#define DS_DNS_MODE_ALWAYS 1
-#define DS_DNS_MODE_CACHE  2
-
 /* increment call load */
 #define DS_LOAD_INC(dgrp, didx) do { \
 		lock_get(&(dgrp)->lock); \
@@ -490,7 +486,7 @@ ds_dest_t *pack_dest(str iuri, int flags, int priority, str *attrs, int dload)
 	/* Do a DNS-Lookup for the Host-Name, if not disabled via dst flags */
 	if(dp->flags & DS_NODNSARES_DST) {
 		dp->irmode |= DS_IRMODE_NOIPADDR;
-	} else if (ds_dns_mode==DS_DNS_MODE_INIT || ds_dns_mode==DS_DNS_MODE_CACHE) {
+	} else if (ds_dns_mode==DS_DNS_MODE_INIT || ds_dns_mode==DS_DNS_MODE_TIMER) {
 		he = resolvehost(hn);
 		if(he == 0) {
 			LM_ERR("could not resolve %.*s (missing no-probing flag?!?)\n",
