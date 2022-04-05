@@ -33,6 +33,7 @@ struct cfg_group_p_usrloc {
 	unsigned int	db_ops_ruid;
 	unsigned int	db_update_as_insert;
 	unsigned int	matching_mode;
+	unsigned int	utc_timestamps;
 };
 
 extern struct cfg_group_p_usrloc	default_p_usrloc_cfg;
