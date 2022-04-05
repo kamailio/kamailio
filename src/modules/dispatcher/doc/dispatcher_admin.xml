@@ -1923,12 +1923,19 @@ onreply_route {
 		<function moreinfo="none">dispatcher.list</function>
 		</title>
 		<para>
-		Lists the groups and included destinations.
+		Lists the routing groups with destination addresses and corresponding
+		attributes.
 		</para>
 		<para>
 		Name: <emphasis>dispatcher.list</emphasis>
 		</para>
-		<para>Parameters: <emphasis>none</emphasis></para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem>
+			<para>_rmode_ - (optional) response mode - can be 'short' to get a
+			shorter version of groups and destinations</para>
+			</listitem>
+		</itemizedlist>
 		<para>
 		Example:
 		</para>
