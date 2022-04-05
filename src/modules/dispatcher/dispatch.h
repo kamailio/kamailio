@@ -74,9 +74,9 @@
 
 #define DS_IRMODE_NOIPADDR	1
 
-#define DS_DNS_MODE_INIT   0
-#define DS_DNS_MODE_ALWAYS 1
-#define DS_DNS_MODE_TIMER  2
+#define DS_DNS_MODE_INIT   1
+#define DS_DNS_MODE_ALWAYS (1<<1)
+#define DS_DNS_MODE_TIMER  (1<<2)
 
 /* clang-format on */
 typedef struct ds_rctx {

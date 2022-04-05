@@ -111,7 +111,7 @@ extern float ds_latency_estimator_alpha;
 extern int ds_attrs_none;
 extern param_t *ds_db_extra_attrs_list;
 extern int ds_load_mode;
-extern int ds_dns_mode;
+extern uint32_t ds_dns_mode;
 
 static db_func_t ds_dbf;
 static db1_con_t *ds_db_handle = NULL;
@@ -486,7 +486,7 @@ ds_dest_t *pack_dest(str iuri, int flags, int priority, str *attrs, int dload)
 	/* Do a DNS-Lookup for the Host-Name, if not disabled via dst flags */
 	if(dp->flags & DS_NODNSARES_DST) {
 		dp->irmode |= DS_IRMODE_NOIPADDR;
-	} else if (ds_dns_mode==DS_DNS_MODE_INIT || ds_dns_mode==DS_DNS_MODE_TIMER) {
+	} else if (ds_dns_mode & (DS_DNS_MODE_INIT|DS_DNS_MODE_TIMER)) {
 		he = resolvehost(hn);
 		if(he == 0) {
 			LM_ERR("could not resolve %.*s (missing no-probing flag?!?)\n",
