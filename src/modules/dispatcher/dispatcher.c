@@ -120,7 +120,7 @@ int ds_hash_check_interval = 30;
 int ds_timer_mode = 0;
 int ds_attrs_none = 0;
 int ds_load_mode = 0;
-uint32_t ds_dns_mode = DS_DNS_INIT;
+uint32_t ds_dns_mode = DS_DNS_MODE_INIT;
 static int ds_dns_mode_param = 0;
 
 str ds_outbound_proxy = STR_NULL;

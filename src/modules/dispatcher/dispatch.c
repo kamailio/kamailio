@@ -3352,7 +3352,7 @@ int ds_is_addr_from_set(sip_msg_t *_m, struct ip_addr *pipaddr,
 			/* dst record using hotname with dns not done - no ip to match */
 			continue;
 		}
-		if(ds_dns_mode != DS_DNS_MODE_ALWAYS) {
+		if(!(ds_dns_mode & DS_DNS_MODE_ALWAYS)) {
 			ipa = &node->dlist[j].ip_address;
 		} else {
 			memcpy(hn, node->dlist[j].host.s, node->dlist[j].host.len);
