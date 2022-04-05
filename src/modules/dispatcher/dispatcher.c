@@ -1584,10 +1584,15 @@ static void dispatcher_rpc_reload(rpc_t *rpc, void *ctx)
 static const char *dispatcher_rpc_list_doc[2] = {
 		"Return the content of dispatcher sets", 0};
 
+
+#define DS_RPC_PRINT_NORMAL 1
+#define DS_RPC_PRINT_SHORT  2
+
 /**
  *
  */
-int ds_rpc_print_set(ds_set_t *node, rpc_t *rpc, void *ctx, void *rpc_handle)
+int ds_rpc_print_set(ds_set_t *node, rpc_t *rpc, void *ctx, void *rpc_handle,
+		int mode)
 {
 	int i = 0, rc = 0;
 	void *rh;
@@ -1604,7 +1609,7 @@ int ds_rpc_print_set(ds_set_t *node, rpc_t *rpc, void *ctx, void *rpc_handle)
 		return 0;
 
 	for(; i < 2; ++i) {
-		rc = ds_rpc_print_set(node->next[i], rpc, ctx, rpc_handle);
+		rc = ds_rpc_print_set(node->next[i], rpc, ctx, rpc_handle, mode);
 		if(rc != 0)
 			return rc;
 	}
@@ -1639,7 +1644,7 @@ int ds_rpc_print_set(ds_set_t *node, rpc_t *rpc, void *ctx, void *rpc_handle)
 		else
 			c[1] = 'X';
 
-		if(node->dlist[j].attrs.body.s) {
+		if(mode != DS_RPC_PRINT_SHORT && node->dlist[j].attrs.body.s!=NULL) {
 			if(rpc->struct_add(vh, "Ssd{", "URI", &node->dlist[j].uri,
 					"FLAGS", c,
 					"PRIORITY", node->dlist[j].priority,
@@ -1709,6 +1714,16 @@ static void dispatcher_rpc_list(rpc_t *rpc, void *ctx)
 {
 	void *th;
 	void *ih;
+	int n;
+	str smode;
+	int vmode = DS_RPC_PRINT_NORMAL;
+
+	n = rpc->scan(ctx, "*S", &smode);
+	if(n == 1) {
+		if(smode.len==5 && strncasecmp(smode.s, "short", 5)==0) {
+			vmode = DS_RPC_PRINT_SHORT;
+		}
+	}
 
 	ds_set_t *dslist = ds_get_list();
 	int dslistnr = ds_get_list_nr();
@@ -1729,7 +1744,7 @@ static void dispatcher_rpc_list(rpc_t *rpc, void *ctx)
 		return;
 	}
 
-	ds_rpc_print_set(dslist, rpc, ctx, ih);
+	ds_rpc_print_set(dslist, rpc, ctx, ih, vmode);
 
 	return;
 }
