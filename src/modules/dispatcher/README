@@ -1569,11 +1569,14 @@ kamcmd dispatcher.set_duid_state ip 2 xyz
 
 5.3.  dispatcher.list
 
-   Lists the groups and included destinations.
+   Lists the routing groups with destination addresses and corresponding
+   attributes.
 
    Name: dispatcher.list
 
-   Parameters: none
+   Parameters:
+     * _rmode_ - (optional) response mode - can be 'short' to get a
+       shorter version of groups and destinations
 
    Example:
                 kamcmd dispatcher.list
