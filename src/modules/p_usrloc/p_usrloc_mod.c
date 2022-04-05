@@ -148,7 +148,6 @@ str uniq_col        = str_init(UNIQ_COL);		/*!< Name of column containing the un
 int db_mode         = 3;				/*!< Database sync scheme:  1-write through, 2-write back, 3-only db */
 int use_domain      = 0;				/*!< Whether usrloc should use domain part of aor */
 int desc_time_order = 0;				/*!< By default do not enable timestamp ordering */
-int ul_UTC_timestamps = 0;				/*!< If set to 1 use UTC instead of local time for expires and last_modified */
 
 int ul_fetch_rows = 2000;				/*!< number of rows to fetch from result */
 int ul_hash_size = 9;
@@ -241,7 +240,7 @@ static param_export_t params[] = {
 	{"error_column",         PARAM_STR, &error_col         },
 	{"risk_group_column",    PARAM_STR, &risk_group_col    },
 	{"expire_time",          INT_PARAM, &default_p_usrloc_cfg.expire_time},
-	{"UTC_timestamps",       INT_PARAM, &ul_UTC_timestamps},
+	{"UTC_timestamps",       INT_PARAM, &default_p_usrloc_cfg.utc_timestamps},
 	{"db_err_threshold",     INT_PARAM, &default_p_usrloc_cfg.db_err_threshold},
 	{"failover_level",       INT_PARAM, &default_p_usrloc_cfg.failover_level},
 	{"db_retry_interval",    INT_PARAM, &retry_interval      },
@@ -484,7 +483,7 @@ struct mi_root*  mi_loc_nr_refresh(struct mi_root* cmd_tree, void* param) {
 #endif
 
 time_t ul_db_datetime_set(time_t v) {
-	if (ul_UTC_timestamps == 1) {
+	if (cfg_get(p_usrloc, p_usrloc_cfg, utc_timestamps) == 1) {
 		return local2utc(v);
 	} else {
 		return v;
@@ -492,7 +491,7 @@ time_t ul_db_datetime_set(time_t v) {
 }
 
 time_t ul_db_datetime_get(time_t v) {
-	if (ul_UTC_timestamps == 1) {
+	if (cfg_get(p_usrloc, p_usrloc_cfg, utc_timestamps) == 1) {
 		return utc2local(v);
 	} else {
 		return v;
