@@ -375,7 +375,7 @@ ds_dest_t *pack_dest(str iuri, int flags, int priority, str *attrs, int dload)
 {
 	ds_dest_t *dp = NULL;
 	/* For DNS-Lookups */
-	static char hn[DS_HN_SIZE];
+	char hn[DS_HN_SIZE];
 	char ub[512];
 	struct hostent *he;
 	struct sip_uri puri;
@@ -383,6 +383,8 @@ ds_dest_t *pack_dest(str iuri, int flags, int priority, str *attrs, int dload)
 	int port, proto;
 	char c = 0;
 	str uri;
+	unsigned short sport = 0;
+	char sproto = PROTO_NONE;
 
 	uri = iuri;
 	/* check uri */
@@ -475,19 +477,38 @@ ds_dest_t *pack_dest(str iuri, int flags, int priority, str *attrs, int dload)
 		dp->sock = ds_default_sockinfo;
 	}
 
-	/* The Hostname needs to be \0 terminated for resolvehost, so we
-	 * make a copy here. */
-	strncpy(hn, puri.host.s, puri.host.len);
-	hn[puri.host.len] = '\0';
 
 	dp->host.s = dp->uri.s + (puri.host.s - uri.s);
 	dp->host.len = puri.host.len;
+
+	/* Copy the port out of the URI */
+	dp->port = puri.port_no;
+	/* Copy the proto out of the URI */
+	dp->proto = puri.proto;
 
 	/* Do a DNS-Lookup for the Host-Name, if not disabled via dst flags */
 	if(dp->flags & DS_NODNSARES_DST) {
 		dp->irmode |= DS_IRMODE_NOIPADDR;
 	} else if (ds_dns_mode & (DS_DNS_MODE_INIT|DS_DNS_MODE_TIMER)) {
-		he = resolvehost(hn);
+		if (ds_dns_mode & DS_DNS_MODE_QSRV) {
+			sport = dp->port;
+			sproto = (char)dp->proto;
+			he = sip_resolvehost(&dp->host, &sport, &sproto);
+			if(he != 0) {
+				if(sport != 0) {
+					dp->port = sport;
+				}
+				if(sproto != PROTO_NONE) {
+					dp->proto = sproto;
+				}
+			}
+		} else {
+			/* The Hostname needs to be \0 terminated for resolvehost, so we
+			 * make a copy here. */
+			strncpy(hn, puri.host.s, puri.host.len);
+			hn[puri.host.len] = '\0';
+			he = resolvehost(hn);
+		}
 		if(he == 0) {
 			LM_ERR("could not resolve %.*s (missing no-probing flag?!?)\n",
 					puri.host.len, puri.host.s);
@@ -497,11 +518,6 @@ ds_dest_t *pack_dest(str iuri, int flags, int priority, str *attrs, int dload)
 			hostent2ip_addr(&dp->ip_address, he, 0);
 		}
 	}
-
-	/* Copy the port out of the URI */
-	dp->port = puri.port_no;
-	/* Copy the proto out of the URI */
-	dp->proto = puri.proto;
 
 	return dp;
 err:
@@ -3343,9 +3359,11 @@ int ds_is_addr_from_set(sip_msg_t *_m, struct ip_addr *pipaddr,
 	pv_value_t val;
 	ip_addr_t *ipa;
 	ip_addr_t ipaddress;
-	static char hn[DS_HN_SIZE];
+	char hn[DS_HN_SIZE];
 	struct hostent *he;
 	int j;
+	unsigned short sport = 0;
+	char sproto = PROTO_NONE;
 
 	for(j = 0; j < node->nr; j++) {
 		if(node->dlist[j].irmode & DS_IRMODE_NOIPADDR) {
@@ -3355,9 +3373,23 @@ int ds_is_addr_from_set(sip_msg_t *_m, struct ip_addr *pipaddr,
 		if(!(ds_dns_mode & DS_DNS_MODE_ALWAYS)) {
 			ipa = &node->dlist[j].ip_address;
 		} else {
-			memcpy(hn, node->dlist[j].host.s, node->dlist[j].host.len);
-			hn[node->dlist[j].host.len] = '\0';
-			he = resolvehost(hn);
+			if (ds_dns_mode & DS_DNS_MODE_QSRV) {
+				sport = node->dlist[j].port;
+				sproto = (char)node->dlist[j].proto;
+				he = sip_resolvehost(&node->dlist[j].host, &sport, &sproto);
+				if(he != 0) {
+					if(sport != 0) {
+						node->dlist[j].port = sport;
+					}
+					if(sproto != PROTO_NONE) {
+						node->dlist[j].proto = sproto;
+					}
+				}
+			} else {
+				memcpy(hn, node->dlist[j].host.s, node->dlist[j].host.len);
+				hn[node->dlist[j].host.len] = '\0';
+				he = resolvehost(hn);
+			}
 			if(he == 0) {
 				LM_WARN("could not resolve %.*s (skipping)\n",
 						node->dlist[j].host.len, node->dlist[j].host.s);
@@ -3436,8 +3468,10 @@ int ds_is_addr_from_list(sip_msg_t *_m, int group, str *uri, int mode)
 	struct ip_addr aipaddr;
 	unsigned short tport;
 	unsigned short tproto;
+	unsigned short sport = 0;
+	char sproto = PROTO_NONE;
 	sip_uri_t puri;
-	static char hn[DS_HN_SIZE];
+	char hn[DS_HN_SIZE];
 	struct hostent *he;
 	int rc = -1;
 
@@ -3450,18 +3484,31 @@ int ds_is_addr_from_list(sip_msg_t *_m, int group, str *uri, int mode)
 			LM_ERR("bad uri [%.*s]\n", uri->len, uri->s);
 			return -1;
 		}
-		strncpy(hn, puri.host.s, puri.host.len);
-		hn[puri.host.len] = '\0';
-
-		he = resolvehost(hn);
+		tport = puri.port_no;
+		tproto = puri.proto;
+		if (ds_dns_mode & DS_DNS_MODE_QSRV) {
+			sport = tport;
+			sproto = (char)tproto;
+			he = sip_resolvehost(&puri.host, &sport, &sproto);
+			if(he != 0) {
+				if(sport != 0) {
+					tport = sport;
+				}
+				if(sproto != PROTO_NONE) {
+					tproto = (unsigned short)sproto;
+				}
+			}
+		} else {
+			memcpy(hn, puri.host.s, puri.host.len);
+			hn[puri.host.len] = '\0';
+			he = resolvehost(hn);
+		}
 		if(he == 0) {
 			LM_ERR("could not resolve %.*s\n", puri.host.len, puri.host.s);
 			return -1;
 		}
 		hostent2ip_addr(&aipaddr, he, 0);
 		pipaddr = &aipaddr;
-		tport = puri.port_no;
-		tproto = puri.proto;
 	}
 
 

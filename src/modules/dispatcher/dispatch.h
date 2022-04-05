@@ -77,6 +77,7 @@
 #define DS_DNS_MODE_INIT   1
 #define DS_DNS_MODE_ALWAYS (1<<1)
 #define DS_DNS_MODE_TIMER  (1<<2)
+#define DS_DNS_MODE_QSRV   (1<<3)
 
 /* clang-format on */
 typedef struct ds_rctx {
