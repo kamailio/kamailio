@@ -163,4 +163,7 @@ int parse_protohostport(str* ins, sr_phostp_t *r);
 
 unsigned int ipv6_get_netif_scope(char *ipval);
 
+int ksr_sockets_no_get(void);
+void ksr_sockets_index(void);
+
 #endif

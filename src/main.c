@@ -2851,6 +2851,7 @@ try_again:
 		fprintf(stderr,  "failed to initialize list addresses\n");
 		goto error;
 	}
+	ksr_sockets_index();
 	if (default_core_cfg.dns_try_ipv6 && !(socket_types & SOCKET_T_IPV6)){
 		/* if we are not listening on any ipv6 address => no point
 		 * to try to resovle ipv6 addresses */

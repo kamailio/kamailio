@@ -762,6 +762,54 @@ found:
 	return si;
 }
 
+/**
+ *
+ */
+static int _ksr_sockets_no = 0;
+
+/**
+ *
+ */
+int ksr_sockets_no_get(void)
+{
+	return _ksr_sockets_no;
+}
+
+/**
+ *
+ */
+void ksr_sockets_index(void)
+{
+	socket_info_t *si = NULL;
+	struct socket_info** list;
+	unsigned short c_proto;
+
+	if(_ksr_sockets_no > 0) {
+		return;
+	}
+
+	c_proto = PROTO_UDP;
+	do {
+		/* get the proper sock_list */
+		list=get_sock_info_list(c_proto);
+
+		if (list==0) {
+			/* disabled or unknown protocol */
+			continue;
+		}
+
+		for (si=*list; si; si=si->next) {
+			if(si->sockname.s == NULL) {
+				continue;
+			}
+			si->gindex = _ksr_sockets_no;
+			_ksr_sockets_no++;
+		}
+	} while((c_proto = next_proto(c_proto))!=0);
+
+	LM_DBG("number of listen sockets: %d\n", _ksr_sockets_no);
+}
+
 socket_info_t* ksr_get_socket_by_name(str *sockname)
 {
 	socket_info_t *si = NULL;

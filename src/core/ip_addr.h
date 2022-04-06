@@ -110,6 +110,7 @@ typedef struct advertise_info {
 
 typedef struct socket_info {
 	int socket;
+	int gindex; /* global index in the lists of all sockets */
 	str name; /* name - eg.: foo.bar or 10.0.0.1 */
 	struct ip_addr address; /* ip address */
 	str address_str;        /*ip address converted to string -- optimization*/
