@@ -25,4 +25,7 @@
 int pv_parse_cfg_name(pv_spec_p sp, str *in);
 int pv_get_cfg(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
 
+int pv_parse_lsock_name(pv_spec_t *sp, str *in);
+int pv_get_lsock(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
+
 #endif

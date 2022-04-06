@@ -93,7 +93,8 @@ static int corex_sip_reply_out(sr_event_param_t *evp);
 static pv_export_t mod_pvs[] = {
 	{ {"cfg", (sizeof("cfg")-1)}, PVT_OTHER, pv_get_cfg, 0,
 		pv_parse_cfg_name, 0, 0, 0 },
-
+	{ {"lsock", (sizeof("lsock")-1)}, PVT_OTHER, pv_get_lsock, 0,
+		pv_parse_lsock_name, 0, 0, 0 },
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };
 
