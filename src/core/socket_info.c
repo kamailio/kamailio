@@ -844,6 +844,40 @@ socket_info_t* ksr_get_socket_by_name(str *sockname)
 	return NULL;
 }
 
+socket_info_t* ksr_get_socket_by_listen(str *sockstr)
+{
+	socket_info_t *si = NULL;
+	struct socket_info** list;
+	unsigned short c_proto;
+
+	c_proto = PROTO_UDP;
+	do {
+		/* get the proper sock_list */
+		list=get_sock_info_list(c_proto);
+
+		if (list==0) {
+			/* disabled or unknown protocol */
+			continue;
+		}
+
+		for (si=*list; si; si=si->next) {
+			if(si->sock_str.s == NULL) {
+				continue;
+			}
+			LM_DBG("checking if listen %.*s matches %.*s\n",
+					sockstr->len, sockstr->s,
+					si->sock_str.len, si->sock_str.s);
+			if (sockstr->len == si->sock_str.len
+					&& strncasecmp(sockstr->s, si->sock_str.s,
+							sockstr->len)==0) {
+				return si;
+			}
+		}
+	} while((c_proto = next_proto(c_proto))!=0);
+
+	return NULL;
+}
+
 /* checks if the proto:port is one of the ports we listen on
  * and returns the corresponding socket_info structure.
  * if proto==0 (PROTO_NONE) the protocol is ignored
