@@ -98,6 +98,12 @@ static pv_export_t mod_pvs[] = {
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };
 
+/* Exported functions */
+static tr_export_t mod_trans[] = {
+	{ {"sock", sizeof("sock") - 1}, tr_sock_parse },
+	{ {0, 0}, 0 }
+};
+
 static cmd_export_t cmds[]={
 	{"append_branch", (cmd_function)w_append_branch, 0, 0,
 		0, REQUEST_ROUTE | FAILURE_ROUTE },
@@ -1366,5 +1372,6 @@ static sr_kemi_t sr_kemi_corex_exports[] = {
 int mod_register(char *path, int *dlflags, void *p1, void *p2)
 {
 	sr_kemi_modules_add(sr_kemi_corex_exports);
+	register_trans_mod(path, mod_trans);
 	return 0;
 }

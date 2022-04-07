@@ -25,6 +25,8 @@
 #include "../../core/dprint.h"
 #include "../../core/action.h"
 #include "../../core/socket_info.h"
+#include "../../core/trim.h"
+#include "../../core/pvapi.h"
 
 #include "corex_var.h"
 
@@ -240,3 +242,161 @@ int pv_get_lsock(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 
 	return pv_get_null(msg, param, res);
 }
+
+enum _tr_sock_type
+{
+	TR_NONE = 0,
+	TR_SOCK
+};
+
+enum _tr_sock_subtype
+{
+	TR_SOCK_NONE = 0,
+	TR_SOCK_HOST,
+	TR_SOCK_PORT,
+	TR_SOCK_PROTO,
+	TR_SOCK_TOURI
+};
+
+/*!
+ * \brief Evaluate SOCK transformations
+ * \param msg SIP message
+ * \param tp transformation
+ * \param subtype transformation type
+ * \param val pseudo-variable
+ * \return 0 on success, -1 on error
+ */
+int tr_sock_eval(sip_msg_t *msg, tr_param_t *tp, int subtype, pv_value_t *val)
+{
+
+	str sv;
+	sr_phostp_t php;
+
+	if(val == NULL || (val->flags & PV_VAL_NULL)) {
+		return -1;
+	}
+
+	if(!(val->flags & PV_VAL_STR)) {
+		return -1;
+	}
+
+	if(val->rs.len >= pv_get_buffer_size()-1) {
+		LM_ERR("value is too long\n");
+		return -1;
+	}
+
+	if(parse_protohostport(&val->rs, &php)<0) {
+		return -1;
+	}
+
+	sv.s = pv_get_buffer();
+	sv.s[0] = '\0';
+	sv.len = 0;
+	switch(subtype) {
+		case TR_SOCK_HOST:
+			if(php.host.len>0) {
+				memcpy(sv.s, php.host.s, php.host.len);
+				sv.len = php.host.len;
+				sv.s[sv.len] = 0;
+			}
+		break;
+		case TR_SOCK_PORT:
+			if(php.sport.len>0) {
+				memcpy(sv.s, php.sport.s, php.sport.len);
+				sv.len = php.sport.len;
+				sv.s[sv.len] = 0;
+			}
+		break;
+		case TR_SOCK_PROTO:
+			if(php.sproto.len>0) {
+				memcpy(sv.s, php.sproto.s, php.sproto.len);
+				sv.len = php.sproto.len;
+				sv.s[sv.len] = 0;
+			}
+		break;
+		case TR_SOCK_TOURI:
+			if(php.host.len>0 && php.sport.len>0 && php.sproto.len) {
+				sv.len = snprintf(sv.s, pv_get_buffer_size()-1,
+						"sip:%.*s:%.*s;transport=%.*s",
+						php.host.len, php.host.s,
+						php.sport.len, php.sport.s,
+						php.sproto.len, php.sproto.s);
+			} else if(php.host.len>0 && php.sport.len>0) {
+				sv.len = snprintf(sv.s, pv_get_buffer_size()-1,
+						"sip:%.*s:%.*s",
+						php.host.len, php.host.s,
+						php.sport.len, php.sport.s);
+			} else if(php.host.len>0 && php.sproto.len>0) {
+				sv.len = snprintf(sv.s, pv_get_buffer_size()-1,
+						"sip:%.*s;transport=%.*s",
+						php.host.len, php.host.s,
+						php.sproto.len, php.sproto.s);
+			} else if(php.host.len>0) {
+				sv.len = snprintf(sv.s, pv_get_buffer_size()-1,
+						"sip:%.*s",
+						php.host.len, php.host.s);
+			}
+			if(sv.len<0 || sv.len>=pv_get_buffer_size()-1) {
+				LM_WARN("uri too long: %d\n", sv.len);
+				sv.s[0] = '\0';
+				sv.len = 0;
+			}
+		break;
+		default:
+			LM_ERR("unknown subtype %d (cfg line: %d)\n",
+					subtype, get_cfg_crt_line());
+			return -1;
+	}
+	val->flags = PV_VAL_STR;
+	val->ri = 0;
+	val->rs = sv;
+
+	return 0;
+}
+
+char *tr_sock_parse(str *in, trans_t *tr)
+{
+	char *p;
+	str name;
+
+	if(in == NULL || tr == NULL)
+		return NULL;
+
+	p = in->s;
+	name.s = in->s;
+	tr->type = TR_SOCK;
+	tr->trf = tr_sock_eval;
+
+	/* find next token */
+	while(is_in_str(p, in) && *p != TR_PARAM_MARKER && *p != TR_RBRACKET)
+		p++;
+	if(*p == '\0') {
+		LM_ERR("invalid transformation: %.*s\n", in->len, in->s);
+		goto error;
+	}
+	name.len = p - name.s;
+	trim(&name);
+
+	if(name.len == 4 && strncasecmp(name.s, "host", 4) == 0) {
+		tr->subtype = TR_SOCK_HOST;
+		goto done;
+	} else if(name.len == 4 && strncasecmp(name.s, "port", 4) == 0) {
+		tr->subtype = TR_SOCK_PORT;
+		goto done;
+	} else if(name.len == 5 && strncasecmp(name.s, "proto", 5) == 0) {
+		tr->subtype = TR_SOCK_PROTO;
+		goto done;
+	} else if(name.len == 5 && strncasecmp(name.s, "touri", 5) == 0) {
+		tr->subtype = TR_SOCK_TOURI;
+		goto done;
+	}
+	LM_ERR("unknown SOCK transformation: %.*s/%.*s/%d!\n", in->len, in->s,
+			name.len, name.s, name.len);
+error:
+	return NULL;
+
+done:
+	tr->name = name;
+	return p;
+}
+
