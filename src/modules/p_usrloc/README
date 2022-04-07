@@ -686,7 +686,8 @@ kamcmd cfg.get p_usrloc matching_mode
 
 3.29. UTC_timestamps(int)
 
-   Enables UTC timestamps for expires and last_modified columns.
+   Enables UTC timestamps for expires and last_modified columns. It can be
+   changed at runtime via rpc command.
 
    Default value is 0 (disabled).
 

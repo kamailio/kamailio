@@ -99,6 +99,8 @@ Federico Cabiddu
               3.38. ds_db_extra_attrs (str)
               3.39. ds_load_mode (int)
               3.40. reload_delta (int)
+              3.41. ds_dns_mode (int)
+              3.42. ds_dns_interval (int)
 
         4. Functions
 
@@ -189,19 +191,21 @@ Federico Cabiddu
    1.40. Set the “ds_db_extra_attrs” parameter
    1.41. Set the “ds_load_mode” parameter
    1.42. Set reload_delta parameter
-   1.43. latency_optimized_dispatching usage
-   1.44. ds_select_dst usage
-   1.45. configuring load balancing with congestion detection
-   1.46. ds_select_domain usage
-   1.47. ds_select usage
-   1.48. ds_select_routes usage
-   1.49. ds_mark_dst usage
-   1.50. ds_list_exists usage
-   1.51. ds_is_from_list usage
-   1.52. ds_is_active usage
-   1.53. ds_load_unset usage
-   1.54. dispatcher list file
-   1.55. Kamailio config script - sample dispatcher usage
+   1.43. Set the “ds_dns_mode” parameter
+   1.44. Set the “ds_dns_interval” parameter
+   1.45. latency_optimized_dispatching usage
+   1.46. ds_select_dst usage
+   1.47. configuring load balancing with congestion detection
+   1.48. ds_select_domain usage
+   1.49. ds_select usage
+   1.50. ds_select_routes usage
+   1.51. ds_mark_dst usage
+   1.52. ds_list_exists usage
+   1.53. ds_is_from_list usage
+   1.54. ds_is_active usage
+   1.55. ds_load_unset usage
+   1.56. dispatcher list file
+   1.57. Kamailio config script - sample dispatcher usage
 
 Chapter 1. Admin Guide
 
@@ -255,6 +259,8 @@ Chapter 1. Admin Guide
         3.38. ds_db_extra_attrs (str)
         3.39. ds_load_mode (int)
         3.40. reload_delta (int)
+        3.41. ds_dns_mode (int)
+        3.42. ds_dns_interval (int)
 
    4. Functions
 
@@ -376,6 +382,8 @@ Chapter 1. Admin Guide
    3.38. ds_db_extra_attrs (str)
    3.39. ds_load_mode (int)
    3.40. reload_delta (int)
+   3.41. ds_dns_mode (int)
+   3.42. ds_dns_interval (int)
 
 3.1. list_file (string)
 
@@ -1015,6 +1023,39 @@ modparam("dispatcher", "ds_load_mode", 1)
 modparam("dispatcher", "reload_delta", 1)
 ...
 
+3.41. ds_dns_mode (int)
+
+   Specify the how DNS resolving is done for destination addresses.
+
+   It is a bitwise flag and can be set to one or the sum of:
+     * 1 - do it at startup and reload (previous behaviour).
+     * 2 - do it always when the address is matched with
+       ds_is_from_list().
+     * 4 - do it startup/reload and refresh on the timer interval
+       specified by ds_dns_interval.
+     * 8 - do SRV (and NAPTR if enabled in core) query instead of A/AAAA
+       lookup. NAPTR is done if protocol and port are not set. SRV is done
+       if port is not set.
+
+   Default value is “1”.
+
+   Example 1.43. Set the “ds_dns_mode” parameter
+...
+modparam("dispatcher", "ds_dns_mode", 2)
+...
+
+3.42. ds_dns_interval (int)
+
+   The interval in seconds to periodically refresh the DNS queries for
+   destination addresses if ds_dns_mode has value 4 set.
+
+   Default value is “600”.
+
+   Example 1.44. Set the “ds_dns_interval” parameter
+...
+modparam("dispatcher", "ds_interval_mode", 1800)
+...
+
 4. Functions
 
    4.1. ds_select_dst(set, alg[, limit])
@@ -1126,7 +1167,7 @@ modparam("dispatcher", "reload_delta", 1)
             - If the attribute 'cc=1' is set, the latency used is
             congestion ms : estimate (current latency ms) - average
             (normal condition latency ms).
-            Example 1.43. latency_optimized_dispatching usage
+            Example 1.45. latency_optimized_dispatching usage
 Using this simple formula :
     ADJUSTED_PRIORITY = PRIORITY - (ESTIMATED_LATENCY_MS/PRIORITY)
 
@@ -1152,7 +1193,7 @@ With congestion control the formula becomes :
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.44. ds_select_dst usage
+   Example 1.46. ds_select_dst usage
 ...
 ds_select_dst("1", "0");
 ...
@@ -1162,7 +1203,7 @@ ds_select_dst("1", "$var(a)");
 ds_select_dst("1", "4", "3");
 ...
 
-   Example 1.45. configuring load balancing with congestion detection
+   Example 1.47. configuring load balancing with congestion detection
 ...
 # sample of SQL provisionning statements
 INSERT INTO "dispatcher"
@@ -1216,7 +1257,7 @@ DEST: {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.46. ds_select_domain usage
+   Example 1.48. ds_select_domain usage
 ...
 $var(a) = 4;
 if(ds_select_domain("1", "$var(a)")) {
@@ -1240,7 +1281,7 @@ if(ds_select_domain("1", "$var(a)")) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.47. ds_select usage
+   Example 1.49. ds_select usage
 ...
 $var(a) = 4;
 if(ds_select("1", "$var(a)")) {
@@ -1283,7 +1324,7 @@ if(ds_select("1", "$var(a)")) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.48. ds_select_routes usage
+   Example 1.50. ds_select_routes usage
 ...
 $var(alg) = 4;
 $var(limit) = 8;
@@ -1358,7 +1399,7 @@ failure_route[REROUTE] {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.49. ds_mark_dst usage
+   Example 1.51. ds_mark_dst usage
 ...
 failure_route[tryagain] {
 ...
@@ -1380,7 +1421,7 @@ failure_route[tryagain] {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.50. ds_list_exists usage
+   Example 1.52. ds_list_exists usage
 ...
 if(ds_list_exists("10")) {
     ...
@@ -1424,7 +1465,7 @@ if(ds_list_exists("10")) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.51. ds_is_from_list usage
+   Example 1.53. ds_is_from_list usage
 ...
 if(ds_is_from_list()) {
     ...
@@ -1454,7 +1495,7 @@ if(ds_is_from_list("10", "3", "sip:127.0.0.1:5080")) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.52. ds_is_active usage
+   Example 1.54. ds_is_active usage
 ...
 if(ds_is_active("10")) {
     ...
@@ -1482,7 +1523,7 @@ if(ds_is_active("10", "sip:127.0.0.1:5080")) {
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE and ONREPLY_ROUTE.
 
-   Example 1.53. ds_load_unset usage
+   Example 1.55. ds_load_unset usage
 ...
 route {
     ...
@@ -1792,7 +1833,7 @@ setid(int) destination(sip uri) flags(int,opt) priority(int,opt) attrs(str,opt)
    For database, each element of a line resides in a different column.
    Next is a dispatcher.list file example:
 
-   Example 1.54. dispatcher list file
+   Example 1.56. dispatcher list file
 ...
 #
 # dispatcher destination sets (groups)
@@ -1817,7 +1858,7 @@ r,opt)
 
    Next listing shows a sample config for using the dispatcher module.
 
-   Example 1.55. Kamailio config script - sample dispatcher usage
+   Example 1.57. Kamailio config script - sample dispatcher usage
 ...
 #!KAMAILIO
 #
