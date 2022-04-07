@@ -1587,6 +1587,7 @@ static const char *dispatcher_rpc_list_doc[2] = {
 
 #define DS_RPC_PRINT_NORMAL 1
 #define DS_RPC_PRINT_SHORT  2
+#define DS_RPC_PRINT_FULL   3
 
 /**
  *
@@ -1604,6 +1605,7 @@ int ds_rpc_print_set(ds_set_t *node, rpc_t *rpc, void *ctx, void *rpc_handle,
 	int j;
 	char c[3];
 	str data = STR_NULL;
+	char ipbuf[IP_ADDR_MAX_STRZ_SIZE];
 
 	if(!node)
 		return 0;
@@ -1644,11 +1646,26 @@ int ds_rpc_print_set(ds_set_t *node, rpc_t *rpc, void *ctx, void *rpc_handle,
 		else
 			c[1] = 'X';
 
+		if(rpc->struct_add(vh, "Ssd", "URI", &node->dlist[j].uri, "FLAGS",
+				   c, "PRIORITY", node->dlist[j].priority)
+				< 0) {
+			rpc->fault(ctx, 500, "Internal error creating dest struct");
+			return -1;
+		}
+
+		if(mode == DS_RPC_PRINT_FULL) {
+			ipbuf[0] = '\0';
+			ip_addr2sbufz(&node->dlist[j].ip_address, ipbuf, IP_ADDR_MAX_STRZ_SIZE);
+			if(rpc->struct_add(vh, "Ssdd", "HOST", &node->dlist[j].host,
+						"IPADDR", ipbuf, "PORT", (int)node->dlist[j].port,
+						"PROTOID", (int)node->dlist[j].proto) < 0) {
+				rpc->fault(ctx, 500, "Internal error creating dest struct");
+				return -1;
+			}
+		}
+
 		if(mode != DS_RPC_PRINT_SHORT && node->dlist[j].attrs.body.s!=NULL) {
-			if(rpc->struct_add(vh, "Ssd{", "URI", &node->dlist[j].uri,
-					"FLAGS", c,
-					"PRIORITY", node->dlist[j].priority,
-					"ATTRS", &wh) < 0) {
+			if(rpc->struct_add(vh, "{", "ATTRS", &wh) < 0) {
 				rpc->fault(ctx, 500, "Internal error creating dest struct");
 				return -1;
 			}
@@ -1667,13 +1684,6 @@ int ds_rpc_print_set(ds_set_t *node, rpc_t *rpc, void *ctx, void *rpc_handle,
 									? &(node->dlist[j].attrs.obproxy) : &data)
 					< 0) {
 				rpc->fault(ctx, 500, "Internal error creating attrs struct");
-				return -1;
-			}
-		} else {
-			if(rpc->struct_add(vh, "Ssd", "URI", &node->dlist[j].uri, "FLAGS",
-					   c, "PRIORITY", node->dlist[j].priority)
-					< 0) {
-				rpc->fault(ctx, 500, "Internal error creating dest struct");
 				return -1;
 			}
 		}
@@ -1722,6 +1732,8 @@ static void dispatcher_rpc_list(rpc_t *rpc, void *ctx)
 	if(n == 1) {
 		if(smode.len==5 && strncasecmp(smode.s, "short", 5)==0) {
 			vmode = DS_RPC_PRINT_SHORT;
+		} else if(smode.len==4 && strncasecmp(smode.s, "full", 4)==0) {
+			vmode = DS_RPC_PRINT_FULL;
 		}
 	}
 
