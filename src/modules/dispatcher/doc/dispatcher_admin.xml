@@ -1932,8 +1932,9 @@ onreply_route {
 		<para>Parameters:</para>
 		<itemizedlist>
 			<listitem>
-			<para>_rmode_ - (optional) response mode - can be 'short' to get a
-			shorter version of groups and destinations</para>
+			<para>_rmode_ - (optional) response mode - can be: 'short' to get a
+			shorter version of groups and destinations; 'full' to get more
+			attributes per destination</para>
 			</listitem>
 		</itemizedlist>
 		<para>
