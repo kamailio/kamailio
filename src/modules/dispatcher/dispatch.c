@@ -3835,6 +3835,85 @@ void ds_ht_timer(unsigned int ticks, void *param)
 	return;
 }
 
+
+
+/**
+ *
+ */
+void ds_dns_update_set(ds_set_t *node)
+{
+	int i, j;
+	char hn[DS_HN_SIZE];
+	struct hostent *he;
+	unsigned short sport = 0;
+	char sproto = PROTO_NONE;
+
+	if(!node)
+		return;
+
+	for(i = 0; i < 2; ++i)
+		ds_dns_update_set(node->next[i]);
+
+	for(j = 0; j < node->nr; j++) {
+		/* do a DNS qookup for the host part, if not disabled via dst flags */
+		if(node->dlist[j].flags & DS_NODNSARES_DST) {
+			continue;
+		}
+		if(node->dlist[j].host.len <= 0) {
+			continue;
+		}
+		LM_DBG("resolving [%.*s] - mode: %d\n", node->dlist[j].host.len,
+				node->dlist[j].host.s, ds_dns_mode);
+		if (ds_dns_mode & DS_DNS_MODE_QSRV) {
+			sport = node->dlist[j].port;
+			sproto = (char)node->dlist[j].proto;
+			he = sip_resolvehost(&node->dlist[j].host, &sport, &sproto);
+			if(he != 0) {
+				if(sport != 0) {
+					node->dlist[j].port = sport;
+				}
+				if(sproto != PROTO_NONE) {
+					node->dlist[j].proto = sproto;
+				}
+			}
+		} else {
+			/* The Hostname needs to be \0 terminated for resolvehost, so we
+			 * make a copy here. */
+			memcpy(hn, node->dlist[j].host.s, node->dlist[j].host.len);
+			hn[node->dlist[j].host.len] = '\0';
+			he = resolvehost(hn);
+		}
+		if(he == 0) {
+			LM_ERR("could not resolve %.*s\n", node->dlist[j].host.len,
+					node->dlist[j].host.s);
+			continue;
+		} else {
+			/* Store hostent in the dispatcher structure */
+			hostent2ip_addr(&node->dlist[j].ip_address, he, 0);
+		}
+	}
+}
+
+/*! \brief
+ * Timer for DNS query of destination addresses
+ *
+ * This timer is regularly fired.
+ */
+void ds_dns_timer(unsigned int ticks, void *param)
+{
+	if(!(ds_dns_mode & DS_DNS_MODE_TIMER)) {
+		return;
+	}
+
+	/* Check for the list. */
+	if(_ds_list == NULL || _ds_list_nr <= 0) {
+		LM_DBG("no destination sets\n");
+		return;
+	}
+
+	ds_dns_update_set(_ds_list);
+}
+
 int ds_next_dst_api(sip_msg_t *msg, int mode)
 {
 	return ds_update_dst(msg, DS_USE_NEXT, mode);

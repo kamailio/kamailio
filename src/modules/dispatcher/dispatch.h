@@ -173,11 +173,15 @@ int ds_is_addr_from_list(sip_msg_t *_m, int group, str *uri, int mode);
  */
 void ds_check_timer(unsigned int ticks, void *param);
 
-
 /*! \brief
  * Timer for checking active calls load
  */
 void ds_ht_timer(unsigned int ticks, void *param);
+
+/*! \brief
+ * Timer for DNS query of destination addresses
+ */
+void ds_dns_timer(unsigned int ticks, void *param);
 
 /*! \brief
  * Check if the reply-code is valid:

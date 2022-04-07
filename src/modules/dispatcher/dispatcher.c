@@ -122,6 +122,7 @@ int ds_attrs_none = 0;
 int ds_load_mode = 0;
 uint32_t ds_dns_mode = DS_DNS_MODE_INIT;
 static int ds_dns_mode_param = 0;
+static int ds_dns_interval = 0;
 
 str ds_outbound_proxy = STR_NULL;
 
@@ -299,6 +300,7 @@ static param_export_t params[]={
 	{"ds_load_mode",       PARAM_INT, &ds_load_mode},
 	{"reload_delta",       PARAM_INT, &ds_reload_delta },
 	{"ds_dns_mode",        PARAM_INT, &ds_dns_mode_param},
+	{"ds_dns_interval",    PARAM_INT, &ds_dns_interval},
 	{0,0,0}
 };
 
@@ -330,6 +332,15 @@ static int mod_init(void)
 
 	ds_dns_mode = 1U<<(unsigned int)ds_dns_mode_param;
 
+	if(ds_dns_mode & DS_DNS_MODE_TIMER) {
+		if(ds_dns_interval<=0) {
+			LM_WARN("dns interval parameter not set - using 600\n");
+			ds_dns_interval = 600;
+		}
+		if(sr_wtimer_add(ds_dns_timer, NULL, ds_dns_interval) < 0) {
+			return -1;
+		}
+	}
 	if(ds_ping_active_init() < 0) {
 		return -1;
 	}
