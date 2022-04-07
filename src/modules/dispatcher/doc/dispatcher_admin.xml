@@ -1100,6 +1100,68 @@ modparam("dispatcher", "reload_delta", 1)
 		</programlisting>
 		</example>
 	</section>
+
+	<section id="dispatcher.p.ds_dns_mode">
+		<title><varname>ds_dns_mode</varname> (int)</title>
+		<para>
+			Specify the how DNS resolving is done for destination addresses.
+		</para>
+		<para>
+			It is a bitwise flag and can be set to one or the sum of:
+		</para>
+		<itemizedlist>
+		<listitem>
+			<para>1 - do it at startup and reload (previous behaviour).</para>
+		</listitem>
+		<listitem>
+			<para>2 - do it always when the address is matched with ds_is_from_list().</para>
+		</listitem>
+		<listitem>
+			<para>4 - do it startup/reload and refresh on the timer interval
+			specified by ds_dns_interval.</para>
+		</listitem>
+		<listitem>
+			<para>8 - do SRV (and NAPTR if enabled in core) query instead of
+			A/AAAA lookup. NAPTR is done if protocol and port are not set.
+			SRV is done if port is not set.</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		<emphasis>
+			Default value is <quote>1</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set the <quote>ds_dns_mode</quote> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "ds_dns_mode", 2)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="dispatcher.p.ds_dns_interval">
+		<title><varname>ds_dns_interval</varname> (int)</title>
+		<para>
+			The interval in seconds to periodically refresh the DNS queries for
+			destination addresses if ds_dns_mode has value 4 set.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>600</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set the <quote>ds_dns_interval</quote> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "ds_interval_mode", 1800)
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 	<section>
