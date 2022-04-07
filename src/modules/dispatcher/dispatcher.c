@@ -121,8 +121,7 @@ int ds_timer_mode = 0;
 int ds_attrs_none = 0;
 int ds_load_mode = 0;
 uint32_t ds_dns_mode = DS_DNS_MODE_INIT;
-static int ds_dns_mode_param = 0;
-static int ds_dns_interval = 0;
+static int ds_dns_interval = 600;
 
 str ds_outbound_proxy = STR_NULL;
 
@@ -299,7 +298,7 @@ static param_export_t params[]={
 	{"ds_db_extra_attrs",  PARAM_STR, &ds_db_extra_attrs},
 	{"ds_load_mode",       PARAM_INT, &ds_load_mode},
 	{"reload_delta",       PARAM_INT, &ds_reload_delta },
-	{"ds_dns_mode",        PARAM_INT, &ds_dns_mode_param},
+	{"ds_dns_mode",        PARAM_INT, &ds_dns_mode},
 	{"ds_dns_interval",    PARAM_INT, &ds_dns_interval},
 	{0,0,0}
 };
@@ -329,8 +328,6 @@ static int mod_init(void)
 	int port, proto;
 	param_hooks_t phooks;
 	param_t *pit = NULL;
-
-	ds_dns_mode = 1U<<(unsigned int)ds_dns_mode_param;
 
 	if(ds_dns_mode & DS_DNS_MODE_TIMER) {
 		if(ds_dns_interval<=0) {
