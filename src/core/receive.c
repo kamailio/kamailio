@@ -161,7 +161,7 @@ sr_net_info_t *ksr_evrt_rcvnetinfo_get(void)
 /**
  *
  */
-int ksr_evrt_received(char *buf, unsigned int len, receive_info_t *rcv_info)
+int ksr_evrt_received(char *buf, unsigned int *len, receive_info_t *rcv_info)
 {
 	sr_kemi_eng_t *keng = NULL;
 	sr_net_info_t netinfo;
@@ -192,7 +192,8 @@ int ksr_evrt_received(char *buf, unsigned int len, receive_info_t *rcv_info)
 	}
 	memset(&netinfo, 0, sizeof(sr_net_info_t));
 	netinfo.data.s = buf;
-	netinfo.data.len = len;
+	netinfo.data.len = *len;
+	netinfo.bufsize = BUF_SIZE;
 	netinfo.rcv = rcv_info;
 
 	ksr_evrt_rcvnetinfo = &netinfo;
@@ -212,6 +213,7 @@ int ksr_evrt_received(char *buf, unsigned int len, receive_info_t *rcv_info)
 		LM_DBG("dropping received message\n");
 		ret = -1;
 	}
+	*len = netinfo.data.len;
 	ksr_evrt_rcvnetinfo = NULL;
 
 	return ret;
@@ -312,7 +314,7 @@ int receive_msg(char *buf, unsigned int len, receive_info_t *rcv_info)
 	}
 
 	if(ksr_evrt_received_mode!=0) {
-		if(ksr_evrt_received(buf, len, rcv_info)<0) {
+		if(ksr_evrt_received(buf, &len, rcv_info)<0) {
 			LM_DBG("dropping the received message\n");
 			goto error00;
 		}

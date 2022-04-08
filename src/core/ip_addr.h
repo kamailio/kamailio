@@ -203,6 +203,7 @@ typedef struct ksr_coninfo {
 
 typedef struct sr_net_info {
 	str data;
+	unsigned int bufsize;
 	receive_info_t* rcv;
 	dest_info_t* dst;
 } sr_net_info_t;
