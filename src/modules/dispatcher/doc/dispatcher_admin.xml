@@ -2082,8 +2082,9 @@ DEST: {
 		<function moreinfo="none">dispatcher.add</function>
 		</title>
 		<para>
-		Add a destination address to the in-memory dispatcher list. Reloading the dispatcher will remove
-		any destinations that are only added to the in-memory dispatcher list.
+		Add a destination address to the in-memory dispatcher list. Reloading
+		the dispatcher will remove any destinations that are only added to the
+		in-memory dispatcher list.
 		</para>
 		<para>
 		Name: <emphasis>dispatcher.add</emphasis>
@@ -2097,6 +2098,9 @@ DEST: {
 			<listitem><para>_flags_ (optional): as described in the list file format,
 			default 0</para></listitem>
 
+			<listitem><para>_priority_ (optional): as described in the list file format,
+			default 0</para></listitem>
+
 			<listitem><para>_attrs_ (optional): as described in the list file format,
 			default ""</para></listitem>
 
@@ -2106,10 +2110,10 @@ DEST: {
 		</para>
 <programlisting  format="linespecific">
 ...
-# prototype: &sercmd; dispatcher.add _group_ _address_ _flags_ _attrs_
+# prototype: &sercmd; dispatcher.add _group_ _address_ _flags_ _priority_ _attrs_
 &sercmd; dispatcher.add 2 sip:127.0.0.1:5080
 &sercmd; dispatcher.add 3 sip:127.0.0.1:5075 8
-&sercmd; dispatcher.add 3 sip:127.0.0.1:5075 0 duid=abc;socket=udp:127.0.0.1:5060
+&sercmd; dispatcher.add 3 sip:127.0.0.1:5075 0 0 duid=abc;socket=udp:127.0.0.1:5060
 ...
 </programlisting>
 	</section>
