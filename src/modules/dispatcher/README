@@ -1684,15 +1684,18 @@ kamcmd dispatcher.ping_active 0
      * _group_: destination group id
      * _address_: address of the destination in the _group_
      * _flags_ (optional): as described in the list file format, default 0
+     * _priority_ (optional): as described in the list file format,
+       default 0
      * _attrs_ (optional): as described in the list file format, default
        ""
 
    Example:
 ...
-# prototype: kamcmd dispatcher.add _group_ _address_ _flags_ _attrs_
+# prototype: kamcmd dispatcher.add _group_ _address_ _flags_ _priority_ _attrs_
 kamcmd dispatcher.add 2 sip:127.0.0.1:5080
 kamcmd dispatcher.add 3 sip:127.0.0.1:5075 8
-kamcmd dispatcher.add 3 sip:127.0.0.1:5075 0 duid=abc;socket=udp:127.0.0.1:5060
+kamcmd dispatcher.add 3 sip:127.0.0.1:5075 0 0 duid=abc;socket=udp:127.0.0.1:506
+0
 ...
 
 5.7.  dispatcher.remove
