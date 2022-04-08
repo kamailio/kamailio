@@ -215,6 +215,9 @@ int pv_get_lsock(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 		case 'l':
 			si = ksr_get_socket_by_listen(&lexpr.val);
 			break;
+		case 'a':
+			si = ksr_get_socket_by_advertise(&lexpr.val);
+			break;
 	}
 	if(si == NULL) {
 		return pv_get_null(msg, param, res);
