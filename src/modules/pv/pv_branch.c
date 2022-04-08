@@ -617,6 +617,60 @@ int pv_get_rcv(struct sip_msg *msg, pv_param_t *param,
 	return 0;
 }
 
+int pv_set_rcv(sip_msg_t *msg, pv_param_t *param, int op, pv_value_t *val)
+{
+	sr_net_info_t *neti = NULL;
+	str s;
+
+	neti = ksr_evrt_rcvnetinfo_get();
+
+	if (neti==NULL || neti->rcv==NULL || neti->rcv->bind_address==NULL) {
+		LM_ERR("received info not set\n");
+		return -1;
+	}
+
+	if(param==NULL) {
+		LM_ERR("bad parameters\n");
+		return -1;
+	}
+	switch(param->pvn.u.isname.name.n)
+	{
+		case 1: /* buf */
+			if (neti->bufsize <= 0) {
+				LM_ERR("received data cannot be changed\n");
+				return -1;
+			}
+			if(val==NULL || (val->flags&PV_VAL_NULL)) {
+				neti->data.s[0] = '\0';
+				neti->data.len = 0;
+				break;
+			}
+			if(!(val->flags&PV_VAL_STR)) {
+				LM_ERR("str value required to set received data\n");
+				return -1;
+			}
+			if(val->rs.len<=0) {
+				neti->data.s[0] = '\0';
+				neti->data.len = 0;
+				break;
+			}
+
+			if (unlikely(val->rs.len >= neti->bufsize - 1)) {
+				LM_ERR("new data is too long: %.*s\n",
+								val->rs.len, val->rs.s);
+				return -1;
+			}
+			memcpy(neti->data.s, val->rs.s, val->rs.len);
+			neti->data.s[val->rs.len] = '\0';
+			neti->data.len = val->rs.len;
+		break;
+		default:
+			LM_DBG("set operation not supported for field %d\n",
+					param->pvn.u.isname.name.n);
+	}
+	return 0;
+}
+
 int pv_parse_rcv_name(pv_spec_p sp, str *in)
 {
 	if(sp==NULL || in==NULL || in->len<=0)
