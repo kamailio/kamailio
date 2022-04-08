@@ -3889,6 +3889,7 @@ void ds_dns_update_set(ds_set_t *node)
 		} else {
 			/* Store hostent in the dispatcher structure */
 			hostent2ip_addr(&node->dlist[j].ip_address, he, 0);
+			gettimeofday(&node->dlist[j].dnstime, NULL);
 		}
 	}
 }

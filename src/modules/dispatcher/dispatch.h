@@ -29,6 +29,7 @@
 #define _DISPATCH_H_
 
 #include <stdio.h>
+#include <sys/time.h>
 #include "../../core/pvar.h"
 #include "../../core/xavp.h"
 #include "../../core/parser/msg_parser.h"
@@ -231,6 +232,7 @@ typedef struct _ds_dest {
 	unsigned short int port; 	/*!< port of the URI */
 	unsigned short int proto; 	/*!< protocol of the URI */
 	int message_count;
+	struct timeval dnstime;
 	struct _ds_dest *next;
 } ds_dest_t;
 

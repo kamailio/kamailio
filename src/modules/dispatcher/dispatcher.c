@@ -1664,9 +1664,11 @@ int ds_rpc_print_set(ds_set_t *node, rpc_t *rpc, void *ctx, void *rpc_handle,
 		if(mode == DS_RPC_PRINT_FULL) {
 			ipbuf[0] = '\0';
 			ip_addr2sbufz(&node->dlist[j].ip_address, ipbuf, IP_ADDR_MAX_STRZ_SIZE);
-			if(rpc->struct_add(vh, "Ssdd", "HOST", &node->dlist[j].host,
+			if(rpc->struct_add(vh, "Ssddjj", "HOST", &node->dlist[j].host,
 						"IPADDR", ipbuf, "PORT", (int)node->dlist[j].port,
-						"PROTOID", (int)node->dlist[j].proto) < 0) {
+						"PROTOID", (int)node->dlist[j].proto,
+						"DNSTIME_SEC", (unsigned long)node->dlist[j].dnstime.tv_sec,
+						"DNSTIME_USEC", (unsigned long)node->dlist[j].dnstime.tv_usec) < 0) {
 				rpc->fault(ctx, 500, "Internal error creating dest struct");
 				return -1;
 			}
