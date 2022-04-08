@@ -2611,12 +2611,11 @@ void ds_add_dest_cb(ds_set_t *node, int i, void *arg)
 }
 
 /* add dispatcher entry to in-memory dispatcher list */
-int ds_add_dst(int group, str *address, int flags, str *attrs)
+int ds_add_dst(int group, str *address, int flags, int priority, str *attrs)
 {
-	int setn, priority;
+	int setn;
 
 	setn = _ds_list_nr;
-	priority = 0;
 
 	*ds_next_idx = (*ds_crt_idx + 1) % 2;
 	ds_avl_destroy(&ds_lists[*ds_next_idx]);

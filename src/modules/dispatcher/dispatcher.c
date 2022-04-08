@@ -1907,7 +1907,7 @@ static const char *dispatcher_rpc_add_doc[2] = {
  */
 static void dispatcher_rpc_add(rpc_t *rpc, void *ctx)
 {
-	int group, flags, nparams;
+	int group, flags, priority, nparams;
 	str dest;
 	str attrs = STR_NULL;
 
@@ -1924,17 +1924,18 @@ static void dispatcher_rpc_add(rpc_t *rpc, void *ctx)
 	*ds_rpc_reload_time = time(NULL);
 
 	flags = 0;
+	priority = 0;
 
-	nparams = rpc->scan(ctx, "dS*dS", &group, &dest, &flags, &attrs);
+	nparams = rpc->scan(ctx, "dS*ddS", &group, &dest, &flags, &priority, &attrs);
 	if(nparams < 2) {
 		rpc->fault(ctx, 500, "Invalid Parameters");
 		return;
-	} else if (nparams <= 3) {
+	} else if (nparams <= 4) {
 		attrs.s = 0;
 		attrs.len = 0;
 	}
 
-	if(ds_add_dst(group, &dest, flags, &attrs) != 0) {
+	if(ds_add_dst(group, &dest, flags, priority, &attrs) != 0) {
 		rpc->fault(ctx, 500, "Adding dispatcher dst failed");
 		return;
 	}

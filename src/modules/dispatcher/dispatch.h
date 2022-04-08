@@ -145,7 +145,7 @@ int ds_select_dst_limit(sip_msg_t *msg, int set, int alg, uint32_t limit,
 		int mode);
 int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode);
 int ds_update_dst(struct sip_msg *msg, int upos, int mode);
-int ds_add_dst(int group, str *address, int flags, str *attrs);
+int ds_add_dst(int group, str *address, int flags, int priority, str *attrs);
 int ds_remove_dst(int group, str *address);
 int ds_update_state(sip_msg_t *msg, int group, str *address, int state,
 		ds_rctx_t *rctx);
