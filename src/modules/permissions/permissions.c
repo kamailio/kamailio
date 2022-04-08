@@ -546,7 +546,7 @@ static int double_fixup(void** param, int param_no)
 		*param = tmp;
 		pkg_free(buffer);
 
-		return 0;
+		return ret;
 
 	} else if (param_no == 2) { /* pseudo variable */
 
