@@ -122,6 +122,7 @@ int ds_attrs_none = 0;
 int ds_load_mode = 0;
 uint32_t ds_dns_mode = DS_DNS_MODE_INIT;
 static int ds_dns_interval = 600;
+int ds_dns_ttl = 0;
 
 str ds_outbound_proxy = STR_NULL;
 
@@ -300,6 +301,7 @@ static param_export_t params[]={
 	{"reload_delta",       PARAM_INT, &ds_reload_delta },
 	{"ds_dns_mode",        PARAM_INT, &ds_dns_mode},
 	{"ds_dns_interval",    PARAM_INT, &ds_dns_interval},
+	{"ds_dns_ttl",         PARAM_INT, &ds_dns_ttl},
 	{0,0,0}
 };
 
@@ -337,6 +339,9 @@ static int mod_init(void)
 		if(sr_wtimer_add(ds_dns_timer, NULL, ds_dns_interval) < 0) {
 			return -1;
 		}
+	}
+	if(ds_dns_ttl<0) {
+		ds_dns_ttl = 0;
 	}
 	if(ds_ping_active_init() < 0) {
 		return -1;

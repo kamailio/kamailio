@@ -112,6 +112,7 @@ extern int ds_attrs_none;
 extern param_t *ds_db_extra_attrs_list;
 extern int ds_load_mode;
 extern uint32_t ds_dns_mode;
+extern int ds_dns_ttl;
 
 static db_func_t ds_dbf;
 static db1_con_t *ds_db_handle = NULL;
@@ -490,6 +491,7 @@ ds_dest_t *pack_dest(str iuri, int flags, int priority, str *attrs, int dload)
 	if(dp->flags & DS_NODNSARES_DST) {
 		dp->irmode |= DS_IRMODE_NOIPADDR;
 	} else if (ds_dns_mode & (DS_DNS_MODE_INIT|DS_DNS_MODE_TIMER)) {
+		dns_set_local_ttl(ds_dns_ttl);
 		if (ds_dns_mode & DS_DNS_MODE_QSRV) {
 			sport = dp->port;
 			sproto = (char)dp->proto;
@@ -509,6 +511,7 @@ ds_dest_t *pack_dest(str iuri, int flags, int priority, str *attrs, int dload)
 			hn[puri.host.len] = '\0';
 			he = resolvehost(hn);
 		}
+		dns_set_local_ttl(0);
 		if(he == 0) {
 			LM_ERR("could not resolve %.*s (missing no-probing flag?!?)\n",
 					puri.host.len, puri.host.s);
@@ -3372,6 +3375,7 @@ int ds_is_addr_from_set(sip_msg_t *_m, struct ip_addr *pipaddr,
 		if(!(ds_dns_mode & DS_DNS_MODE_ALWAYS)) {
 			ipa = &node->dlist[j].ip_address;
 		} else {
+			dns_set_local_ttl(ds_dns_ttl);
 			if (ds_dns_mode & DS_DNS_MODE_QSRV) {
 				sport = node->dlist[j].port;
 				sproto = (char)node->dlist[j].proto;
@@ -3389,6 +3393,7 @@ int ds_is_addr_from_set(sip_msg_t *_m, struct ip_addr *pipaddr,
 				hn[node->dlist[j].host.len] = '\0';
 				he = resolvehost(hn);
 			}
+			dns_set_local_ttl(0);
 			if(he == 0) {
 				LM_WARN("could not resolve %.*s (skipping)\n",
 						node->dlist[j].host.len, node->dlist[j].host.s);
@@ -3485,6 +3490,7 @@ int ds_is_addr_from_list(sip_msg_t *_m, int group, str *uri, int mode)
 		}
 		tport = puri.port_no;
 		tproto = puri.proto;
+		dns_set_local_ttl(ds_dns_ttl);
 		if (ds_dns_mode & DS_DNS_MODE_QSRV) {
 			sport = tport;
 			sproto = (char)tproto;
@@ -3502,6 +3508,7 @@ int ds_is_addr_from_list(sip_msg_t *_m, int group, str *uri, int mode)
 			hn[puri.host.len] = '\0';
 			he = resolvehost(hn);
 		}
+		dns_set_local_ttl(0);
 		if(he == 0) {
 			LM_ERR("could not resolve %.*s\n", puri.host.len, puri.host.s);
 			return -1;
@@ -3863,6 +3870,7 @@ void ds_dns_update_set(ds_set_t *node)
 		}
 		LM_DBG("resolving [%.*s] - mode: %d\n", node->dlist[j].host.len,
 				node->dlist[j].host.s, ds_dns_mode);
+		dns_set_local_ttl(ds_dns_ttl);
 		if (ds_dns_mode & DS_DNS_MODE_QSRV) {
 			sport = node->dlist[j].port;
 			sproto = (char)node->dlist[j].proto;
@@ -3882,6 +3890,7 @@ void ds_dns_update_set(ds_set_t *node)
 			hn[node->dlist[j].host.len] = '\0';
 			he = resolvehost(hn);
 		}
+		dns_set_local_ttl(0);
 		if(he == 0) {
 			LM_ERR("could not resolve %.*s\n", node->dlist[j].host.len,
 					node->dlist[j].host.s);
