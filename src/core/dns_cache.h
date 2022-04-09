@@ -374,5 +374,6 @@ int dns_cache_delete_single_record(unsigned short type,
 			str *value,
 			int flags);
 
+void dns_set_local_ttl(int ttl);
 
 #endif

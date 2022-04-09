@@ -88,12 +88,15 @@ struct t_dns_cache_stats* dns_cache_stats=0;
 #define LOCK_DNS_HASH()		lock_get(dns_hash_lock)
 #define UNLOCK_DNS_HASH()	lock_release(dns_hash_lock)
 
+static int _dns_local_ttl = 0;
+
 #define FIX_TTL(t) \
-	(((t)<cfg_get(core, core_cfg, dns_cache_min_ttl))? \
-		cfg_get(core, core_cfg, dns_cache_min_ttl): \
-		(((t)>cfg_get(core, core_cfg, dns_cache_max_ttl))? \
-			cfg_get(core, core_cfg, dns_cache_max_ttl): \
-			(t)))
+	((_dns_local_ttl>0)?_dns_local_ttl: \
+		(((t)<cfg_get(core, core_cfg, dns_cache_min_ttl))? \
+			cfg_get(core, core_cfg, dns_cache_min_ttl): \
+				(((t)>cfg_get(core, core_cfg, dns_cache_max_ttl))? \
+					cfg_get(core, core_cfg, dns_cache_max_ttl): \
+						(t))))
 
 
 struct dns_hash_head{
@@ -132,6 +135,10 @@ static const char* dns_str_errors[]={
 };
 
 
+void dns_set_local_ttl(int ttl)
+{
+	_dns_local_ttl = ttl;
+}
 
 /* param: err (negative error number) */
 const char* dns_strerror(int err)
