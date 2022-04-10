@@ -1162,6 +1162,28 @@ modparam("dispatcher", "ds_interval_mode", 1800)
 		</example>
 	</section>
 
+	<section id="dispatcher.p.ds_dns_ttl">
+		<title><varname>ds_dns_ttl</varname> (int)</title>
+		<para>
+			The interval in seconds to set TTL for DNS results received for
+			queries dones inside this module. If 0, this TTL is not set,
+			result and core values are used.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set the <quote>ds_dns_ttl</quote> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "ds_interval_mode", 7200)
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 	<section>
