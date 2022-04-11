@@ -66,7 +66,14 @@
     <section id="auth.dep">
 	<title>Dependencies</title>
 	<para>
-	    The module does not depend on any other module.
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>sl</emphasis> - stateless reply.
+			</para>
+			</listitem>
+			</itemizedlist>
 	</para>
     </section>
     
