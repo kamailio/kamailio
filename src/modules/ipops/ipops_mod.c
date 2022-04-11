@@ -46,6 +46,7 @@
 #include "../../core/mod_fix.h"
 #include "../../core/pvar.h"
 #include "../../core/resolve.h"
+#include "../../core/dns_cache.h"
 #include "../../core/lvalue.h"
 #include "../../core/kemi.h"
 #include "api.h"
@@ -110,6 +111,7 @@ static int fixup_free_detailed_ip_type(void** param, int param_no);
 static int w_dns_query(sip_msg_t* msg, char* str1, char* str2);
 static int w_srv_query(sip_msg_t* msg, char* str1, char* str2);
 static int w_naptr_query(sip_msg_t* msg, char* str1, char* str2);
+static int w_dns_set_local_ttl(sip_msg_t*, char*, char*);
 static int mod_init(void);
 
 static pv_export_t mod_pvs[] = {
@@ -165,6 +167,8 @@ static cmd_export_t cmds[] =
 		ANY_ROUTE },
 	{ "naptr_query", (cmd_function)w_naptr_query, 2, fixup_spve_spve, 0,
 		ANY_ROUTE },
+	{ "dns_set_local_ttl", (cmd_function)w_dns_set_local_ttl, 1, fixup_igp_null,
+		fixup_free_igp_null, ANY_ROUTE },
 	{ "bind_ipops", (cmd_function)bind_ipops, 0, 0, 0, 0},
 	{ 0, 0, 0, 0, 0, 0 }
 };
@@ -1361,6 +1365,30 @@ static int ki_naptr_query(sip_msg_t* msg, str* naptrname, str* pvid)
 /**
  *
  */
+static int ki_dns_set_local_ttl(sip_msg_t* msg, int vttl)
+{
+	dns_set_local_ttl(vttl);
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_dns_set_local_ttl(sip_msg_t *msg, char *pttl, char *p2)
+{
+	int vttl = 0;
+
+	if(fixup_get_ivalue(msg, (gparam_t*)pttl, &vttl)<0) {
+		LM_ERR("cannot get the ttl value\n");
+		return -1;
+	}
+
+	return ki_dns_set_local_ttl(msg, vttl);
+}
+
+/**
+ *
+ */
 /* clang-format off */
 static sr_kemi_t sr_kemi_ipops_exports[] = {
 	{ str_init("ipops"), str_init("is_ip"),
@@ -1456,6 +1484,11 @@ static sr_kemi_t sr_kemi_ipops_exports[] = {
 	{ str_init("ipops"), str_init("naptr_query"),
 		SR_KEMIP_INT, ki_naptr_query,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("ipops"), str_init("dns_set_local_ttl"),
+		SR_KEMIP_INT, ki_dns_set_local_ttl,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
