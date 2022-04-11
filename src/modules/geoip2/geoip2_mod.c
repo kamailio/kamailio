@@ -80,6 +80,7 @@ struct module_exports exports = {
  */
 static int mod_init(void)
 {
+	LM_INFO("using GeoIP library version %s\n", MMDB_lib_version());
 
 	if(geoip2_path==NULL || strlen(geoip2_path)==0)
 	{
