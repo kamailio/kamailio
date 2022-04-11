@@ -283,7 +283,7 @@ ifneq (,$(findstring gcc, $(CC_LONGVER)))
 	# sed with POSIX.1 regex doesn't support |, + or ?
 	# (darwin, solaris ...) => this complicated expression
 	MKDEP=$(CC) -MM -MG
-	#transform gcc version into 2.9x or 3.0
+	#transform gcc version into some well-known versions, or 9 for newer versions
 	CC_SHORTVER:=$(shell echo "$(CC_VER)" | cut -d" " -f 2| \
 				 sed -e 's/[^0-9]*-\(.*\)/\1/'| \
 				 sed -e 's/2\.9.*/2.9x/' \
@@ -310,7 +310,9 @@ ifneq (,$(findstring gcc, $(CC_LONGVER)))
 					-e 's/10\.[0-9]\..*/9.0+/' \
 					-e 's/10\.[0-9]$$/9.0+/' \
 					-e 's/11\.[0-9]\..*/9.0+/' \
-					-e 's/11\.[0-9]$$/9.0+/')
+					-e 's/11\.[0-9]$$/9.0+/' \
+					-e 's/12\.[0-9]\..*/9.0+/' \
+					-e 's/12\.[0-9]$$/9.0+/')
 ifeq (,$(strip $(filter-out 3.0 3.4 4.x 4.2+ 4.5+ 5.0+ 6.0+ 7.0+ 8.0+ 9.0+,$(CC_SHORTVER))))
 	# dependencies can be generated on-the-fly while compiling *.c
 	CC_MKDEP_OPTS=-MMD -MP
