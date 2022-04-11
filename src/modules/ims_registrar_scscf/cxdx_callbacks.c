@@ -90,10 +90,9 @@ AAAMessage* cxdx_process_rtr(AAAMessage *rtr) {
 		while (impucontact) {
 			LM_DBG("Deleting contact with AOR [%.*s]\n", impucontact->contact->aor.len, impucontact->contact->aor.s);
 			ul.lock_contact_slot_i(impucontact->contact->sl);
-			impucontact->contact->state = CONTACT_DELETE_PENDING;
 			if (r->shead) {
 				//send NOTIFY to all subscribers of this IMPU.
-				notify_subscribers(r, impucontact->contact, 0, 0, IMS_REGISTRAR_CONTACT_UNREGISTERED);
+				notify_subscribers(r, impucontact->contact, 0, 0, IMS_REGISTRAR_CONTACT_DEREGISTERED);
 			}
 			impucontact->contact->state = CONTACT_DELETED;
 			ul.unlock_contact_slot_i(impucontact->contact->sl);
@@ -119,10 +118,9 @@ AAAMessage* cxdx_process_rtr(AAAMessage *rtr) {
 			while (impucontact) {
 				LM_DBG("Deleting contact with AOR [%.*s]\n", impucontact->contact->aor.len, impucontact->contact->aor.s);
 				ul.lock_contact_slot_i(impucontact->contact->sl);
-				impucontact->contact->state = CONTACT_DELETE_PENDING;
 				if (r->shead) {
 					//send NOTIFY to all subscribers of this IMPU.
-					notify_subscribers(r, impucontact->contact, 0, 0, IMS_REGISTRAR_CONTACT_UNREGISTERED);
+					notify_subscribers(r, impucontact->contact, 0, 0, IMS_REGISTRAR_CONTACT_DEREGISTERED);
 				}
 				impucontact->contact->state = CONTACT_DELETED;
 				ul.unlock_contact_slot_i(impucontact->contact->sl);
