@@ -101,6 +101,7 @@ int disable_callee_publish_flag = DEF_DISABLE_CALLEE_PUBLISH_FLAG;
 char * pubruri_caller_avp  = DEF_PUBRURI_CALLER_AVP;
 char * pubruri_callee_avp  = DEF_PUBRURI_CALLEE_AVP;
 int publish_dialog_req_within = DEF_PUBLISH_DIALOG_REQ_WITHIN;
+int dialog_event_types = DLGCB_FAILED| DLGCB_CONFIRMED_NA | DLGCB_TERMINATED | DLGCB_EXPIRED | DLGCB_EARLY;
 
 int puadinfo_attribute_display = 0;
 
@@ -622,25 +623,12 @@ struct dlginfo_cell* get_dialog_data(struct dlg_cell *dlg, int type, int disable
 	}
 
 	/* register dialog callbacks which triggers sending PUBLISH */
-        if (publish_dialog_req_within) {
-		if (dlg_api.register_dlgcb(dlg,
-				DLGCB_FAILED| DLGCB_CONFIRMED_NA | DLGCB_TERMINATED
-				| DLGCB_EXPIRED | DLGCB_REQ_WITHIN | DLGCB_EARLY,
-				__dialog_sendpublish, dlginfo, free_dlginfo_cell) != 0) {
-			LM_ERR("cannot register callback for interesting dialog types\n");
-			free_dlginfo_cell(dlginfo);
-			return NULL;
-		}
-        } else {
-		if (dlg_api.register_dlgcb(dlg,
-				DLGCB_FAILED| DLGCB_CONFIRMED_NA | DLGCB_TERMINATED
-				| DLGCB_EXPIRED | DLGCB_EARLY,
-				__dialog_sendpublish, dlginfo, free_dlginfo_cell) != 0) {
-			LM_ERR("cannot register callback for interesting dialog types\n");
-			free_dlginfo_cell(dlginfo);
-			return NULL;
-		}
-        }
+	if (dlg_api.register_dlgcb(dlg, dialog_event_types,
+			__dialog_sendpublish, dlginfo, free_dlginfo_cell) != 0) {
+		LM_ERR("cannot register callback for interesting dialog types\n");
+		free_dlginfo_cell(dlginfo);
+		return NULL;
+	}
 
 #ifdef PUA_DIALOGINFO_DEBUG
 	/* dialog callback testing (registered last to be executed frist) */
@@ -855,6 +843,9 @@ static int mod_init(void)
 	} else {
 		LM_DBG("configured to use headers for uri values\n");
 	}
+
+	if(publish_dialog_req_within)
+		dialog_event_types |= DLGCB_REQ_WITHIN;
 
 	return 0;
 }
