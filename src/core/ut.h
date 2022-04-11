@@ -729,7 +729,7 @@ static inline int str2int(str* _s, unsigned int* _r)
 
 
 /*
- * Convert an str to signed long
+ * Convert a str to signed long
  */
 static inline int str2slong(str* _s, long* _r)
 {
@@ -738,7 +738,7 @@ static inline int str2slong(str* _s, long* _r)
 
 
 /*
- * Convert an str to signed integer
+ * Convert a str to signed integer
  */
 static inline int str2sint(str* _s, int* _r)
 {
@@ -747,7 +747,7 @@ static inline int str2sint(str* _s, int* _r)
 
 
 /*
- * Convert an strz to integer
+ * Convert a strz to integer
  */
 static inline int strz2int(char* _s, unsigned int* _r)
 {
@@ -770,7 +770,7 @@ static inline int strz2int(char* _s, unsigned int* _r)
 }
 
 /*
- * Convert an strz to signed integer
+ * Convert a strz to signed integer
  */
 static inline int strz2sint(char* _s, int* _r)
 {

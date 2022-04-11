@@ -143,7 +143,7 @@ typedef struct _str str;
 	} while(0)
 
 /**
- * str with value: not null and not emptu
+ * str with value: not null and not empty
  */
 #define STR_WITHVAL(_sp) ((_sp) && ((_sp)->s) && ((_sp)->len))
 

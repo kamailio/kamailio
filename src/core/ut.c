@@ -97,7 +97,7 @@ int group2gid(int* gid, char* group)
 
 
 /*
- * Replacement of timegm (does not exists on all platforms
+ * Replacement of timegm (does not exists on all platforms)
  * Taken from
  * http://lists.samba.org/archive/samba-technical/2002-November/025737.html
  */
@@ -232,7 +232,7 @@ unsigned int get_sys_version(int* major, int* minor, int* minor2)
 
 /** transform a relative pathname into an absolute one.
  * @param base  - base file, used to extract the absolute path prefix.
- *                Might be NULL, in which case the path of the ser.cfg is
+ *                Might be NULL, in which case the path of the kamailio.cfg is
  *                used.
  * @param file  - file path to be transformed. If it's already absolute
  *                (starts with '/') is left alone. If not the result will
@@ -301,7 +301,7 @@ char* get_abs_pathname(str* base, str* file)
 
 
 /**
- * @brief search for occurence of needle in text
+ * @brief search for occurrence of needle in text
  * @return pointer to start of needle in text or NULL if the needle
  *	is not found
  */
@@ -323,7 +323,7 @@ char *str_search(str *text, str *needle)
 }
 
 /**
- * @brief search for occurence of needlez starting from vstart and before vend
+ * @brief search for occurrence of needlez starting from vstart and before vend
  * @return pointer to start of needle in text or NULL if the needle
  *	is not found
  */
@@ -346,7 +346,7 @@ char *stre_search_strz(char *vstart, char *vend, char *needlez)
 }
 
 /**
- * @brief case insensitive search for occurence of needle in text
+ * @brief case insensitive search for occurrence of needle in text
  * @return pointer to start of needle in text or NULL if the needle
  *	is not found
  */
@@ -393,7 +393,7 @@ char *str_casesearch_strz(str *text, char *needlez)
 }
 
 /**
- * @brief search for last occurence of needle in text (reverse search)
+ * @brief search for last occurrence of needle in text (reverse search)
  * @return pointer to start of needle in text or NULL if the needle
  *	is not found
  */
@@ -415,7 +415,7 @@ char *str_rsearch(str *text, str *needle)
 }
 
 /**
- * @brief case insensitive search for last occurence of needle in text (reverse search)
+ * @brief case insensitive search for last occurrence of needle in text (reverse search)
  * @return pointer to start of needle in text or NULL if the needle
  *	is not found
  */
