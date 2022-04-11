@@ -643,7 +643,7 @@ struct dlginfo_cell* get_dialog_data(struct dlg_cell *dlg, int type, int disable
         }
 
 #ifdef PUA_DIALOGINFO_DEBUG
-	/* dialog callback testing (registered last to be executed frist) */
+	/* dialog callback testing (registered last to be executed first) */
 	if (dlg_api.register_dlgcb(dlg,
 				DLGCB_FAILED| DLGCB_CONFIRMED_NA | DLGCB_CONFIRMED
 				| DLGCB_REQ_WITHIN | DLGCB_TERMINATED | DLGCB_EXPIRED
