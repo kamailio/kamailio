@@ -286,7 +286,7 @@ done:
     //free path vector pkg memory
 //    reset_path_vector(req);
 
-    tmb.t_continue(data->tindex, data->tlabel, data->act);
+    tmb.t_continue_skip_timer(data->tindex, data->tlabel, data->act);
     free_saved_transaction_data(data);
     return;
 
