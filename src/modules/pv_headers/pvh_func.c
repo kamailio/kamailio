@@ -389,8 +389,7 @@ int pvh_remove_header_param(struct sip_msg *msg, int idx, str *hname, str *eleme
 	char *token;
 	char *result = (char*)pkg_malloc(elements->len - toRemove->len);
 	char *t = (char*)pkg_malloc(elements->len);
-	int maxSize = sizeof(elements->s)/sizeof(char);
-	maxSize = maxSize < elements->len?elements->len:maxSize;
+	int maxSize = elements->len;
 
 	if (result == NULL || t == NULL)
 	{
@@ -404,7 +403,7 @@ int pvh_remove_header_param(struct sip_msg *msg, int idx, str *hname, str *eleme
 	token = strtok_r(t, ", ", &next_token);
 	while(token)
 	{
-		int notTarget = strncmp(token, toRemove->s, sizeof(toRemove->s)/sizeof(char));
+		int notTarget = strncmp(token, toRemove->s, toRemove->len);
 		if (notTarget)
 		{
 			int n = snprintf(result + offset, maxSize - offset, "%s", token);
