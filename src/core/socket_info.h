@@ -106,6 +106,7 @@ struct socket_info* find_si(struct ip_addr* ip, unsigned short port,
 socket_info_t* ksr_get_socket_by_name(str *sockname);
 socket_info_t* ksr_get_socket_by_listen(str *sockstr);
 socket_info_t* ksr_get_socket_by_advertise(str *sockstr);
+socket_info_t* ksr_get_socket_by_index(int idx);
 
 struct socket_info** get_sock_info_list(unsigned short proto);
 

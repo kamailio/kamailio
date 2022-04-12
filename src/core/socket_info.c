@@ -912,6 +912,40 @@ socket_info_t* ksr_get_socket_by_advertise(str *sockstr)
 	return NULL;
 }
 
+socket_info_t* ksr_get_socket_by_index(int idx)
+{
+	socket_info_t *si = NULL;
+	struct socket_info** list;
+	unsigned short c_proto;
+
+	if (idx<0) {
+		idx += _ksr_sockets_no;
+		if (idx < 0) {
+			LM_DBG("negative overall index\n");
+			return NULL;
+		}
+	}
+	c_proto = PROTO_UDP;
+	do {
+		/* get the proper sock_list */
+		list=get_sock_info_list(c_proto);
+
+		if (list==0) {
+			/* disabled or unknown protocol */
+			continue;
+		}
+
+		for (si=*list; si; si=si->next) {
+			if(idx==0) {
+				return si;
+			}
+			idx--;
+		}
+	} while((c_proto = next_proto(c_proto))!=0);
+
+	return NULL;
+}
+
 /* checks if the proto:port is one of the ports we listen on
  * and returns the corresponding socket_info structure.
  * if proto==0 (PROTO_NONE) the protocol is ignored
