@@ -37,7 +37,7 @@ Henning Westerholt
 
         5. RPC Commands
 
-              5.1. userblocklist.reload_blocklist
+              5.1. geoip2.reload
 
         6. Exported pseudo-variables
 
@@ -67,7 +67,7 @@ Chapter 1. Admin Guide
 
    5. RPC Commands
 
-        5.1. userblocklist.reload_blocklist
+        5.1. geoip2.reload
 
    6. Exported pseudo-variables
 
@@ -144,9 +144,9 @@ if(geoip2_match("$si", "src"))
 
 5. RPC Commands
 
-   5.1. userblocklist.reload_blocklist
+   5.1. geoip2.reload
 
-5.1.  userblocklist.reload_blocklist
+5.1.  geoip2.reload
 
    Reload the internal GeoIP database. This is necessary after the
    database file has been changed on the disk.
