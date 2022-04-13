@@ -59,12 +59,11 @@ Pawel Kuzak
 
         6. MI Commands
 
-              6.1. reload_blocklist
-              6.2. dump_blocklist
-              6.3. check_blocklist prefix
-              6.4. check_allowlist prefix
-              6.5. check_userblocklist user [domain] prefix
-              6.6. check_userallowlist user [domain] prefix
+              6.1. dump_blocklist
+              6.2. check_blocklist prefix
+              6.3. check_allowlist prefix
+              6.4. check_userblocklist user [domain] prefix
+              6.5. check_userallowlist user [domain] prefix
 
         7. Installation and Running
 
@@ -91,14 +90,13 @@ Pawel Kuzak
    1.17. check_blocklist usage
    1.18. check_allowlist usage
    1.19. userblocklist.reload_blocklist usage
-   1.20. reload_blocklist usage
-   1.21. dump_blocklist usage
-   1.22. check_blocklist usage
-   1.23. check_allowlist usage
-   1.24. check_userblocklist usage
-   1.25. check_userallowlist usage
-   1.26. Example database content - globalblocklist table
-   1.27. Example database content - userblocklist table
+   1.20. dump_blocklist usage
+   1.21. check_blocklist usage
+   1.22. check_allowlist usage
+   1.23. check_userblocklist usage
+   1.24. check_userallowlist usage
+   1.25. Example database content - globalblocklist table
+   1.26. Example database content - userblocklist table
 
 Chapter 1. Admin Guide
 
@@ -144,12 +142,11 @@ Chapter 1. Admin Guide
 
    6. MI Commands
 
-        6.1. reload_blocklist
-        6.2. dump_blocklist
-        6.3. check_blocklist prefix
-        6.4. check_allowlist prefix
-        6.5. check_userblocklist user [domain] prefix
-        6.6. check_userallowlist user [domain] prefix
+        6.1. dump_blocklist
+        6.2. check_blocklist prefix
+        6.3. check_allowlist prefix
+        6.4. check_userblocklist user [domain] prefix
+        6.5. check_userallowlist user [domain] prefix
 
    7. Installation and Running
 
@@ -460,36 +457,28 @@ kamcmd userblocklist.reload_blocklist
 
 6. MI Commands
 
-   6.1. reload_blocklist
-   6.2. dump_blocklist
-   6.3. check_blocklist prefix
-   6.4. check_allowlist prefix
-   6.5. check_userblocklist user [domain] prefix
-   6.6. check_userallowlist user [domain] prefix
+   6.1. dump_blocklist
+   6.2. check_blocklist prefix
+   6.3. check_allowlist prefix
+   6.4. check_userblocklist user [domain] prefix
+   6.5. check_userallowlist user [domain] prefix
 
-6.1.  reload_blocklist
+   The following MI commands are currently disabled, they need to migrated
+   to the RPC infrastructure.
 
-   Reload the internal global blocklist cache. This is necessary after the
-   database tables for the global blocklist have been changed.
-
-   Example 1.20. reload_blocklist usage
-                                        ...
-                                        kamctl fifo reload_blocklist
-                                        ...
-
-6.2.  dump_blocklist
+6.1.  dump_blocklist
 
    Dumps the default, in memory, global_blocklist content to stdout. Note
    that a reload_blocklist should be issued before, in order to see the
    latest content of the database.
 
-   Example 1.21. dump_blocklist usage
+   Example 1.20. dump_blocklist usage
                                         ...
                                         kamctl fifo reload_blocklist
                                         kamctl fifo dump_blocklist
                                         ...
 
-6.3.  check_blocklist prefix
+6.2.  check_blocklist prefix
 
    Searches in the default, in memory, global list. Finds the longest
    prefix that matches the given prefix parameter. Returns true if the
@@ -498,13 +487,13 @@ kamcmd userblocklist.reload_blocklist
    reload_blocklist should be issued before, in order to check through the
    latest content of the database.
 
-   Example 1.22. check_blocklist usage
+   Example 1.21. check_blocklist usage
                                         ...
                                         kamctl fifo reload_blocklist
                                         kamctl fifo check_blocklist prefix
                                         ...
 
-6.4.  check_allowlist prefix
+6.3.  check_allowlist prefix
 
    Searches in the default, in memory, global list. Finds the longest
    prefix that matches the given prefix parameter. Returns true if the
@@ -513,13 +502,13 @@ kamcmd userblocklist.reload_blocklist
    that a reload_blocklist should be issued before, in order to check
    through the latest content of the database.
 
-   Example 1.23. check_allowlist usage
+   Example 1.22. check_allowlist usage
                                         ...
                                         kamctl fifo reload_blocklist
                                         kamctl fifo check_allowlist prefix
                                         ...
 
-6.5.  check_userblocklist user [domain] prefix
+6.4.  check_userblocklist user [domain] prefix
 
    Searches in the default user list table. Finds the longest prefix for
    the given user@domain that matches the given prefix parameter. Returns
@@ -528,13 +517,13 @@ kamcmd userblocklist.reload_blocklist
    Note that the domain parameter is optional. If not given, the second
    parameter is the considered to be the prefix.
 
-   Example 1.24. check_userblocklist usage
+   Example 1.23. check_userblocklist usage
                                         ...
                                         kamctl fifo check_userblocklist user [do
 main] prefix
                                         ...
 
-6.6.  check_userallowlist user [domain] prefix
+6.5.  check_userallowlist user [domain] prefix
 
    Searches in the default user list table. Finds the longest prefix for
    the given user@domain that matches the given prefix parameter. Returns
@@ -543,7 +532,7 @@ main] prefix
    found. Note that the domain parameter is optional. If not given, the
    second parameter is the considered to be the prefix.
 
-   Example 1.25. check_userallowlist usage
+   Example 1.24. check_userallowlist usage
                                         ...
                                         kamctl fifo check_userallowlist user [do
 main] prefix
@@ -566,7 +555,7 @@ main] prefix
    complete database documentation on the project webpage,
    https://www.kamailio.org/docs/db-tables/kamailio-db-devel.html.
 
-   Example 1.26. Example database content - globalblocklist table
+   Example 1.25. Example database content - globalblocklist table
 ...
 +----+-----------+-----------+
 | id | prefix    | allowlist |
@@ -583,7 +572,7 @@ main] prefix
    “123455787” are also blocklisted, because the longest prefix will be
    matched.
 
-   Example 1.27. Example database content - userblocklist table
+   Example 1.26. Example database content - userblocklist table
 ...
 +----+----------------+-------------+-----------+-----------+
 | id | username       | domain      | prefix    | allowlist |
