@@ -44,6 +44,9 @@
 	<para>
 		Many queries can be done and store results in different containers to
 		be able to use in parallel. Database is loaded at startup in cache.
+		The cache can be reloaded with an RPC command. In this case make sure
+		that you do not overwrite the file in place, but replace it, e.g. with
+		a <quote>move</quote> command.
 	</para>
     </section>
     <section>
