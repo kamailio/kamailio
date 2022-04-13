@@ -490,6 +490,8 @@ int geoip2_init_pv(char *path)
 {
 	int status;
 	_handle_GeoIP = shm_malloc(sizeof(struct MMDB_s));
+	memset(_handle_GeoIP, 0, sizeof(struct MMDB_s));
+
 	if (_handle_GeoIP == NULL)
 	{
 		SHM_MEM_ERROR;
@@ -522,9 +524,13 @@ int geoip2_reload_pv(char *path)
 	if(MMDB_SUCCESS != status)
 	{
 		LM_ERR("cannot reload GeoIP database file at: %s\n", path);
+
+	}
+	else
+	{
+		LM_INFO("reloaded GeoIP database file at: %s\n", path);
 	}
 	lock_release(lock);
-	LM_INFO("reloaded GeoIP database file at: %s\n", path);
 
 	return status;
 }
