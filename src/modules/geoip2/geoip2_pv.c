@@ -29,6 +29,7 @@
 #include "../../core/dprint.h"
 #include "../../core/hashes.h"
 #include "../../core/pvar.h"
+#include "../../core/locking.h"
 
 #include "geoip2_pv.h"
 
@@ -61,7 +62,8 @@ typedef struct _geoip2_pv {
 	int type;
 } geoip2_pv_t;
 
-static MMDB_s _handle_GeoIP;
+static MMDB_s *_handle_GeoIP;
+static gen_lock_t *lock = NULL;
 
 static sr_geoip2_item_t *_sr_geoip2_list = NULL;
 
@@ -239,6 +241,44 @@ int pv_geoip2_get_strzval(struct sip_msg *msg, pv_param_t *param,
 	return pv_get_strval(msg, param, res, &s);
 }
 
+static int get_mmdb_value2(MMDB_entry_s *entry, MMDB_entry_data_s *data,
+		const char *first, const char *second)
+{
+	int status = 0;
+
+	lock_get(lock);
+	status = MMDB_get_value(entry, data, first, second, NULL);
+	lock_release(lock);
+
+	return status;
+}
+
+static int get_mmdb_value3(MMDB_entry_s *entry, MMDB_entry_data_s *data,
+		const char *first, const char *second, const char *third)
+{
+	int status = 0;
+
+	lock_get(lock);
+	status = MMDB_get_value(entry, data, first, second, third, NULL);
+	lock_release(lock);
+
+	return status;
+}
+
+static int get_mmdb_value4(MMDB_entry_s *entry, MMDB_entry_data_s *data,
+		const char *first, const char *second, const char *third,
+		const char *fourth)
+{
+	int status = 0;
+
+	lock_get(lock);
+	status = MMDB_get_value(entry, data, first, second, third, fourth, NULL);
+	lock_release(lock);
+
+	return status;
+}
+
+
 int pv_get_geoip2(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
 {
@@ -261,9 +301,8 @@ int pv_get_geoip2(struct sip_msg *msg, pv_param_t *param,
 			{
 				if(gpv->item->r.flags&1)
 					return pv_get_null(msg, param, res);
-				if(MMDB_get_value(&gpv->item->r.record.entry, &entry_data,
-					"location","time_zone", NULL
-					) != MMDB_SUCCESS)
+				if(get_mmdb_value2(&gpv->item->r.record.entry, &entry_data,
+					"location","time_zone") != MMDB_SUCCESS)
 					return pv_get_null(msg, param, res);
 				if(entry_data.has_data && entry_data.type == MMDB_DATA_TYPE_UTF8_STRING) {
 					gpv->item->r.time_zone.s = (char *)entry_data.utf8_string;
@@ -277,8 +316,8 @@ int pv_get_geoip2(struct sip_msg *msg, pv_param_t *param,
 			{
 				if(gpv->item->r.flags&32)
 					return pv_get_null(msg, param, res);
-				if(MMDB_get_value(&gpv->item->r.record.entry, &entry_data,
-					"postal","code", NULL) != MMDB_SUCCESS)
+				if(get_mmdb_value2(&gpv->item->r.record.entry, &entry_data,
+					"postal","code") != MMDB_SUCCESS)
 					return pv_get_null(msg, param, res);
 				if(entry_data.has_data && entry_data.type == MMDB_DATA_TYPE_UTF8_STRING) {
 					gpv->item->r.zip.s = (char *)entry_data.utf8_string;
@@ -291,8 +330,8 @@ int pv_get_geoip2(struct sip_msg *msg, pv_param_t *param,
 			if((gpv->item->r.flags&2)==0)
 			{
 				gpv->item->r.latitude[0] = '\0';
-				if(MMDB_get_value(&gpv->item->r.record.entry, &entry_data,
-					"location","latitude", NULL) != MMDB_SUCCESS)
+				if(get_mmdb_value2(&gpv->item->r.record.entry, &entry_data,
+					"location","latitude") != MMDB_SUCCESS)
 					return pv_get_null(msg, param, res);
 				if(entry_data.has_data && entry_data.type == MMDB_DATA_TYPE_DOUBLE)
 					snprintf(gpv->item->r.latitude, 15, "%f", entry_data.double_value);
@@ -304,8 +343,8 @@ int pv_get_geoip2(struct sip_msg *msg, pv_param_t *param,
 			if((gpv->item->r.flags&4)==0)
 			{
 				gpv->item->r.latitude[0] = '\0';
-				if(MMDB_get_value(&gpv->item->r.record.entry, &entry_data,
-					"location","longitude", NULL) != MMDB_SUCCESS)
+				if(get_mmdb_value2(&gpv->item->r.record.entry, &entry_data,
+					"location","longitude") != MMDB_SUCCESS)
 					return pv_get_null(msg, param, res);
 				if(entry_data.has_data && entry_data.type == MMDB_DATA_TYPE_DOUBLE)
 					snprintf(gpv->item->r.longitude, 15, "%f", entry_data.double_value);
@@ -318,9 +357,8 @@ int pv_get_geoip2(struct sip_msg *msg, pv_param_t *param,
 			{
 				if(gpv->item->r.flags&16)
 					return pv_get_null(msg, param, res);
-				if(MMDB_get_value(&gpv->item->r.record.entry, &entry_data,
-					"continent","code", NULL
-					) != MMDB_SUCCESS)
+				if(get_mmdb_value2(&gpv->item->r.record.entry, &entry_data,
+					"continent","code") != MMDB_SUCCESS)
 					return pv_get_null(msg, param, res);
 				if(entry_data.has_data && entry_data.type == MMDB_DATA_TYPE_UTF8_STRING) {
 					gpv->item->r.cont_code.s = (char *)entry_data.utf8_string;
@@ -334,9 +372,8 @@ int pv_get_geoip2(struct sip_msg *msg, pv_param_t *param,
 			{
 				if(gpv->item->r.flags&64)
 					return pv_get_null(msg, param, res);
-				if(MMDB_get_value(&gpv->item->r.record.entry, &entry_data,
-					"city","names","en", NULL
-					) != MMDB_SUCCESS)
+				if(get_mmdb_value3(&gpv->item->r.record.entry, &entry_data,
+					"city","names","en") != MMDB_SUCCESS)
 					return pv_get_null(msg, param, res);
 				if(entry_data.has_data && entry_data.type == MMDB_DATA_TYPE_UTF8_STRING) {
 					gpv->item->r.city.s = (char *)entry_data.utf8_string;
@@ -350,9 +387,8 @@ int pv_get_geoip2(struct sip_msg *msg, pv_param_t *param,
 			{
 				if(gpv->item->r.flags&128)
 					return pv_get_null(msg, param, res);
-				if(MMDB_get_value(&gpv->item->r.record.entry, &entry_data,
-					"subdivisions","0","iso_code", NULL
-					) != MMDB_SUCCESS)
+				if(get_mmdb_value3(&gpv->item->r.record.entry, &entry_data,
+					"subdivisions","0","iso_code") != MMDB_SUCCESS)
 					return pv_get_null(msg, param, res);
 				if(entry_data.has_data && entry_data.type == MMDB_DATA_TYPE_UTF8_STRING) {
 					gpv->item->r.region_code.s = (char *)entry_data.utf8_string;
@@ -366,9 +402,8 @@ int pv_get_geoip2(struct sip_msg *msg, pv_param_t *param,
 			{
 				if(gpv->item->r.flags&16)
 					return pv_get_null(msg, param, res);
-				if(MMDB_get_value(&gpv->item->r.record.entry, &entry_data,
-					"subdivisions","0","names","en", NULL
-					) != MMDB_SUCCESS)
+				if(get_mmdb_value4(&gpv->item->r.record.entry, &entry_data,
+					"subdivisions","0","names","en") != MMDB_SUCCESS)
 					return pv_get_null(msg, param, res);
 				if(entry_data.has_data && entry_data.type == MMDB_DATA_TYPE_UTF8_STRING) {
 					gpv->item->r.region_name.s = (char *)entry_data.utf8_string;
@@ -381,8 +416,8 @@ int pv_get_geoip2(struct sip_msg *msg, pv_param_t *param,
 			if((gpv->item->r.flags&256)==0)
 			{
 				gpv->item->r.metro[0] = '\0';
-				if(MMDB_get_value(&gpv->item->r.record.entry, &entry_data,
-					"location","metro_code", NULL) != MMDB_SUCCESS)
+				if(get_mmdb_value2(&gpv->item->r.record.entry, &entry_data,
+					"location","metro_code") != MMDB_SUCCESS)
 					return pv_get_null(msg, param, res);
 				if(entry_data.has_data && entry_data.type == MMDB_DATA_TYPE_UINT16)
 					snprintf(gpv->item->r.metro, 15, "%hd", entry_data.uint16);
@@ -404,20 +439,18 @@ int pv_get_geoip2(struct sip_msg *msg, pv_param_t *param,
 			{
 				if(gpv->item->r.flags&512)
 					return pv_get_null(msg, param, res);
-				if(MMDB_get_value(&gpv->item->r.record.entry, &entry_data,
-					"country","iso_code", NULL
-					) != MMDB_SUCCESS
-					&& MMDB_get_value(&gpv->item->r.record.entry, &entry_data,
-						"registered_country","iso_code", NULL
-						) != MMDB_SUCCESS
+				if(get_mmdb_value2(&gpv->item->r.record.entry, &entry_data,
+					"country","iso_code") != MMDB_SUCCESS
+					&& get_mmdb_value2(&gpv->item->r.record.entry, &entry_data,
+						"registered_country","iso_code") != MMDB_SUCCESS
 					)
 					return pv_get_null(msg, param, res);
 				if(entry_data.has_data && entry_data.type == MMDB_DATA_TYPE_UTF8_STRING) {
 					gpv->item->r.country.s = (char *)entry_data.utf8_string;
 					gpv->item->r.country.len = entry_data.data_size;
 				}
-				if(MMDB_get_value(&gpv->item->r.record.entry, &entry_data,
-					"traits","is_anonymous_proxy", NULL) == MMDB_SUCCESS
+				if(get_mmdb_value2(&gpv->item->r.record.entry, &entry_data,
+					"traits","is_anonymous_proxy") == MMDB_SUCCESS
 					&& entry_data.has_data && entry_data.type == MMDB_DATA_TYPE_BOOLEAN
 					&& entry_data.boolean) {
 					gpv->item->r.country.s = "A1";
@@ -429,16 +462,71 @@ int pv_get_geoip2(struct sip_msg *msg, pv_param_t *param,
 	}
 }
 
+static int init_shmlock(void)
+{
+	lock = lock_alloc();
+	if (!lock) {
+		LM_CRIT("cannot allocate memory for lock\n");
+		return -1;
+	}
+	if (lock_init(lock) == 0) {
+		LM_CRIT("cannot initialize lock\n");
+		return -1;
+	}
+
+	return 0;
+}
+
+static void destroy_shmlock(void)
+{
+	if (lock) {
+		lock_destroy(lock);
+		lock_dealloc((void *)lock);
+		lock = NULL;
+	}
+}
+
 int geoip2_init_pv(char *path)
 {
-	int status = MMDB_open(path, MMDB_MODE_MMAP, &_handle_GeoIP);
+	int status;
+	_handle_GeoIP = shm_malloc(sizeof(struct MMDB_s));
+	if (_handle_GeoIP == NULL)
+	{
+		SHM_MEM_ERROR;
+		return -1;
+	}
+
+	status = MMDB_open(path, MMDB_MODE_MMAP, _handle_GeoIP);
 
 	if(MMDB_SUCCESS != status)
 	{
 		LM_ERR("cannot open GeoIP database file at: %s\n", path);
 		return -1;
 	}
+
+	if (init_shmlock() != 0)
+	{
+		LM_ERR("cannot create GeoIP database lock\n");
+		return -1;
+	}
 	return 0;
+}
+
+int geoip2_reload_pv(char *path)
+{
+	int status = 0;
+
+	lock_get(lock);
+	MMDB_close(_handle_GeoIP);
+	status = MMDB_open(path, MMDB_MODE_MMAP, _handle_GeoIP);
+	if(MMDB_SUCCESS != status)
+	{
+		LM_ERR("cannot reload GeoIP database file at: %s\n", path);
+	}
+	lock_release(lock);
+	LM_INFO("reloaded GeoIP database file at: %s\n", path);
+
+	return status;
 }
 
 void geoip2_destroy_list(void)
@@ -447,7 +535,10 @@ void geoip2_destroy_list(void)
 
 void geoip2_destroy_pv(void)
 {
-	MMDB_close(&_handle_GeoIP);
+	MMDB_close(_handle_GeoIP);
+	shm_free(_handle_GeoIP);
+	_handle_GeoIP = NULL;
+	destroy_shmlock();
 }
 
 void geoip2_pv_reset(str *name)
@@ -481,10 +572,12 @@ int geoip2_update_pv(str *tomatch, str *name)
 
 	strncpy(gr->tomatch, tomatch->s, tomatch->len);
 	tomatch->s[tomatch->len] = '\0';
-	gr->record = MMDB_lookup_string(&_handle_GeoIP,
+	lock_get(lock);
+	gr->record = MMDB_lookup_string(_handle_GeoIP,
 			(const char*)gr->tomatch,
 			&gai_error, &mmdb_error
 			);
+	lock_release(lock);
 	LM_DBG("attempt to match: %s\n", gr->tomatch);
 	if (gai_error || MMDB_SUCCESS != mmdb_error || !gr->record.found_entry)
 	{

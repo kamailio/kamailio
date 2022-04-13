@@ -122,6 +122,27 @@ if(geoip2_match("$si", "src"))
 	</section>
 	
     </section>
+
+    <section>
+	<title>RPC Commands</title>
+	<section id="userblocklist.r.reload_blocklist">
+	   <title>
+		<function moreinfo="none">userblocklist.reload_blocklist</function>
+	   </title>
+	   <para>
+			Reload the internal GeoIP database. This is necessary after
+			the database file has been changed on the disk.
+	   </para>
+		<example>
+		<title><function>geoip2.reload</function> usage</title>
+		<programlisting format="linespecific">
+...
+&kamcmd; geoip2.reload
+...
+		</programlisting>
+		</example>
+	</section>
+    </section>
 	
 	<section>
 		<title>Exported pseudo-variables</title>

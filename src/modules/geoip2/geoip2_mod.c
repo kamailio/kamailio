@@ -30,6 +30,7 @@
 #include "../../core/pvar.h"
 #include "../../core/kemi.h"
 #include "../../core/mod_fix.h"
+#include "../../core/rpc_lookup.h"
 
 #include "geoip2_pv.h"
 
@@ -39,6 +40,7 @@ static char *geoip2_path = NULL;
 
 static int  mod_init(void);
 static void mod_destroy(void);
+static int geoip2_rpc_init(void);
 
 static int w_geoip2_match(struct sip_msg* msg, char* str1, char* str2);
 static int geoip2_match(sip_msg_t *msg, str *tomatch, str *pvclass);
@@ -93,6 +95,13 @@ static int mod_init(void)
 		LM_ERR("cannot init for database file at: %s\n", geoip2_path);
 		return -1;
 	}
+
+	if (geoip2_rpc_init() < 0)
+	{
+		LM_ERR("error during RPC initialization\n");
+		return -1;
+	}
+
 	return 0;
 }
 
@@ -131,6 +140,38 @@ static int w_geoip2_match(sip_msg_t* msg, char* target, char* pvname)
 	}
 
 	return geoip2_match(msg, &tomatch, &pvclass);
+}
+
+static void geoip2_rpc_reload(rpc_t* rpc, void* ctx)
+{
+	if(geoip2_reload_pv(geoip2_path) != 0)
+	{
+		rpc->fault(ctx, 500, "Reload failed");
+		return;
+	}
+}
+
+static const char* geoip2_rpc_reload_doc[2] =
+{
+	"Reload GeoIP2 database file.",
+	0
+};
+
+rpc_export_t ubl_rpc[] =
+{
+	{"geoip2.reload", geoip2_rpc_reload,
+		geoip2_rpc_reload_doc, 0},
+	{0, 0, 0, 0}
+};
+
+static int geoip2_rpc_init(void)
+{
+        if (rpc_register_array(ubl_rpc)!=0)
+        {
+                LM_ERR("failed to register RPC commands\n");
+                return -1;
+        }
+        return 0;
 }
 
 /**

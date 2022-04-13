@@ -32,6 +32,7 @@ int pv_get_geoip2(struct sip_msg *msg, pv_param_t *param,
 
 int geoip2_init_pv(char *path);
 void geoip2_destroy_pv(void);
+int geoip2_reload_pv(char *path);
 void geoip2_pv_reset(str *pvclass);
 int geoip2_update_pv(str *tomatch, str *pvclass);
 
