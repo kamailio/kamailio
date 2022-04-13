@@ -33,7 +33,7 @@
 	The module exports four functions, <function>check_blocklist</function>,
 	<function>check_allowlist</function>,
 	<function>check_user_blocklist</function> and <function>check_user_allowlist</function>
-	for usage in the configuration file. Furthermore it provides a MI function to
+	for usage in the configuration file. Furthermore it provides a RPC function to
 	reload the global blocklist cache.
 	</para>
 	<para>
