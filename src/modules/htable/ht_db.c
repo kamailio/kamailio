@@ -551,6 +551,11 @@ int ht_db_save_table(ht_t *ht, str *dbtable)
 	time_t now;
 	int ncols;
 
+	if(ht==NULL || ht->entries==NULL) {
+		LM_DBG("hash table not initialized yet\n");
+		return -1;
+	}
+
 	if(ht_db_con==NULL)
 	{
 		LM_ERR("no db connection\n");
