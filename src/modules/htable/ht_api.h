@@ -63,6 +63,7 @@ typedef struct _ht
 	unsigned int htexpire;
 	str dbtable;
 	int dbmode;
+	int dbload;
 	int ncols;
 	str scols[HT_MAX_COLS];
 	char pack[4];
