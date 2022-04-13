@@ -405,24 +405,7 @@ if (!check_allowlist("globalblocklist")) {
 
 <section>
 	<title>MI Commands</title>
-		<section>
-			<title>
-				<function moreinfo="none">reload_blocklist</function>
-			</title>
-			<para>
-				Reload the internal global blocklist cache. This is necessary after
-				the database tables for the global blocklist have been changed.
-			</para>
-			<example>
-				<title><function>reload_blocklist</function> usage</title>
-				<programlisting format="linespecific">
-					...
-					&ctltool; fifo reload_blocklist
-					...
-				</programlisting>
-	    		</example>
-		</section>
-
+		The following MI commands are currently disabled, they need to migrated to the RPC infrastructure.
 		<section>
 			<title>
 				<function moreinfo="none">dump_blocklist</function>
