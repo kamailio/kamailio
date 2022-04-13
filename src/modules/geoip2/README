@@ -10,6 +10,10 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
+Henning Westerholt
+
+   gilawa.com
+
    Copyright © 2010 Daniel-Constantin Mierla (asipto.com)
      __________________________________________________________________
 
@@ -31,12 +35,17 @@ Daniel-Constantin Mierla
 
               4.1. geoip2_match(ipaddr, pvc)
 
-        5. Exported pseudo-variables
+        5. RPC Commands
+
+              5.1. userblocklist.reload_blocklist
+
+        6. Exported pseudo-variables
 
    List of Examples
 
    1.1. Set path parameter
    1.2. geoip2_match usage
+   1.3. geoip2.reload usage
 
 Chapter 1. Admin Guide
 
@@ -56,7 +65,11 @@ Chapter 1. Admin Guide
 
         4.1. geoip2_match(ipaddr, pvc)
 
-   5. Exported pseudo-variables
+   5. RPC Commands
+
+        5.1. userblocklist.reload_blocklist
+
+   6. Exported pseudo-variables
 
 1. Overview
 
@@ -126,7 +139,21 @@ if(geoip2_match("$si", "src"))
     xlog("SIP message from: $gip2(src=>cc)\n");
 ...
 
-5. Exported pseudo-variables
+5. RPC Commands
+
+   5.1. userblocklist.reload_blocklist
+
+5.1.  userblocklist.reload_blocklist
+
+   Reload the internal GeoIP database. This is necessary after the
+   database file has been changed on the disk.
+
+   Example 1.3. geoip2.reload usage
+...
+kamcmd geoip2.reload
+...
+
+6. Exported pseudo-variables
 
      * $gip2(pvc=>key) - pvc is an identifier for this query result; it is
        designated by the second parameter of geoip2_match(). The key can
