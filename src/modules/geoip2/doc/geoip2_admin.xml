@@ -128,9 +128,9 @@ if(geoip2_match("$si", "src"))
 
     <section>
 	<title>RPC Commands</title>
-	<section id="userblocklist.r.reload_blocklist">
+	<section id="geoip2.r.reload">
 	   <title>
-		<function moreinfo="none">userblocklist.reload_blocklist</function>
+		<function moreinfo="none">geoip2.reload</function>
 	   </title>
 	   <para>
 			Reload the internal GeoIP database. This is necessary after
