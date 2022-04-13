@@ -395,7 +395,6 @@ int ht_init_tables(void)
 		if(ht->entries==NULL)
 		{
 			LM_ERR("no more shared memory for [%.*s]\n", ht->name.len, ht->name.s);
-			shm_free(ht);
 			return -1;
 		}
 		memset(ht->entries, 0, ht->htsize*sizeof(ht_entry_t));
@@ -413,7 +412,7 @@ int ht_init_tables(void)
 					i--;
 				}
 				shm_free(ht->entries);
-				shm_free(ht);
+				ht->entries = NULL;
 				return -1;
 
 			}
