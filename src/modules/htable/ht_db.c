@@ -211,6 +211,7 @@ int ht_db_load_table(ht_t *ht, str *dbtable, int mode)
 		LM_ERR("failed to use_table\n");
 		return -1;
 	}
+	ht->dbload = 0;
 	if(ht->ncols>0) {
 		db_ord = &ht->scols[0];
 		for(c=0; c<ht->ncols; c++) {
@@ -527,6 +528,7 @@ int ht_db_load_table(ht_t *ht, str *dbtable, int mode)
 
 	ht_dbf.free_result(ht_db_con, db_res);
 	LM_DBG("loaded %d values in hash table\n", cnt);
+	ht->dbload = 1;
 
 	return 0;
 error:
