@@ -55,5 +55,6 @@ int siprepo_msg_set(sip_msg_t *msg, str *msgid);
 int siprepo_msg_rm(sip_msg_t *msg, str *callid, str *msgid);
 int siprepo_msg_pull(sip_msg_t *msg, str *callid, str *msgid, str *rname);
 int siprepo_msg_check(sip_msg_t *msg);
+void siprepo_msg_timer(unsigned int ticks, int worker, void *param);
 
 #endif

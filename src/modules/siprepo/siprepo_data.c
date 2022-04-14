@@ -43,6 +43,7 @@
 
 static siprepo_slot_t *_siprepo_table = NULL;
 extern int _siprepo_table_size;
+extern int _siprepo_expire;
 
 /**
  *
@@ -341,4 +342,48 @@ int siprepo_msg_pull(sip_msg_t *msg, str *callid, str *msgid, str *rname)
 	ksr_msg_env_reset();
 
 	return 0;
+}
+
+/**
+ *
+ */
+void siprepo_timer_exec(unsigned int ticks, int worker, void *param)
+{
+	time_t tnow;
+	int i;
+	siprepo_msg_t *it = NULL;
+	siprepo_msg_t *elist = NULL;
+
+	tnow = time(NULL);
+	for(i=0; i<_siprepo_table_size; i++) {
+		lock_get(&_siprepo_table[i].lock);
+		for(it=_siprepo_table[i].plist; it!=NULL; it=it->next) {
+			if(it->itime+_siprepo_expire < tnow) {
+				if(it->prev==NULL) {
+					_siprepo_table[i].plist = it->next;
+					if(_siprepo_table[i].plist) {
+						_siprepo_table[i].plist->prev = NULL;
+					}
+				} else {
+					it->prev->next = it->next;
+				}
+				if(it->next!=NULL) {
+					it->next->prev = it->prev;
+				}
+				if(elist) {
+					it->next = elist;
+					elist = it;
+				} else {
+					it->next = NULL;
+					elist = it;
+				}
+			}
+		}
+		lock_release(&_siprepo_table[i].lock);
+	}
+	while(elist) {
+		it = elist;
+		elist = elist->next;
+		shm_free(it);
+	}
 }

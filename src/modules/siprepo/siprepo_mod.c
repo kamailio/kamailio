@@ -32,6 +32,7 @@
 #include "../../core/receive.h"
 #include "../../core/mod_fix.h"
 #include "../../core/async_task.h"
+#include "../../core/timer_proc.h"
 #include "../../core/kemi.h"
 
 #include "siprepo_data.h"
@@ -53,6 +54,8 @@ static int w_sr_msg_async_pull(sip_msg_t *msg, char *pcallid, char *pmsgid,
 		char *pgname, char *prname);
 static int w_sr_msg_rm(sip_msg_t *msg, char *pcallid, char *pmsgid);
 static int w_sr_msg_check(sip_msg_t *msg, char *p1, char *p2);
+
+static void siprepo_timer_exec(unsigned int ticks, int worker, void *param);
 
 /* clang-format off */
 typedef struct sworker_task_param {
@@ -108,6 +111,7 @@ static int mod_init(void)
 		LM_ERR("failed to initialize hash table\n");
 		return -1;
 	}
+	register_basic_timers(_siprepo_timer_procs);
 	return 0;
 }
 
@@ -116,6 +120,21 @@ static int mod_init(void)
  */
 static int child_init(int rank)
 {
+	int i;
+	char si_desc[MAX_PT_DESC];
+
+	if(rank!=PROC_MAIN) {
+		return 0;
+	}
+	for(i=0; i<_siprepo_timer_procs; i++) {
+		snprintf(si_desc, MAX_PT_DESC, "SIPREPO child=%d", i);
+		if(fork_basic_timer_w(PROC_TIMER, si_desc, 1 /*socks flag*/,
+						siprepo_timer_exec, i, NULL, _siprepo_timer_interval
+						/*sec*/)<0) {
+			LM_ERR("failed to start timer routine as process\n");
+			return -1; /* error */
+		}
+	}
 	return 0;
 }
 
@@ -293,6 +312,11 @@ static int ki_sr_msg_check(sip_msg_t *msg)
 static int w_sr_msg_check(sip_msg_t *msg, char *p1, char *p2)
 {
 	return ki_sr_msg_check(msg);
+}
+
+static void siprepo_timer_exec(unsigned int ticks, int worker, void *param)
+{
+	siprepo_msg_timer(ticks, worker, param);
 }
 
 /**
