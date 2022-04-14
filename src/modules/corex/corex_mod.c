@@ -34,6 +34,7 @@
 #include "../../core/str_list.h"
 #include "../../core/events.h"
 #include "../../core/onsend.h"
+#include "../../core/forward.h"
 #include "../../core/dns_cache.h"
 #include "../../core/parser/parse_uri.h"
 #include "../../core/parser/parse_param.h"
@@ -47,6 +48,7 @@
 MODULE_VERSION
 
 static int nio_intercept = 0;
+static int w_forward_reply(sip_msg_t *msg, char *p1, char *p2);
 static int w_append_branch(sip_msg_t *msg, char *su, char *sq);
 static int w_send_udp(sip_msg_t *msg, char *su, char *sq);
 static int w_send_tcp(sip_msg_t *msg, char *su, char *sq);
@@ -105,6 +107,8 @@ static tr_export_t mod_trans[] = {
 };
 
 static cmd_export_t cmds[]={
+	{"forward_reply", (cmd_function)w_forward_reply, 0, 0,
+		0, CORE_ONREPLY_ROUTE },
 	{"append_branch", (cmd_function)w_append_branch, 0, 0,
 		0, REQUEST_ROUTE | FAILURE_ROUTE },
 	{"append_branch", (cmd_function)w_append_branch, 1, fixup_spve_null,
@@ -249,11 +253,21 @@ static int child_init(int rank)
 
 	return 0;
 }
+
 /**
  * destroy module function
  */
 static void mod_destroy(void)
 {
+}
+
+/**
+ * forward reply based on via
+ */
+static int w_forward_reply(sip_msg_t *msg, char *p1, char *p2)
+{
+	forward_reply(msg);
+	return 1;
 }
 
 /**
