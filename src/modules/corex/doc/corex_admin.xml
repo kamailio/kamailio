@@ -907,6 +907,27 @@ event_route[dispatcher:dst-down] {
 </programlisting>
         </example>
     </section>
+	<section id="corex.f.forward_reply">
+		<title>
+			<function moreinfo="none">forward_reply()</function>
+		</title>
+        <para>
+			Forward received reply on demand.
+        </para>
+        <para>
+        This function can be used in CORE_ONREPLY_ROUTE.
+        </para>
+        <example>
+        <title><function>forward_reply</function> usage</title>
+        <programlisting format="linespecific">
+...
+route[reply] {
+    forward_reply();
+}
+...
+</programlisting>
+        </example>
+    </section>
 	</section>
 
 	<section>
