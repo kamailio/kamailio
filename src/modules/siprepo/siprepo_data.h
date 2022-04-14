@@ -38,7 +38,9 @@ typedef struct siprepo_msg {
 	str vbranch;
 	str dbuf;
 	unsigned int cseqmetid;
+	int msgno;
 	int pid;
+	flag_t mflags;
 	receive_info_t rcv;
 	time_t itime;
 	struct siprepo_msg *next;

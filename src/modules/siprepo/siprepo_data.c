@@ -35,6 +35,8 @@
 #include "../../core/trim.h"
 #include "../../core/ut.h"
 #include "../../core/receive.h"
+#include "../../core/globals.h"
+#include "../../core/dset.h"
 #include "../../core/route.h"
 #include "../../core/kemi.h"
 
@@ -193,6 +195,9 @@ int siprepo_msg_set(sip_msg_t *msg, str *msgid)
 
 	it->mtype = msg->first_line.type;
 	it->itime = time(NULL);
+	it->msgno = msg->id;
+	it->pid = msg->pid;
+	it->mflags = msg->flags;
 
 	_siprepo_table[slotid].plist->prev = it;
 	it->next = _siprepo_table[slotid].plist;
@@ -308,6 +313,7 @@ int siprepo_msg_pull(sip_msg_t *msg, str *callid, str *msgid, str *rname)
 	int rtno;
 	sr_kemi_eng_t *keng = NULL;
 	str evname = str_init("siprepo:msg");
+	char lbuf[BUF_SIZE];
 
 	it = siprepo_msg_find(msg, callid, msgid, 1);
 	if(it==NULL) {
@@ -316,10 +322,35 @@ int siprepo_msg_pull(sip_msg_t *msg, str *callid, str *msgid, str *rname)
 		lock_release(&_siprepo_table[slotid].lock);
 		return 1;
 	}
-	memset(&lmsg, 0, sizeof(sip_msg_t));
 	slotid = it->hid % _siprepo_table_size;
+	memset(&lmsg, 0, sizeof(sip_msg_t));
+	lmsg.buf = lbuf;
+	memcpy(lmsg.buf, it->dbuf.s, it->dbuf.len);
+	lmsg.len = it->dbuf.len;
+	lmsg.rcv = it->rcv;
+	lmsg.id = it->msgno;
+	lmsg.pid = it->pid;
+	lmsg.set_global_address = default_global_address;
+	lmsg.set_global_port = default_global_port;
+
+	if(parse_msg(lmsg.buf, lmsg.len, &lmsg) != 0) {
+		LM_ERR("failed to parse msg id [%.*s]\n", msgid->len, msgid->s);
+		lock_release(&_siprepo_table[slotid].lock);
+		return 1;
+	}
+	if(unlikely(parse_headers(&lmsg, HDR_FROM_F|HDR_TO_F|HDR_CALLID_F|HDR_CSEQ_F, 0)
+			< 0)) {
+		LOG(cfg_get(core, core_cfg, sip_parser_log),
+				"parsing relevant headers failed\n");
+	}
+	/* set log prefix */
+	log_prefix_set(&lmsg);
+
+	/* ... clear branches from previous message */
+	clear_branches();
 
 	if(it->mtype==SIP_REQUEST) {
+		ruri_mark_new();
 		rtype = REQUEST_ROUTE;
 	} else {
 		rtype = CORE_ONREPLY_ROUTE;
@@ -340,7 +371,10 @@ int siprepo_msg_pull(sip_msg_t *msg, str *callid, str *msgid, str *rname)
 	}
 	set_route_type(rtbk);
 	ksr_msg_env_reset();
-
+	LM_DBG("cleaning up\n");
+	free_sip_msg(&lmsg);
+	/* reset log prefix */
+	log_prefix_set(NULL);
 	return 0;
 }
 
