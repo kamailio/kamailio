@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+
+	<title>&adminguide;</title>
+
+	<section>
+	<title>Overview</title>
+	<para>
+		This module can store and fetch SIP message content in an in-memory
+		hash table.
+	</para>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>None</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>None</emphasis>
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+
+	<section>
+	<title>Parameters</title>
+	<section id="siprepo.p.hash_size">
+		<title>
+		<function moreinfo="none">hash_size (int)</function>
+		</title>
+		<para>
+			Number of slots in the hash table. It should be power of 2.
+		</para>
+		<para>
+		Default value: 256.
+		</para>
+		<example>
+		<title><function>hash_size</function> usage</title>
+		<programlisting format="linespecific">
+...
+modparam("siprepo", "hash_size", 1024)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="siprepo.p.expire">
+		<title>
+		<function moreinfo="none">expire (int)</function>
+		</title>
+		<para>
+			Number of seconds until the stored message content expires.
+		</para>
+		<para>
+		Default value: 180.
+		</para>
+		<example>
+		<title><function>expire</function> usage</title>
+		<programlisting format="linespecific">
+...
+modparam("siprepo", "expire", 240)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="siprepo.p.timer_interval">
+		<title>
+		<function moreinfo="none">timer_interval (int)</function>
+		</title>
+		<para>
+			Number of seconds to run the timer routine.
+		</para>
+		<para>
+		Default value: 10.
+		</para>
+		<example>
+		<title><function>timer_interval</function> usage</title>
+		<programlisting format="linespecific">
+...
+modparam("siprepo", "timer_interval", 5)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="siprepo.p.timer_procs">
+		<title>
+		<function moreinfo="none">timer_procs (int)</function>
+		</title>
+		<para>
+			Number of timer processes.
+		</para>
+		<para>
+		Default value: 1.
+		</para>
+		<example>
+		<title><function>timer_procs</function> usage</title>
+		<programlisting format="linespecific">
+...
+modparam("siprepo", "timer_procs", 2)
+...
+</programlisting>
+		</example>
+	</section>
+
+	</section>
+
+	<section>
+	<title>Functions</title>
+	<section id="siprepo.f.sr_msg_push">
+		<title>
+		<function moreinfo="none">sr_msg_push(msgid)</function>
+		</title>
+		<para>
+			Push the message content to hash table and associate it with
+			`msgid`. The Call-Id and msgid are needed to pull the message.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>sr_msg_push()</function> usage</title>
+		<programlisting format="linespecific">
+...
+request_route {
+    ...
+    $var(msgid) = $sruid;
+    if(sr_msg_push("$var(msgid)")) {
+    }
+    ...
+}
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="siprepo.f.sr_msg_pull">
+		<title>
+		<function moreinfo="none">sr_msg_pull(callid, msgid, rname)</function>
+		</title>
+		<para>
+			Pull the message content and execute the route block 'rname'.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>sr_msg_pull()</function> usage</title>
+		<programlisting format="linespecific">
+...
+request_route {
+    ...
+    if(sr_msg_pull("$var(callid)", "$var(msgid)", "REPOPULL")) {
+    }
+    ...
+}
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="siprepo.f.sr_msg_async_pull">
+		<title>
+		<function moreinfo="none">sr_msg_async_pull(callid, msgid, gname, rname)</function>
+		</title>
+		<para>
+			Pull the message content and execute the route block 'rname' via
+			async group 'gname'.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>sr_msg_async_pull()</function> usage</title>
+		<programlisting format="linespecific">
+...
+request_route {
+    ...
+    if(sr_msg_async_pull("$var(callid)", "$var(msgid)", "WG01", "REPOPULL")) {
+    }
+    ...
+}
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="siprepo.f.sr_msg_rm">
+		<title>
+		<function moreinfo="none">sr_msg_rm(callid, msgid)</function>
+		</title>
+		<para>
+			Remove the message content.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>sr_msg_rm()</function> usage</title>
+		<programlisting format="linespecific">
+...
+request_route {
+    ...
+    if(sr_msg_rm("$var(callid)", "$var(msgid)")) {
+    }
+    ...
+}
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="siprepo.f.sr_msg_check">
+		<title>
+		<function moreinfo="none">sr_msg_check()</function>
+		</title>
+		<para>
+			Check if the message is stored.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>sr_msg_checkj()</function> usage</title>
+		<programlisting format="linespecific">
+...
+request_route {
+    ...
+    if(sr_msg_check()) {
+    }
+    ...
+}
+...
+</programlisting>
+		</example>
+	</section>
+
+	</section>
+</chapter>

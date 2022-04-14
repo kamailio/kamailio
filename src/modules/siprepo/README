@@ -1,0 +1,239 @@
+SIPREPO Module
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+Edited by
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+   Copyright © 2022 asipto.com
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. hash_size (int)
+              3.2. expire (int)
+              3.3. timer_interval (int)
+              3.4. timer_procs (int)
+
+        4. Functions
+
+              4.1. sr_msg_push(msgid)
+              4.2. sr_msg_pull(callid, msgid, rname)
+              4.3. sr_msg_async_pull(callid, msgid, gname, rname)
+              4.4. sr_msg_rm(callid, msgid)
+              4.5. sr_msg_check()
+
+   List of Examples
+
+   1.1. hash_size usage
+   1.2. expire usage
+   1.3. timer_interval usage
+   1.4. timer_procs usage
+   1.5. sr_msg_push() usage
+   1.6. sr_msg_pull() usage
+   1.7. sr_msg_async_pull() usage
+   1.8. sr_msg_rm() usage
+   1.9. sr_msg_checkj() usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. hash_size (int)
+        3.2. expire (int)
+        3.3. timer_interval (int)
+        3.4. timer_procs (int)
+
+   4. Functions
+
+        4.1. sr_msg_push(msgid)
+        4.2. sr_msg_pull(callid, msgid, rname)
+        4.3. sr_msg_async_pull(callid, msgid, gname, rname)
+        4.4. sr_msg_rm(callid, msgid)
+        4.5. sr_msg_check()
+
+1. Overview
+
+   This module can store and fetch SIP message content in an in-memory
+   hash table.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * None.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * None
+
+3. Parameters
+
+   3.1. hash_size (int)
+   3.2. expire (int)
+   3.3. timer_interval (int)
+   3.4. timer_procs (int)
+
+3.1. hash_size (int)
+
+   Number of slots in the hash table. It should be power of 2.
+
+   Default value: 256.
+
+   Example 1.1. hash_size usage
+...
+modparam("siprepo", "hash_size", 1024)
+...
+
+3.2. expire (int)
+
+   Number of seconds until the stored message content expires.
+
+   Default value: 180.
+
+   Example 1.2. expire usage
+...
+modparam("siprepo", "expire", 240)
+...
+
+3.3. timer_interval (int)
+
+   Number of seconds to run the timer routine.
+
+   Default value: 10.
+
+   Example 1.3. timer_interval usage
+...
+modparam("siprepo", "timer_interval", 5)
+...
+
+3.4. timer_procs (int)
+
+   Number of timer processes.
+
+   Default value: 1.
+
+   Example 1.4. timer_procs usage
+...
+modparam("siprepo", "timer_procs", 2)
+...
+
+4. Functions
+
+   4.1. sr_msg_push(msgid)
+   4.2. sr_msg_pull(callid, msgid, rname)
+   4.3. sr_msg_async_pull(callid, msgid, gname, rname)
+   4.4. sr_msg_rm(callid, msgid)
+   4.5. sr_msg_check()
+
+4.1. sr_msg_push(msgid)
+
+   Push the message content to hash table and associate it with `msgid`.
+   The Call-Id and msgid are needed to pull the message.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.5. sr_msg_push() usage
+...
+request_route {
+    ...
+    $var(msgid) = $sruid;
+    if(sr_msg_push("$var(msgid)")) {
+    }
+    ...
+}
+...
+
+4.2. sr_msg_pull(callid, msgid, rname)
+
+   Pull the message content and execute the route block 'rname'.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.6. sr_msg_pull() usage
+...
+request_route {
+    ...
+    if(sr_msg_pull("$var(callid)", "$var(msgid)", "REPOPULL")) {
+    }
+    ...
+}
+...
+
+4.3. sr_msg_async_pull(callid, msgid, gname, rname)
+
+   Pull the message content and execute the route block 'rname' via async
+   group 'gname'.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.7. sr_msg_async_pull() usage
+...
+request_route {
+    ...
+    if(sr_msg_async_pull("$var(callid)", "$var(msgid)", "WG01", "REPOPULL")) {
+    }
+    ...
+}
+...
+
+4.4. sr_msg_rm(callid, msgid)
+
+   Remove the message content.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.8. sr_msg_rm() usage
+...
+request_route {
+    ...
+    if(sr_msg_rm("$var(callid)", "$var(msgid)")) {
+    }
+    ...
+}
+...
+
+4.5. sr_msg_check()
+
+   Check if the message is stored.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.9. sr_msg_checkj() usage
+...
+request_route {
+    ...
+    if(sr_msg_check()) {
+    }
+    ...
+}
+...
