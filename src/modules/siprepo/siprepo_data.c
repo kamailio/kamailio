@@ -111,7 +111,7 @@ siprepo_msg_t *siprepo_msg_find(sip_msg_t *msg, str *callid, str *msgid, int lmo
 /**
  *
  */
-int siprepo_msg_set(sip_msg_t *msg, str *msgid)
+int siprepo_msg_set(sip_msg_t *msg, str *msgid, int rmode)
 {
 	unsigned int hid;
 	unsigned int slotid;
@@ -303,7 +303,8 @@ int siprepo_msg_check(sip_msg_t *msg)
 /**
  *
  */
-int siprepo_msg_pull(sip_msg_t *msg, str *callid, str *msgid, str *rname)
+int siprepo_msg_pull(sip_msg_t *msg, str *callid, str *msgid, str *rname,
+		int rmode)
 {
 	unsigned int slotid;
 	sip_msg_t lmsg;

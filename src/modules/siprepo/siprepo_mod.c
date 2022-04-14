@@ -48,10 +48,11 @@ static int mod_init(void);
 static int child_init(int);
 static void mod_destroy(void);
 
-static int w_sr_msg_push(sip_msg_t *msg, char *pmsgid, char *p2);
-static int w_sr_msg_pull(sip_msg_t *msg, char *pcallid, char *pmsgid, char *prname);
+static int w_sr_msg_push(sip_msg_t *msg, char *pmsgid, char *prmode);
+static int w_sr_msg_pull(sip_msg_t *msg, char *pcallid, char *pmsgid, char *prname,
+		char *prmode);
 static int w_sr_msg_async_pull(sip_msg_t *msg, char *pcallid, char *pmsgid,
-		char *pgname, char *prname);
+		char *pgname, char *prname, char *prmode);
 static int w_sr_msg_rm(sip_msg_t *msg, char *pcallid, char *pmsgid);
 static int w_sr_msg_check(sip_msg_t *msg, char *p1, char *p2);
 
@@ -66,11 +67,11 @@ typedef struct sworker_task_param {
 } sworker_task_param_t;
 
 static cmd_export_t cmds[]={
-	{"sr_msg_push", (cmd_function)w_sr_msg_push, 1, fixup_spve_null,
+	{"sr_msg_push", (cmd_function)w_sr_msg_push, 2, fixup_spve_igp,
 		fixup_free_spve_null, REQUEST_ROUTE|CORE_ONREPLY_ROUTE},
-	{"sr_msg_pull", (cmd_function)w_sr_msg_pull, 2, fixup_spve_spve,
-		fixup_free_spve_spve, REQUEST_ROUTE|CORE_ONREPLY_ROUTE},
-	{"sr_msg_async_pull", (cmd_function)w_sr_msg_async_pull, 4, fixup_spve_all,
+	{"sr_msg_pull", (cmd_function)w_sr_msg_pull, 3, fixup_spve_all,
+		fixup_free_spve_all, REQUEST_ROUTE|CORE_ONREPLY_ROUTE},
+	{"sr_msg_async_pull", (cmd_function)w_sr_msg_async_pull, 5, fixup_spve_all,
 		fixup_free_spve_all, ANY_ROUTE},
 	{"sr_msg_rm", (cmd_function)w_sr_msg_rm, 2, fixup_spve_spve,
 		fixup_free_spve_spve, REQUEST_ROUTE|CORE_ONREPLY_ROUTE},
@@ -148,11 +149,11 @@ static void mod_destroy(void)
 /**
  *
  */
-static int ki_sr_msg_push(sip_msg_t *msg, str *msgid)
+static int ki_sr_msg_push(sip_msg_t *msg, str *msgid, int rmode)
 {
 	int ret;
 
-	ret = siprepo_msg_set(msg, msgid);
+	ret = siprepo_msg_set(msg, msgid, rmode);
 
 	if(ret<0) {
 		return ret;
@@ -163,26 +164,32 @@ static int ki_sr_msg_push(sip_msg_t *msg, str *msgid)
 /**
  *
  */
-static int w_sr_msg_push(sip_msg_t *msg, char *pmsgid, char *p2)
+static int w_sr_msg_push(sip_msg_t *msg, char *pmsgid, char *prmode)
 {
 	str msgid = STR_NULL;
+	int rmode = 0;
 
 	if(fixup_get_svalue(msg, (gparam_t *)pmsgid, &msgid) != 0) {
 		LM_ERR("cannot get msgid value\n");
 		return -1;
 	}
+	if(fixup_get_ivalue(msg, (gparam_t *)prmode, &rmode) != 0) {
+		LM_ERR("cannot get rmode value\n");
+		return -1;
+	}
 
-	return ki_sr_msg_push(msg, &msgid);
+	return ki_sr_msg_push(msg, &msgid, rmode);
 }
 
 /**
  *
  */
-static int ki_sr_msg_pull(sip_msg_t *msg, str *callid, str *msgid, str *rname)
+static int ki_sr_msg_pull(sip_msg_t *msg, str *callid, str *msgid, str *rname,
+		int rmode)
 {
 	int ret;
 
-	ret = siprepo_msg_pull(msg, callid, msgid, rname);
+	ret = siprepo_msg_pull(msg, callid, msgid, rname, rmode);
 
 	if(ret<0) {
 		return ret;
@@ -193,11 +200,13 @@ static int ki_sr_msg_pull(sip_msg_t *msg, str *callid, str *msgid, str *rname)
 /**
  *
  */
-static int w_sr_msg_pull(sip_msg_t *msg, char *pcallid, char *pmsgid, char *prname)
+static int w_sr_msg_pull(sip_msg_t *msg, char *pcallid, char *pmsgid, char *prname,
+		char *prmode)
 {
 	str callid = STR_NULL;
 	str msgid = STR_NULL;
 	str rname = STR_NULL;
+	int rmode = 0;
 
 	if(fixup_get_svalue(msg, (gparam_t *)pcallid, &callid) != 0) {
 		LM_ERR("cannot get callid value\n");
@@ -211,15 +220,19 @@ static int w_sr_msg_pull(sip_msg_t *msg, char *pcallid, char *pmsgid, char *prna
 		LM_ERR("cannot get route name\n");
 		return -1;
 	}
+	if(fixup_get_ivalue(msg, (gparam_t *)prmode, &rmode) != 0) {
+		LM_ERR("cannot get rmode value\n");
+		return -1;
+	}
 
-	return ki_sr_msg_pull(msg, &callid, &msgid, &rname);
+	return ki_sr_msg_pull(msg, &callid, &msgid, &rname, rmode);
 }
 
 /**
  *
  */
 static int ki_sr_msg_async_pull(sip_msg_t *msg, str *callid, str *msgid,
-		str *gname, str *rname)
+		str *gname, str *rname, int rmode)
 {
 	return 1;
 }
@@ -228,12 +241,13 @@ static int ki_sr_msg_async_pull(sip_msg_t *msg, str *callid, str *msgid,
  *
  */
 static int w_sr_msg_async_pull(sip_msg_t *msg, char *pcallid, char *pmsgid,
-		char *pgname, char *prname)
+		char *pgname, char *prname, char *prmode)
 {
 	str callid = STR_NULL;
 	str msgid = STR_NULL;
 	str gname = STR_NULL;
 	str rname = STR_NULL;
+	int rmode = 0;
 
 	if(fixup_get_svalue(msg, (gparam_t *)pcallid, &callid) != 0) {
 		LM_ERR("cannot get callid value\n");
@@ -251,8 +265,12 @@ static int w_sr_msg_async_pull(sip_msg_t *msg, char *pcallid, char *pmsgid,
 		LM_ERR("cannot get route name\n");
 		return -1;
 	}
+	if(fixup_get_ivalue(msg, (gparam_t *)prmode, &rmode) != 0) {
+		LM_ERR("cannot get rmode value\n");
+		return -1;
+	}
 
-	return ki_sr_msg_async_pull(msg, &callid, &msgid, &gname, &rname);
+	return ki_sr_msg_async_pull(msg, &callid, &msgid, &gname, &rname, rmode);
 }
 
 
