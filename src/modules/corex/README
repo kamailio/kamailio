@@ -62,6 +62,7 @@ Muhammad Shahzad Shafi
               4.22. via_use_xavp_fields(flags)
               4.23. is_faked_msg()
               4.24. is_socket_name(sockname)
+              4.25. forward_reply()
 
         5. RPC Commands
 
@@ -114,8 +115,9 @@ Muhammad Shahzad Shafi
    1.28. via_use_xavp_fields usage
    1.29. is_faked_msg usage
    1.30. is_socket_name usage
-   1.31. event_route[network:msg] use cases
-   1.32. Sample PERL code for do_compress and do_uncompress
+   1.31. forward_reply usage
+   1.32. event_route[network:msg] use cases
+   1.33. Sample PERL code for do_compress and do_uncompress
 
 Chapter 1. Admin Guide
 
@@ -162,6 +164,7 @@ Chapter 1. Admin Guide
         4.22. via_use_xavp_fields(flags)
         4.23. is_faked_msg()
         4.24. is_socket_name(sockname)
+        4.25. forward_reply()
 
    5. RPC Commands
 
@@ -351,6 +354,7 @@ modparam("corex", "nio_msg_avp", "$avp(msg)")
    4.22. via_use_xavp_fields(flags)
    4.23. is_faked_msg()
    4.24. is_socket_name(sockname)
+   4.25. forward_reply()
 
 4.1.  append_branch([ uri, [ q ] ])
 
@@ -744,6 +748,19 @@ event_route[dispatcher:dst-down] {
     }
 ...
 
+4.25.  forward_reply()
+
+   Forward received reply on demand.
+
+   This function can be used in CORE_ONREPLY_ROUTE.
+
+   Example 1.31. forward_reply usage
+...
+route[reply] {
+    forward_reply();
+}
+...
+
 5. RPC Commands
 
    5.1. corex.debug
@@ -907,7 +924,7 @@ event_route[dispatcher:dst-down] {
    Next is a basic usage example where encoding and decoding is done using
    PERL.
 
-   Example 1.31. event_route[network:msg] use cases
+   Example 1.32. event_route[network:msg] use cases
 ...
 loadmodule "app_perl.so"
 loadmodule "corex.so"
@@ -938,7 +955,7 @@ event_route[network:msg] {
 }
 ...
 
-   Example 1.32. Sample PERL code for do_compress and do_uncompress
+   Example 1.33. Sample PERL code for do_compress and do_uncompress
 ...
 use strict;
 use warnings;
