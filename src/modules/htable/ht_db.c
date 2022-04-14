@@ -495,7 +495,7 @@ int ht_db_load_table(ht_t *ht, str *dbtable, int mode)
 				if (ht->htexpire > 0 && expires.n > 0) {
 					expires.n -= now;
 					if(ht_set_cell_expire(ht, &hname, 0, &expires)) {
-						LM_ERR("error setting expires to hash entry [%*.s]\n", hname.len, hname.s);
+						LM_ERR("error setting expires to hash entry [%.*s]\n", hname.len, hname.s);
 						goto error;
 					}
 				}
