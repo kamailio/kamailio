@@ -927,7 +927,7 @@ ims_subscription *parse_user_data(str xml)
 	if (!ctxtInit) parser_init(scscf_user_data_dtd,scscf_user_data_xsd);	
 	doc=0;
 	
-	doc = xmlParseMemory((unsigned char *)xml.s, xml.len);
+	doc = xmlParseMemory(xml.s, xml.len);
 	if (!doc){
 		LM_ERR("This is not a valid XML <%.*s>\n", xml.len,xml.s);
 		goto error;
