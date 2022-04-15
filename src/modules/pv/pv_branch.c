@@ -620,7 +620,6 @@ int pv_get_rcv(struct sip_msg *msg, pv_param_t *param,
 int pv_set_rcv(sip_msg_t *msg, pv_param_t *param, int op, pv_value_t *val)
 {
 	sr_net_info_t *neti = NULL;
-	str s;
 
 	neti = ksr_evrt_rcvnetinfo_get();
 
