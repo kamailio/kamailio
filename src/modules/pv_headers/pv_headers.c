@@ -590,13 +590,13 @@ static sr_kemi_t pvh_kemi_exports[] = {
 	},
 	{ str_init("pv_headers"), str_init("pvh_header_param_exists"),
 		SR_KEMIP_INT, pvh_header_param_exists,
-			{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE,
+			{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 				SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE}
 	},
 	{ str_init("pv_headers"), str_init("pvh_remove_header_param"),
 		SR_KEMIP_INT, pvh_remove_header_param,
-			{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE,
-				SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE}
+			{ SR_KEMIP_INT, SR_KEMIP_STR, SR_KEMIP_STR,
+				SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE}
 	},
 	{{0, 0}, {0, 0}, 0, NULL, {0, 0, 0, 0, 0, 0}}
 };
