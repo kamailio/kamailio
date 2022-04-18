@@ -162,10 +162,10 @@ int str2valid_uint(str* _number, unsigned int* _result) {
 	return 0;
 }
 
-/* parses the given comma seperated string into a string list */
-strl* parse_str_list(str* _string) {
+/* parses the given comma separated string into a string list */
+str_list_t* parse_str_list(str* _string) {
 	str input;
-	strl *parsed_list, *pl;
+	str_list_t *parsed_list, *pl;
 	char *comma;
 
 	/* make a copy because we trim it */
@@ -178,40 +178,40 @@ strl* parse_str_list(str* _string) {
 		LM_DBG("list is empty\n");
 		return NULL;
 	}
-	parsed_list = pkg_malloc(sizeof(strl));
+	parsed_list = pkg_malloc(sizeof(str_list_t));
 	if (parsed_list == NULL) {
 		LM_ERR("OUT OF MEMORY for initial list element\n");
 		return NULL;
 	}
-	memset(parsed_list, 0, sizeof(strl));
-	parsed_list->string.s = input.s;
-	parsed_list->string.len = input.len;
+	memset(parsed_list, 0, sizeof(str_list_t));
+	parsed_list->s.s = input.s;
+	parsed_list->s.len = input.len;
 
 	comma = q_memchr(input.s, ',', input.len);
 	pl = parsed_list;
 	while (comma != NULL) {
-		pl->next = pkg_malloc(sizeof(strl));
+		pl->next = pkg_malloc(sizeof(str_list_t));
 		if (pl->next == NULL) {
 			LM_ERR("OUT OF MEMORY for further list element\n");
 			return parsed_list;
 		}
-		memset(pl->next, 0, sizeof(strl));
-		pl->next->string.s = comma + 1;
-		pl->next->string.len = pl->string.len
-			- (pl->next->string.s - pl->string.s);
-		pl->string.len = comma - pl->string.s;
-		trim_trailing(&(pl->string));
+		memset(pl->next, 0, sizeof(str_list_t));
+		pl->next->s.s = comma + 1;
+		pl->next->s.len = pl->s.len
+			- (pl->next->s.s - pl->s.s);
+		pl->s.len = comma - pl->s.s;
+		trim_trailing(&(pl->s));
 		pl = pl->next;
-		trim_leading(&(pl->string));
-		comma = q_memchr(pl->string.s, ',', pl->string.len);
+		trim_leading(&(pl->s));
+		comma = q_memchr(pl->s.s, ',', pl->s.len);
 	}
 
 	return parsed_list;
 }
 
 /* free the elements of the linked str list */
-void free_str_list(strl *_list) {
-	strl *cur, *next;
+void free_str_list(str_list_t *_list) {
+	str_list_t *cur, *next;
 
 	if (_list != NULL) {
 		cur = _list;
@@ -224,7 +224,7 @@ void free_str_list(strl *_list) {
 }
 
 int parse_proxyrequire(struct hdr_field* _h) {
-	strl *pr_l;
+	str_list_t *pr_l;
 
 	if (_h->parsed) {
 		return 0; /* Already parsed */
@@ -664,7 +664,7 @@ int check_expires_value(sip_msg_t* msg) {
 
 /* check the content of the Proxy-Require header */
 int check_proxy_require(sip_msg_t* msg) {
-	strl *r_pr, *l_pr;
+	str_list_t *r_pr, *l_pr;
 	char *u;
 	int u_len;
 
@@ -692,20 +692,20 @@ int check_proxy_require(sip_msg_t* msg) {
 			l_pr = proxyrequire_list;
 			while (l_pr != NULL) {
 				LM_DBG("comparing r='%.*s' l='%.*s'\n",
-						r_pr->string.len, r_pr->string.s, l_pr->string.len,
-						l_pr->string.s);
-				if (l_pr->string.len == r_pr->string.len &&
+						r_pr->s.len, r_pr->s.s, l_pr->s.len,
+						l_pr->s.s);
+				if (l_pr->s.len == r_pr->s.len &&
 						/* FIXME tokens are case in-sensitive */
-						memcmp(l_pr->string.s, r_pr->string.s,
-							l_pr->string.len) == 0) {
+						memcmp(l_pr->s.s, r_pr->s.s,
+							l_pr->s.len) == 0) {
 					break;
 				}
 				l_pr = l_pr->next;
 			}
 			if (l_pr == NULL) {
 				LM_DBG("request contains unsupported extension: %.*s\n",
-						r_pr->string.len, r_pr->string.s);
-				u_len = UNSUPPORTED_HEADER_LEN + 2 + r_pr->string.len;
+						r_pr->s.len, r_pr->s.s);
+				u_len = UNSUPPORTED_HEADER_LEN + 2 + r_pr->s.len;
 				u = pkg_malloc(u_len);
 				if (u == NULL) {
 					LM_ERR("failed to allocate memory for"
@@ -713,9 +713,9 @@ int check_proxy_require(sip_msg_t* msg) {
 				}
 				else {
 					memcpy(u, UNSUPPORTED_HEADER, UNSUPPORTED_HEADER_LEN);
-					memcpy(u + UNSUPPORTED_HEADER_LEN, r_pr->string.s,
-							r_pr->string.len);
-					memcpy(u + UNSUPPORTED_HEADER_LEN + r_pr->string.len,
+					memcpy(u + UNSUPPORTED_HEADER_LEN, r_pr->s.s,
+							r_pr->s.len);
+					memcpy(u + UNSUPPORTED_HEADER_LEN + r_pr->s.len,
 							CRLF, CRLF_LEN);
 					add_lump_rpl(msg, u, u_len, LUMP_RPL_HDR);
 				}
