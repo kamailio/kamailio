@@ -145,7 +145,7 @@ static int mod_init(void)
 
 	if(cfg_get(tcp, tcp_cfg, accept_no_cl)==0) {
 		LM_WARN("tcp_accept_no_cl not set - usually required"
-				" to handle HTTP requests with no Content-Lenght\n");
+				" to handle HTTP requests with no Content-Length\n");
 	}
 
 	/* bind the SL API */
