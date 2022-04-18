@@ -344,18 +344,18 @@ static void siprepo_timer_exec(unsigned int ticks, int worker, void *param)
 static sr_kemi_t sr_kemi_sworker_exports[] = {
 	{ str_init("siprepo"), str_init("sr_msg_push"),
 		SR_KEMIP_INT, ki_sr_msg_push,
-		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("siprepo"), str_init("sr_msg_pull"),
 		SR_KEMIP_INT, ki_sr_msg_pull,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
-			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+			SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("siprepo"), str_init("sr_msg_async_pull"),
 		SR_KEMIP_INT, ki_sr_msg_async_pull,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
-			SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE }
+			SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE }
 	},
 	{ str_init("siprepo"), str_init("sr_msg_rm"),
 		SR_KEMIP_INT, ki_sr_msg_rm,
