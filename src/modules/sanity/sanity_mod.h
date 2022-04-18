@@ -25,7 +25,8 @@
 #define MOD_SANITY_CHK_H
 
 #include "../../core/str.h"
-#include "../../modules/sl/sl.h"
+#include "../../core/str_list.h"
+#include "../sl/sl.h"
 #include "../../core/parser/msg_parser.h"
 
 #define SANITY_RURI_SIP_VERSION        (1<<0)
@@ -73,15 +74,8 @@
 #define SANITY_CHECK_ERROR -1
 #define SANITY_CHECK_NOT_APPLICABLE -2
 
-struct _strlist {
-	str string;            /* the string */
-	struct _strlist* next; /* the next strlist element */
-};
-
-typedef struct _strlist strl;
-
 extern int default_checks;
-extern strl* proxyrequire_list;
+extern str_list_t* proxyrequire_list;
 
 extern sl_api_t slb;
 

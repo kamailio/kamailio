@@ -44,7 +44,7 @@
 		<listitem>
 			<para>
 			required headers - (4) -checks if the minimum set of required headers
-			to, from, cseq, callid and via is present in the request.
+			To, From, CSeq, Call-ID and Via is present in the request.
 			</para>
 		</listitem>
 		<listitem>
@@ -59,31 +59,31 @@
 		</listitem>
 		<listitem>
 			<para>
-			Cseq method - (32) - checks if the method from the Cseq header is equal
+			Cseq method - (32) - checks if the method from the CSeq header is equal
 			to the request method.
 			</para>
 		</listitem>
 		<listitem>
 			<para>
-			Cseq value - (64) - checks if the number in the Cseq header is a valid
+			Cseq value - (64) - checks if the number in the CSeq header is a valid
 			unsigned integer.
 			</para>
 		</listitem>
 		<listitem>
 			<para>
 			content length - (128) - checks if the size of the body matches with the
-			value from the content length header.
+			value from the Content-Length header.
 			</para>
 		</listitem>
 		<listitem>
 			<para>
-			expires value - (256) - checks if the value of the expires header is a
+			expires value - (256) - checks if the value of the Expires header is a
 			valid unsigned integer.
 			</para>
 		</listitem>
 		<listitem>
 			<para>
-			proxy require - (512) - checks if all items of the proxy require header
+			proxy require - (512) - checks if all items of the Proxy-Require header
 			are present in the list of the extensions from the module
 			parameter proxy_require.
 			</para>
@@ -111,7 +111,7 @@
 		</listitem>
 		<listitem>
 			<para>
-			authorization header (8192) - checks if the Authorization is valid
+			Authorization header (8192) - checks if the Authorization header is valid
 			if the scheme is "digest" (see "digest credentials" above), always
 			returns success for other schemes.
 			</para>
@@ -195,7 +195,8 @@ modparam("sanity", "uri_checks", 3)
 	<title><varname>proxy_require</varname> (string)</title>
 	<para>
 		This parameter sets the list of supported SIP extensions for this &kamailio;.
-		The value is expected as a comma separated list of extensions.
+		The value is expected as a comma separated list
+		(leading and trailing whitespaces are stripped from each token) of extensions.
 		This list is separated into single tokens. Each token from
 		a proxy require header will be compared with the tokens from this
 		list.
