@@ -32,10 +32,6 @@
 #include "../../core/rpc.h"
 #include "../../core/rpc_lookup.h"
 #include "../../core/parser/msg_parser.h"
-#include "../../core/parser/parse_uri.h"
-#include "../../core/parser/parse_to.h"
-#include "../../core/parser/parse_from.h"
-#include "../../core/parser/parse_cseq.h"
 
 #include "cfgt_int.h"
 #include "cfgt_json.h"
@@ -70,18 +66,6 @@ static int _cfgt_init_hashtable(struct str_hash_table *ht)
 
 	str_hash_init(ht);
 
-	return 0;
-}
-
-int _cfgt_pv_parse(str *param, pv_elem_p *elem)
-{
-	if(param->s && param->len > 0) {
-		if(pv_parse_format(param, elem) < 0) {
-			LM_ERR("malformed or non AVP %.*s AVP definition\n", param->len,
-					param->s);
-			return -1;
-		}
-	}
 	return 0;
 }
 
@@ -234,8 +218,7 @@ int _cfgt_get_hdr_helper(struct sip_msg *msg, str *res, int mode)
 	if(msg == NULL || (mode == 0 && res == NULL))
 		return -1;
 
-	/* we need to be sure we have parsed all headers */
-	if(parse_headers(msg, HDR_EOH_F, 0) < 0) {
+	if(parse_headers(msg, HDR_CALLID_F, 0) < 0) {
 		LM_ERR("error parsing headers\n");
 		return -1;
 	}
@@ -636,27 +619,31 @@ int _cfgt_node_get_flowname(cfgt_str_list_p route, int *indx, str *dest)
 
 int _cfgt_parse_msg(sip_msg_t *msg)
 {
+	int res = 1;
 	if(parse_msg(msg->buf, msg->len, msg) != 0) {
 		LM_ERR("outbuf buffer parsing failed!");
-		return 1;
+		return res;
 	}
 
 	if(msg->first_line.type == SIP_REQUEST) {
 		if(!IS_SIP(msg)) {
 			LM_DBG("non sip request message\n");
-			return 1;
+			goto done;
 		}
 	} else if(msg->first_line.type == SIP_REPLY) {
 		if(!IS_SIP_REPLY(msg)) {
 			LM_DBG("non sip reply message\n");
-			return 1;
+			goto done;
 		}
 	} else {
 		LM_DBG("non sip message\n");
-		return 1;
+		goto done;
 	}
+	res = 0;
 
-	return 0;
+done:
+	free_sip_msg(msg);
+	return res;
 }
 
 int cfgt_process_route(struct sip_msg *msg, struct action *a)
