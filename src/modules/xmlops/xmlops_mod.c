@@ -43,6 +43,7 @@ MODULE_VERSION
 
 extern int pv_xml_buf_size;
 
+/* clang-format off */
 static pv_export_t mod_pvs[] = {
 	{ {"xml", sizeof("xml")-1}, PVT_OTHER, pv_get_xml, pv_set_xml,
 		pv_parse_xml_name, 0, 0, 0 },
@@ -58,14 +59,14 @@ static param_export_t params[]={
 /** module exports */
 struct module_exports exports= {
 	"xmlops",		/* module name */
-	 DEFAULT_DLFLAGS,	/* dlopen flags */
-	 0,  			/* exported functions */
-	 params,		/* exported parameters */
-	 0,				/* exported rpc functions */
-	 mod_pvs,		/* exported pseudo-variables */
-	 0,				/* response handling function */
-	 0,				/* module init function */
-	 0,				/* per-child init function */
- 	 0				/* destroy function */
+	DEFAULT_DLFLAGS,	/* dlopen flags */
+	0,  			/* exported functions */
+	params,			/* exported parameters */
+	0,				/* exported rpc functions */
+	mod_pvs,		/* exported pseudo-variables */
+	0,				/* response handling function */
+	0,				/* module init function */
+	0,				/* per-child init function */
+	0				/* destroy function */
 };
-
+/* clang-format on */

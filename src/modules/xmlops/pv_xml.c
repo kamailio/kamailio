@@ -37,15 +37,16 @@
 
 int pv_xml_buf_size = 4095;
 
+/* clang-format off */
 typedef struct _pv_xml {
 	str docname;
 	unsigned int docid;
 	str inbuf;
 	str outbuf;
 	int updated;
-    xmlDocPtr doc;
-    xmlXPathContextPtr xpathCtx; 
-    xmlXPathObjectPtr xpathObj; 
+	xmlDocPtr doc;
+	xmlXPathContextPtr xpathCtx;
+	xmlXPathObjectPtr xpathObj;
 	struct _pv_xml *next;
 } pv_xml_t;
 
@@ -55,6 +56,7 @@ typedef struct _pv_xml_spec {
 	int type;
 	pv_elem_t *pve;
 } pv_xml_spec_t;
+/* clang-format on */
 
 pv_xml_t *_pv_xml_root = NULL;
 
@@ -70,7 +72,7 @@ pv_xml_t *pv_xml_get_struct(str *name)
 
 	while(it!=NULL)
 	{
-		if(docid == it->docid && name->len==it->docname.len 
+		if(docid == it->docid && name->len==it->docname.len
 				&& strncmp(name->s, it->docname.s, name->len)==0)
 		{
 			LM_DBG("doc found [%.*s]\n", name->len, name->s);
@@ -99,8 +101,8 @@ pv_xml_t *pv_xml_get_struct(str *name)
 
 int pv_xpath_nodes_eval(pv_xml_t *xdoc)
 {
-    int size;
-    int i;
+	int size;
+	int i;
 	xmlNodeSetPtr nodes;
 	char *p;
 	xmlChar *keyword;
@@ -110,7 +112,7 @@ int pv_xpath_nodes_eval(pv_xml_t *xdoc)
 			|| xdoc->xpathObj==NULL)
 		return -1;
 
-    nodes = xdoc->xpathObj->nodesetval;
+	nodes = xdoc->xpathObj->nodesetval;
 	if(nodes==NULL)
 	{
 		xdoc->outbuf.len = 0;
@@ -118,7 +120,7 @@ int pv_xpath_nodes_eval(pv_xml_t *xdoc)
 		return 0;
 	}
 	size = nodes->nodeNr;
-    p = xdoc->outbuf.s;
+	p = xdoc->outbuf.s;
 	for(i = 0; i < size; ++i)
 	{
 		if(nodes->nodeTab[i]==NULL)
@@ -166,9 +168,9 @@ int pv_xpath_nodes_update(pv_xml_t *xdoc, str *val)
 {
 	xmlNodeSetPtr nodes;
 	const xmlChar* value;
-    int size;
-    int i;
-    
+	int size;
+	int i;
+
 	if(xdoc==NULL || xdoc->doc==NULL || xdoc->xpathCtx==NULL
 			|| xdoc->xpathObj==NULL || val==NULL)
 		return -1;
@@ -177,16 +179,16 @@ int pv_xpath_nodes_update(pv_xml_t *xdoc, str *val)
 		LM_ERR("internal buffer overflow - %d\n", val->len);
 		return -1;
 	}
-    nodes = xdoc->xpathObj->nodesetval;
+	nodes = xdoc->xpathObj->nodesetval;
 	if(nodes==NULL)
 		return 0;
-    size = nodes->nodeNr;
+	size = nodes->nodeNr;
 
 	value = (const xmlChar*)xdoc->outbuf.s;
 	memcpy(xdoc->outbuf.s, val->s, val->len);
 	xdoc->outbuf.s[val->len] = '\0';
 	xdoc->outbuf.len = val->len;
-    
+
 	/*
 	 * NOTE: the nodes are processed in reverse order, i.e. reverse document
 	 *       order because xmlNodeSetContent can actually free up descendant
@@ -198,7 +200,7 @@ int pv_xpath_nodes_update(pv_xml_t *xdoc, str *val)
 	for(i = size - 1; i >= 0; i--) {
 		if(nodes->nodeTab[i]==NULL)
 			continue;
-	
+
 		xmlNodeSetContent(nodes->nodeTab[i], value);
 		/*
 		 * All the elements returned by an XPath query are pointers to
@@ -211,7 +213,7 @@ int pv_xpath_nodes_update(pv_xml_t *xdoc, str *val)
 		 * This can be exercised by running
 		 *       valgrind xpath2 test3.xml '//discarded' discarded
 		 * There is 2 ways around it:
-		 *   - make a copy of the pointers to the nodes from the result set 
+		 *   - make a copy of the pointers to the nodes from the result set
 		 *     then call xmlXPathFreeObject() and then modify the nodes
 		 * or
 		 *   - remove the reference to the modified nodes from the node set
@@ -298,7 +300,7 @@ int pv_get_xml(struct sip_msg *msg,  pv_param_t *param,
 				LM_ERR("cannot get xpath string\n");
 				return pv_get_null(msg, param, res);
 			}
-			
+
 			/* Evaluate xpath expression */
 			pv_xml_register_ns(pxs->xdoc->xpathCtx);
 			pxs->xdoc->xpathObj = xmlXPathEvalExpression(
@@ -307,21 +309,21 @@ int pv_get_xml(struct sip_msg *msg,  pv_param_t *param,
 			{
 				LM_ERR("unable to evaluate xpath expression [%s/%d]\n",
 						xpaths.s, xpaths.len);
-				xmlXPathFreeContext(pxs->xdoc->xpathCtx); 
-				xmlFreeDoc(pxs->xdoc->doc); 
-				pxs->xdoc->xpathCtx = NULL; 
-				pxs->xdoc->doc = NULL; 
+				xmlXPathFreeContext(pxs->xdoc->xpathCtx);
+				xmlFreeDoc(pxs->xdoc->doc);
+				pxs->xdoc->xpathCtx = NULL;
+				pxs->xdoc->doc = NULL;
 				return pv_get_null(msg, param, res);
 			}
 			/* Print results */
 			if(pv_xpath_nodes_eval(pxs->xdoc)<0)
 			{
 				xmlXPathFreeObject(pxs->xdoc->xpathObj);
-				xmlXPathFreeContext(pxs->xdoc->xpathCtx); 
+				xmlXPathFreeContext(pxs->xdoc->xpathCtx);
 				xmlFreeDoc(pxs->xdoc->doc);
 				pxs->xdoc->xpathObj = NULL;
-				pxs->xdoc->xpathCtx = NULL; 
-				pxs->xdoc->doc = NULL; 
+				pxs->xdoc->xpathCtx = NULL;
+				pxs->xdoc->doc = NULL;
 				return pv_get_null(msg, param, res);
 			}
 			xmlXPathFreeObject(pxs->xdoc->xpathObj);
@@ -396,17 +398,17 @@ int pv_set_xml(struct sip_msg* msg, pv_param_t *param,
 				LM_ERR("cannot get xpath string\n");
 				return -1;
 			}
-			
+
 			/* Evaluate xpath expression */
 			pxs->xdoc->xpathObj = xmlXPathEvalExpression(
 					(const xmlChar*)xpaths.s, pxs->xdoc->xpathCtx);
 			if(pxs->xdoc->xpathObj == NULL)
 			{
 				LM_ERR("unable to evaluate xpath expression [%s]\n", xpaths.s);
-				xmlXPathFreeContext(pxs->xdoc->xpathCtx); 
-				xmlFreeDoc(pxs->xdoc->doc); 
-				pxs->xdoc->xpathCtx = NULL; 
-				pxs->xdoc->doc = NULL; 
+				xmlXPathFreeContext(pxs->xdoc->xpathCtx);
+				xmlFreeDoc(pxs->xdoc->doc);
+				pxs->xdoc->xpathCtx = NULL;
+				pxs->xdoc->doc = NULL;
 				return -1;
 			}
 			/* Set value */
@@ -415,11 +417,11 @@ int pv_set_xml(struct sip_msg* msg, pv_param_t *param,
 				LM_ERR("unable to update xpath [%s] - [%.*s]\n", xpaths.s,
 						val->rs.len, val->rs.s);
 				xmlXPathFreeObject(pxs->xdoc->xpathObj);
-				xmlXPathFreeContext(pxs->xdoc->xpathCtx); 
-				xmlFreeDoc(pxs->xdoc->doc); 
+				xmlXPathFreeContext(pxs->xdoc->xpathCtx);
+				xmlFreeDoc(pxs->xdoc->doc);
 				pxs->xdoc->xpathObj = NULL;
-				pxs->xdoc->xpathCtx = NULL; 
-				pxs->xdoc->doc = NULL; 
+				pxs->xdoc->xpathCtx = NULL;
+				pxs->xdoc->doc = NULL;
 				return -1;
 			}
 			pxs->xdoc->updated = 1;
