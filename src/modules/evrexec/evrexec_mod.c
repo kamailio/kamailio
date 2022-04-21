@@ -259,11 +259,14 @@ void evrexec_process_socket(evrexec_task_t *it, int idx)
 	if(it->sockfd==-1) {
 		LM_ERR("failed to create socket - address: %.*s (%d/%s)\n",
 				it->sockaddr.len, it->sockaddr.s, errno, strerror(errno));
+		freeaddrinfo(res);
 		return;
 	}
 	if(bind(it->sockfd, res->ai_addr, res->ai_addrlen)==-1) {
 		LM_ERR("failed to bind socket - address: %.*s (%d/%s)\n",
 				it->sockaddr.len, it->sockaddr.s, errno, strerror(errno));
+		close(it->sockfd);
+		freeaddrinfo(res);
 		return;
 	}
 	freeaddrinfo(res);
