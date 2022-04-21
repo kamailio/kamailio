@@ -1146,7 +1146,11 @@ int tps_db_load_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
 		db_ops[nr_keys]=OP_EQ;
 		db_vals[nr_keys].type = DB1_STR;
 		db_vals[nr_keys].nul = 0;
-		db_vals[nr_keys].val.str_val = TPS_STRZ(md->b_tag);
+		if(md->direction==TPS_DIR_DOWNSTREAM) {
+			db_vals[nr_keys].val.str_val = TPS_STRZ(md->b_tag);
+		} else {
+			db_vals[nr_keys].val.str_val = TPS_STRZ(md->a_tag);
+		}
 		nr_keys++;
 
 		db_keys[nr_keys]=&tt_col_s_method;
