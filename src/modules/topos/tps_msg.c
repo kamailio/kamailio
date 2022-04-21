@@ -803,6 +803,7 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 	uint32_t direction = TPS_DIR_DOWNSTREAM;
 	int ret;
 	int use_branch = 0;
+	unsigned int metid = 0;
 
 	LM_DBG("handling incoming request\n");
 
@@ -835,11 +836,11 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 	if(tps_storage_load_dialog(msg, &mtsd, &stsd) < 0) {
 		goto error;
 	}
-        if(((((get_cseq(msg)->method_id) & (METHOD_PRACK|METHOD_UPDATE))
-			&& stsd.b_contact.len <= 0)) || (((get_cseq(msg)->method_id) 
-                        & (METHOD_BYE) && stsd.b_contact.len <= 0) && (0 == dialog))) {
+	metid = get_cseq(msg)->method_id;
+	if((metid & (METHOD_BYE|METHOD_PRACK|METHOD_UPDATE))
+			&& stsd.b_contact.len <= 0) {
 		/* no B-side contact, look for INVITE transaction record */
-		if((get_cseq(msg)->method_id) & (METHOD_UPDATE)) {
+		if(metid & (METHOD_BYE|METHOD_UPDATE)) {
 			/* detect direction - via from-tag */
 			if(tps_dlg_detect_direction(msg, &stsd, &direction) < 0) {
 				goto error;
@@ -917,7 +918,7 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 				goto error;
 			}
 		}
-		if((get_cseq(msg)->method_id)&(METHOD_SUBSCRIBE)) {
+		if(metid & METHOD_SUBSCRIBE) {
 			if(tps_storage_update_dialog(msg, &mtsd, &stsd, TPS_DBU_CONTACT|TPS_DBU_TIME)<0) {
 				goto error;
 			}
