@@ -77,18 +77,18 @@ Chapter 1. Admin Guide
      * ruri scheme - (2) - checks if the URI scheme of the request URI is
        supported (sip[s]|tel[s]) by Kamailio
      * required headers - (4) -checks if the minimum set of required
-       headers to, from, cseq, callid and via is present in the request.
+       headers To, From, CSeq, Call-ID and Via is present in the request.
      * via sip version - (8) - disabled.
      * via protocol - (16) - disabled.
-     * Cseq method - (32) - checks if the method from the Cseq header is
+     * Cseq method - (32) - checks if the method from the CSeq header is
        equal to the request method.
-     * Cseq value - (64) - checks if the number in the Cseq header is a
+     * Cseq value - (64) - checks if the number in the CSeq header is a
        valid unsigned integer.
      * content length - (128) - checks if the size of the body matches
-       with the value from the content length header.
-     * expires value - (256) - checks if the value of the expires header
+       with the value from the Content-Length header.
+     * expires value - (256) - checks if the value of the Expires header
        is a valid unsigned integer.
-     * proxy require - (512) - checks if all items of the proxy require
+     * proxy require - (512) - checks if all items of the Proxy-Require
        header are present in the list of the extensions from the module
        parameter proxy_require.
      * parse uri's - (1024) - checks if the specified URIs are present and
@@ -100,9 +100,9 @@ Chapter 1. Admin Guide
        scheme differs from "digest",
      * duplicated To/From tags (4096) - checks for the presence of
        duplicated tags in To/From headers.
-     * authorization header (8192) - checks if the Authorization is valid
-       if the scheme is "digest" (see "digest credentials" above), always
-       returns success for other schemes.
+     * Authorization header (8192) - checks if the Authorization header is
+       valid if the scheme is "digest" (see "digest credentials" above),
+       always returns success for other schemes.
      * first via header (16384) - checks if the first Via header is
        available, can be parsed and has an address value.
 
@@ -153,9 +153,10 @@ modparam("sanity", "uri_checks", 3)
 3.3. proxy_require (string)
 
    This parameter sets the list of supported SIP extensions for this
-   Kamailio. The value is expected as a comma separated list of
-   extensions. This list is separated into single tokens. Each token from
-   a proxy require header will be compared with the tokens from this list.
+   Kamailio. The value is expected as a comma separated list (leading and
+   trailing whitespaces are stripped from each token) of extensions. This
+   list is separated into single tokens. Each token from a proxy require
+   header will be compared with the tokens from this list.
 
    Example 1.3. Set proxy_require parameter
 ...
