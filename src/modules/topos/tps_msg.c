@@ -863,10 +863,9 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 		mtsd.direction = direction;
 	}
 
-
 	tps_storage_lock_release(&lkey);
 
-	if(use_branch) {
+	if(use_branch && direction == TPS_DIR_DOWNSTREAM) {
 		nuri = stsd.b_contact;
 	} else {
 		if(direction == TPS_DIR_UPSTREAM) {
@@ -884,7 +883,7 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 		}
 	}
 
-	if(use_branch) {
+	if(use_branch && direction == TPS_DIR_DOWNSTREAM) {
 		if(tps_reappend_route(msg, &stsd, &stsd.s_rr, 1) < 0) {
 			LM_ERR("failed to reappend s-route\n");
 			return -1;
