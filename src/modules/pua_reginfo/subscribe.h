@@ -16,8 +16,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -26,8 +26,8 @@
 
 #include "../../core/parser/msg_parser.h"
 
-int reginfo_subscribe(struct sip_msg*, char*, char*);
-int reginfo_subscribe2(struct sip_msg*, char*, char*);
-int fixup_subscribe(void** param, int param_no);
+int reginfo_subscribe(struct sip_msg *, char *, char *);
+int reginfo_subscribe2(struct sip_msg *, char *, char *);
+int fixup_subscribe(void **param, int param_no);
 
 #endif
