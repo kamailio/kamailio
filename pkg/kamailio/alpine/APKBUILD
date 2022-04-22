@@ -77,7 +77,7 @@ _mod_list_dbuid="db2_ops uid_auth_db uid_avp_db uid_domain uid_gflags \
 		uid_uri_db"
 
 # - modules for devel purposes
-_mod_list_devel="malloc_test print print_lib"
+_mod_list_devel="misctest print print_lib"
 
 # - modules depending on pcre3 library
 _mod_list_pcre="dialplan lcr regex"
