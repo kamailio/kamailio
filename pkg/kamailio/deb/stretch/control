@@ -742,6 +742,10 @@ Description: RabbitMQ and AMQP integration modules for the Kamailio SIP server
 Package: kamailio-cnxcc-modules
 Architecture: linux-any
 Multi-Arch: same
+Breaks:
+ kamailio (<<5.1),
+Replaces:
+ kamailio (<<5.1),
 Pre-Depends:
  ${misc:Pre-Depends},
 Depends:
