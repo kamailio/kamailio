@@ -389,10 +389,6 @@ Description: CPL module (CPL interpreter engine) for the Kamailio SIP server
 Package: kamailio-radius-modules
 Architecture: any
 Multi-Arch: same
-Breaks:
- kamailio (<<5.1),
-Replaces:
- kamailio (<<5.1),
 Pre-Depends:
  ${misc:Pre-Depends},
 Depends:
