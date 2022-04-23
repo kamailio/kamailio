@@ -24,23 +24,28 @@ License: GPL-2+
  License version 2 can be found in the file `/usr/share/common-licenses/GPL-2'.
 
 
-Files: atomic/* atomic_ops.* basex.* bit_*.c char_msg_val.h compiler_opt.h
- core_stats.h counters.* endianness.* futexlock.h hashes.h io_wait.*
- kstats_types.h lock_ops.c lock_ops_init.h
- lvalue.* mem/ll_malloc.* mem/memdbg.h mem/sf_malloc.* mi/*.h mod_fix.*
- modules/tm/rpc_uac.* modules/counters/counters.c modules/tls/sbufq.h
- modules/tls/tls_bio.* modules/tls/tls_cfg.* modules/tls/tls_cfg.h
- modules/tls/tls_ct_wrq.* modules/tls/tls_ct_q.h modules/tls/tls_domain.*
- modules/tls/tls_server.h modules/tls/tls_locking.* modules/tls/tls_rpc.*
- modules/tls/tls_server.c modules/malloc_test/malloc_test.c modules/blst/blst.c
- parser/case_p_* parser/case_reas.h pvapi.h pv_core.* rand/fastrand.* raw_*
- rpc_lookup.* rvalue.* sctp_* ser_time.h shm_init.* sip_msg_clone.* sock_ut.*
- sr_compat.* str_hash.h switch.* tcp_ev.h tcp_int_send.h tcp_options.*
- tcp_read.h tcp_stats.* timer_proc.* tls_hooks.* tls_hooks_init.h ver.*
+Files: src/code/atomic/* src/code/atomic_ops.* src/code/basex.* src/code/bit_*.c
+ src/code/char_msg_val.h src/code/compiler_opt.h src/code/core_stats.h src/code/counters.*
+ src/code/endianness.* src/code/futexlock.h src/code/hashes.h src/code/io_wait.*
+ src/core/lock_ops.c src/core/lock_ops_init.h src/core/lvalue.* src/core/mem/ll_malloc.*
+ src/core/mem/memdbg.h src/core/mem/sf_malloc.* src/core/mod_fix.* src/modules/tm/rpc_uac.*
+ src/modules/counters/counters.c src/modules/tls/sbufq.h
+ src/modules/tls/tls_bio.* src/modules/tls/tls_cfg.* src/modules/tls/tls_cfg.h
+ src/modules/tls/tls_ct_wrq.* src/modules/tls/tls_ct_q.h src/modules/tls/tls_domain.*
+ src/modules/tls/tls_server.* src/modules/tls/tls_locking.* src/modules/tls/tls_rpc.*
+ src/modules/malloc_test/malloc_test.c src/modules/blst/blst.c
+ src/core/parser/case_p_* src/core/parser/case_reas.h src/core/pvapi.h
+ src/core/pv_core.* src/core/rand/fastrand.* src/core/raw_*
+ src/core/rpc_lookup.* src/core/rvalue.* src/core/sctp_* src/core/ser_time.h
+ src/core/shm_init.* src/core/sip_msg_clone.* src/core/sock_ut.*
+ src/core/sr_compat.* src/core/str_hash.h src/core/switch.*
+ src/core/tcp_ev.h src/core/tcp_int_send.h src/core/tcp_options.*
+ src/core/tcp_read.h src/core/tcp_stats.* src/core/timer_proc.*
+ src/core/tls_hooks.* src/core/tls_hooks_init.h src/core/ver.*
 Copyright: 2006-2010 iptelorg GmbH
 License: ISC
 
-Files: modules/tls/tls_select.* modules/tls/tls_dump_vf.*
+Files: src/modules/tls/tls_select.* src/modules/tls/tls_dump_vf.*
 Copyright: 2005-2010 iptelorg GmbH
 License: GPL-2 + OpenSSL exception
  On Debian systems, the full text of the GNU General Public
@@ -50,7 +55,7 @@ License: GPL-2 + OpenSSL exception
  * such as linking with software components and libraries released under
  * OpenSSL project license.
 
-Files: modules/websocket/* modules/outbound/* modules/auth_ephemeral/*
+Files: src/modules/websocket/* src/modules/outbound/* src/modules/auth_ephemeral/*
 Copyright: 2012-2013 Crocodile RCS Ltd
 License: GPL-2 + OpenSSL exception
  On Debian systems, the full text of the GNU General Public
@@ -60,48 +65,24 @@ License: GPL-2 + OpenSSL exception
  * such as linking with software components and libraries released under
  * OpenSSL project license.
 
-Files: daemonize.* fastlock.h lock_ops.h mem/mem.* mem/f_malloc.h
- mem/meminfo.h mem/memtest.c mem/shm_mem.c mem/q_malloc.h mem/q_malloc.c
- mem/shm_mem.h mem/f_malloc.c modules/tls/tls_rpc.c modules/tls/tls_server.c
- modules/tls/tls_domain.c modules/tls/tls_domain.h modules/tls/tls_server.h
- modules/tls/tls_rpc.h pt.c pt.h sched_yield.h ut.c ut.h
+Files: src/core/daemonize.* src/core/fastlock.h src/core/lock_ops.h
+ src/core/mem/mem.* src/core/mem/f_malloc.h
+ src/core/mem/meminfo.h src/core/mem/memtest.c src/core/mem/shm_mem.c
+ src/core/mem/q_malloc.* src/core/mem/shm_mem.h
+ src/core/mem/f_malloc.c src/core/pt.* src/core/sched_yield.h src/core/ut.*
 Copyright: 2001-2003 FhG Fokus
 License: ISC
 
-Files: events.* modules/topoh/*
+Files: src/core/events.* src/modules/topoh/*
 Copyright: 2009 SIP-Router.org
 License: ISC
 
-Files: modules/mi_rpc/mi_rpc_mod.c modules/pv/pv_xavp.*
- modules/usrloc/ul_rpc.* ppcfg.* xavp.*
+Files: src/modules/pv/pv_xavp.* src/modules/usrloc/ul_rpc.*
+ src/core/ppcfg.* src/core/xavp.*
 Copyright: 2009-2010 Daniel-Constantin Mierla (asipto.com)
 License: ISC
 
-Files: obsolete/jabber_k/tree234.*
-Copyright: 1999, 2000, 2001, Simon Tatham
-License: Expat
- Permission is hereby granted, free of charge, to any person
- obtaining a copy of this software and associated documentation
- files (the "Software"), to deal in the Software without
- restriction, including without limitation the rights to use,
- copy, modify, merge, publish, distribute, sublicense, and/or
- sell copies of the Software, and to permit persons to whom the
- Software is furnished to do so, subject to the following
- conditions:
- .
- The above copyright notice and this permission notice shall be
- included in all copies or substantial portions of the Software.
- .
- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
- EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
- OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
- NONINFRINGEMENT.  IN NO EVENT SHALL SIMON TATHAM BE LIABLE FOR
- ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
- CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
- CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- SOFTWARE.
-
-Files: modules/xmpp/xsnprintf.c obsolete/jabber_s/xsnprintf.c obsolete/jabber_k/xsnprintf.c
+Files: src/modules/xmpp/xsnprintf.c
 Copyright: 1995-1998, The Apache Group
 License: Apache-1.0
  Redistribution and use in source and binary forms, with or without
@@ -143,25 +124,22 @@ License: Apache-1.0
  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  OF THE POSSIBILITY OF SUCH DAMAGE.
 
-Files: modules/mi_xmlrpc/abyss*
-Copyright: 2000, Moez Mahfoudh <mmoez@bigfoot.com>
-License: BSD-3-clause
-
-Files: list.h
+Files: src/code/list.h
 Copyright: 1991, 1993 The Regents of the University of California
 License: BSD-3-clause
 
-Files: modules/tm/t_serial.*
+Files: src/modules/tm/t_serial.*
 Copyright: 2008 Juha Heinanen
 License: BSD-2-clause
 
-Files: parser/sdp/sdp.* parser/sdp/sdp_helpr_funcs.* parser/sdp/sdp_cloner.h
+Files: src/core/parser/sdp/sdp.* src/core/parser/sdp/sdp_helpr_funcs.*
+ src/core/parser/sdp/sdp_cloner.h
 Copyright:
  2008-2009 SOMA Networks, INC.
  2010 VoIP Embedded, Inc
 License: BSD-2-clause
 
-Files: modules/tls/fixed_c_zlib.h
+Files: src/modules/tls/fixed_c_zlib.h
 Copyright:1998-2005 The OpenSSL Project
 Comment: file copied from OpenSSL 0.9.8, refers to OpenSSL License. Note that
  this code will not build by default in the Debian packaging.
@@ -210,7 +188,7 @@ License: OpenSSL
  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  OF THE POSSIBILITY OF SUCH DAMAGE.
 
-Files: md5.* md5utils.c
+Files: src/core/crypto/md5.* src/core/crypto/md5utils.c
 Copyright: 1991-2, RSA Data Security, Inc
 Comment: Note that md5.c and md5.h have been replaced in the patches
  plum_md5*.patch .
@@ -241,7 +219,7 @@ License: RSA-MD5
  These notices must be retained in any copies of any part of this
  documentation and/or software.
 
-Files: mem/dl_*
+Files: src/core/mem/dl_*
 Copyright: n/a
 License: public-domain
  This is a version (aka dlmalloc) of malloc/free/realloc written by
@@ -249,7 +227,7 @@ License: public-domain
  http://creativecommons.org/licenses/publicdomain.  Send questions,
  comments, complaints, performance data, etc to dl@cs.oswego.edu
 
-Files: rand/isaac/*
+Files: src/core/rand/isaac/*
 Copyright: n/a
 License: public-domain
  By Bob Jenkins.  My random number generator, ISAAC.  Public Domain.
@@ -267,7 +245,7 @@ License: ISC
  ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-Files: lib/srutils/srjson.*
+Files: src/lib/srutils/srjson.*
 Copyright: 2009 Dave Gamble
 License: MIT
  Permission is hereby granted, free of charge, to any person obtaining a copy
