@@ -936,7 +936,13 @@ tlsf_t tlsf_create(void* mem)
 tlsf_t tlsf_create_with_pool(void* mem, size_t bytes)
 {
 	tlsf_t tlsf = tlsf_create(mem);
-	tlsf_add_pool(tlsf, (char*)mem + tlsf_size(), bytes - tlsf_size());
+	if(tlsf) {
+		pool_t p;
+		p = tlsf_add_pool(tlsf, (char*)mem + tlsf_size(), bytes - tlsf_size());
+		if(!p) {
+			return NULL;
+		}
+	}
 	return tlsf;
 }
 
@@ -1387,6 +1393,12 @@ int tlsf_malloc_init_pkg_manager(void)
 	_tlsf_pkg_pool = malloc(pkg_mem_size);
 	if (_tlsf_pkg_pool) {
 		_tlsf_pkg_block = tlsf_create_with_pool(_tlsf_pkg_pool, pkg_mem_size);
+		if(_tlsf_pkg_block==NULL) {
+			LM_CRIT("could not create tlsf pkg memory pool\n");
+			fprintf(stderr, "could not create tlsf pkg memory pool: %ld bytes\n",
+							pkg_mem_size);
+			return -1;
+		}
 	} else {
 		LOG(L_CRIT, "could not initialize tlsf pkg memory pool\n");
 		fprintf(stderr, "Too much tlsf pkg memory demanded: %ld bytes\n",
@@ -1629,6 +1641,12 @@ int tlsf_malloc_init_shm_manager(void)
 	_tlsf_shm_pool = shm_core_get_pool();
 	if (_tlsf_shm_pool) {
 		_tlsf_shm_block = tlsf_create_with_pool(_tlsf_shm_pool, shm_mem_size);
+		if(!_tlsf_shm_block) {
+			LM_CRIT("could not create tlsf shm memory pool\n");
+			fprintf(stderr, "could not create tlsf shm memory pool: %ld bytes\n",
+							shm_mem_size);
+			return -1;
+		}
 	} else {
 		LOG(L_CRIT, "could not initialize tlsf shm memory pool\n");
 		fprintf(stderr, "Too much tlsf shm memory demanded: %ld bytes\n",
