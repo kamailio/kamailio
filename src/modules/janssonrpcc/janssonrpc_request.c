@@ -217,7 +217,7 @@ void retry_cb(int fd, short event, void* arg)
 
 	DEBUG("retrying request: id=%d\n", req->id);
 
-	if(jsonrpc_send(req->cmd->conn, req, 0)<0) {
+	if(jsonrpc_send(req->cmd->conn, req, false)<0) {
 		goto error;
 	}
 

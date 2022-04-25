@@ -89,6 +89,7 @@ int refresh_srv(jsonrpc_srv_t* srv_obj)
 			continue;
 		srv_record = (struct srv_rdata*)l->rdata;
 		if (srv_record == NULL) {
+			free_rdata_list(head);
 			ERR("BUG: null rdata\n");
 			return -1;
 		}
@@ -109,16 +110,16 @@ int refresh_srv(jsonrpc_srv_t* srv_obj)
 		jsonrpc_server_group_t* cgroup = NULL;
 		for(cgroup=conn_group; cgroup!=NULL; cgroup=cgroup->next) {
 			new_server = create_server();
-			CHECK_MALLOC(new_server);
+			CHECK_MALLOC_GOTO(new_server, errdup);
 
 			shm_str_dup(&new_server->conn, &cgroup->conn);
-			CHECK_MALLOC(new_server->conn.s);
+			CHECK_MALLOC_GOTO(new_server->conn.s, errdup);
 
 			shm_str_dup(&new_server->addr, &name);
-			CHECK_MALLOC(new_server->addr.s);
+			CHECK_MALLOC_GOTO(new_server->addr.s, errdup);
 
 			shm_str_dup(&new_server->srv, &srv);
-			CHECK_MALLOC(new_server->srv.s);
+			CHECK_MALLOC_GOTO(new_server->srv.s, errdup);
 
 			new_server->port = srv_record->port;
 			new_server->priority = srv_record->priority;
@@ -129,6 +130,7 @@ int refresh_srv(jsonrpc_srv_t* srv_obj)
 			addto_server_list(new_server, &new_servers);
 		}
 	}
+	free_rdata_list(head);
 
 	if(iter <= 0) goto end;
 
@@ -204,6 +206,12 @@ end:
 	free_server_list(rm_servers);
 
 	return retval;
+
+errdup:
+	free_rdata_list(head);
+	free_server_list(new_servers);
+	free_server(new_server);
+	return -1;
 }
 
 void free_srv(jsonrpc_srv_t* srv)

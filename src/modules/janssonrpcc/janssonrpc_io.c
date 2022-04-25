@@ -442,6 +442,7 @@ int jsonrpc_send(str conn, jsonrpc_request_t* req, bool notify_only)
 	if (sent) {
 		if (notify_only == true) { // free the request if using janssonrpc_notification function
 			free_req_cmd(req->cmd);
+			req->cmd = NULL;
 			free_request(req);
 		} else {
 			struct timeval tv;
