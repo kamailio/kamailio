@@ -27,6 +27,8 @@
 
 #include "../../core/parser/msg_parser.h"
 
+#define SIPREPO_RMODE_RM 1
+
 typedef struct siprepo_msg {
 	unsigned int hid;
 	int mtype;

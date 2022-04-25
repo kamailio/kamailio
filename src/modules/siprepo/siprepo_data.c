@@ -111,6 +111,25 @@ siprepo_msg_t *siprepo_msg_find(sip_msg_t *msg, str *callid, str *msgid, int lmo
 /**
  *
  */
+void siprepo_msg_unlink(siprepo_msg_t *it, unsigned int slotid)
+{
+	if(it->prev==NULL) {
+		_siprepo_table[slotid].plist = it->next;
+		if(_siprepo_table[slotid].plist) {
+			_siprepo_table[slotid].plist->prev = NULL;
+		}
+	} else {
+		it->prev->next = it->next;
+	}
+	if(it->next!=NULL) {
+		it->next->prev = it->prev;
+	}
+	return;
+}
+
+/**
+ *
+ */
 int siprepo_msg_set(sip_msg_t *msg, str *msgid, int rmode)
 {
 	unsigned int hid;
@@ -334,9 +353,15 @@ int siprepo_msg_pull(sip_msg_t *msg, str *callid, str *msgid, str *rname,
 	lmsg.set_global_address = default_global_address;
 	lmsg.set_global_port = default_global_port;
 
+	if(rmode & SIPREPO_RMODE_RM) {
+		siprepo_msg_unlink(it, slotid);
+		shm_free(it);
+	}
+
+	lock_release(&_siprepo_table[slotid].lock);
+
 	if(parse_msg(lmsg.buf, lmsg.len, &lmsg) != 0) {
 		LM_ERR("failed to parse msg id [%.*s]\n", msgid->len, msgid->s);
-		lock_release(&_siprepo_table[slotid].lock);
 		return 1;
 	}
 	if(unlikely(parse_headers(&lmsg, HDR_FROM_F|HDR_TO_F|HDR_CALLID_F|HDR_CSEQ_F, 0)
@@ -394,17 +419,7 @@ void siprepo_timer_exec(unsigned int ticks, int worker, void *param)
 		lock_get(&_siprepo_table[i].lock);
 		for(it=_siprepo_table[i].plist; it!=NULL; it=it->next) {
 			if(it->itime+_siprepo_expire < tnow) {
-				if(it->prev==NULL) {
-					_siprepo_table[i].plist = it->next;
-					if(_siprepo_table[i].plist) {
-						_siprepo_table[i].plist->prev = NULL;
-					}
-				} else {
-					it->prev->next = it->next;
-				}
-				if(it->next!=NULL) {
-					it->next->prev = it->prev;
-				}
+				siprepo_msg_unlink(it, slotid);
 				if(elist) {
 					it->next = elist;
 					elist = it;
