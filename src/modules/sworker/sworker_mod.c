@@ -122,9 +122,6 @@ static void mod_destroy(void)
 /**
  *
  */
-/**
- *
- */
 void sworker_exec_task(void *param)
 {
 	sworker_task_param_t *stp;
