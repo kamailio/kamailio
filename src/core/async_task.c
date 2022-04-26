@@ -440,7 +440,7 @@ int async_task_group_push(str *gname, async_task_t *task)
 				gname->len, gname->s);
 		return -1;
 	}
-	LM_DBG("task [%p] sent to groupt [%.*s]\n", task, gname->len, gname->s);
+	LM_DBG("task [%p] sent to group [%.*s]\n", task, gname->len, gname->s);
 	return 0;
 }
 
