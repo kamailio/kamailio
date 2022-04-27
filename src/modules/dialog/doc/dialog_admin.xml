@@ -1468,7 +1468,7 @@ modparam("dialog", "timer_procs", 1)
 		</example>
 	</section>
 
-	<section>
+	<section id="dialog.p.enable_dmq">
 		<title><varname>enable_dmq</varname> (int)</title>
 		<para>
 			If set to 1, the dialog will be synced via dmq.
@@ -1666,6 +1666,47 @@ modparam("dialog", "keep_proxy_rr", 1)
 </programlisting>
 		</example>
 	</section>
+
+	<section id="dialog.p.bye_early_code">
+		<title><varname>bye_early_code</varname> (int)</title>
+		<para>
+			This parameter defines the reply-code being used for
+			dialogs being terminated in early stage (e.g. before
+			200 OK/ACK).
+		</para>
+		<emphasis>
+			Default value is <quote>480</quote>.
+		</emphasis>
+		<example>
+		<title>Set <varname>bye_early_code</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialog", "bye_early_code", 503)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="dialog.p.bye_early_reason">
+		<title><varname>bye_early_reason</varname> (string)</title>
+		<para>
+			This parameter defines the reply-reason being used for
+			dialogs being terminated in early stage (e.g. before
+			200 OK/ACK).
+		</para>
+		<emphasis>
+			Default value is <quote>Temporarily Unavailable</quote>.
+		</emphasis>
+		<example>
+		<title>Set <varname>bye_early_reason</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialog", "bye_early_reason", "Call terminated")
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 	<section>
@@ -1936,7 +1977,9 @@ redlg_setflag("1");
 		<function moreinfo="none">dlg_bye(side)</function>
 		</title>
 		<para>
-		Send BYE to both parties of a dialog.
+		Send BYE to parties of a dialog or - if in early stage - a CANCEL to the 
+		B-Party and a SIP response to the A-Party (as defined in bye_early_code /
+		bye_early_reason).
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
@@ -2444,6 +2487,67 @@ dlg_reset_property("timeout-noreset");
 </programlisting>
 		</example>
 	</section>
+
+	<section id="dialog.f.dlg_req_within">
+		<title>
+		<function moreinfo="none">dlg_req_within(side, method, [headers], [content_type, content])</function>
+		</title>
+		<para>
+		Sends a in-dialog SIP Request with method to a party of a dialog indicated by the side parameter.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>side</emphasis> - where to send the request. It can be:
+				'caller', 'callee', or 'all' (send to both sides).
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				<emphasis>method</emphasis> - Method of the request
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				<emphasis>headers</emphasis> (optional) - additional headers to be added to the request.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				<emphasis>content_type</emphasis> (optional) - Content-Type of the request body - will
+				be added as Content-Type Header.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				<emphasis>content</emphasis> (optional) - Content to be sent as body.
+			</para>
+		</listitem>
+		</itemizedlist>		
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>dlg_req_within</function> usage</title>
+		<programlisting format="linespecific">
+...
+	# Send a simple request:
+	dlg_req_within("all", "OPTIONS");
+...
+	# Send a simple request with extra headers:
+	dlg_req_within("caller", "OPTIONS", "X-Info: Bandwidth granted\r\nX-Info-2: Go ahead\r\n");
+...
+	# Send a simple request with body:
+	dlg_req_within("caller", "UPDATE", "application/sdp", "...some SDP...");
+...
+	# Send a simple request with extra headers and body:
+	dlg_req_within("callee", "INFO", "X-Info: Bandwidth granted\r\n", "application/sdp", "...some SDP...");
+...
+		</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 
