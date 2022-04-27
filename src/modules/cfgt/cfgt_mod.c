@@ -42,6 +42,7 @@ unsigned int init_flag = 0;
 extern int cfgt_mask;
 extern str cfgt_basedir;
 extern str cfgt_hdr_prefix;
+extern int cfgt_skip_unknown;
 /* clang-format off */
 /*! \brief
  * Exported functions
@@ -58,6 +59,7 @@ static param_export_t params[] = {
 	{"basedir", PARAM_STR, &cfgt_basedir},
 	{"mask", INT_PARAM, &cfgt_mask},
 	{"callid_prefix", PARAM_STR, &cfgt_hdr_prefix},
+	{"skip_unknown", INT_PARAM, &cfgt_skip_unknown},
 	{0, 0, 0}
 };
 

@@ -43,6 +43,7 @@ cfgt_hash_p _cfgt_uuid = NULL;
 str cfgt_hdr_prefix = {"NGCP%", 5};
 str cfgt_basedir = {"/tmp", 4};
 int cfgt_mask = CFGT_DP_ALL;
+int cfgt_skip_unknown = 0;
 int not_sip = 0;
 
 int _cfgt_get_filename(int msgid, str uuid, str *dest, int *dir);
@@ -385,6 +386,10 @@ void cfgt_save_node(cfgt_node_p node)
 	str dest = STR_NULL;
 	int dir = 0;
 	struct stat sb;
+	if(cfgt_skip_unknown && strncmp(_cfgt_node->uuid.s, "unknown", 7) == 0) {
+		LM_DBG("skip unknown\n");
+		return;
+	}
 	if(_cfgt_get_filename(node->msgid, node->uuid, &dest, &dir) < 0) {
 		LM_ERR("can't build filename\n");
 		return;
@@ -658,6 +663,9 @@ int cfgt_process_route(struct sip_msg *msg, struct action *a)
 		LM_ERR("node empty\n");
 		return -1;
 	}
+	if(cfgt_skip_unknown && strncmp(_cfgt_node->uuid.s, "unknown", 7) == 0) {
+		return 0;
+	}
 	if(a->rname == NULL) {
 		LM_DBG("no routename. type:%d\n", a->type);
 		return 0;
@@ -806,6 +814,10 @@ int cfgt_post(struct sip_msg *msg, unsigned int flags, void *bar)
 	str flowname = STR_NULL;
 
 	if(_cfgt_node) {
+		if(cfgt_skip_unknown
+				&& strncmp(_cfgt_node->uuid.s, "unknown", 7) == 0) {
+			return 1;
+		}
 		LM_DBG("dump last flow\n");
 		if(_cfgt_node->route == NULL
 				&& strncmp(_cfgt_node->uuid.s, "unknown", 7) == 0)
@@ -844,6 +856,10 @@ int cfgt_msgout(sr_event_param_t *evp)
 	}
 
 	if(_cfgt_node) {
+		if(cfgt_skip_unknown
+				&& strncmp(_cfgt_node->uuid.s, "unknown", 7) == 0) {
+			return 0;
+		}
 		jobj = srjson_CreateStr(&_cfgt_node->jdoc, buf->s, buf->len);
 		if(jobj == NULL) {
 			LM_ERR("cannot create json object\n");
