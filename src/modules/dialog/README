@@ -32,8 +32,7 @@ Julien Klingenmeyer
 
    Copyright © 2006 Voice Sistem SRL
 
-   Copyright © 2011, 2022 ng-voice GmbH, Carsten Bock,
-   http://www.ng-voice.com
+   Copyright © 2011 Carsten Bock, http://www.ng-voice.com
      __________________________________________________________________
 
    Table of Contents
@@ -114,8 +113,6 @@ Julien Klingenmeyer
               6.61. h_id_start (int)
               6.62. h_id_step (int)
               6.63. keep_proxy_rr (string)
-              6.64. bye_early_code (int)
-              6.65. bye_early_reason (string)
 
         7. Functions
 
@@ -140,8 +137,6 @@ Julien Klingenmeyer
               7.19. dlg_db_load_callid(cival)
               7.20. dlg_db_load_extra()
               7.21. dlg_reset_property(attr)
-              7.22. dlg_req_within(side, method, [headers], [content_type,
-                      content])
 
         8. Statistics
 
@@ -260,30 +255,27 @@ Julien Klingenmeyer
    1.61. Set h_id_start parameter
    1.62. Set h_id_step parameter
    1.63. Set dlg_keep_proxy_rr parameter
-   1.64. Set bye_early_code parameter
-   1.65. Set bye_early_reason parameter
-   1.66. set_dlg_profile usage
-   1.67. unset_dlg_profile usage
-   1.68. is_in_profile usage
-   1.69. get_profile_size usage
-   1.70. dlg_isflagset usage
-   1.71. dlg_setflag usage
-   1.72. dlg_resetflag usage
-   1.73. dlg_bye usage
-   1.74. dlg_refer usage
-   1.75. dlg_manage usage
-   1.76. dlg_bridge usage
-   1.77. dlg_get usage
-   1.78. is_known_dlg() usage
-   1.79. dlg_set_timeout usage
-   1.80. dlg_set_timeout_by_profile usage
-   1.81. dlg_set_property usage
-   1.82. dlg_remote_profile usage
-   1.83. dlg_set_ruri() usage
-   1.84. dlg_db_load_callid() usage
-   1.85. dlg_db_load_extra() usage
-   1.86. dlg_reset_property usage
-   1.87. dlg_req_within usage
+   1.64. set_dlg_profile usage
+   1.65. unset_dlg_profile usage
+   1.66. is_in_profile usage
+   1.67. get_profile_size usage
+   1.68. dlg_isflagset usage
+   1.69. dlg_setflag usage
+   1.70. dlg_resetflag usage
+   1.71. dlg_bye usage
+   1.72. dlg_refer usage
+   1.73. dlg_manage usage
+   1.74. dlg_bridge usage
+   1.75. dlg_get usage
+   1.76. is_known_dlg() usage
+   1.77. dlg_set_timeout usage
+   1.78. dlg_set_timeout_by_profile usage
+   1.79. dlg_set_property usage
+   1.80. dlg_remote_profile usage
+   1.81. dlg_set_ruri() usage
+   1.82. dlg_db_load_callid() usage
+   1.83. dlg_db_load_extra() usage
+   1.84. dlg_reset_property usage
 
 Chapter 1. Admin Guide
 
@@ -363,8 +355,6 @@ Chapter 1. Admin Guide
         6.61. h_id_start (int)
         6.62. h_id_step (int)
         6.63. keep_proxy_rr (string)
-        6.64. bye_early_code (int)
-        6.65. bye_early_reason (string)
 
    7. Functions
 
@@ -389,8 +379,6 @@ Chapter 1. Admin Guide
         7.19. dlg_db_load_callid(cival)
         7.20. dlg_db_load_extra()
         7.21. dlg_reset_property(attr)
-        7.22. dlg_req_within(side, method, [headers], [content_type,
-                content])
 
    8. Statistics
 
@@ -599,8 +587,6 @@ Chapter 1. Admin Guide
    6.61. h_id_start (int)
    6.62. h_id_step (int)
    6.63. keep_proxy_rr (string)
-   6.64. bye_early_code (int)
-   6.65. bye_early_reason (string)
 
 6.1. enable_stats (integer)
 
@@ -1468,28 +1454,6 @@ modparam("dialog", "h_id_step", 10)
 modparam("dialog", "keep_proxy_rr", 1)
 ...
 
-6.64. bye_early_code (int)
-
-   This parameter defines the reply-code being used for dialogs being
-   terminated in early stage (e.g. before 200 OK/ACK).
-   Default value is “480”.
-
-   Example 1.64. Set bye_early_code parameter
-...
-modparam("dialog", "bye_early_code", 503)
-...
-
-6.65. bye_early_reason (string)
-
-   This parameter defines the reply-reason being used for dialogs being
-   terminated in early stage (e.g. before 200 OK/ACK).
-   Default value is “Temporarily Unavailable”.
-
-   Example 1.65. Set bye_early_reason parameter
-...
-modparam("dialog", "bye_early_reason", "Call terminated")
-...
-
 7. Functions
 
    7.1. set_dlg_profile(profile,[value])
@@ -1513,7 +1477,6 @@ modparam("dialog", "bye_early_reason", "Call terminated")
    7.19. dlg_db_load_callid(cival)
    7.20. dlg_db_load_extra()
    7.21. dlg_reset_property(attr)
-   7.22. dlg_req_within(side, method, [headers], [content_type, content])
 
 7.1.  set_dlg_profile(profile,[value])
 
@@ -1531,7 +1494,7 @@ modparam("dialog", "bye_early_reason", "Call terminated")
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE, REPLY_ROUTE
    and FAILURE_ROUTE.
 
-   Example 1.66. set_dlg_profile usage
+   Example 1.64. set_dlg_profile usage
 ...
 set_dlg_profile("inbound_call");
 set_dlg_profile("caller","$fu");
@@ -1550,7 +1513,7 @@ set_dlg_profile("caller","$fu");
    This function can be used from BRANCH_ROUTE, REPLY_ROUTE and
    FAILURE_ROUTE.
 
-   Example 1.67. unset_dlg_profile usage
+   Example 1.65. unset_dlg_profile usage
 ...
 unset_dlg_profile("inbound_call");
 unset_dlg_profile("caller","$fu");
@@ -1573,7 +1536,7 @@ unset_dlg_profile("caller","$fu");
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE, REPLY_ROUTE
    and FAILURE_ROUTE.
 
-   Example 1.68. is_in_profile usage
+   Example 1.66. is_in_profile usage
 ...
 if (is_in_profile("inbound_call")) {
         log("this request belongs to a inbound call\n");
@@ -1603,7 +1566,7 @@ if (is_in_profile("caller","XX")) {
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE, REPLY_ROUTE
    and FAILURE_ROUTE.
 
-   Example 1.69. get_profile_size usage
+   Example 1.67. get_profile_size usage
 ...
 if(get_profile_size("inbound_call","$avp(size)"))
     xlog("currently there are $avp(size) inbound calls\n");
@@ -1622,7 +1585,7 @@ if(get_profile_size("caller","$fu","$avp(size)"))
    This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
    ONREPLY_ROUTE and FAILURE_ROUTE.
 
-   Example 1.70. dlg_isflagset usage
+   Example 1.68. dlg_isflagset usage
 ...
 if(dlg_isflagset("1"))
 {
@@ -1640,7 +1603,7 @@ if(dlg_isflagset("1"))
    This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
    ONREPLY_ROUTE and FAILURE_ROUTE.
 
-   Example 1.71. dlg_setflag usage
+   Example 1.69. dlg_setflag usage
 ...
 dlg_setflag("1");
 ...
@@ -1655,16 +1618,14 @@ dlg_setflag("1");
    This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
    ONREPLY_ROUTE and FAILURE_ROUTE.
 
-   Example 1.72. dlg_resetflag usage
+   Example 1.70. dlg_resetflag usage
 ...
 redlg_setflag("1");
 ...
 
 7.8.  dlg_bye(side)
 
-   Send BYE to parties of a dialog or - if in early stage - a CANCEL to
-   the B-Party and a SIP response to the A-Party (as defined in
-   bye_early_code / bye_early_reason).
+   Send BYE to both parties of a dialog.
 
    Meaning of the parameters is as follows:
      * side - where to send the BYE. It can be: 'caller', 'callee', or
@@ -1672,7 +1633,7 @@ redlg_setflag("1");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.73. dlg_bye usage
+   Example 1.71. dlg_bye usage
 ...
 dlg_bye("all");
 ...
@@ -1689,7 +1650,7 @@ dlg_bye("all");
    This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
    ONREPLY_ROUTE and FAILURE_ROUTE.
 
-   Example 1.74. dlg_refer usage
+   Example 1.72. dlg_refer usage
 ...
 dlg_refer("caller", "sip:announcement@kamailio.org");
 ...
@@ -1702,7 +1663,7 @@ dlg_refer("caller", "sip:announcement@kamailio.org");
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.75. dlg_manage usage
+   Example 1.73. dlg_manage usage
 ...
 modparam("dialog", "default_timeout", 100)
 ...
@@ -1730,7 +1691,7 @@ request_route {
    This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
    ONREPLY_ROUTE and FAILURE_ROUTE.
 
-   Example 1.76. dlg_bridge usage
+   Example 1.74. dlg_bridge usage
 ...
 dlg_bridge("sip:user@kamailio.org", "sip:annoucement@kamailio.org",
    "sip:kamailio.org:5080");
@@ -1749,7 +1710,7 @@ dlg_bridge("sip:user@kamailio.org", "sip:annoucement@kamailio.org",
    This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
    ONREPLY_ROUTE and FAILURE_ROUTE.
 
-   Example 1.77. dlg_get usage
+   Example 1.75. dlg_get usage
 ...
 if(dlg_get("abcdef", "123", "456"))
 {
@@ -1773,7 +1734,7 @@ if(dlg_get("abcdef", "123", "456"))
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE, REPLY_ROUTE
    and FAILURE_ROUTE.
 
-   Example 1.78. is_known_dlg() usage
+   Example 1.76. is_known_dlg() usage
 ...
 if(!uri == myself) {
         if(is_known_dlg()) {
@@ -1797,7 +1758,7 @@ if(!uri == myself) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.79. dlg_set_timeout usage
+   Example 1.77. dlg_set_timeout usage
 ...
 if(dlg_set_timeout("180", "123", "456"))
 {
@@ -1819,7 +1780,7 @@ if(dlg_set_timeout("180", "123", "456"))
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.80. dlg_set_timeout_by_profile usage
+   Example 1.78. dlg_set_timeout_by_profile usage
 ...
 # All dialogs belonging to user abc123 (tracked via set_dlg_profile())
 # will be timed out in 3 seconds.
@@ -1851,7 +1812,7 @@ dlg_set_timeout_by_profile("users", "abc123", "3");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.81. dlg_set_property usage
+   Example 1.79. dlg_set_property usage
 ...
 dlg_set_property("ka-src");
 dlg_set_property("ka-dst");
@@ -1879,7 +1840,7 @@ dlg_set_property("timeout-noreset");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.82. dlg_remote_profile usage
+   Example 1.80. dlg_remote_profile usage
 ...
 $var(exp) = 3600 + $Ts;
 dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
@@ -1892,7 +1853,7 @@ dlg_remote_profile("add", "caller", "test", "$sruid", "$var(exp)");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.83. dlg_set_ruri() usage
+   Example 1.81. dlg_set_ruri() usage
 ...
 if(has_totag() and is_present_hf("Route") and uri==myself ) {
         if(dlg_set_ruri()) {
@@ -1908,7 +1869,7 @@ if(has_totag() and is_present_hf("Route") and uri==myself ) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.84. dlg_db_load_callid() usage
+   Example 1.82. dlg_db_load_callid() usage
 ...
 if(has_totag()) {
     if(!is_known_dlg()) {
@@ -1927,7 +1888,7 @@ if(has_totag()) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.85. dlg_db_load_extra() usage
+   Example 1.83. dlg_db_load_extra() usage
 ...
 if(has_totag()) {
     if(!is_known_dlg()) {
@@ -1953,44 +1914,11 @@ if(has_totag()) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.86. dlg_reset_property usage
+   Example 1.84. dlg_reset_property usage
 ...
 dlg_reset_property("ka-src");
 dlg_reset_property("ka-dst");
 dlg_reset_property("timeout-noreset");
-...
-
-7.22.  dlg_req_within(side, method, [headers], [content_type, content])
-
-   Sends a in-dialog SIP Request with method to a party of a dialog
-   indicated by the side parameter.
-
-   Meaning of the parameters is as follows:
-     * side - where to send the request. It can be: 'caller', 'callee', or
-       'all' (send to both sides).
-     * method - Method of the request
-     * headers (optional) - additional headers to be added to the request.
-     * content_type (optional) - Content-Type of the request body - will
-       be added as Content-Type Header.
-     * content (optional) - Content to be sent as body.
-
-   This function can be used from ANY_ROUTE.
-
-   Example 1.87. dlg_req_within usage
-...
-        # Send a simple request:
-        dlg_req_within("all", "OPTIONS");
-...
-        # Send a simple request with extra headers:
-        dlg_req_within("caller", "OPTIONS", "X-Info: Bandwidth granted\r\nX-Info
--2: Go ahead\r\n");
-...
-        # Send a simple request with body:
-        dlg_req_within("caller", "UPDATE", "application/sdp", "...some SDP...");
-...
-        # Send a simple request with extra headers and body:
-        dlg_req_within("callee", "INFO", "X-Info: Bandwidth granted\r\n", "appli
-cation/sdp", "...some SDP...");
 ...
 
 8. Statistics
