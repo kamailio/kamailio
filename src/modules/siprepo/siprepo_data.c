@@ -38,6 +38,7 @@
 #include "../../core/globals.h"
 #include "../../core/dset.h"
 #include "../../core/route.h"
+#include "../../core/async_task.h"
 #include "../../core/kemi.h"
 
 #include "siprepo_data.h"
@@ -46,6 +47,16 @@
 static siprepo_slot_t *_siprepo_table = NULL;
 extern int _siprepo_table_size;
 extern int _siprepo_expire;
+
+/* clang-format off */
+typedef struct siprepo_task_param {
+	str callid;
+	str msgid;
+	str rname;
+	int rmode;
+} siprepo_task_param_t;
+/* clang-format off */
+
 
 /**
  *
@@ -80,7 +91,7 @@ int siprepo_table_init(void)
 /**
  *
  */
-siprepo_msg_t *siprepo_msg_find(sip_msg_t *msg, str *callid, str *msgid, int lmode)
+siprepo_msg_t *siprepo_msg_find(str *callid, str *msgid, int lmode)
 {
 	unsigned int hid;
 	unsigned int slotid;
@@ -175,7 +186,7 @@ int siprepo_msg_set(sip_msg_t *msg, str *msgid, int rmode)
 	hid = get_hash1_raw(scallid.s, scallid.len);
 	slotid = hid % _siprepo_table_size;
 
-	if(siprepo_msg_find(msg, &scallid, msgid, 1)!=NULL) {
+	if(siprepo_msg_find(&scallid, msgid, 1)!=NULL) {
 		LM_DBG("msg [%.*s] found in repo\n", msgid->len, msgid->s);
 		lock_release(&_siprepo_table[slotid].lock);
 		return 1;
@@ -230,12 +241,12 @@ int siprepo_msg_set(sip_msg_t *msg, str *msgid, int rmode)
 /**
  *
  */
-int siprepo_msg_rm(sip_msg_t *msg, str *callid, str *msgid)
+int siprepo_msg_rm(str *callid, str *msgid)
 {
 	unsigned int slotid;
 	siprepo_msg_t *it = NULL;
 
-	it = siprepo_msg_find(msg, callid, msgid, 1);
+	it = siprepo_msg_find(callid, msgid, 1);
 	if(it==NULL) {
 		LM_DBG("msg [%.*s] not found in repo\n", msgid->len, msgid->s);
 		slotid = get_hash1_raw(callid->s, callid->len) % _siprepo_table_size;
@@ -322,8 +333,7 @@ int siprepo_msg_check(sip_msg_t *msg)
 /**
  *
  */
-int siprepo_msg_pull(sip_msg_t *msg, str *callid, str *msgid, str *rname,
-		int rmode)
+int siprepo_msg_pull(str *callid, str *msgid, str *rname, int rmode)
 {
 	unsigned int slotid;
 	sip_msg_t lmsg;
@@ -335,7 +345,7 @@ int siprepo_msg_pull(sip_msg_t *msg, str *callid, str *msgid, str *rname,
 	str evname = str_init("siprepo:msg");
 	char lbuf[BUF_SIZE];
 
-	it = siprepo_msg_find(msg, callid, msgid, 1);
+	it = siprepo_msg_find(callid, msgid, 1);
 	if(it==NULL) {
 		LM_DBG("msg [%.*s] not found in repo\n", msgid->len, msgid->s);
 		slotid = get_hash1_raw(callid->s, callid->len) % _siprepo_table_size;
@@ -407,6 +417,94 @@ int siprepo_msg_pull(sip_msg_t *msg, str *callid, str *msgid, str *rname,
 /**
  *
  */
+void siprepo_exec_task(void *param)
+{
+	siprepo_task_param_t *stp;
+	int ret;
+
+	stp = (siprepo_task_param_t *)param;
+
+
+	LM_DBG("received task [%p] - callid [%.*s] msgid [%.*s]\n", stp,
+			stp->callid.len, stp->callid.s, stp->msgid.len, stp->msgid.s);
+
+	ret = siprepo_msg_pull(&stp->callid, &stp->msgid, &stp->rname, stp->rmode);
+
+	LM_DBG("execution return code: %d\n", ret);
+	shm_free(stp);
+
+	return;
+}
+
+/**
+ *
+ */
+int siprepo_send_task(str *gname, siprepo_task_param_t *stp)
+{
+	async_task_t *at = NULL;
+	int ret;
+
+	at = (async_task_t *)shm_malloc(sizeof(async_task_t));
+	if(at == NULL) {
+		LM_ERR("no more shm memory\n");
+		return -1;
+	}
+	memset(at, 0, sizeof(async_task_t));
+	at->exec = siprepo_exec_task;
+	at->param = stp;
+
+	ret = async_task_group_push(gname, at);
+	if(ret < 0) {
+		shm_free(at);
+		return ret;
+	}
+	return 0;
+}
+
+/**
+ *
+ */
+int siprepo_msg_async_pull(str *callid, str *msgid, str *gname, str *rname,
+		int rmode)
+{
+	size_t dsize;
+	siprepo_task_param_t *stp;
+	int ret;
+
+	dsize = ROUND_POINTER(sizeof(siprepo_task_param_t))
+				+ ROUND_POINTER(callid->len + 1) + ROUND_POINTER(msgid->len + 1)
+				+ ROUND_POINTER(rname->len + 1);
+
+	stp = (siprepo_task_param_t*)shm_mallocxz(dsize);
+	if(stp == NULL) {
+		SHM_MEM_ERROR_FMT("new repo structure\n");
+		return -1;
+	}
+	stp->callid.s = (char*)stp + ROUND_POINTER(sizeof(siprepo_task_param_t));
+	memcpy(callid->s, stp->callid.s, callid->len);
+	stp->callid.len = callid->len;
+
+	stp->msgid.s = stp->callid.s + ROUND_POINTER(callid->len + 1);
+	memcpy(msgid->s, stp->msgid.s, msgid->len);
+	stp->msgid.len = msgid->len;
+
+	stp->rname.s = stp->msgid.s + ROUND_POINTER(msgid->len + 1);
+	memcpy(rname->s, stp->rname.s, rname->len);
+	stp->rname.len = rname->len;
+
+	stp->rmode = rmode;
+
+	ret = siprepo_send_task(gname, stp);
+	if(ret < 0) {
+		shm_free(stp);
+		return ret;
+	}
+	return 0;
+}
+
+/**
+ *
+ */
 void siprepo_timer_exec(unsigned int ticks, int worker, void *param)
 {
 	time_t tnow;
@@ -419,7 +517,7 @@ void siprepo_timer_exec(unsigned int ticks, int worker, void *param)
 		lock_get(&_siprepo_table[i].lock);
 		for(it=_siprepo_table[i].plist; it!=NULL; it=it->next) {
 			if(it->itime+_siprepo_expire < tnow) {
-				siprepo_msg_unlink(it, slotid);
+				siprepo_msg_unlink(it, i);
 				if(elist) {
 					it->next = elist;
 					elist = it;

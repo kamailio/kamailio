@@ -56,9 +56,11 @@ typedef struct siprepo_slot {
 
 int siprepo_table_init(void);
 int siprepo_msg_set(sip_msg_t *msg, str *msgid, int rmode);
-int siprepo_msg_rm(sip_msg_t *msg, str *callid, str *msgid);
-int siprepo_msg_pull(sip_msg_t *msg, str *callid, str *msgid, str *rname,
+int siprepo_msg_rm(str *callid, str *msgid);
+int siprepo_msg_pull(str *callid, str *msgid, str *rname,
 		int rmode);
+int siprepo_msg_async_pull(str *callid, str *msgid, str *gname,
+		str *rname, int rmode);
 int siprepo_msg_check(sip_msg_t *msg);
 void siprepo_msg_timer(unsigned int ticks, int worker, void *param);
 

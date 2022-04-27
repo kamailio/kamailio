@@ -189,7 +189,7 @@ static int ki_sr_msg_pull(sip_msg_t *msg, str *callid, str *msgid, str *rname,
 {
 	int ret;
 
-	ret = siprepo_msg_pull(msg, callid, msgid, rname, rmode);
+	ret = siprepo_msg_pull(callid, msgid, rname, rmode);
 
 	if(ret<0) {
 		return ret;
@@ -234,6 +234,13 @@ static int w_sr_msg_pull(sip_msg_t *msg, char *pcallid, char *pmsgid, char *prna
 static int ki_sr_msg_async_pull(sip_msg_t *msg, str *callid, str *msgid,
 		str *gname, str *rname, int rmode)
 {
+	int ret;
+
+	ret = siprepo_msg_async_pull(callid, msgid, gname, rname, rmode);
+
+	if(ret<0) {
+		return ret;
+	}
 	return 1;
 }
 
@@ -281,7 +288,7 @@ static int ki_sr_msg_rm(sip_msg_t *msg, str *callid, str *msgid)
 {
 	int ret;
 
-	ret = siprepo_msg_rm(msg, callid, msgid);
+	ret = siprepo_msg_rm(callid, msgid);
 
 	if(ret<0) {
 		return ret;
