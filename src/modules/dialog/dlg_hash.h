@@ -133,7 +133,6 @@ typedef struct dlg_cell
 	struct dlg_head_cbl  cbs;		/*!< dialog callbacks */
 	struct dlg_profile_link *profile_links; /*!< dialog profiles */
 	struct dlg_var       *vars;		/*!< dialog variables */
-	struct cell          *t;            /*!< Reference to Transaction of the INVITE */
 	unsigned int         ka_src_counter;	/*!< keepalive src (caller) counter */
 	unsigned int         ka_dst_counter;	/*!< keepalive dst (callee) counter */
 } dlg_cell_t;

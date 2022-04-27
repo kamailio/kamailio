@@ -40,7 +40,6 @@
 #include "../../modules/tm/dlg.h"
 #include "../../modules/tm/tm_load.h"
 #include "../../core/counters.h"
-#include "../../core/parser/contact/parse_contact.h"
 #include "dlg_timer.h"
 #include "dlg_hash.h"
 #include "dlg_handlers.h"
@@ -55,9 +54,6 @@ extern str dlg_extra_hdrs;
 extern str dlg_lreq_callee_headers;
 extern int dlg_ka_failed_limit;
 extern int dlg_filter_mode;
-
-extern int bye_early_code;
-extern str bye_early_reason;
 
 /**
  *
@@ -382,24 +378,10 @@ static inline int send_bye(struct dlg_cell * cell, int dir, str *hdrs)
 	dlg_iuid_t *iuid = NULL;
 	str lhdrs;
 
-	/* Send Cancel or final response for non-confirmed dialogs */
+	/* do not send BYE request for non-confirmed dialogs (not supported) */
 	if (cell->state != DLG_STATE_CONFIRMED_NA && cell->state != DLG_STATE_CONFIRMED) {
-		if (cell->t) {
-			if (dir == DLG_CALLER_LEG) {
-				if(d_tmb.t_reply(cell->t->uas.request, bye_early_code, bye_early_reason.s)< 0) {
-					LM_ERR("Failed to send reply to caller\n");
-					return -1;
-				}
-				LM_DBG("\"%d %.*s\" sent to caller\n", bye_early_code, bye_early_reason.len, bye_early_reason.s);
-			} else {
-				d_tmb.cancel_all_uacs(cell->t, 0);
-				LM_DBG("CANCEL sent to callee(s)\n");
-			}
-			return 0;
-		} else {
-			LM_ERR("terminating non-confirmed dialog not possible, transaction not longer available.\n");
-			return -1;
-		}
+		LM_ERR("terminating non-confirmed dialogs not supported\n");
+		return -1;
 	}
 
 	/*verify direction*/
@@ -456,262 +438,6 @@ err:
 	return -1;
 }
 
-dlg_t * build_dlg_t_early(struct sip_msg *msg, struct dlg_cell * cell, int branch_id, str * rr_set){
-
-	dlg_t* td = NULL;
-	str cseq;
-	unsigned int loc_seq;
-	char nbuf[MAX_URI_SIZE];
-	char dbuf[80];
-	str nuri = STR_NULL;
-	str duri = STR_NULL;
-	size_t sz;
-	char *p;
-	unsigned int own_rr = 0, skip_recs = 0;
-
-	if (cell->state != DLG_STATE_UNCONFIRMED && cell->state != DLG_STATE_EARLY) {
-		LM_ERR("Invalid state for build_dlg_state: %d (only working for unconfirmed or early dialogs)\n", cell->state);
-		goto error;
-	}
-
-	if (msg == NULL || msg->first_line.type != SIP_REPLY) {
-		if (!cell->t) {
-			LM_ERR("No Transaction associated\n");
-			goto error;
-		}
-
-		if (branch_id <= 0 || branch_id > cell->t->nr_of_outgoings) {
-			LM_ERR("Invalid branch %d (%d branches in transaction)\n", branch_id, cell->t->nr_of_outgoings);
-			goto error;
-		}
-		msg = msg;
-	}
-
-	if (!msg->contact && (parse_headers(msg,HDR_CONTACT_F,0)<0 
-	   || !msg->contact)) {
-		LM_ERR("bad sip message or missing Contact hdr\n");
-		goto error;
-	}
-
-	if ( parse_contact(msg->contact)<0 ||
-	((contact_body_t *)msg->contact->parsed)->contacts==NULL) {
-		LM_ERR("bad Contact HDR\n");
-		goto error;
-	}
-
-	/*try to restore alias parameter if no route set */
-	nuri.s = nbuf;
-	nuri.len = MAX_URI_SIZE;
-	duri.s = dbuf;
-	duri.len = 80;
-	if(uri_restore_rcv_alias(&((contact_body_t *)msg->contact->parsed)->contacts->uri, &nuri, &duri)<0) {
-		nuri.len = 0;
-		duri.len = 0;
-	}
-
-	if(nuri.len>0 && duri.len>0) {
-		sz = sizeof(dlg_t) + (nuri.len+duri.len+2)*sizeof(char);
-	} else {
-		sz = sizeof(dlg_t);
-	}
-
-	td = (dlg_t*)pkg_malloc(sz);
-	if(!td){
-		LM_ERR("out of pkg memory\n");
-		return NULL;
-	}
-	memset(td, 0, sz);
-
-	/*route set*/
-	if (msg->record_route) {
-		if (cell->t) {
-			LM_DBG("Transaction exists\n");
-			own_rr = (cell->t->flags&TM_UAC_FLAG_R2)?2:
-			   (cell->t->flags&TM_UAC_FLAG_RR)?1:0;	
-		} else {
-			own_rr = (msg->flags&TM_UAC_FLAG_R2)?2:
-			   (msg->flags&TM_UAC_FLAG_RR)?1:0;
-		}
-		skip_recs = cell->from_rr_nb + own_rr;
-
-		LM_DBG("Skipping %u records, %u of myself\n", skip_recs, own_rr);
-
-		if( print_rr_body(msg->record_route, rr_set, DLG_CALLEE_LEG,
-							&skip_recs) != 0 ){
-			LM_ERR("failed to print route records \n");
-			goto error;
-		}
-		LM_DBG("New Route-Set: %.*s\n", STR_FMT(rr_set));
-
-		if( parse_rr_body(rr_set->s, rr_set->len,
-						&td->route_set) !=0){
-		 	LM_ERR("failed to parse route set\n");
-			goto error;
-		}
-	}
-
-	/*local sequence number*/
-	cseq = cell->cseq[DLG_CALLER_LEG];
-
-	if (cseq.len > 0) {
-		LM_DBG("CSeq is %.*s\n", cseq.len, cseq.s);
-		if(str2int(&cseq, &loc_seq) != 0){
-			LM_ERR("invalid cseq\n");
-			goto error;
-		}
-	} else {
-		LM_DBG("CSeq not set yet, assuming 1\n");
-		loc_seq = 1;
-	}
-
-	/*we don not increase here the cseq as this will be done by TM*/
-	td->loc_seq.value = loc_seq;
-	td->loc_seq.is_set = 1;
-
-	LM_DBG("nuri: %.*s\n", STR_FMT(&nuri));
-	LM_DBG("duri: %.*s\n", STR_FMT(&duri));
-
-	if(nuri.len>0 && duri.len>0) {
-		/* req uri */
-		p = (char*)td + sizeof(dlg_t);
-		strncpy(p, nuri.s, nuri.len);
-		p[nuri.len] = '\0';
-		td->rem_target.s = p;
-		td->rem_target.len = nuri.len;
-		/* dst uri */
-		p += nuri.len + 1;
-		strncpy(p, duri.s, duri.len);
-		p[duri.len] = '\0';
-		td->dst_uri.s = p;
-		td->dst_uri.len = duri.len;
-	} else {
-		td->rem_target = ((contact_body_t *)msg->contact->parsed)->contacts->uri;
-	}
-
-	td->rem_uri	= cell->from_uri;
-	td->loc_uri	= cell->to_uri;
-	LM_DBG("rem_uri: %.*s\n", STR_FMT(&td->rem_uri));
-	LM_DBG("loc_uri: %.*s\n", STR_FMT(&td->loc_uri));
-
-	LM_DBG("rem_target: %.*s\n", STR_FMT(&td->rem_target));
-	LM_DBG("dst_uri: %.*s\n", STR_FMT(&td->dst_uri));
-
-	td->id.call_id = cell->callid;
-	td->id.rem_tag = cell->tag[DLG_CALLER_LEG];
-	td->id.loc_tag = cell->tag[DLG_CALLEE_LEG];
-
-	td->state= DLG_EARLY;
-	td->send_sock = cell->bind_addr[DLG_CALLER_LEG];
-
-	return td;
-
-error:
-	LM_ERR("Error occured creating early dialog\n");	
-	free_tm_dlg(td);
-	return NULL;
-}
-
-int dlg_request_within(struct sip_msg *msg, struct dlg_cell *dlg, int side, str * method, str * hdrs, str * content_type, str * content)
-{
-	uac_req_t uac_r;
-	dlg_t* dialog_info;
-	int result;
-	dlg_iuid_t *iuid = NULL;
-	char rr_set_s[MAX_URI_SIZE];
-	str rr_set = {rr_set_s, 0};
-	str allheaders = {0, 0};
-	str content_type_hdr = {"Content-Type: ", 14};
-	int idx = 0;
-	memset(rr_set_s, 0, 500);
-
-	/* Special treatment for callee in early state*/
-	if (dlg->state != DLG_STATE_CONFIRMED_NA && dlg->state != DLG_STATE_CONFIRMED && side == DLG_CALLEE_LEG) {
-		LM_DBG("Send request to callee in early state...\n");
-
-		if (dlg->t == NULL && d_tmb.t_gett) {
-			dlg->t = d_tmb.t_gett();
-			if (dlg->t && dlg->t != T_UNDEFINED)
-				idx = dlg->t->nr_of_outgoings;
-		}
-		LM_DBG("Branch %i\n", idx);
-
-		/*verify direction*/
-		if ((dialog_info = build_dlg_t_early(msg, dlg, idx, &rr_set)) == 0){
-			LM_ERR("failed to create dlg_t\n");
-			goto err;
-		}
-	} else {
-		LM_DBG("Send request to caller or in confirmed state...\n");
-		/*verify direction*/
-		if ((dialog_info = build_dlg_t(dlg, side)) == 0){
-			LM_ERR("failed to create dlg_t\n");
-			goto err;
-		}
-	}
-
-	LM_DBG("sending %.*s to %s\n", method->len, method->s, (side==DLG_CALLER_LEG)?"caller":"callee");
-
-	iuid = dlg_get_iuid_shm_clone(dlg);
-	if(iuid==NULL)
-	{
-		LM_ERR("failed to create dialog unique id clone\n");
-		goto err;
-	}
-
-	if (hdrs && hdrs->len > 0) {
-		LM_DBG("Extra headers: %.*s\n", STR_FMT(hdrs));
-		allheaders.len += hdrs->len;
-	}
-
-	if (content_type && content_type->s && content && content->s) {
-		LM_DBG("Content-Type: %.*s\n", STR_FMT(content_type));
-		allheaders.len += content_type_hdr.len + content_type->len + 2;
-	}
-	if (allheaders.len > 0) {
-		allheaders.s = (char*)pkg_malloc(allheaders.len);
-		if (allheaders.s == NULL) {
-			PKG_MEM_ERROR;
-			goto err;
-		}
-		allheaders.len = 0;
-		if (hdrs && hdrs->len > 0) {
-			memcpy(allheaders.s, hdrs->s, hdrs->len);
-			allheaders.len += hdrs->len;
-		}
-		if (content_type && content_type->s && content && content->s) {
-			memcpy(allheaders.s + allheaders.len, content_type_hdr.s, content_type_hdr.len);
-			allheaders.len += content_type_hdr.len;
-			memcpy(allheaders.s + allheaders.len, content_type->s, content_type->len);
-			allheaders.len += content_type->len;
-			memcpy(allheaders.s + allheaders.len, "\r\n", 2);
-			allheaders.len += 2;
-		}
-		LM_DBG("All headers: %.*s\n", STR_FMT(&allheaders));
-	}
-
-	set_uac_req(&uac_r, method, allheaders.len?&allheaders:NULL, (content && content->len)?content:NULL, dialog_info, TMCB_LOCAL_COMPLETED,
-				bye_reply_cb, (void*)iuid);
-
-	result = d_tmb.t_request_within(&uac_r);
-
-	if (allheaders.s)
-		pkg_free(allheaders.s);
-
-	if(result < 0){
-		LM_ERR("failed to send request\n");
-		goto err;
-	}
-
-	free_tm_dlg(dialog_info);
-
-	LM_DBG("%.*s sent to %s\n", method->len, method->s, (side==DLG_CALLER_LEG)?"caller":"callee");
-
-	return 0;
-err:
-	if(dialog_info)
-		free_tm_dlg(dialog_info);
-	return -1;
-}
 
 /* send keep-alive
  * dlg - pointer to a struct dlg_cell

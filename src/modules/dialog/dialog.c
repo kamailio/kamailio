@@ -123,9 +123,6 @@ str dlg_bridge_controller = str_init("sip:controller@kamailio.org");
 
 str dlg_bridge_contact = str_init("sip:controller@kamailio.org:5060");
 
-int bye_early_code = 480;
-str bye_early_reason = str_init("Temporarily Unavailable");
-
 str ruri_pvar_param = str_init("$ru");
 pv_elem_t * ruri_param_model = NULL;
 str empty_str = STR_NULL;
@@ -202,16 +199,6 @@ static int w_dlg_remote_profile(sip_msg_t *msg, char *cmd, char *pname,
 		char *pval, char *puid, char *expires);
 static int fixup_dlg_remote_profile(void** param, int param_no);
 
-static int w_dlg_req_with_headers_and_content(struct sip_msg *, char *, char *, char* , char *, char *);
-static int w_dlg_req_with_content(struct sip_msg *, char *, char *, char *, char *);
-static int w_dlg_req_with_headers(struct sip_msg *, char *, char *, char *);
-static int w_dlg_req_within(struct sip_msg *, char *, char *);
-
-static int fixup_dlg_dlg_req_within(void** , int );
-static int fixup_dlg_req_with_headers(void** , int );
-static int fixup_dlg_req_with_content(void** , int );
-static int fixup_dlg_req_with_headers_and_content(void** , int );
-
 static cmd_export_t cmds[]={
 	{"dlg_manage", (cmd_function)w_dlg_manage,            0,0,
 			0, REQUEST_ROUTE },
@@ -269,14 +256,6 @@ static cmd_export_t cmds[]={
 			0, ANY_ROUTE },
 	{"dlg_db_load_extra", (cmd_function)w_dlg_db_load_extra, 0, 0,
 			0, ANY_ROUTE },
-	{"dlg_req_within",  (cmd_function)w_dlg_req_within, 2, fixup_dlg_dlg_req_within,
-			0, ANY_ROUTE},
-	{"dlg_req_within",  (cmd_function)w_dlg_req_with_headers, 3, fixup_dlg_req_with_headers,
-			0, ANY_ROUTE},
-	{"dlg_req_within",  (cmd_function)w_dlg_req_with_content, 4, fixup_dlg_req_with_content,
-			0, ANY_ROUTE},
-	{"dlg_req_within",  (cmd_function)w_dlg_req_with_headers_and_content, 5,
-			fixup_dlg_req_with_headers_and_content, 0, ANY_ROUTE},
 
 	{"load_dlg",  (cmd_function)load_dlg,   0, 0, 0, 0},
 	{0,0,0,0,0,0}
@@ -350,8 +329,6 @@ static param_export_t mod_params[]={
 	{ "h_id_step",             PARAM_INT, &dlg_h_id_step            },
 	{ "keep_proxy_rr",         INT_PARAM, &dlg_keep_proxy_rr        },
 	{ "dlg_filter_mode",       INT_PARAM, &dlg_filter_mode          },
-	{ "bye_early_code",        PARAM_INT, &bye_early_code           },
-	{ "bye_early_reason",      PARAM_STR, &bye_early_reason         },
 	{ 0,0,0 }
 };
 
@@ -1120,232 +1097,6 @@ static int w_dlg_isflagset(struct sip_msg *msg, char *flag, str *s2)
 static int w_dlg_manage(struct sip_msg *msg, char *s1, char *s2)
 {
 	return dlg_manage(msg);
-}
-
-static int fixup_dlg_dlg_req_within(void** param, int param_no)
-{
-	char *val;
-	int n = 0;
-
-	if (param_no==1) {
-		val = (char*)*param;
-		if (strcasecmp(val,"all")==0) {
-			n = 0;
-		} else if (strcasecmp(val,"caller")==0) {
-			n = 1;
-		} else if (strcasecmp(val,"callee")==0) {
-			n = 2;
-		} else {
-			LM_ERR("invalid param \"%s\"\n", val);
-			return E_CFG;
-		}
-		pkg_free(*param);
-		*param=(void*)(long)n;
-	} else if (param_no==2) {
-		return fixup_spve_null(param, 1);
-	} else {
-		LM_ERR("called with parameter != 1\n");
-		return E_BUG;
-	}
-	return 0;
-}
-
-static int fixup_dlg_req_with_headers(void** param, int param_no)
-{
-	char *val;
-	int n = 0;
-
-	if (param_no==1) {
-		val = (char*)*param;
-		if (strcasecmp(val,"all")==0) {
-			n = 0;
-		} else if (strcasecmp(val,"caller")==0) {
-			n = 1;
-		} else if (strcasecmp(val,"callee")==0) {
-			n = 2;
-		} else {
-			LM_ERR("invalid param \"%s\"\n", val);
-			return E_CFG;
-		}
-		pkg_free(*param);
-		*param=(void*)(long)n;
-	} else if (param_no==2) {
-		return fixup_spve_null(param, 1);
-	} else if (param_no==3) {
-		return fixup_spve_null(param, 1);
-	} else {
-		LM_ERR("called with parameter != 1\n");
-		return E_BUG;
-	}
-	return 0;
-}
-
-
-static int fixup_dlg_req_with_content(void** param, int param_no)
-{
-	char *val;
-	int n = 0;
-
-	if (param_no==1) {
-		val = (char*)*param;
-		if (strcasecmp(val,"all")==0) {
-			n = 0;
-		} else if (strcasecmp(val,"caller")==0) {
-			n = 1;
-		} else if (strcasecmp(val,"callee")==0) {
-			n = 2;
-		} else {
-			LM_ERR("invalid param \"%s\"\n", val);
-			return E_CFG;
-		}
-		pkg_free(*param);
-		*param=(void*)(long)n;
-	} else if (param_no==2) {
-		return fixup_spve_null(param, 1);
-	} else if (param_no==3) {
-		return fixup_spve_null(param, 1);
-	} else if (param_no==4) {
-		return fixup_spve_null(param, 1);
-	} else {
-		LM_ERR("called with parameter != 1\n");
-		return E_BUG;
-	}
-	return 0;
-}
-
-static int fixup_dlg_req_with_headers_and_content(void** param, int param_no)
-{
-	char *val;
-	int n = 0;
-
-	if (param_no==1) {
-		val = (char*)*param;
-		if (strcasecmp(val,"all")==0) {
-			n = 0;
-		} else if (strcasecmp(val,"caller")==0) {
-			n = 1;
-		} else if (strcasecmp(val,"callee")==0) {
-			n = 2;
-		} else {
-			LM_ERR("invalid param \"%s\"\n", val);
-			return E_CFG;
-		}
-		pkg_free(*param);
-		*param=(void*)(long)n;
-	} else if (param_no==2) {
-		return fixup_spve_null(param, 1);
-	} else if (param_no==3) {
-		return fixup_spve_null(param, 1);
-	} else if (param_no==4) {
-		return fixup_spve_null(param, 1);
-	} else if (param_no==5) {
-		return fixup_spve_null(param, 1);
-	} else {
-		LM_ERR("called with parameter != 1\n");
-		return E_BUG;
-	}
-	return 0;
-}
-
-static int w_dlg_req_with_headers_and_content(struct sip_msg *msg, char *side, char *method, char* headers, char *content_type, char *content)
-{
-	dlg_cell_t *dlg = NULL;
-	int n;
-	str str_method = {0,0};
-	str str_headers = {0,0};
-	str str_content_type = {0,0};
-	str str_content = {0,0};
-
-	dlg = dlg_get_ctx_dialog();
-	if(dlg==NULL)
-		return -1;
-
-	if(fixup_get_svalue(msg, (gparam_p)method, &str_method)!=0)
-	{
-		LM_ERR("unable to get Method\n");
-		goto error;
-	}
-	if(str_method.s==NULL || str_method.len == 0)
-	{
-		LM_ERR("invalid Method parameter\n");
-		goto error;
-	}
-
-	if (headers) {
-		if(fixup_get_svalue(msg, (gparam_p)headers, &str_headers)!=0)
-		{
-			LM_ERR("unable to get Method\n");
-			goto error;
-		}
-		if(str_headers.s==NULL || str_headers.len == 0)
-		{
-			LM_ERR("invalid Headers parameter\n");
-			goto error;
-		}		
-	}
-	if (content_type && content) {
-		if(fixup_get_svalue(msg, (gparam_p)content_type, &str_content_type)!=0)
-		{
-			LM_ERR("unable to get Content-Type\n");
-			goto error;
-		}
-		if(str_content_type.s==NULL || str_content_type.len == 0)
-		{
-			LM_ERR("invalid Headers parameter\n");
-			goto error;
-		}		
-		if(fixup_get_svalue(msg, (gparam_p)content, &str_content)!=0)
-		{
-			LM_ERR("unable to get Content\n");
-			goto error;
-		}
-		if(str_content.s==NULL || str_content.len == 0)
-		{
-			LM_ERR("invalid Content parameter\n");
-			goto error;
-		}		
-	}
-	
-	n = (int)(long)side;
-	if(n==1)
-	{
-		if(dlg_request_within(msg, dlg, DLG_CALLER_LEG, &str_method, &str_headers, &str_content_type, &str_content)!=0)
-			goto error;
-		goto done;
-	} else if(n==2) {
-		if(dlg_request_within(msg, dlg, DLG_CALLEE_LEG, &str_method, &str_headers, &str_content_type, &str_content)!=0)
-			goto error;
-		goto done;
-	} else {
-		if(dlg_request_within(msg, dlg, DLG_CALLER_LEG, &str_method, &str_headers, &str_content_type, &str_content)!=0)
-			goto error;
-		if(dlg_request_within(msg, dlg, DLG_CALLEE_LEG, &str_method, &str_headers, &str_content_type, &str_content)!=0)
-			goto error;
-		goto done;
-	}
-
-done:
-	dlg_release(dlg);
-	return 1;
-
-error:
-	dlg_release(dlg);
-	return -1;		
-}
-
-static int w_dlg_req_with_content(struct sip_msg *msg, char *side, char *method, char *content_type, char *content)
-{
-	return w_dlg_req_with_headers_and_content(msg, side, method, NULL, content_type, content);
-}
-
-static int w_dlg_req_with_headers(struct sip_msg *msg, char *side, char *method, char *headers)
-{
-	return w_dlg_req_with_headers_and_content(msg, side, method, headers, NULL, NULL);
-}
-
-static int w_dlg_req_within(struct sip_msg *msg, char *side, char *method)
-{
-	return w_dlg_req_with_headers_and_content(msg, side, method, NULL, NULL, NULL);
 }
 
 static int w_dlg_bye(struct sip_msg *msg, char *side, char *s2)
