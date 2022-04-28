@@ -394,6 +394,7 @@ void cfgt_save_node(cfgt_node_p node)
 		LM_DBG("dir [%s] already exists\n", dest.s);
 	} else if(mkdir(dest.s, S_IRWXO | S_IXGRP | S_IRWXU) < 0) {
 		LM_ERR("failed to make directory: %s\n", strerror(errno));
+		pkg_free(dest.s);
 		return;
 	}
 	dest.s[dir] = '/';
