@@ -1258,6 +1258,9 @@ dlg_cell_t *dlg_lookup_msg_dialog(sip_msg_t *msg, unsigned int *dir)
 				msg->callid->body.len, msg->callid->body.s);
 		return NULL;
 	}
+        if(msg->first_line.u.request.method_value == METHOD_CANCEL) {
+                dlg_set_ctx_iuid(dlg);
+        }
 	if(dir) *dir = vdir;
 	return dlg;
 }
