@@ -1258,7 +1258,7 @@ static int change_media_sdp(sip_msg_t *msg, struct lrkproxy_hash_entry *e, const
         e->snat_ipv4.len = strlen(e->snat_ipv4.s);
 
         str current_port;
-        unsigned int snat_port;
+        unsigned int snat_port = 0;
 
         str2int(&e->dst_port, &snat_port);
         snat_port += 2;
