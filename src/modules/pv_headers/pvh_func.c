@@ -383,13 +383,13 @@ int pvh_header_param_exists(struct sip_msg *msg, str *hname, str *hvalue)
 
 int pvh_remove_header_param(struct sip_msg *msg, int idx, str *hname, str *elements, str *toRemove)
 {
+	int notTarget, writtenChars;
 	int offset = 0;
 	int ret = -1;
 	char *next_token;
 	char *token;
 	char *result = (char*)pkg_malloc(elements->len - toRemove->len);
-	char *t = (char*)pkg_malloc(elements->len);
-	int maxSize = elements->len;
+	char *t = (char*)pkg_malloc(elements->len+1);
 
 	if (result == NULL || t == NULL)
 	{
@@ -397,37 +397,35 @@ int pvh_remove_header_param(struct sip_msg *msg, int idx, str *hname, str *eleme
 		goto clean;
 	}
 
-	snprintf(result, elements->len - toRemove->len, "%*s", elements->len - toRemove->len, "");
 	snprintf(t, elements->len+1, "%s", elements->s);
 
 	token = strtok_r(t, ", ", &next_token);
 	while(token)
 	{
-		int notTarget = strncmp(token, toRemove->s, toRemove->len);
+		notTarget = strncmp(token, toRemove->s, toRemove->len);
 		if (notTarget)
 		{
-			int n = snprintf(result + offset, maxSize - offset, "%s", token);
-			if (n < 0 || n >= maxSize - offset)
+			writtenChars = snprintf(result + offset, elements->len - offset, "%s", token);
+			if (writtenChars < 0 || writtenChars >= elements->len - offset)
 			{
 				break;
 			}
-			offset += n;
+			offset += writtenChars;
 		}
 		token = strtok_r(NULL, ", ", &next_token);
-		if (token && notTarget && maxSize - offset - toRemove->len > 2)
+		if (token && notTarget && elements->len - offset - toRemove->len > 2)
 		{
-			int n = snprintf(result + offset, maxSize - offset, ", ");
-			if (n < 0 || n >= maxSize - offset)
+			writtenChars = snprintf(result + offset, elements->len - offset, ", ");
+			if (writtenChars < 0 || writtenChars >= elements->len - offset)
 			{
 				break;
 			}
-			offset += n;
+			offset += writtenChars;
 		}
 	}
 
 	if (elements->len-toRemove->len > 0)
 	{
-		snprintf(elements->s, elements->len, "%*s", elements->len-toRemove->len, "");
 		snprintf(elements->s, (strlen(result)%elements->len)+1, "%s", result);
 		elements->len = strlen(result);
 		ret = 1;
