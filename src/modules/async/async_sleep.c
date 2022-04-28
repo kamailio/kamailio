@@ -649,7 +649,7 @@ int pv_get_async(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 /**
  *
  */
-int pv_parse_geoip_name(pv_spec_t *sp, str *in)
+int pv_parse_async_name(pv_spec_t *sp, str *in)
 {
 	if(sp==NULL || in==NULL || in->len<=0)
 		return -1;
