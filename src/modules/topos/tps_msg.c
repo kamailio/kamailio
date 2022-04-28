@@ -837,7 +837,7 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 		goto error;
 	}
 	metid = get_cseq(msg)->method_id;
-	if((metid & (METHOD_BYE|METHOD_PRACK|METHOD_UPDATE))
+	if((metid & (METHOD_BYE|METHOD_INFO|METHOD_PRACK|METHOD_UPDATE))
 			&& stsd.b_contact.len <= 0) {
 		/* no B-side contact, look for INVITE transaction record */
 		if(metid & (METHOD_BYE|METHOD_UPDATE)) {
