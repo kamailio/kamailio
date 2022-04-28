@@ -309,6 +309,7 @@ int parse_doc_url(str doc_url, char** serv_addr, xcap_doc_sel_t* doc_sel)
 {
 	char* sl, *str_type;
 
+	memset(doc_sel, 0, sizeof(xcap_doc_sel_t));
 	sl= strchr(doc_url.s, '/');
 	if(sl==NULL) {
 		return -1;
