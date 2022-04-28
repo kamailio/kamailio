@@ -420,8 +420,9 @@ static void send_notifies(db1_res_t *result, int did_col, int resource_uri_col, 
 
 	if(rlmi_doc)
 	{
-		LM_DBG("timer_send_notify at end len_est = %d resource_added = %d\n", len_est, resource_added);
-		if (resource_added == 1)
+		LM_DBG("timer notify at end len_est = %d resource_added = %d dlg = %p\n",
+				len_est, resource_added, dialog);
+		if (resource_added == 1 && dialog != NULL)
 		{
 			send_notify(&rlmi_doc, buf, buf_len, bstr, dialog, hash_code);
 		}
