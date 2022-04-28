@@ -2164,6 +2164,8 @@ static int db_redis_perform_update(const db1_con_t* _h, km_redis_con_t *con, con
         if (db_redis_build_type_keys(con, CON_TABLE(_h), db_keys, db_vals, all_type_keys_count,
                     &type_keys, &set_keys, &type_keys_count) != 0) {
             LM_ERR("failed to build type keys\n");
+            pkg_free(db_vals);
+            db_vals = NULL;
             goto error;
         }
         pkg_free(db_keys);
@@ -2306,7 +2308,7 @@ static int db_redis_perform_update(const db1_con_t* _h, km_redis_con_t *con, con
 
                 if (scard != 0)
                     continue;
-                
+
                 if (db_redis_key_add_string(&query_v, "SREM", 4) != 0) {
                     LM_ERR("Failed to add srem command to post-delete query\n");
                     goto error;
