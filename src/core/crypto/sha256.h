@@ -77,25 +77,28 @@ typedef struct _SHA512_CTX {
 
 typedef SHA512_CTX SHA384_CTX;
 
+typedef uint8_t  sha2_byte;   /* Exactly 1 byte */
+typedef uint32_t sha2_word32; /* Exactly 4 bytes */
+typedef uint64_t sha2_word64; /* Exactly 8 bytes */
 
 /*** SHA-256/384/512 Function Prototypes ******************************/
 #ifndef NOPROTO
 
 void sr_SHA256_Init(SHA256_CTX *);
 void sr_SHA256_Update(SHA256_CTX*, const uint8_t*, size_t);
-void sr_SHA256_Final(uint8_t[SHA256_DIGEST_LENGTH], SHA256_CTX*);
+void sr_SHA256_Final(sha2_byte[SHA256_DIGEST_LENGTH], SHA256_CTX*);
 char* sr_SHA256_End(SHA256_CTX*, char[SHA256_DIGEST_STRING_LENGTH]);
 char* sr_SHA256_Data(const uint8_t*, size_t, char[SHA256_DIGEST_STRING_LENGTH]);
 
 void sr_SHA384_Init(SHA384_CTX*);
 void sr_SHA384_Update(SHA384_CTX*, const uint8_t*, size_t);
-void sr_SHA384_Final(uint8_t[SHA384_DIGEST_LENGTH], SHA384_CTX*);
+void sr_SHA384_Final(sha2_byte[SHA384_DIGEST_LENGTH], SHA384_CTX*);
 char* sr_SHA384_End(SHA384_CTX*, char[SHA384_DIGEST_STRING_LENGTH]);
 char* sr_SHA384_Data(const uint8_t*, size_t, char[SHA384_DIGEST_STRING_LENGTH]);
 
 void sr_SHA512_Init(SHA512_CTX*);
 void sr_SHA512_Update(SHA512_CTX*, const uint8_t*, size_t);
-void sr_SHA512_Final(uint8_t[SHA512_DIGEST_LENGTH], SHA512_CTX*);
+void sr_SHA512_Final(sha2_byte[SHA512_DIGEST_LENGTH], SHA512_CTX*);
 char* sr_SHA512_End(SHA512_CTX*, char[SHA512_DIGEST_STRING_LENGTH]);
 char* sr_SHA512_Data(const uint8_t*, size_t, char[SHA512_DIGEST_STRING_LENGTH]);
 
