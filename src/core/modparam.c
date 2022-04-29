@@ -147,6 +147,12 @@ int set_mod_param_regex(char* regex, char* name, modparam_t type, void* val)
 							break;
 
 						case PARAM_STR:
+							if( ((str*)val2)->s==NULL) {
+								LM_ERR("null value\n");
+								regfree(&preg);
+								pkg_free(reg);
+								return -1;
+							}
 							((str*)ptr)->s = pkg_malloc(((str*)val2)->len+1);
 							if (!((str*)ptr)->s) {
 								PKG_MEM_ERROR;
