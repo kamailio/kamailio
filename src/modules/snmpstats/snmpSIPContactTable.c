@@ -203,7 +203,7 @@ int createContactRow(int userIndex, int contactIndex, char *contactName,
 
 	/* Fill in the rest of the rows columns */
 	theRow->kamailioSIPContactURI =
-			(unsigned char *)pkg_malloc((stringLength + 1) * sizeof(char));
+			(unsigned char *)pkg_malloc((stringLength + 1) * sizeof(unsigned char));
 	if(theRow->kamailioSIPContactURI == NULL) {
 		pkg_free(OIDIndex);
 		free(theRow);
