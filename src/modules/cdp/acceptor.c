@@ -79,12 +79,12 @@ void acceptor_process(dp_config *cfg)
 	unsigned int sock;
 
 	LM_INFO("Acceptor process starting up...\n");
-	listening_socks = pkg_malloc((cfg->acceptors_cnt+1)*sizeof(int));
+	listening_socks = pkg_malloc((cfg->acceptors_cnt+1)*sizeof(unsigned int));
 	if (!listening_socks){
-		LOG_NO_MEM("pkg",(cfg->acceptors_cnt+1)*sizeof(int));
+		LOG_NO_MEM("pkg",(cfg->acceptors_cnt+1)*sizeof(unsigned int));
 		goto done;
 	}
-	memset(listening_socks,0,(cfg->acceptors_cnt+1)*sizeof(int));
+	memset(listening_socks,0,(cfg->acceptors_cnt+1)*sizeof(unsigned int));
 	k=0;
 	for(i=0;i<cfg->acceptors_cnt;i++)
 		if (create_socket(cfg->acceptors[i].port,cfg->acceptors[i].bind,&sock)){
