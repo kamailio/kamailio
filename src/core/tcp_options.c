@@ -108,6 +108,8 @@ static cfg_def_t tcp_cfg_def[] = {
 		"accept TCP messages without Content-Length "},
 	{ "reuse_port",   CFG_VAR_INT | CFG_ATOMIC,   0,        1,  0,         0,
 		"reuse TCP ports "},
+	{ "close_rst",     CFG_VAR_INT | CFG_READONLY,    0,   1,      0,         0,
+		"trigger an RST on connection close"},
 	/* internal and/or "fixed" versions of some vars
 	   (not supposed to be writeable, read will provide only debugging value*/
 	{ "rd_buf_size", CFG_VAR_INT | CFG_ATOMIC,    512,    16777216,  0,         0,
@@ -164,6 +166,7 @@ void init_tcp_options()
 	tcp_default_cfg.rd_buf_size=DEFAULT_TCP_BUF_SIZE;
 	tcp_default_cfg.wq_blk_size=DEFAULT_TCP_WBUF_SIZE;
 	tcp_default_cfg.reuse_port=0;
+	tcp_default_cfg.close_rst=0;
 }
 
 

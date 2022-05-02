@@ -138,6 +138,7 @@ struct cfg_group_tcp{
 	int new_conn_alias_flags;
 	int accept_no_cl;  /* on/off - accept messages without content-length */
 	int reuse_port;  /* enable SO_REUSEPORT */
+	int close_rst; /* on /off trigger an RST on connection close */
 
 	/* internal, "fixed" vars */
 	unsigned int rd_buf_size; /* read buffer size (should be > max. datagram)*/

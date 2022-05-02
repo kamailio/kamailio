@@ -3167,6 +3167,13 @@ inline static void tcpconn_close_main_fd(struct tcp_connection* tcpconn)
 #endif
 #ifdef TCP_FD_CACHE
 	if (likely(cfg_get(tcp, tcp_cfg, fd_cache))) shutdown(fd, SHUT_RDWR);
+	if(unlikely(cfg_get(tcp, tcp_cfg, close_rst))) {
+		struct linger sl = {
+			.l_onoff = 1,  /* non-zero value enables linger option in kernel */
+			.l_linger = 0, /* timeout interval in seconds */
+		};
+		setsockopt(fd, SOL_SOCKET, SO_LINGER, &sl, sizeof(sl));
+	}
 #endif /* TCP_FD_CACHE */
 	if (unlikely(tcp_safe_close(fd)<0))
 		LM_ERR("(%p): %s close(%d) failed (flags 0x%x): %s (%d)\n", tcpconn,
