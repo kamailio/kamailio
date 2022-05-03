@@ -450,6 +450,7 @@ extern char *default_routename;
 %token TCP_OPT_ACCEPT_NO_CL
 %token TCP_OPT_ACCEPT_HEP3
 %token TCP_OPT_ACCEPT_HAPROXY
+%token TCP_OPT_CLOSE_RST
 %token TCP_CLONE_RCVBUF
 %token TCP_REUSE_PORT
 %token TCP_WAIT_DATA
@@ -1301,6 +1302,14 @@ assign_stm:
 		#endif
 	}
 	| TCP_OPT_ACCEPT_HAPROXY EQUAL error { yyerror("boolean value expected"); }
+	| TCP_OPT_CLOSE_RST EQUAL NUMBER {
+         #ifdef USE_TCP
+             tcp_default_cfg.close_rst=$3;
+         #else
+             warn("tcp support not compiled in");
+         #endif
+     }
+     | TCP_OPT_CLOSE_RST EQUAL error { yyerror("boolean value expected"); }
 
 	| TCP_CLONE_RCVBUF EQUAL NUMBER {
 		#ifdef USE_TCP
