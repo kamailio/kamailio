@@ -1406,6 +1406,10 @@ void m_send_ontimer(unsigned int ticks, void *param)
 		SET_STR_VAL(str_vals[0], db_res, i, 1); /* user */
 		SET_STR_VAL(str_vals[1], db_res, i, 2); /* host */
 		SET_STR_VAL(str_vals[2], db_res, i, 3); /* body */
+		if(str_vals[0].s==NULL || str_vals[1].s==NULL || str_vals[2].s==NULL) {
+			LM_DBG("message[%d] mid=%d has no user, host or body\n", i, mid);
+			continue;
+		}
 		SET_STR_VAL(str_vals[3], db_res, i, 4); /* ctype */
 
 		extra_hdrs_str.len = 0;
