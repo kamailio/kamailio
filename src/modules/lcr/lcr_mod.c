@@ -1939,7 +1939,7 @@ static inline int decode_avp_value(char *value, unsigned int *gw_index,
 		struct ip_addr *addr, str *hostname, str *port, str *params,
 		str *transport, unsigned int *flags, unsigned int *rule_id)
 {
-	unsigned int u;
+	unsigned int u = 0;
 	str s;
 	char *sep;
 	struct ip_addr *ip;
