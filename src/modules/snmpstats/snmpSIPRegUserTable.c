@@ -248,7 +248,7 @@ int createRegUserRow(char *stringToRegister)
 	theRow->kamailioSIPUserIndex = index;
 
 	theRow->kamailioSIPUserUri =
-			(unsigned char *)pkg_malloc(stringLength * sizeof(char));
+			(unsigned char *)pkg_malloc(stringLength * sizeof(unsigned char));
 	if(theRow->kamailioSIPUserUri == NULL) {
 		pkg_free(OIDIndex);
 		free(theRow);
