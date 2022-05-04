@@ -667,7 +667,7 @@ int ipsec_create(struct sip_msg* m, udomain_t* d, int _cflags)
 
     ul.lock_udomain(d, &ci.via_host, ci.via_port, ci.via_prot);
 
-    if (ul.get_pcontact(d, &ci, &pcontact, 0) != 0) {
+    if (ul.get_pcontact(d, &ci, &pcontact, 0) != 0 || pcontact==NULL) {
         LM_ERR("Contact doesn't exist\n");
         goto cleanup;
     }
@@ -810,7 +810,8 @@ int ipsec_forward(struct sip_msg* m, udomain_t* d, int _cflags)
 
     ul.lock_udomain(d, &ci.via_host, ci.via_port, ci.via_prot);
 
-    if (ul.get_pcontact(d, &ci, &pcontact, _cflags & IPSEC_REVERSE_SEARCH) != 0) {
+    if (ul.get_pcontact(d, &ci, &pcontact, _cflags & IPSEC_REVERSE_SEARCH) != 0
+    		|| pcontact==NULL) {
         LM_ERR("Contact doesn't exist\n");
         goto cleanup;
     }
@@ -967,7 +968,7 @@ int ipsec_destroy(struct sip_msg* m, udomain_t* d)
 
     ul.lock_udomain(d, &ci.via_host, ci.via_port, ci.via_prot);
 
-    if (ul.get_pcontact(d, &ci, &pcontact, 0) != 0) {
+    if (ul.get_pcontact(d, &ci, &pcontact, 0) != 0 || pcontact==NULL) {
         LM_ERR("Contact doesn't exist\n");
         goto cleanup;
     }
