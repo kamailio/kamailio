@@ -28,7 +28,6 @@
 #include "h_table.h"
 #include "t_reply.h"
 
-
 #define CSEQ "CSeq: "
 #define CSEQ_LEN (sizeof(CSEQ)-1)
 #define TO "To: "
@@ -44,7 +43,6 @@
 #define MAXFWD_VALUE "70"
 #define MAXFWD_HEADER "Max-Forwards: " MAXFWD_VALUE CRLF
 #define MAXFWD_HEADER_LEN (sizeof(MAXFWD_HEADER) - 1)
-
 
 char *build_local(struct cell *Trans, unsigned int branch,
 	unsigned int *len, char *method, int method_len, str *to
@@ -91,5 +89,8 @@ int t_calc_branch(struct cell *t,
 /* exported minimum functions for use in t_cancel */
 char* print_callid_mini(char* target, str callid);
 char* print_cseq_mini(char* target, str* cseq, str* method);
+
+typedef void (*t_uas_request_clean_parsed_f)(tm_cell_t *t);
+void t_uas_request_clean_parsed(tm_cell_t *t);
 
 #endif
