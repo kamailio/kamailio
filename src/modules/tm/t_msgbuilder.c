@@ -46,6 +46,22 @@
 #endif
 
 
+#define CSEQ "CSeq: "
+#define CSEQ_LEN (sizeof(CSEQ)-1)
+#define TO "To: "
+#define TO_LEN (sizeof(TO)-1)
+#define CALLID "Call-ID: "
+#define CALLID_LEN (sizeof(CALLID)-1)
+#define FROM "From: "
+#define FROM_LEN (sizeof(FROM)-1)
+#define FROMTAG ";tag="
+#define FROMTAG_LEN (sizeof(FROMTAG)-1)
+#define TOTAG ";tag="
+#define TOTAG_LEN (sizeof(TOTAG)-1)
+#define MAXFWD_VALUE "70"
+#define MAXFWD_HEADER "Max-Forwards: " MAXFWD_VALUE CRLF
+#define MAXFWD_HEADER_LEN (sizeof(MAXFWD_HEADER) - 1)
+
 /* convenience macros */
 #define memapp(_d,_s,_len) \
 	do{\
