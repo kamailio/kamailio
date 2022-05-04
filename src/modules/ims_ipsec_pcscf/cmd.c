@@ -140,7 +140,7 @@ static str get_www_auth_param(const char* param_name, str www_auth)
     return val;
 }
 
-static int fill_contact(struct pcontact_info* ci, struct sip_msg* m)
+static int fill_contact(struct pcontact_info* ci, struct sip_msg* m, tm_cell_t *t)
 {
     contact_body_t* cb = NULL;
     struct via_body* vb = NULL;
@@ -244,7 +244,6 @@ static int fill_contact(struct pcontact_info* ci, struct sip_msg* m)
 		}
 	}
     else if(m->first_line.type == SIP_REPLY) {
-        struct cell *t = tmb.t_gett();
         if (!t || t == (void*) -1) {
             LM_ERR("Reply without transaction\n");
             return -1;
@@ -651,9 +650,13 @@ int ipsec_create(struct sip_msg* m, udomain_t* d, int _cflags)
     pcontact_t* pcontact = NULL;
     struct pcontact_info ci;
     int ret = IPSEC_CMD_FAIL;   // FAIL by default
+	tm_cell_t *t = NULL;
 
+    if(m->first_line.type == SIP_REPLY) {
+        t = tmb.t_gett();
+    }
     // Find the contact
-    if(fill_contact(&ci, m) != 0) {
+    if(fill_contact(&ci, m, t) != 0) {
         LM_ERR("Error filling in contact data\n");
         return ret;
     }
@@ -681,7 +684,7 @@ int ipsec_create(struct sip_msg* m, udomain_t* d, int _cflags)
     }
 
     // Get request from reply
-    struct cell *t = tmb.t_gett();
+    if (!t) t = tmb.t_gett();
     if (!t || t == (void*) -1) {
         LM_ERR("Reply without transaction\n");
         goto cleanup;
@@ -765,6 +768,9 @@ cleanup:
     // Do not free str* sec_header! It will be freed in data_lump.c -> free_lump()
     ul.unlock_udomain(d, &ci.via_host, ci.via_port, ci.via_prot);
     pkg_free(ci.received_host.s);
+	if(t) {
+		tmb.t_uas_request_clean_parsed(t);
+	}
     return ret;
 }
 
@@ -778,11 +784,12 @@ int ipsec_forward(struct sip_msg* m, udomain_t* d, int _cflags)
     unsigned short dst_port = 0;
     unsigned short src_port = 0;
     ip_addr_t via_host;
-    
     struct sip_msg* req = NULL;
+    struct cell *t = NULL;
+
     if(m->first_line.type == SIP_REPLY) {
         // Get request from reply
-        struct cell *t = tmb.t_gett();
+        t = tmb.t_gett();
         if (!t) {
             LM_ERR("Error getting transaction\n");
             return ret;
@@ -796,7 +803,7 @@ int ipsec_forward(struct sip_msg* m, udomain_t* d, int _cflags)
     //
     // Find the contact
     //
-    if(fill_contact(&ci, m) != 0) {
+    if(fill_contact(&ci, m, t) != 0) {
         LM_ERR("Error filling in contact data\n");
         return ret;
     }
@@ -864,7 +871,7 @@ int ipsec_forward(struct sip_msg* m, udomain_t* d, int _cflags)
 
         // for Request sends from P-CSCF client port
         src_port = s->port_pc;
-        
+
         // for Request sends to UE server port
         dst_port = s->port_us;
     }
@@ -934,6 +941,9 @@ int ipsec_forward(struct sip_msg* m, udomain_t* d, int _cflags)
 cleanup:
     ul.unlock_udomain(d, &ci.via_host, ci.via_port, ci.via_prot);
     pkg_free(ci.received_host.s);
+	if(t) {
+		tmb.t_uas_request_clean_parsed(t);
+	}
     return ret;
 }
 
@@ -943,11 +953,14 @@ int ipsec_destroy(struct sip_msg* m, udomain_t* d)
     struct pcontact_info ci;
     pcontact_t* pcontact = NULL;
     int ret = IPSEC_CMD_FAIL; // FAIL by default
+	tm_cell_t *t = NULL;
 
-    //
+    if(m->first_line.type == SIP_REPLY) {
+        t = tmb.t_gett();
+    }
+
     // Find the contact
-    //
-    if(fill_contact(&ci, m) != 0) {
+    if(fill_contact(&ci, m, t) != 0) {
         LM_ERR("Error filling in contact data\n");
         return ret;
     }
@@ -978,6 +991,9 @@ int ipsec_destroy(struct sip_msg* m, udomain_t* d)
 cleanup:
     ul.unlock_udomain(d, &ci.via_host, ci.via_port, ci.via_prot);
     pkg_free(ci.received_host.s);
+	if(t) {
+		tmb.t_uas_request_clean_parsed(t);
+	}
     return ret;
 }
 
