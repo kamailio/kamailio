@@ -1776,3 +1776,37 @@ error:
 	return NULL;
 }
 
+/**
+ *
+ */
+void t_uas_request_clean_parsed(tm_cell_t *t)
+{
+	struct hdr_field *hdr;
+	void *mstart;
+	void *mend;
+
+	if (!t || !t->uas.request) {
+		return;
+	}
+
+	mstart = t->uas.request;
+	mend = t->uas.end_request;
+
+	/* free header's parsed structures that were added by failure handlers */
+	for (hdr=t->uas.request->headers; hdr; hdr=hdr->next ) {
+		if (hdr->parsed && hdr_allocs_parse(hdr)
+				&& (hdr->parsed<mstart || hdr->parsed>=mend)) {
+			/* header parsed filed doesn't point inside fake memory
+			 * chunck -> it was added by failure funcs.-> free it as pkg */
+			LM_DBG("removing hdr->parsed %d\n",	hdr->type);
+			clean_hdr_field(hdr);
+			hdr->parsed = 0;
+		}
+	}
+	/* free parsed body added by failure handlers */
+	if (t->uas.request->body) {
+		if(t->uas.request->body->free)
+			t->uas.request->body->free(&t->uas.request->body);
+		t->uas.request->body = 0;
+	}
+}

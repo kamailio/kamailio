@@ -138,6 +138,7 @@ int load_tm( struct tm_binds *tmb)
 	tmb->t_next_contacts = t_next_contacts;
 	tmb->set_fr = t_set_fr;
 	tmb->t_release_transaction = t_release_transaction;
+	tmb->t_uas_request_clean_parsed = t_uas_request_clean_parsed;
 	return 1;
 }
 

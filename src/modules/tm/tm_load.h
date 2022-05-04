@@ -38,6 +38,7 @@
 #include "t_append_branches.h"
 #include "t_stats.h"
 #include "t_serial.h"
+#include "t_msgbuilder.h"
 
 /* export not usable from scripts */
 #define NO_SCRIPT	-1
@@ -121,6 +122,7 @@ struct tm_binds {
 	cmd_function	t_next_contacts;
 	tset_fr_f set_fr;
 	trelease_t      t_release_transaction;
+	t_uas_request_clean_parsed_f t_uas_request_clean_parsed;
 };
 
 typedef struct tm_binds tm_api_t;
