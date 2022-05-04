@@ -1297,7 +1297,7 @@ int extract_sdialog_info_ex(subs_t *subs, struct sip_msg *msg, uint32_t miexp,
 	str rec_route = {0, 0};
 	int rt = 0;
 	contact_body_t *b;
-	struct to_body *pto, TO = {0}, *pfrom = NULL;
+	struct to_body *pto, tob = {0}, *pfrom = NULL;
 	uint32_t lexpire;
 	str rtag_value;
 	struct sip_uri uri;
@@ -1346,12 +1346,12 @@ int extract_sdialog_info_ex(subs_t *subs, struct sip_msg *msg, uint32_t miexp,
 		LM_DBG("'To' header ALREADY PARSED: <%.*s>\n", pto->uri.len,
 				pto->uri.s);
 	} else {
-		parse_to(msg->to->body.s, msg->to->body.s + msg->to->body.len + 1, &TO);
-		if(TO.uri.len <= 0) {
+		parse_to(msg->to->body.s, msg->to->body.s + msg->to->body.len + 1, &tob);
+		if(tob.uri.len <= 0) {
 			LM_DBG("'To' header NOT parsed\n");
 			goto error;
 		}
-		pto = &TO;
+		pto = &tob;
 	}
 
 	if(pto->parsed_uri.user.s && pto->parsed_uri.host.s
@@ -1503,11 +1503,11 @@ int extract_sdialog_info_ex(subs_t *subs, struct sip_msg *msg, uint32_t miexp,
 	}
 	getbflagsval(0, &subs->flags);
 
-	free_to_params(&TO);
+	free_to_params(&tob);
 	return 0;
 
 error:
-	free_to_params(&TO);
+	free_to_params(&tob);
 	return -1;
 }
 
