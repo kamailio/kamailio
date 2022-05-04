@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2001-2003 FhG Fokus
  * Copyright (C) 2007-2008 1&1 Internet AG
- *
+ * 
  * This file is part of Kamailio, a free SIP server.
  *
  * Kamailio is free software; you can redistribute it and/or modify
@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
+ * You should have received a copy of the GNU General Public License 
+ * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -294,7 +294,7 @@ db1_con_t* db_do_init2(const str* url, void* (*new_connection)(), db_pooling_t p
 		LM_ERR("The configured db_url is too long\n");
 		return 0;
 	}
-
+	
 	/* this is the root memory for this database connection. */
 	res = (db1_con_t*)pkg_malloc(con_size);
 	if (!res) {

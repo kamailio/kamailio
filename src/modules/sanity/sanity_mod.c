@@ -60,7 +60,7 @@ static cmd_export_t cmds[] = {
 		REQUEST_ROUTE|ONREPLY_ROUTE},
 	{"sanity_check", (cmd_function)w_sanity_check, 2, fixup_igp_igp, 0,
 		REQUEST_ROUTE|ONREPLY_ROUTE},
-	{"sanity_reply", (cmd_function)w_sanity_reply, 0, 0, 0,
+	{"sanity_check", (cmd_function)w_sanity_reply, 0, 0, 0,
 		REQUEST_ROUTE|ONREPLY_ROUTE},
 	{"bind_sanity",  (cmd_function)bind_sanity,    0, 0, 0, 0 },
 	{0, 0, 0, 0, 0, 0}
