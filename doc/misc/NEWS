@@ -338,7 +338,7 @@ modules:
                           the retransmissions which would otherwise be 
                           challenged). The major advantage is greatly 
                           enhanced security (extremely small probability of
-                          a succesfull replay attack) combine with support
+                          a successful replay attack) combine with support
                           for cached credentials (if the UAs do support qop 
                           and auth)
                        - nc_array_size - size of the array used for storing
