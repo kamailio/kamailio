@@ -20,7 +20,7 @@
 # 2006-10-19  Added address table (bogdan)
 # 2006-10-27  subscriber table cleanup; some columns are created only if
 #             serweb is installed (bogdan)
-# 2007-01-26  added seperate installation routine for presence related tables
+# 2007-01-26  added separate installation routine for presence related tables
 #             and fix permissions for the SERIAL sequences.
 # 2007-05-21  Move SQL database definitions out of this script (henning)
 # 2007-05-31  Move common definitions to kamdbctl.base file (henningw)
