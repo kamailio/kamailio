@@ -737,7 +737,7 @@ void tls_h_tcpconn_close_f(struct tcp_connection *c, int fd)
 			tls_mbuf_init(&rd, 0, 0); /* no read */
 			tls_mbuf_init(&wr, wr_buf, sizeof(wr_buf));
 			if (tls_set_mbufs(c, &rd, &wr)==0) {
-				tls_shutdown(c); /* shudown only on succesfull set fd */
+				tls_shutdown(c); /* shutdown only on successful set fd */
 				/* write as much as possible and update wr.
 				 * Since this is a close, we don't want to queue the write
 				 * (if it can't write immediately, just fail silently)
