@@ -2581,9 +2581,9 @@ struct hostent* dns_srv_sip_resolvehost(str* name, unsigned short* port,
  *         tried      - bitmap used to keep track of the already tried records
  *                      (no more then sizeof(tried)*8 valid records are
  *                      ever walked
- *         srv_name   - if succesfull, it will be set to the selected record
+ *         srv_name   - if successful, it will be set to the selected record
  *                      srv name (naptr repl.)
- *         proto      - if succesfull it will be set to the selected record
+ *         proto      - if successful it will be set to the selected record
  *                      protocol
  * returns  0 if no more records found or a pointer to the selected record
  *  and sets  protocol and srv_name
