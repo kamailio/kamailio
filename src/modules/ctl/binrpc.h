@@ -694,7 +694,7 @@ inline static int binrpc_bytes_needed(struct binrpc_parse_ctx *ctx)
  * known problems: no support for arrays inside STRUCT
  * param smode: allow simple vals inside struct (needed for 
  * not-strict-formatted rpc responses)
- * returns position after the record and *err==0 if succesfull
+ * returns position after the record and *err==0 if successful
  *         original position and *err<0 if not */
 inline static unsigned char* binrpc_read_record(struct binrpc_parse_ctx* ctx,
 												unsigned char* buf,
@@ -829,7 +829,7 @@ inline static unsigned char* binrpc_read_record(struct binrpc_parse_ctx* ctx,
 			}
 			break;
 		case BINRPC_T_DOUBLE: /* FIXME: hack: represented as fixed point
-		                                      inside an long long */
+		                                      inside a long long */
 			if (ctx->in_struct && smode==0) goto error_record;
 			p=binrpc_read_llong(&ll, len, p, end, err);
 			v->u.fval=((double)ll)/1000;
