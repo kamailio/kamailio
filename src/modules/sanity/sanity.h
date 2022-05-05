@@ -48,7 +48,7 @@ int check_via_protocol(struct sip_msg* _msg);
 /* check if the SIP version in the Via header is 2.0 */
 int check_via_sip_version(struct sip_msg* _msg);
 
-/* compare the Content-Length value with the accutal body length */
+/* compare the Content-Length value with the actual body length */
 int check_cl(struct sip_msg* _msg);
 
 /* compare the method in the CSeq header with the request line value */
