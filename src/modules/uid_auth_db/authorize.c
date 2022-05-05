@@ -216,7 +216,7 @@ static int generate_avps(db_res_t* result, db_rec_t *row)
 /* this is a dirty work around to check the credentials of all users,
  * if the database query returned more then one result
  *
- * Fills res (which must be db_free'd afterwards if the call was succesfull)
+ * Fills res (which must be db_free'd afterwards if the call was successful)
  * returns  0 on success, 1 on no match (?)
  *          and -1 on error (memory, db a.s.o).
  * WARNING: if -1 is returned res _must_ _not_ be freed (it's empty)
