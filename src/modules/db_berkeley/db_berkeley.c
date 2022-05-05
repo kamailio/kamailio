@@ -1055,8 +1055,10 @@ int bdb_update(db1_con_t *_con, db_key_t *_k, db_op_t *_op, db_val_t *_v,
 		goto cleanup;
 	}
 
-	if(lkey)
+	if(lkey) {
 		pkg_free(lkey);
+		lkey = NULL;
+	}
 
 	key.data = kbuf;
 	key.ulen = MAX_ROW_SIZE;
