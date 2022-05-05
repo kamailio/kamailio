@@ -578,7 +578,7 @@ int check_cseq_value(sip_msg_t* msg) {
 	return SANITY_CHECK_PASSED;
 }
 
-/* compare the Content-Length value with the accutal body length */
+/* compare the Content-Length value with the actual body length */
 int check_cl(sip_msg_t* msg) {
 	char *body;
 
