@@ -1123,7 +1123,7 @@ modparam("acc", "cdr_start_on_confirmed", 1)
 		<title><varname>cdr_facility</varname> (integer)</title>
 		<para>
 		Log facility to which CDR messages are issued to syslog.
-		This allows to easily seperate CDR-specific logging from
+		This allows to easily separate CDR-specific logging from
 		the other log messages.
 		</para>
 		<para>
