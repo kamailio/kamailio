@@ -4301,7 +4301,7 @@ static inline int handle_new_connect(struct socket_info* si)
 					cfg_get(tcp, tcp_cfg, max_connections));
 		tcp_safe_close(new_sock);
 		TCP_STATS_LOCAL_REJECT();
-		return 1; /* success, because the accept was succesfull */
+		return 1; /* success, because the accept was successful */
 	}
 	if (unlikely(si->proto==PROTO_TLS)) {
 		if (unlikely(*tls_connections_no>=cfg_get(tcp, tcp_cfg, max_tls_connections))){
@@ -4310,13 +4310,13 @@ static inline int handle_new_connect(struct socket_info* si)
 					cfg_get(tcp, tcp_cfg, max_tls_connections));
 			tcp_safe_close(new_sock);
 			TCP_STATS_LOCAL_REJECT();
-			return 1; /* success, because the accept was succesfull */
+			return 1; /* success, because the accept was successful */
 		}
 	}
 	if (unlikely(init_sock_opt_accept(new_sock)<0)){
 		LM_ERR("init_sock_opt failed\n");
 		tcp_safe_close(new_sock);
-		return 1; /* success, because the accept was succesfull */
+		return 1; /* success, because the accept was successful */
 	}
 	(*tcp_connections_no)++;
 	if (unlikely(si->proto==PROTO_TLS))
@@ -4352,7 +4352,7 @@ static inline int handle_new_connect(struct socket_info* si)
 				LM_ERR("duplicated connection by local and remote addresses\n");
 				_tcpconn_free(tcpconn);
 				tcp_safe_close(new_sock);
-				return 1; /* success, because the accept was succesfull */
+				return 1; /* success, because the accept was successful */
 			}
 		}
 		tcpconn->flags|=F_CONN_PASSIVE;
@@ -4394,7 +4394,7 @@ static inline int handle_new_connect(struct socket_info* si)
 		if (unlikely(si->proto==PROTO_TLS))
 			(*tls_connections_no)--;
 	}
-	return 1; /* accept() was succesfull */
+	return 1; /* accept() was successful */
 }
 
 

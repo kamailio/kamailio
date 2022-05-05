@@ -286,7 +286,7 @@ not_forced:
 #ifdef USE_TCP
 		case PROTO_WS:
 		case PROTO_TCP:
-		/* on tcp just use the "main address", we don't really now the
+		/* on tcp just use the "main address", we don't really know the
 		 * sending address (we can find it out, but we'll need also to see
 		 * if we listen on it, and if yes on which port -> too complicated*/
 			switch(to->s.sa_family){

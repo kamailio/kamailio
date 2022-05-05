@@ -186,7 +186,7 @@
 
 /* %0=var, %1=*var, %2=new, %3=old :
  * ret=*var; if *var==old  then *var=new; return ret
- * => if succesfull (changed var to new)  ret==old */
+ * => if successful (changed var to new)  ret==old */
 #define ATOMIC_CMPXCHG_DECL(NAME, P_TYPE) \
 	inline static P_TYPE atomic_##NAME##_##P_TYPE (volatile P_TYPE *var, \
 														P_TYPE old, \
