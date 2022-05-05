@@ -109,7 +109,7 @@ Locking & unlocking:
 void    lock_get(gen_lock_t* lock);      - lock (mutex down)
 void    lock_release(gen_lock_t* lock);  - unlock (mutex up)
 int     lock_try(gen_lock_t* lock);      - tries to lock and returns 0 
-                                           if succesfull, -1 if not (this is
+                                           if successful, -1 if not (this is
                                            a non-blocking lock_get())
 
 
@@ -164,7 +164,7 @@ Locking & unlocking:
 void lock_set_get(lock_set_t* s, int i);
 void lock_set_release(lock_set_t* s, int i);
 int  lock_set_try(lock_set_t* s, int i);      - tries to lock the i-th lock
-                                                from the set. If succesfull
+                                                from the set. If successful
                                                 returns 0, if not -1.
 
 Example:
