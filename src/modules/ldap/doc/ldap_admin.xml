@@ -616,7 +616,7 @@ ldap_result("telephoneNumber/$avp(s:tel_number)");
 	<varname>int</varname> for integer. If <varname>avp_type</varname> is specified as
 	<varname>int</varname> then <varname>ldap_result</varname> tries to convert the LDAP
 	attribute values to integer. In this case, the values are only stored as AVP if the
-	conversion to integer is succesfull. 
+	conversion to integer is successful.
 	</para>
 		
         <variablelist>
