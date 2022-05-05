@@ -1476,14 +1476,14 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 				if(pv_get_spec_value(msg, (pv_spec_p)tp->next->v.data, &v)!=0
 						|| (!(v.flags&PV_VAL_INT)))
 				{
-					LM_ERR("fmt cannot get p2 (cfg line: %d)\n",
+					LM_ERR("fmtline cannot get p2 (cfg line: %d)\n",
 							get_cfg_crt_line());
 					return -1;
 				}
 				m = v.ri;
 			}
-			if(n<0 || m<0) {
-				LM_ERR("substr negative offset (cfg line: %d)\n",
+			if(n<=0 || m<0) {
+				LM_ERR("fmtline with invalid parameters (cfg line: %d)\n",
 						get_cfg_crt_line());
 				return -1;
 			}
