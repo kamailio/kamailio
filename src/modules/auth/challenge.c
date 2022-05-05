@@ -81,7 +81,7 @@ void strip_realm(str* _realm)
  * @param nonce_len A value/result parameter. Initially it contains the
  *                  nonce buffer length. If the length is too small, it
  *                  will be set to the needed length and the function will
- *                  return error immediately. After a succesfull call it will
+ *                  return error immediately. After a successful call it will
  *                  contain the size of nonce written into the buffer,
  *                  without the terminating 0.
  * @param cfg This is the value of one of the three module parameters that
