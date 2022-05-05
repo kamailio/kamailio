@@ -91,7 +91,6 @@ int userblocklist_db_init(void) {
 		userblocklist_db_close();
 		return -1;
 	}
-	userblocklist_db_close();
 	return 0;
 }
 
