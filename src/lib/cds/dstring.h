@@ -77,7 +77,7 @@ typedef struct _dstring_t {
 	/** predefined buffer size */
 	int buff_size;
 
-	/** a operation on this string was unsuccesfull -> 
+	/** a operation on this string was unsuccessful ->
 	 * all other operations will produce error */
 	int error;
 } dstring_t;
