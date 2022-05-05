@@ -92,7 +92,7 @@ static gen_lock_set_t* init_lock_set(int *size)
 			lset = 0;
 			continue;
 		}
-		/* alloc and init succesfull */
+		/* alloc and init successful */
 		break;
 	}
 
