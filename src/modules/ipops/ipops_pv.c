@@ -373,7 +373,7 @@ int dns_update_pv(str *hostname, str *name)
 		return -2;
 	}
 
-	dr = sr_dns_get_item(name);
+	dr = sr_dns_add_item(name);
 	if(dr==NULL)
 	{
 		LM_DBG("container not found: %s\n", name->s);
