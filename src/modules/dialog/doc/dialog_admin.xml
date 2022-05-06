@@ -2103,6 +2103,54 @@ if(dlg_get("abcdef", "123", "456"))
 		</example>
 	</section>
 
+	<section id="dialog.f.dlg_get_var">
+		<title>
+		<function moreinfo="none">dlg_get_var(callid, ftag, ttag, name, dst)</function>
+		</title>
+		<para>
+			Get dlg_var of another dialog value based on Call-ID, From-Tag and To-Tag
+			parameters.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>callid</emphasis> - SIP call-id.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>ftag</emphasis> - SIP From tag.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>ttag</emphasis> - SIP To tag.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>name</emphasis> - key name of the $dlg_var.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>dst</emphasis> - pv to store the value of $dlg_var(name).
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from BRANCH_ROUTE,
+			REQUEST_ROUTE, ONREPLY_ROUTE and FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function>dlg_get_var</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(dlg_get_var("$var(ci)", "$var(ft)", "456", "test", "$var(tmp)"))
+{
+	xdbg("$$dlg_var(test):$var(tmp)\n");
+}
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="dialog.f.is_known_dlg">
 		<title>
 		<function moreinfo="none">is_known_dlg()</function>
