@@ -95,6 +95,7 @@ sr_dns_item_t *sr_dns_add_item(str *name)
 {
 	sr_dns_item_t *it = NULL;
 	unsigned int hashid = 0;
+	int n = 0;
 
 	hashid =  get_hash1_raw(name->s, name->len);
 
@@ -105,7 +106,13 @@ sr_dns_item_t *sr_dns_add_item(str *name)
 				&& strncmp(it->name.s, name->s, name->len)==0)
 			return it;
 		it = it->next;
+		n++;
 	}
+	if(n > 20) {
+		LM_WARN("too many dns containers - adding nunmber %d - can fill memory\n",
+				n);
+	}
+
 	/* add new */
 	it = (sr_dns_item_t*)pkg_malloc(sizeof(sr_dns_item_t));
 	if(it==NULL)
