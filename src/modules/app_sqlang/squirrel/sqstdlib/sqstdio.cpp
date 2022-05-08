@@ -154,7 +154,7 @@ static SQInteger _file_constructor(HSQUIRRELVM v)
 static SQInteger _file_close(HSQUIRRELVM v)
 {
     SQFile *self = NULL;
-    if(SQ_SUCCEEDED(sq_getinstanceup(v,1,(SQUserPointer*)&self,(SQUserPointer)SQSTD_FILE_TYPE_TAG))
+    if(SQ_SUCCEEDED(sq_getinstanceup(v,1,(SQUserPointer*)&self,(SQUserPointer)SQSTD_FILE_TYPE_TAG, SQTrue))
         && self != NULL)
     {
         self->Close();
@@ -200,7 +200,7 @@ SQRESULT sqstd_createfile(HSQUIRRELVM v, SQFILE file,SQBool own)
 SQRESULT sqstd_getfile(HSQUIRRELVM v, SQInteger idx, SQFILE *file)
 {
     SQFile *fileobj = NULL;
-    if(SQ_SUCCEEDED(sq_getinstanceup(v,idx,(SQUserPointer*)&fileobj,(SQUserPointer)SQSTD_FILE_TYPE_TAG))) {
+    if(SQ_SUCCEEDED(sq_getinstanceup(v,idx,(SQUserPointer*)&fileobj,(SQUserPointer)SQSTD_FILE_TYPE_TAG,SQFalse))) {
         *file = fileobj->GetHandle();
         return SQ_OK;
     }
