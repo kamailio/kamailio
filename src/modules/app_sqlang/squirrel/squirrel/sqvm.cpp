@@ -586,7 +586,7 @@ bool SQVM::FOREACH_OP(SQObjectPtr &o1,SQObjectPtr &o2,SQObjectPtr
 
 #define _GUARD(exp) { if(!exp) { SQ_THROW();} }
 
-bool SQVM::CLOSURE_OP(SQObjectPtr &target, SQFunctionProto *func)
+bool SQVM::CLOSURE_OP(SQObjectPtr &target, SQFunctionProto *func,SQInteger boundtarget)
 {
     SQInteger nouters;
     SQClosure *closure = SQClosure::Create(_ss(this), func,_table(_roottable)->GetWeakRef(OT_TABLE));
@@ -610,6 +610,19 @@ bool SQVM::CLOSURE_OP(SQObjectPtr &target, SQFunctionProto *func)
             closure->_defaultparams[i] = _stack._vals[_stackbase + spos];
         }
     }
+	if (boundtarget != 0xFF) {
+		SQObjectPtr &val = _stack._vals[_stackbase + boundtarget];
+		SQObjectType t = sq_type(val);
+		if (t == OT_TABLE || t == OT_CLASS || t == OT_INSTANCE || t == OT_ARRAY) {
+			closure->_env = _refcounted(val)->GetWeakRef(t);
+			__ObjAddRef(closure->_env);
+		}
+		else {
+			Raise_Error(_SC("cannot bind a %s as environment object"), IdType2Name(t));
+			closure->Release();
+			return false;
+		}
+	}
     target = closure;
     return true;
 
@@ -1003,7 +1016,7 @@ exception_restore:
             case _OP_CLOSURE: {
                 SQClosure *c = ci->_closure._unVal.pClosure;
                 SQFunctionProto *fp = c->_function;
-                if(!CLOSURE_OP(TARGET,fp->_functions[arg1]._unVal.pFunctionProto)) { SQ_THROW(); }
+                if(!CLOSURE_OP(TARGET,fp->_functions[arg1]._unVal.pFunctionProto,arg2)) { SQ_THROW(); }
                 continue;
             }
             case _OP_YIELD:{
@@ -1323,7 +1336,7 @@ SQInteger SQVM::FallBackGet(const SQObjectPtr &self,const SQObjectPtr &key,SQObj
     case OT_USERDATA:
         //delegation
         if(_delegable(self)->_delegate) {
-            if(Get(SQObjectPtr(_delegable(self)->_delegate),key,dest,0,DONT_FALL_BACK)) return FALLBACK_OK;
+            if(Get(SQObjectPtr(_delegable(self)->_delegate),key,dest, GET_FLAG_DO_NOT_RAISE_ERROR,DONT_FALL_BACK)) return FALLBACK_OK;
         }
         else {
             return FALLBACK_NO_MATCH;
