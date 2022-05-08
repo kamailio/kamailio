@@ -1129,7 +1129,7 @@ modparam("acc", "cdr_start_on_confirmed", 1)
 6.34. cdr_facility (integer)
 
    Log facility to which CDR messages are issued to syslog. This allows to
-   easily seperate CDR-specific logging from the other log messages.
+   easily separate CDR-specific logging from the other log messages.
 
    Default value is LOG_DAEMON.
 
