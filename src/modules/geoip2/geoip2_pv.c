@@ -565,14 +565,14 @@ int geoip2_update_pv(str *tomatch, str *name)
 
 	if(tomatch->len>255)
 	{
-		LM_DBG("target too long (max 255): %s\n", tomatch->s);
+		LM_ERR("target too long (max 255): %s\n", tomatch->s);
 		return -3;
 	}
 
 	gr = sr_geoip2_get_record(name);
 	if(gr==NULL)
 	{
-		LM_DBG("container not found: %s\n", tomatch->s);
+		LM_ERR("container not found: %s\n", tomatch->s);
 		return - 4;
 	}
 
