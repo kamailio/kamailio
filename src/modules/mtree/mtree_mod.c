@@ -318,18 +318,6 @@ error1:
 	return -1;
 }
 
-static int mt_child_init(void)
-{
-	db_con = mt_dbf.init(&db_url);
-	if(db_con==NULL)
-	{
-		LM_ERR("failed to connect to database\n");
-		return -1;
-	}
-
-	return 0;
-}
-
 
 /* each child get a new connection to the database */
 static int child_init(int rank)
@@ -338,9 +326,12 @@ static int child_init(int rank)
 	if (rank==PROC_INIT || rank==PROC_MAIN || rank==PROC_TCP_MAIN)
 		return 0;
 
-	if ( mt_child_init()!=0 )
+	db_con = mt_dbf.init(&db_url);
+	if(db_con==NULL)
+	{
+		LM_ERR("failed to connect to database\n");
 		return -1;
-
+	}
 	LM_DBG("#%d: database connection opened successfully\n", rank);
 
 	return 0;
@@ -942,7 +933,7 @@ void rpc_mtree_reload(rpc_t* rpc, void* c)
 		}
 		rpc->rpl_printf(c, "Ok. Mtrees reloaded.");
 		return;
-	} 
+	}
 	if(!mt_defined_trees())
 	{
 		rpc->fault(c, 500, "No Mtrees defined.");
