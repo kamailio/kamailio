@@ -608,6 +608,8 @@ static int w_xavi_child_sets(sip_msg_t *msg, char *prname, char *pcname,
 static int w_xavi_rm(sip_msg_t *msg, char *prname, char *p2);
 static int w_xavi_child_rm(sip_msg_t *msg, char *prname, char *pcname);
 
+static int w_xavp_lshift(sip_msg_t *msg, char *pxname, char *pidx);
+
 int pv_xavp_copy_fixup(void** param, int param_no);
 int pv_evalx_fixup(void** param, int param_no);
 int w_pv_evalx(struct sip_msg *msg, char *dst, str *fmt);
@@ -683,6 +685,9 @@ static cmd_export_t cmds[]={
 		ANY_ROUTE},
 	{"xavi_child_rm", (cmd_function)w_xavi_child_rm,
 		2, fixup_spve_spve, fixup_free_spve_spve,
+		ANY_ROUTE},
+	{"xavp_lshift", (cmd_function)w_xavp_lshift,
+		2, fixup_spve_igp, fixup_free_spve_igp,
 		ANY_ROUTE},
 	{"sbranch_set_ruri",  (cmd_function)w_sbranch_set_ruri,  0, 0, 0,
 		ANY_ROUTE },
@@ -902,6 +907,38 @@ static int ki_xavp_print(sip_msg_t* msg)
 {
 	xavp_print_list(NULL);
 	return 1;
+}
+
+/**
+ *
+ */
+static int ki_xavp_lshift(sip_msg_t *msg, str *xname, int idx)
+{
+	int ret;
+
+	ret = xavp_lshift(xname, NULL, idx);
+
+	return (ret==0)?1:ret;
+}
+
+/**
+ *
+ */
+static int w_xavp_lshift(sip_msg_t *msg, char *pxname, char *pidx)
+{
+	str xname = STR_NULL;
+	int idx = 0;
+
+	if(fixup_get_svalue(msg, (gparam_t*)pxname, &xname)<0) {
+		LM_ERR("failed to get the xavp name\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)pidx, &idx)<0) {
+		LM_ERR("failed to get the xavp index\n");
+		return -1;
+	}
+
+	return ki_xavp_lshift(msg, &xname, idx);
 }
 
 static int ki_xavu_print(sip_msg_t* msg)
@@ -3172,6 +3209,11 @@ static sr_kemi_t sr_kemi_pvx_exports[] = {
 		SR_KEMIP_INT, ki_xavp_copy_dst,
 		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_STR,
 			SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavp_lshift"),
+		SR_KEMIP_INT, ki_xavp_lshift,
+		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
