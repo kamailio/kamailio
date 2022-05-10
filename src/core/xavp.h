@@ -98,6 +98,7 @@ struct str_list *xavp_get_list_key_names(sr_xavp_t *xavp);
 
 int xavp_insert(sr_xavp_t *xavp, int idx, sr_xavp_t **list);
 sr_xavp_t *xavp_extract(str *name, sr_xavp_t **list);
+int xavp_lshift(str *name, sr_xavp_t **head, int idx);
 
 void xavp_print_list(sr_xavp_t **head);
 
