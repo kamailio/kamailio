@@ -58,15 +58,16 @@ Daniel-Constantin Mierla
               4.18. xavi_rm(rname)
               4.19. xavp_child_rm(rname, cname)
               4.20. xavi_child_rm(rname, cname)
-              4.21. sbranch_set_ruri()
-              4.22. sbranch_append()
-              4.23. sbranch_reset()
-              4.24. pv_xavp_print()
-              4.25. pv_xavu_print()
-              4.26. pv_xavi_print()
-              4.27. pv_var_to_xavp(varname, xname)
-              4.28. pv_xavp_to_var(xname)
-              4.29. pv_evalx(dst, fmt)
+              4.21. xavp_lshift(xname, idx)
+              4.22. sbranch_set_ruri()
+              4.23. sbranch_append()
+              4.24. sbranch_reset()
+              4.25. pv_xavp_print()
+              4.26. pv_xavu_print()
+              4.27. pv_xavi_print()
+              4.28. pv_var_to_xavp(varname, xname)
+              4.29. pv_xavp_to_var(xname)
+              4.30. pv_evalx(dst, fmt)
 
         5. RPC Commands
 
@@ -98,17 +99,18 @@ Daniel-Constantin Mierla
    1.21. xavi_rm usage
    1.22. xavp_child_rm usage
    1.23. xavi_child_rm usage
-   1.24. sbranch_set_ruri() usage
-   1.25. sbranch_append() usage
+   1.24. xavp_lshift usage
+   1.25. sbranch_set_ruri() usage
    1.26. sbranch_append() usage
-   1.27. pv_xavp_print() usage
-   1.28. pv_xavu_print() usage
-   1.29. pv_xavi_print() usage
-   1.30. pv_var_to_xavp() usage
-   1.31. pv_xavp_to_var() usage
+   1.27. sbranch_append() usage
+   1.28. pv_xavp_print() usage
+   1.29. pv_xavu_print() usage
+   1.30. pv_xavi_print() usage
+   1.31. pv_var_to_xavp() usage
    1.32. pv_xavp_to_var() usage
-   1.33. pv.shvSet usage
-   1.34. pv.shvGet usage
+   1.33. pv_xavp_to_var() usage
+   1.34. pv.shvSet usage
+   1.35. pv.shvGet usage
 
 Chapter 1. Admin Guide
 
@@ -150,15 +152,16 @@ Chapter 1. Admin Guide
         4.18. xavi_rm(rname)
         4.19. xavp_child_rm(rname, cname)
         4.20. xavi_child_rm(rname, cname)
-        4.21. sbranch_set_ruri()
-        4.22. sbranch_append()
-        4.23. sbranch_reset()
-        4.24. pv_xavp_print()
-        4.25. pv_xavu_print()
-        4.26. pv_xavi_print()
-        4.27. pv_var_to_xavp(varname, xname)
-        4.28. pv_xavp_to_var(xname)
-        4.29. pv_evalx(dst, fmt)
+        4.21. xavp_lshift(xname, idx)
+        4.22. sbranch_set_ruri()
+        4.23. sbranch_append()
+        4.24. sbranch_reset()
+        4.25. pv_xavp_print()
+        4.26. pv_xavu_print()
+        4.27. pv_xavi_print()
+        4.28. pv_var_to_xavp(varname, xname)
+        4.29. pv_xavp_to_var(xname)
+        4.30. pv_evalx(dst, fmt)
 
    5. RPC Commands
 
@@ -274,15 +277,16 @@ modparam("pv","avp_aliases","email=s:email_addr;tmp=i:100")
    4.18. xavi_rm(rname)
    4.19. xavp_child_rm(rname, cname)
    4.20. xavi_child_rm(rname, cname)
-   4.21. sbranch_set_ruri()
-   4.22. sbranch_append()
-   4.23. sbranch_reset()
-   4.24. pv_xavp_print()
-   4.25. pv_xavu_print()
-   4.26. pv_xavi_print()
-   4.27. pv_var_to_xavp(varname, xname)
-   4.28. pv_xavp_to_var(xname)
-   4.29. pv_evalx(dst, fmt)
+   4.21. xavp_lshift(xname, idx)
+   4.22. sbranch_set_ruri()
+   4.23. sbranch_append()
+   4.24. sbranch_reset()
+   4.25. pv_xavp_print()
+   4.26. pv_xavu_print()
+   4.27. pv_xavi_print()
+   4.28. pv_var_to_xavp(varname, xname)
+   4.29. pv_xavp_to_var(xname)
+   4.30. pv_evalx(dst, fmt)
 
 4.1. pv_isset(pvar)
 
@@ -680,7 +684,29 @@ xavi_child_rm("WhatEver", "FoO");
 # same result as: $xavi(whatever=>foo) = $null;
 ...
 
-4.21.  sbranch_set_ruri()
+4.21.  xavp_lshift(xname, idx)
+
+   Left shift with rotation of the xavps with name xname so that the one
+   at the index idx becomes the first and the ones before it are at the
+   end of the list.
+
+   The first parameter has to be the name of XAVP in the root list. The
+   second parameter is the index of the XAVP that becomes the first one.
+
+   The parameters can be with variables.
+
+   Function can be used from ANY ROUTE.
+
+   Example 1.24. xavp_lshift usage
+...
+$xavp(n) = 10;
+$xavp(n) = 20;
+$xavp(n) = 30;
+xavp_lshift("n", "1");
+# results in: $xavp(n) having the list of values 20 30 10
+...
+
+4.22.  sbranch_set_ruri()
 
    Use the attributes from static branch ($sbranch(key) variable) to set
    request URI and the other fields of the branch associated with request
@@ -691,7 +717,7 @@ xavi_child_rm("WhatEver", "FoO");
 
    Function can be used from REQUEST_ROUTE, BRANCH_ROUTE or FAILURE_ROUTE.
 
-   Example 1.24. sbranch_set_ruri() usage
+   Example 1.25. sbranch_set_ruri() usage
 ...
 sbranch_reset();
 $sbranch(uri) = "sip:127.0.0.1:5080";
@@ -701,7 +727,7 @@ $sbranch(send_socket) =  "udp:127.0.0.1:5060";
 sbranch_set_ruri();
 ...
 
-4.22.  sbranch_append()
+4.23.  sbranch_append()
 
    Use the attributes from static branch ($sbranch(key) variable) to
    append a new branch to destination set. It is an alternative to
@@ -713,7 +739,7 @@ sbranch_set_ruri();
 
    Function can be used from REQUEST_ROUTE, BRANCH_ROUTE or FAILURE_ROUTE.
 
-   Example 1.25. sbranch_append() usage
+   Example 1.26. sbranch_append() usage
 ...
 sbranch_reset();
 $sbranch(uri) = "sip:127.0.0.1:5080";
@@ -722,51 +748,51 @@ $sbranch(send_socket) =  "udp:127.0.0.1:5060";
 sbranch_append();
 ...
 
-4.23.  sbranch_reset()
+4.24.  sbranch_reset()
 
    Reset the content of static branch ($sbranch(key) variable.
 
    Function can be used from REQUEST_ROUTE, BRANCH_ROUTE or FAILURE_ROUTE.
 
-   Example 1.26. sbranch_append() usage
+   Example 1.27. sbranch_append() usage
 ...
 sbranch_reset();
 ...
 
-4.24.  pv_xavp_print()
+4.25.  pv_xavp_print()
 
    Print all XAVPs to the syslog using INFO log level.
 
    Function can be used from ANY_ROUTE.
 
-   Example 1.27. pv_xavp_print() usage
+   Example 1.28. pv_xavp_print() usage
 ...
 pv_xavp_print();
 ...
 
-4.25.  pv_xavu_print()
+4.26.  pv_xavu_print()
 
    Print all XAVUs to the syslog using INFO log level.
 
    Function can be used from ANY_ROUTE.
 
-   Example 1.28. pv_xavu_print() usage
+   Example 1.29. pv_xavu_print() usage
 ...
 pv_xavu_print();
 ...
 
-4.26.  pv_xavi_print()
+4.27.  pv_xavi_print()
 
    Print all XAVIs to the syslog using INFO log level.
 
    Function can be used from ANY_ROUTE.
 
-   Example 1.29. pv_xavi_print() usage
+   Example 1.30. pv_xavi_print() usage
 ...
 pv_xavi_print();
 ...
 
-4.27.  pv_var_to_xavp(varname, xname)
+4.28.  pv_var_to_xavp(varname, xname)
 
    Copy the script variable value into an xavp.
 
@@ -778,7 +804,7 @@ pv_xavi_print();
 
    Function can be used from ANY_ROUTE.
 
-   Example 1.30. pv_var_to_xavp() usage
+   Example 1.31. pv_var_to_xavp() usage
 ...
 $var("temp") = 3;
 $var("foo") = "foo indeed";
@@ -792,7 +818,7 @@ $xavp("ok[0]=>temp") now is 3
 $xavp("ok[0]=>foo") now is "foo indeed"
 ...
 
-4.28.  pv_xavp_to_var(xname)
+4.29.  pv_xavp_to_var(xname)
 
    Copy xavp values into vars. Reverse of pv_var_to_xavp().
 
@@ -800,7 +826,7 @@ $xavp("ok[0]=>foo") now is "foo indeed"
 
    Function can be used from ANY_ROUTE.
 
-   Example 1.31. pv_xavp_to_var() usage
+   Example 1.32. pv_xavp_to_var() usage
 ...
 $xavp("bar=>temp") = 3;
 $xavp("bar[0]=>foo") = "foo indeed";
@@ -810,7 +836,7 @@ $var("temp") now is 3
 $var("foo") now is "foo indeed"
 ...
 
-4.29.  pv_evalx(dst, fmt)
+4.30.  pv_evalx(dst, fmt)
 
    The fmt string is evaluated twice for exiting variables, the result is
    stored in dst variable. The dst must be the name of a writable
@@ -819,7 +845,7 @@ $var("foo") now is "foo indeed"
 
    Function can be used from ANY_ROUTE.
 
-   Example 1.32. pv_xavp_to_var() usage
+   Example 1.33. pv_xavp_to_var() usage
 ...
 $var(x) = "test";
 $var(y) = "$var(x)"
@@ -844,7 +870,7 @@ pv_evalx("$var(z)", "$var(y) one");
           + “str”: string value
      * _value_: value to be set
 
-   Example 1.33. pv.shvSet usage
+   Example 1.34. pv.shvSet usage
 ...
 $ kamcmd pv.shvSet debug int 3
 ...
@@ -858,7 +884,7 @@ $ kamcmd pv.shvSet debug int 3
 
    If no name is given, all shared variables are listed.
 
-   Example 1.34. pv.shvGet usage
+   Example 1.35. pv.shvGet usage
 ...
 $ kamcmd pv.shvGet debug
 ...
