@@ -736,6 +736,39 @@ xavi_child_rm("WhatEver", "FoO");
 				</programlisting>
 			</example>
 		</section>
+		<section id="pv.f.xavp_lshift">
+			<title>
+				<function moreinfo="none">xavp_lshift(xname, idx)</function>
+			</title>
+			<para>
+				Left shift with rotation of the xavps with name xname so that
+				the one at the index idx becomes the first and the ones before
+				it are at the end of the list.
+			</para>
+			<para>
+				The first parameter has to be the name of XAVP in the root list.
+				The second parameter is the index of the XAVP that becomes the
+				first one.
+			</para>
+			<para>
+				The parameters can be with variables.
+			</para>
+			<para>
+			Function can be used from ANY ROUTE.
+			</para>
+			<example>
+				<title><function>xavp_lshift</function> usage</title>
+				<programlisting format="linespecific">
+...
+$xavp(n) = 10;
+$xavp(n) = 20;
+$xavp(n) = 30;
+xavp_lshift("n", "1");
+# results in: $xavp(n) having the list of values 20 30 10
+...
+				</programlisting>
+			</example>
+		</section>
 		<section id="pv.f.sbranch_set_ruri">
 			<title>
 				<function moreinfo="none">sbranch_set_ruri()</function>
