@@ -526,6 +526,8 @@ static pv_export_t mod_pvs[] = {
 
 	{ {"shv", (sizeof("shv")-1)}, PVT_OTHER, pv_get_shvar,
 		pv_set_shvar, pv_parse_shvar_name, 0, 0, 0},
+	{ {"shvinc", (sizeof("shvinc")-1)}, PVT_OTHER, pv_get_shvinc,
+		0, pv_parse_shvar_name, 0, 0, 0},
 	{ {"time", (sizeof("time")-1)}, PVT_CONTEXT, pv_get_local_time,
 		0, pv_parse_time_name, 0, 0, 0},
 	{ {"timef", (sizeof("timef")-1)}, PVT_CONTEXT, pv_get_local_strftime,

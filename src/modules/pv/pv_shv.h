@@ -57,6 +57,7 @@ int pv_parse_shvar_name(pv_spec_p sp, str *in);
 int pv_get_shvar(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res);
 int pv_set_shvar(struct sip_msg* msg, pv_param_t *param, int op,
 		pv_value_t *val);
+int pv_get_shvinc(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res);
 
 int shvar_init_locks(void);
 void shvar_destroy_locks(void);
