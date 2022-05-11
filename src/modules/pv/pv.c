@@ -935,7 +935,7 @@ static int w_xavp_lshift(sip_msg_t *msg, char *pxname, char *pidx)
 		LM_ERR("failed to get the xavp name\n");
 		return -1;
 	}
-	if(fixup_get_svalue(msg, (gparam_t*)pidx, &idx)<0) {
+	if(fixup_get_ivalue(msg, (gparam_t*)pidx, &idx)<0) {
 		LM_ERR("failed to get the xavp index\n");
 		return -1;
 	}
