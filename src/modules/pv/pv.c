@@ -2872,6 +2872,11 @@ static sr_kemi_t sr_kemi_pvx_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("pvx"), str_init("shvinc_get"),
+		SR_KEMIP_XVAL, ki_shvinc_get,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ str_init("pvx"), str_init("pv_var_to_xavp"),
 		SR_KEMIP_INT, ki_var_to_xavp,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,

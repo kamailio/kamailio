@@ -71,6 +71,7 @@ void rpc_shv_set(rpc_t* rpc, void* c);
 int ki_shv_seti(sip_msg_t *msg, str *vname, int ival);
 int ki_shv_sets(sip_msg_t *msg, str *vname, str *sval);
 sr_kemi_xval_t* ki_shv_get(sip_msg_t *msg, str *vname);
+sr_kemi_xval_t* ki_shvinc_get(sip_msg_t *msg, str *vname);
 
 #endif
 

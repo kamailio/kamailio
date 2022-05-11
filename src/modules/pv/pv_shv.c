@@ -796,4 +796,34 @@ sr_kemi_xval_t* ki_shv_get(sip_msg_t *msg, str *vname)
 	}
 }
 
+/**
+ *
+ */
+sr_kemi_xval_t* ki_shvinc_get(sip_msg_t *msg, str *vname)
+{
+	sh_var_t *shv = NULL;
+
+	memset(&_sr_kemi_shv_xval, 0, sizeof(sr_kemi_xval_t));
+
+	shv = get_shvar_by_name(vname);
+	if(shv==NULL) {
+		LM_WARN("$shv(%.*s) is not defined - return value 0\n",
+				vname->len, vname->s);
+		_sr_kemi_shv_xval.vtype = SR_KEMIP_INT;
+		_sr_kemi_shv_xval.v.n = 0;
+		return &_sr_kemi_shv_xval;
+	}
+
+	lock_shvar(shv);
+	if(shv->v.flags&VAR_VAL_STR) {
+		_sr_kemi_shv_xval.v.n = 0;
+	} else {
+		shv->v.value.n++;
+		_sr_kemi_shv_xval.v.n = shv->v.value.n;
+	}
+	unlock_shvar(shv);
+	_sr_kemi_shv_xval.vtype = SR_KEMIP_INT;
+	return &_sr_kemi_shv_xval;
+}
+
 /* vi: set ts=4 sw=4 tw=79:ai:cindent: */
