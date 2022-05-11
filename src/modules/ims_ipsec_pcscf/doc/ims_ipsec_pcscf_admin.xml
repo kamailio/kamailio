@@ -82,7 +82,7 @@ modparam("ims_ipsec_pcscf", "ipsec_listen_addr6", "")
     <section>
       <title><varname>ipsec_client_port</varname> (int)</title>
 
-      <para>Start port number which will be bound for incoming (server) IPSec traffic.</para>
+      <para>Port number which will be bound for incoming (server) IPSec traffic.</para>
 
       <para><emphasis>Default value is 5062.</emphasis></para>
 
@@ -100,7 +100,7 @@ modparam("ims_ipsec_pcscf", "ipsec_client_port", 5062)
     <section>
       <title><varname>ipsec_server_port</varname> (int)</title>
 
-      <para>Start port number which will be bound for incoming (server) IPSec traffic.</para>
+      <para>Port number which will be bound for incoming (server) IPSec traffic.</para>
 
       <para><emphasis>Default value is 5063.</emphasis></para>
 
@@ -118,9 +118,7 @@ modparam("ims_ipsec_pcscf", "ipsec_server_port", 5063)
     <section>
       <title><varname>ipsec_max_connections</varname> (int)</title>
 
-      <para>Maximum IPSec connections for the process. E.g. if ipsec_client_port=5100, ipsec_server_port=6100 and
-      ipsec_max_connections=10, all client ports between 5100 and 5109 and all server ports between 6100 and 6109
-      will be used for maximum to 10 IPSec connections.</para>
+      <para>Maximum simultanious IPSec connections</para>
 
       <para><emphasis>Default value is 2.</emphasis></para>
 
@@ -138,11 +136,9 @@ modparam("ims_ipsec_pcscf", "ipsec_max_connections", 10)
     <section>
       <title><varname>ipsec_reuse_server_port</varname> (int)</title>
 
-      <para>Reuse (1) or not (0) the P-CSCF Server port for Re-registration for one UA.
-      When set to 0 - During Re-registration P-CSCF will distribute new P-CSCF client and
-      P-CSCF server ports.
-      When set to 1 - During Re-registration P-CSCF will reuse the old P-CSCF server port and
-      will distribute a new P-CSCF client port.</para>
+      <para>Reuse (1) or not (0) the P-CSCF IPSec information for Re-registration for one UA.
+      When set to 0 - During Re-registration P-CSCF will create new IPSec tunnels.
+      When set to 1 - During Re-registration P-CSCF will reuse the old IPSec tunnels.</para>
 
       <para><emphasis>Default value is 1.</emphasis></para>
 
@@ -192,6 +188,40 @@ modparam("ims_ipsec_pcscf", "ipsec_spi_id_start", 100)
         <programlisting format="linespecific">
 ...
 modparam("ims_ipsec_pcscf", "ipsec_spi_id_range", 1000)
+...
+        </programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><varname>ipsec_preferred_alg</varname> (string)</title>
+
+      <para>A name of an authentication algorithm which the Proxy-CSCF will <emphasis>prefer</emphasis> when creating IPSec tunnels.</para>
+      <para><emphasis>Default value is empty string (null) - the last algorithm in the Sec-Agree header will be used.</emphasis></para>
+
+      <example>
+        <title><varname>ipsec_preferred_alg</varname> parameter usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_ipsec_pcscf", "ipsec_preferred_alg", "hmac-sha-1-96")
+...
+        </programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><varname>ipsec_preferred_ealg</varname> (string)</title>
+
+      <para>A name of an encrytion algorithm which the Proxy-CSCF will <emphasis>prefer</emphasis> when creating IPSec tunnels.</para>
+      <para><emphasis>Default value is empty string (null) - the last algorithm in the Sec-Agree header will be used. Note that the possibility of it being the "null" algorithm is not insignificant.</emphasis></para>
+
+      <example>
+        <title><varname>ipsec_preferred_ealg</varname> parameter usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_ipsec_pcscf", "ipsec_preferred_ealg", "aes-cbc")
 ...
         </programlisting>
       </example>

@@ -35,12 +35,51 @@ typedef struct spi_generator{
 	uint32_t		spi_val;
 	uint32_t		min_spi;
 	uint32_t		max_spi;
+	uint32_t		sport_start_val;
+	uint32_t		cport_start_val;
+	uint32_t		port_range;
 } spi_generator_t;
 
 spi_generator_t* spi_data = NULL;
 
+static int init_free_spi()
+{
+	uint32_t sport_start_val, cport_start_val, port_range, sport, cport, j;
+
+	if(!spi_data) {
+		return 1;
+	}
+
+	sport_start_val = spi_data->sport_start_val;
+	cport_start_val = spi_data->cport_start_val;
+	port_range = spi_data->port_range;
+	//save the initial value for the highly unlikely case where there are no free SPIs
+	sport = sport_start_val;
+	cport = cport_start_val;
+
+	spi_data->free_spi = create_list();
+	for(j = spi_data->min_spi; j < spi_data->max_spi; j+=2)
+	{
+		spi_add(&spi_data->free_spi, j, j+1, cport, sport);
+		cport++;
+		sport++;
+
+		if(cport >= cport_start_val + port_range) {
+			cport = cport_start_val;
+		}
+
+		if(sport >= sport_start_val + port_range) {
+			sport = sport_start_val;
+		}
+	}
+
+	return 0;
+}
+
 int init_spi_gen(uint32_t spi_start_val, uint32_t spi_range, uint32_t sport_start_val, uint32_t cport_start_val, uint32_t port_range)
 {
+    uint32_t j;
+
     if(spi_start_val < 1) {
         return 1;
     }
@@ -48,11 +87,6 @@ int init_spi_gen(uint32_t spi_start_val, uint32_t spi_range, uint32_t sport_star
     if(UINT32_MAX - spi_range < spi_start_val) {
         return 2;
     }
-
-    //save the initial value for the highly unlikely case where there are no free SPIs
-    uint32_t sport = sport_start_val;
-    uint32_t cport = cport_start_val;
-    uint32_t j = 0;
 
     if(spi_data){
         return 3;
@@ -76,27 +110,15 @@ int init_spi_gen(uint32_t spi_start_val, uint32_t spi_range, uint32_t sport_star
         spi_data->used_spis[j] = create_list();
     }
 
-    spi_data->free_spi = create_list();
     spi_data->spi_val  = spi_data->min_spi = spi_start_val;
     spi_data->max_spi  = spi_start_val + spi_range;
+    spi_data->sport_start_val = sport_start_val;
+    spi_data->cport_start_val = cport_start_val;
+    spi_data->port_range = port_range;
 
-    LM_ERR("spi_data:%p init free spi for IPSEC tunnel min_spi:%u max_api:%u\n", spi_data, spi_data->min_spi, spi_data->max_spi);
-
-    for(j = spi_data->min_spi; j < spi_data->max_spi; j+=2)
-    {
-        spi_add(&spi_data->free_spi, j, j+1, cport, sport);
-        LM_ERR("spi_data:%p add element to spi free list head:%p\n", spi_data, spi_data->free_spi.head);
-        cport++;
-        sport++;
-
-        if(cport >= cport_start_val + port_range) {
-            cport = cport_start_val;
-        }
-
-        if(sport >= sport_start_val + port_range) {
-            sport = sport_start_val;
-        }
-    }
+	if(init_free_spi() != 0) {
+		return 7;
+	}
 
 	pthread_mutex_unlock(&spi_data->spis_mut);
 
@@ -159,6 +181,8 @@ int release_spi(uint32_t spi_cid, uint32_t spi_sid, uint16_t cport, uint16_t spo
 
 int clean_spi_list()
 {
+	uint32_t j;
+
 	if(!spi_data){
 		return 1;
 	}
@@ -167,11 +191,13 @@ int clean_spi_list()
 		return 1;
 	}
 
-  uint32_t j = 0;
 	for(j = 0; j < MAX_HASH_SPI; j++) {
 		destroy_list(&spi_data->used_spis[j]);
 	}
-  destroy_list(&spi_data->free_spi);
+
+	destroy_list(&spi_data->free_spi);
+	init_free_spi();
+
 	spi_data->spi_val = spi_data->min_spi;
 
 	pthread_mutex_unlock(&spi_data->spis_mut);
@@ -181,7 +207,6 @@ int clean_spi_list()
 
 int destroy_spi_gen()
 {
-	LM_ERR("destroy spi list \n" );
 	if(!spi_data){
 		return 1;
 	}

@@ -25,6 +25,9 @@
 #include "../../core/parser/msg_parser.h"
 #include "../../core/mem/mem.h"
 
+extern str ipsec_preferred_alg;
+extern str ipsec_preferred_ealg;
+
 static uint32_t parse_digits(str value)
 {
     uint32_t ret = 0;
@@ -76,7 +79,7 @@ static int process_sec_agree_param(str name, str value, ipsec_t *ret, char *alg_
     if(strncasecmp(name.s, "alg", name.len) == 0) {
         SEC_COPY_STR_PARAM(ret->r_alg, value);
 
-        if(strncasecmp(value.s, "hmac-sha-1-96", value.len) == 0) {
+        if(ipsec_preferred_alg.len && STR_EQ(value, ipsec_preferred_alg)) {
             *alg_found = 1;
         }
     }
@@ -89,7 +92,7 @@ static int process_sec_agree_param(str name, str value, ipsec_t *ret, char *alg_
     else if(strncasecmp(name.s, "ealg", name.len) == 0) {
         SEC_COPY_STR_PARAM(ret->r_ealg, value);
 
-        if(strncasecmp(value.s, "aes-cbc", value.len) == 0) {
+        if(ipsec_preferred_ealg.len && STR_EQ(value, ipsec_preferred_ealg)) {
             *ealg_found = 1;
         }
     }

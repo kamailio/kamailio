@@ -43,6 +43,8 @@ int ipsec_reuse_server_port = 1;
 int ipsec_max_connections = 2;
 int spi_id_start = 100;
 int spi_id_range = 1000;
+str ipsec_preferred_alg= STR_NULL;
+str ipsec_preferred_ealg= STR_NULL;
 int xfrm_user_selector = 143956232;
 
 ip_addr_t ipsec_listen_ip_addr;
@@ -90,6 +92,8 @@ static param_export_t params[] = {
 	{"ipsec_max_connections",	INT_PARAM, &ipsec_max_connections	},
 	{"ipsec_spi_id_start",		INT_PARAM, &spi_id_start			},
 	{"ipsec_spi_id_range",		INT_PARAM, &spi_id_range			},
+	{"ipsec_preferred_alg",		PARAM_STR, &ipsec_preferred_alg		},
+	{"ipsec_preferred_ealg",	PARAM_STR, &ipsec_preferred_ealg	},
 	{0, 0, 0}
 };
 

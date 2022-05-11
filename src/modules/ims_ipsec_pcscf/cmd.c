@@ -945,6 +945,10 @@ int ipsec_reconfig()
 		return 0;
 	}
 
+	if(clean_spi_list() != 0) {
+		return 1;
+	}
+
 	return ipsec_cleanall();
 }
 
