@@ -197,6 +197,9 @@ static int w_dlg_db_load_extra(sip_msg_t *msg, char *p1, char *p2);
 static int fixup_dlg_get_var(void** param, int param_no);
 static int fixup_dlg_get_var_free(void** param, int param_no);
 static int w_dlg_get_var(struct sip_msg*, char*, char*, char*, char*, char*);
+static int fixup_dlg_set_var(void** param, int param_no);
+static int fixup_dlg_set_var_free(void** param, int param_no);
+static int w_dlg_set_var(struct sip_msg*, char*, char*, char*, char*, char*);
 static int w_dlg_remote_profile(sip_msg_t *msg, char *cmd, char *pname,
 		char *pval, char *puid, char *expires);
 static int fixup_dlg_remote_profile(void** param, int param_no);
@@ -260,6 +263,8 @@ static cmd_export_t cmds[]={
 			0, ANY_ROUTE },
 	{"dlg_get_var",(cmd_function)w_dlg_get_var, 5, fixup_dlg_get_var,
 			fixup_dlg_get_var_free, ANY_ROUTE },
+	{"dlg_set_var",(cmd_function)w_dlg_set_var, 5, fixup_dlg_set_var,
+			fixup_dlg_set_var_free, ANY_ROUTE },
 
 	{"load_dlg",  (cmd_function)load_dlg,   0, 0, 0, 0},
 	{0,0,0,0,0,0}
@@ -1608,6 +1613,96 @@ static int fixup_dlg_get_var_free(void** param, int param_no)
 	return -1;
 }
 
+static int ki_dlg_set_var(sip_msg_t *msg, str *sc, str *sf, str *st, str *key, str *val)
+{
+	dlg_cell_t *dlg = NULL;
+	unsigned int dir = 0;
+	int ret = 1;
+
+	if(sc==NULL || sc->s==NULL || sc->len == 0) {
+		LM_ERR("invalid Call-ID parameter\n");
+		return -1;
+	}
+	if(sf==NULL || sf->s==NULL || sf->len == 0) {
+		LM_ERR("invalid From tag parameter\n");
+		return -1;
+	}
+	if(st==NULL || st->s==NULL || st->len == 0) {
+		LM_ERR("invalid To tag parameter\n");
+		return -1;
+	}
+
+	dlg = get_dlg(sc, sf, st, &dir);
+	if(dlg==NULL)
+		return -1;
+	if(set_dlg_variable(dlg, key, val) != 0) ret = -1;
+	dlg_release(dlg);
+	return ret;
+}
+
+static int w_dlg_set_var(struct sip_msg *msg, char *ci, char *ft, char *tt, char *key, char *val)
+{
+	str sc = STR_NULL;
+	str sf = STR_NULL;
+	str st = STR_NULL;
+	str k = STR_NULL;
+	str v = STR_NULL;
+
+	if(ci==0 || ft==0 || tt==0)
+	{
+		LM_ERR("invalid parameters\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_p)ci, &sc)!=0)
+	{
+		LM_ERR("unable to get Call-ID\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_p)ft, &sf)!=0)
+	{
+		LM_ERR("unable to get From tag\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_p)tt, &st)!=0)
+	{
+		LM_ERR("unable to get To Tag\n");
+		return -1;
+	}
+	if(st.s==NULL || st.len == 0)
+	{
+		LM_ERR("invalid To tag parameter\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_p)key, &k)!=0)
+	{
+		LM_ERR("unable to get key name\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_p)val, &v)!=0)
+	{
+		LM_ERR("unable to get value\n");
+		return -1;
+	}
+	return ki_dlg_set_var(msg, &sc, &sf, &st, &k, &v);
+}
+
+static int fixup_dlg_set_var(void** param, int param_no)
+{
+	if(param_no>=1 && param_no<=5)
+		return fixup_spve_null(param, 1);
+	return 0;
+}
+
+static int fixup_dlg_set_var_free(void** param, int param_no)
+{
+	if (param_no <= 5)
+		return fixup_free_spve_null(param, 1);
+	return -1;
+}
+
 static int ki_dlg_get(sip_msg_t *msg, str *sc, str *sf, str *st)
 {
 	dlg_cell_t *dlg = NULL;
@@ -2197,6 +2292,11 @@ static sr_kemi_t sr_kemi_dialog_exports[] = {
 		SR_KEMIP_STR, ki_dlg_get_var,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dialog"), str_init("dlg_set_var"),
+		SR_KEMIP_INT, ki_dlg_set_var,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE }
 	},
 	{ str_init("dialog"), str_init("set_dlg_profile_static"),
 		SR_KEMIP_INT, ki_set_dlg_profile_static,
