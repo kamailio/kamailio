@@ -937,7 +937,7 @@ int ki_lookup_xavp(sip_msg_t* msg, str *utname, str* uri,
 			memset(&nxval, 0, sizeof(sr_xval_t));
 			nxval.type = SR_XTYPE_STR;
 			nxval.v.s = ptr->received;
-			STR_STATIC_SET(fxname, "socket");
+			STR_STATIC_SET(fxname, "dsturi");
 			if(xavp_add_value(&fxname, &nxval, &cxavp)==NULL) {
 				LM_ERR("failed to add xavp %.*s field\n", fxname.len, fxname.s);
 				goto error;
