@@ -601,7 +601,7 @@ static int w_sbranch_set_ruri(sip_msg_t *msg, char p1, char *p2);
 static int w_sbranch_append(sip_msg_t *msg, char p1, char *p2);
 static int w_sbranch_reset(sip_msg_t *msg, char p1, char *p2);
 static int w_var_to_xavp(sip_msg_t *msg, char *p1, char *p2);
-static int w_xavp_to_var(sip_msg_t *msg, char *p1);
+static int w_xavp_to_var(sip_msg_t *msg, char *p1, char *p2);
 
 static int w_xavi_child_seti(sip_msg_t *msg, char *prname, char *pcname,
 		char *pval);
@@ -888,7 +888,7 @@ static int ki_var_to_xavp(sip_msg_t *msg, str *varname, str *xname)
 /**
  * xavp to script variable
  */
-static int w_xavp_to_var(sip_msg_t *msg, char *s1)
+static int w_xavp_to_var(sip_msg_t *msg, char *s1, char *p2)
 {
 	str xname = STR_NULL;
 
