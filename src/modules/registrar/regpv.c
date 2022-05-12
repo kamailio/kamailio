@@ -863,4 +863,134 @@ void reg_ul_expired_contact(ucontact_t* ptr, int type, void* param)
 	return;
 error:
 	regpv_free_profile(rpp);
-	return; }
+	return;
+}
+
+int ki_lookup_xavp(sip_msg_t* msg, str *utname, str* uri,
+		str* rxname, str *cxname)
+{
+	udomain_t* dt;
+	urecord_t* r;
+	ucontact_t* ptr;
+	str aor = {0, 0};
+	sr_xavp_t *rxavp=NULL;
+	sr_xavp_t *cxavp=NULL;
+	sr_xavp_t *pxavp=NULL;
+	sr_xval_t nxval;
+	str fxname = {0, 0};
+	int res;
+	int n;
+
+	if (extract_aor(uri, &aor, NULL) < 0) {
+		LM_ERR("failed to extract Address Of Record\n");
+		return -1;
+	}
+
+	if(ul.get_udomain(utname->s, &dt)<0) {
+		LM_ERR("usrloc domain [%s] not found\n", utname->s);
+		return -1;
+	}
+
+	/* add record aor field */
+	memset(&nxval, 0, sizeof(sr_xval_t));
+	nxval.type = SR_XTYPE_STR;
+	nxval.v.s = aor;
+	STR_STATIC_SET(fxname, "aor");
+	if(xavp_add_value(&fxname, &nxval, &rxavp)==NULL) {
+		LM_ERR("failed to add xavp %.*s field\n", fxname.len, fxname.s);
+		return -1;
+	}
+
+	/* copy contacts */
+	ul.lock_udomain(dt, &aor);
+	res = ul.get_urecord(dt, &aor, &r);
+	if (res > 0) {
+		LM_DBG("'%.*s' not found in usrloc\n", aor.len, ZSW(aor.s));
+		ul.unlock_udomain(dt, &aor);
+		xavp_destroy_list(&rxavp);
+		return -1;
+	}
+
+	ptr = r->contacts;
+	n = 0;
+	while(ptr) {
+		/* add record uri field */
+		memset(&nxval, 0, sizeof(sr_xval_t));
+		nxval.type = SR_XTYPE_STR;
+		nxval.v.s = ptr->c;
+		STR_STATIC_SET(fxname, "uri");
+		if(xavp_add_value(&fxname, &nxval, &cxavp)==NULL) {
+			LM_ERR("failed to add xavp %.*s field\n", fxname.len, fxname.s);
+			goto error;
+		}
+		if(ptr->sock) {
+			memset(&nxval, 0, sizeof(sr_xval_t));
+			nxval.type = SR_XTYPE_STR;
+			nxval.v.s = ptr->sock->sock_str;
+			STR_STATIC_SET(fxname, "socket");
+			if(xavp_add_value(&fxname, &nxval, &cxavp)==NULL) {
+				LM_ERR("failed to add xavp %.*s field\n", fxname.len, fxname.s);
+				goto error;
+			}
+		}
+		if(ptr->received.s!=NULL) {
+			memset(&nxval, 0, sizeof(sr_xval_t));
+			nxval.type = SR_XTYPE_STR;
+			nxval.v.s = ptr->received;
+			STR_STATIC_SET(fxname, "socket");
+			if(xavp_add_value(&fxname, &nxval, &cxavp)==NULL) {
+				LM_ERR("failed to add xavp %.*s field\n", fxname.len, fxname.s);
+				goto error;
+			}
+		}
+		/* add cxavp in root list */
+		memset(&nxval, 0, sizeof(sr_xval_t));
+		nxval.type = SR_XTYPE_XAVP;
+		nxval.v.xavp = cxavp;
+		if((pxavp = xavp_add_value_after(cxname, &nxval, pxavp))==NULL) {
+			LM_ERR("cannot add dst xavp to root list\n");
+			goto error;
+		}
+		cxavp = NULL;
+		n++;
+		ptr = ptr->next;
+	}
+	ul.release_urecord(r);
+	ul.unlock_udomain(dt, &aor);
+
+	/* add record count field */
+	memset(&nxval, 0, sizeof(sr_xval_t));
+	nxval.type = SR_XTYPE_INT;
+	nxval.v.i = n;
+	STR_STATIC_SET(fxname, "count");
+	if(xavp_add_value(&fxname, &nxval, &rxavp)==NULL) {
+		LM_ERR("failed to add xavp %.*s field\n", fxname.len, fxname.s);
+		xavp_destroy_list(&rxavp);
+		return -1;
+	}
+
+	/* add rxavp in root list */
+	memset(&nxval, 0, sizeof(sr_xval_t));
+	nxval.type = SR_XTYPE_XAVP;
+	nxval.v.xavp = rxavp;
+	if((pxavp = xavp_add_value(rxname, &nxval, NULL))==NULL) {
+		LM_ERR("cannot add rxavp to root list\n");
+		xavp_destroy_list(&rxavp);
+		return -1;
+	}
+
+	LM_DBG("fetched <%d> contacts for <%.*s> in [%.*s]\n",
+			n, aor.len, aor.s, cxname->len, cxname->s);
+	return 1;
+
+error:
+	ul.release_urecord(r);
+	ul.unlock_udomain(dt, &aor);
+	if(cxavp!=NULL) {
+		xavp_destroy_list(&cxavp);
+	}
+	if(rxavp!=NULL) {
+		xavp_destroy_list(&rxavp);
+	}
+	return -1;
+}
