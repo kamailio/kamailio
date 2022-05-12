@@ -1450,6 +1450,84 @@ lookup_branches("location");
 		</example>
 	</section>
 
+	<section id="registrar.f.lookup_xavp">
+		<title>
+		<function moreinfo="none">lookup_xavp(ultable, uri, rxname, cxname)</function>
+		</title>
+		<para>
+			Similar to lookup(...), but store the location record attributes
+			in XAVPs. Note that not all contact record fields are stored
+		</para>
+		<para>Meaning of the parameters:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+			<emphasis>ultable</emphasis> - name of the usrloc table that is used
+			for the lookup.
+			</para>
+		<listitem>
+		</listitem>
+			<para>
+			<emphasis>uri</emphasis> - the URI to be searched in location table.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				<emphasis>rxname</emphasis> - name of the XAVP to store record
+				attributes. These are:
+			</para>
+			<itemizedlist>
+			<listitem>
+				<para>
+				<emphasis>aor</emphasis> - the address of record.
+				</para>
+			</listitem>
+			</itemizedlist>
+		</listitem>
+		<listitem>
+			<para>
+				<emphasis>cxname</emphasis> - name of the XAVP to store content
+				attributes, name mapping is done from the perspective of using
+				them to send out SIP requests. These are:
+			</para>
+			<itemizedlist>
+			<listitem>
+				<para>
+				<emphasis>uri</emphasis> - the contact address.
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+				<emphasis>socket</emphasis> - the socket of the contact record.
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+				<emphasis>dsturi</emphasis> - the destination uri of the contact
+				record (the received field in location contact).
+				</para>
+			</listitem>
+			</itemizedlist>
+			</itemizedlist>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>lookup_xavp</function> usage</title>
+		<programlisting format="linespecific">
+...
+lookup_xavp("location", "$fu", "rul", "cul");
+xinfo("aor: $xavp(rul=&gt;aor)\n");
+xinfo("number of contacts: $xavp(rul&gt;count)\n");
+xinfo("first contact record - uri: $xavp(cul&gt;uri)\n");
+xinfo("first contact record - socket: $xavp(cul&gt;socket)\n");
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="registrar.f.registered">
 		<title>
 		<function moreinfo="none">registered(domain [, uri [, match_option [, match_action]]])</function>
