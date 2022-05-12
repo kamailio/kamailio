@@ -430,6 +430,113 @@ error:
 	return -1;
 }
 
+/**
+ *
+ */
+static sr_kemi_xval_t _sr_kemi_reg_ulc_xval = {0};
+
+sr_kemi_xval_t* ki_reg_ulc_rget(sip_msg_t* msg, str* rid, str* attr)
+{
+	regpv_profile_t *rpp = NULL;
+
+	memset(&_sr_kemi_reg_ulc_xval, 0, sizeof(sr_kemi_xval_t));
+	if(rid==NULL || rid->s==NULL || attr==NULL || attr->s==NULL) {
+		LM_WARN("invalid parameters - return value 0\n");
+		_sr_kemi_reg_ulc_xval.vtype = SR_KEMIP_INT;
+		_sr_kemi_reg_ulc_xval.v.n = 0;
+		return &_sr_kemi_reg_ulc_xval;
+	}
+
+	rpp = regpv_get_profile(rid);
+	if(rpp==0) {
+		LM_WARN("result [%.*s] is not defined - return value 0\n",
+				rid->len, rid->s);
+		_sr_kemi_reg_ulc_xval.vtype = SR_KEMIP_INT;
+		_sr_kemi_reg_ulc_xval.v.n = 0;
+		return &_sr_kemi_reg_ulc_xval;
+	}
+
+	if(attr->len==5 && strncmp(attr->s, "count", 5)==0) {
+		_sr_kemi_reg_ulc_xval.vtype = SR_KEMIP_INT;
+		_sr_kemi_reg_ulc_xval.v.n = rpp->nrc;
+		return &_sr_kemi_reg_ulc_xval;
+	} else if(attr->len==3 && strncmp(attr->s, "aor", 3)==0) {
+		_sr_kemi_reg_ulc_xval.vtype = SR_KEMIP_STR;
+		_sr_kemi_reg_ulc_xval.v.s = rpp->aor;
+		return &_sr_kemi_reg_ulc_xval;
+	}
+
+	LM_WARN("attribute [%.*s] is not defined - return value 0\n",
+			attr->len, attr->s);
+	_sr_kemi_reg_ulc_xval.vtype = SR_KEMIP_INT;
+	_sr_kemi_reg_ulc_xval.v.n = 0;
+	return &_sr_kemi_reg_ulc_xval;
+}
+
+sr_kemi_xval_t* ki_reg_ulc_cget(sip_msg_t* msg, str* rid, str* attr, int idx)
+{
+	regpv_profile_t *rpp = NULL;
+	ucontact_t *c = NULL;
+	int i = 0;
+
+
+	memset(&_sr_kemi_reg_ulc_xval, 0, sizeof(sr_kemi_xval_t));
+	if(rid==NULL || rid->s==NULL || attr==NULL || attr->s==NULL) {
+		LM_WARN("invalid parameters - return value 0\n");
+		_sr_kemi_reg_ulc_xval.vtype = SR_KEMIP_INT;
+		_sr_kemi_reg_ulc_xval.v.n = 0;
+		return &_sr_kemi_reg_ulc_xval;
+	}
+
+	rpp = regpv_get_profile(rid);
+	if(rpp==0) {
+		LM_WARN("result [%.*s] is not defined - return value 0\n",
+				rid->len, rid->s);
+		_sr_kemi_reg_ulc_xval.vtype = SR_KEMIP_INT;
+		_sr_kemi_reg_ulc_xval.v.n = 0;
+		return &_sr_kemi_reg_ulc_xval;
+	}
+
+	/* work only with positive indexes by now */
+	if(idx<0) {
+		idx = 0;
+	}
+	/* get contact by index */
+	i = 0;
+	for(c = rpp->contacts; c!=NULL; c = c->next) {
+		if(i == idx) {
+			break;
+		}
+		i++;
+	}
+	if(c == NULL) {
+		LM_WARN("contact at index [%d] is not found - return value 0\n", idx);
+		_sr_kemi_reg_ulc_xval.vtype = SR_KEMIP_INT;
+		_sr_kemi_reg_ulc_xval.v.n = 0;
+		return &_sr_kemi_reg_ulc_xval;
+	}
+
+	if(attr->len==4 && strncmp(attr->s, "addr", 4)==0) {
+		_sr_kemi_reg_ulc_xval.vtype = SR_KEMIP_STR;
+		_sr_kemi_reg_ulc_xval.v.s = c->c;
+		return &_sr_kemi_reg_ulc_xval;
+	} else if(attr->len==6 && strncmp(attr->s, "socket", 6)==0) {
+		if(c->sock==NULL) {
+			sr_kemi_xval_null(&_sr_kemi_reg_ulc_xval, SR_KEMI_XVAL_NULL_EMPTY);
+			return &_sr_kemi_reg_ulc_xval;
+		}
+		_sr_kemi_reg_ulc_xval.vtype = SR_KEMIP_STR;
+		_sr_kemi_reg_ulc_xval.v.s = c->sock->sock_str;
+		return &_sr_kemi_reg_ulc_xval;
+	}
+
+	LM_WARN("attribute [%.*s] is not defined - return value 0\n",
+			attr->len, attr->s);
+	_sr_kemi_reg_ulc_xval.vtype = SR_KEMIP_INT;
+	_sr_kemi_reg_ulc_xval.v.n = 0;
+	return &_sr_kemi_reg_ulc_xval;
+}
+
 int pv_fetch_contacts_helper(sip_msg_t* msg, udomain_t* dt, str* uri,
 		str* profile)
 {
