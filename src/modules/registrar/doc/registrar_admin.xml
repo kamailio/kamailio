@@ -1465,8 +1465,8 @@ lookup_branches("location");
 			<emphasis>ultable</emphasis> - name of the usrloc table that is used
 			for the lookup.
 			</para>
-		<listitem>
 		</listitem>
+		<listitem>
 			<para>
 			<emphasis>uri</emphasis> - the URI to be searched in location table.
 			</para>
@@ -1507,7 +1507,6 @@ lookup_branches("location");
 				record (the received field in location contact).
 				</para>
 			</listitem>
-			</itemizedlist>
 			</itemizedlist>
 		</listitem>
 		</itemizedlist>
