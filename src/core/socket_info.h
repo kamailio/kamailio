@@ -107,6 +107,7 @@ socket_info_t* ksr_get_socket_by_name(str *sockname);
 socket_info_t* ksr_get_socket_by_listen(str *sockstr);
 socket_info_t* ksr_get_socket_by_advertise(str *sockstr);
 socket_info_t* ksr_get_socket_by_index(int idx);
+socket_info_t* ksr_get_socket_by_address(str *sockstr);
 
 struct socket_info** get_sock_info_list(unsigned short proto);
 

@@ -946,6 +946,19 @@ socket_info_t* ksr_get_socket_by_index(int idx)
 	return NULL;
 }
 
+socket_info_t* ksr_get_socket_by_address(str *sockstr)
+{
+	socket_info_t *si = NULL;
+
+	si = ksr_get_socket_by_listen(sockstr);
+
+	if(si!=NULL) {
+		return si;
+	}
+
+	return ksr_get_socket_by_advertise(sockstr);
+}
+
 /* checks if the proto:port is one of the ports we listen on
  * and returns the corresponding socket_info structure.
  * if proto==0 (PROTO_NONE) the protocol is ignored
