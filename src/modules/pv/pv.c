@@ -695,7 +695,7 @@ static cmd_export_t cmds[]={
 		ANY_ROUTE},
 	{"xavp_push_dst", (cmd_function)w_xavp_push_dst,
 		1, fixup_spve_null, fixup_free_spve_null,
-		ANY_ROUTE},
+		REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
 	{"sbranch_set_ruri",  (cmd_function)w_sbranch_set_ruri,  0, 0, 0,
 		ANY_ROUTE },
 	{"sbranch_append",    (cmd_function)w_sbranch_append,    0, 0, 0,
