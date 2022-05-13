@@ -353,7 +353,7 @@ static int update_contact_ipsec_params(ipsec_t* s, const struct sip_msg* m, ipse
     // Generate SPI
     if(s_old) {
         if(s_old->spi_pc && s_old->spi_ps && s_old->port_pc && s_old->port_ps) {
-            LM_ERR("Error using old IPSEC tunnel creation\n");
+            LM_INFO("Reusing IPSEC tunnel\n");
             s->spi_pc = s_old->spi_pc;
             s->spi_ps = s_old->spi_ps;
             s->port_pc = s_old->port_pc;
