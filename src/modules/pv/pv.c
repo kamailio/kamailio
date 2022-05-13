@@ -29,6 +29,7 @@
 #include "../../core/mod_fix.h"
 #include "../../core/xavp.h"
 #include "../../core/kemi.h"
+#include "../../core/dset.h"
 #include "../../core/rpc.h"
 #include "../../core/rpc_lookup.h"
 #include "../../core/strutils.h"
@@ -611,6 +612,7 @@ static int w_xavi_rm(sip_msg_t *msg, char *prname, char *p2);
 static int w_xavi_child_rm(sip_msg_t *msg, char *prname, char *pcname);
 
 static int w_xavp_lshift(sip_msg_t *msg, char *pxname, char *pidx);
+static int w_xavp_push_dst(sip_msg_t *msg, char *pxname, char *p2);
 
 int pv_xavp_copy_fixup(void** param, int param_no);
 int pv_evalx_fixup(void** param, int param_no);
@@ -690,6 +692,9 @@ static cmd_export_t cmds[]={
 		ANY_ROUTE},
 	{"xavp_lshift", (cmd_function)w_xavp_lshift,
 		2, fixup_spve_igp, fixup_free_spve_igp,
+		ANY_ROUTE},
+	{"xavp_push_dst", (cmd_function)w_xavp_push_dst,
+		1, fixup_spve_null, fixup_free_spve_null,
 		ANY_ROUTE},
 	{"sbranch_set_ruri",  (cmd_function)w_sbranch_set_ruri,  0, 0, 0,
 		ANY_ROUTE },
@@ -941,6 +946,84 @@ static int w_xavp_lshift(sip_msg_t *msg, char *pxname, char *pidx)
 	}
 
 	return ki_xavp_lshift(msg, &xname, idx);
+}
+
+/**
+ *
+ */
+static int ki_xavp_push_dst(sip_msg_t *msg, str *xname)
+{
+	sr_xavp_t *rxavp = NULL;
+	sr_xavp_t *lxavp = NULL;
+	str fxname = STR_NULL;
+	socket_info_t *si;
+
+	rxavp = xavp_get(xname, NULL);
+	if(rxavp == NULL || rxavp->val.type != SR_XTYPE_XAVP) {
+		LM_DBG("no xavp with destination attributes\n");
+		return -1;
+	}
+
+	/* retrieve attributes from sub list */
+	rxavp = rxavp->val.v.xavp;
+
+	STR_STATIC_SET(fxname, "uri")
+	lxavp = xavp_get(&fxname, rxavp);
+	if(lxavp!=NULL && lxavp->val.type==SR_XTYPE_STR) {
+		LM_DBG("xavp uri field in next destination record (%p)\n", lxavp);
+		if(rewrite_uri(msg, &lxavp->val.v.s) < 0) {
+			LM_ERR("error while setting r-uri with: %.*s\n",
+					lxavp->val.v.s.len, lxavp->val.v.s.s);
+			return -1;
+		}
+	}
+
+	STR_STATIC_SET(fxname, "dsturi")
+	lxavp = xavp_get(&fxname, rxavp);
+	if(lxavp!=NULL && lxavp->val.type==SR_XTYPE_STR) {
+		LM_DBG("xavp dsturi field in next destination record (%p)\n", lxavp);
+		if(set_dst_uri(msg, &lxavp->val.v.s) < 0) {
+			LM_ERR("error while setting dst uri with: %.*s\n",
+					lxavp->val.v.s.len, lxavp->val.v.s.s);
+			return -1;
+		}
+		/* dst_uri changes, so it makes sense to re-use the current uri for
+		 * forking */
+		ruri_mark_new(); /* re-use uri for serial forking */
+	}
+
+	STR_STATIC_SET(fxname, "socket")
+	lxavp = xavp_get(&fxname, rxavp);
+	if(lxavp!=NULL && lxavp->val.type==SR_XTYPE_STR) {
+		si = ksr_get_socket_by_address(&lxavp->val.v.s);
+		if(si != NULL) {
+			set_force_socket(msg, si);
+		}
+	} else {
+		STR_STATIC_SET(fxname, "sockptr")
+		lxavp = xavp_get(&fxname, rxavp);
+		if(lxavp!=NULL && lxavp->val.type==SR_XTYPE_VPTR) {
+			LM_DBG("socket enforced in next destination record\n");
+			set_force_socket(msg, lxavp->val.v.vptr);
+		}
+	}
+
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_xavp_push_dst(sip_msg_t *msg, char *pxname, char *p2)
+{
+	str xname = STR_NULL;
+
+	if(fixup_get_svalue(msg, (gparam_t*)pxname, &xname)<0) {
+		LM_ERR("failed to get the xavp name\n");
+		return -1;
+	}
+
+	return ki_xavp_push_dst(msg, &xname);
 }
 
 static int ki_xavu_print(sip_msg_t* msg)
@@ -3220,6 +3303,11 @@ static sr_kemi_t sr_kemi_pvx_exports[] = {
 	{ str_init("pvx"), str_init("xavp_lshift"),
 		SR_KEMIP_INT, ki_xavp_lshift,
 		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pvx"), str_init("xavp_push_dst"),
+		SR_KEMIP_INT, ki_xavp_push_dst,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
