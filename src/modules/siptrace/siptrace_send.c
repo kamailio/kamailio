@@ -301,7 +301,7 @@ int trace_send_duplicate(char *buf, int len, dest_info_t *dst2)
 
 	if(!dst2) {
 		/* create a temporary proxy from dst param */
-		dst.proto = PROTO_UDP;
+		dst.proto = trace_dup_uri->proto;
 		p = mk_proxy(&trace_dup_uri->host,
 				(trace_dup_uri->port_no) ? trace_dup_uri->port_no : SIP_PORT, dst.proto);
 		if(p == 0) {
