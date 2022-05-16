@@ -149,7 +149,7 @@ modparam("xlog", "long_format", 1)
 </programlisting>
 		</example>
 	</section>
-	<section id="xlog.p.varname">
+	<section id="xlog.p.prefix">
 		<title><varname>prefix</varname> (str)</title>
 		<para>
 		Prefix to be output before the log message.
@@ -168,7 +168,7 @@ modparam("xlog", "prefix", "-xlog: ")
 </programlisting>
 		</example>
 	</section>
-	<section id="xlog.p.varname">
+	<section id="xlog.p.prefix_mode">
 		<title><varname>prefix_mode</varname> (str)</title>
 		<para>
 		control behaviour of <varname>prefix</varname> value.
