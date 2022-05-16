@@ -3199,8 +3199,7 @@ error:
 inline static void tcpconn_close_main_fd(struct tcp_connection* tcpconn)
 {
 	int fd;
-	
-	
+
 	fd=tcpconn->s;
 #ifdef USE_TLS
 	if (tcpconn->type==PROTO_TLS || tcpconn->type==PROTO_WSS)
@@ -3214,7 +3213,10 @@ inline static void tcpconn_close_main_fd(struct tcp_connection* tcpconn)
 				.l_onoff = 1,  /* non-zero value enables linger option in kernel */
 				.l_linger = 0, /* timeout interval in seconds */
 		};
-		setsockopt(fd, SOL_SOCKET, SO_LINGER, &sl, sizeof(sl));
+		if(setsockopt(fd, SOL_SOCKET, SO_LINGER, &sl, sizeof(sl))<0) {
+			LM_WARN("setsockopt SO_LINGER %d - %s\n", errno,
+						strerror(errno));
+		}
 	}
 	if (unlikely(tcp_safe_close(fd)<0))
 		LM_ERR("(%p): %s close(%d) failed (flags 0x%x): %s (%d)\n", tcpconn,
