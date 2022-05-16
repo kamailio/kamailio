@@ -2081,7 +2081,8 @@ dlg_bridge("sip:user@kamailio.org", "sip:annoucement@kamailio.org",
 			</para>
 		</listitem>
 		<listitem>
-			<para><emphasis>ttag</emphasis> - SIP To tag.
+			<para><emphasis>ttag</emphasis> - SIP To tag (it can be empty string
+			to match a dialog during call setup (eg., match for CANCEL)).
 			</para>
 		</listitem>
 		</itemizedlist>
