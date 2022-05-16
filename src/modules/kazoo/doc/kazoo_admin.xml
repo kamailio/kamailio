@@ -6,9 +6,6 @@
 <!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
 %docentities;
 
-<!ENTITY % xinclude SYSTEM "http://www.docbook.org/xml/4.4/xinclude.mod" >
-%xinclude;
-
 ]>
 <!-- Module User's Guide -->
 
