@@ -1705,7 +1705,8 @@ dlg_bridge("sip:user@kamailio.org", "sip:annoucement@kamailio.org",
    Meaning of the parameters is as follows:
      * callid - SIP call-id.
      * ftag - SIP From tag.
-     * ttag - SIP To tag.
+     * ttag - SIP To tag (it can be empty string to match a dialog during
+       call setup (eg., match for CANCEL)).
 
    This function can be used from BRANCH_ROUTE, REQUEST_ROUTE,
    ONREPLY_ROUTE and FAILURE_ROUTE.
