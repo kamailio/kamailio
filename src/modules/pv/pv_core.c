@@ -2597,6 +2597,11 @@ int pv_get_scriptvar(struct sip_msg *msg,  pv_param_t *param,
 		res->ri = sv->v.value.n;
 		res->flags = PV_VAL_STR|PV_VAL_INT|PV_TYPE_INT;
 	}
+
+	if (!sv->init) {
+		LM_WARN("Script variable \"$var(%.*s)\" used uninitialized!\n", sv->name.len, sv->name.s);
+	}
+
 	return 0;
 }
 
@@ -2899,6 +2904,10 @@ int pv_set_scriptvar(struct sip_msg* msg, pv_param_t *param,
 		LM_ERR("error - cannot find svar\n");
 		goto error;
 	}
+
+	script_var_t *sv = (param->pvn.u.dname);
+	sv->init = 1;
+
 	if((val==NULL) || (val->flags&PV_VAL_NULL))
 	{
 		if(((script_var_t*)param->pvn.u.dname)->v.flags&VAR_TYPE_NULL)

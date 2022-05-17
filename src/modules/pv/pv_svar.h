@@ -46,6 +46,7 @@ typedef struct script_var {
 	str name;
 	script_val_t v;
 	struct script_var *next;
+	int init;
 } script_var_t, *script_var_p;
 
 script_var_t* add_var(str *name, int vtype);
