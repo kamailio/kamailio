@@ -505,7 +505,7 @@ int siprepo_msg_async_pull(str *callid, str *msgid, str *gname, str *rname,
 /**
  *
  */
-void siprepo_timer_exec(unsigned int ticks, int worker, void *param)
+void siprepo_msg_timer(unsigned int ticks, int worker, void *param)
 {
 	time_t tnow;
 	int i;
