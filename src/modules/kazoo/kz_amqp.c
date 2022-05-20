@@ -1340,7 +1340,7 @@ int kz_amqp_async_query_ex(struct sip_msg* msg, char* _exchange, char* _routing_
 	  json_obj = json_tokener_parse(json_s.s);
 
 	  if (json_obj==NULL) {
-		  LM_ERR("empty or invalid JSON payload : %*.s\n", json_s.len, json_s.s);
+		  LM_ERR("empty or invalid JSON payload : %.*s\n", json_s.len, json_s.s);
 		  goto error;
 	  }
 
@@ -1499,7 +1499,7 @@ int kz_amqp_query_ex(struct sip_msg* msg, char* exchange, char* routing_key, cha
 		struct json_object *j = json_tokener_parse(json_s.s);
 
 		if (j==NULL) {
-			LM_ERR("empty or invalid JSON payload : %*.s\n", json_s.len, json_s.s);
+			LM_ERR("empty or invalid JSON payload : %.*s\n", json_s.len, json_s.s);
 			return -1;
 		}
 
