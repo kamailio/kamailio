@@ -55,5 +55,6 @@ sr_kemi_xval_t* ki_reg_ulc_cget(sip_msg_t* msg, str* rid, str* attr, int idx);
 
 int ki_lookup_xavp(sip_msg_t* msg, str *utname, str* uri,
 		str* rxname, str *cxname);
+int ki_reg_from_user(sip_msg_t* msg, str *utname, str* uri, int vmode);
 
 #endif

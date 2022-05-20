@@ -33,6 +33,7 @@
 #include "../../core/mod_fix.h"
 #include "../../core/route.h"
 #include "../../core/action.h"
+#include "../../core/resolve.h"
 #include "../../core/fmsg.h"
 #include "../../core/kemi.h"
 #include "../../core/receive.h"
@@ -994,3 +995,88 @@ error:
 	}
 	return -1;
 }
+
+#define REG_FROM_USER_MPORT (1)
+#define REG_FROM_USER_MPROTO (1<<1)
+/**
+ *
+ */
+int ki_reg_from_user(sip_msg_t* msg, str *utname, str* uri, int vmode)
+{
+	udomain_t* dt;
+	urecord_t* r;
+	ucontact_t* ptr;
+	str aor = {0, 0};
+	sip_uri_t rcvuri;
+	int res = -1;
+	int ret = -1;
+	ip_addr_t ipb;
+
+	if (extract_aor(uri, &aor, NULL) < 0) {
+		LM_ERR("failed to extract Address Of Record\n");
+		return -1;
+	}
+
+	if(ul.get_udomain(utname->s, &dt)<0) {
+		LM_ERR("usrloc domain [%s] not found\n", utname->s);
+		return -1;
+	}
+
+	/* copy contacts */
+	ul.lock_udomain(dt, &aor);
+	res = ul.get_urecord(dt, &aor, &r);
+	if (res > 0) {
+		LM_DBG("'%.*s' not found in usrloc\n", aor.len, ZSW(aor.s));
+		ul.unlock_udomain(dt, &aor);
+		return -1;
+	}
+
+	for(ptr = r->contacts; ptr; ptr = ptr->next) {
+		if(ptr->received.s!=NULL) {
+			if (parse_uri(ptr->received.s, ptr->received.len, &rcvuri) < 0) {
+				LM_ERR("failed to parse rcv uri [%.*s]\n",
+						ptr->received.len, ptr->received.s);
+				goto error;
+			}
+		} else {
+			if (parse_uri(ptr->c.s, ptr->c.len, &rcvuri) < 0) {
+				LM_ERR("failed to parse contact uri [%.*s]\n",
+						ptr->received.len, ptr->received.s);
+				goto error;
+			}
+		}
+		if(str2ipxbuf(&rcvuri.host, &ipb) < 0) {
+			LM_WARN("failed to convert ip [%.*s] - ignoring\n",
+					rcvuri.host.len, rcvuri.host.s);
+			continue;
+		}
+		if(!ip_addr_cmp(&msg->rcv.src_ip, &ipb)) {
+			continue;
+		}
+		if(vmode & REG_FROM_USER_MPORT) {
+			if(msg->rcv.src_port!=rcvuri.port_no) {
+				continue;
+			}
+		}
+		if(vmode & REG_FROM_USER_MPROTO) {
+			if(msg->rcv.proto!=rcvuri.proto) {
+				continue;
+			}
+		}
+		LM_DBG("matched contact record with source address [%.*s]\n",
+				rcvuri.host.len, rcvuri.host.s);
+		ret = 1;
+		break;
+	}
+	ul.release_urecord(r);
+	ul.unlock_udomain(dt, &aor);
+
+	return ret;
+
+error:
+	ul.release_urecord(r);
+	ul.unlock_udomain(dt, &aor);
+	return -1;
+
+}
+
