@@ -1511,7 +1511,7 @@ static int fixup_dlg_bridge(void** param, int param_no)
 	return 0;
 }
 
-static str *ki_dlg_get_var(sip_msg_t *msg, str *sc, str *sf, str *st, str *key)
+static str *ki_dlg_get_var_helper(sip_msg_t *msg, str *sc, str *sf, str *st, str *key)
 {
 	dlg_cell_t *dlg = NULL;
 	unsigned int dir = 0;
@@ -1536,6 +1536,30 @@ static str *ki_dlg_get_var(sip_msg_t *msg, str *sc, str *sf, str *st, str *key)
 	val = get_dlg_variable(dlg, key);
 	dlg_release(dlg);
 	return val;
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t _sr_kemi_dialog_xval = {0};
+
+static sr_kemi_xval_t *ki_dlg_get_var(sip_msg_t *msg, str *sc, str *sf, str *st, str *key)
+{
+	str *val = NULL;
+
+	memset(&_sr_kemi_dialog_xval, 0, sizeof(sr_kemi_xval_t));
+
+	val = ki_dlg_get_var_helper(msg, &sc, &sf, &st, &k);
+	if(!val) {
+		sr_kemi_xval_null(&_sr_kemi_dialog_xval, SR_KEMI_XVAL_NULL_NONE);
+		return &_sr_kemi_dialog_xval;
+	}
+
+	_sr_kemi_dialog_xval.vtype = SR_KEMIP_STR;
+	_sr_kemi_dialog_xval.v.s = *pval;
+
+	return &_sr_kemi_dialog_xval;
+
 }
 
 static int w_dlg_get_var(struct sip_msg *msg, char *ci, char *ft, char *tt, char *key, char *pv)
@@ -1582,7 +1606,7 @@ static int w_dlg_get_var(struct sip_msg *msg, char *ci, char *ft, char *tt, char
 		return -1;
 	}
 	dst_pv = (pv_spec_t *)pv;
-	val = ki_dlg_get_var(msg, &sc, &sf, &st, &k);
+	val = ki_dlg_get_var_helper(msg, &sc, &sf, &st, &k);
 	if(val) {
 		memset(&dst_val, 0, sizeof(pv_value_t));
 		dst_val.flags |= PV_VAL_STR;
@@ -2158,11 +2182,6 @@ static int ki_dlg_var_sets(sip_msg_t *msg, str *name, str *val)
 /**
  *
  */
-static sr_kemi_xval_t _sr_kemi_dialog_xval = {0};
-
-/**
- *
- */
 static sr_kemi_xval_t* ki_dlg_var_get_mode(sip_msg_t *msg, str *name, int rmode)
 {
 	dlg_cell_t *dlg;
@@ -2289,7 +2308,7 @@ static sr_kemi_t sr_kemi_dialog_exports[] = {
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("dialog"), str_init("dlg_get_var"),
-		SR_KEMIP_STR, ki_dlg_get_var,
+		SR_KEMIP_XVAL, ki_dlg_get_var,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
