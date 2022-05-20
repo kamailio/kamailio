@@ -96,6 +96,7 @@ Bogdan-Andre Iancu
               4.9. reg_fetch_contacts(domain, uri, profile)
               4.10. reg_free_contacts(profile)
               4.11. reg_send_reply()
+              4.12. reg_from_user(ultable, uri, mode)
 
         5. Event Routes
 
@@ -162,8 +163,9 @@ Bogdan-Andre Iancu
    1.43. reg_fetch_contacts usage
    1.44. reg_free_contacts usage
    1.45. reg_send_reply usage
-   1.46. event_route[usrloc:contact-expired] usage
-   1.47. $ulc(name) usage
+   1.46. reg_from_user usage
+   1.47. event_route[usrloc:contact-expired] usage
+   1.48. $ulc(name) usage
 
 Chapter 1. Admin Guide
 
@@ -230,6 +232,7 @@ Chapter 1. Admin Guide
         4.9. reg_fetch_contacts(domain, uri, profile)
         4.10. reg_free_contacts(profile)
         4.11. reg_send_reply()
+        4.12. reg_from_user(ultable, uri, mode)
 
    5. Event Routes
 
@@ -991,6 +994,7 @@ kamcmd cfg.set_now_int registrar use_expired_contacts 0
    4.9. reg_fetch_contacts(domain, uri, profile)
    4.10. reg_free_contacts(profile)
    4.11. reg_send_reply()
+   4.12. reg_from_user(ultable, uri, mode)
 
 4.1.  save(domain, [, flags [, uri]])
 
@@ -1293,6 +1297,30 @@ save("location", "0x2");
 reg_send_reply();
 ...
 
+4.12.  reg_from_user(ultable, uri, mode)
+
+   The function returns true if the SIP message comes from the user
+   identified by 'uri' parameter by matching the associated location
+   records. The matching is done with the field 'received' if it is set,
+   otherwise with the contact address.
+
+   Meaning of the parameters is as follows:
+     * ultable - user location table (e.g., 'location')
+     * uri - SIP URI to identify the location records to match against.
+     * mode - matching mode (int) - host part (IP address) is matched
+       always. If mode has bit 1 set (value 1), then the port is matched
+       as well. If mode has bit 2 set (value 2), then the protocol is
+       matched as well.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.46. reg_from_user usage
+...
+if(reg_from_user("location", "sip:alice@server.com", "0")) {
+    # message coming from where 'alice' sent before a REGISTER request
+}
+...
+
 5. Event Routes
 
    5.1. event_route[usrloc:contact-expired]
@@ -1302,7 +1330,7 @@ reg_send_reply();
    Executed when a contact in location table has expired. The variable
    $ulc(exp=>...) is filled with the attributes of the expired contact.
 
-   Example 1.46. event_route[usrloc:contact-expired] usage
+   Example 1.47. event_route[usrloc:contact-expired] usage
 ...
 event_route[usrloc:contact-expired] {
     xlog("expired contact for $ulc(exp=>aor)\n");
@@ -1376,7 +1404,7 @@ event_route[usrloc:contact-expired] {
    The pseudo-variable accepts positive index value to access a specific
    contact record.
 
-   Example 1.47. $ulc(name) usage
+   Example 1.48. $ulc(name) usage
 ...
 if(reg_fetch_contacts("location", "$fu", "caller"))
 {
