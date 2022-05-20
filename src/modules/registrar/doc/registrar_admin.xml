@@ -1816,6 +1816,52 @@ reg_send_reply();
 </programlisting>
 		</example>
 	</section>
+	<section id="registrar.f.reg_from_user">
+		<title>
+		<function moreinfo="none">reg_from_user(ultable, uri, mode)</function>
+		</title>
+		<para>
+			The function returns true if the SIP message comes from the user
+			identified by 'uri' parameter by matching the associated location
+			records. The matching is done with the field 'received' if it is set,
+			otherwise with the contact address.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+			<emphasis>ultable</emphasis> - user location table (e.g., 'location')
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			<emphasis>uri</emphasis> - SIP URI to identify the location records
+			to match against.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			<emphasis>mode</emphasis> - matching mode (int) - host part (IP address)
+			is matched always. If mode has bit 1 set (value 1), then the port is
+			matched as well. If mode has bit 2 set (value 2), then the protocol
+			is matched as well.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>reg_from_user</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(reg_from_user("location", "sip:alice@server.com", "0")) {
+    # message coming from where 'alice' sent before a REGISTER request
+}
+...
+</programlisting>
+		</example>
+	</section>
 
 	</section>
 
