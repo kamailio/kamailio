@@ -1549,14 +1549,14 @@ static sr_kemi_xval_t *ki_dlg_get_var(sip_msg_t *msg, str *sc, str *sf, str *st,
 
 	memset(&_sr_kemi_dialog_xval, 0, sizeof(sr_kemi_xval_t));
 
-	val = ki_dlg_get_var_helper(msg, &sc, &sf, &st, &k);
+	val = ki_dlg_get_var_helper(msg, sc, sf, st, key);
 	if(!val) {
 		sr_kemi_xval_null(&_sr_kemi_dialog_xval, SR_KEMI_XVAL_NULL_NONE);
 		return &_sr_kemi_dialog_xval;
 	}
 
 	_sr_kemi_dialog_xval.vtype = SR_KEMIP_STR;
-	_sr_kemi_dialog_xval.v.s = *pval;
+	_sr_kemi_dialog_xval.v.s = *val;
 
 	return &_sr_kemi_dialog_xval;
 
