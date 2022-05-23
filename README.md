@@ -5,7 +5,7 @@
 
 Project Website:
 
-  * http://www.kamailio.org
+  * https://www.kamailio.org
 
 [20 Years Of Kamailio Development: Sep 3, 2001 - Sep 3, 2021](https://www.kamailio.org/w/2021/09/kamailio-20-years-of-development/)
 
@@ -57,7 +57,7 @@ The online documentation for modules in the latest stable branch:
 
 The wiki collects a consistent number of tutorials, the indexes for variables, functions and parameters:
 
-  * https://www.kamailio.org/wiki/
+  * https://www.kamailio.org/wikidocs/
 
 Please read the README file in the source code, one per module.
 
@@ -65,14 +65,14 @@ Please read the README file in the source code, one per module.
 
 Step by step tutorials to install Kamailio from source code are available at:
 
-  * https://www.kamailio.org/wiki/start#installation
+  * https://www.kamailio.org/wikidocs/#installation
 
 Please read the INSTALL file from the source code for more information.
 
 Repositories for Linux packages:
 
-  * deb: https://www.kamailio.org/wiki/packages/debs
-  * rpm: https://www.kamailio.org/wiki/packages/rpms
+  * deb: https://www.kamailio.org/wikidocs/packages/debs
+  * rpm: https://www.kamailio.org/wikidocs/packages/rpms
 
 ## Issues And Bug Reports
 
