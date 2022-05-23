@@ -2,6 +2,37 @@
 
 ===================== Changes Since Version 5.5.0 ===========================
 
+commit 9df3ebedc62631ecb5faf1bc93008c30d1ffecb7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon May 23 10:57:55 2022 +0200
+
+    pkg: version set to 5.6.0 for rpms and alpine specs
+
+commit dd2978576fca0985fe05cf6b26a9330d1b8cba1c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon May 23 10:09:18 2022 +0200
+
+    Makefile.defs: version set to 5.6.0
+
+commit 9b044b41778b3d3d55027751fc6c2b55027cc3c4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon May 23 09:44:43 2022 +0200
+
+    ChangeLog: initial content for v5.6.x series
+
+commit c38529cad713964534ef1ad94c31ce88c3e16c81
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon May 23 09:29:20 2022 +0200
+
+    pkg/kamailio/deb: version set 5.6.0
+
+commit 018f6145e441dede75ea6f128b472397574f7763
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon May 16 15:08:38 2022 +0200
+
+    pkg/kamailio/deb: version set 5.6.0~rc1
+
+
 commit 88786b402cbeb4a7d2261ed198c0927cec79e362
 Author: Daniel-Constantin Mierla <miconda@gmail.com>
 Date:   Mon May 23 08:18:04 2022 +0200
