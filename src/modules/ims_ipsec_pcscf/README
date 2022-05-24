@@ -51,6 +51,8 @@ Tsvetomir Dimitrov
               3.6. ipsec_reuse_server_port (int)
               3.7. ipsec_spi_id_start (int)
               3.8. ipsec_spi_id_range (int)
+              3.9. ipsec_preferred_alg (string)
+              3.10. ipsec_preferred_ealg (string)
 
         4. Functions
 
@@ -68,9 +70,11 @@ Tsvetomir Dimitrov
    1.6. ipsec_reuse_server_port parameter usage
    1.7. ipsec_spi_id_start parameter usage
    1.8. ipsec_spi_id_range parameter usage
-   1.9. ipsec_create
-   1.10. ipsec_forward
-   1.11. ipsec_destroy
+   1.9. ipsec_preferred_alg parameter usage
+   1.10. ipsec_preferred_ealg parameter usage
+   1.11. ipsec_create
+   1.12. ipsec_forward
+   1.13. ipsec_destroy
 
 Chapter 1. Admin Guide
 
@@ -92,6 +96,8 @@ Chapter 1. Admin Guide
         3.6. ipsec_reuse_server_port (int)
         3.7. ipsec_spi_id_start (int)
         3.8. ipsec_spi_id_range (int)
+        3.9. ipsec_preferred_alg (string)
+        3.10. ipsec_preferred_ealg (string)
 
    4. Functions
 
@@ -130,6 +136,8 @@ Chapter 1. Admin Guide
    3.6. ipsec_reuse_server_port (int)
    3.7. ipsec_spi_id_start (int)
    3.8. ipsec_spi_id_range (int)
+   3.9. ipsec_preferred_alg (string)
+   3.10. ipsec_preferred_ealg (string)
 
 3.1. ipsec_listen_addr (string)
 
@@ -159,8 +167,7 @@ modparam("ims_ipsec_pcscf", "ipsec_listen_addr6", "")
 
 3.3. ipsec_client_port (int)
 
-   Start port number which will be bound for incoming (server) IPSec
-   traffic.
+   Port number which will be bound for incoming (server) IPSec traffic.
 
    Default value is 5062.
 
@@ -171,8 +178,7 @@ modparam("ims_ipsec_pcscf", "ipsec_client_port", 5062)
 
 3.4. ipsec_server_port (int)
 
-   Start port number which will be bound for incoming (server) IPSec
-   traffic.
+   Port number which will be bound for incoming (server) IPSec traffic.
 
    Default value is 5063.
 
@@ -183,11 +189,7 @@ modparam("ims_ipsec_pcscf", "ipsec_server_port", 5063)
 
 3.5. ipsec_max_connections (int)
 
-   Maximum IPSec connections for the process. E.g. if
-   ipsec_client_port=5100, ipsec_server_port=6100 and
-   ipsec_max_connections=10, all client ports between 5100 and 5109 and
-   all server ports between 6100 and 6109 will be used for maximum to 10
-   IPSec connections.
+   Maximum simultanious IPSec connections
 
    Default value is 2.
 
@@ -198,11 +200,10 @@ modparam("ims_ipsec_pcscf", "ipsec_max_connections", 10)
 
 3.6. ipsec_reuse_server_port (int)
 
-   Reuse (1) or not (0) the P-CSCF Server port for Re-registration for one
-   UA. When set to 0 - During Re-registration P-CSCF will distribute new
-   P-CSCF client and P-CSCF server ports. When set to 1 - During
-   Re-registration P-CSCF will reuse the old P-CSCF server port and will
-   distribute a new P-CSCF client port.
+   Reuse (1) or not (0) the P-CSCF IPSec information for Re-registration
+   for one UA. When set to 0 - During Re-registration P-CSCF will create
+   new IPSec tunnels. When set to 1 - During Re-registration P-CSCF will
+   reuse the old IPSec tunnels.
 
    Default value is 1.
 
@@ -238,6 +239,33 @@ modparam("ims_ipsec_pcscf", "ipsec_spi_id_start", 100)
 modparam("ims_ipsec_pcscf", "ipsec_spi_id_range", 1000)
 ...
 
+3.9. ipsec_preferred_alg (string)
+
+   A name of an authentication algorithm which the Proxy-CSCF will prefer
+   when creating IPSec tunnels.
+
+   Default value is empty string (null) - the last algorithm in the
+   Sec-Agree header will be used.
+
+   Example 1.9. ipsec_preferred_alg parameter usage
+...
+modparam("ims_ipsec_pcscf", "ipsec_preferred_alg", "hmac-sha-1-96")
+...
+
+3.10. ipsec_preferred_ealg (string)
+
+   A name of an encrytion algorithm which the Proxy-CSCF will prefer when
+   creating IPSec tunnels.
+
+   Default value is empty string (null) - the last algorithm in the
+   Sec-Agree header will be used. Note that the possibility of it being
+   the "null" algorithm is not insignificant.
+
+   Example 1.10. ipsec_preferred_ealg parameter usage
+...
+modparam("ims_ipsec_pcscf", "ipsec_preferred_ealg", "aes-cbc")
+...
+
 4. Functions
 
    4.1. ipsec_create(domain)
@@ -258,7 +286,7 @@ modparam("ims_ipsec_pcscf", "ipsec_spi_id_range", 1000)
        every registration. This is an optional parameter, default value -
        0.
 
-   Example 1.9. ipsec_create
+   Example 1.11. ipsec_create
 ...
 ipsec_create("location");
 # or
@@ -278,7 +306,7 @@ ipsec_create("location", "1");
        the memory. Useful when contact alias is disabled. This is an
        optional parameter, default value - 0.
 
-   Example 1.10. ipsec_forward
+   Example 1.12. ipsec_forward
 ...
 ipsec_forward("location");
 # or
@@ -293,7 +321,7 @@ ipsec_forward("location", "1");
      * domain - Logical domain within the registrar. If a database is used
        then this must be name of the table which stores the contacts.
 
-   Example 1.11. ipsec_destroy
+   Example 1.13. ipsec_destroy
 ...
 ipsec_destroy("location");
 ...

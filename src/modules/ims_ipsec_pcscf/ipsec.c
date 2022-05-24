@@ -24,7 +24,6 @@
 
 #include "ipsec.h"
 #include "spi_gen.h"
-#include "port_gen.h"
 
 #include "../../core/dprint.h"
 #include "../../core/mem/pkg.h"
@@ -204,7 +203,6 @@ int add_sa(struct mnl_socket* nl_sock, const struct ip_addr *src_addr_param, con
         LM_DBG("Creating security associations: UNKNOW Auth Algorithm\n");
         return -1;
     }
-
 
     mnl_attr_put(l_nlh, XFRMA_ALG_AUTH, sizeof(struct xfrm_algo) + l_auth_algo->alg_key_len, l_auth_algo);
 
@@ -830,13 +828,7 @@ static int delete_unused_sa_cb(const struct nlmsghdr *nlh, void *data)
 
     // NOTE: Release the Proxy SPIs and Ports only here. Do not release the same SPIs and ports in delete unsused policy callback.
     // Release SPIs
-    release_spi(ipsec.spi_pc);
-    release_spi(ipsec.spi_ps);
-
-    // Release the client and the server ports
-    release_cport(ipsec.port_pc);
-    release_sport(ipsec.port_ps);
-
+    release_spi(ipsec.spi_pc, ipsec.spi_ps, ipsec.port_pc, ipsec.port_ps);
     return MNL_CB_OK;
 }
 

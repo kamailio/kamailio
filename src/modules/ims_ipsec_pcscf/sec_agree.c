@@ -25,6 +25,9 @@
 #include "../../core/parser/msg_parser.h"
 #include "../../core/mem/mem.h"
 
+extern str ipsec_preferred_alg;
+extern str ipsec_preferred_ealg;
+
 static uint32_t parse_digits(str value)
 {
     uint32_t ret = 0;
@@ -68,13 +71,17 @@ static void trim_whitespaces(str* string) {
         DST.len = SRC.len;
 
 
-static int process_sec_agree_param(str name, str value, ipsec_t *ret)
+static int process_sec_agree_param(str name, str value, ipsec_t *ret, char *alg_found, char *ealg_found)
 {
     trim_whitespaces(&name);
     trim_whitespaces(&value);
 
     if(strncasecmp(name.s, "alg", name.len) == 0) {
         SEC_COPY_STR_PARAM(ret->r_alg, value);
+
+        if(ipsec_preferred_alg.len && STR_EQ(value, ipsec_preferred_alg)) {
+            *alg_found = 1;
+        }
     }
     else if(strncasecmp(name.s, "prot", name.len) == 0) {
         SEC_COPY_STR_PARAM(ret->prot, value);
@@ -84,6 +91,10 @@ static int process_sec_agree_param(str name, str value, ipsec_t *ret)
     }
     else if(strncasecmp(name.s, "ealg", name.len) == 0) {
         SEC_COPY_STR_PARAM(ret->r_ealg, value);
+
+        if(ipsec_preferred_ealg.len && STR_EQ(value, ipsec_preferred_ealg)) {
+            *ealg_found = 1;
+        }
     }
     else if(strncasecmp(name.s, "spi-c", name.len) == 0) {
         ret->spi_uc = parse_digits(value);
@@ -157,11 +168,14 @@ static security_t* parse_sec_agree(struct hdr_field* h)
     body.s=body.s+i+1;
     body.len=body.len-i-1;
 
+    char preferred_alg_found  = 0;
+    char preferred_ealg_found = 0;
+
     // get the rest of the parameters
     i = 0;
     while(i <= body.len) {
         //look for end of buffer or parameter separator
-        if(i == body.len || body.s[i] == ';' ) {
+        if(i == body.len || body.s[i] == ';' || body.s[i] == ',' || body.s[i] == ' ') {
             if(name.len) {
                 // if(name.len) => a param name is parsed
                 // and now i points to the end of its value
@@ -176,8 +190,24 @@ static security_t* parse_sec_agree(struct hdr_field* h)
             i=0;
 
             if(name.len && value.len) {
-                if(process_sec_agree_param(name, value, params->data.ipsec)) {
+                if(strncasecmp(name.s, "alg", name.len) == 0) {
+                    if(preferred_alg_found && preferred_ealg_found) {
+                        break;
+                    }
+                    preferred_alg_found = 0;
+                    preferred_ealg_found = 0;
+                }
+ 
+                char alg_found  = 0;
+                char ealg_found = 0;
+                if(process_sec_agree_param(name, value, params->data.ipsec, &alg_found, &ealg_found)) {
                     goto cleanup;
+                }
+                if(alg_found) {
+                    preferred_alg_found = 1;
+                }
+                if(ealg_found) {
+                    preferred_ealg_found = 1;
                 }
             }
             //else - something's wrong. Ignore!
