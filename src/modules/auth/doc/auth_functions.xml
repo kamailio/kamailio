@@ -342,7 +342,7 @@ if (!pv_proxy_authenticate("$fd", "$avp(password)", "0")) {
 
 	<section id="auth.f.pv_auth_check">
 		<title>
-			<function moreinfo="none">pv_auth_check(realm, passwd, flags, checks)</function>
+			<function moreinfo="none">pv_auth_check(realm, passwd[, passwd2], flags, checks)</function>
 		</title>
 		<para>
 		The function combines the functionalities of

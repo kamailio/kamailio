@@ -84,7 +84,10 @@ static int pv_www_authenticate2(struct sip_msg* msg, char* realm,
 static int fixup_pv_auth(void **param, int param_no);
 static int w_pv_auth_check(sip_msg_t *msg, char *realm,
 		char *passwd, char *flags, char *checks);
+static int w_pv_auth_check2(sip_msg_t *msg, char *realm,
+		char *passwd, char *passwd2, char *flags, char *checks);
 static int fixup_pv_auth_check(void **param, int param_no);
+static int fixup_pv_auth_check2(void **param, int param_no);
 
 static int proxy_challenge(struct sip_msg *msg, char* realm, char *flags);
 static int www_challenge(struct sip_msg *msg, char* realm, char *flags);
@@ -175,6 +178,8 @@ static cmd_export_t cmds[] = {
 		fixup_spve_null, 0, REQUEST_ROUTE},
 	{"pv_auth_check",         (cmd_function)w_pv_auth_check,           4,
 		fixup_pv_auth_check, 0, REQUEST_ROUTE},
+	{"pv_auth_check",         (cmd_function)w_pv_auth_check2,          5,
+		fixup_pv_auth_check2, 0, REQUEST_ROUTE},
 	{"bind_auth_s",           (cmd_function)bind_auth_s, 0, 0, 0        },
 	{0, 0, 0, 0, 0, 0}
 };
@@ -479,7 +484,7 @@ int w_has_credentials(sip_msg_t *msg, char* realm, char* s2)
 /**
  * @brief do WWW-Digest authentication with password taken from cfg var
  */
-int pv_authenticate(struct sip_msg *msg, str *realm, str *passwd,
+static int pv_authenticate_internal(struct sip_msg *msg, str *realm, str **passwds,
 		int flags, int hftype, str *method)
 {
 	struct hdr_field* h;
@@ -533,33 +538,41 @@ int pv_authenticate(struct sip_msg *msg, str *realm, str *passwd,
 
 	cred = (auth_body_t*)h->parsed;
 
-	/* compute HA1 if needed */
-	if ((flags&1)==0) {
-		/* Plaintext password is stored in PV, calculate HA1 */
-		calc_HA1(HA_MD5, &cred->digest.username.whole, realm,
-				passwd, 0, 0, ha1);
-		LM_DBG("HA1 string calculated: %s\n", ha1);
-	} else {
-		memcpy(ha1, passwd->s, passwd->len);
-		ha1[passwd->len] = '\0';
-	}
+	for (int pw_i = 0; passwds[pw_i]; pw_i++) {
+		str *passwd = passwds[pw_i];
 
-	/* Recalculate response, it must be same to authorize successfully */
-	rauth = auth_check_response(&(cred->digest), method, ha1);
-	if(rauth==AUTHENTICATED) {
-		ret = AUTH_OK;
-		switch(post_auth(msg, h, ha1)) {
-			case AUTHENTICATED:
-				break;
-			default:
-				ret = AUTH_ERROR;
-				break;
+		/* compute HA1 if needed */
+		if ((flags&1)==0) {
+			/* Plaintext password is stored in PV, calculate HA1 */
+			calc_HA1(HA_MD5, &cred->digest.username.whole, realm,
+					passwd, 0, 0, ha1);
+			LM_DBG("HA1 string calculated: %s\n", ha1);
+		} else {
+			memcpy(ha1, passwd->s, passwd->len);
+			ha1[passwd->len] = '\0';
 		}
-	} else {
-		if(rauth==NOT_AUTHENTICATED)
-			ret = AUTH_INVALID_PASSWORD;
-		else
-			ret = AUTH_ERROR;
+
+		/* Recalculate response, it must be same to authorize successfully */
+		rauth = auth_check_response(&(cred->digest), method, ha1);
+		if(rauth==AUTHENTICATED) {
+			ret = AUTH_OK;
+			switch(post_auth(msg, h, ha1)) {
+				case AUTHENTICATED:
+					break;
+				default:
+					ret = AUTH_ERROR;
+					break;
+			}
+		} else {
+			if(rauth==NOT_AUTHENTICATED)
+				ret = AUTH_INVALID_PASSWORD;
+			else
+				ret = AUTH_ERROR;
+		}
+
+		if (ret == AUTH_OK) {
+			break;
+		}
 	}
 
 end:
@@ -588,6 +601,16 @@ end:
 	}
 
 	return ret;
+}
+
+/*
+ * Call pv_authenticate_internal with a single password
+ */
+int pv_authenticate(struct sip_msg *msg, str *realm, str *passwd,
+		int flags, int hftype, str *method)
+{
+	str *passwds[] = { passwd, NULL };
+	return pv_authenticate_internal(msg, realm, passwds, flags, hftype, method);
 }
 
 /**
@@ -715,7 +738,8 @@ static int pv_www_authenticate2(struct sip_msg *msg, char* realm,
 		goto error;
 	}
 
-	return pv_authenticate(msg, &srealm, &spasswd, vflags, HDR_AUTHORIZATION_T,
+	str *passwds[] = { &spasswd, NULL };
+	return pv_authenticate_internal(msg, &srealm, passwds, vflags, HDR_AUTHORIZATION_T,
 			&smethod);
 
 error:
@@ -725,7 +749,7 @@ error:
 /**
  *
  */
-static int pv_auth_check(sip_msg_t *msg, str *srealm, str *spasswd, int vflags,
+static int pv_auth_check_internal(sip_msg_t *msg, str *srealm, str **passwds, int vflags,
 		int vchecks)
 {
 	int ret;
@@ -736,10 +760,10 @@ static int pv_auth_check(sip_msg_t *msg, str *srealm, str *spasswd, int vflags,
 	str suser;
 
 	if(msg->REQ_METHOD==METHOD_REGISTER)
-		ret = pv_authenticate(msg, srealm, spasswd, vflags, HDR_AUTHORIZATION_T,
+		ret = pv_authenticate_internal(msg, srealm, passwds, vflags, HDR_AUTHORIZATION_T,
 				&msg->first_line.u.request.method);
 	else
-		ret = pv_authenticate(msg, srealm, spasswd, vflags, HDR_PROXYAUTH_T,
+		ret = pv_authenticate_internal(msg, srealm, passwds, vflags, HDR_PROXYAUTH_T,
 				&msg->first_line.u.request.method);
 
 	if(ret==AUTH_OK && (vchecks&AUTH_CHECK_ID_F)) {
@@ -794,16 +818,24 @@ static int pv_auth_check(sip_msg_t *msg, str *srealm, str *spasswd, int vflags,
 	return ret;
 }
 
+static int pv_auth_check(sip_msg_t *msg, str *srealm, str *passwd, int vflags,
+		int vchecks)
+{
+	str *passwds[] = { passwd, NULL };
+	return pv_auth_check_internal(msg, srealm, passwds, vflags, vchecks);
+}
+
 /**
  *
  */
-static int w_pv_auth_check(sip_msg_t *msg, char *realm,
-		char *passwd, char *flags, char *checks)
+static int w_pv_auth_check2(sip_msg_t *msg, char *realm,
+		char *passwd, char *passwd2, char *flags, char *checks)
 {
 	int vflags = 0;
 	int vchecks = 0;
 	str srealm  = {0, 0};
 	str spasswd = {0, 0};
+	str spasswd2 = {0, 0};
 
 
 	if(msg==NULL) {
@@ -840,6 +872,18 @@ static int w_pv_auth_check(sip_msg_t *msg, char *realm,
 		return AUTH_ERROR;
 	}
 
+	if (passwd2) {
+		if (get_str_fparam(&spasswd2, msg, (fparam_t*)passwd2) < 0) {
+			LM_ERR("failed to get passwd2 value\n");
+			return AUTH_ERROR;
+		}
+
+		if (spasswd2.len == 0) {
+			LM_ERR("invalid secondary password value - empty content\n");
+			return AUTH_ERROR;
+		}
+	}
+
 	if (get_int_fparam(&vflags, msg, (fparam_t*)flags) < 0) {
 		LM_ERR("invalid flags value\n");
 		return AUTH_ERROR;
@@ -851,7 +895,18 @@ static int w_pv_auth_check(sip_msg_t *msg, char *realm,
 	}
 	LM_DBG("realm [%.*s] flags [%d] checks [%d]\n", srealm.len, srealm.s,
 			vflags, vchecks);
-	return pv_auth_check(msg, &srealm, &spasswd, vflags, vchecks);
+	str *passwds[] = { &spasswd, (passwd2 && spasswd2.len > 0) ? &spasswd2 : NULL, NULL };
+	return pv_auth_check_internal(msg, &srealm, passwds, vflags, vchecks);
+}
+
+
+/*
+ *
+ */
+static int w_pv_auth_check(sip_msg_t *msg, char *realm,
+		char *passwd, char *flags, char *checks)
+{
+	return w_pv_auth_check2(msg, realm, passwd, NULL, flags, checks);
 }
 
 
@@ -892,6 +947,28 @@ static int fixup_pv_auth_check(void **param, int param_no)
 			return fixup_var_pve_str_12(param, 1);
 		case 3:
 		case 4:
+			return fixup_var_int_12(param, 1);
+	}
+	return 0;
+}
+
+/**
+ * @brief fixup function for pv_auth_check2
+ */
+static int fixup_pv_auth_check2(void **param, int param_no)
+{
+	if(strlen((char*)*param)<=0) {
+		LM_ERR("empty parameter %d not allowed\n", param_no);
+		return -1;
+	}
+
+	switch(param_no) {
+		case 1:
+		case 2:
+		case 3:
+			return fixup_var_pve_str_12(param, 1);
+		case 4:
+		case 5:
 			return fixup_var_int_12(param, 1);
 	}
 	return 0;
