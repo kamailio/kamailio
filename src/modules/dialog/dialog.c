@@ -1570,53 +1570,62 @@ static int w_dlg_get_var(struct sip_msg *msg, char *ci, char *ft, char *tt, char
 	str k = STR_NULL;
 	str *val = NULL;
 	pv_value_t dst_val;
-	pv_spec_t* dst_pv;
+	pv_spec_t* dst_pv = (pv_spec_t *)pv;
 
 	if(ci==0 || ft==0 || tt==0)
 	{
 		LM_ERR("invalid parameters\n");
-		return -1;
+		goto error;
 	}
 
 	if(fixup_get_svalue(msg, (gparam_p)ci, &sc)!=0)
 	{
 		LM_ERR("unable to get Call-ID\n");
-		return -1;
+		goto error;
 	}
 
 	if(fixup_get_svalue(msg, (gparam_p)ft, &sf)!=0)
 	{
 		LM_ERR("unable to get From tag\n");
-		return -1;
+		goto error;
 	}
 
 	if(fixup_get_svalue(msg, (gparam_p)tt, &st)!=0)
 	{
 		LM_ERR("unable to get To Tag\n");
-		return -1;
+		goto error;
 	}
 	if(st.s==NULL || st.len == 0)
 	{
 		LM_ERR("invalid To tag parameter\n");
-		return -1;
+		goto error;
 	}
 	if(fixup_get_svalue(msg, (gparam_p)key, &k)!=0)
 	{
 		LM_ERR("unable to get key name\n");
-		return -1;
+		goto error;
 	}
-	dst_pv = (pv_spec_t *)pv;
-	val = ki_dlg_get_var_helper(msg, &sc, &sf, &st, &k);
+	val = ki_dlg_get_var(msg, &sc, &sf, &st, &k);
 	if(val) {
 		memset(&dst_val, 0, sizeof(pv_value_t));
 		dst_val.flags |= PV_VAL_STR;
 		dst_val.rs.s = val->s;
 		dst_val.rs.len = val->len;
-		if(pv_set_spec_value(msg, dst_pv, 0, &dst_val) != 0) return -1;
 	} else {
-		if(pv_get_null(msg, NULL, &dst_val) != 0) return -1;
+		pv_get_null(msg, NULL, &dst_val);
+	}
+	if(pv_set_spec_value(msg, dst_pv, 0, &dst_val) != 0) {
+		LM_ERR("unable to set value to dst_pv\n");
+		if(val) goto error; else return -1;
 	}
 	return 1;
+
+error:
+	pv_get_null(msg, NULL, &dst_val);
+	if(pv_set_spec_value(msg, dst_pv, 0, &dst_val) != 0) {
+		LM_ERR("unable to set null value to dst_pv\n");
+	}
+	return -1;
 }
 
 static int fixup_dlg_get_var(void** param, int param_no)
