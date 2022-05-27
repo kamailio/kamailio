@@ -1568,7 +1568,7 @@ static int w_dlg_get_var(struct sip_msg *msg, char *ci, char *ft, char *tt, char
 	str sf = STR_NULL;
 	str st = STR_NULL;
 	str k = STR_NULL;
-	str *val = NULL;
+	sr_kemi_xval_t *val = NULL;
 	pv_value_t dst_val;
 	pv_spec_t* dst_pv = (pv_spec_t *)pv;
 
@@ -1606,11 +1606,11 @@ static int w_dlg_get_var(struct sip_msg *msg, char *ci, char *ft, char *tt, char
 		goto error;
 	}
 	val = ki_dlg_get_var(msg, &sc, &sf, &st, &k);
-	if(val) {
+	if(val && val->vtype == SR_KEMIP_STR) {
 		memset(&dst_val, 0, sizeof(pv_value_t));
 		dst_val.flags |= PV_VAL_STR;
-		dst_val.rs.s = val->s;
-		dst_val.rs.len = val->len;
+		dst_val.rs.s = val->v.s.s;
+		dst_val.rs.len = val->v.s.len;
 	} else {
 		pv_get_null(msg, NULL, &dst_val);
 	}
