@@ -1,7 +1,7 @@
 /*
  * lost module functions
  *
- * Copyright (C) 2021 Wolfgang Kampichler
+ * Copyright (C) 2022 Wolfgang Kampichler
  * DEC112, FREQUENTIS AG
  *
  * This file is part of Kamailio, a free SIP server.
@@ -1123,16 +1123,24 @@ int lost_function(struct sip_msg *_m, char *_con, char *_uri, char *_name,
 		switch(fsrdata->category) {
 			case RESPONSE:
 				if(fsrdata->uri != NULL) {
-					/* get the first uri element */
-					if((tmp.s = fsrdata->uri->value) != NULL) {
-						tmp.len = strlen(fsrdata->uri->value);
-						if(pkg_str_dup(&uri, &tmp) < 0) {
-							LM_ERR("could not copy: [%.*s]\n", tmp.len, tmp.s);
-							goto err;
-						}
+					/* get the first sips uri element ... */
+					if(lost_search_response_list(&fsrdata->uri, &tmp.s, SIPS_S) > 0) {
+						tmp.len = strlen(tmp.s);
+					/* or the first sip uri element ... */
+					} else if(lost_search_response_list(&fsrdata->uri, &tmp.s, SIP_S) > 0) {
+						tmp.len = strlen(tmp.s);
+					/* or return error if nothing found */
+					} else {
+					  LM_ERR("sip/sips uri not found: [%.*s]\n", ret.len, ret.s);
+						goto err;
+					}
+					/* copy uri string */
+					if(pkg_str_dup(&uri, &tmp) < 0) {
+						LM_ERR("could not copy: [%.*s]\n", tmp.len, tmp.s);
+						goto err;
 					}
 				} else {
-					LM_ERR("uri not found: [%.*s]\n", ret.len, ret.s);
+					LM_ERR("uri element not found: [%.*s]\n", ret.len, ret.s);
 					goto err;
 				}
 				if(fsrdata->mapping != NULL) {
