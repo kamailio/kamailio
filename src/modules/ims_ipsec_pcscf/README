@@ -301,10 +301,14 @@ ipsec_create("location", "1");
    Meaning of the parameters is as follows:
      * domain - Logical domain within the registrar. If a database is used
        then this must be name of the table which stores the contacts.
-       flags - bitwise flag: 0x01 - set force socket for request messages.
-       Useful for ipsec and TCP. 0x02 - reverse search for a contact in
-       the memory. Useful when contact alias is disabled. This is an
-       optional parameter, default value - 0.
+       flags - bitwise flag:
+          + 0x01 - set force socket for request messages. Useful for ipsec
+            and TCP.
+          + 0x02 - reverse search for a contact in the memory. Useful when
+            contact alias is disabled.
+          + 0x04 - use destination URI for IPSec tunnel search. Useful for
+            routing requests within dialog.
+       This is an optional parameter, default value - 0.
 
    Example 1.12. ipsec_forward
 ...
