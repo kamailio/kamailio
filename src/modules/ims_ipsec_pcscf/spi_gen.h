@@ -31,10 +31,14 @@
 // is important not to use generate ID which is still in use. For this reason there are
 // acquire_spi() and release_spi(uint32_t id) functions.
 
-int init_spi_gen(uint32_t spi_start_val, uint32_t spi_range, uint32_t sport_start_val, uint32_t cport_start_val, uint32_t port_range);
+int init_spi_gen(uint32_t spi_start_val, uint32_t spi_range,
+		uint32_t sport_start_val, uint32_t cport_start_val,
+		uint32_t port_range);
 int clean_spi_list();
 int destroy_spi_gen();
-uint32_t acquire_spi(uint32_t* spi_cid, uint32_t* spi_sid, uint16_t* cport, uint16_t* sport);
-int release_spi(uint32_t spi_cid, uint32_t spi_sid, uint16_t cport, uint16_t sport);
+uint32_t acquire_spi(
+		uint32_t *spi_cid, uint32_t *spi_sid, uint16_t *cport, uint16_t *sport);
+int release_spi(
+		uint32_t spi_cid, uint32_t spi_sid, uint16_t cport, uint16_t sport);
 
 #endif /*  _SPI_GEN_H_ */

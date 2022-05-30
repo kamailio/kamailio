@@ -27,146 +27,146 @@
 
 spi_list_t create_list()
 {
-    spi_list_t lst;
-    lst.head = NULL;
-    lst.tail = NULL;
-    return lst;
+	spi_list_t lst;
+	lst.head = NULL;
+	lst.tail = NULL;
+	return lst;
 }
 
-void destroy_list(spi_list_t* lst)
+void destroy_list(spi_list_t *lst)
 {
-	if(!lst){
+	if(!lst) {
 		return;
 	}
-	
-    spi_node_t* l = lst->head;
-    while(l) {
-        spi_node_t* n = l->next;
-        shm_free(l);
-        l = n;
-    }
+
+	spi_node_t *l = lst->head;
+	while(l) {
+		spi_node_t *n = l->next;
+		shm_free(l);
+		l = n;
+	}
 
 	lst->head = NULL;
 	lst->tail = NULL;
 }
 
-int spi_add(spi_list_t* list, uint32_t spi_cid, uint32_t spi_sid, uint16_t sport, uint16_t cport)
+int spi_add(spi_list_t *list, uint32_t spi_cid, uint32_t spi_sid,
+		uint16_t sport, uint16_t cport)
 {
-	if(!list){
+	if(!list) {
 		return 1;
 	}
 
 	// create new node
-	spi_node_t* n = shm_malloc(sizeof(spi_node_t));
-    if(!n)
-        return 1;
+	spi_node_t *n = shm_malloc(sizeof(spi_node_t));
+	if(!n)
+		return 1;
 
-    n->next = NULL;
-    n->spi_cid = spi_cid;
-    n->spi_sid = spi_sid;
-    n->sport   = sport;
-    n->cport   = cport;
+	n->next = NULL;
+	n->spi_cid = spi_cid;
+	n->spi_sid = spi_sid;
+	n->sport = sport;
+	n->cport = cport;
 
-    //when list is empty
-    if(!list->head) {
-        list->head = n;
-        list->tail = n;
-        return 0;
-    }
-
-    list->tail->next = n;
-    list->tail = n;
-
-    return 0;
-}
-
-int spi_remove_head(spi_list_t* list)
-{
-    if(!list) {
-        return 1;
-    }
-
-    //when list is empty
-    if(!list->head) {
-        return 1;
-    }
-
-    spi_node_t* t = list->head;
-    list->head = t->next;
-    shm_free(t);
-
-    return 0;
-}
-
-int spi_remove(spi_list_t* list, uint32_t spi_cid, uint32_t spi_sid)
-{
-	if(!list){
+	//when list is empty
+	if(!list->head) {
+		list->head = n;
+		list->tail = n;
 		return 0;
 	}
 
-    //when list is empty
-    if(!list->head) {
-        return 0;
-    }
+	list->tail->next = n;
+	list->tail = n;
 
-    //when target is head
-    if(list->head->spi_cid == spi_cid && list->head->spi_sid == spi_sid) {
-        spi_node_t* t = list->head;
-        list->head = t->next;
+	return 0;
+}
 
-        //if head==tail, adjust tail too
-        if(t == list->tail) {
-            list->tail = list->head;
-        }
+int spi_remove_head(spi_list_t *list)
+{
+	if(!list) {
+		return 1;
+	}
+
+	//when list is empty
+	if(!list->head) {
+		return 1;
+	}
+
+	spi_node_t *t = list->head;
+	list->head = t->next;
+	shm_free(t);
+
+	return 0;
+}
+
+int spi_remove(spi_list_t *list, uint32_t spi_cid, uint32_t spi_sid)
+{
+	if(!list) {
+		return 0;
+	}
+
+	//when list is empty
+	if(!list->head) {
+		return 0;
+	}
+
+	//when target is head
+	if(list->head->spi_cid == spi_cid && list->head->spi_sid == spi_sid) {
+		spi_node_t *t = list->head;
+		list->head = t->next;
+
+		//if head==tail, adjust tail too
+		if(t == list->tail) {
+			list->tail = list->head;
+		}
 
 		shm_free(t);
-        return 1;
-    }
+		return 1;
+	}
 
 
-    spi_node_t* prev = list->head;
-    spi_node_t* curr = list->head->next;
+	spi_node_t *prev = list->head;
+	spi_node_t *curr = list->head->next;
 
-    while(curr) {
-        if(curr->spi_cid == spi_cid && curr->spi_sid == spi_sid) {
-            spi_node_t* t = curr;
+	while(curr) {
+		if(curr->spi_cid == spi_cid && curr->spi_sid == spi_sid) {
+			spi_node_t *t = curr;
 
-            //detach node
-            prev->next = curr->next;
+			//detach node
+			prev->next = curr->next;
 
-            //is it the last elemet
-            if(t == list->tail) {
-                list->tail = prev;
-            }
+			//is it the last elemet
+			if(t == list->tail) {
+				list->tail = prev;
+			}
 
 			shm_free(t);
-            return 1;
-        }
+			return 1;
+		}
 
-        prev = curr;
-        curr = curr->next;
-    }
+		prev = curr;
+		curr = curr->next;
+	}
 
-    return -1; // out of scope
+	return -1; // out of scope
 }
 
-int spi_in_list(spi_list_t* list, uint32_t spi_cid, uint32_t spi_sid)
+int spi_in_list(spi_list_t *list, uint32_t spi_cid, uint32_t spi_sid)
 {
-	if(!list){
+	if(!list) {
 		return 0;
 	}
 
-    if(!list->head)
-        return 0;
+	if(!list->head)
+		return 0;
 
-    spi_node_t* n = list->head;
-    while(n) {
-        if (n->spi_cid == spi_cid && n->spi_sid == spi_sid) {
-            return 1;
-        }
-        n = n->next;
-    }
+	spi_node_t *n = list->head;
+	while(n) {
+		if(n->spi_cid == spi_cid && n->spi_sid == spi_sid) {
+			return 1;
+		}
+		n = n->next;
+	}
 
-    return 0;
+	return 0;
 }
-
