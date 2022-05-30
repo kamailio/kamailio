@@ -169,26 +169,24 @@ static int fill_contact(
 	if(m->first_line.type == SIP_REQUEST) {
 		char *alias_start;
 		struct sip_uri uri;
+		str suri;
 
 		memset(&uri, 0, sizeof(struct sip_uri));
 
 		if((sflags & IPSEC_DSTADDR_SEARCH) && m->dst_uri.s!=NULL
 				&& m->dst_uri.len>0) {
+			suri = m->dst_uri;
 			LM_DBG("using dst uri for contact filling: %.*s\n",
-					m->dst_uri.len, m->dst_uri.s);
-			if(parse_uri(m->dst_uri.s, m->dst_uri.len, &uri)<0) {
-				LM_ERR("failed to parse the request dst URI\n");
-				return -1;
-			}
+					suri.len, suri.s);
 		} else {
+			suri = m->first_line.u.request.uri;
 			LM_DBG("using original uri for contact filling: %.*s\n",
-					m->first_line.u.request.uri.len,
-					m->first_line.u.request.uri.s);
-			if(parse_uri(m->first_line.u.request.uri.s,
-					   m->first_line.u.request.uri.len, &uri)<0) {
-				LM_ERR("failed to parse the request URI from first line\n");
-				return -1;
-			}
+					suri.len, suri.s);
+		}
+		if(parse_uri(suri.s, suri.len, &uri)<0) {
+			LM_ERR("failed to parse the URI: %.*s / flags: 0x%x\n",
+					suri.len, suri.s, sflags);
+			return -1;
 		}
 
 		req = m;
