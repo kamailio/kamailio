@@ -51,14 +51,14 @@
 #include "ims_usrloc_pcscf_mod.h"
 #include "../../core/parser/parse_uri.h"
 
-extern unsigned int init_flag;
+extern int ims_ulp_init_flag;
 
 int bind_usrloc(usrloc_api_t* api) {
 	if (!api) {
 		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
-	if (init_flag == 0) {
+	if (ims_ulp_init_flag == 0) {
 		LM_ERR("configuration error - trying to bind to usrloc module"
 				" before being initialized\n");
 		return -1;

@@ -77,13 +77,13 @@ int expires_grace = 3600;   //default is a grace period of 1 hour - after this c
  * Module parameters and their default values
  */
 str usrloc_debug_file = str_init(DEFAULT_DBG_FILE);
-int usrloc_debug 	= 0;
-int ul_hash_size = 9;
-int init_flag = 0;
-str db_url          = str_init(DEFAULT_DB_URL);	/*!< Database URL */
-int timer_interval  = 60;						/*!< Timer interval in seconds */
-int db_mode         = 0;						/*!< Database sync scheme: 0-no db, 1-write through, 2-write back, 3-only db */
-int ul_fetch_rows 	= 2000;
+int usrloc_debug 	  = 0;
+int ul_hash_size      = 9;
+int ims_ulp_init_flag = 0;
+str db_url            = str_init(DEFAULT_DB_URL);	/*!< Database URL */
+int timer_interval    = 60;						/*!< Timer interval in seconds */
+int db_mode           = 0;						/*!< Database sync scheme: 0-no db, 1-write through, 2-write back, 3-only db */
+int ul_fetch_rows 	  = 2000;
 int match_contact_host_port = 1;					/*!< Should we match contact just based on rui host and port*/
 
 db1_con_t* ul_dbh = 0;
@@ -198,7 +198,7 @@ static int mod_init(void) {
 		LM_DBG("Running in DB mode %i\n", db_mode);
 	}
 
-	init_flag = 1;
+	ims_ulp_init_flag = 1;
 
 	return 0;
 }
