@@ -116,7 +116,7 @@ str db_url          = str_init(DEFAULT_DB_URL);	/*!< Database URL */
 
 /* flags */
 unsigned int nat_bflag = (unsigned int)-1;
-unsigned int init_flag = 0;
+unsigned int ims_uls_init_flag = 0;
 
 ims_dlg_api_t dlgb;
 
@@ -380,7 +380,7 @@ static int mod_init(void) {
 		nat_bflag = 1 << nat_bflag;
 	}
 
-	init_flag = 1;
+	ims_uls_init_flag = 1;
         
 	/* From contact_dlg_handlers.c
          * 

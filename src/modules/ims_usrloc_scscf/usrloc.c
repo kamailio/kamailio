@@ -55,7 +55,7 @@
 /*! nat branch flag */
 extern unsigned int nat_bflag;
 /*! flag to protect against wrong initialization */
-extern unsigned int init_flag;
+extern unsigned int ims_uls_init_flag;
 
 /*!
  * \brief usrloc module API export bind function
@@ -67,7 +67,7 @@ int bind_usrloc(usrloc_api_t* api) {
 		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
-	if (init_flag == 0) {
+	if (ims_uls_init_flag == 0) {
 		LM_ERR("configuration error - trying to bind to usrloc module"
 				" before being initialized\n");
 		return -1;
