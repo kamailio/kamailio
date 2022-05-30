@@ -76,13 +76,15 @@ const int IPSEC_CMD_SUCCESS = 1;
 extern usrloc_api_t ul;
 extern struct tm_binds tmb;
 
-#define IPSEC_SEND_FORCE_SOCKET \
-	0x01 /* if set - set send force socket for request messages */
-#define IPSEC_REVERSE_SEARCH \
-	0x02 /* if set - start searching from the last element */
+/* if set - set send force socket for request messages */
+#define IPSEC_SEND_FORCE_SOCKET 0x01
+/* if set - start searching from the last element */
+#define IPSEC_REVERSE_SEARCH 0x02
+/* if set - use destination address for IPSec tunnel search */
+#define IPSEC_DSTADDR_SEARCH 0x04
 
-#define IPSEC_CREATE_DELETE_UNUSED_TUNNELS \
-	0x01 /* if set - delete unused tunnels before every registration */
+/* if set - delete unused tunnels before every registration */
+#define IPSEC_CREATE_DELETE_UNUSED_TUNNELS 0x01
 
 int bind_ipsec_pcscf(ipsec_pcscf_api_t *api)
 {
@@ -150,7 +152,7 @@ static str get_www_auth_param(const char *param_name, str www_auth)
 }
 
 static int fill_contact(
-		struct pcontact_info *ci, struct sip_msg *m, tm_cell_t *t)
+		pcontact_info_t *ci, sip_msg_t *m, tm_cell_t *t, int sflags)
 {
 	contact_body_t *cb = NULL;
 	struct via_body *vb = NULL;
@@ -167,12 +169,26 @@ static int fill_contact(
 	if(m->first_line.type == SIP_REQUEST) {
 		char *alias_start;
 		struct sip_uri uri;
+
 		memset(&uri, 0, sizeof(struct sip_uri));
 
-		if(parse_uri(m->first_line.u.request.uri.s,
-				   m->first_line.u.request.uri.len, &uri)) {
-			LM_ERR("Can't parse the request URI from first line\n");
-			return -1;
+		if((sflags & IPSEC_DSTADDR_SEARCH) && m->dst_uri.s!=NULL
+				&& m->dst_uri.len>0) {
+			LM_DBG("using dst uri for contact filling: %.*s\n",
+					m->dst_uri.len, m->dst_uri.s);
+			if(parse_uri(m->dst_uri.s, m->dst_uri.len, &uri)<0) {
+				LM_ERR("failed to parse the request dst URI\n");
+				return -1;
+			}
+		} else {
+			LM_DBG("using original uri for contact filling: %.*s\n",
+					m->first_line.u.request.uri.len,
+					m->first_line.u.request.uri.s);
+			if(parse_uri(m->first_line.u.request.uri.s,
+					   m->first_line.u.request.uri.len, &uri)<0) {
+				LM_ERR("failed to parse the request URI from first line\n");
+				return -1;
+			}
 		}
 
 		req = m;
@@ -673,7 +689,7 @@ int ipsec_create(struct sip_msg *m, udomain_t *d, int _cflags)
 		t = tmb.t_gett();
 	}
 	// Find the contact
-	if(fill_contact(&ci, m, t) != 0) {
+	if(fill_contact(&ci, m, t, _cflags) != 0) {
 		LM_ERR("Error filling in contact data\n");
 		return ret;
 	}
@@ -828,7 +844,7 @@ int ipsec_forward(struct sip_msg *m, udomain_t *d, int _cflags)
 	//
 	// Find the contact
 	//
-	if(fill_contact(&ci, m, t) != 0) {
+	if(fill_contact(&ci, m, t, _cflags) != 0) {
 		LM_ERR("Error filling in contact data\n");
 		return ret;
 	}
@@ -997,7 +1013,7 @@ int ipsec_destroy(struct sip_msg *m, udomain_t *d)
 	}
 
 	// Find the contact
-	if(fill_contact(&ci, m, t) != 0) {
+	if(fill_contact(&ci, m, t, 0) != 0) {
 		LM_ERR("Error filling in contact data\n");
 		return ret;
 	}
