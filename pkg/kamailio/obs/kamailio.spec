@@ -1539,6 +1539,7 @@ fi
 %doc %{_docdir}/kamailio/modules/README.sdpops
 %doc %{_docdir}/kamailio/modules/README.seas
 %doc %{_docdir}/kamailio/modules/README.sipcapture
+%doc %{_docdir}/kamailio/modules/README.siprepo
 %doc %{_docdir}/kamailio/modules/README.sipt
 %doc %{_docdir}/kamailio/modules/README.siptrace
 %doc %{_docdir}/kamailio/modules/README.siputils
@@ -1699,6 +1700,7 @@ fi
 %{_libdir}/kamailio/modules/sdpops.so
 %{_libdir}/kamailio/modules/seas.so
 %{_libdir}/kamailio/modules/sipcapture.so
+%{_libdir}/kamailio/modules/siprepo.so
 %{_libdir}/kamailio/modules/sipt.so
 %{_libdir}/kamailio/modules/siptrace.so
 %{_libdir}/kamailio/modules/siputils.so
