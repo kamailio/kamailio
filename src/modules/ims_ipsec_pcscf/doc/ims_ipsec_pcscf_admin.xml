@@ -281,8 +281,27 @@ ipsec_create("location", "1");
           </para>
           <para>
           <emphasis>flags</emphasis> - bitwise flag:
-          0x01 - set force socket for request messages. Useful for ipsec and TCP.
-          0x02 - reverse search for a contact in the memory. Useful when contact alias is disabled.
+		  <itemizedlist>
+			<listitem>
+			  <para>
+			  <emphasis>0x01</emphasis> - set force socket for request messages. Useful for ipsec and TCP.
+			  </para>
+			</listitem>
+			<listitem>
+			  <para>
+				  <emphasis>0x02</emphasis> - reverse search for a contact in the memory.
+				  Useful when contact alias is disabled.
+			  </para>
+			</listitem>
+			<listitem>
+			  <para>
+				  <emphasis>0x04</emphasis> - use destination URI for IPSec tunnel search. Useful for
+				  routing requests within dialog.
+			  </para>
+			</listitem>
+		  </itemizedlist>
+          </para>
+		  <para>
           This is an optional parameter, default value - 0.
           </para>
         </listitem>
