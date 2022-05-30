@@ -65,7 +65,7 @@ static int free_uint_fixup(void **param, int param_no);
 
 extern int bind_ipsec_pcscf(usrloc_api_t *api);
 
-int init_flag = 0;
+unsigned int ipsec_init_flag = 0;
 
 /* clang-format off */
 
@@ -363,7 +363,7 @@ static int mod_init(void)
 		return -1;
 	}
 
-	init_flag = 1;
+	ipsec_init_flag = 1;
 
 	return 0;
 }

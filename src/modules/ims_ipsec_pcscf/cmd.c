@@ -67,7 +67,7 @@ extern ip_addr_t ipsec_listen_ip_addr6;
 
 extern int spi_id_start;
 
-extern unsigned int init_flag;
+extern unsigned int ipsec_init_flag;
 
 // check http://www.asipto.com/pub/kamailio-devel-guide/#c16return_values
 const int IPSEC_CMD_FAIL = -1;
@@ -90,7 +90,7 @@ int bind_ipsec_pcscf(ipsec_pcscf_api_t *api)
 		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
-	if(init_flag == 0) {
+	if(ipsec_init_flag == 0) {
 		LM_ERR("configuration error - trying to bind to ipsec pscscf module "
 			   "before being initialized\n");
 		return -1;
