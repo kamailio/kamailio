@@ -82,6 +82,8 @@ extern struct tm_binds tmb;
 #define IPSEC_REVERSE_SEARCH 0x02
 /* if set - use destination address for IPSec tunnel search */
 #define IPSEC_DSTADDR_SEARCH 0x04
+/* if set - use new r-uri address for IPSec tunnel search */
+#define IPSEC_RURIADDR_SEARCH 0x08
 
 /* if set - delete unused tunnels before every registration */
 #define IPSEC_CREATE_DELETE_UNUSED_TUNNELS 0x01
@@ -177,6 +179,11 @@ static int fill_contact(
 				&& m->dst_uri.len>0) {
 			suri = m->dst_uri;
 			LM_DBG("using dst uri for contact filling: %.*s\n",
+					suri.len, suri.s);
+		} else if((sflags & IPSEC_RURIADDR_SEARCH) && m->new_uri.s!=NULL
+				&& m->new_uri.len>0) {
+			suri = m->new_uri;
+			LM_DBG("using new r-uri for contact filling: %.*s\n",
 					suri.len, suri.s);
 		} else {
 			suri = m->first_line.u.request.uri;
