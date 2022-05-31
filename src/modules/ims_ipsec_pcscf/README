@@ -308,6 +308,7 @@ ipsec_create("location", "1");
             contact alias is disabled.
           + 0x04 - use destination URI for IPSec tunnel search. Useful for
             routing requests within dialog.
+          + 0x08 - use new R-URI for IPSec tunnel search.
        This is an optional parameter, default value - 0.
 
    Example 1.12. ipsec_forward
