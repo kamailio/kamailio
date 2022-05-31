@@ -299,6 +299,11 @@ ipsec_create("location", "1");
 				  routing requests within dialog.
 			  </para>
 			</listitem>
+			<listitem>
+			  <para>
+				  <emphasis>0x08</emphasis> - use new R-URI for IPSec tunnel search.
+			  </para>
+			</listitem>
 		  </itemizedlist>
           </para>
 		  <para>
