@@ -77,13 +77,15 @@ extern usrloc_api_t ul;
 extern struct tm_binds tmb;
 
 /* if set - set send force socket for request messages */
-#define IPSEC_SEND_FORCE_SOCKET 0x01
+#define IPSEC_SEND_FORCE_SOCKET 1
 /* if set - start searching from the last element */
-#define IPSEC_REVERSE_SEARCH 0x02
+#define IPSEC_REVERSE_SEARCH 2
 /* if set - use destination address for IPSec tunnel search */
-#define IPSEC_DSTADDR_SEARCH 0x04
+#define IPSEC_DSTADDR_SEARCH (1<<2)
 /* if set - use new r-uri address for IPSec tunnel search */
-#define IPSEC_RURIADDR_SEARCH 0x08
+#define IPSEC_RURIADDR_SEARCH (1<<3)
+/* if set - do not use alias for IPSec tunnel received details */
+#define IPSEC_NOALIAS_SEARCH (1<<4)
 
 /* if set - delete unused tunnels before every registration */
 #define IPSEC_CREATE_DELETE_UNUSED_TUNNELS 0x01
@@ -219,16 +221,16 @@ static int fill_contact(
 			ci->via_prot = vb->proto;
 		}
 
-		if(uri.params.len > 6
-				&& (alias_start = _strnistr(
-							uri.params.s, "alias=", uri.params.len))
-						   != NULL) {
+		alias_start = NULL;
+		if((!(sflags & IPSEC_NOALIAS_SEARCH)) && uri.params.len > 6) {
+			alias_start = _strnistr(uri.params.s, "alias=", uri.params.len);
+		}
+		if(alias_start!=NULL && *(alias_start-1)==';') {
 			char *p, *port_s, *proto_s;
 			char portbuf[5];
 			str alias_s;
 
-			LM_DBG("contact has an alias [%.*s] - we can use that as the "
-				   "received\n",
+			LM_DBG("contact has an alias [%.*s] - use that as the received\n",
 					uri.params.len, uri.params.s);
 
 			alias_s.len = uri.params.len - (alias_start - uri.params.s) - 6;
@@ -858,7 +860,8 @@ int ipsec_forward(struct sip_msg *m, udomain_t *d, int _cflags)
 
 	if(ul.get_pcontact(d, &ci, &pcontact, _cflags & IPSEC_REVERSE_SEARCH) != 0
 			|| pcontact == NULL) {
-		LM_ERR("Contact doesn't exist\n");
+		LM_ERR("contact not found [%d:%.*s:%d]\n", (int)ci.via_prot,
+				ci.via_host.len, ci.via_host.s, (int)ci.via_port);
 		goto cleanup;
 	}
 
@@ -891,6 +894,7 @@ int ipsec_forward(struct sip_msg *m, udomain_t *d, int _cflags)
 	//int uri_len = 4 /* strlen("sip:") */ + ci.via_host.len + 5 /* max len of port number */ ;
 
 	if(m->dst_uri.s) {
+		LM_DBG("resetting dst uri\n");
 		pkg_free(m->dst_uri.s);
 		m->dst_uri.s = NULL;
 		m->dst_uri.len = 0;
@@ -938,6 +942,7 @@ int ipsec_forward(struct sip_msg *m, udomain_t *d, int _cflags)
 	memcpy(m->dst_uri.s, buf, buf_len);
 	m->dst_uri.len = buf_len;
 	m->dst_uri.s[m->dst_uri.len] = '\0';
+	LM_ERR("new destination URI: %.*s\n", m->dst_uri.len, m->dst_uri.s);
 
 	// Set send socket
 	struct socket_info *client_sock = grep_sock_info(
@@ -951,6 +956,7 @@ int ipsec_forward(struct sip_msg *m, udomain_t *d, int _cflags)
 
 	// Set destination info
 	struct dest_info dst_info;
+	init_dest_info(&dst_info);
 	dst_info.send_sock = client_sock;
 	if(m->first_line.type == SIP_REQUEST
 			&& (_cflags & IPSEC_SEND_FORCE_SOCKET)) {
