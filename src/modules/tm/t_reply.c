@@ -104,6 +104,10 @@ extern str _tm_event_callback_lres_sent;
 
 extern unsigned long tm_exec_time_check;
 
+#ifdef USE_DNS_FAILOVER
+extern str failover_reply_codes_str;
+#endif
+
 /* remap 503 response code to 500 */
 extern int tm_remap_503_500;
 /* send path and flags in 3xx class reply */
@@ -2328,6 +2332,7 @@ int reply_received( struct sip_msg  *p_msg )
 #ifdef USE_DNS_FAILOVER
 	int branch_ret;
 	int prev_branch;
+	int failover_continue = 0;
 #endif
 #ifdef USE_DST_BLOCKLIST
 	int blst_503_timeout;
@@ -2642,7 +2647,12 @@ int reply_received( struct sip_msg  *p_msg )
 		 *  This code is out of LOCK_REPLIES() to minimize the time the
 		 *  reply lock is held (the lock won't be held while sending the
 		 *   message)*/
-		if (cfg_get(core, core_cfg, use_dns_failover) && (msg_status==503)) {
+
+
+		failover_continue = (failover_reply_codes_str.s!=NULL && failover_reply_codes_str.len>0 &&
+							t_failover_check_reply_code(msg_status));
+
+		if (cfg_get(core, core_cfg, use_dns_failover) && (msg_status==503 || failover_continue)) {
 			branch_ret=add_uac_dns_fallback(t, t->uas.request,
 												uac, !replies_locked);
 			prev_branch=-1;

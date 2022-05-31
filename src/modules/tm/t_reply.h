@@ -228,4 +228,8 @@ int t_get_picked_branch(void);
 int t_get_this_branch_instance(struct sip_msg *msg, str *instance);
 int t_get_this_branch_ruid(struct sip_msg *msg, str *ruid);
 
+#ifdef USE_DNS_FAILOVER
+int t_failover_check_reply_code(int code);
+#endif
+
 #endif
