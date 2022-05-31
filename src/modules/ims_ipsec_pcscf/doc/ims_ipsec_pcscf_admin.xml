@@ -284,24 +284,29 @@ ipsec_create("location", "1");
 		  <itemizedlist>
 			<listitem>
 			  <para>
-			  <emphasis>0x01</emphasis> - set force socket for request messages. Useful for ipsec and TCP.
+			  <emphasis>0x01</emphasis> (1) - set force socket for request messages. Useful for ipsec and TCP.
 			  </para>
 			</listitem>
 			<listitem>
 			  <para>
-				  <emphasis>0x02</emphasis> - reverse search for a contact in the memory.
+				  <emphasis>0x02</emphasis> (2) - reverse search for a contact in the memory.
 				  Useful when contact alias is disabled.
 			  </para>
 			</listitem>
 			<listitem>
 			  <para>
-				  <emphasis>0x04</emphasis> - use destination URI for IPSec tunnel search. Useful for
+				  <emphasis>0x04</emphasis> (4) - use destination URI for IPSec tunnel search. Useful for
 				  routing requests within dialog.
 			  </para>
 			</listitem>
 			<listitem>
 			  <para>
-				  <emphasis>0x08</emphasis> - use new R-URI for IPSec tunnel search.
+				  <emphasis>0x08</emphasis> (8) - use new R-URI for IPSec tunnel search.
+			  </para>
+			</listitem>
+			<listitem>
+			  <para>
+				  <emphasis>0x10</emphasis> (16) - do not look for alias parameter to set received details.
 			  </para>
 			</listitem>
 		  </itemizedlist>
