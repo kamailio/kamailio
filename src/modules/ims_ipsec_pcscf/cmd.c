@@ -86,6 +86,8 @@ extern struct tm_binds tmb;
 #define IPSEC_RURIADDR_SEARCH (1<<3)
 /* if set - do not use alias for IPSec tunnel received details */
 #define IPSEC_NOALIAS_SEARCH (1<<4)
+/* if set - do not reset dst uri for IPsec forward */
+#define IPSEC_NODSTURI_RESET (1<<5)
 
 /* if set - delete unused tunnels before every registration */
 #define IPSEC_CREATE_DELETE_UNUSED_TUNNELS 0x01
@@ -893,14 +895,13 @@ int ipsec_forward(struct sip_msg *m, udomain_t *d, int _cflags)
 	//    from URI
 	//int uri_len = 4 /* strlen("sip:") */ + ci.via_host.len + 5 /* max len of port number */ ;
 
-	if(m->dst_uri.s) {
-		LM_DBG("resetting dst uri\n");
+	if(!(_cflags & IPSEC_NODSTURI_RESET) && (m->dst_uri.s!=NULL)) {
+		LM_DBG("resetting dst uri [%.*s]\n", m->dst_uri.len, m->dst_uri.s);
 		pkg_free(m->dst_uri.s);
 		m->dst_uri.s = NULL;
 		m->dst_uri.len = 0;
 	}
 
-	char buf[1024];
 	if(m->first_line.type == SIP_REPLY) {
 		// for Reply get the dest proto from the received request
 		dst_proto = req->rcv.proto;
@@ -931,18 +932,21 @@ int ipsec_forward(struct sip_msg *m, udomain_t *d, int _cflags)
 		dst_port = s->port_us;
 	}
 
-	int buf_len = snprintf(buf, sizeof(buf) - 1, "sip:%.*s:%d", ci.via_host.len,
-			ci.via_host.s, dst_port);
+	if(!(_cflags & IPSEC_NODSTURI_RESET)) {
+		char buf[1024];
+		int buf_len = snprintf(buf, sizeof(buf) - 1, "sip:%.*s:%d", ci.via_host.len,
+				ci.via_host.s, dst_port);
 
-	if((m->dst_uri.s = pkg_malloc(buf_len + 1)) == NULL) {
-		LM_ERR("Error allocating memory for dst_uri\n");
-		goto cleanup;
+		if((m->dst_uri.s = pkg_malloc(buf_len + 1)) == NULL) {
+			LM_ERR("Error allocating memory for dst_uri\n");
+			goto cleanup;
+		}
+
+		memcpy(m->dst_uri.s, buf, buf_len);
+		m->dst_uri.len = buf_len;
+		m->dst_uri.s[m->dst_uri.len] = '\0';
+		LM_ERR("new destination URI: %.*s\n", m->dst_uri.len, m->dst_uri.s);
 	}
-
-	memcpy(m->dst_uri.s, buf, buf_len);
-	m->dst_uri.len = buf_len;
-	m->dst_uri.s[m->dst_uri.len] = '\0';
-	LM_ERR("new destination URI: %.*s\n", m->dst_uri.len, m->dst_uri.s);
 
 	// Set send socket
 	struct socket_info *client_sock = grep_sock_info(
