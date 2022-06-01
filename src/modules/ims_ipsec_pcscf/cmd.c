@@ -838,6 +838,9 @@ int ipsec_forward(struct sip_msg *m, udomain_t *d, int _cflags)
 	ip_addr_t via_host;
 	struct sip_msg *req = NULL;
 	struct cell *t = NULL;
+	struct socket_info *client_sock = NULL;
+
+	LM_DBG("processing with flags: 0x%x\n", _cflags);
 
 	if(m->first_line.type == SIP_REPLY) {
 		// Get request from reply
@@ -915,8 +918,7 @@ int ipsec_forward(struct sip_msg *m, udomain_t *d, int _cflags)
 		dst_port = dst_proto == PROTO_TCP ? s->port_uc : s->port_us;
 
 		// Check send socket
-		struct socket_info *client_sock =
-				grep_sock_info(via_host.af == AF_INET ? &ipsec_listen_addr
+		client_sock = grep_sock_info(via_host.af == AF_INET ? &ipsec_listen_addr
 													  : &ipsec_listen_addr6,
 						src_port, dst_proto);
 		if(!client_sock) {
@@ -960,7 +962,7 @@ int ipsec_forward(struct sip_msg *m, udomain_t *d, int _cflags)
 	}
 
 	// Set send socket
-	struct socket_info *client_sock = grep_sock_info(
+	client_sock = grep_sock_info(
 			via_host.af == AF_INET ? &ipsec_listen_addr : &ipsec_listen_addr6,
 			src_port, dst_proto);
 	if(!client_sock) {
@@ -990,10 +992,12 @@ int ipsec_forward(struct sip_msg *m, udomain_t *d, int _cflags)
 
 	// Update dst_info in message
 	if(m->first_line.type == SIP_REPLY) {
-		struct cell *t = tmb.t_gett();
 		if(!t) {
-			LM_ERR("Error getting transaction\n");
-			goto cleanup;
+			t = tmb.t_gett();
+			if(!t) {
+				LM_ERR("Error getting transaction\n");
+				goto cleanup;
+			}
 		}
 		t->uas.response.dst = dst_info;
 	}
