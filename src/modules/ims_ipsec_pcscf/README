@@ -314,6 +314,8 @@ ipsec_create("location", "1");
           + 0x20 (32) - do not reset the destination URI.
           + 0x40 (64) - use user equipment client port as target for TCP
             requests.
+          + 0x80 (128) - set transport parameter in the new dst uri for
+            TCP requests.
        This is an optional parameter, default value - 0.
 
    Example 1.12. ipsec_forward
