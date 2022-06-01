@@ -151,6 +151,7 @@ static struct action *mod_func_action = NULL;
 static struct lvalue* lval_tmp = NULL;
 static struct rvalue* rval_tmp = NULL;
 static struct rval_expr* rve_tmp = NULL;
+static socket_attrs_t tmp_sa;
 
 static void warn(char* s, ...);
 static void warn_at(struct cfg_pos* pos, char* s, ...);
@@ -382,6 +383,9 @@ extern char *default_routename;
 %token STAT
 %token STATS_NAMESEP
 %token CHILDREN
+%token SOCKET
+%token BIND
+%token WORKERS
 %token SOCKET_WORKERS
 %token ASYNC_WORKERS
 %token ASYNC_USLEEP
@@ -797,6 +801,48 @@ avpflag_spec:
 			yyerror("cannot declare avpflag");
 	}
 	;
+socket_lattr:
+	BIND EQUAL proto COLON listen_id COLON port	{
+			tmp_sa.bindproto = $3;
+			tmp_sa.bindaddr.s = $5;
+			tmp_sa.bindaddr.len = strlen(tmp_sa.bindaddr.s);
+			tmp_sa.bindport = $7;
+		}
+	| BIND EQUAL listen_id COLON port	{
+			tmp_sa.bindaddr.s = $3;
+			tmp_sa.bindaddr.len = strlen(tmp_sa.bindaddr.s);
+			tmp_sa.bindport = $5;
+		}
+	| BIND EQUAL proto COLON listen_id	{
+			tmp_sa.bindproto = $3;
+			tmp_sa.bindaddr.s = $5;
+			tmp_sa.bindaddr.len = strlen(tmp_sa.bindaddr.s);
+		}
+	| BIND EQUAL listen_id	{
+			tmp_sa.bindaddr.s = $3;
+			tmp_sa.bindaddr.len = strlen(tmp_sa.bindaddr.s);
+		}
+	| BIND EQUAL error { yyerror("string value expected"); }
+	| STRNAME EQUAL STRING {
+			tmp_sa.sockname.s = $3;
+			tmp_sa.sockname.len = strlen(tmp_sa.sockname.s);
+		}
+	| STRNAME EQUAL error { yyerror("string value expected"); }
+	| ADVERTISE EQUAL listen_id COLON NUMBER {
+			tmp_sa.useaddr.s = $3;
+			tmp_sa.useaddr.len = strlen(tmp_sa.useaddr.s);
+			tmp_sa.useport = $5;
+		}
+	| WORKERS EQUAL NUMBER { tmp_sa.workers=$3; }
+	| WORKERS EQUAL error { yyerror("number expected"); }
+	| VIRTUAL EQUAL NUMBER { if($3!=0) { tmp_sa.sflags |= SI_IS_VIRTUAL; } }
+	| VIRTUAL EQUAL error { yyerror("number expected"); }
+	| SEMICOLON {}
+	;
+socket_lattrs:
+	socket_lattrs socket_lattr {}
+	| socket_lattr {}
+	;
 assign_stm:
 	DEBUG_V EQUAL intno { default_core_cfg.debug=$3; }
 	| DEBUG_V EQUAL error  { yyerror("number  expected"); }
@@ -949,6 +995,15 @@ assign_stm:
 	| CHILDREN EQUAL error { yyerror("number expected"); }
 	| STATS_NAMESEP EQUAL STRING { ksr_stats_namesep=$3; }
 	| STATS_NAMESEP EQUAL error { yyerror("string value expected"); }
+	| SOCKET {
+				memset(&tmp_sa, 0, sizeof(socket_attrs_t));
+			} EQUAL LBRACE socket_lattrs RBRACE {
+				if(add_listen_socket(&tmp_sa)<0) {
+					LM_ERR("failed to add listen socket\n");
+					yyerror("failed to add listen socket");
+					ksr_exit(-1);
+				}
+	}
 	| SOCKET_WORKERS EQUAL NUMBER { socket_workers=$3; }
 	| SOCKET_WORKERS EQUAL error { yyerror("number expected"); }
 	| ASYNC_WORKERS EQUAL NUMBER { async_task_set_workers($3); }
