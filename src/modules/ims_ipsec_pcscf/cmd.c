@@ -90,6 +90,8 @@ extern struct tm_binds tmb;
 #define IPSEC_NODSTURI_RESET (1<<5)
 /* if set - use user equipment client port as target for requests over TCP */
 #define IPSEC_TCPPORT_UEC (1<<6)
+/* if set - build new dst uri with transport parameter for TCP */
+#define IPSEC_SETDSTURI_FULL (1<<7)
 
 /* if set - delete unused tunnels before every registration */
 #define IPSEC_CREATE_DELETE_UNUSED_TUNNELS 0x01
@@ -947,8 +949,14 @@ int ipsec_forward(struct sip_msg *m, udomain_t *d, int _cflags)
 
 	if(!(_cflags & IPSEC_NODSTURI_RESET)) {
 		char buf[1024];
-		int buf_len = snprintf(buf, sizeof(buf) - 1, "sip:%.*s:%d", ci.via_host.len,
-				ci.via_host.s, dst_port);
+		int buf_len;
+		if((_cflags & IPSEC_SETDSTURI_FULL) && (dst_proto == PROTO_TCP)) {
+			buf_len = snprintf(buf, sizeof(buf) - 1, "sip:%.*s:%d;transport=tcp",
+					ci.via_host.len, ci.via_host.s, dst_port);
+		} else {
+			buf_len = snprintf(buf, sizeof(buf) - 1, "sip:%.*s:%d", ci.via_host.len,
+					ci.via_host.s, dst_port);
+		}
 
 		if((m->dst_uri.s = pkg_malloc(buf_len + 1)) == NULL) {
 			LM_ERR("Error allocating memory for dst_uri\n");
