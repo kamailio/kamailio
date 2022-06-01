@@ -88,6 +88,8 @@ extern struct tm_binds tmb;
 #define IPSEC_NOALIAS_SEARCH (1<<4)
 /* if set - do not reset dst uri for IPsec forward */
 #define IPSEC_NODSTURI_RESET (1<<5)
+/* if set - use user equipment client port as target for requests over TCP */
+#define IPSEC_TCPPORT_UEC (1<<6)
 
 /* if set - delete unused tunnels before every registration */
 #define IPSEC_CREATE_DELETE_UNUSED_TUNNELS 0x01
@@ -925,11 +927,20 @@ int ipsec_forward(struct sip_msg *m, udomain_t *d, int _cflags)
 		// for Request get the dest proto from the saved contact
 		dst_proto = pcontact->received_proto;
 
-		// for Request sends from P-CSCF client port
-		src_port = s->port_pc;
+		if(_cflags & IPSEC_TCPPORT_UEC) {
+			// for Request and TCP sends from P-CSCF server port, for Request and UDP sends from P-CSCF client port
+			src_port = dst_proto == PROTO_TCP ? s->port_ps : s->port_pc;
 
-		// for Request sends to UE server port
-		dst_port = s->port_us;
+			// for Request and TCP sends to UE client port, for Request and UDP sends to UE server port
+			dst_port = dst_proto == PROTO_TCP ? s->port_uc : s->port_us;
+
+		} else {
+			// for Request sends from P-CSCF client port
+			src_port = s->port_pc;
+
+			// for Request sends to UE server port
+			dst_port = s->port_us;
+		}
 	}
 
 	if(!(_cflags & IPSEC_NODSTURI_RESET)) {
