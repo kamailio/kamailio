@@ -309,6 +309,11 @@ ipsec_create("location", "1");
 				  <emphasis>0x10</emphasis> (16) - do not look for alias parameter to set received details.
 			  </para>
 			</listitem>
+			<listitem>
+			  <para>
+				  <emphasis>0x20</emphasis> (32) - do not reset the destination URI.
+			  </para>
+			</listitem>
 		  </itemizedlist>
           </para>
 		  <para>
