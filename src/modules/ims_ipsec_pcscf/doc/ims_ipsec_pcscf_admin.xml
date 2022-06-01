@@ -314,6 +314,11 @@ ipsec_create("location", "1");
 				  <emphasis>0x20</emphasis> (32) - do not reset the destination URI.
 			  </para>
 			</listitem>
+			<listitem>
+			  <para>
+				  <emphasis>0x40</emphasis> (64) - use user equipment client port as target for TCP requests.
+			  </para>
+			</listitem>
 		  </itemizedlist>
           </para>
 		  <para>
