@@ -213,7 +213,7 @@ nid_t nc_new(nid_t id, unsigned char p)
  * NC_TOO_BIG       (nc value got too big and cannot be held anymore)
  * NC_REPLAY        (nc value is <= the current stored one)
  */
-enum nc_check_ret nc_check_val(nid_t id, unsigned pool, unsigned int nc)
+enum nc_check_ret nc_check_val(nid_t id, unsigned pool, unsigned int nc, int update)
 {
 	unsigned int i;
 	unsigned n, r;
@@ -234,6 +234,8 @@ enum nc_check_ret nc_check_val(nid_t id, unsigned pool, unsigned int nc)
 		crt_nc=(v>>(r*8)) & ((1U<<(sizeof(nc_t)*8))-1);
 		if (crt_nc>=nc)
 			return NC_REPLAY;
+		if (!update)
+			break;
 		/* set corresponding array cell byte/short to new nc */
 		new_v=(v & ~(((1U<<(sizeof(nc_t)*8))-1)<< (r*8)) )|
 				(nc << (r*8));
