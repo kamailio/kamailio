@@ -1,7 +1,7 @@
 Source: kamailio
 Section: net
 Priority: optional
-Maintainer: Debian VoIP Team <pkg-voip-maintainers@lists.alioth.debian.org>
+Maintainer: Kamailio Admin Group <kadmin.hq@lists.kamailio.org>
 Uploaders:
  Victor Seva <vseva@debian.org>,
  Tzafrir Cohen <tzafrir@debian.org>,
@@ -54,8 +54,9 @@ Build-Depends:
  zlib1g-dev,
 Standards-Version: 3.9.5
 Homepage: http://www.kamailio.org/
-Vcs-git: git://anonscm.debian.org/pkg-voip/kamailio.git
-Vcs-Browser: http://anonscm.debian.org/gitweb/?p=pkg-voip/kamailio.git
+Vcs-Git: https://github.com/kamailio/kamailio.git
+Vcs-Browser: https://github.com/kamailio/kamailio/
+Rules-Requires-Root: no
 
 Package: kamailio
 Architecture: linux-any
