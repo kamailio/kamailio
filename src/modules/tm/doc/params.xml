@@ -1623,4 +1623,29 @@ modparam("tm", "enable_uac_fr", 1)
 		</example>
 	</section>
 
+	<section id="tm.p.failover_reply_codes">
+		<title><varname>failover_reply_codes</varname> (string)</title>
+		<para>
+			This parameter defines the response codes (only codes >= 300 and class >= 3), which enable
+			dns failover  to continue to try next ips when previous one fail. It is a list separated by
+			colons, where you may define either a single code (e.g. "code=408" would accept 408 as an
+			additional response code) or a class of responses, you want to accept (e.g. "class=3" would accept
+			everything from 300 to 999 as valid response).
+			(with default behaviour only 503 code or no response from previous one will try next ip).
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote></quote>
+		</emphasis>
+		</para>
+		<example>
+		<title>Set the <quote>failover_reply_codes</quote> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("tm", "failover_reply_codes", "code=403;code=488;class=5")
+...
+</programlisting>
+		</example>
+	</section>
+
 </section>

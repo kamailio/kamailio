@@ -43,6 +43,11 @@
  * end (this allows the script writter to send its own error reply) */
 #define TM_DELAYED_REPLY
 
+#ifdef USE_DNS_FAILOVER
+extern int** failover_reply_codes;
+extern int* failover_reply_codes_cnt;
+#endif
+
 /* fr_timer AVP specs */
 static int     fr_timer_avp_type = 0;
 static int_str fr_timer_avp = {0};
@@ -83,6 +88,12 @@ void tm_shutdown()
 
 	LM_DBG("start\n");
 
+#ifdef USE_DNS_FAILOVER
+	if(failover_reply_codes)
+		shm_free(failover_reply_codes);
+	if(failover_reply_codes_cnt)
+		shm_free(failover_reply_codes_cnt);
+#endif
 	/* destroy the hash table */
 	LM_DBG("emptying hash table\n");
 	free_hash_table( );
