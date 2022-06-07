@@ -424,6 +424,11 @@ int pv_set_uac_req(struct sip_msg* msg, pv_param_t *param,
 				LM_ERR("Invalid value type\n");
 				return -1;
 			}
+			if(tval->rs.len>=128)
+			{
+				LM_ERR("Value size too big\n");
+				return -1;
+			}
 			memcpy(_uac_req.s_callid.s, tval->rs.s, tval->rs.len);
 			_uac_req.s_callid.s[tval->rs.len] = '\0';
 			_uac_req.s_callid.len = tval->rs.len;
