@@ -93,15 +93,18 @@ void env_set_totag(struct cell *t, struct sip_msg *reply)
 		tmb.t_get_reply_totag(t->uas.request, &acc_env.to_tag);
 }
 
-int env_set_reason(struct sip_msg *reply, str *buff) {
+int env_set_reason(struct sip_msg *reply, str *buff, int code) {
+/*
 	int i;
 	char *p;
+*/
 	if (reply!=FAKED_REPLY || !buff || !buff->s || buff->len < 20)
 		return 0;
 	if (strncmp(buff->s, "SIP/2.0 ", 8) != 0) {
 		LM_ERR("not a SIP reply\n");
 		return 0;
 	}
+/*
 	p = buff->s + 12;
 	for (i=12;i<buff->len;i++) {
 		if (*p == '\r' || *p == '\n') {
@@ -112,6 +115,13 @@ int env_set_reason(struct sip_msg *reply, str *buff) {
 		}
 		p++;
 	}
+*/
+
+	/* Set the reason to a pointer in heap memory. It will contain the last seen FAKED_REPLY */
+	acc_env.reason.s = error_text(code);
+	acc_env.reason.len = strlen(acc_env.reason.s);
+	LM_DBG("reason[%.*s]\n", acc_env.reason.len, acc_env.reason.s);
+
 	return 0;
 }
 
@@ -139,7 +149,8 @@ static inline void env_set_code_status( int code, struct sip_msg *reply)
 		acc_env.code_s.s =
 			int2bstr((unsigned long)code, code_buf, &acc_env.code_s.len);
 		/* reason */
-		if (acc_env.reason.len == 0) { /* already extracted in case of locally generated replies */
+		/* In case of an ACK the reply == NULL, but the reason must be set when report_ack is 1 */
+		if (acc_env.reason.len == 0 || reply==NULL) { /* already extracted in case of locally generated replies */
 			acc_env.reason.s = error_text(code);
 			acc_env.reason.len = strlen(acc_env.reason.s);
 		}
@@ -719,7 +730,7 @@ static void tmcb_func( struct cell* t, int type, struct tmcb_params *ps )
 	LM_DBG("acc callback called for t(%p) event type %d, reply code %d\n",
 			t, type, ps->code);
 	if (type&TMCB_RESPONSE_OUT) {
-		env_set_reason(ps->rpl, &ps->send_buf);
+		env_set_reason(ps->rpl, &ps->send_buf, ps->code);
 		acc_onreply( t, ps->req, ps->rpl, ps->code);
 	} else if (type&TMCB_E2EACK_IN) {
 		acc_onack( t, t->uas.request, ps->req, ps->code);
