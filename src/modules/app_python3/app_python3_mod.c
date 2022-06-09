@@ -180,6 +180,9 @@ static int mod_init(void)
  */
 static int child_init(int rank)
 {
+
+	pid_t parent_pid = 0;
+
 	if(rank==PROC_INIT) {
 		/*
 		 * this is called before any process is forked
@@ -189,6 +192,7 @@ static int child_init(int rank)
 		 * TODO: is PyOS_AfterFork_Parent() necesary
 		 * in the main process?
 		 */
+		parent_pid = getpid();
 #if PY_VERSION_HEX >= 0x03070000
 		PyOS_BeforeFork() ;
 #endif
@@ -206,7 +210,11 @@ static int child_init(int rank)
 	}
 	_apy_process_rank = rank;
 
-	if (rank > 0) {
+	if (parent_pid != getpid()) {
+		/* this must only be called in a real child process
+		 * kamailio has a non-fork mode so rank > 0 is not
+		 * a sufficient test
+		 */
 #if PY_VERSION_HEX >= 0x03070000
 		PyOS_AfterFork_Child();
 #else
