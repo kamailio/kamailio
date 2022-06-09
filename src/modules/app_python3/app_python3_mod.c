@@ -200,19 +200,19 @@ static int child_init(int rank)
 		 * processes
 		 */
 #if PY_VERSION_HEX >= 0x03070000
-		/* this is causing abort on Python 3.8+ GH#3125
-		 * skip for now
 		PyOS_AfterFork_Parent() ;
-		*/
 #endif
 		return 0;
 	}
 	_apy_process_rank = rank;
+
+	if (rank > 0) {
 #if PY_VERSION_HEX >= 0x03070000
-	PyOS_AfterFork_Child();
+		PyOS_AfterFork_Child();
 #else
-	PyOS_AfterFork();
+		PyOS_AfterFork();
 #endif
+	}
 	if (cfg_child_init()) {
 		return -1;
 	}
