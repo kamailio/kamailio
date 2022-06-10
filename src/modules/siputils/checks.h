@@ -89,7 +89,9 @@ int is_uri_user_e164(str *uri);
 /*
  * Check if pseudo variable argument value is an e164 number
  */
-int is_e164(struct sip_msg* _m, char* _sp, char* _s2);
+int w_is_e164(struct sip_msg* _m, char* _sp, char* _s2);
+
+int siputils_e164_check(str* _user);
 
 /*
  * Set userpart of URI

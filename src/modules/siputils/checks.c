@@ -656,7 +656,7 @@ int tel2sip(struct sip_msg* _msg, char* _uri, char* _hostpart, char* _res)
 /*
  * Check if parameter is an e164 number.
  */
-static inline int e164_check(str* _user)
+int siputils_e164_check(str* _user)
 {
 	int i;
 	char c;
@@ -675,7 +675,7 @@ static inline int e164_check(str* _user)
 /*
  * Check if user part of URI in pseudo variable is an e164 number
  */
-int is_e164(struct sip_msg* _m, char* _sp, char* _s2)
+int w_is_e164(struct sip_msg* _m, char* _sp, char* _s2)
 {
 	pv_spec_t *sp;
 	pv_value_t pv_val;
@@ -688,7 +688,7 @@ int is_e164(struct sip_msg* _m, char* _sp, char* _s2)
 				LM_DBG("missing argument\n");
 				return -1;
 			}
-			return e164_check(&(pv_val.rs));
+			return siputils_e164_check(&(pv_val.rs));
 		} else {
 			LM_ERR("pseudo variable value is not string\n");
 			return -1;
@@ -743,7 +743,7 @@ int is_uri_user_e164(str *uri)
 	if (chr == NULL) return -1;
 	user.len = chr - user.s;
 
-	return e164_check(&user);
+	return siputils_e164_check(&user);
 }
 
 /*
