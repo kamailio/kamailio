@@ -1764,8 +1764,10 @@ if(ds_list_exists("10")) {
 		</listitem>
 		<listitem>
 			<para><emphasis>mode</emphasis> - (optional) - a bitmask to specify
-				how the matching should be done. If parameter is 0, all ip, port and
-				proto are matched and active status is ignored.
+				how the matching should be done. If the parameter is missing,
+				the matching is done with ignoring the protocol (value 2).
+				If parameter is 0, all ip, port and proto are matched and
+				active status is ignored.
 				If bit one is set, then port is ignored.
 				If bit two is set, then protocol is ignored.
 				If bit three is set, then state must be active.	The parameter
