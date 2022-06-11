@@ -794,6 +794,10 @@ BuildRequires:  python2, python2-devel
 %if 0%{?rhel} == 7
 Requires:   python36, kamailio = %ver
 BuildRequires:  python36, python36-devel
+%endif
+%if 0%{?rhel} == 8
+Requires:   python39, kamailio = %ver
+BuildRequires:  python39, python39-devel
 %else
 Requires:   python3, kamailio = %ver
 BuildRequires:  python3, python3-devel
@@ -1179,6 +1183,9 @@ make every-module skip_modules="app_mono db_cassandra db_oracle iptrtpproxy \
 %if 0%{?fedora} || 0%{?suse_version} || 0%{?rhel} == 8
     FREERADIUS=1 \
 %endif
+%if 0%{?rhel} == 8
+    PYTHON3=python3.9 \
+%endif
     group_include="kstandard kautheph kberkeley kcarrierroute \
 %if %{with cnxcc}
     kcnxcc \
@@ -1279,6 +1286,9 @@ make install-modules-all skip_modules="app_mono db_cassandra db_oracle \
 %endif
 %if 0%{?fedora} || 0%{?suse_version} || 0%{?rhel} == 8
     FREERADIUS=1 \
+%endif
+%if 0%{?rhel} == 8
+    PYTHON3=python3.9 \
 %endif
     group_include="kstandard kautheph kberkeley kcarrierroute \
 %if %{with cnxcc}
