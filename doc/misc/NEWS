@@ -720,7 +720,7 @@ new config variables:
          dropping the connection. Linux only.
   tcp_crlf_ping = yes | no (set by default) - enable CRLF keepalives aka
          SIP outbound.
-  pmtu_discovery = 0 | 1 (default 0) - set DF bit in outbound IP if enabled
+  pmtu_discovery = 0 | 1 (default 0) - set DF bit in outbound IPv4 if enabled
   dns_srv_lb = yes | no (default no) - enable dns srv weight based load 
     balancing (see doc/dns.txt)
   dns_try_naptr = yes | no (default no) - enable naptr support 

@@ -338,13 +338,27 @@ int udp_init(struct socket_info* sock_info)
 	}
 #endif
 #if defined (__OS_linux)
-	/* if pmtu_discovery=1 then set DF bit and do Path MTU discovery
-	 * disabled by default */
-	optval= (pmtu_discovery) ? IP_PMTUDISC_DO : IP_PMTUDISC_DONT;
-	if(setsockopt(sock_info->socket, IPPROTO_IP, IP_MTU_DISCOVER,
-			(void*)&optval, sizeof(optval)) ==-1){
-		LM_ERR("setsockopt: %s\n", strerror(errno));
-		goto error;
+	if (addr->s.sa_family==AF_INET){
+		/* If pmtu_discovery=1 then set DF bit and do Path MTU discovery
+		 * disabled by default.  Specific to IPv4. */
+		optval= (pmtu_discovery) ? IP_PMTUDISC_DO : IP_PMTUDISC_DONT;
+		if(setsockopt(sock_info->socket, IPPROTO_IP, IP_MTU_DISCOVER,
+				(void*)&optval, sizeof(optval)) ==-1){
+			LM_ERR("setsockopt: %s\n", strerror(errno));
+			goto error;
+		}
+	} else if (addr->s.sa_family==AF_INET6){
+		/* Since IPv6 never fragments but sends ICMPv6 Packet too Big,
+		 * we always want to benefit from kernel Path MTU knowledge;
+		 * especially because our sockets are unconnected and cannot
+		 * learn this for themselves.  Details in Issue #3119.  */
+		optval= IPV6_PMTUDISC_WANT;
+		if(setsockopt(sock_info->socket, IPPROTO_IPV6,
+				IPV6_MTU_DISCOVER,
+				(void*)&optval, sizeof(optval)) ==-1){
+			LM_ERR("setsockopt: %s\n", strerror(errno));
+			goto error;
+		}
 	}
 #endif
 
