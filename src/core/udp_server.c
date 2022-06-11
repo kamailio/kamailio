@@ -329,12 +329,22 @@ int udp_init(struct socket_info* sock_info)
 	}
 
 #if defined (__OS_linux) && defined(UDP_ERRORS)
+	/* Ask for the ability to recvmsg (...,MSG_ERRQUEUE) for immediate
+	 * resend when hitting Path MTU limits. */
 	optval=1;
 	/* enable error receiving on unconnected sockets */
-	if(setsockopt(sock_info->socket, SOL_IP, IP_RECVERR,
+	if (addr->s.sa_family==AF_INET){
+		if(setsockopt(sock_info->socket, SOL_IP, IP_RECVERR,
 					(void*)&optval, sizeof(optval)) ==-1){
-		LM_ERR("setsockopt: %s\n", strerror(errno));
-		goto error;
+			LM_ERR("setsockopt: %s\n", strerror(errno));
+			goto error;
+		}
+	} else if (addr->s.sa_family==AF_INET6){
+		if(setsockopt(sock_info->socket, SOL_IPV6, IPV6_RECVERR,
+					(void*)&optval, sizeof(optval)) ==-1){
+			LM_ERR("setsockopt: %s\n", strerror(errno));
+			goto error;
+		}
 	}
 #endif
 #if defined (__OS_linux)
