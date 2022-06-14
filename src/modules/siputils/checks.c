@@ -48,6 +48,8 @@
 #include "../../core/mod_fix.h"
 #include "checks.h"
 
+extern int e164_max_len;
+
 /**
  * return 1 (true) if the SIP message type is request
  */
@@ -661,7 +663,7 @@ int siputils_e164_check(str* _user)
 	int i;
 	char c;
 
-	if ((_user->len > 2) && (_user->len < 17) && ((_user->s)[0] == '+')) {
+	if ((_user->len > 2) && (_user->len <= e164_max_len) && ((_user->s)[0] == '+')) {
 		for (i = 1; i < _user->len; i++) {
 			c = (_user->s)[i];
 			if (c < '0' || c > '9') return -1;

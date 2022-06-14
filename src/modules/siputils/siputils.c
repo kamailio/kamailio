@@ -89,6 +89,9 @@ str rpid_suffix = {DEF_RPID_SUFFIX, sizeof(DEF_RPID_SUFFIX) - 1};
 /*! Definition of AVP containing rpid value */
 char* rpid_avp_param = DEF_RPID_AVP;
 
+/* max length for e164 number including the leading '+' */
+int e164_max_len = 16;
+
 /* for options functionality */
 str opt_accept = str_init(ACPT_DEF);
 str opt_accept_enc = str_init(ACPT_ENC_DEF);
@@ -217,6 +220,7 @@ static param_export_t params[] = {
 	{"rpid_prefix",             PARAM_STR, &rpid_prefix  },
 	{"rpid_suffix",             PARAM_STR, &rpid_suffix  },
 	{"rpid_avp",                PARAM_STRING, &rpid_avp_param },
+	{"e164_max_len",            PARAM_INT, &e164_max_len },
 	{0, 0, 0}
 };
 
