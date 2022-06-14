@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<section id="tls.functions">
+	<sectioninfo>
+	</sectioninfo>
+
+	<title>Functions</title>
+
+	<section id="tls.f.is_peer_verfied">
+		<title><function>is_peer_verified()</function></title>
+		<para>
+			Returns true if the connection on which the message was received
+			is TLS, the peer presented an X509 certificate and the
+			certificate chain verified ok.
+		</para>
+		<para>
+			It can be used only in a request route.
+		</para>
+		<example>
+			<title><function>is_peer_verified</function> usage</title>
+			<programlisting>
+...
+	if (proto==TLS &amp;&amp; !is_peer_verified()) {
+		sl_send_reply("400", "No certificate or verification failed");
+		exit;
+	}
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="tls.f.tls_set_connect_server_id">
+		<title><function>tls_set_connect_server_id(srvid)</function></title>
+		<para>
+			Set the server id of the tls profile to be used by next client
+			connect, being reset after use. It is an alternative to the use
+			of xavp to specify server id of a client profile for the cases
+			when xavps are no longer available (e.g., after
+			event_route[tm:local-request]).
+		</para>
+		<para>
+			If the parameter is an empty string, then the value is reset.
+		</para>
+		<para>
+			It can be used only in ANY_ROUTE.
+		</para>
+		<example>
+			<title><function>tls_set_connect_server_id</function> usage</title>
+			<programlisting>
+...
+    tls_set_connect_server_id("clientone");
+...
+</programlisting>
+		</example>
+	</section>
+</section>
