@@ -3854,6 +3854,9 @@ static void yyerror_at(struct cfg_pos* p, char* format, ...)
 		LM_CRIT("parse error in config file %s, line %d, column %d: %s\n",
 					p->fname, p->s_line, p->s_col, s);
 	cfg_errors++;
+	if(ksr_all_errors==0) {
+		ksr_exit(-1);
+	}
 }
 
 
