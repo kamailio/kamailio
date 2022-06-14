@@ -244,6 +244,21 @@ modparam("auth", "rpid_avp", "$avp(myrpid)")
 		</programlisting>
 		</example>
 	</section>
+	<section id="siputils.p.e164_max_len">
+		<title><varname>e164_max_len</varname> (int)</title>
+		<para>
+		The maximum length for checking e164 numbers, including the leading '+'.
+		</para>
+		<para>
+		Default value is <quote>16</quote>.
+		</para>
+		<example>
+		<title>e164_max_len parameter example</title>
+		<programlisting format="linespecific">
+modparam("siputils", "e164_max_len", 20)
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>
