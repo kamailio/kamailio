@@ -64,7 +64,7 @@ enum nc_check_ret{
 
 /* check if nonce-count nc w/ index i is expected/valid and record its
  * value */
-enum nc_check_ret nc_check_val(nid_t i, unsigned pool, unsigned int nc);
+enum nc_check_ret nc_check_val(nid_t i, unsigned pool, unsigned int nc, int update);
 
 /* re-init the stored nc for nonce id in pool pool_no */
 nid_t nc_new(nid_t id, unsigned char pool_no);

@@ -307,7 +307,7 @@ static inline int l8hex2int(char* _s, unsigned int *_r)
  *          6 - nonce reused
  */
 int check_nonce(auth_body_t* auth, str* secret1, str* secret2,
-		struct sip_msg* msg)
+		struct sip_msg* msg, int update_nonce)
 {
 	str * nonce;
 	int since, b_nonce2_len, b_nonce_len, cfg;
@@ -418,7 +418,7 @@ if (!memcmp(&b_nonce.n.md5_1[0], &b_nonce2.n.md5_1[0], 16)) {
 			LM_ERR("bad nc value %.*s\n", auth->digest.nc.len, auth->digest.nc.s);
 			return 5; /* invalid nc */
 		}
-		switch(nc_check_val(n_id, pf & NF_POOL_NO_MASK, nc)){
+		switch(nc_check_val(n_id, pf & NF_POOL_NO_MASK, nc, update_nonce)){
 			case NC_OK:
 				/* don't perform extra checks or one-time nonce checks
 				 * anymore, if we have nc */

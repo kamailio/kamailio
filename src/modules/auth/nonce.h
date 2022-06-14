@@ -219,7 +219,7 @@ int calc_nonce(char* nonce, int* nonce_len, int cfg, int since, int expires,
  * Check nonce value received from UA
  */
 int check_nonce(auth_body_t* auth, str* secret1, str* secret2,
-					struct sip_msg* msg);
+					struct sip_msg* msg, int update_nonce);
 
 
 
