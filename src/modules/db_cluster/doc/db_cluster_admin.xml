@@ -204,9 +204,10 @@ modparam("db_cluster", "max_query_length", 5)
 		<programlisting format="linespecific">
 ...
 modparam("db_cluster", "connection",
-             "c1=&gt;&defaultdb;1")
+             "c1=&gt;mysql://kamailio:kamailiorw@localhost/kamailio1")
 modparam("db_cluster", "connection",
-             "c2=&gt;&defaultdb;2")
+             "c2=&gt;mysql://kamailio:kamailiorw@remotehost/kamailio2")
+
 modparam("db_cluster", "cluster", "k1=&gt;c1=9r9p;c2=9r9p")
 
 modparam("acc", "db_url", "cluster://k1")
