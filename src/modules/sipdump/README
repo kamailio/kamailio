@@ -320,7 +320,7 @@ modparam("rtimer", "timer", "name=tjobs;interval=300;mode=1;")
 modparam("rtimer", "exec", "timer=tjobs;route=TCLEAN")
 ...
 route[TCLEAN] {
-    exec_cmd("find /tmp -type f -name kamailio-sipdump-* -mtime +1 -delete &");
+    exec_cmd("find /tmp -type f -name kamailio-sipdump-* -mtime +2 -delete &");
 }
 ...
 

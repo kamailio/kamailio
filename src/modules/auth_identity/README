@@ -25,7 +25,7 @@ Gergely Kovacs
               5.6. callid_cache_limit (integer)
               5.7. certificate_cache_limit (integer)
               5.8. cainfo_path (string)
-              5.9. accept_pem_certs ([0|1])
+              5.9. accept_pem_certs (int)
 
         6. Functions
 
@@ -91,7 +91,7 @@ Chapter 1. Admin Guide
         5.6. callid_cache_limit (integer)
         5.7. certificate_cache_limit (integer)
         5.8. cainfo_path (string)
-        5.9. accept_pem_certs ([0|1])
+        5.9. accept_pem_certs (int)
 
    6. Functions
 
@@ -174,7 +174,7 @@ Chapter 1. Admin Guide
    5.6. callid_cache_limit (integer)
    5.7. certificate_cache_limit (integer)
    5.8. cainfo_path (string)
-   5.9. accept_pem_certs ([0|1])
+   5.9. accept_pem_certs (int)
 
 5.1. privatekey_path (string)
 
@@ -296,11 +296,12 @@ modparam("auth_identity","certificate_cache_limit",4096)
 modparam("auth_identity","cainfo_path","/etc/ssl/certs/ca-certificates.crt")
 ...
 
-5.9. accept_pem_certs ([0|1])
+5.9. accept_pem_certs (int)
 
    Note: this parameter is for verifier service.
 
    Enables the acquired certificate processing if it is in PEM format.
+   Value can be 0 or 1.
 
    This parameter is optional. The default value is "0".
 
