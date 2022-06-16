@@ -164,7 +164,7 @@ static int tls_bio_mbuf_free(BIO* b)
 		struct tls_bio_mbuf_data* d;
 		d = wolfSSL_BIO_get_data(b);
 		if (likely(d)) {
-			OPENSSL_free(d);
+			wolfSSL_OPENSSL_free(d);
 			wolfSSL_BIO_set_data(b, NULL);
 			wolfSSL_BIO_set_init(b, 0);
 		}

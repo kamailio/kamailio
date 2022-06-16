@@ -32,16 +32,6 @@
 #include "../../core/ip_addr.h"
 #include "tls_domain.h"
 
-/* openssl < 1. 0 */
-#ifndef OPENSSL_NO_KRB5
-/* enable workarround for openssl kerberos wrong malloc bug
- * (kssl code uses libc malloc/free/calloc instead of OPENSSL_malloc &
- * friends)*/
-#define TLS_KSSL_WORKARROUND
-extern int openssl_kssl_malloc_bug; /* is openssl bug #1467 present ? */
-#endif
-
-
 typedef struct sr_tls_methods_s {
 	const SSL_METHOD* TLSMethod;
 	int TLSMethodMin;

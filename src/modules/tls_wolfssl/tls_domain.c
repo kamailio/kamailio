@@ -45,21 +45,8 @@
 #include "tls_verify.h"
 
 /*
- * ECDHE is enabled only on OpenSSL 1.0.0e and later.
- * See http://www.openssl.org/news/secadv_20110906.txt
- * for details.
- * Also, copied from _ssl.c of Python for correct initialization.
- * Allow automatic ECDH curve selection (on OpenSSL 1.0.2+), or use
- * prime256v1 by default.  This is Apache mod_ssl's initialization
- * policy, so we should be safe. OpenSSL 1.1 has it enabled by default.
+ * needed for wolfSSL
  */
-
-#ifndef OPENSSL_NO_DH
-
-/*
- * not needed for OpenSSL 1.1.0+ and LibreSSL
- */
-#if !defined(SSL_CTX_set_dh_auto)
 static unsigned char dh3072_p[] = {
    0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xC9,0x0F,0xDA,0xA2,
    0x21,0x68,0xC2,0x34,0xC4,0xC6,0x62,0x8B,0x80,0xDC,0x1C,0xD1,
@@ -97,7 +84,6 @@ static unsigned char dh3072_p[] = {
 };
 
 static unsigned char dh3072_g[] = { 0x02 };
-#endif
 
 static void setup_dh(WOLFSSL_CTX *ctx)
 {
@@ -105,7 +91,6 @@ static void setup_dh(WOLFSSL_CTX *ctx)
  * not needed for OpenSSL 1.1.0+ and LibreSSL
  * DH_new() is deprecated in OpenSSL 3
  */
-#if !defined(SSL_CTX_set_dh_auto)
 	DH *dh;
 	BIGNUM *p;
 	BIGNUM *g;
@@ -131,11 +116,7 @@ static void setup_dh(WOLFSSL_CTX *ctx)
    wolfSSL_CTX_set_tmp_dh(ctx, dh);
 
    DH_free(dh);
-#else
-   SSL_CTX_set_dh_auto(ctx, 1);
-#endif
 }
-#endif
 
 
 /**
@@ -677,9 +658,7 @@ static int set_cipher_list(tls_domain_t* d)
 					tls_domain_str(d), cipher_list);
 			return -1;
 		}
-#ifndef OPENSSL_NO_DH
                 setup_dh(d->ctx[i]);
-#endif
 	}
 	return 0;
 }
@@ -885,8 +864,6 @@ static int tls_ssl_ctx_set_read_ahead(WOLFSSL_CTX* ctx, long val, void* unused)
 }
 
 
-#ifndef OPENSSL_NO_TLSEXT
-
 /**
  * @brief SNI callback function
  *
@@ -948,7 +925,6 @@ static int tls_server_name_cb(SSL *ssl, int *ad, void *private)
 	LM_DBG("tls_server_name_cb return SSL_TLSEXT_ERR_OK");
 	return SSL_TLSEXT_ERR_OK;
 }
-#endif
 
 
 /**
@@ -1015,7 +991,6 @@ static int ksr_tls_fix_domain(tls_domain_t* d, tls_domain_t* def)
 		}
 #endif	      
 
-#ifndef OPENSSL_NO_TLSEXT
 		/*
 		* check server domains for server_name extension and register
 		* callback function
@@ -1037,17 +1012,14 @@ static int ksr_tls_fix_domain(tls_domain_t* d, tls_domain_t* def)
 				return -1;
 			}
 		}
-#endif
 	}
 
-#ifndef OPENSSL_NO_TLSEXT
 	if ((d->type & TLS_DOMAIN_SRV)
 			&& (d->server_name.len>0 || (d->type & TLS_DOMAIN_DEF))) {
 		LM_NOTICE("registered server_name callback handler for socket "
 			"[%s:%d], server_name='%s' ...\n", ip_addr2a(&d->ip), d->port,
 			(d->server_name.s)?d->server_name.s:"<default>");
 	}
-#endif
 
 	if (load_cert(d) < 0) return -1;
 	if (load_ca_list(d) < 0) return -1;
@@ -1192,21 +1164,12 @@ int tls_fix_domains_cfg(tls_domains_cfg_t* cfg, tls_domain_t* srv_defaults,
 	}
 	/* only in >= 1.0.0 */
 
-#ifndef OPENSSL_NO_BUF_FREELISTS
 	if (tls_foreach_CTX_in_cfg(cfg, tls_ssl_ctx_set_freelist,
 								ssl_freelist_max_len, 0) < 0) {
 		ERR("invalid ssl_freelist_max_len value (%d)\n",
 				ssl_freelist_max_len);
 		return -1;
 	}
-#endif
-
-#if defined (OPENSSL_NO_BUF_FREELISTS)
-	if (ssl_freelist_max_len >= 0)
-		ERR("cannot change openssl freelist_max_len, openssl too old"
-				"(needed at least 1.0.0) or compiled without freelist support"
-				" (OPENSSL_NO_BUF_FREELIST)\n");
-#endif
 
 	/* only in >= 0.9.9 */
 	if (tls_foreach_CTX_in_cfg(cfg, tls_ssl_ctx_set_max_send_fragment,

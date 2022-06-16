@@ -940,14 +940,14 @@ static int get_comp(str* res, int local, int issuer, int nid, sip_msg_t* msg)
 	res->s = buf;
 	res->len = text_len;
 
-	OPENSSL_free(text_s);
+	wolfSSL_OPENSSL_free(text_s);
 	if (!local) X509_free(cert);
 	tcpconn_put(c);
 	return 0;
 
  err:
-	if (text_s) OPENSSL_free(text_s);
-	if (!local) X509_free(cert);
+	if (text_s) wolfSSL_OPENSSL_free(text_s);
+	if (!local) wolfSSL_X509_free(cert);
 	tcpconn_put(c);
 	return -1;
 }
@@ -1173,15 +1173,6 @@ static int sel_cert(str* res, select_t* s, struct sip_msg* msg)
 }
 
 
-#ifdef OPENSSL_NO_TLSEXT
-static int get_tlsext_sn(str* res, sip_msg_t* msg)
-{
-	ERR("TLS extension 'server name' is not available! "
-		"please install openssl with TLS extension support and recompile "
-		"the server\n");
-	return -1;
-}
-#else
 static int get_tlsext_sn(str* res, sip_msg_t* msg)
 {
 	static char buf[1024];
@@ -1231,7 +1222,6 @@ error:
 	if (c) tcpconn_put(c);
 	return -1;
 }
-#endif
 
 
 static int sel_tlsext_sn(str* res, select_t* s, sip_msg_t* msg)
