@@ -1,0 +1,367 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+	"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
+	[ <!ENTITY % local.common.attrib
+	 "xmlns:xi CDATA #FIXED 'http://www.w3.org/2001/XInclude'">
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<book id="tls" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <bookinfo>
+	<title>TLS Module</title>
+	<authorgroup>
+		<author>
+		<firstname>Andrei</firstname>
+		<surname>Pelinescu-Onciul</surname>
+		<affiliation><orgname>iptelorg GmbH</orgname></affiliation>
+		<address>
+			<email>andrei@iptel.org</email>
+		</address>
+		</author>
+		<author>
+		<firstname>Carsten</firstname>
+		<surname>Bock</surname>
+		<affiliation><orgname>ng-voice GmbH</orgname></affiliation>
+		<address>
+			<email>carsten@ng-voice.com</email>
+		</address>
+		</author>
+		<author>
+		<firstname>Olle E.</firstname>
+		<surname>Johansson</surname>
+		<affiliation><orgname>Edvina AB</orgname></affiliation>
+		<address>
+			<email>oej@edvina.net</email>
+		</address>
+		</author>
+	</authorgroup>
+	<copyright>
+		<year>2007</year>
+		<holder>iptelorg GmbH</holder>
+	</copyright>
+	<copyright>
+		<year>2014</year>
+		<holder>ng-voice GmbH</holder>
+	</copyright>
+	</bookinfo>
+	<toc></toc>
+
+	<chapter>
+	<title>Admin Guide</title>
+	<section id="tls.overview">
+		<title>Overview</title>
+		<para>
+			This module implements the TLS transport for &kamailio;
+			using the <ulink url="http://www.openssl.org">OpenSSL library</ulink>
+			(http://www.openssl.org). To enable the &kamailio; TLS support this
+			module must be loaded and <emphasis>enable_tls=yes</emphasis> core setting
+			must be added to the Kamailio config file.
+		</para>
+		<para>
+			IMPORTANT: the tls module must be loaded before any other &kamailio; module
+			that uses libssl (OpenSSL library). A safe option is to have the tls module
+			loaded first (be in the first "loadmodule" in &kamailio;.cfg).
+		</para>
+		<para>
+			IMPORTANT: using this module compiled with newer versions of libssl
+			(e.g., v1.1+) may require &kamailio; to be started with
+			<emphasis>--atexit=no</emphasis> command line parameters to avoid
+			calling C atexit callbacks inside the process ending during
+			daemonize procedure as well as during shut down, which can lead
+			to crashes because it destroys and then accesses shared memory. For
+			example, such case has been reported for Ubuntu 20.04 or RedHat 8.
+		</para>
+	</section>
+	<section id="tls.quick_start">
+		<title>Quick Start</title>
+		<para>
+		The default kamailio.cfg file has basic tls support included, it has to
+		be enabled with "#!define WITH_TLS" directive.
+		</para>
+		<para>
+		The most important parameters to set the path to the public certificate and private key
+		files. You can either have them in different file or in the same file in PEM format.
+		The parameters for them are <varname>certificate</varname> and <varname>private_key</varname>.
+		They can be given as modparam or or provided in the profiles of tls.cfg file.
+		</para>
+		<para>
+		When installing tls module of kamailio, a sample 'tls.cfg' file is deployed in the same
+		folder with 'kamailio.cfg', along with freshly generated self signed certificates.
+		</para>
+		<para>
+		HINT: be sure you have <emphasis>enable_tls=yes</emphasis> to your kamailio.cfg.
+		</para>
+		<example>
+		<title>Quick Start Basic Config</title>
+		<programlisting>
+#...
+loadmodule "sl.so"
+loadmodule "tls.so"
+
+modparam("tls", "private_key", "./server-test.pem")
+modparam("tls", "certificate", "./server-test.pem")
+modparam("tls", "ca_list", "./calist.pem")
+
+enable_tls=yes
+
+request_route {
+	if(proto != TLS) {
+		sl_send_reply("403", "Accepting TLS Only");
+		exit;
+	}
+	...
+}
+		</programlisting>
+		</example>
+	</section>
+
+	<section id="tls.notes">
+		<title>Important Notes</title>
+		<para>
+			The TLS module needs some special options enabled when compiling
+			Kamailio. These options are enabled by default, however in case
+			you're using a modified Kamailio version or Makefile, make sure
+			that you enable -DUSE_TLS and -DTLS_HOOKS (or compile with make
+			TLS_HOOKS=1 which will take care of both options).
+		</para>
+		<para>
+			To quickly check if your Kamailio version was compiled with these
+			options, run kamailio -V and look for USE_TLS and TLS_HOOKS among the flags.
+		</para>
+		<para>
+			For OpenSSL (libssl) v1.1.x, it is required to preload
+			'openssl_mutex_shared' library shipped by &kamailio;. For more details
+			see 'src/modules/tls/openssl_mutex_shared/README.md'.
+		</para>
+		<para>
+			This module includes several workarounds for various Openssl bugs
+			(like compression and Kerberos using the wrong memory allocations
+			functions, low memory problems a.s.o). On startup it will try to enable 
+			the needed workarounds based on the OpenSSL library version. Each time
+			a known problem is detected and a workaround is enabled, a message will
+			be logged. In general it is recommended to compile this module on the
+			same machine or a similar machine to where kamailio will be run or to
+			link it statically with <emphasis>libssl</emphasis>. For example if on
+			the compile machine OpenSSL does not have the Kerberos support enabled,
+			but on the target machine a Kerberos enabled OpenSSL library is installed,
+			Kamailio cannot apply the needed workarounds and will refuse to start.
+			The same thing will happen if the OpenSSL versions are too different
+			(to force Kamailio startup anyway, see the <varname>tls_force_run</varname>
+			module parameter).
+		</para>
+		<para>
+			Compression is fully supported if you have a new enough OpenSSL version
+			(starting with 0.9.8). Although there are some problems with zlib compression
+			in currently deployed OpenSSL versions (up to and including 0.9.8d, see
+			openssl bug #1468), the TLS module will automatically switch to its own fixed version.
+			Note however that starting with &kamailio; 3.1 compression is not enabled by
+			default, due to the huge extra memory consumption that it causes (about 10x
+			more memory). To enable it use
+			<emphasis>modparam("tls", "tls_disable_compression", 0)</emphasis>
+ 			(see <varname>tls_disable_compression</varname>).
+		</para>
+		<para>
+			The TLS module includes workarounds for the following known openssl bugs: 
+			<itemizedlist>
+                        <listitem><para>
+			openssl #1204 (disable SS_OP_TLS_BLOCK_PADDING_BUG if compression is enabled,
+			for versions between 0.9.8 and 0.9.8c),
+                        </para></listitem>
+                        <listitem><para>
+			openssl #1468 (fix zlib compression memory allocation),
+                        </para></listitem>
+                        <listitem><para>
+			openssl #1467 (kerberos support will be disabled if the openssl version is less than 0.9.8e-beta1) 
+                        </para></listitem>
+                        <listitem><para>
+			openssl #1491 (stop using tls in low memory situations due to the very high risk of openssl crashing or leaking memory).
+                        </para></listitem>
+			</itemizedlist>
+			The bug reports can be viewed at <ulink url="http://rt.openssl.org/">http://rt.openssl.org/</ulink>.
+		</para>
+	</section>
+
+
+	<section id="tls.compile">
+		<title>Compiling the TLS Module</title>
+		<para>
+			In most case compiling the TLS module is as simple as:
+			<programlisting>
+make -C modules/tls
+			</programlisting>
+			or
+			<programlisting>
+make modules modules=modules/tls
+			</programlisting>
+			or (compiling whole Kamailio and the tls module)
+			<programlisting>
+make all include_modules=tls
+			</programlisting>
+			.
+		</para>
+		<para>
+			However in some cases the OpenSSL library requires linking with other libraries.
+			For example compiling the OpenSSL library with Kerberos and zlib-shared support
+			will require linking the TLS module with libkrb5 and libz. In this case just add
+			<emphasis>TLS_EXTRA_LIBS</emphasis>="library list" to make's command line. E.g.:
+			<programlisting>
+make TLS_EXTRA_LIBS="-lkrb5 -lz" all include_modules=tls
+			</programlisting>
+		</para>
+		<para>
+			In general, if Kamailio fails to start with a symbol not found error when trying
+			to load the TLS module (check the log), it means some needed library was not
+			linked and it must be added to <emphasis>TLS_EXTRA_LIBS</emphasis>
+		</para>
+		<para>
+		<ulink url="http://wiki.openssl.org/index.php/Elliptic_Curve_Diffie_Hellman">
+		Elliptic Curve Diffie-Hellman (EDCH)</ulink>-Ciphers are only supported in OpenSSL 1.0.0e and later.
+		</para>
+	</section>
+
+	<section id="tls.low_memory">
+		<title>TLS and Low Memory</title>
+		<para>
+			The Openssl library doesn't handle low memory situations very well. If memory
+			allocations start to fail (due to memory shortage), Openssl can crash or cause memory
+			leaks (making the memory shortage even worse). As of this writing all Openssl versions
+			were affected (including 0.9.8e), see Openssl bug #1491. The TLS module has some
+			workarounds for preventing this problem (see <varname>low_mem_treshold1</varname>
+			and <varname>low_mem_threshold2</varname>), however starting Kamailio with enough shared
+			memory is higly recommended. When this is not possible a quick way to significantly
+			reduce Openssl memory usage it to  disable compression (see <varname>tls_disable_compression</varname>).
+		</para>
+	</section>
+
+	<section id="tls.debugging">
+		<title>TLS Debugging</title>
+		<para>
+			Debugging messages can be selectively enabled by recompiling
+			the TLS module with a combination of the following defines:
+			<itemizedlist>
+				<listitem>
+					<para>
+						TLS_WR_DEBUG - debug messages for the write/send part.
+					</para>
+				</listitem>
+				<listitem>
+					<para>
+						TLS_RD_DEBUG - debug messages for the read/receive
+						part.
+					</para>
+				</listitem>
+				<listitem>
+					<para>
+						TLS_BIO_DEBUG - debug messages for the custom BIO.
+					</para>
+				</listitem>
+			</itemizedlist>
+		</para>
+		<example>
+			<title>Compiling TLS with Debug Messages</title>
+			<programlisting>
+make -C modules/tls extra_defs="-DTLS_WR_DEBUG -DTLS_RD_DEBUG"
+			</programlisting>
+		</example>
+		<para>
+			To change the level at which the debug messages are logged,
+			change the <varname>tls_debug</varname> module parameter.
+		</para>
+	</section>
+
+	<section id="tls.known_limitations">
+		<title>Known Limitations</title>
+		<para>
+			The private key must not be encrypted (Kamailio cannot ask you for a password on startup).
+		</para>
+		<para>
+			The TLS certificate verifications ignores the certificate name, Subject Altname
+			and IP extensions, it just checks if the certificate is signed by a recognized CA.
+			One can use the select framework to try to overcome this limitation (check in the
+			script for the contents of various certificate fields), but this is not only slow,
+			but also not exactly standard conforming (the verification should happen during TLS
+			connection establishment and not after).
+		</para>
+		<para>
+			TLS specific config reloading is not safe, so for now better don't use it,
+			especially under heavy traffic.
+		</para>
+		<para>
+			This documentation is incomplete.
+			The provided selects are not documented in this file. A list with all the
+			ones implemented by the TLS module can be found in the Cookbook
+			<ulink url="&kamwiki;">&kamwiki;</ulink> in the section
+			<emphasis>Selects</emphasis> for the respective version of &kamailio;.
+		</para>
+	</section>
+
+	<xi:include href="certs_howto.xml"/>
+	<xi:include href="hsm_howto.xml"/>
+	<xi:include href="params.xml"/>
+	<xi:include href="functions.xml"/>
+	<xi:include href="rpc.xml"/>
+	<xi:include href="history.xml"/>
+
+	<section id="tls.event_routes">
+		<title>Event Routes</title>
+		<section id="tls.evrt.connection_out">
+		<title>event_route[tls:connection-out]</title>
+		<para>
+			Event route to be executed when a TLS connection is opened by
+			&kamailio;. If drop() is executed in the event route, then the
+			data is no longer sent over the connection.
+		</para>
+	<example>
+	    <title>Use of <varname>event_route[tls:connection-out]</varname></title>
+	    <programlisting>
+...
+event_route[tls:connection-out] {
+  if($sndto(ip)=="1.2.3.4") {
+    drop;
+  }
+}
+...
+	    </programlisting>
+	</example>
+
+		</section>
+	</section>
+	<section id="tls.dbstorage">
+		<title>TLS With Database Backend</title>
+		<para>
+		The module does not connect to database to fetch the values for the
+		TLS profile attributes. However the 'kamcli' tool can generate the tls.cfg
+		from a database table. Once generated, the 'tls.cfg' can be reloaded with
+		an RPC command.
+		</para>
+		<para>
+		The kamcli tool can be found at <ulink url="https://github.com/kamailio/kamcli">https://github.com/kamailio/kamcli</ulink>.
+		</para>
+		<para>
+		The schema to create the database table can be seen with the command: "kamcli tls sqlprint".
+		The default name for database table is 'tlscfg'.
+		</para>
+		<para>
+		The most of the column names matches the corresponding attribute names
+		from a TLS profile.
+		</para>
+		<para>
+		The profile id in 'tls.cfg' is generated from '[profile_type:profile_name]'.
+		The 'profile_type' has to be 'server' or 'client'. The 'profile_name'
+		can be 'default', 'any' or the pair of IP address and port like 'ipaddr:port'.
+		</para>
+		<para>
+		The 'file_type' is specifying if the values for 'certificate', 'private_key',
+		'ca_list' and 'crl' are path to files on disc (when is set to 0) or the
+		content of the files (when set to 1). If 'file_type' is 1, then 'kamcli'
+		will create new files on disc and store the values from the database in
+		them. The target folder for 'tls.cfg' and the certificates related files
+		can be set via command options for 'kamcli tls', for more details see
+		the output of 'kamcli tls --help' and 'kamcli tls cfgprint --help'.
+		</para>
+	</section>
+	</chapter>
+</book>
+

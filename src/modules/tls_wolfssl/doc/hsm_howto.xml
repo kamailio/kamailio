@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<section id="tls.hsm_howto" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+    </sectioninfo>
+
+	<title>HSM Howto</title>
+		<para>
+			This documents OpenSSL engine support for private keys in HSM. 
+		</para>
+		<para>
+		        Assumptions: an OpenSSL engine configured with private key. We still require the certificate file
+			and list of CA certificates per a regular TLS configuration.
+		</para>
+		<para>
+		<programlisting>
+Thales Luna Example
+--------------------
+
+...
+# Example for Thales Luna
+modparam("tls", "engine", "gem")
+modparam("tls", "engine_config", "/usr/local/etc/kamailio/thales.cnf")
+modparam("tls", "engine_algorithms", "EC")
+...
+
+/usr/local/etc/kamailio/thales.cnf is a OpenSSL config format file used to
+bootstrap the engine, e.g., pass the PIN.
+
+...
+# the key kamailio is mandatory
+kamailio = openssl_init
+
+[ openssl_init ]
+engines = engine_section
+
+[ engine_section ]
+# gem is the name of the Thales Luna OpenSSL engine
+gem = gem_section
+
+[ gem_section ]
+# from Thales documentation
+dynamic_path = /usr/lib64/engines-1.1/gem.so
+ENGINE_INIT = 0:20:21:password=1234-ABCD-5678-EFGH
+...
+
+
+Thales nShield Connect
+----------------------
+
+Place holder
+		</programlisting>
+		</para>
+
+
+</section>
