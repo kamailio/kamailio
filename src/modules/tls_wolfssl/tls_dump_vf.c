@@ -36,7 +36,7 @@
 #include <wolfssl/options.h>
 #include <wolfssl/ssl.h>
 #include "../../core/dprint.h"
-#include "tls_mod.h"
+#include "tls_wolfssl_mod.h"
 #include "tls_cfg.h"
 
 /** log the verification failure reason.

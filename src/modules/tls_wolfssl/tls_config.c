@@ -25,7 +25,7 @@
 
 #include "tls_config.h"
 #include "tls_domain.h"
-#include "tls_mod.h"
+#include "tls_wolfssl_mod.h"
 #include "tls_util.h"
 
 #include "../../core/cfg_parser.h"

@@ -32,7 +32,7 @@
 #include "../../core/mem/shm_mem.h"
 #include "../../core/globals.h"
 #include "../../core/dprint.h"
-#include "tls_mod.h"
+#include "tls_wolfssl_mod.h"
 #include "tls_util.h"
 
 

@@ -23,8 +23,8 @@
 
 
 
-#ifndef _TLS_MOD_H
-#define _TLS_MOD_H
+#ifndef _TLS_WOLFSSL_MOD_H
+#define _TLS_WOLFSSL_MOD_H
 
 #include "../../core/str.h"
 #include "../../core/locking.h"
@@ -42,4 +42,4 @@ extern str tls_domains_cfg_file;
 
 extern int sr_tls_renegotiation;
 
-#endif /* _TLS_MOD_H */
+#endif /* _TLS_WOLFSSL_MOD_H */

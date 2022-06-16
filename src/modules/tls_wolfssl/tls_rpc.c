@@ -32,7 +32,7 @@
 #include "../../core/cfg/cfg.h"
 #include "../../core/dprint.h"
 #include "tls_init.h"
-#include "tls_mod.h"
+#include "tls_wolfssl_mod.h"
 #include "tls_domain.h"
 #include "tls_config.h"
 #include "tls_util.h"

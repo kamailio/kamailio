@@ -46,11 +46,11 @@
 #include "../../core/strutils.h"
 #include "tls_server.h"
 #include "tls_select.h"
-#include "tls_mod.h"
+#include "tls_wolfssl_mod.h"
 #include "tls_init.h" /* features macros */
 #include "tls_cfg.h"
 
-// CERT_REVOKED is already defined by wolfSSL 
+// CERT_REVOKED is already defined by wolfSSL
 enum {
 	CERT_LOCAL = 1,   /* Select local certificate */
 	CERT_PEER,        /* Select peer certificate */

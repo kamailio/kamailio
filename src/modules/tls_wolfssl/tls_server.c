@@ -56,7 +56,7 @@
 #include "tls_init.h"
 #include "tls_domain.h"
 #include "tls_util.h"
-#include "tls_mod.h"
+#include "tls_wolfssl_mod.h"
 #include "tls_server.h"
 #include "tls_select.h"
 #include "tls_bio.h"

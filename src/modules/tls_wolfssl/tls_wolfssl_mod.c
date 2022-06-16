@@ -51,7 +51,7 @@
 #include "tls_config.h"
 #include "tls_rpc.h"
 #include "tls_util.h"
-#include "tls_mod.h"
+#include "tls_wolfssl_mod.h"
 #include "tls_cfg.h"
 #include "tls_rand.h"
 
