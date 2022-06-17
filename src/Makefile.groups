@@ -404,7 +404,7 @@ module_group_kmemcached=$(mod_list_memcached)
 module_group_ktls_basic=$(mod_list_tlsdeps)
 
 # pkg tls module with curl
-module_group_ktls=$(mod_list_tlsdeps) $(mod_list_tlsdeps_curl)
+module_group_ktls=$(mod_list_tlsdeps) $(mod_list_tlsdeps_curl) $(mod_list_tlsa)
 
 # pkg tlsa module
 module_group_ktlsa=$(mod_list_tlsa)
