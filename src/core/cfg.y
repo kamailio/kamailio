@@ -333,6 +333,8 @@ extern char *default_routename;
 %token STRNAME
 %token ALIAS
 %token SR_AUTO_ALIASES
+%token DOMAIN
+%token SR_AUTO_DOMAINS
 %token DNS
 %token REV_DNS
 %token DNS_TRY_IPV6
@@ -1737,8 +1739,22 @@ assign_stm:
 		free_socket_id_lst($3);
 	}
 	| ALIAS  EQUAL error  { yyerror("hostname expected"); }
+	| DOMAIN EQUAL  id_lst {
+		for(lst_tmp=$3; lst_tmp; lst_tmp=lst_tmp->next){
+			add_alias(	lst_tmp->addr_lst->name,
+						strlen(lst_tmp->addr_lst->name),
+						lst_tmp->port, lst_tmp->proto);
+			for (nl_tmp=lst_tmp->addr_lst->next; nl_tmp; nl_tmp=nl_tmp->next)
+				add_alias(nl_tmp->name, strlen(nl_tmp->name),
+							lst_tmp->port, lst_tmp->proto);
+		}
+		free_socket_id_lst($3);
+	}
+	| DOMAIN  EQUAL error  { yyerror("hostname expected"); }
 	| SR_AUTO_ALIASES EQUAL NUMBER { sr_auto_aliases=$3; }
 	| SR_AUTO_ALIASES EQUAL error  { yyerror("boolean value expected"); }
+	| SR_AUTO_DOMAINS EQUAL NUMBER { sr_auto_aliases=$3; }
+	| SR_AUTO_DOMAINS EQUAL error  { yyerror("boolean value expected"); }
 	| ADVERTISED_ADDRESS EQUAL listen_id {
 		if ($3){
 			default_global_address.s=$3;
