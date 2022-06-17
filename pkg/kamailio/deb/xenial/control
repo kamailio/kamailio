@@ -50,7 +50,6 @@ Build-Depends:
  libunistring-dev,
  libval-dev,
  libxml2-dev,
- libxmlrpc-core-c3-dev,
  openssl,
  pkg-config,
  python,
