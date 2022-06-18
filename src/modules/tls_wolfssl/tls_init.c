@@ -216,26 +216,49 @@ static void* ser_realloc(void *ptr, size_t size, const char* file, int line)
 
 #else /*TLS_MALLOC_DBG */
 
+// up align memory allocations to 16 bytes for
+// wolfSSL --enable-aligndata=yes (the default)
+static const int MAX_ALIGN = __alignof__(max_align_t);
 
-static void* ser_malloc(size_t size, const char *fname, int fline)
+static void* ser_malloc(size_t size)
 {
-	return shm_malloc(size);
+	char* ptr =  shm_malloc(size + 2*MAX_ALIGN);
+	int pad = MAX_ALIGN - ((long) ptr % MAX_ALIGN);
+
+	*(size_t*)ptr = size;
+
+	memset(ptr + MAX_ALIGN, pad, pad);
+	return ptr + MAX_ALIGN + pad;
 }
 
-
-static void* ser_realloc(void *ptr, size_t size, const char *fname, int fline)
+static void* ser_realloc(void *ptr, size_t new_size)
 {
-	return shm_realloc(ptr, size);
-}
+	if(!ptr) return ser_malloc(new_size);
 
-static void ser_free(void *ptr, const char *fname, int fline)
+	int pad = *((unsigned char*)ptr - 1);
+	unsigned char *real_ptr = (unsigned char*)ptr - pad - MAX_ALIGN;
+	int size = *(size_t*)real_ptr;
+
+	char *new_ptr = shm_realloc(real_ptr, new_size+2*MAX_ALIGN);
+	*(size_t*)new_ptr = new_size;
+	int new_pad = MAX_ALIGN - ((long) new_ptr % MAX_ALIGN);
+	if (new_pad != pad) {
+		memmove(new_ptr + MAX_ALIGN + new_pad, new_ptr + MAX_ALIGN + pad, size);
+		memset(new_ptr + MAX_ALIGN, new_pad, new_pad);
+	}
+		
+	return new_ptr + MAX_ALIGN + new_pad;
+}
+#endif /* LIBRESSL_VERSION_NUMBER */
+
+static void ser_free(void *ptr)
 {
 	if (ptr) {
-		shm_free(ptr);
+		int pad = *((unsigned char *)ptr - 1);
+		shm_free((unsigned char*)ptr - pad  - MAX_ALIGN);
 	}
 }
 
-#endif /* LIBRESSL_VERSION_NUMBER */
 
 /*
  * Initialize TLS socket
@@ -366,11 +389,7 @@ int tls_pre_init(void)
 	mf = NULL;
 	rf = NULL;
 	ff = NULL;
-#ifdef TLS_MALLOC_DBG
-	if (!CRYPTO_set_mem_ex_functions(ser_malloc, ser_realloc, ser_free)) {
-#else
-	if (!CRYPTO_set_mem_functions(ser_malloc, ser_realloc, ser_free)) {
-#endif
+	if (wolfSSL_SetAllocators(ser_malloc, ser_free, ser_realloc)) {
 		LM_ERR("Unable to set the memory allocation functions\n");
 		// CRYPTO_get_mem_functions(&mf, &rf, &ff);
 		LM_ERR("libssl current mem functions - m: %p r: %p f: %p\n",
@@ -412,107 +431,11 @@ int tls_h_mod_pre_init_f(void)
  */
 int tls_h_mod_init_f(void)
 {
-	/*struct socket_info* si;*/
-	long ssl_version;
-	const char *ssl_version_txt;
-	int low_mem_threshold1;
-	int low_mem_threshold2;
-	str tls_grp;
-	str s;
-	cfg_ctx_t* cfg_ctx;
-
 	if(tls_mod_initialized == 1) {
 		LM_DBG("already initialized\n");
 		return 0;
 	}
 	LM_DBG("initializing tls system\n");
-
-	ssl_version=wolfSSL_OpenSSL_version_num();
-	ssl_version_txt=wolfSSL_OpenSSL_version(OPENSSL_VERSION);
-
-	/* check if version have the same major minor and fix level
-	 * (e.g. 0.9.8a & 0.9.8c are ok, but 0.9.8 and 0.9.9x are not)
-	 * - values is represented as 0xMMNNFFPPS: major minor fix patch status
-	 *   0x00090705f == 0.9.7e release */
-	if ((ssl_version>>12)!=(OPENSSL_VERSION_NUMBER>>12)){
-		LM_CRIT("installed openssl library"
-				" version is too different from the library the " NAME " tls"
-				" module was compiled with: installed \"%s\" (0x%08lx),"
-				" compiled \"%s\" (0x%08lx).\n"
-				" Please make sure a compatible version is used"
-				" (tls_force_run in kamailio.cfg will override this check)\n",
-				ssl_version_txt, ssl_version,
-				OPENSSL_VERSION_TEXT, (long)OPENSSL_VERSION_NUMBER);
-		if (cfg_get(tls, tls_cfg, force_run))
-			LM_WARN("tls_force_run turned on, ignoring "
-					" openssl version mismatch\n");
-		else
-			return -1; /* safer to exit */
-	}
-
-	/* check kerberos support using compile flags only for version < 1.1.0 */
-
-	/* set free memory threshold for openssl bug #1491 workaround */
-	low_mem_threshold1 = cfg_get(tls, tls_cfg, low_mem_threshold1);
-	low_mem_threshold2 = cfg_get(tls, tls_cfg, low_mem_threshold2);
-	if (low_mem_threshold1<0){
-		/* default */
-		low_mem_threshold1=512*1024*get_max_procs();
-	}else
-		low_mem_threshold1*=1024; /* KB */
-	if (low_mem_threshold2<0){
-		/* default */
-		low_mem_threshold2=256*1024*get_max_procs();
-	}else
-		low_mem_threshold2*=1024; /* KB */
-
-#if 0
-	if ((low_mem_threshold1==0) || (low_mem_threshold2==0))
-	 LM_WARN("tls: openssl bug #1491 (crash/mem leaks on low memory)"
-				" workaround disabled\n");
-	else
-		LM_WARN("openssl bug #1491 (crash/mem leaks on low memory)"
-				" workaround enabled (on low memory tls operations will fail"
-				" preemptively) with free memory thresholds %d and %d bytes\n",
-				low_mem_threshold1, low_mem_threshold2);
-#endif
-
-	if (shm_available()==(unsigned long)(-1)){
-		LM_WARN(NAME " is compiled without MALLOC_STATS support:"
-				" the workaround for low mem. openssl bugs will _not_ "
-				"work\n");
-		low_mem_threshold1=0;
-		low_mem_threshold2=0;
-	}
-	if ((low_mem_threshold1 != cfg_get(tls, tls_cfg, low_mem_threshold1))
-			|| (low_mem_threshold2
-				!= cfg_get(tls, tls_cfg, low_mem_threshold2))) {
-		/* ugly hack to set the initial values for the mem tresholds */
-		if (cfg_register_ctx(&cfg_ctx, 0)) {
-			LM_ERR("failed to register cfg context\n");
-			return -1;
-		}
-		tls_grp.s = "tls";
-		tls_grp.len = strlen(tls_grp.s);
-		s.s = "low_mem_threshold1";
-		s.len = strlen(s.s);
-		if (low_mem_threshold1 != cfg_get(tls, tls_cfg, low_mem_threshold1) &&
-				cfg_set_now_int(cfg_ctx, &tls_grp, NULL /* group id */, &s,
-					low_mem_threshold1)) {
-			LM_ERR("failed to set tls.low_mem_threshold1 to %d\n",
-					low_mem_threshold1);
-			return -1;
-		}
-		s.s = "low_mem_threshold2";
-		s.len = strlen(s.s);
-		if (low_mem_threshold2 != cfg_get(tls, tls_cfg, low_mem_threshold2) &&
-				cfg_set_now_int(cfg_ctx, &tls_grp, NULL /* group id */, &s,
-					low_mem_threshold2)) {
-			LM_ERR("failed to set tls.low_mem_threshold1 to %d\n",
-					low_mem_threshold2);
-			return -1;
-		}
-	}
 
 	init_ssl_methods();
 	tls_mod_initialized = 1;

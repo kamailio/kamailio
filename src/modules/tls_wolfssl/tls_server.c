@@ -65,14 +65,6 @@
 
 int tls_run_event_routes(struct tcp_connection *c);
 
-/* low memory treshold for openssl bug #1491 workaround */
-#define LOW_MEM_NEW_CONNECTION_TEST() \
-	(cfg_get(tls, tls_cfg, low_mem_threshold1) && \
-		(shm_available_safe() < cfg_get(tls, tls_cfg, low_mem_threshold1)))
-#define LOW_MEM_CONNECTED_TEST() \
-	(cfg_get(tls, tls_cfg, low_mem_threshold2) && \
-		(shm_available_safe() <  cfg_get(tls, tls_cfg, low_mem_threshold2)))
-
 #define TLS_RD_MBUF_SZ	65536
 #define TLS_WR_MBUF_SZ	65536
 
@@ -238,12 +230,6 @@ static int tls_complete_init(struct tcp_connection* c)
 	str *sname = NULL;
 	str *srvid = NULL;
 
-	if (LOW_MEM_NEW_CONNECTION_TEST()){
-		ERR("tls: ssl bug #1491 workaround: not enough memory for safe"
-				" operation: shm=%lu threshold1=%d\n", shm_available_safe(),
-				cfg_get(tls, tls_cfg, low_mem_threshold1));
-		goto error2;
-	}
 	/* Get current TLS configuration and increase reference
 	 * count immediately.
 	 */
@@ -341,11 +327,6 @@ static int tls_fix_connection_unsafe(struct tcp_connection* c)
 		if (unlikely(tls_complete_init(c) < 0)) {
 			return -1;
 		}
-	}else if (unlikely(LOW_MEM_CONNECTED_TEST())){
-		ERR("tls: ssl bug #1491 workaround: not enough memory for safe"
-				" operation: shm=%lu threshold2=%d\n", shm_available_safe(),
-				cfg_get(tls, tls_cfg, low_mem_threshold2));
-		return -1;
 	}
 	return 0;
 }
@@ -371,12 +352,6 @@ static int tls_fix_connection(struct tcp_connection* c)
 				return ret;
 			}
 		lock_release(&c->write_lock);
-	}
-	if (unlikely(LOW_MEM_CONNECTED_TEST())){
-		ERR("tls: ssl bug #1491 workaround: not enough memory for safe"
-				" operation: shm=%lu threshold2=%d\n", shm_available_safe(),
-				cfg_get(tls, tls_cfg, low_mem_threshold2));
-		return -1;
 	}
 	return 0;
 }
@@ -575,12 +550,6 @@ static int tls_shutdown(struct tcp_connection *c)
 	 * if the connection is not fully initialized */
 	if (unlikely(tls_c->state != S_TLS_ESTABLISHED))
 		return 0;
-	if (unlikely(LOW_MEM_CONNECTED_TEST())){
-		ERR("tls: ssl bug #1491 workaround: not enough memory for safe"
-				" operation: shm=%lu threshold2=%d\n", shm_available_safe(),
-				cfg_get(tls, tls_cfg, low_mem_threshold2));
-		goto err;
-	}
 
 	ret = wolfSSL_shutdown(ssl);
 	if (ret == 1) {
