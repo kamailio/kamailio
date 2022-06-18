@@ -39,7 +39,7 @@ ifneq ($(CRYPTO_BUILDER),)
 	LIBS += $(shell $(CRYPTO_BUILDER) --libs-only-L)
 endif # ifneq ($(CRYPTO_BUILDER),)
 
-	LIBS += -l:libssl.a -l:libcrypto.a -l:libz.a -l:libdl.a
+	LIBS += -l:libssl.a -l:libcrypto.a -l:libz.a -ldl
 	# TODO: explore use of LIBS += -Wl,-Bstatic $(shell $(SSL_BUILDER) --libs-only-l)
 
 else
@@ -53,7 +53,7 @@ else # ifneq ($(SSL_BUILDER),)
 	DEFS += -I$(LOCALBASE)/ssl/include
 	LIBS += -L$(LOCALBASE)/lib -L$(LOCALBASE)/ssl/lib \
 			-L$(LOCALBASE)/lib64 -L$(LOCALBASE)/ssl/lib64 \
-			-l:libssl.a -l:libcrypto.a -l:libz.a -l:libdl.a
+			-l:libssl.a -l:libcrypto.a -l:libz.a -ldl
 endif # ifneq ($(SSL_BUILDER),)
 
 include ../../Makefile.modules

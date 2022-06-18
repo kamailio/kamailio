@@ -134,6 +134,16 @@ typedef struct socket_info {
 #endif /* USE_MCAST */
 } socket_info_t;
 
+typedef struct socket_attrs {
+	int bindproto;
+	str bindaddr;
+	int bindport;
+	str useaddr;
+	int useport;
+	str sockname;
+	int workers;
+	int sflags;
+} socket_attrs_t;
 
 /* send flags */
 typedef enum send_flags {

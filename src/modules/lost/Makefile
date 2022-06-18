@@ -16,6 +16,12 @@ XML2CFG=$(shell \
 		echo 'pkg-config libxml-2.0'; \
 	fi)
 endif
+CURL_BUILDER=$(shell \
+	if pkg-config --exists libcurl; then \
+		echo 'pkg-config libcurl'; \
+	else \
+		which curl-config; \
+	fi)
 endif
 
 ifneq ($(XML2CFG),)
@@ -24,6 +30,14 @@ ifneq ($(XML2CFG),)
 else
 	DEFS+=-I$(LOCALBASE)/include/libxml2 -I$(LOCALBASE)/include
 	LIBS+=-L$(LOCALBASE)/lib -lxml2
+endif
+
+ifneq ($(CURL_BUILDER),)
+	DEFS += $(shell $(CURL_BUILDER) --cflags )
+	LIBS += $(shell $(CURL_BUILDER) --libs)
+else
+	DEFS+=-I$(LOCALBASE)/include
+	LIBS+=-L$(LOCALBASE)/lib -lcurl
 endif
 
 include ../../Makefile.modules

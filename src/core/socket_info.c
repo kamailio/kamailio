@@ -1117,13 +1117,14 @@ error:
 
 
 /* adds a sock_info structure to the corresponding proto list
- * return  0 on success, -1 on error */
-int add_listen_advertise_iface_name(char* name, struct name_lst* addr_l,
+ * return last new socket info structur on success, NULL on error */
+socket_info_t* add_listen_socket_info(char* name, struct name_lst* addr_l,
 						unsigned short port, unsigned short proto,
 						char *usename, unsigned short useport, char *sockname,
 						enum si_flags flags)
 {
-	struct socket_info** list;
+	socket_info_t* newsi = NULL;
+	socket_info_t** list = NULL;
 	unsigned short c_proto;
 	struct name_lst* a_l;
 	unsigned short c_port;
@@ -1151,8 +1152,9 @@ int add_listen_advertise_iface_name(char* name, struct name_lst* addr_l,
 			c_port=port;
 		}
 		if (c_proto!=PROTO_SCTP){
-			if (new_sock2list(name, 0, c_port, c_proto, usename, useport,
-								sockname, flags & ~SI_IS_MHOMED, list)==0){
+			newsi = new_sock2list(name, 0, c_port, c_proto, usename, useport,
+								sockname, flags & ~SI_IS_MHOMED, list);
+			if(newsi==0){
 				LM_ERR("new_sock2list failed\n");
 				goto error;
 			}
@@ -1167,16 +1169,32 @@ int add_listen_advertise_iface_name(char* name, struct name_lst* addr_l,
 				}
 			}
 		}else{
-			if (new_sock2list(name, addr_l, c_port, c_proto, usename, useport,
-						sockname, flags, list)==0){
+			newsi = new_sock2list(name, addr_l, c_port, c_proto, usename, useport,
+						sockname, flags, list);
+			if(newsi==0){
 				LM_ERR("new_sock2list failed\n");
 				goto error;
 			}
 		}
-	}while( (proto==0) && (c_proto=next_proto(c_proto)));
-	return 0;
+	} while((proto==0) && (c_proto=next_proto(c_proto)));
+
+	return newsi;
 error:
-	return -1;
+	return NULL;
+}
+
+/* adds a sock_info structure to the corresponding proto list
+ * return  0 on success, -1 on error */
+int add_listen_advertise_iface_name(char* name, struct name_lst* addr_l,
+						unsigned short port, unsigned short proto,
+						char *usename, unsigned short useport, char *sockname,
+						enum si_flags flags)
+{
+	if(add_listen_socket_info(name, addr_l, port, proto, usename, useport,
+				sockname, flags)==NULL) {
+		return -1;
+	}
+	return 0;
 }
 
 /* adds a sock_info structure to the corresponding proto list
@@ -1208,6 +1226,24 @@ int add_listen_iface_name(char* name, struct name_lst* addr_l,
 {
 	return add_listen_advertise_iface_name(name, addr_l, port, proto, 0, 0,
 			sockname, flags);
+}
+
+int add_listen_socket(socket_attrs_t *sa)
+{
+	socket_info_t* newsi;
+	name_lst_t addr_l;
+
+	if(sa->bindaddr.s==NULL) {
+		LM_ERR("no bind address provided\n");
+		return -1;
+	}
+	memset(&addr_l, 0, sizeof(name_lst_t));
+	addr_l.name = sa->bindaddr.s;
+
+	newsi = add_listen_socket_info(sa->bindaddr.s, &addr_l, sa->bindport,
+			sa->bindproto, sa->useaddr.s, sa->useport, sa->sockname.s, sa->sflags);
+
+	return (newsi!=NULL)?0:-1;
 }
 
 #ifdef __OS_linux

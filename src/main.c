@@ -206,6 +206,7 @@ Options:\n\
     --modparam=modname:paramname:type:value set the module parameter\n\
                   type has to be 's' for string value and 'i' for int value, \n\
                   example: --modparam=corex:alias_subdomains:s:" NAME ".org\n\
+    --all-errors Print details about all config errors that can be detected\n\
     -M nr        Size of private memory allocated, in Megabytes\n\
     -n processes Number of child processes to fork per interface\n\
                   (default: 8)\n"
@@ -482,6 +483,7 @@ int child_rank = 0;
 int ser_kill_timeout=DEFAULT_SER_KILL_TIMEOUT;
 
 int ksr_verbose_startup = 0;
+int ksr_all_errors = 0;
 
 /* cfg parsing */
 int cfg_errors=0;
@@ -2018,6 +2020,7 @@ int main(int argc, char** argv)
 		{"debug",       required_argument, 0, KARGOPTVAL + 8},
 		{"cfg-print",   no_argument,       0, KARGOPTVAL + 9},
 		{"atexit",      required_argument, 0, KARGOPTVAL + 10},
+		{"all-errors",  no_argument,       0, KARGOPTVAL + 11},
 		{0, 0, 0, 0 }
 	};
 
@@ -2127,6 +2130,9 @@ int main(int argc, char** argv)
 						LM_ERR("bad atexit value: %s\n", optarg);
 						goto error;
 					}
+					break;
+			case KARGOPTVAL+11:
+					ksr_all_errors = 1;
 					break;
 
 			default:
@@ -2317,6 +2323,7 @@ int main(int argc, char** argv)
 			case KARGOPTVAL+8:
 			case KARGOPTVAL+9:
 			case KARGOPTVAL+10:
+			case KARGOPTVAL+11:
 					break;
 
 			/* long options */

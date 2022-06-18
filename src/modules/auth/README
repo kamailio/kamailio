@@ -836,6 +836,7 @@ if (!auth_check("$fd", "subscriber", "1")) {
           + 4 - build challenge header with qop=auth and add it to avp
           + 8 - build challenge header with qop=auth-int and add it to avp
           + 16 - build challenge header with stale=true
+          + 32 - don't invalidate nc on authentication failure
      * method - the method to be used for authentication. This parameter
        is optional and if not set is the first "word" on the request-line.
 

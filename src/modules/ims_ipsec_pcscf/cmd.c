@@ -86,6 +86,12 @@ extern struct tm_binds tmb;
 #define IPSEC_RURIADDR_SEARCH (1<<3)
 /* if set - do not use alias for IPSec tunnel received details */
 #define IPSEC_NOALIAS_SEARCH (1<<4)
+/* if set - do not reset dst uri for IPsec forward */
+#define IPSEC_NODSTURI_RESET (1<<5)
+/* if set - use user equipment client port as target for requests over TCP */
+#define IPSEC_TCPPORT_UEC (1<<6)
+/* if set - build new dst uri with transport parameter for TCP */
+#define IPSEC_SETDSTURI_FULL (1<<7)
 
 /* if set - delete unused tunnels before every registration */
 #define IPSEC_CREATE_DELETE_UNUSED_TUNNELS 0x01
@@ -834,6 +840,9 @@ int ipsec_forward(struct sip_msg *m, udomain_t *d, int _cflags)
 	ip_addr_t via_host;
 	struct sip_msg *req = NULL;
 	struct cell *t = NULL;
+	struct socket_info *client_sock = NULL;
+
+	LM_DBG("processing with flags: 0x%x\n", _cflags);
 
 	if(m->first_line.type == SIP_REPLY) {
 		// Get request from reply
@@ -893,14 +902,13 @@ int ipsec_forward(struct sip_msg *m, udomain_t *d, int _cflags)
 	//    from URI
 	//int uri_len = 4 /* strlen("sip:") */ + ci.via_host.len + 5 /* max len of port number */ ;
 
-	if(m->dst_uri.s) {
-		LM_DBG("resetting dst uri\n");
+	if(!(_cflags & IPSEC_NODSTURI_RESET) && (m->dst_uri.s!=NULL)) {
+		LM_DBG("resetting dst uri [%.*s]\n", m->dst_uri.len, m->dst_uri.s);
 		pkg_free(m->dst_uri.s);
 		m->dst_uri.s = NULL;
 		m->dst_uri.len = 0;
 	}
 
-	char buf[1024];
 	if(m->first_line.type == SIP_REPLY) {
 		// for Reply get the dest proto from the received request
 		dst_proto = req->rcv.proto;
@@ -912,8 +920,7 @@ int ipsec_forward(struct sip_msg *m, udomain_t *d, int _cflags)
 		dst_port = dst_proto == PROTO_TCP ? s->port_uc : s->port_us;
 
 		// Check send socket
-		struct socket_info *client_sock =
-				grep_sock_info(via_host.af == AF_INET ? &ipsec_listen_addr
+		client_sock = grep_sock_info(via_host.af == AF_INET ? &ipsec_listen_addr
 													  : &ipsec_listen_addr6,
 						src_port, dst_proto);
 		if(!client_sock) {
@@ -924,28 +931,46 @@ int ipsec_forward(struct sip_msg *m, udomain_t *d, int _cflags)
 		// for Request get the dest proto from the saved contact
 		dst_proto = pcontact->received_proto;
 
-		// for Request sends from P-CSCF client port
-		src_port = s->port_pc;
+		if(_cflags & IPSEC_TCPPORT_UEC) {
+			// for Request and TCP sends from P-CSCF server port, for Request and UDP sends from P-CSCF client port
+			src_port = dst_proto == PROTO_TCP ? s->port_ps : s->port_pc;
 
-		// for Request sends to UE server port
-		dst_port = s->port_us;
+			// for Request and TCP sends to UE client port, for Request and UDP sends to UE server port
+			dst_port = dst_proto == PROTO_TCP ? s->port_uc : s->port_us;
+
+		} else {
+			// for Request sends from P-CSCF client port
+			src_port = s->port_pc;
+
+			// for Request sends to UE server port
+			dst_port = s->port_us;
+		}
 	}
 
-	int buf_len = snprintf(buf, sizeof(buf) - 1, "sip:%.*s:%d", ci.via_host.len,
-			ci.via_host.s, dst_port);
+	if(!(_cflags & IPSEC_NODSTURI_RESET)) {
+		char buf[1024];
+		int buf_len;
+		if((_cflags & IPSEC_SETDSTURI_FULL) && (dst_proto == PROTO_TCP)) {
+			buf_len = snprintf(buf, sizeof(buf) - 1, "sip:%.*s:%d;transport=tcp",
+					ci.via_host.len, ci.via_host.s, dst_port);
+		} else {
+			buf_len = snprintf(buf, sizeof(buf) - 1, "sip:%.*s:%d", ci.via_host.len,
+					ci.via_host.s, dst_port);
+		}
 
-	if((m->dst_uri.s = pkg_malloc(buf_len + 1)) == NULL) {
-		LM_ERR("Error allocating memory for dst_uri\n");
-		goto cleanup;
+		if((m->dst_uri.s = pkg_malloc(buf_len + 1)) == NULL) {
+			LM_ERR("Error allocating memory for dst_uri\n");
+			goto cleanup;
+		}
+
+		memcpy(m->dst_uri.s, buf, buf_len);
+		m->dst_uri.len = buf_len;
+		m->dst_uri.s[m->dst_uri.len] = '\0';
+		LM_ERR("new destination URI: %.*s\n", m->dst_uri.len, m->dst_uri.s);
 	}
-
-	memcpy(m->dst_uri.s, buf, buf_len);
-	m->dst_uri.len = buf_len;
-	m->dst_uri.s[m->dst_uri.len] = '\0';
-	LM_ERR("new destination URI: %.*s\n", m->dst_uri.len, m->dst_uri.s);
 
 	// Set send socket
-	struct socket_info *client_sock = grep_sock_info(
+	client_sock = grep_sock_info(
 			via_host.af == AF_INET ? &ipsec_listen_addr : &ipsec_listen_addr6,
 			src_port, dst_proto);
 	if(!client_sock) {
@@ -975,10 +1000,12 @@ int ipsec_forward(struct sip_msg *m, udomain_t *d, int _cflags)
 
 	// Update dst_info in message
 	if(m->first_line.type == SIP_REPLY) {
-		struct cell *t = tmb.t_gett();
 		if(!t) {
-			LM_ERR("Error getting transaction\n");
-			goto cleanup;
+			t = tmb.t_gett();
+			if(!t) {
+				LM_ERR("Error getting transaction\n");
+				goto cleanup;
+			}
 		}
 		t->uas.response.dst = dst_info;
 	}

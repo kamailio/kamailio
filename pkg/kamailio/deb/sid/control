@@ -1,7 +1,7 @@
 Source: kamailio
 Section: net
 Priority: optional
-Maintainer: Debian VoIP Team <pkg-voip-maintainers@lists.alioth.debian.org>
+Maintainer: Kamailio Admin Group <kadmin.hq@lists.kamailio.org>
 Uploaders:
  Victor Seva <vseva@debian.org>,
 Build-Depends:
@@ -59,8 +59,8 @@ Build-Depends:
  zlib1g-dev,
 Standards-Version: 4.6.0.1
 Homepage: http://www.kamailio.org/
-Vcs-Git: https://salsa.debian.org/pkg-voip-team/kamailio.git
-Vcs-Browser: https://salsa.debian.org/pkg-voip-team/kamailio/
+Vcs-Git: https://github.com/kamailio/kamailio.git
+Vcs-Browser: https://github.com/kamailio/kamailio/
 Rules-Requires-Root: no
 
 Package: kamailio

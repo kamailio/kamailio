@@ -1458,12 +1458,13 @@ if(ds_list_exists("10")) {
        specific group id. The parameter can be an integer or a variable
        holding an integer value.
      * mode - (optional) - a bitmask to specify how the matching should be
-       done. If parameter is 0, all ip, port and proto are matched and
-       active status is ignored. If bit one is set, then port is ignored.
-       If bit two is set, then protocol is ignored. If bit three is set,
-       then state must be active. The parameter can be an integer or a
-       variable holding an integer value. It must be provided if the uri
-       parameter is provided.
+       done. If the parameter is missing, the matching is done with
+       ignoring the protocol (value 2). If parameter is 0, all ip, port
+       and proto are matched and active status is ignored. If bit one is
+       set, then port is ignored. If bit two is set, then protocol is
+       ignored. If bit three is set, then state must be active. The
+       parameter can be an integer or a variable holding an integer value.
+       It must be provided if the uri parameter is provided.
      * uri (optional) - if parameter is empty or missing, the matching is
        done against source IP, port and protocol. Otherwise the value has
        to be a valid SIP URI, used to match against addresses in the

@@ -730,7 +730,7 @@ inline static unsigned char* binrpc_read_record(struct binrpc_parse_ctx* ctx,
 	type=*p & 0xf;
 	len=*p>>4;
 	p++;
-	if (len & 8){
+	if ((type!=BINRPC_T_DOUBLE) && (len & 8)){
 		end_tag=1; /* possible end mark for array or structs */
 		/* we have to read len bytes and use them as the new len */
 		p=binrpc_read_int(&len, len&7, p, end, err);

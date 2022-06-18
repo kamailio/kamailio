@@ -11,12 +11,6 @@ sed -i -e '/dh-systemd/d' ${DIST}/control
 sed -i -e '/dh_systemd/d' ${DIST}/rules
 rm ${DIST}/kamailio.service
 
-# No mi_xmlrpc module
-sed -i -e '/libxmlrpc-c3-dev/d' -e '/^Package: kamailio-xmlrpc-modules/,/^$/d' \
-  ${DIST}/control
-sed -i -e 's/ mi_xmlrpc[ ,$]*/ /' ${DIST}/rules
-sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ mi_xmlrpc/' ${DIST}/rules
-
 # use old libfreeradius
 sed -i 's/libradcli-dev/libfreeradius-client-dev/' ${DIST}/control
 sed -i -e 's/RADCLI/FREERADIUS/' ${DIST}/rules
@@ -24,8 +18,8 @@ sed -i -e 's/RADCLI/FREERADIUS/' ${DIST}/rules
 # no systemd module
 sed -i -e '/libsystemd-dev/d' -e '/^Package: kamailio-systemd-modules/,/^$/d' \
   ${DIST}/control
-sed -i -e 's/ systemd[ ,$]*/ /' ${DIST}/rules
-sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ systemd/' ${DIST}/rules
+sed -i -e '/^PACKAGE_GROUPS += systemd/d' ${DIST}/rules
+sed -i -e '/--EXCLUDED--/i EXTRA_EXCLUDED_MODULES += systemd' ${DIST}/rules
 
 # old mysql
 sed -i -e 's/default-mysql-client/mysql-client/' \
@@ -41,51 +35,51 @@ sed -i -e '/libssl-dev/d' ${DIST}/control
 # No geoip2 module
 sed -i -e '/libmaxminddb-dev/d' -e '/^Package: kamailio-geoip2-modules/,/^$/d' \
 	${DIST}/control
-sed -i -e 's/ geoip2[ ,$]*/ /' ${DIST}/rules
-sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ geoip2/' ${DIST}/rules
+sed -i -e '/^PACKAGE_GROUPS += geoip2/d' ${DIST}/rules
+sed -i -e '/--EXCLUDED--/i EXTRA_EXCLUDED_MODULES += geoip2' ${DIST}/rules
 
 # No phonenum module
 sed -i -e '/libphonenumber-dev/d' -e '/^Package: kamailio-phonenum-modules/,/^$/d' \
 	${DIST}/control
-sed -i -e 's/ phonenum[ ,$]*/ /' ${DIST}/rules
-sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ phonenum/' ${DIST}/rules
+sed -i -e '/^PACKAGE_GROUPS += phonenum/d' ${DIST}/rules
+sed -i -e '/--EXCLUDED--/i EXTRA_EXCLUDED_MODULES += phonenum' ${DIST}/rules
 
 # Mo mongodb
 sed -i -e '/libmongoc-dev/d' -e '/^Package: kamailio-mongodb-modules/,/^$/d' \
 	${DIST}/control
-sed -i -e 's/ mongodb[ ,$]*/ /' ${DIST}/rules
-sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ mongodb/' ${DIST}/rules
+sed -i -e '/^PACKAGE_GROUPS += mongodb/d' ${DIST}/rules
+sed -i -e '/--EXCLUDED--/i EXTRA_EXCLUDED_MODULES += mongodb' ${DIST}/rules
 
 # no pkg-config for ruby-dev
 sed -i -e '/ruby-dev/d' -e '/^Package: kamailio-ruby-modules/,/^$/d' \
 	${DIST}/control
-sed -i -e 's/ ruby[ ,$]*/ /' ${DIST}/rules
-sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ ruby/' ${DIST}/rules
+sed -i -e '/^PACKAGE_GROUPS += ruby/d' ${DIST}/rules
+sed -i -e '/--EXCLUDED--/i EXTRA_EXCLUDED_MODULES += ruby' ${DIST}/rules
 
 # No mqtt module
 sed -i -e '/libmosquitto-dev/d' -e '/^Package: kamailio-mqtt-modules/,/^$/d' \
 	${DIST}/control
-sed -i -e 's/ mqtt[ ,$]*/ /' ${DIST}/rules
-sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ mqtt/' ${DIST}/rules
+sed -i -e '/^PACKAGE_GROUPS += mqtt/d' ${DIST}/rules
+sed -i -e '/--EXCLUDED--/i EXTRA_EXCLUDED_MODULES += mqtt' ${DIST}/rules
 
 # No secsipid module
 sed -i -e '/libsecsipid-dev/d' -e '/^Package: kamailio-secsipid-modules/,/^$/d' \
 	${DIST}/control
-sed -i -e 's/ secsipid[ ,$]*/ /' ${DIST}/rules
-sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ secsipid/' ${DIST}/rules
+sed -i -e '/^PACKAGE_GROUPS += secsipid/d' ${DIST}/rules
+sed -i -e '/--EXCLUDED--/i EXTRA_EXCLUDED_MODULES += secsipid' ${DIST}/rules
 
 # libwebsockets >= 3.1
 sed -i -e '/libwebsockets-dev/d' -e '/^Package: kamailio-lwsc-modules/,/^$/d' \
 	${DIST}/control
-sed -i -e 's/ lwsc[ ,$]*/ /' ${DIST}/rules
-sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ lwsc/' ${DIST}/rules
+sed -i -e '/^PACKAGE_GROUPS += lwsc/d' ${DIST}/rules
+sed -i -e '/--EXCLUDED--/i EXTRA_EXCLUDED_MODULES += lwsc' ${DIST}/rules
 
 # no libnats-dev
 sed -i -e '/^ libnats-dev,/d' \
   -e '/^Package: kamailio-nats-modules/,/^$/d' \
   ${DIST}/control
-sed -i -e 's/ nats[ ,$]*//' ${DIST}/rules
-sed -i -e '/^EXCLUDED_MODULES=/s/$/ nats/' ${DIST}/rules
+sed -i -e '/^PACKAGE_GROUPS += nats/d' ${DIST}/rules
+sed -i -e '/--EXCLUDED--/i EXTRA_EXCLUDED_MODULES += nats' ${DIST}/rules
 
 wrap-and-sort -sat -d ${DIST}
 

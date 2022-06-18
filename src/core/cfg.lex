@@ -308,7 +308,9 @@ ADVERTISE	advertise|ADVERTISE
 VIRTUAL		virtual
 STRNAME		name|NAME
 ALIAS		alias
+DOMAIN		domain
 SR_AUTO_ALIASES	auto_aliases
+SR_AUTO_DOMAINS auto_domains
 DNS		 dns
 REV_DNS	 rev_dns
 DNS_TRY_IPV6	dns_try_ipv6
@@ -361,6 +363,9 @@ STATS_NAMESEP	stats_name_separator
 MAXBUFFER maxbuffer
 SQL_BUFFER_SIZE sql_buffer_size
 CHILDREN children
+SOCKET socket
+BIND bind
+WORKERS workers
 SOCKET_WORKERS socket_workers
 ASYNC_WORKERS async_workers
 ASYNC_USLEEP async_usleep
@@ -747,8 +752,11 @@ IMPORTFILE      "import_file"
 <INITIAL>{VIRTUAL}	{ count(); yylval.strval=yytext; return VIRTUAL; }
 <INITIAL>{STRNAME}	{ count(); yylval.strval=yytext; return STRNAME; }
 <INITIAL>{ALIAS}	{ count(); yylval.strval=yytext; return ALIAS; }
+<INITIAL>{DOMAIN}	{ count(); yylval.strval=yytext; return DOMAIN; }
 <INITIAL>{SR_AUTO_ALIASES}	{ count(); yylval.strval=yytext;
 									return SR_AUTO_ALIASES; }
+<INITIAL>{SR_AUTO_DOMAINS}	{ count(); yylval.strval=yytext;
+									return SR_AUTO_DOMAINS; }
 <INITIAL>{DNS}	{ count(); yylval.strval=yytext; return DNS; }
 <INITIAL>{REV_DNS}	{ count(); yylval.strval=yytext; return REV_DNS; }
 <INITIAL>{DNS_TRY_IPV6}	{ count(); yylval.strval=yytext;
@@ -832,6 +840,8 @@ IMPORTFILE      "import_file"
 <INITIAL>{MAXBUFFER}	{ count(); yylval.strval=yytext; return MAXBUFFER; }
 <INITIAL>{SQL_BUFFER_SIZE}	{ count(); yylval.strval=yytext; return SQL_BUFFER_SIZE; }
 <INITIAL>{CHILDREN}	{ count(); yylval.strval=yytext; return CHILDREN; }
+<INITIAL>{SOCKET}	{ count(); yylval.strval=yytext; return SOCKET; }
+<INITIAL>{BIND}	{ count(); yylval.strval=yytext; return BIND; }
 <INITIAL>{SOCKET_WORKERS}	{ count(); yylval.strval=yytext; return SOCKET_WORKERS; }
 <INITIAL>{ASYNC_WORKERS}	{ count(); yylval.strval=yytext; return ASYNC_WORKERS; }
 <INITIAL>{ASYNC_USLEEP}	{ count(); yylval.strval=yytext; return ASYNC_USLEEP; }
