@@ -581,9 +581,12 @@ int tps_reinsert_via(sip_msg_t *msg, tps_data_t *ptsd, str *hbody)
 int tps_reinsert_contact(sip_msg_t *msg, tps_data_t *ptsd, str *hbody)
 {
 	str hname = str_init("Contact");
+	int method = get_cseq(msg)->method_id;
 
-	if(tps_add_headers(msg, &hname, hbody, 0)<0) {
-		return -1;
+    if (!(method & (METHOD_CANCEL|METHOD_BYE|METHOD_PRACK))) {
+		if(tps_add_headers(msg, &hname, hbody, 0)<0) {
+			return -1;
+		}
 	}
 
 	return 0;
