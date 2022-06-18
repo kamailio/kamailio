@@ -109,9 +109,9 @@ LD_EXTRA_OPTS := $(shell dpkg-buildflags --get LDFLAGS)
 # https://wiki.debian.org/ReproducibleBuilds/
 CC_EXTRA_OPTS += -DVERSION_NODATE
 
-#tlsa
-export LIBSSL_STATIC_SRCLIB=yes
-export LIBSSL_STATIC_SRCPATH=/usr/$(LIBDIR)
+# "function" to get package short name out of a dir/module_name
+# it also transforms db_foo into foo
+mod_name=$(subst db_,,$(lastword $(subst /, ,$(1))))
 
 define PACKAGE_GRP_BUILD_template
 	# package all the modules in PACKAGE_GROUPS in separate packages
