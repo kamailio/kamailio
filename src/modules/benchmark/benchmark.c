@@ -474,7 +474,7 @@ int bm_register_timer_param(modparam_t type, void* val)
 		LM_ERR("cannot find timer [%s]\n", (char*)val);
 		return -1;
 	}
-	LM_ERR("timer [%s] registered: %u\n", (char*)val, tid);
+	LM_DBG("timer [%s] registered: %u\n", (char*)val, tid);
 	return 0;
 }
 
