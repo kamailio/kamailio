@@ -38,7 +38,7 @@ mod_list_dbuid=db2_ops uid_auth_db uid_avp_db uid_domain uid_gflags \
 				 uid_uri_db
 
 # - modules for devel purposes
-mod_list_devel=malloc_test print print_lib
+mod_list_devel=misctest print print_lib
 
 # - modules depending on pcre3 library
 mod_list_pcre=dialplan lcr regex
@@ -93,6 +93,9 @@ mod_list_tlsdeps_curl=auth_identity
 
 # - modules depending on static openssl library
 mod_list_tlsa=tlsa
+
+# - modules depending on static wolfssl library
+mod_list_tls_wolfssl=tls_wolfssl
 
 # - modules depending on openssl library
 mod_list_outbound=outbound
@@ -280,6 +283,7 @@ mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
 			   $(mod_list_lwsc) \
 			   $(mod_list_stirshaken) \
 			   $(mod_list_tlsa) \
+			   $(mod_list_tls_wolfssl) \
 			   $(mod_list_rtp_media_server)
 
 
@@ -400,10 +404,13 @@ module_group_kmemcached=$(mod_list_memcached)
 module_group_ktls_basic=$(mod_list_tlsdeps)
 
 # pkg tls module with curl
-module_group_ktls=$(mod_list_tlsdeps) $(mod_list_tlsdeps_curl)
+module_group_ktls=$(mod_list_tlsdeps) $(mod_list_tlsdeps_curl) $(mod_list_tlsa)
 
 # pkg tlsa module
 module_group_ktlsa=$(mod_list_tlsa)
+
+# pkg tls_wolfssl module
+module_group_ktls_wolfssl=$(mod_list_tls_wolfssl)
 
 # pkg websocket module
 module_group_kwebsocket=$(mod_list_websocket)

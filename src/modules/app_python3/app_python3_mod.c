@@ -185,9 +185,6 @@ static int child_init(int rank)
 		 * this is called before any process is forked
 		 * so the Python internal state handler
 		 * should be called now.
-		 *
-		 * TODO: is PyOS_AfterFork_Parent() necesary
-		 * in the main process?
 		 */
 #if PY_VERSION_HEX >= 0x03070000
 		PyOS_BeforeFork() ;
@@ -205,11 +202,14 @@ static int child_init(int rank)
 		return 0;
 	}
 	_apy_process_rank = rank;
+
+	if (!_ksr_is_main) {
 #if PY_VERSION_HEX >= 0x03070000
-	PyOS_AfterFork_Child();
+		PyOS_AfterFork_Child();
 #else
-	PyOS_AfterFork();
+		PyOS_AfterFork();
 #endif
+	}
 	if (cfg_child_init()) {
 		return -1;
 	}

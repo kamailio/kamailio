@@ -37,6 +37,7 @@
 #include "../../core/parser/parser_f.h"
 #include "../../core/ut.h"
 #include "../../core/pvar.h"
+#include "checks.h"
 #include "rpid.h"
 
 
@@ -92,29 +93,6 @@ void get_rpid_avp( int_str *rpid_avp_p, int *rpid_avp_type_p )
 {
 	*rpid_avp_p = rpid_avp_name;
 	*rpid_avp_type_p = rpid_avp_type;
-}
-
-
-/*!
- * \brief Check if user is a E164 number
- * \param _user user
- * \note Copy of is_e164 from enum module
- * \return 1 if its a E164 number, -1 if not
- */
-static inline int is_e164(str* _user)
-{
-	int i;
-	char c;
-
-	if ((_user->len > 2) && (_user->len < 17) && ((_user->s)[0] == '+')) {
-		for (i = 1; i < _user->len; i++) {
-			c = (_user->s)[i];
-			if ((c < '0') || (c > '9')) return -1;
-		}
-		return 1;
-	} else {
-		return -1;
-	}
 }
 
 
@@ -325,7 +303,7 @@ int is_rpid_user_e164(struct sip_msg* _m, char* _s1, char* _s2)
 		goto err;
 	}
 
-	return is_e164(&uri.user);
+	return siputils_e164_check(&uri.user);
 
 err:
 	return -1;

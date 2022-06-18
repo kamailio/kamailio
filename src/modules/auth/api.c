@@ -34,7 +34,7 @@
 #include "rfc2617_sha256.h"
 #include "challenge.h"
 
-static int auth_check_hdr_md5(struct sip_msg* msg, auth_body_t* auth_body,
+static int auth_check_hdr_md5_default(struct sip_msg* msg, auth_body_t* auth_body,
 		auth_result_t* auth_res);
 
 /*
@@ -94,7 +94,7 @@ auth_result_t pre_auth(struct sip_msg* msg, str* realm, hdr_types_t hftype,
 
 	/* check authorization header field's validity */
 	if (check_auth_hdr == NULL) {
-		check_hf = auth_check_hdr_md5;
+		check_hf = auth_check_hdr_md5_default;
 	} else {	/* use check function of external authentication module */
 		check_hf = check_auth_hdr;
 	}
@@ -113,8 +113,8 @@ auth_result_t pre_auth(struct sip_msg* msg, str* realm, hdr_types_t hftype,
  * @result if authentication should continue (1) or not (0)
  *
  */
-static int auth_check_hdr_md5(struct sip_msg* msg, auth_body_t* auth,
-		auth_result_t* auth_res)
+int auth_check_hdr_md5(struct sip_msg* msg, auth_body_t* auth,
+		auth_result_t* auth_res, int update_nonce)
 {
 	int ret;
 
@@ -125,7 +125,7 @@ static int auth_check_hdr_md5(struct sip_msg* msg, auth_body_t* auth,
 		return 0;
 	}
 
-	ret = check_nonce(auth, &secret1, &secret2, msg);
+	ret = check_nonce(auth, &secret1, &secret2, msg, update_nonce);
 	if (ret!=0){
 		if (ret==3 || ret==4){
 			/* failed auth_extra_checks or stale */
@@ -143,6 +143,12 @@ static int auth_check_hdr_md5(struct sip_msg* msg, auth_body_t* auth,
 		}
 	}
 	return 1;
+}
+
+static int auth_check_hdr_md5_default(struct sip_msg* msg, auth_body_t* auth,
+		auth_result_t* auth_res)
+{
+	return auth_check_hdr_md5(msg, auth, auth_res, 1);
 }
 
 /**

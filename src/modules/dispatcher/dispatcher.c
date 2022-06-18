@@ -1247,7 +1247,7 @@ int ds_ping_check_rplcode(int code)
 			}
 		} else {
 			/* reply class */
-			if(((*ds_ping_reply_codes)[i] / 100) == code) {
+			if((*ds_ping_reply_codes)[i] == code / 100) {
 				return 1;
 			}
 		}

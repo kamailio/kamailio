@@ -97,6 +97,8 @@ int fix_all_socket_lists(void);
 void print_all_socket_lists(void);
 void print_aliases(void);
 
+int add_listen_socket(socket_attrs_t *sa);
+
 struct socket_info* grep_sock_info(str* host, unsigned short port,
 										unsigned short proto);
 struct socket_info* grep_sock_info_by_port(unsigned short port,

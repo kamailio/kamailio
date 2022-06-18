@@ -3182,7 +3182,7 @@ int t_failover_check_reply_code(int code)
 			}
 		} else {
 			/* reply class */
-			if(((*failover_reply_codes)[i] / 100) == code) {
+			if((*failover_reply_codes)[i] == code / 100) {
 				return 1;
 			}
 		}

@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+	"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
+	[ <!ENTITY % local.common.attrib
+	 "xmlns:xi CDATA #FIXED 'http://www.w3.org/2001/XInclude'">
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<book id="tls" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <bookinfo>
+	<title>wolfSSL TLS Module</title>
+	<authorgroup>
+		<author>
+		<firstname>Shih-Ping</firstname>
+		<surname>Chan</surname>
+		<address>
+			<email>shihping.chan@gmail.com</email>
+		</address>
+		</author>
+	</authorgroup>
+	<copyright>
+		<year>2022</year>
+		<holder>Chan Shih-Ping</holder>
+	</copyright>
+	</bookinfo>
+	<toc></toc>
+
+	<chapter>
+	<title>Admin Guide</title>
+	<section id="tls_wolfssl.overview">
+		<title>Overview</title>
+		<para>
+			This module implements the TLS transport for &kamailio;
+			using the <ulink url="https://www.wolfssl.com">wolfSSL library</ulink>
+			(https://www.wolfssl.com). To enable the &kamailio; TLS support this
+			module must be loaded and <emphasis>enable_tls=yes</emphasis> core setting
+			must be added to the Kamailio config file.
+		</para>
+		<para>
+		        This module is derived from the tls module and adapted to wolfSSL using the
+		        OpenSSL-compatibility layer. Credit goes to the authors of the tls module.
+		</para>
+		<para>
+		        This module is based on wolfSSL 5.2.0 and 5.3.0 and is not fully compatible
+		        with the tls module (protocol versions &#60; 1.1 not supported it the Debian
+			package for example.
+		</para>
+		<para>
+		        This user is referred to the documentation of the tls module for configuration
+			and other information. Not all configuration keys are implemented (e.g., protocol
+			versions — defaults to 1.2+ and cipher suites).
+		</para>
+	</section>
+	<section id="tls_wolfssl.quick_start">
+		<title>Quick Start</title>
+		<para>
+		The default kamailio.cfg file has basic tls support included, it has to
+		be enabled with "#!define WITH_TLS" directive.
+		</para>
+		<example>
+		<title>Quick Start Basic Config</title>
+		<programlisting>
+#...
+loadmodule "sl.so"
+loadmodule "tls_wolfssl.so"
+#... refer to Quick Start oftls module
+#... for further configuration
+		</programlisting>
+		</example>
+	</section>
+
+	<section id="tls_wolfssl.notes">
+		<title>Important Notes</title>
+		<para>
+		        The wolfSSL TLS module is intended to be compiled with a
+		        recent version of wolfSSL (5.2.0+).
+		</para>
+	</section>
+
+
+	<section id="tls_wolfssl.compile">
+	        <title>Compiling the wolfSSL TLS Module</title>
+	        <para> The development package for wolfSSL is required (libwolfssl-dev or equivalent).
+		</para>
+		<para>
+			In most case compiling the wolfSSL TLS module is as simple as:
+			<programlisting>
+make -C modules/tls_wolfssl
+			</programlisting>
+			or
+			<programlisting>
+make modules modules=modules/tls_wolfssl
+			</programlisting>
+			or (compiling whole Kamailio and the tls module)
+			<programlisting>
+make all include_modules=tls_wolfssl
+			</programlisting>
+			.
+		</para>
+	</section>
+	</chapter>
+</book>
+
