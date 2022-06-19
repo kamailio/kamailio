@@ -177,6 +177,37 @@ modparam("nats", "subject_queue_group", "MyQueue2:2021")
 				</programlisting>
 			</example>
 		</section>
+		<section>
+			<title>
+				<varname>event_callback</varname>
+				(str)
+			</title>
+			<para>
+				Name of the KEMI function to be executed instead of the event route.
+			</para>
+			<para>
+				<emphasis>Default value is not set.</emphasis>
+			</para>
+			<example>
+				<title>
+					Set
+					<varname>event_callback</varname>
+					parameter
+				</title>
+				<programlisting format="linespecific">
+...
+modparam("nats", "event_callback", "ksr_nats_event")
+
+-- event callback function implemented in Lua
+function ksr_nats_event(evname)
+	KSR.info("===== nats module received event: " .. evname ..
+		", data:" .. KSR.pv.gete('$natsData') .. "\n");
+	return 1;
+end
+...
+				</programlisting>
+			</example>
+		</section>
 	</section>
 	<section>
 		<title>Functions</title>

@@ -24,6 +24,8 @@
 
 #include "defs.h"
 #include "nats_mod.h"
+#include "nats_pub.h"
+#include "../../core/kemi.h"
 
 MODULE_VERSION
 
@@ -38,6 +40,7 @@ char *eventData = NULL;
 
 int *nats_pub_worker_pipes_fds = NULL;
 int *nats_pub_worker_pipes = NULL;
+static str nats_event_callback = STR_NULL;
 
 static nats_evroutes_t _nats_rts;
 
@@ -50,7 +53,10 @@ static param_export_t params[] = {
 		{"nats_url", PARAM_STRING | USE_FUNC_PARAM, (void *)_init_nats_server_url_add},
 		{"num_publish_workers", INT_PARAM, &nats_pub_workers_num},
 		{"subject_queue_group", PARAM_STRING | USE_FUNC_PARAM,
-				(void *)_init_nats_sub_add}};
+				(void *)_init_nats_sub_add},
+		{"event_callback", PARAM_STR,   &nats_event_callback},
+		{0, 0, 0}
+};
 
 static cmd_export_t cmds[] = {{"nats_publish", (cmd_function)w_nats_publish_f,
 									  2, fixup_publish_get_value,
@@ -73,16 +79,9 @@ static void onMsg(
 		natsConnection *nc, natsSubscription *sub, natsMsg *msg, void *closure)
 {
 	nats_on_message_ptr on_message = (nats_on_message_ptr)closure;
-	char *s = (char *)natsMsg_GetSubject(msg);
 	char *data = (char *)natsMsg_GetData(msg);
-	if(on_message->rt < 0 || event_rt.rlist[on_message->rt] == NULL) {
-		LM_INFO("event-route [nats:%s] does not exist\n", s);
-		goto end;
-	}
 	eventData = data;
-	nats_run_cfg_route(on_message->rt);
-
-end:
+	nats_run_cfg_route(on_message->rt, &on_message->evname);
 	eventData = NULL;
 	natsMsg_Destroy(msg);
 }
@@ -90,22 +89,25 @@ end:
 static void connectedCB(natsConnection *nc, void *closure)
 {
 	char url[NATS_URL_MAX_SIZE];
+	str evname = str_init("nats:connected");
 	natsConnection_GetConnectedUrl(nc, url, sizeof(url));
-	nats_run_cfg_route(_nats_rts.connected);
+	nats_run_cfg_route(_nats_rts.connected, &evname);
 }
 
 static void disconnectedCb(natsConnection *nc, void *closure)
 {
 	char url[NATS_URL_MAX_SIZE];
+	str evname = str_init("nats:disconnected");
 	natsConnection_GetConnectedUrl(nc, url, sizeof(url));
-	nats_run_cfg_route(_nats_rts.disconnected);
+	nats_run_cfg_route(_nats_rts.disconnected, &evname);
 }
 
 static void reconnectedCb(natsConnection *nc, void *closure)
 {
 	char url[NATS_URL_MAX_SIZE];
+	str evname = str_init("nats:connected");
 	natsConnection_GetConnectedUrl(nc, url, sizeof(url));
-	nats_run_cfg_route(_nats_rts.connected);
+	nats_run_cfg_route(_nats_rts.connected, &evname);
 }
 
 static void closedCB(natsConnection *nc, void *closure)
@@ -247,9 +249,13 @@ int init_worker(
 	if(rt < 0 || event_rt.rlist[rt] == NULL) {
 		LM_INFO("route [%s] does not exist\n", routename);
 		worker->on_message->rt = -1;
-		return 0;
+	} else {
+		worker->on_message->rt = rt;
 	}
-	worker->on_message->rt = rt;
+	worker->on_message->_evname = malloc(buffsize);
+	strcpy(worker->on_message->_evname, routename);
+	worker->on_message->evname.s = worker->on_message->_evname;
+	worker->on_message->evname.len = strlen(worker->on_message->_evname);
 	worker->nc = nc;
 	return 0;
 }
@@ -565,6 +571,9 @@ int nats_destroy_workers()
 				}
 			}
 			if(worker->on_message != NULL) {
+				if (worker->on_message->_evname) {
+					free(worker->on_message->_evname);
+				}
 				shm_free(worker->on_message);
 			}
 			shm_free(worker);
@@ -657,15 +666,18 @@ int _init_nats_sub_add(modparam_t type, void *val)
 /**
  * Invoke a event route block
  */
-int nats_run_cfg_route(int rt)
+int nats_run_cfg_route(int rt, str *evname)
 {
 	struct run_act_ctx ctx;
+	sr_kemi_eng_t *keng = NULL;
 	sip_msg_t *fmsg;
 	sip_msg_t tmsg;
 
+	keng = sr_kemi_eng_get();
+
 	// check for valid route pointer
-	if(rt < 0) {
-		return 0;
+	if(rt < 0 || !event_rt.rlist[rt]) {
+		if (keng == NULL) return 0;
 	}
 
 	fmsg = faked_msg_next();
@@ -673,6 +685,13 @@ int nats_run_cfg_route(int rt)
 	fmsg = &tmsg;
 	set_route_type(EVENT_ROUTE);
 	init_run_actions_ctx(&ctx);
+	if (rt < 0 && keng) {
+		if (sr_kemi_route(keng, fmsg, EVENT_ROUTE,
+			&nats_event_callback, evname) < 0) {
+			LM_ERR("error running event route kemi callback\n");
+		}
+		return 0;
+	}
 	run_top_route(event_rt.rlist[rt], fmsg, 0);
 	return 0;
 }
@@ -790,4 +809,36 @@ int nats_pv_get_event_payload(
 {
 	return eventData == NULL ? pv_get_null(msg, param, res)
 							 : pv_get_strzval(msg, param, res, eventData);
+}
+
+/**
+ *
+ */
+int ki_nats_publish(sip_msg_t *msg, str *subject, str *payload)
+{
+	return w_nats_publish(msg, *subject, *payload);
+}
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_nats_exports[] = {
+	{ str_init("nats"), str_init("publish"),
+		SR_KEMIP_INT, ki_nats_publish,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_nats_exports);
+	return 0;
 }
