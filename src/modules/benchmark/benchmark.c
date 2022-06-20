@@ -220,7 +220,7 @@ static int bm_init_mycfg(void)
 	}
 	bm_mycfg = (bm_cfg_t*)shm_malloc(sizeof(bm_cfg_t));
 	if(bm_mycfg==NULL) {
-		LM_ERR("failed to allocated shared memory\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	memset(bm_mycfg, 0, sizeof(bm_cfg_t));
@@ -407,7 +407,7 @@ int _bm_register_timer(char *tname, int mode, unsigned int *id)
 
 	if(bmt==0)
 	{
-		LM_ERR("no more shm\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	memset(bmt, 0, sizeof(benchmark_timer_t));
@@ -417,7 +417,7 @@ int _bm_register_timer(char *tname, int mode, unsigned int *id)
 	if(bmt->start == NULL)
 	{
 		shm_free(bmt);
-		LM_ERR("no more pkg\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	memset(bmt->start, 0, sizeof(bm_timeval_t));
@@ -442,7 +442,7 @@ int _bm_register_timer(char *tname, int mode, unsigned int *id)
 								sizeof(benchmark_timer_t*));
 		if(bm_mycfg->tindex==0)
 		{
-			LM_ERR("no more share memory\n");
+			SHM_MEM_ERROR;
 			if(tidx!=0)
 				shm_free(tidx);
 			return -1;
