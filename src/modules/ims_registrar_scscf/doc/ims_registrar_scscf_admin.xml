@@ -431,6 +431,26 @@
       </example>
     </section>
 
+    <section>
+      <title>skip_multiple_bindings_on_reg_resp (int)</title>
+
+      <para>If set to 1 - on Re-Registration registrar sends in 200OK reply only
+      current contact in case of multiple bindings.
+      If set to 0 - on Re-Registration registrar sends in 200OK reply all
+      contacts in case of multiple bindings according to RFC3261.
+      </para>
+
+      <para><emphasis> Default value is 0. </emphasis></para>
+
+      <example>
+        <title>Set <varname>skip_multiple_bindings_on_reg_resp</varname> parameter</title>
+
+        <programlisting format="linespecific">...
+        modparam("ims_registrar_scscf", "skip_multiple_bindings_on_reg_resp", 1)
+...</programlisting>
+      </example>
+    </section>
+
   </section>
 
   <section>

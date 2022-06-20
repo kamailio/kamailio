@@ -83,6 +83,7 @@ extern int store_data_on_dereg; /**< should we store SAR user data on de-registr
 
 extern int ue_unsubscribe_on_dereg;
 extern int user_data_always;
+extern int skip_multiple_bindings_on_reg_resp;
 
 #define DO_NOT_USE_REALM_FOR_PRIVATE_IDENTITY         0x01
 
@@ -872,7 +873,7 @@ int update_contacts(struct sip_msg* msg, udomain_t* _d,
                 goto error;
             }
             //build the contact buffer for the exact registered contact for reply on explicit IMPU
-            build_contact(impu_rec, contact_header, msg);
+            build_contact(impu_rec, contact_header, skip_multiple_bindings_on_reg_resp == 1 ? msg : 0);
             build_p_associated_uri(impu_rec->s);
 
             subscription = impu_rec->s;
@@ -883,7 +884,7 @@ int update_contacts(struct sip_msg* msg, udomain_t* _d,
                         ecf1, ecf2, &impu_rec) != 0) {
                     LM_ERR("Unable to update explicit impurecord for <%.*s>\n", public_identity->len, public_identity->s);
                 }
-                build_contact(impu_rec, contact_header, msg);
+                build_contact(impu_rec, contact_header, skip_multiple_bindings_on_reg_resp == 1 ? msg : 0);
                 ul.unlock_udomain(_d, public_identity);
                 break;
             }
