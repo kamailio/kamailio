@@ -525,6 +525,25 @@ modparam("topos", "context", "srvone")
 </programlisting>
 		</example>
 	</section>
+	<section id="topos.p.methods_nocontact">
+		<title><varname>methods_nocontact</varname> (str)</title>
+		<para>
+			List of SIP methods to skip adding Contact header for.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>BYE,CANCEL,PRACK</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>methods_nocontact</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("topos", "methods_nocontact", "CANCEL,PRACK")
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>

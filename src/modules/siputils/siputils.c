@@ -89,6 +89,9 @@ str rpid_suffix = {DEF_RPID_SUFFIX, sizeof(DEF_RPID_SUFFIX) - 1};
 /*! Definition of AVP containing rpid value */
 char* rpid_avp_param = DEF_RPID_AVP;
 
+/* max length for e164 number including the leading '+' */
+int e164_max_len = 16;
+
 /* for options functionality */
 str opt_accept = str_init(ACPT_DEF);
 str opt_accept_enc = str_init(ACPT_ENC_DEF);
@@ -141,7 +144,7 @@ static cmd_export_t cmds[]={
 		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE},
 	{"is_uri",            (cmd_function)is_uri,           1, fixup_spve_null,
 		fixup_free_spve_null, ANY_ROUTE},
-	{"is_e164",            (cmd_function)is_e164,           1, fixup_pvar_null,
+	{"is_e164",            (cmd_function)w_is_e164,           1, fixup_pvar_null,
 		fixup_free_pvar_null, REQUEST_ROUTE|FAILURE_ROUTE|LOCAL_ROUTE},
 	{"is_uri_user_e164",   (cmd_function)w_is_uri_user_e164,  1, fixup_pvar_null,
 		fixup_free_pvar_null, ANY_ROUTE},
@@ -217,6 +220,7 @@ static param_export_t params[] = {
 	{"rpid_prefix",             PARAM_STR, &rpid_prefix  },
 	{"rpid_suffix",             PARAM_STR, &rpid_suffix  },
 	{"rpid_avp",                PARAM_STRING, &rpid_avp_param },
+	{"e164_max_len",            PARAM_INT, &e164_max_len },
 	{0, 0, 0}
 };
 

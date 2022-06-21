@@ -49,6 +49,7 @@ Frederic Gaisnon
               3.16. xavu_field_contact_host (str)
               3.17. rr_update (int)
               3.18. context (str)
+              3.19. methods_nocontact (str)
 
         4. Functions
 
@@ -81,11 +82,12 @@ Frederic Gaisnon
    1.16. Set xavu_field_contact_host parameter
    1.17. Set rr_update parameter
    1.18. Set context parameter
-   1.19. tps_set_context usage
-   1.20. Usage of event_route[topos:msg-outgoing]
-   1.21. Usage of event_route[topos:msg-sending]
-   1.22. Usage of event_route[topos:msg-incoming]
-   1.23. Usage of event_route[topos:msg-receoving]
+   1.19. Set methods_nocontact parameter
+   1.20. tps_set_context usage
+   1.21. Usage of event_route[topos:msg-outgoing]
+   1.22. Usage of event_route[topos:msg-sending]
+   1.23. Usage of event_route[topos:msg-incoming]
+   1.24. Usage of event_route[topos:msg-receoving]
 
 Chapter 1. Admin Guide
 
@@ -117,6 +119,7 @@ Chapter 1. Admin Guide
         3.16. xavu_field_contact_host (str)
         3.17. rr_update (int)
         3.18. context (str)
+        3.19. methods_nocontact (str)
 
    4. Functions
 
@@ -187,6 +190,7 @@ Chapter 1. Admin Guide
    3.16. xavu_field_contact_host (str)
    3.17. rr_update (int)
    3.18. context (str)
+   3.19. methods_nocontact (str)
 
 3.1. storage (str)
 
@@ -471,6 +475,17 @@ modparam("topos", "rr_update", 1)
 modparam("topos", "context", "srvone")
 ...
 
+3.19. methods_nocontact (str)
+
+   List of SIP methods to skip adding Contact header for.
+
+   Default value is “BYE,CANCEL,PRACK”.
+
+   Example 1.19. Set methods_nocontact parameter
+...
+modparam("topos", "methods_nocontact", "CANCEL,PRACK")
+...
+
 4. Functions
 
    4.1. tps_set_context(ctx)
@@ -482,7 +497,7 @@ modparam("topos", "context", "srvone")
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.19. tps_set_context usage
+   Example 1.20. tps_set_context usage
 ...
 request_route {
     ...
@@ -510,7 +525,7 @@ request_route {
    reparsing the outgoing SIP message for the cases when topology hiding
    is not wanted.
 
-   Example 1.20. Usage of event_route[topos:msg-outgoing]
+   Example 1.21. Usage of event_route[topos:msg-outgoing]
 ...
 event_route[topos:msg-outgoing] {
   if($sndto(ip)=="10.1.1.10") {
@@ -529,7 +544,7 @@ event_route[topos:msg-outgoing] {
    $sndto(proto) point to the destination. The SIP message is the one to
    be sent out.
 
-   Example 1.21. Usage of event_route[topos:msg-sending]
+   Example 1.22. Usage of event_route[topos:msg-sending]
 ...
 event_route[topos:msg-sending] {
   if(is_request() and $fU=="alice") {
@@ -549,7 +564,7 @@ event_route[topos:msg-sending] {
    internally generated one at startup, to avoid reparsing the outgoing
    SIP message for the cases when topology hiding is not wanted.
 
-   Example 1.22. Usage of event_route[topos:msg-incoming]
+   Example 1.23. Usage of event_route[topos:msg-incoming]
 ...
 event_route[topos:msg-incoming] {
   if($si=="10.1.1.10") {
@@ -567,7 +582,7 @@ event_route[topos:msg-incoming] {
    Inside the event route the variables $si, $sp and $proto point to the
    source address. The SIP message is the one to be sent out.
 
-   Example 1.23. Usage of event_route[topos:msg-receoving]
+   Example 1.24. Usage of event_route[topos:msg-receoving]
 ...
 event_route[topos:msg-receiving] {
   if(is_request() and $fU=="alice") {

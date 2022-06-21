@@ -1,55 +1,114 @@
 #!/usr/bin/make -f
-# Sample debian/rules that uses debhelper.
-# GNU copyright 1997 to 1999 by Joey Hess.
-
-DEBVERSION:=$(shell head -n 1 debian/changelog \
-                    | sed -e 's/^[^(]*(\([^)]*\)).*/\1/')
-UPVERSION:=$(shell dpkg-parsechangelog | sed -ne 's/^Version: \(\([0-9]\+\):\)\?\(.*\)-.*/\3/p')
-
-FILENAME := kamailio_$(UPVERSION).orig.tar.gz
-URL := http://www.kamailio.org/pub/kamailio/$(UPVERSION)/src/kamailio-$(UPVERSION)_src.tar.gz
-
-DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
-
-export DEB_BUILD_MAINT_OPTIONS = hardening=+all
-DPKG_EXPORT_BUILDFLAGS = 1
-include /usr/share/dpkg/buildflags.mk
 
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+DPKG_EXPORT_BUILDFLAGS = 1
+
+include /usr/share/dpkg/architecture.mk
+include /usr/share/dpkg/buildflags.mk
+include /usr/share/dpkg/pkg-info.mk
+
+# Enable parallel builds.
+NUMJOBS = 1
+ifneq (,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
+  NUMJOBS = $(patsubst parallel=%,%,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
+  MAKEFLAGS += -j$(NUMJOBS)
+endif
+
 export JAVA_HOME=/usr/lib/jvm/java-gcj
 export FREERADIUS=1
 
-# modules not in the "main" kamailio package
-EXCLUDED_MODULES= nats
+# Modules not in the "main" kamailio package:
+EXCLUDED_MODULES =
 
-# extra modules to skip, because they are not compilable now
-# - regardless if they go to the main kamailio package or to some module package,
-# they will be excluded from compile and install of all
-EXTRA_EXCLUDED_MODULES=bdb dbtext oracle pa iptrtpproxy mi_xmlrpc systemd geoip2 phonenum mongodb ruby mqtt secsipid lwsc
+# Extra modules to skip, because they are not compilable now:
+# - regardless if they go to the main kamailio package or to some module
+#   package, they will be excluded from compile and install of all.
+EXTRA_EXCLUDED_MODULES += bdb
+EXTRA_EXCLUDED_MODULES += dbtext
+EXTRA_EXCLUDED_MODULES += oracle
+EXTRA_EXCLUDED_MODULES += pa
+EXTRA_EXCLUDED_MODULES += iptrtpproxy
+EXTRA_EXCLUDED_MODULES += systemd
+EXTRA_EXCLUDED_MODULES += geoip2
+EXTRA_EXCLUDED_MODULES += phonenum
+EXTRA_EXCLUDED_MODULES += mongodb
+EXTRA_EXCLUDED_MODULES += ruby
+EXTRA_EXCLUDED_MODULES += mqtt
+EXTRA_EXCLUDED_MODULES += secsipid
+EXTRA_EXCLUDED_MODULES += lwsc
+EXTRA_EXCLUDED_MODULES += nats
+## --EXCLUDED--
 
-# module groups that are packaged in separate packages
-# (with the name kamailio-$(group_name)-modules)
+
+# Module groups that are packaged in seperate packages (with the name
+# kamailio-$(group_name)-modules).
 # Note: the order is important (should be in dependency order, the one
 # on which other depend first)
-PACKAGE_GROUPS=mysql postgres berkeley unixodbc radius presence \
-			   ldap xml perl utils lua memcached \
-			   snmpstats carrierroute xmpp cpl redis python geoip \
-			   sqlite json mono ims sctp java \
-			   tls outbound websocket autheph dnssec kazoo cnxcc \
-			   erlang rabbitmq python3
+PACKAGE_GROUPS += mysql
+PACKAGE_GROUPS += postgres
+PACKAGE_GROUPS += berkeley
+PACKAGE_GROUPS += unixodbc
+PACKAGE_GROUPS += radius
+PACKAGE_GROUPS += presence
+PACKAGE_GROUPS += ldap
+PACKAGE_GROUPS += xml
+PACKAGE_GROUPS += perl
+PACKAGE_GROUPS += utils
+PACKAGE_GROUPS += lua
+PACKAGE_GROUPS += memcached
+PACKAGE_GROUPS += snmpstats
+PACKAGE_GROUPS += carrierroute
+PACKAGE_GROUPS += xmpp
+PACKAGE_GROUPS += cpl
+PACKAGE_GROUPS += redis
+PACKAGE_GROUPS += python
+PACKAGE_GROUPS += geoip
+PACKAGE_GROUPS += sqlite
+PACKAGE_GROUPS += json
+PACKAGE_GROUPS += mono
+PACKAGE_GROUPS += ims
+PACKAGE_GROUPS += sctp
+PACKAGE_GROUPS += java
+PACKAGE_GROUPS += tls
+PACKAGE_GROUPS += outbound
+PACKAGE_GROUPS += websocket
+PACKAGE_GROUPS += autheph
+PACKAGE_GROUPS += dnssec
+PACKAGE_GROUPS += kazoo
+PACKAGE_GROUPS += cnxcc
+PACKAGE_GROUPS += erlang
+PACKAGE_GROUPS += rabbitmq
+PACKAGE_GROUPS += python3
 
-# module groups to be packaged onto kamailio-extra-modules
-EXTRA_GROUPS=gzcompress uuid ev jansson http_async
+# Module groups to be packaged onto kamailio-extra-modules.
+EXTRA_GROUPS += ev
+EXTRA_GROUPS += gzcompress
+EXTRA_GROUPS += jansson
+EXTRA_GROUPS += uuid
+EXTRA_GROUPS += http_async
 
-# name of libdir in the path for libraries (e.g., lib for 32b, lib64 for 64b)
+D = $(CURDIR)/debian/$(DEB_SOURCE)
+
+# Name of libdir in the path for libraries (e.g., the multiarch triplet).
 export LIBDIR ?= lib/$(DEB_HOST_MULTIARCH)
 
-# directories with possible duplicate libraries (that should be deleted
-# from current module* packages)
-DUP_LIBS_DIRS=$(CURDIR)/debian/kamailio/usr/$(LIBDIR)/kamailio \
-			$(CURDIR)/debian/kamailio-db-modules/usr/$(LIBDIR)/kamailio
+# Directories with possible duplicate libraries (that should be deleted
+# from current module* packages).
+DUP_LIBS_DIRS = $(D)/usr/$(LIBDIR)/kamailio \
+                $(D)-db-modules/usr/$(LIBDIR)/kamailio
+
+# CFLAGS + CPPFLAGS -> CC_EXTRA_OPTS
+CC_EXTRA_OPTS := $(shell dpkg-buildflags --get CPPFLAGS)
+CC_EXTRA_OPTS += $(shell dpkg-buildflags --get CFLAGS)
+CXXFLAGS := $(shell dpkg-buildflags --get CXXFLAGS)
+# LDFLAGS -> LD_EXTRA_OPTS
+LD_EXTRA_OPTS := $(shell dpkg-buildflags --get LDFLAGS)
+
+# https://wiki.debian.org/ReproducibleBuilds/
+CC_EXTRA_OPTS += -DVERSION_NODATE
 
 # "function" to get package short name out of a dir/module_name
 # it also transforms db_foo into foo
@@ -65,18 +124,18 @@ endef
 define PACKAGE_GRP_INSTALL_template
 	$(foreach grp,$(PACKAGE_GROUPS),\
 		$(MAKE) install-modules-all LIBDIR=$(LIBDIR) group_include="k$(grp)" \
-		BASEDIR=$(CURDIR)/debian/kamailio-$(grp)-modules \
-		cfg_prefix=$(CURDIR)/debian/kamailio-$(grp)-modules \
-		doc-dir=share/doc/kamailio-$(grp)-modules quiet=verbose
+		BASEDIR=$(D)-$(grp)-modules \
+		cfg_prefix=$(D)-$(grp)-modules \
+		doc-dir=share/doc/$(DEB_SOURCE)-$(grp)-modules quiet=verbose
 		# eliminate duplicate libs
 		-for d in $(DUP_LIBS_DIRS); do \
-			test "$$d" != "$(CURDIR)/debian/kamailio-$(grp)-modules/usr/$(LIBDIR)/kamailio" &&\
+			test "$$d" != "$(D)-$(grp)-modules/usr/$(LIBDIR)/kamailio" &&\
 			for r in `find $$d -name 'lib*'|xargs`; do \
 				echo "removing $(grp) lib `basename $$r` present also in $$d";\
-				rm -f $(CURDIR)/debian/kamailio-$(grp)-modules/usr/$(LIBDIR)/kamailio/`basename "$$r"` ; \
+				rm -f $(D)-$(grp)-modules/usr/$(LIBDIR)/kamailio/`basename "$$r"` ; \
 			done ; \
 		done
-		find $(CURDIR)/debian/kamailio-$(grp)-modules -depth -empty -type d -exec rmdir {} \;
+		find $(D)-$(grp)-modules -depth -empty -type d -exec rmdir {} \;
 	)
 endef
 
@@ -90,38 +149,28 @@ endef
 define PACKAGE_EXTRA_INSTALL_template
 	$(foreach grp,$(EXTRA_GROUPS),\
 		$(MAKE) install-modules-all LIBDIR=$(LIBDIR) group_include="k$(grp)" \
-		BASEDIR=$(CURDIR)/debian/kamailio-extra-modules \
-		cfg_prefix=$(CURDIR)/debian/kamailio-extra-modules \
-		doc-dir=share/doc/kamailio-extra-modules quiet=verbose
+		BASEDIR=$(D)-extra-modules \
+		cfg_prefix=$(D)-extra-modules \
+		doc-dir=share/doc/$(DEB_SOURCE)-extra-modules quiet=verbose
 	)
 	# eliminate duplicate libs
 	-for d in $(DUP_LIBS_DIRS); do \
-		test "$$d" != "$(CURDIR)/debian/kamailio-extra-modules/usr/$(LIBDIR)/kamailio" &&\
+		test "$$d" != "$(D)-extra-modules/usr/$(LIBDIR)/kamailio" &&\
 		for r in `find $$d -name 'lib*'|xargs`; do \
 			echo "removing extra lib `basename $$r` present also in $$d";\
-			rm -f $(CURDIR)/debian/kamailio-extra-modules/usr/$(LIBDIR)/kamailio/`basename "$$r"` ; \
+			rm -f $(D)-extra-modules/usr/$(LIBDIR)/kamailio/`basename "$$r"` ; \
 		done ; \
 	done
-	find $(CURDIR)/debian/kamailio-extra-modules -depth -empty -type d -exec rmdir {} \;
+	find $(D)-extra-modules -depth -empty -type d -exec rmdir {} \;
 endef
-
-# CFLAGS + CPPFLAGS -> CC_EXTRA_OPTS
-CC_EXTRA_OPTS := $(shell dpkg-buildflags --get CPPFLAGS)
-CC_EXTRA_OPTS += $(shell DEB_CFLAGS_MAINT_STRIP=-O2 dpkg-buildflags --get CFLAGS)
-CXXFLAGS := $(shell DEB_CXXFLAGS_MAINT_STRIP=-O2 dpkg-buildflags --get CXXFLAGS)
-# LDFLAGS -> LD_EXTRA_OPTS
-LD_EXTRA_OPTS := $(shell dpkg-buildflags --get LDFLAGS)
-
-# https://wiki.debian.org/ReproducibleBuilds/
-CC_EXTRA_OPTS += -DVERSION_NODATE
 
 configure: configure-stamp
 configure-stamp:
 	dh_testdir
 	# Add here commands to configure the package.
-	$(MAKE) FLAVOUR=kamailio cfg prefix=/usr cfg_prefix=$(CURDIR)/debian/kamailio \
+	$(MAKE) FLAVOUR=kamailio cfg prefix=/usr cfg_prefix=$(D) \
 			cfg_target=/etc/kamailio/ \
-			BASEDIR=$(CURDIR)/debian/kamailio \
+			BASEDIR=$(D) \
 			skip_modules="$(EXCLUDED_MODULES) $(EXTRA_EXCLUDED_MODULES)" \
 			CC_EXTRA_OPTS="$(CC_EXTRA_OPTS)" \
 			LD_EXTRA_OPTS="$(LD_EXTRA_OPTS)" \
@@ -160,13 +209,13 @@ install: build
 	# make group packages
 	$(call PACKAGE_GRP_INSTALL_template)
 	$(call PACKAGE_EXTRA_INSTALL_template)
-	mv $(CURDIR)/debian/kamailio-berkeley-modules/usr/sbin/kambdb_recover \
-		$(CURDIR)/debian/kamailio-berkeley-bin/usr/sbin/kambdb_recover
+	mv $(D)-berkeley-modules/usr/sbin/kambdb_recover \
+		$(D)-berkeley-bin/usr/sbin/kambdb_recover
 	# install /etc/default/kamailio file
-	mkdir -p $(CURDIR)/debian/kamailio/etc/default
-	cp -f debian/kamailio.default $(CURDIR)/debian/kamailio/etc/default/kamailio
+	mkdir -p $(D)/etc/default
+	cp -f debian/kamailio.default $(D)/etc/default/kamailio
 	# delete /run/kamailio dir
-	rm -rf $(CURDIR)/debian/kamailio/usr/local
+	rm -rf $(D)/usr/local
 
 
 # This single target is used to build all the packages, all at once, or
@@ -212,16 +261,5 @@ binary-arch: build install
 binary-%: build install
 	$(MAKE) -f debian/rules binary-common DH_OPTIONS=-p$*
 
-print-version:
-	@@echo "Debian version:          $(DEBVERSION)"
-	@@echo "Upstream version:        $(UPVERSION)"
-
-get-orig-source:
-	@@dh_testdir
-	@@[ -d ../tarballs/. ]||mkdir -p ../tarballs
-	@@echo Downloading $(FILENAME) from $(URL) ...
-	@@wget -nv -T10 -t3 -O ../tarballs/$(FILENAME) $(URL)
-
 binary: binary-indep binary-arch
 .PHONY: build clean binary-indep binary-arch binary install configure
-

@@ -51,7 +51,6 @@ Build-Depends:
  libval-dev,
  libwebsockets-dev,
  libxml2-dev,
- libxmlrpc-c3-dev,
  openssl,
  pkg-config,
  python,

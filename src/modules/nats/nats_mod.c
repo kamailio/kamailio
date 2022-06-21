@@ -298,7 +298,10 @@ int _nats_pub_worker_proc(
 			!= NATS_OK) {
 		LM_ERR("could not connect to nats servers [%s]\n",
 				natsStatus_GetText(s));
+	} else {
+		connectedCB(worker->nc->conn, NULL);
 	}
+
 	s = natsOptions_SetEventLoop(worker->nc->opts, (void *)worker->uvLoop,
 			natsLibuv_Attach, natsLibuv_Read, natsLibuv_Write,
 			natsLibuv_Detach);

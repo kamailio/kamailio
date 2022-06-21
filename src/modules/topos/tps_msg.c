@@ -57,6 +57,8 @@ extern str _tps_context_value;
 str _sr_hname_xbranch = str_init("P-SR-XBranch");
 str _sr_hname_xuuid = str_init("P-SR-XUID");
 
+unsigned int _tps_methods_nocontact = METHOD_CANCEL|METHOD_BYE|METHOD_PRACK;
+
 /**
  *
  */
@@ -581,6 +583,10 @@ int tps_reinsert_via(sip_msg_t *msg, tps_data_t *ptsd, str *hbody)
 int tps_reinsert_contact(sip_msg_t *msg, tps_data_t *ptsd, str *hbody)
 {
 	str hname = str_init("Contact");
+
+	if (get_cseq(msg)->method_id & _tps_methods_nocontact) {
+		return 0;
+	}
 
 	if(tps_add_headers(msg, &hname, hbody, 0)<0) {
 		return -1;

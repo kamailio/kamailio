@@ -1,0 +1,81 @@
+wolfSSL TLS Module
+
+Shih-Ping Chan
+
+   Copyright © 2022 Chan Shih-Ping
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Quick Start
+        3. Important Notes
+        4. Compiling the wolfSSL TLS Module
+
+   List of Examples
+
+   1.1. Quick Start Basic Config
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Quick Start
+   3. Important Notes
+   4. Compiling the wolfSSL TLS Module
+
+1. Overview
+
+   This module implements the TLS transport for Kamailio using the wolfSSL
+   library (https://www.wolfssl.com). To enable the Kamailio TLS support
+   this module must be loaded and enable_tls=yes core setting must be
+   added to the Kamailio config file.
+
+   This module is derived from the tls module and adapted to wolfSSL using
+   the OpenSSL-compatibility layer. Credit goes to the authors of the tls
+   module.
+
+   This module is based on wolfSSL 5.2.0 and 5.3.0 and is not fully
+   compatible with the tls module (protocol versions < 1.1 not supported
+   it the Debian package for example.
+
+   This user is referred to the documentation of the tls module for
+   configuration and other information. Not all configuration keys are
+   implemented (e.g., protocol versions — defaults to 1.2+ and cipher
+   suites).
+
+2. Quick Start
+
+   The default kamailio.cfg file has basic tls support included, it has to
+   be enabled with "#!define WITH_TLS" directive.
+
+   Example 1.1. Quick Start Basic Config
+#...
+loadmodule "sl.so"
+loadmodule "tls_wolfssl.so"
+#... refer to Quick Start oftls module
+#... for further configuration
+
+3. Important Notes
+
+   The wolfSSL TLS module is intended to be compiled with a recent version
+   of wolfSSL (5.2.0+).
+
+4. Compiling the wolfSSL TLS Module
+
+   The development package for wolfSSL is required (libwolfssl-dev or
+   equivalent).
+
+   In most case compiling the wolfSSL TLS module is as simple as:
+make -C modules/tls_wolfssl
+
+   or
+make modules modules=modules/tls_wolfssl
+
+   or (compiling whole Kamailio and the tls module)
+make all include_modules=tls_wolfssl
+
+   .

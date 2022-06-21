@@ -213,7 +213,8 @@ modparam("db_cluster", "max_query_length", 5)
 modparam("db_cluster", "connection",
              "c1=>mysql://kamailio:kamailiorw@localhost/kamailio1")
 modparam("db_cluster", "connection",
-             "c2=>mysql://kamailio:kamailiorw@localhost/kamailio2")
+             "c2=>mysql://kamailio:kamailiorw@remotehost/kamailio2")
+
 modparam("db_cluster", "cluster", "k1=>c1=9r9p;c2=9r9p")
 
 modparam("acc", "db_url", "cluster://k1")

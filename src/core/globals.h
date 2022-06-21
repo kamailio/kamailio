@@ -213,6 +213,7 @@ extern int rt_timer2_policy; /* "slow" timer, SCHED_OTHER */
 extern int http_reply_parse;
 extern int _sr_ip_free_bind;
 extern int ksr_verbose_startup;
+extern int ksr_all_errors;
 extern int ksr_route_locks_size;
 extern str _ksr_xavp_via_params;
 extern str _ksr_xavp_via_fields;

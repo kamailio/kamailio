@@ -54,7 +54,7 @@ int pp_def_qvalue(str *defval, str *outval)
 	str_list_t *sb;
 
 	if(pv_get_buffer_size() < defval->len + 4) {
-		LM_ERR("defined value is too large\n");
+		LM_ERR("defined value is too large %d < %d\n", pv_get_buffer_size(), defval->len + 4);
 		return -1;
 	}
 	newval.s = pv_get_buffer();
