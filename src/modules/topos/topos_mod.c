@@ -50,6 +50,7 @@
 #include "../../core/parser/parse_uri.h"
 #include "../../core/parser/parse_to.h"
 #include "../../core/parser/parse_from.h"
+#include "../../core/parser/parse_methods.h"
 #include "../../core/timer_proc.h"
 #include "../../core/fmsg.h"
 #include "../../core/onsend.h"
@@ -84,6 +85,8 @@ str _tps_storage = str_init("db");
 
 extern int _tps_branch_expire;
 extern int _tps_dialog_expire;
+extern unsigned int _tps_methods_nocontact;
+str _tps_methods_nocontact_list = str_init("");
 
 int _tps_clean_interval = 60;
 
@@ -165,6 +168,8 @@ static param_export_t params[]={
 	{"xavu_field_contact_host", PARAM_STR, &_tps_xavu_field_contact_host},
 	{"rr_update",		PARAM_INT, &_tps_rr_update},
 	{"context",			PARAM_STR, &_tps_context_param},
+	{"methods_nocontact",		PARAM_STR, &_tps_methods_nocontact_list},
+
 	{0,0,0}
 };
 
@@ -214,6 +219,12 @@ static int mod_init(void)
 		return -1;
 	}
 
+	if(_tps_methods_nocontact_list.len>0) {
+		if(parse_methods(&_tps_methods_nocontact_list, &_tps_methods_nocontact)<0) {
+			LM_ERR("failed to parse methods_nocontact parameter\n");
+			return -1;
+		}
+	}
 	if(_tps_storage.len==2 && strncmp(_tps_storage.s, "db", 2)==0) {
 		/* Find a database module */
 		if (db_bind_mod(&_tps_db_url, &_tpsdbf)) {
