@@ -46,6 +46,8 @@
 #include "tps_msg.h"
 #include "tps_storage.h"
 
+#define TPS_METHODS_NOCONTACT (METHOD_CANCEL|METHOD_BYE|METHOD_PRACK)
+
 extern int _tps_param_mask_callid;
 extern int _tps_contact_mode;
 extern str _tps_cparam_name;
@@ -581,6 +583,10 @@ int tps_reinsert_via(sip_msg_t *msg, tps_data_t *ptsd, str *hbody)
 int tps_reinsert_contact(sip_msg_t *msg, tps_data_t *ptsd, str *hbody)
 {
 	str hname = str_init("Contact");
+
+	if (get_cseq(msg)->method_id & TPS_METHODS_NOCONTACT) {
+		return 0;
+	}
 
 	if(tps_add_headers(msg, &hname, hbody, 0)<0) {
 		return -1;
