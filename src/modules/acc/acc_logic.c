@@ -94,28 +94,13 @@ void env_set_totag(struct cell *t, struct sip_msg *reply)
 }
 
 int env_set_reason(struct sip_msg *reply, str *buff, int code) {
-/*
-	int i;
-	char *p;
-*/
+
 	if (reply!=FAKED_REPLY || !buff || !buff->s || buff->len < 20)
 		return 0;
 	if (strncmp(buff->s, "SIP/2.0 ", 8) != 0) {
 		LM_ERR("not a SIP reply\n");
 		return 0;
 	}
-/*
-	p = buff->s + 12;
-	for (i=12;i<buff->len;i++) {
-		if (*p == '\r' || *p == '\n') {
-			acc_env.reason.s = buff->s+12;
-			acc_env.reason.len = i-12;
-			LM_DBG("reason[%.*s]\n", acc_env.reason.len, acc_env.reason.s);
-			return 1;
-		}
-		p++;
-	}
-*/
 
 	/* Set the reason to a pointer in heap memory. It will contain the last seen FAKED_REPLY */
 	acc_env.reason.s = error_text(code);
