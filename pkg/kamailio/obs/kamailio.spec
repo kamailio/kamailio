@@ -21,6 +21,7 @@
 %bcond_without nats
 %bcond_without perl
 %bcond_without phonenum
+%bcond_without python2
 %bcond_without python3
 %bcond_without rabbitmq
 %bcond_without redis
@@ -55,6 +56,7 @@
 %bcond_with nats
 %bcond_without perl
 %bcond_with phonenum
+%bcond_without python2
 %bcond_with python3
 %bcond_with rabbitmq
 %bcond_with redis
@@ -90,6 +92,7 @@
 %bcond_with nats
 %bcond_without perl
 %bcond_without phonenum
+%bcond_without python2
 %bcond_without python3
 %bcond_without rabbitmq
 %bcond_without redis
@@ -135,6 +138,53 @@
 %bcond_without nats
 %bcond_without perl
 %bcond_without phonenum
+%bcond_without python2
+%bcond_without python3
+%bcond_without rabbitmq
+%bcond_without redis
+%bcond_without ruby
+%bcond_without sctp
+%bcond_without websocket
+%bcond_without xmlrpc
+%endif
+
+%if 0%{?rhel} == 9
+%if 0%{?centos_ver}
+%define dist_name centos
+%define dist_version %{?centos}
+%define dist .el9.centos
+%endif
+%if 0%{?almalinux_ver}
+%define dist_name centos
+%define dist_version %{?almalinux}
+%define dist .el9.almalinux
+%endif
+%if 0%{?rocky_ver}
+%define dist_name centos
+%define dist_version %{?rocky}
+%define dist .el9.rocky
+%endif
+%if 0%{?centos_ver} == 0 && 0%{?almalinux_ver} == 0 && 0%{?rocky_ver} == 0
+%define dist_name rhel
+%define dist_version %{?rhel}
+%endif
+%bcond_without cnxcc
+%bcond_with dnssec
+%bcond_without evapi
+%bcond_without geoip
+%bcond_without http_async_client
+%bcond_without ims
+%bcond_without jansson
+%bcond_without json
+%bcond_without lua
+%bcond_without lwsc
+%bcond_without kazoo
+%bcond_without memcached
+%bcond_without mongodb
+%bcond_without nats
+%bcond_without perl
+%bcond_without phonenum
+%bcond_with python2
 %bcond_without python3
 %bcond_without rabbitmq
 %bcond_without redis
@@ -163,6 +213,7 @@
 %bcond_with nats
 %bcond_without perl
 %bcond_with phonenum
+%bcond_without python2
 %bcond_without python3
 %bcond_with rabbitmq
 %bcond_without redis
@@ -788,13 +839,11 @@ SIP Presence (and RLS, XCAP, etc) support for Kamailio.
 %package    python
 Summary:    Python extensions for Kamailio
 Group:      %{PKGGROUP}
+%if %{with python2}
 Requires:   python2, kamailio = %ver
 BuildRequires:  python2, python2-devel
-%if %{with python3}
-%if 0%{?rhel} == 7
-Requires:   python36, kamailio = %ver
-BuildRequires:  python36, python36-devel
 %endif
+%if %{with python3}
 %if 0%{?rhel} == 8
 Requires:   python39, kamailio = %ver
 BuildRequires:  python39, python39-devel
@@ -824,7 +873,7 @@ RabbitMQ module for Kamailio.
 Summary:    RADIUS modules for Kamailio
 Group:      %{PKGGROUP}
 Requires:   kamailio = %ver
-%if 0%{?fedora} || 0%{?suse_version} || 0%{?rhel} == 8
+%if 0%{?fedora} || 0%{?suse_version} || 0%{?rhel} >= 8
 Requires:   freeradius-client
 BuildRequires:  freeradius-client-devel
 %else
@@ -1158,14 +1207,14 @@ sed -i -e 's/python3/python2/' utils/kamctl/dbtextdb/dbtextdb.py
 %endif
 
 # on latest dist need to add --atexit=no for Kamailio options. More details GH #2616
-%if 0%{?fedora} || 0%{?suse_version} || 0%{?rhel} == 8
+%if 0%{?fedora} || 0%{?suse_version} || 0%{?rhel} >= 8
 sed -i -e 's|/usr/sbin/kamailio|/usr/sbin/kamailio --atexit=no|' pkg/kamailio/obs/kamailio.service
 %endif
 
 
 %build
 ln -s ../obs pkg/kamailio/%{dist_name}/%{dist_version}
-%if 0%{?fedora} || 0%{?suse_version} || 0%{?rhel} == 8
+%if 0%{?fedora} || 0%{?suse_version} || 0%{?rhel} >= 8
 export FREERADIUS=1
 %endif
 make cfg prefix=/usr \
@@ -1180,10 +1229,10 @@ make every-module skip_modules="app_mono db_cassandra db_oracle iptrtpproxy \
 %if %{with openssl11}
     SSL_BUILDER="pkg-config libssl11" \
 %endif
-%if 0%{?fedora} || 0%{?suse_version} || 0%{?rhel} == 8
+%if 0%{?fedora} || 0%{?suse_version} || 0%{?rhel} >= 8
     FREERADIUS=1 \
 %endif
-%if 0%{?rhel} == 8
+%if 0%{?rhel} >= 8
     PYTHON3=python3.9 \
 %endif
     group_include="kstandard kautheph kberkeley kcarrierroute \
@@ -1244,7 +1293,10 @@ make every-module skip_modules="app_mono db_cassandra db_oracle iptrtpproxy \
 %if %{with phonenum}
     kphonenum \
 %endif
-    kpostgres kpresence kpython \
+    kpostgres kpresence \
+%if %{with python2}
+    kpython \
+%endif
 %if %{with python3}
     kpython3 \
 %endif
@@ -1284,10 +1336,10 @@ make install-modules-all skip_modules="app_mono db_cassandra db_oracle \
 %if %{with openssl11}
     SSL_BUILDER="pkg-config libssl11" \
 %endif
-%if 0%{?fedora} || 0%{?suse_version} || 0%{?rhel} == 8
+%if 0%{?fedora} || 0%{?suse_version} || 0%{?rhel} >= 8
     FREERADIUS=1 \
 %endif
-%if 0%{?rhel} == 8
+%if 0%{?rhel} >= 8
     PYTHON3=python3.9 \
 %endif
     group_include="kstandard kautheph kberkeley kcarrierroute \
@@ -1348,7 +1400,10 @@ make install-modules-all skip_modules="app_mono db_cassandra db_oracle \
 %if %{with phonenum}
     kphonenum \
 %endif
-    kpostgres kpresence kpython \
+    kpostgres kpresence \
+%if %{with python2}
+    kpython \
+%endif
 %if %{with python3}
     kpython3 \
 %endif
@@ -1411,8 +1466,8 @@ install -m644 pkg/kamailio/%{dist_name}/%{dist_version}/sipcapture.sysconfig \
 %if 0%{?suse_version}
 %py_compile -O %{buildroot}%{_libdir}/kamailio/kamctl/dbtextdb
 %endif
-%if 0%{?fedora} || 0%{?rhel} == 8
-%py_byte_compile %{__python2} %{buildroot}%{_libdir}/kamailio/kamctl/dbtextdb
+%if 0%{?fedora} || 0%{?rhel} >= 8
+%py_byte_compile %{__python3} %{buildroot}%{_libdir}/kamailio/kamctl/dbtextdb
 %endif
 
 # Removing devel files
@@ -1778,8 +1833,8 @@ fi
 
 %dir %{_libdir}/kamailio/kamctl/dbtextdb
 %{_libdir}/kamailio/kamctl/dbtextdb/dbtextdb.py
-%{_libdir}/kamailio/kamctl/dbtextdb/dbtextdb.pyc
-%{_libdir}/kamailio/kamctl/dbtextdb/dbtextdb.pyo
+%dir %{_libdir}/kamailio/kamctl/dbtextdb/__pycache__
+%{_libdir}/kamailio/kamctl/dbtextdb/__pycache__/*.pyc
 
 %{_mandir}/man5/*
 %{_mandir}/man8/*
@@ -2145,8 +2200,10 @@ fi
 
 %files      python
 %defattr(-,root,root)
+%if %{with python2}
 %doc %{_docdir}/kamailio/modules/README.app_python
 %{_libdir}/kamailio/modules/app_python.so
+%endif
 %if %{with python3}
 %doc %{_docdir}/kamailio/modules/README.app_python3
 %{_libdir}/kamailio/modules/app_python3.so
