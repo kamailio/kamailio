@@ -459,7 +459,8 @@ static str log_prefix_str = STR_NULL;
 
 void log_init(void)
 {
-	struct addrinfo hints, *info;
+	struct addrinfo hints;
+	struct addrinfo *info = NULL;
 	int gai_result;
 	char hostname[1024];
 
