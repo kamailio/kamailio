@@ -22,7 +22,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
-
+#include "../../core/pvapi.h"
 #include "../../core/strutils.h"
 
 #include "pv_headers.h"
@@ -381,73 +381,45 @@ int pvh_header_param_exists(struct sip_msg *msg, str *hname, str *hvalue)
 	return -1;
 }
 
-int pvh_remove_header_param(struct sip_msg *msg, int idx, str *hname, str *elements, str *toRemove)
+int pvh_remove_header_param_helper(str *orig, const str *toRemove, str *dst)
 {
-	int notTarget, writtenChars;
+	int notTarget;
+	int writtenChars = 0;
 	int offset = 0;
-	int ret = -1;
-	char *next_token;
+	char *saveptr = NULL;
 	char *token;
-	char *result = (char*)pkg_malloc(elements->len - toRemove->len);
-	char *t = (char*)pkg_malloc(elements->len+1);
+	char t[header_value_size];
+	char *result = pv_get_buffer();
+	int maxSize = pv_get_buffer_size();
 
-	if (result == NULL || t == NULL)
-	{
-		PKG_MEM_ERROR;
-		goto clean;
-	}
-
-	snprintf(t, elements->len+1, "%s", elements->s);
-
-	token = strtok_r(t, ", ", &next_token);
-	while(token)
-	{
-		notTarget = strncmp(token, toRemove->s, toRemove->len);
-		if (notTarget)
-		{
-			writtenChars = snprintf(result + offset, elements->len - offset, "%s", token);
-			if (writtenChars < 0 || writtenChars >= elements->len - offset)
-			{
-				break;
-			}
+	memset(result, 0, maxSize);
+	LM_DBG("orig:'%.*s' toRemove:'%.*s'\n", STR_FMT(orig), STR_FMT(toRemove));
+	strncpy(t, orig->s, orig->len);
+	t[orig->len] = '\0';
+	token = strtok_r(t, ", ", &saveptr);
+	dst->s = NULL; dst->len = -1;
+	while(token) {
+		notTarget = strncasecmp(token, toRemove->s, toRemove->len);
+		LM_DBG("offset:%d token:%s notTarget:%d\n", offset, token, notTarget);
+		if(notTarget) {
+			writtenChars = snprintf(result + offset, maxSize - offset, "%s, ", token);
+			if(writtenChars < 0) break;
 			offset += writtenChars;
+		} else {
+			dst->len = 0; /* we found a token */
 		}
-		token = strtok_r(NULL, ", ", &next_token);
-		if (token && notTarget && elements->len - offset - toRemove->len > 2)
-		{
-			writtenChars = snprintf(result + offset, elements->len - offset, ", ");
-			if (writtenChars < 0 || writtenChars >= elements->len - offset)
-			{
-				break;
-			}
-			offset += writtenChars;
+		token = strtok_r(NULL, ", ", &saveptr);
+	}
+
+	if(offset > 0) {
+		dst->s = result;
+		if(offset > 2 && result[offset-2] == ',' && result[offset-1] == ' ') {
+			LM_DBG("remove last separator\n");
+			offset = offset - 2;
+			result[offset] = '\0';
 		}
+		dst->len = offset;
+		LM_DBG("offset:%d result:'%.*s'[%d]\n", offset, STR_FMT(dst), dst->len);
 	}
-
-	if (elements->len-toRemove->len > 0)
-	{
-		snprintf(elements->s, (strlen(result)%elements->len)+1, "%s", result);
-		elements->len = strlen(result);
-		ret = 1;
-	}
-	else
-	{
-		ret = pvh_remove_header(msg, hname, idx);
-	}
-
-clean:
-
-	if(t != NULL)
-	{
-		pkg_free(t);
-		t = NULL;
-	}
-
-	if(result != NULL)
-	{
-		pkg_free(result);
-		result = NULL;
-	}
-
-	return ret;
+	return offset;
 }
