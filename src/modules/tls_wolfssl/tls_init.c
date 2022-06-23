@@ -243,7 +243,7 @@ static void* ser_realloc(void *ptr, size_t new_size)
 	*(size_t*)new_ptr = new_size;
 	int new_pad = MAX_ALIGN - ((long) new_ptr % MAX_ALIGN);
 	if (new_pad != pad) {
-		memmove(new_ptr + MAX_ALIGN + new_pad, new_ptr + MAX_ALIGN + pad, size);
+		memmove(new_ptr + MAX_ALIGN + new_pad, new_ptr + MAX_ALIGN + pad, new_size);
 		memset(new_ptr + MAX_ALIGN, new_pad, new_pad);
 	}
 		
