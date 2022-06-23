@@ -215,7 +215,27 @@ static void* ser_realloc(void *ptr, size_t size, const char* file, int line)
 }
 
 #else /*TLS_MALLOC_DBG */
+static void* ser_malloc(size_t size)
+{
+	return shm_malloc(size);
 
+}
+
+static void* ser_realloc(void *ptr, size_t size)
+{
+	return shm_realloc(ptr, size);
+
+}
+#endif
+
+static void ser_free(void *ptr)
+{
+	if (ptr) {
+		shm_free(ptr);
+	}
+}
+
+#if 0
 // up align memory allocations to 16 bytes for
 // wolfSSL --enable-aligndata=yes (the default)
 static const int MAX_ALIGN = __alignof__(max_align_t);
@@ -245,7 +265,6 @@ static void* ser_realloc(void *ptr, size_t new_size)
 		
 	return new_ptr + new_pad;
 }
-#endif /* LIBRESSL_VERSION_NUMBER */
 
 static void ser_free(void *ptr)
 {
@@ -254,7 +273,7 @@ static void ser_free(void *ptr)
 		shm_free((unsigned char*)ptr - pad);
 	}
 }
-
+#endif
 
 /*
  * Initialize TLS socket

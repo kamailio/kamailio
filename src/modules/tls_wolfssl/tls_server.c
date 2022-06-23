@@ -309,7 +309,7 @@ static int tls_complete_init(struct tcp_connection* c)
 error:
 	atomic_dec(&cfg->ref_count);
 	if (data) shm_free(data);
-error2:
+
 	return -1;
 }
 
