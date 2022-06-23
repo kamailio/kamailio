@@ -222,32 +222,28 @@ static const int MAX_ALIGN = __alignof__(max_align_t);
 
 static void* ser_malloc(size_t size)
 {
-	char* ptr =  shm_malloc(size + 2*MAX_ALIGN);
-	int pad = MAX_ALIGN - ((long) ptr % MAX_ALIGN);
+	char* ptr =  shm_malloc(size + MAX_ALIGN);
+	int pad = MAX_ALIGN - ((long) ptr % MAX_ALIGN); // 8 or 16 bytes
 
-	*(size_t*)ptr = size;
-
-	memset(ptr + MAX_ALIGN, pad, pad);
-	return ptr + MAX_ALIGN + pad;
+	memset(ptr, pad, pad);
+	return ptr + pad;
 }
 
 static void* ser_realloc(void *ptr, size_t new_size)
 {
 	if(!ptr) return ser_malloc(new_size);
 
-	int pad = *((unsigned char*)ptr - 1);
-	unsigned char *real_ptr = (unsigned char*)ptr - pad - MAX_ALIGN;
-	int size = *(size_t*)real_ptr;
+	int pad = *((char*)ptr - 1); // 8 or 16 bytes
+	char *real_ptr = (char*)ptr - pad; 
 
-	char *new_ptr = shm_realloc(real_ptr, new_size+2*MAX_ALIGN);
-	*(size_t*)new_ptr = new_size;
+	char *new_ptr = shm_realloc(real_ptr, new_size+MAX_ALIGN);
 	int new_pad = MAX_ALIGN - ((long) new_ptr % MAX_ALIGN);
 	if (new_pad != pad) {
-		memmove(new_ptr + MAX_ALIGN + new_pad, new_ptr + MAX_ALIGN + pad, new_size);
-		memset(new_ptr + MAX_ALIGN, new_pad, new_pad);
+		memmove(new_ptr + new_pad, new_ptr + pad, new_size);
+		memset(new_ptr, new_pad, new_pad);
 	}
 		
-	return new_ptr + MAX_ALIGN + new_pad;
+	return new_ptr + new_pad;
 }
 #endif /* LIBRESSL_VERSION_NUMBER */
 
@@ -255,7 +251,7 @@ static void ser_free(void *ptr)
 {
 	if (ptr) {
 		int pad = *((unsigned char *)ptr - 1);
-		shm_free((unsigned char*)ptr - pad  - MAX_ALIGN);
+		shm_free((unsigned char*)ptr - pad);
 	}
 }
 
