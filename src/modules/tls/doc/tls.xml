@@ -84,7 +84,7 @@
 		The most important parameters to set the path to the public certificate and private key
 		files. You can either have them in different file or in the same file in PEM format.
 		The parameters for them are <varname>certificate</varname> and <varname>private_key</varname>.
-		They can be given as modparam or or provided in the profiles of tls.cfg file.
+		They can be given as modparam or provided in the profiles of tls.cfg file.
 		</para>
 		<para>
 		When installing tls module of kamailio, a sample 'tls.cfg' file is deployed in the same
