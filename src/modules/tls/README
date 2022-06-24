@@ -250,7 +250,7 @@ Chapter 1. Admin Guide
    The most important parameters to set the path to the public certificate
    and private key files. You can either have them in different file or in
    the same file in PEM format. The parameters for them are certificate
-   and private_key. They can be given as modparam or or provided in the
+   and private_key. They can be given as modparam or provided in the
    profiles of tls.cfg file.
 
    When installing tls module of kamailio, a sample 'tls.cfg' file is

@@ -157,8 +157,8 @@ Ovidiu Sas
    1.43. has_body usage
    1.44. is_audio_on_hold usage
    1.45. is_privacy usage
-   1.46. in_list() usage
-   1.47. in_list() usage
+   1.46. in_list usage
+   1.47. in_list_prefix usage
    1.48. cmp_str usage
    1.49. cmp_str usage
    1.50. starts_with usage
@@ -1239,7 +1239,7 @@ if(is_privacy("id"))
 
    Function can be used from all kinds of routes.
 
-   Example 1.46. in_list() usage
+   Example 1.46. in_list usage
 ...
 $var(subject) = "fi";
 $var(list) = "dk,fi,no,se";
@@ -1257,7 +1257,7 @@ if (in_list("$var(subject)", "$var(list)", ",")) {
 
    Function can be used from all kinds of routes.
 
-   Example 1.47. in_list() usage
+   Example 1.47. in_list_prefix usage
 ...
 $var(subject) = "final";
 $var(list) = "dk,fi,no,se";
