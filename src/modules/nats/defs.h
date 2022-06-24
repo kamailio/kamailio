@@ -27,6 +27,7 @@
 
 #include <nats/nats.h>
 #include <uv.h>
+#include "../../core/str.h"
 
 #define NATS_DEFAULT_URL "nats://localhost:4222"
 #define NATS_MAX_SERVERS 10
@@ -63,6 +64,8 @@ typedef struct _init_nats_server
 typedef struct _nats_on_message
 {
 	int rt;
+	char *_evname;
+	str evname;
 } nats_on_message, *nats_on_message_ptr;
 
 struct nats_consumer_worker

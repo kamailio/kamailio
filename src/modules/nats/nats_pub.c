@@ -90,6 +90,11 @@ int w_nats_publish_f(sip_msg_t *msg, char *subj, char *payload)
 		return -1;
 	}
 
+	return w_nats_publish(msg, subj_s, payload_s);
+}
+
+int w_nats_publish(sip_msg_t *msg, str subj_s, str payload_s)
+{
 	// round-robin pub workers
 	pub_worker++;
 	if(pub_worker >= nats_pub_workers_num) {
