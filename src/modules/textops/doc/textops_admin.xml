@@ -1711,7 +1711,7 @@ if(is_privacy("id"))
 		Function can be used from all kinds of routes.
 		</para>
 		<example>
-			<title><function>in_list()</function> usage</title>
+			<title><function>in_list</function> usage</title>
 			<programlisting format="linespecific">
 ...
 $var(subject) = "fi";
@@ -1735,7 +1735,7 @@ if (in_list("$var(subject)", "$var(list)", ",")) {
 		Function can be used from all kinds of routes.
 		</para>
 		<example>
-			<title><function>in_list()</function> usage</title>
+			<title><function>in_list_prefix</function> usage</title>
 			<programlisting format="linespecific">
 ...
 $var(subject) = "final";
