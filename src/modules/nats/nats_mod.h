@@ -40,7 +40,7 @@ extern int fixup_publish_get_value(void **param, int param_no);
 extern int fixup_publish_get_value_free(void **param, int param_no);
 extern void _nats_pub_worker_cb(uv_poll_t *handle, int status, int events);
 
-int nats_run_cfg_route(int rt);
+int nats_run_cfg_route(int rt, str *evname);
 void nats_init_environment();
 
 int _init_nats_server_url_add(modparam_t type, void *val);
