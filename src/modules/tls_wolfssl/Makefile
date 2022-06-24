@@ -9,17 +9,13 @@ auto_gen=
 NAME=tls_wolfssl.so
 
 LIBS += lib/lib/libwolfssl.a
-DEFS += -I./lib/include/
+INCLUDES += -I./lib/include/
 
 
 include ../../Makefile.modules
-SOURCES := $(shell ls *.c)
-OBJECTS = $(SOURCES:.c=.o)
-MOD_DIR := $(shell pwd)
+$(objs): lib/include/wolfssl/options.h
 
-$(OBJECTS): lib/lib/libwolfssl.a
-
-lib/lib/libwolfssl.a:
+lib/include/wolfssl/options.h lib/lib/libwolfssl.a:
 	@cd ./lib/wolfssl; \
 	if [ ! -f "configure" ]; then \
 		./autogen.sh; \
@@ -28,9 +24,8 @@ lib/lib/libwolfssl.a:
 		env -u DEFS -u CFLAGS -u LDFLAGS -u LIBS EXTRA_CFLAGS="-g -fPIC -Wno-error=array-bounds -Wno-error=stringop-overflow" ./configure \
 		--enable-all --enable-pkcs11 --enable-static --enable-aligndata=no \
 		--disable-shared --disable-examples \
-		--prefix=$(MOD_DIR)/lib \
-		--exec-prefix=$(MOD_DIR)/lib; \
-		sed -i s/-Werror// Makefile; \
+		--prefix=$(CURDIR)/lib \
+		--exec-prefix=$(CURDIR)/lib; \
 	fi;
 	@$(MAKE) -C ./lib/wolfssl install
 
@@ -38,7 +33,7 @@ $(NAME): lib/lib/libwolfssl.a
 
 clean-wolfssl:
 	@rm -rf ./lib/{bin,include,share,lib}; \
-	cd ./lib/wolfssl; make clean || /bin/true
+	(cd ./lib/wolfssl; make distclean) || /bin/true
 
 clean-module:
 	@rm -f *.o *.so
@@ -46,3 +41,6 @@ clean-module:
 clean-all: clean-wolfssl clean-module
 
 .PHONY: clean-wolfssl clean-module clean-all
+
+# debugging for dependency on lib/wolfssl
+$(warning sources = $(sources), auto_gen = $(auto_gen), objs = $(objs))
