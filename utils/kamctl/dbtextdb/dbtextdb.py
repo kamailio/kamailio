@@ -1135,7 +1135,7 @@ class DBText(object):
             else:
                 header = '%s)' % header
 
-        self.temp_file.write(header.strip() + '\n')
+        self.temp_file.write((header.strip() + '\n').encode())
 
         # write data
         for row in self.data:
@@ -1143,7 +1143,7 @@ class DBText(object):
             for col in columns:
                 row_str = '%s:%s' % (row_str, row[col])
 
-            self.temp_file.write(row_str[1:] + '\n')
+            self.temp_file.write((row_str[1:] + '\n').encode())
 
         self.temp_file.flush()
 
