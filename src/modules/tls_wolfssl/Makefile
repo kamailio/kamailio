@@ -25,9 +25,9 @@ lib/lib/libwolfssl.a:
 		./autogen.sh; \
 	fi; \
 	if [ ! -f "Makefile" ]; then \
-		env -u DEFS -u CFLAGS -u LDFLAGS -u LIBS EXTRA_CFLAGS="-g -fPIC" ./configure \
+		env -u DEFS -u CFLAGS -u LDFLAGS -u LIBS EXTRA_CFLAGS="-g -fPIC -Wno-error=array-bounds -Wno-error=stringop-overflow" ./configure \
 		--enable-all --enable-pkcs11 --enable-static --enable-aligndata=no \
-		--disable-shared --disable-silent-rules --disable-examples \
+		--disable-shared --disable-examples \
 		--prefix=$(MOD_DIR)/lib \
 		--exec-prefix=$(MOD_DIR)/lib; \
 		sed -i s/-Werror// Makefile; \
@@ -44,5 +44,5 @@ clean-module:
 	@rm -f *.o *.so
 
 clean-all: clean-wolfssl clean-module
-  
+
 .PHONY: clean-wolfssl clean-module clean-all
