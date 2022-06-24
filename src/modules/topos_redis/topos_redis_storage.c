@@ -54,6 +54,11 @@ static str _tps_redis_dprefix = str_init("d:z:");
 
 static char _tps_redis_cbuf[TPS_REDIS_DATA_SIZE];
 
+static str _tps_redis_empty = str_init("");
+
+#define TPS_REDIS_STRZ(_s) ((_s).s)?(_s):(_tps_redis_empty)
+
+
 /**
  * storage keys
  */
@@ -594,6 +599,7 @@ int tps_redis_load_initial_method_branch(sip_msg_t *msg, tps_data_t *md, tps_dat
 	str skey = STR_NULL;
 	str sval = STR_NULL;
 	str xuuid = str_init("");
+	str xtag = str_init("");
 	str smethod = str_init("INVITE");
 
 	if(msg==NULL || md==NULL || sd==NULL)
@@ -615,6 +621,11 @@ int tps_redis_load_initial_method_branch(sip_msg_t *msg, tps_data_t *md, tps_dat
 	memset(argvlen, 0, TPS_REDIS_NR_KEYS * sizeof(size_t));
 	argc = 0;
 
+	if(md->direction==TPS_DIR_DOWNSTREAM) {
+		xtag = TPS_REDIS_STRZ(md->b_tag);
+	} else {
+		xtag = TPS_REDIS_STRZ(md->a_tag);
+	}
 	if(md->a_uuid.len>1) {
 		xuuid.s = md->a_uuid.s + 1;
 		xuuid.len = md->a_uuid.len - 1;
@@ -641,7 +652,7 @@ int tps_redis_load_initial_method_branch(sip_msg_t *msg, tps_data_t *md, tps_dat
 					_tps_redis_bprefix.len, _tps_redis_bprefix.s,
 					smethod.len, smethod.s,
 					md->a_callid.len, md->a_callid.s,
-					md->b_tag.len, md->b_tag.s,
+					xtag.len, xtag.s,
 					xuuid.len, xuuid.s);
 	if(rkey.len<0 || rkey.len>=TPS_REDIS_DATA_SIZE) {
 		LM_ERR("error or insufficient buffer size: %d\n", rkey.len);
