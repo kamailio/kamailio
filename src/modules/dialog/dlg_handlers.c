@@ -945,6 +945,8 @@ int dlg_new_dialog(sip_msg_t *req, struct cell *t, const int run_initial_cbs)
 		LM_ERR("failed to create new dialog\n");
 		return -1;
 	}
+	// Store link to Transaction
+	dlg->t = t;
 
 	/* save caller's tag, cseq, contact and record route*/
 	if (populate_leg_info(dlg, req, t, DLG_CALLER_LEG,

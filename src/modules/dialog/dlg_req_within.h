@@ -52,5 +52,6 @@ int free_tm_dlg(dlg_t *td);
 int dlg_bye(struct dlg_cell *dlg, str *hdrs, int side);
 int dlg_bye_all(struct dlg_cell *dlg, str *hdrs);
 int dlg_send_ka(dlg_cell_t *dlg, int dir);
+int dlg_request_within(struct sip_msg *msg, struct dlg_cell *dlg, int side, str * method, str * hdrs, str * content_type, str * content);
 
 #endif
