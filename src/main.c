@@ -2172,6 +2172,10 @@ int main(int argc, char** argv)
 	init_tcp_options(); /* set the defaults before the config */
 #endif
 
+	if (pv_init_buffer()<0) {
+		goto error;
+	}
+
 	pp_define_core();
 
 	/* process command line (cfg. file path etc) */
