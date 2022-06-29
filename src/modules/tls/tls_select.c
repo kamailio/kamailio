@@ -629,24 +629,35 @@ static int pv_validity(sip_msg_t* msg, pv_param_t* param, pv_value_t* res)
 }
 
 
-static int get_sn(str* res, int* ires, int local, sip_msg_t* msg)
+static int get_sn(str* res, int local, sip_msg_t* msg)
 {
-	static char buf[INT2STR_MAX_LEN];
+	static char buf[80]; // handle 256-bit > log(2^256,10)
 	X509* cert;
 	struct tcp_connection* c;
-	char* sn;
-	int num;
+	char* sn = NULL;
+	BIGNUM* bn = NULL;
 
 	if (get_cert(&cert, &c, msg, local) < 0) return -1;
 
-	num = ASN1_INTEGER_get(X509_get_serialNumber(cert));
-	sn = int2str(num, &res->len);
+	if (!(bn = BN_new())) goto error;
+	if (!ASN1_INTEGER_to_BN(X509_get_serialNumber(cert), bn)) goto error;
+	if (!(sn = BN_bn2dec(bn)) || strlen(sn) > 80) goto error;
+
+	res->len = strlen(sn);
 	memcpy(buf, sn, res->len);
 	res->s = buf;
-	if (ires) *ires = num;
+
 	if (!local) X509_free(cert);
 	tcpconn_put(c);
+
+	BN_free(bn);
+	OPENSSL_free(sn);
 	return 0;
+
+ error:
+	if (sn) OPENSSL_free(sn);
+	if (bn) BN_free(bn);
+	return -1;
 }
 
 static int sel_sn(str* res, select_t* s, sip_msg_t* msg)
@@ -661,7 +672,7 @@ static int sel_sn(str* res, select_t* s, sip_msg_t* msg)
 		return -1;
 	}
 
-	return get_sn(res, NULL, local, msg);
+	return get_sn(res, local, msg);
 }
 
 
@@ -678,11 +689,11 @@ static int pv_sn(sip_msg_t* msg, pv_param_t* param, pv_value_t* res)
 		return pv_get_null(msg, param, res);
 	}
 	
-	if (get_sn(&res->rs, &res->ri, local, msg) < 0) {
+	if (get_sn(&res->rs, local, msg) < 0) {
 		return pv_get_null(msg, param, res);
 	}
 	
-	res->flags = PV_VAL_STR | PV_VAL_INT;
+	res->flags = PV_VAL_STR;
 	return 0;
 }
 
