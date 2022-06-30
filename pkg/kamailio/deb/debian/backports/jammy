@@ -1,0 +1,36 @@
+#!/bin/bash
+#
+# Target dist: Ubuntu Jammy
+DIST=jammy
+
+rm -rf ${DIST}
+cp -r debian ${DIST}
+
+# No dnssec module:
+sed -i -e '/libval-dev/d' -e '/^Package: kamailio-dnssec-modules/,/^$/d' \
+  ${DIST}/control
+sed -i -e '/^PACKAGE_GROUPS += dnssec/d' ${DIST}/rules
+sed -i -e '/--EXCLUDED--/i EXTRA_EXCLUDED_MODULES += dnssec' ${DIST}/rules
+
+# No app_java due lack of gcj-jdk
+sed -i -e '/gcj-jdk/d' -e '/^Package: kamailio-java-modules/,/^$/d' \
+  ${DIST}/control
+sed -i -e '/^export JAVA_HOME/d' ${DIST}/rules
+sed -i -e '/^PACKAGE_GROUPS += java/d' ${DIST}/rules
+sed -i -e '/--EXCLUDED--/i EXTRA_EXCLUDED_MODULES += java' ${DIST}/rules
+
+# no dh-systemd
+sed -i -e '/dh-systemd/d' ${DIST}/control
+
+# no python2
+sed -i -e '/^ python,/d' -e '/python-dev/d' \
+  -e '/^Package: kamailio-python-modules/,/^$/d' \
+  ${DIST}/control
+sed -i -e '/^PACKAGE_GROUPS += python$/d' ${DIST}/rules
+sed -i -e '/--EXCLUDED--/i EXTRA_EXCLUDED_MODULES += python' ${DIST}/rules
+
+wrap-and-sort -sat -d ${DIST}
+
+# clean backports scripts
+rm -rf ${DIST}/backports
+exit 0
