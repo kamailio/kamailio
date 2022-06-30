@@ -1,0 +1,2 @@
+kamailio-tls-modules binary: possible-gpl-code-linked-with-openssl
+kamailio-tls-modules binary: library-not-linked-against-libc
