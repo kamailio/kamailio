@@ -19,7 +19,11 @@ fi;
 
 # path to the dbtext database
 if [ -z "$DBTEXT_PATH" ] ; then
-	DBTEXT_PATH="/usr/local/share/kamailio/dbtext/kamailio"
+	if [ -z "$DB_PATH" ] ; then
+		DBTEXT_PATH="/usr/local/share/kamailio/dbtext/kamailio"
+	else
+		DBTEXT_PATH=$DB_PATH
+	fi
 fi
 
 export DBTEXT_PATH
