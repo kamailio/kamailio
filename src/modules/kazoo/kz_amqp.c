@@ -2259,7 +2259,8 @@ int kz_amqp_send_ex(kz_amqp_server_ptr srv, kz_amqp_cmd_ptr cmd, kz_amqp_channel
 	amqp_bytes_t routing_key = {0,0};
 	amqp_bytes_t payload = {0,0};
 	int ret = -1;
-    json_obj_ptr json_obj = NULL;
+	json_obj_ptr json_obj = NULL;
+	int num_headers = 0;
 
 	amqp_basic_properties_t props;
 	memset(&props, 0, sizeof(amqp_basic_properties_t));
@@ -2278,7 +2279,6 @@ int kz_amqp_send_ex(kz_amqp_server_ptr srv, kz_amqp_cmd_ptr cmd, kz_amqp_channel
     routing_key = amqp_bytes_malloc_dup(amqp_cstring_bytes(cmd->routing_key));
     payload = amqp_bytes_malloc_dup(amqp_cstring_bytes(cmd->payload));
 
-    int num_headers = 0;
     if ( (cmd->headers != NULL) &&  (strlen (cmd->headers) > 0 ) ) {
         num_headers = add_amqp_headers(cmd->headers, &props);
     }
