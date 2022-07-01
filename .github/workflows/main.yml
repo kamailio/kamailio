@@ -4,6 +4,8 @@ name: build
   push:
     branches:
       - master
+      - '5.6'
+      - '5.5'
   pull_request:
     branches:
       - master
@@ -13,7 +15,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     container:
-      image: kamailio/pkg-kamailio-docker:dev-${{ matrix.distribution }}
+      image: kamailio/pkg-kamailio-docker:${{ github.ref_name }}-${{ matrix.distribution }}
       volumes:
         - ${{ github.workspace }}:/code
       env:
