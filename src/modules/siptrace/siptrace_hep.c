@@ -588,6 +588,9 @@ int hlog(struct sip_msg *msg, str *correlationid, str *message)
 	pkg_free(p);
 
 	if(trace_send_sock_name_str.s) {
+		if(!trace_send_sock_info) {
+			trace_send_sock_info = ksr_get_socket_by_name(&trace_send_sock_name_str);
+		}
 		dst.send_sock = trace_send_sock_info;
 	} else if(trace_send_sock_str.s) {
 		LM_DBG("send sock activated - find the sock info\n");
