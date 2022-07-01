@@ -1738,9 +1738,9 @@ static int fix_hostname(str* name, struct ip_addr* address, str* address_str,
 		PKG_MEM_ERROR;
 		goto error;
 	}
-	strncpy(address_str->s, tmp, strlen(tmp)+1);
-	/* set is_ip (1 if name is an ip address, 0 otherwise) */
 	address_str->len=strlen(tmp);
+	strncpy(address_str->s, tmp, address_str->len+1);
+	/* set is_ip (1 if name is an ip address, 0 otherwise) */
 	if (sr_auto_aliases && (address_str->len==name->len) &&
 		(strncasecmp(address_str->s, name->s, address_str->len)==0)){
 		*flags|=SI_IS_IP;

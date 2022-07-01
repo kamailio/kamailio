@@ -682,11 +682,12 @@ listen_id:
 				LM_CRIT("cfg. parser: bad ip address.\n");
 				$$=0;
 			} else {
-				$$=pkg_malloc(strlen(tmp)+1);
+				i_tmp=strlen(tmp)+1;
+				$$=pkg_malloc(i_tmp);
 				if ($$==0) {
 					PKG_MEM_CRITICAL;
 				} else {
-					strncpy($$, tmp, strlen(tmp)+1);
+					strncpy($$, tmp, i_tmp);
 				}
 			}
 		}
@@ -696,7 +697,8 @@ listen_id:
 		if ($$==0) {
 				PKG_MEM_CRITICAL;
 		} else {
-				strncpy($$, $1, strlen($1)+1);
+				i_tmp=strlen($1)+1;
+				strncpy($$, $1, i_tmp);
 		}
 	}
 	| host_or_if {
@@ -705,7 +707,8 @@ listen_id:
 			if ($$==0) {
 					PKG_MEM_CRITICAL;
 			} else {
-					strncpy($$, $1, strlen($1)+1);
+					i_tmp=strlen($1)+1;
+					strncpy($$, $1, i_tmp);
 			}
 		}
 	}
