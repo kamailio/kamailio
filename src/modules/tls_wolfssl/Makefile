@@ -8,15 +8,17 @@ include ../../Makefile.defs
 auto_gen=
 NAME=tls_wolfssl.so
 
-LIBS += lib/lib/libwolfssl.a
-INCLUDES += -I./lib/include/
+WOLFSSL_PREFIX = ../../../misc/external/wolfssl/build
+WOLFSSL_SRC = ../../../misc/external/wolfssl/wolfssl
 
+LIBS += $(WOLFSSL_PREFIX)/lib/libwolfssl.a
+INCLUDES += -I$(WOLFSSL_PREFIX)/include/
 
 include ../../Makefile.modules
-$(objs): lib/include/wolfssl/options.h
+$(objs): $(WOLFSSL_PREFIX)/include/wolfssl/options.h
 
-lib/include/wolfssl/options.h lib/lib/libwolfssl.a:
-	@cd ./lib/wolfssl; \
+$(WOLFSSL_PREFIX)/include/wolfssl/options.h $(WOLFSSL_PREFIX)/lib/libwolfssl.a:
+	@cd $(WOLFSSL_SRC); \
 	if [ ! -f "configure" ]; then \
 		./autogen.sh; \
 	fi; \
@@ -24,16 +26,16 @@ lib/include/wolfssl/options.h lib/lib/libwolfssl.a:
 		env -u DEFS -u CFLAGS -u LDFLAGS -u LIBS EXTRA_CFLAGS="-g -fPIC -Wno-error=array-bounds -Wno-error=stringop-overflow" ./configure \
 		--enable-all --enable-pkcs11 --enable-static --enable-aligndata=no \
 		--disable-shared --disable-examples \
-		--prefix=$(CURDIR)/lib \
-		--exec-prefix=$(CURDIR)/lib; \
+		--prefix=$(CURDIR)/$(WOLFSSL_PREFIX) \
+		--exec-prefix=$(CURDIR)/$(WOLFSSL_PREFIX); \
 	fi;
-	@$(MAKE) -C ./lib/wolfssl install
+	@$(MAKE) -C $(WOLFSSL_SRC) install
 
-$(NAME): lib/lib/libwolfssl.a
+$(NAME): $(WOLFSSL_PREFIX)/lib/libwolfssl.a
 
 clean-wolfssl:
-	@rm -rf ./lib/{bin,include,share,lib}; \
-	(cd ./lib/wolfssl; make distclean) || /bin/true
+	@rm -rf $(WOLFSSL_PREFIX)/{bin,include,share,lib}; \
+	(cd $(WOLFSSL_SRC); make distclean) || /bin/true
 
 clean-module:
 	@rm -f *.o *.so

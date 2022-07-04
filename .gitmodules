@@ -2,5 +2,5 @@
 	path = pkg/docker
 	url = https://github.com/kamailio/kamailio-ci.git
 [submodule "src/modules/tls_wolfssl/lib/wolfssl"]
-	path = src/modules/tls_wolfssl/lib/wolfssl
+	path = misc/external/wolfssl/wolfssl
 	url = https://github.com/wolfSSL/wolfssl.git
