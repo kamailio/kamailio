@@ -1163,6 +1163,7 @@ again:
 	if(res)
 	{
 		if (check_cluster_reply(res, &rsrv)) {
+			freeReplyObject(res);
 			goto again;
 		}
 		return res;
@@ -1173,6 +1174,7 @@ again:
 		res = redisCommandArgv(rsrv->ctxRedis, argc, argv, argvlen);
 		if (res) {
 			if (check_cluster_reply(res, &rsrv)) {
+				freeReplyObject(res);
 				goto again;
 			}
 		}
