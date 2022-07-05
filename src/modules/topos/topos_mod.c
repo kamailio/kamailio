@@ -87,6 +87,8 @@ extern int _tps_branch_expire;
 extern int _tps_dialog_expire;
 extern unsigned int _tps_methods_nocontact;
 str _tps_methods_nocontact_list = str_init("");
+extern unsigned int _tps_methods_noinitial;
+str _tps_methods_noinitial_list = str_init("");
 
 int _tps_clean_interval = 60;
 
@@ -169,6 +171,7 @@ static param_export_t params[]={
 	{"rr_update",		PARAM_INT, &_tps_rr_update},
 	{"context",			PARAM_STR, &_tps_context_param},
 	{"methods_nocontact",		PARAM_STR, &_tps_methods_nocontact_list},
+	{"methods_noinitial",		PARAM_STR, &_tps_methods_noinitial_list},
 
 	{0,0,0}
 };
@@ -222,6 +225,12 @@ static int mod_init(void)
 	if(_tps_methods_nocontact_list.len>0) {
 		if(parse_methods(&_tps_methods_nocontact_list, &_tps_methods_nocontact)<0) {
 			LM_ERR("failed to parse methods_nocontact parameter\n");
+			return -1;
+		}
+	}
+	if(_tps_methods_noinitial_list.len>0) {
+		if(parse_methods(&_tps_methods_nocontact_list, &_tps_methods_noinitial)<0) {
+			LM_ERR("failed to parse methods_noinitial parameter\n");
 			return -1;
 		}
 	}
