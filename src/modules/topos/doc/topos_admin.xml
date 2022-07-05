@@ -546,6 +546,26 @@ modparam("topos", "methods_nocontact", "CANCEL,PRACK")
 </programlisting>
 		</example>
 	</section>
+	<section id="topos.p.methods_noinitial">
+		<title><varname>methods_noinitial</varname> (str)</title>
+		<para>
+			List of SIP methods to skip doing topos if it is an intial request
+			(no To-tag).
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote></quote> (no method).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>methods_noinitial</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("topos", "methods_noinitial", "OPTIONS,NOTIFY")
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>
