@@ -128,10 +128,7 @@ int t_release_transaction( struct cell *trans )
 void put_on_wait(  struct cell  *Trans  )
 {
 
-#ifdef EXTRA_DEBUG
-	LM_DBG("put on WAIT \n");
-#endif
-
+	LM_DBG("put T [%p] on wait\n", Trans);
 
 	/* we put the transaction on wait timer; we do it only once
 	   in transaction's timelife because putting it multiple-times
