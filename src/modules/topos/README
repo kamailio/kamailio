@@ -140,11 +140,13 @@ Chapter 1. Admin Guide
    to be loaded (tune the module parameters if needed).
 
    It also works for SIP MESSAGE or other requests that do not create a
-   dialog -- record_route() must be used for them as well, the headers are
-   not going to be in the messages sent to the network, they are needed to
-   know local addresses used to communicate with each side. This module is
-   designed to work for presence (SUBSCRIBE-based) dialogs too. The
-   REGISTER and PUBLISH requests are skipped from processing by this
+   dialog (e.g., OPTIONS) -- record_route() must be used for them as well,
+   the headers are not going to be in the messages sent to the network,
+   they are needed to know local addresses used to communicate with each
+   side. This module is designed to work for presence (SUBSCRIBE-based)
+   dialogs too.
+
+   The REGISTER and PUBLISH requests are skipped from processing by this
    module, expected to be terminated on a local SIP server.
 
 2. Dependencies
