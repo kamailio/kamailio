@@ -235,16 +235,12 @@ PerlInterpreter *parser_init(void) {
 	argc++;
 
 	pr=perl_parse(new_perl, xs_init, argc, argv, NULL);
+
 	if (pr) {
-		LM_ERR("failed to load perl file \"%s\" with code %d.\n", argv[argc-1], pr);
-		if (modpathset_start) {
-			for (i = modpathset_start; i <= modpathset_end; i++) {
-				pkg_free(argv[i]);
-			}
-		}
-		return NULL;
+		LM_WARN("parsed perl file \"%s\" returned with code %d - continue\n",
+				argv[argc-1], pr);
 	} else {
-		LM_INFO("successfully loaded perl file \"%s\"\n", argv[argc-1]);
+		LM_INFO("successfully parsed perl file \"%s\"\n", argv[argc-1]);
 	}
 
 	if (modpathset_start) {
@@ -252,7 +248,8 @@ PerlInterpreter *parser_init(void) {
 			pkg_free(argv[i]);
 		}
 	}
-	perl_run(new_perl);
+	pr = perl_run(new_perl);
+	LM_INFO("perl run return code %d\n", pr);
 
 	return new_perl;
 
