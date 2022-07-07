@@ -97,6 +97,7 @@ char* sr_SHA384_End(SHA384_CTX*, char[SHA384_DIGEST_STRING_LENGTH]);
 char* sr_SHA384_Data(const uint8_t*, size_t, char[SHA384_DIGEST_STRING_LENGTH]);
 
 void sr_SHA512_Init(SHA512_CTX*);
+void sr_SHA512_256_Init(SHA512_CTX*);
 void sr_SHA512_Update(SHA512_CTX*, const uint8_t*, size_t);
 void sr_SHA512_Final(sha2_byte[SHA512_DIGEST_LENGTH], SHA512_CTX*);
 char* sr_SHA512_End(SHA512_CTX*, char[SHA512_DIGEST_STRING_LENGTH]);
@@ -117,6 +118,7 @@ char* sr_SHA384_End();
 char* sr_SHA384_Data();
 
 void sr_SHA512_Init();
+void sr_SHA512_256_Init();
 void sr_SHA512_Update();
 void sr_SHA512_Final();
 char* sr_SHA512_End();

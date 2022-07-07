@@ -301,6 +301,18 @@ const static sha2_word64 sha512_initial_hash_value[8] = {
 	0x5be0cd19137e2179ULL
 };
 
+/* Initial hash value H for SHA-512/256 */
+const static sha2_word64 sha512_256_initial_hash_value[8] = {
+	0x22312194FC2BF72CULL,
+	0x9F555FA3C84C64C2ULL,
+	0x2393B86B6F53B151ULL,
+	0x963877195940EABDULL,
+	0x96283EE2A88EFFE3ULL,
+	0xBE5E1E2553863992ULL,
+	0x2B0199FC2C85B8AAULL,
+	0x0EB72DDC81C52CA2ULL
+};
+
 /*
  * Constant used by SHA256/384/512_End() functions for converting the
  * digest to a readable hexadecimal character string:
@@ -636,12 +648,21 @@ char* sr_SHA256_Data(const sha2_byte* data, size_t len, char digest[SHA256_DIGES
 }
 
 
-/*** SHA-512: *********************************************************/
+/*** SHA-512 SHA-512/256: *********************************************************/
 void sr_SHA512_Init(SHA512_CTX* context) {
 	if (context == (SHA512_CTX*)0) {
 		return;
 	}
 	MEMCPY_BCOPY(context->state, sha512_initial_hash_value, SHA512_DIGEST_LENGTH);
+	MEMSET_BZERO(context->buffer, SHA512_BLOCK_LENGTH);
+	context->bitcount[0] = context->bitcount[1] =  0;
+}
+
+void sr_SHA512_256_Init(SHA512_CTX* context) {
+	if (context == (SHA512_CTX*)0) {
+		return;
+	}
+	MEMCPY_BCOPY(context->state, sha512_256_initial_hash_value, SHA512_DIGEST_LENGTH);
 	MEMSET_BZERO(context->buffer, SHA512_BLOCK_LENGTH);
 	context->bitcount[0] = context->bitcount[1] =  0;
 }
