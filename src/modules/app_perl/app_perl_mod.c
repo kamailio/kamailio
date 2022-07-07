@@ -71,6 +71,7 @@ int unsafemodfnc = 0;
 int _ap_reset_cycles_init = 0;
 int _ap_exec_cycles = 0;
 int *_ap_reset_cycles = 0;
+int _ap_parse_mode = 0;
 
 /* Reference to the running Perl interpreter instance */
 PerlInterpreter *my_perl = NULL;
@@ -123,6 +124,7 @@ static param_export_t params[] = {
 	{"unsafemodfnc", INT_PARAM, &unsafemodfnc},
 	{"reset_cycles", INT_PARAM, &_ap_reset_cycles_init},
 	{"perl_destroy_func",  PARAM_STRING, &perl_destroy_func},
+	{"parse_mode", PARAM_INT, &_ap_parse_mode},
 	{ 0, 0, 0 }
 };
 
@@ -237,8 +239,21 @@ PerlInterpreter *parser_init(void) {
 	pr=perl_parse(new_perl, xs_init, argc, argv, NULL);
 
 	if (pr) {
-		LM_WARN("parsed perl file \"%s\" returned with code %d - continue\n",
+		if(_ap_parse_mode==0) {
+			LM_WARN("parsed perl file \"%s\" returned with code %d - continue\n",
 				argv[argc-1], pr);
+		} else {
+			LM_ERR("failed parsing perl file \"%s\" with code %d.\n",
+					argv[argc-1], pr);
+			if (modpathset_start) {
+				for (i = modpathset_start; i <= modpathset_end; i++) {
+					pkg_free(argv[i]);
+				}
+			}
+			perl_destruct(new_perl);
+			perl_free(new_perl);
+			return NULL;
+		}
 	} else {
 		LM_INFO("successfully parsed perl file \"%s\"\n", argv[argc-1]);
 	}
