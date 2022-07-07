@@ -283,6 +283,13 @@ int perl_reload(void)
 	}
 	my_perl = parser_init();
 
+	if(my_perl) {
+		LM_DBG("new perl interpreter initialized\n");
+	} else {
+		LM_CRIT("failed to initialize a new perl interpreter - exiting\n");
+		exit(-1);
+	}
+
 #ifdef PERL_EXIT_DESTRUCT_END
 	PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
 #else
@@ -291,13 +298,7 @@ int perl_reload(void)
 	PL_exit_flags |= PERL_EXIT_EXPECTED;
 #endif
 
-	if(my_perl) {
-		LM_DBG("new perl interpreter initialized\n");
-		return 0;
-	} else {
-		LM_CRIT("failed to initialize a new perl interpreter - exiting\n");
-		exit(-1);
-	}
+	return 0;
 }
 
 
