@@ -239,6 +239,30 @@ modparam("app_perl", "perl_destroy_func", "my_perl_destroy")
 			</example>
 		</section>
 
+		<section id="app_perl.p.parse_mode">
+			<title><varname>parse_mode</varname> (int)</title>
+			<para>
+			Control how to behave on perl_parse() return code - on some versions
+			it is the value for application exit and can break reloading.
+			</para>
+			<para>
+			If set to 0, continue even of perl_parse() returns non-zero, logging
+			a warning. If set to 1, realod fails on non-zero return code and
+			triggers an exit.
+			</para>
+			<para>
+			Default value is <emphasis>0</emphasis>.
+			</para>
+			<example>
+			<title>Set <varname>parse_mode</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("app_perl", "parse_mode", 1)
+...
+</programlisting>
+			</example>
+		</section>
+
 	</section>
 
 	<section>
