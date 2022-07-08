@@ -149,7 +149,7 @@ int perl_exec2(struct sip_msg* _msg, char* fnc, char* mystr) {
 	call_pv(fnc, G_EVAL|G_SCALAR);		/* call the function     */
 
 	if(SvTRUE(ERRSV)) {
-		LM_WARN("perl error: %s\n", SvPV_nolen(ERRSV));
+		LM_WARN("perl error for [%s]: %s\n", ZSW(fnc), SvPV_nolen(ERRSV));
 	}
 
 	SPAGAIN;			/* refresh stack pointer         */
@@ -160,5 +160,6 @@ int perl_exec2(struct sip_msg* _msg, char* fnc, char* mystr) {
 	FREETMPS;			/* free that return value        */
 	LEAVE;				/* ...and the XPUSHed "mortal" args.*/
 
+	LM_DBG("executed [%s] with return code: %d\n", ZSW(fnc), retval);
 	return retval;
 }
