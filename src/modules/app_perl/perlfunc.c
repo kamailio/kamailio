@@ -147,6 +147,11 @@ int perl_exec2(struct sip_msg* _msg, char* fnc, char* mystr) {
 	PUTBACK;			/* make local stack pointer global */
 
 	call_pv(fnc, G_EVAL|G_SCALAR);		/* call the function     */
+
+	if(SvTRUE(ERRSV)) {
+		LM_WARN("perl error: %s\n", SvPV_nolen(ERRSV));
+	}
+
 	SPAGAIN;			/* refresh stack pointer         */
 	/* pop the return value from stack */
 	retval = POPi;
