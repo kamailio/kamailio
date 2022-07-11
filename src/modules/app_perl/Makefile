@@ -1,4 +1,4 @@
-# perl module makefile
+# app_perl module makefile
 #
 #
 # WARNING: do not run this directly, it should be run by the main Makefile
@@ -8,14 +8,16 @@ auto_gen=kamailioxs.c
 NAME=app_perl.so
 LIBS=
 
+PERLBIN ?= perl
+
 ifeq ($(PERLLDOPTS),)
-	LIBS+=`perl -MExtUtils::Embed -e ldopts`
+	LIBS+=`$(PERLBIN) -MExtUtils::Embed -e ldopts`
 else
 	LIBS+=$(PERLLDOPTS)
 endif
 
 ifeq ($(PERLCCOPTS),)
-	PERLCCOPTS=$(shell perl -MExtUtils::Embed -e ccopts)
+	PERLCCOPTS=$(shell $(PERLBIN) -MExtUtils::Embed -e ccopts)
 endif
 DEFS+=$(PERLCCOPTS)
 
@@ -25,7 +27,7 @@ PODFILES=kamailioxs.xs `find lib/perl -name *.pm`
 
 ifeq ($(TYPEMAP),)
 	ifeq ($(PERLLIBPATH),)
-		PERLLIBPATH=`perl -MConfig -e 'print $$Config{installprivlib}'`
+		PERLLIBPATH=`$(PERLBIN) -MConfig -e 'print $$Config{installprivlib}'`
 	endif
 	TYPEMAP=$(PERLLIBPATH)/ExtUtils/typemap
 endif
