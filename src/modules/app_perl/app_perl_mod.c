@@ -72,6 +72,7 @@ int _ap_reset_cycles_init = 0;
 int _ap_exec_cycles = 0;
 int *_ap_reset_cycles = 0;
 int _ap_parse_mode = 0;
+static int _ap_warn_mode = 0;
 
 /* Reference to the running Perl interpreter instance */
 PerlInterpreter *my_perl = NULL;
@@ -125,6 +126,7 @@ static param_export_t params[] = {
 	{"reset_cycles", INT_PARAM, &_ap_reset_cycles_init},
 	{"perl_destroy_func",  PARAM_STRING, &perl_destroy_func},
 	{"parse_mode", PARAM_INT, &_ap_parse_mode},
+	{"warn_mode",  PARAM_INT, &_ap_warn_mode},
 	{ 0, 0, 0 }
 };
 
@@ -185,7 +187,7 @@ EXTERN_C void xs_init(pTHX) {
  */
 int parser_init(void) {
 	int argc = 0;
-	char *argv[MAX_LIB_PATHS + 3];
+	char *argv[MAX_LIB_PATHS + 6];
 	char *entry, *stop, *end;
 	int modpathset_start = 0;
 	int modpathset_end = 0;
@@ -207,6 +209,10 @@ int parser_init(void) {
 	perl_construct(my_perl);
 
 	argv[0] = ""; argc++; /* First param _needs_ to be empty */
+
+	if(_ap_warn_mode==1) {
+		argv[argc] = "-w"; argc++;
+	}
 
 	 /* Possible Include path extension by modparam */
 	if (modpath && (strlen(modpath) > 0)) {
