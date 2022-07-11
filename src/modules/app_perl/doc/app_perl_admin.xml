@@ -262,6 +262,25 @@ modparam("app_perl", "parse_mode", 1)
 </programlisting>
 			</example>
 		</section>
+		<section id="app_perl.p.warn_mode">
+			<title><varname>warn_mode</varname> (int)</title>
+			<para>
+				Allows to enable warning for perl_parse(). If set to 1, "-w" is
+				passed to perl_parse() and detected warnings in the Perl script
+				should be printed to the log.
+			</para>
+			<para>
+			Default value is <emphasis>0</emphasis>.
+			</para>
+			<example>
+			<title>Set <varname>warn_mode</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("app_perl", "warn_mode", 1)
+...
+</programlisting>
+			</example>
+		</section>
 
 	</section>
 
