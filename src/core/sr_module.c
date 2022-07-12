@@ -340,6 +340,9 @@ static inline int version_control(void *handle, char *path)
 	char **m_flags;
 	char* error;
 
+#ifdef __FreeBSD__
+    (void) dlerror();
+#endif
 	m_ver=(char **)dlsym(handle, "module_version");
 	if ((error=(char *)dlerror())!=0) {
 		LM_ERR("no version info in module <%s>: %s\n", path, error);
