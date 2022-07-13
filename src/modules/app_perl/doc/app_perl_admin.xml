@@ -267,7 +267,8 @@ modparam("app_perl", "parse_mode", 1)
 			<para>
 				Allows to enable warning for perl_parse(). If set to 1, "-w" is
 				passed to perl_parse() and detected warnings in the Perl script
-				should be printed to the log.
+				should be printed to the log. If set to 1, then "-W" is passed
+				to perl_parse().
 			</para>
 			<para>
 			Default value is <emphasis>0</emphasis>.
