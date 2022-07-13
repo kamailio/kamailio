@@ -212,6 +212,8 @@ int parser_init(void) {
 
 	if(_ap_warn_mode==1) {
 		argv[argc] = "-w"; argc++;
+	} else if(_ap_warn_mode==2) {
+		argv[argc] = "-W"; argc++;
 	}
 
 	 /* Possible Include path extension by modparam */
