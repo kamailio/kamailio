@@ -1220,6 +1220,7 @@ struct tcp_connection* tcpconn_new(int sock, union sockaddr_union* su,
 	c->rcv.proto_reserved2=0;
 	c->state=state;
 	c->extra_data=0;
+	c->timestamp=time(NULL);
 #ifdef USE_TLS
 	if (type==PROTO_TLS){
 		if (tls_tcpconn_init(c, sock)==-1) goto error;

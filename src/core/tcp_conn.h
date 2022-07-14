@@ -220,6 +220,7 @@ typedef struct tcp_connection {
 	enum tcp_conn_states state; /* connection state */
 	void* extra_data; /* extra data associated to the connection, 0 for tcp*/
 	struct timer_ln timer;
+	time_t timestamp;/* connection creation timestamp */
 	ticks_t timeout;/* connection timeout, after this it will be removed*/
 	ticks_t lifetime;/* connection lifetime */
 	unsigned id_hash; /* hash index in the id_hash */
