@@ -93,6 +93,8 @@ END watchers_tr;
 /
 BEGIN map2users('watchers'); END;
 /
+CREATE INDEX watchers_time_status_idx  ON watchers (inserted_time, status);
+
 INSERT INTO version (table_name, table_version) values ('watchers','3');
 
 CREATE TABLE xcap (
