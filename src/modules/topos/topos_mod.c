@@ -229,7 +229,7 @@ static int mod_init(void)
 		}
 	}
 	if(_tps_methods_noinitial_list.len>0) {
-		if(parse_methods(&_tps_methods_nocontact_list, &_tps_methods_noinitial)<0) {
+		if(parse_methods(&_tps_methods_noinitial_list, &_tps_methods_noinitial)<0) {
 			LM_ERR("failed to parse methods_noinitial parameter\n");
 			return -1;
 		}
