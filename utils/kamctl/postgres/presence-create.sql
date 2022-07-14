@@ -69,6 +69,8 @@ CREATE TABLE watchers (
     CONSTRAINT watchers_watcher_idx UNIQUE (presentity_uri, watcher_username, watcher_domain, event)
 );
 
+CREATE INDEX watchers_time_status_idx ON watchers (inserted_time, status);
+
 INSERT INTO version (table_name, table_version) values ('watchers','3');
 
 CREATE TABLE xcap (
