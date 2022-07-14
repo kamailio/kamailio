@@ -23,7 +23,7 @@ $(WOLFSSL_PREFIX)/include/wolfssl/options.h $(WOLFSSL_PREFIX)/lib/libwolfssl.a:
 		./autogen.sh; \
 	fi; \
 	if [ ! -f "Makefile" ]; then \
-		env -u DEFS -u CFLAGS -u LDFLAGS -u LIBS EXTRA_CFLAGS="-g -fPIC -Wno-error=array-bounds -Wno-error=stringop-overflow" ./configure \
+		env -u DEFS -u CFLAGS -u LDFLAGS -u LIBS EXTRA_CFLAGS="-g -fPIC" ./configure \
 		--enable-all --enable-pkcs11 --enable-static --enable-aligndata=no \
 		--disable-shared --disable-examples \
 		--prefix=$(CURDIR)/$(WOLFSSL_PREFIX) \
