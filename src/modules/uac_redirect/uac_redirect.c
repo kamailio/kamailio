@@ -166,6 +166,10 @@ static int get_redirect_fixup(void** param, int param_no)
 		*param=(void*)(long)( (((unsigned short)maxt)<<8) | maxb);
 	} else if (param_no==2) {
 		/* acc function loaded? */
+		if (uacred_acc_fct_s.s==0 || uacred_acc_fct_s.s[0]=='\0') {
+			LM_ERR("acc support enabled, but no acc function defined\n");
+			return E_UNSPEC;
+		}
 		if (_uacred_accb.acc_request==NULL) {
 			/* bind the ACC API */
 			if(acc_load_api(&_uacred_accb) < 0) {
@@ -249,10 +253,12 @@ static int redirect_init(void)
 		goto error;
 	}
 
-	/* bind the ACC API */
-	if(acc_load_api(&_uacred_accb) < 0) {
-		LM_ERR("cannot bind to ACC API\n");
-		return -1;
+	if(uacred_acc_fct_s.s != 0 && uacred_acc_fct_s.s[0] != '\0') {
+		/* bind the ACC API */
+		if(acc_load_api(&_uacred_accb) < 0) {
+			LM_ERR("cannot bind to ACC API\n");
+			return -1;
+		}
 	}
 
 	/* init filter */
