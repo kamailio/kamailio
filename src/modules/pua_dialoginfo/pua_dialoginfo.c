@@ -364,7 +364,7 @@ __dialog_sendpublish(struct dlg_cell *dlg, int type, struct dlg_cb_params *_para
 	}
 
 	if(use_pubruri_avps && (refresh_pubruri_avps_flag > -1
-		|| (request->flags & (1<<refresh_pubruri_avps_flag))))
+		|| (request->flags & (1U<<(unsigned int)refresh_pubruri_avps_flag))))
 	{
 		lock_get(&dlginfo->lock);
 		refresh_pubruri_avps(dlginfo, &uri);
@@ -516,7 +516,7 @@ __dialog_sendpublish(struct dlg_cell *dlg, int type, struct dlg_cb_params *_para
 	}
 
 	if(use_pubruri_avps && (refresh_pubruri_avps_flag > -1
-		|| (request->flags & (1<<refresh_pubruri_avps_flag))))
+		|| (request->flags & (1U<<(unsigned int)refresh_pubruri_avps_flag))))
 	{
 		lock_release(&dlginfo->lock);
 	}
