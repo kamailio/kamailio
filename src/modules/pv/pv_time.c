@@ -23,6 +23,8 @@
 #include <ctype.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdint.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <time.h>
 #include <sys/time.h>
@@ -32,6 +34,12 @@
 #include "../../core/pvar.h"
 
 #include "pv_time.h"
+
+#if defined(CLOCK_MONOTONIC_RAW)
+#define PV_MONOTONIC_CLOCK CLOCK_MONOTONIC_RAW
+#else
+#define PV_MONOTONIC_CLOCK CLOCK_MONOTONIC
+#endif
 
 int pv_parse_time_name(pv_spec_p sp, str *in)
 {
@@ -306,6 +314,7 @@ int pv_get_timeval(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
 {
 	struct timeval tv;
+	struct timespec ts;
 	str s;
 	struct tm lt;
 	char lbuf[64];
@@ -355,7 +364,18 @@ int pv_get_timeval(struct sip_msg *msg, pv_param_t *param,
 				return pv_get_null(msg, param, res);
 			s.s = _timeval_ts_buf;
 			return pv_get_strval(msg, param, res, &s);
-
+		case 6:
+			if (!clock_gettime(PV_MONOTONIC_CLOCK, &ts)) {
+				s.len = snprintf(_timeval_ts_buf, 64, "%" PRIu64,
+					(u_int64_t)ts.tv_sec * 1000000000 + (u_int64_t)ts.tv_nsec);
+				if(s.len<0)
+					return pv_get_null(msg, param, res);
+				s.s = _timeval_ts_buf;
+				return pv_get_strval(msg, param, res, &s);
+			} else {
+				LM_ERR("unable to get monotonic clock value\n");
+				return pv_get_null(msg, param, res);
+			}
 		default:
 			msg_set_time(msg);
 			return pv_get_uintval(msg, param, res, (unsigned int)msg->tval.tv_sec);
@@ -385,6 +405,8 @@ int pv_parse_timeval_name(pv_spec_p sp, str *in)
 				sp->pvp.pvn.u.isname.name.n = 4;
 			else if(strncmp(in->s, "Fn", 2)==0)
 				sp->pvp.pvn.u.isname.name.n = 5;
+			else if(strncmp(in->s, "Sm", 2)==0)
+				sp->pvp.pvn.u.isname.name.n = 6;
 			else goto error;
 		break;
 		default:
