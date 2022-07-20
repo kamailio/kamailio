@@ -456,7 +456,9 @@ err:
 	return -1;
 }
 
-dlg_t * build_dlg_t_early(struct sip_msg *msg, struct dlg_cell * cell, int branch_id, str * rr_set){
+dlg_t * build_dlg_t_early(struct sip_msg *msg, struct dlg_cell * cell,
+		int branch_id, str * rr_set)
+{
 
 	dlg_t* td = NULL;
 	str cseq;
@@ -470,31 +472,33 @@ dlg_t * build_dlg_t_early(struct sip_msg *msg, struct dlg_cell * cell, int branc
 	unsigned int own_rr = 0, skip_recs = 0;
 
 	if (cell->state != DLG_STATE_UNCONFIRMED && cell->state != DLG_STATE_EARLY) {
-		LM_ERR("Invalid state for build_dlg_state: %d (only working for unconfirmed or early dialogs)\n", cell->state);
+		LM_ERR("invalid state for build_dlg_state: %d"
+				" (only working for unconfirmed or early dialogs)\n", cell->state);
 		goto error;
 	}
 
 	if (msg == NULL || msg->first_line.type != SIP_REPLY) {
 		if (!cell->t) {
-			LM_ERR("No Transaction associated\n");
+			LM_ERR("no transaction associated\n");
 			goto error;
 		}
 
 		if (branch_id <= 0 || branch_id > cell->t->nr_of_outgoings) {
-			LM_ERR("Invalid branch %d (%d branches in transaction)\n", branch_id, cell->t->nr_of_outgoings);
+			LM_ERR("invalid branch %d (%d branches in transaction)\n",
+					branch_id, cell->t->nr_of_outgoings);
 			goto error;
 		}
 		msg = msg;
 	}
 
-	if (!msg->contact && (parse_headers(msg,HDR_CONTACT_F,0)<0 
-	   || !msg->contact)) {
+	if (!msg->contact && (parse_headers(msg,HDR_CONTACT_F,0)<0
+				|| !msg->contact)) {
 		LM_ERR("bad sip message or missing Contact hdr\n");
 		goto error;
 	}
 
 	if ( parse_contact(msg->contact)<0 ||
-	((contact_body_t *)msg->contact->parsed)->contacts==NULL) {
+			((contact_body_t *)msg->contact->parsed)->contacts==NULL) {
 		LM_ERR("bad Contact HDR\n");
 		goto error;
 	}
@@ -504,7 +508,8 @@ dlg_t * build_dlg_t_early(struct sip_msg *msg, struct dlg_cell * cell, int branc
 	nuri.len = MAX_URI_SIZE;
 	duri.s = dbuf;
 	duri.len = 80;
-	if(uri_restore_rcv_alias(&((contact_body_t *)msg->contact->parsed)->contacts->uri, &nuri, &duri)<0) {
+	if(uri_restore_rcv_alias(&((contact_body_t *)msg->contact->parsed)->contacts->uri,
+				&nuri, &duri)<0) {
 		nuri.len = 0;
 		duri.len = 0;
 	}
@@ -525,27 +530,27 @@ dlg_t * build_dlg_t_early(struct sip_msg *msg, struct dlg_cell * cell, int branc
 	/*route set*/
 	if (msg->record_route) {
 		if (cell->t) {
-			LM_DBG("Transaction exists\n");
+			LM_DBG("transaction exists\n");
 			own_rr = (cell->t->flags&TM_UAC_FLAG_R2)?2:
-			   (cell->t->flags&TM_UAC_FLAG_RR)?1:0;	
+				(cell->t->flags&TM_UAC_FLAG_RR)?1:0;
 		} else {
 			own_rr = (msg->flags&TM_UAC_FLAG_R2)?2:
-			   (msg->flags&TM_UAC_FLAG_RR)?1:0;
+				(msg->flags&TM_UAC_FLAG_RR)?1:0;
 		}
 		skip_recs = cell->from_rr_nb + own_rr;
 
-		LM_DBG("Skipping %u records, %u of myself\n", skip_recs, own_rr);
+		LM_DBG("skipping %u records, %u of myself\n", skip_recs, own_rr);
 
 		if( print_rr_body(msg->record_route, rr_set, DLG_CALLEE_LEG,
-							&skip_recs) != 0 ){
+					&skip_recs) != 0 ){
 			LM_ERR("failed to print route records \n");
 			goto error;
 		}
-		LM_DBG("New Route-Set: %.*s\n", STR_FMT(rr_set));
+		LM_DBG("new route set: %.*s\n", STR_FMT(rr_set));
 
 		if( parse_rr_body(rr_set->s, rr_set->len,
-						&td->route_set) !=0){
-		 	LM_ERR("failed to parse route set\n");
+					&td->route_set) !=0){
+			LM_ERR("failed to parse route set\n");
 			goto error;
 		}
 	}
@@ -606,12 +611,13 @@ dlg_t * build_dlg_t_early(struct sip_msg *msg, struct dlg_cell * cell, int branc
 	return td;
 
 error:
-	LM_ERR("Error occured creating early dialog\n");	
+	LM_ERR("Error occured creating early dialog\n");
 	free_tm_dlg(td);
 	return NULL;
 }
 
-int dlg_request_within(struct sip_msg *msg, struct dlg_cell *dlg, int side, str * method, str * hdrs, str * content_type, str * content)
+int dlg_request_within(struct sip_msg *msg, struct dlg_cell *dlg, int side,
+		str * method, str * hdrs, str * content_type, str * content)
 {
 	uac_req_t uac_r;
 	dlg_t* dialog_info;
@@ -625,7 +631,8 @@ int dlg_request_within(struct sip_msg *msg, struct dlg_cell *dlg, int side, str 
 	memset(rr_set_s, 0, 500);
 
 	/* Special treatment for callee in early state*/
-	if (dlg->state != DLG_STATE_CONFIRMED_NA && dlg->state != DLG_STATE_CONFIRMED && side == DLG_CALLEE_LEG) {
+	if (dlg->state != DLG_STATE_CONFIRMED_NA
+			&& dlg->state != DLG_STATE_CONFIRMED && side == DLG_CALLEE_LEG) {
 		LM_DBG("Send request to callee in early state...\n");
 
 		if (dlg->t == NULL && d_tmb.t_gett) {
@@ -649,7 +656,8 @@ int dlg_request_within(struct sip_msg *msg, struct dlg_cell *dlg, int side, str 
 		}
 	}
 
-	LM_DBG("sending %.*s to %s\n", method->len, method->s, (side==DLG_CALLER_LEG)?"caller":"callee");
+	LM_DBG("sending %.*s to %s\n", method->len, method->s,
+			(side==DLG_CALLER_LEG)?"caller":"callee");
 
 	iuid = dlg_get_iuid_shm_clone(dlg);
 	if(iuid==NULL)
@@ -689,7 +697,8 @@ int dlg_request_within(struct sip_msg *msg, struct dlg_cell *dlg, int side, str 
 		LM_DBG("All headers: %.*s\n", STR_FMT(&allheaders));
 	}
 
-	set_uac_req(&uac_r, method, allheaders.len?&allheaders:NULL, (content && content->len)?content:NULL, dialog_info, TMCB_LOCAL_COMPLETED,
+	set_uac_req(&uac_r, method, allheaders.len?&allheaders:NULL,
+			(content && content->len)?content:NULL, dialog_info, TMCB_LOCAL_COMPLETED,
 				bye_reply_cb, (void*)iuid);
 
 	result = d_tmb.t_request_within(&uac_r);
@@ -704,7 +713,8 @@ int dlg_request_within(struct sip_msg *msg, struct dlg_cell *dlg, int side, str 
 
 	free_tm_dlg(dialog_info);
 
-	LM_DBG("%.*s sent to %s\n", method->len, method->s, (side==DLG_CALLER_LEG)?"caller":"callee");
+	LM_DBG("%.*s sent to %s\n", method->len, method->s,
+			(side==DLG_CALLER_LEG)?"caller":"callee");
 
 	return 0;
 err:
