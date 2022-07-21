@@ -1810,6 +1810,9 @@ PyObject *sr_apy_kemi_exec_func(PyObject *self, PyObject *args, int idx)
 	PyObject *ret = NULL;
 	PyThreadState *pstate = NULL;
 	PyFrameObject *pframe = NULL;
+#if PY_VERSION_HEX >= 0x03100000
+	PyCodeObject *pcode = NULL;
+#endif
 	struct timeval tvb = {0}, tve = {0};
 	struct timezone tz;
 	unsigned int tdiff;
@@ -1832,10 +1835,27 @@ PyObject *sr_apy_kemi_exec_func(PyObject *self, PyObject *args, int idx)
 				   + (tve.tv_usec - tvb.tv_usec);
 		if(tdiff >= cfg_get(core, core_cfg, latency_limit_action)) {
 			pstate = PyThreadState_GET();
-			if (pstate != NULL && pstate->frame != NULL) {
+			if (pstate != NULL) {
+#if PY_VERSION_HEX >= 0x03100000
+				pframe = PyThreadState_GetFrame(pstate);
+				if(pframe != NULL) {
+					pcode = PyFrame_GetCode(pframe);
+				}
+#else
 				pframe = pstate->frame;
+#endif
 			}
 
+#if PY_VERSION_HEX >= 0x03100000
+			LOG(cfg_get(core, core_cfg, latency_log),
+					"alert - action KSR.%s%s%s(...)"
+					" took too long [%u ms] (file:%s func:%s line:%d)\n",
+					(ket->mname.len>0)?ket->mname.s:"",
+					(ket->mname.len>0)?".":"", ket->fname.s, tdiff,
+					(pcode)?PyBytes_AsString(pcode->co_filename):"",
+					(pcode)?PyBytes_AsString(pcode->co_name):"",
+					(pframe)?PyFrame_GetLineNumber(pframe):0);
+#else
 			LOG(cfg_get(core, core_cfg, latency_log),
 					"alert - action KSR.%s%s%s(...)"
 					" took too long [%u ms] (file:%s func:%s line:%d)\n",
@@ -1844,6 +1864,7 @@ PyObject *sr_apy_kemi_exec_func(PyObject *self, PyObject *args, int idx)
 					(pframe && pframe->f_code)?PyBytes_AsString(pframe->f_code->co_filename):"",
 					(pframe && pframe->f_code)?PyBytes_AsString(pframe->f_code->co_name):"",
 					(pframe && pframe->f_code)?PyCode_Addr2Line(pframe->f_code, pframe->f_lasti):0);
+#endif
 		}
 	}
 
