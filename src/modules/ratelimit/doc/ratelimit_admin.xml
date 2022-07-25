@@ -582,10 +582,10 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
 	MAX_PIPES/MAX_QUEUES can be added without recompilation.
 	<itemizedlist>
 		<listitem><para>
-		<emphasis>MAX_PIPES</emphasis> - 16
+		<emphasis>MAX_PIPES</emphasis> - 32
 		</para></listitem>
 		<listitem><para>
-		<emphasis>MAX_QUEUES</emphasis> - 10
+		<emphasis>MAX_QUEUES</emphasis> - 32
 		</para></listitem>
 	</itemizedlist>
 	</para>
