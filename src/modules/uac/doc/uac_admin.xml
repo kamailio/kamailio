@@ -1508,7 +1508,7 @@ event_route[uac:reply] {
 		</itemizedlist>
 		</para>
 		<para>
-			Use a dot (.) if no value should be set for auth_password, auth_ha1,
+			Use a dot (.) if no value should be set for realm, auth_password, auth_ha1, socket
 			or contact_addr.
 		</para>
 

@@ -2170,6 +2170,11 @@ static void rpc_uac_reg_add(rpc_t* rpc, void* ctx)
 		return;
 	}
 
+	if(reg.realm.len==1 && reg.realm.s[0] == '.') {
+		reg.realm.s = NULL;
+		reg.realm.len = 0;
+	}
+
 	if(reg.auth_password.len==1 && reg.auth_password.s[0] == '.') {
 		reg.auth_password.s = NULL;
 		reg.auth_password.len = 0;
@@ -2178,6 +2183,11 @@ static void rpc_uac_reg_add(rpc_t* rpc, void* ctx)
 	if(reg.auth_ha1.len==1 && reg.auth_ha1.s[0] == '.') {
 		reg.auth_ha1.s = NULL;
 		reg.auth_ha1.len = 0;
+	}
+
+	if(reg.socket.len==1 && reg.socket.s[0] == '.') {
+		reg.socket.s = NULL;
+		reg.socket.len = 0;
 	}
 
 	if(reg.contact_addr.len==1 && reg.contact_addr.s[0] == '.') {
