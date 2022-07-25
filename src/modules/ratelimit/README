@@ -514,5 +514,5 @@ modparam("ratelimit", "pipe", "4:NETWORK:10000")
 
    The pipes and queues are stored as static vectors, so no more than
    MAX_PIPES/MAX_QUEUES can be added without recompilation.
-     * MAX_PIPES - 16
-     * MAX_QUEUES - 10
+     * MAX_PIPES - 32
+     * MAX_QUEUES - 32
