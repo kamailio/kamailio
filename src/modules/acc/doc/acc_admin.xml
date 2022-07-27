@@ -325,6 +325,13 @@ if (uri=~"sip:+40") /* calls to Romania */ {
                 </para>
 
                 <para>
+                The dialog module needs to be engaged on the dialogs that should be accounted, that
+                they will be tracked by the server. This is usally done by calling the function
+                <emphasis>dlg_manage()</emphasis> or setting the <emphasis>dlg_flag</emphasis>.
+                Refer to the documentation of the dialog module for more information.
+                </para>
+
+                <para>
 				Sometimes, dialogs expire because the UA has a problem and a final message is never
 				transmitted. You can toggle on/off the generation of CDR-based logging in such cases
 				with only the dlg_vars showing by using the cdr_expired_dlg_enable parameter
