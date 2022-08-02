@@ -651,6 +651,43 @@ modparam("siptrace", "evcb_msg", "ksr_siptrace_msg")
 </programlisting>
                 </example>
         </section>
+
+	<section id="siptrace.p.trace_dialog_ack">
+                <title><varname>trace_dialog_ack</varname> (str)</title>
+                <para>
+			Enable tracing of in-dialog ACK.
+                </para>
+                <para>
+			Default value is 0 (disabled).
+                </para>
+                <example>
+			<title>Set <varname>trace_dialog_ack</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("siptrace", "trace_dialog_ack", 1)
+...
+</programlisting>
+                </example>
+        </section>
+
+	<section id="siptrace.p.trace_dialog_spiral">
+                <title><varname>trace_dialog_spiral</varname> (str)</title>
+                <para>
+			Enable tracing of dialog spirals.
+                </para>
+                <para>
+			Default value is 0 (disabled).
+                </para>
+                <example>
+			<title>Set <varname>trace_dialog_spiral</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("siptrace", "trace_dialog_spiral", 1)
+...
+</programlisting>
+                </example>
+        </section>
+
 	</section>
 
 	<section>
