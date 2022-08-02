@@ -195,6 +195,10 @@ static str trace_local_ip = {NULL, 0};
 static db1_con_t *db_con = NULL; /*!< database connection */
 static db_func_t db_funcs;		  /*!< Database functions */
 
+int trace_dialog_ack = 0;
+int trace_dialog_spiral = 0;
+static int spiral_tracked;
+
 int pv_parse_siptrace_name(pv_spec_t *sp, str *in);
 int pv_get_siptrace(sip_msg_t *msg, pv_param_t *param,
 		pv_value_t *res);
@@ -263,6 +267,8 @@ static param_export_t params[] = {
 	{"trace_init_mode", PARAM_INT, &_siptrace_init_mode},
 	{"trace_mode", PARAM_INT, &_siptrace_mode},
 	{"evcb_msg", PARAM_STR, &_siptrace_evcb_msg},
+	{"trace_dialog_ack", PARAM_INT, &trace_dialog_ack},
+	{"trace_dialog_spiral", PARAM_INT, &trace_dialog_spiral},
 	{0, 0, 0}
 };
 /* clang-format on */
@@ -1979,12 +1985,19 @@ static void trace_dialog(struct dlg_cell* dlg, int type, struct dlg_cb_params *p
 	}
 
 	/* request - params->req */
-	if (params == NULL || params->req == NULL) {
+	if (params == NULL || (!trace_dialog_spiral && params->req == NULL)) {
 		LM_ERR("Invalid args!\n");
 		return;
 	}
 
-	if (!(params->req->msg_flags & FL_SIPTRACE)) {
+	if (trace_dialog_spiral && *params->param == NULL) {
+		LM_DBG("Spiraled dialog!\n");
+		if (dlgb.register_dlgcb(dlg, DLGCB_SPIRALED, trace_dialog, &spiral_tracked, NULL) != 0) {
+			LM_ERR("could not register consider_exporting() for dialog event DLGCB_SPIRALED\n");
+		}
+	}
+
+	if (!trace_dialog_spiral && !(params->req->msg_flags & FL_SIPTRACE)) {
 		LM_DBG("Trace is off for this request...\n");
 		return;
 	}
@@ -2004,6 +2017,13 @@ static void trace_dialog(struct dlg_cell* dlg, int type, struct dlg_cb_params *p
 	if(dlgb.register_dlgcb(dlg, DLGCB_REQ_WITHIN,
 				trace_dialog_transaction, xavp->val.v.vptr, 0) != 0) {
 		LM_ERR("Failed to register DLGCB_REQ_WITHIN callback!\n");
+		return;
+	}
+
+	/* this will trace in-dialog ACK */
+	if(trace_dialog_ack && dlgb.register_dlgcb(dlg, DLGCB_CONFIRMED,
+				trace_dialog_transaction, xavp->val.v.vptr, 0) != 0) {
+		LM_ERR("Failed to register DLGCB_CONFIRMED callback!\n");
 		return;
 	}
 
