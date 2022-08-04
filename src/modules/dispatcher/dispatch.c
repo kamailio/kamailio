@@ -2680,6 +2680,11 @@ int ds_remove_dst(int group, str *address)
 	setn = 0;
 
 	dp = pack_dest(*address, 0, 0, NULL, 0);
+	if(dp==NULL) {
+		LM_ERR("failed to pack address: %d %.*s\n", group,
+				address->len, address->s);
+		return -1;
+	}
 	filter_arg.setid = group;
 	filter_arg.dest = dp;
 	filter_arg.setn = &setn;
