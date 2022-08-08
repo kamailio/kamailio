@@ -195,8 +195,8 @@ static str trace_local_ip = {NULL, 0};
 static db1_con_t *db_con = NULL; /*!< database connection */
 static db_func_t db_funcs;		  /*!< Database functions */
 
-int trace_dialog_ack = 0;
-int trace_dialog_spiral = 0;
+int trace_dialog_ack = 1;
+int trace_dialog_spiral = 1;
 static int spiral_tracked;
 
 int pv_parse_siptrace_name(pv_spec_t *sp, str *in);
