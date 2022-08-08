@@ -1246,8 +1246,8 @@ event_route[uac:reply] {
      * socket
      * contact_addr
 
-   Use a dot (.) if no value should be set for auth_password, auth_ha1, or
-   contact_addr.
+   Use a dot (.) if no value should be set for realm, auth_password,
+   auth_ha1, socket or contact_addr.
 
    Example 1.50. uac.reg_add usage
 ...
