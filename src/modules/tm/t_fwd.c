@@ -1042,6 +1042,8 @@ int add_uac_dns_fallback(struct cell *t, struct sip_msg* msg,
 		t->uac[t->nr_of_outgoings].on_branch_failure = old_uac->on_branch_failure;
 		/* copy branch flags */
 		t->uac[t->nr_of_outgoings].branch_flags = old_uac->branch_flags;
+		/* restore X/AVP values from initial transaction */
+		tm_xdata_swap(t, 0, 0);
 
 		if (cfg_get(tm, tm_cfg, reparse_on_dns_failover)){
 			/* Reuse the old buffer and only replace the via header.
