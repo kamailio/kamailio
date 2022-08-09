@@ -575,10 +575,7 @@ void tm_xdata_replace(tm_xdata_t *newxd, tm_xlinks_t *bakxd)
 		xavp_set_list(bakxd->xavps_list);
 		xavu_set_list(bakxd->xavus_list);
 		xavi_set_list(bakxd->xavis_list);
-		return;
-	}
-
-	if(newxd != NULL && bakxd != NULL) {
+	} else if(newxd != NULL && bakxd != NULL) {
 		LM_DBG("replace existing list in backup xd from new xd\n");
 		bakxd->uri_avps_from = set_avp_list(
 				AVP_TRACK_FROM | AVP_CLASS_URI, &newxd->uri_avps_from);
@@ -595,7 +592,6 @@ void tm_xdata_replace(tm_xdata_t *newxd, tm_xlinks_t *bakxd)
 		bakxd->xavps_list = xavp_set_list(&newxd->xavps_list);
 		bakxd->xavus_list = xavu_set_list(&newxd->xavus_list);
 		bakxd->xavis_list = xavi_set_list(&newxd->xavis_list);
-		return;
 	}
 }
 
