@@ -514,6 +514,7 @@ error0:
  * backup xdata from/to msg context to local var and use T lists
  * - mode = 0 - from msg context to _txdata and use T lists
  * - mode = 1 - restore to msg context from _txdata
+ * the function can be also used to restore the core context from transacation data
  */
 void tm_xdata_swap(tm_cell_t *t, tm_xlinks_t *xd, int mode)
 {
