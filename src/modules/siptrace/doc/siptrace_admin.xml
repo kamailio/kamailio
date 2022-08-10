@@ -656,6 +656,7 @@ modparam("siptrace", "evcb_msg", "ksr_siptrace_msg")
                 <title><varname>trace_dialog_ack</varname> (str)</title>
                 <para>
 			Enable tracing of in-dialog ACK.
+			Before this param, one must have set the onsend() route and captured the outgoing ACK there.
                 </para>
                 <para>
 			Default value is 1 (enabled).
@@ -674,6 +675,8 @@ modparam("siptrace", "trace_dialog_ack", 1)
                 <title><varname>trace_dialog_spiral</varname> (str)</title>
                 <para>
 			Enable tracing of dialog spirals.
+			A spiraled dialog is a dialog established by a SIP INVITE that loops back to the same kamailio(as next hop).
+			Right now, inside the siptrace code, a spiraled dialog is identified by (*params->param == NULL).
                 </para>
                 <para>
 			Default value is 1 (enabled).
