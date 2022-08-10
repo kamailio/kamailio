@@ -211,11 +211,14 @@ modparam("uac_redirect","accept_filter",".*@siphub\.net")
 		<section id="uac_redirect.p.acc_function">
 			<title><varname>acc_function</varname> (string)</title>
 			<para>
-			Specifies the accounting function to be used. Just by defining 
-			this parameter, the accounting support will not be enabled. 
-			Accounting may only be enabled via two parameters 
-			<function moreinfo="none">set_accept_filter()</function> 
-			scripting function.
+			Specifies the accounting function to be used. Just by defining
+			this parameter, the accounting is not done automatically, it has to
+			be requested via parameters of
+			<function moreinfo="none">set_accept_filter()</function>
+			or other scripting function.
+			</para>
+			<para>
+			Set it to empty string in order to disable binding to acc module.
 			</para>
 			<para>
 			Its values may be:
@@ -248,13 +251,9 @@ modparam("uac_redirect","acc_function","acc_db_request")
 		<section id="uac_redirect.p.acc_db_table">
 			<title><varname>acc_db_table</varname> (string)</title>
 			<para>
-			Specifies the accounting table to be used if DB accounting was 
-			chosen (<varname>acc_function</varname> was set to 
-			<quote>acc_db_request</quote>). Just by defining 
-			this parameter, the accounting support will not be enabled. 
-			Accounting may only be enabled via two parameters 
-			<function moreinfo="none">set_accept_filter()</function> 
-			scripting function.
+			Specifies the accounting table to be used if DB accounting was
+			chosen (<varname>acc_function</varname> was set to
+			<quote>acc_db_request</quote> or <quote>acc_request</quote>).
 			</para>
 			<para>
 				<emphasis>
