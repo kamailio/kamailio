@@ -570,7 +570,7 @@ int isup_get_generic_number_nai(unsigned char *buf, int len)
 
 	if(offset != -1 && len-offset-2 > 1)
 	{
-		 return buf[offset+2] & 0x7F;
+		 return buf[offset+3] & 0x7F;
 	}
 	return -1;
 }
@@ -586,13 +586,13 @@ int isup_get_generic_number(unsigned char *buf, int len, char* sb_buf)
 	if(offset != -1 && len-offset-2 > 1)
 	{
 		sbparamlen = (buf[offset+1] & 0xFF) - 2;
-		oddeven = (buf[offset+2] >> 7) & 0x1;
+		oddeven = (buf[offset+3] >> 7) & 0x1;
 
 		while ((sbparamlen > 0) && (buf[offset] != 0)) {
-			sb_buf[sb_i]="0123456789ABCDEF"[(buf[offset+4+sb_j] & 0x0F)];
+			sb_buf[sb_i]="0123456789ABCDEF"[(buf[offset+5+sb_j] & 0x0F)];
 			if(sbparamlen > 1 || oddeven == 0) 
 			{
-				sb_buf[sb_i+1]="0123456789ABCDEF"[(buf[offset+4+sb_j] >>4 & 0x0F)];
+				sb_buf[sb_i+1]="0123456789ABCDEF"[(buf[offset+5+sb_j] >>4 & 0x0F)];
 			}
 			sb_i=sb_i+2;
 			sbparamlen--;
