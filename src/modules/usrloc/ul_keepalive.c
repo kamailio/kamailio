@@ -33,6 +33,7 @@
 #include "../../core/forward.h"
 #include "../../core/globals.h"
 #include "../../core/pvar.h"
+#include "../../core/sr_module.h"
 #include "../../core/parser/parse_uri.h"
 #include "../../core/parser/parse_from.h"
 #include "../../core/parser/parse_to.h"
@@ -110,6 +111,11 @@ int ul_ka_urecord(urecord_t *ur)
 	if (ul_ka_mode == ULKA_NONE) {
 		return 0;
 	}
+
+	if(likely(destroy_modules_phase()!=0)) {
+		return 0;
+	}
+
 	LM_DBG("keepalive for aor: %.*s\n", ur->aor.len, ur->aor.s);
 	tnow = time(NULL);
 
