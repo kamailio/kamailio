@@ -814,29 +814,34 @@
 		...
 User-agent
 ==========
-[+] Blacklisted
-    -----------
-    0001 -> friendly-scanner
-    0002 -> pplsip
-    0003 -> sipcli
-    0004 -> sundayddr
-    0005 -> iWar
-    0006 -> sipsak
-    0007 -> VaxSIPUserAgent
-    0008 -> SimpleSIP
-    0009 -> SIP Call
-    0010 -> Ozeki
-    0011 -> VoIPSec
-    0012 -> SIPScan
-    0013 -> Conaito
-    0014 -> UsaAirport
-    0015 -> PortSIP VoIP SDK
-    0016 -> zxcvfdf11
-    0017 -> fdgddfg546df4g8d5f
-
-[+] Whitelisted
-    -----------
-    0001 -> my custom ua
+{
+        User-Agent: {
+                Blacklisted: {
+                        Value: friendly-scanner
+                        Value: pplsip
+                        Value: sipcli
+                        Value: sundayddr
+                        Value: iWar
+                        Value: sipsak
+                        Value: VaxSIPUserAgent
+                        Value: SimpleSIP
+                        Value: SIP Call
+                        Value: Ozeki
+                        Value: VoIPSec
+                        Value: SIPScan
+                        Value: Conaito
+                        Value: UsaAirport
+                        Value: PortSIP VoIP SDK
+                        Value: zxcvfdf11
+                        Value: fdgddfg546df4g8d5f
+                        Value: siptest
+                        Value: Nmap NSE
+                }
+                Whitelisted: {
+                        Value: my custom ua
+                }
+        }
+}
 		...
 		</programlisting>
  </example>
@@ -850,40 +855,40 @@ User-agent
  
          <programlisting format="linespecific">
 		...
-Blocked messages (blacklist)
-============================
-[+] By user-agent    : 1256
-[+] By country       : 45
-[+] By from domain   : 0
-[+] By to domain     : 0
-[+] By contact domain: 1
-[+] By IP address    : 2552
-[+] By from name     : 0
-[+] By to name       : 0
-[+] By contact name  : 0
-[+] By from user     : 316
-[+] By to user       : 134
-[+] By contact user  : 0
-
-Allowed messages (whitelist)
-============================
-[+] By user-agent    : 0
-[+] By country       : 478
-[+] By from domain   : 0
-[+] By to domain     : 0
-[+] By contact domain: 0
-[+] By IP address    : 0
-[+] By from name     : 0
-[+] By to name       : 0
-[+] By contact name  : 0
-[+] By from user     : 0
-[+] By to user       : 0
-[+] By contact user  : 0
-
-Other blocked messages
-======================
-[+] Destinations   : 0
-[+] SQL injection  : 213
+{
+        Blacklist: {
+                User-Agent: 1256
+                Country: 45
+                From-Domain: 0
+                To-Domain: 0
+                Contact-Domain: 1
+                IP-Address: 2552
+                From-Name: 0
+                To-Name: 0
+                Contact-Name: 0
+                From-User: 316
+                To-User: 0134
+                Contact-User: 0
+        }
+        Whitelist: {
+                User-Agent: 0
+                Country: 478
+                From-Domain: 0
+                To-Domain: 0
+                Contact-Domain: 0
+                IP-Address: 0
+                From-Name: 0
+                To-Name: 0
+                Contact-Name: 0
+                From-User: 0
+                To-User: 0
+                Contact-User: 0
+        }
+        Other: {
+                Destination: 0
+                SQL-Injection: 213
+        }
+}
 		...
 		</programlisting>
  </example>
