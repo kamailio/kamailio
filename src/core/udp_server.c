@@ -336,13 +336,13 @@ int udp_init(struct socket_info* sock_info)
 	if (addr->s.sa_family==AF_INET){
 		if(setsockopt(sock_info->socket, SOL_IP, IP_RECVERR,
 					(void*)&optval, sizeof(optval)) ==-1){
-			LM_ERR("setsockopt: %s\n", strerror(errno));
+			LM_ERR("IPV4 setsockopt: %s\n", strerror(errno));
 			goto error;
 		}
 	} else if (addr->s.sa_family==AF_INET6){
 		if(setsockopt(sock_info->socket, SOL_IPV6, IPV6_RECVERR,
 					(void*)&optval, sizeof(optval)) ==-1){
-			LM_ERR("setsockopt: %s\n", strerror(errno));
+			LM_ERR("IPv6 setsockopt: %s\n", strerror(errno));
 			goto error;
 		}
 	}
@@ -354,7 +354,7 @@ int udp_init(struct socket_info* sock_info)
 		optval= (pmtu_discovery) ? IP_PMTUDISC_DO : IP_PMTUDISC_DONT;
 		if(setsockopt(sock_info->socket, IPPROTO_IP, IP_MTU_DISCOVER,
 				(void*)&optval, sizeof(optval)) ==-1){
-			LM_ERR("setsockopt: %s\n", strerror(errno));
+			LM_ERR("IPv4 setsockopt: %s\n", strerror(errno));
 			goto error;
 		}
 	} else if (addr->s.sa_family==AF_INET6){
@@ -365,7 +365,7 @@ int udp_init(struct socket_info* sock_info)
 		if(setsockopt(sock_info->socket, IPPROTO_IPV6,
 				IPV6_MTU_DISCOVER,
 				(void*)&optval, sizeof(optval)) ==-1){
-			LM_ERR("setsockopt: %s\n", strerror(errno));
+			LM_ERR("IPv6 setsockopt: %s\n", strerror(errno));
 			goto error;
 		}
 	}
