@@ -329,22 +329,45 @@ int udp_init(struct socket_info* sock_info)
 	}
 
 #if defined (__OS_linux) && defined(UDP_ERRORS)
+	/* Ask for the ability to recvmsg (...,MSG_ERRQUEUE) for immediate
+	 * resend when hitting Path MTU limits. */
 	optval=1;
 	/* enable error receiving on unconnected sockets */
-	if(setsockopt(sock_info->socket, SOL_IP, IP_RECVERR,
+	if (addr->s.sa_family==AF_INET){
+		if(setsockopt(sock_info->socket, SOL_IP, IP_RECVERR,
 					(void*)&optval, sizeof(optval)) ==-1){
-		LM_ERR("setsockopt: %s\n", strerror(errno));
-		goto error;
+			LM_ERR("IPV4 setsockopt: %s\n", strerror(errno));
+			goto error;
+		}
+	} else if (addr->s.sa_family==AF_INET6){
+		if(setsockopt(sock_info->socket, SOL_IPV6, IPV6_RECVERR,
+					(void*)&optval, sizeof(optval)) ==-1){
+			LM_ERR("IPv6 setsockopt: %s\n", strerror(errno));
+			goto error;
+		}
 	}
 #endif
 #if defined (__OS_linux)
-	/* if pmtu_discovery=1 then set DF bit and do Path MTU discovery
-	 * disabled by default */
-	optval= (pmtu_discovery) ? IP_PMTUDISC_DO : IP_PMTUDISC_DONT;
-	if(setsockopt(sock_info->socket, IPPROTO_IP, IP_MTU_DISCOVER,
-			(void*)&optval, sizeof(optval)) ==-1){
-		LM_ERR("setsockopt: %s\n", strerror(errno));
-		goto error;
+	if (addr->s.sa_family==AF_INET){
+		/* If pmtu_discovery=1 then set DF bit and do Path MTU discovery
+		 * disabled by default.  Specific to IPv4. */
+		optval= (pmtu_discovery) ? IP_PMTUDISC_DO : IP_PMTUDISC_DONT;
+		if(setsockopt(sock_info->socket, IPPROTO_IP, IP_MTU_DISCOVER,
+				(void*)&optval, sizeof(optval)) ==-1){
+			LM_ERR("IPv4 setsockopt: %s\n", strerror(errno));
+			goto error;
+		}
+	} else if (addr->s.sa_family==AF_INET6){
+		/* IPv6 never fragments but sends ICMPv6 Packet too Big,
+		 * If pmtu_discovery=1 then set DF bit and do Path MTU discovery
+		 * disabled by default.  Specific to IPv6. */
+		optval= (pmtu_discovery) ? IPV6_PMTUDISC_DO : IPV6_PMTUDISC_DONT;
+		if(setsockopt(sock_info->socket, IPPROTO_IPV6,
+				IPV6_MTU_DISCOVER,
+				(void*)&optval, sizeof(optval)) ==-1){
+			LM_ERR("IPv6 setsockopt: %s\n", strerror(errno));
+			goto error;
+		}
 	}
 #endif
 
