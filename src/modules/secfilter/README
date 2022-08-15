@@ -661,8 +661,6 @@ d in the user-agent header ($ua)");
 
    Example 1.24. kamcmd secfilter.print ua
                 ...
-User-agent
-==========
 {
         User-Agent: {
                 Blacklisted: {
