@@ -812,8 +812,6 @@
  
          <programlisting format="linespecific">
 		...
-User-agent
-==========
 {
         User-Agent: {
                 Blacklisted: {
