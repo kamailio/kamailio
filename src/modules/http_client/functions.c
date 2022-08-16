@@ -6,7 +6,9 @@
  * Based on functions from siputil
  * 	Copyright (C) 2008 Juha Heinanen
  * 	Copyright (C) 2013 Carsten Bock, ng-voice GmbH
- *
+ * 
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ * 
  * This file is part of Kamailio, a free SIP server.
  *
  * Kamailio is free software; you can redistribute it and/or modify
