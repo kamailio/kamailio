@@ -200,6 +200,7 @@ int ul_ka_urecord(urecord_t *ur)
 		}
 		idst.proto = dproto;
 		idst.send_sock = ssock;
+		idst.id = uc->tcpconn_id;
 
 		if(ssock->useinfo.name.len > 0) {
 			if (ssock->useinfo.address.af == AF_INET6) {
@@ -270,19 +271,16 @@ static int ul_ka_send(str *kamsg, dest_info_t *kadst)
 #ifdef USE_TCP
 	else if(kadst->proto == PROTO_WS || kadst->proto == PROTO_WSS) {
 		/*ws-wss*/
-		kadst->id=0;
 		return wss_send(kadst, kamsg->s, kamsg->len);
 	}
 	else if(kadst->proto == PROTO_TCP) {
 		/*tcp*/
-		kadst->id=0;
 		return tcp_send(kadst, 0, kamsg->s, kamsg->len);
 	}
 #endif
 #ifdef USE_TLS
 	else if(kadst->proto == PROTO_TLS) {
 		/*tls*/
-		kadst->id=0;
 		return tcp_send(kadst, 0, kamsg->s, kamsg->len);
 	}
 #endif

@@ -1317,9 +1317,15 @@ modparam("usrloc", "version_table", 0)
 		contact records stored in memory.
 		</para>
 		<para>
-		Note: it is recommeder to set 'timer_procs' parameter in order to have
+		Note: it is recommended to set 'timer_procs' parameter in order to have
 		dedicated timer processes for usrloc module and off-load the keepalive
 		sending process from the core timers.
+		</para>
+		<para>
+		Note: Keepalives will be sent to the IP and port using the transport
+		defined in the “received” column.  If not set, then keepalives will be sent
+		to the AOR using UDP as a default transport.  If available, the TCP
+		connection will be re-used for WS, TCP and TLS.
 		</para>
 		<para>
 		Default value is <quote>0 (keepalive disabled)</quote>.
@@ -1780,4 +1786,3 @@ modparam("usrloc", "db_clean_tcp", 1)
 
 
 </chapter>
-

@@ -114,6 +114,7 @@ int ul_ka_db_records(int partidx)
 	keys2[5] = &ul_ruid_col;
 	keys2[6] = &ul_user_col;
 	keys2[7] = &ul_domain_col;
+	keys2[8] = &ul_con_id_col;
 
 	/* where fields */
 	keys1[0] = &ul_expires_col;
@@ -255,6 +256,9 @@ int ul_ka_db_records(int partidx)
 			}
 			ur.aorhash = ul_get_aorhash(&ur.aor);
 			ur.contacts = &uc;
+
+			/* tcpconn_id */
+			uc.tcpconn_id = VAL_INT(ROW_VALUES(row)+8);
 
 			ul_ka_urecord(&ur);
 		} /* row cycle */
