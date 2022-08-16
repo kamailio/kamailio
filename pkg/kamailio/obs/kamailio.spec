@@ -1809,7 +1809,7 @@ fi
 
 %dir %{_libdir}/kamailio/kamctl/dbtextdb
 %{_libdir}/kamailio/kamctl/dbtextdb/dbtextdb.py
-%if 0%{?rhel} > 8
+%if 0%{?rhel} >= 8 || 0%{?fedora}
 %dir %{_libdir}/kamailio/kamctl/dbtextdb/__pycache__
 %{_libdir}/kamailio/kamctl/dbtextdb/__pycache__/*.pyc
 %endif
