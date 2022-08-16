@@ -1809,8 +1809,14 @@ fi
 
 %dir %{_libdir}/kamailio/kamctl/dbtextdb
 %{_libdir}/kamailio/kamctl/dbtextdb/dbtextdb.py
+%if 0%{?rhel} > 8
 %dir %{_libdir}/kamailio/kamctl/dbtextdb/__pycache__
 %{_libdir}/kamailio/kamctl/dbtextdb/__pycache__/*.pyc
+%endif
+%if 0%{?rhel} == 6 || 0%{?rhel} == 7
+%{_libdir}/kamailio/kamctl/dbtextdb/dbtextdb.pyc
+%{_libdir}/kamailio/kamctl/dbtextdb/dbtextdb.pyo
+%endif
 
 %{_mandir}/man5/*
 %{_mandir}/man8/*
