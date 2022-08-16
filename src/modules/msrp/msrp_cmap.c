@@ -270,20 +270,21 @@ int msrp_cmap_save(msrp_frame_t *mf)
 	} else {
 		for(itb=_msrp_cmap_head->cslots[idx].first; itb; itb=itb->next)
 		{
-			if(itb->citemid>it->citemid || itb->next==NULL) {
-				if(itb->next==NULL) {
-					itb->next=it;
-					it->prev = itb;
+			if(itb->citemid>it->citemid) {
+				/* insert before current item */
+				it->next = itb;
+				if(itb->prev==NULL) {
+					_msrp_cmap_head->cslots[idx].first = it;
 				} else {
-					it->next = itb;
-					if(itb->prev==NULL) {
-						_msrp_cmap_head->cslots[idx].first = it;
-					} else {
-						itb->prev->next = it;
-					}
-					it->prev = itb->prev;
-					itb->prev = it;
+					itb->prev->next = it;
 				}
+				it->prev = itb->prev;
+				itb->prev = it;
+				break;
+			} else if(itb->next==NULL) {
+				/* insert after last item */
+				itb->next=it;
+				it->prev = itb;
 				break;
 			}
 		}
