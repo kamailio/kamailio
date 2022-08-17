@@ -92,8 +92,8 @@ int ul_ka_db_records(int partidx)
 	db_key_t keys1[4]; /* where */
 	db_val_t vals1[4];
 	db_op_t  ops1[4];
-	db_key_t keys2[8]; /* select */
-	int n[2] = {2, 8}; /* number of dynamic values used on key1/key2 */
+	db_key_t keys2[9]; /* select */
+	int n[2] = {2, 9}; /* number of dynamic values used on key1/key2 */
 	dlist_t *dom = NULL;
 	urecord_t ur;
 	ucontact_t uc;
