@@ -1113,9 +1113,14 @@ modparam("usrloc", "version_table", 0)
    Note: the internal keepalive is for the moment implemented only for
    contact records stored in memory.
 
-   Note: it is recommeder to set 'timer_procs' parameter in order to have
+   Note: it is recommended to set 'timer_procs' parameter in order to have
    dedicated timer processes for usrloc module and off-load the keepalive
    sending process from the core timers.
+
+   Note: Keepalives will be sent to the IP and port using the transport
+   defined in the âreceivedâ column. If not set, then keepalives will
+   be sent to the AOR using UDP as a default transport. If available, the
+   TCP connection will be re-used for WS, TCP and TLS.
 
    Default value is “0 (keepalive disabled)”.
 
