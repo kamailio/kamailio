@@ -792,7 +792,7 @@ static int child_init(int rank)
 
 	/* in DB_MODE_SHUTDOWN only PROC_MAIN will do a DB dump at the end, so
 	 * for the rest of the processes will be the same as DB_MODE_NONE */
-	if (dlg_db_mode==DB_MODE_SHUTDOWN && rank!=PROC_MAIN)
+	if (dlg_db_mode==DB_MODE_SHUTDOWN && rank!=PROC_POSTCHILDINIT)
 		dlg_db_mode = DB_MODE_NONE;
 	/* in DB_MODE_REALTIME and DB_MODE_DELAYED the PROC_MAIN have no DB handle */
 	if ( (dlg_db_mode==DB_MODE_REALTIME || dlg_db_mode==DB_MODE_DELAYED) &&
