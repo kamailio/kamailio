@@ -401,12 +401,6 @@ static void init_ssl_methods(void)
 	ssl_methods[TLS_USE_TLSv1_2 - 1] = TLSv1_2_method();
 #endif
 
-#if OPENSSL_VERSION_NUMBER >= 0x1010100fL && !defined(LIBRESSL_VERSION_NUMBER)
-	ssl_methods[TLS_USE_TLSv1_3_cli - 1] = TLSv1_3_client_method();
-	ssl_methods[TLS_USE_TLSv1_3_srv - 1] = TLSv1_3_server_method();
-	ssl_methods[TLS_USE_TLSv1_3 - 1] = TLSv1_3_method();
-#endif
-
 	/* ranges of TLS versions (require a minimum TLS version) */
 	ssl_methods[TLS_USE_TLSv1_PLUS - 1] = (void*)TLS_OP_TLSv1_PLUS;
 
@@ -418,9 +412,6 @@ static void init_ssl_methods(void)
 	ssl_methods[TLS_USE_TLSv1_2_PLUS - 1] = (void*)TLS_OP_TLSv1_2_PLUS;
 #endif
 
-#if OPENSSL_VERSION_NUMBER >= 0x1010100fL && !defined(LIBRESSL_VERSION_NUMBER)
-	ssl_methods[TLS_USE_TLSv1_3_PLUS - 1] = (void*)TLS_OP_TLSv1_3_PLUS;
-#endif
 #else
 	/* openssl 1.1.0+ */
 	memset(sr_tls_methods, 0, sizeof(sr_tls_methods));
