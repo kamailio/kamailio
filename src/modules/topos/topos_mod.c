@@ -81,7 +81,7 @@ static str _tps_db_url = str_init(DEFAULT_DB_URL);
 int _tps_param_mask_callid = 0;
 int _tps_sanity_checks = 0;
 int _tps_rr_update = 0;
-int _tps_separate_via = 0;
+int _tps_separate_hv = 0;
 str _tps_storage = str_init("db");
 
 extern int _tps_branch_expire;
@@ -157,7 +157,7 @@ static param_export_t params[]={
 	{"db_url",		PARAM_STR, &_tps_db_url},
 	{"mask_callid",		PARAM_INT, &_tps_param_mask_callid},
 	{"sanity_checks",	PARAM_INT, &_tps_sanity_checks},
-	{"separate_via",    PARAM_INT, &_tps_separate_via},
+	{"separate_header_values",	PARAM_INT, &_tps_separate_hv},
 	{"branch_expire",	PARAM_INT, &_tps_branch_expire},
 	{"dialog_expire",	PARAM_INT, &_tps_dialog_expire},
 	{"clean_interval",	PARAM_INT, &_tps_clean_interval},

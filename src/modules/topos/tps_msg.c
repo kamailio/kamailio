@@ -50,7 +50,7 @@ extern int _tps_param_mask_callid;
 extern int _tps_contact_mode;
 extern str _tps_cparam_name;
 extern int _tps_rr_update;
-extern int _tps_separate_via;
+extern int _tps_separate_hv;
 
 extern str _tps_context_param;
 extern str _tps_context_value;
@@ -632,9 +632,9 @@ int tps_remove_name_headers(sip_msg_t *msg, str *hname)
 /**
  *
  */
-int tps_reappend_via_separate_header(sip_msg_t *msg, tps_data_t *ptsd, str *hbody)
+int tps_reappend_separate_header_values(sip_msg_t *msg, tps_data_t *ptsd, str *hbody, str *hname)
 {
-        str hname = str_init("Via");
+
         int i;
         str sb;
         char *p = NULL;
@@ -649,7 +649,7 @@ int tps_reappend_via_separate_header(sip_msg_t *msg, tps_data_t *ptsd, str *hbod
                 if(sb.len>0) {
                     sb.s = p;
                     if(sb.s[sb.len-1]==',') sb.len--;
-                    if(tps_add_headers(msg, &hname, &sb, 0)<0) {
+                    if(tps_add_headers(msg, hname, &sb, 0)<0) {
                         return -1;
                     }
                 }
@@ -663,7 +663,7 @@ int tps_reappend_via_separate_header(sip_msg_t *msg, tps_data_t *ptsd, str *hbod
         if(sb.len>0) {
                 sb.s = p;
                 if(sb.s[sb.len-1]==',') sb.len--;
-                if(tps_add_headers(msg, &hname, &sb, 0)<0) {
+                if(tps_add_headers(msg, hname, &sb, 0)<0) {
                     return -1;
                 }
         }
@@ -676,8 +676,8 @@ int tps_reappend_via(sip_msg_t *msg, tps_data_t *ptsd, str *hbody)
 {
 	str hname = str_init("Via");
 
-    if (_tps_separate_via!= 0)
-        return tps_reappend_via_separate_header(msg, ptsd, hbody);
+	if (TPS_SEPERATE_VIA & _tps_separate_hv)
+		return tps_reappend_separate_header_values(msg, ptsd, hbody,&hname);
 
 	if(tps_add_headers(msg, &hname, hbody, 0)<0) {
 		return -1;
@@ -788,6 +788,9 @@ int tps_reappend_rr(sip_msg_t *msg, tps_data_t *ptsd, str *hbody)
 {
 	str hname = str_init("Record-Route");
 
+	if (TPS_SEPERATE_RECORD_ROUTE & _tps_separate_hv)
+		return tps_reappend_separate_header_values(msg, ptsd, hbody,&hname);
+
 	if(tps_add_headers(msg, &hname, hbody, 0)<0) {
 		return -1;
 	}
@@ -842,6 +845,8 @@ int tps_reappend_route(sip_msg_t *msg, tps_data_t *ptsd, str *hbody, int rev)
 	trim_zeros_lr(&sb);
 	trim(&sb);
 	if(sb.len>0 && sb.s[sb.len-1]==',') sb.len--;
+	if (TPS_SEPERATE_ROUTE & _tps_separate_hv)
+		return tps_reappend_separate_header_values(msg, ptsd, &sb,&hname);
 	if(tps_add_headers(msg, &hname, &sb, 0)<0) {
 		return -1;
 	}
