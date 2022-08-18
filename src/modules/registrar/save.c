@@ -432,12 +432,14 @@ int reg_get_crt_max_contacts(void)
 {
 	int n;
 	sr_xavp_t *vavp=NULL;
-	str vname = {"max_contacts", 12};
+	str vname = str_init("max_contacts");
 
 	n = 0;
 
 	if(reg_xavp_cfg.s!=NULL)
 	{
+		LM_DBG("looking up $xavp(%.*s=>%.*s) for max contacts limit\n",
+				reg_xavp_cfg.len, reg_xavp_cfg.s, vname.len, vname.s);
 		vavp = xavp_get_child_with_ival(&reg_xavp_cfg, &vname);
 		if(vavp!=NULL)
 		{
@@ -506,8 +508,8 @@ static inline int insert_contacts(struct sip_msg* _m, udomain_t* _d, str* _a,
 
 
 		if (maxc > 0 && num >= maxc) {
-			LM_INFO("too many contacts (%d) for AOR <%.*s>\n",
-					num, _a->len, _a->s);
+			LM_INFO("too many contacts (n:%d max:%d) for AOR <%.*s>\n",
+					num, maxc, _a->len, _a->s);
 			rerrno = R_TOO_MANY;
 			goto error;
 		}
@@ -573,7 +575,7 @@ static inline int insert_contacts(struct sip_msg* _m, udomain_t* _d, str* _a,
 	} else { /* No contacts found */
 		build_contact(_m, NULL, &u->host);
 	}
-	
+
 #ifdef USE_TCP
 	if ( tcp_check && e_max>0 ) {
 		e_max -= act_time;
