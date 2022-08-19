@@ -360,6 +360,7 @@ inline static void final_response_handler(
 	int branch_ret;
 	int prev_branch;
 	ticks_t now;
+	tm_xlinks_t backup_xd;
 #endif
 
 #ifdef EXTRA_DEBUG
@@ -450,11 +451,15 @@ inline static void final_response_handler(
 				branch_ret = add_uac_dns_fallback(
 						t, t->uas.request, &t->uac[r_buf->branch], 0);
 				prev_branch = -1;
+				/* restore X/AVP values from initial transaction */
+				tm_xdata_swap(t, &backup_xd, 0);
 				while((branch_ret >= 0) && (branch_ret != prev_branch)) {
 					prev_branch = branch_ret;
 					branch_ret =
 							t_send_branch(t, branch_ret, t->uas.request, 0, 0);
 				}
+				/* restore X/AVP values from backup data */
+				tm_xdata_swap(t, &backup_xd, 1);
 			}
 		}
 #endif
