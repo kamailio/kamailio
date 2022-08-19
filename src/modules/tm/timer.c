@@ -442,12 +442,14 @@ inline static void final_response_handler(
 					BLST_ERR_TIMEOUT, &r_buf->dst, r_buf->my_T->uas.request);
 #endif
 #ifdef USE_DNS_FAILOVER
-		/* if this is an invite, the destination resolves to more ips, and
-		 *  it still hasn't passed more than fr_inv_timeout since we
-		 *  started, add another branch/uac */
+		/* if this is an request, the destination resolves to more IPs, and
+		 * it still hasn't passed more than max_inv_lifetime or
+		 * max_noninv_lifetimesince we started, add another branch/uac */
 		if(cfg_get(core, core_cfg, use_dns_failover)) {
 			now = get_ticks_raw();
 			if((s_ticks_t)(t->end_of_life - now) > 0) {
+				LM_DBG("send on branch %d failed, adding another branch\n",
+						r_buf->branch);
 				branch_ret = add_uac_dns_fallback(
 						t, t->uas.request, &t->uac[r_buf->branch], 0);
 				prev_branch = -1;
