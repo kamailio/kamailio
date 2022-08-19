@@ -354,9 +354,6 @@ inline static void final_response_handler(
 {
 	int silent;
 #ifdef USE_DNS_FAILOVER
-	/*int i;
-	int added_branches;
-	*/
 	int branch_ret;
 	int prev_branch;
 	ticks_t now;
