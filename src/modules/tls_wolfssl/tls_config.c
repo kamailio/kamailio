@@ -125,6 +125,8 @@ static cfg_option_t methods[] = {
 	{"TLSv1.1+", .val = TLS_USE_TLSv1_1_PLUS},
 	{"TLSv1.2",  .val = TLS_USE_TLSv1_2},
 	{"TLSv1.2+", .val = TLS_USE_TLSv1_2_PLUS},
+	{"TLSv1.3",  .val = TLS_USE_TLSv1_3},
+	{"TLSv1.3+", .val = TLS_USE_TLSv1_3_PLUS},
 	{0}
 };
 
