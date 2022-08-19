@@ -254,7 +254,7 @@ static void* ser_realloc(void *ptr, size_t new_size)
 	if(!ptr) return ser_malloc(new_size);
 
 	int pad = *((char*)ptr - 1); // 8 or 16 bytes
-	char *real_ptr = (char*)ptr - pad; 
+	char *real_ptr = (char*)ptr - pad;
 
 	char *new_ptr = shm_realloc(real_ptr, new_size+MAX_ALIGN);
 	int new_pad = MAX_ALIGN - ((long) new_ptr % MAX_ALIGN);
@@ -262,7 +262,7 @@ static void* ser_realloc(void *ptr, size_t new_size)
 		memmove(new_ptr + new_pad, new_ptr + pad, new_size);
 		memset(new_ptr, new_pad, new_pad);
 	}
-		
+
 	return new_ptr + new_pad;
 }
 
@@ -359,6 +359,16 @@ static void init_ssl_methods(void)
 	sr_tls_methods[TLS_USE_TLSv1_2 - 1].TLSMethodMin = TLS1_2_VERSION;
 	sr_tls_methods[TLS_USE_TLSv1_2 - 1].TLSMethodMax = TLS1_2_VERSION;
 
+	sr_tls_methods[TLS_USE_TLSv1_3_cli - 1].TLSMethod = TLS_client_method();
+	sr_tls_methods[TLS_USE_TLSv1_3_cli - 1].TLSMethodMin = TLS1_3_VERSION;
+	sr_tls_methods[TLS_USE_TLSv1_3_cli - 1].TLSMethodMax = TLS1_3_VERSION;
+	sr_tls_methods[TLS_USE_TLSv1_3_srv - 1].TLSMethod = TLS_server_method();
+	sr_tls_methods[TLS_USE_TLSv1_3_srv - 1].TLSMethodMin = TLS1_3_VERSION;
+	sr_tls_methods[TLS_USE_TLSv1_3_srv - 1].TLSMethodMax = TLS1_3_VERSION;
+	sr_tls_methods[TLS_USE_TLSv1_3 - 1].TLSMethod = TLS_method();
+	sr_tls_methods[TLS_USE_TLSv1_3 - 1].TLSMethodMin = TLS1_3_VERSION;
+	sr_tls_methods[TLS_USE_TLSv1_3 - 1].TLSMethodMax = TLS1_3_VERSION;
+
 	/* ranges of TLS versions (require a minimum TLS version) */
 	sr_tls_methods[TLS_USE_TLSv1_PLUS - 1].TLSMethod = TLS_method();
 	sr_tls_methods[TLS_USE_TLSv1_PLUS - 1].TLSMethodMin = TLS1_VERSION;
@@ -368,6 +378,9 @@ static void init_ssl_methods(void)
 
 	sr_tls_methods[TLS_USE_TLSv1_2_PLUS - 1].TLSMethod = TLS_method();
 	sr_tls_methods[TLS_USE_TLSv1_2_PLUS - 1].TLSMethodMin = TLS1_2_VERSION;
+
+	sr_tls_methods[TLS_USE_TLSv1_3_PLUS - 1].TLSMethod = TLS_method();
+	sr_tls_methods[TLS_USE_TLSv1_3_PLUS - 1].TLSMethodMin = TLS1_3_VERSION;
 }
 
 

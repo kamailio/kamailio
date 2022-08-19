@@ -135,7 +135,7 @@ cfg_def_t	tls_cfg_def[] = {
 	{"force_run", CFG_VAR_INT | CFG_READONLY, 0, 1, 0, 0,
 		"force loading the tls module even when initial sanity checks fail"},
 	{"method",   CFG_VAR_STR | CFG_READONLY, 0, 0, 0, 0,
-		"TLS method used (TLSv1.2, TLSv1.1, TLSv1, SSLv3, SSLv2, SSLv23)"},
+		"TLS method used (TLSv1.3 TLSv1.2, TLSv1.1, TLSv1, SSLv3, SSLv2, SSLv23)"},
 	{"server_name",   CFG_VAR_STR | CFG_READONLY, 0, 0, 0, 0,
 		"Server name (SNI)"},
 	{"server_name_mode", CFG_VAR_INT | CFG_READONLY, 0, 1, 0, 0,
