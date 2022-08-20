@@ -546,8 +546,8 @@ modparam("topos", "methods_nocontact", "CANCEL,PRACK")
 </programlisting>
 		</example>
 	</section>
-	<section id="topos.p.separate_header_values">
-		<title><varname>separate_header_values</varname> (int)</title>
+	<section id="topos.p.header_mode">
+		<title><varname>header_mode</varname> (int)</title>
 		<para>
 			List of headers to disable multiple comma separated values inserted in compact form.
 			Altough compact form is RFC compliant this paramter gives possibilty to disable
@@ -566,10 +566,10 @@ modparam("topos", "methods_nocontact", "CANCEL,PRACK")
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>separate_header_values</varname> parameter</title>
+		<title>Set <varname>header_mode</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("topos", "separate_header_values", 1)
+modparam("topos", "header_mode", 1)
 ...
 </programlisting>
 		</example>
