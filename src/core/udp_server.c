@@ -349,9 +349,19 @@ int udp_init(struct socket_info* sock_info)
 #endif
 #if defined (__OS_linux)
 	if (addr->s.sa_family==AF_INET){
-		/* If pmtu_discovery=1 then set DF bit and do Path MTU discovery
-		 * disabled by default.  Specific to IPv4. */
-		optval= (pmtu_discovery) ? IP_PMTUDISC_DO : IP_PMTUDISC_DONT;
+		/* If pmtu_discovery=1 then set DF bit and do Path MTU discovery,
+		 * disabled by default. Specific to IPv4. If pmtu_discovery=2
+		 * then the datagram will be fragmented if needed according to
+		 * path MTU, or will set the don't-fragment flag otherwise */
+		switch (pmtu_discovery) {
+			case 1: optval=IP_PMTUDISC_DO;
+			break;
+			case 2: optval=IP_PMTUDISC_WANT;
+			break;
+			case 0:
+			default: optval=IP_PMTUDISC_DONT;
+			break;
+		}
 		if(setsockopt(sock_info->socket, IPPROTO_IP, IP_MTU_DISCOVER,
 				(void*)&optval, sizeof(optval)) ==-1){
 			LM_ERR("IPv4 setsockopt: %s\n", strerror(errno));
@@ -359,9 +369,19 @@ int udp_init(struct socket_info* sock_info)
 		}
 	} else if (addr->s.sa_family==AF_INET6){
 		/* IPv6 never fragments but sends ICMPv6 Packet too Big,
-		 * If pmtu_discovery=1 then set DF bit and do Path MTU discovery
-		 * disabled by default.  Specific to IPv6. */
-		optval= (pmtu_discovery) ? IPV6_PMTUDISC_DO : IPV6_PMTUDISC_DONT;
+		 * If pmtu_discovery=1 then set DF bit and do Path MTU discovery,
+		 * disabled by default. Specific to IPv6. If pmtu_discovery=2
+                 * then the datagram will be fragmented if needed according to
+                 * path MTU */
+                switch (pmtu_discovery) {
+			case 1: optval=IPV6_PMTUDISC_DO;
+			break;
+			case 2: optval=IPV6_PMTUDISC_WANT;
+			break;
+			case 0:
+			default: optval=IPV6_PMTUDISC_DONT;
+			break;
+		}
 		if(setsockopt(sock_info->socket, IPPROTO_IPV6,
 				IPV6_MTU_DISCOVER,
 				(void*)&optval, sizeof(optval)) ==-1){
