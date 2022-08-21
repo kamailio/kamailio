@@ -500,11 +500,11 @@ modparam("topos", "methods_nocontact", "CANCEL,PRACK")
 
    List of headers to disable multiple comma separated values inserted in
    compact form. Altough compact form is RFC compliant this paramter gives
-   possibilty to disable compact form header values for UA that dont
-   support/handle it. The following options are available: (1) - disable
-   multiple comma separated values for Via header (2) - disable multiple
-   comma separated values for Record-Route header (4) - disable multiple
-   comma separated values for Route header
+   possibilty to disable compact form header values for UA that don't
+   support or can't handle it. The following options are available: (1) -
+   disable multiple comma separated values for Via header (2) - disable
+   multiple comma separated values for Record-Route header (4) - disable
+   multiple comma separated values for Route header
 
    Default value is “0”.
 
