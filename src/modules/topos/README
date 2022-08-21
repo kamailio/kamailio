@@ -50,7 +50,8 @@ Frederic Gaisnon
               3.17. rr_update (int)
               3.18. context (str)
               3.19. methods_nocontact (str)
-              3.20. methods_noinitial (str)
+              3.20. header_mode (int)
+              3.21. methods_noinitial (str)
 
         4. Functions
 
@@ -84,12 +85,13 @@ Frederic Gaisnon
    1.17. Set rr_update parameter
    1.18. Set context parameter
    1.19. Set methods_nocontact parameter
-   1.20. Set methods_noinitial parameter
-   1.21. tps_set_context usage
-   1.22. Usage of event_route[topos:msg-outgoing]
-   1.23. Usage of event_route[topos:msg-sending]
-   1.24. Usage of event_route[topos:msg-incoming]
-   1.25. Usage of event_route[topos:msg-receoving]
+   1.20. Set header_mode parameter
+   1.21. Set methods_noinitial parameter
+   1.22. tps_set_context usage
+   1.23. Usage of event_route[topos:msg-outgoing]
+   1.24. Usage of event_route[topos:msg-sending]
+   1.25. Usage of event_route[topos:msg-incoming]
+   1.26. Usage of event_route[topos:msg-receoving]
 
 Chapter 1. Admin Guide
 
@@ -122,7 +124,8 @@ Chapter 1. Admin Guide
         3.17. rr_update (int)
         3.18. context (str)
         3.19. methods_nocontact (str)
-        3.20. methods_noinitial (str)
+        3.20. header_mode (int)
+        3.21. methods_noinitial (str)
 
    4. Functions
 
@@ -196,7 +199,8 @@ Chapter 1. Admin Guide
    3.17. rr_update (int)
    3.18. context (str)
    3.19. methods_nocontact (str)
-   3.20. methods_noinitial (str)
+   3.20. header_mode (int)
+   3.21. methods_noinitial (str)
 
 3.1. storage (str)
 
@@ -492,14 +496,31 @@ modparam("topos", "context", "srvone")
 modparam("topos", "methods_nocontact", "CANCEL,PRACK")
 ...
 
-3.20. methods_noinitial (str)
+3.20. header_mode (int)
+
+   List of headers to disable multiple comma separated values inserted in
+   compact form. Altough compact form is RFC compliant this paramter gives
+   possibilty to disable compact form header values for UA that dont
+   support/handle it. The following options are available: (1) - disable
+   multiple comma separated values for Via header (2) - disable multiple
+   comma separated values for Record-Route header (4) - disable multiple
+   comma separated values for Route header
+
+   Default value is “0”.
+
+   Example 1.20. Set header_mode parameter
+...
+modparam("topos", "header_mode", 1)
+...
+
+3.21. methods_noinitial (str)
 
    List of SIP methods to skip doing topos if it is an intial request (no
    To-tag).
 
    Default value is “” (no method).
 
-   Example 1.20. Set methods_noinitial parameter
+   Example 1.21. Set methods_noinitial parameter
 ...
 modparam("topos", "methods_noinitial", "OPTIONS,NOTIFY")
 ...
@@ -515,7 +536,7 @@ modparam("topos", "methods_noinitial", "OPTIONS,NOTIFY")
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.21. tps_set_context usage
+   Example 1.22. tps_set_context usage
 ...
 request_route {
     ...
@@ -543,7 +564,7 @@ request_route {
    reparsing the outgoing SIP message for the cases when topology hiding
    is not wanted.
 
-   Example 1.22. Usage of event_route[topos:msg-outgoing]
+   Example 1.23. Usage of event_route[topos:msg-outgoing]
 ...
 event_route[topos:msg-outgoing] {
   if($sndto(ip)=="10.1.1.10") {
@@ -562,7 +583,7 @@ event_route[topos:msg-outgoing] {
    $sndto(proto) point to the destination. The SIP message is the one to
    be sent out.
 
-   Example 1.23. Usage of event_route[topos:msg-sending]
+   Example 1.24. Usage of event_route[topos:msg-sending]
 ...
 event_route[topos:msg-sending] {
   if(is_request() and $fU=="alice") {
@@ -582,7 +603,7 @@ event_route[topos:msg-sending] {
    internally generated one at startup, to avoid reparsing the outgoing
    SIP message for the cases when topology hiding is not wanted.
 
-   Example 1.24. Usage of event_route[topos:msg-incoming]
+   Example 1.25. Usage of event_route[topos:msg-incoming]
 ...
 event_route[topos:msg-incoming] {
   if($si=="10.1.1.10") {
@@ -600,7 +621,7 @@ event_route[topos:msg-incoming] {
    Inside the event route the variables $si, $sp and $proto point to the
    source address. The SIP message is the one to be sent out.
 
-   Example 1.25. Usage of event_route[topos:msg-receoving]
+   Example 1.26. Usage of event_route[topos:msg-receoving]
 ...
 event_route[topos:msg-receiving] {
   if(is_request() and $fU=="alice") {
