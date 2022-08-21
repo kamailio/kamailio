@@ -546,6 +546,34 @@ modparam("topos", "methods_nocontact", "CANCEL,PRACK")
 </programlisting>
 		</example>
 	</section>
+	<section id="topos.p.header_mode">
+		<title><varname>header_mode</varname> (int)</title>
+		<para>
+			List of headers to disable multiple comma separated values inserted in compact form.
+			Altough compact form is RFC compliant this paramter gives possibilty to disable
+			compact form header values for UA that dont support/handle it.
+
+			The following options are available:
+
+			(1) - disable multiple comma separated values for Via  header
+			(2) - disable multiple comma separated values for Record-Route header
+			(4) - disable multiple comma separated values for Route header
+
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>header_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("topos", "header_mode", 1)
+...
+</programlisting>
+		</example>
+	</section>
 	<section id="topos.p.methods_noinitial">
 		<title><varname>methods_noinitial</varname> (str)</title>
 		<para>

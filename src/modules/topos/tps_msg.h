@@ -31,6 +31,10 @@
 
 #include "../../core/parser/msg_parser.h"
 
+#define TPS_SPLIT_VIA            (1<<0)
+#define TPS_SPLIT_RECORD_ROUTE   (1<<1)
+#define TPS_SPLIT_ROUTE          (1<<2)
+
 int tps_update_hdr_replaces(sip_msg_t *msg);
 char* tps_msg_update(sip_msg_t *msg, unsigned int *olen);
 int tps_skip_msg(sip_msg_t *msg);
