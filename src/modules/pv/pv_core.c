@@ -2223,6 +2223,7 @@ int pv_get_hfl(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 	rr_t *rrb = NULL;
 	contact_t *cb = NULL;
 	hdr_field_t *hf = NULL;
+	hdr_field_t thdr = {0};
 	int n = 0;
 	str sval = STR_NULL;
 
@@ -2234,6 +2235,15 @@ int pv_get_hfl(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 		if(pv_get_spec_name(msg, param, &tv)!=0 || (!(tv.flags&PV_VAL_STR))) {
 			LM_ERR("invalid name\n");
 			return -1;
+		}
+		parse_hname2_short(tv.rs.s, tv.rs.s + tv.rs.len, &thdr);
+		if(thdr.type==HDR_ERROR_T) {
+			LM_ERR("error parsing header name [%.*s]\n", tv.rs.len, tv.rs.s);
+			return pv_get_sintval(msg, param, res, 0);
+		}
+		if(thdr.type!=HDR_OTHER_T) {
+			tv.flags = 0;
+			tv.ri = thdr.type;
 		}
 	} else {
 		if(param->pvn.u.isname.type == AVP_NAME_STR) {
@@ -2458,6 +2468,7 @@ int pv_get_hflc(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 	rr_t *rrb = NULL;
 	contact_t *cb = NULL;
 	hdr_field_t *hf = NULL;
+	hdr_field_t thdr = {0};
 	int n = 0;
 
 	if(msg==NULL || res==NULL || param==NULL)
@@ -2468,6 +2479,15 @@ int pv_get_hflc(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 		if(pv_get_spec_name(msg, param, &tv)!=0 || (!(tv.flags&PV_VAL_STR))) {
 			LM_ERR("invalid name\n");
 			return pv_get_sintval(msg, param, res, 0);
+		}
+		parse_hname2_short(tv.rs.s, tv.rs.s + tv.rs.len, &thdr);
+		if(thdr.type==HDR_ERROR_T) {
+			LM_ERR("error parsing header name [%.*s]\n", tv.rs.len, tv.rs.s);
+			return pv_get_sintval(msg, param, res, 0);
+		}
+		if(thdr.type!=HDR_OTHER_T) {
+			tv.flags = 0;
+			tv.ri = thdr.type;
 		}
 	} else {
 		if(param->pvn.u.isname.type == AVP_NAME_STR) {
