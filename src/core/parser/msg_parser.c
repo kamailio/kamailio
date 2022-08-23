@@ -623,9 +623,11 @@ int parse_headers(struct sip_msg* const msg, const hdr_flags_t flags, const int 
 
 skip:
 	msg->unparsed=tmp;
-	if(msg->headers==NULL) {
-		/* nothing parsed - invalid input sip message */
-		goto error1;
+	if(ksr_sip_parser_mode & KSR_SIP_PARSER_MODE_STRICT) {
+		if(msg->headers==NULL) {
+			/* nothing parsed - invalid input sip message */
+			goto error1;
+		}
 	}
 	/* restore original flags */
 	msg->parsed_flag |= orig_flag;
