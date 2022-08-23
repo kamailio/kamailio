@@ -312,7 +312,7 @@ DOMAIN		domain
 SR_AUTO_ALIASES	auto_aliases
 SR_AUTO_DOMAINS auto_domains
 DNS		 dns
-REV_DNS	 rev_dns
+REV_DNS	 rev_dns|dns_rev_via
 DNS_TRY_IPV6	dns_try_ipv6
 DNS_TRY_NAPTR	dns_try_naptr
 DNS_SRV_LB		dns_srv_lb|dns_srv_loadbalancing
