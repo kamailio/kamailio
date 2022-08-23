@@ -2259,7 +2259,7 @@ int pv_get_hfl(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 		parse_hname2_short(tv.rs.s, tv.rs.s + tv.rs.len, &thdr);
 		if(thdr.type==HDR_ERROR_T) {
 			LM_ERR("error parsing header name [%.*s]\n", tv.rs.len, tv.rs.s);
-			return pv_get_sintval(msg, param, res, 0);
+			return pv_get_null(msg, param, res);
 		}
 		if(thdr.type!=HDR_OTHER_T) {
 			tv.flags = 0;
