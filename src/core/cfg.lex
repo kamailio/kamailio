@@ -330,7 +330,7 @@ DNS_NAPTR_IGNORE_RFC	dns_naptr_ignore_rfc
 /* dns cache */
 DNS_CACHE_INIT	dns_cache_init
 DNS_USE_CACHE	use_dns_cache|dns_use_cache
-DNS_USE_FAILOVER	use_dns_failover
+DNS_USE_FAILOVER	use_dns_failover|dns_use_failover
 DNS_CACHE_FLAGS		dns_cache_flags
 DNS_CACHE_NEG_TTL	dns_cache_negative_ttl
 DNS_CACHE_MIN_TTL	dns_cache_min_ttl
