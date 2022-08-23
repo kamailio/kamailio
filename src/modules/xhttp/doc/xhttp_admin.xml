@@ -85,13 +85,23 @@
 	<section>
 		<title>&kamailio; Core Settings</title>
 		<para>
-		SIP requires a Content-Length header for TCP transport. But most HTTP clients do not
-		set the content length for normal GET requests. Therefore, the core must be configured
-		to allow incoming requests without content length header:
+		Related core settings:
 			<itemizedlist>
 			<listitem>
 			<para>
-				<emphasis>tcp_accept_no_cl=yes</emphasis>
+				<emphasis>tcp_accept_no_cl=yes</emphasis> - SIP requires the
+				Content-Length header for TCP transport. But most HTTP clients
+				do not set the content length for normal GET requests. Therefore,
+				the core must be configured to allow incoming requests without
+				content length header.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>http_reply_parse=yes</emphasis> - various Kamailio
+				modules may parse what it is sent out (e.g., for replication,
+				topology management). In such case errors are printed if the
+				outgoing message is not SIP and this parameter is not set.
 			</para>
 			</listitem>
 			</itemizedlist>
@@ -221,6 +231,11 @@ event_route[xhttp:request] {
 			The event route is executed when a new HTTP request is received.
         </para>
         <programlisting  format="linespecific">
+...
+tcp_accept_no_cl=yes
+...
+loadmodule "sl.so"
+loadmodule "xhttp.so
 ...
 event_route[xhttp:request] {
     xhttp_reply("200", "OK", "text/html",

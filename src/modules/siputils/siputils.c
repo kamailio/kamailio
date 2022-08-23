@@ -34,12 +34,6 @@
  *  This module implement various functions and checks related to
  *  SIP message handling and URI handling.
  *
- *  It offers some functions related to handle ringing. In a
- *  parallel forking scenario you get several 183s with SDP. You
- *  don't want that your customers hear more than one ringtone or
- *  answer machine in parallel on the phone. So its necessary to
- *  drop the 183 in this cases and send a 180 instead.
- *
  *  This module provides a function to answer OPTIONS requests
  *  which are directed to the server itself. This means an OPTIONS
  *  request which has the address of the server in the request
@@ -66,8 +60,8 @@
 #include "../../core/kemi.h"
 #include "../../core/parser/parse_option_tags.h"
 #include "../../core/parser/parse_uri.h"
+#include "../../core/parser/parse_date.h"
 
-#include "ring.h"
 #include "options.h"
 
 #include "checks.h"
@@ -95,8 +89,9 @@ str rpid_suffix = {DEF_RPID_SUFFIX, sizeof(DEF_RPID_SUFFIX) - 1};
 /*! Definition of AVP containing rpid value */
 char* rpid_avp_param = DEF_RPID_AVP;
 
-gen_lock_t *ring_lock = NULL;
-unsigned int ring_timeout = 0;
+/* max length for e164 number including the leading '+' */
+int e164_max_len = 16;
+
 /* for options functionality */
 str opt_accept = str_init(ACPT_DEF);
 str opt_accept_enc = str_init(ACPT_ENC_DEF);
@@ -113,6 +108,8 @@ static int w_contact_param_decode(sip_msg_t *msg, char *pnparam, char *p2);
 static int w_contact_param_decode_ruri(sip_msg_t *msg, char *pnparam, char *p2);
 static int w_contact_param_rm(sip_msg_t *msg, char *pnparam, char *p2);
 
+static int w_hdr_date_check(sip_msg_t *msg, char *ptdiff, char *p2);
+
 /* Fixup functions to be defined later */
 static int fixup_set_uri(void** param, int param_no);
 static int fixup_free_set_uri(void** param, int param_no);
@@ -125,8 +122,6 @@ static int fixup_option(void** param, int param_no);
 char *contact_flds_separator = DEFAULT_SEPARATOR;
 
 static cmd_export_t cmds[]={
-	{"ring_insert_callid", (cmd_function)ring_insert_callid, 0, ring_fixup,
-		0, REQUEST_ROUTE|FAILURE_ROUTE},
 	{"options_reply",      (cmd_function)opt_reply,         0, 0,
 		0, REQUEST_ROUTE},
 	{"is_user",            (cmd_function)is_user,           1, fixup_spve_null,
@@ -149,7 +144,7 @@ static cmd_export_t cmds[]={
 		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE},
 	{"is_uri",            (cmd_function)is_uri,           1, fixup_spve_null,
 		fixup_free_spve_null, ANY_ROUTE},
-	{"is_e164",            (cmd_function)is_e164,           1, fixup_pvar_null,
+	{"is_e164",            (cmd_function)w_is_e164,           1, fixup_pvar_null,
 		fixup_free_pvar_null, REQUEST_ROUTE|FAILURE_ROUTE|LOCAL_ROUTE},
 	{"is_uri_user_e164",   (cmd_function)w_is_uri_user_e164,  1, fixup_pvar_null,
 		fixup_free_pvar_null, ANY_ROUTE},
@@ -162,6 +157,8 @@ static cmd_export_t cmds[]={
 	{"cmp_uri",  (cmd_function)w_cmp_uri,                   2, fixup_spve_spve,
 		0, ANY_ROUTE},
 	{"cmp_aor",  (cmd_function)w_cmp_aor,                   2, fixup_spve_spve,
+		0, ANY_ROUTE},
+	{"cmp_hdr_name",  (cmd_function)w_cmp_hdr_name,         2, fixup_spve_spve,
 		0, ANY_ROUTE},
 	{"is_rpid_user_e164",   (cmd_function)is_rpid_user_e164, 0, 0,
 		0, REQUEST_ROUTE},
@@ -185,6 +182,8 @@ static cmd_export_t cmds[]={
 		0, ANY_ROUTE},
 	{"is_first_hop",  (cmd_function)w_is_first_hop,          0, 0,
 		0, ANY_ROUTE},
+	{"is_first_hop",  (cmd_function)w_is_first_hop,          1, fixup_igp_null,
+		fixup_free_igp_null, ANY_ROUTE},
 	{"is_tel_number", (cmd_function)is_tel_number,           1, fixup_spve_null,
 		0, ANY_ROUTE},
 	{"is_numeric", (cmd_function)is_numeric,                 1, fixup_spve_null,
@@ -203,6 +202,8 @@ static cmd_export_t cmds[]={
 		fixup_spve_null, fixup_free_spve_null, REQUEST_ROUTE},
 	{"contact_param_rm",      (cmd_function)w_contact_param_rm,    1,
 		fixup_spve_null, fixup_free_spve_null, REQUEST_ROUTE|ONREPLY_ROUTE},
+	{"hdr_date_check",  (cmd_function)w_hdr_date_check,      1, fixup_igp_null,
+		fixup_free_igp_null, ANY_ROUTE},
 
 	{"bind_siputils",       (cmd_function)bind_siputils,           1, 0,
 		0, 0},
@@ -211,7 +212,6 @@ static cmd_export_t cmds[]={
 };
 
 static param_export_t params[] = {
-	{"ring_timeout",            INT_PARAM, &default_siputils_cfg.ring_timeout},
 	{"options_accept",          PARAM_STR, &opt_accept},
 	{"options_accept_encoding", PARAM_STR, &opt_accept_enc},
 	{"options_accept_language", PARAM_STR, &opt_accept_lang},
@@ -220,6 +220,7 @@ static param_export_t params[] = {
 	{"rpid_prefix",             PARAM_STR, &rpid_prefix  },
 	{"rpid_suffix",             PARAM_STR, &rpid_suffix  },
 	{"rpid_avp",                PARAM_STRING, &rpid_avp_param },
+	{"e164_max_len",            PARAM_INT, &e164_max_len },
 	{0, 0, 0}
 };
 
@@ -247,21 +248,6 @@ struct module_exports exports= {
 
 static int mod_init(void)
 {
-	if(default_siputils_cfg.ring_timeout > 0) {
-		ring_init_hashtable();
-
-		ring_lock = lock_alloc();
-		assert(ring_lock);
-		if (lock_init(ring_lock) == 0) {
-			LM_CRIT("cannot initialize lock.\n");
-			return -1;
-		}
-		if (register_script_cb(ring_filter, PRE_SCRIPT_CB|ONREPLY_CB, 0) != 0) {
-			LM_ERR("could not insert callback");
-			return -1;
-		}
-	}
-
 	/* bind the SL API */
 	if (sl_load_api(&opt_slb)!=0) {
 		LM_ERR("cannot bind to SL API\n");
@@ -284,13 +270,7 @@ static int mod_init(void)
 
 static void mod_destroy(void)
 {
-	if (ring_lock) {
-		lock_destroy(ring_lock);
-		lock_dealloc((void *)ring_lock);
-		ring_lock = NULL;
-	}
 
-	ring_destroy_hashtable();
 }
 
 
@@ -546,6 +526,66 @@ static int ki_is_uri(sip_msg_t* msg, str* suri)
 	return 1;
 }
 
+/*
+ * Check date header value with time difference
+ */
+static int ki_hdr_date_check(sip_msg_t* msg, int tdiff)
+{
+	time_t tnow, tmsg;
+
+	if ((!msg->date) && (parse_headers(msg, HDR_DATE_F, 0) == -1)) {
+		LM_ERR("failed parsing Date header\n");
+		return -1;
+	}
+	if (!msg->date) {
+		LM_ERR("Date header field is not found\n");
+		return -1;
+	}
+	if ((!(msg->date)->parsed) && (parse_date_header(msg) < 0)) {
+		LM_ERR("failed parsing DATE body\n");
+		return -1;
+	}
+
+#ifdef HAVE_TIMEGM
+	tmsg=timegm(&get_date(msg)->date);
+#else
+	tmsg=_timegm(&get_date(msg)->date);
+#endif
+	if (tmsg < 0) {
+		LM_ERR("timegm error\n");
+		return -2;
+	}
+
+	if ((tnow=time(0)) < 0) {
+		LM_ERR("time error %s\n", strerror(errno));
+		return -3;
+	}
+
+	if (tnow > tmsg + tdiff) {
+		LM_ERR("autdated date header value (%ld sec)\n", tnow - tmsg + tdiff);
+		return -4;
+	} else {
+		LM_ERR("Date header value OK\n");
+	}
+
+	return 1;
+
+}
+
+/**
+ *
+ */
+static int w_hdr_date_check(sip_msg_t *msg, char *ptdiff, char *p2)
+{
+	int tdiff = 0;
+
+	if(fixup_get_ivalue(msg, (gparam_t*)ptdiff, &tdiff)<0) {
+		LM_ERR("failed to get time diff parameter\n");
+		return -1;
+	}
+	return ki_hdr_date_check(msg, tdiff);
+}
+
 /**
  *
  */
@@ -569,6 +609,11 @@ static sr_kemi_t sr_kemi_siputils_exports[] = {
 	{ str_init("siputils"), str_init("is_first_hop"),
 		SR_KEMIP_INT, is_first_hop,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("siputils"), str_init("is_first_hop_mode"),
+		SR_KEMIP_INT, is_first_hop_mode,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("siputils"), str_init("is_uri"),
@@ -659,6 +704,26 @@ static sr_kemi_t sr_kemi_siputils_exports[] = {
 	{ str_init("siputils"), str_init("contact_param_rm"),
 		SR_KEMIP_INT, ki_contact_param_rm,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("siputils"), str_init("hdr_date_check"),
+		SR_KEMIP_INT, ki_hdr_date_check,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("siputils"), str_init("cmp_uri"),
+		SR_KEMIP_INT, ki_cmp_uri,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("siputils"), str_init("cmp_aor"),
+		SR_KEMIP_INT, ki_cmp_aor,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("siputils"), str_init("cmp_hdr_name"),
+		SR_KEMIP_INT, ki_cmp_hdr_name,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 

@@ -57,6 +57,7 @@ int pv_parse_shvar_name(pv_spec_p sp, str *in);
 int pv_get_shvar(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res);
 int pv_set_shvar(struct sip_msg* msg, pv_param_t *param, int op,
 		pv_value_t *val);
+int pv_get_shvinc(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res);
 
 int shvar_init_locks(void);
 void shvar_destroy_locks(void);
@@ -70,6 +71,7 @@ void rpc_shv_set(rpc_t* rpc, void* c);
 int ki_shv_seti(sip_msg_t *msg, str *vname, int ival);
 int ki_shv_sets(sip_msg_t *msg, str *vname, str *sval);
 sr_kemi_xval_t* ki_shv_get(sip_msg_t *msg, str *vname);
+sr_kemi_xval_t* ki_shvinc_get(sip_msg_t *msg, str *vname);
 
 #endif
 

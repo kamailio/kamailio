@@ -354,12 +354,10 @@ inline static void final_response_handler(
 {
 	int silent;
 #ifdef USE_DNS_FAILOVER
-	/*int i;
-	int added_branches;
-	*/
 	int branch_ret;
 	int prev_branch;
 	ticks_t now;
+	tm_xlinks_t backup_xd;
 #endif
 
 #ifdef EXTRA_DEBUG
@@ -441,20 +439,26 @@ inline static void final_response_handler(
 					BLST_ERR_TIMEOUT, &r_buf->dst, r_buf->my_T->uas.request);
 #endif
 #ifdef USE_DNS_FAILOVER
-		/* if this is an invite, the destination resolves to more ips, and
-		 *  it still hasn't passed more than fr_inv_timeout since we
-		 *  started, add another branch/uac */
+		/* if this is an request, the destination resolves to more IPs, and
+		 * it still hasn't passed more than max_inv_lifetime or
+		 * max_noninv_lifetimesince we started, add another branch/uac */
 		if(cfg_get(core, core_cfg, use_dns_failover)) {
 			now = get_ticks_raw();
 			if((s_ticks_t)(t->end_of_life - now) > 0) {
+				LM_DBG("send on branch %d failed, adding another branch\n",
+						r_buf->branch);
 				branch_ret = add_uac_dns_fallback(
 						t, t->uas.request, &t->uac[r_buf->branch], 0);
 				prev_branch = -1;
+				/* restore X/AVP values from initial transaction */
+				tm_xdata_swap(t, &backup_xd, 0);
 				while((branch_ret >= 0) && (branch_ret != prev_branch)) {
 					prev_branch = branch_ret;
 					branch_ret =
 							t_send_branch(t, branch_ret, t->uas.request, 0, 0);
 				}
+				/* restore X/AVP values from backup data */
+				tm_xdata_swap(t, &backup_xd, 1);
 			}
 		}
 #endif
@@ -510,6 +514,13 @@ ticks_t retr_buf_handler(ticks_t ticks, struct timer_ln *tl, void *p)
 							  a little race risk, but
 							  nothing bad would happen */
 		rbuf->flags |= F_RB_TIMEOUT;
+#ifdef TIMER_DEBUG
+		if (rbuf->flags & F_RB_FR_INV) {
+			LM_DBG("reached the \"fr_inv_timeout\"\n");
+		} else {
+			LM_DBG("reached the \"fr_timeout\"\n");
+		}
+#endif
 		/* WARNING:  the next line depends on taking care not to start the
 		 *           wait timer before finishing with t (if this is not
 		 *           guaranteed then comment the timer_allow_del() line) */

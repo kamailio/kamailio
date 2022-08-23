@@ -137,15 +137,21 @@ typedef int (*param_func_t)( modparam_t type, void* val);
 #define call_fixup(fixup, param, param_no) \
 	((fixup) ? (fixup)(param, param_no) : 0)
 
+/* flags to execute child_init() for special ranks */
+#define KSRMOD_FLAG_POSTCHILDINIT (1<<1)
+void ksr_module_set_flag(unsigned int flag);
+
 /* Macros - used as rank in child_init function */
-#define PROC_MAIN      0  /**< Main ser process */
+#define PROC_MAIN      0  /**< Main process */
 #define PROC_TIMER    -1  /**< Timer attendant process */
 #define PROC_RPC      -2  /**< RPC type process */
 #define PROC_FIFO      PROC_RPC  /**< FIFO attendant process */
 #define PROC_TCP_MAIN -4  /**< TCP main process */
 #define PROC_UNIXSOCK -5  /**< Unix socket server */
 #define PROC_ATTENDANT -10  /**< main "attendant process */
-#define PROC_INIT     -127 /**< special rank, the context is the main ser
+#define PROC_POSTCHILDINIT -126  /**< special rank - main kamailio process after
+									after all child_init() are executed */
+#define PROC_INIT     -127 /**< special rank, the context is the main kamailio
 							  process, but this is guaranteed to be executed
 							  before any process is forked, so it can be used
 							  to setup shared variables that depend on some
@@ -154,7 +160,7 @@ typedef int (*param_func_t)( modparam_t type, void* val);
 							  @warning child_init(PROC_MAIN) is again called
 							 in the same process (main), but latter
 							 (before tcp), so make sure you don't init things
-							 twice, bot in PROC_MAIN and PROC_INT */
+							 twice, both in PROC_MAIN and PROC_INT */
 #define PROC_NOCHLDINIT -128 /**< no child init functions will be called
                                 if this rank is used in fork_process() */
 
@@ -320,11 +326,12 @@ typedef struct sr_module {
 	char* path;
 	void* handle;
 	ksr_module_exports_t exports;
+	unsigned int modflags;
 	struct sr_module* next;
 } sr_module_t;
 
 
-extern struct sr_module* modules; /**< global module list*/
+extern sr_module_t* modules; /**< global module list*/
 extern response_function* mod_response_cbks; /**< response callback array */
 extern int mod_response_cbk_no; /**< size of reponse callbacks array */
 

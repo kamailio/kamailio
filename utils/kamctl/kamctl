@@ -5,7 +5,7 @@
 #===================================================================
 
 ### version for this script
-VERSION='5.4.0'
+VERSION='5.6.0'
 
 PATH=$PATH:/usr/local/sbin/
 
@@ -1799,6 +1799,11 @@ ksr_srv() {
 				ctl_cmd_run corex.debug $2
 			fi
 			;;
+		modules)
+			require_ctlengine
+			mecho "list loaded modules"
+			ctl_cmd_run core.modules
+			;;
 		version)
 			require_ctlengine
 			mecho "list server version"
@@ -2750,142 +2755,156 @@ usrloc() {
 
 tls_ca() {
 
-	if [ "$1" = "rootCA" ] ; then
-		if [ -z $2 ] ; then
-			# use default
-			CA_BASE=$ETCDIR/tls
-		else
-			CA_BASE=`(cd $2;pwd)`
-		fi
+	case $1 in
+		"rootCA")
+			if [ -z $2 ] ; then
+				# use default
+				CA_BASE=$ETCDIR/tls
+			else
+				CA_BASE=`(cd $2;pwd)`
+			fi
 
-		if [ ! -d $CA_BASE ] ; then
-			merr "Config directory ($CA_BASE) does not exist"
-			exit 1
-		fi
-
-		CA_CONF='ca.conf'
-		CA_PATH=$CA_BASE/rootCA
-		if [ ! -f $CA_BASE/$CA_CONF  ] ; then
-			merr "root CA config file ($CA_BASE/$CA_CONF) does not exist"
-			exit 1
-		fi
-
-		if [ -d $CA_PATH ] ; then
-			mwarn "root CA directory ($CA_PATH) exists! Remove it (y/n)?"
-			read X
-			if [ "$X" != "y" -a "$X" != "Y" ] ; then
+			if [ ! -d $CA_BASE ] ; then
+				merr "Config directory ($CA_BASE) does not exist"
 				exit 1
 			fi
-		fi
 
-		mecho "Creating directory $CA_PATH and its sub-tree"
-		mkdir -p $CA_PATH
-		if [ $? -ne 0 ] ; then
-			merr "Failed to create root directory $CA_PATH"
-			exit 1
-		fi
-		rm -fr "${CA_PATH:?}"/*
-		mkdir $CA_PATH/private
-		mkdir $CA_PATH/certs
-		touch $CA_PATH/index.txt
-		echo 01 >$CA_PATH/serial
-
-		mecho "Creating CA self-signed certificate"
-		( cd $CA_PATH; openssl req -config $CA_BASE/$CA_CONF -x509 -newkey \
-			rsa:2048 -days 365 -out ./cacert.pem -outform PEM )
-		if [ $? -ne 0 ] ; then
-			merr "Failed to create self-signed certificate"
-			exit 1
-		fi
-
-		mecho "Protecting CA private key"
-		chmod 600 $CA_PATH/private/cakey.pem
-
-		mecho "DONE"
-		minfo "Private key can be found in $CA_PATH/private/cakey.pem"
-		minfo "Certificate can be found in $CA_PATH/cacert.pem"
-
-	elif [ "$1" = "userCERT" ] ; then
-
-		if [ -z $2 ] ; then
-			merr "Missing user name parameter"
-			exit 1
-		fi
-
-		if [ -z $3 ] ; then
-			# use default
-			CA_BASE=$ETCDIR/tls
-		else
-			CA_BASE=`(cd $3;pwd)`
-		fi
-
-		if [ ! -d $CA_BASE ] ; then
-			merr "Config directory ($CA_BASE) does not exist"
-			exit 1
-		fi
-
-		USER_DIR=$CA_BASE/$2
-		USER_CFG=$CA_BASE/$2.conf
-		USER=$2
-		REQ_CFG=$CA_BASE/request.conf
-
-		if [ ! -f $USER_CFG ] ; then
-			merr "User config file $USER_CFG not found"
-			exit 1
-		fi
-
-		if [ ! -f $REQ_CFG ] ; then
-			merr "Request config file $REQ_CFG not found"
-			exit 1
-		fi
-
-		mecho "Using config file $USER_CFG"
-
-		if [ -d $USER_DIR ] ; then
-			mwarn "User CERT directory ($USER_DIR) exists! Remove it (y/n)?"
-			read X
-			if [ "$X" != "y" -a "$X" != "Y" ] ; then
+			CA_CONF='ca.conf'
+			CA_PATH=$CA_BASE/rootCA
+			if [ ! -f $CA_BASE/$CA_CONF  ] ; then
+				merr "root CA config file ($CA_BASE/$CA_CONF) does not exist"
 				exit 1
 			fi
-		fi
 
-		mecho "Creating directory $USER_DIR"
-		mkdir -p $USER_DIR
-		if [ $? -ne 0 ] ; then
-			merr "Failed to create user directory $USER_DIR "
-			exit 1
-		fi
-		rm -fr "${USER_DIR:?}"/*
+			if [ -d $CA_PATH ] ; then
+				mwarn "root CA directory ($CA_PATH) exists! Remove it (y/n)?"
+				read X
+				if [ "$X" != "y" -a "$X" != "Y" ] ; then
+					exit 1
+				fi
+			fi
 
-		mecho "Creating user certificate request"
-		openssl req  -config $USER_CFG -out $USER_DIR/$USER-cert_req.pem \
-			-keyout $USER_DIR/$USER-privkey.pem -new -nodes
-		if [ $? -ne 0 ] ; then
-			merr "Failed to generate certificate request"
-			exit 1
-		fi
+			mecho "Creating directory $CA_PATH and its sub-tree"
+			mkdir -p $CA_PATH
+			if [ $? -ne 0 ] ; then
+				merr "Failed to create root directory $CA_PATH"
+				exit 1
+			fi
+			rm -fr "${CA_PATH:?}"/*
+			mkdir $CA_PATH/private
+			mkdir $CA_PATH/certs
+			touch $CA_PATH/index.txt
+			echo 01 >$CA_PATH/serial
 
-		mecho "Signing certificate request"
-		( cd $CA_BASE ; openssl ca -config $REQ_CFG -in \
-			$USER_DIR/$USER-cert_req.pem -out $USER_DIR/$USER-cert.pem )
-		if [ $? -ne 0 ] ; then
-			merr "Failed to generate certificate request"
-			exit 1
-		fi
+			mecho "Creating CA self-signed certificate"
+			( cd $CA_PATH; openssl req -config $CA_BASE/$CA_CONF -x509 -newkey \
+				rsa:2048 -days 365 -out ./cacert.pem -outform PEM )
+			if [ $? -ne 0 ] ; then
+				merr "Failed to create self-signed certificate"
+				exit 1
+			fi
 
-		mecho "Generating CA list"
-		cat $CA_BASE/rootCA/cacert.pem >> $USER_DIR/$USER-calist.pem
+			mecho "Protecting CA private key"
+			chmod 600 $CA_PATH/private/cakey.pem
 
-		mecho "DONE"
-		minfo "Private key is locate at $USER_DIR/$USER-privkey.pem "
-		minfo "Certificate is locate at $USER_DIR/$USER-cert.pem "
-		minfo "CA-List is locate at $USER_DIR/$USER-calist.pem "
+			mecho "DONE"
+			minfo "Private key can be found in $CA_PATH/private/cakey.pem"
+			minfo "Certificate can be found in $CA_PATH/cacert.pem"
+			;;
 
-	else
-		merr "unknown TLS command $1"
-		usage_tls
-		exit 1
-	fi
+		"userCERT")
+			if [ -z $2 ] ; then
+				merr "Missing user name parameter"
+				exit 1
+			fi
+
+			if [ -z $3 ] ; then
+				# use default
+				CA_BASE=$ETCDIR/tls
+			else
+				CA_BASE=`(cd $3;pwd)`
+			fi
+
+			if [ ! -d $CA_BASE ] ; then
+				merr "Config directory ($CA_BASE) does not exist"
+				exit 1
+			fi
+
+			USER_DIR=$CA_BASE/$2
+			USER_CFG=$CA_BASE/$2.conf
+			USER=$2
+			REQ_CFG=$CA_BASE/request.conf
+
+			if [ ! -f $USER_CFG ] ; then
+				merr "User config file $USER_CFG not found"
+				exit 1
+			fi
+
+			if [ ! -f $REQ_CFG ] ; then
+				merr "Request config file $REQ_CFG not found"
+				exit 1
+			fi
+
+			mecho "Using config file $USER_CFG"
+
+			if [ -d $USER_DIR ] ; then
+				mwarn "User CERT directory ($USER_DIR) exists! Remove it (y/n)?"
+				read X
+				if [ "$X" != "y" -a "$X" != "Y" ] ; then
+					exit 1
+				fi
+			fi
+
+			mecho "Creating directory $USER_DIR"
+			mkdir -p $USER_DIR
+			if [ $? -ne 0 ] ; then
+				merr "Failed to create user directory $USER_DIR "
+				exit 1
+			fi
+			rm -fr "${USER_DIR:?}"/*
+
+			mecho "Creating user certificate request"
+			openssl req  -config $USER_CFG -out $USER_DIR/$USER-cert_req.pem \
+				-keyout $USER_DIR/$USER-privkey.pem -new -nodes
+			if [ $? -ne 0 ] ; then
+				merr "Failed to generate certificate request"
+				exit 1
+			fi
+
+			mecho "Signing certificate request"
+			( cd $CA_BASE ; openssl ca -config $REQ_CFG -in \
+				$USER_DIR/$USER-cert_req.pem -out $USER_DIR/$USER-cert.pem )
+			if [ $? -ne 0 ] ; then
+				merr "Failed to generate certificate request"
+				exit 1
+			fi
+
+			mecho "Generating CA list"
+			cat $CA_BASE/rootCA/cacert.pem >> $USER_DIR/$USER-calist.pem
+
+			mecho "DONE"
+			minfo "Private key is locate at $USER_DIR/$USER-privkey.pem "
+			minfo "Certificate is locate at $USER_DIR/$USER-cert.pem "
+			minfo "CA-List is locate at $USER_DIR/$USER-calist.pem "
+			;;
+
+		"gen-certs")
+			mecho "Generating self signed certificates"
+			if [ -z "$CERTDAYS" ] ; then
+				CERTDAYS=365
+			fi
+			if [ -n "$2" ] ; then
+				openssl req -x509 -newkey rsa:4096 -nodes -subj "/CN=${2}" -keyout kamailio-selfsigned.key -out kamailio-selfsigned.pem -days ${CERTDAYS}
+			else
+				openssl req -x509 -newkey rsa:4096 -nodes -keyout kamailio-selfsigned.key -out kamailio-selfsigned.pem -days ${CERTDAYS}
+			fi
+			;;
+
+		*)
+			merr "unknown TLS command $1"
+			usage_tls
+			;;
+	esac
 }
 
 extcmd() {

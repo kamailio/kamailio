@@ -662,7 +662,7 @@ int pv_parse_sipdump_name(pv_spec_t *sp, str *in)
 		case 8:
 			if(strncmp(in->s, "src_port", 8)==0)
 				sp->pvp.pvn.u.isname.name.n = 8;
-			if(strncmp(in->s, "dst_port", 8)==0)
+			else if(strncmp(in->s, "dst_port", 8)==0)
 				sp->pvp.pvn.u.isname.name.n = 9;
 			else goto error;
 		break;

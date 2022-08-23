@@ -23,10 +23,9 @@
 	</para>
 	<para>
 		There is some very early support of the <acronym>Diameter</acronym>
-		protocol in the <quote>acc_diameter</quote> module which will be deleted
-		in coming releases. This support is not up to date with the current
-		Diameter protocols. If you need Diameter support, please use the
-		<acronym>ims_charging</acronym> module.
+		protocol in the <quote>acc_diameter</quote> module, but is not up to date
+		with the current Diameter protocols. If you need Diameter support,
+		please use the <acronym>ims_charging</acronym> module.
 	</para>
 	<para>
 		To account a transaction and to choose which set of backends to be
@@ -323,6 +322,13 @@ if (uri=~"sip:+40") /* calls to Romania */ {
                 well. Except for pseudo-variables valid in the call-final transaction, however,
                 information given will not be stored in the CDR as they cannot be accessed by the
                 end of the call when the CDR is logged.
+                </para>
+
+                <para>
+                The dialog module needs to be engaged on the dialogs that should be accounted, that
+                they will be tracked by the server. This is usally done by calling the function
+                <emphasis>dlg_manage()</emphasis> or setting the <emphasis>dlg_flag</emphasis>.
+                Refer to the documentation of the dialog module for more information.
                 </para>
 
                 <para>
@@ -1045,11 +1051,17 @@ modparam("acc", "db_insert_mode", 1)
 	<section id="acc.p.cdr_enable">
 		<title><varname>cdr_enable</varname> (integer)</title>
 		<para>
-		Should CDR-based logging be enabled?
+		Enable CDR reporting - one record per call reported to "acc_cdrs" table,
+		relying on dialog module.
 		</para>
 		<para>
-		0 - off (default).
-		1 - on.
+		The value can be:
+		<itemizedlist>
+		<listitem>
+			<para>0 - off (default).</para>
+			<para>1 - on.</para>
+		</listitem>
+		</itemizedlist>
 		</para>
 		<example>
 		<title>cdr_enable example</title>
@@ -1118,7 +1130,7 @@ modparam("acc", "cdr_start_on_confirmed", 1)
 		<title><varname>cdr_facility</varname> (integer)</title>
 		<para>
 		Log facility to which CDR messages are issued to syslog.
-		This allows to easily seperate CDR-specific logging from
+		This allows to easily separate CDR-specific logging from
 		the other log messages.
 		</para>
 		<para>
@@ -1438,6 +1450,47 @@ modparam("acc", "cdr_on_failed", 0)
 </programlisting>
 		</example>
 	</section>
+
+	<section id="acc.p.acc_extra_size">
+		<title><varname>acc_extra_size</varname> (int)</title>
+		<para>
+			Set the maximum number of extra attributes that can be stored in the
+			accounting record (event accounting record). It is related to log_extra
+			and db_extra module parameters.
+		</para>
+		<para>
+		Default value is 64.
+		</para>
+		<example>
+		<title>acc_extra_size</title>
+		<programlisting format="linespecific">
+...
+modparam("acc", "acc_extra_size", 100)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="acc.p.cdr_extra_size">
+		<title><varname>cdr_extra_size</varname> (int)</title>
+		<para>
+		Set the maximum number of extra attributes that can be stored in the
+		call data record (cdr by dialog module). It is related to cdr_extra
+		module parameter.
+		</para>
+		<para>
+		Default value is 64.
+		</para>
+		<example>
+		<title>cdr_extra_size</title>
+		<programlisting format="linespecific">
+...
+modparam("acc", "cdr_extra_size", 100)
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 	<section>
@@ -1554,37 +1607,6 @@ acc_db_request("$var(code) Error: $avp(reason)", "SomeTable");
 acc_request("100 Received", "acc");
 acc_request("100 Received", "acc_$time(year)_$time(mon)");
 acc_db_request("$var(code) $avp(reason)", "acc");
-...
-</programlisting>
-		</example>
-	</section>
-	<section id="acc.f.acc_diam_request">
-		<title>
-			<function moreinfo="none">acc_diam_request(comment)</function>
-		</title>
-		<para>
-		Like <function moreinfo="none">acc_log_request</function>,
-		<function moreinfo="none">acc_diam_request</function> reports on
-		a request. It reports to the configured Diameter server.
-		</para>
-		<para>
-		Meaning of the parameters is as follows:</para>
-		<itemizedlist>
-		<listitem>
-			<para><emphasis>comment</emphasis> - Comment to be appended.
-			The string can contain any number of pseudo-variables.
-			</para>
-		</listitem>
-		</itemizedlist>
-		<para>
-		This function can be used from ANY_ROUTE.
-		</para>
-		<example>
-		<title>acc_diam_request usage</title>
-		<programlisting format="linespecific">
-...
-acc_diam_request("Some comment");
-acc_diam_request("$var(code) Error: $avp(reason)");
 ...
 </programlisting>
 		</example>

@@ -38,9 +38,6 @@
 #define SDP_USE_PKG_MEM 0
 #define SDP_USE_SHM_MEM 1
 
-#define HOLD_IP_STR "0.0.0.0"
-#define HOLD_IP_LEN 7
-
 /**
  * Creates and initialize a new sdp_info structure
  */
@@ -371,7 +368,8 @@ static int parse_sdp_session(str *sdp_body, int session_num, str *cnt_disp, sdp_
 	sdp_session_cell_t *session;
 	sdp_stream_cell_t *stream;
 	sdp_payload_attr_t *payload_attr;
-	int parse_payload_attr;
+	sdp_ice_opt_t *ice_opt; /* media lvl ice options */
+	int parse_payload_attr, ice_trickle = 0;
 	str fmtp_string;
 	str remote_candidates = {"a:remote-candidates:", 20};
 
@@ -451,6 +449,18 @@ static int parse_sdp_session(str *sdp_body, int session_num, str *cnt_disp, sdp_
 		tmpstr1.s = b1p;
 		tmpstr1.len = m1p - b1p;
 		extract_bwidth(&tmpstr1, &session->bw_type, &session->bw_width);
+	}
+
+	/* Find sendrecv_mode between session begin and first media.
+	 * parse session attributes to check is_on_hold for a= for all medias. */
+	a1p = find_first_sdp_line(o1p, m1p, 'a', NULL);
+	while (a1p) {
+		tmpstr1.s = a1p;
+		tmpstr1.len = m1p - a1p;
+		if (extract_sendrecv_mode(&tmpstr1, &session->sendrecv_mode, &session->is_on_hold) == 0) {
+			break;
+		}
+		a1p = find_next_sdp_line(a1p, m1p, 'a', NULL);
 	}
 
 	/* Have session. Iterate media descriptions in session */
@@ -570,10 +580,12 @@ static int parse_sdp_session(str *sdp_body, int session_num, str *cnt_disp, sdp_
 				payload_attr = (sdp_payload_attr_t*)get_sdp_payload4payload(stream, &rtp_payload);
 				set_sdp_payload_fmtp(payload_attr, &fmtp_string);
 			} else if (parse_payload_attr && extract_candidate(&tmpstr1, stream) == 0) {
-			        a1p += 2;
+				a1p += 2;
+			} else if (parse_payload_attr && extract_ice_option(&tmpstr1, stream) == 0) {
+				a1p += 2;
 			} else if (parse_payload_attr && extract_field(&tmpstr1, &stream->remote_candidates,
 								       remote_candidates) == 0) {
-			        a1p += 2;
+				a1p += 2;
 			} else if (extract_accept_types(&tmpstr1, &stream->accept_types) == 0) {
 				a1p = stream->accept_types.s + stream->accept_types.len;
 			} else if (extract_accept_wrapped_types(&tmpstr1, &stream->accept_wrapped_types) == 0) {
@@ -584,7 +596,8 @@ static int parse_sdp_session(str *sdp_body, int session_num, str *cnt_disp, sdp_
 				a1p = stream->path.s + stream->path.len;
 			} else {
 				/* unknown a= line, ignore -- jump over it */
-				LM_DBG("ignoring unknown type in a= line: `%.*s'\n", tmpstr1.len, tmpstr1.s);
+				LM_DBG("ignoring unknown type in a= line: `%.*s...'\n",
+						(tmpstr1.len>20)?20:tmpstr1.len, tmpstr1.s);
 				a1p += 2;
 			}
 
@@ -593,14 +606,49 @@ static int parse_sdp_session(str *sdp_body, int session_num, str *cnt_disp, sdp_
 		/* Let's detect if the media is on hold by checking
 		 * the good old "0.0.0.0" connection address */
 		if (!stream->is_on_hold) {
+			/* But, exclude the cases with ICE trickle re-negotiation (RFC8840),
+			 * which are not the on hold (RFC2543) case actually */
+			ice_opt = stream->ice_opt;
+			while(ice_opt)
+			{
+				if (ice_opt->option.len == ICE_OPT_TRICKLE_LEN &&
+					strncmp(ice_opt->option.s, ICE_OPT_TRICKLE_STR, ICE_OPT_TRICKLE_LEN)==0) {
+					ice_trickle = 1;
+					ice_opt = NULL; /* break */
+				} else {
+					ice_opt = ice_opt->next;
+				}
+			}
+
+			/* SDP stream level */
 			if (stream->ip_addr.s && stream->ip_addr.len) {
-				if (stream->ip_addr.len == HOLD_IP_LEN &&
-					strncmp(stream->ip_addr.s, HOLD_IP_STR, HOLD_IP_LEN)==0)
-					stream->is_on_hold = RFC2543_HOLD;
+				if (stream->pf == AF_INET &&
+					stream->ip_addr.len == HOLD_IP_LEN &&
+					strncmp(stream->ip_addr.s, HOLD_IP_STR, HOLD_IP_LEN)==0) {
+
+					/* make sure it's not ICE trickle re-negotiation */
+					if (ice_trickle &&
+						stream->port.len==HOLD_PORT_ICE_TRICKLE_LEN && /* port=9 */
+						strncmp(stream->port.s,HOLD_PORT_ICE_TRICKLE_STR,HOLD_PORT_ICE_TRICKLE_LEN)==0)
+						LM_DBG("Not a zeroed on-hold (RFC2543), because is ICE re-negotiaion (RFC8840)\n");
+					else
+						stream->is_on_hold = RFC2543_HOLD;
+				}
+
+			/* SDP session level */
 			} else if (session->ip_addr.s && session->ip_addr.len) {
-				if (session->ip_addr.len == HOLD_IP_LEN &&
-					strncmp(session->ip_addr.s, HOLD_IP_STR, HOLD_IP_LEN)==0)
-					stream->is_on_hold = RFC2543_HOLD;
+				if (session->pf == AF_INET &&
+					session->ip_addr.len == HOLD_IP_LEN &&
+					strncmp(session->ip_addr.s, HOLD_IP_STR, HOLD_IP_LEN)==0) {
+
+					/* make sure it's not ICE trickle re-negotiation */
+					if (ice_trickle &&
+						stream->port.len==HOLD_PORT_ICE_TRICKLE_LEN && /* port=9 */
+						strncmp(stream->port.s,HOLD_PORT_ICE_TRICKLE_STR,HOLD_PORT_ICE_TRICKLE_LEN)==0)
+						LM_DBG("Not a zeroed on-hold (RFC2543), because is ICE re-negotiaion (RFC8840)\n");
+					else
+						stream->is_on_hold = RFC2543_HOLD;
+				}
 			}
 		}
 		++stream_num;
@@ -632,12 +680,20 @@ static int parse_mixed_content(str *mixed_body, str delimiter, sdp_info_t* _sdp)
 		d1p = d2p;
 		if (d1p == NULL || d1p >= bodylimit)
 			break; /* No applications left */
+		if(d1p + delimiter.len + 2 > bodylimit) {
+			LM_ERR("failed parsing [%.*s]\n", mixed_body->len, mixed_body->s);
+			return -1;
+		}
 		d2p = find_next_sdp_line_delimiter(d1p, bodylimit, delimiter, bodylimit);
+		if(d2p - d1p < delimiter.len + 2) {
+			LM_ERR("invalid format [%.*s]\n", (int)(d2p-d1p), d1p);
+			return -1;
+		}
 		/* d2p is text limit for application parsing */
-		memset(&hf,0, sizeof(struct hdr_field));
+		memset(&hf, 0, sizeof(struct hdr_field));
 		rest = eat_line(d1p + delimiter.len + 2, d2p - d1p - delimiter.len - 2);
 		if ( rest > d2p ) {
-			LM_ERR("Unparsable <%.*s>\n", (int)(d2p-d1p), d1p);
+			LM_ERR("unparsable [%.*s]\n", (int)(d2p-d1p), d1p);
 			return -1;
 		}
 		no_eoh_found = 1;
@@ -801,7 +857,8 @@ void free_sdp(sdp_info_t** _sdp)
 	sdp_session_cell_t *session, *l_session;
 	sdp_stream_cell_t *stream, *l_stream;
 	sdp_payload_attr_t *payload, *l_payload;
-        sdp_ice_attr_t *tmp;
+	sdp_ice_attr_t *ice_attr, *l_ice_attr;
+	sdp_ice_opt_t *ice_opt, *l_ice_opt;
 
 	LM_DBG("_sdp = %p\n", _sdp);
 	if (sdp == NULL) return;
@@ -824,10 +881,17 @@ void free_sdp(sdp_info_t** _sdp)
 			if (l_stream->p_payload_attr) {
 				pkg_free(l_stream->p_payload_attr);
 			}
-			while (l_stream->ice_attr) {
-			    tmp = l_stream->ice_attr->next;
-			    pkg_free(l_stream->ice_attr);
-			    l_stream->ice_attr = tmp;
+			ice_attr = l_stream->ice_attr;
+			while (ice_attr) {
+				l_ice_attr = ice_attr;
+				ice_attr = ice_attr->next;
+				pkg_free(l_ice_attr);
+			}
+			ice_opt = l_stream->ice_opt;
+			while (ice_opt) {
+				l_ice_opt = ice_opt;
+				ice_opt = ice_opt->next;
+				pkg_free(l_ice_opt);
 			}
 			pkg_free(l_stream);
 		}
@@ -841,7 +905,8 @@ void free_sdp(sdp_info_t** _sdp)
 void print_sdp_stream(sdp_stream_cell_t *stream, int log_level)
 {
 	sdp_payload_attr_t *payload;
-        sdp_ice_attr_t *ice_attr;
+	sdp_ice_attr_t *ice_attr;
+	sdp_ice_opt_t *ice_opt;
 
 	LOG(log_level , "....stream[%d]:%p=>%p {%p} '%.*s' '%.*s:%.*s:%.*s' '%.*s' [%d] '%.*s' '%.*s:%.*s' (%d)=>%p (%d)=>%p '%.*s' '%.*s' '%.*s' '%.*s' '%.*s' '%.*s' '%.*s'\n",
 		stream->stream_num, stream, stream->next,
@@ -859,8 +924,9 @@ void print_sdp_stream(sdp_stream_cell_t *stream, int log_level)
 		stream->path.len, stream->path.s,
 		stream->max_size.len, stream->max_size.s,
 		stream->accept_types.len, stream->accept_types.s,
-	        stream->accept_wrapped_types.len, stream->accept_wrapped_types.s,
-	    	stream->remote_candidates.len, stream->remote_candidates.s);
+		stream->accept_wrapped_types.len, stream->accept_wrapped_types.s,
+		stream->remote_candidates.len, stream->remote_candidates.s);
+
 	payload = stream->payload_attr;
 	while (payload) {
 		LOG(log_level, "......payload[%d]:%p=>%p p_payload_attr[%d]:%p '%.*s' '%.*s' '%.*s' '%.*s' '%.*s'\n",
@@ -873,12 +939,19 @@ void print_sdp_stream(sdp_stream_cell_t *stream, int log_level)
 			payload->fmtp_string.len, payload->fmtp_string.s);
 		payload=payload->next;
 	}
+
 	ice_attr = stream->ice_attr;
 	while (ice_attr) {
-	    LOG(log_level, "......'%.*s' %u\n",
-		ice_attr->foundation.len, ice_attr->foundation.s,
-		ice_attr->component_id);
-	    ice_attr = ice_attr->next;
+		LOG(log_level, "......ice candidate foundation '%.*s' component id '%u'\n",
+			ice_attr->foundation.len, ice_attr->foundation.s,
+			ice_attr->component_id);
+		ice_attr = ice_attr->next;
+	}
+
+	ice_opt = stream->ice_opt;
+	while (ice_opt) {
+		LOG(log_level, "......ice option '%.*s'\n", ice_opt->option.len, ice_opt->option.s);
+		ice_opt = ice_opt->next;
 	}
 }
 
@@ -931,6 +1004,8 @@ void free_cloned_sdp_stream(sdp_stream_cell_t *_stream)
 {
 	sdp_stream_cell_t *stream, *l_stream;
 	sdp_payload_attr_t *payload, *l_payload;
+	sdp_ice_attr_t *ice_attr, *l_ice_attr;
+	sdp_ice_opt_t *ice_opt, *l_ice_opt;
 
 	stream = _stream;
 	while (stream) {
@@ -944,6 +1019,18 @@ void free_cloned_sdp_stream(sdp_stream_cell_t *_stream)
 		}
 		if (l_stream->p_payload_attr) {
 			shm_free(l_stream->p_payload_attr);
+		}
+		ice_attr = l_stream->ice_attr;
+		while (ice_attr) {
+			l_ice_attr = ice_attr;
+			ice_attr = ice_attr->next;
+			shm_free(l_ice_attr);
+		}
+		ice_opt = l_stream->ice_opt;
+		while (ice_opt) {
+			l_ice_opt = ice_opt;
+			ice_opt = ice_opt->next;
+			shm_free(l_ice_opt);
 		}
 		shm_free(l_stream);
 	}
@@ -1036,10 +1123,114 @@ sdp_payload_attr_t * clone_sdp_payload_attr(sdp_payload_attr_t *attr)
 	return clone_attr;
 }
 
+sdp_ice_attr_t * clone_sdp_ice_attr(sdp_ice_attr_t *ice_attr)
+{
+	sdp_ice_attr_t * clone_ice_attr;
+	int len;
+	char *p;
+
+	if (ice_attr == NULL) return NULL;
+
+	len = sizeof(sdp_ice_attr_t) +
+			ice_attr->foundation.len +
+			ice_attr->transport.len +
+			ice_attr->connection_addr.len +
+			ice_attr->port.len +
+			ice_attr->candidate_type.len;
+
+	clone_ice_attr = (sdp_ice_attr_t*)shm_malloc(len);
+	if (clone_ice_attr == NULL) {
+		SHM_MEM_ERROR;
+		return NULL;
+	}
+	memset(clone_ice_attr, 0, len);
+
+	p = (char*)(clone_ice_attr); /* beginning of the struct */
+
+	/* foundation */
+	if (ice_attr->foundation.len) {
+		clone_ice_attr->foundation.s = p;
+		clone_ice_attr->foundation.len = ice_attr->foundation.len;
+		memcpy( p, ice_attr->foundation.s, ice_attr->foundation.len);
+		p += ice_attr->foundation.len;
+	}
+
+	/* skip component_id and just copy it int to int directly */
+	p++;
+	clone_ice_attr->component_id = ice_attr->component_id;
+
+	/* transport */
+	if (ice_attr->transport.len) {
+		clone_ice_attr->transport.s = p;
+		clone_ice_attr->transport.len = ice_attr->transport.len;
+		memcpy( p, ice_attr->transport.s, ice_attr->transport.len);
+		p += ice_attr->transport.len;
+	}
+
+	/* connection_addr */
+	if (ice_attr->connection_addr.len) {
+		clone_ice_attr->connection_addr.s = p;
+		clone_ice_attr->connection_addr.len = ice_attr->connection_addr.len;
+		memcpy( p, ice_attr->connection_addr.s, ice_attr->connection_addr.len);
+		p += ice_attr->connection_addr.len;
+	}
+
+	/* port */
+	if (ice_attr->port.len) {
+		clone_ice_attr->port.s = p;
+		clone_ice_attr->port.len = ice_attr->port.len;
+		memcpy( p, ice_attr->port.s, ice_attr->port.len);
+		p += ice_attr->port.len;
+	}
+
+	/* candidate_type */
+	if (ice_attr->candidate_type.len) {
+		clone_ice_attr->candidate_type.s = p;
+		clone_ice_attr->candidate_type.len = ice_attr->candidate_type.len;
+		memcpy( p, ice_attr->candidate_type.s, ice_attr->candidate_type.len);
+		p += ice_attr->candidate_type.len;
+	}
+
+	/* candidateType */
+	clone_ice_attr->candidateType = ice_attr->candidateType;
+
+	return clone_ice_attr;
+}
+
+sdp_ice_opt_t * clone_sdp_opt_attr(sdp_ice_opt_t *ice_opt)
+{
+	sdp_ice_opt_t * clone_ice_opt;
+	int len;
+	char *p;
+
+	if (ice_opt == NULL) return NULL;
+	len = sizeof(sdp_ice_opt_t) + ice_opt->option.len;
+
+	clone_ice_opt = (sdp_ice_opt_t*)shm_malloc(len);
+	if (clone_ice_opt == NULL) {
+		SHM_MEM_ERROR;
+		return NULL;
+	}
+	memset(clone_ice_opt, 0, len);
+	p = (char*)(clone_ice_opt); /* beginning of the struct */
+
+	/* ice option */
+	if (ice_opt->option.len) {
+		clone_ice_opt->option.s = p;
+		clone_ice_opt->option.len = ice_opt->option.len;
+		memcpy( p, ice_opt->option.s, ice_opt->option.len);
+	}
+
+	return clone_ice_opt;
+}
+
 sdp_stream_cell_t * clone_sdp_stream_cell(sdp_stream_cell_t *stream)
 {
 	sdp_stream_cell_t *clone_stream;
 	sdp_payload_attr_t *clone_payload_attr, *payload_attr;
+	sdp_ice_attr_t *clone_ice_attr, *tmp_ice_attr, *prev_ice_attr;
+	sdp_ice_opt_t *clone_ice_opt, *tmp_ice_opt, *prev_ice_opt;
+
 	int len, i;
 	char *p;
 
@@ -1059,7 +1250,10 @@ sdp_stream_cell_t * clone_sdp_stream_cell(sdp_stream_cell_t *stream)
 			stream->payloads.len +
 			stream->bw_type.len +
 			stream->bw_width.len +
-			stream->rtcp_port.len;
+			stream->rtcp_port.len +
+			stream->raw_stream.len +
+			stream->remote_candidates.len;
+
 	clone_stream = (sdp_stream_cell_t*)shm_malloc(len);
 	if (clone_stream == NULL) {
 		SHM_MEM_ERROR;
@@ -1078,14 +1272,75 @@ sdp_stream_cell_t * clone_sdp_stream_cell(sdp_stream_cell_t *stream)
 		clone_payload_attr->next = payload_attr;
 		payload_attr = clone_payload_attr;
 	}
-	clone_stream->payload_attr = payload_attr;
 
+	clone_stream->payload_attr = payload_attr;
 	clone_stream->payloads_num = stream->payloads_num;
+
 	if (clone_stream->payloads_num) {
 		if (NULL == init_p_payload_attr(clone_stream, SDP_USE_SHM_MEM)) {
 			goto error;
 		}
 	}
+
+	/* clone ICE candidate attributes */
+	if (stream->ice_attrs_num) {
+		tmp_ice_attr = stream->ice_attr;
+		clone_ice_attr = clone_sdp_ice_attr(tmp_ice_attr);
+
+		if (clone_ice_attr == NULL) {
+			LM_ERR("unable to clone ice attributes for component[%d]\n",
+			tmp_ice_attr->component_id);
+			goto error;
+		}
+		clone_stream->ice_attr = clone_ice_attr;
+		prev_ice_attr = clone_ice_attr;
+		tmp_ice_attr = stream->ice_attr->next;
+
+		clone_ice_attr->next = NULL;
+
+		for (i=1; i<stream->ice_attrs_num; i++) {
+			clone_ice_attr = clone_sdp_ice_attr(tmp_ice_attr);
+
+			if (clone_ice_attr == NULL) {
+				LM_ERR("unable to clone ice attributes for component[%d]\n",
+					tmp_ice_attr->component_id);
+				goto error;
+			}
+			prev_ice_attr->next = clone_ice_attr;
+			prev_ice_attr = clone_ice_attr;
+			tmp_ice_attr = stream->ice_attr->next;
+		}
+	}
+	clone_stream->ice_attrs_num = stream->ice_attrs_num;
+
+	/* clone media level ICE options */
+	if (stream->ice_opt_num) {
+		tmp_ice_opt = stream->ice_opt;
+		clone_ice_opt = clone_sdp_opt_attr(tmp_ice_opt);
+
+		if (clone_ice_opt == NULL) {
+			LM_ERR("unable to clone ice option for option[%d]\n", i);
+			goto error;
+		}
+		clone_stream->ice_opt = clone_ice_opt;
+		prev_ice_opt = clone_ice_opt;
+		tmp_ice_opt = stream->ice_opt->next;
+
+		clone_ice_opt->next = NULL;
+
+		for (i=1; i<stream->ice_opt_num; i++) {
+			clone_ice_opt = clone_sdp_opt_attr(tmp_ice_opt);
+
+			if (clone_ice_opt == NULL) {
+				LM_ERR("unable to clone ice option for option[%d]\n", i);
+				goto error;
+			}
+			prev_ice_opt->next = clone_ice_opt;
+			prev_ice_opt = clone_ice_opt;
+			tmp_ice_opt = stream->ice_opt->next;
+		}
+	}
+	clone_stream->ice_opt_num = stream->ice_opt_num;
 
 	clone_stream->stream_num = stream->stream_num;
 	clone_stream->pf = stream->pf;
@@ -1189,7 +1444,9 @@ sdp_session_cell_t * clone_sdp_session_cell(sdp_session_cell_t *session)
 		session->ip_addr.len +
 		session->o_ip_addr.len +
 		session->bw_type.len +
-		session->bw_width.len;
+		session->bw_width.len +
+		session->sendrecv_mode.len;
+
 	clone_session = (sdp_session_cell_t*)shm_malloc(len);
 	if (clone_session == NULL) {
 		SHM_MEM_ERROR;

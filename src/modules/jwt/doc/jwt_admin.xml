@@ -85,7 +85,7 @@ modparam("jwt", "key_mode", 1)
 	<title>Functions</title>
 	<section id="jwt.f.jwt_generate">
 	    <title>
-		<function moreinfo="none">jwt_generate(prvkey, alg, claims)</function>
+		<function moreinfo="none">jwt_generate(prvkey, alg, claims, [headers])</function>
 	    </title>
 	    <para>
 	    Generate the JWT, its value can be retrieved in the variable $jwt(val).
@@ -108,6 +108,16 @@ modparam("jwt", "key_mode", 1)
 			<listitem>
 			<para>
 			claims - the list of claims to be added to JWT, in the format
+			"name1=value1;name2=value2;..." (same as the SIP parameters format).
+			The string values can be enclosed in single or double quotes. If a
+			value is not eclosed in between quotes, it is added as numeric
+			value if it is successfully converted to a long value, otherwise is
+			added as string value.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+			headers - the list of headers to be added to JWT, in the format
 			"name1=value1;name2=value2;..." (same as the SIP parameters format).
 			The string values can be enclosed in single or double quotes. If a
 			value is not eclosed in between quotes, it is added as numeric

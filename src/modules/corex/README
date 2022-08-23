@@ -62,6 +62,7 @@ Muhammad Shahzad Shafi
               4.22. via_use_xavp_fields(flags)
               4.23. is_faked_msg()
               4.24. is_socket_name(sockname)
+              4.25. forward_reply()
 
         5. RPC Commands
 
@@ -72,7 +73,8 @@ Muhammad Shahzad Shafi
               5.5. corex.shm_summary
               5.6. corex.pkg_summary
               5.7. corex.shm.info
-              5.8. corex.shm.stats
+              5.8. corex.shm.report
+              5.9. corex.shm.stats
 
         6. Event Routes
 
@@ -113,8 +115,9 @@ Muhammad Shahzad Shafi
    1.28. via_use_xavp_fields usage
    1.29. is_faked_msg usage
    1.30. is_socket_name usage
-   1.31. event_route[network:msg] use cases
-   1.32. Sample PERL code for do_compress and do_uncompress
+   1.31. forward_reply usage
+   1.32. event_route[network:msg] use cases
+   1.33. Sample PERL code for do_compress and do_uncompress
 
 Chapter 1. Admin Guide
 
@@ -161,6 +164,7 @@ Chapter 1. Admin Guide
         4.22. via_use_xavp_fields(flags)
         4.23. is_faked_msg()
         4.24. is_socket_name(sockname)
+        4.25. forward_reply()
 
    5. RPC Commands
 
@@ -171,7 +175,8 @@ Chapter 1. Admin Guide
         5.5. corex.shm_summary
         5.6. corex.pkg_summary
         5.7. corex.shm.info
-        5.8. corex.shm.stats
+        5.8. corex.shm.report
+        5.9. corex.shm.stats
 
    6. Event Routes
 
@@ -249,10 +254,13 @@ modparam("corex", "alias_subdomains", "udp:sip-router.org:5060")
 
    The format of the value follows the SIP params style:
    "attr1=val1;attr2=val2;...". The attributes can be:
-     * type - it can be "A" (IPv4) or "AAAA" (IPv6)
+     * type - it can be "A" (IPv4), "AAAA" (IPv6) or "SRV"
      * name - the domain name
      * addr - the IP address
      * ttl - TTL value
+     * priority - priority value for SRV record
+     * weight - weight value for SRV record
+     * port - port value for SRV record
      * flags - can be: 1 - the domain is unresolvable (like blocklisted);
        2 - the record is permanent (never times out, never deleted, never
        overwritten)
@@ -346,6 +354,7 @@ modparam("corex", "nio_msg_avp", "$avp(msg)")
    4.22. via_use_xavp_fields(flags)
    4.23. is_faked_msg()
    4.24. is_socket_name(sockname)
+   4.25. forward_reply()
 
 4.1.  append_branch([ uri, [ q ] ])
 
@@ -739,6 +748,19 @@ event_route[dispatcher:dst-down] {
     }
 ...
 
+4.25.  forward_reply()
+
+   Forward received reply on demand.
+
+   This function can be used in CORE_ONREPLY_ROUTE.
+
+   Example 1.31. forward_reply usage
+...
+route[reply] {
+    forward_reply();
+}
+...
+
 5. RPC Commands
 
    5.1. corex.debug
@@ -748,7 +770,8 @@ event_route[dispatcher:dst-down] {
    5.5. corex.shm_summary
    5.6. corex.pkg_summary
    5.7. corex.shm.info
-   5.8. corex.shm.stats
+   5.8. corex.shm.report
+   5.9. corex.shm.stats
 
 5.1.  corex.debug
 
@@ -808,7 +831,14 @@ event_route[dispatcher:dst-down] {
    Example:
                 kamcli rpc shm.info
 
-5.8.  corex.shm.stats
+5.8.  corex.shm.report
+
+   Return shared memory manager usage report.
+
+   Example:
+                kamcli rpc shm.report
+
+5.9.  corex.shm.stats
 
    Return shared memory statistics (values are in bytes).
 
@@ -894,7 +924,7 @@ event_route[dispatcher:dst-down] {
    Next is a basic usage example where encoding and decoding is done using
    PERL.
 
-   Example 1.31. event_route[network:msg] use cases
+   Example 1.32. event_route[network:msg] use cases
 ...
 loadmodule "app_perl.so"
 loadmodule "corex.so"
@@ -925,7 +955,7 @@ event_route[network:msg] {
 }
 ...
 
-   Example 1.32. Sample PERL code for do_compress and do_uncompress
+   Example 1.33. Sample PERL code for do_compress and do_uncompress
 ...
 use strict;
 use warnings;

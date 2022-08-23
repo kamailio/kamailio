@@ -98,6 +98,7 @@ char *scscf_user_data_xsd = 0; /* Path to "CxDataType_Rel6.xsd" or "CxDataType_R
 int scscf_support_wildcardPSI = 0;
 int store_data_on_dereg = 0; /**< should we store SAR data on de-registration  */
 unsigned int send_vs_callid_avp = 1;	/* flag to enable/disable proprietary use of a callid AVP. TODO: add call-id as per TS129.229 */
+int skip_multiple_bindings_on_reg_resp = 0; /* For RE-REGISTRATION in 200OK add only the current contact and skip all other bindings */
 
 int ue_unsubscribe_on_dereg = 0;  /*many UEs do not unsubscribe on de reg - therefore we should remove their subscription and not send a notify
 				   Some UEs do unsubscribe then everything is fine*/
@@ -133,6 +134,8 @@ static int w_lookup_path_to_contact(struct sip_msg* _m, char* contact_uri);
 /*! \brief Fixup functions */
 static int domain_fixup(void** param, int param_no);
 static int assign_save_fixup3_async(void** param, int param_no);
+static int free_uint_fixup(void** param, int param_no);
+static int save_fixup3(void** param, int param_no);
 static int unreg_fixup(void** param, int param_no);
 static int fetchc_fixup(void** param, int param_no);
 /*! \brief Functions */
@@ -215,6 +218,8 @@ static pv_export_t mod_pvs[] = {
  */
 static cmd_export_t cmds[] = {
     {"save", (cmd_function) w_save, 2, assign_save_fixup3_async, 0, REQUEST_ROUTE | ONREPLY_ROUTE},
+    {"save", (cmd_function) w_save, 3, assign_save_fixup3_async, 0, REQUEST_ROUTE | ONREPLY_ROUTE},
+    {"save", (cmd_function) w_save, 4, save_fixup3, free_uint_fixup, REQUEST_ROUTE | ONREPLY_ROUTE},
     {"lookup", (cmd_function) w_lookup, 1, domain_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE},
     {"lookup", (cmd_function) w_lookup_ue_type, 2, domain_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE},
     {"lookup_path_to_contact", (cmd_function) w_lookup_path_to_contact, 1, fixup_var_str_12, 0, REQUEST_ROUTE},
@@ -283,6 +288,7 @@ static param_export_t params[] = {
 	{"max_notification_list_size", INT_PARAM, &max_notification_list_size},
 	{"notification_processes", INT_PARAM, &notification_processes},
 	{"send_vs_callid_avp", INT_PARAM, &send_vs_callid_avp},
+	{"skip_multiple_bindings_on_reg_resp", INT_PARAM, &skip_multiple_bindings_on_reg_resp},
     {0, 0, 0}
 };
 
@@ -620,7 +626,11 @@ AAAMessage* callback_cdp_request(AAAMessage *request, void *param) {
  * Wrapper to save(location)
  */
 static int w_save(struct sip_msg* _m, char* _route, char* _d, char* mode, char* _cflags) {
-    return save(_m, _d, _route);
+    if(_cflags){
+        return save(_m, _d, _route, ((int)(*_cflags)));
+    }
+
+    return save(_m, _d, _route, 0);
 }
 
 static int w_assign_server_unreg(struct sip_msg* _m, char* _route, char* _d, char* _direction) {
@@ -696,6 +706,68 @@ static int assign_save_fixup3_async(void** param, int param_no) {
             return -1;
         }
         *param = (void*) d;
+    }
+
+    return 0;
+}
+
+static int unit_fixup(void** param, int param_no)
+{
+	str s;
+	unsigned int* num;
+
+	if(*param){
+		num = (unsigned int*)pkg_malloc(sizeof(unsigned int));
+		*num = 0;
+
+		s.s = *param;
+		s.len = strlen(s.s);
+
+		if (likely(str2int(&s, num) == 0)) {
+			*param = (void*)(long)num;
+		}else{
+			LM_ERR("failed to convert to int\n");
+			pkg_free(num);
+			return E_UNSPEC;
+		}
+	}else{
+		return E_UNSPEC;
+	}
+
+	return 0;
+}
+
+static int free_uint_fixup(void** param, int param_no)
+{
+	if(*param && param_no == 2){
+		pkg_free(*param);
+		*param = 0;
+	}
+	return 0;
+}
+
+static int save_fixup3(void** param, int param_no) {
+    if (strlen((char*) *param) <= 0) {
+        LM_ERR("empty parameter %d not allowed\n", param_no);
+        return -1;
+    }
+
+    if (param_no == 1) {        //route name - static or dynamic string (config vars)
+        if (fixup_spve_null(param, param_no) < 0)
+            return -1;
+        return 0;
+    } else if (param_no == 2) {
+        udomain_t* d;
+
+        if (ul.register_udomain((char*) *param, &d) < 0) {
+            LM_ERR("Error doing fixup on save");
+            return -1;
+        }
+        *param = (void*) d;
+    } else if (param_no == 3) {
+        return 0;
+    } else if (param_no == 4) {
+        return unit_fixup(param, param_no);
     }
 
     return 0;

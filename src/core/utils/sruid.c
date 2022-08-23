@@ -36,6 +36,9 @@
 #include "../../core/dprint.h"
 #include "../../core/globals.h"
 #include "../../core/pt.h"
+#include "../../core/ut.h"
+#include "../../core/trim.h"
+#include "../../core/hashes.h"
 
 #include "sruid.h"
 
@@ -45,6 +48,8 @@
 
 static unsigned int sruid_lfsr32 = 0;
 static unsigned int sruid_lfsr31 = 0;
+
+static sruid_uuid_api_t _sruid_uuid_api = {0};
 
 static int sruid_shift_lfsr(unsigned int *lfsr, unsigned int mask)
 {
@@ -214,6 +219,25 @@ int sruid_nextx(sruid_t *sid, str *x)
 /**
  *
  */
+int sruid_nexthid(sruid_t *sid, str *sval)
+{
+	char buf_int[INT2STR_MAX_LEN];
+	str hval = str_init("0");
+	unsigned int hid = 0;
+
+	if(sval==NULL || sval->s==NULL || sval->len<=0) {
+		return sruid_nextx(sid, &hval);
+	}
+	hval = *sval;
+	trim(&hval);
+	hid = get_hash1_raw(hval.s, hval.len);
+	hval.s = int2strbuf(hid, buf_int, INT2STR_MAX_LEN, &hval.len);
+	return sruid_nextx(sid, &hval);
+}
+
+/**
+ *
+ */
 int sruid_next(sruid_t *sid)
 {
 	return sruid_nextx(sid, NULL);
@@ -231,8 +255,68 @@ int sruid_nextx_safe(sruid_t *sid, str *x)
 /**
  *
  */
+int sruid_nexthid_safe(sruid_t *sid, str *sval)
+{
+	if(unlikely(sid->pid!=my_pid())) sruid_reinit(sid, sid->mode);
+	return sruid_nexthid(sid, sval);
+}
+
+/**
+ *
+ */
 int sruid_next_safe(sruid_t *sid)
 {
 	if(unlikely(sid->pid!=my_pid())) sruid_reinit(sid, sid->mode);
 	return sruid_nextx(sid, NULL);
 }
+
+/**
+ *
+ */
+int sruid_uuid_api_set(sruid_uuid_api_t *sapi)
+{
+	if(_sruid_uuid_api.fgenerate!=NULL) {
+		LM_ERR("sruid uuid api already set\n");
+		return -1;
+	}
+
+	memcpy(&_sruid_uuid_api, sapi, sizeof(sruid_uuid_api_t));
+	return 0;
+}
+
+/**
+ *
+ */
+int sruid_uuid_generate(char *out, int *len)
+{
+	if(_sruid_uuid_api.fgenerate == NULL) {
+		*len = 0;
+		return -1;
+	}
+	return _sruid_uuid_api.fgenerate(out, len);
+}
+
+/**
+ *
+ */
+int sruid_uuid_generate_time(char *out, int *len)
+{
+	if(_sruid_uuid_api.fgenerate_time == NULL) {
+		*len = 0;
+		return -1;
+	}
+	return _sruid_uuid_api.fgenerate_time(out, len);
+}
+
+/**
+ *
+ */
+int sruid_uuid_generate_random(char *out, int *len)
+{
+	if(_sruid_uuid_api.fgenerate_random == NULL) {
+		*len = 0;
+		return -1;
+	}
+	return _sruid_uuid_api.fgenerate_random(out, len);
+}
+

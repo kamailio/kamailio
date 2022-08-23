@@ -434,6 +434,10 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 						/* found the user*/
 						uri->user.s=s;
 						uri->user.len=p-s;
+						if(uri->user.len<=0) {
+							/* at '@' and no user part */
+							goto error_bad_char;
+						}
 						state=URI_HOST;
 						found_user=1;
 						s=p+1; /* skip '@' */
@@ -1232,11 +1236,20 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 			break; /* do nothing, avoids a compilation warning */
 	}
 
-	if(uri->port.len>5)
+	/* common sanity checks */
+	if(uri->port.len>5) {
+		/* port value too large */
 		goto error_invalid_port;
+	}
+	if(uri->host.len>0 && uri->user.len<=0 &&uri->host.s>buf && (*(uri->host.s-1)=='@'
+			|| *uri->host.s=='@')) {
+		/* '@' before host, but no user part */
+		goto error_bad_uri;
+	}
 
 #ifdef EXTRA_DEBUG
 	/* do stuff */
+	LM_DBG("state=%d\n", state);
 	LM_DBG("parsed uri:\n type=%d user=<%.*s>(%d)\n passwd=<%.*s>(%d)\n"
 			" host=<%.*s>(%d)\n port=<%.*s>(%d): %d\n params=<%.*s>(%d)\n"
 			" headers=<%.*s>(%d)\n",

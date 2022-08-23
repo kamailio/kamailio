@@ -46,7 +46,7 @@
 #include "../../core/rpc_lookup.h"
 #include "../../core/timer.h"     /* register_timer */
 #include "../../core/timer_proc.h" /* register_sync_timer */
-#include "../../core/globals.h"   /* is_main */
+#include "../../core/globals.h"
 #include "../../core/ut.h"        /* str_init */
 #include "../../core/utils/sruid.h"
 #include "dlist.h"           /* register_udomain */
@@ -176,6 +176,7 @@ int ul_desc_time_order = 0;				/*!< By default do not enable timestamp ordering 
 int ul_handle_lost_tcp = 0;				/*!< By default do not remove contacts before expiration time */
 int ul_close_expired_tcp = 0;				/*!< By default do not close TCP connections for expired contacts */
 int ul_skip_remote_socket = 0;				/*!< By default do not skip remote socket */
+int ul_db_clean_tcp = 0;				/*!< Clean TCP/TLS/WSS contacts in DB before loading records */
 
 int ul_fetch_rows = 2000;				/*!< number of rows to fetch from result */
 int ul_hash_size = 10;
@@ -263,6 +264,7 @@ static param_export_t params[] = {
 	{"ka_loglevel",         PARAM_INT, &ul_ka_loglevel},
 	{"ka_logmsg",           PARAM_STR, &ul_ka_logmsg},
 	{"load_rank",           PARAM_INT, &ul_load_rank},
+	{"db_clean_tcp",        PARAM_INT, &ul_db_clean_tcp},
 	{0, 0, 0}
 };
 
@@ -356,6 +358,16 @@ static int mod_init(void)
 	}
 
 	/* Shall we use database ? */
+	switch (ul_db_mode) {
+		case DB_ONLY:
+		case WRITE_THROUGH:
+		case WRITE_BACK:
+		/*
+		 * register the need to be called post-fork of all children
+		 * with the special rank PROC_POSTCHILDINIT
+		 */
+		ksr_module_set_flag(KSRMOD_FLAG_POSTCHILDINIT);
+	}
 	if (ul_db_mode != NO_DB) { /* Yes */
 		if (db_bind_mod(&ul_db_url, &ul_dbf) < 0) { /* Find database module */
 			LM_ERR("failed to bind database module\n");
@@ -450,14 +462,14 @@ static int child_init(int _rank)
 		case WRITE_THROUGH:
 			/* connect to db only from SIP workers, TIMER and MAIN processes,
 			 *  and RPC processes */
-			if (_rank<=0 && _rank!=PROC_TIMER && _rank!=PROC_MAIN
+			if (_rank<=0 && _rank!=PROC_TIMER && _rank!=PROC_POSTCHILDINIT
 					 && _rank!=PROC_RPC)
 				return 0;
 			break;
 		case WRITE_BACK:
 			/* connect to db only from TIMER (for flush), from MAIN (for
 			 * final flush() and from child 1 for preload */
-			if (_rank!=PROC_TIMER && _rank!=PROC_MAIN && _rank!=PROC_SIPINIT)
+			if (_rank!=PROC_TIMER && _rank!=PROC_POSTCHILDINIT && _rank!=PROC_SIPINIT)
 				return 0;
 			break;
 		case DB_READONLY:

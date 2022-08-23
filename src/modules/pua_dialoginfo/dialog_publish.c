@@ -87,7 +87,7 @@ static xmlAttrPtr puadi_xmlNewPropStr(xmlNodePtr node, char *name, str *sval)
 
 str* build_dialoginfo(char *state, str *entity, str *peer, str *callid,
 		unsigned int initiator, str *localtag, str *remotetag,
-		str *localtarget, str *remotetarget)
+		str *localtarget, str *remotetarget, str *uuid)
 {
 	xmlDocPtr  doc = NULL;
 	xmlNodePtr root_node = NULL;
@@ -141,7 +141,7 @@ str* build_dialoginfo(char *state, str *entity, str *peer, str *callid,
 		goto error;
 	}
 
-	if(puadi_xmlNewPropStr(dialog_node, "id", callid)==NULL) {
+	if(puadi_xmlNewPropStr(dialog_node, "id", uuid)==NULL) {
 		goto error;
 	}
 
@@ -289,7 +289,7 @@ error:
 void dialog_publish(char *state, str* ruri, str *entity, str *peer, str *callid,
 		unsigned int initiator, unsigned int lifetime, str *localtag,
 		str *remotetag, str *localtarget, str *remotetarget,
-		unsigned short do_pubruri_localcheck)
+		unsigned short do_pubruri_localcheck, str* uuid)
 {
 	str* body= NULL;
 	str uri= {NULL, 0};
@@ -319,7 +319,7 @@ void dialog_publish(char *state, str* ruri, str *entity, str *peer, str *callid,
 	content_type.len= 27;
 
 	body= build_dialoginfo(state, entity, peer, callid, initiator, localtag,
-			remotetag, localtarget, remotetarget);
+			remotetag, localtarget, remotetarget, uuid);
 	if(body == NULL || body->s == NULL)
 		goto error;
 
@@ -328,7 +328,7 @@ void dialog_publish(char *state, str* ruri, str *entity, str *peer, str *callid,
 	size= sizeof(publ_info_t)
 		+ sizeof(str) 			/* *pres_uri */
 		+ ( ruri->len 		/* pres_uri->s */
-				+ callid->len + 16	/* id.s */
+				+ uuid->len + 16	/* id.s */
 				+ content_type.len	/* content_type.s */
 			)*sizeof(char);
 
@@ -363,8 +363,8 @@ void dialog_publish(char *state, str* ruri, str *entity, str *peer, str *callid,
 	}
 	publ->id.s= (char*)publ+ size;
 	memcpy(publ->id.s, "DIALOG_PUBLISH.", 15);
-	memcpy(publ->id.s+15, callid->s, callid->len);
-	publ->id.len= 15+ callid->len;
+	memcpy(publ->id.s+15, uuid->s, uuid->len);
+	publ->id.len= 15+ uuid->len;
 	size+= publ->id.len;
 
 	publ->content_type.s= (char*)publ+ size;
@@ -411,14 +411,14 @@ void dialog_publish_multi(char *state, struct str_list* ruris, str *entity,
 		str *peer, str *callid, unsigned int initiator, unsigned int lifetime,
 		str *localtag, str *remotetag,
 		str *localtarget, str *remotetarget, unsigned short
-		do_pubruri_localcheck)
+		do_pubruri_localcheck, str *uuid)
 {
 	while(ruris) {
 		LM_DBG("CALLING dialog_publish for URI %.*s\n",
 				ruris->s.len, ruris->s.s);
 		dialog_publish(state,&(ruris->s),entity,peer,callid,initiator,
 				lifetime,localtag,remotetag,localtarget,remotetarget,
-				do_pubruri_localcheck);
+				do_pubruri_localcheck,uuid);
 		ruris=ruris->next;
 	}
 }

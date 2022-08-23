@@ -236,7 +236,7 @@ modparam("sqlops", "connect_mode", 1)
 		<title>Set <varname>results_maxsize</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("sqlops", "results_maxsize", 4096)
+modparam("sqlops", "results_maxsize", 64)
 ...
 </programlisting>
 		</example>

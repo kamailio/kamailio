@@ -195,48 +195,45 @@ int sdp_locate_line(sip_msg_t* msg, char *pos, str *aline)
 int sdp_remove_str_codec_id_attrs(sip_msg_t* msg,
 		sdp_stream_cell_t* sdp_stream, str *rm_codec)
 {
+	str sdp_attrs_list[] = {
+		str_init("a=rtpmap:"),
+		str_init("a=fmtp:"),
+		str_init("a=rtcp-fb:"),
+		{0, 0}
+	};
+	int i;
 	str aline = {0, 0};
-	sdp_payload_attr_t *payload;
+	str raw_stream = {0, 0};
 	struct lump *anchor;
 
-	payload = sdp_stream->payload_attr;
-	while (payload) {
-		LM_DBG("a= ... for codec %.*s/%.*s\n",
-				payload->rtp_payload.len, payload->rtp_payload.s,
-				payload->rtp_enc.len, payload->rtp_enc.s);
-		if(rm_codec->len==payload->rtp_payload.len
-				&& strncmp(payload->rtp_payload.s, rm_codec->s,
-					rm_codec->len)==0) {
-			if(payload->rtp_enc.s!=NULL) {
-				if(sdp_locate_line(msg, payload->rtp_enc.s, &aline)==0)
-				{
-					LM_DBG("removing line: %.*s", aline.len, aline.s);
-					anchor = del_lump(msg, aline.s - msg->buf,
-							aline.len, 0);
-					if (anchor == NULL) {
-						LM_ERR("failed to remove [%.*s] inside [%.*s]\n",
-								rm_codec->len, rm_codec->s,
-								aline.len, aline.s);
-						return -1;
-					}
-				}
-			}
-			if(payload->fmtp_string.s!=NULL) {
-				if(sdp_locate_line(msg, payload->fmtp_string.s, &aline)==0)
-				{
-					LM_DBG("removing line: %.*s\n", aline.len, aline.s);
-					anchor = del_lump(msg, aline.s - msg->buf,
-							aline.len, 0);
-					if (anchor == NULL) {
-						LM_ERR("failed to remove [%.*s] inside [%.*s]\n",
-								rm_codec->len, rm_codec->s,
-								aline.len, aline.s);
-						return -1;
+	raw_stream = sdp_stream->raw_stream;
+	while(raw_stream.len>5) {
+		sdp_locate_line(msg, raw_stream.s, &aline);
+		/* process attribute lines: a=x:c... */
+		if((aline.len>5) && ((aline.s[0] | 0x20)=='a')) {
+			LM_DBG("processing sdp line [%.*s]\n", aline.len, aline.s);
+			for(i=0; sdp_attrs_list[i].s!=NULL; i++) {
+				if(aline.len > sdp_attrs_list[i].len + rm_codec->len) {
+					if(strncasecmp(aline.s, sdp_attrs_list[i].s,
+								sdp_attrs_list[i].len)==0
+							&& strncmp(aline.s+sdp_attrs_list[i].len, rm_codec->s,
+								rm_codec->len)==0
+							&& aline.s[sdp_attrs_list[i].len + rm_codec->len]==' ') {
+						LM_DBG("removing line: [%.*s]\n", aline.len, aline.s);
+						anchor = del_lump(msg, aline.s - msg->buf,
+								aline.len, 0);
+						if (anchor == NULL) {
+							LM_ERR("failed to remove - id [%.*s] line [%.*s]\n",
+									rm_codec->len, rm_codec->s,
+									aline.len, aline.s);
+							return -1;
+						}
 					}
 				}
 			}
 		}
-		payload=payload->next;
+		raw_stream.s = aline.s + aline.len;
+		raw_stream.len -= aline.len;
 	}
 
 	return 0;

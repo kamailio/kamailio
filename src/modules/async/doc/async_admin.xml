@@ -68,7 +68,7 @@
 	</section>
 	<section>
 	<title>Parameters</title>
-	<section>
+	<section id="async.p.workers">
 		<title><varname>workers</varname> (int)</title>
 		<para>
 			Number of worker processes to be started to handle the asynchronous
@@ -88,14 +88,14 @@ modparam("async", "workers", 2)
 </programlisting>
 		</example>
 	</section>
-	<section>
+	<section id="async.p.ms_timer">
 		<title><varname>ms_timer</varname> (int)</title>
 		<para>
 			Enables millisecond timer for async_ms_sleep() and async_ms_route() functions.
 			The integer value is the timer resolution in milliseconds. A smaller timer
-			resultion will generate a higher load on the system. If you set ms_timer
-			to 1 you will get a timer with 1 millisecond resultion, a setting of 20
-			provides a resultion of 20ms.
+			resolution will generate a higher load on the system. If you set ms_timer
+			to 1 you will get a timer with 1 millisecond resolution, a setting of 20
+			provides a resolution of 20ms.
 		</para>
 		<para>
 		<emphasis>
@@ -107,6 +107,27 @@ modparam("async", "workers", 2)
 		<programlisting format="linespecific">
 ...
 modparam("async", "ms_timer", 10)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="async.p.return">
+		<title><varname>return</varname> (int)</title>
+		<para>
+			The value to be returned by async functions on success. It does
+			not apply for async data functions, only for those that suspend
+			the SIP transaction.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>workers</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("async", "return", 1)
 ...
 </programlisting>
 		</example>
@@ -287,8 +308,8 @@ route[REQUESTSHAPER] {
 		</title>
 		<para>
 		Continue the processing of the SIP request with the route[routename]
-		in one of the processes from core asynchronous framework. The core
-		parameter async_workers has to be set to enable asynchronous
+		in one of the processes from first group of core asynchronous framework.
+		The core parameter async_workers has to be set to enable asynchronous
 		framework. The task is executed as soon as a process from asynchronous
 		framework is idle, there is no wait time for the task like for
 		async_route(...).
@@ -336,6 +357,105 @@ request_route {
 }
 route[RESUME] {
    t_relay();
+   exit;
+}
+...
+</programlisting>
+	</example>
+	</section>
+	<section id="async.f.async_task_group_route">
+		<title>
+		<function moreinfo="none">async_task_group_route(routename, groupname)</function>
+		</title>
+		<para>
+		Similar to async_task_route(), but allows to specify the name of the group
+		for asynchronous workers. See also 'async_workers_group' core global
+		parameter.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title><function>async_task_group_route</function> usage</title>
+		<programlisting format="linespecific">
+...
+async_workers_group="name=abc;workers=4;nonblock=0;usleep=0"
+...
+request_route {
+    ...
+    async_task_route("RESUME", "abc");
+    ...
+}
+route[RESUME] {
+   t_relay();
+   exit;
+}
+...
+</programlisting>
+	</example>
+	</section>
+	<section id="async.f.async_task_data">
+		<title>
+			<function moreinfo="none">async_task_data(routename, data)</function>
+		</title>
+		<para>
+		Send the data to a asynchronous task process (in the first group) that
+		executes the route[rountename] and makes the data available via $async(data).
+		</para>
+		<para>
+		The current SIP message is not suspended and it is not available in
+		the asynchronous task process, a local faked SIP request is used there.
+		</para>
+		<para>
+		The parameters can contain variables.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>async_task_data</function> usage</title>
+		<programlisting format="linespecific">
+...
+async_workers_group="name=abc;workers=4;nonblock=0;usleep=0"
+...
+request_route {
+    ...
+    async_task_data("RESUME", "caller: $fU - callee: $tU");
+    ...
+}
+route[RESUME] {
+   xinfo("$async(data)\n");
+   exit;
+}
+...
+</programlisting>
+	</example>
+	</section>
+	<section id="async.f.async_task_group_data">
+		<title>
+			<function moreinfo="none">async_task_group_data(routename, groupname, data)</function>
+		</title>
+		<para>
+		Similar to async_task_route(), but allows to specify the name of the group
+		for asynchronous workers. See also 'async_workers_group' core global
+		parameter.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>async_task_group_data</function> usage</title>
+		<programlisting format="linespecific">
+...
+async_workers_group="name=abc;workers=4;nonblock=0;usleep=0"
+...
+request_route {
+    ...
+    async_task_data("RESUME", "abc", "caller: $fU - callee: $tU");
+    ...
+}
+route[RESUME] {
+   xinfo("$async(data)\n");
    exit;
 }
 ...

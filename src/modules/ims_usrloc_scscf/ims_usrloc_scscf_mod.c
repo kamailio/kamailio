@@ -47,7 +47,7 @@
 #include "../../core/dprint.h"
 #include "../../core/rpc_lookup.h"
 #include "../../core/timer.h"     /* register_timer */
-#include "../../core/globals.h"   /* is_main */
+#include "../../core/globals.h"
 #include "../../core/ut.h"        /* str_init */
 #include "dlist.h"           /* register_udomain */
 #include "udomain.h"         /* {insert,delete,get,release}_urecord */
@@ -116,7 +116,7 @@ str db_url          = str_init(DEFAULT_DB_URL);	/*!< Database URL */
 
 /* flags */
 unsigned int nat_bflag = (unsigned int)-1;
-unsigned int init_flag = 0;
+unsigned int ims_uls_init_flag = 0;
 
 ims_dlg_api_t dlgb;
 
@@ -124,6 +124,9 @@ int sub_dialog_hash_size = 9;
 shtable_t sub_dialog_table;
 
 int contact_delete_delay = 30;   //If contact is put into delay delete state this is how long we delay before deleting
+
+char* cscf_realm = 0;
+int skip_cscf_realm = 0;
 
 new_shtable_t pres_new_shtable;
 insert_shtable_t pres_insert_shtable;
@@ -170,6 +173,8 @@ static param_export_t params[] = {
     {"db_mode",				INT_PARAM, &db_mode},
     {"db_url", 				PARAM_STR, &db_url},
     {"timer_procs",             INT_PARAM, &ul_timer_procs},
+	{"realm",               PARAM_STRING, &cscf_realm},
+	{"skip_realm",          INT_PARAM, &skip_cscf_realm},
 	{0, 0, 0}
 };
 
@@ -375,7 +380,7 @@ static int mod_init(void) {
 		nat_bflag = 1 << nat_bflag;
 	}
 
-	init_flag = 1;
+	ims_uls_init_flag = 1;
         
 	/* From contact_dlg_handlers.c
          * 

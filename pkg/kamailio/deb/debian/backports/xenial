@@ -28,14 +28,21 @@ sed -i 's/libmongoc-dev/libbson-dev,\n libmongoc-dev/' \
 # No secsipid module
 sed -i -e '/libsecsipid-dev/d' -e '/^Package: kamailio-secsipid-modules/,/^$/d' \
 	${DIST}/control
-sed -i -e 's/ secsipid[ ,$]*/ /' ${DIST}/rules
-sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ secsipid/' ${DIST}/rules
+sed -i -e '/^PACKAGE_GROUPS += secsipid/d' ${DIST}/rules
+sed -i -e '/--EXCLUDED--/i EXTRA_EXCLUDED_MODULES += secsipid' ${DIST}/rules
 
 # libwebsockets >= 3.1
 sed -i -e '/libwebsockets-dev/d' -e '/^Package: kamailio-lwsc-modules/,/^$/d' \
 	${DIST}/control
-sed -i -e 's/ lwcs[ ,$]*/ /' ${DIST}/rules
-sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ lwcs/' ${DIST}/rules
+sed -i -e '/^PACKAGE_GROUPS += lwsc/d' ${DIST}/rules
+sed -i -e '/--EXCLUDED--/i EXTRA_EXCLUDED_MODULES += lwsc' ${DIST}/rules
+
+# no libnats-dev
+sed -i -e '/^ libnats-dev,/d' \
+  -e '/^Package: kamailio-nats-modules/,/^$/d' \
+  ${DIST}/control
+sed -i -e '/^PACKAGE_GROUPS += nats/d' ${DIST}/rules
+sed -i -e '/--EXCLUDED--/i EXTRA_EXCLUDED_MODULES += nats' ${DIST}/rules
 
 wrap-and-sort -sat -d ${DIST}
 

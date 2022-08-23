@@ -221,6 +221,7 @@ static int mod_init(void)
 		switch(ws_keepalive_mechanism) {
 			case KEEPALIVE_MECHANISM_PING:
 			case KEEPALIVE_MECHANISM_PONG:
+			case KEEPALIVE_MECHANISM_CONCHECK:
 				break;
 			default:
 				ws_keepalive_mechanism = DEFAULT_KEEPALIVE_MECHANISM;

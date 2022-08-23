@@ -17,12 +17,13 @@
 	<title>Overview</title>
 	<para>
 		The module executes event route blocks or KEMI functions on dedicated
-		processes at startup. The execution can be delayed for a specified
-		interval of time.
+		processes at startup, upon an RPC command or data received on a custom
+		UDP socket.
 	</para>
 	<para>
-		The actions in the event route should be a loop or other tasks that
-		run forever.
+		For startup event route, the execution can be delayed for a specified
+		interval of time. The actions in the event route should be a loop or
+		other tasks that run forever.
 	</para>
 	</section>
 	<section>
@@ -66,7 +67,7 @@
 		<itemizedlist>
 		<listitem>
 		<para>
-		"name=_string_;wait=_number_;workers=_number_"
+		"name=_string_;wait=_number_;workers=_number_;sockaddr=_udp_socket_"
 		</para>
 		</listitem>
 		</itemizedlist>
@@ -88,7 +89,8 @@
 		<para>
 			<emphasis>workers</emphasis> - if set to 0 or 1 the task is executed
 			in a dedicated process. Any number > 1 will create more dedicated
-			processes, each of them executing the task.
+			processes, each of them executing the startup task. For UDP data
+			execution (when 'sockaddr' is set), only 1 worker process is created.
 		</para>
 		</listitem>
 		<listitem>
@@ -97,6 +99,14 @@
 			inside the dedicated process before executing the task.
 		</para>
 		</listitem>
+		<listitem>
+		<para>
+			<emphasis>sockaddr</emphasis> - full UDP socket address in format
+			'udp:ip:port' (example: 'udp:127.0.0.1:54321'). Received data is
+			made available in the event route via $evr(data).
+		</para>
+		</listitem>
+
 		</itemizedlist>
 		<para>
 		<emphasis>
@@ -108,6 +118,7 @@
 		<programlisting format="linespecific">
 ...
 modparam("evrexec", "exec", "name=evrexec:timer;wait=1000;workers=1;")
+modparam("evrexec", "exec", "name=evrexec:udp;sockaddr=udp:127.0.0.1:4444;workers=1;")
 ...
 event_route[evrexec:timer] {
   $var(x) = 0;
@@ -117,6 +128,11 @@ event_route[evrexec:timer] {
     sleep("600");
   }
 }
+
+event_route[evrexec:udp] {
+  xinfo("udp socket data: [$evr(data)] from [$evr(srcip)]\n");
+}
+
 ...
 </programlisting>
 		</example>

@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -32,11 +32,11 @@
 struct sip_msg;
 
 /* via param types
- * WARNING: keep in sync with parse_via.c FIN_HIDDEN... 
+ * WARNING: keep in sync with parse_via.c FIN_HIDDEN...
  * and with tm/sip_msg.c via_body_cloner
  */
 enum {
-	PARAM_HIDDEN=230, PARAM_TTL, PARAM_BRANCH, 
+	PARAM_HIDDEN=230, PARAM_TTL, PARAM_BRANCH,
 	PARAM_MADDR, PARAM_RECEIVED, PARAM_RPORT, PARAM_I, PARAM_ALIAS,
 #ifdef USE_COMP
 	PARAM_COMP,
@@ -60,27 +60,29 @@ typedef struct via_param {
 
 
 /* Format: name/version/transport host:port;params comment */
- /* WARNING: keep in sync with tm/sip_msg.c via_body_cloner */
-typedef struct via_body { 
+/* WARNING: keep in sync with tm/sip_msg.c via_body_cloner */
+typedef struct via_body {
 	int error;
 	str hdr;   /* Contains "Via" or "v" */
 	str name;
-	str version;   
+	str version;
 	str transport;
 	str host;
 	short proto; /* transport */
 	unsigned short port;
 #ifdef USE_COMP
 	short comp_no;
+	short comp_no_pad; /* padding to align to 32bit */
 #endif
 	str port_str;
 	str params;
 	str comment;
+	char *bstart;                 /* body content, not including hdr */
 	int bsize;                    /* body size, not including hdr */
 	struct via_param* param_lst;  /* list of parameters*/
 	struct via_param* last_param; /*last via parameter, internal use*/
 
-	     /* shortcuts to "important" params*/
+	/* shortcuts to "important" params*/
 	struct via_param* branch;
 	str tid; /* transaction id, part of branch */
 	struct via_param* received;
@@ -90,8 +92,8 @@ typedef struct via_body {
 #ifdef USE_COMP
 	struct via_param* comp; /* see rfc3486 */
 #endif
-	struct via_body* next; /* pointer to next via body string if
-				  compact via or null */
+	struct via_body* next; /* pointer to next via body string
+							if compact via or null */
 } via_body_t;
 
 

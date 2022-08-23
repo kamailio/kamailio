@@ -36,6 +36,7 @@ typedef struct async_param {
 		gparam_t *proute;
 	} u;
 } async_param_t;
+
 /* clang-format on */
 
 int async_init_timer_list(void);
@@ -48,6 +49,14 @@ int async_destroy_ms_timer_list(void);
 int async_ms_sleep(sip_msg_t *msg, int milliseconds, cfg_action_t *act, str *cbname);
 void async_mstimer_exec(unsigned int ticks, void *param);
 
-int async_send_task(sip_msg_t *msg, cfg_action_t *act, str *cbname);
+int async_send_task(sip_msg_t *msg, cfg_action_t *act, str *cbname, str *gname);
+int async_send_data(sip_msg_t *msg, cfg_action_t *act, str *cbname, str *gname,
+		str *sdata);
+
+int pv_get_async(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
+int pv_parse_async_name(pv_spec_t *sp, str *in);
+
+sr_kemi_xval_t* ki_async_get_gname(sip_msg_t *msg);
+sr_kemi_xval_t* ki_async_get_data(sip_msg_t *msg);
 
 #endif

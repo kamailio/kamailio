@@ -219,9 +219,13 @@ char* parse_content_length(char* const buffer, const char* const end,
 	int  size;
 
 	p = buffer;
+	if(buffer>=end) {
+		LM_ERR("empty input buffer: %p - %p\n", buffer, end);
+		goto error;
+	}
 	/* search the begining of the number */
-	while ( p<end && (*p==' ' || *p=='\t' ||
-	(*p=='\n' && (*(p+1)==' '||*(p+1)=='\t')) ))
+	while ( p<end && (*p==' ' || *p=='\t'
+				|| (*p=='\n' && p+1<end && (*(p+1)==' ' || *(p+1)=='\t')) ) )
 		p++;
 	if (p==end)
 		goto error;
@@ -229,26 +233,50 @@ char* parse_content_length(char* const buffer, const char* const end,
 	size = 0;
 	number = 0;
 	while (p<end && *p>='0' && *p<='9') {
-		number = number*10 + (*p)-'0';
+		if(number >= INT_MAX/10) {
+			LM_ERR("content lenght value is too large\n");
+			goto error;
+		}
+		number = number*10 + ((*p) - '0');
 		size ++;
 		p++;
 	}
 	if (p==end || size==0)
 		goto error;
-	/* now we should have only spaces at the end */
-	while ( p<end && (*p==' ' || *p=='\t' ||
-	(*p=='\n' && (*(p+1)==' '||*(p+1)=='\t')) ))
-		p++;
-	if (p==end)
-		goto error;
-	/* the header ends proper? */
-	if ( (*(p++)!='\n') && (*(p-1)!='\r' || *(p++)!='\n' ) )
-		goto error;
+	do {
+		/* only spaces till the end-of-header */
+		while (p<end && (*p==' ' || *p=='\t')) p++;
+		if (p==end)
+			goto error;
+		/* EOH with \n or \r\n */
+		if(*p=='\n') {
+			p++;
+		} else if (p+1<end && *p=='\r' && *(p+1)=='\n') {
+			p += 2;
+		} else {
+			/* no valid EOH */
+			goto error;
+		}
+		if(p<end) {
+			/* multi line header body */
+			if(*p==' ' || *p=='\t') {
+				p++;
+				if (p==end)
+					goto error;
+			} else {
+				break;
+			}
+		}
+	} while(p<end);
 
 	*length = number;
 	return p;
 error:
-	LM_ERR("parse error near char [%d][%c]\n", *p, *p);
+	if(p<end) {
+		LM_ERR("parse error near char [%d][%c]\n", *p, *p);
+	} else {
+		LM_ERR("parse error over the end of input: %p - %p\n", buffer, end);
+	}
 	return 0;
 }
 

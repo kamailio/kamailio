@@ -36,6 +36,16 @@
 #define RFC2543_HOLD 1
 #define RFC3264_HOLD 2
 
+#define HOLD_IP_STR "0.0.0.0"
+#define HOLD_IP_LEN 7
+
+#define HOLD_PORT_ICE_TRICKLE_STR "9"
+#define HOLD_PORT_ICE_TRICKLE_LEN 1
+
+#define ICE_OPTIONS "a=ice-options:"
+#define ICE_OPT_TRICKLE_STR "trickle"
+#define ICE_OPT_TRICKLE_LEN 7
+
 typedef struct sdp_payload_attr {
 	struct sdp_payload_attr *next;
 	int payload_num; /**< payload index inside stream */
@@ -46,15 +56,20 @@ typedef struct sdp_payload_attr {
 	str fmtp_string;
 } sdp_payload_attr_t;
 
+typedef struct sdp_ice_opt {
+	struct sdp_ice_opt *next;
+	str option; /* for e.g. 'trickle', 'rtp+ecn' */
+} sdp_ice_opt_t;
+
 typedef struct sdp_ice_attr {
-    struct sdp_ice_attr *next;
-    str foundation;
-    unsigned int component_id;
-    str transport;
-    str connection_addr;
-    str port;
-    str candidate_type;
-    int candidateType; /* ICE_HOST/ICE_SRFLX/ICE_PRFLX/ICE_RELAY/ICE_UNKNOWN */
+	struct sdp_ice_attr *next;
+	str foundation;
+	unsigned int component_id;
+	str transport;
+	str connection_addr;
+	str port;
+	str candidate_type;
+	int candidateType;			/* ICE_HOST/ICE_SRFLX/ICE_PRFLX/ICE_RELAY/ICE_UNKNOWN */
 } sdp_ice_attr_t;
 
 typedef struct sdp_stream_cell {
@@ -88,10 +103,11 @@ typedef struct sdp_stream_cell {
 	str raw_stream;                           /**< fast access to raw stream string */
 	struct sdp_payload_attr **p_payload_attr; /**< fast access pointers to payloads */
 	struct sdp_payload_attr *payload_attr;
-	int ice_attrs_num;                        /**< number of ICE attrs inside a stream */
-	/* add fast access pointers to ice attributes if you need them */
-	sdp_ice_attr_t *ice_attr;
-	str remote_candidates;                    /**< ICE a:remote-candidates */
+	int ice_attrs_num;                        /* number of candidate ICE attrs inside a stream */
+	sdp_ice_attr_t *ice_attr;                 /* add fast access pointers to ice candidate attributes */
+	int ice_opt_num;                          /* number of media level ICE options inside the stream */
+	sdp_ice_opt_t *ice_opt;                   /* add fast access pointers to media level ICE options */
+	str remote_candidates;                    /* ICE a:remote-candidates */
 } sdp_stream_cell_t;
 
 typedef struct sdp_session_cell {
@@ -111,6 +127,8 @@ typedef struct sdp_session_cell {
 				AS - application specific */
 	str bw_width;     /**< The <bandwidth> is interpreted as kilobits per second by default */
 	int streams_num;  /**< number of streams inside a session */
+	str sendrecv_mode;
+	int is_on_hold; /**< flag indicating if this session is on hold */
 	struct sdp_stream_cell*  streams;
 } sdp_session_cell_t;
 

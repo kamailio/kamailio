@@ -70,9 +70,9 @@
 		</para>
 	</section>
 
-	<section id="tm.rpc.t_uac_wait">
+	<section id="tm.rpc.t_uac_wait_block">
 		<title>
-		<function moreinfo="none">tm.t_uac_wait</function>
+		<function moreinfo="none">tm.t_uac_wait_block</function>
 		</title>
 		<para>
 		Similar to tm.t_uac_start, but blocks waiting for the SIP response and

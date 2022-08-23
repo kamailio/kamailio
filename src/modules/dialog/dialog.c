@@ -104,6 +104,7 @@ str dlg_extra_hdrs = {NULL,0};
 static int db_fetch_rows = 200;
 static int db_skip_load = 0;
 static int dlg_keep_proxy_rr = 0;
+int dlg_filter_mode = 0;
 int initial_cbs_inscript = 1;
 int dlg_wait_ack = 1;
 static int dlg_timer_procs = 0;
@@ -121,6 +122,9 @@ str dlg_event_callback = STR_NULL;
 str dlg_bridge_controller = str_init("sip:controller@kamailio.org");
 
 str dlg_bridge_contact = str_init("sip:controller@kamailio.org:5060");
+
+int bye_early_code = 480;
+str bye_early_reason = str_init("Temporarily Unavailable");
 
 str ruri_pvar_param = str_init("$ru");
 pv_elem_t * ruri_param_model = NULL;
@@ -193,10 +197,25 @@ static int w_is_known_dlg(struct sip_msg *);
 static int w_dlg_set_ruri(sip_msg_t *, char *, char *);
 static int w_dlg_db_load_callid(sip_msg_t *msg, char *ci, char *p2);
 static int w_dlg_db_load_extra(sip_msg_t *msg, char *p1, char *p2);
-
+static int fixup_dlg_get_var(void** param, int param_no);
+static int fixup_dlg_get_var_free(void** param, int param_no);
+static int w_dlg_get_var(struct sip_msg*, char*, char*, char*, char*, char*);
+static int fixup_dlg_set_var(void** param, int param_no);
+static int fixup_dlg_set_var_free(void** param, int param_no);
+static int w_dlg_set_var(struct sip_msg*, char*, char*, char*, char*, char*);
 static int w_dlg_remote_profile(sip_msg_t *msg, char *cmd, char *pname,
 		char *pval, char *puid, char *expires);
 static int fixup_dlg_remote_profile(void** param, int param_no);
+
+static int w_dlg_req_with_headers_and_content(struct sip_msg *, char *, char *, char* , char *, char *);
+static int w_dlg_req_with_content(struct sip_msg *, char *, char *, char *, char *);
+static int w_dlg_req_with_headers(struct sip_msg *, char *, char *, char *);
+static int w_dlg_req_within(struct sip_msg *, char *, char *);
+
+static int fixup_dlg_dlg_req_within(void** , int );
+static int fixup_dlg_req_with_headers(void** , int );
+static int fixup_dlg_req_with_content(void** , int );
+static int fixup_dlg_req_with_headers_and_content(void** , int );
 
 static cmd_export_t cmds[]={
 	{"dlg_manage", (cmd_function)w_dlg_manage,            0,0,
@@ -246,7 +265,7 @@ static cmd_export_t cmds[]={
 	{"dlg_set_property", (cmd_function)w_dlg_set_property,1,fixup_spve_null,
 			0, ANY_ROUTE },
 	{"dlg_reset_property", (cmd_function)w_dlg_reset_property,1,fixup_spve_null,
-            0, ANY_ROUTE },
+			0, ANY_ROUTE },
 	{"dlg_remote_profile", (cmd_function)w_dlg_remote_profile, 5, fixup_dlg_remote_profile,
 			0, ANY_ROUTE },
 	{"dlg_set_ruri",       (cmd_function)w_dlg_set_ruri,  0, NULL,
@@ -255,6 +274,18 @@ static cmd_export_t cmds[]={
 			0, ANY_ROUTE },
 	{"dlg_db_load_extra", (cmd_function)w_dlg_db_load_extra, 0, 0,
 			0, ANY_ROUTE },
+	{"dlg_get_var",(cmd_function)w_dlg_get_var, 5, fixup_dlg_get_var,
+			fixup_dlg_get_var_free, ANY_ROUTE },
+	{"dlg_set_var",(cmd_function)w_dlg_set_var, 5, fixup_dlg_set_var,
+			fixup_dlg_set_var_free, ANY_ROUTE },
+	{"dlg_req_within",  (cmd_function)w_dlg_req_within, 2, fixup_dlg_dlg_req_within,
+			0, ANY_ROUTE},
+	{"dlg_req_within",  (cmd_function)w_dlg_req_with_headers, 3, fixup_dlg_req_with_headers,
+			0, ANY_ROUTE},
+	{"dlg_req_within",  (cmd_function)w_dlg_req_with_content, 4, fixup_dlg_req_with_content,
+			0, ANY_ROUTE},
+	{"dlg_req_within",  (cmd_function)w_dlg_req_with_headers_and_content, 5,
+			fixup_dlg_req_with_headers_and_content, 0, ANY_ROUTE},
 
 	{"load_dlg",  (cmd_function)load_dlg,   0, 0, 0, 0},
 	{0,0,0,0,0,0}
@@ -327,6 +358,9 @@ static param_export_t mod_params[]={
 	{ "h_id_start",            PARAM_INT, &dlg_h_id_start           },
 	{ "h_id_step",             PARAM_INT, &dlg_h_id_step            },
 	{ "keep_proxy_rr",         INT_PARAM, &dlg_keep_proxy_rr        },
+	{ "dlg_filter_mode",       INT_PARAM, &dlg_filter_mode          },
+	{ "bye_early_code",        PARAM_INT, &bye_early_code           },
+	{ "bye_early_reason",      PARAM_STR, &bye_early_reason         },
 	{ 0,0,0 }
 };
 
@@ -539,8 +573,8 @@ static int mod_init(void)
 	}
 
 	if (timeout_spec.s) {
-		if ( pv_parse_spec(&timeout_spec, &timeout_avp)==0
-				&& (timeout_avp.type!=PVT_AVP)){
+		if (pv_parse_spec(&timeout_spec, &timeout_avp)==0
+				&& (timeout_avp.type!=PVT_AVP)) {
 			LM_ERR("malformed or non AVP timeout "
 				"AVP definition in '%.*s'\n", timeout_spec.len,timeout_spec.s);
 			return -1;
@@ -569,9 +603,8 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if (seq_match_mode!=SEQ_MATCH_NO_ID &&
-	seq_match_mode!=SEQ_MATCH_FALLBACK &&
-	seq_match_mode!=SEQ_MATCH_STRICT_ID ) {
+	if (seq_match_mode!=SEQ_MATCH_NO_ID && seq_match_mode!=SEQ_MATCH_FALLBACK
+			&& seq_match_mode!=SEQ_MATCH_STRICT_ID ) {
 		LM_ERR("invalid value %d for seq_match_mode param!!\n",seq_match_mode);
 		return -1;
 	}
@@ -665,7 +698,8 @@ static int mod_init(void)
 
 	/* init handlers */
 	init_dlg_handlers( rr_param, dlg_flag,
-		timeout_spec.s?&timeout_avp:0, default_timeout, seq_match_mode, dlg_keep_proxy_rr);
+			timeout_spec.s?&timeout_avp:0, default_timeout, seq_match_mode,
+			dlg_keep_proxy_rr);
 
 	/* init timer */
 	if (init_dlg_timer(dlg_ontimeout)!=0) {
@@ -702,8 +736,8 @@ static int mod_init(void)
 	if (dlg_db_mode==DB_MODE_NONE) {
 		db_url.s = 0; db_url.len = 0;
 	} else {
-		if (dlg_db_mode!=DB_MODE_REALTIME &&
-		dlg_db_mode!=DB_MODE_DELAYED && dlg_db_mode!=DB_MODE_SHUTDOWN ) {
+		if (dlg_db_mode!=DB_MODE_REALTIME && dlg_db_mode!=DB_MODE_DELAYED
+				&& dlg_db_mode!=DB_MODE_SHUTDOWN ) {
 			LM_ERR("unsupported db_mode %d\n", dlg_db_mode);
 			return -1;
 		}
@@ -711,12 +745,12 @@ static int mod_init(void)
 			LM_ERR("db_url not configured for db_mode %d\n", dlg_db_mode);
 			return -1;
 		}
-		if (init_dlg_db(&db_url, dlg_hash_size, db_update_period, db_fetch_rows, db_skip_load)!=0) {
+		if (init_dlg_db(&db_url, dlg_hash_size, db_update_period, db_fetch_rows,
+					db_skip_load)!=0) {
 			LM_ERR("failed to initialize the DB support\n");
 			return -1;
 		}
 	}
-
 
 	/* timer process to send keep alive requests */
 	if(dlg_ka_timer>0 && dlg_ka_interval>0)
@@ -734,6 +768,10 @@ static int mod_init(void)
 	if (dlg_enable_dmq>0 && dlg_dmq_initialize()!=0) {
 		LM_ERR("failed to initialize dmq integration\n");
 		return -1;
+	}
+
+	if(dlg_db_mode==DB_MODE_SHUTDOWN) {
+		ksr_module_set_flag(KSRMOD_FLAG_POSTCHILDINIT);
 	}
 
 	return 0;
@@ -775,9 +813,9 @@ static int child_init(int rank)
 		}
 	}
 
-	if ( ((dlg_db_mode==DB_MODE_REALTIME || dlg_db_mode==DB_MODE_DELAYED) &&
-	(rank>0 || rank==PROC_TIMER || rank==PROC_RPC)) ||
-	(dlg_db_mode==DB_MODE_SHUTDOWN && (rank==PROC_MAIN)) ) {
+	if ( ((dlg_db_mode==DB_MODE_REALTIME || dlg_db_mode==DB_MODE_DELAYED)
+				&& (rank>0 || rank==PROC_TIMER || rank==PROC_RPC))
+			|| (dlg_db_mode==DB_MODE_SHUTDOWN && (rank==PROC_POSTCHILDINIT)) ) {
 		if ( dlg_connect_db(&db_url) ) {
 			LM_ERR("failed to connect to database (rank=%d)\n",rank);
 			return -1;
@@ -786,7 +824,7 @@ static int child_init(int rank)
 
 	/* in DB_MODE_SHUTDOWN only PROC_MAIN will do a DB dump at the end, so
 	 * for the rest of the processes will be the same as DB_MODE_NONE */
-	if (dlg_db_mode==DB_MODE_SHUTDOWN && rank!=PROC_MAIN)
+	if (dlg_db_mode==DB_MODE_SHUTDOWN && rank!=PROC_POSTCHILDINIT)
 		dlg_db_mode = DB_MODE_NONE;
 	/* in DB_MODE_REALTIME and DB_MODE_DELAYED the PROC_MAIN have no DB handle */
 	if ( (dlg_db_mode==DB_MODE_REALTIME || dlg_db_mode==DB_MODE_DELAYED) &&
@@ -1097,6 +1135,240 @@ static int w_dlg_manage(struct sip_msg *msg, char *s1, char *s2)
 	return dlg_manage(msg);
 }
 
+static int fixup_dlg_dlg_req_within(void** param, int param_no)
+{
+	char *val;
+	int n = 0;
+
+	if (param_no==1) {
+		val = (char*)*param;
+		if (strcasecmp(val,"all")==0) {
+			n = 0;
+		} else if (strcasecmp(val,"caller")==0) {
+			n = 1;
+		} else if (strcasecmp(val,"callee")==0) {
+			n = 2;
+		} else {
+			LM_ERR("invalid param \"%s\"\n", val);
+			return E_CFG;
+		}
+		pkg_free(*param);
+		*param=(void*)(long)n;
+	} else if (param_no==2) {
+		return fixup_spve_null(param, 1);
+	} else {
+		LM_ERR("called with parameter != 1\n");
+		return E_BUG;
+	}
+	return 0;
+}
+
+static int fixup_dlg_req_with_headers(void** param, int param_no)
+{
+	char *val;
+	int n = 0;
+
+	if (param_no==1) {
+		val = (char*)*param;
+		if (strcasecmp(val,"all")==0) {
+			n = 0;
+		} else if (strcasecmp(val,"caller")==0) {
+			n = 1;
+		} else if (strcasecmp(val,"callee")==0) {
+			n = 2;
+		} else {
+			LM_ERR("invalid param \"%s\"\n", val);
+			return E_CFG;
+		}
+		pkg_free(*param);
+		*param=(void*)(long)n;
+	} else if (param_no==2) {
+		return fixup_spve_null(param, 1);
+	} else if (param_no==3) {
+		return fixup_spve_null(param, 1);
+	} else {
+		LM_ERR("called with parameter != 1\n");
+		return E_BUG;
+	}
+	return 0;
+}
+
+
+static int fixup_dlg_req_with_content(void** param, int param_no)
+{
+	char *val;
+	int n = 0;
+
+	if (param_no==1) {
+		val = (char*)*param;
+		if (strcasecmp(val,"all")==0) {
+			n = 0;
+		} else if (strcasecmp(val,"caller")==0) {
+			n = 1;
+		} else if (strcasecmp(val,"callee")==0) {
+			n = 2;
+		} else {
+			LM_ERR("invalid param \"%s\"\n", val);
+			return E_CFG;
+		}
+		pkg_free(*param);
+		*param=(void*)(long)n;
+	} else if (param_no==2) {
+		return fixup_spve_null(param, 1);
+	} else if (param_no==3) {
+		return fixup_spve_null(param, 1);
+	} else if (param_no==4) {
+		return fixup_spve_null(param, 1);
+	} else {
+		LM_ERR("called with parameter != 1\n");
+		return E_BUG;
+	}
+	return 0;
+}
+
+static int fixup_dlg_req_with_headers_and_content(void** param, int param_no)
+{
+	char *val;
+	int n = 0;
+
+	if (param_no==1) {
+		val = (char*)*param;
+		if (strcasecmp(val,"all")==0) {
+			n = 0;
+		} else if (strcasecmp(val,"caller")==0) {
+			n = 1;
+		} else if (strcasecmp(val,"callee")==0) {
+			n = 2;
+		} else {
+			LM_ERR("invalid param \"%s\"\n", val);
+			return E_CFG;
+		}
+		pkg_free(*param);
+		*param=(void*)(long)n;
+	} else if (param_no==2) {
+		return fixup_spve_null(param, 1);
+	} else if (param_no==3) {
+		return fixup_spve_null(param, 1);
+	} else if (param_no==4) {
+		return fixup_spve_null(param, 1);
+	} else if (param_no==5) {
+		return fixup_spve_null(param, 1);
+	} else {
+		LM_ERR("called with parameter != 1\n");
+		return E_BUG;
+	}
+	return 0;
+}
+
+static int w_dlg_req_with_headers_and_content(struct sip_msg *msg, char *side,
+		char *method, char* headers, char *content_type, char *content)
+{
+	dlg_cell_t *dlg = NULL;
+	int n;
+	str str_method = {0,0};
+	str str_headers = {0,0};
+	str str_content_type = {0,0};
+	str str_content = {0,0};
+
+	dlg = dlg_get_ctx_dialog();
+	if(dlg==NULL)
+		return -1;
+
+	if(fixup_get_svalue(msg, (gparam_p)method, &str_method)!=0)
+	{
+		LM_ERR("unable to get Method\n");
+		goto error;
+	}
+	if(str_method.s==NULL || str_method.len == 0)
+	{
+		LM_ERR("invalid Method parameter\n");
+		goto error;
+	}
+
+	if (headers) {
+		if(fixup_get_svalue(msg, (gparam_p)headers, &str_headers)!=0)
+		{
+			LM_ERR("unable to get Method\n");
+			goto error;
+		}
+		if(str_headers.s==NULL || str_headers.len == 0)
+		{
+			LM_ERR("invalid Headers parameter\n");
+			goto error;
+		}
+	}
+	if (content_type && content) {
+		if(fixup_get_svalue(msg, (gparam_p)content_type, &str_content_type)!=0)
+		{
+			LM_ERR("unable to get Content-Type\n");
+			goto error;
+		}
+		if(str_content_type.s==NULL || str_content_type.len == 0)
+		{
+			LM_ERR("invalid Headers parameter\n");
+			goto error;
+		}
+		if(fixup_get_svalue(msg, (gparam_p)content, &str_content)!=0)
+		{
+			LM_ERR("unable to get Content\n");
+			goto error;
+		}
+		if(str_content.s==NULL || str_content.len == 0)
+		{
+			LM_ERR("invalid Content parameter\n");
+			goto error;
+		}
+	}
+
+	n = (int)(long)side;
+	if(n==1)
+	{
+		if(dlg_request_within(msg, dlg, DLG_CALLER_LEG, &str_method, &str_headers,
+					&str_content_type, &str_content)!=0)
+			goto error;
+		goto done;
+	} else if(n==2) {
+		if(dlg_request_within(msg, dlg, DLG_CALLEE_LEG, &str_method, &str_headers,
+					&str_content_type, &str_content)!=0)
+			goto error;
+		goto done;
+	} else {
+		if(dlg_request_within(msg, dlg, DLG_CALLER_LEG, &str_method, &str_headers,
+					&str_content_type, &str_content)!=0)
+			goto error;
+		if(dlg_request_within(msg, dlg, DLG_CALLEE_LEG, &str_method, &str_headers,
+					&str_content_type, &str_content)!=0)
+			goto error;
+		goto done;
+	}
+
+done:
+	dlg_release(dlg);
+	return 1;
+
+error:
+	dlg_release(dlg);
+	return -1;
+}
+
+static int w_dlg_req_with_content(struct sip_msg *msg, char *side, char *method,
+		char *content_type, char *content)
+{
+	return w_dlg_req_with_headers_and_content(msg, side, method, NULL,
+			content_type, content);
+}
+
+static int w_dlg_req_with_headers(struct sip_msg *msg, char *side, char *method,
+		char *headers)
+{
+	return w_dlg_req_with_headers_and_content(msg, side, method, headers, NULL, NULL);
+}
+
+static int w_dlg_req_within(struct sip_msg *msg, char *side, char *method)
+{
+	return w_dlg_req_with_headers_and_content(msg, side, method, NULL, NULL, NULL);
+}
+
 static int w_dlg_bye(struct sip_msg *msg, char *side, char *s2)
 {
 	dlg_cell_t *dlg = NULL;
@@ -1105,7 +1377,7 @@ static int w_dlg_bye(struct sip_msg *msg, char *side, char *s2)
 	dlg = dlg_get_ctx_dialog();
 	if(dlg==NULL)
 		return -1;
-	
+
 	n = (int)(long)side;
 	if(n==1)
 	{
@@ -1140,7 +1412,7 @@ static int w_dlg_refer(struct sip_msg *msg, char *side, char *to)
 	dlg = dlg_get_ctx_dialog();
 	if(dlg==NULL)
 		return -1;
-	
+
 	n = (int)(long)side;
 
 	if(fixup_get_svalue(msg, (gparam_p)to, &st)!=0)
@@ -1394,7 +1666,7 @@ static int w_dlg_reset_property(struct sip_msg *msg, char *prop, char *s2)
 }
 
 static int w_dlg_set_timeout_by_profile3(struct sip_msg *msg, char *profile,
-					char *value, char *timeout_str) 
+					char *value, char *timeout_str)
 {
 	pv_elem_t *pve = NULL;
 	str val_s;
@@ -1402,22 +1674,21 @@ static int w_dlg_set_timeout_by_profile3(struct sip_msg *msg, char *profile,
 	pve = (pv_elem_t *) value;
 
 	if(pve != NULL && ((struct dlg_profile_table *) profile)->has_value) {
-		if(pv_printf_s(msg,pve, &val_s) != 0 || 
-		   !val_s.s || val_s.len == 0) {
+		if(pv_printf_s(msg,pve, &val_s) != 0 || !val_s.s || val_s.len == 0) {
 			LM_WARN("cannot get string for value\n");
 			return -1;
 		}
 	}
 
 	if(dlg_set_timeout_by_profile((struct dlg_profile_table *) profile,
-				   &val_s, atoi(timeout_str)) != 0)
+				&val_s, atoi(timeout_str)) != 0)
 		return -1;
 
 	return 1;
 }
 
-static int w_dlg_set_timeout_by_profile2(struct sip_msg *msg, 
-					 char *profile, char *timeout_str)
+static int w_dlg_set_timeout_by_profile2(struct sip_msg *msg,
+		char *profile, char *timeout_str)
 {
 	return w_dlg_set_timeout_by_profile3(msg, profile, NULL, timeout_str);
 }
@@ -1494,6 +1765,231 @@ static int fixup_dlg_bridge(void** param, int param_no)
 		return E_BUG;
 	}
 	return 0;
+}
+
+static str *ki_dlg_get_var_helper(sip_msg_t *msg, str *sc, str *sf, str *st, str *key)
+{
+	dlg_cell_t *dlg = NULL;
+	unsigned int dir = 0;
+	str *val = NULL;
+
+	if(sc==NULL || sc->s==NULL || sc->len == 0) {
+		LM_ERR("invalid Call-ID parameter\n");
+		return val;
+	}
+	if(sf==NULL || sf->s==NULL || sf->len == 0) {
+		LM_ERR("invalid From tag parameter\n");
+		return val;
+	}
+	if(st==NULL || st->s==NULL || st->len == 0) {
+		LM_ERR("invalid To tag parameter\n");
+		return val;
+	}
+
+	dlg = get_dlg(sc, sf, st, &dir);
+	if(dlg==NULL)
+		return val;
+	val = get_dlg_variable(dlg, key);
+	dlg_release(dlg);
+	return val;
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t _sr_kemi_dialog_xval = {0};
+
+static sr_kemi_xval_t *ki_dlg_get_var(sip_msg_t *msg, str *sc, str *sf, str *st, str *key)
+{
+	str *val = NULL;
+
+	memset(&_sr_kemi_dialog_xval, 0, sizeof(sr_kemi_xval_t));
+
+	val = ki_dlg_get_var_helper(msg, sc, sf, st, key);
+	if(!val) {
+		sr_kemi_xval_null(&_sr_kemi_dialog_xval, SR_KEMI_XVAL_NULL_NONE);
+		return &_sr_kemi_dialog_xval;
+	}
+
+	_sr_kemi_dialog_xval.vtype = SR_KEMIP_STR;
+	_sr_kemi_dialog_xval.v.s = *val;
+
+	return &_sr_kemi_dialog_xval;
+
+}
+
+static int w_dlg_get_var(struct sip_msg *msg, char *ci, char *ft, char *tt, char *key, char *pv)
+{
+	str sc = STR_NULL;
+	str sf = STR_NULL;
+	str st = STR_NULL;
+	str k = STR_NULL;
+	sr_kemi_xval_t *val = NULL;
+	pv_value_t dst_val;
+	pv_spec_t* dst_pv = (pv_spec_t *)pv;
+
+	if(ci==0 || ft==0 || tt==0)
+	{
+		LM_ERR("invalid parameters\n");
+		goto error;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_p)ci, &sc)!=0)
+	{
+		LM_ERR("unable to get Call-ID\n");
+		goto error;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_p)ft, &sf)!=0)
+	{
+		LM_ERR("unable to get From tag\n");
+		goto error;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_p)tt, &st)!=0)
+	{
+		LM_ERR("unable to get To Tag\n");
+		goto error;
+	}
+	if(st.s==NULL || st.len == 0)
+	{
+		LM_ERR("invalid To tag parameter\n");
+		goto error;
+	}
+	if(fixup_get_svalue(msg, (gparam_p)key, &k)!=0)
+	{
+		LM_ERR("unable to get key name\n");
+		goto error;
+	}
+	val = ki_dlg_get_var(msg, &sc, &sf, &st, &k);
+	if(val && val->vtype == SR_KEMIP_STR) {
+		memset(&dst_val, 0, sizeof(pv_value_t));
+		dst_val.flags |= PV_VAL_STR;
+		dst_val.rs.s = val->v.s.s;
+		dst_val.rs.len = val->v.s.len;
+	} else {
+		pv_get_null(msg, NULL, &dst_val);
+	}
+	if(pv_set_spec_value(msg, dst_pv, 0, &dst_val) != 0) {
+		LM_ERR("unable to set value to dst_pv\n");
+		if(val) goto error; else return -1;
+	}
+	return 1;
+
+error:
+	pv_get_null(msg, NULL, &dst_val);
+	if(pv_set_spec_value(msg, dst_pv, 0, &dst_val) != 0) {
+		LM_ERR("unable to set null value to dst_pv\n");
+	}
+	return -1;
+}
+
+static int fixup_dlg_get_var(void** param, int param_no)
+{
+	if(param_no>=1 && param_no<=4)
+		return fixup_spve_null(param, 1);
+	if(param_no==5)
+		return fixup_pvar_all(param, 1);
+	return 0;
+}
+
+static int fixup_dlg_get_var_free(void** param, int param_no)
+{
+	if (param_no <= 4)
+		return fixup_free_spve_null(param, 1);
+	if (param_no == 5)
+		return fixup_free_pvar_all(param, 1);
+	return -1;
+}
+
+static int ki_dlg_set_var(sip_msg_t *msg, str *sc, str *sf, str *st, str *key, str *val)
+{
+	dlg_cell_t *dlg = NULL;
+	unsigned int dir = 0;
+	int ret = 1;
+
+	if(sc==NULL || sc->s==NULL || sc->len == 0) {
+		LM_ERR("invalid Call-ID parameter\n");
+		return -1;
+	}
+	if(sf==NULL || sf->s==NULL || sf->len == 0) {
+		LM_ERR("invalid From tag parameter\n");
+		return -1;
+	}
+	if(st==NULL || st->s==NULL || st->len == 0) {
+		LM_ERR("invalid To tag parameter\n");
+		return -1;
+	}
+
+	dlg = get_dlg(sc, sf, st, &dir);
+	if(dlg==NULL)
+		return -1;
+	if(set_dlg_variable(dlg, key, val) != 0) ret = -1;
+	dlg_release(dlg);
+	return ret;
+}
+
+static int w_dlg_set_var(struct sip_msg *msg, char *ci, char *ft, char *tt, char *key, char *val)
+{
+	str sc = STR_NULL;
+	str sf = STR_NULL;
+	str st = STR_NULL;
+	str k = STR_NULL;
+	str v = STR_NULL;
+
+	if(ci==0 || ft==0 || tt==0)
+	{
+		LM_ERR("invalid parameters\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_p)ci, &sc)!=0)
+	{
+		LM_ERR("unable to get Call-ID\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_p)ft, &sf)!=0)
+	{
+		LM_ERR("unable to get From tag\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_p)tt, &st)!=0)
+	{
+		LM_ERR("unable to get To Tag\n");
+		return -1;
+	}
+	if(st.s==NULL || st.len == 0)
+	{
+		LM_ERR("invalid To tag parameter\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_p)key, &k)!=0)
+	{
+		LM_ERR("unable to get key name\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_p)val, &v)!=0)
+	{
+		LM_ERR("unable to get value\n");
+		return -1;
+	}
+	return ki_dlg_set_var(msg, &sc, &sf, &st, &k, &v);
+}
+
+static int fixup_dlg_set_var(void** param, int param_no)
+{
+	if(param_no>=1 && param_no<=5)
+		return fixup_spve_null(param, 1);
+	return 0;
+}
+
+static int fixup_dlg_set_var_free(void** param, int param_no)
+{
+	if (param_no <= 5)
+		return fixup_free_spve_null(param, 1);
+	return -1;
 }
 
 static int ki_dlg_get(sip_msg_t *msg, str *sc, str *sf, str *st)
@@ -1951,11 +2447,6 @@ static int ki_dlg_var_sets(sip_msg_t *msg, str *name, str *val)
 /**
  *
  */
-static sr_kemi_xval_t _sr_kemi_dialog_xval = {0};
-
-/**
- *
- */
 static sr_kemi_xval_t* ki_dlg_var_get_mode(sip_msg_t *msg, str *name, int rmode)
 {
 	dlg_cell_t *dlg;
@@ -2080,6 +2571,16 @@ static sr_kemi_t sr_kemi_dialog_exports[] = {
 		SR_KEMIP_INT, ki_dlg_get,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dialog"), str_init("dlg_get_var"),
+		SR_KEMIP_XVAL, ki_dlg_get_var,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dialog"), str_init("dlg_set_var"),
+		SR_KEMIP_INT, ki_dlg_set_var,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE }
 	},
 	{ str_init("dialog"), str_init("set_dlg_profile_static"),
 		SR_KEMIP_INT, ki_set_dlg_profile_static,
@@ -2324,10 +2825,20 @@ static inline void internal_rpc_print_dlg(rpc_t *rpc, void *c, dlg_cell_t *dlg,
 	void *h, *sh, *ssh;
 	dlg_profile_link_t *pl;
 	dlg_var_t *var;
+	time_t tnow;
+	int tdur;
 
 	if (rpc->add(c, "{", &h) < 0) goto error;
 
-	rpc->struct_add(h, "dddSSSddddddddd",
+	tnow = time(NULL);
+	if (dlg->end_ts) {
+		tdur = (int)(dlg->end_ts - dlg->start_ts);
+	} else if (dlg->start_ts) {
+		tdur = (int)(tnow - dlg->start_ts);
+	} else {
+		tdur = 0;
+	}
+	rpc->struct_add(h, "dddSSSdddddddddd",
 		"h_entry", dlg->h_entry,
 		"h_id", dlg->h_id,
 		"ref", dlg->ref,
@@ -2338,7 +2849,8 @@ static inline void internal_rpc_print_dlg(rpc_t *rpc, void *c, dlg_cell_t *dlg,
 		"start_ts", dlg->start_ts,
 		"init_ts", dlg->init_ts,
 		"end_ts", dlg->end_ts,
-		"timeout", dlg->tl.timeout ? time(0) + dlg->tl.timeout - get_ticks() : 0,
+		"duration", tdur,
+		"timeout", dlg->tl.timeout ? tnow + dlg->tl.timeout - get_ticks() : 0,
 		"lifetime", dlg->lifetime,
 		"dflags", dlg->dflags,
 		"sflags", dlg->sflags,
@@ -2581,12 +3093,12 @@ static const char *rpc_end_dlg_entry_id_doc[2] = {
 	"End a given dialog based on [h_entry] [h_id]", 0
 };
 static const char *rpc_dlg_terminate_dlg_doc[2] = {
-        "End a given dialog based on callid", 0
+	"End a given dialog based on callid", 0
 };
 static const char *rpc_dlg_set_state_doc[3] = {
-        "Set state for a dialog based on callid and tags",
-        "It is targeting the need to update from state 4 (confirmed) to 5 (terminated)",
-        0
+	"Set state for a dialog based on callid and tags",
+	"It is targeting the need to update from state 4 (confirmed) to 5 (terminated)",
+	0
 };
 static const char *rpc_profile_get_size_doc[2] = {
 	"Returns the number of dialogs belonging to a profile", 0
@@ -2652,10 +3164,10 @@ static void rpc_dlg_terminate_dlg(rpc_t *rpc,void *c){
 	LM_DBG("Dialog bye return code %d \n",ret);
 
 	if(ret>=0) {
-        LM_WARN("Dialog is terminated callid: '%.*s' \n",
-        		callid.len, callid.s);
-        dlg_release(dlg);
-    }
+		LM_WARN("Dialog is terminated callid: '%.*s' \n",
+		callid.len, callid.s);
+		dlg_release(dlg);
+	}
 }
 
 static void rpc_dlg_set_state(rpc_t *rpc,void *c){
@@ -2706,7 +3218,7 @@ static void rpc_dlg_set_state(rpc_t *rpc,void *c){
 		dlg->init_ts = (unsigned int)(time(0));
 		dlg->end_ts = (unsigned int)(time(0));
 	}
-	dlg->dflags |= DLG_FLAG_NEW;
+	dlg->dflags |= DLG_FLAG_CHANGED;
 
 	dlg_unref(dlg, unref);
 
@@ -2746,7 +3258,7 @@ static void rpc_dlg_is_alive(rpc_t *rpc, void *c)
 		return;
 	}
 	state = dlg->state;
-    dlg_release(dlg);
+	dlg_release(dlg);
 	if (state != DLG_STATE_CONFIRMED) {
 		LM_DBG("Dialog with Call-ID '%.*s' is in state: %d (confirmed: %d)\n",
 				callid.len, callid.s, state, DLG_STATE_CONFIRMED);
@@ -2858,16 +3370,21 @@ static void rpc_dlg_stats_active(rpc_t *rpc, void *c)
 {
 	dlg_cell_t *dlg;
 	unsigned int i;
+	int dlg_own = 0;
 	int dlg_starting = 0;
 	int dlg_connecting = 0;
 	int dlg_answering = 0;
 	int dlg_ongoing = 0;
 	void *h;
 
+	if(rpc->scan(c, "*d", &dlg_own) < 1)
+		dlg_own = 0;
 	for( i=0 ; i<d_table->size ; i++ ) {
 		dlg_lock( d_table, &(d_table->entries[i]) );
 
 		for( dlg=d_table->entries[i].first ; dlg ; dlg=dlg->next ) {
+			if(dlg_own != 0 && dlg->bind_addr[0] == NULL)
+				continue;
 			switch(dlg->state) {
 				case DLG_STATE_UNCONFIRMED:
 					dlg_starting++;
@@ -2916,6 +3433,8 @@ static void rpc_dlg_list_match_ex(rpc_t *rpc, void *c, int with_context)
 	str mop = {NULL, 0};
 	str mval = {NULL, 0};
 	str sval = {NULL, 0};
+	unsigned int ival = 0;
+	unsigned int mival = 0;
 	int n = 0;
 	int m = 0;
 	int vkey = 0;
@@ -2944,6 +3463,8 @@ static void rpc_dlg_list_match_ex(rpc_t *rpc, void *c, int with_context)
 		vkey = 2;
 	} else if(mkey.len==6 && strncmp(mkey.s, "callid", mkey.len)==0) {
 		vkey = 3;
+	} else if(mkey.len==8 && strncmp(mkey.s, "start_ts", mkey.len)==0) {
+		vkey = 4;
 	} else {
 		LM_ERR("invalid key %.*s\n", mkey.len, mkey.s);
 		rpc->fault(c, 500, "Invalid matching key parameter");
@@ -2967,6 +3488,10 @@ static void rpc_dlg_list_match_ex(rpc_t *rpc, void *c, int with_context)
 		}
 	} else if(strncmp(mop.s, "sw", 2)==0) {
 		vop = 2;
+	} else if(strncmp(mop.s, "gt", 2)==0) {
+		vop = 3;
+	} else if(strncmp(mop.s, "lt", 2)==0) {
+		vop = 4;
 	} else {
 		LM_ERR("invalid matching operator %.*s\n", mop.len, mop.s);
 		rpc->fault(c, 500, "Invalid matching operator parameter");
@@ -2974,6 +3499,18 @@ static void rpc_dlg_list_match_ex(rpc_t *rpc, void *c, int with_context)
 	}
 	if(rpc->scan(c, "*d", &n)<1) {
 		n = 0;
+	}
+
+	if (vkey == 4  && vop <= 2) {
+		LM_ERR("Matching operator %.*s not supported with start_ts key\n", mop.len, mop.s);
+		rpc->fault(c, 500, "Matching operator not supported with start_ts key");
+		return;
+	}
+
+	if (vkey != 4  && vop >= 3) {
+		LM_ERR("Matching operator %.*s not supported with key %.*s\n", mop.len, mop.s, mkey.len, mkey.s);
+		rpc->fault(c, 500, "Matching operator not supported");
+		return;
 	}
 
 	for(i=0; i<d_table->size; i++) {
@@ -2992,6 +3529,9 @@ static void rpc_dlg_list_match_ex(rpc_t *rpc, void *c, int with_context)
 				break;
 				case 3:
 					sval = dlg->callid;
+				break;
+				case 4:
+					ival = dlg->start_ts;
 				break;
 			}
 			switch(vop) {
@@ -3012,6 +3552,17 @@ static void rpc_dlg_list_match_ex(rpc_t *rpc, void *c, int with_context)
 					/* starts with */
 					if(mval.len<=sval.len
 							&& strncmp(mval.s, sval.s, mval.len)==0) {
+						matched = 1;
+					}
+				break;
+				case 3:
+					/* greater than */
+					if (str2int(&mval, &mival) == 0 && ival > mival) {
+						matched = 1;
+					}
+				break;
+				case 4:
+					if (str2int(&mval, &mival) == 0 && ival < mival) {
 						matched = 1;
 					}
 				break;

@@ -42,6 +42,9 @@
 #include "../../core/parser/parser_f.h"
 #include "../../core/parser/sdp/sdp_helpr_funcs.h"
 
+static pv_spec_t *custom_sdp_ip_avp;		/*!< AVP for custom_sdp_ip setting */
+
+
 #define READ(val) \
 	(*(val + 0) + (*(val + 1) << 8) + (*(val + 2) << 16) + (*(val + 3) << 24))
 #define advance(_ptr,_n,_str,_error) \
@@ -407,6 +410,25 @@ int get_sdp_ipaddr_media(struct sip_msg *msg, str *ip_addr) {
         return -1;
     }
 
+    char *s = ip_addr2a(&msg->rcv.src_ip);
+            LM_INFO("=========>msg->rcv.src_ip:%s\n", s);
+//            LM_INFO("=========>msg->contact-body:%.*s\n", msg->contact->body.len, msg->contact->body.s);
+//            LM_INFO("=========>msg->contact-name:%.*s\n", msg->contact->name.len, msg->contact->name.s);
+
+    pv_value_t pv_val;
+    if (custom_sdp_ip_avp) {
+        if ((pv_get_spec_value(msg, custom_sdp_ip_avp, &pv_val) == 0)
+            && (pv_val.flags & PV_VAL_STR) && (pv_val.rs.len > 0)) {
+            ip_addr->s = pv_val.rs.s;
+            ip_addr->len = pv_val.rs.len;
+                    LM_INFO("=========>custom_sdp_ip_avp:%.*s\n",   ip_addr->len,   ip_addr->s);
+
+            return 0;
+        }
+        else
+                LM_DBG("invalid AVP value, using default user from RURI\n");
+    }
+
 
     int sdp_session_num = 0;
     sdp_session = get_sdp_session(msg, sdp_session_num);
@@ -418,9 +440,11 @@ int get_sdp_ipaddr_media(struct sip_msg *msg, str *ip_addr) {
 
     if (sdp_session->ip_addr.s && sdp_session->ip_addr.len > 0) {
                 LM_INFO("sdp_session->ip_addr:%.*s\n", sdp_session->ip_addr.len, sdp_session->ip_addr.s);
+
         ip_addr->s = sdp_session->ip_addr.s;
         ip_addr->len = sdp_session->ip_addr.len;
         trim(ip_addr);
+
     }
     else {
         int sdp_stream_num = 0;
@@ -477,3 +501,8 @@ int get_sdp_port_media(struct sip_msg *msg, str *port){
 
 }
 
+void init_custom_sdp_ip(pv_spec_t *custom_sdp_ip_avp_p)
+{
+    custom_sdp_ip_avp = custom_sdp_ip_avp_p;
+
+}

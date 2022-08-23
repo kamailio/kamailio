@@ -50,12 +50,16 @@ extern int _tps_param_mask_callid;
 extern int _tps_contact_mode;
 extern str _tps_cparam_name;
 extern int _tps_rr_update;
+extern int _tps_header_mode;
 
 extern str _tps_context_param;
 extern str _tps_context_value;
 
 str _sr_hname_xbranch = str_init("P-SR-XBranch");
 str _sr_hname_xuuid = str_init("P-SR-XUID");
+
+unsigned int _tps_methods_nocontact = METHOD_CANCEL|METHOD_BYE|METHOD_PRACK;
+unsigned int _tps_methods_noinitial = 0;
 
 /**
  *
@@ -268,6 +272,13 @@ int tps_skip_msg(sip_msg_t *msg)
 
 	if((get_cseq(msg)->method_id)&(METHOD_REGISTER|METHOD_PUBLISH))
 		return 1;
+
+	if(_tps_methods_noinitial!=0 && msg->first_line.type==SIP_REQUEST
+			&& get_to(msg)->tag_value.len<=0) {
+		if((get_cseq(msg)->method_id) & _tps_methods_noinitial) {
+			return 1;
+		}
+	}
 
 	return 0;
 }
@@ -582,6 +593,10 @@ int tps_reinsert_contact(sip_msg_t *msg, tps_data_t *ptsd, str *hbody)
 {
 	str hname = str_init("Contact");
 
+	if (get_cseq(msg)->method_id & _tps_methods_nocontact) {
+		return 0;
+	}
+
 	if(tps_add_headers(msg, &hname, hbody, 0)<0) {
 		return -1;
 	}
@@ -617,9 +632,52 @@ int tps_remove_name_headers(sip_msg_t *msg, str *hname)
 /**
  *
  */
+int tps_reappend_separate_header_values(sip_msg_t *msg, tps_data_t *ptsd, str *hbody, str *hname)
+{
+
+        int i;
+        str sb;
+        char *p = NULL;
+
+        if(hbody==NULL || hbody->s==NULL || hbody->len<=0 || hbody->s[0]=='\0')
+            return 0;
+
+        sb.len = 1;
+        p = hbody->s;
+        for(i=0; i<hbody->len-1; i++) {
+            if(hbody->s[i]==',') {
+                if(sb.len>0) {
+                    sb.s = p;
+                    if(sb.s[sb.len-1]==',') sb.len--;
+                    if(tps_add_headers(msg, hname, &sb, 0)<0) {
+                        return -1;
+                    }
+                }
+                sb.len = 0;
+                p = hbody->s + i + 1;
+            }
+            sb.len++;
+        }
+
+
+        if(sb.len>0) {
+                sb.s = p;
+                if(sb.s[sb.len-1]==',') sb.len--;
+                if(tps_add_headers(msg, hname, &sb, 0)<0) {
+                    return -1;
+                }
+        }
+
+
+        return 0;
+}
+
 int tps_reappend_via(sip_msg_t *msg, tps_data_t *ptsd, str *hbody)
 {
 	str hname = str_init("Via");
+
+	if (TPS_SPLIT_VIA & _tps_header_mode)
+		return tps_reappend_separate_header_values(msg, ptsd, hbody,&hname);
 
 	if(tps_add_headers(msg, &hname, hbody, 0)<0) {
 		return -1;
@@ -730,6 +788,9 @@ int tps_reappend_rr(sip_msg_t *msg, tps_data_t *ptsd, str *hbody)
 {
 	str hname = str_init("Record-Route");
 
+	if (TPS_SPLIT_RECORD_ROUTE & _tps_header_mode)
+		return tps_reappend_separate_header_values(msg, ptsd, hbody,&hname);
+
 	if(tps_add_headers(msg, &hname, hbody, 0)<0) {
 		return -1;
 	}
@@ -784,6 +845,8 @@ int tps_reappend_route(sip_msg_t *msg, tps_data_t *ptsd, str *hbody, int rev)
 	trim_zeros_lr(&sb);
 	trim(&sb);
 	if(sb.len>0 && sb.s[sb.len-1]==',') sb.len--;
+	if (TPS_SPLIT_ROUTE & _tps_header_mode)
+		return tps_reappend_separate_header_values(msg, ptsd, &sb,&hname);
 	if(tps_add_headers(msg, &hname, &sb, 0)<0) {
 		return -1;
 	}
@@ -803,6 +866,7 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 	uint32_t direction = TPS_DIR_DOWNSTREAM;
 	int ret;
 	int use_branch = 0;
+	unsigned int metid = 0;
 
 	LM_DBG("handling incoming request\n");
 
@@ -835,10 +899,11 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 	if(tps_storage_load_dialog(msg, &mtsd, &stsd) < 0) {
 		goto error;
 	}
-	if(((get_cseq(msg)->method_id) & (METHOD_BYE|METHOD_PRACK|METHOD_UPDATE))
+	metid = get_cseq(msg)->method_id;
+	if((metid & (METHOD_BYE|METHOD_INFO|METHOD_PRACK|METHOD_UPDATE))
 			&& stsd.b_contact.len <= 0) {
 		/* no B-side contact, look for INVITE transaction record */
-		if((get_cseq(msg)->method_id) & (METHOD_UPDATE)) {
+		if(metid & (METHOD_BYE|METHOD_UPDATE)) {
 			/* detect direction - via from-tag */
 			if(tps_dlg_detect_direction(msg, &stsd, &direction) < 0) {
 				goto error;
@@ -861,10 +926,9 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 		mtsd.direction = direction;
 	}
 
-
 	tps_storage_lock_release(&lkey);
 
-	if(use_branch) {
+	if(use_branch && direction == TPS_DIR_DOWNSTREAM) {
 		nuri = stsd.b_contact;
 	} else {
 		if(direction == TPS_DIR_UPSTREAM) {
@@ -882,7 +946,7 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 		}
 	}
 
-	if(use_branch) {
+	if(use_branch && direction == TPS_DIR_DOWNSTREAM) {
 		if(tps_reappend_route(msg, &stsd, &stsd.s_rr, 1) < 0) {
 			LM_ERR("failed to reappend s-route\n");
 			return -1;
@@ -916,7 +980,7 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 				goto error;
 			}
 		}
-		if((get_cseq(msg)->method_id)&(METHOD_SUBSCRIBE)) {
+		if(metid & METHOD_SUBSCRIBE) {
 			if(tps_storage_update_dialog(msg, &mtsd, &stsd, TPS_DBU_CONTACT|TPS_DBU_TIME)<0) {
 				goto error;
 			}
@@ -1157,6 +1221,11 @@ int tps_response_sent(sip_msg_t *msg)
 	}
 	if(contact_keep==0 && msg->first_line.u.reply.statuscode>100
 				&& msg->first_line.u.reply.statuscode<200
+				&& msg->contact==NULL) {
+		contact_keep = 1;
+	}
+	if(contact_keep==0 && msg->first_line.u.reply.statuscode>=400
+				&& msg->first_line.u.reply.statuscode<500
 				&& msg->contact==NULL) {
 		contact_keep = 1;
 	}

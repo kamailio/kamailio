@@ -6,30 +6,31 @@ DIST=focal
 rm -rf ${DIST}
 cp -r debian ${DIST}
 
-# No mi_xmlrpc module
-sed -i -e '/libxmlrpc-c3-dev/d' -e '/^Package: kamailio-xmlrpc-modules/,/^$/d' \
-	${DIST}/control
-sed -i -e 's/ mi_xmlrpc[ ,$]*/ /' ${DIST}/rules
-sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ mi_xmlrpc/' ${DIST}/rules
-
 # No dnssec module:
 sed -i -e '/libval-dev/d' -e '/^Package: kamailio-dnssec-modules/,/^$/d' \
   ${DIST}/control
-sed -i -e 's/ dnssec[ ,$]*/ /' ${DIST}/rules
-sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ dnssec/' ${DIST}/rules
+sed -i -e '/^PACKAGE_GROUPS += dnssec/d' ${DIST}/rules
+sed -i -e '/--EXCLUDED--/i EXTRA_EXCLUDED_MODULES += dnssec' ${DIST}/rules
 
 # No app_java due lack of gcj-jdk
 sed -i -e '/gcj-jdk/d' -e '/^Package: kamailio-java-modules/,/^$/d' \
   ${DIST}/control
 sed -i -e '/^export JAVA_HOME/d' ${DIST}/rules
-sed -i -e 's/ java[ ,$]*/ /' ${DIST}/rules
-sed -i -e '/^EXCLUDED_MODULES=/s/$/ java/' ${DIST}/rules
+sed -i -e '/^PACKAGE_GROUPS += java/d' ${DIST}/rules
+sed -i -e '/--EXCLUDED--/i EXTRA_EXCLUDED_MODULES += java' ${DIST}/rules
 
 # No secsipid module
 sed -i -e '/libsecsipid-dev/d' -e '/^Package: kamailio-secsipid-modules/,/^$/d' \
 	${DIST}/control
-sed -i -e 's/ secsipid[ ,$]*/ /' ${DIST}/rules
-sed -i -e '/^EXTRA_EXCLUDED_MODULES=/s/$/ secsipid/' ${DIST}/rules
+sed -i -e '/^PACKAGE_GROUPS += secsipid/d' ${DIST}/rules
+sed -i -e '/--EXCLUDED--/i EXTRA_EXCLUDED_MODULES += secsipid' ${DIST}/rules
+
+# no libnats-dev
+sed -i -e '/^ libnats-dev,/d' \
+  -e '/^Package: kamailio-nats-modules/,/^$/d' \
+  ${DIST}/control
+sed -i -e '/^PACKAGE_GROUPS += nats/d' ${DIST}/rules
+sed -i -e '/--EXCLUDED--/i EXTRA_EXCLUDED_MODULES += nats' ${DIST}/rules
 
 wrap-and-sort -sat -d ${DIST}
 

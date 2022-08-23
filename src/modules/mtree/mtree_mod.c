@@ -175,37 +175,37 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if(pv_parse_spec(&value_param, &pv_value)<00
+	if(pv_parse_spec(&value_param, &pv_value) < 0
 			|| !(pv_is_w(&pv_value)))
 	{
-		LM_ERR("cannot parse value pv or is read only\n");
+		LM_ERR("cannot parse value pv or pv is read-only\n");
 		return -1;
 	}
 
-	if (pv_parse_spec(&values_param, &pv_values) <0
+	if (pv_parse_spec(&values_param, &pv_values) < 0
 			|| pv_values.type != PVT_AVP) {
 		LM_ERR("cannot parse values avp\n");
 		return -1;
 	}
 
-	if(pv_parse_spec(&dstid_param, &pv_dstid)<0
+	if(pv_parse_spec(&dstid_param, &pv_dstid) < 0
 			|| pv_dstid.type!=PVT_AVP)
 	{
 		LM_ERR("cannot parse dstid avp\n");
 		return -1;
 	}
 
-	if(pv_parse_spec(&weight_param, &pv_weight)<0
+	if(pv_parse_spec(&weight_param, &pv_weight) < 0
 			|| pv_weight.type!=PVT_AVP)
 	{
-		LM_ERR("cannot parse dstid avp\n");
+		LM_ERR("cannot parse weight avp\n");
 		return -1;
 	}
 
-	if(pv_parse_spec(&count_param, &pv_count)<0
-			|| !(pv_is_w(&pv_weight)))
+	if(pv_parse_spec(&count_param, &pv_count) < 0
+			|| !(pv_is_w(&pv_count)))
 	{
-		LM_ERR("cannot parse count pv or is read-only\n");
+		LM_ERR("cannot parse count pv or pv is read-only\n");
 		return -1;
 	}
 
@@ -220,7 +220,7 @@ static int mod_init(void)
 	LM_DBG("mt_char_list=%s \n", mt_char_list.s);
 	mt_char_table_init();
 
-	/* binding to mysql module */
+	/* binding to database module */
 	if(db_bind_mod(&db_url, &mt_dbf))
 	{
 		LM_ERR("database module not found\n");
@@ -318,18 +318,6 @@ error1:
 	return -1;
 }
 
-static int mt_child_init(void)
-{
-	db_con = mt_dbf.init(&db_url);
-	if(db_con==NULL)
-	{
-		LM_ERR("failed to connect to database\n");
-		return -1;
-	}
-
-	return 0;
-}
-
 
 /* each child get a new connection to the database */
 static int child_init(int rank)
@@ -338,9 +326,12 @@ static int child_init(int rank)
 	if (rank==PROC_INIT || rank==PROC_MAIN || rank==PROC_TCP_MAIN)
 		return 0;
 
-	if ( mt_child_init()!=0 )
+	db_con = mt_dbf.init(&db_url);
+	if(db_con==NULL)
+	{
+		LM_ERR("failed to connect to database\n");
 		return -1;
-
+	}
 	LM_DBG("#%d: database connection opened successfully\n", rank);
 
 	return 0;
@@ -614,7 +605,7 @@ static int mt_load_db(m_tree_t *pt)
 		if(RES_ROWS(db_res)[0].values[0].type != DB1_STRING
 				|| RES_ROWS(db_res)[0].values[1].type != DB1_STRING)
 		{
-			LM_ERR("wrond column types in db table (%d / %d)\n",
+			LM_ERR("wrong column types in db table (%d / %d)\n",
 					RES_ROWS(db_res)[0].values[0].type,
 					RES_ROWS(db_res)[0].values[1].type);
 			goto error;
@@ -929,61 +920,62 @@ void rpc_mtree_reload(rpc_t* rpc, void* c)
 {
 	str tname = {0, 0};
 	m_tree_t *pt = NULL;
-	int treloaded = 0;
+	int treeloaded = 0;
 
 	if(db_table.len>0)
 	{
 		/* re-loading all information from database */
 		if(mt_load_db_trees()!=0)
 		{
-			LM_ERR("cannot re-load mtrees from database\n");
-			goto error;
+			rpc->fault(c, 500, "Can not reload Mtrees from database.");
+			LM_ERR("RPC failed: cannot reload mtrees from database\n");
+			return;
 		}
-	} else {
-		if(!mt_defined_trees())
-		{
-			LM_ERR("empty mtree list\n");
-			goto error;
-		}
+		rpc->rpl_printf(c, "Ok. Mtrees reloaded.");
+		return;
+	}
+	if(!mt_defined_trees())
+	{
+		rpc->fault(c, 500, "No Mtrees defined.");
+		LM_ERR("RPC failed: No Mtrees defined\n");
+		return;
+	}
 
-		/* read tree name */
-		if (rpc->scan(c, "S", &tname) != 1) {
+	/* read tree name */
+	if (rpc->scan(c, "S", &tname) != 1) {
+		tname.s = 0;
+		tname.len = 0;
+	} else {
+		if(*tname.s=='.') {
 			tname.s = 0;
 			tname.len = 0;
-		} else {
-			if(*tname.s=='.') {
-				tname.s = 0;
-				tname.len = 0;
-			}
-		}
-
-		pt = mt_get_first_tree();
-
-		while(pt!=NULL)
-		{
-			if(tname.s==NULL
-					|| (tname.s!=NULL && pt->tname.len>=tname.len
-						&& strncmp(pt->tname.s, tname.s, tname.len)==0))
-			{
-				/* re-loading table from database */
-				if(mt_load_db(pt)!=0)
-				{
-					LM_ERR("cannot re-load mtree from database\n");
-					goto error;
-				}
-				treloaded = 1;
-			}
-			pt = pt->next;
-		}
-		if(treloaded == 0) {
-			rpc->fault(c, 500, "No Mtree Name Matching");
 		}
 	}
 
-	return;
+	pt = mt_get_first_tree();
 
-error:
-	rpc->fault(c, 500, "Mtree Reload Failed");
+	while(pt!=NULL)
+	{
+		if(tname.s==NULL
+				|| (tname.s!=NULL && pt->tname.len>=tname.len
+					&& strncmp(pt->tname.s, tname.s, tname.len)==0))
+		{
+			/* re-loading table from database */
+			if(mt_load_db(pt)!=0)
+			{
+				rpc->fault(c, 500, "Mtree Reload Failed");
+				LM_ERR("RPC failed: cannot reload mtrees from database\n");
+				return;
+			}
+			treeloaded = 1;
+		}
+		pt = pt->next;
+	}
+	if(treeloaded == 0) {
+		rpc->fault(c, 500, "Can not find specified Mtree");	
+	}
+	rpc->rpl_printf(c, "Ok. Mtree reloaded.");
+	return;
 }
 
 static const char* rpc_mtree_reload_doc[2] = {
@@ -1029,7 +1021,7 @@ again:
 	if(tr==NULL)
 	{
 		/* no tree with such name*/
-		rpc->fault(ctx, 404, "Not found tree");
+		rpc->fault(ctx, 404, "Tree not found");
 		goto error;
 	}
 
@@ -1038,7 +1030,7 @@ again:
 		LM_DBG("no prefix found in [%.*s] for [%.*s]\n",
 				tname.len, tname.s,
 				tomatch.len, tomatch.s);
-		rpc->fault(ctx, 404, "Not found");
+		rpc->fault(ctx, 404, "Prefix not found");
 	}
 
 error:

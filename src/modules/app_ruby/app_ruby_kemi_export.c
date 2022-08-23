@@ -8228,6 +8228,4102 @@ static VALUE sr_kemi_ruby_exec_func_1023(int argc, VALUE* argv, VALUE self)
 /**
  *
  */
+static VALUE sr_kemi_ruby_exec_func_1024(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1024, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1025(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1025, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1026(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1026, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1027(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1027, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1028(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1028, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1029(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1029, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1030(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1030, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1031(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1031, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1032(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1032, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1033(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1033, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1034(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1034, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1035(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1035, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1036(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1036, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1037(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1037, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1038(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1038, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1039(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1039, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1040(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1040, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1041(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1041, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1042(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1042, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1043(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1043, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1044(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1044, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1045(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1045, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1046(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1046, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1047(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1047, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1048(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1048, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1049(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1049, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1050(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1050, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1051(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1051, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1052(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1052, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1053(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1053, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1054(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1054, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1055(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1055, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1056(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1056, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1057(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1057, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1058(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1058, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1059(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1059, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1060(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1060, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1061(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1061, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1062(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1062, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1063(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1063, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1064(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1064, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1065(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1065, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1066(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1066, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1067(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1067, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1068(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1068, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1069(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1069, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1070(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1070, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1071(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1071, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1072(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1072, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1073(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1073, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1074(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1074, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1075(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1075, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1076(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1076, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1077(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1077, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1078(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1078, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1079(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1079, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1080(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1080, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1081(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1081, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1082(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1082, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1083(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1083, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1084(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1084, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1085(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1085, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1086(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1086, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1087(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1087, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1088(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1088, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1089(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1089, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1090(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1090, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1091(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1091, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1092(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1092, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1093(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1093, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1094(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1094, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1095(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1095, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1096(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1096, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1097(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1097, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1098(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1098, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1099(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1099, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1100(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1100, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1101(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1101, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1102(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1102, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1103(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1103, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1104(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1104, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1105(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1105, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1106(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1106, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1107(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1107, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1108(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1108, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1109(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1109, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1110(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1110, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1111(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1111, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1112(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1112, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1113(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1113, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1114(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1114, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1115(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1115, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1116(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1116, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1117(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1117, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1118(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1118, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1119(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1119, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1120(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1120, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1121(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1121, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1122(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1122, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1123(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1123, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1124(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1124, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1125(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1125, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1126(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1126, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1127(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1127, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1128(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1128, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1129(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1129, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1130(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1130, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1131(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1131, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1132(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1132, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1133(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1133, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1134(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1134, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1135(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1135, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1136(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1136, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1137(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1137, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1138(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1138, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1139(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1139, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1140(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1140, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1141(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1141, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1142(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1142, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1143(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1143, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1144(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1144, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1145(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1145, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1146(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1146, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1147(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1147, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1148(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1148, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1149(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1149, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1150(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1150, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1151(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1151, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1152(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1152, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1153(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1153, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1154(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1154, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1155(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1155, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1156(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1156, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1157(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1157, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1158(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1158, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1159(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1159, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1160(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1160, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1161(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1161, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1162(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1162, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1163(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1163, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1164(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1164, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1165(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1165, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1166(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1166, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1167(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1167, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1168(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1168, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1169(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1169, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1170(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1170, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1171(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1171, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1172(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1172, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1173(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1173, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1174(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1174, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1175(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1175, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1176(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1176, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1177(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1177, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1178(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1178, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1179(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1179, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1180(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1180, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1181(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1181, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1182(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1182, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1183(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1183, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1184(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1184, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1185(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1185, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1186(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1186, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1187(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1187, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1188(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1188, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1189(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1189, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1190(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1190, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1191(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1191, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1192(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1192, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1193(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1193, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1194(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1194, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1195(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1195, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1196(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1196, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1197(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1197, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1198(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1198, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1199(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1199, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1200(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1200, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1201(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1201, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1202(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1202, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1203(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1203, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1204(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1204, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1205(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1205, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1206(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1206, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1207(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1207, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1208(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1208, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1209(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1209, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1210(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1210, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1211(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1211, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1212(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1212, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1213(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1213, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1214(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1214, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1215(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1215, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1216(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1216, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1217(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1217, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1218(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1218, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1219(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1219, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1220(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1220, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1221(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1221, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1222(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1222, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1223(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1223, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1224(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1224, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1225(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1225, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1226(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1226, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1227(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1227, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1228(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1228, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1229(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1229, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1230(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1230, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1231(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1231, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1232(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1232, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1233(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1233, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1234(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1234, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1235(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1235, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1236(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1236, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1237(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1237, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1238(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1238, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1239(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1239, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1240(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1240, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1241(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1241, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1242(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1242, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1243(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1243, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1244(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1244, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1245(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1245, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1246(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1246, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1247(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1247, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1248(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1248, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1249(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1249, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1250(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1250, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1251(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1251, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1252(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1252, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1253(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1253, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1254(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1254, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1255(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1255, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1256(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1256, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1257(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1257, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1258(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1258, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1259(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1259, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1260(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1260, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1261(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1261, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1262(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1262, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1263(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1263, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1264(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1264, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1265(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1265, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1266(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1266, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1267(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1267, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1268(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1268, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1269(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1269, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1270(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1270, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1271(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1271, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1272(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1272, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1273(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1273, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1274(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1274, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1275(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1275, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1276(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1276, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1277(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1277, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1278(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1278, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1279(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1279, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1280(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1280, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1281(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1281, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1282(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1282, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1283(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1283, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1284(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1284, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1285(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1285, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1286(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1286, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1287(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1287, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1288(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1288, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1289(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1289, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1290(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1290, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1291(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1291, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1292(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1292, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1293(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1293, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1294(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1294, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1295(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1295, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1296(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1296, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1297(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1297, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1298(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1298, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1299(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1299, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1300(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1300, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1301(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1301, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1302(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1302, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1303(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1303, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1304(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1304, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1305(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1305, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1306(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1306, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1307(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1307, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1308(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1308, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1309(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1309, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1310(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1310, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1311(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1311, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1312(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1312, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1313(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1313, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1314(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1314, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1315(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1315, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1316(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1316, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1317(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1317, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1318(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1318, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1319(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1319, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1320(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1320, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1321(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1321, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1322(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1322, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1323(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1323, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1324(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1324, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1325(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1325, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1326(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1326, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1327(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1327, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1328(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1328, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1329(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1329, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1330(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1330, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1331(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1331, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1332(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1332, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1333(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1333, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1334(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1334, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1335(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1335, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1336(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1336, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1337(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1337, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1338(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1338, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1339(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1339, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1340(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1340, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1341(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1341, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1342(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1342, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1343(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1343, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1344(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1344, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1345(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1345, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1346(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1346, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1347(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1347, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1348(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1348, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1349(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1349, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1350(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1350, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1351(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1351, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1352(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1352, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1353(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1353, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1354(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1354, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1355(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1355, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1356(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1356, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1357(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1357, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1358(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1358, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1359(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1359, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1360(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1360, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1361(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1361, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1362(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1362, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1363(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1363, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1364(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1364, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1365(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1365, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1366(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1366, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1367(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1367, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1368(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1368, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1369(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1369, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1370(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1370, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1371(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1371, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1372(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1372, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1373(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1373, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1374(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1374, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1375(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1375, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1376(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1376, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1377(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1377, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1378(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1378, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1379(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1379, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1380(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1380, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1381(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1381, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1382(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1382, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1383(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1383, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1384(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1384, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1385(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1385, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1386(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1386, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1387(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1387, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1388(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1388, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1389(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1389, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1390(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1390, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1391(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1391, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1392(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1392, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1393(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1393, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1394(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1394, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1395(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1395, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1396(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1396, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1397(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1397, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1398(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1398, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1399(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1399, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1400(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1400, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1401(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1401, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1402(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1402, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1403(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1403, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1404(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1404, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1405(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1405, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1406(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1406, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1407(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1407, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1408(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1408, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1409(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1409, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1410(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1410, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1411(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1411, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1412(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1412, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1413(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1413, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1414(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1414, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1415(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1415, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1416(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1416, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1417(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1417, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1418(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1418, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1419(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1419, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1420(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1420, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1421(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1421, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1422(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1422, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1423(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1423, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1424(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1424, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1425(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1425, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1426(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1426, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1427(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1427, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1428(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1428, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1429(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1429, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1430(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1430, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1431(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1431, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1432(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1432, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1433(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1433, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1434(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1434, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1435(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1435, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1436(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1436, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1437(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1437, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1438(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1438, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1439(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1439, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1440(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1440, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1441(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1441, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1442(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1442, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1443(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1443, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1444(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1444, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1445(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1445, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1446(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1446, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1447(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1447, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1448(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1448, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1449(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1449, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1450(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1450, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1451(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1451, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1452(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1452, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1453(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1453, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1454(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1454, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1455(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1455, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1456(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1456, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1457(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1457, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1458(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1458, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1459(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1459, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1460(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1460, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1461(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1461, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1462(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1462, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1463(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1463, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1464(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1464, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1465(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1465, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1466(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1466, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1467(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1467, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1468(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1468, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1469(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1469, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1470(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1470, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1471(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1471, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1472(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1472, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1473(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1473, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1474(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1474, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1475(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1475, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1476(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1476, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1477(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1477, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1478(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1478, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1479(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1479, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1480(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1480, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1481(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1481, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1482(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1482, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1483(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1483, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1484(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1484, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1485(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1485, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1486(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1486, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1487(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1487, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1488(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1488, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1489(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1489, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1490(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1490, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1491(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1491, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1492(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1492, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1493(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1493, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1494(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1494, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1495(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1495, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1496(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1496, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1497(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1497, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1498(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1498, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1499(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1499, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1500(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1500, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1501(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1501, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1502(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1502, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1503(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1503, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1504(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1504, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1505(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1505, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1506(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1506, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1507(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1507, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1508(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1508, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1509(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1509, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1510(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1510, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1511(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1511, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1512(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1512, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1513(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1513, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1514(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1514, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1515(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1515, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1516(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1516, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1517(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1517, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1518(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1518, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1519(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1519, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1520(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1520, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1521(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1521, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1522(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1522, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1523(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1523, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1524(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1524, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1525(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1525, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1526(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1526, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1527(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1527, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1528(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1528, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1529(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1529, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1530(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1530, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1531(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1531, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1532(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1532, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1533(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1533, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1534(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1534, argc, argv, self);
+}
+
+/**
+ *
+ */
+static VALUE sr_kemi_ruby_exec_func_1535(int argc, VALUE* argv, VALUE self)
+{
+	return sr_kemi_ruby_exec_func(NULL, 1535, argc, argv, self);
+}
+
+/**
+ *
+ */
 static sr_kemi_ruby_export_t _sr_kemi_ruby_export_list[] = {
 	{ sr_kemi_ruby_exec_func_0, NULL},
 	{ sr_kemi_ruby_exec_func_1, NULL},
@@ -9253,6 +13349,518 @@ static sr_kemi_ruby_export_t _sr_kemi_ruby_export_list[] = {
 	{ sr_kemi_ruby_exec_func_1021, NULL},
 	{ sr_kemi_ruby_exec_func_1022, NULL},
 	{ sr_kemi_ruby_exec_func_1023, NULL},
+	{ sr_kemi_ruby_exec_func_1024, NULL},
+	{ sr_kemi_ruby_exec_func_1025, NULL},
+	{ sr_kemi_ruby_exec_func_1026, NULL},
+	{ sr_kemi_ruby_exec_func_1027, NULL},
+	{ sr_kemi_ruby_exec_func_1028, NULL},
+	{ sr_kemi_ruby_exec_func_1029, NULL},
+	{ sr_kemi_ruby_exec_func_1030, NULL},
+	{ sr_kemi_ruby_exec_func_1031, NULL},
+	{ sr_kemi_ruby_exec_func_1032, NULL},
+	{ sr_kemi_ruby_exec_func_1033, NULL},
+	{ sr_kemi_ruby_exec_func_1034, NULL},
+	{ sr_kemi_ruby_exec_func_1035, NULL},
+	{ sr_kemi_ruby_exec_func_1036, NULL},
+	{ sr_kemi_ruby_exec_func_1037, NULL},
+	{ sr_kemi_ruby_exec_func_1038, NULL},
+	{ sr_kemi_ruby_exec_func_1039, NULL},
+	{ sr_kemi_ruby_exec_func_1040, NULL},
+	{ sr_kemi_ruby_exec_func_1041, NULL},
+	{ sr_kemi_ruby_exec_func_1042, NULL},
+	{ sr_kemi_ruby_exec_func_1043, NULL},
+	{ sr_kemi_ruby_exec_func_1044, NULL},
+	{ sr_kemi_ruby_exec_func_1045, NULL},
+	{ sr_kemi_ruby_exec_func_1046, NULL},
+	{ sr_kemi_ruby_exec_func_1047, NULL},
+	{ sr_kemi_ruby_exec_func_1048, NULL},
+	{ sr_kemi_ruby_exec_func_1049, NULL},
+	{ sr_kemi_ruby_exec_func_1050, NULL},
+	{ sr_kemi_ruby_exec_func_1051, NULL},
+	{ sr_kemi_ruby_exec_func_1052, NULL},
+	{ sr_kemi_ruby_exec_func_1053, NULL},
+	{ sr_kemi_ruby_exec_func_1054, NULL},
+	{ sr_kemi_ruby_exec_func_1055, NULL},
+	{ sr_kemi_ruby_exec_func_1056, NULL},
+	{ sr_kemi_ruby_exec_func_1057, NULL},
+	{ sr_kemi_ruby_exec_func_1058, NULL},
+	{ sr_kemi_ruby_exec_func_1059, NULL},
+	{ sr_kemi_ruby_exec_func_1060, NULL},
+	{ sr_kemi_ruby_exec_func_1061, NULL},
+	{ sr_kemi_ruby_exec_func_1062, NULL},
+	{ sr_kemi_ruby_exec_func_1063, NULL},
+	{ sr_kemi_ruby_exec_func_1064, NULL},
+	{ sr_kemi_ruby_exec_func_1065, NULL},
+	{ sr_kemi_ruby_exec_func_1066, NULL},
+	{ sr_kemi_ruby_exec_func_1067, NULL},
+	{ sr_kemi_ruby_exec_func_1068, NULL},
+	{ sr_kemi_ruby_exec_func_1069, NULL},
+	{ sr_kemi_ruby_exec_func_1070, NULL},
+	{ sr_kemi_ruby_exec_func_1071, NULL},
+	{ sr_kemi_ruby_exec_func_1072, NULL},
+	{ sr_kemi_ruby_exec_func_1073, NULL},
+	{ sr_kemi_ruby_exec_func_1074, NULL},
+	{ sr_kemi_ruby_exec_func_1075, NULL},
+	{ sr_kemi_ruby_exec_func_1076, NULL},
+	{ sr_kemi_ruby_exec_func_1077, NULL},
+	{ sr_kemi_ruby_exec_func_1078, NULL},
+	{ sr_kemi_ruby_exec_func_1079, NULL},
+	{ sr_kemi_ruby_exec_func_1080, NULL},
+	{ sr_kemi_ruby_exec_func_1081, NULL},
+	{ sr_kemi_ruby_exec_func_1082, NULL},
+	{ sr_kemi_ruby_exec_func_1083, NULL},
+	{ sr_kemi_ruby_exec_func_1084, NULL},
+	{ sr_kemi_ruby_exec_func_1085, NULL},
+	{ sr_kemi_ruby_exec_func_1086, NULL},
+	{ sr_kemi_ruby_exec_func_1087, NULL},
+	{ sr_kemi_ruby_exec_func_1088, NULL},
+	{ sr_kemi_ruby_exec_func_1089, NULL},
+	{ sr_kemi_ruby_exec_func_1090, NULL},
+	{ sr_kemi_ruby_exec_func_1091, NULL},
+	{ sr_kemi_ruby_exec_func_1092, NULL},
+	{ sr_kemi_ruby_exec_func_1093, NULL},
+	{ sr_kemi_ruby_exec_func_1094, NULL},
+	{ sr_kemi_ruby_exec_func_1095, NULL},
+	{ sr_kemi_ruby_exec_func_1096, NULL},
+	{ sr_kemi_ruby_exec_func_1097, NULL},
+	{ sr_kemi_ruby_exec_func_1098, NULL},
+	{ sr_kemi_ruby_exec_func_1099, NULL},
+	{ sr_kemi_ruby_exec_func_1100, NULL},
+	{ sr_kemi_ruby_exec_func_1101, NULL},
+	{ sr_kemi_ruby_exec_func_1102, NULL},
+	{ sr_kemi_ruby_exec_func_1103, NULL},
+	{ sr_kemi_ruby_exec_func_1104, NULL},
+	{ sr_kemi_ruby_exec_func_1105, NULL},
+	{ sr_kemi_ruby_exec_func_1106, NULL},
+	{ sr_kemi_ruby_exec_func_1107, NULL},
+	{ sr_kemi_ruby_exec_func_1108, NULL},
+	{ sr_kemi_ruby_exec_func_1109, NULL},
+	{ sr_kemi_ruby_exec_func_1110, NULL},
+	{ sr_kemi_ruby_exec_func_1111, NULL},
+	{ sr_kemi_ruby_exec_func_1112, NULL},
+	{ sr_kemi_ruby_exec_func_1113, NULL},
+	{ sr_kemi_ruby_exec_func_1114, NULL},
+	{ sr_kemi_ruby_exec_func_1115, NULL},
+	{ sr_kemi_ruby_exec_func_1116, NULL},
+	{ sr_kemi_ruby_exec_func_1117, NULL},
+	{ sr_kemi_ruby_exec_func_1118, NULL},
+	{ sr_kemi_ruby_exec_func_1119, NULL},
+	{ sr_kemi_ruby_exec_func_1120, NULL},
+	{ sr_kemi_ruby_exec_func_1121, NULL},
+	{ sr_kemi_ruby_exec_func_1122, NULL},
+	{ sr_kemi_ruby_exec_func_1123, NULL},
+	{ sr_kemi_ruby_exec_func_1124, NULL},
+	{ sr_kemi_ruby_exec_func_1125, NULL},
+	{ sr_kemi_ruby_exec_func_1126, NULL},
+	{ sr_kemi_ruby_exec_func_1127, NULL},
+	{ sr_kemi_ruby_exec_func_1128, NULL},
+	{ sr_kemi_ruby_exec_func_1129, NULL},
+	{ sr_kemi_ruby_exec_func_1130, NULL},
+	{ sr_kemi_ruby_exec_func_1131, NULL},
+	{ sr_kemi_ruby_exec_func_1132, NULL},
+	{ sr_kemi_ruby_exec_func_1133, NULL},
+	{ sr_kemi_ruby_exec_func_1134, NULL},
+	{ sr_kemi_ruby_exec_func_1135, NULL},
+	{ sr_kemi_ruby_exec_func_1136, NULL},
+	{ sr_kemi_ruby_exec_func_1137, NULL},
+	{ sr_kemi_ruby_exec_func_1138, NULL},
+	{ sr_kemi_ruby_exec_func_1139, NULL},
+	{ sr_kemi_ruby_exec_func_1140, NULL},
+	{ sr_kemi_ruby_exec_func_1141, NULL},
+	{ sr_kemi_ruby_exec_func_1142, NULL},
+	{ sr_kemi_ruby_exec_func_1143, NULL},
+	{ sr_kemi_ruby_exec_func_1144, NULL},
+	{ sr_kemi_ruby_exec_func_1145, NULL},
+	{ sr_kemi_ruby_exec_func_1146, NULL},
+	{ sr_kemi_ruby_exec_func_1147, NULL},
+	{ sr_kemi_ruby_exec_func_1148, NULL},
+	{ sr_kemi_ruby_exec_func_1149, NULL},
+	{ sr_kemi_ruby_exec_func_1150, NULL},
+	{ sr_kemi_ruby_exec_func_1151, NULL},
+	{ sr_kemi_ruby_exec_func_1152, NULL},
+	{ sr_kemi_ruby_exec_func_1153, NULL},
+	{ sr_kemi_ruby_exec_func_1154, NULL},
+	{ sr_kemi_ruby_exec_func_1155, NULL},
+	{ sr_kemi_ruby_exec_func_1156, NULL},
+	{ sr_kemi_ruby_exec_func_1157, NULL},
+	{ sr_kemi_ruby_exec_func_1158, NULL},
+	{ sr_kemi_ruby_exec_func_1159, NULL},
+	{ sr_kemi_ruby_exec_func_1160, NULL},
+	{ sr_kemi_ruby_exec_func_1161, NULL},
+	{ sr_kemi_ruby_exec_func_1162, NULL},
+	{ sr_kemi_ruby_exec_func_1163, NULL},
+	{ sr_kemi_ruby_exec_func_1164, NULL},
+	{ sr_kemi_ruby_exec_func_1165, NULL},
+	{ sr_kemi_ruby_exec_func_1166, NULL},
+	{ sr_kemi_ruby_exec_func_1167, NULL},
+	{ sr_kemi_ruby_exec_func_1168, NULL},
+	{ sr_kemi_ruby_exec_func_1169, NULL},
+	{ sr_kemi_ruby_exec_func_1170, NULL},
+	{ sr_kemi_ruby_exec_func_1171, NULL},
+	{ sr_kemi_ruby_exec_func_1172, NULL},
+	{ sr_kemi_ruby_exec_func_1173, NULL},
+	{ sr_kemi_ruby_exec_func_1174, NULL},
+	{ sr_kemi_ruby_exec_func_1175, NULL},
+	{ sr_kemi_ruby_exec_func_1176, NULL},
+	{ sr_kemi_ruby_exec_func_1177, NULL},
+	{ sr_kemi_ruby_exec_func_1178, NULL},
+	{ sr_kemi_ruby_exec_func_1179, NULL},
+	{ sr_kemi_ruby_exec_func_1180, NULL},
+	{ sr_kemi_ruby_exec_func_1181, NULL},
+	{ sr_kemi_ruby_exec_func_1182, NULL},
+	{ sr_kemi_ruby_exec_func_1183, NULL},
+	{ sr_kemi_ruby_exec_func_1184, NULL},
+	{ sr_kemi_ruby_exec_func_1185, NULL},
+	{ sr_kemi_ruby_exec_func_1186, NULL},
+	{ sr_kemi_ruby_exec_func_1187, NULL},
+	{ sr_kemi_ruby_exec_func_1188, NULL},
+	{ sr_kemi_ruby_exec_func_1189, NULL},
+	{ sr_kemi_ruby_exec_func_1190, NULL},
+	{ sr_kemi_ruby_exec_func_1191, NULL},
+	{ sr_kemi_ruby_exec_func_1192, NULL},
+	{ sr_kemi_ruby_exec_func_1193, NULL},
+	{ sr_kemi_ruby_exec_func_1194, NULL},
+	{ sr_kemi_ruby_exec_func_1195, NULL},
+	{ sr_kemi_ruby_exec_func_1196, NULL},
+	{ sr_kemi_ruby_exec_func_1197, NULL},
+	{ sr_kemi_ruby_exec_func_1198, NULL},
+	{ sr_kemi_ruby_exec_func_1199, NULL},
+	{ sr_kemi_ruby_exec_func_1200, NULL},
+	{ sr_kemi_ruby_exec_func_1201, NULL},
+	{ sr_kemi_ruby_exec_func_1202, NULL},
+	{ sr_kemi_ruby_exec_func_1203, NULL},
+	{ sr_kemi_ruby_exec_func_1204, NULL},
+	{ sr_kemi_ruby_exec_func_1205, NULL},
+	{ sr_kemi_ruby_exec_func_1206, NULL},
+	{ sr_kemi_ruby_exec_func_1207, NULL},
+	{ sr_kemi_ruby_exec_func_1208, NULL},
+	{ sr_kemi_ruby_exec_func_1209, NULL},
+	{ sr_kemi_ruby_exec_func_1210, NULL},
+	{ sr_kemi_ruby_exec_func_1211, NULL},
+	{ sr_kemi_ruby_exec_func_1212, NULL},
+	{ sr_kemi_ruby_exec_func_1213, NULL},
+	{ sr_kemi_ruby_exec_func_1214, NULL},
+	{ sr_kemi_ruby_exec_func_1215, NULL},
+	{ sr_kemi_ruby_exec_func_1216, NULL},
+	{ sr_kemi_ruby_exec_func_1217, NULL},
+	{ sr_kemi_ruby_exec_func_1218, NULL},
+	{ sr_kemi_ruby_exec_func_1219, NULL},
+	{ sr_kemi_ruby_exec_func_1220, NULL},
+	{ sr_kemi_ruby_exec_func_1221, NULL},
+	{ sr_kemi_ruby_exec_func_1222, NULL},
+	{ sr_kemi_ruby_exec_func_1223, NULL},
+	{ sr_kemi_ruby_exec_func_1224, NULL},
+	{ sr_kemi_ruby_exec_func_1225, NULL},
+	{ sr_kemi_ruby_exec_func_1226, NULL},
+	{ sr_kemi_ruby_exec_func_1227, NULL},
+	{ sr_kemi_ruby_exec_func_1228, NULL},
+	{ sr_kemi_ruby_exec_func_1229, NULL},
+	{ sr_kemi_ruby_exec_func_1230, NULL},
+	{ sr_kemi_ruby_exec_func_1231, NULL},
+	{ sr_kemi_ruby_exec_func_1232, NULL},
+	{ sr_kemi_ruby_exec_func_1233, NULL},
+	{ sr_kemi_ruby_exec_func_1234, NULL},
+	{ sr_kemi_ruby_exec_func_1235, NULL},
+	{ sr_kemi_ruby_exec_func_1236, NULL},
+	{ sr_kemi_ruby_exec_func_1237, NULL},
+	{ sr_kemi_ruby_exec_func_1238, NULL},
+	{ sr_kemi_ruby_exec_func_1239, NULL},
+	{ sr_kemi_ruby_exec_func_1240, NULL},
+	{ sr_kemi_ruby_exec_func_1241, NULL},
+	{ sr_kemi_ruby_exec_func_1242, NULL},
+	{ sr_kemi_ruby_exec_func_1243, NULL},
+	{ sr_kemi_ruby_exec_func_1244, NULL},
+	{ sr_kemi_ruby_exec_func_1245, NULL},
+	{ sr_kemi_ruby_exec_func_1246, NULL},
+	{ sr_kemi_ruby_exec_func_1247, NULL},
+	{ sr_kemi_ruby_exec_func_1248, NULL},
+	{ sr_kemi_ruby_exec_func_1249, NULL},
+	{ sr_kemi_ruby_exec_func_1250, NULL},
+	{ sr_kemi_ruby_exec_func_1251, NULL},
+	{ sr_kemi_ruby_exec_func_1252, NULL},
+	{ sr_kemi_ruby_exec_func_1253, NULL},
+	{ sr_kemi_ruby_exec_func_1254, NULL},
+	{ sr_kemi_ruby_exec_func_1255, NULL},
+	{ sr_kemi_ruby_exec_func_1256, NULL},
+	{ sr_kemi_ruby_exec_func_1257, NULL},
+	{ sr_kemi_ruby_exec_func_1258, NULL},
+	{ sr_kemi_ruby_exec_func_1259, NULL},
+	{ sr_kemi_ruby_exec_func_1260, NULL},
+	{ sr_kemi_ruby_exec_func_1261, NULL},
+	{ sr_kemi_ruby_exec_func_1262, NULL},
+	{ sr_kemi_ruby_exec_func_1263, NULL},
+	{ sr_kemi_ruby_exec_func_1264, NULL},
+	{ sr_kemi_ruby_exec_func_1265, NULL},
+	{ sr_kemi_ruby_exec_func_1266, NULL},
+	{ sr_kemi_ruby_exec_func_1267, NULL},
+	{ sr_kemi_ruby_exec_func_1268, NULL},
+	{ sr_kemi_ruby_exec_func_1269, NULL},
+	{ sr_kemi_ruby_exec_func_1270, NULL},
+	{ sr_kemi_ruby_exec_func_1271, NULL},
+	{ sr_kemi_ruby_exec_func_1272, NULL},
+	{ sr_kemi_ruby_exec_func_1273, NULL},
+	{ sr_kemi_ruby_exec_func_1274, NULL},
+	{ sr_kemi_ruby_exec_func_1275, NULL},
+	{ sr_kemi_ruby_exec_func_1276, NULL},
+	{ sr_kemi_ruby_exec_func_1277, NULL},
+	{ sr_kemi_ruby_exec_func_1278, NULL},
+	{ sr_kemi_ruby_exec_func_1279, NULL},
+	{ sr_kemi_ruby_exec_func_1280, NULL},
+	{ sr_kemi_ruby_exec_func_1281, NULL},
+	{ sr_kemi_ruby_exec_func_1282, NULL},
+	{ sr_kemi_ruby_exec_func_1283, NULL},
+	{ sr_kemi_ruby_exec_func_1284, NULL},
+	{ sr_kemi_ruby_exec_func_1285, NULL},
+	{ sr_kemi_ruby_exec_func_1286, NULL},
+	{ sr_kemi_ruby_exec_func_1287, NULL},
+	{ sr_kemi_ruby_exec_func_1288, NULL},
+	{ sr_kemi_ruby_exec_func_1289, NULL},
+	{ sr_kemi_ruby_exec_func_1290, NULL},
+	{ sr_kemi_ruby_exec_func_1291, NULL},
+	{ sr_kemi_ruby_exec_func_1292, NULL},
+	{ sr_kemi_ruby_exec_func_1293, NULL},
+	{ sr_kemi_ruby_exec_func_1294, NULL},
+	{ sr_kemi_ruby_exec_func_1295, NULL},
+	{ sr_kemi_ruby_exec_func_1296, NULL},
+	{ sr_kemi_ruby_exec_func_1297, NULL},
+	{ sr_kemi_ruby_exec_func_1298, NULL},
+	{ sr_kemi_ruby_exec_func_1299, NULL},
+	{ sr_kemi_ruby_exec_func_1300, NULL},
+	{ sr_kemi_ruby_exec_func_1301, NULL},
+	{ sr_kemi_ruby_exec_func_1302, NULL},
+	{ sr_kemi_ruby_exec_func_1303, NULL},
+	{ sr_kemi_ruby_exec_func_1304, NULL},
+	{ sr_kemi_ruby_exec_func_1305, NULL},
+	{ sr_kemi_ruby_exec_func_1306, NULL},
+	{ sr_kemi_ruby_exec_func_1307, NULL},
+	{ sr_kemi_ruby_exec_func_1308, NULL},
+	{ sr_kemi_ruby_exec_func_1309, NULL},
+	{ sr_kemi_ruby_exec_func_1310, NULL},
+	{ sr_kemi_ruby_exec_func_1311, NULL},
+	{ sr_kemi_ruby_exec_func_1312, NULL},
+	{ sr_kemi_ruby_exec_func_1313, NULL},
+	{ sr_kemi_ruby_exec_func_1314, NULL},
+	{ sr_kemi_ruby_exec_func_1315, NULL},
+	{ sr_kemi_ruby_exec_func_1316, NULL},
+	{ sr_kemi_ruby_exec_func_1317, NULL},
+	{ sr_kemi_ruby_exec_func_1318, NULL},
+	{ sr_kemi_ruby_exec_func_1319, NULL},
+	{ sr_kemi_ruby_exec_func_1320, NULL},
+	{ sr_kemi_ruby_exec_func_1321, NULL},
+	{ sr_kemi_ruby_exec_func_1322, NULL},
+	{ sr_kemi_ruby_exec_func_1323, NULL},
+	{ sr_kemi_ruby_exec_func_1324, NULL},
+	{ sr_kemi_ruby_exec_func_1325, NULL},
+	{ sr_kemi_ruby_exec_func_1326, NULL},
+	{ sr_kemi_ruby_exec_func_1327, NULL},
+	{ sr_kemi_ruby_exec_func_1328, NULL},
+	{ sr_kemi_ruby_exec_func_1329, NULL},
+	{ sr_kemi_ruby_exec_func_1330, NULL},
+	{ sr_kemi_ruby_exec_func_1331, NULL},
+	{ sr_kemi_ruby_exec_func_1332, NULL},
+	{ sr_kemi_ruby_exec_func_1333, NULL},
+	{ sr_kemi_ruby_exec_func_1334, NULL},
+	{ sr_kemi_ruby_exec_func_1335, NULL},
+	{ sr_kemi_ruby_exec_func_1336, NULL},
+	{ sr_kemi_ruby_exec_func_1337, NULL},
+	{ sr_kemi_ruby_exec_func_1338, NULL},
+	{ sr_kemi_ruby_exec_func_1339, NULL},
+	{ sr_kemi_ruby_exec_func_1340, NULL},
+	{ sr_kemi_ruby_exec_func_1341, NULL},
+	{ sr_kemi_ruby_exec_func_1342, NULL},
+	{ sr_kemi_ruby_exec_func_1343, NULL},
+	{ sr_kemi_ruby_exec_func_1344, NULL},
+	{ sr_kemi_ruby_exec_func_1345, NULL},
+	{ sr_kemi_ruby_exec_func_1346, NULL},
+	{ sr_kemi_ruby_exec_func_1347, NULL},
+	{ sr_kemi_ruby_exec_func_1348, NULL},
+	{ sr_kemi_ruby_exec_func_1349, NULL},
+	{ sr_kemi_ruby_exec_func_1350, NULL},
+	{ sr_kemi_ruby_exec_func_1351, NULL},
+	{ sr_kemi_ruby_exec_func_1352, NULL},
+	{ sr_kemi_ruby_exec_func_1353, NULL},
+	{ sr_kemi_ruby_exec_func_1354, NULL},
+	{ sr_kemi_ruby_exec_func_1355, NULL},
+	{ sr_kemi_ruby_exec_func_1356, NULL},
+	{ sr_kemi_ruby_exec_func_1357, NULL},
+	{ sr_kemi_ruby_exec_func_1358, NULL},
+	{ sr_kemi_ruby_exec_func_1359, NULL},
+	{ sr_kemi_ruby_exec_func_1360, NULL},
+	{ sr_kemi_ruby_exec_func_1361, NULL},
+	{ sr_kemi_ruby_exec_func_1362, NULL},
+	{ sr_kemi_ruby_exec_func_1363, NULL},
+	{ sr_kemi_ruby_exec_func_1364, NULL},
+	{ sr_kemi_ruby_exec_func_1365, NULL},
+	{ sr_kemi_ruby_exec_func_1366, NULL},
+	{ sr_kemi_ruby_exec_func_1367, NULL},
+	{ sr_kemi_ruby_exec_func_1368, NULL},
+	{ sr_kemi_ruby_exec_func_1369, NULL},
+	{ sr_kemi_ruby_exec_func_1370, NULL},
+	{ sr_kemi_ruby_exec_func_1371, NULL},
+	{ sr_kemi_ruby_exec_func_1372, NULL},
+	{ sr_kemi_ruby_exec_func_1373, NULL},
+	{ sr_kemi_ruby_exec_func_1374, NULL},
+	{ sr_kemi_ruby_exec_func_1375, NULL},
+	{ sr_kemi_ruby_exec_func_1376, NULL},
+	{ sr_kemi_ruby_exec_func_1377, NULL},
+	{ sr_kemi_ruby_exec_func_1378, NULL},
+	{ sr_kemi_ruby_exec_func_1379, NULL},
+	{ sr_kemi_ruby_exec_func_1380, NULL},
+	{ sr_kemi_ruby_exec_func_1381, NULL},
+	{ sr_kemi_ruby_exec_func_1382, NULL},
+	{ sr_kemi_ruby_exec_func_1383, NULL},
+	{ sr_kemi_ruby_exec_func_1384, NULL},
+	{ sr_kemi_ruby_exec_func_1385, NULL},
+	{ sr_kemi_ruby_exec_func_1386, NULL},
+	{ sr_kemi_ruby_exec_func_1387, NULL},
+	{ sr_kemi_ruby_exec_func_1388, NULL},
+	{ sr_kemi_ruby_exec_func_1389, NULL},
+	{ sr_kemi_ruby_exec_func_1390, NULL},
+	{ sr_kemi_ruby_exec_func_1391, NULL},
+	{ sr_kemi_ruby_exec_func_1392, NULL},
+	{ sr_kemi_ruby_exec_func_1393, NULL},
+	{ sr_kemi_ruby_exec_func_1394, NULL},
+	{ sr_kemi_ruby_exec_func_1395, NULL},
+	{ sr_kemi_ruby_exec_func_1396, NULL},
+	{ sr_kemi_ruby_exec_func_1397, NULL},
+	{ sr_kemi_ruby_exec_func_1398, NULL},
+	{ sr_kemi_ruby_exec_func_1399, NULL},
+	{ sr_kemi_ruby_exec_func_1400, NULL},
+	{ sr_kemi_ruby_exec_func_1401, NULL},
+	{ sr_kemi_ruby_exec_func_1402, NULL},
+	{ sr_kemi_ruby_exec_func_1403, NULL},
+	{ sr_kemi_ruby_exec_func_1404, NULL},
+	{ sr_kemi_ruby_exec_func_1405, NULL},
+	{ sr_kemi_ruby_exec_func_1406, NULL},
+	{ sr_kemi_ruby_exec_func_1407, NULL},
+	{ sr_kemi_ruby_exec_func_1408, NULL},
+	{ sr_kemi_ruby_exec_func_1409, NULL},
+	{ sr_kemi_ruby_exec_func_1410, NULL},
+	{ sr_kemi_ruby_exec_func_1411, NULL},
+	{ sr_kemi_ruby_exec_func_1412, NULL},
+	{ sr_kemi_ruby_exec_func_1413, NULL},
+	{ sr_kemi_ruby_exec_func_1414, NULL},
+	{ sr_kemi_ruby_exec_func_1415, NULL},
+	{ sr_kemi_ruby_exec_func_1416, NULL},
+	{ sr_kemi_ruby_exec_func_1417, NULL},
+	{ sr_kemi_ruby_exec_func_1418, NULL},
+	{ sr_kemi_ruby_exec_func_1419, NULL},
+	{ sr_kemi_ruby_exec_func_1420, NULL},
+	{ sr_kemi_ruby_exec_func_1421, NULL},
+	{ sr_kemi_ruby_exec_func_1422, NULL},
+	{ sr_kemi_ruby_exec_func_1423, NULL},
+	{ sr_kemi_ruby_exec_func_1424, NULL},
+	{ sr_kemi_ruby_exec_func_1425, NULL},
+	{ sr_kemi_ruby_exec_func_1426, NULL},
+	{ sr_kemi_ruby_exec_func_1427, NULL},
+	{ sr_kemi_ruby_exec_func_1428, NULL},
+	{ sr_kemi_ruby_exec_func_1429, NULL},
+	{ sr_kemi_ruby_exec_func_1430, NULL},
+	{ sr_kemi_ruby_exec_func_1431, NULL},
+	{ sr_kemi_ruby_exec_func_1432, NULL},
+	{ sr_kemi_ruby_exec_func_1433, NULL},
+	{ sr_kemi_ruby_exec_func_1434, NULL},
+	{ sr_kemi_ruby_exec_func_1435, NULL},
+	{ sr_kemi_ruby_exec_func_1436, NULL},
+	{ sr_kemi_ruby_exec_func_1437, NULL},
+	{ sr_kemi_ruby_exec_func_1438, NULL},
+	{ sr_kemi_ruby_exec_func_1439, NULL},
+	{ sr_kemi_ruby_exec_func_1440, NULL},
+	{ sr_kemi_ruby_exec_func_1441, NULL},
+	{ sr_kemi_ruby_exec_func_1442, NULL},
+	{ sr_kemi_ruby_exec_func_1443, NULL},
+	{ sr_kemi_ruby_exec_func_1444, NULL},
+	{ sr_kemi_ruby_exec_func_1445, NULL},
+	{ sr_kemi_ruby_exec_func_1446, NULL},
+	{ sr_kemi_ruby_exec_func_1447, NULL},
+	{ sr_kemi_ruby_exec_func_1448, NULL},
+	{ sr_kemi_ruby_exec_func_1449, NULL},
+	{ sr_kemi_ruby_exec_func_1450, NULL},
+	{ sr_kemi_ruby_exec_func_1451, NULL},
+	{ sr_kemi_ruby_exec_func_1452, NULL},
+	{ sr_kemi_ruby_exec_func_1453, NULL},
+	{ sr_kemi_ruby_exec_func_1454, NULL},
+	{ sr_kemi_ruby_exec_func_1455, NULL},
+	{ sr_kemi_ruby_exec_func_1456, NULL},
+	{ sr_kemi_ruby_exec_func_1457, NULL},
+	{ sr_kemi_ruby_exec_func_1458, NULL},
+	{ sr_kemi_ruby_exec_func_1459, NULL},
+	{ sr_kemi_ruby_exec_func_1460, NULL},
+	{ sr_kemi_ruby_exec_func_1461, NULL},
+	{ sr_kemi_ruby_exec_func_1462, NULL},
+	{ sr_kemi_ruby_exec_func_1463, NULL},
+	{ sr_kemi_ruby_exec_func_1464, NULL},
+	{ sr_kemi_ruby_exec_func_1465, NULL},
+	{ sr_kemi_ruby_exec_func_1466, NULL},
+	{ sr_kemi_ruby_exec_func_1467, NULL},
+	{ sr_kemi_ruby_exec_func_1468, NULL},
+	{ sr_kemi_ruby_exec_func_1469, NULL},
+	{ sr_kemi_ruby_exec_func_1470, NULL},
+	{ sr_kemi_ruby_exec_func_1471, NULL},
+	{ sr_kemi_ruby_exec_func_1472, NULL},
+	{ sr_kemi_ruby_exec_func_1473, NULL},
+	{ sr_kemi_ruby_exec_func_1474, NULL},
+	{ sr_kemi_ruby_exec_func_1475, NULL},
+	{ sr_kemi_ruby_exec_func_1476, NULL},
+	{ sr_kemi_ruby_exec_func_1477, NULL},
+	{ sr_kemi_ruby_exec_func_1478, NULL},
+	{ sr_kemi_ruby_exec_func_1479, NULL},
+	{ sr_kemi_ruby_exec_func_1480, NULL},
+	{ sr_kemi_ruby_exec_func_1481, NULL},
+	{ sr_kemi_ruby_exec_func_1482, NULL},
+	{ sr_kemi_ruby_exec_func_1483, NULL},
+	{ sr_kemi_ruby_exec_func_1484, NULL},
+	{ sr_kemi_ruby_exec_func_1485, NULL},
+	{ sr_kemi_ruby_exec_func_1486, NULL},
+	{ sr_kemi_ruby_exec_func_1487, NULL},
+	{ sr_kemi_ruby_exec_func_1488, NULL},
+	{ sr_kemi_ruby_exec_func_1489, NULL},
+	{ sr_kemi_ruby_exec_func_1490, NULL},
+	{ sr_kemi_ruby_exec_func_1491, NULL},
+	{ sr_kemi_ruby_exec_func_1492, NULL},
+	{ sr_kemi_ruby_exec_func_1493, NULL},
+	{ sr_kemi_ruby_exec_func_1494, NULL},
+	{ sr_kemi_ruby_exec_func_1495, NULL},
+	{ sr_kemi_ruby_exec_func_1496, NULL},
+	{ sr_kemi_ruby_exec_func_1497, NULL},
+	{ sr_kemi_ruby_exec_func_1498, NULL},
+	{ sr_kemi_ruby_exec_func_1499, NULL},
+	{ sr_kemi_ruby_exec_func_1500, NULL},
+	{ sr_kemi_ruby_exec_func_1501, NULL},
+	{ sr_kemi_ruby_exec_func_1502, NULL},
+	{ sr_kemi_ruby_exec_func_1503, NULL},
+	{ sr_kemi_ruby_exec_func_1504, NULL},
+	{ sr_kemi_ruby_exec_func_1505, NULL},
+	{ sr_kemi_ruby_exec_func_1506, NULL},
+	{ sr_kemi_ruby_exec_func_1507, NULL},
+	{ sr_kemi_ruby_exec_func_1508, NULL},
+	{ sr_kemi_ruby_exec_func_1509, NULL},
+	{ sr_kemi_ruby_exec_func_1510, NULL},
+	{ sr_kemi_ruby_exec_func_1511, NULL},
+	{ sr_kemi_ruby_exec_func_1512, NULL},
+	{ sr_kemi_ruby_exec_func_1513, NULL},
+	{ sr_kemi_ruby_exec_func_1514, NULL},
+	{ sr_kemi_ruby_exec_func_1515, NULL},
+	{ sr_kemi_ruby_exec_func_1516, NULL},
+	{ sr_kemi_ruby_exec_func_1517, NULL},
+	{ sr_kemi_ruby_exec_func_1518, NULL},
+	{ sr_kemi_ruby_exec_func_1519, NULL},
+	{ sr_kemi_ruby_exec_func_1520, NULL},
+	{ sr_kemi_ruby_exec_func_1521, NULL},
+	{ sr_kemi_ruby_exec_func_1522, NULL},
+	{ sr_kemi_ruby_exec_func_1523, NULL},
+	{ sr_kemi_ruby_exec_func_1524, NULL},
+	{ sr_kemi_ruby_exec_func_1525, NULL},
+	{ sr_kemi_ruby_exec_func_1526, NULL},
+	{ sr_kemi_ruby_exec_func_1527, NULL},
+	{ sr_kemi_ruby_exec_func_1528, NULL},
+	{ sr_kemi_ruby_exec_func_1529, NULL},
+	{ sr_kemi_ruby_exec_func_1530, NULL},
+	{ sr_kemi_ruby_exec_func_1531, NULL},
+	{ sr_kemi_ruby_exec_func_1532, NULL},
+	{ sr_kemi_ruby_exec_func_1533, NULL},
+	{ sr_kemi_ruby_exec_func_1534, NULL},
+	{ sr_kemi_ruby_exec_func_1535, NULL},
 	{NULL, NULL}
 };
 

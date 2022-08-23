@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="misctest.functions" xmlns:xi="http://www.w3.org/2001/XInclude">
+	<sectioninfo>
+	</sectioninfo>
+
+	<title>Functions</title>
+
+	<section id="misctest.mt_mem_alloc">
+		<title><function>mt_mem_alloc(size)</function></title>
+		<para>
+			Allocates size bytes.
+		</para>
+		<note><para>This is a debugging function for simulating memory
+					leaks or stressing the memory allocator. It should not
+					be used in production setups
+		</para></note>
+		<example>
+			<title><function>men_alloc</function> usage</title>
+			<programlisting>
+...
+mem_alloc(1048576); # 1MB
+...
+			</programlisting>
+		</example>
+	</section>
+
+	<section id="misctest.mt_mem_free">
+		<title><function>mt_mem_free()</function></title>
+		<para>
+			Frees all the memory allocated with mem_alloc() up to this
+			point.
+		</para>
+		<note><para>This is a debugging function for simulating memory
+					leaks or stressing the memory allocator. It should not
+					be used in production setups
+		</para></note>
+		<example>
+			<title><function>mem_free</function> usage</title>
+			<programlisting>
+...
+mem_free();
+...
+			</programlisting>
+		</example>
+	</section>
+
+</section>

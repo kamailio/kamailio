@@ -52,6 +52,9 @@ int ldap_search_impl(struct sip_msg *_msg, str *ldap_url);
 int ldap_write_result(struct sip_msg *_msg, struct ldap_result_params *_lrp,
 		struct subst_expr *_se);
 
+int ldap_result_toavp(sip_msg_t *_msg, str *attrname, struct subst_expr *_se,
+		int_str *dst_avp_name, int dst_avp_type, int dst_avp_val_type);
+
 int ldap_result_next(void);
 
 int ldap_filter_url_encode(struct sip_msg *_msg, pv_elem_t *_filter_component,

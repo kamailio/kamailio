@@ -1299,7 +1299,33 @@ modparam("dialog", "send_bye", 1)
 </programlisting>
 		</example>
 	</section>
-
+	<section id="dialog.p.dlg_filter_mode">
+		<title><varname>dlg_filter_mode</varname> (int)</title>
+		<para>
+			Set dialog fitering mode, which can specify what dialogs are processed.
+			Its value can be a combination (the sum) of following flags:
+		</para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>1</emphasis> - do not send keepalives and do not
+				execute timeout function if dialog is not local (if the
+				associated bind address is not a local socket).
+			</para></listitem>
+		</itemizedlist>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>dlg_filter_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialog", "dlg_filter_mode", 1)
+...
+</programlisting>
+		</example>
+	</section>
 	<section id="dialog.p.wait_ack">
 		<title><varname>wait_ack</varname> (int)</title>
 		<para>
@@ -1442,7 +1468,7 @@ modparam("dialog", "timer_procs", 1)
 		</example>
 	</section>
 
-	<section>
+	<section id="dialog.p.enable_dmq">
 		<title><varname>enable_dmq</varname> (int)</title>
 		<para>
 			If set to 1, the dialog will be synced via dmq.
@@ -1640,6 +1666,47 @@ modparam("dialog", "keep_proxy_rr", 1)
 </programlisting>
 		</example>
 	</section>
+
+	<section id="dialog.p.bye_early_code">
+		<title><varname>bye_early_code</varname> (int)</title>
+		<para>
+			This parameter defines the reply-code being used for
+			dialogs being terminated in early stage (e.g. before
+			200 OK/ACK).
+		</para>
+		<emphasis>
+			Default value is <quote>480</quote>.
+		</emphasis>
+		<example>
+		<title>Set <varname>bye_early_code</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialog", "bye_early_code", 503)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="dialog.p.bye_early_reason">
+		<title><varname>bye_early_reason</varname> (string)</title>
+		<para>
+			This parameter defines the reply-reason being used for
+			dialogs being terminated in early stage (e.g. before
+			200 OK/ACK).
+		</para>
+		<emphasis>
+			Default value is <quote>Temporarily Unavailable</quote>.
+		</emphasis>
+		<example>
+		<title>Set <varname>bye_early_reason</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialog", "bye_early_reason", "Call terminated")
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 	<section>
@@ -1910,7 +1977,9 @@ redlg_setflag("1");
 		<function moreinfo="none">dlg_bye(side)</function>
 		</title>
 		<para>
-		Send BYE to both parties of a dialog.
+		Send BYE to parties of a dialog or - if in early stage - a CANCEL to the 
+		B-Party and a SIP response to the A-Party (as defined in bye_early_code /
+		bye_early_reason).
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
@@ -2055,7 +2124,8 @@ dlg_bridge("sip:user@kamailio.org", "sip:annoucement@kamailio.org",
 			</para>
 		</listitem>
 		<listitem>
-			<para><emphasis>ttag</emphasis> - SIP To tag.
+			<para><emphasis>ttag</emphasis> - SIP To tag (it can be empty string
+			to match a dialog during call setup (eg., match for CANCEL)).
 			</para>
 		</listitem>
 		</itemizedlist>
@@ -2070,6 +2140,102 @@ dlg_bridge("sip:user@kamailio.org", "sip:annoucement@kamailio.org",
 if(dlg_get("abcdef", "123", "456"))
 {
 	dlg_bye("all");
+}
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="dialog.f.dlg_get_var">
+		<title>
+		<function moreinfo="none">dlg_get_var(callid, ftag, ttag, name, dst)</function>
+		</title>
+		<para>
+			Get dlg_var of another dialog value based on Call-ID, From-Tag and To-Tag
+			parameters.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>callid</emphasis> - SIP call-id.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>ftag</emphasis> - SIP From tag.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>ttag</emphasis> - SIP To tag.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>name</emphasis> - key name of the $dlg_var.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>dst</emphasis> - pv to store the value of $dlg_var(name).
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from BRANCH_ROUTE,
+			REQUEST_ROUTE, ONREPLY_ROUTE and FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function>dlg_get_var</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(dlg_get_var("$var(ci)", "$var(ft)", "456", "test", "$var(tmp)"))
+{
+	xdbg("$$dlg_var(test):$var(tmp)\n");
+}
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="dialog.f.dlg_set_var">
+		<title>
+		<function moreinfo="none">dlg_set_var(callid, ftag, ttag, name, value)</function>
+		</title>
+		<para>
+			Set dlg_var of another dialog value based on Call-ID, From-Tag and To-Tag
+			parameters.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>callid</emphasis> - SIP call-id.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>ftag</emphasis> - SIP From tag.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>ttag</emphasis> - SIP To tag.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>name</emphasis> - key name of the $dlg_var.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>value</emphasis> - string value to store at $dlg_var(name).
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from BRANCH_ROUTE,
+			REQUEST_ROUTE, ONREPLY_ROUTE and FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function>dlg_set_var</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(dlg_set_var("$var(ci)", "$var(ft)", "456", "test", "$var(tmp)"))
+{
+	xdbg("set $$dlg_var(test):$var(tmp)\n");
 }
 ...
 </programlisting>
@@ -2418,6 +2584,67 @@ dlg_reset_property("timeout-noreset");
 </programlisting>
 		</example>
 	</section>
+
+	<section id="dialog.f.dlg_req_within">
+		<title>
+		<function moreinfo="none">dlg_req_within(side, method, [headers], [content_type, content])</function>
+		</title>
+		<para>
+		Sends a in-dialog SIP Request with method to a party of a dialog indicated by the side parameter.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>side</emphasis> - where to send the request. It can be:
+				'caller', 'callee', or 'all' (send to both sides).
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				<emphasis>method</emphasis> - Method of the request
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				<emphasis>headers</emphasis> (optional) - additional headers to be added to the request.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				<emphasis>content_type</emphasis> (optional) - Content-Type of the request body - will
+				be added as Content-Type Header.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				<emphasis>content</emphasis> (optional) - Content to be sent as body.
+			</para>
+		</listitem>
+		</itemizedlist>		
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>dlg_req_within</function> usage</title>
+		<programlisting format="linespecific">
+...
+	# Send a simple request:
+	dlg_req_within("all", "OPTIONS");
+...
+	# Send a simple request with extra headers:
+	dlg_req_within("caller", "OPTIONS", "X-Info: Bandwidth granted\r\nX-Info-2: Go ahead\r\n");
+...
+	# Send a simple request with body:
+	dlg_req_within("caller", "UPDATE", "application/sdp", "...some SDP...");
+...
+	# Send a simple request with extra headers and body:
+	dlg_req_within("callee", "INFO", "X-Info: Bandwidth granted\r\n", "application/sdp", "...some SDP...");
+...
+		</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 
@@ -2500,12 +2727,16 @@ dlg_reset_property("timeout-noreset");
 				<emphasis>mkey</emphasis> - matching key. It can be: 'ruri' -
 				match against R-URI of the dialog; 'furi' - match against From
 				header URI of the dialog; 'turi' - match against the To header
-				URI of the dialog; 'callid' - match against Call-Id value.
+				URI of the dialog; 'callid' - match against Call-Id value;
+				'start_ts' - match against start timestamp.
 			</para></listitem>
 			<listitem><para>
 				<emphasis>mop</emphasis> - matching operator. It can be: 'eq' -
 				match using string comparison; 're' - match using regular
-				expression; 'sw' - match using starts-with (prefix) comparison.
+				expression; 'sw' - match using starts-with (prefix) comparison;
+				'gt' - match using integer greater comparison; 'lt' - match
+				using integer lesser comparison. Integer comparison can be used
+				only with 'start_ts' key.
 			</para></listitem>
 			<listitem><para>
 				<emphasis>mval</emphasis> - matching value.
@@ -2517,6 +2748,8 @@ dlg_reset_property("timeout-noreset");
 &kamcmd; dlg.list_match furi eq sip:alice@test.com 2
 ...
 &kamcmd; dlg.list_match furi sw sip:alice@
+...
+&kamcmd; dlg.list_match start_ts gt s:1641550904
 ...
 		</programlisting>
 		</section>
@@ -2801,7 +3034,14 @@ dlg_reset_property("timeout-noreset");
 			(not relying on core stats framework).
 		</para>
 		<para>Name: <emphasis>dlg.stats_active</emphasis></para>
-		<para>Parameters: none.</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>local_only</emphasis> (optional) - if not 0 then filter out
+				non local dialogs (the receiving socket is not found locally,
+				from C code point of view, the bind_addr info is not set).
+			</para></listitem>
+		</itemizedlist>
 		<para>Returned fields</para>
 		<itemizedlist>
 			<listitem><para>

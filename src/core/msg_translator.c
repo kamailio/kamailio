@@ -493,8 +493,9 @@ static inline int lump_check_opt(	struct lump *l,
 		case COND_IF_DIFF_REALMS:
 			get_ip_port_proto;
 			/* faster tests first */
-			if ((port==snd_i->send_sock->port_no) && 
+			if ((port==snd_i->send_sock->port_no) &&
 					(proto==snd_i->send_sock->proto) &&
+					(msg->rcv.proto==snd_i->proto) &&
 #ifdef USE_COMP
 					(msg->rcv.comp==snd_i->comp) &&
 #endif
@@ -512,7 +513,8 @@ static inline int lump_check_opt(	struct lump *l,
 			} else return 0;
 		case COND_IF_DIFF_PROTO:
 			get_ip_port_proto;
-			if (proto!=snd_i->send_sock->proto) {
+			if ((proto!=snd_i->send_sock->proto)
+					|| (msg->rcv.proto!=snd_i->proto)) {
 				LUMP_SET_COND_TRUE(l);
 				return 1;
 			} else return 0;
@@ -3326,7 +3328,13 @@ int sip_msg_update_buffer(sip_msg_t *msg, str *obuf)
 		 * valid/safe for config */
 		return 0;
 	}
-
+	if(parse_headers(msg, HDR_FROM_F|HDR_TO_F|HDR_CALLID_F|HDR_CSEQ_F, 0) < 0) {
+		LM_ERR("parsing main headers of new sip message failed [[%.*s]]\n",
+				msg->len, msg->buf);
+		/* exit config execution - sip_msg_t structure is no longer
+		 * valid/safe for config */
+		return 0;
+	}
 	return 1;
 }
 

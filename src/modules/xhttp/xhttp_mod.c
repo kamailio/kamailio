@@ -41,6 +41,7 @@
 #include "../../core/sip_msg_clone.h"
 #include "../../core/mod_fix.h"
 #include "../../core/pvar.h"
+#include "../../core/tcp_options.h"
 #include "../../core/kemi.h"
 
 #include "api.h"
@@ -140,6 +141,11 @@ static int mod_init(void)
 			LM_WARN("event_route[xhttp:request] is empty\n");
 		}
 		xhttp_route_no = route_no;
+	}
+
+	if(cfg_get(tcp, tcp_cfg, accept_no_cl)==0) {
+		LM_WARN("tcp_accept_no_cl not set - usually required"
+				" to handle HTTP requests with no Content-Length\n");
 	}
 
 	/* bind the SL API */

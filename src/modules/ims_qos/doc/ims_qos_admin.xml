@@ -384,7 +384,139 @@ modparam("ims_qos", "include_rtcp_fd", 1)
         </programlisting>
       </example>
     </section>
-    
+
+    <section>
+      <title><varname>af_signaling_ip</varname> (String)</title>
+
+      <para>Set P-CSCF IPv4 address to generate the flows for the UE - PCSCF signaling path. Used only for AAR register, Flow-Description AVP (507)</para>
+
+      <para><emphasis> Default value is 127.0.0.1</emphasis></para>
+
+      <example>
+        <title><varname>af_signaling_ip</varname> parameter
+        usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_qos", "af_signaling_ip", "127.0.0.1")
+...
+        </programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><varname>af_signaling_ip6</varname> (String)</title>
+
+      <para>Set P-CSCF IPv6 address to generate the flows for the UE - PCSCF signaling path. Used only for AAR register, Flow-Description AVP (507)</para>
+
+      <para><emphasis> Default value is ""</emphasis></para>
+
+      <example>
+        <title><varname>af_signaling_ip6</varname> parameter
+        usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_qos", "af_signaling_ip6", "fd16::205:2dee:ce4a:ab22")
+...
+        </programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><varname>media_type</varname> (String)</title>
+
+      <para>Describe Media Type AVP(520) for AAR register</para>
+
+      <para><emphasis> Default value is 'control'</emphasis></para>
+
+      <example>
+        <title><varname>media_type</varname> parameter
+        usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_qos", "media_type", "audio")
+...
+        </programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><varname>flow_protocol</varname> (String)</title>
+
+      <para>Describe Flow protocol for Flow-Description AVP (507). Used only for AAR register</para>
+
+      <para><emphasis> Default value is 'IP'</emphasis></para>
+
+      <example>
+        <title><varname>flow_protocol</varname> parameter
+        usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_qos", "flow_protocol", "UDP")
+...
+        </programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><varname>omit_flow_ports</varname> integer</title>
+
+      <para>If set to 1 ommit ports for Flow-Description AVP (507). Used only for AAR register</para>
+
+      <para><emphasis> Default value is 0, Add ports to Flow-Description AVP (507)</emphasis></para>
+
+      <example>
+        <title><varname>omit_flow_ports</varname> parameter
+        usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_qos", "omit_flow_ports", 1)
+...
+        </programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><varname>rs_default_bandwidth</varname> integer</title>
+
+      <para>Describe default RS-Bandwidth AVP(522) for AAR</para>
+
+      <para><emphasis> Default value is 0</emphasis></para>
+
+      <example>
+        <title><varname>rs_default_bandwidth</varname> parameter
+        usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_qos", "rs_default_bandwidth", 600)
+...
+        </programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title><varname>rr_default_bandwidth</varname> integer</title>
+
+      <para>Describe default RR-Bandwidth AVP(521) for AAR</para>
+
+      <para><emphasis> Default value is 0</emphasis></para>
+
+      <example>
+        <title><varname>rr_default_bandwidth</varname> parameter
+        usage</title>
+
+        <programlisting format="linespecific">
+...
+modparam("ims_qos", "rr_default_bandwidth", 2000)
+...
+        </programlisting>
+      </example>
+    </section>
   </section>
 
   <section>

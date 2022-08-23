@@ -359,18 +359,22 @@ static int mod_init(void)
 	}
 	if (x509_get_notafter(&glb_imycertnotafter, pmycert)) {
 		LOG(L_ERR, "AUTH_IDENTITY:mod_init: Error getting certificate expiration date\n");
+		fclose(hpemfile);
 		return -13;
 	}
 	if (x509_get_notbefore(&ttmp, pmycert)) {
 		LOG(L_ERR, "AUTH_IDENTITY:mod_init: Error getting certificate validity date\n");
+		fclose(hpemfile);
 		return -13;
 	}
 	if ((tnow=time(0)) < 0) {
 		LOG(L_ERR, "AUTH_IDENTITY:mod_init: time error %s\n", strerror(errno));
+		fclose(hpemfile);
 		return -13;
 	}
 	if (tnow < ttmp || tnow > glb_imycertnotafter) {
 		LOG(L_ERR, "AUTH_IDENTITY:mod_init: Date of certificate is invalid (%s)\n", glb_sservercertpath);
+		fclose(hpemfile);
 		return -14;
 	}
 
@@ -591,7 +595,7 @@ static int check_date(struct sip_msg* msg, char* srt1, char* str2)
 	}
 
 	if (tnow > tmsg + glb_iauthval) {
-		LOG(L_INFO, "AUTH_IDENTITY VERIFIER: Outdated date header value (%ld sec)\n", tnow - tmsg + glb_iauthval);
+		LOG(L_INFO, "AUTH_IDENTITY VERIFIER: Outdated date header value (%" TIME_T_FMT " sec)\n", TIME_T_CAST(tnow - tmsg + glb_iauthval));
 		return -4;
 	} else
 		LOG(AUTH_DBG_LEVEL, "AUTH_IDENTITY VERIFIER: Date header value OK\n");

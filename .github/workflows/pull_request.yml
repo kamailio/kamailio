@@ -1,0 +1,33 @@
+---
+name: checks_pr
+'on':
+  pull_request:
+    branches:
+      - master
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: kamailio/pkg-kamailio-docker:master-${{ matrix.distribution }}
+      volumes:
+        - ${{ github.workspace }}:/code
+      env:
+        DIST: ${{ matrix.distribution }}
+        CC: ${{ matrix.compilier }}
+    strategy:
+      matrix:
+        include:
+          - distribution: bullseye
+            compilier: gcc
+          - distribution: bullseye
+            compilier: clang
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ammaraskar/gcc-problem-matcher@0.1
+      - name: build
+        run: |
+          cd /code
+          ./test/travis/build_travis.sh
+        shell: bash

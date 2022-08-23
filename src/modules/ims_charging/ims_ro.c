@@ -7,6 +7,7 @@
 #include "../../core/socket_info.h"
 #include "../../core/timer.h"
 #include "../../core/locking.h"
+#include "../../core/kemi.h"
 #include "../../modules/tm/tm_load.h"
 
 #include "../../modules/ims_dialog/dlg_hash.h"
@@ -33,6 +34,7 @@
 #include "ro_avp.h"
 #include "ro_db_handler.h"
 #include "ims_charging_stats.h"
+#include "../../core/str.h"
 
 static pv_spec_t *custom_user_avp;		/*!< AVP for custom_user setting */
 static pv_spec_t *app_provided_party_avp;	/*!< AVP for app_provided_party setting */
@@ -50,7 +52,7 @@ extern int vendor_specific_chargeinfo;
 
 struct session_setup_data {
     struct ro_session *ro_session;
-    cfg_action_t* action;
+    void* action;
     unsigned int tindex;
     unsigned int tlabel;
 };
@@ -856,7 +858,8 @@ void send_ccr_stop_with_param(struct ro_session *ro_session, unsigned int code, 
         LM_DBG("Final used number of seconds for session is %ld\n", used);
     }
 
-    LM_DBG("Call started at %ld and ended at %ld and lasted %d seconds and so far we have billed for %ld seconds\n", ro_session->start_time, stop_time,
+    LM_DBG("Call started at %" TIME_T_FMT " and ended at %" TIME_T_FMT " and lasted %d seconds and so far we have billed for %ld seconds\n",
+            TIME_T_CAST(ro_session->start_time), TIME_T_CAST(stop_time),
             actual_time_seconds, ro_session->billed + used);
     if (ro_session->billed + used < actual_time_seconds) {
         LM_DBG("Making adjustment by adding %ld seconds\n", actual_time_seconds - (ro_session->billed + used));
@@ -1077,7 +1080,7 @@ error:
  * @returns #CSCF_RETURN_BREAK if OK, #CSCF_RETURN_ERROR on error
  */
 int Ro_Send_CCR(struct sip_msg *msg, struct dlg_cell *dlg, int dir, int reservation_units, str* incoming_trunk_id, str* outgoing_trunk_id,
-        str* pani, cfg_action_t* action, unsigned int tindex, unsigned int tlabel) {
+        str* pani, void* action, unsigned int tindex, unsigned int tlabel) {
     str session_id = {0, 0},
     called_asserted_identity = {0, 0},
     subscription_id = {0, 0},
@@ -1217,7 +1220,24 @@ int Ro_Send_CCR(struct sip_msg *msg, struct dlg_cell *dlg, int dir, int reservat
     }
     LM_DBG("new session created\n");
 
-    ssd->action = action;
+    if (sr_kemi_eng_get())
+    {
+        str *tmp = shm_malloc(sizeof(str));
+        if (tmp == NULL) {
+            SHM_MEM_ERROR;
+            goto error;
+        }
+        if (shm_str_dup(tmp, (str *) action) != 0) {
+            SHM_MEM_ERROR;
+            shm_free(tmp);
+            goto error;
+        } else {
+            ssd->action = tmp;
+        }
+    } else {
+        ssd->action = action;
+    }
+
     ssd->tindex = tindex;
     ssd->tlabel = tlabel;
     ssd->ro_session = new_session;
@@ -1464,7 +1484,16 @@ static void resume_on_initial_ccr(int is_timeout, void *param, AAAMessage *cca, 
     if (t)
         tmb.unref_cell(t);
 
-    tmb.t_continue(ssd->tindex, ssd->tlabel, ssd->action);
+    if (sr_kemi_eng_get())
+    {
+        str cb_param = str_init("ccr:continue");
+        tmb.t_continue_cb(ssd->tindex, ssd->tlabel, ssd->action, &cb_param);
+        str_free(*((str *)ssd->action), shm);
+        shm_free(ssd->action);
+    } else {
+        tmb.t_continue(ssd->tindex, ssd->tlabel, ssd->action);
+    }
+
     shm_free(ssd);
 
     counter_inc(ims_charging_cnts_h.successful_initial_ccrs);
@@ -1575,23 +1604,23 @@ static int create_cca_result_code(int result) {
 
 static int create_cca_fui_avps(int action, str* redirecturi) {
 	int_str action_avp_val, action_avp_name, redirecturi_avp_val, redirecturi_avp_name;
-    action_avp_name.s.s = RO_AVP_CCA_FUI_ACTION;
-    action_avp_name.s.len = RO_AVP_CCA_FUI_ACTION_LENGTH;
+	action_avp_name.s.s = RO_AVP_CCA_FUI_ACTION;
+	action_avp_name.s.len = RO_AVP_CCA_FUI_ACTION_LENGTH;
 	redirecturi_avp_name.s.s = RO_AVP_CCA_FUI_REDIRECT_URI;
-    redirecturi_avp_name.s.len = RO_AVP_CCA_FUI_REDIRECT_URI_LENGTH;
-    char buf[10];
+	redirecturi_avp_name.s.len = RO_AVP_CCA_FUI_REDIRECT_URI_LENGTH;
+	char buf[10];
 	int rc;
 
-    action_avp_val.n = action;
-    action_avp_val.s.len = snprintf(buf, 10, "%i", action);
-    action_avp_val.s.s = buf;
+	action_avp_val.n = action;
+	action_avp_val.s.len = snprintf(buf, 10, "%i", action);
+	action_avp_val.s.s = buf;
 
-    rc = add_avp(AVP_NAME_STR|AVP_VAL_STR, action_avp_name, action_avp_val);
+	rc = add_avp(AVP_NAME_STR|AVP_VAL_STR, action_avp_name, action_avp_val);
 
-    if (rc < 0)
-        LM_ERR("Couldn't create ["RO_AVP_CCA_FUI_ACTION"] AVP\n");
-    else
-        LM_DBG("Created AVP ["RO_AVP_CCA_FUI_ACTION"] successfully: value=[%d]\n", action);
+	if (rc < 0)
+		LM_ERR("Couldn't create ["RO_AVP_CCA_FUI_ACTION"] AVP\n");
+	else
+		LM_DBG("Created AVP ["RO_AVP_CCA_FUI_ACTION"] successfully: value=[%d]\n", action);
 
 	if (redirecturi && redirecturi->len >0 && redirecturi->s) {
 		redirecturi_avp_val.s.len = redirecturi->len;
@@ -1605,7 +1634,7 @@ static int create_cca_fui_avps(int action, str* redirecturi) {
 			LM_DBG("Created AVP ["RO_AVP_CCA_FUI_REDIRECT_URI"] successfully: value=[%.*s]\n", redirecturi->len, redirecturi->s);
 	}
 
-    return 1;
+	return 1;
 }
 
 static int get_mac_avp_value(struct sip_msg *msg, str *value) {

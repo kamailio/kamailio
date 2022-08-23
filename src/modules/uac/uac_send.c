@@ -43,6 +43,8 @@
 #include "uac_send.h"
 #include "uac_reg.h"
 
+#define UAC_SEND_FL_HA1 (1<<0)
+
 #define MAX_UACH_SIZE 2048
 #define MAX_UACB_SIZE 32768
 #define MAX_UACD_SIZE 128
@@ -422,6 +424,11 @@ int pv_set_uac_req(struct sip_msg* msg, pv_param_t *param,
 				LM_ERR("Invalid value type\n");
 				return -1;
 			}
+			if(tval->rs.len>=128)
+			{
+				LM_ERR("Value size too big\n");
+				return -1;
+			}
 			memcpy(_uac_req.s_callid.s, tval->rs.s, tval->rs.len);
 			_uac_req.s_callid.s[tval->rs.len] = '\0';
 			_uac_req.s_callid.len = tval->rs.len;
@@ -492,6 +499,19 @@ int pv_set_uac_req(struct sip_msg* msg, pv_param_t *param,
 			}
 			_uac_req.evtype = tval->ri;
 			break;
+		case 17:
+			if(tval==NULL)
+			{
+				_uac_req.flags = 0;
+				return 0;
+			}
+			if(!(tval->flags&PV_VAL_INT))
+			{
+				LM_ERR("Invalid value type\n");
+				return -1;
+			}
+			_uac_req.flags = tval->ri;
+			break;
 	}
 	return 0;
 }
@@ -528,6 +548,8 @@ int pv_parse_uac_req_name(pv_spec_p sp, str *in)
 		case 5:
 			if(strncmp(in->s, "auser", 5)==0)
 				sp->pvp.pvn.u.isname.name.n = 9;
+			else if(strncmp(in->s, "flags", 5)==0)
+				sp->pvp.pvn.u.isname.name.n = 17;
 			else goto error;
 		break;
 		case 6:
@@ -700,14 +722,16 @@ void uac_resend_tm_callback(struct cell *t, int type, struct tmcb_params *ps)
 	}
 	tp = (uac_send_info_t*)(*ps->param);
 
-	if(tp->evroute!=0) {
+	if(tp->evroute!=0 && ps->code > 0) {
 		uac_req_run_event_route((ps->rpl==FAKED_REPLY)?NULL:ps->rpl,
 				tp, ps->code);
 	}
 
 done:
-	if(tp!=NULL)
+	if(tp!=NULL){
 		shm_free(tp);
+		*ps->param = NULL;
+	}
 	return;
 
 }
@@ -721,8 +745,8 @@ void uac_send_tm_callback(struct cell *t, int type, struct tmcb_params *ps)
 	struct hdr_field *hdr;
 	HASHHEX response;
 	str *new_auth_hdr = NULL;
-	static struct authenticate_body auth;
-	struct uac_credential cred;
+	static uac_authenticate_body_t auth;
+	uac_credential_t cred;
 	char  b_hdrs[MAX_UACH_SIZE];
 	str   s_hdrs;
 	uac_req_t uac_r;
@@ -738,7 +762,7 @@ void uac_send_tm_callback(struct cell *t, int type, struct tmcb_params *ps)
 	}
 	tp = (uac_send_info_t*)(*ps->param);
 
-	if(tp->evroute!=0) {
+	if(tp->evroute!=0 && ps->code > 0) {
 		uac_req_run_event_route((ps->rpl==FAKED_REPLY)?NULL:ps->rpl,
 				tp, ps->code);
 	}
@@ -771,6 +795,9 @@ void uac_send_tm_callback(struct cell *t, int type, struct tmcb_params *ps)
 	cred.realm  = auth.realm;
 	cred.user   = tp->s_auser;
 	cred.passwd = tp->s_apasswd;
+	if(tp->flags & UAC_SEND_FL_HA1) {
+		cred.aflags = UAC_FLCRED_HA1;
+	}
 
 	do_uac_auth(&tp->s_method, &tp->s_ruri, &cred, &auth, response);
 	new_auth_hdr=build_authorization_hdr(ps->code, &tp->s_ruri, &cred,
@@ -809,7 +836,7 @@ void uac_send_tm_callback(struct cell *t, int type, struct tmcb_params *ps)
 	uac_r.body = (tp->s_body.len <= 0) ? NULL : &tp->s_body;
 	uac_r.ssock = (tp->s_sock.len <= 0) ? NULL : &tp->s_sock;
 	uac_r.dialog = &tmdlg;
-	uac_r.cb_flags = TMCB_LOCAL_COMPLETED;
+	uac_r.cb_flags = TMCB_LOCAL_COMPLETED|TMCB_DESTROY;
 	if(tp->evroute!=0) {
 		/* Callback function */
 		uac_r.cb  = uac_resend_tm_callback;
@@ -829,8 +856,10 @@ void uac_send_tm_callback(struct cell *t, int type, struct tmcb_params *ps)
 
 done:
 error:
-	if(tp!=NULL)
+	if(tp!=NULL){
 		shm_free(tp);
+		*ps->param = NULL;
+	}
 	return;
 }
 
@@ -866,9 +895,21 @@ int uac_req_send(void)
 			return -1;
 		}
 
-		uac_r.cb_flags = TMCB_LOCAL_COMPLETED;
-		/* Callback function */
-		uac_r.cb  = uac_send_tm_callback;
+		switch (_uac_req.evroute)
+		{
+
+			case 2: 
+				uac_r.cb_flags = TMCB_ON_FAILURE|TMCB_DESTROY;
+				/* Callback function */
+				uac_r.cb  = uac_resend_tm_callback;
+				break;
+			case 1:
+			default:
+				uac_r.cb_flags = TMCB_LOCAL_COMPLETED|TMCB_DESTROY;
+				/* Callback function */
+				uac_r.cb  = uac_send_tm_callback;
+				break;
+		}
 		/* Callback parameter */
 		uac_r.cbp = (void*)tp;
 	}

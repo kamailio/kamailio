@@ -459,6 +459,26 @@ modparam("uac", "reg_random_delay", 300)
 			</example>
 		</section>
 
+		<section id="uac.p.reg_hash_size">
+			<title><varname>reg_hash_size</varname> (int)</title>
+			<para>
+			 The number of entries of the hash table used by uac_reg to store the
+			 registration records is 2^hash_size. For hash_size=4, the number of
+			 slots of the hash table is 16.
+			</para>
+			<para>
+				<emphasis>Default value is <quote>4</quote> (16 slots).</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>reg_hash_size</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("uac", "reg_hash_size", 10)
+...
+				</programlisting>
+			</example>
+		</section>
+
 		<section id="uac.p.reg_db_table">
 			<title><varname>reg_db_table</varname> (string)</title>
 			<para>
@@ -547,7 +567,7 @@ modparam("uac", "reg_active", 0)
 			Timer interval (in seconds) at which remote registrations are cleaned
 			up in case of failure or removed. When setting it take in consideration
 			the maximum value for retransmission timeout, this param should be greater
-			than it. This value also impacts how ofter the reload for remote
+			than it. This value also impacts how often the reload for remote
 			registrations table can be executed -- the RPC command will fail if
 			executed in less than reg_gc_interval value since the last reload.
 			</para>
@@ -562,6 +582,24 @@ modparam("uac", "reg_active", 0)
 				<programlisting format="linespecific">
 ...
 modparam("uac", "reg_gc_interval", 60)
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="uac.p.reg_use_domain">
+			<title><varname>reg_use_domain</varname> (int)</title>
+			<para>
+				If set to 1, domain part of URIs is used by functions doing
+				lookup on user name.
+			</para>
+			<para>
+				<emphasis>Default value is <quote>0</quote>.</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>reg_use_domain</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("uac", "reg_use_domain", 1)
 ...
 				</programlisting>
 			</example>
@@ -627,8 +665,6 @@ end
  </programlisting>
 		</example>
 	</section>
-  
-  
 	</section>
 
 	<section>
@@ -989,6 +1025,31 @@ if(uac_reg_lookup("$rU", "$ru"))
 				</programlisting>
 			</example>
 		</section>
+		<section id="uac.f.uac_reg_lookup_uri">
+			<title>
+				<function moreinfo="none">uac_reg_lookup_uri(uri, dst)</function>
+			</title>
+			<para>
+			This function sets the PV dst to SIP URI that correspond to the URI user
+			in uac registrations table. The uri can contain pseudo-variables and
+			dst must be the name of a pseudo-variable.
+			</para>
+			<para>
+			This function can be used from ANY_ROUTE.
+			</para>
+			<example>
+				<title><function>uac_reg_lookup_uri</function> usage</title>
+				<programlisting format="linespecific">
+...
+
+if(uac_reg_lookup("$var(uri)", "$ru"))
+{
+    lookup("location");
+}
+...
+				</programlisting>
+			</example>
+		</section>
 		<section id="uac.f.uac_reg_status">
 			<title>
 				<function moreinfo="none">uac_reg_status(uuid)</function>
@@ -1180,11 +1241,20 @@ failure_route[REMOTE_AUTH] {
 				<function moreinfo="none">event_route[uac:reply]</function>
 			</title>
 		<para>
-			Event route executed for the final reply of the branch for the
-			request sent with uac_req_send(). The associated $uac_req(evroute)
-			has to be set to 1. If the request is challenged for authentication
+		The associated $uac_req(evroute) can have either of the following values:
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>1</emphasis> : event route executed for the <emphasis>final reply</emphasis> of the branch for the
+			request sent with uac_req_send(). If the request is challenged for authentication
 			with 401/407, then the event_route is executed twice, first for
 			401/407 and second for final reply of the transaction.
+			</para></listitem>
+			<listitem><para>
+				<emphasis>2</emphasis> : event route executed for <emphasis>failure</emphasis> of the branch for the
+			request sent with uac_req_send(). event route will execute also for timeout.
+			In order for this to work, please also enable TM module "enable_uac_fr" modparam.
+			</para></listitem>
+		</itemizedlist>
 		</para>
 		<example>
 		<title><function>event_route[uac:reply]</function> usage</title>
@@ -1438,7 +1508,7 @@ event_route[uac:reply] {
 		</itemizedlist>
 		</para>
 		<para>
-			Use a dot (.) if no value should be set for auth_password, auth_ha1,
+			Use a dot (.) if no value should be set for realm, auth_password, auth_ha1, socket
 			or contact_addr.
 		</para>
 
@@ -1558,7 +1628,7 @@ event_route[uac:reply] {
 			<listitem><para>
 			<emphasis>contact_addr</emphasis> - contact address to be used for this record
 			instead of reg_contact_addr module parameter, e.g.:, 192.168.0.125:5060. It can
-			be set to '.' (dot) to skip setting it and then reg_contact_addr modparam is used.
+			be set to '' (empty string) to skip setting it and then reg_contact_addr modparam is used.
 			</para></listitem>
 		</itemizedlist>
 		<itemizedlist>

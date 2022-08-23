@@ -31,7 +31,7 @@
 
 
 enum _tr_type { TR_NONE=0, TR_STRING, TR_URI, TR_PARAMLIST, TR_NAMEADDR,
-				TR_TOBODY, TR_LINE, TR_URIALIAS};
+				TR_TOBODY, TR_LINE, TR_URIALIAS, TR_VAL};
 enum _tr_s_subtype {
 	TR_S_NONE=0, TR_S_LEN, TR_S_INT, TR_S_MD5, TR_S_SHA256, TR_S_SHA384,
 	TR_S_SHA512, TR_S_SUBSTR, TR_S_SELECT, TR_S_ENCODEHEXA, TR_S_DECODEHEXA,
@@ -45,7 +45,7 @@ enum _tr_s_subtype {
 	TR_S_UNBRACKET, TR_S_COUNT, TR_S_ENCODEBASE64T, TR_S_DECODEBASE64T,
 	TR_S_ENCODEBASE64URL, TR_S_DECODEBASE64URL,
 	TR_S_ENCODEBASE64URLT, TR_S_DECODEBASE64URLT, TR_S_RMWS, TR_S_BEFORE,
-	TR_S_AFTER
+	TR_S_AFTER, TR_S_RBEFORE, TR_S_RAFTER, TR_S_FMTLINES, TR_S_FMTLINET
 };
 enum _tr_uri_subtype {
 	TR_URI_NONE=0, TR_URI_USER, TR_URI_HOST, TR_URI_PASSWD, TR_URI_PORT,
@@ -55,7 +55,8 @@ enum _tr_uri_subtype {
 	TR_URI_SURI
 };
 enum _tr_param_subtype {
-	TR_PL_NONE=0, TR_PL_VALUE, TR_PL_VALUEAT, TR_PL_NAME, TR_PL_COUNT
+	TR_PL_NONE=0, TR_PL_VALUE, TR_PL_VALUEAT, TR_PL_NAME, TR_PL_COUNT,
+	TR_PL_IN
 };
 enum _tr_nameaddr_subtype {
 	TR_NA_NONE=0, TR_NA_NAME, TR_NA_URI, TR_NA_LEN
@@ -71,6 +72,10 @@ enum _tr_urialias_subtype {
 	TR_URIALIAS_NONE=0, TR_URIALIAS_ENCODE, TR_URIALIAS_DECODE
 };
 
+enum _tr_val_subtype {
+	TR_VAL_NONE=0, TR_VAL_N0, TR_VAL_NE, TR_VAL_JSON, TR_VAL_JSONQE
+};
+
 
 char* tr_parse_string(str *in, trans_t *tr);
 char* tr_parse_uri(str *in, trans_t *tr);
@@ -79,6 +84,7 @@ char* tr_parse_nameaddr(str *in, trans_t *tr);
 char* tr_parse_tobody(str* in, trans_t *t);
 char* tr_parse_line(str* in, trans_t *t);
 char* tr_parse_urialias(str* in, trans_t *t);
+char* tr_parse_val(str* in, trans_t *t);
 
 int tr_init_buffers(void);
 

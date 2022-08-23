@@ -188,9 +188,11 @@ char *lw_get_hf_name(char *begin, char *end, enum _hdr_types_t *type)
 
 				case 't': /* To */
 					if(LOWER_BYTE(*(p + 1)) == 'o') {
-						p += 2;
-						*type = HDR_TO_T;
-						break;
+						if((*(p + 2) == ' ') || (*(p + 2) == ':')) {
+							p += 2;
+							*type = HDR_TO_T;
+							break;
+						}
 					}
 					if((*(p + 1) == ' ') || (*(p + 1) == ':')) {
 						p++;

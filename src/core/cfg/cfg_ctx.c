@@ -284,7 +284,7 @@ static int cfg_update_defaults(cfg_group_meta_t	*meta,
 				meta->array = array;
 				clone_done = 1;
 			}
-			if(ginst->vars + var->offset) {
+			if((unsigned long)ginst->vars + var->offset) {
 				memcpy(ginst->vars + var->offset, new_val, cfg_var_size(var));
 			} else {
 				LM_ERR("invalid variable offset\n");

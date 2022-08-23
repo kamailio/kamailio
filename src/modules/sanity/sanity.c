@@ -162,10 +162,10 @@ int str2valid_uint(str* _number, unsigned int* _result) {
 	return 0;
 }
 
-/* parses the given comma seperated string into a string list */
-strl* parse_str_list(str* _string) {
+/* parses the given comma separated string into a string list */
+str_list_t* parse_str_list(str* _string) {
 	str input;
-	strl *parsed_list, *pl;
+	str_list_t *parsed_list, *pl;
 	char *comma;
 
 	/* make a copy because we trim it */
@@ -178,40 +178,40 @@ strl* parse_str_list(str* _string) {
 		LM_DBG("list is empty\n");
 		return NULL;
 	}
-	parsed_list = pkg_malloc(sizeof(strl));
+	parsed_list = pkg_malloc(sizeof(str_list_t));
 	if (parsed_list == NULL) {
 		LM_ERR("OUT OF MEMORY for initial list element\n");
 		return NULL;
 	}
-	memset(parsed_list, 0, sizeof(strl));
-	parsed_list->string.s = input.s;
-	parsed_list->string.len = input.len;
+	memset(parsed_list, 0, sizeof(str_list_t));
+	parsed_list->s.s = input.s;
+	parsed_list->s.len = input.len;
 
 	comma = q_memchr(input.s, ',', input.len);
 	pl = parsed_list;
 	while (comma != NULL) {
-		pl->next = pkg_malloc(sizeof(strl));
+		pl->next = pkg_malloc(sizeof(str_list_t));
 		if (pl->next == NULL) {
 			LM_ERR("OUT OF MEMORY for further list element\n");
 			return parsed_list;
 		}
-		memset(pl->next, 0, sizeof(strl));
-		pl->next->string.s = comma + 1;
-		pl->next->string.len = pl->string.len
-			- (pl->next->string.s - pl->string.s);
-		pl->string.len = comma - pl->string.s;
-		trim_trailing(&(pl->string));
+		memset(pl->next, 0, sizeof(str_list_t));
+		pl->next->s.s = comma + 1;
+		pl->next->s.len = pl->s.len
+			- (pl->next->s.s - pl->s.s);
+		pl->s.len = comma - pl->s.s;
+		trim_trailing(&(pl->s));
 		pl = pl->next;
-		trim_leading(&(pl->string));
-		comma = q_memchr(pl->string.s, ',', pl->string.len);
+		trim_leading(&(pl->s));
+		comma = q_memchr(pl->s.s, ',', pl->s.len);
 	}
 
 	return parsed_list;
 }
 
 /* free the elements of the linked str list */
-void free_str_list(strl *_list) {
-	strl *cur, *next;
+void free_str_list(str_list_t *_list) {
+	str_list_t *cur, *next;
 
 	if (_list != NULL) {
 		cur = _list;
@@ -224,7 +224,7 @@ void free_str_list(strl *_list) {
 }
 
 int parse_proxyrequire(struct hdr_field* _h) {
-	strl *pr_l;
+	str_list_t *pr_l;
 
 	if (_h->parsed) {
 		return 0; /* Already parsed */
@@ -578,7 +578,7 @@ int check_cseq_value(sip_msg_t* msg) {
 	return SANITY_CHECK_PASSED;
 }
 
-/* compare the Content-Length value with the accutal body length */
+/* compare the Content-Length value with the actual body length */
 int check_cl(sip_msg_t* msg) {
 	char *body;
 
@@ -664,7 +664,7 @@ int check_expires_value(sip_msg_t* msg) {
 
 /* check the content of the Proxy-Require header */
 int check_proxy_require(sip_msg_t* msg) {
-	strl *r_pr, *l_pr;
+	str_list_t *r_pr, *l_pr;
 	char *u;
 	int u_len;
 
@@ -692,20 +692,20 @@ int check_proxy_require(sip_msg_t* msg) {
 			l_pr = proxyrequire_list;
 			while (l_pr != NULL) {
 				LM_DBG("comparing r='%.*s' l='%.*s'\n",
-						r_pr->string.len, r_pr->string.s, l_pr->string.len,
-						l_pr->string.s);
-				if (l_pr->string.len == r_pr->string.len &&
+						r_pr->s.len, r_pr->s.s, l_pr->s.len,
+						l_pr->s.s);
+				if (l_pr->s.len == r_pr->s.len &&
 						/* FIXME tokens are case in-sensitive */
-						memcmp(l_pr->string.s, r_pr->string.s,
-							l_pr->string.len) == 0) {
+						memcmp(l_pr->s.s, r_pr->s.s,
+							l_pr->s.len) == 0) {
 					break;
 				}
 				l_pr = l_pr->next;
 			}
 			if (l_pr == NULL) {
 				LM_DBG("request contains unsupported extension: %.*s\n",
-						r_pr->string.len, r_pr->string.s);
-				u_len = UNSUPPORTED_HEADER_LEN + 2 + r_pr->string.len;
+						r_pr->s.len, r_pr->s.s);
+				u_len = UNSUPPORTED_HEADER_LEN + 2 + r_pr->s.len;
 				u = pkg_malloc(u_len);
 				if (u == NULL) {
 					LM_ERR("failed to allocate memory for"
@@ -713,9 +713,9 @@ int check_proxy_require(sip_msg_t* msg) {
 				}
 				else {
 					memcpy(u, UNSUPPORTED_HEADER, UNSUPPORTED_HEADER_LEN);
-					memcpy(u + UNSUPPORTED_HEADER_LEN, r_pr->string.s,
-							r_pr->string.len);
-					memcpy(u + UNSUPPORTED_HEADER_LEN + r_pr->string.len,
+					memcpy(u + UNSUPPORTED_HEADER_LEN, r_pr->s.s,
+							r_pr->s.len);
+					memcpy(u + UNSUPPORTED_HEADER_LEN + r_pr->s.len,
 							CRLF, CRLF_LEN);
 					add_lump_rpl(msg, u, u_len, LUMP_RPL_HDR);
 				}
@@ -753,7 +753,6 @@ int check_proxy_require(sip_msg_t* msg) {
 /* check if the typical URI's are parseable */
 int check_parse_uris(sip_msg_t* msg, int checks) {
 
-	struct to_body *ft_body = NULL;
 	struct sip_uri uri;
 
 	LM_DBG("check_parse_uris entered\n");
@@ -775,9 +774,8 @@ int check_parse_uris(sip_msg_t* msg, int checks) {
 	/* check From URI */
 	if (SANITY_URI_CHECK_FROM & checks) {
 		LM_DBG("looking up From header\n");
-		if ((!msg->from && parse_headers(msg, HDR_FROM_F, 0) != 0)
-				|| !msg->from) {
-			LM_WARN("invalid from header\n");
+		if(parse_from_uri(msg)==NULL) {
+			LM_WARN("invalid From header or uri\n");
 			if(!msg->from || !msg->from->body.s) {
 				msg->msg_flags |= FL_MSG_NOREPLY;
 			} else {
@@ -787,55 +785,12 @@ int check_parse_uris(sip_msg_t* msg, int checks) {
 			}
 			return SANITY_CHECK_FAILED;
 		}
-		if (!msg->from->parsed) {
-			LM_DBG("parsing From header\n");
-			ft_body = pkg_malloc(sizeof(struct to_body));
-			if (!ft_body) {
-				LM_ERR("out of pkg_memory (From)\n");
-				if (sanity_reply(msg, 500, "Invalid Resources") < 0) {
-					LM_WARN("failed to send 500 reply\n");
-				}
-				return SANITY_CHECK_ERROR;
-			}
-			memset(ft_body, 0, sizeof(struct to_body));
-			parse_to(msg->from->body.s, msg->from->body.s + \
-					msg->from->body.len + 1, ft_body);
-			if (ft_body->error == PARSE_ERROR) {
-				LM_WARN("failed to parse From header [%.*s]\n",
-						msg->from->body.len, msg->from->body.s);
-				free_to(ft_body);
-				if (sanity_reply(msg, 400, "Bad From header") < 0) {
-					LM_WARN("failed to send 400 via sl reply"
-							" (bad from header)\n");
-				}
-				return SANITY_CHECK_FAILED;
-			}
-			msg->from->parsed = ft_body;
-			ft_body = NULL;
-		}
-		if (((struct to_body*)msg->from->parsed)->uri.s) {
-			LM_DBG("parsing From URI\n");
-			if (parse_uri(((struct to_body*)msg->from->parsed)->uri.s,
-						((struct to_body*)msg->from->parsed)->uri.len, &uri) != 0) {
-				LM_WARN("failed to parse From uri\n");
-				if (sanity_reply(msg, 400, "Bad From URI") < 0) {
-					LM_WARN("failed to send 400 via sl reply"
-							" (bad from uri)\n");
-				}
-				return SANITY_CHECK_FAILED;
-			}
-			/* FIXME: we should store this parsed struct somewhere so that
-			 * it could be re-used */
-			/* FIXME 2: would it make sense to check here for "mandatory"
-			 * or "requested" parts of the URI? */
-		}
 	}
 	/* check To URI */
 	if (SANITY_URI_CHECK_TO & checks) {
 		LM_DBG("looking up To header\n");
-		if ((!msg->to && parse_headers(msg, HDR_TO_F, 0) != 0)
-				|| !msg->to) {
-			LM_WARN("invalid To header\n");
+		if(parse_to_uri(msg)==NULL) {
+			LM_WARN("invalid To header or uri\n");
 			if(!msg->to || !msg->to->body.s) {
 				msg->msg_flags |= FL_MSG_NOREPLY;
 			} else {
@@ -845,36 +800,16 @@ int check_parse_uris(sip_msg_t* msg, int checks) {
 			}
 			return SANITY_CHECK_FAILED;
 		}
-		/* parse_to is automatically called for HDR_TO_F */
-		if (!msg->to->parsed) {
-			LM_WARN("failed to parse To header\n");
-			if (sanity_reply(msg, 400, "Bad To URI") < 0) {
-				LM_WARN("failed to send 400 via sl reply (bad to uri)\n");
-			}
-			return SANITY_CHECK_FAILED;
-		}
-		if (((struct to_body*)msg->to->parsed)->uri.s) {
-			DBG("check_parse_uris(): parsing To URI\n");
-			if (parse_uri(((struct to_body*)msg->to->parsed)->uri.s,
-						((struct to_body*)msg->to->parsed)->uri.len, &uri) != 0) {
-				LM_WARN("failed to parse To uri\n");
-				if (sanity_reply(msg, 400, "Bad To URI") < 0) {
-					LM_WARN("failed to send 400 via sl reply (bad to uri)\n");
-				}
-				return SANITY_CHECK_FAILED;
-			}
-			/* FIXME: we should store this parsed struct somewhere so that
-			 * it could be re-used */
-			/* FIXME 2: would it make sense to check here for "mandatory"
-			 * or "requested" parts of the URI? */
-		}
 	}
 	/* check Contact URI */
 	if (SANITY_URI_CHECK_CONTACT & checks) {
 		LM_DBG("looking up Contact header\n");
-		if ((!msg->contact && parse_headers(msg, HDR_CONTACT_F, 0) != 0)
-				|| !msg->contact) {
-			LM_WARN("missing contact header\n");
+		if(parse_contact_headers(msg) < 0) {
+			LM_WARN("failed to parse Contact headers\n");
+			if (sanity_reply(msg, 400, "Bad Contact Header") < 0) {
+				LM_WARN("failed to send 400 via send_reply (bad Contact)\n");
+			}
+			return SANITY_CHECK_FAILED;
 		}
 		if (msg->contact) {
 			LM_DBG("parsing Contact header\n");

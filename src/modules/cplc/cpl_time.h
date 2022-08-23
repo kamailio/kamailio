@@ -51,7 +51,7 @@
 #define is_leap_year(yyyy) ((((yyyy)%400))?(((yyyy)%100)?(((yyyy)%4)?0:1):0):1)
 
 
-typedef struct _ac_maxval
+typedef struct _cpl_ac_maxval
 {
 	int yweek;
 	int yday;
@@ -59,9 +59,9 @@ typedef struct _ac_maxval
 	int mweek;
 	int mday;
 	int mwday;
-} ac_maxval_t, *ac_maxval_p;
+} cpl_ac_maxval_t, *cpl_ac_maxval_p;
 
-typedef struct _ac_tm
+typedef struct _cpl_ac_tm
 {
 	time_t time;
 	struct tm t;
@@ -69,22 +69,22 @@ typedef struct _ac_tm
 	int yweek;
 	int ywday;
 	int mwday;
-	ac_maxval_p mv;
-} ac_tm_t, *ac_tm_p;
+	cpl_ac_maxval_p mv;
+} cpl_ac_tm_t, *cpl_ac_tm_p;
 
-ac_tm_p ac_tm_new(void);
+cpl_ac_tm_p cpl_ac_tm_new(void);
 
-int ac_tm_set_time(ac_tm_p, time_t);
+int cpl_ac_tm_set_time(cpl_ac_tm_p, time_t);
 
-int ac_tm_reset(ac_tm_p);
-int ac_tm_free(ac_tm_p);
+int cpl_ac_tm_reset(cpl_ac_tm_p);
+int cpl_ac_tm_free(cpl_ac_tm_p);
 
-int ac_get_mweek(struct tm*);
-int ac_get_yweek(struct tm*);
-ac_maxval_p ac_get_maxval(ac_tm_p);
-int ac_get_wkst(void);
+int cpl_ac_get_mweek(struct tm*);
+int cpl_ac_get_yweek(struct tm*);
+cpl_ac_maxval_p cpl_ac_get_maxval(cpl_ac_tm_p);
+int cpl_ac_get_wkst(void);
 
-int ac_print(ac_tm_p);
+int cpl_ac_print(cpl_ac_tm_p);
 
 
 
@@ -110,14 +110,14 @@ int ac_print(ac_tm_p);
 #define TSW_TSET	1
 #define TSW_RSET	2
 
-typedef struct _tr_byxxx
+typedef struct _cpl_tr_byxxx
 {
 	int nr;
 	int *xxx;
 	int *req;
-} tr_byxxx_t, *tr_byxxx_p;
+} cpl_tr_byxxx_t, *cpl_tr_byxxx_p;
 
-typedef struct _tmrec
+typedef struct _cpl_tmrec
 {
 	time_t dtstart;
 	struct tm ts;
@@ -126,50 +126,48 @@ typedef struct _tmrec
 	time_t until;
 	int freq;
 	int interval;
-	tr_byxxx_p byday;
-	tr_byxxx_p bymday;
-	tr_byxxx_p byyday;
-	tr_byxxx_p bymonth;
-	tr_byxxx_p byweekno;
+	cpl_tr_byxxx_p byday;
+	cpl_tr_byxxx_p bymday;
+	cpl_tr_byxxx_p byyday;
+	cpl_tr_byxxx_p bymonth;
+	cpl_tr_byxxx_p byweekno;
 	int wkst;
-} tmrec_t, *tmrec_p;
+} cpl_tmrec_t, *cpl_tmrec_p;
 
-typedef struct _tr_res
+typedef struct _cpl_tr_res
 {
 	int flag;
 	time_t rest;
-} tr_res_t, *tr_res_p;
+} cpl_tr_res_t, *cpl_tr_res_p;
 
-tr_byxxx_p tr_byxxx_new(void);
-int tr_byxxx_init(tr_byxxx_p, int);
-int tr_byxxx_free(tr_byxxx_p);
+cpl_tr_byxxx_p cpl_tr_byxxx_new(void);
+int cpl_tr_byxxx_init(cpl_tr_byxxx_p, int);
+int cpl_tr_byxxx_free(cpl_tr_byxxx_p);
 
-tmrec_p tmrec_new(void);
-int tmrec_free(tmrec_p);
+cpl_tmrec_p cpl_tmrec_new(void);
+int cpl_tmrec_free(cpl_tmrec_p);
 
-int tr_parse_dtstart(tmrec_p, char*);
-int tr_parse_dtend(tmrec_p, char*);
-int tr_parse_duration(tmrec_p, char*);
-int tr_parse_until(tmrec_p, char*);
-int tr_parse_freq(tmrec_p, char*);
-int tr_parse_interval(tmrec_p, char*);
-int tr_parse_byday(tmrec_p, char*);
-int tr_parse_bymday(tmrec_p, char*);
-int tr_parse_byyday(tmrec_p, char*);
-int tr_parse_bymonth(tmrec_p, char*);
-int tr_parse_byweekno(tmrec_p, char*);
-int tr_parse_wkst(tmrec_p, char*);
+int cpl_tr_parse_dtstart(cpl_tmrec_p, char*);
+int cpl_tr_parse_dtend(cpl_tmrec_p, char*);
+int cpl_tr_parse_duration(cpl_tmrec_p, char*);
+int cpl_tr_parse_until(cpl_tmrec_p, char*);
+int cpl_tr_parse_freq(cpl_tmrec_p, char*);
+int cpl_tr_parse_interval(cpl_tmrec_p, char*);
+int cpl_tr_parse_byday(cpl_tmrec_p, char*);
+int cpl_tr_parse_bymday(cpl_tmrec_p, char*);
+int cpl_tr_parse_byyday(cpl_tmrec_p, char*);
+int cpl_tr_parse_bymonth(cpl_tmrec_p, char*);
+int cpl_tr_parse_byweekno(cpl_tmrec_p, char*);
+int cpl_tr_parse_wkst(cpl_tmrec_p, char*);
 
-int tr_print(tmrec_p);
-time_t ic_parse_datetime(char*,struct tm*);
-time_t ic_parse_duration(char*);
+int cpl_tr_print(cpl_tmrec_p);
+time_t cpl_ic_parse_datetime(char*,struct tm*);
+time_t cpl_ic_parse_duration(char*);
 
-tr_byxxx_p ic_parse_byday(char*);
-tr_byxxx_p ic_parse_byxxx(char*);
-int ic_parse_wkst(char*);
+cpl_tr_byxxx_p cpl_ic_parse_byday(char*);
+cpl_tr_byxxx_p cpl_ic_parse_byxxx(char*);
+int cpl_ic_parse_wkst(char*);
 
-int check_tmrec(tmrec_p, ac_tm_p, tr_res_p);
-
+int cpl_check_tmrec(cpl_tmrec_p, cpl_ac_tm_p, cpl_tr_res_p);
 
 #endif
-

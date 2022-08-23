@@ -98,6 +98,7 @@ Carsten Bock
               3.56. ka_loglevel (int)
               3.57. ka_logmsg (str)
               3.58. load_rank (int)
+              3.59. db_clean_tcp (int)
 
         4. RPC Commands
 
@@ -203,6 +204,7 @@ Carsten Bock
    1.56. ka_loglevel parameter usage
    1.57. ka_logmsg parameter usage
    1.58. load_rank parameter usage
+   1.59. db_clean_tcp parameter usage
 
 Chapter 1. Admin Guide
 
@@ -277,6 +279,7 @@ Chapter 1. Admin Guide
         3.56. ka_loglevel (int)
         3.57. ka_logmsg (str)
         3.58. load_rank (int)
+        3.59. db_clean_tcp (int)
 
    4. RPC Commands
 
@@ -414,6 +417,7 @@ Chapter 1. Admin Guide
    3.56. ka_loglevel (int)
    3.57. ka_logmsg (str)
    3.58. load_rank (int)
+   3.59. db_clean_tcp (int)
 
 3.1. nat_bflag (int)
 
@@ -1109,9 +1113,14 @@ modparam("usrloc", "version_table", 0)
    Note: the internal keepalive is for the moment implemented only for
    contact records stored in memory.
 
-   Note: it is recommeder to set 'timer_procs' parameter in order to have
+   Note: it is recommended to set 'timer_procs' parameter in order to have
    dedicated timer processes for usrloc module and off-load the keepalive
    sending process from the core timers.
+
+   Note: Keepalives will be sent to the IP and port using the transport
+   defined in the âreceivedâ column. If not set, then keepalives will
+   be sent to the AOR using UDP as a default transport. If available, the
+   TCP connection will be re-used for WS, TCP and TLS.
 
    Default value is “0 (keepalive disabled)”.
 
@@ -1229,6 +1238,22 @@ modparam("usrloc", "ka_logmsg", " to-uri: [$tu] remote-addr: [$sas]")
    Example 1.58. load_rank parameter usage
 ...
 modparam("usrloc", "load_rank", 1)
+...
+
+3.59. db_clean_tcp (int)
+
+   If set to 1, when Kamailio starts it removes the contacts with
+   transport TCP, TLS or WSS, no longer loading them. Useful when end
+   points do not listen for incoming connections on contact address, which
+   is quite common (end point use only tcp client connections). On
+   restart, connections are lost, therefore the corresponding contact
+   records become useless.
+
+   Default value is “0” (do not clean tcp contacts).
+
+   Example 1.59. db_clean_tcp parameter usage
+...
+modparam("usrloc", "db_clean_tcp", 1)
 ...
 
 4. RPC Commands

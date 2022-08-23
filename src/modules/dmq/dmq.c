@@ -161,7 +161,7 @@ static int make_socket_str_from_uri(struct sip_uri *uri, str *socket)
 	}
 
 	if(get_valid_proto_string(uri->proto, 0, 0, &sproto)<0) {
-		LM_WARN("unknown transport protocol - fall back to udp\n");
+		LM_INFO("unknown transport protocol - fall back to udp\n");
 		sproto.s = "udp";
 		sproto.len = 3;
 	}
@@ -442,6 +442,7 @@ void rpc_dmq_remove(rpc_t* rpc, void* ctx)
 		rpc->fault(ctx, 500, "Failure");
 		return;
 	}
+	rpc->rpl_printf(ctx, "Ok. DMQ node removed.");
 }
 
 static const char* rpc_dmq_remove_doc[3] = {

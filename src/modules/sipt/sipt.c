@@ -47,14 +47,27 @@ static int sipt_get_hop_counter(struct sip_msg *msg, pv_param_t *param, pv_value
 static int sipt_get_event_info(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 static int sipt_get_cpc(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 static int sipt_get_calling_party_nai(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
+static int sipt_get_calling_party(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 static int sipt_get_presentation(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 static int sipt_get_screening(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 static int sipt_get_called_party_nai(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
+static int sipt_get_called_party(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 static int sipt_get_charge_indicator(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 
 static int sipt_get_redirection_info(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 static int sipt_get_redirection_number_nai(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 static int sipt_get_redirection_number(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
+
+static int sipt_get_redirection_reason(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
+static int sipt_get_original_redirection_reason(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
+static int sipt_get_redirecting_number_nai(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
+static int sipt_get_redirecting_number(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
+static int sipt_get_original_called_number_nai(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
+static int sipt_get_original_called_number(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
+static int sipt_get_generic_number_nai(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
+static int sipt_get_generic_number(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
+
+static int sipt_has_isup_body(struct sip_msg *msg, char *type, char *str2 );
 
 /* New API */
 int sipt_parse_pv_name(pv_spec_p sp, str *in);
@@ -102,10 +115,30 @@ static sipt_header_map_t sipt_header_mapping[] =
 		{{"CHARGE_INDICATOR", 1}, 
 			{NULL, 0}
 		}},
-        {"REDIRECTION_INFO", ISUP_PARM_REDIRECTION_INFO, 
-                {{NULL, 0}}  },
-        {"REDIRECTION_NUMBER", ISUP_PARM_REDIRECTION_NUMBER, 
-            		{{"NATURE_OF_ADDRESS", 1}, 
+	{"REDIRECTION_INFO", ISUP_PARM_DIVERSION_INFORMATION,
+		{{NULL, 0}}  },
+	{"REDIRECTION_NUMBER", ISUP_PARM_REDIRECTION_NUMBER,
+		{{"NATURE_OF_ADDRESS", 1},
+			{"NAI", 1},
+			{NULL, 0}
+		}},
+	{"REDIRECTION_INFORMATION", ISUP_PARM_REDIRECTION_INFO,
+		{{"REASON", 1},
+			{"ORIGINAL_REASON", 2},
+			{NULL, 0}
+		}},
+	{"REDIRECTING_NUMBER", ISUP_PARM_REDIRECTING_NUMBER,
+		{{"NATURE_OF_ADDRESS", 1},
+			{"NAI", 1},
+			{NULL, 0}
+		}},
+	{"ORIGINAL_CALLED_NUMBER", ISUP_PARM_ORIGINAL_CALLED_NUM,
+		{{"NATURE_OF_ADDRESS", 1},
+			{"NAI", 1},
+			{NULL, 0}
+		}},
+	{"GENERIC_NUMBER", ISUP_PARM_GENERIC_ADDR,
+		{{"NATURE_OF_ADDRESS", 1},
 			{"NAI", 1},
 			{NULL, 0}
 		}},
@@ -168,7 +201,13 @@ static cmd_export_t cmds[]={
 		4,          /* number of parameters */
 		fixup_str_str_str, fixup_free_str_str_str,         /* */
 		/* can be applied to original requests */
-		ONREPLY_ROUTE}, 
+		ONREPLY_ROUTE},
+	{"sipt_has_isup_body", /* action name as in scripts */
+		(cmd_function)sipt_has_isup_body,  /* C function name */
+		0,          /* number of parameters */
+		0, 0,
+		/* can be applied to original requests */
+		ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -207,23 +246,53 @@ struct module_exports exports = {
 	mod_destroy      /* destroy function */
 };
 
-static int sipt_get_hop_counter(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
+static inline int sipt_check_IAM(struct sip_msg *msg, str *body)
 {
-	str body;
-	body.s = get_body_part(msg, TYPE_APPLICATION,SUBTYPE_ISUP,&body.len);
+	body->s = get_body_part(msg, TYPE_APPLICATION,SUBTYPE_ISUP, &body->len);
 
-	if(body.s == NULL)
+	if(body->s == NULL)
 	{
 		LM_INFO("No ISUP Message Found");
 		return -1;
 	}
 
-	if(body.s[0] != ISUP_IAM)
+	if(body->s[0] != ISUP_IAM)
 	{
 		LM_DBG("message not an IAM\n");
 		return -1;
 	}
-	
+	return 1;
+}
+
+static inline int sipt_check_ACM_CPG(struct sip_msg *msg, str *body)
+{
+	body->s = get_body_part(msg, TYPE_APPLICATION,SUBTYPE_ISUP, &body->len);
+
+	if(body->s == NULL)
+	{
+		LM_INFO("No ISUP Message Found");
+		return -1;
+	}
+
+	if((body->s[0] != ISUP_ACM) && (body->s[0] != ISUP_CPG))
+	{
+		LM_DBG("message not an ACM or CPG\n");
+		return -1;
+	}
+	return 1;
+}
+
+
+static int sipt_get_hop_counter(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
+{
+	str body;
+
+	if(sipt_check_IAM(msg, &body) != 1)
+	{
+		LM_INFO("could not check IAM\n");
+		return -1;
+	}
+
 	pv_get_sintval(msg, param, res, isup_get_hop_counter((unsigned char*)body.s, body.len));
 	return 0;
 }
@@ -252,17 +321,10 @@ static int sipt_get_event_info(struct sip_msg *msg, pv_param_t *param, pv_value_
 static int sipt_get_cpc(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	str body;
-	body.s = get_body_part(msg, TYPE_APPLICATION,SUBTYPE_ISUP,&body.len);
 
-	if(body.s == NULL)
+	if(sipt_check_IAM(msg, &body) != 1)
 	{
-		LM_INFO("No ISUP Message Found");
-		return -1;
-	}
-
-	if(body.s[0] != ISUP_IAM)
-	{
-		LM_DBG("message not an IAM\n");
+		LM_INFO("could not check IAM\n");
 		return -1;
 	}
 	
@@ -273,17 +335,10 @@ static int sipt_get_cpc(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 static int sipt_get_calling_party_nai(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	str body;
-	body.s = get_body_part(msg, TYPE_APPLICATION,SUBTYPE_ISUP,&body.len);
 
-	if(body.s == NULL)
+	if(sipt_check_IAM(msg, &body) != 1)
 	{
-		LM_INFO("No ISUP Message Found");
-		return -1;
-	}
-
-	if(body.s[0] != ISUP_IAM)
-	{
-		LM_DBG("message not an IAM\n");
+		LM_INFO("could not check IAM\n");
 		return -1;
 	}
 	
@@ -291,20 +346,35 @@ static int sipt_get_calling_party_nai(struct sip_msg *msg, pv_param_t *param, pv
 	return 0;
 }
 
-static int sipt_get_redirection_info(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
+static int sipt_get_calling_party(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
+	static char sb_s_buf[26];
 	str body;
-	body.s = get_body_part(msg, TYPE_APPLICATION,SUBTYPE_ISUP,&body.len);
+	memset(sb_s_buf, 0, 26);
 
-	if(body.s == NULL)
+	if(sipt_check_IAM(msg, &body) != 1)
 	{
-		LM_INFO("No ISUP Message Found");
+		LM_INFO("could not check IAM\n");
 		return -1;
 	}
 
-	if((body.s[0] != ISUP_ACM) && (body.s[0] != ISUP_CPG))
+	isup_get_calling_party((unsigned char*)body.s, body.len, sb_s_buf);
+
+	if (strlen(sb_s_buf) > 0)
 	{
-		LM_DBG("message not an ACM or CPG\n");
+		pv_get_strzval(msg, param, res, sb_s_buf);
+	} else {
+		pv_get_sintval(msg, param, res, -1);
+	}
+	return 0;
+}
+
+static int sipt_get_redirection_info(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
+{
+	str body;
+	if(sipt_check_ACM_CPG(msg, &body) != 1)
+	{
+		LM_INFO("could not check ACM or CPG\n");
 		return -1;
 	}
 	
@@ -315,17 +385,9 @@ static int sipt_get_redirection_info(struct sip_msg *msg, pv_param_t *param, pv_
 static int sipt_get_redirection_number_nai(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	str body;
-	body.s = get_body_part(msg, TYPE_APPLICATION,SUBTYPE_ISUP,&body.len);
-
-	if(body.s == NULL)
+	if(sipt_check_ACM_CPG(msg, &body) != 1)
 	{
-		LM_INFO("No ISUP Message Found");
-		return -1;
-	}
-
-	if((body.s[0] != ISUP_ACM) && (body.s[0] != ISUP_CPG))
-	{
-		LM_DBG("message not an ACM or CPG\n");
+		LM_INFO("could not check ACM or CPG\n");
 		return -1;
 	}
 	
@@ -337,18 +399,10 @@ static int sipt_get_redirection_number(struct sip_msg *msg, pv_param_t *param, p
 {
 	static char sb_s_buf[26];
 	str body;
-	body.s = get_body_part(msg, TYPE_APPLICATION,SUBTYPE_ISUP,&body.len);
-
 	memset(sb_s_buf, 0, 26);
-	if(body.s == NULL)
+	if(sipt_check_ACM_CPG(msg, &body) != 1)
 	{
-		LM_INFO("No ISUP Message Found");
-		return -1;
-	}
-
-	if((body.s[0] != ISUP_ACM) && (body.s[0] != ISUP_CPG))
-	{
-		LM_DBG("message not an ACM or CPG\n");
+		LM_INFO("could not check ACM or CPG\n");
 		return -1;
 	}
 
@@ -363,21 +417,149 @@ static int sipt_get_redirection_number(struct sip_msg *msg, pv_param_t *param, p
 	return 0;
 }
 
+static int sipt_get_redirection_reason(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
+{
+	str body;
+
+	if(sipt_check_IAM(msg, &body) != 1)
+	{
+		LM_INFO("could not check IAM\n");
+		return -1;
+	}
+
+	pv_get_sintval(msg, param, res, isup_get_redirection_reason((unsigned char*)body.s, body.len));
+	return 0;
+}
+
+static int sipt_get_original_redirection_reason(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
+{
+	str body;
+
+	if(sipt_check_IAM(msg, &body) != 1)
+	{
+		LM_INFO("could not check IAM\n");
+		return -1;
+	}
+
+	pv_get_sintval(msg, param, res, isup_get_original_redirection_reason((unsigned char*)body.s, body.len));
+	return 0;
+}
+
+static int sipt_get_redirecting_number_nai(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
+{
+	str body;
+
+	if(sipt_check_IAM(msg, &body) != 1)
+	{
+		LM_INFO("could not check IAM\n");
+		return -1;
+	}
+	
+	pv_get_sintval(msg, param, res, isup_get_redirecting_number_nai((unsigned char*)body.s, body.len));
+	return 0;
+}
+
+static int sipt_get_redirecting_number(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
+{
+	static char sb_s_buf[26];
+	str body;
+	memset(sb_s_buf, 0, 26);
+
+	if(sipt_check_IAM(msg, &body) != 1)
+	{
+		LM_INFO("could not check IAM\n");
+		return -1;
+	}
+
+	isup_get_redirecting_number((unsigned char*)body.s, body.len, sb_s_buf);
+
+	if (strlen(sb_s_buf) > 0)
+	{
+		pv_get_strzval(msg, param, res, sb_s_buf);
+	} else {
+		pv_get_sintval(msg, param, res, -1);
+	}
+	return 0;
+}
+
+static int sipt_get_original_called_number_nai(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
+{
+	str body;
+
+	if(sipt_check_IAM(msg, &body) != 1)
+	{
+		LM_INFO("could not check IAM\n");
+		return -1;
+	}
+
+	pv_get_sintval(msg, param, res, isup_get_original_called_number_nai((unsigned char*)body.s, body.len));
+	return 0;
+}
+
+static int sipt_get_original_called_number(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
+{
+	static char sb_s_buf[26];
+	str body;
+	memset(sb_s_buf, 0, 26);
+
+	if(sipt_check_IAM(msg, &body) != 1)
+	{
+		LM_INFO("could not check IAM\n");
+		return -1;
+	}
+
+	isup_get_original_called_number((unsigned char*)body.s, body.len, sb_s_buf);
+
+	if (strlen(sb_s_buf) > 0)
+	{
+		pv_get_strzval(msg, param, res, sb_s_buf);
+	} else {
+		pv_get_sintval(msg, param, res, -1);
+	}
+	return 0;
+}
+
+static int sipt_get_generic_number_nai(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
+{
+	str body;
+
+	if(sipt_check_IAM(msg, &body) != 1)
+	{
+		LM_INFO("could not check IAM\n");
+		return -1;
+	}
+
+	pv_get_sintval(msg, param, res, isup_get_generic_number_nai((unsigned char*)body.s, body.len));
+	return 0;
+}
+
+static int sipt_get_generic_number(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
+{
+	static char sb_s_buf[26];
+	str body;
+	memset(sb_s_buf, 0, 26);
+	if(sipt_check_IAM(msg, &body) != 1)
+	{
+		LM_INFO("could not check IAM\n");
+		return -1;
+	}
+	isup_get_generic_number((unsigned char*)body.s, body.len, sb_s_buf);
+
+	if (strlen(sb_s_buf) > 0)
+	{
+		pv_get_strzval(msg, param, res, sb_s_buf);
+	} else {
+		pv_get_sintval(msg, param, res, -1);
+	}
+	return 0;
+}
 
 static int sipt_get_presentation(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	str body;
-	body.s = get_body_part(msg, TYPE_APPLICATION,SUBTYPE_ISUP,&body.len);
-
-	if(body.s == NULL)
+	if(sipt_check_IAM(msg, &body) != 1)
 	{
-		LM_INFO("No ISUP Message Found");
-		return -1;
-	}
-
-	if(body.s[0] != ISUP_IAM)
-	{
-		LM_DBG("message not an IAM\n");
+		LM_INFO("could not check IAM\n");
 		return -1;
 	}
 	
@@ -388,19 +570,12 @@ static int sipt_get_presentation(struct sip_msg *msg, pv_param_t *param, pv_valu
 static int sipt_get_screening(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	str body;
-	body.s = get_body_part(msg, TYPE_APPLICATION,SUBTYPE_ISUP,&body.len);
-
-	if(body.s == NULL)
+	if(sipt_check_IAM(msg, &body) != 1)
 	{
-		LM_INFO("No ISUP Message Found");
+		LM_INFO("could not check IAM\n");
 		return -1;
 	}
 
-	if(body.s[0] != ISUP_IAM)
-	{
-		LM_DBG("message not an IAM\n");
-		return -1;
-	}
 	LM_DBG("about to get screening\n");
 	
 	pv_get_sintval(msg, param, res, isup_get_screening((unsigned char*)body.s, body.len));
@@ -432,22 +607,43 @@ static int sipt_get_charge_indicator(struct sip_msg *msg, pv_param_t *param, pv_
 static int sipt_get_called_party_nai(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	str body;
-	body.s = get_body_part(msg, TYPE_APPLICATION,SUBTYPE_ISUP,&body.len);
-
-	if(body.s == NULL)
+	if(sipt_check_IAM(msg, &body) != 1)
 	{
-		LM_INFO("No ISUP Message Found");
-		return -1;
-	}
-
-	if(body.s[0] != ISUP_IAM)
-	{
-		LM_DBG("message not an IAM\n");
+		LM_INFO("could not check IAM\n");
 		return -1;
 	}
 	
 	pv_get_sintval(msg, param, res, isup_get_called_party_nai((unsigned char*)body.s, body.len));
 	return 0;
+}
+
+static int sipt_get_called_party(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
+{
+	static char sb_s_buf[26];
+	str body;
+	memset(sb_s_buf, 0, 26);
+	if(sipt_check_IAM(msg, &body) != 1)
+	{
+		LM_INFO("could not check IAM\n");
+		return -1;
+	}
+
+	isup_get_called_party((unsigned char*)body.s, body.len, sb_s_buf);
+
+	if (strlen(sb_s_buf) > 0)
+	{
+		pv_get_strzval(msg, param, res, sb_s_buf);
+	} else {
+		pv_get_sintval(msg, param, res, -1);
+	}
+	return 0;
+}
+
+static int sipt_has_isup_body(struct sip_msg *msg, char* foo, char* bar)
+{
+	str body;
+	body.s = get_body_part(msg, TYPE_APPLICATION,SUBTYPE_ISUP,&body.len);
+	return (body.s == NULL)?-1:1;
 }
 
 int sipt_parse_pv_name(pv_spec_p sp, str *in)
@@ -571,6 +767,8 @@ static int sipt_get_pv(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 		case ISUP_PARM_CALLING_PARTY_NUM:
 			switch(spv->sub_type)
 			{
+				case 0: /* NUMBER */
+					return sipt_get_calling_party(msg, param, res);
 				case 1: /* NAI */
 					return sipt_get_calling_party_nai(msg, param, res);
 				case 2: /* SCREENIG */
@@ -582,6 +780,8 @@ static int sipt_get_pv(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 		case ISUP_PARM_CALLED_PARTY_NUM:
 			switch(spv->sub_type)
 			{
+				case 0: /* NUMBER */
+					return sipt_get_called_party(msg, param, res);
 				case 1: /* NAI */
 					return sipt_get_called_party_nai(msg, param, res);
 			}
@@ -597,15 +797,51 @@ static int sipt_get_pv(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 				return sipt_get_charge_indicator(msg, param, res);
 			}
 			break;
-		case ISUP_PARM_REDIRECTION_INFO:
+		case ISUP_PARM_DIVERSION_INFORMATION:
 			return sipt_get_redirection_info(msg, param, res);
-                case ISUP_PARM_REDIRECTION_NUMBER:
+		case ISUP_PARM_REDIRECTION_NUMBER:
 			switch(spv->sub_type)
 			{
 				case 0: /* NUMBER */
 					return sipt_get_redirection_number(msg, param, res);
 				case 1: /* NAI */
 					return sipt_get_redirection_number_nai(msg, param, res);
+			}
+			break;
+		case ISUP_PARM_REDIRECTION_INFO:
+			switch(spv->sub_type)
+			{
+				case 1: /* REASON */
+					return sipt_get_redirection_reason(msg, param, res);
+				case 2: /* ORIGINAL_REASON */
+					return sipt_get_original_redirection_reason(msg, param, res);
+			}
+			break;
+		case ISUP_PARM_REDIRECTING_NUMBER:
+			switch(spv->sub_type)
+			{
+				case 0: /* NUMBER */
+					return sipt_get_redirecting_number(msg, param, res);
+				case 1: /* NAI */
+					return sipt_get_redirecting_number_nai(msg, param, res);
+			}
+			break;
+		case ISUP_PARM_GENERIC_ADDR:
+			switch(spv->sub_type)
+			{
+				case 0: /* NUMBER */
+					return sipt_get_generic_number(msg, param, res);
+				case 1: /* NAI */
+					return sipt_get_generic_number_nai(msg, param, res);
+			}
+			break;
+		case ISUP_PARM_ORIGINAL_CALLED_NUM:
+			switch(spv->sub_type)
+			{
+				case 0: /* NUMBER */
+					return sipt_get_original_called_number(msg, param, res);
+				case 1: /* NAI */
+					return sipt_get_original_called_number_nai(msg, param, res);
 			}
 			break;
 	}

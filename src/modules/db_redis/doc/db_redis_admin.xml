@@ -146,6 +146,17 @@ location=entry:ruid&amp;usrdom:username,domain&amp;timer:partition,keepalive;acc
 					</listitem>
 				</itemizedlist>
 			</para>
+			<para>
+				The following library is an optional dependency to support redis cluster protocol:
+				<itemizedlist>
+					<listitem>
+						<para>
+						<emphasis>hiredis-cluster</emphasis> - available at
+						<ulink url="https://github.com/Nordix/hiredis-cluster">https://github.com/Nordix/hiredis-cluster</ulink>
+						</para>
+					</listitem>
+				</itemizedlist>
+			</para>
 		</section>
 	</section>
 
@@ -215,6 +226,10 @@ modparam("db_redis", "verbosity", 0)
 			Load the module and set the "db_url" modparam for specific modules to:
 			'redis://[username]@host:port/database'. Username is optional.
 			The database portion must be a valid Redis database number.
+		</para>
+		<para>
+			For cluster support you need to set the "db_url" modparam with a comma separated list of cluster hosts:
+			'redis://host1:port1,host2:port2/'. The database portion is not supported in cluster mode.
 		</para>
 		<example>
 			<title>Usage</title>

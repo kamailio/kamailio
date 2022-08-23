@@ -164,9 +164,10 @@ int AAAmsg2json(AAAMessage * request, str * dest) {
 	}
 
 	dest->len = strlen(out);
-	dest->s = pkg_malloc(dest->len);
+	dest->s = pkg_malloc(dest->len + 1);
 	if (dest->s) {
 		memcpy(dest->s, out, dest->len);
+		dest->s[dest->len] = '\0';
 		free(out);
 	} else {
 		LM_WARN("Failed to allocate %d bytes for the JSON\n", dest->len);

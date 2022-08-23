@@ -83,6 +83,9 @@ extern int store_data_on_dereg; /**< should we store SAR user data on de-registr
 
 extern int ue_unsubscribe_on_dereg;
 extern int user_data_always;
+extern int skip_multiple_bindings_on_reg_resp;
+
+#define DO_NOT_USE_REALM_FOR_PRIVATE_IDENTITY         0x01
 
 /* \brief
  * Return randomized expires between expires-range% and expires.
@@ -545,7 +548,7 @@ static inline int update_contacts_helper(struct sip_msg* msg, impurecord_t* impu
                         LM_DBG("Need to update contact: <%.*s>: "
                                 "q_value [%d],"
                                 "sos: [%d],"
-                                "expires [%ld]\n", chi->uri.len, chi->uri.s, qvalue, sos, expires - time(NULL));
+                                "expires [%" TIME_T_FMT "]\n", chi->uri.len, chi->uri.s, qvalue, sos, TIME_T_CAST(expires - time(NULL)));
 
                         LM_DBG("packing contact information\n");
                         if ((ci = pack_ci(msg, chi, expires, 0)) == 0) {
@@ -870,7 +873,7 @@ int update_contacts(struct sip_msg* msg, udomain_t* _d,
                 goto error;
             }
             //build the contact buffer for the exact registered contact for reply on explicit IMPU
-            build_contact(impu_rec, contact_header, msg);
+            build_contact(impu_rec, contact_header, skip_multiple_bindings_on_reg_resp == 1 ? msg : 0);
             build_p_associated_uri(impu_rec->s);
 
             subscription = impu_rec->s;
@@ -881,7 +884,7 @@ int update_contacts(struct sip_msg* msg, udomain_t* _d,
                         ecf1, ecf2, &impu_rec) != 0) {
                     LM_ERR("Unable to update explicit impurecord for <%.*s>\n", public_identity->len, public_identity->s);
                 }
-                build_contact(impu_rec, contact_header, msg);
+                build_contact(impu_rec, contact_header, skip_multiple_bindings_on_reg_resp == 1 ? msg : 0);
                 ul.unlock_udomain(_d, public_identity);
                 break;
             }
@@ -1276,13 +1279,13 @@ error:
  */
 //int save(struct sip_msg* msg, udomain_t* _d) {
 
-int save(struct sip_msg* msg, char* str1, char *route) {
+int save(struct sip_msg* msg, char* str1, char *route, int _cflags) {
     int expires;
     int require_user_data = 0;
     int data_available;
     contact_t* c;
     int st;
-    str public_identity, private_identity, realm;
+    str public_identity, private_identity, realm={0,0};
     int sar_assignment_type = AVP_IMS_SAR_NO_ASSIGNMENT;
     str route_name;
 
@@ -1342,12 +1345,15 @@ int save(struct sip_msg* msg, char* str1, char *route) {
         rerrno = R_SAR_FAILED;
         goto error;
     }
-    realm = cscf_get_realm_from_uri(public_identity);
-    if (realm.len <= 0 || !realm.s) {
-        LM_ERR("can't get realm\n");
-        rerrno = R_SAR_FAILED;
-        goto error;
-    }
+
+    if (!(_cflags & DO_NOT_USE_REALM_FOR_PRIVATE_IDENTITY)) {
+        realm = cscf_get_realm_from_uri(public_identity);
+        if (realm.len <= 0 || !realm.s) {
+            LM_ERR("can't get realm\n");
+            rerrno = R_SAR_FAILED;
+            goto error;
+        }
+     }
 
     private_identity = cscf_get_private_identity(msg, realm);
     if (private_identity.len <= 0 || !private_identity.s) {

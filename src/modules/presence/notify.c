@@ -1700,7 +1700,8 @@ jump_over_body:
 	}
 
 	/* build extra headers */
-	if(build_str_hdr(subs, notify_body ? 1 : 0, &str_hdr) < 0) {
+	if(build_str_hdr(subs, (notify_body && notify_body->len>0) ? 1 : 0,
+				&str_hdr) < 0) {
 		LM_ERR("while building headers\n");
 		goto error;
 	}
@@ -2866,6 +2867,7 @@ int process_dialogs(int round, int presence_winfo)
 	str ev_sname, winfo = str_init("presence.winfo");
 	int now = (int)time(NULL);
 	int updated = 0;
+	int no_active_watchers = 0;
 	db_query_f query_fn = pa_dbf.query_lock ? pa_dbf.query_lock : pa_dbf.query;
 
 	query_cols[n_query_cols] = &str_updated_col;
@@ -2899,13 +2901,6 @@ int process_dialogs(int round, int presence_winfo)
 		goto error;
 	}
 
-	if(pa_dbf.start_transaction) {
-		if(pa_dbf.start_transaction(pa_db, pres_db_table_lock) < 0) {
-			LM_ERR("in start_transaction\n");
-			goto error;
-		}
-	}
-
 	/* Step 1: Find active_watchers that require notification */
 	if(query_fn(pa_db, query_cols, query_ops, query_vals, result_cols,
 			   n_query_cols, n_result_cols, 0, &dialog_list)
@@ -2919,7 +2914,17 @@ int process_dialogs(int round, int presence_winfo)
 	}
 
 	if(dialog_list->n <= 0)
+	{
+		no_active_watchers = 1;
 		goto done;
+	}
+
+	if(pa_dbf.start_transaction) {
+		if(pa_dbf.start_transaction(pa_db, pres_db_table_lock) < 0) {
+			LM_ERR("in start_transaction\n");
+			goto error;
+		}
+	}
 
 	/* Step 2: Update the records so they are not notified again */
 	if(pa_dbf.update(pa_db, query_cols, query_ops, query_vals, update_cols,
@@ -3163,7 +3168,7 @@ error:
 	if(dialog)
 		pa_dbf.free_result(pa_db, dialog);
 
-	if(pa_dbf.abort_transaction) {
+	if(no_active_watchers == 0 && pa_dbf.abort_transaction) {
 		if(pa_dbf.abort_transaction(pa_db) < 0)
 			LM_ERR("in abort_transaction\n");
 	}

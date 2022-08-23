@@ -85,7 +85,7 @@ MODULE_VERSION
 
 
 /* WARNING: Keep this aligned with parser/msg_parser.h! */
-#define FL_DO_KEEPALIVE (1 << 31)
+#define FL_DO_KEEPALIVE (1u << 31)
 
 #define HASH_SIZE 512
 
@@ -1707,6 +1707,7 @@ static void restore_keepalive_state(void)
 	unsigned h;
 	str host;
 	FILE *f;
+	long long ll_1, ll_2;
 
 	if(!keepalive_state_file)
 		return;
@@ -1724,7 +1725,9 @@ static void restore_keepalive_state(void)
 	res = fscanf(f, STATE_FILE_HEADER); // skip header
 
 	while(true) {
-		res = fscanf(f, "%63s %63s %ld %ld", uri, socket, &rtime, &stime);
+		res = fscanf(f, "%63s %63s %" TIME_T_FMT " %" TIME_T_FMT, uri, socket, &ll_1, &ll_2);
+		rtime = ll_1;
+		stime = ll_2;
 		if(res == EOF) {
 			if(ferror(f))
 				LM_ERR("error while reading keepalive state file: %s\n",

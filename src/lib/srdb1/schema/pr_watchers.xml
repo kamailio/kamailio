@@ -63,7 +63,7 @@
         <natural/>
     </column>
 
-    <column>
+    <column id="status">
         <name>status</name>
         <type>int</type>
         <size>11</size>
@@ -78,7 +78,7 @@
         <description>Reason</description>
     </column>
 
-    <column>
+    <column id="inserted_time">
         <name>inserted_time</name>
         <type>int</type>
         <size>11</size>
@@ -91,6 +91,12 @@
         <colref linkend="watcher_domain"/>
         <colref linkend="event"/>
         <unique/>
+    </index>
+
+    <index>
+        <name>time_status_idx</name>
+        <colref linkend="inserted_time"/>
+        <colref linkend="status"/>
     </index>
 
 </table>

@@ -56,7 +56,7 @@ err_exit:
 }
 
 
-rt_info_t *build_rt_info(int priority, tmrec_t *trec,
+rt_info_t *build_rt_info(int priority, dr_tmrec_t *trec,
 		/* script routing table index */
 		int route_idx,
 		/* list of destinations indexes */

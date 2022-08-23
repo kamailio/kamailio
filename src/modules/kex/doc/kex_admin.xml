@@ -489,6 +489,15 @@ resetdebug();
 		Verbose info, including version number, compile flags, compiler, repository, hash
 		</para>
 	</section>
+	<section id="kex.r.core.runinfo">
+		<title>
+		<function moreinfo="none">core.runinfo</function>
+		</title>
+		<para>
+		Runtime details like running version, uptime, ...
+		</para>
+	</section>
+
 	<section id="kex.r.core.kill">
 		<title>
 		<function moreinfo="none">core.kill</function>

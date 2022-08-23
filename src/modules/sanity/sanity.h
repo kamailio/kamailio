@@ -36,8 +36,8 @@ int ki_sanity_reply(sip_msg_t *msg);
  * and converts it into _result. returns -1 on error and 0 on success*/
 int str2valid_uint(str* _number, unsigned int* _result);
 
-/* parses the given comma seperated string into a string list */
-strl* parse_str_list(str* _string);
+/* parses the given comma separated string into a string list */
+str_list_t* parse_str_list(str* _string);
 
 /* check top Via header */
 int check_via1_header(sip_msg_t* msg);
@@ -48,7 +48,7 @@ int check_via_protocol(struct sip_msg* _msg);
 /* check if the SIP version in the Via header is 2.0 */
 int check_via_sip_version(struct sip_msg* _msg);
 
-/* compare the Content-Length value with the accutal body length */
+/* compare the Content-Length value with the actual body length */
 int check_cl(struct sip_msg* _msg);
 
 /* compare the method in the CSeq header with the request line value */

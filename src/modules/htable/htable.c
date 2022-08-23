@@ -80,6 +80,14 @@ static int ht_reset(struct sip_msg* msg, char* htname, char* foo);
 static int w_ht_iterator_start(struct sip_msg* msg, char* iname, char* hname);
 static int w_ht_iterator_next(struct sip_msg* msg, char* iname, char* foo);
 static int w_ht_iterator_end(struct sip_msg* msg, char* iname, char* foo);
+static int w_ht_iterator_rm(struct sip_msg* msg, char* iname, char* foo);
+static int w_ht_iterator_sets(struct sip_msg* msg, char* iname, char* val);
+static int w_ht_iterator_seti(struct sip_msg* msg, char* iname, char* val);
+static int w_ht_iterator_setex(struct sip_msg* msg, char* iname, char* val);
+static int w_ht_setxs(sip_msg_t *msg, char *htname, char *itname,
+		char *itval, char *exval);
+static int w_ht_setxi(sip_msg_t *msg, char *htname, char *itname,
+		char *itval, char *exval);
 
 int ht_param(modparam_t type, void* val);
 
@@ -140,6 +148,19 @@ static cmd_export_t cmds[]={
 		ANY_ROUTE},
 	{"sht_iterator_end",	(cmd_function)w_ht_iterator_end,	1, fixup_spve_null, 0,
 		ANY_ROUTE},
+	{"sht_iterator_rm",	(cmd_function)w_ht_iterator_rm,	1, fixup_spve_null, 0,
+		ANY_ROUTE},
+	{"sht_iterator_sets",	(cmd_function)w_ht_iterator_sets,	2, fixup_spve_spve,
+		fixup_free_spve_spve, ANY_ROUTE},
+	{"sht_iterator_seti",	(cmd_function)w_ht_iterator_seti,	2, fixup_spve_igp,
+		fixup_free_spve_igp, ANY_ROUTE},
+	{"sht_iterator_setex",	(cmd_function)w_ht_iterator_setex,	2, fixup_spve_igp,
+		fixup_free_spve_igp, ANY_ROUTE},
+	{"sht_setxs",	(cmd_function)w_ht_setxs,	4, fixup_sssi,
+		fixup_free_sssi, ANY_ROUTE},
+	{"sht_setxi",	(cmd_function)w_ht_setxi,	4, fixup_ssii,
+		fixup_free_ssii, ANY_ROUTE},
+
 	{"bind_htable",     (cmd_function)bind_htable,     0, 0, 0,
 		ANY_ROUTE},
 	{0,0,0,0,0,0}
@@ -378,7 +399,7 @@ static int ht_rm_re_helper(sip_msg_t *msg, ht_t *ht, str *rexp, int rmode)
 		isval.s = *rexp;
 		if (ht_dmq_replicate_action(HT_DMQ_RM_CELL_RE, &ht->name, NULL,
 				AVP_VAL_STR, &isval, rmode)!=0) {
-			LM_ERR("dmq relication failed for [%.*s]\n", ht->name.len, ht->name.s);
+			LM_ERR("dmq replication failed for [%.*s]\n", ht->name.len, ht->name.s);
 		}
 	}
 	if(ht_rm_cell_re(rexp, ht, rmode)<0)
@@ -486,7 +507,7 @@ static int ht_rm_items(sip_msg_t* msg, str* hname, str* op, str *val,
 				isval.s = *val;
 				if ((ht->dmqreplicate > 0) && ht_dmq_replicate_action(HT_DMQ_RM_CELL_RE, &ht->name, NULL,
 							AVP_VAL_STR, &isval, mkey)!=0) {
-					LM_ERR("dmq relication failed (op %d)\n", mkey);
+					LM_ERR("dmq replication failed (op %d)\n", mkey);
 				}
 				if(ht_rm_cell_re(val, ht, mkey)<0) {
 					return -1;
@@ -496,7 +517,7 @@ static int ht_rm_items(sip_msg_t* msg, str* hname, str* op, str *val,
 				isval.s = *val;
 				if ((ht->dmqreplicate > 0) &&ht_dmq_replicate_action(HT_DMQ_RM_CELL_SW, &ht->name, NULL,
 							AVP_VAL_STR, &isval, mkey)!=0) {
-					LM_ERR("dmq relication failed (op %d)\n", mkey);
+					LM_ERR("dmq replication failed (op %d)\n", mkey);
 				}
 				if(ht_rm_cell_op(val, ht, mkey, HT_RM_OP_SW)<0) {
 					return -1;
@@ -569,7 +590,7 @@ static int ki_ht_rm(sip_msg_t* msg, str* hname, str* iname)
 	if (ht->dmqreplicate>0
 			&& ht_dmq_replicate_action(HT_DMQ_DEL_CELL, hname,
 				iname, 0, NULL, 0)!=0) {
-		LM_ERR("dmq relication failed\n");
+		LM_ERR("dmq replication failed\n");
 	}
 	ht_del_cell(ht, iname);
 	return 1;
@@ -788,6 +809,129 @@ static int ki_ht_iterator_end(sip_msg_t *msg, str *iname)
 	if(ht_iterator_end(iname)<0)
 		return -1;
 	return 1;
+}
+
+static int w_ht_iterator_rm(struct sip_msg* msg, char* iname, char* foo)
+{
+	str siname;
+	int ret;
+
+	if(fixup_get_svalue(msg, (gparam_t*)iname, &siname)<0 || siname.len<=0)
+	{
+		LM_ERR("cannot get iterator name\n");
+		return -1;
+	}
+	ret = ht_iterator_rm(&siname);
+	return (ret==0)?1:ret;
+}
+
+static int ki_ht_iterator_rm(sip_msg_t *msg, str *iname)
+{
+	int ret;
+
+	if(iname==NULL || iname->s==NULL || iname->len<=0) {
+		LM_ERR("invalid parameters\n");
+		return -1;
+	}
+	ret = ht_iterator_rm(iname);
+	return (ret==0)?1:ret;
+}
+
+static int ki_ht_iterator_sets(sip_msg_t *msg, str *iname, str *sval)
+{
+	int ret;
+
+	if(iname==NULL || iname->s==NULL || iname->len<=0) {
+		LM_ERR("invalid parameters\n");
+		return -1;
+	}
+
+	ret = ht_iterator_sets(iname, sval);
+	return (ret==0)?1:ret;
+}
+
+static int w_ht_iterator_sets(struct sip_msg* msg, char* iname, char* val)
+{
+	str siname;
+	str sval;
+
+	if(fixup_get_svalue(msg, (gparam_t*)iname, &siname)<0)
+	{
+		LM_ERR("cannot get iterator name\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)val, &sval)<0)
+	{
+		LM_ERR("cannot get value\n");
+		return -1;
+	}
+
+	return ki_ht_iterator_sets(msg, &siname, &sval);
+}
+
+static int ki_ht_iterator_seti(sip_msg_t *msg, str *iname, int ival)
+{
+	int ret;
+
+	if(iname==NULL || iname->s==NULL || iname->len<=0) {
+		LM_ERR("invalid parameters\n");
+		return -1;
+	}
+
+	ret = ht_iterator_seti(iname, ival);
+	return (ret==0)?1:ret;
+}
+
+static int w_ht_iterator_seti(struct sip_msg* msg, char* iname, char* val)
+{
+	str siname;
+	int ival;
+
+	if(fixup_get_svalue(msg, (gparam_t*)iname, &siname)<0 || siname.len<=0)
+	{
+		LM_ERR("cannot get iterator name\n");
+		return -1;
+	}
+	if(fixup_get_ivalue(msg, (gparam_t*)val, &ival)<0)
+	{
+		LM_ERR("cannot get value\n");
+		return -1;
+	}
+
+	return ki_ht_iterator_seti(msg, &siname, ival);
+}
+
+static int ki_ht_iterator_setex(sip_msg_t *msg, str *iname, int exval)
+{
+	int ret;
+
+	if(iname==NULL || iname->s==NULL || iname->len<=0) {
+		LM_ERR("invalid parameters\n");
+		return -1;
+	}
+
+	ret = ht_iterator_setex(iname, exval);
+
+	return (ret==0)?1:ret;
+}
+
+static int w_ht_iterator_setex(struct sip_msg* msg, char* iname, char* val)
+{
+	str siname;
+	int ival;
+
+	if(fixup_get_svalue(msg, (gparam_t*)iname, &siname)<0 || siname.len<=0)
+	{
+		LM_ERR("cannot get iterator name\n");
+		return -1;
+	}
+	if(fixup_get_ivalue(msg, (gparam_t*)val, &ival)<0)
+	{
+		LM_ERR("cannot get value\n");
+		return -1;
+	}
+
+	return ki_ht_iterator_setex(msg, &siname, ival);
 }
 
 static int ki_ht_slot_xlock(sip_msg_t *msg, str *htname, str *skey, int lmode)
@@ -1047,7 +1191,7 @@ static int ki_ht_sets(sip_msg_t *msg, str *htname, str *itname, str *itval)
 
 	if (ht->dmqreplicate>0 && ht_dmq_replicate_action(HT_DMQ_SET_CELL,
 				&ht->name, itname, AVP_VAL_STR, &isvalue, 1)!=0) {
-		LM_ERR("dmq relication failed\n");
+		LM_ERR("dmq replication failed\n");
 	}
 
 	if(ht_set_cell(ht, itname, AVP_VAL_STR, &isvalue, 1)!=0) {
@@ -1078,7 +1222,7 @@ static int ki_ht_seti(sip_msg_t *msg, str *htname, str *itname, int itval)
 
 	if (ht->dmqreplicate>0 && ht_dmq_replicate_action(HT_DMQ_SET_CELL,
 				&ht->name, itname, 0, &isvalue, 1)!=0) {
-		LM_ERR("dmq relication failed\n");
+		LM_ERR("dmq replication failed\n");
 	}
 
 	if(ht_set_cell(ht, itname, 0, &isvalue, 1)!=0) {
@@ -1112,7 +1256,7 @@ static int ki_ht_setex(sip_msg_t *msg, str *htname, str *itname, int itval)
 	if (ht->dmqreplicate>0
 				&& ht_dmq_replicate_action(HT_DMQ_SET_CELL_EXPIRE, htname,
 				itname, 0, &isval, 0)!=0) {
-		LM_ERR("dmq relication failed\n");
+		LM_ERR("dmq replication failed\n");
 	}
 	if(ht_set_cell_expire(ht, itname, 0, &isval)!=0) {
 		LM_ERR("cannot set expire for sht: %.*s key: %.*s\n", htname->len,
@@ -1169,6 +1313,37 @@ static int ki_ht_setxs(sip_msg_t *msg, str *htname, str *itname, str *itval,
 /**
  *
  */
+static int w_ht_setxs(sip_msg_t *msg, char *htname, char *itname,
+		char *itval, char *exval)
+{
+	str shtname;
+	str sitname;
+	str sitval;
+	int iexval;
+
+	if(fixup_get_svalue(msg, (gparam_t*)htname, &shtname)<0 || shtname.len<=0) {
+		LM_ERR("cannot get htable name\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)itname, &sitname)<0 || sitname.len<=0) {
+		LM_ERR("cannot get item name\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)itval, &sitval)<0) {
+		LM_ERR("cannot get item value\n");
+		return -1;
+	}
+	if(fixup_get_ivalue(msg, (gparam_t*)exval, &iexval)<0) {
+		LM_ERR("cannot get expire value\n");
+		return -1;
+	}
+
+	return ki_ht_setxs(msg, &shtname, &sitname, &sitval, iexval);
+}
+
+/**
+ *
+ */
 static int ki_ht_setxi(sip_msg_t *msg, str *htname, str *itname, int itval,
 	int exval)
 {
@@ -1209,6 +1384,37 @@ static int ki_ht_setxi(sip_msg_t *msg, str *htname, str *itname, int itval,
 	return 0;
 }
 
+/**
+ *
+ */
+static int w_ht_setxi(sip_msg_t *msg, char *htname, char *itname,
+		char *itval, char *exval)
+{
+	str shtname;
+	str sitname;
+	int nitval;
+	int iexval;
+
+	if(fixup_get_svalue(msg, (gparam_t*)htname, &shtname)<0 || shtname.len<=0) {
+		LM_ERR("cannot get htable name\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)itname, &sitname)<0 || sitname.len<=0) {
+		LM_ERR("cannot get item name\n");
+		return -1;
+	}
+	if(fixup_get_ivalue(msg, (gparam_t*)itval, &nitval)<0) {
+		LM_ERR("cannot get item value\n");
+		return -1;
+	}
+	if(fixup_get_ivalue(msg, (gparam_t*)exval, &iexval)<0) {
+		LM_ERR("cannot get expire value\n");
+		return -1;
+	}
+
+	return ki_ht_setxi(msg, &shtname, &sitname, nitval, iexval);
+}
+
 #define KSR_HT_KEMI_NOINTVAL -255
 static ht_cell_t *_htc_ki_local=NULL;
 
@@ -1239,7 +1445,7 @@ static int ki_ht_add_op(sip_msg_t *msg, str *htname, str *itname, int itval)
 	if (ht->dmqreplicate>0) {
 		if (ht_dmq_replicate_action(HT_DMQ_SET_CELL, htname, itname, 0,
 					&htc->value, 1)!=0) {
-			LM_ERR("dmq relication failed\n");
+			LM_ERR("dmq replication failed\n");
 		}
 	}
 	return htc->value.n;
@@ -1277,6 +1483,18 @@ static const char* htable_seti_doc[2] = {
 	"Set one key in a hash table to an integer value.",
 	0
 };
+static const char* htable_setex_doc[2] = {
+	"Set expire in a hash table for the item referenced by key.",
+	0
+};
+static const char* htable_setxs_doc[2] = {
+	"Set one key in a hash table to a string value and its expire value.",
+	0
+};
+static const char* htable_setxi_doc[2] = {
+	"Set one key in a hash table to an integer value and its expire value.",
+	0
+};
 static const char* htable_list_doc[2] = {
 	"List all htables.",
 	0
@@ -1302,6 +1520,7 @@ static const char* htable_store_doc[2] = {
 static void htable_rpc_delete(rpc_t* rpc, void* c) {
 	str htname, keyname;
 	ht_t *ht;
+	int res;
 
 	if (rpc->scan(c, "SS", &htname, &keyname) < 2) {
 		rpc->fault(c, 500, "Not enough parameters (htable name & key name");
@@ -1314,10 +1533,20 @@ static void htable_rpc_delete(rpc_t* rpc, void* c) {
 	}
 
 	if (ht->dmqreplicate>0 && ht_dmq_replicate_action(HT_DMQ_DEL_CELL, &ht->name, &keyname, 0, NULL, 0)!=0) {
-		LM_ERR("dmq relication failed\n");
+		LM_ERR("dmq replication failed\n");
 	}
 
-	ht_del_cell(ht, &keyname);
+	res = ht_del_cell_confirm(ht, &keyname);
+
+	if (res  == -1) {
+		rpc->fault(c, 500, "Internal error");
+		return;
+	} else if (res == 0) {
+		rpc->fault(c, 404, "Key not found in htable.");
+		return;
+	}
+	rpc->rpl_printf(c, "Ok. Key deleted.");
+	return;
 }
 
 /*! \brief RPC htable.get command to get one item */
@@ -1415,7 +1644,7 @@ static void htable_rpc_sets(rpc_t* rpc, void* c) {
 
 	if (ht->dmqreplicate>0 && ht_dmq_replicate_action(HT_DMQ_SET_CELL,
 				&ht->name, &keyname, AVP_VAL_STR, &keyvalue, 1)!=0) {
-		LM_ERR("dmq relication failed\n");
+		LM_ERR("dmq replication failed\n");
 	}
 
 	if(ht_set_cell(ht, &keyname, AVP_VAL_STR, &keyvalue, 1)!=0)
@@ -1425,7 +1654,7 @@ static void htable_rpc_sets(rpc_t* rpc, void* c) {
 		rpc->fault(c, 500, "Failed to set the item");
 		return;
 	}
-
+	rpc->rpl_printf(c, "Ok. Key set to new value.");
 	return;
 }
 
@@ -1450,7 +1679,7 @@ static void htable_rpc_seti(rpc_t* rpc, void* c) {
 
 	if (ht->dmqreplicate>0 && ht_dmq_replicate_action(HT_DMQ_SET_CELL,
 				&ht->name, &keyname, 0, &keyvalue, 1)!=0) {
-		LM_ERR("dmq relication failed\n");
+		LM_ERR("dmq replication failed\n");
 	}
 
 	if(ht_set_cell(ht, &keyname, 0, &keyvalue, 1)!=0)
@@ -1460,7 +1689,79 @@ static void htable_rpc_seti(rpc_t* rpc, void* c) {
 		rpc->fault(c, 500, "Failed to set the item");
 		return;
 	}
+	rpc->rpl_printf(c, "Ok. Key set to new value.");
+	return;
+}
 
+/*! \brief RPC htable.setex command to set expire for one item */
+static void htable_rpc_setex(rpc_t* rpc, void* c) {
+	str htname, itname;
+	int exval;
+	ht_t *ht;
+
+	if (rpc->scan(c, "SS.d", &htname, &itname, &exval) < 3) {
+		rpc->fault(c, 500,
+				"Not enough parameters (htable name, item name and expire)");
+		return;
+	}
+
+	/* check if htable exists */
+	ht = ht_get_table(&htname);
+	if (!ht) {
+		rpc->fault(c, 500, "No such htable");
+		return;
+	}
+
+
+	if(ki_ht_setex(NULL, &htname, &itname, exval)<0) {
+		rpc->fault(c, 500, "Failed to set the item");
+		return;
+	}
+
+	rpc->rpl_printf(c, "Ok");
+	return;
+}
+
+/*! \brief RPC htable.setxs command to set one item to string value and its expire value */
+static void htable_rpc_setxs(rpc_t* rpc, void* c) {
+	str htname, keyname;
+	str sval;
+	int exval;
+
+	if (rpc->scan(c, "SS.Sd", &htname, &keyname, &sval, &exval) < 4) {
+		rpc->fault(c, 500,
+				"Not enough parameters (htable name, key name, value and expire)");
+		return;
+	}
+
+	if(ki_ht_setxs(NULL, &htname, &keyname, &sval, exval)<0) {
+		LM_ERR("cannot set $sht(%.*s=>%.*s)\n", htname.len, htname.s,
+				keyname.len, keyname.s);
+		rpc->fault(c, 500, "Failed to set the item");
+		return;
+	}
+	rpc->rpl_printf(c, "Ok. Key set to new value.");
+	return;
+}
+
+/*! \brief RPC htable.setxi command to set one item to integer value and its expire value */
+static void htable_rpc_setxi(rpc_t* rpc, void* c) {
+	str htname, keyname;
+	int ival;
+	int exval;
+
+	if (rpc->scan(c, "SS.dd", &htname, &keyname, &ival, &exval) < 4) {
+		rpc->fault(c, 500,
+				"Not enough parameters (htable name, key name, value and expire)");
+		return;
+	}
+	if(ki_ht_setxi(NULL, &htname, &keyname, ival, exval)<0) {
+		LM_ERR("cannot set $sht(%.*s=>%.*s)\n", htname.len, htname.s,
+				keyname.len, keyname.s);
+		rpc->fault(c, 500, "Failed to set the item");
+		return;
+	}
+	rpc->rpl_printf(c, "Ok. Key set to new value.");
 	return;
 }
 
@@ -1662,7 +1963,11 @@ static void  htable_rpc_flush(rpc_t* rpc, void* c)
 		rpc->fault(c, 500, "No such htable");
 		return;
 	}
-	ht_reset_content(ht);
+	if(ht_reset_content(ht) < 0) {
+		rpc->fault(c, 500, "Htable flush failed.");
+		return;
+	}
+	rpc->rpl_printf(c, "Ok. Htable flushed.");
 }
 
 /*! \brief RPC htable.reload command to reload content of a hash table */
@@ -1748,6 +2053,8 @@ static void htable_rpc_reload(rpc_t* rpc, void* c)
 		ht_slot_unlock(ht, i);
 		nht.entries[i].first = first;
 	}
+	ht->dbload = 1;
+
 	/* free old entries */
 	for(i=0; i<nht.htsize; i++)
 	{
@@ -1761,6 +2068,7 @@ static void htable_rpc_reload(rpc_t* rpc, void* c)
 	}
 	free(nht.entries);
 	ht_db_close_con();
+	rpc->rpl_printf(c, "Ok. Htable reloaded.");
 	return;
 }
 
@@ -1811,6 +2119,7 @@ static void htable_rpc_store(rpc_t* rpc, void* c)
 		return;
 	}
 	ht_db_close_con();
+	rpc->rpl_printf(c, "Ok. Htable successfully stored to DB.");
 	return;
 }
 
@@ -1820,6 +2129,9 @@ rpc_export_t htable_rpc[] = {
 	{"htable.get", htable_rpc_get, htable_get_doc, 0},
 	{"htable.sets", htable_rpc_sets, htable_sets_doc, 0},
 	{"htable.seti", htable_rpc_seti, htable_seti_doc, 0},
+	{"htable.setex", htable_rpc_setex, htable_setex_doc, 0},
+	{"htable.setxs", htable_rpc_setxs, htable_setxs_doc, 0},
+	{"htable.setxi", htable_rpc_setxi, htable_setxi_doc, 0},
 	{"htable.listTables", htable_rpc_list, htable_list_doc, RET_ARRAY},
 	{"htable.reload", htable_rpc_reload, htable_reload_doc, 0},
 	{"htable.store", htable_rpc_store, htable_store_doc, 0},
@@ -1871,6 +2183,26 @@ static sr_kemi_t sr_kemi_htable_exports[] = {
 	{ str_init("htable"), str_init("sht_iterator_end"),
 		SR_KEMIP_INT, ki_ht_iterator_end,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("htable"), str_init("sht_iterator_rm"),
+		SR_KEMIP_INT, ki_ht_iterator_rm,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("htable"), str_init("sht_iterator_sets"),
+		SR_KEMIP_INT, ki_ht_iterator_sets,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("htable"), str_init("sht_iterator_seti"),
+		SR_KEMIP_INT, ki_ht_iterator_seti,
+		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("htable"), str_init("sht_iterator_setex"),
+		SR_KEMIP_INT, ki_ht_iterator_setex,
+		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("htable"), str_init("sht_rm"),

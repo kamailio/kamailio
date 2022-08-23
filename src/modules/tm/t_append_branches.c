@@ -46,7 +46,18 @@
 #include "t_reply.h"
 #include "t_append_branches.h"
 
-int t_append_branches(void) {
+/* this function can act in two ways:
+ * - first way, create branches for all existing location records
+ *   of this particular AOR. Search for locations is done in
+ *   the location table.
+ * - second way, if the contact parameter is given,
+ *   then only a desired location is meant for appending,
+ *   if not found in the location table, an append will not happen
+ *   for this AOR.
+ *
+ *   If the contact parameter is given, it must be of syntax:
+ *     sip:<user>@<host>:<port>   (without parameters) */
+int t_append_branches(str * contact) {
 	struct cell *t = NULL;
 	struct sip_msg *orig_msg = NULL;
 	struct sip_msg *faked_req;
@@ -59,7 +70,7 @@ int t_append_branches(void) {
 	str current_uri;
 	str dst_uri, path, instance, ruid, location_ua;
 	struct socket_info* si;
-	int q, i, found;
+	int q, i, found, append;
 	flag_t backup_bflags = 0;
 	flag_t bflags = 0;
 	int new_branch, branch_ret, lowest_ret;
@@ -124,6 +135,25 @@ int t_append_branches(void) {
 	while((current_uri.s=next_branch( &current_uri.len, &q, &dst_uri, &path,
 										&bflags, &si, &ruid, &instance, &location_ua))) {
 		LM_DBG("Current uri %.*s\n",current_uri.len, current_uri.s);
+
+		/* if the contact parameter is given, then append by
+			an exact location that has been requested for this function call */
+		if (contact->s != NULL && contact->len != 0) {
+
+			LM_DBG("Comparing requested contact <%.*s> against location <%.*s>\n",
+							contact->len, contact->s, current_uri.len, current_uri.s);
+
+			append = 1;
+			if (strstr(current_uri.s, contact->s) == NULL) {
+				append = 0; /* this while cycle will be stopped */
+			}
+
+			/* do not append the branch if a contact does not match */
+			if (!append)
+				continue;
+
+			LM_DBG("Branch will be appended for contact <%.*s>\n", contact->len, contact->s);
+		}
 
 		found = 0;
 		for (i=0; i<outgoings; i++) {

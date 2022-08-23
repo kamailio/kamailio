@@ -50,11 +50,15 @@ static int w_mq_size(struct sip_msg *msg, char *mq, char *str2);
 static int w_mq_add(struct sip_msg* msg, char* mq, char* key, char* val);
 static int w_mq_pv_free(struct sip_msg* msg, char* mq, char* str2);
 int mq_param(modparam_t type, void *val);
+int mq_param_name(modparam_t type, void *val);
 static int fixup_mq_add(void** param, int param_no);
 static int bind_mq(mq_api_t* api);
 
 static int mqueue_rpc_init(void);
 
+static int mqueue_size = 0;
+
+int mqueue_addmode = 0;
 
 static pv_export_t mod_pvs[] = {
 	{ {"mqk", sizeof("mqk")-1}, PVT_OTHER, pv_get_mqk, 0,
@@ -84,6 +88,9 @@ static cmd_export_t cmds[]={
 static param_export_t params[]={
 	{"db_url",          PARAM_STR, &mqueue_db_url},
 	{"mqueue",          PARAM_STRING|USE_FUNC_PARAM, (void*)mq_param},
+	{"mqueue_name",     PARAM_STRING|USE_FUNC_PARAM, (void*)mq_param_name},
+	{"mqueue_size",     INT_PARAM, &mqueue_size },
+	{"mqueue_addmode",  INT_PARAM, &mqueue_addmode },
 	{0, 0, 0}
 };
 
@@ -209,6 +216,7 @@ int mq_param(modparam_t type, void *val)
 	str qname = {0, 0};
 	int msize = 0;
 	int dbmode = 0;
+	int addmode = 0;
 
 	if(val==NULL)
 		return -1;
@@ -236,6 +244,9 @@ int mq_param(modparam_t type, void *val)
 		} else if(pit->name.len==6
 				&& strncasecmp(pit->name.s, "dbmode", 6)==0) {
 			str2sint(&pit->body, &dbmode);
+		} else if(pit->name.len==7
+				&& strncasecmp(pit->name.s, "addmode", 7)==0) {
+			str2sint(&pit->body, &addmode);
 		}  else {
 			LM_ERR("unknown param: %.*s\n", pit->name.len, pit->name.s);
 			free_params(params_list);
@@ -248,13 +259,13 @@ int mq_param(modparam_t type, void *val)
 		free_params(params_list);
 		return -1;
 	}
-	if(mq_head_add(&qname, msize)<0)
+	if(mq_head_add(&qname, msize, addmode)<0)
 	{
 		LM_ERR("cannot add mqueue: %.*s\n", mqs.len, mqs.s);
 		free_params(params_list);
 		return -1;
 	}
-	LM_INFO("mqueue param: [%.*s|%d]\n", qname.len, qname.s, dbmode);
+	LM_INFO("mqueue param: [%.*s|%d|%d]\n", qname.len, qname.s, dbmode, addmode);
 	if(dbmode == 1 || dbmode == 2) {
 		if(mqueue_db_load_queue(&qname)<0)
 		{
@@ -265,6 +276,41 @@ int mq_param(modparam_t type, void *val)
 	}
 	mq_set_dbmode(&qname, dbmode);
 	free_params(params_list);
+	return 0;
+}
+
+int mq_param_name(modparam_t type, void *val)
+{
+	str qname = {0, 0};
+	int msize = 0;
+	int addmode = 0;
+
+	if(val==NULL)
+		return -1;
+
+	if(!shm_initialized())
+	{
+		LM_ERR("shm not initialized - cannot define mqueue now\n");
+		return 0;
+	}
+
+	qname.s = (char*)val;
+	qname.len = strlen(qname.s);
+
+	addmode = mqueue_addmode;
+	msize = mqueue_size;
+
+	if(qname.len<=0)
+	{
+		LM_ERR("mqueue name not defined: %.*s\n", qname.len, qname.s);
+		return -1;
+	}
+	if(mq_head_add(&qname, msize, addmode)<0)
+	{
+		LM_ERR("cannot add mqueue: %.*s\n", qname.len, qname.s);
+		return -1;
+	}
+	LM_INFO("mqueue param: [%.*s|%d]\n", qname.len, qname.s, msize);
 	return 0;
 }
 

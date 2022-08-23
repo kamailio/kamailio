@@ -684,8 +684,8 @@ static int child_init(int rank)
 
 		for (i = 0; i < rls_notifier_processes; i++)
 		{
-			char tmp[16];
-			snprintf(tmp, 16, "RLS NOTIFIER %d", i);
+			char tmp[25];
+			snprintf(tmp, 25, "RLS NOTIFIER %d", i);
 			rls_notifier_id[i] = i;
 
 			if (fork_basic_utimer(PROC_TIMER, tmp, 1,

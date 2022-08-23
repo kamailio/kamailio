@@ -29,7 +29,7 @@ Daniel-Constantin Mierla
 
         4. Functions
 
-              4.1. jwt_generate(prvkey, alg, claims)
+              4.1. jwt_generate(prvkey, alg, claims, [headers])
               4.2. jwt_verify(pubkey, alg, claims, jwtval)
 
         5. Variables
@@ -59,7 +59,7 @@ Chapter 1. Admin Guide
 
    4. Functions
 
-        4.1. jwt_generate(prvkey, alg, claims)
+        4.1. jwt_generate(prvkey, alg, claims, [headers])
         4.2. jwt_verify(pubkey, alg, claims, jwtval)
 
    5. Variables
@@ -109,10 +109,10 @@ modparam("jwt", "key_mode", 1)
 
 4. Functions
 
-   4.1. jwt_generate(prvkey, alg, claims)
+   4.1. jwt_generate(prvkey, alg, claims, [headers])
    4.2. jwt_verify(pubkey, alg, claims, jwtval)
 
-4.1.  jwt_generate(prvkey, alg, claims)
+4.1.  jwt_generate(prvkey, alg, claims, [headers])
 
    Generate the JWT, its value can be retrieved in the variable $jwt(val).
 
@@ -121,6 +121,12 @@ modparam("jwt", "key_mode", 1)
      * alg - the algoritm to build the signature, as supported by the
        libjwt (e.g., RS256, HS256, ES256, ...)
      * claims - the list of claims to be added to JWT, in the format
+       "name1=value1;name2=value2;..." (same as the SIP parameters
+       format). The string values can be enclosed in single or double
+       quotes. If a value is not eclosed in between quotes, it is added as
+       numeric value if it is successfully converted to a long value,
+       otherwise is added as string value.
+     * headers - the list of headers to be added to JWT, in the format
        "name1=value1;name2=value2;..." (same as the SIP parameters
        format). The string values can be enclosed in single or double
        quotes. If a value is not eclosed in between quotes, it is added as

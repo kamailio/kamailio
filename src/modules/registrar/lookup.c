@@ -45,6 +45,8 @@
 #include "lookup.h"
 #include "config.h"
 
+#define REG_LOOKUP_FILTER_BFLAG        (1<<0)
+#define REG_LOOKUP_FILTER_TCPCON       (1<<1)
 
 extern int reg_lookup_filter_mode;
 
@@ -60,12 +62,13 @@ static void reg_lookup_filter_init(void)
 	str filter_bflags = str_init("rlf_bflags");
 	sr_xavp_t *vavp = NULL;
 
-	if(reg_lookup_filter_mode==0 || reg_xavp_cfg.s==NULL) {
+	if(reg_lookup_filter_mode==0) {
 		return;
 	}
 	memset(&_reg_lookup_filter, 0, sizeof(reg_lookup_filter_t));
 
-	if((reg_lookup_filter_mode & 1)
+	if((reg_lookup_filter_mode & REG_LOOKUP_FILTER_BFLAG)
+			&& (reg_xavp_cfg.s != NULL && reg_xavp_cfg.len > 0)
 			&& (vavp = xavp_get_child_with_ival(&reg_xavp_cfg,
 					&filter_bflags)) != NULL) {
 		if(vavp->val.v.i != 0) {
@@ -73,24 +76,45 @@ static void reg_lookup_filter_init(void)
 			_reg_lookup_filter.factive = 1;
 		}
 	}
+
+	if(reg_lookup_filter_mode & REG_LOOKUP_FILTER_TCPCON) {
+		_reg_lookup_filter.factive = 1;
+	}
 	return;
 }
 
 static int reg_lookup_filter_match(ucontact_t* ptr)
 {
-	if(reg_lookup_filter_mode==0 || reg_xavp_cfg.s==NULL) {
+	tcp_connection_t *con = NULL;
+
+	if(reg_lookup_filter_mode==0 || _reg_lookup_filter.factive==0) {
 		return 1;
 	}
-	if(_reg_lookup_filter.factive==0) {
-		return 1;
-	}
-	if(_reg_lookup_filter.bflags!=0) {
+
+	if((reg_lookup_filter_mode & REG_LOOKUP_FILTER_BFLAG)
+			&& _reg_lookup_filter.bflags!=0) {
 		if((_reg_lookup_filter.bflags & ptr->cflags)==0) {
 			return 0;
 		}
 	}
-	return 1;
 
+	if(reg_lookup_filter_mode & REG_LOOKUP_FILTER_TCPCON) {
+		if(ptr->tcpconn_id > 0) {
+			con = tcpconn_get(ptr->tcpconn_id, 0, 0, 0, 0);
+			if (unlikely(con == NULL)) {
+				LM_DBG("connection id %d does not exist\n", ptr->tcpconn_id);
+				return 0;
+			}
+			if (con->state != S_CONN_OK) {
+				LM_DBG("connection id %d not in state ok\n", ptr->tcpconn_id);
+				tcpconn_put(con);
+				return 0;
+			}
+			tcpconn_put(con);
+		}
+	}
+
+	return 1;
 }
 
 static int has_to_tag(struct sip_msg* msg)
@@ -485,7 +509,9 @@ int lookup_helper(struct sip_msg* _m, udomain_t* _d, str* _uri, int _mode)
 	if (!cfg_get(registrar, registrar_cfg, append_branches)) goto done;
 
 	for( ; ptr ; ptr = ptr->next ) {
-		if ((VALID_CONTACT(ptr, act_time) || cfg_get(registrar,registrar_cfg,use_expired_contacts)) && allowed_method(_m, ptr)
+		if ((VALID_CONTACT(ptr, act_time)
+					|| cfg_get(registrar,registrar_cfg,use_expired_contacts))
+				&& allowed_method(_m, ptr)
 				&& reg_lookup_filter_match(ptr)) {
 			path_dst.len = 0;
 			if(ptr->path.s && ptr->path.len) {
@@ -500,7 +526,8 @@ int lookup_helper(struct sip_msg* _m, udomain_t* _d, str* _uri, int _mode)
 						continue;
 					}
 					if (check_self(&(path_uri.host), 0, 0)) {
-						/* first hop in path vector is local - check for additional hops and if present, point to next one */
+						/* first hop in path vector is local
+						 * - check for additional hops and if present, point to next one */
 						if (path_str.len > (path_dst.len + 3)) {
 							path_str.s = path_str.s + path_dst.len + 3;
 							path_str.len = path_str.len - path_dst.len - 3;

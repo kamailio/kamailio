@@ -44,7 +44,8 @@ Olle E. Johansson
               4.5. dlg_major_threshold (Integer)
               4.6. snmpgetPath (String)
               4.7. snmpCommunity (String)
-              4.8. export_registrar (int)
+              4.8. snmpVersion (String)
+              4.9. export_registrar (int)
 
         5. Functions
         6. Installation and Running
@@ -69,7 +70,8 @@ Olle E. Johansson
    1.5. Setting the dlg_major_threshold parameter
    1.6. Setting the snmpgetPath parameter
    1.7. Setting the snmpCommunity parameter
-   1.8. Setting the export_registrar parameter
+   1.8. Setting the snmpVersion parameter
+   1.9. Setting the export_registrar parameter
 
 Chapter 1. Admin Guide
 
@@ -100,7 +102,8 @@ Chapter 1. Admin Guide
         4.5. dlg_major_threshold (Integer)
         4.6. snmpgetPath (String)
         4.7. snmpCommunity (String)
-        4.8. export_registrar (int)
+        4.8. snmpVersion (String)
+        4.9. export_registrar (int)
 
    5. Functions
    6. Installation and Running
@@ -309,7 +312,8 @@ Chapter 1. Admin Guide
    4.5. dlg_major_threshold (Integer)
    4.6. snmpgetPath (String)
    4.7. snmpCommunity (String)
-   4.8. export_registrar (int)
+   4.8. snmpVersion (String)
+   4.9. export_registrar (int)
 
 4.1. sipEntityType (String)
 
@@ -426,7 +430,21 @@ modparam("snmpstats", "snmpgetPath",     "/my/custom/path/")
 modparam("snmpstats", "snmpCommunity", "customCommunityString")
 ...
 
-4.8. export_registrar (int)
+4.8. snmpVersion (String)
+
+   The SNMPStats module provides the kamailioSIPServiceStartTime scalar.
+   This scalar requires the SNMPStats module to perform a snmpget query to
+   the master agent. You can use this parameter to set specific SNMP
+   version.
+
+   Default value is “3”.
+
+   Example 1.8. Setting the snmpVersion parameter
+...
+modparam("snmpstats", "snmpVersion", "2c")
+...
+
+4.9. export_registrar (int)
 
    The SNMPStats module will export registrar (usrloc) records if this
    parameter is set to 1. This will result in more memory usage and bigger
@@ -440,7 +458,7 @@ modparam("snmpstats", "snmpCommunity", "customCommunityString")
 
    Default value is “0” (don't export).
 
-   Example 1.8. Setting the export_registrar parameter
+   Example 1.9. Setting the export_registrar parameter
 ...
 modparam("snmpstats", "export_registrar", 1)
 ...

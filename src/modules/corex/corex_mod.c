@@ -34,6 +34,7 @@
 #include "../../core/str_list.h"
 #include "../../core/events.h"
 #include "../../core/onsend.h"
+#include "../../core/forward.h"
 #include "../../core/dns_cache.h"
 #include "../../core/parser/parse_uri.h"
 #include "../../core/parser/parse_param.h"
@@ -47,6 +48,7 @@
 MODULE_VERSION
 
 static int nio_intercept = 0;
+static int w_forward_reply(sip_msg_t *msg, char *p1, char *p2);
 static int w_append_branch(sip_msg_t *msg, char *su, char *sq);
 static int w_send_udp(sip_msg_t *msg, char *su, char *sq);
 static int w_send_tcp(sip_msg_t *msg, char *su, char *sq);
@@ -93,11 +95,20 @@ static int corex_sip_reply_out(sr_event_param_t *evp);
 static pv_export_t mod_pvs[] = {
 	{ {"cfg", (sizeof("cfg")-1)}, PVT_OTHER, pv_get_cfg, 0,
 		pv_parse_cfg_name, 0, 0, 0 },
-
+	{ {"lsock", (sizeof("lsock")-1)}, PVT_OTHER, pv_get_lsock, 0,
+		pv_parse_lsock_name, 0, 0, 0 },
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };
 
+/* Exported functions */
+static tr_export_t mod_trans[] = {
+	{ {"sock", sizeof("sock") - 1}, tr_sock_parse },
+	{ {0, 0}, 0 }
+};
+
 static cmd_export_t cmds[]={
+	{"forward_reply", (cmd_function)w_forward_reply, 0, 0,
+		0, CORE_ONREPLY_ROUTE },
 	{"append_branch", (cmd_function)w_append_branch, 0, 0,
 		0, REQUEST_ROUTE | FAILURE_ROUTE },
 	{"append_branch", (cmd_function)w_append_branch, 1, fixup_spve_null,
@@ -242,11 +253,21 @@ static int child_init(int rank)
 
 	return 0;
 }
+
 /**
  * destroy module function
  */
 static void mod_destroy(void)
 {
+}
+
+/**
+ * forward reply based on via
+ */
+static int w_forward_reply(sip_msg_t *msg, char *p1, char *p2)
+{
+	forward_reply(msg);
+	return 1;
 }
 
 /**
@@ -383,6 +404,10 @@ static int corex_dns_cache_param_add(str *pval)
 	unsigned short dns_type = 0;
 	int dns_ttl = 0;
 	int dns_flags = 0;
+	int dns_priority = 0;
+	int dns_weight = 0;
+	int dns_port = 0;
+
 
 	if(pval==NULL) {
 		LM_ERR("invalid parameter\n");
@@ -414,8 +439,11 @@ static int corex_dns_cache_param_add(str *pval)
 						|| (pit->body.s[0]=='A'))) {
 				dns_type = T_A;
 			} else if((pit->body.len == 4)
-					&& strncasecmp(pit->name.s, "aaaa", 4)==0) {
+					&& strncasecmp(pit->body.s, "aaaa", 4)==0) {
 				dns_type = T_AAAA;
+			} else if((pit->body.len == 3)
+					&& strncasecmp(pit->body.s, "srv", 3)==0) {
+				dns_type = T_SRV;
 			}
 		} else if(pit->name.len==3
 				&& strncasecmp(pit->name.s, "ttl", 3)==0) {
@@ -433,6 +461,30 @@ static int corex_dns_cache_param_add(str *pval)
 					return -1;
 				}
 			}
+		} else if(pit->name.len==8
+				&& strncasecmp(pit->name.s, "priority", 8)==0) {
+			if(dns_flags==0) {
+				if (str2sint(&pit->body, &dns_priority) < 0) {
+					LM_ERR("invalid priority: %.*s\n", pit->body.len, pit->body.s);
+					return -1;
+				}
+			}
+		} else if(pit->name.len==6
+				&& strncasecmp(pit->name.s, "weight", 6)==0) {
+			if(dns_flags==0) {
+				if (str2sint(&pit->body, &dns_weight) < 0) {
+					LM_ERR("invalid weight: %.*s\n", pit->body.len, pit->body.s);
+					return -1;
+				}
+			}
+		} else if(pit->name.len==4
+				&& strncasecmp(pit->name.s, "port", 4)==0) {
+			if(dns_flags==0) {
+				if (str2sint(&pit->body, &dns_port) < 0) {
+					LM_ERR("invalid port: %.*s\n", pit->body.len, pit->body.s);
+					return -1;
+				}
+			}
 		}
 	}
 
@@ -440,9 +492,9 @@ static int corex_dns_cache_param_add(str *pval)
 				&dns_name,
 				dns_ttl,
 				&dns_addr,
-				0 /* priority */,
-				0 /* weight */,
-				0 /* port */,
+				dns_priority, /* priority */
+				dns_weight, /* weight */
+				dns_port, /* port */
 				dns_flags) == 0) {
 		return 0;
 	}
@@ -1334,5 +1386,6 @@ static sr_kemi_t sr_kemi_corex_exports[] = {
 int mod_register(char *path, int *dlflags, void *p1, void *p2)
 {
 	sr_kemi_modules_add(sr_kemi_corex_exports);
+	register_trans_mod(path, mod_trans);
 	return 0;
 }

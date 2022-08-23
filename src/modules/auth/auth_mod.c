@@ -450,12 +450,12 @@ int ki_has_credentials(sip_msg_t *msg, str* srealm)
 
 	ret = find_credentials(msg, srealm, HDR_PROXYAUTH_T, &hdr);
 	if(ret==0) {
-		LM_DBG("found www credentials with realm [%.*s]\n", srealm->len, srealm->s);
+		LM_DBG("found proxy credentials with realm [%.*s]\n", srealm->len, srealm->s);
 		return 1;
 	}
 	ret = find_credentials(msg, srealm, HDR_AUTHORIZATION_T, &hdr);
 	if(ret==0) {
-		LM_DBG("found proxy credentials with realm [%.*s]\n", srealm->len, srealm->s);
+		LM_DBG("found www credentials with realm [%.*s]\n", srealm->len, srealm->s);
 		return 1;
 	}
 
@@ -476,6 +476,19 @@ int w_has_credentials(sip_msg_t *msg, char* realm, char* s2)
 	}
 	return ki_has_credentials(msg, &srealm);
 }
+
+#ifdef USE_NC
+/**
+ * Calls auth_check_hdr_md5 with the update_nonce flag set to false.
+ * Used when flag 32 is set in pv_authenticate.
+ */
+static int auth_check_hdr_md5_noupdate(struct sip_msg* msg, auth_body_t* auth,
+		auth_result_t* auth_res)
+{
+	return auth_check_hdr_md5(msg, auth, auth_res, 0);
+}
+#endif
+
 /**
  * @brief do WWW-Digest authentication with password taken from cfg var
  */
@@ -490,11 +503,17 @@ int pv_authenticate(struct sip_msg *msg, str *realm, str *passwd,
 	avp_value_t val;
 	static char ha1[256];
 	struct qp *qop = NULL;
+	check_auth_hdr_t check_auth_hdr = NULL;
 
 	cred = 0;
 	ret = AUTH_ERROR;
 
-	switch(pre_auth(msg, realm, hftype, &h, NULL)) {
+#ifdef USE_NC
+	if (nc_enabled && (flags & 32))
+		check_auth_hdr = auth_check_hdr_md5_noupdate;
+#endif
+
+	switch(pre_auth(msg, realm, hftype, &h, check_auth_hdr)) {
 		case NONCE_REUSED:
 			LM_DBG("nonce reused");
 			ret = AUTH_NONCE_REUSED;
@@ -561,6 +580,16 @@ int pv_authenticate(struct sip_msg *msg, str *realm, str *passwd,
 		else
 			ret = AUTH_ERROR;
 	}
+
+#ifdef USE_NC
+	/* On success we need to update the nonce if flag 32 is set */
+	if (nc_enabled && ret == AUTH_OK && (flags & 32)) {
+		if (check_nonce(cred, &secret1, &secret2, msg, 1) < 0) {
+			LM_ERR("check_nonce failed after post_auth");
+			ret = AUTH_ERROR;
+		}
+	}
+#endif
 
 end:
 	if (ret < 0) {

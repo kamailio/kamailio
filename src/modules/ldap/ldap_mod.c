@@ -34,6 +34,7 @@
 #include "../../core/sr_module.h"
 #include "../../core/pvar.h"
 #include "../../core/mod_fix.h"
+#include "../../core/kemi.h"
 #include "../../core/mem/mem.h"
 
 #include "ld_session.h"
@@ -166,7 +167,7 @@ static int child_init(int rank)
 			return -1;
 		}
 
-		if(ldap_connect(ld_name) != 0) {
+		if(oldap_connect(ld_name) != 0) {
 			LM_ERR("[%s]: failed to connect to LDAP host(s)\n", ld_name);
 			ldap_disconnect(ld_name);
 			return -1;
@@ -463,5 +464,67 @@ static int ldap_filter_url_encode_fixup(void **param, int param_no)
 		*param = (void *)spec_p;
 	}
 
+	return 0;
+}
+
+/**
+ *
+ */
+static int ki_ldap_search(sip_msg_t *msg, str *ldapurl)
+{
+	return ldap_search_impl(msg, ldapurl);
+}
+
+/**
+ *
+ */
+static int ki_ldap_result_str(sip_msg_t *msg, str *attrname, str *avpname)
+{
+	int_str dst_avp_name;
+
+	dst_avp_name.s = *avpname;
+	return ldap_result_toavp(msg, attrname, NULL, &dst_avp_name,
+			AVP_NAME_STR, 0 /*str result*/);
+}
+
+/**
+ *
+ */
+static int ki_ldap_result_next(sip_msg_t *msg)
+{
+	return ldap_result_next();
+}
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_ldap_exports[] = {
+	{ str_init("ldap"), str_init("search"),
+		SR_KEMIP_INT, ki_ldap_search,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("secsipid"), str_init("result_str"),
+		SR_KEMIP_INT, ki_ldap_result_str,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("ldap"), str_init("result_next"),
+		SR_KEMIP_INT, ki_ldap_result_next,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_ldap_exports);
 	return 0;
 }

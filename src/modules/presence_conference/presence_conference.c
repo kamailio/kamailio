@@ -49,6 +49,7 @@ add_event_t pres_add_event;
 
 /* module parameters */
 int use_partial_states = 0;
+unsigned int pres_conf_default_expires = 3600;
 
 /* module exported commands */
 static cmd_export_t cmds[] =
@@ -59,6 +60,7 @@ static cmd_export_t cmds[] =
 /* module exported paramaters */
 static param_export_t params[] = {
 	{ "use_partial_states", INT_PARAM, &use_partial_states },
+	{ "default_expires", INT_PARAM, &pres_conf_default_expires },
 	{0, 0, 0}
 };
 

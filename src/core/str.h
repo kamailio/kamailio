@@ -143,7 +143,23 @@ typedef struct _str str;
 	} while(0)
 
 /**
- * str with value: not null and not emptu
+ * set str x variable with static value char* v
+ */
+#define STR_STATIC_SET(x, v) do { \
+	(x).s = v; \
+	(x).len = sizeof(v) - 1; \
+} while (0);
+
+/**
+ * set str x variable with char* v
+ */
+#define STR_SET(x, v) do { \
+	(x).s = v; \
+	(x).len = strlen(v); \
+} while (0);
+
+/**
+ * str with value: not null and not empty
  */
 #define STR_WITHVAL(_sp) ((_sp) && ((_sp)->s) && ((_sp)->len))
 

@@ -478,7 +478,7 @@ int db_insert_ucontact(ucontact_t* _c)
 	keys[nr_cols] = &expires_col;
 	vals[nr_cols].type = DB1_DATETIME;
 	vals[nr_cols].nul = 0;
-	vals[nr_cols].val.time_val = _c->expires;
+	vals[nr_cols].val.time_val = ul_db_datetime_set(_c->expires);
 	nr_cols++;
 
 	keys[nr_cols] = &q_col;
@@ -560,7 +560,7 @@ int db_insert_ucontact(ucontact_t* _c)
 	keys[nr_cols] = &last_mod_col;
 	vals[nr_cols].type = DB1_DATETIME;
 	vals[nr_cols].nul = 0;
-	vals[nr_cols].val.time_val = _c->last_modified;
+	vals[nr_cols].val.time_val = ul_db_datetime_set(_c->last_modified);
 	nr_cols++;
 
 	keys[nr_cols] = &ruid_col;
@@ -917,7 +917,7 @@ int db_update_ucontact_addr(ucontact_t* _c)
 
 	vals2[0].type = DB1_DATETIME;
 	vals2[0].nul = 0;
-	vals2[0].val.time_val = _c->expires;
+	vals2[0].val.time_val = ul_db_datetime_set(_c->expires);
 
 	vals2[1].type = DB1_DOUBLE;
 	vals2[1].nul = 0;
@@ -973,7 +973,7 @@ int db_update_ucontact_addr(ucontact_t* _c)
 
 	vals2[10].type = DB1_DATETIME;
 	vals2[10].nul = 0;
-	vals2[10].val.time_val = _c->last_modified;
+	vals2[10].val.time_val = ul_db_datetime_set(_c->last_modified);
 
     nr_cols2 = 11;
 	if(_c->ruid.len>0)
@@ -1077,7 +1077,7 @@ int db_update_ucontact_ruid(ucontact_t* _c)
    keys2[n2] = &expires_col;
    vals2[n2].type = DB1_DATETIME;
    vals2[n2].nul = 0;
-   vals2[n2].val.time_val = _c->expires;
+   vals2[n2].val.time_val = ul_db_datetime_set(_c->expires);
    n2++;
 
    keys2[n2] = &q_col;
@@ -1153,7 +1153,7 @@ int db_update_ucontact_ruid(ucontact_t* _c)
    keys2[n2] = &last_mod_col;
    vals2[n2].type = DB1_DATETIME;
    vals2[n2].nul = 0;
-   vals2[n2].val.time_val = _c->last_modified;
+   vals2[n2].val.time_val = ul_db_datetime_set(_c->last_modified);
    n2++;
 
    keys2[n2] = &callid_col;

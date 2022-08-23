@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+	"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
+	[ <!ENTITY % local.common.attrib
+	 "xmlns:xi CDATA #FIXED 'http://www.w3.org/2001/XInclude'">
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<book id="tls" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <bookinfo>
+	<title>TLSA Module</title>
+	<authorgroup>
+		<author>
+		<firstname>Daniel-Constantin</firstname>
+		<surname>Mierla</surname>
+		<affiliation><orgname>kamailio.org</orgname></affiliation>
+		<address>
+			<email>miconda@gmail.com</email>
+		</address>
+		</author>
+	</authorgroup>
+	<copyright>
+		<year>2021</year>
+		<holder>kamailio.org</holder>
+	</copyright>
+	</bookinfo>
+	<toc></toc>
+
+	<chapter>
+	<title>Admin Guide</title>
+	<section id="tls.overview">
+		<title>Overview</title>
+		<para>
+			This is a pseudo module that builds TLS module compiled statically against
+			libssl and libcrypto (from <ulink url="http://www.openssl.org">OpenSSL project</ulink>).
+			Its C code files simply include the files from TLS module, setting
+			a different module name.
+		</para>
+		<para>
+			It is a replacement for tls module, with the same modparams and functions.
+			Just replace ' loadmodule "tls.so" ' with ' loadmodule "tlsa.so" '
+			and ' modparam("tls", ...) ' with ' modparam("tlsa", ...) '. See the
+			docs of TLS module for all the details related to its parameters,
+			functions, rpc commands, variables, ...
+		</para>
+		<para>
+			The benefit of this module is having the libssl and libcrypto embedded
+			in the module object file, thus not sharing the SSL/TLS context with
+			any other modules that may link indirectly to libssl (e.g., like
+			http_client that links against libcurl, which uses libssl). In this
+			way, the initialization of SSL context (e.g., setting shared memory
+			management functions) by tlsa module does not impact the other
+			modules.
+		</para>
+		<para>
+			Another benefit could be the ability to link a specific libssl
+			version (e.g., using source build), not being bound to the version
+			shipped with the operating system.
+		</para>
+		<para>
+			The drawback is that updates to the libssl done via operating
+			system upgrades are not reflected in the tlsa module. It has to
+			be recompiled every time a new libssl version is installed and it
+			is wanted to be used by tlsa module.
+		</para>
+		<para>
+			NOTE: the module is known to work to be compiled with GCC on Linux
+			(tested on Debian Stable 10.x). Other compilers (e.g., clang, icc)
+			may not support same static linking options. Also, some operating
+			systems may provide only dynamic libssl and libcrypto libraries
+			via their packages.
+		</para>
+		<para>
+			NOTE: edit the Makefile in the module folder and update it accordingly
+			to set the path to libssl and libcrypto libraries specific to own
+			system when not wanting to use "pkg-config" (e.g., when having
+			these libraries compiled from sources).
+		</para>
+	</section>
+	</chapter>
+</book>
+

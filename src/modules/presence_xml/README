@@ -38,6 +38,7 @@ Anca-Maria Vamanu
               3.13. force_presence_single_body(int)
               3.14. presence_single_body_priorities(str)
               3.15. presence_single_body_lookup_element(str)
+              3.16. default_expires (int)
 
         4. Functions
 
@@ -65,8 +66,9 @@ Anca-Maria Vamanu
    1.13. Set force_presence_single_body parameter
    1.14. Set presence_single_body_priorities parameter
    1.15. Set presence_single_body_lookup_element parameter
-   1.16. pres_check_basic usage
-   1.17. pres_check_activities usage
+   1.16. Set default_expires parameter
+   1.17. pres_check_basic usage
+   1.18. pres_check_activities usage
 
 Chapter 1. Admin Guide
 
@@ -95,6 +97,7 @@ Chapter 1. Admin Guide
         3.13. force_presence_single_body(int)
         3.14. presence_single_body_priorities(str)
         3.15. presence_single_body_lookup_element(str)
+        3.16. default_expires (int)
 
    4. Functions
 
@@ -157,6 +160,7 @@ Chapter 1. Admin Guide
    3.13. force_presence_single_body(int)
    3.14. presence_single_body_priorities(str)
    3.15. presence_single_body_lookup_element(str)
+   3.16. default_expires (int)
 
 3.1. db_url(str)
 
@@ -369,6 +373,18 @@ modparam("presence_xml", "presence_single_body_priorities", "Offline|Online|Busy
 modparam("presence_xml", "presence_single_body_lookup_element", "status")
 ...
 
+3.16. default_expires (int)
+
+   The default expires value used when missing from SUBSCRIBE message (in
+   seconds).
+
+   Default value is “3600”.
+
+   Example 1.16. Set default_expires parameter
+...
+modparam("presence_xml", "default_expires", 3600)
+...
+
 4. Functions
 
    4.1. pres_check_basic(presentity_uri, status)
@@ -385,7 +401,7 @@ modparam("presence_xml", "presence_single_body_lookup_element", "status")
      * 1 - if a match is found.
      * -1 - if a match is not found.
 
-   Example 1.16. pres_check_basic usage
+   Example 1.17. pres_check_basic usage
 ...
     if (pres_check_basic("$ru", "open")) {
         ...
@@ -409,7 +425,7 @@ modparam("presence_xml", "presence_single_body_lookup_element", "status")
      * -1 - if a match is not found.
      * -2 - if /presence/person or /presence/person/activity do not exist.
 
-   Example 1.17. pres_check_activities usage
+   Example 1.18. pres_check_activities usage
 ...
     if (pres_check_basic("$ru", "open")) {
         pres_check_activities("$ru", "unknown");

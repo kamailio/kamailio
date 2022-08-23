@@ -78,12 +78,15 @@ void stm_timer_exec(unsigned int ticks, int worker, void *param);
 void stm_main_timer_exec(unsigned int ticks, void *param);
 int stm_get_worker(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 
+static int default_interval = 120;
+
 static pv_export_t rtimer_pvs[] = {
 	{{"rtimer_worker", (sizeof("rtimer_worker")-1)}, PVT_OTHER, stm_get_worker, 0,	0, 0, 0, 0},
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };
 
 static param_export_t params[]={
+	{"default_interval",       INT_PARAM, &default_interval},
 	{"timer",             PARAM_STRING|USE_FUNC_PARAM, (void*)stm_t_param},
 	{"exec",              PARAM_STRING|USE_FUNC_PARAM, (void*)stm_e_param},
 	{0,0,0}
@@ -294,7 +297,7 @@ int stm_t_param(modparam_t type, void *val)
 		return -1;
 	}
 	if(tmp.interval==0)
-		tmp.interval = 120;
+		tmp.interval = default_interval;
 
 	nt = (stm_timer_t*)pkg_malloc(sizeof(stm_timer_t));
 	if(nt==0)
@@ -307,6 +310,7 @@ int stm_t_param(modparam_t type, void *val)
 	nt->next = _stm_list;
 	_stm_list = nt;
 	free_params(params_list);
+	LM_INFO("created rtimer name=%.*s interval=%d mode=%d\n", tmp.name.len, tmp.name.s, tmp.interval, tmp.mode);
 	return 0;
 }
 

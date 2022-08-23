@@ -20,11 +20,13 @@
 
 #include <sys/types.h>
 #include <string.h>
+#include <stdlib.h>
 #include <regex.h>
 #include <ctype.h>
 
 #include "parser/parse_uri.h"
 #include "parser/parse_param.h"
+#include "parser/parse_hname2.h"
 
 #include "dprint.h"
 #include "ut.h"
@@ -455,22 +457,61 @@ int cmpi_str(str *s1, str *s2)
 int cmp_hdrname_str(str *s1, str *s2)
 {
 	str n1, n2;
+	hdr_field_t hf1, hf2;
+
 	n1 = *s1;
 	n2 = *s2;
 	trim_trailing(&n1);
 	trim_trailing(&n2);
-	/* todo: parse hdr name and compare with short/long alternative */
+
+	parse_hname2_str(&n1, &hf1);
+	parse_hname2_str(&n2, &hf2);
+	if(hf1.type==HDR_ERROR_T || hf2.type==HDR_ERROR_T) {
+		LM_ERR("error parsing header names [%.*s] [%.*s]\n", n1.len, n1.s,
+				n2.len, n2.s);
+		return -4;
+	}
+
+	if(hf1.type!=HDR_OTHER_T) {
+		if(hf1.type==hf2.type) {
+			return 0;
+		} else {
+			return 2;
+		}
+	} else if(hf2.type!=HDR_OTHER_T) {
+		return 2;
+	}
 	return cmpi_str(&n1, &n2);
 }
 
 int cmp_hdrname_strzn(str *s1, char *s2, size_t len)
 {
 	str n1, n2;
+	hdr_field_t hf1, hf2;
+
 	n1 = *s1;
 	n2.s = s2;
 	n2.len = len;
 	trim_trailing(&n1);
 	trim_trailing(&n2);
+
+	parse_hname2_str(&n1, &hf1);
+	parse_hname2_str(&n2, &hf2);
+	if(hf1.type==HDR_ERROR_T || hf2.type==HDR_ERROR_T) {
+		LM_ERR("error parsing header names [%.*s] [%.*s]\n", n1.len, n1.s,
+				n2.len, n2.s);
+		return -4;
+	}
+
+	if(hf1.type!=HDR_OTHER_T) {
+		if(hf1.type==hf2.type) {
+			return 0;
+		} else {
+			return 2;
+		}
+	} else if(hf2.type!=HDR_OTHER_T) {
+		return 2;
+	}
 	return cmpi_str(&n1, &n2);
 }
 
@@ -833,4 +874,84 @@ int urldecode(str *sin, str *sout)
 
 	LM_DBG("urldecoded string is <%s>\n", sout->s);
 	return 0;
+}
+
+/*! \brief
+ *  escape input string to prepare it for use as json value
+ */
+void ksr_str_json_escape(str *s_in, str *s_out, int *emode)
+{
+	char *p1, *p2;
+	int len = 0;
+	char token;
+	int i;
+
+	s_out->len = 0;
+	if (!s_in || !s_in->s) {
+		s_out->s = strdup("");
+		*emode = 1;
+		return;
+	}
+	for(i = 0; i < s_in->len; i++) {
+		if (strchr("\"\\\b\f\n\r\t", s_in->s[i])) {
+			len += 2;
+		} else if (s_in->s[i] < 32) {
+			len += 6;
+		} else {
+			len++;
+		}
+	}
+	if(len == s_in->len) {
+		s_out->s = s_in->s;
+		s_out->len = s_in->len;
+		*emode = 0;
+		return;
+	}
+
+	s_out->s = (char*)malloc(len + 2);
+	if (!s_out->s) {
+		return;
+	}
+	*emode = 1;
+
+	p2 = s_out->s;
+	p1 = s_in->s;
+	while (p1 < s_in->s + s_in->len) {
+		if ((unsigned char) *p1 > 31 && *p1 != '\"' && *p1 != '\\') {
+			*p2++ = *p1++;
+		} else {
+			*p2++ = '\\';
+			switch (token = *p1++) {
+			case '\\':
+				*p2++ = '\\';
+				break;
+			case '\"':
+				*p2++ = '\"';
+				break;
+			case '\b':
+				*p2++ = 'b';
+				break;
+			case '\f':
+				*p2++ = 'f';
+				break;
+			case '\n':
+				*p2++ = 'n';
+				break;
+			case '\r':
+				*p2++ = 'r';
+				break;
+			case '\t':
+				*p2++ = 't';
+				break;
+			default:
+				/* escape and print */
+				snprintf(p2, 6, "u%04x", token);
+				p2 += 5;
+				break;
+			}
+		}
+	}
+	*p2++ = 0;
+	s_out->len = len;
+	return;
 }

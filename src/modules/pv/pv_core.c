@@ -32,15 +32,19 @@
 #include "../../core/strutils.h"
 #include "../../core/tcp_conn.h"
 #include "../../core/pvapi.h"
+#include "../../core/xavp.h"
 #include "../../core/ppcfg.h"
 #include "../../core/trim.h"
 #include "../../core/msg_translator.h"
+#include "../../core/cfg/cfg.h"
+#include "../../core/cfg/cfg_ctx.h"
 
 #include "../../core/parser/parse_from.h"
 #include "../../core/parser/parse_uri.h"
 #include "../../core/parser/parse_hname2.h"
 #include "../../core/parser/parse_content.h"
 #include "../../core/parser/parse_refer_to.h"
+#include "../../core/parser/parse_rr.h"
 #include "../../core/parser/parse_rpid.h"
 #include "../../core/parser/parse_diversion.h"
 #include "../../core/parser/parse_ppi_pai.h"
@@ -144,6 +148,9 @@ int pv_get_method(struct sip_msg *msg, pv_param_t *param,
 				(int)msg->first_line.u.request.method_value);
 	}
 
+	if (IS_HTTP_REPLY(msg))
+		return pv_get_null(msg, param, res);
+
 	if(msg->cseq==NULL && ((parse_headers(msg, HDR_CSEQ_F, 0)==-1) ||
 				(msg->cseq==NULL)))
 	{
@@ -236,6 +243,20 @@ int pv_get_status(struct sip_msg *msg, pv_param_t *param,
 
 	if(msg->first_line.type != SIP_REPLY)
 		return pv_get_null(msg, param, res);
+
+	return pv_get_intstrval(msg, param, res,
+			(int)msg->first_line.u.reply.statuscode,
+			&msg->first_line.u.reply.status);
+}
+
+int pv_get_statusi(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	if(msg==NULL)
+		return -1;
+
+	if(msg->first_line.type != SIP_REPLY)
+		return pv_get_sintval(msg, param, res, 0);
 
 	return pv_get_intstrval(msg, param, res,
 			(int)msg->first_line.u.reply.statuscode,
@@ -909,6 +930,18 @@ int pv_get_rcvaddr_uri_full(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
 {
 	return pv_get_rcvaddr_uri_helper(msg, param, 1, res);
+}
+
+int pv_get_rcvaddr_socket(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	if(msg==NULL)
+		return -1;
+
+	if(msg->rcv.bind_address==NULL || msg->rcv.bind_address->sock_str.s==NULL) {
+		return pv_get_null(msg, param, res);
+	}
+	return pv_get_strval(msg, param, res, &msg->rcv.bind_address->sock_str);
 }
 
 int pv_get_rcv_advertised_ip(struct sip_msg *msg, pv_param_t *param,
@@ -1956,91 +1989,55 @@ int pv_get_avp(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res)
 	return pv_get_null(msg, param, res);
 }
 
-int pv_get_hdr(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res)
+int pv_get_hdr_helper(sip_msg_t *msg, pv_param_t *param, pv_value_t *res,
+		pv_value_t *tv, int idx, int idxf)
 {
-	int idx;
-	int idxf;
-	pv_value_t tv;
 	struct hdr_field *hf;
 	struct hdr_field *hf0;
 	char *p, *p_ini;
 	int n, p_size;
 
-	if(msg==NULL || res==NULL || param==NULL)
-		return -1;
-
-	/* get the name */
-	if(param->pvn.type == PV_NAME_PVAR)
-	{
-		if(pv_get_spec_name(msg, param, &tv)!=0 || (!(tv.flags&PV_VAL_STR)))
-		{
-			LM_ERR("invalid name\n");
-			return -1;
-		}
-	} else {
-		if(param->pvn.u.isname.type == AVP_NAME_STR)
-		{
-			tv.flags = PV_VAL_STR;
-			tv.rs = param->pvn.u.isname.name.s;
-		} else {
-			tv.flags = 0;
-			tv.ri = param->pvn.u.isname.name.n;
-		}
-	}
 	/* we need to be sure we have parsed all headers */
-	if(parse_headers(msg, HDR_EOH_F, 0)<0)
-	{
+	if(parse_headers(msg, HDR_EOH_F, 0)<0) {
 		LM_ERR("error parsing headers\n");
 		return pv_get_null(msg, param, res);
 	}
 
-	for (hf=msg->headers; hf; hf=hf->next)
-	{
-		if(tv.flags == 0)
-		{
-			if (tv.ri==hf->type)
+	for (hf=msg->headers; hf; hf=hf->next) {
+		if(tv->flags == 0) {
+			if (tv->ri==hf->type)
 				break;
 		} else {
-			if(tv.rs.len==1 && tv.rs.s[0]=='*')
+			if(tv->rs.len==1 && tv->rs.s[0]=='*')
 				break;
-			if (cmp_hdrname_str(&hf->name, &tv.rs)==0)
+			if (cmp_hdrname_str(&hf->name, &tv->rs)==0)
 				break;
 		}
 	}
-	if(hf==NULL)
+	if(hf==NULL) {
 		return pv_get_null(msg, param, res);
-	/* get the index */
-	if(pv_get_spec_index(msg, param, &idx, &idxf)!=0)
-	{
-		LM_ERR("invalid index\n");
-		return -1;
 	}
 
 	/* get the value */
 	res->flags = PV_VAL_STR;
-	if(idx==0 && (idxf==PV_IDX_INT || idxf==PV_IDX_NONE))
-	{
+	if(idx==0 && (idxf==PV_IDX_INT || idxf==PV_IDX_NONE)) {
 		res->rs  = hf->body;
 		return 0;
 	}
-	if(idxf==PV_IDX_ALL)
-	{
+	if(idxf==PV_IDX_ALL) {
 		p_ini = pv_get_buffer();
 		p = p_ini;
 		p_size = pv_get_buffer_size();
 		do {
-			if(p!=p_ini)
-			{
-				if(p-p_ini+PV_FIELD_DELIM_LEN+1>p_size)
-				{
+			if(p!=p_ini) {
+				if(p-p_ini+PV_FIELD_DELIM_LEN+1>p_size) {
 					LM_ERR("local buffer length exceeded\n");
 					return pv_get_null(msg, param, res);
 				}
 				memcpy(p, PV_HDR_DELIM, PV_HDR_DELIM_LEN);
 				p += PV_HDR_DELIM_LEN;
 			}
-			if(p-p_ini+hf->body.len+1>p_size)
-			{
+			if(p-p_ini+hf->body.len+1>p_size) {
 				LM_ERR("local buffer length exceeded [%d/%d]!\n",
 						(int)(p-p_ini+hf->body.len+1),
 						hf->body.len);
@@ -2049,16 +2046,14 @@ int pv_get_hdr(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res)
 			memcpy(p, hf->body.s, hf->body.len);
 			p += hf->body.len;
 			/* next hf */
-			for (hf=hf->next; hf; hf=hf->next)
-			{
-				if(tv.flags == 0)
-				{
-					if (tv.ri==hf->type)
+			for (hf=hf->next; hf; hf=hf->next) {
+				if(tv->flags == 0) {
+					if (tv->ri==hf->type)
 						break;
 				} else {
-					if(tv.rs.len==1 && tv.rs.s[0]=='*')
+					if(tv->rs.len==1 && tv->rs.s[0]=='*')
 						break;
-					if (cmp_hdrname_str(&hf->name, &tv.rs)==0)
+					if (cmp_hdrname_str(&hf->name, &tv->rs)==0)
 						break;
 				}
 			}
@@ -2070,50 +2065,42 @@ int pv_get_hdr(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res)
 
 	/* we have a numeric index */
 	hf0 = 0;
-	if(idx<0)
-	{
+	if(idx<0) {
 		n = 1;
 		/* count headers */
-		for (hf0=hf->next; hf0; hf0=hf0->next)
-		{
-			if(tv.flags == 0)
-			{
-				if (tv.ri==hf0->type)
+		for (hf0=hf->next; hf0; hf0=hf0->next) {
+			if(tv->flags == 0) {
+				if (tv->ri==hf0->type)
 					n++;
 			} else {
-				if(tv.rs.len==1 && tv.rs.s[0]=='*') {
+				if(tv->rs.len==1 && tv->rs.s[0]=='*') {
 					n++;
-				} else if (cmp_hdrname_str(&hf0->name, &tv.rs)==0) {
+				} else if (cmp_hdrname_str(&hf0->name, &tv->rs)==0) {
 					n++;
 				}
 			}
 		}
 		idx = -idx;
-		if(idx>n)
-		{
+		if(idx>n) {
 			LM_DBG("index out of range\n");
 			return pv_get_null(msg, param, res);
 		}
 		idx = n - idx;
-		if(idx==0)
-		{
+		if(idx==0) {
 			res->rs  = hf->body;
 			return 0;
 		}
 	}
 	n=0;
-	while(n<idx)
-	{
-		for (hf0=hf->next; hf0; hf0=hf0->next)
-		{
-			if(tv.flags == 0)
-			{
-				if (tv.ri==hf0->type)
+	while(n<idx) {
+		for (hf0=hf->next; hf0; hf0=hf0->next) {
+			if(tv->flags == 0) {
+				if (tv->ri==hf0->type)
 					n++;
 			} else {
-				if(tv.rs.len==1 && tv.rs.s[0]=='*') {
+				if(tv->rs.len==1 && tv->rs.s[0]=='*') {
 					n++;
-				} else if (cmp_hdrname_str(&hf0->name, &tv.rs)==0) {
+				} else if (cmp_hdrname_str(&hf0->name, &tv->rs)==0) {
 					n++;
 				}
 			}
@@ -2124,15 +2111,58 @@ int pv_get_hdr(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res)
 			break;
 	}
 
-	if(hf0!=0)
-	{
+	if(hf0!=0) {
 		res->rs  = hf0->body;
 		return 0;
 	}
 
 	LM_DBG("index out of range\n");
 	return pv_get_null(msg, param, res);
+}
 
+/**
+ *
+ */
+int pv_get_hdr(sip_msg_t *msg,  pv_param_t *param, pv_value_t *res)
+{
+	int idx;
+	int idxf;
+	pv_value_t tv = {0};
+	hdr_field_t thdr = {0};
+
+	if(msg==NULL || res==NULL || param==NULL)
+		return -1;
+
+	/* get the name */
+	if(param->pvn.type == PV_NAME_PVAR) {
+		if(pv_get_spec_name(msg, param, &tv)!=0 || (!(tv.flags&PV_VAL_STR))) {
+			LM_ERR("invalid name\n");
+			return -1;
+		}
+		parse_hname2_short(tv.rs.s, tv.rs.s + tv.rs.len, &thdr);
+		if(thdr.type==HDR_ERROR_T) {
+			LM_ERR("error parsing header name [%.*s]\n", tv.rs.len, tv.rs.s);
+			return pv_get_null(msg, param, res);
+		}
+		if(thdr.type!=HDR_OTHER_T) {
+			tv.flags = 0;
+			tv.ri = thdr.type;
+		}
+	} else {
+		if(param->pvn.u.isname.type == AVP_NAME_STR) {
+			tv.flags = PV_VAL_STR;
+			tv.rs = param->pvn.u.isname.name.s;
+		} else {
+			tv.flags = 0;
+			tv.ri = param->pvn.u.isname.name.n;
+		}
+	}
+	/* get the index */
+	if(pv_get_spec_index(msg, param, &idx, &idxf)!=0) {
+		LM_ERR("invalid index\n");
+		return -1;
+	}
+	return pv_get_hdr_helper(msg, param, res, &tv, idx, idxf);
 }
 
 /**
@@ -2142,6 +2172,7 @@ int pv_get_hdrc(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res)
 {
 	pv_value_t tv;
 	struct hdr_field *hf;
+	hdr_field_t thdr = {0};
 	int hcount;
 
 	if(msg==NULL || res==NULL || param==NULL)
@@ -2156,6 +2187,15 @@ int pv_get_hdrc(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res)
 		{
 			LM_ERR("invalid name\n");
 			return pv_get_sintval(msg, param, res, hcount);
+		}
+		parse_hname2_short(tv.rs.s, tv.rs.s + tv.rs.len, &thdr);
+		if(thdr.type==HDR_ERROR_T) {
+			LM_ERR("error parsing header name [%.*s]\n", tv.rs.len, tv.rs.s);
+			return pv_get_sintval(msg, param, res, 0);
+		}
+		if(thdr.type!=HDR_OTHER_T) {
+			tv.flags = 0;
+			tv.ri = thdr.type;
 		}
 	} else {
 		if(param->pvn.u.isname.type == AVP_NAME_STR)
@@ -2189,6 +2229,378 @@ int pv_get_hdrc(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res)
 		}
 	}
 	return pv_get_sintval(msg, param, res, hcount);
+}
+
+/**
+ *
+ */
+int pv_get_hfl(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
+{
+	int idx = 0;
+	int idxf = 0;
+	pv_value_t tv = {0};
+	via_body_t *vb = NULL;
+	rr_t *rrb = NULL;
+	contact_t *cb = NULL;
+	hdr_field_t *hf = NULL;
+	hdr_field_t thdr = {0};
+	int n = 0;
+	str sval = STR_NULL;
+
+	if(msg==NULL || res==NULL || param==NULL)
+		return -1;
+
+	/* get the name */
+	if(param->pvn.type == PV_NAME_PVAR) {
+		if(pv_get_spec_name(msg, param, &tv)!=0 || (!(tv.flags&PV_VAL_STR))) {
+			LM_ERR("invalid name\n");
+			return -1;
+		}
+		parse_hname2_short(tv.rs.s, tv.rs.s + tv.rs.len, &thdr);
+		if(thdr.type==HDR_ERROR_T) {
+			LM_ERR("error parsing header name [%.*s]\n", tv.rs.len, tv.rs.s);
+			return pv_get_null(msg, param, res);
+		}
+		if(thdr.type!=HDR_OTHER_T) {
+			tv.flags = 0;
+			tv.ri = thdr.type;
+		}
+	} else {
+		if(param->pvn.u.isname.type == AVP_NAME_STR) {
+			tv.flags = PV_VAL_STR;
+			tv.rs = param->pvn.u.isname.name.s;
+		} else {
+			tv.flags = 0;
+			tv.ri = param->pvn.u.isname.name.n;
+		}
+	}
+	/* get the index */
+	if(pv_get_spec_index(msg, param, &idx, &idxf)!=0) {
+		LM_ERR("invalid index\n");
+		return -1;
+	}
+	if((tv.flags != 0) || (idxf==PV_IDX_ALL)) {
+		return pv_get_hdr_helper(msg, param, res, &tv, idx, idxf);
+	}
+	if (parse_headers(msg, HDR_EOH_F, 0)<0) {
+		LM_DBG("failed to parse sip headers\n");
+		return pv_get_null(msg, param, res);
+	}
+
+	if((tv.flags == 0) && (tv.ri==HDR_VIA_T)) {
+		if(msg->h_via1==NULL) {
+			LM_WARN("no Via header\n");
+			return pv_get_null(msg, param, res);
+		}
+		if(idx<0) {
+			n = 1;
+			/* count Via header bodies */
+			for(hf=msg->h_via1; hf!=NULL; hf=hf->next) {
+				if(hf->type==HDR_VIA_T) {
+					for(vb=(via_body_t*)hf->parsed; vb!=NULL; vb=vb->next) {
+						n++;
+					}
+				}
+			}
+
+			idx = -idx;
+			if(idx>n) {
+				LM_DBG("index out of range\n");
+				return pv_get_null(msg, param, res);
+			}
+			idx = n - idx;
+		}
+		if(idx==0) {
+			vb = (via_body_t*)(msg->h_via1->parsed);
+			sval.s = vb->name.s;
+			sval.len = vb->bsize;
+			trim(&sval);
+			res->rs = sval;
+			return 0;
+		}
+		n=0;
+		for(hf=msg->h_via1; hf!=NULL; hf=hf->next) {
+			if(hf->type==HDR_VIA_T) {
+				for(vb=(via_body_t*)hf->parsed; vb!=NULL; vb=vb->next) {
+					if(n==idx) {
+						sval.s = vb->name.s;
+						sval.len = vb->bsize;
+						trim(&sval);
+						res->rs = sval;
+						return 0;
+					}
+					n++;
+				}
+			}
+		}
+		LM_DBG("unexpected via index out of range\n");
+		return pv_get_null(msg, param, res);
+	}
+	if((tv.flags == 0) && (tv.ri==HDR_RECORDROUTE_T || tv.ri==HDR_ROUTE_T)) {
+		if(tv.ri==HDR_RECORDROUTE_T) {
+			hf=msg->record_route;
+		} else {
+			hf=msg->route;
+		}
+		if(hf==NULL) {
+			LM_DBG("no %s header\n", (tv.ri==HDR_ROUTE_T)?"route":"record-route");
+			return pv_get_null(msg, param, res);
+		}
+
+		if(idx<0) {
+			n = 1;
+			/* count Record-Route/Route header bodies */
+			for(; hf!=NULL; hf=hf->next) {
+				if(hf->type==tv.ri) {
+					if(parse_rr(hf) == -1) {
+						LM_ERR("failed parsing %s header\n",
+								(tv.ri==HDR_ROUTE_T)?"route":"record-route");
+						return pv_get_null(msg, param, res);
+					}
+					for(rrb=(rr_t*)hf->parsed; rrb!=NULL; rrb=rrb->next) {
+						n++;
+					}
+				}
+			}
+
+			idx = -idx;
+			if(idx>n) {
+				LM_DBG("index out of %s headers range\n",
+						(tv.ri==HDR_ROUTE_T)?"route":"record-route");
+				return pv_get_null(msg, param, res);
+			}
+			idx = n - idx;
+		}
+		if(idx==0) {
+			if(tv.ri==HDR_RECORDROUTE_T) {
+				hf=msg->record_route;
+			} else {
+				hf=msg->route;
+			}
+			if(parse_rr(hf) == -1) {
+				LM_ERR("failed parsing %s header\n",
+						(tv.ri==HDR_ROUTE_T)?"route":"record-route");
+				return pv_get_null(msg, param, res);
+			}
+			rrb = (rr_t*)(hf->parsed);
+			sval.s = rrb->nameaddr.name.s;
+			sval.len = rrb->len;
+			trim(&sval);
+			res->rs = sval;
+			return 0;
+		}
+		n=0;
+		if(tv.ri==HDR_RECORDROUTE_T) {
+			hf=msg->record_route;
+		} else {
+			hf=msg->route;
+		}
+		for(; hf!=NULL; hf=hf->next) {
+			if(hf->type==tv.ri) {
+				if(parse_rr(hf) == -1) {
+					LM_ERR("failed parsing %s header\n",
+							(tv.ri==HDR_ROUTE_T)?"route":"record-route");
+					return pv_get_null(msg, param, res);
+				}
+				for(rrb=(rr_t*)hf->parsed; rrb!=NULL; rrb=rrb->next) {
+					if(n==idx) {
+						sval.s = rrb->nameaddr.name.s;
+						sval.len = rrb->len;
+						trim(&sval);
+						res->rs = sval;
+						return 0;
+					}
+					n++;
+				}
+			}
+		}
+		LM_DBG("unexpected %s index out of range\n",
+				(tv.ri==HDR_ROUTE_T)?"route":"record-route");
+		return pv_get_null(msg, param, res);
+	}
+
+	if((tv.flags == 0) && (tv.ri==HDR_CONTACT_T)) {
+		if(msg->contact==NULL) {
+			LM_DBG("no Contact header\n");
+			return pv_get_null(msg, param, res);
+		}
+		if(parse_contact_headers(msg) < 0) {
+			LM_DBG("failed to parse Contact headers\n");
+			return pv_get_null(msg, param, res);
+		}
+		if(idx<0) {
+			n = 1;
+			/* count Contact header bodies */
+			for(hf=msg->contact; hf!=NULL; hf=hf->next) {
+				if(hf->type==HDR_CONTACT_T) {
+					for(cb=(((contact_body_t*)hf->parsed)->contacts);
+							cb!=NULL; cb=cb->next) {
+						n++;
+					}
+				}
+			}
+
+			idx = -idx;
+			if(idx>n) {
+				LM_DBG("index out of range\n");
+				return pv_get_null(msg, param, res);
+			}
+			idx = n - idx;
+		}
+		if(idx==0) {
+			cb = ((contact_body_t*)msg->contact->parsed)->contacts;
+			sval.s = cb->name.s;
+			sval.len = cb->len;
+			trim(&sval);
+			res->rs = sval;
+			return 0;
+		}
+		n=0;
+		for(hf=msg->contact; hf!=NULL; hf=hf->next) {
+			if(hf->type==HDR_CONTACT_T) {
+				for(cb=(((contact_body_t*)hf->parsed)->contacts);
+						cb!=NULL; cb=cb->next) {
+					if(n==idx) {
+						sval.s = cb->name.s;
+						sval.len = cb->len;
+						trim(&sval);
+						res->rs = sval;
+						return 0;
+					}
+					n++;
+				}
+			}
+		}
+		LM_DBG("unexpected contact index out of range\n");
+		return pv_get_null(msg, param, res);
+	}
+
+	return pv_get_hdr_helper(msg, param, res, &tv, idx, idxf);
+}
+
+/**
+ *
+ */
+int pv_get_hflc(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
+{
+	pv_value_t tv = {0};
+	via_body_t *vb = NULL;
+	rr_t *rrb = NULL;
+	contact_t *cb = NULL;
+	hdr_field_t *hf = NULL;
+	hdr_field_t thdr = {0};
+	int n = 0;
+
+	if(msg==NULL || res==NULL || param==NULL)
+		return -1;
+
+	/* get the name */
+	if(param->pvn.type == PV_NAME_PVAR) {
+		if(pv_get_spec_name(msg, param, &tv)!=0 || (!(tv.flags&PV_VAL_STR))) {
+			LM_ERR("invalid name\n");
+			return pv_get_sintval(msg, param, res, 0);
+		}
+		parse_hname2_short(tv.rs.s, tv.rs.s + tv.rs.len, &thdr);
+		if(thdr.type==HDR_ERROR_T) {
+			LM_ERR("error parsing header name [%.*s]\n", tv.rs.len, tv.rs.s);
+			return pv_get_sintval(msg, param, res, 0);
+		}
+		if(thdr.type!=HDR_OTHER_T) {
+			tv.flags = 0;
+			tv.ri = thdr.type;
+		}
+	} else {
+		if(param->pvn.u.isname.type == AVP_NAME_STR) {
+			tv.flags = PV_VAL_STR;
+			tv.rs = param->pvn.u.isname.name.s;
+		} else {
+			tv.flags = 0;
+			tv.ri = param->pvn.u.isname.name.n;
+		}
+	}
+
+	if (parse_headers(msg, HDR_EOH_F, 0)<0) {
+		LM_DBG("failed to parse sip headers\n");
+		return pv_get_sintval(msg, param, res, 0);
+	}
+
+	if((tv.flags == 0) && (tv.ri==HDR_VIA_T)) {
+		if(msg->h_via1==NULL) {
+			LM_WARN("no Via header\n");
+			return pv_get_sintval(msg, param, res, 0);
+		}
+		/* count Via header bodies */
+		for(hf=msg->h_via1; hf!=NULL; hf=hf->next) {
+			if(hf->type==HDR_VIA_T) {
+				for(vb=(via_body_t*)hf->parsed; vb!=NULL; vb=vb->next) {
+					n++;
+				}
+			}
+		}
+		return pv_get_sintval(msg, param, res, n);
+	}
+
+	if((tv.flags == 0) && (tv.ri==HDR_RECORDROUTE_T || tv.ri==HDR_ROUTE_T)) {
+		if(tv.ri==HDR_RECORDROUTE_T) {
+			hf=msg->record_route;
+		} else {
+			hf=msg->route;
+		}
+		if(hf==NULL) {
+			LM_DBG("no %s header\n", (tv.ri==HDR_ROUTE_T)?"route":"record-route");
+			return pv_get_sintval(msg, param, res, 0);
+		}
+
+		/* count Record-Route/Route header bodies */
+		for(; hf!=NULL; hf=hf->next) {
+			if(hf->type==tv.ri) {
+				if(parse_rr(hf) == -1) {
+					LM_ERR("failed parsing %s header\n",
+							(tv.ri==HDR_ROUTE_T)?"route":"record-route");
+					return pv_get_sintval(msg, param, res, 0);
+				}
+				for(rrb=(rr_t*)hf->parsed; rrb!=NULL; rrb=rrb->next) {
+					n++;
+				}
+			}
+		}
+		return pv_get_sintval(msg, param, res, n);
+	}
+
+	if((tv.flags == 0) && (tv.ri==HDR_CONTACT_T)) {
+		if(msg->contact==NULL) {
+			LM_DBG("no Contact header\n");
+			return pv_get_sintval(msg, param, res, 0);
+		}
+		if(parse_contact_headers(msg) < 0) {
+			LM_DBG("failed to parse Contact headers\n");
+			return pv_get_sintval(msg, param, res, 0);
+		}
+
+		/* count Contact header bodies */
+		for(hf=msg->contact; hf!=NULL; hf=hf->next) {
+			if(hf->type==HDR_CONTACT_T) {
+				for(cb=(((contact_body_t*)hf->parsed)->contacts);
+						cb!=NULL; cb=cb->next) {
+					n++;
+				}
+			}
+		}
+		return pv_get_sintval(msg, param, res, n);
+	}
+
+	for (hf=msg->headers; hf; hf=hf->next) {
+		if(tv.flags == 0) {
+			if (tv.ri==hf->type) {
+				n++;
+			}
+		} else {
+			if (cmp_hdrname_str(&hf->name, &tv.rs)==0) {
+				n++;
+			}
+		}
+	}
+	return pv_get_sintval(msg, param, res, n);
 }
 
 /**
@@ -2248,15 +2660,148 @@ int pv_get_cnt(struct sip_msg *msg, pv_param_t *param,
 	if(pv==NULL)
 		return pv_get_null(msg, param, res);
 
-	if(pv_get_avp_name(0, &pv->pvp, &avp_name, &avp_type)!=0)
-	{
-		LM_ERR("invalid AVP definition\n");
-		return pv_get_null(msg, param, res);
-	}
-	avp=search_first_avp(avp_type, avp_name, NULL, &state);
-	while(avp) {
-		n++;
-		avp=search_next_avp(&state, NULL);
+	switch(pv->type) {
+		case PVT_AVP:
+			if(pv_get_avp_name(0, &pv->pvp, &avp_name, &avp_type)!=0)
+			{
+				LM_ERR("invalid AVP definition\n");
+				return pv_get_null(msg, param, res);
+			}
+			avp=search_first_avp(avp_type, avp_name, NULL, &state);
+			while(avp) {
+				n++;
+				avp=search_next_avp(&state, NULL);
+			}
+		break;
+
+		case PVT_XAVP:
+		{
+			/* Usage:
+			 *
+			 * $cnt($xavp(key[*])) : number of XAVPs "key".
+			 * $cnt($xavp(key[n]=>sub[*])) : number of children "sub" in XAVP "key[n]".
+			 * $cnt($xavp(key[*]=>sub[*])) : total number of children "sub" in all XAVPs "key".
+			 *
+			 * $cnt($xavp(key[n])) : 1 or 0 (if this index exists or not).
+			 * $cnt($xavp(key[-n])) : same but with reverse indexing (-1 is the last index).
+			 *
+			 * $cnt($xavp(key[*]=>sub[n] : number of children "sub[n]" that exist in all XAPVs "key".
+			 *
+			 * $cnt($xavp(key)) is the same as $cnt($xavp(key[*])).
+			 * $cnt($xavp(key=>sub)) is the same as $cnt($xavp(key[*]=>sub[*])).
+			 *
+			 * Note: Usually for a XAVP no index means "index 0", not all.
+			 * But this would be less intuitive in our case for counting.
+			 */
+			pv_xavp_name_t *xname, *xname_sub;
+			sr_xavp_t *ravp, *sub_avp;
+			int root_idxf, root_idx_spec, root_idx;
+			int sub_idxf, sub_idx_spec, sub_idx;
+			int count;
+
+			xname = pv->pvp.pvn.u.dname;
+			if (xname == NULL) {
+				LM_ERR("invalid XAVP definition\n");
+				return pv_get_null(msg, param, res);
+			}
+			xname_sub = xname->next; /* NULL if no sub-key is provided */
+
+			/* No index or index * means: count all entries */
+			int root_all = 1;
+			if (xname->index.type == PVT_EXTRA) {
+				/* Get root index */
+				if (pv_get_spec_index(msg, &xname->index.pvp, &root_idx_spec, &root_idxf) != 0) {
+					LM_ERR("invalid XAVP root index\n");
+					return pv_get_null(msg, param, res);
+				}
+				if (!(root_idxf == PV_IDX_ALL)) root_all = 0;
+			}
+			if (!root_all) {
+				/* Fix root index (if negative) */
+				if (root_idx_spec >= 0) {
+					root_idx = root_idx_spec;
+				} else {
+					count = xavp_count(&xname->name, NULL);
+					root_idx = count + root_idx_spec;
+				}
+				ravp = xavp_get_by_index(&xname->name, root_idx, NULL);
+			}
+
+			if (xname_sub == NULL) {
+				/* No XAVP sub-key */
+				if (root_all) {
+					/* Count all root XAVP */
+					n = xavp_count(&xname->name, NULL);
+				} else {
+					/* Check if specific root XAVP index exists */
+					if (ravp) n = 1;
+				}
+
+			} else {
+				/* Having a XAVP sub-key */
+				/* No index or index * means: count all entries */
+				int sub_all = 1;
+				if (xname_sub->index.type == PVT_EXTRA) {
+					/* Get sub index */
+					if (pv_get_spec_index(msg, &xname_sub->index.pvp, &sub_idx_spec, &sub_idxf) != 0) {
+						LM_ERR("invalid XAVP sub index\n");
+						return pv_get_null(msg, param, res);
+					}
+					if (!(sub_idxf == PV_IDX_ALL)) sub_all = 0;
+				}
+
+				if (!root_all) {
+					/* If the root XAVP value is not of type XAVP then nothing to count */
+					if (ravp && ravp->val.type == SR_XTYPE_XAVP) {
+						if (sub_all) {
+							/* Count all sub XAVP within root XAVP */
+							n = xavp_count(&xname_sub->name, &ravp->val.v.xavp);
+						} else {
+							/* Check if specific sub XAVP index exists within root XAVP */
+							/* Fix sub index (if negative) */
+							if (sub_idx_spec >= 0) {
+								sub_idx = sub_idx_spec;
+							} else {
+								count = xavp_count(&xname_sub->name, &ravp->val.v.xavp);
+								sub_idx = count + sub_idx_spec;
+							}
+							sub_avp = xavp_get_by_index(&xname_sub->name, sub_idx, &ravp->val.v.xavp);
+							if (sub_avp) n = 1;
+						}
+					}
+
+				} else {
+					/* Iterate on root XAVP. For each, count the sub XAVP. */
+					ravp = xavp_get(&xname->name, NULL);
+					while (ravp) {
+						/* If the root XAVP value is not of type XAVP then nothing to count */
+						if (ravp->val.type == SR_XTYPE_XAVP) {
+							if (sub_all) {
+								/* Count all sub XAVP within root XAVP */
+								n += xavp_count(&xname_sub->name, &ravp->val.v.xavp);
+							} else {
+								/* Check if specific sub XAVP index exists within root XAVP */
+								/* Fix sub index (if negative) */
+								if (sub_idx_spec >= 0) {
+									sub_idx = sub_idx_spec;
+								} else {
+									count = xavp_count(&xname_sub->name, &ravp->val.v.xavp);
+									sub_idx = count + sub_idx_spec;
+								}
+								sub_avp = xavp_get_by_index(&xname_sub->name, sub_idx, &ravp->val.v.xavp);
+								if (sub_avp) n += 1;
+							}
+						}
+						ravp = xavp_get_next(ravp);
+					}
+				}
+			}
+		}
+		break;
+
+		default:
+			LM_ERR("invalid type: neither AVP nor XAVP\n");
+			return pv_get_null(msg, param, res);
 	}
 
 	return pv_get_uintval(msg, param, res, n);
@@ -3274,8 +3819,8 @@ int pv_parse_hdr_name(pv_spec_p sp, str *in)
 	s.s = p;
 	s.len = in->len+1;
 
-	if (parse_hname2_short(s.s, s.s + s.len, &hdr)==0)
-	{
+	parse_hname2_short(s.s, s.s + s.len, &hdr);
+	if(hdr.type==HDR_ERROR_T) {
 		LM_ERR("error parsing header name [%.*s]\n", s.len, s.s);
 		goto error;
 	}
@@ -3295,6 +3840,11 @@ error:
 	return -1;
 }
 
+int pv_parse_hfl_name(pv_spec_t *sp, str *in)
+{
+	return pv_parse_hdr_name(sp, in);
+}
+
 int pv_parse_cnt_name(pv_spec_p sp, str *in)
 {
 	pv_spec_t *pv=NULL;
@@ -3308,8 +3858,8 @@ int pv_parse_cnt_name(pv_spec_p sp, str *in)
 		return -1;
 	}
 
-	if(pv->type!=PVT_AVP) {
-		LM_ERR("expected avp name instead of [%.*s]\n", in->len, in->s);
+	if(pv->type!=PVT_AVP && pv->type!=PVT_XAVP) {
+		LM_ERR("expected avp or xavp name instead of [%.*s]\n", in->len, in->s);
 		return -1;
 	}
 
@@ -3329,6 +3879,11 @@ int pv_parse_K_name(pv_spec_p sp, str *in)
 
 	switch(in->len)
 	{
+		case 2:
+			if(strncmp(in->s, "WS", 2)==0)
+				sp->pvp.pvn.u.isname.name.n = 6;
+			else goto error;
+		break;
 		case 3:
 			if(strncmp(in->s, "UDP", 3)==0)
 				sp->pvp.pvn.u.isname.name.n = 2;
@@ -3336,15 +3891,24 @@ int pv_parse_K_name(pv_spec_p sp, str *in)
 				sp->pvp.pvn.u.isname.name.n = 3;
 			else if(strncmp(in->s, "TLS", 3)==0)
 				sp->pvp.pvn.u.isname.name.n = 4;
+			else if(strncmp(in->s, "WSS", 3)==0)
+				sp->pvp.pvn.u.isname.name.n = 7;
 			else goto error;
 		break;
 		case 4:
 			if(strncmp(in->s, "IPv4", 4)==0)
 				sp->pvp.pvn.u.isname.name.n = 0;
+			else if(strncmp(in->s, "INET", 4)==0)
+				sp->pvp.pvn.u.isname.name.n = 0;
 			else if(strncmp(in->s, "IPv6", 4)==0)
 				sp->pvp.pvn.u.isname.name.n = 1;
 			else if(strncmp(in->s, "SCTP", 4)==0)
 				sp->pvp.pvn.u.isname.name.n = 5;
+			else goto error;
+		break;
+		case 5:
+			if(strncmp(in->s, "INET6", 5)==0)
+				sp->pvp.pvn.u.isname.name.n = 1;
 			else goto error;
 		break;
 		default:
@@ -3407,6 +3971,10 @@ int pv_get_K(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 			return pv_get_uintval(msg, param, res, PROTO_TLS);
 		case 5:
 			return pv_get_uintval(msg, param, res, PROTO_SCTP);
+		case 6:
+			return pv_get_uintval(msg, param, res, PROTO_WS);
+		case 7:
+			return pv_get_uintval(msg, param, res, PROTO_WSS);
 		default:
 			return pv_get_uintval(msg, param, res, AF_INET);
 	}
@@ -3598,6 +4166,8 @@ int pv_parse_msg_attrs_name(pv_spec_p sp, str *in)
 				sp->pvp.pvn.u.isname.name.n = 4;
 			else if(strncmp(in->s, "fpart", 5)==0)
 				sp->pvp.pvn.u.isname.name.n = 7;
+			else if(strncmp(in->s, "lpart", 5)==0)
+				sp->pvp.pvn.u.isname.name.n = 9;
 			else goto error;
 		break;
 		case 8:
@@ -3694,6 +4264,12 @@ int pv_get_msg_attrs(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 			s.len = msg->unparsed - s.s;
 			trim(&s);
 			return pv_get_sintval(msg, param, res, s.len);
+		case 9: /* last part - headers + body */
+			if(msg->headers==NULL || msg->headers->name.s==NULL)
+				return pv_get_null(msg, param, res);
+			s.s = msg->headers->name.s;
+			s.len = msg->buf + msg->len - s.s;
+			return pv_get_strval(msg, param, res, &s);
 
 		default:
 			return pv_get_null(msg, param, res);
@@ -3750,4 +4326,632 @@ int pv_get_ksr_attrs(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 		default:
 			return pv_get_null(msg, param, res);
 	}
+}
+
+
+/**
+ *
+ */
+int pv_parse_rpl_attrs_name(pv_spec_p sp, str *in)
+{
+	if(sp==NULL || in==NULL || in->len<=0)
+		return -1;
+
+	/* attributes not related to dst of reply get an id starting with 20 */
+	switch(in->len) {
+		case 4:
+			if(strncmp(in->s, "duri", 4)==0)
+				sp->pvp.pvn.u.isname.name.n = 0;
+			else goto error;
+		break;
+		case 5:
+			if(strncmp(in->s, "dhost", 5)==0)
+				sp->pvp.pvn.u.isname.name.n = 1;
+			else if(strncmp(in->s, "dport", 5)==0)
+				sp->pvp.pvn.u.isname.name.n = 2;
+			else if(strncmp(in->s, "cntrr", 5)==0)
+				sp->pvp.pvn.u.isname.name.n = 21;
+			else goto error;
+		break;
+		case 6:
+			if(strncmp(in->s, "dproto", 6)==0)
+				sp->pvp.pvn.u.isname.name.n = 3;
+			else if(strncmp(in->s, "cntvia", 6)==0)
+				sp->pvp.pvn.u.isname.name.n = 20;
+			else goto error;
+		break;
+		case 8:
+			if(strncmp(in->s, "dprotoid", 8)==0)
+				sp->pvp.pvn.u.isname.name.n = 4;
+			else goto error;
+		break;
+
+		default:
+			goto error;
+	}
+	sp->pvp.pvn.type = PV_NAME_INTSTR;
+	sp->pvp.pvn.u.isname.type = 0;
+
+	return 0;
+
+error:
+	LM_ERR("unknown PV rpl key: %.*s\n", in->len, in->s);
+	return -1;
+}
+
+
+/**
+ *
+ */
+int pv_get_rpl_attrs(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
+{
+	static char rpluribuf[MAX_URI_SIZE];
+	str suri = STR_NULL;
+	str host = STR_NULL;
+	str sproto = STR_NULL;
+	unsigned int port = 0;
+	hdr_field_t *hf = NULL;
+	unsigned int hcnt = 0;
+
+	if(param==NULL) {
+		return pv_get_null(msg, param, res);
+	}
+
+	if(!IS_SIP_REPLY(msg)) {
+		return pv_get_null(msg, param, res);
+	}
+	if(param->pvn.u.isname.name.n<20) {
+		if(parse_headers( msg, HDR_VIA2_F, 0)==-1) {
+			LM_DBG("no 2nd via parsed\n");
+			return pv_get_null(msg, param, res);
+		}
+		if((msg->via2==0) || (msg->via2->error!=PARSE_OK)) {
+			return pv_get_null(msg, param, res);
+		}
+		if(msg->via2->rport && msg->via2->rport->value.s) {
+			LM_DBG("using 'rport'\n");
+			if(str2int(&msg->via2->rport->value, &port)<0) {
+				LM_ERR("invalid rport value\n");
+				return pv_get_null(msg, param, res);
+			}
+		}
+		if(msg->via2->received) {
+			LM_DBG("using 'received'\n");
+			host = msg->via2->received->value;
+		} else {
+			LM_DBG("using via host\n");
+			host = msg->via2->host;
+		}
+		if(port==0) {
+			port = (msg->via2->port)?msg->via2->port:SIP_PORT;
+		}
+	}
+	switch(param->pvn.u.isname.name.n) {
+		case 0: /* dst uri */
+			if(get_valid_proto_string(msg->via2->proto, 1, 0, &sproto)<0) {
+				sproto.s = "udp";
+				sproto.len = 3;
+			}
+			suri.len = snprintf(rpluribuf, MAX_URI_SIZE, "sip:%.*s:%u;transport=%.*s",
+					host.len, host.s, port, sproto.len, sproto.s);
+			if(suri.len<=0 || suri.len>=MAX_URI_SIZE) {
+				LM_DBG("building the dst uri failed (%d)\n", suri.len);
+				return pv_get_null(msg, param, res);
+			}
+			suri.s = rpluribuf;
+			return pv_get_strval(msg, param, res, &suri);
+		case 1: /* dst host */
+			return pv_get_strval(msg, param, res, &host);
+		case 2: /* dst port */
+			return pv_get_uintval(msg, param, res, port);
+		case 3: /* dst proto */
+			if(get_valid_proto_string(msg->via2->proto, 0, 0, &sproto)<0) {
+				sproto.s = "udp";
+				sproto.len = 3;
+			}
+			return pv_get_strintval(msg, param, res, &sproto,
+					(int)msg->via2->proto);
+		case 4: /* dst protoid */
+			return pv_get_uintval(msg, param, res, msg->via2->proto);
+		case 20: /* count of via */
+			if (parse_headers(msg, HDR_EOH_F, 0)<0) {
+				LM_DBG("failed to parse sip headers\n");
+				return pv_get_null(msg, param, res);
+			}
+			hcnt = 0;
+			for(hf=msg->h_via1; hf!=NULL; hf=hf->next) {
+				if(hf->type==HDR_VIA_T) {
+					via_body_t *vb;
+					for(vb=(via_body_t*)hf->parsed; vb!=NULL; vb=vb->next) {
+						hcnt++;
+					}
+				}
+			}
+			return pv_get_uintval(msg, param, res, hcnt);
+		case 21: /* count of record-route */
+			if (parse_headers(msg, HDR_EOH_F, 0)<0) {
+				LM_DBG("failed to parse sip headers\n");
+				return pv_get_null(msg, param, res);
+			}
+			hcnt = 0;
+			for(hf=msg->h_via1; hf!=NULL; hf=hf->next) {
+				if(hf->type == HDR_RECORDROUTE_T) {
+					rr_t *rrb;
+					if(parse_rr(hf) == -1) {
+						LM_ERR("failed parsing rr header\n");
+						return pv_get_null(msg, param, res);
+					}
+					for(rrb=(rr_t*)hf->parsed; rrb!=NULL; rrb=rrb->next) {
+						hcnt++;
+					}
+				}
+			}
+			return pv_get_uintval(msg, param, res, hcnt);
+
+		default:
+			return pv_get_null(msg, param, res);
+	}
+}
+
+
+/**
+ *
+ */
+static cfg_ctx_t *_pv_ccp_ctx = NULL;
+
+/**
+ *
+ */
+int pv_ccp_ctx_init(void)
+{
+	if (cfg_register_ctx(&_pv_ccp_ctx, NULL)) {
+		LM_ERR("failed to register cfg context\n");
+		return -1;
+	}
+
+	return 0;
+}
+
+/**
+ *
+ */
+void pv_free_ccp_attrs_name(void *p)
+{
+	pv_name_t *pn;
+
+	if(p==NULL) {
+		return;
+	}
+
+	pn = (pv_name_t*)p;
+	if(pn->u.isname.name.s.s) {
+		pkg_free(pn->u.isname.name.s.s);
+		pn->u.isname.name.s.s = 0;
+		pn->u.isname.name.s.len = 0;
+	}
+}
+
+/**
+ *
+ */
+int pv_parse_ccp_attrs_name(pv_spec_p sp, str *in)
+{
+	int i;
+
+	if(sp==NULL || in==NULL || in->len<=0) {
+		return -1;
+	}
+
+	for(i=0; i<in->len; i++) {
+		if(in->s[i] == '.') {
+			break;
+		}
+	}
+	if(i==0 || i>=in->len-1) {
+		LM_ERR("invalid PV ccp key: %.*s\n", in->len, in->s);
+		goto error;
+	}
+
+	sp->pvp.pvn.u.isname.name.s.s = (char*)pkg_malloc(in->len+1);
+	if(sp->pvp.pvn.u.isname.name.s.s==NULL) {
+		PKG_MEM_ERROR;
+		goto error;
+	}
+
+	memcpy(sp->pvp.pvn.u.isname.name.s.s, in->s, in->len);
+	sp->pvp.pvn.u.isname.name.s.s[in->len] = '\0';
+	sp->pvp.pvn.u.isname.name.s.len = in->len;
+
+	sp->pvp.pvn.nfree = pv_free_ccp_attrs_name;
+
+	sp->pvp.pvn.type = PV_NAME_INTSTR;
+	sp->pvp.pvn.u.isname.type = 0;
+
+	return 0;
+
+error:
+	return -1;
+}
+
+/**
+ *
+ */
+int pv_get_ccp_attrs(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
+{
+	str gname = STR_NULL;
+	str vname = STR_NULL;
+	unsigned int *grpid = NULL;
+	str s = STR_NULL;
+	char *sep = NULL;
+	void *val = NULL;
+	unsigned int vtype = 0;
+	int ret = 0;
+
+	s = param->pvn.u.isname.name.s;
+
+	sep = q_memrchr(s.s, '.', s.len);
+	if(sep==NULL) {
+		LM_ERR("invalid pv name [%.*s]\n", s.len, s.s);
+		return pv_get_null(msg, param, res);
+	}
+	gname.s = s.s;
+	gname.len = sep - s.s;
+	vname.s = sep + 1;
+	vname.len = s.s + s.len - sep - 1;
+
+	if (cfg_get_group_id(&gname, &grpid)) {
+		LM_ERR("wrong group syntax. Use either 'group', or 'group[id]'\n");
+		return pv_get_null(msg, param, res);;
+	}
+
+	LM_DBG("getting value for variable: %.*s.%.*s\n", gname.len, gname.s,
+				vname.len, vname.s);
+	ret = cfg_get_by_name(_pv_ccp_ctx, &gname, grpid, &vname,
+			&val, &vtype);
+	if (ret < 0) {
+		LM_ERR("failed to get the variable [%.*s]\n", s.len, s.s);
+		return pv_get_null(msg, param, res);
+	} else if (ret > 0) {
+		LM_ERR("variable exists, but it is not readable: %.*s\n", s.len, s.s);
+		return pv_get_null(msg, param, res);
+	}
+	switch (vtype) {
+		case CFG_VAR_INT:
+			return pv_get_sintval(msg, param, res, (int)(long)val);
+		case CFG_VAR_STRING:
+			return pv_get_strzval(msg, param, res, (char*)val);
+		case CFG_VAR_STR:
+			return pv_get_strval(msg, param, res, (str*)val);
+		case CFG_VAR_POINTER:
+			LM_ERR("pointer value for variable [%.*s]\n", s.len, s.s);
+			return pv_get_null(msg, param, res);
+	}
+
+	LM_ERR("unknown type for variable [%.*s]\n", s.len, s.s);
+	return pv_get_null(msg, param, res);
+}
+
+/**
+ *
+ */
+int pv_set_ccp_attrs(struct sip_msg* msg, pv_param_t *param,
+		int op, pv_value_t *val)
+{
+	str gname = STR_NULL;
+	str vname = STR_NULL;
+	unsigned int *grpid = NULL;
+	str s = STR_NULL;
+	char *sep = NULL;
+
+	if(val == NULL || (val->flags&PV_VAL_NULL)) {
+		LM_WARN("ignoring null asignment\n");
+		return 0;
+	}
+
+	s = param->pvn.u.isname.name.s;
+
+	sep = q_memrchr(s.s, '.', s.len);
+	if(sep==NULL) {
+		LM_ERR("invalid pv name [%.*s]\n", s.len, s.s);
+		return -1;
+	}
+	gname.s = s.s;
+	gname.len = sep - s.s;
+	vname.s = sep + 1;
+	vname.len = s.s + s.len - sep - 1;
+
+	if (cfg_get_group_id(&gname, &grpid)) {
+		LM_ERR("wrong group syntax. Use either 'group', or 'group[id]'\n");
+		return -1;
+	}
+
+	LM_DBG("setting value for variable: %.*s.%.*s\n", gname.len, gname.s,
+				vname.len, vname.s);
+
+	if(val->flags&PV_TYPE_INT) {
+		if(cfg_set_now_int(_pv_ccp_ctx, &gname, grpid, &vname, val->ri)) {
+			LM_ERR("failed to set int to the variable: [%.*s]\n", s.len, s.s);
+			return -1;
+		}
+	} else {
+		if(cfg_set_now_str(_pv_ccp_ctx, &gname, grpid, &vname, &val->rs)) {
+			LM_ERR("failed to set str to the variable: [%.*s]\n", s.len, s.s);
+			return -1;
+		}
+	}
+	return 0;
+}
+
+/**
+ *
+ */
+int pv_parse_via_name(pv_spec_p sp, str *in)
+{
+	if(sp==NULL || in==NULL || in->len<=0)
+		return -1;
+
+	/* attributes not related to dst of reply get an id starting with 20 */
+	switch(in->len) {
+		case 1:
+			if(in->s[0]=='i')
+				sp->pvp.pvn.u.isname.name.n = 7;
+			else goto error;
+		break;
+		case 4:
+			if(strncmp(in->s, "host", 4)==0)
+				sp->pvp.pvn.u.isname.name.n = 0;
+			else if(strncmp(in->s, "port", 4)==0)
+				sp->pvp.pvn.u.isname.name.n = 1;
+			else goto error;
+		break;
+		case 5:
+			if(strncmp(in->s, "proto", 5)==0)
+				sp->pvp.pvn.u.isname.name.n = 2;
+			else if(strncmp(in->s, "rport", 5)==0)
+				sp->pvp.pvn.u.isname.name.n = 5;
+			else goto error;
+		break;
+		case 6:
+			if(strncmp(in->s, "branch", 6)==0)
+				sp->pvp.pvn.u.isname.name.n = 4;
+			else goto error;
+		break;
+		case 7:
+			if(strncmp(in->s, "protoid", 7)==0)
+				sp->pvp.pvn.u.isname.name.n = 3;
+			else goto error;
+		break;
+		case 8:
+			if(strncmp(in->s, "received", 8)==0)
+				sp->pvp.pvn.u.isname.name.n = 6;
+			else goto error;
+		break;
+
+		default:
+			goto error;
+	}
+	sp->pvp.pvn.type = PV_NAME_INTSTR;
+	sp->pvp.pvn.u.isname.type = 0;
+
+	return 0;
+
+error:
+	LM_ERR("unknown PV rpl key: %.*s\n", in->len, in->s);
+	return -1;
+}
+
+/**
+ *
+ */
+int pv_get_via_attr(sip_msg_t *msg, via_body_t *vb, pv_param_t *param,
+		pv_value_t *res)
+{
+	if(vb==NULL) {
+		LM_DBG("null via header\n");
+		return pv_get_null(msg, param, res);
+	}
+
+	switch(param->pvn.u.isname.name.n) {
+		case 0: /* host */
+			if(vb->host.s!=NULL && vb->host.len>0) {
+				return pv_get_strval(msg, param, res, &vb->host);
+			}
+			break;
+		case 1: /* port */
+			return pv_get_uintval(msg, param, res, (vb->port)?vb->port:SIP_PORT);
+		case 2: /* proto */
+			return pv_get_strval(msg, param, res, &vb->transport);
+		case 3: /* protoid */
+			return pv_get_sintval(msg, param, res, (int)vb->proto);
+		case 4: /* branch */
+			if(vb->branch!=NULL && vb->branch->value.len>0) {
+				return pv_get_strval(msg, param, res, &vb->branch->value);
+			}
+			break;
+		case 5: /* rport */
+			if(vb->rport!=NULL && vb->rport->value.len>0) {
+				return pv_get_strval(msg, param, res, &vb->rport->value);
+			}
+			break;
+		case 6: /* received */
+			if(vb->received!=NULL && vb->received->value.len>0) {
+				return pv_get_strval(msg, param, res, &vb->received->value);
+			}
+			break;
+		case 7: /* i */
+			if(vb->i!=NULL && vb->i->value.len>0) {
+				return pv_get_strval(msg, param, res, &vb->i->value);
+			}
+			break;
+
+		default:
+			return pv_get_null(msg, param, res);
+	}
+
+	return pv_get_null(msg, param, res);
+}
+
+
+/**
+ *
+ */
+int pv_get_via0(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
+{
+	if (parse_headers(msg, HDR_EOH_F, 0)<0) {
+		LM_DBG("failed to parse sip headers\n");
+		return pv_get_null(msg, param, res);
+	}
+
+	return pv_get_via_attr(msg, msg->via1, param, res);
+}
+
+/**
+ *
+ */
+int pv_get_via1(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
+{
+	if (parse_headers(msg, HDR_EOH_F, 0)<0) {
+		LM_DBG("failed to parse sip headers\n");
+		return pv_get_null(msg, param, res);
+	}
+
+	return pv_get_via_attr(msg, msg->via2, param, res);
+}
+
+/**
+ *
+ */
+int pv_get_viaZ(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
+{
+	hdr_field_t *hf = NULL;
+	via_body_t *vb = NULL;
+	via_body_t *vbZ = NULL;
+
+	if (parse_headers(msg, HDR_EOH_F, 0)<0) {
+		LM_DBG("failed to parse sip headers\n");
+		return pv_get_null(msg, param, res);
+	}
+
+	vbZ = msg->via1;
+	for(hf=msg->h_via1; hf!=NULL; hf=hf->next) {
+		if(hf->type==HDR_VIA_T) {
+			for(vb=(via_body_t*)hf->parsed; vb!=NULL; vb=vb->next) {
+				vbZ = vb;
+			}
+		}
+	}
+
+	return pv_get_via_attr(msg, vbZ, param, res);
+}
+
+/**
+ *
+ */
+int pv_parse_msgbuf_name(pv_spec_t *sp, str *in)
+{
+	int n;
+	char *p;
+	pv_spec_t *nsp = 0;
+
+	if(in==NULL || in->s==NULL || in->len<=0 || sp==NULL) {
+		return -1;
+	}
+
+	p = in->s;
+	if(*p==PV_MARKER) {
+		nsp = (pv_spec_p)pkg_malloc(sizeof(pv_spec_t));
+		if(nsp==NULL) {
+			LM_ERR("no more memory\n");
+			return -1;
+		}
+		p = pv_parse_spec(in, nsp);
+		if(p==NULL) {
+			LM_ERR("invalid variable [%.*s]\n", in->len, in->s);
+			pv_spec_free(nsp);
+			return -1;
+		}
+		//LM_ERR("dynamic name [%.*s]\n", in->len, in->s);
+		//pv_print_spec(nsp);
+		sp->pvp.pvn.type = PV_NAME_PVAR;
+		sp->pvp.pvn.u.dname = (void*)nsp;
+		return 0;
+	}
+
+	if (str2sint(in, &n) != 0) {
+		LM_ERR("bad index value: [%.*s]\n", in->len, in->s);
+		return -1;
+	}
+
+	sp->pvp.pvn.u.isname.name.n = n;
+	sp->pvp.pvn.type = PV_NAME_INTSTR;
+	sp->pvp.pvn.u.isname.type = 0;
+
+	return 0;
+}
+
+/**
+ *
+ */
+int pv_get_vparam_ival(sip_msg_t *msg, pv_param_t *param)
+{
+	pv_value_t vval;
+
+	if(param->pvn.type==PV_NAME_PVAR) {
+		/* pvar */
+		if(pv_get_spec_value(msg, (pv_spec_t*)(param->pvn.u.dname), &vval)!=0) {
+			LM_ERR("cannot get name value\n");
+			return -1;
+		}
+		return vval.ri;
+	} else {
+		return param->pvn.u.isname.name.n;
+	}
+}
+
+/**
+ *
+ */
+int pv_get_msgbuf(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
+{
+	int n;
+	static char outmsgbuf[4];
+
+	n = pv_get_vparam_ival(msg, param);
+
+	if(n<0 || n>=msg->len) {
+		LM_ERR("index out of range\n");
+		return pv_get_null(msg, param, res);
+	}
+	outmsgbuf[0] = msg->buf[n];
+	outmsgbuf[1] = '\0';
+	return pv_get_strlval(msg, param, res, outmsgbuf, 2);
+}
+
+/**
+ *
+ */
+int pv_set_msgbuf(sip_msg_t *msg, pv_param_t *param,
+		int op, pv_value_t *val)
+{
+	int n;
+
+	n = pv_get_vparam_ival(msg, param);
+
+	if(n<0 || n>=msg->len) {
+		LM_ERR("index out of range\n");
+		return -1;
+	}
+
+	if((val==NULL) || (val->flags&PV_VAL_NULL)) {
+		LM_ERR("null value - skipping\n");
+		return 1;
+	}
+	if(!(val->flags&PV_VAL_STR) || val->rs.len<=0) {
+		LM_ERR("error - str value required\n");
+		return -1;
+	}
+
+	msg->buf[n] = val->rs.s[0];
+
+	return 0;
 }

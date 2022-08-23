@@ -149,6 +149,13 @@ str *dbg_get_cmd_name(int t)
  */
 int _dbg_cfgtrace = 0;
 
+#define DBG_CFGTRACE_NOCFGFILE (1<<0)
+/**
+ *
+ */
+int _dbg_cfgtrace_format = 0;
+
+
 /**
  *
  */
@@ -359,13 +366,23 @@ int dbg_cfg_trace(sr_event_param_t *evp)
 	{
 		if(is_printable(_dbg_cfgtrace_level))
 		{
-			LOG_FL(_dbg_cfgtrace_facility, _dbg_cfgtrace_level,
-					_dbg_cfgtrace_lname, _dbg_cfgtrace_prefix,
-					"%s=[%s] c=[%s] l=%d a=%d n=%.*s\n",
-					get_current_route_type_name(), ZSW(a->rname),
-					ZSW(a->cfile), a->cline,
-					a->type, an->len, ZSW(an->s)
-				);
+			if(unlikely(_dbg_cfgtrace_format & DBG_CFGTRACE_NOCFGFILE)) {
+				LOG_FL(_dbg_cfgtrace_facility, _dbg_cfgtrace_level,
+						_dbg_cfgtrace_lname, _dbg_cfgtrace_prefix,
+						"%s=[%s] l=%d a=%d n=%.*s\n",
+						get_current_route_type_name(), ZSW(a->rname),
+						a->cline,
+						a->type, an->len, ZSW(an->s)
+					);
+			} else {
+				LOG_FL(_dbg_cfgtrace_facility, _dbg_cfgtrace_level,
+						_dbg_cfgtrace_lname, _dbg_cfgtrace_prefix,
+						"%s=[%s] c=[%s] l=%d a=%d n=%.*s\n",
+						get_current_route_type_name(), ZSW(a->rname),
+						ZSW(a->cfile), a->cline,
+						a->type, an->len, ZSW(an->s)
+					);
+			}
 		}
 	}
 	if(_dbg_pid_list[process_no].set&DBG_CFGTEST_ON)

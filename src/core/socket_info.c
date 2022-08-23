@@ -562,6 +562,67 @@ struct socket_info** get_sock_info_list(unsigned short proto)
 	return 0;
 }
 
+/* Check list of active local IPs for grep_sock_info
+ * This function is only used for sockets with the SI_IS_VIRTUAL flag set. This
+ * is so floating (virtual) IPs that are not currently local, are not returned
+ * as matches by grep_sock_info.
+ *
+ * Params:
+ * - si - Socket info of socket that has been flagged with SI_IS_VIRTUAL, 
+ *   that we want to check if it's actually local right now.
+ *
+ * Returns 1 if socket is local, or 0 if not.
+ */
+static int check_local_addresses(struct socket_info* si)
+{
+	int match = 0;
+	struct ifaddrs *ifap, *ifa;
+
+	if (si == NULL) {
+		LM_ERR("Socket info is NULL. Returning no match.\n");
+		return 0;
+	}
+
+	if (!(si->flags & SI_IS_VIRTUAL)) {
+		LM_ERR("Have been passed a socket without the virtual flag set. This should "
+			"not happen. Returning a match to maintain standard behaviour.\n");
+		return 1;
+	}
+
+	if (getifaddrs(&ifap) != 0) {
+		LM_ERR("getifaddrs failed. Assuming no match.\n");
+		return 0;
+	}
+
+	for (ifa = ifap; ifa; ifa = ifa->ifa_next)
+	{
+		/* skip if no IP addr associated with the interface */
+		if (ifa->ifa_addr==0)
+			continue;
+#ifdef AF_PACKET
+		/* skip AF_PACKET addr family since it is of no use later on */
+		if (ifa->ifa_addr->sa_family == AF_PACKET)
+			continue;
+#endif
+		struct ip_addr local_addr;
+		sockaddr2ip_addr(&local_addr, (struct sockaddr*)ifa->ifa_addr);
+
+		LM_DBG("Checking local address: %s\n", ip_addr2a(&local_addr));
+		if (ip_addr_cmp(&si->address, &local_addr)) {
+			match = 1;
+			LM_DBG("Found matching local IP %s for virtual socket %s\n", ip_addr2a(&local_addr), si->name.s);
+			break;
+		}
+	}
+	freeifaddrs(ifap);
+	//Default to not local if no match is found
+	if (!match) {
+		LM_DBG("No matching local IP found for socket %s.\n", si->name.s);
+		return 0;
+	} else {
+		return 1;
+	}
+}
 
 /* helper function for grep_sock_info
  * params:
@@ -653,7 +714,16 @@ retry:
 			}
 			if (si_hname_cmp(&hname, &si->name, &si->address_str,
 								&si->address, si->flags)==0) {
-				goto found;
+				if (si->flags & SI_IS_VIRTUAL) {
+					LM_DBG("Checking virtual socket: [%.*s]\n", si->name.len, si->name.s);
+					if (check_local_addresses(si)) {
+						goto found;
+					} else {
+						LM_DBG("Skipping virtual socket that is not local.\n");
+					}
+				} else {
+					goto found;
+				}
 			}
 			if(si->useinfo.name.s!=NULL) {
 				LM_DBG("checking advertise if host==us:"
@@ -692,6 +762,54 @@ found:
 	return si;
 }
 
+/**
+ *
+ */
+static int _ksr_sockets_no = 0;
+
+/**
+ *
+ */
+int ksr_sockets_no_get(void)
+{
+	return _ksr_sockets_no;
+}
+
+/**
+ *
+ */
+void ksr_sockets_index(void)
+{
+	socket_info_t *si = NULL;
+	struct socket_info** list;
+	unsigned short c_proto;
+
+	if(_ksr_sockets_no > 0) {
+		return;
+	}
+
+	c_proto = PROTO_UDP;
+	do {
+		/* get the proper sock_list */
+		list=get_sock_info_list(c_proto);
+
+		if (list==0) {
+			/* disabled or unknown protocol */
+			continue;
+		}
+
+		for (si=*list; si; si=si->next) {
+			if(si->sockname.s == NULL) {
+				continue;
+			}
+			si->gindex = _ksr_sockets_no;
+			_ksr_sockets_no++;
+		}
+	} while((c_proto = next_proto(c_proto))!=0);
+
+	LM_DBG("number of listen sockets: %d\n", _ksr_sockets_no);
+}
+
 socket_info_t* ksr_get_socket_by_name(str *sockname)
 {
 	socket_info_t *si = NULL;
@@ -724,6 +842,121 @@ socket_info_t* ksr_get_socket_by_name(str *sockname)
 	} while((c_proto = next_proto(c_proto))!=0);
 
 	return NULL;
+}
+
+socket_info_t* ksr_get_socket_by_listen(str *sockstr)
+{
+	socket_info_t *si = NULL;
+	struct socket_info** list;
+	unsigned short c_proto;
+
+	c_proto = PROTO_UDP;
+	do {
+		/* get the proper sock_list */
+		list=get_sock_info_list(c_proto);
+
+		if (list==0) {
+			/* disabled or unknown protocol */
+			continue;
+		}
+
+		for (si=*list; si; si=si->next) {
+			if(si->sock_str.s == NULL) {
+				continue;
+			}
+			LM_DBG("checking if listen %.*s matches %.*s\n",
+					sockstr->len, sockstr->s,
+					si->sock_str.len, si->sock_str.s);
+			if (sockstr->len == si->sock_str.len
+					&& strncasecmp(sockstr->s, si->sock_str.s,
+							sockstr->len)==0) {
+				return si;
+			}
+		}
+	} while((c_proto = next_proto(c_proto))!=0);
+
+	return NULL;
+}
+
+socket_info_t* ksr_get_socket_by_advertise(str *sockstr)
+{
+	socket_info_t *si = NULL;
+	struct socket_info** list;
+	unsigned short c_proto;
+
+	c_proto = PROTO_UDP;
+	do {
+		/* get the proper sock_list */
+		list=get_sock_info_list(c_proto);
+
+		if (list==0) {
+			/* disabled or unknown protocol */
+			continue;
+		}
+
+		for (si=*list; si; si=si->next) {
+			if(si->useinfo.sock_str.s == NULL) {
+				continue;
+			}
+			LM_DBG("checking if listen %.*s matches %.*s\n",
+					sockstr->len, sockstr->s,
+					si->useinfo.sock_str.len, si->useinfo.sock_str.s);
+			if (sockstr->len == si->useinfo.sock_str.len
+					&& strncasecmp(sockstr->s, si->useinfo.sock_str.s,
+							sockstr->len)==0) {
+				return si;
+			}
+		}
+	} while((c_proto = next_proto(c_proto))!=0);
+
+	return NULL;
+}
+
+socket_info_t* ksr_get_socket_by_index(int idx)
+{
+	socket_info_t *si = NULL;
+	struct socket_info** list;
+	unsigned short c_proto;
+
+	if (idx<0) {
+		idx += _ksr_sockets_no;
+		if (idx < 0) {
+			LM_DBG("negative overall index\n");
+			return NULL;
+		}
+	}
+	c_proto = PROTO_UDP;
+	do {
+		/* get the proper sock_list */
+		list=get_sock_info_list(c_proto);
+
+		if (list==0) {
+			/* disabled or unknown protocol */
+			continue;
+		}
+
+		for (si=*list; si; si=si->next) {
+			if(idx==0) {
+				return si;
+			}
+			idx--;
+		}
+	} while((c_proto = next_proto(c_proto))!=0);
+
+	return NULL;
+}
+
+socket_info_t* ksr_get_socket_by_address(str *sockstr)
+{
+	socket_info_t *si = NULL;
+
+	si = ksr_get_socket_by_listen(sockstr);
+
+	if(si!=NULL) {
+		return si;
+	}
+
+	return ksr_get_socket_by_advertise(sockstr);
 }
 
 /* checks if the proto:port is one of the ports we listen on
@@ -884,13 +1117,14 @@ error:
 
 
 /* adds a sock_info structure to the corresponding proto list
- * return  0 on success, -1 on error */
-int add_listen_advertise_iface_name(char* name, struct name_lst* addr_l,
+ * return last new socket info structur on success, NULL on error */
+socket_info_t* add_listen_socket_info(char* name, struct name_lst* addr_l,
 						unsigned short port, unsigned short proto,
 						char *usename, unsigned short useport, char *sockname,
 						enum si_flags flags)
 {
-	struct socket_info** list;
+	socket_info_t* newsi = NULL;
+	socket_info_t** list = NULL;
 	unsigned short c_proto;
 	struct name_lst* a_l;
 	unsigned short c_port;
@@ -918,8 +1152,9 @@ int add_listen_advertise_iface_name(char* name, struct name_lst* addr_l,
 			c_port=port;
 		}
 		if (c_proto!=PROTO_SCTP){
-			if (new_sock2list(name, 0, c_port, c_proto, usename, useport,
-								sockname, flags & ~SI_IS_MHOMED, list)==0){
+			newsi = new_sock2list(name, 0, c_port, c_proto, usename, useport,
+								sockname, flags & ~SI_IS_MHOMED, list);
+			if(newsi==0){
 				LM_ERR("new_sock2list failed\n");
 				goto error;
 			}
@@ -934,16 +1169,32 @@ int add_listen_advertise_iface_name(char* name, struct name_lst* addr_l,
 				}
 			}
 		}else{
-			if (new_sock2list(name, addr_l, c_port, c_proto, usename, useport,
-						sockname, flags, list)==0){
+			newsi = new_sock2list(name, addr_l, c_port, c_proto, usename, useport,
+						sockname, flags, list);
+			if(newsi==0){
 				LM_ERR("new_sock2list failed\n");
 				goto error;
 			}
 		}
-	}while( (proto==0) && (c_proto=next_proto(c_proto)));
-	return 0;
+	} while((proto==0) && (c_proto=next_proto(c_proto)));
+
+	return newsi;
 error:
-	return -1;
+	return NULL;
+}
+
+/* adds a sock_info structure to the corresponding proto list
+ * return  0 on success, -1 on error */
+int add_listen_advertise_iface_name(char* name, struct name_lst* addr_l,
+						unsigned short port, unsigned short proto,
+						char *usename, unsigned short useport, char *sockname,
+						enum si_flags flags)
+{
+	if(add_listen_socket_info(name, addr_l, port, proto, usename, useport,
+				sockname, flags)==NULL) {
+		return -1;
+	}
+	return 0;
 }
 
 /* adds a sock_info structure to the corresponding proto list
@@ -975,6 +1226,24 @@ int add_listen_iface_name(char* name, struct name_lst* addr_l,
 {
 	return add_listen_advertise_iface_name(name, addr_l, port, proto, 0, 0,
 			sockname, flags);
+}
+
+int add_listen_socket(socket_attrs_t *sa)
+{
+	socket_info_t* newsi;
+	name_lst_t addr_l;
+
+	if(sa->bindaddr.s==NULL) {
+		LM_ERR("no bind address provided\n");
+		return -1;
+	}
+	memset(&addr_l, 0, sizeof(name_lst_t));
+	addr_l.name = sa->bindaddr.s;
+
+	newsi = add_listen_socket_info(sa->bindaddr.s, &addr_l, sa->bindport,
+			sa->bindproto, sa->useaddr.s, sa->useport, sa->sockname.s, sa->sflags);
+
+	return (newsi!=NULL)?0:-1;
 }
 
 #ifdef __OS_linux
@@ -1263,6 +1532,7 @@ static int build_iface_list(void)
 					case IFA_LABEL:
 						LM_DBG("iface name is %s\n", (char*)RTA_DATA(rtap));
 						strncpy(name, (char*)RTA_DATA(rtap), MAX_IF_LEN-1);
+						name[MAX_IF_LEN-1] = '\0';
 						break;
 					case IFA_BROADCAST:
 					case IFA_ANYCAST:
@@ -1281,7 +1551,8 @@ static int build_iface_list(void)
 			}
 
 			if(strlen(ifaces[index].name)==0 && strlen(name)>0) {
-				strncpy(ifaces[index].name, name, MAX_IF_LEN-1);
+				memcpy(ifaces[index].name, name, MAX_IF_LEN-1);
+				ifaces[index].name[MAX_IF_LEN-1] = '\0';
 			}
 
 			ifaces[index].index = index;
@@ -1468,9 +1739,9 @@ static int fix_hostname(str* name, struct ip_addr* address, str* address_str,
 		PKG_MEM_ERROR;
 		goto error;
 	}
-	strncpy(address_str->s, tmp, strlen(tmp)+1);
-	/* set is_ip (1 if name is an ip address, 0 otherwise) */
 	address_str->len=strlen(tmp);
+	strncpy(address_str->s, tmp, address_str->len+1);
+	/* set is_ip (1 if name is an ip address, 0 otherwise) */
 	if (sr_auto_aliases && (address_str->len==name->len) &&
 		(strncasecmp(address_str->s, name->s, address_str->len)==0)){
 		*flags|=SI_IS_IP;
@@ -2071,10 +2342,11 @@ void print_all_socket_lists()
 				for (ai=si->addr_info_lst; ai; ai=ai->next) {
 					printf(", %s", ai->address_str.s);
 				}
-				printf("):%s%s%s\n",
+				printf("):%s%s%s%s\n",
 						si->port_no_str.s,
-						si->flags & SI_IS_MCAST ? " mcast" : "",
-						si->flags & SI_IS_MHOMED? " mhomed" : "");
+						si->flags & SI_IS_MCAST  ? " mcast" : "",
+						si->flags & SI_IS_MHOMED ? " mhomed" : "",
+						si->flags & SI_IS_VIRTUAL? " virtual" : "");
 			}else{
 				printf("             %s: %s",
 						get_valid_proto_name(proto),
@@ -2082,10 +2354,11 @@ void print_all_socket_lists()
 				if (!(si->flags & SI_IS_IP)) {
 					printf(" [%s]", si->address_str.s);
 				}
-				printf( ":%s%s%s",
+				printf( ":%s%s%s%s",
 						si->port_no_str.s,
-						si->flags & SI_IS_MCAST ? " mcast" : "",
-						si->flags & SI_IS_MHOMED? " mhomed" : "");
+						si->flags & SI_IS_MCAST  ? " mcast" : "",
+						si->flags & SI_IS_MHOMED ? " mhomed" : "",
+						si->flags & SI_IS_VIRTUAL? " virtual" : "");
 				if (si->sockname.s) {
 					printf(" name %s", si->sockname.s);
 				}
@@ -2198,11 +2471,14 @@ int parse_protohostport(str* ins, sr_phostp_t *r)
 	if (second) { /* 2 ':' found => check if valid */
 		if (parse_proto((unsigned char*)ins->s, first-ins->s, &r->proto)<0)
 			goto error_proto;
+		r->sproto.s = ins->s;
+		r->sproto.len = first-ins->s;
 
 		tmp.s=second+1;
 		tmp.len=(ins->s + ins->len) - tmp.s;
 
 		if (str2int(&tmp, (unsigned int *)&(r->port))<0) goto error_port;
+		r->sport = tmp;
 
 		r->host.s=first+1;
 		r->host.len=(int)(second-r->host.s);
@@ -2215,10 +2491,13 @@ int parse_protohostport(str* ins, sr_phostp_t *r)
 		/* invalid port => it's proto:host */
 		if (parse_proto((unsigned char*)ins->s, first-ins->s, &r->proto)<0)
 			goto error_proto;
+		r->sproto.s = ins->s;
+		r->sproto.len = first-ins->s;
 		r->host.s=first+1;
 		r->host.len=(int)(p-r->host.s);
 	}else{
 		/* valid port => its host:port */
+		r->sport = tmp;
 		r->host.s=ins->s;
 		r->host.len=(int)(first-r->host.s);
 	}

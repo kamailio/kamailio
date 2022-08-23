@@ -52,7 +52,10 @@ static struct {
 
 
 #define READ(val) \
-	(*(val + 0) + (*(val + 1) << 8) + (*(val + 2) << 16) + (*(val + 3) << 24))
+	((unsigned int)(*(val + 0)) \
+	 + ((unsigned int)(*(val + 1)) << 8) \
+	 + ((unsigned int)(*(val + 2)) << 16) \
+	 + ((unsigned int)(*(val + 3)) << 24))
 #define advance(_ptr,_n,_str,_error) \
 	do{\
 		if ((_ptr)+(_n)>(_str).s+(_str).len)\
@@ -276,6 +279,26 @@ static inline sdp_ice_attr_t *add_sdp_ice(sdp_stream_cell_t* _stream)
 	return ice_attr;
 }
 
+static inline sdp_ice_opt_t *add_sdp_ice_opt(sdp_stream_cell_t* _stream)
+{
+	sdp_ice_opt_t *ice_opt;
+	int len;
+
+	len = sizeof(sdp_ice_opt_t);
+	ice_opt = (sdp_ice_opt_t *)pkg_malloc(len);
+	if (ice_opt == NULL) {
+	    PKG_MEM_ERROR;
+	    return NULL;
+	}
+	memset( ice_opt, 0, len);
+
+	/* Insert the new ice option */
+	ice_opt->next = _stream->ice_opt;
+	_stream->ice_opt = ice_opt;
+	_stream->ice_opt_num++;
+
+	return ice_opt;
+}
 
 int extract_candidate(str *body, sdp_stream_cell_t *stream)
 {
@@ -340,6 +363,46 @@ int extract_field(str *body, str *value, str field)
 	return 0;
 }
 
+int extract_ice_option(str *body, sdp_stream_cell_t *stream)
+{
+	sdp_ice_opt_t *ice_opt;
+
+	char * ptr_src;
+	int max_options = 10; /* protection - max options can be listed in one line */
+	int length = 0;       /* each option length */
+
+	/* a=ice-options: */
+	if ((body->len < 14) || (strncasecmp(body->s, ICE_OPTIONS, 14) != 0))
+		return -1;
+
+	ptr_src = body->s + 14;
+	if (*ptr_src == 32) ptr_src++; /* if starts with a space, skip it */
+
+	/* identify all existing ICE options, if they are listed in one row */
+	while (*ptr_src && *ptr_src != '\r' && *ptr_src != '\n' && max_options-->0)
+	{
+		while (*ptr_src != 32 && *ptr_src && *ptr_src != '\r' && *ptr_src != '\n')
+		{
+			length++;
+			ptr_src++;
+		}
+
+		ice_opt = add_sdp_ice_opt(stream);
+		if (ice_opt == NULL) {
+			LM_ERR("failed to add ice option\n");
+			return -1;
+		}
+
+		ice_opt->option.s = ptr_src-length;
+		ice_opt->option.len = length;
+		trim_len(ice_opt->option.len, ice_opt->option.s, ice_opt->option);
+
+		length = 0;
+		if (*ptr_src == 32) ptr_src++; /* skip space */
+	}
+
+	return 0;
+}
 
 int extract_ptime(str *body, str *ptime)
 {
@@ -739,7 +802,7 @@ char* get_sdp_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 	}
 
 	/* eliminate leading whitespace */
-	tmp=eat_lws_end(tmp, end); 
+	tmp=eat_lws_end(tmp, end);
 	if (tmp>=end) {
 		LM_ERR("hf empty\n");
 		goto error;
@@ -754,7 +817,8 @@ char* get_sdp_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 		if (match){
 			match++;
 		}else {
-			LM_ERR("bad body for <%s>(%d)\n", hdr->name.s, hdr->type);
+			LM_ERR("bad body for <%.*s>(%d)\n", hdr->name.len, hdr->name.s,
+					hdr->type);
 			tmp=end;
 			goto error;
 		}
@@ -778,32 +842,32 @@ error:
 
 char *find_sdp_line_delimiter(char* p, char* plimit, str delimiter)
 {
-  static char delimiterhead[3] = "--";
-  char *cp, *cp1;
-  /* Iterate through body */
-  cp = p;
-  for (;;) {
-    if (cp >= plimit)
-      return NULL;
-    for(;;) {
-      cp1 = ser_memmem(cp, delimiterhead, plimit-cp, 2);
-      if (cp1 == NULL)
-	return NULL;
-      /* We matched '--',
-       * now let's match the boundary delimiter */
-      if (strncmp(cp1+2, delimiter.s, delimiter.len) == 0)
-	break;
-      else
-	cp = cp1 + 2 + delimiter.len;
-      if (cp >= plimit)
-	return NULL;
-    }
-    if (cp1[-1] == '\n' || cp1[-1] == '\r')
-      return cp1;
-    if (plimit - cp1 < 2 + delimiter.len)
-      return NULL;
-    cp = cp1 + 2 + delimiter.len;
-  }
+	static char delimiterhead[3] = "--";
+	char *cp, *cp1;
+	/* Iterate through body */
+	cp = p;
+	for (;;) {
+		if (cp >= plimit)
+			return NULL;
+		for(;;) {
+			cp1 = ser_memmem(cp, delimiterhead, plimit-cp, 2);
+			if (cp1 == NULL)
+				return NULL;
+			/* We matched '--',
+			 * now let's match the boundary delimiter */
+			if(cp1+2+delimiter.len >= plimit)
+				return NULL;
+			if (strncmp(cp1+2, delimiter.s, delimiter.len) == 0)
+				break;
+			else
+				cp = cp1 + 2 + delimiter.len;
+		}
+		if (cp1[-1] == '\n' || cp1[-1] == '\r')
+			return cp1;
+		if (plimit - cp1 < 2 + delimiter.len)
+			return NULL;
+		cp = cp1 + 2 + delimiter.len;
+	}
 }
 
 
@@ -812,10 +876,10 @@ char *find_sdp_line_delimiter(char* p, char* plimit, str delimiter)
  */
 char *find_next_sdp_line_delimiter(char* p, char* plimit, str delimiter, char* defptr)
 {
-  char *t;
-  if (p >= plimit || plimit - p < 3)
-    return defptr;
-  t = find_sdp_line_delimiter(p + 2, plimit, delimiter);
-  return t ? t : defptr;
+	char *t;
+	if (p >= plimit || plimit - p < 3)
+		return defptr;
+	t = find_sdp_line_delimiter(p + 2, plimit, delimiter);
+	return t ? t : defptr;
 }
 

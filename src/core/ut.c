@@ -32,6 +32,11 @@
 #include <sys/utsname.h> /* uname() */
 #include <libgen.h>
 
+#ifdef __OS_darwin
+/* portable clock_gettime() */
+#include <mach/clock.h>
+#include <mach/mach.h>
+#endif
 
 #include "ut.h"
 #include "mem/mem.h"
@@ -92,7 +97,7 @@ int group2gid(int* gid, char* group)
 
 
 /*
- * Replacement of timegm (does not exists on all platforms
+ * Replacement of timegm (does not exists on all platforms)
  * Taken from
  * http://lists.samba.org/archive/samba-technical/2002-November/025737.html
  */
@@ -150,6 +155,27 @@ time_t utc2local(time_t in)
 }
 
 
+/**
+ * portable implementation for clock_gettime(CLOCK_REALTIME, ts)
+ */
+int ksr_clock_gettime(struct timespec *ts)
+{
+#ifdef __OS_darwin
+	clock_serv_t cclock;
+	mach_timespec_t mts;
+
+	/* OS X does not have clock_gettime, use clock_get_time */
+	host_get_clock_service(mach_host_self(), CALENDAR_CLOCK, &cclock);
+	clock_get_time(cclock, &mts);
+	mach_port_deallocate(mach_task_self(), cclock);
+	ts->tv_sec = mts.tv_sec;
+	ts->tv_nsec = mts.tv_nsec;
+	return 0;
+#else
+	return clock_gettime(CLOCK_REALTIME, ts);
+#endif
+}
+
 /*
  * Return str as zero terminated string allocated
  * using pkg_malloc
@@ -206,7 +232,7 @@ unsigned int get_sys_version(int* major, int* minor, int* minor2)
 
 /** transform a relative pathname into an absolute one.
  * @param base  - base file, used to extract the absolute path prefix.
- *                Might be NULL, in which case the path of the ser.cfg is
+ *                Might be NULL, in which case the path of the kamailio.cfg is
  *                used.
  * @param file  - file path to be transformed. If it's already absolute
  *                (starts with '/') is left alone. If not the result will
@@ -275,7 +301,7 @@ char* get_abs_pathname(str* base, str* file)
 
 
 /**
- * @brief search for occurence of needle in text
+ * @brief search for occurrence of needle in text
  * @return pointer to start of needle in text or NULL if the needle
  *	is not found
  */
@@ -297,7 +323,7 @@ char *str_search(str *text, str *needle)
 }
 
 /**
- * @brief search for occurence of needlez starting from vstart and before vend
+ * @brief search for occurrence of needlez starting from vstart and before vend
  * @return pointer to start of needle in text or NULL if the needle
  *	is not found
  */
@@ -320,14 +346,14 @@ char *stre_search_strz(char *vstart, char *vend, char *needlez)
 }
 
 /**
- * @brief case insensitive search for occurence of needle in text
+ * @brief case insensitive search for occurrence of needle in text
  * @return pointer to start of needle in text or NULL if the needle
  *	is not found
  */
 char *str_casesearch(str *text, str *needle)
 {
 	int i,j;
-	for(i=0;i<text->len-needle->len;i++) {
+	for(i=0;i<=text->len-needle->len;i++) {
 		for(j=0;j<needle->len;j++) {
 			if ( !((text->s[i+j]==needle->s[j]) ||
 					( isalpha((int)text->s[i+j])
@@ -337,7 +363,7 @@ char *str_casesearch(str *text, str *needle)
 		if (j==needle->len)
 			return text->s+i;
 	}
-	return 0;
+	return NULL;
 }
 
 /**
@@ -364,6 +390,49 @@ char *str_casesearch_strz(str *text, char *needlez)
 	needle.len = strlen(needlez);
 
 	return str_casesearch(text, &needle);
+}
+
+/**
+ * @brief search for last occurrence of needle in text (reverse search)
+ * @return pointer to start of needle in text or NULL if the needle
+ *	is not found
+ */
+char *str_rsearch(str *text, str *needle)
+{
+    char *p;
+
+    if(text==NULL || text->s==NULL || needle==NULL || needle->s==NULL
+			|| text->len<needle->len)
+        return NULL;
+
+    for (p = text->s + text->len - needle->len; p >= text->s; p--) {
+        if (*p == *needle->s && memcmp(p, needle->s, needle->len)==0) {
+            return p;
+        }
+    }
+
+    return NULL;
+}
+
+/**
+ * @brief case insensitive search for last occurrence of needle in text (reverse search)
+ * @return pointer to start of needle in text or NULL if the needle
+ *	is not found
+ */
+char *str_rcasesearch(str *text, str *needle)
+{
+	int i,j;
+	for(i=text->len-needle->len;i>=0;i--) {
+		for(j=0;j<needle->len;j++) {
+			if ( !((text->s[i+j]==needle->s[j]) ||
+					( isalpha((int)text->s[i+j])
+						&& ((text->s[i+j])^(needle->s[j]))==0x20 )) )
+				break;
+		}
+		if (j==needle->len)
+			return text->s+i;
+	}
+	return NULL;
 }
 
 /*

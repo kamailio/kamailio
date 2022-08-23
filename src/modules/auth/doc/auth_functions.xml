@@ -274,6 +274,10 @@ if (!auth_check("$fd", "subscriber", "1")) {
 				<para><emphasis>16</emphasis> - build challenge header with
 					stale=true</para>
 			</listitem>
+			<listitem>
+				<para><emphasis>32</emphasis> - don't invalidate nc on
+					authentication failure</para>
+			</listitem>
 
 			</itemizedlist>
 		</listitem>

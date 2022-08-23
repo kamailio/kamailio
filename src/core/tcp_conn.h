@@ -193,12 +193,22 @@ typedef struct tcp_conn_alias {
 #endif
 
 
+enum tcp_closed_reason {
+	TCP_CLOSED_EOF = 0,
+	TCP_CLOSED_TIMEOUT,
+	TCP_CLOSED_RESET,
+
+	_TCP_CLOSED_REASON_MAX /* /!\ keep this one always at the end */
+};
+
+
 typedef struct tcp_connection {
 	int s; /*socket, used by "tcp main" */
 	int fd; /* used only by "children", don't modify it! private data! */
 	gen_lock_t write_lock;
 	int id; /* id (unique!) used to retrieve a specific connection when
 			 * reply-ing */
+	enum tcp_closed_reason event; /* connection close reason */
 	int reader_pid; /* pid of the active reader process */
 	struct receive_info rcv; /* src & dst ip, ports, proto a.s.o*/
 	ksr_coninfo_t cinfo; /* connection info (e.g., for haproxy ) */
@@ -210,6 +220,7 @@ typedef struct tcp_connection {
 	enum tcp_conn_states state; /* connection state */
 	void* extra_data; /* extra data associated to the connection, 0 for tcp*/
 	struct timer_ln timer;
+	time_t timestamp;/* connection creation timestamp */
 	ticks_t timeout;/* connection timeout, after this it will be removed*/
 	ticks_t lifetime;/* connection lifetime */
 	unsigned id_hash; /* hash index in the id_hash */
@@ -342,14 +353,6 @@ typedef struct tcp_event_info {
 	struct receive_info *rcv;
 	struct tcp_connection *con;
 } tcp_event_info_t;
-
-enum tcp_closed_reason {
-	TCP_CLOSED_EOF = 0,
-	TCP_CLOSED_TIMEOUT,
-	TCP_CLOSED_RESET,
-
-	_TCP_CLOSED_REASON_MAX /* /!\ keep this one always at the end */
-};
 
 typedef struct tcp_closed_event_info {
 	enum tcp_closed_reason reason;

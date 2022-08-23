@@ -1,2 +1,2 @@
 id/int,l_uuid/string,l_username/string,l_domain/string,r_username/string,r_domain/string,realm/string,auth_username/string,auth_password/string,auth_ha1/string,auth_proxy/string,expires/int,flags/int,reg_delay/int,contact_addr/string,socket/string,
-4
+5

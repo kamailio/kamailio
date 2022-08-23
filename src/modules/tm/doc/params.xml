@@ -876,7 +876,7 @@ modparam("tm", "fr_inv_timer_avp", "my_fr_inv_timer")
 	</section>
 
 	<section id="tm.p.unmatched_cancel">
-		<title><varname>unmatched_cancel</varname> (string)</title>
+		<title><varname>unmatched_cancel</varname> (integer)</title>
 		<para>
 			This parameter selects between forwarding CANCELs
 			that do not match any transaction statefully (0,
@@ -899,7 +899,7 @@ modparam("tm", "fr_inv_timer_avp", "my_fr_inv_timer")
 			<title>Set <varname>unmatched_cancel</varname> parameter</title>
 			<programlisting>
 ...
-modparam("tm", "unmatched_cancel", "2")
+modparam("tm", "unmatched_cancel", 2)
 ...
 			</programlisting>
 		</example>
@@ -995,6 +995,33 @@ modparam("tm", "callid_matching", 1)
 ...
 	    </programlisting>
 	</example>
+	</section>
+
+	<section id="tm.p.callid_cseq_matching">
+		<title><varname>callid_cseq_matching</varname> (int)</title>
+		<para>
+			If set to something other than 0, will do transaction matching 
+			using callid and cseq header values instead of via branch md5 value.
+
+		<emphasis>
+			Note that this behavior is non-RFC conpliant!
+		</emphasis>
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>callid_cseq_matching</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("tm", "callid_cseq_matching", 0)
+...
+
+kamcmd cfg.set_now_int tm callid_cseq_matching 1
+		</programlisting>
+		</example>
 	</section>
 
 	<section id="tm.p.pass_provisional_replies">
@@ -1575,6 +1602,47 @@ modparam("tm", "exec_time_check", 0)
 		<programlisting format="linespecific">
 ...
 modparam("tm", "reply_relay_mode", 0)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="tm.p.enable_uac_fr">
+		<title><varname>enable_uac_fr</varname> (int)</title>
+		<para>
+			Enable failure route trigger, for uac. This will copy the tm uac into uas.
+			Thus, failure route can be triggered even for uac messages.
+		</para>
+		<example>
+			<title>enable_uac_fr example</title>
+			<programlisting>
+...
+modparam("tm", "enable_uac_fr", 1)
+....
+			</programlisting>
+		</example>
+	</section>
+
+	<section id="tm.p.failover_reply_codes">
+		<title><varname>failover_reply_codes</varname> (string)</title>
+		<para>
+			This parameter defines the response codes (only codes >= 300 and class >= 3), which enable
+			dns failover  to continue to try next ips when previous one fail. It is a list separated by
+			colons, where you may define either a single code (e.g. "code=408" would accept 408 as an
+			additional response code) or a class of responses, you want to accept (e.g. "class=3" would accept
+			everything from 300 to 999 as valid response).
+			(with default behaviour only 503 code or no response from previous one will try next ip).
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote></quote>
+		</emphasis>
+		</para>
+		<example>
+		<title>Set the <quote>failover_reply_codes</quote> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("tm", "failover_reply_codes", "code=403;code=488;class=5")
 ...
 </programlisting>
 		</example>

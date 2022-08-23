@@ -65,6 +65,26 @@ int parse_pai_ppi_body(char *buf, int len, p_id_body_t **body)
 	while ((*tmp == ',') && (num_uri < NUM_PAI_BODIES))
 	{
 		tmp++;
+		while(tmp<buf+len && (*tmp==' ' || *tmp=='\t')) tmp++;
+		if(tmp>=buf+len) {
+			LM_ERR("no content after comma when parsing PAI/PPI body %u '%.*s'\n",
+					num_uri, len, buf);
+			return -1;
+		}
+		if((tmp<buf+len-1 && *tmp=='\n')
+				|| (tmp<buf+len-2 && *tmp=='\r' && *(tmp+1)=='\n')) {
+			if(*tmp=='\n') {
+				tmp++;
+			} else {
+				tmp += 2;
+			}
+			if(*tmp!=' ' && *tmp!='\t') {
+				LM_ERR("no space after EOL when parsing PAI/PPI body %u '%.*s'\n",
+						num_uri, len, buf);
+				return -1;
+			}
+			tmp++;
+		}
 		tmp = parse_addr_spec(tmp, buf+len, &uri_b[num_uri], 1);
 		if (uri_b[num_uri].error == PARSE_ERROR)
 		{

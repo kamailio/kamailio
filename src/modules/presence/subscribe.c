@@ -56,6 +56,10 @@ static str pu_500_rpl = str_init("Server Internal Error");
 static str pu_489_rpl = str_init("Bad Event");
 static str pu_423_rpl = str_init("Interval Too Brief");
 
+static int get_ok_reply_code() {
+	return pres_subs_respond_200 ? 200 : 202;
+}
+
 static int send_2XX_reply(sip_msg_t *msg, int reply_code, unsigned int lexpire,
 		str *local_contact)
 {
@@ -498,6 +502,7 @@ int update_subscription_notifier(
 		struct sip_msg *msg, subs_t *subs, int to_tag_gen, int *sent_reply)
 {
 	int num_peers = 0;
+	int reply_code;
 
 	*sent_reply = 0;
 
@@ -539,11 +544,9 @@ int update_subscription_notifier(
 		}
 	}
 
-	if(send_2XX_reply(msg, subs->event->type & PUBL_TYPE ? 202 : 200,
-			   subs->expires, &subs->local_contact)
-			< 0) {
-		LM_ERR("sending %d response\n",
-				subs->event->type & PUBL_TYPE ? 202 : 200);
+	reply_code = subs->event->type & PUBL_TYPE ? get_ok_reply_code() : 200;
+	if(send_2XX_reply(msg, reply_code, subs->expires, &subs->local_contact) < 0) {
+		LM_ERR("sending %d response\n", reply_code);
 		goto error;
 	}
 	*sent_reply = 1;
@@ -558,6 +561,7 @@ int update_subscription(
 		struct sip_msg *msg, subs_t *subs, int to_tag_gen, int *sent_reply)
 {
 	unsigned int hash_code;
+	int reply_code;
 
 	LM_DBG("update subscription\n");
 	printf_subs(subs);
@@ -573,9 +577,10 @@ int update_subscription(
 					&subs->from_tag, &subs->callid);
 
 			if(subs->event->type & PUBL_TYPE) {
-				if(send_2XX_reply(msg, 202, subs->expires, &subs->local_contact)
+				reply_code = get_ok_reply_code();
+				if(send_2XX_reply(msg, reply_code, subs->expires, &subs->local_contact)
 						< 0) {
-					LM_ERR("sending 202 OK\n");
+					LM_ERR("sending %d OK\n", reply_code);
 					goto error;
 				}
 				*sent_reply = 1;
@@ -656,8 +661,9 @@ int update_subscription(
 	/* reply_and_notify  */
 
 	if(subs->event->type & PUBL_TYPE) {
-		if(send_2XX_reply(msg, 202, subs->expires, &subs->local_contact) < 0) {
-			LM_ERR("sending 202 OK reply\n");
+		reply_code = get_ok_reply_code();
+		if(send_2XX_reply(msg, reply_code, subs->expires, &subs->local_contact) < 0) {
+			LM_ERR("sending %d OK\n", reply_code);
 			goto error;
 		}
 		*sent_reply = 1;
@@ -1297,7 +1303,7 @@ int extract_sdialog_info_ex(subs_t *subs, struct sip_msg *msg, uint32_t miexp,
 	str rec_route = {0, 0};
 	int rt = 0;
 	contact_body_t *b;
-	struct to_body *pto, TO = {0}, *pfrom = NULL;
+	struct to_body *pto, tob = {0}, *pfrom = NULL;
 	uint32_t lexpire;
 	str rtag_value;
 	struct sip_uri uri;
@@ -1346,12 +1352,12 @@ int extract_sdialog_info_ex(subs_t *subs, struct sip_msg *msg, uint32_t miexp,
 		LM_DBG("'To' header ALREADY PARSED: <%.*s>\n", pto->uri.len,
 				pto->uri.s);
 	} else {
-		parse_to(msg->to->body.s, msg->to->body.s + msg->to->body.len + 1, &TO);
-		if(TO.uri.len <= 0) {
+		parse_to(msg->to->body.s, msg->to->body.s + msg->to->body.len + 1, &tob);
+		if(tob.uri.len <= 0) {
 			LM_DBG("'To' header NOT parsed\n");
 			goto error;
 		}
-		pto = &TO;
+		pto = &tob;
 	}
 
 	if(pto->parsed_uri.user.s && pto->parsed_uri.host.s
@@ -1503,11 +1509,11 @@ int extract_sdialog_info_ex(subs_t *subs, struct sip_msg *msg, uint32_t miexp,
 	}
 	getbflagsval(0, &subs->flags);
 
-	free_to_params(&TO);
+	free_to_params(&tob);
 	return 0;
 
 error:
-	free_to_params(&TO);
+	free_to_params(&tob);
 	return -1;
 }
 

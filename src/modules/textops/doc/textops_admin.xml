@@ -19,9 +19,15 @@
 		The module implements text based operations over the SIP message
 		processed by &kamailio;. SIP is a text based protocol and the module
 		provides a large set of very useful functions to manipulate the
-		message at text level, e.g., regular expression search and replace,
-		Perl-like substitutions, checks for method type, header presence,
-		insert of new header and date, etc.
+		message at text level, e.g., regular expression search, replace
+		or substitutions, checks for method type, header presence,
+		insert of new header and date, string comparisons, multi-part body
+		operations, etc.
+	</para>
+	<para>
+		If not stated otherwise, the regular expressions parameters for search,
+		replace or substitute have to be in POSIX format. For PCRE regular
+		expression matching, see the pcre or dialplan modules.
 	</para>
 	</section>
 	<section>
@@ -591,7 +597,7 @@ replace_hdrs_str("&kamailio;", "&kamailio; SIP Proxy", "a");
 		<function moreinfo="none">subst('/re/repl/flags')</function>
 		</title>
 		<para>
-		Replaces re with repl (sed or perl like).
+		Replaces re with repl.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
@@ -728,7 +734,7 @@ if (subst_user('/(.*)3642$/$avp(user_prefix)\13642/')){$
 		<function moreinfo="none">subst_body('/re/repl/flags')</function>
 		</title>
 		<para>
-		Replaces re with repl (sed or perl like) in the body of the message.
+		Replaces re with repl in the body of the message.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
@@ -768,7 +774,7 @@ if ( subst_body('/^o=(.*) /o=$fU /') ) {};
 		<function moreinfo="none">subst_hf(hf, subexp, flags)</function>
 		</title>
 		<para>
-		Perl-like substitutions in the body of a header field.
+		Substitutions in the body of a header field.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
@@ -895,7 +901,7 @@ set_reply_body("test", "text/plain");
 		<programlisting format="linespecific">
 ...
 if (has_body("multipart/mixed")) {
-    if (filter_body("application/sdp") {
+    if (filter_body("application/sdp")) {
         remove_hf("Content-Type");
         append_hf("Content-Type: application/sdp\r\n");
     } else {
@@ -1497,6 +1503,88 @@ if(remove_hf_exp_pv("^$var(match)", "^$var(keep)"))
 		</example>
 	</section>
 
+	<section id="textops.f.remove_hf_idx">
+		<title>
+		<function moreinfo="none">remove_hf_idx(hname, idx)</function>
+		</title>
+		<para>
+			Remove from message the headers matching by name 'hname' with
+			the index 'idx'.
+		</para>
+		<para>
+		Returns true if the header is removed.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>hname</emphasis> - header name.</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>idx</emphasis> - index of the header, starting
+			from 0 with first header; negative values count from the end of
+			the headers, -1 being the last header matching the name.</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+			The parameters can be config variables.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>remove_hf_idx</function> usage</title>
+		<programlisting format="linespecific">
+...
+remove_hf_idx("X-My-Header", "-1");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="textops.f.remove_hf_match">
+		<title>
+		<function moreinfo="none">remove_hf_match(hname, op, expr)</function>
+		</title>
+		<para>
+			Remove from message all headers with name 'hname' matching the body
+			with expression <quote>expr</quote>, based on operator
+			<quote>op</quote>.
+		</para>
+		<para>
+		Returns true if at least one header is found and removed.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>hanem</emphasis> - name of the header.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>op</emphasis> - operator - it can be: 'eq' - equal;
+			'ne' - not equal; 'in' - include; 're' - regular expression match.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>expr</emphasis> - expression to match.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>remove_hf_match</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(remove_hf_match("X-Info", "in", "^data")) {
+    # all headers with name "X-Info" that have the body matching regular
+    # expression "^data" are removed
+}
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="textops.f.has_body">
 		<title>
 		<function moreinfo="none">has_body()</function>,
@@ -1623,7 +1711,7 @@ if(is_privacy("id"))
 		Function can be used from all kinds of routes.
 		</para>
 		<example>
-			<title><function>in_list()</function> usage</title>
+			<title><function>in_list</function> usage</title>
 			<programlisting format="linespecific">
 ...
 $var(subject) = "fi";
@@ -1647,7 +1735,7 @@ if (in_list("$var(subject)", "$var(list)", ",")) {
 		Function can be used from all kinds of routes.
 		</para>
 		<example>
-			<title><function>in_list()</function> usage</title>
+			<title><function>in_list_prefix</function> usage</title>
 			<programlisting format="linespecific">
 ...
 $var(subject) = "final";

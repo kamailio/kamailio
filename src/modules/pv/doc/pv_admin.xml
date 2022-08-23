@@ -399,6 +399,9 @@ xavp_params_explode("a=b;c=d;e=d", "x");
 				Serialize the subfields in an XAVP to a parameters string format.
 			</para>
 			<para>
+				Number values are serialized as unsigned integer string format.
+			</para>
+			<para>
 				The first parameter has to be the name of XAVP (only the string
 				name, not the in $xavp(name)). The second parameter
 				is the name of output variable (in full name, like $var(output)).
@@ -417,6 +420,71 @@ $xavp(x=&gt;e) = "f";
 $xavp(x[0]=&gt;c) = "d";
 $xavp(x[0]=&gt;a) = "b";
 xavp_params_implode("x", "$var(out)");
+# results in: $var(out) is "a=b;c=d;e=f;"
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="pv.f.xavu_params_explode">
+			<title>
+				<function moreinfo="none">xavu_params_explode(sparams, xname)</function>
+			</title>
+			<para>
+				Convert a parameters string in xavu atributes.
+			</para>
+			<para>
+				The first parameter has to be a string in the format of SIP header
+				parameters (name1=value1;...;nameN=valueN). The second parameter
+				is the name of the root xavu to hold the pairs (nameX,valueX).
+			</para>
+			<para>
+				The values are stored as string type.
+			</para>
+			<para>
+			Function can be used from ANY ROUTE.
+			</para>
+			<example>
+				<title><function>xavu_params_explode</function> usage</title>
+				<programlisting format="linespecific">
+...
+xavu_params_explode("a=b;c=d;e=d", "x");
+# results in:
+#    $xavu(x=&gt;a) = "b";
+#    $xavu(x=&gt;c) = "d";
+#    $xavu(x=&gt;e) = "f";
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="pv.f.xavu_params_implode">
+			<title>
+				<function moreinfo="none">xavu_params_implode(xname, pvname)</function>
+			</title>
+			<para>
+				Serialize the subfields in an XAUP to a parameters string format.
+			</para>
+			<para>
+				Number values are serialized as unsigned integer string format.
+			</para>
+			<para>
+				The first parameter has to be the name of XAVU (only the string
+				name, not the in $xavu(name)). The second parameter
+				is the name of output variable (in full name, like $var(output)).
+			</para>
+			<para>
+				The value is stored as string type.
+			</para>
+			<para>
+			Function can be used from ANY ROUTE.
+			</para>
+			<example>
+				<title><function>xavu_params_implode</function> usage</title>
+				<programlisting format="linespecific">
+...
+$xavu(x=&gt;e) = "f";
+$xavu(x=&gt;c) = "d";
+$xavu(x=&gt;a) = "b";
+xavu_params_implode("x", "$var(out)");
 # results in: $var(out) is "a=b;c=d;e=f;"
 ...
 				</programlisting>
@@ -664,6 +732,81 @@ xavp_child_rm("x", "y");
 ...
 xavi_child_rm("WhatEver", "FoO");
 # same result as: $xavi(whatever=&gt;foo) = $null;
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="pv.f.xavp_lshift">
+			<title>
+				<function moreinfo="none">xavp_lshift(xname, idx)</function>
+			</title>
+			<para>
+				Left shift with rotation of the xavps with name xname so that
+				the one at the index idx becomes the first and the ones before
+				it are at the end of the list.
+			</para>
+			<para>
+				The first parameter has to be the name of XAVP in the root list.
+				The second parameter is the index of the XAVP that becomes the
+				first one.
+			</para>
+			<para>
+				The parameters can be with variables.
+			</para>
+			<para>
+			Function can be used from ANY ROUTE.
+			</para>
+			<example>
+				<title><function>xavp_lshift</function> usage</title>
+				<programlisting format="linespecific">
+...
+$xavp(n) = 10;
+$xavp(n) = 20;
+$xavp(n) = 30;
+xavp_lshift("n", "1");
+# results in: $xavp(n) having the list of values 20 30 10
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="pv.f.xavp_push_dst">
+			<title>
+				<function moreinfo="none">xavp_push_dst(xname)</function>
+			</title>
+			<para>
+				Set destination fields from XAVP attributes.
+			</para>
+			<para>
+				The first parameter has to be the name of XAVP in the root list.
+			</para>
+			<para>
+				The parameters can be with variables.
+			</para>
+			<para>
+				The attributes that can be stored in the XAVP fields:
+			</para>
+			<itemizedlist>
+				<listitem>
+					<para>uri: SIP URI address to set R-URI</para>
+				</listitem>
+				<listitem>
+					<para>dsturi: SIP URI address to set DST-URI</para>
+				</listitem>
+				<listitem>
+					<para>socket: listen address to set outgoing socket</para>
+				</listitem>
+			</itemizedlist>
+			<para>
+			Function can be used from REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE.
+			</para>
+			<example>
+				<title><function>xavp_push_dst</function> usage</title>
+				<programlisting format="linespecific">
+...
+$xavp(dst=&gt;uri) = "sip:alice@server.com";
+$xavp(dst[0]=&gt;dsturi) = "sip:proxy.com";
+$xavp(dst[0]=&gt;socket) = "udp:1.2.3.4:5060";
+xavp_push_dst("dst");
 ...
 				</programlisting>
 			</example>

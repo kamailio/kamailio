@@ -80,6 +80,8 @@
 #define DS_ALG_PARALLEL 12
 #define DS_ALG_LATENCY 13
 
+#define DS_HN_SIZE 256
+
 /* increment call load */
 #define DS_LOAD_INC(dgrp, didx) do { \
 		lock_get(&(dgrp)->lock); \
@@ -109,6 +111,8 @@ extern float ds_latency_estimator_alpha;
 extern int ds_attrs_none;
 extern param_t *ds_db_extra_attrs_list;
 extern int ds_load_mode;
+extern uint32_t ds_dns_mode;
+extern int ds_dns_ttl;
 
 static db_func_t ds_dbf;
 static db1_con_t *ds_db_handle = NULL;
@@ -325,7 +329,7 @@ int ds_set_attrs(ds_dest_t *dest, str *vattrs)
 				dest->attrs.weight = tmp_ival;
 			} else {
 				dest->attrs.weight = 0;
-				LM_ERR("weight %d not in 1-100 range - ignoring destination",
+				LM_ERR("weight %d not in 1-100 range - ignoring destination\n",
 						tmp_ival);
 			}
 		} else if(pit->name.len == 7
@@ -350,7 +354,7 @@ int ds_set_attrs(ds_dest_t *dest, str *vattrs)
 				dest->attrs.rweight = tmp_ival;
 			} else {
 				dest->attrs.rweight = 0;
-				LM_WARN("rweight %d not in 1-100 range - ignoring", tmp_ival);
+				LM_WARN("rweight %d not in 1-100 range - ignoring\n", tmp_ival);
 			}
 		} else if(pit->name.len == 9
 				&& strncasecmp(pit->name.s, "ping_from", 9) == 0) {
@@ -372,7 +376,7 @@ ds_dest_t *pack_dest(str iuri, int flags, int priority, str *attrs, int dload)
 {
 	ds_dest_t *dp = NULL;
 	/* For DNS-Lookups */
-	static char hn[256];
+	char hn[DS_HN_SIZE];
 	char ub[512];
 	struct hostent *he;
 	struct sip_uri puri;
@@ -380,6 +384,8 @@ ds_dest_t *pack_dest(str iuri, int flags, int priority, str *attrs, int dload)
 	int port, proto;
 	char c = 0;
 	str uri;
+	unsigned short sport = 0;
+	char sproto = PROTO_NONE;
 
 	uri = iuri;
 	/* check uri */
@@ -403,7 +409,7 @@ ds_dest_t *pack_dest(str iuri, int flags, int priority, str *attrs, int dload)
 		}
 	}
 
-	if(puri.host.len > 254) {
+	if(puri.host.len > (DS_HN_SIZE-2)) {
 		LM_ERR("hostname in uri is too long [%.*s]\n", uri.len, uri.s);
 		goto err;
 	}
@@ -472,16 +478,40 @@ ds_dest_t *pack_dest(str iuri, int flags, int priority, str *attrs, int dload)
 		dp->sock = ds_default_sockinfo;
 	}
 
-	/* The Hostname needs to be \0 terminated for resolvehost, so we
-	 * make a copy here. */
-	strncpy(hn, puri.host.s, puri.host.len);
-	hn[puri.host.len] = '\0';
+
+	dp->host.s = dp->uri.s + (puri.host.s - uri.s);
+	dp->host.len = puri.host.len;
+
+	/* Copy the port out of the URI */
+	dp->port = puri.port_no;
+	/* Copy the proto out of the URI */
+	dp->proto = puri.proto;
 
 	/* Do a DNS-Lookup for the Host-Name, if not disabled via dst flags */
 	if(dp->flags & DS_NODNSARES_DST) {
 		dp->irmode |= DS_IRMODE_NOIPADDR;
-	} else {
-		he = resolvehost(hn);
+	} else if (ds_dns_mode & (DS_DNS_MODE_INIT|DS_DNS_MODE_TIMER)) {
+		dns_set_local_ttl(ds_dns_ttl);
+		if (ds_dns_mode & DS_DNS_MODE_QSRV) {
+			sport = dp->port;
+			sproto = (char)dp->proto;
+			he = sip_resolvehost(&dp->host, &sport, &sproto);
+			if(he != 0) {
+				if(sport != 0) {
+					dp->port = sport;
+				}
+				if(sproto != PROTO_NONE) {
+					dp->proto = sproto;
+				}
+			}
+		} else {
+			/* The Hostname needs to be \0 terminated for resolvehost, so we
+			 * make a copy here. */
+			strncpy(hn, puri.host.s, puri.host.len);
+			hn[puri.host.len] = '\0';
+			he = resolvehost(hn);
+		}
+		dns_set_local_ttl(0);
 		if(he == 0) {
 			LM_ERR("could not resolve %.*s (missing no-probing flag?!?)\n",
 					puri.host.len, puri.host.s);
@@ -491,11 +521,6 @@ ds_dest_t *pack_dest(str iuri, int flags, int priority, str *attrs, int dload)
 			hostent2ip_addr(&dp->ip_address, he, 0);
 		}
 	}
-
-	/* Copy the port out of the URI */
-	dp->port = puri.port_no;
-	/* Copy the proto out of the URI */
-	dp->proto = puri.proto;
 
 	return dp;
 err:
@@ -1192,7 +1217,7 @@ unsigned int ds_get_hash(str *x, str *y)
 	if(!x && !y)
 		return 0;
 	h = 0;
-	if(x) {
+	if(x && x->s) {
 		p = x->s;
 		if(x->len >= 4) {
 			for(; p <= (x->s + x->len - 4); p += 4) {
@@ -1207,7 +1232,7 @@ unsigned int ds_get_hash(str *x, str *y)
 		}
 		h += v ^ (v >> 3);
 	}
-	if(y) {
+	if(y && y->s) {
 		p = y->s;
 		if(y->len >= 4) {
 			for(; p <= (y->s + y->len - 4); p += 4) {
@@ -2201,7 +2226,7 @@ int ds_manage_route_algo13(ds_set_t *idx, ds_select_state_t *rstate) {
 	}
 
 	for(y=0; y<idx->nr ;y++) {
-		int latency_proirity_handicap = 0;
+		int latency_priority_handicap = 0;
 		ds_dest_t * ds_dest = &idx->dlist[z];
 		int gw_priority = ds_dest->priority;
 		int gw_latency = ds_dest->latency_stats.estimate;
@@ -2211,19 +2236,15 @@ int ds_manage_route_algo13(ds_set_t *idx, ds_select_state_t *rstate) {
 			gw_latency = ds_dest->latency_stats.estimate - ds_dest->latency_stats.average;
 		if(!gw_inactive) {
 			if(gw_latency > gw_priority && gw_priority > 0)
-				latency_proirity_handicap = gw_latency / gw_priority;
-			ds_dest->attrs.rpriority = gw_priority - latency_proirity_handicap;
+				latency_priority_handicap = gw_latency / gw_priority;
+			ds_dest->attrs.rpriority = gw_priority - latency_priority_handicap;
 			if(ds_dest->attrs.rpriority < 1 && gw_priority > 0)
 				ds_dest->attrs.rpriority = 1;
-			if(ds_dest->attrs.rpriority > active_priority) {
-				hash = z;
-				active_priority = ds_dest->attrs.rpriority;
-			}
 			ds_sorted[y].idx = z;
 			ds_sorted[y].priority = ds_dest->attrs.rpriority;
 			LM_DBG("[active]idx[%d]uri[%.*s]priority[%d-%d=%d]latency[%dms]flag[%d]\n",
 				z, ds_dest->uri.len, ds_dest->uri.s,
-				gw_priority, latency_proirity_handicap,
+				gw_priority, latency_priority_handicap,
 				ds_dest->attrs.rpriority, gw_latency, ds_dest->flags);
 		} else {
 			ds_sorted[y].idx = -1;
@@ -2237,10 +2258,15 @@ int ds_manage_route_algo13(ds_set_t *idx, ds_select_state_t *rstate) {
 		else
 			z = (z + 1) % idx->nr;
 	}
+	ds_sorted_by_priority(ds_sorted, idx->nr);
+	// the list order might have changed after sorting - update hash
+	if(idx->nr > 0) {
+		hash = ds_sorted[0].idx;
+		active_priority = ds_sorted[0].priority;
+	}
+	ds_manage_routes_fill_reodered_xavp(ds_sorted, idx, rstate);
 	idx->last = (hash + 1) % idx->nr;
 	LM_DBG("priority[%d]gateway_selected[%d]next_index[%d]\n", active_priority, hash, idx->last);
-	ds_sorted_by_priority(ds_sorted, idx->nr);
-	ds_manage_routes_fill_reodered_xavp(ds_sorted, idx, rstate);
 	pkg_free(ds_sorted);
 	return hash;
 }
@@ -2588,12 +2614,11 @@ void ds_add_dest_cb(ds_set_t *node, int i, void *arg)
 }
 
 /* add dispatcher entry to in-memory dispatcher list */
-int ds_add_dst(int group, str *address, int flags, str *attrs)
+int ds_add_dst(int group, str *address, int flags, int priority, str *attrs)
 {
-	int setn, priority;
+	int setn;
 
 	setn = _ds_list_nr;
-	priority = 0;
 
 	*ds_next_idx = (*ds_crt_idx + 1) % 2;
 	ds_avl_destroy(&ds_lists[*ds_next_idx]);
@@ -2655,6 +2680,11 @@ int ds_remove_dst(int group, str *address)
 	setn = 0;
 
 	dp = pack_dest(*address, 0, 0, NULL, 0);
+	if(dp==NULL) {
+		LM_ERR("failed to pack address: %d %.*s\n", group,
+				address->len, address->s);
+		return -1;
+	}
 	filter_arg.setid = group;
 	filter_arg.dest = dp;
 	filter_arg.setn = &setn;
@@ -3334,13 +3364,52 @@ int ds_is_addr_from_set(sip_msg_t *_m, struct ip_addr *pipaddr,
 		int export_set_pv)
 {
 	pv_value_t val;
+	ip_addr_t *ipa;
+	ip_addr_t ipaddress;
+	char hn[DS_HN_SIZE];
+	struct hostent *he;
 	int j;
+	unsigned short sport = 0;
+	char sproto = PROTO_NONE;
+
 	for(j = 0; j < node->nr; j++) {
 		if(node->dlist[j].irmode & DS_IRMODE_NOIPADDR) {
 			/* dst record using hotname with dns not done - no ip to match */
 			continue;
 		}
-		if(ip_addr_cmp(pipaddr, &node->dlist[j].ip_address)
+		if(!(ds_dns_mode & DS_DNS_MODE_ALWAYS)) {
+			ipa = &node->dlist[j].ip_address;
+		} else {
+			dns_set_local_ttl(ds_dns_ttl);
+			if (ds_dns_mode & DS_DNS_MODE_QSRV) {
+				sport = node->dlist[j].port;
+				sproto = (char)node->dlist[j].proto;
+				he = sip_resolvehost(&node->dlist[j].host, &sport, &sproto);
+				if(he != 0) {
+					if(sport != 0) {
+						node->dlist[j].port = sport;
+					}
+					if(sproto != PROTO_NONE) {
+						node->dlist[j].proto = sproto;
+					}
+				}
+			} else {
+				memcpy(hn, node->dlist[j].host.s, node->dlist[j].host.len);
+				hn[node->dlist[j].host.len] = '\0';
+				he = resolvehost(hn);
+			}
+			dns_set_local_ttl(0);
+			if(he == 0) {
+				LM_WARN("could not resolve %.*s (skipping)\n",
+						node->dlist[j].host.len, node->dlist[j].host.s);
+				continue;
+			} else {
+				/* Store hostent in the dispatcher structure */
+				hostent2ip_addr(&ipaddress, he, 0);
+				ipa = &ipaddress;
+			}
+		}
+		if(ip_addr_cmp(pipaddr, ipa)
 				&& ((mode & DS_MATCH_NOPORT) || node->dlist[j].port == 0
 						   || tport == node->dlist[j].port)
 				&& ((mode & DS_MATCH_NOPROTO)
@@ -3408,8 +3477,10 @@ int ds_is_addr_from_list(sip_msg_t *_m, int group, str *uri, int mode)
 	struct ip_addr aipaddr;
 	unsigned short tport;
 	unsigned short tproto;
+	unsigned short sport = 0;
+	char sproto = PROTO_NONE;
 	sip_uri_t puri;
-	static char hn[256];
+	char hn[DS_HN_SIZE];
 	struct hostent *he;
 	int rc = -1;
 
@@ -3418,22 +3489,37 @@ int ds_is_addr_from_list(sip_msg_t *_m, int group, str *uri, int mode)
 		tport = _m->rcv.src_port;
 		tproto = _m->rcv.proto;
 	} else {
-		if(parse_uri(uri->s, uri->len, &puri) != 0 || puri.host.len > 255) {
+		if(parse_uri(uri->s, uri->len, &puri) != 0 || puri.host.len > (DS_HN_SIZE-2)) {
 			LM_ERR("bad uri [%.*s]\n", uri->len, uri->s);
 			return -1;
 		}
-		strncpy(hn, puri.host.s, puri.host.len);
-		hn[puri.host.len] = '\0';
-
-		he = resolvehost(hn);
+		tport = puri.port_no;
+		tproto = puri.proto;
+		dns_set_local_ttl(ds_dns_ttl);
+		if (ds_dns_mode & DS_DNS_MODE_QSRV) {
+			sport = tport;
+			sproto = (char)tproto;
+			he = sip_resolvehost(&puri.host, &sport, &sproto);
+			if(he != 0) {
+				if(sport != 0) {
+					tport = sport;
+				}
+				if(sproto != PROTO_NONE) {
+					tproto = (unsigned short)sproto;
+				}
+			}
+		} else {
+			memcpy(hn, puri.host.s, puri.host.len);
+			hn[puri.host.len] = '\0';
+			he = resolvehost(hn);
+		}
+		dns_set_local_ttl(0);
 		if(he == 0) {
 			LM_ERR("could not resolve %.*s\n", puri.host.len, puri.host.s);
 			return -1;
 		}
 		hostent2ip_addr(&aipaddr, he, 0);
 		pipaddr = &aipaddr;
-		tport = puri.port_no;
-		tproto = puri.proto;
 	}
 
 
@@ -3453,6 +3539,32 @@ int ds_is_addr_from_list(sip_msg_t *_m, int group, str *uri, int mode)
 int ds_is_from_list(struct sip_msg *_m, int group)
 {
 	return ds_is_addr_from_list(_m, group, NULL, DS_MATCH_NOPROTO);
+}
+
+/**
+ * Check if the a group has any or a specific active uri
+ */
+int ds_is_active_uri(sip_msg_t *msg, int group, str *uri)
+{
+	ds_set_t *list;
+	int j;
+
+	list = ds_avl_find(_ds_list, group);
+	if(list) {
+		for(j = 0; j < list->nr; j++) {
+			if(!ds_skip_dst(list->dlist[j].flags)) {
+				if(uri==NULL || uri->s==NULL || uri->len<=0) {
+					return 1;
+				}
+				if((list->dlist[j].uri.len==uri->len)
+						&& (memcmp(list->dlist[j].uri.s, uri->s, uri->len)==0)) {
+					return 1;
+				}
+			}
+		}
+	}
+
+	return -1;
 }
 
 /*! \brief
@@ -3501,6 +3613,11 @@ static void ds_options_callback(
 			rctx.flags |= 1;
 			rctx.reason = ps->rpl->first_line.u.reply.reason;
 		}
+	}
+
+	/* Check if in the meantime someone disabled probing of the target through RPC, MI or reload */
+	if(ds_probing_mode == DS_PROBE_ONLYFLAGGED && !(ds_get_state(group, &uri) & DS_PROBING_DST)) {
+		return;
 	}
 
 	/* ps->code contains the result-code of the request.
@@ -3727,6 +3844,88 @@ void ds_ht_timer(unsigned int ticks, void *param)
 		lock_release(&_dsht_load->entries[i].lock);
 	}
 	return;
+}
+
+
+
+/**
+ *
+ */
+void ds_dns_update_set(ds_set_t *node)
+{
+	int i, j;
+	char hn[DS_HN_SIZE];
+	struct hostent *he;
+	unsigned short sport = 0;
+	char sproto = PROTO_NONE;
+
+	if(!node)
+		return;
+
+	for(i = 0; i < 2; ++i)
+		ds_dns_update_set(node->next[i]);
+
+	for(j = 0; j < node->nr; j++) {
+		/* do a DNS qookup for the host part, if not disabled via dst flags */
+		if(node->dlist[j].flags & DS_NODNSARES_DST) {
+			continue;
+		}
+		if(node->dlist[j].host.len <= 0) {
+			continue;
+		}
+		LM_DBG("resolving [%.*s] - mode: %d\n", node->dlist[j].host.len,
+				node->dlist[j].host.s, ds_dns_mode);
+		dns_set_local_ttl(ds_dns_ttl);
+		if (ds_dns_mode & DS_DNS_MODE_QSRV) {
+			sport = node->dlist[j].port;
+			sproto = (char)node->dlist[j].proto;
+			he = sip_resolvehost(&node->dlist[j].host, &sport, &sproto);
+			if(he != 0) {
+				if(sport != 0) {
+					node->dlist[j].port = sport;
+				}
+				if(sproto != PROTO_NONE) {
+					node->dlist[j].proto = sproto;
+				}
+			}
+		} else {
+			/* The Hostname needs to be \0 terminated for resolvehost, so we
+			 * make a copy here. */
+			memcpy(hn, node->dlist[j].host.s, node->dlist[j].host.len);
+			hn[node->dlist[j].host.len] = '\0';
+			he = resolvehost(hn);
+		}
+		dns_set_local_ttl(0);
+		if(he == 0) {
+			LM_ERR("could not resolve %.*s\n", node->dlist[j].host.len,
+					node->dlist[j].host.s);
+			continue;
+		} else {
+			/* Store hostent in the dispatcher structure */
+			hostent2ip_addr(&node->dlist[j].ip_address, he, 0);
+			gettimeofday(&node->dlist[j].dnstime, NULL);
+		}
+	}
+}
+
+/*! \brief
+ * Timer for DNS query of destination addresses
+ *
+ * This timer is regularly fired.
+ */
+void ds_dns_timer(unsigned int ticks, void *param)
+{
+	if(!(ds_dns_mode & DS_DNS_MODE_TIMER)) {
+		return;
+	}
+
+	/* Check for the list. */
+	if(_ds_list == NULL || _ds_list_nr <= 0) {
+		LM_DBG("no destination sets\n");
+		return;
+	}
+
+	ds_dns_update_set(_ds_list);
 }
 
 int ds_next_dst_api(sip_msg_t *msg, int mode)

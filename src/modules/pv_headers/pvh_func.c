@@ -22,7 +22,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
-
+#include "../../core/pvapi.h"
 #include "../../core/strutils.h"
 
 #include "pv_headers.h"
@@ -276,12 +276,6 @@ int pvh_apply_headers(struct sip_msg *msg)
 		}
 
 		if(!str_hash_case_get(&rm_hdrs, sub->name.s, sub->name.len)) {
-			if(!pvh_avp_is_null(sub) && xavi_count(&sub->name, &sub) == 1) {
-				LM_DBG("replace header[%s]: %s\n", sub->name.s, sub->val.v.s.s);
-				pvh_real_hdr_replace(msg, &sub->name, &sub->val.v.s);
-				pvh_str_hash_add_key(&rm_hdrs, &sub->name);
-				continue;
-			}
 			LM_DBG("remove header[%s]: %s\n", sub->name.s, sub->val.v.s.s);
 			pvh_real_hdr_del_by_name(msg, &sub->name);
 			pvh_str_hash_add_key(&rm_hdrs, &sub->name);
@@ -362,4 +356,70 @@ int pvh_remove_header(struct sip_msg *msg, str *hname, int indx)
 	}
 
 	return 1;
+}
+
+int pvh_header_param_exists(struct sip_msg *msg, str *hname, str *hvalue)
+{
+	sr_xavp_t *avi=NULL;
+	char head_name[header_name_size];
+	str br_xname = {head_name, header_name_size};
+
+	avi = xavi_get(&xavi_name,NULL);
+	pvh_get_branch_xname(msg, &xavi_name, &br_xname);
+
+	avi = xavi_get_child(&br_xname, hname);
+
+	while(avi)
+	{
+		if (avi->val.type == SR_XTYPE_STR && avi->val.v.s.s != NULL && _strnstr(avi->val.v.s.s, hvalue->s, avi->val.v.s.len) != NULL)
+		{
+			return 1;
+		}
+		avi = xavi_get_next(avi);
+	}
+
+	return -1;
+}
+
+int pvh_remove_header_param_helper(str *orig, const str *toRemove, str *dst)
+{
+	int notTarget;
+	int writtenChars = 0;
+	int offset = 0;
+	char *saveptr = NULL;
+	char *token;
+	char t[header_value_size];
+	char *result = pv_get_buffer();
+	int maxSize = pv_get_buffer_size();
+
+	memset(result, 0, maxSize);
+	LM_DBG("orig:'%.*s' toRemove:'%.*s'\n", STR_FMT(orig), STR_FMT(toRemove));
+	strncpy(t, orig->s, orig->len);
+	t[orig->len] = '\0';
+	token = strtok_r(t, ", ", &saveptr);
+	dst->s = NULL; dst->len = -1;
+	while(token) {
+		notTarget = strncasecmp(token, toRemove->s, toRemove->len);
+		LM_DBG("offset:%d token:%s notTarget:%d\n", offset, token, notTarget);
+		if(notTarget) {
+			writtenChars = snprintf(result + offset, maxSize - offset, "%s, ", token);
+			if(writtenChars < 0) break;
+			offset += writtenChars;
+		} else {
+			dst->len = 0; /* we found a token */
+		}
+		token = strtok_r(NULL, ", ", &saveptr);
+	}
+
+	if(offset > 0) {
+		dst->s = result;
+		if(offset > 2 && result[offset-2] == ',' && result[offset-1] == ' ') {
+			LM_DBG("remove last separator\n");
+			offset = offset - 2;
+			result[offset] = '\0';
+		}
+		dst->len = offset;
+		LM_DBG("offset:%d result:'%.*s'[%d]\n", offset, STR_FMT(dst), dst->len);
+	}
+	return offset;
 }

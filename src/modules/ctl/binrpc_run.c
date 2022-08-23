@@ -886,6 +886,46 @@ static int rpc_scan(struct binrpc_ctx* ctx, char* fmt, ...)
 					goto error_read;
 				*(va_arg(ap, double*))=d;
 				break;
+			case 'l':
+				/* long - convert it from double */
+				v.type=autoconv?BINRPC_T_ALL:BINRPC_T_DOUBLE;
+				ctx->in.s=binrpc_read_record(&ctx->in.ctx, ctx->in.s,
+												ctx->in.end, &v, 0, &err);
+				if (err<0 || ((d=binrpc_val_conv_double(&v, &err))==0 &&
+						err<0))
+					goto error_read;
+				*(va_arg(ap, long*))=(long)d;
+				break;
+			case 'j':
+				/* unsigned long - convert it from double */
+				v.type=autoconv?BINRPC_T_ALL:BINRPC_T_DOUBLE;
+				ctx->in.s=binrpc_read_record(&ctx->in.ctx, ctx->in.s,
+												ctx->in.end, &v, 0, &err);
+				if (err<0 || ((d=binrpc_val_conv_double(&v, &err))==0 &&
+						err<0))
+					goto error_read;
+				*(va_arg(ap, unsigned long*))=(unsigned long)d;
+				break;
+			case 'L':
+				/* long long - convert it from double */
+				v.type=autoconv?BINRPC_T_ALL:BINRPC_T_DOUBLE;
+				ctx->in.s=binrpc_read_record(&ctx->in.ctx, ctx->in.s,
+												ctx->in.end, &v, 0, &err);
+				if (err<0 || ((d=binrpc_val_conv_double(&v, &err))==0 &&
+						err<0))
+					goto error_read;
+				*(va_arg(ap, long long*))=(long long)d;
+				break;
+			case 'J':
+				/* unsigned long long - convert it from double */
+				v.type=autoconv?BINRPC_T_ALL:BINRPC_T_DOUBLE;
+				ctx->in.s=binrpc_read_record(&ctx->in.ctx, ctx->in.s,
+												ctx->in.end, &v, 0, &err);
+				if (err<0 || ((d=binrpc_val_conv_double(&v, &err))==0 &&
+						err<0))
+					goto error_read;
+				*(va_arg(ap, unsigned long long*))=(unsigned long long)d;
+				break;
 			case 's': /* asciiz */
 			case 'S': /* str */
 				v.type=autoconv?BINRPC_T_ALL:BINRPC_T_STR;
@@ -968,6 +1008,7 @@ static int rpc_add(struct binrpc_ctx* ctx, char* fmt, ...)
 	str* sp;
 	struct rpc_struct_l* rs;
 	str null_value = str_init("<null string>");
+	double d;
 
 	va_start(ap, fmt);
 	for (;*fmt; fmt++){
@@ -1014,6 +1055,30 @@ static int rpc_add(struct binrpc_ctx* ctx, char* fmt, ...)
 				break;
 			case 'f':
 				err=binrpc_adddouble(&ctx->out.pkt, va_arg(ap, double));
+				if (err<0) goto error_add;
+				break;
+			case 'l':
+				/* long - store in a double */
+				d =  (double)va_arg(ap, long);
+				err=binrpc_adddouble(&ctx->out.pkt, d);
+				if (err<0) goto error_add;
+				break;
+			case 'j':
+				/* unsigned long - store in a double */
+				d =  (double)va_arg(ap, unsigned long);
+				err=binrpc_adddouble(&ctx->out.pkt, d);
+				if (err<0) goto error_add;
+				break;
+			case 'L':
+				/* long long - store in a double */
+				d =  (double)va_arg(ap, long long);
+				err=binrpc_adddouble(&ctx->out.pkt, d);
+				if (err<0) goto error_add;
+				break;
+			case 'J':
+				/* unsigned long long - store in a double */
+				d =  (double)va_arg(ap, unsigned long long);
+				err=binrpc_adddouble(&ctx->out.pkt, d);
 				if (err<0) goto error_add;
 				break;
 			default:
@@ -1142,6 +1207,26 @@ static int rpc_struct_add(struct rpc_struct_l* s, char* fmt, ...)
 				avp.type=BINRPC_T_DOUBLE;
 				avp.u.fval=va_arg(ap, double);
 				break;
+			case 'l':
+				/* long - store in a double */
+				avp.type=BINRPC_T_DOUBLE;
+				avp.u.fval=(double)va_arg(ap, long);
+				break;
+			case 'j':
+				/* unsigned long - store in a double */
+				avp.type=BINRPC_T_DOUBLE;
+				avp.u.fval=(double)va_arg(ap, unsigned long);
+				break;
+			case 'L':
+				/* long long - store in a double */
+				avp.type=BINRPC_T_DOUBLE;
+				avp.u.fval=(double)va_arg(ap, long long);
+				break;
+			case 'J':
+				/* unsigned long long - store in a double */
+				avp.type=BINRPC_T_DOUBLE;
+				avp.u.fval=(double)va_arg(ap, unsigned long long);
+				break;
 			default:
 				LM_ERR("formatting char \'%c\' not supported\n", *fmt);
 				goto error;
@@ -1171,6 +1256,7 @@ static int rpc_array_add(struct rpc_struct_l* s, char* fmt, ...)
 	str *sp;
 	struct rpc_struct_l* rs;
 	str null_value = str_init("<null string>");
+	double d;
 
 	va_start(ap, fmt);
 	for (;*fmt; fmt++){
@@ -1217,6 +1303,30 @@ static int rpc_array_add(struct rpc_struct_l* s, char* fmt, ...)
 				break;
 			case 'f':
 				err=binrpc_adddouble(&s->pkt, va_arg(ap, double));
+				if (err<0) goto error_add;
+				break;
+			case 'l':
+				/* long - store in a double */
+				d = (double)va_arg(ap, long);
+				err=binrpc_adddouble(&s->pkt, d);
+				if (err<0) goto error_add;
+				break;
+			case 'j':
+				/* unsigned long - store in a double */
+				d = (double)va_arg(ap, unsigned long);
+				err=binrpc_adddouble(&s->pkt, d);
+				if (err<0) goto error_add;
+				break;
+			case 'L':
+				/* long long - store in a double */
+				d = (double)va_arg(ap, long long);
+				err=binrpc_adddouble(&s->pkt, d);
+				if (err<0) goto error_add;
+				break;
+			case 'J':
+				/* unsigned long long - store in a double */
+				d = (double)va_arg(ap, unsigned long long);
+				err=binrpc_adddouble(&s->pkt, d);
 				if (err<0) goto error_add;
 				break;
 			default:

@@ -29,6 +29,8 @@ Bastian Friedrich
               5.2. modpath (string)
               5.3. reset_cycles (int)
               5.4. perl_destroy_func (string)
+              5.5. parse_mode (int)
+              5.6. warn_mode (int)
 
         6. Functions
 
@@ -196,10 +198,12 @@ Bastian Friedrich
    1.2. Set modpath parameter
    1.3. Set reset_cycles parameter
    1.4. Set perl_destroy_func parameter
-   1.5. perl_exec_simple() usage
-   1.6. perl_exec() usage
-   1.7. app_perl.set_reset_cycles usage
-   1.8. app_perl.get_reset_cycles usage
+   1.5. Set parse_mode parameter
+   1.6. Set warn_mode parameter
+   1.7. perl_exec_simple() usage
+   1.8. perl_exec() usage
+   1.9. app_perl.set_reset_cycles usage
+   1.10. app_perl.get_reset_cycles usage
 
 Chapter 1. Admin Guide
 
@@ -219,6 +223,8 @@ Chapter 1. Admin Guide
         5.2. modpath (string)
         5.3. reset_cycles (int)
         5.4. perl_destroy_func (string)
+        5.5. parse_mode (int)
+        5.6. warn_mode (int)
 
    6. Functions
 
@@ -339,6 +345,8 @@ if (perl_exec("ldap_alias")) {
    5.2. modpath (string)
    5.3. reset_cycles (int)
    5.4. perl_destroy_func (string)
+   5.5. parse_mode (int)
+   5.6. warn_mode (int)
 
 5.1. filename (string)
 
@@ -399,6 +407,35 @@ modparam("app_perl", "reset_cycles", 100000)
 modparam("app_perl", "perl_destroy_func", "my_perl_destroy")
 ...
 
+5.5. parse_mode (int)
+
+   Control how to behave on perl_parse() return code - on some versions it
+   is the value for application exit and can break reloading.
+
+   If set to 0, continue even of perl_parse() returns non-zero, logging a
+   warning. If set to 1, realod fails on non-zero return code and triggers
+   an exit.
+
+   Default value is 0.
+
+   Example 1.5. Set parse_mode parameter
+...
+modparam("app_perl", "parse_mode", 1)
+...
+
+5.6. warn_mode (int)
+
+   Allows to enable warning for perl_parse(). If set to 1, "-w" is passed
+   to perl_parse() and detected warnings in the Perl script should be
+   printed to the log. If set to 1, then "-W" is passed to perl_parse().
+
+   Default value is 0.
+
+   Example 1.6. Set warn_mode parameter
+...
+modparam("app_perl", "warn_mode", 1)
+...
+
 6. Functions
 
    6.1. perl_exec_simple(func, [param])
@@ -417,7 +454,7 @@ modparam("app_perl", "perl_destroy_func", "my_perl_destroy")
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE and BRANCH_ROUTE.
 
-   Example 1.5. perl_exec_simple() usage
+   Example 1.7. perl_exec_simple() usage
 ...
 if (method=="INVITE") {
         perl_exec_simple("dosomething", "on invite messages");
@@ -436,7 +473,7 @@ if (method=="INVITE") {
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE and BRANCH_ROUTE.
 
-   Example 1.6. perl_exec() usage
+   Example 1.8. perl_exec() usage
 ...
 if (perl_exec("ldapalias")) {
         ...
@@ -453,7 +490,7 @@ if (perl_exec("ldapalias")) {
    Set the value of the reset_cycle. The command has one integer
    parameter.
 
-   Example 1.7. app_perl.set_reset_cycles usage
+   Example 1.9. app_perl.set_reset_cycles usage
 ...
 kamcmd app_perl.set_reset_cycles 20000
 ...
@@ -462,7 +499,7 @@ kamcmd app_perl.set_reset_cycles 20000
 
    Return the value of the reset_cycle.
 
-   Example 1.8. app_perl.get_reset_cycles usage
+   Example 1.10. app_perl.get_reset_cycles usage
 ...
 kamcmd app_perl.get_reset_cycles
 ...

@@ -20,12 +20,6 @@
 	handling and URI handling.
 	</para>
 	<para>
-	It offers some functions related to handle ringing. In a parallel forking
-	scenario you get several 183s with SDP. You don't want that your customers
-	hear more than one ringtone or answer machine in parallel on the phone.
-	So its necessary to drop the 183 in this cases and send a 180 instead.
-	</para>
-	<para>
 	This module also provides a function to answer OPTIONS requests which
 	are directed to the server itself. This means an OPTIONS request
 	which has the address of the server in the request URI, and no
@@ -72,26 +66,6 @@
 
 	<section>
 		<title>Parameters</title>
-		<section id="siputils.p.ring_timeout">
-			<title><varname>ring_timeout</varname> (int)</title>
-			<para>
-			Timeout value in seconds, define how long the call-id is stored in the internal list kept for replacing 183 messages  with 180.
-			A reasonable value is <quote>30</quote>.
-			</para>
-			<para>
-			<emphasis>
-				Default value is <quote>0</quote>. This means functionality is disabled.
-			</emphasis>
-			</para>
-			<example>
-			<title>Set <varname>ring_timeout</varname> parameter</title>
-				<programlisting format="linespecific">
-...
-modparam("siputils", "ring_timeout", 30)
-...
-				</programlisting>
-			</example>
-		</section>
 		<section id="siputils.p.options_accept">
 		<title><varname>options_accept</varname> (string)</title>
 		<para>
@@ -227,7 +201,7 @@ modparam("siputils", "options_support", "100rel")
 		<example>
 		<title>rpid_prefix parameter example</title>
 		<programlisting format="linespecific">
-modparam("auth", "rpid_prefix", "Whatever &lt;")
+modparam("siputils", "rpid_prefix", "Whatever &lt;")
 </programlisting>
 		</example>
 	</section>
@@ -244,7 +218,7 @@ modparam("auth", "rpid_prefix", "Whatever &lt;")
 		<example>
 		<title>rpid_suffix parameter example</title>
 		<programlisting format="linespecific">
-modparam("auth", "rpid_suffix", "@1.2.3.4>")
+modparam("siputils", "rpid_suffix", "@1.2.3.4>")
 </programlisting>
 		</example>
 	</section>
@@ -266,39 +240,29 @@ modparam("auth", "rpid_suffix", "@1.2.3.4>")
 		<example>
 		<title>rpid_avp parameter example</title>
 		<programlisting format="linespecific">
-modparam("auth", "rpid_avp", "$avp(myrpid)")
+modparam("siputils", "rpid_avp", "$avp(myrpid)")
 		</programlisting>
+		</example>
+	</section>
+	<section id="siputils.p.e164_max_len">
+		<title><varname>e164_max_len</varname> (int)</title>
+		<para>
+		The maximum length for checking e164 numbers, including the leading '+'.
+		</para>
+		<para>
+		Default value is <quote>16</quote>.
+		</para>
+		<example>
+		<title>e164_max_len parameter example</title>
+		<programlisting format="linespecific">
+modparam("siputils", "e164_max_len", 20)
+</programlisting>
 		</example>
 	</section>
 	</section>
 
 	<section>
 	<title>Functions</title>
-		<section id="siputils.f.ring_insert_callid">
-			<title>
-				<function moreinfo="none">ring_insert_callid()</function>
-			</title>
-			<para>
-			Inserting the call-id in the internal list, which is checked when
-			further replies arrive. Any 183 reply that is received during the
-			timeout value will be converted to a 180 message. Please note that you
-			need to set a positive timeout value in order to use this function.
-			</para>
-			<para>
-			The function returns TRUE on success, and FALSE during processing failures.
-			</para>
-			<para>
-			This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
-			</para>
-			<example>
-				<title><function>ring_insert_callid()</function> usage</title>
-				<programlisting format="linespecific">
-...
-ring_insert_callid();
-...
-				</programlisting>
-			</example>
-	</section>
 	<section id="siputils.f.options_reply">
 		<title>
 		<function moreinfo="none">options_reply()</function>
@@ -796,7 +760,7 @@ if (is_alphanumex("$rU", "+.-_")) {
 		This function will encode uri-s inside Contact header in the following
 		manner
 		sip:username:password@ip:port;transport=protocol goes
-		sip:encoding_prefix*username*ip*port*protocol@hostpart.
+		sip:encoding_prefix*username*password*ip*port*protocol@hostpart.
 		</para>
 		<para>
 		* is the default separator and can be changed by setting the contact_flds_separator
@@ -840,9 +804,9 @@ if (src_ip == 10.0.0.0/8) encode_contact("natted_client","1.2.3.4");
 		</title>
 		<para>
 		This function will decode the request URI. If the RURI is in the format
-		sip:encoding_prefix*username*ip*port*protocol@hostpart it will be decoded to
-		sip:username:password@ip:port;transport=protocol It uses the default 
-		set parameter for contact encoding separator.
+		sip:encoding_prefix*username*password*ip*port*protocol@hostpart it will
+		be decoded to sip:username:password@ip:port;transport=protocol. It uses
+		the default set parameter for contact encoding separator.
 		</para>
 		<para>
 		The function returns negative on error, 1 on success.
@@ -920,7 +884,7 @@ if(cmp_uri("$ru", "sip:kamailio@kamailio.org"))
 		<function moreinfo="none">cmp_aor(str1, str2)</function>
 		</title>
 		<para>
-		The function returns <emphasis>true</emphasis> if 
+		The function returns <emphasis>true</emphasis> if
 		the two parameters matches as AoR. The parameters have to be SIP
 		URIs.
 		</para>
@@ -932,6 +896,29 @@ if(cmp_uri("$ru", "sip:kamailio@kamailio.org"))
 		<programlisting format="linespecific">
 ...
 if(cmp_aor("$rU@KaMaIlIo.org", "sip:kamailio@$fd"))
+{
+    # do interesting stuff here
+}
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="siputils.f.cmp_hdr_name">
+		<title>
+		<function moreinfo="none">cmp_hdr_name(str1, str2)</function>
+		</title>
+		<para>
+		The function returns <emphasis>true</emphasis> (return code 1) if
+		the two parameters matches as header names.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>cmp_hdr_name</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(cmp_hdr_name("$var(hname)", "From"))
 {
     # do interesting stuff here
 }
@@ -1169,20 +1156,33 @@ if (is_supported("outbound")) { ... }
 	</section>
 	<section id="siputils.f.is_first_hop">
 		<title>
-			<function moreinfo="none">is_first_hop()</function>
+			<function moreinfo="none">is_first_hop([mode])</function>
 		</title>
 		<para>
 		The function returns true if the proxy is first hop after the
-		original sender. For incoming SIP requests, it means there is only
-		one Via header. For incoming SIP replies, it means that top
-		Record-Route URI is 'myself' and source address is not matching it
-		(to avoid detecting in case of local loops). The detection is done
-		only when Record-Route has an IP address in its URI (for a domain,
-		it returns -1/false).
+		original sender based on a best effort estimation by checking Via
+		and Record-Route headers.
+		</para>
+		<para>
+		For incoming SIP requests, it means there is only one Via header.
+		</para>
+		<para>
+		For incoming SIP replies, if mode==0, it means that top Record-Route
+		URI is 'myself' and source address is not matching local IP (to avoid
+		detecting in case of local loops). Therefore for mode==0 the detection
+		is done only when Record-Route has an IP address in its URI (for a domain,
+		it returns -1/false). If mode==1, then the check of local IP is no
+		longer done, only if top Record-Route is myself, returning true also if
+		there is a domain, assuming that is expected no looping can happen
+		based on config rules.
 		</para>
 		<para>
 		Note that it does not detect spirals, which can have the condition
 		for replies true also in the case of additional SIP reply reception.
+		</para>
+		<para>
+		Parameter mode is optional and can be an integer or a varaible holding
+		an integer. If not provided, the behaviour is like mode==0.
 		</para>
 		<para>
 		This function can be used from ANY_ROUTE.
@@ -1192,6 +1192,8 @@ if (is_supported("outbound")) { ... }
 		<programlisting format="linespecific">
 ...
 if(is_first_hop()) { ... }
+...
+if(is_first_hop("1")) { ... }
 ...
 </programlisting>
 		</example>
@@ -1336,6 +1338,37 @@ if (is_method("INVITE") and src_ip == 1.2.3.4) {
 ...
 if (is_method("REGISTER") and src_ip == 1.2.3.4) {
     contact_param_rm("myparam");
+}
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="siputils.f.hdr_date_check">
+		<title>
+		<function moreinfo="none">hdr_date_check(tdiff)</function>
+		</title>
+		<para>
+		Returns true if sip message has Date header and its value is lower
+		than 'NOW() - tdiff'.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>tdiff</emphasis> - time difference in seconds,
+			it can be a variable or static integer value.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>hdr_date_check</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (!hdr_date_check("10")) {
+    sl_send_reply("403", "Outdated date");
+    exit;
 }
 ...
 </programlisting>

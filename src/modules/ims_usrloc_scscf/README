@@ -47,6 +47,8 @@ Yasin Caner
               3.19. support_wildcardPSI (int)
               3.20. unreg_validity (int)
               3.21. user_data_xsd (string)
+              3.22. realm (string)
+              3.23. skip_realm (int)
 
         4. RPC Commands
 
@@ -79,6 +81,8 @@ Yasin Caner
    1.19. Set support_wildcardPSI parameter
    1.20. Set unreg_validity parameter
    1.21. Set unreg_validity parameter
+   1.22. Set realm parameter
+   1.23. Set skip_realm parameter
 
 Chapter 1. Admin Guide
 
@@ -112,6 +116,8 @@ Chapter 1. Admin Guide
         3.19. support_wildcardPSI (int)
         3.20. unreg_validity (int)
         3.21. user_data_xsd (string)
+        3.22. realm (string)
+        3.23. skip_realm (int)
 
    4. RPC Commands
 
@@ -159,6 +165,8 @@ Chapter 1. Admin Guide
    3.19. support_wildcardPSI (int)
    3.20. unreg_validity (int)
    3.21. user_data_xsd (string)
+   3.22. realm (string)
+   3.23. skip_realm (int)
 
 3.1. db_url (string)
 
@@ -384,6 +392,23 @@ st/scscf")
    Example 1.21. Set unreg_validity parameter
         modparam("ims_usrloc_scscf", "user_data_xsd", "/usr/local/etc/kamailio/C
 xDataType_Rel6.xsd")
+
+3.22. realm (string)
+
+   Default value is NULL
+
+   Example 1.22. Set realm parameter
+        modparam("ims_usrloc_scscf", "realm", "kamailio-ims.org")
+
+3.23. skip_realm (int)
+
+   Skipping defined network name in the realm for NOTIFY's Message body
+   reginfo tag.
+
+   Default value is 0
+
+   Example 1.23. Set skip_realm parameter
+        modparam("ims_usrloc_scscf", "skip_realm", 1)
 
 4. RPC Commands
 

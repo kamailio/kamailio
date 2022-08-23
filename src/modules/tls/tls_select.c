@@ -39,6 +39,7 @@
 #include "../../core/tcp_server.h"
 #include "../../core/tcp_conn.h"
 #include "../../core/ut.h"
+#include "../../core/pvapi.h"
 #include "../../core/cfg/cfg.h"
 #include "../../core/dprint.h"
 #include "../../core/strutils.h"
@@ -629,24 +630,35 @@ static int pv_validity(sip_msg_t* msg, pv_param_t* param, pv_value_t* res)
 }
 
 
-static int get_sn(str* res, int* ires, int local, sip_msg_t* msg)
+static int get_sn(str* res, int local, sip_msg_t* msg)
 {
-	static char buf[INT2STR_MAX_LEN];
+	static char buf[80]; // handle 256-bit > log(2^256,10)
 	X509* cert;
 	struct tcp_connection* c;
-	char* sn;
-	int num;
+	char* sn = NULL;
+	BIGNUM* bn = NULL;
 
 	if (get_cert(&cert, &c, msg, local) < 0) return -1;
 
-	num = ASN1_INTEGER_get(X509_get_serialNumber(cert));
-	sn = int2str(num, &res->len);
+	if (!(bn = BN_new())) goto error;
+	if (!ASN1_INTEGER_to_BN(X509_get_serialNumber(cert), bn)) goto error;
+	if (!(sn = BN_bn2dec(bn)) || strlen(sn) > 80) goto error;
+
+	res->len = strlen(sn);
 	memcpy(buf, sn, res->len);
 	res->s = buf;
-	if (ires) *ires = num;
+
 	if (!local) X509_free(cert);
 	tcpconn_put(c);
+
+	BN_free(bn);
+	OPENSSL_free(sn);
 	return 0;
+
+ error:
+	if (sn) OPENSSL_free(sn);
+	if (bn) BN_free(bn);
+	return -1;
 }
 
 static int sel_sn(str* res, select_t* s, sip_msg_t* msg)
@@ -661,7 +673,7 @@ static int sel_sn(str* res, select_t* s, sip_msg_t* msg)
 		return -1;
 	}
 
-	return get_sn(res, NULL, local, msg);
+	return get_sn(res, local, msg);
 }
 
 
@@ -678,11 +690,11 @@ static int pv_sn(sip_msg_t* msg, pv_param_t* param, pv_value_t* res)
 		return pv_get_null(msg, param, res);
 	}
 	
-	if (get_sn(&res->rs, &res->ri, local, msg) < 0) {
+	if (get_sn(&res->rs, local, msg) < 0) {
 		return pv_get_null(msg, param, res);
 	}
 	
-	res->flags = PV_VAL_STR | PV_VAL_INT;
+	res->flags = PV_VAL_STR;
 	return 0;
 }
 
@@ -1256,8 +1268,104 @@ static int pv_tlsext_sn(sip_msg_t* msg, pv_param_t* param, pv_value_t* res)
 }
 
 
+int pv_parse_tls_name(pv_spec_p sp, str *in)
+{
+	if(sp==NULL || in==NULL || in->len<=0)
+		return -1;
+
+	switch(in->len) {
+		case 13:
+			if(strncmp(in->s, "m_issuer_line", 13)==0)
+				sp->pvp.pvn.u.isname.name.n = 1001;
+			else if(strncmp(in->s, "p_issuer_line", 13)==0)
+				sp->pvp.pvn.u.isname.name.n = 5001;
+			else goto error;
+		break;
+		case 14:
+			if(strncmp(in->s, "m_subject_line", 14)==0)
+				sp->pvp.pvn.u.isname.name.n = 1000;
+			else if(strncmp(in->s, "p_subject_line", 14)==0)
+				sp->pvp.pvn.u.isname.name.n = 5000;
+			else goto error;
+		break;
+		default:
+			goto error;
+	}
+	sp->pvp.pvn.type = PV_NAME_INTSTR;
+	sp->pvp.pvn.u.isname.type = 0;
+
+	return 0;
+
+error:
+	LM_ERR("unknown PV tls name %.*s\n", in->len, in->s);
+	return -1;
+}
 
 
+int pv_get_tls(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	SSL *ssl = NULL;
+	tcp_connection_t *c = NULL;
+	X509 *cert = NULL;
+	str sv = STR_NULL;
+
+	if(msg==NULL || param==NULL) {
+		return -1;
+	}
+
+	c = get_cur_connection(msg);
+	if (c == NULL) {
+		LM_DBG("TLS connection not found\n");
+		return pv_get_null(msg, param, res);
+	}
+	ssl = get_ssl(c);
+	if (ssl == NULL) {
+		goto error;
+	}
+	cert = (param->pvn.u.isname.name.n < 5000) ? SSL_get_certificate(ssl)
+					: SSL_get_peer_certificate(ssl);
+	if (cert == NULL) {
+		if (param->pvn.u.isname.name.n < 5000) {
+			LM_ERR("failed to retrieve my TLS certificate from SSL structure\n");
+		} else {
+			LM_ERR("failed to retrieve peer TLS certificate from SSL structure\n");
+		}
+		goto error;
+	}
+
+	switch(param->pvn.u.isname.name.n)
+	{
+		case 1000:
+		case 5000:
+			sv.s = pv_get_buffer();
+			sv.len = pv_get_buffer_size() - 1;
+			if(X509_NAME_oneline(X509_get_subject_name(cert), sv.s, sv.len)==NULL) {
+				goto error;
+			}
+			tcpconn_put(c);
+			return pv_get_strzval(msg, param, res, sv.s);
+		break;
+
+		case 1001:
+		case 5001:
+			sv.s = pv_get_buffer();
+			sv.len = pv_get_buffer_size() - 1;
+			if(X509_NAME_oneline(X509_get_issuer_name(cert), sv.s, sv.len)==NULL) {
+				goto error;
+			}
+			tcpconn_put(c);
+			return pv_get_strzval(msg, param, res, sv.s);
+		break;
+
+		default:
+			goto error;
+	}
+
+error:
+	tcpconn_put(c);
+	return pv_get_null(msg, param, res);
+}
 
 select_row_t tls_sel[] = {
 	/* Current cipher parameters */
@@ -1544,6 +1652,8 @@ pv_export_t tls_pv[] = {
 	{{"tls_peer_server_name", sizeof("tls_peer_server_name")-1},
 		PVT_OTHER, pv_tlsext_sn, 0,
 		0, 0, pv_init_iname, PV_TLSEXT_SNI },
+	{ {"tls", (sizeof("tls")-1)}, PVT_OTHER, pv_get_tls,
+		0, pv_parse_tls_name, 0, 0, 0},
 
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 

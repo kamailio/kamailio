@@ -39,6 +39,7 @@
 #include "../../core/mod_fix.h"
 #include "../../core/events.h"
 #include "../../core/kemi.h"
+#include "../../core/pass_fd.h"
 
 #include "tcpops.h"
 
@@ -61,9 +62,10 @@ static int w_tcpops_enable_closed_event0(sip_msg_t* msg, char* p1, char* p2);
 static int w_tcp_conid_state(sip_msg_t* msg, char* con, char *p2);
 static int w_tcp_conid_alive(sip_msg_t* msg, char* con, char *p2);
 static int w_tcp_get_conid(sip_msg_t* msg, char *paddr, char *pvn);
-static int fixup_numpv(void** param, int param_no);
 static int w_tcp_set_otcpid(sip_msg_t* msg, char* conid, char *p2);
 static int w_tcp_set_otcpid_flag(sip_msg_t* msg, char* mode, char *p2);
+static int w_tcp_close_connection(sip_msg_t* msg, char* p1, char *p2);
+static int w_tcp_close_connection_id(sip_msg_t* msg, char* pconid, char *p2);
 
 str tcpops_event_callback = STR_NULL;
 
@@ -79,30 +81,34 @@ static pv_export_t mod_pvs[] = {
 
 static cmd_export_t cmds[]={
 	{"tcp_keepalive_enable", (cmd_function)w_tcp_keepalive_enable4, 4,
-			fixup_numpv, 0, ANY_ROUTE},
+			fixup_igp_all, fixup_free_igp_all, ANY_ROUTE},
 	{"tcp_keepalive_enable", (cmd_function)w_tcp_keepalive_enable3, 3,
-			fixup_numpv, 0, REQUEST_ROUTE|ONREPLY_ROUTE},
+			fixup_igp_all, fixup_free_igp_all, REQUEST_ROUTE|ONREPLY_ROUTE},
 	{"tcp_keepalive_disable", (cmd_function)w_tcp_keepalive_disable1, 1,
-			fixup_numpv, 0, ANY_ROUTE},
+			fixup_igp_all, fixup_free_igp_all, ANY_ROUTE},
 	{"tcp_keepalive_disable", (cmd_function)w_tcp_keepalive_disable0, 0,
 			0, 0, REQUEST_ROUTE|ONREPLY_ROUTE},
 	{"tcp_set_connection_lifetime", (cmd_function)w_tcpops_set_connection_lifetime2, 2,
-			fixup_numpv, 0, ANY_ROUTE},
+			fixup_igp_all, fixup_free_igp_all, ANY_ROUTE},
 	{"tcp_set_connection_lifetime", (cmd_function)w_tcpops_set_connection_lifetime1, 1,
-			fixup_numpv, 0, REQUEST_ROUTE|ONREPLY_ROUTE},
+			fixup_igp_all, fixup_free_igp_all, REQUEST_ROUTE|ONREPLY_ROUTE},
 	{"tcp_enable_closed_event", (cmd_function)w_tcpops_enable_closed_event1, 1,
-			fixup_numpv, 0, ANY_ROUTE},
+			fixup_igp_all, fixup_free_igp_all, ANY_ROUTE},
 	{"tcp_enable_closed_event", (cmd_function)w_tcpops_enable_closed_event0, 0,
 			0, 0, REQUEST_ROUTE|ONREPLY_ROUTE},
 	{"tcp_conid_state", (cmd_function)w_tcp_conid_state, 1,
-			fixup_numpv, 0, ANY_ROUTE},
+			fixup_igp_all, fixup_free_igp_all, ANY_ROUTE},
 	{"tcp_get_conid", (cmd_function)w_tcp_get_conid, 2,
 			fixup_spve_pvar, fixup_free_spve_pvar, ANY_ROUTE},
 	{"tcp_conid_alive", (cmd_function)w_tcp_conid_alive, 1,
-			fixup_numpv, 0, ANY_ROUTE},
+			fixup_igp_all, fixup_free_igp_all, ANY_ROUTE},
 	{"tcp_set_otcpid", (cmd_function)w_tcp_set_otcpid, 1,
 			fixup_igp_all, fixup_free_igp_all, ANY_ROUTE},
 	{"tcp_set_otcpid_flag", (cmd_function)w_tcp_set_otcpid_flag, 1,
+			fixup_igp_all, fixup_free_igp_all, ANY_ROUTE},
+	{"tcp_close_connection", (cmd_function)w_tcp_close_connection, 0,
+			0, 0, ANY_ROUTE},
+	{"tcp_close_connection", (cmd_function)w_tcp_close_connection_id, 1,
 			fixup_igp_all, fixup_free_igp_all, ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
@@ -525,14 +531,6 @@ static int w_tcpops_enable_closed_event0(sip_msg_t* msg, char* p1, char* p2)
 /**
  *
  */
-static int fixup_numpv(void** param, int param_no)
-{
-	return fixup_igp_null(param, 1);
-}
-
-/**
- *
- */
 static int ki_tcp_get_conid_helper(sip_msg_t* msg, str *saddr, pv_spec_t *pvs)
 {
 	int conid = 0;
@@ -674,6 +672,65 @@ static int w_tcp_set_otcpid_flag(sip_msg_t* msg, char* mode, char *p2)
 	return ki_tcp_set_otcpid_flag(msg, vmode);
 }
 
+/*!
+ * \brief Close a TCP connection
+ *
+ * Requests the TCP main process to close the specified TCP connection
+ * \param conid the internal connection ID
+ */
+static int ki_tcp_close_connection_id(sip_msg_t *msg, int conid)
+{
+	struct tcp_connection *con;
+	long mcmd[2];
+	int n;
+
+	if ((con = tcpconn_get(conid, 0, 0, 0, 0))) {
+		mcmd[0] = (long)con;
+		mcmd[1] = CONN_EOF;
+
+		con->send_flags.f |= SND_F_CON_CLOSE;
+		con->flags |= F_CONN_FORCE_EOF;
+
+		n = send_all(unix_tcp_sock, mcmd, sizeof(mcmd));
+		if (unlikely(n <= 0)){
+			LM_ERR("failed to send close request: %s (%d)\n", strerror(errno), errno);
+			return -2;
+		}
+		return 1;
+	}
+	return -1;
+}
+
+/**
+ *
+ */
+static int ki_tcp_close_connection(sip_msg_t *msg)
+{
+	return ki_tcp_close_connection_id(msg, msg->rcv.proto_reserved1);
+}
+
+/**
+ *
+ */
+static int w_tcp_close_connection_id(sip_msg_t* msg, char* pconid, char *p2)
+{
+	int conid = 0;
+
+	if(fixup_get_ivalue(msg, (gparam_t*)pconid, &conid)<0) {
+		LM_ERR("failed to get conid parameter\n");
+		return -1;
+	}
+	return ki_tcp_close_connection_id(msg, conid);
+}
+
+/**
+ *
+ */
+static int w_tcp_close_connection(sip_msg_t* msg, char* p1, char *p2)
+{
+	return ki_tcp_close_connection_id(msg, msg->rcv.proto_reserved1);
+}
+
 /**
  *
  */
@@ -805,6 +862,16 @@ static sr_kemi_t sr_kemi_tcpops_exports[] = {
 	},
 	{ str_init("tcpops"), str_init("tcp_set_otcpid_flag"),
 		SR_KEMIP_INT, ki_tcp_set_otcpid_flag,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tcpops"), str_init("tcp_close_connection"),
+		SR_KEMIP_INT, ki_tcp_close_connection,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tcpops"), str_init("tcp_close_connection_id"),
+		SR_KEMIP_INT, ki_tcp_close_connection_id,
 		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},

@@ -38,6 +38,7 @@
 #include "t_append_branches.h"
 #include "t_stats.h"
 #include "t_serial.h"
+#include "t_msgbuilder.h"
 
 /* export not usable from scripts */
 #define NO_SCRIPT	-1
@@ -83,7 +84,6 @@ struct tm_binds {
 	cancel_all_uacs_f  cancel_all_uacs;
 	prepare_request_within_f  prepare_request_within;
 	send_prepared_request_f   send_prepared_request;
-	enum route_mode*   route_mode;
 #ifdef DIALOG_CALLBACKS
 	register_new_dlg_cb_f register_new_dlg_cb;
 	register_dlg_tmcb_f   register_dlg_tmcb;
@@ -96,6 +96,7 @@ struct tm_binds {
 	t_get_canceled_ident_f    t_get_canceled_ident;
 	t_suspend_f	t_suspend;
 	t_continue_f	t_continue;
+	t_continue_f	t_continue_skip_timer;
 	t_continue_cb_f	t_continue_cb;
 	t_cancel_suspend_f	t_cancel_suspend;
 	tget_reply_totag_f t_get_reply_totag;
@@ -122,6 +123,7 @@ struct tm_binds {
 	cmd_function	t_next_contacts;
 	tset_fr_f set_fr;
 	trelease_t      t_release_transaction;
+	t_uas_request_clean_parsed_f t_uas_request_clean_parsed;
 };
 
 typedef struct tm_binds tm_api_t;

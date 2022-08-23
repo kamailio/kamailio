@@ -209,8 +209,8 @@ int process_contact(udomain_t * _d, int expires, str contact_uri, int contact_st
             /*TODO_LATEST - put this back */
         } else {//state is active
             //update this contact
-            LM_DBG("This contact: <%.*s> is in state active and is in usrloc so just updating - old expires: %li, new expires: %i which is in %i seconds\n", contact_uri.len, contact_uri.s,
-                    pcontact->expires,
+            LM_DBG("This contact: <%.*s> is in state active and is in usrloc so just updating - old expires: %" TIME_T_FMT ", new expires: %i which is in %i seconds\n", contact_uri.len, contact_uri.s,
+                    TIME_T_CAST(pcontact->expires),
                     expires,
                     expires - local_time_now);
             if (ul.update_pcontact(_d, &ci, pcontact) != 0) {

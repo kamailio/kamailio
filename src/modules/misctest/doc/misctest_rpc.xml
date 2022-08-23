@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+	"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
+	[ <!-- Include general documentation entities -->
+		<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+		%docentities;
+	]
+>
+
+<section id="misctest.rpcs" xmlns:xi="http://www.w3.org/2001/XInclude">
+	<sectioninfo>
+	</sectioninfo>
+	<title>RPC Commands</title>
+
+	<section id="mt.mem_alloc">
+		<title> <function>mt.mem_alloc size [unit]</function></title>
+		<para>
+			Allocates the specified number of bytes.
+			<varname>unit</varname> is optional and can be one of:
+			<itemizedlist>
+			<listitem><para><emphasis>b</emphasis> - bytes </para></listitem>
+			<listitem><para><emphasis>k</emphasis> - KB </para></listitem>
+			<listitem><para><emphasis>m</emphasis> - MB </para></listitem>
+			<listitem><para><emphasis>g</emphasis> - GB </para></listitem>
+			</itemizedlist>
+		</para>
+		<example>
+			<title><function>mt.mem_alloc</function> usage</title>
+			<programlisting>
+ $ &kamcmd; mt.mem_alloc 10 k
+			</programlisting>
+		</example>
+	</section>
+
+	<section id="mt.mem_free">
+		<title> <function>mt.mem_free [size] [unit]</function></title>
+		<para>
+			Frees at least <varname>size</varname> bytes from the memory
+			allocated by other misctest functions (e.g. mt.mem_alloc).
+		</para>
+		<para>
+			<varname>size</varname> is optional. If missing, everything will
+			be freed.
+		</para>
+		<para>
+			<varname>unit</varname> is optional and can be one of:
+			<itemizedlist>
+			<listitem><para><emphasis>b</emphasis> - bytes </para></listitem>
+			<listitem><para><emphasis>k</emphasis> - KB </para></listitem>
+			<listitem><para><emphasis>m</emphasis> - MB </para></listitem>
+			<listitem><para><emphasis>g</emphasis> - GB </para></listitem>
+			</itemizedlist>
+		</para>
+		<example>
+			<title><function>mt.mem_free</function> usage</title>
+		<programlisting>
+ $ &kamcmd; mt.mem_free 1 m
+		</programlisting>
+		</example>
+	</section>
+
+	<section id="mt.mem_used">
+		<title> <function>mt.mem_used [unit]</function></title>
+		<para>
+			Returns/displays how many bytes are allocated. The default
+			unit is bytes (for all the possible units see above).
+		</para>
+		<para>
+			<varname>unit</varname> is optional and can be one of:
+			<itemizedlist>
+			<listitem><para><emphasis>b</emphasis> - bytes </para></listitem>
+			<listitem><para><emphasis>k</emphasis> - KB </para></listitem>
+			<listitem><para><emphasis>m</emphasis> - MB </para></listitem>
+			<listitem><para><emphasis>g</emphasis> - GB </para></listitem>
+			</itemizedlist>
+		</para>
+		<example>
+			<title><function>mt.mem_used</function> usage</title>
+		<programlisting>
+ $ &kamcmd; mt.mem_used
+9221460
+		</programlisting>
+		</example>
+	</section>
+
+	<section id="mt.mem_rnd_alloc">
+		<title><function>mt.mem_rnd_alloc min max total [unit]</function>
+		</title>
+		<para>
+			Allocates <varname>total_size</varname> memory, in pieces of
+			random size between
+			<varname>min</varname> .. <varname>max</varname> (inclusive).
+			<varname>unit</varname> is optional and represents the unit for
+			all the given sizes (see above).
+		</para>
+		<example>
+			<title><function>mt.mem_rnd_alloc</function> usage</title>
+			<programlisting>
+ $ &kamcmd; mt.mem_rnd_alloc 1 64 10240 k
+			</programlisting>
+		</example>
+	</section>
+
+	<section id="mt.mem_test_start">
+		<title>
+			<function>
+				mt.mem_test_start min max total min_int max_int total_time
+				[unit]
+			</function>
+		</title>
+		<para>
+			Starts a malloc test that will take <varname>total_time</varname>
+			to execute. Memory allocations will be performed at intervals
+			randomly chosen between <varname>min_int</varname> and
+			<varname>max_int</varname> (in ms). Each allocation will have a
+			randomly chosen size between <varname>min</varname> and
+			<varname>max</varname> <varname>unit</varname> bytes. After
+			<varname>total</varname> <varname>unit</varname> bytes are
+			allocated, everything is released/freed again and the allocations
+			are restarted. All the times are expressed in milliseconds.
+			<varname>unit</varname> is optional and represents the unit for
+			all the given sizes (see above).
+		</para>
+		<para>
+			Several tests can be run in parallel.
+		</para>
+		<para>
+			Returns the test id.
+		</para>
+		<example>
+			<title><function>mt.mem_test_start</function> usage</title>
+			<programlisting>
+ $ &kamcmd; mt.mem_test_start 15 64 25000 128 1500 3600000 k
+1
+			</programlisting>
+		</example>
+	</section>
+
+	<section id="mt.mem_test_stop">
+		<title> <function>mt.mem_test_stop id</function></title>
+		<para>
+			Stops the test identified by <varname>id</varname>.
+		</para>
+		<example>
+			<title><function>mt.mem_test_stop</function> usage</title>
+		<programlisting>
+ $ &kamcmd; mt.mem_test_stop 1
+		</programlisting>
+		</example>
+	</section>
+
+	<section id="mt.mem_test_destroy">
+		<title> <function>mt.mem_test_destroy id</function></title>
+		<para>
+			Destroys the test identified by <varname>id</varname>
+			(besides stopping it, it also frees all the data, including the
+			statistics).
+		</para>
+		<example>
+			<title><function>mt.mem_test_destroy</function> usage</title>
+		<programlisting>
+ $ &sercmd; mt.mem_test_destroy 1
+		</programlisting>
+		</example>
+	</section>
+
+	<section id="mt.mem_test_destroy_all">
+		<title> <function>mt.mem_test_destroy_all id</function></title>
+		<para>
+			Destroys all the running or stopped tests.
+		</para>
+		<example>
+			<title><function>mt.mem_test_destroy_all</function> usage</title>
+		<programlisting>
+ $ &sercmd; mt.mem_test_destroy_all
+		</programlisting>
+		</example>
+	</section>
+
+	<section id="mt.mem_test_list">
+		<title> <function>mt.mem_test_list [id] [unit]</function></title>
+		<para>
+			Returns/displays data about the test identified by
+			<varname>id</varname>, or if no <varname>id</varname> is
+			specified, it lists all the tests (running or stopped).
+		</para>
+		<para>
+			<varname>unit</varname> is optional. The default is
+			is bytes (for all the possible units see above).
+		</para>
+		<example>
+			<title><function>mt.mem_test_list</function> usage</title>
+		<programlisting>
+ $ &sercmd; mt.mem_test_list
+{
+	ID           : 2
+	run time (s) : 1471
+	remaining (s): 2128
+	allocations  : 1749
+	errors       : 24
+	overflows    : 2
+	total alloc  : 69614530
+	min          : 15360
+	max          : 65536
+	total        : 25600000
+}
+{
+	ID           : 1
+	run time (s) : 3600
+	remaining (s): 0
+	allocations  : 4268
+	errors       : 640
+	overflows    : 4
+	total alloc  : 144220713
+	min          : 15360
+	max          : 65536
+	total        : 29696000
+}
+		</programlisting>
+		</example>
+	</section>
+
+</section>

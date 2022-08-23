@@ -41,7 +41,7 @@ int default_uri_checks = SANITY_DEFAULT_URI_CHECKS;
 int _sanity_drop = 1;
 int ksr_sanity_noreply = 0;
 
-strl* proxyrequire_list = NULL;
+str_list_t* proxyrequire_list = NULL;
 
 sl_api_t slb;
 
@@ -60,7 +60,7 @@ static cmd_export_t cmds[] = {
 		REQUEST_ROUTE|ONREPLY_ROUTE},
 	{"sanity_check", (cmd_function)w_sanity_check, 2, fixup_igp_igp, 0,
 		REQUEST_ROUTE|ONREPLY_ROUTE},
-	{"sanity_check", (cmd_function)w_sanity_reply, 0, 0, 0,
+	{"sanity_reply", (cmd_function)w_sanity_reply, 0, 0, 0,
 		REQUEST_ROUTE|ONREPLY_ROUTE},
 	{"bind_sanity",  (cmd_function)bind_sanity,    0, 0, 0, 0 },
 	{0, 0, 0, 0, 0, 0}
@@ -98,7 +98,7 @@ struct module_exports exports = {
  * initialize module
  */
 static int mod_init(void) {
-	strl* ptr;
+	str_list_t* ptr;
 
 	LM_DBG("sanity initializing\n");
 
@@ -116,8 +116,8 @@ static int mod_init(void) {
 	proxyrequire_list = ptr;
 
 	while (ptr != NULL) {
-		LM_DBG("string: '%.*s', next: %p\n", ptr->string.len,
-				ptr->string.s, ptr->next);
+		LM_DBG("string: '%.*s', next: %p\n", ptr->s.len,
+				ptr->s.s, ptr->next);
 		ptr = ptr->next;
 	}
 

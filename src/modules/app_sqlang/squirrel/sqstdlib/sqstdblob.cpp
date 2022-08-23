@@ -14,7 +14,7 @@
 
 #define SETUP_BLOB(v) \
     SQBlob *self = NULL; \
-    { if(SQ_FAILED(sq_getinstanceup(v,1,(SQUserPointer*)&self,(SQUserPointer)SQSTD_BLOB_TYPE_TAG))) \
+    { if(SQ_FAILED(sq_getinstanceup(v,1,(SQUserPointer*)&self,(SQUserPointer)SQSTD_BLOB_TYPE_TAG,SQFalse))) \
         return sq_throwerror(v,_SC("invalid type tag"));  } \
     if(!self || !self->IsValid())  \
         return sq_throwerror(v,_SC("the blob is invalid"));
@@ -152,7 +152,7 @@ static SQInteger _blob__cloned(HSQUIRRELVM v)
 {
     SQBlob *other = NULL;
     {
-        if(SQ_FAILED(sq_getinstanceup(v,2,(SQUserPointer*)&other,(SQUserPointer)SQSTD_BLOB_TYPE_TAG)))
+        if(SQ_FAILED(sq_getinstanceup(v,2,(SQUserPointer*)&other,(SQUserPointer)SQSTD_BLOB_TYPE_TAG,SQFalse)))
             return SQ_ERROR;
     }
     //SQBlob *thisone = new SQBlob(other->Len());
@@ -205,8 +205,8 @@ static SQInteger _g_blob_swap2(HSQUIRRELVM v)
 {
     SQInteger i;
     sq_getinteger(v,2,&i);
-    short s=(short)i;
-    sq_pushinteger(v,(s<<8)|((s>>8)&0x00FF));
+    unsigned short s = (unsigned short)i;
+    sq_pushinteger(v, ((s << 8) | ((s >> 8) & 0x00FFu)) & 0xFFFFu);
     return 1;
 }
 
@@ -242,7 +242,7 @@ static const SQRegFunction bloblib_funcs[]={
 SQRESULT sqstd_getblob(HSQUIRRELVM v,SQInteger idx,SQUserPointer *ptr)
 {
     SQBlob *blob;
-    if(SQ_FAILED(sq_getinstanceup(v,idx,(SQUserPointer *)&blob,(SQUserPointer)SQSTD_BLOB_TYPE_TAG)))
+    if(SQ_FAILED(sq_getinstanceup(v,idx,(SQUserPointer *)&blob,(SQUserPointer)SQSTD_BLOB_TYPE_TAG,SQTrue)))
         return -1;
     *ptr = blob->GetBuf();
     return SQ_OK;
@@ -251,7 +251,7 @@ SQRESULT sqstd_getblob(HSQUIRRELVM v,SQInteger idx,SQUserPointer *ptr)
 SQInteger sqstd_getblobsize(HSQUIRRELVM v,SQInteger idx)
 {
     SQBlob *blob;
-    if(SQ_FAILED(sq_getinstanceup(v,idx,(SQUserPointer *)&blob,(SQUserPointer)SQSTD_BLOB_TYPE_TAG)))
+    if(SQ_FAILED(sq_getinstanceup(v,idx,(SQUserPointer *)&blob,(SQUserPointer)SQSTD_BLOB_TYPE_TAG,SQTrue)))
         return -1;
     return blob->Len();
 }
@@ -267,7 +267,7 @@ SQUserPointer sqstd_createblob(HSQUIRRELVM v, SQInteger size)
         sq_pushinteger(v,size); //size
         SQBlob *blob = NULL;
         if(SQ_SUCCEEDED(sq_call(v,2,SQTrue,SQFalse))
-            && SQ_SUCCEEDED(sq_getinstanceup(v,-1,(SQUserPointer *)&blob,(SQUserPointer)SQSTD_BLOB_TYPE_TAG))) {
+            && SQ_SUCCEEDED(sq_getinstanceup(v,-1,(SQUserPointer *)&blob,(SQUserPointer)SQSTD_BLOB_TYPE_TAG,SQTrue))) {
             sq_remove(v,-2);
             return blob->GetBuf();
         }

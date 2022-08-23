@@ -32,6 +32,7 @@
 #include "../../core/dprint.h"
 #include "../../core/parser/parse_param.h"
 #include "../../core/usr_avp.h"
+#include "../../core/shm_init.h"
 #include "../../core/cfg_parser.h"
 #include "http_client.h"
 #include "curlcon.h"
@@ -112,7 +113,7 @@ static cfg_option_t http_client_options[] = {
 		{"keepconnections", .f = cfg_parse_int_opt},					/* 17 */
 		{0}};
 
-/*! Count the number of connections 
+/*! Count the number of connections
  */
 unsigned int curl_connection_count()
 {
@@ -135,7 +136,7 @@ int http_connection_exists(str *name)
 		return 1;
 	}
 
-	LM_DBG("curl_connection_exists no success in looking for httpcon: [%.*s]\n",
+	LM_DBG("no success in looking for httpcon: [%.*s]\n",
 			name->len, name->s);
 	return 0;
 }
@@ -148,7 +149,7 @@ curl_con_t *curl_get_connection(str *name)
 	unsigned int conid;
 
 	conid = core_case_hash(name, 0, 0);
-	LM_DBG("curl_get_connection looking for httpcon: [%.*s] ID %u\n", name->len,
+	LM_DBG("looking for httpcon: [%.*s] ID %u\n", name->len,
 			name->s, conid);
 
 	cc = _curl_con_root;
@@ -159,8 +160,8 @@ curl_con_t *curl_get_connection(str *name)
 		}
 		cc = cc->next;
 	}
-	LM_DBG("curl_get_connection no success in looking for httpcon: [%.*s]\n",
-			name->len, name->s);
+	LM_DBG("no success in looking for httpcon: [%.*s] (list: %p)\n",
+			name->len, name->s, _curl_con_root);
 	return NULL;
 }
 
@@ -171,12 +172,13 @@ curl_con_pkg_t *curl_get_pkg_connection(curl_con_t *con)
 
 	ccp = _curl_con_pkg_root;
 	while(ccp) {
-		if(ccp->conid == con->conid) {
+		if(ccp->conid == con->conid && ccp->name.len == con->name.len
+				&& strncmp(ccp->name.s, con->name.s, con->name.len) == 0) {
 			return ccp;
 		}
 		ccp = ccp->next;
 	}
-	LM_ERR("curl_get_pkg_connection no success in looking for pkg memory for "
+	LM_ERR("no success in looking for pkg memory for "
 		   "httpcon: [%.*s]\n",
 			con->name.len, con->name.s);
 	return NULL;
@@ -236,6 +238,11 @@ int curl_parse_param(char *val)
 
 	LM_DBG("modparam httpcon: %s\n", val);
 	LM_DBG(" *** Default httproxy: %s\n", http_proxy.s);
+
+	if(!shm_initialized()) {
+		LM_ERR("shared memory was not initialized\n");
+		return -1;
+	}
 
 	/* parse: name=>http_url*/
 	in.s = val;
@@ -808,8 +815,9 @@ curl_con_t *curl_init_con(str *name)
 		cc = cc->next;
 	}
 
-	cc = (curl_con_t *)shm_malloc(sizeof(
-			curl_con_t)); /* Connection structures are shared by all children processes */
+	/* Connection structures are shared by all children processes */
+	cc = (curl_con_t *)shm_malloc(sizeof(curl_con_t)
+			+ (name->len + 1)*sizeof(char));
 	if(cc == NULL) {
 		LM_ERR("no shm memory\n");
 		return NULL;
@@ -817,7 +825,8 @@ curl_con_t *curl_init_con(str *name)
 
 	/* Each structure is allocated in package memory so each process can write into it without
 	   any locks or such stuff */
-	ccp = (curl_con_pkg_t *)pkg_malloc(sizeof(curl_con_pkg_t));
+	ccp = (curl_con_pkg_t *)pkg_malloc(sizeof(curl_con_pkg_t)
+			+ (name->len + 1)*sizeof(char));
 	if(ccp == NULL) {
 		/* We failed to allocate ccp, so let's free cc and quit */
 		shm_free(cc);
@@ -825,17 +834,21 @@ curl_con_t *curl_init_con(str *name)
 		return NULL;
 	}
 
-	memset(cc, 0, sizeof(curl_con_t));
+	memset(cc, 0, sizeof(curl_con_t) + (name->len + 1)*sizeof(char));
 	cc->next = _curl_con_root;
 	cc->conid = conid;
+	cc->name.s = (char*)cc + sizeof(curl_con_t);
+	memcpy(cc->name.s, name->s, name->len);
+	cc->name.len = name->len;
 	_curl_con_root = cc;
-	cc->name = *name;
 
 	/* Put the new ccp first in line */
-	memset(ccp, 0, sizeof(curl_con_pkg_t));
+	memset(ccp, 0, sizeof(curl_con_pkg_t) + (name->len + 1)*sizeof(char));
 	ccp->next = _curl_con_pkg_root;
 	ccp->conid = conid;
-	ccp->curl = NULL;
+	ccp->name.s = (char*)ccp + sizeof(curl_con_pkg_t);
+	memcpy(ccp->name.s, name->s, name->len);
+	ccp->name.len = name->len;
 	_curl_con_pkg_root = ccp;
 
 	LM_DBG("CURL: Added connection [%.*s]\n", name->len, name->s);

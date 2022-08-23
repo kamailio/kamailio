@@ -205,15 +205,16 @@ modparam("uac_redirect","accept_filter",".*@siphub\.net")
 4.4. acc_function (string)
 
    Specifies the accounting function to be used. Just by defining this
-   parameter, the accounting support will not be enabled. Accounting may
-   only be enabled via two parameters set_accept_filter() scripting
+   parameter, the accounting is not done automatically, it has to be
+   requested via parameters of set_accept_filter() or other scripting
    function.
+
+   Set it to empty string in order to disable binding to acc module.
 
    Its values may be:
      * acc_log_request
      * acc_db_request
-     * acc_rad_request
-     * acc_diam_request
+     * acc_request
 
    The default value is “acc_log_request”.
 
@@ -225,10 +226,7 @@ modparam("uac_redirect","acc_function","acc_db_request")
 4.5. acc_db_table (string)
 
    Specifies the accounting table to be used if DB accounting was chosen
-   (acc_function was set to “acc_db_request”). Just by defining this
-   parameter, the accounting support will not be enabled. Accounting may
-   only be enabled via two parameters set_accept_filter() scripting
-   function.
+   (acc_function was set to “acc_db_request” or “acc_request”).
 
    The default value is “acc”.
 

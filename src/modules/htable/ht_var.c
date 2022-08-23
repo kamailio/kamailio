@@ -94,7 +94,7 @@ int pv_set_ht_cell(struct sip_msg* msg, pv_param_t *param,
 		if (hpv->ht->dmqreplicate>0
 				&& ht_dmq_replicate_action(HT_DMQ_DEL_CELL, &hpv->htname,
 					&htname, 0, NULL, 0)!=0) {
-			LM_ERR("dmq relication failed\n");
+			LM_ERR("dmq replication failed\n");
 		}
 		ht_del_cell(hpv->ht, &htname);
 		return 0;
@@ -106,7 +106,7 @@ int pv_set_ht_cell(struct sip_msg* msg, pv_param_t *param,
 		if (hpv->ht->dmqreplicate>0
 				&& ht_dmq_replicate_action(HT_DMQ_SET_CELL, &hpv->htname,
 					&htname, 0, &isval, 1)!=0) {
-			LM_ERR("dmq relication failed\n");
+			LM_ERR("dmq replication failed\n");
 		}
 		if(ht_set_cell(hpv->ht, &htname, 0, &isval, 1)!=0)
 		{
@@ -118,7 +118,7 @@ int pv_set_ht_cell(struct sip_msg* msg, pv_param_t *param,
 		if (hpv->ht->dmqreplicate>0
 				&& ht_dmq_replicate_action(HT_DMQ_SET_CELL, &hpv->htname,
 					&htname, AVP_VAL_STR, &isval, 1)!=0) {
-			LM_ERR("dmq relication failed\n");
+			LM_ERR("dmq replication failed\n");
 		}
 		if(ht_set_cell(hpv->ht, &htname, AVP_VAL_STR, &isval, 1)!=0)
 		{
@@ -264,7 +264,7 @@ int pv_set_ht_cell_expire(struct sip_msg* msg, pv_param_t *param,
 			isval.n = val->ri;
 	}
 	if (hpv->ht->dmqreplicate>0 && ht_dmq_replicate_action(HT_DMQ_SET_CELL_EXPIRE, &hpv->htname, &htname, 0, &isval, 0)!=0) {
-		LM_ERR("dmq relication failed\n");
+		LM_ERR("dmq replication failed\n");
 	}
 	if(ht_set_cell_expire(hpv->ht, &htname, 0, &isval)!=0)
 	{
@@ -366,7 +366,7 @@ int pv_get_ht_add(struct sip_msg *msg,  pv_param_t *param,
 	/* integer */
 	if (hpv->ht->dmqreplicate>0) {
 		if (ht_dmq_replicate_action(HT_DMQ_SET_CELL, &hpv->htname, &htname, 0, &htc->value, 1)!=0) {
-			LM_ERR("dmq relication failed\n");
+			LM_ERR("dmq replication failed\n");
 		}
 	}
 	return pv_get_sintval(msg, param, res, htc->value.n);

@@ -126,4 +126,7 @@ extern int  max_loc_nr;
 extern int * mdb_w_available;
 extern int mdb_availability_control;
 
+time_t ul_db_datetime_set(time_t v);
+time_t ul_db_datetime_get(time_t v);
+
 #endif /* UL_MOD_H */

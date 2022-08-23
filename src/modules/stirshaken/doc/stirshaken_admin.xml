@@ -256,6 +256,46 @@ modparam("stirshaken", "vs_cache_expire_s", 15)
 </programlisting>
 		</example>
 	</section>
+		<section>
+		<title><varname>vs_certsubject_pvname</varname> (str)</title>
+		<para>
+		If vs_certsubject_pvname is set then the Subject of the authenticated x509 certificate will be written to this pseudo-variable when
+		stirshaken_check_identity() is executed.  If the Identity header cannot be fully authenticated the pseudo-variable will be set to $null.
+		</para>
+		<para>
+		<emphasis>
+			Default value is blank (disabled).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>vs_certsubject_pvname</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("stirshaken", "vs_certsubject_pvname", "$vn(certsubject)")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>vs_pptgrants_pvname</varname> (str)</title>
+		<para>
+		If vs_pptgrants_pvname is set then the JSON string of the authenticated PASSporT's grants will be written to this pseudo-variable when
+		stirshaken_check_identity() is executed.  If the Identity header cannot be fully authenticated the pseudo-variable will be set to $null.
+		</para>
+		<para>
+		<emphasis>
+			Default value is blank (disabled).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>vs_pptgrants_pvname</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("stirshaken", "vs_pptgrants_pvname", "$vn(grants)")
+...
+</programlisting>
+		</example>
+	</section>
 
 	</section>
 
@@ -382,7 +422,7 @@ request_route {
 		</para>
 		<para>
 		The parameters can contain pseudo-variables.
-		If origid is empty, an unique identifier will be generated wih libuuid, e.g. "3f31bd2b-9fc4-4084-b0b0-566506c46292".
+		If origid is empty, an unique identifier will be generated with libuuid, e.g. "3f31bd2b-9fc4-4084-b0b0-566506c46292".
 		</para>
 		<para>
 		This function can be used from ANY_ROUTE.

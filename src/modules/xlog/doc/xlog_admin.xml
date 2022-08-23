@@ -149,7 +149,7 @@ modparam("xlog", "long_format", 1)
 </programlisting>
 		</example>
 	</section>
-	<section id="xlog.p.varname">
+	<section id="xlog.p.prefix">
 		<title><varname>prefix</varname> (str)</title>
 		<para>
 		Prefix to be output before the log message.
@@ -164,6 +164,28 @@ modparam("xlog", "long_format", 1)
 		<programlisting format="linespecific">
 ...
 modparam("xlog", "prefix", "-xlog: ")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="xlog.p.prefix_mode">
+		<title><varname>prefix_mode</varname> (str)</title>
+		<para>
+		control behaviour of <varname>prefix</varname> value.
+		if mode = 0 then <varname>prefix</varname> is treated as string (current behaviour).
+		if mode = 1 then <varname>prefix</varname> is treated as pv_format specifier and value will be evaluated before output.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>prefix_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("xlog", "prefix", "$cfg(name):$cfg(line)")
+modparam("xlog", "prefix_mode", 1)
 ...
 </programlisting>
 		</example>

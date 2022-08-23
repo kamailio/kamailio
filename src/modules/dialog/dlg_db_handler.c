@@ -802,6 +802,7 @@ int update_dialog_dbinfo_unsafe(struct dlg_cell * cell)
 	int i;
 	struct dlg_var *var;
 	srjson_doc_t jdoc;
+	str sempty = str_init("");
 
 	db_val_t values[DIALOG_TABLE_COL_NO];
 
@@ -870,14 +871,25 @@ int update_dialog_dbinfo_unsafe(struct dlg_cell * cell)
 		SET_STR_VALUE(values+6, cell->tag[DLG_CALLEE_LEG]);
 		SET_PROPER_NULL_FLAG(cell->tag[DLG_CALLEE_LEG], values, 6);
 
-		LM_DBG("caller sock_info is %.*s, callee sock_info is %.*s\n",
-			cell->bind_addr[DLG_CALLER_LEG]->sock_str.len,
-			cell->bind_addr[DLG_CALLER_LEG]->sock_str.s,
-			cell->bind_addr[DLG_CALLEE_LEG]->sock_str.len,
-			cell->bind_addr[DLG_CALLEE_LEG]->sock_str.s);
 
-		SET_STR_VALUE(values+7, cell->bind_addr[DLG_CALLER_LEG]->sock_str);
-		SET_STR_VALUE(values+8, cell->bind_addr[DLG_CALLEE_LEG]->sock_str);
+		if(cell->bind_addr[DLG_CALLER_LEG]) {
+			LM_DBG("caller sock_info is %.*s\n",
+				cell->bind_addr[DLG_CALLER_LEG]->sock_str.len,
+				cell->bind_addr[DLG_CALLER_LEG]->sock_str.s);
+			SET_STR_VALUE(values+7, cell->bind_addr[DLG_CALLER_LEG]->sock_str);
+		} else {
+			LM_DBG("no caller sock_info\n");
+			SET_STR_VALUE(values+7, sempty);
+		}
+		if(cell->bind_addr[DLG_CALLEE_LEG]) {
+			LM_DBG("callee sock_info is %.*s\n",
+				cell->bind_addr[DLG_CALLEE_LEG]->sock_str.len,
+				cell->bind_addr[DLG_CALLEE_LEG]->sock_str.s);
+			SET_STR_VALUE(values+8, cell->bind_addr[DLG_CALLEE_LEG]->sock_str);
+		} else {
+			LM_DBG("no callee sock_info\n");
+			SET_STR_VALUE(values+8, sempty);
+		}
 
 		SET_STR_VALUE(values+12, cell->cseq[DLG_CALLER_LEG]);
 		SET_STR_VALUE(values+13, cell->cseq[DLG_CALLEE_LEG]);

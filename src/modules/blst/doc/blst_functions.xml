@@ -38,15 +38,15 @@ else
 	</title>
 	<para>
 		Adds the source of the current message to the blocklist for
-		the time interval specified in the <emphasis>Retry-After</emphasis> 
+		the time interval specified in the <emphasis>Retry-After</emphasis>
 		header.
-		If the <emphasis>Retry-After</emphasis> header is missing, it will 
+		If the <emphasis>Retry-After</emphasis> header is missing, it will
 		fail (returns false).
-		If the <emphasis>Retry-After</emphasis> value is less than 
-		<varname>min</varname>, then <varname>min</varname> seconds will be 
+		If the <emphasis>Retry-After</emphasis> value is less than
+		<varname>min</varname>, then <varname>min</varname> seconds will be
 		used instead.
 		If the <emphasis>Retry-After</emphasis> value is greater than
-		<varname>max</varname>, then <varname>max</varname> seconds will be 
+		<varname>max</varname>, then <varname>max</varname> seconds will be
 		used instead.
 	</para>
 	<example>
@@ -117,7 +117,7 @@ if (msg_status==503){ # blocklist 503 source for Retry-After seconds
 		works for local replies to the current message.
 	</para>
 	<para>
-		The variants of these functions with no parameters will ignore 
+		The variants of these functions with no parameters will ignore
 		everything (equivalent to passing 0xff).
 	</para>
 	<para>

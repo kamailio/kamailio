@@ -48,6 +48,7 @@
 #include "../../core/receive.h"
 #include "../../core/fmsg.h"
 #include "../../core/kemi.h"
+#include "../../core/daemonize.h"
 #include "../../modules/tm/tm_load.h"
 
 #include "async_http.h"
@@ -89,8 +90,12 @@ int async_http_init_worker(int prank, async_http_worker_t* worker)
 
 void async_http_run_worker(async_http_worker_t* worker)
 {
+	int ret;
 	init_http_multi(worker->evbase, worker->g);
-	event_base_dispatch(worker->evbase);
+	ret = event_base_dispatch(worker->evbase);
+	LM_ERR("event base dispatch failed - ret: %d (errno: %d - %s)\n", ret, errno,
+			strerror(errno));
+	ksr_exit(-1);
 }
 
 int async_http_init_sockets(async_http_worker_t *worker)

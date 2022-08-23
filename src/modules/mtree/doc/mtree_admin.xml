@@ -63,7 +63,7 @@
     </section>
     <section>
 	<title>Parameters</title>
-	<section>
+	<section id="mtree.p.db_url">
 	    <title><varname>db_url</varname> (string)</title>
 	    <para>
 		URL of the database server to be used.
@@ -83,7 +83,7 @@ modparam("mtree", "db_url", "&exampledb;")
 	    </example>
 	</section>
 
-	<section>
+	<section id="mtree.p.db_table">
 	    <title><varname>db_table</varname> (string)</title>
 	    <para>
 		Name of database table where data for many trees is stored. It is ignored
@@ -105,7 +105,7 @@ modparam("mtree", "db_table", "mtrees")
 	    </example>
 	</section>
 
-	<section>
+	<section id="mtree.p.mtree">
 	    <title><varname>mtree</varname> (string)</title>
 	    <para>
 			Definition of memory tree with using a parameters format string.
@@ -139,9 +139,18 @@ modparam("mtree", "db_table", "mtrees")
 		</listitem>
 		<listitem>
 			<para>
-				type - the  type of tree elements (0 = string, 2 = integer).
-				It is valid only when the (tprefix, tvalue) pairs are loaded
+				type - the  type of tree elements (0 = string, 1 = d:w, 2 = integer).
+				None-zero is valid only when the (tprefix, tvalue) pairs are loaded
 				(not for multi-column values).
+			</para>
+			<para>
+				When the type is 1, the value in database has to be two integers
+				separated by colon, the first one (d - dstid) will be stored in
+				pv_dstid AVP and the second (w - weight) will be stored in
+				pv_weight AVP. If in the matching records are many with the same
+				dstid, it will keep only the one with the longest prefix. Then
+				the records are ordered by the weight and stored in the specified
+				AVPs. The number of stored records is saved in pv_count variable.
 			</para>
 		</listitem>
 		<listitem>
@@ -176,7 +185,7 @@ modparam("mtree", "mtree",
 	    </example>
 	</section>
 
-	<section>
+	<section id="mtree.p.tname_column">
 	    <title><varname>tname_column</varname> (string)</title>
 	    <para>
 		Name of 'tname' column.
@@ -196,7 +205,7 @@ modparam("mtree", "tname_column", "name")
 	    </example>
 	</section>
 
-	<section>
+	<section id="mtree.p.tprefix_column">
 	    <title><varname>tprefix_column</varname> (string)</title>
 	    <para>
 		Name of 'tprefix' column.
@@ -216,7 +225,7 @@ modparam("mtree", "tprefix_column", "prefix")
 	    </example>
 	</section>
 
-	<section>
+	<section id="mtree.p.tvalue_column">
 	    <title><varname>tvalue_column</varname> (string)</title>
 	    <para>
 		Name of 'tvalue' column.
@@ -236,7 +245,7 @@ modparam("mtree", "tvalue_column", "ipaddr")
 	    </example>
 	</section>
 
-	<section>
+	<section id="mtree.p.fetch_rows">
 	    <title><varname>fetch_rows</varname> (integer)</title>
 	    <para>
 		Number of rows to be loaded in one step from database.
@@ -256,7 +265,7 @@ modparam("mtree", "fetch_rows", 4000)
 	    </example>
 	</section>
 
-	<section>
+	<section id="mtree.p.char_list">
 	    <title><varname>char_list</varname> (string)</title>
 	    <para>
 		The list with characters allowed in prefix.
@@ -276,7 +285,7 @@ modparam("mtree", "char_list", "0123456789*+")
 	    </example>
 	</section>
 
-	<section>
+	<section id="mtree.p.pv_value">
 	    <title><varname>pv_value</varname> (string)</title>
 	    <para>
 		The PV spec where to store the matched value. It can be any
@@ -297,7 +306,7 @@ modparam("mtree", "pv_value", "$var(mtval)")
 	    </example>
 	</section>
 
-	<section>
+	<section id="mtree.p.pv_values">
 	    <title><varname>pv_values</varname> (string)</title>
 	    <para>
 		The AVP where to store the matched values when mtree is of type
@@ -318,7 +327,68 @@ modparam("mtree", "pv_values", "$avp(mtvals)")
 	    </example>
 	</section>
 
-	<section>
+	<section id="mtree.p.pv_dstid">
+	    <title><varname>pv_dstid</varname> (string)</title>
+	    <para>
+		The AVP name where to store the first integer value when tree type is 1.
+		</para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>$avp(tdstid)</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>pv_dstid</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("mtree", "pv_dstid", "$var(dstid)")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section id="mtree.p.pv_weight">
+	    <title><varname>pv_weight</varname> (string)</title>
+	    <para>
+		The AVP name where to store the second integer value when tree type is 1.
+		</para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>$avp(tweight)</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>pv_weight</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("mtree", "pv_dstid", "$var(weight)")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section id="mtree.p.pv_count">
+	    <title><varname>pv_count</varname> (string)</title>
+	    <para>
+		The PV spec where to store the count of matched values when tree type
+		is 1. It can be any writable PV.
+		</para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>$avp(tcount)</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>pv_count</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("mtree", "pv_count", "$var(count)")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section id="mtree.p.mt_tree_type">
 	    <title><varname>mt_tree_type</varname> (integer)</title>
 	    <para>
 		Default payload type for trees data stored in 'db_table'. Documented
@@ -339,7 +409,7 @@ modparam("mtree", "mt_tree_type", 2)
 	    </example>
 	</section>
 
-	<section>
+	<section id="mtree.p.mt_ignore_duplicates">
 	    <title><varname>mt_ignore_duplicates</varname> (integer)</title>
 	    <para>
 		Ignore duplicated prefixes when loading data.
@@ -359,7 +429,7 @@ modparam("mtree", "mt_ignore_duplicates", 1)
 	    </example>
 	</section>
 
-	<section>
+	<section id="mtree.p.mt_allow_duplicates">
 	    <title><varname>mt_allow_duplicates</varname> (integer)</title>
 	    <para>
 		Allow duplicate prefixes when loading data.
@@ -384,13 +454,13 @@ modparam("mtree", "mt_allow_duplicates", 1)
     <section>
 	<title>Functions</title>
  	<section>
-	    <title>
+	    <title id="mtree.f.mt_match">
 		<function moreinfo="none">mt_match(mtree, pv, mode)</function>
 	    </title>
 	    <para>
 		Match 'pv' value against 'mtree'. If 'mtree' type is 0 or 2 and value
-		of 'mode' is NOT 2, sets a value of the longest matching prefix to
-		pseudo variable specified by pv_value parameter. If 'mtree' type is 
+		of 'mode' is NOT 2, sets associated value of the longest matching prefix
+		to pseudo variable specified by pv_value parameter. If 'mtree' type is
 		0 or 2 and value of 'mode' is 2, sets values of all matching prefixes
 		to avp specified by pv_values parameter so that a value of longest
 		matching prefix is in avp index 0.  Parameter 'mode' can be an integer

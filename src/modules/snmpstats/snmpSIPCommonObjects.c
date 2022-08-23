@@ -298,8 +298,8 @@ int handle_kamailioSIPSummaryOutResponses(netsnmp_mib_handler *handler,
 	 */
 
 	int fwd_replies = get_statistic("fwd_replies");
-	int local_replies = get_statistic("local_replies");
-	int relayed_replies = get_statistic("relayed_replies");
+	int local_replies = get_statistic("rpl_generated");
+	int relayed_replies = get_statistic("rpl_sent");
 	int sent_replies = get_statistic("sent_replies");
 
 	int result = fwd_replies + local_replies + relayed_replies + sent_replies;

@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding='ISO-8859-1'?>
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
-"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+		"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
 
-<!-- Include general documentation entities -->
-<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
-%docentities;
+		<!-- Include general documentation entities -->
+		<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+		%docentities;
 
-]>
+		]>
 
 <!-- Module User's Guide -->
 
@@ -15,352 +15,401 @@
 	<title>&adminguide;</title>
 
 	<section>
-	<title>Overview</title>
-	<para>
-		This is a module that enables media streams to be relayed via
- 		pylrkproxy engine that exist in:
-		https://github.com/mojtabaesfandiari/pylrkproxy
-		It does relaying audio streams between peers in
-		PREROUTING netfilter-hooking section in kernel-space linux.
-		The LRKProxy architecture is composed of two
-		different layers. These layers are independent of each
-		other.
-		For more information about LRKProxy architecture, please visit our paper in ieeexplore:
-		https://ieeexplore.ieee.org/document/9303608
-	</para>
+		<title>Overview</title>
+		<para>
+			This is a module that enables media streams to be relayed via
+			pylrkproxy engine. This engine can be found at:
+			https://github.com/mojtabaesfandiari/pylrkproxy
+			It does relaying audio streams between peers in
+			PREROUTING netfilter-hooking section in kernel-space linux.
+			The LRKProxy architecture is composed of two
+			different layers. These layers are independent of each
+			other.
+			For more information about LRKProxy architecture, please visit our paper in ieeexplore:
+			https://ieeexplore.ieee.org/document/9303608
+		</para>
 	</section>
 
 	<section>
-	<title>LRKProxy Architecture</title>
-	<section>
-		<title>LRKP_Controlling Layer (LRKP_CL)</title>
-		<para>
-			The first layer is developed as User-Space
-			application that allows User-Space to directly
-			access and manipulate cache data
-			buffer and packet buffer in Kernel-Space. This layer
-			gets all information about creating new sessions,
-			active sessions and teardown sessions which is
-	       		gotten from SDP body during signaling plan and relay
-			them to the LRKP-Transport Stateful Layer (LRKP-
-			TSL).
-		</para>
-	</section>
-	<section>
-		<title>LRKP_Transport Stateful Layer (LRKP_TSL)</title>
-		<para>
-			The second layer is developed in Kernel-Space as
-        		a main decision point for RTP admission controller
-        		and Quickpath selector to where a received packet
-        		should be forwarded with power of packet mangling
-        		framework in the network stack.
-		</para>
-	</section>
-	<para>
-		The LRKP_CL and LRKP-TSL could be run as
-		independence functions on different machines. We
-		could have one LRKP_CL with multiple LRKP-TSL
-		on different machines. The LRKP_CL could works
-		with all LRKP-TSL with different strategies(lrkp_alg parameter).
-	</para>
-	</section>
-	<section>
-	<title>Multiple LRKProxy usage</title>
-	<para>
-		The LRKP_CL Layer can support multiple LRKP_TSL Layer
-    		for balancing/distribution and control/selection purposes.
-	</para>
-	<para>
-		The module allows definition of several sets of LRKP_TSL.
-		Load-balancing will be performed over predefine algorithm by setting lrkp_alg parameter.
-
-	</para>
-	<para>
-		IMPORTANT: This module does not support balancing inside a set like as is done RTPProxy module based on
-		the weight of each rtpproxy from the set. The balancing would be run on different machine
-	</para>
-	</section>
-	
-	<section>
-	<title>Dependencies</title>
-	<section>
-		<title>&kamailio; Modules</title>
-		<para>
-		The following modules must be loaded before this module:
-			<itemizedlist>
-			<listitem>
+		<title>LRKProxy Architecture</title>
+		<section>
+			<title>LRKP_Controlling Layer (LRKP_CL)</title>
 			<para>
-				<emphasis>tm module</emphasis> - (optional) if you want to
-				have lrkproxy_manage() fully functional
+				The first layer is developed as User-Space
+				application that allows User-Space to directly
+				access and manipulate cache data
+				buffer and packet buffer in Kernel-Space. This layer
+				gets all information about creating new sessions,
+				active sessions and teardown sessions which is
+				gotten from SDP body during signaling plan and relay
+				them to the LRKP-Transport Stateful Layer (LRKP-
+				TSL).
 			</para>
-			</listitem>
-			</itemizedlist>
+		</section>
+		<section>
+			<title>LRKP_Transport Stateful Layer (LRKP_TSL)</title>
+			<para>
+				The second layer is developed in Kernel-Space as
+				a main decision point for RTP admission controller
+				and Quickpath selector to where a received packet
+				should be forwarded with power of packet mangling
+				framework in the network stack.
+			</para>
+		</section>
+		<para>
+			The LRKP_CL and LRKP-TSL could be run as
+			independence functions on different machines. We
+			could have one LRKP_CL with multiple LRKP-TSL
+			on different machines. The LRKP_CL could works
+			with all LRKP-TSL with different strategies(lrkp_alg parameter).
 		</para>
 	</section>
 	<section>
-		<title>External Libraries or Applications</title>
+		<title>Multiple LRKProxy usage</title>
 		<para>
-		The following libraries or applications must be installed before
-		running &kamailio; with this module loaded:
-			<itemizedlist>
-			<listitem>
-			<para>
-				<emphasis>None</emphasis>.
-			</para>
-			</listitem>
-			</itemizedlist>
+			The LRKP_CL Layer can support multiple LRKP_TSL Layer
+			for balancing/distribution and control/selection purposes.
+		</para>
+		<para>
+			The module allows definition of several sets of LRKP_TSL.
+			Load-balancing will be performed over predefine algorithm by setting lrkp_alg parameter.
+
+		</para>
+		<para>
+			IMPORTANT: This module does not support balancing inside a set like as is done RTPProxy module based on
+			the weight of each rtpproxy from the set. The balancing would be run on different machine.
 		</para>
 	</section>
+
 	<section>
-	<title>Parameters</title>
-	<section id="lrkproxy.p.lrkproxy_sock">
-	<title><varname>lrkproxy_sock</varname> (string)</title>
+		<title>Dependencies</title>
+		<section>
+			<title>&kamailio; Modules</title>
 			<para>
-			Used to define the list of LRKP_TSL instances to connect to. These can
-			be UNIX sockets or IPv4/IPv6 UDP sockets. Each modparam entry will
-   			insert sockets into a single set with default value set ID '0'.
-   			To define multiple LRKP_TSL, just add the instances in each modparam.
+				The following modules must be loaded before this module:
+				<itemizedlist>
+					<listitem>
+						<para>
+							<emphasis>tm module</emphasis> - (optional) if you want to
+							have lrkproxy_manage() fully functional
+						</para>
+					</listitem>
+				</itemizedlist>
 			</para>
+		</section>
+		<section>
+			<title>External Libraries or Applications</title>
 			<para>
-			<emphasis>
-				Default value is <quote>NONE</quote> (disabled).
-			</emphasis>
+				The following libraries or applications must be installed before
+				running &kamailio; with this module loaded:
+				<itemizedlist>
+					<listitem>
+						<para>
+							<emphasis>None</emphasis>.
+						</para>
+					</listitem>
+				</itemizedlist>
 			</para>
-			<example>
-			<title>Set <varname>lrkproxy_sock</varname> parameter</title>
-			<programlisting format="linespecific">
-...
-# single lrkproxy
-modparam("lrkproxy", "lrkproxy_sock", "udp:192.168.122.108:8080")
+		</section>
+		<section>
+			<title>Parameters</title>
+			<section id="lrkproxy.p.lrkproxy_sock">
+				<title><varname>lrkproxy_sock</varname> (string)</title>
+				<para>
+					Used to define the list of LRKP_TSL instances to connect to. These can
+					be UNIX sockets or IPv4/IPv6 UDP sockets. Each modparam entry will
+					insert sockets into a single set with default value set ID '0'.
+					To define multiple LRKP_TSL, just add the instances in each modparam.
+				</para>
+				<para>
+					<emphasis>
+						Default value is <quote>NONE</quote> (disabled).
+					</emphasis>
+				</para>
+				<example>
+					<title>Set <varname>lrkproxy_sock</varname> parameter</title>
+					<programlisting format="linespecific">
+						...
+						# single lrkproxy
+						modparam("lrkproxy", "lrkproxy_sock", "udp:192.168.122.108:8080")
 
-# multiple lrkproxies for LB in diffenrent machine
-modparam("lrkproxy", "lrkproxy_sock", "udp:192.168.122.108:8080")
-modparam("lrkproxy", "lrkproxy_sock", "udp:192.168.122.109:8080")
+						# multiple lrkproxies for LB in diffenrent machine
+						modparam("lrkproxy", "lrkproxy_sock", "udp:192.168.122.108:8080")
+						modparam("lrkproxy", "lrkproxy_sock", "udp:192.168.122.109:8080")
 
-...
-</programlisting>
-		</example>
-	</section>
-	<section id="lrkproxy.p.lrkproxy_disable_tout">
-		<title><varname>lrkproxy_disable_tout</varname> (integer)</title>
-		<para>
-		Once LRKP_TSL was found unreachable and marked as disabled, the
-   		LRKP_CL module will not attempt to establish communication to LRKP_TSL
-   		for lrkproxy_disable_tout seconds.
-		</para>
-		<para>
-		<emphasis>
-			Default value is <quote>60</quote>.
-		</emphasis>
-		</para>
-		<example>
-		<title>Set <varname>lrkproxy_disable_tout</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("lrkproxy", "lrkproxy_disable_tout", 20)
-...
-</programlisting>
-		</example>
-	</section>
-	<section id="lrkproxy.p.lrkproxy_tout">
-		<title><varname>lrkproxy_tout</varname> (integer)</title>
-		<para>
-		Timeout value in waiting for reply from LRKP_TSL.
-		</para>
-		<para>
-		<emphasis>
-			Default value is <quote>1</quote>.
-		</emphasis>
-		</para>
-		<example>
-		<title>Set <varname>lrkproxy_tout</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("lrkproxy", "lrkproxy_tout", 2)
-...
-</programlisting>
-		</example>
-	</section>
-	<section id="lrkproxy.p.lrkproxy_retr">
-		<title><varname>lrkproxy_retr</varname> (integer)</title>
-		<para>
-		How many times the LRKP_CL should retry to send and receive after
-		timeout was generated.
-		</para>
-		<para>
-		<emphasis>
-			Default value is <quote>5</quote>.
-		</emphasis>
-		</para>
-		<example>
-		<title>Set <varname>lrkproxy_retr</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("lrkproxy", "lrkproxy_retr", 2)
-...
-</programlisting>
-		</example>
-	</section>
-	<section id="lrkproxy.p.lrkp_alg">
-		<title><varname>lrkp_alg</varname> (integer)</title>
-		<para>
-		This parameter set the algorithm of LRKP_TSL selection.
-    		lrk_LINER=0,
-    		lrk_RR=1
-		</para>
-		<para>
-		<emphasis>
-			Default value is <quote>0</quote>.
-		</emphasis>
-		</para>
-		<example>
-		<title>Set <varname>lrkp_alg</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("lrkproxy", "lrkp_alg", 1)
-...
-</programlisting>
-		</example>
-	</section>
+						...
+					</programlisting>
+				</example>
+			</section>
+			<section id="lrkproxy.p.lrkproxy_disable_tout">
+				<title><varname>lrkproxy_disable_tout</varname> (integer)</title>
+				<para>
+					Once LRKP_TSL was found unreachable and marked as disabled, the
+					LRKP_CL module will not attempt to establish communication to LRKP_TSL
+					for lrkproxy_disable_tout seconds.
+				</para>
+				<para>
+					<emphasis>
+						Default value is <quote>60</quote>.
+					</emphasis>
+				</para>
+				<example>
+					<title>Set <varname>lrkproxy_disable_tout</varname> parameter</title>
+					<programlisting format="linespecific">
+						...
+						modparam("lrkproxy", "lrkproxy_disable_tout", 20)
+						...
+					</programlisting>
+				</example>
+			</section>
+			<section id="lrkproxy.p.lrkproxy_tout">
+				<title><varname>lrkproxy_tout</varname> (integer)</title>
+				<para>
+					Timeout value in waiting for reply from LRKP_TSL.
+				</para>
+				<para>
+					<emphasis>
+						Default value is <quote>1</quote>.
+					</emphasis>
+				</para>
+				<example>
+					<title>Set <varname>lrkproxy_tout</varname> parameter</title>
+					<programlisting format="linespecific">
+						...
+						modparam("lrkproxy", "lrkproxy_tout", 2)
+						...
+					</programlisting>
+				</example>
+			</section>
+			<section id="lrkproxy.p.lrkproxy_retr">
+				<title><varname>lrkproxy_retr</varname> (integer)</title>
+				<para>
+					How many times the LRKP_CL should retry to send and receive after
+					timeout was generated.
+				</para>
+				<para>
+					<emphasis>
+						Default value is <quote>5</quote>.
+					</emphasis>
+				</para>
+				<example>
+					<title>Set <varname>lrkproxy_retr</varname> parameter</title>
+					<programlisting format="linespecific">
+						...
+						modparam("lrkproxy", "lrkproxy_retr", 2)
+						...
+					</programlisting>
+				</example>
+			</section>
+			<section id="lrkproxy.p.lrkp_alg">
+				<title><varname>lrkp_alg</varname> (integer)</title>
+				<para>
+					This parameter set the algorithm of LRKP_TSL selection.
+					lrk_LINER=0,
+					lrk_RR=1
+				</para>
+				<para>
+					<emphasis>
+						Default value is <quote>0</quote>.
+					</emphasis>
+				</para>
+				<example>
+					<title>Set <varname>lrkp_alg</varname> parameter</title>
+					<programlisting format="linespecific">
+						...
+						modparam("lrkproxy", "lrkp_alg", 1)
+						...
+					</programlisting>
+				</example>
+			</section>
 
-	<section id="lrkproxy.p.hash_table_tout">
-		<title><varname>hash_table_tout</varname> (integer)</title>
-		<para>
-		Number of seconds after an lrkproxy hash table entry is marked for
-   		deletion. By default, this parameter is set to 3600 (seconds).
-		</para>
-		<para>
-		To maintain information about a selected rtp machine node, for a given
-		call, entries are added in a hashtable of (callid, viabranch) pairs. When
-   		command comes, lookup callid, viabranch pairs. If found, return chosen node. If not
-   		found, choose a new node, insert it in the hastable and return the
-   		chosen node.
-		</para>
-		<para>
-		NOTE: In the current implementation, the actual deletion happens on the
-		fly, while insert/remove/lookup the hastable, only for the entries in
-		the insert/remove/lookup path.
-		</para>
-		<para>
-		NOTE: When configuring this parameter, one should consider maximum call
-		time VS share memory for unfinished calls.
-		</para>
-		<para>
-		<emphasis>
-			Default value is <quote>3600</quote>.
-		</emphasis>
-		</para>
-		<example>
-		<title>Set <varname>hash_table_tout</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("lrkproxy", "hash_table_tout", "3600")
-...
-</programlisting>
-		</example>
-	</section>
-	<section id="lrkproxy.p.hash_table_size">
-		<title><varname>hash_table_size</varname> (integer)</title>
-		<para>
-		Size of the hash table. Default value is 128.
-		</para>
-		<para>
-		<emphasis>
-			Default value is <quote>128</quote>.
-		</emphasis>
-		</para>
-		<example>
-		<title>Set <varname>hash_table_size</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("lrkproxy", "hash_table_size", 256)
-...
-</programlisting>
-		</example>
-	</section>
-	</section>
-	<section>
-	<title>Functions</title>
-	<section id="lrkproxy.f.set_lrkproxy_set">
-		<title>
-		<function moreinfo="none">set_lrkproxy_set(setid)</function>
-		</title>
-		<para>
-		Sets the Id of the lrkproxy set to be used for the next
-   		lrkproxy_manage() command. The parameter can be an integer or a config
-   		variable holding an integer.
-		</para>
-		<para>
-		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
-		BRANCH_ROUTE.
-		</para>
-		<example>
-		<title><function>set_lrkproxy_set</function> usage</title>
-		<programlisting format="linespecific">
-...
-set_lrkproxy_set("0");
-lrkproxy_manage();
-...
-</programlisting>
-		</example>
-	</section>
-        <section id="lrkproxy.f.lrkproxy_manage">
-                <title>
-                <function moreinfo="none">lrkproxy_manage([flags [, ip_address]])</function>
-                </title>
-                <para>
-                Manage the LRKProxy session - it combines the functionality of
-   		lrkproxy_offer(), lrkproxy_answer() and unforce_lrkproxy(), detecting
-   		internally based on message type and method which one to execute.
-                </para>
-		<para>
-		   IMPORTANT:The LRKProxy just has one function relating rtp packets. 
-		   It does not support combination of functionality of lrkproxy_offer(),
-		   lrkproxy_answer() and unforce_lrkproxy() and other etc.
-		   So you have to just use lrkproxy_manage.
-		</para>
-		<para>Meaning of the parameters is as follows:</para>
-		<itemizedlist>
-		<listitem>
-			<para>
-			<emphasis>flags</emphasis> - flags to turn on some features.
-			</para>
-			<itemizedlist>
-				<listitem><para>
-				<emphasis>internal,external</emphasis> - The shorthand of this flag is "ie".
-				This can be used to relay media sessions between two different NIC from internal to external path.
-				</para></listitem>
-			</itemizedlist>
-			<itemizedlist>
-				<listitem><para>
-				<emphasis>external,internal</emphasis> - The shorthand of this flag is "ei".
-				This can be used to relay media sessions between two different NIC from external to internal path.
-				</para></listitem>
-			</itemizedlist>
-		</listitem>
-		<listitem><para>
-		<emphasis>ip_address</emphasis> - new SDP IP address.This optional parameter is under development.
-		</para></listitem>
-		</itemizedlist>
-		<para>
-		This function can be used from ANY_ROUTE.
-                </para>
-		<example>
-		<title><function>lrkproxy_manage</function> usage</title>
-		<programlisting format="linespecific">
-...
-lrkproxy_manage();
-//or
-lrkproxy_manage("ie");
-//or
-lrkproxy_manage("ei");
-
-...
-</programlisting>
-                </example>
-	</section>
+			<section id="lrkproxy.p.hash_table_tout">
+				<title><varname>hash_table_tout</varname> (integer)</title>
+				<para>
+					Number of seconds after an lrkproxy hash table entry is marked for
+					deletion. By default, this parameter is set to 3600 (seconds).
+				</para>
+				<para>
+					To maintain information about a selected rtp machine node, for a given
+					call, entries are added in a hashtable of (callid, viabranch) pairs. When
+					command comes, lookup callid, viabranch pairs. If found, return chosen node. If not
+					found, choose a new node, insert it in the hastable and return the
+					chosen node.
+				</para>
+				<para>
+					NOTE: In the current implementation, the actual deletion happens on the
+					fly, while insert/remove/lookup the hastable, only for the entries in
+					the insert/remove/lookup path.
+				</para>
+				<para>
+					NOTE: When configuring this parameter, one should consider maximum call
+					time VS share memory for unfinished calls.
+				</para>
+				<para>
+					<emphasis>
+						Default value is <quote>3600</quote>.
+					</emphasis>
+				</para>
+				<example>
+					<title>Set <varname>hash_table_tout</varname> parameter</title>
+					<programlisting format="linespecific">
+						...
+						modparam("lrkproxy", "hash_table_tout", "3600")
+						...
+					</programlisting>
+				</example>
+			</section>
 
 
-	</section>
+
+			<section id="lrkproxy.p.hash_table_size">
+				<title><varname>hash_table_size</varname> (integer)</title>
+				<para>
+					Size of the hash table. Default value is 128.
+				</para>
+				<para>
+					<emphasis>
+						Default value is <quote>128</quote>.
+					</emphasis>
+				</para>
+				<example>
+					<title>Set <varname>hash_table_size</varname> parameter</title>
+					<programlisting format="linespecific">
+						...
+						modparam("lrkproxy", "hash_table_size", 256)
+						...
+					</programlisting>
+				</example>
+			</section>
+
+			<section id="lrkproxy.p.custom_sdp_ip_avp">
+				<title><varname>custom_sdp_ip_avp</varname> (string)</title>
+				<para>
+					This option useful for solving STUN and help UDP packets make it across NAT devices safe and sound.
+					In this way, it should be set by clients's ip public manually.
+				</para>
+				<para>
+					<emphasis>
+						Default value is <quote>NULL</quote>.
+					</emphasis>
+				</para>
+				<example>
+					<title>Set <varname>custom_sdp_ip_avp</varname> parameter</title>
+					<programlisting format="linespecific">
+						...
+						modparam("lrkproxy", "custom_sdp_ip_avp", "$avp(RR_CUSTOM_SDP_IP_AVP)")
+						...
+					</programlisting>
+				</example>
+			</section>
+
+			<section id="lrkproxy.p.gt">
+				<title><varname>gt</varname> (integer)</title>
+				<para>
+					This option useful for optimization in allocation port resource in lrkproxy service.
+				</para>
+				<para>
+					<emphasis>
+						Default value is <quote>0</quote>.
+					</emphasis>
+				</para>
+				<example>
+					<title>Set <varname>gt</varname> parameter</title>
+					<programlisting format="linespecific">
+						...
+						modparam("lrkproxy", "gt", "1")
+						...
+					</programlisting>
+				</example>
+			</section>
+
+
+
+
+
+		</section>
+		<section>
+			<title>Functions</title>
+			<section id="lrkproxy.f.set_lrkproxy_set">
+				<title>
+					<function moreinfo="none">set_lrkproxy_set(setid)</function>
+				</title>
+				<para>
+					Sets the Id of the lrkproxy set to be used for the next
+					lrkproxy_manage() command. The parameter can be an integer or a config
+					variable holding an integer.
+				</para>
+				<para>
+					This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
+					BRANCH_ROUTE.
+				</para>
+				<example>
+					<title><function>set_lrkproxy_set</function> usage</title>
+					<programlisting format="linespecific">
+						...
+						set_lrkproxy_set("0");
+						lrkproxy_manage();
+						...
+					</programlisting>
+				</example>
+			</section>
+			<section id="lrkproxy.f.lrkproxy_manage">
+				<title>
+					<function moreinfo="none">lrkproxy_manage([flags [, ip_address]])</function>
+				</title>
+				<para>
+					Manage the LRKProxy session - it combines the functionality of
+					lrkproxy_offer(), lrkproxy_answer() and unforce_lrkproxy(), detecting
+					internally based on message type and method which one to execute.
+				</para>
+				<para>
+					IMPORTANT:The LRKProxy just has one function relating rtp packets.
+					It does not support combination of functionality of lrkproxy_offer(),
+					lrkproxy_answer() and unforce_lrkproxy() and other etc.
+					So you have to just use lrkproxy_manage.
+				</para>
+				<para>Meaning of the parameters is as follows:</para>
+				<itemizedlist>
+					<listitem>
+						<para>
+							<emphasis>flags</emphasis> - flags to turn on some features.
+						</para>
+						<itemizedlist>
+							<listitem><para>
+								<emphasis>internal,external</emphasis> - The shorthand of this flag is "ie".
+								This can be used to relay media sessions between two different NIC from internal to external path.
+							</para></listitem>
+						</itemizedlist>
+						<itemizedlist>
+							<listitem><para>
+								<emphasis>external,internal</emphasis> - The shorthand of this flag is "ei".
+								This can be used to relay media sessions between two different NIC from external to internal path.
+							</para></listitem>
+						</itemizedlist>
+					</listitem>
+					<listitem><para>
+						<emphasis>ip_address</emphasis> - new SDP IP address.This optional parameter is under development.
+					</para></listitem>
+				</itemizedlist>
+				<para>
+					This function can be used from ANY_ROUTE.
+				</para>
+				<example>
+					<title><function>lrkproxy_manage</function> usage</title>
+					<programlisting format="linespecific">
+						...
+						lrkproxy_manage();
+						//or
+						lrkproxy_manage("ie");
+						//or
+						lrkproxy_manage("ei");
+
+						...
+					</programlisting>
+				</example>
+			</section>
+
+
+		</section>
 	</section>
 </chapter>

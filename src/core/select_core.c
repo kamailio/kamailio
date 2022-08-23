@@ -221,18 +221,6 @@ SELECT_uri_header(from)
 SELECT_uri_header(refer_to)
 SELECT_uri_header(rpid)
 
-int parse_contact_header( struct sip_msg *msg)
-{
-        if ( !msg->contact && ( parse_headers(msg,HDR_CONTACT_F,0)==-1 || !msg->contact)) {
-                LM_DBG("bad msg or missing CONTACT header\n");
-                return -1;
-        }
-
-        if (msg->contact->parsed)
-                return 0;
-
-	return parse_contact(msg->contact);
-}
 
 #define get_contact(msg) ((contact_body_t*)(msg->contact->parsed))
 
@@ -595,7 +583,7 @@ int select_msg_header(str* res, select_t* s, struct sip_msg* msg)
 {
 	/* get all headers */
 	char *c;
-	res->s = SIP_MSG_START(msg) + msg->first_line.len; 
+	res->s = SIP_MSG_START(msg) + msg->first_line.len;
 	c = get_body(msg);
 	res->len = c - res->s;
 	return 0;
@@ -607,7 +595,7 @@ int select_anyheader(str* res, select_t* s, struct sip_msg* msg)
 	int hi;
 	char c;
 	struct hdr_field hdr;
-	
+
 	if(msg==NULL) {
 		if (res!=NULL) return -1;
 
@@ -622,13 +610,15 @@ int select_anyheader(str* res, select_t* s, struct sip_msg* msg)
 				/* if header name is parseable, parse it and set SEL_PARAM_DIV */
 			c=s->params[2].v.s.s[s->params[2].v.s.len];
 			s->params[2].v.s.s[s->params[2].v.s.len]=':';
-			if (parse_hname2_short(s->params[2].v.s.s,s->params[2].v.s.s+(s->params[2].v.s.len<3?4:s->params[2].v.s.len+1),
-						&hdr)==0) {
+			parse_hname2_short(s->params[2].v.s.s,s->params[2].v.s.s
+					+(s->params[2].v.s.len<3?4:s->params[2].v.s.len+1),
+						&hdr);
+			if(hdr.type==HDR_ERROR_T) {
 				LM_ERR("fixup_call:parse error\n");
 				return -1;
 			}
 			s->params[2].v.s.s[s->params[2].v.s.len]=c;
-			
+
 			if (hdr.type!=HDR_OTHER_T && hdr.type!=HDR_ERROR_T) {
 				/* pkg_free(s->params[1].v.s.s); */
 				/* don't free it (the mem can leak only once at startup)

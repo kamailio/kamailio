@@ -46,6 +46,7 @@
 #include "async_task.h"
 
 static async_wgroup_t *_async_wgroup_list = NULL;
+static async_wgroup_t *_async_wgroup_crt = NULL;
 
 int async_task_run(async_wgroup_t *awg, int idx);
 
@@ -66,6 +67,14 @@ int async_task_workers_active(void)
 		return 0;
 
 	return 1;
+}
+
+/**
+ *
+ */
+async_wgroup_t *async_task_workers_get_crt(void)
+{
+	return _async_wgroup_crt;
 }
 
 /**
@@ -186,7 +195,8 @@ int async_task_child_init(int rank)
 	}
 
 	if(rank>0) {
-		async_task_close_sockets_parent();
+		/* no need to close the socket from sip workers */
+		/* async_task_close_sockets_parent(); */
 		return 0;
 	}
 	if (rank!=PROC_MAIN)
@@ -430,7 +440,7 @@ int async_task_group_push(str *gname, async_task_t *task)
 				gname->len, gname->s);
 		return -1;
 	}
-	LM_DBG("task [%p] sent to groupt [%.*s]\n", task, gname->len, gname->s);
+	LM_DBG("task [%p] sent to group [%.*s]\n", task, gname->len, gname->s);
 	return 0;
 }
 
@@ -444,6 +454,8 @@ int async_task_run(async_wgroup_t *awg, int idx)
 
 	LM_DBG("async task worker [%.*s] idx [%d] ready\n", awg->name.len,
 			awg->name.s, idx);
+
+	_async_wgroup_crt = awg;
 
 	for( ; ; ) {
 		if(unlikely(awg->usleep)) sleep_us(awg->usleep);

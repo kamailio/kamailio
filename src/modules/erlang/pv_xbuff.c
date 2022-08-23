@@ -86,10 +86,14 @@ sr_xavp_t *xbuff_new(str *name)
 
 	if(!xbuffs_root)
 	{
-		xbuff = xavp_add_xavp_value(&xbuff_list,name,&xbuff_val,xavp_get_crt_list());
-	} else {
-		xbuff = xavp_get_child(&xbuff_list, name);
+		xbuffs_root = xavp_add_xavp_value(&xbuff_list,name,&xbuff_val,xavp_get_crt_list());
+		if (!xbuffs_root){
+				LM_ERR("cannot create xbuffs_root \n");
+				return NULL;
+			}
 	}
+
+	xbuff = xavp_get_child(&xbuff_list, name);
 
 	if (!xbuff) {
 
@@ -197,6 +201,9 @@ int pv_xbuff_parse_name(pv_spec_t *sp, str *in)
 	p = in->s;
 
 	name.s = p;
+
+	/*pvi.type now defaults to 4, breaking the erlang module's type management*/
+	sp->pvp.pvi.type = 0;
 
 	while (is_in_str(p, in)) {
 		if (*p == '[' || *p== '=')

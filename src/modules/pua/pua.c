@@ -58,7 +58,7 @@ htable_t* HashT= NULL;
 int HASH_SIZE= -1;
 extern int bind_pua(pua_api_t* api);
 int min_expires= 0;
-int default_expires=3600;
+int pua_default_expires=3600;
 static str db_url = str_init(DEFAULT_DB_URL);
 str db_table= str_init("pua");
 int update_period= 100;
@@ -126,7 +126,7 @@ static param_export_t params[]={
 	{"db_url",                   PARAM_STR, &db_url},
 	{"db_table",                 PARAM_STR, &db_table},
 	{"min_expires",	             INT_PARAM, &min_expires},
-	{"default_expires",          INT_PARAM, &default_expires},
+	{"default_expires",          INT_PARAM, &pua_default_expires},
 	{"update_period",            INT_PARAM, &update_period},
 	{"outbound_proxy",           PARAM_STR, &outbound_proxy},
 	{"dlginfo_increase_version", INT_PARAM, &dlginfo_increase_version},
@@ -162,8 +162,8 @@ static int mod_init(void)
 	if(min_expires< 0)
 		min_expires= 0;
 
-	if(default_expires< 600)
-		default_expires= 3600;
+	if(pua_default_expires< 600)
+		pua_default_expires= 3600;
 
 	if(pua_rpc_init()<0) {
 		LM_ERR("failed to register RPC commands\n");
@@ -702,7 +702,7 @@ int update_pua(ua_pres_t* p)
 	dlg_t* td = NULL;
 
 	if(p->desired_expires== 0)
-		expires= 3600;
+		expires= pua_default_expires;
 	else
 		expires= p->desired_expires- (int)time(NULL);
 

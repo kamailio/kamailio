@@ -125,13 +125,14 @@ Sven Knoblich
               6.46. reason_from_hf (int)
               6.47. clone_msg (int)
               6.48. cdr_on_failed (int)
+              6.49. acc_extra_size (int)
+              6.50. cdr_extra_size (int)
 
         7. Functions
 
               7.1. acc_log_request(comment)
               7.2. acc_db_request(comment, table)
               7.3. acc_request(comment, table)
-              7.4. acc_diam_request(comment)
 
    2. Frequently Asked Questions
 
@@ -185,10 +186,11 @@ Sven Knoblich
    1.46. reason_from_hf
    1.47. clone_msg
    1.48. cdr_on_failed
-   1.49. acc_log_request usage
-   1.50. acc_db_request usage
-   1.51. acc_db_request usage
-   1.52. acc_diam_request usage
+   1.49. acc_extra_size
+   1.50. cdr_extra_size
+   1.51. acc_log_request usage
+   1.52. acc_db_request usage
+   1.53. acc_db_request usage
 
 Chapter 1. Admin Guide
 
@@ -281,13 +283,14 @@ Chapter 1. Admin Guide
         6.46. reason_from_hf (int)
         6.47. clone_msg (int)
         6.48. cdr_on_failed (int)
+        6.49. acc_extra_size (int)
+        6.50. cdr_extra_size (int)
 
    7. Functions
 
         7.1. acc_log_request(comment)
         7.2. acc_db_request(comment, table)
         7.3. acc_request(comment, table)
-        7.4. acc_diam_request(comment)
 
 1. Overview
 
@@ -298,9 +301,9 @@ Chapter 1. Admin Guide
    support for radius is enabled.
 
    There is some very early support of the Diameter protocol in the
-   “acc_diameter” module which will be deleted in coming releases. This
-   support is not up to date with the current Diameter protocols. If you
-   need Diameter support, please use the ims_charging module.
+   “acc_diameter” module, but is not up to date with the current Diameter
+   protocols. If you need Diameter support, please use the ims_charging
+   module.
 
    To account a transaction and to choose which set of backends to be
    used, the script writer just has to set some flags (see the module
@@ -526,6 +529,11 @@ Note
    information given will not be stored in the CDR as they cannot be
    accessed by the end of the call when the CDR is logged.
 
+   The dialog module needs to be engaged on the dialogs that should be
+   accounted, that they will be tracked by the server. This is usally done
+   by calling the function dlg_manage() or setting the dlg_flag. Refer to
+   the documentation of the dialog module for more information.
+
    Sometimes, dialogs expire because the UA has a problem and a final
    message is never transmitted. You can toggle on/off the generation of
    CDR-based logging in such cases with only the dlg_vars showing by using
@@ -677,6 +685,8 @@ $dlg_var(callee) = $avp(callee); #callee='C'
    6.46. reason_from_hf (int)
    6.47. clone_msg (int)
    6.48. cdr_on_failed (int)
+   6.49. acc_extra_size (int)
+   6.50. cdr_extra_size (int)
 
 6.1. early_media (integer)
 
@@ -1074,9 +1084,12 @@ modparam("acc", "db_insert_mode", 1)
 
 6.30. cdr_enable (integer)
 
-   Should CDR-based logging be enabled?
+   Enable CDR reporting - one record per call reported to "acc_cdrs"
+   table, relying on dialog module.
 
-   0 - off (default). 1 - on.
+   The value can be:
+     * 0 - off (default).
+       1 - on.
 
    Example 1.30. cdr_enable example
 ...
@@ -1121,7 +1134,7 @@ modparam("acc", "cdr_start_on_confirmed", 1)
 6.34. cdr_facility (integer)
 
    Log facility to which CDR messages are issued to syslog. This allows to
-   easily seperate CDR-specific logging from the other log messages.
+   easily separate CDR-specific logging from the other log messages.
 
    Default value is LOG_DAEMON.
 
@@ -1321,12 +1334,37 @@ modparam("acc", "clone_msg", 0)
 modparam("acc", "cdr_on_failed", 0)
 ...
 
+6.49. acc_extra_size (int)
+
+   Set the maximum number of extra attributes that can be stored in the
+   accounting record (event accounting record). It is related to log_extra
+   and db_extra module parameters.
+
+   Default value is 64.
+
+   Example 1.49. acc_extra_size
+...
+modparam("acc", "acc_extra_size", 100)
+...
+
+6.50. cdr_extra_size (int)
+
+   Set the maximum number of extra attributes that can be stored in the
+   call data record (cdr by dialog module). It is related to cdr_extra
+   module parameter.
+
+   Default value is 64.
+
+   Example 1.50. cdr_extra_size
+...
+modparam("acc", "cdr_extra_size", 100)
+...
+
 7. Functions
 
    7.1. acc_log_request(comment)
    7.2. acc_db_request(comment, table)
    7.3. acc_request(comment, table)
-   7.4. acc_diam_request(comment)
 
 7.1.  acc_log_request(comment)
 
@@ -1341,7 +1379,7 @@ modparam("acc", "cdr_on_failed", 0)
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.49. acc_log_request usage
+   Example 1.51. acc_log_request usage
 ...
 acc_log_request("Some comment");
 $var(code) = 404;
@@ -1363,7 +1401,7 @@ acc_log_request("$var(code) Error: $avp(reason)");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.50. acc_db_request usage
+   Example 1.52. acc_db_request usage
 ...
 acc_db_request("Some comment", "SomeTable");
 acc_db_request("Some comment", "acc_$time(year)_$time(mon)");
@@ -1387,28 +1425,11 @@ acc_db_request("$var(code) Error: $avp(reason)", "SomeTable");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.51. acc_db_request usage
+   Example 1.53. acc_db_request usage
 ...
 acc_request("100 Received", "acc");
 acc_request("100 Received", "acc_$time(year)_$time(mon)");
 acc_db_request("$var(code) $avp(reason)", "acc");
-...
-
-7.4.  acc_diam_request(comment)
-
-   Like acc_log_request, acc_diam_request reports on a request. It reports
-   to the configured Diameter server.
-
-   Meaning of the parameters is as follows:
-     * comment - Comment to be appended. The string can contain any number
-       of pseudo-variables.
-
-   This function can be used from ANY_ROUTE.
-
-   Example 1.52. acc_diam_request usage
-...
-acc_diam_request("Some comment");
-acc_diam_request("$var(code) Error: $avp(reason)");
 ...
 
 Chapter 2. Frequently Asked Questions

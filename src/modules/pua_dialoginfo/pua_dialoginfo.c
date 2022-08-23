@@ -41,6 +41,8 @@
 #include "../../core/str_list.h"
 #include "../../core/mem/mem.h"
 #include "../../core/pt.h"
+#include "../../core/ut.h"
+#include "../../core/utils/sruid.h"
 #include "../dialog/dlg_load.h"
 #include "../dialog/dlg_hash.h"
 #include "../pua/pua_bind.h"
@@ -58,6 +60,7 @@ MODULE_VERSION
 #define DEF_OVERRIDE_LIFETIME 0
 #define DEF_SEND_PUBLISH_FLAG -1
 #define DEF_USE_PUBRURI_AVPS 0
+#define DEF_REFRESH_PUBRURI_AVPS_FLAG -1
 #define DEF_PUBRURI_CALLER_AVP 0
 #define DEF_PUBRURI_CALLEE_AVP 0
 #define DEF_CALLEE_TRYING 0
@@ -78,11 +81,13 @@ unsigned short pubruri_caller_avp_type;
 int_str pubruri_caller_avp_name;
 unsigned short pubruri_callee_avp_type;
 int_str pubruri_callee_avp_name;
+sruid_t _puadi_sruid;
 
 static str caller_dlg_var = {0, 0}; /* pubruri_caller */
 static str callee_dlg_var = {0, 0}; /* pubruri_callee */
 static str caller_entity_when_publish_disabled = {0, 0}; /* pubruri_caller */
 static str callee_entity_when_publish_disabled = {0, 0}; /* pubruri_callee */
+static str local_identity_dlg_var = STR_NULL;
 
 /* Module parameter variables */
 int include_callid         = DEF_INCLUDE_CALLID;
@@ -93,12 +98,14 @@ int caller_confirmed       = DEF_CALLER_ALWAYS_CONFIRMED;
 int include_req_uri        = DEF_INCLUDE_REQ_URI;
 int send_publish_flag      = DEF_SEND_PUBLISH_FLAG;
 int use_pubruri_avps       = DEF_USE_PUBRURI_AVPS;
+int refresh_pubruri_avps_flag = DEF_REFRESH_PUBRURI_AVPS_FLAG;
 int callee_trying          = DEF_CALLEE_TRYING;
 int disable_caller_publish_flag = DEF_DISABLE_CALLER_PUBLISH_FLAG;
 int disable_callee_publish_flag = DEF_DISABLE_CALLEE_PUBLISH_FLAG;
 char * pubruri_caller_avp  = DEF_PUBRURI_CALLER_AVP;
 char * pubruri_callee_avp  = DEF_PUBRURI_CALLEE_AVP;
 int publish_dialog_req_within = DEF_PUBLISH_DIALOG_REQ_WITHIN;
+int dialog_event_types = DLGCB_FAILED| DLGCB_CONFIRMED_NA | DLGCB_TERMINATED | DLGCB_EXPIRED | DLGCB_EARLY;
 
 int puadinfo_attribute_display = 0;
 
@@ -106,7 +113,7 @@ send_publish_t pua_send_publish;
 /** module functions */
 
 static int mod_init(void);
-
+static int child_init(int rank);
 
 static cmd_export_t cmds[]={
 	{0, 0, 0, 0, 0, 0}
@@ -121,10 +128,12 @@ static param_export_t params[]={
 	{"include_req_uri",     INT_PARAM, &include_req_uri },
 	{"send_publish_flag",   INT_PARAM, &send_publish_flag },
 	{"use_pubruri_avps",    INT_PARAM, &use_pubruri_avps },
+	{"refresh_pubruri_avps_flag",   INT_PARAM, &refresh_pubruri_avps_flag },
 	{"pubruri_caller_avp",  PARAM_STRING, &pubruri_caller_avp },
 	{"pubruri_callee_avp",  PARAM_STRING, &pubruri_callee_avp },
 	{"pubruri_caller_dlg_var",  PARAM_STR, &caller_dlg_var },
 	{"pubruri_callee_dlg_var",  PARAM_STR, &callee_dlg_var },
+	{"local_identity_dlg_var",  PARAM_STR, &local_identity_dlg_var },
 	{"callee_trying",       INT_PARAM, &callee_trying },
 	{"disable_caller_publish_flag",   INT_PARAM, &disable_caller_publish_flag },
 	{"disable_callee_publish_flag",   INT_PARAM, &disable_callee_publish_flag },
@@ -144,7 +153,7 @@ struct module_exports exports= {
 	0,					/* exported pseudo-variables */
 	0,					/* response handling function */
 	mod_init,			/* module initialization function */
-	0,					/* per-child init function */
+	child_init,		/* per-child init function */
 	0					/* module destroy function */
 };
 
@@ -253,6 +262,69 @@ __dialog_cbtest(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
 }
 #endif
 
+static struct str_list* get_str_list(unsigned short avp_flags, int_str avp_name);
+static int is_ruri_in_list(struct str_list *list, str *ruri);
+
+void refresh_pubruri_avps(struct dlginfo_cell *dlginfo, str *uri)
+{
+	struct str_list *pubruris = get_str_list(pubruri_caller_avp_type,
+			pubruri_caller_avp_name);
+	struct str_list *list, *next;
+	str target = STR_NULL;
+
+	if(pubruris) {
+		list = dlginfo->pubruris_caller;
+		while(list) {
+			if(is_ruri_in_list(pubruris, &list->s) == 0) {
+				LM_DBG("ruri:'%.*s' removed from pubruris_caller list\n",
+					list->s.len, list->s.s);
+				next = list->next; list->next = NULL;
+				dialog_publish_multi("terminated", list,
+						&(dlginfo->from_uri), uri, &(dlginfo->callid), 1,
+						10, 0, 0, &(dlginfo->from_contact),
+						&target, send_publish_flag==-1?1:0, &(dlginfo->uuid));
+				list->next = next;
+			}
+			list = list->next;
+		}
+		free_str_list_all(dlginfo->pubruris_caller);
+		dlginfo->pubruris_caller = pubruris;
+		LM_DBG("refreshed pubruris_caller info from avp\n");
+	}
+	pubruris = get_str_list(pubruri_callee_avp_type,
+			pubruri_callee_avp_name);
+	if(pubruris) {
+		list = dlginfo->pubruris_callee;
+		while(list) {
+			if(is_ruri_in_list(pubruris, &list->s) == 0) {
+				LM_DBG("ruri:'%.*s' removed from pubruris_callee list\n",
+					list->s.len, list->s.s);
+				next = list->next; list->next = NULL;
+				dialog_publish_multi("terminated", list,
+						uri, &(dlginfo->from_uri), &(dlginfo->callid), 0,
+						10, 0, 0, &target, &(dlginfo->from_contact),
+						send_publish_flag==-1?1:0, &(dlginfo->uuid));
+				list->next = next;
+			}
+			list = list->next;
+		}
+		free_str_list_all(dlginfo->pubruris_callee);
+		dlginfo->pubruris_callee = pubruris;
+		LM_DBG("refreshed pubruris_callee info from avp\n");
+	}
+}
+
+void refresh_local_identity(struct dlg_cell *dlg, str *uri) {
+	str *s = dlg_api.get_dlg_var(dlg, &local_identity_dlg_var);
+
+	if(s != NULL) {
+		uri->s = s->s;
+		uri->len = s->len;
+		LM_DBG("Found local_identity in dialog '%.*s'\n",
+				uri->len, uri->s);
+	}
+}
+
 static void
 __dialog_sendpublish(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
 {
@@ -291,6 +363,17 @@ __dialog_sendpublish(struct dlg_cell *dlg, int type, struct dlg_cb_params *_para
 		uri=callee_entity_when_publish_disabled;
 	}
 
+	if(use_pubruri_avps && (refresh_pubruri_avps_flag > -1
+		|| (request->flags & (1U<<(unsigned int)refresh_pubruri_avps_flag))))
+	{
+		lock_get(&dlginfo->lock);
+		refresh_pubruri_avps(dlginfo, &uri);
+	}
+
+	if(local_identity_dlg_var.len > 0) {
+		refresh_local_identity(dlg, &uri);
+	}
+
 	switch (type) {
 		case DLGCB_FAILED:
 		case DLGCB_TERMINATED:
@@ -302,14 +385,14 @@ __dialog_sendpublish(struct dlg_cell *dlg, int type, struct dlg_cb_params *_para
 				dialog_publish_multi("terminated", dlginfo->pubruris_caller,
 						&identity_local, &uri, &(dlginfo->callid), 1,
 						10, 0, 0, &(dlginfo->from_contact),
-						&target, send_publish_flag==-1?1:0);
+						&target, send_publish_flag==-1?1:0,&(dlginfo->uuid));
 			}
 			if ((!dlginfo->disable_callee_publish) && (disable_callee_publish_flag == -1 || !(request
 						&& (request->flags & (1<<disable_callee_publish_flag))))) {
 				dialog_publish_multi("terminated", dlginfo->pubruris_callee,
 						&uri, &identity_local, &(dlginfo->callid), 0,
 						10, 0, 0, &target, &(dlginfo->from_contact),
-						send_publish_flag==-1?1:0);
+						send_publish_flag==-1?1:0,&(dlginfo->uuid));
 			}
 			break;
 		case DLGCB_CONFIRMED:
@@ -322,14 +405,14 @@ __dialog_sendpublish(struct dlg_cell *dlg, int type, struct dlg_cb_params *_para
 				dialog_publish_multi("confirmed", dlginfo->pubruris_caller,
 						&identity_local, &uri, &(dlginfo->callid), 1,
 						dlginfo->lifetime, 0, 0, &(dlginfo->from_contact), &target,
-						send_publish_flag==-1?1:0);
+						send_publish_flag==-1?1:0,&(dlginfo->uuid));
 			}
 			if ((!dlginfo->disable_callee_publish) && (disable_callee_publish_flag == -1 || !(request
 						&& (request->flags & (1<<disable_callee_publish_flag))))) {
 				dialog_publish_multi("confirmed", dlginfo->pubruris_callee, &uri,
 						&identity_local, &(dlginfo->callid), 0,
 						dlginfo->lifetime, 0, 0, &target, &(dlginfo->from_contact),
-						send_publish_flag==-1?1:0);
+						send_publish_flag==-1?1:0,&(dlginfo->uuid));
 			}
 			break;
 		case DLGCB_EARLY:
@@ -370,13 +453,13 @@ __dialog_sendpublish(struct dlg_cell *dlg, int type, struct dlg_cb_params *_para
 								&identity_local, &uri, &(dlginfo->callid), 1,
 								dlginfo->lifetime, &(dlginfo->from_tag), &tag,
 								&(dlginfo->from_contact), &target,
-								send_publish_flag==-1?1:0);
+								send_publish_flag==-1?1:0,&(dlginfo->uuid));
 					} else {
 						dialog_publish_multi("early", dlginfo->pubruris_caller,
 								&identity_local, &uri, &(dlginfo->callid), 1,
 								dlginfo->lifetime, &(dlginfo->from_tag), &tag,
 								&(dlginfo->from_contact), &target,
-								send_publish_flag==-1?1:0);
+								send_publish_flag==-1?1:0,&(dlginfo->uuid));
 					}
 				}
 				if ((!dlginfo->disable_callee_publish) && (disable_callee_publish_flag == -1 || !(request
@@ -384,7 +467,7 @@ __dialog_sendpublish(struct dlg_cell *dlg, int type, struct dlg_cb_params *_para
 					dialog_publish_multi("early", dlginfo->pubruris_callee, &uri,
 							&identity_local, &(dlginfo->callid), 0,
 							dlginfo->lifetime, &tag, &(dlginfo->from_tag), &target,
-							&(dlginfo->from_contact), send_publish_flag==-1?1:0);
+							&(dlginfo->from_contact), send_publish_flag==-1?1:0,&(dlginfo->uuid));
 				}
 
 			} else {
@@ -394,22 +477,22 @@ __dialog_sendpublish(struct dlg_cell *dlg, int type, struct dlg_cb_params *_para
 						dialog_publish_multi("confirmed", dlginfo->pubruris_caller,
 								&identity_local, &uri, &(dlginfo->callid), 1,
 								dlginfo->lifetime, 0, 0, &(dlginfo->from_contact),
-								&target, send_publish_flag==-1?1:0);
+								&target, send_publish_flag==-1?1:0,&(dlginfo->uuid));
 
 					} else {
 						dialog_publish_multi("early", dlginfo->pubruris_caller,
 								&identity_local, &uri, &(dlginfo->callid), 1,
 								dlginfo->lifetime, 0, 0, &(dlginfo->from_contact),
-								&target, send_publish_flag==-1?1:0);
+								&target, send_publish_flag==-1?1:0,&(dlginfo->uuid));
 					}
 				}
-                                if ((!dlginfo->disable_callee_publish) && (disable_callee_publish_flag == -1 || !(request
-                                                && (request->flags & (1<<disable_callee_publish_flag)))))
+				if ((!dlginfo->disable_callee_publish) && (disable_callee_publish_flag == -1 || !(request
+					&& (request->flags & (1<<disable_callee_publish_flag)))))
 				{
 					dialog_publish_multi("early", dlginfo->pubruris_callee, &uri,
 							&identity_local, &(dlginfo->callid), 0,
 							dlginfo->lifetime, 0, 0, &target,
-							&(dlginfo->from_contact), send_publish_flag==-1?1:0);
+							&(dlginfo->from_contact), send_publish_flag==-1?1:0,&(dlginfo->uuid));
 				}
 			}
 			break;
@@ -421,15 +504,21 @@ __dialog_sendpublish(struct dlg_cell *dlg, int type, struct dlg_cb_params *_para
 				dialog_publish_multi("terminated", dlginfo->pubruris_caller,
 						&identity_local, &uri, &(dlginfo->callid), 1,
 						10, 0, 0, &(dlginfo->from_contact), &target,
-						send_publish_flag==-1?1:0);
+						send_publish_flag==-1?1:0,&(dlginfo->uuid));
 			}
 			if ((!dlginfo->disable_callee_publish) && (disable_callee_publish_flag == -1 || !(request
 					&& (request->flags & (1<<disable_callee_publish_flag))))) {
 				dialog_publish_multi("terminated", dlginfo->pubruris_callee, &uri,
 						&identity_local, &(dlginfo->callid), 0,
 						10, 0, 0, &target, &(dlginfo->from_contact),
-						send_publish_flag==-1?1:0);
+						send_publish_flag==-1?1:0,&(dlginfo->uuid));
 			}
+	}
+
+	if(use_pubruri_avps && (refresh_pubruri_avps_flag > -1
+		|| (request->flags & (1U<<(unsigned int)refresh_pubruri_avps_flag))))
+	{
+		lock_release(&dlginfo->lock);
 	}
 }
 
@@ -488,6 +577,13 @@ struct dlginfo_cell* get_dialog_data(struct dlg_cell *dlg, int type, int disable
 	int len;
 	str* s=NULL;
 
+	// generate new random uuid
+	if(sruid_next_safe(&_puadi_sruid) < 0) {
+		return NULL;
+	}
+	LM_DBG("uuid generated: '%.*s'\n",
+		_puadi_sruid.uid.len, _puadi_sruid.uid.s);
+
 	/* create dlginfo structure to store important data inside the module*/
 	len = sizeof(struct dlginfo_cell)
 		+ dlg->from_uri.len
@@ -495,7 +591,8 @@ struct dlginfo_cell* get_dialog_data(struct dlg_cell *dlg, int type, int disable
 		+ dlg->callid.len
 		+ dlg->tag[0].len
 		+ dlg->req_uri.len
-		+ dlg->contact[0].len;
+		+ dlg->contact[0].len
+		+ _puadi_sruid.uid.len;
 
 	dlginfo = (struct dlginfo_cell*)shm_malloc( len );
 	if (dlginfo==0) {
@@ -503,6 +600,12 @@ struct dlginfo_cell* get_dialog_data(struct dlg_cell *dlg, int type, int disable
 		return NULL;
 	}
 	memset( dlginfo, 0, len);
+
+	if(use_pubruri_avps && lock_init(&dlginfo->lock) == 0) {
+		LM_ERR("cannot init the lock\n");
+		free_dlginfo_cell(dlginfo);
+		return NULL;
+	}
 
 	/* copy from dlg structure to dlginfo structure */
 	dlginfo->lifetime     = override_lifetime ? override_lifetime : dlg->lifetime;
@@ -520,6 +623,8 @@ struct dlginfo_cell* get_dialog_data(struct dlg_cell *dlg, int type, int disable
 	dlginfo->req_uri.len  = dlg->req_uri.len;
 	dlginfo->from_contact.s   = dlginfo->req_uri.s + dlginfo->req_uri.len;
 	dlginfo->from_contact.len = dlg->contact[0].len;
+	dlginfo->uuid.s = dlginfo->from_contact.s + dlginfo->from_contact.len;
+	dlginfo->uuid.len = _puadi_sruid.uid.len;
 
 	memcpy(dlginfo->from_uri.s, dlg->from_uri.s, dlg->from_uri.len);
 	memcpy(dlginfo->to_uri.s, dlg->to_uri.s, dlg->to_uri.len);
@@ -527,6 +632,7 @@ struct dlginfo_cell* get_dialog_data(struct dlg_cell *dlg, int type, int disable
 	memcpy(dlginfo->from_tag.s, dlg->tag[0].s, dlg->tag[0].len);
 	memcpy(dlginfo->req_uri.s, dlg->req_uri.s, dlg->req_uri.len);
 	memcpy(dlginfo->from_contact.s, dlg->contact[0].s, dlg->contact[0].len);
+	memcpy(dlginfo->uuid.s, _puadi_sruid.uid.s, _puadi_sruid.uid.len);
 
 	if (use_pubruri_avps) {
 		if(type==DLGCB_CREATED) {
@@ -609,28 +715,15 @@ struct dlginfo_cell* get_dialog_data(struct dlg_cell *dlg, int type, int disable
 	}
 
 	/* register dialog callbacks which triggers sending PUBLISH */
-        if (publish_dialog_req_within) {
-		if (dlg_api.register_dlgcb(dlg,
-				DLGCB_FAILED| DLGCB_CONFIRMED_NA | DLGCB_TERMINATED
-				| DLGCB_EXPIRED | DLGCB_REQ_WITHIN | DLGCB_EARLY,
-				__dialog_sendpublish, dlginfo, free_dlginfo_cell) != 0) {
-			LM_ERR("cannot register callback for interesting dialog types\n");
-			free_dlginfo_cell(dlginfo);
-			return NULL;
-		}
-        } else {
-		if (dlg_api.register_dlgcb(dlg,
-				DLGCB_FAILED| DLGCB_CONFIRMED_NA | DLGCB_TERMINATED
-				| DLGCB_EXPIRED | DLGCB_EARLY,
-				__dialog_sendpublish, dlginfo, free_dlginfo_cell) != 0) {
-			LM_ERR("cannot register callback for interesting dialog types\n");
-			free_dlginfo_cell(dlginfo);
-			return NULL;
-		}
-        }
+	if (dlg_api.register_dlgcb(dlg, dialog_event_types,
+			__dialog_sendpublish, dlginfo, free_dlginfo_cell) != 0) {
+		LM_ERR("cannot register callback for interesting dialog types\n");
+		free_dlginfo_cell(dlginfo);
+		return NULL;
+	}
 
 #ifdef PUA_DIALOGINFO_DEBUG
-	/* dialog callback testing (registered last to be executed frist) */
+	/* dialog callback testing (registered last to be executed first) */
 	if (dlg_api.register_dlgcb(dlg,
 				DLGCB_FAILED| DLGCB_CONFIRMED_NA | DLGCB_CONFIRMED
 				| DLGCB_REQ_WITHIN | DLGCB_TERMINATED | DLGCB_EXPIRED
@@ -675,7 +768,7 @@ __dialog_created(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
 		disable_callee_publish=1;
 	}
 
-        dlginfo=get_dialog_data(dlg, type, disable_caller_publish, disable_callee_publish);
+	dlginfo=get_dialog_data(dlg, type, disable_caller_publish, disable_callee_publish);
 	if(dlginfo==NULL)
 		return;
 
@@ -693,20 +786,24 @@ __dialog_created(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
 
 	if ((!disable_caller_publish) && (disable_caller_publish_flag == -1 || !(request
 		&& (request->flags & (1<<disable_caller_publish_flag))))) {
+		if(use_pubruri_avps) lock_get(&dlginfo->lock);
 		dialog_publish_multi("Trying", dlginfo->pubruris_caller,
 				&identity_local,
 				&identity_remote,
 				&(dlg->callid), 1, dlginfo->lifetime,
-				0, 0, 0, 0, (send_publish_flag==-1)?1:0);
+				0, 0, 0, 0, (send_publish_flag==-1)?1:0,&(dlginfo->uuid));
+		if(use_pubruri_avps) lock_release(&dlginfo->lock);
 	}
 
 	if (callee_trying && ((!disable_callee_publish) && (disable_callee_publish_flag == -1 || !(request
 			&& (request->flags & (1<<disable_callee_publish_flag)))))) {
+		if(use_pubruri_avps) lock_get(&dlginfo->lock);
 		dialog_publish_multi("Trying", dlginfo->pubruris_callee,
 				&identity_remote,
 				&identity_local,
 				&(dlg->callid), 0, dlginfo->lifetime,
-				0, 0, 0, 0, (send_publish_flag==-1)?1:0);
+				0, 0, 0, 0, (send_publish_flag==-1)?1:0,&(dlginfo->uuid));
+		if(use_pubruri_avps) lock_release(&dlginfo->lock);
 	}
 }
 
@@ -737,6 +834,10 @@ static int mod_init(void)
 	str s;
 	pv_spec_t avp_spec;
         struct sip_uri ruri_uri;
+
+	if(sruid_init(&_puadi_sruid, (char)'-', "padi", SRUID_INC)<0) {
+		return -1;
+	}
 
 	if(caller_dlg_var.len<=0) {
 		LM_WARN("pubruri_caller_dlg_var is not set"
@@ -839,6 +940,25 @@ static int mod_init(void)
 		LM_DBG("configured to use headers for uri values\n");
 	}
 
+	if(publish_dialog_req_within)
+		dialog_event_types |= DLGCB_REQ_WITHIN;
+
+	return 0;
+}
+
+/**
+ * @brief Initialize module children
+ */
+static int child_init(int rank)
+{
+	if(sruid_init(&_puadi_sruid, (char)'-', "padi", SRUID_INC)<0) {
+		return -1;
+	}
+
+	if(rank != PROC_MAIN) {
+		return 0;
+	}
+
 	return 0;
 }
 
@@ -853,12 +973,23 @@ void free_dlginfo_cell(void *param) {
 	free_str_list_all(cell->pubruris_caller);
 	free_str_list_all(cell->pubruris_callee);
 
-	/*if (cell->to_tag) {
-		shm_free(cell->to_tag);
-	}*/
+	if(use_pubruri_avps) lock_destroy(cell->lock);
 	shm_free(param);
 }
 
+
+int is_ruri_in_list(struct str_list *list, str *ruri) {
+	struct str_list *pubruris = list;
+	LM_DBG("search:'%.*s'\n", ruri->len, ruri->s);
+	while(pubruris) {
+		LM_DBG("compare with:'%.*s'\n", pubruris->s.len, pubruris->s.s);
+		if(str_strcmp(&pubruris->s, ruri) == 0) {
+			return 1;
+		}
+		pubruris = pubruris->next;
+	}
+	return 0;
+}
 
 void free_str_list_all(struct str_list * del_current) {
 

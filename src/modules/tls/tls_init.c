@@ -463,6 +463,18 @@ static void init_ssl_methods(void)
 	sr_tls_methods[TLS_USE_TLSv1_2 - 1].TLSMethodMin = TLS1_2_VERSION;
 	sr_tls_methods[TLS_USE_TLSv1_2 - 1].TLSMethodMax = TLS1_2_VERSION;
 
+#if OPENSSL_VERSION_NUMBER >= 0x1010100fL && !defined(LIBRESSL_VERSION_NUMBER)
+	sr_tls_methods[TLS_USE_TLSv1_3_cli - 1].TLSMethod = TLS_client_method();
+	sr_tls_methods[TLS_USE_TLSv1_3_cli - 1].TLSMethodMin = TLS1_3_VERSION;
+	sr_tls_methods[TLS_USE_TLSv1_3_cli - 1].TLSMethodMax = TLS1_3_VERSION;
+	sr_tls_methods[TLS_USE_TLSv1_3_srv - 1].TLSMethod = TLS_server_method();
+	sr_tls_methods[TLS_USE_TLSv1_3_srv - 1].TLSMethodMin = TLS1_3_VERSION;
+	sr_tls_methods[TLS_USE_TLSv1_3_srv - 1].TLSMethodMax = TLS1_3_VERSION;
+	sr_tls_methods[TLS_USE_TLSv1_3 - 1].TLSMethod = TLS_method();
+	sr_tls_methods[TLS_USE_TLSv1_3 - 1].TLSMethodMin = TLS1_3_VERSION;
+	sr_tls_methods[TLS_USE_TLSv1_3 - 1].TLSMethodMax = TLS1_3_VERSION;
+#endif
+
 	/* ranges of TLS versions (require a minimum TLS version) */
 	sr_tls_methods[TLS_USE_TLSv1_PLUS - 1].TLSMethod = TLS_method();
 	sr_tls_methods[TLS_USE_TLSv1_PLUS - 1].TLSMethodMin = TLS1_VERSION;
@@ -472,6 +484,11 @@ static void init_ssl_methods(void)
 
 	sr_tls_methods[TLS_USE_TLSv1_2_PLUS - 1].TLSMethod = TLS_method();
 	sr_tls_methods[TLS_USE_TLSv1_2_PLUS - 1].TLSMethodMin = TLS1_2_VERSION;
+
+#if OPENSSL_VERSION_NUMBER >= 0x1010100fL && !defined(LIBRESSL_VERSION_NUMBER)
+	sr_tls_methods[TLS_USE_TLSv1_3_PLUS - 1].TLSMethod = TLS_method();
+	sr_tls_methods[TLS_USE_TLSv1_3_PLUS - 1].TLSMethodMin = TLS1_3_VERSION;
+#endif
 
 #endif
 }
@@ -589,10 +606,20 @@ int tls_pre_init(void)
 	void (*ff)(void *, const char *, int) = NULL;
 #endif
 
+#ifdef KSR_LIBSSL_STATIC
+	LM_INFO("libssl linked mode: static\n");
+#endif
+
 	/*
 	 * this has to be called before any function calling CRYPTO_malloc,
 	 * CRYPTO_malloc will set allow_customize in openssl to 0
 	 */
+	CRYPTO_get_mem_functions(&mf, &rf, &ff);
+	LM_DBG("initial memory functions - malloc: %p realloc: %p free: %p\n",
+			mf, rf, ff);
+	mf = NULL;
+	rf = NULL;
+	ff = NULL;
 #ifdef TLS_MALLOC_DBG
 	if (!CRYPTO_set_mem_ex_functions(ser_malloc, ser_realloc, ser_free)) {
 #else
@@ -602,10 +629,14 @@ int tls_pre_init(void)
 		CRYPTO_get_mem_functions(&mf, &rf, &ff);
 		LM_ERR("libssl current mem functions - m: %p r: %p f: %p\n",
 					mf, rf, ff);
+		LM_ERR("module mem functions - m: %p r: %p f: %p\n",
+					ser_malloc, ser_realloc, ser_free);
 		LM_ERR("Be sure tls module is loaded before any other module using"
 				" libssl (can be loaded first to be safe)\n");
 		return -1;
 	}
+	LM_DBG("updated memory functions - malloc: %p realloc: %p free: %p\n",
+			ser_malloc, ser_realloc, ser_free);
 #endif /* LIBRESSL_VERSION_NUMBER */
 
 	if (tls_init_locks()<0)

@@ -375,7 +375,7 @@ int pvh_set_xavi(struct sip_msg *msg, str *xname, str *name, void *data,
 	LM_DBG("br_xname: %.*s name: %.*s append:%d\n", br_xname.len, br_xname.s,
 			name->len, name->s, append);
 	memset(&xval, 0, sizeof(sr_xval_t));
-	if(data == NULL || SR_XTYPE_NULL) {
+	if(data == NULL || type == SR_XTYPE_NULL) {
 		xval.type = SR_XTYPE_NULL;
 	} else if(type == SR_XTYPE_STR) {
 		xval.type = SR_XTYPE_STR;
@@ -515,8 +515,6 @@ int pvh_clone_branch_xavi(struct sip_msg *msg, str *xname)
 	}
 
 	do {
-		if(pvh_skip_header(&sub->name))
-			continue;
 		if(sub->val.type == SR_XTYPE_DATA)
 			continue;
 		if(pvh_xavi_append_value(&sub->name, &sub->val, &br_xavi->val.v.xavp)
@@ -618,9 +616,11 @@ int pvh_set_header(
 
 	if(val == NULL || (val->flags & PV_VAL_NULL)) {
 		if(idxf == PV_IDX_ALL) {
-			cnt = xavi_rm_by_name(hname, 1, &xavi);
-			LM_DBG("removed %d values of %.*s=>%.*s, set $null\n", cnt,
-					xavi->name.len, xavi->name.s, hname->len, hname->s);
+			if(hname_cnt > 1) {
+				cnt = xavi_rm_by_name(hname, 1, &avi);
+				LM_DBG("removed %d values of %.*s=>%.*s, set $null\n", cnt,
+						xavi->name.len, xavi->name.s, hname->len, hname->s);
+			}
 			if(pvh_set_xavi(msg, &xavi_name, hname, NULL, SR_XTYPE_NULL, 0, 0)
 					< 0)
 				goto err;
@@ -649,7 +649,7 @@ int pvh_set_header(
 				goto err;
 		} else if(idxf == PV_IDX_ALL) {
 			if(hname_cnt > 1) {
-				cnt = xavi_rm_by_name(hname, 1, &xavi);
+				cnt = xavi_rm_by_name(hname, 1, &avi);
 				LM_DBG("removed %d values of %.*s=>%.*s\n", cnt, xavi->name.len,
 						xavi->name.s, hname->len, hname->s);
 			}

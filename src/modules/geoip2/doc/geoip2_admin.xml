@@ -44,6 +44,9 @@
 	<para>
 		Many queries can be done and store results in different containers to
 		be able to use in parallel. Database is loaded at startup in cache.
+		The cache can be reloaded with an RPC command. In this case make sure
+		that you do not overwrite the file in place, but replace it, e.g. with
+		a <quote>move</quote> command.
 	</para>
     </section>
     <section>
@@ -109,6 +112,8 @@ modparam("geoip2", "path", "/usr/local/share/GeoIP/GeoLite2-City.mmdb")
 	    <para>
 			Match ipaddr against the GeoIP database and set the pvc container. The
 			function has to be called before accessing a key via: $gip2(pvc=&gt;key).
+			At least one function needs to be present that access the pvc container,
+			otherwise this function will not work.
 	    </para>
 		<example>
 		<title><function>geoip2_match</function> usage</title>
@@ -121,6 +126,27 @@ if(geoip2_match("$si", "src"))
 	    </example>
 	</section>
 	
+    </section>
+
+    <section>
+	<title>RPC Commands</title>
+	<section id="geoip2.r.reload">
+	   <title>
+		<function moreinfo="none">geoip2.reload</function>
+	   </title>
+	   <para>
+			Reload the internal GeoIP database. This is necessary after
+			the database file has been changed on the disk.
+	   </para>
+		<example>
+		<title><function>geoip2.reload</function> usage</title>
+		<programlisting format="linespecific">
+...
+&kamcmd; geoip2.reload
+...
+		</programlisting>
+		</example>
+	</section>
     </section>
 	
 	<section>

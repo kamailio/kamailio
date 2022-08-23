@@ -118,7 +118,7 @@ if [ ! -d $HOMEDIR ]; then
     chown ${USER}:${GROUP} $HOMEDIR
 fi
 
-OPTIONS="-f $CFGFILE -P $PIDFILE -m $SHM_MEMORY -M $PKG_MEMORY -u $USER -g $GROUP"
+OPTIONS="-f $CFGFILE -P $PIDFILE -m $SHM_MEMORY -M $PKG_MEMORY -u $USER -g $GROUP --atexit=no"
 
 case "$1" in
   start|debug)

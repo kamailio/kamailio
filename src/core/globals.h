@@ -103,6 +103,7 @@ extern int tls_max_connections; /* maximum tls connections, hard limit */
 #endif
 extern int ksr_tcp_accept_hep3;
 extern int ksr_tcp_accept_haproxy;
+extern int ksr_tcp_script_mode;
 #ifdef USE_TLS
 extern int tls_disable;
 extern unsigned short tls_port_no;
@@ -159,7 +160,7 @@ extern char *avp_db_url;  /* db url used by user preferences (AVPs) */
 
 extern int reply_to_via;
 
-extern int is_main;
+extern int _ksr_is_main;
 extern int fixup_complete;
 
 /* debugging level for dumping memory status */
@@ -212,6 +213,7 @@ extern int rt_timer2_policy; /* "slow" timer, SCHED_OTHER */
 extern int http_reply_parse;
 extern int _sr_ip_free_bind;
 extern int ksr_verbose_startup;
+extern int ksr_all_errors;
 extern int ksr_route_locks_size;
 extern str _ksr_xavp_via_params;
 extern str _ksr_xavp_via_fields;

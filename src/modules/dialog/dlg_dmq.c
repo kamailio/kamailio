@@ -106,7 +106,7 @@ int dlg_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp, dmq_node_t* no
 	srjson_t *it = NULL;
 
 	dlg_dmq_action_t action = DLG_DMQ_NONE;
-	dlg_iuid_t iuid;
+	dlg_iuid_t iuid = {0};
 	str profiles = {0, 0}, callid = {0, 0}, tag1 = {0,0}, tag2 = {0,0},
 		contact1 = {0,0}, contact2 = {0,0}, k={0,0}, v={0,0};
 	str cseq1 = {0,0}, cseq2 = {0,0}, route_set1 = {0,0}, route_set2 = {0,0},

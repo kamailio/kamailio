@@ -45,9 +45,12 @@ Juha Heinanen
               3.8. char_list (string)
               3.9. pv_value (string)
               3.10. pv_values (string)
-              3.11. mt_tree_type (integer)
-              3.12. mt_ignore_duplicates (integer)
-              3.13. mt_allow_duplicates (integer)
+              3.11. pv_dstid (string)
+              3.12. pv_weight (string)
+              3.13. pv_count (string)
+              3.14. mt_tree_type (integer)
+              3.15. mt_ignore_duplicates (integer)
+              3.16. mt_allow_duplicates (integer)
 
         4. Functions
 
@@ -79,11 +82,14 @@ Juha Heinanen
    1.8. Set char_list parameter
    1.9. Set pv_value parameter
    1.10. Set pv_values parameter
-   1.11. Set mt_tree_type parameter
-   1.12. Set mt_ignore_duplicates parameter
-   1.13. Set mt_allow_duplicates parameter
-   1.14. mt_match usage
-   1.15. mtree.list rpc usage
+   1.11. Set pv_dstid parameter
+   1.12. Set pv_weight parameter
+   1.13. Set pv_count parameter
+   1.14. Set mt_tree_type parameter
+   1.15. Set mt_ignore_duplicates parameter
+   1.16. Set mt_allow_duplicates parameter
+   1.17. mt_match usage
+   1.18. mtree.list rpc usage
 
 Chapter 1. Admin Guide
 
@@ -107,9 +113,12 @@ Chapter 1. Admin Guide
         3.8. char_list (string)
         3.9. pv_value (string)
         3.10. pv_values (string)
-        3.11. mt_tree_type (integer)
-        3.12. mt_ignore_duplicates (integer)
-        3.13. mt_allow_duplicates (integer)
+        3.11. pv_dstid (string)
+        3.12. pv_weight (string)
+        3.13. pv_count (string)
+        3.14. mt_tree_type (integer)
+        3.15. mt_ignore_duplicates (integer)
+        3.16. mt_allow_duplicates (integer)
 
    4. Functions
 
@@ -163,9 +172,12 @@ Chapter 1. Admin Guide
    3.8. char_list (string)
    3.9. pv_value (string)
    3.10. pv_values (string)
-   3.11. mt_tree_type (integer)
-   3.12. mt_ignore_duplicates (integer)
-   3.13. mt_allow_duplicates (integer)
+   3.11. pv_dstid (string)
+   3.12. pv_weight (string)
+   3.13. pv_count (string)
+   3.14. mt_tree_type (integer)
+   3.15. mt_ignore_duplicates (integer)
+   3.16. mt_allow_duplicates (integer)
 
 3.1. db_url (string)
 
@@ -209,9 +221,16 @@ modparam("mtree", "db_table", "mtrees")
        separated string, which will be associated with the prefix (string
        transformation {s.select,...) can be used in configuration file to
        extract a specific column value).
-     * type - the type of tree elements (0 = string, 2 = integer). It is
-       valid only when the (tprefix, tvalue) pairs are loaded (not for
-       multi-column values).
+     * type - the type of tree elements (0 = string, 1 = d:w, 2 =
+       integer). None-zero is valid only when the (tprefix, tvalue) pairs
+       are loaded (not for multi-column values).
+       When the type is 1, the value in database has to be two integers
+       separated by colon, the first one (d - dstid) will be stored in
+       pv_dstid AVP and the second (w - weight) will be stored in
+       pv_weight AVP. If in the matching records are many with the same
+       dstid, it will keep only the one with the longest prefix. Then the
+       records are ordered by the weight and stored in the specified AVPs.
+       The number of stored records is saved in pv_count variable.
      * multi - tells if dbtable can contain more than one tree (0 = one
        tree, 1 = more than one tree identified by tname column). It is
        valid only when the (tprefix, tvalue) pairs are loaded (not for
@@ -308,36 +327,72 @@ modparam("mtree", "pv_value", "$var(mtval)")
 modparam("mtree", "pv_values", "$avp(mtvals)")
 ...
 
-3.11. mt_tree_type (integer)
+3.11. pv_dstid (string)
+
+   The AVP name where to store the first integer value when tree type is
+   1.
+
+   Default value is “$avp(tdstid)”.
+
+   Example 1.11. Set pv_dstid parameter
+...
+modparam("mtree", "pv_dstid", "$var(dstid)")
+...
+
+3.12. pv_weight (string)
+
+   The AVP name where to store the second integer value when tree type is
+   1.
+
+   Default value is “$avp(tweight)”.
+
+   Example 1.12. Set pv_weight parameter
+...
+modparam("mtree", "pv_dstid", "$var(weight)")
+...
+
+3.13. pv_count (string)
+
+   The PV spec where to store the count of matched values when tree type
+   is 1. It can be any writable PV.
+
+   Default value is “$avp(tcount)”.
+
+   Example 1.13. Set pv_count parameter
+...
+modparam("mtree", "pv_count", "$var(count)")
+...
+
+3.14. mt_tree_type (integer)
 
    Default payload type for trees data stored in 'db_table'. Documented
    values are 0 for string payloads and 2 for integer payloads.
 
    Default value is 0.
 
-   Example 1.11. Set mt_tree_type parameter
+   Example 1.14. Set mt_tree_type parameter
 ...
 modparam("mtree", "mt_tree_type", 2)
 ...
 
-3.12. mt_ignore_duplicates (integer)
+3.15. mt_ignore_duplicates (integer)
 
    Ignore duplicated prefixes when loading data.
 
    Default value is 0.
 
-   Example 1.12. Set mt_ignore_duplicates parameter
+   Example 1.15. Set mt_ignore_duplicates parameter
 ...
 modparam("mtree", "mt_ignore_duplicates", 1)
 ...
 
-3.13. mt_allow_duplicates (integer)
+3.16. mt_allow_duplicates (integer)
 
    Allow duplicate prefixes when loading data.
 
    Default value is 0.
 
-   Example 1.13. Set mt_allow_duplicates parameter
+   Example 1.16. Set mt_allow_duplicates parameter
 ...
 modparam("mtree", "mt_allow_duplicates", 1)
 ...
@@ -349,16 +404,16 @@ modparam("mtree", "mt_allow_duplicates", 1)
 4.1.  mt_match(mtree, pv, mode)
 
    Match 'pv' value against 'mtree'. If 'mtree' type is 0 or 2 and value
-   of 'mode' is NOT 2, sets a value of the longest matching prefix to
-   pseudo variable specified by pv_value parameter. If 'mtree' type is 0
-   or 2 and value of 'mode' is 2, sets values of all matching prefixes to
-   avp specified by pv_values parameter so that a value of longest
-   matching prefix is in avp index 0. Parameter 'mode' can be an integer
-   constant or a pseudo variable with integer value.
+   of 'mode' is NOT 2, sets associated value of the longest matching
+   prefix to pseudo variable specified by pv_value parameter. If 'mtree'
+   type is 0 or 2 and value of 'mode' is 2, sets values of all matching
+   prefixes to avp specified by pv_values parameter so that a value of
+   longest matching prefix is in avp index 0. Parameter 'mode' can be an
+   integer constant or a pseudo variable with integer value.
 
    Returns 1 if match succeeded and -1 otherwise.
 
-   Example 1.14. mt_match usage
+   Example 1.17. mt_match usage
 ...
 mt_match("mytree", "$rU", "0");
 ...
@@ -379,7 +434,7 @@ mt_match("mytree", "$rU", "0");
    Parameters:
      * _mtree_ : name of tree to list (optional).
 
-   Example 1.15. mtree.list rpc usage
+   Example 1.18. mtree.list rpc usage
 ...
 kamcmd mtree.list
 kamcmd mtree.list mytree

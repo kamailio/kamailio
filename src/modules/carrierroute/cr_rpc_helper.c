@@ -235,13 +235,13 @@ int dump_tree_recursor (rpc_t* rpc, void* ctx, void *gh,
 			struct dtrie_node_t *node, char *prefix)
 {
 	char s[256];
-	char rbuf[1024];
 	char *p;
 	int i,len;
 	struct route_flags *rf;
 	struct route_rule *rr;
 	struct route_rule_p_list * rl;
 	double prob;
+	void* hh, *ih;
 
 	len=strlen(prefix);
 	if (len > 254) {
@@ -267,39 +267,45 @@ int dump_tree_recursor (rpc_t* rpc, void* ctx, void *gh,
 			} else {
 				prob = rr->prob;
 			}
-			snprintf(rbuf, 1024,
-					"%10s: %0.3f %%, '%.*s': %s, '%i', '%.*s', '%.*s', '%.*s'",
-					len > 0 ? prefix : "NULL", prob * 100,
-					rr->host.len, rr->host.s,
-					(rr->status ? "ON" : "OFF"), rr->strip,
-					rr->local_prefix.len, rr->local_prefix.s,
-					rr->local_suffix.len, rr->local_suffix.s,
-					rr->comment.len, rr->comment.s);
-			if (rpc->array_add(gh, "s", rbuf)<0)
+
+			if (rpc->array_add(gh, "{", &hh)<0)
 			{
 				rpc->fault(ctx, 500, "Failed to add data to response");
 				return -1;
 			}
 
+			if(rpc->struct_add(hh, "sfSsdSSS",
+					"prefix", len > 0 ? prefix : "NULL",
+					"prob", prob * 100,
+					"host",  &rr->host,
+					"status",(rr->status ? "ON" : "OFF"),
+					"strip", rr->strip,
+					"prefix", &rr->local_prefix,
+					"suffix", &rr->local_suffix,
+					"comment", &rr->comment)<0)
+			{
+				rpc->fault(ctx, 500, "Internal error - routes structure");
+								return -1;
+			}
+
 			if(!rr->status && rr->backup && rr->backup->rr){
-				snprintf(rbuf, 1024,
-						"            Rule is backed up by: %.*s",
-						rr->backup->rr->host.len, rr->backup->rr->host.s);
-				if (rpc->array_add(gh, "s", rbuf)<0)
+				if (rpc->struct_add(hh, "S", "backup_by", &rr->backup->rr->host)<0)
 				{
 					rpc->fault(ctx, 500, "Failed to add backup by info to response");
 					return -1;
 				}
 			}
 			if(rr->backed_up){
+				if (rpc->struct_add(hh, "[", "backup_for", &ih)<0)
+				{
+					rpc->fault(ctx, 500, "Failed to add backup for data to response");
+					return -1;
+				}
 				rl = rr->backed_up;
 				i=0;
 				while(rl){
 					if(rl->rr){
-						snprintf(rbuf, 1024,
-								"            Rule is backup for: %.*s",
-								rl->rr->host.len, rl->rr->host.s);
-						if (rpc->array_add(gh, "s", rbuf)<0)
+						if (rpc->array_add(ih, "S", &rl->rr->host)<0)
 						{
 							rpc->fault(ctx, 500, "Failed to add backup for data to response");
 							return -1;

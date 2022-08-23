@@ -29,6 +29,7 @@
 #define _DISPATCH_H_
 
 #include <stdio.h>
+#include <sys/time.h>
 #include "../../core/pvar.h"
 #include "../../core/xavp.h"
 #include "../../core/parser/msg_parser.h"
@@ -73,8 +74,13 @@
 #define DS_XAVP_CTX_SKIP_CNT	1
 
 #define DS_IRMODE_NOIPADDR	1
-/* clang-format on */
 
+#define DS_DNS_MODE_INIT   1
+#define DS_DNS_MODE_ALWAYS (1<<1)
+#define DS_DNS_MODE_TIMER  (1<<2)
+#define DS_DNS_MODE_QSRV   (1<<3)
+
+/* clang-format on */
 typedef struct ds_rctx {
 	int flags;
 	int code;
@@ -140,7 +146,7 @@ int ds_select_dst_limit(sip_msg_t *msg, int set, int alg, uint32_t limit,
 		int mode);
 int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode);
 int ds_update_dst(struct sip_msg *msg, int upos, int mode);
-int ds_add_dst(int group, str *address, int flags, str *attrs);
+int ds_add_dst(int group, str *address, int flags, int priority, str *attrs);
 int ds_remove_dst(int group, str *address);
 int ds_update_state(sip_msg_t *msg, int group, str *address, int state,
 		ds_rctx_t *rctx);
@@ -151,6 +157,7 @@ int ds_mark_dst(struct sip_msg *msg, int mode);
 int ds_print_list(FILE *fout);
 int ds_log_sets(void);
 int ds_list_exist(int set);
+int ds_is_active_uri(sip_msg_t *msg, int group, str *uri);
 
 
 int ds_load_unset(struct sip_msg *msg);
@@ -167,11 +174,15 @@ int ds_is_addr_from_list(sip_msg_t *_m, int group, str *uri, int mode);
  */
 void ds_check_timer(unsigned int ticks, void *param);
 
-
 /*! \brief
  * Timer for checking active calls load
  */
 void ds_ht_timer(unsigned int ticks, void *param);
+
+/*! \brief
+ * Timer for DNS query of destination addresses
+ */
+void ds_dns_timer(unsigned int ticks, void *param);
 
 /*! \brief
  * Check if the reply-code is valid:
@@ -209,6 +220,7 @@ void latency_stats_init(ds_latency_stats_t *latency_stats, int latency, int coun
 
 typedef struct _ds_dest {
 	str uri;          /*!< address/uri */
+	str host;         /*!< shortcut to host part */
 	int flags;        /*!< flags */
 	int priority;     /*!< priority */
 	int dload;        /*!< load */
@@ -220,6 +232,7 @@ typedef struct _ds_dest {
 	unsigned short int port; 	/*!< port of the URI */
 	unsigned short int proto; 	/*!< protocol of the URI */
 	int message_count;
+	struct timeval dnstime;
 	struct _ds_dest *next;
 } ds_dest_t;
 

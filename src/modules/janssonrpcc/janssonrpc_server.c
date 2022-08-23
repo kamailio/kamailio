@@ -278,7 +278,7 @@ int jsonrpc_server_from_srv(str conn, str srv,
 		DBG("server %s\n", srv_record->name);
 
 		server = create_server();
-		CHECK_MALLOC(server);
+		CHECK_MALLOC_GOTO(server, error);
 
 		shm_str_dup(&server->conn, &conn);
 		CHECK_MALLOC_GOTO(server->conn.s, error);

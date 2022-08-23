@@ -35,6 +35,15 @@
 /** Fast 32-bit header field name parser.
  * @file
  */
+
+char *parse_sip_header_name(char* const begin, const char* const end,
+		hdr_field_t* const hdr, int emode, int logmode);
+
+/* macro to find header name without printing errors in failure case */
+#define find_hname2_str(hbuf, hdr) \
+	parse_sip_header_name((hbuf)->s, (hbuf)->s + (hbuf)->len, hdr, 1, 0)
+
+
 char* parse_hname2(char* const begin, const char* const end, struct hdr_field* const hdr);
 char* parse_hname2_short(char* const begin, const char* const end, struct hdr_field* const hdr);
 char* parse_hname2_str (str* const hbuf, hdr_field_t* const hdr);

@@ -323,7 +323,8 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 				ci.instance = _c->instance->body;
 				LM_DBG("set instance[%.*s]\n", ci.instance.len, ci.instance.s);
 			}
-			if(_use_regid && _c->instance!=NULL && _c->reg_id!=NULL && _c->reg_id->body.len>0) {
+			if(_use_regid && _c->instance!=NULL && _c->reg_id!=NULL
+					&& _c->reg_id->body.len>0) {
 				if(str2int(&_c->reg_id->body, &ci.reg_id)<0 || ci.reg_id==0)
 				{
 					LM_ERR("invalid reg-id value\n");
@@ -431,12 +432,14 @@ int reg_get_crt_max_contacts(void)
 {
 	int n;
 	sr_xavp_t *vavp=NULL;
-	str vname = {"max_contacts", 12};
+	str vname = str_init("max_contacts");
 
 	n = 0;
 
 	if(reg_xavp_cfg.s!=NULL)
 	{
+		LM_DBG("looking up $xavp(%.*s=>%.*s) for max contacts limit\n",
+				reg_xavp_cfg.len, reg_xavp_cfg.s, vname.len, vname.s);
 		vavp = xavp_get_child_with_ival(&reg_xavp_cfg, &vname);
 		if(vavp!=NULL)
 		{
@@ -459,7 +462,8 @@ int reg_get_crt_max_contacts(void)
  * and insert all contacts from the message that have expires
  * > 0
  */
-static inline int insert_contacts(struct sip_msg* _m, udomain_t* _d, str* _a, int _use_regid, int novariation)
+static inline int insert_contacts(struct sip_msg* _m, udomain_t* _d, str* _a,
+		int _use_regid, int novariation)
 {
 	ucontact_info_t* ci;
 	urecord_t* r = NULL;
@@ -504,8 +508,8 @@ static inline int insert_contacts(struct sip_msg* _m, udomain_t* _d, str* _a, in
 
 
 		if (maxc > 0 && num >= maxc) {
-			LM_INFO("too many contacts (%d) for AOR <%.*s>\n",
-					num, _a->len, _a->s);
+			LM_INFO("too many contacts (n:%d max:%d) for AOR <%.*s>\n",
+					num, maxc, _a->len, _a->s);
 			rerrno = R_TOO_MANY;
 			goto error;
 		}
@@ -551,7 +555,8 @@ static inline int insert_contacts(struct sip_msg* _m, udomain_t* _d, str* _a, in
 			if (parse_uri( _c->uri.s, _c->uri.len, &uri)<0) {
 				LM_ERR("failed to parse contact <%.*s>\n",
 						_c->uri.len, _c->uri.s);
-			} else if (uri.proto==PROTO_TCP || uri.proto==PROTO_TLS || uri.proto==PROTO_WS || uri.proto==PROTO_WSS) {
+			} else if (uri.proto==PROTO_TCP || uri.proto==PROTO_TLS
+					|| uri.proto==PROTO_WS || uri.proto==PROTO_WSS) {
 				if (e_max) {
 					LM_WARN("multiple TCP contacts on single REGISTER\n");
 					if (expires>e_max) e_max = expires;
@@ -570,7 +575,7 @@ static inline int insert_contacts(struct sip_msg* _m, udomain_t* _d, str* _a, in
 	} else { /* No contacts found */
 		build_contact(_m, NULL, &u->host);
 	}
-	
+
 #ifdef USE_TCP
 	if ( tcp_check && e_max>0 ) {
 		e_max -= act_time;
@@ -604,7 +609,7 @@ static int test_max_contacts(struct sip_msg* _m, urecord_t* _r, contact_t* _c,
 		}
 		ptr = ptr->next;
 	}
-	LM_DBG("%d valid contacts\n", num);
+	LM_DBG("%d valid contacts before update\n", num);
 
 	for( ; _c ; _c = get_next_contact(_c) ) {
 		/* calculate expires */
@@ -626,12 +631,13 @@ static int test_max_contacts(struct sip_msg* _m, urecord_t* _r, contact_t* _c,
 		}
 	}
 
-	LM_DBG("%d contacts after commit\n", num);
 	if (num > mc) {
-		LM_INFO("too many contacts for AOR <%.*s>\n", _r->aor.len, _r->aor.s);
+		LM_INFO("too many contacts for AOR <%.*s> (n:%d max:%d)\n",
+				_r->aor.len, _r->aor.s, num, mc);
 		rerrno = R_TOO_MANY;
 		return -1;
 	}
+	LM_DBG("%d contacts when update is done (max: %d)\n", num, mc);
 
 	return 0;
 }
@@ -648,7 +654,8 @@ static int test_max_contacts(struct sip_msg* _m, urecord_t* _r, contact_t* _c,
  * 3) If contact in usrloc exists and expires
  *    == 0, delete contact
  */
-static inline int update_contacts(struct sip_msg* _m, urecord_t* _r, int _mode, int _use_regid, int novariation)
+static inline int update_contacts(struct sip_msg* _m, urecord_t* _r, int _mode,
+		int _use_regid, int novariation)
 {
 	ucontact_info_t *ci;
 	ucontact_t *c, *ptr, *ptr0;
@@ -683,7 +690,8 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r, int _mode, 
 
 #ifdef USE_TCP
 	if ( (_m->flags&tcp_persistent_flag) &&
-			(_m->rcv.proto==PROTO_TCP||_m->rcv.proto==PROTO_TLS||_m->rcv.proto==PROTO_WS||_m->rcv.proto==PROTO_WSS)) {
+			(_m->rcv.proto==PROTO_TCP||_m->rcv.proto==PROTO_TLS
+			 ||_m->rcv.proto==PROTO_WS||_m->rcv.proto==PROTO_WSS)) {
 		e_max = -1;
 		tcp_check = 1;
 	} else {
@@ -805,7 +813,8 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r, int _mode, 
 			if (parse_uri( _c->uri.s, _c->uri.len, &uri)<0) {
 				LM_ERR("failed to parse contact <%.*s>\n",
 						_c->uri.len, _c->uri.s);
-			} else if (uri.proto==PROTO_TCP || uri.proto==PROTO_TLS || uri.proto==PROTO_WS || uri.proto==PROTO_WSS) {
+			} else if (uri.proto==PROTO_TCP || uri.proto==PROTO_TLS
+					|| uri.proto==PROTO_WS || uri.proto==PROTO_WSS) {
 				if (e_max>0) {
 					LM_WARN("multiple TCP contacts on single REGISTER\n");
 				}
@@ -1015,10 +1024,18 @@ int save(struct sip_msg* _m, udomain_t* _d, int _cflags, str *_uri)
 
 	update_stat(accepted_registrations, 1);
 
-	/* Only send reply upon request, not upon reply */
-	if ((is_route_type(REQUEST_ROUTE) || is_route_type(FAILURE_ROUTE))
-			&& !is_cflag_set(REG_SAVE_NORPL_FL) && (reg_send_reply(_m) < 0))
-		return -1;
+	if(!is_cflag_set(REG_SAVE_NORPL_FL)) {
+		/* Only send reply upon request, not upon reply */
+		if (is_route_type(REQUEST_ROUTE) || is_route_type(FAILURE_ROUTE)) {
+			if (reg_send_reply(_m) < 0) {
+				return -1;
+			}
+		}
+	} else if (is_cflag_set(REG_SAVE_PREPRPL_FL)) {
+		if (reg_prepare_reply(_m) < 0) {
+			return -1;
+		}
+	}
 
 	if (path_enabled && path_mode != PATH_MODE_OFF) {
 		reset_path_vector(_m);

@@ -178,6 +178,11 @@ allid,time_hires&cid:callid
    running Kamailio with this module loaded:
      * hiredis - available at https://github.com/redis/hiredis
 
+   The following library is an optional dependency to support redis
+   cluster protocol:
+     * hiredis-cluster - available at
+       https://github.com/Nordix/hiredis-cluster
+
 4. Parameters
 
    4.1. schema_path (string)
@@ -226,6 +231,10 @@ modparam("db_redis", "verbosity", 0)
    Load the module and set the "db_url" modparam for specific modules to:
    'redis://[username]@host:port/database'. Username is optional. The
    database portion must be a valid Redis database number.
+
+   For cluster support you need to set the "db_url" modparam with a comma
+   separated list of cluster hosts: 'redis://host1:port1,host2:port2/'.
+   The database portion is not supported in cluster mode.
 
    Example 1.4. Usage
 ...

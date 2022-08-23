@@ -35,6 +35,8 @@
 #include "compiler_opt.h"
 #include "cfg_core.h"
 
+#define TIME_T_FMT "lld"
+#define TIME_T_CAST(x) ((long long)(x))
 
 /** dicover the function name */
 /* C >= 99 has __func__, older gcc versions have __FUNCTION__ */
@@ -138,6 +140,7 @@ extern int my_pid(void);
 extern int log_stderr;
 
 extern int log_color;
+extern int log_cee;
 extern char *log_prefix_fmt;
 extern str *log_prefix_val;
 extern int log_prefix_mode;
@@ -172,6 +175,7 @@ void set_module_debug_facility_cb(get_module_debug_facility_f f);
 #define is_printable(level) (get_debug_level(LOG_MNAME, LOG_MNAME_LEN)>=(level))
 extern struct log_level_info log_level_info[];
 extern char *log_name;
+extern char *log_fqdn;
 
 #ifndef NO_SIG_DEBUG
 /** @brief protection against "simultaneous" printing from signal handlers */
@@ -189,6 +193,7 @@ void dprint_color_update(int level, char f, char b);
 void dprint_init_colors(void);
 void dprint_term_color(char f, char b, str *obuf);
 
+void log_init(void);
 void log_prefix_init(void);
 
 #define LOGV_PREFIX_STR ((log_prefix_val)?log_prefix_val->s:"")

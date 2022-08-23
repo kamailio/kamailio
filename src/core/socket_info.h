@@ -97,6 +97,8 @@ int fix_all_socket_lists(void);
 void print_all_socket_lists(void);
 void print_aliases(void);
 
+int add_listen_socket(socket_attrs_t *sa);
+
 struct socket_info* grep_sock_info(str* host, unsigned short port,
 										unsigned short proto);
 struct socket_info* grep_sock_info_by_port(unsigned short port,
@@ -104,6 +106,10 @@ struct socket_info* grep_sock_info_by_port(unsigned short port,
 struct socket_info* find_si(struct ip_addr* ip, unsigned short port,
 												unsigned short proto);
 socket_info_t* ksr_get_socket_by_name(str *sockname);
+socket_info_t* ksr_get_socket_by_listen(str *sockstr);
+socket_info_t* ksr_get_socket_by_advertise(str *sockstr);
+socket_info_t* ksr_get_socket_by_index(int idx);
+socket_info_t* ksr_get_socket_by_address(str *sockstr);
 
 struct socket_info** get_sock_info_list(unsigned short proto);
 
@@ -151,8 +157,10 @@ inline static struct socket_info* get_first_socket(void)
 
 /* structure to break down 'proto:host:port' */
 typedef struct _sr_phostp {
+	str sproto;
 	int proto;
 	str host;
+	str sport;
 	int port;
 } sr_phostp_t;
 
@@ -160,5 +168,8 @@ struct socket_info* lookup_local_socket(str *phostp);
 int parse_protohostport(str* ins, sr_phostp_t *r);
 
 unsigned int ipv6_get_netif_scope(char *ipval);
+
+int ksr_sockets_no_get(void);
+void ksr_sockets_index(void);
 
 #endif

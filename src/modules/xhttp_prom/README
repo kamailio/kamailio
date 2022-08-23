@@ -512,7 +512,7 @@ prom_gauge_set("gg01", "-12.5");
 ...
 
 # Definition of gg02 gauge with two labels method and IP
-modparam("xhttp_prom", "prom_gauge", "name=cnt02; label=method:IP;");
+modparam("xhttp_prom", "prom_gauge", "name=gg02; label=method:IP;");
 ...
 # Assign 2.8 to value of gg02 gauge with labels method and IP. It creates the ga
 uge if it does not exist.

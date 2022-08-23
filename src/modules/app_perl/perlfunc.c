@@ -100,7 +100,7 @@ int perl_exec2(struct sip_msg* _msg, char* fnc, char* mystr) {
 	dSP;
 
 	if (!perl_checkfnc(fnc)) {
-		LM_ERR("unknown perl function called.\n");
+		LM_ERR("unknown perl function called [%s]\n", ZSW(fnc));
 		reason.s = "Internal error";
 		reason.len = sizeof("Internal error")-1;
 		if (slb.freply(_msg, 500, &reason) == -1)
@@ -109,7 +109,7 @@ int perl_exec2(struct sip_msg* _msg, char* fnc, char* mystr) {
 		}
 		return -1;
 	}
-	
+
 	switch ((_msg->first_line).type) {
 	case SIP_REQUEST:
 		if (parse_sip_msg_uri(_msg) < 0) {
@@ -147,6 +147,11 @@ int perl_exec2(struct sip_msg* _msg, char* fnc, char* mystr) {
 	PUTBACK;			/* make local stack pointer global */
 
 	call_pv(fnc, G_EVAL|G_SCALAR);		/* call the function     */
+
+	if(SvTRUE(ERRSV)) {
+		LM_WARN("perl error for [%s]: %s\n", ZSW(fnc), SvPV_nolen(ERRSV));
+	}
+
 	SPAGAIN;			/* refresh stack pointer         */
 	/* pop the return value from stack */
 	retval = POPi;
@@ -155,5 +160,6 @@ int perl_exec2(struct sip_msg* _msg, char* fnc, char* mystr) {
 	FREETMPS;			/* free that return value        */
 	LEAVE;				/* ...and the XPUSHed "mortal" args.*/
 
+	LM_DBG("executed [%s] with return code: %d\n", ZSW(fnc), retval);
 	return retval;
 }

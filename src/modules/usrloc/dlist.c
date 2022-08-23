@@ -92,8 +92,8 @@ int ul_ka_db_records(int partidx)
 	db_key_t keys1[4]; /* where */
 	db_val_t vals1[4];
 	db_op_t  ops1[4];
-	db_key_t keys2[8]; /* select */
-	int n[2] = {2, 8}; /* number of dynamic values used on key1/key2 */
+	db_key_t keys2[9]; /* select */
+	int n[2] = {2, 9}; /* number of dynamic values used on key1/key2 */
 	dlist_t *dom = NULL;
 	urecord_t ur;
 	ucontact_t uc;
@@ -114,6 +114,7 @@ int ul_ka_db_records(int partidx)
 	keys2[5] = &ul_ruid_col;
 	keys2[6] = &ul_user_col;
 	keys2[7] = &ul_domain_col;
+	keys2[8] = &ul_con_id_col;
 
 	/* where fields */
 	keys1[0] = &ul_expires_col;
@@ -255,6 +256,9 @@ int ul_ka_db_records(int partidx)
 			}
 			ur.aorhash = ul_get_aorhash(&ur.aor);
 			ur.contacts = &uc;
+
+			/* tcpconn_id */
+			uc.tcpconn_id = VAL_INT(ROW_VALUES(row)+8);
 
 			ul_ka_urecord(&ur);
 		} /* row cycle */
@@ -960,7 +964,9 @@ int synchronize_all_udomains(int istart, int istep)
 				res |= db_timer_udomain(ptr->d);
 			}
 		}
-		ul_ka_db_records((unsigned int)istart);
+		if (ul_ka_mode != ULKA_NONE) {
+			ul_ka_db_records((unsigned int)istart);
+		}
 	} else {
 		for( ptr=_ksr_ul_root ; ptr ; ptr=ptr->next) {
 			mem_timer_udomain(ptr->d, istart, istep);

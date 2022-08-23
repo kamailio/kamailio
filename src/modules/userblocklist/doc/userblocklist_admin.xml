@@ -33,7 +33,7 @@
 	The module exports four functions, <function>check_blocklist</function>,
 	<function>check_allowlist</function>,
 	<function>check_user_blocklist</function> and <function>check_user_allowlist</function>
-	for usage in the configuration file. Furthermore it provides a MI function to
+	for usage in the configuration file. Furthermore it provides a RPC function to
 	reload the global blocklist cache.
 	</para>
 	<para>
@@ -401,31 +401,10 @@ if (!check_allowlist("globalblocklist")) {
 				</programlisting>
 			</example>
 		</section>
-</section>
 
-<section>
-	<title>MI Commands</title>
-		<section>
+		<section id="userblocklist.r.dump_blocklist">
 			<title>
-				<function moreinfo="none">reload_blocklist</function>
-			</title>
-			<para>
-				Reload the internal global blocklist cache. This is necessary after
-				the database tables for the global blocklist have been changed.
-			</para>
-			<example>
-				<title><function>reload_blocklist</function> usage</title>
-				<programlisting format="linespecific">
-					...
-					&ctltool; fifo reload_blocklist
-					...
-				</programlisting>
-	    		</example>
-		</section>
-
-		<section>
-			<title>
-				<function moreinfo="none">dump_blocklist</function>
+				<function moreinfo="none">userblocklist.dump_blocklist</function>
 			</title>
 			<para>
 				Dumps the default, in memory, global_blocklist content to stdout.
@@ -433,19 +412,19 @@ if (!check_allowlist("globalblocklist")) {
 				in order to see the latest content of the database.
 			</para>
 			<example>
-				<title><function>dump_blocklist</function> usage</title>
+				<title><function>userblocklist.dump_blocklist</function> usage</title>
 				<programlisting format="linespecific">
-					...
-					&ctltool; fifo reload_blocklist
-					&ctltool; fifo dump_blocklist
-					...
+...
+&kamcmd; userblocklist.reload_blocklist
+&kamcmd; userblocklist.dump_blocklist
+...
 				</programlisting>
 	    		</example>
 		</section>
 
-		<section>
+		<section id="userblocklist.r.check_blocklist">
 			<title>
-				<function moreinfo="none">check_blocklist prefix</function>
+				<function moreinfo="none">userblocklist.check_blocklist prefix</function>
 			</title>
 			<para>
 				Searches in the default, in memory, global list. 
@@ -456,19 +435,18 @@ if (!check_allowlist("globalblocklist")) {
 				in order to check through the latest content of the database.
 			</para>
 			<example>
-				<title><function>check_blocklist</function> usage</title>
+				<title><function>userblocklist.check_blocklist</function> usage</title>
 				<programlisting format="linespecific">
-					...
-					&ctltool; fifo reload_blocklist
-					&ctltool; fifo check_blocklist prefix
-					...
+...
+&kamcmd; userblocklist.check_blocklist s:1234
+...
 				</programlisting>
 	    		</example>
 		</section>
 
-		<section>
+		<section id="userblocklist.r.check_allowlist">
 			<title>
-				<function moreinfo="none">check_allowlist prefix</function>
+				<function moreinfo="none">userblocklist.check_allowlist prefix</function>
 			</title>
 			<para>
 				Searches in the default, in memory, global list. 
@@ -480,19 +458,18 @@ if (!check_allowlist("globalblocklist")) {
 				in order to check through the latest content of the database.
 			</para>
 			<example>
-				<title><function>check_allowlist</function> usage</title>
+				<title><function>userblocklist.check_allowlist</function> usage</title>
 				<programlisting format="linespecific">
-					...
-					&ctltool; fifo reload_blocklist
-					&ctltool; fifo check_allowlist prefix
-					...
+...
+&kamcmd; userblocklist.check_allowlist s:1234
+...
 				</programlisting>
 	    		</example>
 		</section>
 
-		<section>
+		<section id="userblocklist.r.check_userblocklist">
 			<title>
-				<function moreinfo="none">check_userblocklist user [domain] prefix</function>
+				<function moreinfo="none">userblocklist.check_userblocklist prefix user [domain] </function>
 			</title>
 			<para>
 				Searches in the default user list table.
@@ -503,18 +480,18 @@ if (!check_allowlist("globalblocklist")) {
 				If not given, the second parameter is the considered to be the prefix. 
 			</para>
 			<example>
-				<title><function>check_userblocklist</function> usage</title>
+				<title><function>userblocklist.check_userblocklist</function> usage</title>
 				<programlisting format="linespecific">
-					...
-					&ctltool; fifo check_userblocklist user [domain] prefix
-					...
+...
+&kamcmd; userblocklist.check_userblocklist s:1234 s:49721123456788
+...
 				</programlisting>
 	    		</example>
 		</section>
 
-		<section>
+		<section id="userblocklist.r.check_userallowlist">
 			<title>
-				<function moreinfo="none">check_userallowlist user [domain] prefix</function>
+				<function moreinfo="none">userblocklist.check_userallowlist prefix user [domain] </function>
 			</title>
 			<para>
 				Searches in the default user list table.
@@ -526,11 +503,11 @@ if (!check_allowlist("globalblocklist")) {
 				If not given, the second parameter is the considered to be the prefix. 
 			</para>
 			<example>
-				<title><function>check_userallowlist</function> usage</title>
+				<title><function>userblocklist.check_userallowlist</function> usage</title>
 				<programlisting format="linespecific">
-					...
-					&ctltool; fifo check_userallowlist user [domain] prefix
-					...
+...
+&kamcmd; userblocklist.check_userallowlist s:1234 s:49721123456788
+...
 				</programlisting>
 	    		</example>
 		</section>

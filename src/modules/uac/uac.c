@@ -102,6 +102,7 @@ static int w_restore_to(struct sip_msg* msg, char* p1, char* p2);
 static int w_uac_auth(struct sip_msg* msg, char* str, char* str2);
 static int w_uac_auth_mode(struct sip_msg* msg, char* pmode, char* str2);
 static int w_uac_reg_lookup(struct sip_msg* msg, char* src, char* dst);
+static int w_uac_reg_lookup_uri(struct sip_msg* msg, char* src, char* dst);
 static int w_uac_reg_status(struct sip_msg* msg, char* src, char* dst);
 static int w_uac_reg_request_to(struct sip_msg* msg, char* src, char* mode_s);
 static int w_uac_reg_enable(struct sip_msg* msg, char* pfilter, char* pval);
@@ -113,6 +114,7 @@ static int child_init(int rank);
 
 extern int reg_timer_interval;
 extern int _uac_reg_gc_interval;
+extern int _uac_reg_use_domain;
 
 static pv_export_t mod_pvs[] = {
 	{ {"uac_req", sizeof("uac_req")-1}, PVT_OTHER, pv_get_uac_req, pv_set_uac_req,
@@ -141,6 +143,8 @@ static cmd_export_t cmds[]={
 			fixup_igp_null, fixup_free_igp_null, FAILURE_ROUTE },
 	{"uac_req_send",  (cmd_function)w_uac_req_send,   0, 0, 0, ANY_ROUTE},
 	{"uac_reg_lookup",  (cmd_function)w_uac_reg_lookup,  2, fixup_spve_pvar,
+		fixup_free_spve_pvar, ANY_ROUTE },
+	{"uac_reg_lookup_uri", (cmd_function)w_uac_reg_lookup_uri, 2, fixup_spve_pvar,
 		fixup_free_spve_pvar, ANY_ROUTE },
 	{"uac_reg_status",  (cmd_function)w_uac_reg_status,  1, fixup_spve_null, 0,
 		ANY_ROUTE },
@@ -181,6 +185,8 @@ static param_export_t params[] = {
 	{"reg_random_delay",	INT_PARAM,			&reg_random_delay      },
 	{"reg_active",	INT_PARAM,			&reg_active_param      },
 	{"reg_gc_interval",		INT_PARAM,	&_uac_reg_gc_interval	},
+	{"reg_hash_size",	INT_PARAM,		&reg_htable_size      },
+	{"reg_use_domain",	PARAM_INT,		&_uac_reg_use_domain  },
 	{"default_socket",	PARAM_STR, &uac_default_socket},
 	{"event_callback",	PARAM_STR,	&uac_event_callback},
 	{0, 0, 0}
@@ -665,6 +671,32 @@ static int ki_uac_reg_lookup(sip_msg_t* msg, str* userid, str* sdst)
 	return uac_reg_lookup(msg, userid, dpv, 0);
 }
 
+static int w_uac_reg_lookup_uri(struct sip_msg* msg, char* src, char* dst)
+{
+	pv_spec_t *dpv;
+	str sval;
+
+	if(fixup_get_svalue(msg, (gparam_t*)src, &sval)<0) {
+		LM_ERR("cannot get the uuid parameter\n");
+		return -1;
+	}
+
+	dpv = (pv_spec_t*)dst;
+
+	return uac_reg_lookup(msg, &sval, dpv, 1);
+}
+
+static int ki_uac_reg_lookup_uri(sip_msg_t* msg, str* suri, str* sdst)
+{
+	pv_spec_t *dpv = NULL;
+	dpv = pv_cache_get(sdst);
+	if(dpv==NULL) {
+		LM_ERR("cannot get pv spec for [%.*s]\n", sdst->len, sdst->s);
+		return -1;
+	}
+	return uac_reg_lookup(msg, suri, dpv, 1);
+}
+
 static int w_uac_reg_status(struct sip_msg* msg, char* src, char* p2)
 {
 	str sval;
@@ -823,6 +855,11 @@ static sr_kemi_t sr_kemi_uac_exports[] = {
 	},
 	{ str_init("uac"), str_init("uac_reg_lookup"),
 		SR_KEMIP_INT, ki_uac_reg_lookup,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("uac"), str_init("uac_reg_lookup_uri"),
+		SR_KEMIP_INT, ki_uac_reg_lookup_uri,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},

@@ -71,6 +71,8 @@ int unsafemodfnc = 0;
 int _ap_reset_cycles_init = 0;
 int _ap_exec_cycles = 0;
 int *_ap_reset_cycles = 0;
+int _ap_parse_mode = 0;
+static int _ap_warn_mode = 0;
 
 /* Reference to the running Perl interpreter instance */
 PerlInterpreter *my_perl = NULL;
@@ -123,6 +125,8 @@ static param_export_t params[] = {
 	{"unsafemodfnc", INT_PARAM, &unsafemodfnc},
 	{"reset_cycles", INT_PARAM, &_ap_reset_cycles_init},
 	{"perl_destroy_func",  PARAM_STRING, &perl_destroy_func},
+	{"parse_mode", PARAM_INT, &_ap_parse_mode},
+	{"warn_mode",  PARAM_INT, &_ap_warn_mode},
 	{ 0, 0, 0 }
 };
 
@@ -181,26 +185,36 @@ EXTERN_C void xs_init(pTHX) {
  * Initialize the perl interpreter.
  * This might later be used to reinit the module.
  */
-PerlInterpreter *parser_init(void) {
+int parser_init(void) {
 	int argc = 0;
-	char *argv[MAX_LIB_PATHS + 3];
-	PerlInterpreter *new_perl = NULL;
+	char *argv[MAX_LIB_PATHS + 6];
 	char *entry, *stop, *end;
 	int modpathset_start = 0;
 	int modpathset_end = 0;
 	int i;
 	int pr;
 
-	new_perl = perl_alloc();
-
-	if (!new_perl) {
-		LM_ERR("could not allocate perl.\n");
-		return NULL;
+	if (my_perl) {
+		LM_ERR("perl interpreter already initialized\n");
+		return 1;
 	}
 
-	perl_construct(new_perl);
+	my_perl = perl_alloc();
+
+	if (!my_perl) {
+		LM_ERR("could not allocate perl interpreter\n");
+		return -1;
+	}
+
+	perl_construct(my_perl);
 
 	argv[0] = ""; argc++; /* First param _needs_ to be empty */
+
+	if(_ap_warn_mode==1) {
+		argv[argc] = "-w"; argc++;
+	} else if(_ap_warn_mode==2) {
+		argv[argc] = "-W"; argc++;
+	}
 
 	 /* Possible Include path extension by modparam */
 	if (modpath && (strlen(modpath) > 0)) {
@@ -218,7 +232,10 @@ PerlInterpreter *parser_init(void) {
 					argv[argc] = pkg_malloc(strlen(entry)+20);
 					if (!argv[argc]) {
 						PKG_MEM_ERROR;
-						return NULL;
+						perl_destruct(my_perl);
+						perl_free(my_perl);
+						my_perl = NULL;
+						return -1;
 					}
 					snprintf(argv[argc], strlen(entry)+20, "-I%s", entry);
 					modpathset_end = argc;
@@ -234,17 +251,26 @@ PerlInterpreter *parser_init(void) {
 	argv[argc] = filename; /* The script itself */
 	argc++;
 
-	pr=perl_parse(new_perl, xs_init, argc, argv, NULL);
+	pr=perl_parse(my_perl, xs_init, argc, argv, NULL);
+
 	if (pr) {
-		LM_ERR("failed to load perl file \"%s\" with code %d.\n", argv[argc-1], pr);
-		if (modpathset_start) {
-			for (i = modpathset_start; i <= modpathset_end; i++) {
-				pkg_free(argv[i]);
+		if(_ap_parse_mode==0) {
+			LM_WARN("parsed perl file \"%s\" returned with code %d - continue\n",
+				argv[argc-1], pr);
+		} else {
+			LM_ERR("failed parsing perl file \"%s\" with code %d.\n",
+					argv[argc-1], pr);
+			if (modpathset_start) {
+				for (i = modpathset_start; i <= modpathset_end; i++) {
+					pkg_free(argv[i]);
+				}
 			}
+			perl_destruct(my_perl);
+			perl_free(my_perl);
+			my_perl = NULL;
 		}
-		return NULL;
 	} else {
-		LM_INFO("successfully loaded perl file \"%s\"\n", argv[argc-1]);
+		LM_INFO("successfully parsed perl file \"%s\"\n", argv[argc-1]);
 	}
 
 	if (modpathset_start) {
@@ -252,20 +278,26 @@ PerlInterpreter *parser_init(void) {
 			pkg_free(argv[i]);
 		}
 	}
-	perl_run(new_perl);
+	pr = perl_run(my_perl);
+	LM_INFO("perl run return code %d\n", pr);
 
-	return new_perl;
+	return 0;
 
 }
 
 /*
  *
  */
-int unload_perl(PerlInterpreter *p) {
+int unload_perl(void) {
+	if (!my_perl) {
+		LM_ERR("perl interpreter not initialized\n");
+		return -1;
+	}
 	/* clean and reset everything */
 	PL_perl_destruct_level = 1;
-	perl_destruct(p);
-	perl_free(p);
+	perl_destruct(my_perl);
+	perl_free(my_perl);
+	my_perl = NULL;
 
 	return 0;
 }
@@ -279,9 +311,16 @@ int unload_perl(PerlInterpreter *p) {
 int perl_reload(void)
 {
 	if(my_perl) {
-		unload_perl(my_perl);
+		unload_perl();
 	}
-	my_perl = parser_init();
+	parser_init();
+
+	if(my_perl) {
+		LM_DBG("new perl interpreter initialized\n");
+	} else {
+		LM_CRIT("failed to initialize a new perl interpreter - exiting\n");
+		exit(-1);
+	}
 
 #ifdef PERL_EXIT_DESTRUCT_END
 	PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
@@ -291,13 +330,7 @@ int perl_reload(void)
 	PL_exit_flags |= PERL_EXIT_EXPECTED;
 #endif
 
-	if(my_perl) {
-		LM_DBG("new perl interpreter initialized\n");
-		return 0;
-	} else {
-		LM_CRIT("failed to initialize a new perl interpreter - exiting\n");
-		exit(-1);
-	}
+	return 0;
 }
 
 
@@ -340,7 +373,7 @@ static int mod_init(void) {
 	PERL_SYS_INIT3(&argc, &argv, &environ);
 
 	gettimeofday(&t1, NULL);
-	my_perl = parser_init();
+	parser_init();
 	gettimeofday(&t2, NULL);
 
 	if (my_perl==NULL)
@@ -376,7 +409,7 @@ static void destroy(void)
 
 	if(my_perl==NULL)
 		return;
-	unload_perl(my_perl);
+	unload_perl();
 	PERL_SYS_TERM();
 	my_perl = NULL;
 }

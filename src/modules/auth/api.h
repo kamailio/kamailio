@@ -82,6 +82,9 @@ typedef int (*check_auth_hdr_t)(struct sip_msg* msg, auth_body_t* auth_body,
 int check_auth_hdr(struct sip_msg* msg, auth_body_t* auth_body,
 		auth_result_t* auth_res);
 
+int auth_check_hdr_md5(struct sip_msg* msg, auth_body_t* auth,
+		auth_result_t* auth_res, int update_nonce);
+
 /*
  * Purpose of this function is to find credentials with given realm,
  * do sanity check, validate credential correctness and determine if

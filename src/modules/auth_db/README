@@ -448,7 +448,8 @@ if (!proxy_authorize("$fd", "subscriber)) {
        user. All other requests: From header must match the authentication
        user. If bit 2 is set as well (flags==3), the ID check is skipped
        for INVITE, BYE, PRACK, UPDATE, MESSAGE - these requests can come
-       with anonymous caller id.
+       with anonymous caller id. If set to 0, then all user checks are
+       skipped.
        Additionally all domains in the checked URIs and the realm in the
        authentication header will be checked to match the provided realm
        parameter.

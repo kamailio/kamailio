@@ -484,6 +484,18 @@ static srjson_t* jsonrpc_print_value(jsonrpc_ctx_t* ctx, char fmt, va_list* ap)
 	case 'f':
 		nj = srjson_CreateNumber(ctx->jrpl, va_arg(*ap, double));
 		break;
+	case 'l':
+		nj = srjson_CreateNumber(ctx->jrpl, va_arg(*ap, long));
+		break;
+	case 'j':
+		nj = srjson_CreateNumber(ctx->jrpl, va_arg(*ap, unsigned long));
+		break;
+	case 'L':
+		nj = srjson_CreateNumber(ctx->jrpl, va_arg(*ap, long long));
+		break;
+	case 'J':
+		nj = srjson_CreateNumber(ctx->jrpl, va_arg(*ap, unsigned long long));
+		break;
 	case 'b':
 		nj = srjson_CreateBool(ctx->jrpl, ((va_arg(*ap, int)==0)?0:1));
 		break;
@@ -586,6 +598,10 @@ static int jsonrpc_scan(jsonrpc_ctx_t* ctx, char* fmt, ...)
 {
 	int *int_ptr;
 	unsigned int *uint_ptr;
+	long *long_ptr;
+	unsigned long *ulong_ptr;
+	long long *llong_ptr;
+	unsigned long long *ullong_ptr;
 	char **char_ptr;
 	double *double_ptr;
 	str *str_ptr;
@@ -634,6 +650,22 @@ static int jsonrpc_scan(jsonrpc_ctx_t* ctx, char* fmt, ...)
 		case 'f': /* double */
 			double_ptr = va_arg(ap, double*);
 			*double_ptr = ctx->req_node->valuedouble;
+			break;
+		case 'l': /* Long */
+			long_ptr = va_arg(ap, long*);
+			*long_ptr = SRJSON_GET_LONG(ctx->req_node);
+			break;
+		case 'j': /* Unsigned Long */
+			ulong_ptr = va_arg(ap, unsigned long*);
+			*ulong_ptr = SRJSON_GET_ULONG(ctx->req_node);
+			break;
+		case 'L': /* Long Long */
+			llong_ptr = va_arg(ap, long long*);
+			*llong_ptr = SRJSON_GET_LLONG(ctx->req_node);
+			break;
+		case 'J': /* Unsigned Long Long */
+			ullong_ptr = va_arg(ap, unsigned long long*);
+			*ullong_ptr = SRJSON_GET_ULLONG(ctx->req_node);
 			break;
 		case 's': /* zero terminated string */
 			char_ptr = va_arg(ap, char**);

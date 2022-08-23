@@ -50,6 +50,7 @@ static void cr_rpc_reload_routes(rpc_t *rpc, void *c) {
 		if (carrierroute_dbh==NULL) {
 			carrierroute_dbh = carrierroute_dbf.init(&carrierroute_db_url);
 			if(carrierroute_dbh==0 ) {
+				rpc->fault(c, 500, "Internal error -- cannot initialize database connection");
 				LM_ERR("cannot initialize database connection\n");
 				return;
 			}
@@ -57,6 +58,7 @@ static void cr_rpc_reload_routes(rpc_t *rpc, void *c) {
 	}
 
 	if ( (reload_route_data())!=0 ) {
+		rpc->fault(c, 500, "Internal error -- failed to load routing data\n");
 		LM_ERR("failed to load routing data\n");
 		return;
 	}

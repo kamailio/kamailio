@@ -922,8 +922,27 @@ int t_reply_matching( struct sip_msg *p_msg , int *p_branch )
 	/* all the transactions from the entry are compared */
 	clist_foreach(hash_bucket, p_cell, next_c){
 		prefetch_loc_r(p_cell->next_c, 1);
-		if ( memcmp(p_cell->md5, loopi,MD5_LEN)!=0)
-			continue;
+
+		if (cfg_get(tm, tm_cfg, callid_cseq_matching)) {
+			if (memcmp(p_cell->callid.s + strlen("Call-ID: "), p_msg->callid->body.s, p_msg->callid->body.len) != 0) {
+				LM_ERR("t_reply_matching: failed callid matching (instead of md5): %d p_cell=%.*s p_msg=%.*s",
+					p_msg->first_line.u.reply.statuscode,
+					p_cell->callid.len, p_cell->callid.s,
+					p_msg->callid->body.len, p_msg->callid->body.s);
+				continue;
+			}
+
+			if (memcmp(p_cell->cseq_n.s + strlen("CSeq: "), get_cseq(p_msg)->number.s, get_cseq(p_msg)->number.len) != 0) {
+				LM_ERR("t_reply_matching: failed cseq matching (instead of md5): %d p_cell=%.*s p_msg=%.*s",
+					p_msg->first_line.u.reply.statuscode,
+					p_cell->cseq_n.len, p_cell->cseq_n.s,
+					get_cseq(p_msg)->number.len, get_cseq(p_msg)->number.s);
+				continue;
+			}
+		} else {
+			if ( memcmp(p_cell->md5, loopi,MD5_LEN)!=0)
+				continue;
+		}
 
 		/* sanity check ... too high branch ? */
 		if (unlikely(branch_id>=p_cell->nr_of_outgoings))
@@ -1568,7 +1587,7 @@ int t_get_canceled_ident(struct sip_msg* msg, unsigned int* hash_index,
  *                0).
  * @param hash_index - searched transaction hash_index (part of the ident).
  * @param label - searched transaction label (part of the ident).
- * @param filter - if 1, skip transaction put on-wait (terminated state).
+ * @param filter - if 1, filter out transactions put on-wait (terminated state).
  * @return -1 on error/not found, 1 on success (found)
  * Side-effects: sets T and T_branch (T_branch always to T_BR_UNDEFINED).
  */
@@ -1818,6 +1837,9 @@ int t_set_fr(struct sip_msg* msg, unsigned int fr_inv_to, unsigned int fr_to)
 		set_msgid_val(user_fr_inv_timeout, msg->id, int, (int)fr_inv);
 		set_msgid_val(user_fr_timeout, msg->id, int, (int)fr);
 	}else{
+#ifdef TIMER_DEBUG
+		LM_DBG("changing default FR timeout values: (\"fr_inv_timeout\": %d, \"fr_timeout\": %d)\n", fr_inv, fr);
+#endif
 		change_fr(t, fr_inv, fr); /* change running uac timers */
 	}
 	return 1;
@@ -1880,6 +1902,9 @@ int t_set_retr(struct sip_msg* msg, unsigned int t1_ms, unsigned int t2_ms)
 		set_msgid_val(user_rt_t1_timeout_ms, msg->id, int, (int)t1_ms);
 		set_msgid_val(user_rt_t2_timeout_ms, msg->id, int, (int)t2_ms);
 	}else{
+#ifdef TIMER_DEBUG
+		LM_DBG("changing default RETR timeout values to: (\"retr_t1_interval\": %d, \"retr_t2_interval\": %d)\n", t1_ms, t2_ms);
+#endif
 		change_retr(t, 1, t1_ms, t2_ms); /* change running uac timers */
 	}
 	return 1;

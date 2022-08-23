@@ -168,7 +168,6 @@ int tcpops_keepalive_enable(int fd, int idle, int count, int interval, int close
 			LM_ERR("failed to set keepalive idle interval: %s\n", strerror(errno));
 		}
 #else
-		#warning "TCP_KEEPIDLE option not supported by this platform"
 		LM_DBG("TCP_KEEPIDLE option not available - ignoring\n");
 #endif
 

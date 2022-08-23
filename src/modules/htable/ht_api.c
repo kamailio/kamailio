@@ -314,7 +314,7 @@ int ht_add_table(str *name, int autoexp, str *dbtable, str *dbcols, int size,
 	if(dbcols!=NULL && dbcols->s!=NULL && dbcols->len>0) {
 		ht->scols[0].s = (char*)shm_malloc((1+dbcols->len)*sizeof(char));
 		if(ht->scols[0].s==NULL) {
-			LM_ERR("no more shm memory\n");
+			LM_ERR("no more shared memory\n");
 			shm_free(ht);
 			return -1;
 		}
@@ -394,8 +394,7 @@ int ht_init_tables(void)
 		ht->entries = (ht_entry_t*)shm_malloc(ht->htsize*sizeof(ht_entry_t));
 		if(ht->entries==NULL)
 		{
-			LM_ERR("no more shm for [%.*s]\n", ht->name.len, ht->name.s);
-			shm_free(ht);
+			LM_ERR("no more shared memory for [%.*s]\n", ht->name.len, ht->name.s);
 			return -1;
 		}
 		memset(ht->entries, 0, ht->htsize*sizeof(ht_entry_t));
@@ -413,7 +412,7 @@ int ht_init_tables(void)
 					i--;
 				}
 				shm_free(ht->entries);
-				shm_free(ht);
+				ht->entries = NULL;
 				return -1;
 
 			}
@@ -472,7 +471,7 @@ int ht_set_cell_ex(ht_t *ht, str *name, int type, int_str *val, int mode,
 	time_t now;
 
 	if(ht==NULL || ht->entries==NULL) {
-		LM_WARN("invalid ht parameter\n");
+		LM_WARN("invalid htable parameter\n");
 		return -1;
 	}
 	if(name==NULL || name->s==NULL) {
@@ -644,7 +643,44 @@ int ht_set_cell(ht_t *ht, str *name, int type, int_str *val, int mode)
 	return ht_set_cell_ex(ht, name, type, val, mode, 0);
 }
 
+static void ht_cell_unlink(ht_t *ht, int idx, ht_cell_t *it)
+{
+	if(it->prev==NULL)
+		ht->entries[idx].first = it->next;
+	else
+		it->prev->next = it->next;
+	if(it->next)
+		it->next->prev = it->prev;
+	ht->entries[idx].esize--;
+}
+
+
+/* Delete entry in htable.
+Return:
+  - 1 on error in argument
+  0 otherwise
+*/
 int ht_del_cell(ht_t *ht, str *name)
+{
+	int ret;
+
+	ret = ht_del_cell_confirm(ht, name);
+	if (ret == -1)
+		return -1;
+	return 0;
+}
+
+/* Delete htable entry with confirmation
+
+oldapi = 1 means to always return 0
+oldapi = 0 means to return 1 on successful deletion
+
+Return:
+	-1 on error in argument
+	0 on entry not found
+	1 on entry found and deleted
+*/
+int ht_del_cell_confirm(ht_t *ht, str *name)
 {
 	unsigned int idx;
 	unsigned int hid;
@@ -675,16 +711,10 @@ int ht_del_cell(ht_t *ht, str *name)
 				&& strncmp(name->s, it->name.s, name->len)==0)
 		{
 			/* found */
-			if(it->prev==NULL)
-				ht->entries[idx].first = it->next;
-			else
-				it->prev->next = it->next;
-			if(it->next)
-				it->next->prev = it->prev;
-			ht->entries[idx].esize--;
+			ht_cell_unlink(ht, idx, it);
 			ht_slot_unlock(ht, idx);
 			ht_cell_free(it);
-			return 0;
+			return 1;
 		}
 		it = it->next;
 	}
@@ -930,7 +960,7 @@ int ht_dbg(void)
 	ht = _ht_root;
 	while(ht)
 	{
-		LM_ERR("===== htable[%.*s] hid: %u exp: %u>\n", ht->name.len,
+		LM_ERR("htable[%.*s] hid: %u exp: %u>\n", ht->name.len,
 				ht->name.s, ht->htid, ht->htexpire);
 		for(i=0; i<ht->htsize; i++)
 		{
@@ -1069,14 +1099,14 @@ int ht_db_sync_tables(void)
 	ht = _ht_root;
 	while(ht)
 	{
-		if(ht->dbtable.len>0 && ht->dbmode!=0 && ht->ncols==0)
+		if(ht->dbtable.len>0 && ht->dbmode!=0 && ht->dbload!=0 && ht->ncols==0)
 		{
 			LM_DBG("sync db table [%.*s] from ht [%.*s]\n",
 					ht->dbtable.len, ht->dbtable.s,
 					ht->name.len, ht->name.s);
 			ht_db_delete_records(&ht->dbtable);
 			if(ht_db_save_table(ht, &ht->dbtable)!=0)
-				LM_ERR("failed sync'ing hash table [%.*s] to db\n",
+				LM_ERR("failed syncing hash table [%.*s] to db\n",
 					ht->name.len, ht->name.s);
 		}
 		ht = ht->next;
@@ -1700,19 +1730,16 @@ void ht_iterator_init(void)
 	memset(_ht_iterators, 0, HT_ITERATOR_SIZE*sizeof(ht_iterator_t));
 }
 
-int ht_iterator_start(str *iname, str *hname)
+static inline int ht_iterator_find(str *iname)
 {
 	int i;
 	int k;
 
 	k = -1;
-	for(i=0; i<HT_ITERATOR_SIZE; i++)
-	{
-		if(_ht_iterators[i].name.len>0)
-		{
+	for(i=0; i<HT_ITERATOR_SIZE; i++) {
+		if(_ht_iterators[i].name.len>0) {
 			if(_ht_iterators[i].name.len==iname->len
-					&& strncmp(_ht_iterators[i].name.s, iname->s, iname->len)==0)
-			{
+					&& strncmp(_ht_iterators[i].name.s, iname->s, iname->len)==0) {
 				k = i;
 				break;
 			}
@@ -1720,6 +1747,14 @@ int ht_iterator_start(str *iname, str *hname)
 			if(k==-1) k = i;
 		}
 	}
+	return k;
+}
+
+int ht_iterator_start(str *iname, str *hname)
+{
+	int k;
+
+	k = ht_iterator_find(iname);
 	if(k==-1)
 	{
 		LM_ERR("no iterator available - max number is %d\n", HT_ITERATOR_SIZE);
@@ -1759,24 +1794,9 @@ int ht_iterator_start(str *iname, str *hname)
 
 int ht_iterator_next(str *iname)
 {
-	int i;
 	int k;
 
-	k = -1;
-	for(i=0; i<HT_ITERATOR_SIZE; i++)
-	{
-		if(_ht_iterators[i].name.len>0)
-		{
-			if(_ht_iterators[i].name.len==iname->len
-					&& strncmp(_ht_iterators[i].name.s, iname->s, iname->len)==0)
-			{
-				k = i;
-				break;
-			}
-		} else {
-			if(k==-1) k = i;
-		}
-	}
+	k = ht_iterator_find(iname);
 	if(k==-1)
 	{
 		LM_ERR("iterator not found [%.*s]\n", iname->len, iname->s);
@@ -1819,47 +1839,209 @@ int ht_iterator_next(str *iname)
 
 int ht_iterator_end(str *iname)
 {
-	int i;
+	int k;
 
-	for(i=0; i<HT_ITERATOR_SIZE; i++)
+	k = ht_iterator_find(iname);
+	if(k==-1 || _ht_iterators[k].name.len<=0)
 	{
-		if(_ht_iterators[i].name.len>0)
-		{
-			if(_ht_iterators[i].name.len==iname->len
-					&& strncmp(_ht_iterators[i].name.s, iname->s, iname->len)==0)
-			{
-				if(_ht_iterators[i].ht!=NULL && _ht_iterators[i].it!=NULL)
-				{
-					if(_ht_iterators[i].slot>=0 && _ht_iterators[i].slot<_ht_iterators[i].ht->htsize)
-					{
-						ht_slot_unlock(_ht_iterators[i].ht, _ht_iterators[i].slot);
-					}
-				}
-				memset(&_ht_iterators[i], 0, sizeof(ht_iterator_t));
-				return 0;
-			}
-		}
+		LM_ERR("iterator not found [%.*s]\n", iname->len, iname->s);
+		return -1;
 	}
 
-	return -1;
+	if(_ht_iterators[k].ht!=NULL && _ht_iterators[k].it!=NULL)
+	{
+		if(_ht_iterators[k].slot>=0 && _ht_iterators[k].slot<_ht_iterators[k].ht->htsize)
+		{
+			ht_slot_unlock(_ht_iterators[k].ht, _ht_iterators[k].slot);
+		}
+	}
+	memset(&_ht_iterators[k], 0, sizeof(ht_iterator_t));
+	return 0;
+}
+
+int ht_iterator_rm(str *iname)
+{
+	int k;
+	ht_cell_t *itb;
+
+	k = ht_iterator_find(iname);
+	if(k==-1) {
+		LM_ERR("iterator not found [%.*s]\n", iname->len, iname->s);
+		return -1;
+	}
+	if(_ht_iterators[k].ht==NULL) {
+		LM_ERR("iterator not initialized [%.*s]\n", iname->len, iname->s);
+		return -1;
+	}
+	if(_ht_iterators[k].it==NULL) {
+		LM_ERR("iterator not used [%.*s]\n", iname->len, iname->s);
+		return -1;
+	}
+
+	itb = _ht_iterators[k].it;
+	_ht_iterators[k].it = _ht_iterators[k].it->next;
+
+	ht_cell_unlink(_ht_iterators[k].ht, _ht_iterators[k].slot, itb);
+	ht_cell_free(itb);
+
+	if(_ht_iterators[k].it!=NULL) {
+		/* next item is in the same slot */
+		return 0;
+	}
+	/* next is not in the same slot - release and go to next slot */
+	ht_slot_unlock(_ht_iterators[k].ht, _ht_iterators[k].slot);
+	_ht_iterators[k].slot++;
+
+	for( ; _ht_iterators[k].slot<_ht_iterators[k].ht->htsize; _ht_iterators[k].slot++) {
+		ht_slot_lock(_ht_iterators[k].ht, _ht_iterators[k].slot);
+		if(_ht_iterators[k].ht->entries[_ht_iterators[k].slot].first!=NULL) {
+			_ht_iterators[k].it = _ht_iterators[k].ht->entries[_ht_iterators[k].slot].first;
+			return 0;
+		}
+		ht_slot_unlock(_ht_iterators[k].ht, _ht_iterators[k].slot);
+	}
+	return -2;
+}
+
+int ht_iterator_sets(str *iname, str *sval)
+{
+	int k;
+	ht_cell_t *itb;
+	unsigned int hid;
+	ht_cell_t *cell;
+	int_str isvalue;
+
+	k = ht_iterator_find(iname);
+	if(k==-1) {
+		LM_ERR("iterator not found [%.*s]\n", iname->len, iname->s);
+		return -1;
+	}
+	if(_ht_iterators[k].ht==NULL) {
+		LM_ERR("iterator not initialized [%.*s]\n", iname->len, iname->s);
+		return -1;
+	}
+	if(_ht_iterators[k].it==NULL) {
+		LM_ERR("iterator not used [%.*s]\n", iname->len, iname->s);
+		return -1;
+	}
+
+	itb = _ht_iterators[k].it;
+
+	/* update value */
+	if(itb->flags&AVP_VAL_STR) {
+		if(itb->value.s.len >= sval->len) {
+			/* copy */
+			itb->value.s.len = sval->len;
+			memcpy(itb->value.s.s, sval->s, sval->len);
+			itb->value.s.s[itb->value.s.len] = '\0';
+
+			if(_ht_iterators[k].ht->updateexpire) {
+				itb->expire = time(NULL) + _ht_iterators[k].ht->htexpire;
+			}
+			return 0;
+		}
+	}
+	/* new */
+	hid = ht_compute_hash(&itb->name);
+
+	isvalue.s = *sval;
+
+	cell = ht_cell_new(&itb->name, AVP_VAL_STR, &isvalue, hid);
+	if(cell == NULL) {
+		LM_ERR("cannot create new cell\n");
+		return -1;
+	}
+	cell->next = itb->next;
+	cell->prev = itb->prev;
+	if(_ht_iterators[k].ht->updateexpire) {
+		cell->expire = time(NULL) + _ht_iterators[k].ht->htexpire;
+	} else {
+		cell->expire = itb->expire;
+	}
+	if(itb->prev)
+		itb->prev->next = cell;
+	else
+		_ht_iterators[k].ht->entries[_ht_iterators[k].slot].first = cell;
+	if(itb->next)
+		itb->next->prev = cell;
+	ht_cell_free(itb);
+	_ht_iterators[k].it = cell;
+
+	return 0;
+}
+
+int ht_iterator_seti(str *iname, int ival)
+{
+	int k;
+	ht_cell_t *itb;
+
+	k = ht_iterator_find(iname);
+	if(k==-1) {
+		LM_ERR("iterator not found [%.*s]\n", iname->len, iname->s);
+		return -1;
+	}
+	if(_ht_iterators[k].ht==NULL) {
+		LM_ERR("iterator not initialized [%.*s]\n", iname->len, iname->s);
+		return -1;
+	}
+	if(_ht_iterators[k].it==NULL) {
+		LM_ERR("iterator not used [%.*s]\n", iname->len, iname->s);
+		return -1;
+	}
+
+	itb = _ht_iterators[k].it;
+
+	/* update value */
+	if(itb->flags&AVP_VAL_STR) {
+		itb->flags &= ~AVP_VAL_STR;
+	}
+	itb->value.n = ival;
+
+	if(_ht_iterators[k].ht->updateexpire) {
+		itb->expire = time(NULL) + _ht_iterators[k].ht->htexpire;
+	}
+	return 0;
+}
+
+int ht_iterator_setex(str *iname, int exval)
+{
+	int k;
+	ht_cell_t *itb;
+
+	k = ht_iterator_find(iname);
+	if(k==-1) {
+		LM_ERR("iterator not found [%.*s]\n", iname->len, iname->s);
+		return -1;
+	}
+	if(_ht_iterators[k].ht==NULL) {
+		LM_ERR("iterator not initialized [%.*s]\n", iname->len, iname->s);
+		return -1;
+	}
+	if(_ht_iterators[k].it==NULL) {
+		LM_ERR("iterator not used [%.*s]\n", iname->len, iname->s);
+		return -1;
+	}
+
+	itb = _ht_iterators[k].it;
+
+	/* update expire */
+	itb->expire = time(NULL) + exval;
+
+	return 0;
 }
 
 ht_cell_t* ht_iterator_get_current(str *iname)
 {
-	int i;
+	int k;
+
 	if(iname==NULL || iname->len<=0)
 		return NULL;
 
-	for(i=0; i<HT_ITERATOR_SIZE; i++)
-	{
-		if(_ht_iterators[i].name.len>0)
-		{
-			if(_ht_iterators[i].name.len==iname->len
-					&& strncmp(_ht_iterators[i].name.s, iname->s, iname->len)==0)
-			{
-				return _ht_iterators[i].it;
-			}
-		}
+	k = ht_iterator_find(iname);
+	if(k==-1 || _ht_iterators[k].name.len<=0) {
+		LM_DBG("iterator not found [%.*s]\n", iname->len, iname->s);
+		return NULL;
 	}
-	return NULL;
+
+	return _ht_iterators[k].it;
 }

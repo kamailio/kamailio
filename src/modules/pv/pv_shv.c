@@ -387,6 +387,38 @@ int pv_get_shvar(struct sip_msg *msg,  pv_param_t *param,
 	return 0;
 }
 
+int pv_get_shvinc(struct sip_msg *msg,  pv_param_t *param,
+		pv_value_t *res)
+{
+	int len = 0;
+	char *sval = NULL;
+	sh_var_t *shv=NULL;
+
+	if(msg==NULL || res==NULL)
+		return -1;
+
+	if(param==NULL || param->pvn.u.dname==0)
+		return pv_get_null(msg, param, res);
+
+	shv= (sh_var_t*)param->pvn.u.dname;
+
+	lock_shvar(shv);
+	if(shv->v.flags&VAR_VAL_STR)
+	{
+		res->ri = 0;
+	} else {
+		shv->v.value.n++;
+		res->ri = shv->v.value.n;
+	}
+	unlock_shvar(shv);
+
+	sval = sint2str(res->ri, &len);
+	res->rs.s = sval;
+	res->rs.len = len;
+	res->flags = PV_VAL_STR|PV_VAL_INT|PV_TYPE_INT;
+	return 0;
+}
+
 int pv_set_shvar(struct sip_msg* msg, pv_param_t *param,
 		int op, pv_value_t *val)
 {
@@ -762,6 +794,36 @@ sr_kemi_xval_t* ki_shv_get(sip_msg_t *msg, str *vname)
 		_sr_kemi_shv_xval.vtype = SR_KEMIP_INT;
 		return &_sr_kemi_shv_xval;
 	}
+}
+
+/**
+ *
+ */
+sr_kemi_xval_t* ki_shvinc_get(sip_msg_t *msg, str *vname)
+{
+	sh_var_t *shv = NULL;
+
+	memset(&_sr_kemi_shv_xval, 0, sizeof(sr_kemi_xval_t));
+
+	shv = get_shvar_by_name(vname);
+	if(shv==NULL) {
+		LM_WARN("$shv(%.*s) is not defined - return value 0\n",
+				vname->len, vname->s);
+		_sr_kemi_shv_xval.vtype = SR_KEMIP_INT;
+		_sr_kemi_shv_xval.v.n = 0;
+		return &_sr_kemi_shv_xval;
+	}
+
+	lock_shvar(shv);
+	if(shv->v.flags&VAR_VAL_STR) {
+		_sr_kemi_shv_xval.v.n = 0;
+	} else {
+		shv->v.value.n++;
+		_sr_kemi_shv_xval.v.n = shv->v.value.n;
+	}
+	unlock_shvar(shv);
+	_sr_kemi_shv_xval.vtype = SR_KEMIP_INT;
+	return &_sr_kemi_shv_xval;
 }
 
 /* vi: set ts=4 sw=4 tw=79:ai:cindent: */

@@ -158,12 +158,12 @@ inline static int calc_bin_nonce_md5(union bin_nonce* b_nonce, int cfg,
  * This function creates the nonce string as it will be sent to the
  * user agent in digest challenge. The format of the nonce string
  * depends on the value of three module parameters, auth_checks_register,
- * auth_checks_no_dlg, and auth_checks_in_dlg. These module parameters
- * control the amount of information from the SIP requst that will be
+ * auth_checks_no_dlg and auth_checks_in_dlg. These module parameters
+ * control the amount of information from the SIP request that will be
  * stored in the nonce string for verification purposes.
  *
  * If all three parameters contain zero then the nonce string consists
- * of time in seconds since 1.1. 1970 and a secret phrase:
+ * of time in seconds since 1.1.1970 and a secret phrase:
  * <expire_time> <valid_since> MD5(<expire_time>, <valid_since>, secret)
  * If any of the parameters is not zero (some optional checks are enabled
  * then the nonce string will also contain MD5 hash of selected parts
@@ -175,7 +175,7 @@ inline static int calc_bin_nonce_md5(union bin_nonce* b_nonce, int cfg,
  * @param nonce_len A value/result parameter. Initially it contains the
  *                  nonce buffer length. If the length is too small, it
  *                  will be set to the needed length and the function will
- *                  return error immediately. After a succesfull call it will
+ *                  return error immediately. After a successful call it will
  *                  contain the size of nonce written into the buffer,
  *                  without the terminating 0.
  * @param cfg This is the value of one of the three module parameters that
@@ -187,7 +187,7 @@ inline static int calc_bin_nonce_md5(union bin_nonce* b_nonce, int cfg,
  * @param n_id    Nounce count and/or one-time nonce index value
  *                (32 bit counter)
  * @param pf      First 2 bits are flags, the rest is the index pool number
- *                 used if nonce counts or one-time nonces are enabled.
+ *                used if nonce counts or one-time nonces are enabled.
  *                The possible flags values are: NF_VALID_NC_ID which means
  *                the nonce-count support is enabled and NF_VALID_OT_ID
  *                which means the one-time nonces support is enabled.
@@ -200,7 +200,7 @@ inline static int calc_bin_nonce_md5(union bin_nonce* b_nonce, int cfg,
  *                MD5(<msg_parts(auth_extra_checks)>, secret2).
  * @param msg     The message for which the nonce is computed. If
  *                auth_extra_checks is set, the MD5 of some fields of the
- *                message will be included in the  generated nonce.
+ *                message will be included in the generated nonce.
  * @return 0 on success and -1 on error
  */
 int calc_nonce(char* nonce, int *nonce_len, int cfg, int since, int expires,
@@ -307,7 +307,7 @@ static inline int l8hex2int(char* _s, unsigned int *_r)
  *          6 - nonce reused
  */
 int check_nonce(auth_body_t* auth, str* secret1, str* secret2,
-		struct sip_msg* msg)
+		struct sip_msg* msg, int update_nonce)
 {
 	str * nonce;
 	int since, b_nonce2_len, b_nonce_len, cfg;
@@ -418,7 +418,7 @@ if (!memcmp(&b_nonce.n.md5_1[0], &b_nonce2.n.md5_1[0], 16)) {
 			LM_ERR("bad nc value %.*s\n", auth->digest.nc.len, auth->digest.nc.s);
 			return 5; /* invalid nc */
 		}
-		switch(nc_check_val(n_id, pf & NF_POOL_NO_MASK, nc)){
+		switch(nc_check_val(n_id, pf & NF_POOL_NO_MASK, nc, update_nonce)){
 			case NC_OK:
 				/* don't perform extra checks or one-time nonce checks
 				 * anymore, if we have nc */

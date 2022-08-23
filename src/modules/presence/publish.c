@@ -69,6 +69,7 @@ void ps_presentity_db_timer_clean(unsigned int ticks, void *param)
 	int n_db_cols = 0, n_result_cols = 0;
 	int event_col, etag_col, user_col, domain_col;
 	int i = 0, num_watchers = 0;
+	pres_ev_t fake;
 	presentity_t pres;
 	str uri = {0, 0}, event, *rules_doc = NULL;
 	static str query_str;
@@ -121,6 +122,7 @@ void ps_presentity_db_timer_clean(unsigned int ticks, void *param)
 		rows = RES_ROWS(result);
 
 		for(i = 0; i < RES_ROW_N(result); i++) {
+			num_watchers = 0;
 			values = ROW_VALUES(&rows[i]);
 			memset(&pres, 0, sizeof(presentity_t));
 
@@ -134,28 +136,33 @@ void ps_presentity_db_timer_clean(unsigned int ticks, void *param)
 			event.len = strlen(event.s);
 			pres.event = contains_event(&event, NULL);
 			if(pres.event == NULL || pres.event->evp == NULL) {
-				LM_ERR("event not found\n");
-				goto error;
+				LM_ERR("event[%.*s] not found\n", STR_FMT(&event));
+				memset(&fake, 0, sizeof(pres_ev_t));
+				fake.name = event;
+				pres.event = &fake;
+				goto simple_error;
 			}
 
 			if(uandd_to_uri(pres.user, pres.domain, &uri) < 0) {
-				LM_ERR("constructing uri\n");
-				goto error;
+				LM_ERR("constructing uri from [user]=%.*s  [domain]=%.*s\n",
+					STR_FMT(&pres.user), STR_FMT(&pres.domain));
+				goto simple_error;
 			}
 
 			/* delete from hash table */
 			if(publ_cache_mode==PS_PCACHE_HYBRID
 					&& delete_phtable(&uri, pres.event->evp->type) < 0) {
-				LM_ERR("deleting from presentity hash table\n");
-				goto error;
+				LM_ERR("deleting uri[%.*s] event[%.*s] from presentity hash table\n",
+					STR_FMT(&uri), STR_FMT(&event));
+				goto simple_error;
 			}
 
-			LM_DBG("found expired publish for [user]=%.*s  [domanin]=%.*s\n",
+			LM_DBG("found expired publish for [user]=%.*s  [domain]=%.*s\n",
 					pres.user.len, pres.user.s, pres.domain.len, pres.domain.s);
 
 			if(pres_force_delete == 1) {
 				if(delete_presentity(&pres, NULL) < 0) {
-					LM_ERR("Deleting presentity\n");
+					LM_ERR("Deleting presentity uri[%.*s]\n", STR_FMT(&uri));
 					goto error;
 				}
 			} else if(pres_notifier_processes > 0) {
@@ -171,7 +178,7 @@ void ps_presentity_db_timer_clean(unsigned int ticks, void *param)
 						if(pa_dbf.abort_transaction(pa_db) < 0)
 							LM_ERR("in abort_transaction\n");
 					}
-					goto error;
+					goto next;
 				}
 
 				if(num_watchers > 0) {
@@ -181,12 +188,12 @@ void ps_presentity_db_timer_clean(unsigned int ticks, void *param)
 							if(pa_dbf.abort_transaction(pa_db) < 0)
 								LM_ERR("in abort_transaction\n");
 						}
-						goto error;
+						goto next;
 					}
 				} else {
 					if(delete_presentity(&pres, NULL) < 0) {
-						LM_ERR("Deleting presentity\n");
-						goto error;
+						LM_ERR("Deleting presentity uri[%.*s]\n", STR_FMT(&uri));
+						goto next;
 					}
 				}
 				if(pa_dbf.end_transaction) {
@@ -201,22 +208,30 @@ void ps_presentity_db_timer_clean(unsigned int ticks, void *param)
 								   &pres.user, &pres.domain, &rules_doc)
 								   < 0) {
 					LM_ERR("getting rules doc\n");
-					goto error;
+					goto simple_error;
 				}
 				if(publ_notify(&pres, uri, NULL, &pres.etag, rules_doc) < 0) {
 					LM_ERR("sending Notify request\n");
-					goto error;
-				}
-				if(rules_doc) {
-					if(rules_doc->s)
-						pkg_free(rules_doc->s);
-					pkg_free(rules_doc);
-					rules_doc = NULL;
+					goto simple_error;
 				}
 			}
 
-			pkg_free(uri.s);
-			uri.s = NULL;
+simple_error:
+			if(num_watchers == 0 && delete_presentity(&pres, NULL) < 0) {
+				LM_ERR("Deleting presentity\n");
+			}
+next:
+			if(uri.s) {
+				pkg_free(uri.s);
+				uri.s = NULL;
+			}
+			if(rules_doc) {
+				if(rules_doc->s) {
+					pkg_free(rules_doc->s);
+				}
+				pkg_free(rules_doc);
+				rules_doc = NULL;
+			}
 		}
 	} while(db_fetch_next(&pa_dbf, pres_fetch_rows, pa_db, &result) == 1
 			&& RES_ROW_N(result) > 0);
@@ -277,22 +292,23 @@ void ps_ptable_timer_clean(unsigned int ticks, void *param)
 		pres.etag = ptn->etag;
 		pres.event = contains_event(&ptn->event, NULL);
 		if(pres.event == NULL || pres.event->evp == NULL) {
-			LM_ERR("event not found\n");
-			goto error;
+			LM_ERR("event[%.*s] not found\n", STR_FMT(&ptn->event));
+			goto next;
 		}
 
 		if(uandd_to_uri(pres.user, pres.domain, &uri) < 0) {
-			LM_ERR("constructing uri\n");
-			goto error;
+			LM_ERR("constructing uri from [user]=%.*s  [domain]=%.*s\n",
+				STR_FMT(&pres.user), STR_FMT(&pres.domain));
+			goto next;
 		}
 
-		LM_DBG("found expired publish for [user]=%.*s  [domanin]=%.*s\n",
+		LM_DBG("found expired publish for [user]=%.*s  [domain]=%.*s\n",
 				pres.user.len, pres.user.s, pres.domain.len, pres.domain.s);
 
 		if(pres_force_delete == 1) {
 			if(ps_ptable_remove(ptn) <0) {
 				LM_ERR("Deleting presentity\n");
-				goto error;
+				goto next;
 			}
 		} else {
 			if(pres.event->get_rules_doc
@@ -300,25 +316,28 @@ void ps_ptable_timer_clean(unsigned int ticks, void *param)
 								&pres.user, &pres.domain, &rules_doc)
 								< 0) {
 				LM_ERR("getting rules doc\n");
-				goto error;
+				goto next;
 			}
 			if(publ_notify(&pres, uri, NULL, &pres.etag, rules_doc) < 0) {
 				LM_ERR("sending Notify request\n");
-				goto error;
-			}
-			if(rules_doc) {
-				if(rules_doc->s)
-					pkg_free(rules_doc->s);
-				pkg_free(rules_doc);
-				rules_doc = NULL;
+				goto next;
 			}
 		}
 
-		pkg_free(uri.s);
-		uri.s = NULL;
+next:
+		if(uri.s) {
+			pkg_free(uri.s);
+			uri.s = NULL;
+		}
+		if(rules_doc) {
+			if(rules_doc->s) {
+				pkg_free(rules_doc->s);
+			}
+			pkg_free(rules_doc);
+			rules_doc = NULL;
+		}
 	}
 
-error:
 	for(ptn = ptlist; ptn != NULL; ptn = ptn->next) {
 		if(ps_ptable_remove(ptn) <0) {
 			LM_ERR("failed deleting presentity item\n");

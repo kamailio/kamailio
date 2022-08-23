@@ -46,6 +46,22 @@
 #endif
 
 
+#define CSEQ "CSeq: "
+#define CSEQ_LEN (sizeof(CSEQ)-1)
+#define TO "To: "
+#define TO_LEN (sizeof(TO)-1)
+#define CALLID "Call-ID: "
+#define CALLID_LEN (sizeof(CALLID)-1)
+#define FROM "From: "
+#define FROM_LEN (sizeof(FROM)-1)
+#define FROMTAG ";tag="
+#define FROMTAG_LEN (sizeof(FROMTAG)-1)
+#define TOTAG ";tag="
+#define TOTAG_LEN (sizeof(TOTAG)-1)
+#define MAXFWD_VALUE "70"
+#define MAXFWD_HEADER "Max-Forwards: " MAXFWD_VALUE CRLF
+#define MAXFWD_HEADER_LEN (sizeof(MAXFWD_HEADER) - 1)
+
 /* convenience macros */
 #define memapp(_d,_s,_len) \
 	do{\
@@ -1637,7 +1653,7 @@ char* build_uac_req(str* method, str* headers, str* body, dlg_t* dialog,
 			memapp(w, CRLF, CRLF_LEN);
 	}
 	memapp(w, CRLF, CRLF_LEN);
-	if (body) memapp(w, body->s, body->len);
+	if (body && body->s && body->len>0) memapp(w, body->s, body->len);
 
 #ifdef EXTRA_DEBUG
 	assert(w-buf == *len);
@@ -1776,3 +1792,37 @@ error:
 	return NULL;
 }
 
+/**
+ *
+ */
+void t_uas_request_clean_parsed(tm_cell_t *t)
+{
+	struct hdr_field *hdr;
+	void *mstart;
+	void *mend;
+
+	if (!t || !t->uas.request) {
+		return;
+	}
+
+	mstart = t->uas.request;
+	mend = t->uas.end_request;
+
+	/* free header's parsed structures that were added by failure handlers */
+	for (hdr=t->uas.request->headers; hdr; hdr=hdr->next ) {
+		if (hdr->parsed && hdr_allocs_parse(hdr)
+				&& (hdr->parsed<mstart || hdr->parsed>=mend)) {
+			/* header parsed filed doesn't point inside fake memory
+			 * chunck -> it was added by failure funcs.-> free it as pkg */
+			LM_DBG("removing hdr->parsed %d\n",	hdr->type);
+			clean_hdr_field(hdr);
+			hdr->parsed = 0;
+		}
+	}
+	/* free parsed body added by failure handlers */
+	if (t->uas.request->body) {
+		if(t->uas.request->body->free)
+			t->uas.request->body->free(&t->uas.request->body);
+		t->uas.request->body = 0;
+	}
+}

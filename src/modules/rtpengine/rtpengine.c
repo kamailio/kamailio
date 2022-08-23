@@ -78,6 +78,7 @@
 #include "../../core/rpc_lookup.h"
 #include "../../core/kemi.h"
 #include "../../core/char_msg_val.h"
+#include "../../core/utils/srjson.h"
 #include "../../modules/tm/tm_load.h"
 #include "../../modules/crypto/api.h"
 #include "../../modules/lwsc/api.h"
@@ -137,6 +138,8 @@ static const char *command_strings[] = {
 	[OP_UNBLOCK_DTMF]	= "unblock DTMF",
 	[OP_BLOCK_MEDIA]	= "block media",
 	[OP_UNBLOCK_MEDIA]	= "unblock media",
+	[OP_SILENCE_MEDIA]	= "silence media",
+	[OP_UNSILENCE_MEDIA]	= "unsilence media",
 	[OP_START_FORWARDING]	= "start forwarding",
 	[OP_STOP_FORWARDING]	= "stop forwarding",
 	[OP_PLAY_MEDIA]		= "play media",
@@ -200,6 +203,8 @@ static int block_dtmf_f(struct sip_msg *, char *, char *);
 static int unblock_dtmf_f(struct sip_msg *, char *, char *);
 static int block_media_f(struct sip_msg *, char *, char *);
 static int unblock_media_f(struct sip_msg *, char *, char *);
+static int silence_media_f(struct sip_msg *, char *, char *);
+static int unsilence_media_f(struct sip_msg *, char *, char *);
 static int start_forwarding_f(struct sip_msg *, char *, char *);
 static int stop_forwarding_f(struct sip_msg *, char *, char *);
 static int play_media_f(struct sip_msg *, char *, char *);
@@ -211,6 +216,10 @@ static int rtpengine_delete1_f(struct sip_msg *, char *, char *);
 static int rtpengine_manage1_f(struct sip_msg *, char *, char *);
 static int rtpengine_query1_f(struct sip_msg *, char *, char *);
 static int rtpengine_info1_f(struct sip_msg *, char *, char *);
+
+static int w_rtpengine_query_v(sip_msg_t *msg, char *pfmt, char *pvar);
+static int fixup_rtpengine_query_v(void **param, int param_no);
+static int fixup_free_rtpengine_query_v(void **param, int param_no);
 
 static int parse_flags(struct ng_flags_parse *, struct sip_msg *, enum rtpe_operation *, const char *);
 
@@ -241,7 +250,7 @@ static int add_rtpp_node_info(void *ptrs, struct rtpp_node *crt_rtpp, struct rtp
 static int rtpp_test_ping(struct rtpp_node *node);
 
 /* Pseudo-Variables */
-static int pv_get_rtpstat_f(struct sip_msg *, pv_param_t *, pv_value_t *);
+static int pv_get_rtpestat_f(struct sip_msg *, pv_param_t *, pv_value_t *);
 static int set_rtp_inst_pvar(struct sip_msg *msg, const str * const uri);
 static int pv_parse_var(str *inp, pv_elem_t **outp, int *got_any);
 static int mos_label_stats_parse(struct minmax_mos_label_stats *mmls);
@@ -274,7 +283,7 @@ static str body_intermediate;
 static str rtp_inst_pv_param = {NULL, 0};
 static pv_spec_t *rtp_inst_pvar = NULL;
 
-/* array with the sockets used by rtpporxy (per process)*/
+/* array with the sockets used by rtpproxy (per process)*/
 static unsigned int *rtpp_no = 0;
 static gen_lock_t *rtpp_no_lock = 0;
 static int *rtpp_socks = 0;
@@ -355,6 +364,12 @@ static cmd_export_t cmds[] = {
 	{"unblock_media",	(cmd_function)unblock_media_f, 		0,
 		0, 0,
 		ANY_ROUTE},
+	{"silence_media",	(cmd_function)silence_media_f,	 	0,
+		0, 0,
+		ANY_ROUTE },
+	{"unsilence_media",	(cmd_function)unsilence_media_f, 	0,
+		0, 0,
+		ANY_ROUTE},
 	{"block_dtmf",		(cmd_function)block_dtmf_f,	 	1,
 		fixup_spve_null, 0,
 		ANY_ROUTE },
@@ -365,6 +380,12 @@ static cmd_export_t cmds[] = {
 		fixup_spve_null, 0,
 		ANY_ROUTE },
 	{"unblock_media",	(cmd_function)unblock_media_f, 		1,
+		fixup_spve_null, 0,
+		ANY_ROUTE},
+	{"silence_media",	(cmd_function)silence_media_f,	 	1,
+		fixup_spve_null, 0,
+		ANY_ROUTE },
+	{"unsilence_media",	(cmd_function)unsilence_media_f, 	1,
 		fixup_spve_null, 0,
 		ANY_ROUTE},
 	{"start_forwarding",	(cmd_function)start_forwarding_f,	0,
@@ -427,12 +448,17 @@ static cmd_export_t cmds[] = {
 	{"rtpengine_query",	(cmd_function)rtpengine_query1_f,	1,
 		fixup_spve_null, 0,
 		ANY_ROUTE},
+	{"rtpengine_query_v",	(cmd_function)w_rtpengine_query_v,	2,
+		fixup_rtpengine_query_v, fixup_free_rtpengine_query_v,
+		ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
 static pv_export_t mod_pvs[] = {
 	{{"rtpstat", (sizeof("rtpstat")-1)}, /* RTP-Statistics */
-	PVT_OTHER, pv_get_rtpstat_f, 0, 0, 0, 0, 0},
+	PVT_OTHER, pv_get_rtpestat_f, 0, 0, 0, 0, 0},
+	{{"rtpestat", (sizeof("rtpestat")-1)}, /* RTP-Statistics */
+	PVT_OTHER, pv_get_rtpestat_f, 0, 0, 0, 0, 0},
 	{{0, 0}, 0, 0, 0, 0, 0, 0, 0}
 };
 
@@ -1315,6 +1341,7 @@ static void rtpengine_rpc_reload(rpc_t* rpc, void* ctx)
 	LM_DBG("current rtpengines list version: %d (%u)\n",
 			_rtpe_list_version->vernum,
 			(unsigned int)_rtpe_list_version->vertime);
+	rpc->rpl_printf(ctx, "Ok. Reload successful.");
 }
 
 static int rtpengine_rpc_iterate(rpc_t* rpc, void* ctx, const str *rtpp_url,
@@ -2631,7 +2658,8 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
 	bencode_list_add_string(item, ip_addr2a(&msg->rcv.src_ip));
 
 	if (op == OP_BLOCK_DTMF || op == OP_BLOCK_MEDIA || op == OP_UNBLOCK_DTMF
-			|| op == OP_UNBLOCK_MEDIA || op == OP_START_FORWARDING || op == OP_STOP_FORWARDING)
+			|| op == OP_UNBLOCK_MEDIA || op == OP_START_FORWARDING || op == OP_STOP_FORWARDING
+			|| op == OP_SILENCE_MEDIA || op == OP_UNSILENCE_MEDIA)
 	{
 		if (ng_flags.directional)
 			bencode_dictionary_add_str(ng_flags.dict, "from-tag", &ng_flags.from_tag);
@@ -2680,7 +2708,8 @@ select_node:
 		}
 
 		cp = send_rtpp_command(node, ng_flags.dict, &ret);
-		if (cp == NULL) {
+		/* if node is disabled permanent, don't recheck it later */
+		if (cp == NULL && node->rn_recheck_ticks != RTPENGINE_MAX_RECHECK_TICKS) {
 			node->rn_disabled = 1;
 			node->rn_recheck_ticks = get_ticks() + cfg_get(rtpengine,rtpengine_cfg,rtpengine_disable_tout);
 		}
@@ -3343,11 +3372,15 @@ select_rtpp_node(str callid, str viabranch, int do_test, struct rtpp_node **quer
 		if (node->rn_recheck_ticks == RTPENGINE_MAX_RECHECK_TICKS) {
 			LM_DBG("node=%.*s for calllen=%d callid=%.*s is disabled(permanent) (probably still UP)! Return it\n",
 				node->rn_url.len, node->rn_url.s, callid.len, callid.len, callid.s);
+			return node;
 		} else {
-			LM_DBG("node=%.*s for calllen=%d callid=%.*s is disabled, either broke or timeout disabled! Return it\n",
+			LM_DBG("node=%.*s for calllen=%d callid=%.*s is disabled, either broke or timeout disabled!\n",
 				node->rn_url.len, node->rn_url.s, callid.len, callid.len, callid.s);
+			if (rtpengine_allow_op == 1) {
+			        LM_DBG("Return it\n");
+				return node;
+			}
 		}
-		return node;
 	}
 
 	return NULL;
@@ -3588,13 +3621,15 @@ ssrc_ok:
 			continue;
 
 		if (decode_mos_vals_dict(&vals_decoded, ssrc_dict, "average MOS")) {
-			average_vals.avg_samples++;
-			average_vals.mos += vals_decoded.mos;
-			average_vals.packetloss += vals_decoded.packetloss;
-			average_vals.jitter += vals_decoded.jitter;
-			average_vals.roundtrip += vals_decoded.roundtrip;
-			average_vals.roundtrip_leg += vals_decoded.roundtrip_leg;
-			average_vals.samples += vals_decoded.samples;
+			if (vals_decoded.mos > 0) {
+				average_vals.avg_samples++;
+				average_vals.mos += vals_decoded.mos;
+				average_vals.packetloss += vals_decoded.packetloss;
+				average_vals.jitter += vals_decoded.jitter;
+				average_vals.roundtrip += vals_decoded.roundtrip;
+				average_vals.roundtrip_leg += vals_decoded.roundtrip_leg;
+				average_vals.samples += vals_decoded.samples;
+			}
 		}
 
 		if (decode_mos_vals_dict(&vals_decoded, ssrc_dict, "highest MOS")) {
@@ -3602,7 +3637,7 @@ ssrc_ok:
 				max_vals = vals_decoded;
 		}
 		if (decode_mos_vals_dict(&vals_decoded, ssrc_dict, "lowest MOS")) {
-			if (vals_decoded.mos < min_vals.mos)
+			if (vals_decoded.mos > 0 && vals_decoded.mos < min_vals.mos)
 				min_vals = vals_decoded;
 		}
 	}
@@ -4012,6 +4047,18 @@ unblock_media_f(struct sip_msg* msg, char *str1, char *str2)
 	return rtpengine_generic_f(msg, str1, OP_UNBLOCK_MEDIA);
 }
 
+static int
+silence_media_f(struct sip_msg* msg, char *str1, char *str2)
+{
+	return rtpengine_generic_f(msg, str1, OP_SILENCE_MEDIA);
+}
+
+static int
+unsilence_media_f(struct sip_msg* msg, char *str1, char *str2)
+{
+	return rtpengine_generic_f(msg, str1, OP_UNSILENCE_MEDIA);
+}
+
 static int rtpengine_play_media(struct sip_msg *msg, void *d, int more, enum rtpe_operation op) {
 	bencode_buffer_t bencbuf;
 	long long duration;
@@ -4118,7 +4165,7 @@ error:
  * Returns the current RTP-Statistics from the RTP-Proxy
  */
 static int
-pv_get_rtpstat_f(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
+pv_get_rtpestat_f(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	void *parms[2];
 
@@ -4126,6 +4173,241 @@ pv_get_rtpstat_f(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 	parms[1] = res;
 
 	return rtpengine_rtpp_set_wrap(msg, rtpengine_rtpstat_wrap, parms, 1, OP_ANY);
+}
+
+/**
+ *
+ */
+static srjson_t *rtpengine_query_v_build_json(srjson_doc_t *jdoc,
+		bencode_item_t *dict)
+{
+	srjson_t *vnode;
+	srjson_t *tnode;
+	bencode_item_t *it;
+	str sval;
+
+	if(jdoc==NULL || dict==NULL) {
+		LM_ERR("invalid parameters\n");
+		return NULL;
+	}
+
+	switch (dict->type) {
+		case BENCODE_STRING:
+			return srjson_CreateStr(jdoc, dict->iov[1].iov_base, dict->iov[1].iov_len);
+
+		case BENCODE_INTEGER:
+			return srjson_CreateNumber(jdoc, dict->value);
+
+		case BENCODE_LIST:
+			vnode = srjson_CreateArray(jdoc);
+			if(vnode==NULL) {
+				LM_ERR("failed to create the array node\n");
+				return NULL;
+			}
+			for (it = dict->child; it; it = it->sibling) {
+				tnode = rtpengine_query_v_build_json(jdoc, it);
+				if (!tnode) {
+					srjson_Delete(jdoc, vnode);
+					return NULL;
+				}
+				srjson_AddItemToArray(jdoc, vnode, tnode);
+			}
+			return vnode;
+
+		case BENCODE_DICTIONARY:
+			vnode = srjson_CreateObject(jdoc);
+			if(vnode==NULL) {
+				LM_ERR("failed to create the object node\n");
+				return NULL;
+			}
+			for (it = dict->child; it; it = it->sibling) {
+				/* name of the item */
+				sval.s = it->iov[1].iov_base;
+				sval.len = it->iov[1].iov_len;
+				/* value of the item */
+				it = it->sibling;
+				tnode = rtpengine_query_v_build_json(jdoc, it);
+				if (!tnode) {
+					srjson_Delete(jdoc, vnode);
+					return NULL;
+				}
+				srjson_AddStrItemToObject(jdoc, vnode, sval.s, sval.len, tnode);
+			}
+			return vnode;
+
+		default:
+			LM_ERR("unsupported bencode item type %d\n", dict->type);
+			return NULL;
+	}
+}
+
+/**
+ *
+ */
+static int rtpengine_query_v_print(bencode_item_t *dict, str *fmt,
+		str *bout)
+{
+	srjson_doc_t jdoc;
+
+	if(fmt==NULL || fmt->s==NULL || fmt->len<=0) {
+		LM_ERR("invalid format parameter\n");
+		return -1;
+	}
+	if(fmt->s[0]!='j' && fmt->s[0]!='J') {
+		LM_ERR("invalid format parameter value: %.*s\n", fmt->len, fmt->s);
+		return -1;
+	}
+
+	srjson_InitDoc(&jdoc, NULL);
+	jdoc.root = rtpengine_query_v_build_json(&jdoc, dict);
+
+	if(jdoc.root==NULL) {
+		LM_ERR("failed to build json document\n");
+		return -1;
+	}
+
+	if(fmt->len>1 && (fmt->s[1]=='p' || fmt->s[1]=='P')) {
+		bout->s = srjson_Print(&jdoc, jdoc.root);
+	} else {
+		bout->s = srjson_PrintUnformatted(&jdoc, jdoc.root);
+	}
+	if(bout->s==NULL) {
+		LM_ERR("unable to serialize json document\n");
+		srjson_DestroyDoc(&jdoc);
+		return -1;
+	}
+	bout->len = strlen(bout->s);
+	srjson_DestroyDoc(&jdoc);
+
+	return 0;
+}
+
+/**
+ *
+ */
+static int rtpengine_query_v_wrap(struct sip_msg *msg, void *d, int more,
+		enum rtpe_operation op)
+{
+	void **parms;
+	str *fmt = NULL;
+	pv_spec_t *dst = NULL;
+	pv_value_t val = {0};
+	bencode_buffer_t bencbuf;
+	bencode_item_t *dict;
+
+	parms = d;
+	fmt = parms[0];
+	dst = parms[1];
+
+	dict = rtpp_function_call_ok(&bencbuf, msg, OP_QUERY, NULL, NULL);
+	if (!dict) {
+		return -1;
+	}
+	if(rtpengine_query_v_print(dict, fmt, &val.rs)<0) {
+		goto error;
+	}
+
+	val.flags = PV_VAL_STR;
+	if(dst->setf) {
+		dst->setf(msg, &dst->pvp, (int)EQ_T, &val);
+	} else {
+		LM_WARN("target pv is not writable\n");
+	}
+
+	/* val.rs.s is allocated by srjson print */
+	free(val.rs.s);
+
+	bencode_buffer_free(&bencbuf);
+	return 1;
+
+error:
+	bencode_buffer_free(&bencbuf);
+	return -1;
+}
+
+/**
+ *
+ */
+static int ki_rtpengine_query_v(sip_msg_t *msg, str *fmt, str *dpv)
+{
+	void *parms[2];
+	pv_spec_t *dst;
+
+	dst = pv_cache_get(dpv);
+	if(dst==NULL) {
+		LM_ERR("failed to get pv spec for: %.*s\n", dpv->len, dpv->s);
+		return -1;
+	}
+	if(dst->setf==NULL) {
+		LM_ERR("target pv is not writable: %.*s\n", dpv->len, dpv->s);
+		return -1;
+	}
+	parms[0] = fmt;
+	parms[1] = dst;
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_query_v_wrap, parms, 1, OP_ANY);
+}
+
+/*
+ * Store the cmd QUERY result to variable
+ */
+static int w_rtpengine_query_v(sip_msg_t *msg, char *pfmt, char *pvar)
+{
+	void *parms[2];
+	str fmt = {NULL, 0};
+	pv_spec_t *dst;
+
+	if(fixup_get_svalue(msg, (gparam_t*)pfmt, &fmt) < 0 || fmt.len <= 0) {
+		LM_ERR("fmt has no value\n");
+		return -1;
+	}
+	dst = (pv_spec_t *)pvar;
+
+	parms[0] = &fmt;
+	parms[1] = dst;
+
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_query_v_wrap, parms, 1, OP_ANY);
+}
+
+/**
+ *
+ */
+static int fixup_rtpengine_query_v(void **param, int param_no)
+{
+	if(param_no == 1) {
+		return fixup_spve_null(param, 1);
+	}
+
+	if(param_no == 2) {
+		if(fixup_pvar_null(param, 1) != 0) {
+			LM_ERR("failed to fixup result pvar\n");
+			return -1;
+		}
+		if(((pv_spec_t *)(*param))->setf == NULL) {
+			LM_ERR("result pvar is not writeble\n");
+			return -1;
+		}
+		return 0;
+	}
+
+	LM_ERR("invalid parameter number <%d>\n", param_no);
+	return -1;
+}
+
+/**
+ *
+ */
+static int fixup_free_rtpengine_query_v(void **param, int param_no)
+{
+	if(param_no == 1) {
+		return fixup_free_spve_null(param, 1);
+	}
+
+	if(param_no == 2) {
+		return fixup_free_pvar_null(param, 1);
+	}
+
+	LM_ERR("invalid parameter number <%d>\n", param_no);
+	return -1;
 }
 
 static int
@@ -4227,6 +4509,23 @@ static int ki_unblock_media0(sip_msg_t *msg)
 static int ki_unblock_media(sip_msg_t *msg , str *flags)
 {
 	return rtpengine_rtpp_set_wrap(msg, rtpengine_simple_wrap, flags->s, 1, OP_UNBLOCK_MEDIA);
+}
+
+static int ki_silence_media0(sip_msg_t *msg)
+{
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_simple_wrap, NULL, 1, OP_SILENCE_MEDIA);
+}
+static int ki_silence_media(sip_msg_t *msg, str *flags)
+{
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_simple_wrap, flags->s, 1, OP_SILENCE_MEDIA);
+}
+static int ki_unsilence_media0(sip_msg_t *msg)
+{
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_simple_wrap, NULL, 1, OP_UNSILENCE_MEDIA);
+}
+static int ki_unsilence_media(sip_msg_t *msg , str *flags)
+{
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_simple_wrap, flags->s, 1, OP_UNSILENCE_MEDIA);
 }
 
 static int ki_block_dtmf0(sip_msg_t *msg)
@@ -4397,6 +4696,27 @@ static sr_kemi_t sr_kemi_rtpengine_exports[] = {
             SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
     },
 
+	{ str_init("rtpengine"), str_init("silence_media0"),
+        SR_KEMIP_INT, ki_silence_media0,
+        { SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+            SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+    },
+    { str_init("rtpengine"), str_init("silence_media"),
+        SR_KEMIP_INT, ki_silence_media,
+        { SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+            SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+    },
+	{ str_init("rtpengine"), str_init("unsilence_media0"),
+        SR_KEMIP_INT, ki_unsilence_media0,
+        { SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+            SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+    },
+    { str_init("rtpengine"), str_init("unsilence_media"),
+        SR_KEMIP_INT, ki_unsilence_media,
+        { SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+            SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+    },
+
 	{ str_init("rtpengine"), str_init("block_dtmf0"),
         SR_KEMIP_INT, ki_block_dtmf0,
         { SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
@@ -4452,6 +4772,11 @@ static sr_kemi_t sr_kemi_rtpengine_exports[] = {
     { str_init("rtpengine"), str_init("rtpengine_query"),
         SR_KEMIP_INT, ki_rtpengine_query,
         { SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+            SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+    },
+   { str_init("rtpengine"), str_init("rtpengine_query_v"),
+        SR_KEMIP_INT, ki_rtpengine_query_v,
+        { SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
             SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
     },
 

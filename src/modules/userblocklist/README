@@ -35,11 +35,11 @@ Pawel Kuzak
               3.6. userblocklist_username_col (string)
               3.7. userblocklist_domain_col (string)
               3.8. userblocklist_prefix_col (string)
-              3.9. userblocklist_whitelist_col (string)
+              3.9. userblocklist_allowlist_col (string)
               3.10. globalblocklist_table (String)
               3.11. globalblocklist_id_col (string)
               3.12. globalblocklist_prefix_col (string)
-              3.13. globalblocklist_whitelist_col (string)
+              3.13. globalblocklist_allowlist_col (string)
               3.14. globalblocklist_description_col (string)
 
         4. Functions
@@ -47,28 +47,24 @@ Pawel Kuzak
               4.1. check_user_blocklist (string user, string domain,
                       string number, string table)
 
-              4.2. check_user_whitelist (string user, string domain,
+              4.2. check_user_allowlist (string user, string domain,
                       string number, string table)
 
               4.3. check_blocklist ([string table])
-              4.4. check_whitelist (string table)
+              4.4. check_allowlist (string table)
 
         5. RPC Commands
 
               5.1. userblocklist.reload_blocklist
+              5.2. userblocklist.dump_blocklist
+              5.3. userblocklist.check_blocklist prefix
+              5.4. userblocklist.check_allowlist prefix
+              5.5. userblocklist.check_userblocklist prefix user [domain]
+              5.6. userblocklist.check_userallowlist prefix user [domain]
 
-        6. MI Commands
+        6. Installation and Running
 
-              6.1. reload_blocklist
-              6.2. dump_blocklist
-              6.3. check_blocklist prefix
-              6.4. check_whitelist prefix
-              6.5. check_userblocklist user [domain] prefix
-              6.6. check_userwhitelist user [domain] prefix
-
-        7. Installation and Running
-
-              7.1. Database setup
+              6.1. Database setup
 
    List of Examples
 
@@ -80,25 +76,24 @@ Pawel Kuzak
    1.6. Set userblocklist_username_col parameter
    1.7. Set userblocklist_domain_col parameter
    1.8. Set userblocklist_prefix_col parameter
-   1.9. Set userblocklist_whitelist_col parameter
+   1.9. Set userblocklist_allowlist_col parameter
    1.10. Set globalblocklist_table parameter
    1.11. Set globalblocklist_id_col parameter
    1.12. Set globalblocklist_prefix_col parameter
-   1.13. Set globalblocklist_whitelist_col parameter
+   1.13. Set globalblocklist_allowlist_col parameter
    1.14. Set globalblocklist_description_col parameter
    1.15. check_user_blocklist usage
-   1.16. check_user_whitelist usage
+   1.16. check_user_allowlist usage
    1.17. check_blocklist usage
-   1.18. check_whitelist usage
+   1.18. check_allowlist usage
    1.19. userblocklist.reload_blocklist usage
-   1.20. reload_blocklist usage
-   1.21. dump_blocklist usage
-   1.22. check_blocklist usage
-   1.23. check_whitelist usage
-   1.24. check_userblocklist usage
-   1.25. check_userwhitelist usage
-   1.26. Example database content - globalblocklist table
-   1.27. Example database content - userblocklist table
+   1.20. userblocklist.dump_blocklist usage
+   1.21. userblocklist.check_blocklist usage
+   1.22. userblocklist.check_allowlist usage
+   1.23. userblocklist.check_userblocklist usage
+   1.24. userblocklist.check_userallowlist usage
+   1.25. Example database content - globalblocklist table
+   1.26. Example database content - userblocklist table
 
 Chapter 1. Admin Guide
 
@@ -120,11 +115,11 @@ Chapter 1. Admin Guide
         3.6. userblocklist_username_col (string)
         3.7. userblocklist_domain_col (string)
         3.8. userblocklist_prefix_col (string)
-        3.9. userblocklist_whitelist_col (string)
+        3.9. userblocklist_allowlist_col (string)
         3.10. globalblocklist_table (String)
         3.11. globalblocklist_id_col (string)
         3.12. globalblocklist_prefix_col (string)
-        3.13. globalblocklist_whitelist_col (string)
+        3.13. globalblocklist_allowlist_col (string)
         3.14. globalblocklist_description_col (string)
 
    4. Functions
@@ -132,28 +127,24 @@ Chapter 1. Admin Guide
         4.1. check_user_blocklist (string user, string domain, string
                 number, string table)
 
-        4.2. check_user_whitelist (string user, string domain, string
+        4.2. check_user_allowlist (string user, string domain, string
                 number, string table)
 
         4.3. check_blocklist ([string table])
-        4.4. check_whitelist (string table)
+        4.4. check_allowlist (string table)
 
    5. RPC Commands
 
         5.1. userblocklist.reload_blocklist
+        5.2. userblocklist.dump_blocklist
+        5.3. userblocklist.check_blocklist prefix
+        5.4. userblocklist.check_allowlist prefix
+        5.5. userblocklist.check_userblocklist prefix user [domain]
+        5.6. userblocklist.check_userallowlist prefix user [domain]
 
-   6. MI Commands
+   6. Installation and Running
 
-        6.1. reload_blocklist
-        6.2. dump_blocklist
-        6.3. check_blocklist prefix
-        6.4. check_whitelist prefix
-        6.5. check_userblocklist user [domain] prefix
-        6.6. check_userwhitelist user [domain] prefix
-
-   7. Installation and Running
-
-        7.1. Database setup
+        6.1. Database setup
 
 1. Overview
 
@@ -166,16 +157,16 @@ Chapter 1. Admin Guide
    handle global blocklists. This lists are loaded on startup into memory,
    thus providing a better performance than the userblocklist case. These
    global blocklists are useful to allow only calls to certain
-   international destinations, i.e. block all not whitelisted numbers.
+   international destinations, i.e. block all not allowlisted numbers.
    They could also be used to prevent the blocklisting of important
-   numbers, as whitelisting is supported too. This is useful for example
+   numbers, as allowlisting is supported too. This is useful for example
    to prevent the customer from blocking emergency call number or service
    hotlines.
 
-   The module exports four functions, check_blocklist, check_whitelist,
-   check_user_blocklist and check_user_whitelist for usage in the
-   configuration file. Furthermore it provides a MI function to reload the
-   global blocklist cache.
+   The module exports four functions, check_blocklist, check_allowlist,
+   check_user_blocklist and check_user_allowlist for usage in the
+   configuration file. Furthermore it provides a RPC function to reload
+   the global blocklist cache.
 
    Please note that only numerical strings for matching are supported at
    the moment (the used library supports this already, but its not yet
@@ -210,11 +201,11 @@ Chapter 1. Admin Guide
    3.6. userblocklist_username_col (string)
    3.7. userblocklist_domain_col (string)
    3.8. userblocklist_prefix_col (string)
-   3.9. userblocklist_whitelist_col (string)
+   3.9. userblocklist_allowlist_col (string)
    3.10. globalblocklist_table (String)
    3.11. globalblocklist_id_col (string)
    3.12. globalblocklist_prefix_col (string)
-   3.13. globalblocklist_whitelist_col (string)
+   3.13. globalblocklist_allowlist_col (string)
    3.14. globalblocklist_description_col (string)
 
 3.1. use_domain (integer)
@@ -304,13 +295,13 @@ modparam("userblocklist", "userblocklist_domain_col", "domain")
 modparam("userblocklist", "userblocklist_prefix_col", "prefix")
 ...
 
-3.9. userblocklist_whitelist_col (string)
+3.9. userblocklist_allowlist_col (string)
 
-   Specify if this a blocklist (0) or a whitelist (1) entry.
+   Specify if this a blocklist (0) or a allowlist (1) entry.
 
-   Example 1.9. Set userblocklist_whitelist_col parameter
+   Example 1.9. Set userblocklist_allowlist_col parameter
 ...
-modparam("userblocklist", "userblocklist_whitelist_col", "whitelist")
+modparam("userblocklist", "userblocklist_allowlist_col", "allowlist")
 ...
 
 3.10. globalblocklist_table (String)
@@ -344,13 +335,13 @@ modparam("userblocklist", "globalblocklist_id_col", "id")
 modparam("userblocklist", "globalblocklist_prefix_col", "prefix")
 ...
 
-3.13. globalblocklist_whitelist_col (string)
+3.13. globalblocklist_allowlist_col (string)
 
-   Specify if this a blocklist (0) or a whitelist (1) entry.
+   Specify if this a blocklist (0) or a allowlist (1) entry.
 
-   Example 1.13. Set globalblocklist_whitelist_col parameter
+   Example 1.13. Set globalblocklist_allowlist_col parameter
 ...
-modparam("userblocklist", "globalblocklist_whitelist_col", "whitelist")
+modparam("userblocklist", "globalblocklist_allowlist_col", "allowlist")
 ...
 
 3.14. globalblocklist_description_col (string)
@@ -367,18 +358,18 @@ modparam("userblocklist", "globalblocklist_description_col", "description")
    4.1. check_user_blocklist (string user, string domain, string number,
           string table)
 
-   4.2. check_user_whitelist (string user, string domain, string number,
+   4.2. check_user_allowlist (string user, string domain, string number,
           string table)
 
    4.3. check_blocklist ([string table])
-   4.4. check_whitelist (string table)
+   4.4. check_allowlist (string table)
 
 4.1.  check_user_blocklist (string user, string domain, string number, string
 table)
 
    Finds the longest prefix that matches the request URI user (or the
    number parameter) for the given user and domain name in the database.
-   If a match is found and it is not set to whitelist, false is returned.
+   If a match is found and it is not set to allowlist, false is returned.
    Otherwise, true is returned. Pseudo-variables or AVPs can be used for
    the user, domain and number parameters. The number and table variables
    are optional, the defaults are used if they are omitted. The number
@@ -394,22 +385,22 @@ if (!check_user_blocklist("$avp(i:80)", "$avp(i:82)")) {
 }
 ...
 
-4.2.  check_user_whitelist (string user, string domain, string number, string
+4.2.  check_user_allowlist (string user, string domain, string number, string
 table)
 
    Finds the longest prefix that matches the request URI user (or the
    number parameter) for the given user and domain name in the database.
-   If a match is found and it is set to whitelist, true is returned.
+   If a match is found and it is set to allowlist, true is returned.
    Otherwise, false is returned. Pseudo-variables or AVPs can be used for
    the user, domain and number parameters. The number and table variables
    are optional, the defaults are used if they are omitted. The number
    parameter can be used to check for example against the from URI user.
 
-   Example 1.16. check_user_whitelist usage
+   Example 1.16. check_user_allowlist usage
 ...
 $avp(i:80) = $rU;
 # rewrite the R-URI
-if (!check_user_whitelist("$avp(i:80)", "$avp(i:82)")) {
+if (!check_user_allowlist("$avp(i:80)", "$avp(i:82)")) {
         # process request
         exit;
 }
@@ -418,7 +409,7 @@ if (!check_user_whitelist("$avp(i:80)", "$avp(i:82)")) {
 4.3.  check_blocklist ([string table])
 
    Finds the longest prefix that matches the request URI for the given
-   table. If a match is found and it is not set to whitelist, false is
+   table. If a match is found and it is not set to allowlist, false is
    returned. Otherwise, true is returned. If no table is given, then
    globalblocklist_table is used.
 
@@ -430,15 +421,15 @@ if (!check_blocklist("globalblocklist")) {
 }
 ...
 
-4.4.  check_whitelist (string table)
+4.4.  check_allowlist (string table)
 
    Finds the longest prefix that matches the request URI for the given
-   table. If a match is found and it is set to whitelist, true is
+   table. If a match is found and it is set to allowlist, true is
    returned. Otherwise, false is returned.
 
-   Example 1.18. check_whitelist usage
+   Example 1.18. check_allowlist usage
 ...
-if (!check_whitelist("globalblocklist")) {
+if (!check_allowlist("globalblocklist")) {
         sl_send_reply("403", "Forbidden");
         exit;
 }
@@ -447,6 +438,11 @@ if (!check_whitelist("globalblocklist")) {
 5. RPC Commands
 
    5.1. userblocklist.reload_blocklist
+   5.2. userblocklist.dump_blocklist
+   5.3. userblocklist.check_blocklist prefix
+   5.4. userblocklist.check_allowlist prefix
+   5.5. userblocklist.check_userblocklist prefix user [domain]
+   5.6. userblocklist.check_userallowlist prefix user [domain]
 
 5.1.  userblocklist.reload_blocklist
 
@@ -458,102 +454,79 @@ if (!check_whitelist("globalblocklist")) {
 kamcmd userblocklist.reload_blocklist
 ...
 
-6. MI Commands
-
-   6.1. reload_blocklist
-   6.2. dump_blocklist
-   6.3. check_blocklist prefix
-   6.4. check_whitelist prefix
-   6.5. check_userblocklist user [domain] prefix
-   6.6. check_userwhitelist user [domain] prefix
-
-6.1.  reload_blocklist
-
-   Reload the internal global blocklist cache. This is necessary after the
-   database tables for the global blocklist have been changed.
-
-   Example 1.20. reload_blocklist usage
-                                        ...
-                                        kamctl fifo reload_blocklist
-                                        ...
-
-6.2.  dump_blocklist
+5.2.  userblocklist.dump_blocklist
 
    Dumps the default, in memory, global_blocklist content to stdout. Note
    that a reload_blocklist should be issued before, in order to see the
    latest content of the database.
 
-   Example 1.21. dump_blocklist usage
-                                        ...
-                                        kamctl fifo reload_blocklist
-                                        kamctl fifo dump_blocklist
-                                        ...
+   Example 1.20. userblocklist.dump_blocklist usage
+...
+kamcmd userblocklist.reload_blocklist
+kamcmd userblocklist.dump_blocklist
+...
 
-6.3.  check_blocklist prefix
+5.3.  userblocklist.check_blocklist prefix
 
    Searches in the default, in memory, global list. Finds the longest
    prefix that matches the given prefix parameter. Returns true if the
-   prefix is found and the whitelist is not set. Returns false otherwise -
-   either prefix found and whitelist set or prefix not found. Note that a
+   prefix is found and the allowlist is not set. Returns false otherwise -
+   either prefix found and allowlist set or prefix not found. Note that a
    reload_blocklist should be issued before, in order to check through the
    latest content of the database.
 
-   Example 1.22. check_blocklist usage
-                                        ...
-                                        kamctl fifo reload_blocklist
-                                        kamctl fifo check_blocklist prefix
-                                        ...
+   Example 1.21. userblocklist.check_blocklist usage
+...
+kamcmd userblocklist.check_blocklist s:1234
+...
 
-6.4.  check_whitelist prefix
+5.4.  userblocklist.check_allowlist prefix
 
    Searches in the default, in memory, global list. Finds the longest
    prefix that matches the given prefix parameter. Returns true if the
-   prefix is found and the whitelist is set. Returns false otherwise -
-   either prefix found and whitelist not set or prefix not found. Note
+   prefix is found and the allowlist is set. Returns false otherwise -
+   either prefix found and allowlist not set or prefix not found. Note
    that a reload_blocklist should be issued before, in order to check
    through the latest content of the database.
 
-   Example 1.23. check_whitelist usage
-                                        ...
-                                        kamctl fifo reload_blocklist
-                                        kamctl fifo check_whitelist prefix
-                                        ...
+   Example 1.22. userblocklist.check_allowlist usage
+...
+kamcmd userblocklist.check_allowlist s:1234
+...
 
-6.5.  check_userblocklist user [domain] prefix
+5.5.  userblocklist.check_userblocklist prefix user [domain]
 
    Searches in the default user list table. Finds the longest prefix for
    the given user@domain that matches the given prefix parameter. Returns
-   true if the prefix is found and the whitelist is not set. Returns false
-   otherwise - either prefix found and whitelist set or prefix not found.
+   true if the prefix is found and the allowlist is not set. Returns false
+   otherwise - either prefix found and allowlist set or prefix not found.
    Note that the domain parameter is optional. If not given, the second
    parameter is the considered to be the prefix.
 
-   Example 1.24. check_userblocklist usage
-                                        ...
-                                        kamctl fifo check_userblocklist user [do
-main] prefix
-                                        ...
+   Example 1.23. userblocklist.check_userblocklist usage
+...
+kamcmd userblocklist.check_userblocklist s:1234 s:49721123456788
+...
 
-6.6.  check_userwhitelist user [domain] prefix
+5.6.  userblocklist.check_userallowlist prefix user [domain]
 
    Searches in the default user list table. Finds the longest prefix for
    the given user@domain that matches the given prefix parameter. Returns
-   true if the prefix is found and the whitelist is set. Returns false
-   otherwise - either prefix found and whitelist not set or prefix not
+   true if the prefix is found and the allowlist is set. Returns false
+   otherwise - either prefix found and allowlist not set or prefix not
    found. Note that the domain parameter is optional. If not given, the
    second parameter is the considered to be the prefix.
 
-   Example 1.25. check_userwhitelist usage
-                                        ...
-                                        kamctl fifo check_userwhitelist user [do
-main] prefix
-                                        ...
+   Example 1.24. userblocklist.check_userallowlist usage
+...
+kamcmd userblocklist.check_userallowlist s:1234 s:49721123456788
+...
 
-7. Installation and Running
+6. Installation and Running
 
-   7.1. Database setup
+   6.1. Database setup
 
-7.1. Database setup
+6.1. Database setup
 
    Before running Kamailio with the userblocklist module, you have to
    setup the database table where the module will read the blocklist data.
@@ -566,10 +539,10 @@ main] prefix
    complete database documentation on the project webpage,
    https://www.kamailio.org/docs/db-tables/kamailio-db-devel.html.
 
-   Example 1.26. Example database content - globalblocklist table
+   Example 1.25. Example database content - globalblocklist table
 ...
 +----+-----------+-----------+
-| id | prefix    | whitelist |
+| id | prefix    | allowlist |
 +----+-----------+-----------+
 |  1 |           |         0 |
 |  2 | 1         |         1 |
@@ -583,10 +556,10 @@ main] prefix
    “123455787” are also blocklisted, because the longest prefix will be
    matched.
 
-   Example 1.27. Example database content - userblocklist table
+   Example 1.26. Example database content - userblocklist table
 ...
 +----+----------------+-------------+-----------+-----------+
-| id | username       | domain      | prefix    | whitelist |
+| id | username       | domain      | prefix    | allowlist |
 +----+----------------+-------------+-----------+-----------+
 | 23 | 49721123456788 |             | 1234      |         0 |
 | 22 | 49721123456788 |             | 123456788 |         1 |

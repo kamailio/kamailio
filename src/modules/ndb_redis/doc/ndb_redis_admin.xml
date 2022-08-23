@@ -308,6 +308,26 @@ modparam("ndb_redis", "allow_dynamic_nodes", 1)
 			</programlisting>
 		</example>
 	</section>
+	<section id="ndb_redis.p.debug">
+		<title><varname>debug</varname> (integer)</title>
+		<para>
+			Set the verbosity level for some of the log messages. It has to be
+			a log level value.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>3</quote> (L_DBG).
+		</emphasis>
+		</para>
+		<example>
+			<title>Set <varname>debug</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("ndb_redis", "debug", 1)
+...
+			</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>

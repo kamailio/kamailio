@@ -109,7 +109,7 @@ modparam("corex", "alias_subdomains", "udp:sip-router.org:5060")
 		<itemizedlist>
 		<listitem>
 			<para>
-			<emphasis>type</emphasis> - it can be "A" (IPv4) or "AAAA" (IPv6)
+			<emphasis>type</emphasis> - it can be "A" (IPv4), "AAAA" (IPv6) or "SRV"
 			</para>
 		</listitem>
 		<listitem>
@@ -125,6 +125,21 @@ modparam("corex", "alias_subdomains", "udp:sip-router.org:5060")
 		<listitem>
 			<para>
 			<emphasis>ttl</emphasis> - TTL value
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			<emphasis>priority</emphasis> - priority value for SRV record
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			<emphasis>weight</emphasis> - weight value for SRV record
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			<emphasis>port</emphasis> - port value for SRV record
 			</para>
 		</listitem>
 		<listitem>
@@ -892,6 +907,27 @@ event_route[dispatcher:dst-down] {
 </programlisting>
         </example>
     </section>
+	<section id="corex.f.forward_reply">
+		<title>
+			<function moreinfo="none">forward_reply()</function>
+		</title>
+        <para>
+			Forward received reply on demand.
+        </para>
+        <para>
+        This function can be used in CORE_ONREPLY_ROUTE.
+        </para>
+        <example>
+        <title><function>forward_reply</function> usage</title>
+        <programlisting format="linespecific">
+...
+route[reply] {
+    forward_reply();
+}
+...
+</programlisting>
+        </example>
+    </section>
 	</section>
 
 	<section>
@@ -1004,6 +1040,20 @@ event_route[dispatcher:dst-down] {
 		</para>
         <programlisting  format="linespecific">
 		&kamcli; rpc shm.info
+		</programlisting>
+    </section>
+	<section id="corex.rpc.shm.report">
+		<title>
+		<function moreinfo="none">corex.shm.report</function>
+		</title>
+		<para>
+			Return shared memory manager usage report.
+		</para>
+		<para>
+		Example:
+		</para>
+        <programlisting  format="linespecific">
+		&kamcli; rpc shm.report
 		</programlisting>
     </section>
 	<section id="corex.rpc.shm.stats">

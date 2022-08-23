@@ -260,8 +260,10 @@ static int inactivate_gw(struct sip_msg *_m, char *_s1, char *_s2);
 static int defunct_gw(struct sip_msg *_m, char *_s1, char *_s2);
 static int from_gw_1(struct sip_msg *_m, char *_s1, char *_s2);
 static int from_gw_3(struct sip_msg *_m, char *_s1, char *_s2, char *_s3);
+static int from_gw_4(struct sip_msg *_m, char *_s1, char *_s2, char *_s3, char *_s4);
 static int from_any_gw_0(struct sip_msg *_m, char *_s1, char *_s2);
 static int from_any_gw_2(struct sip_msg *_m, char *_s1, char *_s2);
+static int from_any_gw_3(struct sip_msg *_m, char *_s1, char *_s2, char *_s3);
 static int to_gw_1(struct sip_msg *_m, char *_s1, char *_s2);
 static int to_gw_3(struct sip_msg *_m, char *_s1, char *_s2, char *_s3);
 static int to_any_gw_0(struct sip_msg *_m, char *_s1, char *_s2);
@@ -283,10 +285,14 @@ static cmd_export_t cmds[] = {
      REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
     {"from_gw", (cmd_function)from_gw_3, 3, 0, 0,
      REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
+	{"from_gw", (cmd_function)from_gw_4, 4, 0, 0,
+	 REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
     {"from_any_gw", (cmd_function)from_any_gw_0, 0, 0, 0,
      REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
     {"from_any_gw", (cmd_function)from_any_gw_2, 2, 0, 0,
      REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
+	{"from_any_gw", (cmd_function)from_any_gw_3, 3, 0, 0,
+	 REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
     {"to_gw", (cmd_function)to_gw_1, 1, 0, 0,
      REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
     {"to_gw", (cmd_function)to_gw_3, 3, 0, 0,
@@ -915,6 +921,26 @@ static int comp_gws(const void *_g1, const void *_g2)
 	return memcmp(g1->ip_addr.u.addr, g2->ip_addr.u.addr, g1->ip_addr.len);
 }
 
+/*
+ * Compare a gateway using IP address and the src port
+ */
+static struct gw_info * find_gateway_by_ip_and_port(struct gw_info * gw, struct gw_info * gws) {
+	int tmp = 0, gw_index = 0, i;
+
+	for (i = 1; i <= gws[0].ip_addr.u.addr32[0]; i++) {
+		tmp = memcmp(gws[i].ip_addr.u.addr, gw->ip_addr.u.addr, gws[i].ip_addr.len);
+		if (gws[i].ip_addr.af == gw->ip_addr.af &&
+			gws[i].ip_addr.len == gw->ip_addr.len &&
+			tmp == 0 &&	/* a comparison of the IP address value */
+			gws[i].port == gw->port) {
+				gw_index = i;
+				break;
+		}
+	}
+	if (gw_index != 0) return &(gws[gw_index]);
+
+	return NULL;
+}
 
 /* 
  * Insert gw info into index i or gws table
@@ -1913,7 +1939,7 @@ static inline int decode_avp_value(char *value, unsigned int *gw_index,
 		struct ip_addr *addr, str *hostname, str *port, str *params,
 		str *transport, unsigned int *flags, unsigned int *rule_id)
 {
-	unsigned int u;
+	unsigned int u = 0;
 	str s;
 	char *sep;
 	struct ip_addr *ip;
@@ -2874,6 +2900,8 @@ static int ki_next_gw(sip_msg_t *_m)
 	struct ip_addr addr;
 
 	tag_str.s = &(tag[0]);
+	r_uri[0] = '\0';
+	dst_uri[0] = '\0';
 
 	ru_avp = search_first_avp(
 			ruri_user_avp_type, ruri_user_avp, &ruri_user_val, 0);
@@ -2978,7 +3006,7 @@ static int next_gw(struct sip_msg *_m, char *_s1, char *_s2)
  * Checks if request comes from ip address of a gateway
  */
 static int do_from_gw(struct sip_msg *_m, unsigned int lcr_id,
-		struct ip_addr *src_addr, uri_transport transport)
+		struct ip_addr *src_addr, uri_transport transport, unsigned int src_port)
 {
 	struct gw_info *res, gw, *gws;
 	int_str val;
@@ -2991,15 +3019,20 @@ static int do_from_gw(struct sip_msg *_m, unsigned int lcr_id,
 		return -1;
 	}
 
-	/* Search for gw ip address */
 	gw.ip_addr = *src_addr;
-	res = (struct gw_info *)bsearch(&gw, &(gws[1]), gws[0].ip_addr.u.addr32[0],
-			sizeof(struct gw_info), comp_gws);
+	if (src_port != 0) {
+		/* Search for gw based on its ip address and port */
+		gw.port = src_port;
+		res = find_gateway_by_ip_and_port(&gw, gws);
+	} else {
+		/* Search for gw based on its ip address */
+		res = (struct gw_info *)bsearch(&gw, &(gws[1]), gws[0].ip_addr.u.addr32[0],
+				sizeof(struct gw_info), comp_gws);
+	}
 
 	/* Store tag and flags and return result */
-	if((res != NULL) && ((transport == PROTO_NONE)
-								|| (res->transport_code == transport))) {
-		LM_DBG("request game from gw\n");
+	if((res != NULL) && ((transport == PROTO_NONE) || (res->transport_code == transport))) {
+		LM_DBG("request came from gw\n");
 		if(tag_avp_param) {
 			val.s.s = res->tag;
 			val.s.len = res->tag_len;
@@ -3021,22 +3054,24 @@ static int do_from_gw(struct sip_msg *_m, unsigned int lcr_id,
 
 /*
  * Checks if request comes from ip address of a gateway taking source
- * address and transport protocol from request.
+ * address, transport protocol and source port from request.
  */
 static int ki_from_gw(sip_msg_t *_m, int lcr_id)
 {
 	uri_transport transport;
+	unsigned int src_port;
 
 	if((lcr_id < 1) || (lcr_id > lcr_count_param)) {
 		LM_ERR("invalid lcr_id parameter value %d\n", lcr_id);
 		return -1;
 	}
 
-	/* Get transport protocol */
+	/* Get transport protocol and port */
 	transport = _m->rcv.proto;
+	src_port = _m->rcv.src_port;
 
 	/* Do test */
-	return do_from_gw(_m, lcr_id, &_m->rcv.src_ip, transport);
+	return do_from_gw(_m, lcr_id, &_m->rcv.src_ip, transport, src_port);
 }
 
 static int from_gw_1(struct sip_msg *_m, char *_lcr_id, char *_s2)
@@ -3056,10 +3091,10 @@ static int from_gw_1(struct sip_msg *_m, char *_lcr_id, char *_s2)
 
 /*
  * Checks if request comes from ip address of a gateway taking source
- * address and transport protocol from parameters
+ * address, transport protocol and source port from parameters.
  */
-static int ki_from_gw_addr(
-		sip_msg_t *_m, int lcr_id, str *addr_str, int transport)
+static int ki_from_gw_addr_port(
+		sip_msg_t *_m, int lcr_id, str *addr_str, int transport, int src_port)
 {
 	struct ip_addr src_addr;
 	struct ip_addr *ip;
@@ -3084,8 +3119,24 @@ static int ki_from_gw_addr(
 		return -1;
 	}
 
+	/* src_port set to 0 is allowed and means we don't want to check it */
+	if(src_port > 65535) {
+		LM_ERR("invalid port parameter value %d\n", src_port);
+		return -1;
+	}
+
 	/* Do test */
-	return do_from_gw(_m, lcr_id, &src_addr, transport);
+	return do_from_gw(_m, lcr_id, &src_addr, transport, src_port);
+}
+
+/*
+ * Checks if request comes from ip address of a gateway taking source
+ * address and transport protocol from parameters.
+ */
+static int ki_from_gw_addr(
+		sip_msg_t *_m, int lcr_id, str *addr_str, int transport)
+{
+	return ki_from_gw_addr_port(_m, lcr_id, addr_str, transport, 0);
 }
 
 static int from_gw_3(
@@ -3112,7 +3163,41 @@ static int from_gw_3(
 		return -1;
 	}
 
-	return ki_from_gw_addr(_m, lcr_id, &addr_str, transport);
+	return ki_from_gw_addr_port(_m, lcr_id, &addr_str, transport, 0);
+}
+
+static int from_gw_4(
+		struct sip_msg *_m, char *_lcr_id, char *_addr, char *_transport, char *_src_port)
+{
+	int lcr_id;
+	str addr_str;
+	char *tmp;
+	uri_transport transport;
+	int src_port;
+
+	/* Get and check parameter values */
+	lcr_id = strtol(_lcr_id, &tmp, 10);
+	if((tmp == 0) || (*tmp) || (tmp == _lcr_id)) {
+		LM_ERR("invalid lcr_id parameter %s\n", _lcr_id);
+		return -1;
+	}
+
+	addr_str.s = _addr;
+	addr_str.len = strlen(_addr);
+
+	transport = strtol(_transport, &tmp, 10);
+	if((tmp == 0) || (*tmp) || (tmp == _transport)) {
+		LM_ERR("invalid transport parameter %s\n", _lcr_id);
+		return -1;
+	}
+	tmp=0;
+	src_port = strtol(_src_port, &tmp, 10);
+	if((tmp == 0) || (*tmp) || (tmp == _src_port)) {
+		LM_ERR("invalid port parameter %s\n", _src_port);
+		return -1;
+	}
+
+	return ki_from_gw_addr_port(_m, lcr_id, &addr_str, transport, src_port);
 }
 
 /*
@@ -3123,11 +3208,14 @@ static int ki_from_any_gw(sip_msg_t *_m)
 {
 	unsigned int i;
 	uri_transport transport;
+	unsigned int src_port;
 
+	/* Get transport protocol and port */
 	transport = _m->rcv.proto;
+	src_port = _m->rcv.src_port;
 
 	for(i = 1; i <= lcr_count_param; i++) {
-		if(do_from_gw(_m, i, &_m->rcv.src_ip, transport) == 1) {
+		if(do_from_gw(_m, i, &_m->rcv.src_ip, transport, src_port) == 1) {
 			return i;
 		}
 	}
@@ -3141,9 +3229,10 @@ static int from_any_gw_0(struct sip_msg *_m, char *_s1, char *_s2)
 
 /*
  * Checks if request comes from ip address of a a gateway taking source
- * IP address and transport protocol from parameters.
+ * IP address, transport protocol and source port from parameters.
  */
-static int ki_from_any_gw_addr(sip_msg_t *_m, str *addr_str, int transport)
+static int ki_from_any_gw_addr_port(sip_msg_t *_m, str *addr_str, int transport,
+		int src_port)
 {
 	unsigned int i;
 	struct ip_addr *ip, src_addr;
@@ -3163,13 +3252,28 @@ static int ki_from_any_gw_addr(sip_msg_t *_m, str *addr_str, int transport)
 		return -1;
 	}
 
+	/* src_port set to 0 is allowed and means we don't want to check it */
+	if(src_port > 65535) {
+		LM_ERR("invalid port parameter value %d\n", src_port);
+		return -1;
+	}
+
 	/* Do test */
 	for(i = 1; i <= lcr_count_param; i++) {
-		if(do_from_gw(_m, i, &src_addr, transport) == 1) {
+		if(do_from_gw(_m, i, &src_addr, transport, src_port) == 1) {
 			return i;
 		}
 	}
 	return -1;
+}
+
+/*
+ * Checks if request comes from ip address of a a gateway taking source
+ * IP address, transport protocol and source port from parameters.
+ */
+static int ki_from_any_gw_addr(sip_msg_t *_m, str *addr_str, int transport)
+{
+	return ki_from_any_gw_addr_port(_m, addr_str, transport, 0);
 }
 
 static int from_any_gw_2(struct sip_msg *_m, char *_addr, char *_transport)
@@ -3188,7 +3292,33 @@ static int from_any_gw_2(struct sip_msg *_m, char *_addr, char *_transport)
 		return -1;
 	}
 
-	return ki_from_any_gw_addr(_m, &addr_str, transport);
+	return ki_from_any_gw_addr_port(_m, &addr_str, transport, 0);
+}
+
+static int from_any_gw_3(struct sip_msg *_m, char *_addr, char *_transport, char *_src_port)
+{
+	str addr_str;
+	uri_transport transport;
+	int src_port;
+	char *tmp;
+
+	/* Get and check parameter values */
+	addr_str.s = _addr;
+	addr_str.len = strlen(_addr);
+
+	transport = strtol(_transport, &tmp, 10);
+	if((tmp == 0) || (*tmp) || (tmp == _transport)) {
+		LM_ERR("invalid transport parameter %s\n", _transport);
+		return -1;
+	}
+	tmp=0;
+	src_port = strtol(_src_port, &tmp, 10);
+	if((tmp == 0) || (*tmp) || (tmp == _src_port)) {
+		LM_ERR("invalid port parameter %s\n", _src_port);
+		return -1;
+	}
+
+	return ki_from_any_gw_addr_port(_m, &addr_str, transport, src_port);
 }
 
 /*
@@ -3482,6 +3612,11 @@ static sr_kemi_t sr_kemi_lcr_exports[] = {
 		{ SR_KEMIP_INT, SR_KEMIP_STR, SR_KEMIP_INT,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("lcr"), str_init("from_gw_addr_port"),
+		SR_KEMIP_INT, ki_from_gw_addr_port,
+		{ SR_KEMIP_INT, SR_KEMIP_STR, SR_KEMIP_INT,
+			SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ str_init("lcr"), str_init("from_any_gw"),
 		SR_KEMIP_INT, ki_from_any_gw,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
@@ -3490,6 +3625,11 @@ static sr_kemi_t sr_kemi_lcr_exports[] = {
 	{ str_init("lcr"), str_init("from_any_gw_addr"),
 		SR_KEMIP_INT, ki_from_any_gw_addr,
 		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("lcr"), str_init("from_any_gw_addr_port"),
+		SR_KEMIP_INT, ki_from_any_gw_addr_port,
+		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_INT,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("lcr"), str_init("to_gw"),

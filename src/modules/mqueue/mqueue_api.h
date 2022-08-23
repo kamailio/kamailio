@@ -45,6 +45,7 @@ typedef struct _mq_head
 	int msize;
 	int csize;
 	int dbmode;
+	int addmode;
 	gen_lock_t lock;
 	mq_item_t *ifirst;
 	mq_item_t *ilast;
@@ -73,7 +74,7 @@ str* get_mqk(str *name);
 str* get_mqv(str *name);
 int mq_head_defined(void);
 void mq_destroy(void);
-int mq_head_add(str *name, int msize);
+int mq_head_add(str *name, int msize, int addmode);
 int mq_head_fetch(str *name);
 void mq_pv_free(str *name);
 int mq_item_add(str *qname, str *key, str *val);

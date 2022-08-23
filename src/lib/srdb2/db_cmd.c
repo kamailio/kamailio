@@ -73,8 +73,8 @@ db_cmd_t* db_cmd(enum db_cmd_type type, db_ctx_t* ctx, char* table,
 	}
 
 	/* FIXME: This should be redesigned so that we do not need to connect
-	 * connections in context before comands are created, this takes splitting
-	 * the command initializatio sequence in two steps, one would be creating
+	 * connections in context before commands are created, this takes splitting
+	 * the command initialization sequence in two steps, one would be creating
 	 * all the data structures and the second would be checking corresponding
 	 * fields and tables on the server.
 	 */

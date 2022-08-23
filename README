@@ -1,6 +1,6 @@
 
 
-Kamailio v5.5
+Kamailio v5.6
 =============
 
 https://www.kamailio.org
@@ -67,7 +67,7 @@ III. Getting started
 The documentation wiki is an important source of tutorials for installing
 and understanding how Kamailio works:
 
-  * https://www.kamailio.org/wiki/
+  * https://www.kamailio.org/wikidocs/
 
 The INSTALL document provides more details and guidelines that will help with
 the installation.
@@ -93,7 +93,7 @@ both developer teams. During the development of the release 4.0, autumn-winter
 of 2012, the merger of the products was completed and a unified product was
 released.
 
-See http://www.kamailio.org/ for the story of SER, OpenSER and Kamailio.
+See https://www.kamailio.org/ for the story of SER, OpenSER and Kamailio.
 
 V. Obtaining Help
 =================
@@ -126,7 +126,7 @@ For code contributions, follow the suggestions provided at:
 The recommended way to contribute code is via pull requests to Kamailio
 project on Github:
 
-  * httpss://github.com/kamailio
+  * https://github.com/kamailio
 
 VII. More Information
 =====================

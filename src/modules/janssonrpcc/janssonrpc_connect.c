@@ -316,8 +316,12 @@ int set_keepalive(int fd, int keepalive, int cnt, int idle, int intvl) {
 	res = setsockopt(fd, IPPROTO_TCP, TCP_KEEPCNT, &idle, sizeof(idle));
 	assert(res == 0);
 
+#ifdef HAVE_TCP_KEEPIDLE
 	res = setsockopt(fd, IPPROTO_TCP, TCP_KEEPIDLE, &idle, sizeof(idle));
 	assert(res == 0);
+#else
+	LM_INFO("TCP_KEEPIDLE option not available - ignoring\n");
+#endif
 
 	res = setsockopt(fd, IPPROTO_TCP, TCP_KEEPINTVL, &intvl, sizeof(intvl));
 	assert(res == 0);
@@ -338,7 +342,7 @@ void bev_connect(jsonrpc_server_t* server)
 		} else {
 			INFO("setting up socket");
 			fd = socket(AF_INET, SOCK_STREAM, 0);
-			if (fd <= 0) {
+			if (fd < 0) {
 				server->keep_alive_socket_fd = -1;
 				ERR("could not setup socket");
 			} else {
@@ -346,6 +350,9 @@ void bev_connect(jsonrpc_server_t* server)
 			}
 		}
 		if (!fd_is_valid(fd)) { // make sure socket is valid
+			if (fd >= 0) {
+				close(fd);
+			}
 			fd = -1;
 			server->keep_alive_socket_fd = -1;
 		}

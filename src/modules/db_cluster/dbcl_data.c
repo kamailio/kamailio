@@ -80,6 +80,15 @@ dbcl_cls_t *dbcl_get_cluster(str *name)
 	return NULL;
 }
 
+dbcl_cls_t *dbcl_get_cluster_root()
+{
+	return _dbcl_cls_root;
+}
+
+dbcl_con_t *dbcl_get_connection_root()
+{
+	return _dbcl_con_root;
+}
 
 int dbcl_init_con(str *name, str *url)
 {
@@ -149,6 +158,30 @@ int dbcl_inactive_con(dbcl_con_t *sc)
 		return -1;
 	sc->sinfo->aticks = get_ticks() + dbcl_inactive_interval;
 	sc->sinfo->state |= DBCL_CON_INACTIVE;
+	return 0;
+}
+
+int dbcl_disable_con(dbcl_con_t *sc, int seconds)
+{
+	LM_INFO("disable connection [%.*s] for %d seconds\n", sc->name.len, sc->name.s, seconds);
+
+	if(sc==NULL || sc->sinfo==NULL)
+		return -1;
+	sc->sinfo->aticks = get_ticks() + seconds;
+	sc->sinfo->state |= DBCL_CON_INACTIVE;
+	return 0;
+}
+
+int dbcl_enable_con(dbcl_con_t *sc)
+{
+	LM_INFO("enable connection [%.*s]\n", sc->name.len, sc->name.s);
+
+	if(sc==NULL || sc->flags==0 || sc->dbh==NULL)
+		return -1;
+	if(sc->sinfo==NULL)
+		return 0;
+	sc->sinfo->aticks = 0;
+	sc->sinfo->state &= ~DBCL_CON_INACTIVE;
 	return 0;
 }
 
@@ -265,7 +298,7 @@ int dbcl_cls_set_connections(dbcl_cls_t *cls, str *cons)
 					pit->name.len, pit->name.s, i, cls->rlist[i].clen);
 			cls->rlist[i].clen++;
 		} else {
-			LM_WARN("too many read connections in cluster - con-id [%.*s]\n",
+			LM_WARN("too many read connections in cluster - connection id [%.*s]\n",
 					pit->name.len, pit->name.s);
 		}
 		if(s.s[2]<'0' || s.s[2]>'9')

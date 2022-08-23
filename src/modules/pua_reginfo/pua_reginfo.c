@@ -16,8 +16,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -35,7 +35,7 @@
 MODULE_VERSION
 
 usrloc_api_t ul; /*!< Structure containing pointers to usrloc functions*/
-pua_api_t pua; /*!< Structure containing pointers to PUA functions*/
+pua_api_t pua;	 /*!< Structure containing pointers to PUA functions*/
 
 /* Default domain to be added, if none provided. */
 str default_domain = {NULL, 0};
@@ -49,38 +49,41 @@ sruid_t _reginfo_sruid;
 int reginfo_use_domain = 0;
 
 /** Fixup functions */
-static int domain_fixup(void** param, int param_no);
+static int domain_fixup(void **param, int param_no);
 
 /** module functions */
 static int mod_init(void);
 
 /* Commands */
 static cmd_export_t cmds[] = {
-	{"reginfo_subscribe", (cmd_function)reginfo_subscribe, 1, fixup_subscribe, 0, REQUEST_ROUTE|ONREPLY_ROUTE}, 	
-	{"reginfo_subscribe", (cmd_function)reginfo_subscribe2, 2, fixup_subscribe, 0, REQUEST_ROUTE|ONREPLY_ROUTE}, 	
-	{"reginfo_handle_notify", (cmd_function)reginfo_handle_notify, 1, domain_fixup, 0, REQUEST_ROUTE}, 	
-	{0, 0, 0, 0, 0, 0} 
+	{"reginfo_subscribe", (cmd_function)reginfo_subscribe, 1,
+			fixup_subscribe, 0, REQUEST_ROUTE | ONREPLY_ROUTE},
+	{"reginfo_subscribe", (cmd_function)reginfo_subscribe2, 2,
+			fixup_subscribe, 0, REQUEST_ROUTE | ONREPLY_ROUTE},
+	{"reginfo_handle_notify", (cmd_function)reginfo_handle_notify, 1,
+			domain_fixup, 0, REQUEST_ROUTE},
+	{0, 0, 0, 0, 0, 0}
 };
 
-static param_export_t params[]={
- 	{"default_domain", PARAM_STR, &default_domain},
+static param_export_t params[] = {
+	{"default_domain", PARAM_STR, &default_domain},
 	{"outbound_proxy", PARAM_STR, &outbound_proxy},
 	{"server_address", PARAM_STR, &server_address},
 	{"publish_reginfo", INT_PARAM, &publish_reginfo},
 	{0, 0, 0}
 };
 
-struct module_exports exports= {
-	"pua_reginfo",		/* module name */
-	DEFAULT_DLFLAGS,	/* dlopen flags */
-	cmds,				/* exported functions */
-	params,				/* exported parameters */
-	0,					/* RPC method exports */
-	0,					/* exported pseudo-variables */
-	0,					/* response handling function */
-	mod_init,			/* module initialization function */
-	0,					/* per-child init function */
-	0					/* module destroy function */
+struct module_exports exports = {
+	"pua_reginfo",	 /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,			 /* exported functions */
+	params,			 /* exported parameters */
+	0,				 /* RPC method exports */
+	0,				 /* exported pseudo-variables */
+	0,				 /* response handling function */
+	mod_init,		 /* module initialization function */
+	0,				 /* per-child init function */
+	0				 /* module destroy function */
 };
 
 /**
@@ -91,29 +94,29 @@ static int mod_init(void)
 	bind_pua_t bind_pua;
 	bind_usrloc_t bind_usrloc;
 
-	if (publish_reginfo == 1) {
-    /* Verify the default domain: */
-    if(!default_domain.s || default_domain.len<=0) {
-      LM_ERR("default domain parameter not set\n");
-      return -1;
-    }
+	if(publish_reginfo == 1) {
+		/* Verify the default domain: */
+		if(!default_domain.s || default_domain.len <= 0) {
+			LM_ERR("default domain parameter not set\n");
+			return -1;
+		}
 	}
 
-	if(!server_address.s || server_address.len<=0) {
+	if(!server_address.s || server_address.len <= 0) {
 		LM_ERR("server_address parameter not set\n");
 		return -1;
 	}
 
-	if(!outbound_proxy.s || outbound_proxy.len<=0)
+	if(!outbound_proxy.s || outbound_proxy.len <= 0)
 		LM_DBG("No outbound proxy set\n");
-        
+
 	/* Bind to PUA: */
-	bind_pua= (bind_pua_t)find_export("bind_pua", 1,0);
-	if (!bind_pua) {
+	bind_pua = (bind_pua_t)find_export("bind_pua", 1, 0);
+	if(!bind_pua) {
 		LM_ERR("Can't bind pua\n");
 		return -1;
-	}	
-	if (bind_pua(&pua) < 0) {
+	}
+	if(bind_pua(&pua) < 0) {
 		LM_ERR("Can't bind pua\n");
 		return -1;
 	}
@@ -129,38 +132,38 @@ static int mod_init(void)
 
 	/* Bind to URSLOC: */
 	bind_usrloc = (bind_usrloc_t)find_export("ul_bind_usrloc", 1, 0);
-	if (!bind_usrloc) {
+	if(!bind_usrloc) {
 		LM_ERR("Can't bind usrloc\n");
 		return -1;
 	}
-	if (bind_usrloc(&ul) < 0) {
+	if(bind_usrloc(&ul) < 0) {
 		LM_ERR("Can't bind usrloc\n");
 		return -1;
 	}
-	if (publish_reginfo == 1) {
+	if(publish_reginfo == 1) {
 		if(ul.register_ulcb == NULL) {
 			LM_ERR("Could not import ul_register_ulcb\n");
 			return -1;
 		}
-		if(ul.register_ulcb(UL_CONTACT_INSERT, reginfo_usrloc_cb , 0)< 0) {
+		if(ul.register_ulcb(UL_CONTACT_INSERT, reginfo_usrloc_cb, 0) < 0) {
 			LM_ERR("can not register callback for insert\n");
 			return -1;
 		}
-		if(ul.register_ulcb(UL_CONTACT_EXPIRE, reginfo_usrloc_cb, 0)< 0) {	
+		if(ul.register_ulcb(UL_CONTACT_EXPIRE, reginfo_usrloc_cb, 0) < 0) {
 			LM_ERR("can not register callback for expire\n");
 			return -1;
 		}
-		if(ul.register_ulcb(UL_CONTACT_UPDATE, reginfo_usrloc_cb, 0)< 0) {	
+		if(ul.register_ulcb(UL_CONTACT_UPDATE, reginfo_usrloc_cb, 0) < 0) {
 			LM_ERR("can not register callback for update\n");
 			return -1;
 		}
-		if(ul.register_ulcb(UL_CONTACT_DELETE, reginfo_usrloc_cb, 0)< 0) {	
+		if(ul.register_ulcb(UL_CONTACT_DELETE, reginfo_usrloc_cb, 0) < 0) {
 			LM_ERR("can not register callback for delete\n");
 			return -1;
 		}
 	}
 
-	if(sruid_init(&_reginfo_sruid, (char)'-', "regi", SRUID_INC)<0)
+	if(sruid_init(&_reginfo_sruid, (char)'-', "regi", SRUID_INC) < 0)
 		return -1;
 
 	/*
@@ -174,18 +177,17 @@ static int mod_init(void)
 /*! \brief
  * Convert char* parameter to udomain_t* pointer
  */
-static int domain_fixup(void** param, int param_no)
+static int domain_fixup(void **param, int param_no)
 {
-	udomain_t* d;
+	udomain_t *d;
 
-	if (param_no == 1) {
-		if (ul.register_udomain((char*)*param, &d) < 0) {
+	if(param_no == 1) {
+		if(ul.register_udomain((char *)*param, &d) < 0) {
 			LM_ERR("failed to register domain\n");
 			return E_UNSPEC;
 		}
 
-		*param = (void*)d;
+		*param = (void *)d;
 	}
 	return 0;
 }
-

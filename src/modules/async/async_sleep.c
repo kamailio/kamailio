@@ -32,6 +32,9 @@
 #include "../../core/timer.h"
 #include "../../core/async_task.h"
 #include "../../modules/tm/tm_load.h"
+#include "../../core/script_cb.h"
+#include "../../core/fmsg.h"
+#include "../../core/route.h"
 #include "../../core/kemi.h"
 
 #include "async_sleep.h"
@@ -86,6 +89,15 @@ static struct async_list_head {
 	async_slot_t ring[ASYNC_RING_SIZE];
 	async_slot_t *later;
 } *_async_list_head = NULL;
+
+typedef struct async_data_param {
+	int dtype;
+	str sval;
+	cfg_action_t *ract;
+	char cbname[ASYNC_CBNAME_SIZE];
+	int cbname_len;
+} async_data_param_t;
+
 /* clang-format on */
 
 /**
@@ -370,6 +382,10 @@ int async_ms_sleep(sip_msg_t *msg, int milliseconds, cfg_action_t *act, str *cbn
 	async_task_param_t *atp;
 	async_task_t *at;
 
+	if (_async_ms_list==NULL) {
+		LM_ERR("async timer list not initialized - check modparams\n");
+		return -1;
+	}
 	if(milliseconds <= 0) {
 		LM_ERR("negative or zero sleep time (%d)\n", milliseconds);
 		return -1;
@@ -447,7 +463,7 @@ int async_ms_sleep(sip_msg_t *msg, int milliseconds, cfg_action_t *act, str *cbn
 /**
  *
  */
-int async_send_task(sip_msg_t *msg, cfg_action_t *act, str *cbname)
+int async_send_task(sip_msg_t *msg, cfg_action_t *act, str *cbname, str *gname)
 {
 	async_task_t *at;
 	tm_cell_t *t = 0;
@@ -497,10 +513,206 @@ int async_send_task(sip_msg_t *msg, cfg_action_t *act, str *cbname)
 		atp->cbname_len = cbname->len;
 	}
 
-	if (async_task_push(at)<0) {
-		shm_free(at);
-		return -1;
+	if (gname!=NULL && gname->len>0) {
+		if (async_task_group_push(gname, at)<0) {
+			shm_free(at);
+			return -1;
+		}
+	} else {
+		if (async_task_push(at)<0) {
+			shm_free(at);
+			return -1;
+		}
 	}
 
 	return 0;
+}
+
+async_data_param_t *_ksr_async_data_param = NULL;
+
+/**
+ *
+ */
+void async_exec_data(void *param)
+{
+	async_data_param_t *adp;
+	sr_kemi_eng_t *keng = NULL;
+	sip_msg_t *fmsg;
+	str cbname = STR_NULL;
+	str evname = str_init("async:task-data");
+	int rtype = 0;
+
+	adp = (async_data_param_t *)param;
+	fmsg = faked_msg_next();
+	if (exec_pre_script_cb(fmsg, REQUEST_CB_TYPE)==0) {
+		return;
+	}
+	rtype = get_route_type();
+	_ksr_async_data_param = adp;
+	set_route_type(REQUEST_ROUTE);
+	keng = sr_kemi_eng_get();
+	if(adp->ract != NULL) {
+		run_top_route(adp->ract, fmsg, 0);
+	} else {
+		keng = sr_kemi_eng_get();
+		if(keng != NULL && adp->cbname_len > 0) {
+			cbname.s = adp->cbname;
+			cbname.len = adp->cbname_len;
+			if(sr_kemi_route(keng, fmsg, EVENT_ROUTE, &cbname, &evname)<0) {
+				LM_ERR("error running event route kemi callback [%.*s]\n",
+						cbname.len, cbname.s);
+			}
+		}
+	}
+	exec_post_script_cb(fmsg, REQUEST_CB_TYPE);
+	ksr_msg_env_reset();
+	set_route_type(rtype);
+	_ksr_async_data_param = NULL;
+	/* param is freed along with the async task strucutre in core */
+}
+
+/**
+ *
+ */
+int async_send_data(sip_msg_t *msg, cfg_action_t *act, str *cbname, str *gname,
+		str *sdata)
+{
+	async_task_t *at;
+	int dsize;
+	async_data_param_t *adp;
+
+	if(cbname && cbname->len>=ASYNC_CBNAME_SIZE-1) {
+		LM_ERR("callback name is too long: %.*s\n", cbname->len, cbname->s);
+		return -1;
+	}
+
+	dsize = sizeof(async_task_t) + sizeof(async_data_param_t) + sdata->len + 1;
+	at = (async_task_t *)shm_malloc(dsize);
+	if(at == NULL) {
+		LM_ERR("no more shm memory\n");
+		return -1;
+	}
+	memset(at, 0, dsize);
+	at->exec = async_exec_data;
+	at->param = (char *)at + sizeof(async_task_t);
+	adp = (async_data_param_t *)at->param;
+	adp->sval.s = (char*)adp + sizeof(async_data_param_t);
+	adp->sval.len = sdata->len;
+	memcpy(adp->sval.s, sdata->s, sdata->len);
+	adp->ract = act;
+	if(cbname && cbname->len>0) {
+		memcpy(adp->cbname, cbname->s, cbname->len);
+		adp->cbname_len = cbname->len;
+	}
+
+	if (gname!=NULL && gname->len>0) {
+		if (async_task_group_push(gname, at)<0) {
+			shm_free(at);
+			return -1;
+		}
+	} else {
+		if (async_task_push(at)<0) {
+			shm_free(at);
+			return -1;
+		}
+	}
+
+	return 0;
+}
+
+
+/**
+ *
+ */
+int pv_get_async(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
+{
+	async_wgroup_t *awg = NULL;
+
+	switch(param->pvn.u.isname.name.n) {
+		case 0:
+			if(_ksr_async_data_param==NULL || _ksr_async_data_param->sval.s==NULL
+					|| _ksr_async_data_param->sval.len<0) {
+				return pv_get_null(msg, param, res);
+			}
+			return pv_get_strval(msg, param, res, &_ksr_async_data_param->sval);
+		case 1:
+			awg = async_task_workers_get_crt();
+			if(awg==NULL || awg->name.s==NULL || awg->name.len<0) {
+				return pv_get_null(msg, param, res);
+			}
+			return pv_get_strval(msg, param, res, &awg->name);
+		default:
+			return pv_get_null(msg, param, res);
+	}
+}
+
+/**
+ *
+ */
+int pv_parse_async_name(pv_spec_t *sp, str *in)
+{
+	if(sp==NULL || in==NULL || in->len<=0)
+		return -1;
+
+	switch(in->len) {
+		case 4:
+			if(strncmp(in->s, "data", 4)==0)
+				sp->pvp.pvn.u.isname.name.n = 0;
+		break;
+		case 5:
+			if(strncmp(in->s, "gname", 5)==0)
+				sp->pvp.pvn.u.isname.name.n = 1;
+		break;
+		default:
+			goto error;
+	}
+	sp->pvp.pvn.type = PV_NAME_INTSTR;
+	sp->pvp.pvn.u.isname.type = 0;
+
+	return 0;
+
+error:
+	LM_ERR("unknown PV time name %.*s\n", in->len, in->s);
+	return -1;
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t _ksr_kemi_async_xval = {0};
+
+/**
+ *
+ */
+sr_kemi_xval_t* ki_async_get_gname(sip_msg_t *msg)
+{
+	async_wgroup_t *awg = NULL;
+
+	memset(&_ksr_kemi_async_xval, 0, sizeof(sr_kemi_xval_t));
+
+	awg = async_task_workers_get_crt();
+	if(awg==NULL || awg->name.s==NULL || awg->name.len<0) {
+		sr_kemi_xval_null(&_ksr_kemi_async_xval, SR_KEMI_XVAL_NULL_EMPTY);
+		return &_ksr_kemi_async_xval;
+	}
+	_ksr_kemi_async_xval.vtype = SR_KEMIP_STR;
+	_ksr_kemi_async_xval.v.s = awg->name;
+	return &_ksr_kemi_async_xval;
+}
+
+/**
+ *
+ */
+sr_kemi_xval_t* ki_async_get_data(sip_msg_t *msg)
+{
+	memset(&_ksr_kemi_async_xval, 0, sizeof(sr_kemi_xval_t));
+
+	if(_ksr_async_data_param==NULL || _ksr_async_data_param->sval.s==NULL
+			|| _ksr_async_data_param->sval.len<0) {
+		sr_kemi_xval_null(&_ksr_kemi_async_xval, SR_KEMI_XVAL_NULL_EMPTY);
+		return &_ksr_kemi_async_xval;
+	}
+	_ksr_kemi_async_xval.vtype = SR_KEMIP_STR;
+	_ksr_kemi_async_xval.v.s = _ksr_async_data_param->sval;
+	return &_ksr_kemi_async_xval;
 }

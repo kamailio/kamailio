@@ -303,6 +303,9 @@ int pres_dmq_handle_msg(
 		} else if(strcmp(it->string, "body") == 0) {
 			p_body.s = it->valuestring;
 			p_body.len = strlen(it->valuestring);
+			if(p_body.len==0) {
+				p_body.s = NULL;
+			}
 		} else {
 			LM_ERR("unrecognized field in json object\n");
 			goto invalid;

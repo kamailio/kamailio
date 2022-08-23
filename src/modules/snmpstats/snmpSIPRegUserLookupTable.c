@@ -520,7 +520,7 @@ void kamailioSIPRegUserLookupTable_set_action(netsnmp_request_group *rg)
 			case COLUMN_KAMAILIOSIPREGUSERLOOKUPURI:
 
 				row_ctx->kamailioSIPRegUserLookupURI =
-						pkg_malloc(sizeof(char) * (var->val_len + 1));
+						pkg_malloc(sizeof(unsigned char) * (var->val_len + 1));
 
 				memcpy(row_ctx->kamailioSIPRegUserLookupURI, var->val.string,
 						var->val_len);

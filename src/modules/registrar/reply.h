@@ -38,6 +38,11 @@
  */
 int reg_send_reply(struct sip_msg* _m);
 
+/*! \brief
+ * Prepare a reply
+ */
+int reg_prepare_reply(struct sip_msg* _m);
+
 
 /*! \brief
  * Build Contact HF for reply

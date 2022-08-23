@@ -41,7 +41,7 @@ Julien Chavanton
               3.8. acc_output_syslog (integer)
               3.9. acc_log_facility (integer)
               3.10. acc_log_level (integer)
-              3.11. cdr_enable (str)
+              3.11. cdr_enable (int)
               3.12. cdr_extra (str)
               3.13. cdr_json_pre_encoded_prefix (string)
               3.14. cdr_expired_dlg_enable (str)
@@ -92,7 +92,7 @@ Chapter 1. Admin Guide
         3.8. acc_output_syslog (integer)
         3.9. acc_log_facility (integer)
         3.10. acc_log_level (integer)
-        3.11. cdr_enable (str)
+        3.11. cdr_enable (int)
         3.12. cdr_extra (str)
         3.13. cdr_json_pre_encoded_prefix (string)
         3.14. cdr_expired_dlg_enable (str)
@@ -142,7 +142,7 @@ Chapter 1. Admin Guide
    3.8. acc_output_syslog (integer)
    3.9. acc_log_facility (integer)
    3.10. acc_log_level (integer)
-   3.11. cdr_enable (str)
+   3.11. cdr_enable (int)
    3.12. cdr_extra (str)
    3.13. cdr_json_pre_encoded_prefix (string)
    3.14. cdr_expired_dlg_enable (str)
@@ -325,11 +325,14 @@ modparam("acc_json", "acc_log_facility", "LOG_LOCAL0")
 modparam("acc_json", "acc_log_level", 2) # Set acc_log_level to 2 (L_INFO)
 ...
 
-3.11. cdr_enable (str)
+3.11. cdr_enable (int)
 
-   Enable Call Data Record generation.
+   Enable CDR reporting - one record per call is reported, relying on
+   dialog module.
 
-   Default value is 0 (disabled).
+   The value can be:
+     * 0 - off (default).
+       1 - on.
 
    Example 1.11. cdr_enable example
 ...

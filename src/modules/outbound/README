@@ -25,6 +25,7 @@ Peter Dunkley
 
               3.1. force_outbound_flag (integer)
               3.2. force_no_outbound_flag (integer)
+              3.3. flow_token_secret (string)
 
    List of Examples
 
@@ -32,6 +33,7 @@ Peter Dunkley
    1.2. Registrar Configuration
    1.3. Set force_outbound_flag parameter
    1.4. Set force_no_outbound_flag parameter
+   1.5. Set flow_token_secret parameter
 
 Chapter 1. Admin Guide
 
@@ -51,6 +53,7 @@ Chapter 1. Admin Guide
 
         3.1. force_outbound_flag (integer)
         3.2. force_no_outbound_flag (integer)
+        3.3. flow_token_secret (string)
 
 1. Overview
 
@@ -480,6 +483,7 @@ event_route[tm:branch-failure:FAIL-BRANCH] {
 
    3.1. force_outbound_flag (integer)
    3.2. force_no_outbound_flag (integer)
+   3.3. flow_token_secret (string)
 
 3.1. force_outbound_flag (integer)
 
@@ -505,4 +509,16 @@ modparam("outbound", "force_outbound_flag", 1)
    Example 1.4. Set force_no_outbound_flag parameter
 ...
 modparam("outbound", "force_no_outbound_flag", 2)
+...
+
+3.3. flow_token_secret (string)
+
+   Secret phrase used to calculate the outbound key value used for flow
+   tokens validation. Allows to set persistent outbound key.
+
+   If not specified, outbound will use randomly generated outbound key
+
+   Example 1.5.  Set flow_token_secret parameter
+...
+modparam("outbound", "flow_token_secret", "johndoessecretphrase")
 ...

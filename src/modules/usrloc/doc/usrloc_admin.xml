@@ -1317,9 +1317,15 @@ modparam("usrloc", "version_table", 0)
 		contact records stored in memory.
 		</para>
 		<para>
-		Note: it is recommeder to set 'timer_procs' parameter in order to have
+		Note: it is recommended to set 'timer_procs' parameter in order to have
 		dedicated timer processes for usrloc module and off-load the keepalive
 		sending process from the core timers.
+		</para>
+		<para>
+		Note: Keepalives will be sent to the IP and port using the transport
+		defined in the “received” column.  If not set, then keepalives will be sent
+		to the AOR using UDP as a default transport.  If available, the TCP
+		connection will be re-used for WS, TCP and TLS.
 		</para>
 		<para>
 		Default value is <quote>0 (keepalive disabled)</quote>.
@@ -1512,6 +1518,29 @@ modparam("usrloc", "ka_logmsg", " to-uri: [$tu] remote-addr: [$sas]")
 		<programlisting format="linespecific">
 ...
 modparam("usrloc", "load_rank", 1)
+...
+		</programlisting>
+		</example>
+	</section>
+
+	<section id="usrloc.p.db_clean_tcp">
+		<title><varname>db_clean_tcp</varname> (int)</title>
+		<para>
+			If set to 1, when &kamailio; starts it removes the contacts with
+			transport TCP, TLS or WSS, no longer loading them. Useful when
+			end points do not listen for incoming connections on contact address,
+			which is quite common (end point use only tcp client connections).
+			On restart, connections are lost, therefore the corresponding
+			contact records become useless.
+		</para>
+		<para>
+		Default value is <quote>0</quote> (do not clean tcp contacts).
+		</para>
+		<example>
+		<title><varname>db_clean_tcp</varname> parameter usage</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "db_clean_tcp", 1)
 ...
 		</programlisting>
 		</example>
@@ -1757,4 +1786,3 @@ modparam("usrloc", "load_rank", 1)
 
 
 </chapter>
-

@@ -4,11 +4,12 @@
 
 inline SQHash _hashstr (const SQChar *s, size_t l)
 {
-        SQHash h = (SQHash)l;  /* seed */
-        size_t step = (l>>5)|1;  /* if string is too long, don't hash all its chars */
-        for (; l>=step; l-=step)
-            h = h ^ ((h<<5)+(h>>2)+(unsigned short)*(s++));
-        return h;
+	SQHash h = (SQHash)l;  /* seed */
+	size_t step = (l >> 5) + 1;  /* if string is too long, don't hash all its chars */
+	size_t l1;
+	for (l1 = l; l1 >= step; l1 -= step)
+		h = h ^ ((h << 5) + (h >> 2) + ((unsigned short)s[l1 - 1]));
+	return h;
 }
 
 struct SQString : public SQRefCounted

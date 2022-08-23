@@ -1,7 +1,5 @@
 /**
- * $Id$
- *
- * XLOG module
+ * XPRINT module
  *
  * Copyright (C) 2001-2003 FhG Fokus
  *
@@ -25,15 +23,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- */
-
-/* History:
- * --------
- * 2004-10-20 - added header name specifier (ramona)
- * 2005-07-04 - added color printing support via escape sequesnces
- *              contributed by Ingo Wolfsberger (ramona)
- * 2005-12-23 - parts from private branch merged (mma)
- *
  */
 
 #include <stdio.h>
@@ -1492,16 +1481,17 @@ static int _xl_parse_format(char *s, xl_elog_p *el, int shm, xl_parse_cb parse_c
 				/* ugly hack for compact header names -- !!fake length!!
 				 * -- parse_hname2 expects name buffer length >= 4
 				 */
-				if (parse_hname2(e->hparam.s,
+				parse_hname2(e->hparam.s,
 						e->hparam.s + ((e->hparam.len<4)?4:e->hparam.len),
-						&hdr)==0)
+						&hdr);
+				if(hdr.type==HDR_ERROR_T)
 				{
-					LOG(L_ERR,"xprint: xl_parse_format: strange error\n");
+					LOG(L_ERR,"xprint: xl_parse_format: header parsing error\n");
 					goto error;
 				}
 				e->hparam.len--;
 				e->hparam.s[e->hparam.len] = c;
-				if (hdr.type!=HDR_OTHER_T && hdr.type!=HDR_ERROR_T)
+				if (hdr.type!=HDR_OTHER_T)
 				{
 					LOG(L_INFO,"INFO:xprint: xl_parse_format: using "
 						"hdr type (%d) instead of <%.*s>\n",

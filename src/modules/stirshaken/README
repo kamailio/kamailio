@@ -35,6 +35,8 @@ Piotr Gregor
               3.7. vs_cache_certificates (int)
               3.8. vs_cache_dir (str)
               3.9. vs_cache_expire_s (int)
+              3.10. vs_certsubject_pvname (str)
+              3.11. vs_pptgrants_pvname (str)
 
         4. Functions
 
@@ -60,13 +62,15 @@ Piotr Gregor
    1.7. Set vs_cache_certificates parameter
    1.8. Set vs_cache_dir parameter
    1.9. Set vs_cache_expire_s parameter
-   1.10. stirshaken_check_identity usage
-   1.11. stirshaken_check_identity_with_key usage
-   1.12. stirshaken_check_identity_with_cert usage
-   1.13. stirshaken_add_identity with origid usage
-   1.14. stirshaken_add_identity with auto generated uuid as origid usage
-   1.15. stirshaken_add_identity_with_key usage
-   1.16. libstirshaken installation
+   1.10. Set vs_certsubject_pvname parameter
+   1.11. Set vs_pptgrants_pvname parameter
+   1.12. stirshaken_check_identity usage
+   1.13. stirshaken_check_identity_with_key usage
+   1.14. stirshaken_check_identity_with_cert usage
+   1.15. stirshaken_add_identity with origid usage
+   1.16. stirshaken_add_identity with auto generated uuid as origid usage
+   1.17. stirshaken_add_identity_with_key usage
+   1.18. libstirshaken installation
 
 Chapter 1. Admin Guide
 
@@ -89,6 +93,8 @@ Chapter 1. Admin Guide
         3.7. vs_cache_certificates (int)
         3.8. vs_cache_dir (str)
         3.9. vs_cache_expire_s (int)
+        3.10. vs_certsubject_pvname (str)
+        3.11. vs_pptgrants_pvname (str)
 
    4. Functions
 
@@ -155,6 +161,8 @@ Chapter 1. Admin Guide
    3.7. vs_cache_certificates (int)
    3.8. vs_cache_dir (str)
    3.9. vs_cache_expire_s (int)
+   3.10. vs_certsubject_pvname (str)
+   3.11. vs_pptgrants_pvname (str)
 
 3.1. as_default_key (str)
 
@@ -309,6 +317,34 @@ modparam("stirshaken", "vs_cache_dir", "/tmp/cert_cache")
 modparam("stirshaken", "vs_cache_expire_s", 15)
 ...
 
+3.10. vs_certsubject_pvname (str)
+
+   If vs_certsubject_pvname is set then the Subject of the authenticated
+   x509 certificate will be written to this pseudo-variable when
+   stirshaken_check_identity() is executed. If the Identity header cannot
+   be fully authenticated the pseudo-variable will be set to $null.
+
+   Default value is blank (disabled).
+
+   Example 1.10. Set vs_certsubject_pvname parameter
+...
+modparam("stirshaken", "vs_certsubject_pvname", "$vn(certsubject)")
+...
+
+3.11. vs_pptgrants_pvname (str)
+
+   If vs_pptgrants_pvname is set then the JSON string of the authenticated
+   PASSporT's grants will be written to this pseudo-variable when
+   stirshaken_check_identity() is executed. If the Identity header cannot
+   be fully authenticated the pseudo-variable will be set to $null.
+
+   Default value is blank (disabled).
+
+   Example 1.11. Set vs_pptgrants_pvname parameter
+...
+modparam("stirshaken", "vs_pptgrants_pvname", "$vn(grants)")
+...
+
 4. Functions
 
    4.1. stirshaken_check_identity()
@@ -338,7 +374,7 @@ modparam("stirshaken", "vs_cache_expire_s", 15)
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.10. stirshaken_check_identity usage
+   Example 1.12. stirshaken_check_identity usage
 ...
 modparam("stirshaken", "vs_verify_x509_cert_path", 1)
 modparam("stirshaken", "vs_ca_dir", "/path/to/ca")
@@ -381,7 +417,7 @@ request_route {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.11. stirshaken_check_identity_with_key usage
+   Example 1.13. stirshaken_check_identity_with_key usage
 ...
 request_route {
         ...
@@ -403,7 +439,7 @@ request_route {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.12. stirshaken_check_identity_with_cert usage
+   Example 1.14. stirshaken_check_identity_with_cert usage
 ...
 request_route {
         ...
@@ -427,12 +463,12 @@ request_route {
    represents the attestation level (should be "A", "B" or "C").
 
    The parameters can contain pseudo-variables. If origid is empty, an
-   unique identifier will be generated wih libuuid, e.g.
+   unique identifier will be generated with libuuid, e.g.
    "3f31bd2b-9fc4-4084-b0b0-566506c46292".
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.13. stirshaken_add_identity with origid usage
+   Example 1.15. stirshaken_add_identity with origid usage
 ...
 request_route {
         ...
@@ -447,7 +483,7 @@ reated)\n");
 }
 ...
 
-   Example 1.14. stirshaken_add_identity with auto generated uuid as
+   Example 1.16. stirshaken_add_identity with auto generated uuid as
    origid usage
 
    If origid is empty, an unique identifier will be generated with
@@ -478,7 +514,7 @@ origid, keyPath)
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.15. stirshaken_add_identity_with_key usage
+   Example 1.17. stirshaken_add_identity_with_key usage
 ...
 request_route {
         ...
@@ -503,7 +539,7 @@ reated)\n");
 
    Installling libstirshaken is easy:
 
-   Example 1.16. libstirshaken installation
+   Example 1.18. libstirshaken installation
 ...
                 git clone git@github.com:signalwire/libstirshaken.git
                 cd libstirshaken

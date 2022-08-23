@@ -511,6 +511,27 @@ modparam("nathelper", "nat_addr_mode", 0)
 </programlisting>
 		</example>
 	</section>
+	<section id="nathelper.p.alias_name">
+		<title><varname>alias_name</varname> (string)</title>
+		<para>
+			The parameter sets the name of the Contact URI parameter set by
+			set_contact_alias() or add_contact_alias() and processed by
+			handle_ruri_alias() in R-URI.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>alias</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>alias_name</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("nathelper", "alias_name", "saddr")
+...
+</programlisting>
+		</example>
+	</section>
 
 	</section>
 
@@ -717,6 +738,12 @@ fix_nated_register();
 			from source IP address. It will work also with multiple connection address
 			lines.
 			</para></listitem>
+			<listitem><para>
+			<emphasis>512</emphasis> -  Test if the target addresses are different
+			or over websocket. For requests, it compares host and port in R-URI ($rU)
+			and D-URI ($du). For replies, it compares host and port in 2nd Via
+			with received and rport parameters.
+			</para></listitem>
 			</itemizedlist>
 		<para>
 		All flags can be bitwise combined, the test returns true if any of 
@@ -794,17 +821,21 @@ if(is_rfc1918("$rd")) {
 
 	<section id="nathelper.f.handle_ruri_alias">
 		<title>
-		<function moreinfo="none">handle_ruri_alias()</function>
+		<function moreinfo="none">handle_ruri_alias([mode])</function>
 		</title>
 		<para>
 		Checks if the Request URI has an <quote>alias</quote>
 		parameter and if so, removes it and sets the <quote>$du</quote> based
-		on its value.  Note that this means that routing of request is based on 
-		<quote>;alias</quote> parameter value of the Request URI rather than 
+		on its value. Note that this means that routing of request is based on
+		<quote>;alias</quote> parameter value of the Request URI rather than
 		the Request URI itself. If you call <function>handle_ruri_alias()</function>
 		on a request, make sure that you screen the alias parameter value of
-		Request URI the same way as you would screen the
-		Request URI itself.
+		Request URI the same way as you would screen the Request URI itself.
+		</para>
+		<para>
+		The optional parameter mode can be 0 to consume first alias parameter,
+		otherwise it consumes the last alias parameter. If the parameter mode is
+		not provided, it consumes the first parameter.
 		</para>
 		<para>
 		Returns <emphasis>1</emphasis> if <quote>;alias</quote> parameter was
@@ -847,8 +878,10 @@ if(is_rfc1918("$rd")) {
 		<para>
 		Adds an <quote>;alias=ip~port~transport</quote> parameter to the
 		contact URI containing the received ip, port, and transport protocol.
-		The new contact URI is immediately visible to other modules in the
-		way the <function>fix_nated_contact()</function> does it.
+		The update of contact URI is signaled to a few other modules in the
+		way the <function>fix_nated_contact()</function> does it by using the
+		internal flags. The new value is not visible to pseudo-variables and it
+		does not change the SIP message buffer.
 		</para>
 		<para>Meaning of parameters:</para>
 		<itemizedlist>

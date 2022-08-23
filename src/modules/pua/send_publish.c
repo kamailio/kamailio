@@ -668,7 +668,7 @@ send_publish:
 
 	if(publ->flag & UPDATE_TYPE)
 		LM_DBG("etag:%.*s\n", etag.len, etag.s);
-	str_hdr = publ_build_hdr((publ->expires< 0)?3600:publ->expires, ev, &publ->content_type,
+	str_hdr = publ_build_hdr((publ->expires< 0)?pua_default_expires:publ->expires, ev, &publ->content_type,
 				(publ->flag & UPDATE_TYPE)?&etag:NULL, publ->extra_headers, (body)?1:0);
 
 	if(str_hdr == NULL)

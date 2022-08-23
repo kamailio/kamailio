@@ -143,15 +143,15 @@ int probe_max_receive_buffer( int udp_sock )
 	if (getsockopt( udp_sock, SOL_SOCKET, SO_RCVBUF, (void*) &ioptval,
 		    &ioptvallen) == -1 )
 	{
-		LM_ERR("getsockopt: %s\n", strerror(errno));
+		LM_ERR("fd: %d getsockopt: %s\n", udp_sock, strerror(errno));
 		return -1;
 	}
 	if ( ioptval==0 )
 	{
-		LM_DBG("SO_RCVBUF initially set to 0; resetting to %d\n",
-			BUFFER_INCREMENT );
+		LM_DBG("SO_RCVBUF initially set to 0 for fd %d; resetting to %d\n",
+				udp_sock, BUFFER_INCREMENT);
 		ioptval=BUFFER_INCREMENT;
-	} else LM_INFO("SO_RCVBUF is initially %d\n", ioptval );
+	} else LM_INFO("SO_RCVBUF is initially %d for fd %d\n", ioptval, udp_sock);
 	for (optval=ioptval; ;  ) {
 		/* increase size; double in initial phase, add linearly later */
 		if (phase==0) optval <<= 1; else optval+=BUFFER_INCREMENT;
@@ -160,11 +160,12 @@ int probe_max_receive_buffer( int udp_sock )
 			else { phase=1; optval >>=1; continue; }
 		}
 		if(ksr_verbose_startup)
-			LM_DBG("trying SO_RCVBUF: %d\n", optval);
+			LM_DBG("trying SO_RCVBUF: %d on fd: %d\n", optval, udp_sock);
 		if (setsockopt( udp_sock, SOL_SOCKET, SO_RCVBUF,
 			(void*)&optval, sizeof(optval)) ==-1){
 			/* Solaris returns -1 if asked size too big; Linux ignores */
-			LM_DBG("SOL_SOCKET failed for %d, phase %d: %s\n", optval, phase, strerror(errno));
+			LM_DBG("SOL_SOCKET failed for val %d on fd %d, phase %d: %s\n",
+					optval, udp_sock, phase, strerror(errno));
 			/* if setting buffer size failed and still in the aggressive
 			   phase, try less aggressively; otherwise give up
 			*/
@@ -179,14 +180,14 @@ int probe_max_receive_buffer( int udp_sock )
 		if (getsockopt( udp_sock, SOL_SOCKET, SO_RCVBUF, (void*) &voptval,
 		    &voptvallen) == -1 )
 		{
-			LM_ERR("getsockopt: %s\n", strerror(errno));
+			LM_ERR("fd: %d getsockopt: %s\n", udp_sock, strerror(errno));
 			return -1;
 		} else {
 			if(ksr_verbose_startup)
-				LM_DBG("setting SO_RCVBUF; set=%d,verify=%d\n",
-						optval, voptval);
+				LM_DBG("setting SO_RCVBUF on fd %d; val=%d, verify=%d\n",
+						udp_sock, optval, voptval);
 			if (voptval<optval) {
-				LM_DBG("setting SO_RCVBUF has no effect\n");
+				LM_DBG("setting SO_RCVBUF on fd %d has no effect\n", udp_sock);
 				/* if setting buffer size failed and still in the aggressive
 				phase, try less aggressively; otherwise give up
 				*/
@@ -200,10 +201,10 @@ int probe_max_receive_buffer( int udp_sock )
 	if (getsockopt( udp_sock, SOL_SOCKET, SO_RCVBUF, (void*) &foptval,
 		    &foptvallen) == -1 )
 	{
-		LM_ERR("getsockopt: %s\n", strerror(errno));
+		LM_ERR("fd: %d getsockopt: %s\n", udp_sock, strerror(errno));
 		return -1;
 	}
-	LM_INFO("SO_RCVBUF is finally %d\n", foptval );
+	LM_INFO("SO_RCVBUF is finally %d on fd %d\n", foptval, udp_sock);
 
 	return 0;
 
@@ -328,22 +329,65 @@ int udp_init(struct socket_info* sock_info)
 	}
 
 #if defined (__OS_linux) && defined(UDP_ERRORS)
+	/* Ask for the ability to recvmsg (...,MSG_ERRQUEUE) for immediate
+	 * resend when hitting Path MTU limits. */
 	optval=1;
 	/* enable error receiving on unconnected sockets */
-	if(setsockopt(sock_info->socket, SOL_IP, IP_RECVERR,
+	if (addr->s.sa_family==AF_INET){
+		if(setsockopt(sock_info->socket, SOL_IP, IP_RECVERR,
 					(void*)&optval, sizeof(optval)) ==-1){
-		LM_ERR("setsockopt: %s\n", strerror(errno));
-		goto error;
+			LM_ERR("IPV4 setsockopt: %s\n", strerror(errno));
+			goto error;
+		}
+	} else if (addr->s.sa_family==AF_INET6){
+		if(setsockopt(sock_info->socket, SOL_IPV6, IPV6_RECVERR,
+					(void*)&optval, sizeof(optval)) ==-1){
+			LM_ERR("IPv6 setsockopt: %s\n", strerror(errno));
+			goto error;
+		}
 	}
 #endif
 #if defined (__OS_linux)
-	/* if pmtu_discovery=1 then set DF bit and do Path MTU discovery
-	 * disabled by default */
-	optval= (pmtu_discovery) ? IP_PMTUDISC_DO : IP_PMTUDISC_DONT;
-	if(setsockopt(sock_info->socket, IPPROTO_IP, IP_MTU_DISCOVER,
-			(void*)&optval, sizeof(optval)) ==-1){
-		LM_ERR("setsockopt: %s\n", strerror(errno));
-		goto error;
+	if (addr->s.sa_family==AF_INET){
+		/* If pmtu_discovery=1 then set DF bit and do Path MTU discovery,
+		 * disabled by default. Specific to IPv4. If pmtu_discovery=2
+		 * then the datagram will be fragmented if needed according to
+		 * path MTU, or will set the don't-fragment flag otherwise */
+		switch (pmtu_discovery) {
+			case 1: optval=IP_PMTUDISC_DO;
+			break;
+			case 2: optval=IP_PMTUDISC_WANT;
+			break;
+			case 0:
+			default: optval=IP_PMTUDISC_DONT;
+			break;
+		}
+		if(setsockopt(sock_info->socket, IPPROTO_IP, IP_MTU_DISCOVER,
+				(void*)&optval, sizeof(optval)) ==-1){
+			LM_ERR("IPv4 setsockopt: %s\n", strerror(errno));
+			goto error;
+		}
+	} else if (addr->s.sa_family==AF_INET6){
+		/* IPv6 never fragments but sends ICMPv6 Packet too Big,
+		 * If pmtu_discovery=1 then set DF bit and do Path MTU discovery,
+		 * disabled by default. Specific to IPv6. If pmtu_discovery=2
+                 * then the datagram will be fragmented if needed according to
+                 * path MTU */
+                switch (pmtu_discovery) {
+			case 1: optval=IPV6_PMTUDISC_DO;
+			break;
+			case 2: optval=IPV6_PMTUDISC_WANT;
+			break;
+			case 0:
+			default: optval=IPV6_PMTUDISC_DONT;
+			break;
+		}
+		if(setsockopt(sock_info->socket, IPPROTO_IPV6,
+				IPV6_MTU_DISCOVER,
+				(void*)&optval, sizeof(optval)) ==-1){
+			LM_ERR("IPv6 setsockopt: %s\n", strerror(errno));
+			goto error;
+		}
 	}
 #endif
 

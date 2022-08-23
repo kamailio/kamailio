@@ -91,7 +91,7 @@
     <column id="fromip">
         <name>fromip</name>
         <type>string</type>
-        <size>&ip_add_len;</size>
+        <size>&proto_addr_len;</size>
         <default/>
         <description>Source IP address</description>
     </column>
@@ -99,7 +99,7 @@
     <column>
         <name>toip</name>
         <type>string</type>
-        <size>&ip_add_len;</size>
+        <size>&proto_addr_len;</size>
         <default/>
         <description>Destination IP address</description>
     </column>

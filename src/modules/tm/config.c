@@ -47,6 +47,7 @@ struct cfg_group_tm	default_tm_cfg = {
 	1,	/* ruri_matching */
 	1,	/* via1_matching */
 	0,	/* callid_matching */
+	0,	/* callid_cseq_matching */
 	FR_TIME_OUT,	/* fr_timeout */
 	INV_FR_TIME_OUT,	/* fr_inv_timeout */
 	INV_FR_TIME_OUT_NEXT, /* fr_inv_timeout_next */
@@ -94,7 +95,8 @@ struct cfg_group_tm	default_tm_cfg = {
 		  CANCELs; on by default */
 	1,  /* e2e_cancel_reason -- copy the Reason headers from incoming CANCELs
 		  into the corresp. hop-by-hop CANCELs, on by default */
-	0   /* relay_100 -- by default, assume stateful proxy and do not relay SIP 100 */
+	0,   /* relay_100 -- by default, assume stateful proxy and do not relay SIP 100 */
+	0  /* enable_uac_fr */
 };
 
 void	*tm_cfg = &default_tm_cfg;
@@ -115,6 +117,8 @@ cfg_def_t	tm_cfg_def[] = {
 		"perform first Via header check in transaction matching"},
 	{"callid_matching",	CFG_VAR_INT | CFG_ATOMIC,	0, 0, 0, 0,
 		"perform callid check in transaction matching"},
+	{"callid_cseq_matching",CFG_VAR_INT | CFG_ATOMIC,	0, 0, 0, 0,
+		"perform callid+cseq instead of md5 in transaction matching"},
 	{"fr_timer",		CFG_VAR_INT | CFG_ATOMIC,	0, 0, timer_fixup, 0,
 		"timer which hits if no final reply for a request "
 		"or ACK for a negative INVITE reply arrives "
@@ -203,5 +207,7 @@ cfg_def_t	tm_cfg_def[] = {
 		" the corresponding generated hop-by-hop CANCELs"},
 	{"relay_100",		CFG_VAR_INT | CFG_ATOMIC,	0, 1, 0, 0,
 		"if set to 1, relay SIP 100 messages as a stateless proxy"},
+	{"enable_uac_fr",		CFG_VAR_INT | CFG_ATOMIC,	0, 1, 0, 0,
+		"if set, enables failure route for UAC messages"},
 	{0, 0, 0, 0, 0, 0}
 };

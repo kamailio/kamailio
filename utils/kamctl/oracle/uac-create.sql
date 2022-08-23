@@ -26,5 +26,5 @@ END uacreg_tr;
 /
 BEGIN map2users('uacreg'); END;
 /
-INSERT INTO version (table_name, table_version) values ('uacreg','4');
+INSERT INTO version (table_name, table_version) values ('uacreg','5');
 

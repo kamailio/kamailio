@@ -143,8 +143,10 @@ static int remove_hf_re_f(struct sip_msg* msg, char* key, char* foo);
 static int remove_hf_exp_f(sip_msg_t* msg, char* ematch, char* eskip);
 static int is_present_hf_re_f(struct sip_msg* msg, char* key, char* foo);
 static int remove_hf_pv_f(sip_msg_t* msg, char* phf, char* foo);
+static int remove_hf_idx_f(sip_msg_t* msg, char* phname, char* pidx);
 static int remove_hf_re_pv_f(sip_msg_t* msg, char* key, char* foo);
 static int remove_hf_exp_pv_f(sip_msg_t* msg, char* ematch, char* eskip);
+static int remove_hf_match_f(sip_msg_t* msg, char* phname, char* pop, char* pexp);
 static int is_present_hf_pv_f(sip_msg_t* msg, char* key, char* foo);
 static int is_present_hf_re_pv_f(sip_msg_t* msg, char* key, char* foo);
 static int is_audio_on_hold_f(struct sip_msg *msg, char *str1, char *str2 );
@@ -239,6 +241,9 @@ static cmd_export_t cmds[]={
 	{"remove_hf",        (cmd_function)remove_hf_f,       1,
 		hname_fixup, free_hname_fixup,
 		ANY_ROUTE},
+	{"remove_hf_idx",    (cmd_function)remove_hf_idx_f,   2,
+		fixup_spve_igp,  fixup_free_spve_igp,
+		ANY_ROUTE},
 	{"remove_hf_re",     (cmd_function)remove_hf_re_f,    1,
 		fixup_regexp_null, fixup_free_regexp_null,
 		ANY_ROUTE},
@@ -259,6 +264,9 @@ static cmd_export_t cmds[]={
 		ANY_ROUTE},
 	{"remove_hf_exp_pv", (cmd_function)remove_hf_exp_pv_f,2,
 		fixup_spve_spve, fixup_free_spve_spve,
+		ANY_ROUTE},
+	{"remove_hf_match", (cmd_function)remove_hf_match_f, 3,
+		fixup_spve_all, fixup_free_spve_all,
 		ANY_ROUTE},
 	{"is_present_hf_pv", (cmd_function)is_present_hf_pv_f,1,
 		fixup_spve_null, fixup_free_spve_null,
@@ -1593,6 +1601,71 @@ static inline int find_line_start(char *text, unsigned int text_len,
 	return 0;
 }
 
+static inline int find_hdr_line_start(char *hname, unsigned int hname_len,
+		char **buf, unsigned int *buf_len, char **bstart)
+{
+	hdr_field_t h1;
+	hdr_field_t h2;
+	str sname;
+	char *ch, *start;
+	unsigned int len;
+
+	sname.s = hname;
+	sname.len = hname_len;
+
+	start = *buf;
+	len = *buf_len;
+	parse_hname2_str(&sname, &h1);
+	if(h1.type==HDR_ERROR_T) {
+		LM_ERR("failed to parse header name: '%.*s'\n", hname_len, hname);
+		return 0;
+	}
+
+	while (hname_len <= len) {
+		/* attempt to find a header name */
+		parse_sip_header_name(start, start + hname_len, &h2, 0, 0);
+		if(h2.type!=HDR_ERROR_T) {
+			if(h1.type>0 && h1.type==h2.type) {
+				*buf = start;
+				*buf_len = len;
+				goto found;
+			} else if(cmpi_str(&h1.name, &h2.name)==0) {
+				*buf = start;
+				*buf_len = len;
+				goto found;
+			}
+		}
+		/* jump to next line */
+		if ((ch = memchr(start, 13, len - 1))) {
+			if (*(ch + 1) != 10) {
+				LM_ERR("No LF after CR\n");
+				return 0;
+			}
+			len = len - (ch - start + 2);
+			start = ch + 2;
+		} else {
+			LM_ERR("No CRLF found\n");
+			return 0;
+		}
+	}
+	return 0;
+
+found:
+	ch = memchr(start, ':', len - 1);
+	if(ch==NULL) {
+		LM_ERR("weird - no ':' found\n");
+		return 0;
+	}
+	ch++;
+	while((ch < start + len) && (*ch==' ' || *ch=='\t')) ch++;
+	if(ch==start + len) {
+		LM_ERR("no header body content\n");
+		return 0;
+	}
+	*bstart = ch;
+	return 1;
+}
+
 /**
  * return:
  *  1: multipart
@@ -1616,6 +1689,7 @@ static int check_multipart(struct sip_msg *msg)
 static int ki_filter_body(struct sip_msg* msg, str *content_type)
 {
 	char *start;
+	char *end;
 	unsigned int len;
 	str body;
 	str boundary = {0,0};
@@ -1641,11 +1715,11 @@ static int ki_filter_body(struct sip_msg* msg, str *content_type)
 	start = body.s;
 	len = body.len;
 
-	while (find_line_start("Content-Type: ", 14, &start, &len))
+	while (find_hdr_line_start("Content-Type: ", 14, &start, &len, &end))
 	{
-		start = start + 14;
-		len = len - 14;
+		len = len - (end - start);
 		LM_DBG("line: [%.*s]\n", len, start);
+		start = end;
 		if (len > content_type->len + 2) {
 			if (strncasecmp(start, content_type->s, content_type->len)== 0)
 			{
@@ -1745,6 +1819,86 @@ int remove_hf_f(struct sip_msg* msg, char* str_hf, char* foo)
 		cnt++;
 	}
 	return cnt==0 ? -1 : 1;
+}
+
+static int ki_remove_hf_idx(sip_msg_t* msg, str* hname, int idx)
+{
+	hdr_field_t hfm = {0};
+	hdr_field_t *hfi = NULL;
+	sr_lump_t *anchor = NULL;
+	int i = 0;
+	int rm = 0;
+	int pos = 0;
+
+	/* ensure all headers are parsed */
+	if(parse_headers(msg, HDR_EOH_F, 0)<0) {
+		LM_ERR("error parsing headers\n");
+		return -1;
+	}
+
+	parse_hname2_str(hname, &hfm);
+	if(hfm.type==HDR_ERROR_T) {
+		LM_ERR("failed to parse header name [%.*s]\n", hname->len, hname->s);
+		return -1;
+	}
+
+	LM_DBG("trying to remove hf: %.*s - index: %d\n", hname->len, hname->s, idx);
+	if(idx>=0) {
+		rm = 1;
+	}
+	pos = idx;
+
+again:
+	i = 0;
+	for (hfi=msg->headers; hfi; hfi=hfi->next) {
+		if (hfm.type!=HDR_OTHER_T && hfm.type!=HDR_ERROR_T) {
+			if (hfm.type!=hfi->type) {
+				continue;
+			}
+		} else {
+			if (hfi->name.len!=hname->len) {
+				continue;
+			}
+			if(strncasecmp(hfi->name.s, hname->s, hname->len)!=0) {
+				continue;
+			}
+		}
+		if(rm==1 && i==pos) {
+			anchor=del_lump(msg, hfi->name.s - msg->buf, hfi->len, 0);
+			if (anchor==0) {
+				LM_ERR("cannot remove hdr %.*s\n", hname->len, hname->s);
+				return -1;
+			}
+			return 1;
+		}
+		i++;
+	}
+	if(rm==1) {
+		/* header not found */
+		return 2;
+	}
+	pos = i + idx;
+	if(pos>=0) {
+		rm = 1;
+		goto again;
+	}
+	return 1;
+}
+
+static int remove_hf_idx_f(sip_msg_t* msg, char* phname, char* pidx)
+{
+	str hname = STR_NULL;
+	int idx = 0;
+
+	if(fixup_get_svalue(msg, (gparam_t*)phname, &hname)<0) {
+		LM_ERR("failed to get header name\n");
+		return -1;
+	}
+	if(fixup_get_ivalue(msg, (gparam_t*)pidx, &idx)<0) {
+		LM_ERR("failed to get header index\n");
+		return -1;
+	}
+	return  ki_remove_hf_idx(msg, &hname, idx);
 }
 
 static int remove_hf_re(sip_msg_t* msg, regex_t *re)
@@ -1966,12 +2120,13 @@ static int ki_hname_gparam(str *hname, gparam_t *gp)
 
 	gp->v.str = *hname;
 
-	if (parse_hname2_short(hbuf, hbuf + gp->v.str.len + 1, &hdr)==0) {
+	parse_hname2_short(hbuf, hbuf + gp->v.str.len + 1, &hdr);
+	if(hdr.type==HDR_ERROR_T) {
 		LM_ERR("error parsing header name: %.*s\n", hname->len, hname->s);
 		return -1;
 	}
 
-	if (hdr.type!=HDR_OTHER_T && hdr.type!=HDR_ERROR_T) {
+	if (hdr.type!=HDR_OTHER_T) {
 		LM_DBG("using hdr type (%d) instead of <%.*s>\n",
 				hdr.type, gp->v.str.len, gp->v.str.s);
 		gp->v.str.s = NULL;
@@ -2076,6 +2231,133 @@ static int remove_hf_exp_pv_f(sip_msg_t* msg, char* pematch, char* peskip)
 		return -1;
 	}
 	return ki_remove_hf_exp(msg, &ematch, &eskip);
+}
+
+static int ki_remove_hf_match(sip_msg_t* msg, str* hname, str *op, str *expr)
+{
+	hdr_field_t hfm = {0};
+	hdr_field_t *hfi = NULL;
+	sr_lump_t *anchor = NULL;
+	int vop = 0;
+	int vrm = 0;
+	regex_t mre;
+	regmatch_t pmatch;
+	char c;
+	int ret = -2;
+
+	memset(&mre, 0, sizeof(regex_t));
+
+	/* ensure all headers are parsed */
+	if(parse_headers(msg, HDR_EOH_F, 0)<0) {
+		LM_ERR("error parsing headers\n");
+		return -1;
+	}
+
+	parse_hname2_str(hname, &hfm);
+	if(hfm.type==HDR_ERROR_T) {
+		LM_ERR("failed to parse header name [%.*s]\n", hname->len, hname->s);
+		return -1;
+	}
+
+	LM_DBG("trying to remove hf: [%.*s] - op: [%.*s] - exp: [%.*s]\n",
+			hname->len, hname->s, op->len, op->s, expr->len, expr->s);
+
+	if(op->len==2 && strncasecmp(op->s, "eq", op->len)==0) {
+		vop = 1;
+	} else if(op->len==2 && strncasecmp(op->s, "ne", op->len)==0) {
+		vop = 2;
+	} else if(op->len==2 && strncasecmp(op->s, "in", op->len)==0) {
+		vop = 3;
+	} else if(op->len==2 && strncasecmp(op->s, "re", op->len)==0) {
+		memset(&mre, 0, sizeof(regex_t));
+		if (regcomp(&mre, expr->s, REG_EXTENDED|REG_ICASE|REG_NEWLINE)!=0) {
+			LM_ERR("failed to compile regex: [%.*s]\n", expr->len, expr->s);
+			return -1;
+		}
+		vop = 4;
+	} else {
+		LM_ERR("unknown operator [%.*s]\n", op->len, op->s);
+		return -1;
+	}
+
+	for (hfi=msg->headers; hfi; hfi=hfi->next) {
+		if (hfm.type!=HDR_OTHER_T && hfm.type!=HDR_ERROR_T) {
+			if (hfm.type!=hfi->type) {
+				continue;
+			}
+		} else {
+			if (hfi->name.len!=hname->len) {
+				continue;
+			}
+			if(strncasecmp(hfi->name.s, hname->s, hname->len)!=0) {
+				continue;
+			}
+		}
+		vrm = 0;
+		switch(vop) {
+			case 1:
+				if(expr->len==hfi->body.len
+						&& strncmp(expr->s, hfi->body.s, expr->len)==0) {
+					vrm = 1;
+				}
+				break;
+			case 2:
+				if(expr->len!=hfi->body.len
+						|| strncmp(expr->s, hfi->body.s, expr->len)!=0) {
+					vrm = 1;
+				}
+				break;
+			case 3:
+				if(str_search(&hfi->body, expr)!=NULL) {
+					vrm = 1;
+				}
+				break;
+			case 4:
+				STR_VTOZ(hfi->body.s[hfi->body.len], c);
+				if (regexec(&mre, hfi->body.s, 1, &pmatch, 0)==0) {
+					vrm = 1;
+				}
+				STR_ZTOV(hfi->body.s[hfi->body.len], c);
+				break;
+		}
+		if(vrm==1) {
+			anchor=del_lump(msg, hfi->name.s - msg->buf, hfi->len, 0);
+			if (anchor==0) {
+				LM_ERR("cannot remove hdr %.*s\n", hname->len, hname->s);
+				ret = -1;
+				goto done;
+			}
+			ret = 1;
+		}
+	}
+
+done:
+	if(vop==4) {
+		regfree(&mre);
+	}
+	return ret;
+}
+
+static int remove_hf_match_f(sip_msg_t* msg, char* phname, char* pop, char* pexp)
+{
+	str hname = STR_NULL;
+	str op = STR_NULL;
+	str expr = STR_NULL;
+
+	if(fixup_get_svalue(msg, (gparam_t*)phname, &hname)!=0) {
+		LM_ERR("unable to get hdr name parameter\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)pop, &op)!=0) {
+		LM_ERR("unable to get op parameter\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)pexp, &expr)!=0) {
+		LM_ERR("unable to get exp parameter\n");
+		return -1;
+	}
+
+	return ki_remove_hf_match(msg, &hname, &op, &expr);
 }
 
 static int fixup_substre(void** param, int param_no)
@@ -3105,10 +3387,9 @@ static int ki_remove_multibody(sip_msg_t* msg, str* content_type)
 	start = body.s;
 	len = body.len;
 
-	while (find_line_start("Content-Type: ", 14, &start, &len))
+	while (find_hdr_line_start("Content-Type: ", 14, &start, &len, &end))
 	{
-		end = start + 14;
-		len = len - 14;
+		len = len - (end - start);
 		if (len > (content_type->len + 2)) {
 			if (strncasecmp(end, content_type->s, content_type->len)== 0)
 			{
@@ -3211,10 +3492,9 @@ static int ki_get_body_part_helper(sip_msg_t* msg, str* ctype, pv_spec_t *dst,
 	len = body.len;
 
 	/* note: header body can follow just after name: - fixit */
-	while (find_line_start("Content-Type: ", 14, &start, &len))
+	while (find_hdr_line_start("Content-Type: ", 14, &start, &len, &end))
 	{
-		end = start + 14;
-		len = len - 14;
+		len = len - (end - start);
 		if (len > (ctype->len + 2)) {
 			if (strncasecmp(end, ctype->s, ctype->len)== 0)
 			{
@@ -3581,17 +3861,19 @@ static int hname_fixup(void** param, int param_no)
 	gp->v.str.s[gp->v.str.len] = ':';
 	gp->v.str.len++;
 
-	if (parse_hname2_short(gp->v.str.s, gp->v.str.s + gp->v.str.len, &hdr)==0)
+	parse_hname2_short(gp->v.str.s, gp->v.str.s + gp->v.str.len, &hdr);
+
+	gp->v.str.len--;
+	gp->v.str.s[gp->v.str.len] = c;
+
+	if(hdr.type==HDR_ERROR_T)
 	{
 		LM_ERR("error parsing header name\n");
 		pkg_free(gp);
 		return E_UNSPEC;
 	}
 
-	gp->v.str.len--;
-	gp->v.str.s[gp->v.str.len] = c;
-
-	if (hdr.type!=HDR_OTHER_T && hdr.type!=HDR_ERROR_T)
+	if (hdr.type!=HDR_OTHER_T)
 	{
 		LM_DBG("using hdr type (%d) instead of <%.*s>\n",
 				hdr.type, gp->v.str.len, gp->v.str.s);
@@ -4369,6 +4651,10 @@ static int ki_is_audio_on_hold(sip_msg_t *msg)
 					strncmp(sdp_stream->media.s,AUDIO_STR,AUDIO_STR_LEN)==0 &&
 					sdp_stream->is_on_hold)
 					return sdp_stream->is_on_hold;
+				if(sdp_stream->media.len==AUDIO_STR_LEN &&
+					strncmp(sdp_stream->media.s,AUDIO_STR,AUDIO_STR_LEN)==0 &&
+					sdp_session->is_on_hold)
+					return sdp_session->is_on_hold;
 				sdp_stream_num++;
 			}
 			sdp_session_num++;
@@ -4984,9 +5270,19 @@ static sr_kemi_t sr_kemi_textops_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("textops"), str_init("remove_hf_idx"),
+		SR_KEMIP_INT, ki_remove_hf_idx,
+		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ str_init("textops"), str_init("remove_hf_exp"),
 		SR_KEMIP_INT, ki_remove_hf_exp,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textops"), str_init("remove_hf_match"),
+		SR_KEMIP_INT, ki_remove_hf_match,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("textops"), str_init("replace"),

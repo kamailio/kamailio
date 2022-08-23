@@ -237,7 +237,7 @@ int ip_addr2sbuf(struct ip_addr* ip, char* buff, int len)
 }
 
 
-/* same as ip_addr2sbuf, but with [  ] around IPv6 addresses */
+/* same as ip_addr2sbuf, but with [  ] around IPv6 addresses and ending \0 */
 int ip_addr2sbufz(struct ip_addr* ip, char* buff, int len)
 {
 	char *p;
@@ -247,15 +247,15 @@ int ip_addr2sbufz(struct ip_addr* ip, char* buff, int len)
 	switch(ip->af){
 		case AF_INET6:
 			*p++ = '[';
-			sz = ip6tosbuf(ip->u.addr, p, len-2);
+			sz = ip6tosbuf(ip->u.addr, p, len-3);
 			p += sz;
 			*p++ = ']';
-			*p=0;
+			*p = '\0';
 			return sz + 2;
-			break;
 		case AF_INET:
-			return ip4tosbuf(ip->u.addr, buff, len);
-			break;
+			sz = ip4tosbuf(ip->u.addr, buff, len-1);
+			buff[sz] = '\0';
+			return sz;
 		default:
 			LM_CRIT("unknown address family %d\n", ip->af);
 			return 0;

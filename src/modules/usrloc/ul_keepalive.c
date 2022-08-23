@@ -33,6 +33,7 @@
 #include "../../core/forward.h"
 #include "../../core/globals.h"
 #include "../../core/pvar.h"
+#include "../../core/sr_module.h"
 #include "../../core/parser/parse_uri.h"
 #include "../../core/parser/parse_from.h"
 #include "../../core/parser/parse_to.h"
@@ -61,7 +62,7 @@ Content-Length: 0\r\n\r\n"
 #define ULKA_CALLID_PREFIX_LEN (sizeof(ULKA_CALLID_PREFIX) - 1)
 
 #define ULKA_MSG "%.*s %.*s SIP/2.0\r\n" \
-  "Via: SIP/2.0/%.*s %.*s:%.*s;branch=z9hG4bKx.%u.%u.0\r\n" \
+  "Via: SIP/2.0/%.*s %s%.*s%s:%.*s;branch=z9hG4bKx.%u.%u.0\r\n" \
   "%s%.*s%.*s" \
   "From: <%.*s>;tag=%.*s-%x-%lx-%lx-%x.%x\r\n" \
   "To: <sip:%.*s%s%.*s>\r\n" \
@@ -101,6 +102,7 @@ int ul_ka_urecord(urecord_t *ur)
 	socket_info_t *ssock;
 	dest_info_t idst;
 	unsigned int bcnt = 0;
+	unsigned int via_ipv6 = 0;
 	int aortype = 0;
 	int i;
 	struct timeval tv;
@@ -109,6 +111,11 @@ int ul_ka_urecord(urecord_t *ur)
 	if (ul_ka_mode == ULKA_NONE) {
 		return 0;
 	}
+
+	if(likely(destroy_modules_phase()!=0)) {
+		return 0;
+	}
+
 	LM_DBG("keepalive for aor: %.*s\n", ur->aor.len, ur->aor.s);
 	tnow = time(NULL);
 
@@ -193,10 +200,17 @@ int ul_ka_urecord(urecord_t *ur)
 		}
 		idst.proto = dproto;
 		idst.send_sock = ssock;
+		idst.id = uc->tcpconn_id;
 
 		if(ssock->useinfo.name.len > 0) {
+			if (ssock->useinfo.address.af == AF_INET6) {
+				via_ipv6 = 1;
+			}
 			vaddr = ssock->useinfo.name;
 		} else {
+			if (ssock->address.af == AF_INET6) {
+				via_ipv6 = 1;
+			}
 			vaddr = ssock->address_str;
 		}
 		if(ssock->useinfo.port_no > 0) {
@@ -212,7 +226,9 @@ int ul_ka_urecord(urecord_t *ur)
 				ul_ka_method.len, ul_ka_method.s,
 				uc->c.len, uc->c.s,
 				sproto.len, sproto.s,
+				(via_ipv6==1)?"[":"",
 				vaddr.len, vaddr.s,
+				(via_ipv6==1)?"]":"",
 				vport.len, vport.s,
 				_ul_ka_counter, bcnt,
 				(uc->path.len>0)?"Route: ":"",
@@ -255,19 +271,16 @@ static int ul_ka_send(str *kamsg, dest_info_t *kadst)
 #ifdef USE_TCP
 	else if(kadst->proto == PROTO_WS || kadst->proto == PROTO_WSS) {
 		/*ws-wss*/
-		kadst->id=0;
 		return wss_send(kadst, kamsg->s, kamsg->len);
 	}
 	else if(kadst->proto == PROTO_TCP) {
 		/*tcp*/
-		kadst->id=0;
 		return tcp_send(kadst, 0, kamsg->s, kamsg->len);
 	}
 #endif
 #ifdef USE_TLS
 	else if(kadst->proto == PROTO_TLS) {
 		/*tls*/
-		kadst->id=0;
 		return tcp_send(kadst, 0, kamsg->s, kamsg->len);
 	}
 #endif

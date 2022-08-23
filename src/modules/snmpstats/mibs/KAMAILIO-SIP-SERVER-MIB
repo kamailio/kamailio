@@ -562,7 +562,7 @@ KAMAILIO-SIP-SERVER-MIB DEFINITIONS ::= BEGIN
                 set the row-status to createAndGo.
                 
                 Then the client can do an SNMP GET on this table with the 
-                aquired index. If the row-status is 'active', then the 
+                acquired index. If the row-status is 'active', then the 
                 kamailioSIPRegUserIndex is the index into the 
                 kamailioSIPRegUserTable that has the specified URI (0 zero 
                 indicates no such URI). The client should then set the 

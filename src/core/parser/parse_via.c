@@ -940,7 +940,7 @@ static /*inline*/ char *parse_via_param(char *const p, const char *const end,
 
 find_value:
 	tmp++;
-	for(; *tmp; tmp++) {
+	for(; tmp<end && *tmp; tmp++) {
 		switch(*tmp) {
 			case ' ':
 			case '\t':
@@ -2064,7 +2064,7 @@ main_via:
 	tmp++;
 	c_nest = 0;
 	/*state should always be F_HOST here*/;
-	for(; *tmp; tmp++) {
+	for(; tmp<end && *tmp; tmp++) {
 		switch(*tmp) {
 			case ' ':
 			case '\t':
@@ -2667,6 +2667,7 @@ endofpacket:
 	/*DBG("parse_via: rest=<%s>\n", tmp);*/
 
 	vb->error = PARSE_OK;
+	vb->bstart = buffer;
 	vb->bsize = tmp - buffer;
 	if(vb->port_str.s) {
 		vb->port = str2s(vb->port_str.s, vb->port_str.len, &err);
@@ -2680,6 +2681,7 @@ endofpacket:
 nextvia:
 	DBG("parsing via: next via\n");
 	vb->error = PARSE_OK;
+	vb->bstart = buffer;
 	vb->bsize = tmp - buffer;
 	if(vb->port_str.s) {
 		vb->port = str2s(vb->port_str.s, vb->port_str.len, &err);
@@ -2701,11 +2703,11 @@ nextvia:
 
 error:
 	if(end > buffer) {
-		LM_ERR("parsing via on: <%.*s>\n", (int)(end - buffer), ZSW(buffer));
+		LM_ERR("parsing via on: <%.*s>\n", (int)(end - buffer), ZSW(ksr_buf_oneline(buffer, (int)(end - buffer))));
 	}
 	if((tmp > buffer) && (tmp < end)) {
 		LM_ERR("parse error, parsed so far:<%.*s>\n", (int)(tmp - buffer),
-				ZSW(buffer));
+				ZSW(ksr_buf_oneline(buffer, (int)(tmp - buffer))));
 	} else {
 		LM_ERR("via parse error\n");
 	}

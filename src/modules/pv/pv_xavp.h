@@ -44,6 +44,7 @@ int pv_xavi_print(struct sip_msg* msg, char* s1, char *s2);
 
 int xavp_slist_explode(str *slist, str *sep, str *mode, str *xname);
 int xavp_params_explode(str *params, str *xname);
+int xavu_params_explode(str *params, str *xname);
 
 int pv_var_to_xavp(str *varname, str *xname);
 int pv_xavp_to_var(str *xname);

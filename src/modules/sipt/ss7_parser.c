@@ -278,6 +278,35 @@ int isup_get_calling_party_nai(unsigned char *buf, int len)
 	return -1;
 }
 
+int isup_get_calling_party(unsigned char *buf, int len, char* sb_buf)
+{
+	int sbparamlen;
+	int sb_i=0;
+	int sb_j=0;
+	int oddeven;
+	int offset = get_optional_header(ISUP_PARM_CALLING_PARTY_NUM, buf, len);
+
+	if(offset != -1 && len-offset-2 > 1)
+	{
+		sbparamlen = (buf[offset+1] & 0xFF) - 2;
+		oddeven = (buf[offset+2] >> 7) & 0x1;
+
+		while ((sbparamlen > 0) && (buf[offset] != 0)) {
+			sb_buf[sb_i]="0123456789ABCDEF"[(buf[offset+4+sb_j] & 0x0F)];
+			if(sbparamlen > 1 || oddeven == 0) 
+			{
+				sb_buf[sb_i+1]="0123456789ABCDEF"[(buf[offset+4+sb_j] >>4 & 0x0F)];
+			}
+			sb_i=sb_i+2;
+			sbparamlen--;
+			sb_j++;
+		}
+		sb_buf[sb_i] = '\x0';
+		return 1;
+	}
+	return -1;
+}
+
 int isup_get_screening(unsigned char *buf, int len)
 {
 	int  offset = get_optional_header(ISUP_PARM_CALLING_PARTY_NUM, buf, len);
@@ -318,6 +347,43 @@ int isup_get_called_party_nai(unsigned char *buf, int len)
 	return message->called_party_number[1]&0x7F;
 }
 
+int isup_get_called_party(unsigned char *buf, int len, char* sb_buf)
+{
+	struct isup_iam_fixed * message = (struct isup_iam_fixed*)buf;
+	int sbparamlen;
+	int oddeven;
+	int sb_i=0;
+	int sb_j=0;
+	int offset = 3;
+
+	// not an iam? do nothing
+	if(message->type != ISUP_IAM)
+	{
+		return -1;
+	}
+
+	/* Message Type = 1 */
+	len -= offsetof(struct isup_iam_fixed, called_party_number);
+
+	if (len < 1)
+		return -1;
+
+	sbparamlen = (message->called_party_number[0] & 0xFF) - 2;
+	oddeven = (message->called_party_number[1] >> 7) & 0x1;
+
+	while ((sbparamlen > 0) && (message->called_party_number[offset] != 0)) {
+		sb_buf[sb_i]="0123456789ABCDEF"[(message->called_party_number[offset+sb_j] & 0x0F)];
+		if(sbparamlen > 1 || oddeven == 0) 
+		{
+			sb_buf[sb_i+1]="0123456789ABCDEF"[(message->called_party_number[offset+sb_j] >>4 & 0x0F)];
+		}
+		sb_i=sb_i+2;
+		sbparamlen--;
+		sb_j++;
+	}
+	sb_buf[sb_i] = '\x0';
+	return 1;
+}
 
 int isup_get_charging_indicator(unsigned char *buf, int len) {
 	struct isup_acm_fixed * orig_message = (struct isup_acm_fixed*)buf;
@@ -394,6 +460,148 @@ int isup_get_redirection_number(unsigned char *buf, int len, char* sb_buf)
                return 1;
        }
        return -1;
+}
+
+int isup_get_redirection_reason(unsigned char *buf, int len)
+{
+	int offset = get_optional_header(ISUP_PARM_REDIRECTION_INFO, buf, len);
+
+	if(offset != -1 && len-offset-2 > 1)
+	{
+		return (buf[offset+3]>>4 & 0x0F);
+	}
+	return -1;
+}
+
+int isup_get_original_redirection_reason(unsigned char *buf, int len)
+{
+	int offset = get_optional_header(ISUP_PARM_REDIRECTION_INFO, buf, len);
+
+	if(offset != -1 && len-offset-2 > 1)
+	{
+		return (buf[offset+2]>>4 & 0x0F);
+	}
+	return -1;
+}
+
+int isup_get_redirecting_number_nai(unsigned char *buf, int len)
+{
+	int offset = get_optional_header(ISUP_PARM_REDIRECTING_NUMBER, buf, len);
+
+	if(offset != -1 && len-offset-2 > 1)
+	{
+		return buf[offset+2] & 0x7F;
+	}
+	return -1;
+}
+
+int isup_get_redirecting_number(unsigned char *buf, int len, char* sb_buf)
+{
+	int sbparamlen;
+	int oddeven;
+	int sb_i=0;
+	int sb_j=0;
+	int offset = get_optional_header(ISUP_PARM_REDIRECTING_NUMBER, buf, len);
+
+	if(offset != -1 && len-offset-2 > 1)
+	{
+		sbparamlen = (buf[offset+1] & 0xFF) - 2;
+		oddeven = (buf[offset+2] >> 7) & 0x1;
+
+		while ((sbparamlen > 0) && (buf[offset] != 0)) {
+			sb_buf[sb_i]="0123456789ABCDEF"[(buf[offset+4+sb_j] & 0x0F)];
+			if(sbparamlen > 1 || oddeven == 0) 
+			{
+				sb_buf[sb_i+1]="0123456789ABCDEF"[(buf[offset+4+sb_j] >>4 & 0x0F)];
+			}
+			sb_i=sb_i+2;
+			sbparamlen--;
+			sb_j++;
+		}
+		sb_buf[sb_i] = '\x0';
+		return 1;
+	}
+	return -1;
+}
+
+int isup_get_original_called_number_nai(unsigned char *buf, int len)
+{
+	int offset = get_optional_header(ISUP_PARM_ORIGINAL_CALLED_NUM, buf, len);
+
+	if(offset != -1 && len-offset-2 > 1)
+	{
+		return buf[offset+2] & 0x7F;
+	}
+	return -1;
+}
+
+int isup_get_original_called_number(unsigned char *buf, int len, char* sb_buf)
+{
+	int sbparamlen;
+	int oddeven;
+	int sb_i=0;
+	int sb_j=0;
+	int offset = get_optional_header(ISUP_PARM_ORIGINAL_CALLED_NUM, buf, len);
+
+	if(offset != -1 && len-offset-2 > 1)
+	{
+		sbparamlen = (buf[offset+1] & 0xFF) - 2;
+		oddeven = (buf[offset+2] >> 7) & 0x1;
+
+		while ((sbparamlen > 0) && (buf[offset] != 0)) {
+			sb_buf[sb_i]="0123456789ABCDEF"[(buf[offset+4+sb_j] & 0x0F)];
+			if(sbparamlen > 1 || oddeven == 0) 
+			{
+				sb_buf[sb_i+1]="0123456789ABCDEF"[(buf[offset+4+sb_j] >>4 & 0x0F)];
+			}
+			sb_i=sb_i+2;
+			sbparamlen--;
+			sb_j++;
+		}
+		sb_buf[sb_i] = '\x0';
+		return 1;
+	}
+	return -1;
+}
+
+int isup_get_generic_number_nai(unsigned char *buf, int len)
+{
+	int offset = get_optional_header(ISUP_PARM_GENERIC_ADDR, buf, len);
+
+	if(offset != -1 && len-offset-2 > 1)
+	{
+		 return buf[offset+3] & 0x7F;
+	}
+	return -1;
+}
+
+int isup_get_generic_number(unsigned char *buf, int len, char* sb_buf)
+{
+	int sbparamlen;
+	int oddeven;
+	int sb_i=0;
+	int sb_j=0;
+	int offset = get_optional_header(ISUP_PARM_GENERIC_ADDR, buf, len);
+
+	if(offset != -1 && len-offset-2 > 1)
+	{
+		sbparamlen = (buf[offset+1] & 0xFF) - 2;
+		oddeven = (buf[offset+3] >> 7) & 0x1;
+
+		while ((sbparamlen > 0) && (buf[offset] != 0)) {
+			sb_buf[sb_i]="0123456789ABCDEF"[(buf[offset+5+sb_j] & 0x0F)];
+			if(sbparamlen > 1 || oddeven == 0) 
+			{
+				sb_buf[sb_i+1]="0123456789ABCDEF"[(buf[offset+5+sb_j] >>4 & 0x0F)];
+			}
+			sb_i=sb_i+2;
+			sbparamlen--;
+			sb_j++;
+		}
+		sb_buf[sb_i] = '\x0';
+		return 1;
+	}
+	return -1;
 }
 
 int isup_update_bci_1(struct sdp_mangler * mangle, int charge_indicator, int called_status, int called_category, int e2e_indicator, unsigned char *buf, int len)

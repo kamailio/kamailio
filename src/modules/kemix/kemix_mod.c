@@ -588,6 +588,38 @@ static sr_kemi_xval_t* ki_kx_get_rcv_sock_name(sip_msg_t *msg)
 /**
  *
  */
+static sr_kemi_xval_t* ki_kx_get_rcvaddr_sock(sip_msg_t *msg)
+{
+	if(msg==NULL) {
+		sr_kemi_xval_null(&_sr_kemi_kx_xval, SR_KEMI_XVAL_NULL_EMPTY);
+		return &_sr_kemi_kx_xval;
+
+	}
+
+	if(msg->rcv.bind_address==NULL || msg->rcv.bind_address->sock_str.s==NULL) {
+		sr_kemi_xval_null(&_sr_kemi_kx_xval, SR_KEMI_XVAL_NULL_EMPTY);
+		return &_sr_kemi_kx_xval;
+	}
+
+	if (msg->rcv.bind_address->sock_str.len + 1 >= pv_get_buffer_size()) {
+		LM_ERR("local buffer size exceeded\n");
+		sr_kemi_xval_null(&_sr_kemi_kx_xval, SR_KEMI_XVAL_NULL_EMPTY);
+		return &_sr_kemi_kx_xval;
+	}
+
+	_sr_kemi_kx_xval.v.s.s = pv_get_buffer();
+	strncpy(_sr_kemi_kx_xval.v.s.s, msg->rcv.bind_address->sock_str.s,
+			msg->rcv.bind_address->sock_str.len);
+	_sr_kemi_kx_xval.v.s.len = msg->rcv.bind_address->sock_str.len;
+	_sr_kemi_kx_xval.v.s.s[_sr_kemi_kx_xval.v.s.len] = '\0';
+
+	_sr_kemi_kx_xval.vtype = SR_KEMIP_STR;
+	return &_sr_kemi_kx_xval;
+}
+
+/**
+ *
+ */
 static sr_kemi_xval_t* ki_kx_get_rcvadvip(sip_msg_t *msg)
 {
 	memset(&_sr_kemi_kx_xval, 0, sizeof(sr_kemi_xval_t));
@@ -1103,6 +1135,39 @@ static sr_kemi_xval_t* ki_kx_get_srcuri(sip_msg_t *msg)
 /**
  *
  */
+static sr_kemi_xval_t* ki_kx_get_srcaddr_sock(sip_msg_t *msg)
+{
+	str ssock;
+
+	if(msg==NULL) {
+		sr_kemi_xval_null(&_sr_kemi_kx_xval, SR_KEMI_XVAL_NULL_EMPTY);
+		return &_sr_kemi_kx_xval;
+
+	}
+
+	if(get_src_address_socket(msg, &ssock)<0) {
+		sr_kemi_xval_null(&_sr_kemi_kx_xval, SR_KEMI_XVAL_NULL_EMPTY);
+		return &_sr_kemi_kx_xval;
+	}
+
+	if (ssock.len + 1 >= pv_get_buffer_size()) {
+		LM_ERR("local buffer size exceeded\n");
+		sr_kemi_xval_null(&_sr_kemi_kx_xval, SR_KEMI_XVAL_NULL_EMPTY);
+		return &_sr_kemi_kx_xval;
+	}
+
+	_sr_kemi_kx_xval.v.s.s = pv_get_buffer();
+	strncpy(_sr_kemi_kx_xval.v.s.s, ssock.s, ssock.len);
+	_sr_kemi_kx_xval.v.s.len = ssock.len;
+	_sr_kemi_kx_xval.v.s.s[_sr_kemi_kx_xval.v.s.len] = '\0';
+
+	_sr_kemi_kx_xval.vtype = SR_KEMIP_STR;
+	return &_sr_kemi_kx_xval;
+}
+
+/**
+ *
+ */
 static sr_kemi_xval_t* ki_kx_get_def(sip_msg_t *msg, str *dname)
 {
 	str *val;
@@ -1136,6 +1201,36 @@ static int ki_kx_get_defn(sip_msg_t *msg, str *dname)
 	}
 
 	return n;
+}
+
+/**
+ *
+ */
+static int ki_kx_ifdef(sip_msg_t *msg, str *dname)
+{
+	str *val;
+
+	val = pp_define_get(dname->len, dname->s);
+
+	if (val!=NULL) {
+		return SR_KEMI_TRUE;
+	}
+	return SR_KEMI_FALSE;
+}
+
+/**
+ *
+ */
+static int ki_kx_ifndef(sip_msg_t *msg, str *dname)
+{
+	str *val;
+
+	val = pp_define_get(dname->len, dname->s);
+
+	if (val==NULL) {
+		return SR_KEMI_TRUE;
+	}
+	return SR_KEMI_FALSE;
 }
 
 /**
@@ -1340,6 +1435,11 @@ static sr_kemi_t sr_kemi_kx_exports[] = {
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("kx"), str_init("get_srcaddr_sock"),
+		SR_KEMIP_XVAL, ki_kx_get_srcaddr_sock,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ str_init("kx"), str_init("get_ua"),
 		SR_KEMIP_XVAL, ki_kx_get_ua,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
@@ -1402,6 +1502,11 @@ static sr_kemi_t sr_kemi_kx_exports[] = {
 	},
 	{ str_init("kx"), str_init("get_rcvadvport"),
 		SR_KEMIP_XVAL, ki_kx_get_rcvadvport,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("kx"), str_init("get_rcvaddr_sock"),
+		SR_KEMIP_XVAL, ki_kx_get_rcvaddr_sock,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
@@ -1502,6 +1607,16 @@ static sr_kemi_t sr_kemi_kx_exports[] = {
 	},
 	{ str_init("kx"), str_init("get_defn"),
 		SR_KEMIP_INT, ki_kx_get_defn,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("kx"), str_init("ifdef"),
+		SR_KEMIP_BOOL, ki_kx_ifdef,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("kx"), str_init("ifndef"),
+		SR_KEMIP_BOOL, ki_kx_ifndef,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},

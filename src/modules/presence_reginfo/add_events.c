@@ -39,7 +39,7 @@ int reginfo_add_events(void)
 
 	event.content_type.s = "application/reginfo+xml";
 	event.content_type.len = 23;
-	event.default_expires= 3600;
+	event.default_expires= pres_reginfo_default_expires;
 	event.type = PUBL_TYPE;
 	event.req_auth = 0;
 	event.evs_publ_handl = 0;

@@ -99,8 +99,8 @@ int pkg_proc_stats_myinit(int rank)
 
 	/* init pkg usage values */
 	pkg_info(&info);
-	_pkg_proc_stats_list[process_no].available = info.free;
-	_pkg_proc_stats_list[process_no].used = info.used;
+	_pkg_proc_stats_list[process_no].available = info.free_size;
+	_pkg_proc_stats_list[process_no].used = info.used_size;
 	_pkg_proc_stats_list[process_no].real_used = info.real_used;
 	_pkg_proc_stats_list[process_no].total_size = info.total_size;
 	_pkg_proc_stats_list[process_no].total_frags = info.total_frags;
@@ -132,8 +132,8 @@ static int pkg_proc_update_stats(sr_event_param_t *evp)
 	if(unlikely(process_no>=_pkg_proc_stats_no))
 		return -1;
 	pkg_info(&info);
-	_pkg_proc_stats_list[process_no].available = info.free;
-	_pkg_proc_stats_list[process_no].used = info.used;
+	_pkg_proc_stats_list[process_no].available = info.free_size;
+	_pkg_proc_stats_list[process_no].used = info.used_size;
 	_pkg_proc_stats_list[process_no].real_used = info.real_used;
 	_pkg_proc_stats_list[process_no].total_frags = info.total_frags;
 	return 0;

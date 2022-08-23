@@ -180,6 +180,16 @@ typedef sr_kemi_xval_t* (*sr_kemi_xfmns_f)(sip_msg_t*, int, str*);
 typedef sr_kemi_xval_t* (*sr_kemi_xfmsn_f)(sip_msg_t*, str*, int);
 typedef sr_kemi_xval_t* (*sr_kemi_xfmss_f)(sip_msg_t*, str*, str*);
 
+/* return xval, params sip_msg_t and three int|str params */
+typedef sr_kemi_xval_t* (*sr_kemi_xfmnnn_f)(sip_msg_t*, int, int, int);
+typedef sr_kemi_xval_t* (*sr_kemi_xfmnns_f)(sip_msg_t*, int, int, str*);
+typedef sr_kemi_xval_t* (*sr_kemi_xfmnsn_f)(sip_msg_t*, int, str*, int);
+typedef sr_kemi_xval_t* (*sr_kemi_xfmnss_f)(sip_msg_t*, int, str*, str*);
+typedef sr_kemi_xval_t* (*sr_kemi_xfmsnn_f)(sip_msg_t*, str*, int, int);
+typedef sr_kemi_xval_t* (*sr_kemi_xfmsns_f)(sip_msg_t*, str*, int, str*);
+typedef sr_kemi_xval_t* (*sr_kemi_xfmssn_f)(sip_msg_t*, str*, str*, int);
+typedef sr_kemi_xval_t* (*sr_kemi_xfmsss_f)(sip_msg_t*, str*, str*, str*);
+
 sr_kemi_t* sr_kemi_lookup(str *mname, int midx, str *fname);
 
 int sr_kemi_modules_add(sr_kemi_t *klist);

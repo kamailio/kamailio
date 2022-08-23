@@ -43,7 +43,7 @@ int dlginfo_add_events(void)
 	event.content_type.s = "application/dialog-info+xml";
 	event.content_type.len = 27;
 
-	event.default_expires= 3600;
+	event.default_expires= pres_dlginfo_default_expires;
 	event.type = PUBL_TYPE;
 	event.req_auth = 0;
 	event.evs_publ_handl = 0;

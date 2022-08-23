@@ -431,6 +431,26 @@
       </example>
     </section>
 
+    <section>
+      <title>skip_multiple_bindings_on_reg_resp (int)</title>
+
+      <para>If set to 1 - on Re-Registration registrar sends in 200OK reply only
+      current contact in case of multiple bindings.
+      If set to 0 - on Re-Registration registrar sends in 200OK reply all
+      contacts in case of multiple bindings according to RFC3261.
+      </para>
+
+      <para><emphasis> Default value is 0. </emphasis></para>
+
+      <example>
+        <title>Set <varname>skip_multiple_bindings_on_reg_resp</varname> parameter</title>
+
+        <programlisting format="linespecific">...
+        modparam("ims_registrar_scscf", "skip_multiple_bindings_on_reg_resp", 1)
+...</programlisting>
+      </example>
+    </section>
+
   </section>
 
   <section>
@@ -438,7 +458,7 @@
 
     <section>
       <title><function moreinfo="none">save(async_reply_route,
-      domain)</function></title>
+      domain, mode, flags)</function></title>
 
       <para>The function processes a REGISTER message. It can add, remove or
       modify usrloc records depending on Contact and Expires HFs in the
@@ -461,6 +481,16 @@
         <listitem>
           <para><emphasis>domain</emphasis>- Logical domain within
           registrar.</para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis>mode</emphasis>- Optional and unused legacy parameter.</para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis>flags</emphasis>- Optional parameter. Valid values:
+          0x01 - Realm is not used when extracting Private Identity from the
+          Authorization header.</para>
         </listitem>
       </itemizedlist>
 

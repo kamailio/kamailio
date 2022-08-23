@@ -2901,7 +2901,7 @@ int ph_run_pi_cmd(pi_ctx_t* ctx)
 		case 0:
 			LM_ERR("no record on clause key [%.*s]\n",
 				command->c_keys[0]->len, command->c_keys[0]->s);
-			if(c_vals) pkg_free(c_vals); c_vals = NULL;
+			if(c_vals) { pkg_free(c_vals); c_vals = NULL; }
 			goto finish_page;
 		case 1:
 			LM_DBG("got [%d] rows for key [%.*s]\n",
@@ -3186,18 +3186,18 @@ int ph_run_pi_cmd(pi_ctx_t* ctx)
 						val_str.len = max_page_len - ctx->reply.body.len;
 						if(db_time2str(values[j].val.time_val,
 									val_str.s, &val_str.len)!=0){
-							LM_ERR("Unable to convert double [%ld]\n",
-								values[j].val.time_val);
+							LM_ERR("Unable to convert double [%" TIME_T_FMT "]\n",
+								TIME_T_CAST(values[j].val.time_val));
 							goto error;
 						}
 						p += val_str.len;
 						ctx->reply.body.len += val_str.len;
 						if(link_on) XHTTP_PI_COPY_2(p,XHTTP_PI_SQUOT_GT,val_str);
 						LM_DBG("   got %.*s[%d]=>"
-							"[%ld][%.*s]\n",
+							"[%" TIME_T_FMT "][%.*s]\n",
 							command->q_keys[j]->len,
 							command->q_keys[j]->s, i,
-							values[j].val.time_val,
+							TIME_T_CAST(values[j].val.time_val),
 							val_str.len, val_str.s);
 						break;
 					default:

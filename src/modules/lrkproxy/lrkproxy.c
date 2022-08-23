@@ -169,6 +169,18 @@ int lrkp_algorithm = LRK_LINER;
 static int hash_table_size = 0;
 static int hash_table_tout = 3600;
 
+/*!< The gt is game-theory variable, It could be set 0:disable and 1:enable
+ * default is 0.
+ */
+int gt = 0;
+
+/*
+ * the custom_sdp_ip_spec variable is used for specific SDP information based $si (source address)
+ * */
+static str custom_sdp_ip_spec = {NULL, 0};
+pv_spec_t custom_sdp_ip_avp;
+
+
 
 
 //static char *ice_candidate_priority_avp_param = NULL;
@@ -220,6 +232,8 @@ static param_export_t params[] = {
         {"lrkp_alg",         INT_PARAM, &lrkp_algorithm         },
         {"hash_table_tout",       INT_PARAM, &hash_table_tout        },
         {"hash_table_size",       INT_PARAM, &hash_table_size        },
+        {"custom_sdp_ip_avp",     PARAM_STR, &custom_sdp_ip_spec},
+        {"gt",   INT_PARAM  , &gt},
 
         {0, 0, 0}
 };
@@ -608,6 +622,18 @@ mod_init(void)
                                " auto-detection is disabled\n");
         memset(&tmb, 0, sizeof(struct tm_binds));
     }
+
+    if (custom_sdp_ip_spec.s) {
+        if (pv_parse_spec(&custom_sdp_ip_spec, &custom_sdp_ip_avp) == 0
+            && (custom_sdp_ip_avp.type != PVT_AVP)) {
+                    LM_ERR("malformed or non AVP custom_sdp_ip "
+                                   "AVP definition in '%.*s'\n", custom_sdp_ip_spec.len,custom_sdp_ip_spec.s);
+            return -1;
+        }
+    }
+
+    init_custom_sdp_ip(custom_sdp_ip_spec.s ? &custom_sdp_ip_avp : 0);
+
 
     return 0;
 }
@@ -1258,10 +1284,13 @@ static int change_media_sdp(sip_msg_t *msg, struct lrkproxy_hash_entry *e, const
         e->snat_ipv4.len = strlen(e->snat_ipv4.s);
 
         str current_port;
-        unsigned int snat_port;
+        unsigned int snat_port = 0;
 
         str2int(&e->dst_port, &snat_port);
-        snat_port += 2;
+
+        /*check if gt is enable or not*/
+        if (!gt)
+            snat_port += 2;
 
         current_port.s = int2str(snat_port, &current_port.len);
 
@@ -1555,6 +1584,7 @@ static int lrkproxy_force(struct sip_msg *msg, const char *flags, enum lrk_opera
 
         //fill src_ipv4 and src_port for entry.
         str src_ipv4;
+
         if (get_sdp_ipaddr_media(msg, &src_ipv4) == -1) {
                     LM_ERR("can't get media src_ipv4 from sdp field\n");
             return -1;
@@ -1618,9 +1648,12 @@ static int lrkproxy_force(struct sip_msg *msg, const char *flags, enum lrk_opera
 
         if (node->lrkp_n_c->current_port >= node->lrkp_n_c->end_port)
             node->lrkp_n_c->current_port = node->lrkp_n_c->start_port;
-        else
-            node->lrkp_n_c->current_port += 4;
-
+        else {
+            if (gt)
+                node->lrkp_n_c->current_port += 2;
+            else
+                node->lrkp_n_c->current_port += 4;
+        }
     } else if (op == OP_ANSWER) {
                 LM_INFO ("Here is SIP_REPLY of METHOD_INVITE\n");
 

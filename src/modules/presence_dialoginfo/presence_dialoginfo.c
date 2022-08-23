@@ -49,6 +49,7 @@ add_event_t pres_add_event;
 /* module parameters */
 int force_single_dialog = 0;
 int force_dummy_dialog = 0;
+unsigned int pres_dlginfo_default_expires = 3600;
 
 /* module exported commands */
 static cmd_export_t cmds[] =
@@ -60,6 +61,7 @@ static cmd_export_t cmds[] =
 static param_export_t params[] = {
 	{ "force_single_dialog", INT_PARAM, &force_single_dialog },
 	{ "force_dummy_dialog", INT_PARAM, &force_dummy_dialog },
+	{ "default_expires", INT_PARAM, &pres_dlginfo_default_expires },    
 	{0, 0, 0}
 };
 

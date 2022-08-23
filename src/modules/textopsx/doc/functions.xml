@@ -50,6 +50,34 @@ if(msg_apply_changes())
 		</example>
 	</section>
 
+	<section id="textopsx.f.msg_set_buffer">
+		<title>
+			<function moreinfo="none">msg_set_buffer(data)</function>
+		</title>
+		<para>
+		Set the content of the SIP message buffer, replacing the exiting data.
+		The parameter can contain variables, its value must be a valid SIP
+		request or reply, a matter of what the old message is.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE or core REPLY_ROUTE.
+		</para>
+		<para>
+		Note: It must be used before the transaction is created in
+		request_route and not inside the onreply_route[name] executed by tm
+		module. Also, do not use after resuming a suspended request or reply,
+		at that moment the transaction is already created.
+		</para>
+		<example>
+		<title><function>msg_set_buffer()</function> usage</title>
+		<programlisting format="linespecific">
+...
+msg_set_buffer("INVITE sip:...");
+...
+</programlisting>
+		</example>
+	</section>
+
     <section id="textopsx.f.change_reply_status">
 	<title>
 	    <function>change_reply_status(code, reason)</function>
@@ -482,5 +510,371 @@ if (@hf_value_exists.supported.path == "1") {
 	    </programlisting>
 	</example>
     </section>
+	<section id="textopsx.f.hf_iterator_start">
+		<title>
+		<function moreinfo="none">hf_iterator_start(iname)</function>
+		</title>
+		<para>
+			Start an iterator for headers in the current SIP message.
+			The parameter iname is used to identify the iterator. There
+			can be up to 4 iterators at the same time, with different name.
+		</para>
+		<para>
+			The parameter can be a dynamic string with variables.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>hf_iterator_start</function> usage</title>
+		<programlisting format="linespecific">
+...
+hf_iterator_start("i1");
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="textopsx.f.hf_iterator_end">
+		<title>
+		<function moreinfo="none">hf_iterator_end(iname)</function>
+		</title>
+		<para>
+			Close the iterator identified by iname parameter. The iname value
+			must be the same used for hf_iterator_start().
+		</para>
+		<para>
+			The parameter can be dynamic string with variables.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>hf_iterator_end</function> usage</title>
+		<programlisting format="linespecific">
+...
+hf_iterator_end("i1");
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="textopsx.f.hf_iterator_next">
+		<title>
+		<function moreinfo="none">hf_iterator_next(iname)</function>
+		</title>
+		<para>
+			Move the iterator to the next header. It must
+			be called also after hf_iterator_start() to get the first
+			header.
+		</para>
+		<para>
+			The return code is false when there is no other header in the list.
+		</para>
+		<para>
+			The item name and value are accessible via variables:
+			$hfitname(iname) and $hfitbody(iname).
+		</para>
+		<para>
+			The parameter can be dynamic string with variables.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>hf_iterator_next</function> usage</title>
+		<programlisting format="linespecific">
+...
+    hf_iterator_start("i1");
+    while(hf_iterator_next("i1")) {
+        xlog("hdr[$hfitname(i1)] is: $hfitbody(i1)\n");
+    }
+    hf_iterator_end("i1");
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="textopsx.f.hf_iterator_prev">
+		<title>
+		<function moreinfo="none">hf_iterator_prev(iname)</function>
+		</title>
+		<para>
+			Move the iterator to the previous header. It must
+			be called also after hf_iterator_start() and hf_iterator_next().
+		</para>
+		<para>
+			The parameter can be dynamic string with variables.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>hf_iterator_prev</function> usage</title>
+		<programlisting format="linespecific">
+...
+    hf_iterator_start("i1");
+    hf_iterator_next("i1");
+...
+    hf_iterator_next("i1");
+...
+    hf_iterator_prev("i1");
+...
+    hf_iterator_end("i1");
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="textopsx.f.hf_iterator_rm">
+		<title>
+		<function moreinfo="none">hf_iterator_rm(iname)</function>
+		</title>
+		<para>
+			Remove the header at the current iterator position.
+		</para>
+		<para>
+			The parameter can be dynamic string with variables.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>hf_iterator_rm</function> usage</title>
+		<programlisting format="linespecific">
+...
+    hf_iterator_start("i1");
+    while(hf_iterator_next("i1")) {
+        if($hfitname(i1)=="My-Header") {
+            hf_iterator_rm("i1");
+        }
+    }
+    hf_iterator_end("i1");
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="textopsx.f.hf_iterator_append">
+		<title>
+		<function moreinfo="none">hf_iterator_append(iname, htext)</function>
+		</title>
+		<para>
+			Add headers after the one at the current iterator possition.
+		</para>
+		<para>
+			The parameters can be dynamic strings with variables.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>hf_iterator_append</function> usage</title>
+		<programlisting format="linespecific">
+...
+    hf_iterator_start("i1");
+    while(hf_iterator_next("i1")) {
+        if($hfitname(i1)=="My-Header") {
+            hf_iterator_append("i1", "My-New-Header: abc\r\n");
+            break;
+        }
+    }
+    hf_iterator_end("i1");
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="textopsx.f.hf_iterator_insert">
+		<title>
+		<function moreinfo="none">hf_iterator_insert(iname, htext)</function>
+		</title>
+		<para>
+			Add headers before the one at the current iterator possition.
+		</para>
+		<para>
+			The parameters can be dynamic strings with variables.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>hf_iterator_insert</function> usage</title>
+		<programlisting format="linespecific">
+...
+    hf_iterator_start("i1");
+    while(hf_iterator_next("i1")) {
+        if($hfitname(i1)=="My-Header") {
+            hf_iterator_insert("i1", "My-New-Header: abc\r\n");
+            break;
+        }
+    }
+    hf_iterator_end("i1");
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="textopsx.f.bl_iterator_start">
+		<title>
+		<function moreinfo="none">bl_iterator_start(iname)</function>
+		</title>
+		<para>
+			Start an iterator for lines in the body of the current SIP message.
+			The parameter iname is used to identify the iterator. There
+			can be up to 4 iterators at the same time, with different name.
+		</para>
+		<para>
+			The parameter can be a dynamic string with variables.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>bl_iterator_start</function> usage</title>
+		<programlisting format="linespecific">
+...
+bl_iterator_start("b1");
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="textopsx.f.bl_iterator_end">
+		<title>
+		<function moreinfo="none">bl_iterator_end(iname)</function>
+		</title>
+		<para>
+			Close the iterator identified by iname parameter. The iname value
+			must be the same used for bl_iterator_start().
+		</para>
+		<para>
+			The parameter can be dynamic string with variables.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>bl_iterator_end</function> usage</title>
+		<programlisting format="linespecific">
+...
+bl_iterator_end("b1");
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="textopsx.f.bl_iterator_next">
+		<title>
+		<function moreinfo="none">bl_iterator_next(iname)</function>
+		</title>
+		<para>
+			Move the iterator to the next line in the body. It must
+			be called also after bl_iterator_start() to get the first
+			header.
+		</para>
+		<para>
+			The return code is false when there is no other header in the list.
+		</para>
+		<para>
+			The body line accessible via variable $blitval(iname) - it contains
+			also the EOL chars.
+		</para>
+		<para>
+			The parameter can be dynamic string with variables.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>bl_iterator_next</function> usage</title>
+		<programlisting format="linespecific">
+...
+    bl_iterator_start("b1");
+    while(bl_iterator_next("b1")) {
+        xlog("body line: $blitval(b1)");
+    }
+    bl_iterator_end("b1");
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="textopsx.f.bl_iterator_rm">
+		<title>
+		<function moreinfo="none">bl_iterator_rm(iname)</function>
+		</title>
+		<para>
+			Remove the body line at the current iterator position.
+		</para>
+		<para>
+			The parameter can be dynamic string with variables.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>bl_iterator_rm</function> usage</title>
+		<programlisting format="linespecific">
+...
+    bl_iterator_start("b1");
+    while(bl_iterator_next("b1")) {
+        if($blitval(b1)=~"abc") {
+            bl_iterator_rm("b1");
+        }
+    }
+    bl_iterator_end("b1");
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="textopsx.f.bl_iterator_append">
+		<title>
+		<function moreinfo="none">bl_iterator_append(iname, text)</function>
+		</title>
+		<para>
+			Add text after the line at the current iterator possition.
+		</para>
+		<para>
+			The parameters can be dynamic strings with variables.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>bl_iterator_append</function> usage</title>
+		<programlisting format="linespecific">
+...
+    bl_iterator_start("b1");
+    while(bl_iterator_next("b1")) {
+        if($blitval(b1)=~"^a=info:xyz") {
+            bl_iterator_append("b1", "a=info:abc\r\n");
+            break;
+        }
+    }
+    bl_iterator_end("b1");
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="textopsx.f.bl_iterator_insert">
+		<title>
+		<function moreinfo="none">bl_iterator_insert(iname, text)</function>
+		</title>
+		<para>
+			Add text before the line at the current iterator possition.
+		</para>
+		<para>
+			The parameters can be dynamic strings with variables.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>bl_iterator_insert</function> usage</title>
+		<programlisting format="linespecific">
+...
+    bl_iterator_start("b1");
+    while(bl_iterator_next("b1")) {
+        if($blitval(b1)=~"^a=info:xyz") {
+            bl_iterator_insert("b1", "a=info:abc\r\n");
+            break;
+        }
+    }
+    bl_iterator_end("b1");
+...
+</programlisting>
+		</example>
+	</section>
 
 </section>

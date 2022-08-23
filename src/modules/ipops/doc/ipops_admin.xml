@@ -1064,6 +1064,46 @@ if (naptr_query ("example.com", "res") > 0) {
 
     </section>
 
+    <section id="ipops.f.dns_set_local_ttl">
+      <title>
+        <function moreinfo="none">dns_set_local_ttl(vttl)</function>
+      </title>
+
+      <para>
+		  Set local ttl for DNS query results. If vttl is 0, then the value of
+		  the result and the core parameters are used.
+      </para>
+
+      <para>Parameters:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>
+			  <emphasis>vttl</emphasis> - TTL value in seconds. It can be static
+			  integer or a variable holding an integer value.
+          </para>
+        </listitem>
+      </itemizedlist>
+
+      <para>
+        This function can be used from ANY_ROUTE.
+      </para>
+
+      <example>
+        <title>
+          <function>dns_set_local_ttl</function> usage
+        </title>
+        <programlisting format="linespecific">
+...
+  dns_set_local_ttl("7200");
+  dns_query("test.com", "xyz")
+  dns_set_local_ttl("0");
+...
+        </programlisting>
+      </example>
+
+    </section>
+
   </section>
- 
+
 </chapter>

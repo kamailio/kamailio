@@ -50,6 +50,7 @@
 #include "../../core/parser/parse_uri.h"
 #include "../../core/parser/parse_to.h"
 #include "../../core/parser/parse_from.h"
+#include "../../core/parser/parse_methods.h"
 #include "../../core/timer_proc.h"
 #include "../../core/fmsg.h"
 #include "../../core/onsend.h"
@@ -80,10 +81,15 @@ static str _tps_db_url = str_init(DEFAULT_DB_URL);
 int _tps_param_mask_callid = 0;
 int _tps_sanity_checks = 0;
 int _tps_rr_update = 0;
+int _tps_header_mode = 0;
 str _tps_storage = str_init("db");
 
 extern int _tps_branch_expire;
 extern int _tps_dialog_expire;
+extern unsigned int _tps_methods_nocontact;
+str _tps_methods_nocontact_list = str_init("");
+extern unsigned int _tps_methods_noinitial;
+str _tps_methods_noinitial_list = str_init("");
 
 int _tps_clean_interval = 60;
 
@@ -107,13 +113,13 @@ str _tps_contact_host = str_init("");
 int _tps_contact_mode = 0;
 str _tps_cparam_name = str_init("tps");
 
-str _tps_xavu_cfg = str_init("");
-str _tps_xavu_field_acontact = str_init("");
-str _tps_xavu_field_bcontact = str_init("");
-str _tps_xavu_field_contact_host = str_init("");
+str _tps_xavu_cfg = STR_NULL;
+str _tps_xavu_field_acontact = STR_NULL;
+str _tps_xavu_field_bcontact = STR_NULL;
+str _tps_xavu_field_contact_host = STR_NULL;
 
-str _tps_context_param = str_init("");
-str _tps_context_value = str_init("");
+str _tps_context_param = STR_NULL;
+str _tps_context_value = STR_NULL;
 
 sanity_api_t scb;
 
@@ -151,6 +157,7 @@ static param_export_t params[]={
 	{"db_url",		PARAM_STR, &_tps_db_url},
 	{"mask_callid",		PARAM_INT, &_tps_param_mask_callid},
 	{"sanity_checks",	PARAM_INT, &_tps_sanity_checks},
+	{"header_mode",	PARAM_INT, &_tps_header_mode},
 	{"branch_expire",	PARAM_INT, &_tps_branch_expire},
 	{"dialog_expire",	PARAM_INT, &_tps_dialog_expire},
 	{"clean_interval",	PARAM_INT, &_tps_clean_interval},
@@ -165,6 +172,9 @@ static param_export_t params[]={
 	{"xavu_field_contact_host", PARAM_STR, &_tps_xavu_field_contact_host},
 	{"rr_update",		PARAM_INT, &_tps_rr_update},
 	{"context",			PARAM_STR, &_tps_context_param},
+	{"methods_nocontact",		PARAM_STR, &_tps_methods_nocontact_list},
+	{"methods_noinitial",		PARAM_STR, &_tps_methods_noinitial_list},
+
 	{0,0,0}
 };
 
@@ -214,6 +224,18 @@ static int mod_init(void)
 		return -1;
 	}
 
+	if(_tps_methods_nocontact_list.len>0) {
+		if(parse_methods(&_tps_methods_nocontact_list, &_tps_methods_nocontact)<0) {
+			LM_ERR("failed to parse methods_nocontact parameter\n");
+			return -1;
+		}
+	}
+	if(_tps_methods_noinitial_list.len>0) {
+		if(parse_methods(&_tps_methods_noinitial_list, &_tps_methods_noinitial)<0) {
+			LM_ERR("failed to parse methods_noinitial parameter\n");
+			return -1;
+		}
+	}
 	if(_tps_storage.len==2 && strncmp(_tps_storage.s, "db", 2)==0) {
 		/* Find a database module */
 		if (db_bind_mod(&_tps_db_url, &_tpsdbf)) {
@@ -247,7 +269,8 @@ static int mod_init(void)
 	if(sruid_init(&_tps_sruid, '-', "tpsh", SRUID_INC)<0)
 		return -1;
 
-	if (_tps_contact_mode == 2 && (_tps_xavu_field_acontact.len <= 0
+	if (_tps_contact_mode == 2 && (_tps_xavu_cfg.len <= 0
+				|| _tps_xavu_field_acontact.len <= 0
 				|| _tps_xavu_field_bcontact.len <= 0)) {
 		LM_ERR("contact_mode parameter is 2,"
 				" but a_contact or b_contact xavu fields not defined\n");

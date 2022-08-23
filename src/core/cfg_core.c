@@ -110,11 +110,12 @@ struct cfg_group_core default_core_cfg = {
 	-1,  /**< udp4_raw_ttl (auto detect by default) */
 	0,  /*!< force_rport */
 	L_DBG+1, /*!< memlog */
-	3, /*!< mem_summary -flags: 0 off, 1 pkg_status, 2 shm_status,
+	12, /*!< mem_summary -flags: 0 off, 1 pkg_status, 2 shm_status,
 		4 pkg_sums, 8 shm_sums, 16 short_status */
 	1, /*!< mem_safety - 0 disabled; 1 enabled */
 	1, /*!< mem_join - 1 enabled */
 	0, /*!< mem_status_mode - 0 only free fragments, 1 all fragements */
+	0, /*!< sip msg parser print on one line*/
 	L_ERR, /*!< sip msg parser error log level*/
 	L_ERR, /*!< corelog */
 	L_DBG, /*!< latency cfg log */
@@ -319,6 +320,8 @@ cfg_def_t core_cfg_def[] = {
 		"join free memory fragments"},
 	{"mem_status_mode",		CFG_VAR_INT|CFG_ATOMIC,	0, 0, 0, 0,
 		"print status for free or all memory fragments"},
+	{"sip_parser_log_oneline",		CFG_VAR_INT|CFG_ATOMIC,	0, 0, 0, 0,
+		"sip msg print on one line"},
 	{"sip_parser_log",		CFG_VAR_INT|CFG_ATOMIC,	0, 0, 0, 0,
 		"log level for sip msg parser error messages"},
 	{"corelog",		CFG_VAR_INT|CFG_ATOMIC,	0, 0, 0, 0,

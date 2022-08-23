@@ -55,6 +55,9 @@ int pv_get_msgtypes(struct sip_msg *msg, pv_param_t *param,
 int pv_get_status(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 
+int pv_get_statusi(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
 int pv_get_reason(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 
@@ -163,6 +166,9 @@ int pv_get_rcvaddr_uri(struct sip_msg *msg, pv_param_t *param,
 int pv_get_rcvaddr_uri_full(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 
+int pv_get_rcvaddr_socket(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res);
+
 int pv_get_rcvsname(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 
@@ -249,9 +255,13 @@ int pv_get_branches(struct sip_msg *msg, pv_param_t *param,
 
 int pv_get_avp(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res);
 
-int pv_get_hdr(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res);
+int pv_get_hdr(sip_msg_t *msg,  pv_param_t *param, pv_value_t *res);
 
 int pv_get_hdrc(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res);
+
+int pv_get_hfl(sip_msg_t *msg,  pv_param_t *param, pv_value_t *res);
+
+int pv_get_hflc(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res);
 
 int pv_get_scriptvar(struct sip_msg *msg,  pv_param_t *param,
 		pv_value_t *res);
@@ -359,6 +369,8 @@ int pv_parse_scriptvarnull_name(pv_spec_p sp, str *in);
 
 int pv_parse_hdr_name(pv_spec_p sp, str *in);
 
+int pv_parse_hfl_name(pv_spec_p sp, str *in);
+
 int pv_parse_cnt_name(pv_spec_p sp, str *in);
 
 int pv_parse_af_name(pv_spec_p sp, str *in);
@@ -392,6 +404,29 @@ int pv_parse_ksr_attrs_name(pv_spec_p sp, str *in);
 
 int pv_get_ksr_attrs(sip_msg_t *msg, pv_param_t *param,
 		pv_value_t *res);
+
+int pv_parse_rpl_attrs_name(pv_spec_p sp, str *in);
+
+int pv_get_rpl_attrs(sip_msg_t *msg, pv_param_t *param,
+		pv_value_t *res);
+
+int pv_ccp_ctx_init(void);
+int pv_parse_ccp_attrs_name(pv_spec_p sp, str *in);
+int pv_get_ccp_attrs(sip_msg_t *msg, pv_param_t *param,
+		pv_value_t *res);
+int pv_set_ccp_attrs(struct sip_msg* msg, pv_param_t *param,
+		int op, pv_value_t *val);
+
+int pv_parse_via_name(pv_spec_p sp, str *in);
+int pv_get_via0(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
+int pv_get_via1(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
+int pv_get_viaZ(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
+
+int pv_parse_msgbuf_name(pv_spec_t *sp, str *in);
+int pv_get_msgbuf(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
+int pv_set_msgbuf(sip_msg_t *msg, pv_param_t *param,
+		int op, pv_value_t *val);
+
 
 #endif
 

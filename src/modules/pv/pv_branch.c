@@ -23,6 +23,7 @@
 #include "../../core/dset.h"
 #include "../../core/onsend.h"
 #include "../../core/socket_info.h"
+#include "../../core/resolve.h"
 
 #include "pv_core.h"
 #include "pv_branch.h"
@@ -616,6 +617,59 @@ int pv_get_rcv(struct sip_msg *msg, pv_param_t *param,
 	return 0;
 }
 
+int pv_set_rcv(sip_msg_t *msg, pv_param_t *param, int op, pv_value_t *val)
+{
+	sr_net_info_t *neti = NULL;
+
+	neti = ksr_evrt_rcvnetinfo_get();
+
+	if (neti==NULL || neti->rcv==NULL || neti->rcv->bind_address==NULL) {
+		LM_ERR("received info not set\n");
+		return -1;
+	}
+
+	if(param==NULL) {
+		LM_ERR("bad parameters\n");
+		return -1;
+	}
+	switch(param->pvn.u.isname.name.n)
+	{
+		case 1: /* buf */
+			if (neti->bufsize <= 0) {
+				LM_ERR("received data cannot be changed\n");
+				return -1;
+			}
+			if(val==NULL || (val->flags&PV_VAL_NULL)) {
+				neti->data.s[0] = '\0';
+				neti->data.len = 0;
+				break;
+			}
+			if(!(val->flags&PV_VAL_STR)) {
+				LM_ERR("str value required to set received data\n");
+				return -1;
+			}
+			if(val->rs.len<=0) {
+				neti->data.s[0] = '\0';
+				neti->data.len = 0;
+				break;
+			}
+
+			if (unlikely(val->rs.len >= neti->bufsize - 1)) {
+				LM_ERR("new data is too long: %.*s\n",
+								val->rs.len, val->rs.s);
+				return -1;
+			}
+			memcpy(neti->data.s, val->rs.s, val->rs.len);
+			neti->data.s[val->rs.len] = '\0';
+			neti->data.len = val->rs.len;
+		break;
+		default:
+			LM_DBG("set operation not supported for field %d\n",
+					param->pvn.u.isname.name.n);
+	}
+	return 0;
+}
+
 int pv_parse_rcv_name(pv_spec_p sp, str *in)
 {
 	if(sp==NULL || in==NULL || in->len<=0)
@@ -669,6 +723,89 @@ error:
 	return -1;
 }
 
+/**
+ *
+ */
+int pv_get_nh_reply(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	static char rpluribuf[MAX_URI_SIZE];
+	str suri = STR_NULL;
+	str host = STR_NULL;
+	str sproto = STR_NULL;
+	unsigned int port = 0;
+
+	if(parse_headers( msg, HDR_VIA2_F, 0)==-1) {
+		LM_DBG("no 2nd via parsed\n");
+		return pv_get_null(msg, param, res);
+	}
+	if((msg->via2==0) || (msg->via2->error!=PARSE_OK)) {
+		return pv_get_null(msg, param, res);
+	}
+	if(msg->via2->rport && msg->via2->rport->value.s) {
+		LM_DBG("using 'rport'\n");
+		if(str2int(&msg->via2->rport->value, &port)<0) {
+			LM_ERR("invalid rport value\n");
+			return pv_get_null(msg, param, res);
+		}
+	}
+	if(msg->via2->received) {
+		LM_DBG("using 'received'\n");
+		host = msg->via2->received->value;
+	} else {
+		LM_DBG("using via host\n");
+		host = msg->via2->host;
+	}
+	if(port==0) {
+		port = GET_SIP_PORT(msg->via2->port, msg->via2->proto);
+	}
+
+	switch(param->pvn.u.isname.name.n) {
+		case 0: /* uri */
+			if(get_valid_proto_string(msg->via2->proto, 1, 0, &sproto)<0) {
+				sproto.s = "udp";
+				sproto.len = 3;
+			}
+			suri.len = snprintf(rpluribuf, MAX_URI_SIZE, "sip:%.*s:%u;transport=%.*s",
+					host.len, host.s, port, sproto.len, sproto.s);
+			if(suri.len<=0 || suri.len>=MAX_URI_SIZE) {
+				LM_DBG("building the dst uri failed (%d)\n", suri.len);
+				return pv_get_null(msg, param, res);
+			}
+			suri.s = rpluribuf;
+			return pv_get_strval(msg, param, res, &suri);
+		case 1: /* user - not in Via */
+			return pv_get_null(msg, param, res);
+		case 2: /* domain/host */
+			return pv_get_strval(msg, param, res, &host);
+		case 3: /* port */
+			return pv_get_uintval(msg, param, res, port);
+		case 4: /* proto */
+			if(get_valid_proto_string(msg->via2->proto, 0, 0, &sproto)<0) {
+				/* default to udp */
+				sproto.s = "udp";
+				sproto.len = 3;
+				return pv_get_strintval(msg, param, res, &sproto, PROTO_UDP);
+			}
+			return pv_get_strintval(msg, param, res, &sproto,
+					(int)msg->via2->proto);
+		case 5: /* ip family */
+			if(str2ip(&host)!=NULL) {
+				return pv_get_uintval(msg, param, res, 4);
+			}
+			if(str2ip6(&host)!=NULL) {
+				return pv_get_uintval(msg, param, res, 6);
+			}
+			return pv_get_uintval(msg, param, res, 0);
+	}
+
+	LM_ERR("unknown specifier\n");
+	return pv_get_null(msg, param, res);
+}
+
+/**
+ *
+ */
 int pv_get_nh(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
 {
@@ -678,8 +815,10 @@ int pv_get_nh(struct sip_msg *msg, pv_param_t *param,
 	if(msg==NULL || res==NULL)
 		return -1;
 
-	if(msg->first_line.type == SIP_REPLY)	/* REPLY doesnt have r/d-uri */
-		return pv_get_null(msg, param, res);
+	if(msg->first_line.type == SIP_REPLY) {
+		/* REPLY doesnt have r/d-uri - use second Via */
+		return pv_get_nh_reply(msg, param, res);
+	}
 
     if (msg->dst_uri.s != NULL && msg->dst_uri.len>0)
 	{
@@ -720,6 +859,17 @@ int pv_get_nh(struct sip_msg *msg, pv_param_t *param,
 			return pv_get_udp(msg, param, res);
 		return pv_get_strintval(msg, param, res, &parsed_uri.transport_val,
 				(int)parsed_uri.proto);
+	} else if(param->pvn.u.isname.name.n==5) /* ip family */ {
+		if(parsed_uri.host.s==NULL || parsed_uri.host.len<=0) {
+			return pv_get_uintval(msg, param, res, 0);
+		}
+		if(str2ip(&parsed_uri.host)!=NULL) {
+			return pv_get_uintval(msg, param, res, 4);
+		}
+		if(str2ip6(&parsed_uri.host)!=NULL) {
+			return pv_get_uintval(msg, param, res, 6);
+		}
+		return pv_get_uintval(msg, param, res, 0);
 	}
 	LM_ERR("unknown specifier\n");
 	return pv_get_null(msg, param, res);
@@ -743,6 +893,8 @@ int pv_parse_nh_name(pv_spec_p sp, str *in)
 				sp->pvp.pvn.u.isname.name.n = 3;
 			else if(strncmp(in->s, "P", 1)==0)
 				sp->pvp.pvn.u.isname.name.n = 4;
+			else if(strncmp(in->s, "i", 1)==0)
+				sp->pvp.pvn.u.isname.name.n = 5;
 			else goto error;
 		break;
 		default:

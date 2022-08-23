@@ -106,7 +106,7 @@ static sr_xavp_t *xavp_new_value(str *name, sr_xval_t *val)
 	int size;
 	unsigned int id;
 
-	if(name==NULL || name->s==NULL || val==NULL)
+	if(name==NULL || name->s==NULL || name->len<=0 || val==NULL)
 		return NULL;
 	id = get_hash1_raw(name->s, name->len);
 
@@ -427,7 +427,7 @@ static int xavp_rm_internal(str *name, sr_xavp_t **head, int idx)
 	int n=0;
 	int count=0;
 
-	if(name==NULL || name->s==NULL)
+	if(name==NULL || name->s==NULL || name->len<=0)
 		return 0;
 
 	id = get_hash1_raw(name->s, name->len);
@@ -498,7 +498,7 @@ int xavp_count(str *name, sr_xavp_t **start)
 	unsigned int id;
 	int n = 0;
 
-	if(name==NULL || name->s==NULL)
+	if(name==NULL || name->s==NULL || name->len<=0)
 		return -1;
 	id = get_hash1_raw(name->s, name->len);
 
@@ -517,6 +517,105 @@ int xavp_count(str *name, sr_xavp_t **start)
 	}
 
 	return n;
+}
+
+/**
+ * Left shift xavps
+ */
+int xavp_lshift(str *name, sr_xavp_t **head, int idx)
+{
+	sr_xavp_t *avp;
+	sr_xavp_t *lhead = NULL;
+	sr_xavp_t *lhead_last = NULL;
+	sr_xavp_t *ltail = NULL;
+	sr_xavp_t *ltail_last = NULL;
+	sr_xavp_t *crt=0;
+	sr_xavp_t *prv=0;
+	unsigned int id;
+	int n=0;
+	int xcnt;
+
+	if(name==NULL || name->s==NULL || name->len<=0) {
+		return 0;
+	}
+
+	if(idx==0) {
+		return 1;
+	}
+	xcnt = xavp_count(name, head);
+	if(xcnt <= 0) {
+		return -2;
+	}
+	while(idx < 0) {
+		idx = xcnt + idx;
+	}
+	if(idx==0) {
+		return 1;
+	}
+	idx = idx % xcnt;
+	if(idx==0) {
+		return 1;
+	}
+
+	id = get_hash1_raw(name->s, name->len);
+	if(head!=NULL)
+		avp = *head;
+	else
+		avp = *_xavp_list_crt;
+	while(avp)
+	{
+		crt = avp;
+		avp=avp->next;
+		if(crt->id==id && crt->name.len==name->len
+				&& strncmp(crt->name.s, name->s, name->len)==0)
+		{
+			if(prv!=NULL)
+				prv->next=crt->next;
+			else if(head!=NULL)
+				*head = crt->next;
+			else
+				*_xavp_list_crt = crt->next;
+			crt->next = NULL;
+			if(n < idx) {
+				if(ltail==NULL) {
+					ltail = crt;
+				}
+				if(ltail_last!=NULL) {
+					ltail_last->next = crt;
+				}
+				ltail_last = crt;
+			} else {
+				if(lhead==NULL) {
+					lhead = crt;
+				}
+				if(lhead_last!=NULL) {
+					lhead_last->next = crt;
+				}
+				lhead_last = crt;
+			}
+			n++;
+		} else {
+			prv = crt;
+		}
+	}
+
+	if(lhead_last) {
+		lhead_last->next = ltail;
+	}
+
+	if(head!=NULL) {
+		if(ltail_last) {
+			ltail_last->next = *head;
+		}
+		*head = lhead;
+	} else {
+		if(ltail_last) {
+			ltail_last->next = *_xavp_list_crt;
+		}
+		*_xavp_list_crt = lhead;
+	}
+
+	return 0;
 }
 
 void xavp_destroy_list_unsafe(sr_xavp_t **head)
@@ -865,7 +964,7 @@ sr_xavp_t *xavp_extract(str *name, sr_xavp_t **list)
 	sr_xavp_t *prv = 0;
 	unsigned int id;
 
-	if(name==NULL || name->s==NULL) {
+	if(name==NULL || name->s==NULL || name->len<=0) {
 		if(list!=NULL) {
 			avp = *list;
 			if(avp!=NULL) {
@@ -1157,7 +1256,7 @@ static sr_xavp_t *xavu_get_internal(str *name, sr_xavp_t **list, sr_xavp_t **prv
 	sr_xavp_t *avu;
 	unsigned int id;
 
-	if(name==NULL || name->s==NULL) {
+	if(name==NULL || name->s==NULL || name->len<=0) {
 		return NULL;
 	}
 
@@ -1235,7 +1334,7 @@ int xavu_rm_by_name(str *name, sr_xavp_t **head)
 	unsigned int id;
 
 
-	if(name==NULL || name->s==NULL) {
+	if(name==NULL || name->s==NULL || name->len<=0) {
 		return -1;
 	}
 
@@ -1579,7 +1678,7 @@ static sr_xavp_t *xavi_new_value(str *name, sr_xval_t *val)
 	int size;
 	unsigned int id;
 
-	if(name==NULL || name->s==NULL || val==NULL)
+	if(name==NULL || name->s==NULL || name->len<=0 || val==NULL)
 		return NULL;
 	id = get_hash1_case_raw(name->s, name->len);
 
@@ -1812,7 +1911,7 @@ static sr_xavp_t *xavi_get_internal(str *name, sr_xavp_t **list, int idx, sr_xav
 	unsigned int id;
 	int n = 0;
 
-	if(name==NULL || name->s==NULL)
+	if(name==NULL || name->s==NULL || name->len<=0)
 		return NULL;
 	id = get_hash1_case_raw(name->s, name->len);
 
@@ -1939,7 +2038,7 @@ static int xavi_rm_internal(str *name, sr_xavp_t **head, int idx)
 	int n=0;
 	int count=0;
 
-	if(name==NULL || name->s==NULL)
+	if(name==NULL || name->s==NULL || name->len<=0)
 		return 0;
 
 	id = get_hash1_case_raw(name->s, name->len);
@@ -2022,7 +2121,7 @@ int xavi_count(str *name, sr_xavp_t **start)
 	unsigned int id;
 	int n = 0;
 
-	if(name==NULL || name->s==NULL)
+	if(name==NULL || name->s==NULL || name->len<=0)
 		return -1;
 	id = get_hash1_case_raw(name->s, name->len);
 
@@ -2315,7 +2414,7 @@ sr_xavp_t *xavi_extract(str *name, sr_xavp_t **list)
 	sr_xavp_t *prv = 0;
 	unsigned int id;
 
-	if(name==NULL || name->s==NULL) {
+	if(name==NULL || name->s==NULL || name->len<=0) {
 		if(list!=NULL) {
 			avi = *list;
 			if(avi!=NULL) {

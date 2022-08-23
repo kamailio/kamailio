@@ -211,6 +211,7 @@ int ht_db_load_table(ht_t *ht, str *dbtable, int mode)
 		LM_ERR("failed to use_table\n");
 		return -1;
 	}
+	ht->dbload = 0;
 	if(ht->ncols>0) {
 		db_ord = &ht->scols[0];
 		for(c=0; c<ht->ncols; c++) {
@@ -494,7 +495,7 @@ int ht_db_load_table(ht_t *ht, str *dbtable, int mode)
 				if (ht->htexpire > 0 && expires.n > 0) {
 					expires.n -= now;
 					if(ht_set_cell_expire(ht, &hname, 0, &expires)) {
-						LM_ERR("error setting expires to hash entry [%*.s]\n", hname.len, hname.s);
+						LM_ERR("error setting expires to hash entry [%.*s]\n", hname.len, hname.s);
 						goto error;
 					}
 				}
@@ -527,6 +528,7 @@ int ht_db_load_table(ht_t *ht, str *dbtable, int mode)
 
 	ht_dbf.free_result(ht_db_con, db_res);
 	LM_DBG("loaded %d values in hash table\n", cnt);
+	ht->dbload = 1;
 
 	return 0;
 error:
@@ -548,6 +550,11 @@ int ht_db_save_table(ht_t *ht, str *dbtable)
 	int i;
 	time_t now;
 	int ncols;
+
+	if(ht==NULL || ht->entries==NULL) {
+		LM_DBG("hash table not initialized yet\n");
+		return -1;
+	}
 
 	if(ht_db_con==NULL)
 	{

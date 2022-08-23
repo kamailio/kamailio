@@ -346,6 +346,7 @@ static int receive_fd(int pipe_fd, int* fd,peer **p)
 		char control[CMSG_SPACE(sizeof(new_fd))];
 	}control_un;
 
+	memset(&msg, 0, sizeof(struct msghdr));
 	msg.msg_control=control_un.control;
 	msg.msg_controllen=sizeof(control_un.control);
 #else
@@ -843,7 +844,7 @@ drop_peer:
  */
 int peer_connect(peer *p)
 {
-	int sock;
+	int sock = -1;
 	int tmp = 0;
 	unsigned int option = 1;
 
@@ -921,17 +922,20 @@ int peer_connect(peer *p)
 						if (valopt) {
 							LM_ERR("peer_connect(): Error opening connection to to %s port %s >%s\n",host,serv,strerror(valopt));
 							close(sock);
+							sock = -1;
 							continue;
 						}
 					}else{
 						LM_ERR("peer_connect(): Timeout or error opening connection to to %s port %s >%s\n",host,serv,strerror(errno));
 						close(sock);
+						sock = -1;
 						continue;
 					}
 				}
 			}else{
 				LM_ERR("peer_connect(): Error opening connection to to %s port %s >%s\n",host,serv,strerror(errno));
 				close(sock);
+				sock = -1;
 				continue;
 			}
 
@@ -955,7 +959,6 @@ int peer_connect(peer *p)
 
 		if (!send_fd(p->fd_exchange_pipe,sock,p)){
 			LM_ERR("peer_connect(): [%.*s] Error sending fd to respective receiver\n",p->fqdn.len,p->fqdn.s);
-			close(sock);
 			goto error;
 		}
 
@@ -966,6 +969,7 @@ int peer_connect(peer *p)
 error:
 	if (res) freeaddrinfo(res);
 	if (sainfo) freeaddrinfo(sainfo);
+	if (sock!=-1) close(sock);
 	return -1;
 }
 

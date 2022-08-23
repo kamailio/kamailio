@@ -12,6 +12,11 @@ Victor Seva
    Sipwise GmbH
    <vseva@sipwise.com>
 
+Fabricio Santolin da Silva
+
+   Alcatel-Lucent Enterprise
+   <fabricio.santolin-da-silva@al-enterprise.com>
+
    Copyright © 2018 Sipwise GmbH
      __________________________________________________________________
 
@@ -44,6 +49,8 @@ Victor Seva
               4.5. pvh_append_header(hname, hvalue)
               4.6. pvh_modify_header(hname, hvalue, [idx])
               4.7. pvh_remove_header(hname, [idx])
+              4.8. pvh_value_exists(hname, hparameter)
+              4.9. pvh_remove_header_param(hname, hparameter)
 
         5. Exported Variables
 
@@ -86,6 +93,8 @@ Chapter 1. Admin Guide
         4.5. pvh_append_header(hname, hvalue)
         4.6. pvh_modify_header(hname, hvalue, [idx])
         4.7. pvh_remove_header(hname, [idx])
+        4.8. pvh_value_exists(hname, hparameter)
+        4.9. pvh_remove_header_param(hname, hparameter)
 
    5. Exported Variables
 
@@ -240,8 +249,8 @@ modparam("pv_headers", "auto_msg", 1)
    4.5. pvh_append_header(hname, hvalue)
    4.6. pvh_modify_header(hname, hvalue, [idx])
    4.7. pvh_remove_header(hname, [idx])
-
-   \
+   4.8. pvh_value_exists(hname, hparameter)
+   4.9. pvh_remove_header_param(hname, hparameter)
 
 4.1.  pvh_collect_headers()
 
@@ -316,6 +325,32 @@ modparam("pv_headers", "auto_msg", 1)
 
    This function can be used from ANY_ROUTE but only after
    pvh_collect_headers() or with “auto_msg” parameter enabled.
+
+4.8.  pvh_value_exists(hname, hparameter)
+
+   Checks if the parameter “hparameter” is present in the header “hname”
+   from XAVP.
+
+   This function can be used from ANY_ROUTE but only after
+   pvh_collect_headers() have been called or with “auto_msg” parameter
+   enabled.
+
+4.9.  pvh_remove_header_param(hname, hparameter)
+
+   Removes an existing parameter “hparameter” in the header “hname” from
+   the XAVP.
+
+   If there are multiple headers, only the one containing the parameter
+   will be modified.
+
+   The parameter can be located in any position (begining, middle or end)
+   of the list of parameters.
+
+   If the parameter is the only one present, the header will be removed.
+
+   This function can be used from ANY_ROUTE but only after
+   pvh_collect_headers() have been called or with “auto_msg” parameter
+   enabled.
 
 5. Exported Variables
 

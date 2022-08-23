@@ -39,8 +39,10 @@
 
 #include "redis_client.h"
 
-#define redisCommandNR(a...) (int)({ void *__tmp; __tmp = redisCommand(a); \
-		if (__tmp) freeReplyObject(__tmp); __tmp ? 0 : -1;})
+#define redisCommandNR(a...) (int)({ \
+		void *__tmp; __tmp = redisCommand(a); \
+		if (__tmp) { freeReplyObject(__tmp); }; \
+		__tmp ? 0 : -1;})
 
 static redisc_server_t * _redisc_srv_list=NULL;
 
@@ -54,6 +56,7 @@ extern int redis_disable_time_param;
 extern int redis_allowed_timeouts_param;
 extern int redis_flush_on_reconnect_param;
 extern int redis_allow_dynamic_nodes_param;
+extern int ndb_redis_debug;
 
 /* backwards compatibility with hiredis < 0.12 */
 #if (HIREDIS_MAJOR == 0) && (HIREDIS_MINOR < 12)
@@ -196,8 +199,8 @@ int redisc_init(void)
 									}
 								}
 							}
-							LM_DBG("slave for %s: %s:%d\n", sentinel_group,
-									addr, port);
+							LOG(ndb_redis_debug, "slave for %s: %s:%d\n",
+									sentinel_group, addr, port);
 						}
 					}
 				}
@@ -205,15 +208,15 @@ int redisc_init(void)
 		}
 
 		if(sock != 0) {
-			LM_DBG("Connecting to unix socket: %s\n", unix_sock_path);
+			LOG(ndb_redis_debug, "Connecting to unix socket: %s\n", unix_sock_path);
 			rsrv->ctxRedis = redisConnectUnixWithTimeout(unix_sock_path,
 					tv_conn);
 		} else {
-			LM_DBG("Connecting to %s:%d\n", addr, port);
+			LOG(ndb_redis_debug, "Connecting to %s:%d\n", addr, port);
 			rsrv->ctxRedis = redisConnectWithTimeout(addr, port, tv_conn);
 		}
 
-		LM_DBG("rsrv->ctxRedis = %p\n", rsrv->ctxRedis);
+		LOG(ndb_redis_debug, "rsrv->ctxRedis = %p\n", rsrv->ctxRedis);
 
 		if(!rsrv->ctxRedis) {
 			LM_ERR("Failed to create REDIS-Context.\n");
@@ -388,18 +391,21 @@ redisc_server_t *redisc_get_server(str *name)
 	unsigned int hname;
 
 	hname = get_hash1_raw(name->s, name->len);
-	LM_DBG("Hash %u (%.*s)\n", hname, name->len, name->s);
+	LOG(ndb_redis_debug, "Hash %u (%.*s)\n", hname, name->len, name->s);
 	rsrv=_redisc_srv_list;
 	while(rsrv!=NULL)
 	{
 		LM_DBG("Entry %u (%.*s)\n", rsrv->hname,
 				rsrv->sname->len, rsrv->sname->s);
 		if(rsrv->hname==hname && rsrv->sname->len==name->len
-				&& strncmp(rsrv->sname->s, name->s, name->len)==0)
+				&& strncmp(rsrv->sname->s, name->s, name->len)==0) {
+			LOG(ndb_redis_debug, "Using entry %u (%.*s)\n", rsrv->hname,
+				rsrv->sname->len, rsrv->sname->s);
 			return rsrv;
+		}
 		rsrv=rsrv->next;
 	}
-	LM_DBG("No entry found.\n");
+	LOG(ndb_redis_debug, "No entry found.\n");
 	return NULL;
 }
 
@@ -495,7 +501,7 @@ int redisc_reconnect_server(redisc_server_t *rsrv)
 						strncpy(addr, res->element[0]->str,
 								res->element[0]->len + 1);
 						port = atoi(res->element[1]->str);
-						LM_DBG("sentinel replied: %s:%d\n", addr, port);
+						LOG(ndb_redis_debug, "sentinel replied: %s:%d\n", addr, port);
 					}
 				}
 				else {
@@ -518,7 +524,7 @@ int redisc_reconnect_server(redisc_server_t *rsrv)
 								}
 							}
 						}
-						LM_DBG("slave for %s: %s:%d\n", sentinel_group,
+						LOG(ndb_redis_debug, "slave for %s: %s:%d\n", sentinel_group,
 								addr, port);
 					}
 				}
@@ -687,7 +693,7 @@ int redisc_create_pipelined_message(redisc_server_t *rsrv)
 
 	if (rsrv->ctxRedis->err)
 	{
-		LM_DBG("Reconnecting server because of error %d: \"%s\"",
+		LOG(ndb_redis_debug, "Reconnecting server because of error %d: \"%s\"",
 				rsrv->ctxRedis->err,rsrv->ctxRedis->errstr);
 		if (redisc_reconnect_server(rsrv))
 		{
@@ -866,10 +872,10 @@ int check_cluster_reply(redisReply *reply, redisc_server_t **rsrv)
 			name.len = snprintf(buffername, sizeof(buffername), "%.*s:%i",
 					addr.len, addr.s, port);
 			name.s = buffername;
-			LM_DBG("Name of new connection: %.*s\n", name.len, name.s);
+			LOG(ndb_redis_debug, "Name of new connection: %.*s\n", name.len, name.s);
 			rsrv_new = redisc_get_server(&name);
 			if(rsrv_new) {
-				LM_DBG("Reusing Connection\n");
+				LOG(ndb_redis_debug, "Reusing connection\n");
 				*rsrv = rsrv_new;
 				return 1;
 			} else if(redis_allow_dynamic_nodes_param) {
@@ -906,8 +912,8 @@ int check_cluster_reply(redisReply *reply, redisc_server_t **rsrv)
 						*rsrv = rsrv_new;
 						/* Need to connect to the new server now */
 						if(redisc_reconnect_server(rsrv_new) == 0) {
-							LM_DBG("Connected to the new server with name: "
-								   "%.*s\n",
+							LOG(ndb_redis_debug, "Connected to the new server"
+									" with name: %.*s\n",
 									name.len, name.s);
 							return 1;
 						} else {
@@ -1157,12 +1163,14 @@ again:
 	/* null reply, reconnect and try again */
 	if(rsrv->ctxRedis->err)
 	{
-		LM_DBG("Redis error: %s\n", rsrv->ctxRedis->errstr);
+		LOG(ndb_redis_debug, "Redis error: %s\n", rsrv->ctxRedis->errstr);
 	}
 
 	if(res)
 	{
 		if (check_cluster_reply(res, &rsrv)) {
+			freeReplyObject(res);
+			LOG(ndb_redis_debug, "Retrying the command directly\n");
 			goto again;
 		}
 		return res;
@@ -1170,9 +1178,12 @@ again:
 
 	if(redisc_reconnect_server(rsrv)==0)
 	{
+		LOG(ndb_redis_debug, "Trying to reconnect to server\n");
 		res = redisCommandArgv(rsrv->ctxRedis, argc, argv, argvlen);
 		if (res) {
 			if (check_cluster_reply(res, &rsrv)) {
+				freeReplyObject(res);
+				LOG(ndb_redis_debug, "Retrying the command after reconnect\n");
 				goto again;
 			}
 		}
@@ -1260,6 +1271,7 @@ int redisc_free_reply(str *name)
 	}
 
 	/* reply entry not found. */
+	LOG(ndb_redis_debug, "reply entry not found: %.*s\n", name->len, name->s);
 	return -1;
 }
 
@@ -1269,6 +1281,10 @@ int redisc_check_auth(redisc_server_t *rsrv, char *pass)
 	int retval = 0;
 
 	reply = redisCommand(rsrv->ctxRedis, "AUTH %s", pass);
+	if(!reply) {
+		LM_ERR("Redis authentication error\n");
+		return -1;
+	}
 	if (reply->type == REDIS_REPLY_ERROR) {
 		LM_ERR("Redis authentication error\n");
 		retval = -1;

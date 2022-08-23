@@ -216,7 +216,7 @@ modparam("sqlops", "connect_mode", 1)
 
    Example 1.5. Set results_maxsize parameter
 ...
-modparam("sqlops", "results_maxsize", 4096)
+modparam("sqlops", "results_maxsize", 64)
 ...
 
 4. Functions

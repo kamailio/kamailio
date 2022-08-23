@@ -259,8 +259,9 @@ int find_credentials(struct sip_msg* msg, str* realm,
 		hdr_flags=HDR_PROXYAUTH_F;
 		break;
 	default:
+		LM_WARN("unexpected header type %d - using authorization\n", hftype);
 		hook = &(msg->authorization);
-		hdr_flags=HDR_T2F(hftype);
+		hdr_flags=HDR_AUTHORIZATION_F;
 		break;
 	}
 

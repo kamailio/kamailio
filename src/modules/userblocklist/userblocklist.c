@@ -1253,12 +1253,325 @@ struct mi_root * mi_check_userallowlist(struct mi_root* cmd, void* param)
 }
 #endif
 
+static void dump_dtrie_rpc(rpc_t* rpc, void *ctx,
+	const struct dtrie_node_t *root, const unsigned int branches,
+	char *prefix, int *length)
+{
+	unsigned int i;
+	char digit, *val = NULL;
+	int val_len = 0;
+	void *out;
+
+	/* Sanity check - should not reach here anyway */
+	if (NULL == root) {
+		LM_ERR("root dtrie is NULL\n");
+		return ;
+	}
+
+	/* If data found, add a new node to the reply tree */
+	if (root->data) {
+		if (rpc->add(ctx, "{", &out) < 0) goto error;
+
+		/* Resolve the value of the allowlist attribute */
+		if (root->data == (void *)MARK_BLOCKLIST) {
+			val = int2str(0, &val_len);
+		} else if (root->data == (void *)MARK_ALLOWLIST) {
+			val = int2str(1, &val_len);
+		}
+
+		prefix[*length] = '\0';
+
+		rpc->struct_add(out, "ss",
+			"prefix", prefix,
+			userblocklist_allowlist_col.s, val);
+	}
+
+	/* Perform a DFS search */
+	for (i = 0; i < branches; i++) {
+		/* If child branch found, traverse it */
+		if (root->child[i]) {
+			if (branches == 10) {
+				digit = i + '0';
+			} else {
+				digit = i;
+			}
+
+			/* Push digit in prefix stack */
+			if (*length >= MAXNUMBERLEN + 1) {
+				LM_ERR("prefix length exceeds %d\n", MAXNUMBERLEN + 1);
+				return ;
+			}
+			prefix[(*length)++] = digit;
+
+			/* Recursive DFS call */
+			dump_dtrie_rpc(rpc, ctx, root->child[i], branches, prefix, length);
+
+			/* Pop digit from prefix stack */
+			(*length)--;
+		}
+	}
+
+	return ;
+
+error:
+	rpc->fault(ctx, 500, "Dump dtrie failed");
+        return;
+}
+
+static void dump_blocklist_rpc(rpc_t* rpc, void *ctx)
+{
+	char prefix_buff[MAXNUMBERLEN + 1];
+	int length = 0;
+
+	/* Check that global blocklist exists */
+	if (!gnode) {
+		LM_ERR("the global blocklist is NULL\n");
+		goto error;
+	}
+
+	dump_dtrie_rpc(rpc, ctx, gnode, match_mode, prefix_buff, &length);
+
+	return ;
+
+error:
+	rpc->fault(ctx, 500, "Dump blocklist failed");
+        return;
+}
+
+static void check_list_rpc (rpc_t* rpc, void *ctx, int list_type)
+{
+	str prefix, val;
+	char req_prefix[MAXNUMBERLEN + 1], *ptr;
+	void **nodeflags, *out;
+	int ret = 0;
+
+	/* Sanity checks */
+	if (rpc->scan(ctx, ".S", &prefix) < 1) goto error_scan;
+	if (prefix.s == NULL || prefix.len == 0) goto error_scan;
+	if (rpc->add(ctx, "{", &out) < 0) goto error;
+
+	strncpy(req_prefix, prefix.s, prefix.len);
+	req_prefix[prefix.len] = '\0';
+
+	/* Check that global blocklist exists */
+	if (!gnode) {
+		LM_ERR("global gnode not found\n");
+		goto error;
+	}
+
+	/* Skip over non-digits. */
+	ptr = req_prefix;
+	while (match_mode == 10 && strlen(ptr) > 0 && !isdigit(*ptr)) {
+		ptr = ptr + 1;
+	}
+
+	/* Avoids dirty reads when updating d-tree */
+	lock_get(lock);
+	nodeflags = dtrie_longest_match(gnode, ptr, strlen(ptr), NULL, match_mode);
+	if (nodeflags) {
+		if (*nodeflags == (void *)MARK_ALLOWLIST) {
+			LM_DBG("prefix %.*s is allowlisted in table %.*s\n",
+				prefix.len, prefix.s, globalblocklist_table.len, globalblocklist_table.s);
+			ret = MARK_ALLOWLIST;
+		} else if (*nodeflags == (void *)MARK_BLOCKLIST) {
+			LM_DBG("prefix %.*s is blocklisted in table %.*s\n",
+				prefix.len, prefix.s, globalblocklist_table.len, globalblocklist_table.s);
+			ret = MARK_BLOCKLIST;
+		}
+	}
+	else {
+		LM_DBG("prefix %.*s not found in table %.*s\n",
+			prefix.len, prefix.s, globalblocklist_table.len, globalblocklist_table.s);
+	}
+	lock_release(lock);
+
+	/* Resolve the value of the attribute to be returned */
+	val.s = FALSE_S;
+	val.len = FALSE_LEN;
+
+	switch (list_type) {
+		case MARK_ALLOWLIST:
+			if (ret == MARK_ALLOWLIST) {
+				val.s = TRUE_S;
+				val.len = TRUE_LEN;
+			}
+
+			rpc->struct_add(out, "SS",
+				"prefix", &prefix,
+				ALLOWLISTED_S, &val);
+			break;
+
+		case MARK_BLOCKLIST:
+			if (ret == MARK_BLOCKLIST) {
+				val.s = TRUE_S;
+				val.len = TRUE_LEN;
+			}
+
+			rpc->struct_add(out, "SS",
+				"prefix", &prefix,
+				BLOCKLISTED_S, &val);
+			break;
+
+		default:
+			LM_ERR("list_type not found\n");
+			goto error;
+	}
+	
+	return ;
+
+error_scan:
+	rpc->fault(ctx, 500, "Check failed: 1 argument needed (\"prefix\")");
+        return;
+
+error:
+	rpc->fault(ctx, 500, "Check failed");
+        return;
+}
+
+static void check_userlist_rpc (rpc_t* rpc, void *ctx, int list_type)
+{
+	str prefix, user, domain, table, val;
+	char req_prefix[MAXNUMBERLEN + 1], *ptr;
+	void **nodeflags, *out;
+	int ret = 0, local_use_domain = 0;
+
+	/* Sanity checks */
+	if (rpc->scan(ctx, ".S.S", &prefix, &user) < 2) goto error_scan;
+	if (rpc->scan(ctx, ".S", &domain) < 1) {
+		domain.s = "";
+		domain.len = 0;
+	}
+	if (prefix.s == NULL || prefix.len == 0 || user.s==NULL || user.len == 0) goto error_scan;
+	if (rpc->add(ctx, "{", &out) < 0) goto error;
+	if (domain.s != NULL && domain.len != 0) local_use_domain = 1;
+
+	strncpy(req_prefix, prefix.s, prefix.len);
+	req_prefix[prefix.len] = '\0';
+
+	/* Check that global blocklist exists */
+	if (!gnode) {
+		LM_ERR("global gnode not found\n");
+		goto error;
+	}
+
+	/* Build userblocklist dtrie */
+	table = userblocklist_table;
+	LM_DBG("check entry %s for user %.*s@%.*s in table %.*s, use domain=%d\n",
+		req_prefix, user.len, user.s, domain.len, domain.s,
+		table.len, table.s, local_use_domain);
+	if (db_build_userbl_tree(&user, &domain, &table, dtrie_root, local_use_domain) < 0) {
+		LM_ERR("cannot build d-tree\n");
+		goto error;
+	}
+
+	/* Skip over non-digits. */
+	ptr = req_prefix;
+	while (match_mode == 10 && strlen(ptr) > 0 && !isdigit(*ptr)) {
+		ptr = ptr + 1;
+	}
+
+	/* Avoids dirty reads when updating d-tree */
+	/* Search for a match in dtrie */
+	nodeflags = dtrie_longest_match(dtrie_root, ptr, strlen(ptr), NULL, match_mode);
+	if (nodeflags) {
+		if (*nodeflags == (void *)MARK_ALLOWLIST) {
+			LM_DBG("user %.*s is allowlisted for prefix %.*s in table %.*s\n",
+				user.len, user.s, prefix.len, prefix.s, table.len, table.s);
+			ret = MARK_ALLOWLIST;
+		} else if (*nodeflags == (void *)MARK_BLOCKLIST) {
+			LM_DBG("user %.*s is blocklisted for prefix %.*s in table %.*s\n",
+				user.len, user.s, prefix.len, prefix.s, table.len, table.s);
+			ret = MARK_BLOCKLIST;
+		}
+	} else {
+		LM_DBG("user %.*s, prefix %.*s not found in table %.*s\n",
+			user.len, user.s, prefix.len, prefix.s, table.len, table.s);
+	}
+
+	/* Resolve the value of the attribute to be returned */
+	val.s = FALSE_S;
+	val.len = FALSE_LEN;
+
+	switch (list_type) {
+		case MARK_ALLOWLIST:
+			if (ret == MARK_ALLOWLIST) {
+				val.s = TRUE_S;
+				val.len = TRUE_LEN;
+			}
+
+			rpc->struct_add(out, "SSSS",
+				"prefix", &prefix,
+				"user", &user,
+				"domain", &domain,
+				ALLOWLISTED_S, &val);
+			break;
+
+		case MARK_BLOCKLIST:
+			if (ret == MARK_BLOCKLIST) {
+				val.s = TRUE_S;
+				val.len = TRUE_LEN;
+			}
+
+			rpc->struct_add(out, "SSSS",
+				"prefix", &prefix,
+				"user", &user,
+				"domain", &domain,
+				BLOCKLISTED_S, &val);
+			break;
+
+		default:
+			LM_ERR("list_type not found\n");
+			goto error;
+	}
+	
+	return ;
+
+error_scan:
+	rpc->fault(ctx, 500, "Check failed: 2 or 3 arguments needed (\"prefix\" \"user\" \"domain\"(optional))");
+        return;
+
+error:
+	rpc->fault(ctx, 500, "Check failed");
+        return;
+}
+
 static void ubl_rpc_reload_blocklist(rpc_t* rpc, void* ctx)
 {
 	if(reload_sources() != 0) {
 		rpc->fault(ctx, 500, "Reload failed");
 		return;
 	}
+
+	rpc->add(ctx, "s", "200 ok");
+	return;
+}
+
+static void ubl_rpc_dump_blocklist(rpc_t* rpc, void* ctx)
+{
+	return dump_blocklist_rpc(rpc, ctx);
+}
+
+static void ubl_rpc_check_blocklist(rpc_t* rpc, void* ctx)
+{
+	return check_list_rpc(rpc, ctx, MARK_BLOCKLIST);
+}
+
+
+static void ubl_rpc_check_allowlist(rpc_t* rpc, void* ctx)
+{
+	return check_list_rpc(rpc, ctx, MARK_ALLOWLIST);
+}
+
+
+static void ubl_rpc_check_userblocklist(rpc_t* rpc, void* ctx)
+{
+	return check_userlist_rpc(rpc, ctx, MARK_BLOCKLIST);
+}
+
+
+static void ubl_rpc_check_userallowlist(rpc_t* rpc, void* ctx)
+{
+	return check_userlist_rpc(rpc, ctx, MARK_ALLOWLIST);
 }
 
 static const char* ubl_rpc_reload_blocklist_doc[2] = {
@@ -1266,9 +1579,44 @@ static const char* ubl_rpc_reload_blocklist_doc[2] = {
 	0
 };
 
+static const char* ubl_rpc_dump_blocklist_doc[2] = {
+	"Dump user blocklist records.",
+	0
+};
+
+static const char* ubl_rpc_check_blocklist_doc[2] = {
+	"Check blocklist records.",
+	0
+};
+
+static const char* ubl_rpc_check_allowlist_doc[2] = {
+	"Check allowlist records.",
+	0
+};
+
+static const char* ubl_rpc_check_userblocklist_doc[2] = {
+	"Check user blocklist records.",
+	0
+};
+
+static const char* ubl_rpc_check_userallowlist_doc[2] = {
+	"Check user allowlist records.",
+	0
+};
+
 rpc_export_t ubl_rpc[] = {
 	{"userblocklist.reload_blocklist", ubl_rpc_reload_blocklist,
 		ubl_rpc_reload_blocklist_doc, 0},
+	{"userblocklist.dump_blocklist", ubl_rpc_dump_blocklist,
+		ubl_rpc_dump_blocklist_doc, 0},
+	{"userblocklist.check_blocklist", ubl_rpc_check_blocklist,
+		ubl_rpc_check_blocklist_doc, 0},
+	{"userblocklist.check_allowlist", ubl_rpc_check_allowlist,
+		ubl_rpc_check_allowlist_doc, 0},
+	{"userblocklist.check_userblocklist", ubl_rpc_check_userblocklist,
+		ubl_rpc_check_userblocklist_doc, 0},
+	{"userblocklist.check_userallowlist", ubl_rpc_check_userallowlist,
+		ubl_rpc_check_userallowlist_doc, 0},
 	{0, 0, 0, 0}
 };
 

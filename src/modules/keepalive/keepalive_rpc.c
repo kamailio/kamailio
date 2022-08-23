@@ -123,7 +123,7 @@ static void keepalive_rpc_add(rpc_t *rpc, void *ctx)
 		rpc->fault(ctx, 500, "couldn't add data to list");
 		return;
 	}
-
+	rpc->rpl_printf(ctx, "Ok. Destination added.");
 	return;
 }
 static const char *keepalive_rpc_add_doc[2] = {
@@ -156,7 +156,7 @@ static void keepalive_rpc_del(rpc_t *rpc, void *ctx)
 		rpc->fault(ctx, 500, "couldn't delete data from list");
 		return;
 	}
-
+	rpc->rpl_printf(ctx, "Ok. Destination removed.");
 	return;
 }
 static const char *keepalive_rpc_del_doc[2] = {
@@ -217,7 +217,7 @@ static const char *keepalive_rpc_get_doc[2] = {
 static void keepalive_rpc_flush(rpc_t *rpc, void *ctx)
 {
 	ka_dest_t *dest;
-	LM_DBG("keepalive flushe\n");
+	LM_DBG("keepalive flush\n");
 	ka_lock_destination_list();
 
 	for(dest = ka_destinations_list->first; dest != NULL; dest = dest->next) {
@@ -225,7 +225,7 @@ static void keepalive_rpc_flush(rpc_t *rpc, void *ctx)
 	}
 	ka_destinations_list->first = 0;
 	ka_unlock_destination_list();
-
+	rpc->rpl_printf(ctx, "Ok. Destination list flushed.");
 	return;
 }
 static const char *keepalive_rpc_flush_doc[2] = {

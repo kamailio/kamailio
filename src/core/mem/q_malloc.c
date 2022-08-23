@@ -942,8 +942,8 @@ void qm_info(void* qmp, struct mem_info* info)
 	memset(info,0, sizeof(*info));
 	info->total_size=qm->size;
 	info->min_frag=MIN_FRAG_SIZE;
-	info->free=qm->size-qm->real_used;
-	info->used=qm->used;
+	info->free_size=qm->size-qm->real_used;
+	info->used_size=qm->used;
 	info->real_used=qm->real_used;
 	info->max_used=qm->max_real_used;
 	info->total_frags=qm->ffrags;
@@ -1028,6 +1028,71 @@ void qm_sums(void* qmp)
 			"-----------------------------\n");
 }
 
+#define QM_REPORT_SET(MREP, FRAG, FIELD) do { \
+		MREP->FIELD ## _size = FRAG->size; \
+		MREP->FIELD ## _file = FRAG->file; \
+		MREP->FIELD ## _func = FRAG->func; \
+		MREP->FIELD ## _mname = FRAG->mname; \
+		MREP->FIELD ## _line = FRAG->line; \
+	} while(0)
+
+void qm_report(void* qmp, mem_report_t *mrep)
+{
+	struct qm_block* qm;
+	struct qm_frag* f;
+
+	qm = (struct qm_block*)qmp;
+
+	memset(mrep, 0, sizeof(mem_report_t));
+	if (!qm) return;
+
+	mrep->total_size=qm->size;
+	mrep->free_size_s=qm->size - qm->real_used;
+	mrep->used_size_s=qm->used;
+	mrep->real_used_s=qm->real_used;
+	mrep->max_used_s=qm->max_real_used;
+
+	for (f=qm->first_frag; (char*)f<(char*)qm->last_frag_end; f=FRAG_NEXT(f)) {
+		mrep->total_frags++;
+		if (f->u.is_free) {
+			mrep->free_frags++;
+			mrep->free_size_m += f->size;
+			if(mrep->max_free_frag_size==0) {
+				QM_REPORT_SET(mrep, f, max_free_frag);
+			} else {
+				if(f->size > mrep->max_free_frag_size) {
+					QM_REPORT_SET(mrep, f, max_free_frag);
+				}
+			}
+			if(mrep->min_free_frag_size==0) {
+				QM_REPORT_SET(mrep, f, min_free_frag);
+			} else {
+				if(f->size < mrep->min_free_frag_size) {
+					QM_REPORT_SET(mrep, f, min_free_frag);
+				}
+			}
+		} else {
+			mrep->used_frags++;
+			mrep->used_size_m += f->size;
+			if(mrep->max_used_frag_size==0) {
+				QM_REPORT_SET(mrep, f, max_used_frag);
+			} else {
+				if(f->size > mrep->max_used_frag_size) {
+					QM_REPORT_SET(mrep, f, max_used_frag);
+				}
+			}
+			if(mrep->min_used_frag_size==0) {
+				QM_REPORT_SET(mrep, f, min_used_frag);
+			} else {
+				if(f->size < mrep->min_used_frag_size) {
+					QM_REPORT_SET(mrep, f, min_used_frag);
+				}
+			}
+		}
+	}
+}
+
+
 void qm_mod_get_stats(void *qmp, void **qm_rootp)
 {
 	if (!qm_rootp) {
@@ -1080,6 +1145,14 @@ void qm_mod_free_stats(void *qm_rootp)
 
 void qm_sums(void *qmp)
 {
+	LM_WARN("Enable DBG_QM_MALLOC for getting the status summary\n");
+	return;
+}
+
+void qm_report(void* qmp, mem_report_t *mrep)
+{
+	LM_WARN("Enable DBG_QM_MALLOC for getting the report\n");
+	memset(mrep, 0, sizeof(mem_report_t));
 	return;
 }
 
@@ -1143,6 +1216,7 @@ int qm_malloc_init_pkg_manager(void)
 	ma.xreallocxf = qm_reallocxf;
 	ma.xstatus = qm_status;
 	ma.xinfo = qm_info;
+	ma.xreport = qm_report;
 	ma.xavailable = qm_available;
 	ma.xsums = qm_sums;
 	ma.xdestroy = qm_malloc_destroy_pkg_manager;
@@ -1337,6 +1411,12 @@ void qm_shm_info(void* qmp, struct mem_info* info)
 	qm_info(qmp, info);
 	qm_shm_unlock();
 }
+void qm_shm_report(void* qmp, mem_report_t* mrep)
+{
+	qm_shm_lock();
+	qm_report(qmp, mrep);
+	qm_shm_unlock();
+}
 unsigned long qm_shm_available(void* qmp)
 {
 	unsigned long r;
@@ -1403,6 +1483,7 @@ int qm_malloc_init_shm_manager(void)
 	ma.xresize        = qm_shm_resize;
 	ma.xstatus        = qm_shm_status;
 	ma.xinfo          = qm_shm_info;
+	ma.xreport        = qm_shm_report;
 	ma.xavailable     = qm_shm_available;
 	ma.xsums          = qm_shm_sums;
 	ma.xdestroy       = qm_malloc_destroy_shm_manager;

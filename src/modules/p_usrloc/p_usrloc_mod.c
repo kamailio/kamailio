@@ -45,7 +45,7 @@
 #include "../../core/dprint.h"
 #include "../../core/rpc_lookup.h"
 #include "../../core/timer_proc.h"
-#include "../../core/globals.h"   /* is_main */
+#include "../../core/globals.h"
 #include "../../core/ut.h"        /* str_init */
 #include "udomain.h"         /* {insert,delete,get,release}_urecord */
 #include "urecord.h"         /* {insert,delete,get}_ucontact */
@@ -240,6 +240,7 @@ static param_export_t params[] = {
 	{"error_column",         PARAM_STR, &error_col         },
 	{"risk_group_column",    PARAM_STR, &risk_group_col    },
 	{"expire_time",          INT_PARAM, &default_p_usrloc_cfg.expire_time},
+	{"UTC_timestamps",       INT_PARAM, &default_p_usrloc_cfg.utc_timestamps},
 	{"db_err_threshold",     INT_PARAM, &default_p_usrloc_cfg.db_err_threshold},
 	{"failover_level",       INT_PARAM, &default_p_usrloc_cfg.failover_level},
 	{"db_retry_interval",    INT_PARAM, &retry_interval      },
@@ -480,3 +481,19 @@ struct mi_root*  mi_loc_nr_refresh(struct mi_root* cmd_tree, void* param) {
 	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
 }
 #endif
+
+time_t ul_db_datetime_set(time_t v) {
+	if (cfg_get(p_usrloc, p_usrloc_cfg, utc_timestamps) == 1) {
+		return local2utc(v);
+	} else {
+		return v;
+	}
+}
+
+time_t ul_db_datetime_get(time_t v) {
+	if (cfg_get(p_usrloc, p_usrloc_cfg, utc_timestamps) == 1) {
+		return utc2local(v);
+	} else {
+		return v;
+	}
+}

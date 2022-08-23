@@ -44,6 +44,7 @@ Iñaki Baz Castillo
               4.16. dns_query(hostname, pvid)
               4.17. srv_query(srvcname, pvid)
               4.18. naptr_query(domain, pvid)
+              4.19. dns_set_local_ttl(vttl)
 
    List of Examples
 
@@ -65,6 +66,7 @@ Iñaki Baz Castillo
    1.16. dns_query usage
    1.17. srv_query usage
    1.18. naptr_query usage
+   1.19. dns_set_local_ttl usage
 
 Chapter 1. Admin Guide
 
@@ -97,6 +99,7 @@ Chapter 1. Admin Guide
         4.16. dns_query(hostname, pvid)
         4.17. srv_query(srvcname, pvid)
         4.18. naptr_query(domain, pvid)
+        4.19. dns_set_local_ttl(vttl)
 
 1. Overview
 
@@ -156,6 +159,7 @@ Chapter 1. Admin Guide
    4.16. dns_query(hostname, pvid)
    4.17. srv_query(srvcname, pvid)
    4.18. naptr_query(domain, pvid)
+   4.19. dns_set_local_ttl(vttl)
 
 4.1.  is_ip (ip)
 
@@ -611,4 +615,22 @@ if (naptr_query ("example.com", "res") > 0) {
     $var(i) = $var(i) + 1;
   }
 }
+...
+
+4.19.  dns_set_local_ttl(vttl)
+
+   Set local ttl for DNS query results. If vttl is 0, then the value of
+   the result and the core parameters are used.
+
+   Parameters:
+     * vttl - TTL value in seconds. It can be static integer or a variable
+       holding an integer value.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.19.  dns_set_local_ttl usage
+...
+  dns_set_local_ttl("7200");
+  dns_query("test.com", "xyz")
+  dns_set_local_ttl("0");
 ...

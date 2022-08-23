@@ -63,6 +63,7 @@ typedef struct _ht
 	unsigned int htexpire;
 	str dbtable;
 	int dbmode;
+	int dbload;
 	int ncols;
 	str scols[HT_MAX_COLS];
 	char pack[4];
@@ -91,6 +92,7 @@ int ht_init_tables(void);
 int ht_destroy(void);
 int ht_set_cell(ht_t *ht, str *name, int type, int_str *val, int mode);
 int ht_del_cell(ht_t *ht, str *name);
+int ht_del_cell_confirm(ht_t *ht, str *name);
 ht_cell_t* ht_cell_value_add(ht_t *ht, str *name, int val, ht_cell_t *old);
 int ht_cell_exists(ht_t *ht, str *name);
 
@@ -129,6 +131,10 @@ void ht_iterator_init(void);
 int ht_iterator_start(str *iname, str *hname);
 int ht_iterator_next(str *iname);
 int ht_iterator_end(str *iname);
+int ht_iterator_rm(str *iname);
+int ht_iterator_sets(str *iname, str *sval);
+int ht_iterator_seti(str *iname, int ival);
+int ht_iterator_setex(str *iname, int exval);
 ht_cell_t* ht_iterator_get_current(str *iname);
 
 void ht_slot_lock(ht_t *ht, int idx);

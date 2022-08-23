@@ -99,6 +99,9 @@ Federico Cabiddu
               3.38. ds_db_extra_attrs (str)
               3.39. ds_load_mode (int)
               3.40. reload_delta (int)
+              3.41. ds_dns_mode (int)
+              3.42. ds_dns_interval (int)
+              3.43. ds_dns_ttl (int)
 
         4. Functions
 
@@ -113,9 +116,10 @@ Federico Cabiddu
               4.9. ds_mark_dst([state])
               4.10. ds_list_exists(groupid)
               4.11. ds_is_from_list([groupid [, mode [, uri] ] ])
-              4.12. ds_load_update()
-              4.13. ds_load_unset()
-              4.14. ds_reload()
+              4.12. ds_is_active(groupid [, uri])
+              4.13. ds_load_update()
+              4.14. ds_load_unset()
+              4.15. ds_reload()
 
         5. RPC Commands
 
@@ -188,18 +192,22 @@ Federico Cabiddu
    1.40. Set the “ds_db_extra_attrs” parameter
    1.41. Set the “ds_load_mode” parameter
    1.42. Set reload_delta parameter
-   1.43. latency_optimized_dispatching usage
-   1.44. ds_select_dst usage
-   1.45. configuring load balancing with congestion detection
-   1.46. ds_select_domain usage
-   1.47. ds_select usage
-   1.48. ds_select_routes usage
-   1.49. ds_mark_dst usage
-   1.50. ds_list_exists usage
-   1.51. ds_is_from_list usage
-   1.52. ds_load_unset usage
-   1.53. dispatcher list file
-   1.54. Kamailio config script - sample dispatcher usage
+   1.43. Set the “ds_dns_mode” parameter
+   1.44. Set the “ds_dns_interval” parameter
+   1.45. Set the “ds_dns_ttl” parameter
+   1.46. latency_optimized_dispatching usage
+   1.47. ds_select_dst usage
+   1.48. configuring load balancing with congestion detection
+   1.49. ds_select_domain usage
+   1.50. ds_select usage
+   1.51. ds_select_routes usage
+   1.52. ds_mark_dst usage
+   1.53. ds_list_exists usage
+   1.54. ds_is_from_list usage
+   1.55. ds_is_active usage
+   1.56. ds_load_unset usage
+   1.57. dispatcher list file
+   1.58. Kamailio config script - sample dispatcher usage
 
 Chapter 1. Admin Guide
 
@@ -253,6 +261,9 @@ Chapter 1. Admin Guide
         3.38. ds_db_extra_attrs (str)
         3.39. ds_load_mode (int)
         3.40. reload_delta (int)
+        3.41. ds_dns_mode (int)
+        3.42. ds_dns_interval (int)
+        3.43. ds_dns_ttl (int)
 
    4. Functions
 
@@ -267,9 +278,10 @@ Chapter 1. Admin Guide
         4.9. ds_mark_dst([state])
         4.10. ds_list_exists(groupid)
         4.11. ds_is_from_list([groupid [, mode [, uri] ] ])
-        4.12. ds_load_update()
-        4.13. ds_load_unset()
-        4.14. ds_reload()
+        4.12. ds_is_active(groupid [, uri])
+        4.13. ds_load_update()
+        4.14. ds_load_unset()
+        4.15. ds_reload()
 
    5. RPC Commands
 
@@ -373,6 +385,9 @@ Chapter 1. Admin Guide
    3.38. ds_db_extra_attrs (str)
    3.39. ds_load_mode (int)
    3.40. reload_delta (int)
+   3.41. ds_dns_mode (int)
+   3.42. ds_dns_interval (int)
+   3.43. ds_dns_ttl (int)
 
 3.1. list_file (string)
 
@@ -1012,6 +1027,52 @@ modparam("dispatcher", "ds_load_mode", 1)
 modparam("dispatcher", "reload_delta", 1)
 ...
 
+3.41. ds_dns_mode (int)
+
+   Specify the how DNS resolving is done for destination addresses.
+
+   It is a bitwise flag and can be set to one or the sum of:
+     * 1 - do it at startup and reload (previous behaviour).
+     * 2 - do it always when the address is matched with
+       ds_is_from_list().
+     * 4 - do it startup/reload and refresh on the timer interval
+       specified by ds_dns_interval.
+     * 8 - do SRV (and NAPTR if enabled in core) query instead of A/AAAA
+       lookup. NAPTR is done if protocol and port are not set. SRV is done
+       if port is not set.
+
+   Default value is “1”.
+
+   Example 1.43. Set the “ds_dns_mode” parameter
+...
+modparam("dispatcher", "ds_dns_mode", 2)
+...
+
+3.42. ds_dns_interval (int)
+
+   The interval in seconds to periodically refresh the DNS queries for
+   destination addresses if ds_dns_mode has value 4 set.
+
+   Default value is “600”.
+
+   Example 1.44. Set the “ds_dns_interval” parameter
+...
+modparam("dispatcher", "ds_interval_mode", 1800)
+...
+
+3.43. ds_dns_ttl (int)
+
+   The interval in seconds to set TTL for DNS results received for queries
+   dones inside this module. If 0, this TTL is not set, result and core
+   values are used.
+
+   Default value is “0”.
+
+   Example 1.45. Set the “ds_dns_ttl” parameter
+...
+modparam("dispatcher", "ds_interval_mode", 7200)
+...
+
 4. Functions
 
    4.1. ds_select_dst(set, alg[, limit])
@@ -1025,9 +1086,10 @@ modparam("dispatcher", "reload_delta", 1)
    4.9. ds_mark_dst([state])
    4.10. ds_list_exists(groupid)
    4.11. ds_is_from_list([groupid [, mode [, uri] ] ])
-   4.12. ds_load_update()
-   4.13. ds_load_unset()
-   4.14. ds_reload()
+   4.12. ds_is_active(groupid [, uri])
+   4.13. ds_load_update()
+   4.14. ds_load_unset()
+   4.15. ds_reload()
 
 4.1.  ds_select_dst(set, alg[, limit])
 
@@ -1051,7 +1113,7 @@ modparam("dispatcher", "reload_delta", 1)
           + “0” - hash over callid
           + “1” - hash over from URI.
           + “2” - hash over to URI.
-          + “3” - hash over request-URI.
+          + “3” - hash over request-URI user.
           + “4” - round-robin (next destination).
           + “5” - hash over authorization-username (Proxy-Authorization or
             "normal" authorization). If no username is found, round robin
@@ -1122,7 +1184,7 @@ modparam("dispatcher", "reload_delta", 1)
             - If the attribute 'cc=1' is set, the latency used is
             congestion ms : estimate (current latency ms) - average
             (normal condition latency ms).
-            Example 1.43. latency_optimized_dispatching usage
+            Example 1.46. latency_optimized_dispatching usage
 Using this simple formula :
     ADJUSTED_PRIORITY = PRIORITY - (ESTIMATED_LATENCY_MS/PRIORITY)
 
@@ -1148,7 +1210,7 @@ With congestion control the formula becomes :
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.44. ds_select_dst usage
+   Example 1.47. ds_select_dst usage
 ...
 ds_select_dst("1", "0");
 ...
@@ -1158,7 +1220,7 @@ ds_select_dst("1", "$var(a)");
 ds_select_dst("1", "4", "3");
 ...
 
-   Example 1.45. configuring load balancing with congestion detection
+   Example 1.48. configuring load balancing with congestion detection
 ...
 # sample of SQL provisionning statements
 INSERT INTO "dispatcher"
@@ -1212,7 +1274,7 @@ DEST: {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.46. ds_select_domain usage
+   Example 1.49. ds_select_domain usage
 ...
 $var(a) = 4;
 if(ds_select_domain("1", "$var(a)")) {
@@ -1236,7 +1298,7 @@ if(ds_select_domain("1", "$var(a)")) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.47. ds_select usage
+   Example 1.50. ds_select usage
 ...
 $var(a) = 4;
 if(ds_select("1", "$var(a)")) {
@@ -1279,7 +1341,7 @@ if(ds_select("1", "$var(a)")) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.48. ds_select_routes usage
+   Example 1.51. ds_select_routes usage
 ...
 $var(alg) = 4;
 $var(limit) = 8;
@@ -1354,7 +1416,7 @@ failure_route[REROUTE] {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.49. ds_mark_dst usage
+   Example 1.52. ds_mark_dst usage
 ...
 failure_route[tryagain] {
 ...
@@ -1376,7 +1438,7 @@ failure_route[tryagain] {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.50. ds_list_exists usage
+   Example 1.53. ds_list_exists usage
 ...
 if(ds_list_exists("10")) {
     ...
@@ -1396,12 +1458,13 @@ if(ds_list_exists("10")) {
        specific group id. The parameter can be an integer or a variable
        holding an integer value.
      * mode - (optional) - a bitmask to specify how the matching should be
-       done. If parameter is 0, all ip, port and proto are matched and
-       active status is ignored. If bit one is set, then port is ignored.
-       If bit two is set, then protocol is ignored. If bit three is set,
-       then state must be active. The parameter can be an integer or a
-       variable holding an integer value. It must be provided if the uri
-       parameter is provided.
+       done. If the parameter is missing, the matching is done with
+       ignoring the protocol (value 2). If parameter is 0, all ip, port
+       and proto are matched and active status is ignored. If bit one is
+       set, then port is ignored. If bit two is set, then protocol is
+       ignored. If bit three is set, then state must be active. The
+       parameter can be an integer or a variable holding an integer value.
+       It must be provided if the uri parameter is provided.
      * uri (optional) - if parameter is empty or missing, the matching is
        done against source IP, port and protocol. Otherwise the value has
        to be a valid SIP URI, used to match against addresses in the
@@ -1420,7 +1483,7 @@ if(ds_list_exists("10")) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.51. ds_is_from_list usage
+   Example 1.54. ds_is_from_list usage
 ...
 if(ds_is_from_list()) {
     ...
@@ -1436,7 +1499,31 @@ if(ds_is_from_list("10", "3", "sip:127.0.0.1:5080")) {
 }
 ...
 
-4.12.  ds_load_update()
+4.12.  ds_is_active(groupid [, uri])
+
+   This function returns true, if there is an active URI in the
+   destination group; otherwise false. If the uri parameter is provided,
+   then the corresponding destination has to be active.
+
+   Description of parameters:
+     * groupid - the group id. The parameter can be an integer or a
+       variable holding an integer value.
+     * uri (optional) - the URI of the destination. if parameter is empty
+       or missing, the any destination is matched.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.55. ds_is_active usage
+...
+if(ds_is_active("10")) {
+    ...
+}
+if(ds_is_active("10", "sip:127.0.0.1:5080")) {
+    ...
+}
+...
+
+4.13.  ds_load_update()
 
    Updates the load state:
      * if it is a BYE or CANCEL - remove the load from destination address
@@ -1447,14 +1534,14 @@ if(ds_is_from_list("10", "3", "sip:127.0.0.1:5080")) {
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE and ONREPLY_ROUTE.
 
-4.13.  ds_load_unset()
+4.14.  ds_load_unset()
 
    Remove the call load for the destination that routed the call.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE and ONREPLY_ROUTE.
 
-   Example 1.52. ds_load_unset usage
+   Example 1.56. ds_load_unset usage
 ...
 route {
     ...
@@ -1478,7 +1565,7 @@ onreply_route {
 }
 ...
 
-4.14.  ds_reload()
+4.15.  ds_reload()
 
    Reloads the groups and included destinations.
 
@@ -1541,11 +1628,15 @@ kamcmd dispatcher.set_duid_state ip 2 xyz
 
 5.3.  dispatcher.list
 
-   Lists the groups and included destinations.
+   Lists the routing groups with destination addresses and corresponding
+   attributes.
 
    Name: dispatcher.list
 
-   Parameters: none
+   Parameters:
+     * _rmode_ - (optional) response mode - can be: 'short' to get a
+       shorter version of groups and destinations; 'full' to get more
+       attributes per destination
 
    Example:
                 kamcmd dispatcher.list
@@ -1611,15 +1702,18 @@ kamcmd dispatcher.ping_active 0
      * _group_: destination group id
      * _address_: address of the destination in the _group_
      * _flags_ (optional): as described in the list file format, default 0
+     * _priority_ (optional): as described in the list file format,
+       default 0
      * _attrs_ (optional): as described in the list file format, default
        ""
 
    Example:
 ...
-# prototype: kamcmd dispatcher.add _group_ _address_ _flags_ _attrs_
+# prototype: kamcmd dispatcher.add _group_ _address_ _flags_ _priority_ _attrs_
 kamcmd dispatcher.add 2 sip:127.0.0.1:5080
 kamcmd dispatcher.add 3 sip:127.0.0.1:5075 8
-kamcmd dispatcher.add 3 sip:127.0.0.1:5075 0 duid=abc;socket=udp:127.0.0.1:5060
+kamcmd dispatcher.add 3 sip:127.0.0.1:5075 0 0 duid=abc;socket=udp:127.0.0.1:506
+0
 ...
 
 5.7.  dispatcher.remove
@@ -1760,7 +1854,7 @@ setid(int) destination(sip uri) flags(int,opt) priority(int,opt) attrs(str,opt)
    For database, each element of a line resides in a different column.
    Next is a dispatcher.list file example:
 
-   Example 1.53. dispatcher list file
+   Example 1.57. dispatcher list file
 ...
 #
 # dispatcher destination sets (groups)
@@ -1785,7 +1879,7 @@ r,opt)
 
    Next listing shows a sample config for using the dispatcher module.
 
-   Example 1.54. Kamailio config script - sample dispatcher usage
+   Example 1.58. Kamailio config script - sample dispatcher usage
 ...
 #!KAMAILIO
 #

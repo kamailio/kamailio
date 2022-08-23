@@ -745,7 +745,7 @@ int parse_msg(char* const buf, const unsigned int len, struct sip_msg* const msg
 error:
 	/* more debugging, msg->orig is/should be null terminated*/
 	LOG(cfg_get(core, core_cfg, sip_parser_log), "ERROR: parse_msg: message=<%.*s>\n",
-			(int)msg->len, ZSW(msg->buf));
+			(int)msg->len, ZSW(ksr_buf_oneline(msg->buf, (int)msg->len)));
 	return -1;
 }
 
@@ -1012,10 +1012,14 @@ hdr_field_t* get_hdr(const sip_msg_t* const msg, const enum _hdr_types_t ht)
 {
 	hdr_field_t *hdr;
 
-	if (msg->parsed_flag & HDR_T2F(ht))
+	if (ht == HDR_ERROR_T || ht == HDR_EOH_T) {
+		return NULL;
+	}
+	if (msg->parsed_flag & HDR_T2F(ht)) {
 		for(hdr = msg->headers; hdr; hdr = hdr->next) {
 			if(hdr->type == ht) return hdr;
 		}
+	}
 	return NULL;
 }
 
@@ -1091,6 +1095,42 @@ int msg_set_time(sip_msg_t* const msg)
 	if(msg->tval.tv_sec!=0)
 		return 0;
 	return gettimeofday(&msg->tval, NULL);
+}
+
+/**
+ * replace \r\n with . and space
+ */
+char *ksr_buf_oneline(char *inbuf, int inlen)
+{
+	static char outbuf[BUF_SIZE];
+	int outlen;
+	int i = 0;
+
+	if (cfg_get(core, core_cfg, sip_parser_log_oneline) == 0) {
+		return inbuf;
+	}
+
+	if (inbuf == NULL) {
+		outbuf[0] = '\0';
+		return outbuf;
+	}
+
+	outlen = (inlen < BUF_SIZE) ? inlen : BUF_SIZE - 1;
+	memcpy(outbuf, inbuf, outlen);
+	outbuf[outlen] = '\0';
+
+	for (i = 0; i < outlen;  i++) {
+		if (outbuf[i] == '\r')
+		{
+			outbuf[i] = '.';
+		}
+		else if (outbuf[i] == '\n')
+		{
+			outbuf[i] = ' ';
+		}
+	}
+
+	return outbuf;
 }
 
 /**
@@ -1356,8 +1396,10 @@ char* get_body(sip_msg_t* const msg)
 				(*(msg->unparsed)=='\n' || *(msg->unparsed)=='\r' ) ) {
 		offset = 1;
 	} else {
-		LM_ERR("failed to locate end of headers (%p %p - %d %d [%s])\n",
-				msg->buf, msg->unparsed, msg->len, len, msg->unparsed);
+		LM_ERR("failed to locate end of headers (%p %p - %d %d [%.*s])\n",
+				msg->buf, msg->unparsed, msg->len, len,
+				(len<msg->len)?(msg->len-len):0,
+				(len<msg->len)?msg->unparsed:"");
 		return 0;
 	}
 

@@ -56,6 +56,7 @@ Ovidiu Sas
               4.14. append_sdp_oldmediaip (int)
               4.15. filter_server_id (int)
               4.16. nat_addr_mode (int)
+              4.17. alias_name (string)
 
         5. Functions
 
@@ -66,7 +67,7 @@ Ovidiu Sas
               5.5. nat_uac_test(flags)
               5.6. is_rfc1918(ip_address)
               5.7. add_contact_alias([ip_addr, port, proto])
-              5.8. handle_ruri_alias()
+              5.8. handle_ruri_alias([mode])
               5.9. set_contact_alias([trim])
               5.10. set_alias_to_pv(target_avp)
 
@@ -103,20 +104,21 @@ Ovidiu Sas
    1.14. Set append_sdp_oldmediaip parameter
    1.15. Set filter_server_id parameter
    1.16. Set nat_addr_mode parameter
-   1.17. fix_nated_contact usage
-   1.18. fix_nated_sdp usage
-   1.19. add_rcv_paramer usage
-   1.20. fix_nated_register usage
-   1.21. nat_uac_test usage
-   1.22. is_rfc1918 usage
-   1.23. add_contact_alias usage
-   1.24. handle_ruri_alias usage
-   1.25. set_contact_alias usage
-   1.26. set_alias_to_pv usage
-   1.27. $rr_count usage
-   1.28. $rr_top_count usage
-   1.29. nathelper.enable_ping usage
-   1.30. @nathelper.rewrite_contact usage
+   1.17. Set alias_name parameter
+   1.18. fix_nated_contact usage
+   1.19. fix_nated_sdp usage
+   1.20. add_rcv_paramer usage
+   1.21. fix_nated_register usage
+   1.22. nat_uac_test usage
+   1.23. is_rfc1918 usage
+   1.24. add_contact_alias usage
+   1.25. handle_ruri_alias usage
+   1.26. set_contact_alias usage
+   1.27. set_alias_to_pv usage
+   1.28. $rr_count usage
+   1.29. $rr_top_count usage
+   1.30. nathelper.enable_ping usage
+   1.31. @nathelper.rewrite_contact usage
 
 Chapter 1. Admin Guide
 
@@ -147,6 +149,7 @@ Chapter 1. Admin Guide
         4.14. append_sdp_oldmediaip (int)
         4.15. filter_server_id (int)
         4.16. nat_addr_mode (int)
+        4.17. alias_name (string)
 
    5. Functions
 
@@ -157,7 +160,7 @@ Chapter 1. Admin Guide
         5.5. nat_uac_test(flags)
         5.6. is_rfc1918(ip_address)
         5.7. add_contact_alias([ip_addr, port, proto])
-        5.8. handle_ruri_alias()
+        5.8. handle_ruri_alias([mode])
         5.9. set_contact_alias([trim])
         5.10. set_alias_to_pv(target_avp)
 
@@ -247,6 +250,7 @@ Chapter 1. Admin Guide
    4.14. append_sdp_oldmediaip (int)
    4.15. filter_server_id (int)
    4.16. nat_addr_mode (int)
+   4.17. alias_name (string)
 
 4.1. force_socket (string)
 
@@ -488,6 +492,19 @@ modparam("nathelper", "filter_server_id", 1)
 modparam("nathelper", "nat_addr_mode", 0)
 ...
 
+4.17. alias_name (string)
+
+   The parameter sets the name of the Contact URI parameter set by
+   set_contact_alias() or add_contact_alias() and processed by
+   handle_ruri_alias() in R-URI.
+
+   Default value is “alias”.
+
+   Example 1.17. Set alias_name parameter
+...
+modparam("nathelper", "alias_name", "saddr")
+...
+
 5. Functions
 
    5.1. fix_nated_contact()
@@ -497,7 +514,7 @@ modparam("nathelper", "nat_addr_mode", 0)
    5.5. nat_uac_test(flags)
    5.6. is_rfc1918(ip_address)
    5.7. add_contact_alias([ip_addr, port, proto])
-   5.8. handle_ruri_alias()
+   5.8. handle_ruri_alias([mode])
    5.9. set_contact_alias([trim])
    5.10. set_alias_to_pv(target_avp)
 
@@ -509,7 +526,7 @@ modparam("nathelper", "nat_addr_mode", 0)
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    BRANCH_ROUTE.
 
-   Example 1.17. fix_nated_contact usage
+   Example 1.18. fix_nated_contact usage
 ...
 if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
 ...
@@ -542,7 +559,7 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1.18. fix_nated_sdp usage
+   Example 1.19. fix_nated_sdp usage
 ...
 if (search("User-Agent: Cisco ATA.*") {fix_nated_sdp("3");};
 ...
@@ -566,7 +583,7 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_sdp("3");};
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.19. add_rcv_paramer usage
+   Example 1.20. add_rcv_paramer usage
 ...
 add_rcv_param(); # add the parameter to the Contact header
 ....
@@ -586,7 +603,7 @@ add_rcv_param("1"); # add the parameter to the Contact URI
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.20. fix_nated_register usage
+   Example 1.21. fix_nated_register usage
 ...
 fix_nated_register();
 ...
@@ -618,6 +635,10 @@ fix_nated_register();
      * 256 - Test if the SDP connection address is different from source
        IP address. It will work also with multiple connection address
        lines.
+     * 512 - Test if the target addresses are different or over websocket.
+       For requests, it compares host and port in R-URI ($rU) and D-URI
+       ($du). For replies, it compares host and port in 2nd Via with
+       received and rport parameters.
 
    All flags can be bitwise combined, the test returns true if any of the
    tests identified a NAT.
@@ -625,7 +646,7 @@ fix_nated_register();
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1.21. nat_uac_test usage
+   Example 1.22. nat_uac_test usage
 ...
 if(nat_uac_test("19")) {
     rtpproxy_manage("co");
@@ -639,7 +660,7 @@ if(nat_uac_test("19")) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.22. is_rfc1918 usage
+   Example 1.23. is_rfc1918 usage
 ...
 if(is_rfc1918("$rd")) {
     # domain in r-uri is private address
@@ -657,7 +678,7 @@ if(is_rfc1918("$rd")) {
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    BRANCH_ROUTE, and LOCAL_ROUTE.
 
-   Example 1.23. add_contact_alias usage
+   Example 1.24. add_contact_alias usage
 ...
     if (!is_present_hf("Record-Route")) {
         if (!add_contact_alias("$var(src_ip)", "$Rp", "tcp")) {
@@ -668,7 +689,7 @@ if(is_rfc1918("$rd")) {
     };
 ...
 
-5.8.  handle_ruri_alias()
+5.8.  handle_ruri_alias([mode])
 
    Checks if the Request URI has an “alias” parameter and if so, removes
    it and sets the “$du” based on its value. Note that this means that
@@ -677,6 +698,10 @@ if(is_rfc1918("$rd")) {
    on a request, make sure that you screen the alias parameter value of
    Request URI the same way as you would screen the Request URI itself.
 
+   The optional parameter mode can be 0 to consume first alias parameter,
+   otherwise it consumes the last alias parameter. If the parameter mode
+   is not provided, it consumes the first parameter.
+
    Returns 1 if “;alias” parameter was found and “$du” was set and the
    “$ru” rewritten, 2 if the alias parameter was not found and nothing was
    done, or -1 in case of error.
@@ -684,7 +709,7 @@ if(is_rfc1918("$rd")) {
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE, and
    LOCAL_ROUTE.
 
-   Example 1.24. handle_ruri_alias usage
+   Example 1.25. handle_ruri_alias usage
 ...
     if ($du == "") {
         handle_ruri_alias();
@@ -706,9 +731,11 @@ if(is_rfc1918("$rd")) {
 5.9.  set_contact_alias([trim])
 
    Adds an “;alias=ip~port~transport” parameter to the contact URI
-   containing the received ip, port, and transport protocol. The new
-   contact URI is immediately visible to other modules in the way the
-   fix_nated_contact() does it.
+   containing the received ip, port, and transport protocol. The update of
+   contact URI is signaled to a few other modules in the way the
+   fix_nated_contact() does it by using the internal flags. The new value
+   is not visible to pseudo-variables and it does not change the SIP
+   message buffer.
 
    Meaning of parameters:
      * trim - by default, set_contact_alias() will not detect and trim an
@@ -719,7 +746,7 @@ if(is_rfc1918("$rd")) {
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    BRANCH_ROUTE, and FAILURE_ROUTE.
 
-   Example 1.25. set_contact_alias usage
+   Example 1.26. set_contact_alias usage
 ...
     if (!is_present_hf("Record-Route")) {
         if (!set_contact_alias()) {
@@ -738,7 +765,7 @@ if(is_rfc1918("$rd")) {
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    BRANCH_ROUTE, and FAILURE_ROUTE.
 
-   Example 1.26. set_alias_to_pv usage
+   Example 1.27. set_alias_to_pv usage
 ...
                 set_alias_to_pv("$avp(aliasuri)");
 ...
@@ -752,7 +779,7 @@ if(is_rfc1918("$rd")) {
 
    Number of Record Routes in received SIP request or reply.
 
-   Example 1.27. $rr_count usage
+   Example 1.28. $rr_count usage
 ...
     $avp(rr_count) = $rr_count;
 ...
@@ -764,7 +791,7 @@ if(is_rfc1918("$rd")) {
    value of $rr_top_count is 1. If there is no Record Route(s), value of
    $rr_top_count is 0.
 
-   Example 1.28. $rr_top_count usage
+   Example 1.29. $rr_top_count usage
 ...
     if ($rr_count == $avp(rr_count) + $rr_top_count) {
         route(ADD_CONTACT_ALIAS);
@@ -782,7 +809,7 @@ if(is_rfc1918("$rd")) {
 
    The function takes only one parameter - a number in decimal format.
 
-   Example 1.29. nathelper.enable_ping usage
+   Example 1.30. nathelper.enable_ping usage
 ...
 $ kamcmd nathelper.enable_ping 1
 ...
@@ -797,7 +824,7 @@ $ kamcmd nathelper.enable_ping 1
    counted from 1. Only IP:port is rewritten, remaining part are left
    unchanged. Full nameaddr is supported.
 
-   Example 1.30. @nathelper.rewrite_contact usage
+   Example 1.31. @nathelper.rewrite_contact usage
 ...
 $c = @nathelper.rewrite_contact[1];
 ...

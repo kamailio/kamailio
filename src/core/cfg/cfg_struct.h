@@ -76,7 +76,6 @@ enum { CFG_GROUP_UNKNOWN = 0, CFG_GROUP_DYNAMIC, CFG_GROUP_STATIC };
 /*! \brief linked list of registered groups */
 #pragma pack(push, 1)
 typedef struct _cfg_group {
-	int		num;		/*!< number of variables within the group */
 	cfg_mapping_t	*mapping;	/*!< describes the mapping betweeen
 					the cfg variable definition and the memory block */
 	char		*vars;		/*!< pointer to the memory block where the values
@@ -85,6 +84,7 @@ typedef struct _cfg_group {
 	cfg_add_var_t	*add_var;	/*!< Additional instances of the variables.
 					This linked list is used only before the config is
 					shmized. */
+	int		num;		/*!< number of variables within the group */
 	int		size;		/*!< size of the memory block that has to be
 					allocated to store the values */
 	int		meta_offset;	/*!< offset of the group within the
@@ -100,9 +100,9 @@ typedef struct _cfg_group {
 					to temporary set the handle in the main process and
 					restore it later to its original value. */
 
-	unsigned char	dynamic;	/*!< indicates whether the variables within the group
-					are dynamically	allocated or not */
 	struct _cfg_group	*next;
+	unsigned int	dynamic;	/*!< indicates whether the variables within the group
+					are dynamically	allocated or not */
 	int		name_len;
 	char		name[1];
 } cfg_group_t;

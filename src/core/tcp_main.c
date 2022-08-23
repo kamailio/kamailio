@@ -79,6 +79,7 @@
 #include "tcp_stats.h"
 #include "tcp_ev.h"
 #include "tsend.h"
+#include "events.h"
 #include "timer_ticks.h"
 #include "local_timer.h"
 #ifdef CORE_TLS
@@ -908,6 +909,8 @@ int tcpconn_read_haproxy(struct tcp_connection *c) {
 	uint32_t size, port;
 	char *p, *end;
 	struct ip_addr *src_ip, *dst_ip;
+	int twaitms = 0;
+	int tsleepus = 0;
 
 	const char v2sig[12] = "\x0D\x0A\x0D\x0A\x00\x0D\x0A\x51\x55\x49\x54\x0A";
 
@@ -949,10 +952,35 @@ int tcpconn_read_haproxy(struct tcp_connection *c) {
 
 	} hdr;
 
+	if(cfg_get(tcp, tcp_cfg, wait_data_ms) > 10000) {
+		tsleepus = 100000;
+	} else if (cfg_get(tcp, tcp_cfg, wait_data_ms) < 1000) {
+		tsleepus = 50000;
+	} else {
+		tsleepus = 10 * cfg_get(tcp, tcp_cfg, wait_data_ms);
+	}
+
+	twaitms = 0;
 	do {
 		bytes = recv(c->s, &hdr, sizeof(hdr), MSG_PEEK);
-	} while (bytes == -1 && (errno == EINTR || errno == EAGAIN));
+		if(bytes==-1 && (errno == EINTR || errno == EAGAIN)) {
+			if(twaitms <= cfg_get(tcp, tcp_cfg, wait_data_ms)) {
+				/* LM_DBG("bytes: %d - errno: %d (%d/%d) - twait: %dms\n", bytes,
+						errno, EINTR, EAGAIN, twaitms); */
+				sleep_us(tsleepus);
+				twaitms += tsleepus/1000;
+			} else {
+				break;
+			}
+		} else {
+			break;
+		}
+	} while (1);
 
+	if(bytes == -1) {
+		/* no data received during tcp_wait_data */
+		return -1;
+	}
 	/* copy original tunnel address details */
 	memcpy(&c->cinfo.src_ip, &c->rcv.src_ip, sizeof(ip_addr_t));
 	memcpy(&c->cinfo.dst_ip, &c->rcv.dst_ip, sizeof(ip_addr_t));
@@ -1115,8 +1143,21 @@ int tcpconn_read_haproxy(struct tcp_connection *c) {
 
 done:
 	/* we need to consume the appropriate amount of data from the socket */
+	twaitms = 0;
 	do {
 		bytes = recv(c->s, &hdr, size, 0);
+		if(bytes==-1 && errno == EINTR) {
+			if(twaitms <= cfg_get(tcp, tcp_cfg, wait_data_ms)) {
+				/* LM_DBG("bytes: %d - errno: %d (%d/%d) - twait: %dms\n", bytes,
+						errno, EINTR, EAGAIN, twaitms); */
+				sleep_us(tsleepus);
+				twaitms += tsleepus/1000;
+			} else {
+				break;
+			}
+		} else {
+			break;
+		}
 	} while (bytes == -1 && errno == EINTR);
 
 	return (bytes >= 0) ? retval : -1;
@@ -1179,6 +1220,7 @@ struct tcp_connection* tcpconn_new(int sock, union sockaddr_union* su,
 	c->rcv.proto_reserved2=0;
 	c->state=state;
 	c->extra_data=0;
+	c->timestamp=time(NULL);
 #ifdef USE_TLS
 	if (type==PROTO_TLS){
 		if (tls_tcpconn_init(c, sock)==-1) goto error;
@@ -1478,7 +1520,12 @@ inline static struct tcp_connection*  tcpconn_add(struct tcp_connection *c)
 		 * the second alias is for (peer_ip, peer_port, local_addr, 0) -- for
 		 *  finding any conenction to peer_ip, peer_port from local_addr 
 		 * the third alias is for (peer_ip, peer_port, local_addr, local_port) 
-		 *   -- for finding if a fully specified connection exists */
+		 *   -- for finding if a fully specified connection exists 
+		 * the fourth alias is for (peer_ip, peer_port, cinfo_addr, 0) -- for
+		 *  finding any connection to peer_ip, peer_port from address stored into cinfo (e.g. when proxy protocol is used)
+		 * the fifth alias is for (peer_ip, peer_port, cinfo_addr, cinfo_port) 
+		 *   -- for finding if a fully specified connection exists using address
+		 *      and port stored into cinfo*/
 		_tcpconn_add_alias_unsafe(c, c->rcv.src_port, &zero_ip, 0,
 													new_conn_alias_flags);
 		if (likely(c->rcv.dst_ip.af && ! ip_addr_any(&c->rcv.dst_ip))){
@@ -1487,6 +1534,14 @@ inline static struct tcp_connection*  tcpconn_add(struct tcp_connection *c)
 			_tcpconn_add_alias_unsafe(c, c->rcv.src_port, &c->rcv.dst_ip,
 									c->rcv.dst_port, new_conn_alias_flags);
 		}
+		if (unlikely(c->cinfo.dst_ip.af && ! ip_addr_any(&c->cinfo.dst_ip) &&
+									! ip_addr_cmp(&c->rcv.dst_ip, &c->cinfo.dst_ip))){
+			_tcpconn_add_alias_unsafe(c, c->rcv.src_port, &c->cinfo.dst_ip, 0,
+													new_conn_alias_flags);
+			_tcpconn_add_alias_unsafe(c, c->rcv.src_port, &c->cinfo.dst_ip, c->cinfo.dst_port,
+													new_conn_alias_flags);
+		}
+
 		/* ignore add_alias errors, there are some valid cases when one
 		 *  of the add_alias would fail (e.g. first add_alias for 2 connections
 		 *   with the same destination but different src. ip*/
@@ -1604,7 +1659,8 @@ struct tcp_connection* _tcpconn_find(int id, struct ip_addr* ip, int port,
 					((l_port==0) || (l_port==a->parent->rcv.dst_port)) &&
 					(ip_addr_cmp(ip, &a->parent->rcv.src_ip)) &&
 					(is_local_ip_any ||
-						ip_addr_cmp(l_ip, &a->parent->rcv.dst_ip))
+						ip_addr_cmp(l_ip, &a->parent->rcv.dst_ip) ||
+						ip_addr_cmp(l_ip, &a->parent->cinfo.dst_ip))
 			   ) {
 				LM_DBG("found connection by peer address (id: %d)\n",
 						a->parent->id);
@@ -3144,8 +3200,7 @@ error:
 inline static void tcpconn_close_main_fd(struct tcp_connection* tcpconn)
 {
 	int fd;
-	
-	
+
 	fd=tcpconn->s;
 #ifdef USE_TLS
 	if (tcpconn->type==PROTO_TLS || tcpconn->type==PROTO_WSS)
@@ -3154,6 +3209,16 @@ inline static void tcpconn_close_main_fd(struct tcp_connection* tcpconn)
 #ifdef TCP_FD_CACHE
 	if (likely(cfg_get(tcp, tcp_cfg, fd_cache))) shutdown(fd, SHUT_RDWR);
 #endif /* TCP_FD_CACHE */
+	if(unlikely(cfg_get(tcp, tcp_cfg, close_rst))) {
+		struct linger sl = {
+				.l_onoff = 1,  /* non-zero value enables linger option in kernel */
+				.l_linger = 0, /* timeout interval in seconds */
+		};
+		if(setsockopt(fd, SOL_SOCKET, SO_LINGER, &sl, sizeof(sl))<0) {
+			LM_WARN("setsockopt SO_LINGER %d - %s\n", errno,
+						strerror(errno));
+		}
+	}
 	if (unlikely(tcp_safe_close(fd)<0))
 		LM_ERR("(%p): %s close(%d) failed (flags 0x%x): %s (%d)\n", tcpconn,
 					su2a(&tcpconn->rcv.src_su, sizeof(tcpconn->rcv.src_su)),
@@ -3494,6 +3559,33 @@ again:
 }
 
 
+static int tcp_emit_closed_event(struct tcp_connection *con)
+{
+	int ret;
+	tcp_closed_event_info_t tev;
+	sr_event_param_t evp = {0};
+	enum tcp_closed_reason reason;
+
+	if (con->event) {
+		reason = con->event;
+	} else {
+		reason = TCP_CLOSED_EOF;
+	}
+
+	ret = 0;
+	LM_DBG("TCP closed event creation triggered (reason: %d)\n", reason);
+	if(likely(sr_event_enabled(SREV_TCP_CLOSED))) {
+		memset(&tev, 0, sizeof(tcp_closed_event_info_t));
+		tev.reason = reason;
+		tev.con = con;
+		evp.data = (void*)(&tev);
+		ret = sr_event_exec(SREV_TCP_CLOSED, &evp);
+	} else {
+		LM_DBG("no callback registering for handling TCP closed event\n");
+	}
+	return ret;
+}
+
 
 /* handles io from a tcp child process
  * params: tcp_c - pointer in the tcp_children array, to the entry for
@@ -3574,6 +3666,7 @@ inline static int handle_tcp_child(struct tcp_child* tcp_c, int fd_i)
 				/* if refcnt was 1 => it was used only in the
 				   tcp reader => it's not hashed or watched for IO
 				   anymore => no need to io_watch_del() */
+				tcp_emit_closed_event(tcpconn);
 				tcpconn_destroy(tcpconn);
 				break;
 			}
@@ -3585,6 +3678,7 @@ inline static int handle_tcp_child(struct tcp_child* tcp_c, int fd_i)
 						tcpconn->flags &= ~F_CONN_WRITE_W;
 					}
 #endif /* TCP_ASYNC */
+					tcp_emit_closed_event(tcpconn);
 					tcpconn_put_destroy(tcpconn);
 				}
 #ifdef TCP_ASYNC
@@ -3636,6 +3730,8 @@ inline static int handle_tcp_child(struct tcp_child* tcp_c, int fd_i)
 							io_watch_del(&io_h, tcpconn->s, -1, IO_FD_CLOSING);
 							tcpconn->flags&=~F_CONN_WRITE_W;
 						}
+						tcpconn->event = TCP_CLOSED_TIMEOUT;
+						tcp_emit_closed_event(tcpconn);
 						tcpconn_put_destroy(tcpconn);
 					} else if (unlikely(tcpconn->flags & F_CONN_WRITE_W)){
 						BUG("unhashed connection watched for write\n");
@@ -3672,6 +3768,7 @@ inline static int handle_tcp_child(struct tcp_child* tcp_c, int fd_i)
 						tcpconn->flags&=~F_CONN_WRITE_W;
 					}
 #endif /* TCP_ASYNC */
+					tcp_emit_closed_event(tcpconn);
 					tcpconn_put_destroy(tcpconn);
 				}
 #ifdef TCP_ASYNC
@@ -3703,6 +3800,7 @@ inline static int handle_tcp_child(struct tcp_child* tcp_c, int fd_i)
 #endif /* TCP_ASYNC */
 				if (tcpconn_try_unhash(tcpconn))
 					tcpconn_put(tcpconn);
+				tcp_emit_closed_event(tcpconn);
 				tcpconn_put_destroy(tcpconn); /* deref & delete if refcnt==0 */
 				break;
 		default:
@@ -3717,9 +3815,9 @@ error:
 
 
 
-/* handles io from a "generic" ser process (get fd or new_fd from a tcp_send)
+/* handles io from a "generic" process (get fd or new_fd from a tcp_send)
  * 
- * params: p     - pointer in the ser processes array (pt[]), to the entry for
+ * params: p     - pointer in the processes array (pt[]), to the entry for
  *                 which an io event was detected
  *         fd_i  - fd index in the fd_array (useful for optimizing
  *                 io_watch_deletes)
@@ -4213,7 +4311,7 @@ static inline int handle_new_connect(struct socket_info* si)
 					cfg_get(tcp, tcp_cfg, max_connections));
 		tcp_safe_close(new_sock);
 		TCP_STATS_LOCAL_REJECT();
-		return 1; /* success, because the accept was succesfull */
+		return 1; /* success, because the accept was successful */
 	}
 	if (unlikely(si->proto==PROTO_TLS)) {
 		if (unlikely(*tls_connections_no>=cfg_get(tcp, tcp_cfg, max_tls_connections))){
@@ -4222,13 +4320,13 @@ static inline int handle_new_connect(struct socket_info* si)
 					cfg_get(tcp, tcp_cfg, max_tls_connections));
 			tcp_safe_close(new_sock);
 			TCP_STATS_LOCAL_REJECT();
-			return 1; /* success, because the accept was succesfull */
+			return 1; /* success, because the accept was successful */
 		}
 	}
 	if (unlikely(init_sock_opt_accept(new_sock)<0)){
 		LM_ERR("init_sock_opt failed\n");
 		tcp_safe_close(new_sock);
-		return 1; /* success, because the accept was succesfull */
+		return 1; /* success, because the accept was successful */
 	}
 	(*tcp_connections_no)++;
 	if (unlikely(si->proto==PROTO_TLS))
@@ -4264,7 +4362,7 @@ static inline int handle_new_connect(struct socket_info* si)
 				LM_ERR("duplicated connection by local and remote addresses\n");
 				_tcpconn_free(tcpconn);
 				tcp_safe_close(new_sock);
-				return 1; /* success, because the accept was succesfull */
+				return 1; /* success, because the accept was successful */
 			}
 		}
 		tcpconn->flags|=F_CONN_PASSIVE;
@@ -4306,7 +4404,7 @@ static inline int handle_new_connect(struct socket_info* si)
 		if (unlikely(si->proto==PROTO_TLS))
 			(*tls_connections_no)--;
 	}
-	return 1; /* accept() was succesfull */
+	return 1; /* accept() was successful */
 }
 
 
@@ -4636,7 +4734,7 @@ static inline void tcp_timer_run(void)
 
 /* keep in sync with tcpconn_destroy, the "delete" part should be
  * the same except for io_watch_del..
- * Note: this function is called only on shutdown by the main ser process via
+ * Note: this function is called only on shutdown by the main process via
  * cleanup(). However it's also safe to call it from the tcp_main process.
  * => with the ser shutdown exception, it cannot execute in parallel
  * with tcpconn_add() or tcpconn_destroy()*/
@@ -4750,7 +4848,7 @@ void tcp_main_loop()
 		}
 	}
 #endif
-	/* add all the unix sockets used for communcation with other ser processes
+	/* add all the unix sockets used for communcation with other processes
 	 *  (get fd, new connection a.s.o) */
 	for (r=1; r<process_no; r++){
 		if (pt[r].unix_sock>0) /* we can't have 0, we never close it!*/

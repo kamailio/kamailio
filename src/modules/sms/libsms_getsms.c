@@ -55,7 +55,7 @@ mailto:s.frings@mail.isis.de
 /* converts an octet to a 8-Bit value */
 static inline int octet2bin(char* octet)
 {
-	int result=0;
+	unsigned int result=0;
 
 	if (octet[0]>57)
 		result=octet[0]-55;
@@ -66,7 +66,7 @@ static inline int octet2bin(char* octet)
 		result+=octet[1]-55;
 	else
 		result+=octet[1]-48;
-	return result;
+	return (int)result;
 }
 
 

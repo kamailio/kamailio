@@ -110,7 +110,7 @@ int send_pr_buffer( struct retr_buf *rb, void *buf, int len);
 
 #define UNREF_NOSTATS(_T_cell) \
 	do{\
-		if (atomic_dec_and_test(&(_T_cell)->ref_count)){ \
+		if (_T_cell && atomic_dec_and_test(&(_T_cell)->ref_count)){ \
 			unlink_timers((_T_cell)); \
 			free_cell((_T_cell)); \
 		}\

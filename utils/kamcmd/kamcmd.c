@@ -427,7 +427,11 @@ void print_binrpc_val(struct binrpc_val* v, int ident)
 			printf("%c", (v->u.end)?'}':'{');
 			break;
 		case BINRPC_T_DOUBLE:
-			printf("%f", v->u.fval);
+			if(v->u.fval == (double)((long long int)v->u.fval)) {
+				printf("%lld", (long long int)v->u.fval);
+			} else {
+				printf("%f", v->u.fval);
+			}
 			break;
 		default:
 			printf("ERROR: unknown type %d\n", v->type);
@@ -2102,6 +2106,7 @@ int main(int argc, char** argv)
 			fprintf(stderr, "ERROR: Bad socket type for %s\n", sock_name);
 			goto error;
 	}
+	free(sock_id->buf); /* not needed anymore */
 	free(sock_id); /* not needed anymore */
 	sock_id=0;
 

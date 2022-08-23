@@ -79,6 +79,22 @@ struct module_exports exports = {
 };
 
 
+typedef struct statsc_nmap {
+	str sname;
+	str rname;
+	int64_t *vals;
+	struct statsc_nmap *next;
+} statsc_nmap_t;
+
+typedef struct _statsc_info {
+	uint64_t steps;
+	uint32_t slots;
+	uint32_t items;
+	statsc_nmap_t *slist;
+} statsc_info_t;
+
+static statsc_info_t *_statsc_info = NULL;
+
 /**
  * @brief Initialize statsc module function
  */
@@ -92,9 +108,17 @@ static int mod_init(void)
 		LM_ERR("failed to register timer routine\n");
 		return -1;
 	}
-	if(statsc_init()<0) {
-		LM_ERR("failed to initialize the stats collector structure\n");
-		return -1;
+	if(_statsc_info==NULL) {
+		if(statsc_init()<0) {
+			LM_ERR("failed to initialize the stats collector structure\n");
+			return -1;
+		}
+	} else {
+		if(_statsc_info->items != (uint32_t)statsc_items) {
+			LM_ERR("number of items set after tracking statiscs were added\n");
+			LM_ERR("set mod param 'items' before 'track'\n");
+			return -1;
+		}
 	}
 	return 0;
 }
@@ -132,16 +156,6 @@ static int w_statsc_reset(sip_msg_t* msg, char* p1, char* p2)
 	return ki_statsc_reset(msg);
 }
 
-typedef int (*statsc_func_t)(void *p, int64_t *res);
-
-typedef struct statsc_nmap {
-	str sname;
-	str rname;
-	int64_t *vals;
-	struct statsc_nmap *next;
-} statsc_nmap_t;
-
-
 int statsc_svalue(str *name, int64_t *res)
 {
 	stat_var       *stat;
@@ -149,6 +163,7 @@ int statsc_svalue(str *name, int64_t *res)
 	stat = get_stat(name);
 	if(stat==NULL) {
 		LM_ERR("statistic %.*s not found\n", name->len, name->s);
+		*res = 0;
 		return -1;
 	}
 
@@ -158,20 +173,13 @@ int statsc_svalue(str *name, int64_t *res)
 }
 
 static statsc_nmap_t _statsc_nmap_default[] = {
-	{ str_init("shm.free"),        str_init("free_size"), 0, 0}, /* shmem:free_size */
-	{ str_init("shm.used"),        str_init("used_size"), 0, 0},
-	{ str_init("shm.real_used"),   str_init("real_used_size"), 0, 0},
-	{ {0, 0},                      {0, 0}, 0, 0}
+	{ str_init("shm.free"),      str_init("free_size"), NULL, NULL}, /* shmem:free_size */
+	{ str_init("shm.used"),      str_init("used_size"), NULL, NULL},
+	{ str_init("shm.real_used"), str_init("real_used_size"), NULL, NULL},
+	{ {NULL, 0},                 {NULL, 0}, NULL, NULL}
 };
 
-typedef struct _statsc_info {
-	uint64_t steps;
-	uint32_t slots;
-	statsc_nmap_t *slist;
-} statsc_info_t;
-
-
-static statsc_info_t *_statsc_info = NULL;
+#define STRLEN_ROUNDUP(len)  ( ( ((size_t)len) / sizeof(void*) + 1 ) * sizeof(void*) )
 
 int statsc_nmap_add(str *sname, str *rname)
 {
@@ -180,11 +188,17 @@ int statsc_nmap_add(str *sname, str *rname)
 	statsc_nmap_t *sl = NULL;
 
 	if(_statsc_info==NULL) {
+		LM_ERR("root structure not initialize yet\n");
+		return -1;
+	}
+	if(_statsc_info->items != (uint32_t)statsc_items) {
+		LM_ERR("number of items set after tracking statiscs were added\n");
+		LM_ERR("set mod param 'items' before 'track'\n");
 		return -1;
 	}
 
 	sz = sizeof(statsc_nmap_t) + statsc_items * sizeof(int64_t)
-		+ sname->len + rname->len + 4;
+		+ STRLEN_ROUNDUP(sname->len) + STRLEN_ROUNDUP(rname->len);
 	sm = shm_malloc(sz);
 	if(sm==NULL) {
 		LM_ERR("no more shared memory\n");
@@ -193,15 +207,18 @@ int statsc_nmap_add(str *sname, str *rname)
 	memset(sm, 0, sz);
 	sm->sname.s = (char*)((char*)sm + sizeof(statsc_nmap_t));
 	sm->sname.len = sname->len;
-	sm->rname.s = (char*)((char*)sm->sname.s + sm->sname.len + 1);
+	sm->rname.s = (char*)((char*)sm->sname.s + STRLEN_ROUNDUP(sm->sname.len));
 	sm->rname.len = rname->len;
-	sm->vals = (int64_t*)((char*)sm->rname.s + sm->rname.len + 1);
+	sm->vals = (int64_t*)((char*)sm->rname.s + STRLEN_ROUNDUP(sm->rname.len));
 	memcpy(sm->sname.s, sname->s, sname->len);
 	memcpy(sm->rname.s, rname->s, rname->len);
 
+	LM_INFO("added stat mapping [%.*s] [%.*s]\n", sname->len, sname->s,
+			 rname->len,  rname->s);
 	if(_statsc_info->slist==NULL) {
 		_statsc_info->slist = sm;
 		_statsc_info->slots = 1;
+		_statsc_info->items = (uint32_t)statsc_items;
 		return 0;
 	}
 	sl = _statsc_info->slist;
@@ -239,6 +256,7 @@ int statsc_init(void)
 	sm->vals = (int64_t*)((char*)sm + sizeof(statsc_nmap_t));
 	_statsc_info->slist = sm;
 	_statsc_info->slots = 1;
+	_statsc_info->items = (uint32_t)statsc_items;
 
 	for(i=0; _statsc_nmap_default[i].sname.s!=0; i++) {
 		if(statsc_nmap_add(&_statsc_nmap_default[i].sname,
@@ -273,7 +291,7 @@ void statsc_timer(unsigned int ticks, void *param)
 
 	i = 0;
 	for(sm=_statsc_info->slist->next; sm!=NULL; sm=sm->next) {
-		LM_DBG("fetching value for: [%.*s] - step [%d]\n", sm->rname.len,
+		LM_DBG("fetching value for: [%.*s] - index [%d]\n", sm->rname.len,
 				sm->rname.s, i);
 		statsc_svalue(&sm->rname, sm->vals + n);
 		i++;
@@ -336,7 +354,8 @@ static void statsc_rpc_report(rpc_t* rpc, void* ctx)
 	int cmode;
 	str sname;
 	int range;
-	int k, m, n, v;
+	int k, m, n;
+	int64_t v;
 	time_t tn;
 	void* th;
 	void* ts;
@@ -415,7 +434,7 @@ static void statsc_rpc_report(rpc_t* rpc, void* ctx)
 					rpc->fault(ctx, 500, "Error creating rpc (5)");
 					return;
 				}
-				v = (int)sm->vals[k];
+				v = sm->vals[k];
 				switch(cmode) {
 					case 1:
 						break;
@@ -424,13 +443,13 @@ static void statsc_rpc_report(rpc_t* rpc, void* ctx)
 							continue;
 						}
 						if(k==0) {
-							v -= (int)sm->vals[statsc_items-1];
+							v -= sm->vals[statsc_items-1];
 						} else {
-							v -= (int)sm->vals[k-1];
+							v -= sm->vals[k-1];
 						}
 						break;
 				}
-				if(rpc->struct_add(ti, "udd",
+				if(rpc->struct_add(ti, "uLd",
 						"timestamp", (unsigned int)_statsc_info->slist->vals[k],
 						"value", v,
 						"index", m++)<0) {
@@ -446,7 +465,7 @@ static void statsc_rpc_report(rpc_t* rpc, void* ctx)
 					rpc->fault(ctx, 500, "Error creating rpc (7)");
 					return;
 				}
-				v = (int)sm->vals[k];
+				v = sm->vals[k];
 				switch(cmode) {
 					case 1:
 						break;
@@ -454,10 +473,10 @@ static void statsc_rpc_report(rpc_t* rpc, void* ctx)
 						if(n==k-1) {
 							continue;
 						}
-						v -= (int)sm->vals[k-1];
+						v -= sm->vals[k-1];
 						break;
 				}
-				if(rpc->struct_add(ti, "udd",
+				if(rpc->struct_add(ti, "uLd",
 						"timestamp", (unsigned int)_statsc_info->slist->vals[k],
 						"value", v,
 						"index", m++)<0) {

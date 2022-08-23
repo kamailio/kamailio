@@ -578,7 +578,7 @@ void evapi_accept_client(struct ev_loop *loop, struct ev_io *watcher, int revent
 		return;
 	}
 
-	/* start watcher to read messages from whatchers */
+	/* start watcher to read messages from watchers */
 	ev_io_init(evapi_client, evapi_recv_client, csock, EV_READ);
 	ev_io_start(loop, evapi_client);
 }

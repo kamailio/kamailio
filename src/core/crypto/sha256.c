@@ -94,35 +94,6 @@
 #error Define BYTE_ORDER to be equal to either LITTLE_ENDIAN or BIG_ENDIAN
 #endif
 
-/*
- * Define the followingsha2_* types to types of the correct length on
- * the native archtecture.   Most BSD systems and Linux define u_intXX_t
- * types.  Machines with very recent ANSI C headers, can use the
- * uintXX_t definintions from inttypes.h by defining SHA2_USE_INTTYPES_H
- * during compile or in the sha.h header file.
- *
- * Machines that support neither u_intXX_t nor inttypes.h's uintXX_t
- * will need to define these three typedefs below (and the appropriate
- * ones in sha.h too) by hand according to their system architecture.
- *
- * Thank you, Jun-ichiro itojun Hagino, for suggesting using u_intXX_t
- * types and pointing out recent ANSI C support for uintXX_t in inttypes.h.
- */
-#ifdef SHA2_USE_INTTYPES_H
-
-typedef uint8_t  sha2_byte;	/* Exactly 1 byte */
-typedef uint32_t sha2_word32;	/* Exactly 4 bytes */
-typedef uint64_t sha2_word64;	/* Exactly 8 bytes */
-
-#else /* SHA2_USE_INTTYPES_H */
-
-typedef u_int8_t  sha2_byte;	/* Exactly 1 byte */
-typedef u_int32_t sha2_word32;	/* Exactly 4 bytes */
-typedef u_int64_t sha2_word64;	/* Exactly 8 bytes */
-
-#endif /* SHA2_USE_INTTYPES_H */
-
-
 /*** SHA-256/384/512 Various Length Definitions ***********************/
 /* NOTE: Most of these are in sha2.h */
 #define SHA256_SHORT_BLOCK_LENGTH	(SHA256_BLOCK_LENGTH - 8)
@@ -328,6 +299,18 @@ const static sha2_word64 sha512_initial_hash_value[8] = {
 	0x9b05688c2b3e6c1fULL,
 	0x1f83d9abfb41bd6bULL,
 	0x5be0cd19137e2179ULL
+};
+
+/* Initial hash value H for SHA-512/256 */
+const static sha2_word64 sha512_256_initial_hash_value[8] = {
+	0x22312194FC2BF72CULL,
+	0x9F555FA3C84C64C2ULL,
+	0x2393B86B6F53B151ULL,
+	0x963877195940EABDULL,
+	0x96283EE2A88EFFE3ULL,
+	0xBE5E1E2553863992ULL,
+	0x2B0199FC2C85B8AAULL,
+	0x0EB72DDC81C52CA2ULL
 };
 
 /*
@@ -570,7 +553,7 @@ void sr_SHA256_Update(SHA256_CTX* context, const sha2_byte *data, size_t len) {
 	usedspace = freespace = 0;
 }
 
-void sr_SHA256_Final(sha2_byte digest[], SHA256_CTX* context) {
+void sr_SHA256_Final(sha2_byte digest[SHA256_DIGEST_LENGTH], SHA256_CTX* context) {
 	sha2_word32	*d = (sha2_word32*)digest;
 	unsigned int	usedspace;
 
@@ -633,7 +616,7 @@ void sr_SHA256_Final(sha2_byte digest[], SHA256_CTX* context) {
 	usedspace = 0;
 }
 
-char *sr_SHA256_End(SHA256_CTX* context, char buffer[]) {
+char *sr_SHA256_End(SHA256_CTX* context, char buffer[SHA256_DIGEST_STRING_LENGTH]) {
 	sha2_byte	digest[SHA256_DIGEST_LENGTH], *d = digest;
 	int		i;
 
@@ -665,12 +648,21 @@ char* sr_SHA256_Data(const sha2_byte* data, size_t len, char digest[SHA256_DIGES
 }
 
 
-/*** SHA-512: *********************************************************/
+/*** SHA-512 SHA-512/256: *********************************************************/
 void sr_SHA512_Init(SHA512_CTX* context) {
 	if (context == (SHA512_CTX*)0) {
 		return;
 	}
 	MEMCPY_BCOPY(context->state, sha512_initial_hash_value, SHA512_DIGEST_LENGTH);
+	MEMSET_BZERO(context->buffer, SHA512_BLOCK_LENGTH);
+	context->bitcount[0] = context->bitcount[1] =  0;
+}
+
+void sr_SHA512_256_Init(SHA512_CTX* context) {
+	if (context == (SHA512_CTX*)0) {
+		return;
+	}
+	MEMCPY_BCOPY(context->state, sha512_256_initial_hash_value, SHA512_DIGEST_LENGTH);
 	MEMSET_BZERO(context->buffer, SHA512_BLOCK_LENGTH);
 	context->bitcount[0] = context->bitcount[1] =  0;
 }
@@ -933,7 +925,7 @@ void SHA512_Last(SHA512_CTX* context) {
 	SHA512_Transform(context, (sha2_word64*)context->buffer);
 }
 
-void sr_SHA512_Final(sha2_byte digest[], SHA512_CTX* context) {
+void sr_SHA512_Final(sha2_byte digest[SHA512_DIGEST_LENGTH], SHA512_CTX* context) {
 	sha2_word64	*d = (sha2_word64*)digest;
 
 	/* Sanity check: */
@@ -962,7 +954,7 @@ void sr_SHA512_Final(sha2_byte digest[], SHA512_CTX* context) {
 	MEMSET_BZERO(context, sizeof(*context));
 }
 
-char *sr_SHA512_End(SHA512_CTX* context, char buffer[]) {
+char *sr_SHA512_End(SHA512_CTX* context, char buffer[SHA512_DIGEST_STRING_LENGTH]) {
 	sha2_byte	digest[SHA512_DIGEST_LENGTH], *d = digest;
 	int		i;
 
@@ -1008,7 +1000,7 @@ void sr_SHA384_Update(SHA384_CTX* context, const sha2_byte* data, size_t len) {
 	sr_SHA512_Update((SHA512_CTX*)context, data, len);
 }
 
-void sr_SHA384_Final(sha2_byte digest[], SHA384_CTX* context) {
+void sr_SHA384_Final(sha2_byte digest[SHA384_DIGEST_LENGTH], SHA384_CTX* context) {
 	sha2_word64	*d = (sha2_word64*)digest;
 
 	/* Sanity check: */
@@ -1037,7 +1029,7 @@ void sr_SHA384_Final(sha2_byte digest[], SHA384_CTX* context) {
 	MEMSET_BZERO(context, sizeof(*context));
 }
 
-char *sr_SHA384_End(SHA384_CTX* context, char buffer[]) {
+char *sr_SHA384_End(SHA384_CTX* context, char buffer[SHA384_DIGEST_STRING_LENGTH]) {
 	sha2_byte	digest[SHA384_DIGEST_LENGTH], *d = digest;
 	int		i;
 

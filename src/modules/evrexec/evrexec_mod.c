@@ -43,6 +43,8 @@ MODULE_VERSION
 typedef struct evrexec_task {
 	str ename;
 	int rtid;
+	str sockaddr;
+	int sockfd;
 	unsigned int wait;
 	unsigned int workers;
 	struct evrexec_task *next;
@@ -50,12 +52,22 @@ typedef struct evrexec_task {
 
 evrexec_task_t *_evrexec_list = NULL;
 
+typedef struct evrexec_info {
+	str data;
+	str srcip;
+	str srcport;
+	int srcportno;
+} evrexec_info_t;
+
+static evrexec_info_t _evrexec_info = { 0 };
+
 /** module functions */
 static int mod_init(void);
 static int child_init(int);
 
 int evrexec_param(modparam_t type, void* val);
-void evrexec_process(evrexec_task_t *it, int idx);
+void evrexec_process_start(evrexec_task_t *it, int idx);
+void evrexec_process_socket(evrexec_task_t *it, int idx);
 
 static int pv_get_evr(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
 static int pv_parse_evr_name(pv_spec_p sp, str *in);
@@ -138,8 +150,13 @@ static int child_init(int rank)
 	it = _evrexec_list;
 	while(it) {
 		for(i=0; i<it->workers; i++) {
-			snprintf(si_desc, MAX_PT_DESC, "EVREXEC child=%d exec=%.*s",
-					i, it->ename.len, it->ename.s);
+			if(it->sockaddr.len>0) {
+				snprintf(si_desc, MAX_PT_DESC, "EVREXEC child=%d exec=%.*s socket=%.*s",
+						i, it->ename.len, it->ename.s, it->sockaddr.len, it->sockaddr.s);
+			} else {
+				snprintf(si_desc, MAX_PT_DESC, "EVREXEC child=%d exec=%.*s",
+						i, it->ename.len, it->ename.s);
+			}
 			pid=fork_process(PROC_RPC, si_desc, 1);
 			if (pid<0)
 				return -1; /* error */
@@ -149,7 +166,11 @@ static int child_init(int rank)
 				if (cfg_child_init())
 					return -1;
 
-				evrexec_process(it, i);
+				if(it->sockaddr.len>0) {
+					evrexec_process_socket(it, i);
+				} else {
+					evrexec_process_start(it, i);
+				}
 			}
 		}
 		it = it->next;
@@ -161,7 +182,7 @@ static int child_init(int rank)
 /**
  *
  */
-void evrexec_process(evrexec_task_t *it, int idx)
+void evrexec_process_start(evrexec_task_t *it, int idx)
 {
 	sip_msg_t *fmsg;
 	sr_kemi_eng_t *keng = NULL;
@@ -186,6 +207,115 @@ void evrexec_process(evrexec_task_t *it, int idx)
 				LM_ERR("error running event route kemi callback\n");
 			}
 		}
+	}
+	/* avoid exiting the process */
+	while(1) { sleep(3600); }
+}
+
+/**
+ *
+ */
+void evrexec_process_socket(evrexec_task_t *it, int idx)
+{
+	sip_msg_t *fmsg;
+	sr_kemi_eng_t *keng = NULL;
+	char hostval[64];
+	char portval[6];
+	struct addrinfo hints;
+	int ret;
+	struct addrinfo* res=0;
+	sr_phostp_t phostp;
+	char rcvbuf[BUF_SIZE];
+	struct sockaddr_storage src_addr;
+	socklen_t src_addr_len;
+	ssize_t count;
+	char srchostval[NI_MAXHOST];
+	char srcportval[NI_MAXSERV];
+
+	if(parse_protohostport(&it->sockaddr, &phostp)<0 || phostp.port==0
+			|| phostp.host.len>62 || phostp.sport.len>5) {
+		LM_ERR("failed to parse or invalid local socket address: %.*s\n",
+				it->sockaddr.len, it->sockaddr.s);
+		return;
+	}
+	memcpy(hostval, phostp.host.s, phostp.host.len);
+	hostval[phostp.host.len] = '\0';
+	memcpy(portval, phostp.sport.s, phostp.sport.len);
+	portval[phostp.sport.len] = '\0';
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family=AF_UNSPEC;
+	hints.ai_socktype=SOCK_DGRAM;
+	hints.ai_protocol=0;
+	hints.ai_flags=AI_PASSIVE|AI_ADDRCONFIG;
+	ret = getaddrinfo(hostval, portval, &hints, &res);
+	if (ret!=0) {
+		LM_ERR("failed to resolve local socket address: %.*s (ret: %d)",
+				it->sockaddr.len, it->sockaddr.s, ret);
+		return;
+	}
+
+	it->sockfd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+	if(it->sockfd==-1) {
+		LM_ERR("failed to create socket - address: %.*s (%d/%s)\n",
+				it->sockaddr.len, it->sockaddr.s, errno, strerror(errno));
+		freeaddrinfo(res);
+		return;
+	}
+	if(bind(it->sockfd, res->ai_addr, res->ai_addrlen)==-1) {
+		LM_ERR("failed to bind socket - address: %.*s (%d/%s)\n",
+				it->sockaddr.len, it->sockaddr.s, errno, strerror(errno));
+		close(it->sockfd);
+		freeaddrinfo(res);
+		return;
+	}
+	freeaddrinfo(res);
+
+	while (1) {
+		src_addr_len = sizeof(src_addr);
+		count = recvfrom(it->sockfd, rcvbuf, sizeof(rcvbuf)-1, 0,
+				(struct sockaddr*)&src_addr, &src_addr_len);
+		if (count==-1) {
+			LM_ERR("failed to receive on socket - address: %.*s (%d/%s)\n",
+				it->sockaddr.len, it->sockaddr.s, errno, strerror(errno));
+			continue;
+		} else if (count == sizeof(rcvbuf) -1 ) {
+			LM_WARN("datagram too large for buffer - truncated\n");
+		}
+		rcvbuf[count] = '\0';
+
+		ret = getnameinfo((struct sockaddr *)&src_addr, src_addr_len, srchostval,
+				sizeof(srchostval), srcportval, sizeof(srcportval),
+				NI_NUMERICHOST | NI_NUMERICSERV);
+		if(ret == 0) {
+			LM_DBG("received data from %s port %s\n", srchostval, srcportval);
+			_evrexec_info.srcip.s = srchostval;
+			_evrexec_info.srcip.len = strlen(_evrexec_info.srcip.s);
+			_evrexec_info.srcport.s = srcportval;
+			_evrexec_info.srcport.len = strlen(_evrexec_info.srcport.s);
+			str2sint(&_evrexec_info.srcport, &_evrexec_info.srcportno);
+		}
+
+		_evrexec_info.data.s = rcvbuf;
+		_evrexec_info.data.len = (int)count;
+
+		fmsg = faked_msg_next();
+		set_route_type(LOCAL_ROUTE);
+		keng = sr_kemi_eng_get();
+		if(keng==NULL) {
+			if(it->rtid>=0 && event_rt.rlist[it->rtid]!=NULL) {
+				run_top_route(event_rt.rlist[it->rtid], fmsg, 0);
+			} else {
+				LM_WARN("empty event route block [%.*s]\n",
+						it->ename.len, it->ename.s);
+			}
+		} else {
+			if(sr_kemi_route(keng, fmsg, EVENT_ROUTE,
+						&it->ename, &it->sockaddr)<0) {
+				LM_ERR("error running event route kemi callback\n");
+			}
+		}
+		memset(&_evrexec_info, 0, sizeof(evrexec_info_t));
 	}
 	/* avoid exiting the process */
 	while(1) { sleep(3600); }
@@ -233,8 +363,13 @@ int evrexec_param(modparam_t type, void *val)
 					return -1;
 				}
 			}
+		} else if (pit->name.len==8
+				&& strncasecmp(pit->name.s, "sockaddr", 8)==0) {
+			tmp.sockaddr = pit->body;
+
 		} else {
-			LM_ERR("invalid attribute: %.*s\n", pit->body.len, pit->body.s);
+			LM_ERR("invalid attribute: %.*s=%.*s\n", pit->name.len, pit->name.s,
+					pit->body.len, pit->body.s);
 			return -1;
 		}
 	}
@@ -242,6 +377,18 @@ int evrexec_param(modparam_t type, void *val)
 		LM_ERR("missing or invalid name attribute\n");
 		free_params(params_list);
 		return -1;
+	}
+	if(tmp.sockaddr.len>0) {
+		if(tmp.sockaddr.len<6) {
+			LM_ERR("invalid sockaddr: %.*s\n", tmp.sockaddr.len, tmp.sockaddr.s);
+			free_params(params_list);
+			return -1;
+		}
+		if(strncmp(tmp.sockaddr.s, "udp:", 4)!=0) {
+			LM_ERR("unsupported sockaddr: %.*s\n", tmp.sockaddr.len, tmp.sockaddr.s);
+			free_params(params_list);
+			return -1;
+		}
 	}
 	/* set '\0' at the end of route name */
 	tmp.ename.s[tmp.ename.len] = '\0';
@@ -264,27 +411,40 @@ int evrexec_param(modparam_t type, void *val)
 		return -1;
 	}
 	memcpy(it, &tmp, sizeof(evrexec_task_t));
+	it->sockfd = -1;
 	if(it->workers==0) it->workers=1;
+	if(it->sockaddr.len>0) it->workers=1;
 	it->next = _evrexec_list;
 	_evrexec_list = it;
 	free_params(params_list);
 	return 0;
 }
 
-static str *pv_evr_data = NULL;
-
 /**
  *
  */
 static int pv_get_evr(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 {
-	if(param==NULL || pv_evr_data==NULL) {
+	if(param==NULL || _evrexec_info.data.s==NULL) {
 		return pv_get_null(msg, param, res);
 	}
 
 	switch(param->pvn.u.isname.name.n) {
 		case 0: /* data */
-			return pv_get_strval(msg, param, res, pv_evr_data);
+			return pv_get_strval(msg, param, res, &_evrexec_info.data);
+		case 1: /* srcpip */
+			if(_evrexec_info.srcip.s==NULL) {
+				return pv_get_null(msg, param, res);
+			}
+			return pv_get_strval(msg, param, res, &_evrexec_info.srcip);
+		case 2: /* srcport */
+			if(_evrexec_info.srcport.s==NULL) {
+				return pv_get_null(msg, param, res);
+			}
+			return pv_get_strval(msg, param, res, &_evrexec_info.srcport);
+		case 3: /* srcportno */
+			return pv_get_sintval(msg, param, res, _evrexec_info.srcportno);
+
 		default:
 			return pv_get_null(msg, param, res);
 	}
@@ -302,6 +462,27 @@ static int pv_parse_evr_name(pv_spec_p sp, str *in)
 		case 4:
 			if(strncmp(in->s, "data", 4)==0) {
 				sp->pvp.pvn.u.isname.name.n = 0;
+			} else {
+				goto error;
+			}
+		break;
+		case 5:
+			if(strncmp(in->s, "srcip", 5)==0) {
+				sp->pvp.pvn.u.isname.name.n = 1;
+			} else {
+				goto error;
+			}
+		break;
+		case 7:
+			if(strncmp(in->s, "srcport", 7)==0) {
+				sp->pvp.pvn.u.isname.name.n = 2;
+			} else {
+				goto error;
+			}
+		break;
+		case 9:
+			if(strncmp(in->s, "srcportno", 9)==0) {
+				sp->pvp.pvn.u.isname.name.n = 3;
 			} else {
 				goto error;
 			}
@@ -355,12 +536,12 @@ void rpc_evr_run(rpc_t *rpc, void *c)
 		evr_data.len = strlen(evr_data.s);
 	}
 
-	pv_evr_data = &evr_data;
+	_evrexec_info.data = evr_data;
 	keng = sr_kemi_eng_get();
 	if(keng==NULL) {
 		evr_id = route_lookup(&event_rt, evr_name.s);
 		if(evr_id == -1) {
-			pv_evr_data = NULL;
+			memset(&_evrexec_info, 0, sizeof(evrexec_info_t));
 			LM_ERR("event route not found: %.*s\n", evr_name.len, evr_name.s);
 			rpc->fault(c, 500, "Event route not found");
 			return;
@@ -388,7 +569,7 @@ void rpc_evr_run(rpc_t *rpc, void *c)
 		}
 	}
 	set_route_type(rtbk);
-	pv_evr_data = NULL;
+	memset(&_evrexec_info, 0, sizeof(evrexec_info_t));
 }
 
 /**

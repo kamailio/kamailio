@@ -33,6 +33,7 @@
 #include "../../core/mod_fix.h"
 #include "../../core/route.h"
 #include "../../core/action.h"
+#include "../../core/resolve.h"
 #include "../../core/fmsg.h"
 #include "../../core/kemi.h"
 #include "../../core/receive.h"
@@ -430,6 +431,113 @@ error:
 	return -1;
 }
 
+/**
+ *
+ */
+static sr_kemi_xval_t _sr_kemi_reg_ulc_xval = {0};
+
+sr_kemi_xval_t* ki_reg_ulc_rget(sip_msg_t* msg, str* rid, str* attr)
+{
+	regpv_profile_t *rpp = NULL;
+
+	memset(&_sr_kemi_reg_ulc_xval, 0, sizeof(sr_kemi_xval_t));
+	if(rid==NULL || rid->s==NULL || attr==NULL || attr->s==NULL) {
+		LM_WARN("invalid parameters - return value 0\n");
+		_sr_kemi_reg_ulc_xval.vtype = SR_KEMIP_INT;
+		_sr_kemi_reg_ulc_xval.v.n = 0;
+		return &_sr_kemi_reg_ulc_xval;
+	}
+
+	rpp = regpv_get_profile(rid);
+	if(rpp==0) {
+		LM_WARN("result [%.*s] is not defined - return value 0\n",
+				rid->len, rid->s);
+		_sr_kemi_reg_ulc_xval.vtype = SR_KEMIP_INT;
+		_sr_kemi_reg_ulc_xval.v.n = 0;
+		return &_sr_kemi_reg_ulc_xval;
+	}
+
+	if(attr->len==5 && strncmp(attr->s, "count", 5)==0) {
+		_sr_kemi_reg_ulc_xval.vtype = SR_KEMIP_INT;
+		_sr_kemi_reg_ulc_xval.v.n = rpp->nrc;
+		return &_sr_kemi_reg_ulc_xval;
+	} else if(attr->len==3 && strncmp(attr->s, "aor", 3)==0) {
+		_sr_kemi_reg_ulc_xval.vtype = SR_KEMIP_STR;
+		_sr_kemi_reg_ulc_xval.v.s = rpp->aor;
+		return &_sr_kemi_reg_ulc_xval;
+	}
+
+	LM_WARN("attribute [%.*s] is not defined - return value 0\n",
+			attr->len, attr->s);
+	_sr_kemi_reg_ulc_xval.vtype = SR_KEMIP_INT;
+	_sr_kemi_reg_ulc_xval.v.n = 0;
+	return &_sr_kemi_reg_ulc_xval;
+}
+
+sr_kemi_xval_t* ki_reg_ulc_cget(sip_msg_t* msg, str* rid, str* attr, int idx)
+{
+	regpv_profile_t *rpp = NULL;
+	ucontact_t *c = NULL;
+	int i = 0;
+
+
+	memset(&_sr_kemi_reg_ulc_xval, 0, sizeof(sr_kemi_xval_t));
+	if(rid==NULL || rid->s==NULL || attr==NULL || attr->s==NULL) {
+		LM_WARN("invalid parameters - return value 0\n");
+		_sr_kemi_reg_ulc_xval.vtype = SR_KEMIP_INT;
+		_sr_kemi_reg_ulc_xval.v.n = 0;
+		return &_sr_kemi_reg_ulc_xval;
+	}
+
+	rpp = regpv_get_profile(rid);
+	if(rpp==0) {
+		LM_WARN("result [%.*s] is not defined - return value 0\n",
+				rid->len, rid->s);
+		_sr_kemi_reg_ulc_xval.vtype = SR_KEMIP_INT;
+		_sr_kemi_reg_ulc_xval.v.n = 0;
+		return &_sr_kemi_reg_ulc_xval;
+	}
+
+	/* work only with positive indexes by now */
+	if(idx<0) {
+		idx = 0;
+	}
+	/* get contact by index */
+	i = 0;
+	for(c = rpp->contacts; c!=NULL; c = c->next) {
+		if(i == idx) {
+			break;
+		}
+		i++;
+	}
+	if(c == NULL) {
+		LM_WARN("contact at index [%d] is not found - return value 0\n", idx);
+		_sr_kemi_reg_ulc_xval.vtype = SR_KEMIP_INT;
+		_sr_kemi_reg_ulc_xval.v.n = 0;
+		return &_sr_kemi_reg_ulc_xval;
+	}
+
+	if(attr->len==4 && strncmp(attr->s, "addr", 4)==0) {
+		_sr_kemi_reg_ulc_xval.vtype = SR_KEMIP_STR;
+		_sr_kemi_reg_ulc_xval.v.s = c->c;
+		return &_sr_kemi_reg_ulc_xval;
+	} else if(attr->len==6 && strncmp(attr->s, "socket", 6)==0) {
+		if(c->sock==NULL) {
+			sr_kemi_xval_null(&_sr_kemi_reg_ulc_xval, SR_KEMI_XVAL_NULL_EMPTY);
+			return &_sr_kemi_reg_ulc_xval;
+		}
+		_sr_kemi_reg_ulc_xval.vtype = SR_KEMIP_STR;
+		_sr_kemi_reg_ulc_xval.v.s = c->sock->sock_str;
+		return &_sr_kemi_reg_ulc_xval;
+	}
+
+	LM_WARN("attribute [%.*s] is not defined - return value 0\n",
+			attr->len, attr->s);
+	_sr_kemi_reg_ulc_xval.vtype = SR_KEMIP_INT;
+	_sr_kemi_reg_ulc_xval.v.n = 0;
+	return &_sr_kemi_reg_ulc_xval;
+}
+
 int pv_fetch_contacts_helper(sip_msg_t* msg, udomain_t* dt, str* uri,
 		str* profile)
 {
@@ -756,4 +864,219 @@ void reg_ul_expired_contact(ucontact_t* ptr, int type, void* param)
 	return;
 error:
 	regpv_free_profile(rpp);
-	return; }
+	return;
+}
+
+int ki_lookup_xavp(sip_msg_t* msg, str *utname, str* uri,
+		str* rxname, str *cxname)
+{
+	udomain_t* dt;
+	urecord_t* r;
+	ucontact_t* ptr;
+	str aor = {0, 0};
+	sr_xavp_t *rxavp=NULL;
+	sr_xavp_t *cxavp=NULL;
+	sr_xavp_t *pxavp=NULL;
+	sr_xval_t nxval;
+	str fxname = {0, 0};
+	int res;
+	int n;
+
+	if (extract_aor(uri, &aor, NULL) < 0) {
+		LM_ERR("failed to extract Address Of Record\n");
+		return -1;
+	}
+
+	if(ul.get_udomain(utname->s, &dt)<0) {
+		LM_ERR("usrloc domain [%s] not found\n", utname->s);
+		return -1;
+	}
+
+	/* add record aor field */
+	memset(&nxval, 0, sizeof(sr_xval_t));
+	nxval.type = SR_XTYPE_STR;
+	nxval.v.s = aor;
+	STR_STATIC_SET(fxname, "aor");
+	if(xavp_add_value(&fxname, &nxval, &rxavp)==NULL) {
+		LM_ERR("failed to add xavp %.*s field\n", fxname.len, fxname.s);
+		return -1;
+	}
+
+	/* copy contacts */
+	ul.lock_udomain(dt, &aor);
+	res = ul.get_urecord(dt, &aor, &r);
+	if (res > 0) {
+		LM_DBG("'%.*s' not found in usrloc\n", aor.len, ZSW(aor.s));
+		ul.unlock_udomain(dt, &aor);
+		xavp_destroy_list(&rxavp);
+		return -1;
+	}
+
+	ptr = r->contacts;
+	n = 0;
+	while(ptr) {
+		/* add record uri field */
+		memset(&nxval, 0, sizeof(sr_xval_t));
+		nxval.type = SR_XTYPE_STR;
+		nxval.v.s = ptr->c;
+		STR_STATIC_SET(fxname, "uri");
+		if(xavp_add_value(&fxname, &nxval, &cxavp)==NULL) {
+			LM_ERR("failed to add xavp %.*s field\n", fxname.len, fxname.s);
+			goto error;
+		}
+		if(ptr->sock) {
+			memset(&nxval, 0, sizeof(sr_xval_t));
+			nxval.type = SR_XTYPE_STR;
+			nxval.v.s = ptr->sock->sock_str;
+			STR_STATIC_SET(fxname, "socket");
+			if(xavp_add_value(&fxname, &nxval, &cxavp)==NULL) {
+				LM_ERR("failed to add xavp %.*s field\n", fxname.len, fxname.s);
+				goto error;
+			}
+		}
+		if(ptr->received.s!=NULL) {
+			memset(&nxval, 0, sizeof(sr_xval_t));
+			nxval.type = SR_XTYPE_STR;
+			nxval.v.s = ptr->received;
+			STR_STATIC_SET(fxname, "dsturi");
+			if(xavp_add_value(&fxname, &nxval, &cxavp)==NULL) {
+				LM_ERR("failed to add xavp %.*s field\n", fxname.len, fxname.s);
+				goto error;
+			}
+		}
+		/* add cxavp in root list */
+		memset(&nxval, 0, sizeof(sr_xval_t));
+		nxval.type = SR_XTYPE_XAVP;
+		nxval.v.xavp = cxavp;
+		if((pxavp = xavp_add_value_after(cxname, &nxval, pxavp))==NULL) {
+			LM_ERR("cannot add dst xavp to root list\n");
+			goto error;
+		}
+		cxavp = NULL;
+		n++;
+		ptr = ptr->next;
+	}
+	ul.release_urecord(r);
+	ul.unlock_udomain(dt, &aor);
+
+	/* add record count field */
+	memset(&nxval, 0, sizeof(sr_xval_t));
+	nxval.type = SR_XTYPE_INT;
+	nxval.v.i = n;
+	STR_STATIC_SET(fxname, "count");
+	if(xavp_add_value(&fxname, &nxval, &rxavp)==NULL) {
+		LM_ERR("failed to add xavp %.*s field\n", fxname.len, fxname.s);
+		xavp_destroy_list(&rxavp);
+		return -1;
+	}
+
+	/* add rxavp in root list */
+	memset(&nxval, 0, sizeof(sr_xval_t));
+	nxval.type = SR_XTYPE_XAVP;
+	nxval.v.xavp = rxavp;
+	if((pxavp = xavp_add_value(rxname, &nxval, NULL))==NULL) {
+		LM_ERR("cannot add rxavp to root list\n");
+		xavp_destroy_list(&rxavp);
+		return -1;
+	}
+
+	LM_DBG("fetched <%d> contacts for <%.*s> in [%.*s]\n",
+			n, aor.len, aor.s, cxname->len, cxname->s);
+	return 1;
+
+error:
+	ul.release_urecord(r);
+	ul.unlock_udomain(dt, &aor);
+	if(cxavp!=NULL) {
+		xavp_destroy_list(&cxavp);
+	}
+	if(rxavp!=NULL) {
+		xavp_destroy_list(&rxavp);
+	}
+	return -1;
+}
+
+#define REG_FROM_USER_MPORT (1)
+#define REG_FROM_USER_MPROTO (1<<1)
+/**
+ *
+ */
+int ki_reg_from_user(sip_msg_t* msg, str *utname, str* uri, int vmode)
+{
+	udomain_t* dt;
+	urecord_t* r;
+	ucontact_t* ptr;
+	str aor = {0, 0};
+	sip_uri_t rcvuri;
+	int res = -1;
+	int ret = -1;
+	ip_addr_t ipb;
+
+	if (extract_aor(uri, &aor, NULL) < 0) {
+		LM_ERR("failed to extract Address Of Record\n");
+		return -1;
+	}
+
+	if(ul.get_udomain(utname->s, &dt)<0) {
+		LM_ERR("usrloc domain [%s] not found\n", utname->s);
+		return -1;
+	}
+
+	/* copy contacts */
+	ul.lock_udomain(dt, &aor);
+	res = ul.get_urecord(dt, &aor, &r);
+	if (res > 0) {
+		LM_DBG("'%.*s' not found in usrloc\n", aor.len, ZSW(aor.s));
+		ul.unlock_udomain(dt, &aor);
+		return -1;
+	}
+
+	for(ptr = r->contacts; ptr; ptr = ptr->next) {
+		if(ptr->received.s!=NULL) {
+			if (parse_uri(ptr->received.s, ptr->received.len, &rcvuri) < 0) {
+				LM_ERR("failed to parse rcv uri [%.*s]\n",
+						ptr->received.len, ptr->received.s);
+				goto error;
+			}
+		} else {
+			if (parse_uri(ptr->c.s, ptr->c.len, &rcvuri) < 0) {
+				LM_ERR("failed to parse contact uri [%.*s]\n",
+						ptr->received.len, ptr->received.s);
+				goto error;
+			}
+		}
+		if(str2ipxbuf(&rcvuri.host, &ipb) < 0) {
+			LM_WARN("failed to convert ip [%.*s] - ignoring\n",
+					rcvuri.host.len, rcvuri.host.s);
+			continue;
+		}
+		if(!ip_addr_cmp(&msg->rcv.src_ip, &ipb)) {
+			continue;
+		}
+		if(vmode & REG_FROM_USER_MPORT) {
+			if(msg->rcv.src_port!=rcvuri.port_no) {
+				continue;
+			}
+		}
+		if(vmode & REG_FROM_USER_MPROTO) {
+			if(msg->rcv.proto!=rcvuri.proto) {
+				continue;
+			}
+		}
+		LM_DBG("matched contact record with source address [%.*s]\n",
+				rcvuri.host.len, rcvuri.host.s);
+		ret = 1;
+		break;
+	}
+	ul.release_urecord(r);
+	ul.unlock_udomain(dt, &aor);
+
+	return ret;
+
+error:
+	ul.release_urecord(r);
+	ul.unlock_udomain(dt, &aor);
+	return -1;
+
+}
+

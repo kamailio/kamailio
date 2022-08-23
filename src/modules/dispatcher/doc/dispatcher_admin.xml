@@ -1100,6 +1100,90 @@ modparam("dispatcher", "reload_delta", 1)
 		</programlisting>
 		</example>
 	</section>
+
+	<section id="dispatcher.p.ds_dns_mode">
+		<title><varname>ds_dns_mode</varname> (int)</title>
+		<para>
+			Specify the how DNS resolving is done for destination addresses.
+		</para>
+		<para>
+			It is a bitwise flag and can be set to one or the sum of:
+		</para>
+		<itemizedlist>
+		<listitem>
+			<para>1 - do it at startup and reload (previous behaviour).</para>
+		</listitem>
+		<listitem>
+			<para>2 - do it always when the address is matched with ds_is_from_list().</para>
+		</listitem>
+		<listitem>
+			<para>4 - do it startup/reload and refresh on the timer interval
+			specified by ds_dns_interval.</para>
+		</listitem>
+		<listitem>
+			<para>8 - do SRV (and NAPTR if enabled in core) query instead of
+			A/AAAA lookup. NAPTR is done if protocol and port are not set.
+			SRV is done if port is not set.</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		<emphasis>
+			Default value is <quote>1</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set the <quote>ds_dns_mode</quote> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "ds_dns_mode", 2)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="dispatcher.p.ds_dns_interval">
+		<title><varname>ds_dns_interval</varname> (int)</title>
+		<para>
+			The interval in seconds to periodically refresh the DNS queries for
+			destination addresses if ds_dns_mode has value 4 set.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>600</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set the <quote>ds_dns_interval</quote> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "ds_interval_mode", 1800)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="dispatcher.p.ds_dns_ttl">
+		<title><varname>ds_dns_ttl</varname> (int)</title>
+		<para>
+			The interval in seconds to set TTL for DNS results received for
+			queries dones inside this module. If 0, this TTL is not set,
+			result and core values are used.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set the <quote>ds_dns_ttl</quote> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("dispatcher", "ds_interval_mode", 7200)
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 	<section>
@@ -1154,7 +1238,7 @@ modparam("dispatcher", "reload_delta", 1)
 			</listitem>
 			<listitem>
 				<para>
-				<quote>3</quote> - hash over request-URI.
+				<quote>3</quote> - hash over request-URI user.
 				</para>
 			</listitem>
 			<listitem>
@@ -1680,8 +1764,10 @@ if(ds_list_exists("10")) {
 		</listitem>
 		<listitem>
 			<para><emphasis>mode</emphasis> - (optional) - a bitmask to specify
-				how the matching should be done. If parameter is 0, all ip, port and
-				proto are matched and active status is ignored.
+				how the matching should be done. If the parameter is missing,
+				the matching is done with ignoring the protocol (value 2).
+				If parameter is 0, all ip, port and proto are matched and
+				active status is ignored.
 				If bit one is set, then port is ignored.
 				If bit two is set, then protocol is ignored.
 				If bit three is set, then state must be active.	The parameter
@@ -1729,6 +1815,46 @@ if(ds_is_from_list("10", "3")) {
     ...
 }
 if(ds_is_from_list("10", "3", "sip:127.0.0.1:5080")) {
+    ...
+}
+...
+</programlisting>
+		</example>
+	</section>
+	<section  id="dispatcher.f.ds_is_active">
+		<title>
+		<function moreinfo="none">ds_is_active(groupid [, uri])</function>
+		</title>
+		<para>
+		This function returns true, if there is an active URI in the destination
+		group; otherwise false. If the uri parameter is provided, then the
+		corresponding destination has to be active.
+		</para>
+		<para>Description of parameters:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>groupid</emphasis> - the group id. The parameter
+				can be an integer or a variable holding an integer value.
+			</para>
+		</listitem>
+        <listitem>
+			<para><emphasis>uri</emphasis> (optional) - the URI of the destination.
+			if parameter is empty or missing, the any destination is matched.
+            </para>
+        </listitem>
+		</itemizedlist>
+
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>ds_is_active</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(ds_is_active("10")) {
+    ...
+}
+if(ds_is_active("10", "sip:127.0.0.1:5080")) {
     ...
 }
 ...
@@ -1883,12 +2009,20 @@ onreply_route {
 		<function moreinfo="none">dispatcher.list</function>
 		</title>
 		<para>
-		Lists the groups and included destinations.
+		Lists the routing groups with destination addresses and corresponding
+		attributes.
 		</para>
 		<para>
 		Name: <emphasis>dispatcher.list</emphasis>
 		</para>
-		<para>Parameters: <emphasis>none</emphasis></para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem>
+			<para>_rmode_ - (optional) response mode - can be: 'short' to get a
+			shorter version of groups and destinations; 'full' to get more
+			attributes per destination</para>
+			</listitem>
+		</itemizedlist>
 		<para>
 		Example:
 		</para>
@@ -1972,8 +2106,9 @@ DEST: {
 		<function moreinfo="none">dispatcher.add</function>
 		</title>
 		<para>
-		Add a destination address to the in-memory dispatcher list. Reloading the dispatcher will remove
-		any destinations that are only added to the in-memory dispatcher list.
+		Add a destination address to the in-memory dispatcher list. Reloading
+		the dispatcher will remove any destinations that are only added to the
+		in-memory dispatcher list.
 		</para>
 		<para>
 		Name: <emphasis>dispatcher.add</emphasis>
@@ -1987,6 +2122,9 @@ DEST: {
 			<listitem><para>_flags_ (optional): as described in the list file format,
 			default 0</para></listitem>
 
+			<listitem><para>_priority_ (optional): as described in the list file format,
+			default 0</para></listitem>
+
 			<listitem><para>_attrs_ (optional): as described in the list file format,
 			default ""</para></listitem>
 
@@ -1996,10 +2134,10 @@ DEST: {
 		</para>
 <programlisting  format="linespecific">
 ...
-# prototype: &sercmd; dispatcher.add _group_ _address_ _flags_ _attrs_
+# prototype: &sercmd; dispatcher.add _group_ _address_ _flags_ _priority_ _attrs_
 &sercmd; dispatcher.add 2 sip:127.0.0.1:5080
 &sercmd; dispatcher.add 3 sip:127.0.0.1:5075 8
-&sercmd; dispatcher.add 3 sip:127.0.0.1:5075 0 duid=abc;socket=udp:127.0.0.1:5060
+&sercmd; dispatcher.add 3 sip:127.0.0.1:5075 0 0 duid=abc;socket=udp:127.0.0.1:5060
 ...
 </programlisting>
 	</section>

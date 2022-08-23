@@ -94,6 +94,10 @@ int is_msg_complete(struct tcp_req* r);
 
 int ksr_tcp_accept_hep3=0;
 int ksr_tcp_accept_haproxy=0;
+
+#define TCP_SCRIPT_MODE_CONTINUE (1<<0)
+int ksr_tcp_script_mode=0;
+
 /**
  * control cloning of TCP receive buffer
  * - needed for operations working directly inside the buffer
@@ -173,26 +177,6 @@ int tcp_http11_continue(struct tcp_connection *c)
 	return ret;
 }
 #endif /* HTTP11 */
-
-static int tcp_emit_closed_event(struct tcp_connection *con, enum tcp_closed_reason reason)
-{
-	int ret;
-	tcp_closed_event_info_t tev;
-	sr_event_param_t evp = {0};
-
-	ret = 0;
-	LM_DBG("TCP closed event creation triggered (reason: %d)\n", reason);
-	if(likely(sr_event_enabled(SREV_TCP_CLOSED))) {
-		memset(&tev, 0, sizeof(tcp_closed_event_info_t));
-		tev.reason = reason;
-		tev.con = con;
-		evp.data = (void*)(&tev);
-		ret = sr_event_exec(SREV_TCP_CLOSED, &evp);
-	} else {
-		LM_DBG("no callback registering for handling TCP closed event\n");
-	}
-	return ret;
-}
 
 
 /** reads data from an existing tcp connection.
@@ -289,9 +273,9 @@ again:
 				LOG(cfg_get(core, core_cfg, corelog),"-> [%s]:%u)\n",
 						ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port);
 				if (errno == ETIMEDOUT) {
-					tcp_emit_closed_event(c, TCP_CLOSED_TIMEOUT);
+					c->event = TCP_CLOSED_TIMEOUT;
 				} else if (errno == ECONNRESET) {
-					tcp_emit_closed_event(c, TCP_CLOSED_RESET);
+					c->event = TCP_CLOSED_RESET;
 				}
 				return -1;
 			}
@@ -304,7 +288,7 @@ again:
 					ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port);
 			c->state=S_CONN_EOF;
 			*flags|=RD_CONN_EOF;
-			tcp_emit_closed_event(c, TCP_CLOSED_EOF);
+			c->event=TCP_CLOSED_EOF;
 		}else{
 			if (unlikely(c->state==S_CONN_CONNECT || c->state==S_CONN_ACCEPT)){
 				TCP_STATS_ESTABLISHED(c->state);
@@ -1362,6 +1346,7 @@ static int hep3_process_msg(char* tcpbuf, unsigned int len,
 int receive_tcp_msg(char* tcpbuf, unsigned int len,
 		struct receive_info* rcv_info, struct tcp_connection* con)
 {
+	int ret = 0;
 #ifdef TCP_CLONE_RCVBUF
 	static char *buf = NULL;
 	static unsigned int bsize = 0;
@@ -1380,7 +1365,11 @@ int receive_tcp_msg(char* tcpbuf, unsigned int len,
 		if(unlikely(con->req.flags&F_TCP_REQ_HEP3))
 			return hep3_process_msg(tcpbuf, len, rcv_info, con);
 
-		return receive_msg(tcpbuf, len, rcv_info);
+		ret = receive_msg(tcpbuf, len, rcv_info);
+		if (ksr_tcp_script_mode&TCP_SCRIPT_MODE_CONTINUE) {
+			return 0;
+		}
+		return ret;
 	}
 
 	/* min buffer size is BUF_SIZE */
@@ -1421,7 +1410,11 @@ int receive_tcp_msg(char* tcpbuf, unsigned int len,
 #endif
 	if(unlikely(con->req.flags&F_TCP_REQ_HEP3))
 		return hep3_process_msg(tcpbuf, len, rcv_info, con);
-	return receive_msg(buf, len, rcv_info);
+	ret = receive_msg(buf, len, rcv_info);
+	if (ksr_tcp_script_mode&TCP_SCRIPT_MODE_CONTINUE) {
+		return 0;
+	}
+	return ret;
 #else /* TCP_CLONE_RCVBUF */
 #ifdef READ_MSRP
 	if(unlikely(con->req.flags&F_TCP_REQ_MSRP_FRAME))
@@ -1433,7 +1426,11 @@ int receive_tcp_msg(char* tcpbuf, unsigned int len,
 #endif
 	if(unlikely(con->req.flags&F_TCP_REQ_HEP3))
 		return hep3_process_msg(tcpbuf, len, rcv_info, con);
-	return receive_msg(tcpbuf, len, rcv_info);
+	ret = receive_msg(tcpbuf, len, rcv_info);
+	if (ksr_tcp_script_mode&TCP_SCRIPT_MODE_CONTINUE) {
+		return 0;
+	}
+	return ret;
 #endif /* TCP_CLONE_RCVBUF */
 }
 
@@ -1696,6 +1693,7 @@ static ticks_t tcpconn_read_timeout(ticks_t t, struct timer_ln* tl, void* data)
 	}
 	if(tcp_conn_lst!=NULL) {
 		tcpconn_listrm(tcp_conn_lst, c, c_next, c_prev);
+		c->event = TCP_CLOSED_TIMEOUT;
 		release_tcpconn(c, (c->state<0)?CONN_ERROR:CONN_RELEASE, tcpmain_sock);
 	}
 	return 0;

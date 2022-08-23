@@ -499,6 +499,28 @@ modparam("outbound", "force_no_outbound_flag", 2)
 		</example>
 	</section>
 
+	<section>
+		<title><varname>flow_token_secret</varname> (string)</title>
+		<para>
+			Secret phrase used to calculate the outbound key value
+			used for flow tokens validation.
+			Allows to set persistent outbound key.
+		</para>
+		<para>
+			If not specified, <emphasis>outbound</emphasis> will use randomly generated outbound key
+		</para>
+		<example>
+			<title>
+				Set <varname>flow_token_secret</varname> parameter
+			</title>
+			<programlisting format="linespecific">
+...
+modparam("outbound", "flow_token_secret", "johndoessecretphrase")
+...
+			</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 </chapter>

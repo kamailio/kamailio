@@ -7,8 +7,8 @@ CREATE TABLE sip_trace (
     msg CLOB,
     method VARCHAR2(50) DEFAULT '',
     status VARCHAR2(255) DEFAULT '',
-    fromip VARCHAR2(50) DEFAULT '',
-    toip VARCHAR2(50) DEFAULT '',
+    fromip VARCHAR2(64) DEFAULT '',
+    toip VARCHAR2(64) DEFAULT '',
     fromtag VARCHAR2(128) DEFAULT '',
     totag VARCHAR2(128) DEFAULT '',
     direction VARCHAR2(4) DEFAULT ''

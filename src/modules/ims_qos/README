@@ -57,6 +57,13 @@ Carsten Bock
               3.14. terminate_dialog_on_rx_failure integer
               3.15. delete_contact_on_rx_failure integer
               3.16. include_rtcp_fd integer
+              3.17. af_signaling_ip (String)
+              3.18. af_signaling_ip6 (String)
+              3.19. media_type (String)
+              3.20. flow_protocol (String)
+              3.21. omit_flow_ports integer
+              3.22. rs_default_bandwidth integer
+              3.23. rr_default_bandwidth integer
 
         4. Functions
 
@@ -87,8 +94,15 @@ Carsten Bock
    1.14. terminate_dialog_on_rx_failure parameter usage
    1.15. delete_contact_on_rx_failure parameter usage
    1.16. include_rtcp_fd parameter usage
-   1.17. Rx_AAR_Register
-   1.18. Rx_AAR
+   1.17. af_signaling_ip parameter usage
+   1.18. af_signaling_ip6 parameter usage
+   1.19. media_type parameter usage
+   1.20. flow_protocol parameter usage
+   1.21. omit_flow_ports parameter usage
+   1.22. rs_default_bandwidth parameter usage
+   1.23. rr_default_bandwidth parameter usage
+   1.24. Rx_AAR_Register
+   1.25. Rx_AAR
 
 Chapter 1. Admin Guide
 
@@ -118,6 +132,13 @@ Chapter 1. Admin Guide
         3.14. terminate_dialog_on_rx_failure integer
         3.15. delete_contact_on_rx_failure integer
         3.16. include_rtcp_fd integer
+        3.17. af_signaling_ip (String)
+        3.18. af_signaling_ip6 (String)
+        3.19. media_type (String)
+        3.20. flow_protocol (String)
+        3.21. omit_flow_ports integer
+        3.22. rs_default_bandwidth integer
+        3.23. rr_default_bandwidth integer
 
    4. Functions
 
@@ -174,6 +195,13 @@ Chapter 1. Admin Guide
    3.14. terminate_dialog_on_rx_failure integer
    3.15. delete_contact_on_rx_failure integer
    3.16. include_rtcp_fd integer
+   3.17. af_signaling_ip (String)
+   3.18. af_signaling_ip6 (String)
+   3.19. media_type (String)
+   3.20. flow_protocol (String)
+   3.21. omit_flow_ports integer
+   3.22. rs_default_bandwidth integer
+   3.23. rr_default_bandwidth integer
 
 3.1. rx_dest_realm (string)
 
@@ -383,6 +411,87 @@ modparam("ims_qos", "delete_contact_on_rx_failure", 0)
 modparam("ims_qos", "include_rtcp_fd", 1)
 ...
 
+3.17. af_signaling_ip (String)
+
+   Set P-CSCF IPv4 address to generate the flows for the UE - PCSCF
+   signaling path. Used only for AAR register, Flow-Description AVP (507)
+
+   Default value is 127.0.0.1
+
+   Example 1.17. af_signaling_ip parameter usage
+...
+modparam("ims_qos", "af_signaling_ip", "127.0.0.1")
+...
+
+3.18. af_signaling_ip6 (String)
+
+   Set P-CSCF IPv6 address to generate the flows for the UE - PCSCF
+   signaling path. Used only for AAR register, Flow-Description AVP (507)
+
+   Default value is ""
+
+   Example 1.18. af_signaling_ip6 parameter usage
+...
+modparam("ims_qos", "af_signaling_ip6", "fd16::205:2dee:ce4a:ab22")
+...
+
+3.19. media_type (String)
+
+   Describe Media Type AVP(520) for AAR register
+
+   Default value is 'control'
+
+   Example 1.19. media_type parameter usage
+...
+modparam("ims_qos", "media_type", "audio")
+...
+
+3.20. flow_protocol (String)
+
+   Describe Flow protocol for Flow-Description AVP (507). Used only for
+   AAR register
+
+   Default value is 'IP'
+
+   Example 1.20. flow_protocol parameter usage
+...
+modparam("ims_qos", "flow_protocol", "UDP")
+...
+
+3.21. omit_flow_ports integer
+
+   If set to 1 ommit ports for Flow-Description AVP (507). Used only for
+   AAR register
+
+   Default value is 0, Add ports to Flow-Description AVP (507)
+
+   Example 1.21. omit_flow_ports parameter usage
+...
+modparam("ims_qos", "omit_flow_ports", 1)
+...
+
+3.22. rs_default_bandwidth integer
+
+   Describe default RS-Bandwidth AVP(522) for AAR
+
+   Default value is 0
+
+   Example 1.22. rs_default_bandwidth parameter usage
+...
+modparam("ims_qos", "rs_default_bandwidth", 600)
+...
+
+3.23. rr_default_bandwidth integer
+
+   Describe default RR-Bandwidth AVP(521) for AAR
+
+   Default value is 0
+
+   Example 1.23. rr_default_bandwidth parameter usage
+...
+modparam("ims_qos", "rr_default_bandwidth", 2000)
+...
+
 4. Functions
 
    4.1. Rx_AAR_Register(route_block, domain)
@@ -413,7 +522,7 @@ modparam("ims_qos", "include_rtcp_fd", 1)
    p.s. this is executed asynchronously. See example on how to retrieve
    return value
 
-   Example 1.17. Rx_AAR_Register
+   Example 1.24. Rx_AAR_Register
 ...
 if(Rx_AAR_Register("REG_AAR_REPLY","location")==0){
     exit;
@@ -455,7 +564,7 @@ route[REG_AAR_REPLY]
    p.s. this is executed asynchronously. See example on how to retrieve
    return value
 
-   Example 1.18. Rx_AAR
+   Example 1.25. Rx_AAR
 ...
 if(Rx_AAR("ORIG_SESSION_AAR_REPLY","orig","",-1)==0){
     exit;

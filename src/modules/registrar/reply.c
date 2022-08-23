@@ -607,9 +607,9 @@ static int add_flow_timer(struct sip_msg* _m)
 }
 
 /*! \brief
- * Send a reply
+ * Prepare headers and send a reply if _mode=1
  */
-int reg_send_reply(struct sip_msg* _m)
+int reg_reply_helper(struct sip_msg* _m, int _mode)
 {
 	str unsup = str_init(OPTION_TAG_PATH_STR);
 	str outbound_str = str_init(OPTION_TAG_OUTBOUND_STR);
@@ -729,12 +729,31 @@ int reg_send_reply(struct sip_msg* _m)
 		}
 	}
 
-	if (slb.freply(_m, code, &msg) < 0) {
-		LM_ERR("failed to send %ld %.*s\n", code, msg.len,msg.s);
-		return -1;
-	} else return 0;
+	if(likely(_mode)) {
+		if (slb.freply(_m, code, &msg) < 0) {
+			LM_ERR("failed to send %ld %.*s\n", code, msg.len,msg.s);
+			return -1;
+		}
+	}
+
+	return 0;
 }
 
+/*! \brief
+ * Send a reply
+ */
+int reg_send_reply(struct sip_msg* _m)
+{
+	return reg_reply_helper(_m, 1);
+}
+
+/*! \brief
+ * Prepare a reply
+ */
+int reg_prepare_reply(struct sip_msg* _m)
+{
+	return reg_reply_helper(_m, 0);
+}
 
 /*! \brief
  * Release contact buffer if any

@@ -33,21 +33,28 @@
 
 typedef struct _spi_node spi_node_t;
 
-struct _spi_node {
-    spi_node_t* next;
-    uint32_t id;
+struct _spi_node
+{
+	spi_node_t *next;
+	uint32_t spi_cid;
+	uint32_t spi_sid;
+	uint16_t sport;
+	uint16_t cport;
 };
 
-typedef struct _spi_list {
-    spi_node_t* head;
-    spi_node_t* tail;
+typedef struct _spi_list
+{
+	spi_node_t *head;
+	spi_node_t *tail;
 } spi_list_t;
 
 
 spi_list_t create_list();
-void destroy_list(spi_list_t* lst);
-int spi_add(spi_list_t* list, uint32_t id);
-int spi_remove(spi_list_t* list, uint32_t id);
-int spi_in_list(spi_list_t* list, uint32_t id);
+void destroy_list(spi_list_t *lst);
+int spi_add(spi_list_t *list, uint32_t spi_cid, uint32_t spi_sid,
+		uint16_t cport, uint16_t sport);
+int spi_remove_head(spi_list_t *list);
+int spi_remove(spi_list_t *list, uint32_t spi_cid, uint32_t spi_sid);
+int spi_in_list(spi_list_t *list, uint32_t spi_cid, uint32_t spi_sid);
 
 #endif /* _SPI_LIST_H_ */

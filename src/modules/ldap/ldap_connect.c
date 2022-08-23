@@ -185,7 +185,7 @@ int ldap_connect_ex(char *_ld_name, int llevel)
 	return 0;
 }
 
-int ldap_connect(char *_ld_name)
+int oldap_connect(char *_ld_name)
 {
 	return ldap_connect_ex(_ld_name, L_DBG);
 }

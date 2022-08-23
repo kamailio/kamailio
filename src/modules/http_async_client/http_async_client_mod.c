@@ -325,7 +325,7 @@ static int child_init(int rank)
 	int pid;
 	int i;
 
-	LM_DBG("child initializing async http\n");
+	LM_DBG("child initializing async http (rank: %d)\n", rank);
 
 	if(num_workers<=0)
 		return 0;
@@ -336,7 +336,7 @@ static int child_init(int rank)
 
 	if (rank==PROC_INIT) {
 		for(i=0; i<num_workers; i++) {
-			LM_DBG("initializing worker notification socket: %d\n", i);
+			LM_DBG("initializing worker notification socket: %d (rank: %d)\n", i, rank);
 			if(async_http_init_sockets(&workers[i])<0) {
 				LM_ERR("failed to initialize tasks sockets\n");
 				return -1;

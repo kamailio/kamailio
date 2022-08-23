@@ -25,11 +25,18 @@
 
 #include "str.h"
 
+#define KSR_PPDEF_NORMAL (0)     /* define normal value */
+#define KSR_PPDEF_QUOTED (1<<0)  /* define quoted value */
+#define KSR_PPDEF_VALREQ (0)     /* define with value required (defenv) */
+#define KSR_PPDEF_VALTRY (1<<0)  /* define only if value exists (trydefenv) */
+
 typedef struct ksr_ppdefine {
 	str name;
 	str value;
 	int dtype;
 } ksr_ppdefine_t;
+
+int pp_def_qvalue(str *defval, str *outval);
 
 str* pp_get_define_name(int idx);
 ksr_ppdefine_t* pp_get_define(int idx);
@@ -39,10 +46,10 @@ int pp_substdef_add(char *data, int mode);
 int pp_subst_run(char **data);
 
 int  pp_define(int len, const char *text);
-int  pp_define_set(int len, char *text);
+int  pp_define_set(int len, char *text, int mode);
 int  pp_define_set_type(int type);
 str *pp_define_get(int len, const char * text);
-int  pp_define_env(const char * text, int len);
+int  pp_define_env(const char * text, int len, int qmode, int vmode);
 
 void pp_ifdef_level_update(int val);
 int pp_ifdef_level_check(void);

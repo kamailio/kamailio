@@ -36,26 +36,37 @@
 #include "ts_hash.h"
 #include "ts_append.h"
 
-int ts_append(struct sip_msg* msg, str *ruri, char *table) {
+int ts_append(struct sip_msg* msg, str *ruri, str *contact, char *table) {
 	ts_urecord_t* _r;
 	ts_transaction_t* ptr;
 
 	struct sip_uri p_uri;
+	struct sip_uri c_uri;
 	str *t_uri;
 
 	int res;
 	int appended;
-	
+
+	/* parse R-URI */
 	if (use_domain) {
 		t_uri = ruri;
 	} else {
-		if(parse_uri(ruri->s, ruri->len, &p_uri)<0) {
+		if(parse_uri(ruri->s, ruri->len, &p_uri) < 0) {
 			LM_ERR("failed to parse uri %.*s\n", ruri->len, ruri->s);
 			return -1;
 		}
 		t_uri = &p_uri.user;
 	}
 
+	/* parse contact if given */
+	if(contact->s != NULL && contact->len != 0) {
+		if (parse_uri(contact->s, contact->len, &c_uri) < 0) {
+			LM_ERR("failed to parse contact %.*s\n", ruri->len, ruri->s);
+			return -1;
+		}
+	}
+
+	/* find urecord in TSILO cache */
 	lock_entry_by_ruri(t_uri);
 
 	res = get_ts_urecord(t_uri, &_r);
@@ -66,12 +77,13 @@ int ts_append(struct sip_msg* msg, str *ruri, char *table) {
 		return -1;
 	}
 
+	/* cycle through existing transactions */
 	ptr = _r->transactions;
 
 	while(ptr) {
 		LM_DBG("transaction %u:%u found for %.*s, going to append branches\n",ptr->tindex, ptr->tlabel, t_uri->len, t_uri->s);
 
-		appended = ts_append_to(msg, ptr->tindex, ptr->tlabel, table, ruri);
+		appended = ts_append_to(msg, ptr->tindex, ptr->tlabel, table, ruri, contact);
 		if (appended > 0)
 			update_stat(added_branches, appended);
 		ptr = ptr->next;
@@ -82,23 +94,28 @@ int ts_append(struct sip_msg* msg, str *ruri, char *table) {
 	return 1;
 }
 
-int ts_append_to(struct sip_msg* msg, int tindex, int tlabel, char *table, str *uri) {
+int ts_append_to(struct sip_msg* msg, int tindex, int tlabel, char *table, str *uri, str *contact) {
 	struct cell     *t=0;
-	struct cell     *orig_t;
+	struct cell     *orig_t;	/* a pointer to an existing transaction or 0 if lookup fails */
 	struct sip_msg *orig_msg;
 	int ret;
 	str stable;
 
+	if(contact->s!=NULL && contact->len > 0) {
+		LM_DBG("trying to append based on specific contact <%.*s>\n", contact->len, contact->s);
+	}
+
+	/* lookup a transaction based on its identifier (hash_index:label) */
 	orig_t = _tmb.t_gett();
 
 	if(_tmb.t_lookup_ident(&t, tindex, tlabel) < 0)
 	{
-		LM_ERR("transaction [%u:%u] not found\n",
-				tindex, tlabel);
+		LM_ERR("transaction [%u:%u] not found\n",	tindex, tlabel);
 		ret = -1;
 		goto done;
 	}
 
+	/* check if the dialog is still in the early stage */
 	if (t->flags & T_CANCELED) {
 		LM_DBG("trasaction [%u:%u] was cancelled\n",
 				tindex, tlabel);
@@ -113,10 +130,11 @@ int ts_append_to(struct sip_msg* msg, int tindex, int tlabel, char *table, str *
 		goto done;
 	}
 
+	/* get original (very first) request of the transaction */
 	orig_msg = t->uas.request;
-
 	stable.s = table;
 	stable.len = strlen(stable.s);
+
 	if(uri==NULL || uri->s==NULL || uri->len<=0) {
 		ret = _regapi.lookup_to_dset(orig_msg, &stable, NULL);
 	} else {
@@ -124,12 +142,14 @@ int ts_append_to(struct sip_msg* msg, int tindex, int tlabel, char *table, str *
 	}
 
 	if(ret != 1) {
-		LM_DBG("transaction %u:%u: error updating dset (%d)\n", tindex, tlabel, ret);
+		LM_ERR("transaction %u:%u: error updating dset (%d)\n", tindex, tlabel, ret);
 		ret = -4;
 		goto done;
 	}
 
-	ret = _tmb.t_append_branches();
+	/* if the contact has been given previously
+		then do a new append only for the desired location */
+	ret = _tmb.t_append_branches(contact);
 
 done:
 	/* unref the transaction which had been referred by t_lookup_ident() call.

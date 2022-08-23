@@ -129,7 +129,7 @@ p_lost_loc_t lost_new_loc(str rurn)
 		goto err;
 	}
 
-	memset(urn, 0, rurn.len + 1);
+	memset(urn, 0, rurn.len);
 	memcpy(urn, rurn.s, rurn.len);
 	urn[rurn.len] = '\0';
 
@@ -182,11 +182,11 @@ p_lost_held_t lost_new_held(str s_uri, str s_type, int time, int exact)
 		goto err;
 	}
 
-	memset(uri, 0, s_uri.len + 1);
+	memset(uri, 0, s_uri.len);
 	memcpy(uri, s_uri.s, s_uri.len);
 	uri[s_uri.len] = '\0';
 
-	memset(type, 0, s_type.len + 1);
+	memset(type, 0, s_type.len);
 	memcpy(type, s_type.s, s_type.len);
 	type[s_type.len] = '\0';
 
@@ -280,7 +280,7 @@ char *lost_copy_string(str src, int *lgth)
 		if(res == NULL) {
 			PKG_MEM_ERROR;
 		} else {
-			memset(res, 0, src.len + 1);
+			memset(res, 0, src.len);
 			memcpy(res, src.s, src.len);
 			res[src.len] = '\0';
 			*lgth = (int)strlen(res);
@@ -343,7 +343,7 @@ char *lost_get_content(xmlNodePtr node, const char *name, int *lgth)
 			xmlFree(content);
 			return cnt;
 		}
-		memset(cnt, 0, len + 1);
+		memset(cnt, 0, len);
 		memcpy(cnt, trimmed, len);
 		cnt[len] = '\0';
 	}
@@ -379,7 +379,7 @@ char *lost_get_property(xmlNodePtr node, const char *name, int *lgth)
 			xmlFree(content);
 			return cnt;
 		}
-		memset(cnt, 0, len + 1);
+		memset(cnt, 0, len);
 		memcpy(cnt, content, len);
 		cnt[len] = '\0';
 	}
@@ -423,7 +423,7 @@ char *lost_get_childname(xmlNodePtr node, const char *name, int *lgth)
 		PKG_MEM_ERROR;
 		return cnt;
 	}
-	memset(cnt, 0, len + 1);
+	memset(cnt, 0, len);
 	memcpy(cnt, trimmed, len);
 	cnt[len] = '\0';
 
@@ -442,9 +442,10 @@ p_lost_geolist_t lost_get_geolocation_header(struct sip_msg *msg, int *items)
 	str hdr = STR_NULL;
 	p_lost_geolist_t list = NULL;
 
+	*items = 0;
+
 	if(parse_headers(msg, HDR_EOH_F, 0) == -1) {
 		LM_ERR("failed to parse SIP headers\n");
-		*items = 0;
 		return list;
 	}
 
@@ -475,62 +476,51 @@ p_lost_geolist_t lost_get_geolocation_header(struct sip_msg *msg, int *items)
  */
 char *lost_get_pai_header(struct sip_msg *msg, int *lgth)
 {
-	struct hdr_field *hf;
-	to_body_t *pai_body;
+	p_id_body_t *p_body;
+
+	char *tmp = NULL;
 	char *res = NULL;
+	int len = 0;
 
 	*lgth = 0;
 
-	if(parse_headers(msg, HDR_PAI_F, 0) == -1) {
-		LM_ERR("could not parse P-A-I header\n");
+	if(parse_pai_header(msg) == -1) {
+		
+		LM_DBG("failed to parse P-A-I header\n");
+		
 		return res;
 	}
 
-	for(hf = msg->headers; hf; hf = hf->next) {
-		if((hf->type == HDR_PAI_T)
-				&& (hf->name.len == LOST_PAI_HEADER_SIZE - 2)) {
-			/* possible hit */
-			if(strncasecmp(hf->name.s, LOST_PAI_HEADER,
-								LOST_PAI_HEADER_SIZE) == 0) {
+	if(msg->pai == NULL || get_pai(msg) == NULL) {
+		LM_ERR("P-A-I header not found\n");
+		return res;
+	}
+	p_body = get_pai(msg);
 
-				LM_DBG("P-A-I body:  [%.*s]\n", hf->body.len, hf->body.s);
+	/* warning in case multiple P-A-I headers were found and use first */
+	if(p_body->num_ids > 1) {
+		LM_WARN("multiple P-A-I headers found, selecting first!\n");
+	}
 
-				/* first, get some memory */
-				pai_body = pkg_malloc(sizeof(to_body_t));
-				if(pai_body == NULL) {
-					PKG_MEM_ERROR;
-					return res;
-				}
-				/* parse P-A-I body */
-				memset(pai_body, 0, sizeof(to_body_t));
-				parse_to(hf->body.s, hf->body.s + hf->body.len + 1, pai_body);
-				if(pai_body->error == PARSE_ERROR) {
-					LM_ERR("bad P-A-I header\n");
-					pkg_free(pai_body);
-					return res;
-				}
-				if(pai_body->error == PARSE_OK) {
-					res = (char *)pkg_malloc(
-							(pai_body->uri.len + 1) * sizeof(char));
-					if(res == NULL) {
-						PKG_MEM_ERROR;
-						pkg_free(pai_body);
-						return res;
-					} else {
-						memset(res, 0, pai_body->uri.len + 1);
-						memcpy(res, pai_body->uri.s, pai_body->uri.len + 1);
-						res[pai_body->uri.len] = '\0';
-						pkg_free(pai_body);
+	LM_DBG("P-A-I body: [%.*s]\n", p_body->id->body.len, p_body->id->body.s);
 
-						*lgth = strlen(res);
-					}
-				}
-			} else {
-				LM_ERR("header '%.*s' length %d\n", hf->body.len, hf->body.s,
-						hf->body.len);
-			}
-			break;
-		}
+	/* accept any identity string (body), but remove <..> if present */ 
+	tmp = p_body->id->body.s;
+	len = p_body->id->body.len;
+	if(tmp[0] == '<' && tmp[len - 1] == '>') {
+		tmp++;
+		len -= 2;
+	}
+	/* allocate memory, copy and \0 terminate string */
+	res = (char *)pkg_malloc((len + 1) * sizeof(char));
+	if(res == NULL) {
+		PKG_MEM_ERROR;
+		return res;
+	} else {
+		memset(res, 0, len);
+		memcpy(res, tmp, len);
+		res[len] = '\0';
+		*lgth = strlen(res);
 	}
 
 	return res;
@@ -645,7 +635,7 @@ char *lost_get_from_header(struct sip_msg *msg, int *lgth)
 
 	*lgth = 0;
 
-	if(parse_headers(msg, HDR_FROM_F, 0) == -1) {
+	if(parse_from_header(msg) == -1) {
 		LM_ERR("failed to parse From header\n");
 		return res;
 	}
@@ -656,15 +646,16 @@ char *lost_get_from_header(struct sip_msg *msg, int *lgth)
 	}
 	f_body = get_from(msg);
 
-	LM_DBG("From body:  [%.*s]\n", f_body->body.len, f_body->body.s);
+	LM_DBG("From body: [%.*s]\n", f_body->body.len, f_body->body.s);
 
+	/* allocate memory, copy and \0 terminate string */
 	res = (char *)pkg_malloc((f_body->uri.len + 1) * sizeof(char));
 	if(res == NULL) {
 		PKG_MEM_ERROR;
 		return res;
 	} else {
-		memset(res, 0, f_body->uri.len + 1);
-		memcpy(res, f_body->uri.s, f_body->uri.len + 1);
+		memset(res, 0, f_body->uri.len);
+		memcpy(res, f_body->uri.s, f_body->uri.len);
 		res[f_body->uri.len] = '\0';
 
 		*lgth = strlen(res);
@@ -764,8 +755,8 @@ char *lost_copy_geoheader_value(char *src, int len)
 		PKG_MEM_ERROR;
 		return res;
 	} else {
-		memset(res, 0, len + 1);
-		memcpy(res, src, len + 1);
+		memset(res, 0, len);
+		memcpy(res, src, len);
 		res[len] = '\0';
 	}
 
@@ -872,8 +863,8 @@ int lost_new_geoheader_list(p_lost_geolist_t *list, str hdr)
 
 							new->type = HTTP;
 						} else if(((*(search + 5) == 's')
-										  || (*(search + 5) == 'S'))
-								  && (*(search + 6) == ':')) {
+								|| (*(search + 5) == 'S'))
+								&& (*(search + 6) == ':')) {
 
 							LM_DBG("adding https url [%s]\n", new->value);
 
@@ -1377,7 +1368,7 @@ https://tools.ietf.org/html/rfc6753
 		return doc;
 	}
 
-	memset(doc, 0, buffersize + 1);
+	memset(doc, 0, buffersize);
 	memcpy(doc, (char *)xmlbuff, buffersize);
 	doc[buffersize] = '\0';
 
@@ -1488,7 +1479,7 @@ https://tools.ietf.org/html/rfc5985
 		return doc;
 	}
 
-	memset(doc, 0, buffersize + 1);
+	memset(doc, 0, buffersize);
 	memcpy(doc, (char *)xmlbuff, buffersize);
 	doc[buffersize] = '\0';
 
@@ -1648,7 +1639,7 @@ https://tools.ietf.org/html/rfc5222
 		return doc;
 	}
 
-	memset(doc, 0, buffersize + 1);
+	memset(doc, 0, buffersize);
 	memcpy(doc, (char *)xmlbuff, buffersize);
 	doc[buffersize] = '\0';
 

@@ -947,29 +947,6 @@ static void rpc_fault(rpc_ctx_t* ctx, int code, char* fmt, ...)
 }
 
 
-static inline int safe_write(FILE* f, char* fmt, ...)
-{
-	va_list ap;
-	
-	if (!*fmt) return 0;
-	va_start(ap, fmt);
-
- retry:
-	     /* First line containing code and reason phrase */
-	if (vfprintf(f, fmt, ap) <= 0) {
-		ERR("fifo write error: %s\n", strerror(errno));
-		if ((errno == EINTR) || (errno == EAGAIN) || (errno == EWOULDBLOCK)) {
-			goto retry;
-		}
-		va_end(ap);
-		return -1;
-	}
-	va_end(ap);
-	return 0;
-}
-
-
-
 inline static int build_iovec(rpc_ctx_t* ctx, struct iovec* v, int v_size) 
 {
 	struct text_chunk* p;

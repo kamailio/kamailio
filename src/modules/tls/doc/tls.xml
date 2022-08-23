@@ -64,6 +64,15 @@
 			that uses libssl (OpenSSL library). A safe option is to have the tls module
 			loaded first (be in the first "loadmodule" in &kamailio;.cfg).
 		</para>
+		<para>
+			IMPORTANT: using this module compiled with newer versions of libssl
+			(e.g., v1.1+) may require &kamailio; to be started with
+			<emphasis>--atexit=no</emphasis> command line parameters to avoid
+			calling C atexit callbacks inside the process ending during
+			daemonize procedure as well as during shut down, which can lead
+			to crashes because it destroys and then accesses shared memory. For
+			example, such case has been reported for Ubuntu 20.04 or RedHat 8.
+		</para>
 	</section>
 	<section id="tls.quick_start">
 		<title>Quick Start</title>
@@ -75,7 +84,7 @@
 		The most important parameters to set the path to the public certificate and private key
 		files. You can either have them in different file or in the same file in PEM format.
 		The parameters for them are <varname>certificate</varname> and <varname>private_key</varname>.
-		They can be given as modparam or or provided in the profiles of tls.cfg file.
+		They can be given as modparam or provided in the profiles of tls.cfg file.
 		</para>
 		<para>
 		When installing tls module of kamailio, a sample 'tls.cfg' file is deployed in the same

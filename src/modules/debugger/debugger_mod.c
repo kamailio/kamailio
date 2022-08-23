@@ -62,6 +62,7 @@ extern char* dump_lump_list(struct lump *list, int s_offset, char *s_buf);
 
 /* parameters */
 extern int _dbg_cfgtrace;
+extern int _dbg_cfgtrace_format;
 extern int _dbg_cfgpkgcheck;
 extern int _dbg_breakpoint;
 extern int _dbg_cfgtrace_level;
@@ -100,6 +101,7 @@ static cmd_export_t cmds[]={
 
 static param_export_t params[]={
 	{"cfgtrace",          INT_PARAM, &_dbg_cfgtrace},
+	{"cfgtrace_format",   INT_PARAM, &_dbg_cfgtrace_format},
 	{"breakpoint",        INT_PARAM, &_dbg_breakpoint},
 	{"log_level",         INT_PARAM, &_dbg_cfgtrace_level},
 	{"log_facility",      PARAM_STRING, &_dbg_cfgtrace_facility_str},

@@ -1,7 +1,7 @@
 /*
  * lost module LoST response parsing functions
  *
- * Copyright (C) 2021 Wolfgang Kampichler
+ * Copyright (C) 2022 Wolfgang Kampichler
  * DEC112, FREQUENTIS AG
  *
  * This file is part of Kamailio, a free SIP server.
@@ -351,6 +351,40 @@ void lost_reverse_response_list(p_lost_list_t *head)
 		current = next;
 	}
 	*head = prev;
+}
+
+/*
+ * lost_search_response_list(list, value, search)
+ * looks for search string in list object and returns pointer if found
+ */
+int lost_search_response_list(p_lost_list_t *list, char **val, const char *str)
+{
+	p_lost_list_t cur;
+	p_lost_list_t next;
+
+	if(*list == NULL)
+		return 0;
+
+	if(str == NULL)
+		return 0;
+
+	LM_DBG("### list data search [%s]\n", str);
+
+	next = *list;
+	while((cur = next) != NULL) {
+		next = cur->next;
+		if(cur->value != NULL) {
+			if(strncasecmp(cur->value, str, strlen(str)) == 0) {
+				*val = cur->value;
+
+				LM_DBG("###\t[%s] found\n", cur->value);
+				
+				return 1;
+			}
+		}
+	}
+
+	return 0;
 }
 
 /*

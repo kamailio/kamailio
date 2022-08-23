@@ -10,6 +10,12 @@ HIREDIS_BUILDER = $(shell \
 	if pkg-config --exists hiredis; then \
 		echo 'pkg-config hiredis'; \
 	fi)
+
+HIREDIS_CLUSTER_BUILDER = $(shell \
+	if pkg-config --exists hiredis_cluster; then \
+		echo 'pkg-config hiredis_cluster'; \
+	fi)
+
 endif
 
 ifeq ($(HIREDIS_BUILDER),)
@@ -32,6 +38,14 @@ endif
 
 DEFS+=$(HIREDISDEFS)
 LIBS=$(HIREDISLIBS)
+
+ifneq ($(HIREDIS_CLUSTER_BUILDER),)
+	HIREDISCLUSTERDEFS = $(shell $(HIREDIS_CLUSTER_BUILDER) --cflags)
+	HIREDISCLUSTERLIBS = $(shell $(HIREDIS_CLUSTER_BUILDER) --libs)
+	DEFS+=-DWITH_HIREDIS_CLUSTER
+	DEFS+=$(HIREDISCLUSTERDEFS)
+	LIBS+=$(HIREDISCLUSTERLIBS)
+endif
 
 SERLIBPATH=../../lib
 SER_LIBS=$(SERLIBPATH)/srdb2/srdb2 $(SERLIBPATH)/srdb1/srdb1

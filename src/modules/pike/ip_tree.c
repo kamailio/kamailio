@@ -92,7 +92,7 @@ static gen_lock_set_t* init_lock_set(int *size)
 			lset = 0;
 			continue;
 		}
-		/* alloc and init succesfull */
+		/* alloc and init successful */
 		break;
 	}
 
@@ -299,10 +299,6 @@ pike_ip_node_t* mark_node(unsigned char *ip,int ip_len,
 			kid = kid->kids;
 			byte_pos++;
 		}
-	}
-
-	if(node==NULL) {
-		return NULL;
 	}
 
 	LM_DBG("only first %d were matched!\n",byte_pos);

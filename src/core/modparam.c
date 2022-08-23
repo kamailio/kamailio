@@ -31,10 +31,13 @@
 #include "dprint.h"
 #include "fmsg.h"
 #include "pvar.h"
+#include "str_list.h"
 #include "mem/mem.h"
 #include <sys/types.h>
 #include <regex.h>
 #include <string.h>
+
+static str_list_t *_ksr_modparam_strlist = NULL;
 
 static char *get_mod_param_type_str(int ptype)
 {
@@ -144,6 +147,12 @@ int set_mod_param_regex(char* regex, char* name, modparam_t type, void* val)
 							break;
 
 						case PARAM_STR:
+							if( ((str*)val2)->s==NULL) {
+								LM_ERR("null value\n");
+								regfree(&preg);
+								pkg_free(reg);
+								return -1;
+							}
 							((str*)ptr)->s = pkg_malloc(((str*)val2)->len+1);
 							if (!((str*)ptr)->s) {
 								PKG_MEM_ERROR;
@@ -190,6 +199,7 @@ int modparamx_set(char* mname, char* pname, modparam_t ptype, void* pval)
 	char* epname;
 	pv_spec_t *pvs;
 	pv_value_t pvv;
+	str_list_t *sb;
 
 	emname = mname;
 	if(strchr(mname, '$') != NULL) {
@@ -197,7 +207,12 @@ int modparamx_set(char* mname, char* pname, modparam_t ptype, void* pval)
 		sfmt.s = mname;
 		sfmt.len = strlen(sfmt.s);
 		if(pv_eval_str(fmsg, &seval, &sfmt)>=0) {
-			emname = seval.s;
+			sb = str_list_block_add(&_ksr_modparam_strlist, seval.s, seval.len);
+			if(sb==NULL) {
+				LM_ERR("failed to handle parameter type: %d\n", ptype);
+				return -1;
+			}
+			emname = sb->s.s;
 		}
 	}
 
@@ -207,7 +222,12 @@ int modparamx_set(char* mname, char* pname, modparam_t ptype, void* pval)
 		sfmt.s = pname;
 		sfmt.len = strlen(sfmt.s);
 		if(pv_eval_str(fmsg, &seval, &sfmt)>=0) {
-			epname = seval.s;
+			sb = str_list_block_add(&_ksr_modparam_strlist, seval.s, seval.len);
+			if(sb==NULL) {
+				LM_ERR("failed to handle parameter type: %d\n", ptype);
+				return -1;
+			}
+			epname = sb->s.s;
 		}
 	}
 
@@ -218,8 +238,13 @@ int modparamx_set(char* mname, char* pname, modparam_t ptype, void* pval)
 				sfmt.s = (char*)pval;
 				sfmt.len = strlen(sfmt.s);
 				if(pv_eval_str(fmsg, &seval, &sfmt)>=0) {
+					sb = str_list_block_add(&_ksr_modparam_strlist, seval.s, seval.len);
+					if(sb==NULL) {
+						LM_ERR("failed to handle parameter type: %d\n", ptype);
+						return -1;
+					}
 					return set_mod_param_regex(emname, epname, PARAM_STRING,
-							(void*)seval.s);
+							(void*)sb->s.s);
 				} else {
 					LM_ERR("failed to evaluate parameter [%s]\n", (char*)pval);
 					return -1;
@@ -267,8 +292,14 @@ int modparamx_set(char* mname, char* pname, modparam_t ptype, void* pval)
 						sfmt.len, sfmt.s);
 				return -1;
 			}
+			sb = str_list_block_add(&_ksr_modparam_strlist, pvv.rs.s, pvv.rs.len);
+			if(sb==NULL) {
+				LM_ERR("failed to handle parameter type: %d\n", ptype);
+				return -1;
+			}
+
 			return set_mod_param_regex(emname, epname, PARAM_STRING,
-							(void*)pvv.rs.s);
+							(void*)sb->s.s);
 		default:
 			LM_ERR("invalid parameter type: %d\n", ptype);
 			return -1;

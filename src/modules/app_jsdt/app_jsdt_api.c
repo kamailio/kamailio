@@ -33,6 +33,7 @@
 #include "../../core/rpc_lookup.h"
 
 #include "duktape.h"
+#include "duk_module_node.h"
 #include "app_jsdt_kemi_export.h"
 #include "app_jsdt_api.h"
 
@@ -53,6 +54,7 @@ typedef struct _sr_jsdt_env
 static sr_jsdt_env_t _sr_J_env = {0};
 
 str _sr_jsdt_load_file = STR_NULL;
+int _sr_jsdt_mode = 1;
 
 static int *_sr_jsdt_reload_version = NULL;
 static int _sr_jsdt_local_version = 0;
@@ -451,10 +453,11 @@ int jsdt_kemi_load_script(void)
 	duk_pop(_sr_J_env.JJ);  /* ignore result */
 	return 0;
 }
+
 /**
  *
  */
-int jsdt_sr_init_child(void)
+int jsdt_sr_init_child(int rank)
 {
 	memset(&_sr_J_env, 0, sizeof(sr_jsdt_env_t));
 	_sr_J_env.J = duk_create_heap_default();
@@ -468,6 +471,14 @@ int jsdt_sr_init_child(void)
 		if(_sr_J_env.JJ==NULL) {
 			LM_ERR("cannot create load JS context (load)\n");
 			return -1;
+		}
+		if(_sr_jsdt_mode == 1) {
+			duk_push_object(_sr_J_env.JJ);
+			duk_push_c_function(_sr_J_env.JJ, cb_resolve_module, DUK_VARARGS);
+			duk_put_prop_string(_sr_J_env.JJ, -2, "resolve");
+			duk_push_c_function(_sr_J_env.JJ, cb_load_module, DUK_VARARGS);
+			duk_put_prop_string(_sr_J_env.JJ, -2, "load");
+			duk_module_node_init(_sr_J_env.JJ);
 		}
 		jsdt_sr_kemi_register_libs(_sr_J_env.JJ);
 		LM_DBG("loading js script file: %.*s\n",
@@ -854,77 +865,104 @@ int sr_kemi_jsdt_exec_func_ex(duk_context *J, sr_kemi_t *ket)
 			}
 		break;
 		case 3:
-			if(ket->ptypes[0]==SR_KEMIP_INT) {
-				if(ket->ptypes[1]==SR_KEMIP_INT) {
-					if(ket->ptypes[2]==SR_KEMIP_INT) {
-						ret = ((sr_kemi_fmnnn_f)(ket->func))(env_J->msg,
-								vps[0].n, vps[1].n, vps[2].n);
-						return sr_kemi_jsdt_return_int(J, ket, ret);
-					} else if(ket->ptypes[2]==SR_KEMIP_STR) {
-						ret = ((sr_kemi_fmnns_f)(ket->func))(env_J->msg,
-								vps[0].n, vps[1].n, &vps[2].s);
-						return sr_kemi_jsdt_return_int(J, ket, ret);
-					} else {
-						LM_ERR("invalid parameters for: %.*s\n",
-								fname->len, fname->s);
-						return app_jsdt_return_false(J);
-					}
-				} else if(ket->ptypes[1]==SR_KEMIP_STR) {
-					if(ket->ptypes[2]==SR_KEMIP_INT) {
-						ret = ((sr_kemi_fmnsn_f)(ket->func))(env_J->msg,
-								vps[0].n, &vps[1].s, vps[2].n);
-						return sr_kemi_jsdt_return_int(J, ket, ret);
-					} else if(ket->ptypes[2]==SR_KEMIP_STR) {
-						ret = ((sr_kemi_fmnss_f)(ket->func))(env_J->msg,
-								vps[0].n, &vps[1].s, &vps[2].s);
-						return sr_kemi_jsdt_return_int(J, ket, ret);
-					} else {
-						LM_ERR("invalid parameters for: %.*s\n",
-								fname->len, fname->s);
-						return app_jsdt_return_false(J);
-					}
+			if(ket->ptypes[0]==SR_KEMIP_STR
+					&& ket->ptypes[1]==SR_KEMIP_STR
+					&& ket->ptypes[2]==SR_KEMIP_STR) {
+				if(ket->rtype==SR_KEMIP_XVAL) {
+					xret = ((sr_kemi_xfmsss_f)(ket->func))(env_J->msg,
+						&vps[0].s, &vps[1].s, &vps[2].s);
+					return sr_kemi_jsdt_return_xval(J, ket, xret);
 				} else {
-					LM_ERR("invalid parameters for: %.*s\n",
-							fname->len, fname->s);
-					return app_jsdt_return_false(J);
+					ret = ((sr_kemi_fmsss_f)(ket->func))(env_J->msg,
+						&vps[0].s, &vps[1].s, &vps[2].s);
+					return sr_kemi_jsdt_return_int(J, ket, ret);
 				}
-			} else if(ket->ptypes[0]==SR_KEMIP_STR) {
-				if(ket->ptypes[1]==SR_KEMIP_INT) {
-					if(ket->ptypes[2]==SR_KEMIP_INT) {
-						ret = ((sr_kemi_fmsnn_f)(ket->func))(env_J->msg,
-								&vps[0].s, vps[1].n, vps[2].n);
-						return sr_kemi_jsdt_return_int(J, ket, ret);
-					} else if(ket->ptypes[2]==SR_KEMIP_STR) {
-						ret = ((sr_kemi_fmsns_f)(ket->func))(env_J->msg,
-								&vps[0].s, vps[1].n, &vps[2].s);
-						return sr_kemi_jsdt_return_int(J, ket, ret);
-					} else {
-						LM_ERR("invalid parameters for: %.*s\n",
-								fname->len, fname->s);
-						return app_jsdt_return_false(J);
-					}
-				} else if(ket->ptypes[1]==SR_KEMIP_STR) {
-					if(ket->ptypes[2]==SR_KEMIP_INT) {
-						ret = ((sr_kemi_fmssn_f)(ket->func))(env_J->msg,
-								&vps[0].s, &vps[1].s, vps[2].n);
-						return sr_kemi_jsdt_return_int(J, ket, ret);
-					} else if(ket->ptypes[2]==SR_KEMIP_STR) {
-						ret = ((sr_kemi_fmsss_f)(ket->func))(env_J->msg,
-								&vps[0].s, &vps[1].s, &vps[2].s);
-						return sr_kemi_jsdt_return_int(J, ket, ret);
-					} else {
-						LM_ERR("invalid parameters for: %.*s\n",
-								fname->len, fname->s);
-						return app_jsdt_return_false(J);
-					}
+			} else if(ket->ptypes[0]==SR_KEMIP_STR
+					&& ket->ptypes[1]==SR_KEMIP_STR
+					&& ket->ptypes[2]==SR_KEMIP_INT) {
+				if(ket->rtype==SR_KEMIP_XVAL) {
+					xret = ((sr_kemi_xfmssn_f)(ket->func))(env_J->msg,
+						&vps[0].s, &vps[1].s, vps[2].n);
+					return sr_kemi_jsdt_return_xval(J, ket, xret);
 				} else {
-					LM_ERR("invalid parameters for: %.*s\n",
-							fname->len, fname->s);
-					return app_jsdt_return_false(J);
+					ret = ((sr_kemi_fmssn_f)(ket->func))(env_J->msg,
+						&vps[0].s, &vps[1].s, vps[2].n);
+					return sr_kemi_jsdt_return_int(J, ket, ret);
+				}
+			} else if(ket->ptypes[0]==SR_KEMIP_STR
+					&& ket->ptypes[1]==SR_KEMIP_INT
+					&& ket->ptypes[2]==SR_KEMIP_STR) {
+				if(ket->rtype==SR_KEMIP_XVAL) {
+					xret = ((sr_kemi_xfmsns_f)(ket->func))(env_J->msg,
+						&vps[0].s, vps[1].n, &vps[2].s);
+					return sr_kemi_jsdt_return_xval(J, ket, xret);
+				} else {
+					ret = ((sr_kemi_fmsns_f)(ket->func))(env_J->msg,
+						&vps[0].s, vps[1].n, &vps[2].s);
+					return sr_kemi_jsdt_return_int(J, ket, ret);
+				}
+			} else if(ket->ptypes[0]==SR_KEMIP_STR
+					&& ket->ptypes[1]==SR_KEMIP_INT
+					&& ket->ptypes[2]==SR_KEMIP_INT) {
+				if(ket->rtype==SR_KEMIP_XVAL) {
+					xret = ((sr_kemi_xfmsnn_f)(ket->func))(env_J->msg,
+						&vps[0].s, vps[1].n, vps[2].n);
+					return sr_kemi_jsdt_return_xval(J, ket, xret);
+				} else {
+					ret = ((sr_kemi_fmsnn_f)(ket->func))(env_J->msg,
+						&vps[0].s, vps[1].n, vps[2].n);
+					return sr_kemi_jsdt_return_int(J, ket, ret);
+				}
+			} else if(ket->ptypes[0]==SR_KEMIP_INT
+					&& ket->ptypes[1]==SR_KEMIP_STR
+					&& ket->ptypes[2]==SR_KEMIP_STR) {
+				if(ket->rtype==SR_KEMIP_XVAL) {
+					xret = ((sr_kemi_xfmnss_f)(ket->func))(env_J->msg,
+						vps[0].n, &vps[1].s, &vps[2].s);
+					return sr_kemi_jsdt_return_xval(J, ket, xret);
+				} else {
+					ret = ((sr_kemi_fmnss_f)(ket->func))(env_J->msg,
+						vps[0].n, &vps[1].s, &vps[2].s);
+					return sr_kemi_jsdt_return_int(J, ket, ret);
+				}
+			} else if(ket->ptypes[0]==SR_KEMIP_INT
+					&& ket->ptypes[1]==SR_KEMIP_STR
+					&& ket->ptypes[2]==SR_KEMIP_INT) {
+				if(ket->rtype==SR_KEMIP_XVAL) {
+					xret = ((sr_kemi_xfmnsn_f)(ket->func))(env_J->msg,
+						vps[0].n, &vps[1].s, vps[2].n);
+					return sr_kemi_jsdt_return_xval(J, ket, xret);
+				} else {
+					ret = ((sr_kemi_fmnsn_f)(ket->func))(env_J->msg,
+						vps[0].n, &vps[1].s, vps[2].n);
+					return sr_kemi_jsdt_return_int(J, ket, ret);
+				}
+			} else if(ket->ptypes[0]==SR_KEMIP_INT
+					&& ket->ptypes[1]==SR_KEMIP_INT
+					&& ket->ptypes[2]==SR_KEMIP_STR) {
+				if(ket->rtype==SR_KEMIP_XVAL) {
+					xret = ((sr_kemi_xfmnns_f)(ket->func))(env_J->msg,
+						vps[0].n, vps[1].n, &vps[2].s);
+					return sr_kemi_jsdt_return_xval(J, ket, xret);
+				} else {
+					ret = ((sr_kemi_fmnns_f)(ket->func))(env_J->msg,
+						vps[0].n, vps[1].n, &vps[2].s);
+					return sr_kemi_jsdt_return_int(J, ket, ret);
+				}
+			} else if(ket->ptypes[0]==SR_KEMIP_INT
+					&& ket->ptypes[1]==SR_KEMIP_INT
+					&& ket->ptypes[2]==SR_KEMIP_INT) {
+				if(ket->rtype==SR_KEMIP_XVAL) {
+					xret = ((sr_kemi_xfmnnn_f)(ket->func))(env_J->msg,
+						vps[0].n, vps[1].n, vps[2].n);
+					return sr_kemi_jsdt_return_xval(J, ket, xret);
+				} else {
+					ret = ((sr_kemi_fmnnn_f)(ket->func))(env_J->msg,
+						vps[0].n, vps[1].n, vps[2].n);
+					return sr_kemi_jsdt_return_int(J, ket, ret);
 				}
 			} else {
-				LM_ERR("invalid parameters for: %.*s\n",
-						fname->len, fname->s);
+				LM_ERR("invalid parameters for: %.*s\n", fname->len, fname->s);
 				return app_jsdt_return_false(J);
 			}
 		break;
@@ -1600,4 +1638,61 @@ int app_jsdt_init_rpc(void)
 		return -1;
 	}
 	return 0;
+}
+
+/**
+*  Duktape - duk_module_node - resolve
+*/
+duk_ret_t cb_resolve_module(duk_context *JJ) {
+	const char *requested_id = duk_get_string(JJ, 0);
+	const char *parent_id = duk_get_string(JJ, 1);
+
+	char requested_path[PATH_MAX];
+	if (requested_id[0] == '/') {
+		// absolute
+		strcpy(requested_path, requested_id);
+	} else if (strncmp(requested_id, "./", 2)
+			  || strncmp(requested_id, "../", 3)) {
+		if (strlen(parent_id)) {
+			// relative to parent
+			strcpy(requested_path, parent_id);
+		} else {
+			// no parent so relative to jsdt_load_file
+			strcpy(requested_path, _sr_jsdt_load_file.s);
+		}
+		char *ptr = strrchr(requested_path, '/');
+		if (ptr) {
+			ptr++;
+			*ptr = '\0';
+		}
+		strcat(requested_path, requested_id);
+	} else {
+		LM_INFO("cb_resolve_module - TODO resolve pathless module names");
+		goto error;
+	}
+	// if missing add .js ext
+	if (strcmp(strrchr(requested_path, '\0') - 3, ".js")){
+		strcat(requested_path, ".js");
+	}
+	char resolved_id[PATH_MAX];
+	if (realpath(requested_path, resolved_id)) {
+		duk_push_string(JJ, resolved_id);
+		return 1;  /*nrets*/
+	} else {
+		goto error;
+	}
+
+error:
+	return duk_generic_error(JJ, "Could not resolve module '%s'", requested_id);
+}
+
+/**
+*  Duktape - duk_module_node - node
+*/
+duk_ret_t cb_load_module(duk_context *JJ) {
+	const char *resolved_id = duk_get_string(JJ, 0);
+	if (0 > jsdt_load_file(JJ, resolved_id)) {
+		return duk_generic_error(JJ, "Could not load module '%s'", resolved_id);
+	}
+	return 1;  /*nrets*/
 }

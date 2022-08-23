@@ -1,0 +1,154 @@
+Slack Module
+
+Arsen Semenov
+
+   <arsperger@gmail.com>
+
+   Copyright © 2021 arsperger.com
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. slack url (str)
+              3.2. channel (str)
+              3.3. username (str)
+              3.4. icon_emoji (str)
+
+        4. Functions
+
+              4.1. slack_send(format)
+
+   List of Examples
+
+   1.1. Set slack webhook URL parameter
+   1.2. Set channel parameter
+   1.3. Set username parameter
+   1.4. Set icon_emoji parameter
+   1.5. slack_send usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. slack url (str)
+        3.2. channel (str)
+        3.3. username (str)
+        3.4. icon_emoji (str)
+
+   4. Functions
+
+        4.1. slack_send(format)
+
+1. Overview
+
+   This module provides integration with Slack over webhooks. Slack
+   integration (https://api.slack.com/messaging/webhooks)
+
+   It relays on libcurl through http_client module.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * HTTP_CLIENT - the http_client module should be loaded first.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * libcurl
+
+3. Parameters
+
+   3.1. slack url (str)
+   3.2. channel (str)
+   3.3. username (str)
+   3.4. icon_emoji (str)
+
+3.1. slack url (str)
+
+   Slack webhook url
+
+   Default value is not set (empty)
+
+   Example 1.1. Set slack webhook URL parameter
+...
+modparam("slack", "slack_url", "https://hooks.slack.com/services/T00000000/B0000
+0000/XXXXXXXXXXXXXXXXXXXXXXXX")
+...
+
+3.2. channel (str)
+
+   Slack channel name
+
+   Default value is #kamailio
+
+   Example 1.2. Set channel parameter
+...
+modparam("slack", "channel", "#kamailio")
+...
+
+3.3. username (str)
+
+   Specify the username for the published message
+
+   Default value is webhookbot.
+
+   Example 1.3. Set username parameter
+...
+modparam("slack", "username", "webhookbot")
+...
+
+3.4. icon_emoji (str)
+
+   specify an emoji (using colon shortcodes, eg. :white_check_mark:) to
+   use as the profile photo alongside the message.
+
+   Default value is :ghost:
+
+   Example 1.4. Set icon_emoji parameter
+...
+modparam("slack", "icon_emoji", ":ghost:")
+...
+
+4. Functions
+
+   4.1. slack_send(format)
+
+4.1.  slack_send(format)
+
+   Send a formatted message to slack channel.
+
+   The parameters are:
+     * format - The formatted string to be send.
+
+   The parameters can contain pseudo-variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.5. slack_send usage
+...
+    slack_send("Hello from Kamailio! caller=$fU;callee=$tU;callid=$ci");
+...

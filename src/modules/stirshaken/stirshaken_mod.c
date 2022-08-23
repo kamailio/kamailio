@@ -50,6 +50,11 @@ static int stirshaken_vs_cache_certificates = 0;
 static size_t stirshaken_vs_cache_expire_s = 120;
 static str stirshaken_vs_cache_dir = str_init("");
 
+static str stirshaken_vs_x509_pvname = STR_NULL;
+static pv_spec_t stirshaken_vs_x509_pv;
+static str stirshaken_vs_pptg_pvname = STR_NULL;
+static pv_spec_t stirshaken_vs_pptg_pv;
+
 static int mod_init(void);
 static int child_init(int);
 static void mod_destroy(void);
@@ -90,6 +95,8 @@ static param_export_t params[] = {
 	{"vs_cache_certificates",	PARAM_INT,   &stirshaken_vs_cache_certificates},
 	{"vs_cache_expire_s",		PARAM_INT,   &stirshaken_vs_cache_expire_s},
 	{"vs_cache_dir",			PARAM_STR,   &stirshaken_vs_cache_dir},
+	{"vs_certsubject_pvname",   PARAM_STR,   &stirshaken_vs_x509_pvname},
+	{"vs_pptgrants_pvname",     PARAM_STR,   &stirshaken_vs_pptg_pvname},
 	{0, 0, 0}
 };
 
@@ -356,6 +363,22 @@ static int mod_init(void)
 				"then please set @vs_verify_x509_cert_path param to 1 and configure @vs_ca_dir (and optionally @vs_crl_dir)\n");
 	}
 
+	if(stirshaken_vs_pptg_pvname.s != 0) {
+		if(pv_parse_spec(&stirshaken_vs_pptg_pvname, &stirshaken_vs_pptg_pv) == NULL
+				|| !pv_is_w(&stirshaken_vs_pptg_pv)) {
+			LM_ERR("Invalid vs_pptgrants_pvname '%s'\n", stirshaken_vs_pptg_pvname.s);
+			return -1;
+		}
+	}
+
+	if(stirshaken_vs_x509_pvname.s != 0) {
+		if(pv_parse_spec(&stirshaken_vs_x509_pvname, &stirshaken_vs_x509_pv) == NULL
+				|| !pv_is_w(&stirshaken_vs_x509_pv)) {
+			LM_ERR("Invalid vs_certsubject_pvname '%s'\n", stirshaken_vs_x509_pvname.s);
+			return -1;
+		}
+	}
+
 	return 0;
 }
 
@@ -364,13 +387,13 @@ static int mod_init(void)
  */
 static int child_init(int rank)
 {
-	LM_INFO("mod stirshaken child init\n");
+	LM_DBG("mod stirshaken child init\n");
 	return 0;
 }
 
 static void mod_destroy(void)
 {
-	LM_INFO("mod stirshaken destroy\n");
+	LM_DBG("mod stirshaken destroy\n");
 	stir_shaken_as_destroy(&as);
 	stir_shaken_vs_destroy(&vs);
 	stir_shaken_deinit();
@@ -391,7 +414,7 @@ static int stirshaken_handle_cache(stir_shaken_context_t *ss, stir_shaken_passpo
 
 	if (!ss->cert_fetched_from_cache) {
 
-		// save certificate to cache with url as a key 
+		// save certificate to cache with url as a key
 		char cert_full_path[STIR_SHAKEN_BUFLEN] = { 0 };
 		const char *x5u = stir_shaken_passport_get_header(ss, passport, "x5u");
 
@@ -444,6 +467,8 @@ static int ki_stirshaken_check_identity(sip_msg_t *msg)
 	stir_shaken_context_t ss = { 0 };
 	stir_shaken_passport_t *passport_out = NULL;
 	stir_shaken_cert_t *cert_out = NULL;
+
+	pv_value_t val;
 
 	for (hf = msg->headers; hf; hf = hf->next) {
 		if (hf->name.len == STIRSHAKEN_HDR_IDENTITY_LEN
@@ -503,6 +528,27 @@ static int ki_stirshaken_check_identity(sip_msg_t *msg)
 		}
 	}
 
+	if (stirshaken_vs_pptg_pvname.s != 0) {
+		memset(&val, 0, sizeof(pv_value_t));
+		val.flags = PV_VAL_STR;
+		val.rs.s = jwt_get_grants_json(passport_out->jwt, NULL);
+		val.rs.len = strlen(val.rs.s);
+		if (stirshaken_vs_pptg_pv.setf(msg, &stirshaken_vs_pptg_pv.pvp, (int)EQ_T, &val) < 0) {
+			LM_ERR("setting %s failed\n", stirshaken_vs_pptg_pvname.s);
+		}
+		stir_shaken_free_jwt_str(val.rs.s);
+	}
+
+	if (stirshaken_vs_x509_pvname.s != 0) {
+		memset(&val, 0, sizeof(pv_value_t));
+		val.flags = PV_VAL_STR;
+		val.rs.s = stir_shaken_cert_get_subject(cert_out);
+		val.rs.len = strlen(val.rs.s);
+		if (stirshaken_vs_x509_pv.setf(msg, &stirshaken_vs_x509_pv.pvp, (int)EQ_T, &val) < 0) {
+			LM_ERR("setting %s failed\n", stirshaken_vs_x509_pvname.s);
+		}
+	}
+
 	LM_DBG("identity check: ok (%s)\n", ss.x509_cert_path_checked ? "with X509 cert path check" : "without X509 cert path check");
 	stir_shaken_passport_destroy(&passport_out);
 	stir_shaken_cert_destroy(&cert_out);
@@ -512,6 +558,24 @@ fail:
 	stir_shaken_passport_destroy(&passport_out);
 	stir_shaken_cert_destroy(&cert_out);
 	LM_ERR("identity check: fail\n");
+	if (stirshaken_vs_pptg_pvname.s != 0) {
+		memset(&val, 0, sizeof(pv_value_t));
+		val.flags = PV_VAL_NULL;
+		//val.rs.s = NULL;
+		//val.rs.len = 0;
+		if (stirshaken_vs_pptg_pv.setf(msg, &stirshaken_vs_pptg_pv.pvp, (int)EQ_T, &val) < 0) {
+			LM_ERR("setting %s to null failed\n", stirshaken_vs_pptg_pvname.s);
+		}
+	}
+	if (stirshaken_vs_x509_pvname.s != 0) {
+		memset(&val, 0, sizeof(pv_value_t));
+		val.flags = PV_VAL_NULL;
+		//val.rs.s = NULL;
+		//val.rs.len = 0;
+		if (stirshaken_vs_x509_pv.setf(msg, &stirshaken_vs_x509_pv.pvp, (int)EQ_T, &val) < 0) {
+			LM_ERR("setting %s to null failed\n", stirshaken_vs_x509_pvname.s);
+		}
+	}
 	return -1;
 }
 
@@ -526,7 +590,7 @@ fail:
  * This method checks if PASSporT verifies successfully with a public key retrieved from obtained certificate.
  * Optionally (if Verification Service is configured to do so with stirshaken_vs_verify_x509_cert_path param set to 1)
  * this method checks if certificate is trusted, by execution of X509 certificate path check.
- * 
+ *
  * Optionally:
  * 		- retrieve PASSporT from SIP Identity Header
  * 		- retrieve certificate referenced in PASSporT's x5u header

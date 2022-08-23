@@ -745,15 +745,41 @@ modparam("registrar", "reg_callid_avp", "$avp(s:avp)")
 		<itemizedlist>
 		<listitem>
 			<para>
-				<emphasis>expires</emphasis> - the number of maximum
-				contacts to be stored for the current registration AoR. It
-				overwrites the 'max_contacts' module parameter value.
+				<emphasis>match_callid</emphasis> - filter contacts by callid.
+				Used in registered().
 			</para>
 		</listitem>
 		<listitem>
 			<para>
-				<emphasis>q</emphasis> - the expires value, to overwrite the
+				<emphasis>match_contact</emphasis> - filter contacts by contact.
+				Used in registered().
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				<emphasis>match_received</emphasis> - filter contacts by received.
+				Used in registered().
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				<emphasis>rlf_bflags</emphasis> - filter contacts by branch flags.
+				Used in lookup().
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				<emphasis>q</emphasis> - q value of contact
+				(integer 0-1000). It overrides q value given in
+				contact header and default_q parameter.
+				Used in save().
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				<emphasis>expires</emphasis> - the expires value, to overwrite the
 				value from SIP headers.
+				Used in save().
 			</para>
 		</listitem>
 		<listitem>
@@ -761,6 +787,7 @@ modparam("registrar", "reg_callid_avp", "$avp(s:avp)")
 				<emphasis>max_contacts</emphasis> - the number of maximum
 				contacts to be stored for the current registration AoR. It
 				overwrites the 'max_contacts' module parameter value.
+				Used in save().
 			</para>
 		</listitem>
 		<listitem>
@@ -768,6 +795,7 @@ modparam("registrar", "reg_callid_avp", "$avp(s:avp)")
 				<emphasis>socket</emphasis> - the string representing the
 				socket on which the register request was received, as alternative
 				to using the sock_hdr.
+				Used in save().
 			</para>
 		</listitem>
 		</itemizedlist>
@@ -1109,7 +1137,15 @@ end
 				rlf_bflags - e.g., $xavp(reg=&gt;rlf_bflags).
 			</para>
 		</listitem>
-	</itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>2</emphasis> - apply the active tcp connection filter
+				- return only contact records that have the associated TCP/TLS/WSS
+				connection active. UDP and SCTP contacts are not filtered, all
+				are returned.
+			</para>
+		</listitem>
+		</itemizedlist>
 		<para>
 		<emphasis>
 			Default value is NULL (disabled).
@@ -1226,6 +1262,11 @@ kamcmd cfg.set_now_int registrar use_expired_contacts 0
 					<emphasis>expires_range</emphasis> or 
 					<emphasis>default_expires_range</emphasis> to this
 					registration.
+					</para>
+				</listitem>
+				<listitem>
+					<para><emphasis>0x10</emphasis> - prepare the headers for
+					reply, used only if flag 0x02 is set.
 					</para>
 				</listitem>
 			</itemizedlist>
@@ -1409,6 +1450,83 @@ lookup_branches("location");
 		</example>
 	</section>
 
+	<section id="registrar.f.lookup_xavp">
+		<title>
+		<function moreinfo="none">lookup_xavp(ultable, uri, rxname, cxname)</function>
+		</title>
+		<para>
+			Similar to lookup(...), but store the location record attributes
+			in XAVPs. Note that not all contact record fields are stored
+		</para>
+		<para>Meaning of the parameters:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+			<emphasis>ultable</emphasis> - name of the usrloc table that is used
+			for the lookup.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			<emphasis>uri</emphasis> - the URI to be searched in location table.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				<emphasis>rxname</emphasis> - name of the XAVP to store record
+				attributes. These are:
+			</para>
+			<itemizedlist>
+			<listitem>
+				<para>
+				<emphasis>aor</emphasis> - the address of record.
+				</para>
+			</listitem>
+			</itemizedlist>
+		</listitem>
+		<listitem>
+			<para>
+				<emphasis>cxname</emphasis> - name of the XAVP to store content
+				attributes, name mapping is done from the perspective of using
+				them to send out SIP requests. These are:
+			</para>
+			<itemizedlist>
+			<listitem>
+				<para>
+				<emphasis>uri</emphasis> - the contact address.
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+				<emphasis>socket</emphasis> - the socket of the contact record.
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+				<emphasis>dsturi</emphasis> - the destination uri of the contact
+				record (the received field in location contact).
+				</para>
+			</listitem>
+			</itemizedlist>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>lookup_xavp</function> usage</title>
+		<programlisting format="linespecific">
+...
+lookup_xavp("location", "$fu", "rul", "cul");
+xinfo("aor: $xavp(rul=&gt;aor)\n");
+xinfo("number of contacts: $xavp(rul&gt;count)\n");
+xinfo("first contact record - uri: $xavp(cul&gt;uri)\n");
+xinfo("first contact record - socket: $xavp(cul&gt;socket)\n");
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="registrar.f.registered">
 		<title>
 		<function moreinfo="none">registered(domain [, uri [, match_option [, match_action]]])</function>
@@ -1438,7 +1556,7 @@ lookup_branches("location");
 		<listitem>
 			<para>
 			<emphasis>match_option</emphasis> (optional) - flag parameter to restrict
-			contact search. use reg_xavp_cfg to set the values to compare to.
+			contact search. use xavp_cfg to set the values to compare to.
 			</para>
             <para>flag values is as follows:</para>
 			<itemizedlist>
@@ -1694,6 +1812,52 @@ reg_free_contacts("callee");
 save("location", "0x2");
 ...
 reg_send_reply();
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="registrar.f.reg_from_user">
+		<title>
+		<function moreinfo="none">reg_from_user(ultable, uri, mode)</function>
+		</title>
+		<para>
+			The function returns true if the SIP message comes from the user
+			identified by 'uri' parameter by matching the associated location
+			records. The matching is done with the field 'received' if it is set,
+			otherwise with the contact address.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+			<emphasis>ultable</emphasis> - user location table (e.g., 'location')
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			<emphasis>uri</emphasis> - SIP URI to identify the location records
+			to match against.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			<emphasis>mode</emphasis> - matching mode (int) - host part (IP address)
+			is matched always. If mode has bit 1 set (value 1), then the port is
+			matched as well. If mode has bit 2 set (value 2), then the protocol
+			is matched as well.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>reg_from_user</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(reg_from_user("location", "sip:alice@server.com", "0")) {
+    # message coming from where 'alice' sent before a REGISTER request
+}
 ...
 </programlisting>
 		</example>

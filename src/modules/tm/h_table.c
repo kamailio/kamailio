@@ -410,6 +410,7 @@ struct cell *build_cell(struct sip_msg *p_msg)
 	init_synonym_id(p_msg, new_cell->md5);
 	init_cell_lock(new_cell);
 	t_stats_created();
+	LM_DBG("created new cell %p\n", new_cell);
 	return new_cell;
 
 error:
@@ -444,6 +445,7 @@ error:
 	xavp_reset_list();
 	xavu_reset_list();
 	xavi_reset_list();
+	LM_DBG("could not create cell\n");
 	return NULL;
 }
 
@@ -512,6 +514,7 @@ error0:
  * backup xdata from/to msg context to local var and use T lists
  * - mode = 0 - from msg context to _txdata and use T lists
  * - mode = 1 - restore to msg context from _txdata
+ * the function can be also used to restore the core context from transacation data
  */
 void tm_xdata_swap(tm_cell_t *t, tm_xlinks_t *xd, int mode)
 {
@@ -524,6 +527,7 @@ void tm_xdata_swap(tm_cell_t *t, tm_xlinks_t *xd, int mode)
 		x = xd;
 
 	if(mode == 0) {
+		LM_DBG("copy X/AVPs from msg context to txdata\n");
 		if(t == NULL)
 			return;
 		x->uri_avps_from =
@@ -542,7 +546,7 @@ void tm_xdata_swap(tm_cell_t *t, tm_xlinks_t *xd, int mode)
 		x->xavus_list = xavu_set_list(&t->xavus_list);
 		x->xavis_list = xavi_set_list(&t->xavis_list);
 	} else if(mode == 1) {
-		/* restore original avp list */
+		LM_DBG("restore X/AVPs msg context from txdata\n");
 		set_avp_list(AVP_TRACK_FROM | AVP_CLASS_URI, x->uri_avps_from);
 		set_avp_list(AVP_TRACK_TO | AVP_CLASS_URI, x->uri_avps_to);
 		set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER, x->user_avps_from);
@@ -561,6 +565,7 @@ void tm_xdata_swap(tm_cell_t *t, tm_xlinks_t *xd, int mode)
 void tm_xdata_replace(tm_xdata_t *newxd, tm_xlinks_t *bakxd)
 {
 	if(newxd == NULL && bakxd != NULL) {
+		LM_DBG("restore X/AVP msg context from backup data\n");
 		set_avp_list(AVP_TRACK_FROM | AVP_CLASS_URI, bakxd->uri_avps_from);
 		set_avp_list(AVP_TRACK_TO | AVP_CLASS_URI, bakxd->uri_avps_to);
 		set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER, bakxd->user_avps_from);
@@ -571,10 +576,8 @@ void tm_xdata_replace(tm_xdata_t *newxd, tm_xlinks_t *bakxd)
 		xavp_set_list(bakxd->xavps_list);
 		xavu_set_list(bakxd->xavus_list);
 		xavi_set_list(bakxd->xavis_list);
-		return;
-	}
-
-	if(newxd != NULL && bakxd != NULL) {
+	} else if(newxd != NULL && bakxd != NULL) {
+		LM_DBG("replace existing list in backup xd from new xd\n");
 		bakxd->uri_avps_from = set_avp_list(
 				AVP_TRACK_FROM | AVP_CLASS_URI, &newxd->uri_avps_from);
 		bakxd->uri_avps_to =
@@ -590,7 +593,6 @@ void tm_xdata_replace(tm_xdata_t *newxd, tm_xlinks_t *bakxd)
 		bakxd->xavps_list = xavp_set_list(&newxd->xavps_list);
 		bakxd->xavus_list = xavu_set_list(&newxd->xavus_list);
 		bakxd->xavis_list = xavi_set_list(&newxd->xavis_list);
-		return;
 	}
 }
 

@@ -70,6 +70,8 @@ static int w_save3(struct sip_msg* _m, char* _d, char* _cflags, char* _uri);
 static int w_lookup(struct sip_msg* _m, char* _d, char* _p2);
 static int w_lookup_to_dset(struct sip_msg* _m, char* _d, char* _p2);
 static int w_lookup_branches(struct sip_msg* _m, char* _d, char* _p2);
+static int w_lookup_xavp(sip_msg_t* _m, char* _ptname, char* _puri,
+		char *prxname, char *pcxname);
 static int w_registered(struct sip_msg* _m, char* _d, char* _uri);
 static int w_unregister(struct sip_msg* _m, char* _d, char* _uri);
 static int w_unregister2(struct sip_msg* _m, char* _d, char* _uri, char *_ruid);
@@ -77,6 +79,8 @@ static int w_registered3(struct sip_msg* _m, char* _d, char* _uri, char* _flags)
 static int w_registered4(struct sip_msg* _m, char* _d, char* _uri, char* _flags,
 		char* _actionflags);
 static int w_reg_send_reply(sip_msg_t* _m, char* _p1, char* _p2);
+static int w_reg_from_user(sip_msg_t* _m, char* _ptname, char* _puri,
+		char *_pmode);
 
 /*! \brief Fixup functions */
 static int domain_fixup(void** param, int param_no);
@@ -206,6 +210,10 @@ static cmd_export_t cmds[] = {
 			REQUEST_ROUTE| FAILURE_ROUTE },
 	{"lookup_branches",  (cmd_function)w_lookup_branches, 1,  domain_uri_fixup, 0,
 			REQUEST_ROUTE | FAILURE_ROUTE },
+	{"lookup_xavp",  (cmd_function)w_lookup_xavp,  4,  fixup_spve_all,
+			fixup_free_spve_null, ANY_ROUTE },
+	{"reg_from_user",  (cmd_function)w_reg_from_user,  3,  fixup_ssi,
+			fixup_free_ssi, ANY_ROUTE },
 	{"reg_send_reply",   (cmd_function)w_reg_send_reply,  0, 0, 0,
 			REQUEST_ROUTE | FAILURE_ROUTE },
 	{"bind_registrar",  (cmd_function)bind_registrar,  0,
@@ -526,6 +534,57 @@ static int ki_lookup_branches(sip_msg_t* _m, str* _dtable)
 	}
 
 	return lookup_branches(_m, d);
+}
+
+static int w_lookup_xavp(sip_msg_t* _m, char* _ptname, char* _puri,
+		char *_prxname, char *_pcxname)
+{
+	str vtname = STR_NULL;
+	str vuri = STR_NULL;
+	str vrxname = STR_NULL;
+	str vcxname = STR_NULL;
+
+	if(fixup_get_svalue(_m, (gparam_t*)_ptname, &vtname) != 0) {
+		LM_ERR("failed to get location table parameter\n");
+		return -1;
+	}
+	if(fixup_get_svalue(_m, (gparam_t*)_puri, &vuri) != 0) {
+		LM_ERR("failed to get uri parameter\n");
+		return -1;
+	}
+	if(fixup_get_svalue(_m, (gparam_t*)_prxname, &vrxname) != 0) {
+		LM_ERR("failed to get record xavp parameter\n");
+		return -1;
+	}
+	if(fixup_get_svalue(_m, (gparam_t*)_pcxname, &vcxname) != 0) {
+		LM_ERR("failed to get contact xavp parameter\n");
+		return -1;
+	}
+
+	return ki_lookup_xavp(_m, &vtname, &vuri, &vrxname, &vcxname);
+}
+
+static int w_reg_from_user(sip_msg_t* _m, char* _ptname, char* _puri,
+		char *_pmode)
+{
+	str vtname = STR_NULL;
+	str vuri = STR_NULL;
+	int vmode = 0;
+
+	if(fixup_get_svalue(_m, (gparam_t*)_ptname, &vtname) != 0) {
+		LM_ERR("failed to get location table parameter\n");
+		return -1;
+	}
+	if(fixup_get_svalue(_m, (gparam_t*)_puri, &vuri) != 0) {
+		LM_ERR("failed to get uri parameter\n");
+		return -1;
+	}
+	if(fixup_get_ivalue(_m, (gparam_t*)_pmode, &vmode) != 0) {
+		LM_ERR("failed to get mode parameter\n");
+		return -1;
+	}
+
+	return ki_reg_from_user(_m, &vtname, &vuri, vmode);
 }
 
 static int w_registered(struct sip_msg* _m, char* _d, char* _uri)
@@ -950,6 +1009,11 @@ static sr_kemi_t sr_kemi_registrar_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("registrar"), str_init("lookup_xavp"),
+		SR_KEMIP_INT, ki_lookup_xavp,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ str_init("registrar"), str_init("registered"),
 		SR_KEMIP_INT, regapi_registered,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
@@ -1000,9 +1064,24 @@ static sr_kemi_t sr_kemi_registrar_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("registrar"), str_init("reg_from_user"),
+		SR_KEMIP_INT, ki_reg_from_user,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_INT,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ str_init("registrar"), str_init("reg_send_reply"),
 		SR_KEMIP_INT, ki_reg_send_reply,
 		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("registrar"), str_init("ulc_rget"),
+		SR_KEMIP_XVAL, ki_reg_ulc_rget,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("registrar"), str_init("ulc_cget"),
+		SR_KEMIP_XVAL, ki_reg_ulc_cget,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_INT,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }

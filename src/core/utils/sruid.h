@@ -51,4 +51,20 @@ int sruid_next_safe(sruid_t *sid);
 int sruid_nextx(sruid_t *sid, str *x);
 int sruid_nextx_safe(sruid_t *sid, str *x);
 
+int sruid_nexthid(sruid_t *sid, str *sval);
+int sruid_nexthid_safe(sruid_t *sid, str *sval);
+
+typedef int (*sruid_uuid_generate_f)(char *out, int *len);
+
+typedef struct sruid_uuid_api {
+	sruid_uuid_generate_f fgenerate;
+	sruid_uuid_generate_f fgenerate_time;
+	sruid_uuid_generate_f fgenerate_random;
+} sruid_uuid_api_t;
+
+int sruid_uuid_api_set(sruid_uuid_api_t *sapi);
+int sruid_uuid_generate(char *out, int *len);
+int sruid_uuid_generate_time(char *out, int *len);
+int sruid_uuid_generate_random(char *out, int *len);
+
 #endif

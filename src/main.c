@@ -169,8 +169,8 @@ Options:\n\
                   default is yes.\n\
     -A define    Add config pre-processor define (e.g., -A WITH_AUTH,\n\
                   -A 'FLT_ACC=1', -A 'DEFVAL=\"str-val\"')\n\
-    -b nr        Maximum receive buffer size which will not be exceeded by\n\
-                  auto-probing procedure even if  OS allows\n\
+    -b nr        Maximum OS UDP receive buffer size which will not be exceeded by\n\
+                  auto-probing-and-increase procedure even if OS allows\n\
     -c           Check configuration file for syntax errors\n\
     --cfg-print  Print configuration file evaluating includes and ifdefs\n\
     -d           Debugging level control (multiple -d to increase the level from 0)\n\
@@ -206,6 +206,7 @@ Options:\n\
     --modparam=modname:paramname:type:value set the module parameter\n\
                   type has to be 's' for string value and 'i' for int value, \n\
                   example: --modparam=corex:alias_subdomains:s:" NAME ".org\n\
+    --all-errors Print details about all config errors that can be detected\n\
     -M nr        Size of private memory allocated, in Megabytes\n\
     -n processes Number of child processes to fork per interface\n\
                   (default: 8)\n"
@@ -293,22 +294,6 @@ void print_internals(void)
 	printf("Thank you for flying %s!\n", NAME);
 }
 
-/* debugging function */
-/*
-void receive_stdin_loop(void)
-{
-	#define BSIZE 1024
-	char buf[BSIZE+1];
-	int len;
-
-	while(1){
-		len=fread(buf,1,BSIZE,stdin);
-		buf[len+1]=0;
-		receive_msg(buf, len);
-		printf("-------------------------\n");
-	}
-}
-*/
 
 /* global vars */
 
@@ -323,7 +308,7 @@ unsigned int maxbuffer = MAX_RECV_BUFFER_SIZE; /* maximum buffer size we do
 												  not want to exceed during the
 												  auto-probing procedure; may
 												  be re-configured */
-unsigned int sql_buffer_size = 65535; /* Size for the SQL buffer. Defaults to 64k. 
+unsigned int sql_buffer_size = 65535; /* Size for the SQL buffer. Defaults to 64k.
                                          This may be re-configured */
 int socket_workers = 0;		/* number of workers processing requests for a socket
 							   - it's reset everytime with a new listen socket */
@@ -358,9 +343,11 @@ int dont_fork = 0;
 int dont_daemonize = 0;
 int log_stderr = 0;
 int log_color = 0;
+int log_cee = 0;
 /* set custom app name for syslog printing */
 char *log_name = 0;
 char *log_prefix_fmt = 0;
+char *log_fqdn = 0;
 pid_t creator_pid = (pid_t) -1;
 int config_check = 0;
 /* check if reply first via host==us */
@@ -496,6 +483,7 @@ int child_rank = 0;
 int ser_kill_timeout=DEFAULT_SER_KILL_TIMEOUT;
 
 int ksr_verbose_startup = 0;
+int ksr_all_errors = 0;
 
 /* cfg parsing */
 int cfg_errors=0;
@@ -522,7 +510,7 @@ extern FILE* yyin;
 extern int yyparse(void);
 
 
-int is_main=1; /* flag = is this the  "main" process? */
+int _ksr_is_main=1; /* flag = is this the  "main" process? */
 int fixup_complete=0; /* flag = is the fixup complete ? */
 
 char* pid_file = 0; /* filename as asked by use */
@@ -663,7 +651,7 @@ static void kill_all_children(int signum)
 		  * (only main can add processes, so from main is safe not to lock
 		  *  and moreover it avoids the lock-holding suicidal children problem)
 		  */
-		if (!is_main) lock_get(process_lock);
+		if (!_ksr_is_main) lock_get(process_lock);
 		for (r=1; r<*process_count; r++){
 			if (r==process_no) continue; /* try not to be suicidal */
 			if (pt[r].pid) {
@@ -672,7 +660,7 @@ static void kill_all_children(int signum)
 			else LM_CRIT("killing: %s > %d no pid!!!\n",
 							pt[r].desc, pt[r].pid);
 		}
-		if (!is_main) lock_release(process_lock);
+		if (!_ksr_is_main) lock_release(process_lock);
 	}
 }
 
@@ -846,7 +834,7 @@ void sig_usr(int signo)
 #endif
 #endif
 
-	if (is_main){
+	if (_ksr_is_main){
 		if (sig_flag==0) sig_flag=signo;
 		else /*  previous sig. not processed yet, ignoring? */
 			return; ;
@@ -1512,6 +1500,12 @@ int main_loop(void)
 			LM_ERR("init_child failed\n");
 			goto error;
 		}
+
+		if (init_child(PROC_POSTCHILDINIT) < 0) {
+			LM_ERR("error in init_child for rank PROC_POSTCHILDINIT\n");
+			goto error;
+		}
+
 		*_sr_instance_started = 1;
 		return udp_rcv_loop();
 	}else{ /* fork: */
@@ -1878,6 +1872,11 @@ int main_loop(void)
 			unix_tcp_sock=-1;
 		}
 #endif
+		if (init_child(PROC_POSTCHILDINIT) < 0) {
+			LM_ERR("error in init_child for rank PROC_POSTCHILDINIT\n");
+			goto error;
+		}
+
 		/* init cfg, but without per child callbacks support */
 		cfg_child_no_cb_init();
 		cfg_ok=1;
@@ -2021,8 +2020,28 @@ int main(int argc, char** argv)
 		{"debug",       required_argument, 0, KARGOPTVAL + 8},
 		{"cfg-print",   no_argument,       0, KARGOPTVAL + 9},
 		{"atexit",      required_argument, 0, KARGOPTVAL + 10},
+		{"all-errors",  no_argument,       0, KARGOPTVAL + 11},
 		{0, 0, 0, 0 }
 	};
+
+	if (argc > 1) {
+		/* checks for common wrong arguments */
+		if(strcasecmp(argv[1], "start")==0) {
+			fprintf(stderr, "error: 'start' is not a supported argument\n");
+			fprintf(stderr, "error: stopping " NAME " ...\n\n");
+			exit(-1);
+		}
+		if(strcasecmp(argv[1], "stop")==0) {
+			fprintf(stderr, "error: 'stop' is not a supported argument\n");
+			fprintf(stderr, "error: stopping " NAME " ...\n\n");
+			exit(-1);
+		}
+		if(strcasecmp(argv[1], "restart")==0) {
+			fprintf(stderr, "error: 'restart' is not a supported argument\n");
+			fprintf(stderr, "error: stopping " NAME " ...\n\n");
+			exit(-1);
+		}
+	}
 
 	/*init*/
 	time(&up_since);
@@ -2036,7 +2055,7 @@ int main(int argc, char** argv)
 	sr_cfgenv_init();
 	daemon_status_init();
 
-	dprint_init_colors();
+	log_init();
 
 	/* command line options */
 	options=  ":f:cm:M:dVIhEeb:l:L:n:vKrRDTN:W:w:t:u:g:P:G:SQ:O:a:A:x:X:Y:";
@@ -2084,6 +2103,10 @@ int main(int argc, char** argv)
 					ksr_slog_init(optarg);
 					break;
 			case KARGOPTVAL+8:
+					if (optarg == NULL) {
+						fprintf(stderr, "bad debug level value\n");
+						goto error;
+					}
 					debug_flag = 1;
 					default_core_cfg.debug=(int)strtol(optarg, &tmp, 10);
 					if ((tmp==0) || (*tmp)){
@@ -2107,6 +2130,9 @@ int main(int argc, char** argv)
 						LM_ERR("bad atexit value: %s\n", optarg);
 						goto error;
 					}
+					break;
+			case KARGOPTVAL+11:
+					ksr_all_errors = 1;
 					break;
 
 			default:
@@ -2151,6 +2177,10 @@ int main(int argc, char** argv)
 #ifdef USE_TCP
 	init_tcp_options(); /* set the defaults before the config */
 #endif
+
+	if (pv_init_buffer()<0) {
+		goto error;
+	}
 
 	pp_define_core();
 
@@ -2264,7 +2294,7 @@ int main(int argc, char** argv)
 					}
 					if(p) {
 						p++;
-						if(pp_define_set(strlen(p), p)<0) {
+						if(pp_define_set(strlen(p), p, KSR_PPDEF_NORMAL)<0) {
 							fprintf(stderr, "error at define value: -A %s\n",
 								optarg);
 							goto error;
@@ -2297,6 +2327,7 @@ int main(int argc, char** argv)
 			case KARGOPTVAL+8:
 			case KARGOPTVAL+9:
 			case KARGOPTVAL+10:
+			case KARGOPTVAL+11:
 					break;
 
 			/* long options */
@@ -2330,7 +2361,7 @@ int main(int argc, char** argv)
 						fprintf(stderr, "bad substdef parameter\n");
 						goto error;
 					}
-					if(pp_substdef_add(optarg, 0)<0) {
+					if(pp_substdef_add(optarg, KSR_PPDEF_NORMAL)<0) {
 						LM_ERR("failed to add substdef expression: %s\n", optarg);
 						goto error;
 					}
@@ -2340,7 +2371,7 @@ int main(int argc, char** argv)
 						fprintf(stderr, "bad substdefs parameter\n");
 						goto error;
 					}
-					if(pp_substdef_add(optarg, 1)<0) {
+					if(pp_substdef_add(optarg, KSR_PPDEF_QUOTED)<0) {
 						LM_ERR("failed to add substdefs expression: %s\n", optarg);
 						goto error;
 					}
@@ -2835,6 +2866,7 @@ try_again:
 		fprintf(stderr,  "failed to initialize list addresses\n");
 		goto error;
 	}
+	ksr_sockets_index();
 	if (default_core_cfg.dns_try_ipv6 && !(socket_types & SOCKET_T_IPV6)){
 		/* if we are not listening on any ipv6 address => no point
 		 * to try to resovle ipv6 addresses */
@@ -3054,7 +3086,7 @@ try_again:
 	if (ret < 0)
 		goto error;
 	/*kill everything*/
-	if (is_main) shutdown_children(SIGTERM, 0);
+	if (_ksr_is_main) shutdown_children(SIGTERM, 0);
 	if (!dont_daemonize) {
 		if (daemon_status_send(0) < 0)
 			fprintf(stderr, "error sending exit status: %s [%d]\n",
@@ -3065,7 +3097,7 @@ try_again:
 
 error:
 	/*kill everything*/
-	if (is_main) shutdown_children(SIGTERM, 0);
+	if (_ksr_is_main) shutdown_children(SIGTERM, 0);
 	if (!dont_daemonize) {
 		if (daemon_status_send((char)-1) < 0)
 			fprintf(stderr, "error sending exit status: %s [%d]\n",

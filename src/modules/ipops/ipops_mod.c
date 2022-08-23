@@ -46,6 +46,7 @@
 #include "../../core/mod_fix.h"
 #include "../../core/pvar.h"
 #include "../../core/resolve.h"
+#include "../../core/dns_cache.h"
 #include "../../core/lvalue.h"
 #include "../../core/kemi.h"
 #include "api.h"
@@ -110,6 +111,7 @@ static int fixup_free_detailed_ip_type(void** param, int param_no);
 static int w_dns_query(sip_msg_t* msg, char* str1, char* str2);
 static int w_srv_query(sip_msg_t* msg, char* str1, char* str2);
 static int w_naptr_query(sip_msg_t* msg, char* str1, char* str2);
+static int w_dns_set_local_ttl(sip_msg_t*, char*, char*);
 static int mod_init(void);
 
 static pv_export_t mod_pvs[] = {
@@ -129,43 +131,47 @@ static pv_export_t mod_pvs[] = {
  */
 static cmd_export_t cmds[] =
 {
-	{ "is_ip", (cmd_function)w_is_ip, 1, fixup_spve_null, 0,
-		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE },
-	{ "is_pure_ip", (cmd_function)w_is_pure_ip, 1, fixup_spve_null, 0,
-		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE },
-	{ "is_ipv4", (cmd_function)w_is_ipv4, 1, fixup_spve_null, 0,
-		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE },
-	{ "is_ipv6", (cmd_function)w_is_ipv6, 1, fixup_spve_null, 0,
-		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE },
-	{ "is_ipv6_reference", (cmd_function)w_is_ipv6_reference, 1, fixup_spve_null, 0,
-		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE },
-	{ "ip_type", (cmd_function)w_ip_type, 1, fixup_spve_null, 0,
-		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE },
+	{ "is_ip", (cmd_function)w_is_ip, 1,
+		fixup_spve_null, fixup_free_spve_null, ANY_ROUTE },
+	{ "is_pure_ip", (cmd_function)w_is_pure_ip, 1,
+		fixup_spve_null, fixup_free_spve_null, ANY_ROUTE },
+	{ "is_ipv4", (cmd_function)w_is_ipv4, 1,
+		fixup_spve_null, fixup_free_spve_null, ANY_ROUTE },
+	{ "is_ipv6", (cmd_function)w_is_ipv6, 1,
+		fixup_spve_null, fixup_free_spve_null, ANY_ROUTE },
+	{ "is_ipv6_reference", (cmd_function)w_is_ipv6_reference, 1,
+		fixup_spve_null, fixup_free_spve_null, ANY_ROUTE },
+	{ "ip_type", (cmd_function)w_ip_type, 1,
+		fixup_spve_null, fixup_free_spve_null, ANY_ROUTE },
 	{ "detailed_ipv4_type", (cmd_function)w_detailed_ipv4_type, 2,
 		fixup_detailed_ip_type, fixup_free_detailed_ip_type, ANY_ROUTE },
 	{ "detailed_ipv6_type", (cmd_function)w_detailed_ipv6_type, 2,
 		fixup_detailed_ip_type, fixup_free_detailed_ip_type, ANY_ROUTE },
 	{ "detailed_ip_type", (cmd_function)w_detailed_ip_type, 2,
 		fixup_detailed_ip_type, fixup_free_detailed_ip_type, ANY_ROUTE },
-	{ "compare_ips", (cmd_function)w_compare_ips, 2, fixup_spve_spve, 0,
-		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE },
-	{ "compare_pure_ips", (cmd_function)w_compare_pure_ips, 2, fixup_spve_spve, 0,
-		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE },
-	{ "is_ip_rfc1918", (cmd_function)w_is_ip_rfc1918, 1, fixup_spve_null, 0,
-		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE },
-	{ "is_in_subnet", (cmd_function)w_ip_is_in_subnet, 2, fixup_spve_spve, 0,
-		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE },
-	{ "dns_sys_match_ip", (cmd_function)w_dns_sys_match_ip, 2, fixup_spve_spve, 0,
-		ANY_ROUTE },
-	{ "dns_int_match_ip", (cmd_function)w_dns_int_match_ip, 2, fixup_spve_spve, 0,
-		ANY_ROUTE },
-	{ "dns_query", (cmd_function)w_dns_query, 2, fixup_spve_spve, 0,
-		ANY_ROUTE },
-	{ "srv_query", (cmd_function)w_srv_query, 2, fixup_spve_spve, 0,
-		ANY_ROUTE },
-	{ "naptr_query", (cmd_function)w_naptr_query, 2, fixup_spve_spve, 0,
-		ANY_ROUTE },
+	{ "compare_ips", (cmd_function)w_compare_ips, 2,
+		fixup_spve_spve, fixup_free_spve_spve, ANY_ROUTE },
+	{ "compare_pure_ips", (cmd_function)w_compare_pure_ips, 2,
+		fixup_spve_spve, fixup_free_spve_spve, ANY_ROUTE },
+	{ "is_ip_rfc1918", (cmd_function)w_is_ip_rfc1918, 1,
+		fixup_spve_null, fixup_free_spve_null, ANY_ROUTE },
+	{ "is_in_subnet", (cmd_function)w_ip_is_in_subnet, 2,
+		fixup_spve_spve, fixup_free_spve_spve, ANY_ROUTE },
+	{ "dns_sys_match_ip", (cmd_function)w_dns_sys_match_ip, 2,
+		fixup_spve_spve, fixup_free_spve_spve, ANY_ROUTE },
+	{ "dns_int_match_ip", (cmd_function)w_dns_int_match_ip, 2,
+		fixup_spve_spve, fixup_free_spve_spve, ANY_ROUTE },
+	{ "dns_query", (cmd_function)w_dns_query, 2,
+		fixup_spve_spve, fixup_free_spve_spve, ANY_ROUTE },
+	{ "srv_query", (cmd_function)w_srv_query, 2,
+		fixup_spve_spve, fixup_free_spve_spve, ANY_ROUTE },
+	{ "naptr_query", (cmd_function)w_naptr_query, 2,
+		fixup_spve_spve, fixup_free_spve_spve, ANY_ROUTE },
+	{ "dns_set_local_ttl", (cmd_function)w_dns_set_local_ttl, 1,
+		fixup_igp_null, fixup_free_igp_null, ANY_ROUTE },
+
 	{ "bind_ipops", (cmd_function)bind_ipops, 0, 0, 0, 0},
+
 	{ 0, 0, 0, 0, 0, 0 }
 };
 
@@ -226,8 +232,7 @@ static int fixup_detailed_ip_type(void** param, int param_no)
 static int fixup_free_detailed_ip_type(void** param, int param_no)
 {
 	if (param_no == 1) {
-		//LM_WARN("free function has not been defined for spve\n");
-		return 0;
+		return fixup_free_spve_null(param, 1);
 	}
 
 	if (param_no == 2) {
@@ -1361,6 +1366,30 @@ static int ki_naptr_query(sip_msg_t* msg, str* naptrname, str* pvid)
 /**
  *
  */
+static int ki_dns_set_local_ttl(sip_msg_t* msg, int vttl)
+{
+	dns_set_local_ttl(vttl);
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_dns_set_local_ttl(sip_msg_t *msg, char *pttl, char *p2)
+{
+	int vttl = 0;
+
+	if(fixup_get_ivalue(msg, (gparam_t*)pttl, &vttl)<0) {
+		LM_ERR("cannot get the ttl value\n");
+		return -1;
+	}
+
+	return ki_dns_set_local_ttl(msg, vttl);
+}
+
+/**
+ *
+ */
 /* clang-format off */
 static sr_kemi_t sr_kemi_ipops_exports[] = {
 	{ str_init("ipops"), str_init("is_ip"),
@@ -1456,6 +1485,11 @@ static sr_kemi_t sr_kemi_ipops_exports[] = {
 	{ str_init("ipops"), str_init("naptr_query"),
 		SR_KEMIP_INT, ki_naptr_query,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("ipops"), str_init("dns_set_local_ttl"),
+		SR_KEMIP_INT, ki_dns_set_local_ttl,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 

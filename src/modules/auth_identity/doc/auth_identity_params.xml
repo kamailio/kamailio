@@ -190,11 +190,11 @@ modparam("auth_identity","cainfo_path","/etc/ssl/certs/ca-certificates.crt")
 		</section>
 
 		<section id="accept_pem_certs">
-			<title><varname>accept_pem_certs</varname> ([0|1])</title>
+			<title><varname>accept_pem_certs</varname> (int)</title>
 			<para>Note: this parameter is for verifier service.</para>
 			<para>
 				Enables the acquired certificate processing if it is in PEM
-				format.
+				format. Value can be 0 or 1.
 			</para>
 			<para>
 				This parameter is optional. The default value is "0".

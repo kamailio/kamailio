@@ -84,6 +84,7 @@ typedef enum si_flags {
 	SI_IS_MCAST     = (1<<2),
 	SI_IS_ANY       = (1<<3),
 	SI_IS_MHOMED    = (1<<4),
+	SI_IS_VIRTUAL	= (1<<5),
 } si_flags_t;
 
 typedef struct addr_info {
@@ -109,6 +110,7 @@ typedef struct advertise_info {
 
 typedef struct socket_info {
 	int socket;
+	int gindex; /* global index in the lists of all sockets */
 	str name; /* name - eg.: foo.bar or 10.0.0.1 */
 	struct ip_addr address; /* ip address */
 	str address_str;        /*ip address converted to string -- optimization*/
@@ -132,6 +134,16 @@ typedef struct socket_info {
 #endif /* USE_MCAST */
 } socket_info_t;
 
+typedef struct socket_attrs {
+	int bindproto;
+	str bindaddr;
+	int bindport;
+	str useaddr;
+	int useport;
+	str sockname;
+	int workers;
+	int sflags;
+} socket_attrs_t;
 
 /* send flags */
 typedef enum send_flags {
@@ -201,6 +213,7 @@ typedef struct ksr_coninfo {
 
 typedef struct sr_net_info {
 	str data;
+	unsigned int bufsize;
 	receive_info_t* rcv;
 	dest_info_t* dst;
 } sr_net_info_t;
@@ -298,7 +311,7 @@ int is_mcast(struct ip_addr* ip);
 
 /* returns 1 if the given ip address is INADDR_ANY or IN6ADDR_ANY,
  * 0 otherwise */
-inline static int ip_addr_any(struct ip_addr* ip)
+inline static int ip_addr_any(const struct ip_addr* ip)
 {
 	int r;
 	int l;
@@ -313,7 +326,7 @@ inline static int ip_addr_any(struct ip_addr* ip)
 
 /* returns 1 if the given ip address is a loopback address
  * 0 otherwise */
-inline static int ip_addr_loopback(struct ip_addr* ip)
+inline static int ip_addr_loopback(const struct ip_addr* ip)
 {
 	if (ip->af==AF_INET)
 		return ip->u.addr32[0]==htonl(INADDR_LOOPBACK);
@@ -349,7 +362,7 @@ inline static void ip_addr_mk_any(int af, struct ip_addr* ip)
 
 /* returns 1 if ip & net.mask == net.ip ; 0 otherwise & -1 on error
  * [ diff. address families ]) */
-inline static int matchnet(struct ip_addr* ip, struct net* net)
+inline static int matchnet(const struct ip_addr* ip, const struct net* net)
 {
 	unsigned int r;
 
@@ -368,7 +381,7 @@ inline static int matchnet(struct ip_addr* ip, struct net* net)
 
 
 /* inits an ip_addr pointer from a sockaddr structure*/
-static inline void sockaddr2ip_addr(struct ip_addr* ip, struct sockaddr* sa)
+static inline void sockaddr2ip_addr(struct ip_addr* ip, const struct sockaddr* sa)
 {
 	switch(sa->sa_family){
 		case AF_INET:
@@ -444,7 +457,7 @@ static inline void su_setport(union sockaddr_union* su, unsigned short port)
 
 
 /* inits an ip_addr pointer from a sockaddr_union ip address */
-static inline void su2ip_addr(struct ip_addr* ip, union sockaddr_union* su)
+static inline void su2ip_addr(struct ip_addr* ip, const union sockaddr_union* su)
 {
 	switch(su->s.sa_family){
 		case AF_INET:
@@ -510,8 +523,20 @@ int hostent2su(union sockaddr_union* su,
 
 
 /* maximum size of a str returned by ip_addr2str */
-#define IP6_MAX_STR_SIZE 39 /*1234:5678:9012:3456:7890:1234:5678:9012*/
-#define IP4_MAX_STR_SIZE 15 /*123.456.789.012*/
+/* POSIX INET6_ADDRSTRLEN (RFC 4291 section 2.2) - IPv6 with IPv4 tunneling
+ * (39): 1234:5678:9012:3456:7890:1234:5678:9012
+ * (45): ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255 */
+#ifdef INET6_ADDRSTRLEN
+#define IP6_MAX_STR_SIZE (INET6_ADDRSTRLEN-1)
+#else
+#define IP6_MAX_STR_SIZE 45
+#endif
+/*123.456.789.123*/
+#ifdef INET_ADDRSTRLEN
+#define IP4_MAX_STR_SIZE (INET_ADDRSTRLEN-1)
+#else
+#define IP4_MAX_STR_SIZE 15
+#endif
 
 /* converts a raw ipv6 addr (16 bytes) to ascii */
 int ip6tosbuf(unsigned char* ip6, char* buff, int len);
@@ -580,7 +605,7 @@ struct hostent* ip_addr2he(str* name, struct ip_addr* ip);
 
 /* init a dest_info structure from a recv_info structure */
 inline static void init_dst_from_rcv(struct dest_info* dst,
-		struct receive_info* rcv)
+		const struct receive_info* rcv)
 {
 	dst->send_sock=rcv->bind_address;
 	dst->to=rcv->src_su;

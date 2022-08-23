@@ -1,0 +1,453 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+
+	<title>&adminguide;</title>
+
+	<section>
+	<title>Overview</title>
+	<para>
+		The module exports utility functions to work with position inside the
+		SIP message buffer.
+	</para>
+	<para>
+		Among them are function to add or remove content at a specific position.
+	</para>
+	</section>
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be installed (but not loaded) to use this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>none</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>none</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+
+	<section>
+	<title>Parameters</title>
+	<section id="posops.p.idx0">
+		<title><varname>idx0</varname> (int)</title>
+		<para>
+			The value to return by functions seeking a position when the index
+			is 0 (note: returning 0 is stopping the execution of configuration
+			file like 'exit', but for KEMI usage it is ok).
+		</para>
+		<para>
+		<emphasis>
+			Default value is -255.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>idx0</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("posops", "idx0", -200)
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+
+	<section>
+	<title>Functions</title>
+		<section id="posops.f.pos_append">
+			<title>
+				<function moreinfo="none">pos_append(idx, val)</function>
+			</title>
+			<para>
+			Append the value val after the position idx in the SIP message buffer.
+			</para>
+			<para>
+			The idx can be an integer value or a variable holding an integer. If
+			the value is negative, the position is counted from the end of the buffer.
+			</para>
+			<para>
+			The val can be a static string or variables.
+			</para>
+			<para>
+			This function can be used from ANY_ROUTE.
+			</para>
+			<example>
+				<title><function>pos_append()</function> usage</title>
+				<programlisting format="linespecific">
+...
+pos_append("100", "kamailio-$si");
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="posops.f.pos_insert">
+			<title>
+				<function moreinfo="none">pos_insert(idx, val)</function>
+			</title>
+			<para>
+			Insert the value val at the position idx in the SIP message buffer.
+			</para>
+			<para>
+			The idx can be an integer value or a variable holding an integer. If
+			the value is negative, the position is counted from the end of the buffer.
+			</para>
+			<para>
+			The val can be a static string or variables.
+			</para>
+			<para>
+			This function can be used from ANY_ROUTE.
+			</para>
+			<example>
+				<title><function>pos_insert()</function> usage</title>
+				<programlisting format="linespecific">
+...
+pos_insert("100", "kamailio-$si");
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="posops.f.pos_rm">
+			<title>
+				<function moreinfo="none">pos_rm(idx, len)</function>
+			</title>
+			<para>
+			Remove len characters starting at the position idx in the SIP message buffer.
+			</para>
+			<para>
+			The idx can be an integer value or a variable holding an integer. If
+			the value is negative, the position is counted from the end of the buffer.
+			</para>
+			<para>
+			The idx can be a positive integer value or a variable holding a positive
+			integer.
+			</para>
+			<para>
+			This function can be used from ANY_ROUTE.
+			</para>
+			<example>
+				<title><function>pos_rm()</function> usage</title>
+				<programlisting format="linespecific">
+...
+pos_insert("100", "10");
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="posops.f.pos_set_char">
+			<title>
+				<function moreinfo="none">pos_set_char(idx, val)</function>
+			</title>
+			<para>
+			Set the char at position index to first character in val.
+			</para>
+			<para>
+			The idx can be an integer value or a variable holding an integer. If
+			the value is negative, the position is counted from the end of the buffer.
+			</para>
+			<para>
+			The val can be a static string or variables.
+			</para>
+			<para>
+			This function can be used from ANY_ROUTE.
+			</para>
+			<example>
+				<title><function>pos_set_char()</function> usage</title>
+				<programlisting format="linespecific">
+...
+pos_set_char("100", "x");
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="posops.f.pos_headers_start">
+			<title>
+				<function moreinfo="none">pos_headers_start()</function>
+			</title>
+			<para>
+			Return the position in the message buffer where headers start.
+			</para>
+			<para>
+			This function can be used from ANY_ROUTE.
+			</para>
+			<example>
+				<title><function>pos_headers_start()</function> usage</title>
+				<programlisting format="linespecific">
+...
+$var(pos) = pos_headers_start();
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="posops.f.pos_headers_end">
+			<title>
+				<function moreinfo="none">pos_headers_end()</function>
+			</title>
+			<para>
+			Return the position in the message buffer where headers end.
+			</para>
+			<para>
+			This function can be used from ANY_ROUTE.
+			</para>
+			<example>
+				<title><function>pos_headers_end()</function> usage</title>
+				<programlisting format="linespecific">
+...
+$var(pos) = pos_headers_end();
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="posops.f.pos_body_start">
+			<title>
+				<function moreinfo="none">pos_body_start()</function>
+			</title>
+			<para>
+			Return the position in the message buffer where body starts.
+			</para>
+			<para>
+			This function can be used from ANY_ROUTE.
+			</para>
+			<example>
+				<title><function>pos_body_start()</function> usage</title>
+				<programlisting format="linespecific">
+...
+$var(pos) = pos_body_start();
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="posops.f.pos_body_end">
+			<title>
+				<function moreinfo="none">pos_body_end()</function>
+			</title>
+			<para>
+			Return the position in the message buffer where body ends.
+			</para>
+			<para>
+			This function can be used from ANY_ROUTE.
+			</para>
+			<example>
+				<title><function>pos_body_end()</function> usage</title>
+				<programlisting format="linespecific">
+...
+$var(pos) = pos_body_end();
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="posops.f.pos_find_str">
+			<title>
+				<function moreinfo="none">pos_find_str(idx, val)</function>
+			</title>
+			<para>
+			Return the position of the val in message buffer starting at idx. In
+			case of not finding it or error, the return code is negative. If
+			val is at index 0, it returns the value specified by modparam idx0.
+			</para>
+			<para>
+			The idx can be an integer value or a variable holding an integer. If
+			the value is negative, the position is counted from the end of the buffer.
+			</para>
+			<para>
+			The val can be a static string or variables.
+			</para>
+			<para>
+			This function can be used from ANY_ROUTE.
+			</para>
+			<example>
+				<title><function>pos_find_str()</function> usage</title>
+				<programlisting format="linespecific">
+...
+$var(idx) = pos_find_str("100", "kamailio");
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="posops.f.pos_findi_str">
+			<title>
+				<function moreinfo="none">pos_findi_str(idx, val)</function>
+			</title>
+			<para>
+			Return the position of the val (matching case insensitive) in message
+			buffer starting at idx. In case of not finding it or error, the return
+			code is negative. If val is at index 0, it returns the value specified
+			by modparam idx0.
+			</para>
+			<para>
+			The idx can be an integer value or a variable holding an integer. If
+			the value is negative, the position is counted from the end of the buffer.
+			</para>
+			<para>
+			The val can be a static string or variables.
+			</para>
+			<para>
+			This function can be used from ANY_ROUTE.
+			</para>
+			<example>
+				<title><function>pos_findi_str()</function> usage</title>
+				<programlisting format="linespecific">
+...
+$var(idx) = pos_findi_str("100", "kamailio");
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="posops.f.pos_rfind_str">
+			<title>
+				<function moreinfo="none">pos_rfind_str(idx, val)</function>
+			</title>
+			<para>
+			Return the last position of the val in message buffer starting at idx
+			(reverse search). In case of not finding it or error, the return code
+			is negative. If val is at index 0, it returns the value specified
+			by modparam idx0.
+			</para>
+			<para>
+			The idx can be an integer value or a variable holding an integer. If
+			the value is negative, the position is counted from the end of the buffer.
+			</para>
+			<para>
+			The val can be a static string or variables.
+			</para>
+			<para>
+			This function can be used from ANY_ROUTE.
+			</para>
+			<example>
+				<title><function>pos_find_str()</function> usage</title>
+				<programlisting format="linespecific">
+...
+$var(idx) = pos_rfind_str("100", "kamailio");
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="posops.f.pos_rfindi_str">
+			<title>
+				<function moreinfo="none">pos_rfindi_str(idx, val)</function>
+			</title>
+			<para>
+			Return the last position of the val (matching case insensitive) in message
+			buffer starting at idx (reverse search). In case of not finding it
+			or error, the return code is negative. If val is at index 0, it
+			returns the value specified by modparam idx0.
+			</para>
+			<para>
+			The idx can be an integer value or a variable holding an integer. If
+			the value is negative, the position is counted from the end of the buffer.
+			</para>
+			<para>
+			The val can be a static string or variables.
+			</para>
+			<para>
+			This function can be used from ANY_ROUTE.
+			</para>
+			<example>
+				<title><function>pos_rfindi_str()</function> usage</title>
+				<programlisting format="linespecific">
+...
+$var(idx) = pos_rfindi_str("100", "kamailio");
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="posops.f.pos_search">
+			<title>
+				<function moreinfo="none">pos_search(idx, re)</function>
+			</title>
+			<para>
+			Return the position that starts matching the regular expression re
+			in message buffer starting at idx. In case of not finding it or error,
+			the return code is negative. If val is at index 0, it returns the
+			value specified by modparam idx0.
+			</para>
+			<para>
+			The idx can be an integer value or a variable holding an integer. If
+			the value is negative, the position is counted from the end of the buffer.
+			</para>
+			<para>
+			The re can be a static regular expression string.
+			</para>
+			<para>
+			This function can be used from ANY_ROUTE.
+			</para>
+			<example>
+				<title><function>pos_search()</function> usage</title>
+				<programlisting format="linespecific">
+...
+$var(idx) = pos_search("100", "[0-9]+");
+...
+				</programlisting>
+			</example>
+		</section>
+		<section id="posops.f.pos_rsearch">
+			<title>
+				<function moreinfo="none">pos_rsearch(idx, re)</function>
+			</title>
+			<para>
+			Return the position of last match that starts matching the regular
+			expression re in message buffer starting at idx. In case of not
+			finding it or error, the return code is negative. If val is at
+			index 0, it returns the value specified by modparam idx0.
+			</para>
+			<para>
+			The idx can be an integer value or a variable holding an integer. If
+			the value is negative, the position is counted from the end of the buffer.
+			</para>
+			<para>
+			The re can be a static regular expression string.
+			</para>
+			<para>
+			This function can be used from ANY_ROUTE.
+			</para>
+			<example>
+				<title><function>pos_rsearch()</function> usage</title>
+				<programlisting format="linespecific">
+...
+$var(idx) = pos_rsearch("100", "[0-9]+");
+...
+				</programlisting>
+			</example>
+		</section>
+	</section>
+
+	<section id="posops.pvs">
+		<title>Pseudo Variables</title>
+		<para>
+			The module exports a pseudo-variable class, $pos(key), to access
+			attributes upon specific function execution.
+		</para>
+		<para>
+			These are documented in the appropriate Wiki pages hosted on the
+			project web site.
+		</para>
+	</section>
+
+</chapter>
+

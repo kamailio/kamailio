@@ -39,11 +39,15 @@
 #define TLS_OP_TLSv1_PLUS   (TLS_OP_SSLv3_PLUS   | SSL_OP_NO_SSLv3)
 
 #ifdef SSL_OP_NO_TLSv1
-#  define TLS_OP_TLSv1_1_PLUS (TLS_OP_TLSv1_PLUS   | SSL_OP_NO_TLSv1)
+#define TLS_OP_TLSv1_1_PLUS (TLS_OP_TLSv1_PLUS   | SSL_OP_NO_TLSv1)
 
-#  ifdef SSL_OP_NO_TLSv1_1
-#    define TLS_OP_TLSv1_2_PLUS (TLS_OP_TLSv1_1_PLUS | SSL_OP_NO_TLSv1_1)
-#  endif /*SSL_OP_NO_TLSv1_1*/
+#ifdef SSL_OP_NO_TLSv1_1
+#define TLS_OP_TLSv1_2_PLUS (TLS_OP_TLSv1_1_PLUS | SSL_OP_NO_TLSv1_1)
+#endif /*SSL_OP_NO_TLSv1_1*/
+
+#ifdef SSL_OP_NO_TLSv1_2
+#define TLS_OP_TLSv1_3_PLUS (TLS_OP_TLSv1_2_PLUS | SSL_OP_NO_TLSv1_2)
+#endif /*SSL_OP_NO_TLSv1_2*/
 
 #endif /*SSL_OP_NO_TLSv1*/
 
@@ -70,10 +74,14 @@ enum tls_method {
 	TLS_USE_TLSv1_2_cli,
 	TLS_USE_TLSv1_2_srv,
 	TLS_USE_TLSv1_2,    /* only TLSv1.2 */
+	TLS_USE_TLSv1_3_cli,
+	TLS_USE_TLSv1_3_srv,
+	TLS_USE_TLSv1_3,    /* only TLSv1.3 */
 	TLS_USE_TLSvRANGE,    /* placeholder - TLSvX ranges must be after it */
 	TLS_USE_TLSv1_PLUS,   /* TLSv1.0 or greater */
 	TLS_USE_TLSv1_1_PLUS, /* TLSv1.1 or greater */
 	TLS_USE_TLSv1_2_PLUS, /* TLSv1.2 or greater */
+	TLS_USE_TLSv1_3_PLUS, /* TLSv1.3 or greater */
 	TLS_METHOD_MAX
 };
 

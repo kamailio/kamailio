@@ -20,20 +20,34 @@ Daniel-Constantin Mierla
         2. Functions
 
               2.1. msg_apply_changes()
-              2.2. change_reply_status(code, reason)
-              2.3. change_reply_status_code(vcode)
-              2.4. remove_body()
-              2.5. keep_hf([regexp])
-              2.6. fnmatch(value, expr [, flags])
-              2.7. append_hf_value(hf, hvalue)
-              2.8. insert_hf_value(hf, hvalue)
-              2.9. remove_hf_value(hf_par)
-              2.10. remove_hf_value2(hf_par)
-              2.11. assign_hf_value(hf, hvalue)
-              2.12. assign_hf_value2(hf, hvalue)
-              2.13. include_hf_value(hf, hvalue)
-              2.14. exclude_hf_value(hf, hvalue)
-              2.15. hf_value_exists(hf, hvalue)
+              2.2. msg_set_buffer(data)
+              2.3. change_reply_status(code, reason)
+              2.4. change_reply_status_code(vcode)
+              2.5. remove_body()
+              2.6. keep_hf([regexp])
+              2.7. fnmatch(value, expr [, flags])
+              2.8. append_hf_value(hf, hvalue)
+              2.9. insert_hf_value(hf, hvalue)
+              2.10. remove_hf_value(hf_par)
+              2.11. remove_hf_value2(hf_par)
+              2.12. assign_hf_value(hf, hvalue)
+              2.13. assign_hf_value2(hf, hvalue)
+              2.14. include_hf_value(hf, hvalue)
+              2.15. exclude_hf_value(hf, hvalue)
+              2.16. hf_value_exists(hf, hvalue)
+              2.17. hf_iterator_start(iname)
+              2.18. hf_iterator_end(iname)
+              2.19. hf_iterator_next(iname)
+              2.20. hf_iterator_prev(iname)
+              2.21. hf_iterator_rm(iname)
+              2.22. hf_iterator_append(iname, htext)
+              2.23. hf_iterator_insert(iname, htext)
+              2.24. bl_iterator_start(iname)
+              2.25. bl_iterator_end(iname)
+              2.26. bl_iterator_next(iname)
+              2.27. bl_iterator_rm(iname)
+              2.28. bl_iterator_append(iname, text)
+              2.29. bl_iterator_insert(iname, text)
 
         3. Selects
 
@@ -44,21 +58,35 @@ Daniel-Constantin Mierla
    List of Examples
 
    1.1. msg_apply_changes() usage
-   1.2. change_reply_status usage
-   1.3. change_reply_status_code usage
-   1.4. remove_body() usage
-   1.5. keep_hf() usage
-   1.6. fnmatch() usage
-   1.7. append_hf_value usage
-   1.8. insert_hf_value usage
-   1.9. remove_hf_value usage
-   1.10. remove_hf_value2 usage
-   1.11. assign_hf_value usage
-   1.12. assign_hf_value2 usage
-   1.13. include_hf_value usage
-   1.14. exclude_hf_value usage
-   1.15. hf_value_exists usage
-   1.16. @hf_value select usage
+   1.2. msg_set_buffer() usage
+   1.3. change_reply_status usage
+   1.4. change_reply_status_code usage
+   1.5. remove_body() usage
+   1.6. keep_hf() usage
+   1.7. fnmatch() usage
+   1.8. append_hf_value usage
+   1.9. insert_hf_value usage
+   1.10. remove_hf_value usage
+   1.11. remove_hf_value2 usage
+   1.12. assign_hf_value usage
+   1.13. assign_hf_value2 usage
+   1.14. include_hf_value usage
+   1.15. exclude_hf_value usage
+   1.16. hf_value_exists usage
+   1.17. hf_iterator_start usage
+   1.18. hf_iterator_end usage
+   1.19. hf_iterator_next usage
+   1.20. hf_iterator_prev usage
+   1.21. hf_iterator_rm usage
+   1.22. hf_iterator_append usage
+   1.23. hf_iterator_insert usage
+   1.24. bl_iterator_start usage
+   1.25. bl_iterator_end usage
+   1.26. bl_iterator_next usage
+   1.27. bl_iterator_rm usage
+   1.28. bl_iterator_append usage
+   1.29. bl_iterator_insert usage
+   1.30. @hf_value select usage
 
 Chapter 1. Admin Guide
 
@@ -68,20 +96,34 @@ Chapter 1. Admin Guide
    2. Functions
 
         2.1. msg_apply_changes()
-        2.2. change_reply_status(code, reason)
-        2.3. change_reply_status_code(vcode)
-        2.4. remove_body()
-        2.5. keep_hf([regexp])
-        2.6. fnmatch(value, expr [, flags])
-        2.7. append_hf_value(hf, hvalue)
-        2.8. insert_hf_value(hf, hvalue)
-        2.9. remove_hf_value(hf_par)
-        2.10. remove_hf_value2(hf_par)
-        2.11. assign_hf_value(hf, hvalue)
-        2.12. assign_hf_value2(hf, hvalue)
-        2.13. include_hf_value(hf, hvalue)
-        2.14. exclude_hf_value(hf, hvalue)
-        2.15. hf_value_exists(hf, hvalue)
+        2.2. msg_set_buffer(data)
+        2.3. change_reply_status(code, reason)
+        2.4. change_reply_status_code(vcode)
+        2.5. remove_body()
+        2.6. keep_hf([regexp])
+        2.7. fnmatch(value, expr [, flags])
+        2.8. append_hf_value(hf, hvalue)
+        2.9. insert_hf_value(hf, hvalue)
+        2.10. remove_hf_value(hf_par)
+        2.11. remove_hf_value2(hf_par)
+        2.12. assign_hf_value(hf, hvalue)
+        2.13. assign_hf_value2(hf, hvalue)
+        2.14. include_hf_value(hf, hvalue)
+        2.15. exclude_hf_value(hf, hvalue)
+        2.16. hf_value_exists(hf, hvalue)
+        2.17. hf_iterator_start(iname)
+        2.18. hf_iterator_end(iname)
+        2.19. hf_iterator_next(iname)
+        2.20. hf_iterator_prev(iname)
+        2.21. hf_iterator_rm(iname)
+        2.22. hf_iterator_append(iname, htext)
+        2.23. hf_iterator_insert(iname, htext)
+        2.24. bl_iterator_start(iname)
+        2.25. bl_iterator_end(iname)
+        2.26. bl_iterator_next(iname)
+        2.27. bl_iterator_rm(iname)
+        2.28. bl_iterator_append(iname, text)
+        2.29. bl_iterator_insert(iname, text)
 
    3. Selects
 
@@ -102,20 +144,34 @@ Chapter 1. Admin Guide
 2. Functions
 
    2.1. msg_apply_changes()
-   2.2. change_reply_status(code, reason)
-   2.3. change_reply_status_code(vcode)
-   2.4. remove_body()
-   2.5. keep_hf([regexp])
-   2.6. fnmatch(value, expr [, flags])
-   2.7. append_hf_value(hf, hvalue)
-   2.8. insert_hf_value(hf, hvalue)
-   2.9. remove_hf_value(hf_par)
-   2.10. remove_hf_value2(hf_par)
-   2.11. assign_hf_value(hf, hvalue)
-   2.12. assign_hf_value2(hf, hvalue)
-   2.13. include_hf_value(hf, hvalue)
-   2.14. exclude_hf_value(hf, hvalue)
-   2.15. hf_value_exists(hf, hvalue)
+   2.2. msg_set_buffer(data)
+   2.3. change_reply_status(code, reason)
+   2.4. change_reply_status_code(vcode)
+   2.5. remove_body()
+   2.6. keep_hf([regexp])
+   2.7. fnmatch(value, expr [, flags])
+   2.8. append_hf_value(hf, hvalue)
+   2.9. insert_hf_value(hf, hvalue)
+   2.10. remove_hf_value(hf_par)
+   2.11. remove_hf_value2(hf_par)
+   2.12. assign_hf_value(hf, hvalue)
+   2.13. assign_hf_value2(hf, hvalue)
+   2.14. include_hf_value(hf, hvalue)
+   2.15. exclude_hf_value(hf, hvalue)
+   2.16. hf_value_exists(hf, hvalue)
+   2.17. hf_iterator_start(iname)
+   2.18. hf_iterator_end(iname)
+   2.19. hf_iterator_next(iname)
+   2.20. hf_iterator_prev(iname)
+   2.21. hf_iterator_rm(iname)
+   2.22. hf_iterator_append(iname, htext)
+   2.23. hf_iterator_insert(iname, htext)
+   2.24. bl_iterator_start(iname)
+   2.25. bl_iterator_end(iname)
+   2.26. bl_iterator_next(iname)
+   2.27. bl_iterator_rm(iname)
+   2.28. bl_iterator_append(iname, text)
+   2.29. bl_iterator_insert(iname, text)
 
 2.1.  msg_apply_changes()
 
@@ -151,7 +207,25 @@ if(msg_apply_changes())
 }
 ...
 
-2.2.  change_reply_status(code, reason)
+2.2.  msg_set_buffer(data)
+
+   Set the content of the SIP message buffer, replacing the exiting data.
+   The parameter can contain variables, its value must be a valid SIP
+   request or reply, a matter of what the old message is.
+
+   This function can be used from REQUEST_ROUTE or core REPLY_ROUTE.
+
+   Note: It must be used before the transaction is created in
+   request_route and not inside the onreply_route[name] executed by tm
+   module. Also, do not use after resuming a suspended request or reply,
+   at that moment the transaction is already created.
+
+   Example 1.2. msg_set_buffer() usage
+...
+msg_set_buffer("INVITE sip:...");
+...
+
+2.3.  change_reply_status(code, reason)
 
    Intercept a SIP reply (in an onreply_route) and change its status code
    and reason phrase prior to forwarding it.
@@ -162,7 +236,7 @@ if(msg_apply_changes())
 
    This function can be used from ONREPLY_ROUTE.
 
-   Example 1.2. change_reply_status usage
+   Example 1.3. change_reply_status usage
 ...
 reply_route {
     if (status == "603") {
@@ -172,7 +246,7 @@ reply_route {
 }
 ...
 
-2.3.  change_reply_status_code(vcode)
+2.4.  change_reply_status_code(vcode)
 
    Change the status code for a SIP reply .
 
@@ -181,7 +255,7 @@ reply_route {
 
    This function can be used from ONREPLY_ROUTE.
 
-   Example 1.3. change_reply_status_code usage
+   Example 1.4. change_reply_status_code usage
 ...
 reply_route {
     if (status == "604") {
@@ -191,18 +265,18 @@ reply_route {
 }
 ...
 
-2.4.  remove_body()
+2.5.  remove_body()
 
    Use this function to remove the body of SIP requests or replies.
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.4. remove_body() usage
+   Example 1.5. remove_body() usage
 ...
 remove_body();
 ...
 
-2.5.  keep_hf([regexp])
+2.6.  keep_hf([regexp])
 
    Remove headers that don't match the regular expression regexp. Several
    header are ignored always (thus not removed): Via, From, To, Call-ID,
@@ -213,12 +287,12 @@ remove_body();
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.5. keep_hf() usage
+   Example 1.6. keep_hf() usage
 ...
 keep_hf("User-Agent");
 ...
 
-2.6.  fnmatch(value, expr [, flags])
+2.7.  fnmatch(value, expr [, flags])
 
    Match the value against the expr using shell-style pattern for file
    name matching (see man page for C function fnmatch()). It is known to
@@ -229,7 +303,7 @@ keep_hf("User-Agent");
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.6. fnmatch() usage
+   Example 1.7. fnmatch() usage
 ...
 if(fnmatch("$rU", "123*"))
 {
@@ -237,7 +311,7 @@ if(fnmatch("$rU", "123*"))
 }
 ...
 
-2.7.  append_hf_value(hf, hvalue)
+2.8.  append_hf_value(hf, hvalue)
 
    Append new header value after an existing header, if no index acquired
    append at the end of list. Note that a header may consist of comma
@@ -249,7 +323,7 @@ if(fnmatch("$rU", "123*"))
        message. The index 1 correxponds to the first header.
      * hvalue - Value to be added, config var formatting supported.
 
-   Example 1.7. append_hf_value usage
+   Example 1.8. append_hf_value usage
 ...
 append_hf_value("foo", "gogo;stamp=$Ts")   # add new header
 append_hf_value("foo[1]", "gogo")  # add new value behind first value
@@ -257,7 +331,7 @@ append_hf_value("foo[-1]", "$var(Bar)") # try add value to the last header, if n
 ot exists add new header
 ...
 
-2.8.  insert_hf_value(hf, hvalue)
+2.9.  insert_hf_value(hf, hvalue)
 
    Insert new header value before an existing header, if no index acquired
    insert before first hf header. Note that a header may consist of comma
@@ -270,14 +344,14 @@ ot exists add new header
        message. The index 1 correxponds to the first header.
      * hvalue - Value to be added, config var formatting supported.
 
-   Example 1.8. insert_hf_value usage
+   Example 1.9. insert_hf_value usage
 ...
 insert_hf_value("foo[2]", "gogo")
 insert_hf_value("foo", "$avp(foo)")   # add new header at the top of list
 insert_hf_value("foo[1]", "gogo") # try add to the first header
 ...
 
-2.9.  remove_hf_value(hf_par)
+2.10.  remove_hf_value(hf_par)
 
    Remove the header value from existing header, Note that a header may
    consist of comma delimited list of values.
@@ -287,7 +361,7 @@ insert_hf_value("foo[1]", "gogo") # try add to the first header
        [. PARAM ] If asterisk is specified as index then all values are
        affected. The index 1 correxponds to the first header.
 
-   Example 1.9. remove_hf_value usage
+   Example 1.10. remove_hf_value usage
 ...
 remove_hf_value("foo")  # remove foo[1]
 remove_hf_value("foo[*]")  # remove all foo's headers
@@ -296,7 +370,7 @@ remove_hf_value("foo.bar")  # delete parameter
 remove_hf_value("foo[*].bar") # for each foo delete bar parameters
 ...
 
-2.10.  remove_hf_value2(hf_par)
+2.11.  remove_hf_value2(hf_par)
 
    Remove specified header or parameter. It is expected header in
    Authorization format (comma delimiters are not treated as multi-value
@@ -307,7 +381,7 @@ remove_hf_value("foo[*].bar") # for each foo delete bar parameters
        PARAM ] If asterisk is specified as index then all values are
        affected. The index 1 correxponds to the first header.
 
-   Example 1.10. remove_hf_value2 usage
+   Example 1.11. remove_hf_value2 usage
 ...
 remove_hf_value2("foo")  # remove foo[1]
 remove_hf_value2("foo[*]")  # remove all foo's headers, the same as remove_hf_he
@@ -317,7 +391,7 @@ remove_hf_value2("foo.bar")  # delete parameter
 remove_hf_value2("foo[*].bar") # for each foo delete bar parameters
 ...
 
-2.11.  assign_hf_value(hf, hvalue)
+2.12.  assign_hf_value(hf, hvalue)
 
    Assign value to specified header value / param.
 
@@ -328,7 +402,7 @@ remove_hf_value2("foo[*].bar") # for each foo delete bar parameters
      * hvalue - Value to be assigned, config var formatting supported. If
        value is empty then no equal sign appears in param.
 
-   Example 1.11. assign_hf_value usage
+   Example 1.12. assign_hf_value usage
 ...
 assign_hf_value("foo", "gogo")  # foo[1]
 assign_hf_value("foo[-1]", "gogo")  # foo[last_foo]
@@ -339,7 +413,7 @@ assign_hf_value("foo[*]", "")  # remove all foo's, empty value remains
 assign_hf_value("foo[*].bar", "")  # set empty value (ex. lr)
 ...
 
-2.12.  assign_hf_value2(hf, hvalue)
+2.13.  assign_hf_value2(hf, hvalue)
 
    Assign value to specified header. It is expected header in
    Authorization format (comma delimiters are not treated as multi-value
@@ -352,14 +426,14 @@ assign_hf_value("foo[*].bar", "")  # set empty value (ex. lr)
      * hvalue - Value to be assigned, config var formatting supported. If
        value is empty then no equal sign appears in param.
 
-   Example 1.12. assign_hf_value2 usage
+   Example 1.13. assign_hf_value2 usage
 ...
 assign_hf_value2("Authorization.integrity-protected", "\"yes\"")
 assign_hf_value2("foo[-1]", "gogo")  # foo[last_foo]
 assign_hf_value2("foo[*].bar", "")  # set empty value (ex. lr)
 ...
 
-2.13.  include_hf_value(hf, hvalue)
+2.14.  include_hf_value(hf, hvalue)
 
    Add value in set if not exists, eg. "Supported: path,100rel".
 
@@ -367,12 +441,12 @@ assign_hf_value2("foo[*].bar", "")  # set empty value (ex. lr)
      * hf - Header field name to be affected.
      * hvalue - config var formatting supported.
 
-   Example 1.13. include_hf_value usage
+   Example 1.14. include_hf_value usage
 ...
 include_hf_value("Supported", "path");
 ...
 
-2.14.  exclude_hf_value(hf, hvalue)
+2.15.  exclude_hf_value(hf, hvalue)
 
    Remove value from set if exists, eg. "Supported: path,100rel".
 
@@ -380,12 +454,12 @@ include_hf_value("Supported", "path");
      * hf - Header field name to be affected.
      * hvalue - config formatting supported.
 
-   Example 1.14. exclude_hf_value usage
+   Example 1.15. exclude_hf_value usage
 ...
 exclude_hf_value("Supported", "100rel");
 ...
 
-2.15.  hf_value_exists(hf, hvalue)
+2.16.  hf_value_exists(hf, hvalue)
 
    Check if value exists in set. Alternate select
    @hf_value_exists.HF.VALUE may be used. It returns one or zero.
@@ -395,7 +469,7 @@ exclude_hf_value("Supported", "100rel");
        dashes.
      * hvalue - config var formatting supported.
 
-   Example 1.15. hf_value_exists usage
+   Example 1.16. hf_value_exists usage
 ...
 if (hf_value_exists("Supported", "100rel")) {
 
@@ -404,6 +478,249 @@ if (hf_value_exists("Supported", "100rel")) {
 if (@hf_value_exists.supported.path == "1") {
 
 }
+...
+
+2.17.  hf_iterator_start(iname)
+
+   Start an iterator for headers in the current SIP message. The parameter
+   iname is used to identify the iterator. There can be up to 4 iterators
+   at the same time, with different name.
+
+   The parameter can be a dynamic string with variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.17. hf_iterator_start usage
+...
+hf_iterator_start("i1");
+...
+
+2.18.  hf_iterator_end(iname)
+
+   Close the iterator identified by iname parameter. The iname value must
+   be the same used for hf_iterator_start().
+
+   The parameter can be dynamic string with variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.18. hf_iterator_end usage
+...
+hf_iterator_end("i1");
+...
+
+2.19.  hf_iterator_next(iname)
+
+   Move the iterator to the next header. It must be called also after
+   hf_iterator_start() to get the first header.
+
+   The return code is false when there is no other header in the list.
+
+   The item name and value are accessible via variables: $hfitname(iname)
+   and $hfitbody(iname).
+
+   The parameter can be dynamic string with variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.19. hf_iterator_next usage
+...
+    hf_iterator_start("i1");
+    while(hf_iterator_next("i1")) {
+        xlog("hdr[$hfitname(i1)] is: $hfitbody(i1)\n");
+    }
+    hf_iterator_end("i1");
+...
+
+2.20.  hf_iterator_prev(iname)
+
+   Move the iterator to the previous header. It must be called also after
+   hf_iterator_start() and hf_iterator_next().
+
+   The parameter can be dynamic string with variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.20. hf_iterator_prev usage
+...
+    hf_iterator_start("i1");
+    hf_iterator_next("i1");
+...
+    hf_iterator_next("i1");
+...
+    hf_iterator_prev("i1");
+...
+    hf_iterator_end("i1");
+...
+
+2.21.  hf_iterator_rm(iname)
+
+   Remove the header at the current iterator position.
+
+   The parameter can be dynamic string with variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.21. hf_iterator_rm usage
+...
+    hf_iterator_start("i1");
+    while(hf_iterator_next("i1")) {
+        if($hfitname(i1)=="My-Header") {
+            hf_iterator_rm("i1");
+        }
+    }
+    hf_iterator_end("i1");
+...
+
+2.22.  hf_iterator_append(iname, htext)
+
+   Add headers after the one at the current iterator possition.
+
+   The parameters can be dynamic strings with variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.22. hf_iterator_append usage
+...
+    hf_iterator_start("i1");
+    while(hf_iterator_next("i1")) {
+        if($hfitname(i1)=="My-Header") {
+            hf_iterator_append("i1", "My-New-Header: abc\r\n");
+            break;
+        }
+    }
+    hf_iterator_end("i1");
+...
+
+2.23.  hf_iterator_insert(iname, htext)
+
+   Add headers before the one at the current iterator possition.
+
+   The parameters can be dynamic strings with variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.23. hf_iterator_insert usage
+...
+    hf_iterator_start("i1");
+    while(hf_iterator_next("i1")) {
+        if($hfitname(i1)=="My-Header") {
+            hf_iterator_insert("i1", "My-New-Header: abc\r\n");
+            break;
+        }
+    }
+    hf_iterator_end("i1");
+...
+
+2.24.  bl_iterator_start(iname)
+
+   Start an iterator for lines in the body of the current SIP message. The
+   parameter iname is used to identify the iterator. There can be up to 4
+   iterators at the same time, with different name.
+
+   The parameter can be a dynamic string with variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.24. bl_iterator_start usage
+...
+bl_iterator_start("b1");
+...
+
+2.25.  bl_iterator_end(iname)
+
+   Close the iterator identified by iname parameter. The iname value must
+   be the same used for bl_iterator_start().
+
+   The parameter can be dynamic string with variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.25. bl_iterator_end usage
+...
+bl_iterator_end("b1");
+...
+
+2.26.  bl_iterator_next(iname)
+
+   Move the iterator to the next line in the body. It must be called also
+   after bl_iterator_start() to get the first header.
+
+   The return code is false when there is no other header in the list.
+
+   The body line accessible via variable $blitval(iname) - it contains
+   also the EOL chars.
+
+   The parameter can be dynamic string with variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.26. bl_iterator_next usage
+...
+    bl_iterator_start("b1");
+    while(bl_iterator_next("b1")) {
+        xlog("body line: $blitval(b1)");
+    }
+    bl_iterator_end("b1");
+...
+
+2.27.  bl_iterator_rm(iname)
+
+   Remove the body line at the current iterator position.
+
+   The parameter can be dynamic string with variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.27. bl_iterator_rm usage
+...
+    bl_iterator_start("b1");
+    while(bl_iterator_next("b1")) {
+        if($blitval(b1)=~"abc") {
+            bl_iterator_rm("b1");
+        }
+    }
+    bl_iterator_end("b1");
+...
+
+2.28.  bl_iterator_append(iname, text)
+
+   Add text after the line at the current iterator possition.
+
+   The parameters can be dynamic strings with variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.28. bl_iterator_append usage
+...
+    bl_iterator_start("b1");
+    while(bl_iterator_next("b1")) {
+        if($blitval(b1)=~"^a=info:xyz") {
+            bl_iterator_append("b1", "a=info:abc\r\n");
+            break;
+        }
+    }
+    bl_iterator_end("b1");
+...
+
+2.29.  bl_iterator_insert(iname, text)
+
+   Add text before the line at the current iterator possition.
+
+   The parameters can be dynamic strings with variables.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.29. bl_iterator_insert usage
+...
+    bl_iterator_start("b1");
+    while(bl_iterator_next("b1")) {
+        if($blitval(b1)=~"^a=info:xyz") {
+            bl_iterator_insert("b1", "a=info:abc\r\n");
+            break;
+        }
+    }
+    bl_iterator_end("b1");
 ...
 
 3. Selects
@@ -441,7 +758,7 @@ if (@hf_value_exists.supported.path == "1") {
      * IDX - Value index, negative value counts from bottom
      * PARAM_NAME - name of parameter
 
-   Example 1.16. @hf_value select usage
+   Example 1.30. @hf_value select usage
 ...
 $a = @hf_value.my_header[1].my_param;
 xplog("L_ERR", "$sel(@hf_value.via[-1]), $sel(@hf_value.from.tag)\n");

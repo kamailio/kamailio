@@ -31,6 +31,7 @@
 #define _REGPV_H_
 
 #include "../../core/pvar.h"
+#include "../../core/kemi.h"
 #include "../../modules/usrloc/usrloc.h"
 
 int pv_get_ulc(struct sip_msg *msg,  pv_param_t *param,
@@ -48,5 +49,12 @@ int ki_reg_free_contacts(sip_msg_t* msg, str* profile);
 void regpv_free_profiles(void);
 
 void reg_ul_expired_contact(ucontact_t* c, int type, void* param);
+
+sr_kemi_xval_t* ki_reg_ulc_rget(sip_msg_t* msg, str* rid, str* attr);
+sr_kemi_xval_t* ki_reg_ulc_cget(sip_msg_t* msg, str* rid, str* attr, int idx);
+
+int ki_lookup_xavp(sip_msg_t* msg, str *utname, str* uri,
+		str* rxname, str *cxname);
+int ki_reg_from_user(sip_msg_t* msg, str *utname, str* uri, int vmode);
 
 #endif

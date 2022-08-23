@@ -66,6 +66,34 @@
 	</section>
 
 	<section>
+	<title>Parameters</title>
+	<section id="sworker.p.xdata">
+		<title>
+		<function moreinfo="none">xdata (str)</function>
+		</title>
+		<para>
+			Name of a script variable from where to take additional data to be
+			passed to special worker along with the SIP message. Same variable
+			will be set by the special worker, therefore it has to be a writable
+			variable. Moreover, it must be a variable that can be set without
+			the SIP message structure, like $var(name), otherwise it can lead to
+			a crash.
+		</para>
+		<para>
+		Default value: not set.
+		</para>
+		<example>
+		<title><function>xdata</function> usage</title>
+		<programlisting format="linespecific">
+...
+modparam("sworker", "xdata", "$var(xdata)")
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+
+	<section>
 	<title>Functions</title>
 	<section id="sworker.f.sworker_active">
 		<title>
@@ -109,7 +137,7 @@ request_route {
 		'drop' must be used so processing of the message does not continue to
 		request_route or reply_route in the same process, it is going to be done
 		by the delegated group of workers. It returns -1 (false) in case there
-		was a proble delegating the processing.
+		was a problem delegating the processing.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE|CORE_REPLY_ROUTE.

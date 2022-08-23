@@ -496,7 +496,7 @@ static void rpc_fetch_add_stat(rpc_t* rpc, void* ctx, void* hst, char* g, char* 
 
 	snprintf(nbuf, 127, "%s.%s", g, n);
 	if (numeric) {
-		res = rpc->struct_add(hst, "d", nbuf, val);
+		res = rpc->struct_add(hst, "j", nbuf, val);
 	} else {
 		res = rpc->struct_printf(hst, nbuf, "%lu", val);
 	}
@@ -869,7 +869,7 @@ unsigned long shm_stats_get_size(void)
 unsigned long shm_stats_get_used(void)
 {
 	stats_shm_update();
-	return _stats_shm_rpc.used;
+	return _stats_shm_rpc.used_size;
 }
 
 unsigned long shm_stats_get_rused(void)
@@ -887,7 +887,7 @@ unsigned long shm_stats_get_mused(void)
 unsigned long shm_stats_get_free(void)
 {
 	stats_shm_update();
-	return _stats_shm_rpc.free;
+	return _stats_shm_rpc.free_size;
 }
 
 unsigned long shm_stats_get_frags(void)

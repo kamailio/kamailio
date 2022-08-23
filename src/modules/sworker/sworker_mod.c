@@ -44,12 +44,15 @@ static int w_sworker_task(sip_msg_t *msg, char *pgname, char *p2);
 static int w_sworker_active(sip_msg_t *msg, char *p1, char *p2);
 
 static int _sworker_active = 0;
+static str _sworker_xdata = STR_NULL;
+static pv_spec_t *_sworker_xdata_spec = NULL;
 
 /* clang-format off */
 typedef struct sworker_task_param {
 	char *buf;
 	int len;
 	receive_info_t rcv;
+	str xdata;
 } sworker_task_param_t;
 
 static cmd_export_t cmds[]={
@@ -60,17 +63,22 @@ static cmd_export_t cmds[]={
 	{0, 0, 0, 0, 0, 0}
 };
 
+static param_export_t params[]={
+	{"xdata",    PARAM_STR,   &_sworker_xdata},
+	{0, 0, 0}
+};
+
 struct module_exports exports = {
-	"sworker",
+	"sworker",       /* module name */
 	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,
-	0,
-	0,              /* exported RPC methods */
-	0,              /* exported pseudo-variables */
-	0,              /* response function */
-	mod_init,       /* module initialization function */
-	child_init,     /* per child init function */
-	mod_destroy    	/* destroy function */
+	cmds,            /* exported functions */
+	params,          /* exported parameters */
+	0,               /* exported RPC methods */
+	0,               /* exported pseudo-variables */
+	0,               /* response function */
+	mod_init,        /* module initialization function */
+	child_init,      /* per child init function */
+	mod_destroy      /* destroy function */
 };
 /* clang-format on */
 
@@ -80,6 +88,19 @@ struct module_exports exports = {
  */
 static int mod_init(void)
 {
+	if(_sworker_xdata.s!=NULL && _sworker_xdata.len>0) {
+		_sworker_xdata_spec = pv_cache_get(&_sworker_xdata);
+		if(_sworker_xdata_spec==NULL) {
+			LM_ERR("cannot get pv spec for [%.*s]\n",
+					_sworker_xdata.len, _sworker_xdata.s);
+			return -1;
+		}
+		if(_sworker_xdata_spec->setf==NULL) {
+			LM_ERR("read only output variable [%.*s]\n",
+					_sworker_xdata.len, _sworker_xdata.s);
+			return -1;
+		}
+	}
 	return 0;
 }
 
@@ -101,15 +122,13 @@ static void mod_destroy(void)
 /**
  *
  */
-/**
- *
- */
 void sworker_exec_task(void *param)
 {
 	sworker_task_param_t *stp;
 	static char buf[BUF_SIZE+1];
 	receive_info_t rcvi;
 	int len;
+	pv_value_t val;
 
 	stp = (sworker_task_param_t *)param;
 
@@ -124,6 +143,23 @@ void sworker_exec_task(void *param)
 	memcpy(&rcvi, &stp->rcv, sizeof(receive_info_t));
 	rcvi.rflags |= RECV_F_INTERNAL;
 
+	if(_sworker_xdata_spec!=NULL) {
+		if(stp->xdata.len>0) {
+			memset(&val, 0, sizeof(pv_value_t));
+			val.flags |= PV_VAL_STR;
+			val.rs = stp->xdata;
+			if(pv_set_spec_value(NULL, _sworker_xdata_spec, 0, &val)!=0) {
+				LM_ERR("failed to set the xdata variable\n");
+				return;
+			}
+		} else {
+			if(pv_set_spec_value(NULL, _sworker_xdata_spec, 0, NULL)!=0) {
+				LM_ERR("failed to reset the xdata variable\n");
+				return;
+			}
+		}
+	}
+
 	_sworker_active = 1;
 	receive_msg(buf, len, &rcvi);
 	_sworker_active = 0;
@@ -137,9 +173,23 @@ int sworker_send_task(sip_msg_t *msg, str *gname)
 	async_task_t *at = NULL;
 	sworker_task_param_t *stp = NULL;
 	int dsize;
+	pv_value_t val;
 
+	memset(&val, 0, sizeof(pv_value_t));
 	dsize = sizeof(async_task_t) + sizeof(sworker_task_param_t)
 		+ (msg->len+1)*sizeof(char);
+	if(_sworker_xdata_spec!=NULL) {
+		if(pv_get_spec_value(msg, _sworker_xdata_spec, &val)!=0) {
+			LM_ERR("failed to get xdata value\n");
+			return -1;
+		}
+		if((val.flags & PV_VAL_STR) && (val.rs.len>0)) {
+			dsize += val.rs.len + 1;
+		} else {
+			LM_DBG("xdata does not have a string value - skipping\n");
+			val.rs.len = 0;
+		}
+	}
 	at = (async_task_t *)shm_malloc(dsize);
 	if(at == NULL) {
 		LM_ERR("no more shm memory\n");
@@ -153,6 +203,12 @@ int sworker_send_task(sip_msg_t *msg, str *gname)
 	memcpy(stp->buf, msg->buf, msg->len);
 	stp->len = msg->len;
 	memcpy(&stp->rcv, &msg->rcv, sizeof(receive_info_t));
+	if(val.rs.len>0) {
+		stp->xdata.s = (char*)stp+sizeof(sworker_task_param_t)+msg->len+1;
+		memcpy(stp->xdata.s, val.rs.s, val.rs.len);
+		stp->xdata.len = val.rs.len;
+		pv_value_destroy(&val);
+	}
 
 	return async_task_group_push(gname, at);
 }
@@ -199,6 +255,17 @@ static int w_sworker_task(sip_msg_t *msg, char *pgname, char *p2)
 /**
  *
  */
+static int ki_sworker_active(sip_msg_t *msg)
+{
+	if(_sworker_active==0) {
+		return -1;
+	}
+	return 1;
+}
+
+/**
+ *
+ */
 static int w_sworker_active(sip_msg_t *msg, char *p1, char *p2)
 {
 	if(_sworker_active==0) {
@@ -215,6 +282,11 @@ static sr_kemi_t sr_kemi_sworker_exports[] = {
 	{ str_init("sworker"), str_init("task"),
 		SR_KEMIP_INT, ki_sworker_task,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("sworker"), str_init("active"),
+		SR_KEMIP_INT, ki_sworker_active,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 

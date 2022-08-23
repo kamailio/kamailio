@@ -454,10 +454,13 @@ int get_pcontact(udomain_t* _d, pcontact_info_t* contact_info, struct pcontact**
 	int serviceroutematch;
 	char *params, *sep;
 	str rinstance = {0, 0};
-        
-	LM_DBG("Searching for contact with AOR [%.*s] in P-CSCF usrloc based on VIA [%d://%.*s:%d] Received [%d://%.*s:%d], Search flag is %d, reverse_search %d\n",
-		contact_info->aor.len, contact_info->aor.s, contact_info->via_prot, contact_info->via_host.len, contact_info->via_host.s, contact_info->via_port,
-		contact_info->received_proto, contact_info->received_host.len, contact_info->received_host.s, contact_info->received_port, contact_info->searchflag,
+
+	LM_DBG("Searching for contact with AOR [%.*s] in P-CSCF usrloc based on VIA [%d://%.*s:%d]"
+			" Received [%d://%.*s:%d], Search flag is %d, reverse_search %d\n",
+		contact_info->aor.len, contact_info->aor.s, contact_info->via_prot, contact_info->via_host.len,
+		contact_info->via_host.s, contact_info->via_port,
+		contact_info->received_proto, contact_info->received_host.len, contact_info->received_host.s,
+		contact_info->received_port, contact_info->searchflag,
 		reverse_search);
 
 	/* parse the uri in the NOTIFY */
@@ -515,6 +518,7 @@ int get_pcontact(udomain_t* _d, pcontact_info_t* contact_info, struct pcontact**
 			int check2_passed = 0;
 			ip_addr_t c_ip_addr;
 			ip_addr_t ci_ip_addr;
+			LM_DBG("mached a record by aorhash: %u\n", aorhash);
 
 			// convert 'contact->contact host' ip string to ip_addr_t
 			if (str2ipxbuf(&c->contact_host, &c_ip_addr) < 0){
@@ -533,10 +537,12 @@ int get_pcontact(udomain_t* _d, pcontact_info_t* contact_info, struct pcontact**
 				(c->contact_port == contact_info->via_port) &&
 				!(contact_info->searchflag & SEARCH_RECEIVED))
 			{
+				LM_DBG("matched contact ip address and port\n");
 				check1_passed = 1;
 			}
 
 			if(contact_info->searchflag & SEARCH_RECEIVED){
+				LM_DBG("continuing to match on received details\n");
 				// convert 'contact->received host' ip string to ip_addr_t
 				if (str2ipxbuf(&c->received_host, &c_ip_addr) < 0){
 					LM_ERR("Unable to convert c->received_host [%.*s]\n", c->received_host.len, c->received_host.s);
@@ -545,7 +551,8 @@ int get_pcontact(udomain_t* _d, pcontact_info_t* contact_info, struct pcontact**
 
 				// convert 'contact info->received host' ip string to ip_addr_t
 				if(str2ipxbuf(&contact_info->received_host, &ci_ip_addr) < 0){
-					LM_ERR("Unable to convert contact_info->received_host [%.*s]\n", contact_info->received_host.len, contact_info->received_host.s);
+					LM_ERR("Unable to convert contact_info->received_host [%.*s]\n",
+							contact_info->received_host.len, contact_info->received_host.s);
 					return 1;
 				}
 
@@ -580,8 +587,10 @@ int get_pcontact(udomain_t* _d, pcontact_info_t* contact_info, struct pcontact**
 				
 					serviceroutematch = 1;
 					for (j=0; j<contact_info->num_service_routes; j++) {
-						if (contact_info->service_routes[j].len != c->service_routes[j].len || memcmp(contact_info->service_routes[j].s, c->service_routes[j].s, c->service_routes[j].len) != 0) {
-							LM_DBG("service route at position %d does not match - looking for [%.*s] and contact has [%.*s]... continuing to next contact check\n", 
+						if (contact_info->service_routes[j].len != c->service_routes[j].len
+								|| memcmp(contact_info->service_routes[j].s, c->service_routes[j].s, c->service_routes[j].len) != 0) {
+							LM_DBG("service route at position %d does not match - looking for [%.*s] and contact has [%.*s]..."
+									" continuing to next contact check\n",
 							    j,
 								contact_info->service_routes[j].len, contact_info->service_routes[j].s,
 								c->service_routes[j].len, c->service_routes[j].s);
@@ -601,6 +610,7 @@ int get_pcontact(udomain_t* _d, pcontact_info_t* contact_info, struct pcontact**
 					c = reverse_search ? c->prev : c->next;
 					continue;
 				}
+				LM_DBG("contact found in memory\n");
 				*_c = c;
 				return 0;
 			}

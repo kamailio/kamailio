@@ -71,7 +71,9 @@ enum SMS_DATA {
 	SMS_UDH_CONCATSM_MAX_NUM_SM,
 	SMS_UDH_CONCATSM_SEQ,
 	SMS_TPDU_ORIGINATING_ADDRESS_FLAGS,
-	SMS_TPDU_DESTINATION_FLAGS
+	SMS_TPDU_DESTINATION_FLAGS,
+	SMS_RPDATA_ORIGINATOR_FLAGS,
+	SMS_RPDATA_DESTINATION_FLAGS
 };
 
 // Types of the PDU-Message
@@ -140,6 +142,8 @@ typedef struct _sms_rp_data {
 	str destination;
 	unsigned char pdu_len;
 	sms_pdu_t pdu;
+	unsigned char originator_flags;
+	unsigned char destination_flags;
 } sms_rp_data_t;
 
 // Pointer to current parsed rp_data/tpdu
@@ -183,29 +187,170 @@ void freeRP_DATA(sms_rp_data_t * rpdata) {
 #define BITMASK_TP_VPF_ENHANCED 0x08
 #define BITMASK_TP_VPF_ABSOLUTE 0x18
 
+#define GSM7BIT_ESCAPE	0x1B
+
+static unsigned char gsm7bit_codes[128] = {
+0x40,0xA3,0x24,0xA5,0x65,0x65,0xF9,0xEC,
+0x6F,0x43,0x0A,0x4F,0x6F,0x0D,0x41,0x61,
+0xFF,0x5F,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
+0xFF,0xFF,0xFF,0x1B,0xC6,0xE6,0xDF,0x45,
+0x20,0x21,0x22,0x23,0xA4,0x25,0x26,0x27,
+0x28,0X29,0x2A,0x2B,0x2C,0xAD,0x2E,0x2F,
+0x30,0x31,0x32,0x33,0x34,0x35,0x36,0x37,
+0x38,0x39,0x3A,0x3B,0x3C,0x3D,0x3E,0x3F,
+0xA1,0x41,0x42,0x43,0x44,0x45,0x46,0x47,
+0x48,0x49,0x4A,0x4B,0x4C,0x4D,0x4E,0x4F,
+0x50,0x51,0x52,0x53,0x54,0x55,0x56,0x57,
+0x58,0x59,0x5A,0x41,0x4F,0x4E,0x55,0xA7,
+0xBF,0x61,0x62,0x63,0x64,0x65,0x66,0x67,
+0x68,0x69,0x6A,0x6B,0x6C,0x6D,0x6E,0x6F,
+0x70,0x71,0x72,0x73,0x74,0x75,0x76,0x77,
+0x78,0x79,0x7A,0x61,0x6F,0x6E,0x75,0x61
+};
+
+static unsigned char gsm7bit_ext_codes[128] = {
+0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
+0xFF,0xFF,0x0C,0xFF,0xFF,0xFF,0xFF,0xFF,
+0xFF,0xFF,0xFF,0xFF,0x5E,0xFF,0xFF,0xFF,
+0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
+0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
+0x7B,0x7D,0xFF,0xFF,0xFF,0xFF,0xFF,0x5C,
+0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
+0xFF,0xFF,0xFF,0xFF,0x5B,0x7E,0x5D,0xFF,
+0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
+0x7C,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
+0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
+0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
+0xFF,0xFF,0xFF,0xFF,0xFF,0x45,0xFF,0xFF,
+0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
+0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
+0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF
+};
+
+static unsigned char ascii2gsm7bit_codes[256] = {
+0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF, // 07
+0xFF,0xFF,0x0A,0xFF,0x1B,0x0D,0xFF,0xFF, // 15
+0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF, // 23
+0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF, // 31
+0x20,0x21,0x22,0x23,0x02,0x25,0x26,0x27, // 39
+0x28,0x29,0x2A,0x2B,0x2C,0x2D,0x2E,0x2F, // 47
+0x30,0x31,0x32,0x33,0x34,0x35,0x36,0x37, // 55
+0x38,0x39,0x3A,0x3B,0x3C,0x3D,0x3E,0x3F, // 63
+0x00,0x41,0x42,0x43,0x44,0x45,0x46,0x47, // 71
+0x48,0x49,0x4A,0x4B,0x4C,0x4D,0x4E,0x4F, // 79
+0x50,0x51,0x52,0x53,0x54,0x55,0x56,0x57, // 87
+0x58,0x59,0x5A,0x1B,0x1B,0x1B,0x1B,0x11, // 95
+0xFF,0x61,0x62,0x63,0x64,0x65,0x66,0x67, // 103
+0x68,0x69,0x6A,0x6B,0x6C,0x6D,0x6E,0x6F, // 111
+0x70,0x71,0x72,0x73,0x74,0x75,0x76,0x77, // 119
+0x78,0x79,0x7A,0x1B,0x1B,0x1B,0x1B,0xFF, // 127
+0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF, // 135
+0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF, // 143
+0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF, // 151
+0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF, // 159
+0xFF,0x40,0xFF,0x01,0x23,0x03,0xFF,0x5F, // 167
+0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF, // 175
+0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF, // 183
+0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0x60, // 191
+0xFF,0xFF,0xFF,0xFF,0x5B,0x0E,0x1C,0x09, // 199
+0xFF,0x1F,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF, // 207
+0xFF,0x5D,0xFF,0xFF,0xFF,0xFF,0x5C,0xFF, // 215
+0x0B,0xFF,0xFF,0xFF,0x5E,0xFF,0xFF,0x1E, // 223
+0x7F,0xFF,0xFF,0xFF,0x7B,0x0F,0x1D,0xFF, // 231
+0x04,0x05,0xFF,0xFF,0x07,0xFF,0xFF,0xFF, // 239
+0xFF,0x7D,0x08,0xFF,0xFF,0xFF,0x7C,0xFF, // 247
+0x0C,0x06,0xFF,0xFF,0x7E,0xFF,0xFF,0xFF, // 255
+};
+
+static unsigned char ascii2gsm7bit_ext_codes[256] = {
+0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF, // 07
+0xFF,0xFF,0xFF,0xFF,0x0A,0xFF,0xFF,0xFF, // 15
+0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF, // 23
+0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF, // 31
+0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF, // 39
+0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF, // 47
+0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF, // 55
+0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF, // 63
+0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF, // 71
+0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF, // 79
+0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF, // 87
+0xFF,0xFF,0xFF,0x3C,0x2F,0x3E,0x14,0xFF, // 95
+0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF, // 103
+0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF, // 111
+0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF, // 119
+0xFF,0xFF,0xFF,0x28,0x40,0x29,0x3D,0xFF, // 127
+0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF, // 135
+0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF, // 143
+0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF, // 151
+0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF, // 159
+0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF, // 167
+0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF, // 175
+0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF, // 183
+0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF, // 191
+0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF, // 199
+0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF, // 207
+0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF, // 215
+0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF, // 223
+0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF, // 231
+0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF, // 239
+0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF, // 247
+0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF, // 255
+};
+
 // Encode SMS-Message by merging 7 bit ASCII characters into 8 bit octets.
-static int ascii_to_gsm(str sms, char * output_buffer, int buffer_size) {
+static int ascii_to_gsm(str sms, char * output_buffer, int buffer_size, int* output_text_size, unsigned char paddingBits) {
 	// Check if output buffer is big enough.
 	if ((sms.len * 7 + 7) / 8 > buffer_size)
-		return -1;
+		return 0;
 
 	int output_buffer_length = 0;
-	int carry_on_bits = 1;
+	int carry_on_bits = 0;
 	int i = 0;
+	unsigned char symbol;
+	int out_size = 0;
+	char* tmp_buff = (char*)pkg_malloc(sms.len * 2);
+
+	if(tmp_buff == NULL) {
+		LM_ERR("Error allocating memory to encode sms text\n");
+		return -1;
+	}
+
+	memset(tmp_buff, 0, sms.len * 2);
 
 	for (; i < sms.len; ++i) {
-		output_buffer[output_buffer_length++] =
-			((sms.s[i] & BITMASK_7BITS) >> (carry_on_bits - 1)) |
-			((sms.s[i + 1] & BITMASK_7BITS) << (8 - carry_on_bits));
-		carry_on_bits++;
-		if (carry_on_bits == 8) {
-			carry_on_bits = 1;
-			++i;
+		if(ascii2gsm7bit_codes[(unsigned char)sms.s[i]] == GSM7BIT_ESCAPE) {
+			tmp_buff[out_size++] = GSM7BIT_ESCAPE;
+			tmp_buff[out_size++] = ascii2gsm7bit_ext_codes[(unsigned char)sms.s[i]];
+		} else {
+			tmp_buff[out_size++] = ascii2gsm7bit_codes[(unsigned char)sms.s[i]];
 		}
 	}
 
-	if (i < sms.len)
-		output_buffer[output_buffer_length++] =	(sms.s[i] & BITMASK_7BITS) >> (carry_on_bits - 1);
+	*output_text_size = out_size;
+
+	if (paddingBits) {
+		carry_on_bits = 7 - paddingBits;
+ 		output_buffer[output_buffer_length++] = tmp_buff[0] << (7 - carry_on_bits);
+ 		carry_on_bits++;
+	}
+
+	for (i = 0; i < out_size; ++i) {
+		if (carry_on_bits == 7) {
+			carry_on_bits = 0;
+			continue;
+		}
+
+		symbol = (tmp_buff[i] & BITMASK_7BITS) >> carry_on_bits;
+
+		if (i < out_size - 1) {
+			symbol |= tmp_buff[i + 1] << (7 - carry_on_bits);
+		}
+
+		output_buffer[output_buffer_length++] = symbol;
+		carry_on_bits++;
+	}
+
+	pkg_free(tmp_buff);
 
 	return output_buffer_length;
 }
@@ -214,7 +359,7 @@ static int ascii_to_gsm(str sms, char * output_buffer, int buffer_size) {
 int gsm_to_ascii(char* buffer, int buffer_length, str sms, const int fill_bits) {
 		int output_text_length = 0;
 
-		if(buffer_length <= 2)
+		if(!buffer_length || (fill_bits && buffer_length < 2))
 			return 0;
 
 		// How many bits we have carried from the next octet. This number can be positive or negative:
@@ -224,7 +369,10 @@ int gsm_to_ascii(char* buffer, int buffer_length, str sms, const int fill_bits) 
 		int carry_on_bits = 0;
 
 		// Used to iterate over buffer. Declared here, because if there are fill_bits it have to be incremented
-		int i = 0;
+		int i = 0, num_bytes = 0;
+
+		unsigned char symbol;
+		unsigned char isEscape = 0; 
 
 		// First remove the fill bits, if any
 		if(fill_bits) {
@@ -234,13 +382,20 @@ int gsm_to_ascii(char* buffer, int buffer_length, str sms, const int fill_bits) 
 			// cmask stands for carry mask or how many bits to carry from the 2nd octet
 			unsigned char cmask = (1 << (fill_bits - 1)) - 1;
 
-			sms.s[output_text_length++] = ( (buffer[0] >> fill_bits) |	// remove the fill bits from the first octet
+			symbol = ( (buffer[0] >> fill_bits) |	// remove the fill bits from the first octet
 											(buffer[1] & cmask << (8 - fill_bits)) // mask the required number of bits
 																					//and shift them accordingly
 										) & BITMASK_7BITS;	// mask just 7 bits from the first octet
 
+			if (symbol != GSM7BIT_ESCAPE) {
+				sms.s[output_text_length++] = gsm7bit_codes[symbol];
+			}else{
+				isEscape = 1;
+			}
+
 			carry_on_bits = fill_bits - 1;
 			i++;
+			num_bytes++;
 		}
 
 
@@ -248,7 +403,7 @@ int gsm_to_ascii(char* buffer, int buffer_length, str sms, const int fill_bits) 
 			if(carry_on_bits > 0) {
 				unsigned char cmask = (1 << (carry_on_bits - 1)) - 1;	//mask for the rightmost carry_on_bits
 																		//E.g. carry_on_bits=3 -> _ _ _ _ _ X X X
-				sms.s[output_text_length++] = ( (buffer[i] >> carry_on_bits) | //shift right to remove carried bits
+				symbol = ( (buffer[i] >> carry_on_bits) | //shift right to remove carried bits
 												(buffer[i+1] & cmask) << (8 - carry_on_bits)	// carry from the next
 																								// and shift accordingly
 												) & BITMASK_7BITS;	// mask just 7 bits from the first octet
@@ -257,7 +412,7 @@ int gsm_to_ascii(char* buffer, int buffer_length, str sms, const int fill_bits) 
 				carry_on_bits = carry_on_bits * -1;	//make carry_on_bits positive for the bitwise ops
 				unsigned char cmask = ((1 << carry_on_bits) - 1) << (8 - carry_on_bits);	//mask for the leftmost carry_on_bits.
 																						//E.g. carry_on_bits=3 -> X X X _ _ _ _ _
-				sms.s[output_text_length++] = ( (buffer[i] << carry_on_bits) | //shift left to make space for the carried bits
+				symbol = ( (buffer[i] << carry_on_bits) | //shift left to make space for the carried bits
 												(buffer[i-1] & cmask) >> (8 - carry_on_bits)	// get the bits from the previous octet
 																								// and shift accordingly
 												) & BITMASK_7BITS;	// mask just 7 bits from the first octet
@@ -265,18 +420,43 @@ int gsm_to_ascii(char* buffer, int buffer_length, str sms, const int fill_bits) 
 				carry_on_bits = carry_on_bits * -1;	//return the original value
 			}
 			else {// carry_on_bits == 0
-				sms.s[output_text_length++] = buffer[i] & BITMASK_7BITS;
+				symbol = buffer[i] & BITMASK_7BITS;
+			}
+
+			if (isEscape) {
+				isEscape = 0;
+
+				sms.s[output_text_length++] = gsm7bit_ext_codes[symbol];
+			} else {
+				if (symbol != GSM7BIT_ESCAPE) {
+					sms.s[output_text_length++] = gsm7bit_codes[symbol];
+				} else {
+					isEscape = 1;
+				}
 			}
 
 			//Update carry_on bits. It is always decremented, because we iterate over octests but read just septets
 			carry_on_bits--;
 
-			if (output_text_length == sms.len) break;
+			if (++num_bytes == sms.len) break;
 
 			if (carry_on_bits == -8) {
 				carry_on_bits = -1;
-				sms.s[output_text_length++] = buffer[i] & BITMASK_7BITS;
-				if (output_text_length == sms.len) break;
+				symbol = buffer[i] & BITMASK_7BITS;
+
+				if (isEscape) {
+					isEscape = 0;
+
+					sms.s[output_text_length++] = gsm7bit_ext_codes[symbol];
+				} else {
+					if (symbol != GSM7BIT_ESCAPE) {
+						sms.s[output_text_length++] = gsm7bit_codes[symbol];
+					} else {
+						isEscape = 1;
+					}
+				}
+
+				if (++num_bytes == sms.len) break;
 			}
 
 			if(carry_on_bits > 0 && (i + 2 >= buffer_length)) {
@@ -286,8 +466,11 @@ int gsm_to_ascii(char* buffer, int buffer_length, str sms, const int fill_bits) 
 			}
 		}
 
-		if (output_text_length < sms.len)  // Add last remainder.
-			sms.s[output_text_length++] = buffer[i - 1] >> (8 - carry_on_bits);
+		if (num_bytes < sms.len) { // Add last remainder.
+			symbol = buffer[i - 1] >> (8 - carry_on_bits);
+
+			sms.s[output_text_length++] = gsm7bit_codes[symbol];
+		}
 
 		return output_text_length;
 }
@@ -296,7 +479,7 @@ int gsm_to_ascii(char* buffer, int buffer_length, str sms, const int fill_bits) 
 int ucs2_to_utf8 (int ucs2, char * utf8) {
 	if (ucs2 < 0x80) {
 		utf8[0] = ucs2;
-	utf8[1] = 0;
+		utf8[1] = 0;
 		return 1;
 	}
 	if (ucs2 >= 0x80  && ucs2 < 0x800) {
@@ -705,7 +888,7 @@ int decode_3gpp_sms(struct sip_msg *msg) {
 							// Length is worst-case 2 * len (UCS2 is 2 Bytes, UTF8 is worst-case 4 Bytes)
 							rp_data->pdu.payload.sm.len = 0;
 							while (len > 0) {
-								j = (body.s[p] << 8) + body.s[p + 1];
+								j = ((unsigned char)body.s[p] << 8) + (unsigned char)body.s[p + 1];
 								p += 2;
 								rp_data->pdu.payload.sm.len += ucs2_to_utf8(j, &rp_data->pdu.payload.sm.s[rp_data->pdu.payload.sm.len]);
 								len -= 2;
@@ -727,7 +910,9 @@ int dumpRPData(sms_rp_data_t * rpdata, int level) {
 		LOG(level, "RP-Data\n");
 		LOG(level, "  Type:                       %x\n", rpdata->msg_type);
 		LOG(level, "  Reference:                  %x (%i)\n", rpdata->reference, rpdata->reference);
+		LOG(level, "  Originator flags:           %x (%i)\n", rpdata->originator_flags, rpdata->originator_flags);
 		LOG(level, "  Originator:                 %.*s (%i)\n", rpdata->originator.len, rpdata->originator.s, rpdata->originator.len);
+		LOG(level, "  Destination flags:          %x (%i)\n", rpdata->destination_flags, rpdata->destination_flags);
 		LOG(level, "  Destination:                %.*s (%i)\n", rpdata->destination.len, rpdata->destination.s, rpdata->destination.len);
 		LOG(level, "T-PDU\n");
 		LOG(level, "  Type:                       %x\n", rpdata->pdu.msg_type);
@@ -801,6 +986,8 @@ int pv_sms_body(struct sip_msg *msg, pv_param_t *param, pv_value_t *res) {
 
 	str sms_body = {0, 0};
 	int buffer_size = 1024, lenpos = 0, i = 0, smstext_len_pos = 0;
+	unsigned char udh_len = 0;
+	struct ie_concat_sm_8bit_ref* concat = NULL;
 
 	// We assume a maximum size of 1024 Bytes, to be verified.
 	sms_body.s = (char*)pkg_malloc(buffer_size);
@@ -815,7 +1002,7 @@ int pv_sms_body(struct sip_msg *msg, pv_param_t *param, pv_value_t *res) {
 	lenpos = sms_body.len;
 	sms_body.s[sms_body.len++] = 0x00;
 	if (rp_send_data->originator.len > 0) {
-		sms_body.s[sms_body.len++] = 0x91; // Type of number: ISDN/Telephony Numbering (E164), no extension
+		sms_body.s[sms_body.len++] = rp_send_data->originator_flags; // Type of number: ISDN/Telephony Numbering (E164), no extension
 		i = EncodePhoneNumber(rp_send_data->originator, &sms_body.s[sms_body.len], buffer_size - sms_body.len);
 		sms_body.s[lenpos] = i + 1;
 		sms_body.len += i;
@@ -823,7 +1010,7 @@ int pv_sms_body(struct sip_msg *msg, pv_param_t *param, pv_value_t *res) {
 	lenpos = sms_body.len;
 	sms_body.s[sms_body.len++] = 0x00;
 	if (rp_send_data->destination.len > 0) {
-		sms_body.s[sms_body.len++] = 0x91; // Type of number: ISDN/Telephony Numbering (E164), no extension
+		sms_body.s[sms_body.len++] = rp_send_data->destination_flags; // Type of number: ISDN/Telephony Numbering (E164), no extension
 		i = EncodePhoneNumber(rp_send_data->destination, &sms_body.s[sms_body.len], buffer_size - sms_body.len);
 		sms_body.s[lenpos] = i + 1;
 		sms_body.len += i;
@@ -850,10 +1037,29 @@ int pv_sms_body(struct sip_msg *msg, pv_param_t *param, pv_value_t *res) {
 	smstext_len_pos = sms_body.len;
 	sms_body.s[sms_body.len++] = rp_send_data->pdu.payload.sm.len;
 
+	// Check for UDH
+	concat = GetConcatShortMsg8bitRefIE(rp_send_data);
+	if(concat->max_num_sm && concat->seq) {
+		sms_body.s[sms_body.len++] = 5; // always 5 for TP_UDH_IE_CONCAT_SM_8BIT_REF
+		sms_body.s[sms_body.len++] = TP_UDH_IE_CONCAT_SM_8BIT_REF;
+		sms_body.s[sms_body.len++] = 3; // always 3 for TP_UDH_IE_CONCAT_SM_8BIT_REF
+		sms_body.s[sms_body.len++] = concat->ref;
+		sms_body.s[sms_body.len++] = concat->max_num_sm;
+		sms_body.s[sms_body.len++] = concat->seq;
+		udh_len = 6;
+	}
+
 	// Coding: 7 Bit
 	if (rp_send_data->pdu.coding == 0x00) {
-		i = ascii_to_gsm(rp_send_data->pdu.payload.sm, &sms_body.s[sms_body.len], buffer_size - sms_body.len);
+		int actual_text_size = 0;
+		unsigned char paddingBits = (udh_len * 8 ) % 7;
+		if (paddingBits) {
+			paddingBits = 7 - paddingBits; 
+		}
+
+		i = ascii_to_gsm(rp_send_data->pdu.payload.sm, &sms_body.s[sms_body.len], buffer_size - sms_body.len, &actual_text_size, paddingBits);
 		sms_body.len += i;
+		sms_body.s[smstext_len_pos] = actual_text_size + udh_len;
 	} else {
 	// Coding: ucs2
 		int i, ucs2, ucs2len = 0;
@@ -876,7 +1082,7 @@ int pv_sms_body(struct sip_msg *msg, pv_param_t *param, pv_value_t *res) {
 		}
 
 		// Update the sms text len
-		sms_body.s[smstext_len_pos] = (unsigned char)ucs2len;
+		sms_body.s[smstext_len_pos] = (unsigned char)ucs2len + udh_len;
 	}
 
 	// Update the len of the PDU
@@ -952,6 +1158,10 @@ int pv_get_sms(struct sip_msg *msg, pv_param_t *param, pv_value_t *res) {
 			return pv_get_sintval(msg, param, res, (int)rp_data->pdu.originating_address_flags);
 		case SMS_TPDU_DESTINATION_FLAGS:
 			return pv_get_sintval(msg, param, res, (int)rp_data->pdu.destination_flags);
+		case SMS_RPDATA_ORIGINATOR_FLAGS:
+			return pv_get_sintval(msg, param, res, (int)rp_data->originator_flags);
+		case SMS_RPDATA_DESTINATION_FLAGS:
+			return pv_get_sintval(msg, param, res, (int)rp_data->destination_flags);
 	}
 	return 0;
 }
@@ -970,6 +1180,8 @@ int pv_set_sms(struct sip_msg* msg, pv_param_t *param, int op, pv_value_t *val) 
 		memset(rp_send_data, 0, sizeof(struct _sms_rp_data));
 		rp_send_data->pdu.originating_address_flags = 0x91; // Type of number: ISDN/Telephony Numbering (E164), no extension
 		rp_send_data->pdu.destination_flags = 0x91;
+		rp_send_data->originator_flags = 0x91;
+		rp_send_data->destination_flags = 0x91;
 	}
 
 	switch(param->pvn.u.isname.name.n) {
@@ -979,6 +1191,8 @@ int pv_set_sms(struct sip_msg* msg, pv_param_t *param, int op, pv_value_t *val) 
 			memset(rp_send_data, 0, sizeof(struct _sms_rp_data));
 			rp_send_data->pdu.originating_address_flags = 0x91; // Type of number: ISDN/Telephony Numbering (E164), no extension
 			rp_send_data->pdu.destination_flags = 0x91;
+			rp_send_data->originator_flags = 0x91;
+			rp_send_data->destination_flags = 0x91;
 			break;
 		case SMS_RPDATA_TYPE:
 			if (val == NULL) {
@@ -1176,7 +1390,7 @@ int pv_set_sms(struct sip_msg* msg, pv_param_t *param, int op, pv_value_t *val) 
 				LM_ERR("Invalid type\n");
 				return -1;
 			}
-			struct ie_concat_sm_8bit_ref* concat = GetConcatShortMsg8bitRefIE(rp_data);
+			struct ie_concat_sm_8bit_ref* concat = GetConcatShortMsg8bitRefIE(rp_send_data);
 			if(concat == NULL)
 				return -1;
 
@@ -1190,7 +1404,7 @@ int pv_set_sms(struct sip_msg* msg, pv_param_t *param, int op, pv_value_t *val) 
 				LM_ERR("Invalid type\n");
 				return -1;
 			}
-			struct ie_concat_sm_8bit_ref* concat = GetConcatShortMsg8bitRefIE(rp_data);
+			struct ie_concat_sm_8bit_ref* concat = GetConcatShortMsg8bitRefIE(rp_send_data);
 			if(concat == NULL)
 				return -1;
 
@@ -1204,7 +1418,7 @@ int pv_set_sms(struct sip_msg* msg, pv_param_t *param, int op, pv_value_t *val) 
 				LM_ERR("Invalid type\n");
 				return -1;
 			}
-			struct ie_concat_sm_8bit_ref* concat = GetConcatShortMsg8bitRefIE(rp_data);
+			struct ie_concat_sm_8bit_ref* concat = GetConcatShortMsg8bitRefIE(rp_send_data);
 			if(concat == NULL)
 				return -1;
 
@@ -1235,6 +1449,30 @@ int pv_set_sms(struct sip_msg* msg, pv_param_t *param, int op, pv_value_t *val) 
 			rp_send_data->pdu.destination_flags = (unsigned char)val->ri;
 			break;
 		}
+		case SMS_RPDATA_ORIGINATOR_FLAGS: {
+			if (val == NULL) {
+				rp_send_data->originator_flags = 0;
+				return 0;
+			}
+			if (!(val->flags & PV_VAL_INT)) {
+				LM_ERR("Invalid value type\n");
+				return -1;
+			}
+			rp_send_data->originator_flags = (unsigned char)val->ri;
+			break;
+		}
+		case SMS_RPDATA_DESTINATION_FLAGS: {
+			if (val == NULL) {
+				rp_send_data->destination_flags = 0;
+				return 0;
+			}
+			if (!(val->flags & PV_VAL_INT)) {
+				LM_ERR("Invalid value type\n");
+				return -1;
+			}
+			rp_send_data->destination_flags = (unsigned char)val->ri;
+			break;
+		}
 	}
 	return 0;
 }
@@ -1261,6 +1499,14 @@ int pv_parse_rpdata_name(pv_spec_p sp, str *in) {
 			break;
 		case 11:
 			if (strncmp(in->s, "destination", 11) == 0) sp->pvp.pvn.u.isname.name.n = SMS_RPDATA_DESTINATION;
+			else goto error;
+			break;
+		case 12:
+			if (strncmp(in->s, "origen_flags", 12) == 0) sp->pvp.pvn.u.isname.name.n = SMS_RPDATA_ORIGINATOR_FLAGS;
+			else goto error;
+			break;
+		case 17:
+			if (strncmp(in->s, "destination_flags", 17) == 0) sp->pvp.pvn.u.isname.name.n = SMS_RPDATA_DESTINATION_FLAGS;
 			else goto error;
 			break;
 		default:

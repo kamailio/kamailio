@@ -27,10 +27,12 @@
 	</para>
 	<para>
 		It also works for SIP MESSAGE or other requests that do not create
-		a dialog -- record_route() must be used for them as well, the
-		headers are not going to be in the messages sent to the network, they
+		a dialog (e.g., OPTIONS) -- record_route() must be used for them as well,
+		the headers are not going to be in the messages sent to the network, they
 		are needed to know local addresses used to communicate with each side.
-                This module is designed to work for presence (SUBSCRIBE-based) dialogs too.
+        This module is designed to work for presence (SUBSCRIBE-based) dialogs too.
+	</para>
+	<para>
 		The REGISTER and PUBLISH requests are skipped from processing
 		by this module, expected to be terminated on a local SIP server.
 	</para>
@@ -294,7 +296,7 @@ modparam("topos", "event_mode", 2)
 		<title><varname>contact_host</varname> (str)</title>
 		<para>
 			You may need to control the host part of the Contact header added
-			by topos. If the xavu_filed_contact_host parameter is set, this value is
+			by topos. If the xavu_field_contact_host parameter is set, this value is
 			ignored.
 
 			For example when using TLS with TOPOS the remote UAS must be able to open
@@ -397,7 +399,7 @@ modparam("topos", "cparam_name", "xyz")
 		<programlisting format="linespecific">
 ...
 modparam("topos", "xavu_cfg", "_tps_")
-modparam("topos", "xavu_filed_a_contact", "a_contact")
+modparam("topos", "xavu_field_a_contact", "a_contact")
 ...
     $xavu(_tps_=>a_contact) = "...";
 ...
@@ -405,7 +407,7 @@ modparam("topos", "xavu_filed_a_contact", "a_contact")
 		</example>
 	</section>
 	<section id="topos.p.xavu_field_a_contact">
-		<title><varname>xavu_filed_a_contact</varname> (str)</title>
+		<title><varname>xavu_field_a_contact</varname> (str)</title>
 		<para>
 			Name of the field inside root XAVU specifed by `xavu_cfg`
 			to evaluate for the A-side Contact Header user part. This parameter
@@ -417,11 +419,11 @@ modparam("topos", "xavu_filed_a_contact", "a_contact")
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>xavu_filed_a_contact</varname> parameter</title>
+		<title>Set <varname>xavu_field_a_contact</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("topos", "xavu_cfg", "_tps_")
-modparam("topos", "xavu_filed_a_contact", "a_contact")
+modparam("topos", "xavu_field_a_contact", "a_contact")
 ...
     $xavu(_tps_=>a_contact) = "...";
 ...
@@ -429,7 +431,7 @@ modparam("topos", "xavu_filed_a_contact", "a_contact")
 		</example>
 	</section>
 	<section id="topos.p.xavu_field_b_contact">
-		<title><varname>xavu_filed_b_contact</varname> (str)</title>
+		<title><varname>xavu_field_b_contact</varname> (str)</title>
 		<para>
 			Name of the field inside root XAVU specifed by `xavu_cfg`
 			to evaluate for the B-side Contact Header user part. This parameter
@@ -441,11 +443,11 @@ modparam("topos", "xavu_filed_a_contact", "a_contact")
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>xavu_filed_b_contact</varname> parameter</title>
+		<title>Set <varname>xavu_field_b_contact</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("topos", "xavu_cfg", "_tps_")
-modparam("topos", "xavu_filed_b_contact", "b_contact")
+modparam("topos", "xavu_field_b_contact", "b_contact")
 ...
     $xavu(_tps_=>b_contact) = "...";
 
@@ -453,7 +455,7 @@ modparam("topos", "xavu_filed_b_contact", "b_contact")
 </programlisting>
 		</example>
 	</section>
-	<section id="topos.p.xavu_filed_contact_host">
+	<section id="topos.p.xavu_field_contact_host">
 		<title><varname>xavu_field_contact_host</varname> (str)</title>
 		<para>
 			Control from where to take the host part of the Contact header added
@@ -476,7 +478,7 @@ modparam("topos", "xavu_filed_b_contact", "b_contact")
 		<programlisting format="linespecific">
 ...
 modparam("topos", "xavu_cfg", "_tps_")
-modparam("topos", "xavu_contact_host", "contact_host")
+modparam("topos", "xavu_field_contact_host", "contact_host")
 ...
     $xavu(_tps_=>contact_host) = "kamailio.org";
 ...
@@ -521,6 +523,73 @@ modparam("topos", "rr_update", 1)
 		<programlisting format="linespecific">
 ...
 modparam("topos", "context", "srvone")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="topos.p.methods_nocontact">
+		<title><varname>methods_nocontact</varname> (str)</title>
+		<para>
+			List of SIP methods to skip adding Contact header for.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>BYE,CANCEL,PRACK</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>methods_nocontact</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("topos", "methods_nocontact", "CANCEL,PRACK")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="topos.p.header_mode">
+		<title><varname>header_mode</varname> (int)</title>
+		<para>
+			List of headers to disable multiple comma separated values inserted in compact form.
+			Altough compact form is RFC compliant this paramter gives possibilty to disable
+			compact form header values for UA that don't support or can't handle it.
+
+			The following options are available:
+
+			(1) - disable multiple comma separated values for Via header
+			(2) - disable multiple comma separated values for Record-Route header
+			(4) - disable multiple comma separated values for Route header
+
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>header_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("topos", "header_mode", 1)
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="topos.p.methods_noinitial">
+		<title><varname>methods_noinitial</varname> (str)</title>
+		<para>
+			List of SIP methods to skip doing topos if it is an intial request
+			(no To-tag).
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote></quote> (no method).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>methods_noinitial</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("topos", "methods_noinitial", "OPTIONS,NOTIFY")
 ...
 </programlisting>
 		</example>

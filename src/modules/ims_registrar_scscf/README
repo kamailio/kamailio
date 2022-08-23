@@ -44,10 +44,11 @@ Richard Good
               3.17. method_filtering (integer)
               3.18. user_data_always (integer)
               3.19. error_reply_code (int)
+              3.20. skip_multiple_bindings_on_reg_resp (int)
 
         4. Functions
 
-              4.1. save(async_reply_route, domain)
+              4.1. save(async_reply_route, domain, mode, flags)
               4.2. lookup(domain)
               4.3. lookup_path_to_contact(uri)
               4.4. unregister(domain)
@@ -96,18 +97,19 @@ Richard Good
    1.17. Set cxdx_forced_peerparameter
    1.18. Set user_data_alwaysparameter
    1.19. Set error_reply_code parameter
-   1.20. save usage
-   1.21. lookup usage
+   1.20. Set skip_multiple_bindings_on_reg_resp parameter
+   1.21. save usage
    1.22. lookup usage
-   1.23. unregister usage
-   1.24. impu_registered usage
-   1.25. term_impu_registered usage
-   1.26. reg_fetch_contacts usage
-   1.27. reg_free_contacts usage
-   1.28. can_subscribe_to_reg usage
-   1.29. subscribe_to_reg usage
-   1.30. can_publish_reg usage
-   1.31. publish_reg usage
+   1.23. lookup usage
+   1.24. unregister usage
+   1.25. impu_registered usage
+   1.26. term_impu_registered usage
+   1.27. reg_fetch_contacts usage
+   1.28. reg_free_contacts usage
+   1.29. can_subscribe_to_reg usage
+   1.30. subscribe_to_reg usage
+   1.31. can_publish_reg usage
+   1.32. publish_reg usage
 
 Chapter 1. Admin Guide
 
@@ -140,10 +142,11 @@ Chapter 1. Admin Guide
         3.17. method_filtering (integer)
         3.18. user_data_always (integer)
         3.19. error_reply_code (int)
+        3.20. skip_multiple_bindings_on_reg_resp (int)
 
    4. Functions
 
-        4.1. save(async_reply_route, domain)
+        4.1. save(async_reply_route, domain, mode, flags)
         4.2. lookup(domain)
         4.3. lookup_path_to_contact(uri)
         4.4. unregister(domain)
@@ -214,6 +217,7 @@ Chapter 1. Admin Guide
    3.17. method_filtering (integer)
    3.18. user_data_always (integer)
    3.19. error_reply_code (int)
+   3.20. skip_multiple_bindings_on_reg_resp (int)
 
 3.1. default_expires (int)
 
@@ -485,9 +489,23 @@ om")
         modparam("ims_registrar_scscf", "error_reply_code", 503)
 ...
 
+3.20. skip_multiple_bindings_on_reg_resp (int)
+
+   If set to 1 - on Re-Registration registrar sends in 200OK reply only
+   current contact in case of multiple bindings. If set to 0 - on
+   Re-Registration registrar sends in 200OK reply all contacts in case of
+   multiple bindings according to RFC3261.
+
+   Default value is 0.
+
+   Example 1.20. Set skip_multiple_bindings_on_reg_resp parameter
+...
+        modparam("ims_registrar_scscf", "skip_multiple_bindings_on_reg_resp", 1)
+...
+
 4. Functions
 
-   4.1. save(async_reply_route, domain)
+   4.1. save(async_reply_route, domain, mode, flags)
    4.2. lookup(domain)
    4.3. lookup_path_to_contact(uri)
    4.4. unregister(domain)
@@ -501,7 +519,7 @@ om")
    4.12. can_publish_reg(domain)
    4.13. publish_reg(domain)
 
-4.1. save(async_reply_route, domain)
+4.1. save(async_reply_route, domain, mode, flags)
 
    The function processes a REGISTER message. It can add, remove or modify
    usrloc records depending on Contact and Expires HFs in the REGISTER
@@ -517,10 +535,13 @@ om")
        completed. This is required because the save function is executed
        asynchronously (Diameter).
      * domain- Logical domain within registrar.
+     * mode- Optional and unused legacy parameter.
+     * flags- Optional parameter. Valid values: 0x01 - Realm is not used
+       when extracting Private Identity from the Authorization header.
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE
 
-   Example 1.20. save usage
+   Example 1.21. save usage
 ...
 if (!impu_registered("location")) {
    save("PRE_REG_SAR_REPLY","location");
@@ -551,7 +572,7 @@ if (!impu_registered("location")) {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE
 
-   Example 1.21. lookup usage
+   Example 1.22. lookup usage
 ...
 lookup("location");
 switch ($retcode) {
@@ -580,7 +601,7 @@ switch ($retcode) {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE
 
-   Example 1.22. lookup usage
+   Example 1.23. lookup usage
 ...
 lookup_path_to_contact($ruri);
 ...
@@ -595,7 +616,7 @@ lookup_path_to_contact($ruri);
 
    This function can be used in REQUEST_ROUTE, FAILURE_ROUTE
 
-   Example 1.23. unregister usage
+   Example 1.24. unregister usage
 ...
 unregister("location");
 ...
@@ -620,7 +641,7 @@ unregister("location");
 
    This function can be used in REQUEST_ROUTE, FAILURE_ROUTE
 
-   Example 1.24. impu_registered usage
+   Example 1.25. impu_registered usage
 ...
 impu_registered("location");
 switch ($retcode) {
@@ -646,7 +667,7 @@ switch ($retcode) {
 
    This function can be used in REQUEST_ROUTE, FAILURE_ROUTE
 
-   Example 1.25. term_impu_registered usage
+   Example 1.26. term_impu_registered usage
 ...
 term_impu_registered("location");
 switch ($retcode) {
@@ -674,7 +695,7 @@ switch ($retcode) {
 
    This function can be used in REQUEST_ROUTE, FAILURE_ROUTE
 
-   Example 1.26. reg_fetch_contacts usage
+   Example 1.27. reg_fetch_contacts usage
 ...
 reg_fetch_contacts("location", "$ru", "callee");
 reg_fetch_contacts("location", "sip:user@kamailio.org", "caller");
@@ -693,7 +714,7 @@ reg_fetch_contacts("location", "sip:user@kamailio.org", "caller");
 
    This function can be used in REQUEST_ROUTE, FAILURE_ROUTE
 
-   Example 1.27. reg_free_contacts usage
+   Example 1.28. reg_free_contacts usage
 ...
 reg_free_contacts("callee");
 ...
@@ -711,7 +732,7 @@ reg_free_contacts("callee");
 
    This function can be used in REQUEST_ROUTE
 
-   Example 1.28. can_subscribe_to_reg usage
+   Example 1.29. can_subscribe_to_reg usage
 ...
 if (can_subscribe_to_reg("location")){
      $var(ret)= subscribe_to_reg("location");
@@ -728,7 +749,7 @@ if (can_subscribe_to_reg("location")){
 
    This function can be used in REQUEST_ROUTE
 
-   Example 1.29. subscribe_to_reg usage
+   Example 1.30. subscribe_to_reg usage
 ...
 if (can_subscribe_to_reg("location")){
      $var(ret)= subscribe_to_reg("location");
@@ -748,7 +769,7 @@ if (can_subscribe_to_reg("location")){
 
    This function can be used in REQUEST_ROUTE
 
-   Example 1.30. can_publish_reg usage
+   Example 1.31. can_publish_reg usage
 ...
 if (can_publish_reg("location")){
     $var(ret)= publish_reg("location");
@@ -765,7 +786,7 @@ if (can_publish_reg("location")){
 
    This function can be used in REQUEST_ROUTE
 
-   Example 1.31. publish_reg usage
+   Example 1.32. publish_reg usage
 ...
 if (can_publish_reg("location")){
     $var(ret)= publish_reg("location");

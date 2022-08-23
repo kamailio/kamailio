@@ -46,6 +46,7 @@
 MODULE_VERSION
 
 static int msg_apply_changes_f(sip_msg_t *msg, char *str1, char *str2);
+static int msg_set_buffer_f(sip_msg_t *msg, char *p1data, char *p2);
 
 static int change_reply_status_f(sip_msg_t *, char *, char *);
 static int change_reply_status_fixup(void **param, int param_no);
@@ -73,16 +74,56 @@ static int assign_hf_value_fixup(void **param, int param_no);
 static int remove_hf_value2_fixup(void **param, int param_no);
 static int assign_hf_value2_fixup(void **param, int param_no);
 
+static int w_hf_iterator_start(sip_msg_t *msg, char *piname, char *p2);
+static int w_hf_iterator_next(sip_msg_t *msg, char *piname, char *p2);
+static int w_hf_iterator_prev(sip_msg_t *msg, char *piname, char *p2);
+static int w_hf_iterator_end(sip_msg_t *msg, char *piname, char *p2);
+static int w_hf_iterator_rm(sip_msg_t *msg, char *piname, char *p2);
+static int w_hf_iterator_append(sip_msg_t *msg, char *piname, char *phtext);
+static int w_hf_iterator_insert(sip_msg_t *msg, char *piname, char *phtext);
+
+static int w_bl_iterator_start(sip_msg_t *msg, char *piname, char *p2);
+static int w_bl_iterator_next(sip_msg_t *msg, char *piname, char *p2);
+static int w_bl_iterator_end(sip_msg_t *msg, char *piname, char *p2);
+static int w_bl_iterator_rm(sip_msg_t *msg, char *piname, char *p2);
+static int w_bl_iterator_append(sip_msg_t *msg, char *piname, char *ptext);
+static int w_bl_iterator_insert(sip_msg_t *msg, char *piname, char *ptext);
+
 static int bind_textopsx(textopsx_api_t *tob);
 
 static int mod_init(void);
 
 extern select_row_t sel_declaration[];
 
+static void hf_iterator_init(void);
+static int pv_parse_hf_iterator_name(pv_spec_t *sp, str *in);
+static int pv_get_hf_iterator_hname(sip_msg_t *msg, pv_param_t *param,
+		pv_value_t *res);
+static int pv_get_hf_iterator_hbody(sip_msg_t *msg, pv_param_t *param,
+		pv_value_t *res);
+
+static void bl_iterator_init(void);
+static int pv_parse_bl_iterator_name(pv_spec_t *sp, str *in);
+static int pv_get_bl_iterator_value(sip_msg_t *msg, pv_param_t *param,
+		pv_value_t *res);
+
+static pv_export_t mod_pvs[] = {
+	{ {"hfitname", sizeof("hfitname")-1}, PVT_OTHER, pv_get_hf_iterator_hname, 0,
+		pv_parse_hf_iterator_name, 0, 0, 0 },
+	{ {"hfitbody", sizeof("hfitbody")-1}, PVT_OTHER, pv_get_hf_iterator_hbody, 0,
+		pv_parse_hf_iterator_name, 0, 0, 0 },
+	{ {"blitval", sizeof("blitval")-1}, PVT_OTHER, pv_get_bl_iterator_value, 0,
+		pv_parse_bl_iterator_name, 0, 0, 0 },
+	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
+};
+
 /* cfg functions */
 /* clag-format off */
 static cmd_export_t cmds[] = {
 	{"msg_apply_changes", (cmd_function)msg_apply_changes_f, 0, 0, 0,
+			REQUEST_ROUTE | ONREPLY_ROUTE},
+	{"msg_set_buffer", (cmd_function)msg_set_buffer_f, 1,
+			fixup_spve_null, fixup_free_spve_null,
 			REQUEST_ROUTE | ONREPLY_ROUTE},
 	{"change_reply_status", change_reply_status_f, 2,
 			change_reply_status_fixup, 0, ONREPLY_ROUTE},
@@ -111,6 +152,32 @@ static cmd_export_t cmds[] = {
 			REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
 	{"hf_value_exists", incexc_hf_value_f, 2, hf_value_exists_fixup, 0,
 			REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
+	{"hf_iterator_start", w_hf_iterator_start, 1, fixup_spve_null,
+			fixup_free_spve_null, ANY_ROUTE},
+	{"hf_iterator_next", w_hf_iterator_next, 1, fixup_spve_null,
+			fixup_free_spve_null, ANY_ROUTE},
+	{"hf_iterator_prev", w_hf_iterator_prev, 1, fixup_spve_null,
+			fixup_free_spve_null, ANY_ROUTE},
+	{"hf_iterator_end", w_hf_iterator_end, 1, fixup_spve_null,
+			fixup_free_spve_null, ANY_ROUTE},
+	{"hf_iterator_rm", w_hf_iterator_rm, 1, fixup_spve_null,
+			fixup_free_spve_null, ANY_ROUTE},
+	{"hf_iterator_append", w_hf_iterator_append, 2, fixup_spve_spve,
+			fixup_free_spve_spve, ANY_ROUTE},
+	{"hf_iterator_insert", w_hf_iterator_insert, 2, fixup_spve_spve,
+			fixup_free_spve_spve, ANY_ROUTE},
+	{"bl_iterator_start", w_bl_iterator_start, 1, fixup_spve_null,
+			fixup_free_spve_null, ANY_ROUTE},
+	{"bl_iterator_next", w_bl_iterator_next, 1, fixup_spve_null,
+			fixup_free_spve_null, ANY_ROUTE},
+	{"bl_iterator_end", w_bl_iterator_end, 1, fixup_spve_null,
+			fixup_free_spve_null, ANY_ROUTE},
+	{"bl_iterator_rm", w_bl_iterator_rm, 1, fixup_spve_null,
+			fixup_free_spve_null, ANY_ROUTE},
+	{"bl_iterator_append", w_bl_iterator_append, 2, fixup_spve_spve,
+			fixup_free_spve_spve, ANY_ROUTE},
+	{"bl_iterator_insert", w_bl_iterator_insert, 2, fixup_spve_spve,
+			fixup_free_spve_spve, ANY_ROUTE},
 
 	{"bind_textopsx", (cmd_function)bind_textopsx, 1, 0, 0, ANY_ROUTE},
 
@@ -124,7 +191,7 @@ struct module_exports exports = {
 	cmds,			/* exported cfg functions */
 	0,				/* exported cfg parameters */
 	0,				/* exported RPC methods */
-	0,				/* exported pseudo-variables */
+	mod_pvs,		/* exported pseudo-variables */
 	0,				/* response handling function */
 	mod_init,		/* module init function */
 	0,				/* per-child init function */
@@ -142,6 +209,9 @@ static int mod_init(void)
 	tcp_set_clone_rcvbuf(1);
 #endif
 	register_select_table(sel_declaration);
+	hf_iterator_init();
+	bl_iterator_init();
+
 	return 0;
 }
 
@@ -174,6 +244,21 @@ static int ki_msg_set_buffer(sip_msg_t *msg, str *obuf)
 	}
 
 	return ki_msg_update_buffer(msg, obuf);
+}
+
+/**
+ *
+ */
+static int msg_set_buffer_f(sip_msg_t *msg, char *p1data, char *p2)
+{
+	str data = STR_NULL;
+
+	if(fixup_get_svalue(msg, (gparam_t*)p1data, &data) < 0) {
+		LM_ERR("could not get string param value\n");
+		return -1;
+	}
+
+	return ki_msg_set_buffer(msg, &data);
 }
 
 /**
@@ -1793,6 +1878,981 @@ static int ki_assign_hf_value2(sip_msg_t *msg, str *hexp, str *val)
 			insupddel_hf_value_f);
 }
 
+#define HF_ITERATOR_SIZE	4
+#define HF_ITERATOR_NAME_SIZE	32
+
+typedef struct hf_iterator {
+	str name;
+	char bname[HF_ITERATOR_NAME_SIZE];
+	hdr_field_t *it;
+	hdr_field_t *prev;
+	int eoh;
+} hf_iterator_t;
+
+static hf_iterator_t _hf_iterators[HF_ITERATOR_SIZE];
+
+/**
+ *
+ */
+static void hf_iterator_init(void)
+{
+	memset(_hf_iterators, 0, HF_ITERATOR_SIZE*sizeof(hf_iterator_t));
+}
+
+/**
+ *
+ */
+static int ki_hf_iterator_start(sip_msg_t *msg, str *iname)
+{
+	int i;
+	int k;
+
+	k = -1;
+	for(i=0; i<HF_ITERATOR_SIZE; i++) {
+		if(_hf_iterators[i].name.len>0) {
+			if(_hf_iterators[i].name.len==iname->len
+					&& strncmp(_hf_iterators[i].name.s, iname->s, iname->len)==0) {
+				k = i;
+				break;
+			}
+		} else {
+			if(k==-1) k = i;
+		}
+	}
+	if(k==-1) {
+		LM_ERR("no iterator available - max number is %d\n", HF_ITERATOR_SIZE);
+		return -1;
+	}
+	if(_hf_iterators[k].name.len<=0) {
+		if(iname->len>=HF_ITERATOR_NAME_SIZE)
+		{
+			LM_ERR("iterator name is too big [%.*s] (max %d)\n",
+					iname->len, iname->s, HF_ITERATOR_NAME_SIZE);
+			return -1;
+		}
+		strncpy(_hf_iterators[k].bname, iname->s, iname->len);
+		_hf_iterators[k].bname[iname->len] = '\0';
+		_hf_iterators[k].name.len = iname->len;
+		_hf_iterators[k].name.s = _hf_iterators[k].bname;
+	}
+	_hf_iterators[k].it = NULL;
+	_hf_iterators[k].prev = NULL;
+	_hf_iterators[k].eoh = 0;
+	if(parse_headers(msg, HDR_EOH_F, 0) == -1) {
+		LM_ERR("failed parsing message\n");
+		return -1;
+	}
+	if(msg->headers==NULL) {
+		LM_ERR("no headers for iterator [%.*s]\n", iname->len, iname->s);
+		return -1;
+	}
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_hf_iterator_start(sip_msg_t *msg, char *piname, char *p2)
+{
+	str iname = STR_NULL;
+	if(fixup_get_svalue(msg, (gparam_t*)piname, &iname)<0) {
+		LM_ERR("failed to get iterator name\n");
+		return -1;
+	}
+	return ki_hf_iterator_start(msg, &iname);
+}
+
+/**
+ *
+ */
+static int ki_hf_iterator_next(sip_msg_t *msg, str *iname)
+{
+	int i;
+	int k;
+
+	k = -1;
+	for(i=0; i<HF_ITERATOR_SIZE; i++) {
+		if(_hf_iterators[i].name.len>0) {
+			if(_hf_iterators[i].name.len==iname->len
+					&& strncmp(_hf_iterators[i].name.s, iname->s, iname->len)==0) {
+				k = i;
+				break;
+			}
+		}
+	}
+	if(k==-1) {
+		LM_ERR("iterator not available [%.*s]\n", iname->len, iname->s);
+		return -1;
+	}
+	if(_hf_iterators[k].eoh == 1) {
+		return -1;
+	}
+
+	if(_hf_iterators[k].it == NULL) {
+		_hf_iterators[k].it = msg->headers;
+	} else {
+		_hf_iterators[k].prev = _hf_iterators[k].it;
+		_hf_iterators[k].it = _hf_iterators[k].it->next;
+	}
+	if(_hf_iterators[k].it == NULL) {
+		_hf_iterators[k].eoh = 1;
+		return -1;
+	}
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_hf_iterator_next(sip_msg_t *msg, char *piname, char *p2)
+{
+	str iname = STR_NULL;
+	if(fixup_get_svalue(msg, (gparam_t*)piname, &iname)<0) {
+		LM_ERR("failed to get iterator name\n");
+		return -1;
+	}
+	return ki_hf_iterator_next(msg, &iname);
+}
+
+/**
+ *
+ */
+static int ki_hf_iterator_prev(sip_msg_t *msg, str *iname)
+{
+	hdr_field_t *hf;
+	int i;
+	int k;
+
+	k = -1;
+	for(i=0; i<HF_ITERATOR_SIZE; i++) {
+		if(_hf_iterators[i].name.len>0) {
+			if(_hf_iterators[i].name.len==iname->len
+					&& strncmp(_hf_iterators[i].name.s, iname->s, iname->len)==0) {
+				k = i;
+				break;
+			}
+		}
+	}
+	if(k==-1) {
+		LM_ERR("iterator not available [%.*s]\n", iname->len, iname->s);
+		return -1;
+	}
+	if(_hf_iterators[k].eoh == 1) {
+		return -1;
+	}
+
+	if(_hf_iterators[k].prev==NULL) {
+		return ki_hf_iterator_start(msg, iname);
+	}
+
+	if(_hf_iterators[k].prev!=_hf_iterators[k].it) {
+		_hf_iterators[k].it = _hf_iterators[k].prev;
+		return 1;
+	}
+	for(hf=msg->headers; hf; hf=hf->next) {
+		if(hf->next) {
+			if(hf->next->next) {
+				if(_hf_iterators[k].it==hf->next->next) {
+					_hf_iterators[k].it = hf->next;
+					_hf_iterators[k].prev = hf;
+					return 1;
+				}
+			} else {
+				if(_hf_iterators[k].it==hf->next) {
+					_hf_iterators[k].it = hf;
+					_hf_iterators[k].prev = NULL;
+					return 1;
+				}
+			}
+		}
+	}
+	return ki_hf_iterator_start(msg, iname);
+}
+
+/**
+ *
+ */
+static int w_hf_iterator_prev(sip_msg_t *msg, char *piname, char *p2)
+{
+	str iname = STR_NULL;
+	if(fixup_get_svalue(msg, (gparam_t*)piname, &iname)<0) {
+		LM_ERR("failed to get iterator name\n");
+		return -1;
+	}
+	return ki_hf_iterator_prev(msg, &iname);
+}
+
+/**
+ *
+ */
+static int ki_hf_iterator_end(sip_msg_t *msg, str *iname)
+{
+	int i;
+	int k;
+
+	k = -1;
+	for(i=0; i<HF_ITERATOR_SIZE; i++) {
+		if(_hf_iterators[i].name.len>0) {
+			if(_hf_iterators[i].name.len==iname->len
+					&& strncmp(_hf_iterators[i].name.s, iname->s, iname->len)==0) {
+				k = i;
+				break;
+			}
+		}
+	}
+	if(k==-1) {
+		LM_ERR("iterator not available [%.*s]\n", iname->len, iname->s);
+		return -1;
+	}
+	_hf_iterators[k].it = NULL;
+	_hf_iterators[k].eoh = 0;
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_hf_iterator_end(sip_msg_t *msg, char *piname, char *p2)
+{
+	str iname = STR_NULL;
+	if(fixup_get_svalue(msg, (gparam_t*)piname, &iname)<0) {
+		LM_ERR("failed to get iterator name\n");
+		return -1;
+	}
+	return ki_hf_iterator_end(msg, &iname);
+}
+
+/**
+ *
+ */
+static int ki_hf_iterator_index(sip_msg_t *msg, str *iname)
+{
+	int i;
+	int k;
+
+	k = -1;
+	for(i=0; i<HF_ITERATOR_SIZE; i++) {
+		if(_hf_iterators[i].name.len>0) {
+			if(_hf_iterators[i].name.len==iname->len
+					&& strncmp(_hf_iterators[i].name.s, iname->s, iname->len)==0) {
+				k = i;
+				break;
+			}
+		}
+	}
+	if(k==-1) {
+		LM_ERR("iterator not available [%.*s]\n", iname->len, iname->s);
+		return -1;
+	}
+
+	return k;
+}
+
+/**
+ *
+ */
+static int ki_hf_iterator_rm(sip_msg_t *msg, str *iname)
+{
+	int k;
+	sr_lump_t *anchor;
+
+	k = ki_hf_iterator_index(msg, iname);
+	if(k<0 || _hf_iterators[k].it==NULL) {
+		return -1;
+	}
+	anchor = del_lump(msg, _hf_iterators[k].it->name.s - msg->buf,
+			_hf_iterators[k].it->len, 0);
+	if (anchor==0) {
+		LM_ERR("cannot remove hdr %.*s\n", _hf_iterators[k].it->name.len,
+				_hf_iterators[k].it->name.s);
+		return -1;
+	}
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_hf_iterator_rm(sip_msg_t *msg, char *piname, char *p2)
+{
+	str iname = STR_NULL;
+	if(fixup_get_svalue(msg, (gparam_t*)piname, &iname)<0) {
+		LM_ERR("failed to get iterator name\n");
+		return -1;
+	}
+	return ki_hf_iterator_rm(msg, &iname);
+}
+
+/**
+ *
+ */
+static int ki_hf_iterator_append(sip_msg_t *msg, str *iname, str *htext)
+{
+	int k;
+	sr_lump_t *anchor;
+	str sval = STR_NULL;
+
+	k = ki_hf_iterator_index(msg, iname);
+	if(k<0 || _hf_iterators[k].it==NULL) {
+		return -1;
+	}
+	anchor = anchor_lump(msg, _hf_iterators[k].it->name.s
+			+ _hf_iterators[k].it->len - msg->buf, 0, 0);
+	if (anchor==0) {
+		LM_ERR("cannot append hdr after %.*s\n", _hf_iterators[k].it->name.len,
+				_hf_iterators[k].it->name.s);
+		return -1;
+	}
+	sval.s = (char*)pkg_malloc(htext->len + 1);
+	if(sval.s==NULL) {
+		LM_ERR("failed append hdr after %.*s\n", _hf_iterators[k].it->name.len,
+				_hf_iterators[k].it->name.s);
+		return -1;
+	}
+	memcpy(sval.s, htext->s, htext->len);
+	sval.len = htext->len;
+	sval.s[sval.len] = '\0';
+
+	if (insert_new_lump_before(anchor, sval.s, sval.len, 0) == 0) {
+		LM_ERR("cannot insert lump\n");
+		pkg_free(sval.s);
+		return -1;
+	}
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_hf_iterator_append(sip_msg_t *msg, char *piname, char *phtext)
+{
+	str iname = STR_NULL;
+	str htext = STR_NULL;
+	if(fixup_get_svalue(msg, (gparam_t*)piname, &iname)<0) {
+		LM_ERR("failed to get iterator name\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)phtext, &htext)<0) {
+		LM_ERR("failed to get header text\n");
+		return -1;
+	}
+
+	return ki_hf_iterator_append(msg, &iname, &htext);
+}
+
+/**
+ *
+ */
+static int ki_hf_iterator_insert(sip_msg_t *msg, str *iname, str *htext)
+{
+	int k;
+	sr_lump_t *anchor;
+	str sval = STR_NULL;
+
+	k = ki_hf_iterator_index(msg, iname);
+	if(k<0 || _hf_iterators[k].it==NULL) {
+		return -1;
+	}
+	anchor = anchor_lump(msg, _hf_iterators[k].it->name.s - msg->buf, 0, 0);
+	if (anchor==0) {
+		LM_ERR("cannot insert hdr after %.*s\n", _hf_iterators[k].it->name.len,
+				_hf_iterators[k].it->name.s);
+		return -1;
+	}
+	sval.s = (char*)pkg_malloc(htext->len + 1);
+	if(sval.s==NULL) {
+		LM_ERR("failed to insert hdr after %.*s\n", _hf_iterators[k].it->name.len,
+				_hf_iterators[k].it->name.s);
+		return -1;
+	}
+	memcpy(sval.s, htext->s, htext->len);
+	sval.len = htext->len;
+	sval.s[sval.len] = '\0';
+
+	if (insert_new_lump_before(anchor, sval.s, sval.len, 0) == 0) {
+		LM_ERR("cannot insert lump\n");
+		pkg_free(sval.s);
+		return -1;
+	}
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_hf_iterator_insert(sip_msg_t *msg, char *piname, char *phtext)
+{
+	str iname = STR_NULL;
+	str htext = STR_NULL;
+	if(fixup_get_svalue(msg, (gparam_t*)piname, &iname)<0) {
+		LM_ERR("failed to get iterator name\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)phtext, &htext)<0) {
+		LM_ERR("failed to get header text\n");
+		return -1;
+	}
+
+	return ki_hf_iterator_insert(msg, &iname, &htext);
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t _sr_kemi_hf_iterator_xval = {0};
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_hf_iterator_hname(sip_msg_t *msg, str *iname)
+{
+	int k;
+
+	memset(&_sr_kemi_hf_iterator_xval, 0, sizeof(sr_kemi_xval_t));
+	k = ki_hf_iterator_index(msg, iname);
+	if(k<0 || _hf_iterators[k].it==NULL) {
+		sr_kemi_xval_null(&_sr_kemi_hf_iterator_xval, 0);
+		return &_sr_kemi_hf_iterator_xval;
+	}
+	_sr_kemi_hf_iterator_xval.vtype = SR_KEMIP_STR;
+	_sr_kemi_hf_iterator_xval.v.s = _hf_iterators[k].it->name;
+	return &_sr_kemi_hf_iterator_xval;
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_hf_iterator_hbody(sip_msg_t *msg, str *iname)
+{
+	int k;
+
+	memset(&_sr_kemi_hf_iterator_xval, 0, sizeof(sr_kemi_xval_t));
+	k = ki_hf_iterator_index(msg, iname);
+	if(k<0 || _hf_iterators[k].it==NULL) {
+		sr_kemi_xval_null(&_sr_kemi_hf_iterator_xval, 0);
+		return &_sr_kemi_hf_iterator_xval;
+	}
+	_sr_kemi_hf_iterator_xval.vtype = SR_KEMIP_STR;
+	_sr_kemi_hf_iterator_xval.v.s = _hf_iterators[k].it->body;
+	return &_sr_kemi_hf_iterator_xval;
+}
+
+/**
+ *
+ */
+static int pv_parse_hf_iterator_name(pv_spec_t *sp, str *in)
+{
+	if(in->len<=0) {
+		return -1;
+	}
+
+	sp->pvp.pvn.u.isname.name.s.s = in->s;
+	sp->pvp.pvn.u.isname.name.s.len = in->len;
+	sp->pvp.pvn.u.isname.type = 0;
+	sp->pvp.pvn.type = PV_NAME_INTSTR;
+
+	return 0;
+}
+
+/**
+ *
+ */
+static int pv_get_hf_iterator_hname(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
+{
+	int i;
+	int k;
+	str *iname;
+
+	iname = &param->pvn.u.isname.name.s;
+	k = -1;
+	for(i=0; i<HF_ITERATOR_SIZE; i++) {
+		if(_hf_iterators[i].name.len>0) {
+			if(_hf_iterators[i].name.len==iname->len
+					&& strncmp(_hf_iterators[i].name.s, iname->s, iname->len)==0) {
+				k = i;
+				break;
+			}
+		}
+	}
+	if(k==-1) {
+		LM_ERR("iterator not available [%.*s]\n", iname->len, iname->s);
+		return pv_get_null(msg, param, res);
+	}
+
+	if(_hf_iterators[i].it==NULL) {
+		return pv_get_null(msg, param, res);
+	}
+	return pv_get_strval(msg, param, res, &_hf_iterators[i].it->name);
+}
+
+/**
+ *
+ */
+static int pv_get_hf_iterator_hbody(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
+{
+	int i;
+	int k;
+	str *iname;
+
+	iname = &param->pvn.u.isname.name.s;
+	k = -1;
+	for(i=0; i<HF_ITERATOR_SIZE; i++) {
+		if(_hf_iterators[i].name.len>0) {
+			if(_hf_iterators[i].name.len==iname->len
+					&& strncmp(_hf_iterators[i].name.s, iname->s, iname->len)==0) {
+				k = i;
+				break;
+			}
+		}
+	}
+	if(k==-1) {
+		LM_ERR("iterator not available [%.*s]\n", iname->len, iname->s);
+		return pv_get_null(msg, param, res);
+	}
+
+	if(_hf_iterators[i].it==NULL) {
+		return pv_get_null(msg, param, res);
+	}
+	return pv_get_strval(msg, param, res, &_hf_iterators[i].it->body);
+}
+
+
+/*** body line iterator */
+#define BL_ITERATOR_SIZE	4
+#define BL_ITERATOR_NAME_SIZE	32
+
+typedef struct bl_iterator {
+	str name;
+	char bname[HF_ITERATOR_NAME_SIZE];
+	str body;
+	str it;
+	int eob;
+} bl_iterator_t;
+
+static bl_iterator_t _bl_iterators[BL_ITERATOR_SIZE];
+
+/**
+ *
+ */
+static void bl_iterator_init(void)
+{
+	memset(_bl_iterators, 0, BL_ITERATOR_SIZE*sizeof(bl_iterator_t));
+}
+
+/**
+ *
+ */
+static int ki_bl_iterator_start(sip_msg_t *msg, str *iname)
+{
+	int i;
+	int k;
+
+	k = -1;
+	for(i=0; i<BL_ITERATOR_SIZE; i++) {
+		if(_bl_iterators[i].name.len>0) {
+			if(_bl_iterators[i].name.len==iname->len
+					&& strncmp(_bl_iterators[i].name.s, iname->s, iname->len)==0) {
+				k = i;
+				break;
+			}
+		} else {
+			if(k==-1) k = i;
+		}
+	}
+	if(k==-1) {
+		LM_ERR("no iterator available - max number is %d\n", BL_ITERATOR_SIZE);
+		return -1;
+	}
+	if(_bl_iterators[k].name.len<=0) {
+		if(iname->len>=BL_ITERATOR_NAME_SIZE) {
+			LM_ERR("iterator name is too big [%.*s] (max %d)\n",
+					iname->len, iname->s, BL_ITERATOR_NAME_SIZE);
+			return -1;
+		}
+		strncpy(_bl_iterators[k].bname, iname->s, iname->len);
+		_bl_iterators[k].bname[iname->len] = '\0';
+		_bl_iterators[k].name.len = iname->len;
+		_bl_iterators[k].name.s = _bl_iterators[k].bname;
+	}
+	_bl_iterators[k].it.s = NULL;
+	_bl_iterators[k].it.len = 0;
+	_bl_iterators[k].eob = 0;
+	_bl_iterators[k].body.s = get_body(msg);
+	if(_bl_iterators[k].body.s==NULL) {
+		LM_DBG("no message body\n");
+		return -1;
+	}
+	_bl_iterators[k].body.len = msg->buf + msg->len - _bl_iterators[k].body.s;
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_bl_iterator_start(sip_msg_t *msg, char *piname, char *p2)
+{
+	str iname = STR_NULL;
+	if(fixup_get_svalue(msg, (gparam_t*)piname, &iname)<0) {
+		LM_ERR("failed to get iterator name\n");
+		return -1;
+	}
+	return ki_bl_iterator_start(msg, &iname);
+}
+
+/**
+ *
+ */
+static int ki_bl_iterator_next(sip_msg_t *msg, str *iname)
+{
+	int i;
+	int k;
+	char *p;
+
+	k = -1;
+	for(i=0; i<BL_ITERATOR_SIZE; i++) {
+		if(_bl_iterators[i].name.len>0) {
+			if(_bl_iterators[i].name.len==iname->len
+					&& strncmp(_bl_iterators[i].name.s, iname->s, iname->len)==0) {
+				k = i;
+				break;
+			}
+		}
+	}
+	if(k==-1) {
+		LM_ERR("iterator not available [%.*s]\n", iname->len, iname->s);
+		return -1;
+	}
+	if(_bl_iterators[k].eob == 1) {
+		return -1;
+	}
+
+	if(_bl_iterators[k].it.s==NULL) {
+		_bl_iterators[k].it.s = _bl_iterators[k].body.s;
+	}
+	p = _bl_iterators[k].it.s + _bl_iterators[k].it.len;
+	if(p>=_bl_iterators[k].body.s + _bl_iterators[k].body.len) {
+		_bl_iterators[k].it.s = NULL;
+		_bl_iterators[k].it.len = 0;
+		_bl_iterators[k].eob = 1;
+		return -1;
+	}
+	_bl_iterators[k].it.s = p;
+	while(p < _bl_iterators[k].body.s + _bl_iterators[k].body.len) {
+		if(*p=='\n') {
+			break;
+		}
+		p++;
+	}
+	_bl_iterators[k].it.len = p - _bl_iterators[k].it.s + 1;
+
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_bl_iterator_next(sip_msg_t *msg, char *piname, char *p2)
+{
+	str iname = STR_NULL;
+	if(fixup_get_svalue(msg, (gparam_t*)piname, &iname)<0) {
+		LM_ERR("failed to get iterator name\n");
+		return -1;
+	}
+	return ki_bl_iterator_next(msg, &iname);
+}
+
+/**
+ *
+ */
+static int ki_bl_iterator_end(sip_msg_t *msg, str *iname)
+{
+	int i;
+	int k;
+
+	k = -1;
+	for(i=0; i<BL_ITERATOR_SIZE; i++) {
+		if(_bl_iterators[i].name.len>0) {
+			if(_bl_iterators[i].name.len==iname->len
+					&& strncmp(_bl_iterators[i].name.s, iname->s, iname->len)==0) {
+				k = i;
+				break;
+			}
+		}
+	}
+	if(k==-1) {
+		LM_ERR("iterator not available [%.*s]\n", iname->len, iname->s);
+		return -1;
+	}
+	_bl_iterators[k].it.s = NULL;
+	_bl_iterators[k].it.len = 0;
+	_bl_iterators[k].body.s = NULL;
+	_bl_iterators[k].body.len = 0;
+	_bl_iterators[k].eob = 0;
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_bl_iterator_end(sip_msg_t *msg, char *piname, char *p2)
+{
+	str iname = STR_NULL;
+	if(fixup_get_svalue(msg, (gparam_t*)piname, &iname)<0) {
+		LM_ERR("failed to get iterator name\n");
+		return -1;
+	}
+	return ki_bl_iterator_end(msg, &iname);
+}
+
+/**
+ *
+ */
+static int ki_bl_iterator_index(sip_msg_t *msg, str *iname)
+{
+	int i;
+	int k;
+
+	k = -1;
+	for(i=0; i<BL_ITERATOR_SIZE; i++) {
+		if(_bl_iterators[i].name.len>0) {
+			if(_bl_iterators[i].name.len==iname->len
+					&& strncmp(_bl_iterators[i].name.s, iname->s, iname->len)==0) {
+				k = i;
+				break;
+			}
+		}
+	}
+	if(k==-1) {
+		LM_ERR("iterator not available [%.*s]\n", iname->len, iname->s);
+		return -1;
+	}
+
+	return k;
+}
+
+/**
+ *
+ */
+static int ki_bl_iterator_rm(sip_msg_t *msg, str *iname)
+{
+	int k;
+	sr_lump_t *anchor;
+
+	k = ki_bl_iterator_index(msg, iname);
+	if(k<0 || _bl_iterators[k].it.s==NULL || _bl_iterators[k].it.len<=0) {
+		return -1;
+	}
+	anchor = del_lump(msg, _bl_iterators[k].it.s - msg->buf,
+			_bl_iterators[k].it.len, 0);
+	if (anchor==0) {
+		LM_ERR("cannot remove line %.*s\n", _bl_iterators[k].it.len,
+				_bl_iterators[k].it.s);
+		return -1;
+	}
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_bl_iterator_rm(sip_msg_t *msg, char *piname, char *p2)
+{
+	str iname = STR_NULL;
+	if(fixup_get_svalue(msg, (gparam_t*)piname, &iname)<0) {
+		LM_ERR("failed to get iterator name\n");
+		return -1;
+	}
+	return ki_bl_iterator_rm(msg, &iname);
+}
+
+/**
+ *
+ */
+static int ki_bl_iterator_append(sip_msg_t *msg, str *iname, str *text)
+{
+	int k;
+	sr_lump_t *anchor;
+	str sval = STR_NULL;
+
+	k = ki_bl_iterator_index(msg, iname);
+	if(k<0 || _bl_iterators[k].it.s==NULL || _bl_iterators[k].it.len<=0) {
+		return -1;
+	}
+	anchor = anchor_lump(msg, _bl_iterators[k].it.s
+			+ _bl_iterators[k].it.len - msg->buf, 0, 0);
+	if (anchor==0) {
+		LM_ERR("cannot append text after %.*s\n", _bl_iterators[k].it.len,
+				_bl_iterators[k].it.s);
+		return -1;
+	}
+	sval.s = (char*)pkg_malloc(text->len + 1);
+	if(sval.s==NULL) {
+		LM_ERR("failed append text after %.*s\n", _bl_iterators[k].it.len,
+				_bl_iterators[k].it.s);
+		return -1;
+	}
+	memcpy(sval.s, text->s, text->len);
+	sval.len = text->len;
+	sval.s[sval.len] = '\0';
+
+	if (insert_new_lump_before(anchor, sval.s, sval.len, 0) == 0) {
+		LM_ERR("cannot insert lump\n");
+		pkg_free(sval.s);
+		return -1;
+	}
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_bl_iterator_append(sip_msg_t *msg, char *piname, char *ptext)
+{
+	str iname = STR_NULL;
+	str text = STR_NULL;
+	if(fixup_get_svalue(msg, (gparam_t*)piname, &iname)<0) {
+		LM_ERR("failed to get iterator name\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)ptext, &text)<0) {
+		LM_ERR("failed to get text\n");
+		return -1;
+	}
+
+	return ki_bl_iterator_append(msg, &iname, &text);
+}
+
+/**
+ *
+ */
+static int ki_bl_iterator_insert(sip_msg_t *msg, str *iname, str *text)
+{
+	int k;
+	sr_lump_t *anchor;
+	str sval = STR_NULL;
+
+	k = ki_bl_iterator_index(msg, iname);
+	if(k<0 || _bl_iterators[k].it.s==NULL || _bl_iterators[k].it.len<=0) {
+		return -1;
+	}
+	anchor = anchor_lump(msg, _bl_iterators[k].it.s - msg->buf, 0, 0);
+	if (anchor==0) {
+		LM_ERR("cannot insert text after %.*s\n", _bl_iterators[k].it.len,
+				_bl_iterators[k].it.s);
+		return -1;
+	}
+	sval.s = (char*)pkg_malloc(text->len + 1);
+	if(sval.s==NULL) {
+		LM_ERR("failed to insert text after %.*s\n", _bl_iterators[k].it.len,
+				_bl_iterators[k].it.s);
+		return -1;
+	}
+	memcpy(sval.s, text->s, text->len);
+	sval.len = text->len;
+	sval.s[sval.len] = '\0';
+
+	if (insert_new_lump_before(anchor, sval.s, sval.len, 0) == 0) {
+		LM_ERR("cannot insert lump\n");
+		pkg_free(sval.s);
+		return -1;
+	}
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_bl_iterator_insert(sip_msg_t *msg, char *piname, char *ptext)
+{
+	str iname = STR_NULL;
+	str text = STR_NULL;
+	if(fixup_get_svalue(msg, (gparam_t*)piname, &iname)<0) {
+		LM_ERR("failed to get iterator name\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)ptext, &text)<0) {
+		LM_ERR("failed to get text\n");
+		return -1;
+	}
+
+	return ki_bl_iterator_insert(msg, &iname, &text);
+}
+
+/**
+ *
+ */
+static sr_kemi_xval_t _sr_kemi_bl_iterator_xval = {0};
+
+/**
+ *
+ */
+static sr_kemi_xval_t* ki_bl_iterator_value(sip_msg_t *msg, str *iname)
+{
+	int k;
+
+	memset(&_sr_kemi_bl_iterator_xval, 0, sizeof(sr_kemi_xval_t));
+	k = ki_bl_iterator_index(msg, iname);
+	if(k<0 || _bl_iterators[k].it.s==NULL || _bl_iterators[k].it.len<=0) {
+		sr_kemi_xval_null(&_sr_kemi_bl_iterator_xval, 0);
+		return &_sr_kemi_bl_iterator_xval;
+	}
+	if(_bl_iterators[k].it.s==NULL) {
+		sr_kemi_xval_null(&_sr_kemi_bl_iterator_xval, 0);
+		return &_sr_kemi_bl_iterator_xval;
+	}
+	_sr_kemi_bl_iterator_xval.vtype = SR_KEMIP_STR;
+	_sr_kemi_bl_iterator_xval.v.s = _bl_iterators[k].it;
+	return &_sr_kemi_bl_iterator_xval;
+}
+
+/**
+ *
+ */
+static int pv_parse_bl_iterator_name(pv_spec_t *sp, str *in)
+{
+	if(in->len<=0) {
+		return -1;
+	}
+
+	sp->pvp.pvn.u.isname.name.s.s = in->s;
+	sp->pvp.pvn.u.isname.name.s.len = in->len;
+	sp->pvp.pvn.u.isname.type = 0;
+	sp->pvp.pvn.type = PV_NAME_INTSTR;
+
+	return 0;
+}
+
+/**
+ *
+ */
+static int pv_get_bl_iterator_value(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
+{
+	int i;
+	int k;
+	str *iname;
+
+	iname = &param->pvn.u.isname.name.s;
+	k = -1;
+	for(i=0; i<BL_ITERATOR_SIZE; i++) {
+		if(_bl_iterators[i].name.len>0) {
+			if(_bl_iterators[i].name.len==iname->len
+					&& strncmp(_bl_iterators[i].name.s, iname->s, iname->len)==0) {
+				k = i;
+				break;
+			}
+		}
+	}
+	if(k==-1) {
+		LM_ERR("iterator not available [%.*s]\n", iname->len, iname->s);
+		return pv_get_null(msg, param, res);
+	}
+
+	if(_bl_iterators[i].it.s==NULL) {
+		return pv_get_null(msg, param, res);
+	}
+	return pv_get_strval(msg, param, res, &_bl_iterators[i].it);
+}
+
 /* select implementation */
 static int sel_hf_value(str *res, select_t *s, struct sip_msg *msg)
 { /* dummy */
@@ -2310,6 +3370,86 @@ static sr_kemi_t sr_kemi_textopsx_exports[] = {
 	{ str_init("textopsx"), str_init("hf_value_exists"),
 		SR_KEMIP_INT, ki_hf_value_exists,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textopsx"), str_init("hf_iterator_start"),
+		SR_KEMIP_INT, ki_hf_iterator_start,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textopsx"), str_init("hf_iterator_end"),
+		SR_KEMIP_INT, ki_hf_iterator_end,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textopsx"), str_init("hf_iterator_next"),
+		SR_KEMIP_INT, ki_hf_iterator_next,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textopsx"), str_init("hf_iterator_prev"),
+		SR_KEMIP_INT, ki_hf_iterator_prev,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textopsx"), str_init("hf_iterator_rm"),
+		SR_KEMIP_INT, ki_hf_iterator_rm,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textopsx"), str_init("hf_iterator_append"),
+		SR_KEMIP_INT, ki_hf_iterator_append,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textopsx"), str_init("hf_iterator_insert"),
+		SR_KEMIP_INT, ki_hf_iterator_insert,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textopsx"), str_init("hf_iterator_hname"),
+		SR_KEMIP_XVAL, ki_hf_iterator_hname,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textopsx"), str_init("hf_iterator_hbody"),
+		SR_KEMIP_XVAL, ki_hf_iterator_hbody,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textopsx"), str_init("bl_iterator_start"),
+		SR_KEMIP_INT, ki_bl_iterator_start,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textopsx"), str_init("bl_iterator_end"),
+		SR_KEMIP_INT, ki_bl_iterator_end,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textopsx"), str_init("bl_iterator_next"),
+		SR_KEMIP_INT, ki_bl_iterator_next,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textopsx"), str_init("bl_iterator_rm"),
+		SR_KEMIP_INT, ki_bl_iterator_rm,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textopsx"), str_init("bl_iterator_append"),
+		SR_KEMIP_INT, ki_bl_iterator_append,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textopsx"), str_init("bl_iterator_insert"),
+		SR_KEMIP_INT, ki_bl_iterator_insert,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("textopsx"), str_init("bl_iterator_value"),
+		SR_KEMIP_XVAL, ki_bl_iterator_value,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 

@@ -51,6 +51,7 @@ typedef void  (*sr_shm_gunlock_f)(void* mbp);
 
 typedef void  (*sr_mem_status_f)(void* mbp);
 typedef void  (*sr_mem_info_f)(void* mbp, struct mem_info* info);
+typedef void  (*sr_mem_report_f)(void* mbp, mem_report_t* mrep);
 typedef unsigned long (*sr_mem_available_f)(void* mbp);
 typedef void  (*sr_mem_sums_f)(void* mbp);
 
@@ -81,6 +82,8 @@ typedef struct sr_pkg_api {
 	sr_mem_status_f    xstatus;
 	/*memory info - internal metrics*/
 	sr_mem_info_f      xinfo;
+	/*memory report - internal report*/
+	sr_mem_report_f    xreport;
 	/*memory available size*/
 	sr_mem_available_f xavailable;
 	/*memory summary*/
@@ -121,6 +124,8 @@ typedef struct sr_shm_api {
 	sr_mem_status_f    xstatus;
 	/*memory info - internal metrics*/
 	sr_mem_info_f      xinfo;
+	/*memory report - internal report*/
+	sr_mem_report_f    xreport;
 	/*memory available size*/
 	sr_mem_available_f xavailable;
 	/*memory summary*/

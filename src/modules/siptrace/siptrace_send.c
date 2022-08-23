@@ -139,6 +139,7 @@ int sip_trace_xheaders_write(struct _siptrace_data *sto)
 	// Change sto to point to the new buffer.
 	sto->body.s = buf;
 	sto->body.len += bytes_written;
+	sto->alloc_body = 1;
 	return 0;
 error:
 	if(buf != NULL) {
@@ -224,6 +225,7 @@ int sip_trace_xheaders_read(struct _siptrace_data *sto)
 	*eoh = '\r';
 	memmove(xheaders, eoh, sto->body.len - (eoh - sto->body.s));
 	sto->body.len -= eoh - xheaders;
+	sto->alloc_headers = 1;
 
 	return 0;
 
@@ -252,14 +254,15 @@ erroraftermalloc:
  */
 int sip_trace_xheaders_free(struct _siptrace_data *sto)
 {
-	if(trace_xheaders_write != 0) {
+	if(sto->alloc_body != 0) {
 		if(sto->body.s) {
 			pkg_free(sto->body.s);
 			sto->body.s = 0;
 		}
+		sto->alloc_body = 0;
 	}
 
-	if(trace_xheaders_read != 0) {
+	if(sto->alloc_headers != 0) {
 		if(sto->fromip.s) {
 			pkg_free(sto->fromip.s);
 			sto->fromip.s = 0;
@@ -272,6 +275,7 @@ int sip_trace_xheaders_free(struct _siptrace_data *sto)
 			pkg_free(sto->dir);
 			sto->dir = 0;
 		}
+		sto->alloc_headers = 0;
 	}
 
 	return 0;
@@ -301,7 +305,7 @@ int trace_send_duplicate(char *buf, int len, dest_info_t *dst2)
 
 	if(!dst2) {
 		/* create a temporary proxy from dst param */
-		dst.proto = PROTO_UDP;
+		dst.proto = trace_dup_uri->proto;
 		p = mk_proxy(&trace_dup_uri->host,
 				(trace_dup_uri->port_no) ? trace_dup_uri->port_no : SIP_PORT, dst.proto);
 		if(p == 0) {
@@ -349,7 +353,7 @@ int trace_send_duplicate(char *buf, int len, dest_info_t *dst2)
 		}
 	}
 
-	if(msg_send(pdst, buf, len) < 0) {
+	if(msg_send_buffer(pdst, buf, len, 1) < 0) {
 		LM_ERR("cannot send duplicate message\n");
 		goto error;
 	}

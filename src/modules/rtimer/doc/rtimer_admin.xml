@@ -57,6 +57,25 @@
 	<section>
 	<title>Parameters</title>
 	<section>
+		<title><varname>default_interval</varname> (int)</title>
+		<para>
+			The definition of the default interval of timers (if not present on the "timer" parameter)
+		</para>
+		<para>
+			The parameter can be set multiple times to get different intervals in same configuration file.
+		</para>
+		<example>
+		<title>Set <varname>default_interval</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+# default time interval set to 300 seconds
+modparam("rtimer", "default_interval", 300)
+...
+		</programlisting>
+		</example>
+	</section>
+
+	<section>
 		<title><varname>timer</varname> (str)</title>
 		<para>
 		The definition of a timer. The value of the parameter must have the

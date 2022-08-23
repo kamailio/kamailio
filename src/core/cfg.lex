@@ -129,8 +129,9 @@
 
 /* start conditions */
 %x STRING1 STRING2 STR_BETWEEN COMMENT COMMENT_LN ATTR SELECT AVP_PVAR PVAR_P
-%x PVARID INCLF IMPTF EVRTNAME CFGPRINTMODE CFGPRINTLOADMOD DEFENV_ID
-%x LINECOMMENT DEFINE_ID DEFINE_EOL DEFINE_DATA IFDEF_ID IFDEF_EOL IFDEF_SKIP
+%x PVARID INCLF IMPTF EVRTNAME CFGPRINTMODE CFGPRINTLOADMOD DEFENV_ID DEFENVS_ID
+%x TRYDEFENV_ID TRYDEFENVS_ID LINECOMMENT DEFINE_ID DEFINE_EOL DEFINE_DATA 
+%x IFDEF_ID IFDEF_EOL IFDEF_SKIP
 
 /* config script types : #!SER  or #!KAMAILIO or #!MAX_COMPAT */
 SER_CFG			SER
@@ -304,11 +305,14 @@ XAVPVIAPARAMS	xavp_via_params
 XAVPVIAFIELDS	xavp_via_fields
 LISTEN		listen
 ADVERTISE	advertise|ADVERTISE
+VIRTUAL		virtual
 STRNAME		name|NAME
 ALIAS		alias
+DOMAIN		domain
 SR_AUTO_ALIASES	auto_aliases
+SR_AUTO_DOMAINS auto_domains
 DNS		 dns
-REV_DNS	 rev_dns
+REV_DNS	 rev_dns|dns_rev_via
 DNS_TRY_IPV6	dns_try_ipv6
 DNS_TRY_NAPTR	dns_try_naptr
 DNS_SRV_LB		dns_srv_lb|dns_srv_loadbalancing
@@ -325,8 +329,8 @@ DNS_SEARCH_FMATCH	dns_search_full_match
 DNS_NAPTR_IGNORE_RFC	dns_naptr_ignore_rfc
 /* dns cache */
 DNS_CACHE_INIT	dns_cache_init
-DNS_USE_CACHE	use_dns_cache
-DNS_USE_FAILOVER	use_dns_failover
+DNS_USE_CACHE	use_dns_cache|dns_use_cache
+DNS_USE_FAILOVER	use_dns_failover|dns_use_failover
 DNS_CACHE_FLAGS		dns_cache_flags
 DNS_CACHE_NEG_TTL	dns_cache_negative_ttl
 DNS_CACHE_MIN_TTL	dns_cache_min_ttl
@@ -359,6 +363,9 @@ STATS_NAMESEP	stats_name_separator
 MAXBUFFER maxbuffer
 SQL_BUFFER_SIZE sql_buffer_size
 CHILDREN children
+SOCKET socket
+BIND bind
+WORKERS workers
 SOCKET_WORKERS socket_workers
 ASYNC_WORKERS async_workers
 ASYNC_USLEEP async_usleep
@@ -373,6 +380,7 @@ MEMSAFETY	"mem_safety"
 MEMJOIN		"mem_join"
 MEMSTATUSMODE		"mem_status_mode"
 CORELOG		"corelog"|"core_log"
+SIP_PARSER_LOG_ONELINE "sip_parser_log_oneline"
 SIP_PARSER_LOG "sip_parser_log"
 SIP_PARSER_MODE "sip_parser_mode"
 SIP_WARNING sip_warning
@@ -418,8 +426,11 @@ TCP_OPT_CRLF_PING	"tcp_crlf_ping"
 TCP_OPT_ACCEPT_NO_CL	"tcp_accept_no_cl"
 TCP_OPT_ACCEPT_HEP3	"tcp_accept_hep3"
 TCP_OPT_ACCEPT_HAPROXY	"tcp_accept_haproxy"
+TCP_OPT_CLOSE_RST	"tcp_close_rst"
 TCP_CLONE_RCVBUF	"tcp_clone_rcvbuf"
 TCP_REUSE_PORT		"tcp_reuse_port"
+TCP_WAIT_DATA	"tcp_wait_data"
+TCP_SCRIPT_MODE	"tcp_script_mode"
 DISABLE_TLS		"disable_tls"|"tls_disable"
 ENABLE_TLS		"enable_tls"|"tls_enable"
 TLSLOG			"tlslog"|"tls_log"
@@ -512,8 +523,8 @@ TLS			"tls"|"TLS"
 SCTP		"sctp"|"SCTP"
 WS		"ws"|"WS"
 WSS		"wss"|"WSS"
-INET		"inet"|"INET"
-INET6		"inet6"|"INET6"
+INET		"inet"|"INET"|"ipv4"|"IPv4"|"IPV4"
+INET6		"inet6"|"INET6"|"ipv6"|"IPv6"|"IPV6"
 SSLv23			"sslv23"|"SSLv23"|"SSLV23"
 SSLv2			"sslv2"|"SSLv2"|"SSLV2"
 SSLv3			"sslv3"|"SSLv3"|"SSLV3"
@@ -564,6 +575,9 @@ ENDIF        endif
 TRYDEF       "trydefine"|"trydef"
 REDEF        "redefine"|"redef"
 DEFENV       defenv
+DEFENVS      defenvs
+TRYDEFENV    trydefenv
+TRYDEFENVS   trydefenvs
 
 /* else is already defined */
 
@@ -735,10 +749,14 @@ IMPORTFILE      "import_file"
 <INITIAL>{XAVPVIAFIELDS}	{ yylval.strval=yytext; return XAVPVIAFIELDS; }
 <INITIAL>{LISTEN}	{ count(); yylval.strval=yytext; return LISTEN; }
 <INITIAL>{ADVERTISE}	{ count(); yylval.strval=yytext; return ADVERTISE; }
+<INITIAL>{VIRTUAL}	{ count(); yylval.strval=yytext; return VIRTUAL; }
 <INITIAL>{STRNAME}	{ count(); yylval.strval=yytext; return STRNAME; }
 <INITIAL>{ALIAS}	{ count(); yylval.strval=yytext; return ALIAS; }
+<INITIAL>{DOMAIN}	{ count(); yylval.strval=yytext; return DOMAIN; }
 <INITIAL>{SR_AUTO_ALIASES}	{ count(); yylval.strval=yytext;
 									return SR_AUTO_ALIASES; }
+<INITIAL>{SR_AUTO_DOMAINS}	{ count(); yylval.strval=yytext;
+									return SR_AUTO_DOMAINS; }
 <INITIAL>{DNS}	{ count(); yylval.strval=yytext; return DNS; }
 <INITIAL>{REV_DNS}	{ count(); yylval.strval=yytext; return REV_DNS; }
 <INITIAL>{DNS_TRY_IPV6}	{ count(); yylval.strval=yytext;
@@ -822,6 +840,8 @@ IMPORTFILE      "import_file"
 <INITIAL>{MAXBUFFER}	{ count(); yylval.strval=yytext; return MAXBUFFER; }
 <INITIAL>{SQL_BUFFER_SIZE}	{ count(); yylval.strval=yytext; return SQL_BUFFER_SIZE; }
 <INITIAL>{CHILDREN}	{ count(); yylval.strval=yytext; return CHILDREN; }
+<INITIAL>{SOCKET}	{ count(); yylval.strval=yytext; return SOCKET; }
+<INITIAL>{BIND}	{ count(); yylval.strval=yytext; return BIND; }
 <INITIAL>{SOCKET_WORKERS}	{ count(); yylval.strval=yytext; return SOCKET_WORKERS; }
 <INITIAL>{ASYNC_WORKERS}	{ count(); yylval.strval=yytext; return ASYNC_WORKERS; }
 <INITIAL>{ASYNC_USLEEP}	{ count(); yylval.strval=yytext; return ASYNC_USLEEP; }
@@ -835,6 +855,7 @@ IMPORTFILE      "import_file"
 <INITIAL>{MEMSAFETY}	{ count(); yylval.strval=yytext; return MEMSAFETY; }
 <INITIAL>{MEMJOIN}	{ count(); yylval.strval=yytext; return MEMJOIN; }
 <INITIAL>{MEMSTATUSMODE}	{ count(); yylval.strval=yytext; return MEMSTATUSMODE; }
+<INITIAL>{SIP_PARSER_LOG_ONELINE}  { count(); yylval.strval=yytext; return SIP_PARSER_LOG_ONELINE; }
 <INITIAL>{SIP_PARSER_LOG}  { count(); yylval.strval=yytext; return SIP_PARSER_LOG; }
 <INITIAL>{SIP_PARSER_MODE}  { count(); yylval.strval=yytext; return SIP_PARSER_MODE; }
 <INITIAL>{CORELOG}	{ count(); yylval.strval=yytext; return CORELOG; }
@@ -907,9 +928,13 @@ IMPORTFILE      "import_file"
 									return TCP_OPT_ACCEPT_HEP3; }
 <INITIAL>{TCP_OPT_ACCEPT_HAPROXY}	{ count(); yylval.strval=yytext;
 									return TCP_OPT_ACCEPT_HAPROXY; }
+<INITIAL>{TCP_OPT_CLOSE_RST}	{ count(); yylval.strval=yytext; return TCP_OPT_CLOSE_RST; }
 <INITIAL>{TCP_CLONE_RCVBUF}		{ count(); yylval.strval=yytext;
 									return TCP_CLONE_RCVBUF; }
 <INITIAL>{TCP_REUSE_PORT}	{ count(); yylval.strval=yytext; return TCP_REUSE_PORT; }
+<INITIAL>{TCP_WAIT_DATA}	{ count(); yylval.strval=yytext;
+									return TCP_WAIT_DATA; }
+<INITIAL>{TCP_SCRIPT_MODE}	{ count(); yylval.strval=yytext; return TCP_SCRIPT_MODE; }
 <INITIAL>{DISABLE_TLS}	{ count(); yylval.strval=yytext; return DISABLE_TLS; }
 <INITIAL>{ENABLE_TLS}	{ count(); yylval.strval=yytext; return ENABLE_TLS; }
 <INITIAL>{TLSLOG}		{ count(); yylval.strval=yytext; return TLS_PORT_NO; }
@@ -1337,7 +1362,7 @@ IMPORTFILE      "import_file"
 <DEFINE_DATA>\\{CR}		{	count(); ksr_cfg_print_part(yytext); } /* eat the escaped CR */
 <DEFINE_DATA>{CR}		{	count();
 							ksr_cfg_print_part(yytext);
-							if (pp_define_set(strlen(s_buf.s), s_buf.s)) return 1;
+							if (pp_define_set(strlen(s_buf.s), s_buf.s, KSR_PPDEF_NORMAL)) return 1;
 							memset(&s_buf, 0, sizeof(s_buf));
 							state = INITIAL;
 							ksr_cfg_print_initial_state();
@@ -1447,7 +1472,70 @@ IMPORTFILE      "import_file"
 <DEFENV_ID>[^ \t\r\n]+   { /* get the define id of environment variable */
 				count();
 				ksr_cfg_print_part(yytext);
-				if(pp_define_env(yytext, yyleng) < 0) {
+				if(pp_define_env(yytext, yyleng, KSR_PPDEF_NORMAL, KSR_PPDEF_VALREQ) < 0) {
+					LM_CRIT("error at %s line %d\n", (finame)?finame:"cfg", line);
+					ksr_exit(-1);
+				}
+				state = INITIAL;
+				ksr_cfg_print_initial_state();
+}
+
+<INITIAL,CFGPRINTMODE>{PREP_START}{DEFENVS}  { count();
+			ksr_cfg_print_part(yytext);
+			state = DEFINE_S;
+			BEGIN(DEFENVS_ID);
+}
+
+<DEFENVS_ID>[ \t]*      { /* eat the whitespace */
+				count();
+				ksr_cfg_print_part(yytext);
+			}
+<DEFENVS_ID>[^ \t\r\n]+   { /* get the define id of environment variable */
+				count();
+				ksr_cfg_print_part(yytext);
+				if(pp_define_env(yytext, yyleng, KSR_PPDEF_QUOTED, KSR_PPDEF_VALREQ) < 0) {
+					LM_CRIT("error at %s line %d\n", (finame)?finame:"cfg", line);
+					ksr_exit(-1);
+				}
+				state = INITIAL;
+				ksr_cfg_print_initial_state();
+}
+
+<INITIAL,CFGPRINTMODE>{PREP_START}{TRYDEFENV}  { count();
+			ksr_cfg_print_part(yytext);
+			state = DEFINE_S;
+			BEGIN(TRYDEFENV_ID);
+}
+
+<TRYDEFENV_ID>[ \t]*      { /* eat the whitespace */
+				count();
+				ksr_cfg_print_part(yytext);
+			}
+<TRYDEFENV_ID>[^ \t\r\n]+   { /* get the define id of environment variable */
+				count();
+				ksr_cfg_print_part(yytext);
+				if(pp_define_env(yytext, yyleng, KSR_PPDEF_NORMAL, KSR_PPDEF_VALTRY) < 0) {
+					LM_CRIT("error at %s line %d\n", (finame)?finame:"cfg", line);
+					ksr_exit(-1);
+				}
+				state = INITIAL;
+				ksr_cfg_print_initial_state();
+}
+
+<INITIAL,CFGPRINTMODE>{PREP_START}{TRYDEFENVS}  { count();
+			ksr_cfg_print_part(yytext);
+			state = DEFINE_S;
+			BEGIN(TRYDEFENVS_ID);
+}
+
+<TRYDEFENVS_ID>[ \t]*      { /* eat the whitespace */
+				count();
+				ksr_cfg_print_part(yytext);
+			}
+<TRYDEFENVS_ID>[^ \t\r\n]+   { /* get the define id of environment variable */
+				count();
+				ksr_cfg_print_part(yytext);
+				if(pp_define_env(yytext, yyleng, KSR_PPDEF_QUOTED, KSR_PPDEF_VALTRY) < 0) {
 					LM_CRIT("error at %s line %d\n", (finame)?finame:"cfg", line);
 					ksr_exit(-1);
 				}
@@ -2007,7 +2095,7 @@ int pp_define(int len, const char *text)
 	return 0;
 }
 
-int pp_define_set(int len, char *text)
+int pp_define_set(int len, char *text, int mode)
 {
 	int ppos;
 
@@ -2049,19 +2137,21 @@ int pp_define_set(int len, char *text)
 
 	pp_defines[ppos].value.len = len;
 	pp_defines[ppos].value.s = text;
-	LM_DBG("### setting define ID [%.*s] value [%.*s]\n",
+	LM_DBG("### setting define ID [%.*s] value [%.*s] (mode: %d)\n",
 			pp_defines[ppos].name.len,
 			pp_defines[ppos].name.s,
 			pp_defines[ppos].value.len,
-			pp_defines[ppos].value.s);
+			pp_defines[ppos].value.s,
+			mode);
 	return 0;
 }
 
-int pp_define_env(const char *text, int len)
+int pp_define_env(const char *text, int len, int qmode, int vmode)
 {
 	char *r;
 	str defname;
 	str defvalue;
+	str newval;
 
 	r = strchr(text, '=');
 
@@ -2080,6 +2170,9 @@ int pp_define_env(const char *text, int len)
 	defvalue.s = getenv(r);
 
 	if(defvalue.s == NULL) {
+        if(vmode == KSR_PPDEF_VALTRY) {
+            return 0;
+        }
 		LM_ERR("env variable not defined [%s]\n", (char*)text);
 		return -1;
 	}
@@ -2090,7 +2183,14 @@ int pp_define_env(const char *text, int len)
 		LM_ERR("cannot set define name [%s]\n", (char*)text);
 		return -1;
 	}
-	if(pp_define_set(defvalue.len, defvalue.s)<0) {
+	if(qmode==KSR_PPDEF_QUOTED) {
+		if(pp_def_qvalue(&defvalue, &newval) < 0) {
+			LM_ERR("failed to enclose in quotes the value\n");
+			return -1;
+		}
+		defvalue = newval;
+	}
+	if(pp_define_set(defvalue.len, defvalue.s, qmode)<0) {
 		LM_ERR("cannot set define value [%s]\n", (char*)text);
 		return -1;
 	}

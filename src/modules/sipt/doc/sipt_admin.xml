@@ -109,6 +109,24 @@ sipt_forwarfing($avp(s:forwarding_number), 3);
 </programlisting>
 		</example>
 	</section>
+	<section id="sipt.f.sipt_has_isup_body">
+		<title><function moreinfo="none">sipt_has_isup_body()</function></title>
+		<para>
+			The function returns <emphasis>true</emphasis> if the SIP message
+			has a ISUP body attached.
+		</para>
+		<example>
+			<title><function moreinfo="none">sipt_has_isup_body()</function> usage</title>
+			<programlisting format="linespecific">
+...
+if(sipt_has_isup_body())
+{
+    # do interesting stuff here
+}
+...
+</programlisting>
+		</example>
+	</section>
 </section>
 <section>
         <title>Exported pseudo-variables</title>
@@ -253,6 +271,14 @@ if($sipt(calling_party_number.nai) == 3)
 </programlisting>
 		</example>
 	</section>
+	<section id="sipt.v.sipt_calling_party_number">
+		<title><varname>$sipt(calling_party_number)</varname></title>
+		<para>
+			Returns the value (Address signal) of the Calling Party for the IAM message.
+			Returns -1 if there is a parsing error or if
+			the Calling Party Number is not present.
+		</para>
+	</section>
 	<section id="sipt.v.sipt_called_party_nai">
 		<title><varname>$sipt(called_party_number.nature_of_address) / $sipt(called_party_number.nai) / $sipt_called_party_nai</varname></title>
 		<para>
@@ -286,6 +312,14 @@ if($sipt(called_party_number.nai) == 3)
 ...
 </programlisting>
 		</example>
+	</section>
+		<section id="sipt.v.sipt_called_party_number">
+		<title><varname>$sipt(called_party_number)</varname></title>
+		<para>
+			Returns the value (Address signal) of the Called Party for the IAM message.
+			Returns -1 if there is a parsing error or if
+			the Called Party Number is not present.
+		</para>
 	</section>
 	<section id="sipt.v.sipt_event_info">
 		<title><varname>$sipt(event_info)</varname></title>
@@ -332,8 +366,8 @@ if($sipt(called_party_number.nai) == 3)
 	<section id="sipt.v.sipt_redirection_info">
 		<title><varname>$sipt(redirection_info) / $sipt_redirection_info</varname></title>
 		<para>
-			Returns redirection info header from ISUP
-			Returns "Redirecting reason" or -1 if no redirection info found.
+			Returns call diversion information header from ISUP
+			Returns "Redirecting reason" or -1 if no call diversion information found.
 		</para>
 		<table>
 			<title>Redirecting reason Values</title>
@@ -386,6 +420,63 @@ $avp(s:redir_num) = $sipt(redirection_number);
 			</tgroup>
 		</table>
 	</section>
+
+	<section id="sipt.v.sipt_redirection_information_reason">
+		<title><varname>$sipt(redirection_information.reason)</varname></title>
+		<para>
+			Returns redirection reason from Redirection information from ISUP or -1 if no Redirection information found.
+		</para>
+	</section>
+
+	<section id="sipt.v.sipt_redirection_information_original_reason">
+		<title><varname>$sipt(redirection_information.original_reason)</varname></title>
+		<para>
+			Returns original redirection reason from Redirection information from ISUP or -1 if no Redirection information found.
+		</para>
+	</section>
+
+	<section id="sipt.v.sipt_redirecting_number_nai">
+		<title><varname>$sipt(redirecting_number.nai)</varname></title>
+		<para>
+			Returns NAI for redirecting number from ISUP or -1 if no redirecting number found.
+		</para>
+	</section>
+
+	<section id="sipt.v.sipt_redirecting_number">
+		<title><varname>$sipt(redirecting_number)</varname></title>
+		<para>
+			Returns redirecting number from ISUP or -1 if no redirecting number found.
+		</para>
+	</section>
+
+	<section id="sipt.v.sipt_original_called_number_nai">
+		<title><varname>$sipt(original_called_number.nai)</varname></title>
+		<para>
+			Returns NAI for original called number from ISUP or -1 if no original called number found.
+		</para>
+	</section>
+
+	<section id="sipt.v.sipt_original_called_number">
+		<title><varname>$sipt(original_called_number)</varname></title>
+		<para>
+			Returns original called number from ISUP or -1 if no original called number found.
+		</para>
+	</section>
+	
+	<section id="sipt.v.sipt_generic_number_nai">
+		<title><varname>$sipt(generic_number.nai)</varname></title>
+		<para>
+			Returns NAI for generic number from ISUP or -1 if no generic number found.
+		</para>
+	</section>
+
+	<section id="sipt.v.sipt_generic_number">
+		<title><varname>$sipt(generic_number)</varname></title>
+		<para>
+			Returns generic number from ISUP or -1 if no generic number found.
+		</para>
+	</section>
+
 </section>
 </chapter>
 

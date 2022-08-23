@@ -34,11 +34,6 @@
  *
  */
 
-#ifdef __OS_darwin
-#include <mach/clock.h>
-#include <mach/mach.h>
-#endif
-
 #include "routing.h"
 #include "config.h"
 #include "peermanager.h"
@@ -50,26 +45,6 @@
 extern dp_config *config; /**< Configuration for this diameter peer 	*/
 int gcount = 0;
 
-/**
- * portable implementation for clock_gettime(CLOCK_REALTIME, ts)
- */
-int ser_clock_gettime(struct timespec *ts)
-{
-#ifdef __OS_darwin
-	clock_serv_t cclock;
-	mach_timespec_t mts;
-
-	/* OS X does not have clock_gettime, use clock_get_time */
-	host_get_clock_service(mach_host_self(), CALENDAR_CLOCK, &cclock);
-	clock_get_time(cclock, &mts);
-	mach_port_deallocate(mach_task_self(), cclock);
-	ts->tv_sec = mts.tv_sec;
-	ts->tv_nsec = mts.tv_nsec;
-	return 0;
-#else
-	return clock_gettime(CLOCK_REALTIME, ts);
-#endif
-}
 
 /**
  * Returns if the peer advertised support for an Application ID
@@ -146,17 +121,17 @@ peer* get_first_connected_route(cdp_session_t* cdp_session, routing_entry *r, in
 	}
 
 	least_recent_time = peers[0]->last_selected;
-	LM_DBG("peer [%.*s] was last used @ %ld\n", peers[0]->fqdn.len, peers[0]->fqdn.s, peers[0]->last_selected);
+	LM_DBG("peer [%.*s] was last used @ %" TIME_T_FMT "\n", peers[0]->fqdn.len, peers[0]->fqdn.s, TIME_T_CAST(peers[0]->last_selected));
 	p = peers[0];
 	for (j = 1; j < peer_count; j++) {
-		LM_DBG("Peer [%.*s] was last used at [%ld]\n", peers[j]->fqdn.len, peers[j]->fqdn.s, peers[j]->last_selected);
+		LM_DBG("Peer [%.*s] was last used at [%" TIME_T_FMT "]\n", peers[j]->fqdn.len, peers[j]->fqdn.s, TIME_T_CAST(peers[j]->last_selected));
 		if (peers[j]->last_selected < least_recent_time) {
 			least_recent_time = peers[j]->last_selected;
 			p = peers[j];
 		}
 	}
 
-	ser_clock_gettime(&time_spec);
+	ksr_clock_gettime(&time_spec);
 
 	p->last_selected = (time_spec.tv_sec*1000000) + round(time_spec.tv_nsec / 1.0e3); // Convert nanoseconds to microseconds
 	LM_DBG("chosen peer [%.*s]\n", p->fqdn.len, p->fqdn.s);

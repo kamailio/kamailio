@@ -88,12 +88,15 @@ struct t_dns_cache_stats* dns_cache_stats=0;
 #define LOCK_DNS_HASH()		lock_get(dns_hash_lock)
 #define UNLOCK_DNS_HASH()	lock_release(dns_hash_lock)
 
+static int _dns_local_ttl = 0;
+
 #define FIX_TTL(t) \
-	(((t)<cfg_get(core, core_cfg, dns_cache_min_ttl))? \
-		cfg_get(core, core_cfg, dns_cache_min_ttl): \
-		(((t)>cfg_get(core, core_cfg, dns_cache_max_ttl))? \
-			cfg_get(core, core_cfg, dns_cache_max_ttl): \
-			(t)))
+	((_dns_local_ttl>0)?_dns_local_ttl: \
+		(((t)<cfg_get(core, core_cfg, dns_cache_min_ttl))? \
+			cfg_get(core, core_cfg, dns_cache_min_ttl): \
+				(((t)>cfg_get(core, core_cfg, dns_cache_max_ttl))? \
+					cfg_get(core, core_cfg, dns_cache_max_ttl): \
+						(t))))
 
 
 struct dns_hash_head{
@@ -132,6 +135,10 @@ static const char* dns_str_errors[]={
 };
 
 
+void dns_set_local_ttl(int ttl)
+{
+	_dns_local_ttl = ttl;
+}
 
 /* param: err (negative error number) */
 const char* dns_strerror(int err)
@@ -2574,9 +2581,9 @@ struct hostent* dns_srv_sip_resolvehost(str* name, unsigned short* port,
  *         tried      - bitmap used to keep track of the already tried records
  *                      (no more then sizeof(tried)*8 valid records are
  *                      ever walked
- *         srv_name   - if succesfull, it will be set to the selected record
+ *         srv_name   - if successful, it will be set to the selected record
  *                      srv name (naptr repl.)
- *         proto      - if succesfull it will be set to the selected record
+ *         proto      - if successful it will be set to the selected record
  *                      protocol
  * returns  0 if no more records found or a pointer to the selected record
  *  and sets  protocol and srv_name

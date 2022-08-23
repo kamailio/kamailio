@@ -43,14 +43,8 @@
 #define EQUAL '='
 #define SEPARATOR ';'
 
-
-#if MAX_ACC_EXTRA<MAX_ACC_LEG
-#define MAX_ACC_INT_BUF MAX_ACC_LEG
-#else
-#define MAX_ACC_INT_BUF MAX_ACC_EXTRA
-#endif
 /* here we copy the strings returned by int2str (which uses a static buffer) */
-static char int_buf[INT2STR_MAX_LEN*MAX_ACC_INT_BUF];
+static char *int_buf = NULL;
 
 struct acc_extra *parse_acc_leg(char *extra_str)
 {
@@ -109,7 +103,7 @@ struct acc_extra *parse_acc_extra(char *extra_str)
 		while (*s && isspace((int)*s))  s++;
 		if (*s==0)
 			goto parse_error;
-		if (n==MAX_ACC_EXTRA) {
+		if (n==acc_extra_size) {
 			LM_ERR("too many extras -> please increase the internal buffer\n");
 			goto error;
 		}
@@ -224,7 +218,7 @@ int extra2strar(struct acc_extra *extra, struct sip_msg *rq, str *val_arr,
 		}
 
 		/* check for overflow */
-		if (n==MAX_ACC_EXTRA) {
+		if (n==acc_extra_size) {
 			LM_WARN("array to short -> omitting extras for accounting\n");
 			goto done;
 		}
@@ -258,6 +252,7 @@ int extra2strar(struct acc_extra *extra, struct sip_msg *rq, str *val_arr,
 				type_arr[n] = TYPE_STR;
 			}
 		}
+		LM_DBG("type of the extra attr[%d] set to: %d\n", n, type_arr[n]);
 		n++;
 
 		extra = extra->next;
@@ -283,7 +278,7 @@ int extra2strar_dlg_only(struct acc_extra *extra, struct dlg_cell* dlg, str *val
 	while (extra) {
 
 		/* check for overflow */
-		if (n==MAX_ACC_EXTRA) {
+		if (n==acc_extra_size) {
 			LM_WARN("array to short -> omitting extras for accounting\n");
 			goto done;
 		}
@@ -365,4 +360,29 @@ int legs2strar( struct acc_extra *legs, struct sip_msg *rq, str *val_arr,
 		return n;
 exit:
 	return 0;
+}
+
+int acc_extra_arrays_alloc(void) {
+	int acc_int_buf_size;
+
+	if (acc_extra_size < MAX_ACC_LEG) {
+		acc_int_buf_size = MAX_ACC_LEG;
+	} else {
+		acc_int_buf_size = acc_extra_size;
+	}
+
+	if ((int_buf = pkg_malloc((INT2STR_MAX_LEN * acc_int_buf_size) * sizeof(char))) == NULL) {
+		LM_ERR("failed to alloc int_buf\n");
+		return -1;
+	}
+
+	return 1;
+}
+
+void acc_extra_arrays_free(void) {
+	if (int_buf) {
+		pkg_free(int_buf);
+	}
+
+	return ;
 }

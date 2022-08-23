@@ -929,6 +929,52 @@ sht_rm_value("ha", "re", ".*");
 </programlisting>
 		</example>
 	</section>
+	<section id="htable.f.sht_setxs">
+		<title>
+		<function moreinfo="none">sht_setxs(htname, itname, itval, exval)</function>
+		</title>
+		<para>
+			Set the item with the name 'itname' from hash table 'htname' to string
+			value 'itval' and expire property to 'exval'.
+		</para>
+		<para>
+			The parameters can be with variables.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>sht_setxs</function> usage</title>
+		<programlisting format="linespecific">
+...
+sht_setxs("ha", "test", "abc", "10");
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="htable.f.sht_setxi">
+		<title>
+		<function moreinfo="none">sht_setxi(htname, itname, itval, exval)</function>
+		</title>
+		<para>
+			Set the item with the name 'itname' from hash table 'htname' to integer
+			value 'itval' and expire property to 'exval'.
+		</para>
+		<para>
+			The parameters can be with variables.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>sht_setxi</function> usage</title>
+		<programlisting format="linespecific">
+...
+sht_setxs("ha", "test", "100", "10");
+...
+</programlisting>
+		</example>
+	</section>
 	<section id="htable.f.sht_reset">
 		<title>
 		<function moreinfo="none">sht_reset(htable)</function>
@@ -1079,6 +1125,116 @@ sht_iterator_end("i1");
     while(sht_iterator_next("i1")) {
         xlog("h1[$shtitkey(i1)] is: $shtitval(i1)\n");
     }
+    sht_iterator_end("i1");
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="htable.f.sht_iterator_rm">
+		<title>
+		<function moreinfo="none">sht_iterator_rm(iname)</function>
+		</title>
+		<para>
+			Remove the current item in the iterator and move the iterator to
+			the next one.
+		</para>
+		<para>
+			The return code is 1 (true) if the item was removed and next item
+			exists; -2 (false) if the item was removed and there is no next item
+			(end of items); other negative value (false) can be returned on
+			error (e.g., iterator or item not found).
+		</para>
+		<para>
+			The parameter can be dynamic string with variables.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>sht_iterator_rm</function> usage</title>
+		<programlisting format="linespecific">
+...
+    sht_iterator_start("i1", "h1");
+    while(sht_iterator_next("i1")) {
+        while($shtitkey(i1) =~ "xyz" and sht_iterator_rm("i1")) {
+            xdbg("item removed\n");
+        }
+    }
+    sht_iterator_end("i1");
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="htable.f.sht_iterator_sets">
+		<title>
+		<function moreinfo="none">sht_iterator_sets(iname, sval)</function>
+		</title>
+		<para>
+			Set the value of the current item to the string in the sval.
+		</para>
+		<para>
+			The parameters can be dynamic strings with variables.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>sht_iterator_sets</function> usage</title>
+		<programlisting format="linespecific">
+...
+    sht_iterator_start("i1", "h1");
+    sht_iterator_next("i1");
+    sht_iterator_sets("i1", "$ci");
+    sht_iterator_end("i1");
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="htable.f.sht_iterator_seti">
+		<title>
+		<function moreinfo="none">sht_iterator_seti(iname, ival)</function>
+		</title>
+		<para>
+			Set the value of the current item to the integer in the ival.
+		</para>
+		<para>
+			The parameters can be dynamic strings or integers with variables.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>sht_iterator_seti</function> usage</title>
+		<programlisting format="linespecific">
+...
+    sht_iterator_start("i1", "h1");
+    sht_iterator_next("i1");
+    sht_iterator_seti("i1", "20");
+    sht_iterator_end("i1");
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="htable.f.sht_iterator_setex">
+		<title>
+		<function moreinfo="none">sht_iterator_setex(iname, exval)</function>
+		</title>
+		<para>
+			Set the expire of the current item to the integer in the exval.
+		</para>
+		<para>
+			The parameters can be dynamic strings or integers with variables.
+		</para>
+		<para>
+			This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>sht_iterator_setex</function> usage</title>
+		<programlisting format="linespecific">
+...
+    sht_iterator_start("i1", "h1");
+    sht_iterator_next("i1");
+    sht_iterator_setex("i1", "120");
     sht_iterator_end("i1");
 ...
 </programlisting>
@@ -1363,7 +1519,98 @@ kamcmd htable.sets test x[0] abc
 kamcmd htable.seti test x 123
 
 # Set first entry in array key x $sht(test=>x[0]) as integer
-kamcmd htable.sets test x[0] 123
+kamcmd htable.seti test x[0] 123
+...
+</programlisting>
+	</section>
+       <section id="htable.rpc.setex">
+                <title>
+                <function moreinfo="none">htable.setex htable key expire</function>
+                </title>
+                <para>
+					Set the expire for an item in hash table.
+                </para>
+                <para>
+                Name: <emphasis>htable.setex</emphasis>
+                </para>
+                <para>Parameters:</para>
+                <itemizedlist>
+                        <listitem><para>htable : name of the hash table</para>
+                        </listitem>
+                        <listitem><para>key : key name in the hash table</para>
+                        </listitem>
+                        <listitem><para>expire : integer value for the expire (seconds)</para>
+                        </listitem>
+                </itemizedlist>
+                <para>
+                Example:
+                </para>
+<programlisting  format="linespecific">
+...
+# set  expire for $sht(test=>x) to 120 secs
+kamctl rpc htable.seti test x 120
+...
+</programlisting>
+	</section>
+       <section id="htable.rpc.setxs">
+                <title>
+                <function moreinfo="none">htable.setxs htable key value expire</function>
+                </title>
+                <para>
+					Set the string value and expire for an item in hash table.
+                </para>
+                <para>
+                Name: <emphasis>htable.setxs</emphasis>
+                </para>
+                <para>Parameters:</para>
+                <itemizedlist>
+                        <listitem><para>htable : name of the hash table</para>
+                        </listitem>
+                        <listitem><para>key : key name in the hash table</para>
+                        </listitem>
+                        <listitem><para>value : string value for the item</para>
+                        </listitem>
+                        <listitem><para>expire : integer value for the expire (seconds)</para>
+                        </listitem>
+                </itemizedlist>
+                <para>
+                Example:
+                </para>
+<programlisting  format="linespecific">
+...
+# set value to 'abc' and expire for $sht(test=>x) to 120 secs
+kamctl rpc htable.setxs test x abc 120
+...
+</programlisting>
+	</section>
+       <section id="htable.rpc.setxi">
+                <title>
+                <function moreinfo="none">htable.setxi htable key value expire</function>
+                </title>
+                <para>
+					Set the integer value and expire for an item in hash table.
+                </para>
+                <para>
+                Name: <emphasis>htable.setxi</emphasis>
+                </para>
+                <para>Parameters:</para>
+                <itemizedlist>
+                        <listitem><para>htable : name of the hash table</para>
+                        </listitem>
+                        <listitem><para>key : key name in the hash table</para>
+                        </listitem>
+                        <listitem><para>value : integer value for the item</para>
+                        </listitem>
+                        <listitem><para>expire : integer value for the expire (seconds)</para>
+                        </listitem>
+                </itemizedlist>
+                <para>
+                Example:
+                </para>
+<programlisting  format="linespecific">
+...
+# set value to 10 and expire for $sht(test=>x) to 120 secs
+kamctl rpc htable.setxi test x 10 120
 ...
 </programlisting>
 	</section>

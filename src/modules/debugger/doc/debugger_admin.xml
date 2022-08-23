@@ -101,6 +101,29 @@ modparam("debugger", "cfgtrace", 1)
 	    </example>
 	</section>
 
+	<section id="dbg.p.cfgtrace_format">
+	    <title><varname>cfgtrace_format</varname> (int)</title>
+	    <para>
+			Control what is printer in the cfgtrace log message. If it is set
+			to 1, then the configuration file path is not printed, making
+			the log messages shorter when not including other configuration
+			files in the main one.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>0</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>cfgtrace_format</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("debugger", "cfgtrace_format", 1)
+...
+</programlisting>
+	    </example>
+	</section>
+
 	<section id="dbg.p.breakpoint">
 	    <title><varname>breakpoint</varname> (int)</title>
 	    <para>

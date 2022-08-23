@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+
+	<title>&adminguide;</title>
+
+	<section>
+	<title>Overview</title>
+	<para>
+		This module provides integration with Slack over webhooks.
+		Slack integration (https://api.slack.com/messaging/webhooks)
+	</para>
+	<para>
+		It relays on libcurl through http_client module.
+	</para>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+			The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem><para>
+			HTTP_CLIENT - the http_client module should be
+			loaded first.
+			</para></listitem>
+			</itemizedlist>
+        </para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>&libcurl;</emphasis>
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+
+	<section>
+	<title>Parameters</title>
+	<section id="slack.p.url">
+		<title><varname>slack url</varname> (str)</title>
+		<para>
+			Slack webhook url
+		</para>
+		<para>
+		<emphasis>
+			Default value is not set (empty)
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>slack webhook URL</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("slack", "slack_url", "https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX")
+...
+		</programlisting>
+		</example>
+	</section>
+	<section id="slack.p.channel">
+		<title><varname>channel</varname> (str)</title>
+		<para>
+			Slack channel name
+		</para>
+		<para>
+		<emphasis>
+			Default value is #kamailio
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>channel</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("slack", "channel", "#kamailio")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="lwsc.p.username">
+		<title><varname>username</varname> (str)</title>
+		<para>
+			Specify the username for the published message
+		</para>
+		<para>
+		<emphasis>
+			Default value is webhookbot.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>username</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("slack", "username", "webhookbot")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="slack.p.icon_emoji">
+		<title><varname>icon_emoji</varname> (str)</title>
+		<para>
+			specify an emoji (using colon shortcodes, eg. :white_check_mark:)
+			to use as the profile photo alongside the message.
+		</para>
+		<para>
+		<emphasis>
+			Default value is :ghost:
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>icon_emoji</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("slack", "icon_emoji", ":ghost:")
+...
+</programlisting>
+		</example>
+	</section>
+
+	</section>
+
+	<section>
+	<title>Functions</title>
+	<section id="slack.f.slack_send">
+	    <title>
+		<function moreinfo="none">slack_send(format)</function>
+	    </title>
+	    <para>
+		Send a formatted message to slack channel.
+		</para>
+		<para>
+		The parameters are:
+		</para>
+		<itemizedlist>
+			<listitem>
+			<para>
+			format - The formatted string to be send.
+			</para>
+			</listitem>
+		</itemizedlist>
+		<para>
+		The parameters can contain pseudo-variables.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>slack_send</function> usage</title>
+		<programlisting format="linespecific">
+...
+    slack_send("Hello from Kamailio! caller=$fU;callee=$tU;callid=$ci");
+...
+</programlisting>
+	    </example>
+	</section>
+	</section>
+</chapter>

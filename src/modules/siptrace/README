@@ -63,6 +63,8 @@ Camille Oudot
               3.22. trace_mode (integer)
               3.23. auth_key (integer)
               3.24. evcb_msg (str)
+              3.25. trace_dialog_ack (str)
+              3.26. trace_dialog_spiral (str)
 
         4. Functions
 
@@ -106,10 +108,12 @@ Camille Oudot
    1.21. Set trace_mode parameter
    1.22. Set auth_key parameter
    1.23. Set evcb_msg parameter
-   1.24. sip_trace() usage
-   1.25. sip_trace_mode() usage
-   1.26. hlog() usage
-   1.27. Send relayed ACK message
+   1.24. Set trace_dialog_ack parameter
+   1.25. Set trace_dialog_spiral parameter
+   1.26. sip_trace() usage
+   1.27. sip_trace_mode() usage
+   1.28. hlog() usage
+   1.29. Send relayed ACK message
 
 Chapter 1. Admin Guide
 
@@ -147,6 +151,8 @@ Chapter 1. Admin Guide
         3.22. trace_mode (integer)
         3.23. auth_key (integer)
         3.24. evcb_msg (str)
+        3.25. trace_dialog_ack (str)
+        3.26. trace_dialog_spiral (str)
 
    4. Functions
 
@@ -231,6 +237,8 @@ Chapter 1. Admin Guide
    3.22. trace_mode (integer)
    3.23. auth_key (integer)
    3.24. evcb_msg (str)
+   3.25. trace_dialog_ack (str)
+   3.26. trace_dialog_spiral (str)
 
 3.1. db_url (str)
 
@@ -565,6 +573,32 @@ modparam("siptrace", "auth_key", "spoihepuirthpeuia")
 modparam("siptrace", "evcb_msg", "ksr_siptrace_msg")
 ...
 
+3.25. trace_dialog_ack (str)
+
+   Enable tracing of in-dialog ACK. Before this param, one must have set
+   the onsend() route and captured the outgoing ACK there.
+
+   Default value is 1 (enabled).
+
+   Example 1.24. Set trace_dialog_ack parameter
+...
+modparam("siptrace", "trace_dialog_ack", 1)
+...
+
+3.26. trace_dialog_spiral (str)
+
+   Enable tracing of dialog spirals. A spiraled dialog is a dialog
+   established by a SIP INVITE that loops back to the same kamailio(as
+   next hop). Right now, inside the siptrace code, a spiraled dialog is
+   identified by (*params->param == NULL).
+
+   Default value is 1 (enabled).
+
+   Example 1.25. Set trace_dialog_spiral parameter
+...
+modparam("siptrace", "trace_dialog_spiral", 1)
+...
+
 4. Functions
 
    4.1. sip_trace([address][,correlation_id][,mode])
@@ -595,7 +629,7 @@ modparam("siptrace", "evcb_msg", "ksr_siptrace_msg")
    ONREPLY_ROUTE, BRANCH_ROUTE.
    Default value is "NULL".
 
-   Example 1.24. sip_trace() usage
+   Example 1.26. sip_trace() usage
 ...
 sip_trace();
 ...
@@ -621,7 +655,7 @@ sip_trace("sip:10.1.1.2:5085", "$ci-abc", "d");
 
    This function can be used in ANY_ROUTE.
 
-   Example 1.25. sip_trace_mode() usage
+   Example 1.27. sip_trace_mode() usage
 ...
 sip_trace_mode("t");
 ...
@@ -638,7 +672,7 @@ sip_trace_mode("t");
      * message - The text to send to Homer as log event. (This parameter
        may contain PVs)
 
-   Example 1.26. hlog() usage
+   Example 1.28. hlog() usage
 ...
 hlog("[cfg:$cfg(line)] This is a log from kamailio to Homer");
 ...
@@ -712,7 +746,7 @@ event_route[siptrace:msg] {
    this name will result in overlapping internal avp used by the module
    therefore causing unknown consequences.
 
-   Example 1.27. Send relayed ACK message
+   Example 1.29. Send relayed ACK message
 ...
 onsend_route {
     if (is_method("ACK")) {

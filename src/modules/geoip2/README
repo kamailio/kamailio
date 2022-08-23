@@ -10,6 +10,10 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
+Henning Westerholt
+
+   gilawa.com
+
    Copyright © 2010 Daniel-Constantin Mierla (asipto.com)
      __________________________________________________________________
 
@@ -31,12 +35,17 @@ Daniel-Constantin Mierla
 
               4.1. geoip2_match(ipaddr, pvc)
 
-        5. Exported pseudo-variables
+        5. RPC Commands
+
+              5.1. geoip2.reload
+
+        6. Exported pseudo-variables
 
    List of Examples
 
    1.1. Set path parameter
    1.2. geoip2_match usage
+   1.3. geoip2.reload usage
 
 Chapter 1. Admin Guide
 
@@ -56,7 +65,11 @@ Chapter 1. Admin Guide
 
         4.1. geoip2_match(ipaddr, pvc)
 
-   5. Exported pseudo-variables
+   5. RPC Commands
+
+        5.1. geoip2.reload
+
+   6. Exported pseudo-variables
 
 1. Overview
 
@@ -78,7 +91,10 @@ Chapter 1. Admin Guide
    to enable access to the results of a query to the database.
 
    Many queries can be done and store results in different containers to
-   be able to use in parallel. Database is loaded at startup in cache.
+   be able to use in parallel. Database is loaded at startup in cache. The
+   cache can be reloaded with an RPC command. In this case make sure that
+   you do not overwrite the file in place, but replace it, e.g. with a
+   “move” command.
 
 2. Dependencies
 
@@ -119,6 +135,8 @@ modparam("geoip2", "path", "/usr/local/share/GeoIP/GeoLite2-City.mmdb")
 
    Match ipaddr against the GeoIP database and set the pvc container. The
    function has to be called before accessing a key via: $gip2(pvc=>key).
+   At least one function needs to be present that access the pvc
+   container, otherwise this function will not work.
 
    Example 1.2. geoip2_match usage
 ...
@@ -126,7 +144,21 @@ if(geoip2_match("$si", "src"))
     xlog("SIP message from: $gip2(src=>cc)\n");
 ...
 
-5. Exported pseudo-variables
+5. RPC Commands
+
+   5.1. geoip2.reload
+
+5.1.  geoip2.reload
+
+   Reload the internal GeoIP database. This is necessary after the
+   database file has been changed on the disk.
+
+   Example 1.3. geoip2.reload usage
+...
+kamcmd geoip2.reload
+...
+
+6. Exported pseudo-variables
 
      * $gip2(pvc=>key) - pvc is an identifier for this query result; it is
        designated by the second parameter of geoip2_match(). The key can

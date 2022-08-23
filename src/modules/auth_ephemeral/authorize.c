@@ -69,11 +69,11 @@ static inline int get_pass(str *_username, str *_secret, str *_password)
 			break;
 		case AUTHEPH_SHA384:
 			hmac_len = SHA384_DIGEST_LENGTH;
-			if (HMAC(EVP_sha256(), _secret->s, _secret->len,
+			if (HMAC(EVP_sha384(), _secret->s, _secret->len,
 					(unsigned char *) _username->s,
 					_username->len, hmac_sha1, &hmac_len) == NULL)
 			{
-				LM_ERR("HMAC-SHA256 failed\n");
+				LM_ERR("HMAC-SHA384 failed\n");
 				return -1;
 			}
 			break;
@@ -88,7 +88,7 @@ static inline int get_pass(str *_username, str *_secret, str *_password)
 			}
 			break;
 		default:
-			LM_ERR("Inavlid SHA Algorithm\n");
+			LM_ERR("Invalid SHA Algorithm\n");
 			return -1;
 
 	}
@@ -479,7 +479,26 @@ int autheph_proxy(struct sip_msg *_m, char *_realm, char *_p2)
 
 int ki_autheph_authenticate(sip_msg_t *_m, str *susername, str *spassword)
 {
-	char generated_password[base64_enc_len(SHA_DIGEST_LENGTH)];
+	unsigned int hmac_len = SHA_DIGEST_LENGTH;
+	switch(autheph_sha_alg) {
+		case AUTHEPH_SHA1:
+			hmac_len = SHA_DIGEST_LENGTH;
+			break;
+		case AUTHEPH_SHA256:
+			hmac_len = SHA256_DIGEST_LENGTH;
+			break;
+		case AUTHEPH_SHA384:
+			hmac_len = SHA384_DIGEST_LENGTH;
+			break;
+		case AUTHEPH_SHA512:
+			hmac_len = SHA512_DIGEST_LENGTH;
+			break;
+		default:
+			LM_ERR("Invalid SHA Algorithm\n");
+			return AUTH_ERROR;
+	}
+
+	char generated_password[base64_enc_len(hmac_len)];
 	str sgenerated_password;
 	struct secret *secret_struct;
 
@@ -515,14 +534,17 @@ int ki_autheph_authenticate(sip_msg_t *_m, str *susername, str *spassword)
 	secret_struct = secret_list;
 	while (secret_struct != NULL)
 	{
-		LM_DBG("trying secret: %.*s\n",
+		LM_DBG("trying secret: %.*s (%i)\n",
 			secret_struct->secret_key.len,
-			secret_struct->secret_key.s);
+			secret_struct->secret_key.s,
+			secret_struct->secret_key.len);
 		if (get_pass(susername, &secret_struct->secret_key,
 				&sgenerated_password) == 0)
 		{
-			LM_DBG("generated password: %.*s\n",
-				sgenerated_password.len, sgenerated_password.s);
+			LM_DBG("generated password: %.*s (%i)\n", 
+				sgenerated_password.len,
+				sgenerated_password.s,
+				sgenerated_password.len);
 			if (spassword->len == sgenerated_password.len
 					&& strncmp(spassword->s, sgenerated_password.s,
 						spassword->len) == 0)

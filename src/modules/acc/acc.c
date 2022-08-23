@@ -61,9 +61,9 @@ extern struct acc_extra *db_extra;
 /* arrays used to collect the values before being
  * pushed to the storage backend (whatever used)
  * (3 = datetime + max 2 from time_mode) */
-static str val_arr[ACC_CORE_LEN+MAX_ACC_EXTRA+MAX_ACC_LEG+3];
-static int int_arr[ACC_CORE_LEN+MAX_ACC_EXTRA+MAX_ACC_LEG+3];
-static char type_arr[ACC_CORE_LEN+MAX_ACC_EXTRA+MAX_ACC_LEG+3];
+static str *val_arr = NULL;
+static int *int_arr = NULL;
+static char *type_arr = NULL;
 
 #define ACC_TIME_FORMAT_SIZE	128
 static char acc_time_format_buf[ACC_TIME_FORMAT_SIZE];
@@ -160,7 +160,7 @@ int core2strar(struct sip_msg *req, str *c_vals, int *i_vals, char *t_vals)
 /********************************************
  *        LOG  ACCOUNTING
  ********************************************/
-static str log_attrs[ACC_CORE_LEN+MAX_ACC_EXTRA+MAX_ACC_LEG];
+static str *log_attrs = NULL;
 
 #define SET_LOG_ATTR(_n,_atr)  \
 	do { \
@@ -309,8 +309,8 @@ int acc_is_db_ready(void)
 
 /* caution: keys need to be aligned to core format
  * (3 = datetime + max 2 from time_mode) */
-static db_key_t db_keys[ACC_CORE_LEN+3+MAX_ACC_EXTRA+MAX_ACC_LEG];
-static db_val_t db_vals[ACC_CORE_LEN+3+MAX_ACC_EXTRA+MAX_ACC_LEG];
+static db_key_t *db_keys = NULL;
+static db_val_t *db_vals = NULL;
 
 
 int acc_get_db_handlers(void **vf, void **vh) {
@@ -429,18 +429,19 @@ int acc_db_request( struct sip_msg *rq)
 	for(i=0; i<m; i++)
 		VAL_STR(db_vals+i) = val_arr[i];
 	/* time value */
-	VAL_TIME(db_vals+(m++)) = acc_env.ts;
+	VAL_TIME(db_vals+m) = acc_env.ts;
+	m++;
 	/* extra time value */
 	if(acc_time_mode==1) {
-		VAL_INT(db_vals+(m++)) = (int)acc_env.tv.tv_sec;
-		i++;
-		VAL_INT(db_vals+(m++)) = (int)acc_env.tv.tv_usec;
-		i++;
+		VAL_INT(db_vals+m) = (int)acc_env.tv.tv_sec;
+		m++;
+		VAL_INT(db_vals+m) = (int)acc_env.tv.tv_usec;
+		m++;
 	} else if(acc_time_mode==2) {
 		dtime = (double)acc_env.tv.tv_usec;
 		dtime = (dtime / 1000000) + (double)acc_env.tv.tv_sec;
-		VAL_DOUBLE(db_vals+(m++)) = dtime;
-		i++;
+		VAL_DOUBLE(db_vals+m) = dtime;
+		m++;
 	} else if(acc_time_mode==3 || acc_time_mode==4) {
 		if(acc_time_mode==3) {
 			localtime_r(&acc_env.ts, &t);
@@ -451,18 +452,23 @@ int acc_db_request( struct sip_msg *rq)
 					acc_time_format, &t)<=0) {
 			acc_time_format_buf[0] = '\0';
 		}
-		VAL_STRING(db_vals+(m++)) = acc_time_format_buf;
-		i++;
+		VAL_STRING(db_vals+m) = acc_time_format_buf;
+		m++;
 	}
+	i = m;
 
 	/* extra columns */
 	o = extra2strar( db_extra, rq, val_arr+m, int_arr+m, type_arr+m);
 	m += o;
 
-	for( i++ ; i<m; i++) {
+	for( ; i<m; i++) {
 		if (acc_extra_nullable == 1 && type_arr[i] == TYPE_NULL) {
+			LM_DBG("attr[%d] is NULL\n", i);
 			VAL_NULL(db_vals + i) = 1;
 		} else {
+			LM_DBG("attr[%d] is STR len=%d\n", i, val_arr[i].len);
+			VAL_NULL(db_vals+i) = 0;
+			VAL_TYPE(db_vals+i)=DB1_STR;
 			VAL_STR(db_vals+i) = val_arr[i];
 		}
 	}
@@ -498,6 +504,8 @@ int acc_db_request( struct sip_msg *rq)
 			if (acc_extra_nullable == 1 && type_arr[i] == TYPE_NULL) {
 					VAL_NULL(db_vals + i) = 1;
 				} else {
+					VAL_NULL(db_vals+i) = 0;
+					VAL_TYPE(db_vals+i)=DB1_STR;
 					VAL_STR(db_vals+i)=val_arr[i];
 				}
 			}
@@ -624,3 +632,62 @@ void acc_api_set_arrays(acc_info_t *inf)
 	inf->leg_info = leg_info;
 }
 
+int acc_arrays_alloc(void) {
+	if ((val_arr = pkg_malloc((ACC_CORE_LEN + acc_extra_size + MAX_ACC_LEG + 3) * sizeof(str))) == NULL) {
+		LM_ERR("failed to alloc val_arr\n");
+		return -1;
+	}
+
+	if ((int_arr = pkg_malloc((ACC_CORE_LEN + acc_extra_size + MAX_ACC_LEG + 3) * sizeof(int))) == NULL) {
+		LM_ERR("failed to alloc int_arr\n");
+		return -1;
+	}
+
+	if ((type_arr = pkg_malloc((ACC_CORE_LEN + acc_extra_size + MAX_ACC_LEG + 3) * sizeof(char))) == NULL) {
+		LM_ERR("failed to alloc type_arr\n");
+		return -1;
+	}
+
+	if ((log_attrs = pkg_malloc((ACC_CORE_LEN + acc_extra_size + MAX_ACC_LEG + 3) * sizeof(str))) == NULL) {
+		LM_ERR("failed to alloc log_attrs\n");
+		return -1;
+	}
+
+	if ((db_keys = pkg_malloc((ACC_CORE_LEN + acc_extra_size + MAX_ACC_LEG + 3) * sizeof(db_key_t))) == NULL) {
+		LM_ERR("failed to alloc db_keys\n");
+		return -1;
+	}
+
+	if ((db_vals = pkg_malloc((ACC_CORE_LEN + acc_extra_size + MAX_ACC_LEG + 3) * sizeof(db_val_t))) == NULL) {
+		LM_ERR("failed to alloc db_vals\n");
+		return -1;
+	}
+
+	return 1;
+}
+
+void acc_arrays_free(void) {
+	if (val_arr) {
+		pkg_free(val_arr);
+	}
+
+	if (int_arr) {
+		pkg_free(int_arr);
+	}
+
+	if (type_arr) {
+		pkg_free(type_arr);
+	}
+
+	if (log_attrs) {
+		pkg_free(log_attrs);
+	}
+
+	if (db_keys) {
+		pkg_free(db_keys);
+	}
+
+	if (db_vals) {
+		pkg_free(db_vals);
+	}
+}
