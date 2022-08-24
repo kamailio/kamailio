@@ -747,8 +747,12 @@ xavi_child_rm("WhatEver", "FoO");
 			</para>
 			<para>
 				The first parameter has to be the name of XAVP in the root list.
+			</para>
+			<para>
 				The second parameter is the index of the XAVP that becomes the
-				first one.
+				first one (if it is greater than the number of XAVPs, modulo
+				operation is done first; if it is negative, it counts from the
+				end of the list).
 			</para>
 			<para>
 				The parameters can be with variables.
