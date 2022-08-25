@@ -145,6 +145,28 @@ int get_t_branch()
 	return T_branch;
 }
 
+/**
+ * return the transaction by combining get() and t_check_msg()
+ * - if T is not set, checks the transactions table for msg, and if found,
+ *   sets T and *branch as well as *vref=1 to signal that T was ref'ed
+ */
+struct cell* t_find(struct sip_msg *msg, int *branch, int *vref)
+{
+	if(vref) {
+		*vref = 0;
+	}
+	if(T != NULL && T != T_UNDEFINED) {
+		return T;
+	}
+	t_check_msg(msg, branch);
+	if(T != NULL && T != T_UNDEFINED) {
+		if(vref) {
+			*vref = 1;
+		}
+	}
+	return T;
+}
+
 static inline int parse_dlg( struct sip_msg *msg )
 {
 	if (parse_headers(msg, HDR_FROM_F | HDR_CSEQ_F | HDR_TO_F, 0)==-1) {

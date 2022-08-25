@@ -68,6 +68,9 @@ int t_check_msg(struct sip_msg* , int *branch );
 typedef struct cell * (*tgett_f)(void);
 struct cell *get_t(void);
 
+typedef struct cell* (*tfind_f)(struct sip_msg*, int*, int*);
+struct cell* t_find(struct sip_msg *msg, int *branch, int *vref);
+
 typedef int (*tgett_branch_f)(void);
 int get_t_branch(void);
 
