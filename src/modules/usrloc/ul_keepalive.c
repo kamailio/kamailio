@@ -37,6 +37,7 @@
 #include "../../core/parser/parse_from.h"
 #include "../../core/parser/parse_to.h"
 #include "../../core/parser/parse_rr.h"
+#include "../../core/rand/fastrand.h"
 
 #include "ul_keepalive.h"
 
@@ -65,7 +66,7 @@ Content-Length: 0\r\n\r\n"
   "%s%.*s%.*s" \
   "From: <%.*s>;tag=%.*s-%x-%lx-%lx-%x.%x\r\n" \
   "To: <sip:%.*s%s%.*s>\r\n" \
-  "Call-ID: " ULKA_CALLID_PREFIX "%u.%u\r\n" \
+  "Call-ID: " ULKA_CALLID_PREFIX "%x-%x-%x.%x\r\n" \
   "CSeq: 80 %.*s\r\n" \
   "Content-Length: 0\r\n\r\n"
 
@@ -236,6 +237,7 @@ int ul_ka_urecord(urecord_t *ur)
 				ur->aor.len, ur->aor.s,
 				(aortype==1)?"":"@",
 				(aortype==1)?0:ul_ka_domain.len, (aortype==1)?"":ul_ka_domain.s,
+				fastrand(), my_pid(),
 				_ul_ka_counter, bcnt,
 				ul_ka_method.len, ul_ka_method.s);
 		if(kabuf_len<=0 || kabuf_len>=ULKA_BUF_SIZE) {
