@@ -147,10 +147,19 @@ if (  (*tmp==(firstchar) || *tmp==((firstchar) | 32)) &&                  \
 	(((req)->first_line.type == SIP_REQUEST) &&           \
 	((req)->first_line.flags & FLINE_FLAG_PROTO_SIP))
 
+/* sip request */
+#define IS_SIP_REQUEST(req)                             \
+	(((req)->first_line.type == SIP_REQUEST) &&           \
+	((req)->first_line.flags & FLINE_FLAG_PROTO_SIP))
+
 /* sip reply */
 #define IS_SIP_REPLY(rpl)                               \
 	(((rpl)->first_line.type == SIP_REPLY) &&             \
 	((rpl)->first_line.flags & FLINE_FLAG_PROTO_SIP))
+
+/* sip message */
+#define IS_SIP_MSG(req)                                  \
+	((req)->first_line.flags & FLINE_FLAG_PROTO_SIP)
 
 /* http request */
 #define IS_HTTP(req)                                    \
