@@ -72,6 +72,7 @@ extern int       dlg_event_rt[DLG_EVENTRT_MAX];
 extern int       dlg_wait_ack;
 extern int       dlg_enable_dmq;
 extern int       dlg_filter_mode;
+extern int       dlg_ctxiuid_mode;
 int              spiral_detected = -1;
 
 extern struct rr_binds d_rrb;		/*!< binding to record-routing module */
@@ -90,6 +91,9 @@ static unsigned int CURR_DLG_ID  = 0xffffffff;	/*!< current dialog id */
 #define RR_DLG_PARAM_SIZE  (2*2*sizeof(int)+3+MAX_DLG_RR_PARAM_NAME)
 /*! separator inside the record-route paramter */
 #define DLG_SEPARATOR      '.'
+
+/*! flags for dlg_ctxiuid */
+#define DLG_CTXIUID_MODE_CANCEL 1
 
 int dlg_set_tm_callbacks(tm_cell_t *t, sip_msg_t *req, dlg_cell_t *dlg,
 		int mode);
@@ -1258,9 +1262,10 @@ dlg_cell_t *dlg_lookup_msg_dialog(sip_msg_t *msg, unsigned int *dir)
 				msg->callid->body.len, msg->callid->body.s);
 		return NULL;
 	}
-        if(msg->first_line.u.request.method_value == METHOD_CANCEL) {
-                dlg_set_ctx_iuid(dlg);
-        }
+	if((dlg_ctxiuid_mode & DLG_CTXIUID_MODE_CANCEL) && IS_SIP_REQUEST(msg)
+			&& (msg->first_line.u.request.method_value == METHOD_CANCEL)) {
+		dlg_set_ctx_iuid(dlg);
+	}
 	if(dir) *dir = vdir;
 	return dlg;
 }

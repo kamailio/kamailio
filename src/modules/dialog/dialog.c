@@ -154,6 +154,7 @@ str dlg_xavp_cfg = {0};
 int dlg_ka_timer = 0;
 int dlg_ka_interval = 0;
 int dlg_clean_timer = 90;
+int dlg_ctxiuid_mode = 0;
 
 str dlg_lreq_callee_headers = {0};
 
@@ -361,6 +362,8 @@ static param_export_t mod_params[]={
 	{ "dlg_filter_mode",       INT_PARAM, &dlg_filter_mode          },
 	{ "bye_early_code",        PARAM_INT, &bye_early_code           },
 	{ "bye_early_reason",      PARAM_STR, &bye_early_reason         },
+	{ "dlg_ctxiuid_mode",      PARAM_INT, &dlg_ctxiuid_mode         },
+
 	{ 0,0,0 }
 };
 
