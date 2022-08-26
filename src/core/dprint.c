@@ -504,7 +504,7 @@ void log_prefix_set(sip_msg_t *msg)
 	log_callid_set(msg);
 	if(log_prefix_pvs == NULL)
 		return;
-	if(msg==NULL || !(IS_SIP(msg) || IS_SIP_REPLY(msg))) {
+	if(msg==NULL || !IS_SIP_MSG(msg)) {
 		log_prefix_val = NULL;
 		return;
 	}
