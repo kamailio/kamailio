@@ -1707,6 +1707,32 @@ modparam("dialog", "bye_early_reason", "Call terminated")
 		</example>
 	</section>
 
+	<section id="dialog.p.dlg_ctxiuid_mode">
+		<title><varname>dlg_ctxiuid_mode</varname> (int)</title>
+		<para>
+			Set dialog context iuid mode, which can specify additional cases
+			when the internal unique id should be set:
+		</para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>1</emphasis> - set it when processing CANCEL requests.
+			</para></listitem>
+		</itemizedlist>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>dlg_ctxiuid_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialog", "dlg_ctxiuid_mode", 1)
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 	<section>
