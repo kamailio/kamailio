@@ -526,6 +526,7 @@ int handle_msg_branch_cb(struct sip_msg *msg, unsigned int flags, void *cb)
 
 int handle_msg_reply_cb(struct sip_msg *msg, unsigned int flags, void *cb)
 {
+	int vref = 0;
 	tm_cell_t *t = NULL;
 	sr_xavp_t **backup_xavis = NULL;
 	sr_xavp_t **list = NULL;
@@ -534,18 +535,12 @@ int handle_msg_reply_cb(struct sip_msg *msg, unsigned int flags, void *cb)
 		return 1;
 	LM_DBG("msg:%p previous branch:%d\n", msg, _branch);
 
-	if(tmb.t_check(msg, &_branch) == -1) {
-		LM_ERR("failed find UAC branch\n");
-	} else {
-		t = tmb.t_gett();
-		if(t == NULL || t == T_UNDEFINED) {
-			LM_DBG("cannot lookup the transaction\n");
-		} else {
-			LM_DBG("T:%p t_check-branch:%d xavi_list:%p branches:%d\n", t,
-					_branch, &t->xavis_list, t->nr_of_outgoings);
-			list = &t->xavis_list;
-			backup_xavis = xavi_set_list(&t->xavis_list);
-		}
+	t = tmb.t_find(msg, &_branch, &vref);
+	if(t != NULL && t != T_UNDEFINED) {
+		LM_DBG("T:%p t_check-branch:%d xavi_list:%p branches:%d\n", t,
+				_branch, &t->xavis_list, t->nr_of_outgoings);
+		list = &t->xavis_list;
+		backup_xavis = xavi_set_list(&t->xavis_list);
 	}
 
 	pvh_get_branch_index(msg, &_branch);
@@ -560,7 +555,7 @@ int handle_msg_reply_cb(struct sip_msg *msg, unsigned int flags, void *cb)
 		xavi_set_list(backup_xavis);
 		LM_DBG("restored backup_xavis:%p\n", *backup_xavis);
 	}
-	if(t) {
+	if(t && vref) {
 		tmb.unref_cell(t);
 		LM_DBG("T:%p unref\n", t);
 	}
