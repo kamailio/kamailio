@@ -224,12 +224,15 @@ static int w_pvh_header_param_exists(struct sip_msg *msg, char *p1, char *p2)
 static int ki_pvh_remove_header_param(
 		struct sip_msg *msg, str *hname, str *toRemove)
 {
-	int idx;
+	int next;
+	int idx = 0;
 	int new_size;
 	str dst = STR_NULL;
 	sr_xavp_t *avi = pvh_xavi_get_child(msg, &xavi_name, hname);
 
-	for(idx = 0; avi != NULL; avi = xavi_get_next(avi)) {
+	while(avi) {
+		next = 1;
+		LM_DBG("hname:%.*s[%d]\n", STR_FMT(hname), idx);
 		if(avi->val.type == SR_XTYPE_STR && avi->val.v.s.s != NULL) {
 			if(str_casesearch(&avi->val.v.s, toRemove) != NULL) {
 				new_size = pvh_remove_header_param_helper(
@@ -239,15 +242,19 @@ static int ki_pvh_remove_header_param(
 							STR_FMT(hname), idx);
 					if(pvh_remove_header(msg, hname, idx) < 0)
 						return -1;
+					avi = pvh_xavi_get_child(msg, &xavi_name, hname);
+					if(idx > 0)
+						idx = 0;
+					next = 0;
 				} else if(dst.len < 0 || new_size == avi->val.v.s.len) {
 					LM_DBG("'%.*s' not found at '%.*s'\n", STR_FMT(toRemove),
 							STR_FMT(&avi->val.v.s));
 				} else {
 					LM_DBG("old_value:'%.*s' new_value:'%.*s'\n",
 							STR_FMT(&avi->val.v.s), STR_FMT(&dst));
-					if(pvh_set_xavi(msg, &xavi_name, hname, &dst, SR_XTYPE_STR,
-							   idx, 0)
-							< 0) {
+					avi = pvh_set_xavi(
+							msg, &xavi_name, hname, &dst, SR_XTYPE_STR, idx, 0);
+					if(avi == NULL) {
 						LM_ERR("can't set new value\n");
 						return -1;
 					}
@@ -257,7 +264,10 @@ static int ki_pvh_remove_header_param(
 						STR_FMT(&avi->val.v.s));
 			}
 		}
-		idx++;
+		if(next) {
+			avi = xavi_get_next(avi);
+			idx++;
+		}
 	}
 	return 1;
 }

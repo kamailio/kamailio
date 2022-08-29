@@ -33,7 +33,7 @@
 
 int pvh_reply_append(sr_xavp_t **start);
 
-int pvh_set_xavi(struct sip_msg *msg, str *xname, str *name, void *data,
+sr_xavp_t *pvh_set_xavi(struct sip_msg *msg, str *xname, str *name, void *data,
 		sr_xtype_t type, int idx, int append);
 int pvh_xavi_keys_count(sr_xavp_t **start);
 sr_xavp_t *pvh_xavi_get_child(struct sip_msg *msg, str *xname, str *name);

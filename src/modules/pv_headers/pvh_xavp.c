@@ -131,18 +131,19 @@ static sr_xavp_t *pvh_xavi_new_value(str *name, sr_xval_t *val)
 	return avp;
 }
 
-int pvh_xavi_append_value(str *name, sr_xval_t *val, sr_xavp_t **start)
+static sr_xavp_t *pvh_xavi_append_value(
+		str *name, sr_xval_t *val, sr_xavp_t **start)
 {
 	sr_xavp_t *last = NULL;
 	sr_xavp_t *xavi = NULL;
 
 	if((xavi = pvh_xavi_new_value(name, val)) == NULL)
-		return -1;
+		return xavi;
 
 	if(*start == NULL) {
 		xavi->next = *start;
 		*start = xavi;
-		return 1;
+		return xavi;
 	}
 
 	last = *start;
@@ -150,13 +151,13 @@ int pvh_xavi_append_value(str *name, sr_xval_t *val, sr_xavp_t **start)
 		last = last->next;
 	last->next = xavi;
 
-	return 1;
+	return xavi;
 }
 
 /**
  *
  */
-static int pvh_xavi_set_value(
+static sr_xavp_t *pvh_xavi_set_value(
 		str *name, sr_xval_t *val, int idx, sr_xavp_t **start)
 {
 	int cnt = 0;
@@ -166,14 +167,11 @@ static int pvh_xavi_set_value(
 		idx = idx + cnt;
 		if(idx < 0) {
 			LM_ERR("wrong calculated idx:%d\n", idx);
-			return -1;
+			return NULL;
 		}
 	}
 	LM_DBG("xavi name: %.*s\n", name->len, name->s);
-	if(xavi_set_value(name, idx, val, start) == NULL)
-		return -1;
-
-	return 1;
+	return xavi_set_value(name, idx, val, start);
 }
 
 /**
@@ -356,11 +354,12 @@ int pvh_xavi_keys_count(sr_xavp_t **start)
 /**
  *
  */
-int pvh_set_xavi(struct sip_msg *msg, str *xname, str *name, void *data,
+sr_xavp_t *pvh_set_xavi(struct sip_msg *msg, str *xname, str *name, void *data,
 		sr_xtype_t type, int idx, int append)
 {
 	sr_xavp_t **xavi = NULL;
 	sr_xavp_t *root = NULL;
+	sr_xavp_t *result = NULL;
 	sr_xval_t root_xval;
 	sr_xval_t xval;
 	char t[header_name_size];
@@ -368,7 +367,7 @@ int pvh_set_xavi(struct sip_msg *msg, str *xname, str *name, void *data,
 
 	if(xname == NULL || name == NULL) {
 		LM_ERR("missing xavi/pv name\n");
-		return -1;
+		return result;
 	}
 
 	pvh_get_branch_xname(msg, xname, &br_xname);
@@ -385,7 +384,7 @@ int pvh_set_xavi(struct sip_msg *msg, str *xname, str *name, void *data,
 		xval.v.data = (sr_data_t *)shm_malloc(sizeof(sr_data_t));
 		if(xval.v.data == NULL) {
 			SHM_MEM_ERROR;
-			return -1;
+			return result;
 		}
 		memset(xval.v.data, 0, sizeof(sr_data_t));
 		xval.v.data->p = data;
@@ -409,7 +408,7 @@ int pvh_set_xavi(struct sip_msg *msg, str *xname, str *name, void *data,
 
 		if((root = xavi_add_value(&br_xname, &root_xval, NULL)) == NULL) {
 			LM_ERR("error create xavi %.*s\n", br_xname.len, br_xname.s);
-			return -1;
+			return NULL;
 		}
 		xavi = &root->val.v.xavp;
 	} else if(xavi_get_child(&br_xname, name) == NULL) {
@@ -417,20 +416,18 @@ int pvh_set_xavi(struct sip_msg *msg, str *xname, str *name, void *data,
 	}
 
 	if(append) {
-		if(pvh_xavi_append_value(name, &xval, xavi) < 0) {
+		if((result = pvh_xavi_append_value(name, &xval, xavi)) == NULL) {
 			LM_ERR("error append xavi=>name %.*s=>%.*s\n", br_xname.len,
 					br_xname.s, name->len, name->s);
-			return -1;
 		}
 	} else {
-		if(pvh_xavi_set_value(name, &xval, idx, xavi) < 0) {
+		if((result = pvh_xavi_set_value(name, &xval, idx, xavi)) == NULL) {
 			LM_ERR("error modify xavi=>name %.*s=>%.*s idx=%d\n", br_xname.len,
 					br_xname.s, name->len, name->s, idx);
-			return -1;
 		}
 	}
 
-	return 1;
+	return result;
 }
 
 

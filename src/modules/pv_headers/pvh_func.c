@@ -325,12 +325,17 @@ int pvh_check_header(struct sip_msg *msg, str *hname)
 
 int pvh_append_header(struct sip_msg *msg, str *hname, str *hvalue)
 {
-	return pvh_set_xavi(msg, &xavi_name, hname, hvalue, SR_XTYPE_STR, 0, 1);
+	if(pvh_set_xavi(msg, &xavi_name, hname, hvalue, SR_XTYPE_STR, 0, 1) == NULL)
+		return -1;
+	return 1;
 }
 
 int pvh_modify_header(struct sip_msg *msg, str *hname, str *hvalue, int indx)
 {
-	return pvh_set_xavi(msg, &xavi_name, hname, hvalue, SR_XTYPE_STR, indx, 0);
+	if(pvh_set_xavi(msg, &xavi_name, hname, hvalue, SR_XTYPE_STR, indx, 0)
+			== NULL)
+		return -1;
+	return 1;
 }
 
 int pvh_remove_header(struct sip_msg *msg, str *hname, int indx)
@@ -346,12 +351,12 @@ int pvh_remove_header(struct sip_msg *msg, str *hname, int indx)
 		do {
 			if(pvh_set_xavi(
 					   msg, &xavi_name, hname, NULL, SR_XTYPE_STR, indx++, 0)
-					< 1)
+					== NULL)
 				return -1;
 		} while(indx < count);
 	} else {
 		if(pvh_set_xavi(msg, &xavi_name, hname, NULL, SR_XTYPE_STR, indx, 0)
-				< 1)
+				== NULL)
 			return -1;
 	}
 
