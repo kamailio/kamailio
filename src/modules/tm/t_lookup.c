@@ -167,6 +167,19 @@ struct cell* t_find(struct sip_msg *msg, int *branch, int *vref)
 	return T;
 }
 
+/**
+ * unref and reset T globals
+ */
+void t_unset(void)
+{
+	if(T == NULL || T == T_UNDEFINED) {
+		return;
+	}
+
+	UNREF( T );
+	set_t(T_UNDEFINED, T_BR_UNDEFINED);
+}
+
 static inline int parse_dlg( struct sip_msg *msg )
 {
 	if (parse_headers(msg, HDR_FROM_F | HDR_CSEQ_F | HDR_TO_F, 0)==-1) {

@@ -71,6 +71,9 @@ struct cell *get_t(void);
 typedef struct cell* (*tfind_f)(struct sip_msg*, int*, int*);
 struct cell* t_find(struct sip_msg *msg, int *branch, int *vref);
 
+typedef void (*tunset_f)(void);
+void t_unset(void);
+
 typedef int (*tgett_branch_f)(void);
 int get_t_branch(void);
 
