@@ -493,6 +493,227 @@ e2eack_found:
 }
 
 
+/** search the transaction corresponding to a request.
+ *  @return - -1   - transaction not found
+ *             0   - transaction found (and referenced)
+ */
+
+int t_request_search( struct sip_msg* p_msg, struct cell **r_cell)
+{
+	struct cell      *p_cell;
+	unsigned int      isACK;
+	struct sip_msg   *t_msg;
+	struct via_param *branch;
+	int match_status;
+	struct cell *e2e_ack_trans;
+	struct entry* hash_bucket;
+	int cancel;
+
+	*r_cell = NULL;
+
+	/* parse all*/
+	if (unlikely(check_transaction_quadruple(p_msg)==0)) {
+		LM_ERR("too few headers\n");
+		/* stop processing */
+		return 0;
+	}
+
+	/* start searching into the table */
+	if (!(p_msg->msg_flags & FL_HASH_INDEX)){
+		p_msg->hash_index=hash( p_msg->callid->body , get_cseq(p_msg)->number);
+		p_msg->msg_flags|=FL_HASH_INDEX;
+	}
+	isACK = p_msg->REQ_METHOD==METHOD_ACK;
+	LM_DBG("start searching: hash=%d, isACK=%d\n",
+			p_msg->hash_index,isACK);
+
+
+	/* assume not found */
+	e2e_ack_trans = 0;
+
+	/* first of all, look if there is RFC3261 magic cookie in branch; if
+	 * so, we can do very quick matching and skip the old-RFC bizzar
+	 * comparison of many header fields
+	 */
+	if (!p_msg->via1) {
+		LM_ERR("no via\n");
+		return 0;
+	}
+	branch=p_msg->via1->branch;
+	if (branch && branch->value.s && branch->value.len>MCOOKIE_LEN
+			&& memcmp(branch->value.s, MCOOKIE,MCOOKIE_LEN)==0) {
+		/* huhuhu! the cookie is there -- let's proceed fast */
+		LOCK_HASH(p_msg->hash_index);
+		match_status=matching_3261(p_msg,&p_cell,
+				/* skip transactions with different method; otherwise CANCEL
+				 * would  match the previous INVITE trans.  */
+				isACK ? ~METHOD_INVITE: ~p_msg->REQ_METHOD,
+				&cancel);
+		switch(match_status) {
+			case 0:	goto notfound;	/* no match */
+			case 1:	goto found; 	/* match */
+			case 2:	goto e2e_ack;	/* e2e proxy ACK */
+		}
+	}
+
+	/* ok -- it's ugly old-fashioned transaction matching -- it is
+	 * a bit simplified to be fast -- we don't do all the comparisons
+	 * of parsed uri, which was simply too bloated */
+	LM_DBG("proceeding to pre-RFC3261 transaction matching\n");
+	/* lock the whole entry*/
+	LOCK_HASH(p_msg->hash_index);
+
+	hash_bucket=&(get_tm_table()->entries[p_msg->hash_index]);
+
+	if (likely(!isACK)) {
+		/* all the transactions from the entry are compared */
+		clist_foreach(hash_bucket, p_cell, next_c){
+			prefetch_loc_r(p_cell->next_c, 1);
+			t_msg = p_cell->uas.request;
+			if (!t_msg) continue; /* skip UAC transactions */
+			/* for non-ACKs we want same method matching, we
+			 * make an exception for pre-exisiting CANCELs because we
+			 * want to set *cancel */
+			if ((t_msg->REQ_METHOD!=p_msg->REQ_METHOD) &&
+					(t_msg->REQ_METHOD!=METHOD_CANCEL))
+				continue;
+			/* compare lengths first */
+			if (!EQ_LEN(callid)) continue;
+			/* CSeq only the number without method ! */
+			if (get_cseq(t_msg)->number.len!=get_cseq(p_msg)->number.len)
+				continue;
+			if (!EQ_LEN(from)) continue;
+			if (!EQ_LEN(to)) continue;
+			if (cfg_get(tm, tm_cfg, ruri_matching) && !EQ_REQ_URI_LEN)
+				continue;
+			if (cfg_get(tm, tm_cfg, via1_matching) && !EQ_VIA_LEN(via1))
+				continue;
+			/* length ok -- move on */
+			if (!EQ_STR(callid)) continue;
+			if (memcmp(get_cseq(t_msg)->number.s, get_cseq(p_msg)->number.s,
+						get_cseq(p_msg)->number.len)!=0) continue;
+			if (!EQ_STR(from)) continue;
+			if (!EQ_STR(to)) continue;
+			if (cfg_get(tm, tm_cfg, ruri_matching) && !EQ_REQ_URI_STR)
+				continue;
+			if (cfg_get(tm, tm_cfg, via1_matching) && !EQ_VIA_STR(via1))
+				continue;
+
+			if ((t_msg->REQ_METHOD==METHOD_CANCEL) &&
+					(p_msg->REQ_METHOD!=METHOD_CANCEL)){
+				/* we've matched an existing CANCEL */
+				continue;
+			}
+
+			/* request matched ! */
+			LM_DBG("non-ACK matched\n");
+			goto found;
+		} /* synonym loop */
+	} else { /* it's an ACK request*/
+		/* all the transactions from the entry are compared */
+		clist_foreach(hash_bucket, p_cell, next_c){
+			prefetch_loc_r(p_cell->next_c, 1);
+			t_msg = p_cell->uas.request;
+			if (!t_msg) continue; /* skip UAC transactions */
+			/* ACK's relate only to INVITEs */
+			if (t_msg->REQ_METHOD!=METHOD_INVITE) continue;
+			/* From|To URI , CallID, CSeq # must be always there */
+			/* compare lengths now */
+			if (!EQ_LEN(callid)) continue;
+			/* CSeq only the number without method ! */
+			if (get_cseq(t_msg)->number.len!=get_cseq(p_msg)->number.len)
+				continue;
+			/* To only the uri -- to many UACs screw up tags  */
+			if (get_to(t_msg)->uri.len!=get_to(p_msg)->uri.len)
+				continue;
+			if (!EQ_STR(callid)) continue;
+			if (memcmp(get_cseq(t_msg)->number.s, get_cseq(p_msg)->number.s,
+						get_cseq(p_msg)->number.len)!=0) continue;
+			if (memcmp(get_to(t_msg)->uri.s, get_to(p_msg)->uri.s,
+						get_to(t_msg)->uri.len)!=0) continue;
+
+			/* it is e2e ACK/200 */
+			if (p_cell->uas.status<300) {
+				/* For e2e ACKs, From's tag 'MUST' equal INVITE's, while use
+				 * of the URI in this case is to be deprecated (Sec. 12.2.1.1).
+				 * Comparing entire From body is dangerous, since some UAs
+				 * screw the display name up. */
+				if (parse_from_header(p_msg) < 0) {
+					LM_ERR("failed to parse From HF; ACK might not match.\n");
+					continue;
+				}
+				if (! STR_EQ(get_from(t_msg)->tag_value,
+							get_from(p_msg)->tag_value))
+					continue;
+
+				/* all criteria for proxied ACK are ok */
+				if (likely(p_cell->relayed_reply_branch!=-2)) {
+					if (unlikely(has_tran_tmcbs(p_cell,
+									TMCB_E2EACK_IN|TMCB_E2EACK_RETR_IN))){
+						if (likely(totag_e2e_ack_matching(p_cell, p_msg)==2))
+							goto e2e_ack;
+						else if (e2e_ack_trans==0)
+							e2e_ack_trans=p_cell;
+					}
+					continue;
+				}
+				/* it's a local UAS transaction */
+				if (dlg_matching(p_cell, p_msg))
+					goto found;
+				continue;
+			} else {
+				/* for hbh ACKs, From HF 'MUST' equal INVITE's one */
+				if (! EQ_LEN(from)) continue;
+				if (! EQ_STR(from)) continue;
+			}
+
+			/* it is not an e2e ACK/200 -- perhaps it is
+			 * local negative case; in which case we will want
+			 * more elements to match: r-uri and via; allow
+			 * mismatching r-uri as an config option for broken
+			 * UACs */
+			if (cfg_get(tm, tm_cfg, ruri_matching) && !EQ_REQ_URI_LEN )
+				continue;
+			if (cfg_get(tm, tm_cfg, via1_matching) && !EQ_VIA_LEN(via1))
+				continue;
+			if (cfg_get(tm, tm_cfg, ruri_matching) && !EQ_REQ_URI_STR)
+				continue;
+			if (cfg_get(tm, tm_cfg, via1_matching) && !EQ_VIA_STR(via1))
+				continue;
+
+			/* wow -- we survived all the check! we matched! */
+			LM_DBG("non-2xx ACK matched\n");
+			goto found;
+		} /* synonym loop */
+	} /* ACK */
+
+notfound:
+
+	if (e2e_ack_trans) {
+		p_cell=e2e_ack_trans;
+		goto e2e_ack;
+	}
+
+	/* no transaction found */
+	UNLOCK_HASH(p_msg->hash_index);
+	LM_DBG("no transaction found\n");
+	return -1;
+
+e2e_ack:
+	UNLOCK_HASH(p_msg->hash_index);
+	LM_DBG("only e2e proxy ACK found\n");
+	return -1;
+
+found:
+	REF_UNSAFE(p_cell);
+	UNLOCK_HASH(p_msg->hash_index);
+	*r_cell = p_cell;
+	LM_DBG("transaction found (T=%p)\n", p_cell);
+	return 1;
+}
+
+
+
 /** find the transaction corresponding to a request.
  *  @return - negative - transaction wasn't found (-1) or
  *                        possible e2eACK match (-2).
@@ -863,6 +1084,175 @@ found:
 }
 
 
+/** search the transaction corresponding to a reply.
+ * @return -1 - transaction not found; 0  - transaction found (and referenced)
+ */
+int t_reply_search(struct sip_msg *p_msg, struct cell **r_cell, int *r_branch)
+{
+	struct cell*  p_cell;
+	unsigned int hash_index   = 0;
+	unsigned int entry_label  = 0;
+	unsigned int branch_id    = 0;
+	char  *hashi, *branchi, *p, *n;
+	struct entry* hash_bucket;
+	int hashl, branchl;
+	int scan_space;
+	str cseq_method;
+	str req_method;
+
+	char *loopi;
+	int loopl;
+
+	short is_cancel;
+
+	*r_cell = NULL;
+	*r_branch = T_BR_UNDEFINED;
+
+	/* make compiler warnings happy */
+	loopi=0;
+	loopl=0;
+
+	/* split the branch into pieces: loop_detection_check(ignored),
+	 * hash_table_id, synonym_id, branch_id */
+
+	if (!(p_msg->via1 && p_msg->via1->branch && p_msg->via1->branch->value.s))
+		goto nomatch2;
+
+	/* we do RFC 3261 tid matching and want to see first if there is
+	 * magic cookie in branch */
+	if (p_msg->via1->branch->value.len<=MCOOKIE_LEN)
+		goto nomatch2;
+	if (memcmp(p_msg->via1->branch->value.s, MCOOKIE, MCOOKIE_LEN)!=0)
+		goto nomatch2;
+
+	p=p_msg->via1->branch->value.s+MCOOKIE_LEN;
+	scan_space=p_msg->via1->branch->value.len-MCOOKIE_LEN;
+
+
+	/* hash_id */
+	n=eat_token2_end( p, p+scan_space, BRANCH_SEPARATOR);
+	hashl=n-p;
+	scan_space-=hashl;
+	if (!hashl || scan_space<2 || *n!=BRANCH_SEPARATOR) goto nomatch2;
+	hashi=p;
+	p=n+1;scan_space--;
+
+	/* md5 value */
+	n=eat_token2_end( p, p+scan_space, BRANCH_SEPARATOR );
+	loopl = n-p;
+	scan_space-= loopl;
+	if (n==p || scan_space<2 || *n!=BRANCH_SEPARATOR)
+		goto nomatch2;
+	loopi=p;
+	p=n+1; scan_space--;
+
+	/* branch id  -  should exceed the scan_space */
+	n=eat_token_end( p, p+scan_space );
+	branchl=n-p;
+	if (!branchl ) goto nomatch2;
+	branchi=p;
+
+	/* sanity check */
+	if (unlikely(reverse_hex2int(hashi, hashl, &hash_index)<0
+				|| hash_index>=TABLE_ENTRIES
+				|| reverse_hex2int(branchi, branchl, &branch_id)<0
+				|| branch_id>=sr_dst_max_branches
+				|| loopl!=MD5_LEN)
+			) {
+		LM_DBG("poor reply ids - index %d label %d branch %d loopl %d/%d\n",
+				hash_index, entry_label, branch_id, loopl, MD5_LEN);
+		goto nomatch2;
+	}
+
+
+	LM_DBG("t_reply_matching: hash %d label %d branch %d\n",
+			hash_index, entry_label, branch_id );
+
+
+	/* search the hash table list at entry 'hash_index'; lock the entry first */
+	cseq_method=get_cseq(p_msg)->method;
+	is_cancel=cseq_method.len==CANCEL_LEN
+		&& memcmp(cseq_method.s, CANCEL, CANCEL_LEN)==0;
+	LOCK_HASH(hash_index);
+	hash_bucket=&(get_tm_table()->entries[hash_index]);
+	/* all the transactions from the entry are compared */
+	clist_foreach(hash_bucket, p_cell, next_c){
+		prefetch_loc_r(p_cell->next_c, 1);
+
+		if (cfg_get(tm, tm_cfg, callid_cseq_matching)) {
+			if (memcmp(p_cell->callid.s + strlen("Call-ID: "), p_msg->callid->body.s, p_msg->callid->body.len) != 0) {
+				LM_ERR("t_reply_matching: failed callid matching (instead of md5): %d p_cell=%.*s p_msg=%.*s",
+					p_msg->first_line.u.reply.statuscode,
+					p_cell->callid.len, p_cell->callid.s,
+					p_msg->callid->body.len, p_msg->callid->body.s);
+				continue;
+			}
+
+			if (memcmp(p_cell->cseq_n.s + strlen("CSeq: "), get_cseq(p_msg)->number.s, get_cseq(p_msg)->number.len) != 0) {
+				LM_ERR("t_reply_matching: failed cseq matching (instead of md5): %d p_cell=%.*s p_msg=%.*s",
+					p_msg->first_line.u.reply.statuscode,
+					p_cell->cseq_n.len, p_cell->cseq_n.s,
+					get_cseq(p_msg)->number.len, get_cseq(p_msg)->number.s);
+				continue;
+			}
+		} else {
+			if ( memcmp(p_cell->md5, loopi,MD5_LEN)!=0)
+				continue;
+		}
+
+		/* sanity check ... too high branch ? */
+		if (unlikely(branch_id>=p_cell->nr_of_outgoings))
+			continue;
+
+		/* does method match ? (remember -- CANCELs have the same branch
+		 * as canceled transactions) */
+		req_method=p_cell->method;
+		if ( /* method match */
+				! ((cseq_method.len==req_method.len
+						&& memcmp( cseq_method.s, req_method.s, cseq_method.len )==0)
+					/* or it is a local cancel */
+					|| (is_cancel && is_invite(p_cell)
+						/* commented out -- should_cancel_branch set it to
+						 * BUSY_BUFFER to avoid collisions with replies;
+						 * thus, we test here by buffer size
+						 */
+						/* && p_cell->uac[branch_id].local_cancel.buffer ))) */
+					&& p_cell->uac[branch_id].local_cancel.buffer_len )))
+					continue;
+
+		if (cfg_get(tm, tm_cfg, callid_matching) &&
+				p_cell->uas.request && p_cell->uas.request->callid
+				&& (p_msg->callid->body.len != p_cell->uas.request->callid->body.len
+					|| memcmp(p_msg->callid->body.s,
+						p_cell->uas.request->callid->body.s,
+						p_msg->callid->body.len) != 0)
+				) {
+			LM_ERR("matching transaction found but callids"
+					" don't match (received: %.*s stored: %.*s)\n",
+					p_msg->callid->body.len, p_msg->callid->body.s,
+					p_cell->uas.request->callid->body.len, p_cell->uas.request->callid->body.s);
+			continue;
+		}
+
+		/* passed all disqualifying factors - the transaction has been matched */
+		*r_cell = p_cell;
+		*r_branch =(int) branch_id;
+		REF_UNSAFE( p_cell );
+		UNLOCK_HASH(hash_index);
+		LM_DBG("reply (%p) matched an active transaction (T=%p)!\n", p_msg, p_cell);
+		return 0;
+	} /* for cycle */
+
+	/* nothing found */
+	UNLOCK_HASH(hash_index);
+	LM_DBG("no matching transaction exists\n");
+
+nomatch2:
+	LM_DBG("failure to match a transaction\n");
+	*r_cell = NULL;
+	*r_branch = -1;
+	return -1;
+}
 
 
 /** get the transaction corresponding to a reply.

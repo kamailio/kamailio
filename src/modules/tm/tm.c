@@ -66,6 +66,7 @@
 #include "../../core/dset.h"
 #include "../../core/mod_fix.h"
 #include "../../core/kemi.h"
+#include "../../core/parser/parse_from.h"
 
 #include "config.h"
 #include "sip_msg.h"
@@ -212,6 +213,7 @@ static int w_t_uac_send(sip_msg_t* msg, char* pmethod, char* pruri,
 static int w_t_get_status_code(sip_msg_t* msg, char *p1, char *p2);
 
 static int t_clean(struct sip_msg* msg, char* key, char* value);
+static int w_t_exists(struct sip_msg* msg, char* p1, char* p2);
 
 /* by default the fr timers avps are not set, so that the avps won't be
  * searched for nothing each time a new transaction is created */
@@ -429,6 +431,7 @@ static cmd_export_t cmds[]={
 	{"t_next_contact_flow", t_next_contact_flow,            0, 0, 0,
 		REQUEST_ROUTE },
 	{"t_clean", t_clean, 0, 0, 0, ANY_ROUTE },
+	{"t_exists", w_t_exists, 0, 0, 0, ANY_ROUTE },
 
 	/* not applicable from the script */
 	{"load_tm",            (cmd_function)load_tm,           NO_SCRIPT,   0, 0, 0},
@@ -3075,6 +3078,43 @@ static int ki_t_clean(sip_msg_t* msg)
 {
 	tm_clean_lifetime();
 	return 1;
+}
+
+static int ki_t_exists(sip_msg_t* msg)
+{
+	tm_cell_t *t = NULL;
+	int br = -1;
+
+	if (parse_headers(msg, HDR_EOH_F, 0 )==-1) {
+		LM_ERR("parsing error\n");
+		return -1;;
+	}
+	if (parse_headers(msg, HDR_VIA1_F|HDR_CSEQ_F|HDR_CALLID_F|HDR_TO_F, 0)==-1) {
+		LM_ERR("required headers cannot be parsed\n");
+		return -1;
+	}
+	if(parse_from_header(msg)==-1) {
+		LM_ERR("from header parsing failed\n");
+		return -1;
+	}
+
+	if (msg->first_line.type==SIP_REQUEST) {
+		t_request_search(msg, &t);
+	} else {
+		t_reply_search(msg, &t, &br);
+	}
+
+	if(!t) {
+		return -1;
+	}
+	UNREF(t);
+
+	return 1;
+}
+
+static int w_t_exists(struct sip_msg* msg, char* p1, char* p2)
+{
+	return ki_t_exists(msg);
 }
 
 #ifdef USE_DNS_FAILOVER

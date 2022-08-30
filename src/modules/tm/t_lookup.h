@@ -105,6 +105,9 @@ tm_cell_t *t_find_ident_filter(unsigned int hash_index, unsigned int label,
 /* lookup a transaction by callid and cseq */
 int t_lookup_callid(struct cell** trans, str callid, str cseq);
 
+int t_request_search( struct sip_msg* p_msg, struct cell **r_cell);
+int t_reply_search(struct sip_msg *p_msg, struct cell **r_cell, int *r_branch);
+
 int t_set_fr(struct sip_msg* msg, unsigned int fr_inv_to, unsigned int fr_to );
 int t_reset_fr(void);
 int t_set_retr(struct sip_msg* msg, unsigned int t1_to, unsigned int t2_to);
