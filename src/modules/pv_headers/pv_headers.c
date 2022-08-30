@@ -555,12 +555,12 @@ int handle_msg_reply_cb(struct sip_msg *msg, unsigned int flags, void *cb)
 		xavi_set_list(backup_xavis);
 		LM_DBG("restored backup_xavis:%p\n", *backup_xavis);
 	}
-	if(t && vref) {
-		tmb.unref_cell(t);
+	if(t != NULL && t != T_UNDEFINED && vref != 0) {
+		/*  t_find() above has the side effect of setting T and
+			REFerencing T => we must unref and unset it */
+		tmb.t_unset();
 		LM_DBG("T:%p unref\n", t);
 	}
-	tmb.t_sett(T_UNDEFINED, T_BR_UNDEFINED);
-	LM_DBG("reset tm\n");
 
 	return 1;
 }
