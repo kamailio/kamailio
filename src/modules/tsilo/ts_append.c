@@ -100,14 +100,16 @@ int ts_append_to(struct sip_msg* msg, int tindex, int tlabel, char *table, str *
 	struct sip_msg *orig_msg;
 	int ret;
 	str stable;
+	int orig_branch;
 
 	if(contact->s!=NULL && contact->len > 0) {
 		LM_DBG("trying to append based on specific contact <%.*s>\n", contact->len, contact->s);
 	}
 
-	/* lookup a transaction based on its identifier (hash_index:label) */
 	orig_t = _tmb.t_gett();
+	orig_branch =  _tmb.t_gett_branch();
 
+	/* lookup a transaction based on its identifier (hash_index:label) */
 	if(_tmb.t_lookup_ident(&t, tindex, tlabel) < 0)
 	{
 		LM_ERR("transaction [%u:%u] not found\n",	tindex, tlabel);
@@ -155,7 +157,7 @@ done:
 	/* unref the transaction which had been referred by t_lookup_ident() call.
 	 * Restore the original transaction (if any) */
 	if(t) _tmb.unref_cell(t);
-	_tmb.t_sett(orig_t, T_BR_UNDEFINED);
+	_tmb.t_sett(orig_t, orig_branch);
 
 	return ret;
 }
