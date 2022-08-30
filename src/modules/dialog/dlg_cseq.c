@@ -131,7 +131,6 @@ int dlg_cseq_update(sip_msg_t *msg)
 	unsigned int ninc = 0;
 	unsigned int vinc = 0;
 	str nval;
-	str *pval;
 	sr_cfgenv_t *cenv = NULL;
 
 	if(dlg_cseq_prepare_msg(msg)!=0) {
@@ -164,14 +163,8 @@ int dlg_cseq_update(sip_msg_t *msg)
 	/* take the increment value from dialog */
 	if((dlg->iflags&DLG_IFLAG_CSEQ_DIFF)==DLG_IFLAG_CSEQ_DIFF) {
 		/* get dialog variable holding cseq diff */
-		pval = get_dlg_variable(dlg, &_dlg_cseq_diff_var_name);
-		if(pval==NULL || pval->s==NULL || pval->len<=0) {
+		if(get_dlg_variable_uintval(dlg, &_dlg_cseq_diff_var_name, &vinc) < 0) {
 			LM_DBG("dialog marked with cseq diff but no variable set yet\n");
-			goto done;
-		}
-		if(str2int(pval, &vinc)<0) {
-			LM_ERR("invalid dlg cseq diff var value: %.*s\n",
-					pval->len, pval->s);
 			goto done;
 		}
 	}
