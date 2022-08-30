@@ -141,6 +141,7 @@ Daniel-Constantin Mierla
 
               4.54. t_get_status_code()
               4.55. t_clean()
+              4.56. t_exists()
 
         5. RPC Commands
 
@@ -283,9 +284,10 @@ Daniel-Constantin Mierla
    1.100. t_uac_send usage
    1.101. t_get_status_code usage
    1.102. t_clean usage
-   1.103. event_route[tm:branch-failure:id] usage
-   1.104. event_route[tm:local-request] usage
-   1.105. event_route[tm:local-response] usage
+   1.103. t_exists usage
+   1.104. event_route[tm:branch-failure:id] usage
+   1.105. event_route[tm:local-request] usage
+   1.106. event_route[tm:local-response] usage
 
 Chapter 1. Admin Guide
 
@@ -407,6 +409,7 @@ Chapter 1. Admin Guide
         4.53. t_uac_send(method, ruri, nexthop, socket, headers, body)
         4.54. t_get_status_code()
         4.55. t_clean()
+        4.56. t_exists()
 
    5. RPC Commands
 
@@ -1843,6 +1846,7 @@ modparam("tm", "failover_reply_codes", "code=403;code=488;class=5")
    4.53. t_uac_send(method, ruri, nexthop, socket, headers, body)
    4.54. t_get_status_code()
    4.55. t_clean()
+   4.56. t_exists()
 
 4.1.  t_relay([host, port])
 
@@ -3025,6 +3029,20 @@ if($var(ts) == 500) { ... }
 t_clean();
 ...
 
+4.56.  t_exists()
+
+   Return true of the transaction for current message exists, without
+   setting the global references.
+
+   Example 1.103. t_exists usage
+...
+reply_route {
+    if (!t_exists()) {
+        drop();
+    }
+}
+...
+
 5. RPC Commands
 
    5.1. tm.list
@@ -3146,7 +3164,7 @@ t_clean();
    enabled with the t_on_branch_failure function. This event_route uses
    the BRANCH_FAILURE_ROUTE route type.
 
-   Example 1.103. event_route[tm:branch-failure:id] usage
+   Example 1.104. event_route[tm:branch-failure:id] usage
 ...
 request_route {
     ...
@@ -3172,7 +3190,7 @@ event_route[tm:branch-failure:myroute] {
    The request can still be updated, i.e., changes are possible to R-URI
    ($ru), destination URI ($du) or the send socket ($fs).
 
-   Example 1.104. event_route[tm:local-request] usage
+   Example 1.105. event_route[tm:local-request] usage
 ...
 event_route [tm:local-request] {
     xlog("L_INFO", "Routing locally generated $rm to $ru\n");
@@ -3185,7 +3203,7 @@ event_route [tm:local-request] {
    Executed after the tm module sent a local generated, transaction
    stateful response.
 
-   Example 1.105. event_route[tm:local-response] usage
+   Example 1.106. event_route[tm:local-response] usage
 ...
 event_route[tm:local-response] {
     xlog("tm:local-response replied locally\n");
