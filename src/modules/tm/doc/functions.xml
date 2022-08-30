@@ -1907,4 +1907,27 @@ t_clean();
 	    </programlisting>
 	</example>
     </section>
+
+	<section id="tm.f.t_exists">
+	<title>
+	    <function>t_exists()</function>
+	</title>
+	<para>
+		Return true of the transaction for current message exists, without
+		setting the global references.
+	</para>
+	<example>
+	    <title><function>t_exists</function> usage</title>
+	    <programlisting>
+...
+reply_route {
+    if (!t_exists()) {
+        drop();
+    }
+}
+...
+	    </programlisting>
+	</example>
+	</section>
+
   </section>
