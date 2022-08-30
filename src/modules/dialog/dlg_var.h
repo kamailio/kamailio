@@ -62,6 +62,8 @@ typedef struct dlg_var {
 str* get_dlg_variable(dlg_cell_t *dlg, str *key);
 int set_dlg_variable(dlg_cell_t *dlg, str *key, str *val);
 
+int get_dlg_variable_uintval(struct dlg_cell *dlg, str *key, unsigned int *uval);
+
 int pv_parse_dialog_var_name(pv_spec_p sp, str *in);
 
 int pv_get_dlg_variable(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);

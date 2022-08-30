@@ -297,6 +297,34 @@ str * get_dlg_variable(struct dlg_cell *dlg, str *key)
     return var;
 }
 
+int get_dlg_variable_uintval(struct dlg_cell *dlg, str *key, unsigned int *uval)
+{
+	str* var = NULL;
+
+	if( !dlg || !key || key->len <=0 || !uval) {
+		LM_ERR("BUG - bad parameters\n");
+		return -1;
+	}
+
+	dlg_lock(d_table, &(d_table->entries[dlg->h_entry]));
+	var = get_dlg_variable_unsafe(dlg, key);
+	if(var==NULL || var->s==NULL || var->len<=0) {
+		LM_DBG("no variable set yet\n");
+		goto error;
+	}
+	if(str2int(var, uval)<0) {
+		LM_ERR("invalid unsingned int value: %.*s\n",
+				var->len, var->s);
+		goto error;
+	}
+	dlg_unlock(d_table, &(d_table->entries[dlg->h_entry]));
+	return 0;
+
+error:
+	dlg_unlock(d_table, &(d_table->entries[dlg->h_entry]));
+	return -1;
+}
+
 int set_dlg_variable(struct dlg_cell *dlg, str *key, str *val)
 {
     int ret = -1;
