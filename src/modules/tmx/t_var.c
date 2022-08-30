@@ -246,7 +246,7 @@ int pv_t_update_inv(struct sip_msg *msg)
 		return 1;
 	}
 
-	if (_pv_tinv.label == t->label && _pv_tinv.index == t->hash_index)  
+	if (_pv_tinv.label == t->label && _pv_tinv.index == t->hash_index)
 		goto done;
 
 	/* make a copy */
@@ -569,23 +569,26 @@ int pv_get_tm_reply_reason(struct sip_msg *msg, pv_param_t *param,
 {
 	struct cell *t;
 	struct sip_msg *reply;
-	int branch;
+	int branch = -1;
+	int vref = 0;
 
 	if(msg==NULL || res==NULL)
 		return -1;
 
 	/* first get the transaction */
-	if (_tmx_tmb.t_check( msg , 0 )==-1) return -1;
-	if ( (t=_tmx_tmb.t_gett())==0) {
+	t = _tmx_tmb.t_find(msg, &branch, &vref);
+	if (t==T_NULL_CELL || t==T_UNDEFINED) {
 		/* no T */
 		return pv_get_strempty(msg, param, res);
 	} else {
 		switch (get_route_type()) {
 			case CORE_ONREPLY_ROUTE:
-				/*  t_check() above has the side effect of setting T and
-					REFerencing T => we must unref and unset it for the
-					main/core onreply_route. */
-				_tmx_tmb.t_unref(msg);
+				if(vref) {
+					/*  t_find() above has the side effect of setting T and
+						REFerencing T => we must unref and unset it for the
+						main/core onreply_route. */
+					_tmx_tmb.t_unref(msg);
+				}
 				/* no break */
 			case TM_ONREPLY_ROUTE:
 				/* use the reason of the current reply */
