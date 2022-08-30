@@ -587,7 +587,7 @@ int pv_get_tm_reply_reason(struct sip_msg *msg, pv_param_t *param,
 					/*  t_find() above has the side effect of setting T and
 						REFerencing T => we must unref and unset it for the
 						main/core onreply_route. */
-					_tmx_tmb.t_unref(msg);
+					_tmx_tmb.t_unset();
 				}
 				/* no break */
 			case TM_ONREPLY_ROUTE:
