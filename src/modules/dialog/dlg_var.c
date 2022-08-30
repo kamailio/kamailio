@@ -279,22 +279,46 @@ void print_lists(struct dlg_cell *dlg) {
 	}
 }
 
+static str _dlg_var_strval = STR_NULL;
+
 str * get_dlg_variable(struct dlg_cell *dlg, str *key)
 {
-    str* var = NULL;
+	str* var = NULL;
 
-    if( !dlg || !key || key->len > strlen(key->s))
-    {
-        LM_ERR("BUG - bad parameters\n");
+	if( !dlg || !key || key->len > strlen(key->s))
+	{
+		LM_ERR("BUG - bad parameters\n");
 
-        return NULL;
-    }
+		return NULL;
+	}
 
-    dlg_lock(d_table, &(d_table->entries[dlg->h_entry]));
-    var = get_dlg_variable_unsafe( dlg, key);
-    dlg_unlock(d_table, &(d_table->entries[dlg->h_entry]));
+	dlg_lock(d_table, &(d_table->entries[dlg->h_entry]));
+	var = get_dlg_variable_unsafe( dlg, key);
+	if(var) {
+		_dlg_var_strval.len = pv_get_buffer_size();
+		if(_dlg_var_strval.len < var->len+1) {
+			LM_ERR("pv buffer too small (%d) - needed %d\n",
+					_dlg_var_strval.len, var->len);
+			_dlg_var_strval.s = NULL;
+			_dlg_var_strval.len = 0;
+			var = NULL;
+		} else {
+			_dlg_var_strval.s = pv_get_buffer();
+			strncpy(_dlg_var_strval.s, var->s, var->len);
+			_dlg_var_strval.len = var->len;
+			_dlg_var_strval.s[_dlg_var_strval.len] = '\0';
+		}
+	} else {
+		_dlg_var_strval.s = NULL;
+		_dlg_var_strval.len = 0;
+	}
 
-    return var;
+	dlg_unlock(d_table, &(d_table->entries[dlg->h_entry]));
+
+	if(var) {
+		return &_dlg_var_strval;
+	}
+	return NULL;
 }
 
 int get_dlg_variable_uintval(struct dlg_cell *dlg, str *key, unsigned int *uval)
