@@ -561,14 +561,18 @@ struct dlginfo_cell* get_dialog_data(struct dlg_cell *dlg, int type, int disable
 			if(caller_dlg_var.len>0
 					&& (s = dlg_api.get_dlg_var(dlg, &caller_dlg_var))!=0) {
 				dlginfo->pubruris_caller =
-					(struct str_list*)shm_malloc( sizeof(struct str_list) );
+					(struct str_list*)shm_malloc(sizeof(struct str_list) + s->len + 1);
 				if (dlginfo->pubruris_caller==0) {
 					SHM_MEM_ERROR;
 					free_dlginfo_cell(dlginfo);
 					return NULL;
 				}
-				memset( dlginfo->pubruris_caller, 0, sizeof(struct str_list));
-				dlginfo->pubruris_caller->s=*s;
+				memset(dlginfo->pubruris_caller, 0, sizeof(struct str_list));
+				dlginfo->pubruris_caller->s.s = (char*)dlginfo->pubruris_caller
+					+ sizeof(sizeof(struct str_list));
+				memcpy(dlginfo->pubruris_caller->s.s, s->s, s->len);
+				dlginfo->pubruris_caller->s.s[s->len] = '\0';
+				dlginfo->pubruris_caller->s.len = s->len;
 				LM_DBG("Found pubruris_caller in dialog '%.*s'\n",
 						dlginfo->pubruris_caller->s.len, dlginfo->pubruris_caller->s.s);
 			}
@@ -576,14 +580,18 @@ struct dlginfo_cell* get_dialog_data(struct dlg_cell *dlg, int type, int disable
 			if(callee_dlg_var.len>0
 					&& (s = dlg_api.get_dlg_var(dlg, &callee_dlg_var))!=0) {
 				dlginfo->pubruris_callee =
-					(struct str_list*)shm_malloc( sizeof(struct str_list) );
+					(struct str_list*)shm_malloc(sizeof(struct str_list) + s->len + 1);
 				if (dlginfo->pubruris_callee==0) {
 					SHM_MEM_ERROR;
 					free_dlginfo_cell(dlginfo);
 					return NULL;
 				}
-				memset( dlginfo->pubruris_callee, 0, sizeof(struct str_list));
-				dlginfo->pubruris_callee->s=*s;
+				memset(dlginfo->pubruris_callee, 0, sizeof(struct str_list));
+				dlginfo->pubruris_callee->s.s = (char*)dlginfo->pubruris_callee
+					+ sizeof(sizeof(struct str_list));
+				memcpy(dlginfo->pubruris_callee->s.s, s->s, s->len);
+				dlginfo->pubruris_callee->s.s[s->len] = '\0';
+				dlginfo->pubruris_callee->s.len = s->len;
 				LM_DBG("Found pubruris_callee in dialog '%.*s'\n",
 						dlginfo->pubruris_callee->s.len, dlginfo->pubruris_callee->s.s);
 			}
