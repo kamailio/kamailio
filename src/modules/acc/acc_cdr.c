@@ -227,12 +227,13 @@ static int db_write_cdr( struct dlg_cell* dialog,
 		m += n;
 	} else if (cdr_expired_dlg_enable){
 		LM_WARN( "fallback to dlg_only search because of message doesn't exist.\n");
-		m += extra2strar_dlg_only( cdr_extra,
+		n += extra2strar_dlg_only( cdr_extra,
 				dialog,
 				cdr_value_array + m,
 				cdr_int_array + m,
 				cdr_type_array +m,
 				&dlgb);
+		m += n;
 	}
 
 	for( ; i<m; i++) {
@@ -311,7 +312,7 @@ static int log_write_cdr( struct dlg_cell* dialog,
 				cdr_type_array + message_index);
 	} else if (cdr_expired_dlg_enable){
 		LM_DBG("fallback to dlg_only search because of message does not exist.\n");
-		message_index += extra2strar_dlg_only( cdr_extra,
+		extra_index += extra2strar_dlg_only( cdr_extra,
 				dialog,
 				cdr_value_array + message_index,
 				cdr_int_array + message_index,

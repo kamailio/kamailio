@@ -268,6 +268,7 @@ int extra2strar_dlg_only(struct acc_extra *extra, struct dlg_cell* dlg, str *val
 	//string value;
 	str* value = 0;
 	int n=0;
+	int i;
 
 	if( !dlg || !val_arr || !int_arr || !type_arr || !p_dlgb)
 	{
@@ -297,7 +298,22 @@ int extra2strar_dlg_only(struct acc_extra *extra, struct dlg_cell* dlg, str *val
 
 		if (value)
 		{
-			val_arr[n].s = value->s;
+			val_arr[n].s = (char *)pkg_malloc(value->len + 1);
+			if (val_arr[n].s == NULL ) {
+				PKG_MEM_ERROR;
+				/* cleanup already allocated memory and
+				 * return that we didn't do anything */
+				for (i = 0; i < n ; i++) {
+					if (NULL != val_arr[i].s){
+						pkg_free(val_arr[i].s);
+						val_arr[i].s = NULL;
+					}
+				}
+				n = 0;
+				goto done;
+			}
+			memcpy(val_arr[n].s, value->s, value->len);
+			val_arr[n].s[value->len] = '\0';
 			val_arr[n].len = value->len;
 			type_arr[n] = TYPE_STR;
 		}
