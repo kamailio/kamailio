@@ -352,7 +352,7 @@ error:
 int set_dlg_variable(struct dlg_cell *dlg, str *key, str *val)
 {
     int ret = -1;
-    if( !dlg || !key || key->len > strlen(key->s) || (val && val->len > strlen(val->s)))
+    if( !dlg || !key || !key->s || key->len<=0 )
     {
         LM_ERR("BUG - bad parameters\n");
         return -1;
