@@ -120,7 +120,7 @@ enum {
 struct ng_flags_parse {
 	int via, to, packetize, transport, directional;
 	bencode_item_t *dict, *flags, *direction, *replace, *rtcp_mux, *sdes,
-		       *t38,
+		       *t38,*received_from,
 		       *codec, *codec_strip, *codec_offer, *codec_transcode, *codec_mask,
 		       *codec_set, *codec_except;
 	str call_id, from_tag, to_tag;
@@ -2241,8 +2241,8 @@ static int parse_flags(struct ng_flags_parse *ng_flags, struct sip_msg *msg, enu
 {
 	char *e;
 	const char *err;
-	str key, val, s;
-
+	str key, val, s , s1;
+	int ip_af = AF_UNSPEC;
 	if (!flags_str)
 		return 0;
 
@@ -2274,6 +2274,27 @@ static int parse_flags(struct ng_flags_parse *ng_flags, struct sip_msg *msg, enu
 		/* check for items which have their own sub-list */
 		if (str_key_val_prefix(&key, "replace", &val, &s)) {
 			bencode_list_add_str(ng_flags->replace, &s);
+			goto next;
+		}
+		if (str_key_val_prefix(&key, "received-from", &val, &s)) {
+			ip_af = get_ip_type(s.s);
+			if (ip_af == AF_INET)
+			{
+				s1.s="IP4";
+				s1.len=3;
+				bencode_list_add_str(ng_flags->received_from, &s1);
+				bencode_list_add_str(ng_flags->received_from, &s);
+			
+			}else if (force_send_ip_af == AF_INET6)
+			{
+				s1.s="IP6";
+				s1.len=3;
+				bencode_list_add_str(ng_flags->received_from, &s1);
+				bencode_list_add_str(ng_flags->received_from, &s);
+			
+			}
+			
+			
 			goto next;
 		}
 		if (str_key_val_prefix(&key, "SDES", &val, &s)) {
@@ -2442,6 +2463,7 @@ static int parse_flags(struct ng_flags_parse *ng_flags, struct sip_msg *msg, enu
 				else if (str_eq(&key, "delete-delay") && val.s)
 					bencode_dictionary_add_integer(ng_flags->dict, "delete delay", atoi(val.s));
 				break;
+						
 
 			case 16:
 				if (str_eq(&key, "UDP/TLS/RTP/SAVP") && !val.s)
@@ -2649,13 +2671,18 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
 		bencode_dictionary_add_str(ng_flags.dict, "via-branch", &viabranch);
 	}
 
-	item = bencode_list(bencbuf);
-	bencode_dictionary_add(ng_flags.dict, "received-from", item);
-	bencode_list_add_string(item, (msg->rcv.src_ip.af == AF_INET) ? "IP4" : (
-		(msg->rcv.src_ip.af == AF_INET6) ? "IP6" :
-		"?"
-	) );
-	bencode_list_add_string(item, ip_addr2a(&msg->rcv.src_ip));
+	if (ng_flags.received_from && ng_flags.received_from->child) {
+		bencode_dictionary_add(ng_flags.dict, "received-from", ng_flags.received_from);
+	}
+	else {
+		item = bencode_list(bencbuf);
+		bencode_dictionary_add(ng_flags.dict, "received-from", item);
+		bencode_list_add_string(item, (msg->rcv.src_ip.af == AF_INET) ? "IP4" : (
+			(msg->rcv.src_ip.af == AF_INET6) ? "IP6" :
+			"?"
+		) );
+		bencode_list_add_string(item, ip_addr2a(&msg->rcv.src_ip));
+	}
 
 	if (op == OP_BLOCK_DTMF || op == OP_BLOCK_MEDIA || op == OP_UNBLOCK_DTMF
 			|| op == OP_UNBLOCK_MEDIA || op == OP_START_FORWARDING || op == OP_STOP_FORWARDING
