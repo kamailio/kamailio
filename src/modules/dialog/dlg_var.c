@@ -378,6 +378,18 @@ done:
     return ret;
 }
 
+int set_dlg_variable_uintval(struct dlg_cell *dlg, str *key, unsigned int uval)
+{
+	str sval = STR_NULL;
+
+	sval.s = int2str(uval, &sval.len);
+	if(sval.s==NULL) {
+		return -1;
+	}
+
+	return set_dlg_variable(dlg, key, &sval);
+}
+
 int pv_get_dlg_variable(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	dlg_cell_t *dlg;
