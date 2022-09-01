@@ -173,8 +173,7 @@ int dlg_cseq_update(sip_msg_t *msg)
 		LM_DBG("nothing to increment\n");
 		goto done;
 	}
-	nval.s = int2str(vinc, &nval.len);
-	if(set_dlg_variable(dlg, &_dlg_cseq_diff_var_name, &nval) <0) {
+	if(set_dlg_variable_uintval(dlg, &_dlg_cseq_diff_var_name, vinc) <0) {
 		LM_ERR("failed to set the dlg cseq diff var\n");
 		goto done;
 	}

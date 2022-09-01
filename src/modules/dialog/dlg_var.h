@@ -63,6 +63,7 @@ str* get_dlg_variable(dlg_cell_t *dlg, str *key);
 int set_dlg_variable(dlg_cell_t *dlg, str *key, str *val);
 
 int get_dlg_variable_uintval(struct dlg_cell *dlg, str *key, unsigned int *uval);
+int set_dlg_variable_uintval(struct dlg_cell *dlg, str *key, unsigned int uval);
 
 int pv_parse_dialog_var_name(pv_spec_p sp, str *in);
 
