@@ -2285,7 +2285,7 @@ static int parse_flags(struct ng_flags_parse *ng_flags, struct sip_msg *msg, enu
 				bencode_list_add_str(ng_flags->received_from, &s1);
 				bencode_list_add_str(ng_flags->received_from, &s);
 			
-			}else if (force_send_ip_af == AF_INET6)
+			}else if (ip_af == AF_INET6)
 			{
 				s1.s="IP6";
 				s1.len=3;
