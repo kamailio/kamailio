@@ -3396,7 +3396,12 @@ int sr_kemi_modules_add(sr_kemi_t *klist)
 		_sr_kemi_modules[_sr_kemi_modules_size-1].kexp = klist;
 	} else {
 		LM_DBG("adding module: %.*s\n", klist[0].mname.len, klist[0].mname.s);
-		_sr_kemi_modules[_sr_kemi_modules_size].mname = klist[0].mname;
+		if(pkg_str_dup(&_sr_kemi_modules[_sr_kemi_modules_size].mname,
+					&klist[0].mname)<0) {
+			LM_ERR("failed to clone module name: %.*s\n", klist[0].mname.len,
+					klist[0].mname.s);
+			return -1;
+		}
 		_sr_kemi_modules[_sr_kemi_modules_size].kexp = klist;
 		_sr_kemi_modules_size++;
 	}
