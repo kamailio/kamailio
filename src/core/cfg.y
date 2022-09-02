@@ -2049,10 +2049,22 @@ module_stm:
 				yyerror("failed to load module");
 			}
 	}
+	| LOADMODULE LPAREN STRING RPAREN {
+		LM_DBG("loading module %s\n", $3);
+			if (load_module($3)!=0) {
+				yyerror("failed to load module");
+			}
+	}
 	| LOADMODULE error	{ yyerror("string expected"); }
 	| LOADMODULEX STRING {
 		LM_DBG("loading module %s\n", $2);
 			if (load_modulex($2)!=0) {
+				yyerror("failed to load module");
+			}
+	}
+	| LOADMODULEX LPAREN STRING RPAREN {
+		LM_DBG("loading module %s\n", $3);
+			if (load_modulex($3)!=0) {
 				yyerror("failed to load module");
 			}
 	}
