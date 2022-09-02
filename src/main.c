@@ -2446,7 +2446,7 @@ int main(int argc, char** argv)
 						fprintf(stderr, "bad load module parameter\n");
 						goto error;
 					}
-					if (load_module(optarg)!=0) {
+					if (ksr_load_module(optarg, NULL)!=0) {
 						LM_ERR("failed to load the module: %s\n", optarg);
 						goto error;
 					}
