@@ -72,20 +72,17 @@ static PyObject *msg_rewrite_ruri(msgobject *self, PyObject *args)
 
 	if (self == NULL) {
 		PyErr_SetString(PyExc_RuntimeError, "self is NULL");
-		Py_INCREF(Py_None);
-		return Py_None;
+		return NULL;
 	}
 
 	if (self->msg == NULL) {
 		PyErr_SetString(PyExc_RuntimeError, "self->msg is NULL");
-		Py_INCREF(Py_None);
-		return Py_None;
+		return NULL;
 	}
 
 	if ((self->msg->first_line).type != SIP_REQUEST) {
 		PyErr_SetString(PyExc_RuntimeError, "Not a request message - rewrite is not possible.\n");
-		Py_INCREF(Py_None);
-		return Py_None;
+		return NULL;
 	}
 
 	if(!PyArg_ParseTuple(args, "s:rewrite_ruri", &nuri.s))
@@ -107,20 +104,17 @@ static PyObject *msg_set_dst_uri(msgobject *self, PyObject *args)
 
 	if (self == NULL) {
 		PyErr_SetString(PyExc_RuntimeError, "self is NULL");
-		Py_INCREF(Py_None);
-		return Py_None;
+		return NULL;
 	}
 
 	if (self->msg == NULL) {
 		PyErr_SetString(PyExc_RuntimeError, "self->msg is NULL");
-		Py_INCREF(Py_None);
-		return Py_None;
+		return NULL;
 	}
 
 	if ((self->msg->first_line).type != SIP_REQUEST) {
 		PyErr_SetString(PyExc_RuntimeError, "Not a request message - set destination is not possible.\n");
-		Py_INCREF(Py_None);
-		return Py_None;
+		return NULL;
 	}
 
 	if(!PyArg_ParseTuple(args, "s:set_dst_uri", &ruri.s))
@@ -129,8 +123,8 @@ static PyObject *msg_set_dst_uri(msgobject *self, PyObject *args)
 	ruri.len = strlen(ruri.s);
 
 	if (set_dst_uri(self->msg, &ruri) < 0) {
-		LM_ERR("Error in set_dst_uri\n");
 		PyErr_SetString(PyExc_RuntimeError, "Error in set_dst_uri\n");
+		return NULL;
 	}
 	/* dst_uri changes, so it makes sense to re-use the current uri for
 	 * forking */
@@ -147,14 +141,12 @@ static PyObject *msg_getHeader(msgobject *self, PyObject *args)
 
 	if (self == NULL) {
 		PyErr_SetString(PyExc_RuntimeError, "self is NULL");
-		Py_INCREF(Py_None);
-		return Py_None;
+		return NULL;
 	}
 
 	if (self->msg == NULL) {
 		PyErr_SetString(PyExc_RuntimeError, "self->msg is NULL");
-		Py_INCREF(Py_None);
-		return Py_None;
+		return NULL;
 	}
 
 	if(!PyArg_ParseTuple(args, "s:getHeader", &hname.s))
@@ -191,22 +183,19 @@ PyObject *msg_call_function(msgobject *self, PyObject *args)
 
 	if (self == NULL) {
 		PyErr_SetString(PyExc_RuntimeError, "self is NULL");
-		Py_INCREF(Py_None);
-		return Py_None;
+		return NULL;
 	}
 
 	if (self->msg == NULL) {
 		PyErr_SetString(PyExc_RuntimeError, "self->msg is NULL");
-		Py_INCREF(Py_None);
-		return Py_None;
+		return NULL;
 	}
 
 	i = PySequence_Size(args);
 	if (i < 1 || i > 3) {
 		PyErr_SetString(PyExc_RuntimeError, "call_function() should " \
 				"have from 1 to 3 arguments");
-		Py_INCREF(Py_None);
-		return Py_None;
+		return NULL;
 	}
 
 	if(!PyArg_ParseTuple(args, "s|ss:call_function", &fname, &arg1, &arg2))
@@ -215,8 +204,7 @@ PyObject *msg_call_function(msgobject *self, PyObject *args)
 	fexport = find_export_record(fname, i - 1, 0);
 	if (fexport == NULL) {
 		PyErr_SetString(PyExc_RuntimeError, "no such function");
-		Py_INCREF(Py_None);
-		return Py_None;
+		return NULL;
 	}
 
 	act = mk_action(MODULE2_T, 4 /* number of (type, value) pairs */,
@@ -229,38 +217,34 @@ PyObject *msg_call_function(msgobject *self, PyObject *args)
 	if (act == NULL) {
 		PyErr_SetString(PyExc_RuntimeError,
 				"action structure could not be created");
-		Py_INCREF(Py_None);
-		return Py_None;
+		return NULL;
 	}
 
 	if (fexport->fixup != NULL) {
 		if (i >= 3) {
 			rval = fexport->fixup(&(act->val[3].u.data), 2);
 			if (rval < 0) {
-				PyErr_SetString(PyExc_RuntimeError, "Error in fixup (2)");
-				Py_INCREF(Py_None);
 				pkg_free(act);
-				return Py_None;
+				PyErr_SetString(PyExc_RuntimeError, "Error in fixup (2)");
+				return NULL;
 			}
 			act->val[3].type = MODFIXUP_ST;
 		}
 		if (i >= 2) {
 			rval = fexport->fixup(&(act->val[2].u.data), 1);
 			if (rval < 0) {
-				PyErr_SetString(PyExc_RuntimeError, "Error in fixup (1)");
-				Py_INCREF(Py_None);
 				pkg_free(act);
-				return Py_None;
+				PyErr_SetString(PyExc_RuntimeError, "Error in fixup (1)");
+				return NULL;
 			}
 			act->val[2].type = MODFIXUP_ST;
 		}
 		if (i == 1) {
 			rval = fexport->fixup(0, 0);
 			if (rval < 0) {
-				PyErr_SetString(PyExc_RuntimeError, "Error in fixup (0)");
-				Py_INCREF(Py_None);
 				pkg_free(act);
-				return Py_None;
+				PyErr_SetString(PyExc_RuntimeError, "Error in fixup (0)");
+				return NULL;
 			}
 		}
 	}
@@ -306,14 +290,12 @@ static PyObject *msg_getType(msgobject *self, PyObject *unused)
 
 	if (self == NULL) {
 		PyErr_SetString(PyExc_RuntimeError, "self is NULL");
-		Py_INCREF(Py_None);
-		return Py_None;
+		return NULL;
 	}
 
 	if (self->msg == NULL) {
 		PyErr_SetString(PyExc_RuntimeError, "self->msg is NULL");
-		Py_INCREF(Py_None);
-		return Py_None;
+		return NULL;
 	}
 
 	switch ((self->msg->first_line).type)
@@ -340,21 +322,19 @@ static PyObject *msg_getMethod(msgobject *self, PyObject *unused)
 
 	if (self == NULL) {
 		PyErr_SetString(PyExc_RuntimeError, "self is NULL");
-		Py_INCREF(Py_None);
-		return Py_None;
+		return NULL;
 	}
 
 	if (self->msg == NULL) {
 		PyErr_SetString(PyExc_RuntimeError, "self->msg is NULL");
-		Py_INCREF(Py_None);
-		return Py_None;
+		return NULL;
 	}
 
 	if ((self->msg->first_line).type != SIP_REQUEST) {
 		PyErr_SetString(PyExc_RuntimeError, "Not a request message - no method available.\n");
-		Py_INCREF(Py_None);
-		return Py_None;
+		return NULL;
 	}
+
 	rval = &((self->msg->first_line).u.request.method);
 	return PyUnicode_FromStringAndSize(rval->s, rval->len);
 }
@@ -365,20 +345,17 @@ static PyObject *msg_getStatus(msgobject *self, PyObject *unused)
 
 	if (self == NULL) {
 		PyErr_SetString(PyExc_RuntimeError, "self is NULL");
-		Py_INCREF(Py_None);
-		return Py_None;
+		return NULL;
 	}
 
 	if (self->msg == NULL) {
 		PyErr_SetString(PyExc_RuntimeError, "self->msg is NULL");
-		Py_INCREF(Py_None);
-		return Py_None;
+		return NULL;
 	}
 
 	if ((self->msg->first_line).type != SIP_REPLY) {
 		PyErr_SetString(PyExc_RuntimeError, "Not a non-reply message - no status available.\n");
-		Py_INCREF(Py_None);
-		return Py_None;
+		return NULL;
 	}
 
 	rval = &((self->msg->first_line).u.reply.status);
@@ -391,20 +368,17 @@ static PyObject *msg_getRURI(msgobject *self, PyObject *unused)
 
 	if (self == NULL) {
 		PyErr_SetString(PyExc_RuntimeError, "self is NULL");
-		Py_INCREF(Py_None);
-		return Py_None;
+		return NULL;
 	}
 
 	if (self->msg == NULL) {
 		PyErr_SetString(PyExc_RuntimeError, "self->msg is NULL");
-		Py_INCREF(Py_None);
-		return Py_None;
+		return NULL;
 	}
 
 	if ((self->msg->first_line).type != SIP_REQUEST) {
 		PyErr_SetString(PyExc_RuntimeError, "Not a request message - RURI is not available.\n");
-		Py_INCREF(Py_None);
-		return Py_None;
+		return NULL;
 	}
 
 	rval = &((self->msg->first_line).u.request.uri);
@@ -417,14 +391,12 @@ static PyObject *msg_get_src_address(msgobject *self, PyObject *unused)
 
 	if (self == NULL) {
 		PyErr_SetString(PyExc_RuntimeError, "self is NULL");
-		Py_INCREF(Py_None);
-		return Py_None;
+		return NULL;
 	}
 
 	if (self->msg == NULL) {
 		PyErr_SetString(PyExc_RuntimeError, "self->msg is NULL");
-		Py_INCREF(Py_None);
-		return Py_None;
+		return NULL;
 	}
 
 	src_ip = PyUnicode_FromString(ip_addr2a(&self->msg->rcv.src_ip));
@@ -457,14 +429,12 @@ static PyObject *msg_get_dst_address(msgobject *self, PyObject *unused)
 
 	if (self == NULL) {
 		PyErr_SetString(PyExc_RuntimeError, "self is NULL");
-		Py_INCREF(Py_None);
-		return Py_None;
+		return NULL;
 	}
 
 	if (self->msg == NULL) {
 		PyErr_SetString(PyExc_RuntimeError, "self->msg is NULL");
-		Py_INCREF(Py_None);
-		return Py_None;
+		return NULL;
 	}
 
 	dst_ip = PyUnicode_FromString(ip_addr2a(&self->msg->rcv.dst_ip));
