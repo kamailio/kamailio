@@ -289,6 +289,7 @@ void pp_define_core(void)
 	char defval[64];
 	char *p;
 	int n;
+	str_list_t *sb;
 
 	strcpy(defval, NAME);
 	p = defval;
@@ -329,6 +330,28 @@ void pp_define_core(void)
 	pp_define_set_type(0);
 	if(pp_define(strlen(defval), defval)<0) {
 		LM_ERR("unable to set cfg define: %s\n", defval);
+		return;
+	}
+
+	strcpy(p, "_VERSION");
+	pp_define_set_type(0);
+	if(pp_define(strlen(defval), defval)<0) {
+		LM_ERR("unable to set cfg define: %s\n", defval);
+		return;
+	}
+
+	n = snprintf(defval, 64, "%u", VERSIONVAL);
+	if(n<0 || n>=64) {
+		LM_ERR("failed to build version define value\n");
+		return;
+	}
+	sb = str_list_block_add(&_ksr_substdef_strlist, defval, strlen(defval));
+	if(sb==NULL) {
+		LM_ERR("failed to store version define value\n");
+		return;
+	}
+	if(pp_define_set(sb->s.len, sb->s.s, KSR_PPDEF_NORMAL)<0) {
+		LM_ERR("error setting version define value\n");
 		return;
 	}
 }
