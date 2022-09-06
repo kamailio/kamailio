@@ -354,6 +354,15 @@ void pp_define_core(void)
 		LM_ERR("error setting version define value\n");
 		return;
 	}
+
+	if(pp_define(strlen("OS_NAME"), "OS_NAME")<0) {
+		LM_ERR("unable to set cfg define OS_NAME\n");
+		return;
+	}
+	if(pp_define_set(strlen(OS_QUOTED), OS_QUOTED, KSR_PPDEF_NORMAL)<0) {
+		LM_ERR("error setting OS_NAME define value\n");
+		return;
+	}
 }
 
 /* vi: set ts=4 sw=4 tw=79:ai:cindent: */
