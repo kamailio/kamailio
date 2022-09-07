@@ -2559,6 +2559,7 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
 		ng_flags.sdes = bencode_list(bencbuf);
 		ng_flags.t38 = bencode_list(bencbuf);
 		ng_flags.codec = bencode_dictionary(bencbuf);
+		ng_flags.received-from = bencode_list(bencbuf);
 
 		if (read_sdp_pvar!= NULL) {
 			if (read_sdp_pvar->getf(msg,&read_sdp_pvar->pvp, &pv_val) < 0)
