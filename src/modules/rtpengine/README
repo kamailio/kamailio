@@ -2160,6 +2160,10 @@ rtpengine_offer();
           + SIP-source-address - the opposite of trust-address. Restores
             the old default behaviour of ignoring endpoint addresses in
             the SDP body.
+          + received-from=IP - Configure the SIP-source-address IP
+            explicitly, which will be useful when two kamailio is cascaded
+            where first kamailio is handling NAT and second kamailio
+            RTPEngine.
           + replace-origin - flags that IP from the origin description
             (o=) should be also changed.
           + replace-session-connection - flags to change the session-level
