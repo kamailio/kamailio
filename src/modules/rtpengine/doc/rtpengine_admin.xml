@@ -2423,13 +2423,13 @@ rtpengine_offer();
 				of ignoring endpoint addresses in the &sdp; body.
 				</para></listitem>
 				<listitem><para>
-				<emphasis>replace-origin</emphasis> - flags that IP from the origin
-				description (o=) should be also changed.
-				</para></listitem>
-				<listitem><para>
 				<emphasis>received-from=IP</emphasis> - Configure the SIP-source-address IP 
 				explicitly, which will be useful when two kamailio is cascaded where first kamailio
 				is handling NAT and second kamailio RTPEngine.
+				</para></listitem>
+				<listitem><para>
+				<emphasis>replace-origin</emphasis> - flags that IP from the origin
+				description (o=) should be also changed.
 				</para></listitem>
 				<listitem><para>
 				<emphasis>replace-session-connection</emphasis> - flags to change the session-level
