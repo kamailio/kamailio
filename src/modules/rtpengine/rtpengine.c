@@ -2551,7 +2551,7 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
 
 	body.s = NULL;
 	ng_flags.flags = bencode_list(bencbuf);
-	ng_flags.received-from = bencode_list(bencbuf);
+	ng_flags.received_from = bencode_list(bencbuf);
 
 	if (op == OP_OFFER || op == OP_ANSWER) {
 		ng_flags.direction = bencode_list(bencbuf);
@@ -2676,13 +2676,13 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
 		bencode_dictionary_add(ng_flags.dict, "received-from", ng_flags.received_from);
 	}
 	else {
-		item = bencode_list(bencbuf);
-		bencode_dictionary_add(ng_flags.dict, "received-from", item);
-		bencode_list_add_string(item, (msg->rcv.src_ip.af == AF_INET) ? "IP4" : (
+		//item = bencode_list(bencbuf);
+		bencode_dictionary_add(ng_flags.dict, "received-from", ng_flags.received_from);
+		bencode_list_add_string(ng_flags.received_from, (msg->rcv.src_ip.af == AF_INET) ? "IP4" : (
 			(msg->rcv.src_ip.af == AF_INET6) ? "IP6" :
 			"?"
 		) );
-		bencode_list_add_string(item, ip_addr2a(&msg->rcv.src_ip));
+		bencode_list_add_string(ng_flags.received_from, ip_addr2a(&msg->rcv.src_ip));
 	}
 
 	if (op == OP_BLOCK_DTMF || op == OP_BLOCK_MEDIA || op == OP_UNBLOCK_DTMF
