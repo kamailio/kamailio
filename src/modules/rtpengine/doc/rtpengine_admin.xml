@@ -2427,6 +2427,11 @@ rtpengine_offer();
 				description (o=) should be also changed.
 				</para></listitem>
 				<listitem><para>
+				<emphasis>received-from=IP</emphasis> - Configure the SIP-source-address IP 
+				explicitly, which will be useful when two kamailio is cascaded where first kamailio
+				is handling NAT and second kamailio RTPEngine.
+				</para></listitem>
+				<listitem><para>
 				<emphasis>replace-session-connection</emphasis> - flags to change the session-level
 				&sdp; connection (c=) IP if media description also includes
 				connection information.
