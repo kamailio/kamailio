@@ -168,6 +168,10 @@ pos_insert("100", "10");
 			Set the char at position index to first character in val.
 			</para>
 			<para>
+			Important: it changes the character directly in the SIP message
+			buffer, the update being immediately visible.
+			</para>
+			<para>
 			The idx can be an integer value or a variable holding an integer. If
 			the value is negative, the position is counted from the end of the buffer.
 			</para>
