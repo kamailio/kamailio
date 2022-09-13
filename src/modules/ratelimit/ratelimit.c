@@ -42,6 +42,7 @@
 #include "../../core/data_lump_rpl.h"
 #include "../../core/counters.h"
 #include "../../core/rpc_lookup.h"
+#include "../../core/kemi.h"
 #include "rl_statistics.h"
 
 
@@ -199,6 +200,8 @@ static int w_rl_check_forced(struct sip_msg*, char *, char *);
 static int w_rl_check_forced_pipe(struct sip_msg*, char *, char *);
 static int add_queue_params(modparam_t, void *);
 static int add_pipe_params(modparam_t, void *);
+static int ki_rl_check(struct sip_msg *msg);
+static int ki_rl_check_pipe(struct sip_msg *msg, int pipe);
 /* RESERVED for future use
 static int set_load_source(modparam_t, void *);
 */
@@ -1323,3 +1326,33 @@ static rpc_export_t rpc_methods[] = {
 	{0, 0, 0, 0}
 };
 
+static sr_kemi_t sr_kemi_ratelimit_exports[] = {
+        { str_init("ratelimit"), str_init("rl_check"),
+                SR_KEMIP_INT, ki_rl_check,
+                { SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+                        SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+        },
+        { str_init("ratelimit"), str_init("rl_check_pipe"),
+                SR_KEMIP_INT, ki_rl_check_pipe,
+                { SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+                        SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+        },
+        { {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+
+};
+
+static int ki_rl_check(struct sip_msg *msg) {
+	return rl_check(msg, -1);
+}
+
+static int ki_rl_check_pipe(struct sip_msg *msg, int pipe) {
+
+	LM_DBG("trying kemi pipe %d\n", pipe);
+	return rl_check(msg, pipe);
+}
+
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+        sr_kemi_modules_add(sr_kemi_ratelimit_exports);
+        return 0;
+}
