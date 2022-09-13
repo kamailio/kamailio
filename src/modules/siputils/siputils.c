@@ -118,6 +118,7 @@ static int fixup_get_uri_param(void** param, int param_no);
 static int free_fixup_get_uri_param(void** param, int param_no);
 static int fixup_option(void** param, int param_no);
 
+static int ki_is_gruu(sip_msg_t *msg);
 
 char *contact_flds_separator = DEFAULT_SEPARATOR;
 
@@ -726,10 +727,19 @@ static sr_kemi_t sr_kemi_siputils_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("siputils"), str_init("is_gruu"),
+		SR_KEMIP_INT, ki_is_gruu,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };
 /* clang-format on */
+
+static int ki_is_gruu(sip_msg_t *msg) {
+	return w_is_gruu(msg, NULL, NULL);
+}
 
 /**
  *
