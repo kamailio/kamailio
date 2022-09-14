@@ -393,7 +393,7 @@ static struct snexpr* pp_snexpr_defval(char *vname)
 		if(pd->value.len>=2 && (pd->value.s[0]=='"' || pd->value.s[0]=='\'')
 				&& pd->value.s[0]==pd->value.s[pd->value.len-1]) {
 			/* strip enclosing quotes for string value */
-			return snexpr_convert_stzl(pd->value.s+1, pd->value.len-1, SNE_OP_CONSTSTZ);
+			return snexpr_convert_stzl(pd->value.s+1, pd->value.len-2, SNE_OP_CONSTSTZ);
 		} else {
 			return snexpr_convert_stzl(pd->value.s, pd->value.len, SNE_OP_CONSTSTZ);
 		}
