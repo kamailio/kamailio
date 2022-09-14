@@ -434,6 +434,7 @@ void pp_ifexp_eval(char *exval, int exlen)
 	}
 
 	if(result->type == SNE_OP_CONSTNUM) {
+		LM_DBG("expression number result: %g\n", result->param.num.nval);
 		if(result->param.num.nval) {
 			b = 1;
 		} else {
@@ -441,8 +442,11 @@ void pp_ifexp_eval(char *exval, int exlen)
 		}
 	} else if(result->type == SNE_OP_CONSTSTZ) {
 		if(result->param.stz.sval==NULL || strlen(result->param.stz.sval)==0) {
+			LM_DBG("expression string result: <%s>\n",
+					(result->param.stz.sval)?"empty":"null");
 			b = 0;
 		} else {
+			LM_DBG("expression string result: [%s]\n", result->param.stz.sval);
 			b = 1;
 		}
 	}
