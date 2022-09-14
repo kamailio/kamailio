@@ -75,6 +75,10 @@ static int dp_reload_f(struct sip_msg* msg);
 static int w_dp_replace(sip_msg_t* msg, char* pid, char* psrc, char* pdst);
 static int w_dp_match(sip_msg_t* msg, char* pid, char* psrc);
 
+static int ki_dp_translate(sip_msg_t* msg, int id, str *input, str *output);
+static int ki_dp_translate_1_args(sip_msg_t* msg, int id);
+static int ki_dp_translate_3_args(sip_msg_t* msg, int id, str *input, str *output);
+
 int dp_replace_fixup(void** param, int param_no);
 int dp_replace_fixup_free(void** param, int param_no);
 
@@ -846,10 +850,96 @@ static sr_kemi_t sr_kemi_dialplan_exports[] = {
 		{ SR_KEMIP_INT, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("dialplan"), str_init("dp_transalte"),
+		SR_KEMIP_INT, ki_dp_translate_1_args,
+		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("dialplan"), str_init("dp_transalte"),
+		SR_KEMIP_INT, ki_dp_translate_3_args,
+		{ SR_KEMIP_INT, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };
 /* clang-format on */
+
+static int ki_dp_translate(sip_msg_t* msg, int id, str *input_spv, str *output_spv) {
+	str input, output;
+	dpl_id_p idp;
+	str attrs, *outattrs;
+	pv_spec_t *pvs_i = NULL, *pvs_o = NULL;
+
+	if (!msg)
+		return -1;
+
+	if (input_spv == NULL || input_spv->s == NULL || input_spv->len <= 0 ||
+	    output_spv == NULL || output_spv->s == NULL || output_spv->len <= 0) {
+		LM_ERR("invalid destination var name for input or output\n");
+		return -1;
+	}
+
+	if (input_spv == NULL && output_spv == NULL) {
+		pvs_i = pv_cache_get(&default_param_s);
+		pvs_o = pv_cache_get(&default_param_s);
+	} else {
+		pvs_i = pv_cache_get(input_spv);
+		pvs_o = pv_cache_get(output_spv);
+	}
+
+	if (pvs_i == NULL || pvs_o == NULL) {
+		LM_ERR("cannot get pv spec for input or output\n");
+		return -1;
+	}
+
+	if ((pvs_i->type!=PVT_AVP && pvs_i->type!=PVT_XAVP && pvs_i->type!=PVT_SCRIPTVAR &&
+	    pvs_i->type!=PVT_RURI && pvs_i->type!=PVT_RURI_USERNAME) ||
+	    (pvs_o->type!=PVT_AVP && pvs_o->type!=PVT_XAVP && pvs_o->type!=PVT_SCRIPTVAR &&
+	    pvs_o->type!=PVT_RURI && pvs_o->type!=PVT_RURI_USERNAME)) {
+		LM_ERR("type of pv error\n");
+		return -1;
+	}
+
+	if ((idp = select_dpid(id)) ==0 ){
+		LM_DBG("no information available for dpid %i\n", id);
+		return -2;
+	}
+
+	/* get the input */
+	if (dp_get_svalue(msg, pvs_i, &input)!=0){
+		LM_ERR("invalid param 2\n");
+		return -1;
+	}
+
+	LM_DBG("input is %.*s\n", input.len, input.s);
+
+	outattrs = (!attr_pvar)?NULL:&attrs;
+	if (dp_translate_helper(msg, &input, &output, idp, outattrs)!=0) {
+		LM_DBG("could not translate %.*s "
+				"with dpid %i\n", input.len, input.s, idp->dp_id);
+		return -1;
+	}
+	LM_DBG("input %.*s with dpid %i => output %.*s\n",
+			input.len, input.s, idp->dp_id, output.len, output.s);
+
+	/* set the output */
+	if (dp_update(msg, pvs_o, &output, outattrs) !=0){
+		LM_ERR("cannot set the output\n");
+		return -1;
+	}
+
+	return 1;
+
+}
+
+static int ki_dp_translate_1_args(sip_msg_t* msg, int id) {
+	return ki_dp_translate(msg, id, NULL, NULL);
+}
+
+static int ki_dp_translate_3_args(sip_msg_t* msg, int id, str *input, str *output) {
+	return ki_dp_translate(msg, id, input, output);
+}
 
 /**
  *
