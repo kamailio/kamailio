@@ -850,12 +850,12 @@ static sr_kemi_t sr_kemi_dialplan_exports[] = {
 		{ SR_KEMIP_INT, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
-	{ str_init("dialplan"), str_init("dp_transalte"),
+	{ str_init("dialplan"), str_init("dp_translate"),
 		SR_KEMIP_INT, ki_dp_translate_1_args,
 		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
-	{ str_init("dialplan"), str_init("dp_transalte"),
+	{ str_init("dialplan"), str_init("dp_translate"),
 		SR_KEMIP_INT, ki_dp_translate_3_args,
 		{ SR_KEMIP_INT, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
