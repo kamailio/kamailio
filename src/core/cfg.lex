@@ -130,8 +130,8 @@
 /* start conditions */
 %x STRING1 STRING2 STR_BETWEEN COMMENT COMMENT_LN ATTR SELECT AVP_PVAR PVAR_P
 %x PVARID INCLF IMPTF EVRTNAME CFGPRINTMODE CFGPRINTLOADMOD DEFENV_ID DEFENVS_ID
-%x TRYDEFENV_ID TRYDEFENVS_ID LINECOMMENT DEFINE_ID DEFINE_EOL DEFINE_DATA 
-%x IFDEF_ID IFDEF_EOL IFDEF_SKIP
+%x TRYDEFENV_ID TRYDEFENVS_ID LINECOMMENT DEFINE_ID DEFINE_EOL DEFINE_DATA
+%x IFDEF_ID IFDEF_EOL IFDEF_SKIP IFEXP_STM
 
 /* config script types : #!SER  or #!KAMAILIO or #!MAX_COMPAT */
 SER_CFG			SER
@@ -571,6 +571,7 @@ PREP_START	"#!"|"!!"
 DEFINE       "define"|"def"
 IFDEF        ifdef
 IFNDEF       ifndef
+IFEXP        ifexp
 ENDIF        endif
 TRYDEF       "trydefine"|"trydef"
 REDEF        "redefine"|"redef"
@@ -1381,6 +1382,9 @@ IMPORTFILE      "import_file"
 <INITIAL,CFGPRINTMODE,IFDEF_SKIP>{PREP_START}{IFNDEF}{EAT_ABLE}+    { count();
 								if (pp_ifdef_type(0)) return 1;
 								state = IFDEF_S; BEGIN(IFDEF_ID); }
+<INITIAL,CFGPRINTMODE,IFDEF_SKIP>{PREP_START}{IFEXP}{EAT_ABLE}+    { count();
+								if (pp_ifdef_type(1)) return 1;
+								state = IFDEF_S; BEGIN(IFEXP_STM); }
 <IFDEF_ID>{ID}{MINUS}           { count();
 									LM_CRIT(
 										"error at %s line %d: '-' not allowed\n",
@@ -1390,6 +1394,11 @@ IMPORTFILE      "import_file"
 <IFDEF_ID>{ID}                { count();
 								pp_ifdef_var(yyleng, yytext);
 								state = IFDEF_EOL_S; BEGIN(IFDEF_EOL); }
+<IFEXP_STM>.*{CR}        { count();
+								pp_ifexp_eval(yytext, yyleng);
+								state = IFDEF_EOL_S; BEGIN(IFDEF_EOL);
+								pp_ifdef();
+								}
 <IFDEF_EOL>{EAT_ABLE}*{CR}    { count(); pp_ifdef(); }
 
 <INITIAL,CFGPRINTMODE,IFDEF_SKIP>{PREP_START}{ELSE}{EAT_ABLE}*{CR}    { count(); pp_else(); }
@@ -2016,7 +2025,7 @@ ksr_ppdefine_t* pp_get_define(int idx)
 	return &pp_defines[idx];
 }
 
-static int pp_lookup(int len, const char *text)
+int pp_lookup(int len, const char *text)
 {
 	str var = {(char *)text, len};
 	int i;
@@ -2243,6 +2252,11 @@ static int pp_ifdef_type(int type)
 static void pp_ifdef_var(int len, const char *text)
 {
 	pp_ifdef_stack[pp_sptr] ^= (pp_lookup(len, text) < 0);
+}
+
+void pp_ifexp_state(int state)
+{
+	pp_ifdef_stack[pp_sptr] = state;
 }
 
 static void pp_update_state()

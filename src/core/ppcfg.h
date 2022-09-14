@@ -40,6 +40,7 @@ int pp_def_qvalue(str *defval, str *outval);
 
 str* pp_get_define_name(int idx);
 ksr_ppdefine_t* pp_get_define(int idx);
+int pp_lookup(int len, const char *text);
 
 int pp_subst_add(char *data);
 int pp_substdef_add(char *data, int mode);
@@ -58,6 +59,9 @@ void pp_ifdef_level_error(void);
 void pp_define_core(void);
 
 void ksr_cfg_print_initial_state(void);
+
+void pp_ifexp_eval(char *exval, int exlen);
+void pp_ifexp_state(int state);
 
 #endif /*_PPCFG_H_*/
 
