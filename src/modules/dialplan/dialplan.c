@@ -76,8 +76,8 @@ static int w_dp_replace(sip_msg_t* msg, char* pid, char* psrc, char* pdst);
 static int w_dp_match(sip_msg_t* msg, char* pid, char* psrc);
 
 static int ki_dp_translate(sip_msg_t* msg, int id, str *input, str *output);
-static int ki_dp_translate_1_args(sip_msg_t* msg, int id);
-static int ki_dp_translate_3_args(sip_msg_t* msg, int id, str *input, str *output);
+static int ki_dp_translate_id(sip_msg_t* msg, int id);
+static int ki_dp_translate_vars(sip_msg_t* msg, int id, str *input, str *output);
 
 int dp_replace_fixup(void** param, int param_no);
 int dp_replace_fixup_free(void** param, int param_no);
@@ -851,12 +851,12 @@ static sr_kemi_t sr_kemi_dialplan_exports[] = {
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("dialplan"), str_init("dp_translate"),
-		SR_KEMIP_INT, ki_dp_translate_1_args,
+		SR_KEMIP_INT, ki_dp_translate_id,
 		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
-	{ str_init("dialplan"), str_init("dp_translate"),
-		SR_KEMIP_INT, ki_dp_translate_3_args,
+	{ str_init("dialplan"), str_init("dp_translate_vars"),
+		SR_KEMIP_INT, ki_dp_translate_vars,
 		{ SR_KEMIP_INT, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
@@ -933,11 +933,11 @@ static int ki_dp_translate(sip_msg_t* msg, int id, str *input_spv, str *output_s
 
 }
 
-static int ki_dp_translate_1_args(sip_msg_t* msg, int id) {
+static int ki_dp_translate_id(sip_msg_t* msg, int id) {
 	return ki_dp_translate(msg, id, NULL, NULL);
 }
 
-static int ki_dp_translate_3_args(sip_msg_t* msg, int id, str *input, str *output) {
+static int ki_dp_translate_vars(sip_msg_t* msg, int id, str *input, str *output) {
 	return ki_dp_translate(msg, id, input, output);
 }
 
