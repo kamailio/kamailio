@@ -144,7 +144,7 @@ Daniel-Constantin Mierla
               5.1. tm.list
               5.2. tm.t_uac_start
               5.3. tm.t_uac_wait
-              5.4. tm.t_uac_wait
+              5.4. tm.t_uac_wait_block
               5.5. tm.cancel
               5.6. tm.hash_stats
               5.7. tm.reply
@@ -404,7 +404,7 @@ Chapter 1. Admin Guide
         5.1. tm.list
         5.2. tm.t_uac_start
         5.3. tm.t_uac_wait
-        5.4. tm.t_uac_wait
+        5.4. tm.t_uac_wait_block
         5.5. tm.cancel
         5.6. tm.hash_stats
         5.7. tm.reply
@@ -2975,7 +2975,7 @@ t_clean();
    5.1. tm.list
    5.2. tm.t_uac_start
    5.3. tm.t_uac_wait
-   5.4. tm.t_uac_wait
+   5.4. tm.t_uac_wait_block
    5.5. tm.cancel
    5.6. tm.hash_stats
    5.7. tm.reply
@@ -3010,7 +3010,7 @@ t_clean();
    Similar to tm.t_uac_start, but waits asynchronously for the SIP
    response and tries to provide its details via RPC response.
 
-5.4.  tm.t_uac_wait
+5.4.  tm.t_uac_wait_block
 
    Similar to tm.t_uac_start, but blocks waiting for the SIP response and
    returns the SIP reply code and reason text via RPC response. It waits
