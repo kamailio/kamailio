@@ -161,6 +161,11 @@ Chapter 1. Admin Guide
    the from local list of active nodes, no longer being considered to be
    part of the KDMQ cluster.
 
+   IMPORTANT: DMQ must be used only between Kamailio instances having same
+   major version. Internal structures can be incompatible between
+   different major versions and can lead to crashes or unexpected
+   behaviour.
+
    Example 1.1. KDMQ Request Example
 
    This request is generated for DMQ peers availability notifications.
