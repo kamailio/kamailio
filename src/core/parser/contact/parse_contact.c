@@ -61,6 +61,33 @@ static inline int contact_parser(char* _s, int _l, contact_body_t* _c)
 	return 0;
 }
 
+/**
+ * Parse all contact headers
+ */
+int parse_contact_headers(sip_msg_t *msg)
+{
+	hdr_field_t* hdr;
+
+	if (parse_headers(msg, HDR_EOH_F, 0) < 0) {
+		LM_ERR("failed to parse headers\n");
+		return -1;
+	}
+
+	if (msg->contact) {
+		hdr = msg->contact;
+		while(hdr) {
+			if (hdr->type == HDR_CONTACT_T) {
+				if (!hdr->parsed && (parse_contact(hdr) < 0)) {
+					LM_ERR("failed to parse Contact body\n");
+					return -1;
+				}
+			}
+			hdr = hdr->next;
+		}
+	}
+
+	return 0;
+}
 
 /*
  * Parse contact header field body

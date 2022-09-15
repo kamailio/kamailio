@@ -46,6 +46,12 @@ typedef struct contact_body {
 } contact_body_t;
 
 
+/**
+ * Parse all contact headers
+ */
+int parse_contact_headers(sip_msg_t *msg);
+
+
 /*
  * Parse contact header field body
  */
