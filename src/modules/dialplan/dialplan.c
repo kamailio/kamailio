@@ -80,11 +80,11 @@ static int ki_dp_translate_vars(sip_msg_t* msg, int id, str *input, str *output)
 int dp_replace_fixup(void** param, int param_no);
 int dp_replace_fixup_free(void** param, int param_no);
 
-str attr_pvar_s = STR_NULL;
-pv_spec_t *attr_pvar = NULL;
+str dp_attr_pvar_s = STR_NULL;
+pv_spec_t *dp_attr_pvar = NULL;
 
-str default_param_s = str_init("$rU");
-dp_param_p default_par2 = NULL;
+str dp_default_param_s = str_init("$rU");
+dp_param_p dp_default_par2 = NULL;
 
 int dp_fetch_rows = 1000;
 int dp_match_dynamic = 0;
@@ -104,7 +104,7 @@ static param_export_t mod_params[]={
 	{ "subst_exp_col",	PARAM_STR,	&subst_exp_column },
 	{ "repl_exp_col",	PARAM_STR,	&repl_exp_column },
 	{ "attrs_col",		PARAM_STR,	&attrs_column },
-	{ "attrs_pvar",	    PARAM_STR,	&attr_pvar_s },
+	{ "attrs_pvar",	    PARAM_STR,	&dp_attr_pvar_s },
 	{ "fetch_rows",		PARAM_INT,	&dp_fetch_rows },
 	{ "match_dynamic",	PARAM_INT,	&dp_match_dynamic },
 	{ "append_branch",	PARAM_INT,	&dp_append_branch },
@@ -150,35 +150,35 @@ static int mod_init(void)
 
 	LM_DBG("db_url=%s/%d/%p\n", ZSW(dp_db_url.s), dp_db_url.len,dp_db_url.s);
 
-	if(attr_pvar_s.s && attr_pvar_s.len>0) {
-		attr_pvar = pv_cache_get(&attr_pvar_s);
-		if( (attr_pvar==NULL) ||
-				((attr_pvar->type != PVT_AVP) &&
-				 (attr_pvar->type != PVT_XAVP) &&
-				 (attr_pvar->type!=PVT_SCRIPTVAR))) {
+	if(dp_attr_pvar_s.s && dp_attr_pvar_s.len>0) {
+		dp_attr_pvar = pv_cache_get(&dp_attr_pvar_s);
+		if( (dp_attr_pvar==NULL) ||
+				((dp_attr_pvar->type != PVT_AVP) &&
+				 (dp_attr_pvar->type != PVT_XAVP) &&
+				 (dp_attr_pvar->type != PVT_SCRIPTVAR))) {
 			LM_ERR("invalid pvar name\n");
 			return -1;
 		}
 	}
 
-	default_par2 = (dp_param_p)shm_malloc(sizeof(dp_param_t));
-	if(default_par2 == NULL){
+	dp_default_par2 = (dp_param_p)shm_malloc(sizeof(dp_param_t));
+	if(dp_default_par2 == NULL){
 		LM_ERR("no shm more memory\n");
 		return -1;
 	}
-	memset(default_par2, 0, sizeof(dp_param_t));
+	memset(dp_default_par2, 0, sizeof(dp_param_t));
 
 	/* emulate "$rU/$rU" as second parameter for dp_translate() */
-	default_param_s.len = strlen(default_param_s.s);
-	default_par2->v.sp[0] = pv_cache_get(&default_param_s);
-	if (default_par2->v.sp[0]==NULL) {
+	dp_default_param_s.len = strlen(dp_default_param_s.s);
+	dp_default_par2->v.sp[0] = pv_cache_get(&dp_default_param_s);
+	if (dp_default_par2->v.sp[0]==NULL) {
 		LM_ERR("input pv is invalid\n");
 		return -1;
 	}
 
-	default_param_s.len = strlen(default_param_s.s);
-	default_par2->v.sp[1] = pv_cache_get(&default_param_s);
-	if (default_par2->v.sp[1]==NULL) {
+	dp_default_param_s.len = strlen(dp_default_param_s.s);
+	dp_default_par2->v.sp[1] = pv_cache_get(&dp_default_param_s);
+	if (dp_default_par2->v.sp[1]==NULL) {
 		LM_ERR("output pv is invalid\n");
 		return -1;
 	}
@@ -214,9 +214,9 @@ static int child_init(int rank)
 static void mod_destroy(void)
 {
 	/*destroy shared memory*/
-	if(default_par2){
-		shm_free(default_par2);
-		default_par2 = NULL;
+	if(dp_default_par2){
+		shm_free(dp_default_par2);
+		dp_default_par2 = NULL;
 	}
 	if(dp_rpc_reload_time!=NULL) {
 		shm_free(dp_rpc_reload_time);
@@ -306,11 +306,11 @@ static int dp_update(struct sip_msg * msg, pv_spec_t * dest,
 
 set_attr_pvar:
 
-	if(attr_pvar==NULL || attrs==NULL)
+	if(dp_attr_pvar==NULL || attrs==NULL)
 		return 0;
 
 	val.rs = *attrs;
-	if(attr_pvar->setf(msg, &attr_pvar->pvp, (int)EQ_T, &val)<0)
+	if(dp_attr_pvar->setf(msg, &dp_attr_pvar->pvp, (int)EQ_T, &val)<0)
 	{
 		LM_ERR("setting attr pseudo-variable failed\n");
 		return -1;
@@ -343,7 +343,7 @@ static int dp_translate_f(struct sip_msg* msg, char* str1, char* str2)
 		return -2;
 	}
 
-	repl_par = (str2!=NULL)? ((dp_param_p)str2):default_par2;
+	repl_par = (str2!=NULL)? ((dp_param_p)str2):dp_default_par2;
 	if (dp_get_svalue(msg, repl_par->v.sp[0], &input)!=0){
 		LM_ERR("invalid param 2\n");
 		return -1;
@@ -351,7 +351,7 @@ static int dp_translate_f(struct sip_msg* msg, char* str1, char* str2)
 
 	LM_DBG("input is %.*s\n", input.len, input.s);
 
-	outattrs = (!attr_pvar)?NULL:&attrs;
+	outattrs = (!dp_attr_pvar)?NULL:&attrs;
 	if (dp_translate_helper(msg, &input, &output, idp, outattrs)!=0) {
 		LM_DBG("could not translate %.*s "
 				"with dpid %i\n", input.len, input.s, idp->dp_id);
@@ -493,7 +493,7 @@ static int dp_replace_helper(sip_msg_t *msg, int dpid, str *input,
 		return -2;
 	}
 
-	outattrs = (!attr_pvar)?NULL:&attrs;
+	outattrs = (!dp_attr_pvar)?NULL:&attrs;
 	output = (!pvd)?NULL:&tmp;
 	if (dp_translate_helper(msg, input, output, idp, outattrs)!=0) {
 		LM_DBG("could not translate %.*s "
@@ -879,8 +879,8 @@ static int ki_dp_translate(sip_msg_t* msg, int id, str *input_spv, str *output_s
 	}
 
 	if (input_spv == NULL && output_spv == NULL) {
-		pvs_i = pv_cache_get(&default_param_s);
-		pvs_o = pv_cache_get(&default_param_s);
+		pvs_i = pv_cache_get(&dp_default_param_s);
+		pvs_o = pv_cache_get(&dp_default_param_s);
 	} else {
 		pvs_i = pv_cache_get(input_spv);
 		pvs_o = pv_cache_get(output_spv);
@@ -912,7 +912,7 @@ static int ki_dp_translate(sip_msg_t* msg, int id, str *input_spv, str *output_s
 
 	LM_DBG("input is %.*s\n", input.len, input.s);
 
-	outattrs = (!attr_pvar)?NULL:&attrs;
+	outattrs = (!dp_attr_pvar)?NULL:&attrs;
 	if (dp_translate_helper(msg, &input, &output, idp, outattrs)!=0) {
 		LM_DBG("could not translate %.*s "
 				"with dpid %i\n", input.len, input.s, idp->dp_id);
