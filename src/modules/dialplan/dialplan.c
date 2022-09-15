@@ -61,8 +61,6 @@
 
 MODULE_VERSION
 
-#define DEFAULT_PARAM    "$rU"
-
 static int mod_init(void);
 static int child_init(int rank);
 static void mod_destroy();
@@ -85,7 +83,7 @@ int dp_replace_fixup_free(void** param, int param_no);
 str attr_pvar_s = STR_NULL;
 pv_spec_t *attr_pvar = NULL;
 
-str default_param_s = str_init(DEFAULT_PARAM);
+str default_param_s = str_init("$rU");
 dp_param_p default_par2 = NULL;
 
 int dp_fetch_rows = 1000;
