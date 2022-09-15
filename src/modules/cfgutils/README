@@ -757,11 +757,11 @@ $ kamcmd cfgutils.get_gflags
    Example 1.34. RANDOM pseudo-variable usage
 ...
 if (rand_event()) {
-  $avp(i:10) = ($RANDOM / 16777216); # 2^24
-  if ($avp(i:10) < 10) {
-     $avp(i:10) = 10;
+  $var(value) = ($RANDOM / 16777216); # 2^24
+  if ($var(value) < 10) {
+     $var(value) = 10;
   }
-  append_to_reply("Retry-After: $avp(i:10)\n");
+  append_to_reply("Retry-After: $var(value)\n");
   sl_send_reply("503", "Try later");
   exit;
 };

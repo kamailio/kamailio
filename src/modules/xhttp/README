@@ -131,11 +131,15 @@ Chapter 1. Admin Guide
 
 3.2. Kamailio Core Settings
 
-   SIP requires a Content-Length header for TCP transport. But most HTTP
-   clients do not set the content length for normal GET requests.
-   Therefore, the core must be configured to allow incoming requests
-   without content length header:
-     * tcp_accept_no_cl=yes
+   Related core settings:
+     * tcp_accept_no_cl=yes - SIP requires the Content-Length header for
+       TCP transport. But most HTTP clients do not set the content length
+       for normal GET requests. Therefore, the core must be configured to
+       allow incoming requests without content length header.
+     * http_reply_parse=yes - various Kamailio modules may parse what it
+       is sent out (e.g., for replication, topology management). In such
+       case errors are printed if the outgoing message is not SIP and this
+       parameter is not set.
 
 3.3. External Libraries or Applications
 

@@ -706,9 +706,11 @@ if(is_rfc1918("$rd")) {
 5.9.  set_contact_alias([trim])
 
    Adds an “;alias=ip~port~transport” parameter to the contact URI
-   containing the received ip, port, and transport protocol. The new
-   contact URI is immediately visible to other modules in the way the
-   fix_nated_contact() does it.
+   containing the received ip, port, and transport protocol. The update of
+   contact URI is signaled to a few other modules in the way the
+   fix_nated_contact() does it by using the internal flags. The new value
+   is not visible to pseudo-variables and it does not change the SIP
+   message buffer.
 
    Meaning of parameters:
      * trim - by default, set_contact_alias() will not detect and trim an
