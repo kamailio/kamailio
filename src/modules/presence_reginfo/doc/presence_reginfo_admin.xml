@@ -86,6 +86,27 @@
             </example>
         </section>
 
+				<section id="presence_reginfo.p.aggregate_presentities">
+							<title><varname>aggregate_presentities</varname> (int)</title>
+							<para>
+							Whether to aggregate in a single notify body all registration 
+							presentities. Useful to have all registrations on first NOTIFY
+							following initial SUBSCRIBE.
+							</para>
+							<para>
+							<emphasis>Default value is <quote>0</quote> (disabled).
+							</emphasis>
+							</para>
+							<example>
+							<title>Set <varname>aggregate_presentities</varname> parameter</title>
+							<programlisting format="linespecific">
+					...
+					modparam("presence_reginfo", "aggregate_presentities", 1)
+					...
+					</programlisting>
+							</example>
+					</section>
+
 	</section>
 
 
