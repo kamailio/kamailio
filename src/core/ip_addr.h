@@ -304,6 +304,8 @@ char* get_proto_name(unsigned int proto);
 int get_valid_proto_string(unsigned int iproto, int utype, int vtype,
 		str *sproto);
 
+char* get_af_name(unsigned int af);
+
 #ifdef USE_MCAST
 /* Returns 1 if the given address is a multicast address */
 int is_mcast(struct ip_addr* ip);
