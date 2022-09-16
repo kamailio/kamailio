@@ -65,7 +65,8 @@ static void corex_rpc_list_sockets(rpc_t* rpc, void* ctx)
 				return;
 			}
 
-			if(rpc->struct_add(th, "ss{",
+			if(rpc->struct_add(th, "sss{",
+				"AF", 	get_af_name(proto),
 				"PROTO", 	get_valid_proto_name(proto),
 				"NAME", 	si->name.s,
 				"ADDRLIST",  &ih)<0)
