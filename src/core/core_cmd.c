@@ -988,7 +988,8 @@ static void core_sockets_list(rpc_t* rpc, void* c)
 		for(si=list?*list:0; si; si=si->next){
 			rpc->struct_add(hr, "{", "socket", &ha);
 			if (si->addr_info_lst){
-				rpc->struct_add(ha, "ss",
+				rpc->struct_add(ha, "sss",
+						"af", get_af_name(si->address.af),
 						"proto", get_proto_name(proto),
 						"address", si->address_str.s);
 				for (ai=si->addr_info_lst; ai; ai=ai->next)
@@ -1003,7 +1004,8 @@ static void core_sockets_list(rpc_t* rpc, void* c)
 				printf("             %s: %s",
 						get_proto_name(proto),
 						si->name.s);
-				rpc->struct_add(ha, "ss",
+				rpc->struct_add(ha, "sss",
+						"af", get_af_name(si->address.af),
 						"proto", get_proto_name(proto),
 						"address", si->name.s);
 				if (!(si->flags & SI_IS_IP))
