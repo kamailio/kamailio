@@ -226,8 +226,9 @@ int ki_sipdump_send(sip_msg_t *msg, str *stag)
 	isd.tag = *stag;
 	isd.protoid = msg->rcv.proto;
 	isd.afid = msg->rcv.src_ip.af;
-	isd.src_ip.len = ip_addr2sbufz(&msg->rcv.src_ip, srcip_buf,
+	isd.src_ip.len = ip_addr2sbuf(&msg->rcv.src_ip, srcip_buf,
 			IP_ADDR_MAX_STRZ_SIZE);
+	srcip_buf[isd.src_ip.len] = 0;
 	isd.src_ip.s = srcip_buf;
 	isd.src_port = msg->rcv.src_port;
 	if(msg->rcv.bind_address==NULL
@@ -340,8 +341,9 @@ int sipdump_msg_received(sr_event_param_t *evp)
 	isd.protoid = evp->rcv->proto;
 	isd.afid = (evp->rcv->bind_address!=NULL
 				&& evp->rcv->bind_address->address.af==AF_INET6)?AF_INET6:AF_INET;
-	isd.src_ip.len = ip_addr2sbufz(&evp->rcv->src_ip, srcip_buf,
+	isd.src_ip.len = ip_addr2sbuf(&evp->rcv->src_ip, srcip_buf,
 					IP_ADDR_MAX_STRZ_SIZE);
+	srcip_buf[isd.src_ip.len] = '\0';
 	isd.src_ip.s = srcip_buf;
 	isd.src_port = evp->rcv->src_port;
 	if(evp->rcv->bind_address==NULL
