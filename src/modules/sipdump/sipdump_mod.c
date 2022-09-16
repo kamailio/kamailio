@@ -408,7 +408,8 @@ int sipdump_msg_sent(sr_event_param_t *evp)
 		isd.src_port = (int)evp->dst->send_sock->port_no;
 	}
 	su2ip_addr(&ip, &evp->dst->to);
-	isd.dst_ip.len = ip_addr2sbufz(&ip, dstip_buf, IP_ADDR_MAX_STRZ_SIZE);
+	isd.dst_ip.len = ip_addr2sbuf(&ip, dstip_buf, IP_ADDR_MAX_STRZ_SIZE);
+	dstip_buf[isd.dst_ip.len] = '\0';
 	isd.dst_ip.s = dstip_buf;
 	isd.dst_port = (int)su_getport(&evp->dst->to);
 
