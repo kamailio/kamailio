@@ -766,8 +766,10 @@ static int ws_rpc_add_node(
 
 		tcpconn_put(con);
 		return 1;
-	} else
+	} else {
+		LM_DBG("ws structure [%p] without an active tcp connection\n", wsc);
 		return 0;
+	}
 }
 
 void ws_rpc_dump(rpc_t *rpc, void *ctx)
