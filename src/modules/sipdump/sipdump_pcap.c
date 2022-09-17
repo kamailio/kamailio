@@ -198,8 +198,8 @@ void sipdump_write_pcap(FILE *fs, sipdump_data_t *spd)
 			return;
 		}
 		memcpy(&v_pcap_ipv6_header.ip6_src, &ip6addr, sizeof(struct in6_addr));
-		if (inet_pton(AF_INET, spd->dst_ip.s, &ip6addr) != 1) {
-			LM_ERR("failed to parse IPv4 address %s\n", spd->dst_ip.s);
+		if (inet_pton(AF_INET6, spd->dst_ip.s, &ip6addr) != 1) {
+			LM_ERR("failed to parse IPv6 address %s\n", spd->dst_ip.s);
 			return;
 		}
 		memcpy(&v_pcap_ipv6_header.ip6_dst, &ip6addr, sizeof(struct in6_addr));
