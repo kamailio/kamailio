@@ -130,8 +130,9 @@ static db_val_t *db_cdr_vals = NULL;
 static int db_write_cdr( struct dlg_cell* dialog,
 		struct sip_msg* message)
 {
-	int m = 0;
-	int n = 0;
+	int attr_cnt = 0;
+	int core_cnt = 0;
+	int extra_cnt = 0;
 	int i;
 	db_func_t *df=NULL;
 	db1_con_t *dh=NULL;
@@ -155,12 +156,13 @@ static int db_write_cdr( struct dlg_cell* dialog,
 	dh = (db1_con_t*)vh;
 
 	/* get default values */
-	m = cdr_core2strar( dialog,
+	core_cnt = cdr_core2strar( dialog,
 			cdr_value_array,
 			cdr_int_array,
 			cdr_type_array);
+	attr_cnt += core_cnt;
 
-	for(i=0; i<m; i++) {
+	for(i=0; i<core_cnt; i++) {
 		db_cdr_keys[i] = &cdr_attrs[i];
 		/* reset errno, some strtoX don't reset it */
 		errno = 0;
@@ -219,24 +221,24 @@ static int db_write_cdr( struct dlg_cell* dialog,
 	/* get extra values */
 	if (message)
 	{
-		n += extra2strar( cdr_extra,
+		extra_cnt = extra2strar( cdr_extra,
 				message,
-				cdr_value_array + m,
-				cdr_int_array + m,
-				cdr_type_array + m);
-		m += n;
+				cdr_value_array + attr_cnt,
+				cdr_int_array + attr_cnt,
+				cdr_type_array + attr_cnt);
+		attr_cnt += extra_cnt;;
 	} else if (cdr_expired_dlg_enable){
 		LM_WARN( "fallback to dlg_only search because of message doesn't exist.\n");
-		n += extra2strar_dlg_only( cdr_extra,
+		extra_cnt = extra2strar_dlg_only( cdr_extra,
 				dialog,
-				cdr_value_array + m,
-				cdr_int_array + m,
-				cdr_type_array +m,
+				cdr_value_array + attr_cnt,
+				cdr_int_array + attr_cnt,
+				cdr_type_array + attr_cnt,
 				&dlgb);
-		m += n;
+		attr_cnt += extra_cnt;
 	}
 
-	for( ; i<m; i++) {
+	for( ; i<attr_cnt; i++) {
 		db_cdr_keys[i] = &cdr_attrs[i];
 
 		if (cdr_extra_nullable == 1 && cdr_type_array[i] == TYPE_NULL) {
@@ -254,29 +256,31 @@ static int db_write_cdr( struct dlg_cell* dialog,
 	}
 
 	if(acc_db_insert_mode==1 && df->insert_delayed!=NULL) {
-		if (df->insert_delayed(dh, db_cdr_keys, db_cdr_vals, m) < 0) {
+		if (df->insert_delayed(dh, db_cdr_keys, db_cdr_vals, attr_cnt) < 0) {
 			LM_ERR("failed to insert delayed into database\n");
 			goto error;
 		}
 	} else if(acc_db_insert_mode==2 && df->insert_async!=NULL) {
-		if (df->insert_async(dh, db_cdr_keys, db_cdr_vals, m) < 0) {
+		if (df->insert_async(dh, db_cdr_keys, db_cdr_vals, attr_cnt) < 0) {
 			LM_ERR("failed to insert async into database\n");
 			goto error;
 		}
 	} else {
-		if (df->insert(dh, db_cdr_keys, db_cdr_vals, m) < 0) {
+		if (df->insert(dh, db_cdr_keys, db_cdr_vals, attr_cnt) < 0) {
 			LM_ERR("failed to insert into database\n");
 			goto error;
 		}
 	}
 
 	/* Free memory allocated by acc_extra.c/extra2strar */
-	free_strar_mem( &(cdr_type_array[m-n]), &(cdr_value_array[m-n]), n, m);
+	free_strar_mem( &(cdr_type_array[core_cnt]), &(cdr_value_array[core_cnt]),
+			extra_cnt, attr_cnt);
 	return 0;
 
 error:
 	/* Free memory allocated by acc_extra.c/extra2strar */
-	free_strar_mem( &(cdr_type_array[m-n]), &(cdr_value_array[m-n]), n, m);
+	free_strar_mem( &(cdr_type_array[core_cnt]), &(cdr_value_array[core_cnt]),
+			extra_cnt, attr_cnt);
 	return -1;
 }
 
