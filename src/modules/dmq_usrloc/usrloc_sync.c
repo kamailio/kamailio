@@ -681,7 +681,7 @@ int usrloc_dmq_send_multi_contact(ucontact_t* ptr, str aor, int action, dmq_node
 	jdoc_contact_group.size += ptr->c.len;
 	srjson_AddStrToObject(jdoc, jdoc_contact, "received", ptr->received.s, ptr->received.len);
 	jdoc_contact_group.size += ptr->received.len;
-	if (_dmq_usrloc_replicate_socket_info==1) {
+	if (_dmq_usrloc_replicate_socket_info==1 && ptr->sock!=NULL && ptr->sock->sock_str.s!=NULL) {
 		srjson_AddStrToObject(jdoc, jdoc_contact, "sock", ptr->sock->sock_str.s, ptr->sock->sock_str.len);
 		jdoc_contact_group.size += ptr->sock->sock_str.len;
 	}
@@ -709,8 +709,8 @@ int usrloc_dmq_send_multi_contact(ucontact_t* ptr, str aor, int action, dmq_node
 	jdoc_contact_group.size += snprintf(NULL,0,"%u", ptr->methods);
 	srjson_AddNumberToObject(jdoc, jdoc_contact, "reg_id", ptr->reg_id);
 	jdoc_contact_group.size += snprintf(NULL,0,"%d", ptr->reg_id);
-        srjson_AddNumberToObject(jdoc, jdoc_contact, "server_id", ptr->server_id);
-        jdoc_contact_group.size += snprintf(NULL,0,"%d", ptr->server_id);
+	srjson_AddNumberToObject(jdoc, jdoc_contact, "server_id", ptr->server_id);
+	jdoc_contact_group.size += snprintf(NULL,0,"%d", ptr->server_id);
 
 	char idx[5];
 	jdoc_contact_group.count++;
