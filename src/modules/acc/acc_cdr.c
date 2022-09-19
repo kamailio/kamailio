@@ -96,9 +96,8 @@ int cdr_core2strar( struct dlg_cell* dlg,
 		int* unused,
 		char* types)
 {
-	str* start = NULL;
-	str* end = NULL;
-	str* duration = NULL;
+	str* dlgvals[MAX_CDR_CORE]; /* start, end, duration */
+	int i;
 
 	if( !dlg || !values || !types)
 	{
@@ -106,18 +105,40 @@ int cdr_core2strar( struct dlg_cell* dlg,
 		return 0;
 	}
 
-	start = dlgb.get_dlg_var( dlg, (str*)&cdr_start_str);
-	end = dlgb.get_dlg_var( dlg, (str*)&cdr_end_str);
-	duration = dlgb.get_dlg_var( dlg, (str*)&cdr_duration_str);
+	dlgvals[0] = dlgb.get_dlg_var( dlg, (str*)&cdr_start_str); /* start */
+	dlgvals[1] = dlgb.get_dlg_var( dlg, (str*)&cdr_end_str); /* end */
+	dlgvals[2] = dlgb.get_dlg_var( dlg, (str*)&cdr_duration_str); /* duration */
 
-	values[0] = ( start != NULL ? *start : empty_string);
-	types[0] = ( start != NULL ? TYPE_DATE : TYPE_NULL);
-
-	values[1] = ( end != NULL ? *end : empty_string);
-	types[1] = ( end != NULL ? TYPE_DATE : TYPE_NULL);
-
-	values[2] = ( duration != NULL ? *duration : empty_string);
-	types[2] = ( duration != NULL ? TYPE_DOUBLE : TYPE_NULL);
+	for(i=0; i<MAX_CDR_CORE; i++) {
+		if (dlgvals[i]!=NULL) {
+			values[i].s = (char *)pkg_malloc(dlgvals[i]->len + 1);
+			if (values[i].s == NULL ) {
+				PKG_MEM_ERROR;
+				/* cleanup already allocated memory and
+				 * return that we didn't do anything */
+				for (i = i-1; i >= 0; i--) {
+					if (NULL != values[i].s){
+						pkg_free(values[i].s);
+						values[i].s = NULL;
+					}
+				}
+				return 0;
+			}
+			memcpy(values[i].s, dlgvals[i]->s, dlgvals[i]->len);
+			values[i].s[dlgvals[i]->len] = '\0';
+			values[i].len = dlgvals[i]->len;
+			if(i!=2) {
+				/* [0] - start; [1] - end */
+				types[i] = TYPE_DATE;
+			} else {
+				/* [2] - duration */
+				types[i] = TYPE_DOUBLE;
+			}
+		} else {
+			values[i] = empty_string;
+			types[i] = TYPE_NULL;
+		}
+	}
 
 	return MAX_CDR_CORE;
 }
@@ -272,15 +293,15 @@ static int db_write_cdr( struct dlg_cell* dialog,
 		}
 	}
 
-	/* Free memory allocated by acc_extra.c/extra2strar */
-	free_strar_mem( &(cdr_type_array[core_cnt]), &(cdr_value_array[core_cnt]),
-			extra_cnt, attr_cnt);
+	/* Free memory allocated by core+extra attrs */
+	free_strar_mem( &(cdr_type_array[0]), &(cdr_value_array[0]),
+			attr_cnt, attr_cnt);
 	return 0;
 
 error:
-	/* Free memory allocated by acc_extra.c/extra2strar */
-	free_strar_mem( &(cdr_type_array[core_cnt]), &(cdr_value_array[core_cnt]),
-			extra_cnt, attr_cnt);
+	/* Free memory allocated by core+extra attrs */
+	free_strar_mem( &(cdr_type_array[0]), &(cdr_value_array[0]),
+			attr_cnt, attr_cnt);
 	return -1;
 }
 
