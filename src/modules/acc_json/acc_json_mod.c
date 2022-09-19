@@ -452,14 +452,13 @@ int cdr_json_write(struct dlg_cell *dlg, struct sip_msg *req, cdr_info_t *inf)
 				inf->tarr + attr_cnt);
 		attr_cnt += extra_cnt;
 	} else if (cdr_expired_dlg_enable){
-		int dlg_index = 0;
-		dlg_index += accb.get_extra_dlg_attrs( cdr_extra,
+		extra_cnt += accb.get_extra_dlg_attrs( cdr_extra,
 				dlg,
 				inf->varr + attr_cnt,
 				inf->iarr + attr_cnt,
 				inf->tarr + attr_cnt,
 				&dlgb);
-		attr_cnt += dlg_index;
+		attr_cnt += extra_cnt;
 	}
 
 	struct acc_extra *extra = cdr_extra;
@@ -516,7 +515,7 @@ int cdr_json_write(struct dlg_cell *dlg, struct sip_msg *req, cdr_info_t *inf)
 		json_object_clear(object);
 		json_decref(object);
 	}
-	/* free memory allocated by get_extra_attrs */
-	free_strar_mem(&(inf->tarr[core_cnt]), &(inf->varr[core_cnt]), extra_cnt, attr_cnt);
+	/* free memory allocated by cdr core+extra attrs */
+	free_strar_mem(&(inf->tarr[0]), &(inf->varr[0]), attr_cnt, attr_cnt);
 	return 1;
 }
