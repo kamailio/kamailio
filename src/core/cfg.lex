@@ -575,6 +575,7 @@ IFEXP        ifexp
 ENDIF        endif
 TRYDEF       "trydefine"|"trydef"
 REDEF        "redefine"|"redef"
+DEFEXP       defexp
 DEFENV       defenv
 DEFENVS      defenvs
 TRYDEFENV    trydefenv
@@ -1338,6 +1339,10 @@ IMPORTFILE      "import_file"
 <INITIAL,CFGPRINTMODE>{PREP_START}{REDEF}{EAT_ABLE}+	{	count();
 											ksr_cfg_print_part(yytext);
 											pp_define_set_type(KSR_PPDEF_REDEF);
+											state = DEFINE_S; BEGIN(DEFINE_ID); }
+<INITIAL,CFGPRINTMODE>{PREP_START}{DEFEXP}{EAT_ABLE}+	{	count();
+											ksr_cfg_print_part(yytext);
+											pp_define_set_type(KSR_PPDEF_DEFEXP);
 											state = DEFINE_S; BEGIN(DEFINE_ID); }
 <DEFINE_ID>{ID}{MINUS}          {	count();
 									ksr_cfg_print_part(yytext);
@@ -2107,6 +2112,7 @@ int pp_define(int len, const char *text)
 int pp_define_set(int len, char *text, int mode)
 {
 	int ppos;
+	char *sval = NULL;
 
 	if(pp_define_index == -2) {
 		/* #!trydef that should be ignored */
@@ -2144,17 +2150,28 @@ int pp_define_set(int len, char *text, int mode)
 		return -1;
 	}
 
-	pp_defines[ppos].value.s = (char*)pkg_malloc(len+1);
-	if (pp_defines[ppos].value.s == NULL) {
-		LM_ERR("no more memory to define %.*s [%d]\n",
-			pp_defines[ppos].name.len,
-			pp_defines[ppos].name.s, ppos);
-		return -1;
-	}
+	if(pp_defines[ppos].dtype == KSR_PPDEF_DEFEXP) {
+		sval = pp_defexp_eval(text, len);
+		if(sval==NULL) {
+			LM_NOTICE("no value returned to set the defexp [%.*s]\n",
+				pp_defines[ppos].name.len, pp_defines[ppos].name.s);
+			return 0;
+		}
+		pp_defines[ppos].value.s = sval;
+		pp_defines[ppos].value.len = strlen(sval);
+	} else {
+		pp_defines[ppos].value.s = (char*)pkg_malloc(len+1);
+		if (pp_defines[ppos].value.s == NULL) {
+			LM_ERR("no more memory to define %.*s [%d]\n",
+				pp_defines[ppos].name.len,
+				pp_defines[ppos].name.s, ppos);
+			return -1;
+		}
 
-	memcpy(pp_defines[ppos].value.s, text, len);
-	pp_defines[ppos].value.s[len] = '\0';
-	pp_defines[ppos].value.len = len;
+		memcpy(pp_defines[ppos].value.s, text, len);
+		pp_defines[ppos].value.s[len] = '\0';
+		pp_defines[ppos].value.len = len;
+	}
 	LM_DBG("### setting define ID [%.*s] value [%.*s] (mode: %d)\n",
 			pp_defines[ppos].name.len,
 			pp_defines[ppos].name.s,

@@ -461,4 +461,63 @@ end:
 	snexpr_destroy(e, &vars);
 }
 
+char *pp_defexp_eval(char *exval, int exlen)
+{
+	str exstr;
+	struct snexpr_var_list vars = {0};
+	struct snexpr *e = NULL;
+	struct snexpr *result = NULL;
+	str sval = STR_NULL;
+	char *res = NULL;
+
+	exstr.s = exval;
+	exstr.len = exlen;
+	trim(&exstr);
+
+	LM_DBG("evaluating [%.*s]\n", exstr.len, exstr.s);
+
+	e = snexpr_create(exstr.s, exstr.len, &vars, NULL, pp_snexpr_defval);
+	if(e == NULL) {
+		LM_ERR("failed to create expression [%.*s]\n", exstr.len, exstr.s);
+		return NULL;
+	}
+
+	result = snexpr_eval(e);
+
+	if(result==NULL) {
+		LM_ERR("expression evaluation [%.*s] is null\n", exstr.len, exstr.s);
+		goto end;
+	}
+
+	if(result->type == SNE_OP_CONSTNUM) {
+		LM_DBG("expression number result: %g\n", result->param.num.nval);
+		sval.s = int2str((long)result->param.num.nval, &sval.len);
+		if(sval.s==NULL) {
+			goto done;
+		}
+	} else if(result->type == SNE_OP_CONSTSTZ) {
+		if(result->param.stz.sval==NULL) {
+			LM_DBG("expression string result is null\n");
+			goto done;
+		}
+		LM_DBG("expression string result: [%s]\n", result->param.stz.sval);
+		sval.s = result->param.stz.sval;
+		sval.len = strlen(result->param.stz.sval);
+	}
+
+	res = (char*)pkg_malloc(sval.len + 1);
+	if(res==NULL) {
+		PKG_MEM_ERROR;
+		goto done;
+	}
+	memcpy(res, sval.s, sval.len);
+	res[sval.len] = '\0';
+
+done:
+	snexpr_result_free(result);
+end:
+	snexpr_destroy(e, &vars);
+	return res;
+}
+
 /* vi: set ts=4 sw=4 tw=79:ai:cindent: */
