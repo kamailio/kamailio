@@ -2144,8 +2144,17 @@ int pp_define_set(int len, char *text, int mode)
 		return -1;
 	}
 
+	pp_defines[ppos].value.s = (char*)pkg_malloc(len+1);
+	if (pp_defines[ppos].value.s == NULL) {
+		LM_ERR("no more memory to define %.*s [%d]\n",
+			pp_defines[ppos].name.len,
+			pp_defines[ppos].name.s, ppos);
+		return -1;
+	}
+
+	memcpy(pp_defines[ppos].value.s, text, len);
+	pp_defines[ppos].value.s[len] = '\0';
 	pp_defines[ppos].value.len = len;
-	pp_defines[ppos].value.s = text;
 	LM_DBG("### setting define ID [%.*s] value [%.*s] (mode: %d)\n",
 			pp_defines[ppos].name.len,
 			pp_defines[ppos].name.s,
