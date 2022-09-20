@@ -1329,15 +1329,15 @@ IMPORTFILE      "import_file"
 
 <INITIAL,CFGPRINTMODE>{PREP_START}{DEFINE}{EAT_ABLE}+	{	count();
 											ksr_cfg_print_part(yytext);
-											pp_define_set_type(0);
+											pp_define_set_type(KSR_PPDEF_DEFINE);
 											state = DEFINE_S; BEGIN(DEFINE_ID); }
 <INITIAL,CFGPRINTMODE>{PREP_START}{TRYDEF}{EAT_ABLE}+	{	count();
 											ksr_cfg_print_part(yytext);
-											pp_define_set_type(1);
+											pp_define_set_type(KSR_PPDEF_TRYDEF);
 											state = DEFINE_S; BEGIN(DEFINE_ID); }
 <INITIAL,CFGPRINTMODE>{PREP_START}{REDEF}{EAT_ABLE}+	{	count();
 											ksr_cfg_print_part(yytext);
-											pp_define_set_type(2);
+											pp_define_set_type(KSR_PPDEF_REDEF);
 											state = DEFINE_S; BEGIN(DEFINE_ID); }
 <DEFINE_ID>{ID}{MINUS}          {	count();
 									ksr_cfg_print_part(yytext);
@@ -1665,7 +1665,7 @@ static void ksr_cfg_print_define_module(char *modpath, int modpathlen)
 	}
 	memcpy(defmod, "MOD_", 4);
 	memcpy(defmod+4, modname.s, modname.len);
-	pp_define_set_type(0);
+	pp_define_set_type(KSR_PPDEF_DEFINE);
 	if(pp_define(modname.len + 4, defmod)<0) {
 		printf("\n# ***** ERROR: unable to set cfg define for module: %s\n",
 				modpath);
@@ -2067,11 +2067,11 @@ int pp_define(int len, const char *text)
 	pp_define_index = -1;
 	ppos = pp_lookup(len, text);
 	if(ppos >= 0) {
-		if(pp_define_type==1) {
+		if(pp_define_type==KSR_PPDEF_TRYDEF) {
 			LM_DBG("ignoring - already defined: %.*s\n", len, text);
 			pp_define_index = -2;
 			return 0;
-		} else if(pp_define_type==2) {
+		} else if(pp_define_type==KSR_PPDEF_REDEF) {
 			LM_DBG("redefining: %.*s\n", len, text);
 			pp_define_index = ppos;
 			if(pp_defines[ppos].value.s != NULL) {
@@ -2187,7 +2187,7 @@ int pp_define_env(const char *text, int len, int qmode, int vmode)
 	}
 	defvalue.len = strlen(defvalue.s);
 
-	pp_define_set_type(0);
+	pp_define_set_type(KSR_PPDEF_DEFINE);
 	if(pp_define(defname.len, defname.s)<0) {
 		LM_ERR("cannot set define name [%s]\n", (char*)text);
 		return -1;

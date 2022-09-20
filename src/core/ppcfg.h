@@ -27,8 +27,13 @@
 
 #define KSR_PPDEF_NORMAL (0)     /* define normal value */
 #define KSR_PPDEF_QUOTED (1<<0)  /* define quoted value */
+
 #define KSR_PPDEF_VALREQ (0)     /* define with value required (defenv) */
 #define KSR_PPDEF_VALTRY (1<<0)  /* define only if value exists (trydefenv) */
+
+#define KSR_PPDEF_DEFINE  0
+#define KSR_PPDEF_TRYDEF  1
+#define KSR_PPDEF_REDEF   2
 
 typedef struct ksr_ppdefine {
 	str name;

@@ -169,7 +169,7 @@ found_regexp:
 found_repl:
 	defvalue.len = p - defvalue.s;
 
-	pp_define_set_type(0);
+	pp_define_set_type(KSR_PPDEF_DEFINE);
 	if(pp_define(defname.len, defname.s)<0) {
 		LM_ERR("cannot set define name\n");
 		goto error;
@@ -305,7 +305,7 @@ void pp_define_core(void)
 		LM_ERR("failed to build define token\n");
 		return;
 	}
-	pp_define_set_type(0);
+	pp_define_set_type(KSR_PPDEF_DEFINE);
 	if(pp_define(strlen(defval), defval)<0) {
 		LM_ERR("unable to set cfg define: %s\n", defval);
 		return;
@@ -317,7 +317,7 @@ void pp_define_core(void)
 		LM_ERR("failed to build define token\n");
 		return;
 	}
-	pp_define_set_type(0);
+	pp_define_set_type(KSR_PPDEF_DEFINE);
 	if(pp_define(strlen(defval), defval)<0) {
 		LM_ERR("unable to set cfg define: %s\n", defval);
 		return;
@@ -329,14 +329,14 @@ void pp_define_core(void)
 		LM_ERR("failed to build define token\n");
 		return;
 	}
-	pp_define_set_type(0);
+	pp_define_set_type(KSR_PPDEF_DEFINE);
 	if(pp_define(strlen(defval), defval)<0) {
 		LM_ERR("unable to set cfg define: %s\n", defval);
 		return;
 	}
 
 	strcpy(p, "_VERSION");
-	pp_define_set_type(0);
+	pp_define_set_type(KSR_PPDEF_DEFINE);
 	if(pp_define(strlen(defval), defval)<0) {
 		LM_ERR("unable to set cfg define: %s\n", defval);
 		return;

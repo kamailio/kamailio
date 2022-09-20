@@ -321,7 +321,7 @@ static int register_module(module_exports_t* e, char* path, void* handle)
 	}
 	strcpy(defmod, "MOD_");
 	strcat(defmod, mod->exports.name);
-	pp_define_set_type(0);
+	pp_define_set_type(KSR_PPDEF_DEFINE);
 	if(pp_define(strlen(defmod), defmod)<0) {
 		LM_ERR("unable to set cfg define for module: %s\n",
 				mod->exports.name);

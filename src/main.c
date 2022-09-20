@@ -2286,7 +2286,7 @@ int main(int argc, char** argv)
 					} else {
 						tmp_len = strlen(optarg);
 					}
-					pp_define_set_type(0);
+					pp_define_set_type(KSR_PPDEF_DEFINE);
 					if(pp_define(tmp_len, optarg)<0) {
 						fprintf(stderr, "error at define param: -A %s\n",
 								optarg);
