@@ -799,6 +799,7 @@ static int snexpr_next_token(const char *s, size_t len, int *flags)
 {
 	unsigned int i = 0;
 	char b;
+	int bsf = 0;
 	if(len == 0) {
 		return 0;
 	}
@@ -845,7 +846,12 @@ static int snexpr_next_token(const char *s, size_t len, int *flags)
 		b = c;
 		i++;
 		c = s[i];
-		while(c != b && i < len) {
+		while(i < len && (bsf==1 || c != b)) {
+			if(bsf == 0 && c == '\\') {
+				bsf = 1;
+			} else {
+				bsf = 0;
+			}
 			i++;
 			c = s[i];
 		}
@@ -956,6 +962,9 @@ static struct snexpr snexpr_varref(struct snexpr_var *v)
 static struct snexpr snexpr_conststr(const char *value, int len)
 {
 	struct snexpr e = snexpr_init();
+	char *p;
+	int i;
+	int bsf = 0;
 	if(len < 2) {
 		len = 0;
 	} else {
@@ -966,9 +975,34 @@ static struct snexpr snexpr_conststr(const char *value, int len)
 	e.param.stz.sval = malloc(len + 1);
 	if(e.param.stz.sval) {
 		if(len > 0) {
-			/* do not copy the quotes */
-			memcpy(e.param.stz.sval, value + 1, len);
-			e.param.stz.sval[len] = '\0';
+			/* do not copy the quotes - start from value[1] */
+			p = e.param.stz.sval;
+			for(i=0; i<len; i++) {
+				if(bsf==0 && value[i+1]=='\\') {
+					bsf = 1;
+				} else if(bsf==1) {
+					bsf = 0;
+					switch(value[i+1]) {
+						case 'n':
+							*p = '\n';
+						break;
+						case 'r':
+							*p = '\r';
+						break;
+						case 't':
+							*p = '\t';
+						break;
+						default:
+							*p = value[i+1];
+					}
+					p++;
+				} else {
+					bsf = 0;
+					*p = value[i+1];
+					p++;
+				}
+			}
+			*p = '\0';
 		} else {
 			e.param.stz.sval[0] = '\0';
 		}
