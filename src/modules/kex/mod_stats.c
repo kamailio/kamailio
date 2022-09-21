@@ -82,6 +82,12 @@ static const char* rpc_mod_mem_statsx_doc[2] = {
 /* test if the current mod info was already printed */
 static int rpc_mod_is_printed_one(mem_counter *stats, mem_counter *current) {
 	mem_counter *iter = stats;
+	
+	if ( stats == NULL || current == NULL )
+	{
+		LM_ERR("rpc_mod_is_printed_one -> funtion parameter contains null value \n");
+		return 1;
+	}
 
 	while (iter && iter != current) {
 		if (strcmp(iter->mname, current->mname) == 0) {
