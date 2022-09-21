@@ -86,7 +86,14 @@ static const char* rpc_mod_mem_statsx_doc[2] = {
 
 /* test if the current mod info was already printed */
 static int rpc_mod_is_printed_one(mem_counter *stats, mem_counter *current) {
-	mem_counter *iter = stats;
+	mem_counter *iter;
+
+	if ( stats == NULL || current == NULL )
+	{
+		LM_ERR("invalid parameter\n");
+		return 1;
+	}
+	iter = stats;
 
 	while (iter && iter != current) {
 		if (strcmp(iter->mname, current->mname) == 0) {
