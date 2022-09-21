@@ -381,8 +381,8 @@ static int sca_mod_init(void)
 
 	register_timer(sca_subscription_purge_expired, sca,
 			sca->cfg->purge_expired_interval);
-	register_timer(
-			sca_appearance_purge_stale, sca, sca->cfg->purge_expired_interval);
+	//register_timer(
+	//		sca_appearance_purge_stale, sca, sca->cfg->purge_expired_interval);
 
 	// register separate timer process to write subscriptions to DB.
 	// move to 3.3+ timer API (register_basic_timer) at some point.
