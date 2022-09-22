@@ -576,6 +576,7 @@ ENDIF        endif
 TRYDEF       "trydefine"|"trydef"
 REDEF        "redefine"|"redef"
 DEFEXP       defexp
+DEFEXPS      defexps
 DEFENV       defenv
 DEFENVS      defenvs
 TRYDEFENV    trydefenv
@@ -1343,6 +1344,10 @@ IMPORTFILE      "import_file"
 <INITIAL,CFGPRINTMODE>{PREP_START}{DEFEXP}{EAT_ABLE}+	{	count();
 											ksr_cfg_print_part(yytext);
 											pp_define_set_type(KSR_PPDEF_DEFEXP);
+											state = DEFINE_S; BEGIN(DEFINE_ID); }
+<INITIAL,CFGPRINTMODE>{PREP_START}{DEFEXPS}{EAT_ABLE}+	{	count();
+											ksr_cfg_print_part(yytext);
+											pp_define_set_type(KSR_PPDEF_DEFEXPS);
 											state = DEFINE_S; BEGIN(DEFINE_ID); }
 <DEFINE_ID>{ID}{MINUS}          {	count();
 									ksr_cfg_print_part(yytext);
@@ -2150,8 +2155,13 @@ int pp_define_set(int len, char *text, int mode)
 		return -1;
 	}
 
-	if(pp_defines[ppos].dtype == KSR_PPDEF_DEFEXP) {
-		sval = pp_defexp_eval(text, len);
+	if(pp_defines[ppos].dtype == KSR_PPDEF_DEFEXP
+			|| pp_defines[ppos].dtype == KSR_PPDEF_DEFEXPS) {
+		if(pp_defines[ppos].dtype == KSR_PPDEF_DEFEXP) {
+			sval = pp_defexp_eval(text, len, 0);
+		} else {
+			sval = pp_defexp_eval(text, len, 1);
+		}
 		if(sval==NULL) {
 			LM_NOTICE("no value returned to set the defexp [%.*s]\n",
 				pp_defines[ppos].name.len, pp_defines[ppos].name.s);

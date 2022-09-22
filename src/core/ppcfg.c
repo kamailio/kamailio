@@ -461,7 +461,7 @@ end:
 	snexpr_destroy(e, &vars);
 }
 
-char *pp_defexp_eval(char *exval, int exlen)
+char *pp_defexp_eval(char *exval, int exlen, int qmode)
 {
 	str exstr;
 	struct snexpr_var_list vars = {0};
@@ -505,13 +505,25 @@ char *pp_defexp_eval(char *exval, int exlen)
 		sval.len = strlen(result->param.stz.sval);
 	}
 
-	res = (char*)pkg_malloc(sval.len + 1);
+	if(qmode==1) {
+		res = (char*)pkg_malloc(sval.len + 3);
+	} else {
+		res = (char*)pkg_malloc(sval.len + 1);
+	}
 	if(res==NULL) {
 		PKG_MEM_ERROR;
 		goto done;
 	}
-	memcpy(res, sval.s, sval.len);
-	res[sval.len] = '\0';
+	if(qmode==1) {
+		res[0] = '"';
+		memcpy(res, sval.s+1, sval.len);
+		res[sval.len+1] = '"';
+		res[sval.len+2] = '\0';
+		LM_DBG("expression quoted string result: [%s]\n", res);
+	} else {
+		memcpy(res, sval.s, sval.len);
+		res[sval.len] = '\0';
+	}
 
 done:
 	snexpr_result_free(result);

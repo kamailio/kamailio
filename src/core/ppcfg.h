@@ -35,6 +35,7 @@
 #define KSR_PPDEF_TRYDEF  1
 #define KSR_PPDEF_REDEF   2
 #define KSR_PPDEF_DEFEXP  3
+#define KSR_PPDEF_DEFEXPS 4
 
 typedef struct ksr_ppdefine {
 	str name;
@@ -68,7 +69,7 @@ void ksr_cfg_print_initial_state(void);
 
 void pp_ifexp_eval(char *exval, int exlen);
 void pp_ifexp_state(int state);
-char *pp_defexp_eval(char *exval, int exlen);
+char *pp_defexp_eval(char *exval, int exlen, int qmode);
 
 #endif /*_PPCFG_H_*/
 
