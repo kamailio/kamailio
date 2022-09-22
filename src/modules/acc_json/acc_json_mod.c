@@ -311,9 +311,9 @@ int acc_json_send_request(struct sip_msg *req, acc_info_t *inf)
 				<= 0) {
 			acc_time_format_buf[0] = '\0';
 		}
-		json_object_set_new(object, "time", json_string(acc_time_format_buf));
+		json_object_set_new(object, acc_time_key.s, json_string(acc_time_format_buf));
 	} else { // default acc_time_mode==1
-		json_object_set_new(object, "time", json_integer(inf->env->ts));
+		json_object_set_new(object, acc_time_key.s, json_integer(inf->env->ts));
 	}
 
 	LM_DBG("text[%.*s]\n", inf->env->text.len, inf->env->text.s);
