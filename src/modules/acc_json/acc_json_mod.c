@@ -37,6 +37,26 @@
 
 MODULE_VERSION
 
+static str acc_method_key = str_init("method");
+static str acc_fromtag_key = str_init("from_tag");
+static str acc_totag_key = str_init("to_tag");
+static str acc_callid_key = str_init("callid");
+static str acc_sipcode_key = str_init("sip_code");
+static str acc_sipreason_key = str_init("sip_reason");
+static str acc_time_key = str_init("time");
+
+static str cdr_start_str = str_init("start_time");
+static str cdr_end_str = str_init("end_time");
+static str cdr_duration_str = str_init("duration");
+
+static char acc_time_format_buf[ACC_TIME_FORMAT_SIZE];
+static char *acc_time_format = "%Y-%m-%d %H:%M:%S";
+
+static int acc_log_level = L_NOTICE;
+static int acc_log_facility = LOG_DAEMON;
+static int cdr_log_level = L_NOTICE;
+static int cdr_log_facility = LOG_DAEMON;
+
 static int mod_init(void);
 static void destroy(void);
 static int child_init(int rank);
