@@ -266,7 +266,7 @@ int extra2strar_dlg_only(struct acc_extra *extra, struct dlg_cell* dlg, str *val
 		int *int_arr, char *type_arr, const struct dlg_binds* p_dlgb)
 {
 	//string value;
-	str* value = 0;
+	str dval = {0};
 	int n=0;
 	int i;
 
@@ -289,16 +289,14 @@ int extra2strar_dlg_only(struct acc_extra *extra, struct dlg_cell* dlg, str *val
 		type_arr[n] = TYPE_NULL;
 
 		str key = extra->spec.pvp.pvn.u.isname.name.s;
-		if ( key.len == 0 || !key.s)
-		{
+		if (key.len == 0 || !key.s) {
 			n++; extra = extra->next; continue;
 		}
-		/* get the value */
-		value = p_dlgb->get_dlg_var( dlg, &key);
+		/* get the dialog var value */
+		p_dlgb->get_dlg_varval(dlg, &key, &dval);
 
-		if (value)
-		{
-			val_arr[n].s = (char *)pkg_malloc(value->len + 1);
+		if (dval.s) {
+			val_arr[n].s = (char *)pkg_malloc(dval.len + 1);
 			if (val_arr[n].s == NULL ) {
 				PKG_MEM_ERROR;
 				/* cleanup already allocated memory and
@@ -312,9 +310,9 @@ int extra2strar_dlg_only(struct acc_extra *extra, struct dlg_cell* dlg, str *val
 				n = 0;
 				goto done;
 			}
-			memcpy(val_arr[n].s, value->s, value->len);
-			val_arr[n].s[value->len] = '\0';
-			val_arr[n].len = value->len;
+			memcpy(val_arr[n].s, dval.s, dval.len);
+			val_arr[n].s[dval.len] = '\0';
+			val_arr[n].len = dval.len;
 			type_arr[n] = TYPE_STR;
 		}
 
