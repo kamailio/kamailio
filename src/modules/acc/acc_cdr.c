@@ -96,7 +96,7 @@ int cdr_core2strar( struct dlg_cell* dlg,
 		int* unused,
 		char* types)
 {
-	str* dlgvals[MAX_CDR_CORE]; /* start, end, duration */
+	str dlgvals[MAX_CDR_CORE]; /* start, end, duration */
 	int i;
 
 	if( !dlg || !values || !types)
@@ -105,13 +105,13 @@ int cdr_core2strar( struct dlg_cell* dlg,
 		return 0;
 	}
 
-	dlgvals[0] = dlgb.get_dlg_var( dlg, (str*)&cdr_start_str); /* start */
-	dlgvals[1] = dlgb.get_dlg_var( dlg, (str*)&cdr_end_str); /* end */
-	dlgvals[2] = dlgb.get_dlg_var( dlg, (str*)&cdr_duration_str); /* duration */
+	dlgb.get_dlg_varval(dlg, &cdr_start_str, &dlgvals[0]); /* start */
+	dlgb.get_dlg_varval(dlg, &cdr_end_str, &dlgvals[1]); /* end */
+	dlgb.get_dlg_varval(dlg, &cdr_duration_str, &dlgvals[2]); /* duration */
 
 	for(i=0; i<MAX_CDR_CORE; i++) {
-		if (dlgvals[i]!=NULL) {
-			values[i].s = (char *)pkg_malloc(dlgvals[i]->len + 1);
+		if (dlgvals[i].s!=NULL) {
+			values[i].s = (char *)pkg_malloc(dlgvals[i].len + 1);
 			if (values[i].s == NULL ) {
 				PKG_MEM_ERROR;
 				/* cleanup already allocated memory and
@@ -124,9 +124,9 @@ int cdr_core2strar( struct dlg_cell* dlg,
 				}
 				return 0;
 			}
-			memcpy(values[i].s, dlgvals[i]->s, dlgvals[i]->len);
-			values[i].s[dlgvals[i]->len] = '\0';
-			values[i].len = dlgvals[i]->len;
+			memcpy(values[i].s, dlgvals[i].s, dlgvals[i].len);
+			values[i].s[dlgvals[i].len] = '\0';
+			values[i].len = dlgvals[i].len;
 			if(i!=2) {
 				/* [0] - start; [1] - end */
 				types[i] = TYPE_DATE;
@@ -420,9 +420,9 @@ static int write_cdr( struct dlg_cell* dialog,
 
 	/* Skip cdr if cdr_skip dlg_var exists */
 	if (cdr_skip.len > 0) {
-		str* nocdr_val = 0;
-		nocdr_val = dlgb.get_dlg_var( dialog, &cdr_skip);
-		if ( nocdr_val ){
+		str nocdr_val = {0};
+		dlgb.get_dlg_varval(dialog, &cdr_skip, &nocdr_val);
+		if (nocdr_val.s){
 			LM_DBG( "cdr_skip dlg_var set, skip cdr!");
 			return 0;
 		}
@@ -440,7 +440,7 @@ static int string2time( str* time_str, struct timeval* time_value)
 	int dot_position = -1;
 	char zero_terminated_value[TIME_STR_BUFFER_SIZE];
 
-	if( !time_str)
+	if(!time_str || !time_str->s)
 	{
 		LM_ERR( "time_str is empty!");
 		return -1;
@@ -517,18 +517,20 @@ static int set_duration( struct dlg_cell* dialog)
 	struct timeval end_time;
 	struct timeval duration_time;
 	str duration_str;
+	str dval = {0};
 
-	if( !dialog)
-	{
+	if( !dialog) {
 		LM_ERR("dialog is empty!\n");
 		return -1;
 	}
 
-	if ( string2time( dlgb.get_dlg_var( dialog, (str*)&cdr_start_str), &start_time) < 0) {
+	dlgb.get_dlg_varval(dialog, &cdr_start_str, &dval);
+	if (string2time(&dval, &start_time) < 0) {
 		LM_ERR( "failed to extract start time\n");
 		return -1;
 	}
-	if ( string2time( dlgb.get_dlg_var( dialog, (str*)&cdr_end_str), &end_time) < 0) {
+	dlgb.get_dlg_varval( dialog, &cdr_end_str, &dval);
+	if ( string2time(&dval, &end_time) < 0) {
 		LM_ERR( "failed to extract end time\n");
 		return -1;
 	}
@@ -540,10 +542,7 @@ static int set_duration( struct dlg_cell* dialog)
 		return -1;
 	}
 
-	if( dlgb.set_dlg_var( dialog,
-				(str*)&cdr_duration_str,
-				(str*)&duration_str) != 0)
-	{
+	if( dlgb.set_dlg_var(dialog, &cdr_duration_str, &duration_str) != 0) {
 		LM_ERR( "failed to set duration time");
 		return -1;
 	}
