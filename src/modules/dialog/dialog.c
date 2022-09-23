@@ -446,7 +446,8 @@ int load_dlg( struct dlg_binds *dlgb )
 	dlgb->register_dlgcb = register_dlgcb;
 	dlgb->terminate_dlg = dlg_bye_all;
 	dlgb->set_dlg_var = set_dlg_variable;
-	dlgb->get_dlg_var = get_dlg_variable;
+	dlgb->get_dlg_varref = get_dlg_varref;
+	dlgb->get_dlg_varval = get_dlg_varval;
 	dlgb->get_dlg = dlg_get_msg_dialog;
 	dlgb->release_dlg = dlg_release;
 	return 1;
@@ -1974,7 +1975,7 @@ static sr_kemi_xval_t* ki_dlg_var_get_mode(sip_msg_t *msg, str *name, int rmode)
 		sr_kemi_xval_null(&_sr_kemi_dialog_xval, rmode);
 		return &_sr_kemi_dialog_xval;
 	}
-	pval = get_dlg_variable(dlg, name);
+	pval = get_dlg_varref(dlg, name);
 	if(pval==NULL || pval->s==NULL) {
 		sr_kemi_xval_null(&_sr_kemi_dialog_xval, rmode);
 		goto done;
@@ -2035,7 +2036,7 @@ static int ki_dlg_var_is_null(sip_msg_t *msg, str *name)
 	if(dlg==NULL) {
 		return 1;
 	}
-	pval = get_dlg_variable(dlg, name);
+	pval = get_dlg_varref(dlg, name);
 	if(pval==NULL || pval->s==NULL) {
 		return 1;
 	}

@@ -46,7 +46,8 @@ struct dlg_binds {
 	register_dlgcb_f  register_dlgcb;
 	terminate_dlg_f terminate_dlg;
     set_dlg_variable_f set_dlg_var;
-	get_dlg_variable_f get_dlg_var;
+	get_dlg_varref_f   get_dlg_varref;
+	get_dlg_varval_f   get_dlg_varval;
 	get_dlg_f          get_dlg;
 	release_dlg_f      release_dlg;
 };
