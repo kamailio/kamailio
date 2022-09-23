@@ -55,8 +55,11 @@ typedef int (*set_dlg_variable_f)( struct dlg_cell* dlg,
                                    str* key,
                                    str* val);
 /* method to get a variable from a dialog */
-typedef str* (*get_dlg_variable_f)( struct dlg_cell* dlg,
+typedef str* (*get_dlg_varref_f)( struct dlg_cell* dlg,
                                     str* key);
+/* method to get a variable from a dialog */
+typedef int (*get_dlg_varval_f)( struct dlg_cell* dlg,
+                                    str* key, str* val);
 
 #define CONFIRMED_DIALOG_STATE 1
 
