@@ -310,13 +310,13 @@ int get_dlg_varval(struct dlg_cell *dlg, str *key, str *val)
 {
 	str *var = NULL;
 
+	val->s = NULL;
+	val->len = 0;
+
 	if( !dlg || !key || key->len > strlen(key->s)) {
 		LM_ERR("BUG - bad parameters\n");
 		return -1;
 	}
-
-	val->s = NULL;
-	val->len = 0;
 
 	dlg_lock(d_table, &(d_table->entries[dlg->h_entry]));
 	var = get_dlg_variable_unsafe(dlg, key);
