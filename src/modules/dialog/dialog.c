@@ -2518,14 +2518,14 @@ static int ki_dlg_var_rm(sip_msg_t *msg, str *name)
 static int ki_dlg_var_is_null(sip_msg_t *msg, str *name)
 {
 	dlg_cell_t *dlg;
-	str *pval;
+	int ret;
 
 	dlg = dlg_get_msg_dialog(msg);
 	if(dlg==NULL) {
 		return 1;
 	}
-	pval = get_dlg_varref(dlg, name);
-	if(pval==NULL || pval->s==NULL) {
+	ret = get_dlg_varstatus(dlg, name);
+	if(ret==1) {
 		return 1;
 	}
 	return -1;
