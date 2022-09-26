@@ -342,6 +342,40 @@ int get_dlg_varval(struct dlg_cell *dlg, str *key, str *val)
 	return -2;
 }
 
+/**
+ * set *val to a pkg-allocated buffer where the dlg value is cloned
+ * - val->s has to be pkg-freed after use
+ */
+int get_dlg_vardup(struct dlg_cell *dlg, str *key, str *val)
+{
+	str *var = NULL;
+
+	val->s = NULL;
+	val->len = 0;
+
+	if( !dlg || !key || key->len<=0) {
+		LM_ERR("BUG - bad parameters\n");
+		return -1;
+	}
+
+	dlg_lock(d_table, &(d_table->entries[dlg->h_entry]));
+	var = get_dlg_variable_unsafe(dlg, key);
+	if(var && var->s) {
+		val->s = (char*)pkg_malloc(var->len + 1);
+		if(val->s!=NULL) {
+			memcpy(val->s, var->s, var->len);
+			val->len = var->len;
+			val->s[val->len] = '\0';
+		}
+	}
+	dlg_unlock(d_table, &(d_table->entries[dlg->h_entry]));
+
+	if(val->s) {
+		return 0;
+	}
+	return -2;
+}
+
 int get_dlg_variable_uintval(struct dlg_cell *dlg, str *key, unsigned int *uval)
 {
 	str* var = NULL;

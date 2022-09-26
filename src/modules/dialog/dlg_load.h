@@ -48,6 +48,7 @@ struct dlg_binds {
     set_dlg_variable_f set_dlg_var;
 	get_dlg_varref_f   get_dlg_varref;
 	get_dlg_varval_f   get_dlg_varval;
+	get_dlg_vardup_f   get_dlg_vardup;
 	get_dlg_f          get_dlg;
 	release_dlg_f      release_dlg;
 };

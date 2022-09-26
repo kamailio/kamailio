@@ -42,7 +42,7 @@ struct dlg_cb_params {
 };
 
 /* callback function prototype */
-typedef void (dialog_cb) (struct dlg_cell* dlg, int type, 
+typedef void (dialog_cb) (struct dlg_cell* dlg, int type,
 		struct dlg_cb_params * params);
 /* function to free the callback param */
 typedef void (param_free_cb) (void *param);
@@ -59,6 +59,9 @@ typedef str* (*get_dlg_varref_f)( struct dlg_cell* dlg,
                                     str* key);
 /* method to get a variable from a dialog */
 typedef int (*get_dlg_varval_f)( struct dlg_cell* dlg,
+                                    str* key, str* val);
+/* method to get a variable value duplicate from a dialog */
+typedef int (*get_dlg_vardup_f)( struct dlg_cell* dlg,
                                     str* key, str* val);
 
 #define CONFIRMED_DIALOG_STATE 1
