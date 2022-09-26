@@ -376,6 +376,31 @@ int get_dlg_vardup(struct dlg_cell *dlg, str *key, str *val)
 	return -2;
 }
 
+/**
+ * return the status if the dlg variable value is set or not
+ * - 1 - variable is set
+ * - 0 - variable is not set
+ */
+int get_dlg_varstatus(struct dlg_cell *dlg, str *key)
+{
+    str* var = NULL;
+    int ret = 0;
+
+    if( !dlg || !key || key->len<=0) {
+        LM_ERR("BUG - bad parameters\n");
+        return 0;
+    }
+
+    dlg_lock(d_table, &(d_table->entries[dlg->h_entry]));
+    var = get_dlg_variable_unsafe(dlg, key);
+	if(var && var->s) {
+		ret = 1;
+	}
+    dlg_unlock(d_table, &(d_table->entries[dlg->h_entry]));
+
+    return ret;
+}
+
 int get_dlg_variable_uintval(struct dlg_cell *dlg, str *key, unsigned int *uval)
 {
 	str* var = NULL;
