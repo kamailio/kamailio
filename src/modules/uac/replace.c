@@ -391,7 +391,7 @@ int replace_uri( struct sip_msg *msg, str *display, str *uri,
 
 	if (dlg) {
 		dlgvar_names = (uac_flag==FL_USE_UAC_FROM)?from_dlgvar:to_dlgvar;
-		if(dlg_api.get_dlg_varref(dlg, &dlgvar_names[0])) {
+		if(dlg_api.get_dlg_varstatus(dlg, &dlgvar_names[0])) {
 
 			LM_INFO("Already called uac_replace for this dialog\n");
 			/* delete the from_new dlg var */
