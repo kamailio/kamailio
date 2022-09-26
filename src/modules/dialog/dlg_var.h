@@ -62,6 +62,7 @@ typedef struct dlg_var {
 str* get_dlg_varref(dlg_cell_t *dlg, str *key);
 int get_dlg_varval(dlg_cell_t *dlg, str *key, str *val);
 int get_dlg_vardup(dlg_cell_t *dlg, str *key, str *val);
+int get_dlg_varstatus(dlg_cell_t *dlg, str *key);
 int set_dlg_variable(dlg_cell_t *dlg, str *key, str *val);
 
 int get_dlg_variable_uintval(struct dlg_cell *dlg, str *key, unsigned int *uval);

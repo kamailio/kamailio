@@ -63,6 +63,9 @@ typedef int (*get_dlg_varval_f)( struct dlg_cell* dlg,
 /* method to get a variable value pkg-allocated duplicate from a dialog */
 typedef int (*get_dlg_vardup_f)( struct dlg_cell* dlg,
                                     str* key, str* val);
+/* method to get if a variable value is set or not from a dialog */
+typedef int (*get_dlg_varstatus_f)( struct dlg_cell* dlg,
+                                    str* key);
 
 #define CONFIRMED_DIALOG_STATE 1
 
