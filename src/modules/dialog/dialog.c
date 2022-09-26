@@ -483,6 +483,8 @@ int load_dlg( struct dlg_binds *dlgb )
 	dlgb->set_dlg_var = set_dlg_variable;
 	dlgb->get_dlg_varref = get_dlg_varref;
 	dlgb->get_dlg_varval = get_dlg_varval;
+	dlgb->get_dlg_vardup = get_dlg_vardup;
+	dlgb->get_dlg_varstatus = get_dlg_varstatus;
 	dlgb->get_dlg = dlg_get_msg_dialog;
 	dlgb->release_dlg = dlg_release;
 	return 1;
