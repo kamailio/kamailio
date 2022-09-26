@@ -287,8 +287,7 @@ str* get_dlg_varref(struct dlg_cell *dlg, str *key)
 {
     str* var = NULL;
 
-    if( !dlg || !key || key->len > strlen(key->s))
-    {
+    if( !dlg || !key || key->len<=0) {
         LM_ERR("BUG - bad parameters\n");
 
         return NULL;
@@ -313,7 +312,7 @@ int get_dlg_varval(struct dlg_cell *dlg, str *key, str *val)
 	val->s = NULL;
 	val->len = 0;
 
-	if( !dlg || !key || key->len > strlen(key->s)) {
+	if( !dlg || !key || key->len<=0) {
 		LM_ERR("BUG - bad parameters\n");
 		return -1;
 	}
