@@ -2139,7 +2139,7 @@ int pv_get_hdr(sip_msg_t *msg,  pv_param_t *param, pv_value_t *res)
 			LM_ERR("invalid name\n");
 			return -1;
 		}
-		parse_hname2_short(tv.rs.s, tv.rs.s + tv.rs.len, &thdr);
+		parse_hname2_str(&tv.rs, &thdr);
 		if(thdr.type==HDR_ERROR_T) {
 			LM_ERR("error parsing header name [%.*s]\n", tv.rs.len, tv.rs.s);
 			return pv_get_null(msg, param, res);
@@ -2188,7 +2188,7 @@ int pv_get_hdrc(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res)
 			LM_ERR("invalid name\n");
 			return pv_get_sintval(msg, param, res, hcount);
 		}
-		parse_hname2_short(tv.rs.s, tv.rs.s + tv.rs.len, &thdr);
+		parse_hname2_str(&tv.rs, &thdr);
 		if(thdr.type==HDR_ERROR_T) {
 			LM_ERR("error parsing header name [%.*s]\n", tv.rs.len, tv.rs.s);
 			return pv_get_sintval(msg, param, res, 0);
@@ -2256,7 +2256,7 @@ int pv_get_hfl(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 			LM_ERR("invalid name\n");
 			return -1;
 		}
-		parse_hname2_short(tv.rs.s, tv.rs.s + tv.rs.len, &thdr);
+		parse_hname2_str(&tv.rs, &thdr);
 		if(thdr.type==HDR_ERROR_T) {
 			LM_ERR("error parsing header name [%.*s]\n", tv.rs.len, tv.rs.s);
 			return pv_get_sintval(msg, param, res, 0);
@@ -2500,7 +2500,7 @@ int pv_get_hflc(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 			LM_ERR("invalid name\n");
 			return pv_get_sintval(msg, param, res, 0);
 		}
-		parse_hname2_short(tv.rs.s, tv.rs.s + tv.rs.len, &thdr);
+		parse_hname2_str(&tv.rs, &thdr);
 		if(thdr.type==HDR_ERROR_T) {
 			LM_ERR("error parsing header name [%.*s]\n", tv.rs.len, tv.rs.s);
 			return pv_get_sintval(msg, param, res, 0);
