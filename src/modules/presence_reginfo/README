@@ -27,12 +27,14 @@ Carsten Bock
         3. Parameters
 
               3.1. default_expires (int)
+              3.2. aggregate_presentities (int)
 
         4. Functions
 
    List of Examples
 
    1.1. Set default_expires parameter
+   1.2. Set aggregate_presentities parameter
 
 Chapter 1. Admin Guide
 
@@ -47,6 +49,7 @@ Chapter 1. Admin Guide
    3. Parameters
 
         3.1. default_expires (int)
+        3.2. aggregate_presentities (int)
 
    4. Functions
 
@@ -86,6 +89,7 @@ Chapter 1. Admin Guide
 3. Parameters
 
    3.1. default_expires (int)
+   3.2. aggregate_presentities (int)
 
 3.1. default_expires (int)
 
@@ -98,6 +102,20 @@ Chapter 1. Admin Guide
         ...
         modparam("presence_reginfo", "default_expires", 3600)
         ...
+
+3.2. aggregate_presentities (int)
+
+   Whether to aggregate in a single notify body all registration
+   presentities. Useful to have all registrations on first NOTIFY
+   following initial SUBSCRIBE.
+
+   Default value is “0” (disabled).
+
+   Example 1.2. Set aggregate_presentities parameter
+                                        ...
+                                        modparam("presence_reginfo", "aggregate_
+presentities", 1)
+                                        ...
 
 4. Functions
 
