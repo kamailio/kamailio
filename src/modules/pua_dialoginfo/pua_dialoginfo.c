@@ -559,7 +559,7 @@ struct dlginfo_cell* get_dialog_data(struct dlg_cell *dlg, int type, int disable
 
 		} else {
 			if(caller_dlg_var.len>0
-					&& (s = dlg_api.get_dlg_var(dlg, &caller_dlg_var))!=0) {
+					&& (s = dlg_api.get_dlg_varref(dlg, &caller_dlg_var))!=0) {
 				dlginfo->pubruris_caller =
 					(struct str_list*)shm_malloc(sizeof(struct str_list) + s->len + 1);
 				if (dlginfo->pubruris_caller==0) {
@@ -578,7 +578,7 @@ struct dlginfo_cell* get_dialog_data(struct dlg_cell *dlg, int type, int disable
 			}
 
 			if(callee_dlg_var.len>0
-					&& (s = dlg_api.get_dlg_var(dlg, &callee_dlg_var))!=0) {
+					&& (s = dlg_api.get_dlg_varref(dlg, &callee_dlg_var))!=0) {
 				dlginfo->pubruris_callee =
 					(struct str_list*)shm_malloc(sizeof(struct str_list) + s->len + 1);
 				if (dlginfo->pubruris_callee==0) {
