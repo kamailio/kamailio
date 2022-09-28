@@ -11,5 +11,5 @@ CREATE TABLE `speed_dial` (
     CONSTRAINT speed_dial_idx UNIQUE (`username`, `domain`, `sd_domain`, `sd_username`)
 );
 
-INSERT INTO version (table_name, table_version) values ('speed_dial','2');
+INSERT INTO version (table_name, table_version) values ('speed_dial','3');
 

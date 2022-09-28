@@ -54,6 +54,7 @@ str domain_column    = str_init("domain");
 str sd_user_column   = str_init("sd_username");
 str sd_domain_column = str_init("sd_domain");
 str new_uri_column   = str_init("new_uri");
+str group_column     = str_init("group_id");
 int use_domain       = 0;
 static str domain_prefix    = {NULL, 0};
 
@@ -69,6 +70,8 @@ static cmd_export_t cmds[] = {
 	{"sd_lookup", (cmd_function)w_sd_lookup, 1, fixup_spve_null, 0,
 		REQUEST_ROUTE},
 	{"sd_lookup", (cmd_function)w_sd_lookup, 2, fixup_spve_spve, 0,
+		REQUEST_ROUTE},
+	{"sd_lookup_group", (cmd_function)w_sd_lookup_group, 2, fixup_spve_spve, 0,
 		REQUEST_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
@@ -177,6 +180,11 @@ static sr_kemi_t sr_kemi_speeddial_exports[] = {
 	},
 	{ str_init("speeddial"), str_init("lookup_owner"),
 		SR_KEMIP_INT, sd_lookup_owner,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("speeddial"), str_init("lookup_group"),
+		SR_KEMIP_INT, sd_lookup_group,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},

@@ -9,7 +9,7 @@
 
 <table id="speed_dial" xmlns:db="http://docbook.org/ns/docbook">
     <name>speed_dial</name>
-    <version>2</version>
+    <version>3</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
 		<db:para>
@@ -98,6 +98,14 @@
         <size>&user_len;</size>
         <default/>
         <description>Description</description>
+    </column>
+
+    <column>
+        <name>group_id</name>
+        <type>string</type>
+        <size>&group_len;</size>
+        <default/>
+        <description>Group ID</description>
     </column>
 
     <index>

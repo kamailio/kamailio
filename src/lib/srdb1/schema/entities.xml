@@ -11,6 +11,7 @@
 <!ENTITY xcap_uri_len "255">
 <!ENTITY id_len "64">
 <!ENTITY table_id_len "10">
+<!ENTITY group_len "128">
 <!ENTITY hf_len "255">
 <!ENTITY contact_len "512">
 <!ENTITY long_hf_len "512">

@@ -61,6 +61,47 @@ static inline int rewrite_ruri(struct sip_msg* _m, char* _s)
 /**
  *
  */
+int process_result(db1_res_t* db_res, str *ret, char *buffer)
+{
+	ret->s=buffer+4;
+	if (RES_ROW_N(db_res) > 1)
+	{
+		LM_WARN("too many similar results, returning first result\n");
+	}
+	switch(RES_ROWS(db_res)[0].values[0].type)
+	{
+		case DB1_STRING:
+			strcpy(ret->s,
+				(char*)RES_ROWS(db_res)[0].values[0].val.string_val);
+			ret->len = strlen(ret->s);
+		break;
+		case DB1_STR:
+			strncpy(ret->s,
+				(char*)RES_ROWS(db_res)[0].values[0].val.str_val.s,
+				RES_ROWS(db_res)[0].values[0].val.str_val.len);
+			ret->len = RES_ROWS(db_res)[0].values[0].val.str_val.len;
+			ret->s[ret->len] = '\0';
+		break;
+		case DB1_BLOB:
+			strncpy(ret->s,
+				(char*)RES_ROWS(db_res)[0].values[0].val.blob_val.s,
+				RES_ROWS(db_res)[0].values[0].val.blob_val.len);
+			ret->len = RES_ROWS(db_res)[0].values[0].val.blob_val.len;
+			ret->s[ret->len] = '\0';
+		break;
+		default:
+			LM_ERR("unknown type of DB new_uri column\n");
+			if (db_funcs.free_result(db_handle, db_res) < 0) {
+				LM_DBG("failed to free result of query\n");
+			}
+			return -1;
+	}
+	return 1;
+}
+
+/**
+ *
+ */
 int sd_lookup_owner(sip_msg_t* _msg, str* stable, str* sowner)
 {
 	str user_s, table_s, uri_s;
@@ -175,34 +216,129 @@ int sd_lookup_owner(sip_msg_t* _msg, str* stable, str* sowner)
 		return -1;
 	}
 
-	user_s.s = useruri_buf+4;
-	switch(RES_ROWS(db_res)[0].values[0].type)
+	if(process_result(db_res, &user_s, useruri_buf) < 0)
 	{
-		case DB1_STRING:
-			strcpy(user_s.s,
-				(char*)RES_ROWS(db_res)[0].values[0].val.string_val);
-			user_s.len = strlen(user_s.s);
-		break;
-		case DB1_STR:
-			strncpy(user_s.s,
-				(char*)RES_ROWS(db_res)[0].values[0].val.str_val.s,
-				RES_ROWS(db_res)[0].values[0].val.str_val.len);
-			user_s.len = RES_ROWS(db_res)[0].values[0].val.str_val.len;
-			user_s.s[user_s.len] = '\0';
-		break;
-		case DB1_BLOB:
-			strncpy(user_s.s,
-				(char*)RES_ROWS(db_res)[0].values[0].val.blob_val.s,
-				RES_ROWS(db_res)[0].values[0].val.blob_val.len);
-			user_s.len = RES_ROWS(db_res)[0].values[0].val.blob_val.len;
-			user_s.s[user_s.len] = '\0';
-		break;
-		default:
-			LM_ERR("unknown type of DB new_uri column\n");
-			if (db_funcs.free_result(db_handle, db_res) < 0) {
-				LM_DBG("failed to free result of query\n");
-			}
-			goto err_server;
+		LM_DBG("failed to process result\n");
+		return -1;
+	}
+
+	/* check 'sip:' */
+	if(user_s.len<4 || strncmp(user_s.s, "sip:", 4))
+	{
+		memcpy(useruri_buf, "sip:", 4);
+		user_s.s -= 4;
+		user_s.len += 4;
+	}
+
+	/**
+	 * Free the result because we don't need it anymore
+	 */
+	if (db_funcs.free_result(db_handle, db_res) < 0) {
+		LM_DBG("failed to free result of query\n");
+	}
+
+	/* set the URI */
+	LM_DBG("URI of sd from R-URI [%s]\n", user_s.s);
+	if(rewrite_ruri(_msg, user_s.s)<0)
+	{
+		LM_ERR("failed to replace the R-URI\n");
+		goto err_server;
+	}
+
+	return 1;
+
+err_server:
+	return -1;
+}
+
+/**
+ * 
+ */
+int sd_lookup_group(sip_msg_t* _msg, str* stable, str* sgroup)
+{
+	str user_s, table_s;
+	int nr_keys;
+	db_key_t db_keys[3];
+	db_val_t db_vals[3];
+	db_key_t db_cols[1];
+	db1_res_t* db_res = NULL;
+
+	if(stable==NULL || stable->s==NULL || stable->len<=0)
+	{
+		LM_ERR("invalid table parameter");
+		goto err_server;
+	}
+	table_s = *stable;
+
+	if(sgroup==NULL || sgroup->s==NULL || sgroup->len<=0)
+	{
+		LM_ERR("invalid group parameter");
+		goto err_server;
+	}
+
+	/* init */
+	nr_keys = 0;
+	db_cols[0]=&new_uri_column;
+
+	/* take sd from r-uri */
+	if (parse_sip_msg_uri(_msg) < 0)
+	{
+		LM_ERR("failed to parsing Request-URI\n");
+		goto err_server;
+	}
+
+	db_keys[nr_keys]=&sd_user_column;
+	db_vals[nr_keys].type = DB1_STR;
+	db_vals[nr_keys].nul = 0;
+	db_vals[nr_keys].val.str_val.s = _msg->parsed_uri.user.s;
+	db_vals[nr_keys].val.str_val.len = _msg->parsed_uri.user.len;
+	nr_keys++;
+
+	if(use_domain>=2)
+	{
+		db_keys[nr_keys]=&sd_domain_column;
+		db_vals[nr_keys].type = DB1_STR;
+		db_vals[nr_keys].nul = 0;
+		db_vals[nr_keys].val.str_val.s = _msg->parsed_uri.host.s;
+		db_vals[nr_keys].val.str_val.len = _msg->parsed_uri.host.len;
+
+		if (dstrip_s.s!=NULL && dstrip_s.len>0
+			&& dstrip_s.len<_msg->parsed_uri.host.len
+			&& strncasecmp(_msg->parsed_uri.host.s,dstrip_s.s,dstrip_s.len)==0)
+		{
+			db_vals[nr_keys].val.str_val.s   += dstrip_s.len;
+			db_vals[nr_keys].val.str_val.len -= dstrip_s.len;
+		}
+		nr_keys++;
+	}
+
+
+	db_keys[nr_keys]=&group_column;
+	db_vals[nr_keys].type = DB1_STR;
+	db_vals[nr_keys].nul = 0;
+	db_vals[nr_keys].val.str_val = *sgroup;
+	nr_keys++;
+
+	db_funcs.use_table(db_handle, &table_s);
+	if(db_funcs.query(db_handle, db_keys, NULL, db_vals, db_cols,
+		nr_keys /*no keys*/, 1 /*no cols*/, NULL, &db_res)!=0 || db_res==NULL)
+	{
+		LM_ERR("failed to query database\n");
+		goto err_server;
+	}
+
+	if(RES_ROW_N(db_res) <= 0 || RES_ROWS(db_res)[0].values[0].nul != 0) {
+		LM_DBG("no sip address found for R-URI\n");
+		if(db_funcs.free_result(db_handle, db_res) < 0) {
+			LM_DBG("failed to free result of query\n");
+		}
+		goto err_server;
+	}
+
+	if(process_result(db_res, &user_s, useruri_buf) < 0)
+	{
+		LM_DBG("failed to process result\n");
+		goto err_server;
 	}
 
 	/* check 'sip:' */
@@ -258,4 +394,25 @@ int w_sd_lookup(struct sip_msg* _msg, char* _table, char* _owner)
 	}
 
 	return sd_lookup_owner(_msg, &table_s, NULL);
+}
+
+/**
+ *
+ */
+int w_sd_lookup_group(struct sip_msg* _msg, char* _table, char* _group)
+{
+	str table_s, group_s;
+
+	if(_table==NULL || fixup_get_svalue(_msg, (gparam_p)_table, &table_s)!=0)
+	{
+		LM_ERR("invalid table parameter");
+		return -1;
+	}
+
+	if(_group==NULL ||fixup_get_svalue(_msg, (gparam_p)_group, &group_s)!=0)
+	{
+		LM_ERR("invalid group parameter");
+		return -1;
+	}
+	return sd_lookup_group(_msg, &table_s, &group_s);
 }

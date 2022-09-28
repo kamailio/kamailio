@@ -252,6 +252,41 @@ if(uri=~"sip:[0-9]{2}@.*")
 </programlisting>
 		</example>
 	</section>
+	<section>
+		<title>
+		<function moreinfo="none">sd_lookup_group(table , group)</function>
+		</title>
+		<para>
+		The function lookups the short dial number from the group defined in the 'table' and replaces the R-URI with associated address.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>table</emphasis> - The name of the table storing the
+			speed dial records.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>group</emphasis> - The group that has the
+			short dialing codes.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title><function>sd_lookup_group</function> usage</title>
+		<programlisting format="linespecific">
+...
+# 'speed_dial' is the default table name created by kamailio db script
+# Using 3 digits to differentiate from the simple lookup 
+if(uri=~"sip:[0-9]{3}@.*")
+	sd_lookup_group("speed_dial", "group_id");
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 	<section>
 	<title>Installation and Running</title>

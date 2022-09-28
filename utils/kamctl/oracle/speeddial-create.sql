@@ -19,5 +19,5 @@ END speed_dial_tr;
 /
 BEGIN map2users('speed_dial'); END;
 /
-INSERT INTO version (table_name, table_version) values ('speed_dial','2');
+INSERT INTO version (table_name, table_version) values ('speed_dial','3');
 
