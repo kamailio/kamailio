@@ -269,7 +269,8 @@ static struct
 
 static enum snexpr_type snexpr_op(const char *s, size_t len, int unary)
 {
-	for(unsigned int i = 0; i < sizeof(OPS) / sizeof(OPS[0]); i++) {
+	unsigned int i;
+	for(i = 0; i < sizeof(OPS) / sizeof(OPS[0]); i++) {
 		if(strlen(OPS[i].s) == len && strncmp(OPS[i].s, s, len) == 0
 				&& (unary == -1 || snexpr_is_unary(OPS[i].op) == unary)) {
 			return OPS[i].op;
@@ -283,7 +284,8 @@ static float snexpr_parse_number(const char *s, size_t len)
 	float num = 0;
 	unsigned int frac = 0;
 	unsigned int digits = 0;
-	for(unsigned int i = 0; i < len; i++) {
+	unsigned int i;
+	for(i = 0; i < len; i++) {
 		if(s[i] == '.' && frac == 0) {
 			frac++;
 			continue;
@@ -319,7 +321,8 @@ struct snexpr_func
 static struct snexpr_func *snexpr_func_find(
 		struct snexpr_func *funcs, const char *s, size_t len)
 {
-	for(struct snexpr_func *f = funcs; f->name; f++) {
+	struct snexpr_func *f;
+	for(f = funcs; f->name; f++) {
 		if(strlen(f->name) == len && strncmp(f->name, s, len) == 0) {
 			return f;
 		}
@@ -1190,7 +1193,8 @@ static struct snexpr *snexpr_create(const char *s, size_t len,
 						sne_vec_free(&arg.args);
 						goto cleanup; /* first argument is not a variable */
 					}
-					for(struct snexpr_var *v = vars->head; v; v = v->next) {
+					struct snexpr_var *v;
+					for(v = vars->head; v; v = v->next) {
 						if(v == u->param.var.vref) {
 							struct macro m = {v->name, arg.args};
 							sne_vec_push(&macros, m);
@@ -1213,8 +1217,9 @@ static struct snexpr *snexpr_create(const char *s, size_t len,
 						m = sne_vec_nth(&macros, found);
 						struct snexpr root = snexpr_constnum(0);
 						struct snexpr *p = &root;
+						int j;
 						/* Assign macro parameters */
-						for(int j = 0; j < sne_vec_len(&arg.args); j++) {
+						for(j = 0; j < sne_vec_len(&arg.args); j++) {
 							char varname[4];
 							snprintf(varname, sizeof(varname) - 1, "$%d",
 									(j + 1));
@@ -1228,7 +1233,7 @@ static struct snexpr *snexpr_create(const char *s, size_t len,
 							p = &sne_vec_nth(&p->param.op.args, 1);
 						}
 						/* Expand macro body */
-						for(int j = 1; j < sne_vec_len(&m.body); j++) {
+						for(j = 1; j < sne_vec_len(&m.body); j++) {
 							if(j < sne_vec_len(&m.body) - 1) {
 								*p = snexpr_binary(SNE_OP_COMMA, snexpr_constnum(0),
 										snexpr_constnum(0));
@@ -1402,6 +1407,7 @@ static void snexpr_destroy_args(struct snexpr *e)
 
 static void snexpr_destroy(struct snexpr *e, struct snexpr_var_list *vars)
 {
+	struct snexpr_var *v;
 	_snexternval_cbf = NULL;
 
 	if(e != NULL) {
@@ -1409,7 +1415,7 @@ static void snexpr_destroy(struct snexpr *e, struct snexpr_var_list *vars)
 		free(e);
 	}
 	if(vars != NULL) {
-		for(struct snexpr_var *v = vars->head; v;) {
+		for(v = vars->head; v;) {
 			struct snexpr_var *next = v->next;
 			if(v->evflags & SNEXPR_VALALLOC) {
 				free(v->v.sval);
