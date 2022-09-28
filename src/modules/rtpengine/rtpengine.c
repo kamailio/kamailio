@@ -2689,8 +2689,11 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
 			|| op == OP_UNBLOCK_MEDIA || op == OP_START_FORWARDING || op == OP_STOP_FORWARDING
 			|| op == OP_SILENCE_MEDIA || op == OP_UNSILENCE_MEDIA)
 	{
-		if (ng_flags.directional)
+		if (ng_flags.directional) {
 			bencode_dictionary_add_str(ng_flags.dict, "from-tag", &ng_flags.from_tag);
+			if (ng_flags.to && ng_flags.to_tag.s && ng_flags.to_tag.len)
+				bencode_dictionary_add_str(ng_flags.dict, "to-tag", &ng_flags.to_tag);
+		}
 	}
 	else if ((msg->first_line.type == SIP_REQUEST && op != OP_ANSWER)
 		|| (msg->first_line.type == SIP_REPLY && op == OP_DELETE)
