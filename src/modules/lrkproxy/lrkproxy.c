@@ -120,7 +120,9 @@ static str DEFAULT_LRKP_SET_ID_STR = str_init("0");
 static char *gencookie();
 static int lrkp_test(struct lrkp_node*);
 static int lrkp_get_config(struct lrkp_node *node);
+static int lrkp_keep_alive(struct lrkp_node *node);
 static int lrkp_set_conntrack_rule(struct lrkproxy_hash_entry *e);
+static int lrkp_remove_conntrack_rule(struct lrkproxy_hash_entry *e);
 
 
 static int lrkproxy_force(struct sip_msg *msg, const char *flags, enum lrk_operation op, int more);
@@ -164,7 +166,7 @@ static unsigned int current_msg_id = (unsigned int)-1;
 struct lrkp_set_head * lrkp_set_list =0;
 struct lrkp_set * selected_lrkp_set =0;
 struct lrkp_set * default_lrkp_set=0;
-struct lrkp_node *selected_lrkp_node = 0;
+static struct lrkp_node *selected_lrkp_node = 0;
 int lrkp_algorithm = LRK_LINER;
 static int hash_table_size = 0;
 static int hash_table_tout = 3600;
@@ -172,7 +174,19 @@ static int hash_table_tout = 3600;
 /*!< The gt is game-theory variable, It could be set 0:disable and 1:enable
  * default is 0.
  */
-int gt = 0;
+static int gt = 0;
+
+/*!< The behind_nat is used when the LRKProxy is behind nat and the external IP should be as Advertised IP.It could be set 0:disable and 1:enable
+ * default is 0.
+ */
+static int behind_nat = 0;
+
+/*!< These option used to local rang ports to work with lrkproxy engine.
+ * Default values are based on lrkproxy engine.
+ */
+
+static int startport = 0;
+static int endport = 0;
 
 /*
  * the custom_sdp_ip_spec variable is used for specific SDP information based $si (source address)
@@ -195,8 +209,8 @@ static int *lrkp_socks = 0;
 
 
 typedef struct lrkp_set_link {
-	struct lrkp_set *rset;
-	pv_spec_t *rpv;
+    struct lrkp_set *rset;
+    pv_spec_t *rpv;
 } lrkp_set_link_t;
 
 /* tm */
@@ -208,17 +222,17 @@ static struct tm_binds tmb;
 static cmd_export_t cmds[] = {
 
         {"set_lrkproxy_set",  (cmd_function)set_lrkproxy_set_f,    1,
-                fixup_set_id, 0,
+                  fixup_set_id, 0,
                 ANY_ROUTE},
         {"lrkproxy_manage",	(cmd_function)lrkproxy_manage0,     0,
-                                                       0, 0,
-                   ANY_ROUTE},
+                  0, 0,
+                ANY_ROUTE},
         {"lrkproxy_manage",	(cmd_function)lrkproxy_manage1,     1,
-                                                       fixup_spve_null, fixup_free_spve_null,
-                   ANY_ROUTE},
+                  fixup_spve_null, fixup_free_spve_null,
+                ANY_ROUTE},
         {"lrkproxy_manage",	(cmd_function)lrkproxy_manage2,     2,
-                                                       fixup_spve_spve, fixup_free_spve_spve,
-                   ANY_ROUTE},
+                  fixup_spve_spve, fixup_free_spve_spve,
+                ANY_ROUTE},
 
         {0, 0, 0, 0, 0, 0}
 };
@@ -234,6 +248,9 @@ static param_export_t params[] = {
         {"hash_table_size",       INT_PARAM, &hash_table_size        },
         {"custom_sdp_ip_avp",     PARAM_STR, &custom_sdp_ip_spec},
         {"gt",   INT_PARAM  , &gt},
+        {"behind_nat",   INT_PARAM  , &behind_nat},
+        {"start_port",   INT_PARAM  , &startport},
+        {"end_port",   INT_PARAM  , &endport},
 
         {0, 0, 0}
 };
@@ -507,51 +524,51 @@ static int lrkproxy_add_lrkproxy_set( char * lrk_proxies)
 
 static int fixup_set_id(void ** param, int param_no)
 {
-	int int_val, err;
-	struct lrkp_set* lrkp_list;
-	lrkp_set_link_t *lrkl = NULL;
-	str s;
+    int int_val, err;
+    struct lrkp_set* lrkp_list;
+    lrkp_set_link_t *lrkl = NULL;
+    str s;
 
-	lrkl = (lrkp_set_link_t*)pkg_malloc(sizeof(lrkp_set_link_t));
-	if(lrkl==NULL) {
-		LM_ERR("no more pkg memory\n");
-		return -1;
-	}
-	memset(lrkl, 0, sizeof(lrkp_set_link_t));
-	s.s = (char*)*param;
-	s.len = strlen(s.s);
+    lrkl = (lrkp_set_link_t*)pkg_malloc(sizeof(lrkp_set_link_t));
+    if(lrkl==NULL) {
+                LM_ERR("no more pkg memory\n");
+        return -1;
+    }
+    memset(lrkl, 0, sizeof(lrkp_set_link_t));
+    s.s = (char*)*param;
+    s.len = strlen(s.s);
 
-	if(s.s[0] == PV_MARKER) {
-		int_val = pv_locate_name(&s);
-		if(int_val<0 || int_val!=s.len) {
-			LM_ERR("invalid parameter %s\n", s.s);
-			pkg_free(lrkl);
-			return -1;
-		}
-		lrkl->rpv = pv_cache_get(&s);
-		if(lrkl->rpv == NULL) {
-			LM_ERR("invalid pv parameter %s\n", s.s);
-			pkg_free(lrkl);
-			return -1;
-		}
-	} else {
-		int_val = str2s(*param, strlen(*param), &err);
-		if (err == 0) {
-			pkg_free(*param);
-			if((lrkp_list = select_lrkp_set(int_val)) ==0){
-				LM_ERR("lrkp_proxy set %i not configured\n", int_val);
-				pkg_free(lrkl);
-				return E_CFG;
-			}
-			lrkl->rset = lrkp_list;
-		} else {
-			LM_ERR("bad number <%s>\n",	(char *)(*param));
-			pkg_free(lrkl);
-			return E_CFG;
-		}
-	}
-	*param = (void*)lrkl;
-	return 0;
+    if(s.s[0] == PV_MARKER) {
+        int_val = pv_locate_name(&s);
+        if(int_val<0 || int_val!=s.len) {
+                    LM_ERR("invalid parameter %s\n", s.s);
+            pkg_free(lrkl);
+            return -1;
+        }
+        lrkl->rpv = pv_cache_get(&s);
+        if(lrkl->rpv == NULL) {
+                    LM_ERR("invalid pv parameter %s\n", s.s);
+            pkg_free(lrkl);
+            return -1;
+        }
+    } else {
+        int_val = str2s(*param, strlen(*param), &err);
+        if (err == 0) {
+            pkg_free(*param);
+            if((lrkp_list = select_lrkp_set(int_val)) ==0){
+                        LM_ERR("lrkp_proxy set %i not configured\n", int_val);
+                pkg_free(lrkl);
+                return E_CFG;
+            }
+            lrkl->rset = lrkp_list;
+        } else {
+                    LM_ERR("bad number <%s>\n",	(char *)(*param));
+            pkg_free(lrkl);
+            return E_CFG;
+        }
+    }
+    *param = (void*)lrkl;
+    return 0;
 }
 
 
@@ -723,7 +740,7 @@ child_init(int rank)
                 return -1;
             }
             freeaddrinfo(res);
-rptest:
+            rptest:
             pnode->ln_enable = lrkp_test(pnode);
             if (pnode->ln_enable) {       //get lrk proxy config if it is enable.
 //                LM_INFO("lrkp_test test is calling here\n"); //enable next line.
@@ -794,14 +811,14 @@ static int lrkp_test(struct lrkp_node *node)
 
 //    if (buf == NULL) {
     if (!buf[0]) {
-        LM_ERR("can't ping the lrk proxy %s, Disable it right now.\n", node->ln_url.s);
+                LM_ERR("can't ping the lrk proxy %s, Disable it right now.\n", node->ln_url.s);
         return 0;
     }
 
     char *resp = buf + v[0].iov_len + v[1].iov_len + 1;
     if (memcmp(resp, "PONG", 4) == 0)
 //                LM_DBG("Recieve PONG response from lrk proxy server %s, Enable it right now.\n", node->ln_url.s);
-            LM_INFO("Recieve PONG response from lrk proxy server %s, Enable it right now.\n", node->ln_url.s);
+                LM_INFO("Recieve PONG response from lrk proxy server %s, Enable it right now.\n", node->ln_url.s);
 
     return 1;
 
@@ -819,31 +836,82 @@ static int lrkp_get_config(struct lrkp_node *node){
 
 //    if (buf == NULL) {
     if (!buf[0]) {
-        LM_ERR("can't get config of the lrk proxy %s, Disable it right now.\n", node->ln_url.s);
+                LM_ERR("can't get config of the lrk proxy %s, Disable it right now.\n", node->ln_url.s);
         return 0;
     }
 
     lnconf = (struct lrkp_node_conf *)(buf + v[0].iov_len + v[1].iov_len + 1);
 
     if (lnconf == NULL){
-        LM_ERR("can't get config of the lrk proxy %s, Disable it right now.\n", node->ln_url.s);
+                LM_ERR("can't get config of the lrk proxy %s, Disable it right now.\n", node->ln_url.s);
         return 0;
     }
 
-
+    if(startport != 0 && endport != 0){
+        lnconf->start_port = lnconf->current_port = startport;
+        lnconf->end_port = endport;
+    }
     memcpy(node->lrkp_n_c, lnconf, sizeof(struct lrkp_node_conf));
 
 //    node->lrkp_n_c = lnconf;
-    LM_INFO("the lrk proxy %s is configured successfully right now.\n", node->ln_url.s);
-    LM_INFO("buffer internal:%s\n", node->lrkp_n_c->internal_ip);
-    LM_INFO("buffer external:%s\n", node->lrkp_n_c->external_ip);
-    LM_INFO("buffer start_port:%d\n", node->lrkp_n_c->start_port);
-    LM_INFO("buffer end_port:%d\n", node->lrkp_n_c->end_port);
-    LM_INFO("buffer current_port:%d\n", node->lrkp_n_c->current_port);
+            LM_INFO("the lrk proxy %s is configured successfully right now.\n", node->ln_url.s);
+            LM_INFO("buffer internal:%s\n", node->lrkp_n_c->internal_ip);
+            LM_INFO("buffer external:%s\n", node->lrkp_n_c->external_ip);
+            LM_INFO("buffer start_port:%d\n", node->lrkp_n_c->start_port);
+            LM_INFO("buffer end_port:%d\n", node->lrkp_n_c->end_port);
+            LM_INFO("buffer current_port:%d\n", node->lrkp_n_c->current_port);
 
     return 1;
 
 
+}
+
+static int lrkp_keep_alive(struct lrkp_node *node){
+
+    int buflen = 256;
+    char buf[buflen];
+    struct iovec v[2] = {{NULL, 0}, {"G", 1}};
+    struct lrkp_node_conf *lnconf = NULL;
+
+    memset(buf, 0, buflen);
+    memcpy(buf, send_lrkp_command(node, v, 2, 0), buflen);
+
+//    if (buf == NULL) {
+    if (!buf[0]) {
+                LM_ERR("can't get config of the lrk proxy %s, Disable it right now.\n", node->ln_url.s);
+        return 0;
+    }
+
+    lnconf = (struct lrkp_node_conf *)(buf + v[0].iov_len + v[1].iov_len + 1);
+
+    if (lnconf == NULL){
+                LM_ERR("can't get config of the lrk proxy %s, Disable it right now.\n", node->ln_url.s);
+        return 0;
+    }
+
+//    if(startport != 0 && endport != 0){
+//        lnconf->start_port = lnconf->current_port = startport;
+//        lnconf->end_port = endport;
+//    }
+
+    /*
+    if(startport != 0 && endport != 0){
+        //lnconf->start_port = lnconf->current_port = startport;
+        lnconf->start_port = lnconf->current_port = node->lrkp_n_c->current_port;
+        lnconf->end_port = endport;
+    }
+
+    memcpy(node->lrkp_n_c, lnconf, sizeof(struct lrkp_node_conf));
+*/
+//    node->lrkp_n_c = lnconf;
+            LM_INFO("the lrk proxy %s is configured successfully right now.\n", node->ln_url.s);
+            LM_INFO("buffer internal:%s\n", node->lrkp_n_c->internal_ip);
+            LM_INFO("buffer external:%s\n", node->lrkp_n_c->external_ip);
+            LM_INFO("buffer start_port:%d\n", node->lrkp_n_c->start_port);
+            LM_INFO("buffer end_port:%d\n", node->lrkp_n_c->end_port);
+            LM_INFO("buffer current_port:%d\n", node->lrkp_n_c->current_port);
+
+    return 1;
 }
 
 static int lrkp_set_conntrack_rule(struct lrkproxy_hash_entry *e) {
@@ -963,6 +1031,122 @@ static int lrkp_set_conntrack_rule(struct lrkproxy_hash_entry *e) {
 
 }
 
+static int lrkp_remove_conntrack_rule(struct lrkproxy_hash_entry *e) {
+    int buflen = 254;
+    char buf[buflen];
+    int v_len = 0;
+
+    char src_ipv4[20];
+    char src_port[20];
+    char dst_ipv4[20];
+    char dst_port[20];
+    char snat_ipv4[20];
+    char snat_port[20];
+    char dnat_ipv4[20];
+    char dnat_port[20];
+    char timeout[20];
+    char callid[50];
+
+    struct iovec v[] = {
+            {NULL, 0},  /* reserved (cookie) */
+            {"D",  1},   /* command & common options */
+            {NULL, 0},  /* src_ipv4 */
+            {NULL, 0},  /* dst_ipnv4 */
+            {NULL, 0},  /* snat_ipv4 */
+            {NULL, 0},  /* dnat_ipv4 */
+            {NULL, 0},  /* src_port */
+            {NULL, 0},  /* dst_port*/
+            {NULL, 0},  /* snat_port */
+            {NULL, 0},  /* dnat_port*/
+            {NULL, 0},  /* timeout to clear conntrack entry*/
+            {NULL, 0},  /* callid of session */
+    };
+
+    v_len += v[1].iov_len;
+
+    //set src_ipv4 to buffer.
+    sprintf(src_ipv4, " %.*s ", e->src_ipv4.len, e->src_ipv4.s);
+    v[2].iov_base = src_ipv4;
+    v[2].iov_len = strlen(v[2].iov_base);
+    v_len += v[2].iov_len;
+
+    //set dst_ipv4 to buffer.
+    sprintf(dst_ipv4, "%.*s ", e->dst_ipv4.len, e->dst_ipv4.s);
+    v[3].iov_base = dst_ipv4;
+    v[3].iov_len = strlen(v[3].iov_base);
+    v_len += v[3].iov_len;
+
+    //set snat_ipv4 to buffer.
+    sprintf(snat_ipv4, "%.*s ", e->snat_ipv4.len, e->snat_ipv4.s);
+    v[4].iov_base = snat_ipv4;
+    v[4].iov_len = strlen(v[4].iov_base);
+    v_len += v[4].iov_len;
+
+    //set dnat_ipv4 to buffer.
+    sprintf(dnat_ipv4, "%.*s ", e->dnat_ipv4.len, e->dnat_ipv4.s);
+    v[5].iov_base = dnat_ipv4;
+    v[5].iov_len = strlen(v[5].iov_base);
+    v_len += v[5].iov_len;
+
+    //set src_port to buffer.
+    sprintf(src_port, "%.*s ", e->src_port.len, e->src_port.s);
+    v[6].iov_base = src_port;
+    v[6].iov_len = strlen(v[6].iov_base);
+    v_len += v[6].iov_len;
+
+    //set dst_port to buffer.
+    sprintf(dst_port, "%.*s ", e->dst_port.len, e->dst_port.s);
+    v[7].iov_base = dst_port;
+    v[7].iov_len = strlen(v[7].iov_base);
+    v_len += v[7].iov_len;
+
+    //set snat_port to buffer.
+    sprintf(snat_port, "%.*s ", e->snat_port.len, e->snat_port.s);
+    v[8].iov_base = snat_port;
+    v[8].iov_len = strlen(v[8].iov_base);
+    v_len += v[8].iov_len;
+
+    //set dnat_port to buffer.
+    sprintf(dnat_port, "%.*s ", e->dnat_port.len, e->dnat_port.s);
+    v[9].iov_base = dnat_port;
+    v[9].iov_len = strlen(v[9].iov_base);
+    v_len += v[9].iov_len;
+
+    //set timeout to buffer. Set to 60 sec for default.
+    sprintf(timeout, "%d ", 60);
+    v[10].iov_base = timeout;
+    v[10].iov_len = strlen(v[10].iov_base);
+    v_len += v[10].iov_len;
+
+    //set callid to buffer.
+    sprintf(callid, "%.*s ", e->callid.len, e->callid.s);
+    v[11].iov_base = callid;
+    v[11].iov_len = strlen(v[11].iov_base);
+    v_len += v[11].iov_len;
+//    LM_ERR("e->callid.len is:%d right now.\n\n", e->callid.len);
+
+    memset(buf, 0, buflen);
+    memcpy(buf, send_lrkp_command(e->node, v, 12, v_len), buflen);
+//
+
+//    if (buf == NULL) {
+    if (!buf[0]) {
+                LM_ERR("can't ping the lrk proxy %s, Disable it right now.\n", e->node->ln_url.s);
+        return 0;
+    }
+
+    v_len += v[0].iov_len;
+
+
+//    char *resp = buf + v[0].iov_len + v[1].iov_len + v[2].iov_len;
+    char *resp = buf + v_len;
+    if (memcmp(resp, "OK", 2) == 0) {
+                LM_INFO("Recieve OK response from lrk proxy server, Rule remove successfully.\n");
+                LM_DBG("Recieve OK response from lrk proxy server, Rule remove successfully.\n");
+    }
+    return 1;
+
+}
 
 char *send_lrkp_command(struct lrkp_node *node, struct iovec *v, int vcnt, int more)
 {
@@ -1058,6 +1242,10 @@ char *send_lrkp_command(struct lrkp_node *node, struct iovec *v, int vcnt, int m
                             if (len == more + v[0].iov_len + 2)
                                 goto out;
 //                            break;
+                        case 'D':
+                            if (len == more + v[0].iov_len + 2)
+                                goto out;
+//                            break;
                     }
 
                 }
@@ -1107,7 +1295,7 @@ struct lrkp_node *select_lrkp_node(int do_test)
     int was_forced2;
 
     if(!selected_lrkp_set){
-        LM_ERR("script error -no valid set selected\n");
+                LM_ERR("script error -no valid set selected\n");
         return NULL;
     }
     /* Most popular case: 1 proxy, nothing to calculate */
@@ -1117,7 +1305,8 @@ struct lrkp_node *select_lrkp_node(int do_test)
         if (!node->ln_enable) {
             node->ln_enable = lrkp_test(node);
             if (node->ln_enable) {       //get lrk proxy config if it is enable.
-                lrkp_get_config(node);
+//                lrkp_get_config(node);
+                lrkp_keep_alive(node);
                 return node;
             }
         }
@@ -1127,16 +1316,19 @@ struct lrkp_node *select_lrkp_node(int do_test)
 
 
     /* Check node is enable and test it again*/
-retry:
+    retry:
+#if 0
     for (node=selected_lrkp_set->ln_first; node!=NULL; node=node->ln_next) {
 
         if (!node->ln_enable) {
             /* Try to enable if it's time to try. */
             node->ln_enable = lrkp_test(node);
             if (node->ln_enable)       //get lrk proxy config if it is enable.
-                lrkp_get_config(node);
+//                lrkp_get_config(node);
+                lrkp_keep_alive(node);
         }
     }
+#endif
 
     if (lrkp_algorithm == LRK_LINER) {
         was_forced = 0;
@@ -1153,7 +1345,8 @@ retry:
             /* Try to enable if it's time to try. */
             node->ln_enable = lrkp_test(node);
             if (node->ln_enable)       //get lrk proxy config if it is enable.
-                lrkp_get_config(node);
+//                lrkp_get_config(node);
+                lrkp_keep_alive(node);
         }
 
 
@@ -1161,12 +1354,12 @@ retry:
     }
     else if(lrkp_algorithm == LRK_RR) {
         was_forced2 = 0;
-retry3:
+        retry3:
         if (!selected_lrkp_node) {
             selected_lrkp_node = selected_lrkp_set->ln_first;
             node = selected_lrkp_set->ln_first;
             if(node->ln_enable)
-                    goto found;
+                goto found;
 //            was_forced2 = 1;
         }
         for (node = selected_lrkp_node->ln_next; node != NULL; node = node->ln_next)
@@ -1184,6 +1377,15 @@ retry3:
 
         was_forced2 = 1;
         selected_lrkp_node = NULL;
+
+        //trying to enable all lrkproxy and check again.
+        for (node = selected_lrkp_set->ln_first; node != NULL; node = node->ln_next) {
+            /* Try to enable if it's time to try. */
+            node->ln_enable = lrkp_test(node);
+            if (node->ln_enable)       //get lrk proxy config if it is enable.
+//                lrkp_get_config(node);
+                lrkp_keep_alive(node);
+        }
 
         goto retry3;
     }
@@ -1254,14 +1456,20 @@ static int change_media_sdp(sip_msg_t *msg, struct lrkproxy_hash_entry *e, const
         } else if (strstr(flags, "ie")) {
             ip_selected = e->node->lrkp_n_c->external_ip; //lrk_node->external_ip;
         } else {
-            LM_INFO("unknown flags, use internal_ip\n");
+                    LM_INFO("unknown flags, use internal_ip\n");
             ip_selected = e->node->lrkp_n_c->internal_ip;
         }
     }
     else {
-        LM_INFO("no flags set, use internal_ip\n");
+                LM_INFO("no flags set, use internal_ip\n");
         ip_selected = e->node->lrkp_n_c->internal_ip;
     }
+
+    if(behind_nat){
+        LM_INFO("lrkproxy is behind nat, use internal_ip\n");
+        ip_selected = e->node->lrkp_n_c->internal_ip;
+    }
+
 
     if (op == OP_OFFER) {
         e->dst_ipv4.s = ip_selected;
@@ -1313,7 +1521,10 @@ static int change_media_sdp(sip_msg_t *msg, struct lrkproxy_hash_entry *e, const
         len = (int) (sdp_param_end - sdp_param_start);
         if ((int) (start_sdp_o - off) == 0) {
             memset(sdp_new_o, 0, 128);
-            snprintf(sdp_new_o, 128, "o=lrkproxy %s %s IN IP4 %s\r", SUP_CPROTOVER, REQ_CPROTOVER, ip_selected);
+            time_t seconds;
+            time(&seconds);
+//            snprintf(sdp_new_o, 128, "o=lrkproxy %s %s IN IP4 %s\r", SUP_CPROTOVER, REQ_CPROTOVER, ip_selected);
+            snprintf(sdp_new_o, 128, "o=lrkproxy %ld %ld IN IP4 %s\r", seconds, seconds, ip_selected);
             strncat(newbody.s, sdp_new_o, strlen(sdp_new_o));
             off += len + 1;
             continue;
@@ -1377,37 +1588,37 @@ static int change_media_sdp(sip_msg_t *msg, struct lrkproxy_hash_entry *e, const
 
 /* This function assumes p points to a line of requested type. */
 
-	static int
+static int
 set_lrkproxy_set_f(struct sip_msg * msg, char * str1, char * str2)
 {
-	lrkp_set_link_t *lrkl;
-	pv_value_t val;
+    lrkp_set_link_t *lrkl;
+    pv_value_t val;
 
-	lrkl = (lrkp_set_link_t*)str1;
+    lrkl = (lrkp_set_link_t*)str1;
 
-	current_msg_id = 0;
-	selected_lrkp_set = 0;
+    current_msg_id = 0;
+    selected_lrkp_set = 0;
 
-	if(lrkl->rset != NULL) {
-		current_msg_id = msg->id;
-		selected_lrkp_set = lrkl->rset;
-	} else {
-		if(pv_get_spec_value(msg, lrkl->rpv, &val)<0) {
-			LM_ERR("cannot evaluate pv param\n");
-			return -1;
-		}
-		if(!(val.flags & PV_VAL_INT)) {
-			LM_ERR("pv param must hold an integer value\n");
-			return -1;
-		}
-		selected_lrkp_set = select_lrkp_set(val.ri);
-		if(selected_lrkp_set==NULL) {
-			LM_ERR("could not locate lrkproxy set %d\n", val.ri);
-			return -1;
-		}
-		current_msg_id = msg->id;
-	}
-	return 1;
+    if(lrkl->rset != NULL) {
+        current_msg_id = msg->id;
+        selected_lrkp_set = lrkl->rset;
+    } else {
+        if(pv_get_spec_value(msg, lrkl->rpv, &val)<0) {
+                    LM_ERR("cannot evaluate pv param\n");
+            return -1;
+        }
+        if(!(val.flags & PV_VAL_INT)) {
+                    LM_ERR("pv param must hold an integer value\n");
+            return -1;
+        }
+        selected_lrkp_set = select_lrkp_set(val.ri);
+        if(selected_lrkp_set==NULL) {
+                    LM_ERR("could not locate lrkproxy set %d\n", val.ri);
+            return -1;
+        }
+        current_msg_id = msg->id;
+    }
+    return 1;
 }
 
 static int
@@ -1430,8 +1641,11 @@ lrkproxy_manage(struct sip_msg *msg, char *flags, char *ip)
           || method==METHOD_BYE || method==METHOD_UPDATE))
         return -1;
 
-    if (method==METHOD_CANCEL || method==METHOD_BYE)
+
+    if (method==METHOD_CANCEL || method==METHOD_BYE) {
         return lrkproxy_unforce(msg, flags, OP_DELETE, 1);
+
+    }
 
     if (msg->msg_flags & FL_SDP_BODY)
         nosdp = 0;
@@ -1661,7 +1875,7 @@ static int lrkproxy_force(struct sip_msg *msg, const char *flags, enum lrk_opera
         entry = lrkproxy_hash_table_lookup(call_id, viabranch);
         if (!entry){
                     LM_ERR("No found entry in hash table\n");
-                    //todo...
+            //todo...
             return 0;
         }
 
@@ -1706,18 +1920,18 @@ static int lrkproxy_force(struct sip_msg *msg, const char *flags, enum lrk_opera
             change_media_sdp(msg, entry, NULL, op);
 
 
-        LM_INFO("selected node: %s\n",entry->node->ln_url.s);
-        LM_INFO("call_is: %.*s\n",entry->callid.len, entry->callid.s);
-        LM_INFO("viabranch: %.*s\n",entry->viabranch.len, entry->viabranch.s);
-        LM_INFO("src_ipv4: %.*s\n",entry->src_ipv4.len, entry->src_ipv4.s);
-        LM_INFO("src_port: %.*s\n",entry->src_port.len, entry->src_port.s);
-        LM_INFO("dst_ipv4: %.*s\n",entry->dst_ipv4.len, entry->dst_ipv4.s);
-        LM_INFO("dst_port: %.*s\n",entry->dst_port.len, entry->dst_port.s);
+                LM_INFO("selected node: %s\n",entry->node->ln_url.s);
+                LM_INFO("call_is: %.*s\n",entry->callid.len, entry->callid.s);
+                LM_INFO("viabranch: %.*s\n",entry->viabranch.len, entry->viabranch.s);
+                LM_INFO("src_ipv4: %.*s\n",entry->src_ipv4.len, entry->src_ipv4.s);
+                LM_INFO("src_port: %.*s\n",entry->src_port.len, entry->src_port.s);
+                LM_INFO("dst_ipv4: %.*s\n",entry->dst_ipv4.len, entry->dst_ipv4.s);
+                LM_INFO("dst_port: %.*s\n",entry->dst_port.len, entry->dst_port.s);
 
-        LM_INFO("dnat_ipv4: %.*s\n",entry->dnat_ipv4.len, entry->dnat_ipv4.s);
-        LM_INFO("dnat_port: %.*s\n",entry->dnat_port.len, entry->dnat_port.s);
-        LM_INFO("snat_ipv4: %.*s\n",entry->snat_ipv4.len, entry->snat_ipv4.s);
-        LM_INFO("snat_port: %.*s\n",entry->snat_port.len, entry->snat_port.s);
+                LM_INFO("dnat_ipv4: %.*s\n",entry->dnat_ipv4.len, entry->dnat_ipv4.s);
+                LM_INFO("dnat_port: %.*s\n",entry->dnat_port.len, entry->dnat_port.s);
+                LM_INFO("snat_ipv4: %.*s\n",entry->snat_ipv4.len, entry->snat_ipv4.s);
+                LM_INFO("snat_port: %.*s\n",entry->snat_port.len, entry->snat_port.s);
 
 
         lrkp_set_conntrack_rule(entry);
@@ -1727,8 +1941,9 @@ static int lrkproxy_force(struct sip_msg *msg, const char *flags, enum lrk_opera
 }
 
 static int lrkproxy_unforce(struct sip_msg *msg, const char *flags, enum lrk_operation op, int more){
-//            LM_INFO ("Here is lrkproxy_unforce\n");
+    //            LM_INFO ("Here is lrkproxy_unforce\n");
 //    struct lrkproxy_hash_entry *entry = NULL;
+    struct lrkproxy_hash_entry *entry = NULL;
     str viabranch = STR_NULL;
     str call_id;
     int via_id;
@@ -1737,7 +1952,6 @@ static int lrkproxy_unforce(struct sip_msg *msg, const char *flags, enum lrk_ope
                 LM_ERR("can't get Call-Id field\n");
         return -1;
     }
-
     /*We have to choice VIA id,
      * for SIP_REQUEST we use VIA1 and for SIP_REPLY we use VIA2 */
     via_id = more;
@@ -1747,20 +1961,45 @@ static int lrkproxy_unforce(struct sip_msg *msg, const char *flags, enum lrk_ope
         return -1;
     }
 
+    //check if entry exist try to send hangup command to Kernel.
+    entry = lrkproxy_hash_table_lookup(call_id, viabranch);
+    if (!entry) {
+                LM_INFO("lrkproxy_unforce=========>not found in\n");
+        return -1;
+    }else
+                LM_INFO("lrkproxy_unforce=========>found in\n");
+
+
+    //=========================================================================MESPIO NEW
+            LM_INFO("selected node: %s\n",entry->node->ln_url.s);
+            LM_INFO("call_is: %.*s\n",entry->callid.len, entry->callid.s);
+            LM_INFO("viabranch: %.*s\n",entry->viabranch.len, entry->viabranch.s);
+            LM_INFO("src_ipv4: %.*s\n",entry->src_ipv4.len, entry->src_ipv4.s);
+            LM_INFO("src_port: %.*s\n",entry->src_port.len, entry->src_port.s);
+            LM_INFO("dst_ipv4: %.*s\n",entry->dst_ipv4.len, entry->dst_ipv4.s);
+            LM_INFO("dst_port: %.*s\n",entry->dst_port.len, entry->dst_port.s);
+
+            LM_INFO("dnat_ipv4: %.*s\n",entry->dnat_ipv4.len, entry->dnat_ipv4.s);
+            LM_INFO("dnat_port: %.*s\n",entry->dnat_port.len, entry->dnat_port.s);
+            LM_INFO("snat_ipv4: %.*s\n",entry->snat_ipv4.len, entry->snat_ipv4.s);
+            LM_INFO("snat_port: %.*s\n",entry->snat_port.len, entry->snat_port.s);
+    //=========================================================================MESPIO NEW
+    lrkp_remove_conntrack_rule(entry);
     if (op == OP_DELETE) {
         /* Delete the key<->value from the hashtable */
         if (!lrkproxy_hash_table_remove(call_id, viabranch, op)) {
-                    LM_ERR("lrkproxy hash table failed to remove entry for callen=%d callid=%.*s viabranch=%.*s\n",
+                    LM_INFO("lrkproxy hash table failed to remove entry for callen=%d callid=%.*s viabranch=%.*s\n",
                            call_id.len, call_id.len, call_id.s,
                            viabranch.len, viabranch.s);
         } else {
-                    LM_DBG("lrkproxy hash table remove entry for callen=%d callid=%.*s viabranch=%.*s\n",
+                    LM_INFO("lrkproxy hash table remove entry for callen=%d callid=%.*s viabranch=%.*s\n",
                            call_id.len, call_id.len, call_id.s,
                            viabranch.len, viabranch.s);
         }
     }
-    LM_INFO("lrkproxy hash table remove entry for callen=%d callid=%.*s viabranch=%.*s successfully\n",
-            call_id.len, call_id.len, call_id.s,
-            viabranch.len, viabranch.s);
+            LM_INFO("lrkproxy hash table remove entry for callen=%d callid=%.*s viabranch=%.*s successfully\n",
+                    call_id.len, call_id.len, call_id.s,
+                    viabranch.len, viabranch.s);
+
     return 1;
 }
