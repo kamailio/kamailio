@@ -52,7 +52,7 @@ id(int,auto) table_name(string) table_version(int)
 0:secfilter:1
 0:silo:8
 0:sip_trace:4
-0:speed_dial:2
+0:speed_dial:3
 0:subscriber:7
 0:topos_d:2
 0:topos_t:2

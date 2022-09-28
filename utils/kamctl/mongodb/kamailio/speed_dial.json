@@ -1,6 +1,6 @@
 {
   "name": "speed_dial",
-  "version": 2,
+  "version": 3,
   "columns": [
     "id": {
       "type": "int",
@@ -43,6 +43,11 @@
       "null": false
     },
     "description": {
+      "type": "string",
+      "default": "",
+      "null": false
+    },
+    "group_id": {
       "type": "string",
       "default": "",
       "null": false

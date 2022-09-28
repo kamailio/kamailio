@@ -13,6 +13,7 @@
 				<col><field>fname</field></col>
 				<col><field>lname</field></col>
 				<col><field>description</field></col>
+				<col><field>group_id</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>add</cmd_name>
@@ -27,6 +28,7 @@
 				<col><field>fname</field></col>
 				<col><field>lname</field></col>
 				<col><field>description</field></col>
+				<col><field>group_id</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>update</cmd_name>
@@ -44,6 +46,7 @@
 				<col><field>fname</field></col>
 				<col><field>lname</field></col>
 				<col><field>description</field></col>
+				<col><field>group_id</field></col>
 			</query_cols>
 		</cmd>
 		<cmd><cmd_name>delete</cmd_name>

@@ -52,7 +52,7 @@ db.getCollection("version").insert({ table_name: "sca_subscriptions", table_vers
 db.getCollection("version").insert({ table_name: "secfilter", table_version: NumberInt(1) });
 db.getCollection("version").insert({ table_name: "silo", table_version: NumberInt(8) });
 db.getCollection("version").insert({ table_name: "sip_trace", table_version: NumberInt(4) });
-db.getCollection("version").insert({ table_name: "speed_dial", table_version: NumberInt(2) });
+db.getCollection("version").insert({ table_name: "speed_dial", table_version: NumberInt(3) });
 db.getCollection("version").insert({ table_name: "subscriber", table_version: NumberInt(7) });
 db.getCollection("version").insert({ table_name: "topos_d", table_version: NumberInt(2) });
 db.getCollection("version").insert({ table_name: "topos_t", table_version: NumberInt(2) });

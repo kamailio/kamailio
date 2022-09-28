@@ -11,4 +11,5 @@
 		<column><field>fname</field><type>DB1_STR</type></column>
 		<column><field>lname</field><type>DB1_STR</type></column>
 		<column><field>description</field><type>DB1_STR</type></column>
+		<column><field>group_id</field><type>DB1_STR</type></column>
 	</db_table>

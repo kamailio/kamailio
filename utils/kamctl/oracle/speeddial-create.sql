@@ -8,6 +8,7 @@ CREATE TABLE speed_dial (
     fname VARCHAR2(64) DEFAULT '',
     lname VARCHAR2(64) DEFAULT '',
     description VARCHAR2(64) DEFAULT '',
+    group_id VARCHAR2(128) DEFAULT '',
     CONSTRAINT speed_dial_speed_dial_idx  UNIQUE (username, domain, sd_domain, sd_username)
 );
 
