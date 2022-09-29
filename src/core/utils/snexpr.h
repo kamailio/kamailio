@@ -508,7 +508,6 @@ static void snexpr_result_free(struct snexpr *e)
 					rv1 = tv; \
 					snexpr_eval_check_val(rv1, SNE_OP_CONSTSTZ); \
 				} \
-				lv = snexpr_concat_strz(rv0->param.stz.sval, rv1->param.stz.sval); \
 				if(strcmp(rv0->param.stz.sval, rv1->param.stz.sval) _CMPOP_ 0) { \
 					lv = snexpr_convert_num(1, SNE_OP_CONSTNUM); \
 				} else { \
