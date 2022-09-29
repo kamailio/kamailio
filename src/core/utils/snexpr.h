@@ -387,6 +387,26 @@ static int to_int(float x)
 }
 
 
+static int snexpr_format_num(char **out, float value)
+{
+	int ret = 0;
+	*out = (char*)malloc(24*sizeof(char));
+	if(*out==NULL) {
+		return -1;
+	}
+	if(value - (long)value != 0) {
+		ret = snprintf(*out, 24, "%.4g", value);
+	} else {
+		ret = snprintf(*out, 24, "%lld", (long long)value);
+	}
+	if((ret < 0) || (ret >= 24)) {
+		free(*out);
+		*out = NULL;
+		return -2;
+	}
+	return 0;
+}
+
 static struct snexpr *snexpr_convert_num(float value, unsigned int ctype)
 {
 	struct snexpr *e = (struct snexpr *)malloc(sizeof(struct snexpr));
@@ -398,7 +418,7 @@ static struct snexpr *snexpr_convert_num(float value, unsigned int ctype)
 	if(ctype == SNE_OP_CONSTSTZ) {
 		e->eflags |= SNEXPR_EXPALLOC | SNEXPR_VALALLOC;
 		e->type = SNE_OP_CONSTSTZ;
-		asprintf(&e->param.stz.sval, "%g", value);
+		snexpr_format_num(&e->param.stz.sval, value);
 		return e;
 	}
 
