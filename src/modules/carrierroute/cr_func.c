@@ -723,6 +723,48 @@ unlock_and_out:
 
 
 /**
+ *
+ */
+int ki_cr_load_user_carrier_helper(struct sip_msg *_msg,
+		str *user, str *domain, pv_spec_t *dvar) {
+	pv_value_t val = {0};
+
+	/* get carrier id */
+	if ((val.ri = load_user_carrier(user, domain)) < 0) {
+		LM_ERR("error in load user carrier");
+		return -1;
+	} else {
+		/* set var */
+		val.flags = PV_VAL_INT|PV_TYPE_INT;
+		if(dvar->setf(_msg, &dvar->pvp, (int)EQ_T, &val)<0) {
+			LM_ERR("failed setting dst var\n");
+			return -1;
+		}
+	}
+	return 1;
+}
+
+/**
+ *
+ */
+int ki_cr_load_user_carrier(struct sip_msg *_msg,
+		str *user, str *domain, str *dstvar) {
+	pv_spec_t *dst;
+
+	dst = pv_cache_get(dstvar);
+	if(dst==NULL) {
+		LM_ERR("failed to get pv spec for: %.*s\n", dstvar->len, dstvar->s);
+		return -1;
+	}
+	if(dst->setf==NULL) {
+		LM_ERR("target pv is not writable: %.*s\n", dstvar->len, dstvar->s);
+		return -1;
+	}
+
+	return ki_cr_load_user_carrier_helper(_msg, user, domain, dst);
+}
+
+/**
  * Loads user carrier from subscriber table and stores it in an AVP.
  *
  * @param _msg the current SIP message
@@ -735,8 +777,6 @@ unlock_and_out:
 int cr_load_user_carrier(struct sip_msg * _msg,
 		char *_user, char *_domain, char *_dstvar) {
 	str user, domain;
-	pv_spec_t *dst;
-	pv_value_t val = {0};
 
 	if (fixup_get_svalue(_msg, (gparam_t*)_user, &user)<0) {
 		LM_ERR("cannot print the user\n");
@@ -747,22 +787,10 @@ int cr_load_user_carrier(struct sip_msg * _msg,
 		LM_ERR("cannot print the domain\n");
 		return -1;
 	}
-	/* get carrier id */
-	if ((val.ri = load_user_carrier(&user, &domain)) < 0) {
-		LM_ERR("error in load user carrier");
-		return -1;
-	} else {
-		/* set var */
-		dst = (pv_spec_t *)_dstvar;
-		val.flags = PV_VAL_INT|PV_TYPE_INT;
-		if(dst->setf(_msg, &dst->pvp, (int)EQ_T, &val)<0) {
-			LM_ERR("failed setting dst var\n");
-			return -1;
-		}
-	}
-	return 1;
-}
 
+	return ki_cr_load_user_carrier_helper(_msg, &user, &domain,
+			(pv_spec_t*)_dstvar);
+}
 
 /**
  * rewrites the request URI of msg after determining the

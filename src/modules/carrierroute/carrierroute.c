@@ -39,6 +39,7 @@
 #include "../../core/str.h"
 #include "../../core/mem/mem.h"
 #include "../../core/ut.h" /* for user2uid() */
+#include "../../core/kemi.h"
 #include "carrierroute.h"
 #include "cr_fixup.h"
 #include "cr_map.h"
@@ -269,4 +270,29 @@ static void mod_destroy(void) {
 		carrierroute_db_close();
 	}
 	destroy_route_data();
+}
+
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_carrierroute_exports[] = {
+	{ str_init("carrierroute"), str_init("cr_user_carrier"),
+		SR_KEMIP_INT, ki_cr_load_user_carrier,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_carrierroute_exports);
+	return 0;
 }
