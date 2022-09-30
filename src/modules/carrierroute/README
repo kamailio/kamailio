@@ -41,7 +41,7 @@ Lucian Balaceanu
 
         4. Functions
 
-              4.1. cr_user_carrier(user, domain, dstavp)
+              4.1. cr_user_carrier(user, domain, dstvar)
               4.2. cr_route(carrier, domain, prefix_matching,
                       rewrite_user, hash_source, descavp)
 
@@ -185,7 +185,7 @@ Chapter 1. Admin Guide
 
    4. Functions
 
-        4.1. cr_user_carrier(user, domain, dstavp)
+        4.1. cr_user_carrier(user, domain, dstvar)
         4.2. cr_route(carrier, domain, prefix_matching, rewrite_user,
                 hash_source, descavp)
 
@@ -473,7 +473,7 @@ modparam("carrierroute", "avoid_failed_destinations", 0)
 
 4. Functions
 
-   4.1. cr_user_carrier(user, domain, dstavp)
+   4.1. cr_user_carrier(user, domain, dstvar)
    4.2. cr_route(carrier, domain, prefix_matching, rewrite_user,
           hash_source, descavp)
 
@@ -501,22 +501,23 @@ cr_user_rewrite_uri(uri, domain)
 cr_tree_rewrite_uri(tree, domain)
 -> cr_route(tree, domain, "$rU", "$rU", "call_id")
 
-4.1.  cr_user_carrier(user, domain, dstavp)
+4.1.  cr_user_carrier(user, domain, dstvar)
 
-   This function loads the carrier and stores it in an AVP. It cannot be
-   used in the config file mode, as it needs a mapping of the given user
-   to a certain carrier. The is derived from a database entry belonging to
-   the user parameter. This mapping must be available in the table that is
-   specified in the “subscriber_table” variable. This data is not cached
-   in memory, that means for every execution of this function a database
-   query will be done.
+   This function loads the carrier and stores it in a config variable. It
+   cannot be used in the config file mode, as it needs a mapping of the
+   given user to a certain carrier. The is derived from a database entry
+   belonging to the user parameter. This mapping must be available in the
+   table that is specified in the “subscriber_table” variable. This data
+   is not cached in memory, that means for every execution of this
+   function a database query will be done.
 
    Meaning of the parameters is as follows:
      * user - Name of the user for the carrier tree lookup. Additional to
        a string any pseudo-variable could be used as input.
      * domain - Name of the routing domain to be used. Additional to a
        string any pseudo-variable could be used as input.
-     * dstavp - Name of the AVP where to store the carrier id.
+     * dstvar - Name of the writaable variable (e.g., an AVP) where to
+       store the carrier id.
 
 4.2.  cr_route(carrier, domain, prefix_matching, rewrite_user, hash_source,
 descavp)
