@@ -395,7 +395,11 @@ static int snexpr_format_num(char **out, float value)
 		return -1;
 	}
 	if(value - (long)value != 0) {
+#ifdef SNEXPR_FLOAT_FULLPREC
+		ret = snprintf(*out, 24, "%g", value);
+#else
 		ret = snprintf(*out, 24, "%.4g", value);
+#endif
 	} else {
 		ret = snprintf(*out, 24, "%lld", (long long)value);
 	}
