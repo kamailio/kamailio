@@ -412,10 +412,10 @@ cr_tree_rewrite_uri(tree, domain)
 		
 	<section>
 	    <title>
-		<function moreinfo="none">cr_user_carrier(user, domain, dstavp)</function>
+		<function moreinfo="none">cr_user_carrier(user, domain, dstvar)</function>
 	    </title>
 	    <para>
-      This function loads the carrier and stores it in an AVP.
+      This function loads the carrier and stores it in a config variable.
       It cannot be used in the config file mode, as it needs a mapping of the
 	  given user to a certain carrier. The is derived from a database entry
 	  belonging to the user parameter. This mapping must be available in the
@@ -438,7 +438,8 @@ cr_tree_rewrite_uri(tree, domain)
 		      </para>
         </listitem>
 	      <listitem>
-          <para><emphasis>dstavp</emphasis> - Name of the AVP where to store the carrier id.
+			<para><emphasis>dstvar</emphasis> - Name of the writaable variable (e.g., an AVP)
+			  where to store the carrier id.
 		      </para>
         </listitem>
 	    </itemizedlist>
