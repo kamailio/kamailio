@@ -45,8 +45,8 @@
  *
  * @return 1 on success, -1 on failure
  */
-int cr_load_user_carrier(struct sip_msg * _msg, gparam_t *_user,
-		gparam_t *_domain, gparam_t *_dstavp);
+int cr_load_user_carrier(struct sip_msg * _msg, char *_user,
+		char *_domain, char *_dstavp);
 
 
 /**

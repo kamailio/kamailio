@@ -53,6 +53,7 @@ int cr_route_fixup(void ** param, int param_no);
  */
 int cr_load_user_carrier_fixup(void ** param, int param_no);
 
+int cr_load_user_carrier_fixup_free(void ** param, int param_no);
 
 /**
  * Fixes the module functions' parameters, i.e. it maps

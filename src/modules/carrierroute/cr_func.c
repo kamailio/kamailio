@@ -41,6 +41,7 @@
 #include "../../core/qvalue.h"
 #include "../../core/dset.h"
 #include "../../core/rand/kam_rand.h"
+#include "../../core/lvalue.h"
 #include "cr_map.h"
 #include "cr_rule.h"
 #include "cr_domain.h"
@@ -731,28 +732,31 @@ unlock_and_out:
  *
  * @return 1 on success, -1 on failure
  */
-int cr_load_user_carrier(struct sip_msg * _msg, gparam_t *_user, gparam_t *_domain, gparam_t *_dstavp) {
+int cr_load_user_carrier(struct sip_msg * _msg,
+		char *_user, char *_domain, char *_dstvar) {
 	str user, domain;
-	int_str avp_val;
-	
-	if (fixup_get_svalue(_msg, _user, &user)<0) {
+	pv_spec_t *dst;
+	pv_value_t val = {0};
+
+	if (fixup_get_svalue(_msg, (gparam_t*)_user, &user)<0) {
 		LM_ERR("cannot print the user\n");
 		return -1;
 	}
 
-	if (fixup_get_svalue(_msg, _domain, &domain)<0) {
+	if (fixup_get_svalue(_msg, (gparam_t*)_domain, &domain)<0) {
 		LM_ERR("cannot print the domain\n");
 		return -1;
 	}
 	/* get carrier id */
-	if ((avp_val.n = load_user_carrier(&user, &domain)) < 0) {
+	if ((val.ri = load_user_carrier(&user, &domain)) < 0) {
 		LM_ERR("error in load user carrier");
 		return -1;
 	} else {
-		/* set avp */
-		if (add_avp(_dstavp->v.pve->spec->pvp.pvn.u.isname.type,
-					_dstavp->v.pve->spec->pvp.pvn.u.isname.name, avp_val)<0) {
-			LM_ERR("add AVP failed\n");
+		/* set var */
+		dst = (pv_spec_t *)_dstvar;
+		val.flags = PV_VAL_INT|PV_TYPE_INT;
+		if(dst->setf(_msg, &dst->pvp, (int)EQ_T, &val)<0) {
+			LM_ERR("failed setting dst var\n");
 			return -1;
 		}
 	}
