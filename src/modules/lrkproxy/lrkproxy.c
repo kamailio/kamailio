@@ -1290,7 +1290,7 @@ static struct lrkp_set * select_lrkp_set(int id_set ){
 
 struct lrkp_node *select_lrkp_node(int do_test)
 {
-    struct lrkp_node* node;
+    struct lrkp_node* node = NULL;
     int was_forced;
     int was_forced2;
 
@@ -1391,7 +1391,7 @@ struct lrkp_node *select_lrkp_node(int do_test)
     }
 
     found:
-    if (do_test) {
+    if (do_test && node) {
 //    //todo...
         node->ln_enable = lrkp_test(node);
         if (!node->ln_enable)
