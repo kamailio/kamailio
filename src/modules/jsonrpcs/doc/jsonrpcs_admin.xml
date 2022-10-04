@@ -582,7 +582,7 @@ xlog("jsonrpc response code: $jsonrpl(code) - the body is: $jsonrpl(body)\n");
 			the parameter 'fifo_name' is set to '/tmp/kamailio_jsonrpc_fifo'.
 		</para>
 		<example>
-		<title>JSONRPC Over Fifo Command From Termina</title>
+		<title>JSONRPC Over Fifo Command From Terminal</title>
 		<programlisting format="linespecific">
 ...
 mkfifo /tmp/kamailio_jsonrpc_reply_fifo
