@@ -71,7 +71,7 @@ Daniel-Constantin Mierla
    1.15. jsonrpc_exec usage
    1.16. JSONRPC Commands - Examples
    1.17. JSONRPC Over Fifo Command
-   1.18. JSONRPC Over Fifo Command From Termina
+   1.18. JSONRPC Over Fifo Command From Terminal
 
 Chapter 1. Admin Guide
 
@@ -494,7 +494,7 @@ xlog("jsonrpc response code: $jsonrpl(code) - the body is: $jsonrpl(body)\n");
    Next is an example of how to test it from a terminal, assuming that the
    parameter 'fifo_name' is set to '/tmp/kamailio_jsonrpc_fifo'.
 
-   Example 1.18. JSONRPC Over Fifo Command From Termina
+   Example 1.18. JSONRPC Over Fifo Command From Terminal
 ...
 mkfifo /tmp/kamailio_jsonrpc_reply_fifo
 cat /tmp/kamailio_jsonrpc_reply_fifo &
