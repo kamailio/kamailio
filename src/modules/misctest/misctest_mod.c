@@ -265,13 +265,13 @@ error:
 
 static int misctest_message_init(void)
 {
-	char tbuf[BUF_SIZE];
+	char tbuf[4*BUF_SIZE];
 	FILE *f;
 	long fsize;
 	sip_msg_t tmsg = { };
 
 	if(misctest_message_data.s!=0 && misctest_message_data.len>0) {
-		if(misctest_message_data.len>=BUF_SIZE-2) {
+		if(misctest_message_data.len>=4*BUF_SIZE-2) {
 			LM_ERR("the data is too big\n");
 			return -1;
 		}
@@ -297,7 +297,7 @@ static int misctest_message_init(void)
 		}
 		fseek(f, 0, SEEK_SET);
 
-		if(fsize>=BUF_SIZE-2) {
+		if(fsize>=4*BUF_SIZE-2) {
 			LM_ERR("the file data is too big\n");
 			fclose(f);
 			return -1;
