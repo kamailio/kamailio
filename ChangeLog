@@ -2,6 +2,22 @@
 
 ===================== Changes Since Version 5.6.1 ===========================
 
+commit d02c9e3a118789d24623a9d77e09c547e9cd8f79 (HEAD -> 5.6, origin/5.6)
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 6 11:24:51 2022 +0200
+
+    ims_qos: use inter-module api release_dlg() instead of direct unref_dlg()
+
+    - fix missing linker symbol
+
+    (cherry picked from commit 8d398d6a83153fc65acd49557b702879d2585dc8)
+
+commit 2556b6e2bb14dd18a17495c10e74915b91b80e3a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 6 10:39:51 2022 +0200
+
+    ChangeLog: content updated for v5.6.2
+
 commit fb212678708dc1ddfcf9680826986834ce703cff
 Author: Daniel-Constantin Mierla <miconda@gmail.com>
 Date:   Thu Oct 6 10:37:06 2022 +0200
