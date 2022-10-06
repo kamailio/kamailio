@@ -53,7 +53,6 @@
 #include "../cdp_avp/cdp_avp_mod.h"
 
 #include "../../modules/ims_dialog/dlg_load.h"
-#include "../../modules/ims_dialog/dlg_hash.h"
 #include "../../modules/tm/tm_load.h"
 #include "../ims_usrloc_pcscf/usrloc.h"
 #include "rx_authdata.h"
@@ -182,7 +181,7 @@ void async_aar_callback(int is_timeout, void *param, AAAMessage *aaa, long elaps
             LM_DBG("passed rx session id [%.*s]", passed_rx_session_id->len, passed_rx_session_id->s);
             dlgb.register_dlgcb_nodlg( data->dlg, DLGCB_TERMINATED | DLGCB_DESTROY | DLGCB_EXPIRED | DLGCB_RESPONSE_WITHIN | DLGCB_CONFIRMED | DLGCB_FAILED, callback_dialog, (void*) (passed_rx_session_id), free_dialog_data);
         } else {
-            unref_dlg(data->dlg, 1);
+            dlgb.release_dlg(data->dlg);
         }
         result = CSCF_RETURN_TRUE;
     } else {
