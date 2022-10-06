@@ -1,3 +1,784 @@
+===================== 2022-10-06 Version 5.6.2 Released =====================
+
+===================== Changes Since Version 5.6.1 ===========================
+
+commit fb212678708dc1ddfcf9680826986834ce703cff
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 6 10:37:06 2022 +0200
+
+    Makefile.defs: version set to 5.6.2
+
+commit 461e1a3acdf924e2fa665ae28f55081433d8aeab
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 6 10:36:26 2022 +0200
+
+    pkg: deb specs updated for v5.6.2
+
+commit 0a0980da9abf348ab855b8e8b85e534501791760
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 6 10:34:46 2022 +0200
+
+    pkg: version set to 5.6.2 for rpms and alpine specs
+
+commit 13229397a2b72ea7f790291ee9e9c03d17fa6680
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Oct 5 10:41:38 2022 +0200
+
+    misctest: allow testing with larger message size than core accepts
+    
+    (cherry picked from commit 598969df126af4ad4d2283e37078e1afe8773a32)
+
+commit 151801a91cb25e523466a9624cd4f2dd41f7bece
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Oct 5 10:37:01 2022 +0200
+
+    misc/fuzz/README.md: added link to OSS-Fuzz folder for Kamailio
+    
+    (cherry picked from commit 916ecb43e94fcc4662ae4212172b2b66488002de)
+
+commit c07b6c55e4cdcc4cf46dafa4431e79a024ca10ec
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Oct 5 10:34:43 2022 +0200
+
+    misc/fuzz: add checks on input size
+    
+    - test with larger messages than core accepts
+    
+    (cherry picked from commit 1cd2fc1977bfa5e362cef0199e4643085c66d3d1)
+
+commit 19aab1894ba88bc7152e00a84819d991937665a6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Sep 30 10:52:25 2022 +0200
+
+    corex: added fixup free functions in module exports
+    
+    (cherry picked from commit d5ae9019dcdfe5b51ce87f6957902abbaa7fa071)
+
+commit bfc5c2aacb272e91da80096ef27fbe6fcfe9a746
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Sep 27 12:11:11 2022 +0200
+
+    pua_dialoginfo: use dlg api function get_dlg_varref()
+    
+    - manual update to the new dlg api function replacing the old
+      get_dlg_var()
+
+commit a138996a58a0e1f8202b61888019ab98adef782c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Sep 26 15:58:15 2022 +0200
+
+    uac: use get_dlg_varstatus() to check if var exists
+    
+    (cherry picked from commit 86a357c278c45a8d7b580e79ac074115871065fb)
+
+commit d5003c0905d112cb7f0d852301681c2d792e4bcc
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Sep 26 15:30:51 2022 +0200
+
+    dialog: export new itermodule api functions
+    
+    - get duplicate var value and status
+    
+    (cherry picked from commit 320af48dffaa3c9b2c266ad9f68233e3cf48f9f0)
+
+commit c77fe2578428acdf08144f9e9bc7e437bd6d733d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Sep 26 12:51:50 2022 +0200
+
+    dialog: updated ki_dlg_var_is_null() to use safer api function
+    
+    (cherry picked from commit abdb02d3d2eec9fb45646f68996da3526c92ef58)
+
+commit bd87a18abefb818fd033be14db35642fc61a4fb1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Sep 26 12:30:06 2022 +0200
+
+    dialog: api function to get the status if dlg var is set or not
+    
+    (cherry picked from commit c2c3211cd31405188891abd16ef770c26a8ddd44)
+
+commit ed86cd4030aa479545c23b31e16c376ef8e44c2c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Sep 26 12:04:29 2022 +0200
+
+    dialog: updated comments for api functions to get dlg var value
+    
+    (cherry picked from commit 8548aaa8a798b939e041821848b2f05b963451d8)
+
+commit c4bebdca67335b0a23588039665bc9c425dc5fd9
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Sep 26 11:57:02 2022 +0200
+
+    dialog: api function get pkg-allocated duplicate of dlg var value
+    
+    (cherry picked from commit 13512f48e03a2ef99847edf639582aaf3b4dfeb3)
+
+commit 02ef4a197372615355875c1ef0a3494c6784e278
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Sep 26 11:46:59 2022 +0200
+
+    dialog: update check on dialog var key length
+    
+    (cherry picked from commit a7571233bc7dee0381e8ed7e44408f63fa45c156)
+
+commit 458ba44f3805fbca4656071b43e820cb22c5de26
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Sep 23 13:59:36 2022 +0200
+
+    uac: use dlg api functions get_dlg_varval() and get_dlg_varref()
+    
+    (cherry picked from commit cd4e2259526bc4642259201ee96b00624f300437)
+
+commit c1196024c8373d8112e7b088f202446e17c1ac12
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Sep 23 13:42:18 2022 +0200
+
+    acc: use get_dlg_varval() to get values for dialog variables
+    
+    (cherry picked from commit fb7c497893f05587bda1c37e09d73a7ebb522715)
+
+commit 547f8f0dc27a1365ab822dd2f9f2d32df6c354cb
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Sep 23 13:33:03 2022 +0200
+
+    dialog: init output dlg var value param eariler
+    
+    (cherry picked from commit ce3cd42631ac06a6a20892bd308901c6acd58f7a)
+
+commit ddd4bc1b1481c1ea7c8d5339efd9969a39da0f04
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Sep 23 13:17:02 2022 +0200
+
+    dialog: internal api functions to get dlg variable reference or value
+    
+    (cherry picked from commit a7cecdcbc3c1d53fce22a33a3768da2a1907d64e)
+
+commit 408b15d756cfaba592c3540b1199229e926eb37e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Sep 22 20:41:32 2022 +0200
+
+    acc_json: code formatting updates
+    
+    (cherry picked from commit bcb3970d7a89ab27b43f86aee5b93a473a8b790b)
+
+commit d3dd1ea6dfbba83148d005234a0dbe93bcd2c04b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Sep 22 20:32:52 2022 +0200
+
+    acc_json: use the variable for the time key
+    
+    (cherry picked from commit 3e2b5d9ed6a0f18199359444c5ae33a1d6b94eb2)
+
+commit feeacb2338c874b7f653537901128486448bc7a9
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Sep 22 20:30:52 2022 +0200
+
+    acc_json: moved global vars declaration to .c file
+    
+    - made them static
+    
+    (cherry picked from commit 023af516f4ede3742f2e1836474978b596a4a3a8)
+
+commit b2ef87bcd84d4d4f7b0f6bf14d5e6479c9cb7727
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Wed Sep 21 18:34:04 2022 +0000
+
+    kex: add additional safety checks for printing, based on PR #3250 from bensly-shanmugam
+    
+    (cherry picked from commit e241f7b8a07b24fba6d6ecf2c344a39d2b2b5859)
+
+commit ad68b6737b478c1cbdd5ca838078e42403670897
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Sep 19 08:40:19 2022 +0200
+
+    acc_json: update to free cdr core attrs
+    
+    (cherry picked from commit f7b35f05f31bd7cc01aea4572c79ba48d84d8123)
+
+commit d223f608282f04844bc492c6ced9a3fe59dfdc94
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Sep 19 08:15:53 2022 +0200
+
+    acc: clone dlg core attributes
+    
+    - GH #3243
+    
+    (cherry picked from commit d616dc46b5373b1474bf855afde4c5687d2a2d09)
+
+commit e336519e133419d61967b1cb931fb046f92e9661
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Sep 18 21:33:25 2022 +0200
+
+    acc: more meaningful array index names for building cdr attributes
+    
+    (cherry picked from commit c5f71a45c7c55af0cf4a6aa482d8a57018af7900)
+
+commit 7d3bf6dc12db22d26f119c3479de05b463ff64d4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sun Sep 18 20:09:53 2022 +0200
+
+    dmq_usrloc: safety checks for sock field
+    
+    - GH #3243
+    
+    (cherry picked from commit 518296523db0c1735c3234d77d6af312f5c9babb)
+
+commit aa645fbebf35183e1c30662f9ed7f484d1f73e0e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Sep 16 15:00:13 2022 +0200
+
+    websocket: debug message for rpc command when finding no tcp connection
+    
+    (cherry picked from commit 4434e83db1d4b668dabbe915fe36719ede165915)
+
+commit 3033b7681b4240fd64c9f1ff446b529a83921097
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Sep 16 14:51:31 2022 +0200
+
+    websocket: clean up ws structures without an active tcp connection
+    
+    - GH #3236
+    
+    (cherry picked from commit abe60832de46796a1395a75a67753c1a12a1ec0a)
+
+commit 88e98ed7810d198703c006a8dec75080e60d8723
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Sep 15 09:28:54 2022 +0200
+
+    dialplan: prefixed some global variables to avoid naming conflicts
+    
+    (cherry picked from commit e43083e32df03b629f0eab9d567bd41d6cb749ff)
+
+commit 86a73afc57b6aedb08662175604d3405a207f4ab
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Sep 15 09:23:26 2022 +0200
+
+    dialplan: removed unnecessary define
+    
+    (cherry picked from commit 220750f79737b13b6aad0c38d6dd8ea3e28d5ca5)
+
+commit 2ee8fad13416c5c447effe9263b3cefb6c916d4a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Sep 15 08:30:26 2022 +0200
+
+    dialplan: rename exports to kemi
+    
+    - function names have to be unique
+    
+    (cherry picked from commit f89bab70ef9cc842f37799c7c414f40d8ac581ab)
+
+commit ca84452027e8b66957b14420df94b9d4e462bc41
+Author: Bastian Triller <bastian.triller@gmail.com>
+Date:   Wed Sep 14 19:30:22 2022 +0200
+
+    dialplan: Fix typos
+    
+    Fix typos in kemi exports
+    
+    (cherry picked from commit 2e8bfcef4f3f90214df0c1fe4d40d359265f060a)
+
+commit cd167423e063dd5e1b1b33aca07c9a2305d63961
+Author: Stefan Mititelu <stefan-cristian.mititelu@1and1.ro>
+Date:   Wed Sep 14 13:19:05 2022 +0300
+
+    dialplan: export dp_translate to kemi
+    
+    (cherry picked from commit 2f67daa9ce945cb57b8429101569203d4b891d1c)
+
+commit f30bed90a892d3ec367d5244d089e75d89c48944
+Author: Stefan Mititelu <stefan-cristian.mititelu@1and1.ro>
+Date:   Tue Sep 13 11:41:04 2022 +0300
+
+    siputils: export is_gruu() to kemi
+    
+    (cherry picked from commit a33b41ba804bc944b0e1c4ecf17fdc3ca68d4da0)
+
+commit f8b08d32713063403819600559477c7c21c32708
+Author: Stefan Mititelu <stefan-cristian.mititelu@1and1.ro>
+Date:   Tue Sep 13 11:24:47 2022 +0300
+
+    ratelimit: export functions to kemi
+    
+    (cherry picked from commit 678d93a742ba294bbe571c975814e01fdd795371)
+
+commit 47131b03e882576f80ae7cd80804e39e5b876696
+Author: Matthias Urlichs <matthias@urlichs.de>
+Date:   Fri Sep 2 12:29:32 2022 +0200
+
+    modules/python3: return NULL on error.
+    
+    - PyErr_SetString is a void function. It doesn't return NULL.
+    
+    (cherry picked from commit b7911b63d7a27a4f29acc4bca3101f7857930084)
+
+commit 8404ba8c869f5d1e44bdf0111d97f249f68d90b5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Sep 26 20:37:31 2022 +0200
+
+    pv: use the function for header name parsing that does not require the colon termination
+    
+    (cherry picked from commit 1fbdc35c3d29da048cb06bfe0268c503c5015c3c)
+
+commit a290ab58f81d540d3613bcd536d7e411b29e2e9c
+Author: Atanas Bakalov <atanas.bakalov@gmail.com>
+Date:   Mon May 30 10:46:38 2022 +0200
+
+    rx_aar: unreference dialog in case of aar update (#3104)
+    
+    - release the dialog reference even for aar updates as the dialog was
+      already referenced when issuing the aar request
+    
+    Co-authored-by: Atanas Bakalov <atanas@wgtwo.com>
+    (cherry picked from commit ab8cb43c83f8c9528e45a5b57fbb1440360f201e)
+
+commit a4472c083cc0b79fb449412425169aa3f3d2c875
+Author: Julien Chavanton <jchavanton@subspace.com>
+Date:   Tue Sep 6 10:45:12 2022 -0400
+
+    dispatcher: fix alog13 gateway selections
+    
+    (cherry picked from commit d56d65b8daac072a4726d9124072151d0d3fbb79)
+
+commit ebda78c92c21770af1a32afc2930740b80d73fd3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Sat Sep 17 10:18:39 2022 +0200
+
+    sipdump: use the right flag to parse ipv6
+    
+    (cherry picked from commit 9a15781f4804ef6620fad5a09ff2e9aacae871cb)
+
+commit d0300a9c69c522b7a6e3f69f21160df30f05f2ff
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Sep 16 14:31:44 2022 +0200
+
+    sipdump: make dest ipv6 addresses without square brackets
+    
+    (cherry picked from commit 0a61ec2f137414a7bfc2535dfe4df9b72e500cf8)
+
+commit 7cfa1feddeeb205ebd3628580881397e9215d786
+Author: Gustavo Almeida <gustavo.abcdef@hotmail.com>
+Date:   Fri Sep 16 21:06:53 2022 +0100
+
+    pkg/kamailio/obs: added readline-devel build dependency (#3233)
+    
+    - Added a readline-devel dependency when generating rpm's. This ensures that when generating rpm's (mock context), kamcmd uses this library in its compilation and autocomplete is available in kamcmd's interactive mode.
+    
+    (cherry picked from commit e49e5a52ded4bef36b5958a748b9556af52d2d33)
+
+commit d3bdffa4f032c250a7834aeb79e5f8629acad777
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Sep 16 13:54:56 2022 +0200
+
+    sipdump: make ipv6 addresses without square brackets
+    
+    (cherry picked from commit ac711cffea91c44f4e13b5d75d6ae01ee4599099)
+
+commit 961b62fc1ced8e7015052c97bf288a560d50e7f7
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Thu Sep 15 10:46:34 2022 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 80699e44d2e7849c25e10d125dfce3ea14bc45f8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Sep 15 10:34:45 2022 +0200
+
+    dmq: docs - reorganized the dmq request section
+    
+    (cherry picked from commit e683ee506d702e9edbe4ce74304170ca04c1d5ec)
+
+commit 31b538926d89783cf0ef86bfbc588ee39342b433
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Thu Sep 15 10:31:54 2022 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 2b1a5ffb75566fb9411b23be23b263986b3eafaa
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Sep 15 10:26:38 2022 +0200
+
+    dmq: docs - note about using same Kamailio version
+    
+    (cherry picked from commit 1fd789246cc7c58237b9a903a198521cd5b3494d)
+
+commit ad753f4657bc72a79fd61b56276de5ae87b3c574
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Wed Sep 14 20:16:27 2022 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 5edc2cd0f0308099be410f7f34c0c2566bb99a1d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Sep 8 10:09:14 2022 +0200
+
+    posops: docs - updated pos_set_char() section
+    
+    - note that the change is done directly inside the sip message buffer
+    
+    (cherry picked from commit c3771966fa8470db91d04323a1e9c837a16a22cf)
+
+commit b0636ff4aaa3f5c21389ca6b99a90be2d79c7953
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Sep 5 10:24:06 2022 +0200
+
+    core: use unsigned printing for version defines
+    
+    (cherry picked from commit 3e94dd4bd3901d503c7be655d761f1d70453a451)
+
+commit d8c8922ff4dd47a47773e5391e4ce49d83087055
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Sep 2 12:50:56 2022 +0200
+
+    core: kemi - duplicate module name when registering the api exports
+    
+    (cherry picked from commit 43f764cae870b15a96b8ca88f1eb195d4ceb8455)
+
+commit 644938a6be5f841634f2e1443e5f123f683c45e4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Sep 1 10:53:54 2022 +0200
+
+    dialog: remove strlen() checks when setting a variable
+    
+    - assumed key->s and val->s are 0-terminated, which may not be the case
+    
+    (cherry picked from commit 2cebd46f8f2dc3f87c9cfd2054976e347aa75ace)
+
+commit 2427f1951a1c63a8c047710d49ef06788c33c869
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Sep 1 10:50:30 2022 +0200
+
+    dialog: wrapper function to set a dlg var with unsigned integer parameter
+    
+    - use it to set cseq diff value
+    
+    (cherry picked from commit b7dc2ac6d66839b38ba8d6f36e9f28bc0a2d1425)
+
+commit 89fa86703adfdf6e30dc43c191d7327800270574
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Aug 31 11:35:51 2022 +0200
+
+    siptrace: use socket name for hep mirroring
+    
+    - GH #3174
+    
+    (cherry picked from commit 30c628732092108e8d73856a5c9ec60b16d5ef99)
+
+commit e1deb704bc1df02e4dbdc85d7728acc040a517e0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Aug 31 10:44:13 2022 +0200
+
+    pua_dialoginfo: clone dlg var values
+    
+    (cherry picked from commit 1553a6c0efb2cec0b5962bba13bc0095211ee75d)
+
+commit 38cbf04afa2c02fa2f15bb1528d6b7f152c89d08
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Aug 30 13:34:38 2022 +0200
+
+    dialog: fetch directly the int value for dlg variable used in dlg_cseq_update()
+    
+    (cherry picked from commit 8cb948cc07e2d577cdd14efdfe38f3e9bbf11d79)
+
+commit 363a6267c4c50b6e321e59961dedc4a6f65fc940
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Aug 30 13:32:16 2022 +0200
+
+    dialog: safer version for getting dlg variable value
+    
+    - clone to ensure that reference is not becoming invalid over the time
+    
+    (cherry picked from commit aded00bbfe75771cef8d0ee9ae8401772f7644a9)
+
+commit 948f066718e102a7d592ef647754ba088f1eb0c6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Aug 30 13:19:33 2022 +0200
+
+    dialog: updated to get the int value for cseq update operations
+    
+    (cherry picked from commit a070f5c132a68111fade7212db6a2bc738e03193)
+
+commit 60a62d6f7df233d61d4ccecc39504e77e25421b8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Aug 31 10:18:07 2022 +0200
+
+    acc: duplicate dlg var values used in extra2strar_dlg_only()
+    
+    - avoid buffer index overlapping and be coherent with extra2strar()
+    
+    (cherry picked from commit 54905e6b02e36e72bb74a92c77b273cf57822f18)
+
+commit 272060e1079d9edbc819d396dafb2034a3812c6a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Aug 25 10:48:16 2022 +0200
+
+    usrloc: adde random and pid to call-id for keepalive requests
+    
+    - GH #3225
+    
+    (cherry picked from commit 721daf5ca55a8fb366cff2821e249bfff64d8f87)
+
+commit 902807e5de185cb6d6463ff617bf4c2e7862f293
+Author: korayvt <koray.vatansever@gmail.com>
+Date:   Tue Aug 23 14:05:45 2022 +0300
+
+    core: added parser mode check
+    
+    (cherry picked from commit 4598f0a0df90ad81e192be55a89fbd5cca52a40e)
+
+commit e44c6716b5d640c489561062ea025455444fe0a3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Aug 22 12:46:33 2022 +0200
+
+    pv: parse header name given with variable to $hdr() and $hdrc()
+    
+    (cherry picked from commit a10da3a8802fd02bab9e8c655aa845d121370fd4)
+
+commit 33e1638b92c073f58b27232e7985a5ffe6994b7f
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Tue Aug 23 07:29:23 2022 +0000
+
+    etc/kamailio.cfg: corrected a typo ("endabled"), GH #3223
+    
+    (cherry picked from commit b46afeca6c515f5baf1812ca821321117df6478b)
+
+commit 4bdd89b4709553e2dde2fb2356ba47d4f7009774
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Aug 22 12:38:14 2022 +0200
+
+    pv: detect known headers provided with variable for $hfl(...) and $hflc(...)
+    
+    - GH #3194
+    
+    (cherry picked from commit fb13cf364870895dec94fa1ddf6a1afd3c099715)
+
+commit addd16c13a0a6ab5cb460850141073d00617610b
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Fri Aug 19 16:31:56 2022 +0000
+
+    utils: small whitespace fix for Makefile
+    
+    (cherry picked from commit 3cb1f8eaec344433fd94011ec28da464c5626c2a)
+
+commit 94101dfc2df05f471fdb7ea1e6190f071bbfd04a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Aug 18 11:52:51 2022 +0200
+
+    registrar: use macro to init str value and more debug messages
+    
+    (cherry picked from commit 5f229a799b251e82431b4642e9bd8aa76c405d13)
+
+commit 5ffbbaa6c956a74665859a709bd6c79ba4223269
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Aug 18 11:34:44 2022 +0200
+
+    registrar: print number of contacts and max limit in logs and formatting updates
+    
+    (cherry picked from commit a88f805236ef0549ce8a8079142b202d569bf3f1)
+
+commit 9d473f92d3ff534535e6170b8895569703c8fc5a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Aug 17 11:07:55 2022 +0200
+
+    usrloc: increased the size for keys2 array in ul_ka_db_records()
+    
+    - consequence of 06f933ad17aac3a3f0f81cf0e0ab04f38cf60993
+    
+    (cherry picked from commit b5ae633242e5e34b1f6dc8f025e68872b47b461c)
+
+commit 506e20e6aae21d862f6d643a2c87c748df8543c7
+Author: Andy Brezinsky <andy.brezinsky@mitel.com>
+Date:   Tue Aug 16 11:20:20 2022 -0500
+
+    usrloc: re-use TCP connections for keepalive
+    
+    - Fixes GH #3178. Sets TCP connection id for keepalive based on the value in the database
+      If unset, tcpconn_id will remain 0 and keepalives will work the same as they do today
+    - Update documentation to clarify when it will use received vs AOR for keepalive
+    
+    (cherry picked from commit 06f933ad17aac3a3f0f81cf0e0ab04f38cf60993)
+
+commit 5bcb685d19b55b3b2046345e195e5deca53e179a
+Author: Shane Mitchell <sm@opencluster.com.au>
+Date:   Tue Aug 16 23:17:17 2022 -0400
+
+    dialog: dont reset dlg_db_mode in POSTCHILDINIT for DB_MODE_SHUTDOWN
+    
+    (cherry picked from commit 8fb25f7cb6fa73dc37fe11df9b921c32009bd107)
+
+commit a5cbf0bade8ab0b04d1f8e9288b239df4df8d76b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Aug 16 09:09:45 2022 +0200
+
+    msrp: proper cmap insert when last item has greater citemid
+    
+    - condition for last item was processed first, resulting in improper
+      order of items, GH #3215
+    
+    (cherry picked from commit 1e4bf1dd7fbfc9d51f0e56e98472a42de781cdbd)
+
+commit 8aceadf62fde1b1faf414e5d47c42102c64d2e90
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Aug 12 14:31:48 2022 +0200
+
+    core/cfg: cast pointer to long to silent compiler warning
+    
+    - GH #3208
+    
+    (cherry picked from commit 26785f866eeadc6944af83ae1a57e8ff100f60f5)
+
+commit e8d797cb26e2b16dff3afd7ecb54beb7012e0370
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Wed Jul 27 07:26:57 2022 +0000
+
+    acc: add some explanation that dialogs need to be tracked for CDR accounting
+    
+    (cherry picked from commit 3ec40d792df5bcee838eee3e5e0e89a2ebdcc453)
+
+commit 98342927e3493a8af6b859ab1cd1877f816a8bde
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Mon Jul 25 13:55:39 2022 +0000
+
+    ratelimit: fix docs to actual values in the code for queue and pipe limits
+    
+    (cherry picked from commit cae9d78a6c8d33f6c4ec780901a55c27260c2000)
+
+commit d8f98b82b393f3dd59bf4d74a52af525395e3811
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Tue Aug 16 16:31:25 2022 +0300
+
+    pkg/kamailio/obs: fixed rpm packaging on CentOS 8 and Fedora
+    
+    (cherry picked from commit 44b3ccd71467b78d9e9a7184c9fd25bc5f616ac4)
+
+commit 6ea663dd3d65aecc298ceab1b5e0f486d77bb0b4
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Tue Aug 16 12:30:56 2022 +0000
+
+    pkg/kamailio/obs: fixed packaging for RHEL 7 and RHEL 6 based dists [skip ci]
+    
+    (cherry picked from commit 4a6aa75dd1de4e33ba6ac3f1d770a1beed61e157)
+
+commit b04f84ea826a4c97cf7ba1804f29833aecc50fd3
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Tue Aug 16 12:16:46 2022 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit e07c2288053a21f5fc758f359a60ffaceb687f35
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Aug 15 20:18:02 2022 +0200
+
+    xhttp: docs - listed http_reply_parse core setting
+    
+    (cherry picked from commit 36b0da00b9fc08be9e855d5dd4cc878b6e3c88bf)
+
+commit 88560506e42e0d127c2034b35397b29ee5909307
+Author: drTr0jan <drtr0jan@yandex.ru>
+Date:   Tue Jul 12 15:12:00 2022 +0300
+
+    core: fix ksr_version_control() for FreeBSD build
+    
+    (cherry picked from commit a8769af4c3a497d0f6a81cff17861e566ffa87bc)
+
+commit e8947f9e2a52dbbf5e255785a15b502d74613071
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Aug 12 09:16:24 2022 +0200
+
+    uac_redirect: check if reason parameter ifs provided for get_redirects()
+    
+    - cope properly with the common function used for the two function
+      variants
+    - GH #3197
+    
+    (cherry picked from commit 3b1354e2fd26c06fa6bc5ddbee1a012507aa2ea5)
+
+commit 6b74c2a08a5a1f7dcd62bf8c3477b6bf1f51a4d3
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Aug 11 21:48:25 2022 +0200
+
+    usrloc: do not send keepalives when destroying modules
+    
+    - GH #3207
+    
+    (cherry picked from commit 939ceb3390b171b773eeb438b8fff72022e4f6f0)
+
+commit 3086494d7fa1ada9ce5f3ed851610a2fc542656a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Aug 10 22:39:03 2022 +0200
+
+    uac_redirect: clarifications for acc_function mod param
+    
+    (cherry picked from commit 7ef109e6cd1ce7ecbfa56c31ff7555275e59095f)
+
+commit 6ac1d7a7cdb49fb8db4ff280c5159098b0b4284f
+Author: russagit <rustam.safargalin@sifox.ru>
+Date:   Wed Aug 10 09:23:13 2022 +0000
+
+    sipt: Fix isup generic_number and generic_number_nai decoding (GH #3209)
+    
+    (cherry picked from commit 9f3d1c274ad926e9640d0091c9702a34f8b2e539)
+
+commit 3e2cf002f544c438a7bcdcff8986b0a28c5921a8
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Aug 4 11:50:50 2022 +0200
+
+    dispatcher: check if packing address fails on removing via rpc
+    
+    - GH #3199
+    
+    (cherry picked from commit 13a4021914057ca66eaa91e2ea022e1827963b70)
+
+commit f1bd6bb8dec9db76acf697a7b1d177a2bfcfd7c1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jul 27 08:04:08 2022 +0200
+
+    nathelper: docs - rephrased the remarks about set_contact_alias()
+    
+    (cherry picked from commit c009f27578e8df9aa77ab852325dad8dc710d6c8)
+
+commit 50a46d9b894a32c82697c4b49a68ececb881b3e5
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Mon Jul 25 18:28:19 2022 +0000
+
+    siputils: fix typo for is_first_hope, related to gh #3200
+    
+    (cherry picked from commit ac75a033132740b06d5afcdc17c25d3c354e7d89)
+
+commit f4d9be60489461f0903b8ca2d1e6248d1e0b0717
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jul 18 08:37:48 2022 +0200
+
+    uac_redirect: test if the acc function is set before binding to acc module
+    
+    - GH #3188
+    
+    (cherry picked from commit e21df35840c7a85cf26a3005f718e5e37edeac8e)
+
+commit ca1e61ec0453b9a4797ac7af88ac179d27e53685
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jul 8 11:14:27 2022 +0200
+
+    core: use memcpy and set end of string
+    
+    (cherry picked from commit 5cd4e817a24308b82fc3f631fb18f354dadf2b7e)
+
+commit 1d03d9e8312e6e9b494f6d243fe9b2b4ea890eaf
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Tue Aug 2 08:47:17 2022 +0000
+
+    usrloc: fix sending keepalive messages for IPv6, it was missing the brackets
+    
+    (cherry picked from commit bd40f0d08f5d0f14b301cb492d1082c71be91c50)
+
+commit 6d55d9f903238479b6026b1d8feb8901d064e92c
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Jul 5 08:15:13 2022 +0200
+
+    pkg/kamailio/deb: lintian overwrite [skip ci]
+    
+    (cherry picked from commit b7f4a7a040717cd03fdeb6d04aac653034cc759e)
+
+
 ===================== 2022-07-06 Version 5.6.1 Released =====================
 
 ===================== Changes Since Version 5.6.0 ===========================
