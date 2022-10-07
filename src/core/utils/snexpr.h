@@ -781,7 +781,7 @@ static struct snexpr *snexpr_eval(struct snexpr *e)
 				if(e->param.var.vref->evflags & SNEXPR_TSTRING) {
 					lv = snexpr_convert_stz(e->param.var.vref->v.sval, SNE_OP_CONSTSTZ);
 				} else {
-					snexpr_convert_num(e->param.var.vref->v.nval, SNE_OP_CONSTNUM);
+					lv = snexpr_convert_num(e->param.var.vref->v.nval, SNE_OP_CONSTNUM);
 				}
 			} else {
 				lv = _snexternval_cbf(e->param.var.vref->name);
