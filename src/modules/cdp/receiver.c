@@ -709,7 +709,7 @@ int receive_loop(peer *original_peer)
 							LM_DBG("select_recv(): fd exchange pipe says fd [%d] for peer %p:[%.*s]\n",fd,
 									p,
 									p?p->fqdn.len:0,
-									p?p->fqdn.s:0);
+									p?p->fqdn.s:"");
 							if (p){
 								sp2=0;
 								for(sp=serviced_peers;sp;sp=sp->next)
@@ -748,7 +748,7 @@ int receive_loop(peer *original_peer)
 						if (sp->tcp_socket>=0 && FD_ISSET(sp->tcp_socket,&efds)) {
 							LM_INFO("select_recv(): [%.*s] Peer socket [%d] found on the exception list... dropping\n",
 									sp->p?sp->p->fqdn.len:0,
-									sp->p?sp->p->fqdn.s:0,
+									sp->p?sp->p->fqdn.s:"",
 									sp->tcp_socket);
 							goto drop_peer;
 						}
@@ -776,7 +776,7 @@ int receive_loop(peer *original_peer)
 										continue;
 									LM_ERR("select_recv(): [%.*s] write on socket [%d] returned error> %s... dropping\n",
 											sp->p?sp->p->fqdn.len:0,
-											sp->p?sp->p->fqdn.s:0,
+											sp->p?sp->p->fqdn.s:"",
 											sp->tcp_socket,
 											strerror(errno));
 									AAAFreeMessage(&msg);
@@ -787,7 +787,7 @@ int receive_loop(peer *original_peer)
 								if (cnt!=msg->buf.len){
 									LM_ERR("select_recv(): [%.*s] write on socket [%d] only wrote %d/%d bytes... dropping\n",
 											sp->p?sp->p->fqdn.len:0,
-											sp->p?sp->p->fqdn.s:0,
+											sp->p?sp->p->fqdn.s:"",
 											sp->tcp_socket,
 											cnt,
 											msg->buf.len);
@@ -807,7 +807,7 @@ receive:
 							if (cnt<=0) {
 								LM_INFO("select_recv(): [%.*s] read on socket [%d] returned %d > %s... dropping\n",
 										sp->p?sp->p->fqdn.len:0,
-										sp->p?sp->p->fqdn.s:0,
+										sp->p?sp->p->fqdn.s:"",
 										sp->tcp_socket,
 										cnt,
 										errno?strerror(errno):"");
