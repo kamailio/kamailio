@@ -92,13 +92,13 @@ str* build_reginfo_partial(ppublic_t *impu, struct pcontact* c, int type) {
 	doc = xmlNewDoc(BAD_CAST "1.0");
 	if (doc == 0) {
 		LM_ERR("Unable to create XML-Doc\n");
-		return NULL;
+		goto error;
 	}
 
 	root_node = xmlNewNode(NULL, BAD_CAST "reginfo");
 	if (root_node == 0) {
 		LM_ERR("Unable to create reginfo-XML-Element\n");
-		return NULL;
+		goto error;
 	}
 	/* This is our Root-Element: */
 	xmlDocSetRootElement(doc, root_node);
@@ -157,7 +157,7 @@ str* build_reginfo_partial(ppublic_t *impu, struct pcontact* c, int type) {
 	body = (str*) pkg_malloc(sizeof(str));
 	if (body == NULL) {
 		LM_ERR("while allocating memory\n");
-		return NULL;
+		goto error;
 	}
 	memset(body, 0, sizeof(str));
 
