@@ -224,10 +224,7 @@ int ka_find_destination(str *uri, str *owner, ka_dest_t **target, ka_dest_t **he
 	ka_dest_t  *dest=0 ,*temp=0;
 	LM_DBG("finding destination: %.*s\n", uri->len, uri->s);
 
-	for(dest = ka_destinations_list->first ;dest; temp=dest, dest= dest->next ){
-		if(!dest)
-			break;
-
+	for(dest = ka_destinations_list->first; dest; temp=dest, dest=dest->next) {
 		if (STR_EQ(*uri, dest->uri) && STR_EQ(*owner, dest->owner)){
 			*head = temp;
 			*target = dest;
@@ -255,10 +252,7 @@ int ka_find_destination_by_uuid(str uuid, ka_dest_t **target, ka_dest_t **head){
 
 	LM_DBG("finding destination with uuid:%.*s\n", uuid.len, uuid.s);
 
-	for(dest = ka_destinations_list->first ;dest ; temp = dest, dest = dest->next ){
-		if(!dest)
-			break;
-
+	for(dest = ka_destinations_list->first; dest; temp = dest, dest = dest->next) {
 		if (STR_EQ(uuid, dest->uuid)){
 			*head = temp;
 			*target = dest;
