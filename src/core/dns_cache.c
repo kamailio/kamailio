@@ -4399,8 +4399,8 @@ int dns_cache_add_record(unsigned short type,
 				}
 
 				if (!rr_p) {
-					for (	rr_p = rr_iter;
-						*rr_p && (*rr_p != new_rr);
+					for (rr_p = rr_iter;
+						rr_p && *rr_p && (*rr_p != new_rr);
 						rr_p = &((*rr_p)->next)
 					);
 				}
