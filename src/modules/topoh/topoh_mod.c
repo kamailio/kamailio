@@ -60,6 +60,8 @@
 MODULE_VERSION
 
 
+#define TH_MASKMODE_SLIP3XXCONTACT 1
+
 /** module parameters */
 str _th_key = str_init("aL9.n8~Hm]Z");
 str th_cookie_name = str_init("TH"); /* lost parameter? */
@@ -75,6 +77,7 @@ str th_via_prefix = {0, 0};
 str th_uri_prefix = {0, 0};
 
 int th_param_mask_callid = 0;
+int th_param_mask_mode = 0;
 
 int th_sanity_checks = 0;
 int th_uri_prefix_checks = 0;
@@ -103,6 +106,7 @@ static param_export_t params[]={
 	{"mask_key",		PARAM_STR, &_th_key},
 	{"mask_ip",			PARAM_STR, &th_ip},
 	{"mask_callid",		PARAM_INT, &th_param_mask_callid},
+	{"mask_mode",		PARAM_INT, &th_param_mask_mode},
 	{"uparam_name",		PARAM_STR, &th_uparam_name},
 	{"uparam_prefix",	PARAM_STR, &th_uparam_prefix},
 	{"vparam_name",		PARAM_STR, &th_vparam_name},
@@ -515,7 +519,11 @@ int th_msg_sent(sr_event_param_t *evp)
 			}
 		} else {
 			th_flip_record_route(&msg, 1);
-			th_mask_contact(&msg);
+			if(!(th_param_mask_mode & TH_MASKMODE_SLIP3XXCONTACT)
+					|| msg.first_line.u.reply.statuscode < 300
+					|| msg.first_line.u.reply.statuscode > 399) {
+				th_mask_contact(&msg);
+			}
 			if(th_cookie_value.s[0]=='d') {
 				th_mask_callid(&msg);
 			}
