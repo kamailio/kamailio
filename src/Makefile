@@ -626,7 +626,7 @@ deb-stable:
 		dpkg-buildpackage -rfakeroot -tc -uc -us; \
 		rm debian; \
 	else \
-		ln -s pkg/$(MAIN_NAME)/deb/buster debian; \
+		ln -s pkg/$(MAIN_NAME)/deb/bullseye debian; \
 		dpkg-buildpackage -rfakeroot -tc -uc -us; \
 		rm debian; \
 	fi)
