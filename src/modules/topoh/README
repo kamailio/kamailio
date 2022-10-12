@@ -28,15 +28,16 @@ Daniel-Constantin Mierla
               3.1. mask_key (str)
               3.2. mask_ip (str)
               3.3. mask_callid (integer)
-              3.4. uparam_name (str)
-              3.5. uparam_prefix (str)
-              3.6. vparam_name (str)
-              3.7. vparam_prefix (str)
-              3.8. callid_prefix (str)
-              3.9. sanity_checks (integer)
-              3.10. uri_prefix_checks (integer)
-              3.11. event_callback (str)
-              3.12. event_mode (int)
+              3.4. mask_mode (integer)
+              3.5. uparam_name (str)
+              3.6. uparam_prefix (str)
+              3.7. vparam_name (str)
+              3.8. vparam_prefix (str)
+              3.9. callid_prefix (str)
+              3.10. sanity_checks (integer)
+              3.11. uri_prefix_checks (integer)
+              3.12. event_callback (str)
+              3.13. event_mode (int)
 
         4. Event Routes
 
@@ -48,17 +49,18 @@ Daniel-Constantin Mierla
    1.1. Set mask_key parameter
    1.2. Set mask_ip parameter
    1.3. Set mask_callid parameter
-   1.4. Set uparam_name parameter
-   1.5. Set uparam_prefix parameter
-   1.6. Set vparam_name parameter
-   1.7. Set vparam_prefix parameter
-   1.8. Set callid_prefix parameter
-   1.9. Set sanity_checks parameter
-   1.10. Set uri_prefix_checks parameter
-   1.11. Set event_callback parameter
-   1.12. Set event_mode parameter
-   1.13. Usage of event_route[topoh:msg-outgoing]
-   1.14. Usage of event_route[topoh:msg-sending]
+   1.4. Set mask_mode parameter
+   1.5. Set uparam_name parameter
+   1.6. Set uparam_prefix parameter
+   1.7. Set vparam_name parameter
+   1.8. Set vparam_prefix parameter
+   1.9. Set callid_prefix parameter
+   1.10. Set sanity_checks parameter
+   1.11. Set uri_prefix_checks parameter
+   1.12. Set event_callback parameter
+   1.13. Set event_mode parameter
+   1.14. Usage of event_route[topoh:msg-outgoing]
+   1.15. Usage of event_route[topoh:msg-sending]
 
 Chapter 1. Admin Guide
 
@@ -75,15 +77,16 @@ Chapter 1. Admin Guide
         3.1. mask_key (str)
         3.2. mask_ip (str)
         3.3. mask_callid (integer)
-        3.4. uparam_name (str)
-        3.5. uparam_prefix (str)
-        3.6. vparam_name (str)
-        3.7. vparam_prefix (str)
-        3.8. callid_prefix (str)
-        3.9. sanity_checks (integer)
-        3.10. uri_prefix_checks (integer)
-        3.11. event_callback (str)
-        3.12. event_mode (int)
+        3.4. mask_mode (integer)
+        3.5. uparam_name (str)
+        3.6. uparam_prefix (str)
+        3.7. vparam_name (str)
+        3.8. vparam_prefix (str)
+        3.9. callid_prefix (str)
+        3.10. sanity_checks (integer)
+        3.11. uri_prefix_checks (integer)
+        3.12. event_callback (str)
+        3.13. event_mode (int)
 
    4. Event Routes
 
@@ -128,15 +131,16 @@ Chapter 1. Admin Guide
    3.1. mask_key (str)
    3.2. mask_ip (str)
    3.3. mask_callid (integer)
-   3.4. uparam_name (str)
-   3.5. uparam_prefix (str)
-   3.6. vparam_name (str)
-   3.7. vparam_prefix (str)
-   3.8. callid_prefix (str)
-   3.9. sanity_checks (integer)
-   3.10. uri_prefix_checks (integer)
-   3.11. event_callback (str)
-   3.12. event_mode (int)
+   3.4. mask_mode (integer)
+   3.5. uparam_name (str)
+   3.6. uparam_prefix (str)
+   3.7. vparam_name (str)
+   3.8. vparam_prefix (str)
+   3.9. callid_prefix (str)
+   3.10. sanity_checks (integer)
+   3.11. uri_prefix_checks (integer)
+   3.12. event_callback (str)
+   3.13. event_mode (int)
 
 3.1. mask_key (str)
 
@@ -182,62 +186,76 @@ modparam("topoh", "mask_ip", "192.168.0.1")
 modparam("topoh", "mask_callid", 1)
 ...
 
-3.4. uparam_name (str)
+3.4. mask_mode (integer)
+
+   Control when and what parts of SIP message are masked.
+
+   It works as a bitmask value. The following options are available: (1) -
+   skip masking Contact headers in 3XX (redirect) replies.
+
+   Default value is 0.
+
+   Example 1.4. Set mask_mode parameter
+...
+modparam("topoh", "mask_mode", 1)
+...
+
+3.5. uparam_name (str)
 
    Name of URI parameter where to store encoded value.
 
    Default value is "line".
 
-   Example 1.4. Set uparam_name parameter
+   Example 1.5. Set uparam_name parameter
 ...
 modparam("topoh", "uparam_name", "myparam")
 ...
 
-3.5. uparam_prefix (str)
+3.6. uparam_prefix (str)
 
    Prefix to be added in encoded URI parameters.
 
    Default value is "sr-".
 
-   Example 1.5. Set uparam_prefix parameter
+   Example 1.6. Set uparam_prefix parameter
 ...
 modparam("topoh", "uparam_prefix", "xyz")
 ...
 
-3.6. vparam_name (str)
+3.7. vparam_name (str)
 
    Name of Via: parameter used to store encoded value.
 
    Default value is "branch".
 
-   Example 1.6. Set vparam_name parameter
+   Example 1.7. Set vparam_name parameter
 ...
 modparam("topoh", "vparam_name", "myv")
 ...
 
-3.7. vparam_prefix (str)
+3.8. vparam_prefix (str)
 
    Prefix to be added in encoded Via: parameters.
 
    Default value is "z9hG4bKsr-".
 
-   Example 1.7. Set vparam_prefix parameter
+   Example 1.8. Set vparam_prefix parameter
 ...
 modparam("topoh", "vparam_prefix", "xyz")
 ...
 
-3.8. callid_prefix (str)
+3.9. callid_prefix (str)
 
    Prefix to be added in encoded Call-ID: headers.
 
    Default value is "!!:".
 
-   Example 1.8. Set callid_prefix parameter
+   Example 1.9. Set callid_prefix parameter
 ...
 modparam("topoh", "callid_prefix", "***")
 ...
 
-3.9. sanity_checks (integer)
+3.10. sanity_checks (integer)
 
    If set to 1, topoh module will bind to sanity module in order to
    perform sanity checks over received SIP request. Default sanity checks
@@ -246,12 +264,12 @@ modparam("topoh", "callid_prefix", "***")
 
    Default value is 0 (do not bind to sanity module).
 
-   Example 1.9. Set sanity_checks parameter
+   Example 1.10. Set sanity_checks parameter
 ...
 modparam("topoh", "sanity_checks", 1)
 ...
 
-3.10. uri_prefix_checks (integer)
+3.11. uri_prefix_checks (integer)
 
    If set to 1, topoh module will check if URIs to be decoded match the
    expected prefix composed from mask IP and parameter name prefix. It can
@@ -265,12 +283,12 @@ modparam("topoh", "sanity_checks", 1)
 
    Default value is 0.
 
-   Example 1.10. Set uri_prefix_checks parameter
+   Example 1.11. Set uri_prefix_checks parameter
 ...
 modparam("topoh", "uri_prefix_checks", 1)
 ...
 
-3.11. event_callback (str)
+3.12. event_callback (str)
 
    The name of the function in the KEMI configuration file (embedded
    scripting language such as Lua, Python, ...) to be executed instead of
@@ -280,7 +298,7 @@ modparam("topoh", "uri_prefix_checks", 1)
 
    Default value is 'empty' (no function is executed for events).
 
-   Example 1.11. Set event_callback parameter
+   Example 1.12. Set event_callback parameter
 ...
 modparam("topoh", "event_callback", "ksr_topoh_event")
 ...
@@ -291,7 +309,7 @@ function ksr_topoh_event(evname)
 end
 ...
 
-3.12. event_mode (int)
+3.13. event_mode (int)
 
    Control what event_route blocks to be executed. It is a bitmask of: 1 -
    execute event_route[topoh:msg-outgoing]; 2 - execute
@@ -299,7 +317,7 @@ end
 
    Default value is 3 (execute both event_route blocks).
 
-   Example 1.12. Set event_mode parameter
+   Example 1.13. Set event_mode parameter
 ...
 modparam("topoh", "event_mode", 2)
 ...
@@ -321,7 +339,7 @@ modparam("topoh", "event_mode", 2)
    reparsing the outgoing SIP message for the cases when topology hiding
    is not wanted.
 
-   Example 1.13. Usage of event_route[topoh:msg-outgoing]
+   Example 1.14. Usage of event_route[topoh:msg-outgoing]
 ...
 event_route[topoh:msg-outgoing] {
   if($sndto(ip)=="10.1.1.10") {
@@ -340,7 +358,7 @@ event_route[topoh:msg-outgoing] {
    $sndto(proto) point to the destination. The SIP message is the one to
    be sent out.
 
-   Example 1.14. Usage of event_route[topoh:msg-sending]
+   Example 1.15. Usage of event_route[topoh:msg-sending]
 ...
 event_route[topoh:msg-sending] {
   if(is_request() and $fU=="alice") {
