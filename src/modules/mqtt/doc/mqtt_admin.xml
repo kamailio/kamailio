@@ -328,6 +328,27 @@ modparam("mqtt", "tls_method", "tlsv1.3")
 		</programlisting>
 		</example>
 	</section>
+	<section id="mqtt.p.tls_alpn">
+		<title><varname>tls_alpn</varname> (str)</title>
+		<para>
+        Used to set the TLS ALPN option for cases where one TLS port is used to share multiple services. Prominent
+        example is AWS IoT, where you have to set the <varname>tls_alpn</varname> to "mqtt" to be able to connect
+        via MQTT.
+		</para>
+		<para>
+		<emphasis>
+			Default value is NULL, where no ALPN is set on the TLS connection.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>tls_alpn</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("mqtt", "tls_alpn", "mqtt")
+...
+		</programlisting>
+		</example>
+	</section>
 	<section id="mqtt.p.certificate">
 		<title><varname>certificate</varname> (str)</title>
 		<para>
