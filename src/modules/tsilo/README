@@ -180,7 +180,7 @@ modparam("tsilo", "use_domain", 1)
 if (is_method("INVITE")) {
     if (t_newtran()) {
         ts_store();
-        # t_store("sip:alice@$td");
+        # ts_store("sip:alice@$td");
     }
 }
 ...
@@ -198,6 +198,11 @@ if (is_method("INVITE")) {
      * ruri - The r-uri for which we want to check existing transactions
        and add them new branches. Can be a static string value or a
        dynamic string with pseudo-variables.
+
+   Return codes:
+     * 1 - branches added.
+       -1 - an internal error has produced (parsing error, memory error).
+       -2 - no records found for the r-uri.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
@@ -230,6 +235,11 @@ if (is_method("REGISTER")) {
        value will be taken from the currently processed REGISTER. If a
        location lookup based on this Contact URI fails (no location record
        found), then the branch append will not happen.
+
+   Return codes:
+     * 1 - branches added.
+       -1 - an internal error has produced (parsing error, memory error).
+       -2 - no records found for the r-uri.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
