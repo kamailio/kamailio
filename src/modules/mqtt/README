@@ -36,10 +36,11 @@ Thomas weber
               3.10. ca_file (str)
               3.11. ca_path (str)
               3.12. tls_method (str)
-              3.13. certificate (str)
-              3.14. private_key (str)
-              3.15. cipher_list (str)
-              3.16. verify_certificate (str)
+              3.13. tls_alpn (str)
+              3.14. certificate (str)
+              3.15. private_key (str)
+              3.16. cipher_list (str)
+              3.17. verify_certificate (str)
 
         4. Functions
 
@@ -69,13 +70,14 @@ Thomas weber
    1.10. Set ca_file parameter
    1.11. Set ca_path parameter
    1.12. Set tls_method parameter
-   1.13. Set certificate parameter
-   1.14. Set private_key parameter
-   1.15. Set cipher_list parameter
-   1.16. Set verify_certificate parameter
-   1.17. mqtt_subscribe usage
-   1.18. mqtt_unsubscribe usage
-   1.19. mqtt_publish usage
+   1.13. Set tls_alpn parameter
+   1.14. Set certificate parameter
+   1.15. Set private_key parameter
+   1.16. Set cipher_list parameter
+   1.17. Set verify_certificate parameter
+   1.18. mqtt_subscribe usage
+   1.19. mqtt_unsubscribe usage
+   1.20. mqtt_publish usage
 
 Chapter 1. Admin Guide
 
@@ -100,10 +102,11 @@ Chapter 1. Admin Guide
         3.10. ca_file (str)
         3.11. ca_path (str)
         3.12. tls_method (str)
-        3.13. certificate (str)
-        3.14. private_key (str)
-        3.15. cipher_list (str)
-        3.16. verify_certificate (str)
+        3.13. tls_alpn (str)
+        3.14. certificate (str)
+        3.15. private_key (str)
+        3.16. cipher_list (str)
+        3.17. verify_certificate (str)
 
    4. Functions
 
@@ -152,10 +155,11 @@ Chapter 1. Admin Guide
    3.10. ca_file (str)
    3.11. ca_path (str)
    3.12. tls_method (str)
-   3.13. certificate (str)
-   3.14. private_key (str)
-   3.15. cipher_list (str)
-   3.16. verify_certificate (str)
+   3.13. tls_alpn (str)
+   3.14. certificate (str)
+   3.15. private_key (str)
+   3.16. cipher_list (str)
+   3.17. verify_certificate (str)
 
 3.1. host (str)
 
@@ -325,7 +329,20 @@ modparam("mqtt", "ca_path", "/etc/ssl/certs")
 modparam("mqtt", "tls_method", "tlsv1.3")
 ...
 
-3.13. certificate (str)
+3.13. tls_alpn (str)
+
+   Used to set the TLS ALPN option for cases where one TLS port is used to
+   share multiple services. Prominent example is AWS IoT, where you have
+   to set the tls_alpn to "mqtt" to be able to connect via MQTT.
+
+   Default value is NULL, where no ALPN is set on the TLS connection.
+
+   Example 1.13. Set tls_alpn parameter
+...
+modparam("mqtt", "tls_alpn", "mqtt")
+...
+
+3.14. certificate (str)
 
    Path to a file containing the PEM encoded certificate file for a TLS
    client connection.
@@ -333,12 +350,12 @@ modparam("mqtt", "tls_method", "tlsv1.3")
    Default value is NULL. If NULL, private_key must also be NULL and no
    client certificate will be used.
 
-   Example 1.13. Set certificate parameter
+   Example 1.14. Set certificate parameter
 ...
 modparam("mqtt", "certificate", "/etc/ssl/certs/myclient.pem")
 ...
 
-3.14. private_key (str)
+3.15. private_key (str)
 
    Path to a file containing the PEM encoded private key for a TLS client
    connection.
@@ -346,24 +363,24 @@ modparam("mqtt", "certificate", "/etc/ssl/certs/myclient.pem")
    Default value is NULL. If NULL, certificate must also be NULL and no
    client certificate will be used.
 
-   Example 1.14. Set private_key parameter
+   Example 1.15. Set private_key parameter
 ...
 modparam("mqtt", "private_key", "/etc/ssl/private/myclient.key")
 ...
 
-3.15. cipher_list (str)
+3.16. cipher_list (str)
 
    A string describing the ciphers available for use. See the cipher(1)
    OpenSSL man page. If NULL, the libssl default ciphers will be used.
 
    Default value is NULL.
 
-   Example 1.15. Set cipher_list parameter
+   Example 1.16. Set cipher_list parameter
 ...
 modparam("mqtt", "cipher_list", "HIGH")
 ...
 
-3.16. verify_certificate (str)
+3.17. verify_certificate (str)
 
    Configure verification of the server certificate. If value is set to 0,
    it is impossible to guarantee that the host you are connecting to is
@@ -378,7 +395,7 @@ modparam("mqtt", "cipher_list", "HIGH")
 
    Default value is 1.
 
-   Example 1.16. Set verify_certificate parameter
+   Example 1.17. Set verify_certificate parameter
 ...
 modparam("mqtt", "verify_certificate", "0")
 ...
@@ -401,7 +418,7 @@ modparam("mqtt", "verify_certificate", "0")
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.17. mqtt_subscribe usage
+   Example 1.18. mqtt_subscribe usage
 ...
 mqtt_subscribe("kamailio/script", 0);
 ...
@@ -413,7 +430,7 @@ mqtt_subscribe("kamailio/script", 0);
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.18. mqtt_unsubscribe usage
+   Example 1.19. mqtt_unsubscribe usage
 ...
 mqtt_unsubscribe("kamailio/script");
 ...
@@ -424,7 +441,7 @@ mqtt_unsubscribe("kamailio/script");
    2). Again the actual sending is done in a mqtt dispatcher process and
    will not block the SIP worker.
 
-   Example 1.19. mqtt_publish usage
+   Example 1.20. mqtt_publish usage
 ...
 mqtt_publish("kamailio/event", "some message", 0);
 ...
