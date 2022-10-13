@@ -44,6 +44,7 @@ static char *_mqtt_ca_path            = NULL;
 static char *_mqtt_certificate        = NULL;
 static char *_mqtt_private_key        = NULL;
 static char *_mqtt_tls_method         = NULL;
+static char *_mqtt_tls_alpn           = NULL;
 static int   _mqtt_verify_certificate = 1;
 static char *_mqtt_cipher_list        = NULL;
 
@@ -85,6 +86,7 @@ static param_export_t params[]={
 	{"keepalive",          INT_PARAM,      &_mqtt_keepalive},
 	{"event_callback",     PARAM_STR,      &_mqtt_event_callback},
 	{"tls_method",         PARAM_STRING,   &_mqtt_tls_method},
+	{"tls_alpn",           PARAM_STRING,   &_mqtt_tls_alpn},
 	{"ca_file",            PARAM_STRING,   &_mqtt_ca_file},
 	{"ca_path",            PARAM_STRING,   &_mqtt_ca_path},
 	{"certificate",        PARAM_STRING,   &_mqtt_certificate},
@@ -198,6 +200,7 @@ static int child_init(int rank)
 		cfg.certificate        = _mqtt_certificate;
 		cfg.private_key        = _mqtt_private_key;
 		cfg.tls_method         = _mqtt_tls_method;
+		cfg.tls_alpn           = _mqtt_tls_alpn;
 		cfg.verify_certificate = _mqtt_verify_certificate;
 		cfg.cipher_list        = _mqtt_cipher_list;
 

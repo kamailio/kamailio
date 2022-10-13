@@ -224,6 +224,17 @@ int mqtt_run_dispatcher(mqtt_dispatcher_cfg_t* cfg)
 			LM_ERR("mosquitto_tls_set() failed: %d %s\n",errno, strerror(errno));
 			return -1;
 		}
+        if (cfg->tls_alpn != NULL) {
+#if LIBMOSQUITTO_VERSION_NUMBER >= 1006000
+            res = mosquitto_string_option(_mosquitto, MOSQ_OPT_TLS_ALPN, cfg->tls_alpn);
+            if (res != MOSQ_ERR_SUCCESS) {
+                LM_ERR("mosquitto_string_option() failed setting TLS ALPN: %d %s\n",errno, strerror(errno));
+                return -1;
+            }
+#else
+		    LM_WARN("unable to set TLS ALPN due to outdated mosquitto library version, upgrade it to >= 1.6.0\n")
+#endif
+        }
 	}
 
 	res = mosquitto_connect(_mosquitto, cfg->host, cfg->port, cfg->keepalive);
