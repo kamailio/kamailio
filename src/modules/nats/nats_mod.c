@@ -600,6 +600,9 @@ int nats_destroy_workers()
  */
 static void mod_destroy(void)
 {
+	if(nats_workers==NULL) {
+		return;
+	}
 	if(nats_destroy_workers() < 0) {
 		LM_ERR("could not cleanup workers\n");
 	}
