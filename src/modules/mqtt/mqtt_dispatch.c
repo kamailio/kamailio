@@ -232,7 +232,7 @@ int mqtt_run_dispatcher(mqtt_dispatcher_cfg_t* cfg)
 				return -1;
 			}
 #else
-			LM_WARN("unable to set TLS ALPN due to outdated mosquitto library version, upgrade it to >= 1.6.0\n")
+			LM_WARN("unable to set TLS ALPN due to outdated mosquitto library version, upgrade it to >= 1.6.0\n");
 #endif
 		}
 	}
