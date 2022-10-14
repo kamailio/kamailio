@@ -314,40 +314,43 @@ static int log_write_cdr( struct dlg_cell* dialog,
 		MAX_SYSLOG_SIZE -
 		2;// -2 because of the string ending '\n\0'
 	char* message_position = NULL;
-	int message_index = 0;
-	int extra_index = 0;
 	int counter = 0;
+	int attr_cnt = 0;
+	int core_cnt = 0;
+	int extra_cnt = 0;
 
 	if(cdr_log_enable==0)
 		return 0;
 
 	/* get default values */
-	message_index = cdr_core2strar( dialog,
+	core_cnt = cdr_core2strar( dialog,
 			cdr_value_array,
 			cdr_int_array,
 			cdr_type_array);
+	attr_cnt += core_cnt;
 
 	/* get extra values */
 	if (message)
 	{
-		extra_index += extra2strar( cdr_extra,
+		extra_cnt += extra2strar(cdr_extra,
 				message,
-				cdr_value_array + message_index,
-				cdr_int_array + message_index,
-				cdr_type_array + message_index);
+				cdr_value_array + attr_cnt,
+				cdr_int_array + attr_cnt,
+				cdr_type_array + attr_cnt);
+		attr_cnt += extra_cnt;;
 	} else if (cdr_expired_dlg_enable){
 		LM_DBG("fallback to dlg_only search because of message does not exist.\n");
-		extra_index += extra2strar_dlg_only( cdr_extra,
+		extra_cnt += extra2strar_dlg_only(cdr_extra,
 				dialog,
-				cdr_value_array + message_index,
-				cdr_int_array + message_index,
-				cdr_type_array + message_index,
+				cdr_value_array + attr_cnt,
+				cdr_int_array + attr_cnt,
+				cdr_type_array + attr_cnt,
 				&dlgb);
+		attr_cnt += extra_cnt;;
 	}
-	message_index += extra_index;
 
 	for( counter = 0, message_position = cdr_message;
-			counter < message_index ;
+			counter < attr_cnt ;
 			counter++ )
 	{
 		const char* const next_message_end = message_position +
@@ -391,9 +394,9 @@ static int log_write_cdr( struct dlg_cell* dialog,
 
 	LM_GEN2( cdr_facility, log_level, "%s", cdr_message);
 
-	/* free memory allocated by extra2strar, nothing is done in case no extra strings were found by extra2strar */
-	free_strar_mem( &(cdr_type_array[message_index-extra_index]), &(cdr_value_array[message_index-extra_index]),
-			extra_index, message_index);
+	/* Free memory allocated by core+extra attrs */
+	free_strar_mem( &(cdr_type_array[0]), &(cdr_value_array[0]),
+			attr_cnt, attr_cnt);
 	return 0;
 }
 
