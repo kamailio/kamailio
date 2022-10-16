@@ -563,7 +563,7 @@ static int ki_hdr_date_check(sip_msg_t* msg, int tdiff)
 	}
 
 	if (tnow > tmsg + tdiff) {
-		LM_ERR("autdated date header value (%ld sec)\n", tnow - tmsg + tdiff);
+		LM_ERR("outdated date header value (%" TIME_T_FMT " sec)\n", TIME_T_CAST(tnow - tmsg + tdiff));
 		return -4;
 	} else {
 		LM_ERR("Date header value OK\n");
