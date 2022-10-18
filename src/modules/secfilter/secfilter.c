@@ -358,6 +358,7 @@ static int w_check_ua(struct sip_msg *msg)
 	len = ua.len;
 
 	/* User-agent whitelisted */
+	lock_get(&secf_data->lock);
 	list = secf_data->wl.ua;
 	while(list) {
 		if(ua.len > list->s.len)
@@ -375,7 +376,6 @@ static int w_check_ua(struct sip_msg *msg)
 	}
 
 	/* User-agent blacklisted */
-	lock_get(&secf_data->lock);
 	list = secf_data->bl.ua;
 	while(list) {
 		if(ua.len > list->s.len)
