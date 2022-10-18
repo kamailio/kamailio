@@ -304,6 +304,7 @@ static int w_check_dst(struct sip_msg *msg, char *val)
 	dst.s = val;
 	dst.len = strlen(val);
 
+	lock_get(&secf_data->lock);
 	list = secf_data->bl.dst;
 	while(list) {
 		if(secf_dst_exact_match == 1) {
@@ -313,6 +314,7 @@ static int w_check_dst(struct sip_msg *msg, char *val)
 					lock_get(secf_lock);
 					secf_stats[BL_DST]++;
 					lock_release(secf_lock);
+					lock_release(&secf_data->lock);
 					return -2;
 				}
 			}
@@ -324,11 +326,13 @@ static int w_check_dst(struct sip_msg *msg, char *val)
 				lock_get(secf_lock);
 				secf_stats[BL_DST]++;
 				lock_release(secf_lock);
+				lock_release(&secf_data->lock);
 				return -2;
 			}
 		}
 		list = list->next;
 	}
+	lock_release(&secf_data->lock);
 
 	return 1;
 }
@@ -363,6 +367,7 @@ static int w_check_ua(struct sip_msg *msg)
 			lock_get(secf_lock);
 			secf_stats[WL_UA]++;
 			lock_release(secf_lock);
+			lock_release(&secf_data->lock);
 			return 2;
 		}
 		list = list->next;
@@ -370,6 +375,7 @@ static int w_check_ua(struct sip_msg *msg)
 	}
 
 	/* User-agent blacklisted */
+	lock_get(&secf_data->lock);
 	list = secf_data->bl.ua;
 	while(list) {
 		if(ua.len > list->s.len)
@@ -380,10 +386,13 @@ static int w_check_ua(struct sip_msg *msg)
 			secf_stats[BL_UA]++;
 			lock_release(secf_lock);
 			return -2;
+			lock_release(&secf_data->lock);
 		}
 		list = list->next;
 		ua.len = len;
 	}
+	lock_release(&secf_data->lock);
+	
 	return 1;
 }
 
@@ -457,6 +466,7 @@ static int check_user(struct sip_msg *msg, int type)
 	dlen = domain.len;
 
 	/* User whitelisted */
+	lock_get(&secf_data->lock);
 	list = secf_data->wl.user;
 	while(list) {
 		if(name.len > list->s.len)
@@ -477,6 +487,7 @@ static int check_user(struct sip_msg *msg, int type)
 						break;
 				}
 				lock_release(secf_lock);
+				lock_release(&secf_data->lock);
 				return 4;
 			}
 		}
@@ -497,6 +508,7 @@ static int check_user(struct sip_msg *msg, int type)
 					break;
 			}
 			lock_release(secf_lock);
+			lock_release(&secf_data->lock);
 			return 2;
 		}
 		list = list->next;
@@ -524,6 +536,7 @@ static int check_user(struct sip_msg *msg, int type)
 						break;
 				}
 				lock_release(secf_lock);
+				lock_release(&secf_data->lock);
 				return -4;
 			}
 		}
@@ -544,6 +557,7 @@ static int check_user(struct sip_msg *msg, int type)
 					break;
 			}
 			lock_release(secf_lock);
+			lock_release(&secf_data->lock);
 			return -2;
 		}
 		list = list->next;
@@ -571,6 +585,7 @@ static int check_user(struct sip_msg *msg, int type)
 					break;
 			}
 			lock_release(secf_lock);
+			lock_release(&secf_data->lock);
 			return 3;
 		}
 		list = list->next;
@@ -596,11 +611,13 @@ static int check_user(struct sip_msg *msg, int type)
 					break;
 			}
 			lock_release(secf_lock);
+			lock_release(&secf_data->lock);
 			return -3;
 		}
 		list = list->next;
 		domain.len = dlen;
 	}
+	lock_release(&secf_data->lock);
 
 	return 1;
 }
@@ -629,6 +646,7 @@ static int w_check_ip(struct sip_msg *msg)
 	len = ip.len;
 
 	/* IP address whitelisted */
+	lock_get(&secf_data->lock);
 	list = secf_data->wl.ip;
 	while(list) {
 		if(ip.len > list->s.len)
@@ -638,6 +656,7 @@ static int w_check_ip(struct sip_msg *msg)
 			lock_get(secf_lock);
 			secf_stats[WL_IP]++;
 			lock_release(secf_lock);
+			lock_release(&secf_data->lock);
 			return 2;
 		}
 		list = list->next;
@@ -653,11 +672,13 @@ static int w_check_ip(struct sip_msg *msg)
 			lock_get(secf_lock);
 			secf_stats[BL_IP]++;
 			lock_release(secf_lock);
+			lock_release(&secf_data->lock);
 			return -2;
 		}
 		list = list->next;
 		ip.len = len;
 	}
+	lock_release(&secf_data->lock);
 
 	return 1;
 }
@@ -682,6 +703,7 @@ static int w_check_country(struct sip_msg *msg, char *val)
 	len = country.len;
 
 	/* Country whitelisted */
+	lock_get(&secf_data->lock);
 	list = secf_data->wl.country;
 	while(list) {
 		if(country.len > list->s.len)
@@ -691,6 +713,7 @@ static int w_check_country(struct sip_msg *msg, char *val)
 			lock_get(secf_lock);
 			secf_stats[WL_COUNTRY]++;
 			lock_release(secf_lock);
+			lock_release(&secf_data->lock);
 			return 2;
 		}
 		list = list->next;
@@ -706,11 +729,13 @@ static int w_check_country(struct sip_msg *msg, char *val)
 			lock_get(secf_lock);
 			secf_stats[BL_COUNTRY]++;
 			lock_release(secf_lock);
+			lock_release(&secf_data->lock);
 			return -2;
 		}
 		list = list->next;
 		country.len = len;
 	}
+	lock_release(&secf_data->lock);
 
 	return 1;
 }
