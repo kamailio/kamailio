@@ -642,6 +642,11 @@ static sr_kemi_t sr_kemi_siputils_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("siputils"), str_init("add_uri_param"),
+		SR_KEMIP_INT, add_uri_param,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ str_init("siputils"), str_init("uri_param_rm"),
 		SR_KEMIP_INT, ki_uri_param_rm,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
