@@ -3818,13 +3818,13 @@ set_rtpengine_set_n(struct sip_msg *msg, rtpp_set_link_t *rtpl, struct rtpp_set 
 	if ( nb_active_nodes > 0 )
 	{
 		LM_DBG("rtpp: selected proxy set ID %d with %d active nodes.\n",
-			current_msg_id, nb_active_nodes);
+			(*out)->id_set, nb_active_nodes);
 		return nb_active_nodes;
 	}
 	else
 	{
 		LM_WARN("rtpp: selected proxy set ID %d but it has no active node.\n",
-			current_msg_id);
+			(*out)->id_set);
 		return -2;
 	}
 }

@@ -41,6 +41,7 @@ typedef struct mqtt_dispatcher_cfg {
 	char *certificate;
 	char *private_key;
 	char *tls_method;
+	char *tls_alpn;
 	int   verify_certificate;
 	char *cipher_list;
 } mqtt_dispatcher_cfg_t;

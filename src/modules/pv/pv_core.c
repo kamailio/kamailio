@@ -2449,11 +2449,16 @@ int pv_get_hfl(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 		}
 		if(idx==0) {
 			cb = ((contact_body_t*)msg->contact->parsed)->contacts;
-			sval.s = cb->name.s;
-			sval.len = cb->len;
-			trim(&sval);
-			res->rs = sval;
-			return 0;
+			if(cb!=NULL) {
+				sval.s = cb->name.s;
+				sval.len = cb->len;
+				trim(&sval);
+				res->rs = sval;
+				return 0;
+			} else {
+				LM_DBG("no contact addresses\n");
+				return pv_get_null(msg, param, res);
+			}
 		}
 		n=0;
 		for(hf=msg->contact; hf!=NULL; hf=hf->next) {
