@@ -77,14 +77,14 @@ void secf_rpc_add_dst(rpc_t *rpc, void *ctx)
 		return;
 	}
 	memcpy(data.s, text, data.len);
-	lock_get(&secf_data->lock);
+	lock_get(&(*secf_data)->lock);
 	if(secf_append_rule(2, 0, &data) == 0) {
 		rpc->rpl_printf(ctx,
 				"Values (%s) inserted into blacklist destinations", data);
 	} else {
 		rpc->fault(ctx, 500, "Error insert values in the blacklist");
 	}
-	lock_release(&secf_data->lock);
+	lock_release(&(*secf_data)->lock);
 	if(data.s)
 		pkg_free(data.s);
 }
@@ -107,14 +107,14 @@ void secf_rpc_add_bl(rpc_t *rpc, void *ctx)
 	ctype.len = strlen(ctype.s);
 	type = get_type(ctype);
 
-	lock_get(&secf_data->lock);
+	lock_get(&(*secf_data)->lock);
 	if(secf_append_rule(0, type, &data) == 0) {
 		rpc->rpl_printf(ctx, "Values (%.*s, %.*s) inserted into blacklist",
 				ctype.len, ctype.s, data.len, data.s);
 	} else {
 		rpc->fault(ctx, 500, "Error inserting values in the blacklist");
 	}
-	lock_release(&secf_data->lock);
+	lock_release(&(*secf_data)->lock);
 }
 
 
@@ -136,22 +136,41 @@ void secf_rpc_add_wl(rpc_t *rpc, void *ctx)
 	ctype.len = strlen(ctype.s);
 	type = get_type(ctype);
 
-	lock_get(&secf_data->lock);
+	lock_get(&(*secf_data)->lock);
 	if(secf_append_rule(1, type, &data) == 0) {
 		rpc->rpl_printf(ctx, "Values (%.*s, %.*s) inserted into whitelist",
 				ctype.len, ctype.s, data.len, data.s);
 	} else {
 		rpc->fault(ctx, 500, "Error insert values in the whitelist");
 	}
-	lock_release(&secf_data->lock);
+	lock_release(&(*secf_data)->lock);
 }
 
 
 /* Reload arrays */
+int rpc_check_reload(rpc_t *rpc, void *ctx)
+{
+	if(secf_rpc_reload_time == NULL) {
+		LM_ERR("not ready for reload\n");
+		rpc->fault(ctx, 500, "Not ready for reload");
+		return -1;
+	}
+	if(*secf_rpc_reload_time != 0
+			&& *secf_rpc_reload_time > time(NULL) - secf_reload_delta) {
+		LM_ERR("ongoing reload\n");
+		rpc->fault(ctx, 500, "ongoing reload");
+		return -1;
+	}
+	*secf_rpc_reload_time = time(NULL);
+	return 0;
+}
+
 void secf_rpc_reload(rpc_t *rpc, void *ctx)
 {
-	secf_free_data();
-
+	if(rpc_check_reload(rpc, ctx) < 0) {
+		return;
+	}
+	
 	if(secf_load_db() == -1) {
 		LM_ERR("Error loading data from database\n");
 		rpc->fault(ctx, 500, "Error loading data from database");
@@ -197,7 +216,7 @@ void secf_rpc_print(rpc_t *rpc, void *ctx)
 			return;
 		}
 
-		list = secf_data->bl.dst;
+		list = (*secf_data)->bl.dst;
 		while(list) {
 			if (rpc->struct_add(dstbh, "S", "Value", &list->s) < 0) {
 				rpc->fault(ctx, 500, "Internal error creating inner struct");
@@ -226,7 +245,7 @@ void secf_rpc_print(rpc_t *rpc, void *ctx)
 			return;
 		}
 
-		list = secf_data->bl.ua;
+		list = (*secf_data)->bl.ua;
 		while(list) {
 			if (rpc->struct_add(uabh, "S", "Value", &list->s.s) < 0) {
 				rpc->fault(ctx, 500, "Internal error creating inner struct");
@@ -235,7 +254,7 @@ void secf_rpc_print(rpc_t *rpc, void *ctx)
 			list = list->next;
 		}
 
-		list = secf_data->wl.ua;
+		list = (*secf_data)->wl.ua;
 		while(list) {
 			if (rpc->struct_add(uawh, "S", "Value", &list->s) < 0) {
 				rpc->fault(ctx, 500, "Internal error creating inner struct");
@@ -264,7 +283,7 @@ void secf_rpc_print(rpc_t *rpc, void *ctx)
 			return;
 		}
 
-		list = secf_data->bl.country;
+		list = (*secf_data)->bl.country;
 		while(list) {
 			if (rpc->struct_add(cbh, "S", "Value", &list->s) < 0) {
 				rpc->fault(ctx, 500, "Internal error creating inner struct");
@@ -273,7 +292,7 @@ void secf_rpc_print(rpc_t *rpc, void *ctx)
 			list = list->next;
 		}
 
-		list = secf_data->wl.country;
+		list = (*secf_data)->wl.country;
 		while(list) {
 			if (rpc->struct_add(cwh, "S", "Value", &list->s) < 0) {
 				rpc->fault(ctx, 500, "Internal error creating inner struct");
@@ -302,7 +321,7 @@ void secf_rpc_print(rpc_t *rpc, void *ctx)
 			return;
 		}
 
-		list = secf_data->bl.domain;
+		list = (*secf_data)->bl.domain;
 		while(list) {
 			if (rpc->struct_add(dbh, "S", "Value", &list->s) < 0) {
 				rpc->fault(ctx, 500, "Internal error creating inner struct");
@@ -311,7 +330,7 @@ void secf_rpc_print(rpc_t *rpc, void *ctx)
 			list = list->next;
 		}
 
-		list = secf_data->wl.domain;
+		list = (*secf_data)->wl.domain;
 		while(list) {
 			if (rpc->struct_add(dwh, "S", "Value", &list->s) < 0) {
 				rpc->fault(ctx, 500, "Internal error creating inner struct");
@@ -340,7 +359,7 @@ void secf_rpc_print(rpc_t *rpc, void *ctx)
 			return;
 		}
 
-		list = secf_data->bl.ip;
+		list = (*secf_data)->bl.ip;
 		while(list) {
 			if (rpc->struct_add(ipbh, "S", "Value", &list->s) < 0) {
 				rpc->fault(ctx, 500, "Internal error creating inner struct");
@@ -349,7 +368,7 @@ void secf_rpc_print(rpc_t *rpc, void *ctx)
 			list = list->next;
 		}
 
-		list = secf_data->wl.ip;
+		list = (*secf_data)->wl.ip;
 		while(list) {
 			if (rpc->struct_add(ipwh, "S", "Value", &list->s) < 0) {
 				rpc->fault(ctx, 500, "Internal error creating inner struct");
@@ -378,7 +397,7 @@ void secf_rpc_print(rpc_t *rpc, void *ctx)
 			return;
 		}
 
-		list = secf_data->bl.user;
+		list = (*secf_data)->bl.user;
 		while(list) {
 			if (rpc->struct_add(usrbh, "S", "Value", &list->s) < 0) {
 				rpc->fault(ctx, 500, "Internal error creating inner struct");
@@ -387,7 +406,7 @@ void secf_rpc_print(rpc_t *rpc, void *ctx)
 			list = list->next;
 		}
 
-		list = secf_data->wl.user;
+		list = (*secf_data)->wl.user;
 		while(list) {
 			if (rpc->struct_add(usrwh, "S", "Value", &list->s) < 0) {
 				rpc->fault(ctx, 500, "Internal error creating inner struct");
