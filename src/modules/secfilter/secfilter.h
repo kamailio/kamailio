@@ -50,7 +50,9 @@ typedef struct _secf_data
 	secf_info_t bl_last;
 } secf_data_t, *secf_data_p;
 
-extern secf_data_p secf_data;
+extern secf_data_p *secf_data;
+extern secf_data_p secf_data_1;
+extern secf_data_p secf_data_2;
 
 extern int *secf_stats;
 void secf_reset_stats(void);
@@ -66,7 +68,7 @@ int secf_get_contact(struct sip_msg *msg, str *user, str *domain);
 /* Database functions */
 int secf_init_db(void);
 int secf_init_data(void);
-void secf_free_data(void);
+void secf_free_data(secf_data_p secf_fdata);
 int secf_load_db(void);
 
 /* Extern variables */
@@ -76,6 +78,9 @@ extern str secf_action_col;
 extern str secf_type_col;
 extern str secf_data_col;
 extern int secf_dst_exact_match;
+extern int secf_reload_delta;
+extern int secf_reload_interval;
+extern time_t *secf_rpc_reload_time;
 
 /* RPC commands */
 void secf_rpc_reload(rpc_t *rpc, void *ctx);
