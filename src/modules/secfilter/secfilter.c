@@ -96,7 +96,14 @@ static param_export_t params[] = {{"db_url", PARAM_STRING, &secf_db_url},
 		{"action_col", PARAM_STR, &secf_action_col},
 		{"type_col", PARAM_STR, &secf_type_col},
 		{"data_col", PARAM_STR, &secf_data_col},
+<<<<<<< HEAD
 		{"dst_exact_match", PARAM_INT, &secf_dst_exact_match}, {0, 0, 0}};
+=======
+		{"dst_exact_match", PARAM_INT, &secf_dst_exact_match},
+		{"reload_delta", PARAM_INT, &secf_reload_delta},
+		{"cleanup_interval", PARAM_INT, &secf_reload_interval},
+		{0, 0, 0}};
+>>>>>>> 82258962ed... secfilter: cleanup old data after a reload by timer function
 
 /* Module exports definition */
 struct module_exports exports = {
@@ -763,11 +770,20 @@ int secf_init_data(void)
 	}
 	memset(secf_data, 0, sizeof(secf_data_t));
 
+	secf_data = shm_malloc(sizeof(secf_data_t));
+	if(secf_data == NULL) {
+		SHM_MEM_ERROR;
+		return -1;
+	}
+
 	secf_stats = shm_malloc(total_data * sizeof(int));
 	memset(secf_stats, 0, total_data * sizeof(int));
 	
 	if(secf_dst_exact_match != 0)
 		secf_dst_exact_match = 1;
+
+	if(register_timer(secf_ht_timer, NULL, secf_reload_interval) < 0)
+		return -1;
 
 	return 0;
 }
@@ -788,6 +804,10 @@ static int mod_init(void)
 		LM_CRIT("cannot initialize lock.\n");
 		return -1;
 	}
+<<<<<<< HEAD
+=======
+	
+>>>>>>> 82258962ed... secfilter: cleanup old data after a reload by timer function
 	secf_lock = lock_alloc();
 	if (!secf_lock) {
 		LM_CRIT("cannot allocate memory for lock.\n");
@@ -888,7 +908,29 @@ static void free_sec_info(secf_info_p info)
 
 void secf_free_data(void)
 {
+<<<<<<< HEAD
 	lock_get(&secf_data->lock);
+=======
+	if(secf_rpc_reload_time == NULL)
+		return;
+
+	if(*secf_rpc_reload_time != 0
+			&& *secf_rpc_reload_time > time(NULL) - secf_reload_interval)
+			return;
+
+	LM_DBG("cleaning old data list\n");
+	if (*secf_data == secf_data_1) {
+		secf_free_data(secf_data_2);
+	} else {
+		secf_free_data(secf_data_1);
+	}
+}
+
+
+void secf_free_data(secf_data_p secf_fdata)
+{
+	lock_get(&secf_fdata->lock);
+>>>>>>> 82258962ed... secfilter: cleanup old data after a reload by timer function
 
 	LM_DBG("freeing wl\n");
 	free_sec_info(&secf_data->wl);
@@ -900,5 +942,9 @@ void secf_free_data(void)
 	memset(&secf_data->bl_last, 0, sizeof(secf_info_t));
 	LM_DBG("so, ua[%p] should be NULL\n", secf_data->bl.ua);
 
+<<<<<<< HEAD
 	lock_release(&secf_data->lock);
+=======
+	lock_release(&secf_fdata->lock);
+>>>>>>> 82258962ed... secfilter: cleanup old data after a reload by timer function
 }

@@ -196,6 +196,17 @@ int secf_load_db(void)
 		return -1;
 	}
 
+<<<<<<< HEAD
+=======
+	/* Choose new hash table and free its old contents */
+	if (*secf_data == secf_data_1) {
+		*secf_data = secf_data_2;
+	} else {
+		*secf_data = secf_data_1;
+	}
+	secf_free_data(*secf_data);
+
+>>>>>>> 82258962ed... secfilter: cleanup old data after a reload by timer function
 	/* Prepare the data for the query */
 	db_cols[0] = &secf_action_col;
 	db_cols[1] = &secf_type_col;

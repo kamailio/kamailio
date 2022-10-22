@@ -156,6 +156,7 @@ void secf_rpc_reload(rpc_t *rpc, void *ctx)
 		LM_ERR("Error loading data from database\n");
 		rpc->fault(ctx, 500, "Error loading data from database");
 	} else {
+		LM_INFO("Data reloaded from RPC");
 		rpc->rpl_printf(ctx, "Data reloaded");
 	}
 }
