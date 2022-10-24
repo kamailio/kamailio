@@ -2287,6 +2287,7 @@ int pv_get_hfl(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 		return pv_get_null(msg, param, res);
 	}
 
+	res->flags = PV_VAL_STR;
 	if((tv.flags == 0) && (tv.ri==HDR_VIA_T)) {
 		if(msg->h_via1==NULL) {
 			LM_WARN("no Via header\n");
