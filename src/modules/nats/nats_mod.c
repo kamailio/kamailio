@@ -18,8 +18,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- *
  */
 
 #include "defs.h"
@@ -44,36 +42,40 @@ static str nats_event_callback = STR_NULL;
 
 static nats_evroutes_t _nats_rts = {0};
 
+/* clang-format off */
 static pv_export_t nats_mod_pvs[] = {
-		{{"natsData", (sizeof("natsData") - 1)}, PVT_OTHER,
+	{{"natsData", (sizeof("natsData") - 1)}, PVT_OTHER,
 				nats_pv_get_event_payload, 0, 0, 0, 0, 0},
-		{{0, 0}, 0, 0, 0, 0, 0, 0, 0}};
+	{{0, 0}, 0, 0, 0, 0, 0, 0, 0}
+};
 
 static param_export_t params[] = {
-		{"nats_url", PARAM_STRING | USE_FUNC_PARAM, (void *)_init_nats_server_url_add},
-		{"num_publish_workers", INT_PARAM, &nats_pub_workers_num},
-		{"subject_queue_group", PARAM_STRING | USE_FUNC_PARAM,
-				(void *)_init_nats_sub_add},
-		{"event_callback", PARAM_STR,   &nats_event_callback},
-		{0, 0, 0}
+	{"nats_url", PARAM_STRING|USE_FUNC_PARAM, (void*)_init_nats_server_url_add},
+	{"num_publish_workers", INT_PARAM, &nats_pub_workers_num},
+	{"subject_queue_group", PARAM_STRING|USE_FUNC_PARAM, (void*)_init_nats_sub_add},
+	{"event_callback", PARAM_STR,   &nats_event_callback},
+	{0, 0, 0}
 };
 
-static cmd_export_t cmds[] = {{"nats_publish", (cmd_function)w_nats_publish_f,
-									  2, fixup_publish_get_value,
-									  fixup_publish_get_value_free, ANY_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
+static cmd_export_t cmds[] = {
+	{"nats_publish", (cmd_function)w_nats_publish_f,
+		  2, fixup_publish_get_value, fixup_publish_get_value_free, ANY_ROUTE},
+	{0, 0, 0, 0, 0, 0}
+};
 
 struct module_exports exports = {
-		"nats", DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,					 /* Exported functions */
-		params,					 /* Exported parameters */
-		0,						 /* exported MI functions */
-		nats_mod_pvs,			 /* exported pseudo-variables */
-		0,						 /* response function*/
-		mod_init,				 /* module initialization function */
-		mod_child_init,			 /* per-child init function */
-		mod_destroy				 /* destroy function */
+	"nats",
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,					 /* Exported functions */
+	params,					 /* Exported parameters */
+	0,						 /* exported MI functions */
+	nats_mod_pvs,			 /* exported pseudo-variables */
+	0,						 /* response function*/
+	mod_init,				 /* module initialization function */
+	mod_child_init,			 /* per-child init function */
+	mod_destroy				 /* destroy function */
 };
+/* clang-format on */
 
 static void onMsg(
 		natsConnection *nc, natsSubscription *sub, natsMsg *msg, void *closure)
