@@ -549,47 +549,51 @@ int nats_destroy_workers()
 	int i;
 	nats_consumer_worker_t *worker;
 	nats_pub_worker_t *pub_worker;
-	for(i = 0; i < _nats_proc_count; i++) {
-		worker = &nats_workers[i];
-		if(worker != NULL) {
-			if(worker->subscription != NULL) {
-				natsSubscription_Unsubscribe(worker->subscription);
-				natsSubscription_Destroy(worker->subscription);
-			}
-			if(worker->uvLoop != NULL) {
-				uv_loop_close(worker->uvLoop);
-			}
-			if(worker->subject != NULL) {
-				shm_free(worker->subject);
-			}
-			if(worker->queue_group != NULL) {
-				shm_free(worker->queue_group);
-			}
-			if(worker->nc != NULL) {
-				if(nats_cleanup_connection(worker->nc) < 0) {
-					LM_ERR("could not cleanup worker connection\n");
+	if(nats_workers != NULL) {
+		for(i = 0; i < _nats_proc_count; i++) {
+			worker = &nats_workers[i];
+			if(worker != NULL) {
+				if(worker->subscription != NULL) {
+					natsSubscription_Unsubscribe(worker->subscription);
+					natsSubscription_Destroy(worker->subscription);
 				}
-			}
-			if(worker->on_message != NULL) {
-				if (worker->on_message->_evname) {
-					free(worker->on_message->_evname);
+				if(worker->uvLoop != NULL) {
+					uv_loop_close(worker->uvLoop);
 				}
-				shm_free(worker->on_message);
+				if(worker->subject != NULL) {
+					shm_free(worker->subject);
+				}
+				if(worker->queue_group != NULL) {
+					shm_free(worker->queue_group);
+				}
+				if(worker->nc != NULL) {
+					if(nats_cleanup_connection(worker->nc) < 0) {
+						LM_ERR("could not cleanup worker connection\n");
+					}
+				}
+				if(worker->on_message != NULL) {
+					if (worker->on_message->_evname) {
+						free(worker->on_message->_evname);
+					}
+					shm_free(worker->on_message);
+				}
+				shm_free(worker);
 			}
-			shm_free(worker);
 		}
 	}
 
-	for(i = 0; i < nats_pub_workers_num; i++) {
-		pub_worker = &nats_pub_workers[i];
-		if(pub_worker != NULL) {
-			if(pub_worker->nc != NULL) {
-				if(nats_cleanup_connection(pub_worker->nc) < 0) {
-					LM_ERR("could not cleanup worker connection\n");
+	if(nats_pub_workers != NULL) {
+		for(i = 0; i < nats_pub_workers_num; i++) {
+			pub_worker = &nats_pub_workers[i];
+			if(pub_worker != NULL) {
+				if(pub_worker->nc != NULL) {
+					if(nats_cleanup_connection(pub_worker->nc) < 0) {
+						LM_ERR("could not cleanup worker connection\n");
+					}
 				}
+				uv_poll_stop(&pub_worker->poll);
+				shm_free(pub_worker);
 			}
-			uv_poll_stop(&pub_worker->poll);
-			shm_free(pub_worker);
 		}
 	}
 	return 0;
@@ -600,9 +604,6 @@ int nats_destroy_workers()
  */
 static void mod_destroy(void)
 {
-	if(nats_workers==NULL) {
-		return;
-	}
 	if(nats_destroy_workers() < 0) {
 		LM_ERR("could not cleanup workers\n");
 	}
