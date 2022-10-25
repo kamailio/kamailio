@@ -35,14 +35,14 @@ nats_consumer_worker_t *nats_workers = NULL;
 nats_pub_worker_t *nats_pub_workers = NULL;
 int nats_pub_workers_num = DEFAULT_NUM_PUB_WORKERS;
 
-int _nats_proc_count;
+static int _nats_proc_count = 0;
 char *eventData = NULL;
 
 int *nats_pub_worker_pipes_fds = NULL;
 int *nats_pub_worker_pipes = NULL;
 static str nats_event_callback = STR_NULL;
 
-static nats_evroutes_t _nats_rts;
+static nats_evroutes_t _nats_rts = {0};
 
 static pv_export_t nats_mod_pvs[] = {
 		{{"natsData", (sizeof("natsData") - 1)}, PVT_OTHER,
