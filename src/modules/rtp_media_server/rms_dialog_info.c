@@ -23,7 +23,7 @@
 extern rms_dialog_info_t *rms_dialog_list;
 extern int in_rms_process;
 
-gen_lock_t *dialog_list_mutex;
+gen_lock_t *dialog_list_mutex = NULL;
 
 static void rms_action_free(rms_dialog_info_t *si)
 {
