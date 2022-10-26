@@ -65,7 +65,7 @@ int uri_param_2(struct sip_msg* _msg, char* _param, char* _value);
  * Adds a new parameter to Request URI
  */
 int add_uri_param(struct sip_msg* _msg, char* _param, char* _s2);
-
+int ki_add_uri_param(struct sip_msg* _msg, str* param);
 
 /*
  * Converts URI, if it is tel URI, to SIP URI.  Returns 1, if
