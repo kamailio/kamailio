@@ -34,6 +34,11 @@
 		this module, look at the files inside the source tree located at
 		'modules/app_python3/python_examples/'.
 	</para>
+	<para>
+		Note: if symbols exported to KEMI (module or function names) conflict
+		with Python's reserved keywords, use the 'getattr()' function or the
+		'__dict__' attribute for 'KSR' (e.g., 'KSR.__dict__["async"].task_route("myroute")').
+	</para>
     </section>
     <section>
 	<title>Dependencies</title>
