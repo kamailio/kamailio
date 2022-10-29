@@ -2065,7 +2065,7 @@ int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode)
  * Set destination address from group 'set' selected with alogorithm 'alg'
  * - the rest of addresses in group are added as next destination in xavps,
  *   up to the 'limit'
- * - mode specify to set address in R-URI or outboud proxy
+ * - mode specify to set address in R-URI or outbound proxy
  *
  */
 int ds_select_dst_limit(sip_msg_t *msg, int set, int alg, uint32_t limit,
