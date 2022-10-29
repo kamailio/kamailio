@@ -1399,7 +1399,8 @@ With congestion control the formula becomes :
 			<emphasis>limit</emphasis> - the maximum number of items to be
 			stored in XAVP list for further fail-overs (the first selected
 			destination and default destination are the first to be put in
-			the list)
+			the list). This can improve the performance especially if you
+			are using a large list of gateways.
 			</para>
 		</listitem>
 		</itemizedlist>
