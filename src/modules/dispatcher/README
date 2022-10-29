@@ -1206,7 +1206,9 @@ With congestion control the formula becomes :
             set is chosen.
      * limit - the maximum number of items to be stored in XAVP list for
        further fail-overs (the first selected destination and default
-       destination are the first to be put in the list)
+       destination are the first to be put in the list). This can improve
+       the performance especially if you are using a large list of
+       gateways.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
