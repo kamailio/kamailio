@@ -283,7 +283,7 @@ static int w_check_sqli(str val)
 	memcpy(cval, val.s, val.len);
 
 	if(strstr(cval, "'") || strstr(cval, "\"") || strstr(cval, "--")
-			|| strstr(cval, "%27") || strstr(cval, "%24")
+			|| strstr(cval, "%27") || strstr(cval, "%22")
 			|| strstr(cval, "%60")) {
 		/* Illegal characters found */
 		lock_get(secf_lock);
