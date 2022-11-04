@@ -220,6 +220,10 @@ static int ki_secsipid_check_identity(sip_msg_t *msg, str *keypath)
 		}
 	}
 
+	if(ibody.len==0) {
+		LM_DBG("identity header not found\n");
+	}
+
 	LM_DBG("identity check: failed\n");
 	return ret;
 }
@@ -268,6 +272,10 @@ static int ki_secsipid_check_identity_pubkey(sip_msg_t *msg, str *keyval)
 				return 1;
 			}
 		}
+	}
+
+	if(ibody.len==0) {
+		LM_DBG("identity header not found\n");
 	}
 
 	LM_DBG("identity check: failed\n");
