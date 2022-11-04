@@ -1922,7 +1922,7 @@ static int ki_dlg_set_var(sip_msg_t *msg, str *sc, str *sf, str *st, str *key, s
 		LM_ERR("invalid From tag parameter\n");
 		return -1;
 	}
-	if(st==NULL || st->s==NULL || st->len == 0) {
+	if(st==NULL) {
 		LM_ERR("invalid To tag parameter\n");
 		return -1;
 	}
@@ -1966,11 +1966,7 @@ static int w_dlg_set_var(struct sip_msg *msg, char *ci, char *ft, char *tt, char
 		LM_ERR("unable to get To Tag\n");
 		return -1;
 	}
-	if(st.s==NULL || st.len == 0)
-	{
-		LM_ERR("invalid To tag parameter\n");
-		return -1;
-	}
+
 	if(fixup_get_svalue(msg, (gparam_p)key, &k)!=0)
 	{
 		LM_ERR("unable to get key name\n");
