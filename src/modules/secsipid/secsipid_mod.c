@@ -225,6 +225,11 @@ static int ki_secsipid_check_identity(sip_msg_t *msg, str *keypath)
 	str ibody = STR_NULL;
 	hdr_field_t *hf;
 
+	if (parse_headers(msg, HDR_EOH_F, 0) == -1) {
+		LM_ERR("error while parsing message\n");
+		return -1;
+	}
+
 	if(secsipid_cache_dir.len > 0) {
 		_secsipid_papi.SecSIPIDSetFileCacheOptions(secsipid_cache_dir.s,
 				secsipid_cache_expire);
@@ -282,6 +287,11 @@ static int ki_secsipid_check_identity_pubkey(sip_msg_t *msg, str *keyval)
 	int ret = -1;
 	str ibody = STR_NULL;
 	hdr_field_t *hf;
+
+	if (parse_headers(msg, HDR_EOH_F, 0) == -1) {
+		LM_ERR("error while parsing message\n");
+		return -1;
+	}
 
 	if(secsipid_libopt_list_used==0) {
 		str_list_t *sit;
