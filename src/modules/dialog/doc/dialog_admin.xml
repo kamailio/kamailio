@@ -2239,7 +2239,7 @@ if(dlg_get_var("$var(ci)", "$var(ft)", "456", "test", "$var(tmp)"))
 			</para>
 		</listitem>
 		<listitem>
-			<para><emphasis>ttag</emphasis> - SIP To tag.
+			<para><emphasis>ttag</emphasis> - SIP To tag. Use "" value to indicate early dialog.
 			</para>
 		</listitem>
 		<listitem>
@@ -2260,6 +2260,11 @@ if(dlg_get_var("$var(ci)", "$var(ft)", "456", "test", "$var(tmp)"))
 		<programlisting format="linespecific">
 ...
 if(dlg_set_var("$var(ci)", "$var(ft)", "456", "test", "$var(tmp)"))
+{
+	xdbg("set $$dlg_var(test):$var(tmp)\n");
+}
+# you can set vars in early dialog too
+if(dlg_set_var("$var(ci)", "$var(ft)", "", "test", "$var(tmp)"))
 {
 	xdbg("set $$dlg_var(test):$var(tmp)\n");
 }
