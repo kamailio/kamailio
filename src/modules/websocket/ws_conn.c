@@ -464,7 +464,7 @@ ws_connection_t *wsconn_get(int id)
 	for(wsc = wsconn_id_hash[id_hash]; wsc; wsc = wsc->id_next) {
 		if(wsc->id == id) {
 			wsconn_ref(wsc);
-			LM_DBG("wsconn_get returns wsc [%p] refcnt [%d]\n", wsc,
+			LM_DBG("wsconn_get id [%d] returns wsc [%p] refcnt [%d]\n", id, wsc,
 					atomic_get(&wsc->refcnt));
 
 			WSCONN_UNLOCK;

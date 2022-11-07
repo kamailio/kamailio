@@ -811,7 +811,8 @@ void ws_keepalive(unsigned int ticks, void *param)
 			} else if (ws_keepalive_mechanism == KEEPALIVE_MECHANISM_CONCHECK) {
 				tcp_connection_t *con = tcpconn_get(wsc->id, 0, 0, 0, 0);
 				if(con==NULL) {
-					LM_INFO("tcp connection has been lost\n");
+					LM_INFO("tcp connection has been lost (id: %d wsc: %p)\n",
+							wsc->id, wsc);
 					wsc->state = WS_S_CLOSING;
 				} else {
 					tcpconn_put(con);
