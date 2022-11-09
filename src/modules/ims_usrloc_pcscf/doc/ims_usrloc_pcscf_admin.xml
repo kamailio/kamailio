@@ -183,6 +183,24 @@ modparam("ims_usrloc_pcscf", "match_contact_host_port", 0)
 </programlisting>
       </example>
     </section>
+
+    <section>
+      <title>expires_grace (int)</title>
+
+      <para>Specify a grace time for keeping the contacts until they are finally deleted.
+          The value of the parameter is defined in seconds.</para>
+
+      <para><emphasis>Default value is 3600.</emphasis></para>
+
+      <example>
+        <title>Set expires_grace parameter</title>
+
+        <programlisting format="linespecific">...
+modparam("ims_usrloc_pcscf", "expires_grace", 1800)
+...
+</programlisting>
+      </example>
+    </section>
     
   </section>
 
