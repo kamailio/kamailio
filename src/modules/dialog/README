@@ -1814,7 +1814,7 @@ if(dlg_get_var("$var(ci)", "$var(ft)", "456", "test", "$var(tmp)"))
    Meaning of the parameters is as follows:
      * callid - SIP call-id.
      * ftag - SIP From tag.
-     * ttag - SIP To tag.
+     * ttag - SIP To tag. Use "" value to indicate early dialog.
      * name - key name of the $dlg_var.
      * value - string value to store at $dlg_var(name).
 
@@ -1824,6 +1824,11 @@ if(dlg_get_var("$var(ci)", "$var(ft)", "456", "test", "$var(tmp)"))
    Example 1.80. dlg_set_var usage
 ...
 if(dlg_set_var("$var(ci)", "$var(ft)", "456", "test", "$var(tmp)"))
+{
+        xdbg("set $$dlg_var(test):$var(tmp)\n");
+}
+# you can set vars in early dialog too
+if(dlg_set_var("$var(ci)", "$var(ft)", "", "test", "$var(tmp)"))
 {
         xdbg("set $$dlg_var(test):$var(tmp)\n");
 }
