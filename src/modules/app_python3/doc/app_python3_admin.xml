@@ -203,12 +203,12 @@ python_exec("my_python_function", "$rU");
             <para>
             Marks the need to reload the Python script.
             The actual reload is done in each worker when it next invokes a Python method.
-            The module uses a worker process lock to prevent recursive reloads. 
+            The module uses a worker process lock to prevent recursive reloads.
             </para>
             <para>
-              This function only reloads the user script and creates a new script object.
-	      It does not reinitialize the interpreter.
-	      E.g., references in the old module remain if not redefined by the new version.
+			This function only reloads (re-executes) the user script and creates
+			a new script object. It does not reinitialize the interpreter (references
+			in the old module remain if not redefined by the new version).
             </para>
             <para>
             Name: <emphasis>app_python.reload</emphasis>
@@ -222,6 +222,28 @@ python_exec("my_python_function", "$rU");
 &kamcmd; app_python.reload
 ...
             </programlisting>
+			<para>
+			Note that reload is done for the Python script provided as parameter
+			to this &kamailio; module. To reload the Python libraries imported
+			in this script, use something like:
+            </para>
+            <programlisting  format="linespecific">
+...
+import mod1
+...
+import modN
+from importlib import reload
+
+def mod_init():
+    reload(mod1)
+    ...
+    reload(modN)
+    return kamailio()
+...
+            </programlisting>
+			<para>
+				Where "modX" are the modules imported at the top.
+            </para>
 		</section>
 		<section id="app_python3.r.api_list">
             <title>
