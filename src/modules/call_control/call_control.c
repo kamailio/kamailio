@@ -589,7 +589,7 @@ make_custom_request(struct sip_msg *msg, CallInfo *call)
         }
         if (pt.flags & PV_VAL_INT) {
             len += snprintf(request + len0, sizeof(request)-len0,
-                      "%.*s = %d ", al->name.len, al->name.s,
+                      "%.*s = %ld ", al->name.len, al->name.s,
                    pt.ri);
         } else    if (pt.flags & PV_VAL_STR) {
             len += snprintf(request + len0, sizeof(request)-len0,
