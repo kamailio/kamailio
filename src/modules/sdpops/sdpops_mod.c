@@ -63,8 +63,8 @@ static int w_sdp_content_sloppy(sip_msg_t* msg, char* foo, char *bar);
 static int w_sdp_with_ice(sip_msg_t* msg, char* foo, char *bar);
 static int w_sdp_get_line_startswith(sip_msg_t* msg, char *foo, char *bar);
 
-static int sdp_get_sess_version(sip_msg_t* msg, str* sess_version, int* sess_version_num);
-static int sdp_set_sess_version(sip_msg_t* msg, str* sess_version, int* sess_version_num);
+static int sdp_get_sess_version(sip_msg_t* msg, str* sess_version, long* sess_version_num);
+static int sdp_set_sess_version(sip_msg_t* msg, str* sess_version, long* sess_version_num);
 static int w_sdp_get_address_family(sip_msg_t* msg);
 
 static int pv_get_sdp(sip_msg_t *msg, pv_param_t *param,
@@ -1905,7 +1905,7 @@ static int ki_sdp_get_line_startswith(sip_msg_t *msg, str *aname, str *sline)
 	return -1;
 }
 
-static int sdp_get_sess_version(sip_msg_t* msg, str* sess_version, int* sess_version_num)
+static int sdp_get_sess_version(sip_msg_t* msg, str* sess_version, long* sess_version_num)
 {
 	sdp_session_cell_t* sdp_session;
 	int sdp_session_num;
@@ -1924,7 +1924,7 @@ static int sdp_get_sess_version(sip_msg_t* msg, str* sess_version, int* sess_ver
 
 	if ( sdp_session_num > 0 )
 	{
-		if ( str2sint(sess_version, sess_version_num) != -1 )
+		if ( str2slong(sess_version, sess_version_num) != -1 )
 		{
 			return 1;
 		}
@@ -1932,11 +1932,11 @@ static int sdp_get_sess_version(sip_msg_t* msg, str* sess_version, int* sess_ver
 	return -1;
 }
 
-static int sdp_set_sess_version(sip_msg_t* msg, str* disabled_old_sess_version, int* new_sess_version_num)
+static int sdp_set_sess_version(sip_msg_t* msg, str* disabled_old_sess_version, long* new_sess_version_num)
 {
 	str new_sess_version = STR_NULL;
 	str old_sess_version = STR_NULL;
-	int old_sess_version_num = 0;
+	long old_sess_version_num = 0;
 	int autoincrement = 0;
 
 	struct lump* anchor = NULL;
@@ -1963,13 +1963,13 @@ static int sdp_set_sess_version(sip_msg_t* msg, str* disabled_old_sess_version, 
 		*new_sess_version_num = old_sess_version_num + 1;
 		if ( *new_sess_version_num < old_sess_version_num )
 		{
-			LM_ERR("autoincrement: new(%d) < old(%d)\n", *new_sess_version_num, old_sess_version_num);
+			LM_ERR("autoincrement: new(%ld) < old(%ld)\n", *new_sess_version_num, old_sess_version_num);
 			return -1;
 		}
-		LM_DBG("old_sess_version_num: %d -> *new_sess_version_num %d\n", old_sess_version_num, *new_sess_version_num);
+		LM_DBG("old_sess_version_num: %ld -> *new_sess_version_num %ld\n", old_sess_version_num, *new_sess_version_num);
 	}
-	LM_DBG("old_sess_version_num: %d  autoincrement: %d\n", old_sess_version_num,autoincrement);
-	LM_DBG("*new_sess_version_num: %d  autoincrement: %d\n", *new_sess_version_num,autoincrement);
+	LM_DBG("old_sess_version_num: %ld  autoincrement: %d\n", old_sess_version_num,autoincrement);
+	LM_DBG("*new_sess_version_num: %ld  autoincrement: %d\n", *new_sess_version_num,autoincrement);
 
 	char *sid;
 	char buf[INT2STR_MAX_LEN];
@@ -1982,7 +1982,7 @@ static int sdp_set_sess_version(sip_msg_t* msg, str* disabled_old_sess_version, 
 
 	if ( autoincrement == 1 && ( new_sess_version.len < old_sess_version.len ) )
 	{
-		LM_ERR("autoincrement: new(%d) < old(%.*s)\n", *new_sess_version_num, old_sess_version.len, old_sess_version.s);
+		LM_ERR("autoincrement: new(%ld) < old(%.*s)\n", *new_sess_version_num, old_sess_version.len, old_sess_version.s);
 		return -1;
 	}
 
@@ -2066,7 +2066,7 @@ static int pv_get_sdp(sip_msg_t *msg, pv_param_t *param,
 {
 	sdp_info_t *sdp = NULL;
 	str sess_version = STR_NULL;
-	int sess_version_num = 0;
+	long sess_version_num = 0;
 
 	if(msg==NULL || param==NULL)
 		return -1;
@@ -2122,7 +2122,7 @@ static int pv_set_sdp(sip_msg_t *msg, pv_param_t *param,
 			LM_ERR("expected integer\n");
 			return -1;
 		}
-		LM_DBG("do $sdp(sess_version) = %d\n", res->ri);
+		LM_DBG("do $sdp(sess_version) = %ld\n", res->ri);
 		return sdp_set_sess_version(msg, NULL, &res->ri);
 	}
 	else
