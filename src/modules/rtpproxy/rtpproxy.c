@@ -1696,7 +1696,7 @@ set_rtp_proxy_set_f(struct sip_msg * msg, char * str1, char * str2)
 		}
 		selected_rtpp_set = select_rtpp_set(val.ri);
 		if(selected_rtpp_set==NULL) {
-			LM_ERR("could not locate rtpproxy set %d\n", val.ri);
+			LM_ERR("could not locate rtpproxy set %ld\n", val.ri);
 			return -1;
 		}
 		current_msg_id = msg->id;
