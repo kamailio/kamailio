@@ -3801,7 +3801,7 @@ set_rtpengine_set_n(struct sip_msg *msg, rtpp_set_link_t *rtpl, struct rtpp_set 
 	}
 	*out = select_rtpp_set(val.ri);
 	if(*out==NULL) {
-		LM_ERR("could not locate rtpengine set %u\n", val.ri);
+		LM_ERR("could not locate rtpengine set %ld\n", val.ri);
 		return -1;
 	}
 	current_msg_id = msg->id;
