@@ -298,7 +298,7 @@ static int exp_optimize_left(struct expr* exp)
 		if (rve->op==RVE_RVAL_OP){
 			rval=&rve->left.rval;
 			switch(rval->type){
-				case RV_INT:
+				case RV_LONG:
 					if (exp->op==NO_OP){
 						exp->l_type=NUMBER_O;
 						exp->l.param=0;
@@ -408,7 +408,7 @@ static int exp_optimize_right(struct expr* exp)
 		if (rve->op==RVE_RVAL_OP){
 			rval=&rve->left.rval;
 			switch(rval->type){
-				case RV_INT:
+				case RV_LONG:
 					exp->r_type=NUMBER_ST;
 					exp->r.numval=rval->v.l;
 					rval_destroy(rval);
@@ -712,7 +712,7 @@ int fix_actions(struct action* a)
 					/* it's not an error anymore to have non-int in an if,
 					   only a script warning (to allow backward compat. stuff
 					   like if (@ruri) 
-					if (rve_type!=RV_INT && rve_type!=RV_NONE){
+					if (rve_type!=RV_LONG && rve_type!=RV_NONE){
 						LM_ERR("fix_actions: invalid expression (%d,%d):"
 								" bad type, integer expected\n",
 								rve->fpos.s_line, rve->fpos.s_col);
@@ -786,7 +786,7 @@ int fix_actions(struct action* a)
 						ret = E_SCRIPT;
 						goto error;
 					}
-					if (rve_type!=RV_INT && rve_type!=RV_NONE){
+					if (rve_type!=RV_LONG && rve_type!=RV_NONE){
 						LM_ERR("invalid expression (%d,%d): bad type, integer expected\n",
 								rve->fpos.s_line, rve->fpos.s_col);
 						ret = E_SCRIPT;
@@ -827,7 +827,7 @@ int fix_actions(struct action* a)
 						ret = E_SCRIPT;
 						goto error;
 					}
-					if (rve_type!=RV_INT && rve_type!=RV_NONE){
+					if (rve_type!=RV_LONG && rve_type!=RV_NONE){
 						LM_ERR("invalid expression (%d,%d): bad type, integer expected\n",
 								rve->fpos.s_line, rve->fpos.s_col);
 						ret = E_SCRIPT;

@@ -2438,7 +2438,7 @@ preprocess_stm:
 			}else if (!rve_check_type((enum rval_type*)&i_tmp, $1, 0, 0 ,0)){
 				yyerror("invalid expression");
 				$$=0;
-			}else if (i_tmp!=RV_INT && i_tmp!=RV_NONE){
+			}else if (i_tmp!=RV_LONG && i_tmp!=RV_NONE){
 				yyerror("invalid expression type, int expected\n");
 				$$=0;
 			}else
@@ -2562,7 +2562,7 @@ exp_elem:
 			$$=0;
 			if (rve_is_constant($3)){
 				i_tmp=rve_guess_type($3);
-				if (i_tmp==RV_INT)
+				if (i_tmp==RV_LONG)
 					yyerror("string expected");
 				else if (i_tmp==RV_STR){
 					if (((rval_tmp=rval_expr_eval(0, 0, $3))==0) ||
@@ -2806,7 +2806,7 @@ ct_rval: rval_expr {
 			} else if ($1 &&
 						!rve_check_type((enum rval_type*)&i_tmp, $1, 0, 0 ,0)){
 				yyerror("invalid expression (bad type)");
-			}else if ($1 && i_tmp!=RV_INT){
+			}else if ($1 && i_tmp!=RV_LONG){
 				yyerror("invalid expression type, int expected\n");
 			*/
 			}else
@@ -3166,7 +3166,7 @@ lval: attr_id_ass {
 				}
 	;
 
-rval: intno			{$$=mk_rve_rval(RV_INT, (void*)$1); }
+rval: intno			{$$=mk_rve_rval(RV_LONG, (void*)$1); }
 	| STRING			{	s_tmp.s=$1; s_tmp.len=strlen($1);
 							$$=mk_rve_rval(RV_STR, &s_tmp); }
 	| attr_id_any		{$$=mk_rve_rval(RV_AVP, $1); pkg_free($1); }
@@ -3217,7 +3217,7 @@ rval_expr: rval						{ $$=$1;
 										}
 									}
 		| rve_un_op rval_expr %prec UNARY	{$$=mk_rve1($1, $2); }
-		| INTCAST rval_expr				{$$=mk_rve1(RVE_INT_OP, $2); }
+		| INTCAST rval_expr				{$$=mk_rve1(RVE_LONG_OP, $2); }
 		| STRCAST rval_expr				{$$=mk_rve1(RVE_STR_OP, $2); }
 		| rval_expr PLUS rval_expr		{$$=mk_rve2(RVE_PLUS_OP, $1, $3); }
 		| rval_expr MINUS rval_expr		{$$=mk_rve2(RVE_MINUS_OP, $1, $3); }
@@ -4033,7 +4033,7 @@ static int rval_expr_int_check(struct rval_expr *rve)
 		else
 			yyerror("BUG: unexpected null \"bad\" expression\n");
 		return -1;
-	}else if (type!=RV_INT && type!=RV_NONE){
+	}else if (type!=RV_LONG && type!=RV_NONE){
 		warn_at(&rve->fpos, "non-int expression (you might want to use"
 				" casts)\n");
 		return 1;

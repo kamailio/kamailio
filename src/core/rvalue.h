@@ -35,7 +35,7 @@
 #include "action.h"
 
 enum rval_type{
-	RV_NONE, RV_INT, RV_STR, /* basic types */
+	RV_NONE, RV_LONG, RV_STR, /* basic types */
 	RV_BEXPR, RV_ACTION_ST,  /* special values */
 	RV_SEL, RV_AVP, RV_PVAR
 };
@@ -82,7 +82,7 @@ enum rval_expr_op{
 	/* avp, pvars a.s.o */
 	RVE_DEFINED_OP, /**< one member, returns is_defined(val) (bool) */
 	RVE_NOTDEFINED_OP, /**< one member, returns is_not_defined(val) (bool) */
-	RVE_INT_OP,   /**< one member, returns (int)val  (int) */
+	RVE_LONG_OP,   /**< one member, returns (int)val  (int) */
 	RVE_STR_OP    /**< one member, returns (str)val  (str) */
 };
 
@@ -273,7 +273,7 @@ int rve_has_side_effects(struct rval_expr* rve);
 
 /**
  * @brief Returns 1 if expression is valid (type-wise)
- * @param type filled with the type of the expression (RV_INT, RV_STR or
+ * @param type filled with the type of the expression (RV_LONG, RV_STR or
  *                RV_NONE if it's dynamic)
  * @param rve  checked expression
  * @param bad_rve set on failure to the subexpression for which the
@@ -282,7 +282,7 @@ int rve_has_side_effects(struct rval_expr* rve);
  * @param exp_t set on failure to the expected type for the bad
  * subexpression
  * @return 0 or 1 and sets *type to the resulting type
- * (RV_INT, RV_STR or RV_NONE if it can be found only at runtime)
+ * (RV_LONG, RV_STR or RV_NONE if it can be found only at runtime)
  */
 int rve_check_type(enum rval_type* type, struct rval_expr* rve,
 					struct rval_expr** bad_rve, enum rval_type* bad_type,
