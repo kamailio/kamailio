@@ -90,7 +90,7 @@ typedef void (*pv_name_free_f)(void*);
 typedef struct _pv_value
 {
 	str rs;    /*!< string value */
-	int ri;    /*!< integer value */
+	long ri;   /*!< long value */
 	int flags; /*!< flags about the type of value */
 } pv_value_t, *pv_value_p;
 
@@ -266,7 +266,7 @@ enum _tr_param_type { TR_PARAM_NONE=0, TR_PARAM_STRING, TR_PARAM_NUMBER,
 typedef struct _tr_param {
 	int type;
 	union {
-		int n;
+		long n;
 		str s;
 		void *data;
 	} v;
