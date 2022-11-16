@@ -254,31 +254,6 @@ int pv_parse_dialog_var_name(pv_spec_p sp, str *in)
 	return 0;
 }
 
-/*! Internal debugging function: Prints the list of dialogs */
-void print_lists(struct dlg_cell *dlg) {
-	struct dlg_var *varlist;
-	varlist = _dlg_var_table;
-	LM_DBG("Internal var-list (%p):\n", varlist);
-	while (varlist) {
-		LM_DBG("%.*s=%.*s (flags %i)\n",
-			varlist->key.len, varlist->key.s,
-			varlist->value.len, varlist->value.s,
-			varlist->vflags);
-		varlist = varlist->next;
-	}
-	if (dlg) {
-		varlist = dlg->vars;
-		LM_DBG("Dialog var-list (%p):\n", varlist);
-		while (varlist) {
-			LM_DBG("%.*s=%.*s (flags %i)\n",
-				varlist->key.len, varlist->key.s,
-				varlist->value.len, varlist->value.s,
-				varlist->vflags);
-			varlist = varlist->next;
-		}
-	}
-}
-
 /**
  * return reference to the dlg variable value
  * - unsafe - use only when it is sure that the value is not updated
@@ -449,8 +424,6 @@ int set_dlg_variable(struct dlg_cell *dlg, str *key, str *val)
     if ( dlg_db_mode==DB_MODE_REALTIME )
         update_dialog_dbinfo(dlg);
 
-    print_lists(dlg);
-
     return 0;
 
 done:
@@ -509,8 +482,6 @@ int pv_get_dlg_variable(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 			spv.s[spv.len] = '\0';
 		}
 	}
-
-	print_lists(dlg);
 
 	/* unlock dialog */
 	if (dlg) {
@@ -584,8 +555,6 @@ int pv_set_dlg_variable(struct sip_msg* msg, pv_param_t *param, int op, pv_value
 		}
 		dlg_unlock(d_table, &(d_table->entries[dlg->h_entry]));
 	}
-	print_lists(dlg);
-
 	dlg_release(dlg);
 	return 0;
 error:
