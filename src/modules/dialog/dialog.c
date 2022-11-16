@@ -144,6 +144,8 @@ stat_var *expired_dlgs = 0;
 stat_var *failed_dlgs = 0;
 stat_var *early_dlgs  = 0;
 
+int debug_variables_list = 0;
+
 struct tm_binds d_tmb;
 struct rr_binds d_rrb;
 pv_spec_t timeout_avp;
@@ -363,6 +365,7 @@ static param_export_t mod_params[]={
 	{ "bye_early_code",        PARAM_INT, &bye_early_code           },
 	{ "bye_early_reason",      PARAM_STR, &bye_early_reason         },
 	{ "dlg_ctxiuid_mode",      PARAM_INT, &dlg_ctxiuid_mode         },
+	{ "debug_variables",       PARAM_INT, &debug_variables_list     },
 
 	{ 0,0,0 }
 };

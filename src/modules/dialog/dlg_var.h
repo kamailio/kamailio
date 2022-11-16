@@ -89,6 +89,8 @@ extern stat_var *processed_dlgs;	/*!< number of processed dialogs */
 extern stat_var *expired_dlgs;		/*!< number of expired dialogs */
 extern stat_var *failed_dlgs;		/*!< number of failed dialogs */
 
+extern int debug_variables_list;
+
 int pv_get_dlg_ctx(sip_msg_t *msg,  pv_param_t *param,
 		pv_value_t *res);
 int pv_set_dlg_ctx(sip_msg_t *msg, pv_param_t *param,

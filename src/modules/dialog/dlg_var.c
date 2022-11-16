@@ -449,7 +449,9 @@ int set_dlg_variable(struct dlg_cell *dlg, str *key, str *val)
     if ( dlg_db_mode==DB_MODE_REALTIME )
         update_dialog_dbinfo(dlg);
 
-    print_lists(dlg);
+    if(unlikely(debug_variables_list)) {
+        print_lists(dlg);
+    }
 
     return 0;
 
@@ -510,7 +512,9 @@ int pv_get_dlg_variable(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 		}
 	}
 
-	print_lists(dlg);
+	if(unlikely(debug_variables_list)) {
+		print_lists(dlg);
+	}
 
 	/* unlock dialog */
 	if (dlg) {
@@ -584,7 +588,9 @@ int pv_set_dlg_variable(struct sip_msg* msg, pv_param_t *param, int op, pv_value
 		}
 		dlg_unlock(d_table, &(d_table->entries[dlg->h_entry]));
 	}
-	print_lists(dlg);
+	if(unlikely(debug_variables_list)) {
+		print_lists(dlg);
+	}
 
 	dlg_release(dlg);
 	return 0;
