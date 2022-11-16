@@ -1613,7 +1613,7 @@ set_lrkproxy_set_f(struct sip_msg * msg, char * str1, char * str2)
         }
         selected_lrkp_set = select_lrkp_set(val.ri);
         if(selected_lrkp_set==NULL) {
-                    LM_ERR("could not locate lrkproxy set %d\n", val.ri);
+                    LM_ERR("could not locate lrkproxy set %ld\n", val.ri);
             return -1;
         }
         current_msg_id = msg->id;
