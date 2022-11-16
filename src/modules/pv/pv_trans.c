@@ -216,7 +216,7 @@ int tr_eval_string(struct sip_msg *msg, tr_param_t *tp, int subtype,
 		case TR_S_INT:
 			if(!(val->flags&PV_VAL_INT))
 			{
-				if(str2sint(&val->rs, &val->ri)!=0)
+				if(str2slong(&val->rs, &val->ri)!=0)
 					return -1;
 			} else {
 				if(!(val->flags&PV_VAL_STR))
