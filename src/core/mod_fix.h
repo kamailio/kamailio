@@ -62,6 +62,8 @@ int fixup_get_svalue(struct sip_msg* msg, gparam_p gp, str *val);
   */
 #define fixup_get_svalue(msg, fp, sval) get_str_fparam(sval, msg, fp)
 
+#define fixup_get_bufvalue(msg, fp, sval) get_strbuf_fparam(sval, msg, fp)
+
 /** get an int value out of a fparam_t.
   *
   * Note: this macro/function is  for kamailio compatibility

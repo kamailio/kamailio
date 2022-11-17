@@ -489,6 +489,8 @@ int fixup_str_2(void** param, int param_no);
  */
 int get_str_fparam(str* dst, struct sip_msg* msg, fparam_t* param);
 
+int get_strbuf_fparam(str* dst, struct sip_msg* msg, fparam_t* param);
+
 /**
  * @brief Get the function parameter value as integer
  * @param dst string destination
