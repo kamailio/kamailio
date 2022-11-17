@@ -147,6 +147,7 @@ FORWARD_SCTP	forward_sctp
 DROP	"drop"
 EXIT	"exit"
 RETURN	"return"
+RETURN_MODE	"return_mode"
 BREAK	"break"
 LOG		log
 ERROR	error
@@ -1049,6 +1050,7 @@ IMPORTFILE      "import_file"
 <INITIAL>{CFGENGINE}	{ count(); yylval.strval=yytext; return CFGENGINE; }
 <INITIAL>{URI_HOST_EXTRA_CHARS}	{ yylval.strval=yytext; return URI_HOST_EXTRA_CHARS; }
 <INITIAL>{HDR_NAME_EXTRA_CHARS}	{ yylval.strval=yytext; return HDR_NAME_EXTRA_CHARS; }
+<INITIAL>{RETURN_MODE}	{ count(); yylval.strval=yytext; return RETURN_MODE; }
 
 <INITIAL>{EQUAL}	{ count(); return EQUAL; }
 <INITIAL>{ADDEQ}          { count(); return ADDEQ; }

@@ -227,6 +227,7 @@ extern char *default_routename;
 %token EXIT
 %token DROP
 %token RETURN
+%token RETURN_MODE
 %token BREAK
 %token LOG_TOK
 %token ERROR
@@ -1900,6 +1901,8 @@ assign_stm:
 	| WAIT_WORKER1_USLEEP EQUAL error { yyerror("number expected"); }
     | SERVER_ID EQUAL NUMBER { server_id=$3; }
 	| SERVER_ID EQUAL error  { yyerror("number expected"); }
+    | RETURN_MODE EQUAL NUMBER { ksr_return_mode=$3; }
+	| RETURN_MODE EQUAL error  { yyerror("number expected"); }
 	| KEMI DOT ONSEND_ROUTE_CALLBACK EQUAL STRING {
 			kemi_onsend_route_callback.s = $5;
 			kemi_onsend_route_callback.len = strlen($5);

@@ -219,6 +219,7 @@ extern str _ksr_xavp_via_params;
 extern str _ksr_xavp_via_fields;
 extern int ksr_sip_parser_mode;
 extern int ksr_cfg_print_mode;
+extern int ksr_return_mode;
 
 extern int ksr_wait_worker1_mode;
 extern int ksr_wait_worker1_time;

@@ -82,6 +82,9 @@
 #define rv_unref(rv) ((--(rv)->refcnt)==0)
 
 
+/* control return code evaluation mode */
+int ksr_return_mode = 0;
+
 inline static void rval_force_clean(struct rvalue* rv)
 {
 	if (rv->flags & RV_CNT_ALLOCED_F){
@@ -946,7 +949,11 @@ int rval_get_int(struct run_act_ctx* h, struct sip_msg* msg,
 			break;
 		case RV_ACTION_ST:
 			if (rv->v.action) {
-				*i=(run_actions_safe(h, rv->v.action, msg)>0);
+				if(unlikely(ksr_return_mode==1)) {
+					*i=run_actions_safe(h, rv->v.action, msg);
+				} else {
+					*i=(run_actions_safe(h, rv->v.action, msg)>0);
+				}
 				h->run_flags &= ~(RETURN_R_F|BREAK_R_F);
 				/* catch return & break in expr*/
 			} else

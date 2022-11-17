@@ -1065,7 +1065,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 					h->run_flags &= ~(RETURN_R_F|BREAK_R_F); /* catch return &
 															    break in expr*/
 					ret=1;  /*default is continue */
-					if (v>0) {
+					if ((ksr_return_mode==0 && v>0) || (ksr_return_mode!=0 && v!=0)) {
 						if ((a->val[1].type==ACTIONS_ST)&&a->val[1].u.data){
 							ret=run_actions(h,
 										(struct action*)a->val[1].u.data, msg);
@@ -1363,12 +1363,13 @@ match_cleanup:
 			rve=(struct rval_expr*)a->val[0].u.data;
 			ret=1;
 			while(!(flags & (BREAK_R_F|RETURN_R_F|EXIT_R_F)) &&
-					(rval_expr_eval_int(h, msg, &v, rve) == 0) && v){
+					(rval_expr_eval_int(h, msg, &v, rve) == 0) &&
+					((ksr_return_mode==0 && v>0) || (ksr_return_mode!=0 && v!=0))) {
 				if (cfg_get(core, core_cfg, max_while_loops) > 0)
 					i++;
 
 				if (unlikely(i > cfg_get(core, core_cfg, max_while_loops))){
-					LM_ERR("runaway while (%d, %d): more then %d loops\n", 
+					LM_ERR("runaway while (%d, %d): more then %d loops\n",
 								rve->fpos.s_line, rve->fpos.s_col,
 								cfg_get(core, core_cfg, max_while_loops));
 					ret=-1;
