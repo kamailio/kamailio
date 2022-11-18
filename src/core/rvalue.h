@@ -146,7 +146,7 @@ enum rval_cache_type{
 
 /** value cache for a rvalue struct.
  * Used to optimize functions that would need to
- * get the value repeatedly (e.g. rval_get_btype() and then rval_get_int())
+ * get the value repeatedly (e.g. rval_get_btype() and then rval_get_long())
  */
 struct rval_cache{
 	enum rval_cache_type cache_type;
@@ -212,8 +212,8 @@ struct rvalue* rval_convert(struct run_act_ctx* h, struct sip_msg* msg,
 							enum rval_type type, struct rvalue* v,
 							struct rval_cache* c);
 
-/** get the integer value of an rvalue. */
-int rval_get_int(struct run_act_ctx* h, struct sip_msg* msg, int* i,
+/** get the long int value of an rvalue. */
+long rval_get_long(struct run_act_ctx* h, struct sip_msg* msg, long* i,
 				struct rvalue* rv, struct rval_cache* cache);
 /** get the string value of an rv. */
 int rval_get_str(struct run_act_ctx* h, struct sip_msg* msg,
@@ -225,9 +225,9 @@ int rval_get_tmp_str(struct run_act_ctx* h, struct sip_msg* msg,
 								struct rval_cache* cache,
 								struct rval_cache* tmp_cache);
 
-/** evals an integer expr  to an int. */
-int rval_expr_eval_int( struct run_act_ctx* h, struct sip_msg* msg,
-						int* res, struct rval_expr* rve);
+/** evals a long expr to a long. */
+int rval_expr_eval_long(struct run_act_ctx* h, struct sip_msg* msg,
+						long* res, struct rval_expr* rve);
 
 /**
  * @brief Evals a rval expression
@@ -259,8 +259,8 @@ struct rvalue* rval_expr_eval(struct run_act_ctx* h, struct sip_msg* msg,
  * when done.
  * @return 0 on success, -1 on error, sets *res_rv or *res_i.
  */
-int rval_expr_eval_rvint( struct run_act_ctx* h, struct sip_msg* msg,
-						struct rvalue** rv_res, int* i_res,
+int rval_expr_eval_rvlong( struct run_act_ctx* h, struct sip_msg* msg,
+						struct rvalue** rv_res, long* i_res,
 						struct rval_expr* rve, struct rval_cache* cache);
 
 

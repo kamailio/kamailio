@@ -32,7 +32,7 @@ struct case_stms{
 	int re_flags; /**< used only for REs */
 	int is_default;
 	union {
-		int match_int;
+		long match_int;
 		str match_str;
 		regex_t* match_re;
 	} label;  /**< fixed case argument */
