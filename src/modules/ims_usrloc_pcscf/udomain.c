@@ -408,11 +408,9 @@ int update_pcontact(struct udomain* _d, struct pcontact_info* _ci, struct pconta
 
 	//TODO: update path, etc
 
-	if ((db_mode == WRITE_THROUGH) || (db_mode == DB_ONLY)){
-        if (db_update_pcontact(_c) != 0) {
+	if (((db_mode == WRITE_THROUGH) || (db_mode == DB_ONLY)) && (db_update_pcontact(_c) != 0)){
 	        LM_ERR("Error updating record in DB");
 	        return -1;
-        }
 	}
 
 	run_ul_callbacks(PCSCF_CONTACT_UPDATE, _c);
@@ -584,15 +582,15 @@ int get_pcontact_from_cache(udomain_t* _d, pcontact_info_t* contact_info, struct
                    if ((needle_uri.user.len != c->contact_user.len) ||
                        (memcmp(needle_uri.user.s, c->contact_user.s, needle_uri.user.len) != 0)) {
                                    LM_ERR("user name does not match - no match here...\n");
-                                   LM_INFO("found pcontact username [%d]: [%.*s]\n", i, c->contact_user.len, c->contact_user.s);
-                                   LM_INFO("incoming contact username: [%.*s]\n", needle_uri.user.len, needle_uri.user.s);
+                                   LM_DBG("found pcontact username [%d]: [%.*s]\n", i, c->contact_user.len, c->contact_user.s);
+                                   LM_DBG("incoming contact username: [%.*s]\n", needle_uri.user.len, needle_uri.user.s);
                                    c = c->next;
                                    continue;
                    }
                    if ((contact_info->aor.len >= 4) && (memcmp(contact_info->aor.s, c->aor.s, 4) != 0)) {   // do not mix up sip- and tel-URIs.
                                 LM_ERR("scheme does not match - no match here...\n");
-                                LM_INFO("found pcontact scheme [%d]: [%.*s]\n", i, 4, c->aor.s);
-                                LM_INFO("incoming contact scheme: [%.*s]\n", 4, contact_info->aor.s);
+                                LM_DBG("found pcontact scheme [%d]: [%.*s]\n", i, 4, c->aor.s);
+                                LM_DBG("incoming contact scheme: [%.*s]\n", 4, contact_info->aor.s);
                                 c = c->next;
                                 continue;
                    }
@@ -1113,126 +1111,75 @@ error1:
 	return -1;
 }
 
-int  db_delete_presentityuri_from_pua(str *presentity_uri)
-{
-        db1_res_t* res = NULL;
-        str _pua;
-
-        db1_con_t* db_handle = 0;
-
-        char *p_pua = "DELETE from pua where pua.pres_uri =\"%.*s\"";
-        char *pua = "pua";
-
-        str query_pua, query_buffer;
-        query_pua.s = p_pua;
-        query_pua.len = strlen(query_pua.s);
-
-        _pua.s = pua;
-        _pua.len = strlen(_pua.s);
-
-        db_handle = get_db_handle ();
-        if (db_handle == 0){
-           LM_ERR("failed to get valid db_handle");
-           return 0;
-        }
-   
-
-        if (ul_dbf.use_table(db_handle, &_pua) < 0) {
-                LM_ERR("failed to use table pua");
-                return 0;
-        }
-
-        int len = query_pua.len + presentity_uri->len + 2;
-        query_buffer.s = (char*) pkg_malloc(len);
-        if (!query_buffer.s) {
-                LM_ERR("mo more pkg mem\n");
-                return 0;
-        }
-        snprintf(query_buffer.s, len, p_pua, presentity_uri->len, presentity_uri->s);
-        query_buffer.len = strlen(query_buffer.s);//len;
-
-
-        LM_INFO("QUERY IS [%.*s] and len is %d\n", query_buffer.len, query_buffer.s, query_buffer.len);
-
-        if (ul_dbf.raw_query(db_handle, &query_buffer, &res) != 0) {
-             LM_ERR("Unable to delete pua entry for   [%.*s]\n",
-                                        presentity_uri->len, presentity_uri->s);
-             ul_dbf.free_result(db_handle, res);
-             if (query_buffer.s)
-                        pkg_free(query_buffer.s);
-             return 0;
-        }
-
-        ul_dbf.free_result(db_handle, res);
-        if (query_buffer.s)
-                        pkg_free(query_buffer.s);
-        return 1;
-}
-
 int db_load_pcontact(udomain_t* _d, str *_aor, int insert_cache, struct pcontact** _c, pcontact_info_t* contact_info)
 {
 	pcontact_info_t *ci;
-    pcontact_t* c=NULL; //Modified
-	db1_res_t* res = NULL;
-	db_row_t *row;
-	int i, len, querylen;
-        str aor, query_location, query_buffer, port={0,0};
-        db1_con_t* db_handle = 0; 
-        char *p_location;
+        db_key_t columns[15];
+        db_key_t keys[2];
+        db_val_t vals[2];
+        db_op_t op[2];
+        db1_res_t* res = NULL;
+        db_row_t *row;
+        int i;
+        str aor, port={0,0};
+        pcontact_t* c = NULL;
+
+        keys[0] = &aor_col;
+        vals[0].type = DB1_STR;
+        vals[0].nul = 0;
+        vals[0].val.str_val = *_aor;
+        op[0] = OP_EQ;
+        op[1] = OP_EQ;
+
+
+        columns[0] = &domain_col;
+        columns[1] = &aor_col;
+        columns[2] = &host_col;
+        columns[3] = &port_col;
+        columns[4] = &protocol_col;
+        columns[5] = &received_col;
+        columns[6] = &received_port_col;
+        columns[7] = &received_proto_col;
+        columns[8] = &rx_session_id_col;
+        columns[9] = &reg_state_col;
+        columns[10] = &expires_col;
+        columns[11] = &socket_col;
+        columns[12] = &service_routes_col;
+        columns[13] = &public_ids_col;
+        columns[14] = &path_col;
+
+
 
         if (_aor->len>0 && _aor->s){
-                LM_INFO("Querying database for P-CSCF contact [%.*s]\n", _aor->len, _aor->s);
-
-    p_location = "SELECT  domain,aor,host,port,protocol,received,received_port,received_proto,rx_session_id,reg_state,expires,socket,service_routes,public_ids,path from location WHERE aor=\"%.*s\""; // AND reg_state=%d";
-                querylen = _aor->len;
+                LM_DBG("Querying database for P-CSCF contact [%.*s]\n", _aor->len, _aor->s);
         } else {
-                LM_INFO("Querying database for P-CSCF received_host [%.*s] and received_port [%d]\n", contact_info->received_host.len, contact_info->received_host.s, contact_info->received_port);
-                p_location = "SELECT domain,aor,host,port,protocol,received,received_port,received_proto,rx_session_id,reg_state,expires,socket,service_routes,public_ids,path from location WHERE received=\"%.*s\" AND received_port=\"%.*s\"";
+                LM_DBG("Querying database for P-CSCF received_host [%.*s] and received_port [%d]\n", contact_info->received_host.len, contact_info->received_host.s, contact_info->received_port);
+                keys[0] = &received_col;
+                vals[0].type = DB1_STR;
+                vals[0].nul = 0;
+                vals[0].val.str_val = contact_info->received_host;
+                keys[1] = &received_port_col;
+                vals[1].type = DB1_INT;
+                vals[1].nul = 0;
                 port.s = int2str(contact_info->received_port, &port.len);
-                querylen = contact_info->received_host.len + port.len;
-        }
-        query_location.s = p_location;
-        query_location.len = strlen(query_location.s);
+                vals[1].val.int_val = contact_info->received_port;
 
-        LM_INFO("TEST: Query location [%.*s]\n", query_location.len, query_location.s);	              
-        
-        if (use_location_pcscf_table(_d->name) < 0) {
-		LM_ERR("failed to use table %.*s\n", _d->name->len, _d->name->s);
-		return 0;
-	}
-
-        db_handle = get_db_handle ();
-        if (db_handle == 0){
-           LM_ERR("failed to get valid db_handle");
-           return 0;
         }
 
-        len = query_location.len + querylen + 2;
-        query_buffer.s = (char*) pkg_malloc(len);
-        if (!query_buffer.s) {
-                LM_ERR("no more pkg mem\n");
-                return 0;
+        if (ul_dbf.use_table(ul_dbh, _d->name) < 0) {
+                LM_ERR("sql use_table failed\n");
+                return -1;
         }
-        
-        if (_aor->len>0 && _aor->s){
-                snprintf(query_buffer.s, len, p_location, _aor->len, _aor->s);
-        } else {
-                snprintf(query_buffer.s, len, p_location, contact_info->received_host.len, contact_info->received_host.s, port.len, port.s);
-        }
-        query_buffer.len = strlen(query_buffer.s);//len;
-        
-        LM_INFO("QUERY IS [%.*s] and len is %d\n", query_buffer.len, query_buffer.s, query_buffer.len);
 
-        if (ul_dbf.raw_query(db_handle, &query_buffer, &res) != 0) {
+
+        if (ul_dbf.query(ul_dbh, keys, op, vals, columns, port.s ? 2 : 1, 15, 0, &res) < 0) {
                 if (!port.s) {
                         LM_ERR("Unable to query DB for location associated with aor [%.*s]\n", _aor->len, _aor->s);
                 }
                 else {
                         LM_ERR("Unable to query DB for location associated with host [%.*s] and port [%.*s]\n", contact_info->received_host.len, contact_info->received_host.s, port.len, port.s);
                 }
-                ul_dbf.free_result(db_handle, res);
-                if (query_buffer.s)
-                        pkg_free(query_buffer.s);
+                ul_dbf.free_result(ul_dbh, res);
                 return 0;
         }
  
@@ -1244,28 +1191,26 @@ int db_load_pcontact(udomain_t* _d, str *_aor, int insert_cache, struct pcontact
                         LM_DBG("host [%.*s] and port [%.*s] not found in table %.*s\n", contact_info->received_host.len, contact_info->received_host.s, port.len, port.s, _d->name->len, _d->name->s);
                 }
 
-		ul_dbf.free_result(db_handle, res);
-                if (query_buffer.s)
-                        pkg_free(query_buffer.s);
+		ul_dbf.free_result(ul_dbh, res);
                 return 0;
         }
-        LM_INFO("Handling Result for query received\n");
+        LM_DBG("Handling Result for query received\n");
 
         for(i = 0; i < RES_ROW_N(res); i++) {
                 row = RES_ROWS(res) + i;
 
                 aor.s = (char*) VAL_STRING(ROW_VALUES(row) + 1);
                 if (VAL_NULL(ROW_VALUES(row) + 1) || aor.s == 0 || aor.s[0] == 0) {
-                        LM_CRIT("empty aor record in table %s...skipping\n", _d->name->s);
+                        LM_ERR("empty aor record in table %s...skipping\n", _d->name->s);
                         continue;
                 }
                 aor.len = strlen(aor.s);
 
                 if ((_aor->len==0 && !_aor->s) && (VAL_NULL(ROW_VALUES(row) + 5) || VAL_NULL(ROW_VALUES(row) + 6))){
-                        LM_CRIT("empty received_host or received_port record in table %s...skipping\n", _d->name->s);
+                        LM_ERR("empty received_host or received_port record in table %s...skipping\n", _d->name->s);
                         continue;
                 }
-                LM_INFO("Convert database values extracted with AOR.");
+                LM_DBG("Convert database values extracted with AOR.");
                 ci = dbrow2info(ROW_VALUES(row) + 1, &aor);
                 if (!ci) {
                         LM_WARN("Failed to get contact info from DB.... continuing...\n");
@@ -1274,9 +1219,7 @@ int db_load_pcontact(udomain_t* _d, str *_aor, int insert_cache, struct pcontact
 
                 if(!(insert_cache)){
                        (*_c)->expires = ci->expires;
-                       if (query_buffer.s)
-                               pkg_free(query_buffer.s);
-                      ul_dbf.free_result(db_handle, res);
+                      ul_dbf.free_result(ul_dbh, res);
 					if(ci->public_ids){
 						pkg_free(ci->public_ids);
 					}
@@ -1320,7 +1263,7 @@ int db_load_pcontact(udomain_t* _d, str *_aor, int insert_cache, struct pcontact
 		//c->flags = c->flags|(1<<FLAG_READFROMDB);
 		//TODO: need to subscribe to s-cscf for first public identity
                 
-                LM_INFO("inserting contact done\n");
+                LM_DBG("inserting contact done\n");
                 *_c = c;
 				if(ci->public_ids){
 					pkg_free(ci->public_ids);
@@ -1331,17 +1274,13 @@ int db_load_pcontact(udomain_t* _d, str *_aor, int insert_cache, struct pcontact
 
 	}
 
-        ul_dbf.free_result(db_handle, res);
-        if (query_buffer.s)
-               pkg_free(query_buffer.s);
+        ul_dbf.free_result(ul_dbh, res);
 	return 1;
 
 error:
                free_pcontact(c);
 error1:
-               ul_dbf.free_result(db_handle, res);
-               if (query_buffer.s)
-                       pkg_free(query_buffer.s);
+               ul_dbf.free_result(ul_dbh, res);
                return 0;
 }
 
@@ -1351,52 +1290,50 @@ int get_pcontact(udomain_t* _d, pcontact_info_t* contact_info, struct pcontact**
     int ret = get_pcontact_from_cache(_d,  contact_info,  _c, reverse_search);
 
     if (ret && (db_mode == DB_ONLY)){
-            // LM_INFO("contact not found in cache for contact_info->via_port [%d]\n", contact_info->via_port);
-            LM_INFO("contact not found in cache for contact_info->received_port [%d]\n", contact_info->received_port);
-            // following if: change for CATT test tool - PCSCF redundancy test cases 
+            LM_DBG("contact not found in cache for contact_info->received_port [%d]\n", contact_info->received_port);
            if (contact_info->searchflag == SEARCH_RECEIVED){
-                   	LM_INFO("Trying contact_info.extra_search_criteria = 0\n");
+                   	LM_DBG("Trying contact_info.extra_search_criteria = 0\n");
                         contact_info->extra_search_criteria = 0;
                         ret = get_pcontact_from_cache(_d,  contact_info,  _c, reverse_search);
                         if (ret == 0){
                                 return ret;
                         }
-                        LM_INFO("contact not found in cache for contact_info->via_port [%d]\n", contact_info->via_port);
+                        LM_DBG("contact not found in cache for contact_info->via_port [%d]\n", contact_info->via_port);
                         contact_info->extra_search_criteria = SEARCH_SERVICE_ROUTES;
 
                         contact_info->searchflag = SEARCH_NORMAL;
-                        LM_INFO("Trying contact_info.searchflag = SEARCH_NORMAL\n");
+                        LM_DBG("Trying contact_info.searchflag = SEARCH_NORMAL\n");
                         ret = get_pcontact_from_cache(_d,  contact_info,  _c, reverse_search);
                         if (ret == 0){
                                  return ret;
                         }
                         else {
-                                LM_INFO("Trying contact_info.extra_search_criteria = 0\n");
+                                LM_DBG("Trying contact_info.extra_search_criteria = 0\n");
                                 contact_info->extra_search_criteria = 0;
                                 ret = get_pcontact_from_cache(_d,  contact_info,  _c, reverse_search);
                                 if (ret == 0){
                                          return ret;
                                 }
-                                LM_INFO("contact not found in cache for contact_info->via_port [%d]\n", contact_info->via_port);
+                                LM_DBG("contact not found in cache for contact_info->via_port [%d]\n", contact_info->via_port);
                                 contact_info->extra_search_criteria = SEARCH_SERVICE_ROUTES;
                                 contact_info->searchflag = SEARCH_RECEIVED;
                         }
            }
                         else {
-                        LM_INFO("Trying contact_info.extra_search_criteria = 0\n");
+                        LM_DBG("Trying contact_info.extra_search_criteria = 0\n");
                         contact_info->extra_search_criteria = 0;
                         ret = get_pcontact_from_cache(_d,  contact_info,  _c, reverse_search);
                         if (ret == 0){
                                 return ret;
                         }
-                        LM_INFO("contact not found in cache for contact_info->via_port [%d]\n", contact_info->via_port);
+                        LM_DBG("contact not found in cache for contact_info->via_port [%d]\n", contact_info->via_port);
                         contact_info->extra_search_criteria = SEARCH_SERVICE_ROUTES;
            }
            if (db_load_pcontact(_d, &contact_info->aor, 1/*insert_cache*/, _c, contact_info)){
-                   LM_INFO("loaded location from db for  AOR [%.*s]\n", contact_info->aor.len, contact_info->aor.s);
+                   LM_DBG("loaded location from db for  AOR [%.*s]\n", contact_info->aor.len, contact_info->aor.s);
                    return 0;
            } else {
-                   LM_INFO("download location DB failed for  AOR [%.*s]\n", contact_info->aor.len, contact_info->aor.s);
+                   LM_DBG("download location DB failed for  AOR [%.*s]\n", contact_info->aor.len, contact_info->aor.s);
                    return 1;
            }
     }
@@ -1407,114 +1344,95 @@ int get_pcontact(udomain_t* _d, pcontact_info_t* contact_info, struct pcontact**
 
 
 int audit_usrloc_expired_pcontacts(udomain_t* _d) {
-db1_res_t* location_rs = NULL;
 
-pcontact_info_t *ci;
-db_row_t *row;
-int i;
-pcontact_t* c;
-time_t expired_50secs;
+        db1_res_t* location_rs = NULL;
+        pcontact_info_t *ci;
+        db_key_t columns[15];
+        db_key_t keys[1];
+        db_val_t vals[1];
+        db_op_t op[1];
+        db_row_t *row;
+        int i;
+        str aor;
+        pcontact_t* c = NULL;
 
-char *p_location = "SELECT  domain,aor,host,port,protocol,received,received_port,received_proto,rx_session_id,reg_state,expires,socket,service_routes,public_ids,path from location WHERE expires < \"%.*s\"";
+        keys[0] = &expires_col;
+        vals[0].type = DB1_DATETIME;
+        vals[0].nul = 0;
+        vals[0].val.time_val = time(0) - expires_grace - audit_expired_pcontacts_timeout;;
+        op[0] = OP_LT;
 
-int len;
-int expiry_str_len = 0;
 
-str query_buffer = { 0, 0 };
-int query_buffer_len = 0;
+        columns[0] = &domain_col;
+        columns[1] = &aor_col;
+        columns[2] = &host_col;
+        columns[3] = &port_col;
+        columns[4] = &protocol_col;
+        columns[5] = &received_col;
+        columns[6] = &received_port_col;
+        columns[7] = &received_proto_col;
+        columns[8] = &rx_session_id_col;
+        columns[9] = &reg_state_col;
+        columns[10] = &expires_col;
+        columns[11] = &socket_col;
+        columns[12] = &service_routes_col;
+        columns[13] = &public_ids_col;
+        columns[14] = &path_col;
 
-struct tm *t;
-char str_time[100];
+        if (ul_dbf.use_table(ul_dbh, _d->name) < 0) {
+                LM_ERR("sql use_table failed\n");
+                return -1;
+        }
 
-str query_location, aor, expiry_date;
-query_location.s = p_location;
-query_location.len = strlen(query_location.s);
+        if (ul_dbf.query(ul_dbh, keys, op, vals, columns, 1, 15, 0, &location_rs) < 0) {
+            LM_ERR("Unable to query DB for expired pcontacts\n");
+            ul_dbf.free_result(ul_dbh, location_rs);
+        } else {
+             if (RES_ROW_N(location_rs) == 0) {
+                 LM_DBG("no expired pcontacts found in DB\n");
+                 ul_dbf.free_result(ul_dbh, location_rs);
+                 goto done;
+             }
 
-if (use_location_pcscf_table("location") < 0) {
-    LM_ERR("failed to use table location");
-    return 0;
-}
+             for(i = 0; i < RES_ROW_N(location_rs); i++) {
+                 row = RES_ROWS(location_rs) + i;
 
-expired_50secs = time(0) - expires_grace - audit_expired_pcontacts_timeout;
+                 aor.s = (char*) VAL_STRING(ROW_VALUES(row) + 1);
 
-t = localtime(&expired_50secs);
-expiry_str_len = strftime(str_time, 100, "%Y-%m-%d %H:%M:%S", t);
-if (expiry_str_len == 0){
-    LM_ERR("could not convert time format\n");
-return -1;
-}
-
-expiry_date.s = str_time;
-expiry_date.len = expiry_str_len;
-
-len = query_location.len +  expiry_str_len + 1/*nul*/;
-query_buffer.s = (char*) pkg_malloc(len);
-if (!query_buffer.s) {
-     LM_ERR("mo more pkg mem\n");
-     return -1;
-}
-query_buffer_len = len;
-snprintf(query_buffer.s, query_buffer_len, p_location, expiry_date.len, expiry_date.s);
-query_buffer.len = strlen(query_buffer.s);//len;
-
-LM_INFO("location QUERY IS [%.*s] and len is %d\n", query_buffer.len, query_buffer.s, query_buffer.len);
-if (ul_dbf.raw_query(ul_dbh, &query_buffer, &location_rs) != 0) {
-    LM_ERR("Unable to query DB for expired pcontacts\n");
-    ul_dbf.free_result(ul_dbh, location_rs);
-} else {
-    if (RES_ROW_N(location_rs) == 0) {
-        LM_INFO("no expired pcontacts found in DB\n");
-        ul_dbf.free_result(ul_dbh, location_rs);
-        goto done;
-    }
-
-    for(i = 0; i < RES_ROW_N(location_rs); i++) {
-          row = RES_ROWS(location_rs) + i;
-
-          aor.s = (char*) VAL_STRING(ROW_VALUES(row) + 1);
-
-          if (VAL_NULL(ROW_VALUES(row) + 1) || aor.s == 0 || aor.s[0] == 0) {
-                  LM_CRIT("empty aor record in table %s...skipping\n", _d->name->s);
-                  continue;
-          }
-          aor.len = strlen(aor.s);
-          ci = dbrow2info(ROW_VALUES(row) + 1, &aor);
-          if (!ci) {
-                LM_WARN("Failed to get contact info from DB.... continuing...\n");
-                continue;
-          }
-          ci->aor = aor;
-          ci->searchflag = SEARCH_NORMAL;
-          ci->reg_state = PCONTACT_ANY;
-          if (get_pcontact_from_cache(_d, ci, &c, 0) == 0){
-          /*
-                     if (&c->head->public_identity)
-                         db_delete_presentityuri_from_pua(&c->head->public_identity);
-                     delete_pcontact(_d, c);
-          */
-          LM_INFO("found pcontact [%.*s] in cache.....should have been cleared by expiry handler\n", aor.len, aor.s);
-          }
-          else{
-               lock_udomain(_d, &ci->via_host, ci->via_port, ci->via_prot);
-               // insert pcontact
-               if (!(db_load_pcontact(_d, &aor, 1/*insert_cache*/, &c, ci))){                   
-                    LM_ERR("could not insert pcontact [%.*s] into cache\n", aor.len, aor.s);
-               }
-               unlock_udomain(_d, &ci->via_host, ci->via_port, ci->via_prot);
-          }
-		if(ci->public_ids){
-			pkg_free(ci->public_ids);
-		}
-		if(ci->service_routes){
-			pkg_free(ci->service_routes);	
-		}			
-      }
-      ul_dbf.free_result(ul_dbh, location_rs);
-    }
+                 if (VAL_NULL(ROW_VALUES(row) + 1) || aor.s == 0 || aor.s[0] == 0) {
+                     LM_ERR("empty aor record in table %s...skipping\n", _d->name->s);
+                     continue;
+                 }
+                 aor.len = strlen(aor.s);
+                 ci = dbrow2info(ROW_VALUES(row) + 1, &aor);
+                 if (!ci) {
+                     LM_ERR("Failed to get contact info from DB.... continuing...\n");
+                     continue;
+                 }
+                 ci->aor = aor;
+                 ci->searchflag = SEARCH_NORMAL;
+                 ci->reg_state = PCONTACT_ANY;
+                 lock_udomain(_d, &ci->via_host, ci->via_port, ci->via_prot);
+                 if (get_pcontact_from_cache(_d, ci, &c, 0) == 0){
+                     LM_DBG("found pcontact [%.*s] in cache.....should have been cleared by expiry handler\n", aor.len, aor.s);
+                 }
+                 else{
+                    // insert pcontact
+                    if (!(db_load_pcontact(_d, &aor, 1/*insert_cache*/, &c, ci))){                   
+                        LM_ERR("could not insert pcontact [%.*s] into cache\n", aor.len, aor.s);
+                    }
+                 }
+                 unlock_udomain(_d, &ci->via_host, ci->via_port, ci->via_prot);
+	         if(ci->public_ids){
+                     pkg_free(ci->public_ids);
+                 }
+         	 if(ci->service_routes){
+                     pkg_free(ci->service_routes);	
+                 }			
+             }
+             ul_dbf.free_result(ul_dbh, location_rs);
+        }
 done:
-   if (query_buffer.s) {
-       pkg_free(query_buffer.s);
-   }
    return 0;
 }
 

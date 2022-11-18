@@ -240,10 +240,9 @@ typedef struct pcontact {
 
 typedef int (*get_pcontact_t)(struct udomain* _d, pcontact_info_t* contact_info, struct pcontact** _c, int reverse_search);
 
-typedef int (*db_delete_presentityuri_from_pua_t)(str *presentity_uri);
 typedef int (*db_load_pcontact_t)(udomain_t* _d, str *_aor, int insert_cache, struct pcontact** _c, pcontact_info_t* contact_info);
-struct ul_callback *cbp_registrar; 
-struct ul_callback *cbp_qos; 
+extern struct ul_callback *cbp_registrar; 
+extern struct ul_callback *cbp_qos; 
 typedef int (*assert_identity_t)(struct udomain* _d, str * _host, unsigned short _port, unsigned short _proto, str * _identity);
 
 typedef int (*insert_pcontact_t)(struct udomain* _d, str* _aor, struct pcontact_info* ci, struct pcontact** _c);
@@ -295,7 +294,6 @@ typedef struct usrloc_api {
     is_ulcb_registered_t is_ulcb_registered;
     register_ulcb_t register_ulcb_method;
     db_load_pcontact_t db_load_pcontact;
-    db_delete_presentityuri_from_pua_t db_delete_presentityuri_from_pua;
 } usrloc_api_t;
 
 /*! usrloc API export bind function */

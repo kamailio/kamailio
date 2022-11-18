@@ -53,7 +53,6 @@
 #include "../../core/ut.h"
 #include "../ims_usrloc_pcscf/usrloc.h" 
 #include "../../lib/ims/ims_getters.h"
-// %KTACT%-END bugfix__PRM19/0000138_no_str_sent
 
 struct pcontact;
 

@@ -204,10 +204,15 @@ static int mod_init(void) {
 			return -1;
 		}
 
-		if (init_db(&db_url, timer_interval, ul_fetch_rows) != 0) {
-			LM_ERR("Error initializing db connection\n");
-			return -1;
-		}
+                if (db_bind_mod(&db_url, &ul_dbf) < 0) { /* Find database module */
+                        LM_ERR("failed to bind database module\n");
+                        return -1;
+                }
+                if (!DB_CAPABILITY(ul_dbf, DB_CAP_ALL)) {
+                        LM_ERR("database module does not implement all functions"
+                                        " needed by the module\n");
+                        return -1;
+                }
 		LM_DBG("Running in DB mode %i\n", db_mode);
 	}
 
@@ -238,10 +243,12 @@ static int child_init(int _rank)
 	}
 
 	LM_DBG("Connecting to usrloc_pcscf DB for rank %d\n", _rank);
-	if (connect_db(&db_url) != 0) {
-		LM_ERR("child(%d): failed to connect to database\n", _rank);
-		return -1;
-	}
+        ul_dbh = ul_dbf.init(&db_url); /* Get a database connection per child */
+
+        if (!ul_dbh) {
+                LM_ERR("child(%d): failed to connect to database\n", _rank);
+                return -1;
+        }
 	/* _rank==PROC_SIPINIT is used even when fork is disabled */
 	if (_rank==PROC_SIPINIT && db_mode!=DB_ONLY) {
 		// if cache is used, populate domains from DB
@@ -274,6 +281,12 @@ static void destroy(void)
 
 	if (db_mode)
 		destroy_db();
+
+        if (cbp_qos)
+           shm_free(cbp_qos);
+
+        if (cbp_registrar)
+           shm_free(cbp_registrar);            
 }
 
 static void audit_usrloc_expired_pcontacts_timer(unsigned int ticks, void* param) {

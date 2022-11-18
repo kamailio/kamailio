@@ -53,6 +53,10 @@
 
 extern int ims_ulp_init_flag;
 
+struct ul_callback *cbp_registrar = 0;
+struct ul_callback *cbp_qos = 0;
+
+
 int bind_usrloc(usrloc_api_t* api) {
 	if (!api) {
 		LM_ERR("invalid parameter value\n");
@@ -82,7 +86,6 @@ int bind_usrloc(usrloc_api_t* api) {
 	api->get_number_of_contacts = get_number_of_contacts;
 	api->is_ulcb_registered = is_ulcb_registered;
 	api->register_ulcb_method = register_ulcb_method;
-        api->db_delete_presentityuri_from_pua = db_delete_presentityuri_from_pua;
 
 	return 0;
 }
