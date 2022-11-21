@@ -144,7 +144,7 @@ avp_t *create_avp (avp_flags_t flags, avp_name_t name, avp_value_t val)
 {
 	avp_t *avp;
 	str *s;
-	struct str_int_data *sid;
+	struct str_num_data *sid;
 	struct str_str_data *ssd;
 	int len;
 
@@ -160,7 +160,7 @@ avp_t *create_avp (avp_flags_t flags, avp_name_t name, avp_value_t val)
 				+ name.s.len + 1 /* Terminating zero for regex search */
 				+ val.s.len + 1; /* Value is zero terminated */
 		} else {
-			len += sizeof(struct str_int_data)-sizeof(union usr_avp_data)
+			len += sizeof(struct str_num_data)-sizeof(union usr_avp_data)
 				+ name.s.len + 1; /* Terminating zero for regex search */
 		}
 	} else {
@@ -191,10 +191,10 @@ avp_t *create_avp (avp_flags_t flags, avp_name_t name, avp_value_t val)
 			break;
 		case AVP_NAME_STR:
 			/* avp type str, int value */
-			sid = (struct str_int_data*)&avp->d.data[0];
+			sid = (struct str_num_data*)&avp->d.data[0];
 			sid->val = val.n;
 			sid->name.len =name.s.len;
-			sid->name.s = (char*)sid + sizeof(struct str_int_data);
+			sid->name.s = (char*)sid + sizeof(struct str_num_data);
 			memcpy( sid->name.s , name.s.s, name.s.len);
 			sid->name.s[name.s.len] = '\0'; /* Zero terminator */
 			break;
@@ -290,9 +290,9 @@ int add_avp_before(avp_t *avp, avp_flags_t flags, avp_name_t name, avp_value_t v
 /* get value functions */
 inline str* get_avp_name(avp_t *avp)
 {
-	struct str_int_data *sid;
+	struct str_num_data *sid;
 	struct str_str_data *ssd;
-	
+
 	switch ( avp->flags&(AVP_NAME_STR|AVP_VAL_STR) )
 	{
 		case 0:
@@ -302,7 +302,7 @@ inline str* get_avp_name(avp_t *avp)
 			return 0;
 		case AVP_NAME_STR:
 			/* avp type str, int value */
-			sid = (struct str_int_data*)&avp->d.data[0];
+			sid = (struct str_num_data*)&avp->d.data[0];
 			return &sid->name;
 		case AVP_NAME_STR|AVP_VAL_STR:
 			/* avp type str, str value */
@@ -318,9 +318,9 @@ inline str* get_avp_name(avp_t *avp)
 inline void get_avp_val(avp_t *avp, avp_value_t *val)
 {
 	str *s;
-	struct str_int_data *sid;
+	struct str_num_data *sid;
 	struct str_str_data *ssd;
-	
+
 	if (avp==0 || val==0)
 		return;
 
@@ -331,7 +331,7 @@ inline void get_avp_val(avp_t *avp, avp_value_t *val)
 			break;
 		case AVP_NAME_STR:
 			/* avp type str, int value */
-			sid = (struct str_int_data*)&avp->d.data[0];
+			sid = (struct str_num_data*)&avp->d.data[0];
 			val->n = sid->val;
 			break;
 		case AVP_VAL_STR:
@@ -712,7 +712,7 @@ avp_list_t* set_avp_list( avp_flags_t flags, avp_list_t* list )
 
 /********* global aliases functions ********/
 
-static inline int check_avp_galias(str *alias, int type, int_str avp_name)
+static inline int check_avp_galias(str *alias, int type, numstr_ut avp_name)
 {
 	struct avp_galias *ga;
 
@@ -740,7 +740,7 @@ static inline int check_avp_galias(str *alias, int type, int_str avp_name)
 }
 
 
-int add_avp_galias(str *alias, int type, int_str avp_name)
+int add_avp_galias(str *alias, int type, numstr_ut avp_name)
 {
 	struct avp_galias *ga;
 
@@ -802,7 +802,7 @@ error:
 }
 
 
-int lookup_avp_galias(str *alias, int *type, int_str *avp_name)
+int lookup_avp_galias(str *alias, int *type, numstr_ut *avp_name)
 {
 	struct avp_galias *ga;
 
@@ -825,7 +825,7 @@ int lookup_avp_galias(str *alias, int *type, int_str *avp_name)
 		goto error; \
 	}
 
-int parse_avp_name( str *name, int *type, int_str *avp_name, int *index)
+int parse_avp_name( str *name, int *type, numstr_ut *avp_name, int *index)
 {
 	int ret;
 	avp_ident_t attr;
@@ -1038,7 +1038,7 @@ void free_avp_ident(avp_ident_t* attr)
 	}
 }
 
-int km_parse_avp_spec( str *name, int *type, int_str *avp_name)
+int km_parse_avp_spec( str *name, int *type, numstr_ut *avp_name)
 {
 	char *p;
 	int index = 0;
@@ -1056,7 +1056,7 @@ int km_parse_avp_spec( str *name, int *type, int_str *avp_name)
 }
 
 
-int parse_avp_spec( str *name, int *type, int_str *avp_name, int *index)
+int parse_avp_spec( str *name, int *type, numstr_ut *avp_name, int *index)
 {
 	str alias;
 
@@ -1077,7 +1077,7 @@ int parse_avp_spec( str *name, int *type, int_str *avp_name, int *index)
 	}
 }
 
-void free_avp_name(avp_flags_t *type, int_str *avp_name)
+void free_avp_name(avp_flags_t *type, numstr_ut *avp_name)
 {
 	if ((*type & AVP_NAME_RE) && (avp_name->re)){
 		regfree(avp_name->re);
@@ -1088,7 +1088,7 @@ void free_avp_name(avp_flags_t *type, int_str *avp_name)
 
 int add_avp_galias_str(char *alias_definition)
 {
-	int_str avp_name;
+	numstr_ut avp_name;
 	char *s;
 	str  name;
 	str  alias;
