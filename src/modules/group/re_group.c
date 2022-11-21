@@ -193,7 +193,7 @@ int get_user_group(struct sip_msg *req, char *user, char *avp)
 	/* check against all re groups */
 	for( rg=re_list,n=0 ; rg ; rg=rg->next ) {
 		if (regexec( &rg->re, uri_buf, 1, &pmatch, 0)==0) {
-			LM_DBG("user matched to group %d!\n", rg->gid.n);
+			LM_DBG("user matched to group %ld!\n", rg->gid.n);
 
 			/* match -> add the gid as AVP */
 			val.ri = rg->gid.n;
