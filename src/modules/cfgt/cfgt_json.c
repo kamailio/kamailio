@@ -44,7 +44,7 @@ int _cfgt_get_array_avp_vals(struct sip_msg *msg, pv_param_t *param,
 		return -1;
 	}
 	if(name_type == 0 && avp_name.n == 0) {
-		LM_DBG("skip name_type:%d avp_name:%d\n", name_type, avp_name.n);
+		LM_DBG("skip name_type:%d avp_name:%ld\n", name_type, avp_name.n);
 		return 0;
 	}
 	*jobj = srjson_CreateArray(jdoc);
