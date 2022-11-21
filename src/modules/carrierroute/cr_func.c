@@ -96,7 +96,7 @@ static inline int cr_gp2id(struct sip_msg *_msg, gparam_t *gp, struct name_map_t
 						gp->v.pve->spec->pvp.pvn.u.isname.name.s.s);
 				else if(gp->v.pve->spec->pvp.pvn.u.isname.type & AVP_NAME_RE)
 					LM_ERR("cannot find AVP regex\n");
-				else 	LM_ERR("cannot find AVP '%d'\n", gp->v.pve->spec->pvp.pvn.u.isname.name.n);
+				else 	LM_ERR("cannot find AVP '%ld'\n", gp->v.pve->spec->pvp.pvn.u.isname.name.n);
 				return -1;
 			}
 			if ((avp->flags&AVP_VAL_STR)==0) {
@@ -109,7 +109,7 @@ static inline int cr_gp2id(struct sip_msg *_msg, gparam_t *gp, struct name_map_t
 							gp->v.pve->spec->pvp.pvn.u.isname.name.s.s);
 					else if(gp->v.pve->spec->pvp.pvn.u.isname.type & AVP_NAME_RE)
 						LM_ERR("cannot map carrier with id %.*s from  AVP regex\n", avp_val.s.len, avp_val.s.s);
-					else 	LM_ERR("cannot map carrier with id %.*s from  AVP '%d'\n", avp_val.s.len, avp_val.s.s, gp->v.pve->spec->pvp.pvn.u.isname.name.n);
+					else 	LM_ERR("cannot map carrier with id %.*s from  AVP '%ld'\n", avp_val.s.len, avp_val.s.s, gp->v.pve->spec->pvp.pvn.u.isname.name.n);
 					return -1;
 				}
 				return id;
