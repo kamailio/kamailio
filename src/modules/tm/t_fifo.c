@@ -573,7 +573,7 @@ static inline char* append2buf( char *buf, int len, struct sip_msg *req,
 			} else {
 				avp_name.n=ha->ival;
 				avp = search_first_avp( 0, avp_name, &avp_val, 0);
-				LM_DBG("AVP <%i>: %p\n",avp_name.n,avp);
+				LM_DBG("AVP <%ld>: %p\n",avp_name.n,avp);
 			}
 			if (avp) {
 				if (avp->flags&AVP_VAL_STR) {
