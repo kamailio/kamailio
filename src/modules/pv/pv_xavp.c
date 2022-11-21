@@ -890,7 +890,7 @@ int pv_xavp_to_var_helper(sr_xavp_t *avp) {
 	else if(avp->val.type==SR_XTYPE_INT) {
 		flags |= VAR_VAL_INT;
 		value.n = avp->val.v.i;
-		LM_DBG("var:[%.*s] INT:[%d]\n", avp->name.len, avp->name.s,
+		LM_DBG("var:[%.*s] INT:[%ld]\n", avp->name.len, avp->name.s,
 			value.n);
 	} else {
 		LM_ERR("avp type not STR nor INT\n");

@@ -664,7 +664,7 @@ int pv_set_rcv(sip_msg_t *msg, pv_param_t *param, int op, pv_value_t *val)
 			neti->data.len = val->rs.len;
 		break;
 		default:
-			LM_DBG("set operation not supported for field %d\n",
+			LM_DBG("set operation not supported for field %ld\n",
 					param->pvn.u.isname.name.n);
 	}
 	return 0;
