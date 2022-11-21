@@ -1681,7 +1681,7 @@ int _dbg_log_assign_action_avp(struct sip_msg* msg, struct lvalue* lv)
 			LM_DBG("%.*s:\"%.*s\"\n", avp_s->name.s.len, avp_s->name.s.s,
 				avp_val.s.len, avp_val.s.s);
 		}else{
-			LM_DBG("%.*s:%d\n", avp_s->name.s.len, avp_s->name.s.s,
+			LM_DBG("%.*s:%ld\n", avp_s->name.s.len, avp_s->name.s.s,
 				avp_val.n);
 		}
 	}
