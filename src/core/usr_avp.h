@@ -57,7 +57,7 @@
 
 struct str_int_data {
 	str name;
-	int val;
+	long val;
 };
 
 struct str_str_data {
@@ -66,7 +66,7 @@ struct str_str_data {
 };
 
 typedef union {
-	int  n;
+	long  n;
 	str  s;
 	regex_t* re;
 } int_str;

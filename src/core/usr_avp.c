@@ -785,7 +785,7 @@ int add_avp_galias(str *alias, int type, int_str avp_name)
 			ga->alias.s, ga->avp.name.s.s);
 	} else {
 		ga->avp.name.n = avp_name.n;
-		LM_DBG("registering <%s> for avp id <%d>\n",
+		LM_DBG("registering <%s> for avp id <%ld>\n",
 			ga->alias.s, ga->avp.name.n);
 	}
 
