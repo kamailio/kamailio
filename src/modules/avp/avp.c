@@ -228,15 +228,17 @@ static int set_iattr(struct sip_msg* msg, char* p1, char* p2)
 {
 	avp_ident_t avpid;
 	int_str value;
+	int i;
 
 	if (get_avp_id(&avpid, (fparam_t*)p1, msg) < 0) {
 		return -1;
 	}
 
-	if (get_int_fparam(&value.n, msg, (fparam_t*)p2) < 0) {
+	if (get_int_fparam(&i, msg, (fparam_t*)p2) < 0) {
 		ERR("Error while obtaining attribute value from '%s'\n", ((fparam_t*)p1)->orig);
 		return -1;
 	}
+	value.n = i;
 
 	if (add_avp(avpid.flags | AVP_NAME_STR, avpid.name, value) != 0) {
 		ERR("add_avp failed\n");
@@ -298,7 +300,7 @@ static int print_attr(struct sip_msg* msg, char* p1, char* p2)
 		LOG(L_INFO, "AVP: '%s'='%.*s'\n",
 				fp->orig, value.s.len, ZSW(value.s.s));
 	} else {
-		LOG(L_INFO, "AVP: '%s'=%d\n", fp->orig, value.n);
+		LOG(L_INFO, "AVP: '%s'=%ld\n", fp->orig, value.n);
 	}
 	return 1;
 }
@@ -525,13 +527,13 @@ static void dump_avp_reverse(avp_t* avp)
 		switch(avp->flags&(AVP_NAME_STR|AVP_VAL_STR)) {
 			case 0:
 				/* avp type ID, int value */
-				LOG(L_INFO,"AVP[%d]=%d\n", avp->id, val.n);
+				LOG(L_INFO,"AVP[%d]=%ld\n", avp->id, val.n);
 				break;
 
 			case AVP_NAME_STR:
 				/* avp type str, int value */
 				name=get_avp_name(avp);
-				LOG(L_INFO,"AVP[\"%.*s\"]=%d\n", name->len, name->s, val.n);
+				LOG(L_INFO,"AVP[\"%.*s\"]=%ld\n", name->len, name->s, val.n);
 				break;
 
 			case AVP_VAL_STR:
@@ -1341,7 +1343,7 @@ token_end:
 							val2.s.len = val.len;
 							DBG("DEBUG: attr_hdr_body2attrs: adding avp '%.*s', sval: '%.*s'\n", name2.s.len, (char*) name2.s.s, val.len, val.s);
 						} else {
-							DBG("DEBUG: attr_hdr_body2attrs: adding avp '%.*s', ival: '%d'\n", name2.s.len, (char*) name2.s.s, val2.n);
+							DBG("DEBUG: attr_hdr_body2attrs: adding avp '%.*s', ival: '%ld'\n", name2.s.len, (char*) name2.s.s, val2.n);
 						}
 						if ( add_avp(AVP_NAME_STR | val_type, name2, val2)!=0) {
 							LOG(L_ERR, "ERROR: attr_hdr_body2attrs: add_avp failed\n");
