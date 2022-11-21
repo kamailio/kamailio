@@ -432,7 +432,7 @@ int mt_add_tvalues(struct sip_msg *msg, m_tree_t *pt, str *tomatch)
 		while (tvalues != NULL) {
 			if (pt->type == MT_TREE_IVAL) {
 				val.n = tvalues->tvalue.n;
-				LM_DBG("adding avp <%.*s> with value <i:%d>\n",
+				LM_DBG("adding avp <%.*s> with value <i:%ld>\n",
 						values_avp_name.s.len, values_avp_name.s.s, val.n);
 				add_avp(values_name_type, values_avp_name, val);
 			} else {  /* pt->type == MT_TREE_SVAL */
