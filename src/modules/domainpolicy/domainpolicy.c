@@ -157,7 +157,7 @@ static void stack_to_avp(struct avp_stack *stack) {
 					continue;
 				}
 				avp_att.n = intval;
-				LM_DBG("create integer named AVP <i:%d>\n", avp_att.n);
+				LM_DBG("create integer named AVP <i:%ld>\n", avp_att.n);
 				add_avp(AVP_VAL_STR, avp_att, avp_val);
 				continue;
 			} else { 
@@ -179,7 +179,7 @@ static void stack_to_avp(struct avp_stack *stack) {
 					continue;
 				}
 				avp_att.n = intval;
-				LM_DBG("create integer named AVP <i:%d>\n", avp_att.n);
+				LM_DBG("create integer named AVP <i:%ld>\n", avp_att.n);
 				add_avp(AVP_VAL_STR, avp_att, avp_val);
 				continue;
 			} else { 
