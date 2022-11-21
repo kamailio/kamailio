@@ -428,7 +428,7 @@ static int lookup_matrix(struct sip_msg *msg, struct multiparam_t *_srctree, str
 		LM_ERR("add AVP failed\n");
 		return -1;
 	}
-	LM_INFO("result from lookup: %d\n", avp_val.n);
+	LM_INFO("result from lookup: %ld\n", avp_val.n);
 	return 1;
 }
 
