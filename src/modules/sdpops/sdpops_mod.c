@@ -2113,7 +2113,7 @@ static int pv_set_sdp(sip_msg_t *msg, pv_param_t *param,
 	if ( res->flags & PV_VAL_INT ) LM_DBG("PV_VAL_INT: %d\n",PV_VAL_INT);
 	if ( res->flags & PV_VAL_STR ) LM_DBG("PV_VAL_STR: %d\n",PV_VAL_STR);
 
-	LM_DBG("param.pvn.u.isname.name.n = %d\n",param->pvn.u.isname.name.n);
+	LM_DBG("param.pvn.u.isname.name.n = %ld\n",param->pvn.u.isname.name.n);
 	if (param->pvn.u.isname.name.n == 1)
 	{
 	// sdp(sess_version)
