@@ -331,7 +331,7 @@ int ht_db_load_table(ht_t *ht, str *dbtable, int mode)
 				if(ht->htexpire > 0 && ht_db_expires_flag!=0) {
 					expires.n = RES_ROWS(db_res)[i].values[4].val.int_val;
 					if (expires.n > 0 && expires.n < now) {
-						LM_DBG("skipping expired entry [%.*s] (%d)\n", kname.len,
+						LM_DBG("skipping expired entry [%.*s] (%ld)\n", kname.len,
 								kname.s, expires.n-now);
 						continue;
 					}
@@ -412,7 +412,7 @@ int ht_db_load_table(ht_t *ht, str *dbtable, int mode)
 								LM_ERR("null value in row %d\n", i);
 								goto error;
 							}
-							str2sint(&kvalue, &val.n);
+							str2slong(&kvalue, &val.n);
 							break;
 						case DB1_BLOB:
 							kvalue = RES_ROWS(db_res)[i].values[3].val.blob_val;
@@ -420,7 +420,7 @@ int ht_db_load_table(ht_t *ht, str *dbtable, int mode)
 								LM_ERR("null value in row %d\n", i);
 								goto error;
 							}
-							str2sint(&kvalue, &val.n);
+							str2slong(&kvalue, &val.n);
 							break;
 						case DB1_STRING:
 							kvalue.s = (char*)(RES_ROWS(db_res)[i].values[3].val.string_val);
@@ -429,7 +429,7 @@ int ht_db_load_table(ht_t *ht, str *dbtable, int mode)
 								goto error;
 							}
 							kvalue.len = strlen(kvalue.s);
-							str2sint(&kvalue, &val.n);
+							str2slong(&kvalue, &val.n);
 							break;
 						case DB1_INT:
 							val.n = RES_ROWS(db_res)[i].values[3].val.int_val;
@@ -589,7 +589,7 @@ int ht_db_save_table(ht_t *ht, str *dbtable)
 				LM_DBG("entry key: [%.*s] value: [%.*s] (str)\n",
 					it->name.len, it->name.s, it->value.s.len, it->value.s.s);
 			} else {
-				LM_DBG("entry key: [%.*s] value: [%d] (int)\n",
+				LM_DBG("entry key: [%.*s] value: [%ld] (int)\n",
 					it->name.len, it->name.s, it->value.n);
 			}
 
