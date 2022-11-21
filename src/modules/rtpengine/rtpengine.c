@@ -3454,11 +3454,11 @@ set_rtpengine_set_from_avp(struct sip_msg *msg, int direction)
 
 	active_rtpp_set = select_rtpp_set(setid_val.n);
 	if(active_rtpp_set == NULL) {
-		LM_ERR("could not locate engine set %u\n", setid_val.n);
+		LM_ERR("could not locate engine set %ld\n", setid_val.n);
 		return -1;
 	}
 
-	LM_DBG("using rtpengine set %u\n", setid_val.n);
+	LM_DBG("using rtpengine set %ld\n", setid_val.n);
 
 	current_msg_id = msg->id;
 
