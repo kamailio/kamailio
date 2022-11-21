@@ -134,6 +134,7 @@ int hepv2_received(char *buf, unsigned int len, struct receive_info *ri)
 					heph->hp_f);
 			return -1;
 	}
+	LM_DBG("header offset: %d af: %d\n", hl, (int)heph->hp_f);
 
 	/* PROTO */
 	if(heph->hp_p == IPPROTO_UDP)
@@ -808,6 +809,7 @@ int hepv2_message_parse(char *buf, unsigned int len, sip_msg_t *msg)
 					heph->hp_f);
 			return -1;
 	}
+	LM_DBG("header offset: %d af: %d\n", hl, (int)heph->hp_f);
 
 	/* PROTO */
 	if(heph->hp_p == IPPROTO_UDP)
