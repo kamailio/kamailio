@@ -173,7 +173,7 @@ unsigned int pres_get_priority(void)
 
 	vavp = xavp_get_child_with_ival(&pres_xavp_cfg, &vname);
 	if(vavp != NULL) {
-		return (unsigned int)vavp->val.v.i;
+		return (unsigned int)vavp->val.v.l;
 	}
 
 	return (unsigned int)(time(NULL) - PRES_PRIORITY_TBASE);

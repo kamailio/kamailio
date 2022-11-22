@@ -1949,7 +1949,7 @@ int pres_get_delete_sub(void)
 
 	vavp = xavp_get_child_with_ival(&pres_xavp_cfg, &vname);
 	if(vavp != NULL) {
-		return (int)vavp->val.v.i;
+		return (int)vavp->val.v.l;
 	}
 
 	return 0;
