@@ -127,7 +127,7 @@ static void generate_avps_rad(VALUE_PAIR *received)
 				if(add_avp(flags, name, val) < 0) {
 					LM_ERR("unable to create a new AVP\n");
 				} else {
-					LM_DBG("AVP '%.*s'/%d='%.*s'/%d has been added\n",
+					LM_DBG("AVP '%.*s'/%ld='%.*s'/%ld has been added\n",
 							(flags & AVP_NAME_STR) ? name.s.len : 4,
 							(flags & AVP_NAME_STR) ? name.s.s : "null",
 							(flags & AVP_NAME_STR) ? 0 : name.n,
@@ -143,7 +143,7 @@ static void generate_avps_rad(VALUE_PAIR *received)
 				if(add_avp(flags, name, val) < 0) {
 					LM_ERR("unable to create a new AVP\n");
 				} else {
-					LM_DBG("AVP '%.*s'/%d='%.*s'/%d has been added\n",
+					LM_DBG("AVP '%.*s'/%ld='%.*s'/%ld has been added\n",
 							(flags & AVP_NAME_STR) ? name.s.len : 4,
 							(flags & AVP_NAME_STR) ? name.s.s : "null",
 							(flags & AVP_NAME_STR) ? 0 : name.n,
@@ -177,7 +177,7 @@ static void generate_avps(struct attr *attrs, VALUE_PAIR *received)
 		if(add_avp(flags, name, val) < 0) {
 			LM_ERR("unable to create a new AVP\n");
 		} else {
-			LM_DBG("AVP '%.*s'/%d='%.*s'/%d has been added\n",
+			LM_DBG("AVP '%.*s'/%ld='%.*s'/%ld has been added\n",
 					(flags & AVP_NAME_STR) ? name.s.len : 4,
 					(flags & AVP_NAME_STR) ? name.s.s : "null",
 					(flags & AVP_NAME_STR) ? 0 : name.n,
