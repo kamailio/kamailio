@@ -120,17 +120,14 @@ void _dbg_get_obj_xavp_val(sr_xavp_t *avp, srjson_doc_t *jdoc, srjson_t **jobj)
 		case SR_XTYPE_NULL:
 			*jobj = srjson_CreateNull(jdoc);
 		break;
-		case SR_XTYPE_INT:
-			*jobj = srjson_CreateNumber(jdoc, avp->val.v.i);
+		case SR_XTYPE_LONG:
+			*jobj = srjson_CreateNumber(jdoc, avp->val.v.l);
 		break;
 		case SR_XTYPE_STR:
 			*jobj = srjson_CreateStr(jdoc, avp->val.v.s.s, avp->val.v.s.len);
 		break;
 		case SR_XTYPE_TIME:
 			result = snprintf(_pv_xavp_buf, 128, "%lu", (long unsigned)avp->val.v.t);
-		break;
-		case SR_XTYPE_LONG:
-			result = snprintf(_pv_xavp_buf, 128, "%ld", (long unsigned)avp->val.v.l);
 		break;
 		case SR_XTYPE_LLONG:
 			result = snprintf(_pv_xavp_buf, 128, "%lld", avp->val.v.ll);
