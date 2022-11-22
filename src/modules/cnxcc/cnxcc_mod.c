@@ -2028,7 +2028,7 @@ static int __pv_get_calls(
 		case CNX_PV_DROPPED:
 			return pv_get_uintval(msg, param, res, _data.stats->dropped);
 		default:
-			LM_ERR("Unknown PV type %d\n", param->pvn.u.isname.name.n);
+			LM_ERR("Unknown PV type %ld\n", param->pvn.u.isname.name.n);
 			break;
 	}
 
