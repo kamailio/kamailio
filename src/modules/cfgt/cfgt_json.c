@@ -121,8 +121,8 @@ void _cfgt_get_obj_xavp_val(sr_xavp_t *avp, srjson_doc_t *jdoc, srjson_t **jobj)
 				return;
 			}
 			break;
-		case SR_XTYPE_INT:
-			*jobj = srjson_CreateNumber(jdoc, avp->val.v.i);
+		case SR_XTYPE_LONG:
+			*jobj = srjson_CreateNumber(jdoc, avp->val.v.l);
 			if(*jobj == NULL) {
 				LM_ERR("cannot create json object\n");
 				return;
@@ -138,10 +138,6 @@ void _cfgt_get_obj_xavp_val(sr_xavp_t *avp, srjson_doc_t *jdoc, srjson_t **jobj)
 		case SR_XTYPE_TIME:
 			result = snprintf(
 					_pv_xavp_buf, 128, "%lu", (long unsigned)avp->val.v.t);
-			break;
-		case SR_XTYPE_LONG:
-			result = snprintf(
-					_pv_xavp_buf, 128, "%ld", (long unsigned)avp->val.v.l);
 			break;
 		case SR_XTYPE_LLONG:
 			result = snprintf(_pv_xavp_buf, 128, "%lld", avp->val.v.ll);
