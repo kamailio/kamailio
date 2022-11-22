@@ -71,8 +71,8 @@ static void reg_lookup_filter_init(void)
 			&& (reg_xavp_cfg.s != NULL && reg_xavp_cfg.len > 0)
 			&& (vavp = xavp_get_child_with_ival(&reg_xavp_cfg,
 					&filter_bflags)) != NULL) {
-		if(vavp->val.v.i != 0) {
-			_reg_lookup_filter.bflags = (uint32_t)vavp->val.v.i;
+		if(vavp->val.v.l != 0) {
+			_reg_lookup_filter.bflags = (uint32_t)vavp->val.v.l;
 			_reg_lookup_filter.factive = 1;
 		}
 	}
@@ -217,8 +217,8 @@ int xavp_rcd_helper(ucontact_t* ptr)
 
 	if(!(reg_xavp_rcd_mask & AVP_RCD_EXP)) {
 		memset(&xval, 0, sizeof(sr_xval_t));
-		xval.type = SR_XTYPE_INT;
-		xval.v.i = (int) (ptr->expires - time(0));
+		xval.type = SR_XTYPE_LONG;
+		xval.v.l = (long) (ptr->expires - time(0));
 		xavp_add_value(&xname_expires, &xval, xavp);
 	}
 

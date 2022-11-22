@@ -443,7 +443,7 @@ int reg_get_crt_max_contacts(void)
 		vavp = xavp_get_child_with_ival(&reg_xavp_cfg, &vname);
 		if(vavp!=NULL)
 		{
-			n = vavp->val.v.i;
+			n = (int)vavp->val.v.l;
 			LM_DBG("using max contacts value from xavp: %d\n", n);
 		}
 	}

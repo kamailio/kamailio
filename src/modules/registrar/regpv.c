@@ -961,8 +961,8 @@ int ki_lookup_xavp(sip_msg_t* msg, str *utname, str* uri,
 
 	/* add record count field */
 	memset(&nxval, 0, sizeof(sr_xval_t));
-	nxval.type = SR_XTYPE_INT;
-	nxval.v.i = n;
+	nxval.type = SR_XTYPE_LONG;
+	nxval.v.l = n;
 	STR_STATIC_SET(fxname, "count");
 	if(xavp_add_value(&fxname, &nxval, &rxavp)==NULL) {
 		LM_ERR("failed to add xavp %.*s field\n", fxname.len, fxname.s);
