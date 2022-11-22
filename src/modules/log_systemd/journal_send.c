@@ -69,11 +69,11 @@ int k_sd_journal_send_xavp(str *rname)
 			nxavp;
 			nxavp = nxavp->next, cnt++)
 	{
-		if (nxavp->val.type == SR_XTYPE_INT) {
+		if (nxavp->val.type == SR_XTYPE_LONG) {
 			buflen = snprintf(NULL, 0,
-					"%.*s=%d",
+					"%.*s=%ld",
 					nxavp->name.len, nxavp->name.s,
-					nxavp->val.v.i);
+					nxavp->val.v.l);
 			logv[cnt].iov_base = pkg_malloc(buflen + 1/*snprintf's trailing \0*/);
 			if (!logv[cnt].iov_base ) {
 				LM_ERR("failed to allocate pkg memory\n");
@@ -82,9 +82,9 @@ int k_sd_journal_send_xavp(str *rname)
 			logv[cnt].iov_len = buflen;
 
 			snprintf(logv[cnt].iov_base, buflen + 1,
-					"%.*s=%d",
+					"%.*s=%ld",
 					nxavp->name.len, nxavp->name.s,
-					nxavp->val.v.i);
+					nxavp->val.v.l);
 		} else if (nxavp->val.type == SR_XTYPE_STR) {
 			buflen = nxavp->name.len + 1 + nxavp->val.v.s.len;
 			logv[cnt].iov_base = pkg_malloc(buflen);
