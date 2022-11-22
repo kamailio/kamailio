@@ -529,19 +529,19 @@ int sql_exec_xquery(struct sip_msg *msg, sql_con_t *con, str *query,
 							(char*)RES_ROWS(db_res)[i].values[j].val.blob_val.s;
 					break;
 					case DB1_INT:
-						val.type = SR_XTYPE_INT;
-						val.v.i
-							= (int)RES_ROWS(db_res)[i].values[j].val.int_val;
+						val.type = SR_XTYPE_LONG;
+						val.v.l
+							= (long)RES_ROWS(db_res)[i].values[j].val.int_val;
 					break;
 					case DB1_DATETIME:
-						val.type = SR_XTYPE_INT;
-						val.v.i
-							= (int)RES_ROWS(db_res)[i].values[j].val.time_val;
+						val.type = SR_XTYPE_LONG;
+						val.v.l
+							= (long)RES_ROWS(db_res)[i].values[j].val.time_val;
 					break;
 					case DB1_BITMAP:
-						val.type = SR_XTYPE_INT;
-						val.v.i
-							= (int)RES_ROWS(db_res)[i].values[j].val.bitmap_val;
+						val.type = SR_XTYPE_LONG;
+						val.v.l
+							= (long)RES_ROWS(db_res)[i].values[j].val.bitmap_val;
 					break;
 					case DB1_BIGINT:
 						val.type = SR_XTYPE_LLONG;
