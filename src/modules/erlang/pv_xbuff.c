@@ -317,8 +317,8 @@ int pv_xbuff_new_xavp(sr_xavp_t **new, pv_value_t *pval, int *counter, char pref
 		nval.type = SR_XTYPE_NULL;
 		s[0] = prefix ? prefix : 'n';
 	} else if (pval->flags&PV_VAL_INT) {
-		nval.type = SR_XTYPE_INT;
-		nval.v.i = pval->ri;
+		nval.type = SR_XTYPE_LONG;
+		nval.v.l = pval->ri;
 		s[0] = prefix ? prefix : 'i';
 	} else if (pval->flags&PV_VAL_STR) {
 		/* check what it is */
@@ -596,8 +596,8 @@ int pv_xbuff_get_value(struct sip_msg *msg, pv_param_t *param,
 	case SR_XTYPE_NULL:
 		return pv_get_null(msg, param, res);
 		break;
-	case SR_XTYPE_INT:
-		return pv_get_sintval(msg, param, res, avp->val.v.i);
+	case SR_XTYPE_LONG:
+		return pv_get_sintval(msg, param, res, avp->val.v.l);
 		break;
 	case SR_XTYPE_STR:
 		switch (avp->name.s[0]) {
@@ -611,10 +611,6 @@ int pv_xbuff_get_value(struct sip_msg *msg, pv_param_t *param,
 		break;
 	case SR_XTYPE_TIME:
 		if(snprintf(_pv_xavp_buf, 128, "%lu", (long unsigned)avp->val.v.t)<0)
-			return pv_get_null(msg, param, res);
-		break;
-	case SR_XTYPE_LONG:
-		if(snprintf(_pv_xavp_buf, 128, "%ld", (long unsigned)avp->val.v.l)<0)
 			return pv_get_null(msg, param, res);
 		break;
 	case SR_XTYPE_LLONG:
@@ -1084,7 +1080,7 @@ int xavp_decode(ei_x_buff *xbuff, int *index, sr_xavp_t **xavp,int level)
 		name.len = snprintf(_s,sizeof(_s),"i%d",counter++);
 
 		ei_decode_long(xbuff->buff,index,&val.v.l);
-		val.type = SR_XTYPE_INT;
+		val.type = SR_XTYPE_LONG;
 
 		*xavp = xavp_new_value(&name,&val);
 		if (!*xavp) {
