@@ -914,7 +914,7 @@ int xavp_encode(ei_x_buff *xbuff, sr_xavp_t *xavp,int level)
 			ei_x_encode_string_len(xbuff,xavp->val.v.s.s,xavp->val.v.s.len);
 			break;
 		case 'i':
-			ei_x_encode_long(xbuff,xavp->val.v.i);
+			ei_x_encode_long(xbuff,xavp->val.v.l);
 			break;
 		case 't':
 			n = xavp_get_count(xavp->val.v.xavp);
