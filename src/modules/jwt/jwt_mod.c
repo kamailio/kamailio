@@ -31,6 +31,7 @@
 #include "../../core/dprint.h"
 #include "../../core/mod_fix.h"
 #include "../../core/lvalue.h"
+#include "../../core/trim.h"
 #include "../../core/kemi.h"
 #include "../../core/parser/parse_param.h"
 
@@ -467,9 +468,10 @@ static int ki_jwt_verify(sip_msg_t* msg, str *key, str *alg, str *claims,
 			LM_ERR("unable to read key file content: %s\n", key->s);
 			goto error;
 		}
-		keybuf[keybuf_len] = '\0';
 		kdata.s = (char*)keybuf;
 		kdata.len = (int)keybuf_len;
+		trim(&kdata);
+		kdata.s[keybuf_len] = '\0';
 		jwt_fcache_add(key, &kdata);
 	}
 	sparams = dupclaims;
