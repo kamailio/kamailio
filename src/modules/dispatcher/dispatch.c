@@ -1969,8 +1969,8 @@ int ds_add_xavp_record(ds_set_t *dsidx, int pos, int set, int alg,
 
 	/* add setid field */
 	memset(&nxval, 0, sizeof(sr_xval_t));
-	nxval.type = SR_XTYPE_INT;
-	nxval.v.i = set;
+	nxval.type = SR_XTYPE_LONG;
+	nxval.v.l = set;
 	if(xavp_add_value(&ds_xavp_dst_grp, &nxval, &nxavp)==NULL) {
 		xavp_destroy_list(&nxavp);
 		LM_ERR("failed to add destination setid xavp field\n");
@@ -2096,8 +2096,8 @@ int ds_select_dst_limit(sip_msg_t *msg, int set, int alg, uint32_t limit,
 			&& (ds_xavp_ctx.len >= 0)) {
 		/* add to xavp the number of selected dst records */
 		memset(&nxval, 0, sizeof(sr_xval_t));
-		nxval.type = SR_XTYPE_INT;
-		nxval.v.i = vstate.cnt;
+		nxval.type = SR_XTYPE_LONG;
+		nxval.v.l = vstate.cnt;
 		if(xavp_add_xavp_value(&ds_xavp_ctx, &ds_xavp_ctx_cnt, &nxval, NULL)==NULL) {
 			LM_ERR("failed to add cnt value to xavp\n");
 			return -1;
@@ -2746,7 +2746,7 @@ int ds_mark_dst(struct sip_msg *msg, int state)
 
 	if(rxavp == NULL)
 		return -1; /* grp xavp not available */
-	group = rxavp->val.v.i;
+	group = (int)rxavp->val.v.l;
 
 	rxavp = xavp_get_child_with_sval(&ds_xavp_dst, &ds_xavp_dst_addr);
 

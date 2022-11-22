@@ -792,8 +792,8 @@ static int ki_ds_select_routes_limit(sip_msg_t *msg, str *srules, str *smode,
 			&& (ds_xavp_ctx.len >= 0)) {
 		/* add to xavp the number of selected dst records */
 		memset(&nxval, 0, sizeof(sr_xval_t));
-		nxval.type = SR_XTYPE_INT;
-		nxval.v.i = vstate.cnt;
+		nxval.type = SR_XTYPE_LONG;
+		nxval.v.l = vstate.cnt;
 		if(xavp_add_xavp_value(&ds_xavp_ctx, &ds_xavp_ctx_cnt, &nxval, NULL)==NULL) {
 			LM_ERR("failed to add cnt value to xavp\n");
 			return -1;
