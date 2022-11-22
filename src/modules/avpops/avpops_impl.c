@@ -1093,11 +1093,11 @@ error:
 
 int set_val_xavp(sr_xavp_t *xavp, int_str *avp_val, int *flag)
 {
-	if(xavp->val.type!=SR_XTYPE_INT&&xavp->val.type!=SR_XTYPE_STR)
+	if(xavp->val.type!=SR_XTYPE_LONG && xavp->val.type!=SR_XTYPE_STR)
 		return -1;
-	if(xavp->val.type==SR_XTYPE_INT)
+	if(xavp->val.type==SR_XTYPE_LONG)
 	{
-		avp_val->n = xavp->val.v.i;
+		avp_val->n = xavp->val.v.l;
 	} else {
 		*flag = AVP_VAL_STR;
 		avp_val->s = xavp->val.v.s;
