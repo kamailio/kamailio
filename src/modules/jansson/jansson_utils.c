@@ -96,8 +96,8 @@ int jansson_to_xval(sr_xval_t *val, char** freeme, json_t* v) {
 		val->v.s.s = (char*)value;
 		val->v.s.len = strlen(value);
 	}else if(json_is_boolean(v)) {
-		val->type = SR_XTYPE_INT;
-		val->v.i = json_is_true(v) ? 1 : 0;
+		val->type = SR_XTYPE_LONG;
+		val->v.l = json_is_true(v) ? 1 : 0;
 	}else if(json_is_real(v)) {
 		char* value = NULL;
 		if(asprintf(&value, "%.15g", json_real_value(v))<0) {
@@ -110,7 +110,7 @@ int jansson_to_xval(sr_xval_t *val, char** freeme, json_t* v) {
 		val->v.s.len = strlen(value);
 	}else if(json_is_integer(v)) {
 		long long value = json_integer_value(v);
-		if ((value > INT_MAX) || (value < INT_MIN))  {
+		if ((value > LONG_MAX) || (value < LONG_MIN))  {
 			char* svalue = NULL;
 			if (asprintf(&svalue, "%"JSON_INTEGER_FORMAT, value) < 0) {
 				ERR("asprintf failed\n");
@@ -121,8 +121,8 @@ int jansson_to_xval(sr_xval_t *val, char** freeme, json_t* v) {
 			val->v.s.s = svalue;
 			val->v.s.len = strlen(svalue);
 		} else {
-			val->type = SR_XTYPE_INT;
-			val->v.i = (int)value;
+			val->type = SR_XTYPE_LONG;
+			val->v.l = (long)value;
 		}
 	}else if(json_is_null(v)) {
 		val->type = SR_XTYPE_NULL;

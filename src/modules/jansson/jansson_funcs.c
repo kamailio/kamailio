@@ -431,17 +431,14 @@ static int jansson_xavp2object(json_t *json, sr_xavp_t **head) {
 			case SR_XTYPE_NULL:
 				it = json_null();
 				break;
-			case SR_XTYPE_INT:
-				it = json_integer(avp->val.v.i);
+			case SR_XTYPE_LONG:
+				it = json_integer((json_int_t)avp->val.v.l);
 				break;
 			case SR_XTYPE_STR:
 				it = json_stringn(avp->val.v.s.s, avp->val.v.s.len);
 				break;
 			case SR_XTYPE_TIME:
 				it = json_integer((json_int_t)avp->val.v.t);
-				break;
-			case SR_XTYPE_LONG:
-				it = json_integer((json_int_t)avp->val.v.l);
 				break;
 			case SR_XTYPE_LLONG:
 				it = json_integer((json_int_t)avp->val.v.ll);
