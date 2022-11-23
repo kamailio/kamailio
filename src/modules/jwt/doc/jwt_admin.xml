@@ -142,7 +142,7 @@ modparam("jwt", "key_mode", 1)
 
 	<section id="jwt.f.jwt_verify">
 	    <title>
-		<function moreinfo="none">jwt_verify(pubkey, alg, claims, jwtval)</function>
+		<function moreinfo="none">jwt_verify(pubkeypath, alg, claims, jwtval)</function>
 	    </title>
 	    <para>
 	    Verify the JWT.
@@ -153,7 +153,7 @@ modparam("jwt", "key_mode", 1)
 		<itemizedlist>
 			<listitem>
 			<para>
-			pubkey - path to public key
+			pubkeypath - path to public key file
 			</para>
 			</listitem>
 			<listitem>
@@ -183,6 +183,58 @@ modparam("jwt", "key_mode", 1)
 		<programlisting format="linespecific">
 ...
   if(!jwt_verify("/path/to/pubkey.pem", "RS256",
+         "caller='$fU';callee='$tU';callid='$ci';index=100",
+        "$var(jwt)") {
+    xwarn("failed to verify jwt\n");
+  }
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section id="jwt.f.jwt_verify_key">
+	    <title>
+		<function moreinfo="none">jwt_verify_key(pubkeyval, alg, claims, jwtval)</function>
+	    </title>
+	    <para>
+	    Verify the JWT.
+		</para>
+		<para>
+		The parameters are:
+		</para>
+		<itemizedlist>
+			<listitem>
+			<para>
+			pubkeyval - public key value
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+			alg - the algoritm to build the signature, as supported by the
+			libjwt (e.g., RS256, HS256, ES256, ...)
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+			claims - the list of claims to be checked they are in the JWT, in the format
+			"name1=value1;name2=value2;..." (same as the SIP parameters format,
+			see also the description of claims parameter for jwt_generate()).
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+			jwtval - the value of the JWT to verify
+			</para>
+			</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>jwt_verify_key</function> usage</title>
+		<programlisting format="linespecific">
+...
+  if(!jwt_verify_key("...", "RS256",
          "caller='$fU';callee='$tU';callid='$ci';index=100",
         "$var(jwt)") {
     xwarn("failed to verify jwt\n");
