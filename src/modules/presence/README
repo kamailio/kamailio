@@ -1135,7 +1135,7 @@ kamcmd presence.updateWatchers sip:alice@domain.com presence
 
    Parameters:
      * mode - (optional) it can be 'full' to print all the fields of
-       presentity record. If missine, only a selected set of fields are
+       presentity record. If missing, only a selected set of fields are
        printed in the response.
 
    RPC Command Format:
