@@ -46,6 +46,8 @@ static int w_jwt_generate_4(sip_msg_t* msg, char* pkey, char* palg, char* pclaim
 static int w_jwt_generate_3(sip_msg_t* msg, char* pkey, char* palg, char* pclaims);
 static int w_jwt_verify(sip_msg_t* msg, char* pkeypath, char* palg, char* pclaims,
 		char *pjwtval);
+static int w_jwt_verify_key(sip_msg_t* msg, char* pkey, char* palg, char* pclaims,
+		char *pjwtval);
 
 static int _jwt_key_mode = 0;
 
@@ -66,6 +68,8 @@ static cmd_export_t cmds[]={
 	{"jwt_generate", (cmd_function)w_jwt_generate_3, 3,
 		fixup_spve_all, 0, ANY_ROUTE},
 	{"jwt_verify", (cmd_function)w_jwt_verify, 4,
+		fixup_spve_all, 0, ANY_ROUTE},
+	{"jwt_verify_key", (cmd_function)w_jwt_verify_key, 4,
 		fixup_spve_all, 0, ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
@@ -599,6 +603,37 @@ static int w_jwt_verify(sip_msg_t* msg, char* pkeypath, char* palg, char* pclaim
 /**
  *
  */
+static int w_jwt_verify_key(sip_msg_t* msg, char* pkey, char* palg, char* pclaims,
+		char *pjwtval)
+{
+	str skey = STR_NULL;
+	str salg = STR_NULL;
+	str sclaims = STR_NULL;
+	str sjwtval = STR_NULL;
+
+	if (fixup_get_svalue(msg, (gparam_t*)pkey, &skey) != 0) {
+		LM_ERR("cannot get the key value\n");
+		return -1;
+	}
+	if (fixup_get_svalue(msg, (gparam_t*)palg, &salg) != 0) {
+		LM_ERR("cannot get algorithm value\n");
+		return -1;
+	}
+	if (fixup_get_svalue(msg, (gparam_t*)pclaims, &sclaims) != 0) {
+		LM_ERR("cannot get claims value\n");
+		return -1;
+	}
+	if (fixup_get_svalue(msg, (gparam_t*)pjwtval, &sjwtval) != 0) {
+		LM_ERR("cannot get jwt value\n");
+		return -1;
+	}
+
+	return ki_jwt_verify(msg, &skey, &salg, &sclaims, &sjwtval);
+}
+
+/**
+ *
+ */
 static int jwt_pv_get(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 {
 	switch(param->pvn.u.isname.name.n)
@@ -647,6 +682,11 @@ static sr_kemi_t sr_kemi_jwt_exports[] = {
 	},
 	{ str_init("jwt"), str_init("jwt_verify"),
 		SR_KEMIP_INT, ki_jwt_verify,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("jwt"), str_init("jwt_verify_key"),
+		SR_KEMIP_INT, ki_jwt_verify_key,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
