@@ -1381,7 +1381,7 @@ pres_update_watchers("sip:test@kamailio.org", "presence");
 		<itemizedlist>
 			<listitem>
 				<para>mode - (optional) it can be 'full' to print all the
-				fields of presentity record. If missine, only a selected
+				fields of presentity record. If missing, only a selected
 				set of fields are printed in the response.</para>
 			</listitem>
 		</itemizedlist>
