@@ -480,7 +480,9 @@ void log_init(void)
 		log_fqdn = strdup (info->ai_canonname);
 	}
 
-	freeaddrinfo (info);
+	if(info!=NULL) {
+		freeaddrinfo (info);
+	}
 
 	dprint_init_colors();
 }
