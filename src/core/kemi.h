@@ -105,6 +105,7 @@ typedef int (*sr_kemi_fmnn_f)(sip_msg_t*, int, int);
 typedef int (*sr_kemi_fmns_f)(sip_msg_t*, int, str*);
 typedef int (*sr_kemi_fmsn_f)(sip_msg_t*, str*, int);
 typedef int (*sr_kemi_fmss_f)(sip_msg_t*, str*, str*);
+typedef int (*sr_kemi_fmsl_f)(sip_msg_t*, str*, long);
 
 /* sip_msg_t and three int|str params */
 typedef int (*sr_kemi_fmnnn_f)(sip_msg_t*, int, int, int);
@@ -183,6 +184,7 @@ typedef sr_kemi_xval_t* (*sr_kemi_xfmnn_f)(sip_msg_t*, int, int);
 typedef sr_kemi_xval_t* (*sr_kemi_xfmns_f)(sip_msg_t*, int, str*);
 typedef sr_kemi_xval_t* (*sr_kemi_xfmsn_f)(sip_msg_t*, str*, int);
 typedef sr_kemi_xval_t* (*sr_kemi_xfmss_f)(sip_msg_t*, str*, str*);
+typedef sr_kemi_xval_t* (*sr_kemi_xfmsl_f)(sip_msg_t*, str*, long);
 
 /* return xval, params sip_msg_t and three int|str params */
 typedef sr_kemi_xval_t* (*sr_kemi_xfmnnn_f)(sip_msg_t*, int, int, int);
