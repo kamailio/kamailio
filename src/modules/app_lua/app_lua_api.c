@@ -957,6 +957,9 @@ int sr_kemi_lua_return_xval(lua_State* L, sr_kemi_t *ket, sr_kemi_xval_t *rx)
 		case SR_KEMIP_INT:
 			lua_pushinteger(L, rx->v.n);
 			return 1;
+		case SR_KEMIP_LONG:
+			lua_pushnumber(L, rx->v.l);
+			return 1;
 		case SR_KEMIP_STR:
 			lua_pushlstring(L, rx->v.s.s, rx->v.s.len);
 			return 1;
@@ -1066,6 +1069,10 @@ int sr_kemi_lua_exec_func_ex(lua_State* L, sr_kemi_t *ket, int pdelta)
 			vps[i].n = lua_tointeger(L, i+pdelta+1);
 			LM_DBG("param[%d] for: %.*s is int: %d\n", i,
 				fname->len, fname->s, vps[i].n);
+		} else if(ket->ptypes[i]==SR_KEMIP_LONG) {
+			vps[i].l = (long)lua_tonumber(L, i+pdelta+1);
+			LM_DBG("param[%d] for: %.*s is long: %ld\n", i,
+				fname->len, fname->s, vps[i].l);
 		} else {
 			LM_ERR("unknown parameter type %d (%d)\n", ket->ptypes[i], i);
 			return app_lua_return_false(L);
@@ -1134,6 +1141,14 @@ int sr_kemi_lua_exec_func_ex(lua_State* L, sr_kemi_t *ket, int pdelta)
 						return sr_kemi_lua_return_xval(L, ket, xret);
 					} else {
 						ret = ((sr_kemi_fmss_f)(ket->func))(env_L->msg, &vps[0].s, &vps[1].s);
+						return sr_kemi_lua_return_int(L, ket, ret);
+					}
+				} else if(ket->ptypes[1]==SR_KEMIP_LONG) {
+					if(ket->rtype==SR_KEMIP_XVAL) {
+						xret = ((sr_kemi_xfmsl_f)(ket->func))(env_L->msg, &vps[0].s, vps[1].l);
+						return sr_kemi_lua_return_xval(L, ket, xret);
+					} else {
+						ret = ((sr_kemi_fmsl_f)(ket->func))(env_L->msg, &vps[0].s, vps[1].l);
 						return sr_kemi_lua_return_int(L, ket, ret);
 					}
 				} else {
