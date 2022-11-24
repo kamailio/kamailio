@@ -30,10 +30,11 @@
 #define SR_KEMIP_INT	(1<<0)	/* type integer */
 #define SR_KEMIP_STR	(1<<1)	/* type str* */
 #define SR_KEMIP_BOOL	(1<<2)	/* type boolean (0/1) */
-#define SR_KEMIP_XVAL	(1<<3)	/* type extended value (integer, str*, ...) */
-#define SR_KEMIP_NULL	(1<<4)	/* type NULL */
-#define SR_KEMIP_DICT	(1<<5)	/* type dictionary */
-#define SR_KEMIP_ARRAY	(1<<6)	/* type array */
+#define SR_KEMIP_LONG	(1<<3)	/* type long integer */
+#define SR_KEMIP_XVAL	(1<<4)	/* type extended value (integer, str*, ...) */
+#define SR_KEMIP_NULL	(1<<5)	/* type NULL */
+#define SR_KEMIP_DICT	(1<<6)	/* type dictionary */
+#define SR_KEMIP_ARRAY	(1<<7)	/* type array */
 
 #define SR_KEMI_FALSE	0
 #define SR_KEMI_TRUE	1
@@ -65,6 +66,7 @@ typedef struct sr_kemi_module {
 
 typedef union {
 	int n;
+	long l;
 	str s;
 } sr_kemi_val_t;
 
@@ -75,6 +77,7 @@ typedef struct sr_kemi_dict_item
 	int vtype;
 	union {
 		int n;
+		long l;
 		str s;
 		struct sr_kemi_dict_item *dict;
 	} v;
@@ -84,6 +87,7 @@ typedef struct sr_kemi_xval {
 	int vtype;
 	union {
 		int n;
+		long l;
 		str s;
 		sr_kemi_dict_item_t *dict;
 	} v;
