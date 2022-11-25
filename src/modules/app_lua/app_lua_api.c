@@ -1003,6 +1003,7 @@ int sr_kemi_lua_exec_func_ex(lua_State* L, sr_kemi_t *ket, int pdelta)
 	str *fname;
 	str *mname;
 	sr_kemi_val_t vps[SR_KEMI_PARAMS_MAX];
+	sr_kemi_xval_t xval;
 	sr_lua_env_t *env_L;
 	sr_kemi_xval_t *xret;
 
@@ -1144,11 +1145,13 @@ int sr_kemi_lua_exec_func_ex(lua_State* L, sr_kemi_t *ket, int pdelta)
 						return sr_kemi_lua_return_int(L, ket, ret);
 					}
 				} else if(ket->ptypes[1]==SR_KEMIP_LONG) {
+					xval.vtype = SR_KEMIP_LONG;
+					xval.v.l = vps[1].l;
 					if(ket->rtype==SR_KEMIP_XVAL) {
-						xret = ((sr_kemi_xfmsl_f)(ket->func))(env_L->msg, &vps[0].s, vps[1].l);
+						xret = ((sr_kemi_xfmsv_f)(ket->func))(env_L->msg, &vps[0].s, &xval);
 						return sr_kemi_lua_return_xval(L, ket, xret);
 					} else {
-						ret = ((sr_kemi_fmsl_f)(ket->func))(env_L->msg, &vps[0].s, vps[1].l);
+						ret = ((sr_kemi_fmsv_f)(ket->func))(env_L->msg, &vps[0].s, &xval);
 						return sr_kemi_lua_return_int(L, ket, ret);
 					}
 				} else {
