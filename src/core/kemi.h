@@ -426,4 +426,7 @@ void sr_kemi_xval_free(sr_kemi_xval_t *xval);
 /* functions exported to kemi that are used in other places */
 int sr_kemi_hdr_remove(sip_msg_t *msg, str *hname);
 
+sr_kemi_xval_t* sr_kemi_exec_func(sr_kemi_t *ket, sip_msg_t *msg, int pno,
+		sr_kemi_xval_t *vps);
+
 #endif
