@@ -226,7 +226,7 @@ static int fixup_free_rtpengine_query_v(void **param, int param_no);
 
 static int parse_flags(struct ng_flags_parse *, struct sip_msg *, enum rtpe_operation *, const char *);
 
-static int rtpengine_offer_answer(struct sip_msg *msg, const char *flags, enum rtpe_operation op, int more, bool async);
+static int rtpengine_offer_answer(struct sip_msg *msg, const char *flags, enum rtpe_operation op, int more, int async);
 static int fixup_set_id(void ** param, int param_no);
 static int set_rtpengine_set_f(struct sip_msg * msg, char * str1, char * str2);
 static struct rtpp_set * select_rtpp_set(unsigned int id_set);
@@ -4065,7 +4065,7 @@ rtpengine_async_answer1_f(struct sip_msg *msg, char *str1, char *str2)
 }
 
 static int
-rtpengine_offer_answer(struct sip_msg *msg, const char *flags, enum rtpe_operation op, int more, bool async)
+rtpengine_offer_answer(struct sip_msg *msg, const char *flags, enum rtpe_operation op, int more, int async)
 {
 	bencode_buffer_t bencbuf;
 	bencode_item_t *dict;
@@ -4074,7 +4074,7 @@ rtpengine_offer_answer(struct sip_msg *msg, const char *flags, enum rtpe_operati
 	pv_value_t pv_val;
 	str cur_body = {0, 0};
 
-	if (async) {
+	if (async==1) {
 		unsigned int tindex;
 		unsigned int tlabel;
 		tm_cell_t *t = 0;
