@@ -590,6 +590,14 @@ static int ki_imc_manager(struct sip_msg* msg)
 				goto error;
 			}
 		break;
+		case IMC_CMDID_MODIFY:
+			if(imc_handle_modify(msg, &cmd, &src, &dst)<0)
+			{
+				LM_ERR("failed to handle 'modify'\n");
+				ret = -120;
+				goto error;
+			}
+		break;
 		case IMC_CMDID_HELP:
 			if(imc_handle_help(msg, &cmd, &src, &dst)<0)
 			{
