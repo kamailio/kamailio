@@ -530,6 +530,7 @@ int nats_cleanup_init_servers()
 
 int nats_cleanup_connection(nats_connection_ptr c)
 {
+	int s;
 	if(c->conn != NULL) {
 		natsConnection_Close(c->conn);
 		natsConnection_Destroy(c->conn);
@@ -537,7 +538,7 @@ int nats_cleanup_connection(nats_connection_ptr c)
 	if(c->opts != NULL) {
 		natsOptions_Destroy(c->opts);
 	}
-	for(int s = 0; s < NATS_MAX_SERVERS; s++) {
+	for(s = 0; s < NATS_MAX_SERVERS; s++) {
 		if(c->servers[s]) {
 			shm_free(c->servers[s]);
 		}
