@@ -453,6 +453,20 @@ if(is_method("MESSAGE)
   -eg: #add sip:john@kamailio.org sip:chat-000@kamailio.org
     or  #add john@kamailio.org sent to sip:chat-000@kamailio.org
   -error case: return codes: -50 -- -59
+
+11.modify
+  -modify user role in a room
+  -takes 3 parameters:
+     1)the complete address of the user
+	 2)the role of the user
+     3)the address of the room -if not present it will be considered
+	   to be the address in the To header of the message
+  -only certain users have the right to invite other user: the owner
+    and the administrators
+  -roles: owner, admin, member
+  -eg: #invite sip:john@kamailio.org admin sip:chat-000@kamailio.org
+    or  #invite john@kamailio.org admin sent to sip:chat-000@kamailio.org
+  -error case: return codes: -120 -- -129
 ...
 </programlisting>
 		</example>

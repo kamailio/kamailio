@@ -344,8 +344,38 @@ imc_member_p imc_add_member(imc_room_p room, str* user, str* domain, int flags)
 	return imp;
 }
 
+imc_member_p imc_modify_member(imc_room_p room, str* user, str* domain, int flags) {
+	imc_member_p imp = NULL;
+	unsigned int hashid;
+
+	if(room==NULL || user == NULL || user->s==NULL || user->len<=0
+			|| domain == NULL || domain->s==NULL || domain->len<=0)
+	{
+		LM_ERR("invalid parameters\n");
+		return NULL;
+	}
+	
+	hashid = core_case_hash(user, domain, 0);
+	imp = room->members;
+	while(imp)
+	{
+		if(imp->hashid==hashid && imp->user.len==user->len
+				&& imp->domain.len==domain->len
+				&& !strncasecmp(imp->user.s, user->s, user->len)
+				&& !strncasecmp(imp->domain.s, domain->s, domain->len))
+		{
+			LM_DBG("member found. modify flags\n");
+			imp->flags = flags;
+			return 0;
+		}
+		imp = imp->next;
+	}
+
+	return -1;
+}
+
 /**
- * search memeber
+ * search member
  */
 imc_member_p imc_get_member(imc_room_p room, str* user, str* domain)
 {
@@ -374,7 +404,7 @@ imc_member_p imc_get_member(imc_room_p room, str* user, str* domain)
 		imp = imp->next;
 	}
 
-	return NULL;
+	return 0;
 }
 
 /**

@@ -62,6 +62,7 @@ static str msg_join_attempt_bcast = STR_STATIC_INIT(PREFIX "%.*s attempted to jo
 static str msg_join_attempt_ucast = STR_STATIC_INIT(PREFIX "Private rooms are by invitation only. Room owners have been notified.");
 static str msg_invite             = STR_STATIC_INIT(PREFIX "%.*s invites you to join the room (send '%.*saccept' or '%.*sreject')");
 static str msg_add_reject         = STR_STATIC_INIT(PREFIX "You don't have the permmission to add members to this room");
+static str msg_modify_reject      = STR_STATIC_INIT(PREFIX "You don't have the permmission to modify members in this room");
 #if 0
 static str msg_rejected           = STR_STATIC_INIT(PREFIX "%.*s has rejected invitation");
 #endif
@@ -289,6 +290,9 @@ int imc_parse_cmd(char *buf, int len, imc_cmd_p cmd)
 	} else if(cmd->name.len==(sizeof("destroy")-1)
 				&& !strncasecmp(cmd->name.s, "destroy", cmd->name.len)) {
 		cmd->type = IMC_CMDID_DESTROY;
+	} else if(cmd->name.len==(sizeof("modify")-1)
+				&& !strncasecmp(cmd->name.s, "modify", cmd->name.len)) {
+		cmd->type = IMC_CMDID_MODIFY;
 	} else if(cmd->name.len==(sizeof("help")-1)
 				&& !strncasecmp(cmd->name.s, "help", cmd->name.len)) {
 		cmd->type = IMC_CMDID_HELP;
@@ -1295,6 +1299,122 @@ error:
 	return rv;
 }
 
+int imc_handle_modify(struct sip_msg* msg, imc_cmd_t *cmd,
+					  struct imc_uri *src, struct imc_uri *dst)
+{
+	int rv = -1;
+	imc_room_p rm = 0;
+	imc_member_p member = 0;
+	int flag_member = 0;
+	str body;
+	struct imc_uri user, room;
+	int params = 0;
+
+	memset(&user, '\0', sizeof(user));
+	memset(&room, '\0', sizeof(room));
+
+	if (cmd->param[0].s) {
+		params++;
+		if (cmd->param[1].s) {
+			params++;
+			if (cmd->param[2].s) {
+				params++;
+			}
+		}
+	}
+
+	switch(params) {
+	case 0:
+		LM_INFO("Modify command with missing argument from [%.*s]\n", STR_FMT(&src->uri));
+		goto error;
+	case 1:
+		LM_INFO("Modify command with missing argument role\n");
+		goto error;		
+	case 2:
+	case 3:
+		/* identify the role */
+		if(cmd->param[1].len==(sizeof(IMC_MEMBER_OWNER_STR)-1)
+				&& !strncasecmp(cmd->param[1].s, IMC_MEMBER_OWNER_STR, cmd->param[1].len))
+		{
+			flag_member |= IMC_MEMBER_OWNER;
+		} else if(cmd->param[1].len==(sizeof(IMC_MEMBER_ADMIN_STR)-1)
+				&& !strncasecmp(cmd->param[1].s, IMC_MEMBER_ADMIN_STR, cmd->param[1].len))
+		{
+			flag_member |= IMC_MEMBER_ADMIN;
+		} else if(cmd->param[1].len==(sizeof(IMC_MEMBER_INVITED_STR)-1)
+				&& !strncasecmp(cmd->param[1].s, IMC_MEMBER_INVITED_STR, cmd->param[1].len))
+		{
+			flag_member |= IMC_MEMBER_INVITED;
+		} else {
+			LM_INFO("Modify command with unknown argument role [%.*s]\n", STR_FMT(&cmd->param[1]));
+			goto error;
+		}
+		
+		if (build_imc_uri(&room, cmd->param[3].s ? cmd->param[3] : dst->parsed.user, &dst->parsed))
+			goto error;
+		break;			
+	default:
+		LM_ERR("Invalid number of parameters %d\n", params);
+		goto error;
+	}
+
+	if (build_imc_uri(&user, cmd->param[0], &dst->parsed))
+		goto error;	
+
+	rm = imc_get_room(&room.parsed.user, &room.parsed.host);
+	if (rm == NULL || (rm->flags & IMC_ROOM_DELETED)) {
+		LM_ERR("Room [%.*s] does not exist!\n", STR_FMT(&room.uri));
+		goto error;
+	}
+	member = imc_get_member(rm, &src->parsed.user, &src->parsed.host);
+
+	if (member == NULL) {
+		LM_ERR("User [%.*s] is not member of room [%.*s]!\n", STR_FMT(&src->uri), STR_FMT(&room.uri));
+		goto error;
+	}
+
+	if (!(member->flags & IMC_MEMBER_OWNER) &&
+			!(member->flags & IMC_MEMBER_ADMIN)) {
+		LM_ERR("User [%.*s] has no right to modify others role!\n", STR_FMT(&member->uri));
+		imc_send_message(&rm->uri, &member->uri, build_headers(msg), &msg_modify_reject);
+		goto done;
+	}
+
+	member = imc_get_member(rm, &user.parsed.user, &user.parsed.host);
+	if (member == NULL) {
+		LM_ERR("User [%.*s] is not member of room [%.*s]!\n", STR_FMT(&member->uri), STR_FMT(&room.uri));
+		goto error;
+	}
+
+	rv = imc_modify_member(rm, &src->parsed.user, &src->parsed.host, flag_member);
+	
+	if (rv == -1) {
+		LM_ERR("Failed to modify member [%.*s] role [%.*s]\n", STR_FMT(&member->uri), STR_FMT(&cmd->param[1]));
+		goto error;
+	}
+
+	body.s = imc_body_buf;
+	body.len = snprintf(body.s, sizeof(imc_body_buf), msg_user_joined.s, STR_FMT(format_uri(member->uri)));
+
+	if (body.len < 0) {
+		LM_ERR("Error while building response\n");
+		goto error;
+	}
+
+	if (body.len > 0)
+		imc_room_broadcast(rm, build_headers(msg), &body);
+
+	if (body.len >= sizeof(imc_body_buf))
+		LM_ERR("Truncated message '%.*s'\n", STR_FMT(&body));
+
+done:
+	rv = 0;
+error:
+	if (user.uri.s != NULL) pkg_free(user.uri.s);
+	if (room.uri.s != NULL) pkg_free(room.uri.s);
+	if (rm != NULL) imc_release_room(rm);
+	return rv;
+}
 
 int imc_room_broadcast(imc_room_p room, str *ctype, str *body)
 {
