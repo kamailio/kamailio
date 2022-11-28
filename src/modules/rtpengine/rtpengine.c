@@ -211,8 +211,11 @@ static int play_media_f(struct sip_msg *, char *, char *);
 static int stop_media_f(struct sip_msg *, char *, char *);
 static int play_dtmf_f(struct sip_msg *, char *, char *);
 static int rtpengine_answer1_f(struct sip_msg *, char *, char *);
+static int rtpengine_async_answer1_f(struct sip_msg *, char *, char *);
 static int rtpengine_offer1_f(struct sip_msg *, char *, char *);
+static int rtpengine_async_offer1_f(struct sip_msg *, char *, char *);
 static int rtpengine_delete1_f(struct sip_msg *, char *, char *);
+static int rtpengine_async_delete1_f(struct sip_msg *, char *, char *);
 static int rtpengine_manage1_f(struct sip_msg *, char *, char *);
 static int rtpengine_query1_f(struct sip_msg *, char *, char *);
 static int rtpengine_info1_f(struct sip_msg *, char *, char *);
@@ -223,7 +226,7 @@ static int fixup_free_rtpengine_query_v(void **param, int param_no);
 
 static int parse_flags(struct ng_flags_parse *, struct sip_msg *, enum rtpe_operation *, const char *);
 
-static int rtpengine_offer_answer(struct sip_msg *msg, const char *flags, enum rtpe_operation op, int more);
+static int rtpengine_offer_answer(struct sip_msg *msg, const char *flags, enum rtpe_operation op, int more, bool async);
 static int fixup_set_id(void ** param, int param_no);
 static int set_rtpengine_set_f(struct sip_msg * msg, char * str1, char * str2);
 static struct rtpp_set * select_rtpp_set(unsigned int id_set);
@@ -418,12 +421,24 @@ static cmd_export_t cmds[] = {
 	{"rtpengine_offer",	(cmd_function)rtpengine_offer1_f,	1,
 		fixup_spve_null, 0,
 		ANY_ROUTE},
+	{"rtpengine_async_offer",	(cmd_function)rtpengine_async_offer1_f,	0,
+		0, 0,
+		ANY_ROUTE},
+	{"rtpengine_async_offer",	(cmd_function)rtpengine_async_offer1_f,	1,
+		fixup_spve_null, 0,
+		ANY_ROUTE},
 	{"rtpengine_answer",	(cmd_function)rtpengine_answer1_f,	0,
 		0, 0,
 		ANY_ROUTE},
 	{"rtpengine_answer",	(cmd_function)rtpengine_answer1_f,	1,
 		fixup_spve_null, 0,
 		ANY_ROUTE},
+	{"rtpengine_async_answer",	(cmd_function)rtpengine_async_answer1_f,	0,
+		0, 0,
+		ANY_ROUTE},
+	{"rtpengine_async_answer",	(cmd_function)rtpengine_async_answer1_f,	1,
+		fixup_spve_null, 0,
+		ANY_ROUTE},	
 	{"rtpengine_info",	(cmd_function)rtpengine_info1_f,	0,
 		0, 0,
 		ANY_ROUTE},
@@ -440,6 +455,12 @@ static cmd_export_t cmds[] = {
 		0, 0,
 		ANY_ROUTE},
 	{"rtpengine_delete",	(cmd_function)rtpengine_delete1_f,	1,
+		fixup_spve_null, 0,
+		ANY_ROUTE},
+	{"rtpengine_async_delete",	(cmd_function)rtpengine_async_delete1_f,	0,
+		0, 0,
+		ANY_ROUTE},
+	{"rtpengine_async_delete",	(cmd_function)rtpengine_async_delete1_f,	1,
 		fixup_spve_null, 0,
 		ANY_ROUTE},
 	{"rtpengine_query",	(cmd_function)rtpengine_query1_f,	0,
@@ -3697,6 +3718,48 @@ static int rtpengine_delete(struct sip_msg *msg, const char *flags) {
 	return 1;
 }
 
+static int rtpengine_async_delete(struct sip_msg *msg, const char *flags) {
+	bencode_buffer_t bencbuf;
+	unsigned int tindex;
+	unsigned int tlabel;
+	tm_cell_t *t = 0;
+
+	if(tmb.t_suspend==NULL) {
+		LM_ERR("evapi async relay is disabled - tm module not loaded\n");
+		return -1;
+	}
+
+	t = tmb.t_gett();
+	if (t==NULL || t==T_UNDEFINED)
+	{
+		if(tmb.t_newtran(msg)<0)
+		{
+			LM_ERR("cannot create the transaction\n");
+			return -1;
+		}
+		t = tmb.t_gett();
+		if (t==NULL || t==T_UNDEFINED)
+		{
+			LM_ERR("cannot lookup the transaction\n");
+			return -1;
+		}
+	}
+	if(tmb.t_suspend(msg, &tindex, &tlabel)<0)
+	{
+		LM_ERR("failed to suspend request processing\n");
+		return -1;
+	}
+
+	LM_DBG("transaction suspended [%u:%u]\n", tindex, tlabel);
+
+	bencode_item_t *ret = rtpp_function_call_ok(&bencbuf, msg, OP_DELETE, flags, NULL);
+	if (!ret)
+		return -1;
+	parse_call_stats(ret, msg);
+	bencode_buffer_free(&bencbuf);
+	return 1;
+}
+
 static int rtpengine_query(struct sip_msg *msg, const char *flags) {
 	bencode_buffer_t bencbuf;
 	bencode_item_t *ret = rtpp_function_call_ok(&bencbuf, msg, OP_QUERY, flags, NULL);
@@ -3742,6 +3805,10 @@ static int rtpengine_delete_wrap(struct sip_msg *msg, void *d, int more, enum rt
 	return rtpengine_delete(msg, d);
 }
 
+static int rtpengine_async_delete_wrap(struct sip_msg *msg, void *d, int more, enum rtpe_operation op) {
+	return rtpengine_async_delete(msg, d);
+}
+
 static int rtpengine_rtpp_set_wrap_fparam(struct sip_msg *msg, int (*func)(struct sip_msg *msg, void *, int,
 			enum rtpe_operation),
 		char *str1, int direction, enum rtpe_operation op)
@@ -3763,6 +3830,12 @@ static int
 rtpengine_delete1_f(struct sip_msg* msg, char* str1, char* str2)
 {
 	return rtpengine_rtpp_set_wrap_fparam(msg, rtpengine_delete_wrap, str1, 1, OP_DELETE);
+}
+
+static int
+rtpengine_async_delete1_f(struct sip_msg* msg, char* str1, char* str2)
+{
+	return rtpengine_rtpp_set_wrap_fparam(msg, rtpengine_async_delete_wrap, str1, 1, OP_DELETE);
 }
 
 static int rtpengine_query_wrap(struct sip_msg *msg, void *d, int more, enum rtpe_operation op) {
@@ -3891,9 +3964,9 @@ rtpengine_manage(struct sip_msg *msg, const char *flags)
 
 	if (msg->first_line.type == SIP_REQUEST) {
 		if((method & (METHOD_ACK|METHOD_PRACK)) && nosdp==0)
-			return rtpengine_offer_answer(msg, flags, OP_ANSWER, 0);
+			return rtpengine_offer_answer(msg, flags, OP_ANSWER, 0 ,0);
 		if(method==METHOD_UPDATE && nosdp==0)
-			return rtpengine_offer_answer(msg, flags, OP_OFFER, 0);
+			return rtpengine_offer_answer(msg, flags, OP_OFFER, 0, 0);
 		if(method==METHOD_INVITE && nosdp==0) {
 			msg->msg_flags |= FL_SDP_BODY;
 			if(tmb.t_gett!=NULL) {
@@ -3904,20 +3977,20 @@ rtpengine_manage(struct sip_msg *msg, const char *flags)
 			}
 			if(route_type==FAILURE_ROUTE)
 				return rtpengine_delete(msg, flags);
-			return rtpengine_offer_answer(msg, flags, OP_OFFER, 0);
+			return rtpengine_offer_answer(msg, flags, OP_OFFER, 0, 0);
 		}
 	} else if (msg->first_line.type == SIP_REPLY) {
 		if (msg->first_line.u.reply.statuscode>=300)
 			return rtpengine_delete(msg, flags);
 		if (nosdp==0) {
 			if (method==METHOD_UPDATE)
-				return rtpengine_offer_answer(msg, flags, OP_ANSWER, 0);
+				return rtpengine_offer_answer(msg, flags, OP_ANSWER, 0, 0);
 			if (tmb.t_gett==NULL || tmb.t_gett()==NULL
 					|| tmb.t_gett()==T_UNDEFINED)
-				return rtpengine_offer_answer(msg, flags, OP_ANSWER, 0);
+				return rtpengine_offer_answer(msg, flags, OP_ANSWER, 0, 0);
 			if (tmb.t_gett()->uas.request->msg_flags & FL_SDP_BODY)
-				return rtpengine_offer_answer(msg, flags, OP_ANSWER, 0);
-			return rtpengine_offer_answer(msg, flags, OP_OFFER, 0);
+				return rtpengine_offer_answer(msg, flags, OP_ANSWER, 0, 0);
+			return rtpengine_offer_answer(msg, flags, OP_OFFER, 0, 0);
 		}
 	}
 	return -1;
@@ -3940,7 +4013,11 @@ rtpengine_info1_f(struct sip_msg *msg, char *str1, char *str2)
 }
 
 static int rtpengine_offer_wrap(struct sip_msg *msg, void *d, int more, enum rtpe_operation op) {
-	return rtpengine_offer_answer(msg, d, OP_OFFER, more);
+	return rtpengine_offer_answer(msg, d, OP_OFFER, more, 0);
+}
+
+static int rtpengine_async_offer_wrap(struct sip_msg *msg, void *d, int more, enum rtpe_operation op) {
+	return rtpengine_offer_answer(msg, d, OP_OFFER, more, 1);
 }
 
 static int
@@ -3949,8 +4026,18 @@ rtpengine_offer1_f(struct sip_msg *msg, char *str1, char *str2)
 	return rtpengine_rtpp_set_wrap_fparam(msg, rtpengine_offer_wrap, str1, 1, OP_OFFER);
 }
 
+static int
+rtpengine_async_offer1_f(struct sip_msg *msg, char *str1, char *str2)
+{
+	return rtpengine_rtpp_set_wrap_fparam(msg, rtpengine_async_offer_wrap, str1, 1, OP_OFFER);
+}
+
 static int rtpengine_answer_wrap(struct sip_msg *msg, void *d, int more, enum rtpe_operation op) {
-	return rtpengine_offer_answer(msg, d, OP_ANSWER, more);
+	return rtpengine_offer_answer(msg, d, OP_ANSWER, more, 0);
+}
+
+static int rtpengine_async_answer_wrap(struct sip_msg *msg, void *d, int more, enum rtpe_operation op) {
+	return rtpengine_offer_answer(msg, d, OP_ANSWER, more, 1);
 }
 
 static int
@@ -3966,7 +4053,19 @@ rtpengine_answer1_f(struct sip_msg *msg, char *str1, char *str2)
 }
 
 static int
-rtpengine_offer_answer(struct sip_msg *msg, const char *flags, enum rtpe_operation op, int more)
+rtpengine_async_answer1_f(struct sip_msg *msg, char *str1, char *str2)
+{
+
+	if (msg->first_line.type == SIP_REQUEST)
+		if (!(msg->first_line.u.request.method_value
+					& (METHOD_ACK | METHOD_PRACK)))
+			return -1;
+
+	return rtpengine_rtpp_set_wrap_fparam(msg, rtpengine_async_answer_wrap, str1, 2, OP_ANSWER);
+}
+
+static int
+rtpengine_offer_answer(struct sip_msg *msg, const char *flags, enum rtpe_operation op, int more, bool async)
 {
 	bencode_buffer_t bencbuf;
 	bencode_item_t *dict;
@@ -3974,6 +4073,39 @@ rtpengine_offer_answer(struct sip_msg *msg, const char *flags, enum rtpe_operati
 	struct lump *anchor;
 	pv_value_t pv_val;
 	str cur_body = {0, 0};
+
+	if (async) {
+		unsigned int tindex;
+		unsigned int tlabel;
+		tm_cell_t *t = 0;
+
+		if(tmb.t_suspend==NULL) {
+			LM_ERR("evapi async relay is disabled - tm module not loaded\n");
+			return -1;
+		}
+
+		t = tmb.t_gett();
+		if (t==NULL || t==T_UNDEFINED)
+		{
+			if(tmb.t_newtran(msg)<0)
+			{
+				LM_ERR("cannot create the transaction\n");
+				return -1;
+			}
+			t = tmb.t_gett();
+			if (t==NULL || t==T_UNDEFINED)
+			{
+				LM_ERR("cannot lookup the transaction\n");
+				return -1;
+			}
+		}
+		if(tmb.t_suspend(msg, &tindex, &tlabel)<0)
+		{
+			LM_ERR("failed to suspend request processing\n");
+			return -1;
+		}
+		LM_DBG("transaction suspended [%u:%u]\n", tindex, tlabel);
+	}
 
 	dict = rtpp_function_call_ok(&bencbuf, msg, op, flags, &body);
 	if (!dict)
@@ -4484,6 +4616,16 @@ static int ki_rtpengine_offer(sip_msg_t *msg, str *flags)
 	return rtpengine_rtpp_set_wrap(msg, rtpengine_offer_wrap, flags->s, 1, OP_ANY);
 }
 
+static int ki_rtpengine_async_offer0(sip_msg_t *msg)
+{
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_async_offer_wrap, 0, 1, OP_ANY);
+}
+
+static int ki_rtpengine_async_offer(sip_msg_t *msg, str *flags)
+{
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_async_offer_wrap, flags->s, 1, OP_ANY);
+}
+
 static int ki_rtpengine_answer0(sip_msg_t *msg)
 {
 	return rtpengine_rtpp_set_wrap(msg, rtpengine_answer_wrap, NULL, 2, OP_ANY);
@@ -4494,6 +4636,16 @@ static int ki_rtpengine_answer(sip_msg_t *msg, str *flags)
 	return rtpengine_rtpp_set_wrap(msg, rtpengine_answer_wrap, flags->s, 2, OP_ANY);
 }
 
+static int ki_rtpengine_async_answer0(sip_msg_t *msg)
+{
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_async_answer_wrap, NULL, 2, OP_ANY);
+}
+
+static int ki_rtpengine_async_answer(sip_msg_t *msg, str *flags)
+{
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_async_answer_wrap, flags->s, 2, OP_ANY);
+}
+
 static int ki_rtpengine_delete0(sip_msg_t *msg)
 {
 	return rtpengine_rtpp_set_wrap(msg, rtpengine_delete_wrap, NULL, 1, OP_ANY);
@@ -4502,6 +4654,16 @@ static int ki_rtpengine_delete0(sip_msg_t *msg)
 static int ki_rtpengine_delete(sip_msg_t *msg, str *flags)
 {
 	return rtpengine_rtpp_set_wrap(msg, rtpengine_delete_wrap, flags->s, 1, OP_ANY);
+}
+
+static int ki_rtpengine_async_delete0(sip_msg_t *msg)
+{
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_async_delete_wrap, NULL, 1, OP_ANY);
+}
+
+static int ki_rtpengine_async_delete(sip_msg_t *msg, str *flags)
+{
+	return rtpengine_rtpp_set_wrap(msg, rtpengine_async_delete_wrap, flags->s, 1, OP_ANY);
 }
 
 static int ki_rtpengine_query0(sip_msg_t *msg)
@@ -4675,6 +4837,16 @@ static sr_kemi_t sr_kemi_rtpengine_exports[] = {
         { SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
             SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
     },
+	{ str_init("rtpengine"), str_init("rtpengine_async_offer0"),
+        SR_KEMIP_INT, ki_rtpengine_async_offer0,
+        { SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+            SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+    },
+    { str_init("rtpengine"), str_init("rtpengine_async_offer"),
+        SR_KEMIP_INT, ki_rtpengine_async_offer,
+        { SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+            SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+    },
     { str_init("rtpengine"), str_init("rtpengine_answer0"),
         SR_KEMIP_INT, ki_rtpengine_answer0,
         { SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
@@ -4682,6 +4854,16 @@ static sr_kemi_t sr_kemi_rtpengine_exports[] = {
     },
     { str_init("rtpengine"), str_init("rtpengine_answer"),
         SR_KEMIP_INT, ki_rtpengine_answer,
+        { SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+            SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+    },    
+	{ str_init("rtpengine"), str_init("rtpengine_async_answer0"),
+        SR_KEMIP_INT, ki_rtpengine_async_answer0,
+        { SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+            SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+    },
+    { str_init("rtpengine"), str_init("rtpengine_async_answer"),
+        SR_KEMIP_INT, ki_rtpengine_async_answer,
         { SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
             SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
     },
@@ -4692,6 +4874,16 @@ static sr_kemi_t sr_kemi_rtpengine_exports[] = {
     },
     { str_init("rtpengine"), str_init("rtpengine_delete"),
         SR_KEMIP_INT, ki_rtpengine_delete,
+        { SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+            SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+    },
+	{ str_init("rtpengine"), str_init("rtpengine_async_delete0"),
+        SR_KEMIP_INT, ki_rtpengine_async_delete0,
+        { SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+            SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+    },
+    { str_init("rtpengine"), str_init("rtpengine_async_delete"),
+        SR_KEMIP_INT, ki_rtpengine_async_delete,
         { SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
             SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
     },
