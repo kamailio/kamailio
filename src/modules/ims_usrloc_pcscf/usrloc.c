@@ -87,6 +87,8 @@ int bind_usrloc(usrloc_api_t* api) {
 	api->is_ulcb_registered = is_ulcb_registered;
 	api->register_ulcb_method = register_ulcb_method;
 
+        api->db_mode    = db_mode;
+
 	return 0;
 }
 
