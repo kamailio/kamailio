@@ -38,6 +38,10 @@
 #define IMC_MEMBER_DELETED  (1<<3)
 #define IMC_MEMBER_SKIP     (1<<4)
 
+#define IMC_MEMBER_OWNER_STR	"owner"
+#define IMC_MEMBER_ADMIN_STR	"admin"
+#define IMC_MEMBER_INVITED_STR	"member"
+
 typedef struct _imc_member
 {
 	unsigned int hashid;
@@ -81,6 +85,7 @@ typedef struct _imc_hentry
 } imc_hentry_t, *imc_hentry_p;
 
 imc_member_p imc_add_member(imc_room_p room, str* user, str* domain, int flags);
+imc_member_p imc_modify_member(imc_room_p room, str* user, str* domain, int flags);
 imc_member_p imc_get_member(imc_room_p room, str* user, str* domain);
 int imc_del_member(imc_room_p room, str* user, str* domain);
 
