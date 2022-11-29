@@ -324,7 +324,7 @@ PyObject *sr_apy_kemi_exec_func_ex(sr_kemi_t *ket, PyObject *self, PyObject *arg
 	}
 
 	xret = sr_kemi_exec_func(ket, lmsg, i, vps);
-	return sr_kemi_apy_return_xval(ket, xret);;
+	return sr_kemi_apy_return_xval(ket, xret);
 }
 
 /**
