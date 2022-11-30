@@ -200,18 +200,21 @@ static stir_shaken_status_t shaken_callback(stir_shaken_callback_arg_t *arg)
 
 					diff = now_s - attr.st_mtime;
 
-					LM_DBG("Checking cached certificate against expiration setting of %zus (now is: %zu, file modification timestamp is: %zu, difference is: %zu)\n",
+					LM_DBG("Checking cached certificate against expiration setting of %zus (now is: %lu, file modification timestamp is: %lu, difference is: %lu)\n",
 						stirshaken_vs_cache_expire_s, now_s, attr.st_mtime, diff);
 
 					if (diff > stirshaken_vs_cache_expire_s) {
-						LM_WARN("Cached certificate %s is behind expiration threshold (%zu > %zu). Need to download new certificate...\n", cert_full_path, diff, stirshaken_vs_cache_expire_s);
+						LM_NOTICE("Cached certificate %s is behind expiration threshold (%lu > %zu). Need to download new certificate...\n", cert_full_path, diff, stirshaken_vs_cache_expire_s);
 						goto exit;
 					} else {
-						LM_WARN("Cached certificate %s is valid for next %zus\n", cert_full_path, stirshaken_vs_cache_expire_s - diff);
+						LM_NOTICE("Cached certificate %s is valid for next %lus\n", cert_full_path, stirshaken_vs_cache_expire_s - diff);
 					}
 				}
-
+#ifdef STIR_SHAKEN_CAN_RW_X509_FULLCHAIN
+				if (STIR_SHAKEN_STATUS_OK != stir_shaken_load_x509_from_file_fullchain(&ss, &cache_copy, cert_full_path)) {
+#else
 				if (!(cache_copy.x = stir_shaken_load_x509_from_file(&ss, cert_full_path))) {
+#endif
 					LM_ERR("Cannot load X509 from file %s\n", cert_full_path);
 					goto exit;
 				}
@@ -420,10 +423,14 @@ static int stirshaken_handle_cache(stir_shaken_context_t *ss, stir_shaken_passpo
 			}
 		}
 
-		LM_DBG("Saving fresh certificate %s in cache (with name: %s)...\n", x5u, cert_full_path);
-
+#ifdef STIR_SHAKEN_CAN_RW_X509_FULLCHAIN
+		LM_DBG("Saving fresh certificate+chain %s to cache as %s\n", x5u, cert_full_path);
+		if (STIR_SHAKEN_STATUS_OK != stir_shaken_x509_to_disk_fullchain(ss, cert->x, cert->xchain, cert_full_path)) {
+#else
+		LM_DBG("Saving fresh certificate %s to cache as %s\n", x5u, cert_full_path);
 		if (STIR_SHAKEN_STATUS_OK != stir_shaken_x509_to_disk(ss, cert->x, cert_full_path)) {
-			LM_ERR("Failed to write cert %s to disk (as: %s)", x5u, cert_full_path);
+#endif
+			LM_ERR("Failed to cache certificate %s to disk", x5u);
 		}
 
 	} else {
@@ -460,7 +467,8 @@ static int ki_stirshaken_check_identity(sip_msg_t *msg)
 	ibody = hf->body;
 
 	if (STIR_SHAKEN_STATUS_OK != stir_shaken_vs_sih_verify(&ss, vs, ibody.s, &cert_out, &passport_out)) {
-		LM_ERR("SIP Identity Header did not pass verification\n");
+		LM_ERR("SIP Identity Header did not pass verification: %s", stir_shaken_get_error(&ss, NULL));
+
 		stirshaken_print_error_details(&ss);
 		goto fail;
 	}
