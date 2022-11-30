@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2016 Daniel-Constantin Mierla (asipto.com)
+ * Copyright (C) 2022 Daniel-Constantin Mierla (asipto.com)
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -23,13 +23,13 @@
  * this file is generated - do not edit
  */
 
-#ifndef __APY_KEMI_FLIB_H__
-#define __APY_KEMI_FLIB_H__
+#ifndef __APY3S_KEMI_FLIB_H__
+#define __APY3S_KEMI_FLIB_H__
 
 #include <Python.h>
 #include "../../core/kemi.h"
 
-#define SR_APY_KEMI_EXPORT_SIZE	1024
+#define SR_APY_KEMI_EXPORT_SIZE	1536
 
 typedef struct sr_apy_kemi_export {
 	PyCFunction pfunc;
