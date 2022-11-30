@@ -2,11 +2,11 @@
 
 # generate the .h file
 
-KEMI_MAX_SIZE=1024
+KEMI_MAX_SIZE=1536
 
-cat > ../apy_kemi_export.h <<EOF
+cat > ../apy3s_kemi_export.h <<EOF
 /**
- * Copyright (C) 2016 Daniel-Constantin Mierla (asipto.com)
+ * Copyright (C) 2022 Daniel-Constantin Mierla (asipto.com)
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -30,8 +30,8 @@ cat > ../apy_kemi_export.h <<EOF
  * this file is generated - do not edit
  */
 
-#ifndef __APY_KEMI_FLIB_H__
-#define __APY_KEMI_FLIB_H__
+#ifndef __APY3S_KEMI_FLIB_H__
+#define __APY3S_KEMI_FLIB_H__
 
 #include <Python.h>
 #include "../../core/kemi.h"
@@ -51,9 +51,9 @@ EOF
 
 # generate the .c file
 
-cat > ../apy_kemi_export.c <<EOF
+cat > ../apy3s_kemi_export.c <<EOF
 /**
- * Copyright (C) 2016 Daniel-Constantin Mierla (asipto.com)
+ * Copyright (C) 2022 Daniel-Constantin Mierla (asipto.com)
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -85,37 +85,37 @@ cat > ../apy_kemi_export.c <<EOF
 
 #include "../../core/dprint.h"
 
-#include "apy_kemi.h"
-#include "apy_kemi_export.h"
+#include "apy3s_kemi.h"
+#include "apy3s_kemi_export.h"
 
 EOF
 
 CEND=${KEMI_MAX_SIZE}
 
 for (( c=0; c<CEND; c++ )); do
-	echo >>../apy_kemi_export.c
-	echo "/**" >>../apy_kemi_export.c
-	echo " *" >>../apy_kemi_export.c
-	echo " */" >>../apy_kemi_export.c
-	echo "static PyObject *sr_apy_kemi_exec_func_${c}(PyObject *self, PyObject *args)" >>../apy_kemi_export.c
-	echo "{" >>../apy_kemi_export.c
-	echo "	return sr_apy_kemi_exec_func(self, args, ${c});" >>../apy_kemi_export.c
-	echo "}" >>../apy_kemi_export.c
+	echo >>../apy3s_kemi_export.c
+	echo "/**" >>../apy3s_kemi_export.c
+	echo " *" >>../apy3s_kemi_export.c
+	echo " */" >>../apy3s_kemi_export.c
+	echo "static PyObject *sr_apy_kemi_exec_func_${c}(PyObject *self, PyObject *args)" >>../apy3s_kemi_export.c
+	echo "{" >>../apy3s_kemi_export.c
+	echo "	return sr_apy_kemi_exec_func(self, args, ${c});" >>../apy3s_kemi_export.c
+	echo "}" >>../apy3s_kemi_export.c
 done
 
-echo >>../apy_kemi_export.c
-echo "/**" >>../apy_kemi_export.c
-echo " *" >>../apy_kemi_export.c
-echo " */" >>../apy_kemi_export.c
+echo >>../apy3s_kemi_export.c
+echo "/**" >>../apy3s_kemi_export.c
+echo " *" >>../apy3s_kemi_export.c
+echo " */" >>../apy3s_kemi_export.c
 
-echo "static sr_apy_kemi_export_t _sr_apy_kemi_export_list[] = {" >>../apy_kemi_export.c
+echo "static sr_apy_kemi_export_t _sr_apy_kemi_export_list[] = {" >>../apy3s_kemi_export.c
 for (( c=0; c<CEND; c++ )); do
-	echo "	{ sr_apy_kemi_exec_func_${c}, NULL}," >>../apy_kemi_export.c
+	echo "	{ sr_apy_kemi_exec_func_${c}, NULL}," >>../apy3s_kemi_export.c
 done
-echo "	{NULL, NULL}" >>../apy_kemi_export.c
-echo "};" >>../apy_kemi_export.c
+echo "	{NULL, NULL}" >>../apy3s_kemi_export.c
+echo "};" >>../apy3s_kemi_export.c
 
-cat >> ../apy_kemi_export.c <<EOF
+cat >> ../apy3s_kemi_export.c <<EOF
 
 /**
  *
