@@ -85,7 +85,6 @@ sr_geoip2_record_t *sr_geoip2_get_record(str *name)
 	return NULL;
 }
 
-
 sr_geoip2_item_t *sr_geoip2_add_item(str *name)
 {
 	sr_geoip2_item_t *it = NULL;

@@ -59,7 +59,7 @@ static cmd_export_t cmds[]={
 };
 
 static param_export_t params[]={
-	{"path",     PARAM_STRING, &geoip2_path},
+	{"path",  PARAM_STRING, &geoip2_path},
 	{"resid", PARAM_STR|PARAM_USE_FUNC, &geoip2_resid_param},
 	{0, 0, 0}
 };
@@ -76,7 +76,6 @@ struct module_exports exports = {
 	0,					/* per-child init function */
 	mod_destroy			/* module destroy function */
 };
-
 
 /**
  * init module function
