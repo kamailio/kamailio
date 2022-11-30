@@ -52,7 +52,6 @@ static pv_export_t mod_pvs[] = {
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };
 
-
 static cmd_export_t cmds[]={
 	{"geoip2_match", (cmd_function)w_geoip2_match, 2, fixup_spve_spve,
 		0, ANY_ROUTE},

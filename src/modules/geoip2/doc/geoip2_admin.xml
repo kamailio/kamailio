@@ -81,7 +81,7 @@
     </section>
     <section>
 	<title>Parameters</title>
-	<section>
+	<section id="geoip2.p.path">
 	    <title><varname>path</varname> (string)</title>
 	    <para>
 		Path to the GeoIP2 database file.
@@ -100,7 +100,31 @@ modparam("geoip2", "path", "/usr/local/share/GeoIP/GeoLite2-City.mmdb")
 </programlisting>
 	    </example>
 	</section>
-
+	<section id="geoip2.p.resid">
+	    <title><varname>resid</varname> (str)</title>
+	    <para>
+		Preregister result container id during initialization, enabling the use
+		of the module in KEMI scripts. In native &kamailio;.cfg file, registration
+		is done when parsing config and finding variables.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote></quote> (empty).
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>resid</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("geoip2", "resid", "src")
+...
+if(geoip2_match("$si", "src")) {
+   ...
+}
+...
+</programlisting>
+	    </example>
+	</section>
 	</section>
 	
     <section>
