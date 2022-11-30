@@ -21,12 +21,12 @@ include /usr/share/dpkg/buildflags.mk
 export RADCLI=1
 
 # modules not in the "main" kamailio package
-EXCLUDED_MODULES=
+EXCLUDED_MODULES= java python
 
 # extra modules to skip, because they are not compilable now
 # - regardless if they go to the main kamailio package or to some module package,
 # they will be excluded from compile and install of all
-EXTRA_EXCLUDED_MODULES=bdb dbtext oracle pa iptrtpproxy mi_xmlrpc
+EXTRA_EXCLUDED_MODULES=bdb dbtext oracle pa iptrtpproxy mi_xmlrpc dnssec
 
 # module groups that are packaged in separate packages
 # (with the name kamailio-$(group_name)-modules)
@@ -34,9 +34,9 @@ EXTRA_EXCLUDED_MODULES=bdb dbtext oracle pa iptrtpproxy mi_xmlrpc
 # on which other depend first)
 PACKAGE_GROUPS=mysql postgres berkeley unixodbc radius presence \
 			   ldap xml perl utils lua memcached \
-			   snmpstats carrierroute xmpp cpl redis python geoip geoip2 \
-			   sqlite json mono ruby ims sctp java \
-			   tls outbound websocket autheph dnssec kazoo cnxcc \
+			   snmpstats carrierroute xmpp cpl redisgeoip geoip2 \
+			   sqlite json mono ruby ims sctp \
+			   tls outbound websocket autheph kazoo cnxcc \
 			   erlang systemd phonenum mongodb rabbitmq python3 mqtt secsipid lwsc nats
 
 # module groups to be packaged onto kamailio-extra-modules
