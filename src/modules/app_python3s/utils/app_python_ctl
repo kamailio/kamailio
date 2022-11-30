@@ -1,0 +1,148 @@
+#!/bin/bash
+
+# generate the .h file
+
+KEMI_MAX_SIZE=1024
+
+cat > ../apy_kemi_export.h <<EOF
+/**
+ * Copyright (C) 2016 Daniel-Constantin Mierla (asipto.com)
+ *
+ * This file is part of Kamailio, a free SIP server.
+ *
+ * Kamailio is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version
+ *
+ * Kamailio is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ *
+ */
+
+/**
+ * this file is generated - do not edit
+ */
+
+#ifndef __APY_KEMI_FLIB_H__
+#define __APY_KEMI_FLIB_H__
+
+#include <Python.h>
+#include "../../core/kemi.h"
+
+#define SR_APY_KEMI_EXPORT_SIZE	${KEMI_MAX_SIZE}
+
+typedef struct sr_apy_kemi_export {
+	PyCFunction pfunc;
+	sr_kemi_t *ket;
+} sr_apy_kemi_export_t;
+
+sr_kemi_t *sr_apy_kemi_export_get(int idx);
+PyCFunction sr_apy_kemi_export_associate(sr_kemi_t *ket);
+
+#endif
+EOF
+
+# generate the .c file
+
+cat > ../apy_kemi_export.c <<EOF
+/**
+ * Copyright (C) 2016 Daniel-Constantin Mierla (asipto.com)
+ *
+ * This file is part of Kamailio, a free SIP server.
+ *
+ * Kamailio is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version
+ *
+ * Kamailio is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ *
+ */
+
+/**
+ * this file is generated - do not edit
+ */
+
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+
+#include <Python.h>
+
+#include "../../core/dprint.h"
+
+#include "apy_kemi.h"
+#include "apy_kemi_export.h"
+
+EOF
+
+CEND=${KEMI_MAX_SIZE}
+
+for (( c=0; c<CEND; c++ )); do
+	echo >>../apy_kemi_export.c
+	echo "/**" >>../apy_kemi_export.c
+	echo " *" >>../apy_kemi_export.c
+	echo " */" >>../apy_kemi_export.c
+	echo "static PyObject *sr_apy_kemi_exec_func_${c}(PyObject *self, PyObject *args)" >>../apy_kemi_export.c
+	echo "{" >>../apy_kemi_export.c
+	echo "	return sr_apy_kemi_exec_func(self, args, ${c});" >>../apy_kemi_export.c
+	echo "}" >>../apy_kemi_export.c
+done
+
+echo >>../apy_kemi_export.c
+echo "/**" >>../apy_kemi_export.c
+echo " *" >>../apy_kemi_export.c
+echo " */" >>../apy_kemi_export.c
+
+echo "static sr_apy_kemi_export_t _sr_apy_kemi_export_list[] = {" >>../apy_kemi_export.c
+for (( c=0; c<CEND; c++ )); do
+	echo "	{ sr_apy_kemi_exec_func_${c}, NULL}," >>../apy_kemi_export.c
+done
+echo "	{NULL, NULL}" >>../apy_kemi_export.c
+echo "};" >>../apy_kemi_export.c
+
+cat >> ../apy_kemi_export.c <<EOF
+
+/**
+ *
+ */
+sr_kemi_t *sr_apy_kemi_export_get(int idx)
+{
+	if(idx<0 || idx>=SR_APY_KEMI_EXPORT_SIZE)
+		return NULL;
+	return _sr_apy_kemi_export_list[idx].ket;
+}
+
+/**
+ *
+ */
+PyCFunction sr_apy_kemi_export_associate(sr_kemi_t *ket)
+{
+	int i;
+	for(i=0; i<SR_APY_KEMI_EXPORT_SIZE; i++) {
+		if(_sr_apy_kemi_export_list[i].ket==NULL) {
+			_sr_apy_kemi_export_list[i].ket = ket;
+			return _sr_apy_kemi_export_list[i].pfunc;
+		}
+		if(_sr_apy_kemi_export_list[i].ket==ket) {
+			return _sr_apy_kemi_export_list[i].pfunc;
+		}
+	}
+	LM_ERR("no more indexing slots\n");
+	return NULL;
+}
+EOF
