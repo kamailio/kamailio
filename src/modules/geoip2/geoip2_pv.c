@@ -124,6 +124,13 @@ sr_geoip2_item_t *sr_geoip2_add_item(str *name)
 	return it;
 }
 
+int sr_geoip2_add_resid(str *rname)
+{
+	if(sr_geoip2_add_item(rname)==NULL) {
+		return -1;
+	}
+	return 0;
+}
 
 int pv_parse_geoip2_name(pv_spec_p sp, str *in)
 {
