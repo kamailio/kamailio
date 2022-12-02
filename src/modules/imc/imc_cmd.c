@@ -91,28 +91,36 @@ static str *get_callid(struct sip_msg *msg)
 
 static str *build_headers(struct sip_msg *msg)
 {
+	static str ctname = STR_STATIC_INIT("Content-Type: ");
 	static str name = STR_STATIC_INIT("In-Reply-To: ");
+	static str nl = STR_STATIC_INIT("\r\n");	
 	static char buf[1024];
 	static str rv;
 	str *callid;
 
-	if ((callid = get_callid(msg)) == NULL)
-		return &all_hdrs;
-
 	rv.s = buf;
-	rv.len = all_hdrs.len + name.len + callid->len;
+	rv.len = all_hdrs.len + ctname.len + msg->content_type->body.len;
+
+	memcpy(buf, all_hdrs.s, all_hdrs.len);
+	memcpy(buf + all_hdrs.len, ctname.s, ctname.len);
+	memcpy(buf + all_hdrs.len + ctname.len, msg->content_type->body.s, msg->content_type->body.len);
+
+	if ((callid = get_callid(msg)) == NULL) {
+		return &rv;		
+	}
+
+	rv.len += nl.len + name.len + callid->len;
 
 	if (rv.len > sizeof(buf)) {
 		LM_ERR("Header buffer too small for In-Reply-To header\n");
-		return &all_hdrs;
+		return &rv;
 	}
-
-	memcpy(buf, all_hdrs.s, all_hdrs.len);
-	memcpy(buf + all_hdrs.len, name.s, name.len);
-	memcpy(buf + all_hdrs.len + name.len, callid->s, callid->len);
+	
+	memcpy(buf + all_hdrs.len + ctname.len + msg->content_type->body.len, nl.s, nl.len);
+	memcpy(buf + all_hdrs.len + ctname.len + msg->content_type->body.len + nl.len, name.s, name.len);
+	memcpy(buf + all_hdrs.len + ctname.len + msg->content_type->body.len + nl.len + name.len, callid->s, callid->len);
 	return &rv;
 }
-
 
 static str *format_uri(str uri)
 {
