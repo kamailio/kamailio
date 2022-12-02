@@ -33,6 +33,7 @@ extern str imc_cmd_start_str;
 extern char imc_cmd_start_char;
 extern struct tm_binds tmb;
 extern str outbound_proxy;
+extern int db_mode;
 extern str all_hdrs;
 extern str extra_hdrs;
 extern int imc_create_on_join;

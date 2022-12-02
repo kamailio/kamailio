@@ -91,6 +91,27 @@ modparam("imc", "db_url", "&exampledb;")
 </programlisting>
 		</example>
 	</section>
+	<section id="imc.p.db_mode">
+		<title><varname>db_mode</varname>(integer)</title>
+		<para>
+		The module supports 2 modes of operation, high speed memory
+		based storage (mode 0), and database only (mode 2) where all 
+		data is stored in a database, allowing scalability at the
+		expense of speed. Mode 1 is reserved.
+		</para>
+		<para>
+		<emphasis>	Default value is <quote>0</quote> 	
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>db_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("imc", "db_mode", 2)
+...
+</programlisting>
+		</example>
+	</section>
 	<section id="imc.p.rooms_table">
 		<title><varname>rooms_table</varname> (str)</title>
 		<para>
