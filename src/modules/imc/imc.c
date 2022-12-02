@@ -54,7 +54,7 @@
 MODULE_VERSION
 
 /** header variables */
-str imc_hdrs = str_init("Content-Type: text/plain\r\nSupported: kamailio/imc\r\n");
+str imc_hdrs = str_init("Supported: kamailio/imc\r\n");
 char hdr_buf[1024];
 str all_hdrs;
 
@@ -435,7 +435,7 @@ static int ki_imc_manager(struct sip_msg* msg)
 		}
 
 		goto done;
-	}
+	}	
 
 	if(imc_handle_message(msg, &body, &src, &dst)<0)
 	{
