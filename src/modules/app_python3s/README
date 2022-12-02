@@ -1,0 +1,198 @@
+app_python3s Module
+
+Daniel-Constantin Mierla
+
+Maxim Sobolev
+
+Anthony Alba
+
+Edited by
+
+Daniel-Constantin Mierla
+
+   Copyright © 2022 kamailio.org
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. load (string)
+
+        4. Functions
+
+              4.1. app_python3s_exec(method [, param])
+
+        5. RPC Commands
+
+              5.1. app_python.reload
+              5.2. app_python.api_list
+
+   List of Examples
+
+   1.1. Set load parameter
+   1.2. app_python3s_exec usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. load (string)
+
+   4. Functions
+
+        4.1. app_python3s_exec(method [, param])
+
+   5. RPC Commands
+
+        5.1. app_python.reload
+        5.2. app_python.api_list
+
+1. Overview
+
+   This module is an alternative 'app_python3' module with static export
+   of 'KSR' object and functions.
+
+   This module cannot be loaded together with 'app_python3' as global
+   symbols have not been renamed. To ease transition, the functions, KEMI
+   exports, and RPC commands have the same names as 'app_python3', which
+   also means the two modules cannot coexist.
+
+   This module allows executing Python3 scripts from the config file,
+   exporting functions to access the SIP message from Python3.
+
+   Note: if symbols exported to KEMI (module or function names) conflict
+   with Python's reserved keywords, use the 'getattr()' function or the
+   '__dict__' attribute for 'KSR' (e.g.,
+   'KSR.__dict__["async"].task_route("myroute")').
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * none.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * python3 - Python 3 runtime.
+
+   To compile this module the Python 3 development package is needed.
+   Requirements:
+     * python3-dev - Python 3 development package.
+     * python3-config - (part of python3-dev) tool to output C includes
+       and library paths.
+
+3. Parameters
+
+   3.1. load (string)
+
+3.1. load (string)
+
+   The path to the file with Python code to be executed from configuration
+   file.
+
+   Default value is "/usr/local/etc/kamailio/handler.py".
+
+   Example 1.1. Set load parameter
+...
+modparam("app_python3s", "load", "/usr/local/etc/kamailio/myscript.py")
+...
+
+4. Functions
+
+   4.1. app_python3s_exec(method [, param])
+
+4.1. app_python3s_exec(method [, param])
+
+   Execute the Python function with the name given by the parameter
+   'method'. Optionally can be provided a second string with the parameter
+   to be passed to the Python function.
+
+   Both parameters can contain pseudo-variables.
+
+   Example 1.2. app_python3s_exec usage
+...
+app_python3s_exec("my_python_function");
+app_python3s_exec("my_python_function", "my_params");
+app_python3s_exec("my_python_function", "$rU");
+...
+
+5. RPC Commands
+
+   5.1. app_python.reload
+   5.2. app_python.api_list
+
+5.1. app_python.reload
+
+   IMPORTANT: this is not thread-safe. In your Python script do not use C
+   extensions with threads that call into apy_exec().
+
+   Marks the need to reload the Python script. The actual reload is done
+   in each worker when it next invokes a Python method. The module uses a
+   worker process lock to prevent recursive reloads.
+
+   This function only reloads (re-executes) the user script and creates a
+   new script object. It does not reinitialize the interpreter (references
+   in the old module remain if not redefined by the new version).
+
+   Name: app_python.reload
+
+   Parameters: none
+
+   Example:
+...
+kamcmd app_python3s.reload
+...
+
+   Note that reload is done for the Python script provided as parameter to
+   this Kamailio module. To reload the Python libraries imported in this
+   script, use something like:
+...
+import mod1
+...
+import modN
+from importlib import reload
+
+def mod_init():
+    reload(mod1)
+    ...
+    reload(modN)
+    return kamailio()
+...
+
+   Where "modX" are the modules imported at the top.
+
+5.2. app_python.api_list
+
+   List the functions available via Kemi framework.
+
+   Name: app_python.api_list
+
+   Parameters: none
+
+   Example:
+...
+kamcmd app_python3s.api_list
+...
