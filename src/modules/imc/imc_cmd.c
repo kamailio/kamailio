@@ -62,6 +62,7 @@ static str msg_join_attempt_bcast = STR_STATIC_INIT(PREFIX "%.*s attempted to jo
 static str msg_join_attempt_ucast = STR_STATIC_INIT(PREFIX "Private rooms are by invitation only. Room owners have been notified.");
 static str msg_invite             = STR_STATIC_INIT(PREFIX "%.*s invites you to join the room (send '%.*saccept' or '%.*sreject')");
 static str msg_add_reject         = STR_STATIC_INIT(PREFIX "You don't have the permmission to add members to this room");
+static str msg_user_modified      = STR_STATIC_INIT(PREFIX "%.*s is now %.*s");
 static str msg_modify_reject      = STR_STATIC_INIT(PREFIX "You don't have the permmission to modify members in this room");
 #if 0
 static str msg_rejected           = STR_STATIC_INIT(PREFIX "%.*s has rejected invitation");
@@ -415,6 +416,14 @@ int imc_handle_create(struct sip_msg* msg, imc_cmd_t *cmd,
 		}
 		LM_DBG("Added room [%.*s]\n", STR_FMT(&rm->uri));
 
+		if (db_mode == 2) {
+			if (add_room_to_db(rm) < 0) {
+				LM_ERR("failed to add room to db\n");
+				goto error;
+			}
+			LM_DBG("Add room [%.*s] to db\n", STR_FMT(&rm->uri));
+		}
+
 		flag_member |= IMC_MEMBER_OWNER;
 		/* adding the owner as the first member*/
 		member = imc_add_member(rm, &src->parsed.user, &src->parsed.host, flag_member);
@@ -424,6 +433,13 @@ int imc_handle_create(struct sip_msg* msg, imc_cmd_t *cmd,
 		}
 		LM_DBG("Added [%.*s] as the first member in room [%.*s]\n",
 			   STR_FMT(&member->uri), STR_FMT(&rm->uri));
+
+		if (db_mode == 2) {
+			if (add_room_member_to_db(member, rm, flag_member) < 0) {
+				LM_ERR("failed to add room member [%.*s] to db\n", STR_FMT(&member->uri));
+				goto error;
+			}
+		}
 
 		imc_send_message(&rm->uri, &member->uri, build_headers(msg), &msg_room_created);
 		goto done;
@@ -456,6 +472,13 @@ int imc_handle_create(struct sip_msg* msg, imc_cmd_t *cmd,
 	}
 	LM_DBG("Added [%.*s] as member to room [%.*s]\n", STR_FMT(&member->uri),
 			STR_FMT(&rm->uri));
+
+	if (db_mode == 2) {
+		if (add_room_member_to_db(member, rm, flag_member) < 0) {
+			LM_ERR("failed to add room member [%.*s] to db\n", STR_FMT(&member->uri));
+			goto error;
+		}
+	}
 
 	body.s = imc_body_buf;
 	body.len = snprintf(body.s, sizeof(imc_body_buf), msg_user_joined.s,
@@ -501,6 +524,7 @@ int imc_handle_join(struct sip_msg* msg, imc_cmd_t *cmd,
 		goto error;
 
 	rm = imc_get_room(&room.parsed.user, &room.parsed.host);
+	
 	if (rm == NULL || (rm->flags & IMC_ROOM_DELETED)) {
 		LM_DBG("Room [%.*s] not found\n", STR_FMT(&room.uri));
 
@@ -516,11 +540,27 @@ int imc_handle_join(struct sip_msg* msg, imc_cmd_t *cmd,
 			goto error;
 		}
 		LM_DBG("Created a new room [%.*s]\n", STR_FMT(&rm->uri));
+
+		if (db_mode == 2) {
+			if (add_room_to_db(rm) < 0) {
+				LM_ERR("failed to add room to db\n");
+				goto error;
+			}
+			LM_DBG("Add room [%.*s] to db\n", STR_FMT(&rm->uri));
+		}
+
 		flag_member |= IMC_MEMBER_OWNER;
 		member = imc_add_member(rm, &src->parsed.user, &src->parsed.host, flag_member);
 		if (member == NULL) {
 			LM_ERR("Failed to add new member [%.*s]\n", STR_FMT(&src->uri));
 			goto error;
+		}
+
+		if (db_mode == 2) {
+			if (add_room_member_to_db(member, rm, flag_member) < 0) {
+				LM_ERR("failed to add room member [%.*s] to db\n", STR_FMT(&member->uri));
+				goto error;
+			}
 		}
 		/* send info message */
 		imc_send_message(&rm->uri, &member->uri, build_headers(msg), &msg_room_created);
@@ -543,6 +583,13 @@ int imc_handle_join(struct sip_msg* msg, imc_cmd_t *cmd,
 		if (member == NULL) {
 			LM_ERR("Failed to add new user [%.*s]\n", STR_FMT(&src->uri));
 			goto error;
+		}
+
+		if (db_mode == 2) {
+			if (add_room_member_to_db(member, rm, flag_member) < 0) {
+				LM_ERR("failed to add room member [%.*s] to db\n", STR_FMT(&member->uri));
+				goto error;
+			}
 		}
 
 		body.len = snprintf(body.s, sizeof(imc_body_buf), msg_user_joined.s,
@@ -636,6 +683,13 @@ int imc_handle_invite(struct sip_msg* msg, imc_cmd_t *cmd,
 	if (member == NULL) {
 		LM_ERR("Adding member [%.*s] failed\n", STR_FMT(&user.uri));
 		goto error;
+	}
+
+	if (db_mode == 2) {
+		if (add_room_member_to_db(member, rm, flag_member) < 0) {
+			LM_ERR("failed to add room member [%.*s] to db\n", STR_FMT(&member->uri));
+			goto error;
+		}
 	}
 
 	body.s = imc_body_buf;
@@ -743,6 +797,13 @@ int imc_handle_add(struct sip_msg* msg, imc_cmd_t *cmd,
 		goto error;
 	}
 
+	if (db_mode == 2) {
+		if (add_room_member_to_db(member, rm, 0) < 0) {
+			LM_ERR("failed to add room member [%.*s] to db\n", STR_FMT(&member->uri));
+			goto error;
+		}
+	}
+
 	body.s = imc_body_buf;
 	body.len = snprintf(body.s, sizeof(imc_body_buf), msg_user_joined.s, STR_FMT(format_uri(member->uri)));
 
@@ -795,6 +856,13 @@ int imc_handle_accept(struct sip_msg* msg, imc_cmd_t *cmd,
 	}
 
 	member->flags &= ~IMC_MEMBER_INVITED;
+
+	if (db_mode == 2) {
+		if (modify_room_member_in_db(member, rm, member->flags) < 0) {
+			LM_ERR("failed to modify room member [%.*s] in db\n", STR_FMT(&member->uri));
+			goto error;
+		}
+	}
 
 	body.s = imc_body_buf;
 	body.len = snprintf(body.s, sizeof(imc_body_buf), msg_user_joined.s, STR_FMT(format_uri(member->uri)));
@@ -879,6 +947,13 @@ int imc_handle_remove(struct sip_msg* msg, imc_cmd_t *cmd,
 	member->flags |= IMC_MEMBER_DELETED;
 	imc_del_member(rm, &user.parsed.user, &user.parsed.host);
 
+	if (db_mode == 2) {
+		if (remove_room_member_from_db(member, rm) < 0) {
+			LM_ERR("failed to remove room member\n");
+			goto error;
+		}
+	}
+
 	body.s = imc_body_buf;
 	body.len = snprintf(body.s, sizeof(imc_body_buf), msg_user_left.s, STR_FMT(format_uri(member->uri)));
 
@@ -939,6 +1014,13 @@ int imc_handle_reject(struct sip_msg* msg, imc_cmd_t *cmd,
 			STR_FMT(&src->uri), STR_FMT(&rm->uri));
 
 	imc_del_member(rm, &src->parsed.user, &src->parsed.host);
+
+	if (db_mode == 2) {
+		if( remove_room_member_from_db(member, rm) < 0) {
+			LM_ERR("failed to remove room member\n");
+			goto error;
+		}
+	}
 
 	rv = 0;
 error:
@@ -1146,6 +1228,13 @@ int imc_handle_leave(struct sip_msg* msg, imc_cmd_t *cmd,
 	member->flags |= IMC_MEMBER_DELETED;
 	imc_del_member(rm, &src->parsed.user, &src->parsed.host);
 
+	if (db_mode == 2) {
+		if (remove_room_member_from_db(member, rm) < 0) {
+			LM_ERR("failed to remove room member\n");
+			goto error;
+		}
+	}
+
 done:
 	rv = 0;
 error:
@@ -1189,13 +1278,21 @@ int imc_handle_destroy(struct sip_msg* msg, imc_cmd_t *cmd,
 	rm->flags |= IMC_ROOM_DELETED;
 
 	/* braodcast message */
-	imc_room_broadcast(rm, build_headers(msg), &msg_room_destroyed);
+	imc_room_broadcast(rm, build_headers(msg), &msg_room_destroyed);	
+
+	if (db_mode == 2) {
+		LM_DBG("Deleting room [%.*s] from db\n", STR_FMT(&room.uri));
+		if (remove_room_from_db(rm) < 0) {
+			LM_ERR("Failed to delete room [%.*s] from db\n", STR_FMT(&room.uri));
+			goto error;
+		}
+	}
+
+	LM_DBG("Deleting room [%.*s] from htable\n", STR_FMT(&room.uri));
+	imc_del_room(&room.parsed.user, &room.parsed.host);	
 
 	imc_release_room(rm);
 	rm = NULL;
-
-	LM_DBG("Deleting room [%.*s]\n", STR_FMT(&room.uri));
-	imc_del_room(&room.parsed.user, &room.parsed.host);
 
 	rv = 0;
 error:
@@ -1341,10 +1438,10 @@ int imc_handle_modify(struct sip_msg* msg, imc_cmd_t *cmd,
 				&& !strncasecmp(cmd->param[1].s, IMC_MEMBER_ADMIN_STR, cmd->param[1].len))
 		{
 			flag_member |= IMC_MEMBER_ADMIN;
-		} else if(cmd->param[1].len==(sizeof(IMC_MEMBER_INVITED_STR)-1)
-				&& !strncasecmp(cmd->param[1].s, IMC_MEMBER_INVITED_STR, cmd->param[1].len))
+		} else if(cmd->param[1].len==(sizeof(IMC_MEMBER_STR)-1)
+				&& !strncasecmp(cmd->param[1].s, IMC_MEMBER_STR, cmd->param[1].len))
 		{
-			flag_member |= IMC_MEMBER_INVITED;
+			flag_member = 0;
 		} else {
 			LM_INFO("Modify command with unknown argument role [%.*s]\n", STR_FMT(&cmd->param[1]));
 			goto error;
@@ -1386,15 +1483,22 @@ int imc_handle_modify(struct sip_msg* msg, imc_cmd_t *cmd,
 		goto error;
 	}
 
-	rv = imc_modify_member(rm, &src->parsed.user, &src->parsed.host, flag_member);
+	rv = imc_modify_member(rm, &member->user, &member->domain, flag_member);
 	
 	if (rv == -1) {
 		LM_ERR("Failed to modify member [%.*s] role [%.*s]\n", STR_FMT(&member->uri), STR_FMT(&cmd->param[1]));
 		goto error;
 	}
 
+	if (db_mode == 2) {
+		if (modify_room_member_in_db(member, rm, flag_member) < 0){
+			LM_ERR("Failed to modify member [%.*s] role [%.*s] in db\n", STR_FMT(&member->uri), STR_FMT(&cmd->param[1]));
+			goto error;
+		}
+	}
+
 	body.s = imc_body_buf;
-	body.len = snprintf(body.s, sizeof(imc_body_buf), msg_user_joined.s, STR_FMT(format_uri(member->uri)));
+	body.len = snprintf(body.s, sizeof(imc_body_buf), msg_user_modified.s, STR_FMT(&member->uri), STR_FMT(&cmd->param[1]));
 
 	if (body.len < 0) {
 		LM_ERR("Error while building response\n");
