@@ -1,14 +1,14 @@
 /**
+ * Copyright (C) 2022 Daniel-Constantin Mierla (asipto.com)
  *
  * This file is part of Kamailio, a free SIP server.
  *
- * This file is free software; you can redistribute it and/or modify
+ * Kamailio is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- *
- * This file is distributed in the hope that it will be useful,
+ * Kamailio is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
@@ -19,23 +19,24 @@
  *
  */
 
-#ifndef _GEOIP_PV_H_
-#define _GEOIP_PV_H_
+/**
+ * this file is generated - do not edit
+ */
 
-#include <maxminddb.h>
+#ifndef __APY3S_KEMI_FLIB_H__
+#define __APY3S_KEMI_FLIB_H__
 
-#include "../../core/pvar.h"
+#include <Python.h>
+#include "../../core/kemi.h"
 
-int pv_parse_geoip2_name(pv_spec_p sp, str *in);
-int pv_get_geoip2(struct sip_msg *msg, pv_param_t *param,
-		pv_value_t *res);
+#define SR_APY_KEMI_EXPORT_SIZE	1536
 
-int geoip2_init_pv(char *path);
-void geoip2_destroy_pv(void);
-int geoip2_reload_pv(char *path);
-void geoip2_pv_reset(str *pvclass);
-int geoip2_update_pv(str *tomatch, str *pvclass);
-int sr_geoip2_add_resid(str *rname);
+typedef struct sr_apy_kemi_export {
+	PyCFunction pfunc;
+	sr_kemi_t *ket;
+} sr_apy_kemi_export_t;
+
+sr_kemi_t *sr_apy_kemi_export_get(int idx);
+PyCFunction sr_apy_kemi_export_associate(sr_kemi_t *ket);
 
 #endif
-

@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+
+<!-- Module User's Guide -->
+
+<chapter>
+
+    <title>&adminguide;</title>
+
+    <section>
+	<title>Overview</title>
+	<para>
+		This module is an alternative 'app_python3' module with static export
+		of 'KSR' object and functions, without instantiating the SIP message
+		object.
+	</para>
+	<para>
+		<emphasis>This module cannot be loaded together with 'app_python3'</emphasis>
+		as some global symbols conflict.
+	</para>
+	<para>
+		This module allows executing Python3 scripts from the config file,
+		exporting functions to access the SIP message from Python3.
+	</para>
+	<para>
+		Note: if symbols exported to KEMI (module or function names) conflict
+		with Python's reserved keywords, use the 'getattr()' function or the
+		'__dict__' attribute for 'KSR' (e.g., 'KSR.__dict__["async"].task_route("myroute")').
+	</para>
+    </section>
+    <section>
+	<title>Dependencies</title>
+	<section>
+	    <title>&kamailio; Modules</title>
+	    <para>
+		The following modules must be loaded before this module:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>none</emphasis>.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+	<section>
+	    <title>External Libraries or Applications</title>
+	    <para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>python3</emphasis> - Python 3 runtime.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	    <para>
+		To compile this module the Python 3 development package is needed.
+		Requirements:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>python3-dev</emphasis> - Python 3 development package.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <emphasis>python3-config</emphasis> - (part of python3-dev)
+				tool to output C includes and library paths.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+    </section>
+    <section>
+	<title>Parameters</title>
+	<section id="app_python3s.p.load">
+	    <title><varname>load</varname> (string)</title>
+	    <para>
+			The path to the file with Python code to be executed
+			from configuration file.
+	    </para>
+	    <para>
+		<emphasis>
+			Default value is <quote>/usr/local/etc/kamailio/kamailio.py</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>load</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("app_python3s", "load", "/usr/local/etc/kamailio/myscript.py")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	</section>
+
+    <section>
+	<title>Functions</title>
+ 	<section id="app_python3.f.app_python3s_exec">
+	    <title>
+		<function moreinfo="none">app_python3s_exec(method [, param])</function>
+	    </title>
+	    <para>
+			Execute the Python function with the name given by the parameter 'method'.
+			Optionally can be provided a second string with the parameter to be passed
+			to the Python function.
+	    </para>
+	    <para>
+			Both parameters can contain pseudo-variables.
+	    </para>
+		<example>
+		<title><function>app_python3s_exec</function> usage</title>
+		<programlisting format="linespecific">
+...
+app_python3s_exec("my_python_function");
+app_python3s_exec("my_python_function", "my_params");
+app_python3s_exec("my_python_function", "$rU");
+...
+</programlisting>
+	    </example>
+	</section>
+
+    </section>
+	<section>
+        <title>RPC Commands</title>
+        <section id="app_python3s.r.reload">
+            <title>
+            <function moreinfo="none">app_python.reload</function>
+            </title>
+			<para>
+				IMPORTANT: this is not thread-safe. In your Python script
+				do not use C extensions with threads that call into
+				<varname>apy_exec()</varname>.
+			</para>
+            <para>
+            Marks the need to reload the Python script.
+            The actual reload is done in each worker when it next invokes a Python method.
+            The module uses a worker process lock to prevent recursive reloads.
+            </para>
+            <para>
+			This function only reloads (re-executes) the user script and creates
+			a new script object. It does not reinitialize the interpreter (references
+			in the old module remain if not redefined by the new version).
+            </para>
+            <para>
+            Name: <emphasis>app_python.reload</emphasis>
+            </para>
+            <para>Parameters: <emphasis>none</emphasis></para>
+            <para>
+            Example:
+            </para>
+            <programlisting  format="linespecific">
+...
+&kamcmd; app_python3s.reload
+...
+            </programlisting>
+			<para>
+			Note that reload is done for the Python script provided as parameter
+			to this &kamailio; module. To reload the Python libraries imported
+			in this script, use something like:
+            </para>
+            <programlisting  format="linespecific">
+...
+import mod1
+...
+import modN
+from importlib import reload
+
+def mod_init():
+    reload(mod1)
+    ...
+    reload(modN)
+    return kamailio()
+...
+            </programlisting>
+			<para>
+				Where "modX" are the modules imported at the top.
+            </para>
+		</section>
+		<section id="app_python3s.r.api_list">
+            <title>
+            <function moreinfo="none">app_python.api_list</function>
+            </title>
+            <para>
+			List the functions available via Kemi framework.
+            </para>
+            <para>
+            Name: <emphasis>app_python.api_list</emphasis>
+            </para>
+            <para>Parameters: <emphasis>none</emphasis></para>
+            <para>
+            Example:
+            </para>
+            <programlisting  format="linespecific">
+...
+&kamcmd; app_python3s.api_list
+...
+            </programlisting>
+        </section>
+	</section>
+
+</chapter>
+

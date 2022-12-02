@@ -44,13 +44,13 @@ static int geoip2_rpc_init(void);
 
 static int w_geoip2_match(struct sip_msg* msg, char* str1, char* str2);
 static int geoip2_match(sip_msg_t *msg, str *tomatch, str *pvclass);
+static int geoip2_resid_param(modparam_t type, void* val);
 
 static pv_export_t mod_pvs[] = {
 	{ {"gip2", sizeof("gip2")-1}, PVT_OTHER, pv_get_geoip2, 0,
 		pv_parse_geoip2_name, 0, 0, 0 },
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };
-
 
 static cmd_export_t cmds[]={
 	{"geoip2_match", (cmd_function)w_geoip2_match, 2, fixup_spve_spve,
@@ -59,7 +59,8 @@ static cmd_export_t cmds[]={
 };
 
 static param_export_t params[]={
-	{"path",     PARAM_STRING, &geoip2_path},
+	{"path",  PARAM_STRING, &geoip2_path},
+	{"resid", PARAM_STR|PARAM_USE_FUNC, &geoip2_resid_param},
 	{0, 0, 0}
 };
 
@@ -75,7 +76,6 @@ struct module_exports exports = {
 	0,					/* per-child init function */
 	mod_destroy			/* module destroy function */
 };
-
 
 /**
  * init module function
@@ -111,6 +111,19 @@ static int mod_init(void)
 static void mod_destroy(void)
 {
 	geoip2_destroy_pv();
+}
+
+static int geoip2_resid_param(modparam_t type, void* val)
+{
+	str rname;
+
+	rname = *((str*)val);
+	if(sr_geoip2_add_resid(&rname) < 0) {
+		LM_ERR("failed to register result container with id: %.*s\n",
+				rname.len, rname.s);
+		return -1;
+	}
+	return 0;
 }
 
 static int geoip2_match(sip_msg_t *msg, str *tomatch, str *pvclass)

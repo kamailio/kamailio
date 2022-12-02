@@ -3,7 +3,7 @@
 
 include ../../Makefile.defs
 auto_gen=
-NAME=app_python3.so
+NAME=app_python3s.so
 
 # If you have multiple Python versions installed make sure to modify the
 # the following to point to the correct instance.
