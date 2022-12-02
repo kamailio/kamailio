@@ -469,6 +469,9 @@ static void destroy(void)
 	db_key_t rq_cols[4];
 	db_val_t rq_vals[4];
 
+	if (db_mode == 0)
+		goto done;
+
 	if(imc_db==NULL)
 		goto done;
 
