@@ -212,5 +212,27 @@ def mod_init():
         </section>
 	</section>
 
+	<section id="app_python3s.kemi_usage">
+        <title>KEMI Usage</title>
+            <para>
+			The module exports KEMI engine with id "python".
+			</para>
+            <para>
+            Example:
+            </para>
+            <programlisting  format="linespecific">
+...
+loadmodule "app_python3s.so"
+...
+cfgengine "python"
+...
+            </programlisting>
+            <para>
+			For more details about KEMI, see:
+			<ulink url="https://www.kamailio.org/docs/tutorials/devel/kamailio-kemi-framework/">https://www.kamailio.org/docs/tutorials/devel/kamailio-kemi-framework/</ulink>
+            </para>
+
+	</section>
+
 </chapter>
 
