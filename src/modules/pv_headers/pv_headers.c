@@ -65,6 +65,7 @@ static void mod_destroy(void);
 static int mod_init(void);
 
 static void handle_tm_t(tm_cell_t *t, int type, struct tmcb_params *params);
+static int handle_msg_failed_cb(struct sip_msg *msg, unsigned int flags, void *cb);
 static int handle_msg_cb(struct sip_msg *msg, unsigned int flags, void *cb);
 static int handle_msg_branch_cb(
 		struct sip_msg *msg, unsigned int flags, void *cb);
@@ -315,6 +316,12 @@ int mod_init(void)
 			LM_ERR("cannot register PRE_SCRIPT_CB ONREPLY_CB callbacks\n");
 			return -1;
 		}
+		if(register_script_cb(
+				   handle_msg_failed_cb, PRE_SCRIPT_CB | FAILURE_CB, 0)
+				< 0) {
+			LM_ERR("cannot register PRE_SCRIPT_CB FAILURE_CB callbacks\n");
+			return -1;
+		}
 	}
 
 	pvh_str_hash_init(&skip_headers, &skip_headers_param, "skip_headers");
@@ -392,6 +399,29 @@ static inline char *tm_type_to_string(int type)
 	return "UNKNOWN";
 }
 
+static inline void print_cb_flags(unsigned int flags)
+{
+	LM_DBG("flags:");
+	if(flags & REQUEST_CB)
+		LM_DBG("REQUEST_CB");
+	if(flags & FAILURE_CB)
+		LM_DBG("FAILURE_CB");
+	if(flags & ONREPLY_CB)
+		LM_DBG("ONREPLY_CB");
+	if(flags & BRANCH_CB)
+		LM_DBG("BRANCH_CB");
+	if(flags & ONSEND_CB)
+		LM_DBG("ONSEND_CB");
+	if(flags & ERROR_CB)
+		LM_DBG("ERROR_CB");
+	if(flags & LOCAL_CB)
+		LM_DBG("LOCAL_CB");
+	if(flags & EVENT_CB)
+		LM_DBG("EVENT_CB");
+	if(flags & BRANCH_FAILURE_CB)
+		LM_DBG("BRANCH_FAILURE_CB");
+}
+
 void handle_tm_t(tm_cell_t *t, int type, struct tmcb_params *params)
 {
 	struct sip_msg *msg = NULL;
@@ -421,11 +451,25 @@ void handle_tm_t(tm_cell_t *t, int type, struct tmcb_params *params)
 	return;
 }
 
+int handle_msg_failed_cb(struct sip_msg *msg, unsigned int flags, void *cb)
+{
+	print_cb_flags(flags);
+
+	if(pvh_parse_msg(msg) != 0)
+		return 1;
+
+	_branch = 0;
+	LM_DBG("msg:%p set branch:%d\n", msg, _branch);
+	return 1;
+}
+
 static int msg_cbs =
 		TMCB_REQUEST_FWDED | TMCB_RESPONSE_FWDED | TMCB_ON_BRANCH_FAILURE;
 
 int handle_msg_cb(struct sip_msg *msg, unsigned int flags, void *cb)
 {
+	print_cb_flags(flags);
+
 	if(pvh_parse_msg(msg) != 0)
 		return 1;
 
@@ -444,6 +488,7 @@ int handle_msg_branch_cb(struct sip_msg *msg, unsigned int flags, void *cb)
 {
 
 	LM_DBG("msg:%p previous branch:%d\n", msg, _branch);
+	print_cb_flags(flags);
 
 	if(flags & PRE_SCRIPT_CB) {
 		pvh_get_branch_index(msg, &_branch);
@@ -462,7 +507,11 @@ int handle_msg_reply_cb(struct sip_msg *msg, unsigned int flags, void *cb)
 
 	if(pvh_parse_msg(msg) != 0)
 		return 1;
+	if(msg == FAKED_REPLY) {
+		LM_DBG("FAKED_REPLY\n");
+	}
 	LM_DBG("msg:%p previous branch:%d\n", msg, _branch);
+	print_cb_flags(flags);
 
 	if(tmb.t_check(msg, &_branch) == -1) {
 		LM_ERR("failed find UAC branch\n");
