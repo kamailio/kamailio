@@ -1,4 +1,5 @@
 /*
+ * Copyright (C) 2022 Daniel-Constatin Mierla (daniel@asipto.com)
  * Copyright (C) 2009 Sippy Software, Inc., http://www.sippysoft.com
  *
  * This file is part of Kamailio, a free SIP server.
@@ -37,6 +38,7 @@ MODULE_VERSION
 
 
 str _sr_python_load_file = str_init("/usr/local/etc/" NAME "/" NAME ".py");
+str _sr_apy3s_script_init = str_init("");
 
 static int mod_init(void);
 static int child_init(int rank);
@@ -58,6 +60,7 @@ PyThreadState *myThreadState = NULL;
 /** module parameters */
 static param_export_t params[]={
 	{"load",               PARAM_STR, &_sr_python_load_file },
+	{"script_init",        PARAM_STR, &_sr_apy3s_script_init },
 
 	{0,0,0}
 };
@@ -253,6 +256,69 @@ int w_app_python3s_exec2(sip_msg_t *_msg, char *pmethod, char *pparam)
 	return apy3s_exec_func(_msg, method.s, param.s, 1);
 }
 
+int apy3s_script_init(PyObject* pModule)
+{
+	PyObject *pFunc, *pArgs, *pHandler;
+	PyGILState_STATE gstate;
+	int rval = -1;
+
+	if(_sr_apy3s_script_init.len<=0) {
+		return 0;
+	}
+	LM_DBG("script init callback: %.*s()\n", _sr_apy3s_script_init.len,
+			_sr_apy3s_script_init.s);
+
+	gstate = PyGILState_Ensure();
+	pFunc = PyObject_GetAttrString(pModule, _sr_apy3s_script_init.s);
+	/* pFunc is a new reference */
+
+	if (pFunc == NULL || !PyCallable_Check(pFunc)) {
+		if (!PyErr_Occurred())
+			PyErr_Format(PyExc_AttributeError,
+					"'module' object '%s' has no attribute '%s'",
+					_sr_apy3s_bname, _sr_apy3s_script_init.s);
+		apy3s_handle_exception("script_init");
+		Py_XDECREF(pFunc);
+		goto error;
+	}
+
+	pArgs = PyTuple_New(0);
+	if (pArgs == NULL) {
+		apy3s_handle_exception("script_init");
+		Py_DECREF(pFunc);
+		goto error;
+	}
+
+	pHandler = PyObject_CallObject(pFunc, pArgs);
+
+	Py_XDECREF(pFunc);
+	Py_XDECREF(pArgs);
+
+	if (PyErr_Occurred()) {
+		LM_ERR("error exception occurred\n");
+		apy3s_handle_exception("script_init");
+		Py_DECREF(pHandler);
+		goto error;
+	}
+
+	if (pHandler == NULL) {
+		LM_ERR("PyObject_CallObject() returned NULL but no exception!\n");
+		if (!PyErr_Occurred())
+			PyErr_Format(PyExc_TypeError,
+					"Function '%s' of module '%s' has returned not returned"
+					" object. Should be a class instance.",
+					_sr_apy3s_script_init.s, _sr_apy3s_bname);
+		apy3s_handle_exception("script_init");
+		Py_DECREF(pHandler);
+		goto error;
+	}
+	Py_XDECREF(pHandler);
+	rval = 0;
+error:
+	PyGILState_Release(gstate);
+	return rval;
+}
+
 int apy_reload_script(void)
 {
 	PyGILState_STATE gstate;
@@ -263,8 +329,13 @@ int apy_reload_script(void)
 	if (!pModule) {
 		if (!PyErr_Occurred())
 			PyErr_Format(PyExc_ImportError, "Reload module '%s'", _sr_apy3s_bname);
-		apy3s_handle_exception("mod_init");
+		apy3s_handle_exception("reload_script");
 		Py_DECREF(_sr_apy3s_format_exc_obj);
+		goto err;
+	}
+	if (apy3s_script_init(pModule)) {
+		LM_ERR("Error calling mod_init on reload\n");
+		Py_DECREF(pModule);
 		goto err;
 	}
 	Py_DECREF(_sr_apy3s_handler_script);
@@ -276,7 +347,7 @@ err:
 	return rval;
 }
 
-#define  INTERNAL_VERSION  "1002\n"
+#define  INTERNAL_VERSION  "1008\n"
 
 int apy_load_script(void)
 {
@@ -325,7 +396,7 @@ int apy_load_script(void)
 		if (!PyErr_Occurred())
 			PyErr_Format(PyExc_AttributeError,
 					"'module' object 'sys' has no attribute 'path'");
-		apy3s_handle_exception("mod_init");
+		apy3s_handle_exception("load_script");
 		Py_DECREF(_sr_apy3s_format_exc_obj);
 		goto err;
 	}
@@ -335,7 +406,7 @@ int apy_load_script(void)
 		if (!PyErr_Occurred())
 			PyErr_Format(PyExc_AttributeError,
 					"PyUnicode_FromString() has failed");
-		apy3s_handle_exception("mod_init");
+		apy3s_handle_exception("load_script");
 		Py_DECREF(_sr_apy3s_format_exc_obj);
 		goto err;
 	}
@@ -347,8 +418,13 @@ int apy_load_script(void)
 	if (pModule == NULL) {
 		if (!PyErr_Occurred())
 			PyErr_Format(PyExc_ImportError, "No module named '%s'", _sr_apy3s_bname);
-		apy3s_handle_exception("mod_init");
+		apy3s_handle_exception("load_script");
 		Py_DECREF(_sr_apy3s_format_exc_obj);
+		goto err;
+	}
+	if (apy3s_script_init(pModule) != 0) {
+		LM_ERR("failed calling script init callback function\n");
+		Py_DECREF(pModule);
 		goto err;
 	}
 	_sr_apy3s_handler_script = pModule;
