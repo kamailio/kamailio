@@ -37,6 +37,8 @@ Maxim Sobolev
               5.1. app_python.reload
               5.2. app_python.api_list
 
+        6. KEMI Usage
+
    List of Examples
 
    1.1. Set load parameter
@@ -69,6 +71,8 @@ Chapter 1. Admin Guide
 
         5.1. app_python.reload
         5.2. app_python.api_list
+
+   6. KEMI Usage
 
 1. Overview
 
@@ -238,3 +242,17 @@ def mod_init():
 ...
 kamcmd app_python.api_list
 ...
+
+6. KEMI Usage
+
+   The module exports KEMI engine with id "python".
+
+   Example:
+...
+loadmodule "app_python3.so"
+...
+cfgengine "python"
+...
+
+   For more details about KEMI, see:
+   https://www.kamailio.org/docs/tutorials/devel/kamailio-kemi-framework/
