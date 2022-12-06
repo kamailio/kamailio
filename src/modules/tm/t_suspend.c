@@ -554,6 +554,11 @@ done:
 					hdr = hdr->next;
 				}
 			}
+
+			/* trigger free of body */
+			if(brpl->body && brpl->body->free) {
+				brpl->body->free(&brpl->body);
+			}
 			sip_msg_free(brpl);
 		}
 	}
