@@ -278,7 +278,7 @@ PyObject *sr_apy_kemi_exec_func_ex(sr_kemi_t *ket, PyObject *self, PyObject *arg
 			LM_ERR("invalid number of parameters - idx: %d argc: %d\n", i, (int)alen);
 			return sr_kemi_apy_return_false();
 		}
-		pobj = PyList_GetItem(args, i);
+		pobj = PyTuple_GetItem(args, i);
 		if(pobj==NULL) {
 			LM_ERR("null parameter - func: %.*s idx: %d argc: %d\n",
 					fname.len, fname.s, i, (int)alen);
