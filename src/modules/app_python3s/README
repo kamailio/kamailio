@@ -27,6 +27,7 @@ Daniel-Constantin Mierla
 
               3.1. load (string)
               3.2. script_init (string)
+              3.3. script_child_init (string)
 
         4. Functions
 
@@ -43,7 +44,8 @@ Daniel-Constantin Mierla
 
    1.1. Set load parameter
    1.2. Set script_init parameter
-   1.3. app_python3s_exec usage
+   1.3. Set script_child_init parameter
+   1.4. app_python3s_exec usage
 
 Chapter 1. Admin Guide
 
@@ -59,6 +61,7 @@ Chapter 1. Admin Guide
 
         3.1. load (string)
         3.2. script_init (string)
+        3.3. script_child_init (string)
 
    4. Functions
 
@@ -114,6 +117,7 @@ Chapter 1. Admin Guide
 
    3.1. load (string)
    3.2. script_init (string)
+   3.3. script_child_init (string)
 
 3.1. load (string)
 
@@ -143,6 +147,22 @@ def ksr_script_init():
     return 1
 ...
 
+3.3. script_child_init (string)
+
+   The name of the Python function to be executed when Kamailio forks
+   child processes at startup and when the script is reloaded.
+
+   Default value is “” (not set).
+
+   Example 1.3. Set script_child_init parameter
+...
+modparam("app_python3s", "script_child_init", "ksr_script_child_init")
+...
+def ksr_script_child_init():
+    KSR.info("child init python script\n")
+    return 1
+...
+
 4. Functions
 
    4.1. app_python3s_exec(method [, param])
@@ -155,7 +175,7 @@ def ksr_script_init():
 
    Both parameters can contain pseudo-variables.
 
-   Example 1.3. app_python3s_exec usage
+   Example 1.4. app_python3s_exec usage
 ...
 app_python3s_exec("my_python_function");
 app_python3s_exec("my_python_function", "my_params");
