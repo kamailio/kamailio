@@ -256,27 +256,26 @@ int w_app_python3s_exec2(sip_msg_t *_msg, char *pmethod, char *pparam)
 	return apy3s_exec_func(_msg, method.s, param.s, 1);
 }
 
-int apy3s_script_init(PyObject* pModule)
+int apy3s_script_init_exec(PyObject* pModule, str *fname, int *rank)
 {
 	PyObject *pFunc, *pArgs, *pHandler;
 	PyGILState_STATE gstate;
 	int rval = -1;
 
-	if(_sr_apy3s_script_init.len<=0) {
+	if(fname==NULL || fname->len<=0) {
 		return 0;
 	}
-	LM_DBG("script init callback: %.*s()\n", _sr_apy3s_script_init.len,
-			_sr_apy3s_script_init.s);
+	LM_DBG("script init callback: %.*s()\n", fname->len, fname->s);
 
 	gstate = PyGILState_Ensure();
-	pFunc = PyObject_GetAttrString(pModule, _sr_apy3s_script_init.s);
+	pFunc = PyObject_GetAttrString(pModule, fname->s);
 	/* pFunc is a new reference */
 
 	if (pFunc == NULL || !PyCallable_Check(pFunc)) {
 		if (!PyErr_Occurred())
 			PyErr_Format(PyExc_AttributeError,
 					"'module' object '%s' has no attribute '%s'",
-					_sr_apy3s_bname, _sr_apy3s_script_init.s);
+					_sr_apy3s_bname, fname->s);
 		apy3s_handle_exception("script_init");
 		Py_XDECREF(pFunc);
 		goto error;
@@ -307,7 +306,7 @@ int apy3s_script_init(PyObject* pModule)
 			PyErr_Format(PyExc_TypeError,
 					"Function '%s' of module '%s' has returned not returned"
 					" object. Should be a class instance.",
-					_sr_apy3s_script_init.s, _sr_apy3s_bname);
+					fname->s, _sr_apy3s_bname);
 		apy3s_handle_exception("script_init");
 		Py_DECREF(pHandler);
 		goto error;
@@ -333,7 +332,7 @@ int apy_reload_script(void)
 		Py_DECREF(_sr_apy3s_format_exc_obj);
 		goto err;
 	}
-	if (apy3s_script_init(pModule)) {
+	if (apy3s_script_init_exec(pModule, &_sr_apy3s_script_init, NULL)) {
 		LM_ERR("Error calling mod_init on reload\n");
 		Py_DECREF(pModule);
 		goto err;
@@ -422,7 +421,7 @@ int apy_load_script(void)
 		Py_DECREF(_sr_apy3s_format_exc_obj);
 		goto err;
 	}
-	if (apy3s_script_init(pModule) != 0) {
+	if (apy3s_script_init_exec(pModule, &_sr_apy3s_script_init, NULL) != 0) {
 		LM_ERR("failed calling script init callback function\n");
 		Py_DECREF(pModule);
 		goto err;
