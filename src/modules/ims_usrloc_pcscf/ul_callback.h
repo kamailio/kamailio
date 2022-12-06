@@ -42,11 +42,17 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  * 
  */
+ 
 
 #ifndef _UL_CALLBACKS_H
 #define _UL_CALLBACKS_H
 
 #include "../../core/dprint.h"
+#include "../../core/parser/msg_parser.h"
+#include "../../core/parser/contact/parse_contact.h" 
+#include "../../core/ut.h"
+#include "../ims_usrloc_pcscf/usrloc.h" 
+#include "../../lib/ims/ims_getters.h"
 
 struct pcontact;
 
@@ -58,6 +64,7 @@ struct pcontact;
 
 typedef void (ul_cb) (struct pcontact *c, int type, void *param);		/*! \brief callback function prototype */
 typedef int (*register_ulcb_t)(struct pcontact *c, int cb_types, ul_cb f, void *param);	/*! \brief register callback function prototype */
+typedef int (*is_ulcb_registered_t)(struct pcontact *c, ul_cb f);
 
 struct ul_callback {
 	int types;                   /*!< types of events that trigger the callback*/
@@ -82,7 +89,9 @@ void destroy_ulcb_list(void);
 void destroy_ul_callbacks_list(struct ul_callback* cb);
 int register_ulcb( struct pcontact *c, int types, ul_cb f, void *param);
 void delete_ulcb(struct pcontact* c, int type);
+int register_ulcb_method( struct pcontact *c, int types, ul_cb f, void *param);
 void run_ul_callbacks( int type , struct pcontact *c);
 void run_ul_create_callbacks(struct pcontact *c);
+int is_ulcb_registered(struct pcontact *c, ul_cb f);
 
 #endif

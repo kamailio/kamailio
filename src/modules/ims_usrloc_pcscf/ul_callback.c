@@ -44,14 +44,14 @@
  * 
  */
 
+
 #include <stdlib.h>
 
 #include "../../core/dprint.h"
 #include "../../core/error.h"
 #include "../../core/mem/shm_mem.h"
-#include "ul_callback.h"
-#include "usrloc.h"
-
+//#include "ul_callback.h"
+#include "../ims_usrloc_pcscf/usrloc.h"
 struct ulcb_head_list* ulcb_list = 0;			/*<! list for create callbacks */
 
 int init_ulcb_list(void)
@@ -96,6 +96,39 @@ void destroy_ul_callbacks_list(struct ul_callback* cb) {
 //		} //TODO: this is if we need/require a freeparam function
 		shm_free(cb_t);
 	}
+}
+
+int register_ulcb_method( struct pcontact *c, int types, ul_cb f, void *param )
+{
+        //struct ul_callback *cbp;
+
+        /* are the callback types valid?... */
+        if ( types<0 || types>PCSCF_MAX ) {
+                LM_CRIT("invalid callback types: mask=%d\n",types);
+                return E_BUG;
+        }
+        /* we don't register null functions */
+        if (f==0) {
+                LM_CRIT("null callback function\n");
+                return E_BUG;
+        }
+
+        /* build a new callback structure */
+        if ( types & PCSCF_CONTACT_UPDATE){
+            if (!(cbp_registrar=(struct ul_callback*)shm_malloc(sizeof( struct ul_callback)))) {
+                LM_ERR("no more share mem\n");
+                return E_OUT_OF_MEM;
+            }
+            cbp_registrar->callback = f;
+        }
+        else{
+            if (!(cbp_qos=(struct ul_callback*)shm_malloc(sizeof( struct ul_callback)))) {
+                LM_ERR("no more share mem\n");
+                return E_OUT_OF_MEM;
+            }
+            cbp_qos->callback = f;
+        }
+        return 1;
 }
 
 int register_ulcb( struct pcontact *c, int types, ul_cb f, void *param )
@@ -181,6 +214,19 @@ void delete_ulcb(struct pcontact* c, int type)
 
 	LM_DBG("No ulcb has been deleted for contact: aor[%.*s], via port %u, received port %u\n", c->aor.len, c->aor.s, c->via_port, c->received_port);
 }
+
+int is_ulcb_registered( struct pcontact *c, ul_cb f)
+{
+	struct ul_callback *cbp;
+
+  for (cbp=c->cbs.first; cbp; cbp=cbp->next) {
+    if (cbp->callback == f)
+      return 1;
+  }
+  return 0;
+
+};
+
 
 /*! \brief run all transaction callbacks for an event type */
 void run_ul_callbacks( int type , struct pcontact *c)
