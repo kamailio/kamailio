@@ -39,6 +39,7 @@ MODULE_VERSION
 
 str _sr_python_load_file = str_init("/usr/local/etc/" NAME "/" NAME ".py");
 str _sr_apy3s_script_init = str_init("");
+str _sr_apy3s_script_child_init = str_init("");
 
 static int mod_init(void);
 static int child_init(int rank);
@@ -57,10 +58,13 @@ int _apy3s_process_rank = 0;
 
 PyThreadState *myThreadState = NULL;
 
+int apy3s_script_init_exec(PyObject* pModule, str *fname, int *vparam);
+
 /** module parameters */
 static param_export_t params[]={
 	{"load",               PARAM_STR, &_sr_python_load_file },
 	{"script_init",        PARAM_STR, &_sr_apy3s_script_init },
+	{"script_child_init",  PARAM_STR, &_sr_apy3s_script_child_init },
 
 	{0,0,0}
 };
@@ -210,7 +214,8 @@ static int child_init(int rank)
 	if (cfg_child_init()) {
 		return -1;
 	}
-	return 0;
+	return apy3s_script_init_exec(_sr_apy3s_handler_script,
+			&_sr_apy3s_script_child_init, &rank);
 }
 
 /**
@@ -256,9 +261,12 @@ int w_app_python3s_exec2(sip_msg_t *_msg, char *pmethod, char *pparam)
 	return apy3s_exec_func(_msg, method.s, param.s, 1);
 }
 
-int apy3s_script_init_exec(PyObject* pModule, str *fname, int *rank)
+/**
+ *
+ */
+int apy3s_script_init_exec(PyObject* pModule, str *fname, int *vparam)
 {
-	PyObject *pFunc, *pArgs, *pHandler;
+	PyObject *pFunc, *pArgs, *pHandler, *pValue;
 	PyGILState_STATE gstate;
 	int rval = -1;
 
@@ -281,11 +289,30 @@ int apy3s_script_init_exec(PyObject* pModule, str *fname, int *rank)
 		goto error;
 	}
 
-	pArgs = PyTuple_New(0);
-	if (pArgs == NULL) {
-		apy3s_handle_exception("script_init");
-		Py_DECREF(pFunc);
-		goto error;
+	if(vparam==NULL) {
+		pArgs = PyTuple_New(0);
+		if (pArgs == NULL) {
+			apy3s_handle_exception("script_init");
+			Py_DECREF(pFunc);
+			goto error;
+		}
+	} else {
+		pArgs = PyTuple_New(1);
+		if (pArgs == NULL) {
+			apy3s_handle_exception("script_init");
+			Py_DECREF(pFunc);
+			goto error;
+		}
+
+		pValue = PyLong_FromLong((long)(*vparam));
+		if (pValue == NULL) {
+			apy3s_handle_exception("script_init");
+			Py_DECREF(pArgs);
+			Py_DECREF(pFunc);
+			goto error;
+		}
+		/* pValue moved to pArgs - no direct dec ref */
+		PyTuple_SetItem(pArgs, 0, pValue);
 	}
 
 	pHandler = PyObject_CallObject(pFunc, pArgs);
@@ -318,6 +345,9 @@ error:
 	return rval;
 }
 
+/**
+ *
+ */
 int apy_reload_script(void)
 {
 	PyGILState_STATE gstate;
@@ -330,24 +360,33 @@ int apy_reload_script(void)
 			PyErr_Format(PyExc_ImportError, "Reload module '%s'", _sr_apy3s_bname);
 		apy3s_handle_exception("reload_script");
 		Py_DECREF(_sr_apy3s_format_exc_obj);
-		goto err;
+		goto error;
 	}
 	if (apy3s_script_init_exec(pModule, &_sr_apy3s_script_init, NULL)) {
 		LM_ERR("Error calling mod_init on reload\n");
 		Py_DECREF(pModule);
-		goto err;
+		goto error;
 	}
 	Py_DECREF(_sr_apy3s_handler_script);
 	_sr_apy3s_handler_script = pModule;
 
+	if(apy3s_script_init_exec(pModule, &_sr_apy3s_script_child_init,
+				&_apy3s_process_rank)<0) {
+		LM_ERR("Failed to run child init callback\n");
+		goto error;
+	}
 	rval =  0;
-err:
+
+error:
 	PyGILState_Release(gstate);
 	return rval;
 }
 
 #define  INTERNAL_VERSION  "1008\n"
 
+/**
+ *
+ */
 int apy_load_script(void)
 {
 	PyObject *sys_path, *pDir, *pModule;
