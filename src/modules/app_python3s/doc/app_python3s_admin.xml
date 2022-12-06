@@ -104,7 +104,7 @@ modparam("app_python3s", "load", "/usr/local/etc/kamailio/myscript.py")
 </programlisting>
 	    </example>
 	</section>
-	<section id="app_python3s.p.load">
+	<section id="app_python3s.p.script_init">
 	    <title><varname>script_init</varname> (string)</title>
 	    <para>
 			The name of the Python function to be executed when the script is
@@ -123,6 +123,30 @@ modparam("app_python3s", "script_init", "ksr_script_init")
 ...
 def ksr_script_init():
     KSR.info("init python script\n")
+    return 1
+...
+</programlisting>
+	    </example>
+	</section>
+	<section id="app_python3s.p.script_child_init">
+	    <title><varname>script_child_init</varname> (string)</title>
+	    <para>
+			The name of the Python function to be executed when &kamailio; forks
+			child processes at startup and when the script is reloaded.
+	    </para>
+	    <para>
+		<emphasis>
+			Default value is <quote></quote> (not set).
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>script_child_init</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("app_python3s", "script_child_init", "ksr_script_child_init")
+...
+def ksr_script_child_init():
+    KSR.info("child init python script\n")
     return 1
 ...
 </programlisting>
