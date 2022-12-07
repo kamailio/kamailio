@@ -34,11 +34,6 @@ function ksr_request_route()
 		return;
 	}
 
-	// handle requests within SIP dialogs
-	ksr_route_withindlg();
-
-	// -- only initial requests (no To tag)
-
 	// handle retransmissions
 	if (!KSR.is_ACK()) {
 		if (KSR.tmx.t_precheck_trans()>0) {
@@ -47,6 +42,11 @@ function ksr_request_route()
 		}
 		if (KSR.tm.t_check_trans()==0) { return; }
 	}
+
+	// handle requests within SIP dialogs
+	ksr_route_withindlg();
+
+	// -- only initial requests (no To tag)
 
 	// authentication
 	ksr_route_auth();
@@ -153,7 +153,7 @@ function ksr_route_reqinit()
 		KSR.x.exit();
 	}
 
-	if (KSR.sanity.sanity_check(1511, 7)<0) {
+	if (KSR.sanity.sanity_check(17895, 7)<0) {
 		KSR.err("Malformed SIP message from "
 				+ KSR.kx.get_srcip() + ":" + KSR.kx.get_srcport() + "\n");
 		KSR.x.exit();
