@@ -65,8 +65,7 @@ end
 def ksr_route_reqinit()
   if KSR::COREX.has_user_agent() > 0 then
     ua = KSR::PV.gete("$ua");
-    if ua.include? 'friendly' or ua.include? 'scanner'
-        or ua.include? 'sipcli' or ua.include? 'sipvicious' then
+    if ua.include? 'friendly' or ua.include? 'scanner' or ua.include? 'sipcli' or ua.include? 'sipvicious' then
       KSR::SL.sl_send_reply(200, "OK");
       exit
     end
