@@ -388,7 +388,7 @@ static int pdb_query(struct sip_msg *_msg, struct multiparam_t *_number, struct 
 		timeoutlogs=-10;
 	}
 	if (gettimeofday(&tnow, NULL) == 0) {
-		LM_INFO("got an answer in %f ms\n", ((double)(tnow.tv_usec-tstart.tv_usec+(tnow.tv_sec-tstart.tv_sec)*1000000))/1000);
+		LM_DBG("got an answer in %f ms\n", ((double)(tnow.tv_usec-tstart.tv_usec+(tnow.tv_sec-tstart.tv_sec)*1000000))/1000);
 	}
 	avp_val.n=carrierid;
 	/* set avp ! */
