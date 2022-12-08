@@ -44,19 +44,20 @@ def ksr_request_route():
             ksr_route_relay()
         return 1
 
+    # handle retransmissions
+    if not KSR.is_ACK() :
+        if KSR.tmx.t_precheck_trans()>0 :
+            KSR.tm.t_check_trans()
+            return 1
+
+        if KSR.tm.t_check_trans()==0 :
+            return 1
+
     # handle requests within SIP dialogs
     if ksr_route_withindlg()==-255 :
         return 1
 
     # -- only initial requests (no To tag)
-
-    # handle retransmissions
-    if KSR.tmx.t_precheck_trans()>0 :
-        KSR.tm.t_check_trans()
-        return 1
-
-    if KSR.tm.t_check_trans()==0 :
-        return 1
 
     # authentication
     if ksr_route_auth()==-255 :
@@ -70,7 +71,7 @@ def ksr_request_route():
 
 
     # account only INVITEs
-    if KSR.pv.get("$rm")=="INVITE" :
+    if KSR.is_INVITE() :
         KSR.setflag(FLT_ACC); # do accounting
 
 
@@ -120,24 +121,30 @@ def ksr_route_relay():
 
 # Per SIP request initial checks
 def ksr_route_reqinit():
-    srcip = KSR.pv.get("$si")
-    if not KSR.is_myself(srcip) :
-        if not KSR.pv.is_null("$sht(ipban=>$si)") :
+    # no connect for sending replies
+    KSR.set_reply_no_connect()
+    # enforce symmetric signaling
+    # send back replies to the source address of request
+    KSR.force_rport()
+
+    if not KSR.is_myself_srcip() :
+        srcip = KSR.kx.get_srcip()
+        if KSR.htable.sht_match_name("ipban", "eq", srcip) > 0 :
             # ip is already blocked
-            KSR.dbg("request from blocked IP - " + KSR.pv.get("$rm")
-                    + " from " + KSR.pv.get("$fu") + " (IP:"
-                    + KSR.pv.get("$si") + ":" + str(KSR.pv.get("$sp")) + ")\n")
+            KSR.dbg("request from blocked IP - " + KSR.kx.get_method()
+                    + " from " + KSR.kx.get_furi() + " (IP:"
+                    + srcip + ":" + str(KSR.pv.get("$sp")) + ")\n")
             return -255
 
         if KSR.pike.pike_check_req()<0 :
-            KSR.err("ALERT: pike blocking " + KSR.pv.get("$rm")
-                    + " from " + KSR.pv.get("$fu") + " (IP:"
-                    + KSR.pv.get("$si") + ":" + str(KSR.pv.get("$sp")) + ")\n")
-            KSR.pv.seti("$sht(ipban=>$si)", 1)
+            KSR.err("ALERT: pike blocking " + KSR.kx.get_method()
+                    + " from " + KSR.kx.get_furi() + " (IP:"
+                    + srcip + ":" + str(KSR.pv.get("$sp")) + ")\n")
+            KSR.htable.sht_seti("ipban", srcip, 1)
             return -255
 
     if KSR.corex.has_user_agent() > 0 :
-        ua = KSR.pv.gete("$ua")
+        ua = KSR.kx.gete_ua()
         if (ua.find("friendly")!=-1 or ua.find("scanner")!=-1
                 or ua.find("sipcli")!=-1 or ua.find("sipvicious")!=-1) :
             KSR.sl.sl_send_reply(200, "Processed")
