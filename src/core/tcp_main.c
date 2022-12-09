@@ -2043,8 +2043,10 @@ int tcp_send(struct dest_info* dst, union sockaddr_union* from,
 		}
 		/* check if connect() is disabled */
 		if (unlikely((dst->send_flags.f & SND_F_FORCE_CON_REUSE) ||
-						cfg_get(tcp, tcp_cfg, no_connect)))
+						cfg_get(tcp, tcp_cfg, no_connect))) {
+			LM_DBG("no connect set and no active connection\n");
 			return -1;
+		}
 		LM_DBG("no open tcp connection found, opening new one\n");
 		/* create tcp connection */
 		if (likely(from==0)){
