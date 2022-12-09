@@ -214,7 +214,7 @@ end
 function ksr_route_withindlg()
 	if KSR.siputils.has_totag()<0 then return 1; end
 
-	-- sequential request withing a dialog should
+	-- sequential request within a dialog should
 	-- take the path determined by record-routing
 	if KSR.rr.loose_route()>0 then
 		ksr_route_dlguri();

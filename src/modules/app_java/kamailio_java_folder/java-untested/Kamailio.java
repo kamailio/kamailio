@@ -244,7 +244,7 @@ public class Kamailio extends NativeMethods
 	{
 	    if (WrappedMethods.has_totag())
 	    {
-		// sequential request withing a dialog should
+		// sequential request within a dialog should
                 // take the path determined by record-routing
 
 		if (WrappedMethods.loose_route())

@@ -166,7 +166,7 @@ function ksr_route_withindlg()
 {
 	if (KSR.siputils.has_totag()<0) { return; }
 
-	// sequential request withing a dialog should
+	// sequential request within a dialog should
 	// take the path determined by record-routing
 	if (KSR.rr.loose_route()>0) {
 		ksr_route_dlguri();

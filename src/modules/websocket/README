@@ -278,7 +278,7 @@ request_route {
 # Handle requests within SIP dialogs
 route[WITHINDLG] {
         if (has_totag()) {
-                # sequential request withing a dialog should
+                # sequential request within a dialog should
                 # take the path determined by record-routing
                 if (loose_route()) {
                         if ($du == "") {
