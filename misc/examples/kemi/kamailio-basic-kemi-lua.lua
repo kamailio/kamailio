@@ -120,7 +120,7 @@ function ksr_request_route()
 
 	if KSR.corex.has_ruri_user() < 0 then
 		-- request with no Username in RURI
-		KSR.sl.sl_send_reply(484,"Address Incomplete");
+		KSR.sl.sl_send_reply(484, "Address Incomplete");
 		return 1;
 	end
 
@@ -190,14 +190,14 @@ function ksr_route_reqinit()
 	end
 
 	if KSR.maxfwd.process_maxfwd(10) < 0 then
-		KSR.sl.sl_send_reply(483,"Too Many Hops");
+		KSR.sl.sl_send_reply(483, "Too Many Hops");
 		KSR.x.exit();
 	end
 
 	if KSR.is_OPTIONS()
 			and KSR.is_myself_ruri()
 			and KSR.corex.has_ruri_user() < 0 then
-		KSR.sl.sl_send_reply(200,"Keepalive");
+		KSR.sl.sl_send_reply(200, "Keepalive");
 		KSR.x.exit();
 	end
 
@@ -314,7 +314,7 @@ function ksr_route_auth()
 	-- a local destination, otherwise deny, not an open relay here
 	if (not KSR.is_myself_furi())
 			and (not KSR.is_myself_ruri()) then
-		KSR.sl.sl_send_reply(403,"Not relaying");
+		KSR.sl.sl_send_reply(403, "Not relaying");
 		KSR.x.exit();
 	end
 

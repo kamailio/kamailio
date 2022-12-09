@@ -61,7 +61,7 @@ def ksr_request_route()
 
   if KSR::COREX.has_ruri_user() < 0 then
     # request with no Username in RURI
-    KSR::SL.sl_send_reply(484,"Address Incomplete");
+    KSR::SL.sl_send_reply(484, "Address Incomplete");
     return;
   end
 
@@ -130,7 +130,7 @@ def ksr_route_reqinit()
   end
 
   if KSR::MAXFWD.process_maxfwd(10) < 0 then
-    KSR::SL.sl_send_reply(483,"Too Many Hops");
+    KSR::SL.sl_send_reply(483, "Too Many Hops");
     exit
   end
 
@@ -195,7 +195,7 @@ def ksr_route_auth()
 	# if caller is not local subscriber, then check if it calls
 	# a local destination, otherwise deny, not an open relay here
 	if !KSR.is_myself_furi() && !KSR.is_myself_ruri() then
-		KSR::SL.sl_send_reply(403,"Not relaying")
+		KSR::SL.sl_send_reply(403, "Not relaying")
 		exit
   end
 

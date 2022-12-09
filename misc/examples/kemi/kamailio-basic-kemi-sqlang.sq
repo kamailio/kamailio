@@ -20,7 +20,7 @@ local FLAGS = {
 // equivalent of request_route{}
 function ksr_request_route()
 {
-	// KSR.sl.sl_send_reply(100,"Intelligent trying");
+	// KSR.sl.sl_send_reply(100, "Intelligent trying");
 	// KSR.info("===== request - from kamailio SQLang script\n");
 
 	// per request initial checks
@@ -145,14 +145,14 @@ function ksr_route_reqinit()
 	}
 
 	if (KSR.maxfwd.process_maxfwd(10) < 0) {
-		KSR.sl.sl_send_reply(483,"Too Many Hops");
+		KSR.sl.sl_send_reply(483, "Too Many Hops");
 		KSR.x.exit();
 	}
 
 	if (KSR.is_OPTIONS()
 			&& KSR.is_myself_ruri()
 			&& KSR.corex.has_ruri_user() < 0) {
-		KSR.sl.sl_send_reply(200,"Keepalive");
+		KSR.sl.sl_send_reply(200, "Keepalive");
 		KSR.x.exit();
 	}
 
@@ -268,7 +268,7 @@ function ksr_route_auth()
 	// a local destination, otherwise deny, not an open relay here
 	if ((!KSR.is_myself_furi())
 			&& (!KSR.is_myself_ruri())) {
-		KSR.sl.sl_send_reply(403,"Not relaying");
+		KSR.sl.sl_send_reply(403, "Not relaying");
 		KSR.x.exit();
 	}
 
