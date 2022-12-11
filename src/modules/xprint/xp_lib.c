@@ -988,7 +988,7 @@ static int xl_get_special(struct sip_msg *msg, str *res, str *hp, int hi, int hf
 	return 0;
 }
 
-/* copy the string withing this range */
+/* copy the string within this range */
 static int	range_from = -1;
 static int	range_to = -1;
 
