@@ -166,11 +166,6 @@ Specifies the number of children processes forked to handle tcp incoming connect
 .BI \-n
 ).
 .TP
-.BI \-P " pid\-file"
-Creates a file containing the pid of the main
-.B kamailio
-process.
-.TP
 .BI \-O " optimization\-level"
 Script optimization level (debugging option).
 .TP
@@ -231,8 +226,8 @@ Specify internal manager for shared memory (shm) can be: fm, qm or tlsf
 .BI \-X " name"
 Specify internal manager for private memory (pkg) if omitted, the one for shm is used
 .TP
- .BI \-Y " dir"
- Runtime dir path
+.BI \-Y " dir"
+Runtime dir path
 .TP
 .BI \-w " working\-dir"
 Specifies the working directory. In the very improbable event that
