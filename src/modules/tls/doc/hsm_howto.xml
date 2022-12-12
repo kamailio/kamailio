@@ -32,7 +32,7 @@ modparam("tls", "engine_config", "/usr/local/etc/kamailio/thales.cnf")
 modparam("tls", "engine_algorithms", "EC")
 ...
 
-/usr/local/etc/kamailio/thales.cnf is a OpenSSL config format file used to
+/usr/local/etc/kamailio/thales.cnf is an OpenSSL config format file used to
 bootstrap the engine, e.g., pass the PIN.
 
 ...
