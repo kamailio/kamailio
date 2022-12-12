@@ -28,7 +28,7 @@ include Makefile.sources
 include Makefile.targets
 
 # whether or not the entire build process should fail if building a module or
-#  an utility fails
+#  a utility fails
 err_fail?=1
 
 # whether or not to install $(MAIN_NAME).cfg or just $(MAIN_NAME).cfg.default
