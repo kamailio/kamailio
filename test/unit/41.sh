@@ -37,7 +37,7 @@ if ! (check_sipp && check_kamailio && check_module "db_mysql" && check_mysql); t
 	exit 0
 fi ;
 
-# add an registrar entry to the db;
+# add a registrar entry to the db;
 $MYSQL "INSERT INTO location (username,contact,socket,user_agent,cseq,q) VALUES (\"foo\",\"sip:foo@127.0.0.1:$UAS\",\"udp:127.0.0.1:$UAS\",\"ser_test\",1,-1);"
 
 $MYSQL "INSERT INTO usr_preferences (uuid, attribute, type, value) VALUES (\"foobar\", \"679\", 0, \"foobar!!!!!\");"

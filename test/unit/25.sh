@@ -46,7 +46,7 @@ fi ;
 
 CFG=25.cfg
 
-# add an registrar entry to the db;
+# add a registrar entry to the db;
 $MYSQL "insert into location (ruid,username,contact,socket,user_agent,cseq,q) values (\"ul-ruid-aa\",\"49721123456789\",\"sip:123456789@127.0.0.1\",\"udp:127.0.0.1:5060\",\"kamailio_test\",1,-1);"
 
 $MYSQL "insert into location (ruid,username,contact,socket,user_agent,cseq,q) values (\"ul-ruid-bb\",\"49721123456788\",\"sip:123456788@127.0.0.1\",\"udp:127.0.0.1:5060\",\"kamailio_test\",1,-1);"
