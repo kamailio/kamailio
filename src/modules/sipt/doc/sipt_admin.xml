@@ -113,7 +113,7 @@ sipt_forwarfing($avp(s:forwarding_number), 3);
 		<title><function moreinfo="none">sipt_has_isup_body()</function></title>
 		<para>
 			The function returns <emphasis>true</emphasis> if the SIP message
-			has a ISUP body attached.
+			has an ISUP body attached.
 		</para>
 		<example>
 			<title><function moreinfo="none">sipt_has_isup_body()</function> usage</title>
