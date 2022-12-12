@@ -630,7 +630,7 @@ modparam("http_client", "httpcon", "apifour=>http://stockholm.example.com/api/ge
 			</para>
  			<para>
 			To set a string value to null, in order to override default settings,
-			you can specify an value of "" - two quotation marks. In order to disable
+			you can specify a value of "" - two quotation marks. In order to disable
 			a http proxy setting you can set the port to zero.
 			</para>
 			<example>
