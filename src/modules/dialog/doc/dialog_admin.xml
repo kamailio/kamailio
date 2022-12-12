@@ -29,7 +29,7 @@
 	common application discussed for illustrative purposes; there are many others.
 	</para>
 	<para>
-	The dialog module provides dialog awareness for the &kamailio; proxy. It's
+	The dialog module provides dialog awareness for the &kamailio; proxy. Its
 	functionality is to keep track of the current dialogs, to offer information
 	about them (e.g. how many dialogs are active), and to manage various
 	characteristics of dialogs. The module exports several functions that can be
@@ -37,7 +37,7 @@
 	the RPC interface.
 	</para>
 	<para>
-	This module also provides a API foundation on which to build
+	This module also provides an API foundation on which to build
 	more complex dialog-oriented functionality in other &kamailio; modules.
 	</para>
 	</section>
@@ -1871,7 +1871,7 @@ unset_dlg_profile("caller","$fu");
 		<programlisting format="linespecific">
 ...
 if (is_in_profile("inbound_call")) {
-	log("this request belongs to a inbound call\n");
+	log("this request belongs to an inbound call\n");
 }
 ...
 if (is_in_profile("caller","XX")) {

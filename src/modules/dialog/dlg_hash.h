@@ -40,7 +40,7 @@
 /* states of a dialog */
 #define DLG_STATE_UNCONFIRMED  1 /*!< unconfirmed dialog */
 #define DLG_STATE_EARLY        2 /*!< early dialog */
-#define DLG_STATE_CONFIRMED_NA 3 /*!< confirmed dialog without a ACK yet */
+#define DLG_STATE_CONFIRMED_NA 3 /*!< confirmed dialog without an ACK yet */
 #define DLG_STATE_CONFIRMED    4 /*!< confirmed dialog */
 #define DLG_STATE_DELETED      5 /*!< deleted dialog */
 
@@ -466,7 +466,7 @@ void dlg_ref_helper(dlg_cell_t *dlg, unsigned int cnt, const char *fname,
 void dlg_release(dlg_cell_t *dlg);
 
 /*!
- * \brief Update a dialog state according a event and the old state
+ * \brief Update a dialog state according an event and the old state
  *
  * This functions implement the main state machine that update a dialog
  * state according a processed event and the current state. If necessary
