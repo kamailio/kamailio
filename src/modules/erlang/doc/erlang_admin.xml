@@ -130,7 +130,7 @@ modparam("erlang", "cnode_host", "kamailio.lan")
 		<section id="erlang.p.erlang_nodename">
 			<title><varname>erlang_nodename</varname> (str)</title>
 			<para>
-				The format of the node name is an <emphasis>name@host</emphasis>
+				The format of the node name is a <emphasis>name@host</emphasis>
 				where name is the name given by the user and host is the full
 				host name if long names are used, or the first part of the host
 				name if short names are used.
