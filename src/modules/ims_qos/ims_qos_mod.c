@@ -659,7 +659,7 @@ uint16_t check_ip_version(str ip)
 }
 
 /* Wrapper to send AAR from config file - this only allows for AAR for calls - not register, which uses r_rx_aar_register
- * return: 1 - success, <=0 failure. 2 - message not a AAR generating message (ie proceed without PCC if you wish)
+ * return: 1 - success, <=0 failure. 2 - message not an AAR generating message (ie proceed without PCC if you wish)
  */
 static int w_rx_aar(struct sip_msg *msg, char *route, char* dir, char *c_id, int id_type)
 {
