@@ -356,7 +356,7 @@ pike_ip_node_t* mark_node(unsigned char *ip,int ip_len,
 
 
 
-/* remove and destroy a IP node along with its subtree */
+/* remove and destroy an IP node along with its subtree */
 void remove_node(pike_ip_node_t *node)
 {
 	LM_DBG("destroying node %p\n",node);
