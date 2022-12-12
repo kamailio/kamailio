@@ -137,7 +137,7 @@ modparam("kafka", "configuration", "topic.metadata.refresh.interval.ms=20000;que
 		  Each topic property is a list of <emphasis>attribute = value</emphasis> separated by semicolon.
 		</para>
 		<para>
-		  name atribute indicates the topic name. It is mandatory.
+		  name attribute indicates the topic name. It is mandatory.
 		  Other attributes mean names of properties and are optional.
 		</para>
 		<para>
