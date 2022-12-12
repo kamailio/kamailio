@@ -296,7 +296,7 @@ struct rval_expr* mk_rval_expr_v(enum rval_type rv_type, void* val,
 									struct cfg_pos* pos);
 
 /**
- * @brief Create a unary op. rval_expr
+ * @brief Create an unary op. rval_expr
  * ret= op rve1
  * @param op   - rval expr. unary operator
  * @param rve1 - rval expr. on which the operator will act.

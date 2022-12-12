@@ -79,7 +79,7 @@
 #elif defined __CPU_x86 || defined __CPU_x86_64
 /* no asm (e.g. no CC_GCC_LIKE_ASM) => debruijn for bit_scan_forward and
  *  br for bit_scan_reverse */
-/* make sure debruijn an branch version are enabled */
+/* make sure debruijn and branch version are enabled */
 #ifndef BIT_SCAN_DEBRUIJN
 #define BIT_SCAN_DEBRUIJN
 #endif
@@ -117,7 +117,7 @@
 
 #else /* __CPU_XXX */
 /* default - like x86 no asm */
-/* make sure debruijn an branch version are enabled */
+/* make sure debruijn and branch version are enabled */
 #ifndef BIT_SCAN_DEBRUIJN
 #define BIT_SCAN_DEBRUIJN
 #endif

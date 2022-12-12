@@ -91,7 +91,7 @@ struct mime_type {
 
 
 /*! \brief
- * returns the accept values of a sip_msg as an null-terminated array
+ * returns the accept values of a sip_msg as a null-terminated array
  * of integer
  */
 #define get_accept(_msg_) ((int*)((_msg_)->accept->parsed))
@@ -109,7 +109,7 @@ int parse_accept_body(struct hdr_field* const hdr);
 
 /*! \brief
  * parse the body of the Accept header. It's values are also converted
- * as an null-terminated array of ints.
+ * as a null-terminated array of ints.
  * Returns:   1 : OK
  *            0 : hdr not found
  *           -1 : error (parse error)
@@ -119,7 +119,7 @@ int parse_accept_hdr(struct sip_msg* const msg);
 
 /*! \brief
  *  parse the body of a Content_-Length header. Also tries to recognize the
- *  type specified by this header (see th above defines).
+ *  type specified by this header (see the above defines).
  *  Returns the first chr after the end of the header.
  */
 char* parse_content_length(char* const buffer, const char* const end, int* const length);
