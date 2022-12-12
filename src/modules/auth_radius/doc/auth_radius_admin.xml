@@ -288,7 +288,7 @@ modparam("auth_radius", "append_realm_to_username", 0)
 		<para>Meaning of the parameter is as follows:</para>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>realm</emphasis> - Realm is a
+			<para><emphasis>realm</emphasis> - Realm is an
 	opaque string that
 			the user agent should present to the user so he
 	can decide what
@@ -366,7 +366,7 @@ modparam("auth_radius", "append_realm_to_username", 0)
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>realm</emphasis> - Realm is a opaque string that
+			<para><emphasis>realm</emphasis> - Realm is an opaque string that
 			the user agent should present to the user so he can decide what
 			username and password to use.  In case of
 	non-REGISTER requests it is usually hostpart of From or
