@@ -789,7 +789,7 @@ static int process_event_reply(as_p as)
             process_bind_action(as,processor_id,flags,&as->ev_buffer.s[10],ev_len-10);
             break;
          case UNBIND_AC:
-            LM_DBG("Processing a UNBIND action from AS (length=%d): %.*s\n",
+            LM_DBG("Processing an UNBIND action from AS (length=%d): %.*s\n",
                   ev_len,as->name.len,as->name.s);
             process_unbind_action(as,processor_id,flags,&as->ev_buffer.s[10],ev_len-10);
             break;
@@ -889,7 +889,7 @@ error:
 }
 
 /**
- * processes a UNBIND event type from the AS.
+ * processes an UNBIND event type from the AS.
  * Bind events follow this form:
  * 1:processor_id
  *
