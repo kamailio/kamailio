@@ -85,7 +85,7 @@ accept invitation to join a conference room\r\n\
 "IMC_CMD_START_STR IMC_CMD_REJECT" - \
 reject invitation to join a conference room\r\n\
 "IMC_CMD_START_STR IMC_CMD_REMOVE" <user_name> [<room_name>] - \
-remove an user from the conference room\r\n\
+remove a user from the conference room\r\n\
 "IMC_CMD_START_STR IMC_CMD_MEMBERS" - \
 list members is a conference room\r\n\
 "IMC_CMD_START_STR IMC_CMD_ROOMS" - \
