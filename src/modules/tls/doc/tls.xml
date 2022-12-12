@@ -133,7 +133,7 @@ request_route {
 		<para>
 			For OpenSSL (libssl) v1.1.x, it is required to preload
 			'openssl_mutex_shared' library shipped by &kamailio;. For more details
-			see 'src/modules/tls/openssl_mutex_shared/README.md'.
+			see 'src/modules/tls/utils/openssl_mutex_shared/README.md'.
 		</para>
 		<para>
 			This module includes several workarounds for various Openssl bugs
