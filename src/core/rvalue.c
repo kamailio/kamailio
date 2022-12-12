@@ -2690,7 +2690,7 @@ struct rval_expr* mk_rval_expr_v(enum rval_type rv_type, void* val,
 
 
 /**
- * @brief Create a unary op. rval_expr
+ * @brief Create an unary op. rval_expr
  * ret= op rve1
  * @param op   - rval expr. unary operator
  * @param rve1 - rval expr. on which the operator will act.
@@ -3652,7 +3652,7 @@ static int rve_optimize(struct rval_expr* rve)
 				if (rve_replace_with_ct_rv(rve->right.rve, rv)<0)
 					goto error;
 				rve->op=RVE_IPLUS_OP;
-				LM_DBG("FIXUP RVE (%d,%d-%d,%d): optimized $v - a into "
+				LM_DBG("FIXUP RVE (%d,%d-%d,%d): optimized $v - an into "
 						"$v + (%d)\n",
 						rve->fpos.s_line, rve->fpos.s_col,
 						rve->fpos.e_line, rve->fpos.e_col,
