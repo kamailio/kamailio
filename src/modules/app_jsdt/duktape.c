@@ -20034,7 +20034,7 @@ DUK_EXTERNAL void *duk_require_buffer(duk_hthread *thr, duk_idx_t idx, duk_size_
 }
 
 /* Get the active buffer data area for a plain buffer or a buffer object.
- * Return NULL if the the value is not a buffer.  Note that a buffer may
+ * Return NULL if the value is not a buffer.  Note that a buffer may
  * have a NULL data pointer when its size is zero, the optional 'out_isbuffer'
  * argument allows caller to detect this reliably.
  */
@@ -26050,7 +26050,7 @@ DUK_LOCAL duk_small_int_t duk__array_sort_compare(duk_hthread *thr, duk_int_t id
 
 	/* Fast exit if indices are identical.  This is valid for a non-existent property,
 	 * for an undefined value, and almost always for ToString() coerced comparison of
-	 * arbitrary values (corner cases where this is not the case include e.g. a an
+	 * arbitrary values (corner cases where this is not the case include e.g. an
 	 * object with varying ToString() coercion).
 	 *
 	 * The specification does not prohibit "caching" of values read from the array, so
@@ -29109,7 +29109,7 @@ DUK_INTERNAL duk_ret_t duk_bi_buffer_slice_shared(duk_hthread *thr) {
 	 *
 	 * Node.js Buffers have special handling: they're Uint8Arrays as far
 	 * as the internal class is concerned, so the new Buffer should also
-	 * be an Uint8Array but inherit from Buffer.prototype.
+	 * be a Uint8Array but inherit from Buffer.prototype.
 	 */
 	res_class_num = DUK_HOBJECT_GET_CLASS_NUMBER((duk_hobject *) h_this);
 	DUK_ASSERT(res_class_num >= DUK_HOBJECT_CLASS_BUFOBJ_MIN);  /* type check guarantees */
@@ -50926,7 +50926,7 @@ DUK_INTERNAL void duk_heap_process_finalize_list(duk_heap *heap) {
 }
 
 /*
- *  Run an duk_hobject finalizer.  Must never throw an uncaught error
+ *  Run a duk_hobject finalizer.  Must never throw an uncaught error
  *  (but may throw caught errors).
  *
  *  There is no return value.  Any return value or error thrown by
@@ -55598,7 +55598,7 @@ DUK_LOCAL void *duk__hobject_alloc_init(duk_hthread *thr, duk_uint_t hobject_fla
 }
 
 /*
- *  Allocate an duk_hobject.
+ *  Allocate a duk_hobject.
  *
  *  The allocated object has no allocation for properties; the caller may
  *  want to force a resize if a desired size is known.
@@ -56981,7 +56981,7 @@ DUK_INTERNAL duk_uint_fast32_t duk_hobject_pc2line_query(duk_hthread *thr, duk_i
  *      duk_tval copies is not problematic with respect to side effects;
  *      care must be taken when holding and using argument duk_tval pointers.
  *
- *    - If a finalizer is executed, it may operate on the the same object
+ *    - If a finalizer is executed, it may operate on the same object
  *      we're currently dealing with.  For instance, the finalizer might
  *      delete a certain property which has already been looked up and
  *      confirmed to exist.  Ideally finalizers would be disabled if GC
@@ -69944,7 +69944,7 @@ DUK_LOCAL duk_bool_t duk__const_needs_refcount(duk_compiler_ctx *comp_ctx, duk_r
 #endif
 }
 
-/* Get the value represented by an duk_ispec to a register or constant.
+/* Get the value represented by a duk_ispec to a register or constant.
  * The caller can control the result by indicating whether or not:
  *
  *   (1) a constant is allowed (sometimes the caller needs the result to
@@ -70138,7 +70138,7 @@ DUK_LOCAL void duk__ispec_toforcedreg(duk_compiler_ctx *comp_ctx, duk_ispec *x, 
 	(void) duk__ispec_toregconst_raw(comp_ctx, x, forced_reg, 0 /*flags*/);
 }
 
-/* Coerce an duk_ivalue to a 'plain' value by generating the necessary
+/* Coerce a duk_ivalue to a 'plain' value by generating the necessary
  * arithmetic operations, property access, or variable access bytecode.
  * The duk_ivalue argument ('x') is converted into a plain value as a
  * side effect.
@@ -70351,7 +70351,7 @@ DUK_LOCAL void duk__ivalue_toplain_ignore(duk_compiler_ctx *comp_ctx, duk_ivalue
 	DUK__SETTEMP(comp_ctx, temp);
 }
 
-/* Coerce an duk_ivalue to a register or constant; result register may
+/* Coerce a duk_ivalue to a register or constant; result register may
  * be a temp or a bound register.
  *
  * The duk_ivalue argument ('x') is converted into a regconst as a
@@ -72523,7 +72523,7 @@ DUK_LOCAL void duk__expr_led(duk_compiler_ctx *comp_ctx, duk_ivalue *left, duk_i
 
 			/* At this point 'res' holds the potential expression value.
 			 * It can be basically any ivalue here, including a reg-bound
-			 * identifier (if code above deems it safe) or a unary/binary
+			 * identifier (if code above deems it safe) or an unary/binary
 			 * operation.  Operations must be resolved to a side effect free
 			 * plain value, and the side effects must happen exactly once.
 			 */
@@ -80324,7 +80324,7 @@ DUK_LOCAL DUK_NOINLINE DUK_HOT void duk__js_execute_bytecode_inner(duk_hthread *
 
 			is_func_decl = ((a & DUK_BC_DECLVAR_FLAG_FUNC_DECL) != 0);
 
-			/* XXX: declvar takes an duk_tval pointer, which is awkward and
+			/* XXX: declvar takes a duk_tval pointer, which is awkward and
 			 * should be reworked.
 			 */
 
@@ -81305,12 +81305,12 @@ DUK_LOCAL DUK_NOINLINE DUK_HOT void duk__js_execute_bytecode_inner(duk_hthread *
  *  the operation:
  *
  *    - If an operation is simple and stateless, and has no side
- *      effects, it won't take an duk_hthread argument and its
+ *      effects, it won't take a duk_hthread argument and its
  *      arguments may be duk_tval pointers (which are safe as long
  *      as no side effects take place).
  *
  *    - If complex coercions are required (e.g. a "ToNumber" coercion)
- *      or errors may be thrown, the operation takes an duk_hthread
+ *      or errors may be thrown, the operation takes a duk_hthread
  *      argument.  This also implies that the operation may have
  *      arbitrary side effects, invalidating any duk_tval pointers.
  *
@@ -83755,7 +83755,7 @@ duk_bool_t duk__get_identifier_reference(duk_hthread *thr,
 			 *
 			 *  Identifiers can never be stored in ancestors and are
 			 *  always plain values, so we can use an internal helper
-			 *  and access the value directly with an duk_tval ptr.
+			 *  and access the value directly with a duk_tval ptr.
 			 *
 			 *  A closed environment is only indicated by it missing
 			 *  the "book-keeping" properties required for accessing
@@ -84572,7 +84572,7 @@ duk_bool_t duk_js_declvar_activation(duk_hthread *thr,
  *  Lexer for source files, ToNumber() string conversions, RegExp expressions,
  *  and JSON.
  *
- *  Provides a stream of ECMAScript tokens from an UTF-8/CESU-8 buffer.  The
+ *  Provides a stream of ECMAScript tokens from a UTF-8/CESU-8 buffer.  The
  *  caller can also rewind the token stream into a certain position which is
  *  needed by the compiler part for multi-pass scanning.  Tokens are
  *  represented as duk_token structures, and contain line number information.
@@ -85540,12 +85540,12 @@ DUK_LOCAL void duk__lexer_skip_to_endofline(duk_lexer_ctx *lex_ctx) {
  *
  *  White space is automatically skipped from the current position (but
  *  not after the input element).  If input has already ended, returns
- *  DUK_TOK_EOF indefinitely.  If a parse error occurs, uses an DUK_ERROR()
+ *  DUK_TOK_EOF indefinitely.  If a parse error occurs, uses a DUK_ERROR()
  *  macro call (and hence a longjmp through current heap longjmp context).
  *  Comments and line terminator tokens are automatically skipped.
  *
  *  The input element being matched is determined by regexp_mode; if set,
- *  parses a InputElementRegExp, otherwise a InputElementDiv.  The
+ *  parses an InputElementRegExp, otherwise an InputElementDiv.  The
  *  difference between these are handling of productions starting with a
  *  forward slash.
  *
