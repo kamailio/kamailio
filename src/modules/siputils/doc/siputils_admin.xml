@@ -254,7 +254,7 @@ modparam("auth", "rpid_avp", "$avp(myrpid)")
 		</title>
 		<para>
 			This function checks if the request method is OPTIONS and
-			if the request URI does not contain an username. If both
+			if the request URI does not contain a username. If both
 			is true the request will be answered stateless with 
 			<quote>200 OK</quote> and the capabilities from the modules
 			parameters.
@@ -268,7 +268,7 @@ modparam("auth", "rpid_avp", "$avp(myrpid)")
 			optional because it is also done by the function itself. But
 			you should not call this function outside the myself check
 			because in this case the function could answer OPTIONS requests
-			which are sent to you as outbound proxy but with an other
+			which are sent to you as outbound proxy but with another
 			destination then your proxy (this check is currently missing
 			in the function).
 		</para>
