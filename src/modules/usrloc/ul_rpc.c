@@ -498,7 +498,7 @@ static void ul_rpc_rm_aor(rpc_t* rpc, void* ctx)
 }
 
 static const char* ul_rpc_rm_aor_doc[2] = {
-	"Delete a address of record including its contacts",
+	"Delete an address of record including its contacts",
 	0
 };
 
