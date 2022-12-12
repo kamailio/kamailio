@@ -61,7 +61,7 @@ static inline int new_credentials(struct hdr_field* _h)
  * Return value -1 means that the function was unable to allocate
  * memory and therefore the server should return Internal Server Error,
  * not Bad Request in this case !
- * Bad Request should be send when return value != -1
+ * Bad Request should be sent when return value != -1
  */
 int parse_credentials(struct hdr_field* _h)
 {

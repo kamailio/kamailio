@@ -1260,7 +1260,7 @@ extern void*     sbrk(ptrdiff_t);
 /* The bit mask value corresponding to MALLOC_ALIGNMENT */
 #define CHUNK_ALIGN_MASK    (MALLOC_ALIGNMENT - SIZE_T_ONE)
 
-/* True if address a has acceptable alignment */
+/* True if address A has acceptable alignment */
 #define is_aligned(A)       (((size_t)((A)) & (CHUNK_ALIGN_MASK)) == 0)
 
 /* the number of bytes to offset an address to align it */

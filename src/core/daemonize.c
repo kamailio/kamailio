@@ -111,7 +111,7 @@ retry:
 
 
 
-/** wait for an exit status to be send by daemon_status_send().
+/** wait for an exit status to be sent by daemon_status_send().
  * @param status - filled with the sent status (a char).
  * @return  0 on success, -1 on error (e.g. process died before sending
  *          status, not initialized a.s.o.).
