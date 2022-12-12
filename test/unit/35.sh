@@ -34,7 +34,7 @@ UAC=5080
 IP="127.0.0.31"
 MASK=27
 
-# add an registrar entry to the db;
+# add a registrar entry to the db;
 $MYSQL "INSERT INTO location (username,contact,socket,user_agent,cseq,q) VALUES (\"foo\",\"sip:foo@localhost:$UAS\",\"udp:127.0.0.1:$UAS\",\"ser_test\",1,-1);"
 $MYSQL "INSERT INTO trusted (src_ip, proto) VALUES (\"127.0.0.1\",\"any\");"
 
