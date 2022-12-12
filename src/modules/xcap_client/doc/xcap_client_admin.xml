@@ -34,7 +34,7 @@
 	</para>
 	<para>
 	The update method is also configurable, either through periodical
-	queries, applicable to any kind of XCAP server or with an management command 
+	queries, applicable to any kind of XCAP server or with a management command 
 	that should be sent by the server upon an update.
 	</para>
 	<para>
