@@ -194,7 +194,7 @@
 		<function moreinfo="none">tm.clean</function>
 		</title>
 		<para>
-		Trigger an hard clean of expired transactions.
+		Trigger a hard clean of expired transactions.
 		</para>
 		<para>Parameters: </para>
 		<itemizedlist>
