@@ -126,7 +126,7 @@ typedef struct hashSlot
 * More detailed function definitions can be found in hashTable.c   */
 
 
-/*! Returns a aorToIndexStruct_t, holding the given 'userIndex' and 'aor'.  The
+/*! Returns an aorToIndexStruct_t, holding the given 'userIndex' and 'aor'.  The
  * structure is used to map between the "aor" (Kamailio's way of indexing
  * users/contacts), and the SNMPStats user and contact integer indexes.  
  *

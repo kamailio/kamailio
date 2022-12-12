@@ -39,7 +39,7 @@
 static oid snmptrap_oid[] = {1, 3, 6, 1, 6, 3, 1, 1, 4, 1, 0};
 
 /* 
- * Sends off an kamailioMsgQueueDepthMinorEvent trap to the master agent,
+ * Sends off a kamailioMsgQueueDepthMinorEvent trap to the master agent,
  * assigning the following variable bindings:
  *
  *  - kamailioMsgQueueDepth          = msgQueueDepth
@@ -78,7 +78,7 @@ int send_kamailioMsgQueueDepthMinorEvent_trap(
 }
 
 /*
- * Sends off an kamailioMsgQueueDepthMajorEvent trap to the master agent,
+ * Sends off a kamailioMsgQueueDepthMajorEvent trap to the master agent,
  * assigning the following variable bindings:
  *
  *  - kamailioMsgQueueDepth          = msgQueueDepth
@@ -118,7 +118,7 @@ int send_kamailioMsgQueueDepthMajorEvent_trap(
 
 
 /*
- * Sends off an kamailioDialogLimitMinorEvent trap to the master agent,
+ * Sends off a kamailioDialogLimitMinorEvent trap to the master agent,
  * assigning the following variable bindings:
  *
  *  - kamailioCurNumDialogs             = numDialogs
@@ -156,7 +156,7 @@ int send_kamailioDialogLimitMinorEvent_trap(int numDialogs, int threshold)
 
 
 /*
- * Sends off an kamailioDialogLimitMinorEvent trap to the master agent,
+ * Sends off a kamailioDialogLimitMinorEvent trap to the master agent,
  * assigning the following variable bindings:
  *
  *  - kamailioCurNumDialogs             = numDialogs
