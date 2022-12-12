@@ -60,8 +60,8 @@ extern dp_config *config;	/**< Configuration for this diameter peer */
 
 
 /**
- * This function encodes a AAAMessage to its network representation (encoder).
- *  From a AAAMessage structure, a buffer to be send is built.
+ * This function encodes an AAAMessage to its network representation (encoder).
+ *  From an AAAMessage structure, a buffer to be sent is built.
  * @param msg - the message to encode
  * @returns 1 on success, -1 on error
  * \note This function is taken from DISC http://developer.berlios.de/projects/disc/
@@ -380,7 +380,7 @@ AAAMessage *AAACreateResponse(AAAMessage *request)
 
 
 /**
- *  Frees a AVP List and all the members
+ *  Frees an AVP List and all the members
  * @param avpList - list to be freed
  * @returns AAA_ERR_SUCCESS
  */

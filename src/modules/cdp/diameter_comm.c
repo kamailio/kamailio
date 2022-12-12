@@ -116,7 +116,7 @@ int AAAAddResponseHandler(AAAResponseHandler_f *f,void *param)
 /* MESSAGE SENDING */
 
 /**
- * Send a AAAMessage asynchronously.
+ * Send an AAAMessage asynchronously.
  * When the response is received, the callback_f(callback_param,...) is called.
  * @param message - the request to be sent
  * @param peer_id - FQDN of the peer to send
@@ -166,7 +166,7 @@ error:
 }
 
 /**
- * Send a AAAMessage asynchronously.
+ * Send an AAAMessage asynchronously.
  * When the response is received, the callback_f(callback_param,...) is called.
  * @param message - the request to be sent
  * @param peer_id - FQDN of the peer to send
@@ -213,7 +213,7 @@ error:
 /**
  * Generic callback used by AAASendRecvMessage() to block until a transactional response
  * is received.
- * The AAASendRecvMessage() is basically a AAASendMessage() that has a callback
+ * The AAASendRecvMessage() is basically an AAASendMessage() that has a callback
  * (this function) that blocks until a transactional response or timeout is received and
  * then it returns that.
  *
@@ -228,7 +228,7 @@ void sendrecv_cb(int is_timeout,void *param,AAAMessage *ans, long elapsed_msecs)
 }
 
 /**
- * Send a AAAMessage synchronously.
+ * Send an AAAMessage synchronously.
  * This blocks until a response is received or a transactional time-out happens.
  * @param message - the request to be sent
  * @param peer_id - FQDN of the peer to send
@@ -299,7 +299,7 @@ out_of_memory:
 }
 
 /**
- * Send a AAAMessage synchronously.
+ * Send an AAAMessage synchronously.
  * This blocks until a response is received or a transactional time-out happens.
  * @param message - the request to be sent
  * @param peer_id - FQDN of the peer to send

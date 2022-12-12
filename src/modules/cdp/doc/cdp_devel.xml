@@ -365,7 +365,7 @@
       <title><function moreinfo="none">AAADropAuthSession(AAASession
       *s)</function></title>
 
-      <para>Deallocates the memory taken by a Authorisation session</para>
+      <para>Deallocates the memory taken by an Authorisation session</para>
 
       <para>Meaning of the parameters is as follows:</para>
 
@@ -398,7 +398,7 @@
       AAACreateTransaction(AAAApplicationId app_id,AAACommandCode
       cmd_code)</function></title>
 
-      <para>Create a AAATransaction for the given request</para>
+      <para>Create an AAATransaction for the given request</para>
 
       <para>Meaning of the parameters is as follows:</para>
 
