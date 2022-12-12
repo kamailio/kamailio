@@ -126,7 +126,7 @@ static int carrier_fixup(void ** param) {
 	}
 
 	if (((gparam_p)(*param))->type == GPARAM_TYPE_STR) {
-		/* This is a name string, convert to a int */
+		/* This is a name string, convert to an int */
 		((gparam_p)(*param))->type=GPARAM_TYPE_INT;
 		/* get carrier id */
 		if ((id = carrier_name_2_id(&((gparam_p)(*param))->v.str)) < 0) {
@@ -157,7 +157,7 @@ static int domain_fixup(void ** param) {
 	}
 
 	if (((gparam_p)(*param))->type == GPARAM_TYPE_STR) {
-		/* This is a name string, convert to a int */
+		/* This is a name string, convert to an int */
 		((gparam_p)(*param))->type=GPARAM_TYPE_INT;
 		/* get domain id */
 		if ((id = domain_name_2_id(&(((gparam_p)(*param))->v.str))) < 0) {
