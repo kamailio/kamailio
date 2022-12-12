@@ -29,7 +29,7 @@
 	</qandaentry>
         <qandaentry>
 		<question>
-		<para>Why is there a ims_dialog module and a dialog module?</para>
+		<para>Why is there an ims_dialog module and a dialog module?</para>
 		</question>
 		<answer>
 		<para>
