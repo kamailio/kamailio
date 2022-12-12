@@ -76,7 +76,7 @@ int sdp_mangle_port (struct sip_msg *msg, char *offset, char *unused);
 /* may replace all appearances of an ip in lines like c=IN IP4 ip with
 	a new value for ip if the found ip matches the filter
 	@param msg a pointer to a sip message
-	@param oldip an filter for ip's in form ip/mask.Example
+	@param oldip a filter for ip's in form ip/mask.Example
 	of oldip "10.0.0.0/255.0.0.0" or "10.0.0.0/8"
 	@param newip the ip replacing old ip
 	@return negative in case of error or number of replacements - 1
