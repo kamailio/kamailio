@@ -14,7 +14,7 @@
         <title>Overview</title>
 
         <para>
-			The &kamailio; H350 module enables an &kamailio; SIP proxy server to access SIP account data stored in an LDAP <xref linkend="RFC4510"/> directory containing H.350 <xref linkend="H350"/> <emphasis>commObjects</emphasis>. ITU-T Recommendation H.350 standardizes LDAP object classes to store Real-Time Communication (RTC) account data. In particular, <emphasis>H.350.4</emphasis> <xref linkend="H350-4"/> defines an object class called <emphasis>sipIdentity</emphasis> that includes attribute specifications for SIP account data like SIP URI, SIP digest username/password, or service level. This allows to store SIP account data in a vendor neutral way and lets different entities, like SIP proxies, provisioning, or billing applications, access the data in a standardized format.  
+			The &kamailio; H350 module enables a &kamailio; SIP proxy server to access SIP account data stored in an LDAP <xref linkend="RFC4510"/> directory containing H.350 <xref linkend="H350"/> <emphasis>commObjects</emphasis>. ITU-T Recommendation H.350 standardizes LDAP object classes to store Real-Time Communication (RTC) account data. In particular, <emphasis>H.350.4</emphasis> <xref linkend="H350-4"/> defines an object class called <emphasis>sipIdentity</emphasis> that includes attribute specifications for SIP account data like SIP URI, SIP digest username/password, or service level. This allows to store SIP account data in a vendor neutral way and lets different entities, like SIP proxies, provisioning, or billing applications, access the data in a standardized format.  
         </para>
         
         <para>
