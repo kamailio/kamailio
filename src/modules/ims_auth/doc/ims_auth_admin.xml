@@ -114,7 +114,7 @@ modparam("ims_auth", "auth_vector_timeout", "domain")
     <section>
       <title><varname>auth_data_timeout</varname> (int)</title>
 
-      <para>Time, in seconds, an used auth vector is valid for.</para>
+      <para>Time, in seconds, a used auth vector is valid for.</para>
 
       <para>Default value is <quote>60</quote>.</para>
 
