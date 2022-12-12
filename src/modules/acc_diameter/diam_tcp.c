@@ -134,7 +134,7 @@ int tcp_send_recv(int sfd, char* buf, int len, rd_buf_t* rb,
 				LM_ERR("no response received\n");
 		//			return AAA_ERROR;
 		}
-		*/		/* Data arriving on a already-connected socket. */
+		*/		/* Data arriving on an already-connected socket. */
 		reset_read_buffer(rb);
 		switch( do_read(sfd, rb) )
 		{
