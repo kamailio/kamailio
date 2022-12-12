@@ -62,7 +62,7 @@
         <type>char</type>
         <size>1</size>
         <default>0</default>
-        <description>Specify if this a blocklist (0) or a allowlist (1) entry.</description>
+        <description>Specify if this is a blocklist (0) or an allowlist (1) entry.</description>
     </column>
 
     <index>
