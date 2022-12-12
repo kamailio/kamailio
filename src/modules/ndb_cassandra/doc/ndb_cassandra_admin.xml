@@ -113,7 +113,7 @@ modparam("ndb_cassandra", "port", 9160)
 		called 'column_family' in the targeted Cassandra node.
 	      </para>
 	      <para>
-	    <varname>value</varname> will be returned as well as a integer return code.
+	    <varname>value</varname> will be returned as well as an integer return code.
 	  </para>
 	  <para>
 	    Return integer needs to be checked:
