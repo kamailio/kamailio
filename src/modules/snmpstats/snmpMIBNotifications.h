@@ -34,7 +34,7 @@
 
 
 /* 
- * Sends off an kamailioMsgQueueDepthMinorEvent trap to the master agent,
+ * Sends off a kamailioMsgQueueDepthMinorEvent trap to the master agent,
  * assigning the following variable bindings:
  *
  *  - kamailioMsgQueueDepth          = msgQueueDepth
@@ -45,7 +45,7 @@ int send_kamailioMsgQueueDepthMinorEvent_trap(
 		int msgQueueDepth, int minorThreshold);
 
 /*
- * Sends off an kamailioMsgQueueDepthMajorEvent trap to the master agent,
+ * Sends off a kamailioMsgQueueDepthMajorEvent trap to the master agent,
  * assigning the following variable bindings:
  *
  *  - kamailioMsgQueueDepth          = msgQueueDepth
@@ -56,7 +56,7 @@ int send_kamailioMsgQueueDepthMajorEvent_trap(
 		int msgQueueDepth, int majorThreshold);
 
 /*
- * Sends off an kamailioDialogLimitMinorEvent trap to the master agent,
+ * Sends off a kamailioDialogLimitMinorEvent trap to the master agent,
  * assigning the following variable bindings:
  *
  *  - kamailioCurNumDialogs             = numDialogs
@@ -66,7 +66,7 @@ int send_kamailioMsgQueueDepthMajorEvent_trap(
 int send_kamailioDialogLimitMinorEvent_trap(int numDialogs, int threshold);
 
 /*
- * Sends off an kamailioDialogLimitMinorEvent trap to the master agent,
+ * Sends off a kamailioDialogLimitMinorEvent trap to the master agent,
  * assigning the following variable bindings:
  *
  *  - kamailioCurNumDialogs             = numDialogs

@@ -215,7 +215,7 @@ int handle_kamailioSIPProxyAuthMethod(netsnmp_mib_handler *handler,
 	}
 
 	/* We can have both tls and auth loaded simultaneously.  Therefore we
-	 * use an if instead of a else/else-if. */
+	 * use an if instead of an else/else-if. */
 	if(module_loaded("auth")) {
 		auth_bitfield |= SIP_AUTH_METHOD_DIGEST;
 		auth_bitfield &= ~SIP_AUTH_METHOD_NONE;
