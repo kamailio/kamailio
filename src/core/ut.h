@@ -647,7 +647,7 @@ static inline void strlower(str* _s)
 	} while(0)
 
 /*
- * Convert an str to unsigned long
+ * Convert a str to unsigned long
  */
 static inline int str2ulong(str* _s, unsigned long* _r)
 {
@@ -655,7 +655,7 @@ static inline int str2ulong(str* _s, unsigned long* _r)
 }
 
 /*
- * Convert an str to unsigned integer
+ * Convert a str to unsigned integer
  */
 static inline int str2int(str* _s, unsigned int* _r)
 {

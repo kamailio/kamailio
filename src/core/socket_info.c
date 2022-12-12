@@ -1494,7 +1494,7 @@ static int fix_hostname(str* name, struct ip_addr* address, str* address_str,
 	}
 	
 #ifdef USE_MCAST
-	/* Check if it is an multicast address and
+	/* Check if it is a multicast address and
 	 * set the flag if so
 	 */
 	if (is_mcast(address)){

@@ -552,7 +552,7 @@ static int parse_sdp_session(str *sdp_body, int session_num, str *cnt_disp, sdp_
 		}
 
 		payload_attr = 0;
-		/* Let's figure out the atributes */
+		/* Let's figure out the attributes */
 		a1p = find_sdp_line(m1p, m2p, 'a');
 		a2p = a1p;
 		for (;;) {

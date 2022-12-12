@@ -229,7 +229,7 @@ int route_get(struct route_list* rt, char* name)
 	int i;
 	
 	len=strlen(name);
-	/* check if exists an non empty*/
+	/* check if exists and non empty*/
 	e=str_hash_get(&rt->names, name, len);
 	if (e){
 		i=e->u.n;
@@ -258,7 +258,7 @@ int route_lookup(struct route_list* rt, char* name)
 	struct str_hash_entry* e;
 	
 	len=strlen(name);
-	/* check if exists an non empty*/
+	/* check if exists and non empty*/
 	e=str_hash_get(&rt->names, name, len);
 	if (e){
 		return e->u.n;

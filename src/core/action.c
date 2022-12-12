@@ -918,7 +918,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 				if (len){
 					if(crt+len>end) goto error_uri;
 					memcpy(crt,tmp,len);crt+=len;
-					user=1; /* we have an user field so mark it */
+					user=1; /* we have a user field so mark it */
 				}
 
 				if (a->type==SET_USERPASS_T) tmp=0;
