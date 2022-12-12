@@ -203,7 +203,7 @@ static inline void space_trim_dup(str *dest, char *src)
 }
 
 /**
- *      Parse a Application Server Extension.
+ *      Parse an Application Server Extension.
  * @param doc - the XML document
  * @param node - the current node
  * @param as - structure to fill
@@ -232,7 +232,7 @@ static int parse_application_server_extension(xmlDocPtr doc,xmlNodePtr node,ims_
 }
 
 /**
- *	Parse a Application Server.
+ *	Parse an Application Server.
  * @param doc - the XML document
  * @param node - the current node
  * @param as - structure to fill
@@ -835,7 +835,7 @@ static int parse_service_profile(xmlDocPtr doc, xmlNodePtr root, ims_service_pro
 }
 
 /**
- *	Parse a IMS Subscription.
+ *	Parse an IMS Subscription.
  * @param doc - the XML document
  * @param root - the current node
  * @returns the ims_subscription* on success or NULL on error
