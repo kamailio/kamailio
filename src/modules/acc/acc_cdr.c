@@ -905,7 +905,7 @@ int set_cdr_extra( char* cdr_extra_value)
 	return 0;
 }
 
-/* convert the facility-name string into a id and store it */
+/* convert the facility-name string into an id and store it */
 int set_cdr_facility( char* cdr_facility_str)
 {
 	int facility_id = -1;
@@ -953,7 +953,7 @@ int init_cdr_generation( void)
 	return 0;
 }
 
-/* convert the facility-name string into a id and store it */
+/* convert the facility-name string into an id and store it */
 void destroy_cdr_generation( void)
 {
 	if( !cdr_extra)

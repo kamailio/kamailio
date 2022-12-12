@@ -384,7 +384,7 @@ if (uri=~"sip:+40") /* calls to Romania */ {
 				(e.g. chain=B;cfa;C|C;cfnr;D). Additionally it is necessary to store the
 				caller and callee for each leg. All this helps to identify the involved
 				phone partners and forwarding chain. When you route such calls multiple times
-				to the same Proxy, you could store the caller and callee within an transaction
+				to the same Proxy, you could store the caller and callee within a transaction
 				based avp and write it into the dialog based dlg_var pv during a 200 INVITE.
 				</para>
 				<section>
