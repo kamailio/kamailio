@@ -40,7 +40,7 @@
 	<para>
 	    A <acronym>SIP</acronym> message consists of message header and
 	    optional message body.  The header is separated from the body with
-	    a empty line (containing CRLF only).
+	    an empty line (containing CRLF only).
 	</para>
 	<para>
 	    Message header consists of the first line and one or more header
