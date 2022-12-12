@@ -30,7 +30,7 @@ fi ;
 
 CFG=21.cfg
 
-# add an registrar entry to the db;
+# add a registrar entry to the db;
 $MYSQL "INSERT INTO subscriber (username, domain, password) VALUES (\"alice\",\"localhost\",\"alice\");"
 
 $BIN -L $MOD_DIR -Y $RUN_DIR -P $PIDFILE -w . -f $CFG -E -e -dd > /dev/null 2>&1

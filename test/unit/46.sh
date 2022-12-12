@@ -64,7 +64,7 @@ test_module_int()
 	return $ret
 }
 
-# add an registrar entry to the db
+# add a registrar entry to the db
 cp $CFG ${CFG}.bak
 
 echo "loadmodule \"db_mysql/db_mysql.so\"" >>$CFG
