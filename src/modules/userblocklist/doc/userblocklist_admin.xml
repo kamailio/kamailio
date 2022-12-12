@@ -201,7 +201,7 @@ modparam("userblocklist", "userblocklist_prefix_col", "prefix")
   </section>
   <section>
     <title><varname>userblocklist_allowlist_col</varname> (string)</title>
-    <para>Specify if this a blocklist (0) or a allowlist (1) entry.</para>
+    <para>Specify if this is a blocklist (0) or an allowlist (1) entry.</para>
     <example>
       <title>Set <varname>userblocklist_allowlist_col</varname> parameter</title>
       <programlisting format="linespecific">
@@ -254,7 +254,7 @@ modparam("userblocklist", "globalblocklist_prefix_col", "prefix")
   </section>
   <section>
     <title><varname>globalblocklist_allowlist_col</varname> (string)</title>
-    <para>Specify if this a blocklist (0) or a allowlist (1) entry.</para>
+    <para>Specify if this is a blocklist (0) or an allowlist (1) entry.</para>
     <example>
       <title>Set <varname>globalblocklist_allowlist_col</varname> parameter</title>
       <programlisting format="linespecific">
