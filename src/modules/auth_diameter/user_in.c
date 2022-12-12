@@ -275,7 +275,7 @@ int diameter_is_user_in(struct sip_msg* _m, char* _hf, char* _group)
 	AAAPrintMessage(req);
 #endif
 
-	/* build a AAA message buffer */
+	/* build an AAA message buffer */
 	if(AAABuildMsgBuffer(req) != AAA_ERR_SUCCESS)
 	{
 		LM_ERR("message buffer not created\n");
