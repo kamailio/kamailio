@@ -345,7 +345,7 @@ int process_body(struct sip_msg* msg, str notify_body, udomain_t * domain) {
         LM_DBG("AOR %.*s has reg_state \"%d\"\n", aor.len, aor.s, reg_state);
 
         if (reg_state == STATE_TERMINATED) {
-            //TODO we if there is a IMPU record state here we should delete all contacts associated to it
+            //TODO we if there is an IMPU record state here we should delete all contacts associated to it
             //Right now we do it go through all the contacts
 
             LM_DBG("AOR %.*s is in state terminated so unsubscribing from reginfo\n", aor.len, aor.s);
