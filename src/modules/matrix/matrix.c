@@ -49,7 +49,7 @@ str matrix_db_url = str_init(DEFAULT_RODB_URL);
 
 
 /**
- * Generic parameter that holds a string, an int or an pseudo-variable
+ * Generic parameter that holds a string, an int or a pseudo-variable
  * @todo replace this with gparam_t
  */
 struct multiparam_t {
