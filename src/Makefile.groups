@@ -131,7 +131,7 @@ mod_list_perldeps=app_perl db_perlvdb
 mod_list_python=app_python
 
 # - modules depending on python3 library
-mod_list_python3=app_python3
+mod_list_python3=app_python3 app_python3s
 
 # - modules depending on libm (math library - standard system library)
 mod_list_jsdt=app_jsdt
