@@ -128,7 +128,7 @@ if [ ! -e $LOCKF ] ; then
 			echo "         Please configure it to your local settings first."
 			echo
 			echo "If you do not press CTRL-C within 2 seconds an informational message"
-			echo "with your hostname will be send to the ser developers."
+			echo "with your hostname will be sent to the ser developers."
 			sleep 2
 			$MAILCOMMAND -s "serresponse executed on ${HOSTN}" $NOTIFY < $TMP
 			rm -f $TMP
