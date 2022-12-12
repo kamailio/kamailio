@@ -452,7 +452,7 @@ isc_match* isc_checker_find(str uri, char direction, int skip,
 	LM_DBG("isc_checker_find(): got a r_public for the user %.*s\n",
 			uri.len, uri.s);
 	if (!p->s) {
-		LM_DBG("isc_checker_find() : got an user without a subscription\n");
+		LM_DBG("isc_checker_find() : got a user without a subscription\n");
 		//need to free the record somewhere
 		//isc_ulb.release_impurecord(p);
 		//need to do an unlock on the domain somewhere
@@ -557,7 +557,7 @@ isc_match* isc_checker_find(str uri, char direction, int skip,
 }
 
 /**
- *	Free up all memory taken by a isc_match.
+ *	Free up all memory taken by an isc_match.
  * @param m - match to deallocate
  */
 void isc_free_match(isc_match *m) {
