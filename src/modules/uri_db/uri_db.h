@@ -31,7 +31,7 @@
 /*
  * Version of domain table required by the module,
  * increment this value if you change the table in
- * an backwards incompatible way. The subscriber
+ * and backwards incompatible way. The subscriber
  * table version needs to be the same as auth_db use.
  */
 #define URI_TABLE_VERSION 1
