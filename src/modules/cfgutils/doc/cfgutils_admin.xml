@@ -41,7 +41,7 @@
 	</para>
 	<para>
 	This module can be used for simple load-shedding, e.g. reply 5% of
-	the Invites with a 503 error and a adequate random Retry-After value.
+	the Invites with a 503 error and an adequate random Retry-After value.
 	</para>
 	<para>
 	The module provides as well functions to delay the execution of the
