@@ -264,7 +264,7 @@ modparam("ims_qos", "video_default_bandwidth", 256)
       <para>This sets the default Reason, when a call is terminated in 
             early stage due to QoS-failure.</para>
 
-      <para><emphasis> Default value is "QoS released", an call in early stage
+      <para><emphasis> Default value is "QoS released", a call in early stage
 		       would be released with "488 QoS released".</emphasis></para>
 
       <example>
@@ -281,7 +281,7 @@ modparam("ims_qos", "early_qosrelease_reason", "Sorry - QoS failed")
     <section>
       <title><varname>confirmed_qosrelease_headers</varname> (String)</title>
 
-      <para>These headers are added to the BYE-Message, when an confirmed call
+      <para>These headers are added to the BYE-Message, when a confirmed call
 	    is terminated due to a QoS failure.</para>
 
       <para><emphasis> Default value is "", no Extra-Headers</emphasis></para>
@@ -526,7 +526,7 @@ modparam("ims_qos", "rr_default_bandwidth", 2000)
       <title><function moreinfo="none">Rx_AAR_Register(route_block,
       domain)</function></title>
 
-      <para>Perform a AAR on Diameter RX interface to subscribe to signalling
+      <para>Perform an AAR on Diameter RX interface to subscribe to signalling
       status. This purpose of this is tell a Diameter server (typically a
       PCRF) to inform the requesting Diameter client on changes to the status
       of signalling bearer for the same framed IP address. For more details
@@ -595,7 +595,7 @@ route[REG_AAR_REPLY]
       <title><function moreinfo="none">Rx_AAR(route_block,
       direction, subscription_id, subscription_id_type)</function></title>
 
-      <para>Perform a AAR on Diameter RX interface to request resource
+      <para>Perform an AAR on Diameter RX interface to request resource
       authorisation from a Diameter server (typically a PCRF). For more
       details see 3GGP TS 29.214.</para>
 
@@ -661,7 +661,7 @@ route[ORIGN_SESSION_AAR_REPLY]
     <section>
       <title>AAR Timeouts (aar_timeouts)</title>
 
-      <para>The number of timeouts on sending a AAR. i.e. no response to
+      <para>The number of timeouts on sending an AAR. i.e. no response to
       AAR.</para>
     </section>
 
