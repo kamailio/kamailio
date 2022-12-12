@@ -3228,7 +3228,7 @@ static int from_any_gw_0(struct sip_msg *_m, char *_s1, char *_s2)
 }
 
 /*
- * Checks if request comes from ip address of a a gateway taking source
+ * Checks if request comes from ip address of a gateway taking source
  * IP address, transport protocol and source port from parameters.
  */
 static int ki_from_any_gw_addr_port(sip_msg_t *_m, str *addr_str, int transport,
@@ -3268,7 +3268,7 @@ static int ki_from_any_gw_addr_port(sip_msg_t *_m, str *addr_str, int transport,
 }
 
 /*
- * Checks if request comes from ip address of a a gateway taking source
+ * Checks if request comes from ip address of a gateway taking source
  * IP address, transport protocol and source port from parameters.
  */
 static int ki_from_any_gw_addr(sip_msg_t *_m, str *addr_str, int transport)
