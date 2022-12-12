@@ -939,7 +939,7 @@ int match_domain_name_table(struct domain_name_list** table, unsigned int group,
 
 
 /*
- * Check if an domain_name/port entry exists in hash table in any group.
+ * Check if a domain_name/port entry exists in hash table in any group.
  * Returns first group in which ip_addr/port is found.
  * Port 0 in hash table matches any port.
  */

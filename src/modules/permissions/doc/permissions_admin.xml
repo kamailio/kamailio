@@ -124,7 +124,7 @@
 		</para>
 		<para>
 		Instead of the From header field the function uses the To header field because
-		th To header field in REGISTER messages contains the URI of the person
+		the To header field in REGISTER messages contains the URI of the person
 		being registered. Instead of the Request-URI of branches the function
 		uses the Contact header field.
 		</para>
