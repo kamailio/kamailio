@@ -1310,7 +1310,7 @@ done:
 }
 
 /**
- * Frees the memory taken by a authentication vector
+ * Frees the memory taken by an authentication vector
  * @param av - the vector to be freed
  */
 void free_auth_vector(auth_vector * av) {
