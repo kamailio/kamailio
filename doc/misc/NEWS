@@ -924,7 +924,7 @@ core:
                        Only a limited number of commands are allowed (drop, if
                        + all the checks, msg flag manipulations, send(), log(),
                        textops::search()). In this route the final destination
-                       of the message is available an can be checked (with
+                       of the message is available and can be checked (with
                        snd_ip, snd_port, to_ip, to_port, snd_proto, snd_af).
                        This route is executed only when forwarding requests.
                        It's not executed for replies, retransmissions, or
