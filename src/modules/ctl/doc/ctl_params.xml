@@ -47,7 +47,7 @@
 	<para>
 		If the protocol part is missing and the address/path part looks like a
 		file system path it will default to a Unix stream socket and if not to
-		an Unix UDP socket.
+		a Unix UDP socket.
 		Examples:
 		<itemizedlist>
 			<listitem>
