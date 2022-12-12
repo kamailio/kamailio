@@ -499,7 +499,7 @@ PROTOTYPES: ENABLE
 
 =head1 Kamailio::Message
 
-This package provides access functions for an Kamailio C<sip_msg> structure and
+This package provides access functions for a Kamailio C<sip_msg> structure and
 its sub-components. Through its means it is possible to fully configure
 alternative routing decisions.
 
@@ -1231,7 +1231,7 @@ append_branch(self, branch = NULL, qval = NULL)
 
 =head2 getParsedRURI()
 
-Returns the current destination URI as an Kamailio::URI object.
+Returns the current destination URI as a Kamailio::URI object.
 
 =cut
 
@@ -1557,7 +1557,7 @@ MODULE = Kamailio PACKAGE = Kamailio::AVP
 
 Add an AVP.
 
-Add an Kamailio AVP to its environment. name and val may both be integers or
+Add a Kamailio AVP to its environment. name and val may both be integers or
 strings; this function will try to guess what is correct. Please note that
  
  Kamailio::AVP::add("10", "10")
@@ -1604,7 +1604,7 @@ add(p_name, p_val)
 
 =head2 get(name)
 
-get an Kamailio AVP:
+get a Kamailio AVP:
 
  my $numavp = Kamailio::AVP::get(5);
  my $stravp = Kamailio::AVP::get("foo");
