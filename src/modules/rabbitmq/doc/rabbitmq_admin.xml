@@ -20,7 +20,7 @@
 			This module offers amqp communication using librabbitmq.
 			This module was created using <emphasis>rabbitmq-c</emphasis> C client
 			(<ulink url="https://github.com/alanxz/rabbitmq-c">https://github.com/alanxz/rabbitmq-c</ulink>).
-			An new amqp connection is setup on a per-children basis, when Kamailio starts.
+			A new amqp connection is setup on a per-children basis, when Kamailio starts.
 			If connection is lost, the process tries to re-establish it when a new amqp action is required.
 		</para>
 
