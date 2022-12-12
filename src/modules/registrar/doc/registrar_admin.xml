@@ -1673,7 +1673,7 @@ add_sock_hdr("Sock-Info");
 		<listitem>
 			<para>
 			<emphasis>ruid</emphasis> - The record unique ID for a
-			a specific contact to be removed. It can contain
+			specific contact to be removed. It can contain
 			pseudo-variables that are evaluated at runtime.
 			</para>
 		</listitem>
