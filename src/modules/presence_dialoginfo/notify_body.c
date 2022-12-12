@@ -255,7 +255,7 @@ str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n)
 	 * replaced by the correct value in the aux_body_processing callback.
 	 * Thus we have CPU intensive XML aggregation only once and can use
 	 * quick search&replace in the per-watcher aux_body_processing callback.
-	 * We use 11 chracters as an signed int (although RFC says unsigned int we
+	 * We use 11 chracters as a signed int (although RFC says unsigned int we
 	 * use signed int as presence module stores "version" in DB as
 	 * signed int) has max. 10 characters + 1 character for the sign
 	 */
