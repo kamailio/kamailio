@@ -536,7 +536,7 @@ static void sst_dialog_response_fwded_CB(struct dlg_cell* did, int type,
 		/*
 		 * We need to get the method this reply is for from the CSEQ
 		 * body. The RFC states we can only play with 2XX from the
-		 * INVITE or reINVTE/UPDATE.
+		 * INVITE or reINVITE/UPDATE.
 		 */
 		if (!msg->cseq && ((parse_headers(msg, HDR_CSEQ_F, 0) == -1) || !msg->cseq)) {
 			LM_ERR("failed to parse CSeq\n");
