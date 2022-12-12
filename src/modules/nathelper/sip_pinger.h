@@ -163,7 +163,7 @@ static inline char *build_sipping(str *curi, struct socket_info *s, str *path,
 	*(p++) = ' ';
 	append_str(p, curi->s, curi->len);
 	append_fix(p, " SIP/2.0" CRLF "Via: SIP/2.0/UDP ");
-	if(s->address.af == AF_INET6) { /* Via header IP is a IPv6 reference */
+	if(s->address.af == AF_INET6) { /* Via header IP is an IPv6 reference */
 		append_fix(p, "[");
 	}
 	append_str(p, vaddr.s, vaddr.len);
