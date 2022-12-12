@@ -589,7 +589,7 @@
             application, then a lookup in this table would be necessary,
             looking for the value '9' (corresponding to the Route header) in
             each of the positions multiple of 3 (0,3,6,9,12, etc). This can be
-            done in a extremely fast and easy way, as this snipped of pseudo
+            done in an extremely fast and easy way, as this snipped of pseudo
             code explains:</para>
 
             <para>for(int j=0,int i=0;i&lt;table_length;i+=3){</para>
