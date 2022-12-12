@@ -99,7 +99,7 @@ static inline int mi_fix_aor(str *aor)
 
 
 /*!
- * \brief Add a node for a address of record
+ * \brief Add a node for an address of record
  * \param parent parent node
  * \param r printed record
  * \param t actual time
@@ -263,7 +263,7 @@ static inline int mi_add_aor_node(struct mi_node *parent, urecord_t* r, time_t t
 /*************************** MI functions *****************************/
 
 /*!
- * \brief Delete a address of record including its contacts
+ * \brief Delete an address of record including its contacts
  * \param cmd mi_root containing the parameter
  * \param param not used
  * \note expects 2 nodes: the table name and the AOR
