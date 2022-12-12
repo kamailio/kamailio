@@ -304,7 +304,7 @@ X731AvailabilityStatus ::= TEXTUAL-CONVENTION
 		A value of not installed means the resource is not present or
 		is incomplete. The operational state should be disabled.
 
-		A value of log full indicates that a a log full condition
+		A value of log full indicates that a log full condition
 		exists."
 
 	SYNTAX BITS {
