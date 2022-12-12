@@ -53,7 +53,7 @@
 		compressed to 230).
 	</para>
 	<para>
-		An use case can be when having peering traffic between two Kamailio
+		A use case can be when having peering traffic between two Kamailio
 		servers. Before relaying to the other Kamailio,  use
 		in config file: append_hf("Content-Encoding: deflate\r\n").
 	</para>
