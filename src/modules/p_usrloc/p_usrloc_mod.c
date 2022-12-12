@@ -35,7 +35,7 @@
  * The module keeps a user location table and provides access
  * to the table to other modules. The module exports no functions
  * that could be used directly from scripts, all access is done
- * over a API. A main user of this API is the registrar module.
+ * over an API. A main user of this API is the registrar module.
  * \see registrar
  */
 
