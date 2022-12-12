@@ -365,14 +365,14 @@ modparam("auth_db", "force_generate_avps", 1)
 			used to authenticate a previous request
 			</para></listitem>
 			<listitem><para>
-			<emphasis>-8 (authuser mismatch)</emphasis> - depending on the method, th
+			<emphasis>-8 (authuser mismatch)</emphasis> - depending on the method, the
 			From/To/RURI user does not match the authentication user (see auth_check() function).
 			</para></listitem>
 		</itemizedlist>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>realm</emphasis> - Realm is a opaque string that
+			<para><emphasis>realm</emphasis> - Realm is an opaque string that
 			the user agent should present to the user so he can decide what
 			username and password to use. Usually this is domain of the host
 			the server is running on.
@@ -448,7 +448,7 @@ if (!www_authorize("kamailio.org", "subscriber")) {
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>realm</emphasis> - Realm is a opaque string that
+			<para><emphasis>realm</emphasis> - Realm is an opaque string that
 			the user agent should present to the user so he can decide what
 			username and password to use. Usually this is domain of the host
 			the server is running on.
@@ -518,7 +518,7 @@ if (!proxy_authorize("$fd", "subscriber)) {
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>realm</emphasis> - Realm is a opaque string that
+			<para><emphasis>realm</emphasis> - Realm is an opaque string that
 			the user agent should present to the user so he can decide what
 			username and password to use. Usually this is domain of the host
 			the server is running on.
@@ -586,7 +586,7 @@ if (!auth_check("$fd", "subscriber", "1")) {
 		</para>
 		<para>
 		In addition, if the subscriber record is found, then the load_credentials
-		attributes are loaded. An use case can be loading the credential attributes
+		attributes are loaded. A use case can be loading the credential attributes
 		for callee.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
