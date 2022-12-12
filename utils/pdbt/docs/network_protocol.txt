@@ -1,7 +1,7 @@
 * Network protocol of pdb server and sip-router module *
 
 The pdb server daemon listen only for UDP messages. The requests contains in
-the UDP payload the number starting with a international prefix, e.g. '49' for
+the UDP payload the number starting with an international prefix, e.g. '49' for
 germany. It must contain only numbers like this: '49721913742734'.
 
 The answer packet contains then the number string from the respective request,
