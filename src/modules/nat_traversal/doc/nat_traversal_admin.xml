@@ -44,7 +44,7 @@
         use cases, including distributed environments with multiple proxies.
         Unlike existing keepalive solutions that only send keepalive messages
         to user agents that have registered (during their registration), the
-        nat_traversal module can keepalive an user agent based on multiple
+        nat_traversal module can keepalive a user agent based on multiple
         conditions, making it not only more flexible and more efficient, but
         also able to work in environments and with use cases where a simple
         keepalive implementation based on keeping alive registrations alone
@@ -87,7 +87,7 @@
         user agent to register to be able to do anything, but a simple keepalive
         implementation based on sending keepalive messages only to registered
         user agents, will also fail to work in common cases, exactly because of
-        this artificial association. For example lets assume that we have an
+        this artificial association. For example lets assume that we have a
         user agent that is registered. If during an outgoing call initiated by
         this user agent, the agent stops registering, then it will not be able
         to receive further in-dialog messages after the NAT binding expires.
@@ -199,7 +199,7 @@
         NAT endpoint needs to be kept alive for the condition triggered by
         the request for which the nat_keepalive() function was called.
         For example assume a network where a proxy P1 receives a REGISTER
-        from an user agent behind NAT. P1 will determine that the user agent
+        from a user agent behind NAT. P1 will determine that the user agent
         is behind NAT so it needs keepalive functionality, but another proxy
         called P2 is actually handling the subscriber registrations. In this
         case P1 has to call nat_keepalive() even though it doesn't yet know
