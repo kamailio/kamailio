@@ -352,7 +352,7 @@ int create_response_avp_string(char* name, str* val) {
     return 1;
 }
 
-//This function gets the dlg from the current msg, gets the ro_session from the dlg and sets a AVP for use in the cfg file: ro_session_id
+//This function gets the dlg from the current msg, gets the ro_session from the dlg and sets an AVP for use in the cfg file: ro_session_id
 static int w_ro_set_session_id_avp(struct sip_msg *msg, char *str1, char *str2) {
     return ki_ro_set_session_id_avp(msg);
 }
