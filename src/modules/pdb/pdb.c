@@ -50,7 +50,7 @@ static uint16_t *global_id = NULL;
 
 
 /*!
- * Generic parameter that holds a string, an int or an pseudo-variable
+ * Generic parameter that holds a string, an int or a pseudo-variable
  * @todo replace this with gparam_t
  */
 struct multiparam_t {
