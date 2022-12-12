@@ -185,7 +185,7 @@ int insert_impurecord(struct udomain* _d, str* public_identity, str* private_ide
 
 
 /*!
- * \brief Obtain a impurecord pointer if the impurecord exists in domain. You should call this function with a lock on the domain
+ * \brief Obtain an impurecord pointer if the impurecord exists in domain. You should call this function with a lock on the domain
  * \param _d domain to search the record
  * \param _aor address of record
  * \param _r new created record
@@ -194,7 +194,7 @@ int insert_impurecord(struct udomain* _d, str* public_identity, str* private_ide
 int get_impurecord_unsafe(udomain_t* _d, str* _aor, struct impurecord** _r);
 
 /*!
- * \brief Obtain a impurecord pointer if the impurecord exists in domain (safe version)
+ * \brief Obtain an impurecord pointer if the impurecord exists in domain (safe version)
  * \param _d domain to search the record
  * \param _aor address of record
  * \param _r new created record
@@ -210,7 +210,7 @@ int get_impurecord(udomain_t* _d, str* _aor, struct impurecord** _r);
 void release_impurecord(udomain_t* _d, struct impurecord* _r);
 
 /*!
- * \brief Delete a impurecord from domain
+ * \brief Delete an impurecord from domain
  * \param _d domain where the record should be deleted
  * \param _aor address of record
  * \param _r deleted record
