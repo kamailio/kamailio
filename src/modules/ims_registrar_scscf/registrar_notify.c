@@ -1547,7 +1547,7 @@ void create_notifications(udomain_t* _t, impurecord_t* r_passed, ucontact_t* c_p
 				contact_port_ip_match(&c_passed->c, &s->watcher_contact) && alias_port_ip_match(&c_passed->c, &s->watcher_contact) &&
 				r_passed->public_identity.len == s->presentity_uri.len &&
 				memcmp(s->presentity_uri.s, r_passed->public_identity.s, r_passed->public_identity.len) == 0) {
-				LM_DBG("This is a UNREGISTER/EXPIRE event for a UE that subscribed to its own state that does not unsubscribe to dereg - therefore no notification\n");
+				LM_DBG("This is an UNREGISTER/EXPIRE event for a UE that subscribed to its own state that does not unsubscribe to dereg - therefore no notification\n");
 
 				if(r->linked_contacts.numcontacts < 2) {
 					// marking the contact as Notify ready if there aren't other linked contacts to the current impu record
