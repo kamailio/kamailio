@@ -319,7 +319,7 @@ modparam("pdt", "check_domain", 0)
 		Returns -1 in error cases.
 	    </para>
 		<para>
-		The translation is done based on lookup up for a entry in the database
+		The translation is done based on lookup up for an entry in the database
 		where the sdomain equals the domain in FROM uri, and the prefix matches
 		the beginning of the user part of the RURI. If such an entry is found,
 		then the domain in RURI is updated with the domain of this entry
