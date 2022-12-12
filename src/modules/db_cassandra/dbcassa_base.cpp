@@ -889,7 +889,7 @@ int db_cassa_raw_query(const db1_con_t* _h, const str* _s, db1_res_t** _r)
 	switch(cassa_cql_res.type) {
 		case 1:  LM_DBG("Result set is an ROW Type.\n");
 			break;
-		case 2: LM_DBG("Result set is an VOID Type.\n");
+		case 2: LM_DBG("Result set is a VOID Type.\n");
 			break;
 		case 3: LM_DBG("Result set is an INT Type.\n");
 			break;
