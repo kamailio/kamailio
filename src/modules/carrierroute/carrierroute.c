@@ -29,7 +29,7 @@
  * \defgroup carrierroute CARRIERROUTE :: The Kamailio carrierroute Module
  * The module provides routing, balancing and blocklisting capabilities.
  * It reads routing entries from a database source or from a config file
- * at Kamailio startup. It can uses one routing tree (for one carrier),
+ * at Kamailio startup. It can use one routing tree (for one carrier),
  * or if needed for every user a different routing tree (unique for each carrier)
  * for number prefix based routing. It supports several routing domains, e.g.
  * for failback routes or different routing rules for VoIP and PSTN targets.
