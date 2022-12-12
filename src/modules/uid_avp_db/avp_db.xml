@@ -177,7 +177,7 @@
         <serdoc:paramtype>string</serdoc:paramtype>
       </serdoc:paraminfo>
       <para>
-        The <parameter>attr_group</parameter> parameter defines a extra
+        The <parameter>attr_group</parameter> parameter defines an extra
         attribute group. See <serdoc:link
           linkend="module.avp_db.extra_attribute_groups">Extra Attribute
         Groups</serdoc:link> below for more information on the content
@@ -454,7 +454,7 @@
       <title>Example</title>
       <para>
         Since this all looks a bit tricky, here are two examples for the
-        definition of a extra attribute group.
+        definition of an extra attribute group.
       </para>
       <programlisting>
         modparam("avp_db", "attr_group",
