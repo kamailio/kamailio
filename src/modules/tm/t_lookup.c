@@ -643,7 +643,7 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked,
 			/* it is not an e2e ACK/200 -- perhaps it is
 			 * local negative case; in which case we will want
 			 * more elements to match: r-uri and via; allow
-			 * mismatching r-uri as an config option for broken
+			 * mismatching r-uri as a config option for broken
 			 * UACs */
 			if (cfg_get(tm, tm_cfg, ruri_matching) && !EQ_REQ_URI_LEN )
 				continue;
@@ -1513,7 +1513,7 @@ int t_unref( struct sip_msg* p_msg  )
 				LM_BUG("called w/ kr=REQ_ERR_DELAYED in failure"
 						" route for %p\n", T);
 			}else if (unlikely( kill_transaction(T, tm_error)<=0 )){
-				// could be a valid error, or due to a immediate CANCEL
+				// could be a valid error, or due to an immediate CANCEL
 				LM_WARN("generation of a delayed stateful reply"
 						" failed\n");
 				t_release_transaction(T);
