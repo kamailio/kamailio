@@ -351,7 +351,7 @@ void cert_item_init()
 	glb_tnow=time(0);
 }
 
-/* we remove a certificate if expired or if accessed less than an other */
+/* we remove a certificate if expired or if accessed less than another */
 int cert_item_least(const void *s1, const void *s2)
 {
 	if (((tcert_item *)s1)->ivalidbefore < glb_tnow)
@@ -447,7 +447,7 @@ void cid_item_init()
 	glb_tnow=time(0);
 }
 
-/* we remove a call-id if older than an other */
+/* we remove a call-id if older than another */
 int cid_item_least(const void *s1, const void *s2)
 {
 	if (((tcid_item *)s1)->ivalidbefore < glb_tnow)
