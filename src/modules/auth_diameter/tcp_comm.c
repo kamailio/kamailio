@@ -233,7 +233,7 @@ int tcp_send_recv(int sockfd, char* buf, int len, rd_buf_t* rb,
 //			return AAA_ERROR;
 		}
 */
-		/* Data arriving on a already-connected socket. */
+		/* Data arriving on an already-connected socket. */
 		reset_read_buffer(rb);
 		switch( do_read(sockfd, rb) )
 		{
