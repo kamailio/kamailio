@@ -72,7 +72,7 @@ if (has_credentials("myrealm")) {
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>realm</emphasis> - Realm is a opaque string that
+			<para><emphasis>realm</emphasis> - Realm is an opaque string that
 			the user agent should present to the user so he can decide what
 			username and password to use. Usually this is domain of the host
 			the server is running on.
@@ -229,7 +229,7 @@ if (!auth_check("$fd", "subscriber", "1")) {
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>realm</emphasis> - Realm is a opaque string that
+			<para><emphasis>realm</emphasis> - Realm is an opaque string that
 			the user agent should present to the user so he can decide what
 			username and password to use. Usually this is domain of the host
 			the server is running on.
