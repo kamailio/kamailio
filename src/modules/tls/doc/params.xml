@@ -1328,7 +1328,7 @@ modparam("tls", "engine_algorithms", "ALL")
 	<section id="tls.p.engine_config">
 	<title><varname>engine_config</varname> (string)</title>
 	<para>
-	        A OpenSSL configuration file to initialize the engine. Typically used to send PIN to HSMs to unlock
+	        An OpenSSL configuration file to initialize the engine. Typically used to send PIN to HSMs to unlock
 	        private keys. See the HSM howto for an example. This global param is not supported in the tls config file.
 	</para>
         </section>
