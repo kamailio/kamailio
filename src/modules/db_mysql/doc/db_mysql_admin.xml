@@ -98,7 +98,7 @@ modparam("db_mysql", "server_timezone", 1)
 		<section>
 		<title><varname>timeout_interval</varname> (integer)</title>
 		<para>
-		Time interval (in seconds) after that an connection attempt, read or write request
+		Time interval (in seconds) after that a connection attempt, read or write request
 		is aborted. The value counts three times, as several retries are done
 		from the driver before it gives up.
 		</para>
