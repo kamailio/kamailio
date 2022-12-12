@@ -623,7 +623,7 @@ AAASession* cdp_new_cc_acc_session(str id, int is_statefull)
 }
 
 /**
- * Creates a Authorization Session for the Client.
+ * Creates an Authorization Session for the Client.
  * It generates a new id and adds the session to the cdp list of sessions
  * \note Returns with a lock on AAASession->hash. Unlock when done working with the result
  * @returns the new AAASession or null on error
@@ -645,7 +645,7 @@ AAASession* AAACreateClientAuthSession(int is_statefull,AAASessionCallback_f *cb
 	return s;
 }
 /**
- * Creates a Authorization Session for the Server, from the application specific Session starting request
+ * Creates an Authorization Session for the Server, from the application specific Session starting request
  * It generates a new id and adds the session to the cdp list of sessions
  * \note Returns with a lock on AAASession->hash. Unlock when done working with the result
  * @returns the new AAASession or null on error
@@ -725,7 +725,7 @@ void AAATerminateAuthSession(AAASession *s)
 }
 
 /**
- * Deallocates the memory taken by a Authorization Session
+ * Deallocates the memory taken by an Authorization Session
  * \note Must be called with a lock on the s->hash - will unlock it, so don't use the session after this
  */
 void AAADropAuthSession(AAASession *s)
@@ -742,7 +742,7 @@ AAASession* AAACreateAccSession(void *generic_data)
 }
 
 /**
- * Deallocates the memory taken by a Accounting Session
+ * Deallocates the memory taken by an Accounting Session
  */
 void AAADropAccSession(AAASession *s)
 {
@@ -788,7 +788,7 @@ int AAAStartChargingCCAccSession(AAASession *s)
 	return 0;
 }
 /**
- * Deallocates the memory taken by a Accounting Session (Credit Control - RFC 4006)
+ * Deallocates the memory taken by an Accounting Session (Credit Control - RFC 4006)
  */
 void AAADropCCAccSession(AAASession *s)
 {
