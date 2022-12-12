@@ -604,7 +604,7 @@ unset_dlg_profile("caller","$fu");
                 <programlisting format="linespecific">
 ...
 if (is_in_profile("inbound_call")) {
-	log("this request belongs to a inbound call\n");
+	log("this request belongs to an inbound call\n");
 }
 ...
 if (is_in_profile("caller","XX")) {

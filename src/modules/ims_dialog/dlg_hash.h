@@ -40,7 +40,7 @@
 #define DLG_STATE_UNCONFIRMED  1 /*!< unconfirmed dialog */
 #define DLG_STATE_EARLY        2 /*!< early dialog */
 #define DLG_STATE_CONFIRMED    4 /*!< confirmed dialog */
-#define DLG_STATE_CONFIRMED_NA 5 /*!< confirmed dialog without a ACK yet */
+#define DLG_STATE_CONFIRMED_NA 5 /*!< confirmed dialog without an ACK yet */
 #define DLG_STATE_DELETED      6 /*!< deleted dialog */
 #define DLG_STATE_CONCURRENTLY_CONFIRMED      7 /*!< confirmed concurrent dailogs */
 
@@ -386,7 +386,7 @@ void ref_dlg(struct dlg_cell *dlg, unsigned int cnt);
 
 
 /*!
- * \brief Update a dialog state according a event and the old state
+ * \brief Update a dialog state according an event and the old state
  *
  * This functions implement the main state machine that update a dialog
  * state according a processed event and the current state. If necessary
