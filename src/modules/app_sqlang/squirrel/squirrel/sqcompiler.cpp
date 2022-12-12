@@ -1273,7 +1273,7 @@ public:
             SQInteger eqtarget = trg;
             bool local = _fs->IsLocal(trg);
             if(local) {
-                eqtarget = _fs->PushTarget(); //we need to allocate a extra reg
+                eqtarget = _fs->PushTarget(); //we need to allocate an extra reg
             }
             _fs->AddInstruction(_OP_EQ, eqtarget, trg, expr);
             _fs->AddInstruction(_OP_JZ, eqtarget, 0);
