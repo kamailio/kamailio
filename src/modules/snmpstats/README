@@ -374,7 +374,7 @@ modparam("snmpstats", "MsgQueueMajorThreshold", 5000)
 
    The SNMPStats module monitors the number of active dialogs. If the
    number of active dialogs exceeds a minor threshold, the SNMPStats
-   module will send out an kamailioDialogLimitMinorEvent trap to signal
+   module will send out a kamailioDialogLimitMinorEvent trap to signal
    that an alarm condition has occurred. The minor threshold is set with
    the dlg_minor_threshold parameter.
 
@@ -390,7 +390,7 @@ modparam("snmpstats", "MsgQueueMajorThreshold", 5000)
 
    The SNMPStats module monitors the number of active dialogs. If the
    number of active dialogs exceeds a major threshold, the SNMPStats
-   module will send out an kamailioDialogLimitMajorEvent trap to signal
+   module will send out a kamailioDialogLimitMajorEvent trap to signal
    that an alarm condition has occurred. The major threshold is set with
    the dlg_major_threshold parameter.
 

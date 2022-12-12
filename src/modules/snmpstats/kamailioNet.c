@@ -300,7 +300,7 @@ int handle_kamailioNetTcpConnEstablished(netsnmp_mib_handler *handler,
 	/* We are never called for a GETNEXT if it's registered as a
        "instance", as it's "magically" handled for us.  */
 
-	/* a instance handler also only hands us one request at a time, so
+	/* an instance handler also only hands us one request at a time, so
        we don't need to loop over a list of requests; we'll only get one. */
 
 	int datafield = get_statistic("established");
@@ -451,7 +451,7 @@ int handle_kamailioNetTcpConnReject(netsnmp_mib_handler *handler,
 	/* We are never called for a GETNEXT if it's registered as a
        "instance", as it's "magically" handled for us.  */
 
-	/* a instance handler also only hands us one request at a time, so
+	/* an instance handler also only hands us one request at a time, so
        we don't need to loop over a list of requests; we'll only get one. */
 	int datafield = get_statistic("local_reject");
 
@@ -480,7 +480,7 @@ int handle_kamailioNetTcpEnabled(netsnmp_mib_handler *handler,
 	/* We are never called for a GETNEXT if it's registered as a
        "instance", as it's "magically" handled for us.  */
 
-	/* a instance handler also only hands us one request at a time, so
+	/* an instance handler also only hands us one request at a time, so
        we don't need to loop over a list of requests; we'll only get one. */
 	int enabled = (tcp_disable == 0);
 
@@ -543,7 +543,7 @@ int handle_kamailioNetTcpAsync(netsnmp_mib_handler *handler,
 	/* We are never called for a GETNEXT if it's registered as a
        "instance", as it's "magically" handled for us.  */
 
-	/* a instance handler also only hands us one request at a time, so
+	/* an instance handler also only hands us one request at a time, so
        we don't need to loop over a list of requests; we'll only get one. */
 
 	switch(reqinfo->mode) {

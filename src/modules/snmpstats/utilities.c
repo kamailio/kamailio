@@ -49,7 +49,7 @@
 static cfg_ctx_t *ctx = NULL;
 
 /*!
- * This function copies an Kamailio "str" datatype into a '\\0' terminated char*
+ * This function copies a Kamailio "str" datatype into a '\\0' terminated char*
  * string.
  *
  * \note Make sure to free the memory allocated to *copiedString, when you no
