@@ -72,7 +72,7 @@
 		<para>
 			The salt is a binary array that is appended to the encryption
 			password for better protection against dictionary attacks. Same
-			salt and password need to be when encrypting and decrypting.
+			salt and password need to be used when encrypting and decrypting.
 		</para>
 		<para>
 		<emphasis>
@@ -139,7 +139,7 @@ modparam("crypto", "register_evcb", 1)
 	<section id="crypto.p.kevcb_netio">
 		<title><varname>kevcb_netio</varname> (str)</title>
 		<para>
-			Name of the KEMI callbac functio for netio events. It receives a
+			Name of the KEMI callback function for netio events. It receives a
 			string parameter with event route name.
 		</para>
 		<para>
