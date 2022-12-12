@@ -572,7 +572,7 @@ static SQInteger array_top(HSQUIRRELVM v)
         v->Push(_array(o)->Top());
         return 1;
     }
-    else return sq_throwerror(v,_SC("top() on a empty array"));
+    else return sq_throwerror(v,_SC("top() on an empty array"));
 }
 
 static SQInteger array_insert(HSQUIRRELVM v)
@@ -1139,7 +1139,7 @@ static SQInteger thread_wakeup(HSQUIRRELVM v)
         if(state != SQ_VMSTATE_SUSPENDED) {
             switch(state) {
                 case SQ_VMSTATE_IDLE:
-                    return sq_throwerror(v,_SC("cannot wakeup a idle thread"));
+                    return sq_throwerror(v,_SC("cannot wakeup an idle thread"));
                 break;
                 case SQ_VMSTATE_RUNNING:
                     return sq_throwerror(v,_SC("cannot wakeup a running thread"));
@@ -1175,7 +1175,7 @@ static SQInteger thread_wakeupthrow(HSQUIRRELVM v)
         if(state != SQ_VMSTATE_SUSPENDED) {
             switch(state) {
                 case SQ_VMSTATE_IDLE:
-                    return sq_throwerror(v,_SC("cannot wakeup a idle thread"));
+                    return sq_throwerror(v,_SC("cannot wakeup an idle thread"));
                 break;
                 case SQ_VMSTATE_RUNNING:
                     return sq_throwerror(v,_SC("cannot wakeup a running thread"));
