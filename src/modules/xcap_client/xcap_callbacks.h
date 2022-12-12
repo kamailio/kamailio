@@ -55,7 +55,7 @@ void destroy_xcapcb_list(void);
 /* register a callback for several types of events */
 int register_xcapcb( int types, xcap_cb f);
 
-/* run all transaction callbacks for an composed type */
+/* run all transaction callbacks for a composed type */
 void run_xcap_update_cb(int type, str xid, char* stream);
 
 #endif
