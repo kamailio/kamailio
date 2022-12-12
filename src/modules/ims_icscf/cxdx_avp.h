@@ -72,7 +72,7 @@ int cxdx_add_destination_realm(AAAMessage *msg, str data);
 int cxdx_add_vendor_specific_appid(AAAMessage *msg,unsigned int vendor_id,unsigned int auth_id,unsigned int acct_id);
 
 /**
- * Creates and adds a Auth-Session-State AVP.
+ * Creates and adds an Auth-Session-State AVP.
  * @param msg - the Diameter message to add to.
  * @param data - the value for the AVP payload
  * @returns 1 on success or 0 on error
@@ -112,7 +112,7 @@ int cxdx_add_visited_network_id(AAAMessage *msg,str data);
 int cxdx_add_UAR_flags(AAAMessage *msg, unsigned int sos_reg);
 
 /**
- * Creates and adds a Authorization-Type AVP.
+ * Creates and adds an Authorization-Type AVP.
  * @param msg - the Diameter message to add to.
  * @param data - the value for the AVP payload
  * @returns 1 on success or 0 on error
@@ -203,7 +203,7 @@ int cxdx_get_auth_data_item_answer(AAAMessage *msg, AAA_AVP **auth_data,
 	str *line_identifier);
 
 /**
- * Creates and adds a ETSI_sip_authorization AVP.
+ * Creates and adds an ETSI_sip_authorization AVP.
  * @param username - UserName
  * @param realm - Realm
  * @param nonce - Nonce
