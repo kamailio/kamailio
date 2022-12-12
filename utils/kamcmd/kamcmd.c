@@ -780,7 +780,7 @@ end:
  * and stops at each %v,  returning  a pointer after the %v, setting *size
  * to the string length (not including %v) and *type to the corresponding
  * BINRPC type (for now only BINRPC_T_ALL).
- * To escape a '%', use "%%", and check for type==-1 (which means skip an call
+ * To escape a '%', use "%%", and check for type==-1 (which means skip a call
  *  again parse_fmt).
  * Usage:
  *        n="test: %v,%v,%v\n";
