@@ -1545,7 +1545,7 @@ static int get_string(char** val, struct xmlrpc_reply* reply,
 			break;
 		case XML_T_INT:
 		case XML_T_BOOL:
-			/* convert str to int an back to str */
+			/* convert str to int and back to str */
 			i = strtol(val_str, &end_ptr, 10);
 			if (val_str==end_ptr){
 				ret=-1;
