@@ -90,7 +90,7 @@ Chapter 1. Admin Guide
 
    The sst module provides a way to update the dialog expiry timer based
    on the SIP INVITE/200 OK Session-Expires header value. You can use the
-   sst module in an Kamailio proxy to allow freeing of local resources of
+   sst module in a Kamailio proxy to allow freeing of local resources of
    dead calls.
 
    You can also use the sst module to validate the MIN_SE header value and
