@@ -80,6 +80,7 @@ endif
 # detect libreadline
 ifneq ($(BUILDER),)
 	DEFS += $(shell $(BUILDER) --cflags readline)
+	DEFS+=-DUSE_READLINE
 	LIBS += $(shell $(BUILDER) --libs readline)
 	use_readline := 1
 else
