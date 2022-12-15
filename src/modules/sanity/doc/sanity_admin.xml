@@ -180,6 +180,7 @@ modparam("sanity", "default_checks", 1)
 	<para>
 		Default value is 7. This resolves to the following list of
 		parsed URIs: Request URI (1), From URI (2) and To URI (4).
+		Additionally the Contact URI can be also checked (8).
 	</para>
 	<example>
 	    <title>Set <varname>uri_checks</varname> parameter</title>
