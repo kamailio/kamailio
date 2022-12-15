@@ -820,7 +820,8 @@ int check_parse_uris(sip_msg_t* msg, int checks) {
 				}
 				return SANITY_CHECK_FAILED;
 			}
-			if (parse_uri(
+			if (!((struct contact_body*)msg->contact->parsed)->star
+					&& parse_uri(
 						((struct contact_body*)msg->contact->parsed)->contacts->uri.s,
 						((struct contact_body*)msg->contact->parsed)->contacts->uri.len,
 						&uri) != 0) {
