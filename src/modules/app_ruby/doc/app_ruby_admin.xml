@@ -35,11 +35,11 @@
 	<section>
 	    <title>&kamailio; Modules</title>
 	    <para>
-		The following modules must be loaded before this module:
+		The following modules must be installed (but not loaded) before this module:
 	    	<itemizedlist>
 		    <listitem>
 			<para>
-			    <emphasis>none</emphasis>.
+			    <emphasis>app_ruby_proc</emphasis>.
 			</para>
 		    </listitem>
 	    	</itemizedlist>
@@ -115,6 +115,25 @@ modparam("app_ruby", "xval_mode", 1)
 ...
 </programlisting>
 	    </example>
+	</section>
+	<section id="app_ruby.p.modproc">
+		<title><varname>modproc</varname> (str)</title>
+		<para>
+		The name of or the path to the required per-process API module.
+		</para>
+		<para>
+		<emphasis>
+			Default value is "app_ruby_proc.so".
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>modproc</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("app_ruby", "modproc", "app_ruby_proc2.so")
+...
+</programlisting>
+		</example>
 	</section>
 	</section>
 
