@@ -27,6 +27,7 @@ Daniel-Constantin Mierla
 
               3.1. load (str)
               3.2. xval_mode (int)
+              3.3. modproc (str)
 
         4. Functions
 
@@ -43,7 +44,8 @@ Daniel-Constantin Mierla
 
    1.1. Set load parameter
    1.2. Set xval_mode parameter
-   1.3. jsdt_run usage
+   1.3. Set modproc parameter
+   1.4. jsdt_run usage
 
 Chapter 1. Admin Guide
 
@@ -59,6 +61,7 @@ Chapter 1. Admin Guide
 
         3.1. load (str)
         3.2. xval_mode (int)
+        3.3. modproc (str)
 
    4. Functions
 
@@ -91,8 +94,9 @@ Chapter 1. Admin Guide
 
 2.1. Kamailio Modules
 
-   The following modules must be loaded before this module:
-     * none.
+   The following modules must be installed (but not loaded) before this
+   module:
+     * app_ruby_proc.
 
 2.2. External Libraries or Applications
 
@@ -105,6 +109,7 @@ Chapter 1. Admin Guide
 
    3.1. load (str)
    3.2. xval_mode (int)
+   3.3. modproc (str)
 
 3.1. load (str)
 
@@ -141,6 +146,17 @@ modparam("app_ruby", "load", "/usr/local/etc/kamailio/ruby/myscript.rb")
 modparam("app_ruby", "xval_mode", 1)
 ...
 
+3.3. modproc (str)
+
+   The name of or the path to the required per-process API module.
+
+   Default value is "app_ruby_proc.so".
+
+   Example 1.3. Set modproc parameter
+...
+modparam("app_ruby", "modproc", "app_ruby_proc2.so")
+...
+
 4. Functions
 
    4.1. ruby_run(function, params)
@@ -152,7 +168,7 @@ modparam("app_ruby", "xval_mode", 1)
    loaded at startup via parameter 'load'. Parameters can be strings with
    pseudo-variables that are evaluated at runtime.
 
-   Example 1.3. jsdt_run usage
+   Example 1.4. jsdt_run usage
 ...
 if(!ruby_run("rb_append_fu_to_reply"))
 {
