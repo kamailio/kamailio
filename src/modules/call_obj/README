@@ -84,7 +84,7 @@ Chapter 1. Admin Guide
 
 1. Overview
 
-   This module provides a way to identify calls using a increasing
+   This module provides a way to identify calls using an increasing
    sequence of integers.
 
    It starts assigning an integer to a call. Next call gets next free

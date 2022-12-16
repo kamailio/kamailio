@@ -292,7 +292,7 @@ request_route {
 
    For OpenSSL (libssl) v1.1.x, it is required to preload
    'openssl_mutex_shared' library shipped by Kamailio. For more details
-   see 'src/modules/tls/openssl_mutex_shared/README.md'.
+   see 'src/modules/tls/utils/openssl_mutex_shared/README.md'.
 
    This module includes several workarounds for various Openssl bugs (like
    compression and Kerberos using the wrong memory allocations functions,
@@ -563,7 +563,7 @@ modparam("tls", "engine_config", "/usr/local/etc/kamailio/thales.cnf")
 modparam("tls", "engine_algorithms", "EC")
 ...
 
-/usr/local/etc/kamailio/thales.cnf is a OpenSSL config format file used to
+/usr/local/etc/kamailio/thales.cnf is an OpenSSL config format file used to
 bootstrap the engine, e.g., pass the PIN.
 
 ...
@@ -1507,7 +1507,7 @@ modparam("tls", "engine_algorithms", "ALL")
 
 10.35. engine_config (string)
 
-   A OpenSSL configuration file to initialize the engine. Typically used
+   An OpenSSL configuration file to initialize the engine. Typically used
    to send PIN to HSMs to unlock private keys. See the HSM howto for an
    example. This global param is not supported in the tls config file.
 

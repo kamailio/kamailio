@@ -143,7 +143,7 @@ $ kamcmd ps
 
    If the protocol part is missing and the address/path part looks like a
    file system path it will default to a Unix stream socket and if not to
-   an Unix UDP socket. Examples:
+   a Unix UDP socket. Examples:
      * "/tmp/unix_test" - equivalent to "unixs:/tmp/unix_test".
      * "localhost:3000" - equivalent to "udp:localhost:3000".
 

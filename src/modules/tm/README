@@ -3136,7 +3136,7 @@ reply_route {
 
 5.9.  tm.clean
 
-   Trigger an hard clean of expired transactions.
+   Trigger a hard clean of expired transactions.
 
    Parameters:
      * none

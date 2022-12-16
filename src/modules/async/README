@@ -363,7 +363,7 @@ route[RESUME] {
 
 4.7.  async_task_data(routename, data)
 
-   Send the data to a asynchronous task process (in the first group) that
+   Send the data to an asynchronous task process (in the first group) that
    executes the route[rountename] and makes the data available via
    $async(data).
 

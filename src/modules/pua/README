@@ -308,7 +308,7 @@ modparam("pua", "db_mode", 0)
 
 3.11. db_table_lock_write (integer)
 
-   Enable (=1) or disable (=0) the Locks for table during an transaction.
+   Enable (=1) or disable (=0) the Locks for table during a transaction.
    Locking only the "current" table causes problems with a MySQL-Databases
    in "DB-Only" mode.
 

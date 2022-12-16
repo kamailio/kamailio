@@ -1222,7 +1222,7 @@ add_sock_hdr("Sock-Info");
      * uri - The SIP URI address of the user which to remove the contact
        addresses for. It can contain pseudo-variables that are evaluated
        at runtime.
-     * ruid - The record unique ID for a a specific contact to be removed.
+     * ruid - The record unique ID for a specific contact to be removed.
        It can contain pseudo-variables that are evaluated at runtime.
 
    This function can be used from ANY_ROUTE.

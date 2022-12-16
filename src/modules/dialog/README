@@ -461,14 +461,14 @@ Chapter 1. Admin Guide
    common application discussed for illustrative purposes; there are many
    others.
 
-   The dialog module provides dialog awareness for the Kamailio proxy.
-   It's functionality is to keep track of the current dialogs, to offer
+   The dialog module provides dialog awareness for the Kamailio proxy. Its
+   functionality is to keep track of the current dialogs, to offer
    information about them (e.g. how many dialogs are active), and to
    manage various characteristics of dialogs. The module exports several
    functions that can be used directly from the configuration route script
    as well as functions for the RPC interface.
 
-   This module also provides a API foundation on which to build more
+   This module also provides an API foundation on which to build more
    complex dialog-oriented functionality in other Kamailio modules.
 
 2. How it works
@@ -1618,7 +1618,7 @@ unset_dlg_profile("caller","$fu");
    Example 1.70. is_in_profile usage
 ...
 if (is_in_profile("inbound_call")) {
-        log("this request belongs to a inbound call\n");
+        log("this request belongs to an inbound call\n");
 }
 ...
 if (is_in_profile("caller","XX")) {

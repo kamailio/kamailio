@@ -135,7 +135,7 @@ Chapter 1. Admin Guide
 
    Limiting the rate messages are processed on a system directly
    influences the load. The ratelimit module can be used to protect a
-   single host or to protect an Kamailio cluster when run on the
+   single host or to protect a Kamailio cluster when run on the
    dispatching box in front.
 
    A sample configuration snippet might look like this:
