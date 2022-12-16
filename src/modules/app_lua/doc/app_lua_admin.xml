@@ -85,7 +85,7 @@
 	    	<itemizedlist>
 		    <listitem>
 			<para>
-			    <emphasis>liblua5.1-dev</emphasis> - Lua devel library.
+			    <emphasis>liblua5.1-dev</emphasis> - Lua devel library.  Versions 5.2, 5.3 and 5.4 also work.
 			</para>
 		    </listitem>
 	    	</itemizedlist>
