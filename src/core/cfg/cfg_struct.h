@@ -299,7 +299,7 @@ static inline void cfg_child_cb_free_item(cfg_child_cb_t *cb)
  * Both parameters can be NULL meaning that the src/dst config is the default, 
  * not an additional group instance.
  * The function executes all the per-child process callbacks which are different
- * in the two instaces.
+ * in the two instances.
  */
 void cfg_move_handle(cfg_group_t *group, cfg_group_inst_t *src_ginst, cfg_group_inst_t *dst_ginst);
 
