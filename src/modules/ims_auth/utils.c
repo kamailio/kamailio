@@ -305,7 +305,7 @@ str ims_get_nonce(struct sip_msg *msg, str realm)
  * Adds a header to the reply message
  * @param msg - the request to add a header to its reply
  * @param content - the str containing the new header
- * @returns 1 on succes, 0 on failure
+ * @returns 1 on success, 0 on failure
  */
 int ims_add_header_rpl(struct sip_msg *msg, str *hdr)
 {
