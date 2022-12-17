@@ -1534,7 +1534,7 @@ xinfo("first contact record - socket: $xavp(cul&gt;socket)\n");
 		<para>
 		The function returns true if the AOR in the URI is 
 		registered, false otherwise.  The function does not modify the 
-		message being process, it neither rewrites the Request-URI if a 
+		message being processed, it neither rewrites the Request-URI if a 
 		contact is found nor append branches. If uri parameter is not
 		provided, then it considered to be the Request-URI for SIP requests
 		and To-URI for SIP replies.
