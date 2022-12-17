@@ -345,7 +345,7 @@ static int ksr_tls_fill_missing(tls_domain_t* d, tls_domain_t* parent)
  * @param ctx SSL context
  * @param larg ?
  * @param parg ?
- * @return return 0 on succes, <0 on critical error
+ * @return return 0 on success, <0 on critical error
  */
 typedef int (*per_ctx_cbk_f)(WOLFSSL_CTX* ctx, long larg, void* parg);
 

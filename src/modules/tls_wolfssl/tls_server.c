@@ -556,7 +556,7 @@ static int tls_shutdown(struct tcp_connection *c)
 		DBG("TLS shutdown successful\n");
 		return 0;
 	} else if (ret == 0) {
-		DBG("First phase of 2-way handshake completed succesfuly\n");
+		DBG("First phase of 2-way handshake completed successfully\n");
 		return 0;
 	} else {
 		err = wolfSSL_get_error(ssl, ret);
