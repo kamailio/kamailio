@@ -129,7 +129,7 @@ $ kamcmd ps
 11277	tcp main process
 
 $ kamcmd help  # list all the supported commands
-dst_blacklist.add
+dst_blocklist.add
 ctl.who
 ...
 

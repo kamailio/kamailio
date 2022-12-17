@@ -258,8 +258,8 @@ static struct cmd_alias cmd_aliases[]={
 	{	"dns_debug_all",	"dns.debug_all",
 			"%v (%v) [%v]: size=%v ref=%v expire=%vs last=%vs ago f=%v\n"
 			"\t\t%v:%v expire=%vs f=%v\n"},
-	{	"dst_blacklist_mem_info",	"dst_blacklist.mem_info",	"%v / %v\n"},
-	{	"dst_blacklist_debug",		"dst_blacklist.debug",
+	{	"dst_blocklist_mem_info",	"dst_blocklist.mem_info",	"%v / %v\n"},
+	{	"dst_blocklist_debug",		"dst_blocklist.debug",
 		"%v:%v:%v expire:%v flags: %v\n"},
 	{0,0,0}
 };
