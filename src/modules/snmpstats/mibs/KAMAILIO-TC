@@ -108,7 +108,7 @@ KamailioSIPMethodIdentifier ::= TEXTUAL-CONVENTION
              MAY return/accept a method identifier value other
              than those defined by IANA.  That system MUST
              ensure no collisions with officially assigned
-             method identifier values and MUST provide a
+             method identifier values and MUST provide an
              identifier to method name mapping via a mechanism
              like sipMethodSupportedTable."
        SYNTAX Unsigned32 (1..4294967295)
