@@ -297,7 +297,7 @@ int handle_kamailioNetTcpConnEstablished(netsnmp_mib_handler *handler,
 		netsnmp_handler_registration *reginfo,
 		netsnmp_agent_request_info *reqinfo, netsnmp_request_info *requests)
 {
-	/* We are never called for a GETNEXT if it's registered as a
+	/* We are never called for a GETNEXT if it's registered as an
        "instance", as it's "magically" handled for us.  */
 
 	/* an instance handler also only hands us one request at a time, so
@@ -448,7 +448,7 @@ int handle_kamailioNetTcpConnReject(netsnmp_mib_handler *handler,
 		netsnmp_handler_registration *reginfo,
 		netsnmp_agent_request_info *reqinfo, netsnmp_request_info *requests)
 {
-	/* We are never called for a GETNEXT if it's registered as a
+	/* We are never called for a GETNEXT if it's registered as an
        "instance", as it's "magically" handled for us.  */
 
 	/* an instance handler also only hands us one request at a time, so
@@ -477,7 +477,7 @@ int handle_kamailioNetTcpEnabled(netsnmp_mib_handler *handler,
 		netsnmp_handler_registration *reginfo,
 		netsnmp_agent_request_info *reqinfo, netsnmp_request_info *requests)
 {
-	/* We are never called for a GETNEXT if it's registered as a
+	/* We are never called for a GETNEXT if it's registered as an
        "instance", as it's "magically" handled for us.  */
 
 	/* an instance handler also only hands us one request at a time, so
@@ -540,7 +540,7 @@ int handle_kamailioNetTcpAsync(netsnmp_mib_handler *handler,
 
 	tcp_options_get(&t);
 	value = t.async;
-	/* We are never called for a GETNEXT if it's registered as a
+	/* We are never called for a GETNEXT if it's registered as an
        "instance", as it's "magically" handled for us.  */
 
 	/* an instance handler also only hands us one request at a time, so
