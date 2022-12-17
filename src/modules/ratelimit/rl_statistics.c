@@ -272,7 +272,7 @@ static int parse_proc_net_line(char *line, int *ipAddress, int *rx_queue)
 
 		/* strtol()'s specifications specify that the second parameter
 		 * is set to the first parameter when a number couldn't be
-		 * parsed out.  This means the parse was unsuccesful.  */
+		 * parsed out.  This means the parse was unsuccessful.  */
 		if (nextNonNumericalChar == currColonLocation) {
 			return 0;
 		}
