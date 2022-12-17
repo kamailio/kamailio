@@ -1786,7 +1786,7 @@ error:
 
 /* append new elements to a socket_info list after "list"
  * each element is created  from addr_info_lst + port, protocol and flags
- * return 0 on succes, -1 on error
+ * return 0 on success, -1 on error
  */
 static int addr_info_to_si_lst(struct addr_info* ai_lst, unsigned short port,
 								char proto, char *usename,
@@ -1808,7 +1808,7 @@ static int addr_info_to_si_lst(struct addr_info* ai_lst, unsigned short port,
 
 /* insert new elements to a socket_info list after "el",
  * each element is created from addr_info_lst + port, * protocol and flags
- * return 0 on succes, -1 on error
+ * return 0 on success, -1 on error
  */
 static int addr_info_to_si_lst_after(struct addr_info* ai_lst,
 										unsigned short port,

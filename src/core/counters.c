@@ -295,7 +295,7 @@ static struct grp_record* grp_hash_lookup(str* group)
 
 
 /** lookup a group and if not found create a new group record.
- * @return pointer to grp_record on succes, 0 on failure ( not found and
+ * @return pointer to grp_record on success, 0 on failure ( not found and
  *  failed to create new group record).
  */
 static struct grp_record* grp_hash_get_create(str* group)
@@ -456,7 +456,7 @@ static struct counter_record* cnt_hash_lookup(str* group, str* name)
 
 
 /** lookup a counter and if not found create a new counter record.
- * @return pointer to counter_record on succes, 0 on failure ( not found and
+ * @return pointer to counter_record on success, 0 on failure ( not found and
  *  failed to create new group record).
  */
 static struct counter_record* cnt_hash_get_create(
@@ -489,7 +489,7 @@ static struct counter_record* cnt_hash_get_create(
  * @param doc       - description/documentation string.
  * @param reg_flags - register flags: 1 - don't fail if counter already
  *                    registered (act like counter_lookup(handle, group, name).
- * @return 0 on succes, < 0 on error (-1 not init or malloc error, -2 already
+ * @return 0 on success, < 0 on error (-1 not init or malloc error, -2 already
  *         registered (and register_flags & 1 == 0).
  */
 int counter_register(	counter_handle_t* handle, const char* group,
