@@ -23,7 +23,7 @@
  * * History:
  * ========
  * 
- * Nov 2013 Richard Good migrated pua_reginfo funtionality to ims_registrar_pcscf
+ * Nov 2013 Richard Good migrated pua_reginfo functionality to ims_registrar_pcscf
  */
 
 #include "subscribe.h"
