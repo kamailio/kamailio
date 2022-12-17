@@ -215,7 +215,7 @@ modparam("ims_auth", "auth_vector_timeout", "domain")
 
 3.4. auth_data_timeout (int)
 
-   Time, in seconds, an used auth vector is valid for.
+   Time, in seconds, a used auth vector is valid for.
 
    Default value is “60”.
 

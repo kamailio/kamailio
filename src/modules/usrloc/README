@@ -301,9 +301,9 @@ Chapter 1. Admin Guide
 
    1.1. Contact matching
 
-   The User location module module keeps a user location table and
-   provides access to the table for other modules. The module exports no
-   functions that can be used directly from routing scripts.
+   The User location module keeps a user location table and provides
+   access to the table for other modules. The module exports no functions
+   that can be used directly from routing scripts.
 
 1.1. Contact matching
 
@@ -1284,7 +1284,7 @@ modparam("usrloc", "load_rank", 1)
 
 4.6.  ul.add
 
-   Adds a new contact for an user AOR.
+   Adds a new contact for a user AOR.
 
    Parameters:
      * table name - table where the contact will be added (Ex: location).

@@ -143,7 +143,7 @@ Chapter 1. Admin Guide
 
    The salt is a binary array that is appended to the encryption password
    for better protection against dictionary attacks. Same salt and
-   password need to be when encrypting and decrypting.
+   password need to be used when encrypting and decrypting.
 
    Default value is "..." (see code).
 
@@ -184,8 +184,8 @@ modparam("crypto", "register_evcb", 1)
 
 3.4. kevcb_netio (str)
 
-   Name of the KEMI callbac functio for netio events. It receives a string
-   parameter with event route name.
+   Name of the KEMI callback function for netio events. It receives a
+   string parameter with event route name.
 
    Default value is not set.
 

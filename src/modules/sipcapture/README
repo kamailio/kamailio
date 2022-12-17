@@ -347,7 +347,7 @@ modparam("sipcapture", "raw_moni_capture_on", 1)
 
 3.11. raw_socket_listen (string)
 
-   Parameter indicate an listen IP address of RAW socket for IPIP
+   Parameter indicate a listen IP address of RAW socket for IPIP
    capturing. You can also define a port/portrange for IPIP/Mirroring
    mode, to capture SIP messages in specific ports:
 

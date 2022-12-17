@@ -307,7 +307,7 @@ modparam("ims_qos", "video_default_bandwidth", 256)
    This sets the default Reason, when a call is terminated in early stage
    due to QoS-failure.
 
-   Default value is "QoS released", an call in early stage would be
+   Default value is "QoS released", a call in early stage would be
    released with "488 QoS released".
 
    Example 1.11. early_qosrelease_reason parameter usage
@@ -317,7 +317,7 @@ modparam("ims_qos", "early_qosrelease_reason", "Sorry - QoS failed")
 
 3.12. confirmed_qosrelease_headers (String)
 
-   These headers are added to the BYE-Message, when an confirmed call is
+   These headers are added to the BYE-Message, when a confirmed call is
    terminated due to a QoS failure.
 
    Default value is "", no Extra-Headers
@@ -391,7 +391,7 @@ modparam("ims_qos", "include_rtcp_fd", 1)
 
 4.1. Rx_AAR_Register(route_block, domain)
 
-   Perform a AAR on Diameter RX interface to subscribe to signalling
+   Perform an AAR on Diameter RX interface to subscribe to signalling
    status. This purpose of this is tell a Diameter server (typically a
    PCRF) to inform the requesting Diameter client on changes to the status
    of signalling bearer for the same framed IP address. For more details
@@ -436,7 +436,7 @@ route[REG_AAR_REPLY]
 
 4.2. Rx_AAR(route_block, direction, subscription_id, subscription_id_type)
 
-   Perform a AAR on Diameter RX interface to request resource
+   Perform an AAR on Diameter RX interface to request resource
    authorisation from a Diameter server (typically a PCRF). For more
    details see 3GGP TS 29.214.
 
@@ -479,7 +479,7 @@ route[ORIGN_SESSION_AAR_REPLY]
 
 5.1. AAR Timeouts (aar_timeouts)
 
-   The number of timeouts on sending a AAR. i.e. no response to AAR.
+   The number of timeouts on sending an AAR. i.e. no response to AAR.
 
 5.2. Average AAR Response Time (aar_avg_response_time)
 

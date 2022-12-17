@@ -539,7 +539,8 @@ modparam("presence", "min_expires", 1800)
 
 3.16. min_expires_action (int)
 
-   The action to take when UA sends a expires value less then min_expires.
+   The action to take when UA sends an expires value less then
+   min_expires.
 
    Possible Values
      * 1 : RFC Compliant, returns “423 Interval Too Brief”
@@ -661,7 +662,7 @@ modparam("presence", "pres_htable_size", 11)
    This parameter enables or disables the sending of an initial empty
    NOTIFY after a SUBSCRIBE/reSUBSCRIBE. This caused problems for MWI
    application, because some CPEs (like Samsung) fail to understand an
-   empty NOTIFY to an message-summary event. This parameter is enabled by
+   empty NOTIFY to a message-summary event. This parameter is enabled by
    default, thus adhering to the standard.
 
    Default value is “1 ”.
@@ -714,7 +715,7 @@ modparam("presence", "fetch_rows", 1000)
 
 3.26. db_table_lock_type (integer)
 
-   Enable (=1) or disable (=0) the Locks for table during an transaction.
+   Enable (=1) or disable (=0) the Locks for table during a transaction.
    Locking only the "current" table causes problems with a MySQL-Databases
    in "DB-Only" mode.
 

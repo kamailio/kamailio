@@ -735,7 +735,7 @@ modparam("rtpengine", "setid_avp", "$avp(setid)")
    be sent from the specified local interface. Both IPv4 and IPv6
    addresses are supported. If not specified, the default interface
    selected by the operating system will be used. Note: when
-   rtpengine_sock is a IPv6 link-local address, one _must_ set this
+   rtpengine_sock is an IPv6 link-local address, one _must_ set this
    parameter in order to successfully connect to RTP engine. This is
    necessarily because OS needs additional scope_id hint to communicate
    over IPv6 link locals. The scope_id is resolved based on the given
@@ -2697,7 +2697,7 @@ $ kamcmd rtpengine.reload
    recheck_ticks are grater than 0, the proxy is considered disabled
    temporary, and it is not taken into consideration for sending data.
    When the recheck_ticks are 0, the proxy is retested when trying to send
-   data (not automatically retested), and data can be send to it on
+   data (not automatically retested), and data can be sent to it on
    success.
 
    NOTE: If you specify an IPv6 RTP, the proxy url must be prefixed with

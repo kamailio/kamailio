@@ -466,7 +466,7 @@ Chapter 1. Admin Guide
        gateway is added to the request URI and then the request is
        forwarded.
 
-   If no rule is found to match the selection criteria an default action
+   If no rule is found to match the selection criteria a default action
    must be taken (e.g., error response sent back). If the gateway in the
    chain has no prefix the request is forwarded without adding any prefix
    to the request URI.
@@ -551,8 +551,8 @@ modparam("drouting", "drg_table", "groups")
 3.5. drl_table(str)
 
    The name of the db table storing definitions of destination lists (to
-   be used directly by the routing rules). You will have a identifier to a
-   group of gateways instead of having all the members of the group as a
+   be used directly by the routing rules). You will have an identifier to
+   a group of gateways instead of having all the members of the group as
    individual elements. Very useful to reuse a list of gateways in
    different places.
 

@@ -571,7 +571,7 @@ unset_dlg_profile("caller","$fu");
    Example 1.13.  is_in_profile usage
 ...
 if (is_in_profile("inbound_call")) {
-        log("this request belongs to a inbound call\n");
+        log("this request belongs to an inbound call\n");
 }
 ...
 if (is_in_profile("caller","XX")) {
@@ -1040,7 +1040,7 @@ Chapter 2. Developer Guide
 Chapter 3. Frequently Asked Questions
 
    3.1. What happened with “use_tight_match” parameter?
-   3.2. Why is there a ims_dialog module and a dialog module?
+   3.2. Why is there an ims_dialog module and a dialog module?
    3.3. Where can I find more about Kamailio?
    3.4. Where can I post a question about this module?
    3.5. How can I report a bug?
@@ -1055,7 +1055,7 @@ Chapter 3. Frequently Asked Questions
 
    3.2.
 
-   Why is there a ims_dialog module and a dialog module?
+   Why is there an ims_dialog module and a dialog module?
 
    The ims_dialog module addresses shortcomings in the initial dialog
    module design. It makes some large changes to the API and therefore

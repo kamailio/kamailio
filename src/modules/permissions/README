@@ -272,8 +272,8 @@ Chapter 1. Admin Guide
    created.
 
    Instead of the From header field the function uses the To header field
-   because th To header field in REGISTER messages contains the URI of the
-   person being registered. Instead of the Request-URI of branches the
+   because the To header field in REGISTER messages contains the URI of
+   the person being registered. Instead of the Request-URI of branches the
    function uses the Contact header field.
 
    Thus, the pairs used in matching will look like this: (To, Contact 1),

@@ -437,7 +437,7 @@ mqtt_publish("kamailio/event", "some message", 0);
 
 5.1.  mqtt:connected
 
-   If defined, the module calls event_route[mqtt:connected] when a
+   If defined, the module calls event_route[mqtt:connected] when an
    outgoing broker connection is established.
 
    MQTT subscriptions are not durable, so you should use this event route

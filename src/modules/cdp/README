@@ -799,7 +799,7 @@ is_statefull,AAASessionCallback_f *cb,void *generic_data)
 
 1.18. AAADropAuthSession(AAASession *s)
 
-   Deallocates the memory taken by a Authorisation session
+   Deallocates the memory taken by an Authorisation session
 
    Meaning of the parameters is as follows:
      * AAASession *s - Session to drop and deallocate memory for
@@ -814,7 +814,7 @@ is_statefull,AAASessionCallback_f *cb,void *generic_data)
 1.20. AAATransaction* AAACreateTransaction(AAAApplicationId
 app_id,AAACommandCode cmd_code)
 
-   Create a AAATransaction for the given request
+   Create an AAATransaction for the given request
 
    Meaning of the parameters is as follows:
      * AAAApplicationId app_id - ID of the request's application
