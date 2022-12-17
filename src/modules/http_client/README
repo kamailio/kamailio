@@ -635,7 +635,7 @@ tstuff;timeout=12;failover=apione")
    Kamailio main config file.
 
    To set a string value to null, in order to override default settings,
-   you can specify an value of "" - two quotation marks. In order to
+   you can specify a value of "" - two quotation marks. In order to
    disable a http proxy setting you can set the port to zero.
 
    Example 1.19. Set config_file parameter

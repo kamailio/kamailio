@@ -556,7 +556,7 @@ if (prepareallosproute()) {
    message contains an OSP cookie, the function will forward originating
    and/or terminating duration usage information to a peering server. The
    function returns TRUE if the BYE includes an OSP cookie. The actual
-   usage message will be send on a different thread and will not delay BYE
+   usage message will be sent on a different thread and will not delay BYE
    processing. The function should be called before relaying the message.
 
    Meaning of the parameter is as follows:

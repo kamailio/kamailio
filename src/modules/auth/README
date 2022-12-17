@@ -728,9 +728,9 @@ if (has_credentials("myrealm")) {
    parameter force_stateless_reply regarding sending of the reply.
 
    Meaning of the parameters is as follows:
-     * realm - Realm is a opaque string that the user agent should present
-       to the user so he can decide what username and password to use.
-       Usually this is domain of the host the server is running on.
+     * realm - Realm is an opaque string that the user agent should
+       present to the user so he can decide what username and password to
+       use. Usually this is domain of the host the server is running on.
        It must not be empty string “”. In case of REGISTER requests, the
        To header field domain (e.g., variable $td) can be used (because
        this header field represents the user being registered), for all
@@ -820,9 +820,9 @@ if (!auth_check("$fd", "subscriber", "1")) {
        a previous request
 
    Meaning of the parameters is as follows:
-     * realm - Realm is a opaque string that the user agent should present
-       to the user so he can decide what username and password to use.
-       Usually this is domain of the host the server is running on.
+     * realm - Realm is an opaque string that the user agent should
+       present to the user so he can decide what username and password to
+       use. Usually this is domain of the host the server is running on.
        It must not be empty string “”. In case of REGISTER requests To
        header field domain (e.g., variable $td) can be used (because this
        header field represents a user being registered), for all other

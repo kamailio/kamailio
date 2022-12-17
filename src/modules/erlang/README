@@ -225,9 +225,9 @@ modparam("erlang", "cnode_host", "kamailio.lan")
 
 3.4. erlang_nodename (str)
 
-   The format of the node name is an name@host where name is the name
-   given by the user and host is the full host name if long names are
-   used, or the first part of the host name if short names are used.
+   The format of the node name is a name@host where name is the name given
+   by the user and host is the full host name if long names are used, or
+   the first part of the host name if short names are used.
 
    Example 1.4. Set erlang_nodename parameter
 ...

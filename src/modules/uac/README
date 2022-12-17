@@ -430,7 +430,7 @@ modparam("uac","credential","username:domain:password")
 
 3.9. auth_realm_avp (string)
 
-   The definition of an PV that might contain the realm to be used to
+   The definition of a PV that might contain the realm to be used to
    perform authentication.
 
    When the PV value is an empty string or NULL when uac_auth() is called,
@@ -630,7 +630,7 @@ modparam("uac", "reg_use_domain", 1)
    entry.
 
    By default no default socket is defined, the send socket is choosen
-   from the “tm” module when the requests is send out.
+   from the “tm” module when the requests is sent out.
 
    If you want to force a certain TCP port (e.g. 5060), you will need to
    set the tcp_reuse_port=yes core parameter as well.

@@ -297,7 +297,7 @@ modparam("userblocklist", "userblocklist_prefix_col", "prefix")
 
 3.9. userblocklist_allowlist_col (string)
 
-   Specify if this a blocklist (0) or a allowlist (1) entry.
+   Specify if this is a blocklist (0) or an allowlist (1) entry.
 
    Example 1.9. Set userblocklist_allowlist_col parameter
 ...
@@ -337,7 +337,7 @@ modparam("userblocklist", "globalblocklist_prefix_col", "prefix")
 
 3.13. globalblocklist_allowlist_col (string)
 
-   Specify if this a blocklist (0) or a allowlist (1) entry.
+   Specify if this is a blocklist (0) or an allowlist (1) entry.
 
    Example 1.13. Set globalblocklist_allowlist_col parameter
 ...

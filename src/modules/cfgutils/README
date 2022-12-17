@@ -199,7 +199,7 @@ Chapter 1. Admin Guide
    “set_prob”, “reset_prob” and “get_prob”.
 
    This module can be used for simple load-shedding, e.g. reply 5% of the
-   Invites with a 503 error and a adequate random Retry-After value.
+   Invites with a 503 error and an adequate random Retry-After value.
 
    The module provides as well functions to delay the execution of the
    server. The functions “sleep” and “usleep” could be used to let the

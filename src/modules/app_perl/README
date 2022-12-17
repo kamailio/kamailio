@@ -649,9 +649,9 @@ Kamailio::log(L_INFO, "foobar");
    2.19. append_branch(branch,qval)
    2.20. getParsedRURI()
 
-   This package provides access functions for an Kamailio sip_msg
-   structure and its sub-components. Through its means it is possible to
-   fully configure alternative routing decisions.
+   This package provides access functions for a Kamailio sip_msg structure
+   and its sub-components. Through its means it is possible to fully
+   configure alternative routing decisions.
 
 2.1. getType()
 
@@ -890,7 +890,7 @@ if ($m->getRURI() =~ m/\@somedomain.net/) {
 
 2.20. getParsedRURI()
 
-   Returns the current destination URI as an Kamailio::URI object.
+   Returns the current destination URI as a Kamailio::URI object.
 
 3. Kamailio::URI
 
@@ -1015,7 +1015,7 @@ if ($m->getRURI() =~ m/\@somedomain.net/) {
 
    Add an AVP.
 
-   Add an Kamailio AVP to its environment. name and val may both be
+   Add a Kamailio AVP to its environment. name and val may both be
    integers or strings; this function will try to guess what is correct.
    Please note that
 Kamailio::AVP::add("10", "10")
@@ -1030,7 +1030,7 @@ Kamailio::AVP::add(10, 10)
 
 4.2. get(name)
 
-   get an Kamailio AVP:
+   get a Kamailio AVP:
 my $numavp = Kamailio::AVP::get(5);
 my $stravp = Kamailio::AVP::get("foo");
 

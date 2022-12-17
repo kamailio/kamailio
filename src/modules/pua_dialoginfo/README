@@ -141,7 +141,7 @@ Chapter 1. Admin Guide
    The module is based on code (copy/paste) from pua_usrloc and
    nat_traversal module.
 
-   Following you will show some examples of an dialog-info XML document
+   Following you will show some examples of a dialog-info XML document
    taken from RFC 4235. This will help you to understand the meaning of
    the module parameters:
 <?xml version="1.0"?>

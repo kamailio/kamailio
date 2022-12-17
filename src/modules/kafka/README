@@ -174,7 +174,7 @@ ue.buffering.max.messages=500000;debug=all;metadata.request.timeout.ms=900000")
    Each topic property is a list of attribute = value separated by
    semicolon.
 
-   name atribute indicates the topic name. It is mandatory. Other
+   name attribute indicates the topic name. It is mandatory. Other
    attributes mean names of properties and are optional.
 
    This parameter is optional. Each topic needs a topic parameter so

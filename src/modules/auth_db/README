@@ -345,14 +345,14 @@ modparam("auth_db", "force_generate_avps", 1)
        header with the correct realm.
      * -6 (nonce reused) - the nonce has already been used to authenticate
        a previous request
-     * -8 (authuser mismatch) - depending on the method, th From/To/RURI
+     * -8 (authuser mismatch) - depending on the method, the From/To/RURI
        user does not match the authentication user (see auth_check()
        function).
 
    Meaning of the parameters is as follows:
-     * realm - Realm is a opaque string that the user agent should present
-       to the user so he can decide what username and password to use.
-       Usually this is domain of the host the server is running on.
+     * realm - Realm is an opaque string that the user agent should
+       present to the user so he can decide what username and password to
+       use. Usually this is domain of the host the server is running on.
        It must not be empty string “”. In case of REGISTER requests To
        header field domain (e.g., variable $td) can be used (because this
        header field represents the user being registered), for all other
@@ -392,9 +392,9 @@ if (!www_authorize("kamailio.org", "subscriber")) {
    Negative return codes have the same meaning as for www_authenticate().
 
    Meaning of the parameters is as follows:
-     * realm - Realm is a opaque string that the user agent should present
-       to the user so he can decide what username and password to use.
-       Usually this is domain of the host the server is running on.
+     * realm - Realm is an opaque string that the user agent should
+       present to the user so he can decide what username and password to
+       use. Usually this is domain of the host the server is running on.
        It must not be empty string “”. Apart of a static string, typical
        value is From header field domain (e.g., variable $fd).
        If an empty string “” is used then the server will generate it from
@@ -431,9 +431,9 @@ if (!proxy_authorize("$fd", "subscriber)) {
    Negative return codes have the same meaning as for www_authenticate().
 
    Meaning of the parameters is as follows:
-     * realm - Realm is a opaque string that the user agent should present
-       to the user so he can decide what username and password to use.
-       Usually this is domain of the host the server is running on.
+     * realm - Realm is an opaque string that the user agent should
+       present to the user so he can decide what username and password to
+       use. Usually this is domain of the host the server is running on.
        It must not be empty string “”. Apart of a static string, typical
        value is From header field domain (e.g., variable $fd).
        The string may contain pseudo variables.
@@ -472,7 +472,7 @@ if (!auth_check("$fd", "subscriber", "1")) {
    authentication functions.
 
    In addition, if the subscriber record is found, then the
-   load_credentials attributes are loaded. An use case can be loading the
+   load_credentials attributes are loaded. A use case can be loading the
    credential attributes for callee.
 
    Meaning of the parameters is as follows:

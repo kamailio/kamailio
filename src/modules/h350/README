@@ -83,7 +83,7 @@ Chapter 1. Admin Guide
 
    1.1. Example H.350 commObject LDAP Entry
 
-   The Kamailio H350 module enables an Kamailio SIP proxy server to access
+   The Kamailio H350 module enables a Kamailio SIP proxy server to access
    SIP account data stored in an LDAP [RFC4510] directory containing H.350
    [H.350] commObjects. ITU-T Recommendation H.350 standardizes LDAP
    object classes to store Real-Time Communication (RTC) account data. In
