@@ -1372,7 +1372,7 @@ struct rvalue* rval_convert(struct run_act_ctx* h, struct sip_msg* msg,
 
 
 /** integer operation: *res= op v.
- * @return 0 on succes, \<0 on error
+ * @return 0 on success, \<0 on error
  */
 inline static int long_longop1(long* res, enum rval_expr_op op, long v)
 {
@@ -1399,7 +1399,7 @@ inline static int long_longop1(long* res, enum rval_expr_op op, long v)
 
 
 /** integer operation: *res= v1 op v2
- * @return 0 on succes, \<0 on error
+ * @return 0 on success, \<0 on error
  */
 inline static int long_longop2(long* res, enum rval_expr_op op, long v1, long v2)
 {
@@ -1532,7 +1532,7 @@ error:
 
 
 /** integer returning operation on string: *res= op str (returns integer)
- * @return 0 on succes, \<0 on error
+ * @return 0 on success, \<0 on error
  */
 inline static int long_strop1(long* res, enum rval_expr_op op, str* s1)
 {

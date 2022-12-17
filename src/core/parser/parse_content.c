@@ -374,7 +374,7 @@ char* decode_mime_type(char* const start, const char* const end,
 		*mime_type |= type_candidate;;
 	}
 
-	/* now its possible to have some spaces */
+	/* now it is possible to have some spaces */
 	while ( p<end && (*p==' ' || *p=='\t' ||
 	(*p=='\n' && (*(p+1)==' '||*(p+1)=='\t')) ))
 		p++;
