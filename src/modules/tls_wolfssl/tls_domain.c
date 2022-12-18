@@ -121,7 +121,7 @@ static void setup_dh(WOLFSSL_CTX *ctx)
 
 /**
  * @brief Create a new TLS domain structure
- * 
+ *
  * Create a new domain structure in new allocated shared memory.
  * @param type domain Type
  * @param ip domain IP
@@ -222,7 +222,7 @@ void tls_destroy_cfg(void)
 			*tls_domains_cfg = (*tls_domains_cfg)->next;
 			tls_free_cfg(ptr);
 		}
-		
+
 		shm_free(tls_domains_cfg);
 		tls_domains_cfg = 0;
 	}
@@ -263,7 +263,7 @@ char* tls_domain_str(tls_domain_t* d)
 
 /**
  * @brief Initialize TLS domain parameters that have not been configured yet
- * 
+ *
  * Initialize TLS domain parameters that have not been configured from
  * parent domain (usually one of default domains)
  * @param d initialized domain
@@ -274,19 +274,19 @@ static int ksr_tls_fill_missing(tls_domain_t* d, tls_domain_t* parent)
 {
 	if (d->method == TLS_METHOD_UNSPEC) d->method = parent->method;
 	LOG(L_INFO, "%s: tls_method=%d\n", tls_domain_str(d), d->method);
-	
+
 	if (d->method < 1 || d->method >= TLS_METHOD_MAX) {
 		ERR("%s: Invalid TLS method value\n", tls_domain_str(d));
 		return -1;
 	}
-	
+
 	if (!d->cert_file.s) {
 		if (shm_asciiz_dup(&d->cert_file.s, parent->cert_file.s) < 0)
 			return -1;
 		d->cert_file.len = parent->cert_file.len;
 	}
 	LOG(L_INFO, "%s: certificate='%s'\n", tls_domain_str(d), d->cert_file.s);
-	
+
 	if (!d->ca_file.s){
 		if (shm_asciiz_dup(&d->ca_file.s, parent->ca_file.s) < 0)
 			return -1;
@@ -307,29 +307,29 @@ static int ksr_tls_fill_missing(tls_domain_t* d, tls_domain_t* parent)
 		d->crl_file.len = parent->crl_file.len;
 	}
 	LOG(L_INFO, "%s: crl='%s'\n", tls_domain_str(d), d->crl_file.s);
-	
+
 	if (d->require_cert == -1) d->require_cert = parent->require_cert;
 	LOG(L_INFO, "%s: require_certificate=%d\n", tls_domain_str(d),
 			d->require_cert);
-	
+
 	if (!d->cipher_list.s) {
 		if ( shm_asciiz_dup(&d->cipher_list.s, parent->cipher_list.s) < 0)
 			return -1;
 		d->cipher_list.len = parent->cipher_list.len;
 	}
 	LOG(L_INFO, "%s: cipher_list='%s'\n", tls_domain_str(d), d->cipher_list.s);
-	
+
 	if (!d->pkey_file.s) {
 		if (shm_asciiz_dup(&d->pkey_file.s, parent->pkey_file.s) < 0)
 			return -1;
 		d->pkey_file.len = parent->pkey_file.len;
 	}
 	LOG(L_INFO, "%s: private_key='%s'\n", tls_domain_str(d), d->pkey_file.s);
-	
+
 	if (d->verify_cert == -1) d->verify_cert = parent->verify_cert;
 	LOG(L_INFO, "%s: verify_certificate=%d\n", tls_domain_str(d),
 			d->verify_cert);
-	
+
 	if (d->verify_depth == -1) d->verify_depth = parent->verify_depth;
 	LOG(L_INFO, "%s: verify_depth=%d\n", tls_domain_str(d), d->verify_depth);
 
@@ -340,7 +340,7 @@ static int ksr_tls_fill_missing(tls_domain_t* d, tls_domain_t* parent)
 }
 
 
-/** 
+/**
  * @brief Called for ctx, with 2 args
  * @param ctx SSL context
  * @param larg ?
@@ -363,7 +363,7 @@ static int tls_domain_foreach_CTX(tls_domain_t* d, per_ctx_cbk_f ctx_cbk,
 {
 	int i,ret;
 	int procs_no;
-	
+
 	procs_no=get_max_procs();
 	for(i = 0; i < procs_no; i++) {
 		if ((ret=ctx_cbk(d->ctx[i], l1, p2))<0)
@@ -463,12 +463,12 @@ static int tls_foreach_CTX_in_cfg(tls_domains_cfg_t* cfg,
 
 /**
  * @brief Fix pathnames when loading domain keys or other list
- * 
+ *
  * Fix pathnames, to be used when loading the domain key, cert, ca list a.s.o.
  * It will replace path with a fixed shm allocated version. Assumes path->s
  * was shm allocated.
  * @param path path to be fixed. If it starts with '.' or '/' is left alone
- * (forced "relative" or "absolute" path). Otherwise the path is considered 
+ * (forced "relative" or "absolute" path). Otherwise the path is considered
  * to be relative to the main config file directory
  * (e.g. for /etc/ser/ser.cfg => /etc/ser/\<path\>).
  * @return  0 on success, -1 on error
@@ -526,7 +526,7 @@ static int load_cert(tls_domain_t* d)
 			TLS_ERR("load_cert:");
 			return -1;
 		}
-		
+
 	}
 	return 0;
 }
@@ -676,7 +676,7 @@ static int set_verification(tls_domain_t* d)
 
 	if (d->require_cert || d->verify_client == TLS_VERIFY_CLIENT_ON) {
 		verify_mode = WOLFSSL_VERIFY_PEER | WOLFSSL_VERIFY_FAIL_IF_NO_PEER_CERT;
-		LOG(L_INFO, "%s: %s MUST present valid certificate\n", 
+		LOG(L_INFO, "%s: %s MUST present valid certificate\n",
 			tls_domain_str(d), d->type & TLS_DOMAIN_SRV ? "Client" : "Server");
 	} else {
 		if (d->verify_cert || d->verify_client >= TLS_VERIFY_CLIENT_OPTIONAL) {
@@ -745,7 +745,7 @@ static void sr_ssl_ctx_info_callback(const SSL *ssl, int event, int ret)
 }
 
 /**
- * @brief Configure generic SSL parameters 
+ * @brief Configure generic SSL parameters
  * @param d domain
  * @return 0
  */
@@ -755,7 +755,7 @@ static int set_ssl_options(tls_domain_t* d)
 	int procs_no;
 	long options;
 
-	
+
 	procs_no=get_max_procs();
 	options=SSL_OP_ALL; /* all the bug workarrounds by default */
 	options|=SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION |
@@ -771,7 +771,7 @@ static int set_ssl_options(tls_domain_t* d)
 
 
 /**
- * @brief Configure TLS session cache parameters 
+ * @brief Configure TLS session cache parameters
  * @param d domain
  * @return 0
  */
@@ -780,7 +780,7 @@ static int set_session_cache(tls_domain_t* d)
 	int i;
 	int procs_no;
 	str tls_session_id;
-	
+
 	procs_no=get_max_procs();
 	tls_session_id=cfg_get(tls, tls_cfg, session_id);
 	for(i = 0; i < procs_no; i++) {
@@ -973,7 +973,7 @@ static int ksr_tls_fix_domain(tls_domain_t* d, tls_domain_t* def)
 			return -1;
 		}
 		wolfSSL_CTX_set_min_proto_version(d->ctx[i], TLS1_2_VERSION);
-#if 0	     
+#if 0
 		if(d->method>TLS_USE_TLSvRANGE) {
 			if(sr_tls_methods[d->method - 1].TLSMethodMin) {
 				SSL_CTX_set_min_proto_version(d->ctx[i],
@@ -989,7 +989,7 @@ static int ksr_tls_fix_domain(tls_domain_t* d, tls_domain_t* def)
 						sr_tls_methods[d->method - 1].TLSMethodMax);
 			}
 		}
-#endif	      
+#endif
 
 		/*
 		* check server domains for server_name extension and register
@@ -1032,7 +1032,7 @@ static int ksr_tls_fix_domain(tls_domain_t* d, tls_domain_t* def)
 }
 
 /**
- * @brief Load a private key from a file 
+ * @brief Load a private key from a file
  * @param d TLS domain
  * @return 0 on success, -1 on error
  */
@@ -1040,7 +1040,7 @@ static int load_private_key(tls_domain_t* d)
 {
 	int idx, ret_pwd, i;
 	int procs_no;
-	
+
 	if (!d->pkey_file.s || !d->pkey_file.len) {
 		DBG("%s: No private key specified\n", tls_domain_str(d));
 		return 0;
@@ -1050,7 +1050,7 @@ static int load_private_key(tls_domain_t* d)
 
 	procs_no=get_max_procs();
 	for(i = 0; i < procs_no; i++) {
-		
+
 		for(idx = 0, ret_pwd = 0; idx < 3; idx++) {
 			ret_pwd = wolfSSL_CTX_use_PrivateKey_file(d->ctx[i], d->pkey_file.s,
 					SSL_FILETYPE_PEM);
@@ -1063,7 +1063,7 @@ static int load_private_key(tls_domain_t* d)
 				continue;
 			}
 		}
-		
+
 		if (!ret_pwd) {
 			ERR("%s: Unable to load private key file '%s'\n",
 			    tls_domain_str(d), d->pkey_file.s);
@@ -1076,7 +1076,7 @@ static int load_private_key(tls_domain_t* d)
 			TLS_ERR("load_private_key:");
 			return -1;
 		}
-	}		
+	}
 
 	DBG("%s: Key '%s' successfully loaded\n",
 	    tls_domain_str(d), d->pkey_file.s);
@@ -1206,7 +1206,7 @@ int tls_fix_domains_cfg(tls_domains_cfg_t* cfg, tls_domain_t* srv_defaults,
 
 /**
  * @brief Create new configuration structure
- * 
+ *
  * Create new configuration structure in new allocated shared memory
  * @return configuration structure or zero on error
  */

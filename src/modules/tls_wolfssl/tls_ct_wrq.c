@@ -1,4 +1,4 @@
-/* 
+/*
  * TLS module
  *
  * Copyright (C) 2010 iptelorg GmbH
@@ -94,7 +94,7 @@ static int ssl_flush(void* tcp_c, void* error, const void* buf, unsigned size)
 	int ssl_error;
 	struct tls_extra_data* tls_c;
 	SSL* ssl;
-	
+
 	tls_c = ((struct tcp_connection*)tcp_c)->extra_data;
 	ssl = tls_c->ssl;
 	ssl_error = SSL_ERROR_NONE;
@@ -117,7 +117,7 @@ static int ssl_flush(void* tcp_c, void* error, const void* buf, unsigned size)
 		if (unlikely(n <= 0))
 			ssl_error = wolfSSL_get_error(ssl, n);
 	}
-	
+
 	*(long*)error = ssl_error;
 	return n;
 }
@@ -126,7 +126,7 @@ static int ssl_flush(void* tcp_c, void* error, const void* buf, unsigned size)
 
 /**
  * @brief Wrapper over tls_ct_q_flush()
- * 
+ *
  * Wrapper over tls_ct_q_flush(), besides doing a tls_ct_q_add it
  * also keeps track of queue size and total queued bytes.
  * @param c TCP connection
@@ -141,7 +141,7 @@ int tls_ct_wq_flush(struct tcp_connection* c, tls_ct_q** ct_q,
 {
 	int ret;
 	long error;
-	
+
 	error = SSL_ERROR_NONE;
 	ret = tls_ct_q_flush(ct_q,  flags, ssl_flush, c, &error);
 	*ssl_err = (int)error;
@@ -154,7 +154,7 @@ int tls_ct_wq_flush(struct tcp_connection* c, tls_ct_q** ct_q,
 
 /**
  * @brief Wrapper over tls_ct_q_add()
- * 
+ *
  * Wrapper over tls_ct_q_add(), besides doing a tls_ct_q_add it
  * also keeps track of queue size and total queued bytes.
  * If the maximum queue size is exceeded => error.
@@ -167,7 +167,7 @@ int tls_ct_wq_flush(struct tcp_connection* c, tls_ct_q** ct_q,
 int tls_ct_wq_add(tls_ct_q** ct_q, const void* data, unsigned int size)
 {
 	int ret;
-	
+
 	if (unlikely( (*ct_q && (((*ct_q)->queued + size) >
 						cfg_get(tls, tls_cfg, con_ct_wq_max))) ||
 				(atomic_get(tls_total_ct_wq) + size) >
@@ -193,7 +193,7 @@ int tls_ct_wq_add(tls_ct_q** ct_q, const void* data, unsigned int size)
 unsigned int tls_ct_wq_free(tls_ct_q** ct_q)
 {
 	unsigned int ret;
-	
+
 	if (likely((ret = tls_ct_q_destroy(ct_q)) > 0))
 		atomic_add(tls_total_ct_wq, -ret);
 	return ret;
