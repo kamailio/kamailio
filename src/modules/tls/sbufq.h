@@ -1,4 +1,4 @@
-/* 
+/*
  * Kamailio TLS module
  *
  * Copyright (C) 2010 iptelorg GmbH
@@ -135,14 +135,14 @@ error:
  * @param min_buf_size - min size to allocate for new buffer elements
  * @return 0 on success, -1 on error (mem. allocation)
  */
-inline static int sbufq_insert(struct sbuffer_queue* q, const void* data, 
+inline static int sbufq_insert(struct sbuffer_queue* q, const void* data,
 							unsigned int size, unsigned int min_buf_size)
 {
 	struct sbuf_elem* b;
-	
+
 	if (likely(q->first==0)) /* if empty, use sbufq_add */
 		return sbufq_add(q, data, size, min_buf_size);
-	
+
 	if (unlikely(q->offset)){
 		LOG(L_CRIT, "BUG: non-null offset %d (bad call, should"
 				"never be called after sbufq_run())\n", q->offset);
@@ -164,7 +164,7 @@ inline static int sbufq_insert(struct sbuffer_queue* q, const void* data,
 		q->first=b;
 		memcpy(b->buf, data, size);
 	}
-	
+
 	q->queued+=size;
 	return 0;
 error:
@@ -185,7 +185,7 @@ inline static unsigned int sbufq_destroy(struct  sbuffer_queue* q)
 	struct sbuf_elem* b;
 	struct sbuf_elem* next_b;
 	int unqueued;
-	
+
 	unqueued=0;
 	if (likely(q->first)){
 		b=q->first;
@@ -205,7 +205,7 @@ inline static unsigned int sbufq_destroy(struct  sbuffer_queue* q)
 
 
 /** tries to flush the queue.
- * Tries to flush as much as possible from the given queue, using the 
+ * Tries to flush as much as possible from the given queue, using the
  * given callback.
  * WARNING: it does no attempt to synchronize access/lock. If needed it should
  * be called under lock.
@@ -238,7 +238,7 @@ inline static int sbufq_flush(struct sbuffer_queue* q, int* flags,
 	int ret;
 	int block_size;
 	char* buf;
-	
+
 	*flags=0;
 	ret=0;
 	while(q->first){
@@ -250,7 +250,7 @@ inline static int sbufq_flush(struct sbuffer_queue* q, int* flags,
 			ret+=n;
 			if (likely(n==block_size)){
 				b=q->first;
-				q->first=q->first->next; 
+				q->first=q->first->next;
 				shm_free(b);
 				q->offset=0;
 				q->queued-=block_size;
