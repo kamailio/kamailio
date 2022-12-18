@@ -239,7 +239,7 @@ static int pv_cipher(sip_msg_t* msg, pv_param_t* param, pv_value_t* res)
 }
 
 
-static int get_bits(str* res, int* i, sip_msg_t* msg) 
+static int get_bits(str* res, long* i, sip_msg_t* msg) 
 {
 	str bits;
 	int b;
@@ -446,7 +446,7 @@ static int pv_cert_version(sip_msg_t* msg, pv_param_t* param, pv_value_t* res)
  * Check whether peer certificate exists and verify the result
  * of certificate verification
  */
-static int check_cert(str* res, int* ires, int local, int err, sip_msg_t* msg)
+static int check_cert(str* res, long* ires, int local, int err, sip_msg_t* msg)
 {
 	static str succ = STR_STATIC_INIT("1");
 	static str fail = STR_STATIC_INIT("0");
