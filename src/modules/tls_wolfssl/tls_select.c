@@ -519,7 +519,7 @@ static int pv_check_cert(sip_msg_t* msg, pv_param_t* param, pv_value_t* res)
 	case PV_CERT_EXPIRED:    err = X509_V_ERR_CERT_HAS_EXPIRED;            break;
 	case PV_CERT_SELFSIGNED: err = X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT; break;
 	default:
-		BUG("unexpected parameter value \"%d\"\n", param->pvn.u.isname.name.n);
+		BUG("unexpected parameter value \"%ld\"\n", param->pvn.u.isname.name.n);
 		return pv_get_null(msg, param, res);
 	}
 	
@@ -619,7 +619,7 @@ static int pv_validity(sip_msg_t* msg, pv_param_t* param, pv_value_t* res)
 	case PV_CERT_NOTBEFORE: bound = NOT_BEFORE; break;
 	case PV_CERT_NOTAFTER:  bound = NOT_AFTER;  break;
 	default:
-		BUG("unexpected parameter value \"%d\"\n", param->pvn.u.isname.name.n);
+		BUG("unexpected parameter value \"%ld\"\n", param->pvn.u.isname.name.n);
 		return pv_get_null(msg, param, res);
 	}
 
@@ -1241,7 +1241,7 @@ static int sel_tlsext_sn(str* res, select_t* s, sip_msg_t* msg)
 static int pv_tlsext_sn(sip_msg_t* msg, pv_param_t* param, pv_value_t* res)
 {
 	if (param->pvn.u.isname.name.n != PV_TLSEXT_SNI) {
-		BUG("unexpected parameter value \"%d\"\n",
+		BUG("unexpected parameter value \"%ld\"\n",
 			param->pvn.u.isname.name.n);
 		return pv_get_null(msg, param, res);
 	}
