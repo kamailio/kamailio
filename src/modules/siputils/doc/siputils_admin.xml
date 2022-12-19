@@ -16,7 +16,7 @@
 	<section>
 	<title>Overview</title>
 	<para>
-	This module implement various functions and checks related to SIP message
+	This module implements various functions and checks related to SIP message
 	handling and URI handling.
 	</para>
 	<para>
@@ -120,7 +120,7 @@ modparam("siputils", "options_accept_encoding", "gzip")
 		<warning>
 		<para>
 			First char of this field must be set to a value which is not used 
-			inside username,password or other fields of contact. Otherwise it 
+			inside username, password or other fields of contact. Otherwise it 
 			is possible for the decoding step to fail/produce wrong results.
 		</para>
 		</warning>
@@ -270,7 +270,7 @@ modparam("siputils", "e164_max_len", 20)
 		<para>
 			This function checks if the request method is OPTIONS and
 			if the request URI does not contain a username. If both
-			is true the request will be answered stateless with 
+			are true the request will be answered stateless with 
 			<quote>200 OK</quote> and the capabilities from the modules
 			parameters.
 		</para>
@@ -284,7 +284,7 @@ modparam("siputils", "e164_max_len", 20)
 			you should not call this function outside the myself check
 			because in this case the function could answer OPTIONS requests
 			which are sent to you as outbound proxy but with another
-			destination then your proxy (this check is currently missing
+			destination than your proxy (this check is currently missing
 			in the function).
 		</para>
 		<para>
@@ -383,7 +383,7 @@ if (uri_param("param1")) {
 	</section>
 	<section id="siputils.f.uri_param_value">
 		<title>
-		<function moreinfo="none">uri_param(param,value)</function>
+		<function moreinfo="none">uri_param(param, value)</function>
 		</title>
 		<para>
 		Find if Request URI has a given parameter with matching value
@@ -754,7 +754,7 @@ if (is_alphanumex("$rU", "+.-_")) {
 
 	<section id="siputils.f.encode_contact">
 		<title>
-		<function moreinfo="none">encode_contact(encoding_prefix,hostpart)</function>
+		<function moreinfo="none">encode_contact(encoding_prefix, hostpart)</function>
 		</title>
 		<para>
 		This function will encode uri-s inside Contact header in the following
