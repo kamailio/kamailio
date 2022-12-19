@@ -57,7 +57,7 @@ static int w_app_ruby_run3(sip_msg_t *msg, char *func, char *p1, char *p2,
 static int fixup_ruby_run(void** param, int param_no);
 
 static str _app_ruby_load_file = STR_NULL;
-static int _app_ruby_xval_mode = 0;
+static int _app_ruby_xval_mode = 1;
 
 static int *_app_ruby_reload_version = NULL;
 static str _app_ruby_modproc = str_init("app_ruby_proc.so");
