@@ -98,20 +98,20 @@ modparam("app_ruby", "load", "/usr/local/etc/kamailio/ruby/myscript.rb")
 			core are used.
 	    </para>
 	    <para>
-			Note: when set to 1, there were crashing reports that are under
-			investigation, this option being provided as intermediary
-			solution to preserve the behaviour from older versions.
+			Note: upt to version 5.7, when set to 1, there were crashing
+			reports that are under investigation, this option being provided
+			as intermediary solution to preserve the behaviour from older versions.
 	    </para>
 	    <para>
 		<emphasis>
-		    Default value is <quote>0</quote>.
+		    Default value is <quote>1</quote>.
 		</emphasis>
 	    </para>
 	    <example>
 		<title>Set <varname>xval_mode</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("app_ruby", "xval_mode", 1)
+modparam("app_ruby", "xval_mode", 0)
 ...
 </programlisting>
 	    </example>
