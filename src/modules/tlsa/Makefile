@@ -44,7 +44,12 @@ endif # ifneq ($(CRYPTO_BUILDER),)
 
 else
 	## when linking against static libs compiled from sources
-	DEFS += -I$(LIBSSL_STATIC_SRCPATH)/include
+	## default OpenSSL installation has lib/,lib64/ as siblings of include/
+	ifneq "$(wildcard $(LIBSSL_STATIC_SRCPATH)/../include )" ""
+		DEFS += -I$(LIBSSL_STATIC_SRCPATH)/../include
+	else
+		DEFS += -I$(LIBSSL_STATIC_SRCPATH)/include
+	endif
 	LIBS += $(LIBSSL_STATIC_SRCPATH)/libssl.a $(LIBSSL_STATIC_SRCPATH)/libcrypto.a
 endif # ifneq ($(LIBSSL_STATIC_SRCLIB),yes)
 
