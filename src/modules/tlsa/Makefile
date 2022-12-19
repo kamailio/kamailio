@@ -10,7 +10,9 @@ NAME=tlsa.so
 
 # set to yes when wanting to link with static libraries compiled from source
 LIBSSL_STATIC_SRCLIB ?= no
-# set to the path of the folder with static libraries compiled from source
+# set to the path of the folder with static libraries compiled from source;
+# can also be the folder where static OpenSSL libraries are installed
+# in which case headers are expected to be in $LIBSSL_STATIC_SRCPATH/../include
 LIBSSL_STATIC_SRCPATH ?= /usr/local/src/openssl
 # or set to the path where the static libraries are installed, for example:
 # LIBSSL_STATIC_SRCPATH ?= /usr/lib/x86_64-linux-gnu/
