@@ -1054,7 +1054,7 @@ static void uac_on_load_callback(struct dlg_cell* dialog, int type, struct dlg_c
 	 * callback for both FROM and TO replace cases. This might be a bit
 	 * inefficient in cases where only one of the functions is used. But as
 	 * this applies only e.g. to a proxy restart with runnning dialogs, it
-	 * does not matter. The replace_callback function will just not find a
+	 * does not matter. The replace_callback function will just not find
 	 * an entry in the dialog variables table and log an error.
 	 */
 	if(uac_load_callback_helper(dialog, FL_USE_UAC_FROM) != 0) {

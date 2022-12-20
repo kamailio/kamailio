@@ -671,7 +671,7 @@ end
 		<title>Functions</title>
 		<section id="uac.f.uac_replace_from">
 			<title>
-				<function moreinfo="none">uac_replace_from(display,uri)</function>
+				<function moreinfo="none">uac_replace_from(display, uri)</function>
 			</title>
 			<para>
 			Replace in FROM header the <emphasis>display</emphasis> name and
@@ -772,7 +772,7 @@ uac_restore_from();
 		</section>
 		<section id="uac.f.uac_replace_to">
 		<title>
-				<function moreinfo="none">uac_replace_to(display,uri)</function>
+				<function moreinfo="none">uac_replace_to(display, uri)</function>
 			</title>
 			<para>
 			Replace in TO header the <emphasis>display</emphasis> name and
