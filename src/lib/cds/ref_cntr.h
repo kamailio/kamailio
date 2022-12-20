@@ -93,7 +93,7 @@ extern "C" {
 /** Structure holding reference counter value. */
 typedef struct {
 	int cntr; /**< counter value */
-	cds_mutex_t *mutex; /**< mutex asigned to this reference counter */
+	cds_mutex_t *mutex; /**< mutex assigned to this reference counter */
 } reference_counter_data_t;
 
 /** Structure holding information about group of reference counters.  
