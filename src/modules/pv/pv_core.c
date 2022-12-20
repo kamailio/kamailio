@@ -4650,7 +4650,7 @@ int pv_set_ccp_attrs(struct sip_msg* msg, pv_param_t *param,
 	char *sep = NULL;
 
 	if(val == NULL || (val->flags&PV_VAL_NULL)) {
-		LM_WARN("ignoring null asignment\n");
+		LM_WARN("ignoring null assignment\n");
 		return 0;
 	}
 
