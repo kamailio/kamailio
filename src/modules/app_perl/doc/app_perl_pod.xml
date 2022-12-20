@@ -689,7 +689,7 @@ my @rows = $ldap->search(
       </para>
       <para>
 	The first argument, when given, should be a hash reference pointing
-	to to the connection parameters, possibly an <literal
+	to to the connection parameters, possibly a <literal
 	role="code"><![CDATA[Kamailio::LDAPUtils::LDAPConfig]]></literal>
 	object. This argument may be <literal
 	role="code"><![CDATA[undef]]></literal> in which case a new
