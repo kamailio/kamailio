@@ -135,15 +135,15 @@ modparam("app_ruby", "load", "/usr/local/etc/kamailio/ruby/myscript.rb")
    internal functions from the app_ruby module, otherwise the ones from
    core are used.
 
-   Note: when set to 1, there were crashing reports that are under
-   investigation, this option being provided as intermediary solution to
-   preserve the behaviour from older versions.
+   Note: upt to version 5.7, when set to 1, there were crashing reports
+   that are under investigation, this option being provided as
+   intermediary solution to preserve the behaviour from older versions.
 
-   Default value is “0”.
+   Default value is “1”.
 
    Example 1.2. Set xval_mode parameter
 ...
-modparam("app_ruby", "xval_mode", 1)
+modparam("app_ruby", "xval_mode", 0)
 ...
 
 3.3. modproc (str)
