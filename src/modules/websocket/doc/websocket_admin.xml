@@ -407,12 +407,12 @@ modparam("websocket", "sub_protocols", 2)
 		accepting the WebSocket handshake.
 		</para></listitem>
 		<listitem><para>
-		<emphasis>1</emphasis> - Add a
+		<emphasis>1</emphasis> - Add an
 		&quot;Access-Control-Allow-Origin: *&quot; header to the
 		response accepting the WebSocket handshake.
 		</para></listitem>
 		<listitem><para>
-		<emphasis>2</emphasis> - Add a
+		<emphasis>2</emphasis> - Add an
 		&quot;Access-Control-Allow-Origin:&quot; header containing the
 		same body as the &quot;Origin:&quot; header from the request to
 		the response accepting the WebSocket handshake. If there is no
