@@ -17,16 +17,16 @@
 	<section>
 		<title>Overview</title>
 		<para>
-		UAC REDIRECT - User Agent Client redirection - module enhance &kamailio;
+		UAC REDIRECT - User Agent Client redirection - module enhances &kamailio;
 		with the functionality of being able to handle (interpret, filter,
 		log and follow) redirect responses ( 3xx replies class).
 		</para>
 		<para>
-		UAC REDIRECT module offer stateful processing, gathering the
+		UAC REDIRECT module offers stateful processing, gathering the
 		contacts from all 3xx branches of a call.
 		</para>
 		<para>
-		The module provide a powerful mechanism for selecting and filtering 
+		The module provides a powerful mechanism for selecting and filtering 
 		the contacts to be used for the new redirect:
 		</para>
 		<itemizedlist>
@@ -340,7 +340,7 @@ modparam("uac_redirect","flags_hdr_mode",2)
 		<section>
 			<title><varname>q_value</varname> (int)</title>
 			<para>
-			Specifies the q-value to asign to contacts without one. Because
+			Specifies the q-value to assign to contacts without one. Because
 			Kamailio doesn't support float parameter types, the value in the
 			parameter is divided by 1000 and stored as float. For example, if
 			you want q value to be 0.38, use value 380 here.
@@ -364,7 +364,7 @@ modparam("uac_redirect","q_value",0)
 		<title>Functions</title>
 		<section id="uac_redirect.f.set_deny_filter">
 			<title>
-				<function moreinfo="none">set_deny_filter(filter,flags)
+				<function moreinfo="none">set_deny_filter(filter, flags)
 					</function>
 			</title>
 			<para>
@@ -414,7 +414,7 @@ set_deny_filter(".*@domain1.net","");
 
 		<section id="uac_redirect.f.set_accept_filter">
 			<title>
-				<function moreinfo="none">set_accept_filter(filter,flags)
+				<function moreinfo="none">set_accept_filter(filter, flags)
 					</function>
 			</title>
 			<para>
@@ -523,7 +523,7 @@ get_redirects("*");
 
 		<section id="uac_redirect.f.get_redirects2">
 			<title>
-				<function moreinfo="none">get_redirects(max,reason)</function>
+				<function moreinfo="none">get_redirects(max, reason)</function>
 			</title>
 			<para>
 				The function has same functionality as 
