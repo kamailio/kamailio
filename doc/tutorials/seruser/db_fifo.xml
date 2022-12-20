@@ -216,7 +216,7 @@ TABLE_NAME
 		<para>
 		This function sends a raw query directly to the database driver 
 		without trying to understand the command. This command <emphasis>MUST
-		NOT</emphasis> generate any response.Otherwise, the database driver 
+		NOT</emphasis> generate any response. Otherwise, the database driver 
 		can block or desynchronize (depending of the driver).
 		Its syntax is:
 		<programlisting>

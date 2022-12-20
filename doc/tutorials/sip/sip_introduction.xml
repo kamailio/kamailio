@@ -868,7 +868,7 @@ Warning: 392 195.37.77.101:5060 "Noisy feedback tells:
 	    <title>Session Termination</title>
 	    <simpara>
 		Session termination is accomplished by sending a BYE request within dialog
-		established bye INVITE. BYE messages are sent directly from one user agent to
+		established by INVITE. BYE messages are sent directly from one user agent to
 		the other unless a proxy on the path of the INVITE request indicated that it
 		wishes to stay on the path by using record routing (see <xref
 		    linkend="record_routing"/>.
@@ -938,7 +938,7 @@ Warning: 392 195.37.77.101:5060 "Noisy feedback tells:
 		    little bit different way. The Request-URI is no more overwritten, it always
 		    contains URI of the destination user agent. If there are any Route header
 		    field in a message, than the message is sent to the URI from the topmost
-		    Route header field. This is significant change--Request-URI doesn't
+		    Route header field. This is a significant change--Request-URI doesn't
 		    necessarily contain URI to which the request will be sent. In fact, loose
 		    routing is very similar to IP source routing.
 		</simpara>

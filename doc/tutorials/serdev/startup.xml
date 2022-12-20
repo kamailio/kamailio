@@ -703,7 +703,7 @@ module_stm = "loadmodule" STRING
 		</listitem>
 		<listitem>
 		    <para>
-			Call <function>init_child(0).</function> The function
+			Call <function>init_child(0)</function>. The function
 			performs per-child specific initialization of all
 			loaded modules.  A module can be initialized though
 			<function>mod_init</function> function.  The function

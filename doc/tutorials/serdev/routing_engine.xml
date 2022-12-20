@@ -29,7 +29,7 @@
 	The routing engine can be found in file <filename>action.c</filename>.
     </para>
     <para>
-	The main function is <function>run_actions.</function> The function
+	The main function is <function>run_actions</function>. The function
 	accepts two parameters. The first parameter is list of actions to be
 	processed (Remember, the config file gets translated into array of
 	linked lists. Each linked list in the array represents one "route" part
