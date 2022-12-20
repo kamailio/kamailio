@@ -527,7 +527,7 @@ struct module_exports exports = {
 			    As the next step, list of all previously loaded
 			    modules will be searched for the same module.  If
 			    such module is found, it means, that user is trying
-			    to load the same module twice. In such case an
+			    to load the same module twice. In such case a
 			    warning will be issued and server will abort.
 			</para>
 		    </listitem>

@@ -79,7 +79,7 @@ RPC Exports for core
 <section id="core.info"><title>core.info</title>
 <para>
         Verbose info, including version number, compile flags,
-        compiler,repository hash a.s.o.
+        compiler, repository hash a.s.o.
 </para>
 <para>
 </para>

@@ -35,7 +35,7 @@
 struct module_exports{
     char* name;                     /* null terminated module name */
     char** cmd_names;               /* cmd names registered 
-                                     * by this modules */
+                                     * by this module */
     cmd_function* cmd_pointers;     /* pointers to the 
                                      * corresponding functions */
     int* param_no;                  /* number of parameters used by 
@@ -48,7 +48,7 @@ struct module_exports{
                                      * (size of cmd_{names,pointers} 
                                      */
     char** param_names;      /* parameter names registered 
-                              * by this modules */
+                              * by this module */
     modparam_t* param_types; /* Type of parameters */
     void** param_pointers;   /* Pointers to the corresponding 
                               * memory locations */
