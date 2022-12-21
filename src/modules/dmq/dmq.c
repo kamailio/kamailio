@@ -379,7 +379,7 @@ static int dmq_add_notification_address(modparam_t type, void * val)
 	}
 
 	/* initial allocation */
-	if (dmq_notification_address_list == 0) {
+	if (dmq_notification_address_list == NULL) {
 		dmq_notification_address_list = pkg_malloc(sizeof(str_list_t));
 		if (dmq_notification_address_list == NULL) {
 			PKG_MEM_ERROR;
