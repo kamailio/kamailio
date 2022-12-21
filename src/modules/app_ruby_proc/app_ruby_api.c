@@ -77,6 +77,32 @@ sr_ruby_env_t *app_ruby_sr_env_get(void)
 }
 
 
+static void ksr_ruby_error(int error)
+{
+	VALUE lasterr;
+	VALUE inclass;
+	VALUE message;
+	VALUE ary;
+	long c;
+
+	if (error == 0)
+		return;
+
+	lasterr = rb_gv_get("$!"); /* NOTRANSLATE */
+	inclass = rb_class_path(CLASS_OF(lasterr));
+	message = rb_obj_as_string(lasterr);
+	LM_ERR("error ruby script: class=%s, message=%s\n",
+			RSTRING_PTR(inclass), RSTRING_PTR(message));
+
+	if (!NIL_P(rb_errinfo())) {
+		ary = rb_funcall(rb_errinfo(), rb_intern("backtrace"), 0);
+		for (c=0; c<RARRAY_LEN(ary); ++c) {
+			LM_ERR("backtrace from %s\n",
+					RSTRING_PTR(RARRAY_PTR(ary)[c]));
+		}
+	}
+}
+
 static int app_ruby_print_last_exception()
 {
 	VALUE rException, rExceptStr;
@@ -108,7 +134,8 @@ int app_ruby_kemi_load_script(void)
 
 	if (state) {
 		/* got exception */
-		app_ruby_print_last_exception();
+		//app_ruby_print_last_exception();
+		ksr_ruby_error(state);
 		LM_ERR("failed to load rb script file: %.*s (%d)\n",
 				_app_ruby_proc_load_file.len, _app_ruby_proc_load_file.s, state);
 		// return -1;
@@ -168,7 +195,8 @@ int app_ruby_proc_init_child(void)
 
 	if (state) {
 		/* handle exception */
-		app_ruby_print_last_exception();
+		// app_ruby_print_last_exception();
+		ksr_ruby_error(state);
 		LM_ERR("test execution with error (res type: %d)\n", TYPE(rbres));
 		return -1;
 	} else {
