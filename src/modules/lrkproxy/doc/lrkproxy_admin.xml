@@ -438,7 +438,7 @@
 						</itemizedlist>
 					</listitem>
 					<listitem><para>
-						<emphasis>ip_address</emphasis> - new SDP IP address.This optional parameter is under development.
+						<emphasis>ip_address</emphasis> - new SDP IP address. This optional parameter is under development.
 					</para></listitem>
 				</itemizedlist>
 				<para>
