@@ -454,7 +454,7 @@ int ld_ldap2fldex(db_fld_t* fld, LDAP* ldap, LDAPMessage* msg, int init)
 				lfld->valuesnum = 0;
 				if (lfld->client_side_filtering && lfld->filter) {
 					int j;
-					/* if the all filter conditions requires NULL value then we can accept the record */
+					/* if all the filter conditions require NULL value then we can accept the record */
 					for (j=0; lfld->filter[j]; j++) {
 						if (lfld->filter[j]->flags & DB_NULL && lfld->filter[j]->op == DB_EQ) {
 							continue;
