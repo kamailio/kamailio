@@ -64,7 +64,7 @@
 	    matter to you, better use stateful processing (<acronym>TM</acronym> 
 	    module) for INVITE processing. Particularly, the problem happens when a UA
 	    sends an INVITE which already has a to-tag in it (e.g., a
-	    re-INVITE) and the server want to reply to it. Then, it will keep the
+	    re-INVITE) and the server wants to reply to it. Then, it will keep the
 	    current to-tag, which will be mirrored in ACK. &kamailio; will not see
 	    its signature and forward the ACK downstream. Caused harm is not
 	    bad, just a useless ACK is forwarded.
