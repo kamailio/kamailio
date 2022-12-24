@@ -2192,7 +2192,7 @@ $SD_DESC_COLUMN FROM $SD_TABLE;"
 				#| $AWK 'BEGIN {line=0;}
 				#	/^\+/ { next }
 				#	{	line++;
-	#if(line==1) print "SIP-ID     \tSpeedDial  \tNew-URI    \tDescritpion\n";
+	#if(line==1) print "SIP-ID     \tSpeedDial  \tNew-URI    \tDescription\n";
 				#		else {
 				#			ORS_BAK=ORS;
 				#			ORS="";
@@ -2234,7 +2234,7 @@ $SD_TABLE $CLAUSE ; "
 			$DBROCMD "$QUERY"
 			# | $AWK 'BEGIN {line=0;} /^\+/ { next }
 			# {
-			#	  if(line==0) print "##  SIP-ID    \tNew-URI   \tDescritpion\n";
+			#	  if(line==0) print "##  SIP-ID    \tNew-URI   \tDescription\n";
 			#	  else {
 			#		  ORS_BAK=ORS;usage_kamailio_monitor() {
 			#		  ORS="";
