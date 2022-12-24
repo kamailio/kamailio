@@ -630,7 +630,7 @@ int ki_sst_check_min(struct sip_msg *msg, int flag)
 		 * First see if there is an Session-Expires: header.  If there
 		 * is, also look for a MIN-SE: header. If there is, use the
 		 * minimum value of the two to compare with srt1. All MUST not
-		 * be less then 90 and 1800 is recomended. See RCF section 4.
+		 * be less than 90 and 1800 is recomended. See RCF section 4.
 		 */
 		if ((result = parse_session_expires(msg, &se)) != parse_sst_success) {
 			if (result != parse_sst_header_not_found) {
