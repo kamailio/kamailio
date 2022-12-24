@@ -77,7 +77,7 @@ modparam("uri_db", "db_url", "mysql://username:password@localhost/kamailio")
 	<section id="uri_db.p.db_table">
 		<title><varname>db_table</varname> (string)</title>
 		<para>
-		The DB table that should be used. Its possible to use the
+		The DB table that should be used. It is possible to use the
 		<quote>subscriber</quote> and <quote>uri</quote> table. If the
 		<quote>uri</quote> table should be used, an additional parameter
 		<quote>use-uri-table</quote>) must be set.
