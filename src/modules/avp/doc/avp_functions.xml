@@ -15,7 +15,7 @@
     <title>Functions</title>
 
     <section id="avp.f.set_iattr">
-	<title><function>set_iattr(attribute,value)</function></title>
+	<title><function>set_iattr(attribute, value)</function></title>
 	<para>
 	    Create an AVP of type integer.
 	</para>
@@ -60,7 +60,7 @@ flags2attr("$msg_flags")
     </section>
     
     <section id="avp.f.set_sattr">
-	<title><function>set_sattr(attribute,value)</function></title>
+	<title><function>set_sattr(attribute, value)</function></title>
 	<para>
 	    Create an AVP of type string.
 	</para>
@@ -102,7 +102,7 @@ set_sattr("called_number", "1234")
     </section>
     
     <section id="avp.f.attr2uri">
-	<title><function>attr2uri($attribute[,uri-part])</function></title>
+	<title><function>attr2uri($attribute[, uri-part])</function></title>
 	<para>
 		Rewrite the whole Request-URI of the message being processed with
 		the value of an AVP, or if an <varname>uri-part</varname> is specified,
