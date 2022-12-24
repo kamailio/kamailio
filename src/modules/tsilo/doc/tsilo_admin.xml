@@ -17,11 +17,11 @@
 	<title>Overview</title>
 	<para>
 		This module provides transaction storage for the &kamailioname;. It
-		stores in an internal table transactions for a Request-URI (R-URI) and add branches
-		to them later if new contacts for the AOR are added.
+		stores in an internal table transactions for a Request-URI (R-URI) and
+		adds branches to them later if new contacts for the AOR are added.
 	</para>
 	<para>
-		For each message, the modules stores <quote>Request-URI</quote>
+		For each message, the module stores <quote>Request-URI</quote>
 		(<quote>R-URI</quote>), &uri; and the internal transaction index
 		and label.
 	</para>
