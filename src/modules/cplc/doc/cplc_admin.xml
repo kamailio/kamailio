@@ -486,7 +486,7 @@ modparam("cplc","ignore3xx",1)
 		<title>Functions</title>
 		<section id="cplc.f.cpl_run_script">
 			<title>
-				<function moreinfo="none">cpl_run_script(type,mode, [uri])</function>
+				<function moreinfo="none">cpl_run_script(type, mode[, uri])</function>
 			</title>
 			<para>
 				Starts the execution of the CPL script. The user name is
@@ -535,7 +535,7 @@ modparam("cplc","ignore3xx",1)
 					<para>
 					<emphasis>IS_STATEFUL</emphasis> - the current INVITE has
 					already a transaction associated. All signaling operations
-					(replies or proxy) will be done in stateful way.So, if
+					(replies or proxy) will be done in stateful way. So, if
 					the function returns, will be in stateful mode.
 					</para>
 				</listitem>
