@@ -30,7 +30,7 @@
 
 /*! \defgroup ipops SIP-router ipops Module
  *
- * The ipops module provide IPv4 and IPv6 operations.
+ * The ipops module provides IPv4 and IPv6 operations.
  */
 
 #include <stdio.h>
