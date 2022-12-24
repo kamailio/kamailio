@@ -2842,7 +2842,7 @@ if(rtpengine_query_v("j", "$var(rdata)")) {
 		internally based on message type and method which one to execute.
 		</para>
 		<para>
-		It can take the same parameters as <function>rtpengine_offer().</function>
+		It can take the same parameters as <function>rtpengine_offer()</function>.
 		The flags parameter to rtpengine_manage() can be a configuration variable
 		containing the flags as a string.
 		</para>
@@ -2923,7 +2923,7 @@ rtpengine_manage();
 		metadata from SDP.
 		</para>
 		<para>
-		It can take the same parameters as <function>rtpengine_manage().</function>
+		It can take the same parameters as <function>rtpengine_manage()</function>.
 		The flags parameter to start_recording can be a configuration variable
 		containing the flags as a string.
 		The call-id flag can be used to start recording for a different call.
@@ -2952,7 +2952,7 @@ start_recording();
 		which offers an alternative for call recording.
 		</para>
 		<para>
-		It can take the same parameters as <function>rtpengine_manage().</function>
+		It can take the same parameters as <function>rtpengine_manage()</function>.
 		The flags parameter to start_recording can be a configuration variable
 		containing the flags as a string.
 		The call-id flag can be used to stop recording for a different call.
