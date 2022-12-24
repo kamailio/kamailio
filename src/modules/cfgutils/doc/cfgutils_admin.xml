@@ -787,7 +787,7 @@ $ &kamcmd; cfgutils.reset_gflag 1
 		<section  id="cfgutils.rpc.is_gflag">
 			<title><function moreinfo="none">cfgutils.is_gflag</function></title>
 			<para>
-			Returns true if the all the flags from the bitmask are set.
+			Returns true if all the flags from the bitmask are set.
 			</para>
 			<para>
 			The parameter value must be a bitmask in decimal or hexadecimal format.
