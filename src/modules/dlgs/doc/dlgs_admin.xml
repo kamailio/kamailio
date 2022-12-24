@@ -68,7 +68,7 @@
 		<title><varname>active_lifetime</varname> (int)</title>
 		<para>
 			The lifetime in seconds of an active dialog in memory. A dialog is
-			considered active after the ACK of 200OK for INVITE.
+			considered active after the ACK of 200 OK for INVITE.
 		</para>
 		<para>
 		<emphasis>
