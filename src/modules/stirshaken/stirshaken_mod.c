@@ -589,7 +589,7 @@ fail:
 
 /**
  * Verify SIP Identity Header (involves call from libstirshaken to cache_callback,
- * wich will supply requested certificate from cache [if configured to do so]
+ * which will supply requested certificate from cache [if configured to do so]
  * or will let libstirshaken to perform HTTP(s) GET request to download certificate).
  * Verify a call with STIR-Shaken.
  *
