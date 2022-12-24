@@ -912,7 +912,7 @@ inline static unsigned char* binrpc_read_struct(struct binrpc_parse_ctx* ctx,
 	p+=len; /* len should be 0 for a struct tag */
 	in_struct=1;
 	v->type=type;
-	v->u.strval.s=(char*)p; /* it will conain the inside of the struc */
+	v->u.strval.s=(char*)p; /* it will contain the inside of the struc */
 	while(in_struct){
 		/* read name */
 		type=*p & 0xf;
