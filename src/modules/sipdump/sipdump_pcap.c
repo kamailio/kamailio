@@ -31,7 +31,7 @@
 extern int sipdump_mode;
 
 /* structures related to PCAP headers imported from open source Asterisk project
- * fuction to write to PCAP file adapted for internal structures
+ * function to write to PCAP file adapted for internal structures
  * source: res_pjsip_logger.c - License GPLv2 -  Copyright (C) Digium, Inc.*/
 
 /* PCAP Header */
