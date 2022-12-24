@@ -81,7 +81,7 @@ and commit history, there are several *rules* required for each contribution.
 
 Please create the commit messages following the GIT convention:
 
-  * start with one short line, preferably less then 50 chars summarizing the
+  * start with one short line, preferably less than 50 chars summarizing the
   changes (this is referred later as "first line of the commit message")
   * then one empty line
   * then a more detailed description (the "commit message content")
