@@ -662,7 +662,7 @@ public:
                         case EXPR: Error(_SC("can't '++' or '--' an expression")); break;
                         case OBJECT:
                         case BASE:
-                            if(_es.donot_get == true)  { Error(_SC("can't '++' or '--' an expression")); break; } //mmh dor this make sense?
+                            if(_es.donot_get == true)  { Error(_SC("can't '++' or '--' an expression")); break; } //mmh does this make sense?
                             Emit2ArgsOP(_OP_PINC, diff);
                             break;
                         case LOCAL: {
