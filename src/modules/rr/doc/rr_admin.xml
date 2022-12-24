@@ -43,7 +43,7 @@
     header will be used - Record-Route parameters mirroring are reinforced by
     RFC 3261 (see 12.1.1 UAS behavior).</para>
 
-    <para>For this purpose, the modules offers the following functions:</para>
+    <para>For this purpose, the module offers the following functions:</para>
 
     <itemizedlist>
       <listitem>
