@@ -39,7 +39,7 @@
 		all database features or supports them in different manner. Here we
 		must express especially <emphasis>filtering</emphasis> and <emphasis>
 		multi-values</emphasis>. The multi-value is de facto array of single
-		values. If the LDAP module get a multi-value field then generates
+		values. If the LDAP module gets a multi-value field then it generates
 		record for every single value, respectively for every combination
 		in case the more fields contain multi-value.
 		</para>
