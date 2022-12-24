@@ -16,7 +16,7 @@
 	<section>
 	<title>Overview</title>
 	<para>
-	The modules is a XCAP client for &kamailio; that can be used by other modules.
+	The module is a XCAP client for &kamailio; that can be used by other modules.
 	It fetches XCAP elements, either documents or part of them, by sending
 	HTTP GET requests to an XCAP server. It also offers support for
 	conditional queries.  It uses the <emphasis>libcurl</emphasis> library as a
@@ -48,7 +48,7 @@
 	<section>
 		<title>&kamailio; Modules</title>
 		<para>
-			The modules is not dependent of any &kamailio; module.
+			The module is not dependent of any &kamailio; module.
 		</para>
 	</section>
 
