@@ -205,7 +205,7 @@ modparam("ruxc", "http_reuse", 1)
 	<section id="ruxc.p.http_retry">
 		<title><varname>http_retry</varname> (int)</title>
 		<para>
-		How many times to retry if the HTTP request does not get a 200ok response.
+		How many times to retry if the HTTP request does not get a 200 OK response.
 		</para>
 		<para>
 		<emphasis>
