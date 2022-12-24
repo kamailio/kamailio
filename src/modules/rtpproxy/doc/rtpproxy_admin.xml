@@ -653,7 +653,7 @@ rtpproxy_destroy();
 		internally based on message type and method which one to execute.
 		</para>
 		<para>
-		It can take the same parameters as <function>rtpproxy_offer().</function>
+		It can take the same parameters as <function>rtpproxy_offer()</function>.
 		The flags parameter to rtpproxy_manage() can be a configuration variable
 		containing the flags as a string.
 		</para>
