@@ -184,7 +184,8 @@ function ksr_route_reqinit()
 	end
 	local ua = KSR.kx.gete_ua();
 	if string.find(ua, "friendly") or string.find(ua, "scanner")
-			or string.find(ua, "sipcli") or string.find(ua, "sipvicious") then
+			or string.find(ua, "sipcli") or string.find(ua, "sipvicious")
+			or string.find(ua, "VaxSIPUserAgent") or string.find(ua, "pplsip") then
 		KSR.sl.sl_send_reply(200, "OK");
 		KSR.x.exit();
 	end
