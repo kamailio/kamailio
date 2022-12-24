@@ -52,7 +52,7 @@ int nio_intercept_init(void)
 
 	if (nio_min_msg_len < 0)
 	{
-		LM_WARN("min_msg_len is less then zero, setting it to zero");
+		LM_WARN("min_msg_len is less than zero, setting it to zero");
 		nio_min_msg_len = 0;
 	}
 
