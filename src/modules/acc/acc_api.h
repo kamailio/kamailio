@@ -79,7 +79,7 @@ typedef int (*legs2strar_f)( struct acc_extra *legs, struct sip_msg *rq, str *va
 		int *int_arr, char *type_arr, int start);
 typedef acc_extra_t* (*leg_info_f)(void);
 
-/* cdr related fuctions */
+/* cdr related functions */
 typedef int (*cdr_core2strar_f)( struct dlg_cell* dlg,
 		str* values, int* unused, char* types);
 typedef int (*extra2strar_dlg_only_f)(struct acc_extra *extra, struct dlg_cell* dlg, str *val_arr,
