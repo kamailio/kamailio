@@ -158,7 +158,8 @@ class kamailio:
         if KSR.corex.has_user_agent() > 0 :
             ua = KSR.pv.gete("$ua")
             if (ua.find("friendly")!=-1 or ua.find("scanner")!=-1
-                    or ua.find("sipcli")!=-1 or ua.find("sipvicious")!=-1) :
+                    or ua.find("sipcli")!=-1 or ua.find("sipvicious")!=-1
+                    or ua.find("VaxSIPUserAgent")!=-1 or ua.find("pplsip")!=-1) :
                 KSR.sl.sl_send_reply(200, "Processed")
                 return -255
 

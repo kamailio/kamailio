@@ -138,7 +138,8 @@ function ksr_route_reqinit()
 		local UA = KSR.pv.get("$ua");
 		// if (sipscanregex.match(UA)) {
 		if (UA.find("friendly")!=null || UA.find("scanner")!=null
-				|| UA.find("sipcli")!=null || UA.find("sipvicious")!=null) {
+				|| UA.find("sipcli")!=null || UA.find("sipvicious")!=null
+				|| UA.find("VaxSIPUserAgent")!= null || UA.find("pplsip")!= null) {
 			KSR.sl.sl_send_reply(200, "OK");
 			KSR.x.exit();
 		}
