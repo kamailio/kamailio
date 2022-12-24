@@ -963,7 +963,7 @@ if (allow_routing("basename")) {
 	</section>
 	<section id ="permissions.f.allow_routing_fileargs">
 		<title>
-		<function moreinfo="none">allow_routing(allow_file,deny_file)</function>
+		<function moreinfo="none">allow_routing(allow_file, deny_file)</function>
 		</title>
 		<para>
 		Returns true if all pairs constructed as described in
