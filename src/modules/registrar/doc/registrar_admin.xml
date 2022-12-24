@@ -77,7 +77,7 @@
 			addresses.
 		</para>
 		<para>
-			The public GRUU is build based on the '+sip.instance'
+			The public GRUU is built based on the '+sip.instance'
 			UUID parameter as recommended by RFC.
 		</para>
 		<para>
@@ -322,7 +322,7 @@ modparam("registrar", "realm_prefix", "sip.")
 		The parameter controls how lookup function processes multiple 
 		contacts.  If there are multiple contacts for the given username in 
 		usrloc and this parameter is set to 1, Request-URI will be 
-		overwritten with the highest-q rated contact and the rest will be 
+		overwritten with the highest-q rated contact.  The rest will be 
 		appended to sip_msg structure and can be later used by tm for forking.
 		If the parameter is set to 0, only Request-URI will be overwritten 
 		with the highest-q rated contact and the rest will be left unprocessed.
