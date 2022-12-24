@@ -233,7 +233,7 @@ modparam("alias_db", "append_branches", 1)
 	<title>Functions</title>
 	<section id="alias_db.f.alias_db_lookup">
 		<title>
-		<function moreinfo="none">alias_db_lookup(table_name [,flags])</function>
+		<function moreinfo="none">alias_db_lookup(table_name[, flags])</function>
 		</title>
 		<para>
 		The function takes the R-URI and search to see whether it is an alias
@@ -292,7 +292,7 @@ alias_db_lookup("dba_$(rU{s.substr,0,1})");
 	</section>
 	<section id="alias_db.p.alias_db_find">
 		<title>
-		<function moreinfo="none">alias_db_find( table_name , input, output [,flags] )</function>
+		<function moreinfo="none">alias_db_find(table_name, input, output[, flags])</function>
 		</title>
 		<para>
 		The function is very similar to <function>alias_db_lookup()</function>,
