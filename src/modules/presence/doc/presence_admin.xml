@@ -412,7 +412,7 @@ modparam("presence", "min_expires", 1800)
 <section id="presence.p.min_expires_action">
     <title><varname>min_expires_action</varname> (int)</title>
     <para>
-        The action to take when UA sends an expires value less then min_expires.
+        The action to take when UA sends an expires value less than min_expires.
     </para>
     <para>
         <itemizedlist>
