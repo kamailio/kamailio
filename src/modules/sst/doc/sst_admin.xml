@@ -26,7 +26,7 @@
 		<para>The sst module provides a way to update the
 		dialog expiry timer based on the SIP INVITE/200 OK
 		Session-Expires header value. You can use the sst
-		module in an &kamailio; proxy to allow freeing of local
+		module in a &kamailio; proxy to allow freeing of local
 		resources of dead calls.</para>
 
 		<para>You can also use the sst module to validate the
@@ -156,7 +156,7 @@
 		<title><varname>enable_stats</varname> (integer)</title>
 
 		<para>If the statistics support should be enabled or
-		not. Via statistic variables, the module provide
+		not. Via statistic variables, the module provides
 		information about the dialog processing. Set it to zero to
 		disable or to non-zero to enable it.</para>
 
@@ -311,7 +311,7 @@ route {
   ...
   if (method=="INVITE") {
     setflag(5); # set the dialog flag
-    setflag(6); # Set the sst flag
+    setflag(6); # set the sst flag
   }
   ...
 }
@@ -404,7 +404,7 @@ route {
 
     <section>
 	<title>Installation and Running</title>
-	<para>Just load the module and remember to set the timeout_avp value.</para>
+	<para>Just load the module and remember to set the timeout_avp and sst_flag values.</para>
 	</section>
 </chapter>
 
