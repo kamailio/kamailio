@@ -424,7 +424,7 @@ modparam("p_usrloc", "failover_level", "1")
 	    <para>
 		Specifies the interval (in seconds) in which a timer process
 		shall check the availability of the databases and try to reconnect
-		to broken ones. It don't make sense to choose a lower value as 10.
+		to broken ones. It doesn't make sense to choose a lower value as 10.
 		It's necessary to provide a writeable master database, otherwise
 		this check stays disabled.
 	    </para>
@@ -877,7 +877,7 @@ modparam("p_usrloc", "db_mode", 2)
 		reasons. This can be done by setting the status column of the respective database
 		in the p_usrloc to the value <quote>2</quote>. This setting is autodetected from
 		all modules on the server cluster. Changes in the locdb table are periodically
-		polled with help of a timer process. After one minute the all read and write traffic
+		polled with help of a timer process. After one minute all the read and write traffic
 		is removed from the deactivated database, and maintenance can be done.
 		</para>
 		<para>
