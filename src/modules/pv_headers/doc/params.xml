@@ -74,7 +74,7 @@ modparam("pv_headers", "header_value_size", 512)
 		<title>Set <varname>header_collect_flag</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("pv_headers", "header_collect_flag", 37)
+modparam("pv_headers", "header_collect_flag", 17)
 ...
 </programlisting>
 		</example>
@@ -95,7 +95,7 @@ modparam("pv_headers", "header_collect_flag", 37)
 		<title>Set <varname>header_apply_flag</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("pv_headers", "header_apply_flag", 38)
+modparam("pv_headers", "header_apply_flag", 18)
 ...
 </programlisting>
 		</example>
