@@ -9,7 +9,7 @@
 ]>
 
 
-<section id="pv_headers.funtions" xmlns:xi="http://www.w3.org/2001/XInclude">
+<section id="pv_headers.functions" xmlns:xi="http://www.w3.org/2001/XInclude">
     <sectioninfo>
     </sectioninfo>
 
@@ -32,7 +32,7 @@
 		</title>
 		<para>
 		Applies the current XAVP headers state to the real headers.
-		and should be called only once per branch when the message is about to leave &kamailio;.
+		Should be called only once per branch when the message is about to leave &kamailio;.
 		</para>
 		<para>
 		The following rules apply:
