@@ -1305,7 +1305,7 @@ modparam("usrloc", "version_table", 0)
 		</listitem>
 		</itemizedlist>
 		<para>
-		For example, if set to 6, then keepalive is sent only natted UDP contacs.
+		For example, if set to 6, then keepalive is sent only natted UDP contacts.
 		</para>
 		<para>
 		Note: the internal keepalive of usrloc module conflicts in some way with
