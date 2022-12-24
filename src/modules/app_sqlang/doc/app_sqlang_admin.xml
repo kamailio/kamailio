@@ -213,7 +213,7 @@ if(!sqlang_runstring('KSR.dbg("Hello World from $fU\n")'))
             </title>
             <para>
 			Marks the need to reload the SQLang script pointed by 'load'
-			parameter.The actual reload is done by every working process when
+			parameter. The actual reload is done by every working process when
 			the next call to sqlang_run() function or KEMI config is executed.
             </para>
             <para>
