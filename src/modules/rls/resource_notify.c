@@ -687,7 +687,7 @@ int ki_rls_handle_notify(sip_msg_t* msg)
 		LM_DBG("presence dialog record not found\n");
 		/* if it is a NOTIFY for a terminated SUBSCRIBE dialog in RLS, then
 		 * the module might not have the dialog structure anymore
-		 * - just send 200ok, it is harmless
+		 * - just send 200 OK, it is harmless
 		 */
 		if(auth_flag==TERMINATED_STATE)
 			goto done;
