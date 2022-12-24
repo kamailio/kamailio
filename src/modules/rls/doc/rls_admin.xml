@@ -15,7 +15,7 @@
 
 	<section>
 	<title>Overview</title>
-	<para>The modules is a Resource List Server implementation following the
+	<para>The module is a Resource List Server implementation following the
 	specification in RFC 4662 and RFC 4826.
 	</para>
 	<para>
@@ -30,7 +30,7 @@
 	</para>
 
 	<para>
-	It handles subscription to lists in an event independent way.The default event
+	It handles subscription to lists in an event independent way. The default event
 	is presence, but if some other events are to be handled by the server, they
 	should be added using the module parameter "rls_events".
 	</para>
@@ -833,7 +833,7 @@ Within event_route[xhttp:request]:
 	<title>Installation</title>
 	<para>
 	The module requires 2 tables in &kamailio; database: rls_presentity
-	and rls_watchers.The SQL syntax to create them can be found in
+	and rls_watchers. The SQL syntax to create them can be found in
 	rls-create.sql script in the database directories in
 	the kamailio/scripts folder.
 	You can also find the complete database documentation on the
