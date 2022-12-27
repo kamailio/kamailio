@@ -22,7 +22,7 @@
 		<title>Admin Guide</title>
 	<section id="uid_domain.overview">
 		<title>Overview</title>
-		<para>Domain modules, as the name suggests, implements support for
+		<para>Domain module, as the name suggests, implements support for
 		multiple independent virtual domains hosted on one SIP server. This is
 		often useful if you have multiple domain names and you want to make
 		them all work and appear as one. Alternatively you might find the
@@ -139,7 +139,7 @@ iptel
 			domain. They can be used to store additional configuration for the
 			entire virtual domain, that is all users that belong (or have SIP
 			URI) in that particular virtual domain. Domain-level attributes
-			can be overridden be user-level attributes with the same name
+			can be overridden by user-level attributes with the same name
 			configured for a particular user. In other words a domain level
 			attribute will only be effective if no user-level attribute with
 			the same name exists.</para>
