@@ -54,7 +54,7 @@
 	( (_len_)+(((_len_)&3)?4-((_len_)&3):0) )
 
 
-/*! \brief from an AAAMessage structure, a buffer to be sent is build
+/*! \brief from an AAAMessage structure, a buffer to be sent is built
  */
 AAAReturnCode AAABuildMsgBuffer( AAAMessage *msg )
 {
