@@ -55,7 +55,7 @@
 	<section>
 	<title>Systemd Notifications</title>
 		<para>
-		If loaded, the module will generated systemd notifications when &kamailio;
+		If loaded, the module will generate systemd notifications when &kamailio;
 		starts and when &kamailio; shuts down. The content of these notifications
 		(sent with sd_notify(...)) are shown in the next example (_PID_ is
 		replaced by the PID of the main process).
