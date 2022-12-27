@@ -921,7 +921,7 @@ domain register {
 			there will be no further forwarding, because next_domain is empty. In the
 			second and third routes are certain gateway errors matched, if this errors
 			have occurred, then the next domain will be chosen. Note that the reply_code must be
-			3 characters wide, and only the "." character is accepted as wildcard.The last route
+			3 characters wide, and only the "." character is accepted as wildcard. The last route
 			does forwarding according some flags, e.g. the customer came from a certain carrier,
 			and has call-forwarding deactivated. In order to use the routing that is
 			specified above, a matching carrierroute table must be provided, that holds
