@@ -276,7 +276,7 @@
     </section>
     <section id="ims_usrloc_scscf.p.contact_delete_delay">
       <title>contact_delete_delay (int)</title>
-      <para>If contact is put into delay delete state ,this is how long we delay before deleting </para>
+      <para>If contact is put into delay delete state, this is how long we delay before deleting </para>
       <para><emphasis> Default value is 30</emphasis></para>
       <example>
         <title>Set <varname>contact_delete_delay </varname>parameter</title>
