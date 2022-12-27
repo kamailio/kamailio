@@ -140,7 +140,7 @@
         <type>string</type>
         <size>&contact_addr_len;</size>
         <default/>
-        <description>Used contact_addr in contact header for sending out requests,if not passed reg_contact_addr will be used instead</description>
+        <description>Used contact_addr in contact header for sending out requests, if not passed reg_contact_addr will be used instead</description>
     </column>
 
     <column id="socket">
