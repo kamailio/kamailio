@@ -579,7 +579,7 @@ mysql> select * from domainpolicy;
 	<para>
 	This example assumes that a set of SIP providers have established
 	a secure Layer 3 network between their proxies. It does not
-	matter whether this network is build by means of IPsec, a private
+	matter whether this network is built by means of IPsec, a private
 	Layer 2 network, or by simple firewalling. We will use the 10.x
 	network (for the walled garden net) and "http://l3fed.org/" 
 	(as federation identifier) in this example.
