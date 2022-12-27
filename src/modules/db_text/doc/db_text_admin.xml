@@ -251,7 +251,7 @@ suser:supasswd:xxx:alpha.org:xxx
 			<title><varname>db_mode</varname> (integer)</title>
 			<para>
 			Set caching mode (0) or non-caching mode (1). In caching mode, data
-			is loaded at startup. In non-caching mode, the module check every time
+			is loaded at startup. In non-caching mode, the module checks every time
 			a table is requested whether the corresponding file on disk has
 			changed, and if yes, will re-load the table from file.
 			</para>
