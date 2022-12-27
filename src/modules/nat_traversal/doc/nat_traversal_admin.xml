@@ -308,7 +308,7 @@
         distributed over the keepalive interval to avoid overloading the
         proxy by generating too many messages at a time. The nat_traversal
         module keeps its internal state about endpoints that need keepalive,
-        state that is build while messages are processed by the proxy and
+        state that is built while messages are processed by the proxy and
         thus it doesn't need to transfer any information from the usrloc
         module, which should also improve its efficiency.
       </para>
