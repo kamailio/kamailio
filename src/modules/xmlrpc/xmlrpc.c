@@ -825,7 +825,7 @@ static int flatten_nests(struct rpc_struct* st, struct xmlrpc_reply* reply) {
 		return 1;
 
 	if (!st->nnext) {
-		if(st->vtype == RET_ARRAY) {
+		if(st->vtype & RET_ARRAY) {
 			if (add_xmlrpc_reply(&st->struct_out, &array_suffix) < 0) return -1;
 		} else {
 			if (add_xmlrpc_reply(&st->struct_out, &struct_suffix) < 0) return -1;
@@ -834,7 +834,7 @@ static int flatten_nests(struct rpc_struct* st, struct xmlrpc_reply* reply) {
 					&st->struct_out.body) < 0) return -1;
 	} else {
 		flatten_nests(st->nnext, reply);
-		if(st->vtype == RET_ARRAY) {
+		if(st->vtype & RET_ARRAY) {
 			if (add_xmlrpc_reply(&st->struct_out, &array_suffix) < 0) return -1;
 		} else {
 			if (add_xmlrpc_reply(&st->struct_out, &struct_suffix) < 0) return -1;
@@ -850,7 +850,7 @@ static int print_structures(struct xmlrpc_reply* reply,
 {
 	while(st) {
 		/* Close the structure first */
-		if(st->vtype == RET_ARRAY) {
+		if(st->vtype & RET_ARRAY) {
 			if (add_xmlrpc_reply(&st->struct_out, &array_suffix) < 0) return -1;
 		} else {
 			if (add_xmlrpc_reply(&st->struct_out, &struct_suffix) < 0) return -1;
@@ -979,7 +979,7 @@ static struct rpc_struct* new_rpcstruct(xmlDocPtr doc, xmlNodePtr structure,
 	} else {
 		/* We will build a reply structure */
 		if (init_xmlrpc_reply(&p->struct_out) < 0) goto err;
-		if(vtype==RET_ARRAY) {
+		if(vtype & RET_ARRAY) {
 			if (add_xmlrpc_reply(&p->struct_out, &array_prefix) < 0) goto err;
 		} else {
 			if (add_xmlrpc_reply(&p->struct_out, &struct_prefix) < 0) goto err;
@@ -1174,7 +1174,7 @@ static int rpc_add(rpc_ctx_t* ctx, char* fmt, ...)
 	reply = &ctx->reply;
 
 	while(*fmt) {
-		if (ctx->flags & RET_ARRAY &&
+		if ((ctx->flags & RET_ARRAY) &&
 				add_xmlrpc_reply(reply, &value_prefix) < 0) goto err;
 		if (*fmt == '{' || *fmt == '[') {
 			void_ptr = va_arg(ap, void**);
@@ -1188,7 +1188,7 @@ static int rpc_add(rpc_ctx_t* ctx, char* fmt, ...)
 			if (print_value(reply, reply, *fmt, &ap) < 0) goto err;
 		}
 
-		if (ctx->flags & RET_ARRAY &&
+		if ((ctx->flags & RET_ARRAY) &&
 				add_xmlrpc_reply(reply, &value_suffix) < 0) goto err;
 		if (add_xmlrpc_reply(reply, &lf) < 0) goto err;
 		fmt++;
@@ -1772,12 +1772,12 @@ static int rpc_rpl_printf(rpc_ctx_t* ctx, char* fmt, ...)
 		if (n > -1 && n < buf_size) {
 			s.s = buf;
 			s.len = n;
-			if (ctx->flags & RET_ARRAY &&
+			if ((ctx->flags & RET_ARRAY) &&
 					add_xmlrpc_reply(reply, &value_prefix) < 0) goto err;
 			if (add_xmlrpc_reply(reply, &string_prefix) < 0) goto err;
 			if (add_xmlrpc_reply_esc(reply, &s) < 0) goto err;
 			if (add_xmlrpc_reply(reply, &string_suffix) < 0) goto err;
-			if (ctx->flags & RET_ARRAY &&
+			if ((ctx->flags & RET_ARRAY) &&
 					add_xmlrpc_reply(reply, &value_suffix) < 0) goto err;
 			if (add_xmlrpc_reply(reply, &lf) < 0) goto err;
 			mxr_free(buf);
@@ -1874,7 +1874,7 @@ static int rpc_struct_add(struct rpc_struct* s, char* fmt, ...)
 		member_name.s = va_arg(ap, char*);
 		member_name.len = (member_name.s ? strlen(member_name.s) : 0);
 
-		if(s->vtype==RET_ARRAY && *fmt == '{') {
+		if((s->vtype==RET_ARRAY) && *fmt == '{') {
 			if (add_xmlrpc_reply(reply, &value_prefix) < 0) goto err;
 			if (add_xmlrpc_reply(reply, &struct_prefix) < 0) goto err;
 		}
@@ -1902,7 +1902,7 @@ static int rpc_struct_add(struct rpc_struct* s, char* fmt, ...)
 		}
 		if (add_xmlrpc_reply(reply, &value_suffix) < 0) goto err;
 		if (add_xmlrpc_reply(reply, &member_suffix) < 0) goto err;
-		if(s->vtype==RET_ARRAY && *fmt == '{') {
+		if((s->vtype & RET_ARRAY) && *fmt == '{') {
 			if (add_xmlrpc_reply(reply, &struct_suffix) < 0) goto err;
 			if (add_xmlrpc_reply(reply, &value_suffix) < 0) goto err;
 		}
@@ -1926,7 +1926,7 @@ static int rpc_array_add(struct rpc_struct* s, char* fmt, ...)
 	struct rpc_struct* p, *tmp;
 
 	reply = &s->struct_out;
-	if(s->vtype!=RET_ARRAY) {
+	if(!(s->vtype & RET_ARRAY)) {
 		LM_ERR("parent structure is not an array\n");
 		goto err;
 	}
@@ -2612,7 +2612,7 @@ static int ki_dispatch_rpc(sip_msg_t* msg)
 		goto skip;
 	}
 	ctx.flags = exp->flags;
-	if (exp->flags & RET_ARRAY &&
+	if ((exp->flags & RET_ARRAY) &&
 			add_xmlrpc_reply(&ctx.reply, &array_prefix) < 0) goto skip;
 	exp->function(&func_param, &ctx);
 
