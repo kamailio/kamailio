@@ -260,7 +260,7 @@ modparam("imc", "extra_hdrs", "P-Flags: 3\r\n")
 3.9. create_on_join (integer)
 
    If set to 1 and user requests to join a non-existing room, the room
-   will be automatically created. If set to 0, joinin a non-existing room
+   will be automatically created. If set to 0, joining a non-existing room
    returns an error.
 
    The default value is 1.

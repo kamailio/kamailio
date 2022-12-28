@@ -292,7 +292,7 @@ tree root /                \ - 142
 
    For 193.175.132.164 with x= reqs_density_per_unit:
      * After first req hits -> the “193” node is built.
-     * After x more hits, the “175” node is build; the hits of “193” node
+     * After x more hits, the “175” node is built; the hits of “193” node
        are split between itself and its child--both of them gone have x/2.
      * And so on for node “132” and “164”.
      * Once “164” build the entire address can be found in the tree. “164”

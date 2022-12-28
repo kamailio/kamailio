@@ -605,7 +605,7 @@ listen = udp:localhost:5060
    a key and a value. The most significant keys are:
      * com.voztele.javax.sip.SER_ADDRESS
        This specifies the IP and port in which the Kamailio is listening
-       for Application Servers to connect and register.This specifies the
+       for Application Servers to connect and register. This specifies the
        IP and port in which the Kamailio is listening for Application
        Servers to connect and register.
 

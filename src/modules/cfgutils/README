@@ -721,7 +721,7 @@ $ kamcmd cfgutils.reset_gflag 1
 
 5.8. cfgutils.is_gflag
 
-   Returns true if the all the flags from the bitmask are set.
+   Returns true if all the flags from the bitmask are set.
 
    The parameter value must be a bitmask in decimal or hexadecimal format.
    The bitmask has a 32 bit size.

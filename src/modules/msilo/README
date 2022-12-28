@@ -189,7 +189,7 @@ Chapter 1. Admin Guide
    them when the user comes back online. It can also send reminders and
    auto-expire messages.
 
-   For each message, the modules stores “Request-URI” (“R-URI”) only if it
+   For each message, the module stores “Request-URI” (“R-URI”) only if it
    is a complete address of record (“username@hostname”), URI from “To”
    header, URI from “From” header, incoming time, expiration time, content
    type and body of the message. If “R-URI” is not an address of record
@@ -572,7 +572,7 @@ modparam("msilo", "use_contact", 0)
 3.26. snd_time_avp (str)
 
    The name of an AVP which may contain the time when to sent the received
-   message as reminder.The AVP is used ony by m_store().
+   message as reminder. The AVP is used ony by m_store().
 
    If the parameter is not set, the module does not look for this AVP. If
    the value is set to a valid AVP name, then the module expects in the

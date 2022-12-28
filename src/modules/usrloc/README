@@ -140,8 +140,8 @@ Carsten Bock
               1.13. ul_update_ucontact(contact, expires, q, callid, cseq,
                       set, res, ua, sock)
 
-              1.14. ul_bind_ursloc( api )
-              1.15. ul_register_ulcb(type ,callback, param)
+              1.14. ul_bind_ursloc(api)
+              1.15. ul_register_ulcb(type, callback, param)
               1.16. ul_get_num_users()
 
    List of Examples
@@ -1104,7 +1104,7 @@ modparam("usrloc", "version_table", 0)
      * 4 (bit 3 set) - the keepalive is sent only for UDP contacts
 
    For example, if set to 6, then keepalive is sent only natted UDP
-   contacs.
+   contacts.
 
    Note: the internal keepalive of usrloc module conflicts in some way
    with the keepalive done by nathelper module. It is recommended to
@@ -1412,8 +1412,8 @@ Chapter 2. Developer Guide
         1.13. ul_update_ucontact(contact, expires, q, callid, cseq, set,
                 res, ua, sock)
 
-        1.14. ul_bind_ursloc( api )
-        1.15. ul_register_ulcb(type ,callback, param)
+        1.14. ul_bind_ursloc(api)
+        1.15. ul_register_ulcb(type, callback, param)
         1.16. ul_get_num_users()
 
 1. Available Functions
@@ -1435,8 +1435,8 @@ Chapter 2. Developer Guide
    1.13. ul_update_ucontact(contact, expires, q, callid, cseq, set, res,
           ua, sock)
 
-   1.14. ul_bind_ursloc( api )
-   1.15. ul_register_ulcb(type ,callback, param)
+   1.14. ul_bind_ursloc(api)
+   1.15. ul_register_ulcb(type, callback, param)
    1.16. ul_get_num_users()
 
 1.1.  ul_register_domain(name)
@@ -1608,7 +1608,7 @@ sock)
      * struct socket_info *sock - socket on which the REGISTER message was
        received on.
 
-1.14.  ul_bind_ursloc( api )
+1.14.  ul_bind_ursloc(api)
 
    The function imports all functions that are exported by the USRLOC
    module. Overs for other modules which want to user the internal USRLOC
@@ -1617,7 +1617,7 @@ sock)
    Meaning of the parameters is as follows:
      * usrloc_api_t* api - USRLOC API
 
-1.15.  ul_register_ulcb(type ,callback, param)
+1.15.  ul_register_ulcb(type, callback, param)
 
    The function register with USRLOC a callback function to be called when
    some event occures inside USRLOC.

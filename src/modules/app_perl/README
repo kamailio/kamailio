@@ -1256,7 +1256,7 @@ ou=de");
    Set up a new LDAP connection.
 
    The first argument, when given, should be a hash reference pointing to
-   to the connection parameters, possibly an
+   to the connection parameters, possibly a
    Kamailio::LDAPUtils::LDAPConfig object. This argument may be undef in
    which case a new (default) Kamailio::LDAPUtils::LDAPConfig object is
    used.

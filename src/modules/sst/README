@@ -190,7 +190,7 @@ Chapter 1. Admin Guide
 4.1. enable_stats (integer)
 
    If the statistics support should be enabled or not. Via statistic
-   variables, the module provide information about the dialog processing.
+   variables, the module provides information about the dialog processing.
    Set it to zero to disable or to non-zero to enable it.
 
    Default value is “1” (enabled).
@@ -295,7 +295,7 @@ route {
   ...
   if (method=="INVITE") {
     setflag(5); # set the dialog flag
-    setflag(6); # Set the sst flag
+    setflag(6); # set the sst flag
   }
   ...
 }
@@ -366,4 +366,5 @@ route {
 
 7. Installation and Running
 
-   Just load the module and remember to set the timeout_avp value.
+   Just load the module and remember to set the timeout_avp and sst_flag
+   values.

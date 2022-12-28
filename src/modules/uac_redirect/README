@@ -35,10 +35,10 @@ Bogdan-Andrei Iancu
 
         5. Functions
 
-              5.1. set_deny_filter(filter,flags)
-              5.2. set_accept_filter(filter,flags)
+              5.1. set_deny_filter(filter, flags)
+              5.2. set_accept_filter(filter, flags)
               5.3. get_redirects(max)
-              5.4. get_redirects(max,reason)
+              5.4. get_redirects(max, reason)
 
         6. Script Example
 
@@ -82,24 +82,24 @@ Chapter 1. Admin Guide
 
    5. Functions
 
-        5.1. set_deny_filter(filter,flags)
-        5.2. set_accept_filter(filter,flags)
+        5.1. set_deny_filter(filter, flags)
+        5.2. set_accept_filter(filter, flags)
         5.3. get_redirects(max)
-        5.4. get_redirects(max,reason)
+        5.4. get_redirects(max, reason)
 
    6. Script Example
 
 1. Overview
 
-   UAC REDIRECT - User Agent Client redirection - module enhance Kamailio
+   UAC REDIRECT - User Agent Client redirection - module enhances Kamailio
    with the functionality of being able to handle (interpret, filter, log
    and follow) redirect responses ( 3xx replies class).
 
-   UAC REDIRECT module offer stateful processing, gathering the contacts
+   UAC REDIRECT module offers stateful processing, gathering the contacts
    from all 3xx branches of a call.
 
-   The module provide a powerful mechanism for selecting and filtering the
-   contacts to be used for the new redirect:
+   The module provides a powerful mechanism for selecting and filtering
+   the contacts to be used for the new redirect:
      * number based - limits like the number of total contacts to be used
        or the maximum number of contacts per branch to be selected.
      * Regular Expression based - combinations of deny and accept filters
@@ -277,7 +277,7 @@ modparam("uac_redirect","flags_hdr_mode",2)
 
 4.8. q_value (int)
 
-   Specifies the q-value to asign to contacts without one. Because
+   Specifies the q-value to assign to contacts without one. Because
    Kamailio doesn't support float parameter types, the value in the
    parameter is divided by 1000 and stored as float. For example, if you
    want q value to be 0.38, use value 380 here.
@@ -291,12 +291,12 @@ modparam("uac_redirect","q_value",0)
 
 5. Functions
 
-   5.1. set_deny_filter(filter,flags)
-   5.2. set_accept_filter(filter,flags)
+   5.1. set_deny_filter(filter, flags)
+   5.2. set_accept_filter(filter, flags)
    5.3. get_redirects(max)
-   5.4. get_redirects(max,reason)
+   5.4. get_redirects(max, reason)
 
-5.1.  set_deny_filter(filter,flags)
+5.1.  set_deny_filter(filter, flags)
 
    Sets additional deny filters. Maximum 6 may be combined. This
    additional filter will apply only to the current message - it will not
@@ -317,7 +317,7 @@ set_deny_filter(".*@domain2.net","reset_all");
 set_deny_filter(".*@domain1.net","");
 ...
 
-5.2.  set_accept_filter(filter,flags)
+5.2.  set_accept_filter(filter, flags)
 
    Sets additional accept filters. Maximum 6 may be combined. This
    additional filter will apply only to the current message - it will not
@@ -373,7 +373,7 @@ get_redirects("6:*");
 get_redirects("*");
 ...
 
-5.4.  get_redirects(max,reason)
+5.4.  get_redirects(max, reason)
 
    The function has same functionality as get_redirects(max) function, but
    it will produce accounting records.

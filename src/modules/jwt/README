@@ -29,7 +29,7 @@ Daniel-Constantin Mierla
 
         4. Functions
 
-              4.1. jwt_generate(prvkey, alg, claims, [headers])
+              4.1. jwt_generate(prvkey, alg, claims[, headers])
               4.2. jwt_verify(pubkeypath, alg, claims, jwtval)
               4.3. jwt_verify_key(pubkeyval, alg, claims, jwtval)
 
@@ -61,7 +61,7 @@ Chapter 1. Admin Guide
 
    4. Functions
 
-        4.1. jwt_generate(prvkey, alg, claims, [headers])
+        4.1. jwt_generate(prvkey, alg, claims[, headers])
         4.2. jwt_verify(pubkeypath, alg, claims, jwtval)
         4.3. jwt_verify_key(pubkeyval, alg, claims, jwtval)
 
@@ -112,11 +112,11 @@ modparam("jwt", "key_mode", 1)
 
 4. Functions
 
-   4.1. jwt_generate(prvkey, alg, claims, [headers])
+   4.1. jwt_generate(prvkey, alg, claims[, headers])
    4.2. jwt_verify(pubkeypath, alg, claims, jwtval)
    4.3. jwt_verify_key(pubkeyval, alg, claims, jwtval)
 
-4.1.  jwt_generate(prvkey, alg, claims, [headers])
+4.1.  jwt_generate(prvkey, alg, claims[, headers])
 
    Generate the JWT, its value can be retrieved in the variable $jwt(val).
 

@@ -115,7 +115,7 @@ Chapter 1. Admin Guide
    1.2. Domain-level Configuration Attributes
    1.3. Caching
 
-   Domain modules, as the name suggests, implements support for multiple
+   Domain module, as the name suggests, implements support for multiple
    independent virtual domains hosted on one SIP server. This is often
    useful if you have multiple domain names and you want to make them all
    work and appear as one. Alternatively you might find the module useful
@@ -219,7 +219,7 @@ iptel
    a particular virtual domain. They can be used to store additional
    configuration for the entire virtual domain, that is all users that
    belong (or have SIP URI) in that particular virtual domain.
-   Domain-level attributes can be overridden be user-level attributes with
+   Domain-level attributes can be overridden by user-level attributes with
    the same name configured for a particular user. In other words a domain
    level attribute will only be effective if no user-level attribute with
    the same name exists.
@@ -498,7 +498,7 @@ if (is_local("@ruri.host")) {
    domain is identified by a unique identifier (opaque string) and it can
    have one or more associated domain names. Given a domain name in the
    second parameter, this function finds the associated virtual domain
-   identifier (known as DID) and stores it in an attribute for later user.
+   identifier (known as DID) and stores it in an attribute for later use.
    In addition to that the function also loads all domain-level attributes
    for the virtual domain and makes them available to the configuration
    script.
@@ -523,10 +523,10 @@ if (is_local("@ruri.host")) {
    domain name was found and -1 otherwise.
 
    The following example shows a typical use of the function. In a multi
-   domain setup, one has to typically figure out where the both the
-   calling and the called domains are local (i.e. configured on the server
-   as the domains the server is responsible for). This is typically done
-   by calling function lookup_domain twice, once with the hostname part of
+   domain setup, one has usually to figure out whether both the calling
+   and the called domains are local (i.e. configured on the server as the
+   domains the server is responsible for). This is typically done by
+   calling function lookup_domain twice, once with the hostname part of
    the From header as parameter and secondly with the hostname part of the
    Request-URI as parameter.
 

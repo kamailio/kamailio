@@ -543,7 +543,7 @@ modparam("presence", "min_expires", 1800)
 
 3.16. min_expires_action (int)
 
-   The action to take when UA sends an expires value less then
+   The action to take when UA sends an expires value less than
    min_expires.
 
    Possible Values
@@ -1427,7 +1427,7 @@ typedef void(free_body_t)(char* body);
    This field must be set if the module needs to manipulate the NOTIFY
    body for each watcher. E.g. if the XML body includes a 'version'
    parameter which will be increased for each NOTIFY, on a "per watcher"
-   basis. The module can either allocate a new buffer for the new body an
+   basis. The module can either allocate a new buffer for the new body and
    return it (aux_free_body function must be set too) or it manipulates
    the original body directly and returns NULL.
 

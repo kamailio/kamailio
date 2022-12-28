@@ -73,7 +73,7 @@ Chapter 1. Admin Guide
 
 1. Overview
 
-   The modules is a XCAP client for Kamailio that can be used by other
+   The module is a XCAP client for Kamailio that can be used by other
    modules. It fetches XCAP elements, either documents or part of them, by
    sending HTTP GET requests to an XCAP server. It also offers support for
    conditional queries. It uses the libcurl library as a client-side HTTP
@@ -101,7 +101,7 @@ Chapter 1. Admin Guide
 
 2.1. Kamailio Modules
 
-   The modules is not dependent of any Kamailio module.
+   The module is not dependent of any Kamailio module.
 
 2.2. External Libraries or Applications
 

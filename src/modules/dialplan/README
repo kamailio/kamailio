@@ -580,7 +580,7 @@ xlog("translated to var $var(y) \n");
 
 8. Installation
 
-   The modules requires one table in Kamailio database: dialplan. The SQL
+   This module requires one table in Kamailio database: dialplan. The SQL
    syntax to create them can be found in dialplan-create.sql script in the
    database directories in the kamailio/scripts folder. You can also find
    the complete database documentation on the project webpage,

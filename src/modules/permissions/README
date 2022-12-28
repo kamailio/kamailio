@@ -67,7 +67,7 @@ Emmanuel Schmidbauer
 
               4.1. allow_routing()
               4.2. allow_routing(basename)
-              4.3. allow_routing(allow_file,deny_file)
+              4.3. allow_routing(allow_file, deny_file)
               4.4. allow_register(basename)
               4.5. allow_register(allow_file, deny_file)
               4.6. allow_uri(basename, pvar)
@@ -181,7 +181,7 @@ Chapter 1. Admin Guide
 
         4.1. allow_routing()
         4.2. allow_routing(basename)
-        4.3. allow_routing(allow_file,deny_file)
+        4.3. allow_routing(allow_file, deny_file)
         4.4. allow_register(basename)
         4.5. allow_register(allow_file, deny_file)
         4.6. allow_uri(basename, pvar)
@@ -769,7 +769,7 @@ modparam("permissions", "trusted_cleanup_interval", 120)
 
    4.1. allow_routing()
    4.2. allow_routing(basename)
-   4.3. allow_routing(allow_file,deny_file)
+   4.3. allow_routing(allow_file, deny_file)
    4.4. allow_register(basename)
    4.5. allow_register(allow_file, deny_file)
    4.6. allow_uri(basename, pvar)
@@ -818,7 +818,7 @@ if (allow_routing("basename")) {
 };
 ...
 
-4.3.  allow_routing(allow_file,deny_file)
+4.3.  allow_routing(allow_file, deny_file)
 
    Returns true if all pairs constructed as described in Section 1.1,
    “Call Routing” have appropriate permissions according to the

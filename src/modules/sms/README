@@ -163,7 +163,7 @@ modem_param      = name "=" value
      * c=SMS_Center (optional) - SMS center number for that modem. Default
        is the SMS center set on the SIM card.
      * b=baudrate (optional) - Default is 19600.
-     * r=retry (optional) - How many times to try to re-send a SMS that
+     * r=retry (optional) - How many times to try to re-send an SMS that
        reported error. Default is twice.
      * l=looping (optional) - Time for modem to wait before performing a
        new check for incomimg/outgoing SMS/SIP_MSG. Default is 20.

@@ -128,9 +128,9 @@ modparam("uri_db", "db_url", "mysql://username:password@localhost/kamailio")
 
 3.2. db_table (string)
 
-   The DB table that should be used. Its possible to use the “subscriber”
-   and “uri” table. If the “uri” table should be used, an additional
-   parameter “use-uri-table”) must be set.
+   The DB table that should be used. It is possible to use the
+   “subscriber” and “uri” table. If the “uri” table should be used, an
+   additional parameter “use-uri-table”) must be set.
 
    Default value is “subscriber”.
 
