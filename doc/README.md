@@ -9,7 +9,7 @@ Most of documentation for Kamailio can be found on the website:
   * main index for documentation:
     * https://www.kamailio.org/w/documentation/
   * wiki site with cookbooks and tutorials:
-    * https://www.kamailio.org/wiki/
+    * https://www.kamailio.org/wikidocs/
   * documentation for the modules in latest stable version:
     * https://www.kamailio.org/docs/modules/stable/
 

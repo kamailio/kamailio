@@ -207,7 +207,7 @@ etc: kamailio.cfg - set load_backends to 1 for permissions module
   * http://www.tpope.net/node/106
 
 The above content about commit message format is taken from Kamailio wiki page:
-  * https://www.kamailio.org/wiki/devel/git-commit-guidelines
+  * https://www.kamailio.org/wikidocs/devel/git-commit-guidelines
   * it is recommended you read that one as well.
 
 ### Developer Access ###

@@ -31,7 +31,7 @@ Github pull requests are the recommended way to contribute to Kamailio source co
 
 To keep a coherent and consistent history of the development, the commit messages format and content must follow the rules detailed at:
 
-  * https://www.kamailio.org/wiki/devel/github-contributions
+  * https://www.kamailio.org/wikidocs/devel/github-contributions
 
 Contributions must conform with licensing rules of the Kamailio project.
 

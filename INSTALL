@@ -537,7 +537,7 @@ C) Quick Start
 
   1) Download an RPM or Debian package from the links on the wiki
 
-    https://www.kamailio.org/wiki/
+    https://www.kamailio.org/wikidocs/
 
   If you don't use an rpm or debian based distribution, try our tar.gz'ed
   binaries
@@ -614,7 +614,7 @@ D) Kamailio With Persistent Data Storage
 
   1) Download the package containing mysql support for Kamailio from the links
      you find on:
-        https://www.kamailio.org/wiki/
+        https://www.kamailio.org/wikidocs/
 
     (rpm and deb provided, most of the binary tar.gz distributions and the
      solaris package include it; if it is not present you'll have to rebuild
@@ -701,4 +701,4 @@ A: Use bug tracker at: https://github.com/kamailio/kamailio/issues
 
 Q: Any F.A.Q. that could be helpful to check before reporting an issue?
 
-A: See: https://www.kamailio.org/wiki/tutorials/faq/main
+A: See: https://www.kamailio.org/wikidocs/tutorials/faq/main

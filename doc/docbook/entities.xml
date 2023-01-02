@@ -11,7 +11,7 @@
 <!ENTITY kamailioconfig "kamailio.cfg">
 <!ENTITY kamailioconfdir "/usr/local/etc/kamailio">
 
-<!ENTITY kamwiki "https://www.kamailio.org/wiki/">
+<!ENTITY kamwiki "https://www.kamailio.org/wikidocs/">
 <!ENTITY kamwikilink "<ulink url='&kamwiki;'>&kamwiki;</ulink>">
 <!ENTITY kamctl "kamctl">
 <!ENTITY kamcli "kamcli">
