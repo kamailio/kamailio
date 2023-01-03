@@ -29,8 +29,6 @@
 #define RPC_HASH_SIZE	32
 #define RPC_SARRAY_SIZE	32 /* initial size */
 
-#define RPC_COPY_EXPORT
-
 static struct str_hash_table rpc_hash_table;
 
 /* array of pointer to rpc exports, sorted after their name
@@ -97,21 +95,15 @@ static int rpc_hash_add(struct rpc_export* rpc)
 	doc1_len=rpc->doc_str[1]?strlen(rpc->doc_str[1]):0;
 	/* alloc everything into one block */
 
-#ifdef RPC_COPY_EXPORT
 	e=pkg_malloc(ROUND_POINTER(sizeof(struct str_hash_entry))
 								+ROUND_POINTER(sizeof(*rpc))+2*sizeof(char*)+
 								+name_len+1+doc0_len+(rpc->doc_str[0]!=0)
 								+doc1_len+(rpc->doc_str[1]!=0)
 								);
-#else /* RPC_COPY_EXPORT */
-	e=pkg_malloc(ROUND_POINTER(sizeof(struct str_hash_entry)));
-#endif /* RPC_COPY_EXPORT */
-
 	if (e==0){
 		PKG_MEM_ERROR;
 		goto error;
 	}
-#ifdef RPC_COPY_EXPORT
 	n_rpc=(rpc_export_t*)((char*)e+
 			ROUND_POINTER(sizeof(struct str_hash_entry)));
 	/* copy rpc into n_rpc */
@@ -135,9 +127,6 @@ static int rpc_hash_add(struct rpc_export* rpc)
 	}else{
 		n_rpc->doc_str[1]=0;
 	}
-#else /* RPC_COPY_EXPORT */
-	n_rpc=rpc;
-#endif /* RPC_COPY_EXPORT */
 
 	e->key.s=(char*)n_rpc->name;
 	e->key.len=name_len;
