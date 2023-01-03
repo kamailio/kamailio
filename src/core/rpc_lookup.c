@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2009 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -40,8 +40,8 @@ int rpc_sarray_crt_size; /* used */
 static int rpc_sarray_max_size; /* number of entries alloc'ed */
 
 /** init the rpc hash table.
-  * @return 0 on success, -1 on error
-  */
+ * @return 0 on success, -1 on error
+ */
 int init_rpcs(void)
 {
 	if (str_hash_alloc(&rpc_hash_table, RPC_HASH_SIZE)<0)
@@ -91,12 +91,12 @@ static int rpc_hash_add(struct rpc_export* rpc)
 	int doc0_len, doc1_len;
 	struct rpc_export* n_rpc;
 	struct rpc_export** r;
-	
+
 	name_len=strlen(rpc->name);
 	doc0_len=rpc->doc_str[0]?strlen(rpc->doc_str[0]):0;
 	doc1_len=rpc->doc_str[1]?strlen(rpc->doc_str[1]):0;
 	/* alloc everything into one block */
-	
+
 #ifdef RPC_COPY_EXPORT
 	e=pkg_malloc(ROUND_POINTER(sizeof(struct str_hash_entry))
 								+ROUND_POINTER(sizeof(*rpc))+2*sizeof(char*)+
@@ -106,7 +106,7 @@ static int rpc_hash_add(struct rpc_export* rpc)
 #else /* RPC_COPY_EXPORT */
 	e=pkg_malloc(ROUND_POINTER(sizeof(struct str_hash_entry)));
 #endif /* RPC_COPY_EXPORT */
-	
+
 	if (e==0){
 		PKG_MEM_ERROR;
 		goto error;
@@ -138,13 +138,13 @@ static int rpc_hash_add(struct rpc_export* rpc)
 #else /* RPC_COPY_EXPORT */
 	n_rpc=rpc;
 #endif /* RPC_COPY_EXPORT */
-	
+
 	e->key.s=(char*)n_rpc->name;
 	e->key.len=name_len;
 	e->flags=0;
 	e->u.p=n_rpc;
 	str_hash_add(&rpc_hash_table, e);
-	
+
 	/* insert it into the sorted array */
 	if (rpc_sarray_max_size<=rpc_sarray_crt_size){
 		/* array must be increased */
@@ -179,7 +179,7 @@ error:
 rpc_export_t* rpc_lookup(const char* name, int len)
 {
 	struct str_hash_entry* e;
-	
+
 	e=str_hash_get(&rpc_hash_table, (char*)name, len);
 	return e?(rpc_export_t*)e->u.p:0;
 }
@@ -191,7 +191,7 @@ rpc_export_t* rpc_lookup(const char* name, int len)
  */
 int rpc_register(rpc_export_t* rpc)
 {
-	
+
 	/* check if the entry is already registered */
 	if (rpc_lookup(rpc->name, strlen(rpc->name))){
 		WARN("duplicate rpc \"%s\"\n", rpc->name);
@@ -204,14 +204,14 @@ int rpc_register(rpc_export_t* rpc)
 
 
 /** register all the rpc in a null-terminated array.
-  * @return 0 on success, >0 if duplicates were found (number of 
-  * duplicates), -1 on error
-  */
+ * @return 0 on success, >0 if duplicates were found (number of
+ * duplicates), -1 on error
+ */
 int rpc_register_array(rpc_export_t* rpc_array)
 {
 	rpc_export_t* rpc;
 	int ret,i;
-	
+
 	ret=0;
 	for (rpc=rpc_array; rpc && rpc->name; rpc++){
 		i=rpc_register(rpc);

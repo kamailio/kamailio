@@ -1,4 +1,4 @@
-/* 
+/*
  * Kamailio Remote Procedure Call Interface
  *
  * Copyright (C) 2005 iptelorg GmbH
@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -27,12 +27,8 @@
 * Module: \ref core
 */
 
-#ifndef _RPC_H
-#define _RPC_H
-
-/*
- * TODO: Add the possibility to add printf-like formatted string to fault
- */
+#ifndef _RPC_H_
+#define _RPC_H_
 
 enum rpc_flags {
 	RET_ARRAY = (1 << 0),
@@ -120,5 +116,4 @@ typedef struct rpc_export {
 	unsigned int flags;      /*!< Various flags, reserved for future use */
 } rpc_export_t;
 
-
-#endif /* _RPC_H */
+#endif /* _RPC_H_ */
