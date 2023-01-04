@@ -30,10 +30,17 @@
 #ifndef _RPC_H_
 #define _RPC_H_
 
+#include <time.h>
+#include "locking.h"
+
 enum rpc_flags {
-	RET_ARRAY = (1 << 0),
-	RET_VALUE = (1 << 1)
+	RPC_RET_ARRAY  = (1 << 0),
+	RPC_RET_VALUE  = (1 << 1),
+	RPC_EXEC_DELTA = (1 << 2)
 };
+
+/* compatibility with old rpc flag name */
+#define RET_ARRAY RPC_RET_ARRAY
 
 typedef enum rpc_capabilities {
 	RPC_DELAYED_REPLY = (1 <<0)  /* delayed reply support */
@@ -115,5 +122,16 @@ typedef struct rpc_export {
 	const char** doc_str;  /*!< Documentation strings, method signature and description */
 	unsigned int flags;      /*!< Various flags, reserved for future use */
 } rpc_export_t;
+
+typedef struct rpc_xdata {
+	gen_lock_t elock;
+	time_t etime;
+} rpc_xdata_t;
+
+typedef struct rpc_exportx {
+	rpc_export_t r;
+	rpc_xdata_t *xdata;
+} rpc_exportx_t;
+
 
 #endif /* _RPC_H_ */
