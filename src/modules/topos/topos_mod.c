@@ -495,10 +495,8 @@ int tps_msg_received(sr_event_param_t *evp)
 			}
 		}
 		dialog = (get_to(&msg)->tag_value.len>0)?1:0;
-		if(dialog) {
-			/* dialog request */
-			tps_request_received(&msg, dialog);
-		}
+		tps_request_received(&msg, dialog);
+		
 	} else {
 		/* reply */
 		tps_response_received(&msg);
