@@ -233,6 +233,8 @@ extern char *ksr_stats_namesep;
 extern str ksr_ipv6_hex_style;
 extern int ksr_local_rport;
 
+extern int ksr_rpc_exec_delta;
+
 #ifdef USE_DNS_CACHE
 extern int dns_cache_init; /* if 0, the DNS cache is not initialized at startup */
 extern unsigned int dns_timer_interval; /* gc timer interval in s */
