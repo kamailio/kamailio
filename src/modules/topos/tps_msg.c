@@ -45,12 +45,14 @@
 #include "../../core/parser/parse_refer_to.h"
 #include "tps_msg.h"
 #include "tps_storage.h"
+#include "tps_mask.h"
 
 extern int _tps_param_mask_callid;
 extern int _tps_contact_mode;
 extern str _tps_cparam_name;
 extern int _tps_rr_update;
 extern int _tps_header_mode;
+extern str _tps_callid_prefix;
 
 extern str _tps_context_param;
 extern str _tps_context_value;
@@ -872,6 +874,7 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 
 	if(dialog==0) {
 		/* nothing to do for initial request */
+		tps_mask_callid(msg);
 		return 0;
 	}
 
@@ -986,6 +989,13 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 			}
 		}
 	}
+	
+	// Downstream Request Change CALL-ID
+	if(direction == TPS_DIR_DOWNSTREAM) {
+	    //  mask CallID
+	    tps_mask_callid(msg);
+	    LM_DBG("RCV message after CALLID CHG->[%.*s] \n",msg->len,msg->buf);
+	}
 	return 0;
 
 error:
@@ -1046,6 +1056,14 @@ int tps_response_received(sip_msg_t *msg)
 	tps_reappend_rr(msg, &btsd, &btsd.s_rr);
 	tps_reappend_rr(msg, &btsd, &btsd.x_rr);
 	tps_append_xbranch(msg, &mtsd.x_vbranch1);
+
+	// UPStream Response Unmask CALL-ID
+	if(direction == TPS_DIR_UPSTREAM) {
+	    //  Unmask CallID
+	    tps_mask_callid(msg);
+	    LM_DBG("RCV RESP after CALLID CHG->[%.*s] \n",msg->len,msg->buf);
+	}
+
 
 	return 0;
 
@@ -1149,6 +1167,12 @@ int tps_request_sent(sip_msg_t *msg, int dialog, int local)
 
 done:
 	tps_storage_lock_release(&lkey);
+	//Upstream Request UNMASK CALLID 
+	if(direction == TPS_DIR_UPSTREAM) {
+	    // Unmask CallID
+	    tps_unmask_callid(msg);
+	    LM_DBG("SENT message after CALLID CHG->[%.*s] \n",msg->len,msg->buf);
+	}
 	return 0;
 
 error:
@@ -1245,6 +1269,12 @@ int tps_response_sent(sip_msg_t *msg)
 	if(tps_storage_update_dialog(msg, &mtsd, &stsd, TPS_DBU_CONTACT)<0) {
 		goto error1;
 	}
+	//DownStream Response UNMASK CALLID 
+	if(direction == TPS_DIR_DOWNSTREAM) {
+	    // Unmask CallID
+	    tps_unmask_callid(msg);
+	    LM_DBG("SENT RESP after CALLID CHG->[%.*s] \n",msg->len,msg->buf);
+	}
 	return 0;
 
 error:
@@ -1252,3 +1282,147 @@ error:
 error1:
 	return -1;
 }
+
+//////////////////MASKING CallID/////////////////////
+
+int tps_mask_callid(sip_msg_t *msg)
+{
+	struct lump* l;
+	str out;
+
+	if(_tps_param_mask_callid==0)
+		return 0;
+
+	if(msg->callid==NULL)
+	{
+		LM_ERR("cannot get Call-Id header\n");
+		return -1;
+	}
+	LM_DBG("CALL-ID : [%.*s]\n", msg->callid->body.len, msg->callid->body.s);
+	out.s = tps_mask_encode(msg->callid->body.s, msg->callid->body.len,
+				&_tps_callid_prefix, &out.len);
+	LM_DBG("Updated CALL-ID : [%.*s]\n",out.len, out.s);
+	if(out.s==NULL)
+	{
+		LM_ERR("cannot encode callid\n");
+		return -1;
+	}
+
+	l=del_lump(msg, msg->callid->body.s-msg->buf, msg->callid->body.len, 0);
+	if (l==0)
+	{
+		LM_ERR("failed deleting callid\n");
+		pkg_free(out.s);
+		return -1;
+	}
+	if (insert_new_lump_after(l, out.s, out.len, 0)==0) {
+		LM_ERR("could not insert new lump\n");
+		pkg_free(out.s);
+		return -1;
+	}
+
+	return 0;
+}
+
+
+int tps_unmask_callid(sip_msg_t *msg)
+{
+	struct lump* l;
+	str out;
+
+	if(_tps_param_mask_callid==0)
+		return 0;
+
+	if(msg->callid==NULL)
+	{
+		LM_ERR("cannot get Call-Id header\n");
+		return -1;
+	}
+
+	/* Do nothing if call-id is not encoded */
+	if ((msg->callid->body.len < _tps_callid_prefix.len) ||
+			(strncasecmp(msg->callid->body.s,_tps_callid_prefix.s,_tps_callid_prefix.len)!=0))
+	{
+		LM_DBG("call-id [%.*s] not encoded",msg->callid->body.len,msg->callid->body.s);
+		return 0;
+	}
+
+	LM_DBG("CALL-ID : [%.*s]\n", msg->callid->body.len, msg->callid->body.s);
+	out.s = tps_mask_decode(msg->callid->body.s, msg->callid->body.len,
+					&_tps_callid_prefix, 0, &out.len);
+	LM_DBG("Updated (unmasked) CALL-ID : [%.*s]\n",out.len, out.s);
+	if(out.s==NULL)
+	{
+		LM_ERR("cannot decode callid\n");
+		return -1;
+	}
+
+	l=del_lump(msg, msg->callid->body.s-msg->buf, msg->callid->body.len, 0);
+	if (l==0)
+	{
+		LM_ERR("failed deleting callid\n");
+		pkg_free(out.s);
+		return -1;
+	}
+	if (insert_new_lump_after(l, out.s, out.len, 0)==0) {
+		LM_ERR("could not insert new lump\n");
+		pkg_free(out.s);
+		return -1;
+	}
+
+	return 0;
+}
+
+#define TPS_CALLID_SIZE	256
+int tps_unmask_callid_str(str *icallid, str *ocallid)
+{
+	static char tps_callid_buf[TPS_CALLID_SIZE];
+	str out;
+
+	if(_tps_param_mask_callid==0)
+		return 0;
+
+	if(icallid->s==NULL) {
+		LM_ERR("invalid Call-Id value\n");
+		return -1;
+	}
+
+	if(_tps_callid_prefix.len>0) {
+		if(_tps_callid_prefix.len >= icallid->len) {
+			return 1;
+		}
+		if(strncmp(icallid->s, _tps_callid_prefix.s, _tps_callid_prefix.len)!=0) {
+			return 1;
+		}
+	}
+	
+	out.s = tps_mask_decode(icallid->s, icallid->len,
+					&_tps_callid_prefix, 0, &out.len);
+	
+	if(out.s == NULL) {
+		LM_ERR("failed to decode call-id\n");
+		return -2;
+	}
+	if(out.len>=TPS_CALLID_SIZE) {
+		pkg_free(out.s);
+		LM_ERR("not enough callid buf size (needed %d)\n", out.len);
+		return -2;
+	}
+
+	memcpy(tps_callid_buf, out.s, out.len);
+	tps_callid_buf[out.len] = '\0';
+
+	pkg_free(out.s);
+
+	ocallid->s = tps_callid_buf;
+	ocallid->len = out.len;
+
+	return 0;
+}
+
+
+
+
+
+
+
