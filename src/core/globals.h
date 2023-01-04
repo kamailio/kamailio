@@ -219,6 +219,7 @@ extern str _ksr_xavp_via_params;
 extern str _ksr_xavp_via_fields;
 extern int ksr_sip_parser_mode;
 extern int ksr_cfg_print_mode;
+extern int ksr_return_mode;
 
 extern int ksr_wait_worker1_mode;
 extern int ksr_wait_worker1_time;
@@ -231,6 +232,8 @@ extern unsigned char *_ksr_hname_extra_chars;
 extern char *ksr_stats_namesep;
 extern str ksr_ipv6_hex_style;
 extern int ksr_local_rport;
+
+extern int ksr_rpc_exec_delta;
 
 #ifdef USE_DNS_CACHE
 extern int dns_cache_init; /* if 0, the DNS cache is not initialized at startup */

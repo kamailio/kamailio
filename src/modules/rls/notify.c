@@ -503,7 +503,7 @@ int add_resource_instance(char* uri, xmlNodePtr resource_node,
 		}
 	}
 
-	/* if record not found should not add a instance node */
+	/* if record not found should not add an instance node */
 	return 0;
 error:
 	return -1;
@@ -571,7 +571,7 @@ error:
 
 int create_empty_rlmi_doc(xmlDocPtr *rlmi_doc, xmlNodePtr *list_node, str *uri, int version, int full_state)
 {
-	/* length is an pessimitic estimate of the size of an empty document
+	/* length is a pessimitic estimate of the size of an empty document
 	 * We calculate it once for performance reasons.
 	 * We add in the uri length each time as this varies, and it is cheap to add */
 	static int length = 0;

@@ -274,7 +274,7 @@ route{
 	# filter too old messages
 	if (!mf_process_maxfwd_header("10")) {
 		log("LOG: Too many hops\n");
-		sl_send_reply("483","Alas Too Many Hops");
+		sl_send_reply("483", "Alas Too Many Hops");
 		break;
 	};
 	if (len_gt( max_len )) {
@@ -523,7 +523,7 @@ route[3] {
 
 	append_hf("P-hint: GATEWAY\r\n");
 	# use UDP to guarantee well-known sender port (TCP ephemeral)
-	t_relay_to_udp("$SER_GWIP","5060");
+	t_relay_to_udp("$SER_GWIP", "5060");
 }
 
 

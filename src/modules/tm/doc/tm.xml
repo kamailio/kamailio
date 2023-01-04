@@ -163,7 +163,7 @@
 		also known as the <quote>q value</quote>. The q value is a floating
 		point number in a range 0 to 1.0. The higher the q value number,
 		the more priority is given to the particular branch in the destination set.
-		Branches with q value 1.0 have maximum priority, such branches should be always
+		Branches with q value 1.0 have maximum priority, such branches should always
 		be tried first in serial forking. Branches with q value 0 have the lowest
 		priority and they should by tried after all other branches with higher
 		priority in the destination set.
@@ -334,7 +334,7 @@ failure_route["serial"]
 	    <listitem>
 		<para>
 		    Possibly, performance could be improved by not parsing
-		    non-INVITEs, as they do not be replied with 100, and do not
+		    non-INVITEs, as they are not replied with 100, and do not
 		    result in ACK/CANCELs, and other things which take
 		    parsing. However, we need to rethink whether we don't need
 		    parsed headers later for something else. Remember, when we

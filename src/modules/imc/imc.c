@@ -30,14 +30,12 @@
 #include <fcntl.h>
 #include <time.h>
 #include "../../lib/srdb1/db.h"
-#include "../../lib/srdb1/db_res.h"
 #include "../../core/sr_module.h"
 #include "../../core/dprint.h"
 #include "../../core/ut.h"
 #include "../../core/timer.h"
 #include "../../core/str.h"
 #include "../../core/mem/shm_mem.h"
-#include "../../lib/srdb1/db.h"
 #include "../../core/parser/parse_from.h"
 #include "../../core/parser/parse_content.h"
 #include "../../core/parser/contact/parse_contact.h"
@@ -56,25 +54,27 @@
 MODULE_VERSION
 
 /** header variables */
-str imc_hdrs = str_init("Content-Type: text/plain\r\nSupported: kamailio/imc\r\n");
+str imc_hdrs = str_init("Supported: kamailio/imc\r\n");
 char hdr_buf[1024];
 str all_hdrs;
 
 /** parameters */
-
 db1_con_t *imc_db = NULL;
 db_func_t imc_dbf;
+
 static str db_url  = str_init(DEFAULT_DB_URL);
+int db_mode = 0;
+
+str rooms_table   = str_init("imc_rooms");
+str members_table = str_init("imc_members");
+
+str imc_col_username = str_init("username");
+str imc_col_domain   = str_init("domain");
+str imc_col_flag     = str_init("flag");
+str imc_col_room     = str_init("room");
+str imc_col_name     = str_init("name");
+
 str outbound_proxy = {NULL, 0};
-
-static str rooms_table   = str_init("imc_rooms");
-static str members_table = str_init("imc_members");
-
-static str imc_col_username = str_init("username");
-static str imc_col_domain   = str_init("domain");
-static str imc_col_flag     = str_init("flag");
-static str imc_col_room     = str_init("room");
-static str imc_col_name     = str_init("name");
 
 imc_hentry_p _imc_htable = NULL;
 int imc_hash_size = 4;
@@ -108,11 +108,12 @@ static cmd_export_t cmds[]={
 
 static param_export_t params[]={
 	{"db_url",				PARAM_STR, &db_url},
+	{"db_mode", 			INT_PARAM, &db_mode},
 	{"hash_size",			INT_PARAM, &imc_hash_size},
 	{"imc_cmd_start_char",	PARAM_STR, &imc_cmd_start_str},
 	{"rooms_table",			PARAM_STR, &rooms_table},
 	{"members_table",		PARAM_STR, &members_table},
-	{"outbound_proxy",		PARAM_STR, &outbound_proxy},
+	{"outbound_proxy",		PARAM_STR, &outbound_proxy},	
 	{"extra_hdrs",        PARAM_STR, &extra_hdrs},
 	{"create_on_join", INT_PARAM, &imc_create_on_join},
 	{"check_on_create", INT_PARAM, &imc_check_on_create},
@@ -146,183 +147,6 @@ struct module_exports exports= {
 	destroy     /* module destroy function */
 };
 
-/**
- * the initiating function
- */
-int add_from_db(void)
-{
-	imc_member_p member = NULL;
-	int i, j, flag;
-	db_key_t mq_result_cols[4], mquery_cols[2];
-	db_key_t rq_result_cols[4];
-	db_val_t mquery_vals[2];
-	db1_res_t *r_res= NULL;
-	db1_res_t *m_res= NULL;
-	db_row_t *m_row = NULL, *r_row = NULL;
-	db_val_t *m_row_vals, *r_row_vals = NULL;
-	str name, domain;
-	imc_room_p room = NULL;
-	int er_ret = -1;
-
-	rq_result_cols[0] = &imc_col_name;
-	rq_result_cols[1] = &imc_col_domain;
-	rq_result_cols[2] = &imc_col_flag;
-
-	mq_result_cols[0] = &imc_col_username;
-	mq_result_cols[1] = &imc_col_domain;
-	mq_result_cols[2] = &imc_col_flag;
-
-	mquery_cols[0] = &imc_col_room;
-	mquery_vals[0].type = DB1_STR;
-	mquery_vals[0].nul = 0;
-
-	if(imc_dbf.use_table(imc_db, &rooms_table)< 0)
-	{
-		LM_ERR("use_table failed\n");
-		return -1;
-	}
-
-	if(imc_dbf.query(imc_db,0, 0, 0, rq_result_cols,0, 3, 0,&r_res)< 0)
-	{
-		LM_ERR("failed to querry table\n");
-		return -1;
-	}
-	if(r_res==NULL || r_res->n<=0)
-	{
-		LM_INFO("the query returned no result\n");
-		if(r_res) imc_dbf.free_result(imc_db, r_res);
-		r_res = NULL;
-		return 0;
-	}
-
-	LM_DBG("found %d rooms\n", r_res->n);
-
-	for(i =0 ; i< r_res->n ; i++)
-	{
-		/*add rooms*/
-		r_row = &r_res->rows[i];
-		r_row_vals = ROW_VALUES(r_row);
-
-		name.s = 	r_row_vals[0].val.str_val.s;
-		name.len = strlen(name.s);
-
-		domain.s = 	r_row_vals[1].val.str_val.s;
-		domain.len = strlen(domain.s);
-
-		flag = 	r_row_vals[2].val.int_val;
-
-		room = imc_add_room(&name, &domain, flag);
-		if(room == NULL)
-		{
-			LM_ERR("failed to add room\n ");
-			goto error;
-		}
-
-		/* add members */
-		if(imc_dbf.use_table(imc_db, &members_table)< 0)
-		{
-			LM_ERR("use_table failed\n ");
-			goto error;
-		}
-
-		mquery_vals[0].val.str_val= room->uri;
-
-		if(imc_dbf.query(imc_db, mquery_cols, 0, mquery_vals, mq_result_cols,
-					1, 3, 0, &m_res)< 0)
-		{
-			LM_ERR("failed to querry table\n");
-			goto error;
-		}
-
-		if(m_res==NULL || m_res->n<=0)
-		{
-			LM_INFO("the query returned no result\n");
-			er_ret = 0;
-			goto error; /* each room must have at least one member*/
-		}
-		for(j =0; j< m_res->n; j++)
-		{
-			m_row = &m_res->rows[j];
-			m_row_vals = ROW_VALUES(m_row);
-
-			name.s = m_row_vals[0].val.str_val.s;
-			name.len = strlen(name.s);
-
-			domain.s = m_row_vals[1].val.str_val.s;
-			domain.len = strlen(domain.s);
-
-			flag = m_row_vals[2].val.int_val;
-
-			LM_DBG("adding memeber: [name]=%.*s [domain]=%.*s"
-					" in [room]= %.*s\n", STR_FMT(&name), STR_FMT(&domain),
-					STR_FMT(&room->uri));
-
-			member = imc_add_member(room, &name, &domain, flag);
-			if(member == NULL)
-			{
-				LM_ERR("failed to adding member\n ");
-				goto error;
-			}
-			imc_release_room(room);
-		}
-
-		if(m_res)
-		{
-			imc_dbf.free_result(imc_db, m_res);
-			m_res = NULL;
-		}
-	}
-
-	if(imc_dbf.use_table(imc_db, &members_table)< 0)
-	{
-		LM_ERR("use table failed\n ");
-		goto error;
-	}
-
-	if(imc_dbf.delete(imc_db, 0, 0 , 0, 0) < 0)
-	{
-		LM_ERR("failed to delete information from db\n");
-		goto error;
-	}
-
-	if(imc_dbf.use_table(imc_db, &rooms_table)< 0)
-	{
-		LM_ERR("use table failed\n ");
-		goto error;
-	}
-
-	if(imc_dbf.delete(imc_db, 0, 0 , 0, 0) < 0)
-	{
-		LM_ERR("failed to delete information from db\n");
-		goto error;
-	}
-
-	if(r_res)
-	{
-		imc_dbf.free_result(imc_db, r_res);
-		r_res = NULL;
-	}
-
-	return 0;
-
-error:
-	if(r_res)
-	{
-		imc_dbf.free_result(imc_db, r_res);
-		r_res = NULL;
-	}
-	if(m_res)
-	{
-		imc_dbf.free_result(imc_db, m_res);
-		m_res = NULL;
-	}
-	if(room)
-		imc_release_room(room);
-	return er_ret;
-
-}
-
-
 static int mod_init(void)
 {
 #ifdef STATISTICS
@@ -333,22 +157,19 @@ static int mod_init(void)
 	}
 #endif
 
-	if(imc_rpc_init()<0)
-	{
+	if(imc_rpc_init()<0) {
 		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}
 
-	if(imc_hash_size <= 0)
-	{
+	if(imc_hash_size <= 0) {
 		LM_ERR("invalid hash size\n");
 		return -1;
 	}
 
 	imc_hash_size = 1 << imc_hash_size;
 
-	if(imc_htable_init() < 0)
-	{
+	if(imc_htable_init() < 0) {
 		LM_ERR("initializing hash table\n");
 		return -1;
 	}
@@ -365,29 +186,34 @@ static int mod_init(void)
 		all_hdrs.len = extra_hdrs.len + imc_hdrs.len;
 	} else {
 		all_hdrs = imc_hdrs;
-	}
+	}	
 
-	/*  binding to mysql module */
-	LM_DBG("db_url=%s/%d/%p\n", ZSW(db_url.s), db_url.len, db_url.s);
+	if(db_mode == 2) {
+		/*  binding to mysql module */
+		LM_DBG("db_url=%s/%d/%p\n", ZSW(db_url.s), db_url.len, db_url.s);
 
-	if (db_bind_mod(&db_url, &imc_dbf))
-	{
-		LM_DBG("database module not found\n");
-		return -1;
-	}
+		if (db_bind_mod(&db_url, &imc_dbf)) {
+			LM_DBG("database module not found\n");
+			return -1;
+		}
 
-	imc_db = imc_dbf.init(&db_url);
-	if (!imc_db)
-	{
-		LM_ERR("failed to connect to the database\n");
-		return -1;
-	}
-	/* read the informations stored in db */
-	if(add_from_db() <0)
-	{
-		LM_ERR("failed to get information from db\n");
-		return -1;
-	}
+		imc_db = imc_dbf.init(&db_url);
+		if (!imc_db) {
+			LM_ERR("failed to connect to the database\n");
+			return -1;
+		}
+
+		/* read the informations stored in db */
+		if (load_rooms_from_db() < 0) {
+			LM_ERR("failed to get information from db\n");
+			return -1;
+		}
+
+		if(imc_db)
+			imc_dbf.close(imc_db);
+
+		imc_db = NULL;
+	}	
 
 	/* load TM API */
 	if (load_tm_api(&tmb)!=0) {
@@ -395,11 +221,7 @@ static int mod_init(void)
 		return -1;
 	}
 
-	imc_cmd_start_char = imc_cmd_start_str.s[0];
-
-	if(imc_db)
-		imc_dbf.close(imc_db);
-	imc_db = NULL;
+	imc_cmd_start_char = imc_cmd_start_str.s[0];	
 
 	return 0;
 }
@@ -412,32 +234,30 @@ static int child_init(int rank)
 	if (rank==PROC_INIT || rank==PROC_TCP_MAIN)
 		return 0; /* do nothing for the main process */
 
-	if (imc_dbf.init==0)
-	{
-		LM_ERR("database not bound\n");
-		return -1;
-	}
-	imc_db = imc_dbf.init(&db_url);
-	if (!imc_db)
-	{
-		LM_ERR("child %d: Error while connecting database\n", rank);
-		return -1;
-	}
-	else
-	{
-		if (imc_dbf.use_table(imc_db, &rooms_table) < 0)
-		{
-			LM_ERR("child %d: Error in use_table '%.*s'\n", rank, STR_FMT(&rooms_table));
+	if (db_mode == 2) {
+		if (imc_dbf.init == 0) {
+			LM_ERR("database not bound\n");
 			return -1;
 		}
-		if (imc_dbf.use_table(imc_db, &members_table) < 0)
-		{
-			LM_ERR("child %d: Error in use_table '%.*s'\n", rank, STR_FMT(&members_table));
+		
+		imc_db = imc_dbf.init(&db_url);		
+		if (!imc_db) {
+			LM_ERR("child %d: Error while connecting database\n", rank);
 			return -1;
 		}
+		else {
+			if (imc_dbf.use_table(imc_db, &rooms_table) < 0) {
+				LM_ERR("child %d: Error in use_table '%.*s'\n", rank, STR_FMT(&rooms_table));
+				return -1;
+			}
+			if (imc_dbf.use_table(imc_db, &members_table) < 0) {
+				LM_ERR("child %d: Error in use_table '%.*s'\n", rank, STR_FMT(&members_table));
+				return -1;
+			}
 
-		LM_DBG("child %d: Database connection opened successfully\n", rank);
-	}
+			LM_DBG("child %d: Database connection opened successfully\n", rank);
+		}
+	}	
 
 	return 0;
 }
@@ -451,8 +271,7 @@ static int ki_imc_manager(struct sip_msg* msg)
 	int ret = -1;
 
 	body.s = get_body( msg );
-	if (body.s==0)
-	{
+	if (body.s==0) {
 		LM_ERR("cannot extract body from msg\n");
 		goto error;
 	}
@@ -508,7 +327,7 @@ static int ki_imc_manager(struct sip_msg* msg)
 				LM_ERR("failed to handle 'create'\n");
 				ret = -30;
 				goto error;
-			}
+			}			
 		break;
 		case IMC_CMDID_JOIN:
 			if(imc_handle_join(msg, &cmd, &src, &dst)<0)
@@ -532,7 +351,7 @@ static int ki_imc_manager(struct sip_msg* msg)
 				LM_ERR("failed to handle 'add'\n");
 				ret = -50;
 				goto error;
-			}
+			}			
 		break;
 		case IMC_CMDID_ACCEPT:
 			if(imc_handle_accept(msg, &cmd, &src, &dst)<0)
@@ -556,7 +375,7 @@ static int ki_imc_manager(struct sip_msg* msg)
 				LM_ERR("failed to handle 'remove'\n");
 				ret = -80;
 				goto error;
-			}
+			}			
 		break;
 		case IMC_CMDID_LEAVE:
 			if(imc_handle_leave(msg, &cmd, &src, &dst)<0)
@@ -590,6 +409,14 @@ static int ki_imc_manager(struct sip_msg* msg)
 				goto error;
 			}
 		break;
+		case IMC_CMDID_MODIFY:
+			if(imc_handle_modify(msg, &cmd, &src, &dst)<0)
+			{
+				LM_ERR("failed to handle 'modify'\n");
+				ret = -120;
+				goto error;
+			}
+		break;
 		case IMC_CMDID_HELP:
 			if(imc_handle_help(msg, &cmd, &src, &dst)<0)
 			{
@@ -608,7 +435,7 @@ static int ki_imc_manager(struct sip_msg* msg)
 		}
 
 		goto done;
-	}
+	}	
 
 	if(imc_handle_message(msg, &body, &src, &dst)<0)
 	{
@@ -641,6 +468,9 @@ static void destroy(void)
 	db_val_t mq_vals[4];
 	db_key_t rq_cols[4];
 	db_val_t rq_vals[4];
+
+	if (db_mode == 0)
+		goto done;
 
 	if(imc_db==NULL)
 		goto done;

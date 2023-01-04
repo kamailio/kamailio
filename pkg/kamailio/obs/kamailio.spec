@@ -290,7 +290,7 @@ Conflicts:  kamailio-utils < %ver, kamailio-websocket < %ver
 Conflicts:  kamailio-xhttp-pi < %ver, kamailio-xmlops < %ver
 Conflicts:  kamailio-xmlrpc < %ver, kamailio-xmpp < %ver
 Conflicts:  kamailio-uuid < %ver
-BuildRequires:  bison, flex, which, make, gcc, gcc-c++, pkgconfig
+BuildRequires:  bison, flex, which, make, gcc, gcc-c++, pkgconfig, readline-devel
 %if 0%{?rhel} != 6
 Requires:  systemd
 BuildRequires:  systemd-devel
@@ -2420,6 +2420,8 @@ fi
 
 
 %changelog
+* Tue Sep 13 2022 Gustavo Almeida <galmeida@broadvoice.com>
+  - added readline-devel build dependency
 * Sat Aug 31 2019 Sergey Safarov <s.safarov@gmail.com> 5.3.0-dev7
   - Packaged kemix, lost and xhttp_prom modules
 * Sat Mar 30 2019 Sergey Safarov <s.safarov@gmail.com> 5.3.0-0

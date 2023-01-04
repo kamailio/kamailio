@@ -784,9 +784,9 @@ urecord_t* db_load_urecord(db1_con_t* _c, udomain_t* _d, str *_aor)
 				aval.v.s = avalue;
 				aval.type = SR_XTYPE_STR;
 			} else if(VAL_INT(ROW_VALUES(row)+1)==1) {
-				/* int value */
-				str2sint(&avalue, &aval.v.i);
-				aval.type = SR_XTYPE_INT;
+				/* long int value */
+				str2slong(&avalue, &aval.v.l);
+				aval.type = SR_XTYPE_LONG;
 			} else {
 				/* unknown type - ignore */
 				continue;
@@ -1636,9 +1636,9 @@ int uldb_preload_attrs(udomain_t *_d)
 				aval.v.s = avalue;
 				aval.type = SR_XTYPE_STR;
 			} else if(VAL_INT(ROW_VALUES(row)+3)==1) {
-				/* int value */
-				str2sint(&avalue, &aval.v.i);
-				aval.type = SR_XTYPE_INT;
+				/* long int value */
+				str2slong(&avalue, &aval.v.l);
+				aval.type = SR_XTYPE_LONG;
 			} else {
 				/* unknown type - ignore */
 				continue;

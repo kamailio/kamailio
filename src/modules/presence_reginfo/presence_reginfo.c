@@ -47,11 +47,13 @@ static int mod_init(void);
 add_event_t pres_add_event;
 
 /* module parameters */
+int pres_reginfo_aggregate_presentities = 0;
 unsigned int pres_reginfo_default_expires = 3600;
 
 /* module exported paramaters */
 static param_export_t params[] = {
 	{ "default_expires", INT_PARAM, &pres_reginfo_default_expires },
+	{ "aggregate_presentities", INT_PARAM, &pres_reginfo_aggregate_presentities },
 	{0, 0, 0}
 };
 
@@ -86,6 +88,12 @@ static int mod_init(void)
 	}
 	if (bind_presence(&pres) < 0) {
 		LM_ERR("can't bind presence\n");
+		return -1;
+	}
+
+	if (pres_reginfo_aggregate_presentities != 0
+			&& pres_reginfo_aggregate_presentities != 1) {
+		LM_ERR("invalid aggregate_presentities param value, should be 0 or 1\n");
 		return -1;
 	}
 

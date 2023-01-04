@@ -56,7 +56,7 @@ modem_param      = name "=" value
 	    </listitem>
 	    <listitem>
 		<para>
-		    r=retry (optional) - How many times to try to re-send a
+		    r=retry (optional) - How many times to try to re-send an
 		    <acronym>SMS</acronym> that reported error. Default is twice.
 		</para>
 	    </listitem>

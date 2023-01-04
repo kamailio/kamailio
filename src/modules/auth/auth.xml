@@ -329,7 +329,7 @@
         mode, ie., a transaction should be created prior to the
         authentication check, for instance by using the function
         <serdoc:func>t_newtran</serdoc:func>, to absorb possible
-        retransmissions. All the replies need to be sent statefuly,
+        retransmissions. All the replies need to be sent statefully,
         using <serdoc:func>t_reply()</serdoc:func>). Otherwise,
         all retransmissions will be challenged which may cause the user
         agent to believe the password supplied by the user to be wrong.

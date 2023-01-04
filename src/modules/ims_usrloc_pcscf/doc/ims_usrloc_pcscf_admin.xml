@@ -142,6 +142,20 @@ modparam("ims_usrloc_pcscf", "db_url",
           reliable. This mode will ensure that no registration data is lost as
           a result of a restart or crash.</para>
         </listitem>
+
+        <listitem>
+          <para>3 - DB_ONLY Scheme. All changes to usrloc are immediately
+          reflected in the database and additionally PCSCF usrloc data are downloaded
+          from db and inserted into PCSCF usrloc cache if required - i.e. If
+          contact data cannot be found in cache a db
+          query for the contact is done in table location and when contact is
+          found there its respective data are inserted in PCSCF usrloc cache.
+          Also an audit had been added for removal of long expired PCSCF usrloc data
+          in table location.
+          This mode will ensure that no registration data is lost as a result of a
+          restart or crash.</para>
+        </listitem>
+
       </itemizedlist>
 
       <para><emphasis>Default value is 0.</emphasis></para>
@@ -179,6 +193,73 @@ modparam("ims_usrloc_pcscf", "db_mode", 1)
 
         <programlisting format="linespecific">...
 modparam("ims_usrloc_pcscf", "match_contact_host_port", 0)
+...
+</programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title>expires_grace (int)</title>
+
+      <para>Specify a grace time for keeping the contacts until they are finally deleted.
+          The value of the parameter is defined in seconds.</para>
+
+      <para><emphasis>Default value is 3600.</emphasis></para>
+
+      <example>
+        <title>Set expires_grace parameter</title>
+
+        <programlisting format="linespecific">...
+modparam("ims_usrloc_pcscf", "expires_grace", 1800)
+...
+</programlisting>
+      </example>
+    </section>
+    
+    <section>
+      <title>audit_expired_pcontacts_interval (int)</title>
+
+      <para>Number of seconds between two audit runs.
+      Note: audit is used for db_mode DB_ONLY (3) only.
+      The module uses this audit to
+      delete expired contacts found in db table location which are expired
+      at least as the audit_expired_pcontacts_timeout value.
+      Such expired contacts in location  may appear when these contacts
+      are not present in usrloc cache because PCSCF crashed before
+      contact expiry.
+      </para>
+
+      <para><emphasis> Default value is 60. </emphasis></para>
+
+      <example>
+        <title>Set audit_expired_pcontacts_interval parameter</title>
+
+        <programlisting format="linespecific">...
+modparam("ims_usrloc_pcscf", "audit_expired_pcontacts_interval", 120)
+...
+</programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title>audit_expired_pcontacts_timeout (int)</title>
+
+      <para>Number of seconds the contacts must be already expired before the audit
+      starts working on them.
+      It is recommended to set only values greater than the Default value 40.
+      The module uses this audit to
+      delete expired contacts found in db table location which are expired
+      at least as many seconds as the sum of this timeout parameter value plus
+      the value of the expires_grace parameter.
+      </para>
+
+      <para><emphasis> Default value is 40. </emphasis></para>
+
+      <example>
+        <title>Set audit_expired_pcontacts_timeout parameter</title>
+
+        <programlisting format="linespecific">...
+modparam("ims_usrloc_pcscf", "audit_expired_pcontacts_timeout", 120)
 ...
 </programlisting>
       </example>
@@ -223,3 +304,4 @@ modparam("ims_usrloc_pcscf", "match_contact_host_port", 0)
     </section>
   </section>
 </chapter>
+

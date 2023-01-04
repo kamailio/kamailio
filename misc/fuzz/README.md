@@ -5,6 +5,10 @@ various open source projects.
 
   * https://github.com/google/oss-fuzz
 
+Folder for Kamailio project on OSS-Fuzz:
+
+  * https://github.com/google/oss-fuzz/tree/master/projects/kamailio
+
 OSS-Fuzz pull request to integrate Kamailio:
 
   * https://github.com/google/oss-fuzz/pull/5279

@@ -1082,7 +1082,7 @@ static inline void log_next_state_dlg(const int event, const struct dlg_cell * d
 }
 
 /*!
- * \brief Update a dialog state according a event and the old state
+ * \brief Update a dialog state according an event and the old state
  *
  * This functions implement the main state machine that update a dialog
  * state according a processed event and the current state. If necessary

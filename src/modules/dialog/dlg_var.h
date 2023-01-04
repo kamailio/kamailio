@@ -25,7 +25,7 @@
  * \ingroup dialog
  * Module: \ref dialog
  */
-		       
+
 #ifndef _DLG_VAR_H_
 #define _DLG_VAR_H_
 
@@ -59,7 +59,10 @@ typedef struct dlg_var {
 	struct dlg_var *next;
 } dlg_var_t;
 
-str* get_dlg_variable(dlg_cell_t *dlg, str *key);
+str* get_dlg_varref(dlg_cell_t *dlg, str *key);
+int get_dlg_varval(dlg_cell_t *dlg, str *key, str *val);
+int get_dlg_vardup(dlg_cell_t *dlg, str *key, str *val);
+int get_dlg_varstatus(dlg_cell_t *dlg, str *key);
 int set_dlg_variable(dlg_cell_t *dlg, str *key, str *val);
 
 int get_dlg_variable_uintval(struct dlg_cell *dlg, str *key, unsigned int *uval);
@@ -85,6 +88,8 @@ extern stat_var *early_dlgs; 		/*!< number of early dialogs */
 extern stat_var *processed_dlgs;	/*!< number of processed dialogs */
 extern stat_var *expired_dlgs;		/*!< number of expired dialogs */
 extern stat_var *failed_dlgs;		/*!< number of failed dialogs */
+
+extern int debug_variables_list;
 
 int pv_get_dlg_ctx(sip_msg_t *msg,  pv_param_t *param,
 		pv_value_t *res);

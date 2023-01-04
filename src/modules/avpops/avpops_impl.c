@@ -1093,11 +1093,11 @@ error:
 
 int set_val_xavp(sr_xavp_t *xavp, int_str *avp_val, int *flag)
 {
-	if(xavp->val.type!=SR_XTYPE_INT&&xavp->val.type!=SR_XTYPE_STR)
+	if(xavp->val.type!=SR_XTYPE_LONG && xavp->val.type!=SR_XTYPE_STR)
 		return -1;
-	if(xavp->val.type==SR_XTYPE_INT)
+	if(xavp->val.type==SR_XTYPE_LONG)
 	{
-		avp_val->n = xavp->val.v.i;
+		avp_val->n = xavp->val.v.l;
 	} else {
 		*flag = AVP_VAL_STR;
 		avp_val->s = xavp->val.v.s;
@@ -1346,7 +1346,7 @@ cycle2:
 		}
 	} else {
 		/* int values to check -> do check */
-		LM_DBG("check <%d> against <%d> as int /%d\n",
+		LM_DBG("check <%ld> against <%ld> as int /%d\n",
 				avp_val.n, check_val.n, val->ops);
 		if (val->ops&AVPOPS_OP_EQ)
 		{
@@ -1452,7 +1452,7 @@ int ops_print_avp(void)
 			LM_INFO("\t\t\tval_str=<%.*s / %d>\n",val.s.len,val.s.s,
 					val.s.len);
 		} else {
-			LM_INFO("\t\t\tval_int=<%d>\n",val.n);
+			LM_INFO("\t\t\tval_int=<%ld>\n",val.n);
 		}
 	}
 
@@ -1683,7 +1683,7 @@ cycle1:
 
 cycle2:
 	/* do operation */
-	LM_DBG(" use <%d> and <%d>\n",
+	LM_DBG(" use <%ld> and <%ld>\n",
 			avp_val.n, op_val.n);
 	if (val->ops&AVPOPS_OP_ADD)
 	{

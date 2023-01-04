@@ -542,8 +542,8 @@ Note
    known as the “q value”. The q value is a floating point number in a
    range 0 to 1.0. The higher the q value number, the more priority is
    given to the particular branch in the destination set. Branches with q
-   value 1.0 have maximum priority, such branches should be always be
-   tried first in serial forking. Branches with q value 0 have the lowest
+   value 1.0 have maximum priority, such branches should always be tried
+   first in serial forking. Branches with q value 0 have the lowest
    priority and they should by tried after all other branches with higher
    priority in the destination set.
 
@@ -912,7 +912,7 @@ modparam("tm", "restart_fr_on_each_reply", 0)
 
 3.10. auto_inv_100 (integer)
 
-   If set (default) tm will automatically send and 100 reply to INVITEs.
+   If set (default) tm will automatically send a 100 reply to INVITEs.
 
    Setting it to 0 can be used to enable first running some tests or
    pre-processing on the INVITE and only if some conditions are met
@@ -1095,7 +1095,7 @@ modparam("tm", "blst_503_max_timeout", 604800)
    INFO=16, REGISTER=32, SUBSCRIBE=64, NOTIFY=126, OTHER=256 (all the
    unknown types). Check parser/msg_parser.h for farther details.
 
-   Change the value carefully, because requests that doesn't get a
+   Change the value carefully, because requests that don't get a
    provisional response (everything but INVITE) can easily cause the next
    hop to be inserted into the blocklist by mistake. For example the next
    hop is a proxy, it is alive, but waiting for the response of the UAS,
@@ -1744,14 +1744,14 @@ modparam("tm", "exec_time_check", 0)
 
 3.52. reply_relay_mode (int)
 
-   If set to 1, a received 200ok response that was suspeneded is no longer
-   forwarded in the transactional context if another final response was
-   forward while 200ok was suspended. Forwarding the 200ok, even it was
-   received first, results in overwritting the transaction response buffer
-   that can impact matching of incoming ACKs.
+   If set to 1, a received 200 OK response that was suspeneded is no
+   longer forwarded in the transactional context if another final response
+   was forward while 200 OK was suspended. Forwarding the 200 OK, even it
+   was received first, results in overwritting the transaction response
+   buffer that can impact matching of incoming ACKs.
 
    Set it to 0 in order to disable this behaviour and attempt to forward
-   suspended 200ok in the transaction context. This was the behaviour
+   suspended 200 OK in the transaction context. This was the behaviour
    before the commit 18410da0.
 
    Default value is 1.
@@ -3136,7 +3136,7 @@ reply_route {
 
 5.9.  tm.clean
 
-   Trigger an hard clean of expired transactions.
+   Trigger a hard clean of expired transactions.
 
    Parameters:
      * none
@@ -3380,12 +3380,11 @@ action *route)
 8. Known Issues
 
      * Possibly, performance could be improved by not parsing non-INVITEs,
-       as they do not be replied with 100, and do not result in
-       ACK/CANCELs, and other things which take parsing. However, we need
-       to rethink whether we don't need parsed headers later for something
-       else. Remember, when we now store a request in sh_mem, we can't
-       apply any pkg_mem operations to it any more. (that might be
-       redesigned too).
+       as they are not replied with 100, and do not result in ACK/CANCELs,
+       and other things which take parsing. However, we need to rethink
+       whether we don't need parsed headers later for something else.
+       Remember, when we now store a request in sh_mem, we can't apply any
+       pkg_mem operations to it any more. (that might be redesigned too).
      * Another performance improvement may be achieved by not parsing CSeq
        in replies until reply branch matches branch of an INVITE/CANCEL in
        transaction table.

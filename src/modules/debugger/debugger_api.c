@@ -488,7 +488,7 @@ int dbg_cfg_trace(sr_event_param_t *evp)
 					{
 						olen = snprintf(_dbg_pid_list[process_no].out.buf,
 							DBG_CMD_SIZE,
-							"%s : t=int v=%d",
+							"%s : t=int v=%ld",
 							pvn.s, val.ri);
 						if(olen<0)
 						{
@@ -498,7 +498,7 @@ int dbg_cfg_trace(sr_event_param_t *evp)
 						_dbg_pid_list[process_no].out.cmd = DBG_CMD_READ;
 					} else {
 						LOG(_dbg_cfgtrace_level,
-								"breakpoint eval: %s : t=int v=%d\n",
+								"breakpoint eval: %s : t=int v=%ld\n",
 								pvn.s, val.ri
 							);
 					}
@@ -1681,7 +1681,7 @@ int _dbg_log_assign_action_avp(struct sip_msg* msg, struct lvalue* lv)
 			LM_DBG("%.*s:\"%.*s\"\n", avp_s->name.s.len, avp_s->name.s.s,
 				avp_val.s.len, avp_val.s.s);
 		}else{
-			LM_DBG("%.*s:%d\n", avp_s->name.s.len, avp_s->name.s.s,
+			LM_DBG("%.*s:%ld\n", avp_s->name.s.len, avp_s->name.s.s,
 				avp_val.n);
 		}
 	}
@@ -1706,7 +1706,7 @@ int _dbg_log_assign_action_pvar(struct sip_msg* msg, struct lvalue* lv)
 	if(value.flags&(PV_VAL_NULL|PV_VAL_EMPTY|PV_VAL_NONE)){
 		LM_DBG("%.*s: $null\n", name->len, name->s);
 	}else if(value.flags&(PV_VAL_INT)){
-		LM_DBG("%.*s:%d\n", name->len, name->s, value.ri);
+		LM_DBG("%.*s:%ld\n", name->len, name->s, value.ri);
 	}else if(value.flags&(PV_VAL_STR)){
 		LM_DBG("%.*s:\"%.*s\"\n", name->len, name->s, value.rs.len, value.rs.s);
 	}

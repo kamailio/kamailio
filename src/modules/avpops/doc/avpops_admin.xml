@@ -23,7 +23,7 @@
 		preferences) and pseudo-variables. AVPs are a powerful tool
 		for implementing services/preferences per user/domain. With this module, they
 		are usable directly from configuration script. </para>
-		<para>The module implement functions for
+		<para>The module implements functions for
 		interfacing DB resources (loading/storing/removing), functions
 		for swapping information between AVPs and SIP messages and a function for 
 		testing/checking the value of an AVP.
@@ -377,7 +377,7 @@ modparam("avpops","db_scheme",
 		<title>Functions</title>
 		<section id="avpops.f.avp_db_load">
 			<title>
-				<function moreinfo="none">avp_db_load(source,name)
+				<function moreinfo="none">avp_db_load(source, name)
 				</function>
 			</title>
 			<para>
@@ -447,7 +447,7 @@ avp_db_load("$ru","$avp(i1:123)/$some_scheme");
 		</section>
 		<section id="avpops.f.avp_db_store">
 			<title>
-				<function moreinfo="none">avp_db_store(source,name)</function>
+				<function moreinfo="none">avp_db_store(source, name)</function>
 			</title>
 			<para>
 			Stores to DB the AVPs corresponding to the given
@@ -474,7 +474,7 @@ avp_db_store("$ru/username","$avp(email)");
 		</section>
 		<section id="avpops.f.avp_db_delete">
 			<title>
-				<function moreinfo="none">avp_db_delete(source,name)</function>
+				<function moreinfo="none">avp_db_delete(source, name)</function>
 			</title>
 			<para>
 			Deletes from DB the AVPs corresponding to the given
@@ -501,7 +501,7 @@ avp_db_delete("$uuid","$avp(s:404fwd)/fwd_table");
 		</section>
 		<section id="avpops.f.avp_db_query">
 			<title>
-				<function moreinfo="none">avp_db_query(query[,dest])</function>
+				<function moreinfo="none">avp_db_query(query[, dest])</function>
 			</title>
 			<para>
 			Make a database query and store the result in AVPs.
@@ -614,7 +614,7 @@ avp_delete("a3");
 		</section>
 		<section id="avpops.f.avp_pushto">
 			<title>
-				<function moreinfo="none">avp_pushto(destination,name)
+				<function moreinfo="none">avp_pushto(destination, name)
 				</function>
 			</title>
 			<para>
@@ -680,7 +680,7 @@ avp_pushto("$br","$avp(i:680)");
 		</section>
 		<section id="avpops.f.avp_check">
 			<title>
-				<function moreinfo="none">avp_check(name,op_value)
+				<function moreinfo="none">avp_check(name, op_value)
 				</function>
 			</title>
 			<para>
@@ -791,7 +791,7 @@ avp_check("$xavp(op=>foo[*])","fm/$xavp(op=>fm[$var(id)])/g");
 		</section>
 		<section id="avpops.f.avp_copy">
 			<title>
-				<function moreinfo="none">avp_copy(old_name,new_name)
+				<function moreinfo="none">avp_copy(old_name, new_name)
 				</function>
 			</title>
 			<para>
@@ -1003,7 +1003,7 @@ avp_subst_pv("$avp(src)", "$var(x)");
 		</section>
 		<section id="avpops.f.avp_op">
 			<title>
-				<function moreinfo="none">avp_op(name,op_value)
+				<function moreinfo="none">avp_op(name, op_value)
 				</function>
 			</title>
 			<para>

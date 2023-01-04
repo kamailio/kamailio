@@ -37,19 +37,14 @@ int pv_xavp_get_value(struct sip_msg *msg, pv_param_t *param,
 		case SR_XTYPE_NULL:
 			return pv_get_null(msg, param, res);
 		break;
-		case SR_XTYPE_INT:
-			return pv_get_sintval(msg, param, res, avp->val.v.i);
+		case SR_XTYPE_LONG:
+			return pv_get_sintval(msg, param, res, avp->val.v.l);
 		break;
 		case SR_XTYPE_STR:
 			return pv_get_strval(msg, param, res, &avp->val.v.s);
 		break;
 		case SR_XTYPE_TIME:
-			if(snprintf(_pv_xavp_buf, 128, "%lu", (long unsigned)avp->val.v.t)<0)
-				return pv_get_null(msg, param, res);
-		break;
-		case SR_XTYPE_LONG:
-			if(snprintf(_pv_xavp_buf, 128, "%ld", (long unsigned)avp->val.v.l)<0)
-				return pv_get_null(msg, param, res);
+			return pv_get_uintval(msg, param, res, (long unsigned)avp->val.v.t);
 		break;
 		case SR_XTYPE_LLONG:
 			if(snprintf(_pv_xavp_buf, 128, "%lld", avp->val.v.ll)<0)
@@ -319,8 +314,8 @@ int pv_set_xavp(struct sip_msg* msg, pv_param_t *param,
 
 	if(val->flags&PV_TYPE_INT)
 	{
-		xval.type = SR_XTYPE_INT;
-		xval.v.i = val->ri;
+		xval.type = SR_XTYPE_LONG;
+		xval.v.l = val->ri;
 	} else {
 		xval.type = SR_XTYPE_STR;
 		xval.v.s = val->rs;
@@ -816,9 +811,9 @@ int pv_var_to_xavp(str *varname, str *xname)
 			memset(&xval, 0, sizeof(sr_xval_t));
 			if(it->v.flags==VAR_VAL_INT)
 			{
-				xval.type = SR_XTYPE_INT;
-				xval.v.i = it->v.value.n;
-				LM_DBG("[%.*s]: %d\n", it->name.len, it->name.s, xval.v.i);
+				xval.type = SR_XTYPE_LONG;
+				xval.v.l = it->v.value.n;
+				LM_DBG("[%.*s]: %ld\n", it->name.len, it->name.s, xval.v.l);
 			} else {
 				if(it->v.value.s.len==0) continue;
 				xval.type = SR_XTYPE_STR;
@@ -851,9 +846,9 @@ int pv_var_to_xavp(str *varname, str *xname)
 		memset(&xval, 0, sizeof(sr_xval_t));
 		if(it->v.flags==VAR_VAL_INT)
 		{
-			xval.type = SR_XTYPE_INT;
-			xval.v.i = it->v.value.n;
-			LM_DBG("[%.*s]: %d\n", it->name.len, it->name.s, xval.v.i);
+			xval.type = SR_XTYPE_LONG;
+			xval.v.l = it->v.value.n;
+			LM_DBG("[%.*s]: %ld\n", it->name.len, it->name.s, xval.v.l);
 		} else {
 			xval.type = SR_XTYPE_STR;
 			xval.v.s.s = it->v.value.s.s;
@@ -887,10 +882,10 @@ int pv_xavp_to_var_helper(sr_xavp_t *avp) {
 		LM_DBG("var:[%.*s] STR:[%.*s]\n", avp->name.len, avp->name.s,
 			value.s.len, value.s.s);
 	}
-	else if(avp->val.type==SR_XTYPE_INT) {
+	else if(avp->val.type==SR_XTYPE_LONG) {
 		flags |= VAR_VAL_INT;
-		value.n = avp->val.v.i;
-		LM_DBG("var:[%.*s] INT:[%d]\n", avp->name.len, avp->name.s,
+		value.n = avp->val.v.l;
+		LM_DBG("var:[%.*s] INT:[%ld]\n", avp->name.len, avp->name.s,
 			value.n);
 	} else {
 		LM_ERR("avp type not STR nor INT\n");
@@ -1068,8 +1063,8 @@ int pv_set_xavu(struct sip_msg* msg, pv_param_t *param,
 	memset(&xval, 0, sizeof(sr_xval_t));
 
 	if(val->flags&PV_TYPE_INT) {
-		xval.type = SR_XTYPE_INT;
-		xval.v.i = val->ri;
+		xval.type = SR_XTYPE_LONG;
+		xval.v.l = val->ri;
 	} else {
 		xval.type = SR_XTYPE_STR;
 		xval.v.s = val->rs;
@@ -1393,8 +1388,8 @@ int pv_set_xavi(struct sip_msg* msg, pv_param_t *param,
 
 	if(val->flags&PV_TYPE_INT)
 	{
-		xval.type = SR_XTYPE_INT;
-		xval.v.i = val->ri;
+		xval.type = SR_XTYPE_LONG;
+		xval.v.l = val->ri;
 	} else {
 		xval.type = SR_XTYPE_STR;
 		xval.v.s = val->rs;

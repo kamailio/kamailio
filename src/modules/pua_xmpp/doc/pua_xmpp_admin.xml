@@ -120,7 +120,7 @@ modparam("pua_xmpp", "server_address", "sip:160.23.23.10")
 		<function moreinfo="none">pua_xmpp_req_winfo(request_uri, expires)</function>
 		</title>
 		<para>
-		Function called when a Subscribe addressed to a user from a
+		Function called when a Subscribe addressed to a user from an
 		xmpp domain is received. It calls sending a Subscribe for 
 		winfo for the user, and the following Notify with dialog-info
 		is translated into a subscription in xmpp. 

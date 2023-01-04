@@ -1271,11 +1271,12 @@ static void mod_destroy(void)
  */
 static int ki_jsonrpcs_dispatch(sip_msg_t* msg)
 {
-	rpc_export_t* rpce;
+	rpc_exportx_t* rpce;
 	jsonrpc_ctx_t* ctx;
 	int ret = 0;
 	srjson_t *nj = NULL;
 	str val;
+	unsigned int rdata;
 
 	if(!IS_HTTP(msg)) {
 		LM_DBG("Got non HTTP msg\n");
@@ -1332,20 +1333,26 @@ static int ki_jsonrpcs_dispatch(sip_msg_t* msg)
 	val.s = nj->valuestring;
 	val.len = strlen(val.s);
 	ctx->method = val.s;
-	rpce = find_rpc_export(ctx->method, 0);
-	if (!rpce || !rpce->function) {
+	rpce = rpc_lookupx(val.s, val.len, &rdata);
+	if (!rpce || !rpce->r.function) {
 		LM_ERR("method callback not found [%.*s]\n", val.len, val.s);
 		jsonrpc_fault(ctx, 500, "Method Not Found");
 		goto send_reply;
 	}
-	ctx->flags = rpce->flags;
+	if (rdata & RPC_EXEC_DELTA) {
+		LM_ERR("execution of command [%.*s] is limited by delta [%d]\n",
+				val.len, val.s, ksr_rpc_exec_delta);
+		jsonrpc_fault(ctx, 500, "Command Executed Too Fast");
+		goto send_reply;
+	}
+	ctx->flags = rpce->r.flags;
 	nj = srjson_GetObjectItem(ctx->jreq, ctx->jreq->root, "params");
 	if(nj!=NULL && nj->type!=srjson_Array && nj->type!=srjson_Object) {
 		LM_ERR("params field is not an array or object\n");
 		goto send_reply;
 	}
 	if(nj!=NULL) ctx->req_node = nj->child;
-	rpce->function(&func_param, ctx);
+	rpce->r.function(&func_param, ctx);
 
 send_reply:
 	if (!ctx->reply_sent && !(ctx->flags&JSONRPC_DELAYED_REPLY_F)) {
@@ -1367,12 +1374,13 @@ static int jsonrpc_dispatch(sip_msg_t* msg, char* s1, char* s2)
 
 int jsonrpc_exec_ex(str *cmd, str *rpath)
 {
-	rpc_export_t* rpce;
+	rpc_exportx_t* rpce;
 	jsonrpc_ctx_t* ctx;
 	int ret;
 	srjson_t *nj = NULL;
 	str val;
 	str scmd;
+	unsigned int rdata = 0;
 
 	scmd = *cmd;
 
@@ -1441,20 +1449,26 @@ int jsonrpc_exec_ex(str *cmd, str *rpath)
 	val.s = nj->valuestring;
 	val.len = strlen(val.s);
 	ctx->method = val.s;
-	rpce = find_rpc_export(ctx->method, 0);
-	if (!rpce || !rpce->function) {
+	rpce = rpc_lookupx(val.s, val.len, &rdata);
+	if (!rpce || !rpce->r.function) {
 		LM_ERR("method callback not found [%.*s]\n", val.len, val.s);
 		jsonrpc_fault(ctx, 500, "Method Not Found");
 		goto send_reply;
 	}
-	ctx->flags = rpce->flags;
+	if (rdata & RPC_EXEC_DELTA) {
+		LM_ERR("execution of command [%.*s] is limited by delta [%d]\n",
+				val.len, val.s, ksr_rpc_exec_delta);
+		jsonrpc_fault(ctx, 500, "Command Executed Too Fast");
+		goto send_reply;
+	}
+	ctx->flags = rpce->r.flags;
 	nj = srjson_GetObjectItem(ctx->jreq, ctx->jreq->root, "params");
 	if(nj!=NULL && nj->type!=srjson_Array && nj->type!=srjson_Object) {
 		LM_ERR("params field is not an array or object\n");
 		goto send_reply;
 	}
 	if(nj!=NULL) ctx->req_node = nj->child;
-	rpce->function(&func_param, ctx);
+	rpce->r.function(&func_param, ctx);
 	ret = 1;
 
 send_reply:

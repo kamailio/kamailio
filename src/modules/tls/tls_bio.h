@@ -1,4 +1,4 @@
-/* 
+/*
  * Kamailio TLS module
  *
  * Copyright (C) 2010 iptelorg GmbH
@@ -15,12 +15,12 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
- 
+
 /** openssl BIOs for reading/writing via a fixed memory buffer.
  * @file modules/tls/tls_bio.h
  * @ingroup tls
  */
- 
+
 #ifndef __tls_bio_h
 #define __tls_bio_h
 

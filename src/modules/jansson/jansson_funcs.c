@@ -92,6 +92,29 @@ int janssonmod_get(struct sip_msg* msg, char* path_in, char* src_in, char* dst)
 	return janssonmod_get_helper(msg, &path_s, &src_s, (pv_spec_t *)dst);
 }
 
+int janssonmod_pv_get(struct sip_msg* msg, char* path_in, char* src_in, char* dst)
+{
+	str path_s;
+	pv_value_t val;
+	int ret;
+
+	if((pv_get_spec_value(msg, (pv_spec_t*)src_in, &val) < 0)
+			|| ((val.flags & PV_VAL_STR) == 0)) {
+		ERR("cannot get json string value\n");
+		return -1;
+	}
+	if (fixup_get_svalue(msg, (gparam_p)path_in, &path_s) != 0) {
+		ERR("cannot get path string value\n");
+		return -1;
+	}
+
+	ret = janssonmod_get_helper(msg, &path_s, &val.rs, (pv_spec_t*)dst);
+
+	pv_value_destroy(&val);
+
+	return ret;
+}
+
 #define STR_EQ_STATIC(a,b) ((a.len == sizeof(b)-1) && (strncmp(a.s, b, sizeof(b)-1)==0))
 
 int janssonmod_set(unsigned int append, struct sip_msg* msg, char* type_in,
@@ -408,17 +431,14 @@ static int jansson_xavp2object(json_t *json, sr_xavp_t **head) {
 			case SR_XTYPE_NULL:
 				it = json_null();
 				break;
-			case SR_XTYPE_INT:
-				it = json_integer(avp->val.v.i);
+			case SR_XTYPE_LONG:
+				it = json_integer((json_int_t)avp->val.v.l);
 				break;
 			case SR_XTYPE_STR:
 				it = json_stringn(avp->val.v.s.s, avp->val.v.s.len);
 				break;
 			case SR_XTYPE_TIME:
 				it = json_integer((json_int_t)avp->val.v.t);
-				break;
-			case SR_XTYPE_LONG:
-				it = json_integer((json_int_t)avp->val.v.l);
 				break;
 			case SR_XTYPE_LLONG:
 				it = json_integer((json_int_t)avp->val.v.ll);

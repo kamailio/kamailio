@@ -359,17 +359,15 @@ int w_uri_param_any(struct sip_msg* _msg, char* _param, char* _str2)
 }
 
 /*
- * Adds a new parameter to Request URI
+ * Adds a new parameter to Request URI - kemi export
  */
-int add_uri_param(struct sip_msg* _msg, char* _param, char* _s2)
+int ki_add_uri_param(struct sip_msg* _msg, str* param)
 {
-	str *param, *cur_uri, new_uri;
+	str *cur_uri, new_uri;
 	struct sip_uri *parsed_uri;
 	char *at;
 
-	param = (str*)_param;
-
-	if (param->len == 0) {
+	if (param==NULL || param->len == 0) {
 		return 1;
 	}
 
@@ -465,6 +463,14 @@ nok:
 ok:
 	pkg_free(new_uri.s);
 	return 1;
+}
+
+/*
+ * Adds a new parameter to Request URI - cfg export
+ */
+int add_uri_param(struct sip_msg* _msg, char* _param, char* _s2)
+{
+	return ki_add_uri_param(_msg, (str*)_param);
 }
 
 /*

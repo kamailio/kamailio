@@ -81,7 +81,7 @@ int check_dialog_alarm(int threshold_to_compare_to)
 	return 0;
 }
 
-/*! This function will be called periodically from an Kamailio timer.  The first
+/*! This function will be called periodically from a Kamailio timer.  The first
  * time it is called, it will query KAMAILIO-MIB for configured thresholds.
  */
 void run_alarm_check(unsigned int ticks, void *attr)

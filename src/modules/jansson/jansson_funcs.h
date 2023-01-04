@@ -27,6 +27,8 @@
 
 int janssonmod_get(struct sip_msg* msg, char* path_in, char* json_in,
 		char* result);
+int janssonmod_pv_get(struct sip_msg* msg, char* path_in, char* json_in,
+		char* result);
 int janssonmod_set(unsigned int append, struct sip_msg* msg, char* type_in,
 		char* path_in, char* value_in, char* result);
 int janssonmod_array_size(struct sip_msg* msg, char* json_in,

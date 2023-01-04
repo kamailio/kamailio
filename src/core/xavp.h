@@ -27,10 +27,9 @@ struct _sr_xavp;
 /* types for xavp values */
 typedef enum {
 	SR_XTYPE_NULL=0,
-	SR_XTYPE_INT,     /* integer value */
+	SR_XTYPE_LONG,    /* long value */
 	SR_XTYPE_STR,     /* str value */
 	SR_XTYPE_TIME,    /* timestamp value */
-	SR_XTYPE_LONG,    /* long value */
 	SR_XTYPE_LLONG,   /* long long value */
 	SR_XTYPE_XAVP,    /* xavp value */
 	SR_XTYPE_VPTR,    /* void pointer value (no free on destroy) */
@@ -51,7 +50,6 @@ typedef struct _sr_data {
 typedef struct _sr_xval {
 	sr_xtype_t type;           /* type of the value */
 	union {
-		int i;
 		str s;                 /* cloned in shared memory */
 		time_t t;
 		long l;
@@ -110,7 +108,7 @@ sr_xavp_t* xavp_get_child_with_ival(str *rname, str *cname);
 sr_xavp_t* xavp_get_child_with_sval(str *rname, str *cname);
 int xavp_serialize_fields(str *rname, char *obuf, int olen);
 
-int xavp_set_child_ival(str *rname, str *cname, int ival);
+int xavp_set_child_ival(str *rname, str *cname, long ival);
 int xavp_set_child_sval(str *rname, str *cname, str *sval);
 
 /** xavu api */
@@ -127,10 +125,10 @@ int xavu_rm(sr_xavp_t *xa, sr_xavp_t **head);
 int xavu_rm_by_name(str *name, sr_xavp_t **head);
 int xavu_rm_child_by_name(str *rname, str *cname);
 sr_xavp_t *xavu_set_xval(str *name, sr_xval_t *val, sr_xavp_t **list);
-sr_xavp_t *xavu_set_ival(str *rname, int ival);
+sr_xavp_t *xavu_set_ival(str *rname, long ival);
 sr_xavp_t *xavu_set_sval(str *rname, str *sval);
 sr_xavp_t *xavu_set_child_xval(str *rname, str *cname, sr_xval_t *xval);
-sr_xavp_t *xavu_set_child_ival(str *rname, str *cname, int ival);
+sr_xavp_t *xavu_set_child_ival(str *rname, str *cname, long ival);
 sr_xavp_t *xavu_set_child_sval(str *rname, str *cname, str *sval);
 sr_xavp_t* xavu_get_child(str *rname, str *cname);
 sr_xavp_t* xavu_get_child_with_ival(str *rname, str *cname);
@@ -178,7 +176,7 @@ sr_xavp_t* xavi_get_child_with_ival(str *rname, str *cname);
 sr_xavp_t* xavi_get_child_with_sval(str *rname, str *cname);
 int xavi_serialize_fields(str *rname, char *obuf, int olen);
 
-int xavi_set_child_ival(str *rname, str *cname, int ival);
+int xavi_set_child_ival(str *rname, str *cname, long ival);
 int xavi_set_child_sval(str *rname, str *cname, str *sval);
 
 #endif

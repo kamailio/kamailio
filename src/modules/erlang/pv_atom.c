@@ -251,7 +251,6 @@ int pv_atom_get_value(struct sip_msg *msg, pv_param_t *param,
 			return pv_get_null(msg, param, res);
 		break;
 	case SR_XTYPE_DATA:
-	case SR_XTYPE_INT:
 	case SR_XTYPE_TIME:
 	case SR_XTYPE_LONG:
 	case SR_XTYPE_LLONG:

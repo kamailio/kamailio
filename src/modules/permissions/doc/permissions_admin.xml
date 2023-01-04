@@ -124,7 +124,7 @@
 		</para>
 		<para>
 		Instead of the From header field the function uses the To header field because
-		th To header field in REGISTER messages contains the URI of the person
+		the To header field in REGISTER messages contains the URI of the person
 		being registered. Instead of the Request-URI of branches the function
 		uses the Contact header field.
 		</para>
@@ -963,7 +963,7 @@ if (allow_routing("basename")) {
 	</section>
 	<section id ="permissions.f.allow_routing_fileargs">
 		<title>
-		<function moreinfo="none">allow_routing(allow_file,deny_file)</function>
+		<function moreinfo="none">allow_routing(allow_file, deny_file)</function>
 		</title>
 		<para>
 		Returns true if all pairs constructed as described in

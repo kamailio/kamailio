@@ -206,8 +206,8 @@ int pv_tuple_get_value(struct sip_msg *msg, pv_param_t *param,
 	case SR_XTYPE_NULL:
 		return pv_get_null(msg, param, res);
 		break;
-	case SR_XTYPE_INT:
-		return pv_get_sintval(msg, param, res, avp->val.v.i);
+	case SR_XTYPE_LONG:
+		return pv_get_sintval(msg, param, res, avp->val.v.l);
 		break;
 	case SR_XTYPE_STR:
 		switch (avp->name.s[0]) {
@@ -221,10 +221,6 @@ int pv_tuple_get_value(struct sip_msg *msg, pv_param_t *param,
 		break;
 	case SR_XTYPE_TIME:
 		if(snprintf(_pv_xavp_buf, 128, "%lu", (long unsigned)avp->val.v.t)<0)
-			return pv_get_null(msg, param, res);
-		break;
-	case SR_XTYPE_LONG:
-		if(snprintf(_pv_xavp_buf, 128, "%ld", (long unsigned)avp->val.v.l)<0)
 			return pv_get_null(msg, param, res);
 		break;
 	case SR_XTYPE_LLONG:

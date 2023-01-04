@@ -104,7 +104,7 @@ static inline int add_contacts_to_loc_set(struct sip_msg* msg,
 		}
 	}
 
-	/* extract from contact header the all the addresses */
+	/* extract from contact header all the addresses */
 	if (parse_contact( msg->contact )!=0) {
 		LM_ERR("unable to parse Contact hdr!\n");
 		goto error;

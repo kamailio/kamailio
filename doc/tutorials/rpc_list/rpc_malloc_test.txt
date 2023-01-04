@@ -31,7 +31,7 @@ RPC Exports for malloc_test
  5. mt.mem_rnd_alloc
         Takes 4 parameters: min, max, total_size and an optional unit
         (b|k|m|g). It will allocate total_size memory, in pieces of
-        random size betweenmin .. max (inclusive).
+        random size between min .. max (inclusive).
 
  6. mt.mem_test_start
         Takes 7 parameters: min, max, total_size, min_interval,

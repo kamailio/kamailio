@@ -2689,8 +2689,11 @@ static bencode_item_t *rtpp_function_call(bencode_buffer_t *bencbuf, struct sip_
 			|| op == OP_UNBLOCK_MEDIA || op == OP_START_FORWARDING || op == OP_STOP_FORWARDING
 			|| op == OP_SILENCE_MEDIA || op == OP_UNSILENCE_MEDIA)
 	{
-		if (ng_flags.directional)
+		if (ng_flags.directional) {
 			bencode_dictionary_add_str(ng_flags.dict, "from-tag", &ng_flags.from_tag);
+			if (ng_flags.to && ng_flags.to_tag.s && ng_flags.to_tag.len)
+				bencode_dictionary_add_str(ng_flags.dict, "to-tag", &ng_flags.to_tag);
+		}
 	}
 	else if ((msg->first_line.type == SIP_REQUEST && op != OP_ANSWER)
 		|| (msg->first_line.type == SIP_REPLY && op == OP_DELETE)
@@ -3451,11 +3454,11 @@ set_rtpengine_set_from_avp(struct sip_msg *msg, int direction)
 
 	active_rtpp_set = select_rtpp_set(setid_val.n);
 	if(active_rtpp_set == NULL) {
-		LM_ERR("could not locate engine set %u\n", setid_val.n);
+		LM_ERR("could not locate engine set %ld\n", setid_val.n);
 		return -1;
 	}
 
-	LM_DBG("using rtpengine set %u\n", setid_val.n);
+	LM_DBG("using rtpengine set %ld\n", setid_val.n);
 
 	current_msg_id = msg->id;
 
@@ -3798,7 +3801,7 @@ set_rtpengine_set_n(struct sip_msg *msg, rtpp_set_link_t *rtpl, struct rtpp_set 
 	}
 	*out = select_rtpp_set(val.ri);
 	if(*out==NULL) {
-		LM_ERR("could not locate rtpengine set %u\n", val.ri);
+		LM_ERR("could not locate rtpengine set %ld\n", val.ri);
 		return -1;
 	}
 	current_msg_id = msg->id;
@@ -3815,13 +3818,13 @@ set_rtpengine_set_n(struct sip_msg *msg, rtpp_set_link_t *rtpl, struct rtpp_set 
 	if ( nb_active_nodes > 0 )
 	{
 		LM_DBG("rtpp: selected proxy set ID %d with %d active nodes.\n",
-			current_msg_id, nb_active_nodes);
+			(*out)->id_set, nb_active_nodes);
 		return nb_active_nodes;
 	}
 	else
 	{
 		LM_WARN("rtpp: selected proxy set ID %d but it has no active node.\n",
-			current_msg_id);
+			(*out)->id_set);
 		return -2;
 	}
 }

@@ -30,7 +30,7 @@ Options:
     -s address  unix socket name or host name to send the commands on
     -R name     force reply socket name, for the unix datagram socket mode
     -D dir      create the reply socket in the directory <dir> if no reply
-                socket is forced (-R) and an unix datagram socket is selected
+                socket is forced (-R) and a unix datagram socket is selected
                 as the transport
     -f format   print the result using format. Format is a string containing
                 %v at the places where values read from the reply should be
@@ -129,7 +129,7 @@ $ kamcmd ps
 11277	tcp main process
 
 $ kamcmd help  # list all the supported commands
-dst_blacklist.add
+dst_blocklist.add
 ctl.who
 ...
 

@@ -23,7 +23,7 @@ A short time after this Jiri began testing the code and requesting new features.
 In Octomber 2001 I made some changes to ser routing language bringing it to what we still use today.
 In the next months I've created the module interface, the first two modules (print and textops) and I've added the shared memory support (this involved the creation of ser's own malloc library which proved to be much faster for ser's memory usage patterns than standards malloc implementations).
 During the same period Bogdan and Jan joined me and Jiri also began writing code.
-In December 2001 Bogdan announced that tm was up an running (after a sleepless night).
+In December 2001 Bogdan announced that tm was up and running (after a sleepless night).
 At the beginning of 2002 we were joined by Daniel. Jan introduced the mysql, usrloc and auth modules.
 Ser first public appearance was at the April 2002 Sipit. We ran it on a pda an still managed to be faster than the testing tools that were used against us :-)
 

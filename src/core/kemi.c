@@ -3167,6 +3167,51 @@ static int sr_kemi_pv_geti (sip_msg_t *msg, str *pvn)
 /**
  *
  */
+static sr_kemi_xval_t* sr_kemi_pv_getl (sip_msg_t *msg, str *pvn)
+{
+	pv_spec_t *pvs;
+	pv_value_t val;
+	int vi;
+
+	memset(&_sr_kemi_xval, 0, sizeof(sr_kemi_xval_t));
+	_sr_kemi_xval.vtype = SR_KEMIP_LONG;
+
+	LM_DBG("pv get: %.*s\n", pvn->len, pvn->s);
+	vi = pv_locate_name(pvn);
+	if(vi != pvn->len) {
+		LM_WARN("invalid pv [%.*s] (%d/%d)\n", pvn->len, pvn->s, vi, pvn->len);
+		return &_sr_kemi_xval;
+	}
+	pvs = pv_cache_get(pvn);
+	if(pvs==NULL) {
+		LM_WARN("cannot get pv spec for [%.*s]\n", pvn->len, pvn->s);
+		return &_sr_kemi_xval;
+	}
+
+	memset(&val, 0, sizeof(pv_value_t));
+	if(pv_get_spec_value(msg, pvs, &val) != 0) {
+		LM_WARN("unable to get pv value for [%.*s]\n", pvn->len, pvn->s);
+		return &_sr_kemi_xval;
+	}
+	if(val.flags&PV_VAL_NULL) {
+		return &_sr_kemi_xval;
+	}
+	if(val.flags&(PV_TYPE_INT|PV_VAL_INT)) {
+		_sr_kemi_xval.v.l = val.ri;
+		return &_sr_kemi_xval;
+	}
+	if(val.ri!=0) {
+		_sr_kemi_xval.v.l = val.ri;
+		return &_sr_kemi_xval;
+	}
+	str2slong(&val.rs, &_sr_kemi_xval.v.l);
+
+	return &_sr_kemi_xval;
+}
+
+/**
+ *
+ */
 static int sr_kemi_pv_seti (sip_msg_t *msg, str *pvn, int ival)
 {
 	pv_spec_t *pvs;
@@ -3187,6 +3232,43 @@ static int sr_kemi_pv_seti (sip_msg_t *msg, str *pvn, int ival)
 
 	memset(&val, 0, sizeof(pv_value_t));
 	val.ri = ival;
+	val.flags |= PV_TYPE_INT|PV_VAL_INT;
+
+	if(pv_set_spec_value(msg, pvs, 0, &val)<0) {
+		LM_ERR("unable to set pv [%.*s]\n", pvn->len, pvn->s);
+		return SR_KEMI_FALSE;
+	}
+
+	return SR_KEMI_TRUE;
+}
+
+/**
+ *
+ */
+static int sr_kemi_pv_setl (sip_msg_t *msg, str *pvn, sr_kemi_xval_t *xval)
+{
+	pv_spec_t *pvs;
+	pv_value_t val;
+	int pl;
+
+	LM_DBG("pv get: %.*s\n", pvn->len, pvn->s);
+	pl = pv_locate_name(pvn);
+	if(pl != pvn->len) {
+		LM_ERR("invalid pv [%.*s] (%d/%d)\n", pvn->len, pvn->s, pl, pvn->len);
+		return SR_KEMI_FALSE;
+	}
+	pvs = pv_cache_get(pvn);
+	if(pvs==NULL) {
+		LM_ERR("cannot get pv spec for [%.*s]\n", pvn->len, pvn->s);
+		return SR_KEMI_FALSE;
+	}
+
+	memset(&val, 0, sizeof(pv_value_t));
+	if(xval==NULL || !(xval->vtype & SR_KEMIP_LONG)) {
+		val.ri = 0;
+	} else {
+		val.ri = xval->v.l;
+	}
 	val.flags |= PV_TYPE_INT|PV_VAL_INT;
 
 	if(pv_set_spec_value(msg, pvs, 0, &val)<0) {
@@ -3317,6 +3399,11 @@ static sr_kemi_t _sr_kemi_pv[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("pv"), str_init("getl"),
+		SR_KEMIP_XVAL, sr_kemi_pv_getl,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 	{ str_init("pv"), str_init("getvn"),
 		SR_KEMIP_XVAL, sr_kemi_pv_getvn,
 		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE,
@@ -3330,6 +3417,11 @@ static sr_kemi_t _sr_kemi_pv[] = {
 	{ str_init("pv"), str_init("seti"),
 		SR_KEMIP_BOOL, sr_kemi_pv_seti,
 		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("pv"), str_init("setl"),
+		SR_KEMIP_BOOL, sr_kemi_pv_setl,
+		{ SR_KEMIP_STR, SR_KEMIP_LONG, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("pv"), str_init("sets"),
@@ -3396,7 +3488,12 @@ int sr_kemi_modules_add(sr_kemi_t *klist)
 		_sr_kemi_modules[_sr_kemi_modules_size-1].kexp = klist;
 	} else {
 		LM_DBG("adding module: %.*s\n", klist[0].mname.len, klist[0].mname.s);
-		_sr_kemi_modules[_sr_kemi_modules_size].mname = klist[0].mname;
+		if(pkg_str_dup(&_sr_kemi_modules[_sr_kemi_modules_size].mname,
+					&klist[0].mname)<0) {
+			LM_ERR("failed to clone module name: %.*s\n", klist[0].mname.len,
+					klist[0].mname.s);
+			return -1;
+		}
 		_sr_kemi_modules[_sr_kemi_modules_size].kexp = klist;
 		_sr_kemi_modules_size++;
 	}

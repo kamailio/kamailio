@@ -124,7 +124,8 @@ Chapter 1. Admin Guide
 
    The following libraries or applications must be installed before
    running Kamailio with this module loaded:
-     * liblua5.1-dev - Lua devel library.
+     * liblua5.1-dev - Lua devel library. Versions 5.2, 5.3 and 5.4 also
+       work.
 
    This module can be compiled against LuaJIT compiler (instead of
    standard Lua). Then this library is needed:

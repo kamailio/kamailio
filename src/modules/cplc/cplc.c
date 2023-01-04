@@ -924,7 +924,7 @@ stop_script:
 resume_script:
 	return 1;
 error:
-	/* send a error reply back */
+	/* send an error reply back */
 	cpl_fct.slb.freply( msg, cpl_err->err_code, &cpl_err->err_msg);
 	/* I don't want to return to script execution, so I return 0 to do break */
 	return 0;

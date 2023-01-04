@@ -68,7 +68,7 @@ Camille Oudot
 
         4. Functions
 
-              4.1. sip_trace([address][,correlation_id][,mode])
+              4.1. sip_trace([address][, correlation_id][, mode])
               4.2. sip_trace_mode(tmode)
               4.3. hlog([correlation_id,] message)
 
@@ -156,7 +156,7 @@ Chapter 1. Admin Guide
 
    4. Functions
 
-        4.1. sip_trace([address][,correlation_id][,mode])
+        4.1. sip_trace([address][, correlation_id][, mode])
         4.2. sip_trace_mode(tmode)
         4.3. hlog([correlation_id,] message)
 
@@ -173,7 +173,7 @@ Chapter 1. Admin Guide
 
 1. Overview
 
-   The SIPtrace module offer a possibility to store incoming and outgoing
+   The SIPtrace module offers a possibility to store incoming and outgoing
    SIP messages in a database and/or duplicate to the capturing server
    (using HEP, the Homer encapsulation protocol, or plain SIP mode). Since
    version 5.3.0 new levels of tracing are available. Transactions and
@@ -601,11 +601,11 @@ modparam("siptrace", "trace_dialog_spiral", 1)
 
 4. Functions
 
-   4.1. sip_trace([address][,correlation_id][,mode])
+   4.1. sip_trace([address][, correlation_id][, mode])
    4.2. sip_trace_mode(tmode)
    4.3. hlog([correlation_id,] message)
 
-4.1.  sip_trace([address][,correlation_id][,mode])
+4.1.  sip_trace([address][, correlation_id][, mode])
 
    Store or forward the current processed SIP message/transaction/dialog
    in database. It is stored in the form prior applying changes made to

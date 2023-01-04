@@ -124,7 +124,7 @@ modparam("ndb_cassandra", "port", 9160)
    keyspace. There must be an existing keyspace called 'keyspace' with a
    column_family called 'column_family' in the targeted Cassandra node.
 
-   value will be returned as well as a integer return code.
+   value will be returned as well as an integer return code.
 
    Return integer needs to be checked:
      * ret < 0, error

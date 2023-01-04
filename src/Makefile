@@ -28,7 +28,7 @@ include Makefile.sources
 include Makefile.targets
 
 # whether or not the entire build process should fail if building a module or
-#  an utility fails
+#  a utility fails
 err_fail?=1
 
 # whether or not to install $(MAIN_NAME).cfg or just $(MAIN_NAME).cfg.default
@@ -626,7 +626,7 @@ deb-stable:
 		dpkg-buildpackage -rfakeroot -tc -uc -us; \
 		rm debian; \
 	else \
-		ln -s pkg/$(MAIN_NAME)/deb/buster debian; \
+		ln -s pkg/$(MAIN_NAME)/deb/bullseye debian; \
 		dpkg-buildpackage -rfakeroot -tc -uc -us; \
 		rm debian; \
 	fi)

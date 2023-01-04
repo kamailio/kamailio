@@ -33,6 +33,9 @@ Mojtaba Esfandiari.S
                     4.3.7. hash_table_size (integer)
                     4.3.8. custom_sdp_ip_avp (string)
                     4.3.9. gt (integer)
+                    4.3.10. behind_nat (integer)
+                    4.3.11. start_port (integer)
+                    4.3.12. end_port (integer)
 
               4.4. Functions
 
@@ -50,8 +53,11 @@ Mojtaba Esfandiari.S
    1.7. Set hash_table_size parameter
    1.8. Set custom_sdp_ip_avp parameter
    1.9. Set gt parameter
-   1.10. set_lrkproxy_set usage
-   1.11. lrkproxy_manage usage
+   1.10. Set behind_nat parameter
+   1.11. Set start_port parameter
+   1.12. Set start_port parameter
+   1.13. set_lrkproxy_set usage
+   1.14. lrkproxy_manage usage
 
 Chapter 1. Admin Guide
 
@@ -79,6 +85,9 @@ Chapter 1. Admin Guide
               4.3.7. hash_table_size (integer)
               4.3.8. custom_sdp_ip_avp (string)
               4.3.9. gt (integer)
+              4.3.10. behind_nat (integer)
+              4.3.11. start_port (integer)
+              4.3.12. end_port (integer)
 
         4.4. Functions
 
@@ -88,7 +97,7 @@ Chapter 1. Admin Guide
 1. Overview
 
    This is a module that enables media streams to be relayed via
-   pylrkproxy engine. This engine can be found at:
+   pylrkproxy engine that exist in:
    https://github.com/mojtabaesfandiari/pylrkproxy It does relaying audio
    streams between peers in PREROUTING netfilter-hooking section in
    kernel-space linux. The LRKProxy architecture is composed of two
@@ -133,7 +142,7 @@ Chapter 1. Admin Guide
 
    IMPORTANT: This module does not support balancing inside a set like as
    is done RTPProxy module based on the weight of each rtpproxy from the
-   set. The balancing would be run on different machine.
+   set. The balancing would be run on different machine
 
 4. Dependencies
 
@@ -150,6 +159,9 @@ Chapter 1. Admin Guide
         4.3.7. hash_table_size (integer)
         4.3.8. custom_sdp_ip_avp (string)
         4.3.9. gt (integer)
+        4.3.10. behind_nat (integer)
+        4.3.11. start_port (integer)
+        4.3.12. end_port (integer)
 
    4.4. Functions
 
@@ -310,6 +322,47 @@ _ip_avp", "$avp(RR_CUSTOM_SDP_IP_AVP)")
                                                 modparam("lrkproxy", "gt", "1")
                                                 ...
 
+4.3.10. behind_nat (integer)
+
+   The behind_nat is used when the LRKProxy is behind NAT firewall and the
+   external IP should be as Advertised IP. It could be set 0:disable or
+   1:enable. If you use AWS for LRKProxy, you might should set behind_nat
+   option.
+
+   Default value is “0”.
+
+   Example 1.10. Set behind_nat parameter
+                                                ...
+                                                modparam("lrkproxy", "behind_nat
+", "1")
+                                                ...
+
+4.3.11. start_port (integer)
+
+   This option use for local rang port for working with LRKProxy engine.
+   Default value is based on LRKProxy engine option. For example if the
+   range of ports in LRKProxy is set from 20000 to 30000, You could use
+   this option to set a subset of the LRKProxy range.
+
+   Example 1.11. Set start_port parameter
+                                                ...
+                                                modparam("lrkproxy", "start_port
+", "25000")
+                                                ...
+
+4.3.12. end_port (integer)
+
+   This option use for local rang port for working with LRKProxy engine.
+   Default value is based on LRKProxy engine option. For example if the
+   range of ports in LRKProxy is set from 20000 to 30000, You could use
+   this option to set a subset of the LRKProxy range.
+
+   Example 1.12. Set start_port parameter
+                                                ...
+                                                modparam("lrkproxy", "end_port",
+ "28000")
+                                                ...
+
 4.4. Functions
 
 4.4.1.  set_lrkproxy_set(setid)
@@ -321,7 +374,7 @@ _ip_avp", "$avp(RR_CUSTOM_SDP_IP_AVP)")
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    BRANCH_ROUTE.
 
-   Example 1.10. set_lrkproxy_set usage
+   Example 1.13. set_lrkproxy_set usage
                                                 ...
                                                 set_lrkproxy_set("0");
                                                 lrkproxy_manage();
@@ -346,12 +399,12 @@ _ip_avp", "$avp(RR_CUSTOM_SDP_IP_AVP)")
           + external,internal - The shorthand of this flag is "ei". This
             can be used to relay media sessions between two different NIC
             from external to internal path.
-     * ip_address - new SDP IP address.This optional parameter is under
+     * ip_address - new SDP IP address. This optional parameter is under
        development.
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.11. lrkproxy_manage usage
+   Example 1.14. lrkproxy_manage usage
                                                 ...
                                                 lrkproxy_manage();
                                                 //or

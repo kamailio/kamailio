@@ -96,9 +96,8 @@ int cdr_core2strar( struct dlg_cell* dlg,
 		int* unused,
 		char* types)
 {
-	str* start = NULL;
-	str* end = NULL;
-	str* duration = NULL;
+	str dlgvals[MAX_CDR_CORE]; /* start, end, duration */
+	int i;
 
 	if( !dlg || !values || !types)
 	{
@@ -106,18 +105,40 @@ int cdr_core2strar( struct dlg_cell* dlg,
 		return 0;
 	}
 
-	start = dlgb.get_dlg_var( dlg, (str*)&cdr_start_str);
-	end = dlgb.get_dlg_var( dlg, (str*)&cdr_end_str);
-	duration = dlgb.get_dlg_var( dlg, (str*)&cdr_duration_str);
+	dlgb.get_dlg_varval(dlg, &cdr_start_str, &dlgvals[0]); /* start */
+	dlgb.get_dlg_varval(dlg, &cdr_end_str, &dlgvals[1]); /* end */
+	dlgb.get_dlg_varval(dlg, &cdr_duration_str, &dlgvals[2]); /* duration */
 
-	values[0] = ( start != NULL ? *start : empty_string);
-	types[0] = ( start != NULL ? TYPE_DATE : TYPE_NULL);
-
-	values[1] = ( end != NULL ? *end : empty_string);
-	types[1] = ( end != NULL ? TYPE_DATE : TYPE_NULL);
-
-	values[2] = ( duration != NULL ? *duration : empty_string);
-	types[2] = ( duration != NULL ? TYPE_DOUBLE : TYPE_NULL);
+	for(i=0; i<MAX_CDR_CORE; i++) {
+		if (dlgvals[i].s!=NULL) {
+			values[i].s = (char *)pkg_malloc(dlgvals[i].len + 1);
+			if (values[i].s == NULL ) {
+				PKG_MEM_ERROR;
+				/* cleanup already allocated memory and
+				 * return that we didn't do anything */
+				for (i = i-1; i >= 0; i--) {
+					if (NULL != values[i].s){
+						pkg_free(values[i].s);
+						values[i].s = NULL;
+					}
+				}
+				return 0;
+			}
+			memcpy(values[i].s, dlgvals[i].s, dlgvals[i].len);
+			values[i].s[dlgvals[i].len] = '\0';
+			values[i].len = dlgvals[i].len;
+			if(i!=2) {
+				/* [0] - start; [1] - end */
+				types[i] = TYPE_DATE;
+			} else {
+				/* [2] - duration */
+				types[i] = TYPE_DOUBLE;
+			}
+		} else {
+			values[i] = empty_string;
+			types[i] = TYPE_NULL;
+		}
+	}
 
 	return MAX_CDR_CORE;
 }
@@ -130,8 +151,9 @@ static db_val_t *db_cdr_vals = NULL;
 static int db_write_cdr( struct dlg_cell* dialog,
 		struct sip_msg* message)
 {
-	int m = 0;
-	int n = 0;
+	int attr_cnt = 0;
+	int core_cnt = 0;
+	int extra_cnt = 0;
 	int i;
 	db_func_t *df=NULL;
 	db1_con_t *dh=NULL;
@@ -155,12 +177,13 @@ static int db_write_cdr( struct dlg_cell* dialog,
 	dh = (db1_con_t*)vh;
 
 	/* get default values */
-	m = cdr_core2strar( dialog,
+	core_cnt = cdr_core2strar( dialog,
 			cdr_value_array,
 			cdr_int_array,
 			cdr_type_array);
+	attr_cnt += core_cnt;
 
-	for(i=0; i<m; i++) {
+	for(i=0; i<core_cnt; i++) {
 		db_cdr_keys[i] = &cdr_attrs[i];
 		/* reset errno, some strtoX don't reset it */
 		errno = 0;
@@ -219,24 +242,24 @@ static int db_write_cdr( struct dlg_cell* dialog,
 	/* get extra values */
 	if (message)
 	{
-		n += extra2strar( cdr_extra,
+		extra_cnt = extra2strar( cdr_extra,
 				message,
-				cdr_value_array + m,
-				cdr_int_array + m,
-				cdr_type_array + m);
-		m += n;
+				cdr_value_array + attr_cnt,
+				cdr_int_array + attr_cnt,
+				cdr_type_array + attr_cnt);
+		attr_cnt += extra_cnt;;
 	} else if (cdr_expired_dlg_enable){
 		LM_WARN( "fallback to dlg_only search because of message doesn't exist.\n");
-		n += extra2strar_dlg_only( cdr_extra,
+		extra_cnt = extra2strar_dlg_only( cdr_extra,
 				dialog,
-				cdr_value_array + m,
-				cdr_int_array + m,
-				cdr_type_array +m,
+				cdr_value_array + attr_cnt,
+				cdr_int_array + attr_cnt,
+				cdr_type_array + attr_cnt,
 				&dlgb);
-		m += n;
+		attr_cnt += extra_cnt;
 	}
 
-	for( ; i<m; i++) {
+	for( ; i<attr_cnt; i++) {
 		db_cdr_keys[i] = &cdr_attrs[i];
 
 		if (cdr_extra_nullable == 1 && cdr_type_array[i] == TYPE_NULL) {
@@ -254,29 +277,31 @@ static int db_write_cdr( struct dlg_cell* dialog,
 	}
 
 	if(acc_db_insert_mode==1 && df->insert_delayed!=NULL) {
-		if (df->insert_delayed(dh, db_cdr_keys, db_cdr_vals, m) < 0) {
+		if (df->insert_delayed(dh, db_cdr_keys, db_cdr_vals, attr_cnt) < 0) {
 			LM_ERR("failed to insert delayed into database\n");
 			goto error;
 		}
 	} else if(acc_db_insert_mode==2 && df->insert_async!=NULL) {
-		if (df->insert_async(dh, db_cdr_keys, db_cdr_vals, m) < 0) {
+		if (df->insert_async(dh, db_cdr_keys, db_cdr_vals, attr_cnt) < 0) {
 			LM_ERR("failed to insert async into database\n");
 			goto error;
 		}
 	} else {
-		if (df->insert(dh, db_cdr_keys, db_cdr_vals, m) < 0) {
+		if (df->insert(dh, db_cdr_keys, db_cdr_vals, attr_cnt) < 0) {
 			LM_ERR("failed to insert into database\n");
 			goto error;
 		}
 	}
 
-	/* Free memory allocated by acc_extra.c/extra2strar */
-	free_strar_mem( &(cdr_type_array[m-n]), &(cdr_value_array[m-n]), n, m);
+	/* Free memory allocated by core+extra attrs */
+	free_strar_mem( &(cdr_type_array[0]), &(cdr_value_array[0]),
+			attr_cnt, attr_cnt);
 	return 0;
 
 error:
-	/* Free memory allocated by acc_extra.c/extra2strar */
-	free_strar_mem( &(cdr_type_array[m-n]), &(cdr_value_array[m-n]), n, m);
+	/* Free memory allocated by core+extra attrs */
+	free_strar_mem( &(cdr_type_array[0]), &(cdr_value_array[0]),
+			attr_cnt, attr_cnt);
 	return -1;
 }
 
@@ -289,40 +314,43 @@ static int log_write_cdr( struct dlg_cell* dialog,
 		MAX_SYSLOG_SIZE -
 		2;// -2 because of the string ending '\n\0'
 	char* message_position = NULL;
-	int message_index = 0;
-	int extra_index = 0;
 	int counter = 0;
+	int attr_cnt = 0;
+	int core_cnt = 0;
+	int extra_cnt = 0;
 
 	if(cdr_log_enable==0)
 		return 0;
 
 	/* get default values */
-	message_index = cdr_core2strar( dialog,
+	core_cnt = cdr_core2strar( dialog,
 			cdr_value_array,
 			cdr_int_array,
 			cdr_type_array);
+	attr_cnt += core_cnt;
 
 	/* get extra values */
 	if (message)
 	{
-		extra_index += extra2strar( cdr_extra,
+		extra_cnt += extra2strar(cdr_extra,
 				message,
-				cdr_value_array + message_index,
-				cdr_int_array + message_index,
-				cdr_type_array + message_index);
+				cdr_value_array + attr_cnt,
+				cdr_int_array + attr_cnt,
+				cdr_type_array + attr_cnt);
+		attr_cnt += extra_cnt;;
 	} else if (cdr_expired_dlg_enable){
 		LM_DBG("fallback to dlg_only search because of message does not exist.\n");
-		extra_index += extra2strar_dlg_only( cdr_extra,
+		extra_cnt += extra2strar_dlg_only(cdr_extra,
 				dialog,
-				cdr_value_array + message_index,
-				cdr_int_array + message_index,
-				cdr_type_array + message_index,
+				cdr_value_array + attr_cnt,
+				cdr_int_array + attr_cnt,
+				cdr_type_array + attr_cnt,
 				&dlgb);
+		attr_cnt += extra_cnt;;
 	}
-	message_index += extra_index;
 
 	for( counter = 0, message_position = cdr_message;
-			counter < message_index ;
+			counter < attr_cnt ;
 			counter++ )
 	{
 		const char* const next_message_end = message_position +
@@ -366,9 +394,9 @@ static int log_write_cdr( struct dlg_cell* dialog,
 
 	LM_GEN2( cdr_facility, log_level, "%s", cdr_message);
 
-	/* free memory allocated by extra2strar, nothing is done in case no extra strings were found by extra2strar */
-	free_strar_mem( &(cdr_type_array[message_index-extra_index]), &(cdr_value_array[message_index-extra_index]),
-			extra_index, message_index);
+	/* Free memory allocated by core+extra attrs */
+	free_strar_mem( &(cdr_type_array[0]), &(cdr_value_array[0]),
+			attr_cnt, attr_cnt);
 	return 0;
 }
 
@@ -395,9 +423,9 @@ static int write_cdr( struct dlg_cell* dialog,
 
 	/* Skip cdr if cdr_skip dlg_var exists */
 	if (cdr_skip.len > 0) {
-		str* nocdr_val = 0;
-		nocdr_val = dlgb.get_dlg_var( dialog, &cdr_skip);
-		if ( nocdr_val ){
+		str nocdr_val = {0};
+		dlgb.get_dlg_varval(dialog, &cdr_skip, &nocdr_val);
+		if (nocdr_val.s){
 			LM_DBG( "cdr_skip dlg_var set, skip cdr!");
 			return 0;
 		}
@@ -415,7 +443,7 @@ static int string2time( str* time_str, struct timeval* time_value)
 	int dot_position = -1;
 	char zero_terminated_value[TIME_STR_BUFFER_SIZE];
 
-	if( !time_str)
+	if(!time_str || !time_str->s)
 	{
 		LM_ERR( "time_str is empty!");
 		return -1;
@@ -492,18 +520,20 @@ static int set_duration( struct dlg_cell* dialog)
 	struct timeval end_time;
 	struct timeval duration_time;
 	str duration_str;
+	str dval = {0};
 
-	if( !dialog)
-	{
+	if( !dialog) {
 		LM_ERR("dialog is empty!\n");
 		return -1;
 	}
 
-	if ( string2time( dlgb.get_dlg_var( dialog, (str*)&cdr_start_str), &start_time) < 0) {
+	dlgb.get_dlg_varval(dialog, &cdr_start_str, &dval);
+	if (string2time(&dval, &start_time) < 0) {
 		LM_ERR( "failed to extract start time\n");
 		return -1;
 	}
-	if ( string2time( dlgb.get_dlg_var( dialog, (str*)&cdr_end_str), &end_time) < 0) {
+	dlgb.get_dlg_varval( dialog, &cdr_end_str, &dval);
+	if ( string2time(&dval, &end_time) < 0) {
 		LM_ERR( "failed to extract end time\n");
 		return -1;
 	}
@@ -515,10 +545,7 @@ static int set_duration( struct dlg_cell* dialog)
 		return -1;
 	}
 
-	if( dlgb.set_dlg_var( dialog,
-				(str*)&cdr_duration_str,
-				(str*)&duration_str) != 0)
-	{
+	if( dlgb.set_dlg_var(dialog, &cdr_duration_str, &duration_str) != 0) {
 		LM_ERR( "failed to set duration time");
 		return -1;
 	}
@@ -906,7 +933,7 @@ int set_cdr_extra( char* cdr_extra_value)
 	return 0;
 }
 
-/* convert the facility-name string into a id and store it */
+/* convert the facility-name string into an id and store it */
 int set_cdr_facility( char* cdr_facility_str)
 {
 	int facility_id = -1;
@@ -954,7 +981,7 @@ int init_cdr_generation( void)
 	return 0;
 }
 
-/* convert the facility-name string into a id and store it */
+/* convert the facility-name string into an id and store it */
 void destroy_cdr_generation( void)
 {
 	if( !cdr_extra)

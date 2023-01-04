@@ -36,6 +36,8 @@ MODULE_VERSION
 static int mod_init(void);
 static int fixup_get_params(void** param, int param_no);
 static int fixup_get_params_free(void** param, int param_no);
+static int fixup_pv_get_params(void** param, int param_no);
+static int fixup_pv_get_params_free(void** param, int param_no);
 static int fixup_set_params(void** param, int param_no);
 static int fixup_set_params_free(void** param, int param_no);
 static int fixup_xencode(void** param, int param_no);
@@ -60,6 +62,8 @@ int janssonmod_get_field(struct sip_msg* msg, char* jansson_in, char* path_in,
 static cmd_export_t cmds[]={
 	{"jansson_get", (cmd_function)janssonmod_get, 3,
 		fixup_get_params, fixup_get_params_free, ANY_ROUTE},
+	{"jansson_pv_get", (cmd_function)janssonmod_pv_get, 3,
+		fixup_pv_get_params, fixup_pv_get_params_free, ANY_ROUTE},
 	{"jansson_array_size", (cmd_function)janssonmod_array_size, 3,
 		fixup_get_params, fixup_get_params_free, ANY_ROUTE},
 	{"jansson_set", (cmd_function)janssonmod_set_replace, 4,
@@ -114,6 +118,34 @@ static int fixup_get_params_free(void** param, int param_no)
 	}
 
 	if (param_no == 3) {
+		return fixup_free_pvar_null(param, 1);
+	}
+
+	ERR("invalid parameter number <%d>\n", param_no);
+	return -1;
+}
+
+static int fixup_pv_get_params(void** param, int param_no)
+{
+	if (param_no == 1) {
+		return fixup_spve_null(param, 1);
+	}
+
+	if (param_no == 2 || param_no == 3) {
+		return fixup_pvar_null(param, 1);
+	}
+
+	ERR("invalid parameter number <%d>\n", param_no);
+	return -1;
+}
+
+static int fixup_pv_get_params_free(void** param, int param_no)
+{
+	if (param_no == 1) {
+		return fixup_free_spve_null(param, 1);
+	}
+
+	if (param_no == 2 || param_no == 3) {
 		return fixup_free_pvar_null(param, 1);
 	}
 

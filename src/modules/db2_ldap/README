@@ -51,8 +51,8 @@ Chapter 1. Admin Guide
    This procedure is sometimes tricky because the LDAP does not support
    all database features or supports them in different manner. Here we
    must express especially filtering and multi-values. The multi-value is
-   de facto array of single values. If the LDAP module get a multi-value
-   field then generates record for every single value, respectively for
+   de facto array of single values. If the LDAP module gets a multi-value
+   field then it generates record for every single value, respectively for
    every combination in case the more fields contain multi-value.
 
    The LDAP supports natively "AND", "OR", "NOT" logical operators and

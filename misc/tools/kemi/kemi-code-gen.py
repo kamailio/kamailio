@@ -2,9 +2,9 @@
 # - print IF conditions with param types for KEMI interpreters
 # - print typedefs for functions
 
-PRINTPARAMS=3
-# - print mode: typedefs, js, lua, python, pythonparams, ruby, sqlang
-PRINTMODE="sqlang"
+PRINTPARAMS=6
+# - print mode: typedefs, xtypedefs, common, js, lua, python, pythonparams, ruby, sqlang
+PRINTMODE="xtypedefs"
 # - two tabs for python params, three for the other cases
 # PRINTTABS="\t\t"
 PRINTTABS="\t\t\t"
@@ -22,12 +22,29 @@ def printCodeFuncTypedefs(prefix):
 	print(sfunc)
 
 
+def printCodeFuncXTypedefs(prefix):
+	sfunc = "typedef sr_kemi_xval_t* (*sr_kemi_xfm" + prefix + "_f)(sip_msg_t*"
+	", str*, str*, str*, str*, str*);"
+	for i, c in enumerate(prefix):
+		if c == 's':
+			sfunc += ", str*"
+		else:
+			sfunc += ", int"
+	sfunc += ");"
+	print(sfunc)
+
+
 def printCodeIfEnd(sretfunc):
 	print(PRINTTABS + "} else {")
 	print(PRINTTABS + "\tLM_ERR(\"invalid parameters for: %.*s\\n\", fname->len, fname->s);")
 	print(PRINTTABS + "\treturn " + sretfunc + ";")
 	print(PRINTTABS + "}")
 
+def printCodeIfEndCommon(sretfunc):
+	print(PRINTTABS + "} else {")
+	print(PRINTTABS + "\tLM_ERR(\"invalid parameters for: %.*s\\n\", ket->fname.len, ket->fname.s);")
+	print(PRINTTABS + "\treturn " + sretfunc + ";")
+	print(PRINTTABS + "}")
 
 def printCodeIfParams(prefix):
 	global PRINTELSE
@@ -55,6 +72,35 @@ def printCodeIfParams(prefix):
 			else:
 				print(PRINTTABS + "\t\t&& ket->ptypes[" + str(i) + "]==SR_KEMIP_INT")
 				sparams += "vps[" + str(i) +"].n, "
+	return sparams
+
+
+def printCodeIfValParams(prefix):
+	global PRINTELSE
+	sparams = ""
+	for i, c in enumerate(prefix):
+		if i==0:
+			if c == 's':
+				print(PRINTTABS + PRINTELSE + "if((ket->ptypes[0] & SR_KEMIP_STR)")
+				sparams += "&vps[" + str(i) +"].v.s, "
+			else:
+				print(PRINTTABS + PRINTELSE + "if((ket->ptypes[0] & SR_KEMIP_INT)")
+				sparams += "vps[" + str(i) +"].v.n, "
+			PRINTELSE = "} else "
+		elif i==PRINTPARAMS-1:
+			if c == 's':
+				print(PRINTTABS + "\t\t&& (ket->ptypes[" + str(i) + "] & SR_KEMIP_STR)) {")
+				sparams += "&vps[" + str(i) +"].v.s);"
+			else:
+				print(PRINTTABS + "\t\t&& (ket->ptypes[" + str(i) + "] & SR_KEMIP_INT)) {")
+				sparams += "vps[" + str(i) +"].v.n);"
+		else:
+			if c == 's':
+				print(PRINTTABS + "\t\t&& (ket->ptypes[" + str(i) + "] & SR_KEMIP_STR)")
+				sparams += "&vps[" + str(i) +"].v.s, "
+			else:
+				print(PRINTTABS + "\t\t&& (ket->ptypes[" + str(i) + "] & SR_KEMIP_INT)")
+				sparams += "vps[" + str(i) +"].v.n, "
 	return sparams
 
 
@@ -181,6 +227,19 @@ def printCodeIfSQLang(prefix):
 	print("\t\t\t\t}")
 
 
+def printCodeIfCommon(prefix):
+	global PRINTELSE
+	sparams = printCodeIfValParams(prefix)
+	print("\t\t\t\tif(ket->rtype & SR_KEMIP_XVAL) {")
+	sfunc = PRINTTABS + "\t\treturn ((sr_kemi_xfm" + prefix + "_f)(ket->func))(msg,\n" + PRINTTABS + "\t\t\t"
+	print(sfunc + sparams)
+	print("\t\t\t\t} else {")
+	sfunc = PRINTTABS + "\t\tret = ((sr_kemi_fm" + prefix + "_f)(ket->func))(msg,\n" + PRINTTABS + "\t\t\t"
+	print(sfunc + sparams)
+	print(PRINTTABS + "\t\treturn sr_kemi_return_int(ket, ret);")
+	print("\t\t\t\t}")
+
+
 # generated possible strings of length k with chars from set.
 def printAllKLength(cset, k):
 
@@ -204,6 +263,10 @@ def printAllKLengthRec(cset, prefix, n, k):
 			printCodeIfRuby(prefix)
 		elif PRINTMODE == "sqlang":
 			printCodeIfSQLang(prefix)
+		elif PRINTMODE == "common":
+			printCodeIfCommon(prefix)
+		elif PRINTMODE == "xtypedefs":
+			printCodeFuncXTypedefs(prefix)
 		else:
 			printCodeFuncTypedefs(prefix)
 		return
@@ -231,5 +294,7 @@ if __name__ == "__main__":
 		printCodeIfEnd("Qfalse")
 	elif PRINTMODE == "sqlang":
 		printCodeIfEnd("app_sqlang_return_false(J)")
+	elif PRINTMODE == "common":
+		printCodeIfEndCommon("sr_kemi_return_false(ket)")
 
 

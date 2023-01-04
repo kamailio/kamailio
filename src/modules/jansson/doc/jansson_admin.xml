@@ -59,7 +59,8 @@
             <function moreinfo="none">jansson_get(key/path, src, dst)</function>
         </title>
         <para>
-            Copy the value at the location 'path' from the json object 'src' and store it in pvar 'dst'.
+			Copy the value at the location 'path' from the json object 'src' and store it in pvar 'dst'.
+			The 'src' can be a static string or a dynamic string with variables.
         </para>
         <para>
 			The path string supports dot delimited notation (e.g. foo.bar.baz),
@@ -82,7 +83,29 @@
         <title><function>jansson_get</function> usage</title>
         <programlisting format="linespecific">
 ...
-if(!jansson_get("inner.deep.list[3]", $var(myjson), "$var(n)")) {
+if(!jansson_get("inner.deep.list[3]", "$var(myjson)", "$var(n)")) {
+	xlog("L_ERR", "Can't parse json data");
+}
+xlog("L_INFO", "foo is $var(n)");
+...
+jansson_get("test", "{\"test\":\"abc\",\"idx\":20}", "$var(n)")
+...
+        </programlisting>
+        </example>
+    </section>
+    <section id="jansson.f.jansson_pv_get">
+        <title>
+            <function moreinfo="none">jansson_pv_get(key/path, srcvar, dst)</function>
+        </title>
+        <para>
+			Similar to jansson_get(), but the 'srcvar' parameter can be only a
+			variable name.
+        </para>
+        <example>
+        <title><function>jansson_pv_get</function> usage</title>
+        <programlisting format="linespecific">
+...
+if(!jansson_pv_get("inner.deep.list[3]", "$var(myjson)", "$var(n)")) {
 	xlog("L_ERR", "Can't parse json data");
 }
 xlog("L_INFO", "foo is $var(n)");

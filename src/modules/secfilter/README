@@ -26,6 +26,8 @@ Jose Luis Verdeguer
               3.4. type_col (string)
               3.5. data_col (string)
               3.6. dst_exact_match (integer)
+              3.7. reload_delta (integer)
+              3.8. cleanup_interval (integer)
 
         4. Functions
 
@@ -66,25 +68,27 @@ Jose Luis Verdeguer
    1.4. Set type_col parameter
    1.5. Set data_col parameter
    1.6. Set dst_exact_match parameter
-   1.7. secf_check_ip usage
-   1.8. secf_check_ua usage
-   1.9. secf_check_country usage
-   1.10. secf_check_from_hdr usage
-   1.11. secf_check_to_hdr usage
-   1.12. secf_check_contact_hdr usage
-   1.13. secf_check_dst usage
-   1.14. secf_check_sqli_hdr usage
-   1.15. secf_check_sqli_all usage
-   1.16. secfilter.reload usage
-   1.17. secfilter.print usage
-   1.18. secfilter.stats usage
-   1.19. secfilter.stats_reset usage
-   1.20. secfilter.add_dst usage
-   1.21. secfilter.add_bl usage
-   1.22. secfilter.add_wl usage
-   1.23. Example database content - secfilter table
-   1.24. kamcmd secfilter.print ua
-   1.25. kamcmd secfilter.stats
+   1.7. Set reload_delta parameter
+   1.8. Set cleanup_interval parameter
+   1.9. secf_check_ip usage
+   1.10. secf_check_ua usage
+   1.11. secf_check_country usage
+   1.12. secf_check_from_hdr usage
+   1.13. secf_check_to_hdr usage
+   1.14. secf_check_contact_hdr usage
+   1.15. secf_check_dst usage
+   1.16. secf_check_sqli_hdr usage
+   1.17. secf_check_sqli_all usage
+   1.18. secfilter.reload usage
+   1.19. secfilter.print usage
+   1.20. secfilter.stats usage
+   1.21. secfilter.stats_reset usage
+   1.22. secfilter.add_dst usage
+   1.23. secfilter.add_bl usage
+   1.24. secfilter.add_wl usage
+   1.25. Example database content - secfilter table
+   1.26. kamcmd secfilter.print ua
+   1.27. kamcmd secfilter.stats
 
 Chapter 1. Admin Guide
 
@@ -104,6 +108,8 @@ Chapter 1. Admin Guide
         3.4. type_col (string)
         3.5. data_col (string)
         3.6. dst_exact_match (integer)
+        3.7. reload_delta (integer)
+        3.8. cleanup_interval (integer)
 
    4. Functions
 
@@ -184,6 +190,8 @@ Chapter 1. Admin Guide
    3.4. type_col (string)
    3.5. data_col (string)
    3.6. dst_exact_match (integer)
+   3.7. reload_delta (integer)
+   3.8. cleanup_interval (integer)
 
 3.1. db_url (string)
 
@@ -269,6 +277,31 @@ ailio")
                 modparam("secfilter", "dst_exact_match", 1)
                 ...
 
+3.7. reload_delta (integer)
+
+   The number of seconds that have to be waited before executing a new RPC
+   reload. By default there is a rate limiting of maximum one reload in
+   five seconds. If set to 0, no rate limit is configured.
+
+   Default value is 5
+
+   Example 1.7. Set reload_delta parameter
+                ...
+                modparam("secfilter", "reload_delta", 1)
+                ...
+
+3.8. cleanup_interval (integer)
+
+   The number of seconds that have to be wait before cleanup the previous
+   values from memory after a RPC reload.
+
+   Default value is 60
+
+   Example 1.8. Set cleanup_interval parameter
+                ...
+                modparam("secfilter", "cleanup_interval", 120)
+                ...
+
 4. Functions
 
    4.1. secf_check_ip ()
@@ -293,7 +326,7 @@ ailio")
      * 1 = the value is not found
      * -2 = the value is blacklisted
 
-   Example 1.7. secf_check_ip usage
+   Example 1.9. secf_check_ip usage
                 ...
         secf_check_ip();
         if ($? == -2) {
@@ -318,7 +351,7 @@ klisted");
      * -1 = error
      * -2 = the value is blacklisted
 
-   Example 1.8. secf_check_ua usage
+   Example 1.10. secf_check_ua usage
                 ...
         secf_check_ua();
         if ($? == -2) {
@@ -339,7 +372,7 @@ klisted");
      * -1 = error
      * -2 = the value is blacklisted
 
-   Example 1.9. secf_check_country usage
+   Example 1.11. secf_check_country usage
                 ...
         if (geoip2_match("$si", "src")) {
                 secf_check_country($gip2(src=>cc));
@@ -370,7 +403,7 @@ gip2(src=>cc)' is blacklisted");
      * -3 = from domain is blacklisted
      * -4 = from name is blacklisted
 
-   Example 1.10. secf_check_from_hdr usage
+   Example 1.12. secf_check_from_hdr usage
                 ...
         secf_check_from_hdr();
         switch ($?) {
@@ -403,7 +436,7 @@ fn' is blacklisted");
      * -3 = to domain is blacklisted
      * -4 = to name is blacklisted
 
-   Example 1.11. secf_check_to_hdr usage
+   Example 1.13. secf_check_to_hdr usage
                 ...
         secf_check_to_hdr();
         switch ($?) {
@@ -435,7 +468,7 @@ td' is blacklisted");
      * -2 = contact user is blacklisted
      * -3 = contact domain is blacklisted
 
-   Example 1.12. secf_check_contact_hdr usage
+   Example 1.14. secf_check_contact_hdr usage
                 ...
         secf_check_contact_hdr();
         switch ($?) {
@@ -463,7 +496,7 @@ in '$ct' is blacklisted");
      * 1 (if the value not found)
      * -2 (if the value is blacklisted)
 
-   Example 1.13. secf_check_dst usage
+   Example 1.15. secf_check_dst usage
                 ...
                 if (is_method("INVITE")) {
                         secf_check_dst($rU);
@@ -480,7 +513,7 @@ stination $rU is blacklisted");
 
    Search for illegal characters in the given value.
 
-   Example 1.14. secf_check_sqli_hdr usage
+   Example 1.16. secf_check_sqli_hdr usage
                 ...
         secf_check_sqli_hdr($ua);
         if ($? == -1) {
@@ -497,7 +530,7 @@ d in the user-agent header ($ua)");
    and contact). If illegal characters are found the message will be
    dropped.
 
-   Example 1.15. secf_check_sqli_all usage
+   Example 1.17. secf_check_sqli_all usage
                 ...
                 secf_check_sqli_all();
                 ...
@@ -516,7 +549,7 @@ d in the user-agent header ($ua)");
 
    Reload all blacklisted and whitelisted values from database.
 
-   Example 1.16. secfilter.reload usage
+   Example 1.18. secfilter.reload usage
                 ...
                 kamcmd secfilter.reload
                 ...
@@ -536,7 +569,7 @@ d in the user-agent header ($ua)");
      * ip (show blacklisted and whitelisted IP addresses)
      * dst (show blacklisted destinations)
 
-   Example 1.17. secfilter.print usage
+   Example 1.19. secfilter.print usage
                 ...
                 kamcmd secfilter.print
                 kamcmd secfilter.print ua
@@ -548,7 +581,7 @@ d in the user-agent header ($ua)");
 
    Print statistics of blocked and allowed messages.
 
-   Example 1.18. secfilter.stats usage
+   Example 1.20. secfilter.stats usage
                 ...
                 kamcmd secfilter.stats
                 ...
@@ -557,7 +590,7 @@ d in the user-agent header ($ua)");
 
    Reset all statistics.
 
-   Example 1.19. secfilter.stats_reset usage
+   Example 1.21. secfilter.stats_reset usage
                 ...
                 kamcmd secfilter.stats_reset
                 ...
@@ -571,7 +604,7 @@ d in the user-agent header ($ua)");
    Parameters:
      * number (number to add to the destination blacklist)
 
-   Example 1.20. secfilter.add_dst usage
+   Example 1.22. secfilter.add_dst usage
                 ...
                 kamcmd secfilter.add_dst 555123123
                 ...
@@ -584,7 +617,7 @@ d in the user-agent header ($ua)");
      * type (must be: ua, country, domain, user or ip)
      * value (value to add to the blacklist)
 
-   Example 1.21. secfilter.add_bl usage
+   Example 1.23. secfilter.add_bl usage
                 ...
                 kamcmd secfilter.add_bl ua friendly-scanner
                 kamcmd secfilter.add_bl user sipvicious
@@ -598,7 +631,7 @@ d in the user-agent header ($ua)");
      * type (must be: ua, country, domain, user or ip)
      * value (value to add to the whitelist)
 
-   Example 1.22. secfilter.add_wl usage
+   Example 1.24. secfilter.add_wl usage
                 ...
                 kamcmd secfilter.add_wl country es
                 kamcmd secfilter.add_wl user trusted_user
@@ -621,7 +654,7 @@ d in the user-agent header ($ua)");
    the complete database documentation on the project webpage,
    https://www.kamailio.org/docs/db-tables/kamailio-db-devel.html.
 
-   Example 1.23. Example database content - secfilter table
+   Example 1.25. Example database content - secfilter table
                 ...
                 +----+-----------+-----------+------------------+
                 | id | action    | type      | data             |
@@ -659,7 +692,7 @@ d in the user-agent header ($ua)");
 
 7.1. Print data
 
-   Example 1.24. kamcmd secfilter.print ua
+   Example 1.26. kamcmd secfilter.print ua
                 ...
 {
         User-Agent: {
@@ -693,7 +726,7 @@ d in the user-agent header ($ua)");
 
 7.2. Statistics
 
-   Example 1.25. kamcmd secfilter.stats
+   Example 1.27. kamcmd secfilter.stats
                 ...
 {
         Blacklist: {

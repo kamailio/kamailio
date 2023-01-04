@@ -298,7 +298,7 @@ modparam("tm", "restart_fr_on_each_reply", 0)
 	<section id="tm.p.auto_inv_100">
 	<title><varname>auto_inv_100</varname> (integer)</title>
 	<para>
-		If set (default) tm will automatically send and 100 reply to INVITEs.
+		If set (default) tm will automatically send a 100 reply to INVITEs.
 	</para>
 	<para>
 		Setting it to 0 can be used to enable first running some tests or
@@ -577,7 +577,7 @@ modparam("tm", "blst_503_max_timeout", 604800)
 		Check parser/msg_parser.h for farther details.
 	</para>
 	<para>
-		Change the value carefully, because requests that doesn't get
+		Change the value carefully, because requests that don't get
 		a provisional response (everything but INVITE) can easily
 		cause the next hop to be inserted into the blocklist
 		by mistake. For example the next hop is a proxy, it is alive,
@@ -1581,15 +1581,15 @@ modparam("tm", "exec_time_check", 0)
 	<section id="tm.p.reply_relay_mode">
 		<title><varname>reply_relay_mode</varname> (int)</title>
 		<para>
-			If set to 1, a received 200ok response that was suspeneded is no
+			If set to 1, a received 200 OK response that was suspeneded is no
 			longer forwarded in the transactional context if another final
-			response was forward while 200ok was suspended. Forwarding the 200ok,
+			response was forward while 200 OK was suspended. Forwarding the 200 OK,
 			even it was received first, results in overwritting the transaction
 			response buffer that can impact matching of incoming ACKs.
 		</para>
 		<para>
 			Set it to 0 in order to disable this behaviour and attempt to forward
-			suspended 200ok in the transaction context. This was the behaviour
+			suspended 200 OK in the transaction context. This was the behaviour
 			before the commit 18410da0.
 		</para>
 		<para>

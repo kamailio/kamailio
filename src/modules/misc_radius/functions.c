@@ -127,7 +127,7 @@ static void generate_avps_rad(VALUE_PAIR *received)
 				if(add_avp(flags, name, val) < 0) {
 					LM_ERR("unable to create a new AVP\n");
 				} else {
-					LM_DBG("AVP '%.*s'/%d='%.*s'/%d has been added\n",
+					LM_DBG("AVP '%.*s'/%ld='%.*s'/%ld has been added\n",
 							(flags & AVP_NAME_STR) ? name.s.len : 4,
 							(flags & AVP_NAME_STR) ? name.s.s : "null",
 							(flags & AVP_NAME_STR) ? 0 : name.n,
@@ -143,7 +143,7 @@ static void generate_avps_rad(VALUE_PAIR *received)
 				if(add_avp(flags, name, val) < 0) {
 					LM_ERR("unable to create a new AVP\n");
 				} else {
-					LM_DBG("AVP '%.*s'/%d='%.*s'/%d has been added\n",
+					LM_DBG("AVP '%.*s'/%ld='%.*s'/%ld has been added\n",
 							(flags & AVP_NAME_STR) ? name.s.len : 4,
 							(flags & AVP_NAME_STR) ? name.s.s : "null",
 							(flags & AVP_NAME_STR) ? 0 : name.n,
@@ -177,7 +177,7 @@ static void generate_avps(struct attr *attrs, VALUE_PAIR *received)
 		if(add_avp(flags, name, val) < 0) {
 			LM_ERR("unable to create a new AVP\n");
 		} else {
-			LM_DBG("AVP '%.*s'/%d='%.*s'/%d has been added\n",
+			LM_DBG("AVP '%.*s'/%ld='%.*s'/%ld has been added\n",
 					(flags & AVP_NAME_STR) ? name.s.len : 4,
 					(flags & AVP_NAME_STR) ? name.s.s : "null",
 					(flags & AVP_NAME_STR) ? 0 : name.n,
@@ -512,8 +512,8 @@ int radius_is_user_in(struct sip_msg *_m, char *_user, char *_group)
  * Check from Radius if URI, whose user and host parts are given as
  * arguments, exists.  If so, loads AVPs based on reply items returned
  * from Radius.  If use_sip_uri_host module parameter has non-zero value,
- * user is send in SA_USER_NAME attribute and host in SA_SIP_URI_HOST
- * attribute.  If is has zero value, user@host is send in SA_USER_NAME
+ * user is sent in SA_USER_NAME attribute and host in SA_SIP_URI_HOST
+ * attribute.  If is has zero value, user@host is sent in SA_USER_NAME
  * attribute.
  */
 int radius_does_uri_user_host_exist(struct sip_msg *_m, str *user, str *host)

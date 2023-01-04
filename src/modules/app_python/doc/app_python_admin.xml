@@ -25,6 +25,11 @@
 		this module, look at the files inside source tree located at
 		'modules/app_python/python_examples/'.
 	</para>
+	<para>
+		As python2 is deprecated in Debian and other distributions, please
+		use the <quote>app_python3</quote> module instead. This module will
+		be removed future releases.
+	</para>
     </section>
     <section>
 	<title>Dependencies</title>

@@ -18,8 +18,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- *
  */
 
 #include "defs.h"
@@ -35,45 +33,49 @@ nats_consumer_worker_t *nats_workers = NULL;
 nats_pub_worker_t *nats_pub_workers = NULL;
 int nats_pub_workers_num = DEFAULT_NUM_PUB_WORKERS;
 
-int _nats_proc_count;
+static int _nats_proc_count = 0;
 char *eventData = NULL;
 
 int *nats_pub_worker_pipes_fds = NULL;
 int *nats_pub_worker_pipes = NULL;
 static str nats_event_callback = STR_NULL;
 
-static nats_evroutes_t _nats_rts;
+static nats_evroutes_t _nats_rts = {0};
 
+/* clang-format off */
 static pv_export_t nats_mod_pvs[] = {
-		{{"natsData", (sizeof("natsData") - 1)}, PVT_OTHER,
+	{{"natsData", (sizeof("natsData") - 1)}, PVT_OTHER,
 				nats_pv_get_event_payload, 0, 0, 0, 0, 0},
-		{{0, 0}, 0, 0, 0, 0, 0, 0, 0}};
+	{{0, 0}, 0, 0, 0, 0, 0, 0, 0}
+};
 
 static param_export_t params[] = {
-		{"nats_url", PARAM_STRING | USE_FUNC_PARAM, (void *)_init_nats_server_url_add},
-		{"num_publish_workers", INT_PARAM, &nats_pub_workers_num},
-		{"subject_queue_group", PARAM_STRING | USE_FUNC_PARAM,
-				(void *)_init_nats_sub_add},
-		{"event_callback", PARAM_STR,   &nats_event_callback},
-		{0, 0, 0}
+	{"nats_url", PARAM_STRING|USE_FUNC_PARAM, (void*)_init_nats_server_url_add},
+	{"num_publish_workers", INT_PARAM, &nats_pub_workers_num},
+	{"subject_queue_group", PARAM_STRING|USE_FUNC_PARAM, (void*)_init_nats_sub_add},
+	{"event_callback", PARAM_STR,   &nats_event_callback},
+	{0, 0, 0}
 };
 
-static cmd_export_t cmds[] = {{"nats_publish", (cmd_function)w_nats_publish_f,
-									  2, fixup_publish_get_value,
-									  fixup_publish_get_value_free, ANY_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
+static cmd_export_t cmds[] = {
+	{"nats_publish", (cmd_function)w_nats_publish_f,
+		  2, fixup_publish_get_value, fixup_publish_get_value_free, ANY_ROUTE},
+	{0, 0, 0, 0, 0, 0}
+};
 
 struct module_exports exports = {
-		"nats", DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,					 /* Exported functions */
-		params,					 /* Exported parameters */
-		0,						 /* exported MI functions */
-		nats_mod_pvs,			 /* exported pseudo-variables */
-		0,						 /* response function*/
-		mod_init,				 /* module initialization function */
-		mod_child_init,			 /* per-child init function */
-		mod_destroy				 /* destroy function */
+	"nats",
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,					 /* Exported functions */
+	params,					 /* Exported parameters */
+	0,						 /* exported MI functions */
+	nats_mod_pvs,			 /* exported pseudo-variables */
+	0,						 /* response function*/
+	mod_init,				 /* module initialization function */
+	mod_child_init,			 /* per-child init function */
+	mod_destroy				 /* destroy function */
 };
+/* clang-format on */
 
 static void onMsg(
 		natsConnection *nc, natsSubscription *sub, natsMsg *msg, void *closure)
@@ -528,6 +530,7 @@ int nats_cleanup_init_servers()
 
 int nats_cleanup_connection(nats_connection_ptr c)
 {
+	int s;
 	if(c->conn != NULL) {
 		natsConnection_Close(c->conn);
 		natsConnection_Destroy(c->conn);
@@ -535,7 +538,7 @@ int nats_cleanup_connection(nats_connection_ptr c)
 	if(c->opts != NULL) {
 		natsOptions_Destroy(c->opts);
 	}
-	for(int s = 0; s < NATS_MAX_SERVERS; s++) {
+	for(s = 0; s < NATS_MAX_SERVERS; s++) {
 		if(c->servers[s]) {
 			shm_free(c->servers[s]);
 		}
@@ -549,47 +552,51 @@ int nats_destroy_workers()
 	int i;
 	nats_consumer_worker_t *worker;
 	nats_pub_worker_t *pub_worker;
-	for(i = 0; i < _nats_proc_count; i++) {
-		worker = &nats_workers[i];
-		if(worker != NULL) {
-			if(worker->subscription != NULL) {
-				natsSubscription_Unsubscribe(worker->subscription);
-				natsSubscription_Destroy(worker->subscription);
-			}
-			if(worker->uvLoop != NULL) {
-				uv_loop_close(worker->uvLoop);
-			}
-			if(worker->subject != NULL) {
-				shm_free(worker->subject);
-			}
-			if(worker->queue_group != NULL) {
-				shm_free(worker->queue_group);
-			}
-			if(worker->nc != NULL) {
-				if(nats_cleanup_connection(worker->nc) < 0) {
-					LM_ERR("could not cleanup worker connection\n");
+	if(nats_workers != NULL) {
+		for(i = 0; i < _nats_proc_count; i++) {
+			worker = &nats_workers[i];
+			if(worker != NULL) {
+				if(worker->subscription != NULL) {
+					natsSubscription_Unsubscribe(worker->subscription);
+					natsSubscription_Destroy(worker->subscription);
 				}
-			}
-			if(worker->on_message != NULL) {
-				if (worker->on_message->_evname) {
-					free(worker->on_message->_evname);
+				if(worker->uvLoop != NULL) {
+					uv_loop_close(worker->uvLoop);
 				}
-				shm_free(worker->on_message);
+				if(worker->subject != NULL) {
+					shm_free(worker->subject);
+				}
+				if(worker->queue_group != NULL) {
+					shm_free(worker->queue_group);
+				}
+				if(worker->nc != NULL) {
+					if(nats_cleanup_connection(worker->nc) < 0) {
+						LM_ERR("could not cleanup worker connection\n");
+					}
+				}
+				if(worker->on_message != NULL) {
+					if (worker->on_message->_evname) {
+						free(worker->on_message->_evname);
+					}
+					shm_free(worker->on_message);
+				}
+				shm_free(worker);
 			}
-			shm_free(worker);
 		}
 	}
 
-	for(i = 0; i < nats_pub_workers_num; i++) {
-		pub_worker = &nats_pub_workers[i];
-		if(pub_worker != NULL) {
-			if(pub_worker->nc != NULL) {
-				if(nats_cleanup_connection(pub_worker->nc) < 0) {
-					LM_ERR("could not cleanup worker connection\n");
+	if(nats_pub_workers != NULL) {
+		for(i = 0; i < nats_pub_workers_num; i++) {
+			pub_worker = &nats_pub_workers[i];
+			if(pub_worker != NULL) {
+				if(pub_worker->nc != NULL) {
+					if(nats_cleanup_connection(pub_worker->nc) < 0) {
+						LM_ERR("could not cleanup worker connection\n");
+					}
 				}
+				uv_poll_stop(&pub_worker->poll);
+				shm_free(pub_worker);
 			}
-			uv_poll_stop(&pub_worker->poll);
-			shm_free(pub_worker);
 		}
 	}
 	return 0;
@@ -664,7 +671,7 @@ int _init_nats_sub_add(modparam_t type, void *val)
 }
 
 /**
- * Invoke a event route block
+ * Invoke an event route block
  */
 int nats_run_cfg_route(int rt, str *evname)
 {

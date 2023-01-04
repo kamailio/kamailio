@@ -276,9 +276,9 @@ modparam("auth_radius", "append_realm_to_username", 0)
    credentials and return whether they are valid or not.
 
    Meaning of the parameter is as follows:
-     * realm - Realm is a opaque string that the user agent should present
-       to the user so he can decide what username and password to use. In
-       case of REGISTER requests it is usually hostpart of To URI.
+     * realm - Realm is an opaque string that the user agent should
+       present to the user so he can decide what username and password to
+       use. In case of REGISTER requests it is usually hostpart of To URI.
        The string may contain pseudo variables.
      * uri_user - Uri_user is an optional pseudo variable parameter whose
        value, if present, will be given to Radius server as value of
@@ -327,10 +327,10 @@ modparam("auth_radius", "append_realm_to_username", 0)
    credentials and return whether they are valid or not.
 
    Meaning of the parameters is as follows:
-     * realm - Realm is a opaque string that the user agent should present
-       to the user so he can decide what username and password to use. In
-       case of non-REGISTER requests it is usually hostpart of From or
-       P-Preferred-Identity URI.
+     * realm - Realm is an opaque string that the user agent should
+       present to the user so he can decide what username and password to
+       use. In case of non-REGISTER requests it is usually hostpart of
+       From or P-Preferred-Identity URI.
        The string may contain pseudo variables.
      * uri_user - Uri_user is an optional pseudo variable parameter whose
        value, if present, will be given to Radius server as value of

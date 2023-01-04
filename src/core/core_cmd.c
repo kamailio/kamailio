@@ -240,7 +240,7 @@ static void system_listMethods(rpc_t* rpc, void* c)
 	int i;
 
 	for(i=0; i<rpc_sarray_crt_size; i++){
-		if (rpc->add(c, "s", rpc_sarray[i]->name) < 0) return;
+		if (rpc->add(c, "s", rpc_sarray[i]->r.name) < 0) return;
 	}
 }
 
@@ -319,6 +319,20 @@ static const char* core_echo_doc[] = {
 
 
 static void core_echo(rpc_t* rpc, void* c)
+{
+	char* string = 0;
+	while((rpc->scan(c, "*.s", &string)>0))
+		rpc->add(c, "s", string);
+}
+
+
+static const char* core_echo_delta_doc[] = {
+	"Returns back its parameters with execution delta limit.", /* Documentation string */
+	0                                             /* Method signature(s) */
+};
+
+
+static void core_echo_delta(rpc_t* rpc, void* c)
 {
 	char* string = 0;
 	while((rpc->scan(c, "*.s", &string)>0))
@@ -988,7 +1002,8 @@ static void core_sockets_list(rpc_t* rpc, void* c)
 		for(si=list?*list:0; si; si=si->next){
 			rpc->struct_add(hr, "{", "socket", &ha);
 			if (si->addr_info_lst){
-				rpc->struct_add(ha, "ss",
+				rpc->struct_add(ha, "sss",
+						"af", get_af_name(si->address.af),
 						"proto", get_proto_name(proto),
 						"address", si->address_str.s);
 				for (ai=si->addr_info_lst; ai; ai=ai->next)
@@ -1003,7 +1018,8 @@ static void core_sockets_list(rpc_t* rpc, void* c)
 				printf("             %s: %s",
 						get_proto_name(proto),
 						si->name.s);
-				rpc->struct_add(ha, "ss",
+				rpc->struct_add(ha, "sss",
+						"af", get_af_name(si->address.af),
 						"proto", get_proto_name(proto),
 						"address", si->name.s);
 				if (!(si->flags & SI_IS_IP))
@@ -1112,6 +1128,8 @@ static rpc_export_t core_rpc_methods[] = {
 	RET_ARRAY},
 	{"core.echo",              core_echo,              core_echo_doc,
 	RET_ARRAY},
+	{"core.echo_delta",        core_echo_delta,        core_echo_delta_doc,
+	RET_ARRAY|RPC_EXEC_DELTA},
 	{"core.version",           core_version,           core_version_doc,
 		0        },
 	{"core.flags",             core_flags,             core_flags_doc,

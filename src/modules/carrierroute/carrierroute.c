@@ -29,7 +29,7 @@
  * \defgroup carrierroute CARRIERROUTE :: The Kamailio carrierroute Module
  * The module provides routing, balancing and blocklisting capabilities.
  * It reads routing entries from a database source or from a config file
- * at Kamailio startup. It can uses one routing tree (for one carrier),
+ * at Kamailio startup. It can use one routing tree (for one carrier),
  * or if needed for every user a different routing tree (unique for each carrier)
  * for number prefix based routing. It supports several routing domains, e.g.
  * for failback routes or different routing rules for VoIP and PSTN targets.
@@ -39,6 +39,7 @@
 #include "../../core/str.h"
 #include "../../core/mem/mem.h"
 #include "../../core/ut.h" /* for user2uid() */
+#include "../../core/kemi.h"
 #include "carrierroute.h"
 #include "cr_fixup.h"
 #include "cr_map.h"
@@ -88,7 +89,8 @@ static void mod_destroy(void);
 /************* Module Exports **********************************************/
 static cmd_export_t cmds[]={
 	{"cr_user_carrier",  (cmd_function)cr_load_user_carrier,  3,
-		cr_load_user_carrier_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
+		cr_load_user_carrier_fixup, cr_load_user_carrier_fixup_free,
+		REQUEST_ROUTE | FAILURE_ROUTE },
 	{"cr_route",         (cmd_function)cr_route5,              5,
 		cr_route_fixup,             0, REQUEST_ROUTE | FAILURE_ROUTE },
 	{"cr_route",         (cmd_function)cr_route,              6,
@@ -268,4 +270,29 @@ static void mod_destroy(void) {
 		carrierroute_db_close();
 	}
 	destroy_route_data();
+}
+
+
+/**
+ *
+ */
+/* clang-format off */
+static sr_kemi_t sr_kemi_carrierroute_exports[] = {
+	{ str_init("carrierroute"), str_init("cr_user_carrier"),
+		SR_KEMIP_INT, ki_cr_load_user_carrier,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+
+	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
+};
+/* clang-format on */
+
+/**
+ *
+ */
+int mod_register(char *path, int *dlflags, void *p1, void *p2)
+{
+	sr_kemi_modules_add(sr_kemi_carrierroute_exports);
+	return 0;
 }

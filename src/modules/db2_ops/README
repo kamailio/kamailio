@@ -22,7 +22,7 @@ Tomas Mandys
 
         5. Functions
 
-              5.1. db_query(query | query_id [,handle] )
+              5.1. db_query(query | query_id[, handle])
               5.2. db_close(handle)
               5.3. db_first(handle)
               5.4. db_next(handle)
@@ -77,7 +77,7 @@ Chapter 1. Admin Guide
 
    5. Functions
 
-        5.1. db_query(query | query_id [,handle] )
+        5.1. db_query(query | query_id[, handle])
         5.2. db_close(handle)
         5.3. db_first(handle)
         5.4. db_next(handle)
@@ -186,7 +186,7 @@ tra_ops ]
 
 5. Functions
 
-   5.1. db_query(query | query_id [,handle] )
+   5.1. db_query(query | query_id[, handle])
    5.2. db_close(handle)
    5.3. db_first(handle)
    5.4. db_next(handle)
@@ -202,7 +202,7 @@ tra_ops ]
    5.14. @db.fetch.handle
    5.15. @db.fetch.handle.row_no
 
-5.1.  db_query(query | query_id [,handle] )
+5.1.  db_query(query | query_id[, handle])
 
    Executes query and in case of SELECT returns result via handle, seeks
    the first record and returns TRUE if table is not empty. The result is

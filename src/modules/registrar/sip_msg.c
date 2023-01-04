@@ -253,8 +253,8 @@ void calc_contact_expires(struct sip_msg* _m, param_t* _ep, int* _e, int novaria
 		vavp = xavp_get_child_with_ival(&reg_xavp_cfg, &xename);
 	}
 
-	if (vavp != NULL && vavp->val.v.i >= 0) {
-		*_e = vavp->val.v.i;
+	if (vavp != NULL && vavp->val.v.l >= 0) {
+		*_e = vavp->val.v.l;
 	} else {
 		if (!_ep || !_ep->body.len) {
 			*_e = get_expires_hf(_m);
@@ -317,8 +317,8 @@ int calc_contact_q(param_t* _q, qvalue_t* _r)
 		vavp = xavp_get_child_with_ival(&reg_xavp_cfg, &xqname);
 
 	if (vavp != NULL) {
-		if ((vavp->val.v.i >= 0) && (vavp->val.v.i <= 1000)) {
-			*_r = vavp->val.v.i;
+		if ((vavp->val.v.l >= 0) && (vavp->val.v.l <= 1000)) {
+			*_r = vavp->val.v.l;
 			return 0;
 		} else {
 			rerrno = R_INV_Q; /* Invalid q parameter */

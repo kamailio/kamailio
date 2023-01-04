@@ -278,7 +278,7 @@ request_route {
 # Handle requests within SIP dialogs
 route[WITHINDLG] {
         if (has_totag()) {
-                # sequential request withing a dialog should
+                # sequential request within a dialog should
                 # take the path determined by record-routing
                 if (loose_route()) {
                         if ($du == "") {
@@ -446,10 +446,10 @@ modparam("websocket", "sub_protocols", 2)
    behaviour of the WebSocket server.
      * 0 - Do not add an "Access-Control-Allow-Origin:" header to the
        response accepting the WebSocket handshake.
-     * 1 - Add a "Access-Control-Allow-Origin: *" header to the response
+     * 1 - Add an "Access-Control-Allow-Origin: *" header to the response
        accepting the WebSocket handshake.
-     * 2 - Add a "Access-Control-Allow-Origin:" header containing the same
-       body as the "Origin:" header from the request to the response
+     * 2 - Add an "Access-Control-Allow-Origin:" header containing the
+       same body as the "Origin:" header from the request to the response
        accepting the WebSocket handshake. If there is no "Origin:" header
        in the request no header will be added to the response.
 

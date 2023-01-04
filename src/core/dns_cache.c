@@ -786,7 +786,7 @@ inline static struct dns_hash_entry* dns_cache_mk_bad_entry(str* name,
 
 
 
-/* create a a/aaaa hash entry from a name and ip address
+/* create an a/aaaa hash entry from a name and ip address
  * returns 0 on error */
 inline static struct dns_hash_entry* dns_cache_mk_ip_entry(str* name,
 															struct ip_addr* ip)
@@ -4399,8 +4399,8 @@ int dns_cache_add_record(unsigned short type,
 				}
 
 				if (!rr_p) {
-					for (	rr_p = rr_iter;
-						*rr_p && (*rr_p != new_rr);
+					for (rr_p = rr_iter;
+						rr_p && *rr_p && (*rr_p != new_rr);
 						rr_p = &((*rr_p)->next)
 					);
 				}

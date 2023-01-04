@@ -37,6 +37,26 @@
 
 MODULE_VERSION
 
+static str acc_method_key = str_init("method");
+static str acc_fromtag_key = str_init("from_tag");
+static str acc_totag_key = str_init("to_tag");
+static str acc_callid_key = str_init("callid");
+static str acc_sipcode_key = str_init("sip_code");
+static str acc_sipreason_key = str_init("sip_reason");
+static str acc_time_key = str_init("time");
+
+static str cdr_start_str = str_init("start_time");
+static str cdr_end_str = str_init("end_time");
+static str cdr_duration_str = str_init("duration");
+
+static char acc_time_format_buf[ACC_TIME_FORMAT_SIZE];
+static char *acc_time_format = "%Y-%m-%d %H:%M:%S";
+
+static int acc_log_level = L_NOTICE;
+static int acc_log_facility = LOG_DAEMON;
+static int cdr_log_level = L_NOTICE;
+static int cdr_log_facility = LOG_DAEMON;
+
 static int mod_init(void);
 static void destroy(void);
 static int child_init(int rank);
@@ -81,37 +101,41 @@ str cdr_json_pre_encoded_prefix = {0, 0};
 static cmd_export_t cmds[] = {{0, 0, 0, 0, 0, 0}};
 
 
-static param_export_t params[] = {{"acc_flag", INT_PARAM, &acc_flag},
-		{"acc_missed_flag", INT_PARAM, &acc_missed_flag},
-		{"acc_extra", PARAM_STRING, &acc_extra_str},
-		{"acc_pre_encoded_prefix", PARAM_STRING, &acc_json_pre_encoded_prefix_str},
-		{"acc_time_mode", INT_PARAM, &acc_time_mode},
-		{"acc_time_format", PARAM_STRING, &acc_time_format},
-		{"acc_log_level", INT_PARAM, &acc_log_level},
-		{"acc_log_facility", PARAM_STRING, &acc_log_facility_str},
-		{"acc_output_mqueue", PARAM_STRING, &acc_output_mqueue_str},
-		{"acc_output_syslog", INT_PARAM, &acc_output_syslog},
-		{"cdr_extra", PARAM_STRING, &cdr_extra_str},
-		{"cdr_pre_encoded_prefix", PARAM_STRING, &cdr_json_pre_encoded_prefix_str},
-		{"cdr_enable", INT_PARAM, &cdr_enable},
-		{"cdr_expired_dlg_enable", INT_PARAM, &cdr_expired_dlg_enable},
-		{"cdr_log_level", INT_PARAM, &cdr_log_level},
-		{"cdr_log_facility", PARAM_STRING, &cdr_log_facility_str},
-		{"cdr_output_mqueue", PARAM_STRING, &cdr_output_mqueue_str},
-		{"cdr_output_syslog", INT_PARAM, &cdr_output_syslog}, {0, 0, 0}};
+static param_export_t params[] = {
+	{"acc_flag", INT_PARAM, &acc_flag},
+	{"acc_missed_flag", INT_PARAM, &acc_missed_flag},
+	{"acc_extra", PARAM_STRING, &acc_extra_str},
+	{"acc_pre_encoded_prefix", PARAM_STRING, &acc_json_pre_encoded_prefix_str},
+	{"acc_time_mode", INT_PARAM, &acc_time_mode},
+	{"acc_time_format", PARAM_STRING, &acc_time_format},
+	{"acc_log_level", INT_PARAM, &acc_log_level},
+	{"acc_log_facility", PARAM_STRING, &acc_log_facility_str},
+	{"acc_output_mqueue", PARAM_STRING, &acc_output_mqueue_str},
+	{"acc_output_syslog", INT_PARAM, &acc_output_syslog},
+	{"cdr_extra", PARAM_STRING, &cdr_extra_str},
+	{"cdr_pre_encoded_prefix", PARAM_STRING, &cdr_json_pre_encoded_prefix_str},
+	{"cdr_enable", INT_PARAM, &cdr_enable},
+	{"cdr_expired_dlg_enable", INT_PARAM, &cdr_expired_dlg_enable},
+	{"cdr_log_level", INT_PARAM, &cdr_log_level},
+	{"cdr_log_facility", PARAM_STRING, &cdr_log_facility_str},
+	{"cdr_output_mqueue", PARAM_STRING, &cdr_output_mqueue_str},
+	{"cdr_output_syslog", INT_PARAM, &cdr_output_syslog},
+
+	{0, 0, 0}
+};
 
 
 struct module_exports exports = {
-		"acc_json", 
-                DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,		 /* exported functions */
-		params,		 /* exported params */
-		0,		 /* exported RPC methods */
-		0,		 /* exported pseudo-variables */
-		0,		 /* response function */
-		mod_init,	 /* initialization module */
-		child_init,	 /* per-child init function */
-		destroy	 	 /* destroy function */
+	"acc_json",
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,		 /* exported functions */
+	params,		 /* exported params */
+	0,		 /* exported RPC methods */
+	0,		 /* exported pseudo-variables */
+	0,		 /* response function */
+	mod_init,	 /* initialization module */
+	child_init,	 /* per-child init function */
+	destroy	 	 /* destroy function */
 };
 
 
@@ -286,14 +310,13 @@ int acc_json_send_request(struct sip_msg *req, acc_info_t *inf)
 		} else {
 			t = gmtime(&inf->env->ts);
 		}
-		if(strftime(acc_time_format_buf, ACC_TIME_FORMAT_SIZE, acc_time_format,
-				   t)
+		if(strftime(acc_time_format_buf, ACC_TIME_FORMAT_SIZE, acc_time_format, t)
 				<= 0) {
 			acc_time_format_buf[0] = '\0';
 		}
-		json_object_set_new(object, "time", json_string(acc_time_format_buf));
+		json_object_set_new(object, acc_time_key.s, json_string(acc_time_format_buf));
 	} else { // default acc_time_mode==1
-		json_object_set_new(object, "time", json_integer(inf->env->ts));
+		json_object_set_new(object, acc_time_key.s, json_integer(inf->env->ts));
 	}
 
 	LM_DBG("text[%.*s]\n", inf->env->text.len, inf->env->text.s);
@@ -452,14 +475,13 @@ int cdr_json_write(struct dlg_cell *dlg, struct sip_msg *req, cdr_info_t *inf)
 				inf->tarr + attr_cnt);
 		attr_cnt += extra_cnt;
 	} else if (cdr_expired_dlg_enable){
-		int dlg_index = 0;
-		dlg_index += accb.get_extra_dlg_attrs( cdr_extra,
+		extra_cnt += accb.get_extra_dlg_attrs( cdr_extra,
 				dlg,
 				inf->varr + attr_cnt,
 				inf->iarr + attr_cnt,
 				inf->tarr + attr_cnt,
 				&dlgb);
-		attr_cnt += dlg_index;
+		attr_cnt += extra_cnt;
 	}
 
 	struct acc_extra *extra = cdr_extra;
@@ -516,7 +538,7 @@ int cdr_json_write(struct dlg_cell *dlg, struct sip_msg *req, cdr_info_t *inf)
 		json_object_clear(object);
 		json_decref(object);
 	}
-	/* free memory allocated by get_extra_attrs */
-	free_strar_mem(&(inf->tarr[core_cnt]), &(inf->varr[core_cnt]), extra_cnt, attr_cnt);
+	/* free memory allocated by cdr core+extra attrs */
+	free_strar_mem(&(inf->tarr[0]), &(inf->varr[0]), attr_cnt, attr_cnt);
 	return 1;
 }

@@ -34,6 +34,7 @@ Carsten Bock
               3.3. db_url (int)
               3.4. db_mode (int)
               3.5. match_contact_host_port (int)
+              3.6. expires_grace (int)
 
         4. RPC Commands
 
@@ -54,6 +55,7 @@ Carsten Bock
    1.3. Set db_url parameter
    1.4. Set db_mode parameter
    1.5. Set match_contact_host_port parameter
+   1.6. Set expires_grace parameter
 
 Chapter 1. Admin Guide
 
@@ -72,6 +74,7 @@ Chapter 1. Admin Guide
         3.3. db_url (int)
         3.4. db_mode (int)
         3.5. match_contact_host_port (int)
+        3.6. expires_grace (int)
 
    4. RPC Commands
 
@@ -122,6 +125,7 @@ Chapter 1. Admin Guide
    3.3. db_url (int)
    3.4. db_mode (int)
    3.5. match_contact_host_port (int)
+   3.6. expires_grace (int)
 
 3.1. hash_size (int)
 
@@ -171,6 +175,17 @@ modparam("ims_usrloc_pcscf", "db_url",
        reflected in the database. This is slow but very reliable. This
        mode will ensure that no registration data is lost as a result of a
        restart or crash.
+     * 3 - DB_ONLY Scheme. All changes to usrloc are immediately
+       reflected in the database and additionally PCSCF usrloc data are downloaded
+       from db and inserted into PCSCF usrloc cache if required - i.e. If 
+       contact data cannot be found in cache a db
+       query for the contact is done in table location and when contact is
+       found there its respective data are inserted in PCSCF usrloc cache.
+       Also an audit had been added for removal of long expired PCSCF usrloc data
+       in table location.
+       Some of the db queries do only support Mysql.
+       This mode will ensure that no registration data is lost as a result of a
+       restart or crash.
 
    Default value is 0.
 
@@ -192,6 +207,18 @@ modparam("ims_usrloc_pcscf", "db_mode", 1)
    Example 1.5. Set match_contact_host_port parameter
 ...
 modparam("ims_usrloc_pcscf", "match_contact_host_port", 0)
+...
+
+3.6. expires_grace (int)
+
+   Specify a grace time for keeping the contacts until they are finally
+   deleted. The value of the parameter is defined in seconds.
+
+   Default value is 3600.
+
+   Example 1.6. Set expires_grace parameter
+...
+modparam("ims_usrloc_pcscf", "expires_grace", 1800)
 ...
 
 4. RPC Commands

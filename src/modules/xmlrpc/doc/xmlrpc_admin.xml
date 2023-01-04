@@ -136,7 +136,7 @@ modparam("xmlrpc", "double_lf_to_crlf", 1)
 	<title><varname>mode</varname> (integer)</title>
 	<para>
 		When set to 1, the xmlrpc module does not register to core the callback
-		functions for non-SIP messages. Useful when another module register
+		functions for non-SIP messages. Useful when another module registers
 		a callback for HTTP request, letting the admin decide when to
 		call the XMLRPC route (or functions).
 	</para>

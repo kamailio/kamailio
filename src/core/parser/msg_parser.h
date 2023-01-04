@@ -110,7 +110,7 @@ typedef enum request_method {
 #define FL_MSG_NOREPLY       (1<<23) /*!< do not send sip reply for request */
 #define FL_SIPTRACE          (1<<24) /*!< message to be traced in stateless replies */
 #define FL_ROUTE_ADDR        (1<<25) /*!< request has Route address for next hop */
-#define FL_USE_OTCPID        (1<<26) /*!< request to be routed using outboud tcp con id */
+#define FL_USE_OTCPID        (1<<26) /*!< request to be routed using outbound tcp con id */
 
 /* WARNING: Value (1 << 28) is reserved for use in kamailio call_control
  * module (flag  FL_USE_CALL_CONTROL )! */

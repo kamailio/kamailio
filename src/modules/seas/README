@@ -605,7 +605,7 @@ listen = udp:localhost:5060
    a key and a value. The most significant keys are:
      * com.voztele.javax.sip.SER_ADDRESS
        This specifies the IP and port in which the Kamailio is listening
-       for Application Servers to connect and register.This specifies the
+       for Application Servers to connect and register. This specifies the
        IP and port in which the Kamailio is listening for Application
        Servers to connect and register.
 
@@ -1359,7 +1359,7 @@ Chapter 2. Developer Guide
    all the Route Headers were requested by the application, then a lookup
    in this table would be necessary, looking for the value '9'
    (corresponding to the Route header) in each of the positions multiple
-   of 3 (0,3,6,9,12, etc). This can be done in a extremely fast and easy
+   of 3 (0,3,6,9,12, etc). This can be done in an extremely fast and easy
    way, as this snipped of pseudo code explains:
 
    for(int j=0,int i=0;i<table_length;i+=3){

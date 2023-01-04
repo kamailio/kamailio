@@ -491,9 +491,9 @@ om")
 
 3.20. skip_multiple_bindings_on_reg_resp (int)
 
-   If set to 1 - on Re-Registration registrar sends in 200OK reply only
+   If set to 1 - on Re-Registration registrar sends in 200 OK reply only
    current contact in case of multiple bindings. If set to 0 - on
-   Re-Registration registrar sends in 200OK reply all contacts in case of
+   Re-Registration registrar sends in 200 OK reply all contacts in case of
    multiple bindings according to RFC3261.
 
    Default value is 0.

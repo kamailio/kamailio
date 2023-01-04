@@ -315,7 +315,7 @@ modparam("uac","credential","username:domain:password")
 		<section id="uac.p.auth_realm_avp">
 			<title><varname>auth_realm_avp</varname> (string)</title>
 			<para>
-			The definition of an PV that might contain the realm to be used
+			The definition of a PV that might contain the realm to be used
 			to perform authentication.
 			</para>
 			<para>
@@ -619,7 +619,7 @@ modparam("uac", "reg_use_domain", 1)
 		<para>
 		<emphasis>
 			By default no default socket is defined, the send socket is choosen from the
-			<quote>tm</quote> module when the requests is send out.
+			<quote>tm</quote> module when the requests is sent out.
 		</emphasis>
 		</para>
 		<para>If you want to force a certain TCP port (e.g. 5060), you will need to set
@@ -671,7 +671,7 @@ end
 		<title>Functions</title>
 		<section id="uac.f.uac_replace_from">
 			<title>
-				<function moreinfo="none">uac_replace_from(display,uri)</function>
+				<function moreinfo="none">uac_replace_from(display, uri)</function>
 			</title>
 			<para>
 			Replace in FROM header the <emphasis>display</emphasis> name and
@@ -772,7 +772,7 @@ uac_restore_from();
 		</section>
 		<section id="uac.f.uac_replace_to">
 		<title>
-				<function moreinfo="none">uac_replace_to(display,uri)</function>
+				<function moreinfo="none">uac_replace_to(display, uri)</function>
 			</title>
 			<para>
 			Replace in TO header the <emphasis>display</emphasis> name and

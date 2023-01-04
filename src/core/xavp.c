@@ -697,9 +697,6 @@ void xavx_print_list_content(char *name, sr_xavp_t **head, sr_xavp_t **rlist, in
 			case SR_XTYPE_NULL:
 				LM_INFO("     %s value: <null>\n", name);
 			break;
-			case SR_XTYPE_INT:
-				LM_INFO("     %s value (int): %d\n", name, avp->val.v.i);
-			break;
 			case SR_XTYPE_STR:
 				LM_INFO("     %s value (str): %s\n", name, avp->val.v.s.s);
 			break;
@@ -1035,7 +1032,7 @@ sr_xavp_t* xavp_get_child_with_ival(str *rname, str *cname)
 
 	vavp = xavp_get_child(rname, cname);
 
-	if(vavp==NULL || vavp->val.type!=SR_XTYPE_INT)
+	if(vavp==NULL || vavp->val.type!=SR_XTYPE_LONG)
 		return NULL;
 
 	return vavp;
@@ -1105,13 +1102,13 @@ int xavp_set_child_xval(str *rname, str *cname, sr_xval_t *xval)
 /**
  *
  */
-int xavp_set_child_ival(str *rname, str *cname, int ival)
+int xavp_set_child_ival(str *rname, str *cname, long ival)
 {
 	sr_xval_t xval;
 
 	memset(&xval, 0, sizeof(sr_xval_t));
-	xval.type = SR_XTYPE_INT;
-	xval.v.i = ival;
+	xval.type = SR_XTYPE_LONG;
+	xval.v.l = ival;
 
 	return xavp_set_child_xval(rname, cname, &xval);
 }
@@ -1156,10 +1153,10 @@ int xavp_serialize_fields(str *rname, char *obuf, int olen)
 	avp = ravp->val.v.xavp;
 	while(avp) {
 		switch(avp->val.type) {
-			case SR_XTYPE_INT:
-				LM_DBG("     XAVP int value: %d\n", avp->val.v.i);
-				ostr.len = snprintf(ostr.s, olen-rlen, "%.*s=%u;",
-						avp->name.len, avp->name.s, (unsigned int)avp->val.v.i);
+			case SR_XTYPE_LONG:
+				LM_DBG("     XAVP long int value: %ld\n", avp->val.v.l);
+				ostr.len = snprintf(ostr.s, olen-rlen, "%.*s=%lu;",
+						avp->name.len, avp->name.s, (unsigned long)avp->val.v.l);
 				if(ostr.len<=0 || ostr.len>=olen-rlen) {
 					LM_ERR("failed to serialize int value (%d/%d\n",
 							ostr.len, olen-rlen);
@@ -1424,13 +1421,13 @@ sr_xavp_t *xavu_set_xval(str *name, sr_xval_t *val, sr_xavp_t **list)
 /**
  *
  */
-sr_xavp_t *xavu_set_ival(str *rname, int ival)
+sr_xavp_t *xavu_set_ival(str *rname, long ival)
 {
 	sr_xval_t xval;
 
 	memset(&xval, 0, sizeof(sr_xval_t));
-	xval.type = SR_XTYPE_INT;
-	xval.v.i = ival;
+	xval.type = SR_XTYPE_LONG;
+	xval.v.l = ival;
 
 	return xavu_set_xval(rname, &xval, NULL);
 }
@@ -1522,13 +1519,13 @@ sr_xavp_t *xavu_set_child_xval(str *rname, str *cname, sr_xval_t *xval)
 /**
  *
  */
-sr_xavp_t *xavu_set_child_ival(str *rname, str *cname, int ival)
+sr_xavp_t *xavu_set_child_ival(str *rname, str *cname, long ival)
 {
 	sr_xval_t xval;
 
 	memset(&xval, 0, sizeof(sr_xval_t));
-	xval.type = SR_XTYPE_INT;
-	xval.v.i = ival;
+	xval.type = SR_XTYPE_LONG;
+	xval.v.l = ival;
 
 	return xavu_set_child_xval(rname, cname, &xval);
 }
@@ -1573,7 +1570,7 @@ sr_xavp_t* xavu_get_child_with_ival(str *rname, str *cname)
 
 	vavp = xavu_get_child(rname, cname);
 
-	if(vavp==NULL || vavp->val.type!=SR_XTYPE_INT)
+	if(vavp==NULL || vavp->val.type!=SR_XTYPE_LONG)
 		return NULL;
 
 	return vavp;
@@ -1622,10 +1619,10 @@ int xavu_serialize_fields(str *rname, char *obuf, int olen)
 	avu = ravu->val.v.xavp;
 	while(avu) {
 		switch(avu->val.type) {
-			case SR_XTYPE_INT:
-				LM_DBG("     XAVP int value: %d\n", avu->val.v.i);
-				ostr.len = snprintf(ostr.s, olen-rlen, "%.*s=%u;",
-						avu->name.len, avu->name.s, (unsigned int)avu->val.v.i);
+			case SR_XTYPE_LONG:
+				LM_DBG("     XAVP long int value: %ld\n", avu->val.v.l);
+				ostr.len = snprintf(ostr.s, olen-rlen, "%.*s=%lu;",
+						avu->name.len, avu->name.s, (unsigned long)avu->val.v.l);
 				if(ostr.len<=0 || ostr.len>=olen-rlen) {
 					LM_ERR("failed to serialize int value (%d/%d\n",
 							ostr.len, olen-rlen);
@@ -2485,7 +2482,7 @@ sr_xavp_t* xavi_get_child_with_ival(str *rname, str *cname)
 
 	vavi = xavi_get_child(rname, cname);
 
-	if(vavi==NULL || vavi->val.type!=SR_XTYPE_INT)
+	if(vavi==NULL || vavi->val.type!=SR_XTYPE_LONG)
 		return NULL;
 
 	return vavi;
@@ -2555,13 +2552,13 @@ int xavi_set_child_xval(str *rname, str *cname, sr_xval_t *xval)
 /**
  *
  */
-int xavi_set_child_ival(str *rname, str *cname, int ival)
+int xavi_set_child_ival(str *rname, str *cname, long ival)
 {
 	sr_xval_t xval;
 
 	memset(&xval, 0, sizeof(sr_xval_t));
-	xval.type = SR_XTYPE_INT;
-	xval.v.i = ival;
+	xval.type = SR_XTYPE_LONG;
+	xval.v.l = ival;
 
 	return xavi_set_child_xval(rname, cname, &xval);
 }
@@ -2605,10 +2602,10 @@ int xavi_serialize_fields(str *rname, char *obuf, int olen)
 	avi = ravi->val.v.xavp;
 	while(avi) {
 		switch(avi->val.type) {
-			case SR_XTYPE_INT:
-				LM_DBG("     XAVP int value: %d\n", avi->val.v.i);
-				ostr.len = snprintf(ostr.s, olen-rlen, "%.*s=%u;",
-						avi->name.len, avi->name.s, (unsigned int)avi->val.v.i);
+			case SR_XTYPE_LONG:
+				LM_DBG("     XAVP long int value: %ld\n", avi->val.v.l);
+				ostr.len = snprintf(ostr.s, olen-rlen, "%.*s=%lu;",
+						avi->name.len, avi->name.s, (unsigned long)avi->val.v.l);
 				if(ostr.len<=0 || ostr.len>=olen-rlen) {
 					LM_ERR("failed to serialize int value (%d/%d\n",
 							ostr.len, olen-rlen);

@@ -159,7 +159,7 @@ struct pg_con *db_postgres_new_connection(struct db_id *id)
 
 err:
 	if(ptr) {
-		LM_ERR("cleaning up %p=pkg_free()\n", ptr);
+		LM_DBG("cleaning up %p=pkg_free()\n", ptr);
 		pkg_free(ptr);
 	}
 	return 0;

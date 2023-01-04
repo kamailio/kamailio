@@ -85,8 +85,8 @@ str _ksr_contact_salias = str_init(";alias=");
 int init_dst_set(void)
 {
 	if(sr_dst_max_branches<=0 || sr_dst_max_branches>=MAX_BRANCHES_LIMIT) {
-		LM_ERR("invalid value for max branches parameter: %u\n",
-				sr_dst_max_branches);
+		LM_ERR("invalid value for max branches parameter: %u, maximum value: %u\n",
+				sr_dst_max_branches, MAX_BRANCHES_LIMIT);
 		return -1;
 	}
 	/* sr_dst_max_branches - 1 : because of the default branch for r-uri, #0 in tm */

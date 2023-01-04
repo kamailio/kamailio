@@ -1604,7 +1604,7 @@ int check_message_support(struct sip_msg* msg)
 		}
 	}
 
-	/* no positivie expires header */
+	/* no positive expires header */
 	if(posexp==0)
 		return -1;
 

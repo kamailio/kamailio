@@ -717,6 +717,22 @@ char* get_proto_name(unsigned int proto)
 	}
 }
 
+/** get address family name (asciiz).
+ * @param af - address family id
+ * @return  string with the adderess family name or "unknown".
+ */
+char* get_af_name(unsigned int af)
+{
+	switch(af) {
+		case AF_INET:
+			return "IPv4";
+		case AF_INET6:
+			return "IPv6";
+		default:
+			return "unknown";
+	}
+}
+
 
 /**
  * match ip address with net address and bitmask

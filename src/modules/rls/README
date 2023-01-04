@@ -151,7 +151,7 @@ Chapter 1. Admin Guide
 
 1. Overview
 
-   The modules is a Resource List Server implementation following the
+   The module is a Resource List Server implementation following the
    specification in RFC 4662 and RFC 4826.
 
    The server is independent from local presence servers, retrieving
@@ -163,7 +163,7 @@ Chapter 1. Admin Guide
    server, the presence module should be loaded in a library mode only
    (see doc for presence module).
 
-   It handles subscription to lists in an event independent way.The
+   It handles subscription to lists in an event independent way. The
    default event is presence, but if some other events are to be handled
    by the server, they should be added using the module parameter
    "rls_events".
@@ -699,7 +699,7 @@ kamcmd rls.update_subs sip:alice@domain.com presence
 6. Installation
 
    The module requires 2 tables in Kamailio database: rls_presentity and
-   rls_watchers.The SQL syntax to create them can be found in
+   rls_watchers. The SQL syntax to create them can be found in
    rls-create.sql script in the database directories in the
    kamailio/scripts folder. You can also find the complete database
    documentation on the project webpage,

@@ -30,7 +30,7 @@ fi ;
 CFG="20.cfg"
 TMPFILE=`mktemp -t kamailio-test.XXXXXXXXXX`
 
-# add an registrar entry to the db;
+# add a registrar entry to the db;
 $MYSQL "INSERT INTO location (ruid, username,contact,socket,user_agent,cseq,q) VALUES (\"kamailio-test-uid\",\"foo\",\"sip:foo@127.0.0.1\",\"udp:127.0.0.1:5060\",\"kamailio_test\",1,-1);"
 
 sipp -sn uas -bg -i 127.0.0.1 -m 1 -f 10 -p 5060 > /dev/null 2>&1

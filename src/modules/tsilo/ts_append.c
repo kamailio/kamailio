@@ -61,7 +61,7 @@ int ts_append(struct sip_msg* msg, str *ruri, str *contact, char *table) {
 	/* parse contact if given */
 	if(contact->s != NULL && contact->len != 0) {
 		if (parse_uri(contact->s, contact->len, &c_uri) < 0) {
-			LM_ERR("failed to parse contact %.*s\n", ruri->len, ruri->s);
+			LM_ERR("failed to parse contact %.*s\n", contact->len, contact->s);
 			return -1;
 		}
 	}
@@ -72,9 +72,9 @@ int ts_append(struct sip_msg* msg, str *ruri, str *contact, char *table) {
 	res = get_ts_urecord(t_uri, &_r);
 
 	if (res != 0) {
-		LM_ERR("failed to retrieve record for %.*s\n", t_uri->len, t_uri->s);
+		LM_DBG("no record for %.*s\n", t_uri->len, t_uri->s);
 		unlock_entry_by_ruri(t_uri);
-		return -1;
+		return -2;
 	}
 
 	/* cycle through existing transactions */

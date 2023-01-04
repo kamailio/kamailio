@@ -315,11 +315,13 @@ void refresh_pubruri_avps(struct dlginfo_cell *dlginfo, str *uri)
 }
 
 void refresh_local_identity(struct dlg_cell *dlg, str *uri) {
-	str *s = dlg_api.get_dlg_var(dlg, &local_identity_dlg_var);
+	str s = {0};
 
-	if(s != NULL) {
-		uri->s = s->s;
-		uri->len = s->len;
+	dlg_api.get_dlg_varval(dlg, &local_identity_dlg_var, &s);
+
+	if(s.s != NULL) {
+		uri->s = s.s;
+		uri->len = s.len;
 		LM_DBG("Found local_identity in dialog '%.*s'\n",
 				uri->len, uri->s);
 	}
@@ -364,7 +366,8 @@ __dialog_sendpublish(struct dlg_cell *dlg, int type, struct dlg_cb_params *_para
 	}
 
 	if(use_pubruri_avps && (refresh_pubruri_avps_flag > -1
-		|| (request->flags & (1U<<(unsigned int)refresh_pubruri_avps_flag))))
+		|| (request
+			&& (request->flags & (1U<<(unsigned int)refresh_pubruri_avps_flag)))))
 	{
 		lock_get(&dlginfo->lock);
 		refresh_pubruri_avps(dlginfo, &uri);
@@ -575,7 +578,7 @@ struct dlginfo_cell* get_dialog_data(struct dlg_cell *dlg, int type, int disable
 {
 	struct dlginfo_cell *dlginfo;
 	int len;
-	str* s=NULL;
+	str dval = {0};
 
 	// generate new random uuid
 	if(sruid_next_safe(&_puadi_sruid) < 0) {
@@ -651,9 +654,10 @@ struct dlginfo_cell* get_dialog_data(struct dlg_cell *dlg, int type, int disable
 
 		} else {
 			if(caller_dlg_var.len>0
-					&& (s = dlg_api.get_dlg_var(dlg, &caller_dlg_var))!=0) {
+					&& (dlg_api.get_dlg_varval(dlg, &caller_dlg_var, &dval)==0)
+					&& dval.s!=NULL) {
 				dlginfo->pubruris_caller =
-					(struct str_list*)shm_malloc(sizeof(struct str_list) + s->len + 1);
+					(struct str_list*)shm_malloc(sizeof(struct str_list) + dval.len + 1);
 				if (dlginfo->pubruris_caller==0) {
 					SHM_MEM_ERROR;
 					free_dlginfo_cell(dlginfo);
@@ -662,17 +666,18 @@ struct dlginfo_cell* get_dialog_data(struct dlg_cell *dlg, int type, int disable
 				memset(dlginfo->pubruris_caller, 0, sizeof(struct str_list));
 				dlginfo->pubruris_caller->s.s = (char*)dlginfo->pubruris_caller
 					+ sizeof(sizeof(struct str_list));
-				memcpy(dlginfo->pubruris_caller->s.s, s->s, s->len);
-				dlginfo->pubruris_caller->s.s[s->len] = '\0';
-				dlginfo->pubruris_caller->s.len = s->len;
+				memcpy(dlginfo->pubruris_caller->s.s, dval.s, dval.len);
+				dlginfo->pubruris_caller->s.s[dval.len] = '\0';
+				dlginfo->pubruris_caller->s.len = dval.len;
 				LM_DBG("Found pubruris_caller in dialog '%.*s'\n",
 						dlginfo->pubruris_caller->s.len, dlginfo->pubruris_caller->s.s);
 			}
 
 			if(callee_dlg_var.len>0
-					&& (s = dlg_api.get_dlg_var(dlg, &callee_dlg_var))!=0) {
+					&& (dlg_api.get_dlg_varval(dlg, &callee_dlg_var, &dval)==0)
+					&& dval.s!=NULL) {
 				dlginfo->pubruris_callee =
-					(struct str_list*)shm_malloc(sizeof(struct str_list) + s->len + 1);
+					(struct str_list*)shm_malloc(sizeof(struct str_list) + dval.len + 1);
 				if (dlginfo->pubruris_callee==0) {
 					SHM_MEM_ERROR;
 					free_dlginfo_cell(dlginfo);
@@ -681,9 +686,9 @@ struct dlginfo_cell* get_dialog_data(struct dlg_cell *dlg, int type, int disable
 				memset(dlginfo->pubruris_callee, 0, sizeof(struct str_list));
 				dlginfo->pubruris_callee->s.s = (char*)dlginfo->pubruris_callee
 					+ sizeof(sizeof(struct str_list));
-				memcpy(dlginfo->pubruris_callee->s.s, s->s, s->len);
-				dlginfo->pubruris_callee->s.s[s->len] = '\0';
-				dlginfo->pubruris_callee->s.len = s->len;
+				memcpy(dlginfo->pubruris_callee->s.s, dval.s, dval.len);
+				dlginfo->pubruris_callee->s.s[dval.len] = '\0';
+				dlginfo->pubruris_callee->s.len = dval.len;
 				LM_DBG("Found pubruris_callee in dialog '%.*s'\n",
 						dlginfo->pubruris_callee->s.len, dlginfo->pubruris_callee->s.s);
 			}

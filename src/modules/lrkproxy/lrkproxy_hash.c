@@ -354,6 +354,12 @@ int lrkproxy_hash_table_remove(str callid, str viabranch, enum lrk_operation op)
     entry = lrkproxy_hash_table->row_entry_list[hash_index];
     last_entry = entry;
 
+    if (!entry)
+                LM_INFO("============>entry is null\n");
+    else
+                LM_INFO("============>entry is not null\n");
+
+
     // lock
     if (lrkproxy_hash_table->row_locks[hash_index]) {
         lock_get(lrkproxy_hash_table->row_locks[hash_index]);
@@ -363,12 +369,19 @@ int lrkproxy_hash_table_remove(str callid, str viabranch, enum lrk_operation op)
     }
 
     while (entry) {
+                LM_INFO("remove============>current_callid=%.*s, entry_callid=%.*s\n",
+                        callid.len, callid.s,
+                        entry->callid.len, entry->callid.s);
+
+                LM_INFO("remove============>current_viabranch=%.*s, entry_viabranch=%.*s\n",
+                        viabranch.len, viabranch.s,
+                        entry->viabranch.len, entry->viabranch.s);
         // if callid found, delete entry
         if ((str_equal(entry->callid, callid) && str_equal(entry->viabranch, viabranch)) ||
             (str_equal(entry->callid, callid) && viabranch.len == 0 && op == OP_DELETE) ||
             str_equal(entry->callid, callid)){
-            //if ((str_equal(entry->callid, callid) && str_equal(entry->viabranch, viabranch)) ||
-            //    (str_equal(entry->callid, callid) && viabranch.len == 0 && op == OP_DELETE)) {
+//            if ((str_equal(entry->callid, callid) && str_equal(entry->viabranch, viabranch)) ||
+//                (str_equal(entry->callid, callid) && viabranch.len == 0 && op == OP_DELETE)) {
             // set pointers; exclude entry
 
             // set pointers; exclude entry
@@ -424,7 +437,8 @@ int lrkproxy_hash_table_remove(str callid, str viabranch, enum lrk_operation op)
 //struct lrkp_node *lrkproxy_hash_table_lookup(str callid, str viabranch, enum lrk_operation op) {
 //struct lrkproxy_hash_entry *lrkproxy_hash_table_lookup(str callid, str viabranch, enum lrk_operation op) {
 struct lrkproxy_hash_entry *lrkproxy_hash_table_lookup(str callid, str viabranch) {
-    struct lrkproxy_hash_entry *entry, *last_entry;
+    struct lrkproxy_hash_entry *entry=NULL;
+    struct lrkproxy_hash_entry *last_entry = NULL;
     unsigned int hash_index;
 //    struct lrkp_node *node;
 
@@ -439,6 +453,7 @@ struct lrkproxy_hash_entry *lrkproxy_hash_table_lookup(str callid, str viabranch
     entry = lrkproxy_hash_table->row_entry_list[hash_index];
     last_entry = entry;
 
+
     // lock
     if (lrkproxy_hash_table->row_locks[hash_index]) {
         lock_get(lrkproxy_hash_table->row_locks[hash_index]);
@@ -447,14 +462,18 @@ struct lrkproxy_hash_entry *lrkproxy_hash_table_lookup(str callid, str viabranch
         return 0;
     }
 
+
     while (entry) {
+
         // if callid found, return entry
-//        if ((str_equal(entry->callid, callid) && str_equal(entry->viabranch, viabranch)) ||
-//            (str_equal(entry->callid, callid) && viabranch.len == 0 && op == OP_DELETE)) {
-        if (str_equal(entry->callid, callid) && str_equal(entry->viabranch, viabranch)) {
+        if ((str_equal(entry->callid, callid) && str_equal(entry->viabranch, viabranch)) ||
+            (str_equal(entry->callid, callid) && viabranch.len == 0) ||
+            str_equal(entry->callid, callid)){
 //            node = entry->node;
             // unlock
+
             lock_release(lrkproxy_hash_table->row_locks[hash_index]);
+
             return entry;
 //            return node;
         }

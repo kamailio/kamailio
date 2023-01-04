@@ -1969,8 +1969,8 @@ int ds_add_xavp_record(ds_set_t *dsidx, int pos, int set, int alg,
 
 	/* add setid field */
 	memset(&nxval, 0, sizeof(sr_xval_t));
-	nxval.type = SR_XTYPE_INT;
-	nxval.v.i = set;
+	nxval.type = SR_XTYPE_LONG;
+	nxval.v.l = set;
 	if(xavp_add_value(&ds_xavp_dst_grp, &nxval, &nxavp)==NULL) {
 		xavp_destroy_list(&nxavp);
 		LM_ERR("failed to add destination setid xavp field\n");
@@ -2065,7 +2065,7 @@ int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode)
  * Set destination address from group 'set' selected with alogorithm 'alg'
  * - the rest of addresses in group are added as next destination in xavps,
  *   up to the 'limit'
- * - mode specify to set address in R-URI or outboud proxy
+ * - mode specify to set address in R-URI or outbound proxy
  *
  */
 int ds_select_dst_limit(sip_msg_t *msg, int set, int alg, uint32_t limit,
@@ -2096,8 +2096,8 @@ int ds_select_dst_limit(sip_msg_t *msg, int set, int alg, uint32_t limit,
 			&& (ds_xavp_ctx.len >= 0)) {
 		/* add to xavp the number of selected dst records */
 		memset(&nxval, 0, sizeof(sr_xval_t));
-		nxval.type = SR_XTYPE_INT;
-		nxval.v.i = vstate.cnt;
+		nxval.type = SR_XTYPE_LONG;
+		nxval.v.l = vstate.cnt;
 		if(xavp_add_xavp_value(&ds_xavp_ctx, &ds_xavp_ctx_cnt, &nxval, NULL)==NULL) {
 			LM_ERR("failed to add cnt value to xavp\n");
 			return -1;
@@ -2112,16 +2112,20 @@ int ds_select_dst_limit(sip_msg_t *msg, int set, int alg, uint32_t limit,
 typedef struct sorted_ds {
 	int idx;
 	int priority;
+	int flags;
+	ds_dest_t *dest;
 } sorted_ds_t;
 
-int ds_manage_routes_fill_reodered_xavp(sorted_ds_t *ds_sorted, ds_set_t *idx, ds_select_state_t *rstate)
+int ds_manage_routes_fill_reordered_xavp(sorted_ds_t *ds_sorted, ds_set_t *idx, ds_select_state_t *rstate)
 {
 	int i;
 	if(!(ds_flags & DS_FAILOVER_ON))
 		return 1;
 	for(i=0; i < idx->nr && rstate->cnt < rstate->limit; i++) {
-		if(ds_sorted[i].idx < 0 || ds_skip_dst(idx->dlist[i].flags)
-				|| (ds_use_default != 0 && ds_sorted[i].idx == (idx->nr - 1))) {
+
+		if(ds_sorted[i].idx < 0 || ds_skip_dst(ds_sorted[i].flags) || (ds_use_default != 0 && ds_sorted[i].idx == (idx->nr - 1))) {
+			LM_DBG("[%d|%.*s|idx:%d]skipped %d || %d\n", i, ds_sorted[i].dest->uri.len, ds_sorted[i].dest->uri.s, ds_sorted[i].idx,
+				ds_sorted[i].idx < 0, ds_skip_dst(ds_sorted[i].flags));
 			continue;
 		}
 		if(ds_add_xavp_record(idx, ds_sorted[i].idx, rstate->setid, rstate->alg,
@@ -2199,16 +2203,23 @@ int ds_manage_routes_fill_xavp(unsigned int hash, ds_set_t *idx, ds_select_state
 
 void ds_sorted_by_priority(sorted_ds_t * sorted_ds, int size) {
 	int i,ii;
+
 	for(i=0;i<size;++i) {
 		for(ii=1;ii<size;++ii) {
 			sorted_ds_t temp;
 			if(sorted_ds[ii-1].priority < sorted_ds[ii].priority) {
 				temp.idx = sorted_ds[ii].idx;
 				temp.priority = sorted_ds[ii].priority;
+				temp.flags = sorted_ds[ii].flags;
+				temp.dest = sorted_ds[ii].dest;
 				sorted_ds[ii].idx = sorted_ds[ii-1].idx;
 				sorted_ds[ii].priority = sorted_ds[ii-1].priority;
+				sorted_ds[ii].flags = sorted_ds[ii-1].flags;
+				sorted_ds[ii].dest = sorted_ds[ii-1].dest;
 				sorted_ds[ii-1].idx = temp.idx;
 				sorted_ds[ii-1].priority = temp.priority;
+				sorted_ds[ii-1].flags = temp.flags;
+				sorted_ds[ii-1].dest = temp.dest;
 			}
 		}
 	}
@@ -2232,7 +2243,7 @@ int ds_manage_route_algo13(ds_set_t *idx, ds_select_state_t *rstate) {
 		int gw_latency = ds_dest->latency_stats.estimate;
 		int gw_inactive = ds_skip_dst(ds_dest->flags);
 		// if cc is enabled, the latency is the congestion ms instead of the estimated latency.
-		if (ds_dest->attrs.congestion_control)
+		if(ds_dest->attrs.congestion_control)
 			gw_latency = ds_dest->latency_stats.estimate - ds_dest->latency_stats.average;
 		if(!gw_inactive) {
 			if(gw_latency > gw_priority && gw_priority > 0)
@@ -2242,17 +2253,20 @@ int ds_manage_route_algo13(ds_set_t *idx, ds_select_state_t *rstate) {
 				ds_dest->attrs.rpriority = 1;
 			ds_sorted[y].idx = z;
 			ds_sorted[y].priority = ds_dest->attrs.rpriority;
-			LM_DBG("[active]idx[%d]uri[%.*s]priority[%d-%d=%d]latency[%dms]flag[%d]\n",
-				z, ds_dest->uri.len, ds_dest->uri.s,
+			LM_DBG("[active][%d]idx[%d]uri[%.*s]priority[%d-%d=%d]latency[%dms]flag[%d]\n",
+				y,z, ds_dest->uri.len, ds_dest->uri.s,
 				gw_priority, latency_priority_handicap,
 				ds_dest->attrs.rpriority, gw_latency, ds_dest->flags);
 		} else {
 			ds_sorted[y].idx = -1;
 			ds_sorted[y].priority = -1;
-			LM_DBG("[inactive]idx[%d]uri[%.*s]priority[%d]latency[%dms]flag[%d]",
-				z, ds_dest->uri.len, ds_dest->uri.s,
+			LM_DBG("[inactive][%d]idx[%d]uri[%.*s]priority[%d]latency[%dms]flag[%d]\n",
+				y,-1, ds_dest->uri.len, ds_dest->uri.s,
 				gw_priority, gw_latency, ds_dest->flags);
 		}
+		ds_sorted[y].flags = ds_dest->flags;
+		ds_sorted[y].dest = ds_dest;
+
 		if(ds_use_default != 0 && idx->nr != 1)
 			z = (z + 1) % (idx->nr - 1);
 		else
@@ -2264,7 +2278,7 @@ int ds_manage_route_algo13(ds_set_t *idx, ds_select_state_t *rstate) {
 		hash = ds_sorted[0].idx;
 		active_priority = ds_sorted[0].priority;
 	}
-	ds_manage_routes_fill_reodered_xavp(ds_sorted, idx, rstate);
+	ds_manage_routes_fill_reordered_xavp(ds_sorted, idx, rstate);
 	idx->last = (hash + 1) % idx->nr;
 	LM_DBG("priority[%d]gateway_selected[%d]next_index[%d]\n", active_priority, hash, idx->last);
 	pkg_free(ds_sorted);
@@ -2732,7 +2746,7 @@ int ds_mark_dst(struct sip_msg *msg, int state)
 
 	if(rxavp == NULL)
 		return -1; /* grp xavp not available */
-	group = rxavp->val.v.i;
+	group = (int)rxavp->val.v.l;
 
 	rxavp = xavp_get_child_with_sval(&ds_xavp_dst, &ds_xavp_dst_addr);
 

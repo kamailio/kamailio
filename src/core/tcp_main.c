@@ -2044,8 +2044,10 @@ int tcp_send(struct dest_info* dst, union sockaddr_union* from,
 		}
 		/* check if connect() is disabled */
 		if (unlikely((dst->send_flags.f & SND_F_FORCE_CON_REUSE) ||
-						cfg_get(tcp, tcp_cfg, no_connect)))
+						cfg_get(tcp, tcp_cfg, no_connect))) {
+			LM_DBG("no connect set and no active connection\n");
 			return -1;
+		}
 		LM_DBG("no open tcp connection found, opening new one\n");
 		/* create tcp connection */
 		if (likely(from==0)){
@@ -3642,7 +3644,7 @@ inline static int handle_tcp_child(struct tcp_child* tcp_c, int fd_i)
 			/* should never happen */
 			LM_CRIT("too few bytes received (%d)\n", bytes );
 			bytes=0; /* something was read so there is no error; otoh if
-					  receive_fd returned less then requested => the receive
+					  receive_fd returned less than requested => the receive
 					  buffer is empty => no more io queued on this fd */
 			goto end;
 		}
@@ -3881,7 +3883,7 @@ inline static int handle_ser_child(struct process_table* p, int fd_i)
 			/* should never happen */
 			LM_CRIT("too few bytes received (%d)\n", bytes );
 			ret=0; /* something was read so there is no error; otoh if
-					  receive_fd returned less then requested => the receive
+					  receive_fd returned less than requested => the receive
 					  buffer is empty => no more io queued on this fd */
 			goto end;
 		}
@@ -4414,7 +4416,7 @@ static inline int handle_new_connect(struct socket_info* si)
  * params: tcpconn - pointer to the tcp_connection for which we have an io ev.
  *         fd_i    - index in the fd_array table (needed for delete)
  * returns:  handle_* return convention, but on success it always returns 0
- *           (because it's one-shot, after a succesful execution the fd is
+ *           (because it's one-shot, after a successful execution the fd is
  *            removed from tcp_main's watch fd list and passed to a child =>
  *            tcp_main is not interested in further io events that might be
  *            queued for this fd)

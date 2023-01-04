@@ -227,7 +227,7 @@ str cscf_get_visited_network_id(struct sip_msg *msg, struct hdr_field **h);
  * Adds a header to the message as the first one in the message
  * @param msg - the message to add a header to
  * @param content - the str containing the new header
- * @returns 1 on succes, 0 on failure
+ * @returns 1 on success, 0 on failure
  */
 int cscf_add_header_first(struct sip_msg *msg, str *hdr, int type);
 
@@ -270,7 +270,7 @@ str cscf_get_authenticate(struct sip_msg *msg, struct hdr_field **h);
  * Adds a header to the message
  * @param msg - the message to add a header to
  * @param content - the str containing the new header
- * @returns 1 on succes, 0 on failure
+ * @returns 1 on success, 0 on failure
  */
 int cscf_add_header(struct sip_msg *msg, str *hdr, int type);
 /**
@@ -432,7 +432,7 @@ str cscf_get_contact(struct sip_msg *msg);
  * Adds a header to the reply message
  * @param msg - the request to add a header to its reply
  * @param content - the str containing the new header
- * @returns 1 on succes, 0 on failure
+ * @returns 1 on success, 0 on failure
  */
 int cscf_add_header_rpl(struct sip_msg *msg, str *hdr);
 

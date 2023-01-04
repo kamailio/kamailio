@@ -8,6 +8,8 @@ name: build
       - '5.5'
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
+permissions:
+  contents: read # to fetch code (actions/checkout)
 jobs:
   build:
     runs-on: ubuntu-latest

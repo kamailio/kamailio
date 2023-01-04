@@ -115,14 +115,14 @@ Chapter 1. Admin Guide
 
 1. Overview
 
-   This module offer the functionality of a presence user agent client,
+   This module offers the functionality of a presence user agent client,
    sending SUBSCRIBE and PUBLISH SIP messages. It's a core part of
    Kamailio's SIP presence package, implementing SIMPLE and various shared
    line appearance implementations.
 
    It can be used with the following modules: pua_rpc, pua_usrloc,
    pua_bla, pua_dialoginfo, pua_reginfo and pua_xmpp. The pua_rpc module
-   offer the possibility to publish any kind of information via the RPC
+   offers the possibility to publish any kind of information via the RPC
    transport. The pua_usrloc module calls a function exported by pua
    modules to publish elementary presence information, such as basic
    status "open" or "closed", for clients that do not implement
@@ -308,7 +308,7 @@ modparam("pua", "db_mode", 0)
 
 3.11. db_table_lock_write (integer)
 
-   Enable (=1) or disable (=0) the Locks for table during an transaction.
+   Enable (=1) or disable (=0) the Locks for table during a transaction.
    Locking only the "current" table causes problems with a MySQL-Databases
    in "DB-Only" mode.
 

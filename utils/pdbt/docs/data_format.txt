@@ -1,7 +1,7 @@
 * File format off the number portability data *
 
 The number portability data consists only from the number or number block in
-the internation format followed by an semi-colon and the carrier identity.
+the internation format followed by a semi-colon and the carrier identity.
 Each entry must be in a separate line.
 
 Format [0-9]{n,m}; [0-9][0-9][0-9]

@@ -294,7 +294,8 @@ char *get_cfg_crt_route_name(void)
 int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 {
 	int ret;
-	int v;
+	long li;
+	long v;
 	struct dest_info dst;
 	char* tmp;
 	char *new_uri, *end, *crt;
@@ -352,9 +353,10 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 						break;
 					case RVE_ST:
 						rve=(struct rval_expr*)a->val[0].u.data;
-						if(rval_expr_eval_int(h, msg, &ret, rve)<0) {
+						if(rval_expr_eval_long(h, msg, &li, rve)<0) {
 							LM_WARN("failed to eval int expression\n");
 						}
+						ret = (int)li;
 						break;
 					case RETCODE_ST:
 						ret=h->last_retcode;
@@ -918,7 +920,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 				if (len){
 					if(crt+len>end) goto error_uri;
 					memcpy(crt,tmp,len);crt+=len;
-					user=1; /* we have an user field so mark it */
+					user=1; /* we have a user field so mark it */
 				}
 
 				if (a->type==SET_USERPASS_T) tmp=0;
@@ -1052,7 +1054,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 				break;
 		case IF_T:
 					rve=(struct rval_expr*)a->val[0].u.data;
-					if (unlikely(rval_expr_eval_int(h, msg, &v, rve) != 0)){
+					if (unlikely(rval_expr_eval_long(h, msg, &v, rve) != 0)){
 						ERR("if expression evaluation failed (%d,%d-%d,%d)\n",
 								rve->fpos.s_line, rve->fpos.s_col,
 								rve->fpos.e_line, rve->fpos.e_col);
@@ -1065,7 +1067,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 					h->run_flags &= ~(RETURN_R_F|BREAK_R_F); /* catch return &
 															    break in expr*/
 					ret=1;  /*default is continue */
-					if (v>0) {
+					if ((ksr_return_mode==0 && v>0) || (ksr_return_mode!=0 && v!=0)) {
 						if ((a->val[1].type==ACTIONS_ST)&&a->val[1].u.data){
 							ret=run_actions(h,
 										(struct action*)a->val[1].u.data, msg);
@@ -1184,7 +1186,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 		case EVAL_T:
 			/* only eval the expression to account for possible
 			   side-effect */
-			rval_expr_eval_int(h, msg, &v,
+			rval_expr_eval_long(h, msg, &v,
 					(struct rval_expr*)a->val[0].u.data);
 			if (h->run_flags & EXIT_R_F){
 				ret=0;
@@ -1196,7 +1198,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 			break;
 		case SWITCH_COND_T:
 			sct=(struct switch_cond_table*)a->val[1].u.data;
-			if (unlikely( rval_expr_eval_int(h, msg, &v,
+			if (unlikely(rval_expr_eval_long(h, msg, &v,
 									(struct rval_expr*)a->val[0].u.data) <0)){
 				/* handle error in expression => use default */
 				ret=-1;
@@ -1227,7 +1229,7 @@ sw_cond_def:
 			break;
 		case SWITCH_JT_T:
 			sjt=(struct switch_jmp_table*)a->val[1].u.data;
-			if (unlikely( rval_expr_eval_int(h, msg, &v,
+			if (unlikely(rval_expr_eval_long(h, msg, &v,
 									(struct rval_expr*)a->val[0].u.data) <0)){
 				/* handle error in expression => use default */
 				ret=-1;
@@ -1278,7 +1280,7 @@ sw_jt_def:
 			rval_cache_init(&c1);
 			rv=0;
 			rv1=0;
-			ret=rval_expr_eval_rvint(h, msg, &rv, &v, 
+			ret=rval_expr_eval_rvlong(h, msg, &rv, &v, 
 									(struct rval_expr*)a->val[0].u.data, &c1);
 									
 			if (unlikely( ret<0)){
@@ -1363,12 +1365,13 @@ match_cleanup:
 			rve=(struct rval_expr*)a->val[0].u.data;
 			ret=1;
 			while(!(flags & (BREAK_R_F|RETURN_R_F|EXIT_R_F)) &&
-					(rval_expr_eval_int(h, msg, &v, rve) == 0) && v){
+					(rval_expr_eval_long(h, msg, &v, rve) == 0) &&
+					((ksr_return_mode==0 && v>0) || (ksr_return_mode!=0 && v!=0))) {
 				if (cfg_get(core, core_cfg, max_while_loops) > 0)
 					i++;
 
 				if (unlikely(i > cfg_get(core, core_cfg, max_while_loops))){
-					LM_ERR("runaway while (%d, %d): more then %d loops\n", 
+					LM_ERR("runaway while (%d, %d): more then %d loops\n",
 								rve->fpos.s_line, rve->fpos.s_col,
 								cfg_get(core, core_cfg, max_while_loops));
 					ret=-1;
@@ -1492,7 +1495,7 @@ match_cleanup:
 					v=(int)a->val[1].u.number;
 					break;
 				case RVE_ST:
-					if (rval_expr_eval_int(h, msg, &v, (struct rval_expr*)a->val[1].u.data) < 0) {
+					if (rval_expr_eval_long(h, msg, &v, (struct rval_expr*)a->val[1].u.data) < 0) {
 						ret=-1;
 						goto error;
 					}

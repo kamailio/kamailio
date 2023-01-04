@@ -221,23 +221,14 @@ static void mod_destroy(void)
  */
 static int ki_secsipid_check_identity(sip_msg_t *msg, str *keypath)
 {
-	int ret = 1;
+	int ret = -1;
 	str ibody = STR_NULL;
 	hdr_field_t *hf;
 
-	for (hf=msg->headers; hf; hf=hf->next) {
-		if (hf->name.len==SECSIPID_HDR_IDENTITY_LEN
-				&& strncasecmp(hf->name.s, SECSIPID_HDR_IDENTITY,
-					SECSIPID_HDR_IDENTITY_LEN)==0)
-			break;
-	}
-
-	if(hf == NULL) {
-		LM_DBG("no identity header\n");
+	if (parse_headers(msg, HDR_EOH_F, 0) == -1) {
+		LM_ERR("error while parsing message\n");
 		return -1;
 	}
-
-	ibody = hf->body;
 
 	if(secsipid_cache_dir.len > 0) {
 		_secsipid_papi.SecSIPIDSetFileCacheOptions(secsipid_cache_dir.s,
@@ -250,12 +241,23 @@ static int ki_secsipid_check_identity(sip_msg_t *msg, str *keypath)
 		}
 		secsipid_libopt_list_used = 1;
 	}
-	ret = _secsipid_papi.SecSIPIDCheckFull(ibody.s, ibody.len, secsipid_expire,
-			keypath->s, secsipid_timeout);
 
-	if(ret==0) {
-		LM_DBG("identity check: ok\n");
-		return 1;
+	for (hf=msg->headers; hf; hf=hf->next) {
+		if (hf->name.len==SECSIPID_HDR_IDENTITY_LEN
+				&& strncasecmp(hf->name.s, SECSIPID_HDR_IDENTITY,
+					SECSIPID_HDR_IDENTITY_LEN)==0) {
+			ibody = hf->body;
+			ret = _secsipid_papi.SecSIPIDCheckFull(ibody.s, ibody.len, secsipid_expire,
+					keypath->s, secsipid_timeout);
+			if(ret==0) {
+				LM_DBG("identity check: ok\n");
+				return 1;
+			}
+		}
+	}
+
+	if(ibody.len==0) {
+		LM_DBG("identity header not found\n");
 	}
 
 	LM_DBG("identity check: failed\n");
@@ -282,19 +284,12 @@ static int w_secsipid_check_identity(sip_msg_t *msg, char *pkeypath, char *str2)
  */
 static int ki_secsipid_check_identity_pubkey(sip_msg_t *msg, str *keyval)
 {
-	int ret = 1;
+	int ret = -1;
 	str ibody = STR_NULL;
 	hdr_field_t *hf;
 
-	for (hf=msg->headers; hf; hf=hf->next) {
-		if (hf->name.len==SECSIPID_HDR_IDENTITY_LEN
-				&& strncasecmp(hf->name.s, SECSIPID_HDR_IDENTITY,
-					SECSIPID_HDR_IDENTITY_LEN)==0)
-			break;
-	}
-
-	if(hf == NULL) {
-		LM_DBG("no identity header\n");
+	if (parse_headers(msg, HDR_EOH_F, 0) == -1) {
+		LM_ERR("error while parsing message\n");
 		return -1;
 	}
 
@@ -306,14 +301,22 @@ static int ki_secsipid_check_identity_pubkey(sip_msg_t *msg, str *keyval)
 		secsipid_libopt_list_used = 1;
 	}
 
-	ibody = hf->body;
+	for (hf=msg->headers; hf; hf=hf->next) {
+		if (hf->name.len==SECSIPID_HDR_IDENTITY_LEN
+				&& strncasecmp(hf->name.s, SECSIPID_HDR_IDENTITY,
+					SECSIPID_HDR_IDENTITY_LEN)==0) {
+			ibody = hf->body;
+			ret = _secsipid_papi.SecSIPIDCheckFullPubKey(ibody.s, ibody.len,
+					secsipid_expire, keyval->s, keyval->len);
+			if(ret==0) {
+				LM_DBG("identity check: ok\n");
+				return 1;
+			}
+		}
+	}
 
-	ret = _secsipid_papi.SecSIPIDCheckFullPubKey(ibody.s, ibody.len,
-			secsipid_expire, keyval->s, keyval->len);
-
-	if(ret==0) {
-		LM_DBG("identity check: ok\n");
-		return 1;
+	if(ibody.len==0) {
+		LM_DBG("identity header not found\n");
 	}
 
 	LM_DBG("identity check: failed\n");

@@ -151,7 +151,7 @@ Chapter 1. Admin Guide
    (e.g., XMLRPC, kamcmd, siremis).
 
    The framework to set breakpoints on specific actions and config lines
-   is not exported to RPC. Each action can be accompanied by an breakpoint
+   is not exported to RPC. Each action can be accompanied by a breakpoint
    or you can use dbg_breakpoint() function to set a breakpoint at certain
    line. Global breakpoints can be enabled/disabled at runtime. The script
    running trace can also be enabled/disabled at runtime.

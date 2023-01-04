@@ -384,7 +384,7 @@ int json_tr_eval(
 
 
 /*!
- * \brief Helper fuction to parse a JSON transformation
+ * \brief Helper function to parse a JSON transformation
  * \param in parsed string
  * \param t transformation
  * \return pointer to the end of the transformation in the string - '}', null on error

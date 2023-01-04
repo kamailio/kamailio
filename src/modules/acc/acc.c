@@ -633,32 +633,32 @@ void acc_api_set_arrays(acc_info_t *inf)
 }
 
 int acc_arrays_alloc(void) {
-	if ((val_arr = pkg_malloc((ACC_CORE_LEN + acc_extra_size + MAX_ACC_LEG + 3) * sizeof(str))) == NULL) {
+	if ((val_arr = pkg_mallocxz((ACC_CORE_LEN + acc_extra_size + MAX_ACC_LEG + 3) * sizeof(str))) == NULL) {
 		LM_ERR("failed to alloc val_arr\n");
 		return -1;
 	}
 
-	if ((int_arr = pkg_malloc((ACC_CORE_LEN + acc_extra_size + MAX_ACC_LEG + 3) * sizeof(int))) == NULL) {
+	if ((int_arr = pkg_mallocxz((ACC_CORE_LEN + acc_extra_size + MAX_ACC_LEG + 3) * sizeof(int))) == NULL) {
 		LM_ERR("failed to alloc int_arr\n");
 		return -1;
 	}
 
-	if ((type_arr = pkg_malloc((ACC_CORE_LEN + acc_extra_size + MAX_ACC_LEG + 3) * sizeof(char))) == NULL) {
+	if ((type_arr = pkg_mallocxz((ACC_CORE_LEN + acc_extra_size + MAX_ACC_LEG + 3) * sizeof(char))) == NULL) {
 		LM_ERR("failed to alloc type_arr\n");
 		return -1;
 	}
 
-	if ((log_attrs = pkg_malloc((ACC_CORE_LEN + acc_extra_size + MAX_ACC_LEG + 3) * sizeof(str))) == NULL) {
+	if ((log_attrs = pkg_mallocxz((ACC_CORE_LEN + acc_extra_size + MAX_ACC_LEG + 3) * sizeof(str))) == NULL) {
 		LM_ERR("failed to alloc log_attrs\n");
 		return -1;
 	}
 
-	if ((db_keys = pkg_malloc((ACC_CORE_LEN + acc_extra_size + MAX_ACC_LEG + 3) * sizeof(db_key_t))) == NULL) {
+	if ((db_keys = pkg_mallocxz((ACC_CORE_LEN + acc_extra_size + MAX_ACC_LEG + 3) * sizeof(db_key_t))) == NULL) {
 		LM_ERR("failed to alloc db_keys\n");
 		return -1;
 	}
 
-	if ((db_vals = pkg_malloc((ACC_CORE_LEN + acc_extra_size + MAX_ACC_LEG + 3) * sizeof(db_val_t))) == NULL) {
+	if ((db_vals = pkg_mallocxz((ACC_CORE_LEN + acc_extra_size + MAX_ACC_LEG + 3) * sizeof(db_val_t))) == NULL) {
 		LM_ERR("failed to alloc db_vals\n");
 		return -1;
 	}

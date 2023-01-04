@@ -2139,7 +2139,7 @@ int pv_get_hdr(sip_msg_t *msg,  pv_param_t *param, pv_value_t *res)
 			LM_ERR("invalid name\n");
 			return -1;
 		}
-		parse_hname2_short(tv.rs.s, tv.rs.s + tv.rs.len, &thdr);
+		parse_hname2_str(&tv.rs, &thdr);
 		if(thdr.type==HDR_ERROR_T) {
 			LM_ERR("error parsing header name [%.*s]\n", tv.rs.len, tv.rs.s);
 			return pv_get_null(msg, param, res);
@@ -2188,7 +2188,7 @@ int pv_get_hdrc(struct sip_msg *msg,  pv_param_t *param, pv_value_t *res)
 			LM_ERR("invalid name\n");
 			return pv_get_sintval(msg, param, res, hcount);
 		}
-		parse_hname2_short(tv.rs.s, tv.rs.s + tv.rs.len, &thdr);
+		parse_hname2_str(&tv.rs, &thdr);
 		if(thdr.type==HDR_ERROR_T) {
 			LM_ERR("error parsing header name [%.*s]\n", tv.rs.len, tv.rs.s);
 			return pv_get_sintval(msg, param, res, 0);
@@ -2256,7 +2256,7 @@ int pv_get_hfl(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 			LM_ERR("invalid name\n");
 			return -1;
 		}
-		parse_hname2_short(tv.rs.s, tv.rs.s + tv.rs.len, &thdr);
+		parse_hname2_str(&tv.rs, &thdr);
 		if(thdr.type==HDR_ERROR_T) {
 			LM_ERR("error parsing header name [%.*s]\n", tv.rs.len, tv.rs.s);
 			return pv_get_null(msg, param, res);
@@ -2287,6 +2287,7 @@ int pv_get_hfl(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 		return pv_get_null(msg, param, res);
 	}
 
+	res->flags = PV_VAL_STR;
 	if((tv.flags == 0) && (tv.ri==HDR_VIA_T)) {
 		if(msg->h_via1==NULL) {
 			LM_WARN("no Via header\n");
@@ -2449,11 +2450,16 @@ int pv_get_hfl(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 		}
 		if(idx==0) {
 			cb = ((contact_body_t*)msg->contact->parsed)->contacts;
-			sval.s = cb->name.s;
-			sval.len = cb->len;
-			trim(&sval);
-			res->rs = sval;
-			return 0;
+			if(cb!=NULL) {
+				sval.s = cb->name.s;
+				sval.len = cb->len;
+				trim(&sval);
+				res->rs = sval;
+				return 0;
+			} else {
+				LM_DBG("no contact addresses\n");
+				return pv_get_null(msg, param, res);
+			}
 		}
 		n=0;
 		for(hf=msg->contact; hf!=NULL; hf=hf->next) {
@@ -2500,7 +2506,7 @@ int pv_get_hflc(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 			LM_ERR("invalid name\n");
 			return pv_get_sintval(msg, param, res, 0);
 		}
-		parse_hname2_short(tv.rs.s, tv.rs.s + tv.rs.len, &thdr);
+		parse_hname2_str(&tv.rs, &thdr);
 		if(thdr.type==HDR_ERROR_T) {
 			LM_ERR("error parsing header name [%.*s]\n", tv.rs.len, tv.rs.s);
 			return pv_get_sintval(msg, param, res, 0);
@@ -4644,7 +4650,7 @@ int pv_set_ccp_attrs(struct sip_msg* msg, pv_param_t *param,
 	char *sep = NULL;
 
 	if(val == NULL || (val->flags&PV_VAL_NULL)) {
-		LM_WARN("ignoring null asignment\n");
+		LM_WARN("ignoring null assignment\n");
 		return 0;
 	}
 

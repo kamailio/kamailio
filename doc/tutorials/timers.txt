@@ -100,7 +100,7 @@ A "fast" timer is a timer that does very little work in its timer handler (it al
 4.2 timer handlers
 ------------------
 
-The timer handler can be periodic, one shot or it can change from call to call. It all depends on what value you return from it. If you always return (ticks_t)(-1) or timer_ln->initial_timeout you have a periodic timer. If you return 0 you have an one shot timer (the timer will be removed when your timer handler function exits). For any other value v, your timer will be automatically re-added with the next expire set to v (expressed in ticks).
+The timer handler can be periodic, one shot or it can change from call to call. It all depends on what value you return from it. If you always return (ticks_t)(-1) or timer_ln->initial_timeout you have a periodic timer. If you return 0 you have a one shot timer (the timer will be removed when your timer handler function exits). For any other value v, your timer will be automatically re-added with the next expire set to v (expressed in ticks).
 
 4.3 timer_add
 -------------
@@ -118,7 +118,7 @@ To remove a timer from the active timer list call timer_del(struct timer_ln*).
 timer_del is the slowest of all the timer functions. If you are trying to delete a timer whose timer is executing. timer_del will wait until it finishes.
 timer_del returns 0 on success and a negative number on error (for now -1 if an attempt to delete and already removed or expired timer is made and -2 if timer_del is called from the timer handle it is supposed to delete).
 WARNING: - avoid deleting your own timer from its timer handle (if you try it, you'll get a BUG message in the log). If you _must_ have this, you have a broken design. If you still want it, look at  timer_allow_del().
-         - if you have an one shot timer that frees its memory before exiting, make sure you don't call timer_del afterwards (e.g. use some reference counters and free the memory only if the counter is 0).
+         - if you have a one shot timer that frees its memory before exiting, make sure you don't call timer_del afterwards (e.g. use some reference counters and free the memory only if the counter is 0).
 
 Race example (using the struct foo defined above):
 

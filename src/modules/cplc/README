@@ -50,7 +50,7 @@ Frederic Gaisnon
 
         4. Functions
 
-              4.1. cpl_run_script(type,mode, [uri])
+              4.1. cpl_run_script(type, mode[, uri])
               4.2. cpl_process_register()
               4.3. cpl_process_register_norpl()
 
@@ -121,7 +121,7 @@ Chapter 1. Admin Guide
 
    4. Functions
 
-        4.1. cpl_run_script(type,mode, [uri])
+        4.1. cpl_run_script(type, mode[, uri])
         4.2. cpl_process_register()
         4.3. cpl_process_register_norpl()
 
@@ -429,11 +429,11 @@ modparam("cplc","ignore3xx",1)
 
 4. Functions
 
-   4.1. cpl_run_script(type,mode, [uri])
+   4.1. cpl_run_script(type, mode[, uri])
    4.2. cpl_process_register()
    4.3. cpl_process_register_norpl()
 
-4.1.  cpl_run_script(type,mode, [uri])
+4.1.  cpl_run_script(type, mode[, uri])
 
    Starts the execution of the CPL script. The user name is fetched from
    new_uri or requested uri or from To header -in this order- (for
@@ -464,7 +464,7 @@ modparam("cplc","ignore3xx",1)
             stateless mode.
           + IS_STATEFUL - the current INVITE has already a transaction
             associated. All signaling operations (replies or proxy) will
-            be done in stateful way.So, if the function returns, will be
+            be done in stateful way. So, if the function returns, will be
             in stateful mode.
           + FORCE_STATEFUL - the current INVITE has no transaction created
             yet. All signaling operations will be done is a stateful way

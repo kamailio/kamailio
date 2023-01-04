@@ -31,7 +31,7 @@
  * \defgroup siputils SIPUTILS :: Various SIP message handling functions
  *
  *
- *  This module implement various functions and checks related to
+ *  This module implements various functions and checks related to
  *  SIP message handling and URI handling.
  *
  *  This module provides a function to answer OPTIONS requests
@@ -118,6 +118,7 @@ static int fixup_get_uri_param(void** param, int param_no);
 static int free_fixup_get_uri_param(void** param, int param_no);
 static int fixup_option(void** param, int param_no);
 
+static int ki_is_gruu(sip_msg_t *msg);
 
 char *contact_flds_separator = DEFAULT_SEPARATOR;
 
@@ -562,7 +563,7 @@ static int ki_hdr_date_check(sip_msg_t* msg, int tdiff)
 	}
 
 	if (tnow > tmsg + tdiff) {
-		LM_ERR("autdated date header value (%ld sec)\n", tnow - tmsg + tdiff);
+		LM_ERR("outdated date header value (%" TIME_T_FMT " sec)\n", TIME_T_CAST(tnow - tmsg + tdiff));
 		return -4;
 	} else {
 		LM_ERR("Date header value OK\n");
@@ -726,10 +727,24 @@ static sr_kemi_t sr_kemi_siputils_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("siputils"), str_init("is_gruu"),
+		SR_KEMIP_INT, ki_is_gruu,
+		{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("siputils"), str_init("add_uri_param"),
+		SR_KEMIP_INT, ki_add_uri_param,
+		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };
 /* clang-format on */
+
+static int ki_is_gruu(sip_msg_t *msg) {
+	return w_is_gruu(msg, NULL, NULL);
+}
 
 /**
  *

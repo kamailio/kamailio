@@ -32,7 +32,7 @@ To execute all unit tests, run:
 
 To run a specific unit test, run:
 
-    make run UNIT=scripname
+    make run UNIT=scriptname
 
 Scriptname is the name of shell file to execute, for example:
 

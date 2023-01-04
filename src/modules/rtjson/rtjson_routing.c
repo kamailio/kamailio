@@ -210,8 +210,8 @@ int rtjson_init_routes(sip_msg_t *msg, str *rdoc)
 	srjson_DestroyDoc(&tdoc);
 
 	memset(&xval, 0, sizeof(sr_xval_t));
-	xval.type = SR_XTYPE_INT;
-	xval.v.i = 0;
+	xval.type = SR_XTYPE_LONG;
+	xval.v.l = 0;
 	xname.s = "idx";
 	xname.len = 3;
 	if(xavp_add_value(&xname, &xval, &xavp)==NULL) {
@@ -271,7 +271,7 @@ int rtjson_push_routes(sip_msg_t *msg)
 		return -1;
 	}
 
-	LM_DBG("routes index: %d\n", iavp->val.v.i);
+	LM_DBG("routes index: %ld\n", iavp->val.v.l);
 
 	srjson_InitDoc(&tdoc, NULL);
 
@@ -395,7 +395,7 @@ int rtjson_init_serial(sip_msg_t *msg, srjson_doc_t *jdoc, sr_xavp_t *iavp)
 		setbflagsval(0, old_bflags|bflags);
 	}
 
-	iavp->val.v.i++;
+	iavp->val.v.l++;
 
 	return 0;
 
@@ -585,7 +585,7 @@ int rtjson_init_parallel(sip_msg_t *msg, srjson_doc_t *jdoc, sr_xavp_t *iavp)
 	while(nj) {
 		rtjson_append_branch(msg, jdoc, nj);
 
-		iavp->val.v.i++;
+		iavp->val.v.l++;
 		nj = nj->next;
 	}
 
@@ -625,7 +625,7 @@ int rtjson_next_route(sip_msg_t *msg)
 		return -1;
 	}
 
-	LM_DBG("routes index: %d\n", iavp->val.v.i);
+	LM_DBG("routes index: %ld\n", iavp->val.v.l);
 
 	srjson_InitDoc(&tdoc, NULL);
 
@@ -657,18 +657,18 @@ int rtjson_next_route(sip_msg_t *msg)
 	nj = tj->child;
 
 	i = 0;
-	while(nj && i<iavp->val.v.i) {
+	while(nj && i<iavp->val.v.l) {
 		nj = nj->next;
 		i++;
 	}
 	if(nj==NULL) {
-		LM_DBG("no route at index: %d\n", iavp->val.v.i);
+		LM_DBG("no route at index: %ld\n", iavp->val.v.l);
 		goto error;
 	}
 
-	iavp->val.v.i++;
+	iavp->val.v.l++;
 	if(rtjson_append_branch(msg, &tdoc, nj)<0) {
-		LM_DBG("route index %d not appended\n", iavp->val.v.i);
+		LM_DBG("route index %ld not appended\n", iavp->val.v.l);
 		goto error;
 	}
 
@@ -709,7 +709,7 @@ int rtjson_update_branch(sip_msg_t *msg)
 		LM_WARN("no idx for routing\n");
 		return -1;
 	}
-	if(iavp->val.v.i<=0) {
+	if(iavp->val.v.l<=0) {
 		LM_WARN("invalid branch idx for routing\n");
 		return -1;
 	}
@@ -745,7 +745,7 @@ int rtjson_update_branch(sip_msg_t *msg)
 
 	i = 0;
 	/* stop at number of branches - 1 */
-	while(nj && i<iavp->val.v.i-1) {
+	while(nj && i<iavp->val.v.l-1) {
 		nj = nj->next;
 		i++;
 	}

@@ -31,6 +31,7 @@
 #include "../../core/dprint.h"
 #include "../../core/mod_fix.h"
 #include "../../core/lvalue.h"
+#include "../../core/trim.h"
 #include "../../core/kemi.h"
 #include "../../core/parser/parse_param.h"
 
@@ -43,7 +44,9 @@ static void mod_destroy(void);
 
 static int w_jwt_generate_4(sip_msg_t* msg, char* pkey, char* palg, char* pclaims, char* pheaders);
 static int w_jwt_generate_3(sip_msg_t* msg, char* pkey, char* palg, char* pclaims);
-static int w_jwt_verify(sip_msg_t* msg, char* pkey, char* palg, char* pclaims,
+static int w_jwt_verify(sip_msg_t* msg, char* pkeypath, char* palg, char* pclaims,
+		char *pjwtval);
+static int w_jwt_verify_key(sip_msg_t* msg, char* pkey, char* palg, char* pclaims,
 		char *pjwtval);
 
 static int _jwt_key_mode = 0;
@@ -65,6 +68,8 @@ static cmd_export_t cmds[]={
 	{"jwt_generate", (cmd_function)w_jwt_generate_3, 3,
 		fixup_spve_all, 0, ANY_ROUTE},
 	{"jwt_verify", (cmd_function)w_jwt_verify, 4,
+		fixup_spve_all, 0, ANY_ROUTE},
+	{"jwt_verify_key", (cmd_function)w_jwt_verify_key, 4,
 		fixup_spve_all, 0, ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
@@ -417,16 +422,13 @@ static int w_jwt_generate_4(sip_msg_t* msg, char* pkey, char* palg, char* pclaim
 /**
  *
  */
-static int ki_jwt_verify(sip_msg_t* msg, str *key, str *alg, str *claims,
+static int ki_jwt_verify_key(sip_msg_t* msg, str *key, str *alg, str *claims,
 		str *jwtval)
 {
 	str dupclaims = STR_NULL;
 	jwt_alg_t valg = JWT_ALG_NONE;
 	str kdata = STR_NULL;
 	time_t iat;
-	FILE *fpk = NULL;
-	unsigned char keybuf[10240];
-	size_t keybuf_len = 0;
 	param_t* params_list = NULL;
 	param_hooks_t phooks;
 	param_t *pit = NULL;
@@ -445,6 +447,8 @@ static int ki_jwt_verify(sip_msg_t* msg, str *key, str *alg, str *claims,
 
 	_jwt_verify_status = 0;
 
+	kdata = *key;
+	trim(&kdata);
 	valg = jwt_str_alg(alg->s);
 	if (valg == JWT_ALG_INVAL) {
 		LM_ERR("not supported algorithm: %s\n", alg->s);
@@ -453,24 +457,6 @@ static int ki_jwt_verify(sip_msg_t* msg, str *key, str *alg, str *claims,
 	if(pkg_str_dup(&dupclaims, claims)<0) {
 		LM_ERR("failed to duplicate claims\n");
 		return -1;
-	}
-	jwt_fcache_get(key, &kdata);
-	if(kdata.s==NULL) {
-		fpk= fopen(key->s, "r");
-		if(fpk==NULL) {
-			LM_ERR("failed to read key file: %s\n", key->s);
-			goto error;
-		}
-		keybuf_len = fread(keybuf, 1, sizeof(keybuf), fpk);
-		fclose(fpk);
-		if(keybuf_len==0) {
-			LM_ERR("unable to read key file content: %s\n", key->s);
-			goto error;
-		}
-		keybuf[keybuf_len] = '\0';
-		kdata.s = (char*)keybuf;
-		kdata.len = (int)keybuf_len;
-		jwt_fcache_add(key, &kdata);
 	}
 	sparams = dupclaims;
 	if(sparams.s[sparams.len-1]==';') {
@@ -546,7 +532,78 @@ error:
 /**
  *
  */
-static int w_jwt_verify(sip_msg_t* msg, char* pkey, char* palg, char* pclaims,
+static int ki_jwt_verify(sip_msg_t* msg, str *keypath, str *alg, str *claims,
+		str *jwtval)
+{
+	str kdata = STR_NULL;
+	FILE *fpk = NULL;
+	unsigned char keybuf[10240];
+	size_t keybuf_len = 0;
+
+	if(keypath==NULL || keypath->s==NULL || alg==NULL || alg->s==NULL
+			|| claims==NULL || claims->s==NULL || claims->len<=0
+			|| jwtval==NULL || jwtval->s==NULL || jwtval->len<=0) {
+		LM_ERR("invalid parameters\n");
+		return -1;
+	}
+
+	jwt_fcache_get(keypath, &kdata);
+	if(kdata.s==NULL) {
+		fpk= fopen(keypath->s, "r");
+		if(fpk==NULL) {
+			LM_ERR("failed to read key file: %s\n", keypath->s);
+			return -1;
+		}
+		keybuf_len = fread(keybuf, 1, sizeof(keybuf), fpk);
+		fclose(fpk);
+		if(keybuf_len==0) {
+			LM_ERR("unable to read key file content: %s\n", keypath->s);
+			return -1;
+		}
+		kdata.s = (char*)keybuf;
+		kdata.len = (int)keybuf_len;
+		trim(&kdata);
+		kdata.s[keybuf_len] = '\0';
+		jwt_fcache_add(keypath, &kdata);
+	}
+	return ki_jwt_verify_key(msg, &kdata, alg, claims, jwtval);
+}
+
+/**
+ *
+ */
+static int w_jwt_verify(sip_msg_t* msg, char* pkeypath, char* palg, char* pclaims,
+		char *pjwtval)
+{
+	str skeypath = STR_NULL;
+	str salg = STR_NULL;
+	str sclaims = STR_NULL;
+	str sjwtval = STR_NULL;
+
+	if (fixup_get_svalue(msg, (gparam_t*)pkeypath, &skeypath) != 0) {
+		LM_ERR("cannot get path to the key file\n");
+		return -1;
+	}
+	if (fixup_get_svalue(msg, (gparam_t*)palg, &salg) != 0) {
+		LM_ERR("cannot get algorithm value\n");
+		return -1;
+	}
+	if (fixup_get_svalue(msg, (gparam_t*)pclaims, &sclaims) != 0) {
+		LM_ERR("cannot get claims value\n");
+		return -1;
+	}
+	if (fixup_get_svalue(msg, (gparam_t*)pjwtval, &sjwtval) != 0) {
+		LM_ERR("cannot get jwt value\n");
+		return -1;
+	}
+
+	return ki_jwt_verify(msg, &skeypath, &salg, &sclaims, &sjwtval);
+}
+
+/**
+ *
+ */
+static int w_jwt_verify_key(sip_msg_t* msg, char* pkey, char* palg, char* pclaims,
 		char *pjwtval)
 {
 	str skey = STR_NULL;
@@ -555,7 +612,7 @@ static int w_jwt_verify(sip_msg_t* msg, char* pkey, char* palg, char* pclaims,
 	str sjwtval = STR_NULL;
 
 	if (fixup_get_svalue(msg, (gparam_t*)pkey, &skey) != 0) {
-		LM_ERR("cannot get path to the key file\n");
+		LM_ERR("cannot get the key value\n");
 		return -1;
 	}
 	if (fixup_get_svalue(msg, (gparam_t*)palg, &salg) != 0) {
@@ -625,6 +682,11 @@ static sr_kemi_t sr_kemi_jwt_exports[] = {
 	},
 	{ str_init("jwt"), str_init("jwt_verify"),
 		SR_KEMIP_INT, ki_jwt_verify,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("jwt"), str_init("jwt_verify_key"),
+		SR_KEMIP_INT, ki_jwt_verify_key,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},

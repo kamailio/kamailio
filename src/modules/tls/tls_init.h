@@ -18,7 +18,7 @@
 
 /*!
  * \file
- * \brief Kamailio TLS support :: OpenSSL initialization funtions
+ * \brief Kamailio TLS support :: OpenSSL initialization functions
  * \ingroup tls
  * Module: \ref tls
  */

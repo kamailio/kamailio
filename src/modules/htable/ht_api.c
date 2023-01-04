@@ -975,7 +975,7 @@ int ht_dbg(void)
 				if(it->flags&AVP_VAL_STR)
 					LM_ERR("\tv-s:%.*s\n", it->value.s.len, it->value.s.s);
 				else
-					LM_ERR("\tv-i:%d\n", it->value.n);
+					LM_ERR("\tv-i:%ld\n", it->value.n);
 				it = it->next;
 			}
 			ht_slot_unlock(ht, i);
@@ -1046,10 +1046,10 @@ int ht_table_spec(char *spec)
 			LM_DBG("htable [%.*s] - dbmode [%u]\n", name.len, name.s,
 					dbmode);
 		} else if(pit->name.len==7 && strncmp(pit->name.s, "initval", 7)==0) {
-			if(str2sint(&tok, &ival.n)!=0)
+			if(str2slong(&tok, &ival.n)!=0)
 				goto error;
 			itype = PV_VAL_INT;
-			LM_DBG("htable [%.*s] - initval [%d]\n", name.len, name.s,
+			LM_DBG("htable [%.*s] - initval [%ld]\n", name.len, name.s,
 					ival.n);
 		} else if(pit->name.len == 12 && strncmp(pit->name.s, "updateexpire", 12) == 0) {
 			if(str2int(&tok, &updateexpire) != 0)
@@ -1268,7 +1268,7 @@ int ht_set_cell_expire(ht_t *ht, str *name, int type, int_str *val)
 	now = 0;
 	if(val->n>0)
 		now = time(NULL) + val->n;
-	LM_DBG("set auto-expire to %u (%d)\n", (unsigned int)now,
+	LM_DBG("set auto-expire to %u (%ld)\n", (unsigned int)now,
 			val->n);
 
 	ht_slot_lock(ht, idx);

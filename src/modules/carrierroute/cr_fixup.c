@@ -126,7 +126,7 @@ static int carrier_fixup(void ** param) {
 	}
 
 	if (((gparam_p)(*param))->type == GPARAM_TYPE_STR) {
-		/* This is a name string, convert to a int */
+		/* This is a name string, convert to an int */
 		((gparam_p)(*param))->type=GPARAM_TYPE_INT;
 		/* get carrier id */
 		if ((id = carrier_name_2_id(&((gparam_p)(*param))->v.str)) < 0) {
@@ -157,7 +157,7 @@ static int domain_fixup(void ** param) {
 	}
 
 	if (((gparam_p)(*param))->type == GPARAM_TYPE_STR) {
-		/* This is a name string, convert to a int */
+		/* This is a name string, convert to an int */
 		((gparam_p)(*param))->type=GPARAM_TYPE_INT;
 		/* get domain id */
 		if ((id = domain_name_2_id(&(((gparam_p)(*param))->v.str))) < 0) {
@@ -320,12 +320,36 @@ int cr_load_user_carrier_fixup(void ** param, int param_no) {
 		}
 	}
 	else if (param_no == 3) {
-		/* destination avp name */
-		if (avp_name_fixup(param) < 0) {
-			LM_ERR("cannot fixup parameter %d\n", param_no);
+		/* destination var name */
+		if(fixup_pvar_null(param, 1) != 0) {
+			LM_ERR("failed to fixup result pvar\n");
 			return -1;
 		}
+		if(((pv_spec_t *)(*param))->setf == NULL) {
+			LM_ERR("dst var is not writeble\n");
+			return -1;
+		}
+		return 0;
 	}
 
 	return 0;
 }
+
+/**
+ *
+ */
+int cr_load_user_carrier_fixup_free(void **param, int param_no)
+{
+	if((param_no >= 1) && (param_no <= 2)) {
+		return fixup_free_spve_null(param, 1);
+	}
+
+	if(param_no == 3) {
+		return fixup_free_pvar_null(param, 1);
+	}
+
+	LM_ERR("invalid parameter number <%d>\n", param_no);
+	return -1;
+}
+
+

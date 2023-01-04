@@ -126,11 +126,11 @@ modparam("pua_xmpp", "server_address", "sip:160.23.23.10")
 
 4.2.  pua_xmpp_req_winfo(request_uri, expires)
 
-   Function called when a Subscribe addressed to a user from a xmpp domain
-   is received. It calls sending a Subscribe for winfo for the user, and
-   the following Notify with dialog-info is translated into a subscription
-   in xmpp. It also requires filtering in configuration file, after
-   method, domain and event(only for presence).
+   Function called when a Subscribe addressed to a user from an xmpp
+   domain is received. It calls sending a Subscribe for winfo for the
+   user, and the following Notify with dialog-info is translated into a
+   subscription in xmpp. It also requires filtering in configuration file,
+   after method, domain and event(only for presence).
 
    It takes 2 parameters: request_uri and the value of Expires header
    field in received Subscribe.

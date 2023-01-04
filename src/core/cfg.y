@@ -227,6 +227,7 @@ extern char *default_routename;
 %token EXIT
 %token DROP
 %token RETURN
+%token RETURN_MODE
 %token BREAK
 %token LOG_TOK
 %token ERROR
@@ -528,6 +529,7 @@ extern char *default_routename;
 %token LATENCY_LIMIT_DB
 %token LATENCY_LIMIT_ACTION
 %token LATENCY_LIMIT_CFG
+%token RPC_EXEC_DELTA_CFG
 %token MSG_TIME
 %token ONSEND_RT_REPLY
 %token URI_HOST_EXTRA_CHARS
@@ -1900,6 +1902,8 @@ assign_stm:
 	| WAIT_WORKER1_USLEEP EQUAL error { yyerror("number expected"); }
     | SERVER_ID EQUAL NUMBER { server_id=$3; }
 	| SERVER_ID EQUAL error  { yyerror("number expected"); }
+    | RETURN_MODE EQUAL NUMBER { ksr_return_mode=$3; }
+	| RETURN_MODE EQUAL error  { yyerror("number expected"); }
 	| KEMI DOT ONSEND_ROUTE_CALLBACK EQUAL STRING {
 			kemi_onsend_route_callback.s = $5;
 			kemi_onsend_route_callback.len = strlen($5);
@@ -1964,6 +1968,8 @@ assign_stm:
 	| LATENCY_LIMIT_ACTION EQUAL error  { yyerror("number  expected"); }
     | LATENCY_LIMIT_CFG EQUAL NUMBER { default_core_cfg.latency_limit_cfg=$3; }
 	| LATENCY_LIMIT_CFG EQUAL error  { yyerror("number  expected"); }
+    | RPC_EXEC_DELTA_CFG EQUAL NUMBER { ksr_rpc_exec_delta=$3; }
+	| RPC_EXEC_DELTA_CFG EQUAL error  { yyerror("number  expected"); }
     | MSG_TIME EQUAL NUMBER { sr_msg_time=$3; }
 	| MSG_TIME EQUAL error  { yyerror("number  expected"); }
 	| ONSEND_RT_REPLY EQUAL NUMBER { onsend_route_reply=$3; }
@@ -2045,14 +2051,38 @@ cfg_var:
 module_stm:
 	LOADMODULE STRING {
 		LM_DBG("loading module %s\n", $2);
-			if (load_module($2)!=0) {
+			if (ksr_load_module($2, NULL)!=0) {
+				yyerror("failed to load module");
+			}
+	}
+	| LOADMODULE LPAREN STRING RPAREN {
+		LM_DBG("loading module %s\n", $3);
+			if (ksr_load_module($3, NULL)!=0) {
+				yyerror("failed to load module");
+			}
+	}
+	| LOADMODULE LPAREN STRING COMMA STRING RPAREN {
+		LM_DBG("loading module %s opts %s\n", $3, $5);
+			if (ksr_load_module($3, $5)!=0) {
 				yyerror("failed to load module");
 			}
 	}
 	| LOADMODULE error	{ yyerror("string expected"); }
 	| LOADMODULEX STRING {
 		LM_DBG("loading module %s\n", $2);
-			if (load_modulex($2)!=0) {
+			if (ksr_load_modulex($2, NULL)!=0) {
+				yyerror("failed to load module");
+			}
+	}
+	| LOADMODULEX LPAREN STRING RPAREN {
+		LM_DBG("loading module %s\n", $3);
+			if (ksr_load_modulex($3, NULL)!=0) {
+				yyerror("failed to load module");
+			}
+	}
+	| LOADMODULEX LPAREN STRING COMMA STRING RPAREN {
+		LM_DBG("loading module %s opts %s\n", $3, $5);
+			if (ksr_load_modulex($3, $5)!=0) {
 				yyerror("failed to load module");
 			}
 	}
@@ -2414,7 +2444,7 @@ preprocess_stm:
 			}else if (!rve_check_type((enum rval_type*)&i_tmp, $1, 0, 0 ,0)){
 				yyerror("invalid expression");
 				$$=0;
-			}else if (i_tmp!=RV_INT && i_tmp!=RV_NONE){
+			}else if (i_tmp!=RV_LONG && i_tmp!=RV_NONE){
 				yyerror("invalid expression type, int expected\n");
 				$$=0;
 			}else
@@ -2538,7 +2568,7 @@ exp_elem:
 			$$=0;
 			if (rve_is_constant($3)){
 				i_tmp=rve_guess_type($3);
-				if (i_tmp==RV_INT)
+				if (i_tmp==RV_LONG)
 					yyerror("string expected");
 				else if (i_tmp==RV_STR){
 					if (((rval_tmp=rval_expr_eval(0, 0, $3))==0) ||
@@ -2782,7 +2812,7 @@ ct_rval: rval_expr {
 			} else if ($1 &&
 						!rve_check_type((enum rval_type*)&i_tmp, $1, 0, 0 ,0)){
 				yyerror("invalid expression (bad type)");
-			}else if ($1 && i_tmp!=RV_INT){
+			}else if ($1 && i_tmp!=RV_LONG){
 				yyerror("invalid expression type, int expected\n");
 			*/
 			}else
@@ -3142,7 +3172,7 @@ lval: attr_id_ass {
 				}
 	;
 
-rval: intno			{$$=mk_rve_rval(RV_INT, (void*)$1); }
+rval: intno			{$$=mk_rve_rval(RV_LONG, (void*)$1); }
 	| STRING			{	s_tmp.s=$1; s_tmp.len=strlen($1);
 							$$=mk_rve_rval(RV_STR, &s_tmp); }
 	| attr_id_any		{$$=mk_rve_rval(RV_AVP, $1); pkg_free($1); }
@@ -3193,7 +3223,7 @@ rval_expr: rval						{ $$=$1;
 										}
 									}
 		| rve_un_op rval_expr %prec UNARY	{$$=mk_rve1($1, $2); }
-		| INTCAST rval_expr				{$$=mk_rve1(RVE_INT_OP, $2); }
+		| INTCAST rval_expr				{$$=mk_rve1(RVE_LONG_OP, $2); }
 		| STRCAST rval_expr				{$$=mk_rve1(RVE_STR_OP, $2); }
 		| rval_expr PLUS rval_expr		{$$=mk_rve2(RVE_PLUS_OP, $1, $3); }
 		| rval_expr MINUS rval_expr		{$$=mk_rve2(RVE_MINUS_OP, $1, $3); }
@@ -4009,7 +4039,7 @@ static int rval_expr_int_check(struct rval_expr *rve)
 		else
 			yyerror("BUG: unexpected null \"bad\" expression\n");
 		return -1;
-	}else if (type!=RV_INT && type!=RV_NONE){
+	}else if (type!=RV_LONG && type!=RV_NONE){
 		warn_at(&rve->fpos, "non-int expression (you might want to use"
 				" casts)\n");
 		return 1;

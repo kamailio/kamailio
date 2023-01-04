@@ -34,10 +34,14 @@
 
 MODULE_VERSION
 
-secf_data_p secf_data = NULL;
+secf_data_p *secf_data = NULL;
+secf_data_p secf_data_1 = NULL;
+secf_data_p secf_data_2 = NULL;
 static gen_lock_t *secf_lock = NULL;
 int *secf_stats;
 int total_data = 26;
+
+time_t *secf_rpc_reload_time = NULL;
 
 /* Static and shared functions */
 static int mod_init(void);
@@ -46,11 +50,12 @@ static int child_init(int rank);
 static int rpc_init(void);
 static void free_str_list(struct str_list *l);
 static void free_sec_info(secf_info_p info);
-void secf_free_data(void);
+void secf_free_data(secf_data_p secf_fdata);
 static void mod_destroy(void);
 static int w_check_sqli(str val);
 static int check_user(struct sip_msg *msg, int type);
 void secf_reset_stats(void);
+void secf_ht_timer(unsigned int ticks, void *);
 
 /* External functions */
 static int w_check_ua(struct sip_msg *msg);
@@ -70,6 +75,8 @@ str secf_table_name = str_init("secfilter");
 str secf_action_col = str_init("action");
 str secf_type_col = str_init("type");
 str secf_data_col = str_init("data");
+int secf_reload_interval = 60;
+int secf_reload_delta = 5;
 
 /* clang-format off */
 /* Exported commands */
@@ -96,7 +103,10 @@ static param_export_t params[] = {{"db_url", PARAM_STRING, &secf_db_url},
 		{"action_col", PARAM_STR, &secf_action_col},
 		{"type_col", PARAM_STR, &secf_type_col},
 		{"data_col", PARAM_STR, &secf_data_col},
-		{"dst_exact_match", PARAM_INT, &secf_dst_exact_match}, {0, 0, 0}};
+		{"dst_exact_match", PARAM_INT, &secf_dst_exact_match},
+		{"reload_delta", PARAM_INT, &secf_reload_delta},
+		{"cleanup_interval", PARAM_INT, &secf_reload_interval},
+		{0, 0, 0}};
 
 /* Module exports definition */
 struct module_exports exports = {
@@ -273,7 +283,7 @@ static int w_check_sqli(str val)
 	memcpy(cval, val.s, val.len);
 
 	if(strstr(cval, "'") || strstr(cval, "\"") || strstr(cval, "--")
-			|| strstr(cval, "%27") || strstr(cval, "%24")
+			|| strstr(cval, "%27") || strstr(cval, "%22")
 			|| strstr(cval, "%60")) {
 		/* Illegal characters found */
 		lock_get(secf_lock);
@@ -304,7 +314,7 @@ static int w_check_dst(struct sip_msg *msg, char *val)
 	dst.s = val;
 	dst.len = strlen(val);
 
-	list = secf_data->bl.dst;
+	list = (*secf_data)->bl.dst;
 	while(list) {
 		if(secf_dst_exact_match == 1) {
 			/* Exact match */
@@ -354,7 +364,7 @@ static int w_check_ua(struct sip_msg *msg)
 	len = ua.len;
 
 	/* User-agent whitelisted */
-	list = secf_data->wl.ua;
+	list = (*secf_data)->wl.ua;
 	while(list) {
 		if(ua.len > list->s.len)
 			ua.len = list->s.len;
@@ -370,7 +380,7 @@ static int w_check_ua(struct sip_msg *msg)
 	}
 
 	/* User-agent blacklisted */
-	list = secf_data->bl.ua;
+	list = (*secf_data)->bl.ua;
 	while(list) {
 		if(ua.len > list->s.len)
 			ua.len = list->s.len;
@@ -384,6 +394,7 @@ static int w_check_ua(struct sip_msg *msg)
 		list = list->next;
 		ua.len = len;
 	}
+	
 	return 1;
 }
 
@@ -457,7 +468,7 @@ static int check_user(struct sip_msg *msg, int type)
 	dlen = domain.len;
 
 	/* User whitelisted */
-	list = secf_data->wl.user;
+	list = (*secf_data)->wl.user;
 	while(list) {
 		if(name.len > list->s.len)
 			name.len = list->s.len;
@@ -504,7 +515,7 @@ static int check_user(struct sip_msg *msg, int type)
 		user.len = ulen;
 	}
 	/* User blacklisted */
-	list = secf_data->bl.user;
+	list = (*secf_data)->bl.user;
 	while(list) {
 		if(name.len > list->s.len)
 			name.len = list->s.len;
@@ -552,7 +563,7 @@ static int check_user(struct sip_msg *msg, int type)
 	}
 
 	/* Domain whitelisted */
-	list = secf_data->wl.domain;
+	list = (*secf_data)->wl.domain;
 	while(list) {
 		if(domain.len > list->s.len)
 			domain.len = list->s.len;
@@ -577,7 +588,7 @@ static int check_user(struct sip_msg *msg, int type)
 		domain.len = dlen;
 	}
 	/* Domain blacklisted */
-	list = secf_data->bl.domain;
+	list = (*secf_data)->bl.domain;
 	while(list) {
 		if(domain.len > list->s.len)
 			domain.len = list->s.len;
@@ -629,7 +640,7 @@ static int w_check_ip(struct sip_msg *msg)
 	len = ip.len;
 
 	/* IP address whitelisted */
-	list = secf_data->wl.ip;
+	list = (*secf_data)->wl.ip;
 	while(list) {
 		if(ip.len > list->s.len)
 			ip.len = list->s.len;
@@ -644,7 +655,7 @@ static int w_check_ip(struct sip_msg *msg)
 		ip.len = len;
 	}
 	/* IP address blacklisted */
-	list = secf_data->bl.ip;
+	list = (*secf_data)->bl.ip;
 	while(list) {
 		if(ip.len > list->s.len)
 			ip.len = list->s.len;
@@ -682,7 +693,7 @@ static int w_check_country(struct sip_msg *msg, char *val)
 	len = country.len;
 
 	/* Country whitelisted */
-	list = secf_data->wl.country;
+	list = (*secf_data)->wl.country;
 	while(list) {
 		if(country.len > list->s.len)
 			country.len = list->s.len;
@@ -697,7 +708,7 @@ static int w_check_country(struct sip_msg *msg, char *val)
 		country.len = len;
 	}
 	/* Country blacklisted */
-	list = secf_data->bl.country;
+	list = (*secf_data)->bl.country;
 	while(list) {
 		if(country.len > list->s.len)
 			country.len = list->s.len;
@@ -731,18 +742,34 @@ INIT AND DESTROY FUNCTIONS
 /* Initialize data */
 int secf_init_data(void)
 {
-	secf_data = (secf_data_p)shm_malloc(sizeof(secf_data_t));
-	if(!secf_data) {
+	secf_data_1 = (secf_data_p)shm_malloc(sizeof(secf_data_t));
+	if(!secf_data_1) {
 		SHM_MEM_ERROR;
 		return -1;
 	}
-	memset(secf_data, 0, sizeof(secf_data_t));
+	memset(secf_data_1, 0, sizeof(secf_data_t));
+
+	secf_data_2 = (secf_data_p)shm_malloc(sizeof(secf_data_t));
+	if(!secf_data_2) {
+		SHM_MEM_ERROR;
+		return -1;
+	}
+	memset(secf_data_2, 0, sizeof(secf_data_t));
+
+	secf_data = shm_malloc(sizeof(secf_data_t));
+	if(secf_data == NULL) {
+		SHM_MEM_ERROR;
+		return -1;
+	}
 
 	secf_stats = shm_malloc(total_data * sizeof(int));
 	memset(secf_stats, 0, total_data * sizeof(int));
 	
 	if(secf_dst_exact_match != 0)
 		secf_dst_exact_match = 1;
+
+	if(register_timer(secf_ht_timer, NULL, secf_reload_interval) < 0)
+		return -1;
 
 	return 0;
 }
@@ -755,14 +782,30 @@ static int mod_init(void)
 	/* Init data to store database values */
 	if(secf_init_data() == -1)
 		return -1;
+	/* Reload time */
+	secf_rpc_reload_time = shm_malloc(sizeof(time_t));
+	if(secf_rpc_reload_time == NULL) {
+		SHM_MEM_ERROR;
+		return -1;
+	}
+	*secf_rpc_reload_time = 0;
+
+	if(secf_reload_delta < 0)
+		secf_reload_delta = 5;
+
 	/* Init RPC */
 	if(rpc_init() < 0)
 		return -1;
 	/* Init locks */
-	if(lock_init(&secf_data->lock) == 0) {
+	if(lock_init(&secf_data_1->lock) == 0) {
 		LM_CRIT("cannot initialize lock.\n");
 		return -1;
 	}
+	if(lock_init(&secf_data_2->lock) == 0) {
+		LM_CRIT("cannot initialize lock.\n");
+		return -1;
+	}
+	
 	secf_lock = lock_alloc();
 	if (!secf_lock) {
 		LM_CRIT("cannot allocate memory for lock.\n");
@@ -802,10 +845,15 @@ static void mod_destroy(void)
 	if(!secf_data)
 		return;
 
+	if(secf_rpc_reload_time!=NULL) {
+		shm_free(secf_rpc_reload_time);
+		secf_rpc_reload_time = 0;
+	}
 	/* Free shared data */
-	secf_free_data();
+	if (secf_data_1) secf_free_data(secf_data_1);
+	if (secf_data_2) secf_free_data(secf_data_2);
 	/* Destroy lock */
-	lock_destroy(&secf_data->lock);
+	lock_destroy(&(*secf_data)->lock);
 	shm_free(secf_data);
 	secf_data = NULL;
 
@@ -827,6 +875,7 @@ static int rpc_init(void)
 	}
 	return 0;
 }
+
 
 /* Free shared data */
 static void free_str_list(struct str_list *l)
@@ -861,19 +910,37 @@ static void free_sec_info(secf_info_p info)
 }
 
 
-void secf_free_data(void)
+void secf_ht_timer(unsigned int ticks, void *param)
 {
-	lock_get(&secf_data->lock);
+	if(secf_rpc_reload_time == NULL)
+		return;
+
+	if(*secf_rpc_reload_time != 0
+			&& *secf_rpc_reload_time > time(NULL) - secf_reload_interval)
+			return;
+
+	LM_DBG("cleaning old data list\n");
+	if (*secf_data == secf_data_1) {
+		secf_free_data(secf_data_2);
+	} else {
+		secf_free_data(secf_data_1);
+	}
+}
+
+
+void secf_free_data(secf_data_p secf_fdata)
+{
+	lock_get(&secf_fdata->lock);
 
 	LM_DBG("freeing wl\n");
-	free_sec_info(&secf_data->wl);
-	memset(&secf_data->wl_last, 0, sizeof(secf_info_t));
-	LM_DBG("so, ua[%p] should be NULL\n", secf_data->wl.ua);
+	free_sec_info(&secf_fdata->wl);
+	memset(&secf_fdata->wl_last, 0, sizeof(secf_info_t));
+	LM_DBG("so, ua[%p] should be NULL\n", secf_fdata->wl.ua);
 
 	LM_DBG("freeing bl\n");
-	free_sec_info(&secf_data->bl);
-	memset(&secf_data->bl_last, 0, sizeof(secf_info_t));
-	LM_DBG("so, ua[%p] should be NULL\n", secf_data->bl.ua);
+	free_sec_info(&secf_fdata->bl);
+	memset(&secf_fdata->bl_last, 0, sizeof(secf_info_t));
+	LM_DBG("so, ua[%p] should be NULL\n", secf_fdata->bl.ua);
 
-	lock_release(&secf_data->lock);
+	lock_release(&secf_fdata->lock);
 }

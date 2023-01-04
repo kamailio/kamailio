@@ -108,7 +108,7 @@ KamailioSIPMethodIdentifier ::= TEXTUAL-CONVENTION
              MAY return/accept a method identifier value other
              than those defined by IANA.  That system MUST
              ensure no collisions with officially assigned
-             method identifier values and MUST provide a
+             method identifier values and MUST provide an
              identifier to method name mapping via a mechanism
              like sipMethodSupportedTable."
        SYNTAX Unsigned32 (1..4294967295)
@@ -304,7 +304,7 @@ X731AvailabilityStatus ::= TEXTUAL-CONVENTION
 		A value of not installed means the resource is not present or
 		is incomplete. The operational state should be disabled.
 
-		A value of log full indicates that a a log full condition
+		A value of log full indicates that a log full condition
 		exists."
 
 	SYNTAX BITS {

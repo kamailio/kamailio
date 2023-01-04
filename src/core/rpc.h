@@ -1,4 +1,4 @@
-/* 
+/*
  * Kamailio Remote Procedure Call Interface
  *
  * Copyright (C) 2005 iptelorg GmbH
@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -27,17 +27,20 @@
 * Module: \ref core
 */
 
-#ifndef _RPC_H
-#define _RPC_H
+#ifndef _RPC_H_
+#define _RPC_H_
 
-/*
- * TODO: Add the possibility to add printf-like formatted string to fault
- */
+#include <time.h>
+#include "locking.h"
 
 enum rpc_flags {
-	RET_ARRAY = (1 << 0),
-	RET_VALUE = (1 << 1)
+	RPC_RET_ARRAY  = (1 << 0),
+	RPC_RET_VALUE  = (1 << 1),
+	RPC_EXEC_DELTA = (1 << 2)
 };
+
+/* compatibility with old rpc flag name */
+#define RET_ARRAY RPC_RET_ARRAY
 
 typedef enum rpc_capabilities {
 	RPC_DELAYED_REPLY = (1 <<0)  /* delayed reply support */
@@ -120,5 +123,15 @@ typedef struct rpc_export {
 	unsigned int flags;      /*!< Various flags, reserved for future use */
 } rpc_export_t;
 
+typedef struct rpc_xdata {
+	gen_lock_t elock;
+	time_t etime;
+} rpc_xdata_t;
 
-#endif /* _RPC_H */
+typedef struct rpc_exportx {
+	rpc_export_t r;
+	rpc_xdata_t *xdata;
+} rpc_exportx_t;
+
+
+#endif /* _RPC_H_ */

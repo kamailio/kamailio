@@ -145,7 +145,7 @@
 
 		<section id="db_query">
 			<title>
-				<function>db_query(query | query_id [,handle] )</function>
+				<function>db_query(query | query_id[, handle])</function>
 			</title>
 			<para>
 				Executes query and in case of SELECT returns result via <emphasis>handle</emphasis>, seeks the first 

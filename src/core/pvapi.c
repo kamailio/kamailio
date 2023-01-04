@@ -549,7 +549,7 @@ int pv_table_free(void)
  * convert unsigned int to pv_value_t
  */
 int pv_get_uintval(struct sip_msg *msg, pv_param_t *param,
-		pv_value_t *res, unsigned int uival)
+		pv_value_t *res, unsigned long uival)
 {
 	int l = 0;
 	char *ch = NULL;
@@ -570,7 +570,7 @@ int pv_get_uintval(struct sip_msg *msg, pv_param_t *param,
  * convert signed int to pv_value_t
  */
 int pv_get_sintval(struct sip_msg *msg, pv_param_t *param,
-		pv_value_t *res, int sival)
+		pv_value_t *res, long sival)
 {
 	int l = 0;
 	char *ch = NULL;
@@ -635,7 +635,7 @@ int pv_get_strlval(struct sip_msg *msg, pv_param_t *param,
  * convert str-int to pv_value_t (type is str)
  */
 int pv_get_strintval(struct sip_msg *msg, pv_param_t *param,
-		pv_value_t *res, str *sval, int ival)
+		pv_value_t *res, str *sval, long ival)
 {
 	if(res==NULL)
 		return -1;
@@ -650,7 +650,7 @@ int pv_get_strintval(struct sip_msg *msg, pv_param_t *param,
  * convert int-str to pv_value_t (type is int)
  */
 int pv_get_intstrval(struct sip_msg *msg, pv_param_t *param,
-		pv_value_t *res, int ival, str *sval)
+		pv_value_t *res, long ival, str *sval)
 {
 	if(res==NULL)
 		return -1;

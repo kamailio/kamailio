@@ -127,7 +127,7 @@ default_validation_class='UTF8Type' and key_validation_class='UTF8Type';
    script by means of the AVPOPS module. Keep in mind that when passing
    back the results from the database only the first row is used to set
    the AVP variables. (default AVPOPS behaviour) The script lines below
-   can be used as an example for issuing the query towards an cassandra
+   can be used as an example for issuing the query towards a cassandra
    instance.(This example will work once the column family `location` is
    configured correctly in the cassandra keyspace)
    ...
@@ -284,7 +284,7 @@ tance(string) reg_id(int)
    ...
 
    The alternative would have been to define an index on the expire column
-   and run a external job to periodically delete the expired records.
+   and run an external job to periodically delete the expired records.
    However, obviously, this would be more costly.
 
 7. Limitations

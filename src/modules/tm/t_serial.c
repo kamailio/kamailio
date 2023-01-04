@@ -136,12 +136,12 @@ void add_contacts_avp(str *uri, str *dst_uri, str *path, str *sock_str,
 		xavp_add_value(&sock_name, &val, &record);
 	}
 
-	val.type = SR_XTYPE_INT;
-	val.v.i = flags;
+	val.type = SR_XTYPE_LONG;
+	val.v.l = flags;
 	xavp_add_value(&flags_name, &val, &record);
 
-	val.type = SR_XTYPE_INT;
-	val.v.i = q_flag;
+	val.type = SR_XTYPE_LONG;
+	val.v.l = q_flag;
 	xavp_add_value(&q_flag_name, &val, &record);
 
 	if (instance->len > 0) {
@@ -588,8 +588,8 @@ void add_contact_flows_avp(str *uri, str *dst_uri, str *path, str *sock_str,
 
 	xavp_add(ulattrs_xavp, &record);
 
-	val.type = SR_XTYPE_INT;
-	val.v.i = flags;
+	val.type = SR_XTYPE_LONG;
+	val.v.l = flags;
 	xavp_add_value(&flags_name, &val, &record);
 
 	val.type = SR_XTYPE_XAVP;
@@ -678,10 +678,10 @@ int ki_t_next_contacts(struct sip_msg* msg)
 	}
 
 	vavp = xavp_get(&flags_name, xavp->val.v.xavp);
-	flags = vavp->val.v.i;
+	flags = (unsigned int)vavp->val.v.l;
 
 	vavp = xavp_get(&q_flag_name, xavp->val.v.xavp);
-	q_flag = vavp->val.v.i;
+	q_flag = (unsigned int)vavp->val.v.l;
 
 	vavp = xavp_get(&instance_name, xavp->val.v.xavp);
 	il = (struct instance_list *)0;
@@ -776,7 +776,7 @@ int ki_t_next_contacts(struct sip_msg* msg)
 
 		vavp = xavp_get(&q_flag_name, xavp->val.v.xavp);
 		if(vavp) {
-			q_flag = vavp->val.v.i;
+			q_flag = (unsigned int)vavp->val.v.l;
 		} else {
 			q_flag = 0;
 		}
@@ -827,7 +827,7 @@ int ki_t_next_contacts(struct sip_msg* msg)
 
 		vavp = xavp_get(&flags_name, xavp->val.v.xavp);
 		if (vavp != NULL) {
-			flags = vavp->val.v.i;
+			flags = (unsigned int)vavp->val.v.l;
 		} else {
 			flags = 0;
 		}
@@ -1031,7 +1031,7 @@ int ki_t_next_contact_flow(struct sip_msg* msg)
 
 		vavp = xavp_get(&flags_name, xavp->val.v.xavp);
 		if (vavp != NULL) {
-			flags = vavp->val.v.i;
+			flags = (unsigned int)vavp->val.v.l;
 		} else {
 			flags = 0;
 		}

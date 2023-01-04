@@ -171,7 +171,7 @@ int   fifo_reply_retries = DEFAULT_REPLY_RETRIES;
 int   fifo_reply_wait    = DEFAULT_REPLY_WAIT;
 
 
-static rpc_t     func_param;        /* Pointers to implementation of RPC funtions */
+static rpc_t     func_param;        /* Pointers to implementation of RPC functions */
 
 static int  rpc_send         (rpc_ctx_t* ctx);                                 /* Send the reply to the client */
 static void rpc_fault        (rpc_ctx_t* ctx,       int code, char* fmt, ...); /* Signal a failure to the client */

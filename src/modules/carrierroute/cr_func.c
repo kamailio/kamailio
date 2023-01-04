@@ -41,6 +41,7 @@
 #include "../../core/qvalue.h"
 #include "../../core/dset.h"
 #include "../../core/rand/kam_rand.h"
+#include "../../core/lvalue.h"
 #include "cr_map.h"
 #include "cr_rule.h"
 #include "cr_domain.h"
@@ -95,7 +96,7 @@ static inline int cr_gp2id(struct sip_msg *_msg, gparam_t *gp, struct name_map_t
 						gp->v.pve->spec->pvp.pvn.u.isname.name.s.s);
 				else if(gp->v.pve->spec->pvp.pvn.u.isname.type & AVP_NAME_RE)
 					LM_ERR("cannot find AVP regex\n");
-				else 	LM_ERR("cannot find AVP '%d'\n", gp->v.pve->spec->pvp.pvn.u.isname.name.n);
+				else 	LM_ERR("cannot find AVP '%ld'\n", gp->v.pve->spec->pvp.pvn.u.isname.name.n);
 				return -1;
 			}
 			if ((avp->flags&AVP_VAL_STR)==0) {
@@ -108,7 +109,7 @@ static inline int cr_gp2id(struct sip_msg *_msg, gparam_t *gp, struct name_map_t
 							gp->v.pve->spec->pvp.pvn.u.isname.name.s.s);
 					else if(gp->v.pve->spec->pvp.pvn.u.isname.type & AVP_NAME_RE)
 						LM_ERR("cannot map carrier with id %.*s from  AVP regex\n", avp_val.s.len, avp_val.s.s);
-					else 	LM_ERR("cannot map carrier with id %.*s from  AVP '%d'\n", avp_val.s.len, avp_val.s.s, gp->v.pve->spec->pvp.pvn.u.isname.name.n);
+					else 	LM_ERR("cannot map carrier with id %.*s from  AVP '%ld'\n", avp_val.s.len, avp_val.s.s, gp->v.pve->spec->pvp.pvn.u.isname.name.n);
 					return -1;
 				}
 				return id;
@@ -722,6 +723,48 @@ unlock_and_out:
 
 
 /**
+ *
+ */
+int ki_cr_load_user_carrier_helper(struct sip_msg *_msg,
+		str *user, str *domain, pv_spec_t *dvar) {
+	pv_value_t val = {0};
+
+	/* get carrier id */
+	if ((val.ri = load_user_carrier(user, domain)) < 0) {
+		LM_ERR("error in load user carrier");
+		return -1;
+	} else {
+		/* set var */
+		val.flags = PV_VAL_INT|PV_TYPE_INT;
+		if(dvar->setf(_msg, &dvar->pvp, (int)EQ_T, &val)<0) {
+			LM_ERR("failed setting dst var\n");
+			return -1;
+		}
+	}
+	return 1;
+}
+
+/**
+ *
+ */
+int ki_cr_load_user_carrier(struct sip_msg *_msg,
+		str *user, str *domain, str *dstvar) {
+	pv_spec_t *dst;
+
+	dst = pv_cache_get(dstvar);
+	if(dst==NULL) {
+		LM_ERR("failed to get pv spec for: %.*s\n", dstvar->len, dstvar->s);
+		return -1;
+	}
+	if(dst->setf==NULL) {
+		LM_ERR("target pv is not writable: %.*s\n", dstvar->len, dstvar->s);
+		return -1;
+	}
+
+	return ki_cr_load_user_carrier_helper(_msg, user, domain, dst);
+}
+
+/**
  * Loads user carrier from subscriber table and stores it in an AVP.
  *
  * @param _msg the current SIP message
@@ -731,34 +774,23 @@ unlock_and_out:
  *
  * @return 1 on success, -1 on failure
  */
-int cr_load_user_carrier(struct sip_msg * _msg, gparam_t *_user, gparam_t *_domain, gparam_t *_dstavp) {
+int cr_load_user_carrier(struct sip_msg * _msg,
+		char *_user, char *_domain, char *_dstvar) {
 	str user, domain;
-	int_str avp_val;
-	
-	if (fixup_get_svalue(_msg, _user, &user)<0) {
+
+	if (fixup_get_svalue(_msg, (gparam_t*)_user, &user)<0) {
 		LM_ERR("cannot print the user\n");
 		return -1;
 	}
 
-	if (fixup_get_svalue(_msg, _domain, &domain)<0) {
+	if (fixup_get_svalue(_msg, (gparam_t*)_domain, &domain)<0) {
 		LM_ERR("cannot print the domain\n");
 		return -1;
 	}
-	/* get carrier id */
-	if ((avp_val.n = load_user_carrier(&user, &domain)) < 0) {
-		LM_ERR("error in load user carrier");
-		return -1;
-	} else {
-		/* set avp */
-		if (add_avp(_dstavp->v.pve->spec->pvp.pvn.u.isname.type,
-					_dstavp->v.pve->spec->pvp.pvn.u.isname.name, avp_val)<0) {
-			LM_ERR("add AVP failed\n");
-			return -1;
-		}
-	}
-	return 1;
-}
 
+	return ki_cr_load_user_carrier_helper(_msg, &user, &domain,
+			(pv_spec_t*)_dstvar);
+}
 
 /**
  * rewrites the request URI of msg after determining the

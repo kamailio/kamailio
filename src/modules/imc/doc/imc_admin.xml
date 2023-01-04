@@ -91,6 +91,27 @@ modparam("imc", "db_url", "&exampledb;")
 </programlisting>
 		</example>
 	</section>
+	<section id="imc.p.db_mode">
+		<title><varname>db_mode</varname>(integer)</title>
+		<para>
+		The module supports 2 modes of operation, high speed memory
+		based storage (mode 0), and database only (mode 2) where all 
+		data is stored in a database, allowing scalability at the
+		expense of speed. Mode 1 is reserved.
+		</para>
+		<para>
+		<emphasis>	Default value is <quote>0</quote> 	
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>db_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("imc", "db_mode", 2)
+...
+</programlisting>
+		</example>
+	</section>
 	<section id="imc.p.rooms_table">
 		<title><varname>rooms_table</varname> (str)</title>
 		<para>
@@ -218,7 +239,7 @@ modparam("imc", "extra_hdrs", "P-Flags: 3\r\n")
 		<para>
 		If set to 1 and user requests to join a non-existing
 		room, the room will be automatically created. If set
-		to 0, joinin a non-existing room returns an error.
+		to 0, joining a non-existing room returns an error.
 		</para>
 		<para>
 		<emphasis>
@@ -453,6 +474,20 @@ if(is_method("MESSAGE)
   -eg: #add sip:john@kamailio.org sip:chat-000@kamailio.org
     or  #add john@kamailio.org sent to sip:chat-000@kamailio.org
   -error case: return codes: -50 -- -59
+
+11.modify
+  -modify user role in a room
+  -takes 3 parameters:
+     1)the complete address of the user
+	 2)the role of the user
+     3)the address of the room -if not present it will be considered
+	   to be the address in the To header of the message
+  -only certain users have the right to invite other user: the owner
+    and the administrators
+  -roles: owner, admin, member
+  -eg: #invite sip:john@kamailio.org admin sip:chat-000@kamailio.org
+    or  #invite john@kamailio.org admin sent to sip:chat-000@kamailio.org
+  -error case: return codes: -120 -- -129
 ...
 </programlisting>
 		</example>

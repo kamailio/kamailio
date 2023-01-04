@@ -412,7 +412,7 @@ modparam("presence", "min_expires", 1800)
 <section id="presence.p.min_expires_action">
     <title><varname>min_expires_action</varname> (int)</title>
     <para>
-        The action to take when UA sends a expires value less then min_expires.
+        The action to take when UA sends an expires value less than min_expires.
     </para>
     <para>
         <itemizedlist>
@@ -604,7 +604,7 @@ modparam("presence", "pres_htable_size", 11)
 		<para>
 		This parameter enables or disables the sending of an initial empty NOTIFY after a SUBSCRIBE/reSUBSCRIBE.
 		This caused problems for MWI application, because some CPEs (like Samsung) fail to understand an empty
-		NOTIFY to an message-summary event. This parameter is enabled by default, thus adhering to the standard.
+		NOTIFY to a message-summary event. This parameter is enabled by default, thus adhering to the standard.
 		</para>
 		<para>
 		<emphasis>Default value is <quote>1 </quote>.
@@ -688,7 +688,7 @@ modparam("presence", "fetch_rows", 1000)
 	<section id="presence.p.db_table_lock_type">
 	    <title><varname>db_table_lock_type</varname> (integer)</title>
 	    <para>
-		Enable (=1) or disable (=0) the Locks for table during an
+		Enable (=1) or disable (=0) the Locks for table during a
 		transaction. Locking only the "current" table causes problems
 		with a MySQL-Databases in "DB-Only" mode.
 	    </para>
@@ -1381,7 +1381,7 @@ pres_update_watchers("sip:test@kamailio.org", "presence");
 		<itemizedlist>
 			<listitem>
 				<para>mode - (optional) it can be 'full' to print all the
-				fields of presentity record. If missine, only a selected
+				fields of presentity record. If missing, only a selected
 				set of fields are printed in the response.</para>
 			</listitem>
 		</itemizedlist>

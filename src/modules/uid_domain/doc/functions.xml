@@ -52,7 +52,7 @@ if (is_local("@ruri.host")) {
 			string) and it can have one or more associated domain names. Given
 			a domain name in the second parameter, this function finds the
 			associated virtual domain identifier (known as DID) and stores it
-			in an attribute for later user. In addition to that the function
+			in an attribute for later use. In addition to that the function
 			also loads all domain-level attributes for the virtual domain and
 			makes them available to the configuration script.
 		</para>
@@ -81,7 +81,7 @@ if (is_local("@ruri.host")) {
 		</para>
 		<para>
 			The following example shows a typical use of the function. In a
-			multi domain setup, one has to typically figure out where the both
+			multi domain setup, one has usually to figure out whether both
 			the calling and the called domains are local (i.e. configured on
 			the server as the domains the server is responsible for). This is
 			typically done by calling function

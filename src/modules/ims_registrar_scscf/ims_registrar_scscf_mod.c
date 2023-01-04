@@ -98,7 +98,7 @@ char *scscf_user_data_xsd = 0; /* Path to "CxDataType_Rel6.xsd" or "CxDataType_R
 int scscf_support_wildcardPSI = 0;
 int store_data_on_dereg = 0; /**< should we store SAR data on de-registration  */
 unsigned int send_vs_callid_avp = 1;	/* flag to enable/disable proprietary use of a callid AVP. TODO: add call-id as per TS129.229 */
-int skip_multiple_bindings_on_reg_resp = 0; /* For RE-REGISTRATION in 200OK add only the current contact and skip all other bindings */
+int skip_multiple_bindings_on_reg_resp = 0; /* For RE-REGISTRATION in 200 OK add only the current contact and skip all other bindings */
 
 int ue_unsubscribe_on_dereg = 0;  /*many UEs do not unsubscribe on de reg - therefore we should remove their subscription and not send a notify
 				   Some UEs do unsubscribe then everything is fine*/

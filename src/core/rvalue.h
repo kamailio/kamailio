@@ -35,7 +35,7 @@
 #include "action.h"
 
 enum rval_type{
-	RV_NONE, RV_INT, RV_STR, /* basic types */
+	RV_NONE, RV_LONG, RV_STR, /* basic types */
 	RV_BEXPR, RV_ACTION_ST,  /* special values */
 	RV_SEL, RV_AVP, RV_PVAR
 };
@@ -82,7 +82,7 @@ enum rval_expr_op{
 	/* avp, pvars a.s.o */
 	RVE_DEFINED_OP, /**< one member, returns is_defined(val) (bool) */
 	RVE_NOTDEFINED_OP, /**< one member, returns is_not_defined(val) (bool) */
-	RVE_INT_OP,   /**< one member, returns (int)val  (int) */
+	RVE_LONG_OP,   /**< one member, returns (int)val  (int) */
 	RVE_STR_OP    /**< one member, returns (str)val  (str) */
 };
 
@@ -146,7 +146,7 @@ enum rval_cache_type{
 
 /** value cache for a rvalue struct.
  * Used to optimize functions that would need to
- * get the value repeatedly (e.g. rval_get_btype() and then rval_get_int())
+ * get the value repeatedly (e.g. rval_get_btype() and then rval_get_long())
  */
 struct rval_cache{
 	enum rval_cache_type cache_type;
@@ -212,8 +212,8 @@ struct rvalue* rval_convert(struct run_act_ctx* h, struct sip_msg* msg,
 							enum rval_type type, struct rvalue* v,
 							struct rval_cache* c);
 
-/** get the integer value of an rvalue. */
-int rval_get_int(struct run_act_ctx* h, struct sip_msg* msg, int* i,
+/** get the long int value of an rvalue. */
+long rval_get_long(struct run_act_ctx* h, struct sip_msg* msg, long* i,
 				struct rvalue* rv, struct rval_cache* cache);
 /** get the string value of an rv. */
 int rval_get_str(struct run_act_ctx* h, struct sip_msg* msg,
@@ -225,9 +225,9 @@ int rval_get_tmp_str(struct run_act_ctx* h, struct sip_msg* msg,
 								struct rval_cache* cache,
 								struct rval_cache* tmp_cache);
 
-/** evals an integer expr  to an int. */
-int rval_expr_eval_int( struct run_act_ctx* h, struct sip_msg* msg,
-						int* res, struct rval_expr* rve);
+/** evals a long expr to a long. */
+int rval_expr_eval_long(struct run_act_ctx* h, struct sip_msg* msg,
+						long* res, struct rval_expr* rve);
 
 /**
  * @brief Evals a rval expression
@@ -259,8 +259,8 @@ struct rvalue* rval_expr_eval(struct run_act_ctx* h, struct sip_msg* msg,
  * when done.
  * @return 0 on success, -1 on error, sets *res_rv or *res_i.
  */
-int rval_expr_eval_rvint( struct run_act_ctx* h, struct sip_msg* msg,
-						struct rvalue** rv_res, int* i_res,
+int rval_expr_eval_rvlong( struct run_act_ctx* h, struct sip_msg* msg,
+						struct rvalue** rv_res, long* i_res,
 						struct rval_expr* rve, struct rval_cache* cache);
 
 
@@ -273,7 +273,7 @@ int rve_has_side_effects(struct rval_expr* rve);
 
 /**
  * @brief Returns 1 if expression is valid (type-wise)
- * @param type filled with the type of the expression (RV_INT, RV_STR or
+ * @param type filled with the type of the expression (RV_LONG, RV_STR or
  *                RV_NONE if it's dynamic)
  * @param rve  checked expression
  * @param bad_rve set on failure to the subexpression for which the
@@ -282,7 +282,7 @@ int rve_has_side_effects(struct rval_expr* rve);
  * @param exp_t set on failure to the expected type for the bad
  * subexpression
  * @return 0 or 1 and sets *type to the resulting type
- * (RV_INT, RV_STR or RV_NONE if it can be found only at runtime)
+ * (RV_LONG, RV_STR or RV_NONE if it can be found only at runtime)
  */
 int rve_check_type(enum rval_type* type, struct rval_expr* rve,
 					struct rval_expr** bad_rve, enum rval_type* bad_type,
@@ -296,7 +296,7 @@ struct rval_expr* mk_rval_expr_v(enum rval_type rv_type, void* val,
 									struct cfg_pos* pos);
 
 /**
- * @brief Create a unary op. rval_expr
+ * @brief Create an unary op. rval_expr
  * ret= op rve1
  * @param op   - rval expr. unary operator
  * @param rve1 - rval expr. on which the operator will act.

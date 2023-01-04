@@ -22,7 +22,7 @@
 		messages.
 	</para>
 	<para>
-		For each message, the modules stores <quote>Request-URI</quote>
+		For each message, the module stores <quote>Request-URI</quote>
 		(<quote>R-URI</quote>) only if it is a complete address of record
 		(<quote>username@hostname</quote>), &uri; from <quote>To</quote>
 		header, &uri; from <quote>From</quote> header, incoming time,
@@ -561,7 +561,7 @@ modparam("msilo", "use_contact", 0)
 		<title><varname>snd_time_avp</varname> (str)</title>
 		<para>
 		The name of an AVP which may contain the time when to sent
-		the received message as reminder.The AVP is used ony by m_store().
+		the received message as reminder. The AVP is used ony by m_store().
 		</para>
 		<para>
 		If the parameter is not set, the module does not look for this AVP. If

@@ -391,7 +391,7 @@ int replace_uri( struct sip_msg *msg, str *display, str *uri,
 
 	if (dlg) {
 		dlgvar_names = (uac_flag==FL_USE_UAC_FROM)?from_dlgvar:to_dlgvar;
-		if(dlg_api.get_dlg_var(dlg, &dlgvar_names[0])) {
+		if(dlg_api.get_dlg_varstatus(dlg, &dlgvar_names[0])) {
 
 			LM_INFO("Already called uac_replace for this dialog\n");
 			/* delete the from_new dlg var */
@@ -873,8 +873,8 @@ static void replace_callback(struct dlg_cell *dlg, int type,
 	struct hdr_field *hdr;
 	struct to_body *body;
 	str old_uri;
-	str* new_uri;
-	str* new_display;
+	str new_uri = {0};
+	str new_display = {0};
 	str buf = STR_NULL;
 	char *p;
 	unsigned int uac_flag;
@@ -927,20 +927,22 @@ static void replace_callback(struct dlg_cell *dlg, int type,
 				" with the original uri\n");
 	}
 
-	if ((new_uri = dlg_api.get_dlg_var(dlg, &dlgvar_names[dlgvar_index])) == 0) {
+	dlg_api.get_dlg_varval(dlg, &dlgvar_names[dlgvar_index], &new_uri);
+	if (new_uri.s == NULL) {
 		LM_DBG("<%.*s> param not found\n", dlgvar_names[dlgvar_index].len,
 				dlgvar_names[dlgvar_index].s);
 		return;
 	}
-	if ((new_display = dlg_api.get_dlg_var(dlg, &dlgvar_names[dlgvar_dpindex])) == 0) {
+	dlg_api.get_dlg_varval(dlg, &dlgvar_names[dlgvar_dpindex], &new_display);
+	if (new_display.s == NULL) {
 		LM_DBG("<%.*s> param not found\n", dlgvar_names[dlgvar_dpindex].len,
 				dlgvar_names[dlgvar_dpindex].s);
 		return;
 	}
 
 	LM_DBG("Replace [%.*s %.*s] with [%.*s %.*s]\n", body->display.len, body->display.s,
-			old_uri.len, old_uri.s, new_display->len, new_display->s,
-			new_uri->len, new_uri->s);
+			old_uri.len, old_uri.s, new_display.len, new_display.s,
+			new_uri.len, new_uri.s);
 
 	/* deal with display name */
 	l = 0;
@@ -955,17 +957,17 @@ static void replace_callback(struct dlg_cell *dlg, int type,
 			return;
 		}
 	}
-	if (new_display->s && new_display->len > 0) {
+	if (new_display.s && new_display.len > 0) {
 		LM_DBG("inserting display [%.*s]\n",
-				new_display->len, new_display->s);
+				new_display.len, new_display.s);
 		/* add the new display exactly over the deleted one */
-		buf.s = pkg_malloc(new_display->len + 2);
+		buf.s = pkg_malloc(new_display.len + 2);
 		if (buf.s==0) {
 			PKG_MEM_ERROR;
 			return;
 		}
-		memcpy( buf.s, new_display->s, new_display->len);
-		buf.len = new_display->len;
+		memcpy(buf.s, new_display.s, new_display.len);
+		buf.len = new_display.len;
 		if (l==0 && (l=get_display_anchor(msg, hdr, body, &buf)) == 0) {
 			LM_ERR("failed to insert anchor\n");
 			pkg_free(buf.s);
@@ -979,12 +981,12 @@ static void replace_callback(struct dlg_cell *dlg, int type,
 	}
 
 	/* uri update - duplicate the decoded value */
-	p = pkg_malloc( new_uri->len);
+	p = pkg_malloc(new_uri.len);
 	if (!p) {
 		PKG_MEM_ERROR;
 		return;
 	}
-	memcpy(p, new_uri->s, new_uri->len);
+	memcpy(p, new_uri.s, new_uri.len);
 
 	/* build del/add lumps */
 	l = del_lump(msg, old_uri.s-msg->buf, old_uri.len, 0);
@@ -994,7 +996,7 @@ static void replace_callback(struct dlg_cell *dlg, int type,
 		return;
 	}
 
-	if (insert_new_lump_after( l, p, new_uri->len, 0)==0) {
+	if (insert_new_lump_after(l, p, new_uri.len, 0)==0) {
 		LM_ERR("insert new lump failed\n");
 		pkg_free(p);
 		return;
@@ -1052,7 +1054,7 @@ static void uac_on_load_callback(struct dlg_cell* dialog, int type, struct dlg_c
 	 * callback for both FROM and TO replace cases. This might be a bit
 	 * inefficient in cases where only one of the functions is used. But as
 	 * this applies only e.g. to a proxy restart with runnning dialogs, it
-	 * does not matter. The replace_callback function will just not find a
+	 * does not matter. The replace_callback function will just not find
 	 * an entry in the dialog variables table and log an error.
 	 */
 	if(uac_load_callback_helper(dialog, FL_USE_UAC_FROM) != 0) {

@@ -417,8 +417,8 @@ int reload_tables(void)
 		value.len = strlen(value.s);
 
 		if(type == 0) {
-			if(str2sint(&value, &(val.n)) == -1) {
-				LM_ERR("value at row <%u> is invalid int\n", i);
+			if(str2slong(&value, &val.n) == -1) {
+				LM_ERR("value at row <%u> is invalid long int\n", i);
 				goto err;
 			}
 		} else {
@@ -426,7 +426,7 @@ int reload_tables(void)
 		}
 
 		if(type == 0)
-			LM_DBG("inserting <did/name/type/value> = <%s/%s/%d/%d> into "
+			LM_DBG("inserting <did/name/type/value> = <%s/%s/%d/%ld> into "
 				   "attribute list\n",
 					did.s, name.s, type, val.n);
 		else

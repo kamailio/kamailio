@@ -96,7 +96,7 @@ modparam("keepalive", "destination", "sip.provider.com")
 			<section>
 				<title><varname>delete_counter</varname>(int)</title>
 				<para>
-					Unsuccesful attemps increase delete_counter. After passing it, keepalive module doesn't try to send options requests. Ignored if it's set to 0.
+					Unsuccessful attemps increase delete_counter. After passing it, keepalive module doesn't try to send options requests. Ignored if it's set to 0.
 				</para>
 				<para>
 				<emphasis>

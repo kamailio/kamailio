@@ -1423,8 +1423,8 @@ static int ki_xav_seti(sip_msg_t *msg, str *rname, int ival, int _case)
 	sr_xval_t xval;
 
 	memset(&xval, 0, sizeof(sr_xval_t));
-	xval.type = SR_XTYPE_INT;
-	xval.v.i = ival;
+	xval.type = SR_XTYPE_LONG;
+	xval.v.l = ival;
 
 	if(_case) {
 		xavp = xavi_add_value(rname, &xval, NULL);
@@ -1771,9 +1771,9 @@ static sr_kemi_xval_t* ki_xavp_get_xval(sr_xavp_t *xavp, int rmode)
 			sr_kemi_xval_null(&_sr_kemi_pv_xval, rmode);
 			return &_sr_kemi_pv_xval;
 		break;
-		case SR_XTYPE_INT:
+		case SR_XTYPE_LONG:
 			_sr_kemi_pv_xval.vtype = SR_KEMIP_INT;
-			_sr_kemi_pv_xval.v.n = xavp->val.v.i;
+			_sr_kemi_pv_xval.v.n = xavp->val.v.l;
 			return &_sr_kemi_pv_xval;
 		break;
 		case SR_XTYPE_STR:
@@ -1783,12 +1783,6 @@ static sr_kemi_xval_t* ki_xavp_get_xval(sr_xavp_t *xavp, int rmode)
 		break;
 		case SR_XTYPE_TIME:
 			if(snprintf(_pv_ki_xavp_buf, 128, "%lu", (long unsigned)xavp->val.v.t)<0) {
-				sr_kemi_xval_null(&_sr_kemi_pv_xval, rmode);
-				return &_sr_kemi_pv_xval;
-			}
-		break;
-		case SR_XTYPE_LONG:
-			if(snprintf(_pv_ki_xavp_buf, 128, "%ld", (long unsigned)xavp->val.v.l)<0) {
 				sr_kemi_xval_null(&_sr_kemi_pv_xval, rmode);
 				return &_sr_kemi_pv_xval;
 			}
@@ -1942,9 +1936,9 @@ sr_kemi_dict_item_t* ki_xav_dict_name(sr_xavp_t *xavp, str *name, int _case)
 			case SR_XTYPE_NULL:
 				val->vtype = SR_KEMIP_NULL;
 			break;
-			case SR_XTYPE_INT:
+			case SR_XTYPE_LONG:
 				val->vtype = SR_KEMIP_INT;
-				val->v.n = avp->val.v.i;
+				val->v.n = avp->val.v.l;
 			break;
 			case SR_XTYPE_STR:
 				val->vtype = SR_KEMIP_STR;
@@ -1952,7 +1946,6 @@ sr_kemi_dict_item_t* ki_xav_dict_name(sr_xavp_t *xavp, str *name, int _case)
 				val->v.s.len = avp->val.v.s.len;
 			break;
 			case SR_XTYPE_TIME:
-			case SR_XTYPE_LONG:
 			case SR_XTYPE_LLONG:
 			case SR_XTYPE_DATA:
 				val->vtype = SR_KEMIP_NULL;

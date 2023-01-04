@@ -581,15 +581,15 @@ int db_val2pv_spec(struct sip_msg* msg, db_val_t *dbval, pv_spec_t *pvs)
 			break;
 			case DB1_INT:
 				pv.flags = PV_VAL_INT | PV_TYPE_INT;
-				pv.ri = (int)dbval->val.int_val;
+				pv.ri = (long)dbval->val.int_val;
 			break;
 			case DB1_DATETIME:
 				pv.flags = PV_VAL_INT | PV_TYPE_INT;
-				pv.ri = (int)dbval->val.time_val;
+				pv.ri = (long)dbval->val.time_val;
 			break;
 			case DB1_BITMAP:
 				pv.flags = PV_VAL_INT | PV_TYPE_INT;
-				pv.ri = (int)dbval->val.bitmap_val;
+				pv.ri = (long)dbval->val.bitmap_val;
 			break;
 			case DB1_BIGINT:
 				/* BIGINT is stored as string */

@@ -2286,7 +2286,7 @@ int main(int argc, char** argv)
 					} else {
 						tmp_len = strlen(optarg);
 					}
-					pp_define_set_type(0);
+					pp_define_set_type(KSR_PPDEF_DEFINE);
 					if(pp_define(tmp_len, optarg)<0) {
 						fprintf(stderr, "error at define param: -A %s\n",
 								optarg);
@@ -2430,7 +2430,6 @@ int main(int argc, char** argv)
 	if (pv_init_api()<0) goto error;
 	if (pv_register_core_vars()!=0) goto error;
 	if (init_rpcs()<0) goto error;
-	if (register_core_rpcs()!=0) goto error;
 
 	/* Fix the value of cfg_file variable.*/
 	if (fix_cfg_file() < 0) goto error;
@@ -2446,7 +2445,7 @@ int main(int argc, char** argv)
 						fprintf(stderr, "bad load module parameter\n");
 						goto error;
 					}
-					if (load_module(optarg)!=0) {
+					if (ksr_load_module(optarg, NULL)!=0) {
 						LM_ERR("failed to load the module: %s\n", optarg);
 						goto error;
 					}
@@ -2761,6 +2760,8 @@ try_again:
 	/* reinit if pv buffer size has been set in config */
 	if (pv_reinit_buffer()<0)
 		goto error;
+
+	if (register_core_rpcs()!=0) goto error;
 
 	if (ksr_route_locks_set_init()<0)
 		goto error;

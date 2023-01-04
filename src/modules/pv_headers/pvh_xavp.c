@@ -47,7 +47,7 @@ static sr_xavp_t *pvh_xavi_get_child_with_ival(
 		return NULL;
 
 	vavi = xavi_get(cname, ravi->val.v.xavp);
-	if(vavi == NULL || vavi->val.type != SR_XTYPE_INT)
+	if(vavi == NULL || vavi->val.type != SR_XTYPE_LONG)
 		return NULL;
 
 	return vavi;
@@ -65,14 +65,14 @@ int pvh_reply_append(sr_xavp_t **start)
 	xavi = pvh_xavi_get_child_with_ival(
 			&xavi_helper_xname, &reply_counter, start ? *start : NULL);
 	if(xavi) {
-		xavi->val.v.i++;
-		LM_DBG("reply message: %d\n", xavi->val.v.i);
-		return xavi->val.v.i;
+		xavi->val.v.l++;
+		LM_DBG("reply message: %ld\n", xavi->val.v.l);
+		return (int)xavi->val.v.l;
 	}
 
 	memset(&xval, 0, sizeof(sr_xval_t));
-	xval.type = SR_XTYPE_INT;
-	xval.v.i = 0;
+	xval.type = SR_XTYPE_LONG;
+	xval.v.l = 0;
 
 	xavi = xavi_get(&xavi_helper_xname, start ? *start : NULL);
 	if(xavi == NULL) {
@@ -92,8 +92,8 @@ int pvh_reply_append(sr_xavp_t **start)
 		}
 		LM_DBG("added value\n");
 	}
-	LM_DBG("reply message: %d\n", xval.v.i);
-	return xval.v.i;
+	LM_DBG("reply message: %ld\n", xval.v.l);
+	return (int)xval.v.l;
 }
 
 static sr_xavp_t *pvh_xavi_new_value(str *name, sr_xval_t *val)

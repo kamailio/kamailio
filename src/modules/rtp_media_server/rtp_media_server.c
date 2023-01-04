@@ -24,19 +24,21 @@
 
 MODULE_VERSION
 
-rms_dialog_info_t *rms_dialog_list;
-static int mod_init(void);
-static void mod_destroy(void);
-static int child_init(int);
+rms_dialog_info_t *rms_dialog_list = NULL;
+
 str playback_fn = {0, 0};
 str log_fn = {0, 0};
 static char *rms_bridge_default_route = "rms:bridged";
 static char *rms_answer_default_route = "rms:start";
 
-int in_rms_process;
-rms_t *rms;
+int in_rms_process = 0;
+rms_t *rms = NULL;
 
 struct tm_binds tmb;
+
+static int mod_init(void);
+static void mod_destroy(void);
+static int child_init(int);
 
 static rms_dialog_info_t *rms_dialog_create_leg(rms_dialog_info_t *di, struct sip_msg *msg);
 static int fixup_rms_action_play(void **param, int param_no);

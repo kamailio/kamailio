@@ -1923,9 +1923,9 @@ int uldb_insert_attrs(str *_dname, str *_user, str *_domain,
 		if(xavp->val.type==SR_XTYPE_STR) {
 			vals[4].val.int_val = 0;
 			avalue = xavp->val.v.s;
-		} else if(xavp->val.type==SR_XTYPE_INT) {
+		} else if(xavp->val.type==SR_XTYPE_LONG) {
 			vals[4].val.int_val = 1;
-			avalue.s = sint2str((long)xavp->val.v.i, &avalue.len);
+			avalue.s = sint2str(xavp->val.v.l, &avalue.len);
 		} else {
 			continue;
 		}

@@ -610,7 +610,7 @@ xlog("the attributes associated with '+49$rU' are '$var(attrs)'\n");
 			<para><emphasis>script var</emphasis> </para>
 			<para>
 			- At input the function will get the input string from an existing
-			script variable. At output the function will set an script variable
+			script variable. At output the function will set a script variable
 			with the value of the output string.
 			</para>
 			</listitem>
@@ -734,7 +734,7 @@ xlog("translated to var $var(y) \n");
     	<section id="dialplan.installation">
 	    <title>Installation</title>
 	    <para>
-		The modules requires one table in &kamailio; database: dialplan.
+		This module requires one table in &kamailio; database: dialplan.
 		The SQL syntax to create them can be found in dialplan-create.sql
        		 script in the database directories in the kamailio/scripts folder.
         	You can also find the complete database documentation on the

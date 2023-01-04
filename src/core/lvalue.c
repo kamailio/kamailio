@@ -92,7 +92,7 @@ inline static int lval_avp_assign(struct run_act_ctx* h, struct sip_msg* msg,
 			AVP_ASSIGN_NOVAL();
 			ret=-1;
 			break;
-		case RV_INT:
+		case RV_LONG:
 			value.n=rv->v.l;
 			flags=avp->type & ~AVP_VAL_STR;
 			ret=!(!value.n);
@@ -268,7 +268,7 @@ inline static int lval_pvar_assign(struct run_act_ctx* h, struct sip_msg* msg,
 			PVAR_ASSIGN_NOVAL();
 			ret=-1;
 			break;
-		case RV_INT:
+		case RV_LONG:
 			pval.flags=PV_TYPE_INT|PV_VAL_INT;
 			pval.ri=rv->v.l;
 			ret=!(!pval.ri);

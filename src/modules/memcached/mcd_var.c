@@ -403,10 +403,10 @@ int pv_set_mcd_expire(struct sip_msg* msg, pv_param_t *param, int op, pv_value_t
 		goto errout;
 	}
 
-	LM_DBG("set expire time %d for key %.*s with flag %d\n", val->ri, key.len, key.s, return_flags);
+	LM_DBG("set expire time %ld for key %.*s with flag %d\n", val->ri, key.len, key.s, return_flags);
 
 	if ((rc= memcached_set(memcached_h, key.s, key.len, return_value, strlen(return_value), val->ri, return_flags)) != MEMCACHED_SUCCESS) {
-		LM_ERR("could not set expire time %d for key %.*s - error was %s\n", val->ri, key.len, key.s, memcached_strerror(memcached_h, rc));
+		LM_ERR("could not set expire time %ld for key %.*s - error was %s\n", val->ri, key.len, key.s, memcached_strerror(memcached_h, rc));
 		goto errout;
 	}
 

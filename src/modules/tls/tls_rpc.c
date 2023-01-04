@@ -92,7 +92,7 @@ static void tls_reload(rpc_t* rpc, void* ctx)
 
  error:
 	tls_free_cfg(cfg);
-	
+
 }
 
 

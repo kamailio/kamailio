@@ -156,7 +156,7 @@ modparam("exec", "time_to_kill", 20)
    lines).
 
    Meaning of the parameters is as follows:
-     * command - Command to be executed. It can include pseudo- variabes;
+     * command - Command to be executed. It can include pseudo-variables;
 
    WARNING: if the var you are passing out has a bash special character in
    it, the var needs to be placed inside quotes, for example:
@@ -201,7 +201,7 @@ exec_msg("echo TEST > /tmp/$rU.txt");
    named 1, 2, 3, ...
 
    Meaning of the parameters is as follows:
-     * command - Command to be executed. It can include pseudo- variabes;
+     * command - Command to be executed. It can include pseudo-variables;
      * avplist - comma separated list with AVP names to store the result
        in;
 

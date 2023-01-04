@@ -130,8 +130,8 @@
 /* start conditions */
 %x STRING1 STRING2 STR_BETWEEN COMMENT COMMENT_LN ATTR SELECT AVP_PVAR PVAR_P
 %x PVARID INCLF IMPTF EVRTNAME CFGPRINTMODE CFGPRINTLOADMOD DEFENV_ID DEFENVS_ID
-%x TRYDEFENV_ID TRYDEFENVS_ID LINECOMMENT DEFINE_ID DEFINE_EOL DEFINE_DATA 
-%x IFDEF_ID IFDEF_EOL IFDEF_SKIP
+%x TRYDEFENV_ID TRYDEFENVS_ID LINECOMMENT DEFINE_ID DEFINE_EOL DEFINE_DATA
+%x IFDEF_ID IFDEF_EOL IFDEF_SKIP IFEXP_STM
 
 /* config script types : #!SER  or #!KAMAILIO or #!MAX_COMPAT */
 SER_CFG			SER
@@ -147,6 +147,7 @@ FORWARD_SCTP	forward_sctp
 DROP	"drop"
 EXIT	"exit"
 RETURN	"return"
+RETURN_MODE	"return_mode"
 BREAK	"break"
 LOG		log
 ERROR	error
@@ -499,6 +500,8 @@ LATENCY_LIMIT_DB		latency_limit_db
 LATENCY_LIMIT_ACTION	latency_limit_action
 LATENCY_LIMIT_CFG		latency_limit_cfg
 
+RPC_EXEC_DELTA_CFG		"rpc_exec_delta"
+
 URI_HOST_EXTRA_CHARS	"uri_host_extra_chars"
 HDR_NAME_EXTRA_CHARS	"hdr_name_extra_chars"
 
@@ -571,9 +574,12 @@ PREP_START	"#!"|"!!"
 DEFINE       "define"|"def"
 IFDEF        ifdef
 IFNDEF       ifndef
+IFEXP        ifexp
 ENDIF        endif
 TRYDEF       "trydefine"|"trydef"
 REDEF        "redefine"|"redef"
+DEFEXP       defexp
+DEFEXPS      defexps
 DEFENV       defenv
 DEFENVS      defenvs
 TRYDEFENV    trydefenv
@@ -1037,6 +1043,7 @@ IMPORTFILE      "import_file"
 <INITIAL>{LATENCY_LIMIT_DB}  { count(); yylval.strval=yytext; return LATENCY_LIMIT_DB;}
 <INITIAL>{LATENCY_LIMIT_ACTION}  { count(); yylval.strval=yytext; return LATENCY_LIMIT_ACTION;}
 <INITIAL>{LATENCY_LIMIT_CFG}  { count(); yylval.strval=yytext; return LATENCY_LIMIT_CFG;}
+<INITIAL>{RPC_EXEC_DELTA_CFG}  { count(); yylval.strval=yytext; return RPC_EXEC_DELTA_CFG;}
 <INITIAL>{CFG_DESCRIPTION}	{ count(); yylval.strval=yytext; return CFG_DESCRIPTION; }
 <INITIAL>{LOADMODULE}	{ count(); yylval.strval=yytext; return LOADMODULE; }
 <INITIAL>{LOADMODULEX}	{ count(); yylval.strval=yytext; return LOADMODULEX; }
@@ -1046,6 +1053,7 @@ IMPORTFILE      "import_file"
 <INITIAL>{CFGENGINE}	{ count(); yylval.strval=yytext; return CFGENGINE; }
 <INITIAL>{URI_HOST_EXTRA_CHARS}	{ yylval.strval=yytext; return URI_HOST_EXTRA_CHARS; }
 <INITIAL>{HDR_NAME_EXTRA_CHARS}	{ yylval.strval=yytext; return HDR_NAME_EXTRA_CHARS; }
+<INITIAL>{RETURN_MODE}	{ count(); yylval.strval=yytext; return RETURN_MODE; }
 
 <INITIAL>{EQUAL}	{ count(); return EQUAL; }
 <INITIAL>{ADDEQ}          { count(); return ADDEQ; }
@@ -1328,15 +1336,23 @@ IMPORTFILE      "import_file"
 
 <INITIAL,CFGPRINTMODE>{PREP_START}{DEFINE}{EAT_ABLE}+	{	count();
 											ksr_cfg_print_part(yytext);
-											pp_define_set_type(0);
+											pp_define_set_type(KSR_PPDEF_DEFINE);
 											state = DEFINE_S; BEGIN(DEFINE_ID); }
 <INITIAL,CFGPRINTMODE>{PREP_START}{TRYDEF}{EAT_ABLE}+	{	count();
 											ksr_cfg_print_part(yytext);
-											pp_define_set_type(1);
+											pp_define_set_type(KSR_PPDEF_TRYDEF);
 											state = DEFINE_S; BEGIN(DEFINE_ID); }
 <INITIAL,CFGPRINTMODE>{PREP_START}{REDEF}{EAT_ABLE}+	{	count();
 											ksr_cfg_print_part(yytext);
-											pp_define_set_type(2);
+											pp_define_set_type(KSR_PPDEF_REDEF);
+											state = DEFINE_S; BEGIN(DEFINE_ID); }
+<INITIAL,CFGPRINTMODE>{PREP_START}{DEFEXP}{EAT_ABLE}+	{	count();
+											ksr_cfg_print_part(yytext);
+											pp_define_set_type(KSR_PPDEF_DEFEXP);
+											state = DEFINE_S; BEGIN(DEFINE_ID); }
+<INITIAL,CFGPRINTMODE>{PREP_START}{DEFEXPS}{EAT_ABLE}+	{	count();
+											ksr_cfg_print_part(yytext);
+											pp_define_set_type(KSR_PPDEF_DEFEXPS);
 											state = DEFINE_S; BEGIN(DEFINE_ID); }
 <DEFINE_ID>{ID}{MINUS}          {	count();
 									ksr_cfg_print_part(yytext);
@@ -1381,6 +1397,9 @@ IMPORTFILE      "import_file"
 <INITIAL,CFGPRINTMODE,IFDEF_SKIP>{PREP_START}{IFNDEF}{EAT_ABLE}+    { count();
 								if (pp_ifdef_type(0)) return 1;
 								state = IFDEF_S; BEGIN(IFDEF_ID); }
+<INITIAL,CFGPRINTMODE,IFDEF_SKIP>{PREP_START}{IFEXP}{EAT_ABLE}+    { count();
+								if (pp_ifdef_type(1)) return 1;
+								state = IFDEF_S; BEGIN(IFEXP_STM); }
 <IFDEF_ID>{ID}{MINUS}           { count();
 									LM_CRIT(
 										"error at %s line %d: '-' not allowed\n",
@@ -1390,6 +1409,11 @@ IMPORTFILE      "import_file"
 <IFDEF_ID>{ID}                { count();
 								pp_ifdef_var(yyleng, yytext);
 								state = IFDEF_EOL_S; BEGIN(IFDEF_EOL); }
+<IFEXP_STM>.*{CR}        { count();
+								pp_ifexp_eval(yytext, yyleng);
+								state = IFDEF_EOL_S; BEGIN(IFDEF_EOL);
+								pp_ifdef();
+								}
 <IFDEF_EOL>{EAT_ABLE}*{CR}    { count(); pp_ifdef(); }
 
 <INITIAL,CFGPRINTMODE,IFDEF_SKIP>{PREP_START}{ELSE}{EAT_ABLE}*{CR}    { count(); pp_else(); }
@@ -1656,7 +1680,7 @@ static void ksr_cfg_print_define_module(char *modpath, int modpathlen)
 	}
 	memcpy(defmod, "MOD_", 4);
 	memcpy(defmod+4, modname.s, modname.len);
-	pp_define_set_type(0);
+	pp_define_set_type(KSR_PPDEF_DEFINE);
 	if(pp_define(modname.len + 4, defmod)<0) {
 		printf("\n# ***** ERROR: unable to set cfg define for module: %s\n",
 				modpath);
@@ -2016,7 +2040,7 @@ ksr_ppdefine_t* pp_get_define(int idx)
 	return &pp_defines[idx];
 }
 
-static int pp_lookup(int len, const char *text)
+int pp_lookup(int len, const char *text)
 {
 	str var = {(char *)text, len};
 	int i;
@@ -2058,11 +2082,11 @@ int pp_define(int len, const char *text)
 	pp_define_index = -1;
 	ppos = pp_lookup(len, text);
 	if(ppos >= 0) {
-		if(pp_define_type==1) {
+		if(pp_define_type==KSR_PPDEF_TRYDEF) {
 			LM_DBG("ignoring - already defined: %.*s\n", len, text);
 			pp_define_index = -2;
 			return 0;
-		} else if(pp_define_type==2) {
+		} else if(pp_define_type==KSR_PPDEF_REDEF) {
 			LM_DBG("redefining: %.*s\n", len, text);
 			pp_define_index = ppos;
 			if(pp_defines[ppos].value.s != NULL) {
@@ -2098,6 +2122,7 @@ int pp_define(int len, const char *text)
 int pp_define_set(int len, char *text, int mode)
 {
 	int ppos;
+	char *sval = NULL;
 
 	if(pp_define_index == -2) {
 		/* #!trydef that should be ignored */
@@ -2135,8 +2160,33 @@ int pp_define_set(int len, char *text, int mode)
 		return -1;
 	}
 
-	pp_defines[ppos].value.len = len;
-	pp_defines[ppos].value.s = text;
+	if(pp_defines[ppos].dtype == KSR_PPDEF_DEFEXP
+			|| pp_defines[ppos].dtype == KSR_PPDEF_DEFEXPS) {
+		if(pp_defines[ppos].dtype == KSR_PPDEF_DEFEXP) {
+			sval = pp_defexp_eval(text, len, 0);
+		} else {
+			sval = pp_defexp_eval(text, len, 1);
+		}
+		if(sval==NULL) {
+			LM_NOTICE("no value returned to set the defexp [%.*s]\n",
+				pp_defines[ppos].name.len, pp_defines[ppos].name.s);
+			return 0;
+		}
+		pp_defines[ppos].value.s = sval;
+		pp_defines[ppos].value.len = strlen(sval);
+	} else {
+		pp_defines[ppos].value.s = (char*)pkg_malloc(len+1);
+		if (pp_defines[ppos].value.s == NULL) {
+			LM_ERR("no more memory to define %.*s [%d]\n",
+				pp_defines[ppos].name.len,
+				pp_defines[ppos].name.s, ppos);
+			return -1;
+		}
+
+		memcpy(pp_defines[ppos].value.s, text, len);
+		pp_defines[ppos].value.s[len] = '\0';
+		pp_defines[ppos].value.len = len;
+	}
 	LM_DBG("### setting define ID [%.*s] value [%.*s] (mode: %d)\n",
 			pp_defines[ppos].name.len,
 			pp_defines[ppos].name.s,
@@ -2178,7 +2228,7 @@ int pp_define_env(const char *text, int len, int qmode, int vmode)
 	}
 	defvalue.len = strlen(defvalue.s);
 
-	pp_define_set_type(0);
+	pp_define_set_type(KSR_PPDEF_DEFINE);
 	if(pp_define(defname.len, defname.s)<0) {
 		LM_ERR("cannot set define name [%s]\n", (char*)text);
 		return -1;
@@ -2243,6 +2293,11 @@ static int pp_ifdef_type(int type)
 static void pp_ifdef_var(int len, const char *text)
 {
 	pp_ifdef_stack[pp_sptr] ^= (pp_lookup(len, text) < 0);
+}
+
+void pp_ifexp_state(int state)
+{
+	pp_ifdef_stack[pp_sptr] = state;
 }
 
 static void pp_update_state()

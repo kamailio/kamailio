@@ -291,7 +291,7 @@ Chapter 1. Admin Guide
 
    GRUU (RFC5627) is supported with both public and temporary addresses.
 
-   The public GRUU is build based on the '+sip.instance' UUID parameter as
+   The public GRUU is built based on the '+sip.instance' UUID parameter as
    recommended by RFC.
 
    The temporary GRUU is built based on internal SRUID (unique id
@@ -479,11 +479,11 @@ modparam("registrar", "realm_prefix", "sip.")
    The parameter controls how lookup function processes multiple contacts.
    If there are multiple contacts for the given username in usrloc and
    this parameter is set to 1, Request-URI will be overwritten with the
-   highest-q rated contact and the rest will be appended to sip_msg
-   structure and can be later used by tm for forking. If the parameter is
-   set to 0, only Request-URI will be overwritten with the highest-q rated
-   contact and the rest will be left unprocessed. This parameter can be
-   modified via Kamailio config framework.
+   highest-q rated contact. The rest will be appended to sip_msg structure
+   and can be later used by tm for forking. If the parameter is set to 0,
+   only Request-URI will be overwritten with the highest-q rated contact
+   and the rest will be left unprocessed. This parameter can be modified
+   via Kamailio config framework.
 
    Default value is 1.
 
@@ -1152,7 +1152,7 @@ xinfo("first contact record - socket: $xavp(cul>socket)\n");
 4.6.  registered(domain [, uri [, match_option [, match_action]]])
 
    The function returns true if the AOR in the URI is registered, false
-   otherwise. The function does not modify the message being process, it
+   otherwise. The function does not modify the message being processed, it
    neither rewrites the Request-URI if a contact is found nor append
    branches. If uri parameter is not provided, then it considered to be
    the Request-URI for SIP requests and To-URI for SIP replies.
@@ -1222,7 +1222,7 @@ add_sock_hdr("Sock-Info");
      * uri - The SIP URI address of the user which to remove the contact
        addresses for. It can contain pseudo-variables that are evaluated
        at runtime.
-     * ruid - The record unique ID for a a specific contact to be removed.
+     * ruid - The record unique ID for a specific contact to be removed.
        It can contain pseudo-variables that are evaluated at runtime.
 
    This function can be used from ANY_ROUTE.

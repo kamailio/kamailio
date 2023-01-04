@@ -130,7 +130,7 @@ modparam("erlang", "cnode_host", "kamailio.lan")
 		<section id="erlang.p.erlang_nodename">
 			<title><varname>erlang_nodename</varname> (str)</title>
 			<para>
-				The format of the node name is an <emphasis>name@host</emphasis>
+				The format of the node name is a <emphasis>name@host</emphasis>
 				where name is the name given by the user and host is the full
 				host name if long names are used, or the first part of the host
 				name if short names are used.
@@ -465,7 +465,7 @@ DEBUG: &lt;script&gt;: 410:typeof(X): tuple, length(X): 2, format(X): {line, [{i
 		<title>Functions</title>
 		<section id="erlang.f.erl_rpc">
 			<title>
-				<function moreinfo="none">erl_rpc(mod,fun,args,reply)</function>
+				<function moreinfo="none">erl_rpc(mod, fun, args, reply)</function>
 			</title>
 			<para>
 				This function supports calling Erlang functions on remote nodes.
@@ -513,7 +513,7 @@ DEBUG: &lt;script&gt;: 386:type(repl): tuple, format(repl): {"one", "two"}
 			</example>
 		</section>
 		<section id="erlang.f.erl_reg_send">
-			<title><function moreinfo="none">erl_reg_send(server,msg)</function></title>
+			<title><function moreinfo="none">erl_reg_send(server, msg)</function></title>
 			<para>
 				This function sends an Erlang term to a registered process.
 			</para>
@@ -543,7 +543,7 @@ erl_reg_send("notifier","$erl_tuple(M)");
 			</example>
 		</section>
 		<section id="erlang.f.erl_send">
-			<title><function moreinfo="none">erl_send(pid,msg)</function></title>
+			<title><function moreinfo="none">erl_send(pid, msg)</function></title>
 			<para>
 				This function sends an Erlang term to a process. This function
 				can be used from ANY_ROUTE. The argument <emphasis>pid</emphasis>
@@ -629,7 +629,7 @@ INFO: &lt;script&gt;: 951:Received message: {"hello", "Kamailio"}
 		<section>
 			<title>Registered pseudo process</title>
 			<para>
-				To create pseudo erlang registered process in &kamailio; scrip create event route in form of
+				To create pseudo erlang registered process in &kamailio; script create event route in form of
 				<varname>event_route[erlang:<emphasis>&lt;my_process_name&gt;</emphasis>]</varname>. Where
 				<emphasis>&lt;my_process_name&gt;</emphasis> is the name of pseudo process.
 			</para>

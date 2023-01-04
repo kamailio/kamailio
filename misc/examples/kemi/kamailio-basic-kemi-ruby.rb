@@ -28,8 +28,6 @@ def ksr_request_route()
     return
   end
 
-  ksr_route_withindlg()
-
   # Retransmissions
   if !KSR.is_ACK() then
     if KSR::TMX.t_precheck_trans() > 0 then
@@ -39,7 +37,12 @@ def ksr_request_route()
     return if KSR::TM.t_check_trans() == 0
   end
 
-  # Auth
+  # Handle requests within SIP dialogs
+  ksr_route_withindlg()
+
+  # -- only initial requests (no To tag)
+
+  # Authentication
   ksr_route_auth()
 
   # Record routing for dialog forming requests (in case they are routed)
@@ -56,36 +59,16 @@ def ksr_request_route()
   # Registrations
   ksr_route_registrar()
 
-  # USRLOC
+  if KSR::COREX.has_ruri_user() < 0 then
+    # request with no Username in RURI
+    KSR::SL.sl_send_reply(484, "Address Incomplete");
+    return;
+  end
+
+  # User location service
   ksr_route_location()
 
   return
-end
-
-def ksr_route_reqinit()
-  if KSR::COREX.has_user_agent() > 0 then
-    ua = KSR::PV.gete("$ua");
-    if ua.include? 'friendly' or ua.include? 'scanner'
-        or ua.include? 'sipcli' or ua.include? 'sipvicious' then
-      KSR::SL.sl_send_reply(200, "OK");
-      exit
-    end
-  end
-
-  if KSR::MAXFWD.process_maxfwd(10) < 0 then
-    KSR::SL.sl_send_reply(483,"Too Many Hops");
-    exit
-  end
-
-  if KSR.is_OPTIONS() and KSR.is_myself_ruri() and KSR::COREX.has_ruri_user() < 0 then
-    KSR::SL.sl_send_reply(200, "Keepalive");
-    exit
-  end
-
-  if KSR::SANITY.sanity_check(1511, 7) < 0 then
-    KSR.err("Malformed SIP message from #{KSR::PV.get('$si')}:#{KSR::PV.get('$sp')}\n");
-    exit
-  end
 end
 
 def ksr_route_relay()
@@ -110,6 +93,57 @@ def ksr_route_relay()
     KSR::SL.sl_reply_error()
   end
   exit
+end
+
+def ksr_route_reqinit()
+  # no connect for sending replies
+  KSR.set_reply_no_connect();
+  # enforce symmetric signaling
+  # send back replies to the source address of request
+  KSR.force_rport();
+
+  if !KSR.is_myself_srcip() then
+    srcip = KSR::KX.get_srcip();
+    if KSR::HTABLE.sht_match_name("ipban", "eq", srcip) > 0 then
+      # ip is already blocked
+      KSR.dbg("request from blocked IP - " + KSR::KX.get_method() +
+          " from " + KSR::KX.get_furi() + " (IP:" +
+          srcip + ":" + KSR::KX.get_srcport() + ")\n");
+      exit;
+    end
+    if KSR::PIKE.pike_check_req() < 0 then
+      KSR.err("ALERT: pike blocking " + KSR.kx.get_method() +
+          " from " + KSR::KX.get_furi() + " (IP:" +
+          srcip + ":" + KSR.kx.get_srcport() + ")\n");
+      KSR::HTABLE.sht_seti("ipban", srcip, 1);
+      exit;
+    end
+  end
+
+  if KSR::COREX.has_user_agent() > 0 then
+    ua = KSR::PV.gete("$ua");
+    if ua.include? 'friendly' or ua.include? 'scanner' or
+        ua.include? 'sipcli' or ua.include? 'sipvicious' or
+        ua.include? 'VaxSIPUserAgent' or ua.include? 'pplsip' then
+      KSR::SL.sl_send_reply(200, "OK");
+      exit
+    end
+  end
+
+  if KSR::MAXFWD.process_maxfwd(10) < 0 then
+    KSR::SL.sl_send_reply(483, "Too Many Hops");
+    exit
+  end
+
+  if KSR.is_OPTIONS() and KSR.is_myself_ruri() and KSR::COREX.has_ruri_user() < 0 then
+    KSR::SL.sl_send_reply(200, "Keepalive");
+    exit
+  end
+
+  if KSR::SANITY.sanity_check(17895, 7) < 0 then
+    KSR.err("Malformed SIP message from #{KSR::PV.get('$si')}:#{KSR::PV.get('$sp')}\n");
+    exit
+  end
 end
 
 def ksr_route_withindlg()
@@ -162,7 +196,7 @@ def ksr_route_auth()
 	# if caller is not local subscriber, then check if it calls
 	# a local destination, otherwise deny, not an open relay here
 	if !KSR.is_myself_furi() && !KSR.is_myself_ruri() then
-		KSR::SL.sl_send_reply(403,"Not relaying")
+		KSR::SL.sl_send_reply(403, "Not relaying")
 		exit
   end
 

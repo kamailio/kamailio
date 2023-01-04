@@ -1434,15 +1434,14 @@ static void lua_sr_push_xavp_name_table(lua_State *L, sr_xavp_t *xavp,
 			case SR_XTYPE_NULL:
 				lua_pushnil(L);
 			break;
-			case SR_XTYPE_INT:
-				i = avp->val.v.i;
+			case SR_XTYPE_LONG:
+				i = avp->val.v.l;
 				lua_pushnumber(L, i);
 			break;
 			case SR_XTYPE_STR:
 				lua_pushlstring(L, avp->val.v.s.s, avp->val.v.s.len);
 			break;
 			case SR_XTYPE_TIME:
-			case SR_XTYPE_LONG:
 			case SR_XTYPE_LLONG:
 			case SR_XTYPE_DATA:
 				lua_pushnil(L);

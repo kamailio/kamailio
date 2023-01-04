@@ -55,9 +55,9 @@
 #define AVP_RPID         "rpid"          /* Remote-Party-ID */
 #define AVP_GFLAGS       "gflags"        /* global flags */
 
-struct str_int_data {
+struct str_num_data {
 	str name;
-	int val;
+	long val;
 };
 
 struct str_str_data {
@@ -65,16 +65,23 @@ struct str_str_data {
 	str val;
 };
 
+/**
+ * union type holding a number (long) or string
+ * - value for avp
+ */
 typedef union {
-	int  n;
+	long  n;
 	str  s;
 	regex_t* re;
-} int_str;
+} numstr_ut;
+
+/* define for backward compatibility */
+typedef numstr_ut int_str;
 
 #define avp_id_t	unsigned short
 #define avp_flags_t	unsigned int
-#define avp_name_t	int_str
-#define avp_value_t	int_str
+#define avp_name_t	numstr_ut
+#define avp_value_t	numstr_ut
 #define avp_index_t	unsigned short
 
 union usr_avp_data{
@@ -203,13 +210,13 @@ avp_list_t* set_avp_list(avp_flags_t flags, avp_list_t* list);
 
 /* global alias functions (manipulation and parsing)*/
 int add_avp_galias_str(char *alias_definition);
-int lookup_avp_galias(str *alias, int *type, int_str *avp_name);
-int add_avp_galias(str *alias, int type, int_str avp_name);
+int lookup_avp_galias(str *alias, int *type, numstr_ut *avp_name);
+int add_avp_galias(str *alias, int type, numstr_ut avp_name);
 int parse_avp_ident( str *name, avp_ident_t* attr);
-int parse_avp_name( str *name, int *type, int_str *avp_name, int *index);
-int parse_avp_spec( str *name, int *type, int_str *avp_name, int *index);
-int km_parse_avp_spec( str *name, int *type, int_str *avp_name);
-void free_avp_name( avp_flags_t *type, int_str *avp_name);
+int parse_avp_name( str *name, int *type, numstr_ut *avp_name, int *index);
+int parse_avp_spec( str *name, int *type, numstr_ut *avp_name, int *index);
+int km_parse_avp_spec( str *name, int *type, numstr_ut *avp_name);
+void free_avp_name( avp_flags_t *type, numstr_ut *avp_name);
 /* Free an ident obtained with parse_avp_ident() */
 void free_avp_ident(avp_ident_t* attr);
 

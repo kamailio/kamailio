@@ -303,7 +303,7 @@ kamailioSIPStatusCodesTable_context *kamailioSIPStatusCodesTable_create_row(
 	if(!ctx)
 		return NULL;
 
-	/* The *_extract_index funtion already validates the indices, so we
+	/* The *_extract_index function already validates the indices, so we
 	 * don't need to do any further evaluations here.  */
 	if(kamailioSIPStatusCodesTable_extract_index(ctx, hdr)) {
 		if(NULL != ctx->index.oids)

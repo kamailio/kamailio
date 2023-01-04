@@ -90,7 +90,7 @@ typedef void (*pv_name_free_f)(void*);
 typedef struct _pv_value
 {
 	str rs;    /*!< string value */
-	int ri;    /*!< integer value */
+	long ri;   /*!< long value */
 	int flags; /*!< flags about the type of value */
 } pv_value_t, *pv_value_p;
 
@@ -220,9 +220,9 @@ int pv_get_null(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 int pv_get_strempty(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 
 int pv_get_uintval(struct sip_msg *msg, pv_param_t *param,
-		pv_value_t *res, unsigned int uival);
+		pv_value_t *res, unsigned long uival);
 int pv_get_sintval(struct sip_msg *msg, pv_param_t *param,
-		pv_value_t *res, int sival);
+		pv_value_t *res, long sival);
 int pv_get_strval(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res, str *sval);
 int pv_get_strzval(struct sip_msg *msg, pv_param_t *param,
@@ -230,9 +230,9 @@ int pv_get_strzval(struct sip_msg *msg, pv_param_t *param,
 int pv_get_strlval(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res, char *sval, int slen);
 int pv_get_strintval(struct sip_msg *msg, pv_param_t *param,
-		pv_value_t *res, str *sval, int ival);
+		pv_value_t *res, str *sval, long ival);
 int pv_get_intstrval(struct sip_msg *msg, pv_param_t *param,
-		pv_value_t *res, int ival, str *sval);
+		pv_value_t *res, long ival, str *sval);
 
 /**
  * Core PV Cache
@@ -266,7 +266,7 @@ enum _tr_param_type { TR_PARAM_NONE=0, TR_PARAM_STRING, TR_PARAM_NUMBER,
 typedef struct _tr_param {
 	int type;
 	union {
-		int n;
+		long n;
 		str s;
 		void *data;
 	} v;

@@ -122,7 +122,7 @@ int pg_cmd_first(db_res_t *res);
 int pg_cmd_next(db_res_t *res);
 
 
-/** Retrieves the value of an db_cmd option.
+/** Retrieves the value of a db_cmd option.
  * This function is called when a SER module uses db_getopt to retrieve the
  * value of db_cmd parameter.
  * @param cmd A db_cmd structure representing the command.
@@ -135,7 +135,7 @@ int pg_cmd_next(db_res_t *res);
 int pg_getopt(db_cmd_t *cmd, char *optname, va_list ap);
 
 
-/** Sets the value of an db_cmd option.
+/** Sets the value of a db_cmd option.
  * This function is called when a SER module uses db_setopt to set the
  * value of db_cmd parameter.
  * @param cmd A db_cmd structure representing the command.

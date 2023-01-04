@@ -30,7 +30,7 @@ COREPATH ?=../../src
 ALLDEP=Makefile $(COREPATH)/Makefile.sources $(COREPATH)/Makefile.rules \
  $(COREPATH)/Makefile.utils $(COREPATH)/Makefile.dirs $(COREPATH)/config.mak
 
-#override modules value, an util cannot have submodules
+#override modules value, a util cannot have submodules
 override modules=
 override static_modules=
 override static_modules_path=

@@ -1,0 +1,62 @@
+app_ruby_proc Module
+
+Daniel-Constantin Mierla
+
+   asipto.com
+
+Edited by
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+   Copyright © 2018 Daniel-Constantin Mierla (asipto.com)
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+1. Overview
+
+   The module implements per-child-process C API functions required by
+   app_ruby module.
+
+   Important: this module must not be loaded standalone via loadmodule,
+   the app_ruby module loads it in each child process. This is required
+   because libruby 1.9+ is multi-threaded and must be initialized per each
+   child process, after forking, otherwise threads locks and resources are
+   inherited and can lead to unpredictable behaviour, such as crashes.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * app_ruby.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * libruby - the ruby library (for compilation on Debian, ruby-dev
+       package is needed.

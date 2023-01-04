@@ -223,7 +223,7 @@ int cdp_trans_timer(time_t now, void* ptr)
 /* TRANSACTIONS */
 
 /**
- * Create a AAATransaction for the given request.
+ * Create an AAATransaction for the given request.
  * @param app_id - id of the request's application
  * @param cmd_code - request's code
  * @returns the AAATransaction*

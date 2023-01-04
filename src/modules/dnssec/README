@@ -80,9 +80,9 @@ Chapter 1. Admin Guide
 
    Set this parameter to an integer value containing of an ORed result of
    one or more of the following values (constant present only for
-   documentation process, as they are mostly mapped to libval
-   flags).Setting this parameter will cause the libval defaults to be
-   completely overwritten
+   documentation process, as they are mostly mapped to libval flags).
+   Setting this parameter will cause the libval defaults to be completely
+   overwritten
 
    QUERY_DONT_VALIDATE == 1<<0 causes the validator to disable validation
    for this query.

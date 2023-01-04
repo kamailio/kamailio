@@ -279,46 +279,126 @@ void print_lists(struct dlg_cell *dlg) {
 	}
 }
 
-static str _dlg_var_strval = STR_NULL;
-
-str * get_dlg_variable(struct dlg_cell *dlg, str *key)
+/**
+ * return reference to the dlg variable value
+ * - unsafe - use only when it is sure that the value is not updated
+ */
+str* get_dlg_varref(struct dlg_cell *dlg, str *key)
 {
-	str* var = NULL;
+    str* var = NULL;
 
-	if( !dlg || !key || key->len > strlen(key->s))
-	{
+    if( !dlg || !key || key->len<=0) {
+        LM_ERR("BUG - bad parameters\n");
+
+        return NULL;
+    }
+
+    dlg_lock(d_table, &(d_table->entries[dlg->h_entry]));
+    var = get_dlg_variable_unsafe( dlg, key);
+    dlg_unlock(d_table, &(d_table->entries[dlg->h_entry]));
+
+    return var;
+}
+
+/**
+ * set *val to a pv buffer where the dlg value is cloned
+ * - safe to use immediately, before another dlg var get or other operation
+ *   done by the same process exceeds the number of pv buffer slots
+ */
+int get_dlg_varval(struct dlg_cell *dlg, str *key, str *val)
+{
+	str *var = NULL;
+
+	val->s = NULL;
+	val->len = 0;
+
+	if( !dlg || !key || key->len<=0) {
 		LM_ERR("BUG - bad parameters\n");
-
-		return NULL;
+		return -1;
 	}
 
 	dlg_lock(d_table, &(d_table->entries[dlg->h_entry]));
-	var = get_dlg_variable_unsafe( dlg, key);
+	var = get_dlg_variable_unsafe(dlg, key);
 	if(var) {
-		_dlg_var_strval.len = pv_get_buffer_size();
-		if(_dlg_var_strval.len < var->len+1) {
+		val->len = pv_get_buffer_size();
+		if(val->len < var->len+1) {
 			LM_ERR("pv buffer too small (%d) - needed %d\n",
-					_dlg_var_strval.len, var->len);
-			_dlg_var_strval.s = NULL;
-			_dlg_var_strval.len = 0;
+					val->len, var->len+1);
+			val->s = NULL;
+			val->len = 0;
 			var = NULL;
 		} else {
-			_dlg_var_strval.s = pv_get_buffer();
-			strncpy(_dlg_var_strval.s, var->s, var->len);
-			_dlg_var_strval.len = var->len;
-			_dlg_var_strval.s[_dlg_var_strval.len] = '\0';
+			val->s = pv_get_buffer();
+			memcpy(val->s, var->s, var->len);
+			val->len = var->len;
+			val->s[val->len] = '\0';
 		}
-	} else {
-		_dlg_var_strval.s = NULL;
-		_dlg_var_strval.len = 0;
 	}
-
 	dlg_unlock(d_table, &(d_table->entries[dlg->h_entry]));
 
 	if(var) {
-		return &_dlg_var_strval;
+		return 0;
 	}
-	return NULL;
+	return -2;
+}
+
+/**
+ * set *val to a pkg-allocated buffer where the dlg value is cloned
+ * - val->s has to be pkg-freed after use
+ */
+int get_dlg_vardup(struct dlg_cell *dlg, str *key, str *val)
+{
+	str *var = NULL;
+
+	val->s = NULL;
+	val->len = 0;
+
+	if( !dlg || !key || key->len<=0) {
+		LM_ERR("BUG - bad parameters\n");
+		return -1;
+	}
+
+	dlg_lock(d_table, &(d_table->entries[dlg->h_entry]));
+	var = get_dlg_variable_unsafe(dlg, key);
+	if(var && var->s) {
+		val->s = (char*)pkg_malloc(var->len + 1);
+		if(val->s!=NULL) {
+			memcpy(val->s, var->s, var->len);
+			val->len = var->len;
+			val->s[val->len] = '\0';
+		}
+	}
+	dlg_unlock(d_table, &(d_table->entries[dlg->h_entry]));
+
+	if(val->s) {
+		return 0;
+	}
+	return -2;
+}
+
+/**
+ * return the status if the dlg variable value is set or not
+ * - 1 - variable is set
+ * - 0 - variable is not set
+ */
+int get_dlg_varstatus(struct dlg_cell *dlg, str *key)
+{
+    str* var = NULL;
+    int ret = 0;
+
+    if( !dlg || !key || key->len<=0) {
+        LM_ERR("BUG - bad parameters\n");
+        return 0;
+    }
+
+    dlg_lock(d_table, &(d_table->entries[dlg->h_entry]));
+    var = get_dlg_variable_unsafe(dlg, key);
+	if(var && var->s) {
+		ret = 1;
+	}
+    dlg_unlock(d_table, &(d_table->entries[dlg->h_entry]));
+
+    return ret;
 }
 
 int get_dlg_variable_uintval(struct dlg_cell *dlg, str *key, unsigned int *uval)
@@ -369,7 +449,9 @@ int set_dlg_variable(struct dlg_cell *dlg, str *key, str *val)
     if ( dlg_db_mode==DB_MODE_REALTIME )
         update_dialog_dbinfo(dlg);
 
-    print_lists(dlg);
+    if(unlikely(debug_variables_list)) {
+        print_lists(dlg);
+    }
 
     return 0;
 
@@ -430,7 +512,9 @@ int pv_get_dlg_variable(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 		}
 	}
 
-	print_lists(dlg);
+	if(unlikely(debug_variables_list)) {
+		print_lists(dlg);
+	}
 
 	/* unlock dialog */
 	if (dlg) {
@@ -504,7 +588,9 @@ int pv_set_dlg_variable(struct sip_msg* msg, pv_param_t *param, int op, pv_value
 		}
 		dlg_unlock(d_table, &(d_table->entries[dlg->h_entry]));
 	}
-	print_lists(dlg);
+	if(unlikely(debug_variables_list)) {
+		print_lists(dlg);
+	}
 
 	dlg_release(dlg);
 	return 0;

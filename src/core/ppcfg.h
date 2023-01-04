@@ -27,8 +27,15 @@
 
 #define KSR_PPDEF_NORMAL (0)     /* define normal value */
 #define KSR_PPDEF_QUOTED (1<<0)  /* define quoted value */
+
 #define KSR_PPDEF_VALREQ (0)     /* define with value required (defenv) */
 #define KSR_PPDEF_VALTRY (1<<0)  /* define only if value exists (trydefenv) */
+
+#define KSR_PPDEF_DEFINE  0
+#define KSR_PPDEF_TRYDEF  1
+#define KSR_PPDEF_REDEF   2
+#define KSR_PPDEF_DEFEXP  3
+#define KSR_PPDEF_DEFEXPS 4
 
 typedef struct ksr_ppdefine {
 	str name;
@@ -40,6 +47,7 @@ int pp_def_qvalue(str *defval, str *outval);
 
 str* pp_get_define_name(int idx);
 ksr_ppdefine_t* pp_get_define(int idx);
+int pp_lookup(int len, const char *text);
 
 int pp_subst_add(char *data);
 int pp_substdef_add(char *data, int mode);
@@ -58,6 +66,10 @@ void pp_ifdef_level_error(void);
 void pp_define_core(void);
 
 void ksr_cfg_print_initial_state(void);
+
+void pp_ifexp_eval(char *exval, int exlen);
+void pp_ifexp_state(int state);
+char *pp_defexp_eval(char *exval, int exlen, int qmode);
 
 #endif /*_PPCFG_H_*/
 

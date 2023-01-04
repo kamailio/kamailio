@@ -181,7 +181,7 @@ if (!maxfwd_process("10") &amp;&amp; $retcode==-1) {
 		<function moreinfo="none">is_maxfwd_lt(max_value)</function>
 		</title>
 		<para>
-		Checks if the Max-Forward header value is less then the
+		Checks if the Max-Forward header value is less than the
 		<quote>max_value</quote> parameter value. It considers also the value
 		of the new inserted header (if locally added). The parameter can be
 		a variable.

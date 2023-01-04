@@ -27,7 +27,7 @@
 #define _IMC_MNG_H_
 
 
-
+#include "../../lib/srdb1/db.h"
 #include "../../core/locking.h"
 #include "../../core/str.h"
 #include "../../core/parser/parse_from.h"
@@ -37,6 +37,24 @@
 #define IMC_MEMBER_INVITED	(1<<2)
 #define IMC_MEMBER_DELETED  (1<<3)
 #define IMC_MEMBER_SKIP     (1<<4)
+
+#define IMC_MEMBER_OWNER_STR	"owner"
+#define IMC_MEMBER_ADMIN_STR	"admin"
+#define IMC_MEMBER_STR			"member"
+
+extern db1_con_t *imc_db;
+extern db_func_t imc_dbf;
+
+extern int db_mode;
+
+extern str rooms_table;
+extern str members_table;
+
+extern str imc_col_username;
+extern str imc_col_domain;
+extern str imc_col_flag;
+extern str imc_col_room;
+extern str imc_col_name;
 
 typedef struct _imc_member
 {
@@ -80,7 +98,15 @@ typedef struct _imc_hentry
 	gen_lock_t lock;
 } imc_hentry_t, *imc_hentry_p;
 
+int load_rooms_from_db();
+int add_room_to_db(imc_room_p room);
+int remove_room_from_db(imc_room_p room);
+int add_room_member_to_db(imc_member_p member, imc_room_p room, int flag);
+int modify_room_member_in_db(imc_member_p member, imc_room_p room, int flag);
+int remove_room_member_from_db(imc_member_p member, imc_room_p room);
+
 imc_member_p imc_add_member(imc_room_p room, str* user, str* domain, int flags);
+int imc_modify_member(imc_room_p room, str* user, str* domain, int flags);
 imc_member_p imc_get_member(imc_room_p room, str* user, str* domain);
 int imc_del_member(imc_room_p room, str* user, str* domain);
 

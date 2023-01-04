@@ -321,7 +321,7 @@ static int register_module(module_exports_t* e, char* path, void* handle)
 	}
 	strcpy(defmod, "MOD_");
 	strcat(defmod, mod->exports.name);
-	pp_define_set_type(0);
+	pp_define_set_type(KSR_PPDEF_DEFINE);
 	if(pp_define(strlen(defmod), defmod)<0) {
 		LM_ERR("unable to set cfg define for module: %s\n",
 				mod->exports.name);
@@ -525,6 +525,7 @@ error:
 	return -1;
 }
 
+
 /**
  * \brief load a sr module
  *
@@ -537,9 +538,10 @@ error:
  * absolute path (not starting with '/') then will try:
  * \<MODS_DIR\>/mod_path
  * @param mod_path path or module name
+ * @param opts options string
  * @return 0 on success , <0 on error
  */
-int load_module(char* mod_path)
+int ksr_load_module(char* mod_path, char *opts)
 {
 	void* handle;
 	char* error;
@@ -553,10 +555,15 @@ int load_module(char* mod_path)
 	str expref;
 	char exbuf[64];
 	char* mdir;
+	char *p;
 
 #ifndef RTLD_NOW
 /* for openbsd */
 #define RTLD_NOW DL_LAZY
+#endif
+#ifndef RTLD_GLOBAL
+/* Unsupported! */
+#define RTLD_GLOBAL 0
 #endif
 
 	if(ksr_locate_module(mod_path, &path)<0) {
@@ -567,6 +574,17 @@ int load_module(char* mod_path)
 
 	retries=2;
 	dlflags=RTLD_NOW;
+
+	if(opts!=NULL) {
+		for(p=opts; *p!='\0'; p++) {
+			if(*p=='G' || *p=='g') {
+				dlflags |= RTLD_GLOBAL;
+			} else {
+				LM_INFO("unknown option: %c\n", *p);
+			}
+		}
+	}
+
 reload:
 	handle=dlopen(path, dlflags); /* resolve all symbols now */
 	if (handle==0){
@@ -653,10 +671,11 @@ skip:
 	return -1;
 }
 
+
 /**
  *
  */
-int load_modulex(char* mod_path)
+int ksr_load_modulex(char* mod_path, char *opts)
 {
 	str seval;
 	str sfmt;
@@ -679,7 +698,7 @@ int load_modulex(char* mod_path)
 		}
 	}
 
-	return load_module(emod);
+	return ksr_load_module(emod, opts);
 }
 
 /**
@@ -1707,6 +1726,92 @@ int get_str_fparam(str* dst, struct sip_msg* msg, fparam_t* param)
 	return 0;
 }
 
+
+/** Get the function parameter value as string cpoied in the dst->s buffer.
+ *  - dst->len has to provide size of dst->s buffer and it is updated to the
+ *  size of the value
+ *  @return  0 - Success
+ *          -1 - Cannot get value
+ */
+int get_strbuf_fparam(str* dst, struct sip_msg* msg, fparam_t* param)
+{
+	int_str val;
+	int ret;
+	avp_t* avp;
+	pv_value_t pv_val;
+	str sv = STR_NULL;
+
+	if(dst==NULL || dst->s==NULL || dst->len<=0) {
+		return -1;
+	}
+
+	switch(param->type) {
+		case FPARAM_REGEX:
+		case FPARAM_UNSPEC:
+		case FPARAM_INT:
+			return -1;
+		case FPARAM_STRING:
+			sv.s = param->v.asciiz;
+			sv.len = strlen(param->v.asciiz);
+			break;
+		case FPARAM_STR:
+			sv = param->v.str;
+			break;
+		case FPARAM_AVP:
+			avp = search_first_avp(param->v.avp.flags, param->v.avp.name,
+									&val, 0);
+			if (unlikely(!avp)) {
+				LM_DBG("Could not find AVP from function parameter '%s'\n",
+						param->orig);
+				return -1;
+			}
+			if (likely(avp->flags & AVP_VAL_STR)) {
+				sv = val.s;
+			} else {
+				/* The caller does not know of what type the AVP will be so
+				 * convert int AVPs into string here
+				 */
+				sv.s = int2str(val.n, &sv.len);
+			}
+			break;
+		case FPARAM_SELECT:
+			ret = run_select(&sv, param->v.select, msg);
+			if (unlikely(ret < 0 || ret > 0)) return -1;
+			break;
+		case FPARAM_PVS:
+			if (likely((pv_get_spec_value(msg, param->v.pvs, &pv_val)==0) &&
+						((pv_val.flags&(PV_VAL_NULL|PV_VAL_STR))==PV_VAL_STR))){
+					sv=pv_val.rs;
+			}else{
+				LM_ERR("Could not convert PV to str\n");
+				return -1;
+			}
+			break;
+		case FPARAM_PVE:
+			if (unlikely(pv_printf(msg, param->v.pve, dst->s, &dst->len)!=0)){
+				LM_ERR("Could not convert the PV-formated string to str\n");
+				dst->len=0;
+				return -1;
+			};
+			break;
+	}
+	if(param->type != FPARAM_PVE) {
+		if(sv.len>=dst->len-1) {
+			LM_ERR("not enough space in output buffer (size: %d need: %d)\n",
+					dst->len, sv.len);
+			return -1;
+		}
+		if(sv.len > 0) {
+			memcpy(dst->s, sv.s, sv.len);
+			dst->len = sv.len;
+			dst->s[dst->len] = '\0';
+		} else {
+			dst->len = 0;
+			dst->s[dst->len] = '\0';
+		}
+	}
+	return 0;
+}
 
 /** Get the function parameter value as integer.
  *  @return  0 - Success

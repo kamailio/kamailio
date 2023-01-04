@@ -488,7 +488,6 @@ dlg_t * build_dlg_t_early(struct sip_msg *msg, struct dlg_cell * cell,
 					branch_id, cell->t->nr_of_outgoings);
 			goto error;
 		}
-		msg = msg;
 	}
 
 	if (!msg->contact && (parse_headers(msg,HDR_CONTACT_F,0)<0

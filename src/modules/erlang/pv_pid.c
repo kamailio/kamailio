@@ -246,7 +246,6 @@ int pv_pid_get_value(struct sip_msg *msg, pv_param_t *param,
 		break;
 	case SR_XTYPE_XAVP:
 	case SR_XTYPE_STR:
-	case SR_XTYPE_INT:
 	case SR_XTYPE_TIME:
 	case SR_XTYPE_LONG:
 	case SR_XTYPE_LLONG:

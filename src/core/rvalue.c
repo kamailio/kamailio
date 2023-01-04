@@ -82,6 +82,9 @@
 #define rv_unref(rv) ((--(rv)->refcnt)==0)
 
 
+/* control return code evaluation mode */
+int ksr_return_mode = 0;
+
 inline static void rval_force_clean(struct rvalue* rv)
 {
 	if (rv->flags & RV_CNT_ALLOCED_F){
@@ -332,7 +335,7 @@ char* rval_type_name(enum rval_type type)
 	switch(type){
 		case RV_NONE:
 			return "none";
-		case RV_INT:
+		case RV_LONG:
 			return "int";
 		case RV_STR:
 			return "str";
@@ -385,7 +388,7 @@ struct rvalue* rval_new(enum rval_type t, union rval_val* v, int extra_size)
 
 
 /**
- * @brief get rvalue basic type (RV_INT or RV_STR)
+ * @brief get rvalue basic type (RV_LONG or RV_STR)
  *
  * Given a rvalue it tries to determinte its basic type.
  * Fills val_cache if non-null and empty (can be used in other rval*
@@ -413,12 +416,12 @@ inline static enum rval_type rval_get_btype(struct run_act_ctx* h,
 	enum rval_type* ptype;
 
 	switch(rv->type){
-		case RV_INT:
+		case RV_LONG:
 		case RV_STR:
 			return rv->type;
 		case RV_BEXPR:
 		case RV_ACTION_ST:
-			return RV_INT;
+			return RV_LONG;
 		case RV_PVAR:
 			if (likely(val_cache && val_cache->cache_type==RV_CACHE_EMPTY)){
 				pv=&val_cache->c.pval;
@@ -431,10 +434,10 @@ inline static enum rval_type rval_get_btype(struct run_act_ctx* h,
 			if (likely(pv_get_spec_value(msg, &rv->v.pvs, pv)==0)){
 				if (pv->flags & PV_TYPE_INT){
 					if (likely(val_cache!=0))
-						val_cache->val_type=RV_INT;
+						val_cache->val_type=RV_LONG;
 					else
 						pv_value_destroy(pv);
-					return RV_INT;
+					return RV_LONG;
 				}else if (pv->flags & PV_VAL_STR){
 					if (likely(val_cache!=0))
 						val_cache->val_type=RV_STR;
@@ -469,8 +472,8 @@ inline static enum rval_type rval_get_btype(struct run_act_ctx* h,
 					*ptype=RV_STR;
 					return RV_STR;
 				}else{
-					*ptype=RV_INT;
-					return RV_INT;
+					*ptype=RV_LONG;
+					return RV_LONG;
 				}
 			}else{
 				*ptype=RV_NONE;
@@ -489,7 +492,7 @@ error:
 
 
 /** guess the type of an expression.
- * @return RV_INT, RV_STR or RV_NONE (when type could not be found,
+ * @return RV_LONG, RV_STR or RV_NONE (when type could not be found,
  * e.g. avp or pvar)
  */
 enum rval_type rve_guess_type( struct rval_expr* rve)
@@ -500,10 +503,10 @@ enum rval_type rve_guess_type( struct rval_expr* rve)
 				case RV_STR:
 				case RV_SEL:
 					return RV_STR;
-				case RV_INT:
+				case RV_LONG:
 				case RV_BEXPR:
 				case RV_ACTION_ST:
-					return RV_INT;
+					return RV_LONG;
 				case RV_PVAR:
 				case RV_AVP:
 				case RV_NONE:
@@ -541,8 +544,8 @@ enum rval_type rve_guess_type( struct rval_expr* rve)
 		case RVE_STREMPTY_OP:
 		case RVE_DEFINED_OP:
 		case RVE_NOTDEFINED_OP:
-		case RVE_INT_OP:
-			return RV_INT;
+		case RVE_LONG_OP:
+			return RV_LONG;
 		case RVE_PLUS_OP:
 			/* '+' evaluates to the type of the left operand */
 			return rve_guess_type(rve->left.rve);
@@ -572,7 +575,7 @@ int rve_is_constant(struct rval_expr* rve)
 			switch(rve->left.rval.type){
 				case RV_STR:
 					return 1;
-				case RV_INT:
+				case RV_LONG:
 					return 1;
 				case RV_SEL:
 				case RV_BEXPR:
@@ -591,7 +594,7 @@ int rve_is_constant(struct rval_expr* rve)
 		case RVE_STREMPTY_OP:
 		case RVE_DEFINED_OP:
 		case RVE_NOTDEFINED_OP:
-		case RVE_INT_OP:
+		case RVE_LONG_OP:
 		case RVE_STR_OP:
 			return rve_is_constant(rve->left.rve);
 		case RVE_MINUS_OP:
@@ -658,7 +661,7 @@ static int rve_op_unary(enum rval_expr_op op)
 		case RVE_STREMPTY_OP:
 		case RVE_DEFINED_OP:
 		case RVE_NOTDEFINED_OP:
-		case RVE_INT_OP:
+		case RVE_LONG_OP:
 		case RVE_STR_OP:
 			return 1;
 		case RVE_MINUS_OP:
@@ -700,7 +703,7 @@ static int rve_op_unary(enum rval_expr_op op)
 
 /**
  * @brief Returns 1 if expression is valid (type-wise)
- * @param type filled with the type of the expression (RV_INT, RV_STR or
+ * @param type filled with the type of the expression (RV_LONG, RV_STR or
  *                RV_NONE if it's dynamic)
  * @param rve  checked expression
  * @param bad_rve set on failure to the subexpression for which the
@@ -709,7 +712,7 @@ static int rve_op_unary(enum rval_expr_op op)
  * @param exp_t set on failure to the expected type for the bad
  * subexpression
  * @return 0 or 1 and sets *type to the resulting type
- * (RV_INT, RV_STR or RV_NONE if it can be found only at runtime)
+ * (RV_LONG, RV_STR or RV_NONE if it can be found only at runtime)
  */
 int rve_check_type(enum rval_type* type, struct rval_expr* rve,
 					struct rval_expr** bad_rve,
@@ -730,12 +733,12 @@ int rve_check_type(enum rval_type* type, struct rval_expr* rve,
 		case RVE_BOOL_OP:
 		case RVE_LNOT_OP:
 		case RVE_BNOT_OP:
-			*type=RV_INT;
+			*type=RV_LONG;
 			if (rve_check_type(&type1, rve->left.rve, bad_rve, bad_t, exp_t)){
 				if (type1==RV_STR){
 					if (bad_rve) *bad_rve=rve->left.rve;
 					if (bad_t) *bad_t=type1;
-					if (exp_t) *exp_t=RV_INT;
+					if (exp_t) *exp_t=RV_LONG;
 					return 0;
 				}
 				return 1;
@@ -760,12 +763,12 @@ int rve_check_type(enum rval_type* type, struct rval_expr* rve,
 		case RVE_IEQ_OP:
 		case RVE_IDIFF_OP:
 		case RVE_IPLUS_OP:
-			*type=RV_INT;
+			*type=RV_LONG;
 			if (rve_check_type(&type1, rve->left.rve, bad_rve, bad_t, exp_t)){
 				if (type1==RV_STR){
 					if (bad_rve) *bad_rve=rve->left.rve;
 					if (bad_t) *bad_t=type1;
-					if (exp_t) *exp_t=RV_INT;
+					if (exp_t) *exp_t=RV_LONG;
 					return 0;
 				}
 				if (rve_check_type(&type2, rve->right.rve, bad_rve,
@@ -773,7 +776,7 @@ int rve_check_type(enum rval_type* type, struct rval_expr* rve,
 					if (type2==RV_STR){
 						if (bad_rve) *bad_rve=rve->right.rve;
 						if (bad_t) *bad_t=type2;
-						if (exp_t) *exp_t=RV_INT;
+						if (exp_t) *exp_t=RV_LONG;
 						return 0;
 					}
 					return 1;
@@ -782,13 +785,13 @@ int rve_check_type(enum rval_type* type, struct rval_expr* rve,
 			return 0;
 		case RVE_EQ_OP:
 		case RVE_DIFF_OP:
-			*type=RV_INT;
+			*type=RV_LONG;
 			if (rve_check_type(&type1, rve->left.rve, bad_rve, bad_t, exp_t)){
 				if (rve_check_type(&type2, rve->right.rve, bad_rve, bad_t,
 										exp_t)){
 					if ((type2!=type1) && (type1!=RV_NONE) &&
 							(type2!=RV_NONE) &&
-							!(type1==RV_STR && type2==RV_INT)){
+							!(type1==RV_STR && type2==RV_LONG)){
 						if (bad_rve) *bad_rve=rve->right.rve;
 						if (bad_t) *bad_t=type2;
 						if (exp_t) *exp_t=type1;
@@ -805,7 +808,7 @@ int rve_check_type(enum rval_type* type, struct rval_expr* rve,
 									exp_t)){
 					if ((type2!=type1) && (type1!=RV_NONE) &&
 							(type2!=RV_NONE) &&
-							!(type1==RV_STR && type2==RV_INT)){
+							!(type1==RV_STR && type2==RV_LONG)){
 						if (bad_rve) *bad_rve=rve->right.rve;
 						if (bad_t) *bad_t=type2;
 						if (exp_t) *exp_t=type1;
@@ -823,13 +826,13 @@ int rve_check_type(enum rval_type* type, struct rval_expr* rve,
 									exp_t)){
 					if ((type2!=type1) && (type1!=RV_NONE) &&
 							(type2!=RV_NONE) &&
-							!(type1==RV_STR && type2==RV_INT)){
+							!(type1==RV_STR && type2==RV_LONG)){
 						if (bad_rve) *bad_rve=rve->right.rve;
 						if (bad_t) *bad_t=type2;
 						if (exp_t) *exp_t=type1;
 						return 0;
 					}
-					if (type1==RV_INT){
+					if (type1==RV_LONG){
 						if (bad_rve) *bad_rve=rve->left.rve;
 						if (bad_t) *bad_t=type1;
 						if (exp_t) *exp_t=RV_STR;
@@ -842,19 +845,19 @@ int rve_check_type(enum rval_type* type, struct rval_expr* rve,
 		case RVE_STREQ_OP:
 		case RVE_STRDIFF_OP:
 		case RVE_MATCH_OP:
-			*type=RV_INT;
+			*type=RV_LONG;
 			if (rve_check_type(&type1, rve->left.rve, bad_rve, bad_t, exp_t)){
 				if (rve_check_type(&type2, rve->right.rve, bad_rve, bad_t,
 									exp_t)){
 					if ((type2!=type1) && (type1!=RV_NONE) &&
 							(type2!=RV_NONE) &&
-							!(type1==RV_STR && type2==RV_INT)){
+							!(type1==RV_STR && type2==RV_LONG)){
 						if (bad_rve) *bad_rve=rve->right.rve;
 						if (bad_t) *bad_t=type2;
 						if (exp_t) *exp_t=type1;
 						return 0;
 					}
-					if (type1==RV_INT){
+					if (type1==RV_LONG){
 						if (bad_rve) *bad_rve=rve->left.rve;
 						if (bad_t) *bad_t=type1;
 						if (exp_t) *exp_t=RV_STR;
@@ -868,9 +871,9 @@ int rve_check_type(enum rval_type* type, struct rval_expr* rve,
 		case RVE_STREMPTY_OP:
 		case RVE_DEFINED_OP:
 		case RVE_NOTDEFINED_OP:
-			*type=RV_INT;
+			*type=RV_LONG;
 			if (rve_check_type(&type1, rve->left.rve, bad_rve, bad_t, exp_t)){
-				if (type1==RV_INT){
+				if (type1==RV_LONG){
 					if (bad_rve) *bad_rve=rve->left.rve;
 					if (bad_t) *bad_t=type1;
 					if (exp_t) *exp_t=RV_STR;
@@ -879,8 +882,8 @@ int rve_check_type(enum rval_type* type, struct rval_expr* rve,
 				return 1;
 			}
 			break;
-		case RVE_INT_OP:
-			*type=RV_INT;
+		case RVE_LONG_OP:
+			*type=RV_LONG;
 			return 1;
 			break;
 		case RVE_STR_OP:
@@ -902,8 +905,8 @@ int rve_check_type(enum rval_type* type, struct rval_expr* rve,
 
 
 
-/** get the integer value of an rvalue.
- * *i=(int)rv
+/** get the long int value of an rvalue.
+ * *i=(long int)rv
  * if rv == undefined select, avp or pvar, return 0.
  * if an error occurs while evaluating a select, avp or pvar, behave as
  * for the undefined case (and return success).
@@ -915,8 +918,8 @@ int rve_check_type(enum rval_type* type, struct rval_expr* rve,
  *
  * @return 0 on success, \<0 on error and EXPR_DROP on drop
  */
-int rval_get_int(struct run_act_ctx* h, struct sip_msg* msg,
-								int* i, struct rvalue* rv,
+long rval_get_long(struct run_act_ctx* h, struct sip_msg* msg,
+								long* i, struct rvalue* rv,
 								struct rval_cache* cache)
 {
 	avp_t* r_avp;
@@ -931,7 +934,7 @@ int rval_get_int(struct run_act_ctx* h, struct sip_msg* msg,
 	s=0;
 	ret=0;
 	switch(rv->type){
-		case RV_INT:
+		case RV_LONG:
 			*i=rv->v.l;
 			break;
 		case RV_STR:
@@ -946,7 +949,11 @@ int rval_get_int(struct run_act_ctx* h, struct sip_msg* msg,
 			break;
 		case RV_ACTION_ST:
 			if (rv->v.action) {
-				*i=(run_actions_safe(h, rv->v.action, msg)>0);
+				if(unlikely(ksr_return_mode==1)) {
+					*i=run_actions_safe(h, rv->v.action, msg);
+				} else {
+					*i=(run_actions_safe(h, rv->v.action, msg)>0);
+				}
 				h->run_flags &= ~(RETURN_R_F|BREAK_R_F);
 				/* catch return & break in expr*/
 			} else
@@ -964,7 +971,7 @@ int rval_get_int(struct run_act_ctx* h, struct sip_msg* msg,
 			goto rv_str;
 		case RV_AVP:
 			if (unlikely(cache && cache->cache_type==RV_CACHE_AVP)){
-				if (likely(cache->val_type==RV_INT)){
+				if (likely(cache->val_type==RV_LONG)){
 					*i=cache->c.avp_val.n;
 				}else if (cache->val_type==RV_STR){
 					s=&cache->c.avp_val.s;
@@ -989,7 +996,7 @@ int rval_get_int(struct run_act_ctx* h, struct sip_msg* msg,
 			break;
 		case RV_PVAR:
 			if (unlikely(cache && cache->cache_type==RV_CACHE_PVAR)){
-				if (likely((cache->val_type==RV_INT) ||
+				if (likely((cache->val_type==RV_LONG) ||
 								(cache->c.pval.flags & PV_VAL_INT))){
 					*i=cache->c.pval.ri;
 				}else if (cache->val_type==RV_STR){
@@ -1033,7 +1040,7 @@ rv_str:
 	/* rv is of string type => try to convert it to int */
 	/* if "" => 0 (most likely case) */
 	if (likely(s->len==0)) *i=0;
-	else if (unlikely(str2sint(s, i)!=0)){
+	else if (unlikely(str2slong(s, i)!=0)){
 		/* dec to int failed, try hex to int */
 		if(!(s->len>2 && s->s[0]=='0' && (s->s[1]=='x' || s->s[1]=='X')
 					&& (hexstr2int(s->s+2, s->len-2, (unsigned int*)i)==0))) {
@@ -1071,36 +1078,36 @@ error:
 			(rve)->fpos.e_line, rve->fpos.e_col )
 
 
-/** macro for checking and handling rval_get_int() retcode.
- * check if the return code is an rval_get_int error and if so
+/** macro for checking and handling rval_get_long() retcode.
+ * check if the return code is an rval_get_long error and if so
  * handle the error (e.g. print a log message, ignore the error by
  * setting ret to 0 a.s.o.)
- * @param ret - retcode as returned by rval_get_int() (might be changed)
+ * @param ret - retcode as returned by rval_get_long() (might be changed)
  * @param txt - warning message txt (no pointer allowed)
  * @param rve - rval_expr, used to access the config. pos
  */
-#if defined RVAL_GET_INT_ERR_WARN && defined RVAL_GET_INT_ERR_IGN
-#define rval_get_int_handle_ret(ret, txt, rve) \
+#if defined RVAL_GET_LONG_ERR_WARN && defined RVAL_GET_LONG_ERR_IGN
+#define rval_get_LONG_handle_ret(ret, txt, rve) \
 	do { \
 		if (unlikely((ret)<0)) { \
 			RVE_LOG(L_WARN, rve, txt); \
 			(ret)=0; \
 		} \
 	}while(0)
-#elif defined RVAL_GET_INT_ERR_WARN
-#define rval_get_int_handle_ret(ret, txt, rve) \
+#elif defined RVAL_GET_LONG_ERR_WARN
+#define rval_get_long_handle_ret(ret, txt, rve) \
 	do { \
 		if (unlikely((ret)<0)) \
 			RVE_LOG(L_WARN, rve, txt); \
 	}while(0)
-#elif defined RVAL_GET_INT_ERR_IGN
-#define rval_get_int_handle_ret(ret, txt, rve) \
+#elif defined RVAL_GET_LONG_ERR_IGN
+#define rval_get_long_handle_ret(ret, txt, rve) \
 	do { \
 		if (unlikely((ret)<0)) \
 				(ret)=0; \
 	} while(0)
 #else
-#define rval_get_int_handle_ret(ret, txt, rve) /* do nothing */
+#define rval_get_long_handle_ret(ret, txt, rve) /* do nothing */
 #endif
 
 
@@ -1141,7 +1148,7 @@ int rval_get_tmp_str(struct run_act_ctx* h, struct sip_msg* msg,
 	}
 
 	switch(rv->type){
-		case RV_INT:
+		case RV_LONG:
 			tmpv->s=sint2strbuf(rv->v.l, tmp_cache->i2s,
 								sizeof(tmp_cache->i2s), &tmpv->len);
 			tmp_cache->cache_type = RV_CACHE_INT2STR;
@@ -1187,7 +1194,7 @@ int rval_get_tmp_str(struct run_act_ctx* h, struct sip_msg* msg,
 			if (likely(cache && cache->cache_type==RV_CACHE_AVP)){
 				if (likely(cache->val_type==RV_STR)){
 					*tmpv=cache->c.avp_val.s;
-				}else if (cache->val_type==RV_INT){
+				}else if (cache->val_type==RV_LONG){
 					i=cache->c.avp_val.n;
 					tmpv->s=sint2strbuf(i, tmp_cache->i2s,
 										sizeof(tmp_cache->i2s), &tmpv->len);
@@ -1217,7 +1224,7 @@ int rval_get_tmp_str(struct run_act_ctx* h, struct sip_msg* msg,
 			if (likely(cache && cache->cache_type==RV_CACHE_PVAR)){
 				if (likely(cache->val_type==RV_STR)){
 					*tmpv=cache->c.pval.rs;
-				}else if (cache->val_type==RV_INT){
+				}else if (cache->val_type==RV_LONG){
 					i=cache->c.pval.ri;
 					tmpv->s=sint2strbuf(i, tmp_cache->i2s,
 										sizeof(tmp_cache->i2s), &tmpv->len);
@@ -1328,7 +1335,7 @@ struct rvalue* rval_convert(struct run_act_ctx* h, struct sip_msg* msg,
 							enum rval_type type, struct rvalue* v,
 							struct rval_cache* c)
 {
-	int i;
+	long i;
 	struct rval_cache tmp_cache;
 	str tmp;
 	struct rvalue* ret;
@@ -1339,11 +1346,11 @@ struct rvalue* rval_convert(struct run_act_ctx* h, struct sip_msg* msg,
 		return v;
 	}
 	switch(type){
-		case RV_INT:
-			if (unlikely(rval_get_int(h, msg, &i, v, c) < 0))
+		case RV_LONG:
+			if (unlikely(rval_get_long(h, msg, &i, v, c) < 0))
 				return 0;
 			val.l=i;
-			return rval_new(RV_INT, &val, 0);
+			return rval_new(RV_LONG, &val, 0);
 		case RV_STR:
 			rval_cache_init(&tmp_cache);
 			if (unlikely(rval_get_tmp_str(h, msg, &tmp, v, c, &tmp_cache) < 0))
@@ -1365,9 +1372,9 @@ struct rvalue* rval_convert(struct run_act_ctx* h, struct sip_msg* msg,
 
 
 /** integer operation: *res= op v.
- * @return 0 on succes, \<0 on error
+ * @return 0 on success, \<0 on error
  */
-inline static int int_intop1(int* res, enum rval_expr_op op, int v)
+inline static int long_longop1(long* res, enum rval_expr_op op, long v)
 {
 	switch(op){
 		case RVE_UMINUS_OP:
@@ -1392,9 +1399,9 @@ inline static int int_intop1(int* res, enum rval_expr_op op, int v)
 
 
 /** integer operation: *res= v1 op v2
- * @return 0 on succes, \<0 on error
+ * @return 0 on success, \<0 on error
  */
-inline static int int_intop2(int* res, enum rval_expr_op op, int v1, int v2)
+inline static int long_longop2(long* res, enum rval_expr_op op, long v1, long v2)
 {
 	switch(op){
 		case RVE_PLUS_OP:
@@ -1479,7 +1486,7 @@ inline static int int_intop2(int* res, enum rval_expr_op op, int v1, int v2)
  * Warning: rv1 & rv2 must be RV_STR
  * @return 0 on success, -1 on error
  */
-inline static int bool_rvstrop2( enum rval_expr_op op, int* res,
+inline static int bool_rvstrop2( enum rval_expr_op op, long* res,
 								struct rvalue* rv1, struct rvalue* rv2)
 {
 	str* s1;
@@ -1525,9 +1532,9 @@ error:
 
 
 /** integer returning operation on string: *res= op str (returns integer)
- * @return 0 on succes, \<0 on error
+ * @return 0 on success, \<0 on error
  */
-inline static int int_strop1(int* res, enum rval_expr_op op, str* s1)
+inline static int long_strop1(long* res, enum rval_expr_op op, str* s1)
 {
 	switch(op){
 		case RVE_STRLEN_OP:
@@ -1543,105 +1550,6 @@ inline static int int_strop1(int* res, enum rval_expr_op op, str* s1)
 	}
 	return 0;
 }
-
-
-#if 0
-/** integer operation: ret= op v (returns a rvalue).
- * @return rvalue on success, 0 on error
- */
-inline static struct rvalue* rval_intop1(struct run_act_ctx* h,
-											struct sip_msg* msg,
-											enum rval_expr_op op,
-											struct rvalue* v)
-{
-	struct rvalue* rv2;
-	struct rvalue* ret;
-	int i;
-
-	i=0;
-	rv2=rval_convert(h, msg, RV_INT, v, 0);
-	if (unlikely(rv2==0)){
-		LM_ERR("rval int conversion failed\n");
-		goto error;
-	}
-	if (unlikely(int_intop1(&i, op, rv2->v.l)<0))
-		goto error;
-	if (rv_chg_in_place(rv2)){
-		ret=rv2;
-		rv_ref(ret);
-	}else if (rv_chg_in_place(v)){
-		ret=v;
-		rv_ref(ret);
-	}else{
-		ret=rval_new(RV_INT, &rv2->v, 0);
-		if (unlikely(ret==0)){
-			LM_ERR("eval out of memory\n");
-			goto error;
-		}
-	}
-	rval_destroy(rv2);
-	ret->v.l=i;
-	return ret;
-error:
-	rval_destroy(rv2);
-	return 0;
-}
-
-
-
-/** integer operation: ret= l op r (returns a rvalue).
- * @return rvalue on success, 0 on error
- */
-inline static struct rvalue* rval_intop2(struct run_act_ctx* h,
-											struct sip_msg* msg,
-											enum rval_expr_op op,
-											struct rvalue* l,
-											struct rvalue* r)
-{
-	struct rvalue* rv1;
-	struct rvalue* rv2;
-	struct rvalue* ret;
-	int i;
-
-	rv2=rv1=0;
-	ret=0;
-	if ((rv1=rval_convert(h, msg, RV_INT, l, 0))==0)
-		goto error;
-	if ((rv2=rval_convert(h, msg, RV_INT, r, 0))==0)
-		goto error;
-	if (unlikely(int_intop2(&i, op, rv1->v.l, rv2->v.l)<0))
-		goto error;
-	if (rv_chg_in_place(rv1)){
-		/* try reusing rv1 */
-		ret=rv1;
-		rv_ref(ret);
-	}else if (rv_chg_in_place(rv2)){
-		/* try reusing rv2 */
-		ret=rv2;
-		rv_ref(ret);
-	}else if ((l->type==RV_INT) && (rv_chg_in_place(l))){
-		ret=l;
-		rv_ref(ret);
-	} else if ((r->type==RV_INT) && (rv_chg_in_place(r))){
-		ret=r;
-		rv_ref(ret);
-	}else{
-		ret=rval_new(RV_INT, &rv1->v, 0);
-		if (unlikely(ret==0)){
-			LM_ERR("rv eval out of memory\n");
-			goto error;
-		}
-	}
-	rval_destroy(rv1);
-	rval_destroy(rv2);
-	ret->v.l=i;
-	return ret;
-error:
-	rval_destroy(rv1);
-	rval_destroy(rv2);
-	return 0;
-}
-#endif /* #if 0 */
 
 
 /** string add operation: ret= l . r (returns a rvalue).
@@ -1769,7 +1677,7 @@ error:
  */
 inline static int rval_str_lop2(struct run_act_ctx* h,
 						struct sip_msg* msg,
-						int* res,
+						long* res,
 						enum rval_expr_op op,
 						struct rvalue* l,
 						struct rval_cache* c1,
@@ -1811,9 +1719,9 @@ error:
  * @param c1 rvalue cache
  * @return 0 success, -1 on error
  */
-inline static int rval_int_strop1(struct run_act_ctx* h,
+inline static int rval_long_strop1(struct run_act_ctx* h,
 						struct sip_msg* msg,
-						int* res,
+						long* res,
 						enum rval_expr_op op,
 						struct rvalue* l,
 						struct rval_cache* c1)
@@ -1825,7 +1733,7 @@ inline static int rval_int_strop1(struct run_act_ctx* h,
 	ret=0;
 	if ((rv1=rval_convert(h, msg, RV_STR, l, c1))==0)
 		goto error;
-	ret=int_strop1(res, op, &rv1->v.s);
+	ret=long_strop1(res, op, &rv1->v.s);
 	rval_destroy(rv1);
 	return ret;
 error:
@@ -1850,7 +1758,7 @@ error:
  * undefined (and it's not reported)
  */
 inline static int rv_defined(struct run_act_ctx* h,
-						struct sip_msg* msg, int* res,
+						struct sip_msg* msg, long* res,
 						struct rvalue* rv, struct rval_cache* cache)
 {
 	avp_t* r_avp;
@@ -1914,8 +1822,8 @@ inline static int rv_defined(struct run_act_ctx* h,
  * @param rve rvalue expression
  * @return 0 on success, -1 on error
  */
-inline static int int_rve_defined(struct run_act_ctx* h,
-						struct sip_msg* msg, int* res,
+inline static int long_rve_defined(struct run_act_ctx* h,
+						struct sip_msg* msg, long* res,
 						struct rval_expr* rve)
 {
 	/* only a rval can be undefined, any expression consisting on more
@@ -1928,15 +1836,15 @@ inline static int int_rve_defined(struct run_act_ctx* h,
 
 
 
-/** evals an integer expr  to an int.
+/** evals a long expr to a long.
  *
  *  *res=(int)eval(rve)
  *  @return 0 on success, \<0 on error
  */
-int rval_expr_eval_int( struct run_act_ctx* h, struct sip_msg* msg,
-						int* res, struct rval_expr* rve)
+int rval_expr_eval_long( struct run_act_ctx* h, struct sip_msg* msg,
+						long* res, struct rval_expr* rve)
 {
-	int i1, i2, ret;
+	long i1, i2, ret;
 	struct rval_cache c1, c2;
 	struct rvalue* rv1;
 	struct rvalue* rv2;
@@ -1944,8 +1852,8 @@ int rval_expr_eval_int( struct run_act_ctx* h, struct sip_msg* msg,
 	ret=-1;
 	switch(rve->op){
 		case RVE_RVAL_OP:
-			ret=rval_get_int(h, msg, res,  &rve->left.rval, 0);
-			rval_get_int_handle_ret(ret, "rval expression conversion to int"
+			ret=rval_get_long(h, msg, res,  &rve->left.rval, 0);
+			rval_get_long_handle_ret(ret, "rval expression conversion to int"
 										" failed", rve);
 			break;
 		case RVE_UMINUS_OP:
@@ -1953,12 +1861,12 @@ int rval_expr_eval_int( struct run_act_ctx* h, struct sip_msg* msg,
 		case RVE_LNOT_OP:
 		case RVE_BNOT_OP:
 			if (unlikely(
-					(ret=rval_expr_eval_int(h, msg, &i1, rve->left.rve)) <0) )
+					(ret=rval_expr_eval_long(h, msg, &i1, rve->left.rve)) <0) )
 				break;
-			ret=int_intop1(res, rve->op, i1);
+			ret=long_longop1(res, rve->op, i1);
 			break;
-		case RVE_INT_OP:
-			ret=rval_expr_eval_int(h, msg, res, rve->left.rve);
+		case RVE_LONG_OP:
+			ret=rval_expr_eval_long(h, msg, res, rve->left.rve);
 			break;
 		case RVE_MUL_OP:
 		case RVE_DIV_OP:
@@ -1978,21 +1886,21 @@ int rval_expr_eval_int( struct run_act_ctx* h, struct sip_msg* msg,
 		case RVE_IEQ_OP:
 		case RVE_IDIFF_OP:
 			if (unlikely(
-					(ret=rval_expr_eval_int(h, msg, &i1, rve->left.rve)) <0) )
+					(ret=rval_expr_eval_long(h, msg, &i1, rve->left.rve)) <0) )
 				break;
 			if (unlikely(
-					(ret=rval_expr_eval_int(h, msg, &i2, rve->right.rve)) <0) )
+					(ret=rval_expr_eval_long(h, msg, &i2, rve->right.rve)) <0) )
 				break;
-			ret=int_intop2(res, rve->op, i1, i2);
+			ret=long_longop2(res, rve->op, i1, i2);
 			break;
 		case RVE_LAND_OP:
 			if (unlikely(
-					(ret=rval_expr_eval_int(h, msg, &i1, rve->left.rve)) <0) )
+					(ret=rval_expr_eval_long(h, msg, &i1, rve->left.rve)) <0) )
 				break;
 			if (i1==0){
 				*res=0;
 			}else{
-				if (unlikely( (ret=rval_expr_eval_int(h, msg, &i2,
+				if (unlikely( (ret=rval_expr_eval_long(h, msg, &i2,
 										rve->right.rve)) <0) )
 					break;
 				*res=i1 && i2;
@@ -2001,12 +1909,12 @@ int rval_expr_eval_int( struct run_act_ctx* h, struct sip_msg* msg,
 			break;
 		case RVE_LOR_OP:
 			if (unlikely(
-					(ret=rval_expr_eval_int(h, msg, &i1, rve->left.rve)) <0) )
+					(ret=rval_expr_eval_long(h, msg, &i1, rve->left.rve)) <0) )
 				break;
 			if (i1){
 				*res=1;
 			}else{
-				if (unlikely( (ret=rval_expr_eval_int(h, msg, &i2,
+				if (unlikely( (ret=rval_expr_eval_long(h, msg, &i2,
 										rve->right.rve)) <0) )
 					break;
 				*res=i1 || i2;
@@ -2021,7 +1929,7 @@ int rval_expr_eval_int( struct run_act_ctx* h, struct sip_msg* msg,
 			 * if left is undef, look at right and convert to right type
 			 */
 			rval_cache_init(&c1);
-			if (unlikely( (ret=rval_expr_eval_rvint(h, msg, &rv1, &i1,
+			if (unlikely( (ret=rval_expr_eval_rvlong(h, msg, &rv1, &i1,
 													rve->left.rve, &c1))<0)){
 				/* error */
 				rval_cache_clean(&c1);
@@ -2030,10 +1938,10 @@ int rval_expr_eval_int( struct run_act_ctx* h, struct sip_msg* msg,
 			if (likely(rv1==0)){
 				/* int */
 				rval_cache_clean(&c1);
-				if (unlikely( (ret=rval_expr_eval_int(h, msg, &i2,
+				if (unlikely( (ret=rval_expr_eval_long(h, msg, &i2,
 														rve->right.rve)) <0) )
 					break;  /* error */
-				ret=int_intop2(res, rve->op, i1, i2);
+				ret=long_longop2(res, rve->op, i1, i2);
 			}else{
 				/* not int => str or undef */
 				/* check for undefined left operand */
@@ -2057,7 +1965,7 @@ int rval_expr_eval_int( struct run_act_ctx* h, struct sip_msg* msg,
 					/*  undef == val
 					 *  => convert to (type_of(val)) (undef) == val */
 					rval_cache_init(&c2);
-					if (unlikely( (ret=rval_expr_eval_rvint(h, msg, &rv2, &i2,
+					if (unlikely( (ret=rval_expr_eval_rvlong(h, msg, &rv2, &i2,
 													rve->right.rve, &c2))<0)){
 						/* error */
 						rval_cache_clean(&c1);
@@ -2067,7 +1975,7 @@ int rval_expr_eval_int( struct run_act_ctx* h, struct sip_msg* msg,
 					}
 					if (rv2==0){
 						/* int */
-						ret=int_intop2(res, rve->op, 0 /* undef */, i2);
+						ret=long_longop2(res, rve->op, 0 /* undef */, i2);
 					}else{
 						/* str or undef */
 						ret=rval_str_lop2(h, msg, res, rve->op, rv1, &c1,
@@ -2102,15 +2010,15 @@ int rval_expr_eval_int( struct run_act_ctx* h, struct sip_msg* msg,
 				break;
 			}
 			/* convert to int */
-			ret=rval_get_int(h, msg, res, rv1, 0); /* convert to int */
-			rval_get_int_handle_ret(ret, "rval expression conversion to int"
+			ret=rval_get_long(h, msg, res, rv1, 0); /* convert to int */
+			rval_get_long_handle_ret(ret, "rval expression conversion to int"
 										" failed", rve);
 			rval_destroy(rv1);
 			break;
 		case RVE_STR_OP:
 			/* (str)expr => eval expression */
 			rval_cache_init(&c1);
-			if (unlikely((ret=rval_expr_eval_rvint(h, msg, &rv1, res,
+			if (unlikely((ret=rval_expr_eval_rvlong(h, msg, &rv1, res,
 													rve->left.rve, &c1))<0)){
 				/* error */
 				rval_cache_clean(&c1);
@@ -2118,36 +2026,19 @@ int rval_expr_eval_int( struct run_act_ctx* h, struct sip_msg* msg,
 			}
 			if (unlikely(rv1)){
 				/* expr evaluated to string => (int)(str)v == (int)v */
-				ret=rval_get_int(h, msg, res, rv1, &c1); /* convert to int */
-				rval_get_int_handle_ret(ret, "rval expression conversion"
+				ret=rval_get_long(h, msg, res, rv1, &c1); /* convert to int */
+				rval_get_long_handle_ret(ret, "rval expression conversion"
 												" to int failed", rve);
 				rval_destroy(rv1);
 				rval_cache_clean(&c1);
 			}
-			/* else (rv1==0)
-			 * => expr evaluated to int =>
-			 * return (int)(str)v == (int)v => do nothing */
 			break;
 
-#if 0
-			/* same thing as above, but in a not optimized, easier to
-			 * understand way */
-			/* 1. (str) expr => eval expr */
-			if (unlikely((rv1=rval_expr_eval(h, msg, rve->left.rve))==0)){
-				ret=-1;
-				break;
-			}
-			/* 2. convert to str and then convert to int
-			 * but since (int)(str)v == (int)v skip over (str)v */
-			ret=rval_get_int(h, msg, res, rv1, 0); /* convert to int */
-			rval_destroy(rv1);
-			break;
-#endif
 		case RVE_DEFINED_OP:
-			ret=int_rve_defined(h, msg, res, rve->left.rve);
+			ret=long_rve_defined(h, msg, res, rve->left.rve);
 			break;
 		case RVE_NOTDEFINED_OP:
-			ret=int_rve_defined(h, msg, res, rve->left.rve);
+			ret=long_rve_defined(h, msg, res, rve->left.rve);
 			*res = !(*res);
 			break;
 		case RVE_STREQ_OP:
@@ -2172,7 +2063,7 @@ int rval_expr_eval_int( struct run_act_ctx* h, struct sip_msg* msg,
 					ret=-1;
 					break;
 			}
-			ret=rval_int_strop1(h, msg, res, rve->op, rv1, 0);
+			ret=rval_long_strop1(h, msg, res, rve->op, rv1, 0);
 			rval_destroy(rv1);
 			break;
 		case RVE_SELVALEXP_OP:
@@ -2211,10 +2102,10 @@ int rval_expr_eval_int( struct run_act_ctx* h, struct sip_msg* msg,
  * when done.
  * @return 0 on success, -1 on error, sets *res_rv or *res_i.
  */
-int rval_expr_eval_rvint(			struct run_act_ctx* h,
+int rval_expr_eval_rvlong(			struct run_act_ctx* h,
 									struct sip_msg* msg,
 									struct rvalue** res_rv,
-									int* res_i,
+									long* res_i,
 									struct rval_expr* rve,
 									struct rval_cache* cache
 									)
@@ -2223,7 +2114,7 @@ int rval_expr_eval_rvint(			struct run_act_ctx* h,
 	struct rvalue* rv2;
 	struct rval_cache c1; /* local cache */
 	int ret;
-	int r, i, j;
+	long r, i, j;
 	enum rval_type type;
 
 	rv1=0;
@@ -2234,9 +2125,9 @@ int rval_expr_eval_rvint(			struct run_act_ctx* h,
 			rv1=&rve->left.rval;
 			rv_ref(rv1);
 			type=rval_get_btype(h, msg, rv1, cache);
-			if (type==RV_INT){
-					r=rval_get_int(h, msg, res_i, rv1, cache);
-					rval_get_int_handle_ret(r, "rval expression conversion"
+			if (type==RV_LONG){
+					r=rval_get_long(h, msg, res_i, rv1, cache);
+					rval_get_long_handle_ret(r, "rval expression conversion"
 												" to int failed", rve);
 					*res_rv=0;
 					ret=r; /* equiv. to if (r<0) goto error */
@@ -2279,14 +2170,14 @@ int rval_expr_eval_rvint(			struct run_act_ctx* h,
 		case RVE_STREMPTY_OP:
 		case RVE_DEFINED_OP:
 		case RVE_NOTDEFINED_OP:
-		case RVE_INT_OP:
+		case RVE_LONG_OP:
 			/* operator forces integer type */
-			ret=rval_expr_eval_int(h, msg, res_i, rve);
+			ret=rval_expr_eval_long(h, msg, res_i, rve);
 			*res_rv=0;
 			break;
 		case RVE_PLUS_OP:
 			rval_cache_init(&c1);
-			r=rval_expr_eval_rvint(h, msg, &rv1, &i, rve->left.rve, &c1);
+			r=rval_expr_eval_rvlong(h, msg, &rv1, &i, rve->left.rve, &c1);
 			if (unlikely(r<0)){
 				LM_ERR("rval expression evaluation failed (%d,%d-%d,%d)\n",
 						rve->left.rve->fpos.s_line, rve->left.rve->fpos.s_col,
@@ -2296,7 +2187,7 @@ int rval_expr_eval_rvint(			struct run_act_ctx* h,
 				goto error;
 			}
 			if (rv1==0){
-				if (unlikely((r=rval_expr_eval_int(h, msg, &j,
+				if (unlikely((r=rval_expr_eval_long(h, msg, &j,
 														rve->right.rve))<0)){
 						LM_ERR("rval expression evaluation failed (%d,%d-%d,%d)"
 								"\n", rve->right.rve->fpos.s_line,
@@ -2306,7 +2197,7 @@ int rval_expr_eval_rvint(			struct run_act_ctx* h,
 						rval_cache_clean(&c1);
 						goto error;
 				}
-				ret=int_intop2(res_i, rve->op, i, j);
+				ret=long_longop2(res_i, rve->op, i, j);
 				*res_rv=0;
 			}else{
 				rv2=rval_expr_eval(h, msg, rve->right.rve);
@@ -2371,7 +2262,7 @@ struct rvalue* rval_expr_eval(struct run_act_ctx* h, struct sip_msg* msg,
 	struct rvalue* ret;
 	struct rval_cache c1;
 	union rval_val v;
-	int r, i, j;
+	long r, i, j;
 	enum rval_type type;
 
 	rv1=0;
@@ -2413,12 +2304,12 @@ struct rvalue* rval_expr_eval(struct run_act_ctx* h, struct sip_msg* msg,
 		case RVE_STREMPTY_OP:
 		case RVE_DEFINED_OP:
 		case RVE_NOTDEFINED_OP:
-		case RVE_INT_OP:
+		case RVE_LONG_OP:
 			/* operator forces integer type */
-			r=rval_expr_eval_int(h, msg, &i, rve);
+			r=rval_expr_eval_long(h, msg, &i, rve);
 			if (likely(r==0)){
 				v.l=i;
-				ret=rval_new(RV_INT, &v, 0);
+				ret=rval_new(RV_LONG, &v, 0);
 				if (unlikely(ret==0)){
 					LM_ERR("rv eval int expression: out of memory\n");
 					goto error;
@@ -2442,16 +2333,16 @@ struct rvalue* rval_expr_eval(struct run_act_ctx* h, struct sip_msg* msg,
 			rval_cache_init(&c1);
 			type=rval_get_btype(h, msg, rv1, &c1);
 			switch(type){
-				case RV_INT:
-					r=rval_get_int(h, msg, &i, rv1, &c1);
-					rval_get_int_handle_ret(r, "rval expression left side "
+				case RV_LONG:
+					r=rval_get_long(h, msg, &i, rv1, &c1);
+					rval_get_long_handle_ret(r, "rval expression left side "
 												"conversion to int failed",
 											rve);
 					if (unlikely(r<0)){
 						rval_cache_clean(&c1);
 						goto error;
 					}
-					if (unlikely((r=rval_expr_eval_int(h, msg, &j,
+					if (unlikely((r=rval_expr_eval_long(h, msg, &j,
 														rve->right.rve))<0)){
 						rval_cache_clean(&c1);
 						LM_ERR("rval expression evaluation failed (%d,%d-%d,%d):"
@@ -2460,14 +2351,14 @@ struct rvalue* rval_expr_eval(struct run_act_ctx* h, struct sip_msg* msg,
 								rve->fpos.e_line, rve->fpos.e_col);
 						goto error;
 					}
-					int_intop2(&r, rve->op, i, j);
+					long_longop2(&r, rve->op, i, j);
 					if (rv_chg_in_place(rv1)){
 						rv1->v.l=r;
 						ret=rv1;
 						rv_ref(ret);
 					}else{
 						v.l=r;
-						ret=rval_new(RV_INT, &v, 0);
+						ret=rval_new(RV_LONG, &v, 0);
 						if (unlikely(ret==0)){
 							rval_cache_clean(&c1);
 							LM_ERR("rv eval int expression: out of memory\n");
@@ -2527,7 +2418,7 @@ struct rvalue* rval_expr_eval(struct run_act_ctx* h, struct sip_msg* msg,
 			break;
 		case RVE_SELVALEXP_OP:
 			/* operator forces integer type */
-			r=rval_expr_eval_int(h, msg, &i, rve->left.rve);
+			r=rval_expr_eval_long(h, msg, &i, rve->left.rve);
 			if (unlikely(r!=0)){
 				LM_ERR("rval expression evaluation failed (%d,%d-%d,%d)\n",
 						rve->fpos.s_line, rve->fpos.s_col,
@@ -2548,9 +2439,9 @@ struct rvalue* rval_expr_eval(struct run_act_ctx* h, struct sip_msg* msg,
 			rval_cache_init(&c1);
 			type=rval_get_btype(h, msg, rv1, &c1);
 			switch(type){
-				case RV_INT:
-					r=rval_get_int(h, msg, &i, rv1, &c1);
-					rval_get_int_handle_ret(r, "rval expression left side "
+				case RV_LONG:
+					r=rval_get_long(h, msg, &i, rv1, &c1);
+					rval_get_long_handle_ret(r, "rval expression left side "
 												"conversion to int failed",
 											rve);
 					if (unlikely(r<0)){
@@ -2558,7 +2449,7 @@ struct rvalue* rval_expr_eval(struct run_act_ctx* h, struct sip_msg* msg,
 						goto error;
 					}
 					v.l=i;
-					ret=rval_new(RV_INT, &v, 0);
+					ret=rval_new(RV_LONG, &v, 0);
 					if (unlikely(ret==0)){
 						rval_cache_clean(&c1);
 						LM_ERR("rv eval int expression: out of memory\n");
@@ -2645,7 +2536,7 @@ struct rval_expr* mk_rval_expr_v(enum rval_type rv_type, void* val,
 	memset(rve, 0, sizeof(*rve));
 	flags=0;
 	switch(rv_type){
-		case RV_INT:
+		case RV_LONG:
 			v.l=(long)val;
 			break;
 		case RV_STR:
@@ -2690,7 +2581,7 @@ struct rval_expr* mk_rval_expr_v(enum rval_type rv_type, void* val,
 
 
 /**
- * @brief Create a unary op. rval_expr
+ * @brief Create an unary op. rval_expr
  * ret= op rve1
  * @param op   - rval expr. unary operator
  * @param rve1 - rval expr. on which the operator will act.
@@ -2711,7 +2602,7 @@ struct rval_expr* mk_rval_expr1(enum rval_expr_op op, struct rval_expr* rve1,
 		case RVE_STREMPTY_OP:
 		case RVE_DEFINED_OP:
 		case RVE_NOTDEFINED_OP:
-		case RVE_INT_OP:
+		case RVE_LONG_OP:
 		case RVE_STR_OP:
 			break;
 		default:
@@ -2809,7 +2700,7 @@ static int rve_op_is_assoc(enum rval_expr_op op)
 		case RVE_STREMPTY_OP:
 		case RVE_DEFINED_OP:
 		case RVE_NOTDEFINED_OP:
-		case RVE_INT_OP:
+		case RVE_LONG_OP:
 		case RVE_STR_OP:
 			/* one operand expression => cannot be assoc. */
 			return 0;
@@ -2867,7 +2758,7 @@ static int rve_op_is_commutative(enum rval_expr_op op)
 		case RVE_STREMPTY_OP:
 		case RVE_DEFINED_OP:
 		case RVE_NOTDEFINED_OP:
-		case RVE_INT_OP:
+		case RVE_LONG_OP:
 		case RVE_STR_OP:
 			/* one operand expression => cannot be commut. */
 			return 0;
@@ -2915,70 +2806,11 @@ static int rve_op_is_commutative(enum rval_expr_op op)
 }
 
 
-#if 0
-/** returns true if the rval expr can be optimized to an int.
- *  (if left & right are leafs (RVE_RVAL_OP) and both of them are
- *   ints return true, else false)
- *  @return 0 or 1
- */
-static int rve_can_optimize_int(struct rval_expr* rve)
-{
-	if (scr_opt_lev<1)
-		return 0;
-	if (rve->op == RVE_RVAL_OP)
-		return 0;
-	if (rve->left.rve->op != RVE_RVAL_OP)
-		return 0;
-	if (rve->left.rve->left.rval.type!=RV_INT)
-		return 0;
-	if (rve->right.rve){
-		if  (rve->right.rve->op != RVE_RVAL_OP)
-			return 0;
-		if (rve->right.rve->left.rval.type!=RV_INT)
-			return 0;
-	}
-	LM_DBG("left %d, right %d\n",
-			rve->left.rve->op, rve->right.rve?rve->right.rve->op:0);
-	return 1;
-}
-
-
-
-/** returns true if the rval expr can be optimized to a str.
- *  (if left & right are leafs (RVE_RVAL_OP) and both of them are
- *   str or left is str and right is int return true, else false)
- *  @return 0 or 1
- */
-static int rve_can_optimize_str(struct rval_expr* rve)
-{
-	if (scr_opt_lev<1)
-		return 0;
-	if (rve->op == RVE_RVAL_OP)
-		return 0;
-	LM_DBG("left %d, right %d\n",
-			rve->left.rve->op, rve->right.rve?rve->right.rve->op:0);
-	if (rve->left.rve->op != RVE_RVAL_OP)
-		return 0;
-	if (rve->left.rve->left.rval.type!=RV_STR)
-		return 0;
-	if (rve->right.rve){
-		if  (rve->right.rve->op != RVE_RVAL_OP)
-			return 0;
-		if ((rve->right.rve->left.rval.type!=RV_STR) &&
-				(rve->right.rve->left.rval.type!=RV_INT))
-			return 0;
-	}
-	return 1;
-}
-#endif
-
-
-
 static int fix_rval(struct rvalue* rv, struct rval_expr* rve)
 {
 	LM_DBG("RV fixing type %d\n", rv->type);
 	switch(rv->type){
-		case RV_INT:
+		case RV_LONG:
 			/*nothing to do*/
 			LM_DBG("RV is int: %d\n", (int)rv->v.l);
 			return 0;
@@ -3065,13 +2897,13 @@ static int rve_replace_with_ct_rv(struct rval_expr* rve, struct rvalue* rv)
 {
 	enum rval_type type;
 	int flags;
-	int i;
+	long i;
 	union rval_val v;
 
 	type=rv->type;
 	flags=0;
-	if (rv->type==RV_INT){
-		if (rval_get_int(0, 0, &i, rv, 0)!=0){
+	if (rv->type==RV_LONG){
+		if (rval_get_long(0, 0, &i, rv, 0)!=0){
 			LM_BUG("unexpected int evaluation failure (%d,%d-%d,%d)\n",
 					rve->fpos.s_line, rve->fpos.s_col,
 					rve->fpos.e_line, rve->fpos.e_col);
@@ -3219,7 +3051,7 @@ static int rve_opt_01(struct rval_expr* rve, enum rval_type rve_type)
 	}while(0)
 
 /* helper macro: replace in-place an int type rve with v (another rve).*/
-#define replace_int_rve(e, v) replace_rve_type_cast(e, v, INT)
+#define replace_long_rve(e, v) replace_rve_type_cast(e, v, LONG)
 /* helper macro: replace in-place a str type rve with v (another rve).*/
 #define replace_str_rve(e, v) replace_rve_type_cast(e, v, STR)
 
@@ -3249,7 +3081,7 @@ static int rve_opt_01(struct rval_expr* rve, enum rval_type rve_type)
 		goto error;
 	}
 	op=rve->op;
-	if (rv->type==RV_INT){
+	if (rv->type==RV_LONG){
 		i=rv->v.l;
 		switch(op){
 			case RVE_MUL_OP:
@@ -3263,7 +3095,7 @@ static int rve_opt_01(struct rval_expr* rve, enum rval_type rve_type)
 					/* $v *  1 -> (int)$v
 					 *  1 * $v -> (int)$v */
 					rve_destroy(ct_rve);
-					replace_int_rve(rve, v_rve);
+					replace_long_rve(rve, v_rve);
 					ret=1;
 				}
 				break;
@@ -3283,7 +3115,7 @@ static int rve_opt_01(struct rval_expr* rve, enum rval_type rve_type)
 					if (ct_rve==rve->right.rve){
 						/* $v / 1 -> (int)$v */
 						rve_destroy(ct_rve);
-						replace_int_rve(rve, v_rve);
+						replace_long_rve(rve, v_rve);
 						ret=1;
 					}
 				}
@@ -3308,7 +3140,7 @@ static int rve_opt_01(struct rval_expr* rve, enum rval_type rve_type)
 					if (ct_rve==rve->right.rve){
 						/* $v - 0 -> $v */
 						rve_destroy(ct_rve);
-						replace_int_rve(rve, v_rve);
+						replace_long_rve(rve, v_rve);
 						ret=1;
 					}
 					/* ? 0 - $v -> -($v)  ? */
@@ -3330,7 +3162,7 @@ static int rve_opt_01(struct rval_expr* rve, enum rval_type rve_type)
 					/* $v |  0 -> (int)$v
 					 *  0 | $v -> (int)$v */
 					rve_destroy(ct_rve);
-					replace_int_rve(rve, v_rve);
+					replace_long_rve(rve, v_rve);
 					ret=1;
 				}
 				break;
@@ -3345,7 +3177,7 @@ static int rve_opt_01(struct rval_expr* rve, enum rval_type rve_type)
 					/* $v &&  1 -> (int)$v
 					 *  1 && $v -> (int)$v */
 					rve_destroy(ct_rve);
-					replace_int_rve(rve, v_rve);
+					replace_long_rve(rve, v_rve);
 					ret=1;
 				}
 				break;
@@ -3360,7 +3192,7 @@ static int rve_opt_01(struct rval_expr* rve, enum rval_type rve_type)
 					/* $v ||  0 -> (int)$v
 					 *  0 && $v -> (int)$v */
 					rve_destroy(ct_rve);
-					replace_int_rve(rve, v_rve);
+					replace_long_rve(rve, v_rve);
 					ret=1;
 				}
 				break;
@@ -3371,11 +3203,11 @@ static int rve_opt_01(struct rval_expr* rve, enum rval_type rve_type)
 				 * check if it's an IPLUS or the result is an integer
 				 * (which generally means unoptimized <int> + <something>).
 				 */
-				if ((i==0) && ((op==RVE_IPLUS_OP) || (rve_type==RV_INT))){
+				if ((i==0) && ((op==RVE_IPLUS_OP) || (rve_type==RV_LONG))){
 					/* $v +  0 -> (int)$v
 					 *  0 + $v -> (int)$v */
 					rve_destroy(ct_rve);
-					replace_int_rve(rve, v_rve);
+					replace_long_rve(rve, v_rve);
 					ret=1;
 				}
 				break;
@@ -3387,7 +3219,7 @@ static int rve_opt_01(struct rval_expr* rve, enum rval_type rve_type)
 		if (ret==1 && dbg){
 			if (right){
 				if (rve->op==RVE_RVAL_OP){
-					if (rve->left.rval.type==RV_INT)
+					if (rve->left.rval.type==RV_LONG)
 						LM_DBG("FIXUP RVE: (%d,%d-%d,%d) optimized"
 								" op%d($v, %d) -> %d\n",
 								rve->fpos.s_line, rve->fpos.s_col,
@@ -3399,9 +3231,9 @@ static int rve_opt_01(struct rval_expr* rve, enum rval_type rve_type)
 								rve->fpos.s_line, rve->fpos.s_col,
 								rve->fpos.e_line, rve->fpos.e_col,
 								op, i);
-				}else if (rve->op==RVE_INT_OP){
+				}else if (rve->op==RVE_LONG_OP){
 					if (rve->left.rve->op==RVE_RVAL_OP &&
-							rve->left.rve->left.rval.type==RV_INT)
+							rve->left.rve->left.rval.type==RV_LONG)
 						LM_DBG("FIXUP RVE: (%d,%d-%d,%d) optimized"
 								" op%d($v, %d) -> (int)%d\n",
 								rve->fpos.s_line, rve->fpos.s_col,
@@ -3422,7 +3254,7 @@ static int rve_opt_01(struct rval_expr* rve, enum rval_type rve_type)
 				}
 			}else{
 				if (rve->op==RVE_RVAL_OP){
-					if (rve->left.rval.type==RV_INT)
+					if (rve->left.rval.type==RV_LONG)
 						LM_DBG("FIXUP RVE: (%d,%d-%d,%d) optimized"
 								" op%d(%d, $v) -> %d\n",
 								rve->fpos.s_line, rve->fpos.s_col,
@@ -3434,9 +3266,9 @@ static int rve_opt_01(struct rval_expr* rve, enum rval_type rve_type)
 								rve->fpos.s_line, rve->fpos.s_col,
 								rve->fpos.e_line, rve->fpos.e_col,
 								op, i);
-				}else if (rve->op==RVE_INT_OP){
+				}else if (rve->op==RVE_LONG_OP){
 					if (rve->left.rve->op==RVE_RVAL_OP &&
-							rve->left.rve->left.rval.type==RV_INT)
+							rve->left.rve->left.rval.type==RV_LONG)
 						LM_DBG("FIXUP RVE: (%d,%d-%d,%d) optimized"
 								" op%d(%d, $v) -> (int)%d\n",
 								rve->fpos.s_line, rve->fpos.s_col,
@@ -3606,7 +3438,7 @@ static int rve_optimize(struct rval_expr* rve)
 		rval_destroy(rv);
 		rv=0;
 		trv=&rve->left.rval;
-		if (trv->type==RV_INT)
+		if (trv->type==RV_LONG)
 			LM_DBG("FIXUP RVE (%d,%d-%d,%d): optimized constant int rve "
 					"(old op %d) to %d\n",
 					rve->fpos.s_line, rve->fpos.s_col,
@@ -3647,12 +3479,12 @@ static int rve_optimize(struct rval_expr* rve)
 								rve->right.rve->fpos.e_col);
 				goto error;
 			}
-			if (rv->type==RV_INT){
+			if (rv->type==RV_LONG){
 				rv->v.l=-rv->v.l;
 				if (rve_replace_with_ct_rv(rve->right.rve, rv)<0)
 					goto error;
 				rve->op=RVE_IPLUS_OP;
-				LM_DBG("FIXUP RVE (%d,%d-%d,%d): optimized $v - a into "
+				LM_DBG("FIXUP RVE (%d,%d-%d,%d): optimized $v - an into "
 						"$v + (%d)\n",
 						rve->fpos.s_line, rve->fpos.s_col,
 						rve->fpos.e_line, rve->fpos.e_col,
@@ -3665,7 +3497,7 @@ static int rve_optimize(struct rval_expr* rve)
 		/* e1 PLUS_OP e2 -> change op if we know e1 basic type */
 		if (rve->op==RVE_PLUS_OP){
 			l_type=rve_guess_type(rve->left.rve);
-			if (l_type==RV_INT){
+			if (l_type==RV_LONG){
 				rve->op=RVE_IPLUS_OP;
 				LM_DBG("FIXUP RVE (%d,%d-%d,%d): changed + into integer plus\n",
 						rve->fpos.s_line, rve->fpos.s_col,
@@ -3681,7 +3513,7 @@ static int rve_optimize(struct rval_expr* rve)
 		 * e1 DIFF_OP e2 -> change op if we know e2 basic type */
 		if (rve->op==RVE_EQ_OP || rve->op==RVE_DIFF_OP){
 			l_type=rve_guess_type(rve->left.rve);
-			if (l_type==RV_INT){
+			if (l_type==RV_LONG){
 				rve->op=(rve->op==RVE_EQ_OP)?RVE_IEQ_OP:RVE_IDIFF_OP;
 				LM_DBG("FIXUP RVE (%d,%d-%d,%d): changed ==/!= into integer"
 						" ==/!=\n",
@@ -3738,7 +3570,7 @@ static int rve_optimize(struct rval_expr* rve)
 					rve_destroy(tmp_rve.left.rve);
 					rve->left.rve=rve->left.rve->left.rve;
 					trv=&rve->right.rve->left.rval;
-					if (trv->type==RV_INT)
+					if (trv->type==RV_LONG)
 						LM_DBG("FIXUP RVE (%d,%d-%d,%d): optimized int rve: "
 								"op(op($v, a), b) with op($v, %d); op=%d\n",
 								rve->fpos.s_line, rve->fpos.s_col,
@@ -3776,7 +3608,7 @@ static int rve_optimize(struct rval_expr* rve)
 					rval_destroy(rv);
 					rv=0;
 					trv=&rve->left.rve->left.rval;
-					if (trv->type==RV_INT)
+					if (trv->type==RV_LONG)
 						LM_DBG("FIXUP RVE (%d,%d-%d,%d): optimized int rve: "
 								"op(op(a, $v), b) with op(%d, $v); op=%d\n",
 								rve->fpos.s_line, rve->fpos.s_col,
@@ -3822,7 +3654,7 @@ static int rve_optimize(struct rval_expr* rve)
 					rve_destroy(tmp_rve.right.rve);
 					rve->right.rve=rve->right.rve->left.rve;
 					trv=&rve->left.rve->left.rval;
-					if (trv->type==RV_INT)
+					if (trv->type==RV_LONG)
 						LM_DBG("FIXUP RVE (%d,%d-%d,%d): optimized int rve: "
 								"op(a, op($v, b)) with op(%d, $v); op=%d\n",
 								rve->fpos.s_line, rve->fpos.s_col,
@@ -3866,7 +3698,7 @@ static int rve_optimize(struct rval_expr* rve)
 					rve_destroy(tmp_rve.right.rve);
 					rve->right.rve=rve->right.rve->right.rve;
 					trv=&rve->left.rve->left.rval;
-					if (trv->type==RV_INT)
+					if (trv->type==RV_LONG)
 						LM_DBG("FIXUP RVE (%d,%d-%d,%d): optimized int rve: "
 								"op(a, op(b, $v)) with op(%d, $v); op=%d\n",
 								rve->fpos.s_line, rve->fpos.s_col,
@@ -3927,7 +3759,7 @@ int fix_rval_expr(void* p)
 		case RVE_STREMPTY_OP:
 		case RVE_DEFINED_OP:
 		case RVE_NOTDEFINED_OP:
-		case RVE_INT_OP:
+		case RVE_LONG_OP:
 		case RVE_STR_OP:
 			ret=fix_rval_expr((void*)rve->left.rve);
 			if (ret<0) goto error;

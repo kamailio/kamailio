@@ -46,7 +46,7 @@
 #define S_CSCF_SIP_MESSAGES_H_
 
 
-#define MSG_200_SAR_OK					"OK - SAR succesful and registrar saved"
+#define MSG_200_SAR_OK					"OK - SAR successful and registrar saved"
 
 #define MSG_400_BAD_REQUEST				"Bad Request"
 #define MSG_400_BAD_Contact 			"Bad Request - Error parsing Contact header" 

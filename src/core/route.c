@@ -232,7 +232,7 @@ int route_get(struct route_list* rt, char* name)
 	int i;
 	
 	len=strlen(name);
-	/* check if exists an non empty*/
+	/* check if exists and non empty*/
 	e=str_hash_get(&rt->names, name, len);
 	if (e){
 		i=e->u.n;
@@ -261,7 +261,7 @@ int route_lookup(struct route_list* rt, char* name)
 	struct str_hash_entry* e;
 	
 	len=strlen(name);
-	/* check if exists an non empty*/
+	/* check if exists and non empty*/
 	e=str_hash_get(&rt->names, name, len);
 	if (e){
 		return e->u.n;
@@ -298,7 +298,7 @@ static int exp_optimize_left(struct expr* exp)
 		if (rve->op==RVE_RVAL_OP){
 			rval=&rve->left.rval;
 			switch(rval->type){
-				case RV_INT:
+				case RV_LONG:
 					if (exp->op==NO_OP){
 						exp->l_type=NUMBER_O;
 						exp->l.param=0;
@@ -408,7 +408,7 @@ static int exp_optimize_right(struct expr* exp)
 		if (rve->op==RVE_RVAL_OP){
 			rval=&rve->left.rval;
 			switch(rval->type){
-				case RV_INT:
+				case RV_LONG:
 					exp->r_type=NUMBER_ST;
 					exp->r.numval=rval->v.l;
 					rval_destroy(rval);
@@ -618,7 +618,8 @@ int fix_actions(struct action* a)
 	char *tmp;
 	void *tmp_p;
 	int ret;
-	int i;
+	long li;
+	long i;
 	ksr_cmd_export_t* cmd;
 	str s;
 	struct hostent* he;
@@ -712,7 +713,7 @@ int fix_actions(struct action* a)
 					/* it's not an error anymore to have non-int in an if,
 					   only a script warning (to allow backward compat. stuff
 					   like if (@ruri) 
-					if (rve_type!=RV_INT && rve_type!=RV_NONE){
+					if (rve_type!=RV_LONG && rve_type!=RV_NONE){
 						LM_ERR("fix_actions: invalid expression (%d,%d):"
 								" bad type, integer expected\n",
 								rve->fpos.s_line, rve->fpos.s_col);
@@ -786,7 +787,7 @@ int fix_actions(struct action* a)
 						ret = E_SCRIPT;
 						goto error;
 					}
-					if (rve_type!=RV_INT && rve_type!=RV_NONE){
+					if (rve_type!=RV_LONG && rve_type!=RV_NONE){
 						LM_ERR("invalid expression (%d,%d): bad type, integer expected\n",
 								rve->fpos.s_line, rve->fpos.s_col);
 						ret = E_SCRIPT;
@@ -827,7 +828,7 @@ int fix_actions(struct action* a)
 						ret = E_SCRIPT;
 						goto error;
 					}
-					if (rve_type!=RV_INT && rve_type!=RV_NONE){
+					if (rve_type!=RV_LONG && rve_type!=RV_NONE){
 						LM_ERR("invalid expression (%d,%d): bad type, integer expected\n",
 								rve->fpos.s_line, rve->fpos.s_col);
 						ret = E_SCRIPT;
@@ -1113,7 +1114,7 @@ int fix_actions(struct action* a)
 						   int */
 						rv = rval_expr_eval(0, 0, rve);
 						if (rv == 0 ||
-								rval_get_int( 0, 0, &i, rv, 0) < 0 ) {
+								rval_get_long(0, 0, &li, rv, 0) < 0 ) {
 							LM_ERR("failed to fix constant rve");
 							if (rv) rval_destroy(rv);
 							ret = E_BUG;
@@ -1122,7 +1123,7 @@ int fix_actions(struct action* a)
 						rval_destroy(rv);
 						rve_destroy(rve);
 						t->val[1].type = NUMBER_ST;
-						t->val[1].u.number = i;
+						t->val[1].u.number = li;
 					} else {
 						/* expression is not constant => fixup &
 						   optimize it */
@@ -1184,7 +1185,7 @@ inline static int comp_num(int op, long left, int rtype, union exp_op* r,
 	int_str val;
 	pv_value_t pval;
 	avp_t* avp;
-	int right;
+	long right;
 
 	if (unlikely(op==NO_OP)) return !(!left);
 	switch(rtype){
@@ -1198,7 +1199,7 @@ inline static int comp_num(int op, long left, int rtype, union exp_op* r,
 			right = r->numval;
 			break;
 		case RVE_ST:
-			if (unlikely(rval_expr_eval_int(h, msg, &right, r->param)<0))
+			if (unlikely(rval_expr_eval_long(h, msg, &right, r->param)<0))
 				return (op == DIFF_OP); /* not found/invalid */
 			break;
 		case PVAR_ST:
@@ -1508,13 +1509,13 @@ inline static int comp_rve(int op, struct rval_expr* rve, int rtype,
 							union exp_op* r, struct sip_msg* msg,
 							struct run_act_ctx* h)
 {
-	int i;
+	long i;
 	struct rvalue* rv;
 	struct rvalue* rv1;
 	struct rval_cache c1;
-	
+
 	rval_cache_init(&c1);
-	if (unlikely(rval_expr_eval_rvint(h,  msg, &rv, &i, rve, &c1)<0)){
+	if (unlikely(rval_expr_eval_rvlong(h,  msg, &rv, &i, rve, &c1)<0)){
 		LM_ERR("failure evaluating expression: bad type\n");
 		i=0; /* false */
 		goto int_expr;
@@ -1544,7 +1545,7 @@ inline static int comp_pvar(int op, pv_spec_t* pvs, int rtype,
 {
 	pv_value_t pval;
 	int ret;
-	
+
 	ret=0;
 	memset(&pval, 0, sizeof(pv_value_t));
 	if (unlikely(pv_get_spec_value(msg, r->param, &pval)!=0)){
