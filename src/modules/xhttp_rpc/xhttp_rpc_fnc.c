@@ -266,10 +266,10 @@ int xhttp_rpc_parse_url(str *http_url, int* mod, int* cmd, str *arg)
 	cmd_len = i - index;
 	for(i=0;i<xhttp_rpc_mod_cmds[*mod].size &&
 		!(strncmp(&url[index],
-			rpc_sarray[xhttp_rpc_mod_cmds[*mod].rpc_e_index+i]->name,
+			rpc_sarray[xhttp_rpc_mod_cmds[*mod].rpc_e_index+i]->r.name,
 			cmd_len) == 0 &&
 		cmd_len==
-		strlen(rpc_sarray[xhttp_rpc_mod_cmds[*mod].rpc_e_index+i]->name));
+		strlen(rpc_sarray[xhttp_rpc_mod_cmds[*mod].rpc_e_index+i]->r.name));
 		i++);
 	if (i==xhttp_rpc_mod_cmds[*mod].size) {
 		LM_ERR("Invalid cmd [%.*s] in url [%.*s]\n",
@@ -373,7 +373,7 @@ int xhttp_rpc_build_header(rpc_ctx_t *ctx)
 
 	if (ctx->arg_received) { /* Build an rpc reply */
 		name.s =
-		(char*)rpc_sarray[xhttp_rpc_mod_cmds[mod].rpc_e_index+cmd]->name;
+		(char*)rpc_sarray[xhttp_rpc_mod_cmds[mod].rpc_e_index+cmd]->r.name;
 		name.len = strlen(name.s);
 		/* Print comand name */
 		XHTTP_RPC_COPY_4(p,XHTTP_RPC_Response_Menu_Cmd_Table_1,
@@ -412,7 +412,7 @@ int xhttp_rpc_build_header(rpc_ctx_t *ctx)
 					XHTTP_RPC_CODE_2);
 		} else {
 			name.s =
-			(char*)rpc_sarray[xhttp_rpc_mod_cmds[mod].rpc_e_index]->name;
+			(char*)rpc_sarray[xhttp_rpc_mod_cmds[mod].rpc_e_index]->r.name;
 			name.len = strlen(name.s);
 			/* Build the list of comands for the selected module */
 			XHTTP_RPC_COPY_4(p,XHTTP_RPC_Response_Menu_Cmd_Table_1,
@@ -430,7 +430,7 @@ int xhttp_rpc_build_header(rpc_ctx_t *ctx)
 					XHTTP_RPC_Response_Menu_Cmd_td_4a);
 			if (cmd>=0) {
 				name.s =
-			(char*)rpc_sarray[xhttp_rpc_mod_cmds[mod].rpc_e_index+cmd]->name;
+			(char*)rpc_sarray[xhttp_rpc_mod_cmds[mod].rpc_e_index+cmd]->r.name;
 				name.len = strlen(name.s);
 				XHTTP_RPC_COPY_3(p,XHTTP_RPC_Response_Menu_Cmd_td_1b,
 						name,
@@ -439,7 +439,7 @@ int xhttp_rpc_build_header(rpc_ctx_t *ctx)
 			XHTTP_RPC_COPY(p,XHTTP_RPC_Response_Menu_Cmd_tr_2);
 			for(j=1;j<xhttp_rpc_mod_cmds[mod].size;j++) {
 				name.s =
-			(char*)rpc_sarray[xhttp_rpc_mod_cmds[mod].rpc_e_index+j]->name;
+			(char*)rpc_sarray[xhttp_rpc_mod_cmds[mod].rpc_e_index+j]->r.name;
 				name.len = strlen(name.s);
 				XHTTP_RPC_COPY_3(p,XHTTP_RPC_Response_Menu_Cmd_tr_1,
 						XHTTP_RPC_Response_Menu_Cmd_td_1a,
