@@ -1069,6 +1069,10 @@ if (allow_trusted("$si", "any", "$ai")) {
 
    Parameters: none
 
+   This RPC command is exported with "RPC_EXEC_DELTA" flag, therefore its
+   execution rate can be restricted to specific time intervals by setting
+   the "rpc_exec_delta" core parameter.
+
 5.2.  permissions.addressDump
 
    Causes the permissions module to dump the contents of cache memory
@@ -1112,6 +1116,10 @@ if (allow_trusted("$si", "any", "$ai")) {
    reload in five seconds.
 
    Parameters: none
+
+   This RPC command is exported with "RPC_EXEC_DELTA" flag, therefore its
+   execution rate can be restricted to specific time intervals by setting
+   the "rpc_exec_delta" core parameter.
 
 5.8.  permissions.trustedDump
 
