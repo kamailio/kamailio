@@ -1330,6 +1330,11 @@ if (allow_trusted("$si", "any", "$ai")) {
 			paramenter. By default is allowed maximum one reload in five seconds.
 		</para>
 		<para>Parameters: <emphasis>none</emphasis></para>
+		<para>
+			This RPC command is exported with "RPC_EXEC_DELTA" flag, therefore its
+			execution rate can be restricted to specific time intervals by setting
+			the "rpc_exec_delta" core parameter.
+		</para>
 	</section>
 
 	<section id ="permissions.r.addressDump">
@@ -1413,6 +1418,11 @@ if (allow_trusted("$si", "any", "$ai")) {
 			paramenter. By default is allowed maximum one reload in five seconds.
 		</para>
 		<para>Parameters: <emphasis>none</emphasis></para>
+		<para>
+			This RPC command is exported with "RPC_EXEC_DELTA" flag, therefore its
+			execution rate can be restricted to specific time intervals by setting
+			the "rpc_exec_delta" core parameter.
+		</para>
 	</section>
 	<section id ="permissions.r.trustedDump">
 		<title>
