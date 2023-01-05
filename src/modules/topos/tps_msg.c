@@ -873,7 +873,7 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 	LM_DBG("handling incoming request\n");
 
 	if(dialog==0) {
-		/* nothing to do for initial request */
+		/* nothing to do for initial request other than CallID Mask*/
 		tps_mask_callid(msg);
 		return 0;
 	}
