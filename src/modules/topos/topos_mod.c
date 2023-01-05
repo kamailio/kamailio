@@ -65,6 +65,7 @@
 #include "tps_storage.h"
 #include "tps_msg.h"
 #include "api.h"
+#include "tps_mask.h"
 
 MODULE_VERSION
 
@@ -83,6 +84,8 @@ int _tps_sanity_checks = 0;
 int _tps_rr_update = 0;
 int _tps_header_mode = 0;
 str _tps_storage = str_init("db");
+str _tps_callid_prefix = str_init("!!:");
+str _tps_key = str_init("aL9.n~8hHSfE");
 
 extern int _tps_branch_expire;
 extern int _tps_dialog_expire;
@@ -174,6 +177,8 @@ static param_export_t params[]={
 	{"context",			PARAM_STR, &_tps_context_param},
 	{"methods_nocontact",		PARAM_STR, &_tps_methods_nocontact_list},
 	{"methods_noinitial",		PARAM_STR, &_tps_methods_noinitial_list},
+	{"callid_prefix",	PARAM_STR, &_tps_callid_prefix},
+	{"mask_key",		PARAM_STR, &_tps_key},
 
 	{0,0,0}
 };
@@ -276,7 +281,7 @@ static int mod_init(void)
 				" but a_contact or b_contact xavu fields not defined\n");
 		return -1;
 	}
-
+	tps_mask_init();
 	sr_event_register_cb(SREV_NET_DATA_IN,  tps_msg_received);
 	sr_event_register_cb(SREV_NET_DATA_OUT, tps_msg_sent);
 
@@ -490,10 +495,8 @@ int tps_msg_received(sr_event_param_t *evp)
 			}
 		}
 		dialog = (get_to(&msg)->tag_value.len>0)?1:0;
-		if(dialog) {
-			/* dialog request */
-			tps_request_received(&msg, dialog);
-		}
+		tps_request_received(&msg, dialog);
+		
 	} else {
 		/* reply */
 		tps_response_received(&msg);

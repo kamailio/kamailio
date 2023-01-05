@@ -43,4 +43,7 @@ int tps_request_received(sip_msg_t *msg, int dialog);
 int tps_response_received(sip_msg_t *msg);
 int tps_request_sent(sip_msg_t *msg, int dialog, int local);
 int tps_response_sent(sip_msg_t *msg);
+int tps_mask_callid(sip_msg_t *msg);
+int tps_unmask_callid(sip_msg_t *msg);
+int tps_unmask_callid_str(str *icallid, str *ocallid);
 #endif
