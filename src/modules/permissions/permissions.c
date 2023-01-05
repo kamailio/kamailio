@@ -1031,8 +1031,8 @@ static const char* rpc_test_uri_doc[2] = {
 };
 
 rpc_export_t permissions_rpc[] = {
-	{"permissions.trustedReload", rpc_trusted_reload, rpc_trusted_reload_doc, 0},
-	{"permissions.addressReload", rpc_address_reload, rpc_address_reload_doc, 0},
+	{"permissions.trustedReload", rpc_trusted_reload, rpc_trusted_reload_doc, RPC_EXEC_DELTA},
+	{"permissions.addressReload", rpc_address_reload, rpc_address_reload_doc, RPC_EXEC_DELTA},
 	{"permissions.trustedDump", rpc_trusted_dump, rpc_trusted_dump_doc, 0},
 	{"permissions.addressDump", rpc_address_dump, rpc_address_dump_doc, RET_ARRAY},
 	{"permissions.subnetDump", rpc_subnet_dump, rpc_subnet_dump_doc, RET_ARRAY},
