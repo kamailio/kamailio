@@ -77,6 +77,10 @@ Chapter 1. Admin Guide
    module, look at the files inside source tree located at
    'modules/app_python/python_examples/'.
 
+   As python2 is deprecated in Debian and other distributions, please use
+   the “app_python3” module instead. This module will be removed future
+   releases.
+
 2. Dependencies
 
    2.1. Kamailio Modules

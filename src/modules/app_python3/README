@@ -87,6 +87,11 @@ Chapter 1. Admin Guide
    module, look at the files inside the source tree located at
    'modules/app_python3/python_examples/'.
 
+   Note: if symbols exported to KEMI (module or function names) conflict
+   with Python's reserved keywords, use the 'getattr()' function or the
+   '__dict__' attribute for 'KSR' (e.g.,
+   'KSR.__dict__["async"].task_route("myroute")').
+
 2. Dependencies
 
    2.1. Kamailio Modules
@@ -190,9 +195,9 @@ python_exec("my_python_function", "$rU");
    in each worker when it next invokes a Python method. The module uses a
    worker process lock to prevent recursive reloads.
 
-   This function only reloads the user script and creates a new script
-   object. It does not reinitialize the interpreter. E.g., references in
-   the old module remain if not redefined by the new version.
+   This function only reloads (re-executes) the user script and creates a
+   new script object. It does not reinitialize the interpreter (references
+   in the old module remain if not redefined by the new version).
 
    Name: app_python.reload
 
@@ -202,6 +207,24 @@ python_exec("my_python_function", "$rU");
 ...
 kamcmd app_python.reload
 ...
+
+   Note that reload is done for the Python script provided as parameter to
+   this Kamailio module. To reload the Python libraries imported in this
+   script, use something like:
+...
+import mod1
+...
+import modN
+from importlib import reload
+
+def mod_init():
+    reload(mod1)
+    ...
+    reload(modN)
+    return kamailio()
+...
+
+   Where "modX" are the modules imported at the top.
 
 5.2.  app_python.api_list
 
