@@ -70,6 +70,7 @@
 #include "../../core/script_cb.h" /* exec_*_script_cb */
 #include "../../core/route.h" /* route_get */
 #include "../../core/sip_msg_clone.h" /* sip_msg_shm_clone */
+#include "../../core/rpc_lookup.h"
 #include "../../core/kemi.h"
 #include "http.h"
 
@@ -2601,20 +2602,27 @@ static int process_xmlrpc(sip_msg_t* msg)
  */
 static int ki_dispatch_rpc(sip_msg_t* msg)
 {
-	rpc_export_t* exp;
+	rpc_exportx_t* exp;
 	int ret = 1;
+	unsigned int rdata;
 
 	if (init_context(&ctx, msg) < 0) goto skip;
 
-	exp = find_rpc_export(ctx.method, 0);
-	if (!exp || !exp->function) {
+	exp = rpc_lookupx(ctx.method, strlen(ctx.method), &rdata);
+	if (!exp || !exp->r.function) {
 		rpc_fault(&ctx, 500, "Method Not Found");
 		goto skip;
 	}
-	ctx.flags = exp->flags;
-	if ((exp->flags & RET_ARRAY) &&
+	if (rdata & RPC_EXEC_DELTA) {
+		LM_ERR("execution of command [%s] is limited by delta [%d]\n",
+				ctx.method, ksr_rpc_exec_delta);
+		rpc_fault(&ctx, 500, "Command Executed Too Fast");
+		goto skip;
+	}
+	ctx.flags = exp->r.flags;
+	if ((exp->r.flags & RET_ARRAY) &&
 			add_xmlrpc_reply(&ctx.reply, &array_prefix) < 0) goto skip;
-	exp->function(&func_param, &ctx);
+	exp->r.function(&func_param, &ctx);
 
 skip:
 	/* The function may have sent the reply itself */
