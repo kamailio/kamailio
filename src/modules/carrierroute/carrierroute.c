@@ -88,19 +88,20 @@ static void mod_destroy(void);
 
 /************* Module Exports **********************************************/
 static cmd_export_t cmds[]={
-	{"cr_user_carrier",  (cmd_function)cr_load_user_carrier,  3,
+	{"cr_user_carrier",  (cmd_function)cr_load_user_carrier,   3,
 		cr_load_user_carrier_fixup, cr_load_user_carrier_fixup_free,
 		REQUEST_ROUTE | FAILURE_ROUTE },
 	{"cr_route",         (cmd_function)cr_route5,              5,
-		cr_route_fixup,             0, REQUEST_ROUTE | FAILURE_ROUTE },
-	{"cr_route",         (cmd_function)cr_route,              6,
-		cr_route_fixup,             0, REQUEST_ROUTE | FAILURE_ROUTE },
-	{"cr_nofallback_route",(cmd_function)cr_nofallback_route5,     5,
-		cr_route_fixup,             0, REQUEST_ROUTE | FAILURE_ROUTE },
-	{"cr_nofallback_route",(cmd_function)cr_nofallback_route,     6,
-		cr_route_fixup,             0, REQUEST_ROUTE | FAILURE_ROUTE },
-	{"cr_next_domain",   (cmd_function)cr_load_next_domain,   6,
-		cr_load_next_domain_fixup,  0, REQUEST_ROUTE | FAILURE_ROUTE },
+		cr_route_fixup, cr_route_fixup_free, REQUEST_ROUTE | FAILURE_ROUTE },
+	{"cr_route",         (cmd_function)cr_route,               6,
+		cr_route_fixup, cr_route_fixup_free, REQUEST_ROUTE | FAILURE_ROUTE },
+	{"cr_nofallback_route",(cmd_function)cr_nofallback_route5, 5,
+		cr_route_fixup, cr_route_fixup_free, REQUEST_ROUTE | FAILURE_ROUTE },
+	{"cr_nofallback_route",(cmd_function)cr_nofallback_route,  6,
+		cr_route_fixup, cr_route_fixup_free, REQUEST_ROUTE | FAILURE_ROUTE },
+	{"cr_next_domain",   (cmd_function)cr_load_next_domain,    6,
+		cr_load_next_domain_fixup, cr_load_next_domain_fixup_free,
+		REQUEST_ROUTE | FAILURE_ROUTE },
 	{0, 0, 0, 0, 0, 0}
 };
 

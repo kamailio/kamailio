@@ -75,7 +75,7 @@ static char g_rewrite_uri[MAX_URI_SIZE+1];
  * @param size size of the list
  * @return id on success, -1 otherwise
  */
-static inline int cr_gp2id(struct sip_msg *_msg, gparam_t *gp, struct name_map_t *map, int size) {
+static inline int cr_gp2id(sip_msg_t* _msg, gparam_t *gp, struct name_map_t *map, int size) {
 	int id;
 	struct usr_avp *avp;
 	int_str avp_val;
@@ -160,6 +160,7 @@ static inline int reply_code_matcher(const str *rcw, const str *rc) {
 /**
  * writes the next_domain avp using the rule list of failure_tree
  *
+ * @param _msg SIP message
  * @param frr_head the head of the failure route rule list
  * @param host last tried host
  * @param reply_code the last reply code
@@ -168,12 +169,11 @@ static inline int reply_code_matcher(const str *rcw, const str *rc) {
  *
  * @return 0 on success, -1 on failure
  */
-static int set_next_domain_on_rule(struct failure_route_rule *frr_head,
-		const str *host, const str *reply_code, const flag_t flags,
-		const gparam_t *dstavp) {
+static int set_next_domain_on_rule(sip_msg_t* _msg,
+		struct failure_route_rule *frr_head, const str *host,
+		const str *reply_code, const flag_t flags, pv_spec_t *dstavp) {
 	struct failure_route_rule * rr;
-	int_str avp_val;
-	
+	pv_value_t val = {0};
 	assert(frr_head != NULL);
 	
 	LM_DBG("searching for matching routing rules");
@@ -188,18 +188,20 @@ static int set_next_domain_on_rule(struct failure_route_rule *frr_head,
 		if (((rr->mask & flags) == rr->flags) &&
 				((rr->host.len == 0) || (str_strcmp(host, &rr->host)==0)) &&
 				(reply_code_matcher(&(rr->reply_code), reply_code)==0)) {
-			avp_val.n = rr->next_domain;
-			if (add_avp(dstavp->v.pve->spec->pvp.pvn.u.isname.type,
-					dstavp->v.pve->spec->pvp.pvn.u.isname.name, avp_val)<0) {
-				LM_ERR("set AVP failed\n");
+			val.ri = rr->next_domain;
+
+			/* set var */
+			val.flags = PV_VAL_INT|PV_TYPE_INT;
+			if(dstavp->setf(_msg, &dstavp->pvp, (int)EQ_T, &val) < 0) {
+				LM_ERR("failed setting next domain id\n");
 				return -1;
 			}
-			
+
 			LM_INFO("next_domain is %d\n", rr->next_domain);
 			return 0;
 		}
 	}
-	
+
 	LM_INFO("no matching rule for (flags=%d, host='%.*s', reply_code='%.*s') found\n", flags, host->len, host->s, reply_code->len, reply_code->s);
 	return -1;
 }
@@ -210,6 +212,7 @@ static int set_next_domain_on_rule(struct failure_route_rule *frr_head,
  * The longest match is taken, so it is possible to define
  * failure route rules for a single number
  *
+ * @param _msg SIP message
  * @param failure_node the current routing tree node
  * @param uri the uri to be rewritten at the current position
  * @param host last tried host
@@ -219,9 +222,10 @@ static int set_next_domain_on_rule(struct failure_route_rule *frr_head,
  *
  * @return 0 on success, -1 on failure, 1 on no more matching child node and no rule list
  */
-static int set_next_domain_recursor(struct dtrie_node_t *failure_node,
-		const str *uri, const str *host, const str *reply_code, const flag_t flags,
-		const gparam_t *dstavp) {
+static int set_next_domain_recursor(sip_msg_t* _msg,
+		struct dtrie_node_t *failure_node, const str *uri,
+		const str *host, const str *reply_code, const flag_t flags,
+		pv_spec_t *dstavp) {
 	str re_uri = *uri;
 	void **ret;
 	
@@ -236,7 +240,7 @@ static int set_next_domain_recursor(struct dtrie_node_t *failure_node,
 		LM_INFO("URI or prefix tree nodes empty, empty rule list\n");
 		return 1;
 	}
-	else return set_next_domain_on_rule(*ret, host, reply_code, flags, dstavp);
+	else return set_next_domain_on_rule(_msg, *ret, host, reply_code, flags, dstavp);
 }
 
 
@@ -334,20 +338,21 @@ int cr_uri_already_used(str dest , avp_value_t* used_dests, int no_dests){
 /**
  * does the work for rewrite_on_rule, writes the new URI into dest
  *
+ * @param msg the sip message, not NULL
  * @param rs the route rule used for rewriting, not NULL
  * @param dest the returned new destination URI, not NULL
- * @param msg the sip message, not NULL
  * @param user the localpart of the uri to be rewritten, not NULL
  *
  * @return 0 on success, -1 on failure
  *
  * @see rewrite_on_rule()
  */
-static int actually_rewrite(const struct route_rule *rs, str *dest,
-		const struct sip_msg *msg, const str * user, gparam_t *descavp) {
+static int actually_rewrite(sip_msg_t* msg, const struct route_rule *rs,
+		str *dest, const str * user, pv_spec_t *descavp) {
 	size_t len;
 	char *p;
-	int_str avp_val;
+
+	pv_value_t val = {0};
 	int strip = 0;
 	str l_user;
 	
@@ -413,9 +418,9 @@ static int actually_rewrite(const struct route_rule *rs, str *dest,
 	*p = '\0';
 
 	if (descavp) {
-		avp_val.s = rs->comment;
-		if (add_avp(AVP_VAL_STR | descavp->v.pve->spec->pvp.pvn.u.isname.type,
-					descavp->v.pve->spec->pvp.pvn.u.isname.name, avp_val)<0) {
+		val.rs = rs->comment;
+		val.flags = PV_VAL_STR;
+		if (descavp->setf(msg, &descavp->pvp, (int)EQ_T, &val) < 0) {
 			LM_ERR("set AVP failed\n");
 			return -1;
 		}
@@ -428,10 +433,10 @@ static int actually_rewrite(const struct route_rule *rs, str *dest,
 /**
  * writes the uri dest using the flags and rule list of rf_head
  *
+ * @param msg the sip message
  * @param rf_head the head of the route flags list
  * @param flags user defined flags
  * @param dest the returned new destination URI
- * @param msg the sip message
  * @param user the localpart of the uri to be rewritten
  * @param hash_source the SIP header used for hashing
  * @param alg the algorithm used for hashing
@@ -439,9 +444,9 @@ static int actually_rewrite(const struct route_rule *rs, str *dest,
  *
  * @return 0 on success, -1 on failure, 1 on empty rule list
  */
-static int rewrite_on_rule(struct route_flags *rf_head, flag_t flags, str * dest,
-		struct sip_msg * msg, const str * user, const enum hash_source hash_source,
-		const enum hash_algorithm alg, gparam_t *descavp) {
+static int rewrite_on_rule(sip_msg_t* msg, struct route_flags *rf_head,
+		flag_t flags, str * dest, const str * user, const enum hash_source hash_source,
+		const enum hash_algorithm alg, pv_spec_t *descavp) {
 	struct route_flags * rf;
 	struct route_rule * rr;
 	int prob;
@@ -563,7 +568,7 @@ static int rewrite_on_rule(struct route_flags *rf_head, flag_t flags, str * dest
 			 * returns -1. This way we get an error
 			 */
 			if ((rr = get_rule_by_hash(rf, prob + 1)) == NULL) {
-				LM_CRIT("no route found\n");
+				LM_ERR("no route found\n");
 				return -1;
 			}
 			break;
@@ -571,7 +576,7 @@ static int rewrite_on_rule(struct route_flags *rf_head, flag_t flags, str * dest
 			LM_ERR("invalid hash algorithm\n");
 			return -1;
 	}
-	return actually_rewrite(rr, dest, msg, user, descavp);
+	return actually_rewrite(msg, rr, dest, user, descavp);
 }
 
 
@@ -580,11 +585,11 @@ static int rewrite_on_rule(struct route_flags *rf_head, flag_t flags, str * dest
  * The longest match is taken, so it is possible to define
  * route rules for a single number
  *
+ * @param msg the sip message
  * @param node the current routing tree node
  * @param pm the user to be used for prefix matching
  * @param flags user defined flags
  * @param dest the returned new destination URI
- * @param msg the sip message
  * @param user the localpart of the uri to be rewritten
  * @param hash_source the SIP header used for hashing
  * @param alg the algorithm used for hashing
@@ -592,10 +597,10 @@ static int rewrite_on_rule(struct route_flags *rf_head, flag_t flags, str * dest
  *
  * @return 0 on success, -1 on failure, 1 on no more matching child node and no rule list
  */
-static int rewrite_uri_recursor(struct dtrie_node_t * node,
-		const str * pm, flag_t flags, str * dest, struct sip_msg * msg, const str * user,
+static int rewrite_uri_recursor(sip_msg_t* msg, struct dtrie_node_t * node,
+		const str * pm, flag_t flags, str * dest, const str * user,
 		const enum hash_source hash_source, const enum hash_algorithm alg,
-		gparam_t *descavp) {
+		pv_spec_t *descavp) {
 	str re_pm = *pm;
 	void **ret;
 	
@@ -610,7 +615,7 @@ static int rewrite_uri_recursor(struct dtrie_node_t * node,
 		LM_INFO("URI or prefix tree nodes empty, empty rule list\n");
 		return 1;
 	}
-	else return rewrite_on_rule(*ret, flags, dest, msg, user, hash_source, alg, descavp);
+	else return rewrite_on_rule(msg, *ret, flags, dest, user, hash_source, alg, descavp);
 }
 
 
@@ -629,44 +634,47 @@ static int rewrite_uri_recursor(struct dtrie_node_t * node,
  *
  * @return 1 on success, -1 on failure
  */
-int cr_do_route(struct sip_msg * _msg, gparam_t *_carrier,
-		gparam_t *_domain, gparam_t *_prefix_matching,
-		gparam_t *_rewrite_user, enum hash_source _hsrc,
-		enum hash_algorithm _halg, gparam_t *_dstavp) {
+int cr_do_route(sip_msg_t* _msg, char *_carrier,
+		char *_domain, char *_prefix_matching,
+		char *_rewrite_user, enum hash_source _hsrc,
+		enum hash_algorithm _halg, char *_dstavp) {
 
 	int carrier_id, domain_id, ret = -1;
 	str rewrite_user, prefix_matching, dest;
 	flag_t flags;
+	pv_spec_t *dstavp;
+
 	struct route_data_t * rd;
 	struct carrier_data_t * carrier_data;
 	struct domain_data_t * domain_data;
 	struct action act;
 	struct run_act_ctx ra_ctx;
 
-	if (fixup_get_svalue(_msg, _rewrite_user, &rewrite_user)<0) {
+	if (fixup_get_svalue(_msg, (gparam_t*) _rewrite_user, &rewrite_user)<0) {
 		LM_ERR("cannot print the rewrite_user\n");
 		return -1;
 	}
 
-	if (fixup_get_svalue(_msg, _prefix_matching, &prefix_matching)<0) {
+	if (fixup_get_svalue(_msg, (gparam_t*) _prefix_matching, &prefix_matching)<0) {
 		LM_ERR("cannot print the prefix_matching\n");
 		return -1;
 	}
 
 	flags = _msg->flags;
+	dstavp = (pv_spec_t*)_dstavp;
 
 	do {
 		rd = get_data();
 	} while (rd == NULL);
 
-	carrier_id = cr_gp2id(_msg, _carrier, rd->carrier_map, rd->carrier_num);
+	carrier_id = cr_gp2id(_msg, (gparam_t*) _carrier, rd->carrier_map, rd->carrier_num);
 	if (carrier_id < 0) {
 		LM_ERR("invalid carrier id %d\n", carrier_id);
 		release_data(rd);
 		return -1;
 	}
 
-	domain_id = cr_gp2id(_msg, _domain, rd->domain_map, rd->domain_num);
+	domain_id = cr_gp2id(_msg, (gparam_t*) _domain, rd->domain_map, rd->domain_num);
 	if (domain_id < 0) {
 		LM_ERR("invalid domain id %d\n", domain_id);
 		release_data(rd);
@@ -697,7 +705,7 @@ int cr_do_route(struct sip_msg * _msg, gparam_t *_carrier,
 		goto unlock_and_out;
 	}
 
-	if (rewrite_uri_recursor(domain_data->tree, &prefix_matching, flags, &dest, _msg, &rewrite_user, _hsrc, _halg, _dstavp) != 0) {
+	if (rewrite_uri_recursor(_msg, domain_data->tree, &prefix_matching, flags, &dest, &rewrite_user, _hsrc, _halg, dstavp) != 0) {
 		/* this is not necessarily an error, rewrite_recursor does already some error logging */
 		LM_INFO("rewrite_uri_recursor doesn't complete, uri %.*s, carrier %d, domain %d\n", prefix_matching.len,
 			prefix_matching.s, carrier_id, domain_id);
@@ -725,7 +733,7 @@ unlock_and_out:
 /**
  *
  */
-int ki_cr_load_user_carrier_helper(struct sip_msg *_msg,
+int ki_cr_load_user_carrier_helper(sip_msg_t* _msg,
 		str *user, str *domain, pv_spec_t *dvar) {
 	pv_value_t val = {0};
 
@@ -747,7 +755,7 @@ int ki_cr_load_user_carrier_helper(struct sip_msg *_msg,
 /**
  *
  */
-int ki_cr_load_user_carrier(struct sip_msg *_msg,
+int ki_cr_load_user_carrier(sip_msg_t* _msg,
 		str *user, str *domain, str *dstvar) {
 	pv_spec_t *dst;
 
@@ -774,7 +782,7 @@ int ki_cr_load_user_carrier(struct sip_msg *_msg,
  *
  * @return 1 on success, -1 on failure
  */
-int cr_load_user_carrier(struct sip_msg * _msg,
+int cr_load_user_carrier(sip_msg_t* _msg,
 		char *_user, char *_domain, char *_dstvar) {
 	str user, domain;
 
@@ -806,18 +814,18 @@ int cr_load_user_carrier(struct sip_msg * _msg,
  *
  * @return 1 on success, -1 on failure
  */
-int cr_route(struct sip_msg * _msg, gparam_t *_carrier,
-		gparam_t *_domain, gparam_t *_prefix_matching,
-		gparam_t *_rewrite_user, enum hash_source _hsrc,
-		gparam_t *_descavp)
+int cr_route(sip_msg_t* _msg, char *_carrier,
+		char *_domain, char *_prefix_matching,
+		char *_rewrite_user, enum hash_source _hsrc,
+		char *_descavp)
 {
 	return cr_do_route(_msg, _carrier, _domain, _prefix_matching,
 		_rewrite_user, _hsrc, alg_crc32, _descavp);
 }
 
-int cr_route5(struct sip_msg * _msg, gparam_t *_carrier,
-		gparam_t *_domain, gparam_t *_prefix_matching,
-		gparam_t *_rewrite_user, enum hash_source _hsrc)
+int cr_route5(sip_msg_t* _msg, char *_carrier,
+		char *_domain, char *_prefix_matching,
+		char *_rewrite_user, enum hash_source _hsrc)
 {
 	return cr_do_route(_msg, _carrier, _domain, _prefix_matching,
 		_rewrite_user, _hsrc, alg_crc32, NULL);
@@ -840,18 +848,18 @@ int cr_route5(struct sip_msg * _msg, gparam_t *_carrier,
  *
  * @return 1 on success, -1 on failure
  */
-int cr_nofallback_route(struct sip_msg * _msg, gparam_t *_carrier,
-		gparam_t *_domain, gparam_t *_prefix_matching,
-		gparam_t *_rewrite_user, enum hash_source _hsrc,
-		gparam_t *_dstavp)
+int cr_nofallback_route(sip_msg_t* _msg, char *_carrier,
+		char *_domain, char *_prefix_matching,
+		char *_rewrite_user, enum hash_source _hsrc,
+		char *_dstavp)
 {
 	return cr_do_route(_msg, _carrier, _domain, _prefix_matching,
 		_rewrite_user, _hsrc, alg_crc32_nofallback, _dstavp);
 }
 
-int cr_nofallback_route5(struct sip_msg * _msg, gparam_t *_carrier,
-		gparam_t *_domain, gparam_t *_prefix_matching,
-		gparam_t *_rewrite_user, enum hash_source _hsrc)
+int cr_nofallback_route5(sip_msg_t* _msg, char *_carrier,
+		char *_domain, char *_prefix_matching,
+		char *_rewrite_user, enum hash_source _hsrc)
 {
 	return cr_do_route(_msg, _carrier, _domain, _prefix_matching,
 		_rewrite_user, _hsrc, alg_crc32_nofallback, NULL);
@@ -871,44 +879,47 @@ int cr_nofallback_route5(struct sip_msg * _msg, gparam_t *_carrier,
  *
  * @return 1 on success, -1 on failure
  */
-int cr_load_next_domain(struct sip_msg * _msg, gparam_t *_carrier,
-		gparam_t *_domain, gparam_t *_prefix_matching,
-		gparam_t *_host, gparam_t *_reply_code, gparam_t *_dstavp) {
+int cr_load_next_domain(sip_msg_t* _msg, char *_carrier,
+		char *_domain, char *_prefix_matching,
+		char *_host, char *_reply_code, char *_dstavp) {
 
 	int carrier_id, domain_id, ret = -1;
 	str prefix_matching, host, reply_code;
 	flag_t flags;
+	pv_spec_t *dstavp;
+
 	struct route_data_t * rd;
 	struct carrier_data_t * carrier_data;
 	struct domain_data_t * domain_data;
 
-	if (fixup_get_svalue(_msg, _prefix_matching, &prefix_matching)<0) {
+	if (fixup_get_svalue(_msg, (gparam_t*) _prefix_matching, &prefix_matching)<0) {
 		LM_ERR("cannot print the prefix_matching\n");
 		return -1;
 	}
-	if (fixup_get_svalue(_msg, _host, &host)<0) {
+	if (fixup_get_svalue(_msg, (gparam_t*) _host, &host)<0) {
 		LM_ERR("cannot print the host\n");
 		return -1;
 	}
-	if (fixup_get_svalue(_msg, _reply_code, &reply_code)<0) {
+	if (fixup_get_svalue(_msg, (gparam_t*) _reply_code, &reply_code)<0) {
 		LM_ERR("cannot print the reply_code\n");
 		return -1;
 	}
 
 	flags = _msg->flags;
+	dstavp = (pv_spec_t*)_dstavp;
 
 	do {
 		rd = get_data();
 	} while (rd == NULL);
 	
-	carrier_id = cr_gp2id(_msg, _carrier, rd->carrier_map, rd->carrier_num);
+	carrier_id = cr_gp2id(_msg, (gparam_t*) _carrier, rd->carrier_map, rd->carrier_num);
 	if (carrier_id < 0) {
 		LM_ERR("invalid carrier id %d\n", carrier_id);
 		release_data(rd);
 		return -1;
 	}
 
-	domain_id = cr_gp2id(_msg, _domain, rd->domain_map, rd->domain_num);
+	domain_id = cr_gp2id(_msg, (gparam_t*) _domain, rd->domain_map, rd->domain_num);
 	if (domain_id < 0) {
 		LM_ERR("invalid domain id %d\n", domain_id);
 		release_data(rd);
@@ -939,7 +950,7 @@ int cr_load_next_domain(struct sip_msg * _msg, gparam_t *_carrier,
 		goto unlock_and_out;
 	}
 
-	if (set_next_domain_recursor(domain_data->failure_tree, &prefix_matching, &host, &reply_code, flags, _dstavp) != 0) {
+	if (set_next_domain_recursor(_msg, domain_data->failure_tree, &prefix_matching, &host, &reply_code, flags, dstavp) != 0) {
 		LM_INFO("set_next_domain_recursor doesn't complete, prefix '%.*s', carrier %d, domain %d\n", prefix_matching.len,
 			prefix_matching.s, carrier_id, domain_id);
 		goto unlock_and_out;
