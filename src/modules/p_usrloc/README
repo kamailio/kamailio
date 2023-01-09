@@ -514,11 +514,11 @@ modparam("p_usrloc", "db_use_transactions", "0")
    activate transaction the db_use_transactions parameter must be also
    set.
 
-   Default value is “READ UNCOMMITED”.
+   Default value is “READ UNCOMMITTED”.
 
    Example 1.17. Set db_transaction_level parameter
 ...
-modparam("p_usrloc", "db_transaction_level", "READ UNCOMMITED")
+modparam("p_usrloc", "db_transaction_level", "READ UNCOMMITTED")
 ...
 
 3.18. write_on_master_db (int)
