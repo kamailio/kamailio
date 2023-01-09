@@ -72,7 +72,7 @@ int cr_route(struct sip_msg * _msg, char *_carrier,
 		char *_descavp);
 
 
-int ki_cr_route(sip_msg_t* _msg, str *_carrier,
+int ki_cr_route_info(sip_msg_t* _msg, str *_carrier,
 		str *_domain, str *_prefix_matching,
 		str *_rewrite_user, str *_hsrc,
 		str *_descavp);
@@ -83,7 +83,7 @@ int cr_route5(struct sip_msg * _msg, char *_carrier,
 		char *_rewrite_user, enum hash_source _hsrc);
 
 
-int ki_cr_route5(sip_msg_t* _msg, str *_carrier,
+int ki_cr_route(sip_msg_t* _msg, str *_carrier,
 		str *_domain, str *_prefix_matching,
 		str *_rewrite_user, str *_hsrc);
 
@@ -111,7 +111,7 @@ int cr_nofallback_route(struct sip_msg * _msg, char *_carrier,
 		char *_dstavp);
 
 
-int ki_cr_nofallback_route(sip_msg_t* _msg, str *_carrier,
+int ki_cr_nofallback_route_info(sip_msg_t* _msg, str *_carrier,
 		str *_domain, str *_prefix_matching,
 		str *_rewrite_user, str *_hsrc,
 		str *_dstavp);
@@ -122,7 +122,7 @@ int cr_nofallback_route5(struct sip_msg * _msg, char *_carrier,
 		char *_rewrite_user, enum hash_source _hsrc);
 
 
-int ki_cr_nofallback_route5(sip_msg_t* _msg, str *_carrier,
+int ki_cr_nofallback_route(sip_msg_t* _msg, str *_carrier,
 		str *_domain, str *_prefix_matching,
 		str *_rewrite_user, str *_hsrc);
 
