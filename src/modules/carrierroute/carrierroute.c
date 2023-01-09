@@ -284,6 +284,31 @@ static sr_kemi_t sr_kemi_carrierroute_exports[] = {
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
+	{ str_init("carrierroute"), str_init("cr_route"),
+		SR_KEMIP_INT, ki_cr_route5,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE }
+	},
+	{ str_init("carrierroute"), str_init("cr_route_info"),
+		SR_KEMIP_INT, ki_cr_route,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR }
+	},
+	{ str_init("carrierroute"), str_init("cr_nofallback_route"),
+		SR_KEMIP_INT, ki_cr_nofallback_route5,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE }
+	},
+	{ str_init("carrierroute"), str_init("cr_nofallback_route_info"),
+		SR_KEMIP_INT, ki_cr_nofallback_route,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR }
+	},
+	{ str_init("carrierroute"), str_init("cr_next_domain"),
+		SR_KEMIP_INT, ki_cr_load_next_domain,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR }
+	},
 
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };

@@ -46,6 +46,7 @@
 #include "cr_rule.h"
 #include "cr_domain.h"
 #include "cr_carrier.h"
+#include "prime_hash.h"
 #include "carrierroute.h"
 #include "config.h"
 
@@ -131,6 +132,23 @@ static inline int cr_gp2id(sip_msg_t* _msg, gparam_t *gp, struct name_map_t *map
 		LM_ERR("invalid parameter type\n");
 		return -1;
 	}
+}
+
+
+/**
+ *
+ */
+static inline int cr_str2id(sip_msg_t* _msg, str *ss, struct name_map_t *map, int size) {
+	int id;
+
+	if (str2sint(ss, &id) != 0) {
+		id = map_name2id(map, size, ss);
+		if (id < 0) {
+			LM_ERR("could not find id '%.*s' from name\n", ss->len, ss->s);
+			return -1;
+		}
+	}
+	return id;
 }
 
 
@@ -733,6 +751,141 @@ unlock_and_out:
 /**
  *
  */
+int ki_cr_do_route_helper(sip_msg_t* _msg, str *_carrier,
+		str *_domain, str *_prefix_matching,
+		str *_rewrite_user, enum hash_source _hsrc,
+		enum hash_algorithm _halg, str *_dstavp) {
+
+	str dest;
+	flag_t flags;
+	pv_spec_t *dstavp;
+	int carrier_id, domain_id, ret = -1;
+
+	struct route_data_t * rd;
+	struct carrier_data_t * carrier_data;
+	struct domain_data_t * domain_data;
+
+	struct action act;
+	struct run_act_ctx ra_ctx;
+
+	if (_rewrite_user == NULL) {
+		LM_ERR("cannot get the rewrite_user\n");
+		return -1;
+	}
+
+	if (_prefix_matching == NULL) {
+		LM_ERR("cannot print the prefix_matching\n");
+		return -1;
+	}
+
+	dstavp = NULL;
+	flags = _msg->flags;
+
+	if (_dstavp != NULL) {
+		dstavp = pv_cache_get(_dstavp);
+		if(dstavp == NULL) {
+			LM_ERR("failed to get pv spec for: %.*s\n", _dstavp->len, _dstavp->s);
+			return -1;
+		}
+		if(dstavp->setf == NULL) {
+			LM_ERR("target pv is not writable: %.*s\n", _dstavp->len, _dstavp->s);
+			return -1;
+		}
+	}
+
+	do {
+		rd = get_data();
+	} while (rd == NULL);
+
+	carrier_id = cr_str2id(_msg, _carrier, rd->carrier_map, rd->carrier_num);
+	if (carrier_id < 0) {
+		LM_ERR("invalid carrier id %d\n", carrier_id);
+		release_data(rd);
+		return -1;
+	}
+
+	domain_id = cr_str2id(_msg, _domain, rd->domain_map, rd->domain_num);
+	if (domain_id < 0) {
+		LM_ERR("invalid domain id %d\n", domain_id);
+		release_data(rd);
+		return -1;
+	}
+
+	carrier_data = NULL;
+	if (carrier_id == 0) {
+		carrier_data = get_carrier_data(rd, rd->default_carrier_id);
+	} else {
+		carrier_data = get_carrier_data(rd, carrier_id);
+		if (carrier_data == NULL) {
+			if (cfg_get(carrierroute, carrierroute_cfg, fallback_default)) {
+				LM_NOTICE("invalid tree id %i specified, using default tree\n", carrier_id);
+				carrier_data = get_carrier_data(rd, rd->default_carrier_id);
+			}
+		}
+	}
+	if (carrier_data == NULL) {
+		LM_ERR("cannot get carrier data\n");
+		goto unlock_and_out;
+	}
+
+	domain_data = get_domain_data(carrier_data, domain_id);
+	if (domain_data == NULL) {
+		LM_ERR("desired routing domain doesn't exist, prefix %.*s, carrier %d, domain %d\n",
+			_prefix_matching->len, _prefix_matching->s, carrier_id, domain_id);
+		goto unlock_and_out;
+	}
+
+	if (rewrite_uri_recursor(_msg, domain_data->tree, _prefix_matching, flags, &dest, _rewrite_user, _hsrc, _halg, dstavp) != 0) {
+		/* this is not necessarily an error, rewrite_recursor does already some error logging */
+		LM_INFO("rewrite_uri_recursor doesn't complete, uri %.*s, carrier %d, domain %d\n", _prefix_matching->len,
+			_prefix_matching->s, carrier_id, domain_id);
+		goto unlock_and_out;
+	}
+
+	LM_INFO("uri %.*s was rewritten to %.*s, carrier %d, domain %d\n", _rewrite_user->len, _rewrite_user->s, dest.len, dest.s, carrier_id, domain_id);
+
+	memset(&act, 0, sizeof(act));
+	act.type = SET_URI_T;
+	act.val[0].type = STRING_ST;
+	act.val[0].u.string = dest.s;
+	init_run_actions_ctx(&ra_ctx);
+	ret = do_action(&ra_ctx, &act, _msg);
+	if (ret < 0) {
+		LM_ERR("Error in do_action()\n");
+	}
+
+unlock_and_out:
+	release_data(rd);
+	return ret;
+}
+
+
+enum hash_source get_hash_source(str* _hsrc) {
+	enum hash_source my_hash_source = shs_error;
+
+	if (strcasecmp("call_id", _hsrc->s) == 0) {
+		my_hash_source = shs_call_id;
+	} else if (strcasecmp("from_uri", _hsrc->s) == 0) {
+		my_hash_source = shs_from_uri;
+	} else if (strcasecmp("from_user", _hsrc->s) == 0) {
+		my_hash_source = shs_from_user;
+	} else if (strcasecmp("to_uri", _hsrc->s) == 0) {
+		my_hash_source = shs_to_uri;
+	} else if (strcasecmp("to_user", _hsrc->s) == 0) {
+		my_hash_source = shs_to_user;
+	} else if (strcasecmp("rand", _hsrc->s) == 0) {
+		my_hash_source = shs_rand;
+	} else {
+		LM_ERR("invalid hash source\n");
+	}
+
+	return my_hash_source;
+}
+
+
+/**
+ *
+ */
 int ki_cr_load_user_carrier_helper(sip_msg_t* _msg,
 		str *user, str *domain, pv_spec_t *dvar) {
 	pv_value_t val = {0};
@@ -823,12 +976,38 @@ int cr_route(sip_msg_t* _msg, char *_carrier,
 		_rewrite_user, _hsrc, alg_crc32, _descavp);
 }
 
+
+int ki_cr_route(sip_msg_t* _msg, str *_carrier,
+		str *_domain, str *_prefix_matching,
+		str *_rewrite_user, str *_hsrc,
+		str *_descavp)
+{
+	enum hash_source hsrc;
+	hsrc = get_hash_source(_hsrc);
+
+	return ki_cr_do_route_helper(_msg, _carrier, _domain, _prefix_matching,
+		_rewrite_user, hsrc, alg_crc32, _descavp);
+}
+
+
 int cr_route5(sip_msg_t* _msg, char *_carrier,
 		char *_domain, char *_prefix_matching,
 		char *_rewrite_user, enum hash_source _hsrc)
 {
 	return cr_do_route(_msg, _carrier, _domain, _prefix_matching,
 		_rewrite_user, _hsrc, alg_crc32, NULL);
+}
+
+
+int ki_cr_route5(sip_msg_t* _msg, str *_carrier,
+		str *_domain, str *_prefix_matching,
+		str *_rewrite_user, str *_hsrc)
+{
+	enum hash_source hsrc;
+	hsrc = get_hash_source(_hsrc);
+
+	return ki_cr_do_route_helper(_msg, _carrier, _domain, _prefix_matching,
+		_rewrite_user, hsrc, alg_crc32, NULL);
 }
 
 
@@ -857,12 +1036,38 @@ int cr_nofallback_route(sip_msg_t* _msg, char *_carrier,
 		_rewrite_user, _hsrc, alg_crc32_nofallback, _dstavp);
 }
 
+
+int ki_cr_nofallback_route(sip_msg_t* _msg, str *_carrier,
+		str *_domain, str *_prefix_matching,
+		str *_rewrite_user, str *_hsrc,
+		str *_dstavp)
+{
+	enum hash_source hsrc;
+	hsrc = get_hash_source(_hsrc);
+
+	return ki_cr_do_route_helper(_msg, _carrier, _domain, _prefix_matching,
+		_rewrite_user, hsrc, alg_crc32_nofallback, _dstavp);
+}
+
+
 int cr_nofallback_route5(sip_msg_t* _msg, char *_carrier,
 		char *_domain, char *_prefix_matching,
 		char *_rewrite_user, enum hash_source _hsrc)
 {
 	return cr_do_route(_msg, _carrier, _domain, _prefix_matching,
 		_rewrite_user, _hsrc, alg_crc32_nofallback, NULL);
+}
+
+
+int ki_cr_nofallback_route5(sip_msg_t* _msg, str *_carrier,
+		str *_domain, str *_prefix_matching,
+		str *_rewrite_user, str *_hsrc)
+{
+	enum hash_source hsrc;
+	hsrc = get_hash_source(_hsrc);
+
+	return ki_cr_do_route_helper(_msg, _carrier, _domain, _prefix_matching,
+		_rewrite_user, hsrc, alg_crc32_nofallback, NULL);
 }
 
 
@@ -958,6 +1163,102 @@ int cr_load_next_domain(sip_msg_t* _msg, char *_carrier,
 	
 	ret = 1;
 	
+unlock_and_out:
+	release_data(rd);
+	return ret;
+}
+
+
+/**
+ *
+ */
+int ki_cr_load_next_domain(sip_msg_t* _msg, str *_carrier,
+		str *_domain, str *_prefix_matching,
+		str *_host, str *_reply_code, str *_dstavp) {
+
+	flag_t flags;
+	pv_spec_t *dstavp;
+	int carrier_id, domain_id, ret = -1;
+
+	struct route_data_t * rd;
+	struct carrier_data_t * carrier_data;
+	struct domain_data_t * domain_data;
+
+	if (_prefix_matching == NULL) {
+		LM_ERR("cannot get the prefix_matching\n");
+		return -1;
+	}
+	if (_host == NULL) {
+		LM_ERR("cannot get the host\n");
+		return -1;
+	}
+	if (_reply_code == NULL) {
+		LM_ERR("cannot get the reply_code\n");
+		return -1;
+	}
+
+	flags = _msg->flags;
+	dstavp = pv_cache_get(_dstavp);
+
+	if(dstavp == NULL) {
+		LM_ERR("failed to get pv spec for: %.*s\n", _dstavp->len, _dstavp->s);
+		return -1;
+	}
+	if(dstavp->setf == NULL) {
+		LM_ERR("target pv is not writable: %.*s\n", _dstavp->len, _dstavp->s);
+		return -1;
+	}
+
+	do {
+		rd = get_data();
+	} while (rd == NULL);
+
+	carrier_id = cr_str2id(_msg, _carrier, rd->carrier_map, rd->carrier_num);
+	if (carrier_id < 0) {
+		LM_ERR("invalid carrier id %d\n", carrier_id);
+		release_data(rd);
+		return -1;
+	}
+
+	domain_id = cr_str2id(_msg, _domain, rd->domain_map, rd->domain_num);
+	if (domain_id < 0) {
+		LM_ERR("invalid domain id %d\n", domain_id);
+		release_data(rd);
+		return -1;
+	}
+
+	carrier_data=NULL;
+	if (carrier_id == 0) {
+		carrier_data = get_carrier_data(rd, rd->default_carrier_id);
+	} else {
+		carrier_data = get_carrier_data(rd, carrier_id);
+		if (carrier_data == NULL) {
+			if (cfg_get(carrierroute, carrierroute_cfg, fallback_default)) {
+				LM_NOTICE("invalid tree id %i specified, using default tree\n", carrier_id);
+				carrier_data = get_carrier_data(rd, rd->default_carrier_id);
+			}
+		}
+	}
+	if (carrier_data == NULL) {
+		LM_ERR("cannot get carrier data\n");
+		goto unlock_and_out;
+	}
+
+	domain_data = get_domain_data(carrier_data, domain_id);
+	if (domain_data == NULL) {
+		LM_ERR("desired routing domain doesn't exist, prefix %.*s, carrier %d, domain %d\n",
+			_prefix_matching->len, _prefix_matching->s, carrier_id, domain_id);
+		goto unlock_and_out;
+	}
+
+	if (set_next_domain_recursor(_msg, domain_data->failure_tree, _prefix_matching, _host, _reply_code, flags, dstavp) != 0) {
+		LM_INFO("set_next_domain_recursor doesn't complete, prefix '%.*s', carrier %d, domain %d\n", _prefix_matching->len,
+			_prefix_matching->s, carrier_id, domain_id);
+		goto unlock_and_out;
+	}
+
+	ret = 1;
+
 unlock_and_out:
 	release_data(rd);
 	return ret;
