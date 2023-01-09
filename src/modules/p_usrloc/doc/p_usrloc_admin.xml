@@ -472,14 +472,14 @@ modparam("p_usrloc", "db_use_transactions", "0")
 	    </para>
 	    <para>
 		<emphasis>
-		    Default value is <quote>READ UNCOMMITED</quote>.
+		    Default value is <quote>READ UNCOMMITTED</quote>.
 		</emphasis>
 	    </para>
 	    <example>
 		<title>Set <varname>db_transaction_level</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("p_usrloc", "db_transaction_level", "READ UNCOMMITED")
+modparam("p_usrloc", "db_transaction_level", "READ UNCOMMITTED")
 ...
 </programlisting>
 	    </example>
