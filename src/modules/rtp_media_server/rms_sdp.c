@@ -187,8 +187,11 @@ PayloadType *
 rms_payload_type_new() // This could be problematic as it must remain compatible with the constructor in MS2.
 {
 	PayloadType *newpayload = (PayloadType *)shm_malloc(sizeof(PayloadType));
-	newpayload->flags |= PAYLOAD_TYPE_ALLOCATED;
+	if(!newpayload) {
+		return NULL;
+	}
 	memset(newpayload, 0, sizeof(PayloadType));
+	newpayload->flags |= PAYLOAD_TYPE_ALLOCATED;
 	return newpayload;
 }
 
