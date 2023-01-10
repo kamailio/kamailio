@@ -944,9 +944,6 @@ static int rms_sip_cancel(struct sip_msg *msg, str *callid_s, str *cseq_s)
 	int fl = 0;
 	int rcode = 0;
 
-	if(rcode<100 || rcode>699)
-		rcode = 0;
-
 	bkt = tmb.t_gett();
 	bkb = tmb.t_gett_branch();
 	if (tmb.t_lookup_callid(&trans, *callid_s, *cseq_s) < 0 ) {
