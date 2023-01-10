@@ -149,6 +149,7 @@ int apy3s_exec_func(sip_msg_t *_msg, char *fname, char *fparam, int emode)
 	rval = (int)PyLong_AsLong(pValue);
 
 	Py_DECREF(pValue);
+	_sr_apy_env.msg = bmsg;
 
 error:
 	if(locked) {
