@@ -240,12 +240,16 @@ static rms_dialog_info_t *rms_stop(rms_dialog_info_t *di)
 static rms_dialog_info_t *rms_dialog_action_check(rms_dialog_info_t *di)
 {
 	rms_action_t *a;
-		if (!di)
-			LM_ERR("Dialog info NULL\n");
+	if (!di) {
+		LM_ERR("Dialog info NULL\n");
+		return NULL;
+	}
 	clist_foreach(&di->action, a, next)
 	{
-		if (!a)
+		if (!a) {
 			LM_ERR("dialog action NULL\n");
+			continue;
+		}
 
 		if(a->type == RMS_HANGUP) {
 			LM_INFO("dialog action RMS_HANGUP [%s]\n", di->callid.s);
