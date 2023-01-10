@@ -52,7 +52,8 @@ typedef struct{
 	str fqdn;	/**< FQDN of the peer */
 	str realm;	/**< Realm of the peer */
 	int port;	/**< TCP port of the peer; the Diameter uri is then aaa://fqdn:port. */
-	str src_addr; /**< IP address used to connect to the peer */
+	str src_addr;	/**< IP address used to connect to the peer */
+	str proto;	/**< IP Protocol (SCTP|TCP) */
 } peer_config;
 
 
@@ -60,6 +61,7 @@ typedef struct{
 typedef struct{
 	int port;	/**< TCP port number to listen on */
 	str bind;	/**< IP address to bind to (if null, then :: (0.0.0.0) - all) */
+	str proto;	/**< IP Protocol (SCTP|TCP) */
 } acceptor_config;
 
 typedef enum {

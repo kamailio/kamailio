@@ -79,7 +79,7 @@ extern int h_errno;
  * @param sock - socket to be update with the identifier of the opened one
  * @returns 1 on success, 0 on error
  */
-int create_socket(int listen_port,str bind_to,unsigned int *sock)
+int create_socket(str ip_proto,int listen_port,str bind_to,unsigned int *sock)
 {
 	unsigned int server_sock=-1;
 	struct addrinfo *ainfo=0,*res=0,hints;
@@ -88,8 +88,11 @@ int create_socket(int listen_port,str bind_to,unsigned int *sock)
 	unsigned int option;
 
 	memset (&hints, 0, sizeof(hints));
-	//hints.ai_protocol = IPPROTO_SCTP;
-	//hints.ai_protocol = IPPROTO_TCP;
+	if ((ip_proto.len) && (strcmp(ip_proto.s,"SCTP")==0)){
+		hints.ai_protocol = IPPROTO_SCTP;
+	}else{
+		hints.ai_protocol = IPPROTO_TCP;
+	}
 	hints.ai_flags = AI_PASSIVE|AI_ADDRCONFIG;
 	hints.ai_socktype = SOCK_STREAM;
 
