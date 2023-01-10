@@ -941,7 +941,6 @@ static int rms_sip_cancel(struct sip_msg *msg, str *callid_s, str *cseq_s)
 	tm_cell_t *bkt;
 	int bkb;
 	struct cancel_info cancel_data;
-	int fl = 0;
 	int rcode = 0;
 
 	bkt = tmb.t_gett();
@@ -955,8 +954,6 @@ static int rms_sip_cancel(struct sip_msg *msg, str *callid_s, str *cseq_s)
 		return 1;
 	}
 
-	if(trans->uas.request && fl>0 && fl<32)
-		setflag(trans->uas.request, fl);
 	init_cancel_info(&cancel_data);
 	cancel_data.reason.cause = rcode;
 	cancel_data.cancel_bitmap = 0;
