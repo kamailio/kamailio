@@ -323,7 +323,9 @@ int apy3s_script_init_exec(PyObject* pModule, str *fname, int *vparam)
 	if (PyErr_Occurred()) {
 		LM_ERR("error exception occurred\n");
 		apy3s_handle_exception("script_init");
-		Py_DECREF(pHandler);
+		if (pHandler != NULL) {
+			Py_DECREF(pHandler);
+		}
 		goto error;
 	}
 
@@ -331,11 +333,10 @@ int apy3s_script_init_exec(PyObject* pModule, str *fname, int *vparam)
 		LM_ERR("PyObject_CallObject() returned NULL but no exception!\n");
 		if (!PyErr_Occurred())
 			PyErr_Format(PyExc_TypeError,
-					"Function '%s' of module '%s' has returned not returned"
-					" object. Should be a class instance.",
+					"Function '%s' of module '%s' has not returned"
+					" an object. Should be a class instance.",
 					fname->s, _sr_apy3s_bname);
 		apy3s_handle_exception("script_init");
-		Py_DECREF(pHandler);
 		goto error;
 	}
 	Py_XDECREF(pHandler);
