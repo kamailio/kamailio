@@ -274,7 +274,9 @@ rms_dialog_info_t *rms_dialog_new(struct sip_msg *msg)
 	return si;
 error:
 	LM_ERR("can not create dialog info.\n");
-	rms_dialog_free(si);
+	if(si) {
+		rms_dialog_free(si);
+	}
 	return NULL;
 }
 
