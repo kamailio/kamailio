@@ -423,7 +423,8 @@ PyObject *sr_apy_kemi_exec_func_ex(sr_kemi_t *ket, PyObject *self, PyObject *arg
 			}
 			if(ket->ptypes[i]==SR_KEMIP_INT) {
 				vps[i].vtype = SR_KEMIP_INT;
-				vps[i].v.n = (int)vps[i].v.l;
+				ret = (int)vps[i].v.l;
+				vps[i].v.n = ret;
 			} else {
 				vps[i].vtype = SR_KEMIP_LONG;
 			}
