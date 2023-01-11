@@ -37,7 +37,6 @@
 #include "p_usrloc_mod.h"
 #include "../usrloc/ul_callback.h"
 #include "urecord.h"
-#include "ucontact.h"
 #include "ul_db_layer.h"
 #include "dlist.h"
 #include "config.h"
