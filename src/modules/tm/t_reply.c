@@ -48,7 +48,6 @@
 #include "../../core/data_lump.h"
 #include "../../core/data_lump_rpl.h"
 #include "../../core/usr_avp.h"
-#include "../../core/usr_avp.h"
 #include "../../core/atomic_ops.h" /* membar_write() */
 #include "../../core/compiler_opt.h"
 #ifdef USE_DST_BLOCKLIST
