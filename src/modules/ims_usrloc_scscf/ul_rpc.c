@@ -25,7 +25,6 @@
 #include "dlist.h"
 #include "ucontact.h"
 #include "udomain.h"
-#include "dlist.h"
 
 static const char* ul_rpc_dump_doc[2] = 	{"Dump SCSCF user location tables", 0 };
 static const char* ul_rpc_showimpu_doc[2] = {"Dump SCSCF IMPU information", 0 };

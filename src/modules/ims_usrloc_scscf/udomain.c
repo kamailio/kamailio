@@ -63,7 +63,6 @@
 #include "ims_usrloc_scscf_mod.h"            /* usrloc module parameters */
 #include "usrloc.h"
 #include "utime.h"
-#include "usrloc.h"
 #include "bin_utils.h"
 #include "usrloc_db.h"
 #include "contact_hslot.h"
