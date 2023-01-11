@@ -33,7 +33,6 @@
 #include "../../core/dprint.h"
 #include "../../core/ut.h"
 #include "../../lib/srdb1/db.h"
-#include "../../core/dprint.h"
 #include "../../core/config.h"
 #include "../../core/socket_info.h"
 #include "../../core/dset.h"
