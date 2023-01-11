@@ -63,7 +63,6 @@
 #include "../../core/mod_fix.h"
 #include "../../core/socket_info.h"
 #include "../../core/pvar.h"
-#include "../../core/mod_fix.h"
 #include "../../core/rand/kam_rand.h"
 #include "../../core/kemi.h"
 #include "hash.h"
