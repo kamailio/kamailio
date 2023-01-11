@@ -62,8 +62,6 @@
 #include "ul_callback.h"
 #include "usrloc.h"
 #include "impurecord.h"
-#include "ucontact.h"
-#include "usrloc.h"
 #include "usrloc_db.h"
 #include "../../core/hashes.h"
 #include "contact_hslot.h"
