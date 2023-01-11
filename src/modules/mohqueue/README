@@ -343,12 +343,14 @@ $var(mohq) = "operators";
        not attempt to change this value.
      * name (25-character string, required): the queue name. Duplicate
        names are not allowed.
-     * uri (100-character string, required): the URI of the queue. It
-       should not include any parameters or headers (e.g.
-       "sip:user@host;maddr=239.255.255.1" or
+     * uri (100-character string, required): the URI of the queue.
+       Duplicates are not allowed. It should not include any parameters or
+       headers (e.g. "sip:user@host;maddr=239.255.255.1" or
        "sip:user@host?subject=project") although it will match any RURI
        that contains this URI even if the RURI has parameters or headers.
-       Duplicates are not allowed.
+       The server name of the URI must uniquely identify the server. If
+       the RURI server name does not uniquely identify the server then it
+       should be rewritten to one the does before calling mohq_send ().
      * mohdir (100-character string, optional): path to the directory
        where the audio files for the queue are stored. This path overrides
        the one provided by the mohdir parameter. If the directory is not

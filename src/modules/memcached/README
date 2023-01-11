@@ -288,4 +288,4 @@ modparam("memcached", "stringify", 1)
      * $mctex(key)
 
    Exported pseudo-variables are documented at
-   https://www.kamailio.org/wiki/.
+   https://www.kamailio.org/wikidocs/.

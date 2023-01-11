@@ -369,4 +369,4 @@ modparam("pv_headers", "auto_msg", 1)
      * $x_rr
 
    Exported pseudo-variables are documented at
-   https://www.kamailio.org/wiki/.
+   https://www.kamailio.org/wikidocs/.

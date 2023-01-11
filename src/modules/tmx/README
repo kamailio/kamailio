@@ -504,7 +504,7 @@ event_route [tm:branch-failure:contact] {
      * $T(name)
 
    Exported pseudo-variables are documented at
-   https://www.kamailio.org/wiki/.
+   https://www.kamailio.org/wikidocs/.
 
 6. Statistics
 

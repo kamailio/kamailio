@@ -499,4 +499,4 @@ event_route[mqtt:message] {
        mqtt:message)
 
    Exported pseudo-variables are documented at
-   https://www.kamailio.org/wiki/.
+   https://www.kamailio.org/wikidocs/.

@@ -603,7 +603,7 @@ avp_copy("$avp(old)","$avp(new)/gd");
    Prints the formatted string 'format' in the AVP 'dest'. The 'format'
    parameter can include any pseudo-variable defined in Kamailio. The list
    with all pseudo-variables in Kamailio can be found at:
-   https://www.kamailio.org/wiki/
+   https://www.kamailio.org/wikidocs/
 
    Meaning of the parameters is as follows:
      * dest - in which AVP should be stored the result. Parameter syntax

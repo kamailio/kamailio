@@ -398,4 +398,4 @@ event_route[evapi:message-received] {
      * $evapi(conidx) - internal connection index
 
    Exported pseudo-variables are documented at
-   https://www.kamailio.org/wiki/.
+   https://www.kamailio.org/wikidocs/.

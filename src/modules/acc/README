@@ -395,7 +395,7 @@ if (uri=~"sip:+40") /* calls to Romania */ {
      * extra_definition = log_name '=' pseudo_variable
 
    The full list of supported pseudo-variables in Kamailio is available
-   at: http://www.kamailio.org/wiki/cookbooks/devel/pseudovariables
+   at: https://www.kamailio.org/wikidocs/cookbooks/devel/pseudovariables
 
    Note: For all the ACK processed by tm, the registered callbacks (like
    acc module) will be called with the corresponding INVITE transaction
@@ -555,7 +555,7 @@ Note
    See also Section 6.35, “cdr_extra (string)”.
 
    The list with all pseudo-variables in Kamailio can be found at:
-   https://www.kamailio.org/wiki/.
+   https://www.kamailio.org/wikidocs/.
 
 4.3. CDR with Multi Call-Legs
 

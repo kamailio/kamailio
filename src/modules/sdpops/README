@@ -531,4 +531,4 @@ if(is_method("INVITE") && has_body("application/sdp")){
        write)
 
    Exported pseudo-variables are also documented at
-   https://www.kamailio.org/wiki/
+   https://www.kamailio.org/wikidocs/

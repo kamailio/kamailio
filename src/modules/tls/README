@@ -402,8 +402,9 @@ make -C modules/tls extra_defs="-DTLS_WR_DEBUG -DTLS_RD_DEBUG"
 
    This documentation is incomplete. The provided selects are not
    documented in this file. A list with all the ones implemented by the
-   TLS module can be found in the Cookbook https://www.kamailio.org/wiki/
-   in the section Selects for the respective version of Kamailio.
+   TLS module can be found in the Cookbook
+   https://www.kamailio.org/wikidocs/ in the section Selects for the
+   respective version of Kamailio.
 
 8. Quick Certificate Howto
 
