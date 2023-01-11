@@ -36,7 +36,6 @@
 #include "../../core/ut.h"
 #include "../../core/parser/digest/digest.h"
 #include "../../core/parser/hf.h"
-#include "../../core/mod_fix.h"
 
 #include "auth_ephemeral_mod.h"
 #include "authorize.h"
