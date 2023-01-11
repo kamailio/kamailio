@@ -31,7 +31,6 @@
 #include "../../core/mem/mem.h"
 #include "../../core/dprint.h"
 #include "../../core/parser/parse_expires.h"
-#include "../../core/dprint.h"
 #include "../../core/mem/shm_mem.h"
 #include "../../core/parser/msg_parser.h"
 #include "../../core/strutils.h"
