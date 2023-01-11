@@ -38,7 +38,6 @@
 #include "../../core/usr_avp.h"
 #include "../../core/mod_fix.h"
 #include "../../core/ut.h"
-#include "../../core/resolve.h"
 
 #define TABLE_VERSION 6
 
