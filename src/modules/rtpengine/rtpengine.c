@@ -44,8 +44,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <ifaddrs.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
 
 #include "../../core/flags.h"
 #include "../../core/sr_module.h"
