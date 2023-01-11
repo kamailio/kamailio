@@ -34,7 +34,6 @@
 #include "../../core/pvar.h"
 #include "../../core/mem/shm_mem.h"
 #include "../../core/mod_fix.h"
-#include "../../core/pvar.h"
 #include "../../core/cfg/cfg_struct.h"
 #include "../../core/kemi.h"
 #include "../../core/fmsg.h"
