@@ -35,7 +35,6 @@
 #include "../../core/socket_info.h"
 #include "../../core/dset.h"
 #include "../../core/pt.h"
-#include "../../core/receive.h"
 #include "../../core/timer_proc.h"
 #include "../../core/script_cb.h"
 #include "../../core/parser/parse_param.h"
