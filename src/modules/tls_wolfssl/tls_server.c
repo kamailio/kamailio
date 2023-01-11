@@ -42,7 +42,6 @@
 #include "../../core/pt.h"
 #include "../../core/timer.h"
 #include "../../core/globals.h"
-#include "../../core/pt.h"
 #include "../../core/tcp_int_send.h"
 #include "../../core/tcp_read.h"
 #include "../../core/cfg/cfg.h"
