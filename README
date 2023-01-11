@@ -121,7 +121,7 @@ documentation or other resources that could help the project.
 
 For code contributions, follow the suggestions provided at:
 
-  * https://www.kamailio.org/wiki/devel/git-commit-guidelines
+  * https://www.kamailio.org/wikidocs/devel/git-commit-guidelines
 
 The recommended way to contribute code is via pull requests to Kamailio
 project on Github:
