@@ -20,8 +20,6 @@
 #include "../../lib/ims/ims_getters.h"
 #include "ro_db_handler.h"
 #include "ims_charging_stats.h"
-#include "ro_session_hash.h"
-#include "ims_charging_stats.h"
 #include "../../core/kemi.h"
 
 MODULE_VERSION
