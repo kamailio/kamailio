@@ -24,7 +24,6 @@
 #include <string.h>
 #include <stdint.h>
 #include <inttypes.h>
-#include <string.h>
 #include <stdlib.h>
 
 #include "../../core/mem/shm_mem.h"
