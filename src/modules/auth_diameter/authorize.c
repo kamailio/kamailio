@@ -28,7 +28,6 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h> 
-#include <string.h>
 
 /* memory management */
 #include "../../core/mem/mem.h"
