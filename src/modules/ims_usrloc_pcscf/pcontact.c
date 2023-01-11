@@ -53,7 +53,6 @@
 #include "usrloc.h"
 #include "utime.h"
 #include "ul_callback.h"
-#include "usrloc.h"
 #include "../../lib/ims/useful_defs.h"
 #include "usrloc_db.h"
 #include "../../core/parser/parse_uri.h"
