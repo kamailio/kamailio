@@ -43,7 +43,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
 #include <stdarg.h>
 #include <sys/types.h>
 #include <signal.h>
@@ -57,7 +56,6 @@
 #include "../../core/parser/msg_parser.h"
 #include "../../core/ut.h"
 #include "../../core/dset.h"
-#include "../../core/str.h"
 #include "../../core/dprint.h"
 #include "../../core/data_lump.h"
 #include "../../core/data_lump_rpl.h"
