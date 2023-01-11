@@ -29,10 +29,8 @@
 #include <string.h>
 #include <sys/uio.h>
 #include <unistd.h>
-#include <fcntl.h>
 #include <sys/un.h>
 #include <ctype.h>
-#include <string.h>
 
 #include "../../core/str.h"
 #include "../../core/ut.h"
