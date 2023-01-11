@@ -502,7 +502,7 @@ public class Kamailio extends NativeMethods
 			    1 - Ok
 			   -1 - Failed
 
-		   Online reference: http://www.kamailio.org/wiki/cookbooks/3.3.x/core#rewriteuri
+		   Online reference: https://www.kamailio.org/wikidocs/cookbooks/3.3.x/core#rewriteuri
 
         5.1.2.3.   static native int RewriteURI(String ruri);
 
@@ -513,7 +513,7 @@ public class Kamailio extends NativeMethods
 			    1 - Ok
 			   -1 - Failed
 
-		   Online reference: http://www.kamailio.org/wiki/cookbooks/3.3.x/core#rewriteuri
+		   Online reference: https://www.kamailio.org/wikidocs/cookbooks/3.3.x/core#rewriteuri
 
 
 
