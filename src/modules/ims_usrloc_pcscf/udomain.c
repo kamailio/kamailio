@@ -56,7 +56,6 @@
 #include "ims_usrloc_pcscf_mod.h"            /* usrloc module parameters */
 #include "usrloc.h"
 #include "utime.h"
-#include "usrloc.h"
 #include "ul_callback.h"
 #include "usrloc_db.h"
 #include "../../core/parser/parse_uri.h"
