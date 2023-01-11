@@ -11,6 +11,10 @@ Lucian Balaceanu
    1&1 Internet AG
    <lucian.balaceanu@1and1.ro>
 
+Muhammad Shahzad Shafi
+
+   1&1 Internet AG
+
    Copyright © 2007 1&1 Internet AG
      __________________________________________________________________
 
@@ -220,7 +224,7 @@ Chapter 1. Admin Guide
    The module provides routing, balancing and blocklisting capabilities.
    It reads routing entries from a database source or from a config file
    at Kamailio startup. It can use one routing tree (for one carrier), or
-   if needed for every user a different routing tree (unique for each
+   if needed, for every user a different routing tree (unique for each
    carrier) for number prefix based routing. It supports several route
    tree domains, e.g. for fallback routes or different routing rules for
    VoIP and PSTN targets.
@@ -241,37 +245,35 @@ Chapter 1. Admin Guide
    database driven routing creates.
 
    Routing tables can be reloaded and edited (in config file mode) with
-   the RPC interface, the config file is updated according the changes.
+   the RPC interface, the config file is updated according to the changes.
    This is not implemented for the db interface, because its easier to do
    the changes directly on the db. But the reload and dump functions work
-   of course here too.
+   of course here as well.
 
    Some module functionality is not fully available in the config file
    mode, as it is not possible to specify all information that can be
    stored in the database tables in the config file. Further information
-   about these limitations is given in later sections. For user based
+   about these limitations is given in a later sections. For user based
    routing or LCR you should use the database mode.
 
    In database mode, this module supports names and IDs for the carriers
    and domains. When using IDs for the routing functions, efficient binary
    search is used to find the needed data structures. If you are using
    constant strings as parameter, these will be converted to IDs during
-   the fixup procedure. However, if you are using AVPs as parameter and
-   they contain strings, this cannot be converted to IDs during the fixup
-   procedure. In that case linear search is performed to find the needed
-   data structures. So from a performance point of view it is better to
-   pass only IDs in AVPs to the routing functions.
+   the fixup procedure using learner search to find the needed data
+   structures. So from a performance point of view it is better to pass
+   only IDs in the routing functions.
 
    Basically this module could be used as a replacement for the lcr and
    the dispatcher module, if you have certain flexibility, integration
-   and/or performance requirements that can't be satisfied with these
+   and/or performance requirements that can not be satisfied with these
    modules. But for smaller installations it probably make more sense to
    use the lcr and dispatcher module.
 
    Starting with version 3.1 , if you want to use this module in failure
    routes, it is not needed to call“append_branch()” after rewriting the
-   request URI in order to relay the message to the new target. Its also
-   supports the usage of database derived failure routing decisions with
+   request URI in order to relay the message to the new target. It also
+   supports the usage of database drived failure routing decisions using
    the carrierfailureroute table.
 
 2. Dependencies
@@ -354,7 +356,7 @@ modparam("carrierroute", "subscriber_carrier_col", "cr_preferred_carrier")
 3.5. config_source (string)
 
    Specifies whether the module loads its config data from a file or from
-   a database. Possible values are file or db.
+   a database. Possible values are “file” and “db”.
 
    Default value is “file”.
 
@@ -505,7 +507,7 @@ cr_tree_rewrite_uri(tree, domain)
 
    This function loads the carrier and stores it in a config variable. It
    cannot be used in the config file mode, as it needs a mapping of the
-   given user to a certain carrier. The is derived from a database entry
+   given user to a certain carrier. The is drived from a database entry
    belonging to the user parameter. This mapping must be available in the
    table that is specified in the “subscriber_table” variable. This data
    is not cached in memory, that means for every execution of this
@@ -516,25 +518,25 @@ cr_tree_rewrite_uri(tree, domain)
        a string any pseudo-variable could be used as input.
      * domain - Name of the routing domain to be used. Additional to a
        string any pseudo-variable could be used as input.
-     * dstvar - Name of the writaable variable (e.g., an AVP) where to
-       store the carrier id.
+     * dstvar - Name of the writaable config variable (e.g., an AVP) where
+       to store the carrier id.
 
 4.2.  cr_route(carrier, domain, prefix_matching, rewrite_user, hash_source,
 descavp)
 
    This function searches for the longest match for the user given in
-   prefix_matching at the given domain in the given carrier tree. The
+   prefix_matching with the given domain in the given carrier tree. The
    Request URI is rewritten using rewrite_user and the given hash source
    and algorithm. Returns -1 if there is no data found or an empty rewrite
-   host on the longest match is found. On success also the description is
-   stored in the given AVP (if omitted, nothing is stored in an AVP). This
-   is useful if you need some additional informations that belongs to each
-   gw, like the destination or the number of channels.
+   host on the longest match is found. On success, it also stores the
+   carrier description in the given AVP (if present). This is useful if
+   you need some additional informations that belongs to each gw, like the
+   destination uri, force socket or any arbitrary info.
 
    Depending on the value of the avoid_failed_destinations module
    parameter, the function pays special attention to the failurerouting
    cases, so that any destination that has failed to provide a successful
-   response will not be reused in a subsequent call of cr_route. This
+   response will not be reused in a subsequent call of this function. This
    situation can appear when different route domains contain a set of
    common gateways.
 
@@ -551,20 +553,21 @@ descavp)
    the hash and the load-balancing is done after the flags matching.
 
    Meaning of the parameters is as follows:
-     * carrier - The routing tree to be used. Additional to a string any
-       pseudo-variable could be used as input.
-     * domain - Name of the routing domain to be used. Additional to a
-       string any pseudo-variable could be used as input.
+     * carrier - The routing tree to be used. It must be string containing
+       either carrier id (nummeric) or carrier name (arbitrary string). It
+       also accepts any pseudo-variable as input.
+     * domain - Name of the routing domain to be used. it must be string
+       containing either domain id (nummeric) or domain name (arbitrary
+       string). It also accepts any pseudo-variable as input.
      * prefix_matching - User name to be used for prefix matching in the
-       routing tree. Additional to a string any pseudo-variable could be
-       used as input.
+       routing tree. It also accepts any pseudo-variable as input
      * rewrite_user - The user name to be used for applying the rewriting
-       rule. Usually this is the user part of the request URI. Additional
-       to a string any pseudo-variable could be used as input.
-     * hash_source - The hash values of the destination set must be a
+       rule. Usually this is the user part of the request URI. It also
+       accepts any pseudo-variable as input
+     * hash_source - The hash values of the destination set, it must be a
        contiguous range starting at 1, limited by the configuration
-       parameter max_targets. Possible values for hash_source are:
-       call_id, from_uri, from_user, to_uri, to_user and rand
+       parameter “max_targets”. Possible values for hash_source are:
+       “call_id”, “from_uri”, “from_user”, “to_uri”, “to_user” and “rand”.
      * decsavp - AVP where to store the description. This parameter is
        optional.
 
@@ -572,72 +575,76 @@ descavp)
 hash_source, descavp)
 
    This function searches for the longest match for the user given in
-   prefix_matching at the given domain in the given carrier tree. The
+   prefix_matching with the given domain in the given carrier tree. The
    Request URI is rewritten using rewrite_user and the given hash source
    and algorithm. Returns -1 if there is no data found or an empty rewrite
-   host on the longest match is found. On success also the description is
-   stored in the given AVP (if omitted, nothing is stored in an AVP). This
-   is useful if you need some additional informations that belongs to each
-   gw, like the destination or the number of channels. This function is
-   only usable with rewrite_user and prefix_matching containing a valid
-   string. This string needs to be numerical if the match_mode parameter
-   is set to 10.
+   host on the longest match is found. On success it also stores the
+   carrier description in the given AVP (if present). This is useful if
+   you need some additional informations that belongs to each gw, like the
+   destination uri, force socket or any arbitrary info.
+
+   This function is only usable with rewrite_user and prefix_matching
+   containing a valid string. This string needs to be numerical if the
+   match_mode parameter is set to 10.
 
    It uses the standard CRC32 algorithm to calculate the hash values. In
-   contrast to the normal cr_route function the backup rules of (now
-   obsolete) cr_prime_route is used. This means not the configured
-   probabilities will be used, only a fixed hash distribution. This makes
-   sense to distribute incoming register requests e.g. to a bunch of
-   registrar servers. If one of the hash targets is not available and
-   backup rule is configured, the function will return -1.
+   contrast to the normal cr_route function, the backup rules of (now
+   obsolete) cr_prime_route is used. This means none of the configured
+   probabilities will be used, only a fixed hash distribution is used.
+   This makes sense to distribute incoming register requests e.g. to a
+   bunch of registrar servers. If one of the hash targets is not available
+   and backup rule is configured, the function will return -1.
 
    Meaning of the parameters is as follows:
-     * carrier - The routing tree to be used. Additional to a string any
-       pseudo-variable could be used as input.
-     * domain - Name of the routing domain to be used. Additional to a
-       string any pseudo-variable could be used as input.
+     * carrier - The routing tree to be used. It must be string containing
+       either carrier id (nummeric) or carrier name (arbitrary string). It
+       also accepts any pseudo-variable as input.
+     * domain - Name of the routing domain to be used. it must be string
+       containing either domain id (nummeric) or domain name (arbitrary
+       string). It also accepts any pseudo-variable as input
      * prefix_matching - User name to be used for prefix matching in the
-       routing tree. Additional to a string any pseudo-variable could be
-       used as input.
+       routing tree. It also accepts any pseudo-variable as input
      * rewrite_user - The user name to be used for applying the rewriting
-       rule. Usually this is the user part of the request URI. Additional
-       to a string any pseudo-variable could be used as input.
-     * hash_source - The hash values of the destination set must be a
+       rule. Usually this is the user part of the request URI. It also
+       accepts any pseudo-variable as input
+     * hash_source - The hash values of the destination set, it must be a
        contiguous range starting at 1, limited by the configuration
-       parameter max_targets. Possible values for hash_source are:
-       call_id, from_uri, from_user, to_uri and to_user.
-     * descavp - Name of the AVP where to store the description. This
-       parameter is optional.
+       parameter “max_targets”. Possible values for hash_source are:
+       “call_id”, “from_uri”, “from_user”, “to_uri”, “to_user” and “rand”.
+     * decsavp - AVP where to store the description. This parameter is
+       optional.
 
 4.4.  cr_next_domain(carrier, domain, prefix_matching, host, reply_code,
 dstavp)
 
    This function searches for the longest match for the user given in
-   prefix_matching at the given domain in the given carrier failure tree.
-   It tries to find a next domain matching the given host, reply_code and
-   the message flags. The matching is done in this order: host, reply_code
-   and then flags. The more wildcards in reply_code and the more bits used
-   in flags, the lower the priority. Returns -1 if there is no data found
-   or an empty next_domain on the longest match is found. Otherwise the
-   next domain is stored in the given AVP. This function is only usable
-   with rewrite_user and prefix_matching containing a valid string. This
-   string needs to be numerical if the match_mode parameter is set to 10.
+   prefix_matching with the given domain in the given carrier failure
+   tree. It tries to find a next domain matching the given host,
+   reply_code and the message flags. The matching is done in this order:
+   “host” then “reply_code” and then “flags”. The more wildcards in
+   reply_code and the more bits used in flags, the lower the priority will
+   be. Returns -1, if there is no data found or if the next_domain on the
+   longest match is empty. Otherwise the next domain is stored in the
+   given variable.
+
+   This function is only usable if rewrite_user and prefix_matching
+   contains a valid string. This string must be numerical if the
+   match_mode parameter is set to 10.
 
    Meaning of the parameters is as follows:
-     * carrier - The routing tree to be used. Additional to a string any
-       pseudo-variable could be used as input.
-     * domain - Name of the routing domain to be used. Additional to a
-       string any pseudo-variable could be used as input.
+     * carrier - The routing tree to be used. It must be string containing
+       either carrier id (nummeric) or carrier name (arbitrary string). It
+       also accepts any pseudo-variable as input.
+     * domain - Name of the routing domain to be used. it must be string
+       containing either domain id (nummeric) or domain name (arbitrary
+       string). It also accepts any pseudo-variable as input.
      * prefix_matching - User name to be used for prefix matching in the
-       routing tree. Additional to a string any pseudo-variable could be
-       used as input.
+       routing tree. It also accepts any pseudo-variable as input.
      * host - The host name to be used for failure route rule matching.
        Usually this is the last tried routing destination stored in an avp
-       by cr_route. Additional to a string any pseudo-variable could be
-       used as input.
+       by cr_route. It also accepts any pseudo-variable as input
      * reply_code - The reply code to be used for failure route rule
-       matching. Additional to a string any pseudo-variable could be used
-       as input.
+       matching. It also accepts any pseudo-variable as input
      * dstavp - Name of the AVP where to store the next routing domain.
 
 5. RPC Commands
@@ -749,76 +756,76 @@ dstavp)
    Example 1.14. Configuration example - Routing to default tree
 ...
 route {
-        # route calls based on hash over callid
-        # choose route domain 0 of the default carrier
+    # route calls based on hash over callid
+    # choose route domain 0 of the default carrier
 
-        if(!cr_route("default", "0", "$rU", "$rU", "call_id")){
-                sl_send_reply("403", "Not allowed");
-        } else {
-                # In case of failure, re-route the request
-                t_on_failure("1");
-                # Relay the request to the gateway
-                t_relay();
-        }
+    if(!cr_route("default", "0", "$rU", "$rU", "call_id")){
+        sl_send_reply("403", "Not allowed");
+    } else {
+        # In case of failure, re-route the request
+        t_on_failure("1");
+        # Relay the request to the gateway
+        t_relay();
+    }
 }
 
 failure_route[1] {
-        revert_uri();
-        # In case of failure, send it to an alternative route:
-        if (t_check_status("408|5[0-9][0-9]")) {
-        #choose route domain 1 of the default carrier
-        if(!cr_route("default", "1", "$rU", "$rU", "call_id")){
-                        t_reply("403", "Not allowed");
-                } else {
-                        t_on_failure("2");
-                        t_relay();
-                }
+    revert_uri();
+    # In case of failure, send it to an alternative route:
+    if (t_check_status("408|5[0-9][0-9]")) {
+    #choose route domain 1 of the default carrier
+    if(!cr_route("default", "1", "$rU", "$rU", "call_id")){
+            t_reply("403", "Not allowed");
+        } else {
+            t_on_failure("2");
+            t_relay();
         }
+    }
 }
 
 failure_route[2] {
-        # further processing
+    # further processing
 }
 
    Example 1.15. Configuration example - Routing to user tree
 ...
 route[1] {
-        cr_user_carrier("$fU", "$fd", "$avp(s:carrier)");
+    cr_user_carrier("$fU", "$fd", "$avp(s:carrier)");
 
-        # just an example domain
-        $avp(s:domain)="start";
-        if (!cr_route("$avp(s:carrier)", "$avp(s:domain)", "$rU", "$rU",
-                        "call_id")) {
-                xlog("L_ERR", "cr_route failed\n");
-                exit;
-        }
-        # if you store also the port as part of the rewrite host,
-        # otherwise you can just use $rd later
-        $avp(s:host)= $rd+":"+$rp;
-        t_on_failure("1");
-                if (!t_relay()) {
-                        sl_reply_error();
-        };
+    # just an example domain
+    $avp(s:domain)="start";
+    if (!cr_route("$avp(s:carrier)", "$avp(s:domain)", "$rU", "$rU",
+            "call_id")) {
+        xlog("L_ERR", "cr_route failed\n");
+        exit;
+    }
+    # if you store also the port as part of the rewrite host,
+    # otherwise you can just use $rd later
+    $avp(s:host)= $rd+":"+$rp;
+    t_on_failure("1");
+        if (!t_relay()) {
+            sl_reply_error();
+    };
 }
 
 failure_route[1] {
-        revert_uri();
-        if (!cr_next_domain("$avp(s:carrier)", "$avp(s:domain)", "$rU",
-                        "$avp(s:host)", "$T_reply_code", "$avp(s:domain)")) {
-                xlog("L_ERR", "cr_next_domain failed\n");
-                exit;
-        }
-        if (!cr_route("$avp(s:carrier)", "$avp(s:domain)", "$rU", "$rU",
-                        "call_id")) {
-                xlog("L_ERR", "cr_route failed\n");
-                exit;
-        }
-        $avp(s:host)= $rd+":"+$rp;
-        t_on_failure("1");
-        if (!t_relay()) {
-                xlog("L_ERR", "t_relay failed\n");
-                exit;
-        };
+    revert_uri();
+    if (!cr_next_domain("$avp(s:carrier)", "$avp(s:domain)", "$rU",
+            "$avp(s:host)", "$T_reply_code", "$avp(s:domain)")) {
+        xlog("L_ERR", "cr_next_domain failed\n");
+        exit;
+    }
+    if (!cr_route("$avp(s:carrier)", "$avp(s:domain)", "$rU", "$rU",
+            "call_id")) {
+        xlog("L_ERR", "cr_route failed\n");
+        exit;
+    }
+    $avp(s:host)= $rd+":"+$rp;
+    t_on_failure("1");
+    if (!t_relay()) {
+        xlog("L_ERR", "t_relay failed\n");
+        exit;
+    };
 }
 ...
 
