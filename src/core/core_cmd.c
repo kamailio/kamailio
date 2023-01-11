@@ -43,7 +43,6 @@
 #include "tcp_info.h"
 #include "tcp_conn.h"
 #include "tcp_options.h"
-#include "core_cmd.h"
 #include "cfg_core.h"
 #include "ppcfg.h"
 
