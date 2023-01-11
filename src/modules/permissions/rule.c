@@ -27,7 +27,6 @@
 #include <regex.h>
 #include "../../core/mem/mem.h"
 #include "../../core/sr_module.h"
-#include "../../core/mem/mem.h"
 #include "rule.h"
 
 
