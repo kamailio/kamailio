@@ -36,7 +36,6 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <netdb.h>
 
 #include "route.h"
 #include "forward.h"
@@ -57,7 +56,6 @@
 #include "onsend.h"
 #include "str_hash.h"
 #include "ut.h"
-#include "rvalue.h"
 #include "switch.h"
 #include "cfg/cfg_struct.h"
 

@@ -45,7 +45,6 @@
 #include "../dprint.h"
 #include "../data_lump_rpl.h"
 #include "../mem/mem.h"
-#include "../error.h"
 #include "../core_stats.h"
 #include "../globals.h"
 #include "parse_hname2.h"
