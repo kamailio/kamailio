@@ -58,7 +58,6 @@
 #include "../../modules/ims_dialog/dlg_hash.h"
 #include "../ims_usrloc_pcscf/usrloc.h"
 
-#include "../../core/mem/shm_mem.h"
 #include "../../core/parser/sdp/sdp_helpr_funcs.h"
 #include "../../core/parser/sdp/sdp.h"
 #include "../../core/parser/parse_rr.h"
