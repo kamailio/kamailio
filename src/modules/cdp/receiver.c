@@ -853,7 +853,7 @@ int peer_connect(peer *p)
 	int error;
 
 	memset (&hints, 0, sizeof(hints));
-	if ((p->proto.len) && (strcmp(p->proto.s,"SCTP")==0)){
+	if ((p->proto.len) && (strncasecmp(p->proto.s,"SCTP",4)==0)){
 		hints.ai_protocol = IPPROTO_SCTP;
 	}else{
 		hints.ai_protocol = IPPROTO_TCP;

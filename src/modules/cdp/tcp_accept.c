@@ -88,7 +88,7 @@ int create_socket(str ip_proto,int listen_port,str bind_to,unsigned int *sock)
 	unsigned int option;
 
 	memset (&hints, 0, sizeof(hints));
-	if ((ip_proto.len) && (strcmp(ip_proto.s,"SCTP")==0)){
+	if ((ip_proto.len) && (strncasecmp(ip_proto.s,"SCTP",4)==0)){
 		hints.ai_protocol = IPPROTO_SCTP;
 	}else{
 		hints.ai_protocol = IPPROTO_TCP;
