@@ -537,7 +537,11 @@ static PyTypeObject MSGtype = {
 
 int python_msgobj_init(void)
 {
+#if PY_VERSION_HEX >= 0x03090000
+	Py_SET_TYPE(&MSGtype, &PyType_Type);
+#else
 	Py_TYPE(&MSGtype) = &PyType_Type;
+#endif
 	if (PyType_Ready(&MSGtype) < 0)
 		return -1;
 	return 0;
