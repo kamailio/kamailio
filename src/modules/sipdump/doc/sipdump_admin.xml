@@ -50,7 +50,16 @@
 			<itemizedlist>
 			<listitem>
 			<para>
-				<emphasis>none</emphasis>.
+				<emphasis>pv</emphasis> - when not loaded in mode=2 variable <varname>$mb</varname> has always value
+				<programlisting format="linespecific">
+OPTIONS sip:you@kamailio.org SIP/2.0
+Via: SIP/2.0/UDP 127.0.0.1
+From: <sip:you@kamailio.org>;tag=123
+To: <sip:you@kamailio.org>
+Call-ID: 123
+CSeq: 1 OPTIONS
+Content-Length: 0
+				</programlisting>
 			</para>
 			</listitem>
 			</itemizedlist>
