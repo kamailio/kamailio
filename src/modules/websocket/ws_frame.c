@@ -809,13 +809,18 @@ void ws_keepalive(unsigned int ticks, void *param)
 				LM_WARN("forcibly closing connection\n");
 				wsconn_close_now(wsc);
 			} else if (ws_keepalive_mechanism == KEEPALIVE_MECHANISM_CONCHECK) {
-				tcp_connection_t *con = tcpconn_get(wsc->id, 0, 0, 0, 0);
-				if(con==NULL) {
-					LM_INFO("tcp connection has been lost (id: %d wsc: %p)\n",
+				if(wsc->state == WS_S_REMOVING) {
+					LM_DBG("ws (id: %d wsc: %p) in removing state ignoring keepalive\n",
 							wsc->id, wsc);
-					wsc->state = WS_S_CLOSING;
 				} else {
-					tcpconn_put(con);
+					tcp_connection_t *con = tcpconn_get(wsc->id, 0, 0, 0, 0);
+					if(con==NULL) {
+						LM_INFO("tcp connection has been lost (id: %d wsc: %p)\n",
+								wsc->id, wsc);
+						wsc->state = WS_S_CLOSING;
+					} else {
+						tcpconn_put(con);
+					}
 				}
 			} else {
 				int opcode = (ws_keepalive_mechanism == KEEPALIVE_MECHANISM_PING)
