@@ -761,8 +761,7 @@ BuildRequires:  zlib-devel
 Requires:   libmysqlclient18
 BuildRequires:  libmysqlclient-devel
 %else
-Requires:   mysql-libs
-BuildRequires:  mysql-devel
+BuildRequires:  mariadb-devel
 %endif
 
 %description    mysql
