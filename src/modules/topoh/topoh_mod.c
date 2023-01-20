@@ -632,6 +632,7 @@ int bind_topoh(topoh_api_t* api)
 	}
 
 	memset(api, 0, sizeof(topoh_api_t));
+	api->mask_callid = th_mask_callid_str;
 	api->unmask_callid = th_unmask_callid_str;
 
 	return 0;
