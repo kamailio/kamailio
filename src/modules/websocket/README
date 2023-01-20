@@ -163,6 +163,8 @@ Chapter 1. Admin Guide
    Example 1.1. event_route[xhttp:request]
 ...
 tcp_accept_no_cl=yes
+listen=tcp:127.0.0.17:80
+listen=tls:127.0.0.17:443
 ...
 loadmodule "sl.so"
 loadmodule "xhttp.so"
@@ -247,6 +249,7 @@ event_route[xhttp:request] {
 ...
 loadmodule "sl.so"
 loadmodule "tm.so"
+loadmodule "xhttp.so"
 ...
 loadmodule "websocket.so"
 ...
