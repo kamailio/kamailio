@@ -43,6 +43,7 @@
 #include "../../core/parser/parse_via.h"
 #include "../../core/parser/contact/parse_contact.h"
 #include "../../core/parser/parse_refer_to.h"
+#include "../topoh/api.h"
 #include "tps_msg.h"
 #include "tps_storage.h"
 
@@ -871,7 +872,9 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 	LM_DBG("handling incoming request\n");
 
 	if(dialog==0) {
-		/* nothing to do for initial request */
+		
+		tps_mask_callid(msg);
+		/* nothing to do for initial request other than Call-ID mask */
 		return 0;
 	}
 
@@ -986,6 +989,11 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 			}
 		}
 	}
+	/* Downstream Request Received Change Call-ID */
+	if(direction == TPS_DIR_DOWNSTREAM) {
+	    tps_mask_callid(msg);
+	    LM_DBG("RCV message after CALLID CHG->[%.*s] \n",msg->len,msg->buf);
+	}
 	return 0;
 
 error:
@@ -1046,6 +1054,13 @@ int tps_response_received(sip_msg_t *msg)
 	tps_reappend_rr(msg, &btsd, &btsd.s_rr);
 	tps_reappend_rr(msg, &btsd, &btsd.x_rr);
 	tps_append_xbranch(msg, &mtsd.x_vbranch1);
+	
+	/* UPStream Response Received Unmask CALL-ID */
+	if(direction == TPS_DIR_UPSTREAM) {
+	
+	    tps_mask_callid(msg);
+	    LM_DBG("RCV RESP after CALLID CHG->[%.*s] \n",msg->len,msg->buf);
+	}
 
 	return 0;
 
@@ -1149,6 +1164,12 @@ int tps_request_sent(sip_msg_t *msg, int dialog, int local)
 
 done:
 	tps_storage_lock_release(&lkey);
+	/*Upstream Request sent UNMASK CALLID */
+	if(direction == TPS_DIR_UPSTREAM) {
+	    /*  Unmask CallID */
+	    tps_unmask_callid(msg);
+	    LM_DBG("SENT message after CALLID CHG->[%.*s] \n",msg->len,msg->buf);
+	}
 	return 0;
 
 error:
@@ -1245,6 +1266,13 @@ int tps_response_sent(sip_msg_t *msg)
 	if(tps_storage_update_dialog(msg, &mtsd, &stsd, TPS_DBU_CONTACT)<0) {
 		goto error1;
 	}
+	
+	/* DownStream Response Sent UNMASK Call-ID */
+	if(direction == TPS_DIR_DOWNSTREAM) {
+	    /* Unmask CallID*/
+	    tps_unmask_callid(msg);
+	    LM_DBG("SENT RESP after CALLID CHG->[%.*s] \n",msg->len,msg->buf);
+	}
 	return 0;
 
 error:
@@ -1252,3 +1280,4 @@ error:
 error1:
 	return -1;
 }
+
