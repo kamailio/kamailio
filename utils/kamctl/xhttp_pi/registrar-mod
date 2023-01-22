@@ -1,4 +1,4 @@
-	<!-- aliases provisionning -->
+	<!-- aliases provisioning -->
 	<mod><mod_name>aliases</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>aliases</db_table_id>

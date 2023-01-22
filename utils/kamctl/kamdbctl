@@ -209,12 +209,12 @@ kamailio_pframework_create() #pars: none
 	fi
 
 
-	get_answer $INSTALL_EXTRA_TABLES "Add provisionning framework for extra tables? (y/n): "
+	get_answer $INSTALL_EXTRA_TABLES "Add provisioning framework for extra tables? (y/n): "
 	if [ "$ANSWER" = "y" ]; then
 		PI_MODULES="$PI_MODULES $EXTRA_MODULES"
 	fi
 
-	get_answer $INSTALL_PRESENCE_TABLES "Add provisionning framework for presence tables? (y/n): "
+	get_answer $INSTALL_PRESENCE_TABLES "Add provisioning framework for presence tables? (y/n): "
 	if [ "$ANSWER" = "y" ]; then
 		PI_PRESENCE_MODULES="TRUE"
 	fi
@@ -261,7 +261,7 @@ kamailio_pframework_create() #pars: none
 	fi
 	cat $DATA_DIR/xhttp_pi/pi_framework-02 >> $DEFAULT_CFG_DIR/pi_framework_sample
 
-	minfo "Sample provisionning framework saved as: $DEFAULT_CFG_DIR/pi_framework_sample"
+	minfo "Sample provisioning framework saved as: $DEFAULT_CFG_DIR/pi_framework_sample"
 }
 
 kamailio_pframework() #pars: <action>

@@ -582,7 +582,7 @@ usage_acc() {
 	mecho " -- command 'acc' - manage accounding records"
 	echo
 cat <<EOF
- acc initdb .................. init acc table by adding extra colums
+ acc initdb .................. init acc table by adding extra columns
  acc showdb .................. show content of acc table
  recent [<secs>] ............. show most recent records in acc (default 300s)
 EOF
