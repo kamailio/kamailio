@@ -27,7 +27,7 @@
 	<listitem><para>The XCAP module is incompatible with TLS module due to Openssl
 	initialization!</para>
 	<para>XCAP module uses libcurl for HTTP communication and libcurl is using
-	libopenssl internaly. But the TLS module needs some extra openssl initialization which
+	libopenssl internally. But the TLS module needs some extra openssl initialization which
 	is not working when libcurl initializes Openssl by itself.</para>
 	<para>Thanks Samuel (samu60@gmail.com) for pointing this out.</para></listitem>
 
@@ -41,7 +41,7 @@ to do this or that, you can:
 <itemizedlist>
 	<listitem><para>Try to search for similar problem in mailing lists on
 	<ulink url="http://www.sip-router.org/">SIP-router's main page</ulink> or in
-	<ulink url="http://lists.kamailio.org/cgi-bin/mailman/listinfo/">list archives</ulink>.
+	<ulink url="https://lists.kamailio.org/mailman3/hyperkitty/">list archives</ulink>.
 	</para></listitem>
 
 	<listitem><para>Send an email to <ulink

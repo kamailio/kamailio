@@ -87,7 +87,7 @@
 	    <structname>cmd_export_t</structname> structure. Structures
 	    describing all exported functions are arranged into an array and
 	    pointer to the array is then passed to the core. The last element
-	    of the array must contain 0 in all it's fields, this element serves
+	    of the array must contain 0 in all its fields, this element serves
 	    as the mark telling the core that this is the very last element and
 	    it must stop scanning the array.
 	</para>
@@ -241,7 +241,7 @@ typedef int (*cmd_function)(struct sip_msg*, char*, char*);
 	    <structname>param_export_t</structname> structure. Structures
 	    describing all exported parameters are arranged into an array and
 	    pointer to the array is then passed to the core. The last element
-	    of the array must contain 0 in all it's fields, this element serves
+	    of the array must contain 0 in all its fields, this element serves
 	    as the mark telling the core that this is the very last element and
 	    it must stop scanning the array (This is same as in array of
 	    exported functions).
@@ -315,7 +315,7 @@ typedef struct param_export_ param_export_t;
 	    <emphasis>after</emphasis> the main process forks. The function
 	    will be called for each child separately. The function should
 	    perform initialization that is specific for each child. For example
-	    each child process might open it's own database connection to avoid
+	    each child process might open its own database connection to avoid
 	    locking of a single connection shared by many processes. Such
 	    connections can be opened in the per-child initialization
 	    function. The function accepts one parameter which is rank

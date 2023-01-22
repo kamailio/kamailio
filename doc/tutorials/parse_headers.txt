@@ -3,7 +3,7 @@
 # 2004.02.23  created (andrei)
 
 
-Starting with the ser version 0.10.99-dev1, the parse headers api has been slighlty changed. The reason for this change was performance improvement (now gcc can optimze much better all the switches involving header types) and dramatically reducing the memory impact of switching to 64 bits flags.
+Starting with the ser version 0.10.99-dev1, the parse headers api has been slightly changed. The reason for this change was performance improvement (now gcc can optimize much better all the switches involving header types) and dramatically reducing the memory impact of switching to 64 bits flags.
 
 The header flags (HDR_xxx) have been split into header types (hdr_types_t) and header flags (hdr_flags_t). Instead of the old HDR_xxx use now HDR_xxx_T when the header type is required and HDR_xxx_F or HDR_T2F(HDR_xxx_T) when the corresponding header flag is needed (e.g. in the parse_headers() call).
 

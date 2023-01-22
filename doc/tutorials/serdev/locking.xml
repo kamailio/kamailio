@@ -34,14 +34,14 @@
 		    compiler knows inline assembly (for example sun cc does
 		    not) FAST_LOCK is preferred. The main advantage of using
 		    FAST_LOCK is very low memory overhead and extremely fast
-		    lock/unlock operations (like 20 times faster then SYSV
+		    lock/unlock operations (like 20 times faster than SYSV
 		    semaphores on linux &amp; 40 times on solaris). The only thing
 		    that comes close to them are pthread mutexes (which are
 		    about 3-4 times slower).
 		</simpara>
 	    </listitem>
 	    <listitem>
-		<simpara><emphasis>PHTREAD_MUTEX</emphasis></simpara>
+		<simpara><emphasis>PTHREAD_MUTEX</emphasis></simpara>
 		<simpara>
 		    Uses pthread_mutex_lock/unlock. They are quite fast but
 		    they work between processes only on some systems (they do
@@ -53,7 +53,7 @@
 		<simpara>
 		    Uses posix semaphores
 		    (<function>sem_wait</function>/<function>sem_post</function>). They
-		    are slower then the previous methods but still way faster
+		    are slower than the previous methods but still way faster
 		    then SYSV semaphores. Unfortunately they also do not work
 		    on all the systems (e.g. linux).
 		</simpara>

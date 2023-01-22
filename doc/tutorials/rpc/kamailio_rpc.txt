@@ -38,7 +38,7 @@
    transport independent way (called the rpc module api) and one for
    implementing RPC transports.
 
-   The RPC transports are implemented by writting a RPC transport module.
+   The RPC transports are implemented by writing a RPC transport module.
    The most used transport modules are ctl , xmlrpc and jsonrpc-s .
 
    ctl implements a proprietary fast and space efficient RPC encoding over
