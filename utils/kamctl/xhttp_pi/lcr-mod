@@ -1,4 +1,4 @@
-	<!-- lcr_gw provisionning -->
+	<!-- lcr_gw provisioning -->
 	<mod><mod_name>lcr_gw</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>lcr_gw</db_table_id>
@@ -69,7 +69,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- lcr_rule_target provisionning -->
+	<!-- lcr_rule_target provisioning -->
 	<mod><mod_name>lcr_rule_target</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>lcr_rule_target</db_table_id>
@@ -116,7 +116,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- lcr_rule provisionning -->
+	<!-- lcr_rule provisioning -->
 	<mod><mod_name>lcr_rule</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>lcr_rule</db_table_id>

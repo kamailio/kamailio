@@ -1,4 +1,4 @@
-	<!-- version provisionning -->
+	<!-- version provisioning -->
 	<mod><mod_name>version</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>version</db_table_id>

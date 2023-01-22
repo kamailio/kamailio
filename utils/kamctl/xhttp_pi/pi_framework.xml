@@ -1003,13 +1003,13 @@
 		- a 'cmd_type': c  q  o
 		Each cmd_type can have:
 		- 'clause_cols' used to specify one or multiple clauses
-		- 'query_cols' used for perfoming the actual query
+		- 'query_cols' used for performing the actual query
 		- 'order_by_cols' used to specify sorting output
 		Each clause_cols will have 'col' elemnts.
 		Each col will have:
 		- a mandatory 'field' identifying the name of the field
-		- an optional 'value' identifing the given value
-		- an optional 'link_cmd' identifing the update cmd with prepared values
+		- an optional 'value' identifying the given value
+		- an optional 'link_cmd' identifying the update cmd with prepared values
 			* only for query_cols for DB1_QUERY commands
 		- a mandatory 'operator' only for 'clause_cols'
 		The [clause|query|order_by]_cols can be:
@@ -1033,7 +1033,7 @@
 		- '!=' '!='
 	-->
 
-	<!-- acc provisionning -->
+	<!-- acc provisioning -->
 	<mod><mod_name>acc</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>acc</db_table_id>
@@ -1086,7 +1086,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- acc_cdrs provisionning -->
+	<!-- acc_cdrs provisioning -->
 	<mod><mod_name>acc_cdrs</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>acc_cdrs</db_table_id>
@@ -1127,7 +1127,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- missed_calls provisionning -->
+	<!-- missed_calls provisioning -->
 	<mod><mod_name>missed_calls</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>missed_calls</db_table_id>
@@ -1180,7 +1180,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- dbaliases provisionning -->
+	<!-- dbaliases provisioning -->
 	<mod><mod_name>dbaliases</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>dbaliases</db_table_id>
@@ -1224,7 +1224,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- subscriber provisionning -->
+	<!-- subscriber provisioning -->
 	<mod><mod_name>subscriber</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>subscriber</db_table_id>
@@ -1271,7 +1271,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- usr_preferences provisionning -->
+	<!-- usr_preferences provisioning -->
 	<mod><mod_name>usr_preferences</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>usr_preferences</db_table_id>
@@ -1324,7 +1324,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- carrierroute provisionning -->
+	<!-- carrierroute provisioning -->
 	<mod><mod_name>carrierroute</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>carrierroute</db_table_id>
@@ -1389,7 +1389,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- carrierfailureroute provisionning -->
+	<!-- carrierfailureroute provisioning -->
 	<mod><mod_name>carrierfailureroute</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>carrierfailureroute</db_table_id>
@@ -1448,7 +1448,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- carrier_name provisionning -->
+	<!-- carrier_name provisioning -->
 	<mod><mod_name>carrier_name</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>carrier_name</db_table_id>
@@ -1483,7 +1483,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- domain_name provisionning -->
+	<!-- domain_name provisioning -->
 	<mod><mod_name>domain_name</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>domain_name</db_table_id>
@@ -1518,7 +1518,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- cpl provisionning -->
+	<!-- cpl provisioning -->
 	<mod><mod_name>cpl</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>cpl</db_table_id>
@@ -1562,7 +1562,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- dialog provisionning -->
+	<!-- dialog provisioning -->
 	<mod><mod_name>dialog</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>dialog</db_table_id>
@@ -1663,7 +1663,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- dialog_vars provisionning -->
+	<!-- dialog_vars provisioning -->
 	<mod><mod_name>dialog_vars</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>dialog_vars</db_table_id>
@@ -1707,7 +1707,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- dialplan provisionning -->
+	<!-- dialplan provisioning -->
 	<mod><mod_name>dialplan</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>dialplan</db_table_id>
@@ -1763,7 +1763,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- dispatcher provisionning -->
+	<!-- dispatcher provisioning -->
 	<mod><mod_name>dispatcher</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>dispatcher</db_table_id>
@@ -1813,7 +1813,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- domain provisionning -->
+	<!-- domain provisioning -->
 	<mod><mod_name>domain</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>domain</db_table_id>
@@ -1854,7 +1854,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- domain_attrs provisionning -->
+	<!-- domain_attrs provisioning -->
 	<mod><mod_name>domain_attrs</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>domain_attrs</db_table_id>
@@ -1901,7 +1901,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- domainpolicy provisionning -->
+	<!-- domainpolicy provisioning -->
 	<mod><mod_name>domainpolicy</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>domainpolicy</db_table_id>
@@ -1948,7 +1948,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- dr_gateways provisionning -->
+	<!-- dr_gateways provisioning -->
 	<mod><mod_name>dr_gateways</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>dr_gateways</db_table_id>
@@ -1998,7 +1998,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- dr_rules provisionning -->
+	<!-- dr_rules provisioning -->
 	<mod><mod_name>dr_rules</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>dr_rules</db_table_id>
@@ -2051,7 +2051,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- dr_gw_lists provisionning -->
+	<!-- dr_gw_lists provisioning -->
 	<mod><mod_name>dr_gw_lists</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>dr_gw_lists</db_table_id>
@@ -2089,7 +2089,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- dr_groups provisionning -->
+	<!-- dr_groups provisioning -->
 	<mod><mod_name>dr_groups</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>dr_groups</db_table_id>
@@ -2133,7 +2133,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- grp provisionning -->
+	<!-- grp provisioning -->
 	<mod><mod_name>grp</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>grp</db_table_id>
@@ -2177,7 +2177,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- re_grp provisionning -->
+	<!-- re_grp provisioning -->
 	<mod><mod_name>re_grp</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>re_grp</db_table_id>
@@ -2215,7 +2215,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- htable provisionning -->
+	<!-- htable provisioning -->
 	<mod><mod_name>htable</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>htable</db_table_id>
@@ -2262,7 +2262,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- imc_rooms provisionning -->
+	<!-- imc_rooms provisioning -->
 	<mod><mod_name>imc_rooms</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>imc_rooms</db_table_id>
@@ -2303,7 +2303,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- imc_members provisionning -->
+	<!-- imc_members provisioning -->
 	<mod><mod_name>imc_members</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>imc_members</db_table_id>
@@ -2347,7 +2347,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- lcr_gw provisionning -->
+	<!-- lcr_gw provisioning -->
 	<mod><mod_name>lcr_gw</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>lcr_gw</db_table_id>
@@ -2418,7 +2418,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- lcr_rule_target provisionning -->
+	<!-- lcr_rule_target provisioning -->
 	<mod><mod_name>lcr_rule_target</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>lcr_rule_target</db_table_id>
@@ -2465,7 +2465,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- lcr_rule provisionning -->
+	<!-- lcr_rule provisioning -->
 	<mod><mod_name>lcr_rule</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>lcr_rule</db_table_id>
@@ -2518,7 +2518,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- matrix provisionning -->
+	<!-- matrix provisioning -->
 	<mod><mod_name>matrix</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>matrix</db_table_id>
@@ -2559,7 +2559,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- mohqcalls provisionning -->
+	<!-- mohqcalls provisioning -->
 	<mod><mod_name>mohqcalls</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>mohqcalls</db_table_id>
@@ -2609,7 +2609,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- mohqueues provisionning -->
+	<!-- mohqueues provisioning -->
 	<mod><mod_name>mohqueues</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>mohqueues</db_table_id>
@@ -2656,7 +2656,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- silo provisionning -->
+	<!-- silo provisioning -->
 	<mod><mod_name>silo</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>silo</db_table_id>
@@ -2724,7 +2724,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- mtree provisionning -->
+	<!-- mtree provisioning -->
 	<mod><mod_name>mtree</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>mtree</db_table_id>
@@ -2762,7 +2762,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- mtrees provisionning -->
+	<!-- mtrees provisioning -->
 	<mod><mod_name>mtrees</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>mtrees</db_table_id>
@@ -2803,7 +2803,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- pdt provisionning -->
+	<!-- pdt provisioning -->
 	<mod><mod_name>pdt</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>pdt</db_table_id>
@@ -2844,7 +2844,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- trusted provisionning -->
+	<!-- trusted provisioning -->
 	<mod><mod_name>trusted</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>trusted</db_table_id>
@@ -2894,7 +2894,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- address provisionning -->
+	<!-- address provisioning -->
 	<mod><mod_name>address</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>address</db_table_id>
@@ -2941,7 +2941,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- pl_pipes provisionning -->
+	<!-- pl_pipes provisioning -->
 	<mod><mod_name>pl_pipes</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>pl_pipes</db_table_id>
@@ -2982,7 +2982,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- presentity provisionning -->
+	<!-- presentity provisioning -->
 	<mod><mod_name>presentity</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>presentity</db_table_id>
@@ -3044,7 +3044,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- active_watchers provisionning -->
+	<!-- active_watchers provisioning -->
 	<mod><mod_name>active_watchers</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>active_watchers</db_table_id>
@@ -3154,7 +3154,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- watchers provisionning -->
+	<!-- watchers provisioning -->
 	<mod><mod_name>watchers</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>watchers</db_table_id>
@@ -3207,7 +3207,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- xcap provisionning -->
+	<!-- xcap provisioning -->
 	<mod><mod_name>xcap</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>xcap</db_table_id>
@@ -3263,7 +3263,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- pua provisionning -->
+	<!-- pua provisioning -->
 	<mod><mod_name>pua</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>pua</db_table_id>
@@ -3349,7 +3349,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- purplemap provisionning -->
+	<!-- purplemap provisioning -->
 	<mod><mod_name>purplemap</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>purplemap</db_table_id>
@@ -3393,7 +3393,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- aliases provisionning -->
+	<!-- aliases provisioning -->
 	<mod><mod_name>aliases</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>aliases</db_table_id>
@@ -3491,7 +3491,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- rls_presentity provisionning -->
+	<!-- rls_presentity provisioning -->
 	<mod><mod_name>rls_presentity</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>rls_presentity</db_table_id>
@@ -3547,7 +3547,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- rls_watchers provisionning -->
+	<!-- rls_watchers provisioning -->
 	<mod><mod_name>rls_watchers</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>rls_watchers</db_table_id>
@@ -3648,7 +3648,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- rtpengine provisionning -->
+	<!-- rtpengine provisioning -->
 	<mod><mod_name>rtpengine</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>rtpengine</db_table_id>
@@ -3695,7 +3695,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- rtpproxy provisionning -->
+	<!-- rtpproxy provisioning -->
 	<mod><mod_name>rtpproxy</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>rtpproxy</db_table_id>
@@ -3742,7 +3742,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- sca_subscriptions provisionning -->
+	<!-- sca_subscriptions provisioning -->
 	<mod><mod_name>sca_subscriptions</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>sca_subscriptions</db_table_id>
@@ -3813,7 +3813,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- secfilter provisionning -->
+	<!-- secfilter provisioning -->
 	<mod><mod_name>secfilter</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>secfilter</db_table_id>
@@ -3854,7 +3854,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- sip_trace provisionning -->
+	<!-- sip_trace provisioning -->
 	<mod><mod_name>sip_trace</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>sip_trace</db_table_id>
@@ -3922,7 +3922,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- speed_dial provisionning -->
+	<!-- speed_dial provisioning -->
 	<mod><mod_name>speed_dial</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>speed_dial</db_table_id>
@@ -3978,7 +3978,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- version provisionning -->
+	<!-- version provisioning -->
 	<mod><mod_name>version</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>version</db_table_id>
@@ -4016,7 +4016,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- topos_d provisionning -->
+	<!-- topos_d provisioning -->
 	<mod><mod_name>topos_d</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>topos_d</db_table_id>
@@ -4120,7 +4120,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- topos_t provisionning -->
+	<!-- topos_t provisioning -->
 	<mod><mod_name>topos_t</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>topos_t</db_table_id>
@@ -4227,7 +4227,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- uacreg provisionning -->
+	<!-- uacreg provisioning -->
 	<mod><mod_name>uacreg</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>uacreg</db_table_id>
@@ -4304,7 +4304,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- uid_credentials provisionning -->
+	<!-- uid_credentials provisioning -->
 	<mod><mod_name>uid_credentials</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>uid_credentials</db_table_id>
@@ -4360,7 +4360,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- uid_user_attrs provisionning -->
+	<!-- uid_user_attrs provisioning -->
 	<mod><mod_name>uid_user_attrs</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>uid_user_attrs</db_table_id>
@@ -4407,7 +4407,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- uid_domain provisionning -->
+	<!-- uid_domain provisioning -->
 	<mod><mod_name>uid_domain</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>uid_domain</db_table_id>
@@ -4448,7 +4448,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- uid_domain_attrs provisionning -->
+	<!-- uid_domain_attrs provisioning -->
 	<mod><mod_name>uid_domain_attrs</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>uid_domain_attrs</db_table_id>
@@ -4495,7 +4495,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- uid_global_attrs provisionning -->
+	<!-- uid_global_attrs provisioning -->
 	<mod><mod_name>uid_global_attrs</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>uid_global_attrs</db_table_id>
@@ -4539,7 +4539,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- uid_uri provisionning -->
+	<!-- uid_uri provisioning -->
 	<mod><mod_name>uid_uri</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>uid_uri</db_table_id>
@@ -4586,7 +4586,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- uid_uri_attrs provisionning -->
+	<!-- uid_uri_attrs provisioning -->
 	<mod><mod_name>uid_uri_attrs</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>uid_uri_attrs</db_table_id>
@@ -4639,7 +4639,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- uri provisionning -->
+	<!-- uri provisioning -->
 	<mod><mod_name>uri</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>uri</db_table_id>
@@ -4683,7 +4683,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- userblocklist provisionning -->
+	<!-- userblocklist provisioning -->
 	<mod><mod_name>userblocklist</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>userblocklist</db_table_id>
@@ -4727,7 +4727,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- globalblocklist provisionning -->
+	<!-- globalblocklist provisioning -->
 	<mod><mod_name>globalblocklist</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>globalblocklist</db_table_id>
@@ -4768,7 +4768,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- location provisionning -->
+	<!-- location provisioning -->
 	<mod><mod_name>location</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>location</db_table_id>
@@ -4866,7 +4866,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- location_attrs provisionning -->
+	<!-- location_attrs provisioning -->
 	<mod><mod_name>location_attrs</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>location_attrs</db_table_id>

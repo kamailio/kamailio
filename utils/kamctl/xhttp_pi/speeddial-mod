@@ -1,4 +1,4 @@
-	<!-- speed_dial provisionning -->
+	<!-- speed_dial provisioning -->
 	<mod><mod_name>speed_dial</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>speed_dial</db_table_id>

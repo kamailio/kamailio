@@ -1,4 +1,4 @@
-	<!-- rtpproxy provisionning -->
+	<!-- rtpproxy provisioning -->
 	<mod><mod_name>rtpproxy</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>rtpproxy</db_table_id>
