@@ -53,7 +53,7 @@ int <function>select_function_name</function>(str* res, struct select *s, struct
 <para>
 	<emphasis>FIXUP CALL:</emphasis>
 	If you set FIXUP_CALL flag for the final
-	function, the fixup call will be done immediatelly after function resolution.
+	function, the fixup call will be done immediately after function resolution.
 	Such call is indicated with res==NULL &amp;&amp; msg==NULL. Such call can convert any of
 	the select's parameter into internal data (can hold one pointer), if you do
 	that, set param_type to SEL_PARAM_DATA.
@@ -75,7 +75,7 @@ int <function>select_function_name</function>(str* res, struct select *s, struct
 </para>
 <para>The table is representation of tree (or oriented graph if you want), where
 first column represents current (up-to now) resolved function (starting with NULL),
-next two columns define if next parameter is integer or particullar string, next
+next two columns define if next parameter is integer or particular string, next
 column is new resolved function which will be tested in next round and the last
 column is set of flags.
 </para>
@@ -132,7 +132,7 @@ TODO:
 <para>
 	<emphasis>NOTE:</emphasis> The tables are inserted into the beginning of the
 	list, so the core's table (and thus parseable names and definitions) can be
-	overrided by module's function, if it is defined with the same name. To
+	overridden by module's function, if it is defined with the same name. To
 	avoid such situation, the best practice is to start module's select with the
 	module's name. E.g in our example code both select functions start
 	with @test...

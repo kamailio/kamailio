@@ -243,7 +243,7 @@ root@localhost"/usr/local/src/freeradius-0.9.1# make install
 		    File <filename>/usr/local/etc/raddb/clients.conf</filename>
 		    contains description of RADIUS clients that are allowed to
 		    use the server. For each of the clients you need to specify
-		    it's hostname or IP address and also a shared secret. The
+		    its hostname or IP address and also a shared secret. The
 		    shared secret must be the same string you configured in
 		    radiusclient library.
 		</simpara>

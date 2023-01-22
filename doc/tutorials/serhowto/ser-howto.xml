@@ -114,7 +114,7 @@
 		</listitem>
 		<listitem>
 		    <para>
-			bison or yacc (Berkley yacc)
+			bison or yacc (Berkeley yacc)
 		    </para>
 		</listitem>
 		<listitem>
@@ -225,8 +225,8 @@
 export SIP_DOMAIN="foo.bar"
 	    </screen>
 	    <para>
-		If you wont the system to created this variable automatically, you need to add the
-		line
+		If you do not want the system to create this variable automatically, you need
+		to add the line
 	    </para>
 	    <screen>
 export SIP_DOMAIN="foo.bar"
@@ -754,7 +754,7 @@ Up time: 132711 [sec]
 
 Transaction Statistics
 Current: 0 (2 waiting) Total: 46 (0 local)
-Replied localy: 37
+Replied locally: 37
 Completion status 6xx: 0, 5xx: 0, 4xx: 23, 3xx: 0,2xx: 22
 
 Stateless Server Statistics

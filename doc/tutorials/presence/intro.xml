@@ -65,7 +65,7 @@ libraries. Their interface is described in standalone documents.
 <section><title>Persistence</title>
 <para>Modules can store their status (working data) into database. This data is
 automatically reloaded on startup, so it is possible to restart SIP-router and
-clients don't note it. Established SIP dialogs are stored in database too.</para>
+clients don't note it. Established SIP dialogs are stored in a database too.</para>
 <para>Details about database storage are described for each module separately in
 module documentation.
 

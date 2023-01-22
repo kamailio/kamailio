@@ -56,7 +56,7 @@ no prefix parameter given - default value is used: /usr/local/)
 	</para></listitem>
 
 	<listitem><para>Compile and install SIP-router with presence modules. Common
-	libraries should be compiled automaticaly - it may fail in the case of
+	libraries should be compiled automatically - it may fail in the case of
 	unsatisfied library dependencies. You need to install all external libraries
 	introduced in <xref linkend="pres.dependencies"/></para>
 	<para><userinput>cd sip_router</userinput></para>
