@@ -44,7 +44,7 @@ install="$pkgname.pre-install $pkgname.pre-upgrade"
 #
 # Alpine specific changes:
 #
-# _mod_list_debugger is not defined in the orignal
+# _mod_list_debugger is not defined in the original
 #
 # Move avp from _mod_list_extras to _mod_list_basic, so that we can create
 # a kamailio-extras package
