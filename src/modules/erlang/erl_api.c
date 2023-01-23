@@ -328,7 +328,7 @@ int _impl_reply(const ei_x_buff *msg)
 
 	/* copy into reply */
 	if (enode->response.buffsz < msg->buffsz) {
-		/* realocate */
+		/* reallocate */
 		enode->response.buff=realloc(enode->response.buff,msg->buffsz);
 		if (!enode->response.buff) {
 			LM_ERR("realloc failed: not enough memory\n");

@@ -226,7 +226,7 @@ int init_cnode_sockets(int cnode_id)
 
 	io_handler_ins(phandler);
 
-	/* start epmd handler - publish Kamailo C node */
+	/* start epmd handler - publish Kamailio C node */
 	if (epmd_init((epmd_handler_t*)phandler, &alivename) < 0 ) {
 		return -1;
 	}
@@ -349,7 +349,7 @@ error:
  * return: -1 on error
  *          0 on EAGAIN or when by some other way it is known that no more
  *            io events are queued on the fd (the receive buffer is empty).
- *            Usefull to detect when there are no more io events queued for
+ *            Useful to detect when there are no more io events queued for
  *            sigio_rt, epoll_et, kqueue.
  *         >0 on successfully read from the fd (when there might be more io
  *            queued -- the receive buffer might still be non-empty)

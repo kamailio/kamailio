@@ -621,7 +621,7 @@ int handle_rex_call(cnode_handler_t *phandler,erlang_ref_ex_t *ref, erlang_pid *
 		response->index = ctx.response_index;
 		ei_x_encode_atom(response, "error");
 		ei_x_encode_tuple_header(response,2);
-		ei_x_encode_string(response, "Inernal Error: Failed to encode reply");
+		ei_x_encode_string(response, "Internal Error: Failed to encode reply");
 	}
 	else
 	{
