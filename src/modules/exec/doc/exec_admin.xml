@@ -77,6 +77,23 @@
 		Otherwise they will be evaluated as &kamailio; pseudo-variables,
 		throwing errors.
 	</para>
+	<para>
+		WARNING: if the exec functions are passed variables that might include 
+		malicious input, then remote attackers may abuse the exec functions to 
+		execute arbitrary code. Specifically, this may result in OS command injection. 
+		In such cases, input validation is required to prevent the vulnerability.
+		The following is an example of how input validation and exec module
+		functions may be used together to prevent exploitation:
+	</para>
+	<programlisting format="linespecific">
+...
+if !($rU =~ "^[0-9]{1,15}$") {
+	xlog("Malformed R-URI username: '$rU'\n");
+	exit;
+}
+exec_msg("echo TEST >> /tmp/$(rU).txt");
+...
+	</programlisting>
 	</section>
 
 	<section>
@@ -186,7 +203,7 @@ modparam("exec", "time_to_kill", 20)
 		<programlisting format="linespecific">
 ...
 exec_dset("echo TEST > /tmp/test.txt");
-exec_dset("echo TEST > /tmp/$rU.txt");
+exec_dset("echo TEST > /tmp/$(rU).txt");
 ...
 </programlisting>
 		</example>
@@ -225,7 +242,7 @@ exec_dset("echo TEST > /tmp/$rU.txt");
 		<programlisting format="linespecific">
 ...
 exec_msg("echo TEST > /tmp/test.txt");
-exec_msg("echo TEST > /tmp/$rU.txt");
+exec_msg("echo TEST > /tmp/$(rU).txt");
 ...
 </programlisting>
 		</example>
@@ -300,7 +317,7 @@ exec_avp("echo TEST", "$avp(s:test)");
 		<programlisting format="linespecific">
 ...
 exec_cmd("echo TEST > /tmp/test.txt");
-exec_cmd("echo TEST > /tmp/$rU.txt");
+exec_cmd("echo TEST > /tmp/$(rU).txt");
 ...
 </programlisting>
 		</example>
@@ -315,4 +332,3 @@ exec_cmd("echo TEST > /tmp/$rU.txt");
 	</para>
 	</section>
 </chapter>
-
