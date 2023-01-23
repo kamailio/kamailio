@@ -42,6 +42,7 @@
 #include <netinet/ip.h>
 #include <unistd.h>
 #include <string.h>
+#include <pthread.h>
 #include <openssl/ssl.h>
 
 #include "../../core/dprint.h"
@@ -63,6 +64,36 @@
 /* will be set to 1 when the TLS env is initialized to make destroy safe */
 static int tls_mod_preinitialized = 0;
 static int tls_mod_initialized = 0;
+
+extern int ksr_tls_lock_mode;
+pthread_mutex_t ksr_tls_lock_shm;
+
+/**
+ *
+ */
+int ksr_tls_lock_init(void)
+{
+	if(ksr_tls_lock_mode==0) {
+		return 0;
+	}
+    if (pthread_mutex_init(&ksr_tls_lock_shm, NULL) != 0) {
+        LM_ERR("mutex init failed\n");
+        return -1;
+    }
+	return 0;
+}
+
+/**
+ *
+ */
+void ksr_tls_lock_destroy(void)
+{
+	if(ksr_tls_lock_mode==0) {
+		return;
+	}
+    pthread_mutex_destroy(&ksr_tls_lock_shm);
+	return;
+}
 
 #if OPENSSL_VERSION_NUMBER < 0x00907000L
 #    warning ""
@@ -207,7 +238,11 @@ static void* ser_malloc(size_t size, const char* file, int line)
 	int s;
 #ifdef RAND_NULL_MALLOC
 	static ticks_t st=0;
+#endif
 
+	pthread_mutex_lock(&ksr_tls_lock_shm);
+
+#ifdef RAND_NULL_MALLOC
 	/* start random null returns only after
 	 * NULL_GRACE_PERIOD from first call */
 	if (st==0) st=get_ticks();
@@ -232,6 +267,7 @@ static void* ser_malloc(size_t size, const char* file, int line)
 				size, file, line, bt_buf);
 	}
 #endif
+	pthread_mutex_unlock(&ksr_tls_lock_shm);
 	return p;
 }
 
@@ -243,7 +279,11 @@ static void* ser_realloc(void *ptr, size_t size, const char* file, int line)
 	int s;
 #ifdef RAND_NULL_MALLOC
 	static ticks_t st=0;
+#endif
 
+	pthread_mutex_lock(&ksr_tls_lock_shm);
+
+#ifdef RAND_NULL_MALLOC
 	/* start random null returns only after
 	 * NULL_GRACE_PERIOD from first call */
 	if (st==0) st=get_ticks();
@@ -268,6 +308,9 @@ static void* ser_realloc(void *ptr, size_t size, const char* file, int line)
 				bt_buf);
 	}
 #endif
+
+	pthread_mutex_unlock(&ksr_tls_lock_shm);
+
 	return p;
 }
 #endif /* LIBRESSL_VERSION_NUMBER */
@@ -279,24 +322,41 @@ static void* ser_realloc(void *ptr, size_t size, const char* file, int line)
 #if OPENSSL_VERSION_NUMBER < 0x010100000L
 static void* ser_malloc(size_t size)
 {
-	return shm_malloc(size);
+	void *p;
+
+	pthread_mutex_lock(&ksr_tls_lock_shm);
+	p = shm_malloc(size);
+	pthread_mutex_unlock(&ksr_tls_lock_shm);
+	return p;
 }
 
 
 static void* ser_realloc(void *ptr, size_t size)
 {
-	return shm_realloc(ptr, size);
+	void *p;
+	pthread_mutex_lock(&ksr_tls_lock_shm);
+	p = shm_realloc(ptr, size);
+	pthread_mutex_unlock(&ksr_tls_lock_shm);
+	return p;
 }
 #else
 static void* ser_malloc(size_t size, const char *fname, int fline)
 {
-	return shm_malloc(size);
+	void *p;
+	pthread_mutex_lock(&ksr_tls_lock_shm);
+	p = shm_malloc(size);
+	pthread_mutex_unlock(&ksr_tls_lock_shm);
+	return p;
 }
 
 
 static void* ser_realloc(void *ptr, size_t size, const char *fname, int fline)
 {
-	return shm_realloc(ptr, size);
+	void *p;
+	pthread_mutex_lock(&ksr_tls_lock_shm);
+	p = shm_realloc(ptr, size);
+	pthread_mutex_unlock(&ksr_tls_lock_shm);
+	return p;
 }
 #endif
 
@@ -312,16 +372,20 @@ static void ser_free(void *ptr)
 	 * As shm_free() aborts on null pointers, we have to check for null pointer
 	 * here in the wrapper function.
 	 */
+	pthread_mutex_lock(&ksr_tls_lock_shm);
 	if (ptr) {
 		shm_free(ptr);
 	}
+	pthread_mutex_unlock(&ksr_tls_lock_shm);
 }
 #else
 static void ser_free(void *ptr, const char *fname, int fline)
 {
+	pthread_mutex_lock(&ksr_tls_lock_shm);
 	if (ptr) {
 		shm_free(ptr);
 	}
+	pthread_mutex_unlock(&ksr_tls_lock_shm);
 }
 #endif
 

@@ -194,6 +194,7 @@ gen_lock_t* tls_domains_cfg_lock = NULL;
 
 
 int sr_tls_renegotiation = 0;
+int ksr_tls_lock_mode = 0;
 
 /*
  * Exported functions
@@ -252,6 +253,7 @@ static param_export_t params[] = {
 	{"xavp_cfg",            PARAM_STR,    &sr_tls_xavp_cfg},
 	{"event_callback",      PARAM_STR,    &sr_tls_event_callback},
 	{"rand_engine",         PARAM_STR|USE_FUNC_PARAM, (void*)ksr_rand_engine_param},
+	{"lock_mode",           PARAM_INT,    &ksr_tls_lock_mode},
 
 	{0, 0, 0}
 };
