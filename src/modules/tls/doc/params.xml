@@ -1032,6 +1032,27 @@ modparam("tls", "renegotiation", 1)
 	</example>
 	</section>
 
+	<section id="tls.p.lock_mode">
+	<title><varname>lock_mode</varname> (int)</title>
+	<para>
+		If set to 1, the memory management operations registered for TLS are
+		wapped within a pthread mutex lock. It can be useful with newer versions
+		of libssl and libcrypto, which have a more pthread multi-threading oriented
+		design.
+	</para>
+	<para>
+		Default value is 0.
+	</para>
+	<example>
+		<title>Set <varname>lock_mode</varname> parameter</title>
+		<programlisting>
+...
+modparam("tls", "lock_mode", 1)
+...
+	</programlisting>
+	</example>
+	</section>
+
 	<section id="tls.p.config">
 	<title><varname>config</varname> (string)</title>
 	<para>
