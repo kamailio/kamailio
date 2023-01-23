@@ -52,7 +52,7 @@
 
     <index>
         <name>blub</name>
-        <!--<primary/> -> PRIMARY KEY over more than one colums -->
+        <!--<primary/> -> PRIMARY KEY over more than one column -->
         <colref linkend="bla"/> <!-- link to the node with these id -->
         <colref linkend="id"/>
     </index>
