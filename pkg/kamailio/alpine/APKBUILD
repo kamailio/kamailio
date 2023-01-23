@@ -17,7 +17,7 @@ _gitcommit=991fe9b28e0e201309048f3b38a135037e40357a
 [ -z "${_gitcommit}" ] && _gitcommit="${pkgver}"
 
 pkgdesc="Open Source SIP Server"
-url="http://www.kamailio.org/"
+url="https://www.kamailio.org/"
 arch="all"
 pkgusers="kamailio"
 pkggroups="kamailio"
@@ -44,7 +44,7 @@ install="$pkgname.pre-install $pkgname.pre-upgrade"
 #
 # Alpine specific changes:
 #
-# _mod_list_debugger is not defined in the orginal
+# _mod_list_debugger is not defined in the orignal
 #
 # Move avp from _mod_list_extras to _mod_list_basic, so that we can create
 # a kamailio-extras package
@@ -165,7 +165,7 @@ _mod_list_perl="app_perl db_perlvdb"
 # - modules depending on ruby library
 _mod_list_ruby="app_ruby"
 
-# - modules depending on python3 libarary
+# - modules depending on python3 library
 _mod_list_python3="app_python3"
 
 # - modules depending on ruby library
@@ -289,7 +289,7 @@ prepare() {
 	cd utils/kamctl/
 	sed -i -e 's:/run/kamailio.pid:/run/kamailio/kamailio.pid:g' \
 		kamctl.base kamctlrc || return 1
-	# we actually dont need bash
+	# we actually don't need bash
 	sed -i -e 's:/bin/bash:/bin/sh:' kamctl kamdbctl \
 		|| return 1
 }
@@ -365,7 +365,7 @@ sqlite() {
 dbtext() {
 	_db_driver DBText text dbtext dbtext || return 1
 	# kamdbctl.dbtext is a python script - but we will not make python
-	# a dependency because kamdbctl is not normaly used
+	# a dependency because kamdbctl is not normally used
 	depends="$depends"
 	mkdir -p "$subpkgdir"/usr/lib/kamailio/kamctl || return 1
 	mv "$pkgdir"/usr/lib/kamailio/kamctl/dbtextdb \
@@ -417,7 +417,7 @@ ldap() {
 }
 
 utils() {
-	_generic_pkg "miscelaneous utility functions" \
+	_generic_pkg "miscellaneous utility functions" \
 		"$_mod_list_utils"
 }
 

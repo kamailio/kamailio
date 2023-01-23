@@ -33,7 +33,7 @@ apk:
 	    -e "s/^pkgver=.*/pkgver=${APK_VERSION}/" \
 	    -i alpine/APKBUILD
 	cd alpine && abuild snapshot
-	@echo \"abuild\" cannot be start from Makefile please start manualy \"cd alpine \&\& abuild -r\"
+	@echo \"abuild\" cannot be started from Makefile please start manually \"cd alpine \&\& abuild -r\"
 
 # build source rpm package
 .PHONY: src.rpm

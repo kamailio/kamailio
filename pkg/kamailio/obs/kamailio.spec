@@ -261,8 +261,8 @@ Release:    %rel
 Packager:   Sergey Safarov <s.safarov@gmail.com>
 License:    GPL-2.0
 Group:      %{PKGGROUP}
-Source:     http://kamailio.org/pub/kamailio/%{ver}/src/%{name}-%{ver}_src.tar.gz
-URL:        http://kamailio.org/
+Source:     https://kamailio.org/pub/kamailio/%{ver}/src/%{name}-%{ver}_src.tar.gz
+URL:        https://kamailio.org/
 Vendor:     kamailio.org
 BuildRoot:  %{_tmppath}/%{name}-%{ver}-buildroot
 Conflicts:  kamailio-acc_json < %ver
@@ -544,7 +544,7 @@ BuildRequires:  libcurl-devel
 %endif
 
 %description   http_async_client
-This module implements protocol functions that use the libcurl to communicate with HTTP servers in asyncronous way.
+This module implements protocol functions that use the libcurl to communicate with HTTP servers in asynchronous way.
 %endif
 
 %package    http_client
