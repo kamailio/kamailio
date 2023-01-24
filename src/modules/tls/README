@@ -61,7 +61,7 @@ Olle E. Johansson
               10.27. session_cache (boolean)
               10.28. session_id (str)
               10.29. renegotiation (boolean)
-              10.30. lock_mode (int)
+              10.30. init_mode (int)
               10.31. config (string)
               10.32. xavp_cfg (string)
               10.33. event_callback (str)
@@ -136,7 +136,7 @@ Olle E. Johansson
    1.38. Set session_cache parameter
    1.39. Set session_id parameter
    1.40. Set renegotiation parameter
-   1.41. Set lock_mode parameter
+   1.41. Set init_mode parameter
    1.42. Sample TLS Config File
    1.43. Set config parameter
    1.44. Change and reload the TLS configuration at runtime
@@ -193,7 +193,7 @@ Chapter 1. Admin Guide
         10.27. session_cache (boolean)
         10.28. session_id (str)
         10.29. renegotiation (boolean)
-        10.30. lock_mode (int)
+        10.30. init_mode (int)
         10.31. config (string)
         10.32. xavp_cfg (string)
         10.33. event_callback (str)
@@ -624,7 +624,7 @@ Place holder
    10.27. session_cache (boolean)
    10.28. session_id (str)
    10.29. renegotiation (boolean)
-   10.30. lock_mode (int)
+   10.30. init_mode (int)
    10.31. config (string)
    10.32. xavp_cfg (string)
    10.33. event_callback (str)
@@ -1267,18 +1267,22 @@ modparam("tls", "session_id", "my-session-id-context")
 modparam("tls", "renegotiation", 1)
 ...
 
-10.30. lock_mode (int)
+10.30. init_mode (int)
 
-   If set to 1, the memory management operations registered for TLS are
-   wapped within a pthread mutex lock. It can be useful with newer
-   versions of libssl and libcrypto, which have a more pthread
-   multi-threading oriented design.
+   Allow setting flags that control how the module is initialized and
+   works at runtime. Many flags (bits) can be set at the same time (set
+   the parameter to the sum of corresponding values).
+
+   If flag (bit) 1 is set (value 1), the memory management operations
+   registered for TLS are wapped within a pthread mutex lock. It can be
+   useful with newer versions of libssl and libcrypto, which have a more
+   pthread multi-threading oriented design.
 
    Default value is 0.
 
-   Example 1.41. Set lock_mode parameter
+   Example 1.41. Set init_mode parameter
 ...
-modparam("tls", "lock_mode", 1)
+modparam("tls", "init_mode", 1)
 ...
 
 10.31. config (string)
