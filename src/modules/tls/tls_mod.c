@@ -78,7 +78,7 @@
  */
 static int mod_init(void);
 static int mod_child(int rank);
-static void destroy(void);
+static void mod_destroy(void);
 
 static int w_is_peer_verified(struct sip_msg* msg, char* p1, char* p2);
 static int w_tls_set_connect_server_id(sip_msg_t* msg, char* psrvid, char* p2);
@@ -275,7 +275,7 @@ struct module_exports exports = {
 	0,               /* response handling function */
 	mod_init,        /* module init function */
 	mod_child,       /* child initi function */
-	destroy          /* destroy function */
+	mod_destroy      /* destroy function */
 };
 
 
@@ -460,7 +460,7 @@ static int mod_child(int rank)
 }
 
 
-static void destroy(void)
+static void mod_destroy(void)
 {
 	/* tls is destroyed via the registered destroy_tls_h callback
 	 *   => nothing to do here */
