@@ -56,6 +56,8 @@ typedef struct sr_tls_methods_s {
 extern sr_tls_methods_t sr_tls_methods[];
 #endif
 
+#define TLS_MODE_PTHREAD_LOCK_SHM (1)
+
 /*
  * just once, pre-initialize the tls subsystem
  */
@@ -88,5 +90,8 @@ int tls_h_init_si_f(struct socket_info *si);
  * listening socket in SER
  */
 int tls_check_sockets(tls_domains_cfg_t* cfg);
+
+int ksr_tls_lock_init(void);
+void ksr_tls_lock_destroy(void);
 
 #endif /* _TLS_INIT_H */

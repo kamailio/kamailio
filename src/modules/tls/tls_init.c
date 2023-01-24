@@ -65,7 +65,7 @@
 static int tls_mod_preinitialized = 0;
 static int tls_mod_initialized = 0;
 
-extern int ksr_tls_lock_mode;
+extern int ksr_tls_init_mode;
 pthread_mutex_t ksr_tls_lock_shm;
 
 /**
@@ -73,7 +73,7 @@ pthread_mutex_t ksr_tls_lock_shm;
  */
 int ksr_tls_lock_init(void)
 {
-	if(ksr_tls_lock_mode==0) {
+	if(!(ksr_tls_init_mode&TLS_MODE_PTHREAD_LOCK_SHM)) {
 		return 0;
 	}
     if (pthread_mutex_init(&ksr_tls_lock_shm, NULL) != 0) {
@@ -88,7 +88,7 @@ int ksr_tls_lock_init(void)
  */
 void ksr_tls_lock_destroy(void)
 {
-	if(ksr_tls_lock_mode==0) {
+	if(!(ksr_tls_init_mode&TLS_MODE_PTHREAD_LOCK_SHM)) {
 		return;
 	}
     pthread_mutex_destroy(&ksr_tls_lock_shm);
@@ -240,7 +240,8 @@ static void* ser_malloc(size_t size, const char* file, int line)
 	static ticks_t st=0;
 #endif
 
-	pthread_mutex_lock(&ksr_tls_lock_shm);
+	if(ksr_tls_init_mode&TLS_MODE_PTHREAD_LOCK_SHM)
+		pthread_mutex_lock(&ksr_tls_lock_shm);
 
 #ifdef RAND_NULL_MALLOC
 	/* start random null returns only after
@@ -267,7 +268,8 @@ static void* ser_malloc(size_t size, const char* file, int line)
 				size, file, line, bt_buf);
 	}
 #endif
-	pthread_mutex_unlock(&ksr_tls_lock_shm);
+	if(ksr_tls_init_mode&TLS_MODE_PTHREAD_LOCK_SHM)
+		pthread_mutex_unlock(&ksr_tls_lock_shm);
 	return p;
 }
 
@@ -281,7 +283,8 @@ static void* ser_realloc(void *ptr, size_t size, const char* file, int line)
 	static ticks_t st=0;
 #endif
 
-	pthread_mutex_lock(&ksr_tls_lock_shm);
+	if(ksr_tls_init_mode&TLS_MODE_PTHREAD_LOCK_SHM)
+		pthread_mutex_lock(&ksr_tls_lock_shm);
 
 #ifdef RAND_NULL_MALLOC
 	/* start random null returns only after
@@ -309,7 +312,8 @@ static void* ser_realloc(void *ptr, size_t size, const char* file, int line)
 	}
 #endif
 
-	pthread_mutex_unlock(&ksr_tls_lock_shm);
+	if(ksr_tls_init_mode&TLS_MODE_PTHREAD_LOCK_SHM)
+		pthread_mutex_unlock(&ksr_tls_lock_shm);
 
 	return p;
 }
@@ -324,9 +328,11 @@ static void* ser_malloc(size_t size)
 {
 	void *p;
 
-	pthread_mutex_lock(&ksr_tls_lock_shm);
+	if(ksr_tls_init_mode&TLS_MODE_PTHREAD_LOCK_SHM)
+		pthread_mutex_lock(&ksr_tls_lock_shm);
 	p = shm_malloc(size);
-	pthread_mutex_unlock(&ksr_tls_lock_shm);
+	if(ksr_tls_init_mode&TLS_MODE_PTHREAD_LOCK_SHM)
+		pthread_mutex_unlock(&ksr_tls_lock_shm);
 	return p;
 }
 
@@ -334,18 +340,22 @@ static void* ser_malloc(size_t size)
 static void* ser_realloc(void *ptr, size_t size)
 {
 	void *p;
-	pthread_mutex_lock(&ksr_tls_lock_shm);
+	if(ksr_tls_init_mode&TLS_MODE_PTHREAD_LOCK_SHM)
+		pthread_mutex_lock(&ksr_tls_lock_shm);
 	p = shm_realloc(ptr, size);
-	pthread_mutex_unlock(&ksr_tls_lock_shm);
+	if(ksr_tls_init_mode&TLS_MODE_PTHREAD_LOCK_SHM)
+		pthread_mutex_unlock(&ksr_tls_lock_shm);
 	return p;
 }
 #else
 static void* ser_malloc(size_t size, const char *fname, int fline)
 {
 	void *p;
-	pthread_mutex_lock(&ksr_tls_lock_shm);
+	if(ksr_tls_init_mode&TLS_MODE_PTHREAD_LOCK_SHM)
+		pthread_mutex_lock(&ksr_tls_lock_shm);
 	p = shm_malloc(size);
-	pthread_mutex_unlock(&ksr_tls_lock_shm);
+	if(ksr_tls_init_mode&TLS_MODE_PTHREAD_LOCK_SHM)
+		pthread_mutex_unlock(&ksr_tls_lock_shm);
 	return p;
 }
 
@@ -353,9 +363,11 @@ static void* ser_malloc(size_t size, const char *fname, int fline)
 static void* ser_realloc(void *ptr, size_t size, const char *fname, int fline)
 {
 	void *p;
-	pthread_mutex_lock(&ksr_tls_lock_shm);
+	if(ksr_tls_init_mode&TLS_MODE_PTHREAD_LOCK_SHM)
+		pthread_mutex_lock(&ksr_tls_lock_shm);
 	p = shm_realloc(ptr, size);
-	pthread_mutex_unlock(&ksr_tls_lock_shm);
+	if(ksr_tls_init_mode&TLS_MODE_PTHREAD_LOCK_SHM)
+		pthread_mutex_unlock(&ksr_tls_lock_shm);
 	return p;
 }
 #endif
@@ -372,20 +384,24 @@ static void ser_free(void *ptr)
 	 * As shm_free() aborts on null pointers, we have to check for null pointer
 	 * here in the wrapper function.
 	 */
-	pthread_mutex_lock(&ksr_tls_lock_shm);
+	if(ksr_tls_init_mode&TLS_MODE_PTHREAD_LOCK_SHM)
+		pthread_mutex_lock(&ksr_tls_lock_shm);
 	if (ptr) {
 		shm_free(ptr);
 	}
-	pthread_mutex_unlock(&ksr_tls_lock_shm);
+	if(ksr_tls_init_mode&TLS_MODE_PTHREAD_LOCK_SHM)
+		pthread_mutex_unlock(&ksr_tls_lock_shm);
 }
 #else
 static void ser_free(void *ptr, const char *fname, int fline)
 {
-	pthread_mutex_lock(&ksr_tls_lock_shm);
+	if(ksr_tls_init_mode&TLS_MODE_PTHREAD_LOCK_SHM)
+		pthread_mutex_lock(&ksr_tls_lock_shm);
 	if (ptr) {
 		shm_free(ptr);
 	}
-	pthread_mutex_unlock(&ksr_tls_lock_shm);
+	if(ksr_tls_init_mode&TLS_MODE_PTHREAD_LOCK_SHM)
+		pthread_mutex_unlock(&ksr_tls_lock_shm);
 }
 #endif
 
