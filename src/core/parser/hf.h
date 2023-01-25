@@ -231,6 +231,7 @@ static inline int hdr_allocs_parse(struct hdr_field* hdr)
 		case HDR_PROXYAUTH_T:
 		case HDR_RECORDROUTE_T:
 		case HDR_REFER_TO_T:
+		case HDR_REQUIRE_T:
 		case HDR_ROUTE_T:
 		case HDR_RPID_T:
 		case HDR_SESSIONEXPIRES_T:
