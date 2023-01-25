@@ -75,7 +75,7 @@ struct msg_start {
 		    <structfield>method_value</structfield> - Parsed
 		    method. Field method which is of type <type>str</type> will
 		    be converted to integer and stored here. This is good for
-		    comparison, integer comparison is much faster then string
+		    comparison, integer comparison is much faster than string
 		    comparison.
 		</para>
 	    </listitem>

@@ -1189,7 +1189,7 @@ Warning: 392 216.87.144.203:5060 "Noisy feedback tells:  pid=19604
 		<simpara>
 		    It is possible there are some magic options in domain/usrloc/auth_db/
 		    registrar/auth modules you need to turn on to enable multidomain
-		    operation--I don't remember these by heart, hopefuly some people
+		    operation--I don't remember these by heart, hopefully some people
 		    on the mailing list do.
 		</simpara>
 	    </answer>

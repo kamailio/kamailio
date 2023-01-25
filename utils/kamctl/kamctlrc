@@ -160,5 +160,5 @@
 # PID_FILE=/run/kamailio/kamailio.pid
 
 ## Extra start options - default is: not set
-## example: start Kamailio with 64MB share memory: STARTOPTIONS="-m 64"
+## example: start Kamailio with 64MB shared memory: STARTOPTIONS="-m 64"
 # STARTOPTIONS=

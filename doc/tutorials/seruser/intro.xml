@@ -625,9 +625,9 @@ if (uri=~"^sip:[0-79][0-9]*@") { # ... forward to gateways then;
 		<title>Rewriting URIs</title>
 		<programlisting>
 if (uri=~"dan@foo.bar") {
-    rewriteuri("sip:bla@somewherelse.com")
+    rewriteuri("sip:bla@somewhereelse.com")
     # forward statelessly to the destination in current URI, i.e.,
-    # to sip:bla@somewherelese.com:5060
+    # to sip:bla@somewhereelse.com:5060
     forward( uri:host, uri:port);
 }
 		</programlisting>

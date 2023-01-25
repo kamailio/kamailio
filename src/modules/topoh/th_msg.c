@@ -540,6 +540,46 @@ int th_unmask_callid(sip_msg_t *msg)
 }
 
 #define TH_CALLID_SIZE	256
+
+int th_mask_callid_str(str *icallid, str *ocallid)
+{
+	static char th_callid_mbuf[TH_CALLID_SIZE];
+	str out;
+
+	if(th_param_mask_callid==0)
+		return 0;
+
+	if(th_param_mask_callid==0)
+		return 0;
+
+	if(icallid->s==NULL) {
+		LM_ERR("invalid call-id value\n");
+		return -1;
+	}
+
+	out.s = th_mask_encode(icallid->s, icallid->len, &th_callid_prefix, &out.len);
+	if(out.s==NULL) {
+		LM_ERR("cannot encode call-id\n");
+		return -1;
+	}
+
+	if(out.len>=TH_CALLID_SIZE) {
+		pkg_free(out.s);
+		LM_ERR("not enough callid buf size (needed %d)\n", out.len);
+		return -2;
+	}
+
+	memcpy(th_callid_mbuf, out.s, out.len);
+	th_callid_mbuf[out.len] = '\0';
+
+	pkg_free(out.s);
+
+	ocallid->s = th_callid_mbuf;
+	ocallid->len = out.len;
+
+	return 0;
+}
+
 int th_unmask_callid_str(str *icallid, str *ocallid)
 {
 	static char th_callid_buf[TH_CALLID_SIZE];

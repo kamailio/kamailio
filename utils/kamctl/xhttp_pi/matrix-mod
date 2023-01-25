@@ -1,4 +1,4 @@
-	<!-- matrix provisionning -->
+	<!-- matrix provisioning -->
 	<mod><mod_name>matrix</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>matrix</db_table_id>

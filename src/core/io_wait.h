@@ -1222,7 +1222,7 @@ inline static int io_wait_loop_sigio_rt(io_wait_h* h, int t)
 	int sigio_fd;
 	struct fd_map* fm;
 	int revents;
-#ifdef SIGINFO64_WORKARROUND
+#ifdef SIGINFO64_WORKAROUND
 	int* pi;
 #endif
 	
@@ -1248,7 +1248,7 @@ again:
 		}
 	}
 	if (likely(n!=SIGIO)){
-#ifdef SIGINFO64_WORKARROUND
+#ifdef SIGINFO64_WORKAROUND
 		/* on linux siginfo.si_band is defined as long in userspace
 		 * and as int in kernel (< 2.6.5) => on 64 bits things will break!
 		 * (si_band will include si_fd, and si_fd will contain

@@ -150,7 +150,7 @@ protection mechanism to avoid the above race.
 4.5 timer_allow_del
 -------------------
 
-Marks a timer as "to be deleted when the handler ends", usefull when the timer handler 
+Marks a timer as "to be deleted when the handler ends", useful when the timer handler 
 knows it won't prolong the timer anymore (it will return 0) and will do some time 
 consuming work. Calling this function will cause simultaneous timer_dels to return 
 immediately (they won't  wait anymore for the timer handle to finish). 

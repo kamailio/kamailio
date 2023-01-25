@@ -357,6 +357,28 @@ modparam("topoh", "event_mode", 2)
 </programlisting>
 		</example>
 	</section>
+	<section id="topoh.p.use_mode">
+		<title><varname>use_mode</varname> (int)</title>
+		<para>
+			Control how the module is initialized. If set to 1, the module is
+			only initialized to be used as a library via inter-module API
+			functions. If set to 0, the module is initialized for SIP messages
+			processing.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0 (to process SIP messages).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>use_mode</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("topoh", "use_mode", 1)
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>

@@ -24,7 +24,7 @@ data. From the SIP_ROUTER's point of view these items are interesting:
 <para>Definition of authorization documents and theirs usage is specified in <xref 
 linkend="pres_draft_common_auth"/> and especially for presence purposes in <xref 
 linkend="pres_draft_auth"/>. Both documents are quite common and in SIP_ROUTER's
-presence modules implemented only partialy. For more information about XCAP
+presence modules implemented only partially. For more information about XCAP
 authorization see details in <xref linkend="pa.xcap"/>.</para>
 </section> <!-- XCAP authorization -->
 
@@ -46,7 +46,7 @@ there. Such customer may simply watch presence state of
 
 <para>Lists of users - more common resource lists - are defined in <xref
 linkend="pres_draft_rls"/> and their usage with SIP in <xref
-linkend="pres_draft_rls_sip"/>. These lists are partialy implemented in <link
+linkend="pres_draft_rls_sip"/>. These lists are partially implemented in <link
 linkend="pres_rls">RLS module</link>.
 For more information about resource lists see details in <xref
 linkend="rls.xcap"/>.</para>
@@ -393,7 +393,7 @@ Alias /xcap-root /var/simulated-xcap-root
 
 <example><title>Simple (and dangerous) cgi-script for upload</title>
 <para>This code is written in C and it is able to create directories if needed, but its usage in
-presented form is realy unsafe! You have to compile it and put into directory
+presented form is really unsafe! You have to compile it and put into directory
 with other CGI scripts.</para>
 <programlisting><![CDATA[
 #include <stdio.h>

@@ -78,7 +78,7 @@ Source files:
           - for messages by modules:
               PROC(PID) LEVEL: MODULE [FILE:LINE]: MESSAGE
 	      
-          - for messages by log(), xlog(), xdbg() script funcitons:
+          - for messages by log(), xlog(), xdbg() script functions:
               PROC(PID) LEVEL: <script>: MESSAGE
 
 	PROC is the SER process number and PID is the linux process ID.

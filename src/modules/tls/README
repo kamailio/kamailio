@@ -61,14 +61,15 @@ Olle E. Johansson
               10.27. session_cache (boolean)
               10.28. session_id (str)
               10.29. renegotiation (boolean)
-              10.30. config (string)
-              10.31. xavp_cfg (string)
-              10.32. event_callback (str)
-              10.33. rand_engine (str)
-              10.34. engine (string)
-              10.35. engine_config (string)
-              10.36. engine_algorithms (string)
-              10.37. verify_client (string)
+              10.30. init_mode (int)
+              10.31. config (string)
+              10.32. xavp_cfg (string)
+              10.33. event_callback (str)
+              10.34. rand_engine (str)
+              10.35. engine (string)
+              10.36. engine_config (string)
+              10.37. engine_algorithms (string)
+              10.38. verify_client (string)
 
         11. Functions
 
@@ -135,17 +136,18 @@ Olle E. Johansson
    1.38. Set session_cache parameter
    1.39. Set session_id parameter
    1.40. Set renegotiation parameter
-   1.41. Sample TLS Config File
-   1.42. Set config parameter
-   1.43. Change and reload the TLS configuration at runtime
-   1.44. Set xavp_cfg parameter
-   1.45. Set event_callback parameter
-   1.46. Set rand_engine parameter
-   1.47. Set verify_client modparam parameter
-   1.48. Set verify_client tls.cfg parameter
-   1.49. is_peer_verified usage
-   1.50. tls_set_connect_server_id usage
-   1.51. Use of event_route[tls:connection-out]
+   1.41. Set init_mode parameter
+   1.42. Sample TLS Config File
+   1.43. Set config parameter
+   1.44. Change and reload the TLS configuration at runtime
+   1.45. Set xavp_cfg parameter
+   1.46. Set event_callback parameter
+   1.47. Set rand_engine parameter
+   1.48. Set verify_client modparam parameter
+   1.49. Set verify_client tls.cfg parameter
+   1.50. is_peer_verified usage
+   1.51. tls_set_connect_server_id usage
+   1.52. Use of event_route[tls:connection-out]
 
 Chapter 1. Admin Guide
 
@@ -191,14 +193,15 @@ Chapter 1. Admin Guide
         10.27. session_cache (boolean)
         10.28. session_id (str)
         10.29. renegotiation (boolean)
-        10.30. config (string)
-        10.31. xavp_cfg (string)
-        10.32. event_callback (str)
-        10.33. rand_engine (str)
-        10.34. engine (string)
-        10.35. engine_config (string)
-        10.36. engine_algorithms (string)
-        10.37. verify_client (string)
+        10.30. init_mode (int)
+        10.31. config (string)
+        10.32. xavp_cfg (string)
+        10.33. event_callback (str)
+        10.34. rand_engine (str)
+        10.35. engine (string)
+        10.36. engine_config (string)
+        10.37. engine_algorithms (string)
+        10.38. verify_client (string)
 
    11. Functions
 
@@ -621,14 +624,15 @@ Place holder
    10.27. session_cache (boolean)
    10.28. session_id (str)
    10.29. renegotiation (boolean)
-   10.30. config (string)
-   10.31. xavp_cfg (string)
-   10.32. event_callback (str)
-   10.33. rand_engine (str)
-   10.34. engine (string)
-   10.35. engine_config (string)
-   10.36. engine_algorithms (string)
-   10.37. verify_client (string)
+   10.30. init_mode (int)
+   10.31. config (string)
+   10.32. xavp_cfg (string)
+   10.33. event_callback (str)
+   10.34. rand_engine (str)
+   10.35. engine (string)
+   10.36. engine_config (string)
+   10.37. engine_algorithms (string)
+   10.38. verify_client (string)
 
 10.1. tls_method (string)
 
@@ -1263,7 +1267,31 @@ modparam("tls", "session_id", "my-session-id-context")
 modparam("tls", "renegotiation", 1)
 ...
 
-10.30. config (string)
+10.30. init_mode (int)
+
+   Allow setting flags that control how the module is initialized and
+   works at runtime. Many flags (bits) can be set at the same time (set
+   the parameter to the sum of corresponding values). The flags are
+   refered with 0-indexing.
+
+   If flag (bit) at index 0 is set (value 1), the memory management
+   operations registered for TLS are wapped within a pthread mutex lock.
+   It can be useful with newer versions of libssl and libcrypto, which
+   have a more pthread multi-threading oriented design.
+
+   If flag (bit) at index 1 is set (value 2), the module executes openssl
+   fork prepare API functions (see
+   https://www.openssl.org/docs/man1.1.1/man3/OPENSSL_fork_prepare.html).
+   It is done only for openssl version greater or equal with 1.1.1.
+
+   Default value is 0.
+
+   Example 1.41. Set init_mode parameter
+...
+modparam("tls", "init_mode", 1)
+...
+
+10.31. config (string)
 
    Sets the name of the TLS specific configuration file or configuration
    directory.
@@ -1340,7 +1368,7 @@ modparam("tls", "renegotiation", 1)
    SNI is provided, then the profile definition is searched again to match
    on 'server_name'.
 
-   Example 1.41. Sample TLS Config File
+   Example 1.42. Sample TLS Config File
 ...
 [server:default]
 method = TLSv1
@@ -1393,7 +1421,7 @@ server_name_mode = 1
    For a more complete example check the tls.cfg distributed with the
    Kamailio source (kamailio/modules/tls/tls.cfg).
 
-   Example 1.42. Set config parameter
+   Example 1.43. Set config parameter
 ...
 modparam("tls", "config", "/usr/local/etc/kamailio/tls.cfg")
 ...
@@ -1401,11 +1429,11 @@ modparam("tls", "config", "/usr/local/etc/kamailio/tls.cfg")
    The file can be changed at runtime. The new config will not be loaded
    immediately, but after the first tls.reload RPC call.
 
-   Example 1.43. Change and reload the TLS configuration at runtime
+   Example 1.44. Change and reload the TLS configuration at runtime
  $ kamcmd cfg.set_now_string tls config "/usr/local/etc/kamailio/new_tls.cfg"
  $ kamcmd tls.reload
 
-10.31. xavp_cfg (string)
+10.32. xavp_cfg (string)
 
    Sets the name of XAVP that stores attributes for TLS connections.
 
@@ -1420,7 +1448,7 @@ modparam("tls", "config", "/usr/local/etc/kamailio/tls.cfg")
 
    The default value is empty (not set).
 
-   Example 1.44. Set xavp_cfg parameter
+   Example 1.45. Set xavp_cfg parameter
 ...
   modparam("tls", "xavp_cfg", "tls")
  ...
@@ -1430,7 +1458,7 @@ modparam("tls", "config", "/usr/local/etc/kamailio/tls.cfg")
   route(RELAY);
 ...
 
-10.32. event_callback (str)
+10.33. event_callback (str)
 
    The name of the function in the kemi configuration file (embedded
    scripting language such as Lua, Python, ...) to be executed instead of
@@ -1441,7 +1469,7 @@ modparam("tls", "config", "/usr/local/etc/kamailio/tls.cfg")
 
    Default value is 'empty' (no function is executed for events).
 
-   Example 1.45. Set event_callback parameter
+   Example 1.46. Set event_callback parameter
 ...
 modparam("tls", "event_callback", "ksr_tls_event")
 ...
@@ -1452,7 +1480,7 @@ function ksr_tls_event(evname)
 end
 ...
 
-10.33. rand_engine (str)
+10.34. rand_engine (str)
 
    Set the random number generator engine for libssl.
 
@@ -1475,12 +1503,12 @@ end
    The default value is empty (not set) for libssl v1.0.x or older, and
    "cryptorand" for libssl v1.1.x or newer.
 
-   Example 1.46. Set rand_engine parameter
+   Example 1.47. Set rand_engine parameter
 ...
 modparam("tls", "rand_engine", "fastrand")
 ...
 
-10.34. engine (string)
+10.35. engine (string)
 
    If OpenSSL is compiled with engine support this will allow algorithms
    to be offloaded and private keys from HSM to be used. Currently only a
@@ -1506,13 +1534,13 @@ modparam("tls", "engine_algorithms", "ALL")
    By default OpenSSL engine support is disabled (NONE). This global param
    is not supported in the tls config file.
 
-10.35. engine_config (string)
+10.36. engine_config (string)
 
    An OpenSSL configuration file to initialize the engine. Typically used
    to send PIN to HSMs to unlock private keys. See the HSM howto for an
    example. This global param is not supported in the tls config file.
 
-10.36. engine_algorithms (string)
+10.37. engine_algorithms (string)
 
    A list of cryptographic methods to be set as default in the engine.
    This is a comma-separated list of values from ALL RSA DSA DH EC RAND
@@ -1522,7 +1550,7 @@ modparam("tls", "engine_algorithms", "ALL")
    The default is not to set any methods as default. This global param is
    not supported in the tls config file.
 
-10.37. verify_client (string)
+10.38. verify_client (string)
 
    Provides an alternative to verify_certificate and require_certificate
    modparam and tls.cfg parameters, and creates an additional
@@ -1554,12 +1582,12 @@ modparam("tls", "engine_algorithms", "ALL")
        verify_client="optional"
      * verify_certificate=1, require_certificate=1 => verify_client="on"
 
-   Example 1.47. Set verify_client modparam parameter
+   Example 1.48. Set verify_client modparam parameter
 ...
 modparam("tls", "verify_client", "on")
 ...
 
-   Example 1.48. Set verify_client tls.cfg parameter
+   Example 1.49. Set verify_client tls.cfg parameter
 ...
 [server:1.2.3.4:5061]
 method = TLSv1
@@ -1584,7 +1612,7 @@ verify_client = optional_no_ca
 
    It can be used only in a request route.
 
-   Example 1.49. is_peer_verified usage
+   Example 1.50. is_peer_verified usage
 ...
         if (proto==TLS && !is_peer_verified()) {
                 sl_send_reply("400", "No certificate or verification failed");
@@ -1603,7 +1631,7 @@ verify_client = optional_no_ca
 
    It can be used only in ANY_ROUTE.
 
-   Example 1.50. tls_set_connect_server_id usage
+   Example 1.51. tls_set_connect_server_id usage
 ...
     tls_set_connect_server_id("clientone");
 ...
@@ -1683,7 +1711,7 @@ verify_client = optional_no_ca
    If drop() is executed in the event route, then the data is no longer
    sent over the connection.
 
-   Example 1.51. Use of event_route[tls:connection-out]
+   Example 1.52. Use of event_route[tls:connection-out]
 ...
 event_route[tls:connection-out] {
   if($sndto(ip)=="1.2.3.4") {

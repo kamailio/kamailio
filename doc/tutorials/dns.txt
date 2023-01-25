@@ -144,7 +144,7 @@ DNS Resolver Options
 
  The maximum time a DNS request can take (before failing) is:
  (dns_retr_time*dns_retr_no) * (search_list_domains) If dns_try_ipv6 is yes,
- mutliply it again by 2.
+ multiply it again by 2.
 
  The option combination that produces the "fastest" DNS resolver config
   (the "faster" in the sense that it gives up the quickest) is:
@@ -159,7 +159,7 @@ DNS Resolver Options
  server configured in /etc/resolv.conf, set the DNS resolver options in Kamailio's
  config as in the above example and enable the DNS cache (in Kamailio).
  Pay particular attention to dns_servers_no and dns_use_search_list. It's a
- good idea to make sure you don't need / use the search list or more then one
+ good idea to make sure you don't need / use the search list or more than one
  DNS server (to avoid unnecessary extra lookups).
 
 

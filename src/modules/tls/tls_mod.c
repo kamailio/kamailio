@@ -78,7 +78,7 @@
  */
 static int mod_init(void);
 static int mod_child(int rank);
-static void destroy(void);
+static void mod_destroy(void);
 
 static int w_is_peer_verified(struct sip_msg* msg, char* p1, char* p2);
 static int w_tls_set_connect_server_id(sip_msg_t* msg, char* psrvid, char* p2);
@@ -194,6 +194,7 @@ gen_lock_t* tls_domains_cfg_lock = NULL;
 
 
 int sr_tls_renegotiation = 0;
+int ksr_tls_init_mode = 0;
 
 /*
  * Exported functions
@@ -252,6 +253,7 @@ static param_export_t params[] = {
 	{"xavp_cfg",            PARAM_STR,    &sr_tls_xavp_cfg},
 	{"event_callback",      PARAM_STR,    &sr_tls_event_callback},
 	{"rand_engine",         PARAM_STR|USE_FUNC_PARAM, (void*)ksr_rand_engine_param},
+	{"init_mode",           PARAM_INT,    &ksr_tls_init_mode},
 
 	{0, 0, 0}
 };
@@ -273,7 +275,7 @@ struct module_exports exports = {
 	0,               /* response handling function */
 	mod_init,        /* module init function */
 	mod_child,       /* child initi function */
-	destroy          /* destroy function */
+	mod_destroy      /* destroy function */
 };
 
 
@@ -396,6 +398,10 @@ static int mod_init(void)
 	if (tls_check_sockets(*tls_domains_cfg) < 0)
 		goto error;
 
+	if (ksr_tls_lock_init() < 0) {
+		goto error;
+	}
+
 	LM_INFO("use OpenSSL version: %08x\n", (uint32_t)(OPENSSL_VERSION_NUMBER));
 #ifndef OPENSSL_NO_ECDH
 	LM_INFO("With ECDH-Support!\n");
@@ -406,6 +412,15 @@ static int mod_init(void)
 	if(sr_tls_event_callback.s==NULL || sr_tls_event_callback.len<=0) {
 		tls_lookup_event_routes();
 	}
+#if OPENSSL_VERSION_NUMBER >= 0x010101000L
+	/*
+	 * register the need to be called post-fork of all children
+	 * with the special rank PROC_POSTCHILDINIT
+	 */
+	if(ksr_tls_init_mode&TLS_MODE_FORK_PREPARE) {
+		ksr_module_set_flag(KSRMOD_FLAG_POSTCHILDINIT);
+	}
+#endif
 	return 0;
 error:
 	tls_h_mod_destroy_f();
@@ -417,6 +432,7 @@ error:
 static int tls_engine_init();
 int tls_fix_engine_keys(tls_domains_cfg_t*, tls_domain_t*, tls_domain_t*);
 #endif
+
 static int mod_child(int rank)
 {
 	if (tls_disable || (tls_domains_cfg==0))
@@ -434,7 +450,29 @@ static int mod_child(int rank)
 									&mod_params, &mod_params) < 0)
 				return -1;
 		}
+#if OPENSSL_VERSION_NUMBER >= 0x010101000L
+		if(ksr_tls_init_mode&TLS_MODE_FORK_PREPARE) {
+			OPENSSL_fork_prepare();
+		}
+#endif
+		return 0;
 	}
+
+#if OPENSSL_VERSION_NUMBER >= 0x010101000L
+	if(ksr_tls_init_mode&TLS_MODE_FORK_PREPARE) {
+		if(rank==PROC_POSTCHILDINIT) {
+			/*
+			 * this is called after forking of all child processes
+			 */
+			OPENSSL_fork_parent();
+			return 0;
+		}
+		if (!_ksr_is_main) {
+			OPENSSL_fork_child();
+		}
+	}
+#endif
+
 #ifndef OPENSSL_NO_ENGINE
 	/*
 	 * after the child is fork()ed we go through the TLS domains
@@ -454,7 +492,7 @@ static int mod_child(int rank)
 }
 
 
-static void destroy(void)
+static void mod_destroy(void)
 {
 	/* tls is destroyed via the registered destroy_tls_h callback
 	 *   => nothing to do here */

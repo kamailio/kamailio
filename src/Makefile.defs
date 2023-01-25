@@ -1883,7 +1883,7 @@ ifeq ($(OS), linux)
 	# check for >= 2.2.0
 	ifeq ($(shell [ $(OSREL_N) -ge 2002000 ] && echo has_sigio), has_sigio)
 		ifeq ($(NO_SIGIO),)
-			C_DEFS+=-DHAVE_SIGIO_RT -DSIGINFO64_WORKARROUND
+			C_DEFS+=-DHAVE_SIGIO_RT -DSIGINFO64_WORKAROUND
 		endif
 	endif
 	# check for >= 2.5.70
