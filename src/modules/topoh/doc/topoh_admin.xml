@@ -92,11 +92,13 @@ modparam("topoh", "mask_key", "some secret here")
 		SIP URIs. Can be any IP address, even a private-space or non-existing
 		IP address (e.g., 192.168.1.1, 127.0.0.2), including the SIP server
 		address, but must not be an address potentially used by clients.
+		If not set, the advertised IP of the, incoming or outgoing, socket is used.
+		If there is no advertised IP, the IP of the socket is used.
 		It is not used at all for SIP routing.
 		</para>
 		<para>
 		<emphasis>
-			Default value is "127.0.0.8".
+			Default value is empty.
 		</emphasis>
 		</para>
 		<example>
