@@ -1037,13 +1037,20 @@ modparam("tls", "renegotiation", 1)
 	<para>
 		Allow setting flags that control how the module is initialized and works
 		at runtime. Many flags (bits) can be set at the same time (set the
-		parameter to the sum of corresponding values).
+		parameter to the sum of corresponding values). The flags are refered
+		with 0-indexing.
 	</para>
 	<para>
-		If flag (bit) 1 is set (value 1), the memory management operations registered for TLS are
-		wapped within a pthread mutex lock. It can be useful with newer versions
-		of libssl and libcrypto, which have a more pthread multi-threading oriented
-		design.
+		If flag (bit) at index 0 is set (value 1), the memory management operations
+		registered for TLS are wapped within a pthread mutex lock. It can be useful
+		with newer versions of libssl and libcrypto, which have a more pthread
+		multi-threading oriented design.
+	</para>
+	<para>
+		If flag (bit) at index 1 is set (value 2), the module executes openssl fork
+		prepare API functions (see
+		<ulink url="https://www.openssl.org/docs/man1.1.1/man3/OPENSSL_fork_prepare.html">https://www.openssl.org/docs/man1.1.1/man3/OPENSSL_fork_prepare.html</ulink>). It is done only for openssl version greater or equal
+		with 1.1.1.
 	</para>
 	<para>
 		Default value is 0.
