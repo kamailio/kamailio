@@ -57,6 +57,7 @@ extern sr_tls_methods_t sr_tls_methods[];
 #endif
 
 #define TLS_MODE_PTHREAD_LOCK_SHM (1)
+#define TLS_MODE_FORK_PREPARE (1<<1)
 
 /*
  * just once, pre-initialize the tls subsystem

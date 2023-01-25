@@ -412,6 +412,15 @@ static int mod_init(void)
 	if(sr_tls_event_callback.s==NULL || sr_tls_event_callback.len<=0) {
 		tls_lookup_event_routes();
 	}
+#if OPENSSL_VERSION_NUMBER >= 0x010101000L
+	/*
+	 * register the need to be called post-fork of all children
+	 * with the special rank PROC_POSTCHILDINIT
+	 */
+	if(ksr_tls_init_mode&TLS_MODE_FORK_PREPARE) {
+		ksr_module_set_flag(KSRMOD_FLAG_POSTCHILDINIT);
+	}
+#endif
 	return 0;
 error:
 	tls_h_mod_destroy_f();
@@ -423,6 +432,7 @@ error:
 static int tls_engine_init();
 int tls_fix_engine_keys(tls_domains_cfg_t*, tls_domain_t*, tls_domain_t*);
 #endif
+
 static int mod_child(int rank)
 {
 	if (tls_disable || (tls_domains_cfg==0))
@@ -440,7 +450,29 @@ static int mod_child(int rank)
 									&mod_params, &mod_params) < 0)
 				return -1;
 		}
+#if OPENSSL_VERSION_NUMBER >= 0x010101000L
+		if(ksr_tls_init_mode&TLS_MODE_FORK_PREPARE) {
+			OPENSSL_fork_prepare();
+		}
+#endif
+		return 0;
 	}
+
+#if OPENSSL_VERSION_NUMBER >= 0x010101000L
+	if(ksr_tls_init_mode&TLS_MODE_FORK_PREPARE) {
+		if(rank==PROC_POSTCHILDINIT) {
+			/*
+			 * this is called after forking of all child processes
+			 */
+			OPENSSL_fork_parent();
+			return 0;
+		}
+		if (!_ksr_is_main) {
+			OPENSSL_fork_child();
+		}
+	}
+#endif
+
 #ifndef OPENSSL_NO_ENGINE
 	/*
 	 * after the child is fork()ed we go through the TLS domains
