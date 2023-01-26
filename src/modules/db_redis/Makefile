@@ -20,10 +20,10 @@ endif
 
 ifeq ($(HIREDIS_BUILDER),)
 	HIREDISDEFS=-I$(LOCALBASE)/include -I$(LOCALBASE)/include/hiredis -I/usr/include/hiredis
-	HIREDISLIBS=-L$(LOCALBASE)/lib -lhiredis
+	HIREDISLIBS=-L$(LOCALBASE)/lib -lhiredis_ssl -lhiredis
 else
 	HIREDISDEFS = $(shell $(HIREDIS_BUILDER) --cflags)
-	HIREDISLIBS = $(shell $(HIREDIS_BUILDER) --libs)
+	HIREDISLIBS = $(shell $(HIREDIS_BUILDER) --libs) -lhiredis_ssl
 
 ifeq (,$(findstring hiredis,$(HIREDISDEFS)))
 	DEFS+=-DWITH_HIREDIS_PATH
@@ -31,7 +31,7 @@ endif
 
 ifeq ($(HIREDISLIBS),-L -lhiredis)
 		HIREDISDEFS = $(shell $(HIREDIS_BUILDER) --cflags) /opt/local/include
-		HIREDISLIBS = -L/opt/local/lib -lhiredis
+		HIREDISLIBS = -L/opt/local/lib -lhiredis -lhiredis_ssl
 endif
 
 endif
@@ -41,7 +41,7 @@ LIBS=$(HIREDISLIBS)
 
 ifneq ($(HIREDIS_CLUSTER_BUILDER),)
 	HIREDISCLUSTERDEFS = $(shell $(HIREDIS_CLUSTER_BUILDER) --cflags)
-	HIREDISCLUSTERLIBS = $(shell $(HIREDIS_CLUSTER_BUILDER) --libs)
+	HIREDISCLUSTERLIBS = $(shell $(HIREDIS_CLUSTER_BUILDER) --libs) -lhiredis_ssl
 	DEFS+=-DWITH_HIREDIS_CLUSTER
 	DEFS+=$(HIREDISCLUSTERDEFS)
 	LIBS+=$(HIREDISCLUSTERLIBS)
