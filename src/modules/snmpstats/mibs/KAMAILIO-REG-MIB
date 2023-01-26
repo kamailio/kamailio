@@ -5,7 +5,7 @@
 -- Mike Varley
 --
 -- Copyright (c) The Internet Society (2006)
--- Ammendments (c) Soma Networks, Inc. (2006)            
+-- Amendments (c) Soma Networks, Inc. (2006)
 --
 -- Modeled after recommedations in 'Understanding SNMP MIBs'
 -- (Perkins, McGinnis) Prentice Hall 1997, chapter 8.
@@ -25,7 +25,7 @@ kamailioRegMibModule MODULE-IDENTITY
     LAST-UPDATED    "201301080430Z"
     ORGANIZATION    "Kamailio"
     CONTACT-INFO
-        "http://www.kamailio.org open source project."
+        "https://www.kamailio.org open source project."
     DESCRIPTION
         "Kamailio Global Registration MIB"
 
@@ -196,7 +196,7 @@ kamailioSIPServerMIB OBJECT-IDENTITY
 kamailioMIB OBJECT-IDENTITY
     STATUS current
     DESCRIPTION 
-    "The Kamailio MIB object and event definitons."
+    "The Kamailio MIB object and event definitions."
     ::= { kamailioCoreMIB 3 }
 
 --

@@ -581,7 +581,7 @@ static int set_if_valid_threshold(
 }
 
 /* 
- * Paramater Configuration Functions 
+ * Parameter Configuration Functions
  */
 
 /* Handles setting of the message queue minor alarm threshold */

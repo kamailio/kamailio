@@ -6,7 +6,7 @@
 -- This MIB provides information related to the Kamailio SIP Router.
 -- 
 -- Copyright (c) The Internet Society (2006)
--- Ammendments (c) Soma Networks, Inc. (2006)
+-- Amendments (c) Soma Networks, Inc. (2006)
 -- Kamailio extras (c) Edvina AB, 2013
 --
 -- All rights reserved.
@@ -53,10 +53,10 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         LAST-UPDATED "201301081200Z"
         ORGANIZATION "Kamailio"
         CONTACT-INFO 
-            "http://www.kamailio.org"
+            "https://www.kamailio.org"
         DESCRIPTION
             "Kamailio MIB module.
-             This module defines objects which are neceesary to monitor an
+             This module defines objects which are necessary to monitor an
              instance of Kamailio.
              
              The objects in this MIB are intended to be used in conjunction
@@ -66,7 +66,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
              Kamailio core itself."
         REVISION   "200605021200Z"
         DESCRIPTION
-            "clarified some of the statisitcs collected, added the alarm 
+            "clarified some of the statistics collected, added the alarm 
             states and notifications."
         REVISION   "200603231200Z"
         DESCRIPTION
@@ -1100,7 +1100,7 @@ KAMAILIO-MIB DEFINITIONS ::= BEGIN
         STATUS      current
         DESCRIPTION
             "The configured threshold indicating the kamailio system has reached
-             a maximum number of dialogs, and perhaps performace will suffer.
+             a maximum number of dialogs, and perhaps performance will suffer.
              -1 indicates the value is not configured, and alarms will never be 
              set, and the usage state will never be reported as 'busy'."
         ::= { kamailioDialogStats 6 }

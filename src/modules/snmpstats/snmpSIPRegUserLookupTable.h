@@ -56,7 +56,7 @@ extern "C" {
 #include "../../core/config.h"
 
 
-/* This structure represnts a row in the table */
+/* This structure represents a row in the table */
 typedef struct kamailioSIPRegUserLookupTable_context_s
 {
 	netsnmp_index index;

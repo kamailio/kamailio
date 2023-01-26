@@ -3,7 +3,7 @@
 -- This MIB provides information related to the Kamailio SIP Router.
 -- 
 -- Copyright (c) The Internet Society (2006)
--- Ammendments (c) Soma Networks, Inc. (2006)
+-- Amendments (c) Soma Networks, Inc. (2006)
 --
 -- All rights reserved.
 -- *****************************************************************
@@ -40,7 +40,7 @@ KAMAILIO-SIP-SERVER-MIB DEFINITIONS ::= BEGIN
            LAST-UPDATED   "201301081000Z"
            ORGANIZATION   "Kamailio"
            CONTACT-INFO
-                   "http://www.kamailio.org"
+                   "https://www.kamailio.org"
                    
            DESCRIPTION
                 "
@@ -529,7 +529,7 @@ KAMAILIO-SIP-SERVER-MIB DEFINITIONS ::= BEGIN
 --
 -- It is not the intention of this table to keep mappings very long, or update 
 -- them if the RegUserTable changes. Clients should always verify the URI they 
--- get from the RegUserTable is consitent with what they expect; this is SNMP
+-- get from the RegUserTable is consistent with what they expect; this is SNMP
 -- and there are no guarantees between requests.
 --
       kamailioSIPRegUserLookupCounter OBJECT-TYPE
