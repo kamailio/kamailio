@@ -29,7 +29,7 @@ changes to this document in a pull request.
 Kamailio is a community managed project, with developers world wide. Any
 contribution to code or documentation is very welcome and appreciated.
 
-In order to be easily able to track the changes and have a coherent ChangLog
+In order to be easily able to track the changes and have a coherent ChangeLog
 and commit history, there are several *rules* required for each contribution.
 
 ## Contributing Code Or Content ##
@@ -116,7 +116,7 @@ changes were done.
 At the end of the first line some CI flags can be added. Available at this
 moment:
 
-  * `[skip ci]` - skip continous integration builds for source code, recommended
+  * `[skip ci]` - skip continuous integration builds for source code, recommended
   to be added when updating documentation, example configs or other utilities.
   Example:
     * `msilo: docs - updated example for m_dump() function [skip ci]`
@@ -270,4 +270,4 @@ released under BSD must be done under BSD as well.
 
 For any question, do not hesitate to contact other developers via mailing list:
 
-  * **[sr-dev [at] lists.kamailio.org](http://lists.kamailio.org/cgi-bin/mailman/listinfo/sr-dev)**
+  * **[sr-dev [at] lists.kamailio.org](https://lists.kamailio.org/mailman3/postorius/lists/sr-dev.lists.kamailio.org/)**
