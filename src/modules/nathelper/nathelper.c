@@ -2405,7 +2405,7 @@ done:
 
 /*
  * Create received SIP uri that will be either
- * passed to registrar in an AVP or apended
+ * passed to registrar in an AVP or appended
  * to Contact header field as a parameter
  */
 static int create_rcv_uri(str *uri, struct sip_msg *m)
@@ -2416,7 +2416,7 @@ static int create_rcv_uri(str *uri, struct sip_msg *m)
 
 /*
  * Add received parameter to Contacts for further
- * forwarding of the REGISTER requuest
+ * forwarding of the REGISTER request
  */
 static int ki_add_rcv_param(sip_msg_t *msg, int upos)
 {
@@ -2485,7 +2485,7 @@ static int ki_add_rcv_param(sip_msg_t *msg, int upos)
 
 /*
  * Add received parameter to Contacts for further
- * forwarding of the REGISTER requuest
+ * forwarding of the REGISTER request
  */
 static int add_rcv_param_f(struct sip_msg *msg, char *str1, char *str2)
 {
