@@ -348,7 +348,7 @@ int main(int argc, char** argv)
 				c_len= min_len+(int)((float)(max_len-min_len+1)*
 											(rand()/(RAND_MAX+1.0)));
 			else 
-				/* test encode /decode random data w/ fixed lenght*/
+				/* test encode /decode random data w/ fixed length*/
 				c_len=max_len;
 			if (offset==-1)
 				/* offset between 0 & MIN(clen,3) */
