@@ -480,7 +480,7 @@ void kamailioSIPRegUserLookupTable_set_reserve2(netsnmp_request_group *rg)
 
 /*
  * This function is called only when all the *_reserve[1|2] functions were
- * succeful.  Its purpose is to make any changes to the row before it is
+ * successful.  Its purpose is to make any changes to the row before it is
  * inserted into the table.  
  *
  * In the case of this table, this involves looking up the index of the
@@ -618,7 +618,7 @@ void kamailioSIPRegUserLookupTable_set_commit(netsnmp_request_group *rg)
 
 
 /*
- * This function is called if the *_reserve[1|2] calls failed.  Its supposed to
+ * This function is called if the *_reserve[1|2] calls failed.  It is supposed to
  * free up any resources allocated earlier.  However, we already take care of
  * all these resources in earlier functions.  So for our purposes, the function
  * body is empty. 

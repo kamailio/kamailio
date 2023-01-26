@@ -5,7 +5,7 @@
 -- Mike Varley
 --
 -- Copyright (c) The Internet Society (2006)
--- Ammendments (c) Soma Networks, Inc. (2006)
+-- Amendments (c) Soma Networks, Inc. (2006)
 --
 -- *******************************************************************
 
@@ -26,7 +26,7 @@ kamailioTcModule MODULE-IDENTITY
 	LAST-UPDATED	"201304041200Z"
 	ORGANIZATION	"Kamailio"
 	CONTACT-INFO
-		"http://www.kamailio.org"
+		"https://www.kamailio.org"
 	DESCRIPTION
 		"Kamailio Global Textual Conventions."
 	::={ kamailioModules 2 }

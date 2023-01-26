@@ -52,7 +52,7 @@
  *
  * - The interprocess buffer was necessary, because NetSNMP's containers can be
  *   very inefficient at adding large amounts of data at a time, such as when
- *   Kamailio first starts up.  It was decided its better to make an SNMP manager
+ *   Kamailio first starts up.  It was decided it is better to make an SNMP manager
  *   wait for data, instead of slowing down the rest of Kamailio while the
  *   sub-agent processes the data. 
  *

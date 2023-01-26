@@ -39,7 +39,7 @@
  *
  * The aorToIndexStruct also contains a numContacts counter. Each time a new
  * contact is associated with the aor (user), the counter is incremented.  Each
- * time a contact is dissasociated (due to an expiration), the counter is
+ * time a contact is disassociated (due to an expiration), the counter is
  * decremented.  When the counter reaches zero the structure will be deleted.
  *
  *  contactToIndexStruct: maps a contact name to:

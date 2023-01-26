@@ -199,7 +199,7 @@ void deleteUser(hashSlot_t *theTable, char *aor, int hashTableSize)
 			}
 
 			if(currentRecord->next == NULL) {
-				/* Edge Case: The last element has been targetted for
+				/* Edge Case: The last element has been targeted for
 					 * deletion.  So move the pointer to the node just before
 					 * this one.  */
 				theTable[hashIndex].last = currentRecord->prev;
