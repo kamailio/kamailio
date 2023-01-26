@@ -66,7 +66,7 @@ typedef int (*db_use_table_f)(db1_con_t* _h, const str * _t);
 /**
  * \brief Initialize database connection and obtain the connection handle.
  *
- * This function initialize the database API and open a new database
+ * This function initializes the database API and opens a new database
  * connection. This function must be called after bind_dbmod but before any
  * other database API function is called.
  * 
@@ -90,7 +90,7 @@ typedef db1_con_t* (*db_init_f) (const str* _sqlurl);
 /**
  * \brief Initialize database connection and obtain the connection handle.
  *
- * This function initialize the database API and open a new database
+ * This function initializes the database API and opens a new database
  * connection. This function must be called after bind_dbmod but before any
  * other database API function is called.
  * 
@@ -129,7 +129,7 @@ typedef void (*db_close_f) (db1_con_t* _h);
  * If _k and _v parameters are NULL and _n is zero, you will get the whole table.
  *
  * if _c is NULL and _nc is zero, you will get all table columns in the result.
- * _r will point to a dynamically allocated structure, it is neccessary to call
+ * _r will point to a dynamically allocated structure, it is necessary to call
  * db_free_result function once you are finished with the result.
  *
  * If _op is 0, equal (=) will be used for all key-value pairs comparisons.
@@ -159,7 +159,7 @@ typedef int (*db_query_f) (const db1_con_t* _h, const db_key_t* _k, const db_op_
  * \brief Gets a partial result set, fetch rows from a result
  *
  * Gets a partial result set, fetch a number of rows from a database result.
- * This function initialize the given result structure on the first run, and
+ * This function initializes the given result structure on the first run, and
  * fetches the nrows number of rows. On subsequenting runs, it uses the
  * existing result and fetches more rows, until it reaches the end of the
  * result set. Because of this the result needs to be null in the first
@@ -212,7 +212,7 @@ typedef int (*db_raw_query_async_f) (const db1_con_t* _h, const str* _s);
  * \brief Free a result allocated by db_query.
  *
  * This function frees all memory allocated previously in db_query. Its
- * neccessary to call this function on a db1_res_t structure if you don't need the
+ * necessary to call this function on a db1_res_t structure if you don't need the
  * structure anymore. You must call this function before you call db_query again!
  * \param _h database connection handle
  * \param _r pointer to db1_res_t structure to destroy
@@ -419,7 +419,7 @@ typedef struct db_func {
 	db_insert_update_f insert_update; /* Insert into table, update on duplicate key */ 
 	db_insert_delayed_f insert_delayed;           /* Insert delayed into table */
 	db_insert_async_f insert_async;               /* Insert async into table */
-	db_affected_rows_f affected_rows; /* Numer of affected rows for last query */
+	db_affected_rows_f affected_rows; /* Number of affected rows for last query */
 	db_start_transaction_f start_transaction; /* Start a single transaction consisting of multiple queries */
 	db_end_transaction_f end_transaction; /* End a transaction */
 	db_abort_transaction_f abort_transaction; /* Abort a transaction */
@@ -482,7 +482,7 @@ db1_con_t* db_do_init2(const str* url, void* (*new_connection)(), db_pooling_t p
  * This helper method does some work for the closing of a database 
  * connection. No function should be called after this
  * \param _h database connection handle
- * \param (*free_connection) Pointer to the db specifc free_connection method
+ * \param (*free_connection) Pointer to the db specific free_connection method
  */
 void db_do_close(db1_con_t* _h, void (*free_connection)());
 

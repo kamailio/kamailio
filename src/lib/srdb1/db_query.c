@@ -450,7 +450,7 @@ static int db_fetch_query_internal(db_func_t *dbf, int frows,
 	} else {
 		if(_query(_h, _k, _op, _v, _c, _n, _nc, _o, _r) < 0)
 		{
-			LM_ERR("unable to do full db querry\n");
+			LM_ERR("unable to do full db query\n");
 			goto error;
 		}
 	}

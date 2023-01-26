@@ -30,7 +30,7 @@
  * Convert a str to a db value, copy strings if _cpy is not zero.
  * Copying is not necessary if the result from the database client library
  * is freed after the result inside the server is processed. If the result
- * is freed earlier, e.g. because its saved inside some temporary storage,
+ * is freed earlier, e.g. because it is saved inside some temporary storage,
  * then it must be copied in order to be use it reliable.
  *
  * \param _t destination value type
@@ -50,7 +50,7 @@ int db_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const int _l,
 		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
-	/* A NULL string is a SQL NULL value, otherwise its an empty value */
+	/* A NULL string is a SQL NULL value, otherwise it is an empty value */
 	if (!_s) {
 		LM_DBG("converting NULL value\n");
 		memset(_v, 0, sizeof(db_val_t));
