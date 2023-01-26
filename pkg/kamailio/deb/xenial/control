@@ -62,7 +62,7 @@ Build-Depends:
  xsltproc,
  zlib1g-dev,
 Standards-Version: 4.6.0.1
-Homepage: http://www.kamailio.org/
+Homepage: https://www.kamailio.org/
 Vcs-Git: https://github.com/kamailio/kamailio.git
 Vcs-Browser: https://github.com/kamailio/kamailio/
 Rules-Requires-Root: no

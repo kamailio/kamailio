@@ -36,7 +36,7 @@ EXTRA_EXCLUDED_MODULES += python
 ## --EXCLUDED--
 
 
-# Module groups that are packaged in seperate packages (with the name
+# Module groups that are packaged in separate packages (with the name
 # kamailio-$(group_name)-modules).
 # Note: the order is important (should be in dependency order, the one
 # on which other depend first)
