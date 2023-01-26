@@ -8,7 +8,7 @@ It builds RPM packages for following distributions:
 
   * CentOS 6 and 7
   * RHEL 6 and 7
-  * Fedora 25 adn 26
+  * Fedora 25 and 26
   * openSUSE 42.2 and 42.3
 
 Kamailio's RPMs bulding projects for various versions can be found at:
