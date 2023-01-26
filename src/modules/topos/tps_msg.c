@@ -43,6 +43,8 @@
 #include "../../core/parser/parse_via.h"
 #include "../../core/parser/contact/parse_contact.h"
 #include "../../core/parser/parse_refer_to.h"
+
+
 #include "tps_msg.h"
 #include "tps_storage.h"
 
@@ -882,7 +884,10 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 		LM_ERR("failed to extract and pack the headers\n");
 		return -1;
 	}
-
+	
+	tps_unmask_callid(msg);
+	LM_DBG("Request message after CALLID Unmask-> [%.*s] \n",msg->len,msg->buf);
+	
 	ret = tps_dlg_message_update(msg, &mtsd, _tps_contact_mode);
 	if(ret<0) {
 		LM_ERR("failed to update on dlg message\n");
@@ -1009,13 +1014,16 @@ int tps_response_received(sip_msg_t *msg)
 	memset(&mtsd, 0, sizeof(tps_data_t));
 	memset(&stsd, 0, sizeof(tps_data_t));
 	memset(&btsd, 0, sizeof(tps_data_t));
-
-	lkey = msg->callid->body;
-
+	
 	if(tps_pack_message(msg, &mtsd)<0) {
 		LM_ERR("failed to extract and pack the headers\n");
 		return -1;
 	}
+	tps_unmask_callid(msg);
+	LM_DBG("Response message after CALLID Unmask-> [%.*s] \n",msg->len,msg->buf);
+	
+	lkey = msg->callid->body;
+	
 	tps_storage_lock_get(&lkey);
 	if(tps_storage_load_branch(msg, &mtsd, &btsd, 0)<0) {
 		goto error;
@@ -1081,7 +1089,12 @@ int tps_request_sent(sip_msg_t *msg, int dialog, int local)
 
 	if(dialog!=0) {
 		if(tps_get_xuuid(msg, &xuuid)<0) {
-			LM_DBG("no x-uuid header - nothing to do\n");
+			LM_DBG("no x-uuid header -Local message only Call-ID Mask if downstream \n");
+			/* ACK and CANCEL go downstream so Call-ID mask required*/
+			if(get_cseq(msg)->method_id==METHOD_ACK
+					|| get_cseq(msg)->method_id==METHOD_CANCEL) {
+				tps_mask_callid(msg);
+			}
 			return 0;
 		}
 		mtsd.a_uuid = xuuid;
@@ -1149,6 +1162,13 @@ int tps_request_sent(sip_msg_t *msg, int dialog, int local)
 
 done:
 	tps_storage_lock_release(&lkey);
+	/*DownStream Request sent MASK CALLID */
+	if(direction == TPS_DIR_DOWNSTREAM) {
+	    /*  mask CallID */
+	    tps_mask_callid(msg);
+	    LM_DBG("SENT message after CALLID CHG->[%.*s] \n",msg->len,msg->buf);
+	}
+	
 	return 0;
 
 error:
@@ -1244,6 +1264,13 @@ int tps_response_sent(sip_msg_t *msg)
 	}
 	if(tps_storage_update_dialog(msg, &mtsd, &stsd, TPS_DBU_CONTACT)<0) {
 		goto error1;
+	}
+	
+	/*DownStream Response sent MASK CALLID */
+	if(direction == TPS_DIR_UPSTREAM) {
+	    /*  mask CallID */
+	    tps_mask_callid(msg);
+	    LM_DBG("SENT Response message after CALLID CHG->[%.*s] \n",msg->len,msg->buf);
 	}
 	return 0;
 
