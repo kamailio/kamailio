@@ -1,7 +1,7 @@
 /*
  *
  *  simple atomic ops testing program
- *  (no paralel stuff, just see if the opcodes are "legal")
+ *  (no parallel stuff, just see if the opcodes are "legal")
  * 
  *  Compile with: gcc -Wall -O3 -D__CPU_i386  on x86 machines
  *                gcc -Wall -O3 -D__CPU_x86_64 on amd64 machines

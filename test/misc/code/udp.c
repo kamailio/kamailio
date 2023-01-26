@@ -49,7 +49,7 @@
 
 /*
 shot written by ashhar farhan, is not bound by any licensing at all.
-you are free to use this code as you deem fit. just dont blame the author
+you are free to use this code as you deem fit. Just don't blame the author
 for any problems you may have using it.
 bouquets and brickbats to farhan@hotfoon.com
 */
@@ -133,7 +133,7 @@ void shoot()
 	addr.sin_port = htons((short)888);
 	addr.sin_family = AF_INET;
 
-	/* if we dont connect, even on Linux, nothing will happen */
+	/* if we don't connect, even on Linux, nothing will happen */
 
 #ifdef CONNECTED	
 	/* we connect as per the RFC 2543 recommendations
@@ -158,7 +158,7 @@ void shoot()
 		/* lets fire the request to the server and store when we did */
 
 		/* if we send too fast, ICMP will arrive back when we are already
-		   done and we wont be able to recognize an error
+		   done and we won't be able to recognize an error
 		*/
 #ifdef CONNECTED
 		ret = send(sock, buff, strlen(buff), 0);
