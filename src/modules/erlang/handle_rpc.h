@@ -68,7 +68,7 @@ int erl_rpc_send(erl_rpc_ctx_t* ctx, int depth);					/* Send the reply to the Er
 void erl_rpc_fault(erl_rpc_ctx_t* ctx, int code, char* fmt, ...);	/* Signal a failure to the client */
 int erl_rpc_add(erl_rpc_ctx_t* ctx, char* fmt, ...);				/* Add a new piece of data to the result */
 int erl_rpc_scan(erl_rpc_ctx_t* ctx, char* fmt, ...);				/* Retrieve request parameters */
-int erl_rpc_printf(erl_rpc_ctx_t* ctx, char* fmt, ...);				/* Add printf-like formated data to the result set */
+int erl_rpc_printf(erl_rpc_ctx_t* ctx, char* fmt, ...);				/* Add printf-like formatted data to the result set */
 int erl_rpc_struct_add(erl_rpc_ctx_t* ctx, char* fmt, ...);			/* Add a new structure into structure */
 int erl_rpc_array_add(erl_rpc_ctx_t* ctx, char* fmt, ...);			/* Add a new structure into array */
 int erl_rpc_struct_scan(erl_rpc_ctx_t* ctx, char* fmt, ...);		/* Scan attributes of a structure */

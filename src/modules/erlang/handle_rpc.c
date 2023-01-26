@@ -572,7 +572,7 @@ error:
 #define RPC_BUF_SIZE 1024
 
 /*
- * adds formated string into RPC response buffer as Erlang string/list
+ * adds formatted string into RPC response buffer as Erlang string/list
  */
 int erl_rpc_printf(erl_rpc_ctx_t* ctx, char* fmt, ...)
 {

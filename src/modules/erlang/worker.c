@@ -260,7 +260,7 @@ err:
 	pkg_free(function.s);
 	free(args.buff);
 	ei_x_free(&reply);
-	abort(); /* cant't recover */
+	abort(); /* can't recover */
 	return -1;
 }
 
