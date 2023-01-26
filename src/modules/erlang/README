@@ -205,7 +205,7 @@ modparam("erlang", "no_cnodes", 2)
 
    alivename is the registered name of the Kamailio process.
 
-   Note, if the no_cnodes greater then 1, then alivename of Kamailio
+   Note, if the no_cnodes is greater than 1, then alivename of Kamailio
    process will be suffixed with number.
 
    Example 1.2. Set cnode_alivename parameter
@@ -684,7 +684,7 @@ Chapter 2. Using Kamailio from Erlang
 1. RPC calls from Erlang
 
    This module implements the erlang transport and encoding interface for
-   Kamailio RPCs. It's allow to call any exported RPC in Kamailio from
+   Kamailio RPCs. It's allowed to call any exported RPC in Kamailio from
    erlang node.
 
    The string in RPC response is binary encoded to allow from erlang side
