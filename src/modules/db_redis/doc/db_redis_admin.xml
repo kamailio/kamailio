@@ -218,6 +218,43 @@ modparam("db_redis", "verbosity", 0)
 			</example>
 		</section>
 
+		<section id="db_redis.p.opt_ssl">
+			<title><varname>opt_ssl</varname> (int)</title>
+			<para>
+				Controls SSL usage while connecting to a remote DB.
+				If set to 1, TLS is used to connect to the DB.
+			</para>
+			<para>
+				Default value: 0.
+			</para>
+			<example>
+				<title>Enabling SSL connection</title>
+				<programlisting format="linespecific">
+...
+modparam("db_redis", "opt_ssl", 1)
+...
+				</programlisting>
+			</example>
+		</section>
+
+		<section id="db_redis.p.db_pass">
+			<title><varname>db_pass</varname> (string)</title>
+			<para>
+				Sets the password to connect to the DB.
+			</para>
+			<para>
+				Default value: "" (empty).
+			</para>
+			<example>
+				<title>Setting a password</title>
+				<programlisting format="linespecific">
+...
+modparam("db_redis", "db_pass", "r3d1sPass")
+...
+				</programlisting>
+			</example>
+		</section>
+
 	</section>
 
 	<section id="db_redis.sec.usage">
@@ -230,6 +267,10 @@ modparam("db_redis", "verbosity", 0)
 		<para>
 			For cluster support you need to set the "db_url" modparam with a comma separated list of cluster hosts:
 			'redis://host1:port1,host2:port2/'. The database portion is not supported in cluster mode.
+		</para>
+		<para>
+			If accessed DB requires SSL connections, you need to enable SSL support setting the "opt_ssl" parameter to 1.
+            In case the DB requires a password, that should be set using the "db_pass" parameter.
 		</para>
 		<example>
 			<title>Usage</title>
