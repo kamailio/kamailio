@@ -35,6 +35,9 @@ sed -i -e '/^ python,/d' -e '/python-dev/d' \
 sed -i -e 's/ python [ ,$]*//' ${DIST}/rules
 sed -i -e '/^EXCLUDED_MODULES=/s/$/ python/' ${DIST}/rules
 
+# no lsb-base
+sed -i -e '/lsb-base/d' ${DIST}/control
+
 wrap-and-sort -sat -d ${DIST}
 
 # clean backports scripts
