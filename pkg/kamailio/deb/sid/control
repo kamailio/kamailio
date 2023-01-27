@@ -30,7 +30,7 @@ Build-Depends:
  libmongoc-dev,
  libmono-2.0-dev,
  libmosquitto-dev,
- libncurses5-dev,
+ libncurses-dev,
  libpcre3-dev,
  libperl-dev,
  libphonenumber-dev (>= 7),
