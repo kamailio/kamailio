@@ -118,6 +118,7 @@ int db_redis_connect(km_redis_con_t *con) {
 #ifndef WITH_HIREDIS_CLUSTER
     int db;
 #endif
+    redisSSLContext *ssl = NULL;
     char* password = NULL;
 
     tv.tv_sec = 1;
@@ -140,7 +141,6 @@ int db_redis_connect(km_redis_con_t *con) {
     char hosts[MAX_URL_LENGTH];
     char* host_begin;
     char* host_end;
-    redisSSLContext *ssl = NULL;
     LM_DBG("connecting to redis cluster at %.*s\n", con->id->url.len, con->id->url.s);
     host_begin = strstr(con->id->url.s, "redis://");
     if (host_begin) {
@@ -149,12 +149,12 @@ int db_redis_connect(km_redis_con_t *con) {
     
     if (db_redis_opt_ssl != 0) {
         /* Create SSL context*/
-	redisInitOpenSSL();
-	ssl = redisCreateSSLContext(NULL, NULL, NULL, NULL, NULL, NULL);
-	if (ssl == NULL) {
-	    LM_ERR("Unable to create Redis SSL Context.\n");
-        goto err;
-    }
+        redisInitOpenSSL();
+        ssl = redisCreateSSLContext(NULL, NULL, NULL, NULL, NULL, NULL);
+        if (ssl == NULL) {
+            LM_ERR("Unable to create Redis SSL Context.\n");
+            goto err;
+        }
     } 
 
     host_end = strstr(host_begin, "/");
@@ -184,17 +184,16 @@ int db_redis_connect(km_redis_con_t *con) {
         goto err;
     }
 #else
-    redisSSLContext *ssl = NULL;
     LM_DBG("connecting to redis at %s:%d\n", con->id->host, con->id->port);
 
     if (db_redis_opt_ssl != 0) {
         /* Create SSL context*/
-	redisInitOpenSSL();
-	ssl = redisCreateSSLContext(NULL, NULL, NULL, NULL, NULL, NULL);
-	if (ssl == NULL) {
-	    LM_ERR("Unable to create Redis SSL Context.\n");
-	    goto err;
-	}
+        redisInitOpenSSL();
+        ssl = redisCreateSSLContext(NULL, NULL, NULL, NULL, NULL, NULL);
+        if (ssl == NULL) {
+            LM_ERR("Unable to create Redis SSL Context.\n");
+            goto err;
+        }
     } 
 
     con->con = redisConnectWithTimeout(con->id->host, con->id->port, tv);
@@ -217,7 +216,6 @@ int db_redis_connect(km_redis_con_t *con) {
         password = db_pass;
     }
     if (password) {
-        LM_DBG("Using password %s\n", password);
         reply = redisCommand(con->con, "AUTH %s", password);
         if (!reply) {
             LM_ERR("cannot authenticate connection %.*s: %s\n",
