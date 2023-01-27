@@ -38,6 +38,9 @@ sed -i -e '/^EXCLUDED_MODULES=/s/$/ python/' ${DIST}/rules
 # no lsb-base
 sed -i -e '/lsb-base/d' ${DIST}/control
 
+# libncurses
+sed -i -e 's/libncurses5-dev/libncurses-dev/g' ${DIST}/control
+
 wrap-and-sort -sat -d ${DIST}
 
 # clean backports scripts

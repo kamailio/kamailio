@@ -30,7 +30,7 @@ Build-Depends:
  libmono-2.0-dev [amd64 armel armhf i386 mipsel kfreebsd-amd64 kfreebsd-i386 ppc64 ppc64el s390x],
  libmosquitto-dev,
  libnats-dev,
- libncurses5-dev,
+ libncurses-dev,
  libpcre3-dev,
  libperl-dev,
  libphonenumber-dev (>= 7),
