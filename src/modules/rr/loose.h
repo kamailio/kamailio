@@ -66,7 +66,7 @@ int loose_route(struct sip_msg* _m);
  *
  * The function checks for the request "msg" if the URI parameters
  * of the local Route header (corresponding to the local server)
- * matches the given regular expression "re". It must be call
+ * matches the given regular expression "re". It must be called
  * after the loose_route was done.
  *
  * \param msg SIP message request that will has the Route header parameters checked
@@ -82,7 +82,7 @@ int check_route_param(struct sip_msg *msg, regex_t* re);
  * The function checks the flow direction of the request "msg". As
  * for checking it's used the "ftag" Route header parameter, the
  * append_fromtag module parameter must be enables.
- * Also this must be call only after the loose_route is done.
+ * Also this must be called only after the loose_route is done.
 
  * \param msg SIP message request that will have the direction checked
  * \param dir direction to be checked against. It may be RR_FLOW_UPSTREAM or RR_FLOW_DOWNSTREAM
@@ -96,7 +96,7 @@ int is_direction(struct sip_msg *msg, int dir);
  *
  * The function search in to the "msg"'s Route header parameters
  * the parameter called "name" and returns its value into "val".
- * It must be call only after the loose_route is done.
+ * It must be called only after the loose_route is done.
  *
  * \param msg - request that will have the Route header parameter searched
  * \param name - contains the Route header parameter to be serached

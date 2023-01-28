@@ -595,7 +595,7 @@ static inline int after_strict(struct sip_msg* _m)
 	}
 
 	if ( enable_double_rr && is_2rr(&puri.params) && is_myself(&puri)) {
-		/* double route may occure due different IP and port, so force as
+		/* double route may occur due different IP and port, so force as
 		 * send interface the one advertise in second Route */
 		si = grep_sock_info( &puri.host, puri.port_no, puri.proto);
 		if (si) {
@@ -891,7 +891,7 @@ static inline int after_loose(struct sip_msg* _m, int preloaded)
 		} else rt = rt->next;
 
 		if (enable_double_rr && is_2rr(&puri.params)) {
-			/* double route may occure due different IP and port, so force as
+			/* double route may occur due different IP and port, so force as
 			 * send interface the one advertise in second Route */
 			if (parse_uri(rt->nameaddr.uri.s,rt->nameaddr.uri.len,&puri)<0) {
 				LM_ERR("failed to parse the double route URI (%.*s)\n",
@@ -1118,7 +1118,7 @@ int redo_route_params(sip_msg_t *msg)
  *
  * The function checks for the request "msg" if the URI parameters
  * of the local Route header (corresponding to the local server)
- * matches the given regular expression "re". It must be call
+ * matches the given regular expression "re". It must be called
  * after the loose_route was done.
  *
  * \param msg SIP message request that will has the Route header parameters checked
@@ -1170,7 +1170,7 @@ int check_route_param(sip_msg_t * msg, regex_t* re)
  *
  * The function search in to the "msg"'s Route header parameters
  * the parameter called "name" and returns its value into "val".
- * It must be call only after the loose_route is done.
+ * It must be called only after the loose_route is done.
  *
  * \param msg - request that will have the Route header parameter searched
  * \param name - contains the Route header parameter to be serached
@@ -1265,7 +1265,7 @@ found:
  * The function checks the flow direction of the request "msg". As
  * for checking it's used the "ftag" Route header parameter, the
  * append_fromtag module parameter must be enables.
- * Also this must be call only after the loose_route is done.
+ * Also this must be called only after the loose_route is done.
 
  * \param msg SIP message request that will have the direction checked
  * \param dir direction to be checked against. It may be RR_FLOW_UPSTREAM or RR_FLOW_DOWNSTREAM
