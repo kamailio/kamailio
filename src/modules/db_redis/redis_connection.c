@@ -35,7 +35,7 @@ static unsigned int MAX_URL_LENGTH = 1023;
 #endif
 
 extern int db_redis_verbosity;
-extern int db_redis_opt_ssl;
+extern int db_redis_opt_tls;
 extern char *db_pass;
 
 static void print_query(redis_key_t *query) {
@@ -147,7 +147,7 @@ int db_redis_connect(km_redis_con_t *con) {
         host_begin += 8;
     } 
     
-    if (db_redis_opt_ssl != 0) {
+    if (db_redis_opt_tls != 0) {
         /* Create SSL context*/
         redisInitOpenSSL();
         ssl = redisCreateSSLContext(NULL, NULL, NULL, NULL, NULL, NULL);
@@ -186,7 +186,7 @@ int db_redis_connect(km_redis_con_t *con) {
 #else
     LM_DBG("connecting to redis at %s:%d\n", con->id->host, con->id->port);
 
-    if (db_redis_opt_ssl != 0) {
+    if (db_redis_opt_tls != 0) {
         /* Create SSL context*/
         redisInitOpenSSL();
         ssl = redisCreateSSLContext(NULL, NULL, NULL, NULL, NULL, NULL);
