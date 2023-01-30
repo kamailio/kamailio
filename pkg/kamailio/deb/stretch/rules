@@ -114,7 +114,7 @@ BUILD_MODULES   := $(addprefix build_,   $(PACKAGE_GROUPS) $(EXTRA_GROUPS))
 INSTALL_MODULES := $(addprefix install_, $(PACKAGE_GROUPS))
 INSTALL_EXTRA   := $(addprefix install_, $(EXTRA_GROUPS))
 
-.PHONY: test_build_all $(BUILD_MODULES) test_install_all $(INSTALL_MODULES) $(INSTALL_EXTRA)
+.PHONY: test_build_all $(BUILD_MODULES) $(INSTALL_MODULES) $(INSTALL_EXTRA)
 test_build_all: configure
 	dh_testdir
 	$(MAKE) all quiet=verbose
@@ -122,14 +122,15 @@ test_build_all: configure
 $(BUILD_MODULES): test_build_all
 	$(MAKE) every-module group_include="k$(subst build_,,$@)" quiet=verbose
 
-test_install_all: build
+test_install_all-stamp: build
 	dh_testdir
 	dh_testroot
 	dh_prep
 	dh_installdirs
 	$(MAKE) install quiet=verbose LIBDIR=$(LIBDIR) group_include="kstandard"
+	touch test_install_all-stamp
 
-$(INSTALL_MODULES): build test_install_all
+$(INSTALL_MODULES): test_install_all-stamp
 	$(MAKE) install-modules-all \
 	  quiet=verbose \
 	  LIBDIR=$(LIBDIR) \
@@ -148,7 +149,7 @@ $(INSTALL_MODULES): build test_install_all
 	# clean empty dirs
 	find $(D)-$(subst install_,,$@)-modules -depth -empty -type d -exec rmdir {} \;
 
-$(INSTALL_EXTRA): build
+$(INSTALL_EXTRA): test_install_all-stamp
 	$(MAKE) install-modules-all \
 	  quiet=verbose \
 	  LIBDIR=$(LIBDIR) \
@@ -192,7 +193,7 @@ build-stamp: configure-stamp $(BUILD_MODULES)
 clean:
 	dh_testdir
 	dh_testroot
-	rm -f build-stamp configure-stamp
+	rm -f build-stamp configure-stamp test_install_all-stamp
 	# Add here commands to clean up after the build process.
 	$(MAKE) maintainer-clean
 	dh_clean
