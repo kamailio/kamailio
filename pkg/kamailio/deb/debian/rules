@@ -115,7 +115,7 @@ INSTALL_MODULES := $(addprefix install_, $(PACKAGE_GROUPS))
 INSTALL_EXTRA   := $(addprefix install_, $(EXTRA_GROUPS))
 
 .PHONY: test_build_all $(BUILD_MODULES) test_install_all $(INSTALL_MODULES) $(INSTALL_EXTRA)
-test_build_all:
+test_build_all: configure
 	dh_testdir
 	$(MAKE) all quiet=verbose
 
@@ -149,10 +149,13 @@ $(INSTALL_MODULES): build test_install_all
 	find $(D)-$(subst install_,,$@)-modules -depth -empty -type d -exec rmdir {} \;
 
 $(INSTALL_EXTRA): build
-	$(MAKE) install-modules-all LIBDIR=$(LIBDIR) group_include="k$(subst install_,,$@)" \
+	$(MAKE) install-modules-all \
+	  quiet=verbose \
+	  LIBDIR=$(LIBDIR) \
 	  BASEDIR=$(D)-extra-modules \
 	  cfg_prefix=$(D)-extra-modules \
-	  doc-dir=share/doc/$(DEB_SOURCE)-extra-modules
+	  doc-dir=share/doc/$(DEB_SOURCE)-extra-modules \
+	  group_include="k$(subst install_,,$@)"
 	# Eliminate duplicate extra libs.
 	for d in $(DUP_LIBS_DIRS); do \
 	  test "$$d" != "$(D)-extra-modules/usr/$(LIBDIR)/kamailio" && \
