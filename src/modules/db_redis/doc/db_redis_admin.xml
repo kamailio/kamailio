@@ -218,20 +218,20 @@ modparam("db_redis", "verbosity", 0)
 			</example>
 		</section>
 
-		<section id="db_redis.p.opt_ssl">
-			<title><varname>opt_ssl</varname> (int)</title>
+		<section id="db_redis.p.opt_tls">
+			<title><varname>opt_tls</varname> (int)</title>
 			<para>
-				Controls SSL usage while connecting to a remote DB.
+				Controls TLS usage while connecting to a remote DB.
 				If set to 1, TLS is used to connect to the DB.
 			</para>
 			<para>
 				Default value: 0.
 			</para>
 			<example>
-				<title>Enabling SSL connection</title>
+				<title>Enabling TLS connection</title>
 				<programlisting format="linespecific">
 ...
-modparam("db_redis", "opt_ssl", 1)
+modparam("db_redis", "opt_tls", 1)
 ...
 				</programlisting>
 			</example>
@@ -269,7 +269,7 @@ modparam("db_redis", "db_pass", "r3d1sPass")
 			'redis://host1:port1,host2:port2/'. The database portion is not supported in cluster mode.
 		</para>
 		<para>
-			If accessed DB requires SSL connections, you need to enable SSL support setting the "opt_ssl" parameter to 1.
+			If accessed DB requires TLS connections, you need to enable TLS support setting the "opt_tls" parameter to 1.
             In case the DB requires a password, that should be set using the "db_pass" parameter.
 		</para>
 		<example>
