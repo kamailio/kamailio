@@ -471,13 +471,10 @@ install-$(1)-doc: modules.lst $(doc_prefix)/$(doc_dir)$(1)
 		if [ -n "$$$$r" -a -r $(1)/"$$$$r/Makefile" ]; then \
 			if [ -f $(1)/"$$$$r"/README ]; then \
 				$$(call try_err,\
-					$(INSTALL_TOUCH) $(doc_prefix)/$(doc_dir)$(1)/README ); \
+					$(INSTALL_TOUCH) $(doc_prefix)/$(doc_dir)$(1)/README."$$$$r" ); \
 				$$(call try_err,\
 					$(INSTALL_DOC)  $(1)/"$$$$r"/README  \
-									$(doc_prefix)/$(doc_dir)$(1)/README ); \
-				$$(call try_err,\
-					mv -f $(doc_prefix)/$(doc_dir)$(1)/README \
-							$(doc_prefix)/$(doc_dir)$(1)/README."$$$$r" ); \
+									$(doc_prefix)/$(doc_dir)$(1)/README."$$$$r" ); \
 			fi ; \
 		fi ; \
 	done; true
