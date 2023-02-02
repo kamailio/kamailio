@@ -327,7 +327,7 @@ static int usrloc_dmq_execute_action(srjson_t *jdoc_action, dmq_node_t* node) {
 	struct socket_info* sock=0;
 	unsigned int action, expires, cseq, flags, cflags, q, last_modified,
 				 methods, reg_id, server_id, port, proto;
-	str aor=STR_NULL, ruid=STR_NULL, received=STR_NULL, instance=STR_NULL;
+	str aor=STR_NULL, ruid=STR_NULL, received=STR_NULL, instance=STR_NULL, sockname=STR_NULL;
 	static str host=STR_NULL, c=STR_NULL, callid=STR_NULL, path=STR_NULL, user_agent=STR_NULL;
 
 	action = expires = cseq = flags = cflags = q = last_modified
@@ -350,7 +350,7 @@ static int usrloc_dmq_execute_action(srjson_t *jdoc_action, dmq_node_t* node) {
 		} else if (strcmp(it->string, "received")==0) {
 			received.s = it->valuestring;
 			received.len = strlen(received.s);
-		} else if (_dmq_usrloc_replicate_socket_info==1 && strcmp(it->string, "sock")==0) {
+		} else if (_dmq_usrloc_replicate_socket_info==DMQ_USRLOC_REPLICATE_SOCKET && strcmp(it->string, "sock")==0) {
 			if (parse_phostport( it->valuestring, &host.s, &host.len,
 					(int*)&port, (int*)&proto)!=0) {
 				LM_ERR("bad socket <%s>\n", it->valuestring);
@@ -363,6 +363,13 @@ static int usrloc_dmq_execute_action(srjson_t *jdoc_action, dmq_node_t* node) {
 				sock = grep_sock_info( &host, (unsigned short)port, proto);
 				sock->sock_str.s = it->valuestring;
 				sock->sock_str.len = strlen(sock->sock_str.s);
+			}
+		} else if (_dmq_usrloc_replicate_socket_info==DMQ_USRLOC_REPLICATE_SOCKNAME && strcmp(it->string, "sockname")==0) {
+			sockname.s = it->valuestring;
+			sockname.len = strlen(sockname.s);
+			sock = ksr_get_socket_by_name(&sockname);
+			if (sock==0) {
+				LM_DBG("socket with name <%s> not known ... ignoring\n", it->valuestring);
 			}
 		} else if (strcmp(it->string, "path")==0) {
 			path.s = it->valuestring;
@@ -402,7 +409,7 @@ static int usrloc_dmq_execute_action(srjson_t *jdoc_action, dmq_node_t* node) {
 	ci.ruid = ruid;
 	ci.c = &c;
 	ci.received = received;
-	if (_dmq_usrloc_replicate_socket_info==1)
+	if (_dmq_usrloc_replicate_socket_info & (DMQ_USRLOC_REPLICATE_SOCKET|DMQ_USRLOC_REPLICATE_SOCKNAME))
 		ci.sock = sock;
 	ci.path = &path;
 	ci.expires = expires;
@@ -681,9 +688,13 @@ int usrloc_dmq_send_multi_contact(ucontact_t* ptr, str aor, int action, dmq_node
 	jdoc_contact_group.size += ptr->c.len;
 	srjson_AddStrToObject(jdoc, jdoc_contact, "received", ptr->received.s, ptr->received.len);
 	jdoc_contact_group.size += ptr->received.len;
-	if (_dmq_usrloc_replicate_socket_info==1 && ptr->sock!=NULL && ptr->sock->sock_str.s!=NULL) {
+	if (_dmq_usrloc_replicate_socket_info==DMQ_USRLOC_REPLICATE_SOCKET && ptr->sock!=NULL && ptr->sock->sock_str.s!=NULL) {
 		srjson_AddStrToObject(jdoc, jdoc_contact, "sock", ptr->sock->sock_str.s, ptr->sock->sock_str.len);
 		jdoc_contact_group.size += ptr->sock->sock_str.len;
+	}
+	else if (_dmq_usrloc_replicate_socket_info==DMQ_USRLOC_REPLICATE_SOCKNAME) {
+		srjson_AddStrToObject(jdoc, jdoc_contact, "sockname", ptr->sock->sockname.s, ptr->sock->sockname.len);
+		jdoc_contact_group.size += ptr->sock->sockname.len;
 	}
 	srjson_AddStrToObject(jdoc, jdoc_contact, "path", ptr->path.s, ptr->path.len);
 	jdoc_contact_group.size += ptr->path.len;
@@ -745,8 +756,11 @@ int usrloc_dmq_send_contact(ucontact_t* ptr, str aor, int action, dmq_node_t* no
 	srjson_AddStrToObject(&jdoc, jdoc.root, "ruid", ptr->ruid.s, ptr->ruid.len);
 	srjson_AddStrToObject(&jdoc, jdoc.root, "c", ptr->c.s, ptr->c.len);
 	srjson_AddStrToObject(&jdoc, jdoc.root, "received", ptr->received.s, ptr->received.len);
-	if (_dmq_usrloc_replicate_socket_info==1 && ptr->sock!=NULL) {
+	if (_dmq_usrloc_replicate_socket_info==DMQ_USRLOC_REPLICATE_SOCKET && ptr->sock!=NULL) {
 		srjson_AddStrToObject(&jdoc, jdoc.root, "sock", ptr->sock->sock_str.s, ptr->sock->sock_str.len);
+	}
+	else if (_dmq_usrloc_replicate_socket_info==DMQ_USRLOC_REPLICATE_SOCKNAME && ptr->sock!=NULL && ptr->sock->sockname.s!=NULL) {
+		srjson_AddStrToObject(&jdoc, jdoc.root, "sockname", ptr->sock->sockname.s, ptr->sock->sockname.len);
 	}
 	srjson_AddStrToObject(&jdoc, jdoc.root, "path", ptr->path.s, ptr->path.len);
 	srjson_AddStrToObject(&jdoc, jdoc.root, "callid", ptr->callid.s, ptr->callid.len);

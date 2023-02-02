@@ -263,7 +263,12 @@ modparam("dmq_usrloc", "usrloc_domain", "my_domain")
 			</listitem>
 			<listitem>
 			<para>
-				1 - enabled
+				1 - enabled, replicate socket by proto:host:port
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				2 - enabled, replicate socket by socket name
 			</para>
 			</listitem>
 			</itemizedlist>
@@ -277,7 +282,7 @@ modparam("dmq_usrloc", "usrloc_domain", "my_domain")
 		<title>Set <varname>replicate_socket_info</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("dmq_usrloc", "replicate_socket_info", 0)
+modparam("dmq_usrloc", "replicate_socket_info", 1)
 ...
 </programlisting>
 	</example>
