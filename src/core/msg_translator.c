@@ -53,7 +53,7 @@
  *    lookup is performed on the host part and the reply is sent to the
  *    resulting ip. If a port is present or the host part is an ip address
  *    the dns lookup will be a "normal" one (A or AAAA).
- *  - if rport is present, it's value will be used as the destination port
+ *  - if rport is present, its value will be used as the destination port
  *   (and this will also disable srv lookups)
  *  - if no port is present the destination port will be taken from the srv
  *    lookup. If the srv lookup fails or is not performed (e.g. ip address
@@ -1459,7 +1459,7 @@ skip_nop_before:
                     /* skip len bytes from orig msg */
                     s_offset+=t->len;
                 } else if (t->op==LUMP_DEL && flag == FLAG_MSG_LUMPS_ONLY) {
-                    /* copy lump value and indent as necessarely */
+                    /* copy lump value and indent as necessarily */
                     memcpy(new_buf+offset, orig + t->u.offset, t->len);
                     offset+=t->len;
                     if (new_buf[offset-1] != '\n') {
@@ -1592,7 +1592,7 @@ static inline int adjust_clen(struct sip_msg* msg, int body_delta, int proto)
 		/* The body has been changed, try to find
 		 * existing Content-Length
 		 */
-		/* no need for Content-Length if it's and UDP packet and
+		/* no need for Content-Length if it's an UDP packet and
 		 * it hasn't Content-Length already */
 		if (msg->content_length==0){
 		    /* content-length doesn't exist, append it */
@@ -1938,7 +1938,7 @@ clean:
 /** builds a request in memory from another sip request.
   *
   * Side-effects: - it adds lumps to the msg which are _not_ cleaned.
-  * The added lumps are HDR_VIA_T (almost always added), HDR_CONTENLENGTH_T
+  * The added lumps are HDR_VIA_T (almost always added), HDR_CONTENTLENGTH_T
   * and HDR_ROUTE_T (when a Route: header is added as a result of a non-null
   * msg->path_vec).
   *               - it might change send_info->proto and send_info->send_socket
@@ -2109,7 +2109,7 @@ after_local_via:
 		}
 		received_buf = NULL;
 	}
-	/* if rport needs to be updated, delete it if present and add it's value */
+	/* if rport needs to be updated, delete it if present and add its value */
 	if (rport_buf){
 		if (msg->via1->rport){ /* rport already present */
 			via_insert_param=del_lump(msg,
@@ -3075,7 +3075,7 @@ char* create_via_hf(unsigned int *len,
 
 /* builds a char* buffer from message headers without body
  * first line is excluded in case of skip_first_line=1
- * error is set -1 if the memory allocation failes
+ * error is set -1 if the memory allocation fails
  */
 char * build_only_headers( struct sip_msg* msg, int skip_first_line,
 				unsigned int *returned_len,
@@ -3127,7 +3127,7 @@ char * build_only_headers( struct sip_msg* msg, int skip_first_line,
 }
 
 /* builds a char* buffer from message body
- * error is set -1 if the memory allocation failes
+ * error is set -1 if the memory allocation fails
  */
 char * build_body( struct sip_msg* msg,
 			unsigned int *returned_len,
@@ -3253,7 +3253,7 @@ int build_sip_msg_from_buf(struct sip_msg *msg, char *buf, int len,
 	msg->buf = buf;
 	msg->len = len;
 	if (parse_msg(buf, len, msg)!=0) {
-		LM_ERR("parsing failed");
+		LM_ERR("parsing failed\n");
 		return -1;
 	}
 	msg->set_global_address=default_global_address;
