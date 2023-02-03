@@ -254,7 +254,7 @@ static int cfg_var_size(cfg_mapping_t *var)
 	}
 }
 
-/* Update the varibales of the array within the meta structure
+/* Update the variables of the array within the meta structure
  * with the new default value.
  * The array is cloned before a change if clone is set to 1.
  */
@@ -364,7 +364,7 @@ int cfg_set_now(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str *va
 	if (group_id
 			&& var->def->on_set_child_cb
 			&& var->def->type & CFG_CB_ONLY_ONCE ) {
-		LM_ERR("This variable does not support muliple values.\n");
+		LM_ERR("This variable does not support multiple values.\n");
 		goto error0;
 	}
 
@@ -388,7 +388,7 @@ int cfg_set_now(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id, str *va
 			&& var->def->on_change_cb) {
 		/* Call the fixup function.
 		 * There is no need to set a temporary cfg handle,
-		 * becaue a single variable is changed */
+		 * because a single variable is changed */
 		if (!group_id) {
 			var_block = *(group->handle);
 		} else {
@@ -734,7 +734,7 @@ int cfg_set_delayed(cfg_ctx_t *ctx, str *group_name, unsigned int *group_id,
 	if (group_id
 			&& var->def->on_set_child_cb
 			&& var->def->type & CFG_CB_ONLY_ONCE) {
-		LM_ERR("This variable does not support muliple values.\n");
+		LM_ERR("This variable does not support multiple values.\n");
 		goto error0;
 	}
 
@@ -1798,7 +1798,7 @@ error:
 	return -1;
 }
 
-/* Check the existance of a group instance.
+/* Check the existence of a group instance.
  * return value:
  *	1: exists
  *	0: does not exist
@@ -1896,7 +1896,7 @@ int cfg_apply_list(cfg_group_inst_t *ginst, cfg_group_t *group,
 		if (var->def->on_set_child_cb
 				&& var->def->type & CFG_CB_ONLY_ONCE
 				) {
-			LM_ERR("This variable does not support muliple values.\n");
+			LM_ERR("This variable does not support multiple values.\n");
 			goto error;
 		}
 

@@ -342,7 +342,7 @@ static inline int parse_token_param(str *_s, str *_r, char separator)
 		return -1;
 	}
 
-	/* Save the begining of the
+	/* Save the beginning of the
 	 * token in _r->s
 	 */
 	_r->s = _s->s;

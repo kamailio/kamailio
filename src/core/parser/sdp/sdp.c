@@ -59,7 +59,7 @@ static inline int new_sdp(struct sip_msg* _m)
 }
 
 /**
- * Alocate a new session cell.
+ * Allocate a new session cell.
  */
 static inline sdp_session_cell_t *add_sdp_session(sdp_info_t* _sdp, int session_num, str* cnt_disp)
 {
@@ -374,7 +374,7 @@ static int parse_sdp_session(str *sdp_body, int session_num, str *cnt_disp, sdp_
 	str remote_candidates = {"a:remote-candidates:", 20};
 
 	/* hook the start and length of sdp body inside structure
-	 * - shorcut useful for multi-part bodies and sdp operations
+	 * - shortcut useful for multi-part bodies and sdp operations
 	 */
 	_sdp->text = *sdp_body;
 	pf = AF_INET;
@@ -712,7 +712,7 @@ static int parse_mixed_content(str *mixed_body, str delimiter, sdp_info_t* _sdp)
 					return -1;
 				if (ret!=end) {
 					LM_ERR("the header CONTENT_TYPE contains "
-						"more then one mime type :-(!\n");
+						"more than one mime type :-(!\n");
 					return -1;
 				}
 				if ((mime&0x00ff)==SUBTYPE_ALL || (mime>>16)==TYPE_ALL) {

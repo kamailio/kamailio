@@ -20,7 +20,7 @@
  */
 
 /**
- * Time Recurence Library according to iCalendar (RFC 2445)
+ * Time Recurrence Library according to iCalendar (RFC 2445)
  * - implemented at FhG Fokus, 2003 - external link:
  *   https://github.com/miconda/tmrec
  * \brief core/utils :: <description of this file>

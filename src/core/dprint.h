@@ -100,7 +100,7 @@
                         (e.g. fixup_dbg_sip_msg) */
 
 /** @brief This is the facility value used to indicate that the caller of the macro
- * did not override the facility. Value 0 (the defaul) is LOG_KERN on Linux
+ * did not override the facility. Value 0 (the default) is LOG_KERN on Linux
  */
 #define DEFAULT_FACILITY 0
 

@@ -68,7 +68,7 @@ inline static void free_via_clen_lump( struct lump **list )
 			if (lump->flags & (LUMPFLAG_DUPED|LUMPFLAG_SHMEM)){
 				LM_CRIT("free_via_clen_lmp: lump %p, flags %x\n",
 						lump, lump->flags);
-				/* ty to continue */
+				/* try to continue */
 			}
 			a=lump->before;
 			while(a) {

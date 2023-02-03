@@ -114,7 +114,7 @@ static inline void local_timer_redist(struct local_timer* l,
 /** local timer add function (no lock, not multithread or multiprocess safe,
  * designed for local process use only)
  * t = current ticks
- * tl must be filled (the intial_timeout and flags must be set)
+ * tl must be filled (the initial_timeout and flags must be set)
  * returns -1 on error, 0 on success */
 static inline int _local_timer_add(struct local_timer *h, ticks_t t,
 									struct timer_ln* tl)

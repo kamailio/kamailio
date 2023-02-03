@@ -57,7 +57,7 @@
  *  functions that use atomic ops (and both of them use at least a store to
  *  the lock). membar_enter_lock() is at most a StoreStore|StoreLoad barrier
  *   and membar_leave_lock() is at most a LoadStore|StoreStore barries
- *  (if the atomic ops on the specific arhitecture imply these barriers
+ *  (if the atomic ops on the specific architecture imply these barriers
  *   => these macros will be empty)
  *   Warning: these barriers don't force LoadLoad ordering between code
  *    before the lock/membar_enter_lock() and code 
@@ -192,7 +192,7 @@ ATOMIC_FUNC_DECL1(and,     "and  %0, %4, %1", int, void, /* no return */ )
 ATOMIC_FUNC_DECL1(or,      "or   %0, %4, %1", int, void, /* no return */ )
 ATOMIC_FUNC_DECL(inc_and_test, "add   %0, 1, %1", int, int, ((ret+1)==0) )
 ATOMIC_FUNC_DECL(dec_and_test, "sub   %0, 1, %1", int, int, ((ret-1)==0) )
-/* deprecated but probably better then CAS for futexes */
+/* deprecated but probably better than CAS for futexes */
 ATOMIC_FUNC_DECL1_RAW(get_and_set, "swap [%2], %0", int, int, ret)
 /*ATOMIC_FUNC_DECL1(get_and_set, "mov %4, %1" , int, int,  ret)*/
 ATOMIC_FUNC_DECL1(add,     "add  %0, %4, %1", int, int,  ret+v)

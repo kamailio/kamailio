@@ -249,7 +249,7 @@ inline static unsigned int get_hash2_case_raw2(const str* key1,
 
 
 /*
- * generic hashing - from the intial origins of ser
+ * generic hashing - from the initial origins of ser
  */
 #define ch_h_inc h+=v^(v>>3)
 #define ch_icase(_c) (((_c)>='A'&&(_c)<='Z')?((_c)|0x20):(_c))

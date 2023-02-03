@@ -53,14 +53,14 @@ Implements:
 	GEN_LOCK_T_PREFERRED - defined if using  arrays of gen_lock_t is as good as
 	                      using a lock set (gen_lock_set_t). 
 						  In general is better to have the locks "close" or 
-						  inside the protected data structure rather then 
+						  inside the protected data structure rather than 
 						  having a separate array or lock set. However in some
 						  case (e.g. SYSV_LOCKS) is better to use lock sets,
 						  either due to lock number limitations, excesive 
 						  performance or memory overhead. In this cases
 						  GEN_LOCK_T_PREFERRED will not be defined.
 	GEN_LOCK_T_UNLIMITED - defined if there is no system imposed limit on
-	                       the number of locks (other then the memory).
+	                       the number of locks (other than the memory).
 	GEN_LOCK_SET_T_UNLIMITED
 	                      - like above but for the size of a lock set.
 

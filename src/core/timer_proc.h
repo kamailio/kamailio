@@ -64,7 +64,7 @@ int fork_basic_timer_w(int child_id, char* desc, int make_sock,
 #define fork_dummy_timer fork_basic_timer
 
 /**
- * \brief Forks a separate simple milisecond-sleep() periodic timer
+ * \brief Forks a separate simple millisecond-sleep() periodic timer
  *
  * Forks a very basic periodic timer process, that just ms-sleep()s for
  * the specified interval and then calls the timer function.
@@ -76,7 +76,7 @@ int fork_basic_timer_w(int child_id, char* desc, int make_sock,
  * @param make_sock @see fork_process()
  * @param f         timer function/callback
  * @param param     parameter passed to the timer function
- * @param uinterval  interval in mili-seconds.
+ * @param uinterval  interval in milliseconds.
  * @return pid of the new process on success, -1 on error
  * (doesn't return anything in the child process)
  */

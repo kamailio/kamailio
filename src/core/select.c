@@ -52,7 +52,7 @@ int select_level = 0;
 
 /** pointer to the SIP uri being processed.
  * Nested function calls can pass information to each
- * other using this pointer. Only for performace reasons.
+ * other using this pointer. Only for performance reasons.
  * (Miklos)
  */
 struct sip_uri	*select_uri_p = NULL;

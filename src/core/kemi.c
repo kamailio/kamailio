@@ -1549,7 +1549,7 @@ static int sr_kemi_core_to_proto_helper(sip_msg_t *msg)
 		return -1;
 	}
 	if(msg->first_line.type == SIP_REPLY) {
-		/* REPLY doesnt have r/d-uri - use second Via */
+		/* REPLY doesn't have r/d-uri - use second Via */
 		if(parse_headers( msg, HDR_VIA2_F, 0)==-1) {
 			LM_DBG("no 2nd via parsed\n");
 			return -1;
@@ -1667,7 +1667,7 @@ static int sr_kemi_core_to_af_helper(sip_msg_t *msg)
 		return -1;
 	}
 	if(msg->first_line.type == SIP_REPLY) {
-		/* REPLY doesnt have r/d-uri - use second Via */
+		/* REPLY doesn't have r/d-uri - use second Via */
 		if(parse_headers( msg, HDR_VIA2_F, 0)==-1) {
 			LM_DBG("no 2nd via parsed\n");
 			return -1;

@@ -596,8 +596,8 @@ error:
  *  (see http://tools.ietf.org/html/draft-ietf-enum-branch-location-record-03)
  * one or several character strings:
  *  01234567
- * +--------+
- * | postion|
+ * +---------+
+ * | position|
  * +-----------+
  * / separator /
  * +-----------+
@@ -1386,7 +1386,7 @@ end:
  * params:
  *         naptr_head - naptr rr list head
  *         tried      - bitmap used to keep track of the already tried records
- *                      (no more then sizeof(tried)*8 valid records are
+ *                      (no more than sizeof(tried)*8 valid records are
  *                      ever walked
  *         srv_name   - if successful, it will be set to the selected record
  *                      srv name (naptr repl.)
@@ -1493,7 +1493,7 @@ size_t create_srv_pref_list(char *proto, struct dns_srv_proto *list) {
 		list_len=1;
 	} else {
 		list_len = 0;
-		/*get protocols and preference scores, and add availble protocol(s) and score(s) to the list*/
+		/*get protocols and preference scores, and add available protocol(s) and score(s) to the list*/
 		for (i=PROTO_UDP; i<PROTO_LAST;i++) {
 			tmp.proto_pref = srv_proto_pref_score(i);
 			/* if -1 so disabled continue with next protocol*/
@@ -1506,7 +1506,7 @@ size_t create_srv_pref_list(char *proto, struct dns_srv_proto *list) {
 			}
 		};
 
-		/* if all protocol prefence scores equal, then set the perference to default values: udp,tcp,tls,sctp */
+		/* if all protocol preference scores equal, then set the preference to default values: udp,tcp,tls,sctp */
 		for (i=1; i<list_len;i++) {
 			if(list[0].proto_pref!=list[i].proto_pref){
 				default_order=0;

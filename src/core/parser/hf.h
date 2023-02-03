@@ -83,7 +83,7 @@ enum _hdr_types_t {
 	HDR_CONTENTDISPOSITION_T	= 30   /*!< Content-Disposition hdr field */,
 	HDR_DIVERSION_T				= 31   /*!< Diversion header field */,
 	HDR_RPID_T					= 32   /*!< Remote-Party-ID header field */,
-	HDR_REFER_TO_T				= 33   /*!< Refer-To header fiels */,
+	HDR_REFER_TO_T				= 33   /*!< Refer-To header fields */,
 	HDR_SIPIFMATCH_T			= 34   /*!< SIP-If-Match header field */,
 	HDR_SESSIONEXPIRES_T		= 35   /*!< Session-Expires header */,
 	HDR_MIN_SE_T				= 36   /*!< Min-SE */,

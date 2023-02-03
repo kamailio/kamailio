@@ -185,7 +185,7 @@ init_state(FState *st)
 }
 
 /*
- * Endianess does not matter.
+ * Endianness does not matter.
  * It just needs to change without repeating.
  */
 static void

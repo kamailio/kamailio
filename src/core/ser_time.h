@@ -29,7 +29,7 @@
 #include <sys/time.h>
 #include <time.h>
 
-/* time(2) equivalent, using ser internal timers (faster then a syscall) */
+/* time(2) equivalent, using ser internal timers (faster than a syscall) */
 time_t ser_time(time_t* t);
 
 /* gettimeofday(2) equivalent, faster but much more imprecise

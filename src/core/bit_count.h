@@ -82,7 +82,7 @@ static inline int bit_count(unsigned int i)
 
 #if 0
 /* number of bits in a byte.
- * (Only slightly faster then the above version,
+ * (Only slightly faster than the above version,
  * It is not worth the extra memory usage.)
  */
 extern int	bits_in_char[256];

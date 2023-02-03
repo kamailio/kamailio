@@ -34,7 +34,7 @@
 #include "keys.h"
 #include "parse_body.h"
 
-/*! \brief returns the value of boundary parameter from the Contect-Type HF */
+/*! \brief returns the value of boundary parameter from the Content-Type HF */
 static inline int get_boundary_param(struct sip_msg *msg, str *boundary)
 {
 	str	s;
@@ -127,7 +127,7 @@ inline static char *get_multipart_body(char *buf,
 		if (beg >= buf_end)
 			goto error;
 	}
-	/* CRLF delimeter found, the body begins right after it */
+	/* CRLF delimiter found, the body begins right after it */
 	while ((beg < buf_end) && (*beg != '\n'))
 		beg++;
 	beg++;
@@ -196,7 +196,7 @@ char *get_body_part(	struct sip_msg *msg,
 			return NULL;
 		buf_end = msg->buf+msg->len;
 
-		/* check all the body parts delimated by the boundary value,
+		/* check all the body parts delimited by the boundary value,
 		and search for the Content-Type HF with the given 
 		type/subtype */
 next_part:
@@ -237,7 +237,7 @@ next_part:
 						return NULL;
 
 					if (*c != ':')
-						/* not realy a Content-Type HF */
+						/* not really a Content-Type HF */
 						goto next_hf;
 					c++;
 
@@ -281,7 +281,7 @@ next_hf:
 				while ((c < buf_end) && (*c != '\n')) c++;
 				c++;
 			}
-			/* CRLF delimeter reached,
+			/* CRLF delimiter reached,
 			no Content-Type HF was found */
 		}
 	}
@@ -343,7 +343,7 @@ char *trim_leading_e_r (char *buffer, char *end_buffer)
  * -- Content-Type   that matches content_type / content_subtype. (if Content-Type enabled) &&
  * -- Content-ID     that matches content_id. (if Content-ID enabled) &&
  * -- Content-Length that matches content_length. (if Content-Length enabled)
- * - false, if any of them doesnt match.
+ * - false, if any of them doesn't match.
  */
 int part_multipart_headers_cmp (char *buffer,
 				char *end_buffer,
@@ -463,14 +463,14 @@ int part_multipart_headers_cmp (char *buffer,
 							error_msg = "Failed to perform trim_leading_hts || trim_leading_e_r";
 						}
 					} else {
-						/* Next characters dont match "Type:" or "ID:" or "Length:" OR
+						/* Next characters don't match "Type:" or "ID:" or "Length:" OR
 					     * header already parsed (maybe duplicates?) and founded OR
-					     * header initially set as disabled and it doesnt need to be treated.
+					     * header initially set as disabled and it doesn't need to be treated.
 					     * This is NOT an error. */
 						;
 					}
 				} else {
-					/* First 8 characters dont match "Content-"
+					/* First 8 characters don't match "Content-"
 					 * This is NOT an error. */
 					;
 				}

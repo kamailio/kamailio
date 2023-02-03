@@ -257,7 +257,7 @@ char *get_cfg_crt_route_name(void)
  * @param msg
  * @param src - source action_u_t array (e.g. action->val)
  * @param dst - temporary action_u_t array used for conversions. It can be
- *              used for the function parameters. It's contents it's not
+ *              used for the function parameters. Its contents is not
  *              valid after the call.
  * @param params... - variable list of parameters, passed to the module
  *               function
@@ -1371,7 +1371,7 @@ match_cleanup:
 					i++;
 
 				if (unlikely(i > cfg_get(core, core_cfg, max_while_loops))){
-					LM_ERR("runaway while (%d, %d): more then %d loops\n",
+					LM_ERR("runaway while (%d, %d): more than %d loops\n",
 								rve->fpos.s_line, rve->fpos.s_col,
 								cfg_get(core, core_cfg, max_while_loops));
 					ret=-1;

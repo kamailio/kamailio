@@ -55,7 +55,7 @@ void clean_hdr_field(struct hdr_field* const hf)
 	void** h_parsed;
 
 	if (hf->parsed){
-		h_parsed=&hf->parsed; /* strict aliasing warnings workarround */
+		h_parsed=&hf->parsed; /* strict aliasing warnings workaround */
 		switch(hf->type){
 		/* headers with pkg alloc for parsed structure (alphabetic order) */
 		case HDR_ACCEPT_T:

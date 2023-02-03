@@ -116,7 +116,7 @@ int fixup_regexpNL_none(void** param, int param_no); /* textops */
   *
   * @see FIXUP_F2FP for the parameters with the exception
   * that only the first no1 parameters are converted to 
-  * fparamt_t and the rest directly to the correponding type
+  * fparamt_t and the rest directly to the corresponding type
   *
   * Side effect: declares also some _fpt_helper functions
   */
@@ -143,7 +143,7 @@ int fixup_regexpNL_none(void** param, int param_no); /* textops */
 	}
 
 
-/** macro for declaring a fixup which fixes all the paremeters to the same
+/** macro for declaring a fixup which fixes all the parameters to the same
   * type.
   *
   * @see FIXUP_F2T.

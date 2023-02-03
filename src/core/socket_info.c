@@ -2496,7 +2496,7 @@ int parse_protohostport(str* ins, sr_phostp_t *r)
 		r->host.s=first+1;
 		r->host.len=(int)(p-r->host.s);
 	}else{
-		/* valid port => its host:port */
+		/* valid port => it is host:port */
 		r->sport = tmp;
 		r->host.s=ins->s;
 		r->host.len=(int)(first-r->host.s);

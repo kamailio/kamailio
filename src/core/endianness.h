@@ -73,7 +73,7 @@ extern int _endian_test_int;
 
 extern int endianness_sanity_check(void);
 
-/* detect compile time endianess */
+/* detect compile time endianness */
 #if defined __BYTE_ORDER && defined __LITTLE_ENDIAN && defined __BIG_ENDIAN
 /* linux */
 #if __BYTE_ORDER == __LITTLE_ENDIAN && ! defined __IS_LITTLE_ENDIAN
@@ -121,11 +121,11 @@ extern int endianness_sanity_check(void);
 #endif
 
 #else
-#error could not detect endianess
+#error could not detect endianness
 #endif
 
 #if !defined __IS_LITTLE_ENDIAN && !defined __IS_BIG_ENDIAN
-#error BUG: could not detect endianess
+#error BUG: could not detect endianness
 #endif
 
 #if defined __IS_LITTLE_ENDIAN && defined __IS_BIG_ENDIAN

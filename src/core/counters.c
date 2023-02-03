@@ -33,7 +33,7 @@
 #define GRP_HASH_SIZE	16
 /* initial sorted groups array size (rpc use) */
 #define GRP_SORTED_SIZE	16
-/* intial counter id 2 record array size */
+/* initial counter id 2 record array size */
 #define CNT_ID2RECORD_SIZE	64
 
 #define CACHELINE_PAD 128
@@ -69,7 +69,7 @@ struct grp_record {
 
 /** hash table mapping a counter name to an id */
 static struct str_hash_table cnts_hash_table;
-/** array maping id 2 record */
+/** array mapping id 2 record */
 struct counter_record** cnt_id2record;
 static int cnt_id2record_size;
 /** hash table for groups (maps a group name to a counter list) */
@@ -186,7 +186,7 @@ void destroy_counters()
 
 
 
-/** complete counter intialization, when the number of processes is known.
+/** complete counter initialization, when the number of processes is known.
  * shm must be available.
  * @return 0 on success, < 0 on error
  */

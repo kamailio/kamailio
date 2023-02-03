@@ -698,7 +698,7 @@ struct sip_msg *sip_msg_shm_clone(
 					/*alloc*/
 					new_to_prm = (struct to_param *)p;
 					p += ROUND4(sizeof(struct to_param));
-					/*coping*/
+					/*copying*/
 					memcpy(new_to_prm, to_prm, sizeof(struct to_param));
 					((struct to_body *)new_hdr->parsed)->param_lst = 0;
 					new_to_prm->name.s = translate_pointer(

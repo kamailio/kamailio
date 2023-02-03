@@ -130,7 +130,7 @@ typedef struct _cfg_group_meta {
 	cfg_group_inst_t	*array;	/*!< Array of cfg groups with num number of items */
 } cfg_group_meta_t;
 
-/*! \brief single memoy block that contains all the cfg values */
+/*! \brief single memory block that contains all the cfg values */
 #pragma pack(push, 1)
 typedef struct _cfg_block {
 	atomic_t	refcnt;		/*!< reference counter,

@@ -664,7 +664,7 @@ inline static int base64_dec(unsigned char* src, int slen,
 	unsigned char* end;
 	int osize;
 	register unsigned a, b, c, d; /* more registers used, but allows for
-									 paralles execution */
+									 parallel execution */
 	
 	if (unlikely((slen<4) || (slen%4) || 
 				(src[slen-2]=='=' && src[slen-1]!='=')))
@@ -784,7 +784,7 @@ inline static int q_base64_dec(unsigned char* src, int slen,
 	register unsigned u;
 #else
 	register unsigned a, b, c, d; /* more registers used, but allows for
-									 paralles execution */
+									 parallel execution */
 #endif
 	
 	if (unlikely((slen<4) || (slen%4) || 

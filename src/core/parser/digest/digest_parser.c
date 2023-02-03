@@ -110,7 +110,7 @@ static inline int parse_token(str* _s, str* _r)
 {
 	int i;
 
-	     /* Save the begining of the
+	     /* Save the beginning of the
 	      * token in _r->s
 	      */
 	_r->s = _s->s;
@@ -173,7 +173,7 @@ static inline int parse_digest_param(str* _s, dig_cred_t* _c)
 	_s->s++;  /* skip = */
 	_s->len--;
 
-	     /* Find the begining of body */
+	     /* Find the beginning of body */
 	trim_leading(_s);
 
 	if (_s->len == 0) {

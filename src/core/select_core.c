@@ -328,7 +328,7 @@ int select_via_name(str* res, select_t* s, struct sip_msg* msg)
 {
 	struct via_body *p = NULL;
 	
-	// it's not neccessary to test if (s->n > 1)
+	// it's not necessary to test if (s->n > 1)
 	if (s->params[1].type == SEL_PARAM_STR) {
 		if(parse_via_header(msg, 1, &p)<0) return -1;
 	} else if (parse_via_header(msg, s->params[1].v.i, &p)<0) return -1;
@@ -340,7 +340,7 @@ int select_via_version(str* res, select_t* s, struct sip_msg* msg)
 {
 	struct via_body *p = NULL;
 	
-	// it's not neccessary to test if (s->n > 1)
+	// it's not necessary to test if (s->n > 1)
 	if (s->params[1].type == SEL_PARAM_STR) {
 		if (parse_via_header(msg, 1, &p)<0) return -1;
 	} else if (parse_via_header(msg, s->params[1].v.i, &p)<0) return -1;
@@ -352,7 +352,7 @@ int select_via_transport(str* res, select_t* s, struct sip_msg* msg)
 {
 	struct via_body *p = NULL;
 	
-	// it's not neccessary to test if (s->n > 1)
+	// it's not necessary to test if (s->n > 1)
 	if (s->params[1].type == SEL_PARAM_STR) {
 		if(parse_via_header(msg, 1, &p)<0) return -1;
 	} else if (parse_via_header(msg, s->params[1].v.i, &p)<0) return -1;
@@ -364,7 +364,7 @@ int select_via_host(str* res, select_t* s, struct sip_msg* msg)
 {
 	struct via_body *p = NULL;
 	
-	// it's not neccessary to test if (s->n > 1)
+	// it's not necessary to test if (s->n > 1)
 	if (s->params[1].type == SEL_PARAM_STR) {
 		if (parse_via_header(msg, 1, &p)<0) return -1;
 	} else if (parse_via_header(msg, s->params[1].v.i, &p)<0) return -1;
@@ -376,7 +376,7 @@ int select_via_port(str* res, select_t* s, struct sip_msg* msg)
 {
 	struct via_body *p = NULL;
 	
-	// it's not neccessary to test if (s->n > 1)
+	// it's not necessary to test if (s->n > 1)
 	if (s->params[1].type == SEL_PARAM_STR) {
 		if (parse_via_header(msg, 1, &p)<0) return -1;
 	} else if (parse_via_header(msg, s->params[1].v.i, &p)<0) return -1;
@@ -388,7 +388,7 @@ int select_via_comment(str* res, select_t* s, struct sip_msg* msg)
 {
 	struct via_body *p = NULL;
 	
-	// it's not neccessary to test if (s->n > 1)
+	// it's not necessary to test if (s->n > 1)
 	if (s->params[1].type == SEL_PARAM_STR) {
 		if(parse_via_header(msg, 1, &p)<0) return -1;
 	} else if (parse_via_header(msg, s->params[1].v.i, &p)<0) return -1;
@@ -401,7 +401,7 @@ int select_via_params(str* res, select_t* s, struct sip_msg* msg)
 	struct via_body *p = NULL;
 	struct via_param *q;
 
-	// it's not neccessary to test if (s->n > 1)
+	// it's not necessary to test if (s->n > 1)
 	if (s->params[1].type == SEL_PARAM_STR) {
 		if (parse_via_header(msg, 1, &p)<0) return -1;
 	} else if (parse_via_header(msg, s->params[1].v.i, &p)<0) return -1;
@@ -425,7 +425,7 @@ int select_via_params_spec(str* res, select_t* s, struct sip_msg* msg)
 		return -1;
 	}
 	
-	// it's not neccessary to test if (s->n > 1)
+	// it's not necessary to test if (s->n > 1)
 	if (s->params[1].type != SEL_PARAM_INT) {
 		if(parse_via_header(msg, 1, &p)<0) return -1;
 	} else if (parse_via_header(msg, s->params[1].v.i, &p)<0) return -1;

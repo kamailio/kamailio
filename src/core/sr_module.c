@@ -1717,7 +1717,7 @@ int get_str_fparam(str* dst, struct sip_msg* msg, fparam_t* param)
 			dst->s=pv_get_buffer();
 			dst->len=pv_get_buffer_size();
 			if (unlikely(pv_printf(msg, param->v.pve, dst->s, &dst->len)!=0)){
-				LM_ERR("Could not convert the PV-formated string to str\n");
+				LM_ERR("Could not convert the PV-formatted string to str\n");
 				dst->len=0;
 				return -1;
 			};
@@ -1727,7 +1727,7 @@ int get_str_fparam(str* dst, struct sip_msg* msg, fparam_t* param)
 }
 
 
-/** Get the function parameter value as string cpoied in the dst->s buffer.
+/** Get the function parameter value as string copied in the dst->s buffer.
  *  - dst->len has to provide size of dst->s buffer and it is updated to the
  *  size of the value
  *  @return  0 - Success
@@ -1789,7 +1789,7 @@ int get_strbuf_fparam(str* dst, struct sip_msg* msg, fparam_t* param)
 			break;
 		case FPARAM_PVE:
 			if (unlikely(pv_printf(msg, param->v.pve, dst->s, &dst->len)!=0)){
-				LM_ERR("Could not convert the PV-formated string to str\n");
+				LM_ERR("Could not convert the PV-formatted string to str\n");
 				dst->len=0;
 				return -1;
 			};
@@ -1956,7 +1956,7 @@ int get_is_fparam(int* i_dst, str* s_dst, struct sip_msg* msg, fparam_t* param, 
 			s_dst->s=pv_get_buffer();
 			s_dst->len=pv_get_buffer_size();
 			if (unlikely(pv_printf(msg, param->v.pve, s_dst->s, &s_dst->len)!=0)){
-				LM_ERR("Could not convert the PV-formated string to str\n");
+				LM_ERR("Could not convert the PV-formatted string to str\n");
 				s_dst->len=0;
 				return -1;
 			}
@@ -2037,7 +2037,7 @@ int fixup_free_fparam_2(void** param, int param_no)
 
 /** returns true if a fixup is a fparam_t* one.
  * Used to automatically detect "pure" fparam fixups that can be used with non
- * contant RVEs.
+ * constant RVEs.
  * @param f - function pointer
  * @return 1 for fparam fixups, 0 for others.
  */

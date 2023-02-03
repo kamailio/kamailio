@@ -43,7 +43,7 @@ void (*set_sig_h(int sig, void (*handler) (int) ))(int)
 	sigemptyset(&act.sa_mask);
 	act.sa_flags=0;
 	*/
-	/* sa_sigaction not set, we use sa_hanlder instead */
+	/* sa_sigaction not set, we use sa_handler instead */
 	return (sigaction (sig, &act, &old)==-1)?SIG_ERR:old.sa_handler;
 }
 #endif

@@ -223,7 +223,7 @@ char* parse_content_length(char* const buffer, const char* const end,
 		LM_ERR("empty input buffer: %p - %p\n", buffer, end);
 		goto error;
 	}
-	/* search the begining of the number */
+	/* search the beginning of the number */
 	while ( p<end && (*p==' ' || *p=='\t'
 				|| (*p=='\n' && p+1<end && (*(p+1)==' ' || *(p+1)=='\t')) ) )
 		p++;
@@ -234,7 +234,7 @@ char* parse_content_length(char* const buffer, const char* const end,
 	number = 0;
 	while (p<end && *p>='0' && *p<='9') {
 		if(number >= INT_MAX/10) {
-			LM_ERR("content lenght value is too large\n");
+			LM_ERR("content length value is too large\n");
 			goto error;
 		}
 		number = number*10 + ((*p) - '0');
@@ -292,7 +292,7 @@ char* decode_mime_type(char* const start, const char* const end,
 
 	p = start;
 
-	/* search the begining of the type */
+	/* search the beginning of the type */
 	while ( p<end && (*p==' ' || *p=='\t' ||
 	(*p=='\n' && (*(p+1)==' '||*(p+1)=='\t')) ))
 		p++;
@@ -337,7 +337,7 @@ char* decode_mime_type(char* const start, const char* const end,
 	if ( p==end || *(p++)!='/')
 		goto error;
 
-	/* search the begining of the sub-type */
+	/* search the beginning of the sub-type */
 	while ( p<end && (*p==' ' || *p=='\t' ||
 	(*p=='\n' && (*(p+1)==' '||*(p+1)=='\t')) ))
 		p++;
@@ -436,7 +436,7 @@ int parse_content_type_hdr(struct sip_msg* const msg)
 	if (ret==0)
 		goto error;
 	if (ret!=end) {
-		LM_ERR("Content-Type hdr contains more then one mime type!\n");
+		LM_ERR("Content-Type hdr contains more than one mime type!\n");
 		goto error;
 	}
 	if ((mime&0x00ff)==SUBTYPE_ALL || (mime>>16)==TYPE_ALL) {

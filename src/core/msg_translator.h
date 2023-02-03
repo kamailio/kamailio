@@ -144,7 +144,7 @@ char * build_only_headers( struct sip_msg* msg, int skip_first_line,
 				struct dest_info* send_info);
 
 /* builds a char* buffer from message body
- * error is set -1 if the memory allocation failes
+ * error is set -1 if the memory allocation fails
  */
 char * build_body( struct sip_msg* msg,
 			unsigned int *returned_len,

@@ -199,7 +199,7 @@ char* as_asciiz(str* s)
 /* return system version (major.minor.minor2) as
  *  (major<<16)|(minor)<<8|(minor2)
  * (if some of them are missing, they are set to 0)
- * if the parameters are not null they are set to the coresp. part
+ * if the parameters are not null they are set to the corresp. part
  */
 unsigned int get_sys_version(int* major, int* minor, int* minor2)
 {

@@ -225,7 +225,7 @@ int cfg_declare_str(char *group_name, char *var_name, char *val, char *descr)
 	return 0;
 }
 
-/* Add a varibale to a group instance with integer type.
+/* Add a variable to a group instance with integer type.
  * The group instance is created if it does not exist.
  * wrapper function for new_add_var()
  */
@@ -243,7 +243,7 @@ int cfg_ginst_var_int(char *group_name, unsigned int group_id, char *var_name,
 			(void *)(long)val, CFG_VAR_INT);
 }
 
-/* Add a varibale to a group instance with string type.
+/* Add a variable to a group instance with string type.
  * The group instance is created if it does not exist.
  * wrapper function for new_add_var()
  */
