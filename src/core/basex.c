@@ -221,7 +221,7 @@ int init_basex()
 #elif defined __IS_BIG_ENDIAN /* __IS_LITTLE_ENDIAN */
 		_bx_b64_12[r]=(b64_enc_char(r>>6)<<8)|b64_enc_char(r&0x3f);
 #else /* __IS_LITTLE_ENDIAN */
-#error Neither __IS_LITTE_ENDIAN nor __IS_BIG_ENDIAN  defined
+#error Neither __IS_LITTLE_ENDIAN nor __IS_BIG_ENDIAN  defined
 #endif
 	/* decode */
 	for (r=0; r<256; r++)

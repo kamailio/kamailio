@@ -71,7 +71,7 @@
 #define membar_write() asm volatile ("eieio \n\t" : : : "memory") 
 #define membar_depends()  do {} while(0) /* really empty, not even a cc bar. */
 #define membar_enter_lock() asm volatile("lwsync \n\t" : : : "memory")
-/* for unlock lwsync will work too and is faster then sync
+/* for unlock lwsync will work too and is faster than sync
  *  [IBM Prgramming Environments Manual, D.4.2.2] */
 #define membar_leave_lock() asm volatile("lwsync \n\t" : : : "memory")
 /* membars after or before atomic_ops or atomic_setget -> use these or

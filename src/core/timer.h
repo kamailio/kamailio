@@ -69,7 +69,7 @@ typedef void (timer_function_w)(unsigned int ticks, int worker, void* param);
 	timer_ticks.h (.e.g TICKS_TO_S(tick) to convert to s or ms )*/
 #define TIMER_TICK 1 /* 1 s, kept for compatibility */
 
-/*function prototype to execute on mili-second based basic timers */
+/*function prototype to execute on millisecond based basic timers */
 typedef void (utimer_function)(unsigned int uticks, void* param);
 typedef void (utimer_function_w)(unsigned int uticks, int worker, void* param);
 

@@ -204,7 +204,7 @@ int raw_udp4_socket(struct ip_addr* ip, str* iface, int iphdr_incl)
  * from and to are filled (only the ip part the ports are 0 since this
  * function doesn't try to look beyond the IP level).
  * @param sock - raw socket
- * @param buf - detination buffer.
+ * @param buf - destination buffer.
  * @param len - buffer len (should be enough for receiving a packet +
  *               IP header).
  * @param from - result parameter, the IP address part of it will be filled
@@ -282,7 +282,7 @@ end:
  * The packet is copied in *buf and *buf is advanced to point to the
  * payload.  Fills from and to.
  * @param rsock - raw socket
- * @param buf - the packet will be written to where *buf points intially and
+ * @param buf - the packet will be written to where *buf points initially and
  *              then *buf will be advanced to point to the udp payload.
  * @param len - buffer length (should be enough to hold at least the
  *               ip and udp headers + 1 byte).

@@ -109,7 +109,7 @@ static cfg_def_t tcp_cfg_def[] = {
 	{ "reuse_port",   CFG_VAR_INT | CFG_ATOMIC,   0,        1,  0,         0,
 		"reuse TCP ports "},
 	{ "wait_data_ms",  CFG_VAR_INT | CFG_ATOMIC,      0, 7200000, 0,        0,
-		"wait for data on new tcp connetions (milliseconds)"},
+		"wait for data on new tcp connections (milliseconds)"},
 	{ "close_rst",     CFG_VAR_INT | CFG_READONLY,    0,   1,      0,         0,
 			"trigger an RST on connection close"},
 	/* internal and/or "fixed" versions of some vars

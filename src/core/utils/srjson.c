@@ -392,7 +392,7 @@ static char *print_string_ptr(srjson_doc_t *doc, const char *str)
 	*ptr2++ = 0;
 	return out;
 }
-/* Invote print_string_ptr (which is useful) on an item. */
+/* Invoke print_string_ptr (which is useful) on an item. */
 static char *print_string(srjson_doc_t *doc, srjson_t *item) {
 	return print_string_ptr(doc, item->valuestring);
 }

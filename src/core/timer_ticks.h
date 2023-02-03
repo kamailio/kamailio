@@ -30,7 +30,7 @@
 #define _timer_ticks_h
 
 /** @brief how many ticks per second (must >1 and < 100 (on linux x86))
- * recomended values >=8, <=32 (a 2^k value is better/faster)*/
+ * recommended values >=8, <=32 (a 2^k value is better/faster)*/
 #define TIMER_TICKS_HZ	16U
 
 /** @brief how many ticks per m milliseconds? (rounded up) */

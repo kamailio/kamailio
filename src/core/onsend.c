@@ -68,7 +68,7 @@ int run_onsend(sip_msg_t* orig_msg, dest_info_t* dst, char* buf, int len)
 			/* backup orig_msg send flags */
 			fwd_snd_flags_bak=orig_msg->fwd_send_flags;
 			rpl_snd_flags_bak=orig_msg->rpl_send_flags;
-			orig_msg->fwd_send_flags=dst->send_flags; /* intial value */
+			orig_msg->fwd_send_flags=dst->send_flags; /* initial value */
 			init_run_actions_ctx(&ra_ctx);
 
 			if(keng) {
@@ -135,7 +135,7 @@ int run_onsend_evroute(onsend_info_t *sndinfo, int evrt, str *evcb, str *evname)
 	/* backup orig_msg send flags */
 	fwd_snd_flags_bak=sndinfo->msg->fwd_send_flags;
 	rpl_snd_flags_bak=sndinfo->msg->rpl_send_flags;
-	sndinfo->msg->fwd_send_flags=sndinfo->dst->send_flags; /* intial value */
+	sndinfo->msg->fwd_send_flags=sndinfo->dst->send_flags; /* initial value */
 	init_run_actions_ctx(&ra_ctx);
 
 	if(keng) {

@@ -322,7 +322,7 @@ void dprint_term_color(char f, char b, str *obuf)
 	p = term_color;
 	end = p + TERM_COLOR_SIZE;
 
-	/* excape sequence */
+	/* escape sequence */
 	dprint_termc_add(p, end, "\033[");
 
 	if(f!='_')

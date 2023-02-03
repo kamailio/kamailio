@@ -95,9 +95,9 @@ icc)
 			CFLAGS="$CFLAGS -tpp6 -xK"
 			#-openmp  #optimize for PIII 
 			# -prefetch doesn't seem to work
-			#( ty to inline acroos files, unroll loops,prefetch,
+			#( try to inline acroos files, unroll loops,prefetch,
 			# optimize for PIII, use PIII instructions & vect.,
-			# mutlithread loops)
+			# multithread loops)
 		;;
 		*)
 			echo "$WARN_ARCH" 1>&2

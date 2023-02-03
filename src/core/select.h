@@ -36,7 +36,7 @@
 #define MAX_SELECT_PARAMS 32
 #define MAX_NESTED_CALLS  4
 
-/* Flags for parser table FLAG bitfiels
+/* Flags for parser table FLAG bitfields
  */
 #define DIVERSION_MASK   0x00FF
 
@@ -147,7 +147,7 @@ extern int select_level;
 
 /* pointer to the SIP uri being processed.
  * Nested function calls can pass information to each
- * other using this pointer. Only for performace reasons.
+ * other using this pointer. Only for performance reasons.
  * (Miklos)
  */
 extern struct sip_uri	*select_uri_p;

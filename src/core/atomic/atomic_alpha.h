@@ -84,7 +84,7 @@
 
 
 /* main asm block 
- * if store failes, jump _forward_ (optimization, because back jumps are
+ * if store fails, jump _forward_ (optimization, because back jumps are
  *  always predicted to happen on alpha )*/
 #define ATOMIC_ASM_OP00_int(op) \
 			"1:   ldl_l %0, %2 \n\t" \

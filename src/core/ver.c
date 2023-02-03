@@ -46,7 +46,7 @@ const char ver_flags[] = SER_COMPILE_FLAGS;
 const char repo_ver[] = REPO_VER;
 /** git hash. */
 const char repo_hash[] = REPO_HASH;
-/** state of the repository: dirty (uncommited changes) or "" */
+/** state of the repository: dirty (uncommitted changes) or "" */
 const char repo_state[] = REPO_STATE;
 
 /* vi: set ts=4 sw=4 tw=79:ai:cindent: */

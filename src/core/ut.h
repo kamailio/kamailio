@@ -399,7 +399,7 @@ static inline int ushort2sbuf(unsigned short u, char* buf, int len)
 
 #define USHORT2STR_MAX_LEN  (USHORT2SBUF_MAX_LEN+1) /* 65535\0*/
 /* converts an unsigned short (16 bits) to asciiz
- * (optimized for port conversiob (4 or 5 digits most of the time)*/
+ * (optimized for port conversion (4 or 5 digits most of the time)*/
 static inline char* ushort2str(unsigned short u)
 {
 	static char buf[USHORT2STR_MAX_LEN];
@@ -1116,7 +1116,7 @@ char* as_asciiz(str* s);
 /* return system version (major.minor.minor2) as
  *  (major<<16)|(minor)<<8|(minor2)
  * (if some of them are missing, they are set to 0)
- * if the parameters are not null they are set to the coresp. part */
+ * if the parameters are not null they are set to the corresp. part */
 unsigned int get_sys_version(int* major, int* minor, int* minor2);
 
 /** Converts relative pathnames to absolute pathnames. This function returns

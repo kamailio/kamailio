@@ -49,7 +49,7 @@
  *         data_len -
  *         flags    - recv flags for the first recv (see recv(2)), only
  *                    0, MSG_WAITALL and MSG_DONTWAIT make sense
- * if flags is set to MSG_DONWAIT (or to 0 and the socket fd is non-blocking),
+ * if flags is set to MSG_DONTWAIT (or to 0 and the socket fd is non-blocking),
  * and if no data is queued on the fd, recv_all will not wait (it will
  * return error and set errno to EAGAIN/EWOULDBLOCK). However if even 1 byte
  *  is queued, the call will block until the whole data_len was read or an

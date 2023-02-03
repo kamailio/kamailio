@@ -72,7 +72,7 @@
  */
 #define RVAL_GET_INT_ERR_IGN
 
-/* minimum size alloc'ed for STR RVs (to accomodate
+/* minimum size alloc'ed for STR RVs (to accommodate
  * strops without reallocs) */
 #define RV_STR_EXTRA 80
 
@@ -390,7 +390,7 @@ struct rvalue* rval_new(enum rval_type t, union rval_val* v, int extra_size)
 /**
  * @brief get rvalue basic type (RV_LONG or RV_STR)
  *
- * Given a rvalue it tries to determinte its basic type.
+ * Given a rvalue it tries to determine its basic type.
  * Fills val_cache if non-null and empty (can be used in other rval*
  * function calls, to avoid re-resolving avps or pvars). It must be
  * rval_cache_clean()'en when no longer needed.
@@ -651,7 +651,7 @@ int rve_has_side_effects(struct rval_expr* rve)
 static int rve_op_unary(enum rval_expr_op op)
 {
 	switch(op){
-		case RVE_RVAL_OP: /* not realy an operator */
+		case RVE_RVAL_OP: /* not really an operator */
 			return -1;
 		case RVE_UMINUS_OP:
 		case RVE_BOOL_OP:
@@ -2489,7 +2489,7 @@ error:
 
 /** evals a rval expr and always returns a new rval.
  * like rval_expr_eval, but always returns a new rvalue (never a reference
- * to an exisiting one).
+ * to an existing one).
  * WARNING: result must be rval_destroy()'ed if non-null (it might be
  * a reference to another rval). The result can be modified only
  * if rv_chg_in_place() returns true.
@@ -3008,7 +3008,7 @@ error:
 
 /** optimize op($v, 0) or op($v, 1).
  * Note: internal use only from rve_optimize
- * It should be called after ct optimization, for non-contant
+ * It should be called after ct optimization, for non-constant
  *  expressions (the left or right side is not constant).
  * @return 1 on success (rve was changed), 0 on failure and -1 on error
  */
@@ -3325,7 +3325,7 @@ static int rve_opt_01(struct rval_expr* rve, enum rval_type rve_type)
 		}
 	/* no optimization for generic RVE_PLUS_OP for now, only for RVE_CONCAT_OP
 	 * (RVE_PLUS_OP should be converted to RVE_CONCAT_OP if it's supposed
-	 * to work on strings. If it's not converted/optimized it means it's type
+	 * to work on strings. If it's not converted/optimized it means its type
 	 * can be determined only at runtime => we cannot optimize */
 		/* debugging messages */
 		if (ret==1 && dbg){

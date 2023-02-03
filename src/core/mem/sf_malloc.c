@@ -1101,7 +1101,7 @@ void sfm_info(struct sfm_block *qm, struct mem_info *info)
 			 * on error (not compiled with bookkeeping code) returns (unsigned long)(-1) */
 unsigned long sfm_available(struct sfm_block *qm)
 {
-	/* we don't know how much free memory we have and it's to expensive
+	/* we don't know how much free memory we have and it's too expensive
 				 * to compute it */
 	return ((unsigned long)-1);
 }

@@ -1124,7 +1124,7 @@ find_value:
 #ifdef USE_COMP
 					case L_COMP_VALUE:
 						comp_unexpected_char;
-						/* we want to contine with no comp */
+						/* we want to continue with no comp */
 						state = F_PARAM;
 						param->value.len = 0;
 						param->value.s = 0;
@@ -1174,7 +1174,7 @@ find_value:
 #ifdef USE_COMP
 					case L_COMP_VALUE:
 						comp_unexpected_char;
-						/* we want to contine with no comp */
+						/* we want to continue with no comp */
 						state = F_VIA;
 						param->value.len = 0;
 						param->value.s = 0;
@@ -1346,7 +1346,7 @@ char *parse_via(
 	struct via_body *vb;
 	struct via_param *param;
 
-	vb = vbody; /* keep orignal vbody value, needed to set the error member
+	vb = vbody; /* keep original vbody value, needed to set the error member
 				* in case of multiple via bodies in the same header */
 parse_again:
 	vb->error = PARSE_ERROR;

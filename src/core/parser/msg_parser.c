@@ -1372,7 +1372,7 @@ int get_rcv_socket_uri(sip_msg_t *m, int tmode, str *uri, int atype)
 }
 
 
-/*! \brief returns a pointer to the begining of the msg's body
+/*! \brief returns a pointer to the beginning of the msg's body
  */
 char* get_body(sip_msg_t* const msg)
 {

@@ -137,7 +137,7 @@ int fork_basic_utimer(int child_id, char* desc, int make_sock,
 			sleep_us(uinterval);
 			cfg_update();
 			ts = get_ticks_raw();
-			f(TICKS_TO_MS(ts), param); /* ticks in mili-seconds */
+			f(TICKS_TO_MS(ts), param); /* ticks in milliseconds */
 		}
 	}
 	/* parent */
@@ -159,7 +159,7 @@ int fork_basic_utimer_w(int child_id, char* desc, int make_sock,
 			sleep_us(uinterval);
 			cfg_update();
 			ts = get_ticks_raw();
-			f(TICKS_TO_MS(ts), worker, param); /* ticks in mili-seconds */
+			f(TICKS_TO_MS(ts), worker, param); /* ticks in milliseconds */
 		}
 	}
 	/* parent */
@@ -254,12 +254,12 @@ int fork_sync_timer(int child_id, char* desc, int make_sock,
 	if (pid<0) return -1;
 	if (pid==0){
 		/* child */
-		interval *= 1000;  /* miliseconds */
+		interval *= 1000;  /* milliseconds */
 		ts2 = interval;
 		if (cfg_child_init()) return -1;
 		for(;;){
 			if (ts2>interval)
-				sleep_us(1000);    /* 1 milisecond sleep to catch up */
+				sleep_us(1000);    /* 1 millisecond sleep to catch up */
 			else
 				sleep_us(ts2*1000); /* microseconds sleep */
 			ts1 = get_ticks_raw();
@@ -312,7 +312,7 @@ int fork_sync_utimer(int child_id, char* desc, int make_sock,
 				sleep_us(ts2);
 			ts1 = get_ticks_raw();
 			cfg_update();
-			f(TICKS_TO_MS(ts1), param); /* ticks in mili-seconds */
+			f(TICKS_TO_MS(ts1), param); /* ticks in milliseconds */
 			ts2 = uinterval - get_ticks_raw() + ts1;
 		}
 	}

@@ -505,7 +505,7 @@ int mk_net_bitlen(struct net* n, struct ip_addr* ip, unsigned int bitlen)
 /** initializes a net structure from a string.
  * @param dst - net structure that will be filled
  * @param s - string of the form "ip", "ip/mask_len" or "ip/ip_mak".
- * @return -1 on error, 0 on succes
+ * @return -1 on error, 0 on success
  */
 int mk_net_str(struct net* dst, str* s)
 {

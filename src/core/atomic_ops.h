@@ -47,7 +47,7 @@
  *                             operation on the lock var.). It is at most
  *                             a StoreStore|StoreLoad barrier, but could also
  *                             be empty if an atomic op implies a memory 
- *                             barrier on the specific arhitecture.
+ *                             barrier on the specific architecture.
  *                             Example usage: 
  *                               raw_lock(l); membar_enter_lock(); ...
  *  void membar_leave_lock() - memory barrier function that should be called 

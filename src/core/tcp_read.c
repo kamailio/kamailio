@@ -548,7 +548,7 @@ int tcp_read_headers(struct tcp_connection *c, rd_conn_flags_t* read_flags)
 #ifdef READ_MSRP
 						/* catch end of MSRP frame without body
 						 *     '-------sessid$\r\n'
-						 * follows headers wihtout extra CRLF */
+						 * follows headers without extra CRLF */
 						if(r->flags&F_TCP_REQ_MSRP_FRAME) {
 							p--;
 							r->state=H_MSRP_BODY_END;
@@ -880,7 +880,7 @@ int tcp_read_headers(struct tcp_connection *c, rd_conn_flags_t* read_flags)
 				r->chunk_size = 0;
 				r->state = H_HTTP11_CHUNK_SIZE;
 				break;
-			case H_HTTP11_CHUNK_BODY: /* content of chunnk */
+			case H_HTTP11_CHUNK_BODY: /* content of chunk */
 				remaining=r->pos-p;
 				if (remaining>r->bytes_to_go) remaining=r->bytes_to_go;
 				r->bytes_to_go-=remaining;
@@ -1379,7 +1379,7 @@ int receive_tcp_msg(char* tcpbuf, unsigned int len,
 
 	/* allocate buffer when needed
 	 * - no buffer yet
-	 * - existing buffer too small (min size is BUF_SIZE - to accomodate most
+	 * - existing buffer too small (min size is BUF_SIZE - to accommodate most
 	 *   of SIP messages; expected larger for HTTP/XCAP)
 	 * - existing buffer too large (e.g., we got a too big message in the past,
 	 *   let's free it)
@@ -1709,7 +1709,7 @@ static ticks_t tcpconn_read_timeout(ticks_t t, struct timer_ln* tl, void* data)
  *            from this fd (e.g.: we are closing it )
  *          0 on EAGAIN or when by some other way it is known that no more
  *            io events are queued on the fd (the receive buffer is empty).
- *            Usefull to detect when there are no more io events queued for
+ *            Useful to detect when there are no more io events queued for
  *            sigio_rt, epoll_et, kqueue.
  *         >0 on successfull read from the fd (when there might be more io
  *            queued -- the receive buffer might still be non-empty)

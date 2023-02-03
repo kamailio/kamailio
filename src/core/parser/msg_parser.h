@@ -383,7 +383,7 @@ typedef struct sip_msg {
 
 	struct lump* add_rm;       /*!< used for all the forwarded requests/replies */
 	struct lump* body_lumps;     /*!< Lumps that update Content-Length */
-	struct lump_rpl *reply_lump; /*!< only for localy generated replies !!!*/
+	struct lump_rpl *reply_lump; /*!< only for locally generated replies !!!*/
 
 	/*! \brief str add_to_branch;
 		whatever whoever want to append to Via branch comes here */
@@ -444,7 +444,7 @@ void free_sip_msg(struct sip_msg* const msg);
 */
 int check_transaction_quadruple(sip_msg_t* const msg);
 
-/*! \brief returns a pointer to the begining of the msg's body
+/*! \brief returns a pointer to the beginning of the msg's body
  */
 char* get_body(sip_msg_t* const msg);
 

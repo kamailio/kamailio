@@ -240,7 +240,7 @@ int register_blocklist_hook(struct blocklist_hook *h, int type)
 			goto error;
 	}
 	if (cb_lst==0 || cb_lst->hooks==0 || cb_lst->max_hooks==0){
-		BUG("register_blocklist_hook: intialization error\n");
+		BUG("register_blocklist_hook: initialization error\n");
 		goto error;
 	}
 
@@ -621,8 +621,8 @@ inline static int _dst_blocklist_del(
 
 /* frees all the expired entries until either there are no more of them
  *  or the total memory used is <= target (to free all of them use -1 for
- *  targer)
- *  params:   target  - free expired entries until no more then taget memory
+ *  target)
+ *  params:   target  - free expired entries until no more than target memory
  *                      is used  (use 0 to free all of them)
  *            delta   - consider an entry expired if it expires after delta
  *                      ticks from now
@@ -697,7 +697,7 @@ static ticks_t blst_timer(ticks_t ticks, struct timer_ln* tl, void* data)
 
 
 /* adds a proto ip:port combination to the blocklist
- * returns 0 on success, -1 on error (blocklist full -- would use more then
+ * returns 0 on success, -1 on error (blocklist full -- would use more than
  *  blst:_max_mem, or out of shm. mem.)
  */
 inline static int dst_blocklist_add_ip(unsigned char err_flags,
@@ -735,7 +735,7 @@ inline static int dst_blocklist_add_ip(unsigned char err_flags,
 #endif
 				UNLOCK_BLST(hash);
 				/* first try to free some memory  (~ 12%), but don't
-				 * spend more then 250 ms*/
+				 * spend more than 250 ms*/
 				dst_blocklist_clean_expired(*blst_mem_used/16*14, 0,
 															MS_TO_TICKS(250));
 				if (unlikely(*blst_mem_used+size >=

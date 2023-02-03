@@ -68,7 +68,7 @@
 
 #define DNS_HASH_SIZE	1024 /* must be <= 65535 */
 #define DEFAULT_DNS_TIMER_INTERVAL 120  /* 2 min. */
-#define DNS_HE_MAX_ADDR 10  /* maxium addresses returne in a hostent struct */
+#define DNS_HE_MAX_ADDR 10  /* maximum addresses returned in a hostent struct */
 #define MAX_CNAME_CHAIN  10
 #define SPACE_FORMAT "    " /* format of view output */
 #define DNS_SRV_ZERO_W_CHANCE	1000 /* one in a 1000*weight_sum chance for
@@ -159,7 +159,7 @@ inline static void dns_destroy_entry(struct dns_hash_entry* e)
 }
 
 
-/* "internal" only, same as above, asumes shm_lock() held (tm optimization) */
+/* "internal" only, same as above, assumes shm_lock() held (tm optimization) */
 inline static void dns_destroy_entry_shm_unsafe(struct dns_hash_entry* e)
 {
 	memset(e, 0, e->total_size);
@@ -479,7 +479,7 @@ int init_dns_cache_stats(int iproc_num)
 
 
 /* must be called with the DNS_LOCK hold
- * remove and entry from the hash, dec. its refcnt and if not referenced
+ * removes an entry from the hash, dec. its refcnt and if not referenced
  * anymore deletes it */
 inline static void _dns_hash_remove(struct dns_hash_entry* e)
 {
@@ -796,7 +796,7 @@ inline static struct dns_hash_entry* dns_cache_mk_ip_entry(str* name,
 	ticks_t now;
 
 	/* everything is allocated in one block: dns_hash_entry + name +
-	 * + dns_rr + rdata;  dns_rr must start at an aligned adress,
+	 * + dns_rr + rdata;  dns_rr must start at an aligned address,
 	 * hence we need to round dns_hash_entry+name size to a sizeof(long)
 	 * multiple.
 	 * Memory image:
@@ -844,7 +844,7 @@ static struct dns_hash_entry* dns_cache_mk_srv_entry(str* name,
 	ticks_t now;
 
 	/* everything is allocated in one block: dns_hash_entry + name +
-	 * + dns_rr + rdata;  dns_rr must start at an aligned adress,
+	 * + dns_rr + rdata;  dns_rr must start at an aligned address,
 	 * hence we need to round dns_hash_entry+name size to a sizeof(long),
 	 * and similarly, dns_rr must be rounded to sizeof(short).
 	 * multiple.
@@ -917,7 +917,7 @@ inline static struct dns_hash_entry* dns_cache_mk_rd_entry(str* name, int type,
 
 
 	/* everything is allocated in one block: dns_hash_entry + name +
-	 * + dns_rr + rdata_raw+ ....;  dns_rr must start at an aligned adress,
+	 * + dns_rr + rdata_raw+ ....;  dns_rr must start at an aligned address,
 	 * hence we need to round dns_hash_entry+name size to a sizeof(long)
 	 * multiple. If rdata type requires it, rdata_raw might need to be also
 	 * aligned.
@@ -927,10 +927,10 @@ inline static struct dns_hash_entry* dns_cache_mk_rd_entry(str* name, int type,
 	 * padding to multiple of sizeof(char*)
 	 * dns_rr1 (e->rr_lst)
 	 * possible padding: no padding for a_rdata or aaaa_rdata,
-	 *                   multipe of sizeof(short) for srv_rdata,
+	 *                   multiple of sizeof(short) for srv_rdata,
 	 *                   multiple of sizeof(long) for naptr_rdata and others
 	 * dns_rr1->rdata  (e->rr_lst->rdata)
-	 * padding to multipe of sizeof long
+	 * padding to multiple of sizeof long
 	 * dns_rr2 (e->rr_lst->next)
 	 * ....
 	 *
@@ -1327,7 +1327,7 @@ inline static struct dns_hash_entry* dns_cache_mk_rd_entry2(struct rdata* rd)
 	no_records=0;
 	rec[0].e=0;
 	/* everything is allocated in one block: dns_hash_entry + name +
-	 * + dns_rr + rdata_raw+ ....;  dns_rr must start at an aligned adress,
+	 * + dns_rr + rdata_raw+ ....;  dns_rr must start at an aligned address,
 	 * hence we need to round dns_hash_entry+name size to a sizeof(long)
 	 * multiple. If rdata type requires it, rdata_raw might need to be also
 	 * aligned.
@@ -1337,10 +1337,10 @@ inline static struct dns_hash_entry* dns_cache_mk_rd_entry2(struct rdata* rd)
 	 * padding to multiple of sizeof(char*)
 	 * dns_rr1 (e->rr_lst)
 	 * possible padding: no padding for a_rdata or aaaa_rdata,
-	 *                   multipe of sizeof(short) for srv_rdata,
+	 *                   multiple of sizeof(short) for srv_rdata,
 	 *                   multiple of sizeof(long) for naptr_rdata and others
 	 * dns_rr1->rdata  (e->rr_lst->rdata)
-	 * padding to multipe of sizeof long
+	 * padding to multiple of sizeof long
 	 * dns_rr2 (e->rr_lst->next)
 	 * ....
 	 *
@@ -2579,7 +2579,7 @@ struct hostent* dns_srv_sip_resolvehost(str* name, unsigned short* port,
  * params:
  *         naptr_head - naptr dns_rr list head
  *         tried      - bitmap used to keep track of the already tried records
- *                      (no more then sizeof(tried)*8 valid records are
+ *                      (no more than sizeof(tried)*8 valid records are
  *                      ever walked
  *         srv_name   - if successful, it will be set to the selected record
  *                      srv name (naptr repl.)
@@ -4379,7 +4379,7 @@ int dns_cache_add_record(unsigned short type,
 
 			if (type == T_SRV) {
 				/* SRV records must be ordered by their priority and weight.
-				 * With modifying an exising rr, or adding new rr to the DNS entry,
+				 * With modifying an existing rr, or adding new rr to the DNS entry,
 				 * the ordered list might got broken which needs to be fixed.
 				 */
 				rr_p = NULL;

@@ -861,7 +861,7 @@ int parse_avp_name( str *name, int *type, numstr_ut *avp_name, int *index)
  *                    (uri, user, domain or global)
  *          \<index\> = \<number\> | '-' \<number\> | ''
  *                    (the avp index, if missing it means AVP_INDEX_ALL, but
- *                     it's use is deprecated)
+ *                     its use is deprecated)
  * More examples:
  *       "fr.bar[1]"  - from track, uri class, avp "bar", the value 1.
  *       "tu./^foo/"  - to track,  user class, all avps for which the name

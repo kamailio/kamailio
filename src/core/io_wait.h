@@ -26,7 +26,7 @@
  * You also have to define:
  *     int handle_io(struct fd_map* fm, short events, int idx) (see below)
  *     (this could be trivially replaced by a callback pointer entry attached
- *      to the io_wait handler if more flexibility rather then performance
+ *      to the io_wait handler if more flexibility rather than performance
  *      is needed)
  *      fd_type - define to some enum of you choice and define also
  *                FD_TYPE_DEFINED (if you don't do it fd_type will be defined
@@ -89,7 +89,7 @@
 #endif /* HAVE_EPOLL */
 
 
-extern int _os_ver; /* os version number, needed to select bugs workarrounds */
+extern int _os_ver; /* os version number, needed to select bugs workarounds */
 
 
 #if 0
@@ -204,7 +204,7 @@ static inline struct fd_map* hash_fd_map(	io_wait_h* h,
 
 #ifdef HANDLE_IO_INLINE
 /* generic handle io routine, this must be defined in the including file
- * (faster then registering a callback pointer)
+ * (faster than registering a callback pointer)
  *
  * params:  fm     - pointer to a fd hash entry
  *          events - combinations of POLLIN, POLLOUT, POLLERR & POLLHUP
@@ -212,7 +212,7 @@ static inline struct fd_map* hash_fd_map(	io_wait_h* h,
  * return: -1 on error
  *          0 on EAGAIN or when by some other way it is known that no more
  *            io events are queued on the fd (the receive buffer is empty).
- *            Usefull to detect when there are no more io events queued for
+ *            Useful to detect when there are no more io events queued for
  *            sigio_rt, epoll_et, kqueue.
  *         >0 on successfull read from the fd (when there might be more io
  *            queued -- the receive buffer might still be non-empty)
@@ -387,7 +387,7 @@ inline static int io_watch_add(	io_wait_h* h,
 		LM_ERR("failed to hash the fd %d\n", fd);
 		goto error;
 	}
-	switch(h->poll_method){ /* faster then pointer to functions */
+	switch(h->poll_method){ /* faster than pointer to functions */
 		case POLL_POLL:
 #ifdef POLLRDHUP
 			/* listen to POLLRDHUP by default (if POLLIN) */
@@ -1154,7 +1154,7 @@ again:
 					constructive we can do if we get an error we don't know
 					how to handle), but apart from that we ignore it in the
 					idea that it is better apply the rest of the changes,
-					rather then dropping all of them.
+					rather than dropping all of them.
 				*/
 				/*
 					example EV_ERROR for trying to delete a read watched fd,
@@ -1295,7 +1295,7 @@ again:
 					(unsigned)sigio_band,
 					sigio_fd);
 #endif
-			/* on some errors (e.g. when receving TCP RST), sigio_band will
+			/* on some errors (e.g. when receiving TCP RST), sigio_band will
 			 * be set to 0x08 (POLLERR) or 0x18 (POLLERR|POLLHUP - on stream
 			 *  unix socket close) , so better catch all events --andrei */
 			if (likely(sigio_band)){

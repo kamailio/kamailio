@@ -380,7 +380,7 @@ int escape_param(str *sin, str *sout)
 
 /*! \brief
  * escapes a string to use as a CSV field, as specified in RFC4180:
- * - enclose sting in double quotes
+ * - enclose string in double quotes
  * - escape double quotes with a second double quote
  */
 int escape_csv(str *sin, str *sout)

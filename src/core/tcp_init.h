@@ -26,7 +26,7 @@
 /* maximum accepted lifetime in ticks (maximum possible is  ~ MAXINT/2) */
 #define MAX_TCP_CON_LIFETIME	((1U<<(sizeof(ticks_t)*8-1))-1)
 
-#define DEFAULT_TCP_SEND_TIMEOUT 10 /* if a send can't write for more then 10s,
+#define DEFAULT_TCP_SEND_TIMEOUT 10 /* if a send can't write for more than 10s,
 									   timeout */
 #define DEFAULT_TCP_CONNECT_TIMEOUT 10 /* if a connect doesn't complete in this
 										  time, timeout */

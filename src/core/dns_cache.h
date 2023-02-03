@@ -311,7 +311,7 @@ struct hostent* dns_get_he(str* name, int flags);
 int dns_sip_resolve(struct dns_srv_handle* h,  str* name, struct ip_addr* ip,
 					unsigned short* port, char* proto, int flags);
 
-/** @brief same as above, but fills su intead of changing port and filling an ip */
+/** @brief same as above, but fills su instead of changing port and filling an ip */
 inline static int dns_sip_resolve2su(struct dns_srv_handle* h,
 									 union sockaddr_union* su,
 									 str* name, unsigned short port,

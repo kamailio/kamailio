@@ -306,7 +306,7 @@ again:
 #ifdef __OS_darwin
 	/* workaround for darwin sigwait bug, see slow_timer_main() for more
 	 * info (or grep __OS_darwin) */
-	/* keep in sync wih main.c: sig_usr() - signals we are interested in */
+	/* keep in sync with main.c: sig_usr() - signals we are interested in */
 	sigaddset(&slow_timer_sset, SIGINT);
 	sigaddset(&slow_timer_sset, SIGTERM);
 	sigaddset(&slow_timer_sset, SIGUSR1);
@@ -436,7 +436,7 @@ inline static void adjust_ticks(void)
 
 
 
-/* time(2) equivalent, using ser internal timers (faster then a syscall) */
+/* time(2) equivalent, using ser internal timers (faster than a syscall) */
 time_t ser_time(time_t *t)
 {
 	if (likely(t==0))
@@ -506,7 +506,7 @@ void timer_free(struct timer_ln* t)
 
 /* unsafe (no lock ) timer add function
  * t = current ticks
- * tl must be filled (the intial_timeout and flags must be set)
+ * tl must be filled (the initial_timeout and flags must be set)
  * returns -1 on error, 0 on success */
 static inline int _timer_add(ticks_t t, struct timer_ln* tl)
 {
@@ -1077,7 +1077,7 @@ void slow_timer_main()
 		/* on darwin sigwait is buggy: it will cause extreme slow down
 		 *  on signal delivery for the signals it doesn't wait on
 		 *  (on darwin 8.8.0, g4 1.5Ghz I've measured a 36s delay!).
-		 * To work arround this bug, we sigwait() on all the signals we
+		 * To work around this bug, we sigwait() on all the signals we
 		 * are interested in kamailio and manually call the main signal handler
 		 * if the signal!= slow timer signal -- andrei */
 		sig_usr(sig);

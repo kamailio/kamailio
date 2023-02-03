@@ -130,7 +130,7 @@
 
 
 extern int yylex();
-/* safer then using yytext which can be array or pointer */
+/* safer than using yytext which can be array or pointer */
 extern char* yy_number_str;
 
 static void yyerror(char* s, ...);
@@ -3264,7 +3264,7 @@ rval_expr: rval						{ $$=$1;
 				rve_tmp=mk_rve2(RVE_SELVALOPT_OP, $5, $7);
 				if(rve_tmp == NULL) {
 					$$=0;
-					yyerror("faild to create tenary target expression");
+					yyerror("failed to create tenary target expression");
 				}
 				$$=mk_rve2(RVE_SELVALEXP_OP, $3, rve_tmp);
 		}
@@ -4308,7 +4308,7 @@ static int mod_f_params_pre_fixup(struct action* a)
 			cmd_exp->fixup_flags  |= FIXUP_F_FPARAM_RVE;
 		else if (!(cmd_exp->fixup_flags & FIXUP_F_FPARAM_RVE) &&
 				 cmd_exp->free_fixup == 0) {
-			/* v0 or v1 functions that have fixups and no coresp. fixup_free
+			/* v0 or v1 functions that have fixups and no corresp. fixup_free
 			   functions, need constant, string params.*/
 			for (r=0; r < param_no; r++) {
 				rve=params[r].u.data;

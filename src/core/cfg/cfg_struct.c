@@ -747,7 +747,7 @@ cfg_group_inst_t *cfg_find_group(cfg_group_meta_t *meta, int group_size, unsigne
 	if (!meta)
 		return NULL;
 
-	/* For now, search lineray. TODO: improve */
+	/* For now, search lineary. TODO: improve */
 	for (i = 0; i < meta->num; i++) {
 		ginst = (cfg_group_inst_t *)((char *)meta->array
 				+ (sizeof(cfg_group_inst_t) + group_size - 1) * i);
@@ -1141,7 +1141,7 @@ void cfg_move_handle(cfg_group_t *group, cfg_group_inst_t *src_ginst, cfg_group_
 			}
 		}
 	}
-	/* keep track of how many group instences are set in the child process */
+	/* keep track of how many group instances are set in the child process */
 	if (!src_ginst && dst_ginst)
 		cfg_ginst_count++;
 	else if (!dst_ginst)

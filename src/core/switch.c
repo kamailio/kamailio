@@ -214,7 +214,7 @@ int fix_switch(struct action* t)
 			n++; /* count only non-default cases */
 		}else{
 			if (default_found){
-				LM_ERR("more then one \"default\"");
+				LM_ERR("more than one \"default\"");
 				return E_UNSPEC;
 			}
 			default_found=1;
@@ -322,10 +322,10 @@ int fix_switch(struct action* t)
 	}
 	/* try to create a jumptable */
 	/* cost: 2 cmp & table lookup
-	   => makes sense for more then 3 cases
+	   => makes sense for more than 3 cases
 	   & if size< MAX_JT_SIZE
 	*/
-	best_hits=3; /* more then 3 hits needed */
+	best_hits=3; /* more than 3 hits needed */
 	start=end=0;
 	for (i=0; i<n; i++){
 		last=first=cond[i];
@@ -529,7 +529,7 @@ static int fix_match(struct action* t)
 			}
 		}else{
 			if (default_found){
-				LM_ERR("more then one \"default\" label found (%d, %d)\n",
+				LM_ERR("more than one \"default\" label found (%d, %d)\n",
 						(c->ct_rve)?c->ct_rve->fpos.s_line:0,
 						(c->ct_rve)?c->ct_rve->fpos.s_col:0);
 				ret=E_UNSPEC;

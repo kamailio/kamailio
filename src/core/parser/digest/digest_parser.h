@@ -99,7 +99,7 @@ typedef struct dig_cred {
  * Macro to obtain the value of realm. The macro would first
  * check if there is any @domain part in the username and if
  * so, it will be returned as the value of realm. This hack is
- * ofter used to protect realm using the digest (username parameter
+ * often used to protect realm using the digest (username parameter
  * is protected by the response hash) and also to allow subscribers
  * to specify a different domain part than the one in realm parameter
  */

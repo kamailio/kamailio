@@ -628,7 +628,7 @@ int forward_request(struct sip_msg* msg, str* dst, unsigned short port,
 		}else{
 			p_onsend=0;
 			ret=ser_error=E_OK;
-			/* exit succcesfully */
+			/* exit succesfully */
 			goto end;
 		}
 #ifdef USE_DNS_FAILOVER

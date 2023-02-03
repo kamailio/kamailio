@@ -31,8 +31,8 @@
 #define _XOPEN_SOURCE_EXTENDED /*!< same as \ref _XOPEN_SOURCE */
 #define __USE_XOPEN_EXTENDED /*!< same as \ref _XOPEN_SOURCE, overrides features.h */
 #define __EXTENSIONS__ /*!< needed on solaris: if XOPEN_SOURCE is defined
-                          struct timeval defintion from <sys/time.h> won't
-                          be included => workarround define _EXTENSIONS_
+                          struct timeval definition from <sys/time.h> won't
+                          be included => workaround define _EXTENSIONS_
                            -andrei */
 #include <signal.h>
 #include <syslog.h>

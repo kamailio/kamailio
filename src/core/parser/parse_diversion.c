@@ -42,7 +42,7 @@
  * returns 0 on success,
  *        -1 on failure.
  *
- * limitations: it parses only the first occurence
+ * limitations: it parses only the first occurrence
  */
 int parse_diversion_header(struct sip_msg *msg)
 {

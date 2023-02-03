@@ -51,7 +51,7 @@ struct timer_head{
  *
  * Uses ~280K on a 64 bits system and ~140K on a 32 bit system; for TICKS_HZ=10
  * holds ~ 30 min in the first hash/wheel and ~233h in the first two.
- * More perfomant arrangement: 16, 8, 8 (but eats 1 MB on a 64 bit system, and
+ * More performant arrangement: 16, 8, 8 (but eats 1 MB on a 64 bit system, and
  *  512K on a 32 bit one). For TICKS_HZ=10 it holds almost 2h in the
  *  first hash/wheel and ~460h in the first two.
  */

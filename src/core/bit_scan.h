@@ -95,7 +95,7 @@
 #elif defined __CPU_sparc64
 /* no asm yet => use branch for everything in 64 bit mode
  *               and debruijn + branch in 32 bit mode
- *  (in 64bit mode the branch method is slightly faster then debruijn,
+ *  (in 64bit mode the branch method is slightly faster than debruijn,
  *   however note that in 32 bit mode the roles are reversed for _forward)*/
 #ifndef BIT_SCAN_BRANCH
 #define BIT_SCAN_BRANCH

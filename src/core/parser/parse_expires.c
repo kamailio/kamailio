@@ -58,7 +58,7 @@ static inline int expires_parser(char* _s, int _l, exp_body_t* _e)
 	_e->text.s = tmp.s;
 	_e->text.len = tmp.len;
 
-	/* more then 32bit/maxuint cant be valid */
+	/* more than 32bit/maxuint can't be valid */
 	if (tmp.len > 10) {
 		_e->valid = 0;
 		return 0;
