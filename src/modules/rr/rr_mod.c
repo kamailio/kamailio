@@ -622,7 +622,7 @@ static void free_rr_lump(struct lump **list)
 			/* if (lump->flags & (LUMPFLAG_DUPED|LUMPFLAG_SHMEM)){
 				LOG(L_CRIT, "BUG: free_rr_lmp: lump %p, flags %x\n",
 						lump, lump->flags);
-			*/	/* ty to continue */
+			*/	/* try to continue */
 			/*}*/
 			a=lump->before;
 			while(a) {
