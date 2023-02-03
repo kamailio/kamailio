@@ -128,7 +128,7 @@ record_route_advertised_address("1.2.3.4:5090");
 		The function checks for the request <quote>msg</quote> if the URI 
 		parameters of the local Route header (corresponding to the local 
 		server) matches the given regular expression <quote>re</quote>. 
-		It must be call after the loose_route was done.
+		It must be called after the loose_route was done.
 		</para>
 		<para>
 		The function returns 0 on success. Otherwise, -1 is returned.
@@ -157,7 +157,7 @@ record_route_advertised_address("1.2.3.4:5090");
 		<quote>msg</quote>. As for checking it's used the <quote>ftag</quote> 
 		Route header parameter, the append_fromtag (see 
 		<xref linkend="append-fromtag-id"/> module parameter 
-		must be enables. Also this must be call only after the loose_route is 
+		must be enables. Also this must be called only after the loose_route is 
 		done.
 		</para>
 		<para>
@@ -185,9 +185,9 @@ record_route_advertised_address("1.2.3.4:5090");
 		<function moreinfo="none">get_route_param( msg, name, val)</function>
 		</title>
 		<para>
-		The function search in to the <quote>msg</quote>'s Route header 
+		The function searches in the <quote>msg</quote>'s Route header 
 		parameters the parameter called <quote>name</quote> and returns its
-		value into <quote>val</quote>. It must be call only after the 
+		value into <quote>val</quote>. It must be called only after the 
 		loose_route is done.
 		</para>
 		<para>
@@ -220,7 +220,7 @@ record_route_advertised_address("1.2.3.4:5090");
 		<function moreinfo="none">register_rrcb( callback, param)</function>
 		</title>
 		<para>
-		The function register a new callback (along with its parameter). The
+		The function registers a new callback (along with its parameter). The
 		callback will be called when a loose route will be performed for the
 		local address.
 		</para>
