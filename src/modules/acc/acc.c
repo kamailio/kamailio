@@ -50,7 +50,7 @@
 
 extern struct acc_extra *log_extra;
 extern struct acc_extra *leg_info;
-extern struct acc_enviroment acc_env;
+extern struct acc_environment acc_env;
 extern char *acc_time_format;
 extern int acc_extra_nullable;
 
@@ -423,7 +423,7 @@ int acc_db_request( struct sip_msg *rq)
 	struct tm t;
 	double dtime;
 
-	/* formated database columns */
+	/* formatted database columns */
 	m = core2strar( rq, val_arr, int_arr, type_arr );
 
 	for(i=0; i<m; i++)

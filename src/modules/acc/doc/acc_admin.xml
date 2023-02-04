@@ -36,7 +36,7 @@
 		module takes no acc-specific script command -- the functionality
 		binds invisibly through transaction processing. Script writers just
 		need to mark the transaction for accounting with proper setflag.
-		Even so, the module allows the script writter to force accounting in
+		Even so, the module allows the script writer to force accounting in
 		special cases via some script functions.
 	</para>
 	<para>
@@ -95,7 +95,7 @@
 			find out about it. In general, a better practice is to account from an
 			end-device (such as PSTN gateway), which best knows about call
 			status (including media status and PSTN status in case of the
-			gateway). However, CDR-base logging has the option to log existing
+			gateway). However, CDR-based logging has the option to log existing
 			information from expired dialogs (the dlg_vars in cdr_extra)
 			Please see cdr_expired_dlg_enable parameter - <xref linkend="acc.p.cdr_expired_dlg_enable"/>.
 			</para>
@@ -220,13 +220,13 @@ if (uri=~"sip:+40") /* calls to Romania */ {
 			<para>
 			A SIP call can have multiple legs due forwarding actions. For
 			example user A calls user B which forwards the call to user C.
-			There is only one SIP call but with 2 legs ( A to B and B to C).
+			There is only one SIP call but with 2 legs (A to B and B to C).
 			Accounting the legs of a call is required for proper billing of
 			the calls (if C is a PSTN number and the call is billed, user B
 			must pay for the call - as last party modifying the call
 			destination-, and not A - as initiator of the call. Call
 			forwarding on server is only one example which shows the
-			necessity of the having an accounting engine with multiple legs
+			necessity of having an accounting engine with multiple legs
 			support.
 			</para>
 		</section>
@@ -250,7 +250,7 @@ if (uri=~"sip:+40") /* calls to Romania */ {
 			</para>
 			<para>
 			By default, the multiple call-leg support is disabled - it can be
-			enabled just be setting the per-leg set of AVPs via the
+			enabled just by setting the per-leg set of AVPs via the
 			<varname>multi_leg_info</varname> module parameter.
 			</para>
 		</section>
@@ -432,7 +432,7 @@ $dlg_var(callee) = $avp(callee); #callee='C'
 		<section>
 			<title>&kamailio; Modules</title>
 			<para>
-			The module depends on the following modules (in the other words
+			The module depends on the following modules (in other words
 			the listed modules must be loaded before this module):
 			<itemizedlist>
 				<listitem>
@@ -494,7 +494,7 @@ modparam("acc", "early_media", 1)
 		<para>
 		Per transaction flag which says if the transaction should be
 		accounted also in case of failure (SIP status code >= 300).
-		This flag triggers accouting when the whole transaction fails
+		This flag triggers accounting when the whole transaction fails
 		(on the server side).
 		</para>
 		<para>
@@ -1057,10 +1057,8 @@ modparam("acc", "db_insert_mode", 1)
 		<para>
 		The value can be:
 		<itemizedlist>
-		<listitem>
-			<para>0 - off (default).</para>
-			<para>1 - on.</para>
-		</listitem>
+		<listitem><para>0 - off (default).</para></listitem>
+		<listitem><para>1 - on.</para></listitem>
 		</itemizedlist>
 		</para>
 		<example>
@@ -1094,10 +1092,10 @@ modparam("acc", "cdr_skip", "nocdr")
 		<para>
 		Should CDR-based logging be enabled in case of expired dialogs?
 		</para>
-		<para>
-		0 - off (default).
-		1 - on.
-		</para>
+		<itemizedlist>
+		<listitem><para>0 - off (default).</para></listitem>
+		<listitem><para>1 - on.</para></listitem>
+		</itemizedlist>
 		<example>
 		<title>cdr_expired_dlg_enable example</title>
 		<programlisting format="linespecific">
@@ -1113,10 +1111,10 @@ modparam("acc", "cdr_expired_dlg_enable", 1)
 		Should the start time be taken from the time when the dialog is created,
         	or when the dialog is confirmed?
 		</para>
-		<para>
-		0 - use time of dialog creation (default).
-		1 - use time of dialog confirmation.
-		</para>
+		<itemizedlist>
+		<listitem><para>0 - use time of dialog creation (default).</para></listitem>
+		<listitem><para>1 - use time of dialog confirmation.</para></listitem>
+		</itemizedlist>
 		<example>
 		<title>cdr_start_on_confirmed example</title>
 		<programlisting format="linespecific">

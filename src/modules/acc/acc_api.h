@@ -49,7 +49,7 @@ typedef struct acc_param {
 } acc_param_t;
 
 /* various acc variables */
-typedef struct acc_enviroment {
+typedef struct acc_environment {
 	unsigned int code;
 	str code_s;
 	str reason;
@@ -58,7 +58,7 @@ typedef struct acc_enviroment {
 	str text;
 	time_t ts;
 	struct timeval tv;
-} acc_enviroment_t;
+} acc_environment_t;
 
 /* acc extra parameter */
 typedef struct acc_extra {
@@ -68,7 +68,7 @@ typedef struct acc_extra {
 } acc_extra_t;
 
 typedef acc_param_t cdr_param_t;
-typedef acc_enviroment_t cdr_enviroment_t;
+typedef acc_environment_t cdr_environment_t;
 typedef acc_extra_t  cdr_extra_t;
 
 typedef int (*core2strar_f)( struct sip_msg *req, str *c_vals,
@@ -87,7 +87,7 @@ typedef int (*extra2strar_dlg_only_f)(struct acc_extra *extra, struct dlg_cell* 
 
 /* acc event data structures */
 typedef struct acc_info {
-	acc_enviroment_t *env;
+	acc_environment_t *env;
 	str *varr;
 	int *iarr;
 	char *tarr;
