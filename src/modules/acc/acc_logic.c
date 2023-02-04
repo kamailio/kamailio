@@ -51,7 +51,7 @@
 extern struct tm_binds tmb;
 extern struct rr_binds rrb;
 
-struct acc_enviroment acc_env;
+struct acc_environment acc_env;
 
 
 #define is_acc_flag_set(_rq,_flag)  (((_flag) != -1) && (isflagset((_rq), (_flag)) == 1))
@@ -419,7 +419,7 @@ void acc_onreq( struct cell* t, int type, struct tmcb_params *ps )
 		}
 		/* if required, determine request direction */
 		if( detect_direction && !rrb.is_direction(ps->req,RR_FLOW_UPSTREAM) ) {
-			LM_DBG("detected an UPSTREAM req -> flaging it\n");
+			LM_DBG("detected an UPSTREAM req -> flagging it\n");
 			ps->req->msg_flags |= FL_REQ_UPSTREAM;
 		}
 	}
@@ -642,7 +642,7 @@ static void acc_onreply(tm_cell_t *t, sip_msg_t *req, sip_msg_t *reply, int code
 		if (hdr->parsed && hdr_allocs_parse(hdr) &&
 					(hdr->parsed<mstart || hdr->parsed>=mend)) {
 			/* header parsed filed doesn't point inside cloned request memory
-			 * chunck -> it was added by resolving acc attributes -> free it as pkg */
+			 * chunk -> it was added by resolving acc attributes -> free it as pkg */
 			DBG("removing hdr->parsed %d\n", hdr->type);
 			clean_hdr_field(hdr);
 			hdr->parsed = 0;

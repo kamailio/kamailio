@@ -348,13 +348,13 @@ static int parse_failed_filter(char *s, unsigned short *failed_filter)
 		at = s;
 		while ((*at >= '0') && (*at <= '9')) at++;
 		if (at - s != 3) {
-			LM_ERR("respose code in failed_filter must have 3 digits\n");
+			LM_ERR("response code in failed_filter must have 3 digits\n");
 			return 0;
 		}
 		failed_filter[n] = (*s - '0') * 100 + (*(s + 1) - '0') * 10 +
 			(*(s + 2) - '0');
 		if (failed_filter[n] < 300) {
-			LM_ERR("invalid respose code %u in failed_filter\n",
+			LM_ERR("invalid response code %u in failed_filter\n",
 					failed_filter[n]);
 			return 0;
 		}
