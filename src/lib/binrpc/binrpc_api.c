@@ -944,7 +944,7 @@ int binrpc_parse_response(struct binrpc_val** vals, int* val_count,
 		*vals = NULL;
 	}
 	else if (i<*val_count){
-/*		do not try to save memory because it causes fragmentation when used ser mem utils and "regualar" memory leak
+/*		do not try to save memory because it causes fragmentation when used ser mem utils and "regular" memory leak
 		struct binrpc_val *t;
 		t = (struct binrpc_val*) binrpc_realloc(*vals, i*sizeof(**vals));
 		if (t) *vals = t;

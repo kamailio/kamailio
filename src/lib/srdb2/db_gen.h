@@ -139,7 +139,7 @@ struct db_drv;
  *
  * All variables and attributes to be shared across all DB API
  * structures should be put into this structure. This structure
- * is at the beginnning of each DB API structure to ensure that
+ * is at the beginning of each DB API structure to ensure that
  * all DB API structures share some common variables.
  */
 typedef struct db_gen {
@@ -156,7 +156,7 @@ typedef struct db_gen {
 
 /*
  * Global variable holding the current index of the payload of the driver that
- * is being executed. DB API is responsible for setting this vaiable before 
+ * is being executed. DB API is responsible for setting this variable before
  * calling functions of DB drivers.
  */
 extern int db_payload_idx;
