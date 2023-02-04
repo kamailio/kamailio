@@ -62,7 +62,7 @@ typedef struct _dstr_buff_t {
 } dstr_buff_t;
 
 /** Dynamic string structure. It is used
- * for muliple appends of any strings. 
+ * for multiple appends of any string.
  *
  * \note There was an attempt to add flags for SHM/PKG memory using, ...
  * but it shows that it slows down, thus they were removed and only the

@@ -102,7 +102,7 @@ void binrpc_close_connection(struct binrpc_handle* handle);
  * Description:
  *   The function send_command provides interface for communication with server 
  *   application via binary rpc protocol. It sends request over unix socket or 
- *   TCP/UDPto the host and reads a respons.
+ *   TCP/UDP to the host and reads a response.
  * 
  * @param handle [in]: a descriptor of connection
  * @param method [in]: string value of XMLRPC method (e.g. system.listMethods)

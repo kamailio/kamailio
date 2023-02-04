@@ -121,7 +121,7 @@ static void destroy_package(notifier_package_t *p)
 		s = ns;
 	}
 	
-	/* !!! don't release notifiers - its their job !!! */
+	/* !!! don't release notifiers - it is their job !!! */
 	/* it may lead to errors there */
 	/* e = p->first_notifier;
 	while (e) {
@@ -230,7 +230,7 @@ static void remove_notifier_from_subscription(qsa_subscription_t *s, notifier_t 
 	for (i = 0; i < cnt; i++) {
 		ss = vector_get_ptr(&s->server_subscriptions, i);
 		if (!ss) continue;
-		/ * FIXME: call n->unsubsribe ??? 
+		/ * FIXME: call n->unsubscribe ???
 		 * NO this is called from unregister which is initiated
 		 * by the notifier (may be synchronized there!) * /
 		if (ss->notifier == n) ss->notifier = NULL; / * "zombie" * /
@@ -379,8 +379,8 @@ void unregister_notifier(notifier_domain_t *domain, notifier_t *info)
 
 /* -------- Subscriber functions -------- */
 
-/* If a notifier publishing watched state registeres after subscibe
- * call, it receives the subscription automaticaly too! */
+/* If a notifier publishing watched state registers after subscribe
+ * call, it receives the subscription automatically too! */
 qsa_subscription_t *subscribe(notifier_domain_t *domain, 
 		str_t *package,
 		qsa_subscription_data_t *data)
@@ -480,7 +480,7 @@ void unsubscribe(notifier_domain_t *domain, qsa_subscription_t *s)
 	s->data = NULL;
 	unlock_subscription_data(s);
 	
-	/* remove clients reference (dont give references to client?) */
+	/* remove clients reference (don't give references to client?) */
 	remove_reference(&s->ref);
 	
 	release_subscription(s); 

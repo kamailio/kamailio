@@ -943,8 +943,8 @@ struct via_body* cscf_get_first_via(struct sip_msg *msg,struct hdr_field **h)
 }
 
 /**
- * Looks for the UE Via in First Via header if its a request
- * or in the last if its a response and returns its body
+ * Looks for the UE Via in First Via header if it is a request
+ * or in the last if it is a response and returns its body
  * @param msg - the SIP message
  * @returns the via of the UE
  */

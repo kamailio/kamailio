@@ -190,7 +190,7 @@ int xcap_query(const char *uri,
 static size_t write_data_func(void *ptr, size_t size, size_t nmemb, void *stream)
 {
 	int s = size * nmemb;
-/*	TRACE_LOG("%d bytes writen\n", s);*/
+/*	TRACE_LOG("%d bytes written\n", s);*/
 	if (s != 0) {
 		if (dstr_append((dstring_t*)stream, ptr, s) != 0) {
 			ERROR_LOG("can't append %d bytes into data buffer\n", s);
