@@ -700,7 +700,7 @@ modparam("usrloc", "db_url", "&exampledb;")
 			4 - This uses database to load records at startup but uses only
 			memory during the runtime. Records are not written back at all,
 			not even at shutdown. Useful for scenarios when registrations are
-			replicated to a node that does the storage in database during
+			replicated to a node that does the storage in a database during
 			runtime.
 			</para>
 		</listitem>
@@ -730,8 +730,8 @@ modparam("usrloc", "db_mode", 2)
 	<section id="usrloc.p.db_load">
 		<title><varname>db_load</varname> (int)</title>
 		<para>
-		Determine if the usrloc module should load contacts from the database storage during module initialization
-		A value of 0 disable the loading from the database, this parameter is ignored if db_mode 4 is set
+		Determine if the usrloc module should load contacts from the database storage during module initialization.
+		A value of 0 disables the loading from the database, this parameter is ignored if db_mode 4 is set.
 		</para>
 		<para>
 		<emphasis>
@@ -1323,7 +1323,7 @@ modparam("usrloc", "version_table", 0)
 		</para>
 		<para>
 		Note: Keepalives will be sent to the IP and port using the transport
-		defined in the “received” column.  If not set, then keepalives will be sent
+		defined in the <quote>received</quote> column.  If not set, then keepalives will be sent
 		to the AOR using UDP as a default transport.  If available, the TCP
 		connection will be re-used for WS, TCP and TLS.
 		</para>
@@ -1755,7 +1755,7 @@ modparam("usrloc", "db_clean_tcp", 1)
 		<title>users</title>
 			<para>
 			Number of AOR existing in the USRLOC memory cache for that domain
-			- can not be reset; this statistic will be register for each
+			- can not be reset; this statistic will be registered for each
 			used domain (Ex: location).
 			</para>
 		</section>
@@ -1763,7 +1763,7 @@ modparam("usrloc", "db_clean_tcp", 1)
 		<title>contacts</title>
 			<para>
 			Number of contacts existing in the USRLOC memory cache for that
-			domain - can not be reset; this statistic will be register for
+			domain - can not be reset; this statistic will be registered for
 			each used domain (Ex: location).
 			</para>
 		</section>
@@ -1771,7 +1771,7 @@ modparam("usrloc", "db_clean_tcp", 1)
 		<title>expires</title>
 			<para>
 			Total number of expired contacts for that domain - can be reset;
-			 this statistic will be register for each used domain
+			 this statistic will be registered for each used domain
 			(Ex: location).
 			</para>
 		</section>

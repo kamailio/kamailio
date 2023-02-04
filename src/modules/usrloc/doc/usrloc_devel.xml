@@ -440,7 +440,7 @@
 		</title>
 		<para>
 		The function register with USRLOC a callback function to be called
-		when some event occures inside USRLOC.
+		when some event occurs inside USRLOC.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
