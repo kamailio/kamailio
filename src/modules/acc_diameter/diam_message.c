@@ -230,7 +230,7 @@ AAAMessage* AAATranslateMessage( unsigned char* source, unsigned int sourceLen,
 	msg_len = get_3bytes( ptr );
 	ptr += MESSAGE_LENGTH_SIZE;
 	if (msg_len>sourceLen) {
-		LM_ERR("AAA message len [%d] bigger then buffer len [%d]\n",
+		LM_ERR("AAA message len [%d] bigger than buffer len [%d]\n",
 				msg_len,sourceLen);
 		goto error;
 	}
