@@ -76,7 +76,7 @@ acc_engine_t _acc_diameter_engine;
 
 /* ----- DIAMETER acc variables ----------- */
 
-/*! \name AccDiamaterVariables  Radius Variables */
+/*! \name AccDiameterVariables  Radius Variables */
 /*@{*/
 int diameter_flag = -1;
 int diameter_missed_flag = -1;
@@ -287,7 +287,7 @@ int acc_diam_init(acc_extra_t *leg_info)
 
 	m = extra2int( leg_info, diam_attrs+n);
 	if (m<0) {
-		LM_ERR("leg info names for DIAMTER must be integer AVP codes\n");
+		LM_ERR("leg info names for DIAMETER must be integer AVP codes\n");
 		return -1;
 	}
 	n += m;

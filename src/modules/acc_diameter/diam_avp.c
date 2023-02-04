@@ -53,7 +53,7 @@ void set_avp_fields( AAA_AVPCode code, AAA_AVP *avp)
 		case 296: /*AVP Origin_Realm*/
 		case 400: /* AVP_Resource */
 		case 401: /* AVP_Response */
-		case 402: /* AVP_Chalenge */
+		case 402: /* AVP_Challenge */
 		case 403: /* AVP_Method */
 		case 404: /* Service_Type AVP */
 		case 405: /* User_Group AVP*/
@@ -62,7 +62,7 @@ void set_avp_fields( AAA_AVPCode code, AAA_AVP *avp)
 			avp->type = AAA_AVP_STRING_TYPE;
 			break;
 		case  27: /*AVP_Session_Timeout*/
-		case 258: /*AVP_Auth_Aplication_Id*/
+		case 258: /*AVP_Auth_Application_Id*/
 		case 262: /*AVP_Redirect_Max_Cache_Time*/
 		case 265: /*AVP_Supported_Vendor_Id*/
 		case 266: /*AVP_Vendor_Id*/

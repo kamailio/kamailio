@@ -77,7 +77,7 @@ int init_mytcp(char* host, int port)
 	if (connect(sfd, (const struct sockaddr *)&serv_addr,
 				sizeof(serv_addr)) < 0)
 	{
-		LM_ERR("failed to connec to the DIAMETER client\n");
+		LM_ERR("failed to connect to the DIAMETER client\n");
 		close(sfd);
 		return -1;
 	}
