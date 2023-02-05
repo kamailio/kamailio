@@ -252,6 +252,27 @@ modparam("sanity", "noreply", 1)
 	    </programlisting>
 	</example>
 	</section>
+
+	<section id="sanity.p.always_log_missed_content_length">
+	<title><varname>always_log_missed_content_length</varname> (integer)</title>
+	<para>
+		If the value is 1 then the SIP message with no 'Content-Length' header
+		will cause warning message in the logs. If the value is 0 then the warning
+		message is not generated for cases when SIP message with no 'Content-Length'
+		header is sent over UDP or SCTP.
+	</para>
+	<para>
+		Default value is 1.
+	</para>
+	<example>
+	    <title>Set <varname>always_log_missed_content_length</varname> parameter</title>
+	    <programlisting>
+...
+modparam("sanity", "always_log_missed_content_length", 0)
+...
+	    </programlisting>
+	</example>
+	</section>
 </section>
 
    <section id="sanity.functions" xmlns:xi="http://www.w3.org/2001/XInclude">

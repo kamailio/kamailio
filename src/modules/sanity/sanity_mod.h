@@ -74,6 +74,9 @@
 #define SANITY_CHECK_ERROR -1
 #define SANITY_CHECK_NOT_APPLICABLE -2
 
+#define SANITY_DONT_LOG_MISSED_CONTENT_LEN 0
+#define SANITY_LOG_MISSED_CONTENT_LEN 1
+
 extern int default_checks;
 extern str_list_t* proxyrequire_list;
 

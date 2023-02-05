@@ -40,6 +40,7 @@ int default_msg_checks = SANITY_DEFAULT_CHECKS;
 int default_uri_checks = SANITY_DEFAULT_URI_CHECKS;
 int _sanity_drop = 1;
 int ksr_sanity_noreply = 0;
+int always_log_missed_content_length = SANITY_LOG_MISSED_CONTENT_LEN;
 
 str_list_t* proxyrequire_list = NULL;
 
@@ -70,11 +71,12 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"default_checks",	PARAM_INT,	&default_msg_checks	},
-	{"uri_checks",		PARAM_INT,	&default_uri_checks	},
-	{"proxy_require",	PARAM_STR,	&pr_str			},
-	{"autodrop",		PARAM_INT,	&_sanity_drop	},
-	{"noreply",			PARAM_INT,	&ksr_sanity_noreply	},
+	{"default_checks",			PARAM_INT,	&default_msg_checks	},
+	{"uri_checks",				PARAM_INT,	&default_uri_checks	},
+	{"proxy_require",			PARAM_STR,	&pr_str			},
+	{"autodrop",				PARAM_INT,	&_sanity_drop	},
+	{"noreply",				PARAM_INT,	&ksr_sanity_noreply	},
+	{"always_log_missed_content_length",	PARAM_INT,	&always_log_missed_content_length	},
 	{0, 0, 0}
 };
 
