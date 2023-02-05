@@ -886,7 +886,7 @@ uac_restore_to();
 			The parameter can be a static integer or a variable holding an integer value.
 			</para>
 			<para>
-			This function can be used from FAILURE_ROUTE.
+			This function can be used from FAILURE_ROUTE and BRANCH_FAILURE_ROUTE event route.
 			</para>
 			<example>
 				<title><function>uac_auth</function> usage</title>
@@ -938,7 +938,7 @@ failure_route[TRUNKAUTH] {
 			The parameter can be a static integer or a variable holding an integer value.
 			</para>
 			<para>
-			This function can be used from FAILURE_ROUTE.
+			This function can be used from FAILURE_ROUTE and BRANCH_FAILURE_ROUTE event route.
 			</para>
 			<example>
 				<title><function>uac_auth_mode</function> usage</title>
