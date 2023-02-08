@@ -61,7 +61,7 @@ typedef struct _reginfo_subscription {
 
 /** Subscription list */
 typedef struct {
-	gen_lock_t *lock; 				/**< lock fo subscription list operations       */
+	gen_lock_t *lock; 				/**< lock for subscription list operations       */
 	reginfo_subscription *head; 	/**< first subscription in the list    */
 	reginfo_subscription *tail; 	/**< last subscription in the list   */
 } reginfo_subscription_hash_slot;
