@@ -681,7 +681,7 @@ static int set_cipher_list(tls_domain_t* d)
 	char* cipher_list;
 
 	cipher_list=d->cipher_list.s;
-#ifdef TLS_KSSL_WORKARROUND
+#ifdef TLS_KSSL_WORKAROUND
 	if (openssl_kssl_malloc_bug) { /* is openssl bug #1467 present ? */
 		if (d->cipher_list.s==0) {
 			/* use "DEFAULT:!KRB5" */
@@ -700,7 +700,7 @@ static int set_cipher_list(tls_domain_t* d)
 			}
 		}
 	}
-#endif /* TLS_KSSL_WORKARROUND */
+#endif /* TLS_KSSL_WORKAROUND */
 	if (!cipher_list) return 0;
 	procs_no=get_max_procs();
 	for(i = 0; i < procs_no; i++) {
@@ -823,7 +823,7 @@ static int set_ssl_options(tls_domain_t* d)
 #endif
 
 	procs_no=get_max_procs();
-	options=SSL_OP_ALL; /* all the bug workarrounds by default */
+	options=SSL_OP_ALL; /* all the bug workarounds by default */
 #if OPENSSL_VERSION_NUMBER >= 0x00907000L
 	options|=SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION |
 				SSL_OP_CIPHER_SERVER_PREFERENCE;
@@ -1323,7 +1323,7 @@ static int load_private_key(tls_domain_t* d)
 		for(idx = 0, ret_pwd = 0; idx < 3; idx++) {
 #ifndef OPENSSL_NO_ENGINE
 			// in PROC_INIT skip loading HSM keys due to
-			// fork() issues with PKCS#11 libaries
+			// fork() issues with PKCS#11 libraries
 			if (strncmp(d->pkey_file.s, "/engine:", 8) != 0) {
 				ret_pwd = SSL_CTX_use_PrivateKey_file(d->ctx[i], d->pkey_file.s,
 					SSL_FILETYPE_PEM);

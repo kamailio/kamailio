@@ -18,7 +18,7 @@
 
 /*! \defgroup tls Kamailio TLS support
  *
- * This modules implements SIP over TCP with TLS encryption.
+ * This module implements SIP over TCP with TLS encryption.
  * Make sure you read the README file that describes configuration
  * of TLS for single servers and servers hosting multiple domains,
  * and thus using multiple SSL/TLS certificates.
@@ -116,20 +116,20 @@ void ksr_tls_lock_destroy(void)
 #    include "fixed_c_zlib.h"
 #endif
 
-#ifdef TLS_KSSL_WORKARROUND
+#ifdef TLS_KSSL_WORKAROUND
 #if OPENSSL_VERSION_NUMBER < 0x00908050L
 #	warning "openssl lib compiled with kerberos support which introduces a bug\
 	(wrong malloc/free used in kssl.c) -- attempting workaround"
-#	warning "NOTE: if you don't link libssl staticaly don't try running the \
+#	warning "NOTE: if you don't link libssl statically don't try running the \
 	compiled code on a system with a differently compiled openssl (it's safer \
 			to compile on the  _target_ system)"
 #endif /* OPENSSL_VERSION_NUMBER */
-#endif /* TLS_KSSL_WORKARROUND */
+#endif /* TLS_KSSL_WORKAROUND */
 
 /* openssl < 1. 0 */
 #if OPENSSL_VERSION_NUMBER < 0x01000000L
 #	warning "openssl < 1.0: no TLS extensions or server name support"
-#endif /* OPENSSL_VERION < 1.0 */
+#endif /* OPENSSL_VERSION < 1.0 */
 
 
 
@@ -146,7 +146,7 @@ void ksr_tls_lock_destroy(void)
 #endif
 
 
-#ifdef TLS_KSSL_WORKARROUND
+#ifdef TLS_KSSL_WORKAROUND
 int openssl_kssl_malloc_bug=0; /* is openssl bug #1467 present ? */
 #endif
 
@@ -211,7 +211,7 @@ inline static int backtrace2str(char* buf, int size)
 			}else if ((s=strchr(bt_strs[i], '['))!=0){
 				e=s+strlen(s);
 			}else{
-				s=bt_strs[i]; e=s+strlen(s); /* add thw whole string */
+				s=bt_strs[i]; e=s+strlen(s); /* add the whole string */
 			}
 			next=buf_append(p, end, s, (int)(long)(e-s));
 			if (next==0) break;
@@ -870,7 +870,7 @@ int tls_h_mod_init_f(void)
 		}
 	}
 
-#ifdef TLS_KSSL_WORKARROUND
+#ifdef TLS_KSSL_WORKAROUND
 	/* if openssl compiled with kerberos support, and openssl < 0.9.8e-dev
 	 * or openssl between 0.9.9-dev and 0.9.9-beta1 apply workaround for
 	 * openssl bug #1467 */
@@ -916,7 +916,7 @@ int tls_h_mod_init_f(void)
 	if ((low_mem_threshold1 != cfg_get(tls, tls_cfg, low_mem_threshold1))
 			|| (low_mem_threshold2
 				!= cfg_get(tls, tls_cfg, low_mem_threshold2))) {
-		/* ugly hack to set the initial values for the mem tresholds */
+		/* ugly hack to set the initial values for the mem thresholds */
 		if (cfg_register_ctx(&cfg_ctx, 0)) {
 			LM_ERR("failed to register cfg context\n");
 			return -1;
