@@ -60,7 +60,7 @@ extern str auth_scheme_types[];
 extern str scscf_name_str;
 extern struct _pv_req_data _pv_treq;
 
-//we use pseudo variables to communicate back to config file this takes the result and converys to a return code, publishes it a pseudo variable
+//We use pseudo variables to communicate back to config file. This takes the result, converts it to a return code and publishes it as a pseudo variable.
 
 int create_return_code(int result) {
     int rc;
@@ -435,7 +435,7 @@ success:
 done:
 
 	if (avlist) {
-		if (!data->is_resync)	//only start the timer if we used the vector above - we dont use it resync mode
+		if (!data->is_resync)	//only start the timer if we used the vector above - we don't use it resync mode
 		start_reg_await_timer(avlist[0]); //start the timer to remove stale or unused Auth Vectors
 
 		//now we add it to the queue as sent as we have already sent the challenge and used it and set the status to SENT
@@ -496,7 +496,7 @@ error1:
  * Create and send a Multimedia-Authentication-Request and returns the parsed Answer structure.
  * This function retrieves authentication vectors from the HSS.
  * @param msg - the SIP message to send for
- * @parma public_identity - the public identity of the user
+ * @param public_identity - the public identity of the user
  * @param private_identity - the private identity of the user
  * @param count - how many authentication vectors to ask for
  * @param algorithm - for which algorithm

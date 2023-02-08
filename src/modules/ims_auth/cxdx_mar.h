@@ -97,7 +97,7 @@ int create_return_code(int result);
  * Create and send a Multimedia-Authentication-Request and returns the parsed Answer structure.
  * This function retrieves authentication vectors from the HSS.
  * @param msg - the SIP message to send for
- * @parma public_identity - the public identity of the user
+ * @param public_identity - the public identity of the user
  * @param private_identity - the private identity of the user
  * @param count - how many authentication vectors to ask for
  * @param algorithm - for which algorithm

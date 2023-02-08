@@ -802,7 +802,7 @@ int authenticate(struct sip_msg* msg, char* _realm, char* str2, int is_proxy_aut
     if (!av) {
         /* if none found, or nonce reuse is disabled, look for a fresh vector
          * We should also drop every other used vector at this point
-         * (there souldn't be more than one) */
+         * (there shouldn't be more than one) */
     	LM_DBG("Looking for auth vector based on IMPI: [%.*s] and IMPU: [%.*s]\n", private_identity.len, private_identity.s, public_identity.len, public_identity.s);
         auth_userdata *aud;
         auth_vector *av_it;
@@ -959,7 +959,7 @@ int authenticate(struct sip_msg* msg, char* _realm, char* str2, int is_proxy_aut
         }
         ret = AUTH_OK;
 
-        if (add_authinfo_hdr && expires != 0 /* don't add auth. info if de-registation */) {
+        if (add_authinfo_hdr && expires != 0 /* don't add auth. info if de-registration */) {
             /* calculate rspauth */
             calc_response(ha1, &nonce,
                     &nc,
