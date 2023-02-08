@@ -333,7 +333,7 @@ static int xhttp_handler(sip_msg_t *msg)
 	ret = NONSIP_MSG_DROP;
 
 	if(!IS_HTTP(msg)) {
-		/* oly http msg type */
+		/* only http msg type */
 		return NONSIP_MSG_PASS;
 	}
 
