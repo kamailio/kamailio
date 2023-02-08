@@ -57,7 +57,7 @@
 
 int tls_run_event_routes(struct tcp_connection *c);
 
-/* low memory treshold for openssl bug #1491 workaround */
+/* low memory threshold for openssl bug #1491 workaround */
 #define LOW_MEM_NEW_CONNECTION_TEST() \
 	(cfg_get(tls, tls_cfg, low_mem_threshold1) && \
 		(shm_available_safe() < cfg_get(tls, tls_cfg, low_mem_threshold1)))
@@ -219,7 +219,7 @@ static str *tls_get_connect_server_name(void)
  * Separated from tls_tcpconn_init to allow delayed ssl context
  * init (from the "child" process and not from the main one).
  * WARNING: the connection should be already locked.
- * @return 0 on success, -1 on errror.
+ * @return 0 on success, -1 on error.
  */
 static int tls_complete_init(struct tcp_connection* c)
 {
@@ -306,7 +306,7 @@ static int tls_complete_init(struct tcp_connection* c)
 #endif
 
 #if OPENSSL_VERSION_NUMBER < 0x010100000L
-#ifdef TLS_KSSL_WORKARROUND
+#ifdef TLS_KSSL_WORKAROUND
 	/* if needed apply workaround for openssl bug #1467 */
 	if (data->ssl->kssl_ctx && openssl_kssl_malloc_bug){
 		kssl_ctx_free(data->ssl->kssl_ctx);
@@ -1013,7 +1013,7 @@ ssl_eof:
  * Each modification of ssl data structures has to be protected, another process
  * might ask for the same connection and attempt write to it which would
  * result in updating the ssl structures.
- * WARNING: must be called whic c->write_lock _unlocked_.
+ * WARNING: must be called with c->write_lock _unlocked_.
  * @param c - tcp connection pointer. The following flags might be set:
  * @param flags - value/result:
  *                     input: RD_CONN_FORCE_EOF  - force EOF after the first
@@ -1106,7 +1106,7 @@ redo_read:
 		/* read() only if no previously detected EOF, or previous
 		 * short read (which means the socket buffer was emptied) */
 		if (likely(!(*flags & (RD_CONN_EOF|RD_CONN_SHORT_READ)))) {
-			/* don't read more then the free bytes in the tcp req buffer */
+			/* don't read more than the free bytes in the tcp req buffer */
 			read_size = MIN_unsigned(rd.size, bytes_free);
 			bytes_read = tcp_read_data(c->fd, c, (char*)rd.buf, read_size,
 										flags);

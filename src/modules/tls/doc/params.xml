@@ -467,7 +467,7 @@ modparam("tls", "connection_timeout", 60)
 	<title><varname>tls_disable_compression</varname> (boolean)</title>
 	<para>
 		If set compression over TLS will be disabled.
-		Note that compression uses a lot of memory (about 10x more then with
+		Note that compression uses a lot of memory (about 10x more than with
 		the compression disabled), so if you want to minimize
 		memory usage is a good idea to disable it. TLS compression also 
 		expose you for the 
@@ -568,9 +568,9 @@ modparam("tls", "ssl_freelist_max_len", 0)
 		allow a successful handshake (try minimum 1024).
 	</para>
 	<para>
-		Lower values would lead to less memory usage, but values lower then
+		Lower values would lead to less memory usage, but values lower than
 		the typical &kamailio; write size would incur a slight performance
-		penalty. Good values are bigger then the  size of the biggest
+		penalty. Good values are bigger than the size of the biggest
 		SIP packet one normally expects to forward. For example in most
 		setups 2048 would be a good value.
 	</para>
@@ -579,7 +579,7 @@ modparam("tls", "ssl_freelist_max_len", 0)
 			Values on the lower side, even if valid (> 512), might not allow
 			for a successful initial handshake. This happens if the
 			certificate does not fit inside one send fragment.
-			Values lower then 1024 should not be used.
+			Values lower than 1024 should not be used.
 			Even with higher values, if the handshake fails,
 			try increasing the value.
 		</para>
@@ -1042,7 +1042,7 @@ modparam("tls", "renegotiation", 1)
 	</para>
 	<para>
 		If flag (bit) at index 0 is set (value 1), the memory management operations
-		registered for TLS are wapped within a pthread mutex lock. It can be useful
+		registered for TLS are wrapped within a pthread mutex lock. It can be useful
 		with newer versions of libssl and libcrypto, which have a more pthread
 		multi-threading oriented design.
 	</para>
@@ -1312,7 +1312,7 @@ end
 		the PRNG engine is set to "cryptorand".
 	</para>
 	<para>
-		The following options are avaialble:
+		The following options are available:
 	</para>
 	<itemizedlist>
 		<listitem><para>krand - use internal kam_rand() function</para></listitem>

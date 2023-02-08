@@ -107,7 +107,7 @@ inline static unsigned int tls_ct_q_destroy(tls_ct_q** ct_q)
  *                    flush_f(flush_p, const void* buf, unsigned size).
  *                    It should return the number of bytes "flushed" on
  *                    success, or <0 on error. If the number of bytes
- *                    "flushed" is smaller then the requested size, it
+ *                    "flushed" is smaller than the requested size, it
  *                    would be assumed that no more bytes can be flushed
  *                    and sbufq_flush will exit.
  * @param flush_p1 - parameter for the flush function callback.
