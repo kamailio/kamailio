@@ -188,7 +188,7 @@ void async_aar_callback(int is_timeout, void *param, AAAMessage *aaa, long elaps
         LM_DBG("Received negative reply from PCRF for AAR Request\n");
         counter_inc(ims_qos_cnts_h.failed_media_aars);
         //we don't free rx_authdata_p here - it is free-ed when the CDP session expires
-        goto error; // if its not a success then that means i want to reject this call!
+        goto error; // if it is not a success then that means I want to reject this call!
     }
 
     //set success response code AVP
@@ -334,7 +334,7 @@ void async_aar_reg_callback(int is_timeout, void *param, AAAMessage *aaa, long e
 
         //at this point we have the contact
         /*set the contact state to say we have successfully done ARR for register
-         * and that we dont need to do it again
+         * and that we don't need to do it again
          * for the duration of the registration.
          * */
         if (ul.update_rx_regsession(domain_t, &local_data->auth_session_id, pcontact) != 0) {

@@ -98,7 +98,7 @@ AAAMessage* rx_process_asr(AAAMessage *request) {
     if (p_session_data->subscribed_to_signaling_path_status) {
         LM_DBG("This is a subscription to signalling status\n");
     } else {
-        LM_DBG("This is a normal media bearer -  bearer is releaed by CDP callbacks\n");
+        LM_DBG("This is a normal media bearer -  bearer is released by CDP callbacks\n");
     }
     cdpb.AAASessionsUnlock(session->hash);
     return 0;

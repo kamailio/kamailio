@@ -610,7 +610,7 @@ void callback_pcscf_contact_cb(struct pcontact *c, int type, void *param)
 
 
 		if (type == PCSCF_CONTACT_EXPIRE || type == PCSCF_CONTACT_DELETE) {
-				// we dont need to send STR if no QoS was ever successfully registered!
+				// we don't need to send STR if no QoS was ever successfully registered!
 				if (must_send_str && (c->reg_state != PCONTACT_REG_PENDING) && (c->reg_state != PCONTACT_REG_PENDING_AAR)) {
 						LM_DBG("Received notification of contact (in state [%d] deleted for signalling bearer with  with Rx session ID: [%.*s]\n",
 								c->reg_state, c->rx_session_id.len, c->rx_session_id.s);
@@ -746,7 +746,7 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* dir, char *c_id, int
 		}
 
 		if (t->uas.status >= 200) {
-				LM_DBG("trasaction sent out a final response already - %d\n",
+				LM_DBG("transaction sent out a final response already - %d\n",
 						t->uas.status);
 				return result;
 		}
@@ -801,14 +801,14 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* dir, char *c_id, int
 		orig_sip_request_msg = &_pv_treq.msg;
 
 
-		//we dont apply QoS if its not a reply to an INVITE! or UPDATE or PRACK!
+		//we do not apply QoS if it is not a reply to an INVITE! or UPDATE or PRACK!
 		if ((t->method.len == 5 && memcmp(t->method.s, "PRACK", 5) == 0)
 				|| (t->method.len == 6 && (memcmp(t->method.s, "INVITE", 6) == 0
 				|| memcmp(t->method.s, "UPDATE", 6) == 0))) {
 				if (cscf_get_content_length(msg) == 0
 						|| cscf_get_content_length(orig_sip_request_msg) == 0) {
 						LM_DBG("No SDP offer answer -> therefore we can not do Rx AAR");
-						//goto aarna; //AAR na if we dont have offer/answer pair
+						//goto aarna; //AAR na if we don't have offer/answer pair
 						return result;
 				}
 		} else {
@@ -888,7 +888,7 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* dir, char *c_id, int
 				return result;
 		}
 
-		//Check that we dont already have an auth session for this specific dialog
+		//Check that we don't already have an auth session for this specific dialog
 		//if not we create a new one and attach it to the dialog (via session ID).
 		enum dialog_direction dlg_direction = get_dialog_direction(direction);
 		if (dlg_direction == DLG_MOBILE_ORIGINATING) {
@@ -1101,7 +1101,7 @@ static int w_rx_aar(struct sip_msg *msg, char *route, char* dir, char *c_id, int
 				LM_DBG("Attached CDP auth session [%.*s] for Rx to dialog in %s mode\n", auth_session->id.len, auth_session->id.s, direction);
 		} else {
 				LM_DBG("Update AAR session for this dialog in mode %s\n", direction);
-				//check if this is triggered by a 183 - if so break here as its probably a re-transmit
+				//check if this is triggered by a 183 - if so break here as it is probably a re-transmit
 				if ((msg->first_line).u.reply.statuscode == 183) {
 						LM_DBG("Received a 183 for a diameter session that already exists - just going to ignore this\n");
 						cdpb.AAASessionsUnlock(auth_session->hash);
@@ -1447,7 +1447,7 @@ static int w_rx_aar_register(struct sip_msg *msg, char* route, char* str1, char*
 										} else {
 												aar_sent = 1;
 												//before we send - bump up the reply counter
-												saved_t_data->answers_not_received++; //we dont need to lock as we already hold the lock above
+												saved_t_data->answers_not_received++; //we don't need to lock as we already hold the lock above
 										}
 								} else {
 										//contact exists - this is a re-registration, for now we just ignore this
