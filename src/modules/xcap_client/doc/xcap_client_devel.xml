@@ -38,7 +38,7 @@ typedef struct xcap_api {
 	xcap_nodeSel_add_terminal_t add_terminal;
 	xcap_nodeSel_free_t free_node_sel;
 	xcapGetNewDoc_t getNewDoc; /* an initial request for the module 
-	fo fetch this document that does not exist in xcap db table
+	to fetch this document that does not exist in xcap db table
 	and handle its update*/
 
 	/* function to register a callback to document changes*/
