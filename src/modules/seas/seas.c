@@ -387,7 +387,7 @@ again:
 			/** TODO handle this correctly !!!*/
 		}
 	}
-	//this shouln't be here, because it will remove the transaction from memory, but
+	//this shouldn't be here, because it will remove the transaction from memory, but
 	//if transaction isn't unref'ed iw will be released anyway at t_unref if kr (killreason)==0
 	// a wait timer will be put to run with WT_TIME_OUT (5 seconds, within which the AS should respond)
 	// this is a bug !!! I think this is why we lose calls at high load !!
@@ -457,7 +457,7 @@ char * create_as_event_t(struct cell *t,struct sip_msg *msg,char processor_id,in
 		LM_DBG("new CANCEL\n");
 		originalT=seas_f.tmb.t_lookup_original(msg);
 		if(!originalT || originalT==T_UNDEFINED){
-			/** we dont even pass the unknown CANCEL to JAIN*/
+			/** we don't even pass the unknown CANCEL to JAIN*/
 			LM_WARN("CANCEL does not match any existing transaction!!\n");
 			goto error;
 		}else{

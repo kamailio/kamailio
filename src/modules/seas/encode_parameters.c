@@ -52,7 +52,7 @@
  *
  * TODO this is little shitty, someone should unify all the param flavours 
  * to a sigle universal type of parameter (to_param,param,disposition_param)
- * the way is done here, at least, we dont have the parameter-hanling code spread all around.
+ * the way is done here, at least, we don't have the parameter-hanling code spread all around.
  */
 int encode_parameters(unsigned char *where,void *pars,char *hdrstart,void *_body,char to)
 {

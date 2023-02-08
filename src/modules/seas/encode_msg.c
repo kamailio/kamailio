@@ -112,7 +112,7 @@ char get_header_code(struct hdr_field *hf)
  * parts.
  *
  * RETURNS: LENGTH of structure on success, <0 if failure
- * if there was failure, you dont need to pkg_free the payload (it is done inside).
+ * if there was failure, you don't need to pkg_free the payload (it is done inside).
  * if there was success, you __NEED_TO_PKG_FREE_THE_PAYLOAD__ from the calling function.
  *
  * The encoded meta-info is composed by 3 sections:
@@ -180,7 +180,7 @@ int encode_msg(struct sip_msg *msg,char *payload,int len)
 	} else {
 		h=(unsigned short)(ms->u.reply.statuscode);
 	}
-   if(h==32){/*statuscode wont be 32...*/
+   if(h==32){/*statuscode won't be 32...*/
       myerror="unknown message type\n";
       goto error;
    }
@@ -290,7 +290,7 @@ int decode_msg(struct sip_msg *msg,char *code, unsigned int len)
 
    memcpy(&h,&code[2],2);
    h=ntohs(h);
-   /*TODO use shorcuts in meta-info header.*/
+   /*TODO use shortcuts in meta-info header.*/
 
    msg->buf=&code[h];
    memcpy(&h,&code[4],2);

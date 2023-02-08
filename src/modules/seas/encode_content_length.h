@@ -18,8 +18,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef __ENCODE_CONTENT_LENGHT_H__
-#define __ENCODE_CONTENT_LENGHT_H__
+#ifndef __ENCODE_CONTENT_LENGTH_H__
+#define __ENCODE_CONTENT_LENGTH_H__
 int encode_contentlength(char *hdr,int hdrlen,long int len,char *where);
 int print_encoded_contentlength(FILE* fd,char *hdr,int hdrlen,unsigned char *payload,int paylen,char *prefix);
 #endif

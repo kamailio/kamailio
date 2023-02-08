@@ -211,7 +211,7 @@ void action_stat(struct cell *t)
 
 
 /**
- * stats socket sould be an IP_address:port or unix://path/to_file
+ * stats socket should be an IP_address:port or unix://path/to_file
  * TODO handling unix sockets and IPv6 !!
  *
  * returns 
@@ -297,7 +297,7 @@ error:
 }
 
 /**
- * stats socket sould be an IP_address:port or unix://path/to_file
+ * stats socket should be an IP_address:port or unix://path/to_file
  * TODO handling unix sockets and IPv6 !!
  *
  * returns 
@@ -351,7 +351,7 @@ void serve_stats(int fd)
 	 }
 	 retrn=print_stats_info(f,sock);
 	 if(retrn==-1){
-	    /**simple error happened, dont worry*/
+	    /**simple error happened, don't worry*/
 	       LM_ERR("printing statisticss \n");
 	       continue;
 	 }else if(retrn==-2){

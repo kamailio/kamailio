@@ -730,7 +730,7 @@ int ac_reply(as_p the_as,unsigned char processor_id,unsigned int flags,char *act
    LM_DBG("Trying to construct a SipReply with: ReasonPhrase:[%.*s] body:[%.*s] headers:[%.*s] totag:[%.*s]\n",\
 	 my_msg->first_line.u.reply.reason.len,my_msg->first_line.u.reply.reason.s,\
 	 body.len,body.s,new_header.len,new_header.s,totag.len,totag.s);
-   /* t_reply_with_body un-ref-counts the transaction, so dont use it anymore*/
+   /* t_reply_with_body un-ref-counts the transaction, so don't use it anymore*/
    if(seas_f.tmb.t_reply_with_body(c,my_msg->first_line.u.reply.statuscode,&(my_msg->first_line.u.reply.reason),&body,&new_header,&totag)<0){
       LM_ERR("Failed to t_reply\n");
       goto error;
@@ -995,7 +995,7 @@ int ac_uac_req(as_p the_as,unsigned char processor_id,unsigned int flags,char *a
    if(tb->tag_value.s && tb->tag_value.len)
       shm_str_dup(&my_dlg->id.rem_tag,&tb->tag_value);
    /**Awful hack: to be able to set our own CSeq, from_tag and call-ID we have
-    * to use req_within instead of req_outside (it sets it's own CSeq,Call-ID
+    * to use req_within instead of req_outside (it sets its own CSeq, Call-ID
     * and ftag), so we have to simulate that the dialog is already in completed
     * state so...
     */
@@ -1019,7 +1019,7 @@ int ac_uac_req(as_p the_as,unsigned char processor_id,unsigned int flags,char *a
       body.s[clen]=0;
       LM_DBG("Trying to construct a Sip Request with: body:%d[%.*s] headers:%d[%.*s]\n",\
 	    body.len,body.len,body.s,headers.len,headers.len,headers.s);
-      /*t_reply_with_body un-ref-counts the transaction, so dont use it anymore*/
+      /*t_reply_with_body un-ref-counts the transaction, so don't use it anymore*/
    }else{
       body.s=NULL;
       body.len=0;
@@ -1408,7 +1408,7 @@ int as_action_fail_resp(int uac_id,int sip_error,char *err_buf,int i)
 
 /*
  * This callback function should be used in order to free the parameters passed to uac_cb.
- * This callback is called when the transaction is detroyed.
+ * This callback is called when the transaction is destroyed.
  */
 void uac_cleanup_cb(struct cell* t, int type, struct tmcb_params *rcvd_params)
 {
@@ -1463,7 +1463,7 @@ exit:
 
 /**
  * This function will be called from a SER process when a reply is received for
- * the transaction. The SER processes only have acces to the EventDispatcher 
+ * the transaction. The SER processes only have access to the EventDispatcher
  * fifo (not to the ActionDispatcher) so EventDispatcher will be the one who 
  * will send the event to the AppServer.
  */
