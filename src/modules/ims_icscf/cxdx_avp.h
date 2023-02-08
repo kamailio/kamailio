@@ -209,7 +209,7 @@ int cxdx_get_auth_data_item_answer(AAAMessage *msg, AAA_AVP **auth_data,
  * @param nonce - Nonce
  * @param URI - URI
  * @param response - Response
- * @param algoritm - Algorithm
+ * @param algorithm - Algorithm
  * @param method - Method
  * @param hash - Enitity-Body-Hash
  * @returns grouped str on success

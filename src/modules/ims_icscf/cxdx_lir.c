@@ -51,7 +51,7 @@
 #include "ims_icscf_mod.h"
 #include "location.h"
 
-//we use pseudo variables to communicate back to config file this takes the result and converys to a return code, publishes it a pseudo variable
+//We use pseudo variables to communicate back to config file. This takes the result, converts it to a return code and publishes it as a pseudo variable.
 int create_lia_return_code(int result) {
     int rc;
     int_str avp_val, avp_name;
