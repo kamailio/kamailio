@@ -22,7 +22,7 @@
 
 /*!
  * \file
- * \brief Module with several utiltity functions related to SIP messages handling
+ * \brief Module with several utility functions related to SIP messages handling
  * \ingroup siputils
  * - Module \ref siputils
  */

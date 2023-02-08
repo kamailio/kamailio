@@ -575,7 +575,7 @@ int w_uri_param_rm(struct sip_msg* _msg, char* _param, char* _str2)
  * Converts URI, if it is tel URI, to SIP URI.  Returns 1, if
  * conversion succeeded and 2 if no conversion was needed, i.e., URI was not
  * tel URI.  Returns -1, if conversion failed.  Takes SIP URI hostpart from
- * second parameter and (if needed) writes the result to third paramater.
+ * second parameter and (if needed) writes the result to third parameter.
  */
 int tel2sip(struct sip_msg* _msg, char* _uri, char* _hostpart, char* _res)
 {

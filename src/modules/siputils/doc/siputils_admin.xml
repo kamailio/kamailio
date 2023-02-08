@@ -1181,7 +1181,7 @@ if (is_supported("outbound")) { ... }
 		for replies true also in the case of additional SIP reply reception.
 		</para>
 		<para>
-		Parameter mode is optional and can be an integer or a varaible holding
+		Parameter mode is optional and can be an integer or a variable holding
 		an integer. If not provided, the behaviour is like mode==0.
 		</para>
 		<para>
