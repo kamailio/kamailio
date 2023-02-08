@@ -43,7 +43,7 @@
 	</para>
 	<para>
 	    The JSON contains an array with all AVP's in the Diameter-Message
-		and it's attributes. The format is identical for both requests
+		and its attributes. The format is identical for both requests
 		and replies.
 	</para>
 	<programlisting format="linespecific">
@@ -132,7 +132,7 @@
     <section>
       <title>Kamailio Modules</title>
 
-      <para>The Following mouldes must be loaded before this module:</para>
+      <para>The following modules must be loaded before this module:</para>
 
       <itemizedlist>
         <listitem>

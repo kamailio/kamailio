@@ -310,7 +310,7 @@ static char *print_string_ptr(const char *str,printbuffer *p)
 	*ptr2++='\"';*ptr2++=0;
 	return out;
 }
-/* Invote print_string_ptr (which is useful) on an item. */
+/* Invoke print_string_ptr (which is useful) on an item. */
 static char *print_string(cJSON *item,printbuffer *p)	{return print_string_ptr(item->valuestring,p);}
 
 /* Predeclare these prototypes. */

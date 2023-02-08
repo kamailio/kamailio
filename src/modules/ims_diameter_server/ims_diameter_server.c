@@ -374,7 +374,7 @@ int diameter_request(struct sip_msg * msg, char* peer, char* appid, char* comman
 }
 
 
-static sr_kemi_t ims_dimeter_server_kemi_exports[] = {
+static sr_kemi_t ims_diameter_server_kemi_exports[] = {
     { str_init("ims_diameter_server"), str_init("diameter_request"),
         SR_KEMIP_INT, ki_diameter_request_peer,
         { SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_INT,
@@ -391,6 +391,6 @@ static sr_kemi_t ims_dimeter_server_kemi_exports[] = {
 
 int mod_register(char *path, int *dlflags, void *p1, void *p2)
 {
-    sr_kemi_modules_add(ims_dimeter_server_kemi_exports);
+    sr_kemi_modules_add(ims_diameter_server_kemi_exports);
     return 0;
 }
