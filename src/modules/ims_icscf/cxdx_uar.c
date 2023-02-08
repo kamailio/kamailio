@@ -52,8 +52,7 @@
 #include "registration.h"
 #include "ims_icscf_mod.h"
 
-
-//we use pseudo variables to communicate back to config file this takes the result and converys to a return code, publishes it a pseudo variable
+//We use pseudo variables to communicate back to config file. This takes the result, converts it to a return code and publishes it a as pseudo variable.
 int create_uaa_return_code(int result) {
     int rc;
     int_str avp_val, avp_name;
