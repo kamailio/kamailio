@@ -761,7 +761,7 @@ dlg_setflag("1");
                 </title>
                 <programlisting format="linespecific">
 ...
-redlg_setflag("1");
+dlg_resetflag("1");
 ...
                 </programlisting>
             </example>
@@ -1014,7 +1014,7 @@ if(dlg_get("abcdef", "123", "456"))
                 <varname>dlg_terminate_dlg</varname>
             </title>
             <para>
-		Terminates a singe dialog, identified by the call_id, ftag, ttag. In ims_dialog module this
+		Terminates a single dialog, identified by the call_id, ftag, ttag. In ims_dialog module this
                 dialog can be terminated in the early or confirmed states.
             </para>
             <para>

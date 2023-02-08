@@ -27,15 +27,15 @@
                 <listitem>
                     <para>
                         <emphasis>struct dlg_cell* dlg</emphasis> - dialog to
-			register callback to. If maybe NULL only for DLGCB_CREATED callback
+			register callback to. It may be NULL only for DLGCB_CREATED callback
 			type, which is not a per dialog type.
                     </para>
                 </listitem>
                 <listitem>
                     <para>
                         <emphasis>int type</emphasis> - types of callbacks; more
-			types may be register for the same callback function; only
-			DLGCB_CREATED must be register alone. Possible types:
+			types may be registered for the same callback function; only
+			DLGCB_CREATED must be registered alone. Possible types:
                         <itemizedlist>
                             <listitem>
                                 <para>

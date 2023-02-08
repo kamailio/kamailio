@@ -445,7 +445,7 @@ int dlg_set_leg_info(struct dlg_cell *dlg, str* tag, str *rr, str *contact,
                         if (!dlg_out->callee_contact.s) {
                             LM_ERR("no more shm mem\n");
 							lock_release(dlg->dlg_out_entries_lock);
-                            return -1; //if we're out of mem we dont really care about cleaning up - prob going to crash anyway
+                            return -1; //if we're out of mem we don't really care about cleaning up - prob going to crash anyway
                         }
                         dlg_out->callee_contact.len = contact->len;
                         memcpy(dlg_out->callee_contact.s, contact->s, contact->len);
@@ -455,7 +455,7 @@ int dlg_set_leg_info(struct dlg_cell *dlg, str* tag, str *rr, str *contact,
                         if (!dlg_out->callee_route_set.s) {
                             LM_ERR("no more shm mem\n");
 							lock_release(dlg->dlg_out_entries_lock);
-                            return -1; //if we're out of mem we dont really care about cleaning up - prob going to crash anyway
+                            return -1; //if we're out of mem we don't really care about cleaning up - prob going to crash anyway
                         }
                         dlg_out->callee_route_set.len = rr->len;
                         memcpy(dlg_out->callee_route_set.s, rr->s, rr->len);
@@ -466,7 +466,7 @@ int dlg_set_leg_info(struct dlg_cell *dlg, str* tag, str *rr, str *contact,
                         if (!dlg_out->callee_cseq.s || !dlg_out->caller_cseq.s) {
                             LM_ERR("no more shm mem\n");
 							lock_release(dlg->dlg_out_entries_lock);
-                            return -1; //if we're out of mem we dont really care about cleaning up - prob going to crash anyway
+                            return -1; //if we're out of mem we don't really care about cleaning up - prob going to crash anyway
                         }
                         dlg_out->caller_cseq.len = cseq->len;
                         memcpy(dlg_out->caller_cseq.s, cseq->s, cseq->len);

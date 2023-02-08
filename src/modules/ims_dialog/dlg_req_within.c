@@ -350,7 +350,7 @@ int dlg_terminate(struct dlg_cell *dlg, struct sip_msg *msg, str *reason, int si
                 if (t->method.len!=6 || t->method.s[0]!='I' || t->method.s[1]!='N' || t->method.s[2]!='V')
 		{
 			//well this is the transaction of a subsequent request within the dialog
-			//and the dialog is not confirmed yet, so its a PRACK or an UPDATE
+			//and the dialog is not confirmed yet, so it is a PRACK or an UPDATE
 			//could also be an option, but the important thing is how am i going to get
 			//the transaction of the invite, that is the one i have to cancel
 			LM_WARN("this is not my transaction so where am i?\n");
@@ -443,7 +443,7 @@ struct mi_root * mi_terminate_dlg(struct mi_root *cmd_tree, void *param) {
     if (dlg) {
         LM_DBG("Found dialog to terminate and it is in state [%i] [%.*s]\n", dlg->state, mi_extra_hdrs.len, mi_extra_hdrs.s);
 
-        if (dlg_terminate(dlg, 0, &reason/*reson*/, /* all sides of a dialog*/ 2, &mi_extra_hdrs) < 0) {
+        if (dlg_terminate(dlg, 0, &reason, /* all sides of a dialog*/ 2, &mi_extra_hdrs) < 0) {
             status = 500;
             msg = MI_DLG_OPERATION_ERR;
             msg_len = MI_DLG_OPERATION_ERR_LEN;
