@@ -600,7 +600,7 @@ int add_supported_secagree_header(struct sip_msg *m)
 	}
 
 	if((supported->s = pkg_malloc(supported_sec_agree_len)) == NULL) {
-		LM_ERR("Error allcationg pkg memory for supported header str\n");
+		LM_ERR("Error allocating pkg memory for supported header str\n");
 		pkg_free(supported);
 		return -1;
 	}
@@ -631,7 +631,7 @@ int add_require_secagree_header(struct sip_msg *m)
 	}
 
 	if((require->s = pkg_malloc(require_sec_agree_len)) == NULL) {
-		LM_ERR("Error allcationg pkg memory for require header str\n");
+		LM_ERR("Error allocating pkg memory for require header str\n");
 		pkg_free(require);
 		return -1;
 	}
