@@ -38,7 +38,7 @@
     <section>
       <title>External Libraries or Applications</title>
 
-      <para>This modules requires the internal IMS library and libmnl for operating with netlink sockets.</para>
+      <para>This module requires the internal IMS library and libmnl for operating with netlink sockets.</para>
     </section>
   </section>
 
@@ -118,7 +118,7 @@ modparam("ims_ipsec_pcscf", "ipsec_server_port", 5063)
     <section>
       <title><varname>ipsec_max_connections</varname> (int)</title>
 
-      <para>Maximum simultanious IPSec connections</para>
+      <para>Maximum simultaneous IPSec connections</para>
 
       <para><emphasis>Default value is 2.</emphasis></para>
 
