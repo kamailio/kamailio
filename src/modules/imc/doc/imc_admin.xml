@@ -158,7 +158,7 @@ modparam("imc", "members_table", "members")
 		</para>
 		<para>
 		<emphasis>
-		The default value is 4 (resultimg in hash size 16).
+		The default value is 4 (resulting in hash size 16).
 		</emphasis>
 		</para>
 		<example>
