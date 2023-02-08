@@ -828,7 +828,8 @@ uac_restore_to();
    format. The parameter can be a static integer or a variable holding an
    integer value.
 
-   This function can be used from FAILURE_ROUTE.
+   This function can be used from FAILURE_ROUTE and BRANCH_FAILURE_ROUTE
+   event route.
 
    Example 1.31. uac_auth usage
 ...
@@ -872,7 +873,8 @@ failure_route[TRUNKAUTH] {
    format. The parameter can be a static integer or a variable holding an
    integer value.
 
-   This function can be used from FAILURE_ROUTE.
+   This function can be used from FAILURE_ROUTE and BRANCH_FAILURE_ROUTE
+   event route.
 
    Example 1.32. uac_auth_mode usage
 ...
