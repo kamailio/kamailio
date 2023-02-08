@@ -109,7 +109,7 @@ sr_dns_item_t *sr_dns_add_item(str *name)
 		n++;
 	}
 	if(n > 20) {
-		LM_WARN("too many dns containers - adding nunmber %d - can fill memory\n",
+		LM_WARN("too many dns containers - adding number %d - can fill memory\n",
 				n);
 	}
 
