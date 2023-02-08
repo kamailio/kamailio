@@ -444,7 +444,7 @@ error:
  * search for P-CSCF contact in usrloc
  * @udomain_t* _d - domain to search in
  * @str* _contact - contact to search for - should be a SIP URI
- * @struct pontact** _c - contact to return to if found (null if not found)
+ * @struct pcontact** _c - contact to return to if found (null if not found)
  * @int reverse_search - reverse search for a contact in the memory
  * @return 0 if found <>0 if not
  */
