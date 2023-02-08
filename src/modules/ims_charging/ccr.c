@@ -25,7 +25,7 @@ int Ro_write_event_type_avps(AAA_AVP_LIST * avp_list, event_type_t * x) {
         if (!cdp_avp->epcapp.add_Expires(&aList, *(x->expires)))
             goto error;
 
-    if (!cdp_avp->epcapp.add_Event_Type(avp_list, &aList, AVP_FREE_DATA))	//TODO: used to be DONT FREE
+    if (!cdp_avp->epcapp.add_Event_Type(avp_list, &aList, AVP_FREE_DATA))	//TODO: used to be DON'T FREE
         goto error;
 
     return 1;
@@ -57,7 +57,7 @@ int Ro_write_time_stamps_avps(AAA_AVP_LIST * avp_list, time_stamps_t* x) {
                 *(x->sip_response_timestamp_fraction)))
             goto error;
 
-    if (!cdp_avp->epcapp.add_Time_Stamps(avp_list, &aList, AVP_FREE_DATA))	//used to be DONT FREE
+    if (!cdp_avp->epcapp.add_Time_Stamps(avp_list, &aList, AVP_FREE_DATA))	//used to be DON'T FREE
         goto error;
 
 
@@ -185,7 +185,7 @@ int Ro_write_ims_information_avps(AAA_AVP_LIST * avp_list, ims_information_t* x)
         aList.head = aList.tail = 0;
     }
 
-    if (!cdp_avp->epcapp.add_IMS_Information(avp_list, &aList2, AVP_FREE_DATA))//TODO check why not DONT FREE DATA
+    if (!cdp_avp->epcapp.add_IMS_Information(avp_list, &aList2, AVP_FREE_DATA))//TODO check why not DON'T FREE DATA
         goto error;
 
     return 1;
@@ -213,7 +213,7 @@ int Ro_write_service_information_avps(AAA_AVP_LIST * avp_list, service_informati
         if (!Ro_write_ims_information_avps(&aList, x->ims_information))
             goto error;
 
-    if (!cdp_avp->epcapp.add_Service_Information(avp_list, &aList, AVP_FREE_DATA)) //TODO: use to be dont free
+    if (!cdp_avp->epcapp.add_Service_Information(avp_list, &aList, AVP_FREE_DATA)) //TODO: use to be don't free
         goto error;
 
     return 1;

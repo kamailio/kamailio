@@ -157,7 +157,7 @@ struct module_exports exports = { MOD_NAME, DEFAULT_DLFLAGS, /* dlopen flags */
         0,
         mod_init, 	/* module initialization function */
         mod_child_init, 	/* per-child init function */
-        mod_destroy 	/* module destroy functoin */
+        mod_destroy 	/* module destroy function */
 };
 
 int fix_parameters() {
@@ -483,7 +483,7 @@ static int ki_ro_ccr(sip_msg_t *msg, str* s_route_name, str* s_direction, int re
      * 1. What mode are we in - terminating or originating
      * 2. We assume this is SCUR in this module for now - can see event based charging in another component instead (AS for SMS for example, etc)
      * 4. Check a dialog exists for call, if not we fail
-     * 5. make sure we dont already have an Ro Session for this dialog
+     * 5. make sure we don't already have an Ro Session for this dialog
      * 6. create new Ro Session
      * 7. register for DLG callback passing new Ro session as parameter - (if dlg torn down we know which Ro session it is associated with)
      *
