@@ -271,9 +271,12 @@ int async_sleep(sip_msg_t *msg, int seconds, cfg_action_t *act, str *cbname)
 	return 0;
 }
 
+static unsigned int _async_timer_exec_last_slot = -1;
+
 void async_timer_exec(unsigned int ticks, void *param)
 {
-	int slot;
+	unsigned int idx;
+	unsigned int slot;
 	async_item_t *ai;
 	sr_kemi_eng_t *keng = NULL;
 	str cbname = STR_NULL;
@@ -282,33 +285,55 @@ void async_timer_exec(unsigned int ticks, void *param)
 	if(_async_list_head == NULL)
 		return;
 
-	slot = ticks % ASYNC_RING_SIZE;
+	idx = ticks % ASYNC_RING_SIZE;
 
-	while(1) {
-		lock_get(&_async_list_head->ring[slot].lock);
-		ai = _async_list_head->ring[slot].lstart;
-		if(ai != NULL)
-			_async_list_head->ring[slot].lstart = ai->next;
-		lock_release(&_async_list_head->ring[slot].lock);
+	if(idx == _async_timer_exec_last_slot) {
+		/* timer faster than 1sec */
+		return;
+	}
 
-		if(ai == NULL)
-			break;
-		if(ai->ract != NULL) {
-			tmb.t_continue(ai->tindex, ai->tlabel, ai->ract);
-			ksr_msg_env_reset();
-		} else {
-			keng = sr_kemi_eng_get();
-			if(keng != NULL && ai->cbname_len>0) {
-				cbname.s = ai->cbname;
-				cbname.len = ai->cbname_len;
-				tmb.t_continue_cb(ai->tindex, ai->tlabel, &cbname, &evname);
+	if(_async_timer_exec_last_slot < 0) {
+		_async_timer_exec_last_slot = idx;
+	}
+	slot = (_async_timer_exec_last_slot + 1) % ASYNC_RING_SIZE;
+	if(slot != idx) {
+		LM_DBG("need to catch up from slot %u to %u (slots: %u)\n", slot, idx,
+				ASYNC_RING_SIZE);
+	}
+
+	do {
+		while(1) {
+			lock_get(&_async_list_head->ring[slot].lock);
+			ai = _async_list_head->ring[slot].lstart;
+			if(ai != NULL)
+				_async_list_head->ring[slot].lstart = ai->next;
+			lock_release(&_async_list_head->ring[slot].lock);
+
+			if(ai == NULL)
+				break;
+			if(ai->ract != NULL) {
+				tmb.t_continue(ai->tindex, ai->tlabel, ai->ract);
 				ksr_msg_env_reset();
 			} else {
-				LM_WARN("no callback to be executed\n");
+				keng = sr_kemi_eng_get();
+				if(keng != NULL && ai->cbname_len>0) {
+					cbname.s = ai->cbname;
+					cbname.len = ai->cbname_len;
+					tmb.t_continue_cb(ai->tindex, ai->tlabel, &cbname, &evname);
+					ksr_msg_env_reset();
+				} else {
+					LM_WARN("no callback to be executed\n");
+				}
 			}
+			shm_free(ai);
 		}
-		shm_free(ai);
-	}
+		if(slot == idx) {
+			break;
+		}
+		slot = (slot + 1) % ASYNC_RING_SIZE;
+	} while(1);
+
+	_async_timer_exec_last_slot = idx;
 }
 
 void async_mstimer_exec(unsigned int ticks, void *param)
