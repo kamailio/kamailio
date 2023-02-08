@@ -468,7 +468,7 @@ isc_match* isc_checker_find(str uri, char direction, int skip,
 	LM_DBG("About to try p->s->service_profiles_cnt!! #profiles is %d\n",
 			p->s->service_profiles_cnt);
 	while (si < p->s->service_profiles_cnt) {
-		LM_DBG("About to try p->s->service_profiles[a].filter_criterai_cnt\n");
+		LM_DBG("About to try p->s->service_profiles[a].filter_criteria_cnt\n");
 		next = cnt + p->s->service_profiles[si].filter_criteria_cnt;
 		if (cnt <= skip && skip < next) {
 			sj = skip - cnt;
