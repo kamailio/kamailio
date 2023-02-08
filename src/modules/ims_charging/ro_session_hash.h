@@ -91,7 +91,7 @@ struct ro_session_entry {
     unsigned int lock_idx; /*!< lock index */
 };
 
-/*! main ro_sesion table */
+/*! main ro_session table */
 struct ro_session_table {
     unsigned int size; /*!< size of the dialog table */
     struct ro_session_entry *entries; /*!< dialog hash table */

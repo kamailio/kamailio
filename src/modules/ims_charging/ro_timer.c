@@ -377,7 +377,7 @@ void resume_ro_session_ontimeout(struct interim_ccr *i_req, int timeout_or_error
 }
 
 /* this is the function called when a we need to request more funds/credit. We need to try and reserve more credit.
- * If we cant we need to put a new timer to kill the call at the appropriate time
+ * If we can't we need to put a new timer to kill the call at the appropriate time
  */
 void ro_session_ontimeout(struct ro_tl *tl) {
     time_t now, call_time;

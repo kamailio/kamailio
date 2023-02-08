@@ -83,7 +83,7 @@ int update_ro_timer(struct ro_tl *tl, int timeout);
 void ro_timer_routine(unsigned int ticks, void * attr);
 
 /* this is the function called when a we need to request more funds/credit. We need to try and reserve more credit.
- * If we cant we need to put a new timer to kill the call at the appropriate time
+ * If we can't we need to put a new timer to kill the call at the appropriate time
  */
 void ro_session_ontimeout(struct ro_tl *tl);
 
