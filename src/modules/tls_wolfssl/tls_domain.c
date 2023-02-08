@@ -630,7 +630,7 @@ static int set_cipher_list(tls_domain_t* d)
 	char* cipher_list;
 
 	cipher_list=d->cipher_list.s;
-#ifdef TLS_KSSL_WORKARROUND
+#ifdef TLS_KSSL_WORKAROUND
 	if (openssl_kssl_malloc_bug) { /* is openssl bug #1467 present ? */
 		if (d->cipher_list.s==0) {
 			/* use "DEFAULT:!KRB5" */
@@ -649,7 +649,7 @@ static int set_cipher_list(tls_domain_t* d)
 			}
 		}
 	}
-#endif /* TLS_KSSL_WORKARROUND */
+#endif /* TLS_KSSL_WORKAROUND */
 	if (!cipher_list) return 0;
 	procs_no=get_max_procs();
 	for(i = 0; i < procs_no; i++) {
@@ -757,7 +757,7 @@ static int set_ssl_options(tls_domain_t* d)
 
 
 	procs_no=get_max_procs();
-	options=SSL_OP_ALL; /* all the bug workarrounds by default */
+	options=SSL_OP_ALL; /* all the bug workarounds by default */
 	options|=SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION |
 				SSL_OP_CIPHER_SERVER_PREFERENCE;
 
