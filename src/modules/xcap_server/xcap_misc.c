@@ -268,7 +268,7 @@ int xcap_parse_uri(str *huri, str *xroot, xcap_uri_t *xuri)
 		if(xuri->file.s[xuri->file.len-1]=='/')
 			xuri->file.len--;
 	}
-	/* doc: aboslute and relative */
+	/* doc: absolute and relative */
 	xuri->adoc.s   = xuri->uri.s;
 	xuri->adoc.len = xuri->file.s + xuri->file.len - xuri->adoc.s;
 	xuri->rdoc.s   = xuri->auid.s;

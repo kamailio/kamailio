@@ -53,7 +53,7 @@ typedef struct xcap_uri {
 typedef struct xcaps_auid_list {
 	str auid;  /* auid value */
 	char term; /* ending char (next one after auid) */
-	int type;  /* internaly type id for auid */
+	int type;  /* internal type id for auid */
 } xcaps_auid_list_t;
 
 extern xcaps_auid_list_t xcaps_auid_list[];
