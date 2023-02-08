@@ -54,7 +54,7 @@
 
 
 /*! \brief
- * Process REGISTER request and save it's contacts
+ * Process REGISTER request and save its contacts
  */
 int assign_server_unreg(struct sip_msg* _m, char* str1, str* direction, char* route);
 

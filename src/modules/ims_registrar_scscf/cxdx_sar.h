@@ -68,7 +68,7 @@ typedef struct saved_transaction {
  * Create and send a Server-Assignment-Request and returns the Answer received for it.
  * This function performs the Server Assignment operation.
  * @param msg - the SIP message to send for
- * @parma public_identity - the public identity of the user
+ * @param public_identity - the public identity of the user
  * @param server_name - local name of the S-CSCF to save on the HSS
  * @param realm - Realm of the user
  * @param assignment_type - type of the assignment

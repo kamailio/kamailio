@@ -829,7 +829,7 @@ int update_contacts(struct sip_msg* msg, udomain_t* _d,
             //if we were successful up to this point, then we need to copy the contacts from main impu record (asserted IMPU) into the register response
             ul.lock_udomain(_d, public_identity);
             if (ul.get_impurecord(_d, public_identity, &impu_rec) != 0) {
-                LM_ERR("Error, we should have a record after registraion\n");
+                LM_ERR("Error, we should have a record after registration\n");
                 ul.unlock_udomain(_d, public_identity);
                 goto error;
             }
@@ -951,7 +951,7 @@ int update_contacts(struct sip_msg* msg, udomain_t* _d,
 	    ul.unlock_udomain(_d, public_identity);
             break;
         case AVP_IMS_SAR_USER_DEREGISTRATION:
-            /*TODO: if its not a star lets find all the contact records and remove them*/
+            /*TODO: if it is not a star lets find all the contact records and remove them*/
             //first we update the state of the contact/s
             for (h = msg->contact; h; h = h->next) {
                 if (h->type == HDR_CONTACT_T && h->parsed) {
@@ -1270,7 +1270,7 @@ error:
 }
 
 /*!\brief
- * Process REGISTER request and save it's contacts
+ * Process REGISTER request and save its contacts
  * 1. ensure request
  * 2. get impu, impi,realm,expiry,etc
  * 3. check expiry
