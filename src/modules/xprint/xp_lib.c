@@ -239,7 +239,7 @@ static int xl_get_ruri(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 	if(msg==NULL || res==NULL)
 		return -1;
 
-	if(msg->first_line.type == SIP_REPLY)	/* REPLY doesnt have a ruri */
+	if(msg->first_line.type == SIP_REPLY)	/* REPLY doesn't have a ruri */
 		return xl_get_null(msg, res, hp, hi, hf);
 
 	if(msg->parsed_uri_ok==0 /* R-URI not parsed*/ && parse_sip_msg_uri(msg)<0)
@@ -580,7 +580,7 @@ static int xl_get_color(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 	p = color;
 	end = p + COL_BUF;
 
-	/* excape sequenz */
+	/* escape sequence */
 	append_sstring(p, end, "\033[");
 
 	if(hp->s[0]!='_')
