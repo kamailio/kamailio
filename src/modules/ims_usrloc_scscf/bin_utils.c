@@ -462,7 +462,7 @@ int bin_decode_str(bin_data *x,str *s)
  *	Encode and append a Public Indentity
  * @param x - binary data to append to
  * @param pi - the public identity to encode
- * @returns 1 on succcess or 0 on error
+ * @returns 1 on success or 0 on error
  */
 static int bin_encode_public_identity(bin_data *x,ims_public_identity *pi)
 {
@@ -478,7 +478,7 @@ error:
  *	Decode a binary string from a binary data structure
  * @param x - binary data to decode from
  * @param pi - the public identity to decode into
- * @returns 1 on succcess or 0 on error
+ * @returns 1 on success or 0 on error
  */
 static int bin_decode_public_identity(bin_data *x,ims_public_identity *pi)
 {
@@ -499,7 +499,7 @@ error:
  *	Encode and append a SPT
  * @param x - binary data to append to
  * @param spt - the service point trigger to encode
- * @returns 1 on succcess or 0 on error
+ * @returns 1 on success or 0 on error
  */
 static int bin_encode_spt(bin_data *x, ims_spt *spt)
 {
@@ -542,7 +542,7 @@ error:
  *	Decode an SPT
  * @param x - binary data to decode from
  * @param spt - the service point trigger to decode into
- * @returns 1 on succcess or 0 on error
+ * @returns 1 on success or 0 on error
  */
 static int bin_decode_spt(bin_data *x, ims_spt *spt)
 {
@@ -611,7 +611,7 @@ error:
  *	Encode and Append a Filter Criteria
  * @param x - binary data to append to
  * @param spt - the service point trigger to encode
- * @returns 1 on succcess or 0 on error
+ * @returns 1 on success or 0 on error
  */
 static int bin_encode_filter_criteria(bin_data *x, ims_filter_criteria *fc)
 {
@@ -654,7 +654,7 @@ error:
  *	Decode a Filter Criteria
  * @param x - binary data to decode from
  * @param fc - filter criteria to decode into
- * @returns 1 on succcess or 0 on error
+ * @returns 1 on success or 0 on error
  */
 static int bin_decode_filter_criteria(bin_data *x, ims_filter_criteria *fc)
 {
@@ -737,7 +737,7 @@ error:
  *	Encode and append a Service Profile
  * @param x - binary data to append to
  * @param sp - the service profile to encode
- * @returns 1 on succcess or 0 on error
+ * @returns 1 on success or 0 on error
  */
 static int bin_encode_service_profile(bin_data *x,ims_service_profile *sp)
 {
@@ -775,7 +775,7 @@ error:
  *	Decode a service profile
  * @param x - binary data to decode from
  * @param sp - service profile to decode into
- * @returns 1 on succcess or 0 on error
+ * @returns 1 on success or 0 on error
  */
 static int bin_decode_service_profile(bin_data *x, ims_service_profile *sp)
 {
@@ -847,7 +847,7 @@ error:
  *	Encode the entire user profile and append it to the binary data
  * @param x - binary data to append to
  * @param s - the ims subscription to encode
- * @returns 1 on succcess or 0 on error
+ * @returns 1 on success or 0 on error
  */
 int bin_encode_ims_subscription(bin_data *x, ims_subscription *s)
 {

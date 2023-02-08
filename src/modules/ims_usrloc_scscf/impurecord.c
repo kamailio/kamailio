@@ -929,7 +929,7 @@ int update_impurecord(struct udomain* _d, str* public_identity, impurecord_t* im
     str private_identity = {0, 0};
     str* impu_str = public_identity;
 
-    //make usre we have IMPU or enough data to find it...
+    //make sure we have IMPU or enough data to find it...
     if (!impu_rec && (!public_identity || !public_identity->len || !public_identity->s)) {
         LM_WARN("can't call update_impurecord with no details of IMPU..\n");
         return -1;
