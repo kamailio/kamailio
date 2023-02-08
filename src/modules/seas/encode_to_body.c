@@ -140,7 +140,7 @@ int print_encoded_to_body(FILE *fd,char *hdr,int hdrlen,unsigned char* payload,i
  * payload is the payload,
  * paylen is the payload length,
  * fd is the file descriptor to which to dump,
- * segregationLevel is wether only URIS must be dumped or all the header code.
+ * segregationLevel is whether only URIS must be dumped or all the header code.
  *
  * return 0 on success, <0 on error
  */

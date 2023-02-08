@@ -454,7 +454,7 @@ read_again:
    if(use_stats && thepointer.ptr->transaction)
       event_stat(thepointer.ptr->transaction);
    if(thepointer.ptr->as == NULL || !thepointer.ptr->as->connected || thepointer.ptr->as->type==CLUSTER_TYPE){
-      LM_WARN("tryied to send an event to an App Server"
+      LM_WARN("tried to send an event to an App Server"
 			  " that is scheduled to die!!\n");
       retval=-2;
       goto error;
@@ -467,7 +467,7 @@ write_again:
       switch(errno){
 	 case EINTR:
 	    if(!thepointer.ptr->as->connected){
-	       LM_WARN("tryied to send an event to an App Server"
+	       LM_WARN("tried to send an event to an App Server"
 				   " that is scheduled to die!!\n");
 	       retval=-2;
 	       goto error;
@@ -617,7 +617,7 @@ static inline int send_sockinfo(int fd)
    unsigned char i;
    char buffer[300];
    int k=0,j;
-   buffer[k++]=16;/*This used to be T_TABLE_POWER in Kamailio 1.0.1, now its hardcoded in config.h*/
+   buffer[k++]=16;/*This used to be T_TABLE_POWER in Kamailio 1.0.1, now it is hardcoded in config.h*/
    for(i=0,s=udp_listen;s;s=s->next,i++);
 #ifdef USE_TCP
    for(s=tcp_listen;s;s=s->next,i++);
@@ -665,7 +665,7 @@ write_again:
  * N: name
  * 1: address string length
  * N: address
- * 2: NBO unsigned shor int port number
+ * 2: NBO unsigned short int port number
  *
  * TODO buffer overflow risk
  */
@@ -698,7 +698,7 @@ static inline int print_sock_info(char *buffer,int wheremax,int *idx,struct sock
 
 /**
  * Handles data from an AppServer. First searches in the AS table which was the AS
- * that sent the data (we dont already know it because this comes from a poll_fd
+ * that sent the data (we don't already know it because this comes from a poll_fd
  * struct). When the one is found, it calls process_event_reply, which in turn
  * looks if there's a complete event in the buffer, and if there is, processes it.
  *
@@ -744,7 +744,7 @@ again:
  * which says the length of the following message (header and payload).
  * This way, we avoid multiple small reads() to the socket, which (as we know), consumes
  * far more processor because of the kernel read(2) system call. The drawback
- * is the added complexity of mantaining a buffer, the bytes read, and looking
+ * is the added complexity of maintaining a buffer, the bytes read, and looking
  * if there is a complete message already prepared.
  *
  * Actions are supposed to be small, that's why BUF_SIZE is 2000 bytes length. 

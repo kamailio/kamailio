@@ -47,7 +47,7 @@
  * encoding is as follows:
  * 1: length of the payload.
  * N: Network-Byte-Ordered(little endian) of the
- * multibyte number represeting the length (now, it is
+ * multibyte number representing the length (now, it is
  * a long integer)
  */
 int encode_contentlength(char *hdr,int hdrlen,long int len,char *where)

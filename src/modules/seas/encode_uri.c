@@ -94,7 +94,7 @@
  * the end of the field, will be the place where the
  * following pointer points to, minus one (note that all the
  * fields present in a URI are preceded by 1 character, ie
- * sip[:user][:passwod][@host][:port][;param1=x][;param2=y][?hdr1=a][&hdr2=b]$p
+ * sip[:user][:password][@host][:port][;param1=x][;param2=y][?hdr1=a][&hdr2=b]$p
  * it will be necessary to have a pointer at the end,
  * pointing two past the end of the uri, so that the length
  * of the last header can be computed.
