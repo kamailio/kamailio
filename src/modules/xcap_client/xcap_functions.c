@@ -165,7 +165,7 @@ xcap_node_sel_t* xcapNodeSelAddStep(xcap_node_sel_t* curr_sel, str* name,
 
 			if(ns_card> 'z')
 			{
-				LM_ERR("Insuficient name cards for namespaces\n");
+				LM_ERR("Insufficient name cards for namespaces\n");
 				goto error;
 			}
 			new_step.len= sprintf(new_step.s, "%c:", ns_card);
