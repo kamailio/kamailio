@@ -169,7 +169,7 @@ cdp_cb_event_t* pop_cdp_cb_event()
 		if (ev == cdp_event_list->tail) { //list now empty
 				cdp_event_list->tail = 0;
 		}
-		ev->next = 0; //make sure whoever gets this cant access our list
+		ev->next = 0; //make sure whoever gets this can't access our list
 		cdp_event_list->size--;
 		lock_release(cdp_event_list->lock);
 
