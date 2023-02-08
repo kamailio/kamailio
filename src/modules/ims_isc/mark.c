@@ -79,7 +79,7 @@ int bin_to_base16(char *from, int len, char *to) {
 /**
  *	Retrieves the mark from message.
  *		- the marking should be in a header like described before
- *	@param msg - SIP mesage to mark
+ *	@param msg - SIP message to mark
  *  @param mark - mark to load into
  *	@returns 1 if found, 0 if not
  */
@@ -194,7 +194,7 @@ int base16_to_bin(char *from, int len, char *to) {
 /**
  *	Deletes the previous marking attempts (lumps).
  *
- *	@param msg - SIP mesage to mark
+ *	@param msg - SIP message to mark
  *	@returns 1 on success
  */
 int isc_mark_drop_route(struct sip_msg *msg) {
@@ -227,7 +227,7 @@ int isc_mark_drop_route(struct sip_msg *msg) {
  *	Mark the message with the given mark.
  *		- old marking attempts are deleted
  *		- marking is performed by inserting the following header
- *	@param msg - SIP mesage to mark
+ *	@param msg - SIP message to mark
  *	@param match - the current IFC match
  *	@param mark - pointer to the mark
  *	@returns 1 on success or 0 on failure
@@ -268,8 +268,8 @@ int isc_mark_set(struct sip_msg *msg, isc_match *match, isc_mark *mark) {
  * - else: \code Route: <sip:as@asdomain.net;lr>, <[iscmark]> \endcode
  * 			 
  *
- *	@param msg - SIP mesage to mark
- *	@param as - SIP addres of the application server to forward to
+ *	@param msg - SIP message to mark
+ *	@param as - SIP address of the application server to forward to
  *	@param iscmark - the mark to write
  *	@returns 1 on success, else 0
  */
