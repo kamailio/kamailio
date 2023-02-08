@@ -38,7 +38,7 @@
     <section>
       <title>External Libraries or Applications</title>
 
-      <para>This modules requires the internal IMS library.</para>
+      <para>This module requires the internal IMS library.</para>
     </section>
   </section>
 
@@ -98,7 +98,7 @@ modparam("ims_registrar_pcscf", "received_avp", "$avp(i:42)")
     <section>
       <title><varname>is_registered_fallback2ip</varname> (int)</title>
 
-      <para>Defines, whether a contact should be searched by it's contact only
+      <para>Defines, whether a contact should be searched by its Contact: only
 	or alternatively by the received IP-Address.</para>
 
       <para>The option may have the following values:</para>

@@ -426,7 +426,7 @@ int check_service_routes(struct sip_msg* _m, udomain_t* _d) {
 				goto error;
 			}
 			
-			LM_DBG("we have a contact which satisifes the routes...\n");
+			LM_DBG("we have a contact which satisfies the routes...\n");
 			ul.unlock_udomain(_d, &vb->host, port, proto);
 			return 1;
 		}

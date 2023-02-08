@@ -51,7 +51,7 @@
 #include "../../lib/ims/ims_getters.h"
 
 /*! \brief
- * Process REGISTER request and save it's contacts
+ * Process REGISTER request and save its contacts
  */
 int save(struct sip_msg* _m, udomain_t* _d, int _cflags);
 int save_pending(struct sip_msg* _m, udomain_t* _d);

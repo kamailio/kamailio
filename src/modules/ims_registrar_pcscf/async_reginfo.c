@@ -261,7 +261,7 @@ reginfo_event_t* pop_reginfo_event()
 	if (ev == reginfo_event_list->tail) { //list now empty
 		reginfo_event_list->tail = 0;
 	}
-	ev->next = 0; //make sure whoever gets this cant access our list
+	ev->next = 0; //make sure whoever gets this can't access our list
 	
 	reginfo_event_list->size--;
 	
