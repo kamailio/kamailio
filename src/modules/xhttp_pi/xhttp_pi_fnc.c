@@ -294,7 +294,7 @@ do{	\
 
 
 static const str XHTTP_PI_Response_Head_1 = str_init("<html><head><title>"\
-	"Kamailio Provisionning Interface</title>"\
+	"Kamailio Provisioning Interface</title>"\
 	"<style type=\"text/css\">"\
 		"body{margin:0;}body,p,div,td,th,tr,form,ol,ul,li,input,textarea,select,"\
 		"a{font-family:\"lucida grande\",verdana,geneva,arial,helvetica,sans-serif;font-size:14px;}"\
@@ -315,7 +315,7 @@ static const str XHTTP_PI_Response_Title_Table_1 = str_init(\
 "<table cellspacing=\"0\" cellpadding=\"5\" width=\"100%%\" border=\"0\">"\
 	"<tr bgcolor=\"#BBDDFF\">"\
 	"<td colspan=2 valign=\"top\" align=\"left\" bgcolor=\"#EFF7FF\" width=\"100%%\">"\
-	"<br/><h2 align=\"center\">Kamailio Provisionning Interface</h2>");
+	"<br/><h2 align=\"center\">Kamailio Provisioning Interface</h2>");
 static const str XHTTP_PI_Response_Title_Table_3 = str_init("<br/></td></tr></table>\n<center>\n");
 
 static const str XHTTP_PI_Response_Menu_Table_1 = str_init("<table border=\"0\" cellpadding=\"3\" cellspacing=\"0\"><tbody><tr>\n");
@@ -384,7 +384,7 @@ static const str XHTTP_PI_Post_Form_2 = str_init(\
 static const str XHTTP_PI_Response_Foot = str_init(\
 "\n</center>\n<div align=\"center\" class=\"foot\" style=\"margin:20px auto\">"\
 	"<span style='margin-left:5px;'></span>"\
-	"<a href=\"http://kamailio.org\">Kamailio web site</a><br/>"\
+	"<a href=\"https://kamailio.org\">Kamailio web site</a><br/>"\
 	"Copyright &copy; 2012-2014 <a href=\"http://www.voipembedded.com/\">VoIP Embedded Inc.</a>"\
 								". All rights reserved."\
 "</div></body></html>");
@@ -1945,7 +1945,7 @@ int ph_init_cmds(ph_framework_t **framework_data, const char* filename)
 	}
 	return 0;
 xml_error:
-	/* FIXME: free thw whole structure */
+	/* FIXME: free the whole structure */
 	if(_framework_data){shm_free(_framework_data);}
 	if(doc){
 		xmlFree(doc);
@@ -2421,7 +2421,7 @@ int ph_build_reply(pi_ctx_t *ctx)
 	ph_modules = ph_framework_data->ph_modules;
 	p = ctx->reply.body.s + ctx->reply.body.len;
 
-	/* Print comand name */
+	/* Print command name */
 	XHTTP_PI_COPY_4(p,XHTTP_PI_Response_Menu_Cmd_Table_1b,
 			XHTTP_PI_Response_Menu_Cmd_tr_1,
 			XHTTP_PI_Response_Menu_Cmd_td_1a,
@@ -2486,7 +2486,7 @@ int ph_build_content(pi_ctx_t *ctx, str *clause, db_val_t *values)
 	p = ctx->reply.body.s + ctx->reply.body.len;
 
 	if (mod>=0) { /* Building command menu */
-		/* Build the list of comands for the selected module */
+		/* Build the list of commands for the selected module */
 		XHTTP_PI_COPY_4(p,XHTTP_PI_Response_Menu_Cmd_Table_1a,
 				XHTTP_PI_Response_Menu_Cmd_tr_1,
 				XHTTP_PI_Response_Menu_Cmd_td_1a,

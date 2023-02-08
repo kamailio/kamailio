@@ -120,7 +120,7 @@ struct module_exports exports= {
 /** Implementation of pi_fault function required by the management API.
  *
  * This function will be called whenever a management function
- * indicates that an error ocurred while it was processing the request. The
+ * indicates that an error occurred while it was processing the request. The
  * function takes the reply code and reason phrase as parameters, these will
  * be put in the body of the reply.
  *
