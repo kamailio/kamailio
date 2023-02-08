@@ -313,7 +313,7 @@ Chapter 1. Admin Guide
    takes no acc-specific script command -- the functionality binds
    invisibly through transaction processing. Script writers just need to
    mark the transaction for accounting with proper setflag. Even so, the
-   module allows the script writter to force accounting in special cases
+   module allows the script writer to force accounting in special cases
    via some script functions.
 
    The accounting module will log by default a fixed set of attributes for
@@ -343,7 +343,7 @@ Chapter 1. Admin Guide
        out about it. In general, a better practice is to account from an
        end-device (such as PSTN gateway), which best knows about call
        status (including media status and PSTN status in case of the
-       gateway). However, CDR-base logging has the option to log existing
+       gateway). However, CDR-based logging has the option to log existing
        information from expired dialogs (the dlg_vars in cdr_extra) Please
        see cdr_expired_dlg_enable parameter - Section 6.32,
        “cdr_expired_dlg_enable (integer)”.
@@ -435,13 +435,12 @@ if (uri=~"sip:+40") /* calls to Romania */ {
 
    A SIP call can have multiple legs due forwarding actions. For example
    user A calls user B which forwards the call to user C. There is only
-   one SIP call but with 2 legs ( A to B and B to C). Accounting the legs
+   one SIP call but with 2 legs (A to B and B to C). Accounting the legs
    of a call is required for proper billing of the calls (if C is a PSTN
    number and the call is billed, user B must pay for the call - as last
    party modifying the call destination-, and not A - as initiator of the
    call. Call forwarding on server is only one example which shows the
-   necessity of the having an accounting engine with multiple legs
-   support.
+   necessity of having an accounting engine with multiple legs support.
 
 3.2. Configuration
 
@@ -459,7 +458,7 @@ if (uri=~"sip:+40") /* calls to Romania */ {
    the call-leg pairs will be added (based on the found AVP sets).
 
    By default, the multiple call-leg support is disabled - it can be
-   enabled just be setting the per-leg set of AVPs via the multi_leg_info
+   enabled just by setting the per-leg set of AVPs via the multi_leg_info
    module parameter.
 
 3.3. Logged data
@@ -621,8 +620,8 @@ $dlg_var(callee) = $avp(callee); #callee='C'
 
 5.1. Kamailio Modules
 
-   The module depends on the following modules (in the other words the
-   listed modules must be loaded before this module):
+   The module depends on the following modules (in other words the listed
+   modules must be loaded before this module):
      * tm -- Transaction Manager
      * a database module -- If SQL support is used.
      * rr -- Record Route, if “detect_direction” module parameter is
@@ -703,7 +702,7 @@ modparam("acc", "early_media", 1)
 
    Per transaction flag which says if the transaction should be accounted
    also in case of failure (SIP status code >= 300). This flag triggers
-   accouting when the whole transaction fails (on the server side).
+   accounting when the whole transaction fails (on the server side).
 
    Default value is not-set (no flag).
 
@@ -1089,7 +1088,7 @@ modparam("acc", "db_insert_mode", 1)
 
    The value can be:
      * 0 - off (default).
-       1 - on.
+     * 1 - on.
 
    Example 1.30. cdr_enable example
 ...
@@ -1110,8 +1109,8 @@ modparam("acc", "cdr_skip", "nocdr")
 6.32. cdr_expired_dlg_enable (integer)
 
    Should CDR-based logging be enabled in case of expired dialogs?
-
-   0 - off (default). 1 - on.
+     * 0 - off (default).
+     * 1 - on.
 
    Example 1.32. cdr_expired_dlg_enable example
 ...
@@ -1122,9 +1121,8 @@ modparam("acc", "cdr_expired_dlg_enable", 1)
 
    Should the start time be taken from the time when the dialog is
    created, or when the dialog is confirmed?
-
-   0 - use time of dialog creation (default). 1 - use time of dialog
-   confirmation.
+     * 0 - use time of dialog creation (default).
+     * 1 - use time of dialog confirmation.
 
    Example 1.33. cdr_start_on_confirmed example
 ...
@@ -1434,10 +1432,10 @@ acc_db_request("$var(code) $avp(reason)", "acc");
 
 Chapter 2. Frequently Asked Questions
 
-   2.1. What happened with old log_fmt parameter
-   2.2. What happened with old multi_leg_enabled parameter
+   2.1. What happened with old log_fmt parameter?
+   2.2. What happened with old multi_leg_enabled parameter?
    2.3. What happened with old src_leg_avp_id and dst_leg_avp_id
-          parameters
+          parameters?
 
    2.4. Where can I find more about Kamailio?
    2.5. Where can I post a question about this module?
@@ -1445,7 +1443,7 @@ Chapter 2. Frequently Asked Questions
 
    2.1.
 
-   What happened with old log_fmt parameter
+   What happened with old log_fmt parameter?
 
    The parameter became obsolete with the restructure of the data logged
    by ACC module (refer to the Overview chapter). For similar behaviour
@@ -1453,7 +1451,7 @@ Chapter 2. Frequently Asked Questions
 
    2.2.
 
-   What happened with old multi_leg_enabled parameter
+   What happened with old multi_leg_enabled parameter?
 
    The parameter became obsolete by the addition of the new multi_leg_info
    parameter. The multi-leg accounting is automatically enabled when
@@ -1461,9 +1459,9 @@ Chapter 2. Frequently Asked Questions
 
    2.3.
 
-   What happened with old src_leg_avp_id and dst_leg_avp_id parameters
+   What happened with old src_leg_avp_id and dst_leg_avp_id parameters?
 
-   The parameter was replaced by the more generic new parameter
+   The parameters were replaced by the more generic new parameter
    multi_leg_info. This allows logging (per-leg) of more information than
    just dst and src.
 

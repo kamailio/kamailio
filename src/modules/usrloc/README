@@ -751,7 +751,7 @@ modparam("usrloc", "db_url", "dbdriver://username:password@dbhost/dbname")
      * 4 - This uses database to load records at startup but uses only
        memory during the runtime. Records are not written back at all, not
        even at shutdown. Useful for scenarios when registrations are
-       replicated to a node that does the storage in database during
+       replicated to a node that does the storage in a database during
        runtime.
 
 Warning
@@ -770,8 +770,8 @@ modparam("usrloc", "db_mode", 2)
 3.28. db_load (int)
 
    Determine if the usrloc module should load contacts from the database
-   storage during module initialization A value of 0 disable the loading
-   from the database, this parameter is ignored if db_mode 4 is set
+   storage during module initialization. A value of 0 disables the loading
+   from the database, this parameter is ignored if db_mode 4 is set.
 
    Default value is 1.
 
@@ -1118,9 +1118,9 @@ modparam("usrloc", "version_table", 0)
    sending process from the core timers.
 
    Note: Keepalives will be sent to the IP and port using the transport
-   defined in the âreceivedâ column. If not set, then keepalives will
-   be sent to the AOR using UDP as a default transport. If available, the
-   TCP connection will be re-used for WS, TCP and TLS.
+   defined in the “received” column. If not set, then keepalives will be
+   sent to the AOR using UDP as a default transport. If available, the TCP
+   connection will be re-used for WS, TCP and TLS.
 
    Default value is “0 (keepalive disabled)”.
 
@@ -1370,19 +1370,19 @@ modparam("usrloc", "db_clean_tcp", 1)
 5.1. users
 
    Number of AOR existing in the USRLOC memory cache for that domain - can
-   not be reset; this statistic will be register for each used domain (Ex:
-   location).
+   not be reset; this statistic will be registered for each used domain
+   (Ex: location).
 
 5.2. contacts
 
    Number of contacts existing in the USRLOC memory cache for that domain
-   - can not be reset; this statistic will be register for each used
+   - can not be reset; this statistic will be registered for each used
    domain (Ex: location).
 
 5.3. expires
 
    Total number of expired contacts for that domain - can be reset; this
-   statistic will be register for each used domain (Ex: location).
+   statistic will be registered for each used domain (Ex: location).
 
 5.4. registered_users
 
@@ -1620,7 +1620,7 @@ sock)
 1.15.  ul_register_ulcb(type, callback, param)
 
    The function register with USRLOC a callback function to be called when
-   some event occures inside USRLOC.
+   some event occurs inside USRLOC.
 
    Meaning of the parameters is as follows:
      * int types - type of event for which the callback should be called
