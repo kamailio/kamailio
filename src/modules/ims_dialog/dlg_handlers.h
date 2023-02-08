@@ -20,7 +20,7 @@
  * History:
  * --------
  * 2006-04-14  initial version (bogdan)
- * 2007-03-06  syncronized state machine added for dialog state. New tranzition
+ * 2007-03-06  synchronized state machine added for dialog state. New tranzition
  *             design based on events; removed num_1xx and num_2xx (bogdan)
  * 2011-10     added support for forked calls (richard and jason)
  */
