@@ -367,11 +367,11 @@ make TLS_EXTRA_LIBS="-lkrb5 -lz" all include_modules=tls
    crash or cause memory leaks (making the memory shortage even worse). As
    of this writing all Openssl versions were affected (including 0.9.8e),
    see Openssl bug #1491. The TLS module has some workarounds for
-   preventing this problem (see low_mem_treshold1 and low_mem_threshold2),
-   however starting Kamailio with enough shared memory is higly
-   recommended. When this is not possible a quick way to significantly
-   reduce Openssl memory usage it to disable compression (see
-   tls_disable_compression).
+   preventing this problem (see low_mem_threshold1 and
+   low_mem_threshold2), however starting Kamailio with enough shared
+   memory is higly recommended. When this is not possible a quick way to
+   significantly reduce Openssl memory usage it to disable compression
+   (see tls_disable_compression).
 
 6. TLS Debugging
 
@@ -916,7 +916,7 @@ modparam("tls", "connection_timeout", 60)
 10.13. tls_disable_compression (boolean)
 
    If set compression over TLS will be disabled. Note that compression
-   uses a lot of memory (about 10x more then with the compression
+   uses a lot of memory (about 10x more than with the compression
    disabled), so if you want to minimize memory usage is a good idea to
    disable it. TLS compression also expose you for the CRIME security
    vulnerability.
@@ -980,9 +980,9 @@ modparam("tls", "ssl_freelist_max_len", 0)
    even valid low values might not be big enough to allow a successful
    handshake (try minimum 1024).
 
-   Lower values would lead to less memory usage, but values lower then the
+   Lower values would lead to less memory usage, but values lower than the
    typical Kamailio write size would incur a slight performance penalty.
-   Good values are bigger then the size of the biggest SIP packet one
+   Good values are bigger than the size of the biggest SIP packet one
    normally expects to forward. For example in most setups 2048 would be a
    good value.
 
@@ -990,7 +990,7 @@ Note
 
    Values on the lower side, even if valid (> 512), might not allow for a
    successful initial handshake. This happens if the certificate does not
-   fit inside one send fragment. Values lower then 1024 should not be
+   fit inside one send fragment. Values lower than 1024 should not be
    used. Even with higher values, if the handshake fails, try increasing
    the value.
 
@@ -1275,7 +1275,7 @@ modparam("tls", "renegotiation", 1)
    refered with 0-indexing.
 
    If flag (bit) at index 0 is set (value 1), the memory management
-   operations registered for TLS are wapped within a pthread mutex lock.
+   operations registered for TLS are wrapped within a pthread mutex lock.
    It can be useful with newer versions of libssl and libcrypto, which
    have a more pthread multi-threading oriented design.
 
@@ -1490,7 +1490,7 @@ end
    this section. If libssl 1.1.x (or newer) is detected at compile time,
    then the PRNG engine is set to "cryptorand".
 
-   The following options are avaialble:
+   The following options are available:
      * krand - use internal kam_rand() function
      * fastrand - use internal fastrand (ISAAC) function
      * cryptorand - use internal cryptorand (Fortuna) function

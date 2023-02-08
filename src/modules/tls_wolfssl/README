@@ -56,7 +56,7 @@ Chapter 1. Admin Guide
 #...
 loadmodule "sl.so"
 loadmodule "tls_wolfssl.so"
-#... refer to Quick Start oftls module
+#... refer to Quick Start of tls module
 #... for further configuration
 
 3. Important Notes
