@@ -314,7 +314,7 @@ typedef struct impu_contact {
 
 /*! \brief Main structure for handling of registered Contact data */
 typedef struct ucontact {
-    gen_lock_t *lock;           /**< we have to lock the contact as it is shared by many impu structs and has reference conting	*/
+    gen_lock_t *lock;           /**< we have to lock the contact as it is shared by many impu structs and has reference counting	*/
     struct contact_hslot* slot; /*!< Collision slot in the hash table array we belong to */
     unsigned int sl; 			/*!< Hash slot number we belong to */
     int ref_count;

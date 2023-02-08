@@ -236,7 +236,7 @@ str get_presentity_from_subscriber_dialog(str *callid, str *to_tag, str *from_ta
     return pres_uri;
 }
 
-/*db_load:  if this is a db_load then we don't write to db - as it will be an unecessary rewrite*/
+/*db_load:  if this is a db_load then we don't write to db - as it will be an unnecessary rewrite*/
 int add_subscriber(impurecord_t* urec,
         subscriber_data_t* subscriber_data, reg_subscriber** _reg_subscriber, int db_load) {
 

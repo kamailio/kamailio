@@ -308,7 +308,7 @@ void mem_timer_udomain(udomain_t* _d, int istart, int istep) {
                 if ((contact_ptr->expires-now) <= 0) {
                     if (contact_ptr->state == CONTACT_DELAYED_DELETE) {
                         if (contact_ptr->ref_count <= 0) {
-                            LM_DBG("contact in state CONTACT_DELATED_DELETE is about to be deleted\n");
+                            LM_DBG("contact in state CONTACT_DELAYED_DELETE is about to be deleted\n");
                             expired_contacts[num_expired_contacts] = contact_ptr;
                             num_expired_contacts++;
                         } else {
@@ -438,7 +438,7 @@ void mem_timer_udomain(udomain_t* _d, int istart, int istep) {
 /*!
  * \brief Get lock for a domain
  * \param _d domain
- * \param _aor adress of record, used as hash source for the lock slot
+ * \param _aor address of record, used as hash source for the lock slot
  */
 void lock_udomain(udomain_t* _d, str* _aor) {
     unsigned int sl;
@@ -760,7 +760,7 @@ int get_impus_from_subscription_as_string(udomain_t* _d, impurecord_t* impu_rec,
     if (is_shm)
         *impus = (str*) shm_malloc(len); 
     else 
-        *impus = (str*) pkg_malloc(len); //TODO: rather put this on the stack... dont' fragment pkg....
+        *impus = (str*) pkg_malloc(len); //TODO: rather put this on the stack... don't fragment pkg....
     
     if (*impus == 0) {
         if (is_shm)
