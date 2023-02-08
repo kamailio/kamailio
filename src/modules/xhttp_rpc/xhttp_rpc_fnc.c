@@ -186,7 +186,7 @@ static const str XHTTP_RPC_Response_Foot = str_init(\
 "\n</center>\n<div align=\"center\" class=\"foot\" style=\"margin:20px auto\">"\
         "<span style='margin-left:5px;'></span>"\
         "<a href=\"http://sip-router.org\">SIP Router web site</a> .:. "\
-        "<a href=\"http://www.kamailio.org\">Kamailio web site</a><br/>"\
+        "<a href=\"https://www.kamailio.org\">Kamailio web site</a><br/>"\
         "Copyright &copy; 2011-2013 <a href=\"http://www.voipembedded.com/\">VoIP Embedded</a>"\
                                                                 ". All rights reserved."\
 "</div></body></html>");
@@ -375,7 +375,7 @@ int xhttp_rpc_build_header(rpc_ctx_t *ctx)
 		name.s =
 		(char*)rpc_sarray[xhttp_rpc_mod_cmds[mod].rpc_e_index+cmd]->r.name;
 		name.len = strlen(name.s);
-		/* Print comand name */
+		/* Print command name */
 		XHTTP_RPC_COPY_4(p,XHTTP_RPC_Response_Menu_Cmd_Table_1,
 				XHTTP_RPC_Response_Menu_Cmd_tr_1,
 				XHTTP_RPC_Response_Menu_Cmd_td_1a,
@@ -414,7 +414,7 @@ int xhttp_rpc_build_header(rpc_ctx_t *ctx)
 			name.s =
 			(char*)rpc_sarray[xhttp_rpc_mod_cmds[mod].rpc_e_index]->r.name;
 			name.len = strlen(name.s);
-			/* Build the list of comands for the selected module */
+			/* Build the list of commands for the selected module */
 			XHTTP_RPC_COPY_4(p,XHTTP_RPC_Response_Menu_Cmd_Table_1,
 					XHTTP_RPC_Response_Menu_Cmd_tr_1,
 					XHTTP_RPC_Response_Menu_Cmd_td_1a,

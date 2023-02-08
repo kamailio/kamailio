@@ -115,7 +115,7 @@ struct module_exports exports= {
 /** Implementation of rpc_fault function required by the management API.
  *
  * This function will be called whenever a management function
- * indicates that an error ocurred while it was processing the request. The
+ * indicates that an error occurred while it was processing the request. The
  * function takes the reply code and reason phrase as parameters, these will
  * be put in the body of the reply.
  *
@@ -149,7 +149,7 @@ static void free_data_struct(struct rpc_data_struct *rpc_d)
 	struct rpc_data_struct *ds;
 
 	if (!rpc_d) {
-		LM_ERR("Atempting to free NULL rpc_data_struct\n");
+		LM_ERR("Attempting to free NULL rpc_data_struct\n");
 		return;
 	}
 	while (rpc_d) {
@@ -213,7 +213,7 @@ static int init_xhttp_rpc_reply(rpc_ctx_t *ctx)
  * This is the function that will be called whenever a management function
  * asks the management interface to send the reply to the client.
  * The SIP/HTTP reply sent to
- * the client will be always 200 OK, if an error ocurred on the server then it
+ * the client will be always 200 OK, if an error occurred on the server then it
  * will be indicated in the html document in body.
  *
  * @param ctx A pointer to the context structure of the xhttp_rpc request that
