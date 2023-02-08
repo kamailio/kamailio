@@ -410,7 +410,7 @@ int sip_handle_pcv(struct sip_msg *msg, char *flags, char *str2)
 		char * pcv_body = pcv_buf  + 19;
 		char pcv_value[40];
 
-		/* We use the IP adress of the interface that received the message as generated-at */
+		/* We use the IP address of the interface that received the message as generated-at */
 		if(msg->rcv.bind_address==NULL || msg->rcv.bind_address->address_str.s==NULL)
 		{
 			LM_ERR("No IP address for message. Failed to generate charging vector.\n");

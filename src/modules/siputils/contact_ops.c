@@ -304,7 +304,7 @@ int encode2format(str uri, struct uri_format *format)
 	format->first = start - string + 4; /*sip: */
 	format->second = end - string;
 	/* --------------------------testing ------------------------------- */
-	/* sip:gva@pass@10.0.0.1;;transport=udp>;expires=2 INCORECT BEHAVIOR OF
+	/* sip:gva@pass@10.0.0.1;;transport=udp>;expires=2 INCORRECT BEHAVIOR OF
 	 * parse_uri,myfunction works good */
 	foo = parse_uri(start, end - start, &sipUri);
 	if(foo != 0) {
