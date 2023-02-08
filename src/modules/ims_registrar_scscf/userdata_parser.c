@@ -644,7 +644,7 @@ static int parse_filter_criteria(xmlDocPtr doc,xmlNodePtr node,ims_filter_criter
  * @param doc - the XML document
  * @param root - the current node
  * @param pi - structure to fill
- * @returns 1 on success, 0 on failure , 2 if its a wildcardpsi
+ * @returns 1 on success, 0 on failure , 2 if it is a wildcardpsi
  */
 static int parse_public_identity(xmlDocPtr doc, xmlNodePtr root, ims_public_identity *pi)
 {

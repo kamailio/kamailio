@@ -461,7 +461,7 @@ int event_reg(udomain_t* _d, impurecord_t* r_passed, ucontact_t* c_passed, int e
                 return 0;
             }
             LM_DBG("Event type is IMS REGISTRAR SUBSCRIBE about to get reginfo_full\n");
-            //lets get IMPU list for presentity as well as register for callbacks (IFF its a new SUBSCRIBE)
+            //lets get IMPU list for presentity as well as register for callbacks (IFF it is a new SUBSCRIBE)
 
             ul.lock_udomain(_d, presentity_uri);
             res = ul.get_impurecord(_d, presentity_uri, &r);
@@ -1239,7 +1239,7 @@ int subscribe_to_reg(struct sip_msg *msg, char *_t, char *str2) {
         ul.lock_udomain(domain, &presentity_uri);
         res = ul.get_impurecord(domain, &presentity_uri, &presentity_impurecord);
         if (res != 0) {
-            LM_DBG("usrloc does not have imprecord for presnetity being subscribed too, we should create one.... TODO\n");
+            LM_DBG("usrloc does not have imprecord for presentity being subscribed too, we should create one.... TODO\n");
             ul.unlock_udomain(domain, &presentity_uri);
             goto doneorerror;
         }
@@ -1413,7 +1413,7 @@ static int extract_alias_ip_port(str* contact, str* port_ip) {
 
 		LM_DBG("alias->len=%d [%.*s]\n", port_ip->len, port_ip->len, port_ip->s);
 
-		// find the firs '~' separates IP from PORT
+		// find the first '~' separates IP from PORT
 		// if NULL -> alias contains only IP
 		if ((p = memchr(port_ip->s, '~', port_ip->len))) {
 			// this is the temporary length of 'PORT~PROTO' string
@@ -1469,7 +1469,7 @@ static str subs_active = {"active;expires=", 15};
  * @param r - r_public* to which it refers
  * @param for_s - the r_subscriber*  to which it refers or NULL if for all
  * @param content - the body content
- * @param expires - the remaining subcription expiration time in seconds
+ * @param expires - the remaining subscription expiration time in seconds
  */
 void create_notifications(udomain_t* _t, impurecord_t* r_passed, ucontact_t* c_passed, str *presentity_uri, str *watcher_contact, str *contact_uri,
                             str* impus, int num_impus, int event_type, str *explit_dereg_contact, int num_explit_dereg_contact) {
@@ -1601,7 +1601,7 @@ out_of_memory:
 }
 
 /*We currently only support certain unknown params to be sent in NOTIFY bodies
- This prevents having compatability issues with UEs including non-standard params in contact header
+ This prevents having compatibility issues with UEs including non-standard params in contact header
  Supported params:
  */
 static str param_q = {"q", 1};
@@ -1755,7 +1755,7 @@ static void process_xml_for_contact(str* buf, str* pad, ucontact_t* ptr) {
  * @param event_type - event type
  * @param subsExpires - subscription expiration
  * @returns the str with the XML content
- * if its a new subscription we do things like subscribe to updates on IMPU, etc
+ * if it is a new subscription we do things like subscribe to updates on IMPU, etc
  */
 str generate_reginfo_full(udomain_t* _t, str* impu_list, int num_impus, str *explit_dereg_contact, str* watcher_contact, int num_explit_dereg_contact, unsigned int reginfo_version) {
     str x = {0, 0};
@@ -1810,7 +1810,7 @@ str generate_reginfo_full(udomain_t* _t, str* impu_list, int num_impus, str *exp
     for (i = 0; i < num_impus; i++) {
         LM_DBG("Scrolling through public identities, current one <%.*s>\n", impu_list[i].len, impu_list[i].s);
         //        if (primary_locked && strncasecmp(impu_list[i].s, primary_impu->s, impu_list[i].len) == 0) {
-        //            LM_DBG("Don't need to lock this impu [%.*s]  as its a ul callback so already locked\n", impu_list[i].len, impu_list[i].s);
+        //            LM_DBG("Don't need to lock this impu [%.*s] as it is a ul callback so already locked\n", impu_list[i].len, impu_list[i].s);
         //            domain_locked = 0;
         //        } else {
         //            LM_DBG("Need to lock this impu\n");
@@ -1931,7 +1931,7 @@ str generate_reginfo_full(udomain_t* _t, str* impu_list, int num_impus, str *exp
 /**
  * Creates the partial reginfo XML.
  * @param pv - the r_public to create for
- * @param pc - the r_contatct to create for
+ * @param pc - the r_contact to create for
  * @param event_type - event type
  * @param subsExpires - subscription expiration
  * @returns the str with the XML content
@@ -2393,7 +2393,7 @@ reg_notification* get_notification() {
     if (n == notification_list->tail) { //list now empty
         notification_list->tail = 0;
     }
-    n->next = 0; //make sure whoever gets this cant access our list
+    n->next = 0; //make sure whoever gets this can't access our list
     notification_list->size--;
     lock_release(notification_list->lock);
 
