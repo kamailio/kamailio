@@ -695,7 +695,7 @@ static int ki_is_ip6_reference(sip_msg_t *msg, str *sval)
 }
 
 /*! \brief Return the IP type of the given argument (string or pv):
- *  1 = IPv4, 2 = IPv6, 3 = IPv6 refenrece, -1 = invalid IP. */
+ *  1 = IPv4, 2 = IPv6, 3 = IPv6 reference, -1 = invalid IP. */
 static int w_ip_type(sip_msg_t* _msg, char* _s, char *_p2)
 {
 	str string;
@@ -728,7 +728,7 @@ static int w_ip_type(sip_msg_t* _msg, char* _s, char *_p2)
 }
 
 /*! \brief Return the IP type of the given argument (string or pv):
- *  1 = IPv4, 2 = IPv6, 3 = IPv6 refenrece, -1 = invalid IP. */
+ *  1 = IPv4, 2 = IPv6, 3 = IPv6 reference, -1 = invalid IP. */
 static int ki_ip_type(sip_msg_t *msg, str *sval)
 {
 	switch (ip_parser_execute(sval->s, sval->len)) {
@@ -990,7 +990,7 @@ static int w_compare_pure_ips(sip_msg_t* _msg, char* _s1, char* _s2)
 }
 
 /*! \brief Return true if the first IP (string or pv) is within the subnet
- * defined by the second commma-separated IP list in CIDR notation.
+ * defined by the second comma-separated IP list in CIDR notation.
  * IPv6 references not allowed. */
 static int ki_ip_is_in_subnet(sip_msg_t* _msg, str* _sval1, str* _sval2)
 {
@@ -1042,7 +1042,7 @@ static int ki_ip_is_in_subnet(sip_msg_t* _msg, str* _sval1, str* _sval2)
 
 
 /*! \brief Return true if the first IP (string or pv) is within the subnet
- * defined by the second commma-separated IP list in CIDR notation.
+ * defined by the second comma-separated IP list in CIDR notation.
  * IPv6 references not allowed. */
 static int w_ip_is_in_subnet(sip_msg_t* _msg, char* _s1, char* _s2)
 {
