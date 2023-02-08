@@ -79,7 +79,7 @@ struct cfg_group_tls {
 	/* maximum number of bytes (clear text) sent into one record.
 	 * The default and maximum value are ~16k. Lower values would lead to a
 	 * lower  memory footprint.
-	 * Values lower then the typical  app. write size might decrease
+	 * Values lower than the typical app. write size might decrease
 	 * performance (extra write() syscalls), so it should be kept ~2k for ser.
 	 */
 	int ssl_max_send_fragment;

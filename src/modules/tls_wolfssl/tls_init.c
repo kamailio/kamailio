@@ -18,7 +18,7 @@
 
 /*! \defgroup tls Kamailio TLS support
  *
- * This modules implements SIP over TCP with TLS encryption.
+ * This module implements SIP over TCP with TLS encryption.
  * Make sure you read the README file that describes configuration
  * of TLS for single servers and servers hosting multiple domains,
  * and thus using multiple SSL/TLS certificates.
@@ -123,7 +123,7 @@ inline static int backtrace2str(char* buf, int size)
 			}else if ((s=strchr(bt_strs[i], '['))!=0){
 				e=s+strlen(s);
 			}else{
-				s=bt_strs[i]; e=s+strlen(s); /* add thw whole string */
+				s=bt_strs[i]; e=s+strlen(s); /* add the whole string */
 			}
 			next=buf_append(p, end, s, (int)(long)(e-s));
 			if (next==0) break;
