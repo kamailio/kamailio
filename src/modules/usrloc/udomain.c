@@ -956,7 +956,7 @@ int udomain_contact_expired_cb(db1_con_t* _c, udomain_t* _d)
 	db_val_t query_vals[3];
 	int key_num = 2;
 	db1_res_t* res = NULL;
-	str user, contact;
+	str user, contact, domain;
 	int i;
 	int n;
 	urecord_t r;
@@ -964,6 +964,9 @@ int udomain_contact_expired_cb(db1_con_t* _c, udomain_t* _d)
 #define RUIDBUF_SIZE 128
 	char ruidbuf[RUIDBUF_SIZE];
 	str ruid;
+#define AORBUF_SIZE 512
+	char aorbuf[AORBUF_SIZE];
+	str aor;
 
 	if (ul_db_mode!=DB_ONLY) {
 		return 0;
@@ -1058,6 +1061,14 @@ int udomain_contact_expired_cb(db1_con_t* _c, udomain_t* _d)
 				continue;
 			}
 			user.len = strlen(user.s);
+			if(user.len < AORBUF_SIZE ) {
+				memcpy(aorbuf, user.s, user.len);
+				aor.s = aorbuf;
+				aor.len = user.len;
+			} else {
+				LM_ERR("user is too long %d\n", user.len);
+				continue;
+			}
 
 			ci = dbrow2info(ROW_VALUES(row)+1, &contact, 0);
 			if (ci==0) {
@@ -1066,18 +1077,30 @@ int udomain_contact_expired_cb(db1_con_t* _c, udomain_t* _d)
 				continue;
 			}
 
-			lock_udomain(_d, &user);
+			if(ul_use_domain) {
+				domain.s = (char*)VAL_STRING(ROW_VALUES(row)+20);
+				domain.len = strlen(domain.s);
+				if(domain.len + aor.len < AORBUF_SIZE) {
+					aorbuf[aor.len] = '@';
+					memcpy(aorbuf+aor.len+1, domain.s, domain.len);
+					aor.len += domain.len + 1;
+				} else {
+					LM_ERR("aor too long, using user part only\n");
+				}
+			}
+
+			lock_udomain(_d, &aor);
 			/* don't use the same static value from get_static_urecord() */
 			memset( &r, 0, sizeof(struct urecord) );
-			r.aor = user;
-			r.aorhash = ul_get_aorhash(&user);
+			r.aor = aor;
+			r.aorhash = ul_get_aorhash(&aor);
 			r.domain = _d->name;
 
 			if ( (c=mem_insert_ucontact(&r, &contact, ci)) == 0) {
 				LM_ERR("inserting temporary contact failed for %.*s\n",
-						user.len, user.s);
+						aor.len, aor.s);
 				release_urecord(&r);
-				unlock_udomain(_d, &user);
+				unlock_udomain(_d, &aor);
 				goto error;
 			}
 
@@ -1096,11 +1119,11 @@ int udomain_contact_expired_cb(db1_con_t* _c, udomain_t* _d)
 					ruid.len = c->ruid.len;
 				} else {
 					LM_ERR("ruid is too long %d for %.*s\n", c->ruid.len,
-							user.len, user.s);
+							aor.len, aor.s);
 				}
 			}
 			release_urecord(&r);
-			unlock_udomain(_d, &user);
+			unlock_udomain(_d, &aor);
 			if(ruid.len > 0 && ul_xavp_contact_name.s != NULL) {
 				/* delete attributes by ruid */
 				uldb_delete_attrs_ruid(_d->name, &ruid);
