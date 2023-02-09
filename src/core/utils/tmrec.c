@@ -31,6 +31,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <stdint.h>
 
 #include "../../core/mem/mem.h"
 #include "tmrec.h"
@@ -271,7 +272,7 @@ int ac_print(ac_tm_t *_atp)
 		return -1;
 	}
 
-	printf("\nSys time: %d\nTime: %02d:%02d:%02d\n", (int)_atp->time,
+	printf("\nSys time: %llu\nTime: %02d:%02d:%02d\n", (uint64_t)_atp->time,
 				_atp->t.tm_hour, _atp->t.tm_min, _atp->t.tm_sec);
 	printf("Date: %s, %04d-%02d-%02d\n", _wdays[_atp->t.tm_wday],
 				_atp->t.tm_year+1900, _atp->t.tm_mon+1, _atp->t.tm_mday);
@@ -511,15 +512,15 @@ int tr_print(tmrec_t *_trp)
 		return -1;
 	}
 	printf("Recurrence definition\n-- start time ---\n");
-	printf("Sys time: %d\n", (int)_trp->dtstart);
+	printf("Sys time: %llu\n", (uint64_t)_trp->dtstart);
 	printf("Time: %02d:%02d:%02d\n", _trp->ts.tm_hour,
 				_trp->ts.tm_min, _trp->ts.tm_sec);
 	printf("Date: %s, %04d-%02d-%02d\n", _wdays[_trp->ts.tm_wday],
 				_trp->ts.tm_year+1900, _trp->ts.tm_mon+1, _trp->ts.tm_mday);
 	printf("---\n");
-	printf("End time: %d\n", (int)_trp->dtend);
-	printf("Duration: %d\n", (int)_trp->duration);
-	printf("Until: %d\n", (int)_trp->until);
+	printf("End time: %llu\n", (uint64_t)_trp->dtend);
+	printf("Duration: %llu\n", (uint64_t)_trp->duration);
+	printf("Until: %llu\n", (uint64_t)_trp->until);
 	printf("Freq: %d\n", (int)_trp->freq);
 	printf("Interval: %d\n", (int)_trp->interval);
 	if(_trp->byday)
@@ -997,7 +998,7 @@ int tr_check_recurrence(tmrec_t *_trp, ac_tm_t *_atp, tr_res_t *_tsw)
 
 int check_freq_interval(tmrec_t *_trp, ac_tm_t *_atp)
 {
-	int _t0, _t1;
+	uint64_t _t0, _t1;
 	struct tm _tm;
 	if(!_trp || !_atp)
 		return REC_ERR;
@@ -1016,12 +1017,12 @@ int check_freq_interval(tmrec_t *_trp, ac_tm_t *_atp)
 			_tm.tm_year = _trp->ts.tm_year;
 			_tm.tm_mon = _trp->ts.tm_mon;
 			_tm.tm_mday = _trp->ts.tm_mday;
-			_t0 = (int)mktime(&_tm);
+			_t0 = (uint64_t)mktime(&_tm);
 			memset(&_tm, 0, sizeof(struct tm));
 			_tm.tm_year = _atp->t.tm_year;
 			_tm.tm_mon = _atp->t.tm_mon;
 			_tm.tm_mday = _atp->t.tm_mday;
-			_t1 = (int)mktime(&_tm);
+			_t1 = (uint64_t)mktime(&_tm);
 			if(_trp->freq == FREQ_DAILY)
 				return (((_t1-_t0)/(24*3600))%_trp->interval==0)?
 					REC_MATCH:REC_NOMATCH;
