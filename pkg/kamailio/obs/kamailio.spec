@@ -736,7 +736,11 @@ BuildRequires:  zlib-devel
 Requires:   libmysqlclient18
 BuildRequires:  libmysqlclient-devel
 %else
+%if 0%{?rhel} == 6
+BuildRequires:  mysql-devel
+%else
 BuildRequires:  mariadb-devel
+%endif
 %endif
 
 %description    mysql
