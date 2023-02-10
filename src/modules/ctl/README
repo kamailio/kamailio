@@ -16,7 +16,7 @@ Andrei Pelinescu-Onciul
         3. Parameters
 
               3.1. binrpc (string)
-              3.2. binrpc_buffer_size (integer or string)
+              3.2. binrpc_buffer_size (integer)
               3.3. mode (integer)
               3.4. user (integer or string)
               3.5. group (integer or string)
@@ -56,7 +56,7 @@ Chapter 1. Admin Guide
    3. Parameters
 
         3.1. binrpc (string)
-        3.2. binrpc_buffer_size (integer or string)
+        3.2. binrpc_buffer_size (integer)
         3.3. mode (integer)
         3.4. user (integer or string)
         3.5. group (integer or string)
@@ -115,7 +115,7 @@ $ kamcmd ps
 3. Parameters
 
    3.1. binrpc (string)
-   3.2. binrpc_buffer_size (integer or string)
+   3.2. binrpc_buffer_size (integer)
    3.3. mode (integer)
    3.4. user (integer or string)
    3.5. group (integer or string)
@@ -170,7 +170,7 @@ modparam("ctl", "binrpc", "localhost:3000")         # udp
 modparam("ctl", "binrpc", "tcp:3012")               # tcp any , port 3012
 modparam("ctl", "binrpc", "udp:*:3012")             # udp any , port 3012
 
-3.2. binrpc_buffer_size (integer or string)
+3.2. binrpc_buffer_size (integer)
 
    The size of the internal buffer used for printing elements of the RPC
    response (e.g., internal RPC printf()). The value is given in bytes.
