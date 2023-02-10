@@ -24,6 +24,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 #include <regex.h>
 #include <fnmatch.h>
 
@@ -657,8 +658,8 @@ int dlgs_ht_dbg(void)
 			LM_ERR("\tdst: %.*s\n", it->dst.len, it->dst.s);
 			LM_ERR("\tdata: %.*s\n", it->data.len, it->data.s);
 			LM_ERR("\truid: %.*s\n", it->ruid.len, it->ruid.s);
-			LM_ERR("\thashid: %u ts_init: %u ts_answer: %u\n", it->hashid,
-					(unsigned int)it->ts_init, (unsigned int)it->ts_answer);
+			LM_ERR("\thashid: %u ts_init: %llu ts_answer: %llu\n", it->hashid,
+					(uint64_t)it->ts_init, (uint64_t)it->ts_answer);
 			it = it->next;
 		}
 		lock_release(&dsht->slots[i].lock);
@@ -1063,7 +1064,7 @@ static int dlgs_rpc_add_item(rpc_t *rpc, void *ctx, dlgs_item_t *it, int n,
 		rpc->fault(ctx, 500, "Internal error creating rpc");
 		return -1;
 	}
-	if(rpc->struct_add(th, "dSSSSSSSuuu",
+	if(rpc->struct_add(th, "dSSSSSSSJJu",
 					"count", n,
 					"src", &it->src,
 					"dst", &it->dst,
@@ -1072,8 +1073,8 @@ static int dlgs_rpc_add_item(rpc_t *rpc, void *ctx, dlgs_item_t *it, int n,
 					"callid", &it->callid,
 					"ftag", &it->ftag,
 					"ttag", &it->ttag,
-					"ts_init", (unsigned int)it->ts_init,
-					"ts_answer", (unsigned int)it->ts_answer,
+					"ts_init", (uint64_t)it->ts_init,
+					"ts_answer", (uint64_t)it->ts_answer,
 					"state", it->state)<0) {
 		rpc->fault(ctx, 500, "Internal error creating item");
 		return -1;
