@@ -90,7 +90,7 @@ modparam("ctl", "binrpc", "udp:*:3012")             # udp any , port 3012
 	</section>
 
     <section id="binrpc_buffer_size">
-    <title><varname>binrpc_buffer_size</varname> (integer or string)</title>
+    <title><varname>binrpc_buffer_size</varname> (integer)</title>
     <para>
 		The size of the internal buffer used for printing elements of the RPC
 		response (e.g., internal RPC printf()). The value is given in bytes.
