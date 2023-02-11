@@ -771,7 +771,7 @@ modparam("dispatcher", "ds_ping_latency_stats", 1)
 		</emphasis>
 		</para>
 		<example>
-		<title>Set the <quote>ds_hash_size</quote> parameter</title>
+		<title>Set the <quote>ds_latency_estimator_alpha</quote> parameter</title>
 <programlisting format="linespecific">
 ...
 modparam("dispatcher", "ds_latency_estimator_alpha", 900)
