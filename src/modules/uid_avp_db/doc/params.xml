@@ -71,7 +71,7 @@
     </section>
 
     <section>
-	<title><varname>name</varname> (string)</title>
+	<title><varname>name_column</varname> (string)</title>
 	<para>
 	    The name of the column containing attribute names.
 	</para>

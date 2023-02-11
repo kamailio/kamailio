@@ -108,8 +108,8 @@ static param_export_t params[] = {
     {"flags_column",     PARAM_STRING, &flags_column    },
     {"scheme_column",    PARAM_STRING, &scheme_column   },
 
-	{"attr_group", PARAM_STR | PARAM_USE_FUNC, (void*)declare_attr_group },
-	{"auto_unlock_extra_attrs", PARAM_INT, &auto_unlock },
+    {"attr_group", PARAM_STR | PARAM_USE_FUNC, (void*)declare_attr_group },
+    {"auto_unlock_extra_attrs", PARAM_INT, &auto_unlock },
     {0, 0, 0}
 };
 
