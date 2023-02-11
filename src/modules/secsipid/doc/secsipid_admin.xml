@@ -117,7 +117,7 @@ modparam("secsipid", "timeout", 2)
 	<section>
 		<title><varname>cache_dir</varname> (str)</title>
 		<para>
-		The path to the directory where to save cached pyblic keys. If set,
+		The path to the directory where to save cached public keys. If set,
 		it activates the public key file caching in the libsecsipid library.
 		</para>
 		<para>
