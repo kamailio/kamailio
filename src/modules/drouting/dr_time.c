@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <stdint.h>
 
 #include "../../core/mem/shm_mem.h"
 #include "dr_time.h"
@@ -911,7 +912,7 @@ int dr_check_tmrec(dr_tmrec_p _trp, dr_ac_tm_p _atp, dr_tr_res_p _tsw)
 
 int dr_check_freq_interval(dr_tmrec_p _trp, dr_ac_tm_p _atp)
 {
-	int _t0, _t1;
+	uint64_t _t0, _t1;
 	struct tm _tm;
 	if(!_trp || !_atp)
 		return REC_ERR;
@@ -929,12 +930,12 @@ int dr_check_freq_interval(dr_tmrec_p _trp, dr_ac_tm_p _atp)
 			_tm.tm_year = _trp->ts.tm_year;
 			_tm.tm_mon = _trp->ts.tm_mon;
 			_tm.tm_mday = _trp->ts.tm_mday;
-			_t0 = (int)mktime(&_tm);
+			_t0 = (uint64_t)mktime(&_tm);
 			memset(&_tm, 0, sizeof(struct tm));
 			_tm.tm_year = _atp->t.tm_year;
 			_tm.tm_mon = _atp->t.tm_mon;
 			_tm.tm_mday = _atp->t.tm_mday;
-			_t1 = (int)mktime(&_tm);
+			_t1 = (uint64_t)mktime(&_tm);
 			if(_trp->freq == FREQ_DAILY)
 				return (((_t1 - _t0) / (24 * 3600)) % _trp->interval == 0)
 							   ? REC_MATCH
