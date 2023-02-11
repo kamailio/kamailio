@@ -122,7 +122,7 @@ m_tree_t* mt_init_tree(str* tname, str *dbtable, str *scols, int type,
 
 	pt->type = type;
 	pt->multi = multi;
-	pt->reload_time = (unsigned int)time(NULL);
+	pt->reload_time = (uint64_t)time(NULL);
 	pt->tname.s = (char*)shm_malloc((1+tname->len)*sizeof(char));
 	if(pt->tname.s==NULL)
 	{

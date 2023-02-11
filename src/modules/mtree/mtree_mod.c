@@ -560,7 +560,7 @@ static int mt_load_db(m_tree_t *pt)
 	new_tree.nritems = 0;
 	new_tree.memsize = 0;
 	new_tree.reload_count++;
-	new_tree.reload_time = (unsigned int)time(NULL);
+	new_tree.reload_time = (uint64_t)time(NULL);
 
 
 	if (mt_dbf.use_table(db_con, &old_tree->dbtable) < 0)
@@ -888,13 +888,13 @@ void rpc_mtree_summary(rpc_t* rpc, void* c)
 				rpc->fault(c, 500, "Internal error adding items");
 				return;
 			}
-			if(rpc->struct_add(ih, "d", "reload_count",
-						(int)pt->reload_count) < 0 ) {
+			if(rpc->struct_add(ih, "j", "reload_count",
+						pt->reload_count) < 0 ) {
 				rpc->fault(c, 500, "Internal error adding items");
 				return;
 			}
-			if(rpc->struct_add(ih, "d", "reload_time",
-						(int)pt->reload_time) < 0 ) {
+			if(rpc->struct_add(ih, "J", "reload_time",
+						pt->reload_time) < 0 ) {
 				rpc->fault(c, 500, "Internal error adding items");
 				return;
 			}

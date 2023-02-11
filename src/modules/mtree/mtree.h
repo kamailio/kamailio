@@ -25,6 +25,8 @@
 #ifndef _MTREE_H_
 #define _MTREE_H_
 
+#include <stdint.h>
+
 #include "../../core/str.h"
 #include "../../core/parser/msg_parser.h"
 #include "../../core/rpc.h"
@@ -76,7 +78,7 @@ typedef struct _m_tree
 	unsigned int nritems;
 	unsigned int memsize;
 	unsigned int reload_count;
-	unsigned int reload_time;
+	uint64_t reload_time;
 	mt_node_t *head;
 	struct _m_tree *next;
 } m_tree_t;
