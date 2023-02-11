@@ -148,6 +148,28 @@ modparam("dlgs", "timer_interval", 60)
 </programlisting>
 		</example>
 	</section>
+	<section id="dlgs.p.hash_size">
+		<title><varname>hash_size</varname> (integer)</title>
+		<para>
+		The size of the hash table internally used to keep the dialogs. A
+		larger table is much faster but consumes more memory. The hash size
+		must be a power of two.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>9</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>hash_size</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dlgs", "hash_size", 5)
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 	<section>
@@ -392,10 +414,10 @@ request_route {
 			the same meaning like those for dlgs_count(...).
 		</para>
 		<example>
-		<title><function>dlgs.get</function> usage</title>
+		<title><function>dlgs.getall</function> usage</title>
 		<programlisting format="linespecific">
 ...
-&kamctl; rpc dlgs.get src eq sip:alice@sipserver.com
+&kamctl; rpc dlgs.getall src eq sip:alice@sipserver.com
 ...
 </programlisting>
 		</example>
