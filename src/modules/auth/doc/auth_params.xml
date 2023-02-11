@@ -30,8 +30,8 @@
 		<title><varname>auth_checks_in_dlg</varname> (flags)</title>
 	<para>
 		These three module parameters control which optional integrity
-        	checks will be performed on the SIP message carrying digest response
-        	during SIP MD5 digest authentication. <varname>auth_check_register</varname>
+		checks will be performed on the SIP message carrying digest response
+		during SIP MD5 digest authentication. <varname>auth_checks_register</varname>
         	controls integrity checks to be performed on REGISTER messages,
         	<varname>auth_checks_no_dlg</varname> controls which optional
         	integrity checks will be performed on SIP requests that have no To
@@ -197,7 +197,8 @@ modparam("auth", "qop", "auth")   # set qop=auth
 		If a response doesn't include <emphasis>qop</emphasis> or 
 		<emphasis>nc</emphasis> (for example obsolete UAs that don't support
 		them) the response will be checked according to the other enabled
-		nonce checks, in this order: one_time_nonce and auth_check_*.
+		nonce checks, in this order: <varname>one_time_nonce</varname> and
+		<varname>auth_checks_*</varname>.
 		If a response includes <emphasis>nc</emphasis> only the normal
 		<varname>nonce_expire</varname> checks and the 
 		<varname>nonce_count</varname> checks will be performed, all
