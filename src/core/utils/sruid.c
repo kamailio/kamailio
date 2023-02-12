@@ -30,6 +30,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
 #include <time.h>
 
@@ -66,7 +67,7 @@ static int sruid_shift_lfsr(unsigned int *lfsr, unsigned int mask)
 
 static void sruid_init_lfsr(void)
 {
-	sruid_lfsr32 = (unsigned int)time(NULL);
+	sruid_lfsr32 = (unsigned int)(uint64_t)time(NULL);
 	sruid_lfsr31 = (unsigned int)getpid();
 }
 
@@ -101,11 +102,11 @@ int sruid_init(sruid_t *sid, char sep, char *cid, int mode)
 	if(server_id!=0)
 		i = snprintf(sid->buf+5, SRUID_SIZE - 5 /*so far*/ - 8 /* extra int */,
 			"%x%c%x%c%x%c", (unsigned int)server_id, sep,
-			(unsigned int)time(NULL), sep, (unsigned int)my_pid(), sep);
+			(unsigned int)(uint64_t)time(NULL), sep, (unsigned int)my_pid(), sep);
 	else
 		i = snprintf(sid->buf+5, SRUID_SIZE - 5 /*so far*/ - 8 /* extra int */,
 			"%x%c%x%c",
-			(unsigned int)time(NULL), sep, (unsigned int)my_pid(), sep);
+			(unsigned int)(uint64_t)time(NULL), sep, (unsigned int)my_pid(), sep);
 	if(i<=0 || i>SRUID_SIZE-13)
 	{
 		LM_ERR("could not initialize sruid struct - output len: %d\n", i);
@@ -141,11 +142,11 @@ int sruid_reinit(sruid_t *sid, int mode)
 	if(server_id!=0) {
 		i = snprintf(sid->buf+5, SRUID_SIZE - 5 /*so far*/ - 8 /* extra int */,
 			"%x%c%x%c%x%c", (unsigned int)server_id, sep,
-			(unsigned int)time(NULL), sep, (unsigned int)my_pid(), sep);
+			(unsigned int)(uint64_t)time(NULL), sep, (unsigned int)my_pid(), sep);
 	} else {
 		i = snprintf(sid->buf+5, SRUID_SIZE - 5 /*so far*/ - 8 /* extra int */,
 			"%x%c%x%c",
-			(unsigned int)time(NULL), sep, (unsigned int)my_pid(), sep);
+			(unsigned int)(uint64_t)time(NULL), sep, (unsigned int)my_pid(), sep);
 	}
 	if(i<=0 || i>SRUID_SIZE-13)
 	{
