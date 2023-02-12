@@ -220,7 +220,7 @@ struct iovec *bencode_iovec(bencode_item_t *root, int *cnt, unsigned int head, u
 
 /* Similar to bencode_iovec(), but instead returns the encoded document as a null-terminated string.
  * Memory for the string is allocated from the same bencode_buffer_t object as the "root" object
- * was allocated from. If "len" is a non-NULL pointer, the length of the genrated string is returned
+ * was allocated from. If "len" is a non-NULL pointer, the length of the generated string is returned
  * in *len. This is important if the encoded document contains binary data, in which case null
  * termination cannot be trusted. The returned string is freed when the corresponding
  * bencode_buffer_t object is destroyed. */

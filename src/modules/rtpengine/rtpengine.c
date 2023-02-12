@@ -1147,8 +1147,8 @@ int add_rtpengine_socks(struct rtpp_set *rtpp_list, char *rtpengine,
 }
 
 
-/* 0 - succes
- * -1 - erorr
+/* 0 - success
+ * -1 - error
  * */
 static int rtpengine_add_rtpengine_set(char * rtp_proxies, unsigned int weight, int disabled, unsigned int ticks)
 {
