@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -26,7 +26,8 @@
  * Module: \ref core
  */
 
-#include <stdlib.h> 
+#include <stdlib.h>
+#include <stdint.h>
 #include "select.h"
 #include "select_core.h"
 #include "select_buf.h"
@@ -60,7 +61,7 @@
 #include "rand/kam_rand.h"
 
 #define RETURN0_res(x) {*res=(x);return 0;}
-#define TRIM_RET0_res(x) {*res=(x);trim(res);return 0;} 
+#define TRIM_RET0_res(x) {*res=(x);trim(res);return 0;}
 #define TEST_RET_res_body(x) if (x){*res=(x)->body;return 0;}else return 1;
 #define TEST_RET_res_value(x) if (x){*res=(x)->value;return 0;}else return 1;
 
@@ -1485,7 +1486,7 @@ int select_sys_unique(str* res, select_t* s, struct sip_msg* msg) {
 		c = int2str_base_0pad(getpid(), &l, 16, UNIQUE_ID_PID_LEN);
 		memcpy(uniq_id, c, UNIQUE_ID_PID_LEN);
 		uniq_id[UNIQUE_ID_PID_LEN] = '-';
-		c = int2str_base_0pad(time(NULL), &l, 16, UNIQUE_ID_TIME_LEN);
+		c = int2str_base_0pad((unsigned int)(uint64_t)time(NULL), &l, 16, UNIQUE_ID_TIME_LEN);
 		memcpy(uniq_id+UNIQUE_ID_PID_LEN+1, c, UNIQUE_ID_TIME_LEN);
 		uniq_id[UNIQUE_ID_PID_LEN+1+UNIQUE_ID_TIME_LEN] = '-';
 
@@ -1525,7 +1526,7 @@ int select_sys_unique(str* res, select_t* s, struct sip_msg* msg) {
 
 
 int select_sys_now(str* res, select_t* s, struct sip_msg* msg) {
-	return uint_to_static_buffer(res, time(NULL));
+	return uint_to_static_buffer(res, (unsigned int)(uint64_t)time(NULL));
 }
 
 int select_sys_now_fmt(str* res, select_t* s, struct sip_msg* msg)
