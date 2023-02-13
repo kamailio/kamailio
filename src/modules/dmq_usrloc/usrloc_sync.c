@@ -692,7 +692,7 @@ int usrloc_dmq_send_multi_contact(ucontact_t* ptr, str aor, int action, dmq_node
 		srjson_AddStrToObject(jdoc, jdoc_contact, "sock", ptr->sock->sock_str.s, ptr->sock->sock_str.len);
 		jdoc_contact_group.size += ptr->sock->sock_str.len;
 	}
-	else if (_dmq_usrloc_replicate_socket_info==DMQ_USRLOC_REPLICATE_SOCKNAME) {
+	else if (_dmq_usrloc_replicate_socket_info==DMQ_USRLOC_REPLICATE_SOCKNAME && ptr->sock!=NULL && ptr->sock->sockname.s!=NULL) {
 		srjson_AddStrToObject(jdoc, jdoc_contact, "sockname", ptr->sock->sockname.s, ptr->sock->sockname.len);
 		jdoc_contact_group.size += ptr->sock->sockname.len;
 	}
