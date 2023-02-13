@@ -50,7 +50,7 @@ add_event_t pres_add_event;
 int pres_reginfo_aggregate_presentities = 0;
 unsigned int pres_reginfo_default_expires = 3600;
 
-/* module exported paramaters */
+/* module exported parameters */
 static param_export_t params[] = {
 	{ "default_expires", INT_PARAM, &pres_reginfo_default_expires },
 	{ "aggregate_presentities", INT_PARAM, &pres_reginfo_aggregate_presentities },
