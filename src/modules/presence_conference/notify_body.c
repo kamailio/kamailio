@@ -42,7 +42,7 @@
 #include "notify_body.h"
 #include "pidf.h"
 
-str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n, int off_index);
+str* aggregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n, int off_index);
 
 void free_xml_body(char* body)
 {
@@ -63,7 +63,7 @@ str* conf_agg_nbody(str* pres_user, str* pres_domain, str** body_array, int n, i
 	if(body_array== NULL)
 		return NULL;
 
-	n_body = agregate_xmls(pres_user, pres_domain, body_array, n, off_index);
+	n_body = aggregate_xmls(pres_user, pres_domain, body_array, n, off_index);
 	LM_DBG("[n_body]=%p\n", n_body);
 	if(n_body) {
 		LM_DBG("[*n_body]=%.*s\n",
@@ -77,7 +77,7 @@ str* conf_agg_nbody(str* pres_user, str* pres_domain, str** body_array, int n, i
 	return n_body;
 }
 
-str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n, int off_index)
+str* aggregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n, int off_index)
 {
 	int i, j = 0;
 
