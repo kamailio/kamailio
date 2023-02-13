@@ -155,7 +155,7 @@ int get_ucontact(urecord_t* _r, str* _c, str* _callid, str* _path,
  * \warning Failing to calls this function after get_urecord will
  * result in a memory leak when the DB_ONLY mode is used. When
  * the records is later deleted, e.g. with delete_urecord, then
- * its not necessary, as this function already releases the record.
+ * it is not necessary, as this function already releases the record.
  * \param _r released record
  */
 void release_urecord(urecord_t* _r);
