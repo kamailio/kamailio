@@ -136,8 +136,8 @@ modparam("db_berkeley", "journal_roll_interval", 3600)
 
 	<section>
 	<title>RPC Commands</title>
-	<section id="db_berkely.rpc.reload">
-		<title>db_berkely.reload</title>
+	<section id="db_berkeley.rpc.reload">
+		<title>db_berkeley.reload</title>
 		<para>
 		Causes db_berkeley module to re-read the contents of specified table (or dbenv).
 		The db_berkeley DB actually loads each table on demand, as opposed to loading all
@@ -147,7 +147,7 @@ modparam("db_berkeley", "journal_roll_interval", 3600)
 		</para>
 
 		<para>
-		Name: <emphasis>db_berkely.reload</emphasis>
+		Name: <emphasis>db_berkeley.reload</emphasis>
 		</para>
 
 		<para>Parameters: <emphasis>tablename</emphasis> (or db_path); to reload a particular table

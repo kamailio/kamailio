@@ -1080,9 +1080,9 @@ int km_bdblib_valtochar(table_p _tp, int *_lres, char *_k, int *_klen,
 			if(i == k) {
 /*
 				 KEY was provided; append to buffer;
-				 _k[j] contains a key, but its a key that 
+				 _k[j] contains a key, but it is a key that 
 				 corresponds to column k of our schema.
-				 now we know its a match, and we dont need
+				 now we know it is a match, and we don't need
 				 index k for anything else
 				*/
 #ifdef BDB_EXTRA_DEBUG

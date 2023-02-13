@@ -1148,9 +1148,9 @@ int bdblib_valtochar(bdb_table_p tp, db_fld_t *fld, int fld_count, char *kout,
 			if(i == k) {
 				/*
 				 KEY was provided; append to buffer;
-				 _k[j] contains a key, but its a key that 
+				 _k[j] contains a key, but it is a key that 
 				 corresponds to column k of our schema.
-				 now we know its a match, and we dont need
+				 now we know it is a match, and we don't need
 				 index k for anything else
 				*/
 				len = total - sum;

@@ -538,7 +538,7 @@ int km_bdb_query(db1_con_t *_con, db_key_t *_k, db_op_t *_op, db_val_t *_v,
 	LM_DBG("SELECT  KEY: [%.*s]\n", (int)key.size, (char *)key.data);
 #endif
 
-	/*query Berkely DB*/
+	/*query Berkeley DB*/
 	if((ret = db->get(db, NULL, &key, &data, 0)) == 0) {
 #ifdef BDB_EXTRA_DEBUG
 		LM_DBG("RESULT\nKEY:  [%.*s]\nDATA: [%.*s]\n", (int)key.size,
@@ -982,7 +982,7 @@ error:
  * _op: operators
  * _v: values of the keys that must match
  * _uk: update keys; cols that need to be updated 
- * _uv: update values; col values that need to be commited
+ * _uv: update values; col values that need to be committed
  * _un: number of rows to update
  */
 int bdb_update(db1_con_t *_con, db_key_t *_k, db_op_t *_op, db_val_t *_v,
@@ -1065,7 +1065,7 @@ int bdb_update(db1_con_t *_con, db_key_t *_k, db_op_t *_op, db_val_t *_v,
 	key.flags = DB_DBT_USERMEM;
 	key.size = len;
 
-	/*stage 1: QUERY Berkely DB*/
+	/*stage 1: QUERY Berkeley DB*/
 	if((ret = db->get(db, NULL, &key, &qdata, 0)) == 0) {
 
 #ifdef BDB_EXTRA_DEBUG
@@ -1089,7 +1089,7 @@ int bdb_update(db1_con_t *_con, db_key_t *_k, db_op_t *_op, db_val_t *_v,
 	memset(ubuf, 0, MAX_ROW_SIZE);
 
 	/* loop over each column of the qbuf and copy it to our new ubuf unless
-	   its a field that needs to update
+	   it is a field that needs to update
 	*/
 	c = strtok(qbuf, DELIM);
 	t = ubuf;

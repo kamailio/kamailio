@@ -63,7 +63,7 @@ static void bdb_cmd_free(db_cmd_t *cmd, bdb_cmd_t *payload)
 
 /** Prepare a query
  * @param cmd DB command structure
- * @param bcmd berkey DB command structure
+ * @param bcmd berkeley DB command structure
  * @return 0 on success, -1 on error
  */
 int bdb_prepare_query(db_cmd_t *cmd, bdb_cmd_t *bcmd)
@@ -197,7 +197,7 @@ error:
 /**
  * Execute a query
  * @param cmd DB command structure
- * @param bcmd Berkely DB command structure
+ * @param bcmd Berkeley DB command structure
  * @return 0 on success, -1 on error
  */
 int bdb_query(db_cmd_t *cmd, bdb_cmd_t *bcmd)
