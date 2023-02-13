@@ -191,10 +191,10 @@ Chapter 1. Admin Guide
    save() and should be used for “REGISTER” requests.
 
    Note: fix_nated_contact() changes the “Contact” header, thus it breaks
-   the RFC. Although usually this is not an issue, it may cause problems
+   the RFC. Although this is not always an issue, it may cause problems
    with strict SIP clients. An alternative is to use add_contact_alias()
-   that together with the handle_ruri_alias() is standards conforming and
-   also supports reuse of TCP/TLS connections.
+   (or set_contact_alias()) that together with the handle_ruri_alias() is
+   standards conforming and also supports reuse of TCP/TLS connections.
 
 2. NAT pinging types
 
@@ -285,12 +285,15 @@ modparam("nathelper", "natping_interval", 10)
 4.3. ping_nated_only (integer)
 
    If this parameter is set to 1 then only contacts that have the behind
-   NAT “nat_bflag” flag in user location database set will get
-   SIP-request-based ping.
+   NAT “nat_bflag” flag set in user location records get the NAT ping (the
+   “nat_bflag” is specified via modparam of usrloc module). By default the
+   ping is done with 4-bytes UDP packet. If sipping_bflag is also set,
+   then the ping is done with a stateless SIP request (by default: OPTIONS
+   request).
 
-   If it is 0 and sipping_bflag is not set, then the 4-bytes UDP ping is
-   sent to all contacts. If it is 0 and sipping_bflag parameter is set,
-   then SIP-request-based pinging is sent to all contacts.
+   If it is 0, then all contacts get a NAT ping, by default being the
+   4-bytes UDP packet. If it is 0 and sipping_bflag parameter is set, then
+   SIP-request-based pinging is sent to all contacts.
 
    Default value is 0.
 
