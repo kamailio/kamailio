@@ -132,7 +132,7 @@ sip:192.168.40.17:5060;status=active
 	<section id="dmq.p.server_address">
 		<title><varname>server_address</varname>(str)</title>
 		<para>
-			The local server address. This is the addres with which the local DMQ
+			The local server address. This is the address with which the local DMQ
 			node joins the servers group to send/receive messages.
 		</para>
 		<para>
@@ -160,7 +160,7 @@ modparam("dmq", "server_address", "sip:10.0.0.20:5061;transport=tls")
 			engine will send/receive messages.
 		</para>
 		<para>
-			Note: if this parameter is not set, the socket to send/receice
+			Note: if this parameter is not set, the socket to send/receive
 			messages is built from server_address parameter.
 		</para>
 		<para>
