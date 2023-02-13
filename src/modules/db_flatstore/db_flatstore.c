@@ -80,7 +80,7 @@ str flat_delimiter = STR_STATIC_INIT("|");
 
 
 /** Escape character.
- * The character in this variable will be used to escape specia characters,
+ * The character in this variable will be used to escape special characters,
  * such as row and field delimiters, if they appear in the data being written
  * in the files.
  */
