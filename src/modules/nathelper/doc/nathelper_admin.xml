@@ -33,11 +33,11 @@
 	</para>
         <para>
 		Note: <function>fix_nated_contact()</function> changes the <quote>Contact</quote>
-		header, thus it breaks the RFC. Although usually this is not an issue, it may
-		cause problems with strict SIP clients.  An alternative is to use
-		<function>add_contact_alias()</function> that together with
-		the <function>handle_ruri_alias()</function> is standards conforming and also
-		supports reuse of TCP/TLS connections.
+		header, thus it breaks the RFC. Although this is not always an issue, it may
+		cause problems with strict SIP clients. An alternative is to use
+		<function>add_contact_alias()</function> (or <function>set_contact_alias()</function>)
+		that together with the <function>handle_ruri_alias()</function> is standards
+		conforming and also supports reuse of TCP/TLS connections.
 	</para>
 	</section>
 
@@ -49,7 +49,7 @@
 	<itemizedlist>
 		<listitem>
 			<para>
-			<emphasis>UDP packet</emphasis> - 4 bytes (zero filled) UDP 
+			<emphasis>UDP packet</emphasis> - 4 bytes (zero filled) UDP
 			packets are sent to the contact address.
 			</para>
 			<itemizedlist>
@@ -59,8 +59,8 @@
 				</para>
 				</listitem>
 				<listitem>
-				<para><emphasis>Disadvantages:</emphasis> unidirectional 
-				traffic through NAT (inbound - from outside to inside); As 
+				<para><emphasis>Disadvantages:</emphasis> unidirectional
+				traffic through NAT (inbound - from outside to inside); As
 				many NATs do update the bind timeout only on outbound traffic,
 				the bind may expire and get closed.
 				</para>
@@ -69,19 +69,19 @@
 		</listitem>
 		<listitem>
 			<para>
-			<emphasis>SIP request</emphasis> - a stateless SIP request is 
+			<emphasis>SIP request</emphasis> - a stateless SIP request is
 			sent to the UDP contact address.
 			</para>
 			<itemizedlist>
 				<listitem>
 				<para><emphasis>Advantages:</emphasis> bidirectional traffic
-				through NAT, since each PING request from &kamailio; (inbound 
-				traffic) will force the SIP client to generate a SIP reply 
+				through NAT, since each PING request from &kamailio; (inbound
+				traffic) will force the SIP client to generate a SIP reply
 				(outbound traffic) - the NAT bind will be surely kept open.
 				</para>
 				</listitem>
 				<listitem>
-				<para><emphasis>Disadvantages:</emphasis> higher bandwidth 
+				<para><emphasis>Disadvantages:</emphasis> higher bandwidth
 				traffic, more expensive (as time) to generate by &kamailio;;
 				</para>
 				</listitem>
@@ -99,7 +99,7 @@
 			<itemizedlist>
 			<listitem>
 			<para>
-				<emphasis>usrloc</emphasis> module - only if the NATed 
+				<emphasis>usrloc</emphasis> module - only if the NATed
 				contacts are to be pinged.
 			</para>
 			</listitem>
@@ -109,7 +109,7 @@
 	<section>
 		<title>External Libraries or Applications</title>
 		<para>
-		The following libraries or applications must be installed before 
+		The following libraries or applications must be installed before
 		running &kamailio; with this module loaded:
 			<itemizedlist>
 			<listitem>
@@ -147,8 +147,8 @@ modparam("nathelper", "force_socket", "127.0.0.1:5060")
 	<section id="nathelper.p.natping_interval">
 		<title><varname>natping_interval</varname> (integer)</title>
 		<para>
-		Period of time in seconds between sending the NAT pings to all 
-		currently registered &ua;s to keep their &nat; bindings alive. 
+		Period of time in seconds between sending the NAT pings to all
+		currently registered &ua;s to keep their &nat; bindings alive.
 		Value of 0 disables this functionality.
 		</para>
 		<note><para>
@@ -173,13 +173,16 @@ modparam("nathelper", "natping_interval", 10)
 		<title><varname>ping_nated_only</varname> (integer)</title>
 		<para>
 		If this parameter is set to 1 then only contacts that have
-		the behind NAT <quote>nat_bflag</quote> flag in user location
-		database set will get SIP-request-based ping.
+		the behind NAT <quote>nat_bflag</quote> flag set in user location
+		records get the NAT ping (the <quote>nat_bflag</quote> is specified via
+		modparam of usrloc module). By default the ping is done with 4-bytes UDP
+		packet. If sipping_bflag is also set, then the ping is done with
+		a stateless SIP request (by default: OPTIONS request).
 		</para>
 		<para>
-		If it is 0 and sipping_bflag is not set, then the 4-bytes UDP ping
-		is sent to all contacts. If it is 0 and sipping_bflag parameter
-		is set, then SIP-request-based pinging is sent to all contacts.
+		If it is 0, then all contacts get a NAT ping, by default being the 4-bytes
+		UDP packet. If it is 0 and sipping_bflag parameter is set, then
+		SIP-request-based pinging is sent to all contacts.
 		</para>
 		<para>
 		<emphasis>
@@ -237,10 +240,10 @@ modparam("nathelper", "natping_socket", "192.168.1.1:5006")
 	<section id="nathelper.p.received_avp">
 		<title><varname>received_avp</varname> (str)</title>
 		<para>
-		The name of the Attribute-Value-Pair (AVP) used to store the URI 
-		containing the received IP, port, and protocol. The URI is created 
-		by fix_nated_register function of nathelper module and the attribute 
-		is then used by the registrar to store the received parameters. Do 
+		The name of the Attribute-Value-Pair (AVP) used to store the URI
+		containing the received IP, port, and protocol. The URI is created
+		by fix_nated_register function of nathelper module and the attribute
+		is then used by the registrar to store the received parameters. Do
 		not forget to change the value of corresponding parameter in
 		registrar module if you change the value of this parameter.
 		</para>
@@ -268,8 +271,8 @@ modparam("nathelper", "received_avp", "$avp(i:42)")
 	<section id="nathelper.p.sipping_bflag">
 		<title><varname>sipping_bflag</varname> (integer)</title>
 		<para>
-		Which branch flag should be used by the module to identify NATed 
-		contacts for which it should perform NAT ping via a SIP request 
+		Which branch flag should be used by the module to identify NATed
+		contacts for which it should perform NAT ping via a SIP request
 		instead of dummy UDP packet.
 		</para>
 		<para>
@@ -291,7 +294,7 @@ modparam("nathelper", "sipping_bflag", 7)
 		<para>
 		The parameter sets the SIP URI to be used in generating the SIP
 		requests for NAT ping purposes. To enable the SIP request pinging
-		feature, you have to set this parameter. The SIP request pinging 
+		feature, you have to set this parameter. The SIP request pinging
 		will be used only for requests marked so.
 		</para>
 		<para>
