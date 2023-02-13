@@ -231,7 +231,7 @@ str* build_pidf(xmlNodePtr pres_node, char* uri, char* resource)
 		}
 		goto done;		
 	}
-	/*if no type present search for suplimentary information */
+	/*if no type present search for supplementary information */
 	status_cont= XMLNodeGetNodeContentByName(pres_node, "status", NULL);
 	show_cont= XMLNodeGetNodeContentByName(pres_node, "show", NULL);
 	

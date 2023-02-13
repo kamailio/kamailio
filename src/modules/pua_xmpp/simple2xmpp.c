@@ -344,7 +344,7 @@ int build_xmpp_content(str* to_uri, str* from_uri, str* body, str* id,
 		goto done;
 	}
 
-	/*extractiong the information from the sip message body*/
+	/*extracting the information from the sip message body*/
 	sip_doc= xmlParseMemory(body->s, body->len);
 	if(sip_doc== NULL)
 	{
