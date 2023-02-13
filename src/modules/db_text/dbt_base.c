@@ -530,7 +530,7 @@ int dbt_insert(db1_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 
 	/* dbt_print_table(_tbc, NULL); */
 
-	/* unlock databse */
+	/* unlock database */
 	dbt_release_table(DBT_CON_CONNECTION(_h), CON_TABLE(_h));
 
 	if(lkey)
@@ -589,7 +589,7 @@ int dbt_delete(db1_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n)
 		LM_DBG("deleting all records\n");
 		((dbt_con_p)_h->tail)->affected = _tbc->nrrows;
 		dbt_table_free_rows(_tbc);
-		/* unlock databse */
+		/* unlock database */
 		dbt_release_table(DBT_CON_CONNECTION(_h), CON_TABLE(_h));
 		return 0;
 	}
