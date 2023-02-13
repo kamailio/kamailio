@@ -53,7 +53,7 @@
 		<title>&kamailio; Modules</title>
 			<para>
 			The module depends on the following modules
-			(in the other words 
+			(in other words 
 			the listed modules must be loaded before this module):
 			<itemizedlist>
 				<listitem>
