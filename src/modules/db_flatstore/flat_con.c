@@ -43,7 +43,7 @@
 
 
 /** Free all memory allocated for a flat_con structure.
- * This function function frees all memory that is in use by
+ * This function frees all memory that is in use by
  * a flat_con structure.
  * @param con A generic db_con connection structure.
  * @param payload Flatstore specific payload to be freed.
