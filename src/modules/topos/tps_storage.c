@@ -890,7 +890,7 @@ int tps_db_insert_branch(tps_data_t *td)
 
 	db_keys[nr_keys] = &tt_col_rectime;
 	db_vals[nr_keys].type = DB1_DATETIME;
-	db_vals[nr_keys].val.int_val = time(NULL);
+	db_vals[nr_keys].val.time_val = time(NULL);
 	nr_keys++;
 
 	db_keys[nr_keys] = &tt_col_a_callid;
