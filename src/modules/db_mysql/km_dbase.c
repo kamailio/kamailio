@@ -59,7 +59,7 @@ static char *mysql_sql_buf;
  * enabled. It also issues a mysql_ping before the query to connect again after
  * a long waiting period because for some older mysql versions the auto reconnect
  * don't work sufficient. If auto_reconnect is enabled and the server supports it,
- * then the mysql_ping is probably not necessary, but its safer to do it in this
+ * then the mysql_ping is probably not necessary, but it is safer to do it in these
  * cases too.
  *
  * \param _h handle for the db
@@ -335,7 +335,7 @@ int db_mysql_query(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _op,
  * \brief Gets a partial result set, fetch rows from a result
  *
  * Gets a partial result set, fetch a number of rows from a database result.
- * This function initialize the given result structure on the first run, and
+ * This function initializes the given result structure on the first run, and
  * fetches the nrows number of rows. On subsequenting runs, it uses the
  * existing result and fetches more rows, until it reaches the end of the
  * result set. Because of this the result needs to be null in the first
