@@ -84,7 +84,7 @@ static const char* db_oracle_errorinfo(ora_con_t* con)
 	case 3135:	/* lost connection */
 	case 6033:	/* connect failed, partner rejected connection */
 	case 6034:	/* connect failed, partner exited unexpectedly */
-	case 6037:	/* connect failed, node unrecheable */
+	case 6037:	/* connect failed, node unreacheable */
 	case 6039:	/* connect failed */
 	case 6042:	/* msgrcv failure (DNT) */
 	case 6043:	/* msgsend failure (DNT) */
@@ -103,19 +103,19 @@ static const char* db_oracle_errorinfo(ora_con_t* con)
 	case 12161:	/* tns internal error */
 	case 12170:	/* tns connect timeout */
 	case 12224:	/* tns no listener */
-	case 12225:	/* tns destination host unrecheable */
+	case 12225:	/* tns destination host unreacheable */
 	case 12230:	/* tns network error */
 	case 12525:	/* tns (internal) timeout */
 	case 12521:	/* tns can't resolve db name */
 	case 12537:	/* tns connection cloed */
 	case 12541:	/* tns not running */
-	case 12543:	/* tns destination host unrecheable */
+	case 12543:	/* tns destination host unreacheable */
 	case 12547:	/* tns lost contact */
 	case 12560:	/* tns protocol(transport) error */
 	case 12561:	/* tns unknown error */
 	case 12608:	/* tns send timeount */
 	case 12609:	/* tns receive timeount */
-	    LM_ERR("conneciom dropped\n");
+	    LM_ERR("connection dropped\n");
 	    db_oracle_disconnect(con);
 	default:
 		break;
@@ -313,7 +313,7 @@ stop_exec:
 	if (stmthp)
 		OCIHandleFree(stmthp, OCI_HTYPE_STMT);
 	if (pass == -1 && !con->connected) {
-		/* Attemtp to reconnect */
+		/* Attempt to reconnect */
 		if (db_oracle_reconnect(con) == OCI_SUCCESS) {
 			LM_NOTICE("attempt repeat after reconnect\n");
 			pass = 0;
