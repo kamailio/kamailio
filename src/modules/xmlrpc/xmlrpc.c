@@ -43,6 +43,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <stdarg.h>
 #include <sys/types.h>
 #include <signal.h>
@@ -1335,7 +1336,7 @@ static int get_int(int* val, struct xmlrpc_reply* reply,
 				ret=-1;
 			break;
 		case XML_T_DATE:
-			*val = xmlrpc2time(val_str);
+			*val = (int)(uint64_t)xmlrpc2time(val_str);
 			break;
 		case XML_T_DOUBLE:
 			*val = (int)strtod(val_str, &end_ptr);
