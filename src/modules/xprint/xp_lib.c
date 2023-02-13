@@ -28,6 +28,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -144,7 +145,7 @@ static int xl_get_times(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 		msg_tm = time(NULL);
 		msg_id = msg->id;
 	}
-	ch = int2str_base_0pad(msg_tm, &l, hi, hi==10?0:8);
+	ch = int2str_base_0pad((unsigned int)(uint64_t)msg_tm, &l, hi, hi==10?0:8);
 
 	res->s = ch;
 	res->len = l;
