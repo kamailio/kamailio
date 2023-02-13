@@ -245,7 +245,7 @@ modparam("pipelimit", "db_url", "dbdriver://username:password@dbhost/dbname")
 
 4.3. plp_table_name (string)
 
-   Name of DB table where data definition for pipes is stores.
+   Name of DB table where data definition for pipes is stored.
 
    Default value is “pl_pipes”.
 

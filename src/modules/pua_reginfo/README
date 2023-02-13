@@ -69,7 +69,7 @@ Chapter 1. Admin Guide
 
 1. Overview
 
-   This modules publishes information about "reg"-events according to to
+   This module publishes information about "reg"-events according to to
    RFC 3680. This can be used distribute the registration-info status to
    the subscribed watchers.
 
@@ -89,7 +89,7 @@ Chapter 1. Admin Guide
      * Get notified, when a user registers: A presence-server, which
        handles offline message storage for an account, would get notified,
        when the user comes online.
-     * A client could subscribe to it's own registration-status, so he
+     * A client could subscribe to its own registration-status, so he
        would get notified as soon as his account gets administratively
        unregistered.
      * ...

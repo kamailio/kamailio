@@ -262,7 +262,7 @@ Chapter 1. Admin Guide
    The module can use database and memory storage (to improve
    performance). For subscriptions it supports the 4 storage modes: Memory
    Only, Write Back, Write Through and DB Only. For publishes, it stores
-   the state documents in database only(because of the large size) and it
+   the state documents in database only (because of the large size) and it
    can store a publish cache in memory to avoid unnecessary database
    queries. Read the subs_db_mode and publ_cache parameter sections to
    decide which is the best storage configuration for you.
@@ -385,7 +385,7 @@ modparam("presence", "watchers_table", "watchers")
 3.5. clean_period (int)
 
    The period in seconds between checks if there are expired messages
-   stored in database.
+   stored in the database.
 
    Default value is “100”. A zero or negative value disables this
    activity.
@@ -574,9 +574,9 @@ modparam("presence", "server_address", "sip:10.10.10.10:5060")
 
    The presence module can utilize database for persistent subscription
    storage. If you use database, your subscriptions will survive machine
-   restarts or SW crashes. The disadvantage is that accessing database can
-   be time consuming. Therefore, presence module implements four database
-   accessing modes:
+   restarts or SW crashes. The disadvantage is that accessing the database
+   can be time consuming. Therefore, presence module implements four
+   database accessing modes:
      * 0 - This disables database completely. Only memory will be used.
        Subscriptions will not survive restart. Use this value if you need
        a really fast presence module and subscription persistence is not
@@ -613,7 +613,7 @@ modparam("presence", "subs_db_mode", 1)
 
    To improve performance, the presence module can operate in a couple of
    modes related to how PUBLISH data is stored. If publ_cache is 0, then
-   no information is store in memory.
+   no information is stored in memory.
 
    If publ_cache is 1, then the module keeps in memory an index of the
    records stored in database, In this mode it keeps only the list of URIs
@@ -806,8 +806,8 @@ if(is_method("PUBLISH")) {
 
 3.31. retrieve_order (int)
 
-   If set to 0, presentity records are retrieve by received_time order. If
-   set to 1, presentity records are retrieve by the value of
+   If set to 0, presentity records are retrieved by received_time order.
+   If set to 1, presentity records are retrieved by the value of
    retrieve_order_by parameter.
 
    Default value is 0.
@@ -1045,9 +1045,9 @@ pres_refresh_watchers("sip:test@kamailio.org", "presence", 1);
 
 4.6.  pres_update_watchers(uri, event)
 
-   The function can be used in configuration to triger updates to watchers
-   status if a change in watchers authorization state occurred (i.e.,
-   updates of xcap documents change state from pending to active).
+   The function can be used in configuration to trigger updates to
+   watchers status if a change in watchers authorization state occurred
+   (i.e., updates of xcap documents change state from pending to active).
 
    Parameters:
      * uri - the uri of the user who made the change and whose watchers
@@ -1491,7 +1491,7 @@ typedef int (*get_event_list_t) (str** ev_list);
 ...
 
    This function returns a string representation of the events registered
-   in presence module.( used for Allowed-Events header).
+   in presence module (used for Allowed-Events header).
 
 14.  update_watchers_status
 
