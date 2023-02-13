@@ -359,7 +359,7 @@ rt_data_t *dr_load_routing_info(db_func_t *dr_dbf, db1_con_t *db_hdl,
 			check_val(ROW_VALUES(row) + 5, DB1_STRING, 0, 0);
 			str_vals[2] = (char *)VAL_STRING(ROW_VALUES(row) + 5);
 
-			/* add the destinaton definition in */
+			/* add the destination definition in */
 			if(add_dst(rdata, int_vals[0], str_vals[0], int_vals[1],
 					   str_vals[1], int_vals[2], str_vals[2])
 					< 0) {
