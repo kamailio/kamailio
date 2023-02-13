@@ -1395,6 +1395,40 @@ kamctl rpc presence.presentity_list full
 ...
 	  </programlisting>
 	</section>
+	<section id="presence.rpc.presentity_show">
+	  <title>presence.presentity_show</title>
+	  <para>
+		Return the presentity records stored in memory by filtering with username
+		and/or domain.
+	  </para>
+	  <para>
+		Name: <emphasis>presence.presentity_show</emphasis>
+	  </para>
+	  <para>Parameters:</para>
+		<itemizedlist>
+			<listitem>
+				<para>mode - it can be  'basic' or 'full' to print a selection or
+				all the fields of presentity record.</para>
+			</listitem>
+			<listitem>
+				<para>user - username to match presentity records, use '*' to
+				match any username.</para>
+			</listitem>
+			<listitem>
+				<para>domain - the value to match the domain of the presentity
+				records, use '*' to match any domain.</para>
+			</listitem>
+		</itemizedlist>
+	  <para>
+		RPC Command Format:
+	  </para>
+	  <programlisting  format="linespecific">
+...
+kamctl rpc presence.presentity_show basic alice sipserver.com
+kamctl rpc presence.presentity_list full * sipserver.com
+...
+	  </programlisting>
+	</section>
 
 </section>
 
