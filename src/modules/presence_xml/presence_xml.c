@@ -185,7 +185,7 @@ static int mod_init(void)
 	}
 
 	if(psapi.add_event == NULL || psapi.update_watchers_status == NULL) {
-		LM_ERR("requited presence api not available\n");
+		LM_ERR("required presence api not available\n");
 		return -1;
 	}
 	if(xml_add_events() < 0) {
