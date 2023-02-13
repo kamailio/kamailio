@@ -1425,7 +1425,7 @@ kamctl rpc presence.presentity_list full
 	  <programlisting  format="linespecific">
 ...
 kamctl rpc presence.presentity_show basic alice sipserver.com
-kamctl rpc presence.presentity_list full * sipserver.com
+kamctl rpc presence.presentity_show full * sipserver.com
 ...
 	  </programlisting>
 	</section>
