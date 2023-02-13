@@ -107,7 +107,7 @@ Ovidiu Sas
    1.17. Set alias_name parameter
    1.18. fix_nated_contact usage
    1.19. fix_nated_sdp usage
-   1.20. add_rcv_paramer usage
+   1.20. add_rcv_param usage
    1.21. fix_nated_register usage
    1.22. nat_uac_test usage
    1.23. is_rfc1918 usage
@@ -187,10 +187,10 @@ Chapter 1. Admin Guide
    with request's source address:port pair. The function fix_nated_sdp()
    adds the active direction indication to SDP (flag 0x01) and updates the
    source IP address too (flag 0x02). The function fix_nated_register()
-   exports exports the request's source address:port into an AVP to be
-   used during save() and should be used for “REGISTER” requests.
+   exports the request's source address:port into an AVP to be used during
+   save() and should be used for “REGISTER” requests.
 
-   Note: fix_nated_contact changes the “Contact” header, thus it breaks
+   Note: fix_nated_contact() changes the “Contact” header, thus it breaks
    the RFC. Although usually this is not an issue, it may cause problems
    with strict SIP clients. An alternative is to use add_contact_alias()
    that together with the handle_ruri_alias() is standards conforming and
@@ -205,7 +205,7 @@ Chapter 1. Admin Guide
             Kamailio;
           + Disadvantages: unidirectional traffic through NAT (inbound -
             from outside to inside); As many NATs do update the bind
-            timeout only on outbound traffic, the bind may expire and
+            timeout only on outbound traffic, the bind may expire and get
             closed.
      * SIP request - a stateless SIP request is sent to the UDP contact
        address.
@@ -285,7 +285,8 @@ modparam("nathelper", "natping_interval", 10)
 4.3. ping_nated_only (integer)
 
    If this parameter is set to 1 then only contacts that have the behind
-   NAT “nat_bflag” flag in user location database set will get ping.
+   NAT “nat_bflag” flag in user location database set will get
+   SIP-request-based ping.
 
    If it is 0 and sipping_bflag is not set, then the 4-bytes UDP ping is
    sent to all contacts. If it is 0 and sipping_bflag parameter is set,
@@ -583,7 +584,7 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_sdp("3");};
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.20. add_rcv_paramer usage
+   Example 1.20. add_rcv_param usage
 ...
 add_rcv_param(); # add the parameter to the Contact header
 ....
@@ -821,7 +822,7 @@ $ kamcmd nathelper.enable_ping 1
 8.1. @nathelper.rewrite_contact[n]
 
    Get n-th Contact value with IP:Port rewritten to source ip:port. N is
-   counted from 1. Only IP:port is rewritten, remaining part are left
+   counted from 1. Only IP:port is rewritten, remaining parts are left
    unchanged. Full nameaddr is supported.
 
    Example 1.31. @nathelper.rewrite_contact usage
