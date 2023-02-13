@@ -89,4 +89,4 @@ int db_mongodb_replace(const db1_con_t* handle, const db_key_t* keys, const db_v
  */
 int db_mongodb_use_table(db1_con_t* _h, const str* _t);
 
-#endif  /* _MONGODB_BASE_H_ */
+#endif  /* _MONGODB_DBASE_H_ */
