@@ -1005,7 +1005,7 @@ static int dbops_fixup_func(void** param, int init_act) {
 	char *c;
 	int res;
 
-	/* check if is it a declare_no that references to declare_xxxx */
+	/* check if it is a declare_no that references to declare_xxxx */
 	c = *param;
 	eat_spaces(c);
 	*param = c;
