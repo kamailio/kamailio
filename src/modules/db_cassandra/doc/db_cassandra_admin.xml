@@ -93,7 +93,7 @@ default_validation_class='UTF8Type' and key_validation_class='UTF8Type';
 		(default AVPOPS behaviour)
 
 		The script lines below can be used as an example for issuing the query towards 
-		a cassandra instance.(This example will work once the column family `location` 
+		a cassandra instance. (This example will work once the column family `location` 
 		is configured correctly in the cassandra keyspace)
 	</para>
 <programlisting format="linespecific">
