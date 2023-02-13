@@ -334,7 +334,7 @@ int db_postgres_submit_query_async(const db1_con_t* _h, const str* _s)
  * \brief Gets a partial result set, fetch rows from a result
  *
  * Gets a partial result set, fetch a number of rows from a database result.
- * This function initialize the given result structure on the first run, and
+ * This function initializes the given result structure on the first run, and
  * fetches the nrows number of rows. On subsequenting runs, it uses the
  * existing result and fetches more rows, until it reaches the end of the
  * result set. Because of this the result needs to be null in the first
@@ -503,7 +503,7 @@ int db_postgres_free_result(db1_con_t *_con, db1_res_t *_r)
  * \param _op operators
  * \param _v values of the keys that must match
  * \param _c column names to return
- * \param _n nmber of key=values pairs to compare
+ * \param _n number of key=values pairs to compare
  * \param _nc number of columns to return
  * \param _o order by the specified column
  * \param _r result set
@@ -526,7 +526,7 @@ int db_postgres_query(const db1_con_t *_h, const db_key_t *_k,
  * \param _op operators
  * \param _v values of the keys that must match
  * \param _c column names to return
- * \param _n nmber of key=values pairs to compare
+ * \param _n number of key=values pairs to compare
  * \param _nc number of columns to return
  * \param _o order by the specified column
  * \param _r result set
@@ -574,13 +574,13 @@ int db_postgres_raw_query_async(const db1_con_t* _h, const str* _s)
 /*!
  * \brief Retrieve result set
  * \param _con structure representing the database connection
- * \param _r pointer to a structure represending the result set
+ * \param _r pointer to a structure representing the result set
  * \return 0 If the status of the last command produced a result set and,
  *   If the result set contains data or the convert_result() routine
  *   completed successfully. Negative if the status of the last command was
  * not handled or if the convert_result() returned an error.
  * \note A new result structure is allocated on every call to this routine.
- * If this routine returns 0, it is the callers responsbility to free the
+ * If this routine returns 0, it is the callers responsibility to free the
  * result structure. If this routine returns < 0, then the result structure
  * is freed before returning to the caller.
  */
