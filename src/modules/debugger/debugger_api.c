@@ -358,7 +358,7 @@ int dbg_cfg_trace(sr_event_param_t *evp)
 				an->len, an->s, a->cline);
 		qm_check(mem_block);
 #else
-		LM_DBG("cfg pkg check is disbled due to missing qm handler\n");
+		LM_DBG("cfg pkg check is disabled due to missing qm handler\n");
 #endif
 	}
 
@@ -1474,7 +1474,7 @@ int dbg_get_mod_debug_level(char *mname, int mnlen, int *mlevel)
 	unsigned int idx;
 	unsigned int hid;
 	dbg_mod_level_t *it;
-	/* no LOG*() usage in this function and those executed insite it
+	/* no LOG*() usage in this function and those executed inside it
 	 * - use fprintf(stderr, ...) if need for troubleshooting
 	 * - it will loop otherwise */
 	if(_dbg_mod_table==NULL)
@@ -1521,7 +1521,7 @@ int dbg_get_mod_debug_facility(char *mname, int mnlen, int *mfacility)
 	unsigned int idx;
 	unsigned int hid;
 	dbg_mod_facility_t *it;
-	/* no LOG*() usage in this function and those executed insite it
+	/* no LOG*() usage in this function and those executed inside it
 	 * - use fprintf(stderr, ...) if need for troubleshooting
 	 * - it will loop otherwise */
 	if(_dbg_mod_table==NULL)
