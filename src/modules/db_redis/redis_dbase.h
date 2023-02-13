@@ -88,4 +88,4 @@ int db_redis_replace(const db1_con_t* handle, const db_key_t* keys, const db_val
  */
 int db_redis_use_table(db1_con_t* _h, const str* _t);
 
-#endif  /* _REDIS_BASE_H_ */
+#endif  /* _REDIS_DBASE_H_ */
