@@ -275,8 +275,8 @@ modparam("debugger", "step_loops", 100)
 	    <title><varname>mod_hash_size</varname> (int)</title>
 	    <para>
 		Used to compute power of two as size of internal hash table to store levels
-		per module (e.g., if its set to 4, internal hash table has 16 slots). One
-		must set it's value grater than 0 such that memory to be allocated
+		per module (e.g., if it is set to 4, internal hash table has 16 slots). One
+		must set its value grater than 0 such that memory to be allocated
 		to save the module specific debug levels or facility configured by 
 		<varname>mod_level</varname> or <varname>mod_facility</varname>.
 		This parameter is accessible readonly via the Kamailio config framework.
