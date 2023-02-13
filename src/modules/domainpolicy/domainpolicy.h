@@ -71,7 +71,7 @@ int dp_can_connect(struct sip_msg* _msg, char* _s1, char* _s2);
  * \param _msg SIP message
  * \param _s1 unused
  * \param _s2 unused
- * \return negative on failure, positive on succes
+ * \return negative on failure, positive on success
  */
 int dp_apply_policy(struct sip_msg* _msg, char* _s1, char* _s2);
 
