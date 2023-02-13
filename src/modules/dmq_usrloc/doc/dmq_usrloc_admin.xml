@@ -181,7 +181,7 @@ modparam("dmq_usrloc", "batch_usleep", 1000)
 		<title><varname>batch_msg_size</varname> (int)</title>
 		<para>
 			The parameter controls the size of the messages during a sync. 
-			This is to make sure the messages are never larger then 65536 (the maximum datagram size).
+			This is to make sure the messages are never larger than 65536 (the maximum datagram size).
 		</para>
 		<para>
 			Note that batch_msg_contacts will also be checked.
