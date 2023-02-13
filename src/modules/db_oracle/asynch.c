@@ -127,7 +127,7 @@ int set_reconnect(unsigned type, const char* val)
 	int rc = set_tv(type, val, &restore_tm);
 
 	if (!synch_mode && is_zero_tm(&restore_tm)) {
-		LM_WARN("in asyncronus mode reconnect time can't be zero. "
+		LM_WARN("in asynchronous mode reconnect time can't be zero. "
 			"Set default value\n");
 		restore_tm = defrest_tm;
 	}

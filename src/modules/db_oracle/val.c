@@ -51,7 +51,7 @@ int db_oracle_val2str(const db1_con_t* _c, const db_val_t* _v, char* _s, int* _l
 }
 
 /*
- * Called after val2str to realy binding
+ * Called after val2str to really binding
  */
 int db_oracle_val2bind(bmap_t* _m, const db_val_t* _v, OCIDate* _o)
 {
