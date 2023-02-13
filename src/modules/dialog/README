@@ -835,7 +835,7 @@ modparam("dialog", "db_mode", 1)
 
    The interval (seconds) at which to update dialogs' information, if the
    server is configured to store the dialog information at a given
-   interval. Too short an interval will generate intensive database
+   interval. A too short interval will generate intensive database
    operations, while an excessively long one will miss dialogs with a
    short lifetime.
 
@@ -1521,7 +1521,7 @@ modparam("dialog", "dlg_ctxiuid_mode", 1)
 
    Activate additional debugging for printing internal lists for dialog
    variables. This output is only visible at debug log level and should
-   only be used for debugging. By default its deactivated.
+   only be used for debugging. By default it is deactivated.
 
    Default value is “0”.
 
@@ -1699,7 +1699,7 @@ dlg_setflag("1");
 
    Example 1.74. dlg_resetflag usage
 ...
-redlg_setflag("1");
+dlg_resetflag("1");
 ...
 
 7.8.  dlg_bye(side)
@@ -1887,7 +1887,7 @@ if(!uri == myself) {
      * timeout - the interval in seconds after which the dialog will time
        out.
      * h_entry - h_entry value of the iternal dialog identifier.
-     * h_id - h_id valye if the internal dialog identifier.
+     * h_id - h_id value if the internal dialog identifier.
 
    This function can be used from ANY_ROUTE.
 
@@ -2056,7 +2056,7 @@ dlg_reset_property("timeout-noreset");
 
 7.24.  dlg_req_within(side, method, [headers], [content_type, content])
 
-   Sends a in-dialog SIP Request with method to a party of a dialog
+   Sends an in-dialog SIP Request with method to a party of a dialog
    indicated by the side parameter.
 
    Meaning of the parameters is as follows:
@@ -2280,8 +2280,8 @@ kamcmd dlg.list_ctx abcdrssfrs122444@192.168.1.1
      * extra_hdrs - (optional) string containg extra headers (full format)
        to be added to the BYE requests.
 
-   The values for the h_entry and h_id can be get via the dlg_list RPC
-   command.
+   The values for the h_entry and h_id can be obtained via the dlg_list
+   RPC command.
 
    RPC Command Format:
 ...
@@ -2438,7 +2438,7 @@ kamcmd dlg.is_alive callid123 fromtag123 totag123
 
    Parameters:
      * attrs - (optional) a list of characters (flags) representing the
-       fields to be added to the response. If is missing, its default
+       fields to be added to the response. If it is missing, its default
        value is 'ftcFT' (note the characters are case sensitive).
        The characters can be:
           + f - From URI
@@ -2548,10 +2548,10 @@ Chapter 2. Developer Guide
    Register a new callback to the dialog.
 
    Meaning of the parameters is as follows:
-     * struct dlg_cell* dlg - dialog to register callback to. If maybe
+     * struct dlg_cell* dlg - dialog to register callback to. It may be
        NULL only for DLGCB_CREATED callback type, which is not a per
        dialog type.
-     * int type - types of callbacks; more types may be register for the
+     * int type - types of callbacks; more types may be registered for the
        same callback function; only DLGCB_LOADED and DLGCB_CREATED must be
        registered alone. Possible types:
           + DLGCB_LOADED

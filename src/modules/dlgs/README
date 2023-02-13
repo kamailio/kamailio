@@ -183,7 +183,7 @@ modparam("dlgs", "finish_lifetime", 20)
 
 3.4. timer_interval (int)
 
-   The value in secods to run the timer callback function for cleaning up
+   The value in seconds to run the timer callback function for cleaning up
    dialogs past the lifetime limit.
 
    Default value is 30.
