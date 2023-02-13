@@ -271,7 +271,7 @@ int add_dst(rt_data_t *r,
 	unsigned short port;
 
 	if(NULL == r || NULL == ip) {
-		LM_ERR("invalid parametres\n");
+		LM_ERR("invalid parameters\n");
 		goto err_exit;
 	}
 
@@ -430,7 +430,7 @@ void free_rt_data(rt_data_t *rt_data, int all)
 			shm_free(rt_data->noprefix.rg);
 			rt_data->noprefix.rg = 0;
 		}
-		/* del top level or reset to 0 it's content */
+		/* del top level or reset to 0 its content */
 		if(all)
 			shm_free(rt_data);
 		else
