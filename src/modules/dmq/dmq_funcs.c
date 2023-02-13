@@ -510,7 +510,7 @@ int cfg_dmq_is_from_node(struct sip_msg *msg, char *p1, char *p2)
  * @brief pings the servers in the nodelist
  *
  * if the server does not reply to the ping, it is removed from the list
- * the ping messages are actualy notification requests
+ * the ping messages are actually notification requests
  * this way the ping will have two uses:
  *   - checks if the servers in the list are up and running
  *   - updates the list of servers from the other nodes
