@@ -48,7 +48,7 @@
 #include "notify_body.h"
 #include "pidf.h"
 
-str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n);
+str* aggregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n);
 int check_relevant_state (xmlChar * dialog_id, xmlDocPtr * xml_array,
 		int total_nodes);
 
@@ -99,7 +99,7 @@ str* dlginfo_agg_nbody_empty(str* pres_user, str* pres_domain)
 	body_array->len = strlen(body);
 
 
-	n_body= agregate_xmls(pres_user, pres_domain, &body_array, 1);
+	n_body= aggregate_xmls(pres_user, pres_domain, &body_array, 1);
 	LM_DBG("[n_body]=%p\n", n_body);
 	if(n_body!=NULL) {
 		LM_DBG("[*n_body]=%.*s\n",n_body->len, n_body->s);
@@ -131,7 +131,7 @@ str* dlginfo_agg_nbody(str* pres_user, str* pres_domain, str** body_array,
 	if(body_array== NULL)
 		return dlginfo_agg_nbody_empty(pres_user, pres_domain);
 
-	n_body= agregate_xmls(pres_user, pres_domain, body_array, n);
+	n_body= aggregate_xmls(pres_user, pres_domain, body_array, n);
 	LM_DBG("[n_body]=%p\n", n_body);
 	if(n_body) {
 		LM_DBG("[*n_body]=%.*s\n",
@@ -148,7 +148,7 @@ str* dlginfo_agg_nbody(str* pres_user, str* pres_domain, str** body_array,
 	return n_body;
 }
 
-str* agregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n)
+str* aggregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n)
 {
 	int i, j= 0;
 
@@ -542,7 +542,7 @@ int check_relevant_state (xmlChar * dialog_id, xmlDocPtr * xml_array,
 		}
 	}
 	if(dialog_id_tmp) xmlFree(dialog_id_tmp);
-	LM_DBG ("result cheching dialog %s is %d\n", dialog_id, result);
+	LM_DBG ("result checking dialog %s is %d\n", dialog_id, result);
 	return result;
 }
 
@@ -550,7 +550,7 @@ int check_relevant_state (xmlChar * dialog_id, xmlDocPtr * xml_array,
 str *dlginfo_body_setversion(subs_t *subs, str *body)
 {
 	char *version_start=0;
-	char version[MAX_INT_LEN + 2]; /* +2 becasue of trailing " and \0 */
+	char version[MAX_INT_LEN + 2]; /* +2 because of trailing " and \0 */
 	int version_len;
 	str* aux_body = NULL;
 
