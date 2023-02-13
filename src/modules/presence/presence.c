@@ -1728,7 +1728,7 @@ static int fixup_update_watchers(void **param, int param_no)
  *  rpc cmd: presence.refreshWatchers
  *			\<presentity_uri>
  *			\<event>
- *          \<refresh_type> // can be:  = 0 -> watchers autentification type or
+ *          \<refresh_type> // can be:  = 0 -> watchers authentification type or
  *									  != 0 -> publish type //
  *		* */
 void rpc_presence_refresh_watchers(rpc_t *rpc, void *ctx)

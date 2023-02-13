@@ -25,7 +25,7 @@
 	The module can use database and memory storage (to improve performance).
 	For subscriptions it supports the 4 storage modes: Memory Only, Write Back,
 	Write Through and DB Only. For publishes, it stores the state documents in
-	database only(because of the large size) and it can store a publish cache in
+	database only (because of the large size) and it can store a publish cache in
 	memory to avoid unnecessary database queries. Read the
 	<emphasis>subs_db_mode</emphasis> and <emphasis>publ_cache</emphasis> parameter
 	sections to decide which is the best storage configuration for you.
@@ -165,7 +165,7 @@ modparam("presence", "watchers_table", "watchers")
 	<section id="presence.p.clean_period">
 		<title><varname>clean_period</varname> (int)</title>
 		<para>
-		The period in seconds between checks if there are expired messages stored in database.
+		The period in seconds between checks if there are expired messages stored in the database.
 		</para>
 		<para>
 		<emphasis>Default value is <quote>100</quote>. A zero or negative value disables this activity.
@@ -462,7 +462,7 @@ modparam("presence", "server_address", "sip:10.10.10.10:5060")
 		<para>
 		The presence module can utilize database for persistent subscription storage.
 		If you use database, your subscriptions will survive machine restarts or
-		SW crashes. The disadvantage is that accessing database can be time consuming.
+		SW crashes. The disadvantage is that accessing the database can be time consuming.
 		Therefore, presence module implements four database accessing modes:
 		</para>
 		<itemizedlist>
@@ -527,7 +527,7 @@ modparam("presence", "subs_db_mode", 1)
 		<para>
 		To improve performance, the presence module can operate in a couple of
 		modes related to how PUBLISH data is stored. If publ_cache is 0,
-		then no information is store in memory.
+		then no information is stored in memory.
 		</para>
 		<para>
 		If publ_cache is 1, then the module keeps in memory an index of the
@@ -820,8 +820,8 @@ if(is_method("PUBLISH")) {
 	<section id="presence.p.retrieve_order">
 	    <title><varname>retrieve_order</varname> (int)</title>
 	    <para>
-		If set to 0, presentity records are retrieve by received_time order.
-		If set to 1, presentity records are retrieve by the value of
+		If set to 0, presentity records are retrieved by received_time order.
+		If set to 1, presentity records are retrieved by the value of
 		retrieve_order_by parameter.
 	    </para>
 	    <para>
@@ -1234,7 +1234,7 @@ pres_refresh_watchers("sip:test@kamailio.org", "presence", 1);
 		<function moreinfo="none">pres_update_watchers(uri, event)</function>
 		</title>
 		<para>
-			The function can be used in configuration to triger updates to watchers
+			The function can be used in configuration to trigger updates to watchers
 			status if a change in watchers authorization state occurred
 			(i.e., updates of xcap documents change state from pending to active).
 		</para>
