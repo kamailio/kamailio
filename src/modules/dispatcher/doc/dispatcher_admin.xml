@@ -1424,7 +1424,7 @@ ds_select_dst("1", "4", "3");
 		<title>configuring load balancing with congestion detection</title>
 		<programlisting format="linespecific">
 ...
-# sample of SQL provisionning statements
+# sample of SQL provisioning statements
 INSERT INTO "dispatcher" 
 VALUES(1,1,'sip:192.168.0.1:5060',0,12,'rweight=50;weight=50;cc=1;','');
 INSERT INTO "dispatcher" 
@@ -1990,7 +1990,7 @@ onreply_route {
 		</title>
 		<para>
 		Sets the state for a destination by matching on 'duid' attribute. The
-		parameters first two parameter 'state' and 'group' are the same like
+		first two parameters 'state' and 'group' are the same like
 		for RPC command 'dispatcher.set_state'. The third parameter 'duid' is
 		the value to be matched against the 'duid' attribute of dispatcher
 		destinations.
@@ -2283,7 +2283,7 @@ kamctl rpc dispatcher.hash 4 bob server.com
 						</listitem>
 						<listitem>
 							<para>'weight' - used for weight based load distribution. It must be set
-								to a positive integer value beteen 1 and 100 (inclusive the limits),
+								to a positive integer value between 1 and 100 (inclusive the limits),
 								otherwise the destination address is ignored (its weight set to 0).
 								The value represents the percent of calls to be sent to that gateways.
 								The sum must not exceed 100, otherwise the destinations whose weight

@@ -631,7 +631,7 @@ int dp_init_relative_weights(ds_set_t *dset)
 	if(dset == NULL || dset->dlist == NULL || dset->nr < 2)
 		return -1;
 
-	/* local copy to avoid syncronization problems */
+	/* local copy to avoid synchronization problems */
 	ds_dests_flags = pkg_malloc(sizeof(int) * dset->nr);
 	if(ds_dests_flags == NULL) {
 		LM_ERR("no more pkg\n");
@@ -2824,7 +2824,7 @@ static inline void latency_stats_update(ds_latency_stats_t *latency_stats, int l
 		latency_stats->m2 += ((double)delta)*delta2;
 		latency_stats->stdev = sqrt(latency_stats->m2 / _VOR1(latency_stats->count-1));
 	}
-	/* exponentialy weighted moving average */
+	/* exponentially weighted moving average */
 	if (latency_stats->count < 10) {
 		latency_stats->estimate = latency_stats->average;
 	} else {
