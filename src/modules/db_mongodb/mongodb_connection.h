@@ -39,7 +39,7 @@ typedef struct km_mongodb_con {
 	mongoc_cursor_t *cursor;           /*!< Cursor link */
 
 	bson_t *colsdoc; /*!< Names of columns */
-	int nrcols;  /*!< Nunmber of columns */
+	int nrcols;  /*!< Number of columns */
 } km_mongodb_con_t;
 
 #define MONGODB_CON(db_con)  ((km_mongodb_con_t*)((db_con)->tail))
