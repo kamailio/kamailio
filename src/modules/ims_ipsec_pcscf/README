@@ -123,7 +123,7 @@ Chapter 1. Admin Guide
 
 2.2. External Libraries or Applications
 
-   This modules requires the internal IMS library and libmnl for operating
+   This module requires the internal IMS library and libmnl for operating
    with netlink sockets.
 
 3. Parameters
@@ -189,7 +189,7 @@ modparam("ims_ipsec_pcscf", "ipsec_server_port", 5063)
 
 3.5. ipsec_max_connections (int)
 
-   Maximum simultanious IPSec connections
+   Maximum simultaneous IPSec connections
 
    Default value is 2.
 

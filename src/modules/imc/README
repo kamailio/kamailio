@@ -212,7 +212,7 @@ modparam("imc", "members_table", "members")
    The power of 2 to get the size of the hash table used for storing
    members and rooms.
 
-   The default value is 4 (resultimg in hash size 16).
+   The default value is 4 (resulting in hash size 16).
 
    Example 1.5. Set hash_size parameter
 ...

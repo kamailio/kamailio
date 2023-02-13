@@ -124,7 +124,7 @@ Chapter 1. Admin Guide
 
 2.2. External Libraries or Applications
 
-   This modules requires the internal IMS library.
+   This module requires the internal IMS library.
 
 3. Parameters
 
@@ -172,7 +172,7 @@ modparam("ims_registrar_pcscf", "received_avp", "$avp(i:42)")
 
 3.4. is_registered_fallback2ip (int)
 
-   Defines, whether a contact should be searched by it's contact only or
+   Defines, whether a contact should be searched by its Contact: only or
    alternatively by the received IP-Address.
 
    The option may have the following values:
