@@ -1,6 +1,6 @@
 /*$Id$
  *
- * Example library using ser module (it doesn't do anything usefull)
+ * Example library using ser module (it doesn't do anything useful)
  *
  *
  * Copyright (C) 2007 iptelorg GmbH
