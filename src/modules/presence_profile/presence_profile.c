@@ -59,7 +59,7 @@ add_event_t pres_add_event;
 /* module parameters */
 unsigned int pres_profile_default_expires = 3600;
 
-/* module exported paramaters */
+/* module exported parameters */
 static param_export_t params[] = {
 	{ "default_expires", INT_PARAM, &pres_profile_default_expires },
 	{0, 0, 0}
