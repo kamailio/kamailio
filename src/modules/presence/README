@@ -1166,7 +1166,7 @@ kamctl rpc presence.presentity_list full
    RPC Command Format:
 ...
 kamctl rpc presence.presentity_show basic alice sipserver.com
-kamctl rpc presence.presentity_list full * sipserver.com
+kamctl rpc presence.presentity_show full * sipserver.com
 ...
 
 6. Exported Variables
