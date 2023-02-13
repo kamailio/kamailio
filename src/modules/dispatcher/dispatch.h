@@ -208,7 +208,7 @@ typedef struct _ds_latency_stats {
 	struct timeval start;
 	int min;
 	int max;
-	float average;  // weigthed average, estimate of the last few weeks
+	float average;  // weighted average, estimate of the last few weeks
 	float stdev;    // last standard deviation
 	float estimate; // short term estimate, EWMA exponential weighted moving average
 	double m2;      // sum of squares, used for recursive variance calculation
@@ -224,7 +224,7 @@ typedef struct _ds_dest {
 	int flags;        /*!< flags */
 	int priority;     /*!< priority */
 	int dload;        /*!< load */
-	ds_attrs_t attrs; /*!< the atttributes */
+	ds_attrs_t attrs; /*!< the attributes */
 	ds_latency_stats_t latency_stats; /*!< latency statistics */
 	int irmode;       /*!< internal runtime mode (flags) */
 	struct socket_info *sock; /*!< pointer to local socket */
