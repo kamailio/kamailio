@@ -417,7 +417,7 @@ int get_dlg_variable_uintval(struct dlg_cell *dlg, str *key, unsigned int *uval)
 		goto error;
 	}
 	if(str2int(var, uval)<0) {
-		LM_ERR("invalid unsingned int value: %.*s\n",
+		LM_ERR("invalid unsigned int value: %.*s\n",
 				var->len, var->s);
 		goto error;
 	}

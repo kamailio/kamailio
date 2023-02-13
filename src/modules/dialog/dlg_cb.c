@@ -106,18 +106,18 @@ int register_dlgcb(struct dlg_cell *dlg, int types, dialog_cb f,
 
 	if ( types&DLGCB_LOADED ) {
 		if (types!=DLGCB_LOADED) {
-			LM_CRIT("DLGCB_LOADED type must be register alone!\n");
+			LM_CRIT("DLGCB_LOADED type must be registered alone!\n");
 			return -1;
 		}
 	} else if ( types&DLGCB_CREATED ) {
 		if (types!=DLGCB_CREATED) {
-			LM_CRIT("DLGCB_CREATED type must be register alone!\n");
+			LM_CRIT("DLGCB_CREATED type must be registered alone!\n");
 			return -1;
 		}
 	} else {
 		if (dlg==0) {
 			LM_CRIT("non-DLGCB_CREATED type "
-				"must be register to a dialog (dlg missing)!\n");
+				"must be registered to a dialog (dlg missing)!\n");
 			return -1;
 		}
 	}

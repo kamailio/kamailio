@@ -549,7 +549,7 @@ modparam("dialog", "db_mode", 1)
 		<para>
 			The interval (seconds) at which to update dialogs' information,
 			if the server is configured to store the dialog information at a given interval.
-			Too short an interval will generate intensive database operations,
+			A too short interval will generate intensive database operations,
 			while an excessively long one will miss dialogs with a short lifetime.
 		</para>
 		<para>
@@ -1738,7 +1738,7 @@ modparam("dialog", "dlg_ctxiuid_mode", 1)
 		<para>
 			Activate additional debugging for printing internal lists for dialog variables.
 			This output is only visible at debug log level and should only be used for
-			debugging. By default its deactivated.
+			debugging. By default it is deactivated.
 		</para>
 		<para>
 		<emphasis>
@@ -2014,7 +2014,7 @@ dlg_setflag("1");
 		<title><function>dlg_resetflag</function> usage</title>
 		<programlisting format="linespecific">
 ...
-redlg_setflag("1");
+dlg_resetflag("1");
 ...
 </programlisting>
 		</example>
@@ -2354,7 +2354,7 @@ if(!uri == myself) {
 			</para>
 		</listitem>
 		<listitem>
-			<para><emphasis>h_id</emphasis> - h_id valye if the internal dialog
+			<para><emphasis>h_id</emphasis> - h_id value if the internal dialog
 				identifier.
 			</para>
 		</listitem>
@@ -2643,7 +2643,7 @@ dlg_reset_property("timeout-noreset");
 		<function moreinfo="none">dlg_req_within(side, method, [headers], [content_type, content])</function>
 		</title>
 		<para>
-		Sends a in-dialog SIP Request with method to a party of a dialog indicated by the side parameter.
+		Sends an in-dialog SIP Request with method to a party of a dialog indicated by the side parameter.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
@@ -2935,7 +2935,7 @@ dlg_reset_property("timeout-noreset");
 			</para></listitem>
 		</itemizedlist>
 		<para>
-		The values for the h_entry and h_id can be get via the dlg_list
+		The values for the h_entry and h_id can be obtained via the dlg_list
 		RPC command.
 		</para>
 		<para>RPC Command Format:</para>
@@ -3167,7 +3167,7 @@ dlg_reset_property("timeout-noreset");
 		<itemizedlist>
 			<listitem><para>
 			<emphasis>attrs</emphasis> - (optional) a list of characters (flags)
-			representing the fields to be added to the response. If is missing,
+			representing the fields to be added to the response. If it is missing,
 			its default value is 'ftcFT' (note the characters are case sensitive).
 			</para>
 			<para>

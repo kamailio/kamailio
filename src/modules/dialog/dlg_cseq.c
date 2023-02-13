@@ -115,7 +115,7 @@ static int dlg_cseq_prepare_new_msg(sip_msg_t *msg)
 {
 	LM_DBG("prepare new msg for cseq update operations\n");
 	if (parse_msg(msg->buf, msg->len, msg)!=0) {
-		LM_DBG("outbuf buffer parsing failed!");
+		LM_DBG("outbuf buffer parsing failed!\n");
 		return 1;
 	}
 	return dlg_cseq_prepare_msg(msg);
@@ -151,7 +151,7 @@ int dlg_cseq_update(sip_msg_t *msg)
 		goto done;
 	}
 
-	/* supported only for downstrem direction */
+	/* supported only for downstream direction */
 	if(direction != DLG_DIR_DOWNSTREAM) {
 		LM_DBG("request not going downstream (%u)\n", direction);
 		goto done;
@@ -215,7 +215,7 @@ int dlg_cseq_refresh(sip_msg_t *msg, dlg_cell_t *dlg,
 
 	LM_DBG("initiating cseq refresh\n");
 
-	/* supported only for downstrem direction */
+	/* supported only for downstream direction */
 	if(direction != DLG_DIR_DOWNSTREAM) {
 		LM_DBG("request not going downstream (%u)\n", direction);
 		goto done;
@@ -372,7 +372,7 @@ int dlg_cseq_msg_sent(sr_event_param_t *evp)
 	}
 
 	if(get_to(&msg)->tag_value.len<=0) {
-		/* intial request - handle only INVITEs, ACKs and CANCELs */
+		/* initial request - handle only INVITEs, ACKs and CANCELs */
 		if(!(msg.first_line.u.request.method_value
 					& (METHOD_INVITE|METHOD_ACK|METHOD_CANCEL))) {
 			goto done;
@@ -395,7 +395,7 @@ int dlg_cseq_msg_sent(sr_event_param_t *evp)
 		goto done;
 	}
 
-	/* supported only for downstrem direction */
+	/* supported only for downstream direction */
 	if(direction != DLG_DIR_DOWNSTREAM) {
 		LM_DBG("request not going downstream (%u)\n", direction);
 		goto done;

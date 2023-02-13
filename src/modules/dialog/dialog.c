@@ -2018,7 +2018,7 @@ static int ki_dlg_get(sip_msg_t *msg, str *sc, str *sf, str *st)
 	dlg = get_dlg(sc, sf, st, &dir);
 	if(dlg==NULL)
 		return -1;
-	/* set shorcut to dialog internal unique id */
+	/* set shortcut to dialog internal unique id */
 	_dlg_ctx.iuid.h_entry = dlg->h_entry;
 	_dlg_ctx.iuid.h_id = dlg->h_id;
 	_dlg_ctx.dir = dir;
@@ -3604,7 +3604,7 @@ static void rpc_dlg_list_match(rpc_t *rpc, void *c)
 }
 
 /*!
- * \brief Print matching dialogs wih context
+ * \brief Print matching dialogs with context
  */
 static void rpc_dlg_list_match_ctx(rpc_t *rpc, void *c)
 {

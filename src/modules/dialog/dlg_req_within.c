@@ -609,7 +609,7 @@ dlg_t * build_dlg_t_early(struct sip_msg *msg, struct dlg_cell * cell,
 	return td;
 
 error:
-	LM_ERR("Error occured creating early dialog\n");
+	LM_ERR("Error occurred creating early dialog\n");
 	free_tm_dlg(td);
 	return NULL;
 }
