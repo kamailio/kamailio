@@ -677,7 +677,7 @@ void mem_timer_udomain(udomain_t* _d)
 /*!
  * \brief Get lock for a domain
  * \param _d domain
- * \param _aor adress of record, used as hash source for the lock slot
+ * \param _aor address of record, used as hash source for the lock slot
  */
 void lock_udomain(udomain_t* _d, str* _aor)
 {

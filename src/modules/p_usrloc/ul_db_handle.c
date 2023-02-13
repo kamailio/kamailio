@@ -266,7 +266,7 @@ int load_location_number(db_func_t * dbf, db1_con_t* dbh, int *loc_nr){
 			"FROM "
 			"%.*s "
 			"WHERE %.*s = 1;", id_col.len, id_col.s, reg_table.len, reg_table.s, status_col.len, status_col.s) < 0){
-			LM_ERR("could not sprinf query\n");
+			LM_ERR("could not sprintf query\n");
 			return -1;
 	}
 	LM_DBG("%s\n",query);

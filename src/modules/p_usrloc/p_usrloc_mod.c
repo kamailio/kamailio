@@ -107,7 +107,7 @@ extern int ul_locks_no;
  * @param url_column name of the column containing the URL to the database.
  * @param status_column name of the column containing the status of the database. 
  * (1=ON, 2=OFF)
- * @param failover_time_column name of the column containing the time whem the 
+ * @param failover_time_column name of the column containing the time when the
  * database's status changed or a spare has been activated.
  * @param spare_flag_column name of the column containing the information if an entry
  * works as spare for broken dbs (0=no spare, 1=spare)
@@ -459,7 +459,7 @@ static void destroy(void)
 static int mi_child_loc_nr_init(void)
 {
 	if(ul_db_child_locnr_init() < 0){
-		LM_ERR("could not retrive location number from database. Try to reinitialize the db handles\n");
+		LM_ERR("could not retrieve location number from database. Try to reinitialize the db handles\n");
 		return -1;
 	}
 	return 0;
