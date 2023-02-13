@@ -193,7 +193,7 @@ static int pdb_msg_format_send(struct pdb_msg *msg,
 #define PDB_BUFTOSHORT(_sv, _b, _n) memcpy(&(_sv), (char*)(_b) + (_n), sizeof(short int))
 
 /*!
- * \return 1 if query for the number succeded and the avp with the corresponding carrier id was set,
+ * \return 1 if query for the number succeeded and the avp with the corresponding carrier id was set,
  * -1 otherwise
  */
 static int pdb_query(struct sip_msg *_msg, struct multiparam_t *_number, struct multiparam_t *_dstavp)
