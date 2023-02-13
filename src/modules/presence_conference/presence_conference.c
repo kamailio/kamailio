@@ -57,7 +57,7 @@ static cmd_export_t cmds[] =
     {0,	0, 0, 0, 0, 0}
 };
 
-/* module exported paramaters */
+/* module exported parameters */
 static param_export_t params[] = {
 	{ "use_partial_states", INT_PARAM, &use_partial_states },
 	{ "default_expires", INT_PARAM, &pres_conf_default_expires },
