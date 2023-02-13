@@ -250,7 +250,7 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 				&& hentity->flag!= RPC_ASYN_PUBLISH)
 		{
 			/* sent a PUBLISH within a dialog that no longer exists
-			 * send again an intial PUBLISH */
+			 * send again an initial PUBLISH */
 			LM_DBG("received a 412 reply- try again to send PUBLISH\n");
 			publ_info_t publ;
 			memset(&publ, 0, sizeof(publ_info_t));

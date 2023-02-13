@@ -47,7 +47,7 @@ typedef struct publ_info
 	void* cb_param;   /*! the parameter for the function to be called on the callback 
 				for the received reply; it must be allocated in share memory;
 				a reference to it will be found in the cb_param filed of the ua_pres_structure
-				receied as a parameter for the registered function*/
+				received as a parameter for the registered function*/
 }publ_info_t;
 
 typedef int (*send_publish_t)(publ_info_t* publ);

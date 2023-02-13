@@ -35,7 +35,7 @@
 #include "pua.h"
 #include "pua_db.h"
 
-/* database colums */
+/* database columns */
 static str str_id_col = str_init( "id" );
 static str str_pres_uri_col = str_init("pres_uri");
 static str str_pres_id_col = str_init("pres_id");
