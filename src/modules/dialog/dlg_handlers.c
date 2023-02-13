@@ -404,7 +404,7 @@ static void dlg_terminated(sip_msg_t *req, dlg_cell_t *dlg, unsigned int dir)
 	if(iuid==NULL)
 		return;
 
-    /* register callback for the coresponding reply */
+    /* register callback for the corresponding reply */
     if (d_tmb.register_tmcb(req,
                             0,
                             TMCB_RESPONSE_OUT,
