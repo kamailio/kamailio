@@ -360,7 +360,7 @@ int mod_init(void)
 
 	if(load_uac_api(&uac) < 0) {
 		LM_NOTICE("could not bind to the 'uac' module, From/To headers will "
-				  "not be modifed\n");
+				  "not be modified\n");
 	}
 
 	if(load_tm_api(&tmb) < 0) {
