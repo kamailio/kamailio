@@ -1859,31 +1859,28 @@ static const char *rpc_presence_cleanup_doc[3] = {
 };
 
 /*! \brief
- *  rpc cmd: presence.presentity_list
- *			\mode - output attributes control
- *		* */
-void rpc_presence_presentity_list(rpc_t *rpc, void *ctx)
+ *  Build the rpc response for listing presentity records
+ *	- imode - output attributes control
+ *	- user - filter by user
+ *  - domain - filter by domain
+ */
+void rpc_presence_presentity_list_filter(rpc_t *rpc, void *ctx, int imode,
+		str *user, str *domain)
 {
-	str omode = {0, 0};
-	int imode = 0;
 	int i = 0;
+	int skip = 0;
 	ps_ptable_t *ptb = NULL;
 	ps_presentity_t *ptn = NULL;
 	void* th = NULL;
 	str pempty = str_init("");
 
-	LM_DBG("listing in memory presentity records\n");
+	LM_DBG("listing in memory presentity records - imode: %d, user: %.*s,"
+			" domain: %.*s\n", imode,
+			(user && user->len>0)?user->len:0,
+			(user && user->len>0)?user->s:"",
+			(domain && domain->len>0)?domain->len:0,
+			(domain && domain->len>0)?domain->s:"");
 
-	imode = rpc->scan(ctx, "*S", &omode);
-	if(imode < 1) {
-		imode = 0;
-	} else {
-		if(omode.len == 4 && strncmp(omode.s, "full", 4)==0) {
-			imode = 1;
-		} else {
-			imode = 0;
-		}
-	}
 	ptb = ps_ptable_get();
 	if(ptb == NULL) {
 		return;
@@ -1893,6 +1890,31 @@ void rpc_presence_presentity_list(rpc_t *rpc, void *ctx)
 		lock_get(&ptb->slots[i].lock);
 		ptn = ptb->slots[i].plist;
 		while(ptn!=NULL) {
+			skip = 0;
+			if(user!=NULL && user->len>0) {
+				if(ptn->user.len==user->len
+						&& strncasecmp(ptn->user.s, user->s, user->len)==0) {
+					if(domain!=NULL && domain->len>0) {
+						if(ptn->domain.len!=domain->len
+								|| strncasecmp(ptn->domain.s, domain->s, domain->len)!=0) {
+							skip = 1;
+						}
+					}
+				} else {
+					skip = 1;
+				}
+			} else {
+				if(domain!=NULL && domain->len>0) {
+					if(ptn->domain.len!=domain->len
+							|| strncasecmp(ptn->domain.s, domain->s, domain->len)!=0) {
+						skip = 1;
+					}
+				}
+			}
+			if(skip == 1) {
+				ptn = ptn->next;
+				continue;
+			}
 			/* add record node */
 			if (rpc->add(ctx, "{", &th) < 0) {
 				rpc->fault(ctx, 500, "Internal error creating rpc");
@@ -1931,8 +1953,79 @@ void rpc_presence_presentity_list(rpc_t *rpc, void *ctx)
 	return;
 }
 
+/*! \brief
+ *  rpc cmd: presence.presentity_list
+ *			\mode - output attributes control
+ *		* */
+void rpc_presence_presentity_list(rpc_t *rpc, void *ctx)
+{
+	str omode = {0, 0};
+	int imode = 0;
+
+	LM_DBG("listing in memory presentity records\n");
+
+	imode = rpc->scan(ctx, "*S", &omode);
+	if(imode < 1) {
+		imode = 0;
+	} else {
+		if(omode.len == 4 && strncmp(omode.s, "full", 4)==0) {
+			imode = 1;
+		} else {
+			imode = 0;
+		}
+	}
+	rpc_presence_presentity_list_filter(rpc, ctx, imode, NULL, NULL);
+}
+
+
+
 static const char *rpc_presence_presentity_list_doc[2] = {
 	"Trigger update of watchers",
+	0
+};
+
+
+/*! \brief
+ *  rpc cmd: presence.presentity_show
+ *			\mode - output attributes control
+ *			\user - filter by user
+ *			\domain - filter by domain
+ *		* */
+void rpc_presence_presentity_show(rpc_t *rpc, void *ctx)
+{
+	str omode = {0, 0};
+	int imode = 0;
+	str user = str_init("");
+	str domain = str_init("");
+
+	LM_DBG("listing in memory presentity records\n");
+
+	imode = rpc->scan(ctx, "SSS", &omode, &user, &domain);
+	if(imode < 3) {
+		rpc->fault(ctx, 500, "Not enough parameters");
+		return;
+	}
+	if(omode.len == 4 && strncmp(omode.s, "full", 4)==0) {
+		imode = 1;
+	} else if(omode.len == 5 && strncmp(omode.s, "basic", 5)==0) {
+		imode = 0;
+	} else {
+		rpc->fault(ctx, 500, "Unknown output mode");
+		return;
+	}
+	if(user.len==1 && user.s[0]=='*') {
+		user.len = 0;
+	}
+	if(domain.len==1 && domain.s[0]=='*') {
+		domain.len = 0;
+	}
+
+	rpc_presence_presentity_list_filter(rpc, ctx, imode, (user.len>0)?&user:NULL,
+			(domain.len>0)?&domain:NULL);
+}
+
+static const char *rpc_presence_presentity_show_doc[2] = {
+	"Show the presentity records for a specific user",
 	0
 };
 
@@ -1944,6 +2037,8 @@ rpc_export_t presence_rpc[] = {
 			rpc_presence_update_watchers_doc, 0},
 	{"presence.presentity_list", rpc_presence_presentity_list,
 			rpc_presence_presentity_list_doc, RET_ARRAY},
+	{"presence.presentity_show", rpc_presence_presentity_show,
+			rpc_presence_presentity_show_doc, RET_ARRAY},
 	{0, 0, 0, 0}
 };
 
