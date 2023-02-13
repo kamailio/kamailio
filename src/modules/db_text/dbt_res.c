@@ -898,7 +898,7 @@ int dbt_sort_result_temp(dbt_row_p *_res, int count, int *_o_l, char *_o_op, int
 	_i = setjmp(dbt_sort_jmpenv);  /* exception handling */
 	if (_i)
 	{
-		/* error occured during qsort */
+		/* error occurred during qsort */
 		LM_ERR("qsort aborted\n");
 		return _i;
 	}

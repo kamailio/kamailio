@@ -60,7 +60,7 @@ static int dbt_get_columns(db1_res_t* _r, dbt_table_p _dres)
 
 	for(col = 0; col < RES_COL_N(_r); col++) {
 		/*
-		 * Its would be not necessary to allocate here new memory, because of
+		 * It would be not necessary to allocate here new memory, because of
 		 * the internal structure of the db_text module. But we do this anyway
 		 * to stay confirm to the other database modules.
 		 */
