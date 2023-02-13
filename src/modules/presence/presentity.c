@@ -69,7 +69,7 @@ char *generate_ETag(int publ_count)
 		ERR_MEM(PKG_MEM_STR);
 	}
 	memset(etag, 0, ETAG_LEN * sizeof(char));
-	size = snprintf(etag, ETAG_LEN, "%c.%d.%d.%d.%d", pres_prefix,
+	size = snprintf(etag, ETAG_LEN, "%c.%u.%d.%d.%d", pres_prefix,
 			pres_startup_time, pres_pid, pres_counter, publ_count);
 	if(size < 0) {
 		LM_ERR("unsuccessful snprintf\n ");

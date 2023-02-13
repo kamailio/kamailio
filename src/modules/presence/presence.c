@@ -142,7 +142,7 @@ static int fixup_has_subscribers(void **param, int param_no);
 int pres_counter = 0;
 int pres_pid = 0;
 char pres_prefix = 'a';
-int pres_startup_time = 0;
+unsigned int pres_startup_time = 0;
 str pres_db_url = {0, 0};
 int pres_expires_offset = 0;
 int pres_cseq_offset = 0;
@@ -447,7 +447,7 @@ static int mod_init(void)
 	}
 
 
-	pres_startup_time = (int)time(NULL);
+	pres_startup_time = (unsigned int)(uint64_t)time(NULL);
 	if(pres_clean_period > 0) {
 		if(pres_timer_mode==0) {
 			register_timer(ps_presentity_db_timer_clean, 0, pres_clean_period);
