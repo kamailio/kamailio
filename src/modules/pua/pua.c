@@ -79,7 +79,7 @@ int pua_fetch_rows = 500;
 db1_con_t *pua_db = NULL;
 db_func_t pua_dbf;
 
-/* database colums */
+/* database columns */
 static str str_pres_uri_col = str_init("pres_uri");
 static str str_pres_id_col = str_init("pres_id");
 static str str_expires_col= str_init("expires");
@@ -397,7 +397,7 @@ static int db_restore(void)
 	if(db_fetch_query(&pua_dbf, pua_fetch_rows, pua_db, 0, 0, 0, result_cols,
 				0, n_result_cols, 0, &res)< 0)
 	{
-		LM_ERR("while querrying table\n");
+		LM_ERR("while querying table\n");
 		if(res)
 		{
 			pua_dbf.free_result(pua_db, res);
