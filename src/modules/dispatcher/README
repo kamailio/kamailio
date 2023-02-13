@@ -178,7 +178,7 @@ Federico Cabiddu
    1.26. Set the “ds_probing_mode” parameter
    1.27. accessing the metrics
    1.28. Set the “ds_ping_latency_stats” parameter
-   1.29. Set the “ds_hash_size” parameter
+   1.29. Set the “ds_latency_estimator_alpha” parameter
    1.30. Set the “ds_hash_size” parameter
    1.31. Set the “ds_hash_expire” parameter
    1.32. Set the “ds_hash_initexpire” parameter
@@ -824,7 +824,7 @@ modparam("dispatcher", "ds_ping_latency_stats", 1)
 
    Default value is “900 => 0.9”.
 
-   Example 1.29. Set the “ds_hash_size” parameter
+   Example 1.29. Set the “ds_latency_estimator_alpha” parameter
 ...
 modparam("dispatcher", "ds_latency_estimator_alpha", 900)
 ...

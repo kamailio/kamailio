@@ -29,6 +29,7 @@ Daniel-Constantin Mierla
               3.2. init_lifetime (int)
               3.3. finish_lifetime (int)
               3.4. timer_interval (int)
+              3.5. hash_size (integer)
 
         4. Functions
 
@@ -53,17 +54,18 @@ Daniel-Constantin Mierla
    1.2. Set init_lifetime parameter
    1.3. Set finish_lifetime parameter
    1.4. Set timer_interval parameter
-   1.5. dlgs_init usage
-   1.6. dlgs_update usage
-   1.7. dlgs_count usage
-   1.8. dlgs_tags_add usage
-   1.9. dlgs_tags_rm usage
-   1.10. dlgs_tags_count usage
-   1.11. dlgs.list usage
-   1.12. dlgs.briefing usage
-   1.13. dlgs.get usage
+   1.5. Set hash_size parameter
+   1.6. dlgs_init usage
+   1.7. dlgs_update usage
+   1.8. dlgs_count usage
+   1.9. dlgs_tags_add usage
+   1.10. dlgs_tags_rm usage
+   1.11. dlgs_tags_count usage
+   1.12. dlgs.list usage
+   1.13. dlgs.briefing usage
    1.14. dlgs.get usage
-   1.15. dlgs.stats usage
+   1.15. dlgs.getall usage
+   1.16. dlgs.stats usage
 
 Chapter 1. Admin Guide
 
@@ -81,6 +83,7 @@ Chapter 1. Admin Guide
         3.2. init_lifetime (int)
         3.3. finish_lifetime (int)
         3.4. timer_interval (int)
+        3.5. hash_size (integer)
 
    4. Functions
 
@@ -136,6 +139,7 @@ Chapter 1. Admin Guide
    3.2. init_lifetime (int)
    3.3. finish_lifetime (int)
    3.4. timer_interval (int)
+   3.5. hash_size (integer)
 
 3.1. active_lifetime (int)
 
@@ -189,6 +193,19 @@ modparam("dlgs", "finish_lifetime", 20)
 modparam("dlgs", "timer_interval", 60)
 ...
 
+3.5. hash_size (integer)
+
+   The size of the hash table internally used to keep the dialogs. A
+   larger table is much faster but consumes more memory. The hash size
+   must be a power of two.
+
+   Default value is “9”.
+
+   Example 1.5. Set hash_size parameter
+...
+modparam("dlgs", "hash_size", 5)
+...
+
 4. Functions
 
    4.1. dlgs_init(src, dst, data)
@@ -206,7 +223,7 @@ modparam("dlgs", "timer_interval", 60)
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE,
    ONREPLY_ROUTE, ONSEND_ROUTE.
 
-   Example 1.5. dlgs_init usage
+   Example 1.6. dlgs_init usage
 ...
 onsend_route {
     ...
@@ -225,7 +242,7 @@ onsend_route {
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE,
    ONSEND_ROUTE.
 
-   Example 1.6. dlgs_update usage
+   Example 1.7. dlgs_update usage
 ...
 request_route {
     ...
@@ -254,7 +271,7 @@ request_route {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.7. dlgs_count usage
+   Example 1.8. dlgs_count usage
 ...
 request_route {
     ...
@@ -277,7 +294,7 @@ request_route {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.8. dlgs_tags_add usage
+   Example 1.9. dlgs_tags_add usage
 ...
 request_route {
     ...
@@ -292,7 +309,7 @@ request_route {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.9. dlgs_tags_rm usage
+   Example 1.10. dlgs_tags_rm usage
 ...
 request_route {
     ...
@@ -310,7 +327,7 @@ request_route {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.10. dlgs_tags_count usage
+   Example 1.11. dlgs_tags_count usage
 ...
 request_route {
     ...
@@ -331,7 +348,7 @@ request_route {
 
    List dialog records.
 
-   Example 1.11. dlgs.list usage
+   Example 1.12. dlgs.list usage
 ...
 kamctl rpc dlgs.list
 ...
@@ -340,7 +357,7 @@ kamctl rpc dlgs.list
 
    List dialog records with fewer attributes per record.
 
-   Example 1.12. dlgs.briefing usage
+   Example 1.13. dlgs.briefing usage
 ...
 kamctl rpc dlgs.briefing
 ...
@@ -352,7 +369,7 @@ kamctl rpc dlgs.briefing
    List first dialog record matching the filter. The parameters have the
    same meaning like those for dlgs_count(...).
 
-   Example 1.13. dlgs.get usage
+   Example 1.14. dlgs.get usage
 ...
 kamctl rpc dlgs.get src eq sip:alice@sipserver.com
 ...
@@ -364,16 +381,16 @@ kamctl rpc dlgs.get src eq sip:alice@sipserver.com
    List all dialog records matching the filter. The parameters have the
    same meaning like those for dlgs_count(...).
 
-   Example 1.14. dlgs.get usage
+   Example 1.15. dlgs.getall usage
 ...
-kamctl rpc dlgs.get src eq sip:alice@sipserver.com
+kamctl rpc dlgs.getall src eq sip:alice@sipserver.com
 ...
 
 5.5.  dlgs.stats
 
    Return dialog statistics.
 
-   Example 1.15. dlgs.stats usage
+   Example 1.16. dlgs.stats usage
 ...
 kamctl rpc dlgs.stats
 ...

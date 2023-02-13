@@ -34,7 +34,7 @@ Anca-Maria Vamanu
    List of Examples
 
    1.1. Set default_domain parameter
-   1.2. Set presentity_prefix parameter
+   1.2. Set entity_prefix parameter
    1.3. Set branch_flag parameter
    1.4. pua_set_publish usage
 
@@ -112,7 +112,7 @@ modparam("pua_usrloc", "default_domain", "kamailio.org")
 
    Default value is “NULL”.
 
-   Example 1.2. Set presentity_prefix parameter
+   Example 1.2. Set entity_prefix parameter
 ...
 modparam("pua_usrloc", "entity_prefix", "pres")
 ...

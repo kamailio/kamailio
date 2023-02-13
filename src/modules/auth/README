@@ -180,7 +180,7 @@ Chapter 1. Admin Guide
 
    These three module parameters control which optional integrity checks
    will be performed on the SIP message carrying digest response during
-   SIP MD5 digest authentication. auth_check_register controls integrity
+   SIP MD5 digest authentication. auth_checks_register controls integrity
    checks to be performed on REGISTER messages, auth_checks_no_dlg
    controls which optional integrity checks will be performed on SIP
    requests that have no To header field or no To tag (in other words the
@@ -297,7 +297,7 @@ modparam("auth", "qop", "auth")   # set qop=auth
 
    If a response doesn't include qop or nc (for example obsolete UAs that
    don't support them) the response will be checked according to the other
-   enabled nonce checks, in this order: one_time_nonce and auth_check_*.
+   enabled nonce checks, in this order: one_time_nonce and auth_checks_*.
    If a response includes nc only the normal nonce_expire checks and the
    nonce_count checks will be performed, all the other checks will be
    ignored.
