@@ -808,7 +808,7 @@ int dp_can_connect(struct sip_msg* _msg, char* _s1, char* _s2) {
  * \param _msg SIP message
  * \param _s1 unused
  * \param _s2 unused
- * \return negative on failure, positive on succes
+ * \return negative on failure, positive on success
  */
 int dp_apply_policy(struct sip_msg* _msg, char* _s1, char* _s2) {
 
@@ -1023,7 +1023,7 @@ int dp_apply_policy(struct sip_msg* _msg, char* _s1, char* _s2) {
 	duri_str.len = at - duri_str.s;
 	LM_DBG("new DURI is '%.*s'\n",duri_str.len, ZSW(duri_str.s));
 	if(set_dst_uri(_msg, &duri_str)<0) {
-		LM_ERR("failed to se dst uri\n");
+		LM_ERR("failed to set dst uri\n");
 		return -1;
 	}
 	/* dst_uri changes, so it makes sense to re-use the current uri for

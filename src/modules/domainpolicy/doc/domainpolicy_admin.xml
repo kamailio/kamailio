@@ -16,8 +16,8 @@
 	<section>
 	<title>Overview</title>
 	<para><emphasis>
-		This modules is considered obsolete. The drafts mentioned here
-		has expired. If you use this module, please send a note to the
+		This module is considered obsolete. The drafts mentioned here
+		have expired. If you use this module, please send a note to the
 		sr-dev mailing list.
 	</emphasis></para>
 	<para>
@@ -38,7 +38,7 @@
 	<section>
 	<title>Dependencies</title>
 	<para>
-		The module depends on the following modules (in the other words the
+		The module depends on the following modules (in other words the
 		listed modules must be loaded before this module):
 		<itemizedlist>
 		<listitem>
@@ -298,8 +298,8 @@ modparam("domainpolicy", "send_socket_avp", "sendsocket")
 		</para>
 		<para>
 		The dp_col_att column specifies the AVP's name. If the AVP start with "s:" or "i:", the
-		corresponding AVP type (string named or integer named) will be generated. If the excat specifier
-		is omited, the AVP type will be guessed.
+		corresponding AVP type (string named or integer named) will be generated. If the exact specifier
+		is omitted, the AVP type will be guessed.
 		</para>
 		<para>
 		The dp_col_val column will always be interpreted as string. Thus, the AVP's value
@@ -414,7 +414,7 @@ switch(retcode) {
 			in the destination URI will be prefixed with this "subdomain".
 			E.g. if the domain in the request URI is
 			"example.com" and the domain_prefix_avp contains "inbound", the domain
-			in the destinaton URI is set to "inbound.example.com".
+			in the destination URI is set to "inbound.example.com".
 		</para>
 		</listitem>
 		<listitem>
