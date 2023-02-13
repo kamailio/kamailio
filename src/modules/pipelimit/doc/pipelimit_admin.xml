@@ -174,7 +174,7 @@ modparam("pipelimit", "db_url", "&exampledb;")
 	<section id="pipelimit.p.plp_table_name">
 	    <title><varname>plp_table_name</varname> (string)</title>
 	    <para>
-			Name of DB table where data definition for pipes is stores.
+			Name of DB table where data definition for pipes is stored.
 	    </para>
 	    <para>
 		<emphasis>
