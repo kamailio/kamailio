@@ -58,7 +58,7 @@ static void notice_processor(void *arg, const char *message)
 
 /** Determine the format of timestamps used by the server.
  * A PostgresSQL server can be configured to store timestamps either as 8-byte
- * integers or floating point numbers with double precision. This functions
+ * integers or floating point numbers with double precision. This function
  * sends a simple SQL query to the server and tries to determine the format of
  * timestamps from the reply. This function is executed once after connecting
  * to a PostgreSQL server and the result of the detection is then stored in
@@ -165,7 +165,7 @@ error:
 
 
 /** Free all memory allocated for a pg_con structure.
- * This function function frees all memory that is in use by
+ * This function frees all memory that is in use by
  * a pg_con structure.
  * @param con A generic db_con connection structure.
  * @param payload PostgreSQL specific payload to be freed.

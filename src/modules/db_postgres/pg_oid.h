@@ -52,7 +52,7 @@ typedef struct pg_type
  * by this driver, that means this driver will be able to convert
  * to and from these types.
  *
- * This enum is primarilly used as index to arrays of pg_type_t that are
+ * This enum is primarily used as index to arrays of pg_type_t that are
  * stored in pg_con structures. Upon connecting to a PostgreSQL server the
  * driver retrieves the list of supported data types and oids from the server
  * and stores then in an array. Different PostgreSQL servers can have
