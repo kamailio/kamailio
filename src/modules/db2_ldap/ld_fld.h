@@ -69,7 +69,7 @@ struct ld_fld {
 /** Creates a new LDAP specific payload.
  * This function creates a new LDAP specific payload structure and
  * attaches the structure to the generic db_fld structure.
- * @param fld A generic db_fld structure to be exended.
+ * @param fld A generic db_fld structure to be extended.
  * @param table Name of the table on the server.
  * @retval 0 on success.
  * @retval A negative number on error.
