@@ -144,4 +144,4 @@ int db_cluster_insert_delayed(const db1_con_t* _h, const db_key_t* _k,
 int db_cluster_use_table(db1_con_t* _h, const str* _t);
 
 
-#endif /* KM_DBASE_H */
+#endif /* _DBCL_API_H_ */

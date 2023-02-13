@@ -94,4 +94,4 @@ int dbcl_enable_con(dbcl_con_t *sc);
 
 int dbcl_parse_con_param(char *val);
 int dbcl_parse_cls_param(char *val);
-#endif /* KM_DBASE_H */
+#endif /* _DBCL_DATA_H_ */
