@@ -82,7 +82,7 @@ struct pres_ev
 	event_t *evp;
 	str content_type;
 	unsigned int default_expires;
-	int type; /* category type: WINFO_TIPE, PUBL_TYPE, ...*/
+	int type; /* category type: WINFO_TYPE, PUBL_TYPE, ...*/
 	int etag_not_new;
 	/*
 	 *  0 - the standard mechanism (allocating new etag for each Publish)

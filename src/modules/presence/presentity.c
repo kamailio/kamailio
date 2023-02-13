@@ -2341,7 +2341,7 @@ int mark_presentity_for_delete(presentity_t *pres, str *ruid)
 	}
 
 	if(RES_ROW_N(result) > 1) {
-		/* More that one is prevented by DB constraint  - but handle
+		/* More than one is prevented by DB constraint  - but handle
 		 * it anyway */
 		LM_ERR("Found %d presentities - expected 1\n", RES_ROW_N(result));
 
