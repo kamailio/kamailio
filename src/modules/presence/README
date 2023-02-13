@@ -87,6 +87,7 @@ Juha Heinanen
               5.2. presence.refreshWatchers
               5.3. presence.updateWatchers
               5.4. presence.presentity_list
+              5.5. presence.presentity_show
 
         6. Exported Variables
 
@@ -237,6 +238,7 @@ Chapter 1. Admin Guide
         5.2. presence.refreshWatchers
         5.3. presence.updateWatchers
         5.4. presence.presentity_list
+        5.5. presence.presentity_show
 
    6. Exported Variables
 
@@ -1067,6 +1069,7 @@ pres_update_watchers("sip:test@kamailio.org", "presence");
    5.2. presence.refreshWatchers
    5.3. presence.updateWatchers
    5.4. presence.presentity_list
+   5.5. presence.presentity_show
 
 5.1. presence.cleanup
 
@@ -1143,6 +1146,27 @@ kamcmd presence.updateWatchers sip:alice@domain.com presence
 ...
 kamctl rpc presence.presentity_list
 kamctl rpc presence.presentity_list full
+...
+
+5.5. presence.presentity_show
+
+   Return the presentity records stored in memory by filtering with
+   username and/or domain.
+
+   Name: presence.presentity_show
+
+   Parameters:
+     * mode - it can be 'basic' or 'full' to print a selection or all the
+       fields of presentity record.
+     * user - username to match presentity records, use '*' to match any
+       username.
+     * domain - the value to match the domain of the presentity records,
+       use '*' to match any domain.
+
+   RPC Command Format:
+...
+kamctl rpc presence.presentity_show basic alice sipserver.com
+kamctl rpc presence.presentity_list full * sipserver.com
 ...
 
 6. Exported Variables
