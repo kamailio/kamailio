@@ -110,7 +110,7 @@ int pike_check_ipaddr(sip_msg_t *msg, ip_addr_t* ip)
 			/* debug */
 			assert( has_timer_set(&(node->timer_ll))
 				&& (node->flags&(NODE_EXPIRED_FLAG|NODE_INTIMER_FLAG)) );
-			/* if node exprired, ignore the current hit and let is
+			/* if node expired, ignore the current hit and let is
 			 * expire in timer process */
 			if ( !(flags&NO_UPDATE) && !(node->flags&NODE_EXPIRED_FLAG) ) {
 				node->expires = get_ticks() + pike_timeout;
@@ -269,7 +269,7 @@ void clean_routine(unsigned int ticks , void *param)
 				node->flags &= ~NODE_IPLEAF_FLAG;
 				node->leaf_hits[CURR_POS] = 0;
 			} else {
-				/* if the node has no prev, means its a top branch node -> just
+				/* if the node has no prev, means it is a top branch node -> just
 				 * removed and destroy it */
 				if (node->prev!=0) {
 					/* if this is the last kid, we have to put the father
