@@ -224,13 +224,14 @@ modparam("dmq_usrloc", "usrloc_domain", "my_domain")
    The parameter controls whether the socket replication is active or not.
    This is important for anycast scenarios. The value can be:
      * 0 - disabled
-     * 1 - enabled
+     * 1 - enabled, replicate socket by proto:host:port
+     * 2 - enabled, replicate socket by socket name
 
    Default value is 0.
 
    Example 1.8. Set replicate_socket_info parameter
 ...
-modparam("dmq_usrloc", "replicate_socket_info", 0)
+modparam("dmq_usrloc", "replicate_socket_info", 1)
 ...
 
 3.9. usrloc_delete (int)
