@@ -3310,7 +3310,7 @@ char* tr_parse_string(str* in, trans_t *t)
 		_tr_parse_nparam(p, p0, tp, spec, n, sign, in, s);
 		if(tp->type==TR_PARAM_NUMBER && tp->v.n<0)
 		{
-			LM_ERR("fmtline%c negative padding lenght value\n", name.s[7]);
+			LM_ERR("fmtline%c negative padding length value\n", name.s[7]);
 			goto error;
 		}
 		t->params->next = tp;

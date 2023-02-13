@@ -769,7 +769,7 @@ static int pv_unset(struct sip_msg* msg, char* pvid, char *foo)
 
 	sp = (pv_spec_t*)pvid;
 	if(pv_set_spec_value(msg, sp, 0, NULL)<0) {
-		LM_ERR("faile to unset variable\n");
+		LM_ERR("failed to unset variable\n");
 		return -1;
 	}
 
@@ -1098,7 +1098,7 @@ static int ki_xavp_copy_dst_mode(str *src_name, int src_idx, str *dst_name,
 		}
 	} else {
 		/* check if destination exists,
-		 * if it does we will append, similar to XAVP assigment */
+		 * if it does we will append, similar to XAVP assignment */
 		dst_xavp = xavp_get(dst_name, NULL);
 		if (!dst_xavp) {
 			LM_DBG("xavp_copy(new): $xavp(%.*s[%d]) >> $xavp(%.*s)\n",
@@ -2057,10 +2057,10 @@ static sr_kemi_xval_t* ki_xav_getd_helper(sip_msg_t *msg, str *rname,
 	memset(&_sr_kemi_pv_xval, 0, sizeof(sr_kemi_xval_t));
 	if(_indx) {
 		indx = *_indx;
-		/* we're going to retrive just one */
+		/* we're going to retrieve just one */
 		_sr_kemi_pv_xval.vtype = SR_KEMIP_DICT;
 	} else {
-		/* we're going to retrive all */
+		/* we're going to retrieve all */
 		_sr_kemi_pv_xval.vtype = SR_KEMIP_ARRAY;
 	}
 	if(_case) {

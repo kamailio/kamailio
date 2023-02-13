@@ -816,7 +816,7 @@ int pv_get_nh(struct sip_msg *msg, pv_param_t *param,
 		return -1;
 
 	if(msg->first_line.type == SIP_REPLY) {
-		/* REPLY doesnt have r/d-uri - use second Via */
+		/* REPLY doesn't have r/d-uri - use second Via */
 		return pv_get_nh_reply(msg, param, res);
 	}
 
