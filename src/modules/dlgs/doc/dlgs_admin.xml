@@ -131,7 +131,7 @@ modparam("dlgs", "finish_lifetime", 20)
 	<section id="dlgs.p.timer_interval">
 		<title><varname>timer_interval</varname> (int)</title>
 		<para>
-			The value in secods to run the timer callback function for cleaning
+			The value in seconds to run the timer callback function for cleaning
 			up dialogs past the lifetime limit.
 		</para>
 		<para>
