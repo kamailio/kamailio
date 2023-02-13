@@ -39,7 +39,7 @@
 #include "../pua/pua.h"
 #include "pua_dialoginfo.h"
 
-/* global modul parameters */
+/* global module parameters */
 extern int include_callid;
 extern int include_localremote;
 extern int include_tags;

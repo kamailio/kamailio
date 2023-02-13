@@ -1,5 +1,5 @@
 /*
- * pua_dialoginfo module - publish dialog-info from dialo module
+ * pua_dialoginfo module - publish dialog-info from dialog module
  *
  * Copyright (C) 2006 Voice Sistem S.R.L.
  * Copyright (C) 2007-2008 Dan Pascu
