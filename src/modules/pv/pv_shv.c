@@ -678,7 +678,7 @@ int param_set_xvar( modparam_t type, void* val, int mode)
 
 	return 0;
 error:
-	LM_ERR("unable to set shv parame [%s]\n", s.s);
+	LM_ERR("unable to set shv parameter [%s]\n", s.s);
 	return -1;
 }
 
