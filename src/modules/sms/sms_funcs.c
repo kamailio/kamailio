@@ -531,7 +531,7 @@ int send_sms_as_sip( struct incame_sms *sms )
 	   the sip destination address;
 	   The sms body can to be in the following two formats:
 	   1. The entire or part of the sent header still exists - we will
-	      pars it and consider the start of the sip message the first
+	      parse it and consider the start of the sip message the first
 	      character that doesn't match the header!
 	   2. The sms body is totally different of the send sms -> search for a
 	      sip address inside; everything before it is ignored, only the
@@ -732,7 +732,7 @@ int _send_sms_as_sip(struct incame_sms *sms, struct modem *mdm)
 			break;
 	}
 	
-	/* CASE IMPOSIBLE!!!!, scan assume default value SMS_BODY_SCAN */
+	/* CASE IMPOSSIBLE!!!!, scan assume default value SMS_BODY_SCAN */
 	LM_ERR("SMS bad config param scan: %d for modem: %s\n",
 		mdm->scan, mdm->name);
 
@@ -888,7 +888,7 @@ void modem_process(struct modem *mdm)
 			if (getsms(&sms,mdm,i)!=-1) {
 				k++;
 				LM_DBG("SMS Get from location %d\n",i);
-				/*for test ;-) ->  to be remove*/
+				/*for test ;-) ->  to be removed*/
 				LM_DBG("SMS RECEIVED:\n\rFrom: %s %s\n\r%.*s %.*s"
 					"\n\r\"%.*s\"\n\r",sms.sender,sms.name,
 					DATE_LEN,sms.date,TIME_LEN,sms.time,
