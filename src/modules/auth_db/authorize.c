@@ -305,7 +305,7 @@ static int digest_authenticate_hdr(sip_msg_t* msg, str *realm,
 		ret = AUTH_OK;
 		switch(auth_api.post_auth(msg, h, ha1)) {
 			case AUTHENTICATED:
-				/* Only when user succeded to authenticate */
+				/* Only when user succeeded to authenticate */
 				if (!force_generate_avps) {
 					generate_avps(msg, result);
 				}
