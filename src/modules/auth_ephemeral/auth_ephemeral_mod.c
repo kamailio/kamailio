@@ -319,7 +319,7 @@ void autheph_rpc_dump_secrets(rpc_t* rpc, void* ctx)
 					secret_struct->secret_key.len,
 					secret_struct->secret_key.s) < 0)
 		{
-			rpc->fault(ctx, 500, "Faiure building the response");
+			rpc->fault(ctx, 500, "Failure building the response");
 			SECRET_UNLOCK;
 			return;
 		}
