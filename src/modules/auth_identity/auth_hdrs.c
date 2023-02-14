@@ -382,7 +382,7 @@ static void free_out_contacthdr(void)
 {
 	void** h_parsed;
 
-	h_parsed=&glb_contact.parsed; /*strict aliasing warnings workarround */
+	h_parsed=&glb_contact.parsed; /*strict aliasing warnings workaround */
 	if (glb_siphdr) {
 		pkg_free(glb_siphdr);
 		glb_siphdr=NULL;
