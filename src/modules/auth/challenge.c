@@ -21,6 +21,8 @@
  *
  */
 
+#include <stdint.h>
+
 #include "../../core/data_lump.h"
 #include "../../core/mem/mem.h"
 #include "../../core/parser/digest/digest.h"
@@ -94,14 +96,14 @@ void strip_realm(str* _realm)
  */
 int calc_new_nonce(char* nonce, int *nonce_len, int cfg, struct sip_msg* msg)
 {
-	int t;
+	unsigned int t;
 #if defined USE_NC || defined USE_OT_NONCE
 	unsigned int n_id;
 	unsigned char pool;
 	unsigned char pool_flags;
 #endif
 
-	t=time(0);
+	t=(unsigned int)(uint64_t)time(0);
 #if defined USE_NC || defined USE_OT_NONCE
 	if (nc_enabled || otn_enabled){
 		pool=nid_get_pool();

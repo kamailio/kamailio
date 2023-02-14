@@ -208,7 +208,8 @@ int get_auth_checks(struct sip_msg* msg);
 /*
  * Calculate nonce value
  */
-int calc_nonce(char* nonce, int* nonce_len, int cfg, int since, int expires,
+int calc_nonce(char* nonce, int* nonce_len, int cfg, unsigned int since,
+		unsigned int expires,
 #if defined USE_NC || defined USE_OT_NONCE
 				unsigned int n_id, unsigned char pf,
 #endif /* USE_NC || USE_OT_NONCE */
