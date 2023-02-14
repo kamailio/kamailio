@@ -212,7 +212,7 @@ static int ki_app_sqlang_dostring(sip_msg_t *msg, str *script)
 	}
 	if(!sqlang_sr_initialized())
 	{
-		LM_ERR("sqlang env not intitialized");
+		LM_ERR("sqlang env not initialized");
 		return -1;
 	}
 	memcpy(_sqlang_buf_stack[0], script->s, script->len);
@@ -245,7 +245,7 @@ static int ki_app_sqlang_dofile(sip_msg_t *msg, str *script)
 	}
 	if(!sqlang_sr_initialized())
 	{
-		LM_ERR("sqlang env not intitialized");
+		LM_ERR("sqlang env not initialized");
 		return -1;
 	}
 	memcpy(_sqlang_buf_stack[0], script->s, script->len);
@@ -278,7 +278,7 @@ static int ki_app_sqlang_runstring(sip_msg_t *msg, str *script)
 	}
 	if(!sqlang_sr_initialized())
 	{
-		LM_ERR("sqlang env not intitialized");
+		LM_ERR("sqlang env not initialized");
 		return -1;
 	}
 	memcpy(_sqlang_buf_stack[0], script->s, script->len);
@@ -309,7 +309,7 @@ static int w_app_sqlang_run(struct sip_msg *msg, char *func, char *p1, char *p2,
 	str s;
 	if(!sqlang_sr_initialized())
 	{
-		LM_ERR("sqlang env not intitialized");
+		LM_ERR("sqlang env not initialized");
 		return -1;
 	}
 	if(fixup_get_svalue(msg, (gparam_p)func, &s)<0)
