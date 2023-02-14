@@ -156,7 +156,7 @@ static int mod_init(void)
 		return -1;
 	}
 
-	LM_INFO("janson version : %s\n", JANSSON_VERSION);
+	LM_INFO("jansson version : %s\n", JANSSON_VERSION);
 #if JANSSON_VERSION_HEX >= 0x010300
 /* Code specific to version 1.3 and above */
 #endif
