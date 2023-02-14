@@ -37,7 +37,7 @@ typedef enum auth_diam_result {
 	NO_CREDENTIALS,     /*!< Credentials missing */
 	STALE_NONCE,        /*!< Stale nonce */
 	INVALID_PASSWORD,   /*!< Invalid password */
-	USER_UNKNOWN,       /*!< User non existant */
+	USER_UNKNOWN,       /*!< User non existent */
 	ERROR,              /*!< Error occurred, a reply has been sent out,
 	                        return 0 to the kamailio core */
 	AUTHORIZED,         /*!< Authorized. If returned by pre_auth,
