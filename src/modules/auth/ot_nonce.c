@@ -93,7 +93,7 @@ int init_ot_nonce()
 		return -1;
 	}else if (size/8 >= max_mem/2){
 		LM_WARN("the currently configured otn_in_flight_no (%ld)  "
-				"would use more then 50%% of the available shared"
+				"would use more than 50%% of the available shared"
 				" memory(%ld bytes)\n", size, max_mem);
 	}
 	otn_in_flight_no=size;
@@ -182,7 +182,7 @@ nid_t otn_new(nid_t id, unsigned char p)
 	unsigned  n, b;
 
 	n=get_otn_array_bit_idx(id, p); /* n-th bit */
-	i=get_otn_array_cell_idx(n);    /* aray index i, corresponding to n */
+	i=get_otn_array_cell_idx(n);    /* array index i, corresponding to n */
 	b=get_otn_cell_bit(n);          /* bit pos corresponding to n */
 	/* new_value = old_value with the corresponding bit zeroed */
 #ifdef OTN_CELL_T_LONG
@@ -213,7 +213,7 @@ enum otn_check_ret otn_check_id(nid_t id, unsigned pool)
 	if (unlikely(otn_id_check_overflow(id, pool)))
 		return OTN_ID_OVERFLOW;
 	n=get_otn_array_bit_idx(id, pool); /* n-th bit */
-	i=get_otn_array_cell_idx(n);    /* aray index i, corresponding to n */
+	i=get_otn_array_cell_idx(n);    /* array index i, corresponding to n */
 	b=get_otn_cell_bit(n);          /* bit pos corresponding to n */
 	b_mask= (otn_cell_t)1<<b;
 
