@@ -217,7 +217,7 @@ static int ki_app_lua_dostring(sip_msg_t *msg, str *script)
 		return -1;
 	}
 	if(!lua_sr_initialized()) {
-		LM_ERR("Lua env not intitialized");
+		LM_ERR("Lua env not initialized");
 		return -1;
 	}
 	memcpy(_lua_buf_stack[0], script->s, script->len);
@@ -250,7 +250,7 @@ static int ki_app_lua_dofile(sip_msg_t *msg, str *script)
 		return -1;
 	}
 	if(!lua_sr_initialized()) {
-		LM_ERR("Lua env not intitialized");
+		LM_ERR("Lua env not initialized");
 		return -1;
 	}
 	memcpy(_lua_buf_stack[0], script->s, script->len);
@@ -282,7 +282,7 @@ static int ki_app_lua_runstring(sip_msg_t *msg, str *script)
 	}
 	if(!lua_sr_initialized())
 	{
-		LM_ERR("Lua env not intitialized");
+		LM_ERR("Lua env not initialized");
 		return -1;
 	}
 	memcpy(_lua_buf_stack[0], script->s, script->len);
@@ -298,7 +298,7 @@ static int w_app_lua_runstring(struct sip_msg *msg, char *script, char *extra)
 	str s;
 	if(!lua_sr_initialized())
 	{
-		LM_ERR("Lua env not intitialized");
+		LM_ERR("Lua env not initialized");
 		return -1;
 	}
 	if(fixup_get_svalue(msg, (gparam_p)script, &s)<0)
@@ -318,7 +318,7 @@ static int w_app_lua_run(struct sip_msg *msg, char *func, char *p1, char *p2,
 	str s;
 	if(!lua_sr_initialized())
 	{
-		LM_ERR("Lua env not intitialized");
+		LM_ERR("Lua env not initialized");
 		return -1;
 	}
 	if(fixup_get_svalue(msg, (gparam_p)func, &s)<0)
