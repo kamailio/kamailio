@@ -60,7 +60,7 @@
 		<section id="smsops.f.isRPDATA">
 		<title><function moreinfo="none">isRPDATA()</function></title>
 		<para>
-			Returns true, if the message contains RP-Data in it's body.
+			Returns true, if the message contains RP-Data in its body.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE.
