@@ -332,7 +332,7 @@ static int sj_serialize_data(sip_msg_t* msg, srjson_doc_t *jdoc, str* smode)
 	for(i=0; i<smode->len; i++) {
 		switch (smode->s[i]) {
 			case '0':
-				/* default attribtues added already */
+				/* default attributes added already */
 			break;
 			case 'B':
 				s.s = get_body(msg);
