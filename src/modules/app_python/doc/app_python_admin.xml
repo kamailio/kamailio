@@ -28,7 +28,7 @@
 	<para>
 		As python2 is deprecated in Debian and other distributions, please
 		use the <quote>app_python3</quote> module instead. This module will
-		be removed future releases.
+		be removed in a future release.
 	</para>
     </section>
     <section>
