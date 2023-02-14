@@ -312,7 +312,7 @@ next:
 				break;
 			}
 			memcpy(rb->chall, avp->data.s, avp->data.len);
-			rb->ret_code = AAA_CHALENGE;
+			rb->ret_code = AAA_CHALLENGE;
 			break;
 		case AAA_AUTHORIZATION_REJECTED:	/* 5003 */
 			rb->ret_code = AAA_NOT_AUTHORIZED;

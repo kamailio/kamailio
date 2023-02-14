@@ -34,7 +34,7 @@
 #define SIP_GROUP_SERVICE	'8'
 #define SIP_ACC_SERVICE		'9'
 
-#define AAA_CHALENGE 		 1
+#define AAA_CHALLENGE 		 1
 #define AAA_AUTHORIZED 		 0
 #define AAA_NOT_AUTHORIZED	 2
 #define AAA_SRVERR			 3

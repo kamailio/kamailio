@@ -608,7 +608,7 @@ int srv_response(struct sip_msg* msg, rd_buf_t * rb, int hftype)
 			send_resp(msg, 500, &dia_500_err, NULL, 0);
 			return -1;
 				
-		case AAA_CHALENGE:
+		case AAA_CHALLENGE:
 		 	if(hftype==HDR_AUTHORIZATION_T) /* SIP server */
 			{
 				auth_hf_len = WWW_AUTH_CHALLENGE_LEN+rb->chall_len;
