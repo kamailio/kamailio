@@ -368,8 +368,8 @@ int check_via_sip_version(sip_msg_t* msg) {
 			" for now; check the source code comments for details\n");
 	return SANITY_CHECK_PASSED;
 
-	/* FIMXE the Via parser fails already on non-2.0 versions
-	 * thus this check makes no sence yet
+	/* FIXME the Via parser fails already on non-2.0 versions
+	 * thus this check makes no sense yet
 	DBG("check_via_sip_version entered\n");
 
 	// FIXME via parser fails on non 2.0 number
@@ -403,7 +403,7 @@ int check_via_protocol(sip_msg_t* msg) {
 	return SANITY_CHECK_PASSED;
 
 	/* FIXME as the Via parser fails already on unknown transports
-	 * this function makes no sence yet
+	 * this function makes no sense yet
 	DBG("check_via_protocol entered\n");
 
 	// FIXME via parser fails on unknown transport
@@ -949,7 +949,7 @@ int check_digest(sip_msg_t* msg, int checks) {
 	}
 }
 
-/* check for the presence of duplicate tag prameters in To/From headers */
+/* check for the presence of duplicate tag parameters in To/From headers */
 int check_duptags(sip_msg_t* msg)
 {
 	to_body_t *tb;
