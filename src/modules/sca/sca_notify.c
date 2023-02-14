@@ -351,7 +351,7 @@ int sca_notify_call_info_subscribers(sca_mod *scam, str *subscription_aor)
 	assert(scam->subscriptions != NULL);
 	assert(!SCA_STR_EMPTY(subscription_aor));
 
-	LM_DBG("Notifying ALL subscribers of AOR %.*s due to a SUBSCRIBTION "
+	LM_DBG("Notifying ALL subscribers of AOR %.*s due to a SUBSCRIPTION "
 		   "request\n",
 			STR_FMT(subscription_aor));
 
