@@ -86,7 +86,7 @@ static int stun_add_common_text_attr(struct stun_msg* res, USHORT_T type, char* 
  * TCP and UDP protocol. There is no other function as an interface.
  * 
  * Return value:	0	if there is no environment error
- * 					-1	if there is some enviroment error such as insufficiency
+ * 					-1	if there is some environment error such as insufficiency
  * 						of memory
  * 
  */
@@ -157,7 +157,7 @@ error:
  * This function ensures parsing of incoming header.
  * 
  * Return value:	0	if there is no environment error
- * 					-1	if there is some enviroment error such as insufficiency
+ * 					-1	if there is some environment error such as insufficiency
  * 						of memory
  */
 
@@ -203,11 +203,11 @@ static int stun_parse_header(struct stun_msg* req, USHORT_T* error_code)
  * stun_parse_body():
  * 			- req: request from host that should be processed
  * 			- unknown: this is a link list header of attributes 
- * 					   that are unknown to SER; defaul value is NULL
+ * 					   that are unknown to SER; default value is NULL
  * 			- error_code: indication of any protocol error
  * 
  * Return value:	0	if there is no environment error
- * 					-1	if there is some enviroment error such as insufficiency
+ * 					-1	if there is some environment error such as insufficiency
  * 						of memory
  */
 static int stun_parse_body(
@@ -262,7 +262,7 @@ static int stun_parse_body(
 		/* check if there is enought unparsed space for attribute's value */
 		if (not_parsed < ntohs(attr.len)) {
 #ifdef EXTRA_DEBUG
-			LOG(L_DBG, "DEBUG: stun_parse_body: remaining message is shorter then attribute length\n");
+			LOG(L_DBG, "DEBUG: stun_parse_body: remaining message is shorter than attribute length\n");
 #endif
 			*error_code = BAD_REQUEST_ERR;
 			continue;
@@ -358,7 +358,7 @@ static int stun_parse_body(
 		}
 		
 		/* check if there is enough unparsed space for the padded attribute
-		   (the padded length might be greater then the attribute length)
+		   (the padded length might be greater than the attribute length)
 		 */
 		if (not_parsed < padded_len) {
 			break;
@@ -391,7 +391,7 @@ static int stun_parse_body(
  * The type of response depends on value of error_code parameter.
  * 
  * Return value:	0	if there is no environment error
- * 					-1	if there is some enviroment error such as insufficiency
+ * 					-1	if there is some environment error such as insufficiency
  * 						of memory  
  */
 
@@ -521,7 +521,7 @@ static int stun_create_response(
  * attributes into response buffer.
  * 
  * Return value:	0	if there is no environment error
- * 					-1	if there is some enviroment error such as insufficiency
+ * 					-1	if there is some environment error such as insufficiency
  * 						of memory
  * 
  */
@@ -585,7 +585,7 @@ static int add_unknown_attr(struct stun_msg* res, struct stun_unknown_att* unkno
  * attributes into response buffer.
  * 
  * Return value:	0	if there is no environment error
- * 					-1	if there is some enviroment error such as insufficiency
+ * 					-1	if there is some environment error such as insufficiency
  * 						of memory
  */
 static int add_error_code(struct stun_msg* res, USHORT_T error_code)
@@ -599,7 +599,7 @@ static int add_error_code(struct stun_msg* res, USHORT_T error_code)
 	orig_len = res->msg.buf.len;
 	text_pad = 0;
 	
-	/* the type and length will be copy as last one because of unknown length*/
+	/* the type and length will be copied as last one because of unknown length*/
 	if (res->msg.buf.len < sizeof(struct stun_attr)) {
 		if (reallock_buffer(&res->msg, sizeof(struct stun_attr)) != 0) {
 #ifdef EXTRA_DEBUG
@@ -703,7 +703,7 @@ error:
  * buffer.
  * 
  * Return value:	0	if there is no environment error
- * 					-1	if there is some enviroment error such as insufficiency
+ * 					-1	if there is some environment error such as insufficiency
  * 						of memory
  */
 static int copy_str_to_buffer(struct stun_msg* res, const char* data, UINT_T pad)
@@ -750,7 +750,7 @@ static int copy_str_to_buffer(struct stun_msg* res, const char* data, UINT_T pad
  * response buffer.
  * 
  * Return value:	0	if there is no environment error
- * 					-1	if there is some enviroment error such as insufficiency
+ * 					-1	if there is some environment error such as insufficiency
  * 						of memory
  */
 static int stun_add_address_attr(struct stun_msg* res, 
@@ -809,11 +809,11 @@ static int stun_add_address_attr(struct stun_msg* res,
  * stun_alloc_unknown_attr()
  * 			- type: type of unknown attribute
  * 
- * The function stun_alloc_unknown_attr ensures allocationg new element for
+ * The function stun_alloc_unknown_attr ensures allocating new element for
  * the link list of unknown attributes.
  * 
  * Return value: pointer to new element of link list in positive case
- * 				 NULL if there is some enviroment error such as insufficiency
+ * 				 NULL if there is some environment error such as insufficiency
  * 						of memory
  */
 static struct stun_unknown_att* stun_alloc_unknown_attr(USHORT_T type)
@@ -858,14 +858,14 @@ static void stun_delete_unknown_attrs(struct stun_unknown_att* unknown)
 
 /*
  * buf_copy()
- * 			- msg: buffer where the data will be copy to
+ * 			- msg: buffer where the data will be copied to
  * 			- source: source data buffer
  * 			- len: number of bytes that should be copied
  * 
  * The function buf_copy copies "len" bytes from source into msg buffer
  * 
  * Return value:	0	if there is no environment error
- * 					-1	if there is some enviroment error such as insufficiency
+ * 					-1	if there is some environment error such as insufficiency
  * 						of memory
  */
 static int buf_copy(struct stun_buffer* msg, void* source, UINT_T len)
@@ -893,7 +893,7 @@ static int buf_copy(struct stun_buffer* msg, void* source, UINT_T len)
  * original length plus bigger from len and STUN_MSG_LEN constant.
  * 
  * Return value:	0	if there is no environment error
- * 					-1	if there is some enviroment error such as insufficiency
+ * 					-1	if there is some environment error such as insufficiency
  * 						of memory
  */
 static int reallock_buffer(struct stun_buffer* buffer, UINT_T len)
@@ -945,7 +945,7 @@ static void clean_memory(struct stun_msg* req,
  * into response buffer.
  * 
  * Return value:	0	if there is no environment error
- * 					-1	if there is some enviroment error such as insufficiency
+ * 					-1	if there is some environment error such as insufficiency
  * 						of memory
  */
 static int stun_add_common_text_attr(struct stun_msg* res, 
