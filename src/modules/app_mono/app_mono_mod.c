@@ -130,7 +130,7 @@ static int w_app_mono_exec(struct sip_msg *msg, char *script, char *mparam)
 
 	if(!mono_sr_initialized())
 	{
-		LM_ERR("Lua env not intitialized");
+		LM_ERR("Lua env not initialized");
 		return -1;
 	}
 	if(fixup_get_svalue(msg, (gparam_p)script, &s)<0)
@@ -173,7 +173,7 @@ static int w_app_mono_run(struct sip_msg *msg, char *mparam, char *extra)
 
 	if(!mono_sr_initialized())
 	{
-		LM_ERR("Lua env not intitialized");
+		LM_ERR("Lua env not initialized");
 		return -1;
 	}
 	if(mparam!=NULL)
