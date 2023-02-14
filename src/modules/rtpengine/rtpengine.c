@@ -3349,6 +3349,12 @@ select_rtpp_node(str callid, str viabranch, int do_test, struct rtpp_node **quer
 	// lookup node
 	node = select_rtpp_node_old(callid, viabranch, do_test, op);
 
+	if (node && is_queried_node(node, queried_nodes_ptr, queried_nodes)) {
+		LM_ERR("rtpengine node for callid=%.*s is known (%.*s) but it has already been queried, therefore not returning it\n",
+			callid.len, callid.s, node->rn_url.len, node->rn_url.s);
+		return NULL;
+	}
+
 	// check node
 	if (!node || (node_in_set(node, active_rtpp_set) == 0)) {
 		// run the selection algorithm
