@@ -151,7 +151,7 @@ modparam("slack", "icon_emoji", ":ghost:")
 		<itemizedlist>
 			<listitem>
 			<para>
-			format - The formatted string to be send.
+			format - The formatted string to be sent.
 			</para>
 			</listitem>
 		</itemizedlist>
