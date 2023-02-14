@@ -586,7 +586,7 @@ if (sql_xquery("ca", "select * from domain", "ra") == 1)
 			<title><varname>$sqlrows(con)</varname></title>
 			<para>
 				Number of affected rows of the previous query on the
-				specified connection. It's primary use is to get the number
+				specified connection. Its primary use is to get the number
 				of rows affected by UPDATE, INSERT and DELETE queries.
 			</para>
 			<para>
