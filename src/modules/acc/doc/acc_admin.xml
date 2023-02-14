@@ -866,7 +866,7 @@ modparam("acc", "db_table_missed_calls", "myMC_table")
 	<section id="acc.p.db_url">
 		<title><varname>db_url</varname> (string)</title>
 		<para>
-		SQL address -- database specific. If is set to NULL or empty string,
+		SQL address -- database specific. If it is set to NULL or empty string,
 		the SQL support is disabled.
 		</para>
 		<para>
