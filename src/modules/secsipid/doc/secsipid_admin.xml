@@ -206,7 +206,7 @@ modparam("secsipid", "libopt", "CacheExpires=0")
 			Check the validity of the Identity header using the keys stored
 			in the file specified by "keyPath". If the parameter is empty,
 			the function is downloading the key using the URL from "info"
-			parameter of the Identity header, using the value od "timeout"
+			parameter of the Identity header, using the value of "timeout"
 			parameter to limit the download time. The validity of the JWT
 			body in the Identity header is also checked against the "expire"
 			parameter.
@@ -314,7 +314,7 @@ request_route {
 		</para>
 		<para>
 		The url parameters can contain pseudo-variables and ovar has to be
-		the name of a writtable pseudo-variable.
+		the name of a writable pseudo-variable.
 		</para>
 		<para>
 		This function can be used from ANY_ROUTE.
