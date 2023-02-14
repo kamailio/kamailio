@@ -195,7 +195,7 @@ int sl_reply_helper(struct sip_msg *msg, int code, char *reason, str *tag)
 
 	*(sl_timeout) = get_ticks_raw() + SL_RPL_WAIT_TIME;
 
-	/* supress multhoming support when sending a reply back -- that makes sure
+	/* suppress multihoming support when sending a reply back -- that makes sure
 	 * that replies will come from where requests came in; good for NATs
 	 * (there is no known use for mhomed for locally generated replies;
 	 * note: forwarded cross-interface replies do benefit of mhomed!

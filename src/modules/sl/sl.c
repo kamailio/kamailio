@@ -259,7 +259,7 @@ static int w_sl_reply_error( struct sip_msg* msg, char* str, char* str2)
 /**
  * @brief send stateful reply if transaction was created
  *
- * Check if transation was created for respective SIP request and reply
+ * Check if transaction was created for respective SIP request and reply
  * in stateful mode, otherwise send stateless reply
  *
  * @param msg - SIP message structure
@@ -341,7 +341,7 @@ static int w_send_reply(struct sip_msg* msg, char* p1, char* p2)
 /**
  * @brief send stateful reply if transaction was created
  *
- * Check if transation was created for respective SIP request and reply
+ * Check if transaction was created for respective SIP request and reply
  * in stateful mode, otherwise send stateless reply
  *
  * @param msg - SIP message structure
