@@ -181,7 +181,7 @@ int hepv2_received(char *buf, unsigned int len, struct receive_info *ri)
 		return -1;
 	}
 
-	/* timming */
+	/* timing */
 	if(heph->hp_v == 2) {
 		hep_offset += sizeof(struct hep_timehdr);
 		heptime_tmp = (struct hep_timehdr *)hep_payload;
@@ -856,7 +856,7 @@ int hepv2_message_parse(char *buf, unsigned int len, sip_msg_t *msg)
 		return -1;
 	}
 
-	/* timming */
+	/* timing */
 	if(heph->hp_v == 2) {
 		hep_offset += sizeof(struct hep_timehdr);
 		heptime_tmp = (struct hep_timehdr *)hep_payload;

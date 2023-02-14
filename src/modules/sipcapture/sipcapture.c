@@ -178,7 +178,7 @@ static int hep_version(struct sip_msg *msg);
 static str db_url = str_init(DEFAULT_DB_URL);
 static str table_name = str_init("sip_capture");
 static str hash_source = str_init("call_id");
-static str table_time_sufix = str_init("%Y%m%D");
+static str table_time_suffix = str_init("%Y%m%D");
 static str mt_mode = str_init("rand");
 static str date_column = str_init("date");
 static str micro_ts_column = str_init("micro_ts");
@@ -400,7 +400,7 @@ static param_export_t params[] = {
 	{"capture_bad_msgs",    INT_PARAM, &parse_bad_msgs },
 	{"insert_retries", INT_PARAM, &insert_retries},
 	{"insert_retry_timeout", INT_PARAM, &insert_retry_timeout},
-	{"table_time_sufix", PARAM_STR, &table_time_sufix},
+	{"table_time_suffix", PARAM_STR, &table_time_suffix},
 	{"topoh_unmask", PARAM_INT, &sc_topoh_unmask},
 	{"nonsip_hook", PARAM_INT, &nonsip_hook},
 	{"event_callback", PARAM_STR, &sc_event_callback},
@@ -2042,7 +2042,7 @@ static int sip_capture(sip_msg_t *msg, str *_table,
 		}
 	}
 
-	/* callid_aleg - default is X-CID but configurable via modul params */
+	/* callid_aleg - default is X-CID but configurable via module params */
 	EMPTY_STR(sco.callid_aleg);
 	int index;
 	for(index = 0; index < n_callid_aleg_headers; index++) {
