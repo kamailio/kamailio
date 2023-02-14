@@ -190,7 +190,7 @@ route[RESUME] {
 		request with the route[routename]. In case of internal errors, the
 		function returns false, otherwise the function exits the execution of
 		the script at that moment (return 0 behaviour).
-		This function works only if the ms_timer parameter has a value greater then 0.
+		This function works only if the ms_timer parameter has a value greater than 0.
 		</para>
 		<para>
 		The routename parameter can be a static string or a dynamic string
@@ -265,7 +265,7 @@ exit;
 		Simulate a sleep of 'milliseconds' and then continue the processing of SIP
 		request with the next action. In case of internal errors, the function
 		returns false.
-		This function works only if the ms_timer parameter has a value greater then 0.
+		This function works only if the ms_timer parameter has a value greater than 0.
 		</para>
 		<para>
 		The sleep parameter represent the number of milliseconds to suspend the
