@@ -97,13 +97,13 @@
 	    <para>
 	    NOTE: Since &kamailio; v5.0, KEMI exports are available in Lua script
 		under KSR module exposed by 'app_lua'. These exports cover most of the modules,
-		a lot more that those listed next. The KEMI exports are the recommended to
+		a lot more than those listed next. The KEMI exports are the recommended to
 		be used, the old 'sr' module might be obsoleted soon. To read more about
 		KEMI exports and available KSR submodules, see:
     	<itemizedlist>
 		    <listitem>
 			<para>
-				<ulink url="http://kamailio.org/docs/tutorials/devel/kamailio-kemi-framework/">http://kamailio.org/docs/tutorials/devel/kamailio-kemi-framework/</ulink>
+				<ulink url="https://kamailio.org/docs/tutorials/devel/kamailio-kemi-framework/">https://kamailio.org/docs/tutorials/devel/kamailio-kemi-framework/</ulink>
 			</para>
 		    </listitem>
     	</itemizedlist>
