@@ -41,7 +41,7 @@ extern unsigned nid_pool_no; /* number of index pools */
 
 /* id incremenet, to avoid cacheline ping-pong and cover all the
  * array locations it should be a number prime with the array size and
- * bigger then the cacheline. Since this is used also for onetime nonces
+ * bigger than the cacheline. Since this is used also for onetime nonces
  * => NID_INC/8 > CACHELINE
  * This number also limits the maximum pool/partition size, since the
  * id overflow check checks if crt_id - nonce_id >= partition_size*NID_INC
@@ -51,7 +51,7 @@ extern unsigned nid_pool_no; /* number of index pools */
 #define DEFAULT_NID_POOL_SIZE 1
 #define MAX_NID_POOL_SIZE    64 /* max. 6 bits used for the pool no*/
 
-#define CACHELINE_SIZE 256 /* more then most real-word cachelines */
+#define CACHELINE_SIZE 256 /* more than most real-word cachelines */
 
 /* if larger tables are needed (see NID_INC comments above), consider
  * switching to unsigned long long */
