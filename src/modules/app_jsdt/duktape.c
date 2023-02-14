@@ -7709,7 +7709,7 @@ struct duk_hcompfunc {
 	 *  executing random data as bytecode due to a compiler error.
 	 *
 	 *  Note: values in the data buffer must be incref'd (they will
-	 *  be decref'd on release) for every compiledfunction referring
+	 *  be decref'd on release) for every compiled function referring
 	 *  to the 'data' element.
 	 */
 
@@ -38049,7 +38049,7 @@ DUK_LOCAL void duk__json_dec_buffer(duk_json_dec_ctx *js_ctx) {
 	 *   - EOF detection
 	 *   - Unknown length of input and output
 	 *
-	 * The best approach here would be a bufwriter and a reasonaly sized
+	 * The best approach here would be a bufwriter and a reasonably sized
 	 * safe inner loop (e.g. 64 output bytes at a time).
 	 */
 
@@ -66572,7 +66572,7 @@ DUK_LOCAL void duk__create_arguments_object(duk_hthread *thr, duk_hobject *func,
 		 *
 		 * Note that the specification requires that the *same* thrower
 		 * built-in object is used here!  See E5 Section 10.6 main
-		 * algoritm, step 14, and Section 13.2.3 which describes the
+		 * algorithm, step 14, and Section 13.2.3 which describes the
 		 * thrower.  See test case test-arguments-throwers.js.
 		 */
 
@@ -72199,7 +72199,7 @@ DUK_LOCAL void duk__nud_array_literal(duk_compiler_ctx *comp_ctx, duk_ivalue *re
 		}
 	}
 
-	/* Update initil size for NEWARR, doesn't need to be exact and is
+	/* Update initial size for NEWARR, doesn't need to be exact and is
 	 * capped at A field limit.
 	 */
 #if !defined(DUK_USE_PREFER_SIZE)
@@ -76850,7 +76850,7 @@ DUK_LOCAL void duk__parse_func_like_raw(duk_compiler_ctx *comp_ctx, duk_small_ui
 	 *  Formal argument list
 	 *
 	 *  We don't check for prohibited names or for duplicate argument
-	 *  names here, becase we don't yet know whether the function will
+	 *  names here, because we don't yet know whether the function will
 	 *  be strict.  Function body parsing handles this retroactively.
 	 */
 
