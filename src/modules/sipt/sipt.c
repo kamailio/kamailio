@@ -771,7 +771,7 @@ static int sipt_get_pv(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 					return sipt_get_calling_party(msg, param, res);
 				case 1: /* NAI */
 					return sipt_get_calling_party_nai(msg, param, res);
-				case 2: /* SCREENIG */
+				case 2: /* SCREENING */
 					return sipt_get_screening(msg, param, res);
 				case 3: /* PRESENTATION */
 					return sipt_get_presentation(msg, param, res);

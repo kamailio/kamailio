@@ -394,7 +394,7 @@ int isup_get_charging_indicator(unsigned char *buf, int len) {
 		return -1;
 	}
 
-	// add minus 1 because the optinal pointer is optional
+	// add minus 1 because the pointer is optional
 	if (len < sizeof(struct isup_acm_fixed) -1 )
 		return -1;
 
@@ -615,7 +615,7 @@ int isup_update_bci_1(struct sdp_mangler * mangle, int charge_indicator, int cal
 		return 1;
 	}
 
-	// add minus 1 because the optinal pointer is optional
+	// add minus 1 because the pointer is optional
 	if (len < sizeof(struct isup_acm_fixed) -1 )
 		return -1;
 
