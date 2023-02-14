@@ -31,7 +31,7 @@
 		<section>
 			<title>&kamailio; Modules</title>
 			<para>
-			The module depends on the following modules (in the other words
+			The module depends on the following modules (in other words
 			the listed modules must be loaded before this module):
 			<itemizedlist>
 			<listitem>
@@ -506,7 +506,7 @@ if (!proxy_authorize("$fd", "subscriber)) {
 		<para>The function combines the functionalities of
 		<function moreinfo="none">www_authenticate</function> and
 		<function moreinfo="none">proxy_authenticate</function>, first being
-		exectuted if the SIP request is a REGISTER, the second for the rest.
+		executed if the SIP request is a REGISTER, the second for the rest.
 		</para>
 		<para>
 		In addition, a matter of <emphasis>flags</emphasis> parameter value,
