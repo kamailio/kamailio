@@ -994,7 +994,7 @@ static int w_sdp_with_active_media(sip_msg_t* msg, char* media, char *bar)
 	AF_INET 2
 	AF_INET6 10
 
-it helps to extract IP adress family at c line  from sdp
+it helps to extract IP address family at c line from sdp
 	@param msg
 	@return -1 for error,
 			4 for  IP4,
