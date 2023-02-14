@@ -69,7 +69,7 @@
 			Set the path to the Ruby file to be loaded at startup. Then you
 			can use Ruby_run(function, params) to execute a function from the
 			script at runtime. If you use it for KEMI configuration,
-			then it has to include the requited functions.
+			then it has to include the required functions.
 	    </para>
 	    <para>
 		<emphasis>
