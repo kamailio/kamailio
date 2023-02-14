@@ -642,7 +642,7 @@ static struct ie_concat_sm_8bit_ref* GetConcatShortMsg8bitRefIE(sms_rp_data_t* r
 int decode_3gpp_sms(struct sip_msg *msg) {
 	str body;
 	int len, blen, j, p = 0;
-	// Parse only the body again, if the mesage differs from the last call:
+	// Parse only the body again, if the message differs from the last call:
 	if (msg->id != current_msg_id) {
 		// Extract Message-body and length: taken from RTPEngine's code
 		body.s = get_body(msg);
@@ -653,8 +653,8 @@ int decode_3gpp_sms(struct sip_msg *msg) {
 
 		/*
 		 * Better use the content-len value - no need of any explicit
-		 * parcing as get_body() parsed all headers and Conten-Length
-		 * body header is automaticaly parsed when found.
+		 * parsing as get_body() parsed all headers and Content-Length
+		 * body header is automatically parsed when found.
 		 */
 		if (msg->content_length==0) {
 			LM_ERR("failed to get the content length in message\n");
