@@ -454,10 +454,10 @@ static int get_certificate(struct sip_msg* msg, char* srt1, char* str2)
 		return -5;
 	}
 
-	/* this case ivalidbefore==0 singns that this certificate was downloaded */
+	/* this case ivalidbefore==0 signs that this certificate was downloaded */
 	glb_tcert.ivalidbefore=0;
 
-	/* chech whether this certificate is our certificate table */
+	/* check whether this certificate is our certificate table */
 	if (get_cert_from_table(glb_tcert_table, &glb_tcert.surl, &glb_tcert)) {
 		/* we did not found it in the table, so we've to download it */
 		/* we reset the PEM buffer */
@@ -716,7 +716,7 @@ static int date_proc(struct sip_msg* msg, char* srt1, char* str2)
 
 	getstr_dynstr(&glb_sdate).len=0;
 
-	/* we'd like to get the DATE header of the massage */
+	/* we'd like to get the DATE header of the message */
 	iRes=datehdr_proc(&sdate, NULL, msg);
 	switch (iRes) {
 		case AUTH_ERROR:
@@ -761,7 +761,7 @@ static int date_proc(struct sip_msg* msg, char* srt1, char* str2)
 	 * RFC 4474 [6] Step 3
 	 */
 	if (glb_imycertnotafter < tmsg) {
-		LOG(L_INFO, "AUTH_IDENTITY AUTHORIZER: My certificate has been expired\n");
+		LOG(L_INFO, "AUTH_IDENTITY AUTHORIZER: My certificate has expired\n");
 		return -8;
 	}
 
@@ -803,7 +803,7 @@ static int add_identity(struct sip_msg* msg, char* srt1, char* str2)
 				LOG(L_ERR, "AUTH_IDENTITY:add_identity: Date header is not found (has auth_date_proc been called?)\n");
 				return -2;
 			}
-			/*  assemble the digest string and the DATE header is missing in the orignal message */
+			/*  assemble the digest string and the DATE header is missing in the original message */
 			if (digeststr_asm(&glb_sdgst,
 							  msg,
 							  &getstr_dynstr(&glb_sdate),

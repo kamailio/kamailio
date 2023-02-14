@@ -54,8 +54,8 @@ time_t glb_tnow=0;	/* we need for this for certificate expiration check when
 int init_table(ttable **ptable,	/* table we'd like to init */
 			   unsigned int ubucknum,	/* number of buckets */
 			   unsigned int uitemlim,	/* maximum number of table intems */
-			   table_item_cmp *fcmp,	/* compare funcion used by search */
-			   table_item_searchinit *fsinit, /* inits the least item searcher funcion */
+			   table_item_cmp *fcmp,	/* compare function used by search */
+			   table_item_searchinit *fsinit, /* inits the least item searcher function */
 			   table_item_cmp *fleast,	/* returns the less item;
 										 * used by item remover */
 			   table_item_free *ffree,	/* frees the data part of an item */
@@ -276,7 +276,7 @@ void garbage_collect(ttable *ptable, int ihashstart, int ihashend)
 	titem *pnow;
 
 
-	/* there is not any garbage collector funcion available */
+	/* there is not any garbage collector function available */
 	if (!ptable->fgc)
 		return;
 
@@ -335,7 +335,7 @@ static int str_duplicate(str* _d, str* _s)
 
 /*
  *
- * Certificate table specific funcions
+ * Certificate table specific functions
  *
  */
 int cert_item_cmp(const void *s1, const void *s2)
@@ -432,7 +432,7 @@ int addcert2table(ttable *ptable, tcert_item *pcert)
 
 /*
  *
- * Call-ID table specific funcions
+ * Call-ID table specific functions
  *
  */
 
