@@ -658,7 +658,7 @@ static int sctp_init_sock_opt_common(int s, int af)
 	}
 #else
 #warning no sctp lib support for SCTP_ASSOCINFO, consider upgrading
-#endif /* SCTP_ASOCINFO */
+#endif /* SCTP_ASSOCINFO */
 	   /* set initmsg options: init_max_attempts & init_max_init_timeo */
 #ifdef SCTP_INITMSG
 	memset(&im, 0, sizeof(im));
@@ -975,7 +975,7 @@ error:
 
 #ifdef SCTP_CONN_REUSE
 
-/* we  need SCTP_ADDR_HASH for being able to make inquires related to existing
+/* we need SCTP_ADDR_HASH for being able to make inquiries related to existing
    sctp association to a particular address  (optional) */
 /*#define SCTP_ADDR_HASH*/
 
@@ -1207,7 +1207,7 @@ void destroy_sctp_con_tracking()
 }
 
 
-/** intializaze sctp_conn hashes.
+/** initialize sctp_conn hashes.
   * @return 0 on success, <0 on error
   */
 int init_sctp_con_tracking()
@@ -2406,7 +2406,7 @@ int sctp_rcv_loop()
 	struct msghdr msg;
 	struct iovec iov[1];
 	struct cmsghdr *cmsg;
-	/* use a larger buffer then needed in case some other ancillary info
+	/* use a larger buffer than needed in case some other ancillary info
 	 * is enabled */
 	char cbuf[CMSG_SPACE(sizeof(*sinfo)) + CMSG_SPACE(1024)];
 

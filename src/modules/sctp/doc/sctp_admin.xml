@@ -143,7 +143,7 @@ modparam("sctp", "sctp_autoclose", 300)
 		</para>
 		<para>
 		<emphasis>
-			Default value is 32000 (miliseconds - 32 seconds).
+			Default value is 32000 (milliseconds - 32 seconds).
 		</emphasis>
 		</para>
 		<example>
@@ -297,7 +297,7 @@ modparam("sctp", "sctp_max_assocs", 10)
 	<section id="sctp.p.sctp_srto_initial">
 		<title><varname>sctp_srto_initial</varname> (int)</title>
 		<para>
-			Initial value of the retransmission timeout (in miliseconds),
+			Initial value of the retransmission timeout (in milliseconds),
 			used in RTO calculations.
 		</para>
 		<para>
@@ -325,7 +325,7 @@ modparam("sctp", "sctp_srto_initial", 1000)
 			Maximum value of the retransmission timeout (RTO) in milliseconds.
 		</para>
 		<para>
-			WARNING: values lower then the sctp sack_delay will cause lots
+			WARNING: values lower than the sctp sack_delay will cause lots
 			of retransmissions and connection instability (see sctp_srto_min
 			for more details).
 		</para>
@@ -354,10 +354,10 @@ modparam("sctp", "sctp_srto_max", 2000)
 			Minimum value of the retransmission timeout (RTO) in milliseconds.
 		</para>
 		<para>
-			WARNING: values lower then the sctp sack_delay of any peer might
+			WARNING: values lower than the sctp sack_delay of any peer might
 			cause retransmissions and possible interoperability problems.
 			According to the standard the sack_delay should be between 200
-			and 500 ms, so avoid trying values lower then 500 ms unless you
+			and 500 ms, so avoid trying values lower than 500 ms unless you
 			control all the possible sctp peers and you do make sure their
 			sack_delay is higher or their sack_freq is 1.
 		</para>
@@ -432,7 +432,7 @@ modparam("sctp", "sctp_init_max_attempts", 3)
 		<title><varname>sctp_init_max_timeo</varname> (int)</title>
 		<para>
 			Maximum INIT retransmission timeout (RTO max for INIT) in
-			miliseconds.
+			milliseconds.
 		</para>
 		<para>
 			Can be changed at runtime (sctp init_max_timeo). 
@@ -506,11 +506,11 @@ modparam("sctp", "sctp_pathmaxrxt", 2)
 		<title><varname>sctp_sack_delay</varname> (int)</title>
 		<para>
 			Delay until an ACK is generated after receiving a packet (in
-			miliseconds).
+			milliseconds).
 		</para>
 		<para>
-			WARNING: a value higher then srto_min can cause a lot of
-			retransmissions (and strange problems). A value higher then
+			WARNING: a value higher than srto_min can cause a lot of
+			retransmissions (and strange problems). A value higher than
 			srto_max will result in very high connections instability.
 			According to the standard the sack_delay value should be between
 			200 and 500 ms.
