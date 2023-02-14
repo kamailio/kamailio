@@ -1498,7 +1498,7 @@ static void trace_onreq_out(struct cell *t, int type, struct tmcb_params *ps)
 	}
 
 	/* FIXME the callback is designed for outgoing requests but this along with
-	 * the callback registration at the begining of the function it's for a special
+	 * the callback registration at the beginning of the function is for a special
 	 * case - incoming CANCEL transactions; they were not traced before; TMCB_E2ECANCEL_IN
 	 * will throw the incoming request through this function and the callback in the beginning
 	 * will make sure the reply for this cancel is caught */
@@ -2592,7 +2592,7 @@ int pv_get_siptrace(sip_msg_t *msg, pv_param_t *param,
 		case 8: /* src_hostip */
 		case 9: /* dst_hostip */
 
-			/* now IPv6 address has brakets that not wanted in IP address operations */
+			/* now IPv6 address has brackets that not wanted in IP address operations */
 			if(host.s[0] == '[' && host.s[host.len-1] == ']') {
 				host.s++;
 				host.len = host.len - 2;

@@ -529,7 +529,7 @@ int pipport2su(char *pipport, union sockaddr_union *tmp_su, unsigned int *proto)
 		*p = '\0';
 	}
 
-	/* now IPv6 address has no brakets. It should be fixed! */
+	/* now IPv6 address has no brackets. It should be fixed! */
 	if(host_s[0] == '[') {
 		len = strlen(host_s + 1) - 1;
 		if(host_s[len + 1] != ']') {
