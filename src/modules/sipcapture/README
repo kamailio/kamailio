@@ -158,7 +158,7 @@ Chapter 1. Admin Guide
 
 1. Overview
 
-   The sipcapture module stores incoming/outgoing SIP messages in
+   The sipcapture module stores incoming/outgoing SIP messages in a
    database.
 
    Kamailio can capture SIP messages in three modes
@@ -538,7 +538,7 @@ modparam("sipcapture", "capture_bad_msgs", 1)
 
 4.1.  sip_capture([table], [cmode])
 
-   Store the current processed HEP/IPIP SIP message in database. It is
+   Store the current processed HEP/IPIP SIP message in a database. It is
    stored in the form prior applying changes made to it.
 
    Meaning of the parameters is as follows:
@@ -563,7 +563,7 @@ sip_capture("", "cmode");
 
 4.2.  report_capture([table], [cid], [data])
 
-   Store the current processed HEP REPORT message in database.
+   Store the current processed HEP REPORT message in a database.
 
    Meaning of the parameters is as follows:
      * table - The table where REPORT message will be stored.

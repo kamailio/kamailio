@@ -90,7 +90,7 @@ Chapter 1. Admin Guide
 
 4.1. isRPDATA()
 
-   Returns true, if the message contains RP-Data in it's body.
+   Returns true, if the message contains RP-Data in its body.
 
    This function can be used from REQUEST_ROUTE.
 

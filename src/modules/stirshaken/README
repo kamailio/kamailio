@@ -244,7 +244,7 @@ modparam("stirshaken", "vs_identity_expire_s", 20)
 3.6. vs_connect_timeout_s (int)
 
    During a call verification with stirshaken_check_identity() a blocking
-   HTTP(s) call is executed to download certificate referneced in PASSporT
+   HTTP(s) call is executed to download certificate referenced in PASSporT
    (unless certificate caching is turned on and a valid cert is found in
    cache). This parameter defines a maximum time in seconds for this
    blocking HTTP(s) connection to be established. After this time had
@@ -359,7 +359,7 @@ modparam("stirshaken", "vs_pptgrants_pvname", "$vn(grants)")
 4.1.  stirshaken_check_identity()
 
    Check the validity of the Identity header by decoding PASSporT's
-   signature with a certificate referenced in it's x5u header and
+   signature with a certificate referenced in its x5u header and
    (optionally) checking that certificate for being trusted by X509
    certificate check with CA root certificates in vs_ca_dir (and
    optionally CRLs in vs_crl_dir). PASSporT's iat grant is also checked
@@ -537,7 +537,7 @@ reated)\n");
    packaged in OS distributions, libstirshaken must be compiled and
    installed before the stirshaken module can be compiled.
 
-   Installling libstirshaken is easy:
+   Installing libstirshaken is easy:
 
    Example 1.18. libstirshaken installation
 ...

@@ -107,9 +107,9 @@ Chapter 1. Admin Guide
    Ex: Germany, D1 = +49 170 5678181 Romania, Connex = +40 722 123456 A
    number in this format is expected to be placed as username into RURI or
    in the To header. If RURI misses the username, the To header will be
-   consider. Also, the gateway will advertise in this format the username
-   in Contact headers (in SIP replies and requests) and in From headers
-   (in SIP requests).
+   considered. Also, the gateway will advertise in this format the
+   username in Contact headers (in SIP replies and requests) and in From
+   headers (in SIP requests).
 
 1.3. Address Mapping
 
@@ -166,7 +166,7 @@ modem_param      = name "=" value
      * r=retry (optional) - How many times to try to re-send an SMS that
        reported error. Default is twice.
      * l=looping (optional) - Time for modem to wait before performing a
-       new check for incomimg/outgoing SMS/SIP_MSG. Default is 20.
+       new check for incoming/outgoing SMS/SIP_MSG. Default is 20.
      * t=to (optional) - uri for sip header TO. Default is NULL.
      * s=scan (optional) - Values: 0: NOT SCAN uri from body sms, use URI
        in t=to. 1: SCAN uri from body sms (normal mode, default mode,
@@ -227,8 +227,8 @@ Note
 modparam("sms", "links", "NOKIA[D1;d2]")
 ...
 
-   The modem NOKIA will send SMS from D1 and D2 net (in this order !). if
-   in a net queue are more then max_sms_per_call SMS the modem will not
+   The modem NOKIA will send SMS from D1 and D2 net (in this order !). If
+   in a net queue are more than max_sms_per_call SMS the modem will not
    sleep before starting the next loop ! Shortly, if messages are waiting
    to be sent, the modem will not go in sleep.
 
@@ -259,8 +259,8 @@ modparam("sms", "max_sms_parts", 10)
 3.6. domain (string)
 
    Specify a fake domain name to be used by the gateway. The Contact
-   headers and the From header from request will be construct based on
-   this fake domain name. It's useful when the gateway is transparently
+   headers and the From header from the request will be constructed based
+   on this fake domain name. It's useful when the gateway is transparently
    hidden behind a proxy/register (located on different machines).
 
    Default is the name of the machine the gateway is running on.
@@ -287,7 +287,7 @@ modparam("sms", "use_contact", 1)
    If the modem should ask for SMS confirmation from the SMS Center. If
    the SMSC reply with an error code, the gateway will send back to SIP
    user a SIP message containing the text (or part of it) that couldn't be
-   send. Two report mechanisms are implemented:
+   sent. Two report mechanisms are implemented:
      * 1 - the reports are delivered by the GSM device as SMS reports (so
        far supported only by Nokia modems);
      * 2 - the reports are delivered as async. CDS responses (supported by

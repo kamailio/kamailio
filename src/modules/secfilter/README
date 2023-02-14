@@ -317,7 +317,7 @@ ailio")
 4.1.  secf_check_ip ()
 
    It checks if the source IP address is blacklisted. The search is
-   aproximate and data stored in the database will be compared as a
+   approximate and data stored in the database will be compared as a
    prefix. For example, if we have blacklisted IP address 192.168.1. all
    messages from IPs like 192.168.1.% will be rejected.
 
