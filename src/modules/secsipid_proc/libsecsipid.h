@@ -71,8 +71,8 @@ extern "C" {
 
 // SecSIPIDSignJSONHP --
 // * sign the JSON header and payload with provided private key
-// * headerJSON -  header part in JSON forman (0-terminated string)
-// * payloadJSON -  payload part in JSON forman (0-terminated string)
+// * headerJSON -  header part in JSON format (0-terminated string)
+// * payloadJSON -  payload part in JSON format (0-terminated string)
 // * prvkeyPath - path to private key to be used to generate the signature
 // * outPtr - to be set to the pointer containing the output (it is a
 //   0-terminated string); the `*outPtr` must be freed after use
