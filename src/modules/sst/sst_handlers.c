@@ -102,7 +102,7 @@ extern struct dlg_binds *dlg_binds;
 typedef struct sst_msg_info_st {
 	int supported; 		   	/* supported = timer in message */
 	unsigned int min_se;   	/* The Min-SE: value or zero    */
-	unsigned int se;		/* The Sesion-Expires: header   */
+	unsigned int se;		/* The Session-Expires: header   */
 	enum sst_refresher refresher;/* The refresher (parse_sst.h)  */
 } sst_msg_info_t;
 
@@ -230,14 +230,14 @@ void sst_handler_init(pv_spec_t *timeout_avp_p, unsigned int min_se,
  * - The proxy MUST NOT add a refresher parameter to the SE.
  *
  * - If SE is already there, the Proxy can reduce its value but no
- *   lower then the Min-SE value if present.
+ *   lower than the Min-SE value if present.
  * - If the SE value is >= Min-SE the proxy MUST NOT increase it!
  * - If the SE value is < Min-SE (settable by the proxy) the proxy
  *   MUST increase the SE value to >= the new Min-SE.
  * - The proxy MUST NOT insert or change the refresher parameter.
  *
  * - If the supported=timer is found, the proxy may reject the request
- *   with a 422 if the SE value is smaller then the local policy. The
+ *   with a 422 if the SE value is smaller than the local policy. The
  *   422 MUST hold the proxies Min-SE value >= 90.
  * - If support=timer is NOT indecated, the proxy can't reject with a
  *   422 but can include/increase the MIN-SE: to be = to local policy.
@@ -320,8 +320,8 @@ void sst_dialog_created_CB(struct dlg_cell *did, int type,
 			}
 			else if (sst_reject) {
 				/* Make sure that that all are at least 90 */
-				LM_DBG("rejecting 442 - local min se: %d - received min se: %d"
-						" - received se: %d\n",
+				LM_DBG("rejecting 442 - local Min-SE: %d - received Min-SE: %d"
+						" - received SE: %d\n",
 						sst_min_se, minfo.min_se, minfo.se);
 				send_reject(msg, MAX(MAX(sst_min_se, minfo.min_se), 90));
 				shm_free(info);
@@ -335,7 +335,7 @@ void sst_dialog_created_CB(struct dlg_cell *did, int type,
 	}
 	else {
 		/*
-		 * No Session-Expire: stated in request.
+		 * No Session-Expires: stated in request.
 		 */
 		str msehdr;
 
@@ -456,15 +456,15 @@ static void sst_dialog_request_within_CB(struct dlg_cell* did, int type,
 		}
 		else if (msg->first_line.u.request.method_value == METHOD_PRACK) {
 			/* Special case here. The PRACK will cause the dialog
-			 * module to reset the timeout value to the ldg->lifetime
+			 * module to reset the timeout value to the dlg->lifetime
 			 * value and look for the new AVP value bound to the
 			 * 1XX/PRACK/200OK/ACK transaction and not to the
 			 * INVITE/200OK avp value. So we need to set the AVP
 			 * again! I think this is a bug in the dialog module,
 			 * either it should ignore PRACK like it ignored ACK, or
 			 * the setting of the timeout value when returning to the
-			 * confiremed callback code should look for the new AVP
-			 * value, which is does not.
+			 * confirmed callback code should look for the new AVP
+			 * value, which it does not.
 			 */
 			LM_DBG("PRACK workaround applied!\n");
 			set_timeout_avp(msg, info->interval);
@@ -506,7 +506,7 @@ static void sst_dialog_response_fwded_CB(struct dlg_cell* did, int type,
 	struct sip_msg* msg = params->rpl;
 
 	/*
-	 * This test to see if the message is a response sould ALWAYS be
+	 * This test to see if the message is a response should ALWAYS be
 	 * true. This callback should not get called for requests. But
 	 * lets be safe.
 	 */
@@ -608,7 +608,7 @@ static void sst_dialog_response_fwded_CB(struct dlg_cell* did, int type,
  *               reply if Session-Expires is to small with the MIN-SE
  *               header in the reply
  *
- * @return 1 if the MIN-SE is too small, -1 if it is OK, or It could
+ * @return 1 if the MIN-SE is too small, -1 if it is OK, or it could
  *         not be checked.
  *
  * NOTE: returning 0 == drop message, 1 == true, -1 == false in the
@@ -630,7 +630,7 @@ int ki_sst_check_min(struct sip_msg *msg, int flag)
 		 * First see if there is an Session-Expires: header.  If there
 		 * is, also look for a MIN-SE: header. If there is, use the
 		 * minimum value of the two to compare with srt1. All MUST not
-		 * be less than 90 and 1800 is recomended. See RCF section 4.
+		 * be less than 90 and 1800 is recommended. See RCF section 4.
 		 */
 		if ((result = parse_session_expires(msg, &se)) != parse_sst_success) {
 			if (result != parse_sst_header_not_found) {
@@ -638,7 +638,7 @@ int ki_sst_check_min(struct sip_msg *msg, int flag)
 				return 0; /* Error drop the message */
 			}
 			/* Session-Expires not supported/stated */
-			LM_DBG("No Session-Expires header found. retuning false (-1)\n");
+			LM_DBG("No Session-Expires header found. returning false (-1)\n");
 			/*
 			 * NOTE: 0 == drop message, 1 == true, -1 == false
 			 */
@@ -713,7 +713,7 @@ int ki_sst_check_min(struct sip_msg *msg, int flag)
  *               header in the reply
  * @param str2 - Not used.
  *
- * @return 1 if the MIN-SE is too small, -1 if it is OK, or It could
+ * @return 1 if the MIN-SE is too small, -1 if it is OK, or it could
  *         not be checked.
  *
  * NOTE: returning 0 == drop message, 1 == true, -1 == false in the
@@ -728,7 +728,7 @@ int sst_check_min(struct sip_msg *msg, char *flag, char *str2)
 }
 
 /**
- * Send a reply (response) to the passed in SIP request messsage with
+ * Send a reply (response) to the passed in SIP request message with
  * the code and reason. If the header is not NULL (and header_len !=
  * 0) the add the header to the reply message.
  *
@@ -755,7 +755,7 @@ static int send_response(struct sip_msg *request, int code, str *reason,
 		}
 		/* Now using the sl function, send the reply/response */
 		if (slb.freply(request, code, reason) < 0) {
-			LM_ERR("Unable to sent reply.\n");
+			LM_ERR("Unable to send reply.\n");
 			return -1;
 		}
 	}
