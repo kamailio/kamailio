@@ -115,7 +115,7 @@ static int mod_init(void)
 		}
 	} else {
 		if(_statsc_info->items != (uint32_t)statsc_items) {
-			LM_ERR("number of items set after tracking statiscs were added\n");
+			LM_ERR("number of items set after tracking statistics were added\n");
 			LM_ERR("set mod param 'items' before 'track'\n");
 			return -1;
 		}
@@ -192,7 +192,7 @@ int statsc_nmap_add(str *sname, str *rname)
 		return -1;
 	}
 	if(_statsc_info->items != (uint32_t)statsc_items) {
-		LM_ERR("number of items set after tracking statiscs were added\n");
+		LM_ERR("number of items set after tracking statistics were added\n");
 		LM_ERR("set mod param 'items' before 'track'\n");
 		return -1;
 	}
