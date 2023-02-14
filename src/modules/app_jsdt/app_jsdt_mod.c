@@ -216,7 +216,7 @@ static int ki_app_jsdt_dostring(sip_msg_t *msg, str *script)
 	}
 	if(!jsdt_sr_initialized())
 	{
-		LM_ERR("jsdt env not intitialized");
+		LM_ERR("jsdt env not initialized");
 		return -1;
 	}
 	memcpy(_jsdt_buf_stack[0], script->s, script->len);
@@ -249,7 +249,7 @@ static int ki_app_jsdt_dofile(sip_msg_t *msg, str *script)
 	}
 	if(!jsdt_sr_initialized())
 	{
-		LM_ERR("jsdt env not intitialized");
+		LM_ERR("jsdt env not initialized");
 		return -1;
 	}
 	memcpy(_jsdt_buf_stack[0], script->s, script->len);
@@ -282,7 +282,7 @@ static int ki_app_jsdt_runstring(sip_msg_t *msg, str *script)
 	}
 	if(!jsdt_sr_initialized())
 	{
-		LM_ERR("jsdt env not intitialized");
+		LM_ERR("jsdt env not initialized");
 		return -1;
 	}
 	memcpy(_jsdt_buf_stack[0], script->s, script->len);
@@ -313,7 +313,7 @@ static int w_app_jsdt_run(struct sip_msg *msg, char *func, char *p1, char *p2,
 	str s;
 	if(!jsdt_sr_initialized())
 	{
-		LM_ERR("jsdt env not intitialized");
+		LM_ERR("jsdt env not initialized");
 		return -1;
 	}
 	if(fixup_get_svalue(msg, (gparam_p)func, &s)<0)
