@@ -312,7 +312,7 @@ static int w_app_ruby_run(struct sip_msg *msg, char *func, char *p1, char *p2,
 	str s;
 	if(!_app_ruby_papi.AppRubyInitialized())
 	{
-		LM_ERR("ruby env not intitialized");
+		LM_ERR("ruby env not initialized");
 		return -1;
 	}
 	if(fixup_get_svalue(msg, (gparam_p)func, &s)<0)
