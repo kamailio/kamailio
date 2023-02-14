@@ -463,7 +463,7 @@ int app_perl_reset_interpreter(void)
 
 static const char* app_perl_rpc_set_reset_cycles_doc[3] = {
 	"Set the value for reset_cycles",
-	"Has one parmeter with int value",
+	"Has one parameter with int value",
 	0
 };
 

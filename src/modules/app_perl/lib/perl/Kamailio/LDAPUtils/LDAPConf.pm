@@ -34,10 +34,10 @@ Kamailio::LDAPUtils::LDAPConf - Read openldap config from standard config files.
 
 This module may be used to retrieve the global LDAP configuration as
 used by other LDAP software, such as C<nsswitch.ldap> and C<pam-ldap>.
-The configuration is usualy stored in C</etc/openldap/ldap.conf> 
+The configuration is usually stored in C</etc/openldap/ldap.conf> 
 
 When used from an account with sufficient privilegs (e.g. root), the
-ldap manager passwort is also retrieved.
+ldap manager password is also retrieved.
 
 =cut
 package Kamailio::LDAPUtils::LDAPConf;

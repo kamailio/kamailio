@@ -206,7 +206,7 @@ modparam("app_perl", "modpath", "/usr/local/lib/kamailio/perl/")
 			not all &kamailio; processes will reset the interpreter at the same time.
 			Each will do it when it has executed the script for the number of
 			reset_cycles. Also, be aware that the reset of the interpreter is taking
-			a bit of time (in the order of tens of mili-seconds).
+			a bit of time (in the order of tens of milliseconds).
 			</para>
 			<para>
 			Default value is <emphasis>0</emphasis> - never reset the interpreter.
@@ -247,7 +247,7 @@ modparam("app_perl", "perl_destroy_func", "my_perl_destroy")
 			</para>
 			<para>
 			If set to 0, continue even of perl_parse() returns non-zero, logging
-			a warning. If set to 1, realod fails on non-zero return code and
+			a warning. If set to 1, reload fails on non-zero return code and
 			triggers an exit.
 			</para>
 			<para>
