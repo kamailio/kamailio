@@ -18,7 +18,7 @@ public abstract class SipMsg
 
 
 	public String new_uri;				// changed first line uri, when you change this
-	public String dst_uri;				// Destination URI, must be forwarded to this URI if dst_url lenght != 0
+	public String dst_uri;				// Destination URI, must be forwarded to this URI if dst_url length != 0
 	public int parsed_uri_ok;			// 1 if parsed_orig_uri is valid, 0 if not, set if to 0 if you modify the uri (e.g change new_uri)
         public int parsed_orig_ruri_ok;			// 1 if parsed_orig_uri is valid, 0 if not, set if to 0 if you modify the uri (e.g change new_uri)
 
