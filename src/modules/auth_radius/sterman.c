@@ -94,7 +94,7 @@ static inline int extract_avp(
 			name->s.s = vp->strvalue;
 			value->n = strtol(++p, &r, 10);
 		} else if(p && r && p != r && !q) {
-			/* int name and int vale */
+			/* int name and int value */
 			name->n = strtol(++p, &q, 10);
 			value->n = strtol(++r, &q, 10);
 		} else if((!p || p > q) && q) {
