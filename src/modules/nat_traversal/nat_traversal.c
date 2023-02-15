@@ -39,6 +39,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <stdint.h>
 #include <ctype.h>
 #include <errno.h>
 #include <time.h>
@@ -922,7 +923,7 @@ static time_t get_register_expire(
 		}
 	}
 
-	LM_DBG("maximum expire for all contacts: %u\n", (unsigned)expire);
+	LM_DBG("maximum expire for all contacts: %llu\n", (uint64_t)expire);
 
 	return (expire ? expire + now : 0);
 }
