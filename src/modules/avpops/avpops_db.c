@@ -21,6 +21,7 @@
 
 
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
 
 #include "../../core/mem/mem.h"
@@ -66,7 +67,7 @@ int avpops_db_bind(const str* db_url)
 
 int avpops_db_init(const str* db_url, const str* db_table, str** db_cols)
 {
-	
+
 	db_hdl = avpops_dbf.init(db_url);
 	if (db_hdl==0)
 	{
@@ -313,16 +314,16 @@ int db_query_avp(struct sip_msg *msg, char *query, pvname_list_t* dest)
 	int i, j;
 	pvname_list_t* crt;
 	static str query_str;
-	
+
 	if(query==NULL)
 	{
 		LM_ERR("bad parameter\n");
 		return -1;
 	}
-	
+
 	query_str.s = query;
 	query_str.len = strlen(query);
-	
+
 	if(avpops_dbf.raw_query(db_hdl, &query_str, &db_res)!=0)
 	{
 		LM_ERR("cannot do the query\n");
@@ -338,11 +339,11 @@ int db_query_avp(struct sip_msg *msg, char *query, pvname_list_t* dest)
 
 	LM_DBG("rows [%d]\n", RES_ROW_N(db_res));
 	/* reverse order of rows so that first row get's in front of avp list */
-	for(i = RES_ROW_N(db_res)-1; i >= 0; i--) 
+	for(i = RES_ROW_N(db_res)-1; i >= 0; i--)
 	{
 		LM_DBG("row [%d]\n", i);
 		crt = dest;
-		for(j = 0; j < RES_COL_N(db_res); j++) 
+		for(j = 0; j < RES_COL_N(db_res); j++)
 		{
 			if(RES_ROWS(db_res)[i].values[j].nul)
 				goto next_avp;
@@ -388,19 +389,19 @@ int db_query_avp(struct sip_msg *msg, char *query, pvname_list_t* dest)
 				break;
 				case DB1_INT:
 					avp_val.n
-						= (int)RES_ROWS(db_res)[i].values[j].val.int_val;
+						= (long)RES_ROWS(db_res)[i].values[j].val.int_val;
 				break;
 				case DB1_BIGINT:
 					avp_val.n
-						= (int)RES_ROWS(db_res)[i].values[j].val.ll_val;
+						= (long)RES_ROWS(db_res)[i].values[j].val.ll_val;
 				break;
 				case DB1_DATETIME:
 					avp_val.n
-						= (int)RES_ROWS(db_res)[i].values[j].val.time_val;
+						= (long)(uint64_t)RES_ROWS(db_res)[i].values[j].val.time_val;
 				break;
 				case DB1_BITMAP:
 					avp_val.n
-						= (int)RES_ROWS(db_res)[i].values[j].val.bitmap_val;
+						= (long)RES_ROWS(db_res)[i].values[j].val.bitmap_val;
 				break;
 				default:
 					goto next_avp;
