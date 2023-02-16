@@ -697,7 +697,7 @@ int dlg_request_within(struct sip_msg *msg, struct dlg_cell *dlg, int side,
 
 	set_uac_req(&uac_r, method, allheaders.len?&allheaders:NULL,
 			(content && content->len)?content:NULL, dialog_info, TMCB_LOCAL_COMPLETED,
-				bye_reply_cb, (void*)iuid);
+				NULL, NULL);
 
 	result = d_tmb.t_request_within(&uac_r);
 
