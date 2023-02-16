@@ -24,6 +24,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 #include <time.h>
 
 #include "../../core/sr_module.h"
@@ -409,8 +410,8 @@ static void statsc_rpc_report(rpc_t* rpc, void* ctx)
 		return;
 	}
 	if(rpc->struct_add(th, "u[",
-				"timestamp", (unsigned int)tn,
-				"stats",     &ts )<0) {
+				"timestamp", (uint64_t)tn,
+				"stats",     &ts)<0) {
 		rpc->fault(ctx, 500, "Error creating rpc (2)");
 		return;
 	}
