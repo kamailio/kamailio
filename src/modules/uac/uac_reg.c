@@ -26,6 +26,7 @@
  */
 
 #include <time.h>
+#include <stdint.h>
 
 #include "../../core/dprint.h"
 #include "../../core/timer.h"
@@ -1882,7 +1883,7 @@ static int rpc_uac_reg_add_node_helper(rpc_t* rpc, void* ctx, reg_uac_t *reg, ti
 		rpc->fault(ctx, 500, "Internal error creating rpc");
 		return -1;
 	}
-	if (rpc->struct_add(th, "SSSSSSSSSSddddddSS",
+	if (rpc->struct_add(th, "SSSSSSSSSSJdddJdSS",
 				"l_uuid",        &reg->l_uuid,
 				"l_username",    &reg->l_username,
 				"l_domain",      &reg->l_domain,
@@ -1896,11 +1897,11 @@ static int rpc_uac_reg_add_node_helper(rpc_t* rpc, void* ctx, reg_uac_t *reg, ti
 										&reg->auth_ha1:&none,
 				"auth_proxy",    (reg->auth_proxy.len)?
 										&reg->auth_proxy:&none,
-				"expires",       (int)reg->expires,
+				"expires",       (uint64_t)reg->expires,
 				"flags",         (int)reg->flags,
 				"diff_expires",  (int)(reg->timer_expires - tn),
 				"timer_expires", (int)reg->timer_expires,
-				"reg_init",      (int)reg->reg_init,
+				"reg_init",      (uint64_t)reg->reg_init,
 				"reg_delay",     (int)reg->reg_delay,
 				"contact_addr",  (reg->contact_addr.len)?
 										&reg->contact_addr:&none,
