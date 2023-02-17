@@ -10,7 +10,7 @@ locate_tool() {
 	while [ -n "$1" ]
 	do
 		if [ -x /usr/bin/which ] ; then
-			TOOLPATH=`which $1`
+			TOOLPATH=`which $1 2> /dev/null`
 			if [ -n "$TOOLPATH" ]; then
 				return
 			fi
