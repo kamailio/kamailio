@@ -563,6 +563,11 @@ void jsonrpc_dgram_server(int rx_sock)
 	jsonrpc_plain_reply_t* jr = NULL;
 	fd_set readfds;
 	int n;
+	char buf_spath[128];
+	char resbuf[JSONRPC_RESPONSE_STORING_BUFSIZE];
+	str spath = STR_NULL;
+	FILE *f = NULL;
+	char *sid = NULL;
 
 	ret = 0;
 
@@ -616,17 +621,43 @@ void jsonrpc_dgram_server(int rx_sock)
 		scmd.len = ret;
 		trim(&scmd);
 
-		LM_DBG("buf is %s and we have received %i bytes\n",
-				scmd.s, scmd.len);
-		if(jsonrpc_exec_ex(&scmd, NULL)<0) {
+		LM_DBG("buf is %.*s and we have received %i bytes\n",
+				scmd.len, scmd.s, scmd.len);
+
+		spath.s = buf_spath;
+		spath.len = 128;
+
+		if(jsonrpc_exec_ex(&scmd, NULL, &spath)<0) {
 			LM_ERR("failed to execute the json document from datagram\n");
 			continue;
 		}
 
 		jr = jsonrpc_plain_reply_get();
-		LM_DBG("command executed - result: [%d] [%p] [%.*s]\n",
+		LM_DBG("command executed - result: [%d] [%p] [len: %d] [%.*s%s]\n",
 				jr->rcode, jr->rbody.s,
-				jr->rbody.len, jr->rbody.s);
+				jr->rbody.len, (jr->rbody.len<2048)?jr->rbody.len:2048, jr->rbody.s,
+				(jr->rbody.len<2048)?"":" ...");
+
+		if(spath.len>0) {
+			sid = jsonrpcs_stored_id_get();
+			f = fopen(spath.s, "w");
+			if(f==NULL) {
+				LM_ERR("cannot write to file: %.*s\n", spath.len, spath.s);
+				snprintf(resbuf, JSONRPC_RESPONSE_STORING_BUFSIZE,
+						JSONRPC_RESPONSE_STORING_FAILED, sid);
+			} else {
+				fwrite(jr->rbody.s, 1, jr->rbody.len, f);
+				fclose(f);
+				snprintf(resbuf, JSONRPC_RESPONSE_STORING_BUFSIZE,
+						JSONRPC_RESPONSE_STORING_DONE, sid);
+			}
+			jsonrpc_dgram_send_data(rx_sock, resbuf, strlen(resbuf),
+					  (struct sockaddr*)&jsonrpc_dgram_reply_addr,
+					  jsonrpc_dgram_reply_addr_len,
+					  jsonrpc_dgram_timeout);
+			continue;
+
+		}
 
 		jsonrpc_dgram_send_data(rx_sock, jr->rbody.s, jr->rbody.len,
 						  (struct sockaddr*)&jsonrpc_dgram_reply_addr,

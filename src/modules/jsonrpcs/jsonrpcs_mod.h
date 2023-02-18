@@ -1,6 +1,6 @@
 /**
  *
- * Copyright (C) 2014 Daniel-Constantin Mierla (asipto.com) 
+ * Copyright (C) 2014 Daniel-Constantin Mierla (asipto.com)
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -77,7 +77,12 @@ typedef struct jsonrpc_plain_reply {
 
 jsonrpc_plain_reply_t* jsonrpc_plain_reply_get(void);
 
-int jsonrpc_exec_ex(str *cmd, str *rpath);
+int jsonrpc_exec_ex(str *cmd, str *rpath, str *spath);
+char *jsonrpcs_stored_id_get(void);
+
+#define JSONRPC_RESPONSE_STORING_DONE "{\n\"jsonrpc\": \"2.0\",\n\t\"result\": \"Stored\",\n\t\"id\": %s\n}"
+#define JSONRPC_RESPONSE_STORING_FAILED "{\n\"jsonrpc\": \"2.0\",\n\t\"error\": {\n\t\t\"code\": 500,\n\t\t\"message\": \"Storing failed\"\n\t},\n\t\"id\": %s\n}"
+#define JSONRPC_RESPONSE_STORING_BUFSIZE (sizeof(JSONRPC_RESPONSE_STORING_FAILED)+64)
 
 #endif
 

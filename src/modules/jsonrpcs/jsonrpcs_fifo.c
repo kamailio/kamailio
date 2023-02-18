@@ -457,7 +457,7 @@ static void jsonrpc_fifo_server(FILE *fifo_stream)
 		LM_DBG("preparing to execute fifo jsonrpc [%.*s]\n", scmd.len, scmd.s);
 		srpath.s = buf_rpath;
 		srpath.len = 128;
-		if(jsonrpc_exec_ex(&scmd, &srpath)<0) {
+		if(jsonrpc_exec_ex(&scmd, &srpath, NULL)<0) {
 			LM_ERR("failed to execute the json document from fifo stream\n");
 			continue;
 		}

@@ -204,6 +204,12 @@ static jsonrpc_error_t _jsonrpc_error_table[] = {
 	{0, { 0, 0 } }
 };
 
+static char _jsonrpcs_stored_id[64];
+
+char *jsonrpcs_stored_id_get(void)
+{
+	return _jsonrpcs_stored_id;
+}
 
 static jsonrpc_plain_reply_t _jsonrpc_plain_reply;
 
@@ -331,10 +337,11 @@ static void jsonrpc_fault(jsonrpc_ctx_t* ctx, int code, char* fmt, ...)
  *
  * @param ctx A pointer to the context structure of the jsonrpc request that
  *            generated the reply.
+ * @param mode If the jsonrpc id should be stored in global buffer
  * @return 1 if the reply was already sent, 0 on success, a negative number on
  *            error
  */
-static int jsonrpc_send(jsonrpc_ctx_t* ctx)
+static int jsonrpc_send_mode(jsonrpc_ctx_t* ctx, int mode)
 {
 	srjson_t *nj = NULL;
 	int i;
@@ -394,9 +401,15 @@ static int jsonrpc_send(jsonrpc_ctx_t* ctx)
 				srjson_AddStrStrToObject(ctx->jrpl, ctx->jrpl->root,
 						"id", 2,
 						nj->valuestring, strlen(nj->valuestring));
+				if(mode==1) {
+					snprintf(_jsonrpcs_stored_id, 62, "\"%s\"", nj->valuestring);
+				}
 			} else {
 				srjson_AddNumberToObject(ctx->jrpl, ctx->jrpl->root, "id",
 						nj->valuedouble);
+				if(mode==1) {
+					snprintf(_jsonrpcs_stored_id, 62, "%lld", (int64_t)nj->valuedouble);
+				}
 			}
 		}
 	} else {
@@ -404,9 +417,15 @@ static int jsonrpc_send(jsonrpc_ctx_t* ctx)
 			srjson_AddStrStrToObject(ctx->jrpl, ctx->jrpl->root,
 					"id", 2,
 					ctx->jsrid_val, strlen(ctx->jsrid_val));
+			if(mode==1) {
+				snprintf(_jsonrpcs_stored_id, 62, "\"%s\"", ctx->jsrid_val);
+			}
 		} else if(ctx->jsrid_type == 2) {
 			srjson_AddNumberToObject(ctx->jrpl, ctx->jrpl->root, "id",
 					(double)(*(long*)ctx->jsrid_val));
+			if(mode==1) {
+				snprintf(_jsonrpcs_stored_id, 62, "%ld", *((long*)ctx->jsrid_val));
+			}
 		}
 	}
 
@@ -447,6 +466,23 @@ static int jsonrpc_send(jsonrpc_ctx_t* ctx)
 	return 0;
 }
 
+/** Implementation of rpc_send function required by the management API.
+ *
+ * This is the function that will be called whenever a management function
+ * asks the management interface to send the reply to the client.
+ * The SIP/HTTP reply sent to
+ * the client will be always 200 OK, if an error ocurred on the server then it
+ * will be indicated in the html document in body.
+ *
+ * @param ctx A pointer to the context structure of the jsonrpc request that
+ *            generated the reply.
+ * @return 1 if the reply was already sent, 0 on success, a negative number on
+ *            error
+ */
+static int jsonrpc_send(jsonrpc_ctx_t* ctx)
+{
+	return jsonrpc_send_mode(ctx, 0);
+}
 
 /** Converts the variables provided in parameter ap according to formatting
  * string provided in parameter fmt into HTML format.
@@ -1164,6 +1200,9 @@ static int mod_init(void)
 {
 	memset(&xhttp_api, 0, sizeof(xhttp_api_t));
 
+	_jsonrpcs_stored_id[0] = '0';
+	_jsonrpcs_stored_id[1] = '\0';
+
 	/* bind the XHTTP API */
 	if(jsonrpc_transport==0 || (jsonrpc_transport&1)) {
 		if (xhttp_load_api(&xhttp_api) < 0) {
@@ -1372,7 +1411,7 @@ static int jsonrpc_dispatch(sip_msg_t* msg, char* s1, char* s2)
 	return ki_jsonrpcs_dispatch(msg);
 }
 
-int jsonrpc_exec_ex(str *cmd, str *rpath)
+int jsonrpc_exec_ex(str *cmd, str *rpath, str *spath)
 {
 	rpc_exportx_t* rpce;
 	jsonrpc_ctx_t* ctx;
@@ -1381,6 +1420,7 @@ int jsonrpc_exec_ex(str *cmd, str *rpath)
 	str val;
 	str scmd;
 	unsigned int rdata = 0;
+	int mode;
 
 	scmd = *cmd;
 
@@ -1440,6 +1480,31 @@ int jsonrpc_exec_ex(str *cmd, str *rpath)
 		rpath->s[val.len] = 0;
 		rpath->len = val.len;
 	}
+	/* store file path */
+	if(spath!=NULL) {
+		if(spath->s==NULL || spath->len<=0) {
+			LM_ERR("empty buffer to store the output file path\n");
+			goto send_reply;
+		}
+		nj = srjson_GetObjectItem(ctx->jreq, ctx->jreq->root, "store_path");
+		if(nj==NULL) {
+			LM_DBG("store path not provided in request\n");
+		} else {
+			val.s = nj->valuestring;
+			val.len = strlen(val.s);
+			if(val.len > 0) {
+				if(val.len>=spath->len) {
+					LM_ERR("no space to store path field\n");
+					goto send_reply;
+				}
+				strncpy(spath->s, val.s, val.len);
+				spath->s[val.len] = 0;
+				spath->len = val.len;
+				mode = 1;
+			}
+		}
+	}
+
 	/* run jsonrpc command */
 	nj = srjson_GetObjectItem(ctx->jreq, ctx->jreq->root, "method");
 	if(nj==NULL) {
@@ -1473,7 +1538,7 @@ int jsonrpc_exec_ex(str *cmd, str *rpath)
 
 send_reply:
 	if (!ctx->reply_sent) {
-		ret = jsonrpc_send(ctx);
+		ret = jsonrpc_send_mode(ctx, mode);
 	}
 	jsonrpc_clean_context(ctx);
 	if (ret < 0) return -1;
@@ -1488,7 +1553,7 @@ static int jsonrpc_exec(sip_msg_t* msg, char* cmd, char* s2)
 		LM_ERR("cannot get the rpc command parameter\n");
 		return -1;
 	}
-	return jsonrpc_exec_ex(&scmd, NULL);
+	return jsonrpc_exec_ex(&scmd, NULL, NULL);
 }
 /**
  *
@@ -1588,7 +1653,7 @@ static int jsonrpc_pv_parse_jrpl_name(pv_spec_t *sp, str *in)
  */
 static int ki_jsonrpcs_exec(sip_msg_t *msg, str *scmd)
 {
-	return jsonrpc_exec_ex(scmd, NULL);
+	return jsonrpc_exec_ex(scmd, NULL, NULL);
 }
 
 /**
