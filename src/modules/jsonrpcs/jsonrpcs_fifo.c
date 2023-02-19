@@ -439,6 +439,11 @@ static void jsonrpc_fifo_server(FILE *fifo_stream)
 	str srpath;
 	int nw;
 	jsonrpc_plain_reply_t* jr = NULL;
+	char buf_spath[128];
+	char resbuf[JSONRPC_RESPONSE_STORING_BUFSIZE];
+	str spath = STR_NULL;
+	FILE *f = NULL;
+	char *sid = NULL;
 
 	while(1) {
 		/* update the local config framework structures */
@@ -457,6 +462,8 @@ static void jsonrpc_fifo_server(FILE *fifo_stream)
 		LM_DBG("preparing to execute fifo jsonrpc [%.*s]\n", scmd.len, scmd.s);
 		srpath.s = buf_rpath;
 		srpath.len = 128;
+		spath.s = buf_spath;
+		spath.len = 128;
 		if(jsonrpc_exec_ex(&scmd, &srpath, NULL)<0) {
 			LM_ERR("failed to execute the json document from fifo stream\n");
 			continue;
@@ -473,13 +480,30 @@ static void jsonrpc_fifo_server(FILE *fifo_stream)
 				LM_ERR("cannot open reply fifo: %.*s\n", srpath.len, srpath.s);
 				continue;
 			}
+			if(spath.len>0) {
+				sid = jsonrpcs_stored_id_get();
+				f = fopen(spath.s, "w");
+				if(f==NULL) {
+					LM_ERR("cannot write to file: %.*s\n", spath.len, spath.s);
+					snprintf(resbuf, JSONRPC_RESPONSE_STORING_BUFSIZE,
+							JSONRPC_RESPONSE_STORING_FAILED, sid);
+				} else {
+					fwrite(jr->rbody.s, 1, jr->rbody.len, f);
+					fclose(f);
+					snprintf(resbuf, JSONRPC_RESPONSE_STORING_BUFSIZE,
+							JSONRPC_RESPONSE_STORING_DONE, sid);
+				}
+				fwrite(resbuf, 1, strlen(resbuf), reply_stream);
+				fclose(reply_stream);
+				continue;
+			}
+
 			nw = fwrite(jr->rbody.s, 1, jr->rbody.len, reply_stream);
 			if(nw < jr->rbody.len) {
 				LM_ERR("failed to write the reply to fifo: %d out of %d\n",
 						nw, jr->rbody.len);
 			}
 			fclose(reply_stream);
-
 		}
 	}
 	return;

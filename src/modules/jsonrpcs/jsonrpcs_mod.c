@@ -1489,6 +1489,7 @@ int jsonrpc_exec_ex(str *cmd, str *rpath, str *spath)
 		nj = srjson_GetObjectItem(ctx->jreq, ctx->jreq->root, "store_path");
 		if(nj==NULL) {
 			LM_DBG("store path not provided in request\n");
+			spath->len = 0;
 		} else {
 			val.s = nj->valuestring;
 			val.len = strlen(val.s);
@@ -1501,6 +1502,8 @@ int jsonrpc_exec_ex(str *cmd, str *rpath, str *spath)
 				spath->s[val.len] = 0;
 				spath->len = val.len;
 				mode = 1;
+			} else {
+				spath->len = 0;
 			}
 		}
 	}
