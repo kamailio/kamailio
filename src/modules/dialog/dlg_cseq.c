@@ -46,6 +46,8 @@
 #include "dlg_handlers.h"
 #include "dlg_var.h"
 #include "dlg_cseq.h"
+#include "dlg_hash.h"
+#include "dlg_db_handler.h"
 
 extern struct tm_binds d_tmb;
 
@@ -166,6 +168,11 @@ int dlg_cseq_update(sip_msg_t *msg)
 		cseq.len = nval.len;
 	}
 	memcpy(cseq.s, nval.s, nval.len);
+
+	dlg->dflags |= DLG_FLAG_CHANGED;
+	if(dlg_db_mode==DB_MODE_REALTIME && (dlg->dflags&DLG_FLAG_CHANGED)) {
+		update_dialog_dbinfo(dlg);
+	}
 
 	LM_DBG("adding auth cseq header value: %.*s\n", nval.len, nval.s);
 	if(parse_headers(msg, HDR_EOH_F, 0)==-1) {

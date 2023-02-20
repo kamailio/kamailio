@@ -664,6 +664,10 @@ int dlg_request_within(struct sip_msg *msg, struct dlg_cell *dlg, int side,
 			LM_ERR("failed to create dlg_t\n");
 			goto err;
 		}
+		dlg->dflags |= DLG_FLAG_CHANGED;
+		if(dlg_db_mode==DB_MODE_REALTIME && (dlg->dflags&DLG_FLAG_CHANGED)) {
+			update_dialog_dbinfo(dlg);
+		}
 	}
 
 	LM_DBG("sending %.*s to %s\n", method->len, method->s,
