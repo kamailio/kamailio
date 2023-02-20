@@ -49,8 +49,6 @@
 
 extern struct tm_binds d_tmb;
 
-static str _dlg_cseq_diff_var_name = str_init("cseq_diff");
-
 /**
  *
  */
@@ -129,7 +127,7 @@ int dlg_cseq_update(sip_msg_t *msg)
 	dlg_cell_t *dlg = NULL;
 	unsigned int direction;
 	unsigned int ninc = 0;
-	unsigned int vinc = 0;
+	str cseq;
 	str nval;
 	sr_cfgenv_t *cenv = NULL;
 
@@ -151,36 +149,23 @@ int dlg_cseq_update(sip_msg_t *msg)
 		goto done;
 	}
 
-	/* supported only for downstream direction */
-	if(direction != DLG_DIR_DOWNSTREAM) {
-		LM_DBG("request not going downstream (%u)\n", direction);
-		goto done;
-	}
-
 	cenv = sr_cfgenv_get();
-	ninc = 1;
 
-	/* take the increment value from dialog */
-	if((dlg->iflags&DLG_IFLAG_CSEQ_DIFF)==DLG_IFLAG_CSEQ_DIFF) {
-		/* get dialog variable holding cseq diff */
-		if(get_dlg_variable_uintval(dlg, &_dlg_cseq_diff_var_name, &vinc) < 0) {
-			LM_DBG("dialog marked with cseq diff but no variable set yet\n");
-			goto done;
-		}
-	}
-	vinc += ninc;
-	if(vinc==0) {
-		LM_DBG("nothing to increment\n");
-		goto done;
-	}
-	if(set_dlg_variable_uintval(dlg, &_dlg_cseq_diff_var_name, vinc) <0) {
-		LM_ERR("failed to set the dlg cseq diff var\n");
-		goto done;
-	}
-	str2int(&get_cseq(msg)->number, &ninc);
-	vinc += ninc;
-	nval.s = int2str(vinc, &nval.len);
+	/*local sequence number*/
+	cseq = dlg->cseq[direction];
+
+	str2int(&cseq, &ninc);
+	ninc += 1;
+	nval.s = int2str(ninc, &nval.len);
 	trim(&nval);
+
+	nval.s = int2str(ninc, &nval.len);
+	if (nval.len != cseq.len) {
+		shm_free(cseq.s);
+		cseq.s = shm_malloc(nval.len);
+		cseq.len = nval.len;
+	}
+	memcpy(cseq.s, nval.s, nval.len);
 
 	LM_DBG("adding auth cseq header value: %.*s\n", nval.len, nval.s);
 	if(parse_headers(msg, HDR_EOH_F, 0)==-1) {
@@ -200,9 +185,6 @@ done:
 int dlg_cseq_refresh(sip_msg_t *msg, dlg_cell_t *dlg,
 		unsigned int direction)
 {
-	unsigned int ninc = 0;
-	unsigned int vinc = 0;
-	str nval;
 	sr_cfgenv_t *cenv = NULL;
 
 	if(dlg_cseq_prepare_msg(msg)!=0) {
@@ -215,40 +197,18 @@ int dlg_cseq_refresh(sip_msg_t *msg, dlg_cell_t *dlg,
 
 	LM_DBG("initiating cseq refresh\n");
 
-	/* supported only for downstream direction */
-	if(direction != DLG_DIR_DOWNSTREAM) {
-		LM_DBG("request not going downstream (%u)\n", direction);
-		goto done;
-	}
-
 	/* take the increment value from dialog */
 	if(!((dlg->iflags&DLG_IFLAG_CSEQ_DIFF)==DLG_IFLAG_CSEQ_DIFF)) {
 		LM_DBG("no cseq refresh required\n");
 		goto done;
 	}
 
-	/* get the value of the dialog variable holding cseq diff */
-	if(get_dlg_variable_uintval(dlg, &_dlg_cseq_diff_var_name, &vinc) < 0) {
-		LM_DBG("dialog marked with cseq diff but no variable set yet\n");
-		goto done;
-	}
-
-	if(vinc==0) {
-		LM_DBG("nothing to increment\n");
-		goto done;
-	}
-
-	str2int(&get_cseq(msg)->number, &ninc);
-	vinc += ninc;
-	nval.s = int2str(vinc, &nval.len);
-	trim(&nval);
-
-	LM_DBG("adding cseq refresh header value: %.*s\n", nval.len, nval.s);
+	LM_DBG("adding cseq refresh header value: %.*s\n", dlg->cseq[direction].len, dlg->cseq[direction].s);
 	if(parse_headers(msg, HDR_EOH_F, 0)==-1) {
 		LM_ERR("failed to parse all headers\n");
 	}
 	cenv = sr_cfgenv_get();
-	sr_hdr_add_zs(msg, cenv->uac_cseq_refresh.s, &nval);
+	sr_hdr_add_zs(msg, cenv->uac_cseq_refresh.s, &dlg->cseq[direction]);
 
 done:
 	return 0;

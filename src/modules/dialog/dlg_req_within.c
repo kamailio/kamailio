@@ -85,6 +85,7 @@ dlg_t * build_dlg_t(struct dlg_cell * cell, int dir){
 	str duri = STR_NULL;
 	size_t sz;
 	char *p;
+	str nval;
 
 	/*remote target--- Request URI*/
 	if(cell->contact[dir].s==0 || cell->contact[dir].len==0){
@@ -124,6 +125,17 @@ dlg_t * build_dlg_t(struct dlg_cell * cell, int dir){
 	/*we don not increase here the cseq as this will be done by TM*/
 	td->loc_seq.value = loc_seq;
 	td->loc_seq.is_set = 1;
+
+	loc_seq += 1;
+	nval.s = int2str(loc_seq, &nval.len);
+	if (nval.len != cseq.len) {
+		shm_free(cseq.s);
+		cseq.s = shm_malloc(nval.len);
+		cseq.len = nval.len;
+	}
+	memcpy(cseq.s, nval.s, nval.len);
+	/* new cseq value */
+	cell->iflags |= DLG_IFLAG_CSEQ_DIFF;
 
 	/*route set*/
 	if( cell->route_set[dir].s && cell->route_set[dir].len){
