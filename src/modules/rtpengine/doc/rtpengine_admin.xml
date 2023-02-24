@@ -2630,6 +2630,15 @@ rtpengine_offer();
 				and used for transcoding on the offering side. Useful only in combination with codec-transcode. <emphasis>all</emphasis> keyword
 				can be used to mask all offered codecs
 				</para></listitem>
+
+				<listitem><para>
+				<emphasis>codec-accept=...</emphasis> - Similar to `mask` and `consume` but doesn't remove the codec from the list of
+				offered codecs. This means that a codec listed under `accept` will still be offered
+				to the remote peer, but if the remote peer rejects it, it will still be accepted
+				towards the original offerer and then used for transcoding. It is a more selective
+				version of what the `always transcode` flag does.
+				</para></listitem>
+
 				<listitem><para>
 				<emphasis>T.38=decode</emphasis> - If the offered &sdp; contains a media section
 				advertising T.38 over UDPTL, translate it to a regular audio media section
@@ -2696,6 +2705,30 @@ if (has_body("application/sdp")) {
 				t_on_reply("1");
 }
 
+...
+</programlisting>
+                </example>
+		<example>
+			<title><function>rtpengine_offer</function> usage to force transcoding from opus to PCMU</title>
+		<programlisting format="linespecific">
+route {
+...
+    if (is_method("INVITE")) {
+        if (has_body("application/sdp")) {
+            if (rtpengine_offer("codec-mask=opus codec-accept-opus codec-strip=PCMU codec-transcode=PCMU"))
+                t_on_reply("1");
+        }
+    }
+...
+}
+
+onreply_route[1]
+{
+...
+    if (has_body("application/sdp"))
+        rtpengine_answer("codec-strip=PCMU codec-strip=PCMA");
+...
+}
 ...
 </programlisting>
                 </example>
