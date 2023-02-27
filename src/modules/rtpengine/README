@@ -253,31 +253,32 @@ Richard Fuchs
    1.80. Set wsapi parameter
    1.81. set_rtpengine_set usage
    1.82. rtpengine_offer usage
-   1.83. rtpengine_answer usage
-   1.84. rtpengine_info usage
-   1.85. rtpengine_delete usage
-   1.86. rtpengine_query usage
-   1.87. rtpengine_query_v usage
-   1.88. rtpengine_manage usage
-   1.89. start_recording usage
-   1.90. stop_recording usage
-   1.91. block_dtmf usage
-   1.92. unblock_dtmf usage
-   1.93. block_media usage
-   1.94. unblock_media usage
-   1.95. silence_media usage
-   1.96. unsilence_media usage
-   1.97. start_forwarding usage
-   1.98. stop_forwarding usage
-   1.99. play_media usage
-   1.100. stop_media usage
-   1.101. play_dtmf usage
-   1.102. $rtpestat Usage
-   1.103. rtpengine.reload usage
-   1.104. rtpengine.enable usage
-   1.105. rtpengine.show usage
-   1.106. rtpengine.ping usage
-   1.107. rtpengine.get_hash_total usage
+   1.83. rtpengine_offer usage to force transcoding from opus to PCMU
+   1.84. rtpengine_answer usage
+   1.85. rtpengine_info usage
+   1.86. rtpengine_delete usage
+   1.87. rtpengine_query usage
+   1.88. rtpengine_query_v usage
+   1.89. rtpengine_manage usage
+   1.90. start_recording usage
+   1.91. stop_recording usage
+   1.92. block_dtmf usage
+   1.93. unblock_dtmf usage
+   1.94. block_media usage
+   1.95. unblock_media usage
+   1.96. silence_media usage
+   1.97. unsilence_media usage
+   1.98. start_forwarding usage
+   1.99. stop_forwarding usage
+   1.100. play_media usage
+   1.101. stop_media usage
+   1.102. play_dtmf usage
+   1.103. $rtpestat Usage
+   1.104. rtpengine.reload usage
+   1.105. rtpengine.enable usage
+   1.106. rtpengine.show usage
+   1.107. rtpengine.ping usage
+   1.108. rtpengine.get_hash_total usage
 
 Chapter 1. Admin Guide
 
@@ -2305,6 +2306,13 @@ rtpengine_offer();
             offering side. Useful only in combination with
             codec-transcode. all keyword can be used to mask all offered
             codecs
+          + codec-accept=... - Similar to `mask` and `consume` but doesn't
+            remove the codec from the list of offered codecs. This means
+            that a codec listed under `accept` will still be offered to
+            the remote peer, but if the remote peer rejects it, it will
+            still be accepted towards the original offerer and then used
+            for transcoding. It is a more selective version of what the
+            `always transcode` flag does.
           + T.38=decode - If the offered SDP contains a media section
             advertising T.38 over UDPTL, translate it to a regular audio
             media section over RTP. By default, PCMU and PCMA will be used
@@ -2362,6 +2370,29 @@ ranscode=PCMA"))
 
 ...
 
+   Example 1.83. rtpengine_offer usage to force transcoding from opus to
+   PCMU
+route {
+...
+    if (is_method("INVITE")) {
+        if (has_body("application/sdp")) {
+            if (rtpengine_offer("codec-mask=opus codec-accept-opus codec-strip=P
+CMU codec-transcode=PCMU"))
+                t_on_reply("1");
+        }
+    }
+...
+}
+
+onreply_route[1]
+{
+...
+    if (has_body("application/sdp"))
+        rtpengine_answer("codec-strip=PCMU codec-strip=PCMA");
+...
+}
+...
+
 5.3.  rtpengine_answer([flags])
 
    Rewrites SDP body to ensure that media is passed through an RTP proxy.
@@ -2374,7 +2405,7 @@ ranscode=PCMA"))
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1.83. rtpengine_answer usage
+   Example 1.84. rtpengine_answer usage
 
    See rtpengine_offer() function example above for example.
 
@@ -2392,7 +2423,7 @@ ranscode=PCMA"))
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.84. rtpengine_info usage
+   Example 1.85. rtpengine_info usage
 ...
 rtpengine_info();
 ...
@@ -2407,7 +2438,7 @@ rtpengine_info();
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.85. rtpengine_delete usage
+   Example 1.86. rtpengine_delete usage
 ...
 rtpengine_delete();
 ...
@@ -2423,7 +2454,7 @@ rtpengine_delete();
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.86. rtpengine_query usage
+   Example 1.87. rtpengine_query usage
 ...
 rtpengine_query();
 ...
@@ -2441,7 +2472,7 @@ rtpengine_query();
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.87. rtpengine_query_v usage
+   Example 1.88. rtpengine_query_v usage
 ...
 if(rtpengine_query_v("j", "$var(rdata)")) {
     xinfo("rtpengine query response: $var(rdata)\n");
@@ -2479,7 +2510,7 @@ if(rtpengine_query_v("j", "$var(rdata)")) {
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.88. rtpengine_manage usage
+   Example 1.89. rtpengine_manage usage
 ...
 rtpengine_manage();
 ...
@@ -2498,7 +2529,7 @@ rtpengine_manage();
 
    This function can be used from REQUEST_ROUTE and ONREPLY_ROUTE.
 
-   Example 1.89. start_recording usage
+   Example 1.90. start_recording usage
 ...
 start_recording();
 ...
@@ -2517,7 +2548,7 @@ start_recording();
 
    This function can be used from REQUEST_ROUTE and ONREPLY_ROUTE.
 
-   Example 1.90. stop_recording usage
+   Example 1.91. stop_recording usage
 ...
 stop_recording();
 ...
@@ -2541,7 +2572,7 @@ stop_recording();
 
    This function can be used from REQUEST_ROUTE and ONREPLY_ROUTE.
 
-   Example 1.91. block_dtmf usage
+   Example 1.92. block_dtmf usage
 ...
 block_dtmf();
 block_dtmf("directional");
@@ -2557,7 +2588,7 @@ block_dtmf("address=192.168.42.42");
    unblocking DTMF events for the entire call (i.e. no flags given) will
    not remove these blocks. The flag “all” can be used to achieve this.
 
-   Example 1.92. unblock_dtmf usage
+   Example 1.93. unblock_dtmf usage
 ...
 unblock_dtmf();
 unblock_dtmf("all");
@@ -2571,7 +2602,7 @@ unblock_dtmf("all");
 
    See “block_dtmf” for a description of the flags that can be used.
 
-   Example 1.93. block_media usage
+   Example 1.94. block_media usage
 ...
 block_media();
 block_media("directional");
@@ -2585,7 +2616,7 @@ block_media("address=192.168.42.42");
 
    See “unblock_dtmf” for a description of the flags that can be used.
 
-   Example 1.94. unblock_media usage
+   Example 1.95. unblock_media usage
 ...
 unblock_media();
 unblock_media("all");
@@ -2600,7 +2631,7 @@ unblock_media("all");
 
    See “block_dtmf” for a description of the flags that can be used.
 
-   Example 1.95. silence_media usage
+   Example 1.96. silence_media usage
 ...
 silence_media();
 silence_media("directional");
@@ -2614,7 +2645,7 @@ silence_media("address=192.168.42.42");
 
    See “unblock_dtmf” for a description of the flags that can be used.
 
-   Example 1.96. unsilence_media usage
+   Example 1.97. unsilence_media usage
 ...
 unsilence_media();
 unsilence_media("all");
@@ -2629,7 +2660,7 @@ unsilence_media("all");
 
    See “block_dtmf” for a description of the flags that can be used.
 
-   Example 1.97. start_forwarding usage
+   Example 1.98. start_forwarding usage
 ...
 start_forwarding();
 start_forwarding("directional");
@@ -2643,7 +2674,7 @@ start_forwarding("address=192.168.42.42");
 
    See “unblock_dtmf” for a description of the flags that can be used.
 
-   Example 1.98. stop_forwarding usage
+   Example 1.99. stop_forwarding usage
 ...
 stop_forwarding();
 stop_forwarding("all");
@@ -2662,7 +2693,7 @@ stop_forwarding("all");
    the duration of the media being played, expressed in milliseconds. If
    the length of the media could not be determined, it's set to -1.
 
-   Example 1.99. play_media usage
+   Example 1.100. play_media usage
 ...
 play_media("file=/use/share/media/hello.wav");
 play_media("from-tag=tfugklbildfydrtuykgfv db-id=12345");
@@ -2674,7 +2705,7 @@ play_media("from-tag=tfugklbildfydrtuykgfv db-id=12345");
    playback is automatically stopped when the end of the media file is
    reached, so this function is only useful to prematurely stop playback.
 
-   Example 1.100. stop_media usage
+   Example 1.101. stop_media usage
 ...
 stop_media();
 stop_media("from-tag=5yqaeriguhxcikxj");
@@ -2705,7 +2736,7 @@ stop_media("from-tag=5yqaeriguhxcikxj");
    alternative pause length can be given through the “pause” option,
    between 100 and 5000 ms.
 
-   Example 1.101. play_dtmf usage
+   Example 1.102. play_dtmf usage
 ...
 play_dtmf("from-tag=5yqaeriguhxcikxj code=#");
 play_dtmf("code=1 volume=5 duration=300 pause=150");
@@ -2723,7 +2754,7 @@ play_dtmf("code=1 volume=5 duration=300 pause=150");
    packet counters. The statistics must be retrieved before the session is
    deleted (before rtpengine_delete()).
 
-   Example 1.102. $rtpestat Usage
+   Example 1.103. $rtpestat Usage
 ...
     append_hf("X-RTP-Statistics: $rtpestat\r\n");
 ...
@@ -2755,7 +2786,7 @@ ackets, 0 errors
 
    The execution of this command is limited to 10 seconds intervals.
 
-   Example 1.103.  rtpengine.reload usage
+   Example 1.104.  rtpengine.reload usage
 ...
 $ kamcmd rtpengine.reload
 ...
@@ -2786,7 +2817,7 @@ $ kamcmd rtpengine.reload
    NOTE: If you specify an IPv6 RTP, the proxy url must be prefixed with
    :: to escape the :: from the IPv6 address. See the example below.
 
-   Example 1.104.  rtpengine.enable usage
+   Example 1.105.  rtpengine.enable usage
 ...
 $ kamcmd rtpengine.enable udp:192.168.2.133:8081 0
 $ kamcmd rtpengine.enable ::udp6:fe80::9a90:96ff:fea8:fd99:9999 1
@@ -2809,7 +2840,7 @@ $ kamcmd rtpengine.enable all 1
    NOTE: When specify the IPv6 RTP proxy url one must prefix it with :: to
    escape the :: from the IPv6 address. See the example below.
 
-   Example 1.105.  rtpengine.show usage
+   Example 1.106.  rtpengine.show usage
 ...
 $ kamcmd rtpengine.show udp:192.168.2.133:8081
 $ kamcmd rtpengine.show ::udp6:fe80::9a90:96ff:fea8:fd99:9999
@@ -2829,7 +2860,7 @@ $ kamcmd rtpengine.show all
    NOTE: When specify the IPv6 RTP proxy url one must prefix it with :: to
    escape the :: from the IPv6 address. See the example below.
 
-   Example 1.106.  rtpengine.ping usage
+   Example 1.107.  rtpengine.ping usage
 ...
 $ kamcmd rtpengine.ping udp:192.168.2.133:8081
 $ kamcmd rtpengine.ping ::udp6:fe80::9a90:96ff:fea8:fd99:9999
@@ -2841,7 +2872,7 @@ $ kamcmd rtpengine.ping all
    Print the total number of hash entries in the hash table at a given
    moment.
 
-   Example 1.107.  rtpengine.get_hash_total usage
+   Example 1.108.  rtpengine.get_hash_total usage
 ...
 $ kamcmd rtpengine.get_hash_total
 ...
