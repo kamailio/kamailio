@@ -667,8 +667,8 @@ modparam("htable", "enable_dmq", 1)
 		<title><varname>dmq_init_sync</varname> (integer)</title>
 		<para>
 			If set to 1, will request synchronization from other nodes at startup. It applies
-			to all tables having the "dmqreplicate" parameter set. As above, it is important to 
-			ensure the definition (size, autoexpire etc.) of replicated tables is identical 
+			to all tables having the "dmqreplicate" parameter set. As above, it is important to
+			ensure the definition (size, autoexpire etc.) of replicated tables is identical
 			across all instances.
 		</para>
 		<para>
@@ -1401,7 +1401,7 @@ if(sht_match_str_value("ha", "eq", "alice")) {
         <title>RPC Commands</title>
         <section id="htable.rpc.get">
                 <title>
-                <function moreinfo="none">htable.get htable key</function>
+                <function moreinfo="none">htable.get htable s:key</function>
                 </title>
                 <para>
 					Lists one value in a hash table
@@ -1422,16 +1422,16 @@ if(sht_match_str_value("ha", "eq", "alice")) {
 <programlisting  format="linespecific">
 ...
 # Dump $sht(students=>alice)
-kamcmd htable.get students alice
+kamcmd htable.get students s:alice
 
 # Dump first entry in array key course $sht(students=>course[0])
-kamcmd htable.get students course[0]
+kamcmd htable.get students s:course[0]
 ...
 </programlisting>
 	</section>
         <section id="htable.rpc.delete">
                 <title>
-                <function moreinfo="none">htable.delete htable key</function>
+                <function moreinfo="none">htable.delete htable s:key</function>
                 </title>
                 <para>
 					Delete one value in a hash table
@@ -1452,16 +1452,16 @@ kamcmd htable.get students course[0]
 <programlisting  format="linespecific">
 ...
 # Delete $sht(students=>alice)
-kamcmd htable.delete students alice
+kamcmd htable.delete students s:alice
 
 # Delete first entry in array key course $sht(students=>course[0])
-kamcmd htable.delete students course[0]
+kamcmd htable.delete students s:course[0]
 ...
 </programlisting>
 	</section>
        <section id="htable.rpc.sets">
                 <title>
-                <function moreinfo="none">htable.sets htable key value</function>
+                <function moreinfo="none">htable.sets htable s:key value</function>
                 </title>
                 <para>
 					Set an item in hash table to string value.
@@ -1475,7 +1475,7 @@ kamcmd htable.delete students course[0]
                         </listitem>
                         <listitem><para>key : Key name in the hash table</para>
                         </listitem>
-                        <listitem><para>Value : String value for the item</para>
+                        <listitem><para>value : String value for the item</para>
                         </listitem>
                 </itemizedlist>
                 <para>
@@ -1484,16 +1484,16 @@ kamcmd htable.delete students course[0]
 <programlisting  format="linespecific">
 ...
 # Set $sht(test=>x) as string
-kamcmd htable.sets test x abc
+kamcmd htable.sets test s:x abc
 
 # Set firsti entry in array key x $sht(test=>x[0]) as string
-kamcmd htable.sets test x[0] abc
+kamcmd htable.sets test s:x[0] abc
 ...
 </programlisting>
 	</section>
        <section id="htable.rpc.seti">
                 <title>
-                <function moreinfo="none">htable.seti htable key value</function>
+                <function moreinfo="none">htable.seti htable s:key value</function>
                 </title>
                 <para>
 					Set an item in hash table to integer value.
@@ -1507,7 +1507,7 @@ kamcmd htable.sets test x[0] abc
                         </listitem>
                         <listitem><para>key : Key name in the hash table</para>
                         </listitem>
-                        <listitem><para>Value : Integer value for the item</para>
+                        <listitem><para>value : Integer value for the item</para>
                         </listitem>
                 </itemizedlist>
                 <para>
@@ -1516,16 +1516,16 @@ kamcmd htable.sets test x[0] abc
 <programlisting  format="linespecific">
 ...
 # Set $sht(test=>x) as integer
-kamcmd htable.seti test x 123
+kamcmd htable.seti test s:x 123
 
 # Set first entry in array key x $sht(test=>x[0]) as integer
-kamcmd htable.seti test x[0] 123
+kamcmd htable.seti test s:x[0] 123
 ...
 </programlisting>
 	</section>
        <section id="htable.rpc.setex">
                 <title>
-                <function moreinfo="none">htable.setex htable key expire</function>
+                <function moreinfo="none">htable.setex htable s:key expire</function>
                 </title>
                 <para>
 					Set the expire for an item in hash table.
@@ -1547,14 +1547,14 @@ kamcmd htable.seti test x[0] 123
                 </para>
 <programlisting  format="linespecific">
 ...
-# set  expire for $sht(test=>x) to 120 secs
-kamctl rpc htable.seti test x 120
+# Set  expire for $sht(test=>x) to 120 secs
+kamctl rpc htable.setex test s:x 120
 ...
 </programlisting>
 	</section>
        <section id="htable.rpc.setxs">
                 <title>
-                <function moreinfo="none">htable.setxs htable key value expire</function>
+                <function moreinfo="none">htable.setxs htable s:key value expire</function>
                 </title>
                 <para>
 					Set the string value and expire for an item in hash table.
@@ -1578,14 +1578,14 @@ kamctl rpc htable.seti test x 120
                 </para>
 <programlisting  format="linespecific">
 ...
-# set value to 'abc' and expire for $sht(test=>x) to 120 secs
-kamctl rpc htable.setxs test x abc 120
+# Set value to 'abc' and expire for $sht(test=>x) to 120 secs
+kamctl rpc htable.setxs test s:x abc 120
 ...
 </programlisting>
 	</section>
        <section id="htable.rpc.setxi">
                 <title>
-                <function moreinfo="none">htable.setxi htable key value expire</function>
+                <function moreinfo="none">htable.setxi htable s:key value expire</function>
                 </title>
                 <para>
 					Set the integer value and expire for an item in hash table.
@@ -1609,8 +1609,8 @@ kamctl rpc htable.setxs test x abc 120
                 </para>
 <programlisting  format="linespecific">
 ...
-# set value to 10 and expire for $sht(test=>x) to 120 secs
-kamctl rpc htable.setxi test x 10 120
+# Set value to 10 and expire for $sht(test=>x) to 120 secs
+kamctl rpc htable.setxi test s:x 10 120
 ...
 </programlisting>
 	</section>
@@ -1817,4 +1817,3 @@ event_route[htable:expired:mytable] {
 	</section>
 
 </chapter>
-
