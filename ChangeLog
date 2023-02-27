@@ -1,3 +1,225 @@
+===================== 2023-02-27 Version 5.6.4 Released =====================
+
+===================== Changes Since Version 5.6.3 ===========================
+
+commit 383bc71cd4f3b2d5d0290f11a6c3975a58c7949e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Feb 27 10:04:04 2023 +0100
+
+    Makefile.defs: version set to 5.6.4
+
+commit c04c950deee4a421d6a978adf977a8d856da9ebc
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Feb 27 10:02:48 2023 +0100
+
+    pkg: deb specs updated for v5.6.4
+
+commit 93aaf27bb49f65c42f78ecbd9942f272d79a4b10
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Feb 27 09:56:17 2023 +0100
+
+    pkg: version set to 5.6.4 for rpms and alpine specs
+
+commit b27ddcd40250201ac9d9051308daa48797e8071c
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Fri Feb 24 14:17:07 2023 +0100
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 614071020f123263b6e0c0cace652f88ac40f470
+Author: POIROTTE Francois <francois.poirotte@csgroup.eu>
+Date:   Fri Feb 17 15:43:22 2023 +0100
+
+    kamctl: hide errors raised by "which"
+    
+    Hide error messages from "which" to avoid polluting kamctl's output
+    (e.g. when a JSON document is returned) in environments where STDOUT
+    and STDERR may be combined into a single stream (e.g. containers)
+    
+    (cherry picked from commit a229d230bca5e785670edc3901f849e93989f9fe)
+
+commit 74416f1fe93dad9ce62c1f31daeb6385d92c3f74
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Feb 13 13:25:28 2023 +0100
+
+    topos: use proper field for datetime value
+    
+    (cherry picked from commit 446892331900c2303e531da55bcb494ccb2d8bce)
+
+commit a914333bbac7b52943dc8d9d58bf15614b6497d5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Feb 10 17:53:42 2023 +0100
+
+    ctl: doc - binrpc_buffer_size can get only integer value
+    
+    (cherry picked from commit 44381746e0e826e8db04597942fa4cee6cbf9175)
+
+commit 89a65b849a392fea8a46b1e6ae8309c764cdf81e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Feb 8 15:51:37 2023 +0100
+
+    async: catch up on possible skipped slots due to slow tasks
+    
+    (cherry picked from commit 0a3c15239a620474bbbc7f4d2f57dda0e9aa0f58)
+
+commit 6796e7faeef7c0af9805b07e4f29c6924d8f3edc
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Feb 7 12:57:04 2023 +0100
+
+    lib/ims: check return of strtok(...)
+    
+    (cherry picked from commit 63095ef1bef36a35952ed265f41d87ccbc1bba70)
+
+commit 1107423f6af0df4d788216324d6547247fa22224
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Feb 3 09:38:26 2023 +0100
+
+    rr: doc - fixed typos and use the proper param name add_username instead of enable_username
+    
+    (cherry picked from commit 022fa0cfc75d150fde219b8ae4f9a99b3fa2f132)
+
+commit b2e872799d8a694bd433193ec8157ab1d329edaa
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Feb 3 09:28:58 2023 +0100
+
+    core: typos in comments and EoL after log when parse msg fails
+    
+    - GH #3348
+    
+    (cherry picked from commit 51fa3da96c1eacd4d679598a3305180c9e818cfb)
+
+commit 6f3a48124cedc04332e45e9f38f54ed5acb1027d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 26 09:20:31 2023 +0100
+
+    ims_dialog: fix module name in modparam examples
+    
+    (cherry picked from commit a4150741748779bba8e14bed286c6d64b1df7f17)
+
+commit ee7d314422003fc6edfbc364015499e38e18ae62
+Author: Sandro Gauci <sandro@enablesecurity.com>
+Date:   Mon Jan 23 13:38:17 2023 +0100
+
+    exec: docs - added security warning
+    
+    - Added warning about potential for OS Command Injection
+    - Updated invalid examples
+    
+    previous example gives the following error:
+    pv_parse_spec2(): error searching pvar "rU.txt"
+    
+    (cherry picked from commit f81f0e77c5ab67431af1f62f0e027379a3445951)
+
+commit d59c64514f032a73a1f6aa65051f81b8784a5713
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jan 16 12:54:48 2023 +0100
+
+    websocket: ignore keepalive in state WS_S_REMOVING
+    
+    - GH #3331
+    
+    (cherry picked from commit 34c3c42b7fe44dbe88110415ec78400a7defde61)
+
+commit ea782be2cc29589f4dd55f0d91c11049b5280fe0
+Author: Richard Fuchs <rfuchs@sipwise.com>
+Date:   Tue Feb 14 15:01:22 2023 -0500
+
+    rtpengine: avoid repeated queries to same node
+    
+    If we know which node handles a particular call from the hash table,
+    only query that node once and then return error if it's dead, instead of
+    going into a pointless loop looking for other nodes to query which don't
+    exist.
+    
+    closes #3370
+    
+    (cherry picked from commit bd0ce126109f40f5217053f20e687b93b2268164)
+
+commit 07fc4d54e1c00a155dc17c25998ab2cbf75d0862
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jan 13 12:41:12 2023 +0100
+
+    app_python3: use Py_SET_TYPE() from python 3.9
+    
+    (cherry picked from commit fc75b4c3f8f9bdba320f74ddf942686c09316b56)
+
+commit 82caa486216930ff634e4b9eeee8184eabaf504c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jan 13 12:33:20 2023 +0100
+
+    app_python3: proper check of PY_VERSION_HEX for python 3.11
+    
+    (cherry picked from commit 8546fb87e3277b675bd47eba9435f739cf3bb69d)
+
+commit 92f15de3d026405c749ce10fb4b11200c9b365b1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jul 21 20:15:29 2022 +0200
+
+    app_python3: use new Python 3.10+ API functions for tracking execution
+    
+    - GH #3187
+    
+    (cherry picked from commit b8bf86eb11a17c853450e5c7f81d2446cf719fbc)
+
+commit baa91762aa9f5ee6ede385148c6302c14537cd15
+Author: Victor Seva <vseva@sipwise.com>
+Date:   Thu Feb 9 11:45:29 2023 +0100
+
+    usrloc: correct AOR value on usrloc:contact-expired
+    
+    previously $ulc(x=>aor) had only the user part even with use_domain set
+    
+    fix #3365
+    
+    (cherry picked from commit f3d00c91a7919207dac23ada58e59a13b9f334d8)
+
+commit b7f8c5a44b0f4d3e09e6cad1eaeeae7e9330cffe
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Fri Feb 10 16:46:04 2023 +0300
+
+    pkg/kamailio: fixed rpm packging for CentOS 6
+    
+    (cherry picked from commit db634e7fb3e5913238561afb4381363bbfe58882)
+
+commit dafb657950f97e7431770be6d0e9f2f04634fc21
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Fri Jan 27 08:30:30 2023 +0100
+
+    pkg/kamailio/deb: remove warning build-depends-on-obsolete-package [skip ci]
+    
+    > W: kamailio source: build-depends-on-obsolete-package Build-Depends: libncurses5-dev => libncurses-dev
+    
+    (cherry picked from commit 387a8ca53f179437ae173b0bd5cb8d2d4922b60d)
+
+commit a45f4ca901f76dae023e390d11e71873cb7e73ff
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Fri Jan 27 08:23:45 2023 +0100
+
+    pkg/kamailio/deb: remove lsb-base dependency [skip ci]
+    
+    * on newer version, there's no need to add it
+    
+    > E: kamailio: depends-on-obsolete-package Depends: lsb-base
+    
+    (cherry picked from commit 03755f93f98608d85591ba8aa184733e3871b92c)
+
+commit 3cc09ff6045c35feef5902e3cea6b313c49e8a77
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Wed Jan 25 07:59:39 2023 +0000
+
+    core: fix memory leak related to Require header parsing, this header also need to be freed
+    
+    (cherry picked from commit 6c372bf644e1c9afa867433e5992e347c8fc4ff6)
+
+commit fe0c4d5efdff79f76a20b3519f41388782fae710
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Thu Jan 19 11:56:18 2023 +0300
+
+    pkg/kamailio/obs: used mariadb connector instead of mysql
+    
+    (cherry picked from commit ea99c8fc235334d4dd48868f74ab5c62662942e6)
+
+
 ===================== 2023-01-11 Version 5.6.3 Released =====================
 
 ===================== Changes Since Version 5.6.2 ===========================
