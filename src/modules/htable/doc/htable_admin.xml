@@ -667,8 +667,8 @@ modparam("htable", "enable_dmq", 1)
 		<title><varname>dmq_init_sync</varname> (integer)</title>
 		<para>
 			If set to 1, will request synchronization from other nodes at startup. It applies
-			to all tables having the "dmqreplicate" parameter set. As above, it is important to 
-			ensure the definition (size, autoexpire etc.) of replicated tables is identical 
+			to all tables having the "dmqreplicate" parameter set. As above, it is important to
+			ensure the definition (size, autoexpire etc.) of replicated tables is identical
 			across all instances.
 		</para>
 		<para>
@@ -1413,7 +1413,7 @@ if(sht_match_str_value("ha", "eq", "alice")) {
                 <itemizedlist>
                         <listitem><para>htable : Name of the hash table to dump</para>
                         </listitem>
-                        <listitem><para>key : Key name of the hash table value to dump</para>
+                        <listitem><para>key : Key name of the hash table value to dump. Note: if key name is an integer value, it should be prefixed with <emphasis>s:<emphasis></para>
                         </listitem>
                 </itemizedlist>
                 <para>
@@ -1423,6 +1423,9 @@ if(sht_match_str_value("ha", "eq", "alice")) {
 ...
 # Dump $sht(students=>alice)
 kamcmd htable.get students alice
+
+# Dump $sht(students=>15)
+kamcmd htable.get students s:15
 
 # Dump first entry in array key course $sht(students=>course[0])
 kamcmd htable.get students course[0]
@@ -1443,7 +1446,7 @@ kamcmd htable.get students course[0]
                 <itemizedlist>
                         <listitem><para>htable : Name of the hash table to delete</para>
                         </listitem>
-                        <listitem><para>key : Key name of the hash table value to delete</para>
+                        <listitem><para>key : Key name of the hash table value to delete. Note: if key name is an integer value, it should be prefixed with <emphasis>s:<emphasis></para>
                         </listitem>
                 </itemizedlist>
                 <para>
@@ -1453,6 +1456,9 @@ kamcmd htable.get students course[0]
 ...
 # Delete $sht(students=>alice)
 kamcmd htable.delete students alice
+
+# Delete $sht(students=>15)
+kamcmd htable.delete students s:15
 
 # Delete first entry in array key course $sht(students=>course[0])
 kamcmd htable.delete students course[0]
@@ -1473,7 +1479,7 @@ kamcmd htable.delete students course[0]
                 <itemizedlist>
                         <listitem><para>htable : Name of the hash table</para>
                         </listitem>
-                        <listitem><para>key : Key name in the hash table</para>
+                        <listitem><para>key : Key name in the hash table. Note: if key name is an integer value, it should be prefixed with <emphasis>s:<emphasis></para>
                         </listitem>
                         <listitem><para>Value : String value for the item</para>
                         </listitem>
@@ -1485,6 +1491,9 @@ kamcmd htable.delete students course[0]
 ...
 # Set $sht(test=>x) as string
 kamcmd htable.sets test x abc
+
+# Set $sht(test=>5) as string
+kamcmd htable.sets test s:5 abc
 
 # Set firsti entry in array key x $sht(test=>x[0]) as string
 kamcmd htable.sets test x[0] abc
@@ -1505,7 +1514,7 @@ kamcmd htable.sets test x[0] abc
                 <itemizedlist>
                         <listitem><para>htable : Name of the hash table</para>
                         </listitem>
-                        <listitem><para>key : Key name in the hash table</para>
+                        <listitem><para>key : Key name in the hash table. Note: if key name is an integer value, it should be prefixed with <emphasis>s:<emphasis></para>
                         </listitem>
                         <listitem><para>Value : Integer value for the item</para>
                         </listitem>
@@ -1517,6 +1526,9 @@ kamcmd htable.sets test x[0] abc
 ...
 # Set $sht(test=>x) as integer
 kamcmd htable.seti test x 123
+
+# Set $sht(test=>5) as integer
+kamcmd htable.seti test s:5 123
 
 # Set first entry in array key x $sht(test=>x[0]) as integer
 kamcmd htable.seti test x[0] 123
@@ -1537,7 +1549,7 @@ kamcmd htable.seti test x[0] 123
                 <itemizedlist>
                         <listitem><para>htable : name of the hash table</para>
                         </listitem>
-                        <listitem><para>key : key name in the hash table</para>
+                        <listitem><para>key : key name in the hash table. Note: if key name is an integer value, it should be prefixed with <emphasis>s:<emphasis></para>
                         </listitem>
                         <listitem><para>expire : integer value for the expire (seconds)</para>
                         </listitem>
@@ -1548,7 +1560,10 @@ kamcmd htable.seti test x[0] 123
 <programlisting  format="linespecific">
 ...
 # set  expire for $sht(test=>x) to 120 secs
-kamctl rpc htable.seti test x 120
+kamctl rpc htable.setex test x 120
+
+# set  expire for $sht(test=>10) to 120 secs
+kamctl rpc htable.setex test s:10 120
 ...
 </programlisting>
 	</section>
@@ -1566,7 +1581,7 @@ kamctl rpc htable.seti test x 120
                 <itemizedlist>
                         <listitem><para>htable : name of the hash table</para>
                         </listitem>
-                        <listitem><para>key : key name in the hash table</para>
+                        <listitem><para>key : key name in the hash table. Note: if key name is an integer value, it should be prefixed with <emphasis>s:<emphasis></para>
                         </listitem>
                         <listitem><para>value : string value for the item</para>
                         </listitem>
@@ -1580,6 +1595,9 @@ kamctl rpc htable.seti test x 120
 ...
 # set value to 'abc' and expire for $sht(test=>x) to 120 secs
 kamctl rpc htable.setxs test x abc 120
+
+# set value to 'abc' and expire for $sht(test=>10) to 120 secs
+kamctl rpc htable.setxs test s:10 abc 120
 ...
 </programlisting>
 	</section>
@@ -1597,7 +1615,7 @@ kamctl rpc htable.setxs test x abc 120
                 <itemizedlist>
                         <listitem><para>htable : name of the hash table</para>
                         </listitem>
-                        <listitem><para>key : key name in the hash table</para>
+                        <listitem><para>key : key name in the hash table. Note: if key name is an integer value, it should be prefixed with <emphasis>s:<emphasis></para>
                         </listitem>
                         <listitem><para>value : integer value for the item</para>
                         </listitem>
@@ -1611,6 +1629,9 @@ kamctl rpc htable.setxs test x abc 120
 ...
 # set value to 10 and expire for $sht(test=>x) to 120 secs
 kamctl rpc htable.setxi test x 10 120
+
+# set value to 10 and expire for $sht(test=>5) to 120 secs
+kamctl rpc htable.setxi test s:5 10 120
 ...
 </programlisting>
 	</section>
@@ -1817,4 +1838,3 @@ event_route[htable:expired:mytable] {
 	</section>
 
 </chapter>
-
