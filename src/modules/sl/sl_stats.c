@@ -36,7 +36,7 @@ static void add_sl_stats( struct sl_stats *t, struct sl_stats *i)
 {
 	enum reply_type rt;
 
-	for (rt=0; rt<RT_END; rt++) { 
+	for (rt=0; rt<RT_END; rt++) {
 		t->err[rt]+=i->err[rt];
 		t->all_replies+=i->err[rt];
 	}
@@ -67,19 +67,19 @@ static void rpc_stats(rpc_t* rpc, void* c)
 	}
 
 	if (rpc->add(c, "{", &st) < 0) return;
-	
-	rpc->struct_add(st, "ddd", 
+
+	rpc->struct_add(st, "jjj",
 			"200", total.err[RT_200],
 			"202", total.err[RT_202],
 			"2xx", total.err[RT_2xx]);
 
-	rpc->struct_add(st, "dddd",
+	rpc->struct_add(st, "jjjj",
 			"300", total.err[RT_300],
 			"301", total.err[RT_301],
 			"302", total.err[RT_302],
 			"3xx", total.err[RT_3xx]);
 
-	rpc->struct_add(st, "dddddddd",
+	rpc->struct_add(st, "jjjjjjjj",
 			"400", total.err[RT_400],
 			"401", total.err[RT_401],
 			"403", total.err[RT_403],
@@ -89,12 +89,12 @@ static void rpc_stats(rpc_t* rpc, void* c)
 			"483", total.err[RT_483],
 			"4xx", total.err[RT_4xx]);
 
-	rpc->struct_add(st, "dd",
+	rpc->struct_add(st, "jj",
 			"500", total.err[RT_500],
 			"5xx", total.err[RT_5xx]);
 
-	rpc->struct_add(st, "d", "6xx", total.err[RT_6xx]);
-	rpc->struct_add(st, "d", "xxx", total.err[RT_xxx]);
+	rpc->struct_add(st, "j", "6xx", total.err[RT_6xx]);
+	rpc->struct_add(st, "j", "xxx", total.err[RT_xxx]);
 }
 
 
@@ -105,7 +105,7 @@ void sl_stats_destroy(void)
 	shm_free(sl_stats);
 }
 
-int init_sl_stats(void) 
+int init_sl_stats(void)
 {
 	sl_stats = (struct sl_stats**)shm_malloc(sizeof(struct sl_stats*));
 	if (!sl_stats) {
@@ -148,7 +148,7 @@ void update_sl_filtered_acks( void )
 	(*sl_stats)[process_no].filtered_acks++;
 }
 
-void update_sl_stats( int code ) 
+void update_sl_stats( int code )
 {
 
 	struct sl_stats *my_stats;
@@ -206,7 +206,7 @@ void update_sl_stats( int code )
 						break;
 		}
 	}
-		
+
 }
 
 rpc_export_t sl_rpc[] = {
