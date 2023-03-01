@@ -178,8 +178,8 @@ int extract_body(struct sip_msg *msg, str *body )
 
 	/*
 	 * Better use the content-len value - no need of any explicit
-	 * parcing as get_body() parsed all headers and Conten-Length
-	 * body header is automaticaly parsed when found.
+	 * parsing as get_body() parsed all headers and Content-Length
+	 * body header is automatically parsed when found.
 	 */
 	if (msg->content_length==0) {
 		LM_ERR("failed to get the content length in message\n");
