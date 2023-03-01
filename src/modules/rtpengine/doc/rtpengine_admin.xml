@@ -2715,7 +2715,7 @@ route {
 ...
     if (is_method("INVITE")) {
         if (has_body("application/sdp")) {
-            if (rtpengine_offer("codec-mask=opus codec-accept-opus codec-strip=PCMU codec-transcode=PCMU"))
+            if (rtpengine_offer("codec-mask=opus codec-accept=opus codec-strip=PCMU codec-transcode=PCMU"))
                 t_on_reply("1");
         }
     }
