@@ -1,6 +1,1236 @@
-===================== 2022-09-19 Version 5.5.5 Released =====================
+===================== 2023-03-02 Version 5.5.6 Released =====================
 
 ===================== Changes Since Version 5.5.5 ===========================
+
+
+commit 7b3d89cf0fc8284546e650198c79141839c6e094
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Mar 2 10:40:39 2023 +0100
+
+    Makefile.defs: version set to 5.5.6
+
+commit 6e4d404566ad498eb97c5dcf604cd352882c4fa2
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Mar 2 10:27:59 2023 +0100
+
+    pkg/kamailio/deb: version set 5.5.6
+
+commit 8042aa4b29f5ff0c570ca926e8087b01266290af
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Mar 2 10:26:52 2023 +0100
+
+    pkg: version set to 5.5.6 for rpm and alpine specs
+
+commit b825f14b7ef3fb92363bc56e753c65e6eda44c88
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Fri Feb 24 17:47:03 2023 +0100
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 8e9144c5f73993a312d0a0bd526a7b0aaacaac1c
+Author: POIROTTE Francois <francois.poirotte@csgroup.eu>
+Date:   Fri Feb 17 15:43:22 2023 +0100
+
+    kamctl: hide errors raised by "which"
+    
+    Hide error messages from "which" to avoid polluting kamctl's output
+    (e.g. when a JSON document is returned) in environments where STDOUT
+    and STDERR may be combined into a single stream (e.g. containers)
+    
+    (cherry picked from commit a229d230bca5e785670edc3901f849e93989f9fe)
+    (cherry picked from commit 614071020f123263b6e0c0cace652f88ac40f470)
+
+commit 1d14e1ba4c5fb5b0bc5121fdcd95c26f8b73c7ea
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Feb 13 13:25:28 2023 +0100
+
+    topos: use proper field for datetime value
+    
+    (cherry picked from commit 446892331900c2303e531da55bcb494ccb2d8bce)
+    (cherry picked from commit 74416f1fe93dad9ce62c1f31daeb6385d92c3f74)
+
+commit 2ce7feed92c5751948c963ffb1bdd5dae2acd0de
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Feb 10 17:53:42 2023 +0100
+
+    ctl: doc - binrpc_buffer_size can get only integer value
+    
+    (cherry picked from commit 44381746e0e826e8db04597942fa4cee6cbf9175)
+    (cherry picked from commit a914333bbac7b52943dc8d9d58bf15614b6497d5)
+
+commit a735a7932711236115cdcf08c18b923476413876
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Feb 8 15:51:37 2023 +0100
+
+    async: catch up on possible skipped slots due to slow tasks
+    
+    (cherry picked from commit 0a3c15239a620474bbbc7f4d2f57dda0e9aa0f58)
+    (cherry picked from commit 89a65b849a392fea8a46b1e6ae8309c764cdf81e)
+
+commit 550f9d63b29110c8f5a2d736041c5cef55d67944
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Feb 7 12:57:04 2023 +0100
+
+    lib/ims: check return of strtok(...)
+    
+    (cherry picked from commit 63095ef1bef36a35952ed265f41d87ccbc1bba70)
+    (cherry picked from commit 6796e7faeef7c0af9805b07e4f29c6924d8f3edc)
+
+commit 27ff2fba44bda772b66a8d6c8f4e8d7216542445
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Feb 3 09:38:26 2023 +0100
+
+    rr: doc - fixed typos and use the proper param name add_username instead of enable_username
+    
+    (cherry picked from commit 022fa0cfc75d150fde219b8ae4f9a99b3fa2f132)
+    (cherry picked from commit 1107423f6af0df4d788216324d6547247fa22224)
+
+commit 40b09a423a9d7b8fe1093831ad335b9ceac6f7f7
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Feb 3 09:28:58 2023 +0100
+
+    core: typos in comments and EoL after log when parse msg fails
+    
+    - GH #3348
+    
+    (cherry picked from commit 51fa3da96c1eacd4d679598a3305180c9e818cfb)
+    (cherry picked from commit b2e872799d8a694bd433193ec8157ab1d329edaa)
+
+commit 844a6e131e6fd522da58ceb2b9f4ec1ced3f667b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jan 26 09:20:31 2023 +0100
+
+    ims_dialog: fix module name in modparam examples
+    
+    (cherry picked from commit a4150741748779bba8e14bed286c6d64b1df7f17)
+    (cherry picked from commit 6f3a48124cedc04332e45e9f38f54ed5acb1027d)
+
+commit 8f8614fae4ae18cfe3d8011b5126d7e916446f71
+Author: Sandro Gauci <sandro@enablesecurity.com>
+Date:   Mon Jan 23 13:38:17 2023 +0100
+
+    exec: docs - added security warning
+    
+    - Added warning about potential for OS Command Injection
+    - Updated invalid examples
+    
+    previous example gives the following error:
+    pv_parse_spec2(): error searching pvar "rU.txt"
+    
+    (cherry picked from commit f81f0e77c5ab67431af1f62f0e027379a3445951)
+    (cherry picked from commit ee7d314422003fc6edfbc364015499e38e18ae62)
+
+commit 0478e3d5022abcdc7f1dd15062d16331dc35ffed
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jan 16 12:54:48 2023 +0100
+
+    websocket: ignore keepalive in state WS_S_REMOVING
+    
+    - GH #3331
+    
+    (cherry picked from commit 34c3c42b7fe44dbe88110415ec78400a7defde61)
+    (cherry picked from commit d59c64514f032a73a1f6aa65051f81b8784a5713)
+
+commit 8b9b056073d214755073f38b9eb44f95a1cf1aff
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Dec 9 10:29:37 2022 +0100
+
+    core: tcp - debug message on no connect
+    
+    (cherry picked from commit 5fee7d818f18afcab4d2e17231d2e4eab79b7b48)
+    (cherry picked from commit 0ba02031953029c3e4820264503400cbd9e14924)
+
+commit aba29b7bca17de61eaa6740a45365bff9783bc77
+Author: Rick Barenthin <rick@ng-voice.com>
+Date:   Tue Dec 6 10:39:18 2022 +0100
+
+    tm: cleanup parsed body at the end t_continue_helper
+    
+    - if t_suspend and t_continue are used for replies
+      and in the called route in t_continue the body of
+      the sip message is parsed the pkg memory of the
+      parsed body is leaked
+    
+    (cherry picked from commit f409a8c9f6fde33eaf8b428887e219b56740b0a5)
+    (cherry picked from commit 7e12f4f5951ebcd40bc7779b6c7bf71081c38481)
+
+commit 047e71f4eae1ba76034adca72a5cd98982af3ac5
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 21 11:28:32 2022 +0100
+
+    sipcapture: debug message with header offset and address family
+    
+    (cherry picked from commit 7f258d97431a9a4bccf8155def52c9e9070c9f1d)
+    (cherry picked from commit caf8465d6f56c5891b8398814d3e66ad4996b386)
+
+commit dda9fa437786304ac0f2e726cf56400371b06ddc
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Nov 7 21:11:56 2022 +0100
+
+    websocket: more details on debig messages
+    
+    (cherry picked from commit e7bd1570e3788e9d04047b4d1d00cb8bd8b172d3)
+    (cherry picked from commit af3a249364b20e46cc80a6ae6ea8c04c9d10513b)
+
+commit 887b53b23e2ba713eac46316bea343e91183ff0e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Nov 4 09:55:22 2022 +0100
+
+    secsipid: ensure headers are parsed
+    
+    (cherry picked from commit a0d9deb9f852f887bed7c0809f3056b5f75379c8)
+    (cherry picked from commit a2c4e0efdb03ba31ddb295fbfd2d95a393480906)
+
+commit 307a2bb2a6174ecc879978c74fbb68dedc5cdbef
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Nov 4 09:28:23 2022 +0100
+
+    secsipid: debug message if identity header is not found
+    
+    (cherry picked from commit 0920aa1a27565bc52fd1ff9f4b9fc31dbd0d2a75)
+    (cherry picked from commit bea811e2a6e8b12f8491b7e46bcc58ad66c9e225)
+
+commit 56941d00b9ed96da159eeba543cc1f0d1d107dcb
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Nov 3 10:20:10 2022 +0100
+
+    secsipid: iterate through all Identity headers
+    
+    (cherry picked from commit cd3b776649e652b5d27b2718c22f08736b1e9e84)
+    (cherry picked from commit a0e89d8fad7e764478b0ff69e1fe335fcd7104a9)
+
+commit d721e45054f31899930d0833c06f5637d6b96a51
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Oct 13 11:59:53 2022 +0200
+
+    kex: added fixup free functions to module exports
+    
+    (cherry picked from commit c8bd10f791ef7aa48a16104472b039a8ca1a53c5)
+    (cherry picked from commit 46cd2b6732a1bcd49c31a4a4a1173d0b27ce39a1)
+
+commit 8e64e5c29a0e03e29f33f2c562ee0acb0614bcf1
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Oct 11 10:17:34 2022 +0200
+
+    keepalive: removed redundant checks
+    
+    (cherry picked from commit cbe6cef58da8de7efa18c4e34458a81176d23e42)
+    (cherry picked from commit 0ead35429a85800105178f7a8427d94ad390da33)
+
+commit f39f172ffb29035082eec3e580a0aa03f0725dca
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Sep 30 10:52:25 2022 +0200
+
+    corex: added fixup free functions in module exports
+    
+    (cherry picked from commit d5ae9019dcdfe5b51ce87f6957902abbaa7fa071)
+    (cherry picked from commit 19aab1894ba88bc7152e00a84819d991937665a6)
+
+commit a9deaa503ff20a3384fe74e37093464c21885e44
+Author: Richard Fuchs <rfuchs@sipwise.com>
+Date:   Tue Feb 14 15:01:22 2023 -0500
+
+    rtpengine: avoid repeated queries to same node
+    
+    If we know which node handles a particular call from the hash table,
+    only query that node once and then return error if it's dead, instead of
+    going into a pointless loop looking for other nodes to query which don't
+    exist.
+    
+    closes #3370
+    
+    (cherry picked from commit bd0ce126109f40f5217053f20e687b93b2268164)
+    (cherry picked from commit ea782be2cc29589f4dd55f0d91c11049b5280fe0)
+
+commit 05ea1752c9f941b624ce5f0b8f4e94d5e81195b2
+Author: Victor Seva <vseva@sipwise.com>
+Date:   Thu Feb 9 11:45:29 2023 +0100
+
+    usrloc: correct AOR value on usrloc:contact-expired
+    
+    previously $ulc(x=>aor) had only the user part even with use_domain set
+    
+    fix #3365
+    
+    (cherry picked from commit f3d00c91a7919207dac23ada58e59a13b9f334d8)
+
+commit ee52692185a959a30d30382d72fb9578917d59b6
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Fri Feb 10 16:46:04 2023 +0300
+
+    pkg/kamailio: fixed rpm packging for CentOS 6
+    
+    (cherry picked from commit db634e7fb3e5913238561afb4381363bbfe58882)
+
+commit 21fdb35fe39fb78deb2dac7bd580d632453e9242
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Thu Jan 19 11:56:18 2023 +0300
+
+    pkg/kamailio/obs: used mariadb connector instead of mysql
+
+commit f7ee24dc4fc3ffb1b6f9e4f73b63f249acd979e3
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Wed Jan 25 07:59:39 2023 +0000
+
+    core: fix memory leak related to Require header parsing, this header also need to be freed
+    
+    (cherry picked from commit 6c372bf644e1c9afa867433e5992e347c8fc4ff6)
+    (cherry picked from commit 3cc09ff6045c35feef5902e3cea6b313c49e8a77)
+
+commit 5671c68a3d043068d9d9fecb5fa12a8d7422f33a
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Mon Jan 9 09:02:40 2023 +0100
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 0622ff34dcdded39de06986e36f4758a8319e050
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Mon Jan 9 07:57:26 2023 +0000
+
+    p_usrloc: fix default transaction isolation level (gh #3324)
+    
+    (cherry picked from commit ff647697724decb7440dfe3758857a06ab008979)
+    (cherry picked from commit af7d9413385cd03da918777072e7246863849dbb)
+
+commit 3d45b091a6983694fbd440ab2f33f1b7abe8f6a1
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Sun Dec 18 11:17:05 2022 +0100
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit bd0fb7164bda717363fc72a726330ad58d0cc860
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Sat Dec 17 12:54:30 2022 +0200
+
+    registrar: typo
+    
+    (cherry picked from commit c738a65c2fd0a40c3cdc236a3d3b48b0d18add21)
+    (cherry picked from commit a3f5abb0852d8c7d4006724639605cc26e74806b)
+
+commit fe4706dab8851834ecb604160146d9bbd223f247
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Sat Dec 17 12:54:52 2022 +0200
+
+    core: typo instaNces
+    
+    (cherry picked from commit 9cff22564db3664faa7b4b5bef86f5f71ff87bc8)
+    (cherry picked from commit b3b066b9f4164bdb7e502b42f522b42d3b6cce66)
+
+commit 4be9d7bb97149a1401f4cc400aab28e1d8bfddf4
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Sat Dec 17 10:47:54 2022 +0100
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 008199a5737a727dc7929b7797f41f356e4602ef
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 19:29:35 2022 +0200
+
+    xmlrpc: typos an â and
+    
+    (cherry picked from commit 5e7c0dfc626117f9069846cc791bacb5371c0346)
+    (cherry picked from commit 1c8aa0d993bdd62b66a32853b81e1240ad459949)
+
+commit 571761038c02aa8af3ba46f1c3e425b9fbfb7bfa
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 19:45:49 2022 +0200
+
+    xcap_client: typos a/an
+    
+    (cherry picked from commit 4a11beabb586f8615e3518456642088cf398de29)
+    (cherry picked from commit 32472814294689b41591a889e06223ec669dfd08)
+
+commit ccef2f073193728dabe67d1e77c0dc304f0103dc
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 19:41:25 2022 +0200
+
+    usrloc: typos a/an
+    
+    (cherry picked from commit aeb5d17914d8674bd6d4769b8c695fd775ceeea5)
+    (cherry picked from commit 94050e45beefe31af9565cf48e72581cfee7354f)
+
+commit 84ddfa0cd7ca03818be3011d49e5dcba849ca6f3
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 20:00:16 2022 +0200
+
+    userblocklist: typos a/an allowlist
+    
+    (cherry picked from commit 3559be38f361ce58330d9f20248774200248362f)
+    (cherry picked from commit 8b41427ea19c10676d061fc5f270e41d525a5a24)
+
+commit 7f71d08c25132499a1dc0e1a5793f2fcebdb7e25
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 21:22:51 2022 +0200
+
+    uid_uri_db: typo a/an backwards incompatible
+    
+    (cherry picked from commit 435f39330bc1534cde53501df3e87cfd21f00899)
+    (cherry picked from commit 05c2c059513fc45be3a777b660066632d898e580)
+
+commit 3aa804201ba9454637dae2d0899bccd1f5fa5c9b
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 21:23:08 2022 +0200
+
+    uri_db: typo a/an backwards incompatible
+    
+    (cherry picked from commit 74dbc074740b3173ac74c8a3a4b97272ff97c7ba)
+    (cherry picked from commit a676080c8d0d5f16642ddb071d7f7ec8049b677c)
+
+commit f68f8cbf0190dd277b8c01c5b5546c908d3f3a3b
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 21:22:27 2022 +0200
+
+    uid_domain: typo a/an backwards incompatible
+    
+    (cherry picked from commit b2ead7fc6356e0d4479217ddc713cbcb9edfebc2)
+    (cherry picked from commit 689865fbd6750d3c656947e7ab63141708eec3c0)
+
+commit c852a1d11805d1cb9a6e05e16ca9ba7f08025f3e
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 21:22:05 2022 +0200
+
+    uid_avp_db: typos a/an extra
+    
+    (cherry picked from commit 4639db37a599e31cdabadcca29a28345d01e4109)
+    (cherry picked from commit 26a7a05af607fd49f288aa18ed10a76b6c5a3498)
+
+commit d9d0ddf795d6cf4fbd494e345be8d7ffcc5f9471
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 21:21:43 2022 +0200
+
+    uac: typos a/an PV; is send â sent
+    
+    (cherry picked from commit 793da45e083713f958b8ca33f99fad67f82b3a5a)
+    (cherry picked from commit 5d28856d79dc172dde7531cfdbc98a45e734fc0c)
+
+commit 570dfc342879ade085a237a3e28e4c49f6310d93
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 19:46:21 2022 +0200
+
+    tm: typos a/an
+    
+    (cherry picked from commit 861ba0a277f276c577d3d3234c75265b548e09e0)
+    (cherry picked from commit 99d675345b963c0173574a0c5fba5310c55178dc)
+
+commit 5a25b5a88f595525cbf6c9eb8f79f928bcb5e495
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 20:07:18 2022 +0200
+
+    tls: typos a/an
+    
+    (cherry picked from commit 6d8acd1632156f733bff2c7b7ef94789dfcf8a17)
+    (cherry picked from commit ea72045d0e04a3d80f8c614adc33b0dbc99628ac)
+
+commit 24cfdd1dd4b25a60b76d41645dab5217eb6ab906
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 20:07:42 2022 +0200
+
+    sst: typos a/an
+    
+    (cherry picked from commit cabb462bfbc6a1fc9c5dc59c882b6199217be1a7)
+    (cherry picked from commit 31224d0789dea31b046e9f01ed72ffc5f3b60f97)
+
+commit cb9422f114b3a1d0230ad2f0dcf374e5fb1dc32d
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 20:05:20 2022 +0200
+
+    snmpstats: typos a/an
+    
+    (cherry picked from commit 14aeceffebd5f093ae9f23287b7b74b34c2936ca)
+    (cherry picked from commit 6b959e52a9b74122cce73d2436e5f439448a97fb)
+
+commit a2c343bd680f37abac1109d6d45790ee9a8d7875
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 20:13:35 2022 +0200
+
+    siputils: typos a/an
+    
+    (cherry picked from commit 18cbc0fa0a1839b01b3d0134bd593372ab95818e)
+    (cherry picked from commit bf69f8222a9f60f7f8ed048e45386d0713f3591f)
+
+commit 18a11993554e521b413b553d869ca7cafe650cc5
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 21:21:03 2022 +0200
+
+    sipcapture: typos a/an listen
+    
+    (cherry picked from commit dcd357649571d32e2d2689ab332ffe9590b3f44f)
+    (cherry picked from commit 7e5872ef5d07324d9f475910b5b0cbb8fa365f22)
+
+commit 4046d29f6b71fb067d40aa64fa0d0810e284d85d
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 20:29:07 2022 +0200
+
+    seas: typos a/an
+    
+    (cherry picked from commit 48f9b1f6cb57096a1d6c1a9d6bebd8275fd00a97)
+    (cherry picked from commit 55a650b7966c67b4d528b9ffd72642bdd4f3aba7)
+
+commit 421d61b070e49bfd49747aa3492f3db93a517a43
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 20:32:40 2022 +0200
+
+    rtpproxy: typos a/an
+    
+    (cherry picked from commit d9bdb46f98f4ff047e05e0dbebb5b8099c37aaec)
+    (cherry picked from commit 505820834c9dbc9dc965e052a260137851a3cfa6)
+
+commit 3d63e926452e2db074bf4f0666cdf5116d872e3c
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 20:32:14 2022 +0200
+
+    rtpengine: typos a/an
+    
+    (cherry picked from commit 550a46a6bd432cd15307fd50e027ce153252be70)
+    (cherry picked from commit cb47ca453027b24e106c5b4fa8f17a8df5a34bff)
+
+commit 9fd0e429c01287758d98d2837b03e3cdc319a621
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 21:20:38 2022 +0200
+
+    rls: typos a/an
+    
+    (cherry picked from commit bcf5f74e3358ac525eff0be41f3f8a6cef76fc6a)
+    (cherry picked from commit 2911bc5faae3557ecc2a457622ce353616344dcb)
+
+commit 3371bc288b2b923331a6d6f35543b229f3513139
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 21:20:17 2022 +0200
+
+    registrar: typo double a
+    
+    (cherry picked from commit 78a60f39c74d89f84abccad23aa4fe5dbd3f5dd4)
+    (cherry picked from commit 26028b6d4a4d13750424e1fa69ec38b86aa0c709)
+
+commit 1c383f76c12e3b04647db0cef5f01441cff436a0
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 21:16:42 2022 +0200
+
+    ratelimit: typo a/an Kamailio
+    
+    (cherry picked from commit 04fa3a2e6a8c5c45e1ebb7d6b9c14b61e55448b4)
+    (cherry picked from commit 5a7219387ae6a55edc7544a6c114964878b943d9)
+
+commit 8c58dafb4f7df77c860efb336f67b3fa3cc84ba2
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 21:18:56 2022 +0200
+
+    rabbitmq: typo a/an new
+    
+    (cherry picked from commit 063d06b78c88eb3d7727cba369089481847bb7de)
+    (cherry picked from commit 7d7a5a3bdcedf72f550bc58a910aee9ad52d8ff7)
+
+commit 506ce7f78a5d4ff8385896c7ceeab3dda6c008a7
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 21:18:03 2022 +0200
+
+    pua_dialoginfo: typo a/an dialog-info
+    
+    (cherry picked from commit 4756758b30faf5e106f8b9cfe7f762a27e2e1ff9)
+    (cherry picked from commit 27100a4b982272618f62a756bf18343c6aefd549)
+
+commit c576da678f5da0cac4dae430a17c19a399c86b28
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 21:17:38 2022 +0200
+
+    pua: typo a/an transaction
+    
+    (cherry picked from commit 10a7e7735b2f85cd0fce6fb4a305222fcf980f21)
+    (cherry picked from commit 46d4a8c9283448727474e252754b8ba805daee05)
+
+commit 624da63c4488c1755986c386d36969c9ae5667c9
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 21:17:15 2022 +0200
+
+    presence_dialoginfo: typo a/an signed
+    
+    (cherry picked from commit 3cff94c3d5fd2d93e466207182023c42b0945cec)
+    (cherry picked from commit 8975b41b0d58995f06bfc131408032bc3a4ef0f5)
+
+commit 48838bd271a7e30572725f4c9a9f626b502a8d02
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 21:15:39 2022 +0200
+
+    presence: typos a/an
+    
+    (cherry picked from commit 069b7bde2ba133c4cab4dc976dc064c77f66239d)
+    (cherry picked from commit 7755d186732bd65091d2d07681b59ea6d78e170c)
+
+commit d9133961c8780a71bd8735b4c04f82271f0593cb
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 21:14:12 2022 +0200
+
+    pike: typo a/an IP node
+    
+    (cherry picked from commit 3e4e735cb78e3d0ed5aeb4da64bdb01a54e36a28)
+    (cherry picked from commit e7735db0b269927ea1b29719c5123a16c8b74401)
+
+commit e7857ecea22f1ab189e1a033a9708794cbcaf005
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 20:30:04 2022 +0200
+
+    permissions: typos a/an
+    
+    (cherry picked from commit e2dda4d4e4d3201080d0a94e534aa320d8e80a95)
+    (cherry picked from commit 71ae6613e0783b2b05797c041856f3d1979b8740)
+
+commit 0959b8a83a4528b6b98a457dac025120d6dfefcb
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 20:35:00 2022 +0200
+
+    peering: typos a/an
+    
+    (cherry picked from commit 29b3f25fa63ef3de9c2b0c8e571e9a1b37a64f93)
+    (cherry picked from commit 8682d69573144a47283420e5ebaf072c6b17590e)
+
+commit 0dfc84c6f40d1e2cdeed85a4c7a2cd2dc85d4ffa
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 21:13:50 2022 +0200
+
+    pdt: typo a/an entry
+    
+    (cherry picked from commit dd02862266a42fd22ef93f2788648c3a3c78ae95)
+    (cherry picked from commit 0aa296365d131f6c2d2ec04d3452e845e1cc1961)
+
+commit 77e77d67e44611b2ddbed927ff200375e641f7fd
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 21:12:51 2022 +0200
+
+    pdb: typo a/an pseudo-variable
+    
+    (cherry picked from commit a93b757ea092db2e6e6b1cc89a3e7ddb2fb5c757)
+    (cherry picked from commit 0378446680f60d02cf551fc249740061c8c6237d)
+
+commit 9d9c4b1f49d9c579fbf2a75cf120283a3449e646
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 21:12:24 2022 +0200
+
+    p_usrloc: typos a/an
+    
+    (cherry picked from commit 69a72618ceb6438c36301f58868dd7e80022355c)
+    (cherry picked from commit 306a5b1c43211206ca134c96be76bb8c201ac5ef)
+
+commit 6e6eb9ec655c8985907aa4594b70e52b23e8ba6a
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 21:11:37 2022 +0200
+
+    osp: typo be send ââ¯sent
+    
+    (cherry picked from commit c5d73f86e19172c2fc1293e6e10fa2903032e7c5)
+    (cherry picked from commit b28b6664361e380be3ed666f485227f1a08e75d0)
+
+commit a3ecc9fbcbbb91c6a46064302536c607da0f3d69
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 21:10:54 2022 +0200
+
+    ndb_cassandra: typo a/an integer
+    
+    (cherry picked from commit b208f915df8b7b5f83bbf95ab622f3773f76c839)
+    (cherry picked from commit eb49f0ff9a7cb78a50a5b6d2e8b597d2833b6bb7)
+
+commit a9aee20cefa1328e90343575688dc8a0d549d162
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 21:10:13 2022 +0200
+
+    nathelper: typo a/an IPv6 reference
+    
+    (cherry picked from commit 942a8a89e53a3a77109acdc2bc3c34468faa1b75)
+    (cherry picked from commit 59120fdf3da8e19f6253e946797a7ec44e88837d)
+
+commit b256f9a718d342097f327b92093bfdd763ec061c
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 21:08:57 2022 +0200
+
+    nat_traversal: typos a/an
+    
+    (cherry picked from commit e69a729fba3ed2b527f66ccf5640156eeb9ae36d)
+    (cherry picked from commit 7823a618c7358da9bf157d5cde0ec9ae135f0d36)
+
+commit 177c936ee16cac86d4270fff946e88255fdbcaf3
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 21:04:39 2022 +0200
+
+    mqtt: typos a/an
+    
+    (cherry picked from commit 0367dab157f5b755bf9bd2cc0452bae6eaea71e2)
+    (cherry picked from commit 866d72af08022c18314f3d6de7829652a8229955)
+
+commit 0c3042dcae4887de1758d5390c04f16348849bfe
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 21:03:39 2022 +0200
+
+    matrix: typo a/an pseudo-variable; spelling is send â sent
+    
+    (cherry picked from commit 7a595ea7acb43149476bf033ac67e7fdd27e06d2)
+    (cherry picked from commit e8a76b9def95bb4d8a2cd986bbedff6e38cfd476)
+
+commit 43585ca345ac74b41b61372a3e2da102ff86106f
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 21:03:09 2022 +0200
+
+    mangler: typo a/an filter
+    
+    (cherry picked from commit 01a70ae52aef6926098feac64ca79605e16fa058)
+    (cherry picked from commit 9b747286db23ac59eae3e70ef30b6e9c6450099f)
+
+commit 50542c1786431acd127e98e63e0eca1fe51b59fc
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 21:01:55 2022 +0200
+
+    kafka: spellig atTribute
+    
+    (cherry picked from commit 648a1b7f4bdf9d0a99815dc6a3b3bd8f3450884c)
+    (cherry picked from commit 58361306239d4bf0bb56d817ed9bdf783576dfd1)
+
+commit 0b160e3c9470ead2a512900a1a3f40b3f87da904
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 20:57:23 2022 +0200
+
+    ims_usrloc_scscf: typos a/an IMPU
+    
+    (cherry picked from commit 8165d77587106d17f11785299dabd8fc10d58f87)
+    (cherry picked from commit 45d16fcfc292120b5008db1e58ea47d5389697ca)
+
+commit a9ddf54ffc266f504a37685e84155f2932150c60
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 20:54:38 2022 +0200
+
+    ims_registrar_scscf: typos a/an
+    
+    (cherry picked from commit b648b2cb2ef77b4ab1ff42a5cc16db1f059b1e0b)
+    (cherry picked from commit 55e2cd2a8024e3bed4e1ada74923bc16280e3970)
+
+commit c727f703c5aa87661368488a2b67ef8ab5efde52
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 20:56:37 2022 +0200
+
+    ims_registrar_pcscf: typo a/an IMPU
+    
+    (cherry picked from commit 58ba041e536c0f667e4bae8c4e1be48add0c0815)
+    (cherry picked from commit 9b60dc8070c6b9d887a8468e7c4712c89e0bab19)
+
+commit ff9a3753bb859160b01f08164d586bfc7ee49aef
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 20:56:11 2022 +0200
+
+    ims_qos: typos a/an
+    
+    (cherry picked from commit 6804318f811833167989d4d9f7bc4e19baa211c8)
+    (cherry picked from commit 56e2ae99f443b30e2ad9bc931192aed51a774728)
+
+commit 07615849c08ca176948e8d45dcc6eb21d21296d3
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 20:55:04 2022 +0200
+
+    ims_icscf: typos a/an
+    
+    (cherry picked from commit f5c0ee927c4b61a623b9c93e476f68ac0a050558)
+    (cherry picked from commit be0cdd0c39c51288ceca842b1ed1efa6cc8cc87f)
+
+commit 5a2839e1e25581058f1135a10c2538c841dc3147
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 20:55:37 2022 +0200
+
+    ims_isc: typos a/an
+    
+    (cherry picked from commit e1a8136fdad06bce8bedaca58ad38e0e8d8b1c51)
+    (cherry picked from commit 5c19f106aadd80b61314e7bd18a3f2532d749d0c)
+
+commit 1de970f31b292b78bb80e7736b6be63f5a91d29c
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 20:53:56 2022 +0200
+
+    ims_dialog: typos a/an
+    
+    (cherry picked from commit dc5df5d917e9443ef4daa47e60d673fe0e547f85)
+    (cherry picked from commit 0af00e49fc67b82e25a3fde75fada9258d697f2f)
+
+commit ef1668445da6d172068ab3eac94ec88a5bd23aa8
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 20:51:06 2022 +0200
+
+    ims_charging_mod: typos a/an
+    
+    (cherry picked from commit dc499e21823a676f96fa43137d4eaa58b89de444)
+    (cherry picked from commit 6aee80d57e8350525fb59017fc7e817ba332e08a)
+
+commit 7d9b2cfd04c14d24f8a8640c3e736f5084377f3d
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 20:50:34 2022 +0200
+
+    ims_auth: typos a/an
+    
+    (cherry picked from commit 3846d9fdb24be2e3aeb2e3199a91c66661820423)
+    (cherry picked from commit 844c92770f7fe4e36b7500e0d1b4b5513e96cd1d)
+
+commit 4d85a5b938a51e8162247da509d48fd864eed7e8
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 20:49:37 2022 +0200
+
+    imc: typo a/an user
+    
+    (cherry picked from commit 6f06537d0e5b661c91d413a1d3a48d2203dd749a)
+    (cherry picked from commit 6903199f300db89b0d7dc027acf6238b318cf3b7)
+
+commit 29ba1960f5b23a522aeda7243f7ddc38e68d6f72
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 20:49:20 2022 +0200
+
+    http_client: typo a/an value
+    
+    (cherry picked from commit 830b136f202913887c25ef46968351741d17fda2)
+    (cherry picked from commit 177f3e19fe0e99eb717bef5eb178af685a6c85db)
+
+commit 528a20a73b0d3a2d406dd44c2825fe8fdf76c2e2
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 20:47:49 2022 +0200
+
+    h350: typo a/an Kamailio
+    
+    (cherry picked from commit 14d4a2203212020df9a8338504636cc9aeb817ed)
+    (cherry picked from commit 3ef572bbec9900a4f2fef0e9edc911729c33a873)
+
+commit 61b1ad04dfa348efb392d697f693cf9f2ba5cef8
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 20:29:40 2022 +0200
+
+    gzcompress: typos a/an
+    
+    (cherry picked from commit fc00785e67797b43b0d3029891d107766a9e20fe)
+    (cherry picked from commit 7e8e3dde3f6bee81b6fa80e7deb5fe22137d43f3)
+
+commit 839c2198f26a93e5b1fd081c38a1b61f081f0bcb
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 20:46:28 2022 +0200
+
+    erlang: typo a/an name
+    
+    (cherry picked from commit a4839ae4102d9df742b4c6b7077ab080364563b1)
+    (cherry picked from commit 6c4cdc67be3eeccb96dde1149d77500649e9811e)
+
+commit f92b921696a6c1c3f5d146f51751e2a95e6c83ea
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 20:27:43 2022 +0200
+
+    drouting: typos a/an
+    
+    (cherry picked from commit 895f7339474bfe9d947afe8980234ba7a345bc9b)
+    (cherry picked from commit 30274cfe1f4a68e0101de726875f2229a1de2fbf)
+
+commit 4fbd74a338318251a887d26887349aec656bd9b8
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 20:45:46 2022 +0200
+
+    domainpolicy: typo a/an backwards
+    
+    (cherry picked from commit 2d246fb8f4768df2c25d18c47ad1f43a0e698e4c)
+    (cherry picked from commit 925b254cf995a3bd1422fc72bfad1d1cff5fc1b3)
+
+commit 5c6aaa1e72550fde29d72892ddc271bbe8caf662
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 20:45:17 2022 +0200
+
+    domain: typo a/an backwards
+    
+    (cherry picked from commit 772e74a5b036974ba856aba0689af21ceefa27c6)
+    (cherry picked from commit eb1e8338324493cd9fa60c199a2c6c46d93022ca)
+
+commit e3e295a8d5851f9e3a4b8362448730f6783934a5
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 20:44:37 2022 +0200
+
+    dispatcher: spelling be send â sent
+    
+    (cherry picked from commit e8fd436486e69c04a791c29196f353896f85d772)
+    (cherry picked from commit 3e9883c34a647a166f82c89e3690a070ea726f4b)
+
+commit 9868cb187677211ce218ed36c43ecafed5471bbb
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 20:42:50 2022 +0200
+
+    dialplan: typo a/an script
+    
+    (cherry picked from commit ea6ba98b9a018a07e894100b0ede662648d88edf)
+    (cherry picked from commit 12063efa4a1c368092c5a63cc0a8ee9a29819cb3)
+
+commit 2cf9f0e5d0a0b2ae0d3b63c918aea67599a48588
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 20:42:05 2022 +0200
+
+    debugger: typos a/an breakpoint
+    
+    (cherry picked from commit e663654fdea87e1be6b30da355f8bf5020ad4507)
+    (cherry picked from commit 9713e3925b7e59e678ab50307f14853cfd76703d)
+
+commit cda229a3dbc149dcece4c44f2eb7240ff9201e35
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 20:41:18 2022 +0200
+
+    db_postgres: typos a/an
+    
+    (cherry picked from commit 137680b9ce564bed5c6a40a448feb1bd6f9ff0ce)
+    (cherry picked from commit 5edc748a388b79b9b8b5d978ee472fab6818010e)
+
+commit 2290428b3db588ff5a9b1776226901e7860ab953
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 20:40:29 2022 +0200
+
+    db_mysql: typo a/an connection
+    
+    (cherry picked from commit 6bf0eb63f9c3db33e2fa70a2207e3da3bcf74051)
+    (cherry picked from commit 626af6bb548206476de52167abe7f15ceb08644f)
+
+commit 3886d5ceb1d5c60953aa9ed56ecff2f8818a1690
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 20:37:13 2022 +0200
+
+    db_cassandra: typos a/an
+    
+    (cherry picked from commit 918b73c92ed86599e67adda2b1f7a864c500efb5)
+    (cherry picked from commit d2ac4093bd80461f52efb5c998ea8fec9fad2b68)
+
+commit 527f61bfb9f2579fa9c8acf458264d8283508a6c
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 20:31:31 2022 +0200
+
+    dialog: typos a/an
+    
+    (cherry picked from commit c5e128fec48d5572bbad898c879c4376f141e619)
+    (cherry picked from commit 251a38d689d952d6ac089be1e2cb50d1a82eebff)
+
+commit d3d43ec6e02cc205729d1a3e22be1a92131b62d5
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 20:28:24 2022 +0200
+
+    ctl: typos a/an
+    
+    (cherry picked from commit 21ce96a931e578be8e9a6897b406af63f18451e5)
+    (cherry picked from commit 11d16a3746ed6f680120db38168e8928fe528f37)
+
+commit 7b7f31d5891329ac930955b2b1ea23f8a53d83f4
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 20:36:25 2022 +0200
+
+    crypto: spelling
+    
+    (cherry picked from commit ab8f951917609f373bc62b6bc93baa33559e336c)
+    (cherry picked from commit 04dbe1a1c3a08e93bcf766a2fa2cab1474b6434f)
+
+commit a0a09dba735c0fabf883358b542aba200e5f7ea3
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 20:35:52 2022 +0200
+
+    cplc: typos a/an
+    
+    (cherry picked from commit 3ac5a9f78f4c8e1b5b6f660d442b15a72336d80d)
+    (cherry picked from commit fb14da427cd26db731243b5208827217572aca9e)
+
+commit bfb026c04ac0257e1994d56812e0cc37fae98f0c
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 20:35:30 2022 +0200
+
+    cfgutils: typos a/an
+    
+    (cherry picked from commit 0e3ad10aba2d82d7eccebbe608fda15e4f49ef20)
+    (cherry picked from commit 9f47746ca3606e0129c011fed1fa1a5eff449153)
+
+commit 27c79c7208228e0363caea739b1490e7f3fb613c
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 20:14:25 2022 +0200
+
+    cdp: typos a/an
+    
+    (cherry picked from commit 96d720c7c7c495ac3cf556700c76b20fedec8ec3)
+    (cherry picked from commit a7cca608ad1d82df78cef69d2dc089c5af7818b3)
+
+commit eac694e94956d4de70c98406b4b881913f2b0e6d
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 20:26:08 2022 +0200
+
+    carrierroute: typos a/an
+    
+    (cherry picked from commit f5986119f9a55c3c91f61788ad3b3f00f2399585)
+    (cherry picked from commit 11c158cc88b8d67d6ea1dca9c917319742e9a367)
+
+commit ee0a2ec0e2af416597936eb3a3122371d622a655
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 19:51:24 2022 +0200
+
+    call_obj: typos a/an increasing
+    
+    (cherry picked from commit 3f827af3e834d603f72a64b7d2142aa94b83cf52)
+    (cherry picked from commit 917da580ddee5557aa85c2d35df1c1efba0c4dc9)
+
+commit 9b4f741fe8cac5d56a1b76bbc659f3d47fc948c1
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 19:50:46 2022 +0200
+
+    avp: typos a/an string
+    
+    (cherry picked from commit 2e86db5adf67b4d30989055bd960c2a8632f64d3)
+    (cherry picked from commit ea41c8b587228bf5324669941dd05af09792503a)
+
+commit 538aedf3bfea8de9746e3e18915b3c052846aad7
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 19:50:20 2022 +0200
+
+    auth_radius: typos a/an
+    
+    (cherry picked from commit f15ef784f9abddabd8b97eb4ca6e89054250b418)
+    (cherry picked from commit 0a6493ccd11f2d7503a848fb02fa82670c81ca14)
+
+commit b1741a09eba82de6f0c3f5af4ccd900da4c66bdf
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 19:49:09 2022 +0200
+
+    auth_identity: typos an other ââ¯another
+    
+    (cherry picked from commit 5836706a63368d8424dc2bed8426bf1ac4bdc097)
+    (cherry picked from commit 322f59b7086c3c5a95026f905e8ca419b7c37370)
+
+commit 6cdc36ca013f973a4d021942e51181074028be54
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 19:48:44 2022 +0200
+
+    auth_diameter: typos a/an
+    
+    (cherry picked from commit 4a4dfb6e92c1abf5c37e65ac571cc88e0ec13025)
+    (cherry picked from commit b2b0ed65b1e23aaf0fdc7adc7e6e6cfd93c59878)
+
+commit 0c5b89a0dd92a77c1413cceecb4038bcc5a871e8
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 19:48:16 2022 +0200
+
+    auth_db: typos a/an
+    
+    (cherry picked from commit c92c396b886f9808935d5103710652a2c365639e)
+    (cherry picked from commit 5fa694c15612bcbecaf1608e7d02eac9f2bfeddf)
+
+commit 024fa8d64e6e1e36ef9e0c38f52f2e3d277e1c43
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 19:59:34 2022 +0200
+
+    auth: typos a/an opaque
+    
+    (cherry picked from commit 0be9582347182271a0a4f1a3bb2c93080d172a03)
+    (cherry picked from commit b647c42a2b43d4ece1f51a41a705e9b5df71e3c6)
+
+commit 8670428d03f7459f462f54624d1daf3807f9a1c9
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 19:46:48 2022 +0200
+
+    app_sqlang: typos a/an
+    
+    (cherry picked from commit 5591a7dae08bb85f077ab0efa7b2876f9673b8cb)
+    (cherry picked from commit 1e3f7100b421923c43be95aeb108e64cbcfea1cc)
+
+commit c5e9a54e5102b03e1a449cebe5ceaf76646b026c
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 19:44:58 2022 +0200
+
+    app_perl: typos a/an
+    
+    (cherry picked from commit 09b657ad9a646b255e7b69aa402352a83172bad2)
+    (cherry picked from commit 13b91640b13e1313864c71c310a851cb4329a675)
+
+commit fc46609d6ffeea6bb8014b8bd0e394d58d503b1f
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 19:43:08 2022 +0200
+
+    app_jsdt: typos a/an
+    
+    (cherry picked from commit 99201809d08f0d10957860a6fc33ba81cd4ca0d5)
+    (cherry picked from commit ddf46d61ac9a6ceae6d28915ba614c9f2c6c2f1c)
+
+commit 5a55dd513c4588f39194f857869797ccdfaa9ebd
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 19:28:26 2022 +0200
+
+    acc_diameter: typos a/an
+    
+    (cherry picked from commit 932058b9eacb934a75279ab26ce57e53a75c5c79)
+    (cherry picked from commit 32ed7b1bdb497880c29a3eebdaf45a5b4d3c6208)
+
+commit 4e4a5ff15924aa4ecff0aa9b56ce19253ac7d922
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 19:27:44 2022 +0200
+
+    acc: typos a/an
+    
+    (cherry picked from commit 55c77f09660cb4fc54338ad09138df74a53c9205)
+    (cherry picked from commit f4a828949feabdc67f70d2a1bf76860a19a75c9e)
+
+commit 9212197773ef1672c889d5cb866d7090b9997e69
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 19:26:33 2022 +0200
+
+    misc/examples: typos
+    
+    (cherry picked from commit d5881bad81146b7e3aae7b7866158155df76cf16)
+    (cherry picked from commit 17fe8fb7d586cbf4b3f1e4d4b6cc191cbb26c4ad)
+
+commit 5257984ca6c51befb3aff62fe8062be0c5d92b5e
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 19:24:25 2022 +0200
+
+    src/Makefile{,.utils}: typos a/an
+    
+    (cherry picked from commit 59f4690cbdabe80966d71172b455572dfe9e0314)
+    (cherry picked from commit ea6e9a3453fb28d37b0ba521586133b6b1560238)
+
+commit 309a9389b980b8f891555edd8d0e6cdd7317a1ec
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 19:23:09 2022 +0200
+
+    doc/: typos a/an
+    
+    (cherry picked from commit a254a91c79449adf8b744e2b093028d0c3c90093)
+    (cherry picked from commit bcaf87e313ad912e303951bf28935a7218fb53e3)
+
+commit df14b6d50677fc8d4bc8ae15a74d3413d0c90779
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 19:21:02 2022 +0200
+
+    lib/: typos a/an
+    
+    (cherry picked from commit 039686530730bf4b0a75eca626266255f3932cca)
+    (cherry picked from commit e3661028080df0baf0323180995b48829457dcd7)
+
+commit de78c161c95a0496640825e4fa015814dae4ad08
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 19:20:21 2022 +0200
+
+    utils/: typos a/an
+    
+    (cherry picked from commit 664e9d1677b5802b08fa26d885f4ec89ddef1ac5)
+    (cherry picked from commit 1706532eed9cfe243f4035ccb66365ed42f0044b)
+
+commit 65f8868f7dc4f06f78034b7def09f3a342edba8c
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 19:19:30 2022 +0200
+
+    test/: typos a/an
+    
+    (cherry picked from commit e24de6868030747438e7c9c33bbd953f4f687474)
+    (cherry picked from commit 3f04422e62c204c88dccc7b8d0099c6e7aec4ec7)
+
+commit 3687b07647e09b71e5e29bd2a5082ea03850258d
+Author: ÐÐ¸Ð»ÑÐ½ ÐÐ°Ð»Ð°ÑÐ·Ð¾Ð² <git-dpa@aegee.org>
+Date:   Mon Dec 12 19:18:35 2022 +0200
+
+    core: typos a/an
+    
+    (cherry picked from commit 521bf3d52fcb56198386bd4fc23f85693bc3d5f9)
+    (cherry picked from commit 2f83a4d5a61c10e7dcb7f27992619a5c1284bbaf)
+
+commit 7f54d4cc0133612b275b6b3af1ccd80a7a08bf87
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Thu Dec 15 14:32:43 2022 +0100
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit baf97015f33d4542fe2925c599d5cc3fb0527450
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Thu Dec 15 13:22:06 2022 +0000
+
+    sanity: also add Contact URI check to documentation
+    
+    (cherry picked from commit b96848689837277d9bc0ec9c1b5524de0f1321e1)
+    (cherry picked from commit 78e181d82e5802e5b96b05cf9f1d9e54dbd1546d)
+
+commit ddc188bcd049220dfa73a090bb23ed5451a9907e
+Author: Bastian Triller <bastian.triller@gmail.com>
+Date:   Thu Dec 15 10:48:40 2022 +0100
+
+    sanity: Prevent segfault
+    
+    For star Contacts, there are no URIs that can be checked.
+    
+    (cherry picked from commit f1bac3433c61b0a5b4be08e7738a3a1aa0defe73)
+    (cherry picked from commit ee9cbc7585fb645bfa7117f8cd5122f3ae260d57)
+
+commit c2cb540a2a1819e203854c54e2bcd04cd7f0d966
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Wed Dec 14 08:38:12 2022 +0000
+
+    utils/kamcmd: add missing USE_READLINE define for pkg-config build, related to #3284
+    
+    (cherry picked from commit a70b6bf09c73d961ebea1947216757fafb951c24)
+    (cherry picked from commit 6ca691df40134abf53feb5d785c90618dcfa5c05)
+
+commit e75897a1406a07f0376278ddc54188bce99ae6f5
+Author: Trevor Peirce <trev@acrovoice.ca>
+Date:   Wed Nov 30 13:28:01 2022 -0800
+
+    stirshaken: Properly handle intermediary/chain certificates when caching certificates
+    
+    - requires patch to libstirshaken (PR 124) to do anything
+    - if patched version of libstirshaken detected, uses new methods to store all intermediary certs
+    - unrelated minor logging tweaks
+    
+    (cherry picked from commit 043ce0e75eae04f356cd539f2146df6846a169e2)
+    (cherry picked from commit 7bb9cadb1cec146cc6f0b5dafb2d50920dc40bcf)
+
+commit 6816f8070c931adba83e93616e29fb7fb70d84f0
+Author: Victor Seva <vseva@sipwise.com>
+Date:   Mon Dec 5 12:43:11 2022 +0100
+
+    pv_headers: fix t_resume scenario
+    
+    (cherry picked from commit af1d9c156e0a69c9e3f39a063f7dd97d1c0a7bf1)
+    (cherry picked from commit 0b52ac67fe12fab9127f30711313470257d32eaa)
+
+commit fbb5e7a736ce0798a7393ada6e0f109a490d027a
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Fri Aug 19 13:17:46 2022 +0000
+
+    tm: backup and restore X/AVP values from initial transaction in DNS failover processing
+    
+    - restore X/AVP values from initial transaction in DNS failover processing
+    - the X/AVP context gets lost, so we need to re-create it from the transaction
+    - otherwise modules that depends on the X/AVPs, e.g. topology hiding will not work
+    - tested with one load-balancer and two proxy servers
+    - previous fix d6b1c20d3ad94 was reverted, we now properly backup and restore
+    
+    (cherry picked from commit 399b34c6bd4e5cbfcf4dcb699755c393229fcb99)
+    (cherry picked from commit 2b5b3a7fb5a26dc467a60e5e70c8b3515f57bc85)
+
+commit 0ad72e16757e86b6e3be9095d2e6282e9ba1690f
+Author: Frits Wiersma <cfwiersma@solcon.nl>
+Date:   Wed Jun 22 21:50:44 2022 +0200
+
+    acc: Fix reason code for locally generated replies. (#3137)
+    
+    * acc: Fix reason code for locally generated replies.
+    
+    - Use heap memory for the reason code instead of the stack memory.
+    - See issue #2981
+    
+    * acc: Remove code which was commented out.
+    
+    - Code was commented out in the previous pull request. (#3137).
+    - This has now been corrected.
+    
+    (cherry picked from commit e74cb2371ab879874a8981818139024f1c2beb9e)
+
+commit fdfb8c5563bd327774802cb08b68b27faee2e840
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Wed Nov 16 16:05:42 2022 +0000
+
+    dialog: remove dialog variable debugging function, it might cause race conditions
+
+commit c4e70496f521a265240736c389716a7dac14893f
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Wed Sep 21 18:34:04 2022 +0000
+
+    kex: add additional safety checks for printing, based on PR #3250 from bensly-shanmugam
+    
+    (cherry picked from commit e241f7b8a07b24fba6d6ecf2c344a39d2b2b5859)
+
+
+===================== 2022-09-19 Version 5.5.5 Released =====================
+
+===================== Changes Since Version 5.5.4 ===========================
 
 
 commit b92a8a0db4cfa25f6c9231c4bc855ff3fb3a5845
