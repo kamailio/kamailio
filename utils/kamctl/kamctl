@@ -73,6 +73,10 @@ if [ -z "$MYLIBDIR" ] ; then
 	fi
 fi
 
+if [ -z "$STARTUP_CONFIG_FILE" ]; then
+	STARTUP_CONFIG_FILE="kamailio.cfg"
+fi
+
 ##### ------------------------------------------------ #####
 ### load base functions
 #
@@ -2007,9 +2011,9 @@ kamailio_start() {
 		exit 1
 	fi
 	if [ $SYSLOG = 1 ] ; then
-		$KAMBIN -P $PID_FILE  -f $ETCDIR/kamailio.cfg $STARTOPTIONS 1>/dev/null 2>/dev/null
+		$KAMBIN -P $PID_FILE  -f $ETCDIR/$STARTUP_CONFIG_FILE $STARTOPTIONS 1>/dev/null 2>/dev/null
 	else
-		$KAMBIN -P $PID_FILE -E  -f $ETCDIR/kamailio.cfg $STARTOPTIONS
+		$KAMBIN -P $PID_FILE -E  -f $ETCDIR/$STARTUP_CONFIG_FILE $STARTOPTIONS
 	fi
 	sleep 3
 	if [ ! -s $PID_FILE ] ; then

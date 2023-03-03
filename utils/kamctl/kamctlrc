@@ -159,6 +159,10 @@
 ## PID file path - default is: /run/kamailio/kamailio.pid
 # PID_FILE=/run/kamailio/kamailio.pid
 
+## Kamailio Startup Configuration File
+## Default is: kamailio.cfg
+# STARTUP_CONFIG_FILE=kamailio.cfg
+
 ## Extra start options - default is: not set
 ## example: start Kamailio with 64MB shared memory: STARTOPTIONS="-m 64"
 # STARTOPTIONS=
