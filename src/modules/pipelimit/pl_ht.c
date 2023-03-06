@@ -248,6 +248,51 @@ pl_pipe_t* pl_pipe_get(str *pipeid, int mode)
 	return NULL;
 }
 
+int pl_pipe_rm(str *pipeid)
+{
+	unsigned int cellid;
+	unsigned int idx;
+	pl_pipe_t *it;
+	pl_pipe_t *it0;
+
+	if(_pl_pipes_ht==NULL)
+		return -1;
+
+	cellid = pl_compute_hash(pipeid);
+	idx = pl_get_entry(cellid, _pl_pipes_ht->htsize);
+
+	lock_get(&_pl_pipes_ht->slots[idx].lock);
+	it = _pl_pipes_ht->slots[idx].first;
+	while(it!=NULL && it->cellid < cellid) {
+		it = it->next;
+	}
+	while(it!=NULL && it->cellid == cellid) {
+		if(pipeid->len==it->name.len
+				&& strncmp(pipeid->s, it->name.s, pipeid->len)==0) {
+			it0 = it;
+			it = it->next;
+			if(it0->prev==NULL) {
+				_pl_pipes_ht->slots[idx].first = it;
+			} else {
+				it0->prev->next = it;
+			}
+			if(it) {
+				it->prev = it0->prev;
+			}
+			_pl_pipes_ht->slots[idx].ssize--;
+			pl_pipe_free(it0);
+
+			lock_release(&_pl_pipes_ht->slots[idx].lock);
+			return 1;
+		}
+		it = it->next;
+	}
+	lock_release(&_pl_pipes_ht->slots[idx].lock);
+
+	return 0;
+}
+
+
 void pl_pipe_release(str *pipeid)
 {
 	unsigned int cellid;
@@ -389,7 +434,7 @@ extern int _pl_cfg_setpoint;
 extern double *_pl_pid_setpoint;
 
 /**
- * checks that all FEEDBACK pipes use the same setpoint 
+ * checks that all FEEDBACK pipes use the same setpoint
  * cpu load. also sets (common) cfg_setpoint value
  * \param	modparam 1 to check modparam (static) fields, 0 to use shm ones
  *
@@ -579,3 +624,19 @@ void rpc_pl_set_pipe(rpc_t *rpc, void *c)
 	}
 }
 
+void rpc_pl_rm_pipe(rpc_t *rpc, void *c)
+{
+	str pipeid;
+	int ret;
+
+	if (rpc->scan(c, "S", &pipeid) < 1) return;
+
+	LM_DBG("rm pipe: %.*s\n", pipeid.len, pipeid.s);
+	ret = pl_pipe_rm(&pipeid);
+
+	if (ret <= 0) {
+		LM_ERR("no pipe: %.*s\n", pipeid.len, pipeid.s);
+		rpc->fault(c, 404, "Pipe not removed - %.*s", pipeid.len, pipeid.s);
+		return;
+	}
+}
