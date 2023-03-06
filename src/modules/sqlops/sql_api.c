@@ -677,6 +677,9 @@ int sql_parse_param(char *val)
 	if(p>in.s+in.len || *p=='\0')
 		goto error;
 	name.len = p - name.s;
+	if(name.len==0) {
+		goto error;
+	}
 	if(*p!='=')
 	{
 		while(p<in.s+in.len && (*p==' ' || *p=='\t' || *p=='\n' || *p=='\r'))
