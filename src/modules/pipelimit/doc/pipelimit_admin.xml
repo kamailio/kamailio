@@ -658,6 +658,31 @@ kamcmd pl.set_pipe 2 RED 10
 ...
 		</programlisting>
 	</section>
+	<section id="pipelimit.r.pl.rm_pipe">
+		<title>
+		<function moreinfo="none">pl.rm_pipe</function>
+		</title>
+		<para>
+		Remove the pipe structure matching the given pipe id.
+		</para>
+		<para>
+		Name: <emphasis>pl.rm_pipe</emphasis>
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>
+			<emphasis>pipe_id</emphasis> - pipe id.
+			</para></listitem>
+		</itemizedlist>
+		<para>
+		RPC Command Format:
+		</para>
+		<programlisting  format="linespecific">
+...
+kamcmd pl.rm_pipe p01
+...
+		</programlisting>
+	</section>
 	<section id="pipelimit.r.pl.get_pipes">
 		<title>
 		<function moreinfo="none">pl.get_pipes</function>
