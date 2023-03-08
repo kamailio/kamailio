@@ -829,12 +829,17 @@ const char *rpc_pl_rm_pipe_doc[2] = {
 	"Remove a pipe: <pipe_id>", 0
 };
 
+const char *rpc_pl_reset_pipe_doc[2] = {
+	"Reset the value of a pipe: <pipe_id>", 0
+};
+
 /* rpc function implementations */
 void rpc_pl_stats(rpc_t *rpc, void *c);
 void rpc_pl_list(rpc_t *rpc, void *c);
 void rpc_pl_get_pipes(rpc_t *rpc, void *c);
 void rpc_pl_set_pipe(rpc_t *rpc, void *c);
 void rpc_pl_rm_pipe(rpc_t *rpc, void *c);
+void rpc_pl_reset_pipe(rpc_t *rpc, void *c);
 
 void rpc_pl_get_pid(rpc_t *rpc, void *c) {
 	rpl_pipe_lock(0);
@@ -876,6 +881,7 @@ static rpc_export_t rpc_methods[] = {
 	{"pl.list",       rpc_pl_list,      rpc_pl_list_doc,      RET_ARRAY},
 	{"pl.get_pipes",  rpc_pl_get_pipes, rpc_pl_get_pipes_doc, RET_ARRAY},
 	{"pl.set_pipe",   rpc_pl_set_pipe,  rpc_pl_set_pipe_doc,  0},
+	{"pl.reset_pipe", rpc_pl_reset_pipe, rpc_pl_reset_pipe_doc, 0},
 	{"pl.rm_pipe",    rpc_pl_rm_pipe,   rpc_pl_rm_pipe_doc,   0},
 	{"pl.get_pid",    rpc_pl_get_pid,   rpc_pl_get_pid_doc,   0},
 	{"pl.set_pid",    rpc_pl_set_pid,   rpc_pl_set_pid_doc,   0},

@@ -624,6 +624,30 @@ void rpc_pl_set_pipe(rpc_t *rpc, void *c)
 	}
 }
 
+void rpc_pl_reset_pipe(rpc_t *rpc, void *c)
+{
+	pl_pipe_t *it;
+	str pipeid;
+
+	if (rpc->scan(c, "S", &pipeid) < 1) return;
+
+	LM_DBG("reset pipe: %.*s\n", pipeid.len, pipeid.s);
+
+	it = pl_pipe_get(&pipeid, 1);
+	if (it==NULL) {
+		LM_ERR("no pipe: %.*s\n", pipeid.len, pipeid.s);
+		rpc->fault(c, 404, "Unknown pipe id %.*s", pipeid.len, pipeid.s);
+		return;
+	}
+
+	it->counter = 0;
+	it->last_counter = 0;
+	it->load = 0;
+	it->unused_intervals = 0;
+
+	pl_pipe_release(&pipeid);
+}
+
 void rpc_pl_rm_pipe(rpc_t *rpc, void *c)
 {
 	str pipeid;
