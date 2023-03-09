@@ -46,7 +46,7 @@ static int mod_init(void);
 static void destroy(void);
 
 static int secret_param(modparam_t _type, void *_val);
-struct secret *secret_list = NULL;
+struct secret **secret_list = NULL;
 gen_lock_t *autheph_secret_lock = NULL;
 
 autheph_username_format_t autheph_username_format = AUTHEPH_USERNAME_IETF;
@@ -125,7 +125,7 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if (secret_list == NULL)
+	if (secret_list == NULL || *secret_list == NULL)
 	{
 		LM_ERR("secret modparam not set\n");
 		return -1;
@@ -172,14 +172,14 @@ static void destroy(void)
 {
 	struct secret *secret_struct;
 
-	if (secret_list != NULL)
+	if (secret_list != NULL && *secret_list != NULL)
 	{
 		SECRET_UNLOCK;
 		SECRET_LOCK;
-		while (secret_list != NULL)
+		while (*secret_list != NULL)
 		{
-			secret_struct = secret_list;
-			secret_list = secret_struct->next;
+			secret_struct = *secret_list;
+			*secret_list = secret_struct->next;
 
 			if (secret_struct->secret_key.s != NULL)
 			{
@@ -188,6 +188,10 @@ static void destroy(void)
 			shm_free(secret_struct);
 		}
 		SECRET_UNLOCK;
+	}
+
+	if (secret_list != NULL) {
+		shm_free(secret_list);
 	}
 
 	if (autheph_secret_lock != NULL)
@@ -226,12 +230,22 @@ static inline int add_secret(str _secret_key)
 	memset(secret_struct, 0, sizeof (struct secret));
 	secret_struct->secret_key = _secret_key;
 	SECRET_LOCK;
-	if (secret_list != NULL)
+	if (secret_list == NULL)
 	{
-		secret_list->prev = secret_struct;
+		secret_list = (struct secret **) shm_malloc(sizeof(struct secret *));
+		if (secret_list == NULL)
+		{
+			LM_ERR("unable to allocate shared memory\n");
+			return -1;
+		}
+		*secret_list = NULL;
 	}
-	secret_struct->next = secret_list;
-	secret_list = secret_struct;
+	if (*secret_list != NULL)
+	{
+		(*secret_list)->prev = secret_struct;
+	}
+	secret_struct->next = *secret_list;
+	*secret_list = secret_struct;
 	SECRET_UNLOCK;
 
 	return 0;
@@ -242,14 +256,14 @@ static inline int rm_secret(int _id)
 	int pos = 0;
 	struct secret *secret_struct;
 
-	if (secret_list == NULL)
+	if (secret_list == NULL || *secret_list == NULL)
 	{
 		LM_ERR("secret list empty\n");
 		return -1;
 	}
 
 	SECRET_LOCK;
-	secret_struct = secret_list;
+	secret_struct = *secret_list;
 	while (pos <= _id && secret_struct != NULL)
 	{
 		if (pos == _id)
@@ -264,7 +278,7 @@ static inline int rm_secret(int _id)
 			}
 			if (pos == 0)
 			{
-				secret_list = secret_struct->next;
+				*secret_list = secret_struct->next;
 			}
 			SECRET_UNLOCK;
 			shm_free(secret_struct->secret_key.s);
@@ -309,7 +323,13 @@ static int secret_param(modparam_t _type, void *_val)
 void autheph_rpc_dump_secrets(rpc_t* rpc, void* ctx)
 {
 	int pos = 0;
-	struct secret *secret_struct = secret_list;
+	struct secret *secret_struct;
+	if (secret_list == NULL)
+	{
+		return;
+	}
+
+	secret_struct = *secret_list;
 
 	SECRET_LOCK;
 	while (secret_struct != NULL)
