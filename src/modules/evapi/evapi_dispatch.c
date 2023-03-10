@@ -49,6 +49,7 @@ static int _evapi_netstring_format = 1;
 extern str _evapi_event_callback;
 extern int _evapi_dispatcher_pid;
 extern int _evapi_max_clients;
+extern int _evapi_wait_idle;
 
 #define EVAPI_IPADDR_SIZE	64
 #define EVAPI_TAG_SIZE	64
@@ -722,7 +723,7 @@ int evapi_run_worker(int prank)
 {
 	LM_DBG("started worker process: %d\n", prank);
 	while(1) {
-		sleep(3);
+		sleep_us(_evapi_wait_idle);
 	}
 }
 
