@@ -236,6 +236,7 @@ static inline int add_secret(str _secret_key)
 		if (secret_list == NULL)
 		{
 			LM_ERR("unable to allocate shared memory\n");
+			shm_free(secret_struct);
 			return -1;
 		}
 		*secret_list = NULL;
