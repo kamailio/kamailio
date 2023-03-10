@@ -173,6 +173,26 @@ modparam("evapi", "max_clients", 4)
 </programlisting>
 		</example>
 	</section>
+	<section id="evapi.p.wait_idle">
+		<title><varname>wait_idle</varname> (int)</title>
+		<para>
+			How many micro-seconds to wait on idle, when no evapi messages are
+			in the processing queue.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 500 000 (0.5 seconds).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>wait_idle</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("evapi", "wait_idle", 100000)
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>
