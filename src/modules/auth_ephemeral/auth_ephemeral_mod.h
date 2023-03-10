@@ -39,7 +39,6 @@ struct secret
 	struct secret *prev;
 	struct secret *next;
 };
-extern struct secret *secret_list;
 
 typedef enum {
 	AUTHEPH_USERNAME_NON_IETF	= 0,
