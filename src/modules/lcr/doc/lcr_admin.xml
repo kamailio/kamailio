@@ -1258,6 +1258,30 @@ modparam("lcr", "ping_socket", "192.98.102.10:5060")
 		</example>
 	</section>
 
+	<section id="lcr.p.lcr_stats">
+		<title><varname>lcr_stats</varname> (int)</title>
+		<para>
+		Enables call counters per gateway.
+		If the value is set to 1, the call counting gets enabled.
+		A gateway matching is only done using the ip or/and port comparison,
+		for this reason the call counters don't get incremented for a gateway, which misses this data.
+		</para>
+		<para>
+		<emphasis>
+			Default value is
+			<quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>lcr_stats</varname> module parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr","lcr_stats", 1)
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 	<section>
@@ -1695,6 +1719,40 @@ if (to_any_gw("192.55.66.2", 1)) {
 		<title><function>lcr.defunct_gw</function> RPC example</title>
 		<programlisting  format="linespecific">
 		$ &sercmd; lcr.defunct_gw 1 4 120
+		</programlisting>
+		</example>
+		</section>
+
+		<section id="lcr.rpc.stats">
+		<title><function>lcr.stats</function></title>
+		<para>
+			Print lcr counters for a gateway as array of objects.
+		</para>
+		<para>
+		Name: <emphasis>lcr.stats</emphasis>
+		</para>
+		<para>Parameters: <emphasis>[gw_id]</emphasis></para>
+		<example>
+		<title><function>lcr.stats</function> RPC example</title>
+		<programlisting  format="linespecific">
+		$ &sercmd; lcr.stats 107
+		</programlisting>
+		</example>
+		</section>
+
+		<section id="lcr.rpc.get_statistics">
+		<title><function>lcr.get_statistics</function></title>
+		<para>
+			Print lcr counters for a gateway as array of strings.
+		</para>
+		<para>
+		Name: <emphasis>lcr.get_statistics</emphasis>
+		</para>
+		<para>Parameters: <emphasis>[gw_id]</emphasis></para>
+		<example>
+		<title><function>lcr.get_statistics</function> RPC example</title>
+		<programlisting  format="linespecific">
+		$ &sercmd; lcr.get_statistics 107
 		</programlisting>
 		</example>
 		</section>
