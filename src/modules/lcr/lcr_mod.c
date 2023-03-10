@@ -65,6 +65,7 @@
 #include "../../core/pvar.h"
 #include "../../core/rand/kam_rand.h"
 #include "../../core/kemi.h"
+#include "../../core/script_cb.h"
 #include "hash.h"
 #include "lcr_rpc.h"
 #include "../../core/rpc_lookup.h"
@@ -204,6 +205,9 @@ static unsigned int priority_ordering_param = 0;
 /* mtree tree name */
 str mtree_param = {"lcr", 3};
 
+/* lcr stats enable flag */
+unsigned int lcr_stats_flag = 0;
+
 /*
  * Other module types and variables
  */
@@ -245,6 +249,9 @@ unsigned int ping_rc_count = 0;
 /* Mtree API var */
 mtree_api_t mtree_api;
 
+// stat counters names
+char *rcv_requests = "rcv_gw_requests";
+
 /*
  * Functions that are defined later
  */
@@ -267,6 +274,10 @@ static int to_gw_1(struct sip_msg *_m, char *_s1, char *_s2);
 static int to_gw_3(struct sip_msg *_m, char *_s1, char *_s2, char *_s3);
 static int to_any_gw_0(struct sip_msg *_m, char *_s1, char *_s2);
 static int to_any_gw_2(struct sip_msg *_m, char *_s1, char *_s2);
+static struct gw_info *ki_lcr_check_sip_msg_against_gwlist(sip_msg_t *_m);
+static struct gw_info *fetch_gw_id(struct sip_msg *_m, unsigned int lcr_id,
+		struct ip_addr *src_addr, uri_transport transport,
+		unsigned int src_port);
 
 /* clang-format off */
 /*
@@ -356,6 +367,7 @@ static param_export_t params[] = {
     {"ping_valid_reply_codes",   PARAM_STR, &ping_valid_reply_codes_param},
     {"ping_from",                PARAM_STR, &ping_from_param},
     {"ping_socket",              PARAM_STR, &ping_socket_param},
+    {"lcr_stats",                PARAM_INT, &lcr_stats_flag },
     {0, 0, 0}
 };
 
@@ -421,6 +433,180 @@ static void lcr_db_close(void)
 	}
 }
 
+// stats request callback function
+static int km_cb_req_stats(struct sip_msg *msg, unsigned int flags, void *param)
+{
+	struct gw_info *stat_gw;
+	if(!IS_SIP(msg))
+		return 1;
+
+	stat_gw = ki_lcr_check_sip_msg_against_gwlist(msg);
+	if(!stat_gw)
+		return 1;
+
+	//update_stat(stat_gw->rcv_reqs,1);
+	stat_gw->rcv_gw_reqs++;
+
+	switch(msg->first_line.u.request.method_value) {
+		case METHOD_INVITE:
+			stat_gw->rcv_gw_reqs_invite++;
+			break;
+		case METHOD_CANCEL:
+			stat_gw->rcv_gw_reqs_cancel++;
+			break;
+		case METHOD_ACK:
+			stat_gw->rcv_gw_reqs_ack++;
+			break;
+		case METHOD_BYE:
+			stat_gw->rcv_gw_reqs_bye++;
+			break;
+		case METHOD_INFO:
+			stat_gw->rcv_gw_reqs_info++;
+			break;
+		case METHOD_REGISTER:
+			stat_gw->rcv_gw_reqs_register++;
+			break;
+		case METHOD_SUBSCRIBE:
+			stat_gw->rcv_gw_reqs_subscribe++;
+			break;
+		case METHOD_NOTIFY:
+			stat_gw->rcv_gw_reqs_notify++;
+			break;
+		case METHOD_MESSAGE:
+			stat_gw->rcv_gw_reqs_message++;
+			break;
+		case METHOD_OPTIONS:
+			stat_gw->rcv_gw_reqs_options++;
+			break;
+		case METHOD_PRACK:
+			stat_gw->rcv_gw_reqs_prack++;
+			break;
+		case METHOD_UPDATE:
+			stat_gw->rcv_gw_reqs_update++;
+			break;
+		case METHOD_REFER:
+			stat_gw->rcv_gw_reqs_refer++;
+			break;
+		case METHOD_PUBLISH:
+			stat_gw->rcv_gw_reqs_publish++;
+			break;
+		case METHOD_OTHER:
+			stat_gw->rcv_gw_reqs_other++;
+			break;
+	}
+	return 1;
+}
+
+static int km_cb_rpl_stats_by_method(
+		struct sip_msg *msg, unsigned int flags, void *param)
+{
+	struct gw_info *stat_gw;
+	int method = 0;
+	int group = 0;
+
+	if(msg == NULL) {
+		return -1;
+	}
+	if(!msg->cseq && (parse_headers(msg, HDR_CSEQ_F, 0) < 0 || !msg->cseq)) {
+		return -1;
+	}
+	method = get_cseq(msg)->method_id;
+	group = msg->first_line.u.reply.statuscode / 100 - 1;
+
+	stat_gw = ki_lcr_check_sip_msg_against_gwlist(msg);
+	if(!stat_gw)
+		return 1;
+
+	if(group >= 0 && group <= 5) {
+		switch(method) {
+			case METHOD_INVITE:
+				stat_gw->rcv_gw_rpl_invite++;
+				stat_gw->rcv_gw_rpl_invite_by_method[group]++;
+				break;
+			case METHOD_CANCEL:
+				stat_gw->rcv_gw_rpl_cancel++;
+				stat_gw->rcv_gw_rpl_cancel_by_method[group]++;
+				break;
+			case METHOD_BYE:
+				stat_gw->rcv_gw_rpl_bye++;
+				stat_gw->rcv_gw_rpl_bye_by_method[group]++;
+				break;
+			case METHOD_REGISTER:
+				stat_gw->rcv_gw_rpl_register++;
+				stat_gw->rcv_gw_rpl_register_by_method[group]++;
+				break;
+			case METHOD_MESSAGE:
+				stat_gw->rcv_gw_rpl_message++;
+				stat_gw->rcv_gw_rpl_message_by_method[group]++;
+				break;
+			case METHOD_PRACK:
+				stat_gw->rcv_gw_rpl_prack++;
+				stat_gw->rcv_gw_rpl_prack_by_method[group]++;
+				break;
+			case METHOD_UPDATE:
+				stat_gw->rcv_gw_rpl_update++;
+				stat_gw->rcv_gw_rpl_update_by_method[group]++;
+				break;
+			case METHOD_REFER:
+				stat_gw->rcv_gw_rpl_refer++;
+				stat_gw->rcv_gw_rpl_refer_by_method[group]++;
+				break;
+		}
+	}
+	return 1;
+}
+
+static int km_cb_rpl_stats(struct sip_msg *msg, unsigned int flags, void *param)
+{
+	struct gw_info *stat_gw;
+	stat_gw = ki_lcr_check_sip_msg_against_gwlist(msg);
+	if(!stat_gw)
+		return 1;
+
+	stat_gw->rcv_gw_rpl++;
+
+	if(msg->first_line.u.reply.statuscode > 99
+			&& msg->first_line.u.reply.statuscode < 200) {
+		stat_gw->rcv_gw_rpls_1xx++;
+		if(msg->first_line.u.reply.statuscode > 179
+				&& msg->first_line.u.reply.statuscode < 190) {
+			stat_gw->rcv_gw_rpls_18x++;
+		}
+	} else if(msg->first_line.u.reply.statuscode > 199
+			  && msg->first_line.u.reply.statuscode < 300) {
+		stat_gw->rcv_gw_rpls_2xx++;
+	} else if(msg->first_line.u.reply.statuscode > 299
+			  && msg->first_line.u.reply.statuscode < 400) {
+		stat_gw->rcv_gw_rpls_3xx++;
+	} else if(msg->first_line.u.reply.statuscode > 399
+			  && msg->first_line.u.reply.statuscode < 500) {
+		stat_gw->rcv_gw_rpls_4xx++;
+		switch(msg->first_line.u.reply.statuscode) {
+			case 401:
+				stat_gw->rcv_gw_rpls_401++;
+				break;
+			case 404:
+				stat_gw->rcv_gw_rpls_404++;
+				break;
+			case 407:
+				stat_gw->rcv_gw_rpls_407++;
+				break;
+			case 480:
+				stat_gw->rcv_gw_rpls_480++;
+				break;
+			case 486:
+				stat_gw->rcv_gw_rpls_486++;
+				break;
+		}
+	} else if(msg->first_line.u.reply.statuscode > 499
+			  && msg->first_line.u.reply.statuscode < 600) {
+		stat_gw->rcv_gw_rpls_5xx++;
+	} else if(msg->first_line.u.reply.statuscode > 599
+			  && msg->first_line.u.reply.statuscode < 700) {
+		stat_gw->rcv_gw_rpls_6xx++;
+	}
+	return 1;
+}
 
 /*
  * Module initialization function that is called before the main process forks
@@ -432,6 +618,28 @@ static int mod_init(void)
 	unsigned short avp_flags;
 	unsigned int i;
 	char *at, *past, *sep;
+
+	// Register callback function for counting in case lcr stats are required
+	if(lcr_stats_flag) {
+		if(register_script_cb(km_cb_req_stats, PRE_SCRIPT_CB | REQUEST_CB, 0)
+				< 0) {
+			LM_ERR("failed to register PRE request callback\n");
+			return -1;
+		}
+
+		if(register_script_cb(km_cb_rpl_stats, PRE_SCRIPT_CB | ONREPLY_CB, 0)
+				< 0) {
+			LM_ERR("failed to register PRE request callback\n");
+			return -1;
+		}
+
+		if(register_script_cb(
+				   km_cb_rpl_stats_by_method, PRE_SCRIPT_CB | ONREPLY_CB, 0)
+				< 0) {
+			LM_ERR("failed to register PRE request callback\n");
+			return -1;
+		}
+	}
 
 	/* Register RPC commands */
 	if(rpc_register_array(lcr_rpc) != 0) {
@@ -1008,6 +1216,10 @@ static int insert_gw(struct gw_info *gws, unsigned int i, unsigned int gw_id,
 		append_str(at, transport, transport_len);
 	}
 	gws[i].uri_len = at - &(gws[i].uri[0]);
+
+	if(lcr_stats_flag)
+		reset_gw_stats(&gws[i]);
+
 	LM_DBG("inserted gw <%u, %.*s, %.*s> at index %u\n", gw_id, gw_name_len,
 			gw_name, gws[i].uri_len, gws[i].uri, i);
 	return 1;
@@ -2267,6 +2479,48 @@ done:
 	return j;
 }
 
+void reset_gw_stats(struct gw_info *gw)
+{
+	gw->rcv_gw_reqs = 0;
+	gw->rcv_gw_reqs_invite = 0;
+	gw->rcv_gw_reqs_cancel = 0;
+	gw->rcv_gw_reqs_ack = 0;
+	gw->rcv_gw_reqs_bye = 0;
+	gw->rcv_gw_reqs_info = 0;
+	gw->rcv_gw_reqs_register = 0;
+	gw->rcv_gw_reqs_subscribe = 0;
+	gw->rcv_gw_reqs_notify = 0;
+	gw->rcv_gw_reqs_message = 0;
+	gw->rcv_gw_reqs_options = 0;
+	gw->rcv_gw_reqs_prack = 0;
+	gw->rcv_gw_reqs_update = 0;
+	gw->rcv_gw_reqs_refer = 0;
+	gw->rcv_gw_reqs_publish = 0;
+	gw->rcv_gw_reqs_other = 0;
+
+	gw->rcv_gw_rpl = 0;
+	gw->rcv_gw_rpl_invite = 0;
+	gw->rcv_gw_rpl_cancel = 0;
+	gw->rcv_gw_rpl_bye = 0;
+	gw->rcv_gw_rpl_register = 0;
+	gw->rcv_gw_rpl_message = 0;
+	gw->rcv_gw_rpl_prack = 0;
+	gw->rcv_gw_rpl_update = 0;
+	gw->rcv_gw_rpl_refer = 0;
+
+	gw->rcv_gw_rpls_1xx = 0;
+	gw->rcv_gw_rpls_18x = 0;
+	gw->rcv_gw_rpls_2xx = 0;
+	gw->rcv_gw_rpls_3xx = 0;
+	gw->rcv_gw_rpls_4xx = 0;
+	gw->rcv_gw_rpls_401 = 0;
+	gw->rcv_gw_rpls_404 = 0;
+	gw->rcv_gw_rpls_407 = 0;
+	gw->rcv_gw_rpls_480 = 0;
+	gw->rcv_gw_rpls_486 = 0;
+	gw->rcv_gw_rpls_5xx = 0;
+	gw->rcv_gw_rpls_6xx = 0;
+}
 
 /*
  * Load info of matching GWs into gw_uri_avps
@@ -3663,4 +3917,56 @@ int mod_register(char *path, int *dlflags, void *p1, void *p2)
 {
 	sr_kemi_modules_add(sr_kemi_lcr_exports);
 	return 0;
+}
+static struct gw_info *fetch_gw_id(struct sip_msg *_m, unsigned int lcr_id,
+		struct ip_addr *src_addr, uri_transport transport,
+		unsigned int src_port)
+{
+	struct gw_info *res, gw, *gws;
+
+	gws = gw_pt[lcr_id];
+
+	/* Skip lcr instance if some of its gws do not have ip_addr */
+	if(gws[0].port != 0) {
+		LM_DBG("lcr instance <%u> has gw(s) without ip_addr\n", lcr_id);
+		return NULL;
+	}
+
+	gw.ip_addr = *src_addr;
+	if(src_port == 0) {
+		return NULL;
+	}
+
+	/* Search for gw based on its ip address and port */
+	gw.port = src_port;
+	res = find_gateway_by_ip_and_port(&gw, gws);
+
+	/* Store tag and flags and return result */
+	if((res != NULL)
+			&& ((transport == PROTO_NONE)
+					|| (res->transport_code == transport))) {
+		LM_DBG("request came from gw\n");
+		return res;
+	}
+	LM_DBG("request did not come from gw\n");
+	return NULL;
+}
+static struct gw_info *ki_lcr_check_sip_msg_against_gwlist(sip_msg_t *_m)
+{
+	unsigned int i;
+	uri_transport transport;
+	unsigned int src_port;
+	struct gw_info *res;
+
+	/* Get transport protocol and port */
+	transport = _m->rcv.proto;
+	src_port = _m->rcv.src_port;
+
+	for(i = 1; i <= lcr_count_param; i++) {
+		res = fetch_gw_id(_m, i, &_m->rcv.src_ip, transport, src_port);
+		if(res != NULL) {
+			return res;
+		}
+	}
+	return NULL;
 }

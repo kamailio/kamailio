@@ -133,6 +133,54 @@ struct gw_info
 	char uri[MAX_URI_LEN];
 	unsigned short uri_len;
 	unsigned int defunct_until;
+
+	unsigned long rcv_gw_reqs;
+	unsigned long rcv_gw_reqs_invite;
+	unsigned long rcv_gw_reqs_cancel;
+	unsigned long rcv_gw_reqs_ack;
+	unsigned long rcv_gw_reqs_bye;
+	unsigned long rcv_gw_reqs_info;
+	unsigned long rcv_gw_reqs_register;
+	unsigned long rcv_gw_reqs_subscribe;
+	unsigned long rcv_gw_reqs_notify;
+	unsigned long rcv_gw_reqs_message;
+	unsigned long rcv_gw_reqs_options;
+	unsigned long rcv_gw_reqs_prack;
+	unsigned long rcv_gw_reqs_update;
+	unsigned long rcv_gw_reqs_refer;
+	unsigned long rcv_gw_reqs_publish;
+	unsigned long rcv_gw_reqs_other;
+
+	unsigned long rcv_gw_rpl;
+	unsigned long rcv_gw_rpl_invite;
+	unsigned long rcv_gw_rpl_invite_by_method[6];
+	unsigned long rcv_gw_rpl_cancel;
+	unsigned long rcv_gw_rpl_cancel_by_method[6];
+	unsigned long rcv_gw_rpl_bye;
+	unsigned long rcv_gw_rpl_bye_by_method[6];
+	unsigned long rcv_gw_rpl_register;
+	unsigned long rcv_gw_rpl_register_by_method[6];
+	unsigned long rcv_gw_rpl_message;
+	unsigned long rcv_gw_rpl_message_by_method[6];
+	unsigned long rcv_gw_rpl_prack;
+	unsigned long rcv_gw_rpl_prack_by_method[6];
+	unsigned long rcv_gw_rpl_update;
+	unsigned long rcv_gw_rpl_update_by_method[6];
+	unsigned long rcv_gw_rpl_refer;
+	unsigned long rcv_gw_rpl_refer_by_method[6];
+
+	unsigned long rcv_gw_rpls_1xx;
+	unsigned long rcv_gw_rpls_18x;
+	unsigned long rcv_gw_rpls_2xx;
+	unsigned long rcv_gw_rpls_3xx;
+	unsigned long rcv_gw_rpls_4xx;
+	unsigned long rcv_gw_rpls_401;
+	unsigned long rcv_gw_rpls_404;
+	unsigned long rcv_gw_rpls_407;
+	unsigned long rcv_gw_rpls_480;
+	unsigned long rcv_gw_rpls_486;
+	unsigned long rcv_gw_rpls_5xx;
+	unsigned long rcv_gw_rpls_6xx;
 };
 
 extern unsigned int lcr_rule_hash_size_param;
@@ -149,5 +197,9 @@ extern int load_gws_dummy(int lcr_id, str *ruri_user, str *from_uri,
 		str *request_uri, unsigned int *gw_indexes);
 extern int reload_tables();
 extern int rpc_defunct_gw(unsigned int, unsigned int, unsigned int);
+extern void reset_gw_stats(struct gw_info *gw);
+
+/* lcr stats enable flag */
+extern unsigned int lcr_stats_flag;
 
 #endif /* LCR_MOD_H */
