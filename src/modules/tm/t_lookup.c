@@ -1767,7 +1767,7 @@ int t_lookup_callid(struct cell ** trans, str callid, str cseq) {
 	}
 
 	/* create header fields the same way tm does itself, then compare headers */
-	endpos = print_callid_mini(callid_header, callid);
+	endpos = print_callid_mini_value(callid_header, callid);
 	LM_DBG("created comparable call_id header field: >%.*s<\n",
 			(int)(endpos - callid_header), callid_header);
 
@@ -1784,8 +1784,14 @@ int t_lookup_callid(struct cell ** trans, str callid, str cseq) {
 	clist_foreach(hash_bucket, p_cell, next_c){
 
 		prefetch_loc_r(p_cell->next_c, 1);
+		int callid_value_len = strlen(callid_header);
+		int cid_value_len = p_cell->callid.len - 8;
+		char* cid_value = (char*)malloc(sizeof(char) * (cid_value_len + 1));
+		char* only_callid = strncpy(cid_value, (p_cell->callid.s + 8), cid_value_len);
+		while(isspace((unsigned char)*only_callid)) only_callid++;
 		/* compare complete header fields, casecmp to make sure invite=INVITE*/
-		if ((strncmp(callid_header, p_cell->callid.s, p_cell->callid.len) == 0)
+		if ((strncmp(callid_header, only_callid, callid_value_len) == 0)
+		/*if ((strncmp(callid_header, p_cell->callid.s, p_cell->callid.len) == 0)*/
 				&& (strncasecmp(cseq_header, p_cell->cseq_n.s, p_cell->cseq_n.len)
 					== 0)) {
 			LM_DBG("we have a match: callid=>>%.*s<< cseq=>>%.*s<<\n",

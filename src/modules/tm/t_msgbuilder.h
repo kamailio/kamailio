@@ -90,6 +90,7 @@ int t_calc_branch(struct cell *t,
 
 /* exported minimum functions for use in t_cancel */
 char* print_callid_mini(char* target, str callid);
+char* print_callid_mini_value(char* target, str callid);
 char* print_cseq_mini(char* target, str* cseq, str* method);
 
 #endif

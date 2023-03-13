@@ -1491,6 +1491,15 @@ char* print_callid_mini(char* target, str callid) {
 	return target;
 }
 
+/*
+ * Print Call-ID header field value
+ */
+char* print_callid_mini_value(char* target, str callid) {
+       memapp(target, callid.s, callid.len);
+       memapp(target, CRLF, CRLF_LEN);
+       return target;
+}
+
 static inline char* print_callid(char* w, dlg_t* dialog, struct cell* t)
 {
 	/* begins with CRLF, not included in t->callid, don`t know why...?!? */
