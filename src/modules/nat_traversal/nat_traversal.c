@@ -923,7 +923,7 @@ static time_t get_register_expire(
 		}
 	}
 
-	LM_DBG("maximum expire for all contacts: %llu\n", (uint64_t)expire);
+	LM_DBG("maximum expire for all contacts: %lu\n", (uint64_t)expire);
 
 	return (expire ? expire + now : 0);
 }
