@@ -524,7 +524,7 @@ str *build_notification_body()
 	str *body;
 	body = pkg_malloc(sizeof(str));
 	if(body == NULL) {
-		LM_ERR("no more pkg\n");
+		PKG_MEM_ERROR;
 		return NULL;
 	}
 	memset(body, 0, sizeof(str));
@@ -532,7 +532,7 @@ str *build_notification_body()
 	body->len = NBODY_LEN;
 	body->s = pkg_malloc(body->len);
 	if(body->s == NULL) {
-		LM_ERR("no more pkg\n");
+		PKG_MEM_ERROR;
 		pkg_free(body);
 		return NULL;
 	}

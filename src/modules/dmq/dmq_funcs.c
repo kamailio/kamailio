@@ -91,7 +91,7 @@ int build_uri_str(str *username, struct sip_uri *uri, str *from)
 				+ TRANSPORT_PARAM_LEN;
 	from->s = pkg_malloc(from_len);
 	if(from->s == NULL) {
-		LM_ERR("no more pkg\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	from->len = 0;
@@ -231,7 +231,7 @@ int dmq_send_message(dmq_peer_t *peer, str *body, dmq_node_t *node,
 	str_hdr.len = 34 + content_type->len + (CRLF_LEN * 2);
 	str_hdr.s = pkg_malloc(str_hdr.len);
 	if(str_hdr.s == NULL) {
-		LM_ERR("no more pkg\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	len += sprintf(str_hdr.s, "Max-Forwards: %d" CRLF "Content-Type: %.*s" CRLF,
@@ -240,7 +240,7 @@ int dmq_send_message(dmq_peer_t *peer, str *body, dmq_node_t *node,
 
 	cb_param = shm_malloc(sizeof(*cb_param));
 	if(cb_param == NULL) {
-		LM_ERR("no more shm for building callback parameter\n");
+		SHM_MEM_ERROR;
 		goto error;
 	}
 	memset(cb_param, 0, sizeof(*cb_param));

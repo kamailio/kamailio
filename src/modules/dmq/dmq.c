@@ -156,7 +156,7 @@ static int make_socket_str_from_uri(struct sip_uri *uri, str *socket)
 	socket->len = uri->host.len + uri->port.len + 7 /*sctp + : + : \0*/;
 	socket->s = pkg_malloc(socket->len);
 	if(socket->s == NULL) {
-		LM_ERR("no more pkg\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 
@@ -245,14 +245,15 @@ static int mod_init(void)
 	/* allocate workers array */
 	dmq_workers = shm_malloc(dmq_num_workers * sizeof(dmq_worker_t));
 	if(dmq_workers == NULL) {
-		LM_ERR("error in shm_malloc\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	memset(dmq_workers, 0, dmq_num_workers * sizeof(dmq_worker_t));
 
 	dmq_init_callback_done = shm_malloc(sizeof(int));
 	if(!dmq_init_callback_done) {
-		LM_ERR("no more shm\n");
+		SHM_MEM_ERROR;
+		shm_free(dmq_workers);
 		return -1;
 	}
 	*dmq_init_callback_done = 0;

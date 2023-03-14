@@ -51,7 +51,7 @@ int set_reply_body(struct sip_msg *msg, str *body, str *content_type)
 	buf = pkg_malloc(sizeof(char) * (len));
 
 	if(buf == 0) {
-		LM_ERR("out of pkg memory\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	memcpy(buf, "Content-Type: ", sizeof("Content-Type: ") - 1);

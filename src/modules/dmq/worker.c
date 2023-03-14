@@ -221,7 +221,7 @@ job_queue_t *alloc_job_queue()
 
 	queue = shm_malloc(sizeof(job_queue_t));
 	if(queue == NULL) {
-		LM_ERR("no more shm\n");
+		SHM_MEM_ERROR;
 		return NULL;
 	}
 	memset(queue, 0, sizeof(job_queue_t));
@@ -257,7 +257,7 @@ int job_queue_push(job_queue_t *queue, dmq_job_t *job)
 
 	newjob = shm_malloc(sizeof(dmq_job_t));
 	if(newjob == NULL) {
-		LM_ERR("no more shm\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 
