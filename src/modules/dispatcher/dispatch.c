@@ -4039,8 +4039,7 @@ ds_set_t *ds_avl_insert(ds_set_t **root, int id, int *setn)
 	}
 	if(!node) {
 		node = shm_malloc(sizeof(ds_set_t));
-		if(!(node))
-		{
+		if(!(node)) {
 			SHM_MEM_ERROR;
 			return NULL;
 		}
