@@ -272,7 +272,7 @@ int ac_print(ac_tm_t *_atp)
 		return -1;
 	}
 
-	printf("\nSys time: %llu\nTime: %02d:%02d:%02d\n", (uint64_t)_atp->time,
+	printf("\nSys time: %lu\nTime: %02d:%02d:%02d\n", (uint64_t)_atp->time,
 				_atp->t.tm_hour, _atp->t.tm_min, _atp->t.tm_sec);
 	printf("Date: %s, %04d-%02d-%02d\n", _wdays[_atp->t.tm_wday],
 				_atp->t.tm_year+1900, _atp->t.tm_mon+1, _atp->t.tm_mday);
@@ -512,15 +512,15 @@ int tr_print(tmrec_t *_trp)
 		return -1;
 	}
 	printf("Recurrence definition\n-- start time ---\n");
-	printf("Sys time: %llu\n", (uint64_t)_trp->dtstart);
+	printf("Sys time: %lu\n", (uint64_t)_trp->dtstart);
 	printf("Time: %02d:%02d:%02d\n", _trp->ts.tm_hour,
 				_trp->ts.tm_min, _trp->ts.tm_sec);
 	printf("Date: %s, %04d-%02d-%02d\n", _wdays[_trp->ts.tm_wday],
 				_trp->ts.tm_year+1900, _trp->ts.tm_mon+1, _trp->ts.tm_mday);
 	printf("---\n");
-	printf("End time: %llu\n", (uint64_t)_trp->dtend);
-	printf("Duration: %llu\n", (uint64_t)_trp->duration);
-	printf("Until: %llu\n", (uint64_t)_trp->until);
+	printf("End time: %lu\n", (uint64_t)_trp->dtend);
+	printf("Duration: %lu\n", (uint64_t)_trp->duration);
+	printf("Until: %lu\n", (uint64_t)_trp->until);
 	printf("Freq: %d\n", (int)_trp->freq);
 	printf("Interval: %d\n", (int)_trp->interval);
 	if(_trp->byday)
