@@ -94,6 +94,23 @@ void jsonrpc_dgram_server(int rx_sock);
 static int jsonrpc_dgram_init_socks(void);
 static int jsonrpc_dgram_post_process(void);
 
+/* tcp socket specific parameters */
+char *jsonrpc_tcp_socket = NULL;
+
+typedef struct jsonrpc_tcp_address {
+	char addrb[72];
+	char *host;
+	char *port;
+	int tsock;
+	struct addrinfo ai_hints;
+	struct addrinfo *ai_res;
+} jsonrpc_tcp_address_t;
+
+static jsonrpc_tcp_address_t _jsonrpc_tcp_address;
+
+/**
+ *
+ */
 int jsonrpc_dgram_mod_init(void)
 {
 	unsigned int port_no;
@@ -665,3 +682,230 @@ void jsonrpc_dgram_server(int rx_sock)
 						  jsonrpc_dgram_timeout);
 	}
 }
+
+
+/**
+ *
+ */
+int jsonrpc_tcp_mod_init(void)
+{
+	char *p;
+	int ai_ret = 0;
+
+	/* checking the tcp socket module param */
+	LM_DBG("testing socket existence...\n");
+
+	if(jsonrpc_tcp_socket==NULL || *jsonrpc_tcp_socket == 0) {
+		LM_ERR("no tcp socket configured\n");
+		return -1;
+	}
+
+	LM_DBG("the socket tcp address is %s\n", jsonrpc_tcp_socket);
+	if(strlen(jsonrpc_tcp_socket)<6 || strlen(jsonrpc_tcp_socket)>71) {
+		LM_ERR("length of socket address is too short or long: %s\n",
+				jsonrpc_tcp_socket);
+		return -1;
+	}
+	memset(&_jsonrpc_tcp_address, 0, sizeof(jsonrpc_tcp_address_t));
+
+	if(strncmp(jsonrpc_tcp_socket, "tcp:", 4) != 0) {
+		LM_ERR("invalid tcp socket address: %s\n",
+				jsonrpc_tcp_socket);
+		return -1;
+	}
+	memcpy(_jsonrpc_tcp_address.addrb, jsonrpc_tcp_socket, strlen(jsonrpc_tcp_socket));
+	/*separate proto and host */
+	p = _jsonrpc_tcp_address.addrb + 4;
+	if( (*(p)) == '\0') {
+		LM_ERR("malformed address: %s\n", jsonrpc_tcp_socket);
+		return -1;
+	}
+	if(*p == '[') {
+		_jsonrpc_tcp_address.host = p + 1;
+	} else {
+		_jsonrpc_tcp_address.host = p;
+	}
+
+	if( (p = strrchr(p+1, ':')) == 0 ) {
+		LM_ERR("no port specified\n");
+		return -1;
+	}
+
+	/*the address contains a port number*/
+	if(*(p-1) == ']') {
+		*(p-1) = '\0';
+	}
+	*p = '\0';
+	p++;
+	_jsonrpc_tcp_address.port = p;
+	LM_DBG("the port string is %s\n", p);
+
+	_jsonrpc_tcp_address.ai_hints.ai_family = AF_UNSPEC;		/* allow IPv4 or IPv6 */
+	_jsonrpc_tcp_address.ai_hints.ai_socktype = SOCK_STREAM;	/* stream socket */
+	ai_ret = getaddrinfo(_jsonrpc_tcp_address.host,
+			_jsonrpc_tcp_address.port, &_jsonrpc_tcp_address.ai_hints,
+			&_jsonrpc_tcp_address.ai_res);
+	if (ai_ret != 0) {
+		LM_ERR("getaddrinfo failed: %d %s\n", ai_ret, gai_strerror(ai_ret));
+		return -1;
+	}
+
+	/* add space for extra processes */
+	register_procs(1);
+	/* add child to update local config framework structures */
+	cfg_register_child(1);
+
+	return 0;
+}
+
+static char jsonrpc_tcp_buf[JSONRPC_DGRAM_BUF_SIZE];
+
+/**
+ *
+ */
+int jsonrpc_tcp_process(void)
+{
+	struct sockaddr caddr;
+	socklen_t clen = sizeof(caddr);
+	int csock = -1;
+	int sflag = 1;
+	int n;
+	str scmd;
+	jsonrpc_plain_reply_t* jr = NULL;
+	char buf_spath[128];
+	char resbuf[JSONRPC_RESPONSE_STORING_BUFSIZE];
+	str spath = STR_NULL;
+	FILE *f = NULL;
+	char *sid = NULL;
+
+	_jsonrpc_tcp_address.tsock = socket(_jsonrpc_tcp_address.ai_res->ai_family,
+			_jsonrpc_tcp_address.ai_res->ai_socktype,
+			_jsonrpc_tcp_address.ai_res->ai_protocol);
+	if(_jsonrpc_tcp_address.tsock < 0 ) {
+		LM_ERR("cannot create server socket (family %d)\n",
+				_jsonrpc_tcp_address.ai_res->ai_family);
+		freeaddrinfo(_jsonrpc_tcp_address.ai_res);
+		return -1;
+	}
+
+	/* Set SO_REUSEADDR option on listening socket so that we don't
+	 * have to wait for connections in TIME_WAIT to go away before
+	 * re-binding.
+	 */
+	if(setsockopt(_jsonrpc_tcp_address.tsock, SOL_SOCKET, SO_REUSEADDR,
+				&sflag, sizeof(int)) < 0) {
+		LM_ERR("cannot set SO_REUSEADDR option on descriptor\n");
+		close(_jsonrpc_tcp_address.tsock);
+		freeaddrinfo(_jsonrpc_tcp_address.ai_res);
+		return -1;
+	}
+
+	if (bind(_jsonrpc_tcp_address.tsock, _jsonrpc_tcp_address.ai_res->ai_addr,
+				_jsonrpc_tcp_address.ai_res-> ai_addrlen) < 0) {
+		LM_ERR("cannot bind to address and port [%s]\n", jsonrpc_tcp_socket);
+		close(_jsonrpc_tcp_address.tsock);
+		freeaddrinfo(_jsonrpc_tcp_address.ai_res);
+		return -1;
+
+	}
+
+	if (listen(_jsonrpc_tcp_address.tsock, 5) < 0) {
+		LM_ERR("failed to listen on socket\n");
+		close(_jsonrpc_tcp_address.tsock);
+		freeaddrinfo(_jsonrpc_tcp_address.ai_res);
+		return -1;
+	}
+
+	while(1) {
+		cfg_update();
+		csock = accept(_jsonrpc_tcp_address.tsock, (struct sockaddr *)&caddr, &clen);
+
+		if (csock < 0) {
+			LM_ERR("cannot accept the client '%s' err='%d'\n", gai_strerror(csock), csock);
+			continue;
+		}
+
+		bzero(jsonrpc_tcp_buf, JSONRPC_DGRAM_BUF_SIZE);
+		n = read(csock, jsonrpc_tcp_buf, JSONRPC_DGRAM_BUF_SIZE - 1);
+		if (n < 0) {
+			LM_ERR("failed reading from tcp socket\n");
+			close(csock);
+			continue;
+		}
+		scmd.s = jsonrpc_dgram_buf;
+		scmd.len = n;
+		trim(&scmd);
+
+		LM_DBG("buf is %.*s and we have received %i bytes\n",
+				scmd.len, scmd.s, scmd.len);
+
+		spath.s = buf_spath;
+		spath.len = 128;
+
+		if(jsonrpc_exec_ex(&scmd, NULL, &spath)<0) {
+			LM_ERR("failed to execute the json document from datagram\n");
+			continue;
+		}
+
+		jr = jsonrpc_plain_reply_get();
+		LM_DBG("command executed - result: [%d] [%p] [len: %d] [%.*s%s]\n",
+				jr->rcode, jr->rbody.s,
+				jr->rbody.len, (jr->rbody.len<2048)?jr->rbody.len:2048, jr->rbody.s,
+				(jr->rbody.len<2048)?"":" ...");
+
+		if(spath.len>0) {
+			sid = jsonrpcs_stored_id_get();
+			f = fopen(spath.s, "w");
+			if(f==NULL) {
+				LM_ERR("cannot write to file: %.*s\n", spath.len, spath.s);
+				snprintf(resbuf, JSONRPC_RESPONSE_STORING_BUFSIZE,
+						JSONRPC_RESPONSE_STORING_FAILED, sid);
+			} else {
+				fwrite(jr->rbody.s, 1, jr->rbody.len, f);
+				fclose(f);
+				snprintf(resbuf, JSONRPC_RESPONSE_STORING_BUFSIZE,
+						JSONRPC_RESPONSE_STORING_DONE, sid);
+			}
+			n = write(csock, resbuf, strlen(resbuf));
+			if(n < 0) {
+				LM_ERR("failed to send the response\n");
+			}
+			close(csock);
+			continue;
+
+		}
+
+		n = write(csock, jr->rbody.s, jr->rbody.len);
+		if(n < 0) {
+			LM_ERR("failed to send the response\n");
+		}
+		close(csock);
+	}
+
+	return 0;
+}
+
+/**
+ *
+ */
+int jsonrpc_tcp_child_init(int rank)
+{
+	int pid;
+
+	if (rank==PROC_MAIN) {
+		pid=fork_process(PROC_RPC, "JSONRPCS TCP", 1);
+		if (pid<0)
+			return -1; /* error */
+		if(pid==0) {
+			/* child */
+
+			/* initialize the config framework */
+			if (cfg_child_init())
+				return -1;
+
+			return jsonrpc_tcp_process();
+		}
+	}
+	return 0;
+}
+

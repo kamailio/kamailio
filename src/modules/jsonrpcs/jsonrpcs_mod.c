@@ -114,6 +114,12 @@ extern int jsonrpc_dgram_mod_init(void);
 extern int jsonrpc_dgram_child_init(int rank);
 extern int jsonrpc_dgram_destroy(void);
 
+/* tcp server parameters */
+extern char *jsonrpc_tcp_socket;
+
+int jsonrpc_tcp_mod_init(void);
+int jsonrpc_tcp_child_init(int rank);
+
 /** The context of the jsonrpc request being processed.
  *
  * This is a global variable that records the context of the jsonrpc request
@@ -161,6 +167,7 @@ static param_export_t params[] = {
 	{"dgram_group",      PARAM_INT,    &jsonrpc_dgram_unix_socket_gid},
 	{"dgram_user",       PARAM_STRING, &jsonrpc_dgram_unix_socket_uid_s},
 	{"dgram_user",       PARAM_INT,    &jsonrpc_dgram_unix_socket_uid},
+	{"tcp_socket",       PARAM_STRING, &jsonrpc_tcp_socket},
 
 	{0, 0, 0}
 };
@@ -1252,6 +1259,25 @@ static int mod_init(void)
 	} else {
 		jsonrpc_dgram_socket = NULL;
 	}
+	/* prepare tcp transport */
+	if(jsonrpc_transport==0 || (jsonrpc_transport&8)) {
+		if(jsonrpc_tcp_socket!=NULL && *jsonrpc_tcp_socket!='\0') {
+			LM_DBG("preparing to listen on tcp socket: %s\n",
+					jsonrpc_tcp_socket);
+			if(jsonrpc_tcp_mod_init()<0) {
+				if(jsonrpc_transport&8) {
+					LM_ERR("cannot initialize tcp transport\n");
+					return -1;
+				} else {
+					jsonrpc_tcp_socket = NULL;
+				}
+			}
+		} else {
+			jsonrpc_tcp_socket = NULL;
+		}
+	} else {
+		jsonrpc_tcp_socket = NULL;
+	}
 
 	memset(&func_param, 0, sizeof(func_param));
 	func_param.send              = (rpc_send_f)jsonrpc_send;
@@ -1286,6 +1312,12 @@ static int child_init(int rank)
 		if(jsonrpc_dgram_socket!=NULL) {
 			if(jsonrpc_dgram_child_init(rank)<0) {
 				LM_ERR("failed to init datagram workers\n");
+				return -1;
+			}
+		}
+		if(jsonrpc_tcp_socket!=NULL) {
+			if(jsonrpc_tcp_child_init(rank)<0) {
+				LM_ERR("failed to init tcp worker\n");
 				return -1;
 			}
 		}
