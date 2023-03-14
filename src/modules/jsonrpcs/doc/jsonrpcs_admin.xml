@@ -123,7 +123,8 @@ modparam("jsonrpcs", "pretty_format", 0)
 				<emphasis>0</emphasis> - all transports that can be enabled.
 				For http, the xhttp module must be loaded. For FIFO, the
 				fifo_name parameter must be set. For DATAGRAM, the dgram_socket
-				parameter must be set.
+				parameter must be set. For TCP, the tcp_socket parameter must be
+				set.
 			</para></listitem>
 			<listitem><para>
 				<emphasis>1</emphasis> - only HTTP transport
@@ -134,7 +135,9 @@ modparam("jsonrpcs", "pretty_format", 0)
 			<listitem><para>
 				<emphasis>4</emphasis> - only DATAGRAM transport
 			</para></listitem>
-
+			<listitem><para>
+				<emphasis>8</emphasis> - only TCP transport
+			</para></listitem>
 		</itemizedlist>
 
 		<para>
@@ -390,6 +393,27 @@ modparam("jsonrpcs", "dgram_user", "root")
 		<programlisting format="linespecific">
 ...
 modparam("jsonrpcs", "dgram_timeout", 2000)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="jsonrpcs.p.tcp_socket">
+		<title><varname>tcp_socket</varname> (str)</title>
+		<para>
+			The name of tcp socket to listen on for RPC commands. Only IPv4/IPv6
+			sockets are supported, unix file stream socket not yet.
+		</para>
+		<para>
+		<emphasis>
+			Default value is "".
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>tcp_socket</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("jsonrpcs", "tcp_socket", "udp:1.2.3.4:5042")
 ...
 </programlisting>
 		</example>
