@@ -43,6 +43,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <time.h>
+#include <inttypes.h>
 #include <sys/types.h>
 #include <arpa/inet.h>
 
@@ -923,7 +924,7 @@ static time_t get_register_expire(
 		}
 	}
 
-	LM_DBG("maximum expire for all contacts: %lu\n", (uint64_t)expire);
+	LM_DBG("maximum expire for all contacts: %" PRIu64 "\n", (uint64_t)expire);
 
 	return (expire ? expire + now : 0);
 }
