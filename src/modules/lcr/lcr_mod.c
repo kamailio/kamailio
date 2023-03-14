@@ -2526,10 +2526,21 @@ static int generate_uris(struct sip_msg *_m, char *r_uri, str *r_uri_user,
 {
 	int_str gw_uri_val;
 	struct usr_avp *gu_avp;
-	str scheme, prefix, hostname, port, params, transport, addr_str, tmp_tag;
+	str scheme = STR_NULL;
+	str prefix = STR_NULL;
+	str hostname = STR_NULL;
+	str port = STR_NULL;
+	str params = STR_NULL;
+	str transport = STR_NULL;
+	str addr_str = STR_NULL;
+	str tmp_tag = STR_NULL;
 	char *at;
-	unsigned int strip;
+	unsigned int strip = 0;
 
+	if(!tag) {
+		LM_ERR("tag parameter is empty\n");
+		return -1;
+	}
 	gu_avp = search_first_avp(gw_uri_avp_type, gw_uri_avp, &gw_uri_val, 0);
 
 	if(!gu_avp)
