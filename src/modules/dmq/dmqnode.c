@@ -69,7 +69,7 @@ dmq_node_list_t *init_dmq_node_list()
 	dmq_node_list_t *node_list;
 	node_list = shm_malloc(sizeof(dmq_node_list_t));
 	if(node_list == NULL) {
-		LM_ERR("no more shm\n");
+		SHM_MEM_ERROR;
 		return NULL;
 	}
 	memset(node_list, 0, sizeof(dmq_node_list_t));
@@ -164,7 +164,7 @@ dmq_node_t *build_dmq_node(str *uri, int shm)
 	if(shm) {
 		ret = shm_malloc(sizeof(dmq_node_t));
 		if(ret == NULL) {
-			LM_ERR("no more shm\n");
+			SHM_MEM_ERROR;
 			goto error;
 		}
 		memset(ret, 0, sizeof(dmq_node_t));
@@ -174,7 +174,7 @@ dmq_node_t *build_dmq_node(str *uri, int shm)
 	} else {
 		ret = pkg_malloc(sizeof(dmq_node_t));
 		if(ret == NULL) {
-			LM_ERR("no more pkg\n");
+			PKG_MEM_ERROR;
 			goto error;
 		}
 		memset(ret, 0, sizeof(dmq_node_t));
@@ -288,7 +288,7 @@ dmq_node_t *shm_dup_node(dmq_node_t *node)
 
 	newnode = shm_malloc(sizeof(dmq_node_t));
 	if(newnode == NULL) {
-		LM_ERR("no more shm\n");
+		SHM_MEM_ERROR;
 		return NULL;
 	}
 	memcpy(newnode, node, sizeof(dmq_node_t));
