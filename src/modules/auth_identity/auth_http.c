@@ -69,7 +69,7 @@ int download_cer(str *suri, CURL *hcurl)
 	} else {
 		/* +1 for the terminating \0 byte */
 		if (!(snulledptr=pkg_malloc(suri->len + 1))) {
-			LOG(L_ERR, "AUTH_IDENTITY:download_cer: Not enough memory error\n");
+			PKG_MEM_ERROR;
 			return -1;
 		}
 		memcpy(snulledptr, suri->s, suri->len);

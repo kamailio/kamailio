@@ -47,8 +47,7 @@ int initdynstr(dynstr *sout, int isize)
 	memset(sout,0,sizeof(*sout));
 	getstr_dynstr(sout).s=pkg_malloc(isize);
 	if (!getstr_dynstr(sout).s) {
-		LOG(L_WARN,
-			"AUTH_IDENTITY:initdynstr: Not enough memory error\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	sout->size=isize;

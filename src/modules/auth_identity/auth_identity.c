@@ -216,7 +216,7 @@ static int mod_init(void)
 		return -4;
 	}
 	if (!(glb_tcert.scertpem.s=pkg_malloc(CERTIFICATE_LENGTH))) {
-		LOG(L_ERR, "AUTH_IDENTITY:mod_init: Not enough memory error\n");
+		PKG_MEM_ERROR;
 		return -3;
 	}
   	/* some servers don't like requests that are made without a user-agent

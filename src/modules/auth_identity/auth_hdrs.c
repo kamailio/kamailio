@@ -520,7 +520,7 @@ int append_hf(struct sip_msg* msg, char *str1, enum _hdr_types_t type)
 
 	s = (char*)pkg_malloc(len+1);
 	if (!s) {
-		LOG(L_ERR, "AUTH_IDENTITY:append_hf: No memory left\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 

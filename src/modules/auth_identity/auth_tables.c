@@ -64,13 +64,14 @@ int init_table(ttable **ptable,	/* table we'd like to init */
 	int i1;
 
 	if (!(*ptable = (ttable *) shm_malloc(sizeof(**ptable)))) {
-		LOG(L_ERR, "AUTH_IDENTITY:init_table: Not enough shared memory error\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	memset(*ptable, 0, sizeof(**ptable));
 
 	if (!((*ptable)->entries = (tbucket *) shm_malloc(sizeof(tbucket)*ubucknum))) {
-		LOG(L_ERR, "AUTH_IDENTITY:init_table: Not enough shared memory error\n");
+		SHM_MEM_ERROR;
+		shm_free(*ptable);
 		return -1;
 	}
 	memset((*ptable)->entries, 0, sizeof(tbucket)*ubucknum);
@@ -121,7 +122,7 @@ static int insert_into_table(ttable *ptable, void *pdata, unsigned int uhash)
 	char bneed2remove=0;
 
 	if (!(pitem=(titem *)shm_malloc(sizeof(*pitem)))) {
-		LOG(L_ERR, "AUTH_IDENTITY:insert_into_table: Not enough shared memory error\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 
@@ -323,7 +324,7 @@ static int str_duplicate(str* _d, str* _s)
 
 	_d->s = (char *)shm_malloc(sizeof(char)*(_s->len));
 	if (!_d->s) {
-		LOG(L_ERR, "AUTH_IDENTITY:str_duplicate: No enough shared memory\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 
@@ -408,7 +409,7 @@ int addcert2table(ttable *ptable, tcert_item *pcert)
 	unsigned int uhash;
 
 	if (!(pshmcert=(tcert_item *)shm_malloc(sizeof(*pshmcert)))) {
-		LOG(L_ERR, "AUTH_IDENTITY:addcert2table: No enough shared memory\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	memset(pshmcert, 0, sizeof(*pshmcert));
@@ -497,7 +498,7 @@ int proc_cid(ttable *ptable,
 	/* we suppose that this SIP request is not replayed so it doesn't exist in
 	   the table so we prepare to insert */
 	if (!(pshmdlg=(tdlg_item *)shm_malloc(sizeof(*pshmdlg)))) {
-		LOG(L_ERR, "AUTH_IDENTITY:addcid2table: No enough shared memory\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	memset(pshmdlg, 0, sizeof(*pshmdlg));
@@ -558,7 +559,8 @@ int proc_cid(ttable *ptable,
 	if (!pcid_item) {
 		/* this is the first request with this call-id */
 		if (!(pshmcid=(tcid_item *)shm_malloc(sizeof(*pshmcid)))) {
-			LOG(L_ERR, "AUTH_IDENTITY:addcid2table: No enough shared memory\n");
+			SHM_MEM_ERROR;
+			shm_free(pshmdlg);
 			return -4;
 		}
 		memset(pshmcid, 0, sizeof(*pshmcid));
