@@ -360,15 +360,13 @@ static int mod_init(void)
 
 	/* Initialize the counter */
 	ds_ping_reply_codes = (int **)shm_malloc(sizeof(unsigned int *));
-	if(!(ds_ping_reply_codes))
-	{
+	if(!(ds_ping_reply_codes)) {
 		SHM_MEM_ERROR;
 		return -1;
 	}
 	*ds_ping_reply_codes = 0;
 	ds_ping_reply_codes_cnt = (int *)shm_malloc(sizeof(int));
-	if(!(ds_ping_reply_codes_cnt))
-	{
+	if(!(ds_ping_reply_codes_cnt)) {
 		shm_free(ds_ping_reply_codes);
 		SHM_MEM_ERROR;
 		return -1;
