@@ -142,7 +142,7 @@ int ds_ping_active_init(void)
 		return 0;
 	_ds_ping_active = (int *)shm_malloc(sizeof(int));
 	if(_ds_ping_active == NULL) {
-		LM_ERR("no more shared memory\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	*_ds_ping_active = 1;
@@ -258,7 +258,7 @@ int ds_init_data(void)
 
 	ds_lists = (ds_set_t **)shm_malloc(2 * sizeof(ds_set_t *));
 	if(!ds_lists) {
-		LM_ERR("Out of memory\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	memset(ds_lists, 0, 2 * sizeof(ds_set_t *));
@@ -266,7 +266,8 @@ int ds_init_data(void)
 
 	p = (int *)shm_malloc(3 * sizeof(int));
 	if(!p) {
-		LM_ERR("Out of memory\n");
+		shm_free(ds_lists);
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	memset(p, 0, 3 * sizeof(int));
@@ -305,7 +306,7 @@ int ds_set_attrs(ds_dest_t *dest, str *vattrs)
 	/* clone in shm */
 	dest->attrs.body.s = (char *)shm_malloc(sattrs.len + 1);
 	if(dest->attrs.body.s == NULL) {
-		LM_ERR("no more shm\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	memcpy(dest->attrs.body.s, sattrs.s, sattrs.len);
@@ -424,14 +425,14 @@ ds_dest_t *pack_dest(str iuri, int flags, int priority, str *attrs, int dload)
 	/* store uri */
 	dp = (ds_dest_t *)shm_malloc(sizeof(ds_dest_t));
 	if(dp == NULL) {
-		LM_ERR("no more memory!\n");
+		SHM_MEM_ERROR;
 		goto err;
 	}
 	memset(dp, 0, sizeof(ds_dest_t));
 
 	dp->uri.s = (char *)shm_malloc((uri.len + 1) * sizeof(char));
 	if(dp->uri.s == NULL) {
-		LM_ERR("no more memory!\n");
+		SHM_MEM_ERROR;
 		goto err;
 	}
 	strncpy(dp->uri.s, uri.s, uri.len);
@@ -634,12 +635,12 @@ int dp_init_relative_weights(ds_set_t *dset)
 	/* local copy to avoid synchronization problems */
 	ds_dests_flags = pkg_malloc(sizeof(int) * dset->nr);
 	if(ds_dests_flags == NULL) {
-		LM_ERR("no more pkg\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	ds_dests_rweights = pkg_malloc(sizeof(int) * dset->nr);
 	if(ds_dests_rweights == NULL) {
-		LM_ERR("no more pkg\n");
+		PKG_MEM_ERROR;
 		pkg_free(ds_dests_flags);
 		return -1;
 	}
@@ -770,7 +771,7 @@ int reindex_dests(ds_set_t *node)
 
 	dp0 = (ds_dest_t *)shm_malloc(node->nr * sizeof(ds_dest_t));
 	if(dp0 == NULL) {
-		LM_ERR("no more memory!\n");
+		SHM_MEM_ERROR;
 		goto err1;
 	}
 	memset(dp0, 0, node->nr * sizeof(ds_dest_t));
@@ -2232,7 +2233,7 @@ int ds_manage_route_algo13(ds_set_t *idx, ds_select_state_t *rstate) {
 	int active_priority = 0;
 	sorted_ds_t *ds_sorted = pkg_malloc(sizeof(sorted_ds_t) * idx->nr);
 	if(ds_sorted == NULL) {
-		LM_ERR("no more pkg\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 
@@ -4038,6 +4039,11 @@ ds_set_t *ds_avl_insert(ds_set_t **root, int id, int *setn)
 	}
 	if(!node) {
 		node = shm_malloc(sizeof(ds_set_t));
+		if(!(node))
+		{
+			SHM_MEM_ERROR;
+			return NULL;
+		}
 		memset(node, 0, sizeof(ds_set_t));
 		node->id = id;
 		node->longer = AVL_NEITHER;
