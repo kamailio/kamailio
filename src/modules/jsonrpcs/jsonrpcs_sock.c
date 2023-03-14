@@ -816,23 +816,32 @@ int jsonrpc_tcp_process(void)
 		return -1;
 	}
 
+	LM_DBG("waiting for client connections\n");
 	while(1) {
 		cfg_update();
 		csock = accept(_jsonrpc_tcp_address.tsock, (struct sockaddr *)&caddr, &clen);
+
+		LM_DBG("new client connected - sock: %d\n", csock);
 
 		if (csock < 0) {
 			LM_ERR("cannot accept the client '%s' err='%d'\n", gai_strerror(csock), csock);
 			continue;
 		}
 
-		bzero(jsonrpc_tcp_buf, JSONRPC_DGRAM_BUF_SIZE);
+		memset(jsonrpc_tcp_buf, 0, JSONRPC_DGRAM_BUF_SIZE);
 		n = read(csock, jsonrpc_tcp_buf, JSONRPC_DGRAM_BUF_SIZE - 1);
 		if (n < 0) {
 			LM_ERR("failed reading from tcp socket\n");
 			close(csock);
 			continue;
 		}
-		scmd.s = jsonrpc_dgram_buf;
+		if(n==0) {
+			LM_DBG("no data received\n");
+			close(csock);
+			continue;
+		}
+		LM_DBG("data received - size: %d\n", n);
+		scmd.s = jsonrpc_tcp_buf;
 		scmd.len = n;
 		trim(&scmd);
 
