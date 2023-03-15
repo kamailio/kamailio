@@ -801,6 +801,11 @@ int evapi_run_dispatcher(char *laddr, int lport)
 /**
  *
  */
+static int _evapi_wait_idle_step = 0;
+
+/**
+ *
+ */
 int evapi_run_worker(int prank)
 {
 	evapi_env_t *renv = NULL;
@@ -814,8 +819,12 @@ int evapi_run_worker(int prank)
 			evapi_run_cfg_route(renv, _evapi_rts.msg_received,
 					&_evapi_rts.msg_received_name);
 			shm_free(renv);
+			_evapi_wait_idle_step = 0;
 		} else {
-			sleep_us(_evapi_wait_idle);
+			if(_evapi_wait_idle_step<3) {
+				_evapi_wait_idle_step++;
+			}
+			sleep_us(_evapi_wait_idle_step * _evapi_wait_idle);
 		}
 	}
 }
