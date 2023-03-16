@@ -54,6 +54,7 @@ str _evapi_event_callback = STR_NULL;
 int _evapi_dispatcher_pid = -1;
 int _evapi_max_clients = 8;
 int _evapi_wait_idle = 500000;
+int _evapi_wait_increase = 3;
 
 static str _evapi_data = STR_NULL;
 static int _evapi_data_size = 0;
@@ -104,6 +105,7 @@ static param_export_t params[]={
 	{"event_callback",    PARAM_STR,   &_evapi_event_callback},
 	{"max_clients",       PARAM_INT,   &_evapi_max_clients},
 	{"wait_idle",         PARAM_INT,   &_evapi_wait_idle},
+	{"wait_increase",     PARAM_INT,   &_evapi_wait_increase},
 	{0, 0, 0}
 };
 

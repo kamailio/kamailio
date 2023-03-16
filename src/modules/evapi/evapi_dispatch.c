@@ -50,6 +50,7 @@ extern str _evapi_event_callback;
 extern int _evapi_dispatcher_pid;
 extern int _evapi_max_clients;
 extern int _evapi_wait_idle;
+extern int _evapi_wait_increase;
 
 #define EVAPI_IPADDR_SIZE	64
 #define EVAPI_TAG_SIZE	64
@@ -821,7 +822,7 @@ int evapi_run_worker(int prank)
 			shm_free(renv);
 			_evapi_wait_idle_step = 0;
 		} else {
-			if(_evapi_wait_idle_step<3) {
+			if(_evapi_wait_idle_step < _evapi_wait_increase) {
 				_evapi_wait_idle_step++;
 			}
 			sleep_us(_evapi_wait_idle_step * _evapi_wait_idle);
