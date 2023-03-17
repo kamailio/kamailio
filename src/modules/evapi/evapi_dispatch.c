@@ -46,6 +46,7 @@
 static int _evapi_notify_sockets[2];
 static int _evapi_netstring_format = 1;
 
+extern int _evapi_workers;
 extern str _evapi_event_callback;
 extern int _evapi_dispatcher_pid;
 extern int _evapi_max_clients;
@@ -556,14 +557,24 @@ void evapi_recv_client(struct ev_loop *loop, struct ev_io *watcher, int revents)
 			evenv.msg.len = frame.len;
 			LM_DBG("executing event route for frame: [%.*s] (%d)\n",
 						frame.len, frame.s, frame.len);
-			evapi_queue_add(&evenv);
+			if(_evapi_workers<=0) {
+				evapi_run_cfg_route(&evenv, _evapi_rts.msg_received,
+					&_evapi_rts.msg_received_name);
+			} else {
+				evapi_queue_add(&evenv);
+			}
 			k++;
 		}
 		_evapi_clients[i].rpos = 0 ;
 	} else {
 		evenv.msg.s = _evapi_clients[i].rbuffer;
 		evenv.msg.len = rlen;
-		evapi_queue_add(&evenv);
+		if(_evapi_workers<=0) {
+			evapi_run_cfg_route(&evenv, _evapi_rts.msg_received,
+				&_evapi_rts.msg_received_name);
+		} else {
+			evapi_queue_add(&evenv);
+		}
 	}
 }
 
