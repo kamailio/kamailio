@@ -32,6 +32,7 @@
 #include "../../core/rpc.h"
 #include "../../core/rpc_lookup.h"
 #include "../../core/parser/msg_parser.h"
+#include "../../core/script_cb.h"
 
 #include "cfgt_int.h"
 #include "cfgt_json.h"
@@ -460,10 +461,24 @@ void _cfgt_print_node(cfgt_node_p node, int json)
 
 int _cfgt_set_dump(struct sip_msg *msg, cfgt_node_p node, str *flow)
 {
+	int len;
+	char v;
 	srjson_t *f, *vars;
 
 	if(node == NULL || flow == NULL)
 		return -1;
+
+	/* don't generate two same nodes */
+	if((len = srjson_GetArraySize(&node->jdoc, node->flow)) >= 1) {
+		f = srjson_GetArrayItem(&node->jdoc, node->flow, len - 1);
+		STR_VTOZ(flow->s[flow->len], v);
+		f = srjson_GetObjectItem(&node->jdoc, f, flow->s);
+		STR_ZTOV(flow->s[flow->len], v);
+		if(f != NULL) {
+			LM_DBG("node[%.*s] flow already there\n", flow->len, flow->s);
+			return 0;
+		}
+	}
 
 	vars = srjson_CreateObject(&node->jdoc);
 	if(vars == NULL) {
@@ -763,11 +778,35 @@ int cfgt_msgin(sr_event_param_t *evp)
 	return -1;
 }
 
+static inline void print_cb_flags(unsigned int flags)
+{
+	LM_DBG("flags:");
+	if(flags & REQUEST_CB)
+		LM_DBG("REQUEST_CB");
+	if(flags & FAILURE_CB)
+		LM_DBG("FAILURE_CB");
+	if(flags & ONREPLY_CB)
+		LM_DBG("ONREPLY_CB");
+	if(flags & BRANCH_CB)
+		LM_DBG("BRANCH_CB");
+	if(flags & ONSEND_CB)
+		LM_DBG("ONSEND_CB");
+	if(flags & ERROR_CB)
+		LM_DBG("ERROR_CB");
+	if(flags & LOCAL_CB)
+		LM_DBG("LOCAL_CB");
+	if(flags & EVENT_CB)
+		LM_DBG("EVENT_CB");
+	if(flags & BRANCH_FAILURE_CB)
+		LM_DBG("BRANCH_FAILURE_CB");
+}
+
 int cfgt_pre(struct sip_msg *msg, unsigned int flags, void *bar)
 {
 	str unknown = {"unknown", 7};
 	int get_hdr_result = 0, res;
 
+	print_cb_flags(flags);
 	if(_cfgt_node) {
 		if(_cfgt_node->msgid == 0) {
 			LM_DBG("new node\n");
@@ -812,7 +851,7 @@ int cfgt_pre(struct sip_msg *msg, unsigned int flags, void *bar)
 int cfgt_post(struct sip_msg *msg, unsigned int flags, void *bar)
 {
 	str flowname = STR_NULL;
-
+	print_cb_flags(flags);
 	if(_cfgt_node) {
 		if(cfgt_skip_unknown
 				&& strncmp(_cfgt_node->uuid.s, "unknown", 7) == 0) {
