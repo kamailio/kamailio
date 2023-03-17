@@ -193,6 +193,29 @@ modparam("evapi", "wait_idle", 100000)
 </programlisting>
 		</example>
 	</section>
+	<section id="evapi.p.wait_increase">
+		<title><varname>wait_increase</varname> (int)</title>
+		<para>
+			Increase wait_idle by itself till its value becomes initial value
+			multiplied with wait_increase. The increase is done only consecutive
+			cycles without any evapi message. When a new evapi message is received,
+			wait_idle is reset to initial value. If wait_increase is set to 1, then
+			wait_idle is used with its initial value always.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 3.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>wait_increase</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("evapi", "wait_increase", 1)
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>
