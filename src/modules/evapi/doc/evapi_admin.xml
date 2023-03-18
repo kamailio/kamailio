@@ -67,7 +67,8 @@
 		<title><varname>workers</varname> (int)</title>
 		<para>
 			Number of worker processes to be started to handle incoming messages
-			from remote applications.
+			from remote applications. If the value is 0, the handling of the
+			incoming message is done by the evapi dispatcher process.
 		</para>
 		<para>
 		<emphasis>
