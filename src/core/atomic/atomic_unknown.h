@@ -45,8 +45,13 @@
 #define membar() do {} while(0)
 #else /* SMP */
 
+#if defined __CPU_arm64 && defined __OS_darwin
+	/* fallback to locking-variant of atomic ops for OSes used for development
+	 * - MacOS with Apple silicon */
+#else
 #warning no native memory barrier implementations, falling back to slow lock \
 	       based workaround
+#endif
 
 #define MEMBAR_USES_LOCK
 
