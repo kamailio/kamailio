@@ -39,6 +39,7 @@ Daniel-Constantin Mierla
               4.11. dgram_group (int) dgram_group (str)
               4.12. dgram_user (int) dgram_group (str)
               4.13. dgram_timeout (int)
+              4.14. tcp_socket (str)
 
         5. Functions
 
@@ -67,11 +68,12 @@ Daniel-Constantin Mierla
    1.11. Set dgram_group parameter
    1.12. Set dgram_user parameter
    1.13. Set dgram_timeout parameter
-   1.14. jsonrpc_dispatch usage
-   1.15. jsonrpc_exec usage
-   1.16. JSONRPC Commands - Examples
-   1.17. JSONRPC Over Fifo Command
-   1.18. JSONRPC Over Fifo Command From Terminal
+   1.14. Set tcp_socket parameter
+   1.15. jsonrpc_dispatch usage
+   1.16. jsonrpc_exec usage
+   1.17. JSONRPC Commands - Examples
+   1.18. JSONRPC Over Fifo Command
+   1.19. JSONRPC Over Fifo Command From Terminal
 
 Chapter 1. Admin Guide
 
@@ -99,6 +101,7 @@ Chapter 1. Admin Guide
         4.11. dgram_group (int) dgram_group (str)
         4.12. dgram_user (int) dgram_group (str)
         4.13. dgram_timeout (int)
+        4.14. tcp_socket (str)
 
    5. Functions
 
@@ -168,6 +171,7 @@ Chapter 1. Admin Guide
    4.11. dgram_group (int) dgram_group (str)
    4.12. dgram_user (int) dgram_group (str)
    4.13. dgram_timeout (int)
+   4.14. tcp_socket (str)
 
 4.1. pretty_format (int)
 
@@ -186,10 +190,12 @@ modparam("jsonrpcs", "pretty_format", 0)
    Control what transports are enabled. The value can be:
      * 0 - all transports that can be enabled. For http, the xhttp module
        must be loaded. For FIFO, the fifo_name parameter must be set. For
-       DATAGRAM, the dgram_socket parameter must be set.
+       DATAGRAM, the dgram_socket parameter must be set. For TCP, the
+       tcp_socket parameter must be set.
      * 1 - only HTTP transport
      * 2 - only FIFO transport
      * 4 - only DATAGRAM transport
+     * 8 - only TCP transport
 
    The value can be also a combination of specific transports. Make the
    sum of the desired transports to enable them. For example, enabling
@@ -339,6 +345,18 @@ modparam("jsonrpcs", "dgram_user", "root")
 modparam("jsonrpcs", "dgram_timeout", 2000)
 ...
 
+4.14. tcp_socket (str)
+
+   The name of tcp socket to listen on for RPC commands. Only IPv4/IPv6
+   sockets are supported, unix file stream socket not yet.
+
+   Default value is "".
+
+   Example 1.14. Set tcp_socket parameter
+...
+modparam("jsonrpcs", "tcp_socket", "udp:1.2.3.4:5042")
+...
+
 5. Functions
 
    5.1. jsonrpc_dispatch()
@@ -348,7 +366,7 @@ modparam("jsonrpcs", "dgram_timeout", 2000)
 
    Handle the JSONRPC request and generate a response.
 
-   Example 1.14. jsonrpc_dispatch usage
+   Example 1.15. jsonrpc_dispatch usage
 ...
 #!KAMAILIO
 
@@ -399,7 +417,7 @@ event_route[xhttp:request] {
    dynamic string with variables. The result of the command can be
    accessed via $jsonrpl(key) pseudo variables.
 
-   Example 1.15. jsonrpc_exec usage
+   Example 1.16. jsonrpc_exec usage
 ...
 jsonrpc_exec('{"jsonrpc": "2.0", "method": "dispatcher.reload", "id": 1}');
 xlog("jsonrpc response code: $jsonrpl(code) - the body is: $jsonrpl(body)\n");
@@ -413,7 +431,7 @@ xlog("jsonrpc response code: $jsonrpl(code) - the body is: $jsonrpl(body)\n");
    only the order of the values must be the one expected by Kamailio RPC
    command.
 
-   Example 1.16. JSONRPC Commands - Examples
+   Example 1.17. JSONRPC Commands - Examples
 ...
 # kamcmd core.psx
 
@@ -481,7 +499,7 @@ xlog("jsonrpc response code: $jsonrpl(code) - the body is: $jsonrpl(body)\n");
    'fifo_reply_dir'. Next is an example showing a JSONRPC command to be
    sent via FIFO transport.
 
-   Example 1.17. JSONRPC Over Fifo Command
+   Example 1.18. JSONRPC Over Fifo Command
 ...
 {
  "jsonrpc": "2.0",
@@ -494,7 +512,7 @@ xlog("jsonrpc response code: $jsonrpl(code) - the body is: $jsonrpl(body)\n");
    Next is an example of how to test it from a terminal, assuming that the
    parameter 'fifo_name' is set to '/tmp/kamailio_jsonrpc_fifo'.
 
-   Example 1.18. JSONRPC Over Fifo Command From Terminal
+   Example 1.19. JSONRPC Over Fifo Command From Terminal
 ...
 mkfifo /tmp/kamailio_jsonrpc_reply_fifo
 cat /tmp/kamailio_jsonrpc_reply_fifo &

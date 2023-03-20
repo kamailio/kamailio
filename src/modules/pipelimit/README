@@ -54,10 +54,12 @@ Daniel-Constantin Mierla
               6.1. pl.list
               6.2. pl.stats
               6.3. pl.set_pipe
-              6.4. pl.get_pipes
-              6.5. pl.set_pid
-              6.6. pl.get_pid
-              6.7. pl.push_load
+              6.4. pl.reset_pipe
+              6.5. pl.rm_pipe
+              6.6. pl.get_pipes
+              6.7. pl.set_pid
+              6.8. pl.get_pid
+              6.9. pl.push_load
 
    List of Examples
 
@@ -117,10 +119,12 @@ Chapter 1. Admin Guide
         6.1. pl.list
         6.2. pl.stats
         6.3. pl.set_pipe
-        6.4. pl.get_pipes
-        6.5. pl.set_pid
-        6.6. pl.get_pid
-        6.7. pl.push_load
+        6.4. pl.reset_pipe
+        6.5. pl.rm_pipe
+        6.6. pl.get_pipes
+        6.7. pl.set_pid
+        6.8. pl.get_pid
+        6.9. pl.push_load
 
 1. Overview
 
@@ -511,10 +515,12 @@ with unexpected retcode=$var(check_result)\n");
    6.1. pl.list
    6.2. pl.stats
    6.3. pl.set_pipe
-   6.4. pl.get_pipes
-   6.5. pl.set_pid
-   6.6. pl.get_pid
-   6.7. pl.push_load
+   6.4. pl.reset_pipe
+   6.5. pl.rm_pipe
+   6.6. pl.get_pipes
+   6.7. pl.set_pid
+   6.8. pl.get_pid
+   6.9. pl.push_load
 
 6.1.  pl.list
 
@@ -561,7 +567,35 @@ kamcmd pl.stats
 kamcmd pl.set_pipe 2 RED 10
 ...
 
-6.4.  pl.get_pipes
+6.4.  pl.reset_pipe
+
+   Reset the values associated with the pipe.
+
+   Name: pl.reset_pipe
+
+   Parameters:
+     * pipe_id - pipe id.
+
+   RPC Command Format:
+...
+kamcmd pl.reset_pipe p01
+...
+
+6.5.  pl.rm_pipe
+
+   Remove the pipe structure matching the given pipe id.
+
+   Name: pl.rm_pipe
+
+   Parameters:
+     * pipe_id - pipe id.
+
+   RPC Command Format:
+...
+kamcmd pl.rm_pipe p01
+...
+
+6.6.  pl.get_pipes
 
    Gets the list of in use pipes.
 
@@ -574,7 +608,7 @@ kamcmd pl.set_pipe 2 RED 10
 kamcmd pl.get_pipes
 ...
 
-6.5.  pl.set_pid
+6.7.  pl.set_pid
 
    Sets the PID Controller parameters for the Feedback Algorithm.
 
@@ -590,7 +624,7 @@ kamcmd pl.get_pipes
 kamcmd pl.set_pid 0.5 0.5 0.5
 ...
 
-6.6.  pl.get_pid
+6.8.  pl.get_pid
 
    Gets the list of in use PID Controller parameters.
 
@@ -603,7 +637,7 @@ kamcmd pl.set_pid 0.5 0.5 0.5
 kamcmd pl.get_pid
 ...
 
-6.7.  pl.push_load
+6.9.  pl.push_load
 
    Force the value of the load parameter. This command is useful for
    testing the Feedback algorithm.
