@@ -19,6 +19,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include <inttypes.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
@@ -1337,7 +1338,7 @@ static void rtpengine_rpc_reload(rpc_t* rpc, void* ctx)
 
 	_rtpe_list_version->vernum += 1;
 	_rtpe_list_version->vertime = time(NULL);
-	LM_DBG("current rtpengines list version: %d (%llu)\n",
+	LM_DBG("current rtpengines list version: %d (%" PRIu64 ")\n",
 			_rtpe_list_version->vernum,
 			(uint64_t)_rtpe_list_version->vertime);
 	rpc->rpl_printf(ctx, "Ok. Reload successful.");
@@ -1857,7 +1858,7 @@ static int build_rtpp_socks(int lmode, int rtest) {
 
 	if(_rtpe_list_vernum_local == _rtpe_list_version->vernum) {
 		/* same version for the list of rtpengines */
-		LM_DBG("same rtpengines list version: %d (%llu)\n",
+		LM_DBG("same rtpengines list version: %d (%" PRIu64 ")\n",
 			_rtpe_list_version->vernum,
 			(uint64_t)_rtpe_list_version->vertime);
 		return 0;
