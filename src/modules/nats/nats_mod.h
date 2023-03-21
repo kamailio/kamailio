@@ -35,7 +35,7 @@ static int mod_init(void);
 static int mod_child_init(int);
 static void mod_destroy(void);
 
-extern int w_nats_publish_f(sip_msg_t *msg, char *subj, char *payload);
+extern int w_nats_publish_f(sip_msg_t *msg, char *subj, char *payload, char *reply);
 extern int fixup_publish_get_value(void **param, int param_no);
 extern int fixup_publish_get_value_free(void **param, int param_no);
 extern void _nats_pub_worker_cb(uv_poll_t *handle, int status, int events);

@@ -32,7 +32,7 @@ int pub_worker = 0;
 
 int fixup_publish_get_value(void **param, int param_no)
 {
-	if(param_no == 1 || param_no == 2) {
+	if(param_no == 1 || param_no == 2 || param_no == 3) {
 		return fixup_spve_null(param, 1);
 	}
 	LM_ERR("invalid parameter number <%d>\n", param_no);
@@ -41,7 +41,7 @@ int fixup_publish_get_value(void **param, int param_no)
 
 int fixup_publish_get_value_free(void **param, int param_no)
 {
-	if(param_no == 1 || param_no == 2) {
+	if(param_no == 1 || param_no == 2 || param_no == 3) {
 		fixup_free_spve_null(param, 1);
 		return 0;
 	}
@@ -49,7 +49,7 @@ int fixup_publish_get_value_free(void **param, int param_no)
 	return -1;
 }
 
-nats_pub_delivery_ptr _nats_pub_delivery_new(str subject, str payload)
+nats_pub_delivery_ptr _nats_pub_delivery_new(str subject, str payload, str reply)
 {
 	nats_pub_delivery_ptr p =
 			(nats_pub_delivery_ptr)shm_malloc(sizeof(nats_pub_delivery));
@@ -63,12 +63,18 @@ nats_pub_delivery_ptr _nats_pub_delivery_new(str subject, str payload)
 	strcpy(p->payload, payload.s);
 	p->payload[payload.len] = '\0';
 
+	if (reply.s) {
+		p->reply = shm_malloc(reply.len + 1);
+		strcpy(p->reply, reply.s);
+		p->reply[reply.len] = '\0';
+	}
+
 	return p;
 }
 
-static int _w_nats_publish_f(str subj, str payload, int worker)
+static int _w_nats_publish_f(str subj, str payload, str reply, int worker)
 {
-	nats_pub_delivery_ptr ptr = _nats_pub_delivery_new(subj, payload);
+	nats_pub_delivery_ptr ptr = _nats_pub_delivery_new(subj, payload, reply);
 	if(write(nats_pub_worker_pipes[worker], &ptr, sizeof(ptr)) != sizeof(ptr)) {
 		LM_ERR("failed to publish message %d, write to "
 			   "command pipe: %s\n",
@@ -77,10 +83,11 @@ static int _w_nats_publish_f(str subj, str payload, int worker)
 	return 1;
 }
 
-int w_nats_publish_f(sip_msg_t *msg, char *subj, char *payload)
+int w_nats_publish_f(sip_msg_t *msg, char *subj, char *payload, char *reply)
 {
 	str subj_s = STR_NULL;
 	str payload_s = STR_NULL;
+	str reply_s = STR_NULL;
 	if(fixup_get_svalue(msg, (gparam_t *)subj, &subj_s) < 0) {
 		LM_ERR("failed to get subj value\n");
 		return -1;
@@ -89,11 +96,16 @@ int w_nats_publish_f(sip_msg_t *msg, char *subj, char *payload)
 		LM_ERR("failed to get subj value\n");
 		return -1;
 	}
-
-	return w_nats_publish(msg, subj_s, payload_s);
+	if (reply) {
+		if(fixup_get_svalue(msg, (gparam_t *)reply, &reply_s) < 0) {
+			LM_ERR("failed to get reply value\n");
+			return -1;
+		}
+	}
+	return w_nats_publish(msg, subj_s, payload_s, reply_s);
 }
 
-int w_nats_publish(sip_msg_t *msg, str subj_s, str payload_s)
+int w_nats_publish(sip_msg_t *msg, str subj_s, str payload_s, str reply_s)
 {
 	// round-robin pub workers
 	pub_worker++;
@@ -101,7 +113,7 @@ int w_nats_publish(sip_msg_t *msg, str subj_s, str payload_s)
 		pub_worker = 0;
 	}
 
-	return _w_nats_publish_f(subj_s, payload_s, pub_worker);
+	return _w_nats_publish_f(subj_s, payload_s, reply_s, pub_worker);
 }
 
 void _nats_pub_worker_cb(uv_poll_t *handle, int status, int events)
@@ -115,11 +127,21 @@ void _nats_pub_worker_cb(uv_poll_t *handle, int status, int events)
 		LM_ERR("failed to read from command pipe: %s\n", strerror(errno));
 		return;
 	}
-	if((s = natsConnection_PublishString(worker->nc->conn, ptr->subject, ptr->payload))
-			!= NATS_OK) {
-		LM_ERR("could not publish to subject [%s] payload [%s] error [%s]\n", ptr->subject, ptr->payload,
-				natsStatus_GetText(s));
+
+	if (ptr->reply) {
+		if((s = natsConnection_PublishRequestString(worker->nc->conn, ptr->subject, ptr->reply, ptr->payload))
+				!= NATS_OK) {
+			LM_ERR("could not publish to subject [%s] payload [%s] error [%s]\n", ptr->subject, ptr->payload,
+					natsStatus_GetText(s));
+		}
+	} else {
+		if((s = natsConnection_PublishString(worker->nc->conn, ptr->subject, ptr->payload))
+				!= NATS_OK) {
+			LM_ERR("could not publish to subject [%s] payload [%s] error [%s]\n", ptr->subject, ptr->payload,
+					natsStatus_GetText(s));
+		}
 	}
+
 	nats_pub_free_delivery_ptr(ptr);
 }
 
@@ -131,5 +153,7 @@ void nats_pub_free_delivery_ptr(nats_pub_delivery_ptr ptr)
 		shm_free(ptr->subject);
 	if(ptr->payload)
 		shm_free(ptr->payload);
+	if(ptr->reply)
+		shm_free(ptr->reply);
 	shm_free(ptr);
 }

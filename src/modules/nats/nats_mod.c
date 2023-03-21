@@ -59,7 +59,7 @@ static param_export_t params[] = {
 
 static cmd_export_t cmds[] = {
 	{"nats_publish", (cmd_function)w_nats_publish_f,
-		  2, fixup_publish_get_value, fixup_publish_get_value_free, ANY_ROUTE},
+		  3, fixup_publish_get_value, fixup_publish_get_value_free, ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -828,7 +828,16 @@ int nats_pv_get_event_payload(
  */
 int ki_nats_publish(sip_msg_t *msg, str *subject, str *payload)
 {
-	return w_nats_publish(msg, *subject, *payload);
+	str reply = STR_NULL;
+	return w_nats_publish(msg, *subject, *payload, reply);
+}
+
+/**
+ *
+ */
+int ki_nats_publish_request(sip_msg_t *msg, str *subject, str *payload, str *reply)
+{
+	return w_nats_publish(msg, *subject, *payload, *reply);
 }
 
 /**
@@ -839,6 +848,11 @@ static sr_kemi_t sr_kemi_nats_exports[] = {
 	{ str_init("nats"), str_init("publish"),
 		SR_KEMIP_INT, ki_nats_publish,
 		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("nats"), str_init("publish_request"),
+		SR_KEMIP_INT, ki_nats_publish_request,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
