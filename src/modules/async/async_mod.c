@@ -289,7 +289,7 @@ static int fixup_async_sleep(void **param, int param_no)
 		return 0;
 	ap = (async_param_t *)pkg_malloc(sizeof(async_param_t));
 	if(ap == NULL) {
-		LM_ERR("no more pkg memory available\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	memset(ap, 0, sizeof(async_param_t));

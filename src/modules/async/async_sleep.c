@@ -109,7 +109,7 @@ int async_init_timer_list(void)
 	_async_list_head = (struct async_list_head *)shm_malloc(
 			sizeof(struct async_list_head));
 	if(_async_list_head == NULL) {
-		LM_ERR("no more shm\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	memset(_async_list_head, 0, sizeof(struct async_list_head));
@@ -135,7 +135,7 @@ int async_init_ms_timer_list(void)
 	_async_ms_list = (struct async_ms_list *)shm_malloc(
 			sizeof(struct async_ms_list));
 	if(_async_ms_list == NULL) {
-		LM_ERR("no more shm\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	memset(_async_ms_list, 0, sizeof(struct async_ms_list));
@@ -247,7 +247,7 @@ int async_sleep(sip_msg_t *msg, int seconds, cfg_action_t *act, str *cbname)
 	slot = ticks % ASYNC_RING_SIZE;
 	ai = (async_item_t *)shm_malloc(sizeof(async_item_t));
 	if(ai == NULL) {
-		LM_ERR("no more shm memory\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	memset(ai, 0, sizeof(async_item_t));
@@ -454,7 +454,7 @@ int async_ms_sleep(sip_msg_t *msg, int milliseconds, cfg_action_t *act, str *cbn
 
 	at = (async_task_t *)shm_malloc(dsize);
 	if(at == NULL) {
-		LM_ERR("no more shm memory\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	memset(at, 0, dsize);
@@ -517,7 +517,7 @@ int async_send_task(sip_msg_t *msg, cfg_action_t *act, str *cbname, str *gname)
 	dsize = sizeof(async_task_t) + sizeof(async_task_param_t);
 	at = (async_task_t *)shm_malloc(dsize);
 	if(at == NULL) {
-		LM_ERR("no more shm memory\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	memset(at, 0, dsize);
@@ -614,7 +614,7 @@ int async_send_data(sip_msg_t *msg, cfg_action_t *act, str *cbname, str *gname,
 	dsize = sizeof(async_task_t) + sizeof(async_data_param_t) + sdata->len + 1;
 	at = (async_task_t *)shm_malloc(dsize);
 	if(at == NULL) {
-		LM_ERR("no more shm memory\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	memset(at, 0, dsize);
