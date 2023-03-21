@@ -361,7 +361,7 @@ static inline void cfg_update_local(int no_cbs)
 	if (unlikely(cfg_child_cb==CFG_NO_CHILD_CBS || no_cbs))
 		return;
 	/* call the per-process callbacks */
-	while (cfg_child_cb != last_cb) {
+	while (cfg_child_cb && cfg_child_cb != last_cb) {
 		prev_cb = cfg_child_cb;
 		cfg_child_cb = cfg_child_cb->next;
 		atomic_inc(&cfg_child_cb->refcnt);
