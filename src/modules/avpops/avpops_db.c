@@ -101,7 +101,7 @@ int avp_add_db_scheme( modparam_t type, void* val)
 	scheme = (struct db_scheme*)pkg_malloc( sizeof(struct db_scheme) );
 	if (scheme==0)
 	{
-		LM_ERR("no more pkg memory\n");
+		PKG_MEM_ERROR;
 		goto error;
 	}
 	memset( scheme, 0, sizeof(struct db_scheme));

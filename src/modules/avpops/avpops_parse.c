@@ -57,7 +57,7 @@ struct fis_param *avpops_parse_pvar(char *in)
 	ap = (struct fis_param*)pkg_malloc(sizeof(struct fis_param));
 	if (ap==0)
 	{
-		LM_ERR("no more pkg mem\n");
+		PKG_MEM_ERROR;
 		return NULL;
 	}
 	memset( ap, 0, sizeof(struct fis_param));
@@ -126,7 +126,7 @@ int parse_avp_db(char *s, struct db_param *dbp, int allow_scheme)
 		dbp->a.u.sval = (pv_spec_t*)pkg_malloc(sizeof(pv_spec_t));
 		if(dbp->a.u.sval==NULL)
 		{
-			LM_ERR("no more pkg\n");
+			PKG_MEM_ERROR;
 			goto error;
 		}
 		memset(dbp->a.u.sval, 0, sizeof(pv_spec_t));
@@ -154,7 +154,7 @@ int parse_avp_db(char *s, struct db_param *dbp, int allow_scheme)
 					dbp->a.u.sval->pvp.pvn.u.isname.name.s.len+1);
 			if (dbp->sa.s==0)
 			{
-				LM_ERR("no more pkg mem\n");
+				PKG_MEM_ERROR;
 				goto error;
 			}
 			memcpy(dbp->sa.s, dbp->a.u.sval->pvp.pvn.u.isname.name.s.s,
@@ -168,7 +168,7 @@ int parse_avp_db(char *s, struct db_param *dbp, int allow_scheme)
 			dbp->sa.s = (char*)pkg_malloc( tmp.len + 1 );
 			if (dbp->sa.s==0)
 			{
-				LM_ERR("no more pkg mem\n");
+				PKG_MEM_ERROR;
 				goto error;
 			}
 			memcpy( dbp->sa.s, tmp.s, tmp.len);
@@ -270,8 +270,8 @@ struct fis_param* parse_intstr_value(char *p, int len)
 	vp = (struct fis_param*)pkg_malloc(sizeof(struct fis_param));
 	if (vp==0)
 	{
-		LM_ERR("no more pkg mem\n");
-		goto error;;
+		PKG_MEM_ERROR;
+		goto error;
 	}
 	memset( vp, 0, sizeof(struct fis_param));
 	vp->opd = flags;
@@ -302,7 +302,7 @@ struct fis_param* parse_intstr_value(char *p, int len)
 		vp->u.s.s = (char*)pkg_malloc((val_str.len+1)*sizeof(char));
 		if (vp->u.s.s==0)
 		{
-			LM_ERR("no more pkg mem\n");
+			PKG_MEM_ERROR;
 			goto error;
 		}
 		vp->u.s.len = val_str.len;
@@ -323,7 +323,7 @@ error:
 		_p.s = (char*)pkg_malloc(_str.len+1); \
 		if (_p.s==0) \
 		{ \
-			LM_ERR("no more pkg memory\n");\
+			PKG_MEM_ERROR;\
 			goto _error; \
 		} \
 		_p.len = _str.len; \

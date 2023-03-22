@@ -214,7 +214,7 @@ static int fixup_db_avp(void** param, int param_no, int allow_scheme)
 		/* prepare the fis_param structure */
 		sp = (struct fis_param*)pkg_malloc(sizeof(struct fis_param));
 		if (sp==0) {
-			LM_ERR("no more pkg mem!\n");
+			PKG_MEM_ERROR;
 			return E_OUT_OF_MEM;
 		}
 		memset(sp, 0, sizeof(struct fis_param));
@@ -243,7 +243,7 @@ static int fixup_db_avp(void** param, int param_no, int allow_scheme)
 			sp->opd = ((flags==0)?AVPOPS_FLAG_UUID0:flags)|AVPOPS_VAL_STR;
 			sp->u.s.s = (char*)pkg_malloc(strlen(s.s)+1);
 			if (sp->u.s.s==0) {
-				LM_ERR("no more pkg mem!!\n");
+				PKG_MEM_ERROR;
 				pkg_free(sp);
 				return E_OUT_OF_MEM;
 			}
@@ -275,7 +275,7 @@ static int fixup_db_avp(void** param, int param_no, int allow_scheme)
 		dbp = (struct db_param*)pkg_malloc(sizeof(struct db_param));
 		if (dbp==0)
 		{
-			LM_ERR("no more pkg mem!!!\n");
+			PKG_MEM_ERROR;
 			return E_OUT_OF_MEM;
 		}
 		memset( dbp, 0, sizeof(struct db_param));
@@ -401,7 +401,7 @@ static int fixup_delete_avp(void** param, int param_no)
 			ap = (struct fis_param*)pkg_malloc(sizeof(struct fis_param));
 			if (ap==0)
 			{
-				LM_ERR(" no more pkg mem\n");
+				PKG_MEM_ERROR;
 				return E_OUT_OF_MEM;
 			}
 			memset(ap, 0, sizeof(struct fis_param));
@@ -685,7 +685,7 @@ static int fixup_check_avp(void** param, int param_no)
 				re = (regex_t*) pkg_malloc(sizeof(regex_t));
 				if (re==0)
 				{
-					LM_ERR("no more pkg mem\n");
+					PKG_MEM_ERROR;
 					pkg_free(ap);
 					return E_OUT_OF_MEM;
 				}
@@ -741,7 +741,7 @@ static int fixup_subst(void** param, int param_no)
 		av = (struct fis_param**)pkg_malloc(2*sizeof(struct fis_param*));
 		if(av==NULL)
 		{
-			LM_ERR("no more pkg memory\n");
+			PKG_MEM_ERROR;
 			return E_UNSPEC;			
 		}
 		memset(av, 0, 2*sizeof(struct fis_param*));
@@ -881,7 +881,7 @@ static int fixup_op_avp(void** param, int param_no)
 		av = (struct fis_param**)pkg_malloc(2*sizeof(struct fis_param*));
 		if(av==NULL)
 		{
-			LM_ERR("no more pkg memory\n");
+			PKG_MEM_ERROR;
 			return E_UNSPEC;			
 		}
 		memset(av, 0, 2*sizeof(struct fis_param*));
