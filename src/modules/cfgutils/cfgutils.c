@@ -884,14 +884,15 @@ static int mod_init(void)
 	probability=(int *) shm_malloc(sizeof(int));
 
 	if (!probability) {
-		LM_ERR("no shmem available\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	*probability = initial_prob;
 
 	gflags=(unsigned int *) shm_malloc(sizeof(unsigned int));
 	if (!gflags) {
-		LM_ERR(" no shmem available\n");
+		SHM_MEM_ERROR;
+		shm_free(probability);
 		return -1;
 	}
 	*gflags=initial_gflags;
