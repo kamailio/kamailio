@@ -182,6 +182,7 @@ static int mod_init(void)
 		return -1;
 	}
 	register_procs(total_procs);
+	cfg_register_child(total_procs);
 
 	nats_pub_worker_pipes_fds =
 			(int *)shm_malloc(sizeof(int) * (nats_pub_workers_num)*2);
@@ -369,6 +370,8 @@ static int mod_child_init(int rank)
 				LM_ERR("failed to fork worker process %d\n", i);
 				return -1;
 			} else if(newpid == 0) {
+				if(cfg_child_init())
+					return -1;
 				worker_loop(i);
 			} else {
 				nats_workers[i].pid = newpid;
