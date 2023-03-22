@@ -443,6 +443,8 @@ int _bm_register_timer(char *tname, int mode, unsigned int *id)
 		if(bm_mycfg->tindex==0)
 		{
 			SHM_MEM_ERROR;
+			shm_free(bmt);
+			pkg_free(bmt->start);
 			if(tidx!=0)
 				shm_free(tidx);
 			return -1;
