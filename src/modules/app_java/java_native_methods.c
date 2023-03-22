@@ -1002,6 +1002,7 @@ JNIEXPORT jint JNICALL Java_org_siprouter_CoreMethods_force_1send_1socket(
 	si = (struct socket_id *)pkg_malloc(sizeof(struct socket_id));
 	if(!si) {
 		PKG_MEM_ERROR;
+		pkg_free(nl);
 		return -1;
 	}
 
