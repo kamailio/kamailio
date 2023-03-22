@@ -868,7 +868,7 @@ duk_ret_t dukopen_KSR(duk_context *J)
 
 	_sr_J_KSRMethods = malloc(SR_JSDT_KSR_METHODS_SIZE * sizeof(duk_function_list_entry));
 	if(_sr_J_KSRMethods==NULL) {
-		LM_ERR("no more pkg memory\n");
+		SYS_MEM_ERROR;
 		return 0;
 	}
 	memset(_sr_J_KSRMethods, 0, SR_JSDT_KSR_METHODS_SIZE * sizeof(duk_function_list_entry));
