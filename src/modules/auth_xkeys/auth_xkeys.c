@@ -61,7 +61,7 @@ int auth_xkeys_list_init(void)
 		return 0;
 	_auth_xkeys_list = shm_malloc(sizeof(auth_xkey_t*));
 	if(_auth_xkeys_list==NULL) {
-		LM_ERR("no more shared memory\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	memset(_auth_xkeys_list, 0, sizeof(auth_xkey_t*));
@@ -88,7 +88,7 @@ int authx_xkey_insert(auth_xkey_t *nkey)
 		+ nkey->kvalue.len + 3;
 	ukey = (auth_xkey_t*)shm_malloc(ksize);
 	if(ukey==NULL) {
-		LM_ERR("no more shared memory\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	memset(ukey, 0, ksize);
@@ -269,7 +269,7 @@ int auth_xkeys_add(sip_msg_t* msg, str *hdr, str *key,
 	}
 	p = (char*)pkg_malloc(xdata.len+1);
 	if(p==NULL) {
-		LM_ERR("no more pkg memory\n");
+		PKG_MEM_ERROR;
 		return -2;
 	}
 	memcpy(p, xdata.s, xdata.len);
