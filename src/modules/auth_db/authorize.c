@@ -59,7 +59,7 @@ int fetch_credentials(sip_msg_t *msg, str *user, str* domain, str *table, int fl
 	}
 	col = pkg_malloc(sizeof(*col) * (nc+1));
 	if (col == NULL) {
-		LM_ERR("no more pkg memory\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 
@@ -140,7 +140,7 @@ static inline int get_ha1(struct username* _username, str* _domain,
 
 	col = pkg_malloc(sizeof(*col) * (credentials_n + 1));
 	if (col == NULL) {
-		LM_ERR("no more pkg memory\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 
