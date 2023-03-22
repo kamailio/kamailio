@@ -34,8 +34,10 @@ struct node*   append_to_list(struct node *head, char *offset, char *name)
 	struct node *new_node;
 
 	new_node = pkg_malloc(sizeof(struct node));
-	if (!new_node)
+	if (!new_node) {
+		PKG_MEM_ERROR;
 		return 0;
+	}
 	new_node->offset = offset;
 	new_node->name = name;
 	new_node->next = head;

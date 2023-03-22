@@ -115,7 +115,7 @@ int load_file( char *filename, str *xml)
 	/* get some memory */
 	xml->s = (char*)pkg_malloc( xml->len+1/*null terminated*/ );
 	if (!xml->s) {
-		LM_ERR("no more free pkg memory\n");
+		PKG_MEM_ERROR;
 		goto error;
 	}
 
@@ -214,7 +214,7 @@ static void cpl_rpc_load(rpc_t* rpc, void* ctx)
 	}
 	file = pkg_malloc(val.len+1);
 	if (file==NULL) {
-		LM_ERR("no more pkg mem\n");
+		PKG_MEM_ERROR;
 		rpc->fault(ctx, 500, "No memory");
 		return;
 	}

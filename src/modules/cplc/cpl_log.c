@@ -86,7 +86,7 @@ void compile_logs( str *log)
 	/* get a buffer */
 	log->s = (char*)pkg_malloc(log->len+1);
 	if (log->s==0) {
-		LM_ERR("no more pkg mem\n");
+		PKG_MEM_ERROR;
 		log->len = 0;
 		return;
 	}

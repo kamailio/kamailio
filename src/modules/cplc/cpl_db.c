@@ -159,7 +159,7 @@ int get_user_script(str *username, str *domain, str *script, str* key)
 			script->len = res->rows[0].values[0].val.blob_val.len;
 			script->s = shm_malloc( script->len );
 			if (!script->s) {
-				LM_ERR("no free sh_mem\n");
+				SHM_MEM_ERROR;
 				goto error;
 			}
 			memcpy( script->s, res->rows[0].values[0].val.blob_val.s,

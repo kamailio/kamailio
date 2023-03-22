@@ -82,7 +82,11 @@ cpl_ac_tm_p cpl_ac_tm_new(void)
 	cpl_ac_tm_p _atp = NULL;
 	_atp = (cpl_ac_tm_p)pkg_malloc(sizeof(cpl_ac_tm_t));
 	if(!_atp)
+	{
+		PKG_MEM_ERROR;
 		return NULL;
+	}
+
 	memset(_atp, 0, sizeof(cpl_ac_tm_t));
 
 	return _atp;
@@ -193,11 +197,13 @@ cpl_ac_maxval_p cpl_ac_get_maxval(cpl_ac_tm_p _atp)
 		return NULL;
 	_amp = (cpl_ac_maxval_p)pkg_malloc(sizeof(cpl_ac_maxval_t));
 	if(!_amp)
+	{
+		PKG_MEM_ERROR;
 		return NULL;
+	}
 
 	/* the number of the days in the year */
 	_amp->yday = 365 + is_leap_year(_atp->t.tm_year+1900);
-
 	/* the number of the days in the month */
 	switch(_atp->t.tm_mon)
 	{
@@ -284,7 +290,10 @@ cpl_tr_byxxx_p cpl_tr_byxxx_new(void)
 	cpl_tr_byxxx_p _bxp = NULL;
 	_bxp = (cpl_tr_byxxx_p)pkg_malloc(sizeof(cpl_tr_byxxx_t));
 	if(!_bxp)
+	{
+		PKG_MEM_ERROR;
 		return NULL;
+	}
 	memset(_bxp, 0, sizeof(cpl_tr_byxxx_t));
 	return _bxp;
 }
@@ -296,10 +305,14 @@ int cpl_tr_byxxx_init(cpl_tr_byxxx_p _bxp, int _nr)
 	_bxp->nr = _nr;
 	_bxp->xxx = (int*)pkg_malloc(_nr*sizeof(int));
 	if(!_bxp->xxx)
+	{
+		PKG_MEM_ERROR;
 		return -1;
+	}
 	_bxp->req = (int*)pkg_malloc(_nr*sizeof(int));
 	if(!_bxp->req)
 	{
+		PKG_MEM_ERROR;
 		pkg_free(_bxp->xxx);
 		_bxp->xxx = NULL;
 		return -1;
@@ -329,7 +342,11 @@ cpl_tmrec_p cpl_tmrec_new(void)
 	cpl_tmrec_p _trp = NULL;
 	_trp = (cpl_tmrec_p)pkg_malloc(sizeof(cpl_tmrec_t));
 	if(!_trp)
+	{
+		PKG_MEM_ERROR;
 		return NULL;
+	}
+
 	memset(_trp, 0, sizeof(cpl_tmrec_t));
 	localtime_r(&_trp->dtstart,&(_trp->ts));
 	return _trp;

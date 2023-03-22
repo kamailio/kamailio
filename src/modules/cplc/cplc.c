@@ -367,7 +367,7 @@ static int cpl_init(void)
 	ptr = getenv("TZ");
 	cpl_env.orig_tz.len = 3/*"TZ="*/ + (ptr?(strlen(ptr)+1):0);
 	if ( (cpl_env.orig_tz.s=shm_malloc( cpl_env.orig_tz.len ))==0 ) {
-		LM_ERR("no more shm mem. for saving TZ!\n");
+		SHM_MEM_ERROR_FMT("for saving TZ!\n");
 		goto error;
 	}
 	memcpy(cpl_env.orig_tz.s,"TZ=",3);
@@ -458,7 +458,7 @@ static inline int build_user_AOR(str *username, str *domain, str *uh, int sip)
 
 	uh->s = (char*)shm_malloc( uh->len + 1 );
 	if (!uh->s) {
-		LM_ERR("no more shm memory.\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 

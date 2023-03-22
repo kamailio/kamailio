@@ -73,7 +73,7 @@ static inline int add_location(struct location **loc_set, str *uri,
 		loc = (struct location*)shm_malloc(
 			sizeof(struct location)+((flags&CPL_LOC_DUPL)?uri->len+1:0) );
 	if (!loc) {
-		LM_ERR("no more free shm memory!\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 

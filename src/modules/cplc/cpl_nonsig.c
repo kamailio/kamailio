@@ -169,7 +169,7 @@ static inline void send_mail( struct cpl_cmd *cmd)
 		if (cmd->s2.s && cmd->s2.len) {
 			/* put the subject in this format : <"$subject"\0> */
 			if ( (argv[2]=(char*)pkg_malloc(1+cmd->s2.len+1+1))==0) {
-				LM_ERR("cannot get pkg memory\n");
+				PKG_MEM_ERROR;
 				goto child_exit;
 			}
 			argv[2][0] = '\"';
@@ -181,7 +181,8 @@ static inline void send_mail( struct cpl_cmd *cmd)
 		}
 		/* put the TO in <$to\0> format*/
 		if ( (argv[3]=(char*)pkg_malloc(cmd->s1.len+1))==0) {
-			LM_ERR("cannot get pkg memory\n");
+			PKG_MEM_ERROR;
+			pkg_free(argv[2]);
 			goto child_exit;
 		}
 		memcpy(argv[3],cmd->s1.s,cmd->s1.len);

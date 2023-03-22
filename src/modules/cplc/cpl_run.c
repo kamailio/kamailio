@@ -117,7 +117,7 @@ struct cpl_interpreter* new_cpl_interpreter( struct sip_msg *msg, str *script)
 
 	intr = (struct cpl_interpreter*)shm_malloc(sizeof(struct cpl_interpreter));
 	if (!intr) {
-		LM_ERR("no more shm free memory!\n");
+		SHM_MEM_ERROR;
 		goto error;
 	}
 	memset( intr, 0, sizeof(struct cpl_interpreter));
@@ -671,7 +671,7 @@ static inline char *run_redirect( struct cpl_interpreter *intr )
 
 	lump_str.s = pkg_malloc( lump_str.len );
 	if(!lump_str.s) {
-		LM_ERR("out of pkg memory!\n");
+		PKG_MEM_ERROR;
 		goto runtime_error;
 	}
 	cp = lump_str.s;
@@ -802,7 +802,7 @@ static inline char *run_log( struct cpl_interpreter *intr )
 	/* duplicate the attrs in shm memory */
 	user.s = p = (char*)shm_malloc( user.len );
 	if (!user.s) {
-		LM_ERR("no more shm memory!\n");
+		SHM_MEM_ERROR;
 		goto runtime_error;
 	}
 	/* copy the user name */
@@ -886,7 +886,7 @@ static inline char *run_mail( struct cpl_interpreter *intr )
 	/* duplicate the attrs in shm memory */
 	p = (char*)shm_malloc( to.len + subject.len + body.len );
 	if (!p) {
-		LM_ERR("no more shm memory!\n");
+		SHM_MEM_ERROR;
 		goto runtime_error;
 	}
 	/* copy the TO */

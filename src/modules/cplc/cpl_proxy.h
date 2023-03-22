@@ -529,7 +529,7 @@ static inline char *run_proxy( struct cpl_interpreter *intr )
 script_error:
 	return CPL_SCRIPT_ERROR;
 mem_error:
-	LM_ERR("no more free shm memory\n");
+	SHM_MEM_ERROR;
 runtime_error:
 	return CPL_RUNTIME_ERROR;
 }
