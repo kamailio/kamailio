@@ -362,7 +362,7 @@ static SQInteger sqlang_sr_modf (HSQUIRRELVM J)
 		if(sqlangv[i]!=NULL) {
 			argv[i] = (char*)pkg_malloc(strlen(sqlangv[i])+1);
 			if(argv[i]==NULL) {
-				LM_ERR("no more pkg\n");
+				PKG_MEM_ERROR;
 				goto error;
 			}
 			strcpy(argv[i], sqlangv[i]);
@@ -583,7 +583,7 @@ int sqlang_sr_init_mod(void)
 	if(_sr_sqlang_reload_version == NULL) {
 		_sr_sqlang_reload_version = (int*)shm_malloc(sizeof(int));
 		if(_sr_sqlang_reload_version == NULL) {
-			LM_ERR("failed to allocated reload version\n");
+			SHM_MEM_ERROR;
 			return -1;
 		}
 		*_sr_sqlang_reload_version = 0;
@@ -1085,7 +1085,7 @@ SQInteger sqlang_open_KSR(HSQUIRRELVM J)
 
 	_sr_J_KSRMethods = malloc(SR_SQLANG_KSR_METHODS_SIZE * sizeof(SQRegFunction));
 	if(_sr_J_KSRMethods==NULL) {
-		LM_ERR("no more pkg memory\n");
+		SYS_MEM_ERROR ;
 		return 0;
 	}
 	memset(_sr_J_KSRMethods, 0, SR_SQLANG_KSR_METHODS_SIZE * sizeof(SQRegFunction));
