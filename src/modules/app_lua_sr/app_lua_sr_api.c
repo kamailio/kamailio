@@ -276,7 +276,7 @@ static int lua_sr_modf (lua_State *L)
 			argv[i] = (char*)pkg_malloc(strlen(luav[i])+1);
 			if(argv[i]==NULL)
 			{
-				LM_ERR("no more pkg\n");
+				PKG_MEM_ERROR;
 				goto error;
 			}
 			strcpy(argv[i], luav[i]);
