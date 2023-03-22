@@ -98,7 +98,7 @@ int km_mod_init(void)
 
 	km_flat_rotate = (time_t*)shm_malloc(sizeof(time_t));
 	if (!km_flat_rotate) {
-		LM_ERR("no shared memory left\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 

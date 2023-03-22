@@ -69,7 +69,7 @@ db1_con_t* flat_db_init(const str* url)
 	 */
 	res = pkg_malloc(sizeof(db1_con_t)+sizeof(struct flat_con*)+sizeof(str));
 	if (!res) {
-		LM_ERR("no pkg memory left\n");
+		PKG_MEM_ERROR;
 		return 0;
 	}
 	memset(res, 0, sizeof(db1_con_t) + sizeof(struct flat_con*) + sizeof(str));

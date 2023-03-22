@@ -43,7 +43,7 @@ struct flat_id* new_flat_id(char* dir, char* table)
 
 	ptr = (struct flat_id*)pkg_malloc(sizeof(struct flat_id));
 	if (!ptr) {
-		LM_ERR("no pkg memory left\n");
+		PKG_MEM_ERROR;
 		return 0;
 	}
 	memset(ptr, 0, sizeof(struct flat_id));
@@ -52,7 +52,7 @@ struct flat_id* new_flat_id(char* dir, char* table)
 	t_len = strlen(table);
 	t = (char*)pkg_malloc(t_len+1);
 	if (!t) {
-		LM_ERR("no pkg memory left\n");
+		PKG_MEM_ERROR;
 		pkg_free(ptr);
 		return 0;
 	}

@@ -172,7 +172,7 @@ static int mod_init(void)
 
 	flat_rotate = (time_t*)shm_malloc(sizeof(time_t));
 	if (!flat_rotate) {
-		ERR("flatstore: Not enough shared memory left\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 

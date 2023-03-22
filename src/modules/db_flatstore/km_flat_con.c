@@ -55,7 +55,7 @@ static char* get_name(struct flat_id* id)
 	
 	buf=pkg_malloc(buf_len);
 	if (buf==0){
-		LM_ERR("pkg memory allocation failure\n");
+		PKG_MEM_ERROR;
 		return 0;
 	}
 
@@ -101,7 +101,7 @@ struct flat_con* flat_new_connection(struct flat_id* id)
 
 	res = (struct flat_con*)pkg_malloc(sizeof(struct flat_con));
 	if (!res) {
-		LM_ERR("no pkg memory left\n");
+		PKG_MEM_ERROR;
 		return 0;
 	}
 
