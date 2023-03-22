@@ -583,7 +583,7 @@ int sqlang_sr_init_mod(void)
 	if(_sr_sqlang_reload_version == NULL) {
 		_sr_sqlang_reload_version = (int*)shm_malloc(sizeof(int));
 		if(_sr_sqlang_reload_version == NULL) {
-			SHM_MEM_ERROR;
+			SHM_MEM_ERROR_FMT("reload version\n");;
 			return -1;
 		}
 		*_sr_sqlang_reload_version = 0;
