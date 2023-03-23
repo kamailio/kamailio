@@ -376,6 +376,18 @@ int pv_get_timeval(struct sip_msg *msg, pv_param_t *param,
 				LM_ERR("unable to get monotonic clock value\n");
 				return pv_get_null(msg, param, res);
 			}
+		case 7:
+			/* recv delay timespec (converted to nanoseconds returned as string) */
+			if (!timespec_isset(&msg->ts_recv_delay)) {
+				LM_ERR("Timer receive delay is not set\n");
+				return pv_get_null(msg, param, res);
+			}
+			s.len = snprintf(_timeval_ts_buf, 64, "%" PRIu64,
+				(u_int64_t)msg->ts_recv_delay.tv_sec * 1000000000 + (u_int64_t)msg->ts_recv_delay.tv_nsec);
+			if (s.len < 0)
+				return pv_get_null(msg, param, res);
+			s.s = _timeval_ts_buf;
+			return pv_get_strval(msg, param, res, &s);
 		default:
 			msg_set_time(msg);
 			return pv_get_uintval(msg, param, res, (unsigned int)msg->tval.tv_sec);
@@ -407,6 +419,9 @@ int pv_parse_timeval_name(pv_spec_p sp, str *in)
 				sp->pvp.pvn.u.isname.name.n = 5;
 			else if(strncmp(in->s, "Sm", 2)==0)
 				sp->pvp.pvn.u.isname.name.n = 6;
+			else if(strncmp(in->s, "RD", 2)==0)
+				/* recv delay timespec (converted to nanoseconds returned as string) */
+				sp->pvp.pvn.u.isname.name.n = 7;
 			else goto error;
 		break;
 		default:
