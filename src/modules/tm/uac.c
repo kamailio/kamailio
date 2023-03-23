@@ -540,6 +540,7 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 	if (unlikely(goto_on_local_req>=0 || tm_event_callback.len>0)) {
 		refresh_shortcuts = t_run_local_req(&buf, &buf_len, uac_r, new_cell, request);
 		if (unlikely(refresh_shortcuts==E_DROP)) {
+			shm_free(buf);
 			ret=E_DROP;
 			goto error1;
 		}
@@ -653,6 +654,10 @@ int prepare_req_within(uac_req_t *uac_r,
 	
 	if (unlikely(ret < 0 && ret == E_DROP)) {
 		ret = 0;
+		if(uac_r->cbp) {
+			shm_free(uac_r->cbp);
+		}
+
 	}
 
  err:
@@ -749,6 +754,9 @@ int t_uac_with_ids(uac_req_t *uac_r,
 	if (ret < 0) {
 		if (unlikely(ret == E_DROP)) {
 			ret = 0;
+			if(uac_r->cbp) {
+				shm_free(uac_r->cbp);
+			}
 		}
 		return ret;
 	}
