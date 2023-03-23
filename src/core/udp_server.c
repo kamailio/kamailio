@@ -430,7 +430,7 @@ int udp_init(struct socket_info* sock_info)
 		if (mcast_ttl>=0){
 			if (setsockopt(sock_info->socket, IPPROTO_IP, IPV6_MULTICAST_HOPS,
 							&mcast_ttl, sizeof(mcast_ttl))==-1){
-				LM_WARN("setssckopt (IPV6_MULTICAST_HOPS): %s\n", strerror(errno));
+				LM_WARN("setsockopt (IPV6_MULTICAST_HOPS): %s\n", strerror(errno));
 			}
 		}
 	} else {
@@ -438,6 +438,15 @@ int udp_init(struct socket_info* sock_info)
 		goto error;
 	}
 #endif /* USE_MCAST */
+
+#if defined (__OS_linux)
+	/* Set socket timestamping.
+	 * Note: SO_TIMESTAMPNS is available since Linux kernel 2.6.30 (June 9, 2009). */
+	optval = 1;
+	if (setsockopt(sock_info->socket, SOL_SOCKET, SO_TIMESTAMPNS, (void*)&optval, sizeof(optval)) == -1) {
+		LM_WARN("setsockopt(SO_TIMESTAMPNS): %s\n", strerror(errno));
+	}
+#endif
 
 	if ( probe_max_receive_buffer(sock_info->socket)==-1) goto error;
 
@@ -498,8 +507,25 @@ int udp_rcv_loop()
 
 	for(;;){
 		fromaddrlen=sizeof(union sockaddr_union);
-		len=recvfrom(bind_address->socket, buf, BUF_SIZE, 0,
-				(struct sockaddr*)fromaddr, &fromaddrlen);
+
+		// Replacement of recvfrom with recvmsg, which allows to access the control messages (ancillary data).
+		//len=recvfrom(bind_address->socket, buf, BUF_SIZE, 0,
+		//		(struct sockaddr*)fromaddr, &fromaddrlen);
+		struct msghdr msg = {0};
+		struct iovec iov[1];
+		iov[0].iov_base = buf;
+		iov[0].iov_len = BUF_SIZE;
+		msg.msg_iov = iov;
+		msg.msg_iovlen = 1;
+		msg.msg_name = fromaddr;
+		msg.msg_namelen = fromaddrlen;
+#ifdef HAVE_MSGHDR_MSG_CONTROL
+		char msg_ctrl_buf[512];
+		msg.msg_control = msg_ctrl_buf;
+		msg.msg_controllen = sizeof(msg_ctrl_buf);
+#endif
+		len = recvmsg(bind_address->socket, &msg, 0);
+
 		if (len==-1){
 			if (errno==EAGAIN){
 				LM_DBG("packet with bad checksum received\n");
@@ -510,13 +536,31 @@ int udp_rcv_loop()
 				continue; /* goto skip;*/
 			else goto error;
 		}
-		if(fromaddrlen != (unsigned int)sockaddru_len(bind_address->su)) {
-			LM_ERR("ignoring data - unexpected from addr len: %u != %u\n",
-					fromaddrlen, (unsigned int)sockaddru_len(bind_address->su));
-			continue;
-		}
+		// With recvmsg we don't have fromaddrlen returned.
+		//if(fromaddrlen != (unsigned int)sockaddru_len(bind_address->su)) {
+		//	LM_ERR("ignoring data - unexpected from addr len: %u != %u\n",
+		//			fromaddrlen, (unsigned int)sockaddru_len(bind_address->su));
+		//	continue;
+		//}
 		/* we must 0-term the messages, receive_msg expects it */
 		buf[len]=0; /* no need to save the previous char */
+
+#ifdef HAVE_MSGHDR_MSG_CONTROL
+		/* Read ancillary data. */
+		struct cmsghdr *cmsg;
+		for (cmsg = CMSG_FIRSTHDR(&msg); cmsg; cmsg = CMSG_NXTHDR(&msg, cmsg)) {
+			switch (cmsg->cmsg_level) {
+				case SOL_SOCKET:
+					switch (cmsg->cmsg_type) {
+						case SO_TIMESTAMPNS: {
+							struct timespec *ts_ptr = (struct timespec *)CMSG_DATA(cmsg);
+							rcvi.ts = *ts_ptr;
+							break;
+						}
+					}
+			}
+		}
+#endif
 
 		if(is_printable(L_DBG) && len>10) {
 			j = 0;

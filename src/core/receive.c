@@ -362,6 +362,14 @@ int receive_msg(char *buf, unsigned int len, receive_info_t *rcv_info)
 	if(likely(sr_msg_time == 1))
 		msg_set_time(msg);
 
+	/* If the timestamp of network reception is available,
+	 * compute and store the time difference between network receiving the message and Kamailio reading it. */
+	if (timespec_isset(&rcv_info->ts)) {
+		struct timespec ts_recvmsg;
+		clock_gettime(CLOCK_REALTIME, &ts_recvmsg); // same clock as used to set SO_TIMESTAMPNS (CLOCK_REALTIME)
+		timespec_sub(&ts_recvmsg, &rcv_info->ts, &msg->ts_recv_delay);
+	}
+
 	if(parse_msg(buf, len, msg) != 0) {
 		errsipmsg = 1;
 		evp.data = (void *)msg;

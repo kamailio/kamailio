@@ -46,6 +46,20 @@
 
 
 
+/* Macros for manipulation of struct timespec
+ * Similar to the macros defined for struct timeval in <sys/time.h> (timersub, ...)
+ */
+#define timespec_isset(tsp) ((tsp)->tv_sec || (tsp)->tv_nsec)
+#define timespec_sub(a, b, result) \
+	do { \
+		(result)->tv_sec = (a)->tv_sec - (b)->tv_sec; \
+		(result)->tv_nsec = (a)->tv_nsec - (b)->tv_nsec; \
+		if ((result)->tv_nsec < 0) { \
+			--(result)->tv_sec; \
+			(result)->tv_nsec += 1000000000; \
+		} \
+	} while (0)
+
 /* zero-string wrapper */
 #define ZSW(_c) ((_c)?(_c):"")
 
@@ -133,7 +147,7 @@
 		(_dest) += (_len) ;						\
 	}while(0);									\
 
-	
+
 /*! append _c char to _dest string */
 #define append_chr(_dest,_c) \
 	*((_dest)++) = _c;
@@ -222,11 +236,11 @@ static inline int btostr( char *p,  unsigned char val)
 #define INT2STR_MAX_LEN  (19+1+1+1) /* 2^64~= 16*10^18 =>
 									   19+1 digits + sign + \0 */
 
-/* 
- * returns a pointer to a static buffer containing l in asciiz (with base "base") & sets len 
+/*
+ * returns a pointer to a static buffer containing l in asciiz (with base "base") & sets len
  * left padded with 0 to "size"
  */
-static inline char* int2str_base_0pad(unsigned int l, int* len, int base, 
+static inline char* int2str_base_0pad(unsigned int l, int* len, int base,
 											int size)
 {
 	static char r[INT2STR_MAX_LEN];
@@ -379,7 +393,7 @@ static inline int ushort2sbuf(unsigned short u, char* buf, int len)
 {
 	int offs;
 	unsigned char a, b, c, d;
-	
+
 	if (unlikely(len<USHORT2SBUF_MAX_LEN))
 		return 0;
 	offs=0;
@@ -478,7 +492,7 @@ inline static int int2reverse_hex( char **c, int *size, unsigned int nr )
 }
 
 /* double output length assumed ; does NOT zero-terminate */
-inline static int string2hex( 
+inline static int string2hex(
 	/* input */ unsigned char *str, int len,
 	/* output */ char *hex )
 {
@@ -555,7 +569,7 @@ inline static int hex2int(char hex_digit)
 	<0 is returned on an unescaping error, length of the
 	unescaped string otherwise
 */
-inline static int un_escape(str *user, str *new_user ) 
+inline static int un_escape(str *user, str *new_user )
 {
  	int i, j, value;
 	int hi, lo;
@@ -608,7 +622,7 @@ inline static int un_escape(str *user, str *new_user )
 error:
 	new_user->len = j;
 	return -1;
-} 
+}
 
 
 /*
@@ -1027,7 +1041,7 @@ static inline int str_strcasecmp(const str *str1, const str *str2)
 #endif
 
 
-/* INTeger-TO-Buffer-STRing : convers an unsigned long to a string 
+/* INTeger-TO-Buffer-STRing : convers an unsigned long to a string
  * IMPORTANT: the provided buffer must be at least INT2STR_MAX_LEN size !! */
 static inline char* int2bstr(unsigned long l, char *s, int* len)
 {
@@ -1092,7 +1106,7 @@ int group2gid(int* gid, char* group);
 
 /*
  * Replacement of timegm (does not exists on all platforms
- * Taken from 
+ * Taken from
  * http://lists.samba.org/archive/samba-technical/2002-November/025737.html
  */
 time_t _timegm(struct tm* t);

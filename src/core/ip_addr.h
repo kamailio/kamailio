@@ -174,6 +174,7 @@ typedef struct receive_info {
 	struct socket_info* bind_address; /* sock_info structure on which
 										* the msg was received */
 	recv_flags_t rflags; /* flags */
+	struct timespec ts; /* network timestamp of incoming packet (using CLOCK_REALTIME) */
 	char proto;
 #ifdef USE_COMP
 	char proto_pad0;  /* padding field */

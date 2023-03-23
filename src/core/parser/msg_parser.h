@@ -296,6 +296,7 @@ typedef struct sip_msg {
 	unsigned int id;               /*!< message id, unique/process*/
 	int pid;                       /*!< process id */
 	struct timeval tval;           /*!< time value associated to message */
+	struct timespec ts_recv_delay; /*!< time difference between network receiving the message and Kamailio reading it */
 	snd_flags_t fwd_send_flags;    /*!< send flags for forwarding */
 	snd_flags_t rpl_send_flags;    /*!< send flags for replies */
 	struct msg_start first_line;   /*!< Message first line */
