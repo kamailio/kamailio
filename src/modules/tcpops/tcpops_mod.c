@@ -604,6 +604,26 @@ setvalue:
 /**
  *
  */
+static int ki_tcp_get_conid(sip_msg_t* msg, str *saddr, str *pvs)
+{
+    pv_spec_t *dst;
+    dst = pv_cache_get(pvs);
+
+    if(dst==NULL) {
+        LM_ERR("failed to get pv spec for: %.*s\n", pvs->len, pvs->s);
+        return -1;
+    }
+    if(dst->setf==NULL) {
+        LM_ERR("target pv is not writable: %.*s\n", pvs->len, pvs->s);
+        return -1;
+    }
+
+    return ki_tcp_get_conid_helper(msg, saddr, dst);
+}
+
+/**
+ *
+ */
 static int w_tcp_get_conid(sip_msg_t* msg, char *paddr, char *pvn)
 {
 	str saddr;
@@ -853,6 +873,11 @@ static sr_kemi_t sr_kemi_tcpops_exports[] = {
 	{ str_init("tcpops"), str_init("tcp_conid_state"),
 		SR_KEMIP_INT, ki_tcp_conid_state,
 		{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("tcpops"), str_init("tcp_get_conid"),
+		SR_KEMIP_INT, ki_tcp_get_conid,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("tcpops"), str_init("tcp_set_otcpid"),
