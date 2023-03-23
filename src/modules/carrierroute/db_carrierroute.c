@@ -111,6 +111,10 @@ int carrierroute_db_init(void) {
 		LM_ERR("can't connect to database.\n");
 		return -1;
 	}
+	if (!DB_CAPABILITY(carrierroute_dbf, DB_CAP_RAW_QUERY)) {
+		LM_ERR("database does not support required raw queries capability\n");
+		return -1;
+	}
 	if (db_check_table_version(&carrierroute_dbf, carrierroute_dbh,
 			&carrierroute_table, carrierroute_version) < 0) {
 		DB_TABLE_VERSION_ERROR(carrierroute_table);
