@@ -912,6 +912,10 @@ void sr_kemi_lua_push_dict(lua_State *L, sr_kemi_dict_item_t *item) {
 void
 sr_kemi_lua_push_dict_item(lua_State *L, sr_kemi_dict_item_t *item)
 {
+	if(!item) {
+		LM_CRIT("BUG: dict field empty\n");
+		return;
+	}
 	switch(item->vtype) {
 		case SR_KEMIP_NONE:
 			LM_CRIT("BUG: vtype is NONE\n");
@@ -951,6 +955,10 @@ sr_kemi_lua_push_dict_item(lua_State *L, sr_kemi_dict_item_t *item)
  */
 int sr_kemi_lua_return_xval(lua_State* L, sr_kemi_t *ket, sr_kemi_xval_t *rx)
 {
+	if(!rx) {
+		LM_CRIT("BUG: xval field empty\n");
+		return 0;
+	}
 	switch(rx->vtype) {
 		case SR_KEMIP_NONE:
 			return 0;
