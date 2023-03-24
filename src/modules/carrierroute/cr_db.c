@@ -335,11 +335,6 @@ int load_route_data_db(struct route_data_t * rd) {
 		return -1;
 	}
 
-	if (!DB_CAPABILITY(carrierroute_dbf, DB_CAP_RAW_QUERY)) {
-		LM_ERR("Database does not support required raw queries capability\n");
-		return -1;
-	}
-
 	if (DB_CAPABILITY(carrierroute_dbf, DB_CAP_FETCH)) {
 		if (carrierroute_dbf.query(carrierroute_dbh, NULL, NULL, NULL, (db_key_t *) columns, 0,
 				columns_load_num, NULL, NULL) < 0) {
