@@ -44,7 +44,7 @@
 
 MODULE_VERSION
 
-static int   _evapi_workers = 1;
+int _evapi_workers = 1;
 static char *_evapi_bind_addr = "127.0.0.1";
 static int   _evapi_bind_port = 8448;
 static char *_evapi_bind_param = NULL;
