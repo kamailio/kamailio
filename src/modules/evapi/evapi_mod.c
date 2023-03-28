@@ -163,6 +163,10 @@ static int mod_init(void)
 		_evapi_bind_addr = _evapi_bind_param;
 	}
 
+	if(evapi_queue_init() < 0) {
+		LM_ERR("failed to init faked internal message queue\n");
+		return -1;
+	}
 	/* add space for one extra process */
 	register_procs(1 + _evapi_workers);
 
