@@ -223,7 +223,7 @@ static inline int add_secret(str _secret_key)
 	secret_struct = (struct secret *) shm_malloc(sizeof(struct secret));
 	if (secret_struct == NULL)
 	{
-		LM_ERR("unable to allocate shared memory\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 
@@ -313,7 +313,7 @@ static int secret_param(modparam_t _type, void *_val)
 	sval.s = (char *) shm_malloc(sizeof(char) * sval.len);
 	if (sval.s == NULL)
 	{
-		LM_ERR("unable to allocate shared memory\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	memcpy(sval.s, (char *) _val, sval.len);
@@ -363,7 +363,7 @@ void autheph_rpc_add_secret(rpc_t* rpc, void* ctx)
 	sval.s = shm_malloc(sizeof(char) * sval.len);
 	if (sval.s == NULL)
 	{
-		LM_ERR("Unable to allocate shared memory\n");
+		SHM_MEM_ERROR;
 		rpc->fault(ctx, 500, "Not enough memory");
 		return;
 	}
