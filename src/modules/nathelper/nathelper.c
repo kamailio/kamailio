@@ -514,7 +514,7 @@ static int mod_init(void)
 
 		natping_state = (unsigned int *)shm_malloc(sizeof(unsigned int));
 		if(!natping_state) {
-			LM_ERR("no shmem left\n");
+			SHM_MEM_ERROR;
 			return -1;
 		}
 		*natping_state = DEFAULT_NATPING_STATE;
@@ -662,7 +662,7 @@ static int fix_nated_contact(struct sip_msg *msg)
 		len += 2;
 	buf = pkg_malloc(len);
 	if(buf == NULL) {
-		LM_ERR("out of pkg memory\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	temp[0] = hostport.s[0];
@@ -765,7 +765,7 @@ static int set_contact_alias(struct sip_msg *msg, int trim)
 	len = nuri.len + 2 * br;
 	buf = pkg_malloc(len + 1);
 	if(buf == NULL) {
-		LM_ERR("out of pkg memory\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	if(br == 1) {
@@ -878,7 +878,7 @@ static int add_contact_alias_0(struct sip_msg *msg)
 		/* add opening < */
 		lt = (char *)pkg_malloc(1);
 		if(!lt) {
-			LM_ERR("no pkg memory left for lt sign\n");
+			PKG_MEM_ERROR_FMT("for lt sign\n");
 			goto err;
 		}
 		*lt = '<';
@@ -899,7 +899,7 @@ static int add_contact_alias_0(struct sip_msg *msg)
 				+ 1 /* proto */ + 1 /* > */;
 	param = (char *)pkg_malloc(param_len);
 	if(!param) {
-		LM_ERR("no pkg memory left for alias param\n");
+		PKG_MEM_ERROR_FMT("for alias param\n");
 		goto err;
 	}
 	at = param;
@@ -1038,7 +1038,7 @@ static int add_contact_alias_3(
 		/* add opening < */
 		lt = (char *)pkg_malloc(1);
 		if(!lt) {
-			LM_ERR("no pkg memory left for lt sign\n");
+			PKG_MEM_ERROR_FMT("for lt sign\n");
 			goto err;
 		}
 		*lt = '<';
@@ -1058,7 +1058,7 @@ static int add_contact_alias_3(
 				+ 1 /* ~ */ + 1 /* proto */ + 1 /* closing > */;
 	param = (char *)pkg_malloc(param_len);
 	if(!param) {
-		LM_ERR("no pkg memory left for alias param\n");
+		PKG_MEM_ERROR_FMT("for alias param\n");
 		goto err;
 	}
 	at = param;
@@ -1868,7 +1868,7 @@ static int ki_fix_nated_sdp_ip(sip_msg_t *msg, int level, str *ip)
 				}
 				buf = pkg_malloc((ADIRECTION_LEN + CRLF_LEN) * sizeof(char));
 				if(buf == NULL) {
-					LM_ERR("out of pkg memory\n");
+					PKG_MEM_ERROR;
 					return -1;
 				}
 				memcpy(buf, CRLF, CRLF_LEN);
@@ -1891,7 +1891,7 @@ static int ki_fix_nated_sdp_ip(sip_msg_t *msg, int level, str *ip)
 			}
 			buf = pkg_malloc((nortpproxy_str.len + CRLF_LEN) * sizeof(char));
 			if(buf == NULL) {
-				LM_ERR("out of pkg memory\n");
+				PKG_MEM_ERROR;
 				return -1;
 			}
 			memcpy(buf, CRLF, CRLF_LEN);
@@ -2040,7 +2040,7 @@ static int alter_mediaip(struct sip_msg *msg, str *body, str *oldip, int oldpf,
 		}
 		buf = pkg_malloc(omip.len + oldip->len + CRLF_LEN);
 		if(buf == NULL) {
-			LM_ERR("out of pkg memory\n");
+			PKG_MEM_ERROR;
 			return -1;
 		}
 		memcpy(buf, CRLF, CRLF_LEN);
@@ -2059,7 +2059,7 @@ static int alter_mediaip(struct sip_msg *msg, str *body, str *oldip, int oldpf,
 		nip.len = newip->len;
 		nip.s = pkg_malloc(nip.len);
 		if(nip.s == NULL) {
-			LM_ERR("out of pkg memory\n");
+			PKG_MEM_ERROR;
 			return -1;
 		}
 		memcpy(nip.s, newip->s, newip->len);
@@ -2067,7 +2067,7 @@ static int alter_mediaip(struct sip_msg *msg, str *body, str *oldip, int oldpf,
 		nip.len = newip->len + 2;
 		nip.s = pkg_malloc(nip.len);
 		if(nip.s == NULL) {
-			LM_ERR("out of pkg memory\n");
+			PKG_MEM_ERROR;
 			return -1;
 		}
 		memcpy(nip.s + 2, newip->s, newip->len);
@@ -2240,7 +2240,7 @@ static void nh_timer(unsigned int ticks, void *timer_idx)
 	if(cblen > 0) {
 		buf = pkg_malloc(cblen);
 		if(buf == NULL) {
-			LM_ERR("out of pkg memory\n");
+			PKG_MEM_ERROR;
 			goto done;
 		}
 	}
@@ -2262,7 +2262,7 @@ static void nh_timer(unsigned int ticks, void *timer_idx)
 		cblen = rval * 2;
 		buf = pkg_malloc(cblen);
 		if(buf == NULL) {
-			LM_ERR("out of pkg memory\n");
+			PKG_MEM_ERROR;
 			goto done;
 		}
 		rval = ul.get_all_ucontacts(buf, cblen,
@@ -2443,7 +2443,7 @@ static int ki_add_rcv_param(sip_msg_t *msg, int upos)
 	while(c) {
 		param = (char *)pkg_malloc(RECEIVED_LEN + 2 + uri.len);
 		if(!param) {
-			LM_ERR("no pkg memory left\n");
+			PKG_MEM_ERROR;
 			return -1;
 		}
 		memcpy(param, RECEIVED, RECEIVED_LEN);
@@ -2868,7 +2868,7 @@ static int nh_alias_to_uri(str *contact_header, str *alias_uri)
 	//sip:host:port;transport=udp
 	alias_uri->s =(char*)pkg_malloc(port.len+host.len+proto.len+16);
 	if(!alias_uri->s) {
-		LM_ERR("Allocation ERROR\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 
