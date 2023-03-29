@@ -1028,32 +1028,37 @@ void cdr_api_set_arrays(cdr_info_t *inf)
 
 int cdr_arrays_alloc(void) {
 	if ((cdr_attrs = pkg_malloc((MAX_CDR_CORE + cdr_extra_size) * sizeof(str))) == NULL) {
-		LM_ERR("failed to alloc cdr_attrs\n");
+		PKG_MEM_ERROR_FMT("failed to alloc cdr_attrs\n");
 		return -1;
 	}
 
 	if ((cdr_value_array = pkg_malloc((MAX_CDR_CORE + cdr_extra_size) * sizeof(str))) == NULL) {
-		LM_ERR("failed to alloc cdr_value_array\n");
+		PKG_MEM_ERROR_FMT("failed to alloc cdr_value_array\n");
+		cdr_arrays_free();
 		return -1;
 	}
 
 	if ((cdr_int_array = pkg_malloc((MAX_CDR_CORE + cdr_extra_size) * sizeof(int))) == NULL) {
-		LM_ERR("failed to alloc cdr_int_array\n");
+		PKG_MEM_ERROR_FMT("failed to alloc cdr_int_array\n");
+		cdr_arrays_free();
 		return -1;
 	}
 
 	if ((cdr_type_array = pkg_malloc((MAX_CDR_CORE + cdr_extra_size) * sizeof(char))) == NULL) {
-		LM_ERR("failed to alloc cdr_type_array\n");
+		PKG_MEM_ERROR_FMT("failed to alloc cdr_type_array\n");
+		cdr_arrays_free();
 		return -1;
 	}
 
 	if ((db_cdr_keys = pkg_malloc((MAX_CDR_CORE + cdr_extra_size) * sizeof(db_key_t))) == NULL) {
-		LM_ERR("failed to alloc db_cdr_keys\n");
+		PKG_MEM_ERROR_FMT("failed to alloc db_cdr_keys\n");
+		cdr_arrays_free();
 		return -1;
 	}
 
 	if ((db_cdr_vals = pkg_malloc((MAX_CDR_CORE + cdr_extra_size) * sizeof(db_val_t))) == NULL) {
-		LM_ERR("failed to alloc db_cdr_vals\n");
+		PKG_MEM_ERROR_FMT("failed to alloc db_cdr_vals\n");
+		cdr_arrays_free();
 		return -1;
 	}
 

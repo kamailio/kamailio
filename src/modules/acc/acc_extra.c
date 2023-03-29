@@ -386,7 +386,7 @@ int acc_extra_arrays_alloc(void) {
 	}
 
 	if ((int_buf = pkg_malloc((INT2STR_MAX_LEN * acc_int_buf_size) * sizeof(char))) == NULL) {
-		LM_ERR("failed to alloc int_buf\n");
+		PKG_MEM_ERROR_FMT("failed to alloc int_buf\n");
 		return -1;
 	}
 
