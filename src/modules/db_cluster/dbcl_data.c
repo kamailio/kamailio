@@ -111,7 +111,7 @@ int dbcl_init_con(str *name, str *url)
 	sc = (dbcl_con_t*)pkg_malloc(sizeof(dbcl_con_t));
 	if(sc==NULL)
 	{
-		LM_ERR("no pkg memory\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	memset(sc, 0, sizeof(dbcl_con_t));
@@ -121,7 +121,7 @@ int dbcl_init_con(str *name, str *url)
 	sc->sinfo = (dbcl_shared_t*)shm_malloc(sizeof(dbcl_shared_t));
 	if(sc->sinfo==NULL)
 	{
-		LM_ERR("no shm memory\n");
+		SHM_MEM_ERROR;
 		pkg_free(sc);
 		return -1;
 	}
@@ -357,7 +357,7 @@ int dbcl_init_cls(str *name, str *cons)
 	sc = (dbcl_cls_t*)pkg_malloc(sizeof(dbcl_cls_t));
 	if(sc==NULL)
 	{
-		LM_ERR("no pkg memory\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	memset(sc, 0, sizeof(dbcl_cls_t));

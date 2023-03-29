@@ -433,7 +433,7 @@ db1_con_t* db_cluster_init(const str* _dburl)
 	cls->ref++;
 	h = (db1_con_t*)pkg_malloc(sizeof(db1_con_t));
 	if (h==NULL) {
-		LM_ERR("out of pkg memory\n");
+		PKG_MEM_ERROR;
 		return NULL;
 	}
 	memset(h, 0, sizeof(db1_con_t));
