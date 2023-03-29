@@ -117,14 +117,14 @@ sr_dns_item_t *sr_dns_add_item(str *name)
 	it = (sr_dns_item_t*)pkg_malloc(sizeof(sr_dns_item_t));
 	if(it==NULL)
 	{
-		LM_ERR("no more pkg\n");
+		PKG_MEM_ERROR;
 		return NULL;
 	}
 	memset(it, 0, sizeof(sr_dns_item_t));
 	it->name.s = (char*)pkg_malloc(name->len+1);
 	if(it->name.s==NULL)
 	{
-		LM_ERR("no more pkg.\n");
+		PKG_MEM_ERROR;
 		pkg_free(it);
 		return NULL;
 	}
@@ -154,8 +154,10 @@ int pv_parse_dns_name(pv_spec_t *sp, str *in)
 
 	dpv = (dns_pv_t*)pkg_malloc(sizeof(dns_pv_t));
 	if(dpv==NULL)
+	{
+		PKG_MEM_ERROR;
 		return -1;
-
+	}
 	memset(dpv, 0, sizeof(dns_pv_t));
 
 	p = in->s;
@@ -473,7 +475,7 @@ int hn_pv_data_init(void)
 
 	_hn_data = (struct _hn_pv_data*)pkg_malloc(sizeof(struct _hn_pv_data)+46+2*(hlen+1));
 	if(_hn_data==NULL) {
-		LM_ERR("no more pkg to init hostname data\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	memset(_hn_data, 0, sizeof(struct _hn_pv_data)+46+2*(hlen+1));
@@ -672,13 +674,13 @@ sr_srv_item_t *sr_srv_add_item (str *pvid, int findflg)
 
 	pitem = (sr_srv_item_t *) pkg_malloc (sizeof (sr_srv_item_t));
 	if (!pitem) {
-		LM_ERR ("No more pkg memory!\n");
+		PKG_MEM_ERROR;
 		return NULL;
 	}
 	memset (pitem, 0, sizeof (sr_srv_item_t));
 	pitem->pvid.s = (char *) pkg_malloc (pvid->len + 1);
 	if (!pitem->pvid.s) {
-		LM_ERR ("No more pkg memory!\n");
+		PKG_MEM_ERROR;
 		pkg_free (pitem);
 		return NULL;
 	}
@@ -879,7 +881,7 @@ int pv_parse_srv_name (pv_spec_t *sp, str *in)
 		return -1;
 	dpv = (srv_pv_t *) pkg_malloc (sizeof (srv_pv_t));
 	if (!dpv) {
-		LM_ERR ("No more pkg memory!\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	memset (dpv, 0, sizeof (srv_pv_t));
@@ -1227,14 +1229,14 @@ sr_naptr_item_t *sr_naptr_add_item(str *pvid, int findflg)
 
 	pitem = (sr_naptr_item_t *)pkg_malloc(sizeof (sr_naptr_item_t));
 	if (!pitem) {
-		LM_ERR ("No more pkg memory!\n");
+		PKG_MEM_ERROR;
 		return NULL;
 	}
 	memset(pitem, 0, sizeof(sr_naptr_item_t));
 
 	pitem->pvid.s = (char *)pkg_malloc(pvid->len + 1);
 	if (!pitem->pvid.s) {
-		LM_ERR ("No more pkg memory!\n");
+		PKG_MEM_ERROR;
 		pkg_free(pitem);
 		return NULL;
 	}
@@ -1314,7 +1316,7 @@ int pv_parse_naptr_name(pv_spec_t *sp, str *in)
 	/* alloc/init pvid structure */
 	dpv = (naptr_pv_t *)pkg_malloc(sizeof(naptr_pv_t));
 	if (!dpv) {
-		LM_ERR ("No more pkg memory!\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	memset(dpv, 0, sizeof(naptr_pv_t));
