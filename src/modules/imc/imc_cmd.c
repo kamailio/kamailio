@@ -172,7 +172,7 @@ static int build_uri(str *res, str value, struct sip_uri *template)
 	}
 
 	if ((res->s = (char*)pkg_malloc(len)) == NULL) {
-		LM_ERR("No memory left\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	res->len = len;
@@ -716,7 +716,7 @@ int imc_handle_invite(struct sip_msg* msg, imc_cmd_t *cmd,
 		LM_ERR("Truncated message '%.*s'\n", STR_FMT(&body));
 
 	if ((cback_param = (del_member_t*)shm_malloc(sizeof(del_member_t))) == NULL) {
-		LM_ERR("No shared memory left\n");
+		SHM_MEM_ERROR;
 		goto error;
 	}
 	memset(cback_param, 0, sizeof(del_member_t));

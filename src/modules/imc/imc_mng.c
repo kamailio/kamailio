@@ -56,7 +56,7 @@ int imc_htable_init(void)
 	_imc_htable = (imc_hentry_p)shm_malloc(imc_hash_size*sizeof(imc_hentry_t));
 	if(_imc_htable == NULL)
 	{
-		LM_ERR("no more shm memory\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	memset(_imc_htable, 0, imc_hash_size*sizeof(imc_hentry_t));
@@ -494,7 +494,7 @@ imc_room_p imc_add_room(str* name, str* domain, int flags)
 	irp = (imc_room_p)shm_malloc(size);
 	if(irp==NULL)
 	{
-		LM_ERR("no more shm memory left\n");
+		SHM_MEM_ERROR;
 		return NULL;
 	}
 	memset(irp, 0, size);
@@ -671,7 +671,7 @@ imc_member_p imc_add_member(imc_room_p room, str* user, str* domain, int flags)
 	imp = (imc_member_p)shm_malloc(size);
 	if(imp== NULL)
 	{
-		LM_ERR("out of shm memory\n");
+		SHM_MEM_ERROR;
 		return NULL;
 	}
 	memset(imp, 0, size);
