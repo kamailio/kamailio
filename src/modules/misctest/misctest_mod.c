@@ -244,7 +244,11 @@ static int misctest_memory_init(void)
 {
 	alloc_lst = shm_malloc(sizeof(*alloc_lst));
 	if(alloc_lst == 0)
+	{
+		SHM_MEM_ERROR;
 		goto error;
+	}
+
 	alloc_lst->chunks = 0;
 	atomic_set_long(&alloc_lst->size, 0);
 	atomic_set_int(&alloc_lst->no, 0);
@@ -252,7 +256,10 @@ static int misctest_memory_init(void)
 		goto error;
 	rndt_lst = shm_malloc(sizeof(*rndt_lst));
 	if(rndt_lst == 0)
+	{
+		SHM_MEM_ERROR;
 		goto error;
+	}
 	rndt_lst->tests = 0;
 	atomic_set_int(&rndt_lst->last_id, 0);
 	if(lock_init(&rndt_lst->lock) == 0)
@@ -469,7 +476,10 @@ static int mem_track(void *addr, unsigned long size)
 
 	mc = shm_malloc(sizeof(*mc));
 	if(mc == 0)
+	{
+		SHM_MEM_ERROR;
 		goto error;
+	}
 	mc->addr = addr;
 	mc->size = size;
 	mc->flags = 0;
@@ -782,7 +792,10 @@ static int mem_leak_time_test(unsigned long min, unsigned long max,
 
 	tst = shm_malloc(sizeof(*tst));
 	if(tst == 0)
+	{
+		SHM_MEM_ERROR;
 		goto error;
+	}
 	memset(tst, 0, sizeof(*tst));
 	id = tst->id = atomic_add_int(&rndt_lst->last_id, 1);
 	tst->min = min;
