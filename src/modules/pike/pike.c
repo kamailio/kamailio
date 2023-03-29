@@ -126,7 +126,7 @@ static int pike_init(void)
 	/* init timer list */
 	pike_timer = (pike_list_link_t*)shm_malloc(sizeof(pike_list_link_t));
 	if (pike_timer==0) {
-		LM_ERR("cannot alloc shm mem for timer!\n");
+		SHM_MEM_ERROR_FMT("for timer!\n");
 		goto error3;
 	}
 	pike_timer->next = pike_timer->prev = pike_timer;

@@ -80,7 +80,11 @@ int pike_top_add_entry( unsigned char *ip_addr, int addr_len,
 {
 	struct TopListItem_t *new_item
 				= (struct TopListItem_t *)malloc(sizeof(struct TopListItem_t));
-
+	if(!new_item)
+	{
+		SYS_MEM_ERROR;
+		return -1;
+	}
 	print_addr(ip_addr, addr_len);
 	DBG("pike_top_add_enrty(ip: %s, leaf_hits[%d,%d], hits[%d,%d],"
 			" expires: %d, status: %d)",

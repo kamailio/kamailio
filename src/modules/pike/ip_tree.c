@@ -114,7 +114,7 @@ int init_ip_tree(int maximum_hits)
 	/* create the pike_root */
 	pike_root = (pike_ip_tree_t*)shm_malloc(sizeof(pike_ip_tree_t));
 	if (pike_root==0) {
-		LM_ERR("shm malloc failed\n");
+		SHM_MEM_ERROR;
 		goto error;
 	}
 	memset(pike_root, 0, sizeof(pike_ip_tree_t));
@@ -200,7 +200,7 @@ static inline pike_ip_node_t *new_ip_node(unsigned char byte)
 
 	new_node = (pike_ip_node_t*)shm_malloc(sizeof(pike_ip_node_t));
 	if (!new_node) {
-		LM_ERR("no more shm mem\n");
+		SHM_MEM_ERROR;
 		return 0;
 	}
 	memset( new_node, 0, sizeof(pike_ip_node_t));
