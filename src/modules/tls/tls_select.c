@@ -318,7 +318,7 @@ static int get_version(str* res, sip_msg_t* msg)
 	res->s = buf;
 	res->len = version.len;
 	tcpconn_put(c);
-        return 0;
+		return 0;
 
  err:
 	if (c) tcpconn_put(c);
@@ -1042,7 +1042,35 @@ static int pv_comp(sip_msg_t* msg, pv_param_t* param, pv_value_t* res)
 }
 
 
-static int get_alt(str* res, int local, int type, sip_msg_t* msg)
+int pv_parse_alt_name(pv_spec_p sp, str *in)
+{
+	pv_elem_t *fmt = NULL;
+
+	if(in->s==NULL || in->len<=0)
+		return -1;
+	if(pv_parse_format(in, &fmt)<0 || fmt==NULL)
+	{
+		LM_ERR("wrong format[%.*s]\n", in->len, in->s);
+		return -1;
+	}
+	if (strncmp(in->s, "DNS", 3) == 0) {
+		sp->pvp.pvn.u.isname.name.n = PV_COMP_HOST;
+	} else if (strncmp(in->s, "URI", 3) == 0) {
+		sp->pvp.pvn.u.isname.name.n = PV_COMP_URI;
+	} else if (strncmp(in->s, "EMAIL", 5) == 0) {
+		sp->pvp.pvn.u.isname.name.n = PV_COMP_E;
+	} else if (strncmp(in->s, "IP", 2) == 0) {
+		sp->pvp.pvn.u.isname.name.n = PV_COMP_IP;
+	} else {
+		LM_ERR("Unsupported alt name %s\n",in->s);
+	}
+
+	sp->pvp.pvn.type = PV_NAME_INTSTR;
+	sp->pvp.pvn.u.isname.type = 0;
+	return 0;
+}
+
+static int get_alt(str* res, int local, int type, int idx, sip_msg_t* msg)
 {
 	static char buf[1024];
 	int n, found = 0;
@@ -1065,35 +1093,34 @@ static int get_alt(str* res, int local, int type, sip_msg_t* msg)
 	for (n = 0; n < sk_GENERAL_NAME_num(names); n++) {
 		nm = sk_GENERAL_NAME_value(names, n);
 		if (nm->type != type) continue;
-		switch(type) {
-		case GEN_EMAIL:
-		case GEN_DNS:
-		case GEN_URI:
-			text.s = (char*)nm->d.ia5->data;
-			text.len = nm->d.ia5->length;
-			if (text.len >= 1024) {
-				ERR("Alternative subject text too long\n");
-				goto err;
+		if (found == idx) {
+			switch(type) {
+			case GEN_EMAIL:
+			case GEN_DNS:
+			case GEN_URI:
+				text.s = (char*)nm->d.ia5->data;
+				text.len = nm->d.ia5->length;
+				if (text.len >= 1024) {
+					ERR("Alternative subject text too long\n");
+						goto err;
+				}
+				memcpy(buf, text.s, text.len);
+				res->s = buf;
+				res->len = text.len;
+				break;
+			case GEN_IPADD:
+				ip.len = nm->d.iPAddress->length;
+				ip.af = (ip.len == 16) ? AF_INET6 : AF_INET;
+				memcpy(ip.u.addr, nm->d.iPAddress->data, ip.len);
+				text.s = ip_addr2a(&ip);
+				text.len = strlen(text.s);
+				memcpy(buf, text.s, text.len);
+				res->s = buf;
+				res->len = text.len;
+				break;
 			}
-			memcpy(buf, text.s, text.len);
-			res->s = buf;
-			res->len = text.len;
-			found = 1;
-			break;
-
-		case GEN_IPADD:
-			ip.len = nm->d.iPAddress->length;
-			ip.af = (ip.len == 16) ? AF_INET6 : AF_INET;
-			memcpy(ip.u.addr, nm->d.iPAddress->data, ip.len);
-			text.s = ip_addr2a(&ip);
-			text.len = strlen(text.s);
-			memcpy(buf, text.s, text.len);
-			res->s = buf;
-			res->len = text.len;
-			found = 1;
-			break;
 		}
-		break;
+		found++;
 	}
 	if (!found) goto err;
 
@@ -1108,31 +1135,41 @@ static int get_alt(str* res, int local, int type, sip_msg_t* msg)
 	return -1;
 }
 
+
 static int sel_alt(str* res, select_t* s, sip_msg_t* msg)
 {
-	int type = GEN_URI, local = 0, i;
+	int type = GEN_URI, local = 0, idx = 0, i;
 
 	for(i = 1; i <= s->n - 1; i++) {
-		switch(s->params[i].v.i) {
-		case CERT_LOCAL: local = 1; break;
-		case CERT_PEER:  local = 0; break;
-		case COMP_E:     type = GEN_EMAIL; break;
-		case COMP_HOST:  type = GEN_DNS;   break;
-		case COMP_URI:   type = GEN_URI;   break;
-		case COMP_IP:    type = GEN_IPADD; break;
+		switch(i) {
+		case 1:
+		case 2:
+			switch(s->params[i].v.i) {
+			case CERT_LOCAL: local = 1; break;
+			case CERT_PEER:  local = 0; break;
+			case COMP_E:     type = GEN_EMAIL; break;
+			case COMP_HOST:  type = GEN_DNS;   break;
+			case COMP_URI:   type = GEN_URI;   break;
+			case COMP_IP:    type = GEN_IPADD; break;
+			default:
+				BUG("Bug in sel_alt: %d\n", s->params[s->n - 1].v.i);
+				return -1;
+			}
+			break;
+		case 3:	idx = s->params[i].v.i; break;
 		default:
 			BUG("Bug in sel_alt: %d\n", s->params[s->n - 1].v.i);
 			return -1;
 		}
 	}
 
-	return get_alt(res, local, type, msg);
+	return get_alt(res, local, type, idx, msg);
 }
 
 
 static int pv_alt(sip_msg_t* msg, pv_param_t* param, pv_value_t* res)
 {
-	int ind_local, local = 0, type = GEN_URI;
+	int idx, idxf, ind_local, local = 0, type = GEN_URI;
 
 	ind_local = param->pvn.u.isname.name.n;
 
@@ -1148,21 +1185,152 @@ static int pv_alt(sip_msg_t* msg, pv_param_t* param, pv_value_t* res)
 	}
 
 	switch(ind_local) {
-		case PV_COMP_E:    type = GEN_EMAIL; break;
-		case PV_COMP_HOST: type = GEN_DNS;   break;
-		case PV_COMP_URI:  type = GEN_URI;   break;
-		case PV_COMP_IP:   type = GEN_IPADD; break;
-		default:
-			BUG("ind_local=%d\n", ind_local);
-			return pv_get_null(msg, param, res);
+	case PV_COMP_E:    type = GEN_EMAIL; break;
+	case PV_COMP_HOST: type = GEN_DNS;   break;
+	case PV_COMP_URI:  type = GEN_URI;   break;
+	case PV_COMP_IP:   type = GEN_IPADD; break;
+	default:
+		BUG("ind_local=%d\n", ind_local);
+		return pv_get_null(msg, param, res);
 	}
 
-	if (get_alt(&res->rs, local, type, msg) < 0) {
+	/* get the index */
+	if(pv_get_spec_index(msg, param, &idx, &idxf)!=0) {
+		LM_ERR("invalid index\n");
+		return -1;
+	} 
+
+	if (get_alt(&res->rs, local, type, idx, msg) < 0) {
 		return pv_get_null(msg, param, res);
 	}
 
 	res->flags = PV_VAL_STR;
 	return 0;
+}
+
+int pv_init_alt_count_iname(pv_spec_p sp, int param)
+{
+	if(sp==NULL)
+		return -1;
+	sp->pvp.pvn.u.isname.name.n = sp->pvp.pvn.u.isname.name.n ^ param;
+	return 0;
+}
+
+static int get_alt_count(long* res, int local, int type, sip_msg_t* msg)
+{
+	int n, found = 0;
+	STACK_OF(GENERAL_NAME)* names = 0;
+	GENERAL_NAME* nm;
+	X509* cert;
+	struct tcp_connection* c;
+
+	if (get_cert(&cert, &c, msg, local) < 0) return -1;
+
+	names = X509_get_ext_d2i(cert, NID_subject_alt_name, NULL, NULL);
+	if (!names) {
+		DBG("Cannot get certificate alternative subject\n");
+		goto err;
+	}
+
+	for (n = 0; n < sk_GENERAL_NAME_num(names); n++) {
+		nm = sk_GENERAL_NAME_value(names, n);
+		if (nm->type != type) continue;
+		found++;
+	}
+	if (names) sk_GENERAL_NAME_pop_free(names, GENERAL_NAME_free);
+	if (!local) X509_free(cert);
+	
+	*res = found;
+	tcpconn_put(c);
+	return 0;
+ err:
+	if (names) sk_GENERAL_NAME_pop_free(names, GENERAL_NAME_free);
+	if (!local) X509_free(cert);
+	tcpconn_put(c);
+	return -1;
+}
+
+
+static int sel_alt_count(str* res, select_t* s, sip_msg_t* msg)
+{
+	str iname;
+	long count = 0;
+	int type = GEN_URI, local = 0, i;
+
+	for(i = 1; i <= s->n - 1; i++) {
+		switch(i) {
+		case 1: 
+			switch(s->params[i].v.i) {
+			case CERT_LOCAL: local = 1; break;
+			case CERT_PEER:  local = 0; break;
+			default:
+				BUG("Bug in sel_alt: %d\n", s->params[s->n - 1].v.i);
+				return -1;
+			}
+			break;
+		case 2: break;
+		case 3:
+			iname = s->params[i].v.s;
+			if (strncmp(iname.s, "EMAIL", 5) == 0) {
+				type = GEN_EMAIL;
+			} else if (strncmp(iname.s, "DNS", 3) == 0) {
+				type = GEN_DNS;
+			} else if (strncmp(iname.s, "URI", 3) == 0) {
+				type = GEN_URI;
+			} else if (strncmp(iname.s, "IP", 2) == 0) {
+				type = GEN_IPADD;
+			} else {
+					BUG("Bug in sel_alt: %d\n", s->params[s->n - 1].v.i);
+					return -1;
+			}
+			break;
+		default:
+			BUG("Bug in sel_alt: %d\n", s->params[s->n - 1].v.i);
+			return -1;
+		}
+	}
+	get_alt_count(&count, local, type, msg);
+	static char buf[1024];
+	int max_len = sizeof buf;
+	int j = snprintf(buf, max_len, "%ld", count);
+	res->s = buf;
+	res->len = j;
+
+	return 0;
+}
+
+
+static int pv_alt_count(sip_msg_t* msg, pv_param_t* param, pv_value_t* res)
+{
+	int ind_local, local = 0, type = GEN_URI;
+	ind_local = param->pvn.u.isname.name.n;
+
+	if (ind_local & PV_CERT_PEER) {
+		local = 0;
+		ind_local = ind_local ^ PV_CERT_PEER;
+	} else if (ind_local & PV_CERT_LOCAL) {
+		local = 1;
+		ind_local = ind_local ^ PV_CERT_LOCAL;
+	} else {
+		BUG("could not determine certificate\n");
+		return pv_get_null(msg, param, res);
+	}
+
+	switch(ind_local) {
+	case PV_COMP_E:    type = GEN_EMAIL; break;
+	case PV_COMP_HOST: type = GEN_DNS;   break;
+	case PV_COMP_URI:  type = GEN_URI;   break;
+	case PV_COMP_IP:   type = GEN_IPADD; break;
+	default:
+		BUG("ind_local=%d\n", ind_local);
+		return pv_get_null(msg, param, res);
+	}
+
+	if (get_alt_count(&res->ri, local, type, msg) < 0) {
+		return pv_get_null(msg, param, res);
+	}
+
+	return pv_get_sintval(msg, param, res, res->ri);
 }
 
 
@@ -1415,21 +1583,23 @@ select_row_t tls_sel[] = {
 	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("notAfter"),   sel_validity, DIVERSION | CERT_NOTAFTER},
 	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("not_after"),  sel_validity, DIVERSION | CERT_NOTAFTER},
 
-	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("email"),         sel_alt, DIVERSION | COMP_E},
-	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("emailAddress"),  sel_alt, DIVERSION | COMP_E},
-	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("email_address"), sel_alt, DIVERSION | COMP_E},
+	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("count"),	sel_alt_count, DIVERSION | CONSUME_NEXT_STR},
 
-	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("host"),     sel_alt, DIVERSION | COMP_HOST},
-	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("hostname"), sel_alt, DIVERSION | COMP_HOST},
-	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("dns"),      sel_alt, DIVERSION | COMP_HOST},
+	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("email"),         sel_alt, DIVERSION | COMP_E | OPTIONAL | CONSUME_NEXT_INT},
+	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("emailAddress"),  sel_alt, DIVERSION | COMP_E | OPTIONAL | CONSUME_NEXT_INT},
+	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("email_address"), sel_alt, DIVERSION | COMP_E | OPTIONAL | CONSUME_NEXT_INT},
 
-	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("uri"), sel_alt, DIVERSION | COMP_URI},
-	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("url"), sel_alt, DIVERSION | COMP_URI},
-	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("urn"), sel_alt, DIVERSION | COMP_URI},
+	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("host"),     sel_alt, DIVERSION | COMP_HOST | OPTIONAL | CONSUME_NEXT_INT},
+	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("hostname"), sel_alt, DIVERSION | COMP_HOST | OPTIONAL | CONSUME_NEXT_INT},
+	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("dns"),      sel_alt, DIVERSION | COMP_HOST | OPTIONAL | CONSUME_NEXT_INT},
 
-	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("ip"),         sel_alt, DIVERSION | COMP_IP},
-	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("IPAddress"),  sel_alt, DIVERSION | COMP_IP},
-	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("ip_address"), sel_alt, DIVERSION | COMP_IP},
+	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("uri"), sel_alt, DIVERSION | COMP_URI | OPTIONAL | CONSUME_NEXT_INT},
+	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("url"), sel_alt, DIVERSION | COMP_URI | OPTIONAL | CONSUME_NEXT_INT},
+	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("urn"), sel_alt, DIVERSION | COMP_URI | OPTIONAL | CONSUME_NEXT_INT},
+
+	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("ip"),         sel_alt, DIVERSION | COMP_IP | OPTIONAL | CONSUME_NEXT_INT},
+	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("IPAddress"),  sel_alt, DIVERSION | COMP_IP | OPTIONAL | CONSUME_NEXT_INT},
+	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("ip_address"), sel_alt, DIVERSION | COMP_IP | OPTIONAL | CONSUME_NEXT_INT},
 
 	{ sel_name, SEL_PARAM_STR, STR_STATIC_INIT("cn"),          sel_comp, DIVERSION | COMP_CN},
 	{ sel_name, SEL_PARAM_STR, STR_STATIC_INIT("commonName"),  sel_comp, DIVERSION | COMP_CN},
@@ -1605,30 +1775,36 @@ pv_export_t tls_pv[] = {
 		PVT_OTHER, pv_comp, 0,
 		0, 0, pv_init_iname, PV_CERT_LOCAL | PV_CERT_SUBJECT | PV_COMP_UID },
 	/* subject alternative name parameters for peer and local */
+	{{"tls_peer_san_count", sizeof("tls_peer_san_count")-1},
+		PVT_OTHER, pv_alt_count, 0,
+		pv_parse_alt_name, 0, pv_init_alt_count_iname, PV_CERT_PEER },
+	{{"tls_my_san_count", sizeof("tls_my_san_count")-1},
+		PVT_OTHER, pv_alt_count, 0,
+		pv_parse_alt_name, 0, pv_init_alt_count_iname, PV_CERT_LOCAL },
 	{{"tls_peer_san_email", sizeof("tls_peer_san_email")-1},
 		PVT_OTHER, pv_alt, 0,
-		0, 0, pv_init_iname, PV_CERT_PEER  | PV_COMP_E },
+		0, pv_parse_index, pv_init_iname, PV_CERT_PEER  | PV_COMP_E },
 	{{"tls_my_san_email", sizeof("tls_my_san_email")-1},
 		PVT_OTHER, pv_alt, 0,
-		0, 0, pv_init_iname, PV_CERT_LOCAL | PV_COMP_E },
+		0, pv_parse_index, pv_init_iname, PV_CERT_LOCAL | PV_COMP_E },
 	{{"tls_peer_san_hostname", sizeof("tls_peer_san_hostname")-1},
 		PVT_OTHER, pv_alt, 0,
-		0, 0, pv_init_iname, PV_CERT_PEER  | PV_COMP_HOST },
+		0, pv_parse_index, pv_init_iname, PV_CERT_PEER  | PV_COMP_HOST },
 	{{"tls_my_san_hostname", sizeof("tls_my_san_hostname")-1},
 		PVT_OTHER, pv_alt, 0,
-		0, 0, pv_init_iname, PV_CERT_LOCAL | PV_COMP_HOST },
+		0, pv_parse_index, pv_init_iname, PV_CERT_LOCAL | PV_COMP_HOST },
 	{{"tls_peer_san_uri", sizeof("tls_peer_san_uri")-1},
 		PVT_OTHER, pv_alt, 0,
-		0, 0, pv_init_iname, PV_CERT_PEER  | PV_COMP_URI },
+		0, pv_parse_index, pv_init_iname, PV_CERT_PEER  | PV_COMP_URI },
 	{{"tls_my_san_uri", sizeof("tls_my_san_uri")-1},
 		PVT_OTHER, pv_alt, 0,
-		0, 0, pv_init_iname, PV_CERT_LOCAL | PV_COMP_URI },
+		0, pv_parse_index, pv_init_iname, PV_CERT_LOCAL | PV_COMP_URI },
 	{{"tls_peer_san_ip", sizeof("tls_peer_san_ip")-1},
 		PVT_OTHER, pv_alt, 0,
-		0, 0, pv_init_iname, PV_CERT_PEER  | PV_COMP_IP },
+		0, pv_parse_index, pv_init_iname, PV_CERT_PEER  | PV_COMP_IP },
 	{{"tls_my_san_ip", sizeof("tls_my_san_ip")-1},
 		PVT_OTHER, pv_alt, 0,
-		0, 0, pv_init_iname, PV_CERT_LOCAL | PV_COMP_IP },
+		0, pv_parse_index, pv_init_iname, PV_CERT_LOCAL | PV_COMP_IP },
 	/* peer certificate validation parameters */
 	{{"tls_peer_verified", sizeof("tls_peer_verified")-1},
 		PVT_OTHER, pv_check_cert, 0,
@@ -1718,3 +1894,7 @@ sr_kemi_xval_t* ki_tls_cget_attr(sip_msg_t* msg, str *aname)
 	sr_kemi_xval_null(&_ksr_kemi_tls_xval, SR_KEMI_XVAL_NULL_EMPTY);
 	return &_ksr_kemi_tls_xval;
 }
+
+
+
+
