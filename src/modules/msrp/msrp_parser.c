@@ -270,7 +270,7 @@ int msrp_parse_headers(msrp_frame_t *mf)
 		hdr = (msrp_hdr_t*)pkg_malloc(sizeof(msrp_hdr_t));
 		if(hdr==NULL)
 		{
-			LM_ERR("no more pkg\n");
+			PKG_MEM_ERROR;
 			return -1;
 		}
 		memset(hdr, 0, sizeof(msrp_hdr_t));
@@ -636,7 +636,7 @@ int msrp_explode_str(str_array_t *arr, str *in, str *del)
 	larr = pkg_mallocxz(n * sizeof(str));
 	if(larr==NULL)
 	{
-		LM_ERR("no more pkg\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 
@@ -712,7 +712,7 @@ int msrp_parse_hdr_uri_list(msrp_hdr_t *hdr)
 	arr = pkg_mallocxz(sizeof(str_array_t));
 	if(arr==NULL)
 	{
-		LM_ERR("no more pkg\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 

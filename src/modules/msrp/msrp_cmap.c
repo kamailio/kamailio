@@ -73,7 +73,7 @@ int msrp_cmap_init(int msize)
 	_msrp_cmap_head = (msrp_cmap_t*)shm_malloc(sizeof(msrp_cmap_t));
 	if(_msrp_cmap_head==NULL)
 	{
-		LM_ERR("no more shm\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	memset(_msrp_cmap_head, 0, sizeof(msrp_cmap_t));
@@ -83,7 +83,7 @@ int msrp_cmap_init(int msize)
 							_msrp_cmap_head->mapsize*sizeof(msrp_centry_t) );
 	if(_msrp_cmap_head->cslots==NULL)
 	{
-		LM_ERR("no more shm.\n");
+		SHM_MEM_ERROR;
 		shm_free(_msrp_cmap_head);
 		_msrp_cmap_head = NULL;
 		return -1;
@@ -234,7 +234,7 @@ int msrp_cmap_save(msrp_frame_t *mf)
 	it = (msrp_citem_t*)shm_malloc(msize);
 	if(it==NULL)
 	{
-		LM_ERR("no more shm\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	memset(it, 0, msize);

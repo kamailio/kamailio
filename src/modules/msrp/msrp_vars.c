@@ -339,7 +339,7 @@ int tr_msrp_eval_msrpuri(struct sip_msg *msg, tr_param_t *tp, int subtype,
 			_tr_msrpuri.s = (char*)pkg_malloc((val->rs.len+1)*sizeof(char));
 			if(_tr_msrpuri.s==NULL)
 			{
-				LM_ERR("no more private memory\n");
+				PKG_MEM_ERROR;
 				memset(&_tr_msrpuri, 0, sizeof(str));
 				memset(&_tr_parsed_msrpuri, 0, sizeof(msrp_uri_t));
 				return -1;
