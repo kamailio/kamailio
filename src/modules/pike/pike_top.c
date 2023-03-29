@@ -79,10 +79,10 @@ int pike_top_add_entry( unsigned char *ip_addr, int addr_len,
 		unsigned int expires, pike_node_status_t status )
 {
 	struct TopListItem_t *new_item
-				= (struct TopListItem_t *)pkg_malloc(sizeof(struct TopListItem_t));
+				= (struct TopListItem_t *)malloc(sizeof(struct TopListItem_t));
 	if(!new_item)
 	{
-		PKG_MEM_ERROR;
+		SYS_MEM_ERROR;
 		return -1;
 	}
 	print_addr(ip_addr, addr_len);
@@ -119,7 +119,7 @@ void pike_top_list_clear()
 	top_list_iter = top_list_root;
 	while (top_list_iter) {
 		ptr = top_list_iter->next;
-		pkg_free(top_list_iter);
+		free(top_list_iter);
 		top_list_iter = ptr;
 	}
 	top_list_root = 0;
