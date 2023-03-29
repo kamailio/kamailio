@@ -145,7 +145,7 @@ int do_read( int socket, rd_buf_t *p)
 				//LM_DBG("message length = %d(%x)\n",len,len);
 				if ( (p->buf=pkg_malloc(len))==0  )
 				{
-					LM_ERR("no more pkg memory\n");
+					PKG_MEM_ERROR;
 					goto error;
 				}
 				*((unsigned int*)p->buf) = p->first_4bytes;
@@ -307,7 +307,7 @@ next:
 			rb->chall = (unsigned char*)pkg_malloc(avp->data.len*sizeof(unsigned char));
 			if(rb->chall == NULL)
 			{
-				LM_ERR("no more pkg memory\n");
+				PKG_MEM_ERROR;
 				rb->ret_code = AAA_SRVERR;
 				break;
 			}

@@ -171,7 +171,7 @@ int diameter_is_user_in(struct sip_msg* _m, char* _hf, char* _group)
 			p = (char*)pkg_malloc(user_name.len);
 			if (!p)
 			{
-				LM_ERR("no pkg memory left\n");
+				PKG_MEM_ERROR;
 				return -6;
 			}
 			user_name.s = p;

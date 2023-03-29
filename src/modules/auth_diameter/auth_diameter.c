@@ -140,7 +140,7 @@ static int mod_child_init(int r)
 	rb = (rd_buf_t*)pkg_malloc(sizeof(rd_buf_t));
 	if(!rb)
 	{
-		LM_DBG("no more free pkg memory\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	rb->buf = 0;
@@ -241,7 +241,7 @@ static int group_fixup(void** param, int param_no)
 		s = (str*)pkg_malloc(sizeof(str));
 		if (!s) 
 		{
-			LM_ERR("no pkg memory left\n");
+			PKG_MEM_ERROR;
 			return E_UNSPEC;
 		}
 		s->s = (char*)*param;

@@ -141,7 +141,7 @@ AAA_AVP*  AAACreateAVP(
 
 	return avp;
 error:
-	LM_ERR("no more pkg memory left!\n");
+	PKG_MEM_ERROR;
 	if(avp) ad_free(avp);
 	return 0;
 }
@@ -420,7 +420,7 @@ AAA_AVP* AAACloneAVP( AAA_AVP *avp , unsigned char clone_data)
 	/* clone the avp structure */
 	n_avp = (AAA_AVP*)ad_malloc( sizeof(AAA_AVP) );
 	if (!n_avp) {
-		LM_ERR(" cannot get free pkg memory!!\n");
+		PKG_MEM_ERROR;
 		goto error;
 	}
 	memcpy( n_avp, avp, sizeof(AAA_AVP));
@@ -430,7 +430,7 @@ AAA_AVP* AAACloneAVP( AAA_AVP *avp , unsigned char clone_data)
 		/* clone the avp data */
 		n_avp->data.s = (char*)ad_malloc( avp->data.len );
 		if (!(n_avp->data.s)) {
-			LM_ERR("cannot get free pkg memory!!\n");
+			PKG_MEM_ERROR;
 			ad_free( n_avp );
 			goto error;
 		}

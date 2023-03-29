@@ -318,6 +318,11 @@ int diameter_authorize(struct hdr_field* hdr, str* p_method, sip_uri_t *uri,
 		{
 			user_name.len += 2;
 			user_name.s = (char*)ad_malloc(user_name.len*sizeof(char));
+			if(!(user_name.s))
+			{
+				PKG_MEM_ERROR;
+				return -1;
+			}
 			memset(user_name.s, 0, user_name.len);
 
 			memcpy(user_name.s, uri->user.s, uri->user.len);
@@ -333,7 +338,7 @@ int diameter_authorize(struct hdr_field* hdr, str* p_method, sip_uri_t *uri,
 		if( (avp=AAACreateAVP(AVP_User_Name, 0, 0, user_name.s, 
 							user_name.len, AVP_FREE_DATA)) == 0)
 		{
-			LM_ERR("no more pkg memory left!\n");
+			LM_ERR("could not create AVP\n");
 			if(user_name.len>0)
 				pkg_free(user_name.s);
 			goto error;
@@ -352,7 +357,7 @@ int diameter_authorize(struct hdr_field* hdr, str* p_method, sip_uri_t *uri,
 			if( (avp=AAACreateAVP(AVP_User_Name, 0, 0, cred->username.whole.s,
 							cred->username.whole.len, AVP_DUPLICATE_DATA)) == 0)
 			{
-				LM_ERR("no more pkg memory left!\n");
+				LM_ERR("could not create AVP\n");
 				goto error;
 			}
 
@@ -371,7 +376,7 @@ int diameter_authorize(struct hdr_field* hdr, str* p_method, sip_uri_t *uri,
 				user_name.s = ad_malloc(user_name.len);
 				if (!user_name.s) 
 				{
-					LM_ERR(" no more pkg memory left\n");
+					PKG_MEM_ERROR;
 					goto error;
 				}
 				memcpy(user_name.s, cred->username.whole.s, 
@@ -389,7 +394,7 @@ int diameter_authorize(struct hdr_field* hdr, str* p_method, sip_uri_t *uri,
 			if( (avp=AAACreateAVP(AVP_User_Name, 0, 0, user_name.s,	
 							user_name.len, AVP_FREE_DATA)) == 0)
 			{
-				LM_ERR(" no more pkg memory left!\n");
+				LM_ERR("could not create AVP\n");
 				if(user_name.len>0)
 					pkg_free(user_name.s);
 				goto error;
@@ -409,7 +414,7 @@ int diameter_authorize(struct hdr_field* hdr, str* p_method, sip_uri_t *uri,
 	if( (avp=AAACreateAVP(AVP_SIP_MSGID, 0, 0, (char*)(&tmp), 
 				sizeof(m_id), AVP_DUPLICATE_DATA)) == 0)
 	{
-		LM_ERR(" no more pkg memory left!\n");
+		LM_ERR("could not create AVP\n");
 		goto error;
 	}
 	if( AAAAddAVPToMessage(req, avp, 0)!= AAA_ERR_SUCCESS)
@@ -422,7 +427,7 @@ int diameter_authorize(struct hdr_field* hdr, str* p_method, sip_uri_t *uri,
 	if( (avp=AAACreateAVP(AVP_Service_Type, 0, 0, SIP_AUTHENTICATION, 
 				SERVICE_LEN, AVP_DUPLICATE_DATA)) == 0)
 	{
-		LM_ERR(" no more pkg memory left!\n");
+		LM_ERR("could not create AVP\n");
 		goto error;
 	}
 	if( AAAAddAVPToMessage(req, avp, 0)!= AAA_ERR_SUCCESS)
@@ -435,7 +440,7 @@ int diameter_authorize(struct hdr_field* hdr, str* p_method, sip_uri_t *uri,
 	if( (avp=AAACreateAVP(AVP_Destination_Realm, 0, 0, uri->host.s,
 						uri->host.len, AVP_DUPLICATE_DATA)) == 0)
 	{
-		LM_ERR(" no more pkg memory left!\n");
+		LM_ERR("could not create AVP\n");
 		goto error;
 	}
 
@@ -452,6 +457,11 @@ int diameter_authorize(struct hdr_field* hdr, str* p_method, sip_uri_t *uri,
 	/* Resource AVP */
 	user_name.len = ruri->user.len + ruri->host.len + ruri->port.len + 2;
 	user_name.s = (char*)ad_malloc(user_name.len*sizeof(char));
+	if(!(user_name.s))
+	{
+		PKG_MEM_ERROR;
+		return -1;
+	}
 	memset(user_name.s, 0, user_name.len);
 	memcpy(user_name.s, ruri->user.s, ruri->user.len);
 
@@ -479,7 +489,7 @@ int diameter_authorize(struct hdr_field* hdr, str* p_method, sip_uri_t *uri,
 	if( (avp=AAACreateAVP(AVP_Resource, 0, 0, user_name.s,
 						user_name.len, AVP_FREE_DATA)) == 0)
 	{
-		LM_ERR(" no more pkg memory left!\n");
+		LM_ERR("could not create AVP\n");
 		if(user_name.s)
 			pkg_free(user_name.s);
 		goto error;
@@ -496,7 +506,7 @@ int diameter_authorize(struct hdr_field* hdr, str* p_method, sip_uri_t *uri,
 		if( (avp=AAACreateAVP(AVP_Response, 0, 0, hdr->body.s,
 						hdr->body.len, AVP_DUPLICATE_DATA)) == 0)
 		{
-			LM_ERR(" no more pkg memory left!\n");
+			LM_ERR("could not create AVP\n");
 			goto error;
 		}
 		
@@ -512,7 +522,7 @@ int diameter_authorize(struct hdr_field* hdr, str* p_method, sip_uri_t *uri,
 		if( (avp=AAACreateAVP(AVP_Method, 0, 0, p_method->s,
 						p_method->len, AVP_DUPLICATE_DATA)) == 0)
 		{
-			LM_ERR(" no more pkg memory left!\n");
+			LM_ERR("could not create AVP\n");
 			goto error;
 		}
 		
@@ -603,6 +613,11 @@ int srv_response(struct sip_msg* msg, rd_buf_t * rb, int hftype)
 			{
 				auth_hf_len = WWW_AUTH_CHALLENGE_LEN+rb->chall_len;
 				auth_hf = (char*)ad_malloc(auth_hf_len*(sizeof(char)));
+				if(!(auth_hf))
+				{
+					PKG_MEM_ERROR;
+					return -1;
+				}
 				memset(auth_hf, 0, auth_hf_len);
 				memcpy(auth_hf,WWW_AUTH_CHALLENGE, WWW_AUTH_CHALLENGE_LEN);
 				memcpy(auth_hf+WWW_AUTH_CHALLENGE_LEN, rb->chall,
@@ -615,6 +630,11 @@ int srv_response(struct sip_msg* msg, rd_buf_t * rb, int hftype)
 			{
 				auth_hf_len = PROXY_AUTH_CHALLENGE_LEN+rb->chall_len;
 				auth_hf = (char*)ad_malloc(auth_hf_len*(sizeof(char)));
+				if(!(auth_hf))
+				{
+					PKG_MEM_ERROR;
+					return -1;
+				}
 				memset(auth_hf, 0, auth_hf_len);
 				memcpy(auth_hf, PROXY_AUTH_CHALLENGE, PROXY_AUTH_CHALLENGE_LEN);
 				memcpy(auth_hf + PROXY_AUTH_CHALLENGE_LEN, rb->chall, 
