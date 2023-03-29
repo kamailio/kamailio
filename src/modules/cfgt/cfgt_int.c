@@ -1,6 +1,6 @@
 /**
  *
- * Copyright (C) 2015 Victor Seva (sipwise.com)
+ * Copyright (C) 2015-2023 Victor Seva (sipwise.com)
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -22,6 +22,7 @@
 #define _GNU_SOURCE
 #include <stdio.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <dirent.h>
 #include <string.h>
 #include <errno.h>
@@ -45,6 +46,7 @@ str cfgt_hdr_prefix = {"NGCP%", 5};
 str cfgt_basedir = {"/tmp", 4};
 int cfgt_mask = CFGT_DP_ALL;
 int cfgt_skip_unknown = 0;
+int cfgt_route_log = 0;
 int not_sip = 0;
 
 int _cfgt_get_filename(int msgid, str uuid, str *dest, int *dir);
@@ -463,6 +465,7 @@ int _cfgt_set_dump(struct sip_msg *msg, cfgt_node_p node, str *flow)
 {
 	int len;
 	char v;
+	unsigned long int tdiff;
 	srjson_t *f, *vars;
 
 	if(node == NULL || flow == NULL)
@@ -494,6 +497,17 @@ int _cfgt_set_dump(struct sip_msg *msg, cfgt_node_p node, str *flow)
 		return -1;
 	}
 
+	if(node->route->duration.tv_usec > 0) {
+		tdiff = (node->route->duration.tv_sec) * 1000000
+				+ (node->route->duration.tv_usec);
+		f = srjson_CreateNumber(&node->jdoc, tdiff);
+		if(f == NULL) {
+			LM_ERR("cannot create json object\n");
+			return -1;
+		}
+		srjson_AddItemToObject(&node->jdoc, vars, "execution_usec", f);
+	}
+
 	f = srjson_CreateObject(&node->jdoc);
 	if(f == NULL) {
 		LM_ERR("cannot create json object\n");
@@ -504,6 +518,20 @@ int _cfgt_set_dump(struct sip_msg *msg, cfgt_node_p node, str *flow)
 	srjson_AddItemToArray(&node->jdoc, node->flow, f);
 	LM_DBG("node[%.*s] flow created\n", flow->len, flow->s);
 	return 0;
+}
+
+static void _cfgt_log_route(cfgt_str_list_p route)
+{
+	unsigned long int tdiff;
+	if(!route) {
+		LM_BUG("empty route\n");
+		return;
+	}
+
+	if(route->duration.tv_usec > 0) {
+		tdiff = (route->duration.tv_sec) * 1000000 + (route->duration.tv_usec);
+		LM_WARN("[%.*s] exectime=%lu usec\n", route->s.len, route->s.s, tdiff);
+	}
 }
 
 void _cfgt_set_type(cfgt_str_list_p route, struct action *a)
@@ -521,6 +549,8 @@ void _cfgt_set_type(cfgt_str_list_p route, struct action *a)
 				route->type = CFGT_DROP_E;
 				LM_DBG("set[%.*s]->CFGT_DROP_E\n", route->s.len, route->s.s);
 			}
+			gettimeofday(&route->end, NULL);
+			timersub(&route->end, &route->start, &route->duration);
 			break;
 		case ROUTE_T:
 			route->type = CFGT_ROUTE;
@@ -535,6 +565,8 @@ void _cfgt_set_type(cfgt_str_list_p route, struct action *a)
 				LM_DBG("[%.*s] already set to CFGT_DROP_E[%d]\n", route->s.len,
 						route->s.s, a->type);
 			}
+			gettimeofday(&route->end, NULL);
+			timersub(&route->end, &route->start, &route->duration);
 			break;
 	}
 }
@@ -554,6 +586,7 @@ int _cfgt_add_routename(cfgt_node_p node, struct action *a, str *routename)
 		memset(node->route, 0, sizeof(cfgt_str_list_t));
 		node->flow_head = node->route;
 		node->route->type = CFGT_ROUTE;
+		gettimeofday(&node->route->start, NULL);
 		ret = 1;
 	} else {
 		LM_DBG("actual routename:[%.*s][%d]\n", node->route->s.len,
@@ -601,6 +634,7 @@ int _cfgt_add_routename(cfgt_node_p node, struct action *a, str *routename)
 		route->prev = node->route;
 		node->route->next = route;
 		node->route = route;
+		gettimeofday(&node->route->start, NULL);
 		_cfgt_set_type(node->route, a);
 	}
 	node->route->s.s = routename->s;
@@ -618,6 +652,8 @@ void _cfgt_del_routename(cfgt_node_p node)
 	}
 	LM_DBG("del route[%.*s]\n", node->route->s.len, node->route->s.s);
 	node->route = node->route->prev;
+	if(cfgt_route_log)
+		_cfgt_log_route(node->route->next);
 	pkg_free(node->route->next);
 	node->route->next = NULL;
 }

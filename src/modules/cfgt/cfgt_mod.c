@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Victor Seva (sipwise.com)
+ * Copyright (C) 2015-2023 Victor Seva (sipwise.com)
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -43,6 +43,7 @@ extern int cfgt_mask;
 extern str cfgt_basedir;
 extern str cfgt_hdr_prefix;
 extern int cfgt_skip_unknown;
+extern int cfgt_route_log;
 /* clang-format off */
 /*! \brief
  * Exported functions
@@ -60,6 +61,7 @@ static param_export_t params[] = {
 	{"mask", INT_PARAM, &cfgt_mask},
 	{"callid_prefix", PARAM_STR, &cfgt_hdr_prefix},
 	{"skip_unknown", INT_PARAM, &cfgt_skip_unknown},
+	{"route_log", INT_PARAM, &cfgt_route_log},
 	{0, 0, 0}
 };
 
