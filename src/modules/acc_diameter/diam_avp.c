@@ -150,7 +150,7 @@ AAA_AVP*  AAACreateAVP(
 
 	return avp;
 error:
-	LM_ERR("no more free memory for a new AVP!\n");
+	PKG_MEM_ERROR_FMT("for a new AVP!\n");
 	if(avp) ad_free(avp);
 	return 0;
 }
