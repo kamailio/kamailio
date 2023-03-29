@@ -541,6 +541,7 @@ static int add_server(char *host, char *port)
 	server->host = pkg_malloc(strlen(host)+1);
 	if (server->host == NULL) {
 		PKG_MEM_ERROR;
+		pkg_free(server);
 		return -1;
 	}
 	strcpy(server->host, host);
@@ -798,9 +799,14 @@ static int mod_init(void)
 		return -1;
 	}
 
-    global_id = (uint16_t*)shm_malloc(sizeof(uint16_t));
-
-    return 0;
+	global_id = (uint16_t*)shm_malloc(sizeof(uint16_t));
+	if(!global_id)
+	{
+		SHM_MEM_ERROR;
+		shm_free(active);
+		return -1;
+	}
+	return 0;
 }
 
 static int child_init (int rank)
