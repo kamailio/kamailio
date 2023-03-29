@@ -222,7 +222,7 @@ int gzc_set_msg_body(sip_msg_t *msg, str *obody, str *nbody)
 	buf=pkg_malloc(nbody->len * sizeof(char));
 	if (buf==0)
 	{
-		LM_ERR("out of pkg memory\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	memcpy(buf, nbody->s, nbody->len);
