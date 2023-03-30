@@ -147,8 +147,8 @@ Chapter 1. Admin Guide
 
 3.1. Modules
 
-   The module depends on the following modules (in the other words the
-   listed modules must be loaded before this module):
+   The module depends on the following modules (in other words the listed
+   modules must be loaded before this module):
      * auth -- Generic authentication functions
 
 3.2. External Libraries or Applications

@@ -959,7 +959,7 @@ modparam("acc", "db_table_missed_calls", "myMC_table")
 
 6.20. db_url (string)
 
-   SQL address -- database specific. If is set to NULL or empty string,
+   SQL address -- database specific. If it is set to NULL or empty string,
    the SQL support is disabled.
 
    Default value is “NULL” (SQL disabled).

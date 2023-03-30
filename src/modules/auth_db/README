@@ -126,8 +126,8 @@ Chapter 1. Admin Guide
 
 2.1. Kamailio Modules
 
-   The module depends on the following modules (in the other words the
-   listed modules must be loaded before this module):
+   The module depends on the following modules (in other words the listed
+   modules must be loaded before this module):
      * auth -- Generic authentication functions
      * database -- Any database module (currently mysql, postgres, dbtext)
 
@@ -421,7 +421,7 @@ if (!proxy_authorize("$fd", "subscriber)) {
 4.5.  auth_check(realm, table, flags)
 
    The function combines the functionalities of www_authenticate and
-   proxy_authenticate, first being exectuted if the SIP request is a
+   proxy_authenticate, first being executed if the SIP request is a
    REGISTER, the second for the rest.
 
    In addition, a matter of flags parameter value, the function checks if

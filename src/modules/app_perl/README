@@ -386,7 +386,7 @@ modparam("app_perl", "modpath", "/usr/local/lib/kamailio/perl/")
    that not all Kamailio processes will reset the interpreter at the same
    time. Each will do it when it has executed the script for the number of
    reset_cycles. Also, be aware that the reset of the interpreter is
-   taking a bit of time (in the order of tens of mili-seconds).
+   taking a bit of time (in the order of tens of milliseconds).
 
    Default value is 0 - never reset the interpreter.
 
@@ -413,7 +413,7 @@ modparam("app_perl", "perl_destroy_func", "my_perl_destroy")
    is the value for application exit and can break reloading.
 
    If set to 0, continue even of perl_parse() returns non-zero, logging a
-   warning. If set to 1, realod fails on non-zero return code and triggers
+   warning. If set to 1, reload fails on non-zero return code and triggers
    an exit.
 
    Default value is 0.
@@ -1175,7 +1175,7 @@ my $conf = new Kamailio::LDAPUtils::LDAPConf();
 
    This module may be used to retrieve the global LDAP configuration as
    used by other LDAP software, such as nsswitch.ldap and pam-ldap. The
-   configuration is usualy stored in /etc/openldap/ldap.conf
+   configuration is usually stored in /etc/openldap/ldap.conf
 
    When used from an account with sufficient privileges (e.g. root), the
    ldap manager password is also retrieved.
@@ -1667,7 +1667,7 @@ Chapter 3. Perl samples
 
    The Kamailio::Utils::PhoneNumbers package provides two methods for the
    transformation of local to canonical telephone numbers, and vice versa.
-   This script demonstrates it's use.
+   This script demonstrates its use.
 
 1.1.10. pseudovars.pl
 

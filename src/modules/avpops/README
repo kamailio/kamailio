@@ -210,7 +210,7 @@ $avp(i3:123) - the AVP identified by the integer 123 which has script flags 1
 
    DB URL for database connection.
 
-   This parameter is optional, it's default value being NULL.
+   The default value is NULL.
 
    Example 1.2. Set db_url parameter
 ...
@@ -221,8 +221,8 @@ modparam("avpops","db_url","mysql://user:passwd@host/database")
 
    DB table to be used.
 
-   This parameter is optional, it's default value being NULL. But if you
-   specify a db_url, you need also setup this parameter.
+   The default value is NULL. But if you specify a db_url, you need also
+   to setup this parameter.
 
    Example 1.3. Set avp_table parameter
 ...
@@ -445,7 +445,7 @@ avp_db_delete("$uuid","$avp(s:404fwd)/fwd_table");
        many rows, then multiple AVPs with corresponding name will be
        added. The value type of the AVP (string or integer) will be
        derived from the type of the columns. Please note that only this
-       two datatypes are supported, so its not possible for example to
+       two datatypes are supported, so it is not possible for example to
        return floating point or big integer values this way.
 
    The function delivers the following return-codes:

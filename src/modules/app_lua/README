@@ -92,7 +92,7 @@ Chapter 1. Admin Guide
    the KEMI framework and exporting Lua module 'KSR'.
 
    To read more about KEMI exports and available KSR submodules, see:
-     * http://kamailio.org/docs/tutorials/devel/kamailio-kemi-framework/
+     * https://kamailio.org/docs/tutorials/devel/kamailio-kemi-framework/
 
    Note: to have the old Lua module 'sr' available, load the 'app_lua_sr'
    Kamailio module.

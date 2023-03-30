@@ -123,7 +123,7 @@ Chapter 1. Admin Guide
    Set the path to the SQLang file to be loaded at startup. Then you can
    use sqlang_run(function, params) to execute a function from the script
    at runtime. If you use it for KEMI configuration, then it has to
-   include the requited functions.
+   include the required functions.
 
    Default value is “null”.
 

@@ -93,7 +93,7 @@ Chapter 1. Admin Guide
    to supplement the registration in the location database. Users are this
    way on a proxy reachable with several request URIs.
 
-   As the module use no memory caching the lookup is a bit slower but the
+   As the module uses no memory caching the lookup is a bit slower but the
    data provisioning is easier. With very fast databases like MySQL the
    speed penalty can be lowered. Also, the search can be performed on
    different tables in the same script.

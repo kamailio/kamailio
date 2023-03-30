@@ -308,7 +308,7 @@ if (!autheph_www("$fd")) {
 4.3.  autheph_check(realm)
 
    This function combines the functionalities of autheph_www and
-   autheph_proxy, the first being exectuted if the SIP request is a
+   autheph_proxy, the first being executed if the SIP request is a
    REGISTER, the second for the rest.
 
 Note

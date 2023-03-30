@@ -287,7 +287,7 @@ modparam("auth", "qop", "auth")   # set qop=auth
 
    If enabled the received nc value is remembered and checked against the
    older value (for a successful authentication the received nc must be
-   greater then the previously received one, see rfc2617 for more
+   greater than the previously received one, see rfc2617 for more
    details). This will provide protection against replay attacks while
    still allowing credentials caching at the UA side.
 
@@ -306,13 +306,13 @@ modparam("auth", "qop", "auth")   # set qop=auth
    maximum number of tracked nonces is set using the nc_array_size or
    nc_array_order parameters. If this number is exceeded, older entries
    will be overwritten. As long as the maximum rate of challengeable
-   messages per average response time is lower then nc_array_size, the
+   messages per average response time is lower than nc_array_size, the
    nonce_count checks should work flawlessly. For optimum performance
    (maximum reuse of cache credentials) nc_array_size divided by
-   nid_pool_no should be lower then the message rate multiplied by the
+   nid_pool_no should be lower than the message rate multiplied by the
    desired nonce_expire.
 
-   The maximum accepted nc value is 255. If nc becomes greater then this,
+   The maximum accepted nc value is 255. If nc becomes greater than this,
    the nonce will be considered stale and the UA will be re-challenged.
 
    Note: nonce_count should be enabled only in stateful mode (a
@@ -409,7 +409,7 @@ route{
    nonces. The maximum number of tracked nonces is set using the
    otn_in_flight_no or otn_in_flight_order parameters. If this number is
    exceeded, older entries will be overwritten. As long as the maximum
-   rate of challengeable messages per average response time is lower then
+   rate of challengeable messages per average response time is lower than
    otn_in_flight_no, the one_time_nonce checks should work flawlessly.
 
    The default value is 0 (off).
@@ -551,11 +551,11 @@ modparam("auth", "otn_in_flight_order", 23)   # 8 Mb (1Mb memory)
 
    If you use multiple servers in your installation, and would like to
    authenticate on the second server against the nonce generated at the
-   first one its necessary to explicitly set the secret to the same value
-   on all servers. However, as the use of a shared (and fixed) secret as
-   nonce is insecure, it is much better is to stay with the default. Any
-   clients should send the authenticated request to the server that issued
-   the challenge.
+   first one, it is necessary to explicitly set the secret to the same
+   value on all servers. However, as the use of a shared (and fixed)
+   secret as nonce is insecure, it is much better is to stay with the
+   default. Any clients should send the authenticated request to the
+   server that issued the challenge.
 
    Default value is randomly generated string.
 
@@ -589,7 +589,7 @@ modparam("auth", "nonce_expire", 600)   # Set nonce_expire to 600s
    In some cases, like shortly after a system time backward adjustment or
    when the current proxy is part of a cluster which is not
    time-synchronized, it's possible to receive a nonce with creation time
-   in the future. In this case if the difference is greater then
+   in the future. In this case if the difference is greater than
    nonce_auth_max_drift seconds, consider the nonce stale and re-challenge
    (otherwise after a dramatic time change backwards, it might happen that
    some previously generated nonces will be valid for too much time).
@@ -706,7 +706,7 @@ if (www_authenticate("realm", "subscriber")) {
 
 4.2. has_credentials(realm)
 
-   This function returns true of the request has Authorization or
+   This function returns true if the request has Authorization or
    Proxy-Authorization header with provided realm. The parameter can be
    string with pseudo-variables.
 
