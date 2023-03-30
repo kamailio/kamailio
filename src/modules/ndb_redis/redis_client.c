@@ -160,7 +160,7 @@ int redisc_init(void)
 				port = 6379;
 				if( (pos = strchr(sentinelAddr, ':')) != NULL ) {
 					port = atoi(pos+1);
-					pos[i] = '\0';
+					pos[0] = '\0';
 				}
 
 				redis = redisConnectWithTimeout(sentinelAddr, port, tv_conn);
