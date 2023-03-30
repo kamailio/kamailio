@@ -318,7 +318,7 @@ static int get_version(str* res, sip_msg_t* msg)
 	res->s = buf;
 	res->len = version.len;
 	tcpconn_put(c);
-		return 0;
+	return 0;
 
  err:
 	if (c) tcpconn_put(c);
@@ -1894,7 +1894,3 @@ sr_kemi_xval_t* ki_tls_cget_attr(sip_msg_t* msg, str *aname)
 	sr_kemi_xval_null(&_ksr_kemi_tls_xval, SR_KEMI_XVAL_NULL_EMPTY);
 	return &_ksr_kemi_tls_xval;
 }
-
-
-
-
