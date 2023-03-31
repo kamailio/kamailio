@@ -1122,10 +1122,8 @@ int e2e_cancel_branch( struct sip_msg *cancel_msg, struct cell *t_cancel,
 			LM_WARN("CANCEL is built locally,"
 					" thus lumps are not applied to the message!\n");
 		}
-		shbuf=build_local_reparse( t_invite, branch, &len, CANCEL,
-				CANCEL_LEN, &t_invite->to
-				, 0
-				);
+		shbuf=build_local_reparse(t_invite, branch, &len, CANCEL,
+				CANCEL_LEN, &t_invite->to_hdr, 0);
 		if (unlikely(!shbuf) || len<=0) {
 			if(shbuf) {
 				shm_free(shbuf);

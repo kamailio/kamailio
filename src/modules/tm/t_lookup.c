@@ -51,6 +51,7 @@
 #include "../../core/hash_func.h"
 #include "../../core/globals.h"
 #include "../../core/forward.h"
+#include "../../core/trim.h"
 #include "t_funcs.h"
 #include "config.h"
 #include "sip_msg.h"
@@ -1180,18 +1181,18 @@ int t_reply_search(struct sip_msg *p_msg, struct cell **r_cell, int *r_branch)
 		prefetch_loc_r(p_cell->next_c, 1);
 
 		if (cfg_get(tm, tm_cfg, callid_cseq_matching)) {
-			if (memcmp(p_cell->callid.s + strlen("Call-ID: "), p_msg->callid->body.s, p_msg->callid->body.len) != 0) {
+			if (memcmp(p_cell->callid_hdr.s + strlen("Call-ID: "), p_msg->callid->body.s, p_msg->callid->body.len) != 0) {
 				LM_ERR("t_reply_matching: failed callid matching (instead of md5): %d p_cell=%.*s p_msg=%.*s",
 					p_msg->first_line.u.reply.statuscode,
-					p_cell->callid.len, p_cell->callid.s,
+					p_cell->callid_hdr.len, p_cell->callid_hdr.s,
 					p_msg->callid->body.len, p_msg->callid->body.s);
 				continue;
 			}
 
-			if (memcmp(p_cell->cseq_n.s + strlen("CSeq: "), get_cseq(p_msg)->number.s, get_cseq(p_msg)->number.len) != 0) {
+			if (memcmp(p_cell->cseq_hdr_n.s + strlen("CSeq: "), get_cseq(p_msg)->number.s, get_cseq(p_msg)->number.len) != 0) {
 				LM_ERR("t_reply_matching: failed cseq matching (instead of md5): %d p_cell=%.*s p_msg=%.*s",
 					p_msg->first_line.u.reply.statuscode,
-					p_cell->cseq_n.len, p_cell->cseq_n.s,
+					p_cell->cseq_hdr_n.len, p_cell->cseq_hdr_n.s,
 					get_cseq(p_msg)->number.len, get_cseq(p_msg)->number.s);
 				continue;
 			}
@@ -1349,18 +1350,18 @@ int t_reply_matching( struct sip_msg *p_msg , int *p_branch )
 		prefetch_loc_r(p_cell->next_c, 1);
 
 		if (cfg_get(tm, tm_cfg, callid_cseq_matching)) {
-			if (memcmp(p_cell->callid.s + strlen("Call-ID: "), p_msg->callid->body.s, p_msg->callid->body.len) != 0) {
+			if (memcmp(p_cell->callid_hdr.s + strlen("Call-ID: "), p_msg->callid->body.s, p_msg->callid->body.len) != 0) {
 				LM_ERR("t_reply_matching: failed callid matching (instead of md5): %d p_cell=%.*s p_msg=%.*s",
 					p_msg->first_line.u.reply.statuscode,
-					p_cell->callid.len, p_cell->callid.s,
+					p_cell->callid_hdr.len, p_cell->callid_hdr.s,
 					p_msg->callid->body.len, p_msg->callid->body.s);
 				continue;
 			}
 
-			if (memcmp(p_cell->cseq_n.s + strlen("CSeq: "), get_cseq(p_msg)->number.s, get_cseq(p_msg)->number.len) != 0) {
+			if (memcmp(p_cell->cseq_hdr_n.s + strlen("CSeq: "), get_cseq(p_msg)->number.s, get_cseq(p_msg)->number.len) != 0) {
 				LM_ERR("t_reply_matching: failed cseq matching (instead of md5): %d p_cell=%.*s p_msg=%.*s",
 					p_msg->first_line.u.reply.statuscode,
-					p_cell->cseq_n.len, p_cell->cseq_n.s,
+					p_cell->cseq_hdr_n.len, p_cell->cseq_hdr_n.s,
 					get_cseq(p_msg)->number.len, get_cseq(p_msg)->number.s);
 				continue;
 			}
@@ -1632,16 +1633,22 @@ static inline void init_new_t(struct cell *new_cell, struct sip_msg *p_msg)
 	ticks_t lifetime;
 
 	shm_msg=new_cell->uas.request;
-	new_cell->from.s=shm_msg->from->name.s;
-	new_cell->from.len=HF_LEN(shm_msg->from);
-	new_cell->to.s=shm_msg->to->name.s;
-	new_cell->to.len=HF_LEN(shm_msg->to);
-	new_cell->callid.s=shm_msg->callid->name.s;
-	new_cell->callid.len=HF_LEN(shm_msg->callid);
-	new_cell->cseq_n.s=shm_msg->cseq->name.s;
-	new_cell->cseq_n.len=get_cseq(shm_msg)->number.s
+	new_cell->from_hdr.s=shm_msg->from->name.s;
+	new_cell->from_hdr.len=HF_LEN(shm_msg->from);
+	new_cell->to_hdr.s=shm_msg->to->name.s;
+	new_cell->to_hdr.len=HF_LEN(shm_msg->to);
+	new_cell->callid_hdr.s=shm_msg->callid->name.s;
+	new_cell->callid_hdr.len=HF_LEN(shm_msg->callid);
+	new_cell->cseq_hdr_n.s=shm_msg->cseq->name.s;
+	new_cell->cseq_hdr_n.len=get_cseq(shm_msg)->number.s
 		+get_cseq(shm_msg)->number.len
 		-shm_msg->cseq->name.s;
+	new_cell->callid_val.s = shm_msg->callid->body.s;
+	new_cell->callid_val.len = shm_msg->callid->body.len;
+	trim(&new_cell->callid_val);
+	new_cell->cseq_num.s = get_cseq(shm_msg)->number.s;
+	new_cell->cseq_num.len = get_cseq(shm_msg)->number.len;
+	trim(&new_cell->cseq_num);
 
 	new_cell->method=new_cell->uas.request->first_line.u.request.method;
 	if (p_msg->REQ_METHOD==METHOD_INVITE){
@@ -2210,12 +2217,12 @@ int t_lookup_callid(struct cell ** trans, str callid, str cseq) {
 
 		prefetch_loc_r(p_cell->next_c, 1);
 		/* compare complete header fields, casecmp to make sure invite=INVITE*/
-		if ((strncmp(callid_header, p_cell->callid.s, p_cell->callid.len) == 0)
-				&& (strncasecmp(cseq_header, p_cell->cseq_n.s, p_cell->cseq_n.len)
+		if ((strncmp(callid_header, p_cell->callid_hdr.s, p_cell->callid_hdr.len) == 0)
+				&& (strncasecmp(cseq_header, p_cell->cseq_hdr_n.s, p_cell->cseq_hdr_n.len)
 					== 0)) {
 			LM_DBG("we have a match: callid=>>%.*s<< cseq=>>%.*s<<\n",
-					p_cell->callid.len, p_cell->callid.s, p_cell->cseq_n.len,
-					p_cell->cseq_n.s);
+					p_cell->callid_hdr.len, p_cell->callid_hdr.s,
+					p_cell->cseq_hdr_n.len, p_cell->cseq_hdr_n.s);
 			REF_UNSAFE(p_cell);
 			UNLOCK_HASH(hash_index);
 			set_t(p_cell, T_BR_UNDEFINED);
@@ -2223,8 +2230,8 @@ int t_lookup_callid(struct cell ** trans, str callid, str cseq) {
 			LM_DBG("t_lookup_callid: transaction found.\n");
 			return 1;
 		}
-		LM_DBG("NO match: callid=%.*s cseq=%.*s\n", p_cell->callid.len,
-				p_cell->callid.s, p_cell->cseq_n.len, p_cell->cseq_n.s);
+		LM_DBG("NO match: callid=%.*s cseq=%.*s\n", p_cell->callid_hdr.len,
+				p_cell->callid_hdr.s, p_cell->cseq_hdr_n.len, p_cell->cseq_hdr_n.s);
 
 	}
 

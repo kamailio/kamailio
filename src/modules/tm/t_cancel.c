@@ -284,14 +284,11 @@ int cancel_branch( struct cell *t, int branch,
 			(t->uas.request && t->uas.request->msg_flags&(FL_USE_UAC_FROM|FL_USE_UAC_TO))) {
 		/* build the CANCEL from the INVITE which was sent out */
 		cancel = build_local_reparse(t, branch, &len, CANCEL, CANCEL_LEN,
-									 (t->uas.request && t->uas.request->msg_flags&FL_USE_UAC_TO)?0:&t->to
-									 , reason
-									 );
+					(t->uas.request && t->uas.request->msg_flags&FL_USE_UAC_TO)?0:&t->to_hdr,
+					reason);
 	} else {
 		/* build the CANCEL from the received INVITE */
-		cancel = build_local(t, branch, &len, CANCEL, CANCEL_LEN, &t->to
-								, reason
-								);
+		cancel = build_local(t, branch, &len, CANCEL, CANCEL_LEN, &t->to_hdr, reason);
 	}
 	if (!cancel || len<=0) {
 		LM_ERR("attempt to build a CANCEL failed\n");

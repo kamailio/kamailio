@@ -33,6 +33,7 @@
 #include "../../core/crc.h"
 #include "../../core/ip_addr.h"
 #include "../../core/dset.h"
+#include "../../core/trim.h"
 #include "../../core/socket_info.h"
 #include "../../core/compiler_opt.h"
 #include "../../core/parser/parse_cseq.h"
@@ -176,18 +177,24 @@ int uac_refresh_shortcuts(tm_cell_t *tcell, int branch, char *buf, int buf_len)
 		goto error;
 	}
 	tcell->uac[branch].uri = *GET_RURI(&lreq);
-	tcell->from.s = lreq.from->name.s;
-	tcell->from.len = lreq.from->len;
-	tcell->to.s = lreq.to->name.s;
-	tcell->to.len = lreq.to->len;
-	tcell->callid.s = lreq.callid->name.s;
-	tcell->callid.len = lreq.callid->len;
+	tcell->from_hdr.s = lreq.from->name.s;
+	tcell->from_hdr.len = lreq.from->len;
+	tcell->to_hdr.s = lreq.to->name.s;
+	tcell->to_hdr.len = lreq.to->len;
+	tcell->callid_hdr.s = lreq.callid->name.s;
+	tcell->callid_hdr.len = lreq.callid->len;
+	tcell->callid_val.s = lreq.callid->body.s;
+	tcell->callid_val.len = lreq.callid->body.len;
+	trim(&tcell->callid_val);
 
 	cs = get_cseq(&lreq);
-	tcell->cseq_n.s = lreq.cseq->name.s;
-	tcell->cseq_n.len = (int)(cs->number.s + cs->number.len - lreq.cseq->name.s);
+	tcell->cseq_hdr_n.s = lreq.cseq->name.s;
+	tcell->cseq_hdr_n.len = (int)(cs->number.s + cs->number.len - lreq.cseq->name.s);
+	tcell->cseq_num.s = cs->number.s;
+	tcell->cseq_num.len = cs->number.len;
+	trim(&tcell->cseq_num);
 
-	LM_DBG("cseq: [%.*s]\n", tcell->cseq_n.len, tcell->cseq_n.s);
+	LM_DBG("cseq: [%.*s]\n", tcell->cseq_hdr_n.len, tcell->cseq_hdr_n.s);
 	lreq.buf=0;
 	free_sip_msg(&lreq);
 	return 0;

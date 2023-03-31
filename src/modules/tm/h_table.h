@@ -363,11 +363,17 @@ typedef struct cell
 	 */
 	atomic_t ref_count;
 	/* needed for generating local ACK/CANCEL for local
-	 * transactions; all but cseq_n include the entire
-	 * header field value, cseq_n only Cseq number; with
+	 * transactions; all but cseq_hdr_n include the entire
+	 * header field value, cseq_hdr_n only Cseq number; with
 	 * local transactions, pointers point to outbound buffer,
 	 * with proxied transactions to inbound request */
-	str from, callid, cseq_n, to;
+	str from_hdr;
+	str callid_hdr;
+	str cseq_hdr_n;
+	str to_hdr;
+
+	str callid_val;
+	str cseq_num;
 	/* method shortcut -- for local transactions, pointer to
 	 * outbound buffer, for proxies transactions pointer to
 	 * original message; needed for reply matching */

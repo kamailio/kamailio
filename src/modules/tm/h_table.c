@@ -599,15 +599,15 @@ void tm_xdata_replace(tm_xdata_t *newxd, tm_xlinks_t *bakxd)
 void tm_log_transaction(tm_cell_t *tcell, int llev, char *ltext)
 {
 	LOG(llev, "%s [start] transaction %p\n", ltext, tcell);
-	LOG(llev, "%s - tindex=%u tlabel=%u method='%.*s' from='%.*s'"
-			" to='%.*s' callid='%.*s' cseq='%.*s' uas_request=%s"
+	LOG(llev, "%s - tindex=%u tlabel=%u method='%.*s' from_hdr='%.*s'"
+			" to_hdr='%.*s' callid_hdr='%.*s' cseq_hdr='%.*s' uas_request=%s"
 			" tflags=%u outgoings=%u ref_count=%u lifetime=%u\n",
 			ltext, (unsigned)tcell->hash_index, (unsigned)tcell->label,
 			tcell->method.len, tcell->method.s,
-			tcell->from.len, tcell->from.s,
-			tcell->to.len, tcell->to.s,
-			tcell->callid.len, tcell->callid.s,
-			tcell->cseq_n.len, tcell->cseq_n.s,
+			tcell->from_hdr.len, tcell->from_hdr.s,
+			tcell->to_hdr.len, tcell->to_hdr.s,
+			tcell->callid_hdr.len, tcell->callid_hdr.s,
+			tcell->cseq_hdr_n.len, tcell->cseq_hdr_n.s,
 			(tcell->uas.request)?"yes":"no",
 			(unsigned)tcell->flags,
 			(unsigned)tcell->nr_of_outgoings,

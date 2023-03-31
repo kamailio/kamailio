@@ -34,6 +34,7 @@
 #include "../../core/parser/parser_f.h"
 #include "../../core/parser/parse_to.h"
 #include "../../core/ut.h"
+#include "../../core/trim.h"
 #include "../../core/srapi.h"
 #include "../../core/parser/msg_parser.h"
 #include "../../core/parser/contact/parse_contact.h"
@@ -133,8 +134,8 @@ char *build_local(struct cell *Trans,unsigned int branch,
 	}
 	*len+= via_len;
 	/*headers*/
-	*len+=Trans->from.len+Trans->callid.len+to->len+
-		+Trans->cseq_n.len+1+method_len+CRLF_LEN+MAXFWD_HEADER_LEN;
+	*len+=Trans->from_hdr.len+Trans->callid_hdr.len+to->len+
+		+Trans->cseq_hdr_n.len+1+method_len+CRLF_LEN+MAXFWD_HEADER_LEN;
 
 
 	/* copy'n'paste Route headers */
@@ -200,11 +201,11 @@ char *build_local(struct cell *Trans,unsigned int branch,
 	append_str(p,via,via_len);
 
 	/*other headers*/
-	append_str( p, Trans->from.s, Trans->from.len );
-	append_str( p, Trans->callid.s, Trans->callid.len );
+	append_str( p, Trans->from_hdr.s, Trans->from_hdr.len );
+	append_str( p, Trans->callid_hdr.s, Trans->callid_hdr.len );
 	append_str( p, to->s, to->len );
 
-	append_str( p, Trans->cseq_n.s, Trans->cseq_n.len );
+	append_str( p, Trans->cseq_hdr_n.s, Trans->cseq_hdr_n.len );
 	append_str( p, " ", 1 );
 	append_str( p, method, method_len );
 	append_str( p, CRLF, CRLF_LEN );
@@ -1225,7 +1226,8 @@ char *build_dlg_ack(struct sip_msg* rpl, struct cell *Trans,
 	*len+= via_len;
 
 	/* headers */
-	*len += Trans->from.len + Trans->callid.len + to->len + Trans->cseq_n.len + 1 + ACK_LEN + CRLF_LEN;
+	*len += Trans->from_hdr.len + Trans->callid_hdr.len + to->len
+		+ Trans->cseq_hdr_n.len + 1 + ACK_LEN + CRLF_LEN;
 
 	/* copy'n'paste Route headers */
 
@@ -1265,11 +1267,11 @@ char *build_dlg_ack(struct sip_msg* rpl, struct cell *Trans,
 	append_str(p, via, via_len);
 
 	/*other headers*/
-	append_str(p, Trans->from.s, Trans->from.len);
-	append_str(p, Trans->callid.s, Trans->callid.len);
+	append_str(p, Trans->from_hdr.s, Trans->from_hdr.len);
+	append_str(p, Trans->callid_hdr.s, Trans->callid_hdr.len);
 	append_str(p, to->s, to->len);
 
-	append_str(p, Trans->cseq_n.s, Trans->cseq_n.len);
+	append_str(p, Trans->cseq_hdr_n.s, Trans->cseq_hdr_n.len);
 	append_str( p, " ", 1 );
 	append_str( p, ACK, ACK_LEN);
 	append_str(p, CRLF, CRLF_LEN);
@@ -1429,8 +1431,8 @@ static inline char* print_request_uri(char* w, str* method, dlg_t* dialog,
  */
 static inline char* print_to(char* w, dlg_t* dialog, struct cell* t, int bracket)
 {
-	t->to.s = w;
-	t->to.len = TO_LEN + dialog->rem_uri.len + CRLF_LEN
+	t->to_hdr.s = w;
+	t->to_hdr.len = TO_LEN + dialog->rem_uri.len + CRLF_LEN
 		+ (((dialog->rem_uri.s[dialog->rem_uri.len - 1]!='>'))?2:0);
 
 	memapp(w, TO, TO_LEN);
@@ -1439,7 +1441,7 @@ static inline char* print_to(char* w, dlg_t* dialog, struct cell* t, int bracket
 	if(bracket) memapp(w, ">", 1);
 
 	if (dialog->id.rem_tag.len) {
-		t->to.len += TOTAG_LEN + dialog->id.rem_tag.len ;
+		t->to_hdr.len += TOTAG_LEN + dialog->id.rem_tag.len ;
 		memapp(w, TOTAG, TOTAG_LEN);
 		memapp(w, dialog->id.rem_tag.s, dialog->id.rem_tag.len);
 	}
@@ -1454,8 +1456,8 @@ static inline char* print_to(char* w, dlg_t* dialog, struct cell* t, int bracket
  */
 static inline char* print_from(char* w, dlg_t* dialog, struct cell* t, int bracket)
 {
-	t->from.s = w;
-	t->from.len = FROM_LEN + dialog->loc_uri.len + CRLF_LEN
+	t->from_hdr.s = w;
+	t->from_hdr.len = FROM_LEN + dialog->loc_uri.len + CRLF_LEN
 		+ ((dialog->loc_uri.s[dialog->loc_uri.len - 1]!='>')?2:0);
 
 	memapp(w, FROM, FROM_LEN);
@@ -1464,7 +1466,7 @@ static inline char* print_from(char* w, dlg_t* dialog, struct cell* t, int brack
 	if(bracket) memapp(w, ">", 1);
 
 	if (dialog->id.loc_tag.len) {
-		t->from.len += FROMTAG_LEN + dialog->id.loc_tag.len;
+		t->from_hdr.len += FROMTAG_LEN + dialog->id.loc_tag.len;
 		memapp(w, FROMTAG, FROMTAG_LEN);
 		memapp(w, dialog->id.loc_tag.s, dialog->id.loc_tag.len);
 	}
@@ -1487,11 +1489,16 @@ char* print_cseq_mini(char* target, str* cseq, str* method) {
 
 static inline char* print_cseq(char* w, str* cseq, str* method, struct cell* t)
 {
-	t->cseq_n.s = w;
+	t->cseq_hdr_n.s = w;
 	/* don't include method name and CRLF -- subsequent
 	 * local requests ACK/CANCEL will add their own */
-	t->cseq_n.len = CSEQ_LEN + cseq->len;
+	t->cseq_hdr_n.len = CSEQ_LEN + cseq->len;
 	w = print_cseq_mini(w, cseq, method);
+
+	t->cseq_num.s = t->cseq_hdr_n.s + CSEQ_LEN;
+	t->cseq_num.len = cseq->len;
+	trim(&t->cseq_num);
+
 	return w;
 }
 
@@ -1511,10 +1518,15 @@ static inline char* print_callid(char* w, dlg_t* dialog, struct cell* t)
 {
 	/* begins with CRLF, not included in t->callid, don`t know why...?!? */
 	memapp(w, CRLF, CRLF_LEN);
-	t->callid.s = w;
-	t->callid.len = CALLID_LEN + dialog->id.call_id.len + CRLF_LEN;
+	t->callid_hdr.s = w;
+	t->callid_hdr.len = CALLID_LEN + dialog->id.call_id.len + CRLF_LEN;
 
 	w = print_callid_mini(w, dialog->id.call_id);
+
+	t->callid_val.s = t->callid_val.s + CALLID_LEN;
+	t->callid_val.len = dialog->id.call_id.len;
+	trim(&t->callid_val);
+
 	return w;
 }
 
@@ -1691,8 +1703,8 @@ char *build_uac_cancel(str *headers,str *body,struct cell *cancelledT,
 	str content_length, via;
 
 	LM_DBG("sing FROM=<%.*s>, TO=<%.*s>, CSEQ_N=<%.*s>\n",
-		cancelledT->from.len, cancelledT->from.s, cancelledT->to.len,
-		cancelledT->to.s, cancelledT->cseq_n.len, cancelledT->cseq_n.s);
+		cancelledT->from_hdr.len, cancelledT->from_hdr.s, cancelledT->to_hdr.len,
+		cancelledT->to_hdr.s, cancelledT->cseq_hdr_n.len, cancelledT->cseq_hdr_n.s);
 
 	branch_str.s=branch_buf;
 	if (!t_calc_branch(cancelledT,  branch, branch_str.s, &branch_str.len )){
@@ -1712,13 +1724,13 @@ char *build_uac_cancel(str *headers,str *body,struct cell *cancelledT,
 	/*via*/
 	*len+= via.len;
 	/*From*/
-	*len+=cancelledT->from.len;
+	*len+=cancelledT->from_hdr.len;
 	/*To*/
-	*len+=cancelledT->to.len;
+	*len+=cancelledT->to_hdr.len;
 	/*CallId*/
-	*len+=cancelledT->callid.len;
+	*len+=cancelledT->callid_hdr.len;
 	/*CSeq*/
-	*len+=cancelledT->cseq_n.len+1+CANCEL_LEN+CRLF_LEN;
+	*len+=cancelledT->cseq_hdr_n.len+1+CANCEL_LEN+CRLF_LEN;
 	/* User Agent */
 	if (server_signature) {
 		*len += USER_AGENT_LEN + CRLF_LEN;
@@ -1756,11 +1768,11 @@ char *build_uac_cancel(str *headers,str *body,struct cell *cancelledT,
 	memapp(p,via.s,via.len);
 
 	/*other headers*/
-	memapp( p, cancelledT->from.s, cancelledT->from.len );
-	memapp( p, cancelledT->callid.s, cancelledT->callid.len );
-	memapp( p, cancelledT->to.s, cancelledT->to.len );
+	memapp( p, cancelledT->from_hdr.s, cancelledT->from_hdr.len );
+	memapp( p, cancelledT->callid_hdr.s, cancelledT->callid_hdr.len );
+	memapp( p, cancelledT->to_hdr.s, cancelledT->to_hdr.len );
 
-	memapp( p, cancelledT->cseq_n.s, cancelledT->cseq_n.len );
+	memapp( p, cancelledT->cseq_hdr_n.s, cancelledT->cseq_hdr_n.len );
 	*(p++) = ' ';
 	memapp( p, CANCEL, CANCEL_LEN );
 	memapp( p, CRLF, CRLF_LEN );
