@@ -74,8 +74,8 @@ static void sca_notify_reply_cb(
 	}
 	return;
 
-	if(sca_uri_extract_aor(&t->to, &to_aor) < 0) {
-		LM_ERR("Failed to extract AoR from %.*s\n", STR_FMT(&t->to));
+	if(sca_uri_extract_aor(&t->to_hdr, &to_aor) < 0) {
+		LM_ERR("Failed to extract AoR from %.*s\n", STR_FMT(&t->to_hdr));
 		return;
 	}
 	// t->to is the entire To header: "To: sip:....", so move to_aor.s ahead
