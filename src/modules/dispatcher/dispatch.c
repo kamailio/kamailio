@@ -3613,8 +3613,8 @@ static void ds_options_callback(
 	/* The SIP-URI is taken from the Transaction.
 	 * Remove the "To: <" (s+5) and the trailing >+new-line (s - 5 (To: <)
 	 * - 3 (>\r\n)). */
-	uri.s = t->to.s + 5;
-	uri.len = t->to.len - 8;
+	uri.s = t->to_hdr.s + 5;
+	uri.len = t->to_hdr.len - 8;
 	LM_DBG("OPTIONS-Request was finished with code %d (to %.*s, group %d)\n",
 			ps->code, uri.len, uri.s, group);
 	if (ds_ping_latency_stats) {
