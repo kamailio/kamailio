@@ -2830,8 +2830,8 @@ static void ping_callback(struct cell *t, int type, struct tmcb_params *ps)
 	/* SIP URI is taken from the Transaction.
      * Remove the "To: <" (s+5) and the trailing >+new-line (s - 5 (To: <)
      * - 3 (>\r\n)). */
-	uri.s = t->to.s + 5;
-	uri.len = t->to.len - 8;
+	uri.s = t->to_hdr.s + 5;
+	uri.len = t->to_hdr.len - 8;
 
 	LM_DBG("OPTIONS %.*s finished with code <%d>\n", uri.len, uri.s, ps->code);
 
