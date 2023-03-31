@@ -2163,14 +2163,14 @@ int t_is_local(struct sip_msg* p_msg)
 	return is_local(t);
 }
 
-/** lookup a transaction based on callid and cseq.
+/** lookup an invite transaction based on callid and cseq.
  * The parameters are pure header field content only,
- * e.g. "123@10.0.0.1" and "11"
+ * e.g. callid: "123@10.0.0.1" and cseq: "11"
  * @param trans - double pointer to the transaction, filled with a pointer
  *                to the found transaction on success and with 0 if the
  *                transaction was not found.
  * @param callid - callid for the searched transaction.
- * @param cseq - cseq for the searched transaction.
+ * @param cseq - cseq number for the searched transaction.
  * @return -1 on error/not found, 1 if found.
  * Side-effects: sets T and T_branch (T_branch always to T_BR_UNDEFINED).
  */
@@ -2179,20 +2179,6 @@ int t_lookup_callid(struct cell ** trans, str callid, str cseq) {
 	unsigned hash_index;
 	struct entry* hash_bucket;
 
-	/* I use MAX_HEADER, not sure if this is a good choice... */
-	char callid_header[MAX_HEADER];
-	char cseq_header[MAX_HEADER];
-	/* save return value of print_* functions here */
-	char* endpos;
-
-	/* need method, which is always INVITE in our case */
-	/* CANCEL is only useful after INVITE */
-	str invite_method;
-	char* invite_string = INVITE;
-
-	invite_method.s = invite_string;
-	invite_method.len = INVITE_LEN;
-
 	/* lookup the hash index where the transaction is stored */
 	hash_index=hash(callid, cseq);
 
@@ -2200,15 +2186,6 @@ int t_lookup_callid(struct cell ** trans, str callid, str cseq) {
 		LM_ERR("invalid hash_index=%u\n",hash_index);
 		return -1;
 	}
-
-	/* create header fields the same way tm does itself, then compare headers */
-	endpos = print_callid_mini(callid_header, callid);
-	LM_DBG("created comparable call_id header field: >%.*s<\n",
-			(int)(endpos - callid_header), callid_header);
-
-	endpos = print_cseq_mini(cseq_header, &cseq, &invite_method);
-	LM_DBG("created comparable cseq header field: >%.*s<\n",
-			(int)(endpos - cseq_header), cseq_header);
 
 	LOCK_HASH(hash_index);
 	LM_DBG("just locked hash index %u, looking for transactions there:\n",
@@ -2219,10 +2196,19 @@ int t_lookup_callid(struct cell ** trans, str callid, str cseq) {
 	clist_foreach(hash_bucket, p_cell, next_c){
 
 		prefetch_loc_r(p_cell->next_c, 1);
+
+		if(p_cell->callid_val.s==NULL || p_cell->cseq_num.s==NULL
+				|| p_cell->cseq_met.s==NULL) {
+			LM_CRIT("null shortcuts for matching attributes - t:%p cid:%p csn:%p csm:%p\n",
+					p_cell, p_cell->callid_val.s, p_cell->cseq_num.s, p_cell->cseq_met.s);
+			continue;
+		}
 		/* compare complete header fields, casecmp to make sure invite=INVITE*/
-		if ((strncmp(callid_header, p_cell->callid_hdr.s, p_cell->callid_hdr.len) == 0)
-				&& (strncasecmp(cseq_header, p_cell->cseq_hdr_n.s, p_cell->cseq_hdr_n.len)
-					== 0)) {
+		if((callid.len==p_cell->callid_val.len) && (cseq.len==p_cell->cseq_num.len)
+				&& (INVITE_LEN==p_cell->cseq_met.len)
+				&& (strncmp(callid.s, p_cell->callid_val.s, callid.len)==0)
+				&& (strncmp(cseq.s, p_cell->cseq_num.s, cseq.len)==0)
+				&& (strncasecmp(INVITE, p_cell->cseq_met.s, INVITE_LEN)==0)) {
 			LM_DBG("we have a match: callid=>>%.*s<< cseq=>>%.*s<<\n",
 					p_cell->callid_hdr.len, p_cell->callid_hdr.s,
 					p_cell->cseq_hdr_n.len, p_cell->cseq_hdr_n.s);
