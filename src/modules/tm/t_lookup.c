@@ -1649,6 +1649,9 @@ static inline void init_new_t(struct cell *new_cell, struct sip_msg *p_msg)
 	new_cell->cseq_num.s = get_cseq(shm_msg)->number.s;
 	new_cell->cseq_num.len = get_cseq(shm_msg)->number.len;
 	trim(&new_cell->cseq_num);
+	new_cell->cseq_met.s = get_cseq(shm_msg)->method.s;
+	new_cell->cseq_met.len = get_cseq(shm_msg)->method.len;
+	trim(&new_cell->cseq_met);
 
 	new_cell->method=new_cell->uas.request->first_line.u.request.method;
 	if (p_msg->REQ_METHOD==METHOD_INVITE){

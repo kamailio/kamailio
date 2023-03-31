@@ -1498,6 +1498,9 @@ static inline char* print_cseq(char* w, str* cseq, str* method, struct cell* t)
 	t->cseq_num.s = t->cseq_hdr_n.s + CSEQ_LEN;
 	t->cseq_num.len = cseq->len;
 	trim(&t->cseq_num);
+	t->cseq_met.s = t->cseq_hdr_n.s + CSEQ_LEN + cseq->len + 1;
+	t->cseq_met.len = method->len;
+	trim(&t->cseq_met);
 
 	return w;
 }

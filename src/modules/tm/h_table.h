@@ -372,8 +372,11 @@ typedef struct cell
 	str cseq_hdr_n;
 	str to_hdr;
 
+	/* shortcuts inside above fields */
 	str callid_val;
 	str cseq_num;
+	str cseq_met;
+
 	/* method shortcut -- for local transactions, pointer to
 	 * outbound buffer, for proxies transactions pointer to
 	 * original message; needed for reply matching */

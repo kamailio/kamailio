@@ -193,6 +193,9 @@ int uac_refresh_shortcuts(tm_cell_t *tcell, int branch, char *buf, int buf_len)
 	tcell->cseq_num.s = cs->number.s;
 	tcell->cseq_num.len = cs->number.len;
 	trim(&tcell->cseq_num);
+	tcell->cseq_met.s = cs->method.s;
+	tcell->cseq_met.len = cs->method.len;
+	trim(&tcell->cseq_met);
 
 	LM_DBG("cseq: [%.*s]\n", tcell->cseq_hdr_n.len, tcell->cseq_hdr_n.s);
 	lreq.buf=0;
