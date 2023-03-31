@@ -120,8 +120,8 @@ static void ka_options_callback(
 	shm_free(uuid);
 	ka_unlock_destination_list();
 
-	uri.s = t->to.s + 5;
-	uri.len = t->to.len - 8;
+	uri.s = t->to_hdr.s + 5;
+	uri.len = t->to_hdr.len - 8;
 	LM_DBG("OPTIONS request was finished with code %d (to %.*s)\n", ps->code,
 			ka_dest->uri.len, ka_dest->uri.s); //uri.len, uri.s);
 
