@@ -32,6 +32,8 @@
 #ifndef LOST_UTILITIES_H
 #define LOST_UTILITIES_H
 
+#include "response.h"
+
 #define LAQUOT '<'
 #define COLON ':'
 
@@ -132,7 +134,7 @@ int lost_parse_host(const char *, str *, int *);
 int lost_new_geoheader_list(p_lost_geolist_t *, str);
 int lost_get_nameinfo(char *, str *, int);
 
-char *lost_find_service_request(p_lost_loc_t, int *);
+char *lost_find_service_request(p_lost_loc_t, p_lost_list_t, int *);
 char *lost_held_location_request(p_lost_held_t, int *);
 char *lost_held_post_request(int *, long, char *);
 char *lost_get_content(xmlNodePtr, const char *, int *);

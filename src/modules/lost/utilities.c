@@ -48,6 +48,7 @@
 
 #include "pidf.h"
 #include "utilities.h"
+#include "response.h"
 
 extern int lost_recursion;
 extern int lost_profile;
@@ -1492,10 +1493,48 @@ https://tools.ietf.org/html/rfc5985
 }
 
 /*
- * lost_find_service_request(loc, lgth)
+ * lost_append_via_element(head, parent)
+ * appends via elements and returns the number of via elements added
+ */
+int lost_append_via_element(p_lost_list_t *head, xmlNodePtr *parent)
+{
+	int cnt = 0;
+	int i;
+	p_lost_list_t current = NULL;
+
+	if (head == NULL) {
+		return 0;
+	}
+
+	/* at least one <via> element to add */
+	current = *head;
+	cnt++;
+
+	/* check for more <via> elements to add */
+	while (current->next != NULL) {
+		cnt++;
+		current = current->next;
+	}
+
+	current = *head;
+	xmlNodePtr ptrVia[cnt];
+
+	/* ad <via> elements to <path> element */
+	for (i = 0; i < cnt; i++) {
+		ptrVia[i] = xmlNewChild(*parent, NULL, BAD_CAST "via", NULL);
+		xmlNewProp(ptrVia[i], BAD_CAST "source", BAD_CAST current->value);
+		current = current->next;
+	}
+
+	return cnt;
+}
+
+
+/*
+ * lost_find_service_request(loc, path, lgth)
  * assembles and returns findService request string (allocated in private memory)
  */
-char *lost_find_service_request(p_lost_loc_t loc, int *lgth)
+char *lost_find_service_request(p_lost_loc_t loc, p_lost_list_t path, int *lgth)
 {
 	int buffersize = 0;
 
@@ -1511,6 +1550,7 @@ char *lost_find_service_request(p_lost_loc_t loc, int *lgth)
 	xmlNodePtr ptrCircle = NULL;
 	xmlNodePtr ptrRadius = NULL;
 	xmlNodePtr ptrNode = NULL;
+	xmlNodePtr ptrPath = NULL;
 
 	xmlKeepBlanksDefault(1);
 
@@ -1531,6 +1571,10 @@ https://tools.ietf.org/html/rfc5222
         </p2:Point>
     </location>
     <service>urn:service:sos.police</service>
+		<path>
+			<via source="resolver.example"/>
+			<via source="authoritative.example"/>
+		</path>
 </findService>
  */
 	/* create request */
@@ -1623,6 +1667,20 @@ https://tools.ietf.org/html/rfc5222
 	/* service - element */
 	snprintf(buf, BUFSIZE, "%s", loc->urn);
 	xmlNewChild(ptrFindService, NULL, BAD_CAST "service", BAD_CAST buf);
+	/* service - element */
+	if (path != NULL) {
+		ptrPath = xmlNewChild(ptrFindService, NULL, BAD_CAST "path", NULL);
+		if(ptrPath == NULL) {
+			LM_ERR("locationRequest xmlNewChild() failed\n");
+			xmlFreeDoc(request);
+			return doc;
+		}
+		if (lost_append_via_element(&path, &ptrPath) == 0) {
+			LM_ERR("appending <via> elements to <path> failed\n");
+			xmlFreeDoc(request);
+			return doc;
+		}
+	}
 
 	xmlDocDumpFormatMemory(request, &xmlbuff, &buffersize, 0);
 	if(xmlbuff == NULL) {

@@ -819,7 +819,9 @@ int lost_function(struct sip_msg *_m, char *_con, char *_uri, char *_name,
 	str req = STR_NULL;
 	str con = STR_NULL;
 	str ret = STR_NULL;
+	str src = STR_NULL;
 	str pidf = STR_NULL;
+	str rereq = STR_NULL;
 	str oldurl = STR_NULL;
 	str losturl = STR_NULL;
 
@@ -1063,9 +1065,8 @@ int lost_function(struct sip_msg *_m, char *_con, char *_uri, char *_name,
 		goto err;
 	}
 	/* assemble findService request */
-	req.s = lost_find_service_request(loc, &req.len);
-	lost_free_loc(&loc); /* clean up */
-
+	req.s = lost_find_service_request(loc, NULL, &req.len);
+	
 	if(req.s == NULL && req.len == 0) {
 		LM_ERR("lost request failed\n");
 		goto err;
@@ -1113,7 +1114,7 @@ int lost_function(struct sip_msg *_m, char *_con, char *_uri, char *_name,
 
 	LM_DBG("findService response: [%.*s]\n", ret.len, ret.s);
 
-	/* at least parse one request */
+	/* at least parse one response */
 	redirect = 1;
 	while(redirect) {
 		fsrdata = lost_parse_findServiceResponse(ret);
@@ -1186,6 +1187,39 @@ int lost_function(struct sip_msg *_m, char *_con, char *_uri, char *_name,
 						tmp.len = strlen(fsrdata->redirect->target);
 						url.s = &(ustr[0]);
 						url.len = MAX_URI_SIZE;
+						/* check loop ... current response */
+						if(oldurl.s != NULL && oldurl.len > 0) {
+							if(str_strcasecmp(&tmp, &oldurl) == 0) {
+								LM_ERR("loop detected: "
+									   "[%.*s]<-->[%.*s]\n",
+										oldurl.len, oldurl.s, tmp.len, tmp.s);
+								goto err;
+							}
+						}
+						/* add redirecting source to path list */
+						if((src.s = fsrdata->redirect->source) != NULL) {
+							src.len = strlen(fsrdata->redirect->source);
+      				if(lost_append_response_list(&fsrdata->path, src) == 0) {
+			  				LM_ERR("could not append server to path elememt\n");
+				  			goto err;
+					  	}
+						}
+						/* clean up */
+						src.s = NULL;
+						src.len = 0;
+						/* check loop ... path elements */
+						char *via = NULL;
+						if(lost_search_response_list(&fsrdata->path, &via, tmp.s) > 0) {
+							LM_ERR("loop detected: "
+								   "[%s]<-->[%.*s]\n",
+									via, tmp.len, tmp.s);
+							goto err;
+						}
+						/* remember the redirect target */
+						if(pkg_str_dup(&oldurl, &tmp) < 0) {
+							LM_ERR("could not copy: [%.*s]\n", tmp.len, tmp.s);
+							goto err;
+						}
 						/* get url string via NAPTR */
 						naptr = lost_naptr_lookup(tmp, &shttps, &url);
 						if(naptr == 0) {
@@ -1200,23 +1234,15 @@ int lost_function(struct sip_msg *_m, char *_con, char *_uri, char *_name,
 						/* clean up */
 						tmp.s = NULL;
 						tmp.len = 0;
-						/* check loop */
-						if(oldurl.s != NULL && oldurl.len > 0) {
-							if(str_strcasecmp(&url, &oldurl) == 0) {
-								LM_ERR("loop detected: "
-									   "[%.*s]<-->[%.*s]\n",
-										oldurl.len, oldurl.s, url.len, url.s);
-								goto err;
-							}
-						}
-						/* remember the redirect target */
-						if(pkg_str_dup(&oldurl, &url) < 0) {
-							LM_ERR("could not copy: [%.*s]\n", url.len, url.s);
-							goto err;
-						}
+
+						/* assemble new findService request including path element */
+						rereq.s = lost_find_service_request(loc, fsrdata->path, &rereq.len);
 						/* clean up */
 						lost_free_findServiceResponse(&fsrdata);
 						lost_free_string(&ret);
+
+						LM_DBG("findService request: [%.*s]\n", rereq.len, rereq.s);
+
 						/* copy url */
 						len = 0;
 						urlrep = lost_copy_string(url, &len);
@@ -1226,9 +1252,12 @@ int lost_function(struct sip_msg *_m, char *_con, char *_uri, char *_name,
 						}
 						/* send request */
 						curl = httpapi.http_client_query(
-								_m, urlrep, &ret, req.s, mtlost);
-						pkg_free(urlrep); /*clean up */
+								_m, urlrep, &ret, rereq.s, mtlost);
+						/*clean up */
+						pkg_free(urlrep);
 						urlrep = NULL;
+						lost_free_string(&rereq);
+						
 						/* only HTTP 2xx responses are accepted */
 						if(curl >= 300 || curl < 100) {
 							LM_ERR("POST [%.*s] failed with error: %d\n",
@@ -1260,6 +1289,7 @@ int lost_function(struct sip_msg *_m, char *_con, char *_uri, char *_name,
 	lost_free_string(&ret);
 	lost_free_string(&req);
 	lost_free_string(&oldurl);
+	lost_free_loc(&loc);
 
 	/* set writable pvars */
 	pvname.rs = name;
@@ -1309,6 +1339,9 @@ err:
 	}
 	if(req.s != NULL && req.len > 0) {
 		lost_free_string(&req);
+	}
+	if(rereq.s != NULL && rereq.len > 0) {
+		lost_free_string(&rereq);
 	}
 	if(name.s != NULL && name.len > 0) {
 		lost_free_string(&name);

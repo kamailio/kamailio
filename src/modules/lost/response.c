@@ -354,6 +354,35 @@ void lost_reverse_response_list(p_lost_list_t *head)
 }
 
 /*
+ * lost_append_response_list(list, str)
+ * appends str value to list object and returns str len
+ */
+int lost_append_response_list(p_lost_list_t *head, str val)
+{
+	int len = 0;
+	p_lost_list_t new = NULL;
+	p_lost_list_t current = *head;
+
+	new = lost_new_response_list();
+	if (new != NULL) {
+		new->value = lost_copy_string(val, &len);
+		new->next = NULL;
+
+		LM_DBG("### new list data [%.*s]\n", val.len, val.s);
+
+		if (current == NULL) {
+			*head = new;
+			return len;
+		}
+		while (current->next != NULL) {
+			current = current->next;
+		}
+		current->next = new;
+	}
+	return len;
+}
+
+/*
  * lost_search_response_list(list, value, search)
  * looks for search string in list object and returns pointer if found
  */
