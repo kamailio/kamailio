@@ -358,7 +358,7 @@ void diameter_peer_destroy()
 		lock_release(shutdownx_lock);
 		return;
 	}else {
-		/* indicating that we are shuting down */
+		/* indicating that we are shutting down */
 		*shutdownx = 1;
 		lock_release(shutdownx_lock);
 	}

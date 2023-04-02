@@ -74,7 +74,7 @@ void set_avp_fields( AAA_AVPCode code, AAA_AVP *avp)
 			avp->type = AAA_AVP_STRING_TYPE;
 			break;
 		case  27: /*AVP_Session_Timeout*/
-		case 258: /*AVP_Auth_Aplication_Id*/
+		case 258: /*AVP_Auth_Application_Id*/
 		case 262: /*AVP_Redirect_Max_Cache_Time*/
 		case 265: /*AVP_Supported_Vendor_Id*/
 		case 266: /*AVP_Vendor_Id*/
@@ -195,7 +195,7 @@ AAAReturnCode  AAAAddAVPToMessage(
 	}
 
 	if (!position) {
-		/* insert at the begining */
+		/* insert at the beginning */
 		avp->next = msg->avpList.head;
 		avp->prev = 0;
 		msg->avpList.head = avp;
@@ -240,7 +240,7 @@ AAAReturnCode  AAAAddAVPToMessage(
 /**
  *  This function finds an AVP with matching code and vendor id.
  * @param msg - message to look into
- * @param startAvp - where to start the search. Usefull when you want to find the next one.
+ * @param startAvp - where to start the search. Useful when you want to find the next one.
  * 	Even this one will be checked and can be returned if it fits.
  * @param avpCode - code of the AVP to match
  * @param vendorId - vendor id to match
@@ -706,7 +706,7 @@ error:
 /**
  * Find an avp into a list of avps.
  * @param avpList - the list to look into
- * @param startAvp - where to start the search. Usefull when you want to find the next one.
+ * @param startAvp - where to start the search. Useful when you want to find the next one.
  * Even this one will be checked and can be returned if it fits.
  * @param avpCode - the AVP code to match
  * @param vendorId - the vendor id to match

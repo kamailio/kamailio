@@ -63,7 +63,7 @@
 #define IMS_vendor_id_CableLabs_char "4491"	/**< char value for ETSI's Vendor Id */
 #define IMS_vendor_id_CableLabs_len	 4		/**< len of char value for 3GPP's Vendor Id */
 
-/*	Command Codes alocated for IMS	*/
+/*	Command Codes allocated for IMS	*/
 /*		The Gq Interface 			*/
 #define IMS_AAR		265		/**< Bearer-Authorization		Request	*/
 #define IMS_AAA		265		/**< Bearer-Authorization		Answer	*/

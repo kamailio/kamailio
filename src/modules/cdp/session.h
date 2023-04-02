@@ -125,7 +125,7 @@ typedef struct _cdp_auth_session_t {
 	time_t lifetime;		/**< absolute time for auth lifetime -1 means forever */
 	time_t grace_period;            /**< grace_period in seconds 	*/
 	unsigned int last_requested_lifetime;   /**< the following 3 timers are used to store what we are */
-	unsigned int last_requested_timeout;    /**<requesitng in a request, if the answer does not have anything */
+	unsigned int last_requested_timeout;    /**<requesting in a request, if the answer does not have anything */
 	unsigned int last_requested_grace;      /**<different then we will use these values */
 
 	void* generic_data;

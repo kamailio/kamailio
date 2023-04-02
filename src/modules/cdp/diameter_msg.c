@@ -449,7 +449,7 @@ AAAReturnCode  AAASetMessageResultCode(
 
 
 /**
- *  This function convert message from the network format to the AAAMessage structure (decoder).
+ *  This function converts message from the network format to the AAAMessage structure (decoder).
  * @param source - the source char buffer
  * @param sourceLen - the length of the input buffer
  * @param attach_buf - whether to attach the input buffer to the message
@@ -502,7 +502,7 @@ AAAMessage* AAATranslateMessage( unsigned char* source, unsigned int sourceLen,
 	msg_len = get_3bytes( ptr );
 	ptr += MESSAGE_LENGTH_SIZE;
 	if (msg_len>sourceLen) {
-		LM_ERR("AAATranslateMessage: AAA message len [%d] bigger then"
+		LM_ERR("AAATranslateMessage: AAA message len [%d] bigger than"
 				" buffer len [%d]\n",msg_len,sourceLen);
 		goto error;
 	}
