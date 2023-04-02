@@ -420,7 +420,7 @@ static void _rpc_fault(struct binrpc_ctx* ctx, int code,
 
 	if (ctx->replied){
 		LOG(L_ERR, "ERROR: binrpc: rpc_send: rpc method %s tried to reply"
-					" more then once\n", ctx->method?ctx->method:"");
+					" more than once\n", ctx->method?ctx->method:"");
 		return;
 	}
 	err=0;
@@ -483,7 +483,7 @@ static void rpc_fault(struct binrpc_ctx* ctx, int code, char* fmt, ...)
 
 	if (ctx->replied){
 		LOG(L_ERR, "ERROR: binrpc: rpc_send: rpc method %s tried to reply"
-					" more then once\n", ctx->method?ctx->method:"");
+					" more than once\n", ctx->method?ctx->method:"");
 		return;
 	}
 	va_start(ap, fmt);
@@ -505,7 +505,7 @@ static int rpc_fault_prepare(struct binrpc_ctx* ctx, int code, char* fmt, ...)
 
 	if (ctx->replied){
 		LOG(L_ERR, "ERROR: binrpc: rpc_send: rpc method %s tried to reply"
-					" more then once\n", ctx->method?ctx->method:"");
+					" more than once\n", ctx->method?ctx->method:"");
 		return -1;
 	}
 	va_start(ap, fmt);
@@ -576,7 +576,7 @@ static int rpc_send(struct binrpc_ctx* ctx)
 	
 	if (ctx->replied){
 		LOG(L_ERR, "ERROR: binrpc: rpc_send: rpc method %s tried to reply"
-					" more then once\n", ctx->method?ctx->method:"");
+					" more than once\n", ctx->method?ctx->method:"");
 		goto error;
 	}
 	b_len=body_get_len(&ctx->out.pkt, &ctx->out.structs);
@@ -617,7 +617,7 @@ error:
  *                         needed (after bytes_needed new bytes received this
  *                         function will be called again
  *         reply,        - buffer where the reply will be written
- *         reply_len     - intially filled with the reply buffer len,
+ *         reply_len     - initially filled with the reply buffer len,
  *                         after the call will contain how much of that
  *                         buffer was really used
  * returns: number of bytes processed on success/partial success
