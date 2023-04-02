@@ -648,7 +648,7 @@ int ht_db_save_table(ht_t *ht, str *dbtable)
 
 
 /**
- * delete databse table
+ * delete database table
  */
 int ht_db_delete_records(str *dbtable)
 {
