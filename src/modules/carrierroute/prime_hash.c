@@ -21,7 +21,7 @@
 /*!
  * \file
  * \brief
- * Functions for determinung a pseudo random number over a message's
+ * Functions for determining a pseudo random number over a message's
  * header field, based on CRC32 or a prime number algorithm.
  */
 
@@ -109,8 +109,8 @@ static int validate_msg(struct sip_msg * msg) {
 		LM_ERR("Message has no From header\n");
 		return -1;
 	}
-	//TODO it would make more sense to do the parsing just if its needed
-	//     but parse_from_header is smart enough, so its probably not a huge problem
+	//TODO it would make more sense to do the parsing just if it is needed
+	//     but parse_from_header is smart enough, so it is probably not a huge problem
 	if (parse_from_header(msg) < 0) {
 		LM_ERR("Error while parsing From header field\n");
 		return -1;

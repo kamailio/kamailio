@@ -22,7 +22,7 @@
 /*!
  * \file
  * \brief
- * Functions for determinung a pseudo random number over a message's
+ * Functions for determining a pseudo random number over a message's
  * header field, based on CRC32 or a prime number algorithm.
  */
 
@@ -64,7 +64,7 @@ typedef int (*hash_func_t)(struct sip_msg * msg,
 /*!
  * \brief CRC32 hash function
  * Returns an integer number between 0 and denominator - 1 based on
- * the hash source from the msg. The hash algorith is CRC32.
+ * the hash source from the msg. The hash algorithm is CRC32.
 */
 int hash_func (struct sip_msg * msg,
                          enum hash_source source, int denominator);
