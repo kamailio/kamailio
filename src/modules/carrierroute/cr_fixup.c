@@ -36,7 +36,7 @@
 
 
 /**
- * The fixup funcions will use the initial mapping.
+ * The fixup functions will use the initial mapping.
  * If the mapping changes afterwards (eg. due to cr_reload_routes),
  * the names used in the routing script will not be mapped
  * to the correct IDs!
@@ -60,7 +60,7 @@ static int carrier_name_2_id(const str *name) {
 
 
 /**
- * The fixup funcions will use the initial mapping.
+ * The fixup functions will use the initial mapping.
  * If the mapping changes afterwards (eg. due to cr_reload_routes),
  * the names used in the routing script will not be mapped
  * to the correct IDs!

@@ -44,7 +44,7 @@ struct route_rule {
 	double prob; /*!< The probability for that rule, only useful when using crc32 hashing */
 	double orig_prob; /*!< The original probability for that rule, only useful when using crc32 hashing */
 	str host; /*!< The new target host for the request */
-	int strip; /*!< the number of digits to be stripped off from uri befor prepending prefix */
+	int strip; /*!< the number of digits to be stripped off from uri before prepending prefix */
 	str local_prefix; /*!< the pefix to be attached to the new destination */
 	str local_suffix; /*!< the suffix to be appended to the localpart of the new destination */
 	str comment; /*!< A comment for the route rule */

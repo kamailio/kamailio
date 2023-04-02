@@ -141,7 +141,7 @@ modparam("carrierroute", "carrierroute_mask_col", "mask")
 			  If all probabilities for a given prefix, tree and domain don't add to 100%,
 			  the prefix values will be adjusted according the given prob values. E.g. if
 			  three hosts with prob values of 0.5, 0.5 and 0.4 are defined, the resulting
-			  probabilities are 35.714, 35.714 and 28.571%. But its better to choose meaningful
+			  probabilities are 35.714, 35.714 and 28.571%. But it is better to choose meaningful
 			  values in the first place because of clarity.
 			  </para>
     <example>

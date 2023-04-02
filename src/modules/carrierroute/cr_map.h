@@ -49,7 +49,7 @@ struct name_map_t {
  * @param size the size of the list
  * @param name the name, we are looking for
  *
- * @return values: on succcess the id for this name, -1 on failure
+ * @return values: on success the id for this name, -1 on failure
  */
 int map_name2id(struct name_map_t * map, int size, const str * name);
 
@@ -61,7 +61,7 @@ int map_name2id(struct name_map_t * map, int size, const str * name);
  * @param size the size of the list
  * @param id the id, we are looking for
  *
- * @return values: on succcess the name for this id, NULL on failure
+ * @return values: on success the name for this id, NULL on failure
  */
 str * map_id2name(struct name_map_t * map, int size, int id);
 
