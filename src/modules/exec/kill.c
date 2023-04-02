@@ -26,7 +26,7 @@
  * Module: \ref exec
  *
  * in this file, we implement the ability to send a kill signal to
- * a child after some time; its a quick ugly hack, for example kill
+ * a child after some time; it is a quick ugly hack, for example kill
  * is sent without any knowledge whether the kid is still alive
  *
  * also, it was never compiled without FAST_LOCK -- nothing will
