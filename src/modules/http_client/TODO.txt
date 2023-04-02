@@ -84,7 +84,7 @@ Development API
                 match_header[len]= '\0';
   https://curl.haxx.se/libcurl/c/CURLOPT_HEADERFUNCTION.html
 
-- It also does get a headers from the reply, which needs a callback
+- It also does get a header from the reply, which needs a callback
 - auth_identify sets the CURLOPT_CAINFO option
   https://curl.haxx.se/libcurl/c/CURLOPT_CAINFO.html
   This can be set in the httpconf object
@@ -103,11 +103,11 @@ Solved issues
 --------------
 - https://github.com/kamailio/kamailio/issues/541 - closed
   Support setting proxy 
-  Comitted another patch, which included default and per-connection proxy
+  Committed another patch, which included default and per-connection proxy
   settings. 
 - https://github.com/kamailio/kamailio/issues/515 - closed
   Support various auth methods - digest, basic etc
-  Comitted another patch, which included default and per-connection settings
+  Committed another patch, which included default and per-connection settings
 - https://github.com/kamailio/kamailio/pull/481 - closed
   Support TLS client certificates
 - https://github.com/kamailio/kamailio/pull/435 - closed
