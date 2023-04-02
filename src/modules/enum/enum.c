@@ -209,7 +209,7 @@ static inline int sip_match(struct naptr_rdata *naptr, str *service)
 			   && (strncasecmp(naptr->services + 4 + service->len, ":sip", 4)
 						  == 0);
 	} else { /* handle compound NAPTRs and multiple services */
-		str bakservice, baknaptr; /* we bakup the str */
+		str bakservice, baknaptr; /* we backup the str */
 		int naptrlen, len;		  /* length of the extracted service */
 
 		/* RFC 3761, NAPTR service field must start with E2U+ */
