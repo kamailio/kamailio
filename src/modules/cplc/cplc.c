@@ -66,7 +66,7 @@ static str  timer_avp      = STR_NULL;  /* name of variable timer AVP */
 static str  proxy_route    = STR_NULL;
 static str  redirect_route = STR_NULL;
 
-struct cpl_enviroment    cpl_env = {
+struct cpl_environment    cpl_env = {
 		0, /* no cpl logging */
 		0, /* recurse proxy level is 0 */
 		0, /* no script route to be run before proxy */
