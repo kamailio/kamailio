@@ -357,7 +357,7 @@ $ kamcmd htable.dump htable
 		<listitem>
 		<para>
 			<emphasis>autoexpire</emphasis> -time in seconds to delete an item
-			from a hash table if no update was done to it. If is missing or set
+			from a hash table if no update was done to it. If it is missing or set
 			to 0, the items won't expire.
 		</para>
 		</listitem>
@@ -793,7 +793,7 @@ sht_print();
 		</title>
 		<para>
 			Delete the item with the name 'itname' from hash table 'htname'.
-			This API function equivaluent to '$sht(htname=&gt;itname) = $null'.
+			This API function is equivalent to '$sht(htname=&gt;itname) = $null'.
 		</para>
 		<para>
 			This function can be used from ANY_ROUTE.
@@ -1559,10 +1559,10 @@ kamcmd htable.seti test x[0] 123
                 </para>
 <programlisting  format="linespecific">
 ...
-# set  expire for $sht(test=>x) to 120 secs
+# set expire for $sht(test=>x) to 120 secs
 kamctl rpc htable.setex test x 120
 
-# set  expire for $sht(test=>10) to 120 secs
+# set expire for $sht(test=>10) to 120 secs
 kamctl rpc htable.setex test s:10 120
 ...
 </programlisting>
