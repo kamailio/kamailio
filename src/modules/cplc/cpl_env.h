@@ -33,7 +33,7 @@
 #include "../../modules/tm/tm_load.h"
 #include "../../modules/sl/sl.h"
 
-struct cpl_enviroment {
+struct cpl_environment {
 	char  *log_dir;         /* dir where the user log should be dumped */
 	int    proxy_recurse;   /* numbers of proxy redirection accepted */
 	int    proxy_route;     /* script route to be run before proxy */
@@ -59,7 +59,7 @@ struct cpl_functions {
 	sl_api_t slb;            /* Structure with pointers to sl funcs */
 };
 
-extern struct cpl_enviroment cpl_env;
+extern struct cpl_environment cpl_env;
 extern struct cpl_functions  cpl_fct;
 
 #endif
