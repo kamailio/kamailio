@@ -251,7 +251,7 @@ evapi_relay("{ \"event\": \"test\",\n \"data\": { \"fU\": \"$fU\" }\n}");
 </programlisting>
 		</example>
 		<para>
-		The above exaple will send the following message over tcp:
+		The above example will send the following message over tcp:
 		</para>
 		<example>
 		<title>TCP message</title>
