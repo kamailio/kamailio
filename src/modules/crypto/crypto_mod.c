@@ -493,7 +493,7 @@ static int ki_crypto_aes_decrypt_helper(sip_msg_t* msg, str *ins, str *keys,
 					(unsigned char *)etext.s, pv_get_buffer_size()-1);
 	if (etext.len < 0) {
 		EVP_CIPHER_CTX_free(de);
-		LM_ERR("base64 inpuy with encrypted value is too large (need %d)\n",
+		LM_ERR("base64 input with encrypted value is too large (need %d)\n",
 				-etext.len);
 		return -1;
 	}
