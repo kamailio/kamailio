@@ -32,7 +32,7 @@
 		<function moreinfo="none">bm_register(name, mode, id)</function>
 		</title>
 		<para>
-		This function register a new timer and/or returns the internal ID
+		This function registers a new timer and/or returns the internal ID
 		associated with the timer. mode controls the creation of new timer
 		if not found. id is to be used by start and log timer functions.
 		</para>
