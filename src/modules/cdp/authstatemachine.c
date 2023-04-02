@@ -413,9 +413,9 @@ int auth_client_statefull_sm_process(cdp_session_t* s, int event, AAAMessage* ms
 					Send_ASA(s, msg);
 					break;
 
-					// Just added this because it might happen if the other peer doesnt
+					// Just added this because it might happen if the other peer doesn't
 					// send a valid STA, then the session stays open forever...
-					// We dont accept that... we have lifetime+grace_period for that
+					// We don't accept that... we have lifetime+grace_period for that
 					// This is not in the Diameter RFC ...
 				case AUTH_EV_SESSION_TIMEOUT:
 				case AUTH_EV_SESSION_GRACE_TIMEOUT:
@@ -425,7 +425,7 @@ int auth_client_statefull_sm_process(cdp_session_t* s, int event, AAAMessage* ms
 					LM_INFO("state machine: AUTH_EV_RECV_STA about to clean up\n");
 					if (msg) AAAFreeMessage(&msg); // if might be needed in frequency
 					// If I register a ResponseHandler then i Free the STA there not here..
-					// but i dont have interest in that now..
+					// but I don't have interest in that now..
 					cdp_session_cleanup(s, NULL);
 					s = 0;
 					rv = 1;
@@ -471,7 +471,7 @@ void auth_server_statefull_sm_process(cdp_session_t* s, int event, AAAMessage* m
 				case AUTH_EV_RECV_REQ:
 					// The RequestHandler will generate a Send event for the answer
 					// and we will only then now if the user is authorised or not
-					// if its not authorised it will move back to idle and cleanup the session
+					// if it is not authorised it will move back to idle and cleanup the session
 					// so no big deal
 					// but this is not the Diameter RFC...
 					x->state = AUTH_ST_OPEN;

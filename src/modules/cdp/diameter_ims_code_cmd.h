@@ -45,7 +45,7 @@
 #define __DIAMETER_IMS_CODE_CMD_H
 
 
-/*	Command Codes alocated for IMS	*/
+/*	Command Codes allocated for IMS	*/
 /*		The Gq Interface 			*/
 #define IMS_AAR		265		/**< Bearer-Authorization		Request	*/
 #define IMS_AAA		265		/**< Bearer-Authorization		Answer	*/

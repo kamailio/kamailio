@@ -508,7 +508,7 @@
         </listitem>
 
         <listitem>
-          <para>AAA_AVP *startAvp - at which AVP to start the search. usefull
+          <para>AAA_AVP *startAvp - at which AVP to start the search. Useful
           for looking for more of the same name</para>
         </listitem>
 

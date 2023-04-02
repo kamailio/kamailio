@@ -446,7 +446,7 @@ int receiver_init(peer *p)
 }
 
 /**
- * The Receiver Process - calls the receiv_loop and it never returns.
+ * The Receiver Process - calls the receive_loop and it never returns.
  * @param p - the peer it is associated with or NULL for the unknown peers receiver
  * @returns never, when disconnected it will exit
  */
@@ -470,7 +470,7 @@ void receiver_process(peer *p)
 
 done:
 	if (!*shutdownx){
-		LM_INFO("receiver_process(): [%.*s]... Receiver process cleaning-up - should not happen unless shuting down!\n",
+		LM_INFO("receiver_process(): [%.*s]... Receiver process cleaning-up - should not happen unless shutting down!\n",
 				p?p->fqdn.len:0,p?p->fqdn.s:0);
 
 	}

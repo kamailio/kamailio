@@ -104,7 +104,7 @@
 	(AVP_CODE_SIZE+AVP_FLAGS_SIZE+AVP_LENGTH_SIZE+\
 	AVP_VENDOR_ID_SIZE*(((_flags_)&AAA_AVP_FLAG_VENDOR_SPECIFIC)!=0) )
 
-/* mesage codes */
+/* message codes */
 #ifndef __IS_BIG_ENDIAN
 	#define AS_MSG_CODE      0x12010000
 	#define AC_MSG_CODE      0x0f010000

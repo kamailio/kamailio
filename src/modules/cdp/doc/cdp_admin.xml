@@ -272,7 +272,7 @@ if(!cdp_has_app("16777216")) {
     <section>
       <title>cdp.enable_peer</title>
 
-      <para>enabe/re-enable a diameter peer</para>
+      <para>enable/re-enable a diameter peer</para>
     </section>
   </section>
 
