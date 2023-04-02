@@ -31,14 +31,14 @@
  *        represented)
  *  CL = cookie length -1 (number of bytes on which the cookie is represented)
  *  E.g.: LL= 0 => total_len is represented on 1 byte (LL+1)
- *        CL= 3 => cookie is represneted on 4 bytes (CL+1)
+ *        CL= 3 => cookie is represented on 4 bytes (CL+1)
  */
 /* record format:
  *  1b   3b     4b
  * |S | size |  type  || <optional value len> ... || <optional value> ... ||
  *
  * if S==0, size is the size (in bytes) of the value (if size==0 => null value)
- * if S==1, optional_value_len is present, and size is it's size
+ * if S==1, optional_value_len is present, and size is its size
  *    (if size==0 => and type==array or struct => marks end, else
  *     error, reserved)
  *  Examples:
@@ -344,7 +344,7 @@ error_len:
 
 
 
-/* changes the length of a header (enough space must be availale) */
+/* changes the length of a header (enough space must be available) */
 inline static int binrpc_hdr_change_len(unsigned char* hdr, int hdr_len,
 										int new_len)
 {
@@ -417,7 +417,7 @@ inline static int binrpc_add_skip(struct binrpc_pkt* pkt, int bytes)
  * adds only the string mark and len, you'll have to memcpy the contents
  * manually later (and also use binrpc_add_skip(pkt, l) or increase
  *  pkt->crt directly if you want to continue adding to this pkt).
- *  Usefull for optimizing str writing (e.g. writev(iovec))
+ *  Useful for optimizing str writing (e.g. writev(iovec))
  *  WARNING: use with care, low level function, binrpc_addstr or
  *           binrpc_add_str_type are probably what you want.
  *  WARNING1: BINRPC_T_STR and BINRPC_T_AVP must be  0 term, the len passed to

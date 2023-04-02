@@ -323,7 +323,7 @@ error:
  *            from this fd (e.g.: we are closing it )
  *          0 on EAGAIN or when by some other way it is known that no more
  *            io events are queued on the fd (the receive buffer is empty).
- *            Usefull to detect when there are no more io events queued for
+ *            Useful to detect when there are no more io events queued for
  *            sigio_rt, epoll_et, kqueue.
  *         >0 on successfull read from the fd (when there might be more io
  *            queued -- the receive buffer might still be non-empty)
@@ -382,7 +382,7 @@ error:
  *            from this fd (e.g.: we are closing it )
  *          0 on EAGAIN or when by some other way it is known that no more
  *            io events are queued on the fd (the receive buffer is empty).
- *            Usefull to detect when there are no more io events queued for
+ *            Useful to detect when there are no more io events queued for
  *            sigio_rt, epoll_et, kqueue.
  *         >0 on successfull accept from the fd (when there might be more io
  *            queued -- the receive buffer might still be non-empty)
@@ -458,7 +458,7 @@ error:
  *            from this fd (e.g.: we are closing it )
  *          0 on EAGAIN or when by some other way it is known that no more
  *            io events are queued on the fd (the receive buffer is empty).
- *            Usefull to detect when there are no more io events queued for
+ *            Useful to detect when there are no more io events queued for
  *            sigio_rt, epoll_et, kqueue.
  *         >0 on successfull read from the fd (when there might be more io
  *            queued -- the receive buffer might still be non-empty)
@@ -572,7 +572,7 @@ error_read:
  *            from this fd (e.g.: we are closing it )
  *          0 on EAGAIN or when by some other way it is known that no more
  *            io events are queued on the fd (the receive buffer is empty).
- *            Usefull to detect when there are no more io events queued for
+ *            Useful to detect when there are no more io events queued for
  *            sigio_rt, epoll_et, kqueue.
  *         >0 on successfull read from the fd (when there might be more io
  *            queued -- the receive buffer might still be non-empty)
@@ -685,7 +685,7 @@ error:
  * return: -1 on error
  *          0 on EAGAIN or when by some other way it is known that no more
  *            io events are queued on the fd (the receive buffer is empty).
- *            Usefull to detect when there are no more io events queued for
+ *            Useful to detect when there are no more io events queued for
  *            sigio_rt, epoll_et, kqueue.
  *         >0 on successfull read from the fd (when there might be more io
  *            queued -- the receive buffer might still be non-empty)

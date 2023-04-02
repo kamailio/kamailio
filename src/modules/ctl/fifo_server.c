@@ -110,7 +110,7 @@ struct readline_handle{
 
 enum text_flags {
 	CHUNK_SEEN         = (1 << 0),
-	CHUNK_POSITIONAL   = (1 << 1), /* Positinal parameter, should be followed by \n */
+	CHUNK_POSITIONAL   = (1 << 1), /* Positional parameter, should be followed by \n */
 	CHUNK_MEMBER_NAME  = (1 << 2), /* Struct member name, should be followed by : */
 	CHUNK_MEMBER_VALUE = (1 << 3)  /* Struct member value, should be followed by , if
 					* there is another member name and \n if not */
@@ -178,7 +178,7 @@ static int  rpc_send         (rpc_ctx_t* ctx);                                 /
 static void rpc_fault        (rpc_ctx_t* ctx,       int code, char* fmt, ...); /* Signal a failure to the client */
 static int  rpc_add          (rpc_ctx_t* ctx,       char* fmt, ...);           /* Add a new piece of data to the result */
 static int  rpc_scan         (rpc_ctx_t* ctx,       char* fmt, ...);           /* Retrieve request parameters */
-static int  rpc_rpl_printf   (rpc_ctx_t* ctx,       char* fmt, ...);           /* Add printf-like formated data to the result set */
+static int  rpc_rpl_printf   (rpc_ctx_t* ctx,       char* fmt, ...);           /* Add printf-like formatted data to the result set */
 static int  rpc_struct_add   (struct text_chunk* s, char* fmt, ...);           /* Create a new structure */
 static int  rpc_struct_scan  (struct rpc_struct* s, char* fmt, ...);           /* Scan attributes of a structure */
 static int  rpc_struct_printf(struct text_chunk* s, char* name, char* fmt, ...);
@@ -457,7 +457,7 @@ static struct rpc_struct* new_struct(rpc_ctx_t* ctx, str* line)
 		     /* Create value chunk */
 		v = new_chunk_unescape(&value);
 		if (!v) {
-			rpc_fault(ctx, 400, "Error while processing struct membeer '%.*s'"
+			rpc_fault(ctx, 400, "Error while processing struct member '%.*s'"
 						" on line %d", name.len, ZSW(name.s), ctx->line_no);
 			goto err;
 		}
