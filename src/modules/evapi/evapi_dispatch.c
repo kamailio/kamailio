@@ -177,7 +177,9 @@ evapi_env_t* evapi_queue_get(void)
 	}
 	lock_release(&_evapi_queue_packets->qlock);
 
-	LM_DBG("getting message from queue [%.*s]\n",  renv->msg.len,  renv->msg.s);
+	if(renv!=NULL) {
+		LM_DBG("getting message from queue [%.*s]\n",  renv->msg.len,  renv->msg.s);
+	}
 
 	return renv;
 }
