@@ -131,6 +131,7 @@ int evapi_queue_add(evapi_env_t *renv)
 	evapi_env_t *nenv;
 	uint32_t ssize;
 
+	LM_DBG("adding message to queue [%.*s]\n",  renv->msg.len,  renv->msg.s);
 	ssize = ROUND_POINTER(sizeof(evapi_env_t)) + renv->msg.len + 1;
 	nenv = (evapi_env_t*)shm_malloc(ssize);
 	if(nenv==NULL) {
@@ -175,6 +176,8 @@ evapi_env_t* evapi_queue_get(void)
 		renv->next = NULL;
 	}
 	lock_release(&_evapi_queue_packets->qlock);
+
+	LM_DBG("getting message from queue [%.*s]\n",  renv->msg.len,  renv->msg.s);
 
 	return renv;
 }
@@ -555,12 +558,14 @@ void evapi_recv_client(struct ev_loop *loop, struct ev_io *watcher, int revents)
 			k += frame.len ;
 			evenv.msg.s = frame.s;
 			evenv.msg.len = frame.len;
-			LM_DBG("executing event route for frame: [%.*s] (%d)\n",
-						frame.len, frame.s, frame.len);
 			if(_evapi_workers<=0) {
+				LM_DBG("executing event route for frame: [%.*s] (%d)\n",
+						frame.len, frame.s, frame.len);
 				evapi_run_cfg_route(&evenv, _evapi_rts.msg_received,
 					&_evapi_rts.msg_received_name);
 			} else {
+				LM_DBG("queueing event route for frame: [%.*s] (%d)\n",
+						frame.len, frame.s, frame.len);
 				evapi_queue_add(&evenv);
 			}
 			k++;
