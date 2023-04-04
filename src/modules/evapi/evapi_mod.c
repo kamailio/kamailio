@@ -163,6 +163,10 @@ static int mod_init(void)
 		_evapi_bind_addr = _evapi_bind_param;
 	}
 
+	if(evapi_clients_init() < 0) {
+		LM_ERR("failed to init client structures\n");
+		return -1;
+	}
 	if(evapi_queue_init() < 0) {
 		LM_ERR("failed to init faked internal message queue\n");
 		return -1;

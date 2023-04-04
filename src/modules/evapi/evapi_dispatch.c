@@ -40,6 +40,7 @@
 #include "../../core/receive.h"
 #include "../../core/kemi.h"
 #include "../../core/fmsg.h"
+#include "../../core/mem/shm.h"
 
 #include "evapi_dispatch.h"
 
@@ -182,6 +183,27 @@ evapi_env_t* evapi_queue_get(void)
 	}
 
 	return renv;
+}
+
+
+/**
+ *
+ */
+int evapi_clients_init(void)
+{
+	int i;
+
+	_evapi_clients = (evapi_client_t*)shm_malloc(sizeof(evapi_client_t)
+			* (EVAPI_MAX_CLIENTS+1));
+	if(_evapi_clients==NULL) {
+		LM_ERR("failed to allocate client structures\n");
+		return -1;
+	}
+	memset(_evapi_clients, 0, sizeof(evapi_client_t) * EVAPI_MAX_CLIENTS);
+	for(i=0; i<EVAPI_MAX_CLIENTS; i++) {
+		_evapi_clients[i].sock = -1;
+	}
+	return 0;
 }
 
 
@@ -728,20 +750,14 @@ int evapi_run_dispatcher(char *laddr, int lport)
 	struct ev_io io_notify;
 	int yes_true = 1;
 	int fflags = 0;
-	int i;
 
 	LM_DBG("starting dispatcher processing\n");
 
-	_evapi_clients = (evapi_client_t*)malloc(sizeof(evapi_client_t)
-			* (EVAPI_MAX_CLIENTS+1));
 	if(_evapi_clients==NULL) {
-		LM_ERR("failed to allocate client structures\n");
+		LM_ERR("client structures not initialized\n");
 		exit(-1);
 	}
-	memset(_evapi_clients, 0, sizeof(evapi_client_t) * EVAPI_MAX_CLIENTS);
-	for(i=0; i<EVAPI_MAX_CLIENTS; i++) {
-		_evapi_clients[i].sock = -1;
-	}
+
 	loop = ev_default_loop(0);
 
 	if(loop==NULL) {
@@ -834,7 +850,8 @@ int evapi_run_worker(int prank)
 	while(1) {
 		renv = evapi_queue_get();
 		if(renv != NULL) {
-			LM_DBG("processing task: %p\n", renv);
+			LM_DBG("processing task: %p [%.*s]\n", renv,
+					renv->msg.len, ZSW(renv->msg.s));
 			evapi_run_cfg_route(renv, _evapi_rts.msg_received,
 					&_evapi_rts.msg_received_name);
 			shm_free(renv);
