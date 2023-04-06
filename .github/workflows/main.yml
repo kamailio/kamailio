@@ -21,9 +21,9 @@ jobs:
     strategy:
       matrix:
         include:
-          - distribution: buster
+          - distribution: bullseye
             compilier: gcc
-          - distribution: buster
+          - distribution: bullseye
             compilier: clang
           - distribution: sid
             compilier: gcc
