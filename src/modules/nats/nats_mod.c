@@ -597,7 +597,7 @@ int nats_destroy_workers()
 						LM_ERR("could not cleanup worker connection\n");
 					}
 				}
-				if(pub_worker->poll != NULL) {
+				if(uv_is_active((uv_handle_t*)&pub_worker->poll)) {
 					uv_poll_stop(&pub_worker->poll);
 				}
 				shm_free(pub_worker);
