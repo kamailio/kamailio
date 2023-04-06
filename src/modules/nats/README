@@ -39,7 +39,7 @@ Emmanuel Schmidbauer
 
         5. Functions
 
-              5.1. nats_publish(subject, payload)
+              5.1. nats_publish(subject, payload, reply)
 
         6. Pseudo Variables
         7. Event Routes
@@ -74,7 +74,7 @@ Chapter 1. Admin Guide
 
    5. Functions
 
-        5.1. nats_publish(subject, payload)
+        5.1. nats_publish(subject, payload, reply)
 
    6. Pseudo Variables
    7. Event Routes
@@ -185,17 +185,21 @@ end
 
 5. Functions
 
-   5.1. nats_publish(subject, payload)
+   5.1. nats_publish(subject, payload, reply)
 
-5.1.  nats_publish(subject, payload)
+5.1.  nats_publish(subject, payload, reply)
 
-   Publishes the payload to subject.
+   Publishes the payload to subject, with an optional reply subject.
 
    Example 1.5.  nats_publish usage
 ...
 $var(my_info) = "$ci=" + $ci + " $fU=" + $fU;
 nats_publish("mysubject", "$var(my_info)"); # publish $var(my_info) to "mysubjec
 t"
+
+# publish $var(my_info) to "mysubject" with a reply.topic topic, so a response
+# can be published back from the other side, like the NATS Request-Reply mode.
+nats_publish("mysubject", "$var(my_info)", "reply.topic");
 ...
 
 6. Pseudo Variables
