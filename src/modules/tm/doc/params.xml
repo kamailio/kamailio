@@ -715,7 +715,7 @@ modparam("tm", "reparse_on_dns_failover", 0)
 	</para>
 	<para>
 		If KEMI is used, the parameter has to be the KEMI function name, which
-		receives a string parameter with the event name.
+		receives a string parameter with the event name, respectively "on_sl_reply".
 	</para>
 	<example>
 	    <title>Set <varname>on_sl_reply</varname> parameter</title>
@@ -727,6 +727,20 @@ modparam("tm", "on_sl_reply", "stateless_replies")
 onreply_route["stateless_replies"] {
 	# do not allow stateless replies to be forwarded
 	return 0;
+}
+	    </programlisting>
+	</example>
+	<example>
+	    <title>Set <varname>on_sl_reply</varname> parameter (KEMI javascript)</title>
+	    <programlisting>
+...
+modparam("tm", "on_sl_reply", "ksr_slreply")
+...
+-- event callback function implemented in javascript
+function ksr_slreply(evname) {
+	# the evname is set to "on_sl_reply"
+	# do not allow stateless replies to be forwarded
+	KSR.x.drop();
 }
 	    </programlisting>
 	</example>
