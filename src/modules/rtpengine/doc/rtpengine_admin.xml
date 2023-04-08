@@ -2366,7 +2366,8 @@ rtpengine_offer();
 				<emphasis>force-answer</emphasis> - force <quote>answer</quote>, that is,
 				only rewrite &sdp; when corresponding session already exists
 				in the &rtp; proxy. By default is on when the session is to be
-				completed.
+				completed.  This is only necessary when the offer was sent by <function>rtpengine_offer()</function>, and
+				the answer is handled by <function>rtpengine_manage()</function>.
 				</para></listitem>
 				<listitem><para>
 				<emphasis>direction=...</emphasis> - this option specifies a logical network
@@ -2482,9 +2483,9 @@ rtpengine_offer();
 				transport protocol that should be used towards the recipient of
 				the &sdp;. If none of them are specified, the protocol given in
 				the &sdp; is left untouched. Otherwise, the <quote>SRTP</quote> flag indicates that
-				SRTP should be used, while <quote>RTP</quote> indicates that SRTP should not be used.
-				<quote>AVPF</quote> indicates that the advanced RTCP profile with feedback messages
-				should be used, and <quote>AVP</quote> indicates that the regular RTCP profile
+				SRTP should be used, while <quote>RTP</quote> indicates that both SRTP and AVPF should
+                                not be used. <quote>AVPF</quote> indicates that the advanced RTCP profile with feedback
+				messages should be used, and <quote>AVP</quote> indicates that the regular RTCP profile
 				should be used. See also the next set of flags below.
 				</para></listitem>
 				<listitem><para>
