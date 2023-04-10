@@ -333,7 +333,7 @@ void cfgutils_rpc_get_gflags(rpc_t* rpc, void* ctx)
 	flags = *gflags;
 
 	if (rpc->rpl_printf(ctx, "0x%X (%u)", flags, flags) < 0) {
-		rpc->fault(ctx, 500, "Faiure building the response");
+		rpc->fault(ctx, 500, "Failure building the response");
 		return;
 	}
 }
@@ -365,7 +365,7 @@ void cfgutils_rpc_get_prob(rpc_t* rpc, void* ctx)
 {
 	if (rpc->rpl_printf(ctx, "actual probability: %u percent",
 				(*probability)) < 0) {
-		rpc->fault(ctx, 500, "Faiure building the response");
+		rpc->fault(ctx, 500, "Failure building the response");
 		return;
 	}
 }
@@ -374,7 +374,7 @@ void cfgutils_rpc_get_hash(rpc_t* rpc, void* ctx)
 {
 	if (rpc->rpl_printf(ctx, "%.*s",
 				MD5_LEN, config_hash) < 0) {
-		rpc->fault(ctx, 500, "Faiure building the response");
+		rpc->fault(ctx, 500, "Failure building the response");
 		return;
 	}
 }
@@ -451,12 +451,12 @@ void cfgutils_rpc_check_hash(rpc_t* rpc, void* ctx)
 
 	if (strncmp(config_hash, tmp, MD5_LEN) == 0) {
 		if (rpc->rpl_printf(ctx, "Identical hash") < 0) {
-			rpc->fault(ctx, 500, "Faiure building the response");
+			rpc->fault(ctx, 500, "Failure building the response");
 			return;
 		}
 	} else {
 		if (rpc->rpl_printf(ctx, "Different hash") < 0) {
-			rpc->fault(ctx, 500, "Faiure building the response");
+			rpc->fault(ctx, 500, "Failure building the response");
 			return;
 		}
 	}
@@ -976,17 +976,17 @@ static int w_core_hash(struct sip_msg *msg, char *p1, char *p2, char *p3)
 
         if (fixup_get_svalue(msg, (gparam_p) p1, &s1) != 0)
         {
-                LM_ERR("invalid s1 paramerer\n");
+                LM_ERR("invalid s1 parameter\n");
                 return -1;
         }
         if (fixup_get_svalue(msg, (gparam_p) p2, &s2) != 0)
         {
-                LM_ERR("invalid s2 paramerer\n");
+                LM_ERR("invalid s2 parameter\n");
                 return -1;
         }
         if (fixup_get_ivalue(msg, (gparam_p) p3, &size) != 0)
         {
-                LM_ERR("invalid size paramerer\n");
+                LM_ERR("invalid size parameter\n");
                 return -1;
         }
 
