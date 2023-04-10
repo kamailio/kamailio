@@ -254,7 +254,7 @@ next_contact:
 }
 
 /**
- * Save contact based on REGISTER request. this will be a pending save, until we receive response
+ * Save contact based on REGISTER request. This will be a pending save, until we receive response
  * from SCSCF. If no response after pending_timeout seconds, the contacts is removed. Can only be used from REQUEST ROUTE
  */
 int save_pending(struct sip_msg* _m, udomain_t* _d) {
