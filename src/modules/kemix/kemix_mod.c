@@ -75,7 +75,7 @@ static sr_kemi_xval_t* ki_kx_get_ruri(sip_msg_t *msg)
 	}
 
 	if(msg->first_line.type == SIP_REPLY) {
-		/* REPLY doesnt have a ruri */
+		/* REPLY doesn't have a ruri */
 		sr_kemi_xval_null(&_sr_kemi_kx_xval, 0);
 		return &_sr_kemi_kx_xval;
 	}
@@ -108,7 +108,7 @@ static sr_kemi_xval_t* ki_kx_get_ouri(sip_msg_t *msg)
 	}
 
 	if(msg->first_line.type == SIP_REPLY) {
-		/* REPLY doesnt have a ruri */
+		/* REPLY doesn't have a ruri */
 		sr_kemi_xval_null(&_sr_kemi_kx_xval, 0);
 		return &_sr_kemi_kx_xval;
 	}
