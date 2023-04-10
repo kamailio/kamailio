@@ -409,7 +409,7 @@ struct rpc_list_params {
 
 
 /**
- * Satistic getter RPC callback.
+ * Statistic getter RPC callback.
  */
 static void rpc_get_grp_vars_cbk(void* p, str* g, str* n, counter_handle_t h)
 {
@@ -644,7 +644,7 @@ static void rpc_stats_fetchn_statistics(rpc_t* rpc, void* ctx)
 }
 
 /**
- * Satistic reset/clear-er RPC callback..
+ * Statistic reset/clear-er RPC callback..
  */
 static void rpc_reset_or_clear_grp_vars_cbk(void* p, str* g, str* n,
 		counter_handle_t h)

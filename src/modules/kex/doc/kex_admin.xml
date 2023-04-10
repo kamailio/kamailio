@@ -88,7 +88,7 @@ setsflag("$var(flag)");
 		<section id="kex.f.issflagset">
 		<title><function moreinfo="none">issflagset(flag)</function></title>
 		<para>
-			Return true of the script flag is set.
+			Return true if the script flag is set.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
@@ -179,7 +179,7 @@ setbflag("$var(flag)", "1");
 		<section id="kex.f.isbflagset">
 		<title><function moreinfo="none">isbflagset(flag [, branch])</function></title>
 		<para>
-			Return true of the branch flag is set.
+			Return true if the branch flag is set.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
@@ -762,7 +762,7 @@ resetdebug();
 		</title>
 		<para>Print the list of available internal statistics.</para>
 		<para>NOTE: the result is an array of strings that have the list of
-		statistics formated like "name = value", being propagated over the time
+		statistics formatted like "name = value", being propagated over the time
 		from the MI variant. Use "stats.fetch" or "stats.fetchn"commands to have
 		a more JSON-friendly output.</para>
 		<para>Parameters: <emphasis>statsid</emphasis> - which statistics to
@@ -785,7 +785,7 @@ resetdebug();
 		<para>Print the list of available internal statistics with a more
 		json friendly output. Each printed statistic is a field in the output
 		structure: {"statsgroup.statsname" : "statsvalue"}. The value is
-		represented as string to accomodate large numbers.</para>
+		represented as string to accommodate large numbers.</para>
 		<para>Parameters: <emphasis>statsid</emphasis> - which statistics to
 		be printed. If set to 'all' then all statistics are printed; if
 		set to 'statsgroup:' then all statistics in the group are printed;

@@ -141,7 +141,7 @@ static int mod_init(void)
 	register_pkg_proc_stats();
 	pkg_proc_stats_init_rpc();
 
-	/* per module memmory debugging RPC command */
+	/* per module memory debugging RPC command */
 	mod_stats_init_rpc();
 
 	return 0;
