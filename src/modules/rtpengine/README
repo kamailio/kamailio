@@ -2114,7 +2114,9 @@ rtpengine_offer();
             default action is rtpengine persists call to redis.
           + force-answer - force “answer”, that is, only rewrite SDP when
             corresponding session already exists in the RTP proxy. By
-            default is on when the session is to be completed.
+            default is on when the session is to be completed. This is
+            only necessary when the offer was sent by rtpengine_offer(),
+            and the answer is handled by rtpengine_manage().
           + direction=... - this option specifies a logical network
             interface and should be given exactly twice. It enables RTP
             bridging between different addresses or networks of the same
@@ -2205,10 +2207,10 @@ rtpengine_offer();
             of the SDP. If none of them are specified, the protocol given
             in the SDP is left untouched. Otherwise, the “SRTP” flag
             indicates that SRTP should be used, while “RTP” indicates that
-            SRTP should not be used. “AVPF” indicates that the advanced
-            RTCP profile with feedback messages should be used, and “AVP”
-            indicates that the regular RTCP profile should be used. See
-            also the next set of flags below.
+            both SRTP and AVPF should not be used. “AVPF” indicates that
+            the advanced RTCP profile with feedback messages should be
+            used, and “AVP” indicates that the regular RTCP profile should
+            be used. See also the next set of flags below.
           + RTP/AVP, RTP/SAVP, UDP/TLS/RTP/SAVP, RTP/AVPF, RTP/SAVPF,
             UDP/TLS/RTP/SAVPF - these serve as an alternative, more
             explicit way to select between the different RTP protocols and

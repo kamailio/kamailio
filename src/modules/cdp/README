@@ -353,7 +353,7 @@ if(!cdp_has_app("16777216")) {
 
 6.2. cdp.enable_peer
 
-   enabe/re-enable a diameter peer
+   enable/re-enable a diameter peer
 
 7. Configuration Examples
 
@@ -858,7 +858,7 @@ AAA_AVPCode avpCode, AAAVendorId vendorId, AAASearchType searchType)
 
    Meaning of the parameters is as follows:
      * AAAMessage *msg - the message to search in
-     * AAA_AVP *startAvp - at which AVP to start the search. usefull for
+     * AAA_AVP *startAvp - at which AVP to start the search. Useful for
        looking for more of the same name
      * AAA_AVPCode avpCode - AVP code to match
      * AAAVendorId vendorId - AVP vendor ID to match

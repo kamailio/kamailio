@@ -444,7 +444,7 @@ modparam("cplc","ignore3xx",1)
    There is no guaranty that the CPL script interpretation ended when
    Kamailio script ended also (for the same INVITE ;-)) - this can happen
    when the CPL script does a PROXY and the script interpretation pause
-   after proxying and it will be resume when some reply is received (this
+   after proxying and it will be resumed when some reply is received (this
    can happen in a different process of SER). If the function returns to
    script, the SIP server should continue with the normal behavior as if
    no script existed. When some error is returned, the function itself
@@ -475,7 +475,7 @@ modparam("cplc","ignore3xx",1)
        script (script processing can continue in stateful mode);
        is_stateless is the fastest and less resources consumer
        (transaction is created only if proxying is done), but there is
-       minimal protection against retransmissions (since replies are send
+       minimal protection against retransmissions (since replies are sent
        stateless); force_stateful is a good compromise - all signaling is
        done stateful (retransmission protection) and in the same time, if
        returning to script, it will be in stateless mode (easy to continue
@@ -496,15 +496,15 @@ cpl_run_script("incoming","force_stateful");
    the current REGISTER request is related or not with CPL script
    upload/download/ remove. If it is, all the needed operation will be
    done. For checking if the REGISTER is CPL related, the function looks
-   fist to "Content-Type" header. If it exists and has a the mime type set
-   to "application/cpl+xml" means this is a CPL script upload/remove
+   first to "Content-Type" header. If it exists and has a the mime type
+   set to "application/cpl+xml" means this is a CPL script upload/remove
    operation. The distinction between to case is made by looking at
    "Content-Disposition" header; id its value is "script;action=store",
    means it's an upload; if it's "script;action=remove", means it's a
    remove operation; other values are considered to be errors. If no
-   "Content-Type" header is present, the function looks to "Accept" header
-   and if it contains the "*" or "application/cpl-xml" the request it will
-   be consider one for downloading CPL scripts. The functions returns to
+   "Content-Type" header is present, the function looks for "Accept"
+   header and if it contains "*" or "application/cpl-xml" the request will
+   be considered for downloading CPL scripts. The functions returns to
    script only if the REGISTER is not related to CPL. In other case, the
    function will send by itself the necessary replies (stateless - using
    sl), including for errors.

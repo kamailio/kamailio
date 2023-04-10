@@ -480,7 +480,7 @@ $ kamcmd htable.dump htable
        can be stored in a hash table, as long as there is enough free
        shared memory, new items can be added.
      * autoexpire -time in seconds to delete an item from a hash table if
-       no update was done to it. If is missing or set to 0, the items
+       no update was done to it. If it is missing or set to 0, the items
        won't expire.
      * dbtable - name of database to be loaded at startup in hash table.
        If empty or missing, no data will be loaded.
@@ -769,7 +769,7 @@ sht_print();
 4.2.  sht_rm(htname, itname)
 
    Delete the item with the name 'itname' from hash table 'htname'. This
-   API function equivaluent to '$sht(htname=>itname) = $null'.
+   API function is equivalent to '$sht(htname=>itname) = $null'.
 
    This function can be used from ANY_ROUTE.
 
@@ -1232,10 +1232,10 @@ kamcmd htable.seti test x[0] 123
 
    Example:
 ...
-# set  expire for $sht(test=>x) to 120 secs
+# set expire for $sht(test=>x) to 120 secs
 kamctl rpc htable.setex test x 120
 
-# set  expire for $sht(test=>10) to 120 secs
+# set expire for $sht(test=>10) to 120 secs
 kamctl rpc htable.setex test s:10 120
 ...
 

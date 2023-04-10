@@ -276,7 +276,7 @@ modparam("evapi", "wait_increase", 1)
 evapi_relay("{ \"event\": \"test\",\n \"data\": { \"fU\": \"$fU\" }\n}");
 ...
 
-   The above exaple will send the following message over tcp:
+   The above example will send the following message over tcp:
 
    Example 1.9. TCP message
 ...

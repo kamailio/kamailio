@@ -360,7 +360,7 @@ kamcmd cnxcc.active_clients
 
 5.2. cnxcc.check_client
 
-   Retrives all calls from a particular identifier.
+   Retrieves all calls from a particular identifier.
 
    Parameters: client/customer identifier
 
