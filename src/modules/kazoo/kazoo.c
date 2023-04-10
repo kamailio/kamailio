@@ -176,7 +176,7 @@ static param_export_t params[] = {
     {"node_hostname", PARAM_STR, &dbk_node_hostname},
     {"amqp_connection", PARAM_STRING|USE_FUNC_PARAM,(void*)kz_amqp_add_connection},
     {"amqp_max_channels", INT_PARAM, &dbk_channels},
-    {"amqp_timmer_process_interval", INT_PARAM, &kz_timer_ms},
+    {"amqp_timer_process_interval", INT_PARAM, &kz_timer_ms},
     {"amqp_consumer_ack_timeout_micro", INT_PARAM, &kz_ack_tv.tv_usec},
     {"amqp_consumer_ack_timeout_sec", INT_PARAM, &kz_ack_tv.tv_sec},
     {"amqp_interprocess_timeout_micro", INT_PARAM, &kz_sock_tv.tv_usec},

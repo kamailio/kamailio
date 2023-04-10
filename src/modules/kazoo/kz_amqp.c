@@ -2353,10 +2353,10 @@ int add_amqp_headers (char * headers, amqp_basic_properties_t * props )
 			if (header_value != NULL) {
 				num_headers++;
 			} else {
-				LM_ERR("Header-Value cant be parsed - skipping!\n");
+				LM_ERR("Header-Value can't be parsed - skipping!\n");
 			}
 		} else {
-			LM_ERR("Header-Name cant be parsed - skipping!\n");
+			LM_ERR("Header-Name can't be parsed - skipping!\n");
 		}
 		kv_pair_str = strtok_r(NULL, headers_delim, &header_saveptr);
 	}
