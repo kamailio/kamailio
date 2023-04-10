@@ -298,7 +298,7 @@ static int jsonrpc_delayed_reply_ctx_init(jsonrpc_ctx_t* ctx)
 /** Implementation of rpc_fault function required by the management API.
  *
  * This function will be called whenever a management function
- * indicates that an error ocurred while it was processing the request. The
+ * indicates that an error occurred while it was processing the request. The
  * function takes the reply code and reason phrase as parameters, these will
  * be put in the body of the reply.
  *
@@ -340,7 +340,7 @@ static void jsonrpc_fault(jsonrpc_ctx_t* ctx, int code, char* fmt, ...)
  * This is the function that will be called whenever a management function
  * asks the management interface to send the reply to the client.
  * The SIP/HTTP reply sent to
- * the client will be always 200 OK, if an error ocurred on the server then it
+ * the client will be always 200 OK, if an error occurred on the server then it
  * will be indicated in the html document in body.
  *
  * @param ctx A pointer to the context structure of the jsonrpc request that
@@ -1191,7 +1191,7 @@ error:
 					(hdr->parsed<(void*)r_ctx->msg ||
 					hdr->parsed>=(void*)(r_ctx->msg+r_ctx->msg_shm_block_size))) {
 				/* header parsed filed doesn't point inside uas.request memory
-				 * chunck -> it was added by failure funcs.-> free it as pkg */
+				 * chunk -> it was added by failure funcs.-> free it as pkg */
 				DBG("removing hdr->parsed %d\n", hdr->type);
 				clean_hdr_field(hdr);
 				hdr->parsed = 0;

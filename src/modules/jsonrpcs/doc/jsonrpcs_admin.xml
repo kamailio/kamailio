@@ -380,7 +380,7 @@ modparam("jsonrpcs", "dgram_user", "root")
 	<section id="jsonrpcs.p.dgram_timeout">
 		<title><varname>dgram_timeout</varname> (int)</title>
 		<para>
-		The reply will expire after trying to sent it for socket_timeout
+		The reply will expire after trying to send it for socket_timeout
 		milliseconds.
 		</para>
 		<para>
