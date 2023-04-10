@@ -96,7 +96,7 @@ modparam("keepalive", "destination", "sip.provider.com")
 			<section>
 				<title><varname>delete_counter</varname>(int)</title>
 				<para>
-					Unsuccessful attemps increase delete_counter. After passing it, keepalive module doesn't try to send options requests. Ignored if it's set to 0.
+					Unsuccessful attempts increase delete_counter. After passing it, keepalive module doesn't try to send options requests. Ignored if it's set to 0.
 				</para>
 				<para>
 				<emphasis>
@@ -143,7 +143,7 @@ modparam("keepalive", "ping_from", "sip:keepalive@kamailio.org")
 					Get destination status.
 				</para>
 		        <para>
-					The Parameter <emphasis>destination</emphasis> is destination you want to check status
+					The parameter <emphasis>destination</emphasis> is destination you want to check status
 		        </para>
         		<para>
 					Returned value:
@@ -179,10 +179,10 @@ if(ka_is_alive("192.168.10.20") == 1) {
 					<itemizedlist>
 						<listitem>sip_uri (string) - address of destination to monitor.
 						Valid format is [protoschema:]ip[:port], with: 'protoschema' being
-						one of 'sip' or 'sips' (SIP over TLS) - if omitted, 'sip'is used
+						one of 'sip' or 'sips' (SIP over TLS) - if omitted, 'sip' is used
 						by default; 'port' is optional (using default standard port 5060
 						for sip and 5061 for sips)</listitem>
-					    <listitem>owner (string) - module name “owning” the destination
+					    <listitem>owner (string) - module name <quote>owning</quote> the destination
 					    (for informational purpose)</listitem>
 					</itemizedlist>
 				</para>
@@ -221,10 +221,10 @@ ka_add_destination("sip:192.168.1.10:5060;transport=tcp", "config");
 					<itemizedlist>
 						<listitem>sip_uri (string) - address of monitored destination.
 						Valid format is [protoschema:]ip[:port], with: 'protoschema' being
-						one of 'sip' or 'sips' (SIP over TLS) - if omitted, 'sip'is used
+						one of 'sip' or 'sips' (SIP over TLS) - if omitted, 'sip' is used
 						by default; 'port' is optional (using default standard port 5060
 						for sip and 5061 for sips)</listitem>
-					    <listitem>owner (string) - module name “owning” the destination
+					    <listitem>owner (string) - module name <quote>owning</quote> the destination
 					    (for informational purpose)</listitem>
 					</itemizedlist>
 				</para>
