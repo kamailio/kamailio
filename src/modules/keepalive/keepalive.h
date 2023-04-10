@@ -74,7 +74,7 @@ typedef struct _ka_dest
 	int flags;
 	int state;
 	time_t last_checked, last_up, last_down;
-	int counter;	// counts unreachable attemps
+	int counter;	// counts unreachable attempts
 	ticks_t ping_interval;  /*!< Actual interval between OPTIONS  */
 
 	void *user_attr;

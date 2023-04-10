@@ -99,11 +99,11 @@ static void keepalive_rpc_list(rpc_t *rpc, void *ctx)
 
 static void keepalive_rpc_add(rpc_t *rpc, void *ctx)
 {
-	str sip_adress = {0,0};
+	str sip_address = {0,0};
 	str table_name ={0,0};
 	int ret = 0;
 
-	ret = rpc->scan(ctx, "SS",&sip_adress,&table_name);
+	ret = rpc->scan(ctx, "SS",&sip_address,&table_name);
 
 	if (ret < 2) {
 		LM_ERR("not enough parameters - read so far: %d\n", ret);
@@ -111,14 +111,14 @@ static void keepalive_rpc_add(rpc_t *rpc, void *ctx)
 		return;
 	}
 
-	LM_DBG("keepalive add [%.*s]\n", sip_adress.len, sip_adress.s);
-	if(sip_adress.len<1 || table_name.len <1){
+	LM_DBG("keepalive add [%.*s]\n", sip_address.len, sip_address.s);
+	if(sip_address.len<1 || table_name.len <1){
 		LM_ERR("parameter is len less than 1  \n"  );
 		rpc->fault(ctx, 500, "parameter is len less than 1");
 		return;
 	}
 
-	if(ka_add_dest(&sip_adress,&table_name,0,ka_ping_interval,0,0,0) < 0 ){
+	if(ka_add_dest(&sip_address,&table_name,0,ka_ping_interval,0,0,0) < 0 ){
 		LM_ERR("couldn't add data to list \n"  );
 		rpc->fault(ctx, 500, "couldn't add data to list");
 		return;
@@ -131,11 +131,11 @@ static const char *keepalive_rpc_add_doc[2] = {
 
 static void keepalive_rpc_del(rpc_t *rpc, void *ctx)
 {
-	str sip_adress = {0,0};
+	str sip_address = {0,0};
 	str table_name ={0,0};
 	int ret = 0;
 
-	ret = rpc->scan(ctx, "SS",&sip_adress,&table_name);
+	ret = rpc->scan(ctx, "SS",&sip_address,&table_name);
 
 	if (ret < 2) {
 		LM_ERR("not enough parameters - read so far: %d\n", ret);
@@ -143,15 +143,15 @@ static void keepalive_rpc_del(rpc_t *rpc, void *ctx)
 		return;
 	}
 
-	LM_DBG("keepalive delete [%.*s]\n", sip_adress.len, sip_adress.s);
+	LM_DBG("keepalive delete [%.*s]\n", sip_address.len, sip_address.s);
 
-	if(sip_adress.len < 1 || table_name.len < 1){
+	if(sip_address.len < 1 || table_name.len < 1){
 		LM_ERR("parameter is len less than 1  \n");
 		rpc->fault(ctx, 500, "parameter is len less than 1");
 		return;
 	}
 
-	if(ka_del_destination(&sip_adress,&table_name) < 0 ){
+	if(ka_del_destination(&sip_address,&table_name) < 0 ){
 		LM_ERR("couldn't delete data from list \n"  );
 		rpc->fault(ctx, 500, "couldn't delete data from list");
 		return;
@@ -164,13 +164,13 @@ static const char *keepalive_rpc_del_doc[2] = {
 
 static void keepalive_rpc_get(rpc_t *rpc, void *ctx)
 {
-	str sip_adress = {0,0};
+	str sip_address = {0,0};
 	str table_name ={0,0};
 	int ret = 0;
 	ka_dest_t *target=0 , *head =0;
 	void *sub;
 
-	ret = rpc->scan(ctx, "SS",&sip_adress,&table_name);
+	ret = rpc->scan(ctx, "SS",&sip_address,&table_name);
 
 	if (ret < 2) {
 		LM_ERR("not enough parameters - read so far: %d\n", ret);
@@ -178,16 +178,16 @@ static void keepalive_rpc_get(rpc_t *rpc, void *ctx)
 		return;
 	}
 
-	LM_DBG("keepalive get [%.*s]\n", sip_adress.len , sip_adress.s);
+	LM_DBG("keepalive get [%.*s]\n", sip_address.len , sip_address.s);
 
-	if(sip_adress.len < 1 || table_name.len < 1){
+	if(sip_address.len < 1 || table_name.len < 1){
 		LM_ERR("parameter is len less than 1  \n");
 		rpc->fault(ctx, 500, "parameter is len less than 1");
 		return;
 	}
 	ka_lock_destination_list();
 
-	if(ka_find_destination(&sip_adress, &table_name, &target, &head) < 0 ){
+	if(ka_find_destination(&sip_address, &table_name, &target, &head) < 0 ){
 		LM_ERR("couldn't get data from list \n"  );
 		rpc->fault(ctx, 500, "couldn't get data from list");
 		ka_unlock_destination_list();
