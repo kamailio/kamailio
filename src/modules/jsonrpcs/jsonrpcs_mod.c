@@ -415,7 +415,8 @@ static int jsonrpc_send_mode(jsonrpc_ctx_t* ctx, int mode)
 				srjson_AddNumberToObject(ctx->jrpl, ctx->jrpl->root, "id",
 						nj->valuedouble);
 				if(mode==1) {
-					snprintf(_jsonrpcs_stored_id, 62, "%lld", (int64_t)nj->valuedouble);
+					snprintf(_jsonrpcs_stored_id, 62, "%lld",
+							(long long int)nj->valuedouble);
 				}
 			}
 		}
