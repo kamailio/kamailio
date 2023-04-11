@@ -211,7 +211,8 @@ static jsonrpc_error_t _jsonrpc_error_table[] = {
 	{0, { 0, 0 } }
 };
 
-static char _jsonrpcs_stored_id[64];
+#define JSONRPCS_STORED_ID_SIZE 72
+static char _jsonrpcs_stored_id[JSONRPCS_STORED_ID_SIZE];
 
 char *jsonrpcs_stored_id_get(void)
 {
@@ -409,13 +410,14 @@ static int jsonrpc_send_mode(jsonrpc_ctx_t* ctx, int mode)
 						"id", 2,
 						nj->valuestring, strlen(nj->valuestring));
 				if(mode==1) {
-					snprintf(_jsonrpcs_stored_id, 62, "\"%s\"", nj->valuestring);
+					snprintf(_jsonrpcs_stored_id, JSONRPCS_STORED_ID_SIZE-1,
+							"\"%s\"", nj->valuestring);
 				}
 			} else {
 				srjson_AddNumberToObject(ctx->jrpl, ctx->jrpl->root, "id",
 						nj->valuedouble);
 				if(mode==1) {
-					snprintf(_jsonrpcs_stored_id, 62, "%lld",
+					snprintf(_jsonrpcs_stored_id, JSONRPCS_STORED_ID_SIZE-1, "%lld",
 							(long long int)nj->valuedouble);
 				}
 			}
@@ -426,13 +428,15 @@ static int jsonrpc_send_mode(jsonrpc_ctx_t* ctx, int mode)
 					"id", 2,
 					ctx->jsrid_val, strlen(ctx->jsrid_val));
 			if(mode==1) {
-				snprintf(_jsonrpcs_stored_id, 62, "\"%s\"", ctx->jsrid_val);
+				snprintf(_jsonrpcs_stored_id, JSONRPCS_STORED_ID_SIZE-1,
+						"\"%s\"", ctx->jsrid_val);
 			}
 		} else if(ctx->jsrid_type == 2) {
 			srjson_AddNumberToObject(ctx->jrpl, ctx->jrpl->root, "id",
 					(double)(*(long*)ctx->jsrid_val));
 			if(mode==1) {
-				snprintf(_jsonrpcs_stored_id, 62, "%ld", *((long*)ctx->jsrid_val));
+				snprintf(_jsonrpcs_stored_id, JSONRPCS_STORED_ID_SIZE-1,
+						"%ld", *((long*)ctx->jsrid_val));
 			}
 		}
 	}
