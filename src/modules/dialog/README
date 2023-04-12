@@ -1808,7 +1808,7 @@ if(dlg_get("abcdef", "123", "456"))
    Meaning of the parameters is as follows:
      * callid - SIP call-id.
      * ftag - SIP From tag.
-     * ttag - SIP To tag.
+     * ttag - SIP To tag. Use "" value to indicate early dialog.
      * name - key name of the $dlg_var.
      * dst - pv to store the value of $dlg_var(name).
 
