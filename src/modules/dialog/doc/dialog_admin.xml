@@ -2213,7 +2213,7 @@ if(dlg_get("abcdef", "123", "456"))
 			</para>
 		</listitem>
 		<listitem>
-			<para><emphasis>ttag</emphasis> - SIP To tag.
+			<para><emphasis>ttag</emphasis> - SIP To tag. Use "" value to indicate early dialog.
 			</para>
 		</listitem>
 		<listitem>
