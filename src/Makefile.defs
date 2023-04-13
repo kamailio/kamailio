@@ -1741,7 +1741,11 @@ endif
 	# -andrei
 
 ifeq ($(CC_NAME), clang)
+ifeq ($(OS), darwin)
+	LDFLAGS+=-Wl,-E $(PROFILE)
+else
 	LDFLAGS+=-Wl,-O2 -Wl,-E $(PROFILE)
+endif
 	MOD_LDFLAGS:=-shared $(LDFLAGS)
 	LIB_LDFLAGS:=-shared $(LDFLAGS)
 	LIB_SONAME=-Wl,-soname,
