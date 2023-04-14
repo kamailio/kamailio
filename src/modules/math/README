@@ -10,7 +10,7 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright © 2023 asipto.com
+   Copyright Â© 2023 asipto.com
      __________________________________________________________________
 
    Table of Contents
@@ -26,12 +26,16 @@ Daniel-Constantin Mierla
         3. Functions
 
               3.1. pow(base, power, res)
-              3.2. log(x, res)
+              3.2. math_logN(x, res)
+              3.3. math_log2(x, res)
+              3.4. math_log10(x, res)
 
    List of Examples
 
-   1.1. pow usage
-   1.2. log usage
+   1.1. math_pow usage
+   1.2. math_logN usage
+   1.3. math_log2 usage
+   1.4. math_log10 usage
 
 Chapter 1. Admin Guide
 
@@ -46,7 +50,9 @@ Chapter 1. Admin Guide
    3. Functions
 
         3.1. pow(base, power, res)
-        3.2. log(x, res)
+        3.2. math_logN(x, res)
+        3.3. math_log2(x, res)
+        3.4. math_log10(x, res)
 
 1. Overview
 
@@ -74,33 +80,63 @@ Chapter 1. Admin Guide
 3. Functions
 
    3.1. pow(base, power, res)
-   3.2. log(x, res)
+   3.2. math_logN(x, res)
+   3.3. math_log2(x, res)
+   3.4. math_log10(x, res)
 
-3.1. pow(base, power, res)
+3.1.  pow(base, power, res)
 
    The exponentiation function, computing the base raised to power,
    storing in res.
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.1. pow usage
+   Example 1.1. math_pow usage
 ...
-    pow("2", "10", "$var(res)");
+    math_pow("2", "10", "$var(res)");
     $var(base) = 2;
     $var(power) = 10;
-    pow("$var(base)", "$var(power)", "$var(res)");
+    math_pow("$var(base)", "$var(power)", "$var(res)");
 ...
 
-3.2. log(x, res)
+3.2.  math_logN(x, res)
 
    The function computes the natural logarithm of x and stores the result
    in res.
 
    This function can be used from ANY_ROUTE.
 
-   Example 1.2. log usage
+   Example 1.2. math_logN usage
 ...
-    log("10", "$var(res)");
+    math_logN("10", "$var(res)");
     $var(x) = 10;
-    pow("$var(x)", "$var(res)");
+    math_logN("$var(x)", "$var(res)");
+...
+
+3.3.  math_log2(x, res)
+
+   The function computes the base-2 logarithm of x and stores the result
+   in res.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.3. math_log2 usage
+...
+    math_log2("16", "$var(res)");
+    $var(x) = 16;
+    math_log2("$var(x)", "$var(res)");
+...
+
+3.4.  math_log10(x, res)
+
+   The function computes the base-10 logarithm of x and stores the result
+   in res.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.4. math_log10 usage
+...
+    math_log10("100", "$var(res)");
+    $var(x) = 100;
+    math_log10("$var(x)", "$var(res)");
 ...
