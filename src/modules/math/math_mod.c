@@ -36,7 +36,7 @@
 MODULE_VERSION
 
 static int w_math_pow(sip_msg_t *msg, char *v1, char *v2, char *r);
-static int w_math_log(sip_msg_t *msg, char *v1, char *r);
+static int w_math_logN(sip_msg_t *msg, char *v1, char *r);
 static int w_math_log2(sip_msg_t *msg, char *v1, char *r);
 static int w_math_log10(sip_msg_t *msg, char *v1, char *r);
 static int fixup_math_p2(void **param, int param_no);
@@ -47,7 +47,7 @@ static int fixup_math_p3(void **param, int param_no);
 static cmd_export_t cmds[]={
 	{"math_pow", (cmd_function)w_math_pow, 3, fixup_math_p3,
 		0, ANY_ROUTE},
-	{"math_log", (cmd_function)w_math_log, 2, fixup_math_p2,
+	{"math_logN", (cmd_function)w_math_logN, 2, fixup_math_p2,
 		0, ANY_ROUTE},
 	{"math_log2", (cmd_function)w_math_log2, 2, fixup_math_p2,
 		0, ANY_ROUTE},
@@ -108,7 +108,7 @@ static int w_math_pow(sip_msg_t *msg, char *v1, char *v2, char *r)
 /**
  *
  */
-static int w_math_log(sip_msg_t *msg, char *v1, char *r)
+static int w_math_logN(sip_msg_t *msg, char *v1, char *r)
 {
 	int vi1 = 0;
 	pv_spec_t *dst;

@@ -80,9 +80,9 @@
 </programlisting>
 		</example>
 	</section>
-	<section id="math.f.log">
+	<section id="math.f.logN">
 		<title>
-		<function moreinfo="none">log(x, res)</function>
+		<function moreinfo="none">logN(x, res)</function>
 		</title>
 		<para>
 		The function computes the natural logarithm of x and stores the result
@@ -92,12 +92,12 @@
 		This function can be used from ANY_ROUTE.
 		</para>
 		<example>
-		<title><function>log</function> usage</title>
+		<title><function>logN</function> usage</title>
 		<programlisting format="linespecific">
 ...
-    log("10", "$var(res)");
+    logN("10", "$var(res)");
     $var(x) = 10;
-    log("$var(x)", "$var(res)");
+    logN("$var(x)", "$var(res)");
 ...
 </programlisting>
 		</example>
