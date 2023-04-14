@@ -69,20 +69,20 @@
 		This function can be used from ANY_ROUTE.
 		</para>
 		<example>
-		<title><function>pow</function> usage</title>
+		<title><function>math_pow</function> usage</title>
 		<programlisting format="linespecific">
 ...
-    pow("2", "10", "$var(res)");
+    math_pow("2", "10", "$var(res)");
     $var(base) = 2;
     $var(power) = 10;
-    pow("$var(base)", "$var(power)", "$var(res)");
+    math_pow("$var(base)", "$var(power)", "$var(res)");
 ...
 </programlisting>
 		</example>
 	</section>
 	<section id="math.f.logN">
 		<title>
-		<function moreinfo="none">logN(x, res)</function>
+		<function moreinfo="none">math_logN(x, res)</function>
 		</title>
 		<para>
 		The function computes the natural logarithm of x and stores the result
@@ -92,19 +92,19 @@
 		This function can be used from ANY_ROUTE.
 		</para>
 		<example>
-		<title><function>logN</function> usage</title>
+		<title><function>math_logN</function> usage</title>
 		<programlisting format="linespecific">
 ...
-    logN("10", "$var(res)");
+    math_logN("10", "$var(res)");
     $var(x) = 10;
-    logN("$var(x)", "$var(res)");
+    math_logN("$var(x)", "$var(res)");
 ...
 </programlisting>
 		</example>
 	</section>
 	<section id="math.f.log2">
 		<title>
-		<function moreinfo="none">log2(x, res)</function>
+		<function moreinfo="none">math_log2(x, res)</function>
 		</title>
 		<para>
 		The function computes the base-2 logarithm of x and stores the result
@@ -114,19 +114,19 @@
 		This function can be used from ANY_ROUTE.
 		</para>
 		<example>
-		<title><function>log2</function> usage</title>
+		<title><function>math_log2</function> usage</title>
 		<programlisting format="linespecific">
 ...
-    log2("16", "$var(res)");
+    math_log2("16", "$var(res)");
     $var(x) = 16;
-    log2("$var(x)", "$var(res)");
+    math_log2("$var(x)", "$var(res)");
 ...
 </programlisting>
 		</example>
 	</section>
 	<section id="math.f.log10">
 		<title>
-		<function moreinfo="none">log10(x, res)</function>
+		<function moreinfo="none">math_log10(x, res)</function>
 		</title>
 		<para>
 		The function computes the base-10 logarithm of x and stores the result
@@ -136,12 +136,12 @@
 		This function can be used from ANY_ROUTE.
 		</para>
 		<example>
-		<title><function>log10</function> usage</title>
+		<title><function>math_log10</function> usage</title>
 		<programlisting format="linespecific">
 ...
-    log10("100", "$var(res)");
+    math_log10("100", "$var(res)");
     $var(x) = 100;
-    log10("$var(x)", "$var(res)");
+    math_log10("$var(x)", "$var(res)");
 ...
 </programlisting>
 		</example>
