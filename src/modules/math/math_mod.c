@@ -37,6 +37,8 @@ MODULE_VERSION
 
 static int w_math_pow(sip_msg_t *msg, char *v1, char *v2, char *r);
 static int w_math_log(sip_msg_t *msg, char *v1, char *r);
+static int w_math_log2(sip_msg_t *msg, char *v1, char *r);
+static int w_math_log10(sip_msg_t *msg, char *v1, char *r);
 static int fixup_math_p2(void **param, int param_no);
 static int fixup_math_p3(void **param, int param_no);
 
@@ -46,6 +48,10 @@ static cmd_export_t cmds[]={
 	{"math_pow", (cmd_function)w_math_pow, 3, fixup_math_p3,
 		0, ANY_ROUTE},
 	{"math_log", (cmd_function)w_math_log, 2, fixup_math_p2,
+		0, ANY_ROUTE},
+	{"math_log2", (cmd_function)w_math_log2, 2, fixup_math_p2,
+		0, ANY_ROUTE},
+	{"math_log10", (cmd_function)w_math_log10, 2, fixup_math_p2,
 		0, ANY_ROUTE},
 
 	{0, 0, 0, 0, 0, 0}
@@ -120,6 +126,62 @@ static int w_math_log(sip_msg_t *msg, char *v1, char *r)
 	}
 
 	val.ri = (long)log((double)vi1);
+	val.flags = PV_TYPE_INT|PV_VAL_INT;
+
+	dst->setf(msg, &dst->pvp, (int)EQ_T, &val);
+
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_math_log2(sip_msg_t *msg, char *v1, char *r)
+{
+	int vi1 = 0;
+	pv_spec_t *dst;
+	pv_value_t val = {0};
+
+	if(fixup_get_ivalue(msg, (gparam_t*)v1, &vi1)<0) {
+		LM_ERR("failed to get first parameter value\n");
+		return -1;
+	}
+
+	dst = (pv_spec_t *)r;
+	if(dst->setf==NULL) {
+		LM_ERR("target pv is not writable\n");
+		return -1;
+	}
+
+	val.ri = (long)log2((double)vi1);
+	val.flags = PV_TYPE_INT|PV_VAL_INT;
+
+	dst->setf(msg, &dst->pvp, (int)EQ_T, &val);
+
+	return 1;
+}
+
+/**
+ *
+ */
+static int w_math_log10(sip_msg_t *msg, char *v1, char *r)
+{
+	int vi1 = 0;
+	pv_spec_t *dst;
+	pv_value_t val = {0};
+
+	if(fixup_get_ivalue(msg, (gparam_t*)v1, &vi1)<0) {
+		LM_ERR("failed to get first parameter value\n");
+		return -1;
+	}
+
+	dst = (pv_spec_t *)r;
+	if(dst->setf==NULL) {
+		LM_ERR("target pv is not writable\n");
+		return -1;
+	}
+
+	val.ri = (long)log10((double)vi1);
 	val.flags = PV_TYPE_INT|PV_VAL_INT;
 
 	dst->setf(msg, &dst->pvp, (int)EQ_T, &val);
