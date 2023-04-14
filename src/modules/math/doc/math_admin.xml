@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../../doc/docbook/entities.xml">
+%docentities;
+
+]>
+<!-- Module User's Guide -->
+
+<chapter>
+
+	<title>&adminguide;</title>
+
+	<section>
+	<title>Overview</title>
+	<para>
+		This module provides a collection of functions for math operations.
+	</para>
+	<para>
+		Note that the result values are casted to intger (long value), being
+		the type supported by the config variables.
+	</para>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>none</emphasis>
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>none</emphasis>
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+
+	<section>
+	<title>Functions</title>
+	<section id="math.f.pow">
+		<title>
+		<function moreinfo="none">pow(base, power, res)</function>
+		</title>
+		<para>
+		The exponentiation function, computing the base raised to power, storing
+		in res.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>pow</function> usage</title>
+		<programlisting format="linespecific">
+...
+    pow("2", "10", "$var(res)");
+    $var(base) = 2;
+    $var(power) = 10;
+    pow("$var(base)", "$var(power)", "$var(res)");
+...
+</programlisting>
+		</example>
+	</section>
+<section id="math.f.log">
+		<title>
+		<function moreinfo="none">log(x, res)</function>
+		</title>
+		<para>
+		The function computes the natural logarithm of x and stores the result
+		in res.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>log</function> usage</title>
+		<programlisting format="linespecific">
+...
+    log("10", "$var(res)");
+    $var(x) = 10;
+    pow("$var(x)", "$var(res)");
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+</chapter>

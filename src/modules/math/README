@@ -1,0 +1,106 @@
+MATH Module
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+Edited by
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+   Copyright © 2023 asipto.com
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Functions
+
+              3.1. pow(base, power, res)
+              3.2. log(x, res)
+
+   List of Examples
+
+   1.1. pow usage
+   1.2. log usage
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Functions
+
+        3.1. pow(base, power, res)
+        3.2. log(x, res)
+
+1. Overview
+
+   This module provides a collection of functions for math operations.
+
+   Note that the result values are casted to intger (long value), being
+   the type supported by the config variables.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * none
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * none
+
+3. Functions
+
+   3.1. pow(base, power, res)
+   3.2. log(x, res)
+
+3.1. pow(base, power, res)
+
+   The exponentiation function, computing the base raised to power,
+   storing in res.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.1. pow usage
+...
+    pow("2", "10", "$var(res)");
+    $var(base) = 2;
+    $var(power) = 10;
+    pow("$var(base)", "$var(power)", "$var(res)");
+...
+
+3.2. log(x, res)
+
+   The function computes the natural logarithm of x and stores the result
+   in res.
+
+   This function can be used from ANY_ROUTE.
+
+   Example 1.2. log usage
+...
+    log("10", "$var(res)");
+    $var(x) = 10;
+    pow("$var(x)", "$var(res)");
+...
