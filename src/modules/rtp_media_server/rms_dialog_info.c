@@ -199,27 +199,31 @@ rms_dialog_info_t *rms_dialog_new_bleg(struct sip_msg *msg)
 		return NULL;
 	rms_dialog_info_t *si = shm_malloc(sizeof(rms_dialog_info_t));
 	if(!si) {
-		LM_ERR("can not allocate dialog info !\n");
+		LM_ERR("can not allocate dialog info!\n");
 		goto error;
 	}
 	memset(si, 0, sizeof(rms_dialog_info_t));
 
 	if(!rms_str_dup(&si->callid, &msg->callid->body, 1)) {
-		LM_ERR("can not get callid .\n");
+		LM_ERR("can not get callid\n");
 		goto error;
 	}
-	if(!rms_str_dup(&si->remote_uri, &msg->from->body, 1))
+	if(!rms_str_dup(&si->remote_uri, &msg->from->body, 1)) {
 		goto error;
+	}
 	str ip;
 	ip.s = ip_addr2a(&msg->rcv.dst_ip);
 	ip.len = strlen(ip.s);
-	if(!rms_str_dup(&si->local_ip, &ip, 1))
+	if(!rms_str_dup(&si->local_ip, &ip, 1)) {
 		goto error;
+	}
 	clist_init(&si->action, next, prev);
 	return si;
 error:
 	LM_ERR("can not create dialog info.\n");
-	rms_dialog_free(si);
+	if(si) {
+		rms_dialog_free(si);
+	}
 	return NULL;
 }
 
@@ -270,7 +274,9 @@ rms_dialog_info_t *rms_dialog_new(struct sip_msg *msg)
 	return si;
 error:
 	LM_ERR("can not create dialog info.\n");
-	rms_dialog_free(si);
+	if(si) {
+		rms_dialog_free(si);
+	}
 	return NULL;
 }
 

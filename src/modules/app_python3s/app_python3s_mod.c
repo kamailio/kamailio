@@ -1,4 +1,5 @@
 /*
+ * Copyright (C) 2022 Daniel-Constatin Mierla (daniel@asipto.com)
  * Copyright (C) 2009 Sippy Software, Inc., http://www.sippysoft.com
  *
  * This file is part of Kamailio, a free SIP server.
@@ -37,6 +38,8 @@ MODULE_VERSION
 
 
 str _sr_python_load_file = str_init("/usr/local/etc/" NAME "/" NAME ".py");
+str _sr_apy3s_script_init = str_init("");
+str _sr_apy3s_script_child_init = str_init("");
 
 static int mod_init(void);
 static int child_init(int rank);
@@ -55,9 +58,13 @@ int _apy3s_process_rank = 0;
 
 PyThreadState *myThreadState = NULL;
 
+int apy3s_script_init_exec(PyObject* pModule, str *fname, int *vparam);
+
 /** module parameters */
 static param_export_t params[]={
 	{"load",               PARAM_STR, &_sr_python_load_file },
+	{"script_init",        PARAM_STR, &_sr_apy3s_script_init },
+	{"script_child_init",  PARAM_STR, &_sr_apy3s_script_child_init },
 
 	{0,0,0}
 };
@@ -207,7 +214,8 @@ static int child_init(int rank)
 	if (cfg_child_init()) {
 		return -1;
 	}
-	return 0;
+	return apy3s_script_init_exec(_sr_apy3s_handler_script,
+			&_sr_apy3s_script_child_init, &rank);
 }
 
 /**
@@ -253,6 +261,94 @@ int w_app_python3s_exec2(sip_msg_t *_msg, char *pmethod, char *pparam)
 	return apy3s_exec_func(_msg, method.s, param.s, 1);
 }
 
+/**
+ *
+ */
+int apy3s_script_init_exec(PyObject* pModule, str *fname, int *vparam)
+{
+	PyObject *pFunc, *pArgs, *pHandler, *pValue;
+	PyGILState_STATE gstate;
+	int rval = -1;
+
+	if(fname==NULL || fname->len<=0) {
+		return 0;
+	}
+	LM_DBG("script init callback: %.*s()\n", fname->len, fname->s);
+
+	gstate = PyGILState_Ensure();
+	pFunc = PyObject_GetAttrString(pModule, fname->s);
+	/* pFunc is a new reference */
+
+	if (pFunc == NULL || !PyCallable_Check(pFunc)) {
+		if (!PyErr_Occurred())
+			PyErr_Format(PyExc_AttributeError,
+					"'module' object '%s' has no attribute '%s'",
+					_sr_apy3s_bname, fname->s);
+		apy3s_handle_exception("script_init");
+		Py_XDECREF(pFunc);
+		goto error;
+	}
+
+	if(vparam==NULL) {
+		pArgs = PyTuple_New(0);
+		if (pArgs == NULL) {
+			apy3s_handle_exception("script_init");
+			Py_DECREF(pFunc);
+			goto error;
+		}
+	} else {
+		pArgs = PyTuple_New(1);
+		if (pArgs == NULL) {
+			apy3s_handle_exception("script_init");
+			Py_DECREF(pFunc);
+			goto error;
+		}
+
+		pValue = PyLong_FromLong((long)(*vparam));
+		if (pValue == NULL) {
+			apy3s_handle_exception("script_init");
+			Py_DECREF(pArgs);
+			Py_DECREF(pFunc);
+			goto error;
+		}
+		/* pValue moved to pArgs - no direct dec ref */
+		PyTuple_SetItem(pArgs, 0, pValue);
+	}
+
+	pHandler = PyObject_CallObject(pFunc, pArgs);
+
+	Py_XDECREF(pFunc);
+	Py_XDECREF(pArgs);
+
+	if (PyErr_Occurred()) {
+		LM_ERR("error exception occurred\n");
+		apy3s_handle_exception("script_init");
+		if (pHandler != NULL) {
+			Py_DECREF(pHandler);
+		}
+		goto error;
+	}
+
+	if (pHandler == NULL) {
+		LM_ERR("PyObject_CallObject() returned NULL but no exception!\n");
+		if (!PyErr_Occurred())
+			PyErr_Format(PyExc_TypeError,
+					"Function '%s' of module '%s' has not returned"
+					" an object. Should be a class instance.",
+					fname->s, _sr_apy3s_bname);
+		apy3s_handle_exception("script_init");
+		goto error;
+	}
+	Py_XDECREF(pHandler);
+	rval = 0;
+error:
+	PyGILState_Release(gstate);
+	return rval;
+}
+
+/**
+ *
+ */
 int apy_reload_script(void)
 {
 	PyGILState_STATE gstate;
@@ -263,21 +359,35 @@ int apy_reload_script(void)
 	if (!pModule) {
 		if (!PyErr_Occurred())
 			PyErr_Format(PyExc_ImportError, "Reload module '%s'", _sr_apy3s_bname);
-		apy3s_handle_exception("mod_init");
+		apy3s_handle_exception("reload_script");
 		Py_DECREF(_sr_apy3s_format_exc_obj);
-		goto err;
+		goto error;
+	}
+	if (apy3s_script_init_exec(pModule, &_sr_apy3s_script_init, NULL)) {
+		LM_ERR("Error calling mod_init on reload\n");
+		Py_DECREF(pModule);
+		goto error;
 	}
 	Py_DECREF(_sr_apy3s_handler_script);
 	_sr_apy3s_handler_script = pModule;
 
+	if(apy3s_script_init_exec(pModule, &_sr_apy3s_script_child_init,
+				&_apy3s_process_rank)<0) {
+		LM_ERR("Failed to run child init callback\n");
+		goto error;
+	}
 	rval =  0;
-err:
+
+error:
 	PyGILState_Release(gstate);
 	return rval;
 }
 
-#define  INTERNAL_VERSION  "1002\n"
+#define  INTERNAL_VERSION  "1008\n"
 
+/**
+ *
+ */
 int apy_load_script(void)
 {
 	PyObject *sys_path, *pDir, *pModule;
@@ -325,7 +435,7 @@ int apy_load_script(void)
 		if (!PyErr_Occurred())
 			PyErr_Format(PyExc_AttributeError,
 					"'module' object 'sys' has no attribute 'path'");
-		apy3s_handle_exception("mod_init");
+		apy3s_handle_exception("load_script");
 		Py_DECREF(_sr_apy3s_format_exc_obj);
 		goto err;
 	}
@@ -335,7 +445,7 @@ int apy_load_script(void)
 		if (!PyErr_Occurred())
 			PyErr_Format(PyExc_AttributeError,
 					"PyUnicode_FromString() has failed");
-		apy3s_handle_exception("mod_init");
+		apy3s_handle_exception("load_script");
 		Py_DECREF(_sr_apy3s_format_exc_obj);
 		goto err;
 	}
@@ -347,8 +457,13 @@ int apy_load_script(void)
 	if (pModule == NULL) {
 		if (!PyErr_Occurred())
 			PyErr_Format(PyExc_ImportError, "No module named '%s'", _sr_apy3s_bname);
-		apy3s_handle_exception("mod_init");
+		apy3s_handle_exception("load_script");
 		Py_DECREF(_sr_apy3s_format_exc_obj);
+		goto err;
+	}
+	if (apy3s_script_init_exec(pModule, &_sr_apy3s_script_init, NULL) != 0) {
+		LM_ERR("failed calling script init callback function\n");
+		Py_DECREF(pModule);
 		goto err;
 	}
 	_sr_apy3s_handler_script = pModule;

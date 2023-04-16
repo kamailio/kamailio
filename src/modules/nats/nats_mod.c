@@ -671,7 +671,7 @@ int _init_nats_sub_add(modparam_t type, void *val)
 }
 
 /**
- * Invoke a event route block
+ * Invoke an event route block
  */
 int nats_run_cfg_route(int rt, str *evname)
 {

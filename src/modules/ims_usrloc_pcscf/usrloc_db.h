@@ -142,5 +142,5 @@ int db_delete_pcontact(pcontact_t* _c);
 int db_update_pcontact(pcontact_t* _c);
 int db_update_pcontact_security_temp(struct pcontact* _c, security_type _t, security_t* _s);
 int db_update_pcontact_security(struct pcontact* _c, security_type _t, security_t* _s);
-
+db1_con_t* get_db_handle ();
 #endif /* USRLOC_DB_H_ */

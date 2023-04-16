@@ -147,7 +147,7 @@ modparam("pua_bla", "server_address", "sip:bla@160.34.23.12")
 				</title>
 			<para>
 				The function is used to mark REGISTER requests made to a BLA AOR.
-				The modules subscribes to the registered contacts for dialog;sla 
+				The module subscribes to the registered contacts for dialog;sla 
 				event.
 			</para>
 			<para>

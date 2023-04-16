@@ -109,8 +109,10 @@ int jansson_to_xval(sr_xval_t *val, char** freeme, json_t* v) {
 		val->v.s.s = value;
 		val->v.s.len = strlen(value);
 	}else if(json_is_integer(v)) {
+#if JSON_INTEGER_IS_LONG_LONG
 		long long value = json_integer_value(v);
-		if ((value > LONG_MAX) || (value < LONG_MIN))  {
+		if ((sizeof(long) < sizeof(long long))
+				&& ((value > LONG_MAX) || (value < LONG_MIN))) {
 			char* svalue = NULL;
 			if (asprintf(&svalue, "%"JSON_INTEGER_FORMAT, value) < 0) {
 				ERR("asprintf failed\n");
@@ -124,6 +126,10 @@ int jansson_to_xval(sr_xval_t *val, char** freeme, json_t* v) {
 			val->type = SR_XTYPE_LONG;
 			val->v.l = (long)value;
 		}
+#else
+		val->type = SR_XTYPE_LONG;
+		val->v.l = (long)json_integer_value(v);
+#endif
 	}else if(json_is_null(v)) {
 		val->type = SR_XTYPE_NULL;
 	}else {

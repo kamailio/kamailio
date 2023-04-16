@@ -21,7 +21,7 @@
 
 /**
  * \file lib/srdb1/db_op.h
- * \brief Type that represents a expression operator.
+ * \brief Type that represents an expression operator.
  * \ingroup db1
  */
 

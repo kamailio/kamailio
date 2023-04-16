@@ -29,7 +29,7 @@
 	common application discussed for illustrative purposes; there are many others.
 	</para>
 	<para>
-	The dialog module provides dialog awareness for the &kamailio; proxy. It's
+	The dialog module provides dialog awareness for the &kamailio; proxy. Its
 	functionality is to keep track of the current dialogs, to offer information
 	about them (e.g. how many dialogs are active), and to manage various
 	characteristics of dialogs. The module exports several functions that can be
@@ -37,7 +37,7 @@
 	the RPC interface.
 	</para>
 	<para>
-	This module also provides a API foundation on which to build
+	This module also provides an API foundation on which to build
 	more complex dialog-oriented functionality in other &kamailio; modules.
 	</para>
 	</section>
@@ -182,7 +182,7 @@
 		<title><varname>enable_stats</varname> (integer)</title>
 		<para>
 		If statistics support should be enabled or not. Via statistics
-		variables, the module provide information about the dialog processing.
+		variables, the module provides information about the dialog processing.
 		Set it to zero to disable or to non-zero to enable it.
 		</para>
 		<para>
@@ -254,7 +254,7 @@ modparam("dialog", "rr_param", "xyz")
 		<title><varname>dlg_flag</varname> (integer)</title>
 		<para>
 		Flag to be used for marking if a dialog should be constructed for the
-		current request (this make sense only for initial requests).
+		current request (this makes sense only for initial requests).
 		</para>
 		<para>
 		Note: it is not needed to set this parameter and its corresponding flag
@@ -345,7 +345,7 @@ modparam("dialog", "early_timeout", 180)
 		<title><varname>noack_timeout</varname> (integer)</title>
 		<para>
 		The timeout (in seconds) after which the dialogs which were answered
-		with 200ok but didn't receive the ACK are marked for termination (the
+		with 200 OK but didn't receive the ACK are marked for termination (the
 		lifetime is set to 10 more seconds).
 		</para>
 		<para>
@@ -1761,7 +1761,7 @@ modparam("dialog", "debug_variables", 1)
 	<title>Functions</title>
 	<section id="dialog.f.set_dlg_profile">
 		<title>
-		<function moreinfo="none">set_dlg_profile(profile,[value])</function>
+		<function moreinfo="none">set_dlg_profile(profile[, value])</function>
 		</title>
 		<para>
 		Inserts the current dialog into a profile. Note that if the profile does
@@ -1800,7 +1800,7 @@ set_dlg_profile("caller","$fu");
 
 	<section id="dialog.f.unset_dlg_profile">
 		<title>
-		<function moreinfo="none">unset_dlg_profile(profile,[value])</function>
+		<function moreinfo="none">unset_dlg_profile(profile[, value])</function>
 		</title>
 		<para>
 		Removes the current dialog from a profile.
@@ -1838,7 +1838,7 @@ unset_dlg_profile("caller","$fu");
 
 	<section id="dialog.f.is_in_profile">
 		<title>
-		<function moreinfo="none">is_in_profile(profile,[value])</function>
+		<function moreinfo="none">is_in_profile(profile[, value])</function>
 		</title>
 		<para>
 		Checks if the current dialog belongs to a profile. If the profile
@@ -1871,7 +1871,7 @@ unset_dlg_profile("caller","$fu");
 		<programlisting format="linespecific">
 ...
 if (is_in_profile("inbound_call")) {
-	log("this request belongs to a inbound call\n");
+	log("this request belongs to an inbound call\n");
 }
 ...
 if (is_in_profile("caller","XX")) {
@@ -1884,7 +1884,7 @@ if (is_in_profile("caller","XX")) {
 
 	<section id="dialog.f.get_profile_size">
 		<title>
-		<function moreinfo="none">get_profile_size(profile,[value],size)</function>
+		<function moreinfo="none">get_profile_size(profile[, value], size)</function>
 		</title>
 		<para>
 		Returns the number of dialogs belonging to a profile. If the profile
@@ -3106,7 +3106,7 @@ dlg_reset_property("timeout-noreset");
 				and rining or 1xx has been received.
 			</para></listitem>
 			<listitem><para>
-				<emphasis>answering</emphasis> - initial INVITE received 200ok,
+				<emphasis>answering</emphasis> - initial INVITE received 200 OK,
 				but ACK was not handled yet.
 			</para></listitem>
 			<listitem><para>

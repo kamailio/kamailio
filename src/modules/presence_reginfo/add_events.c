@@ -49,7 +49,7 @@ int reginfo_add_events(void)
 
 
 	if(pres_reginfo_aggregate_presentities) {
-		/* aggregate XML body and free() fuction */
+		/* aggregate XML body and free() function */
 		event.agg_nbody = reginfo_agg_nbody;
 		event.free_body = free_xml_body;
 		/* modify XML body for each watcher to set the correct "version" */

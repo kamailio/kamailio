@@ -153,14 +153,14 @@ typedef struct tls_domains_cfg {
 
 /**
  * @brief Create a new TLS domain structure
- * 
+ *
  * Create a new domain structure in new allocated shared memory.
  * @param type domain Type
  * @param ip domain IP
  * @param port domain port
  * @return new domain
  */
-tls_domain_t *tls_new_domain(int type, struct ip_addr *ip, 
+tls_domain_t *tls_new_domain(int type, struct ip_addr *ip,
 			     unsigned short port);
 
 
@@ -182,7 +182,7 @@ char* tls_domain_str(tls_domain_t* d);
 
 /**
  * @brief Create new TLS configuration structure
- * 
+ *
  * Create new configuration structure in new allocated shared memory.
  * @return configuration structure or zero on error
  */
@@ -200,7 +200,7 @@ int tls_add_domain(tls_domains_cfg_t* cfg, tls_domain_t* d);
 
 /**
  * @brief Initialize attributes of all domains from default domains if necessary
- * 
+ *
  * Initialize attributes of all domains from default domains if necessary,
  * fill in missing parameters.
  * @param cfg initialized domain

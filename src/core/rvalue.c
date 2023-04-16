@@ -1372,7 +1372,7 @@ struct rvalue* rval_convert(struct run_act_ctx* h, struct sip_msg* msg,
 
 
 /** integer operation: *res= op v.
- * @return 0 on succes, \<0 on error
+ * @return 0 on success, \<0 on error
  */
 inline static int long_longop1(long* res, enum rval_expr_op op, long v)
 {
@@ -1399,7 +1399,7 @@ inline static int long_longop1(long* res, enum rval_expr_op op, long v)
 
 
 /** integer operation: *res= v1 op v2
- * @return 0 on succes, \<0 on error
+ * @return 0 on success, \<0 on error
  */
 inline static int long_longop2(long* res, enum rval_expr_op op, long v1, long v2)
 {
@@ -1532,7 +1532,7 @@ error:
 
 
 /** integer returning operation on string: *res= op str (returns integer)
- * @return 0 on succes, \<0 on error
+ * @return 0 on success, \<0 on error
  */
 inline static int long_strop1(long* res, enum rval_expr_op op, str* s1)
 {
@@ -2581,7 +2581,7 @@ struct rval_expr* mk_rval_expr_v(enum rval_type rv_type, void* val,
 
 
 /**
- * @brief Create a unary op. rval_expr
+ * @brief Create an unary op. rval_expr
  * ret= op rve1
  * @param op   - rval expr. unary operator
  * @param rve1 - rval expr. on which the operator will act.
@@ -3484,7 +3484,7 @@ static int rve_optimize(struct rval_expr* rve)
 				if (rve_replace_with_ct_rv(rve->right.rve, rv)<0)
 					goto error;
 				rve->op=RVE_IPLUS_OP;
-				LM_DBG("FIXUP RVE (%d,%d-%d,%d): optimized $v - a into "
+				LM_DBG("FIXUP RVE (%d,%d-%d,%d): optimized $v - an into "
 						"$v + (%d)\n",
 						rve->fpos.s_line, rve->fpos.s_col,
 						rve->fpos.e_line, rve->fpos.e_col,

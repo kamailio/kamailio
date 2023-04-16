@@ -321,7 +321,7 @@ xlog("L_INFO", "Size of queue is: $var(q_size)\n");
      * $mq_size(mqueue) - the size of the specified mqueue
 
    Exported pseudo-variables are documented at
-   https://www.kamailio.org/wiki/.
+   https://www.kamailio.org/wikidocs/.
 
 6. RPC Commands
 

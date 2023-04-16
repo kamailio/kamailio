@@ -334,6 +334,11 @@ dp_config* parse_dp_config(xmlDocPtr doc)
 					quote_trim_dup(&(x->peers[x->peers_cnt].src_addr),(char*)xc);
 					xmlFree(xc);
 				}
+				xc = xmlGetProp(child,(xmlChar*)"ip_proto");
+				if (xc){
+					quote_trim_dup(&(x->peers[x->peers_cnt].proto),(char*)xc);
+					xmlFree(xc);
+				}
 				x->peers_cnt++;
 			}
 			else if (xmlStrlen(child->name)==8 && strncasecmp((char*)child->name,"Acceptor",8)==0){
@@ -346,6 +351,11 @@ dp_config* parse_dp_config(xmlDocPtr doc)
 				xc = xmlGetProp(child,(xmlChar*)"port");
 				if (xc){
 					x->acceptors[x->acceptors_cnt].port = atoi((char*)xc);
+					xmlFree(xc);
+				}
+				xc = xmlGetProp(child,(xmlChar*)"ip_proto");
+				if (xc){
+					quote_trim_dup(&(x->acceptors[x->acceptors_cnt].proto),(char*)xc);
 					xmlFree(xc);
 				}
 				x->acceptors_cnt++;

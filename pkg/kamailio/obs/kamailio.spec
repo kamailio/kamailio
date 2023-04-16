@@ -736,8 +736,7 @@ BuildRequires:  zlib-devel
 Requires:   libmysqlclient18
 BuildRequires:  libmysqlclient-devel
 %else
-Requires:   mysql-libs
-BuildRequires:  mysql-devel
+BuildRequires:  mariadb-devel
 %endif
 
 %description    mysql
@@ -2212,7 +2211,9 @@ fi
 %endif
 %if %{with python3}
 %doc %{_docdir}/kamailio/modules/README.app_python3
+%doc %{_docdir}/kamailio/modules/README.app_python3s
 %{_libdir}/kamailio/modules/app_python3.so
+%{_libdir}/kamailio/modules/app_python3s.so
 %endif
 
 
@@ -2280,7 +2281,9 @@ fi
 %files      ruby
 %defattr(-,root,root)
 %doc %{_docdir}/kamailio/modules/README.app_ruby
+%doc %{_docdir}/kamailio/modules/README.app_ruby_proc
 %{_libdir}/kamailio/modules/app_ruby.so
+%{_libdir}/kamailio/modules/app_ruby_proc.so
 %endif
 
 

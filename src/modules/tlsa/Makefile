@@ -10,7 +10,9 @@ NAME=tlsa.so
 
 # set to yes when wanting to link with static libraries compiled from source
 LIBSSL_STATIC_SRCLIB ?= no
-# set to the path of the folder with static libraries compiled from source
+# set to the path of the folder with static libraries compiled from source;
+# can also be the folder where static OpenSSL libraries are installed
+# in which case headers are expected to be in $LIBSSL_STATIC_SRCPATH/../include
 LIBSSL_STATIC_SRCPATH ?= /usr/local/src/openssl
 # or set to the path where the static libraries are installed, for example:
 # LIBSSL_STATIC_SRCPATH ?= /usr/lib/x86_64-linux-gnu/
@@ -44,7 +46,12 @@ endif # ifneq ($(CRYPTO_BUILDER),)
 
 else
 	## when linking against static libs compiled from sources
-	DEFS += -I$(LIBSSL_STATIC_SRCPATH)/include
+	## default OpenSSL installation has lib/,lib64/ as siblings of include/
+	ifneq "$(wildcard $(LIBSSL_STATIC_SRCPATH)/../include )" ""
+		DEFS += -I$(LIBSSL_STATIC_SRCPATH)/../include
+	else
+		DEFS += -I$(LIBSSL_STATIC_SRCPATH)/include
+	endif
 	LIBS += $(LIBSSL_STATIC_SRCPATH)/libssl.a $(LIBSSL_STATIC_SRCPATH)/libcrypto.a
 endif # ifneq ($(LIBSSL_STATIC_SRCLIB),yes)
 

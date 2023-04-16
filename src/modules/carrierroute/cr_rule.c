@@ -46,7 +46,7 @@
  * @param backup indicates if the route is backed up by another. only
                  useful if status==0, if set, it is the hash value
                  of another rule
- * @param backed_up an NULL-termintated array of hash indices of the route
+ * @param backed_up a NULL-termintated array of hash indices of the route
                     for which this route is backup
  * @param comment a comment for the route rule
  *

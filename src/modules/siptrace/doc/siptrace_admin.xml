@@ -16,7 +16,7 @@
 	<section>
 	<title>Overview</title>
 	<para>
-		The SIPtrace module offer a possibility to store incoming and outgoing SIP
+		The SIPtrace module offers a possibility to store incoming and outgoing SIP
 		messages in a database and/or duplicate to the capturing server (using <acronym>HEP</acronym>,
 		the Homer encapsulation protocol, or plain SIP mode). Since version 5.3.0 new levels of tracing
 		are available. Transactions and dialogs can be traced.
@@ -697,7 +697,7 @@ modparam("siptrace", "trace_dialog_spiral", 1)
 	<title>Functions</title>
 	<section id="siptrace.f.sip_trace">
 		<title>
-		<function moreinfo="none">sip_trace([address][,correlation_id][,mode])</function>
+		<function moreinfo="none">sip_trace([address][, correlation_id][, mode])</function>
 		</title>
 		<para>
 		Store or forward the current processed SIP message/transaction/dialog in database.

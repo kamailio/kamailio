@@ -420,7 +420,7 @@ int kz_tr_eval(struct sip_msg *msg, tr_param_t *tp, int subtype, pv_value_t *val
 
 
 /*!
- * \brief Helper fuction to parse a kazoo transformation
+ * \brief Helper function to parse a kazoo transformation
  * \param in parsed string
  * \param t transformation
  * \return pointer to the end of the transformation in the string - '}', null on error

@@ -178,7 +178,7 @@ modparam("keepalive", "destination", "sip.provider.com")
 
 2.3.3. delete_counter(int)
 
-   Unsuccesful attemps increase delete_counter. After passing it,
+   Unsuccessful attemps increase delete_counter. After passing it,
    keepalive module doesn't try to send options requests. Ignored if it's
    set to 0.
 

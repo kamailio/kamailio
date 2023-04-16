@@ -68,7 +68,7 @@ Gabriel Vasile
               4.2. is_user(username)
               4.3. has_totag()
               4.4. uri_param(param)
-              4.5. uri_param(param,value)
+              4.5. uri_param(param, value)
               4.6. uri_param_any(param)
               4.7. add_uri_param(param)
               4.8. get_uri_param(name, var)
@@ -81,7 +81,7 @@ Gabriel Vasile
               4.15. is_numeric(tval)
               4.16. is_alphanum(tval)
               4.17. is_alphanumex(tval, eset)
-              4.18. encode_contact(encoding_prefix,hostpart)
+              4.18. encode_contact(encoding_prefix, hostpart)
               4.19. decode_contact()
               4.20. decode_contact_header()
               4.21. cmp_uri(str1, str2)
@@ -191,7 +191,7 @@ Chapter 1. Admin Guide
         4.2. is_user(username)
         4.3. has_totag()
         4.4. uri_param(param)
-        4.5. uri_param(param,value)
+        4.5. uri_param(param, value)
         4.6. uri_param_any(param)
         4.7. add_uri_param(param)
         4.8. get_uri_param(name, var)
@@ -204,7 +204,7 @@ Chapter 1. Admin Guide
         4.15. is_numeric(tval)
         4.16. is_alphanum(tval)
         4.17. is_alphanumex(tval, eset)
-        4.18. encode_contact(encoding_prefix,hostpart)
+        4.18. encode_contact(encoding_prefix, hostpart)
         4.19. decode_contact()
         4.20. decode_contact_header()
         4.21. cmp_uri(str1, str2)
@@ -237,7 +237,7 @@ Chapter 1. Admin Guide
 
 1. Overview
 
-   This module implement various functions and checks related to SIP
+   This module implements various functions and checks related to SIP
    message handling and URI handling.
 
    This module also provides a function to answer OPTIONS requests which
@@ -313,7 +313,7 @@ modparam("siputils", "options_accept_encoding", "gzip")
 Warning
 
    First char of this field must be set to a value which is not used
-   inside username,password or other fields of contact. Otherwise it is
+   inside username, password or other fields of contact. Otherwise it is
    possible for the decoding step to fail/produce wrong results.
 
    Default value is “*”.
@@ -404,7 +404,7 @@ modparam("siputils", "e164_max_len", 20)
    4.2. is_user(username)
    4.3. has_totag()
    4.4. uri_param(param)
-   4.5. uri_param(param,value)
+   4.5. uri_param(param, value)
    4.6. uri_param_any(param)
    4.7. add_uri_param(param)
    4.8. get_uri_param(name, var)
@@ -417,7 +417,7 @@ modparam("siputils", "e164_max_len", 20)
    4.15. is_numeric(tval)
    4.16. is_alphanum(tval)
    4.17. is_alphanumex(tval, eset)
-   4.18. encode_contact(encoding_prefix,hostpart)
+   4.18. encode_contact(encoding_prefix, hostpart)
    4.19. decode_contact()
    4.20. decode_contact_header()
    4.21. cmp_uri(str1, str2)
@@ -443,7 +443,7 @@ modparam("siputils", "e164_max_len", 20)
 4.1.  options_reply()
 
    This function checks if the request method is OPTIONS and if the
-   request URI does not contain an username. If both is true the request
+   request URI does not contain a username. If both are true the request
    will be answered stateless with “200 OK” and the capabilities from the
    modules parameters.
 
@@ -454,8 +454,8 @@ modparam("siputils", "e164_max_len", 20)
    because it is also done by the function itself. But you should not call
    this function outside the myself check because in this case the
    function could answer OPTIONS requests which are sent to you as
-   outbound proxy but with an other destination then your proxy (this
-   check is currently missing in the function).
+   outbound proxy but with another destination than your proxy (this check
+   is currently missing in the function).
 
    This function can be used from REQUEST_ROUTE.
 
@@ -513,7 +513,7 @@ if (uri_param("param1")) {
 };
 ...
 
-4.5.  uri_param(param,value)
+4.5.  uri_param(param, value)
 
    Find if Request URI has a given parameter with matching value
 
@@ -735,7 +735,7 @@ if (is_alphanumex("$rU", "+.-_")) {
 }
 ...
 
-4.18.  encode_contact(encoding_prefix,hostpart)
+4.18.  encode_contact(encoding_prefix, hostpart)
 
    This function will encode uri-s inside Contact header in the following
    manner sip:username:password@ip:port;transport=protocol goes

@@ -39,7 +39,6 @@
 #include "usrloc_mod.h"            /* usrloc module parameters */
 #include "usrloc.h"
 #include "utime.h"
-#include "usrloc.h"
 #include "ul_callback.h"
 #include "ul_keepalive.h"
 #include "urecord.h"

@@ -399,7 +399,7 @@ _ip_avp", "$avp(RR_CUSTOM_SDP_IP_AVP)")
           + external,internal - The shorthand of this flag is "ei". This
             can be used to relay media sessions between two different NIC
             from external to internal path.
-     * ip_address - new SDP IP address.This optional parameter is under
+     * ip_address - new SDP IP address. This optional parameter is under
        development.
 
    This function can be used from ANY_ROUTE.

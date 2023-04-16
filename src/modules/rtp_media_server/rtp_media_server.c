@@ -240,12 +240,16 @@ static rms_dialog_info_t *rms_stop(rms_dialog_info_t *di)
 static rms_dialog_info_t *rms_dialog_action_check(rms_dialog_info_t *di)
 {
 	rms_action_t *a;
-		if (!di)
-			LM_ERR("Dialog info NULL\n");
+	if (!di) {
+		LM_ERR("Dialog info NULL\n");
+		return NULL;
+	}
 	clist_foreach(&di->action, a, next)
 	{
-		if (!a)
+		if (!a) {
 			LM_ERR("dialog action NULL\n");
+			continue;
+		}
 
 		if(a->type == RMS_HANGUP) {
 			LM_INFO("dialog action RMS_HANGUP [%s]\n", di->callid.s);
@@ -941,11 +945,7 @@ static int rms_sip_cancel(struct sip_msg *msg, str *callid_s, str *cseq_s)
 	tm_cell_t *bkt;
 	int bkb;
 	struct cancel_info cancel_data;
-	int fl = 0;
 	int rcode = 0;
-
-	if(rcode<100 || rcode>699)
-		rcode = 0;
 
 	bkt = tmb.t_gett();
 	bkb = tmb.t_gett_branch();
@@ -958,8 +958,6 @@ static int rms_sip_cancel(struct sip_msg *msg, str *callid_s, str *cseq_s)
 		return 1;
 	}
 
-	if(trans->uas.request && fl>0 && fl<32)
-		setflag(trans->uas.request, fl);
 	init_cancel_info(&cancel_data);
 	cancel_data.reason.cause = rcode;
 	cancel_data.cancel_bitmap = 0;

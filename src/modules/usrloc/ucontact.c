@@ -39,7 +39,6 @@
 #include "usrloc.h"
 #include "urecord.h"
 #include "ucontact.h"
-#include "usrloc.h"
 
 extern int ul_db_insert_null;
 

@@ -77,7 +77,7 @@
 			addresses.
 		</para>
 		<para>
-			The public GRUU is build based on the '+sip.instance'
+			The public GRUU is built based on the '+sip.instance'
 			UUID parameter as recommended by RFC.
 		</para>
 		<para>
@@ -322,7 +322,7 @@ modparam("registrar", "realm_prefix", "sip.")
 		The parameter controls how lookup function processes multiple 
 		contacts.  If there are multiple contacts for the given username in 
 		usrloc and this parameter is set to 1, Request-URI will be 
-		overwritten with the highest-q rated contact and the rest will be 
+		overwritten with the highest-q rated contact.  The rest will be 
 		appended to sip_msg structure and can be later used by tm for forking.
 		If the parameter is set to 0, only Request-URI will be overwritten 
 		with the highest-q rated contact and the rest will be left unprocessed.
@@ -1534,7 +1534,7 @@ xinfo("first contact record - socket: $xavp(cul&gt;socket)\n");
 		<para>
 		The function returns true if the AOR in the URI is 
 		registered, false otherwise.  The function does not modify the 
-		message being process, it neither rewrites the Request-URI if a 
+		message being processed, it neither rewrites the Request-URI if a 
 		contact is found nor append branches. If uri parameter is not
 		provided, then it considered to be the Request-URI for SIP requests
 		and To-URI for SIP replies.
@@ -1673,7 +1673,7 @@ add_sock_hdr("Sock-Info");
 		<listitem>
 			<para>
 			<emphasis>ruid</emphasis> - The record unique ID for a
-			a specific contact to be removed. It can contain
+			specific contact to be removed. It can contain
 			pseudo-variables that are evaluated at runtime.
 			</para>
 		</listitem>

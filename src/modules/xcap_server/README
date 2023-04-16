@@ -319,7 +319,7 @@ event_route[xhttp:request] {
        target, domain, uri_adoc.
 
    Exported pseudo-variables are documented at
-   https://www.kamailio.org/wiki/.
+   https://www.kamailio.org/wikidocs/.
 
    Example 1.11. $xcapuri(...) PV
 ...

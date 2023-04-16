@@ -379,7 +379,7 @@ static int dmq_add_notification_address(modparam_t type, void * val)
 	}
 
 	/* initial allocation */
-	if (dmq_notification_address_list == 0) {
+	if (dmq_notification_address_list == NULL) {
 		dmq_notification_address_list = pkg_malloc(sizeof(str_list_t));
 		if (dmq_notification_address_list == NULL) {
 			PKG_MEM_ERROR;
@@ -388,6 +388,8 @@ static int dmq_add_notification_address(modparam_t type, void * val)
 		dmq_tmp_list = dmq_notification_address_list;
 		dmq_tmp_list->s = tmp_str;
 		dmq_tmp_list->next = NULL;
+		LM_DBG("Created list and added new notification address to the list %.*s\n",
+			dmq_tmp_list->s.len, dmq_tmp_list->s.s);
 	} else {
 		dmq_tmp_list = append_str_list(tmp_str.s, tmp_str.len, &dmq_tmp_list, &total_list);
 		if (dmq_tmp_list == NULL) {

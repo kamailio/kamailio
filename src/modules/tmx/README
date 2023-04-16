@@ -262,8 +262,8 @@ if (t_reply_callid("123qaz", "5", "458", "Replied remotely")) {
 4.4.  t_flush_flags()
 
    Flush the flags from current SIP message into the already created
-   transaction. It make sense only in routing block if the transaction was
-   created via t_newtran() and the flags have been altered since.
+   transaction. It makes sense only in routing block if the transaction
+   was created via t_newtran() and the flags have been altered since.
 
    It is not needed to execute this function when using t_relay() (or
    similar tm relay functions, flags are synchronized automatically in
@@ -279,7 +279,7 @@ t_flush_flags();
 4.5.  t_flush_xflags()
 
    Flush the extended flags from current SIP message into the already
-   created transaction. It make sense only in routing block if the
+   created transaction. It makes sense only in routing block if the
    transaction was created via t_newtran() and the extended flags have
    been altered since.
 
@@ -504,7 +504,7 @@ event_route [tm:branch-failure:contact] {
      * $T(name)
 
    Exported pseudo-variables are documented at
-   https://www.kamailio.org/wiki/.
+   https://www.kamailio.org/wikidocs/.
 
 6. Statistics
 

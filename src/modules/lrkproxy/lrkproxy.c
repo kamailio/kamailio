@@ -617,7 +617,7 @@ mod_init(void)
         pkg_free(lrkp_strings);
 
 
-    /* init the hastable which keeps the all media address for both party and also the elected_node <--> callid& via-branch relation */
+    /* init the hastable which keeps all the media address for both party and also the elected_node <--> callid& via-branch relation */
     if (hash_table_size < 1){
         hash_table_size = HASH_SIZE;    //the default size 128 entry.
     }

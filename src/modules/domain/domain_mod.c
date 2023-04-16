@@ -50,7 +50,7 @@ MODULE_VERSION
 /*
  * Version of domain table required by the module,
  * increment this value if you change the table in
- * an backwards incompatible way
+ * a backwards incompatible way
  */
 #define DOMAIN_TABLE_VERSION 2
 #define DOMAIN_ATTRS_TABLE_VERSION 1

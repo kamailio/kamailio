@@ -18,7 +18,6 @@
 #include "../../core/parser/parse_from.h"
 #include "../../core/parser/parse_cseq.h"
 #include "../../core/parser/contact/parse_contact.h"
-#include "../../core/parser/parse_from.h"
 #include "../../core/parser/parse_rr.h"
 #include "../../modules/tm/tm_load.h"
 #include "../../modules/rr/api.h"

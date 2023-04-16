@@ -76,7 +76,7 @@ Chapter 1. Admin Guide
 
    This module offers amqp communication using librabbitmq. This module
    was created using rabbitmq-c C client
-   (https://github.com/alanxz/rabbitmq-c). An new amqp connection is setup
+   (https://github.com/alanxz/rabbitmq-c). A new amqp connection is setup
    on a per-children basis, when Kamailio starts. If connection is lost,
    the process tries to re-establish it when a new amqp action is
    required.

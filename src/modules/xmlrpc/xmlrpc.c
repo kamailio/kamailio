@@ -43,7 +43,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
 #include <stdarg.h>
 #include <sys/types.h>
 #include <signal.h>
@@ -57,7 +56,6 @@
 #include "../../core/parser/msg_parser.h"
 #include "../../core/ut.h"
 #include "../../core/dset.h"
-#include "../../core/str.h"
 #include "../../core/dprint.h"
 #include "../../core/data_lump.h"
 #include "../../core/data_lump_rpl.h"
@@ -70,6 +68,7 @@
 #include "../../core/script_cb.h" /* exec_*_script_cb */
 #include "../../core/route.h" /* route_get */
 #include "../../core/sip_msg_clone.h" /* sip_msg_shm_clone */
+#include "../../core/rpc_lookup.h"
 #include "../../core/kemi.h"
 #include "http.h"
 
@@ -825,7 +824,7 @@ static int flatten_nests(struct rpc_struct* st, struct xmlrpc_reply* reply) {
 		return 1;
 
 	if (!st->nnext) {
-		if(st->vtype == RET_ARRAY) {
+		if(st->vtype & RET_ARRAY) {
 			if (add_xmlrpc_reply(&st->struct_out, &array_suffix) < 0) return -1;
 		} else {
 			if (add_xmlrpc_reply(&st->struct_out, &struct_suffix) < 0) return -1;
@@ -834,7 +833,7 @@ static int flatten_nests(struct rpc_struct* st, struct xmlrpc_reply* reply) {
 					&st->struct_out.body) < 0) return -1;
 	} else {
 		flatten_nests(st->nnext, reply);
-		if(st->vtype == RET_ARRAY) {
+		if(st->vtype & RET_ARRAY) {
 			if (add_xmlrpc_reply(&st->struct_out, &array_suffix) < 0) return -1;
 		} else {
 			if (add_xmlrpc_reply(&st->struct_out, &struct_suffix) < 0) return -1;
@@ -850,7 +849,7 @@ static int print_structures(struct xmlrpc_reply* reply,
 {
 	while(st) {
 		/* Close the structure first */
-		if(st->vtype == RET_ARRAY) {
+		if(st->vtype & RET_ARRAY) {
 			if (add_xmlrpc_reply(&st->struct_out, &array_suffix) < 0) return -1;
 		} else {
 			if (add_xmlrpc_reply(&st->struct_out, &struct_suffix) < 0) return -1;
@@ -979,7 +978,7 @@ static struct rpc_struct* new_rpcstruct(xmlDocPtr doc, xmlNodePtr structure,
 	} else {
 		/* We will build a reply structure */
 		if (init_xmlrpc_reply(&p->struct_out) < 0) goto err;
-		if(vtype==RET_ARRAY) {
+		if(vtype & RET_ARRAY) {
 			if (add_xmlrpc_reply(&p->struct_out, &array_prefix) < 0) goto err;
 		} else {
 			if (add_xmlrpc_reply(&p->struct_out, &struct_prefix) < 0) goto err;
@@ -1174,7 +1173,7 @@ static int rpc_add(rpc_ctx_t* ctx, char* fmt, ...)
 	reply = &ctx->reply;
 
 	while(*fmt) {
-		if (ctx->flags & RET_ARRAY &&
+		if ((ctx->flags & RET_ARRAY) &&
 				add_xmlrpc_reply(reply, &value_prefix) < 0) goto err;
 		if (*fmt == '{' || *fmt == '[') {
 			void_ptr = va_arg(ap, void**);
@@ -1188,7 +1187,7 @@ static int rpc_add(rpc_ctx_t* ctx, char* fmt, ...)
 			if (print_value(reply, reply, *fmt, &ap) < 0) goto err;
 		}
 
-		if (ctx->flags & RET_ARRAY &&
+		if ((ctx->flags & RET_ARRAY) &&
 				add_xmlrpc_reply(reply, &value_suffix) < 0) goto err;
 		if (add_xmlrpc_reply(reply, &lf) < 0) goto err;
 		fmt++;
@@ -1545,7 +1544,7 @@ static int get_string(char** val, struct xmlrpc_reply* reply,
 			break;
 		case XML_T_INT:
 		case XML_T_BOOL:
-			/* convert str to int an back to str */
+			/* convert str to int and back to str */
 			i = strtol(val_str, &end_ptr, 10);
 			if (val_str==end_ptr){
 				ret=-1;
@@ -1772,12 +1771,12 @@ static int rpc_rpl_printf(rpc_ctx_t* ctx, char* fmt, ...)
 		if (n > -1 && n < buf_size) {
 			s.s = buf;
 			s.len = n;
-			if (ctx->flags & RET_ARRAY &&
+			if ((ctx->flags & RET_ARRAY) &&
 					add_xmlrpc_reply(reply, &value_prefix) < 0) goto err;
 			if (add_xmlrpc_reply(reply, &string_prefix) < 0) goto err;
 			if (add_xmlrpc_reply_esc(reply, &s) < 0) goto err;
 			if (add_xmlrpc_reply(reply, &string_suffix) < 0) goto err;
-			if (ctx->flags & RET_ARRAY &&
+			if ((ctx->flags & RET_ARRAY) &&
 					add_xmlrpc_reply(reply, &value_suffix) < 0) goto err;
 			if (add_xmlrpc_reply(reply, &lf) < 0) goto err;
 			mxr_free(buf);
@@ -1874,7 +1873,7 @@ static int rpc_struct_add(struct rpc_struct* s, char* fmt, ...)
 		member_name.s = va_arg(ap, char*);
 		member_name.len = (member_name.s ? strlen(member_name.s) : 0);
 
-		if(s->vtype==RET_ARRAY && *fmt == '{') {
+		if((s->vtype==RET_ARRAY) && *fmt == '{') {
 			if (add_xmlrpc_reply(reply, &value_prefix) < 0) goto err;
 			if (add_xmlrpc_reply(reply, &struct_prefix) < 0) goto err;
 		}
@@ -1902,7 +1901,7 @@ static int rpc_struct_add(struct rpc_struct* s, char* fmt, ...)
 		}
 		if (add_xmlrpc_reply(reply, &value_suffix) < 0) goto err;
 		if (add_xmlrpc_reply(reply, &member_suffix) < 0) goto err;
-		if(s->vtype==RET_ARRAY && *fmt == '{') {
+		if((s->vtype & RET_ARRAY) && *fmt == '{') {
 			if (add_xmlrpc_reply(reply, &struct_suffix) < 0) goto err;
 			if (add_xmlrpc_reply(reply, &value_suffix) < 0) goto err;
 		}
@@ -1926,7 +1925,7 @@ static int rpc_array_add(struct rpc_struct* s, char* fmt, ...)
 	struct rpc_struct* p, *tmp;
 
 	reply = &s->struct_out;
-	if(s->vtype!=RET_ARRAY) {
+	if(!(s->vtype & RET_ARRAY)) {
 		LM_ERR("parent structure is not an array\n");
 		goto err;
 	}
@@ -2601,20 +2600,27 @@ static int process_xmlrpc(sip_msg_t* msg)
  */
 static int ki_dispatch_rpc(sip_msg_t* msg)
 {
-	rpc_export_t* exp;
+	rpc_exportx_t* exp;
 	int ret = 1;
+	unsigned int rdata;
 
 	if (init_context(&ctx, msg) < 0) goto skip;
 
-	exp = find_rpc_export(ctx.method, 0);
-	if (!exp || !exp->function) {
+	exp = rpc_lookupx(ctx.method, strlen(ctx.method), &rdata);
+	if (!exp || !exp->r.function) {
 		rpc_fault(&ctx, 500, "Method Not Found");
 		goto skip;
 	}
-	ctx.flags = exp->flags;
-	if (exp->flags & RET_ARRAY &&
+	if (rdata & RPC_EXEC_DELTA) {
+		LM_ERR("execution of command [%s] is limited by delta [%d]\n",
+				ctx.method, ksr_rpc_exec_delta);
+		rpc_fault(&ctx, 500, "Command Executed Too Fast");
+		goto skip;
+	}
+	ctx.flags = exp->r.flags;
+	if ((exp->r.flags & RET_ARRAY) &&
 			add_xmlrpc_reply(&ctx.reply, &array_prefix) < 0) goto skip;
-	exp->function(&func_param, &ctx);
+	exp->r.function(&func_param, &ctx);
 
 skip:
 	/* The function may have sent the reply itself */

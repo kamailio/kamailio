@@ -47,7 +47,7 @@
   </section>
   <section id="ID-949656abaac653354242d1d0e9b418be"><title>Kamailio::Message</title>
     <para>
-      This package provides access functions for an Kamailio <literal
+      This package provides access functions for a Kamailio <literal
       role="code"><![CDATA[sip_msg]]></literal> structure and its
       sub-components. Through its means it is possible to fully configure
       alternative routing decisions.
@@ -335,7 +335,7 @@ $m->xlog("L_INFO", "foo");]]></screen>
     </section>
     <section id="ID-f20c57aaa92a757d7152aa0479ee1fc0"><title>getParsedRURI()</title>
       <para>
-	Returns the current destination URI as an Kamailio::URI object.
+	Returns the current destination URI as a Kamailio::URI object.
       </para>
     </section>
   </section>
@@ -460,7 +460,7 @@ $m->xlog("L_INFO", "foo");]]></screen>
 	Add an AVP.
       </para>
       <para>
-	Add an Kamailio AVP to its environment. name and val may both be
+	Add a Kamailio AVP to its environment. name and val may both be
 	integers or strings; this function will try to guess what is
 	correct. Please note that
       </para>
@@ -479,7 +479,7 @@ $m->xlog("L_INFO", "foo");]]></screen>
     </section>
     <section id="ID-ad3f402b1c78426a3a1de4d0c1d9ad6c"><title>get(name)</title>
       <para>
-	get an Kamailio AVP:
+	get a Kamailio AVP:
       </para>
       <screen><![CDATA[my $numavp = Kamailio::AVP::get(5);
 my $stravp = Kamailio::AVP::get("foo");]]></screen>
@@ -689,7 +689,7 @@ my @rows = $ldap->search(
       </para>
       <para>
 	The first argument, when given, should be a hash reference pointing
-	to to the connection parameters, possibly an <literal
+	to to the connection parameters, possibly a <literal
 	role="code"><![CDATA[Kamailio::LDAPUtils::LDAPConfig]]></literal>
 	object. This argument may be <literal
 	role="code"><![CDATA[undef]]></literal> in which case a new

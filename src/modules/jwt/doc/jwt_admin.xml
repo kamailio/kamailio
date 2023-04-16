@@ -85,7 +85,7 @@ modparam("jwt", "key_mode", 1)
 	<title>Functions</title>
 	<section id="jwt.f.jwt_generate">
 	    <title>
-		<function moreinfo="none">jwt_generate(prvkey, alg, claims, [headers])</function>
+		<function moreinfo="none">jwt_generate(prvkey, alg, claims[, headers])</function>
 	    </title>
 	    <para>
 	    Generate the JWT, its value can be retrieved in the variable $jwt(val).

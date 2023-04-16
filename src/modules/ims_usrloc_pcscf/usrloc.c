@@ -42,7 +42,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  * 
  */
-
+ 
 #include "usrloc.h"
 #include "dlist.h"
 #include "pcontact.h"
@@ -52,6 +52,10 @@
 #include "../../core/parser/parse_uri.h"
 
 extern int ims_ulp_init_flag;
+
+struct ul_callback *cbp_registrar = 0;
+struct ul_callback *cbp_qos = 0;
+
 
 int bind_usrloc(usrloc_api_t* api) {
 	if (!api) {
@@ -70,7 +74,7 @@ int bind_usrloc(usrloc_api_t* api) {
 	api->unlock_udomain = unlock_udomain;
 	api->insert_pcontact = insert_pcontact;
 	api->delete_pcontact = delete_pcontact;
-    api->unreg_pending_contacts_cb = unreg_pending_contacts_cb;
+        api->unreg_pending_contacts_cb = unreg_pending_contacts_cb;
 	api->get_pcontact = get_pcontact;
 	api->assert_identity = assert_identity;
 	api->update_pcontact = update_pcontact;
@@ -80,6 +84,10 @@ int bind_usrloc(usrloc_api_t* api) {
 	api->update_temp_security = update_temp_security;
 	api->register_ulcb = register_ulcb;
 	api->get_number_of_contacts = get_number_of_contacts;
+	api->is_ulcb_registered = is_ulcb_registered;
+	api->register_ulcb_method = register_ulcb_method;
+
+        api->db_mode    = db_mode;
 
 	return 0;
 }

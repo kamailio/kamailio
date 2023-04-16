@@ -853,8 +853,11 @@ int peer_connect(peer *p)
 	int error;
 
 	memset (&hints, 0, sizeof(hints));
-	//hints.ai_protocol = IPPROTO_SCTP;
-	//hints.ai_protocol = IPPROTO_TCP;
+	if ((p->proto.len) && (strncasecmp(p->proto.s,"SCTP",4)==0)){
+		hints.ai_protocol = IPPROTO_SCTP;
+	}else{
+		hints.ai_protocol = IPPROTO_TCP;
+	}
 	hints.ai_flags = AI_ADDRCONFIG;
 	hints.ai_socktype = SOCK_STREAM;
 

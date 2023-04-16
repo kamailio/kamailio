@@ -46,9 +46,9 @@ Seudin Kasumovic
 
         5. Functions
 
-              5.1. erl_rpc(mod,fun,args,reply)
-              5.2. erl_reg_send(server,msg)
-              5.3. erl_send(pid,msg)
+              5.1. erl_rpc(mod, fun, args, reply)
+              5.2. erl_reg_send(server, msg)
+              5.3. erl_send(pid, msg)
               5.4. erl_reply(msg)
 
         6. Event routes
@@ -65,12 +65,12 @@ Seudin Kasumovic
         1. Available Functions
 
               1.1. erl_load_api(erl_api)
-              1.2. rpc(reply,module,function,args)
-              1.3. reg_send(server,msg)
-              1.4. send(pid,msg)
+              1.2. rpc(reply, module, function, args)
+              1.3. reg_send(server, msg)
+              1.4. send(pid, msg)
               1.5. reply(msg)
-              1.6. xavp2xbuff(xbuff,xavp)
-              1.7. xbuff2xavp(xavp,xbuff)
+              1.6. xavp2xbuff(xbuff, xavp)
+              1.7. xbuff2xavp(xavp, xbuff)
 
    List of Examples
 
@@ -133,9 +133,9 @@ Chapter 1. Admin Guide
 
    5. Functions
 
-        5.1. erl_rpc(mod,fun,args,reply)
-        5.2. erl_reg_send(server,msg)
-        5.3. erl_send(pid,msg)
+        5.1. erl_rpc(mod, fun, args, reply)
+        5.2. erl_reg_send(server, msg)
+        5.3. erl_send(pid, msg)
         5.4. erl_reply(msg)
 
    6. Event routes
@@ -225,9 +225,9 @@ modparam("erlang", "cnode_host", "kamailio.lan")
 
 3.4. erlang_nodename (str)
 
-   The format of the node name is an name@host where name is the name
-   given by the user and host is the full host name if long names are
-   used, or the first part of the host name if short names are used.
+   The format of the node name is a name@host where name is the name given
+   by the user and host is the full host name if long names are used, or
+   the first part of the host name if short names are used.
 
    Example 1.4. Set erlang_nodename parameter
 ...
@@ -477,12 +477,12 @@ DEBUG: <script>: 410:typeof(X): tuple, length(X): 2, format(X): {line, [{id, 23}
 
 5. Functions
 
-   5.1. erl_rpc(mod,fun,args,reply)
-   5.2. erl_reg_send(server,msg)
-   5.3. erl_send(pid,msg)
+   5.1. erl_rpc(mod, fun, args, reply)
+   5.2. erl_reg_send(server, msg)
+   5.3. erl_send(pid, msg)
    5.4. erl_reply(msg)
 
-5.1.  erl_rpc(mod,fun,args,reply)
+5.1.  erl_rpc(mod, fun, args, reply)
 
    This function supports calling Erlang functions on remote nodes.
 
@@ -520,7 +520,7 @@ pl=>format)\n");
 DEBUG: <script>: 386:type(repl): tuple, format(repl): {"one", "two"}
 ...
 
-5.2. erl_reg_send(server,msg)
+5.2. erl_reg_send(server, msg)
 
    This function sends an Erlang term to a registered process.
 
@@ -543,7 +543,7 @@ $erl_tuple(M) = $erl_atom(example);
 erl_reg_send("notifier","$erl_tuple(M)");
 ...
 
-5.3. erl_send(pid,msg)
+5.3. erl_send(pid, msg)
 
    This function sends an Erlang term to a process. This function can be
    used from ANY_ROUTE. The argument pid is the Erlang process id of the
@@ -617,7 +617,7 @@ INFO: <script>: 951:Received message: {"hello", "Kamailio"}
 
 6.1. Registered pseudo process
 
-   To create pseudo erlang registered process in Kamailio scrip create
+   To create pseudo erlang registered process in Kamailio script create
    event route in form of event_route[erlang:<my_process_name>]. Where
    <my_process_name> is the name of pseudo process.
 
@@ -742,22 +742,22 @@ Chapter 3. Developer Guide
    1. Available Functions
 
         1.1. erl_load_api(erl_api)
-        1.2. rpc(reply,module,function,args)
-        1.3. reg_send(server,msg)
-        1.4. send(pid,msg)
+        1.2. rpc(reply, module, function, args)
+        1.3. reg_send(server, msg)
+        1.4. send(pid, msg)
         1.5. reply(msg)
-        1.6. xavp2xbuff(xbuff,xavp)
-        1.7. xbuff2xavp(xavp,xbuff)
+        1.6. xavp2xbuff(xbuff, xavp)
+        1.7. xbuff2xavp(xavp, xbuff)
 
 1. Available Functions
 
    1.1. erl_load_api(erl_api)
-   1.2. rpc(reply,module,function,args)
-   1.3. reg_send(server,msg)
-   1.4. send(pid,msg)
+   1.2. rpc(reply, module, function, args)
+   1.3. reg_send(server, msg)
+   1.4. send(pid, msg)
    1.5. reply(msg)
-   1.6. xavp2xbuff(xbuff,xavp)
-   1.7. xbuff2xavp(xavp,xbuff)
+   1.6. xavp2xbuff(xbuff, xavp)
+   1.7. xbuff2xavp(xavp, xbuff)
 
 1.1.  erl_load_api(erl_api)
 
@@ -767,7 +767,7 @@ Chapter 3. Developer Guide
    Meaning of the parameters is as follows:
      * erl_api_t* erl_api - API bindings structure.
 
-1.2.  rpc(reply,module,function,args)
+1.2.  rpc(reply, module, function, args)
 
    This function supports calling Erlang functions on remote nodes. On
    success function returns 0.
@@ -778,7 +778,7 @@ Chapter 3. Developer Guide
      * str *function - string containing function name.
      * ei_x_buff *args - dynamic ei buffer with encoded arguments.
 
-1.3.  reg_send(server,msg)
+1.3.  reg_send(server, msg)
 
    This function sends an Erlang term to a registered process. On success
    return 0.
@@ -789,7 +789,7 @@ Chapter 3. Developer Guide
      * ei_x_buff *msg - dynamic ei buffer with encoded erlang term. The
        msg must be encoded with version byte.
 
-1.4.  send(pid,msg)
+1.4.  send(pid, msg)
 
    This function sends an Erlang term to a process. On success return 0.
 
@@ -806,7 +806,7 @@ Chapter 3. Developer Guide
    Meaning of parameters is as follows:
      * ei_x_buff *msg - dynamic ei buffer with encoded erlang term.
 
-1.6.  xavp2xbuff(xbuff,xavp)
+1.6.  xavp2xbuff(xbuff, xavp)
 
    Function encodes XAVP variable into ei dynamic buffer. How to create
    XAVP variable see source code.
@@ -816,7 +816,7 @@ Chapter 3. Developer Guide
        encoded.
      * sr_xavp_t *xavp - XAVP variable to be encoded.
 
-1.7.  xbuff2xavp(xavp,xbuff)
+1.7.  xbuff2xavp(xavp, xbuff)
 
    Function decodes ei dynamic buffer into XAVP variable.
 

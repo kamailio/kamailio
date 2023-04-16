@@ -53,7 +53,6 @@
 #include "usrloc.h"
 #include "utime.h"
 #include "ul_callback.h"
-#include "usrloc.h"
 #include "bin_utils.h"
 #include "subscribe.h"
 #include "usrloc_db.h"

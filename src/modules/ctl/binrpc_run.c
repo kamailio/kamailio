@@ -22,6 +22,7 @@
 #include "binrpc.h"
 #include "../../core/dprint.h"
 #include "../../core/rpc.h"
+#include "../../core/rpc_lookup.h"
 #include "../../core/sr_module.h"
 #include "../../core/mem/mem.h"
 #include "../../core/clist.h"
@@ -614,10 +615,10 @@ error:
 /* params: buf, size     - buffer containing the packet
  *         bytes_needed  - int pointer, filled with how many bytes are still
  *                         needed (after bytes_needed new bytes received this
- *                         function will be called again 
+ *                         function will be called again
  *         reply,        - buffer where the reply will be written
  *         reply_len     - intially filled with the reply buffer len,
- *                         after the call will contain how much of that 
+ *                         after the call will contain how much of that
  *                         buffer was really used
  * returns: number of bytes processed on success/partial success
  *          -1 on error
@@ -627,9 +628,10 @@ int process_rpc_req(unsigned char* buf, int size, int* bytes_needed,
 {
 	int err;
 	struct binrpc_val val;
-	rpc_export_t* rpc_e;
+	rpc_exportx_t* rpc_e;
 	struct binrpc_ctx f_ctx;
 	struct binrpc_parse_ctx* ctx;
+	unsigned int rdata;
 
 	if(ksr_shutdown_phase()) {
 		/* during shutdown - no more RPC command handling */
@@ -666,7 +668,7 @@ int process_rpc_req(unsigned char* buf, int size, int* bytes_needed,
 		goto error;
 	}
 	/* now we have the entire packet */
-	
+
 	/* get rpc method */
 	val.type=BINRPC_T_STR;
 	f_ctx.in.s=binrpc_read_record(ctx, f_ctx.in.s, f_ctx.in.end, &val, 0, &err);
@@ -676,16 +678,20 @@ int process_rpc_req(unsigned char* buf, int size, int* bytes_needed,
 		rpc_fault(&f_ctx, 400, "bad request method: %s", binrpc_error(err) );
 		goto error;
 	}
-	
-	/* find_rpc_exports needs 0 terminated strings, but all str are
-	 * 0 term by default */
-	rpc_e=find_rpc_export(val.u.strval.s, 0);
-	if ((rpc_e==0) || (rpc_e->function==0)){
+
+	rpc_e = rpc_lookupx(val.u.strval.s, val.u.strval.len, &rdata);
+	if ((rpc_e==NULL) || (rpc_e->r.function==NULL)){
 		rpc_fault(&f_ctx, 500, "command %s not found", val.u.strval.s);
 		goto end;
 	}
+	if (rdata & RPC_EXEC_DELTA) {
+		LM_ERR("execution of command [%.*s] is limited by delta [%d]\n",
+				val.u.strval.len, val.u.strval.s, ksr_rpc_exec_delta);
+		rpc_fault(&f_ctx, 500, "Command Executed Too Fast");
+		goto end;
+	}
 	f_ctx.method=val.u.strval.s;
-	rpc_e->function(&binrpc_callbacks, &f_ctx);
+	rpc_e->r.function(&binrpc_callbacks, &f_ctx);
 	if (f_ctx.replied==0){
 		if ((binrpc_pkt_len(&f_ctx.out.pkt)==0)
 			&& f_ctx.err_code && f_ctx.err_phrase.s

@@ -416,7 +416,7 @@
 
 	<section>
 		<title>
-		<function moreinfo="none">ul_bind_ursloc( api )
+		<function moreinfo="none">ul_bind_ursloc(api)
 			</function>
 		</title>
 		<para>
@@ -435,7 +435,7 @@
 
 	<section>
 		<title>
-		<function moreinfo="none">ul_register_ulcb(type ,callback, param)
+		<function moreinfo="none">ul_register_ulcb(type, callback, param)
 			</function>
 		</title>
 		<para>

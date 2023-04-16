@@ -27,7 +27,6 @@
 #include "../../core/qvalue.h"
 #include "../../core/parser/contact/parse_contact.h"
 #include "../../core/utils/sruid.h"
-#include "../../core/qvalue.h"
 #include "rd_filter.h"
 #include "rd_funcs.h"
 

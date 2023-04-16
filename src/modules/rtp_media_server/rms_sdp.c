@@ -187,8 +187,11 @@ PayloadType *
 rms_payload_type_new() // This could be problematic as it must remain compatible with the constructor in MS2.
 {
 	PayloadType *newpayload = (PayloadType *)shm_malloc(sizeof(PayloadType));
-	newpayload->flags |= PAYLOAD_TYPE_ALLOCATED;
+	if(!newpayload) {
+		return NULL;
+	}
 	memset(newpayload, 0, sizeof(PayloadType));
+	newpayload->flags |= PAYLOAD_TYPE_ALLOCATED;
 	return newpayload;
 }
 
@@ -251,6 +254,9 @@ PayloadType *rms_sdp_select_payload(rms_sdp_info_t *sdp)
 	char *payloads = sdp->payloads.s;
 	char *payload_type_number = strtok(payloads, " ");
 
+	if (!pt) {
+		return NULL;
+	}
 	while (payload_type_number) {
 		pt->type = atoi(payload_type_number);
 		pt = rms_sdp_check_payload_type(pt, sdp);
@@ -259,7 +265,7 @@ PayloadType *rms_sdp_select_payload(rms_sdp_info_t *sdp)
 	}
 	if (!pt->mime_type) {
 		LM_INFO("unsuported codec\n");
-		if (pt) shm_free(pt); // payload_type_destroy(pt);
+		shm_free(pt); // payload_type_destroy(pt);
 		return NULL;
 	}
 	LM_INFO("payload_type:%d %s/%d/%d\n", pt->type, pt->mime_type,

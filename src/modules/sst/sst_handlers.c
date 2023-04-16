@@ -536,7 +536,7 @@ static void sst_dialog_response_fwded_CB(struct dlg_cell* did, int type,
 		/*
 		 * We need to get the method this reply is for from the CSEQ
 		 * body. The RFC states we can only play with 2XX from the
-		 * INVITE or reINVTE/UPDATE.
+		 * INVITE or reINVITE/UPDATE.
 		 */
 		if (!msg->cseq && ((parse_headers(msg, HDR_CSEQ_F, 0) == -1) || !msg->cseq)) {
 			LM_ERR("failed to parse CSeq\n");
@@ -630,7 +630,7 @@ int ki_sst_check_min(struct sip_msg *msg, int flag)
 		 * First see if there is an Session-Expires: header.  If there
 		 * is, also look for a MIN-SE: header. If there is, use the
 		 * minimum value of the two to compare with srt1. All MUST not
-		 * be less then 90 and 1800 is recomended. See RCF section 4.
+		 * be less than 90 and 1800 is recomended. See RCF section 4.
 		 */
 		if ((result = parse_session_expires(msg, &se)) != parse_sst_success) {
 			if (result != parse_sst_header_not_found) {

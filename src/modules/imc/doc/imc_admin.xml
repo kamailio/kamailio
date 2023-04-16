@@ -239,7 +239,7 @@ modparam("imc", "extra_hdrs", "P-Flags: 3\r\n")
 		<para>
 		If set to 1 and user requests to join a non-existing
 		room, the room will be automatically created. If set
-		to 0, joinin a non-existing room returns an error.
+		to 0, joining a non-existing room returns an error.
 		</para>
 		<para>
 		<emphasis>

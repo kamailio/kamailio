@@ -449,7 +449,7 @@ int lua_sr_list_script(sr_lua_load_t **list)
 
 /**
  * Mark script in pos to be reloaded
- * pos -1: reload all scritps
+ * pos -1: reload all scripts
  */
 int lua_sr_reload_script(int pos)
 {

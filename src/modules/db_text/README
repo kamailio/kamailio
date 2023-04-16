@@ -228,7 +228,7 @@ suser:supasswd:xxx:alpha.org:xxx
 4.1. db_mode (integer)
 
    Set caching mode (0) or non-caching mode (1). In caching mode, data is
-   loaded at startup. In non-caching mode, the module check every time a
+   loaded at startup. In non-caching mode, the module checks every time a
    table is requested whether the corresponding file on disk has changed,
    and if yes, will re-load the table from file.
 
@@ -426,7 +426,7 @@ loadmodule "modules/auth_db/auth_db.so"
 
 # use dbtext database for persistent storage
 modparam("usrloc", "db_mode", 2)
-modparam("usrloc|auth_db", "db_url", "db_text:///tmp/kamailiodb")
+modparam("usrloc|auth_db", "db_url", "text:///tmp/kamailiodb")
 
 # -- auth params --
 #
@@ -461,7 +461,7 @@ route{
     # use different transport protocol
     if (!method=="REGISTER") record_route();
 
-    # subsequent messages withing a dialog should take the
+    # subsequent messages within a dialog should take the
     # path determined by record-routing
     if (loose_route()) {
         # mark routing logic in request

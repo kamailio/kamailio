@@ -40,9 +40,7 @@
 #include "../../core/receive.h"
 #include "../../core/ip_addr.h"
 
-#include "../../core/receive.h"
 #include "../../core/globals.h"
-#include "../../core/route.h"
 #include "../../core/parser/msg_parser.h"
 #include "../../core/action.h"
 #include "../../core/script_cb.h"

@@ -150,7 +150,7 @@
         argument <symbol>attribute</symbol>.
       </para>
       <para>
-        If the destination URI is set, the request will be send to the
+        If the destination URI is set, the request will be sent to the
         address determined from that URI instead of the Request-URI. It
         will carried over into branches together with the Request-URI when a
         call to <serdoc:func>append_branch</serdoc:func> is made.
@@ -379,7 +379,7 @@
       </para>
       <para>
         Like <serdoc:func>set_sattr</serdoc:func>, it is identical to
-        assinging an string using the assignment operator and is
+        assinging a string using the assignment operator and is
         deprecated.
       </para>
     </refsect2>
@@ -421,7 +421,7 @@
         attribute does not yet exist, it is created.
       </para>
       <para>
-        This function is identical to assinging an string using the
+        This function is identical to assinging a string using the
         assignment operator and
         is only kept to retain compatibility with earlier versions of SER.
         It therefore is deprecated and may be removed in the future.

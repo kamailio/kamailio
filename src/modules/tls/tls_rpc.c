@@ -92,7 +92,7 @@ static void tls_reload(rpc_t* rpc, void* ctx)
 
  error:
 	tls_free_cfg(cfg);
-	
+
 }
 
 
@@ -279,7 +279,7 @@ static void tls_options(rpc_t* rpc, void* c)
 
 
 rpc_export_t tls_rpc[] = {
-	{"tls.reload", tls_reload, tls_reload_doc, 0},
+	{"tls.reload", tls_reload, tls_reload_doc, RPC_EXEC_DELTA},
 	{"tls.list",   tls_list,   tls_list_doc,   RET_ARRAY},
 	{"tls.info",   tls_info,   tls_info_doc, 0},
 	{"tls.options",tls_options, tls_options_doc, 0},

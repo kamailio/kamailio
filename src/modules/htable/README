@@ -1106,7 +1106,7 @@ if(sht_match_str_value("ha", "eq", "alice")) {
      * $shtrecord(attribute)
 
    Exported pseudo-variables are documented at
-   https://www.kamailio.org/wiki/.
+   https://www.kamailio.org/wikidocs/.
 
 6. RPC Commands
 

@@ -2762,7 +2762,7 @@ int tr_eval_val(struct sip_msg *msg, tr_param_t *tp, int subtype,
 	_tr_parse_sparamx(_p, _p0, _tp, _spec, _ps, _in, _s, 0)
 
 /*!
- * \brief Helper fuction to parse a string transformation
+ * \brief Helper function to parse a string transformation
  * \param in parsed string
  * \param t transformation
  * \return pointer to the end of the transformation in the string - '}', null on error
@@ -3340,7 +3340,7 @@ done:
 
 
 /*!
- * \brief Helper fuction to parse a URI transformation
+ * \brief Helper function to parse a URI transformation
  * \param in parsed string
  * \param t transformation
  * \return pointer to the end of the transformation in the string - '}', null on error
@@ -3463,7 +3463,7 @@ done:
 
 
 /*!
- * \brief Helper fuction to parse a parameter transformation
+ * \brief Helper function to parse a parameter transformation
  * \param in parsed string
  * \param t transformation
  * \return pointer to the end of the transformation in the string - '}', null on error
@@ -3590,7 +3590,7 @@ error:
 
 
 /*!
- * \brief Helper fuction to parse a name-address transformation
+ * \brief Helper function to parse a name-address transformation
  * \param in parsed string
  * \param t transformation
  * \return pointer to the end of the transformation in the string - '}', null on error
@@ -3643,7 +3643,7 @@ done:
 }
 
 /*!
- * \brief Helper fuction to parse a name-address transformation
+ * \brief Helper function to parse a name-address transformation
  * \param in parsed string
  * \param t transformation
  * \return pointer to the end of the transformation in the string - '}', null on error
@@ -3704,7 +3704,7 @@ done:
 }
 
 /*!
- * \brief Helper fuction to parse a line transformation
+ * \brief Helper function to parse a line transformation
  * \param in parsed string
  * \param t transformation
  * \return pointer to the end of the transformation in the string - '}', null on error
@@ -3799,7 +3799,7 @@ done:
 }
 
 /*!
- * \brief Helper fuction to parse urialias transformation
+ * \brief Helper function to parse urialias transformation
  * \param in parsed string
  * \param t transformation
  * \return pointer to the end of the transformation in the string - '}', null on error
@@ -3849,7 +3849,7 @@ done:
 
 
 /*!
- * \brief Helper fuction to parse val transformation
+ * \brief Helper function to parse val transformation
  * \param in parsed string
  * \param t transformation
  * \return pointer to the end of the transformation in the string - '}', null on error

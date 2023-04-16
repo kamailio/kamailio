@@ -292,7 +292,7 @@ request_route {
 
    For OpenSSL (libssl) v1.1.x, it is required to preload
    'openssl_mutex_shared' library shipped by Kamailio. For more details
-   see 'src/modules/tls/openssl_mutex_shared/README.md'.
+   see 'src/modules/tls/utils/openssl_mutex_shared/README.md'.
 
    This module includes several workarounds for various Openssl bugs (like
    compression and Kerberos using the wrong memory allocations functions,
@@ -402,8 +402,9 @@ make -C modules/tls extra_defs="-DTLS_WR_DEBUG -DTLS_RD_DEBUG"
 
    This documentation is incomplete. The provided selects are not
    documented in this file. A list with all the ones implemented by the
-   TLS module can be found in the Cookbook https://www.kamailio.org/wiki/
-   in the section Selects for the respective version of Kamailio.
+   TLS module can be found in the Cookbook
+   https://www.kamailio.org/wikidocs/ in the section Selects for the
+   respective version of Kamailio.
 
 8. Quick Certificate Howto
 
@@ -563,7 +564,7 @@ modparam("tls", "engine_config", "/usr/local/etc/kamailio/thales.cnf")
 modparam("tls", "engine_algorithms", "EC")
 ...
 
-/usr/local/etc/kamailio/thales.cnf is a OpenSSL config format file used to
+/usr/local/etc/kamailio/thales.cnf is an OpenSSL config format file used to
 bootstrap the engine, e.g., pass the PIN.
 
 ...
@@ -1507,7 +1508,7 @@ modparam("tls", "engine_algorithms", "ALL")
 
 10.35. engine_config (string)
 
-   A OpenSSL configuration file to initialize the engine. Typically used
+   An OpenSSL configuration file to initialize the engine. Typically used
    to send PIN to HSMs to unlock private keys. See the HSM howto for an
    example. This global param is not supported in the tls config file.
 
@@ -1642,6 +1643,10 @@ verify_client = optional_no_ca
    reload modparam() parameters. Note that existing active TLS connections
    are not terminated and they continue to use the old certificates. The
    new configuration will be used for new connections.
+
+   This RPC command is exported with "RPC_EXEC_DELTA" flag, therefore its
+   execution rate can be restricted to specific time intervals by setting
+   the "rpc_exec_delta" core parameter.
 
    Parameters:
      * None.

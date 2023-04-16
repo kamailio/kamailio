@@ -266,7 +266,7 @@
 
 		<para>
 		<emphasis>
-		registrarServer, redirectServer, proxyServer, userAgent, edgeproxyServer, sipcaptureServer,other
+		registrarServer, redirectServer, proxyServer, userAgent, edgeproxyServer, sipcaptureServer, other
 		</emphasis>
 		</para>
 
@@ -295,7 +295,7 @@ modparam("snmpstats", "sipEntityType", "proxyServer")
 		<para>
 		The SNMPStats module monitors the number of bytes waiting to be consumed by 
 		Kamailio.  If the number of bytes waiting to be consumed exceeds a minor
-		threshold, the SNMPStats module will send out an kamailioMsgQueueDepthMinorEvent
+		threshold, the SNMPStats module will send out a kamailioMsgQueueDepthMinorEvent
 		trap to signal that an alarm condition has occurred.  The minor threshold is set
 		with the MsgQueueMinorThreshold parameter.  
 		</para>
@@ -320,7 +320,7 @@ modparam("snmpstats", "MsgQueueMinorThreshold", 2000)
 		<para>
 		The SNMPStats module monitors the number of bytes waiting to be consumed by 
 		Kamailio.  If the number of bytes waiting to be consumed exceeds a major
-		threshold, the SNMPStats module will send out an kamailioMsgQueueDepthMajorEvent
+		threshold, the SNMPStats module will send out a kamailioMsgQueueDepthMajorEvent
 		trap to signal that an alarm condition has occurred.  The major threshold is set
 		with the MsgQueueMajorThreshold parameter.  
 		</para>
@@ -345,7 +345,7 @@ modparam("snmpstats", "MsgQueueMajorThreshold", 5000)
 		<para>
 		The SNMPStats module monitors the number of active dialogs.  If the number of
 		active dialogs exceeds a minor threshold, the SNMPStats module will send out 
-		an kamailioDialogLimitMinorEvent trap to signal that an alarm condition has 
+		a kamailioDialogLimitMinorEvent trap to signal that an alarm condition has 
 		occurred.  The minor threshold is set with the dlg_minor_threshold parameter.  
 		</para>
 
@@ -369,7 +369,7 @@ modparam("snmpstats", "MsgQueueMajorThreshold", 5000)
 		<para>
 		The SNMPStats module monitors the number of active dialogs.  If the number of
 		active dialogs exceeds a major threshold, the SNMPStats module will send out 
-		an kamailioDialogLimitMajorEvent trap to signal that an alarm condition has 
+		a kamailioDialogLimitMajorEvent trap to signal that an alarm condition has 
 		occurred.  The major threshold is set with the dlg_major_threshold parameter.  
 		</para>
 

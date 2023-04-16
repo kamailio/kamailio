@@ -22,7 +22,7 @@
 /** Defines:
  *           TM_ONREPLY_FINAL_DROP_OK - allows dropping the final reply
  *            from the tm onreply_routes, but comes with a small performance
- *            hit (extra unlock()/lock() for each final reply when a onreply
+ *            hit (extra unlock()/lock() for each final reply when an onreply
  *            route is set).
  */
 
@@ -47,7 +47,6 @@
 #include "../../core/route.h"
 #include "../../core/data_lump.h"
 #include "../../core/data_lump_rpl.h"
-#include "../../core/usr_avp.h"
 #include "../../core/usr_avp.h"
 #include "../../core/atomic_ops.h" /* membar_write() */
 #include "../../core/compiler_opt.h"
@@ -2615,7 +2614,7 @@ int reply_received( struct sip_msg  *p_msg )
 #ifdef USE_DST_BLOCKLIST
 		/* add temporary to the blocklist the source of a 503 reply */
 		if ( (msg_status==503) && cfg_get(tm, tm_cfg, tm_blst_503) &&
-				/* check if the request sent on the branch had the the
+				/* check if the request sent on the branch had the
 				 * blst 503 ignore flags set or it was set in the onreply_r*/
 				should_blocklist_su(BLST_503, &p_msg->fwd_send_flags,
 										p_msg->rcv.proto, &p_msg->rcv.src_su)

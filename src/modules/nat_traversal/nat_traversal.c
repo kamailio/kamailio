@@ -820,7 +820,7 @@ static bool test_private_via(struct sip_msg *msg)
 }
 
 
-// return the Expires header value (converted to an UNIX timestamp if > 0)
+// return the Expires header value (converted to a UNIX timestamp if > 0)
 static int get_expires(struct sip_msg *msg)
 {
 	exp_body_t *expires;

@@ -104,7 +104,54 @@ modparam("app_python3s", "load", "/usr/local/etc/kamailio/myscript.py")
 </programlisting>
 	    </example>
 	</section>
-
+	<section id="app_python3s.p.script_init">
+	    <title><varname>script_init</varname> (string)</title>
+	    <para>
+			The name of the Python function to be executed when the script is
+			loaded or reloaded.
+	    </para>
+	    <para>
+		<emphasis>
+			Default value is <quote></quote> (not set).
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>script_init</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("app_python3s", "script_init", "ksr_script_init")
+...
+def ksr_script_init():
+    KSR.info("init python script\n")
+    return 1
+...
+</programlisting>
+	    </example>
+	</section>
+	<section id="app_python3s.p.script_child_init">
+	    <title><varname>script_child_init</varname> (string)</title>
+	    <para>
+			The name of the Python function to be executed when &kamailio; forks
+			child processes at startup and when the script is reloaded.
+	    </para>
+	    <para>
+		<emphasis>
+			Default value is <quote></quote> (not set).
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>script_child_init</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("app_python3s", "script_child_init", "ksr_script_child_init")
+...
+def ksr_script_child_init():
+    KSR.info("child init python script\n")
+    return 1
+...
+</programlisting>
+	    </example>
+	</section>
 	</section>
 
     <section>
@@ -170,7 +217,7 @@ app_python3s_exec("my_python_function", "$rU");
 			<para>
 			Note that reload is done for the Python script provided as parameter
 			to this &kamailio; module. To reload the Python libraries imported
-			in this script, use something like:
+			in this script, leverage "script_init" and use something like:
             </para>
             <programlisting  format="linespecific">
 ...
@@ -179,7 +226,7 @@ import mod1
 import modN
 from importlib import reload
 
-def mod_init():
+def ksr_script_init():
     reload(mod1)
     ...
     reload(modN)
@@ -210,6 +257,27 @@ def mod_init():
 ...
             </programlisting>
         </section>
+	</section>
+
+	<section id="app_python3s.kemi_usage">
+        <title>KEMI Usage</title>
+            <para>
+			The module exports KEMI engine with id "python".
+			</para>
+            <para>
+            Example:
+            </para>
+            <programlisting  format="linespecific">
+...
+loadmodule "app_python3s.so"
+...
+cfgengine "python"
+...
+            </programlisting>
+            <para>
+			For more details about KEMI, see:
+			<ulink url="https://www.kamailio.org/docs/tutorials/devel/kamailio-kemi-framework/">https://www.kamailio.org/docs/tutorials/devel/kamailio-kemi-framework/</ulink>
+            </para>
 	</section>
 
 </chapter>

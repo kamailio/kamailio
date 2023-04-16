@@ -257,7 +257,7 @@ again:
 					BUG("kq_ev_change: kevent flush changes failed"
 							" (unexpected error): %s [%d]\n",
 							strerror(errno), errno);
-					/* ignore error even if it's not a EBADF/ENOENT */
+					/* ignore error even if it's not an EBADF/ENOENT */
 				/* one of the file descriptors is bad, probably already
 				   closed => try to apply changes one-by-one */
 				for (r = 0; r < h->kq_nchanges; r++) {

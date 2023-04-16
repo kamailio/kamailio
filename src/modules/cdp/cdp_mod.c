@@ -106,7 +106,7 @@ static int w_cdp_has_app(sip_msg_t *msg, char *appid, char *param);
  * - AAAGroupAVPS() - group a #AAA_AVP_LIST of #AAA_AVP into a grouped #AAA_AVP
  * - AAAUngroupAVPS() - ungroup a grouped #AAA_AVP into a #AAA_AVP_LIST of #AAA_AVP
  * - AAAFindMatchingAVPList() - find an #AAA_AVP inside a #AAA_AVP_LIST
- * - AAAFreeAVPList() - free the memory taken by the all members of #AAA_AVP_LIST
+ * - AAAFreeAVPList() - free the memory taken by all the members of #AAA_AVP_LIST
  * <p>
  * - AAAAddRequestHandler() - add a #AAARequestHandler_f callback to request being received
  * - AAAAddResponseHandler() - add a #AAAResponseHandler_f callback to responses being received

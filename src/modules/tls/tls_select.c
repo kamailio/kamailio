@@ -175,16 +175,16 @@ static int get_cert(X509** cert, struct tcp_connection** c, struct sip_msg* msg,
 		}
 		goto err;
 	}
-	
+
 	return 0;
-	
+
  err:
 	tcpconn_put(*c);
 	return -1;
 }
 
 
-static int get_cipher(str* res, sip_msg_t* msg) 
+static int get_cipher(str* res, sip_msg_t* msg)
 {
 	str cipher;
 	static char buf[1024];
@@ -237,7 +237,7 @@ static int pv_cipher(sip_msg_t* msg, pv_param_t* param, pv_value_t* res)
 }
 
 
-static int get_bits(str* res, long* i, sip_msg_t* msg) 
+static int get_bits(str* res, long* i, sip_msg_t* msg)
 {
 	str bits;
 	int b;
@@ -273,7 +273,7 @@ static int get_bits(str* res, long* i, sip_msg_t* msg)
 }
 
 
-static int sel_bits(str* res, select_t* s, sip_msg_t* msg) 
+static int sel_bits(str* res, select_t* s, sip_msg_t* msg)
 {
 	return get_bits(res, NULL, msg);
 }
@@ -367,7 +367,7 @@ static int get_desc(str* res, sip_msg_t* msg)
 
  err:
 	if (c) tcpconn_put(c);
-	return -1;	
+	return -1;
 }
 
 
@@ -406,7 +406,7 @@ static int get_cert_version(str* res, int local, sip_msg_t* msg)
 static int sel_cert_version(str* res, select_t* s, sip_msg_t* msg)
 {
 	int local;
-	
+
 	switch(s->params[s->n - 2].v.i) {
 	case CERT_PEER: local = 0; break;
 	case CERT_LOCAL: local = 1; break;
@@ -421,7 +421,7 @@ static int sel_cert_version(str* res, select_t* s, sip_msg_t* msg)
 static int pv_cert_version(sip_msg_t* msg, pv_param_t* param, pv_value_t* res)
 {
 	int local;
-	
+
 	if (param->pvn.u.isname.name.n & PV_CERT_PEER) {
 		local = 0;
 	} else if (param->pvn.u.isname.name.n & PV_CERT_LOCAL) {
@@ -485,7 +485,7 @@ static int check_cert(str* res, long* ires, int local, int err, sip_msg_t* msg)
 static int sel_check_cert(str* res, select_t* s, sip_msg_t* msg)
 {
 	int local, err;
-	
+
 	switch(s->params[s->n - 2].v.i) {
 	case CERT_PEER: local = 0; break;
 	case CERT_LOCAL: local = 1; break;
@@ -502,7 +502,7 @@ static int sel_check_cert(str* res, select_t* s, sip_msg_t* msg)
 	default:
 		BUG("Unexpected parameter value \"%d\"\n", s->params[s->n - 1].v.i);
 		return -1;
-	}   
+	}
 
 	return check_cert(res, NULL, local, err, msg);
 }
@@ -510,7 +510,7 @@ static int sel_check_cert(str* res, select_t* s, sip_msg_t* msg)
 static int pv_check_cert(sip_msg_t* msg, pv_param_t* param, pv_value_t* res)
 {
 	int err;
-	
+
 	switch (param->pvn.u.isname.name.n) {
 	case PV_CERT_VERIFIED:   err = X509_V_OK;                              break;
 	case PV_CERT_REVOKED:    err = X509_V_ERR_CERT_REVOKED;                break;
@@ -520,7 +520,7 @@ static int pv_check_cert(sip_msg_t* msg, pv_param_t* param, pv_value_t* res)
 		BUG("unexpected parameter value \"%ld\"\n", param->pvn.u.isname.name.n);
 		return pv_get_null(msg, param, res);
 	}
-	
+
 
 	if (check_cert(&res->rs, &res->ri, 0, err, msg) < 0) {
 		return pv_get_null(msg, param, res);
@@ -564,7 +564,7 @@ static int get_validity(str* res, int local, int bound, sip_msg_t* msg)
 		ERR("Error while printing certificate date/time\n");
 		goto err;
 	}
-	
+
 	BIO_get_mem_ptr(mem, &p);
 	if (p->length >= 1024) {
 		ERR("Date/time too long\n");
@@ -588,7 +588,7 @@ static int get_validity(str* res, int local, int bound, sip_msg_t* msg)
 static int sel_validity(str* res, select_t* s, sip_msg_t* msg)
 {
 	int local, bound;
-	
+
 	switch(s->params[s->n - 2].v.i) {
 	case CERT_PEER:  local = 0; break;
 	case CERT_LOCAL: local = 1; break;
@@ -612,7 +612,7 @@ static int sel_validity(str* res, select_t* s, sip_msg_t* msg)
 static int pv_validity(sip_msg_t* msg, pv_param_t* param, pv_value_t* res)
 {
 	int bound;
-	
+
 	switch (param->pvn.u.isname.name.n) {
 	case PV_CERT_NOTBEFORE: bound = NOT_BEFORE; break;
 	case PV_CERT_NOTAFTER:  bound = NOT_AFTER;  break;
@@ -624,7 +624,7 @@ static int pv_validity(sip_msg_t* msg, pv_param_t* param, pv_value_t* res)
 	if (get_validity(&res->rs, 0, bound, msg) < 0) {
 		return pv_get_null(msg, param, res);
 	}
-	
+
 	res->flags = PV_VAL_STR;
 	return 0;
 }
@@ -680,7 +680,7 @@ static int sel_sn(str* res, select_t* s, sip_msg_t* msg)
 static int pv_sn(sip_msg_t* msg, pv_param_t* param, pv_value_t* res)
 {
 	int local;
-	
+
 	if (param->pvn.u.isname.name.n & PV_CERT_PEER) {
 		local = 0;
 	} else if (param->pvn.u.isname.name.n & PV_CERT_LOCAL) {
@@ -689,11 +689,11 @@ static int pv_sn(sip_msg_t* msg, pv_param_t* param, pv_value_t* res)
 		BUG("could not determine certificate\n");
 		return pv_get_null(msg, param, res);
 	}
-	
+
 	if (get_sn(&res->rs, local, msg) < 0) {
 		return pv_get_null(msg, param, res);
 	}
-	
+
 	res->flags = PV_VAL_STR;
 	return 0;
 }
@@ -913,7 +913,7 @@ static int get_comp(str* res, int local, int issuer, int nid, sip_msg_t* msg)
 	int index, text_len;
 	char* elem;
 	unsigned char* text_s;
-	       
+
 	text_s = 0;
 
 	if (get_cert(&cert, &c, msg, local) < 0) return -1;
@@ -997,7 +997,7 @@ static int pv_comp(sip_msg_t* msg, pv_param_t* param, pv_value_t* res)
 	int ind_local, local = 0, issuer = 0, nid = NID_commonName;
 
 	/* copy callback value as we modify it */
-	ind_local = param->pvn.u.isname.name.n;	
+	ind_local = param->pvn.u.isname.name.n;
 	DBG("ind_local = %x", ind_local);
 
 	if (ind_local & PV_CERT_PEER) {
@@ -1125,7 +1125,7 @@ static int sel_alt(str* res, select_t* s, sip_msg_t* msg)
 			return -1;
 		}
 	}
-	
+
 	return get_alt(res, local, type, msg);
 }
 
@@ -1133,7 +1133,7 @@ static int sel_alt(str* res, select_t* s, sip_msg_t* msg)
 static int pv_alt(sip_msg_t* msg, pv_param_t* param, pv_value_t* res)
 {
 	int ind_local, local = 0, type = GEN_URI;
-	
+
 	ind_local = param->pvn.u.isname.name.n;
 
 	if (ind_local & PV_CERT_PEER) {
@@ -1160,7 +1160,7 @@ static int pv_alt(sip_msg_t* msg, pv_param_t* param, pv_value_t* res)
 	if (get_alt(&res->rs, local, type, msg) < 0) {
 		return pv_get_null(msg, param, res);
 	}
-	
+
 	res->flags = PV_VAL_STR;
 	return 0;
 }
@@ -1197,7 +1197,7 @@ static int get_tlsext_sn(str* res, sip_msg_t* msg)
 {
 	static char buf[1024];
 	struct tcp_connection* c;
-	str server_name;	
+	str server_name;
 	SSL* ssl;
 
 	c = get_cur_connection(msg);
@@ -1213,20 +1213,20 @@ static int get_tlsext_sn(str* res, sip_msg_t* msg)
 	server_name.s = (char*)SSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name);
 	if (server_name.s) {
 		server_name.len = strlen(server_name.s);
-		DBG("received server_name (TLS extension): '%.*s'\n", 
+		DBG("received server_name (TLS extension): '%.*s'\n",
 			STR_FMT(&server_name));
 	} else {
 		DBG("SSL_get_servername returned NULL\n");
 		goto error;
 	}
-	
+
 	/* copy server_name into the buffer. If the buffer is too small copy only
 	 * the last bytes as these are the more important ones and prefix with
 	 * '+' */
 	if (server_name.len > sizeof(buf)) {
 		ERR("server_name to big for buffer\n");
 		buf[0] = '+';
-		memcpy(buf + 1, server_name.s + 1 + server_name.len - sizeof(buf), 
+		memcpy(buf + 1, server_name.s + 1 + server_name.len - sizeof(buf),
 			   sizeof(buf) - 1);
 		res->len = sizeof(buf);
 	} else {
@@ -1234,10 +1234,10 @@ static int get_tlsext_sn(str* res, sip_msg_t* msg)
 		res->len = server_name.len;
 	}
 	res->s = buf;
-	
+
 	tcpconn_put(c);
 	return 0;
-	
+
 error:
 	if (c) tcpconn_put(c);
 	return -1;
@@ -1258,11 +1258,11 @@ static int pv_tlsext_sn(sip_msg_t* msg, pv_param_t* param, pv_value_t* res)
 			param->pvn.u.isname.name.n);
 		return pv_get_null(msg, param, res);
 	}
-	
+
 	if (get_tlsext_sn(&res->rs, msg) < 0) {
 		return pv_get_null(msg, param, res);
 	}
-	
+
 	res->flags = PV_VAL_STR;
 	return 0;
 }
@@ -1370,7 +1370,7 @@ error:
 select_row_t tls_sel[] = {
 	/* Current cipher parameters */
 	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("tls"), sel_tls, 0},
-	
+
 	{ sel_tls, SEL_PARAM_STR, STR_STATIC_INIT("version"),     sel_version, 0},
 	{ sel_tls, SEL_PARAM_STR, STR_STATIC_INIT("desc"),        sel_desc,    0},
 	{ sel_tls, SEL_PARAM_STR, STR_STATIC_INIT("description"), sel_desc,    0},
@@ -1383,9 +1383,9 @@ select_row_t tls_sel[] = {
 	{ sel_tls, SEL_PARAM_STR, STR_STATIC_INIT("my"),          sel_cert,    DIVERSION | CERT_LOCAL},
 	{ sel_tls, SEL_PARAM_STR, STR_STATIC_INIT("me"),          sel_cert,    DIVERSION | CERT_LOCAL},
 	{ sel_tls, SEL_PARAM_STR, STR_STATIC_INIT("myself"),      sel_cert,    DIVERSION | CERT_LOCAL},
-	
+
 	{ sel_cipher, SEL_PARAM_STR, STR_STATIC_INIT("bits"), sel_bits, 0},
-	
+
 	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("subject"), sel_name, DIVERSION | CERT_SUBJECT},
 	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("subj"),    sel_name, DIVERSION | CERT_SUBJECT},
 	{ sel_cert, SEL_PARAM_STR, STR_STATIC_INIT("issuer"),  sel_name, DIVERSION | CERT_ISSUER},

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2009 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -21,23 +21,23 @@
  * \author andrei
  */
 
-#ifndef __rpc_lookup_h
-#define __rpc_lookup_h
+#ifndef _RPC_LOOKUP_H_
+#define _RPC_LOOKUP_H_
 
 #include "rpc.h"
+
 /* must be exported for listing the rpcs */
-extern rpc_export_t** rpc_sarray;
+extern rpc_exportx_t** rpc_sarray;
 extern int rpc_sarray_crt_size;
 
 int init_rpcs(void);
 void destroy_rpcs(void);
 
 rpc_export_t* rpc_lookup(const char* name, int len);
+rpc_exportx_t* rpc_lookupx(const char* name, int len, unsigned int *rdata);
 int rpc_register(rpc_export_t* rpc);
 int rpc_register_array(rpc_export_t* rpc_array);
 
-
-
-#endif /*__rpc_lookup_h*/
+#endif /*_RPC_LOOKUP_H_*/
 
 /* vi: set ts=4 sw=4 tw=79:ai:cindent: */

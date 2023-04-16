@@ -358,7 +358,7 @@ st/scscf")
 
 3.18. contact_delete_delay (int)
 
-   If contact is put into delay delete state ,this is how long we delay
+   If contact is put into delay delete state, this is how long we delay
    before deleting
 
    Default value is 30

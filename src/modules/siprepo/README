@@ -10,7 +10,7 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright © 2022 asipto.com
+   Copyright Â© 2022 asipto.com
      __________________________________________________________________
 
    Table of Contents
@@ -103,7 +103,7 @@ Chapter 1. Admin Guide
    3.3. timer_interval (int)
    3.4. timer_procs (int)
 
-3.1. hash_size (int)
+3.1.  hash_size (int)
 
    Number of slots in the hash table. It should be power of 2.
 
@@ -114,7 +114,7 @@ Chapter 1. Admin Guide
 modparam("siprepo", "hash_size", 1024)
 ...
 
-3.2. expire (int)
+3.2.  expire (int)
 
    Number of seconds until the stored message content expires.
 
@@ -125,7 +125,7 @@ modparam("siprepo", "hash_size", 1024)
 modparam("siprepo", "expire", 240)
 ...
 
-3.3. timer_interval (int)
+3.3.  timer_interval (int)
 
    Number of seconds to run the timer routine.
 
@@ -136,7 +136,7 @@ modparam("siprepo", "expire", 240)
 modparam("siprepo", "timer_interval", 5)
 ...
 
-3.4. timer_procs (int)
+3.4.  timer_procs (int)
 
    Number of timer processes.
 
@@ -155,7 +155,7 @@ modparam("siprepo", "timer_procs", 2)
    4.4. sr_msg_rm(callid, msgid)
    4.5. sr_msg_check()
 
-4.1. sr_msg_push(msgid)
+4.1.  sr_msg_push(msgid)
 
    Push the message content to hash table and associate it with `msgid`.
    The Call-Id and msgid are needed to pull the message.
@@ -173,7 +173,7 @@ request_route {
 }
 ...
 
-4.2. sr_msg_pull(callid, msgid, rname)
+4.2.  sr_msg_pull(callid, msgid, rname)
 
    Pull the message content and execute the route block 'rname'.
 
@@ -189,7 +189,7 @@ request_route {
 }
 ...
 
-4.3. sr_msg_async_pull(callid, msgid, gname, rname)
+4.3.  sr_msg_async_pull(callid, msgid, gname, rname)
 
    Pull the message content and execute the route block 'rname' via async
    group 'gname'.
@@ -206,7 +206,7 @@ request_route {
 }
 ...
 
-4.4. sr_msg_rm(callid, msgid)
+4.4.  sr_msg_rm(callid, msgid)
 
    Remove the message content.
 
@@ -222,7 +222,7 @@ request_route {
 }
 ...
 
-4.5. sr_msg_check()
+4.5.  sr_msg_check()
 
    Check if the message is stored.
 

@@ -37,7 +37,6 @@
 #include "p_usrloc_mod.h"
 #include "../usrloc/ul_callback.h"
 #include "urecord.h"
-#include "ucontact.h"
 #include "ul_db_layer.h"
 #include "dlist.h"
 #include "config.h"
@@ -1467,7 +1466,7 @@ int update_ucontact(struct urecord* _r, ucontact_t* _c, ucontact_info_t* _ci)
 		/*
 		 * prevent problems when we're in a failover situation: the first DB contains
 		 * the complete location entries, the other misses some of them. Before the
-		 * update it checks for a entry in the first DB, this is ok. But the update
+		 * update it checks for an entry in the first DB, this is ok. But the update
 		 * in the second DB will not work. Thus the expire mechanism don't work, it
 		 * takes too long until both DBs have the same number of entries again.
 		 */

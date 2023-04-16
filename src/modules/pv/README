@@ -175,7 +175,7 @@ Chapter 1. Admin Guide
 
    This module collects the core pseudo-variables that can be used in
    configuration file. They are listed in wiki:
-   https://www.kamailio.org/wiki/ in Pseudo-Variables section
+   https://www.kamailio.org/wikidocs/ in Pseudo-Variables section
 
 2. Dependencies
 
@@ -441,7 +441,7 @@ xinfo("AFTER $xavp(d[2]=>x) == [d-2-x] $xavp(d[2]=>y) == [d-2-y]\n");
 
 4.8.  xavp_params_explode(sparams, xname)
 
-   Convert a parameters string in xavp atributes.
+   Convert a parameters string in xavp attributes.
 
    The first parameter has to be a string in the format of SIP header
    parameters (name1=value1;...;nameN=valueN). The second parameter is the
@@ -485,7 +485,7 @@ xavp_params_implode("x", "$var(out)");
 
 4.10.  xavu_params_explode(sparams, xname)
 
-   Convert a parameters string in xavu atributes.
+   Convert a parameters string in xavu attributes.
 
    The first parameter has to be a string in the format of SIP header
    parameters (name1=value1;...;nameN=valueN). The second parameter is the

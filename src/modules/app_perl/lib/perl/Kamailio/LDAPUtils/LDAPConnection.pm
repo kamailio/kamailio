@@ -134,7 +134,7 @@ sub ldap { return $_[0]->{'ldap'}; }
 
 perform an ldap search, return the dn of the first matching
 directory entry, unless a specific attribute has been requested,
-in wich case the values(s) fot this attribute are returned.
+in which case the values(s) fot this attribute are returned.
 
 When the first argument (conf) is a C<Kamailio::LDAPUtils::LDAPConnection>, it
 will be used to perform the queries. You can pass the first argument 

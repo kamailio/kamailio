@@ -339,7 +339,7 @@ struct sip_msg {
 		    <emphasis>REQUEST</emphasis> before it will be
 		    forwarded. The list will be processed when the request is
 		    being converted to character array (i.e. immediately before
-		    the request will be send out).
+		    the request will be sent out).
 		</para>
 	    </listitem>
 	    <listitem>
@@ -349,7 +349,7 @@ struct sip_msg {
 		    <emphasis>REPLY</emphasis> before it will be forwarded. the
 		    list will be processed when the reply is being converted to
 		    character array (i.e. immediately before the request will
-		    be send out).
+		    be sent out).
 		</para>
 	    </listitem>
 	    <listitem>

@@ -41,7 +41,7 @@
 	</para>
 	<para>
 	This module can be used for simple load-shedding, e.g. reply 5% of
-	the Invites with a 503 error and a adequate random Retry-After value.
+	the Invites with a 503 error and an adequate random Retry-After value.
 	</para>
 	<para>
 	The module provides as well functions to delay the execution of the
@@ -787,7 +787,7 @@ $ &kamcmd; cfgutils.reset_gflag 1
 		<section  id="cfgutils.rpc.is_gflag">
 			<title><function moreinfo="none">cfgutils.is_gflag</function></title>
 			<para>
-			Returns true if the all the flags from the bitmask are set.
+			Returns true if all the flags from the bitmask are set.
 			</para>
 			<para>
 			The parameter value must be a bitmask in decimal or hexadecimal format.

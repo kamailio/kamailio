@@ -121,10 +121,10 @@ Julien Klingenmeyer
 
         7. Functions
 
-              7.1. set_dlg_profile(profile,[value])
-              7.2. unset_dlg_profile(profile,[value])
-              7.3. is_in_profile(profile,[value])
-              7.4. get_profile_size(profile,[value],size)
+              7.1. set_dlg_profile(profile[, value])
+              7.2. unset_dlg_profile(profile[, value])
+              7.3. is_in_profile(profile[, value])
+              7.4. get_profile_size(profile[, value], size)
               7.5. dlg_isflagset(flag)
               7.6. dlg_setflag(flag)
               7.7. dlg_resetflag(flag)
@@ -378,10 +378,10 @@ Chapter 1. Admin Guide
 
    7. Functions
 
-        7.1. set_dlg_profile(profile,[value])
-        7.2. unset_dlg_profile(profile,[value])
-        7.3. is_in_profile(profile,[value])
-        7.4. get_profile_size(profile,[value],size)
+        7.1. set_dlg_profile(profile[, value])
+        7.2. unset_dlg_profile(profile[, value])
+        7.3. is_in_profile(profile[, value])
+        7.4. get_profile_size(profile[, value], size)
         7.5. dlg_isflagset(flag)
         7.6. dlg_setflag(flag)
         7.7. dlg_resetflag(flag)
@@ -461,14 +461,14 @@ Chapter 1. Admin Guide
    common application discussed for illustrative purposes; there are many
    others.
 
-   The dialog module provides dialog awareness for the Kamailio proxy.
-   It's functionality is to keep track of the current dialogs, to offer
+   The dialog module provides dialog awareness for the Kamailio proxy. Its
+   functionality is to keep track of the current dialogs, to offer
    information about them (e.g. how many dialogs are active), and to
    manage various characteristics of dialogs. The module exports several
    functions that can be used directly from the configuration route script
    as well as functions for the RPC interface.
 
-   This module also provides a API foundation on which to build more
+   This module also provides an API foundation on which to build more
    complex dialog-oriented functionality in other Kamailio modules.
 
 2. How it works
@@ -619,7 +619,7 @@ Chapter 1. Admin Guide
 6.1. enable_stats (integer)
 
    If statistics support should be enabled or not. Via statistics
-   variables, the module provide information about the dialog processing.
+   variables, the module provides information about the dialog processing.
    Set it to zero to disable or to non-zero to enable it.
 
    Default value is “1 (enabled)”.
@@ -663,7 +663,7 @@ modparam("dialog", "rr_param", "xyz")
 6.4. dlg_flag (integer)
 
    Flag to be used for marking if a dialog should be constructed for the
-   current request (this make sense only for initial requests).
+   current request (this makes sense only for initial requests).
 
    Note: it is not needed to set this parameter and its corresponding flag
    for initial request in case the “dlg_manage()” function is used. In
@@ -716,7 +716,7 @@ modparam("dialog", "early_timeout", 180)
 6.8. noack_timeout (integer)
 
    The timeout (in seconds) after which the dialogs which were answered
-   with 200ok but didn't receive the ACK are marked for termination (the
+   with 200 OK but didn't receive the ACK are marked for termination (the
    lifetime is set to 10 more seconds).
 
    Default value is “60 (1 minute)”.
@@ -1532,10 +1532,10 @@ modparam("dialog", "debug_variables", 1)
 
 7. Functions
 
-   7.1. set_dlg_profile(profile,[value])
-   7.2. unset_dlg_profile(profile,[value])
-   7.3. is_in_profile(profile,[value])
-   7.4. get_profile_size(profile,[value],size)
+   7.1. set_dlg_profile(profile[, value])
+   7.2. unset_dlg_profile(profile[, value])
+   7.3. is_in_profile(profile[, value])
+   7.4. get_profile_size(profile[, value], size)
    7.5. dlg_isflagset(flag)
    7.6. dlg_setflag(flag)
    7.7. dlg_resetflag(flag)
@@ -1557,7 +1557,7 @@ modparam("dialog", "debug_variables", 1)
    7.23. dlg_reset_property(attr)
    7.24. dlg_req_within(side, method, [headers], [content_type, content])
 
-7.1.  set_dlg_profile(profile,[value])
+7.1.  set_dlg_profile(profile[, value])
 
    Inserts the current dialog into a profile. Note that if the profile
    does not support values, they will be silently discarded. Also, there
@@ -1579,7 +1579,7 @@ set_dlg_profile("inbound_call");
 set_dlg_profile("caller","$fu");
 ...
 
-7.2.  unset_dlg_profile(profile,[value])
+7.2.  unset_dlg_profile(profile[, value])
 
    Removes the current dialog from a profile.
 
@@ -1598,7 +1598,7 @@ unset_dlg_profile("inbound_call");
 unset_dlg_profile("caller","$fu");
 ...
 
-7.3.  is_in_profile(profile,[value])
+7.3.  is_in_profile(profile[, value])
 
    Checks if the current dialog belongs to a profile. If the profile is
    defined with values, then the check is also matching with the specific
@@ -1618,7 +1618,7 @@ unset_dlg_profile("caller","$fu");
    Example 1.70. is_in_profile usage
 ...
 if (is_in_profile("inbound_call")) {
-        log("this request belongs to a inbound call\n");
+        log("this request belongs to an inbound call\n");
 }
 ...
 if (is_in_profile("caller","XX")) {
@@ -1626,7 +1626,7 @@ if (is_in_profile("caller","XX")) {
 }
 ...
 
-7.4.  get_profile_size(profile,[value],size)
+7.4.  get_profile_size(profile[, value], size)
 
    Returns the number of dialogs belonging to a profile. If the profile
    supports values, the check can be reinforced to take into account a
@@ -2398,7 +2398,7 @@ kamcmd dlg.bridge_dlg _from_ _to_ _op_
        been received.
      * connecting - initial INVITE was forwarded and rining or 1xx has
        been received.
-     * answering - initial INVITE received 200ok, but ACK was not handled
+     * answering - initial INVITE received 200 OK, but ACK was not handled
        yet.
      * ongoing - ongoing active dialog, after the ACK was processed.
      * all - all active dialogs, respectively the sum of the above values.

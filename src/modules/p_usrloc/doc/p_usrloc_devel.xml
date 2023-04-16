@@ -249,7 +249,7 @@
 			 Lookup the first and if needed the second key, and performs a query in one of the
 			 chosen databases. The returned handle _r_h must be used to free the result
 			 set after the usage of the returned database entries, otherwise a memory leak
-			 will occur.You must call ul_db_free_result before you can call ul_db_query again!
+			 will occur. You must call ul_db_free_result before you can call ul_db_query again!
 			</para>
 			<para>Meaning of the parameters is as follows:</para>
 			<itemizedlist>

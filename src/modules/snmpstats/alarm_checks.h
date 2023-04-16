@@ -45,7 +45,7 @@ int check_msg_queue_alarm(int threshold_to_compare_to);
  * otherwise. */
 int check_dialog_alarm(int threshold_to_compare_to);
 
-/*! This function will be called periodically from an Kamailio timer.  The first
+/*! This function will be called periodically from a Kamailio timer.  The first
  * time it is called, it will query KAMAILIO-MIB for configured thresholds.
  */
 void run_alarm_check(unsigned int ticks, void *attr);

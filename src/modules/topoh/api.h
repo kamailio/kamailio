@@ -29,10 +29,12 @@
 
 #include "../../core/sr_module.h"
 
+typedef int (*topoh_mask_callid_f)(str *icallid, str *ocallid);
 typedef int (*topoh_unmask_callid_f)(str *icallid, str *ocallid);
 
 
 typedef struct topoh_api {
+	topoh_mask_callid_f mask_callid;
 	topoh_unmask_callid_f unmask_callid;
 } topoh_api_t;
 

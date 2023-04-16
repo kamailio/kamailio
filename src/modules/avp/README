@@ -20,11 +20,11 @@ Michal Matyska
         1. Overview
         2. Functions
 
-              2.1. set_iattr(attribute,value)
+              2.1. set_iattr(attribute, value)
               2.2. flags2attr("$avp")
-              2.3. set_sattr(attribute,value)
+              2.3. set_sattr(attribute, value)
               2.4. print_attr($attribute)
-              2.5. attr2uri($attribute[,uri-part])
+              2.5. attr2uri($attribute[, uri-part])
               2.6. attr_exists(attribute)
               2.7. attr_equals(attribute, value)
               2.8. attr_equals_xl(attribute, xl_format)
@@ -73,11 +73,11 @@ Chapter 1. Admin Guide
    1. Overview
    2. Functions
 
-        2.1. set_iattr(attribute,value)
+        2.1. set_iattr(attribute, value)
         2.2. flags2attr("$avp")
-        2.3. set_sattr(attribute,value)
+        2.3. set_sattr(attribute, value)
         2.4. print_attr($attribute)
-        2.5. attr2uri($attribute[,uri-part])
+        2.5. attr2uri($attribute[, uri-part])
         2.6. attr_exists(attribute)
         2.7. attr_equals(attribute, value)
         2.8. attr_equals_xl(attribute, xl_format)
@@ -117,11 +117,11 @@ Chapter 1. Admin Guide
 
 2. Functions
 
-   2.1. set_iattr(attribute,value)
+   2.1. set_iattr(attribute, value)
    2.2. flags2attr("$avp")
-   2.3. set_sattr(attribute,value)
+   2.3. set_sattr(attribute, value)
    2.4. print_attr($attribute)
-   2.5. attr2uri($attribute[,uri-part])
+   2.5. attr2uri($attribute[, uri-part])
    2.6. attr_exists(attribute)
    2.7. attr_equals(attribute, value)
    2.8. attr_equals_xl(attribute, xl_format)
@@ -143,7 +143,7 @@ Chapter 1. Admin Guide
    2.24. hdr_body2attrs(headername, prefix)
    2.25. hdr_body2attrs2(headername, prefix)
 
-2.1. set_iattr(attribute,value)
+2.1. set_iattr(attribute, value)
 
    Create an AVP of type integer.
 
@@ -165,7 +165,7 @@ set_iattr("fr_inv_timer", "60")
 flags2attr("$msg_flags")
 ...
 
-2.3. set_sattr(attribute,value)
+2.3. set_sattr(attribute, value)
 
    Create an AVP of type string.
 
@@ -185,7 +185,7 @@ set_sattr("called_number", "1234")
    Meaning of the parameter is as follows:
      * attribute - The name of the AVP.
 
-2.5. attr2uri($attribute[,uri-part])
+2.5. attr2uri($attribute[, uri-part])
 
    Rewrite the whole Request-URI of the message being processed with the
    value of an AVP, or if an uri-part is specified, rewrite only that

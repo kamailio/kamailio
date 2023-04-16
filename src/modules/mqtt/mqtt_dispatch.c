@@ -384,7 +384,7 @@ void mqtt_on_message(struct mosquitto *mosquitto, void *userdata, const struct m
 }
 
 /**
- * Invoke a event route block
+ * Invoke an event route block
  */
 int mqtt_run_cfg_route(int rt, str *rtname, sip_msg_t *fake_msg)
 {

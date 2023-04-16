@@ -1,4 +1,4 @@
-/* 
+/*
  * TLS module
  *
  * Copyright (C) 2010 iptelorg GmbH
@@ -52,7 +52,7 @@ inline static int tls_ct_q_add(tls_ct_q** ct_q, const void* data,
 								unsigned int size, unsigned int min_buf_size)
 {
 	tls_ct_q* q;
-	
+
 	q = *ct_q;
 	if (likely(q == 0)){
 		q=shm_malloc(sizeof(tls_ct_q));
@@ -70,7 +70,7 @@ error:
 
 /**
  * @brief Destroy a buffer queue
- * 
+ *
  * Everything is destroyed from a buffer queue (shm_free()'d), included the queue head.
  * @warning it does no attempt to synchronize access/lock. If needed it should
  * be called under lock.
@@ -80,7 +80,7 @@ error:
 inline static unsigned int tls_ct_q_destroy(tls_ct_q** ct_q)
 {
 	unsigned int ret;
-	
+
 	ret = 0;
 	if (likely(ct_q && *ct_q)) {
 		ret = sbufq_destroy(*ct_q);
@@ -94,8 +94,8 @@ inline static unsigned int tls_ct_q_destroy(tls_ct_q** ct_q)
 
 /**
  * @brief Tries to flush the tls clear text queue
- * 
- * Tries to flush as much as possible from the given queue, using the 
+ *
+ * Tries to flush as much as possible from the given queue, using the
  * given callback.
  * @warning it does no attempt to synchronize access/lock. If needed it should
  * be called under lock.

@@ -31,7 +31,7 @@
  * \defgroup siputils SIPUTILS :: Various SIP message handling functions
  *
  *
- *  This module implement various functions and checks related to
+ *  This module implements various functions and checks related to
  *  SIP message handling and URI handling.
  *
  *  This module provides a function to answer OPTIONS requests

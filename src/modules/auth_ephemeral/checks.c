@@ -32,7 +32,6 @@
 #include "../../core/parser/digest/digest.h"
 #include "../../core/parser/parse_from.h"
 #include "../../core/parser/parse_uri.h"
-#include "../../core/mod_fix.h"
 
 #include "auth_ephemeral_mod.h"
 #include "authorize.h"

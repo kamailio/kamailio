@@ -81,7 +81,7 @@ and commit history, there are several *rules* required for each contribution.
 
 Please create the commit messages following the GIT convention:
 
-  * start with one short line, preferably less then 50 chars summarizing the
+  * start with one short line, preferably less than 50 chars summarizing the
   changes (this is referred later as "first line of the commit message")
   * then one empty line
   * then a more detailed description (the "commit message content")
@@ -207,7 +207,7 @@ etc: kamailio.cfg - set load_backends to 1 for permissions module
   * http://www.tpope.net/node/106
 
 The above content about commit message format is taken from Kamailio wiki page:
-  * https://www.kamailio.org/wiki/devel/git-commit-guidelines
+  * https://www.kamailio.org/wikidocs/devel/git-commit-guidelines
   * it is recommended you read that one as well.
 
 ### Developer Access ###

@@ -99,6 +99,7 @@ typedef struct _peer_t{
 	str realm;				/**< Realm of the peer */
 	int port;				/**< TCP Port of the peer */
 	str src_addr;			/**< IP Address used to connect to the peer */
+	str proto;			/**< IP Protocol (SCTP|TCP) */
 
 	app_config *applications;/**< list of supported applications */
 	int applications_max;	/**< size of list of supporter applications*/
@@ -127,7 +128,7 @@ typedef struct _peer_t{
 	struct _peer_t *prev;	/**< previous peer in the peer list */
 } peer;
 
-peer* new_peer(str fqdn,str realm,int port,str src_addr);
+peer* new_peer(str fqdn,str realm,int port,str src_addr,str proto);
 void free_peer(peer *x,int locked);
 
 void touch_peer(peer *p);

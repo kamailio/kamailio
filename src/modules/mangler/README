@@ -68,7 +68,7 @@ Chapter 1. Admin Guide
 Warning
 
    The first character of this field must be set to a value which is not
-   used inside username, password or other fields of contact.Otherwise it
+   used inside username, password or other fields of contact. Otherwise it
    is possible for the decoding step to fail/produce wrong results.
 
    Default value is "*".

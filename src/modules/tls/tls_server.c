@@ -35,7 +35,6 @@
 #include "../../core/pt.h"
 #include "../../core/timer.h"
 #include "../../core/globals.h"
-#include "../../core/pt.h"
 #include "../../core/tcp_int_send.h"
 #include "../../core/tcp_read.h"
 #include "../../core/cfg/cfg.h"
@@ -606,7 +605,7 @@ static int tls_shutdown(struct tcp_connection *c)
 		DBG("TLS shutdown successful\n");
 		return 0;
 	} else if (ret == 0) {
-		DBG("First phase of 2-way handshake completed succesfuly\n");
+		DBG("First phase of 2-way handshake completed successfully\n");
 		return 0;
 	} else {
 		err = SSL_get_error(ssl, ret);

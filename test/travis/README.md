@@ -31,7 +31,7 @@ $ docker run \
 ```
 
 One can always [login](./README.md#login-inside-the-build-environment) inside
-the container and build everything [manually](http://www.kamailio.org/wiki/install/devel/git#compile_kamailio)
+the container and build everything [manually](https://www.kamailio.org/wikidocs/install/devel/git#compile_kamailio)
 
 Clean Sources
 -------------

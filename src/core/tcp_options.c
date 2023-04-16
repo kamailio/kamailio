@@ -393,7 +393,7 @@ void tcp_options_get(struct cfg_group_tcp* t)
 
 
 /** register tcp config into the configuration framework.
- *  @return 0 on succes, -1 on error*/
+ *  @return 0 on success, -1 on error*/
 int tcp_register_cfg()
 {
 	if (cfg_declare("tcp", tcp_cfg_def, &tcp_default_cfg, cfg_sizeof(tcp),

@@ -30,7 +30,6 @@
 #include "java_iface.h"
 #include "utils.h"
 #include "app_java_mod.h"
-#include "java_iface.h"
 #include "java_support.h"
 #include "java_native_methods.h"
 #include "java_msgobj.h"

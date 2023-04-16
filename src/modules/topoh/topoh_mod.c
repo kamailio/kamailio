@@ -82,6 +82,7 @@ int th_param_mask_mode = 0;
 int th_sanity_checks = 0;
 int th_uri_prefix_checks = 0;
 int th_mask_addr_myself = 0;
+int _th_use_mode = 0;
 
 sanity_api_t scb;
 
@@ -116,6 +117,7 @@ static param_export_t params[]={
 	{"uri_prefix_checks",	PARAM_INT, &th_uri_prefix_checks},
 	{"event_callback",	PARAM_STR, &_th_eventrt_callback},
 	{"event_mode",		PARAM_INT, &_th_eventrt_mode},
+	{"use_mode",		PARAM_INT, &_th_use_mode},
 	{0,0,0}
 };
 
@@ -146,6 +148,12 @@ static int mod_init(void)
 {
 	sip_uri_t puri;
 	char buri[MAX_URI_SIZE];
+
+	if(_th_use_mode==1) {
+		/* use in library mode, not for processing sip messages */
+		th_mask_init();
+		return 0;
+	}
 
 	_th_eventrt_outgoing = route_lookup(&event_rt, _th_eventrt_outgoing_name.s);
 	if(_th_eventrt_outgoing<0
@@ -632,6 +640,7 @@ int bind_topoh(topoh_api_t* api)
 	}
 
 	memset(api, 0, sizeof(topoh_api_t));
+	api->mask_callid = th_mask_callid_str;
 	api->unmask_callid = th_unmask_callid_str;
 
 	return 0;

@@ -28,7 +28,6 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h> 
-#include <string.h>
 
 /* memory management */
 #include "../../core/mem/mem.h"
@@ -275,7 +274,7 @@ int diameter_is_user_in(struct sip_msg* _m, char* _hf, char* _group)
 	AAAPrintMessage(req);
 #endif
 
-	/* build a AAA message buffer */
+	/* build an AAA message buffer */
 	if(AAABuildMsgBuffer(req) != AAA_ERR_SUCCESS)
 	{
 		LM_ERR("message buffer not created\n");

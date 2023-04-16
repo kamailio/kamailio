@@ -1,4 +1,4 @@
-/** 
+/**
  * Copyright (c) 2014 rxi
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -60,7 +60,7 @@ static void map_addnode(map_base_t *m, map_node_t *node) {
 static int map_resize(map_base_t *m, int nbuckets) {
   map_node_t *nodes, *node, *next;
   map_node_t **buckets;
-  int i; 
+  int i;
   /* Chain all nodes together */
   nodes = NULL;
   i = m->nbuckets;

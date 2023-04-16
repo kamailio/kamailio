@@ -25,7 +25,6 @@
 #include "../../core/dprint.h"
 #include "../../core/ut.h"
 #include "../../lib/srdb1/db.h"
-#include "../../core/dprint.h"
 #include "../../core/config.h"
 #include "../../core/socket_info.h"
 #include "../../modules/tm/dlg.h"
@@ -352,7 +351,7 @@ int dlg_terminate(struct dlg_cell *dlg, struct sip_msg *msg, str *reason, int si
 		{
 			//well this is the transaction of a subsequent request within the dialog
 			//and the dialog is not confirmed yet, so its a PRACK or an UPDATE
-			//could also be an options, but the important thing is how am i going to get
+			//could also be an option, but the important thing is how am i going to get
 			//the transaction of the invite, that is the one i have to cancel
 			LM_WARN("this is not my transaction so where am i?\n");
                         return 1; //TODO - need to check why we got in here once before? this crashed on t_reply as t seemed invalid

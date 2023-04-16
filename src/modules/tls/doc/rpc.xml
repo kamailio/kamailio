@@ -58,6 +58,11 @@
 			terminated and they continue to use the old certificates. The new configuration
 			will be used for new connections.
 		</para>
+		<para>
+			This RPC command is exported with "RPC_EXEC_DELTA" flag, therefore its
+			execution rate can be restricted to specific time intervals by setting
+			the "rpc_exec_delta" core parameter.
+		</para>
 		<para>Parameters: </para>
                 <itemizedlist>
                         <listitem><para>

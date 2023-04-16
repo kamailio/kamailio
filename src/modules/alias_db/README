@@ -42,8 +42,8 @@ Daniel-Constantin Mierla
 
         4. Functions
 
-              4.1. alias_db_lookup(table_name [,flags])
-              4.2. alias_db_find( table_name , input, output [,flags] )
+              4.1. alias_db_lookup(table_name[, flags])
+              4.2. alias_db_find(table_name, input, output[, flags])
 
    List of Examples
 
@@ -81,8 +81,8 @@ Chapter 1. Admin Guide
 
    4. Functions
 
-        4.1. alias_db_lookup(table_name [,flags])
-        4.2. alias_db_find( table_name , input, output [,flags] )
+        4.1. alias_db_lookup(table_name[, flags])
+        4.2. alias_db_find(table_name, input, output[, flags])
 
 1. Overview
 
@@ -219,10 +219,10 @@ modparam("alias_db", "append_branches", 1)
 
 4. Functions
 
-   4.1. alias_db_lookup(table_name [,flags])
-   4.2. alias_db_find( table_name , input, output [,flags] )
+   4.1. alias_db_lookup(table_name[, flags])
+   4.2. alias_db_find(table_name, input, output[, flags])
 
-4.1.  alias_db_lookup(table_name [,flags])
+4.1.  alias_db_lookup(table_name[, flags])
 
    The function takes the R-URI and search to see whether it is an alias
    or not. If it is an alias for a local user, the R-URI is replaced with
@@ -254,7 +254,7 @@ alias_db_lookup("dbaliases", "rd");
 alias_db_lookup("dba_$(rU{s.substr,0,1})");
 ...
 
-4.2.  alias_db_find( table_name , input, output [,flags] )
+4.2.  alias_db_find(table_name, input, output[, flags])
 
    The function is very similar to alias_db_lookup(), but instead of using
    fixed input (RURI) and output (RURI) is able to get the input SIP URI

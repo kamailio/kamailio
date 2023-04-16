@@ -75,7 +75,7 @@ if [ "$ret" -eq 0 ] ; then
 					grep "Contact header field present" $TMPFILE > /dev/null
 					ret=$?
 					if [ "$ret" -eq 0 ] ; then
-						grep "this is an registration" $TMPFILE > /dev/null
+						grep "this is a registration" $TMPFILE > /dev/null
 						ret=$?
 						if [ "$ret" -eq 0 ] ; then
 							grep "this is an unregistration" $TMPFILE > /dev/null

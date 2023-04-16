@@ -42,7 +42,7 @@ tree root /                \ - 142
 	</listitem>
 	<listitem>
 	    <para>
-		After x more hits, the <quote>175</quote> node is build; the hits of
+		After x more hits, the <quote>175</quote> node is built; the hits of
 		<quote>193</quote> node are split between itself and its child--both of them gone
 		have x/2.
 	    </para>

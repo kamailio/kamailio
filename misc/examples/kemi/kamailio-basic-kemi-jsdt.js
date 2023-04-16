@@ -17,7 +17,7 @@ var FLB_NATSIPPING=7
 // equivalent of request_route{}
 function ksr_request_route()
 {
-	// KSR.sl.sl_send_reply(100,"Intelligent trying");
+	// KSR.sl.sl_send_reply(100, "Intelligent trying");
 	// KSR.info("===== request - from kamailio javascript script\n");
 
 	// per request initial checks
@@ -34,11 +34,6 @@ function ksr_request_route()
 		return;
 	}
 
-	// handle requests within SIP dialogs
-	ksr_route_withindlg();
-
-	// -- only initial requests (no To tag)
-
 	// handle retransmissions
 	if (!KSR.is_ACK()) {
 		if (KSR.tmx.t_precheck_trans()>0) {
@@ -47,6 +42,11 @@ function ksr_request_route()
 		}
 		if (KSR.tm.t_check_trans()==0) { return; }
 	}
+
+	// handle requests within SIP dialogs
+	ksr_route_withindlg();
+
+	// -- only initial requests (no To tag)
 
 	// authentication
 	ksr_route_auth();
@@ -135,25 +135,26 @@ function ksr_route_reqinit()
 	if (KSR.corex.has_user_agent()>0) {
 		var UA = KSR.kx.gete_ua();
 		if (UA.indexOf("friendly")>=0 || UA.indexOf("scanner")>=0
-				|| UA.indexOf("sipcli")>=0 || UA.indexOf("sipvicious")>=0) {
+				|| UA.indexOf("sipcli")>=0 || UA.indexOf("sipvicious")>=0
+				|| UA.indexOf("VaxSIPUserAgent")>=0 || UA.indexOf("pplsip")>= 0) {
 			KSR.sl.sl_send_reply(200, "OK");
 			KSR.x.exit();
 		}
 	}
 
 	if (KSR.maxfwd.process_maxfwd(10) < 0) {
-		KSR.sl.sl_send_reply(483,"Too Many Hops");
+		KSR.sl.sl_send_reply(483, "Too Many Hops");
 		KSR.x.exit();
 	}
 
 	if (KSR.is_OPTIONS()
 			&& KSR.is_myself_ruri()
 			&& KSR.corex.has_ruri_user() < 0) {
-		KSR.sl.sl_send_reply(200,"Keepalive");
+		KSR.sl.sl_send_reply(200, "Keepalive");
 		KSR.x.exit();
 	}
 
-	if (KSR.sanity.sanity_check(1511, 7)<0) {
+	if (KSR.sanity.sanity_check(17895, 7)<0) {
 		KSR.err("Malformed SIP message from "
 				+ KSR.kx.get_srcip() + ":" + KSR.kx.get_srcport() + "\n");
 		KSR.x.exit();
@@ -166,7 +167,7 @@ function ksr_route_withindlg()
 {
 	if (KSR.siputils.has_totag()<0) { return; }
 
-	// sequential request withing a dialog should
+	// sequential request within a dialog should
 	// take the path determined by record-routing
 	if (KSR.rr.loose_route()>0) {
 		ksr_route_dlguri();
@@ -265,7 +266,7 @@ function ksr_route_auth()
 	// a local destination, otherwise deny, not an open relay here
 	if ((!KSR.is_myself_furi())
 			&& (!KSR.is_myself_ruri())) {
-		KSR.sl.sl_send_reply(403,"Not relaying");
+		KSR.sl.sl_send_reply(403, "Not relaying");
 		KSR.x.exit();
 	}
 

@@ -7,16 +7,16 @@ notes for previous versions are posted below.
 
 For releases after 3.1, please visit:
 
-https://www.kamailio.org/wiki/features/new-in-5.2.x
-https://www.kamailio.org/wiki/features/new-in-5.1.x
-https://www.kamailio.org/wiki/features/new-in-5.0.x
-http://www.kamailio.org/wiki/features/new-in-4.4.x
-http://www.kamailio.org/wiki/features/new-in-4.3.x
-http://www.kamailio.org/wiki/features/new-in-4.2.x
-http://www.kamailio.org/wiki/features/new-in-4.1.x
-http://www.kamailio.org/wiki/features/new-in-4.0.x
-http://www.kamailio.org/wiki/features/new-in-3.3.x
-http://www.kamailio.org/wiki/features/new-in-3.2.x
+https://www.kamailio.org/wikidocs/features/new-in-5.2.x
+https://www.kamailio.org/wikidocs/features/new-in-5.1.x
+https://www.kamailio.org/wikidocs/features/new-in-5.0.x
+https://www.kamailio.org/wikidocs/features/new-in-4.4.x
+https://www.kamailio.org/wikidocs/features/new-in-4.3.x
+https://www.kamailio.org/wikidocs/features/new-in-4.2.x
+https://www.kamailio.org/wikidocs/features/new-in-4.1.x
+https://www.kamailio.org/wikidocs/features/new-in-4.0.x
+https://www.kamailio.org/wikidocs/features/new-in-3.3.x
+https://www.kamailio.org/wikidocs/features/new-in-3.2.x
 
 Earlier verisons are listed below.
 ===================================================
@@ -924,7 +924,7 @@ core:
                        Only a limited number of commands are allowed (drop, if
                        + all the checks, msg flag manipulations, send(), log(),
                        textops::search()). In this route the final destination
-                       of the message is available an can be checked (with
+                       of the message is available and can be checked (with
                        snd_ip, snd_port, to_ip, to_port, snd_proto, snd_af).
                        This route is executed only when forwarding requests.
                        It's not executed for replies, retransmissions, or

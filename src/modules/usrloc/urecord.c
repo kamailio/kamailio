@@ -39,7 +39,6 @@
 #include "usrloc.h"
 #include "utime.h"
 #include "ul_callback.h"
-#include "usrloc.h"
 
 /*! contact matching mode */
 int ul_matching_mode = CONTACT_ONLY;

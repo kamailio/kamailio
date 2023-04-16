@@ -16,7 +16,7 @@
 	<section>
 	<title>Overview</title>
 	<para>
-		This module provides a way to identify calls using a increasing sequence
+		This module provides a way to identify calls using an increasing sequence
 		of integers.
 	</para>
 	<para>

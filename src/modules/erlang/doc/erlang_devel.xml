@@ -30,7 +30,7 @@
 		</section>
 		<section>
 			<title>
-				<function moreinfo="none">rpc(reply,module,function,args)</function>
+				<function moreinfo="none">rpc(reply, module, function, args)</function>
 			</title>
 			<para>
 				This function supports calling Erlang functions on remote nodes. On success function returns 0.
@@ -53,7 +53,7 @@
 		</section>
 		<section>
 			<title>
-				<function moreinfo="none">reg_send(server,msg)</function>
+				<function moreinfo="none">reg_send(server, msg)</function>
 			</title>
 			<para>
 				This function sends an Erlang term to a registered process. On success return 0.
@@ -72,7 +72,7 @@
 		</section>
 		<section>
 			<title>
-				<function moreinfo="none">send(pid,msg)</function>
+				<function moreinfo="none">send(pid, msg)</function>
 			</title>
 			<para>
 				This function sends an Erlang term to a process. On success return 0.
@@ -106,7 +106,7 @@
 		</section>
 		<section>
 			<title>
-				<function moreinfo="none">xavp2xbuff(xbuff,xavp)</function>
+				<function moreinfo="none">xavp2xbuff(xbuff, xavp)</function>
 			</title>
 			<para>
 				Function encodes XAVP variable into ei dynamic buffer. How to create XAVP variable
@@ -125,7 +125,7 @@
 		</section>
 		<section>
 			<title>
-				<function moreinfo="none">xbuff2xavp(xavp,xbuff)</function>
+				<function moreinfo="none">xbuff2xavp(xavp, xbuff)</function>
 			</title>
 			<para>
 				Function decodes ei dynamic buffer into XAVP variable.

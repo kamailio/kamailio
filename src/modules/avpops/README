@@ -39,18 +39,18 @@ Ramona-Elena Modroiu
 
         5. Functions
 
-              5.1. avp_db_load(source,name)
-              5.2. avp_db_store(source,name)
-              5.3. avp_db_delete(source,name)
-              5.4. avp_db_query(query[,dest])
+              5.1. avp_db_load(source, name)
+              5.2. avp_db_store(source, name)
+              5.3. avp_db_delete(source, name)
+              5.4. avp_db_query(query[, dest])
               5.5. avp_delete(name)
-              5.6. avp_pushto(destination,name)
-              5.7. avp_check(name,op_value)
-              5.8. avp_copy(old_name,new_name)
+              5.6. avp_pushto(destination, name)
+              5.7. avp_check(name, op_value)
+              5.8. avp_copy(old_name, new_name)
               5.9. avp_printf(dest, format)
               5.10. avp_subst(avps, subst)
               5.11. avp_subst_pv(avps, subst)
-              5.12. avp_op(name,op_value)
+              5.12. avp_op(name, op_value)
               5.13. is_avp_set(name)
               5.14. avp_print()
 
@@ -108,18 +108,18 @@ Chapter 1. Admin Guide
 
    5. Functions
 
-        5.1. avp_db_load(source,name)
-        5.2. avp_db_store(source,name)
-        5.3. avp_db_delete(source,name)
-        5.4. avp_db_query(query[,dest])
+        5.1. avp_db_load(source, name)
+        5.2. avp_db_store(source, name)
+        5.3. avp_db_delete(source, name)
+        5.4. avp_db_query(query[, dest])
         5.5. avp_delete(name)
-        5.6. avp_pushto(destination,name)
-        5.7. avp_check(name,op_value)
-        5.8. avp_copy(old_name,new_name)
+        5.6. avp_pushto(destination, name)
+        5.7. avp_check(name, op_value)
+        5.8. avp_copy(old_name, new_name)
         5.9. avp_printf(dest, format)
         5.10. avp_subst(avps, subst)
         5.11. avp_subst_pv(avps, subst)
-        5.12. avp_op(name,op_value)
+        5.12. avp_op(name, op_value)
         5.13. is_avp_set(name)
         5.14. avp_print()
 
@@ -131,7 +131,7 @@ Chapter 1. Admin Guide
    implementing services/preferences per user/domain. With this module,
    they are usable directly from configuration script.
 
-   The module implement functions for interfacing DB resources
+   The module implements functions for interfacing DB resources
    (loading/storing/removing), functions for swapping information between
    AVPs and SIP messages and a function for testing/checking the value of
    an AVP.
@@ -338,22 +338,22 @@ modparam("avpops","db_scheme",
 
 5. Functions
 
-   5.1. avp_db_load(source,name)
-   5.2. avp_db_store(source,name)
-   5.3. avp_db_delete(source,name)
-   5.4. avp_db_query(query[,dest])
+   5.1. avp_db_load(source, name)
+   5.2. avp_db_store(source, name)
+   5.3. avp_db_delete(source, name)
+   5.4. avp_db_query(query[, dest])
    5.5. avp_delete(name)
-   5.6. avp_pushto(destination,name)
-   5.7. avp_check(name,op_value)
-   5.8. avp_copy(old_name,new_name)
+   5.6. avp_pushto(destination, name)
+   5.7. avp_check(name, op_value)
+   5.8. avp_copy(old_name, new_name)
    5.9. avp_printf(dest, format)
    5.10. avp_subst(avps, subst)
    5.11. avp_subst_pv(avps, subst)
-   5.12. avp_op(name,op_value)
+   5.12. avp_op(name, op_value)
    5.13. is_avp_set(name)
    5.14. avp_print()
 
-5.1.  avp_db_load(source,name)
+5.1.  avp_db_load(source, name)
 
    Loads from DB into memory the AVPs corresponding to the given source.
    If given, it sets the script flags for loaded AVPs. It returns true if
@@ -391,7 +391,7 @@ avp_db_load("$uuid","$avp(s:404fwd)/fwd_table");
 avp_db_load("$ru","$avp(i1:123)/$some_scheme");
 ...
 
-5.2.  avp_db_store(source,name)
+5.2.  avp_db_store(source, name)
 
    Stores to DB the AVPs corresponding to the given source.
 
@@ -407,7 +407,7 @@ avp_db_store("$tu","$avp(i:678)");
 avp_db_store("$ru/username","$avp(email)");
 ...
 
-5.3.  avp_db_delete(source,name)
+5.3.  avp_db_delete(source, name)
 
    Deletes from DB the AVPs corresponding to the given source.
 
@@ -424,7 +424,7 @@ avp_db_delete("$ru/username","$avp(email)");
 avp_db_delete("$uuid","$avp(s:404fwd)/fwd_table");
 ...
 
-5.4.  avp_db_query(query[,dest])
+5.4.  avp_db_query(query[, dest])
 
    Make a database query and store the result in AVPs. This command is
    deprecated, please use the more flexible and advanced sqlops module
@@ -486,7 +486,7 @@ avp_delete("i");
 avp_delete("a3");
 ...
 
-5.6.  avp_pushto(destination,name)
+5.6.  avp_pushto(destination, name)
 
    Pushes the value of AVP(s) into the SIP message.
 
@@ -516,7 +516,7 @@ avp_pushto("$du","$avp(i:679)");
 avp_pushto("$br","$avp(i:680)");
 ...
 
-5.7.  avp_check(name,op_value)
+5.7.  avp_check(name, op_value)
 
    Checks the value of the AVP(s) against an operator and value.
 
@@ -571,7 +571,7 @@ $var(id)=2;
 avp_check("$xavp(op=>foo[*])","fm/$xavp(op=>fm[$var(id)])/g");
 ...
 
-5.8.  avp_copy(old_name,new_name)
+5.8.  avp_copy(old_name, new_name)
 
    Copy / move an avp under a new name.
 
@@ -603,7 +603,7 @@ avp_copy("$avp(old)","$avp(new)/gd");
    Prints the formatted string 'format' in the AVP 'dest'. The 'format'
    parameter can include any pseudo-variable defined in Kamailio. The list
    with all pseudo-variables in Kamailio can be found at:
-   https://www.kamailio.org/wiki/
+   https://www.kamailio.org/wikidocs/
 
    Meaning of the parameters is as follows:
      * dest - in which AVP should be stored the result. Parameter syntax
@@ -683,7 +683,7 @@ avp_subst_pv("$avp(src)", "/$var(y)/$var(z)/gi");
 avp_subst_pv("$avp(src)", "$var(x)");
 ...
 
-5.12.  avp_op(name,op_value)
+5.12.  avp_op(name, op_value)
 
    Different integer operations with avps.
 

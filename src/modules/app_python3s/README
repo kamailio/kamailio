@@ -10,7 +10,7 @@ Edited by
 
 Daniel-Constantin Mierla
 
-   Copyright � 2022 kamailio.org
+   Copyright © 2022 kamailio.org
      __________________________________________________________________
 
    Table of Contents
@@ -26,6 +26,8 @@ Daniel-Constantin Mierla
         3. Parameters
 
               3.1. load (string)
+              3.2. script_init (string)
+              3.3. script_child_init (string)
 
         4. Functions
 
@@ -36,10 +38,14 @@ Daniel-Constantin Mierla
               5.1. app_python.reload
               5.2. app_python.api_list
 
+        6. KEMI Usage
+
    List of Examples
 
    1.1. Set load parameter
-   1.2. app_python3s_exec usage
+   1.2. Set script_init parameter
+   1.3. Set script_child_init parameter
+   1.4. app_python3s_exec usage
 
 Chapter 1. Admin Guide
 
@@ -54,6 +60,8 @@ Chapter 1. Admin Guide
    3. Parameters
 
         3.1. load (string)
+        3.2. script_init (string)
+        3.3. script_child_init (string)
 
    4. Functions
 
@@ -64,15 +72,16 @@ Chapter 1. Admin Guide
         5.1. app_python.reload
         5.2. app_python.api_list
 
+   6. KEMI Usage
+
 1. Overview
 
    This module is an alternative 'app_python3' module with static export
-   of 'KSR' object and functions.
+   of 'KSR' object and functions, without instantiating the SIP message
+   object.
 
-   This module cannot be loaded together with 'app_python3' as global
-   symbols have not been renamed. To ease transition, the functions, KEMI
-   exports, and RPC commands have the same names as 'app_python3', which
-   also means the two modules cannot coexist.
+   This module cannot be loaded together with 'app_python3' as some global
+   symbols conflict.
 
    This module allows executing Python3 scripts from the config file,
    exporting functions to access the SIP message from Python3.
@@ -107,24 +116,58 @@ Chapter 1. Admin Guide
 3. Parameters
 
    3.1. load (string)
+   3.2. script_init (string)
+   3.3. script_child_init (string)
 
 3.1. load (string)
 
    The path to the file with Python code to be executed from configuration
    file.
 
-   Default value is "/usr/local/etc/kamailio/handler.py".
+   Default value is “/usr/local/etc/kamailio/kamailio.py”.
 
    Example 1.1. Set load parameter
 ...
 modparam("app_python3s", "load", "/usr/local/etc/kamailio/myscript.py")
 ...
 
+3.2. script_init (string)
+
+   The name of the Python function to be executed when the script is
+   loaded or reloaded.
+
+   Default value is “” (not set).
+
+   Example 1.2. Set script_init parameter
+...
+modparam("app_python3s", "script_init", "ksr_script_init")
+...
+def ksr_script_init():
+    KSR.info("init python script\n")
+    return 1
+...
+
+3.3. script_child_init (string)
+
+   The name of the Python function to be executed when Kamailio forks
+   child processes at startup and when the script is reloaded.
+
+   Default value is “” (not set).
+
+   Example 1.3. Set script_child_init parameter
+...
+modparam("app_python3s", "script_child_init", "ksr_script_child_init")
+...
+def ksr_script_child_init():
+    KSR.info("child init python script\n")
+    return 1
+...
+
 4. Functions
 
    4.1. app_python3s_exec(method [, param])
 
-4.1. app_python3s_exec(method [, param])
+4.1.  app_python3s_exec(method [, param])
 
    Execute the Python function with the name given by the parameter
    'method'. Optionally can be provided a second string with the parameter
@@ -132,7 +175,7 @@ modparam("app_python3s", "load", "/usr/local/etc/kamailio/myscript.py")
 
    Both parameters can contain pseudo-variables.
 
-   Example 1.2. app_python3s_exec usage
+   Example 1.4. app_python3s_exec usage
 ...
 app_python3s_exec("my_python_function");
 app_python3s_exec("my_python_function", "my_params");
@@ -144,7 +187,7 @@ app_python3s_exec("my_python_function", "$rU");
    5.1. app_python.reload
    5.2. app_python.api_list
 
-5.1. app_python.reload
+5.1.  app_python.reload
 
    IMPORTANT: this is not thread-safe. In your Python script do not use C
    extensions with threads that call into apy_exec().
@@ -168,14 +211,14 @@ kamcmd app_python3s.reload
 
    Note that reload is done for the Python script provided as parameter to
    this Kamailio module. To reload the Python libraries imported in this
-   script, use something like:
+   script, leverage "script_init" and use something like:
 ...
 import mod1
 ...
 import modN
 from importlib import reload
 
-def mod_init():
+def ksr_script_init():
     reload(mod1)
     ...
     reload(modN)
@@ -184,7 +227,7 @@ def mod_init():
 
    Where "modX" are the modules imported at the top.
 
-5.2. app_python.api_list
+5.2.  app_python.api_list
 
    List the functions available via Kemi framework.
 
@@ -196,3 +239,17 @@ def mod_init():
 ...
 kamcmd app_python3s.api_list
 ...
+
+6. KEMI Usage
+
+   The module exports KEMI engine with id "python".
+
+   Example:
+...
+loadmodule "app_python3s.so"
+...
+cfgengine "python"
+...
+
+   For more details about KEMI, see:
+   https://www.kamailio.org/docs/tutorials/devel/kamailio-kemi-framework/

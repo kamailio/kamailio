@@ -67,7 +67,7 @@ Emmanuel Schmidbauer
 
               4.1. allow_routing()
               4.2. allow_routing(basename)
-              4.3. allow_routing(allow_file,deny_file)
+              4.3. allow_routing(allow_file, deny_file)
               4.4. allow_register(basename)
               4.5. allow_register(allow_file, deny_file)
               4.6. allow_uri(basename, pvar)
@@ -181,7 +181,7 @@ Chapter 1. Admin Guide
 
         4.1. allow_routing()
         4.2. allow_routing(basename)
-        4.3. allow_routing(allow_file,deny_file)
+        4.3. allow_routing(allow_file, deny_file)
         4.4. allow_register(basename)
         4.5. allow_register(allow_file, deny_file)
         4.6. allow_uri(basename, pvar)
@@ -275,8 +275,8 @@ Chapter 1. Admin Guide
    created.
 
    Instead of the From header field the function uses the To header field
-   because th To header field in REGISTER messages contains the URI of the
-   person being registered. Instead of the Request-URI of branches the
+   because the To header field in REGISTER messages contains the URI of
+   the person being registered. Instead of the Request-URI of branches the
    function uses the Contact header field.
 
    Thus, the pairs used in matching will look like this: (To, Contact 1),
@@ -769,7 +769,7 @@ modparam("permissions", "trusted_cleanup_interval", 120)
 
    4.1. allow_routing()
    4.2. allow_routing(basename)
-   4.3. allow_routing(allow_file,deny_file)
+   4.3. allow_routing(allow_file, deny_file)
    4.4. allow_register(basename)
    4.5. allow_register(allow_file, deny_file)
    4.6. allow_uri(basename, pvar)
@@ -818,7 +818,7 @@ if (allow_routing("basename")) {
 };
 ...
 
-4.3.  allow_routing(allow_file,deny_file)
+4.3.  allow_routing(allow_file, deny_file)
 
    Returns true if all pairs constructed as described in Section 1.1,
    “Call Routing” have appropriate permissions according to the
@@ -1069,6 +1069,10 @@ if (allow_trusted("$si", "any", "$ai")) {
 
    Parameters: none
 
+   This RPC command is exported with "RPC_EXEC_DELTA" flag, therefore its
+   execution rate can be restricted to specific time intervals by setting
+   the "rpc_exec_delta" core parameter.
+
 5.2.  permissions.addressDump
 
    Causes the permissions module to dump the contents of cache memory
@@ -1112,6 +1116,10 @@ if (allow_trusted("$si", "any", "$ai")) {
    reload in five seconds.
 
    Parameters: none
+
+   This RPC command is exported with "RPC_EXEC_DELTA" flag, therefore its
+   execution rate can be restricted to specific time intervals by setting
+   the "rpc_exec_delta" core parameter.
 
 5.8.  permissions.trustedDump
 

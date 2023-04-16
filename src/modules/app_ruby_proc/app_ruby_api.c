@@ -41,7 +41,7 @@
 #undef xmalloc
 #undef xfree
 
-extern int _ksr_app_ruby_xval_mode;
+int _app_ruby_proc_xval_mode = 0;
 
 int app_ruby_kemi_export_libs(void);
 
@@ -63,10 +63,10 @@ typedef struct ksr_ruby_data {
 
 static sr_ruby_env_t _sr_R_env = {0};
 
-str _sr_ruby_load_file = STR_NULL;
+static str _app_ruby_proc_load_file = STR_NULL;
 
-static int *_sr_ruby_reload_version = NULL;
-static int _sr_ruby_local_version = 0;
+static int *_app_ruby_proc_reload_version = NULL;
+static int _app_ruby_proc_local_version = 0;
 
 /**
  *
@@ -76,25 +76,31 @@ sr_ruby_env_t *app_ruby_sr_env_get(void)
 	return &_sr_R_env;
 }
 
-/**
- * 
- */
-int ruby_sr_init_mod(void)
+
+static void ksr_ruby_error(int error)
 {
-	if(_sr_ruby_load_file.s == NULL || _sr_ruby_load_file.len<=0) {
-		LM_ERR("no ruby script file to load was provided\n");
-		return -1;
-	}
-	if(_sr_ruby_reload_version == NULL) {
-		_sr_ruby_reload_version = (int*)shm_malloc(sizeof(int));
-		if(_sr_ruby_reload_version == NULL) {
-			LM_ERR("failed to allocated reload version\n");
-			return -1;
+	VALUE lasterr;
+	VALUE inclass;
+	VALUE message;
+	VALUE ary;
+	long c;
+
+	if (error == 0)
+		return;
+
+	lasterr = rb_gv_get("$!"); /* NOTRANSLATE */
+	inclass = rb_class_path(CLASS_OF(lasterr));
+	message = rb_obj_as_string(lasterr);
+	LM_ERR("error ruby script: class=%s, message=%s\n",
+			RSTRING_PTR(inclass), RSTRING_PTR(message));
+
+	if (!NIL_P(rb_errinfo())) {
+		ary = rb_funcall(rb_errinfo(), rb_intern("backtrace"), 0);
+		for (c=0; c<RARRAY_LEN(ary); ++c) {
+			LM_ERR("backtrace from %s\n",
+					RSTRING_PTR(RARRAY_PTR(ary)[c]));
 		}
-		*_sr_ruby_reload_version = 0;
 	}
-	memset(&_sr_R_env, 0, sizeof(sr_ruby_env_t));
-	return 0;
 }
 
 static int app_ruby_print_last_exception()
@@ -121,19 +127,20 @@ int app_ruby_kemi_load_script(void)
 	int state = 0;
 	VALUE script;
 
-	script  = rb_str_new_cstr(_sr_ruby_load_file.s);
+	script  = rb_str_new_cstr(_app_ruby_proc_load_file.s);
 
 	/* handle exceptions like rb_eval_string_protect() */
 	rb_load_protect(script, 0, &state);
 
 	if (state) {
 		/* got exception */
-		app_ruby_print_last_exception();
+		//app_ruby_print_last_exception();
+		ksr_ruby_error(state);
 		LM_ERR("failed to load rb script file: %.*s (%d)\n",
-				_sr_ruby_load_file.len, _sr_ruby_load_file.s, state);
+				_app_ruby_proc_load_file.len, _app_ruby_proc_load_file.s, state);
 		// return -1;
 	}
-	LM_DBG("rb script loaded: %s\n", _sr_ruby_load_file.s);
+	LM_DBG("rb script loaded: %s\n", _app_ruby_proc_load_file.s);
 
 	return 0;
 }
@@ -144,11 +151,11 @@ int app_ruby_kemi_load_script(void)
 int app_ruby_kemi_reload_script(void)
 {
 	int v;
-	if(_sr_ruby_load_file.s == NULL && _sr_ruby_load_file.len<=0) {
+	if(_app_ruby_proc_load_file.s == NULL && _app_ruby_proc_load_file.len<=0) {
 		LM_WARN("script file path not provided\n");
 		return -1;
 	}
-	if(_sr_ruby_reload_version == NULL) {
+	if(_app_ruby_proc_reload_version == NULL) {
 		LM_WARN("reload not enabled\n");
 		return -1;
 	}
@@ -157,23 +164,23 @@ int app_ruby_kemi_reload_script(void)
 		return -1;
 	}
 
-	v = *_sr_ruby_reload_version;
-	if(v == _sr_ruby_local_version) {
+	v = *_app_ruby_proc_reload_version;
+	if(v == _app_ruby_proc_local_version) {
 		/* same version */
 		return 0;
 	}
 	LM_DBG("reloading ruby script file: %.*s (%d => %d)\n",
-				_sr_ruby_load_file.len, _sr_ruby_load_file.s,
-				_sr_ruby_local_version, v);
+				_app_ruby_proc_load_file.len, _app_ruby_proc_load_file.s,
+				_app_ruby_proc_local_version, v);
 	app_ruby_kemi_load_script();
-	_sr_ruby_local_version = v;
+	_app_ruby_proc_local_version = v;
 	return 0;
 }
 
 /**
  *
  */
-int ruby_sr_init_child(void)
+int app_ruby_proc_init_child(void)
 {
 	int state = 0;
 	VALUE rbres;
@@ -181,14 +188,15 @@ int ruby_sr_init_child(void)
 	/* construct the VM */
 	ruby_init();
 	ruby_init_loadpath();
-	ruby_script(_sr_ruby_load_file.s);
+	ruby_script(_app_ruby_proc_load_file.s);
 
 	/* Ruby goes here */
 	rbres = rb_eval_string_protect("puts 'Hello " NAME "!'", &state);
 
 	if (state) {
 		/* handle exception */
-		app_ruby_print_last_exception();
+		// app_ruby_print_last_exception();
+		ksr_ruby_error(state);
 		LM_ERR("test execution with error (res type: %d)\n", TYPE(rbres));
 		return -1;
 	} else {
@@ -209,9 +217,9 @@ int ruby_sr_init_child(void)
 }
 
 /**
- * 
+ *
  */
-void ruby_sr_destroy(void)
+void app_ruby_proc_mod_destroy(void)
 {
 	if(_sr_R_env.rinit == 1) {
 		return;
@@ -223,9 +231,9 @@ void ruby_sr_destroy(void)
 }
 
 /**
- * 
+ *
  */
-int ruby_sr_initialized(void)
+int app_ruby_proc_initialized(void)
 {
 	if(_sr_R_env.rinit==1) {
 		return 1;
@@ -759,7 +767,7 @@ VALUE sr_kemi_ruby_return_xval(sr_kemi_t *ket, sr_kemi_xval_t *rx)
 		case SR_KEMIP_LONG:
 			return LONG2NUM(rx->v.l);
 		case SR_KEMIP_STR:
-			if(_ksr_app_ruby_xval_mode==0) {
+			if(_app_ruby_proc_xval_mode==0) {
 				LM_ERR("attempt to return xval str - support disabled - returning null\n");
 				return Qnil;
 			} else {
@@ -920,7 +928,7 @@ VALUE sr_kemi_ruby_exec_func(ksr_ruby_context_t *R, int eidx, int argc,
 /**
  *
  */
-int app_ruby_run_ex(sip_msg_t *msg, char *func, char *p1, char *p2,
+int app_ruby_proc_run_ex(sip_msg_t *msg, char *func, char *p1, char *p2,
 		char *p3, int emode)
 {
 	sip_msg_t *bmsg;
@@ -976,11 +984,11 @@ int app_ruby_run_ex(sip_msg_t *msg, char *func, char *p1, char *p2,
 int app_ruby_run(sip_msg_t *msg, char *func, char *p1, char *p2,
 		char *p3)
 {
-	return app_ruby_run_ex(msg, func, p1, p2, p3, 0);
+	return app_ruby_proc_run_ex(msg, func, p1, p2, p3, 0);
 }
 
 /**
- * 
+ *
  */
 int app_ruby_runstring(sip_msg_t *msg, char *script)
 {
@@ -989,7 +997,7 @@ int app_ruby_runstring(sip_msg_t *msg, char *script)
 }
 
 /**
- * 
+ *
  */
 int app_ruby_dostring(sip_msg_t *msg, char *script)
 {
@@ -998,7 +1006,7 @@ int app_ruby_dostring(sip_msg_t *msg, char *script)
 }
 
 /**
- * 
+ *
  */
 int app_ruby_dofile(sip_msg_t *msg, char *script)
 {
@@ -1014,7 +1022,7 @@ static VALUE _ksr_mKSR;
 static VALUE _ksr_mSMD[SR_RUBY_KSR_MODULES_SIZE];
 
 /**
- * 
+ *
  */
 void ksr_app_ruby_toupper(char *bin, char *bout)
 {
@@ -1025,7 +1033,7 @@ void ksr_app_ruby_toupper(char *bin, char *bout)
 	bout[i] = '\0';
 }
 /**
- * 
+ *
  */
 int app_ruby_kemi_export_libs(void)
 {
@@ -1079,7 +1087,7 @@ int app_ruby_kemi_export_libs(void)
 
 	m = 0;
 
-	if(_ksr_app_ruby_xval_mode==0) {
+	if(_app_ruby_proc_xval_mode==0) {
 		/* pv submodule */
 		_ksr_mSMD[m] = rb_define_module_under(_ksr_mKSR, "PV");
 		for(i=0; _sr_kemi_pv_R_Map[i].fname!=0; i++) {
@@ -1104,7 +1112,7 @@ int app_ruby_kemi_export_libs(void)
 	/* registered kemi modules */
 	if(emods_size>1) {
 		for(k=1; k<emods_size; k++) {
-			if((_ksr_app_ruby_xval_mode==0) && emods[k].kexp[0].mname.len==2
+			if((_app_ruby_proc_xval_mode==0) && emods[k].kexp[0].mname.len==2
 					&& strncasecmp(emods[k].kexp[0].mname.s, "pv", 2)==0) {
 				LM_DBG("skipping external pv sub-module\n");
 				continue;
@@ -1141,113 +1149,71 @@ int app_ruby_kemi_export_libs(void)
 	return 1;
 }
 
-static const char* app_ruby_rpc_reload_doc[2] = {
-	"Reload javascript file",
-	0
-};
-
-
-static void app_ruby_rpc_reload(rpc_t* rpc, void* ctx)
-{
-	int v;
-	void *vh;
-
-	if(_sr_ruby_load_file.s == NULL && _sr_ruby_load_file.len<=0) {
-		LM_WARN("script file path not provided\n");
-		rpc->fault(ctx, 500, "No script file");
-		return;
-	}
-	if(_sr_ruby_reload_version == NULL) {
-		LM_WARN("reload not enabled\n");
-		rpc->fault(ctx, 500, "Reload not enabled");
-		return;
-	}
-
-	v = *_sr_ruby_reload_version;
-	*_sr_ruby_reload_version += 1;
-	LM_INFO("marking for reload ruby script file: %.*s (%d / %d => %d)\n",
-				_sr_ruby_load_file.len, _sr_ruby_load_file.s,
-				_sr_ruby_local_version, v, *_sr_ruby_reload_version);
-
-	if (rpc->add(ctx, "{", &vh) < 0) {
-		rpc->fault(ctx, 500, "Server error");
-		return;
-	}
-	rpc->struct_add(vh, "dd",
-			"old", v,
-			"new", *_sr_ruby_reload_version);
-}
-
-static const char* app_ruby_rpc_api_list_doc[2] = {
-	"List kemi exports to ruby",
-	0
-};
-
-static void app_ruby_rpc_api_list(rpc_t* rpc, void* ctx)
-{
-	int i;
-	int n;
-	sr_kemi_t *ket;
-	void* th;
-	void* sh;
-	void* ih;
-
-	if (rpc->add(ctx, "{", &th) < 0) {
-		rpc->fault(ctx, 500, "Internal error root reply");
-		return;
-	}
-	n = 0;
-	for(i=0; i<SR_KEMI_RUBY_EXPORT_SIZE; i++) {
-		ket = sr_kemi_ruby_export_get(i);
-		if(ket==NULL) continue;
-		n++;
-	}
-
-	if(rpc->struct_add(th, "d[",
-				"msize", n,
-				"methods",  &ih)<0)
-	{
-		rpc->fault(ctx, 500, "Internal error array structure");
-		return;
-	}
-	for(i=0; i<SR_KEMI_RUBY_EXPORT_SIZE; i++) {
-		ket = sr_kemi_ruby_export_get(i);
-		if(ket==NULL) continue;
-		if(rpc->struct_add(ih, "{", "func", &sh)<0) {
-			rpc->fault(ctx, 500, "Internal error internal structure");
-			return;
-		}
-		if(rpc->struct_add(sh, "SSSS",
-				"ret", sr_kemi_param_map_get_name(ket->rtype),
-				"module", &ket->mname,
-				"name", &ket->fname,
-				"params", sr_kemi_param_map_get_params(ket->ptypes))<0) {
-			LM_ERR("failed to add the structure with attributes (%d)\n", i);
-			rpc->fault(ctx, 500, "Internal error creating dest struct");
-			return;
-		}
-	}
-}
-
 /**
  *
  */
-rpc_export_t app_ruby_rpc_cmds[] = {
-	{"app_ruby.reload", app_ruby_rpc_reload,
-		app_ruby_rpc_reload_doc, 0},
-	{"app_ruby.api_list", app_ruby_rpc_api_list,
-		app_ruby_rpc_api_list_doc, 0},
-	{0, 0, 0, 0}
-};
-
-/**
- *
- */
-int app_ruby_init_rpc(void)
+int app_ruby_proc_opt_set_s(char* optName, str* optVal)
 {
-	if (rpc_register_array(app_ruby_rpc_cmds)!=0) {
-		LM_ERR("failed to register RPC commands\n");
+	LM_DBG("trying to set option: %s\n", optName);
+	if(strcasecmp(optName, "LoadFile")==0) {
+		_app_ruby_proc_load_file = *optVal;
+	} else {
+		LM_ERR("unknown option: %s\n", optName);
 		return -1;
 	}
 	return 0;
+}
+
+/**
+ *
+ */
+int app_ruby_proc_opt_set_n(char* optName, int optVal)
+{
+	LM_DBG("trying to set option: %s\n", optName);
+	if(strcasecmp(optName, "XValMode")==0) {
+		_app_ruby_proc_xval_mode = optVal;
+	} else {
+		LM_ERR("unknown option: %s\n", optName);
+		return -1;
+	}
+	return 0;
+}
+
+/**
+ *
+ */
+int app_ruby_proc_opt_set_p(char* optName, void* optVal)
+{
+	LM_DBG("trying to set option: %s\n", optName);
+	if(strcasecmp(optName, "ReloadVersionPtr")==0) {
+		_app_ruby_proc_reload_version = optVal;
+	} else {
+		LM_ERR("unknown option: %s\n", optName);
+		return -1;
+	}
+	return 0;
+}
+
+/**
+ *
+ */
+int app_ruby_proc_get_export_size(void)
+{
+	return SR_KEMI_RUBY_EXPORT_SIZE;
+}
+
+/**
+ *
+ */
+sr_kemi_t* app_ruby_proc_get_export(int idx)
+{
+	return sr_kemi_ruby_export_get(idx);
+}
+
+/**
+ *
+ */
+int app_ruby_proc_local_version(void)
+{
+	return _app_ruby_proc_local_version;
 }

@@ -19,17 +19,15 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <sys/types.h>/*setsockopt,bind,accept,fork,pid_t*/
+#include <sys/types.h>/*setsockopt,bind,accept,fork,pid_t,waitpid*/
 #include <sys/socket.h>/*setsockopt,bind,accept,listen*/
 #include <netinet/tcp.h>/*TCP_NODELAY*/
-#include <string.h>/*strcmp,memset*/
+#include <string.h>/*strcmp,memset,memcmp*/
 #include <errno.h>/*errno*/
 #include <unistd.h>/*close(),read(),pipe,fork,pid_t*/
 #include <poll.h>/*poll*/
 #include <signal.h>/*signal*/
 #include <time.h>/*time*/
-#include <string.h>/*memcmp*/
-#include <sys/types.h>/*waitpid*/
 #include <sys/wait.h>/*waitpid*/
 
 #include "../../core/ip_addr.h" /*sockaddr_union, ip_addr*/
@@ -789,7 +787,7 @@ static int process_event_reply(as_p as)
             process_bind_action(as,processor_id,flags,&as->ev_buffer.s[10],ev_len-10);
             break;
          case UNBIND_AC:
-            LM_DBG("Processing a UNBIND action from AS (length=%d): %.*s\n",
+            LM_DBG("Processing an UNBIND action from AS (length=%d): %.*s\n",
                   ev_len,as->name.len,as->name.s);
             process_unbind_action(as,processor_id,flags,&as->ev_buffer.s[10],ev_len-10);
             break;
@@ -889,7 +887,7 @@ error:
 }
 
 /**
- * processes a UNBIND event type from the AS.
+ * processes an UNBIND event type from the AS.
  * Bind events follow this form:
  * 1:processor_id
  *

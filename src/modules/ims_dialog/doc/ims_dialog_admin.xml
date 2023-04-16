@@ -211,7 +211,7 @@ modparam("ims_dialog", "rr_param", "xyz")
             </title>
             <para>
 		Flag to be used for marking if a dialog should be constructed for the
-		current request (this make sense only for initial requests).
+		current request (this makes sense only for initial requests).
             </para>
             <para>
                 <emphasis>
@@ -482,7 +482,7 @@ modparam("dialog", "bridge_controller", "sip:ctd@kamailio.org")
         <title>Functions</title>
         <section>
             <title>
-                <function moreinfo="none">set_dlg_profile(profile,[value])</function>
+                <function moreinfo="none">set_dlg_profile(profile[, value])</function>
             </title>
             <para>
 		Inserts the current dialog into a profile. Note that if the profile does
@@ -526,7 +526,7 @@ set_dlg_profile("caller","$fu");
 
         <section>
             <title>
-                <function moreinfo="none">unset_dlg_profile(profile,[value])</function>
+                <function moreinfo="none">unset_dlg_profile(profile[, value])</function>
             </title>
             <para>
 		Removes the current dialog from a profile.
@@ -568,7 +568,7 @@ unset_dlg_profile("caller","$fu");
 
         <section>
             <title>
-                <function moreinfo="none">is_in_profile(profile,[value])</function>
+                <function moreinfo="none">is_in_profile(profile[, value])</function>
             </title>
             <para>
 		Checks if the current dialog belongs to a profile. If the profile
@@ -604,7 +604,7 @@ unset_dlg_profile("caller","$fu");
                 <programlisting format="linespecific">
 ...
 if (is_in_profile("inbound_call")) {
-	log("this request belongs to a inbound call\n");
+	log("this request belongs to an inbound call\n");
 }
 ...
 if (is_in_profile("caller","XX")) {
@@ -617,7 +617,7 @@ if (is_in_profile("caller","XX")) {
 
         <section>
             <title>
-                <function moreinfo="none">get_profile_size(profile,[value],size)</function>
+                <function moreinfo="none">get_profile_size(profile[, value], size)</function>
             </title>
             <para>
 		Returns the number of dialogs belonging to a profile. If the profile

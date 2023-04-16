@@ -317,7 +317,7 @@ int process_action(as_p the_as)
 	    ac_jain_pong(the_as,processor_id,flags,the_as->ac_buffer.s+10,ac_len-10);
 	    break;
 	 default:
-	    LM_DBG("Processing a UNKNOWN TYPE action from AS (length=%d): %.*s\n",
+	    LM_DBG("Processing an UNKNOWN TYPE action from AS (length=%d): %.*s\n",
 				ac_len,the_as->name.len,the_as->name.s);
 	    break;
       }

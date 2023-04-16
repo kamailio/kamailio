@@ -1243,7 +1243,7 @@ static struct snexpr *snexpr_create(const char *s, size_t len,
 						int j;
 						/* Assign macro parameters */
 						for(j = 0; j < sne_vec_len(&arg.args); j++) {
-							char varname[4];
+							char varname[14];
 							snprintf(varname, sizeof(varname) - 1, "$%d",
 									(j + 1));
 							struct snexpr_var *v =

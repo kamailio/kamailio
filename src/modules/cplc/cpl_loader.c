@@ -28,7 +28,6 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <sys/uio.h>
 #include <errno.h>
 #include <string.h>
 #include <ctype.h>

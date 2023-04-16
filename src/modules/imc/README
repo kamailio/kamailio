@@ -14,6 +14,8 @@ Edited by
 
 Anca-Maria Vamanu
 
+Joey Golan
+
    Copyright © 2006 Voice Sistem SRL
      __________________________________________________________________
 
@@ -30,14 +32,15 @@ Anca-Maria Vamanu
         3. Parameters
 
               3.1. db_url (str)
-              3.2. rooms_table (str)
-              3.3. members_table (str)
-              3.4. hash_size (integer)
-              3.5. imc_cmd_start_char (str)
-              3.6. outbound_proxy (str)
-              3.7. extra_hdrs (str)
-              3.8. create_on_join (integer)
-              3.9. check_on_create (integer)
+              3.2. db_mode(integer)
+              3.3. rooms_table (str)
+              3.4. members_table (str)
+              3.5. hash_size (integer)
+              3.6. imc_cmd_start_char (str)
+              3.7. outbound_proxy (str)
+              3.8. extra_hdrs (str)
+              3.9. create_on_join (integer)
+              3.10. check_on_create (integer)
 
         4. Functions
 
@@ -58,16 +61,17 @@ Anca-Maria Vamanu
    List of Examples
 
    1.1. Set db_url parameter
-   1.2. Set rooms_table parameter
-   1.3. Set members_table parameter
-   1.4. Set hash_size parameter
-   1.5. Set imc_cmd_start_char parameter
-   1.6. Set outbound_proxy parameter
-   1.7. Set extra_hdrs parameter
-   1.8. Set create_on_join parameter
-   1.9. Set check_on_create parameter
-   1.10. Usage of imc_manager() function
-   1.11. List of commands
+   1.2. Set db_mode parameter
+   1.3. Set rooms_table parameter
+   1.4. Set members_table parameter
+   1.5. Set hash_size parameter
+   1.6. Set imc_cmd_start_char parameter
+   1.7. Set outbound_proxy parameter
+   1.8. Set extra_hdrs parameter
+   1.9. Set create_on_join parameter
+   1.10. Set check_on_create parameter
+   1.11. Usage of imc_manager() function
+   1.12. List of commands
 
 Chapter 1. Admin Guide
 
@@ -82,14 +86,15 @@ Chapter 1. Admin Guide
    3. Parameters
 
         3.1. db_url (str)
-        3.2. rooms_table (str)
-        3.3. members_table (str)
-        3.4. hash_size (integer)
-        3.5. imc_cmd_start_char (str)
-        3.6. outbound_proxy (str)
-        3.7. extra_hdrs (str)
-        3.8. create_on_join (integer)
-        3.9. check_on_create (integer)
+        3.2. db_mode(integer)
+        3.3. rooms_table (str)
+        3.4. members_table (str)
+        3.5. hash_size (integer)
+        3.6. imc_cmd_start_char (str)
+        3.7. outbound_proxy (str)
+        3.8. extra_hdrs (str)
+        3.9. create_on_join (integer)
+        3.10. check_on_create (integer)
 
    4. Functions
 
@@ -145,14 +150,15 @@ Chapter 1. Admin Guide
 3. Parameters
 
    3.1. db_url (str)
-   3.2. rooms_table (str)
-   3.3. members_table (str)
-   3.4. hash_size (integer)
-   3.5. imc_cmd_start_char (str)
-   3.6. outbound_proxy (str)
-   3.7. extra_hdrs (str)
-   3.8. create_on_join (integer)
-   3.9. check_on_create (integer)
+   3.2. db_mode(integer)
+   3.3. rooms_table (str)
+   3.4. members_table (str)
+   3.5. hash_size (integer)
+   3.6. imc_cmd_start_char (str)
+   3.7. outbound_proxy (str)
+   3.8. extra_hdrs (str)
+   3.9. create_on_join (integer)
+   3.10. check_on_create (integer)
 
 3.1. db_url (str)
 
@@ -165,53 +171,67 @@ Chapter 1. Admin Guide
 modparam("imc", "db_url", "dbdriver://username:password@dbhost/dbname")
 ...
 
-3.2. rooms_table (str)
+3.2. db_mode(integer)
+
+   The module supports 2 modes of operation, high speed memory based
+   storage (mode 0), and database only (mode 2) where all data is stored
+   in a database, allowing scalability at the expense of speed. Mode 1 is
+   reserved.
+
+   Default value is “0”
+
+   Example 1.2. Set db_mode parameter
+...
+modparam("imc", "db_mode", 2)
+...
+
+3.3. rooms_table (str)
 
    The name of the table storing IMC rooms.
 
    The default value is "imc_rooms".
 
-   Example 1.2. Set rooms_table parameter
+   Example 1.3. Set rooms_table parameter
 ...
 modparam("imc", "rooms_table", "rooms")
 ...
 
-3.3. members_table (str)
+3.4. members_table (str)
 
    The name of the table storing IMC members.
 
    The default value is "imc_members".
 
-   Example 1.3. Set members_table parameter
+   Example 1.4. Set members_table parameter
 ...
 modparam("imc", "members_table", "members")
 ...
 
-3.4. hash_size (integer)
+3.5. hash_size (integer)
 
    The power of 2 to get the size of the hash table used for storing
    members and rooms.
 
    The default value is 4 (resultimg in hash size 16).
 
-   Example 1.4. Set hash_size parameter
+   Example 1.5. Set hash_size parameter
 ...
 modparam("imc", "hash_size", 8)
 ...
 
-3.5. imc_cmd_start_char (str)
+3.6. imc_cmd_start_char (str)
 
    The character which indicates that the body of the message is a
    command.
 
    The default value is "#".
 
-   Example 1.5. Set imc_cmd_start_char parameter
+   Example 1.6. Set imc_cmd_start_char parameter
 ...
 modparam("imc", "imc_cmd_start_char", "#")
 ...
 
-3.6. outbound_proxy (str)
+3.7. outbound_proxy (str)
 
    The SIP address used as next hop when sending the message. Very useful
    when using Kamailio with a domain name not in DNS, or when using a
@@ -220,44 +240,44 @@ modparam("imc", "imc_cmd_start_char", "#")
 
    Default value is NULL.
 
-   Example 1.6. Set outbound_proxy parameter
+   Example 1.7. Set outbound_proxy parameter
 ...
 modparam("imc", "outbound_proxy", "sip:kamailio.org;transport=tcp")
 ...
 
-3.7. extra_hdrs (str)
+3.8. extra_hdrs (str)
 
    Extra headers (each ending with \r\n) to be added in messages sent out
    from imc server.
 
    Default value is NULL.
 
-   Example 1.7. Set extra_hdrs parameter
+   Example 1.8. Set extra_hdrs parameter
 ...
 modparam("imc", "extra_hdrs", "P-Flags: 3\r\n")
 ...
 
-3.8. create_on_join (integer)
+3.9. create_on_join (integer)
 
    If set to 1 and user requests to join a non-existing room, the room
-   will be automatically created. If set to 0, joinin a non-existing room
+   will be automatically created. If set to 0, joining a non-existing room
    returns an error.
 
    The default value is 1.
 
-   Example 1.8. Set create_on_join parameter
+   Example 1.9. Set create_on_join parameter
 ...
 modparam("imc", "create_on_join", 0)
 ...
 
-3.9. check_on_create (integer)
+3.10. check_on_create (integer)
 
    If set to 1, the chat server will report an error if the user attempts
    to create a room that already exists.
 
    The default value is 0.
 
-   Example 1.9. Set check_on_create parameter
+   Example 1.10. Set check_on_create parameter
 ...
 modparam("imc", "check_on_create", 1)
 ...
@@ -275,7 +295,7 @@ modparam("imc", "check_on_create", 1)
    This function can be used from REQUEST_ROUTE. See command description
    for error codes returned by this function.
 
-   Example 1.10. Usage of imc_manager() function
+   Example 1.11. Usage of imc_manager() function
 ...
 # the rooms will be named chat-xyz to avoid overlapping
 # with usernames
@@ -338,7 +358,7 @@ kamcmd imc_list_members _room_
 
    Next picture presents the list of commands and their parameters.
 
-   Example 1.11. List of commands
+   Example 1.12. List of commands
 ...
 
 1.create
@@ -425,6 +445,20 @@ kamcmd imc_list_members _room_
   -eg: #add sip:john@kamailio.org sip:chat-000@kamailio.org
     or  #add john@kamailio.org sent to sip:chat-000@kamailio.org
   -error case: return codes: -50 -- -59
+
+11.modify
+  -modify user role in a room
+  -takes 3 parameters:
+     1)the complete address of the user
+         2)the role of the user
+     3)the address of the room -if not present it will be considered
+           to be the address in the To header of the message
+  -only certain users have the right to invite other user: the owner
+    and the administrators
+  -roles: owner, admin, member
+  -eg: #invite sip:john@kamailio.org admin sip:chat-000@kamailio.org
+    or  #invite john@kamailio.org admin sent to sip:chat-000@kamailio.org
+  -error case: return codes: -120 -- -129
 ...
 
 8. Installation

@@ -132,7 +132,7 @@ Chapter 1. Admin Guide
        %{[$avp_alias[index]}
 
    The full list of available pseudo-variables in Kamailio is available
-   at: https://www.kamailio.org/wiki/
+   at: https://www.kamailio.org/wikidocs/
 
 3. Dependencies
 

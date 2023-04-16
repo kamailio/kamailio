@@ -399,7 +399,7 @@ route[RESUME] {
 			<function moreinfo="none">async_task_data(routename, data)</function>
 		</title>
 		<para>
-		Send the data to a asynchronous task process (in the first group) that
+		Send the data to an asynchronous task process (in the first group) that
 		executes the route[rountename] and makes the data available via $async(data).
 		</para>
 		<para>

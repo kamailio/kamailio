@@ -140,7 +140,7 @@ Chapter 1. Admin Guide
 3.1. active_lifetime (int)
 
    The lifetime in seconds of an active dialog in memory. A dialog is
-   considered active after the ACK of 200OK for INVITE.
+   considered active after the ACK of 200 OK for INVITE.
 
    Default value is 10800 (3 hours).
 

@@ -48,7 +48,7 @@ int conference_add_events(void)
     event.req_auth = 0;
     event.evs_publ_handl = 0;
 
-    /* aggregate XML body and free() fuction */
+    /* aggregate XML body and free() function */
     event.agg_nbody = conf_agg_nbody;
     event.free_body = free_xml_body;
 

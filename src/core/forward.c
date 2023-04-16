@@ -58,7 +58,6 @@
 #include "name_alias.h"
 #include "socket_info.h"
 #include "onsend.h"
-#include "resolve.h"
 #ifdef USE_DNS_FAILOVER
 #include "dns_cache.h"
 #endif

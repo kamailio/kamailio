@@ -199,4 +199,4 @@ if(phonenum_match_cn("1-484-555-8888", "US", "src")) {
           + error - error string if phone number matching fails.
 
    Exported pseudo-variables are documented at
-   https://www.kamailio.org/wiki/.
+   https://www.kamailio.org/wikidocs/.

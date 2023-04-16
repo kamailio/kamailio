@@ -124,7 +124,7 @@
 		</para>
 		<para>
 		Instead of the From header field the function uses the To header field because
-		th To header field in REGISTER messages contains the URI of the person
+		the To header field in REGISTER messages contains the URI of the person
 		being registered. Instead of the Request-URI of branches the function
 		uses the Contact header field.
 		</para>
@@ -963,7 +963,7 @@ if (allow_routing("basename")) {
 	</section>
 	<section id ="permissions.f.allow_routing_fileargs">
 		<title>
-		<function moreinfo="none">allow_routing(allow_file,deny_file)</function>
+		<function moreinfo="none">allow_routing(allow_file, deny_file)</function>
 		</title>
 		<para>
 		Returns true if all pairs constructed as described in
@@ -1330,6 +1330,11 @@ if (allow_trusted("$si", "any", "$ai")) {
 			paramenter. By default is allowed maximum one reload in five seconds.
 		</para>
 		<para>Parameters: <emphasis>none</emphasis></para>
+		<para>
+			This RPC command is exported with "RPC_EXEC_DELTA" flag, therefore its
+			execution rate can be restricted to specific time intervals by setting
+			the "rpc_exec_delta" core parameter.
+		</para>
 	</section>
 
 	<section id ="permissions.r.addressDump">
@@ -1413,6 +1418,11 @@ if (allow_trusted("$si", "any", "$ai")) {
 			paramenter. By default is allowed maximum one reload in five seconds.
 		</para>
 		<para>Parameters: <emphasis>none</emphasis></para>
+		<para>
+			This RPC command is exported with "RPC_EXEC_DELTA" flag, therefore its
+			execution rate can be restricted to specific time intervals by setting
+			the "rpc_exec_delta" core parameter.
+		</para>
 	</section>
 	<section id ="permissions.r.trustedDump">
 		<title>

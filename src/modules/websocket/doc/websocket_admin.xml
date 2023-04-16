@@ -44,6 +44,8 @@
 	<programlisting><![CDATA[
 ...
 tcp_accept_no_cl=yes
+listen=tcp:127.0.0.17:80
+listen=tls:127.0.0.17:443
 ...
 loadmodule "sl.so"
 loadmodule "xhttp.so"
@@ -135,6 +137,7 @@ event_route[xhttp:request] {
 ...
 loadmodule "sl.so"
 loadmodule "tm.so"
+loadmodule "xhttp.so"
 ...
 loadmodule "websocket.so"
 ...
@@ -166,7 +169,7 @@ request_route {
 # Handle requests within SIP dialogs
 route[WITHINDLG] {
         if (has_totag()) {
-                # sequential request withing a dialog should
+                # sequential request within a dialog should
                 # take the path determined by record-routing
                 if (loose_route()) {
                         if ($du == "") {
@@ -407,12 +410,12 @@ modparam("websocket", "sub_protocols", 2)
 		accepting the WebSocket handshake.
 		</para></listitem>
 		<listitem><para>
-		<emphasis>1</emphasis> - Add a
+		<emphasis>1</emphasis> - Add an
 		&quot;Access-Control-Allow-Origin: *&quot; header to the
 		response accepting the WebSocket handshake.
 		</para></listitem>
 		<listitem><para>
-		<emphasis>2</emphasis> - Add a
+		<emphasis>2</emphasis> - Add an
 		&quot;Access-Control-Allow-Origin:&quot; header containing the
 		same body as the &quot;Origin:&quot; header from the request to
 		the response accepting the WebSocket handshake. If there is no

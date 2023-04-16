@@ -149,6 +149,7 @@ int apy3s_exec_func(sip_msg_t *_msg, char *fname, char *fparam, int emode)
 	rval = (int)PyLong_AsLong(pValue);
 
 	Py_DECREF(pValue);
+	_sr_apy_env.msg = bmsg;
 
 error:
 	if(locked) {
@@ -422,7 +423,8 @@ PyObject *sr_apy_kemi_exec_func_ex(sr_kemi_t *ket, PyObject *self, PyObject *arg
 			}
 			if(ket->ptypes[i]==SR_KEMIP_INT) {
 				vps[i].vtype = SR_KEMIP_INT;
-				vps[i].v.n = (int)vps[i].v.l;
+				ret = (int)vps[i].v.l;
+				vps[i].v.n = ret;
 			} else {
 				vps[i].vtype = SR_KEMIP_LONG;
 			}
@@ -446,7 +448,7 @@ PyObject *sr_apy_kemi_exec_func(PyObject *self, PyObject *args, int idx)
 	PyObject *ret = NULL;
 	PyThreadState *pstate = NULL;
 	PyFrameObject *pframe = NULL;
-#if PY_VERSION_HEX >= 0x03100000
+#if PY_VERSION_HEX >= 0x030B0000
 	PyCodeObject *pcode = NULL;
 #endif
 	struct timeval tvb = {0}, tve = {0};
@@ -472,7 +474,7 @@ PyObject *sr_apy_kemi_exec_func(PyObject *self, PyObject *args, int idx)
 		if(tdiff >= cfg_get(core, core_cfg, latency_limit_action)) {
 			pstate = PyThreadState_GET();
 			if (pstate != NULL) {
-#if PY_VERSION_HEX >= 0x03100000
+#if PY_VERSION_HEX >= 0x030B0000
 				pframe = PyThreadState_GetFrame(pstate);
 				if(pframe != NULL) {
 					pcode = PyFrame_GetCode(pframe);
@@ -482,7 +484,7 @@ PyObject *sr_apy_kemi_exec_func(PyObject *self, PyObject *args, int idx)
 #endif
 			}
 
-#if PY_VERSION_HEX >= 0x03100000
+#if PY_VERSION_HEX >= 0x030B0000
 			LOG(cfg_get(core, core_cfg, latency_log),
 					"alert - action KSR.%s%s%s(...)"
 					" took too long [%u us] (file:%s func:%s line:%d)\n",

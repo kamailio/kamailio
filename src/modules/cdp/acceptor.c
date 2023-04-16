@@ -87,7 +87,7 @@ void acceptor_process(dp_config *cfg)
 	memset(listening_socks,0,(cfg->acceptors_cnt+1)*sizeof(unsigned int));
 	k=0;
 	for(i=0;i<cfg->acceptors_cnt;i++)
-		if (create_socket(cfg->acceptors[i].port,cfg->acceptors[i].bind,&sock)){
+		if (create_socket(cfg->acceptors[i].proto,cfg->acceptors[i].port,cfg->acceptors[i].bind,&sock)){
 			listening_socks[k++]=sock;
 		}
 

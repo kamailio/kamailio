@@ -16,7 +16,7 @@
 	<section>
 	<title>Overview</title>
 	<para>
-		The User location module module keeps a user location table and
+		The User location module keeps a user location table and
 		provides access to the table for  other modules. The module exports no
 		functions that can  be used directly from routing scripts.
 	</para>
@@ -1305,7 +1305,7 @@ modparam("usrloc", "version_table", 0)
 		</listitem>
 		</itemizedlist>
 		<para>
-		For example, if set to 6, then keepalive is sent only natted UDP contacs.
+		For example, if set to 6, then keepalive is sent only natted UDP contacts.
 		</para>
 		<para>
 		Note: the internal keepalive of usrloc module conflicts in some way with
@@ -1641,7 +1641,7 @@ modparam("usrloc", "db_clean_tcp", 1)
 		<function moreinfo="none">ul.add</function>
 		</title>
 		<para>
-		Adds a new contact for an user AOR.
+		Adds a new contact for a user AOR.
 		</para>
 		<para>Parameters: </para>
 		<itemizedlist>

@@ -63,7 +63,6 @@
 #include "ims_usrloc_scscf_mod.h"            /* usrloc module parameters */
 #include "usrloc.h"
 #include "utime.h"
-#include "usrloc.h"
 #include "bin_utils.h"
 #include "usrloc_db.h"
 #include "contact_hslot.h"
@@ -611,7 +610,7 @@ error:
 }
 
 /*!
- * \brief Obtain a impurecord pointer if the impurecord exists in domain. You should call this function with a lock on the domain
+ * \brief Obtain an impurecord pointer if the impurecord exists in domain. You should call this function with a lock on the domain
  * \param _d domain to search the record
  * \param _aor address of record
  * \param _r new created record
@@ -639,7 +638,7 @@ int get_impurecord_unsafe(udomain_t* _d, str* public_identity, struct impurecord
 }
 
 /*!
- * \brief Obtain a impurecord pointer if the impurecord exists in domain. domain must be locked before calling
+ * \brief Obtain an impurecord pointer if the impurecord exists in domain. domain must be locked before calling
  * \param _d domain to search the record
  * \param public_identity address of record
  * \param _r returned record - null if not found
@@ -663,7 +662,7 @@ void release_impurecord(udomain_t* _d, struct impurecord* _r) {
 }
 
 /*!
- * \brief Delete a impurecord from domain
+ * \brief Delete an impurecord from domain
  * \param _d domain where the record should be deleted
  * \param _aor address of record - used only if _r in next param is null
  * \param _r deleted record to delete - if null will use the aor to search (assumed that domain is locked).

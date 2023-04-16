@@ -97,7 +97,6 @@
 #include "t_stats.h"
 
 #include "../../core/hash_func.h"
-#include "../../core/dprint.h"
 #include "../../core/config.h"
 #include "../../core/parser/parser_f.h"
 #include "../../core/ut.h"

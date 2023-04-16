@@ -33,7 +33,7 @@ UAS=5070
 UAC=5080
 
 
-# add an registrar entry to the db;
+# add a registrar entry to the db;
 $MYSQL "DELETE FROM location WHERE ruid=\"kamailio-unit-uid\""
 $MYSQL "INSERT INTO location (ruid,username,contact,socket,user_agent,cseq,q) VALUES (\"kamailio-unit-uid\", \"foo\",\"sip:foo@localhost:$UAS\",\"udp:127.0.0.1:$UAS\",\"kamailio_test\",1,-1);"
 

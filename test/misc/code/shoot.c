@@ -310,7 +310,7 @@ int main(int argc, char *argv[])
 
 
 /*
-shoot will exercise the all types of sip servers.
+shoot will exercise all the types of sip servers.
 it is not to be used to measure round-trips and general connectivity.
 use ping for that. 
 written by farhan on 10th august, 2000.

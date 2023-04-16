@@ -365,7 +365,7 @@ xinfo("AFTER $xavp(d[2]=&gt;x) == [d-2-x] $xavp(d[2]=&gt;y) == [d-2-y]\n");
 				<function moreinfo="none">xavp_params_explode(sparams, xname)</function>
 			</title>
 			<para>
-				Convert a parameters string in xavp atributes.
+				Convert a parameters string in xavp attributes.
 			</para>
 			<para>
 				The first parameter has to be a string in the format of SIP header
@@ -430,7 +430,7 @@ xavp_params_implode("x", "$var(out)");
 				<function moreinfo="none">xavu_params_explode(sparams, xname)</function>
 			</title>
 			<para>
-				Convert a parameters string in xavu atributes.
+				Convert a parameters string in xavu attributes.
 			</para>
 			<para>
 				The first parameter has to be a string in the format of SIP header

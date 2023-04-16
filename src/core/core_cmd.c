@@ -43,7 +43,6 @@
 #include "tcp_info.h"
 #include "tcp_conn.h"
 #include "tcp_options.h"
-#include "core_cmd.h"
 #include "cfg_core.h"
 #include "ppcfg.h"
 
@@ -240,7 +239,7 @@ static void system_listMethods(rpc_t* rpc, void* c)
 	int i;
 
 	for(i=0; i<rpc_sarray_crt_size; i++){
-		if (rpc->add(c, "s", rpc_sarray[i]->name) < 0) return;
+		if (rpc->add(c, "s", rpc_sarray[i]->r.name) < 0) return;
 	}
 }
 
@@ -319,6 +318,20 @@ static const char* core_echo_doc[] = {
 
 
 static void core_echo(rpc_t* rpc, void* c)
+{
+	char* string = 0;
+	while((rpc->scan(c, "*.s", &string)>0))
+		rpc->add(c, "s", string);
+}
+
+
+static const char* core_echo_delta_doc[] = {
+	"Returns back its parameters with execution delta limit.", /* Documentation string */
+	0                                             /* Method signature(s) */
+};
+
+
+static void core_echo_delta(rpc_t* rpc, void* c)
 {
 	char* string = 0;
 	while((rpc->scan(c, "*.s", &string)>0))
@@ -1105,15 +1118,17 @@ static void core_ppdefines_full(rpc_t* rpc, void* c)
  * RPC Methods exported by core
  */
 static rpc_export_t core_rpc_methods[] = {
-	{"system.listMethods",     system_listMethods,     system_listMethods_doc,     RET_ARRAY},
+	{"system.listMethods",     system_listMethods,     system_listMethods_doc,     RPC_RET_ARRAY},
 	{"system.methodSignature", system_methodSignature, system_methodSignature_doc, 0        },
 	{"system.methodHelp",      system_methodHelp,      system_methodHelp_doc,      0        },
 	{"core.prints",            core_prints,            core_prints_doc,
-	RET_ARRAY},
+		RPC_RET_ARRAY},
 	{"core.printi",            core_printi,            core_printi_doc,
-	RET_ARRAY},
+		RPC_RET_ARRAY},
 	{"core.echo",              core_echo,              core_echo_doc,
-	RET_ARRAY},
+		RPC_RET_ARRAY},
+	{"core.echo_delta",        core_echo_delta,        core_echo_delta_doc,
+		RPC_RET_ARRAY|RPC_EXEC_DELTA},
 	{"core.version",           core_version,           core_version_doc,
 		0        },
 	{"core.flags",             core_flags,             core_flags_doc,
@@ -1123,11 +1138,11 @@ static rpc_export_t core_rpc_methods[] = {
 	{"core.runinfo",           core_runinfo,           core_runinfo_doc,
 		0        },
 	{"core.uptime",            core_uptime,            core_uptime_doc,            0        },
-	{"core.ps",                core_ps,                core_ps_doc,                RET_ARRAY},
-	{"core.psx",               core_psx,               core_psx_doc,               RET_ARRAY},
-	{"core.psa",               core_psa,               core_psa_doc,               RET_ARRAY},
-	{"core.pwd",               core_pwd,               core_pwd_doc,               RET_ARRAY},
-	{"core.arg",               core_arg,               core_arg_doc,               RET_ARRAY},
+	{"core.ps",                core_ps,                core_ps_doc,                RPC_RET_ARRAY},
+	{"core.psx",               core_psx,               core_psx_doc,               RPC_RET_ARRAY},
+	{"core.psa",               core_psa,               core_psa_doc,               RPC_RET_ARRAY},
+	{"core.pwd",               core_pwd,               core_pwd_doc,               RPC_RET_ARRAY},
+	{"core.arg",               core_arg,               core_arg_doc,               RPC_RET_ARRAY},
 	{"core.kill",              core_kill,              core_kill_doc,              0        },
 	{"core.shmmem",            core_shmmem,            core_shmmem_doc,            0	},
 #if defined(SF_MALLOC) || defined(LL_MALLOC)
@@ -1135,14 +1150,14 @@ static rpc_export_t core_rpc_methods[] = {
 #endif
 	{"core.tcp_info",          core_tcpinfo,           core_tcpinfo_doc,    0},
 	{"core.tcp_options",       core_tcp_options,       core_tcp_options_doc,0},
-	{"core.tcp_list",          core_tcp_list,          core_tcp_list_doc, RET_ARRAY},
+	{"core.tcp_list",          core_tcp_list,          core_tcp_list_doc, RPC_RET_ARRAY},
 	{"core.udp4_raw_info",     core_udp4rawinfo,       core_udp4rawinfo_doc,
 		0},
 	{"core.aliases_list",      core_aliases_list,      core_aliases_list_doc, 0},
 	{"core.sockets_list",      core_sockets_list,      core_sockets_list_doc, 0},
-	{"core.modules",           core_modules,           core_modules_doc,         RET_ARRAY},
-	{"core.ppdefines",         core_ppdefines,         core_ppdefines_doc,       RET_ARRAY},
-	{"core.ppdefines_full",    core_ppdefines_full,    core_ppdefines_full_doc,  RET_ARRAY},
+	{"core.modules",           core_modules,           core_modules_doc,         RPC_RET_ARRAY},
+	{"core.ppdefines",         core_ppdefines,         core_ppdefines_doc,       RPC_RET_ARRAY},
+	{"core.ppdefines_full",    core_ppdefines_full,    core_ppdefines_full_doc,  RPC_RET_ARRAY},
 #ifdef USE_DNS_CACHE
 	{"dns.mem_info",          dns_cache_mem_info,     dns_cache_mem_info_doc,
 		0	},
@@ -1151,7 +1166,7 @@ static rpc_export_t core_rpc_methods[] = {
 	{"dns.debug_all",      dns_cache_debug_all,       dns_cache_debug_all_doc,
 		0	},
 	{"dns.view",               dns_cache_view,        dns_cache_view_doc,
-		RET_ARRAY	},
+		RPC_RET_ARRAY	},
 	{"dns.lookup",             dns_cache_rpc_lookup,  dns_cache_rpc_lookup_doc,
 		0	},
 	{"dns.delete_all",         dns_cache_delete_all,  dns_cache_delete_all_doc,

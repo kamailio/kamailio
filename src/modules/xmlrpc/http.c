@@ -55,7 +55,7 @@
  * @param msg a pointer to the currently processed SIP message
  * @param via the Via header field text to be inserted
  * @param via_len size of the Via header field being inserted
- * @return 0 on succes, a negative number on error.
+ * @return 0 on success, a negative number on error.
  */
 static int insert_fake_via(sip_msg_t* msg, char* via, int via_len)
 {

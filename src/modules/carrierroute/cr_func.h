@@ -66,13 +66,26 @@ int ki_cr_load_user_carrier(struct sip_msg *_msg,
  *
  * @return 1 on success, -1 on failure
  */
-int cr_route(struct sip_msg * _msg, gparam_t *_carrier,
-		gparam_t *_domain, gparam_t *_prefix_matching,
-		gparam_t *_rewrite_user, enum hash_source _hsrc,
-		gparam_t *_descavp);
-int cr_route5(struct sip_msg * _msg, gparam_t *_carrier,
-		gparam_t *_domain, gparam_t *_prefix_matching,
-		gparam_t *_rewrite_user, enum hash_source _hsrc);
+int cr_route(struct sip_msg * _msg, char *_carrier,
+		char *_domain, char *_prefix_matching,
+		char *_rewrite_user, enum hash_source _hsrc,
+		char *_descavp);
+
+
+int ki_cr_route_info(sip_msg_t* _msg, str *_carrier,
+		str *_domain, str *_prefix_matching,
+		str *_rewrite_user, str *_hsrc,
+		str *_descavp);
+
+
+int cr_route5(struct sip_msg * _msg, char *_carrier,
+		char *_domain, char *_prefix_matching,
+		char *_rewrite_user, enum hash_source _hsrc);
+
+
+int ki_cr_route(sip_msg_t* _msg, str *_carrier,
+		str *_domain, str *_prefix_matching,
+		str *_rewrite_user, str *_hsrc);
 
 
 /**
@@ -92,13 +105,26 @@ int cr_route5(struct sip_msg * _msg, gparam_t *_carrier,
  *
  * @return 1 on success, -1 on failure
  */
-int cr_nofallback_route(struct sip_msg * _msg, gparam_t *_carrier,
-		gparam_t *_domain, gparam_t *_prefix_matching,
-		gparam_t *_rewrite_user, enum hash_source _hsrc,
-		gparam_t *_dstavp);
-int cr_nofallback_route5(struct sip_msg * _msg, gparam_t *_carrier,
-		gparam_t *_domain, gparam_t *_prefix_matching,
-		gparam_t *_rewrite_user, enum hash_source _hsrc);
+int cr_nofallback_route(struct sip_msg * _msg, char *_carrier,
+		char *_domain, char *_prefix_matching,
+		char *_rewrite_user, enum hash_source _hsrc,
+		char *_dstavp);
+
+
+int ki_cr_nofallback_route_info(sip_msg_t* _msg, str *_carrier,
+		str *_domain, str *_prefix_matching,
+		str *_rewrite_user, str *_hsrc,
+		str *_dstavp);
+
+
+int cr_nofallback_route5(struct sip_msg * _msg, char *_carrier,
+		char *_domain, char *_prefix_matching,
+		char *_rewrite_user, enum hash_source _hsrc);
+
+
+int ki_cr_nofallback_route(sip_msg_t* _msg, str *_carrier,
+		str *_domain, str *_prefix_matching,
+		str *_rewrite_user, str *_hsrc);
 
 
 /**
@@ -114,8 +140,13 @@ int cr_nofallback_route5(struct sip_msg * _msg, gparam_t *_carrier,
  *
  * @return 1 on success, -1 on failure
  */
-int cr_load_next_domain(struct sip_msg * _msg, gparam_t *_carrier,
-		gparam_t *_domain, gparam_t *_prefix_matching, gparam_t *_host,
-		gparam_t *_reply_code, gparam_t *_dstavp);
+int cr_load_next_domain(struct sip_msg * _msg, char *_carrier,
+		char *_domain, char *_prefix_matching, char *_host,
+		char *_reply_code, char *_dstavp);
+
+
+int ki_cr_load_next_domain(sip_msg_t* _msg, str *_carrier,
+		str *_domain, str *_prefix_matching,
+		str *_host, str *_reply_code, str *_dstavp);
 
 #endif

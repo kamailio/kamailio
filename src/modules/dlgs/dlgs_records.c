@@ -1249,7 +1249,7 @@ static void dlgs_rpc_get(rpc_t *rpc, void *ctx)
 }
 
 static const char *dlgs_rpc_getall_doc[2] = {
-	"Get the all dlgs records by filter",
+	"Get all the dlgs records by filter",
 	0
 };
 

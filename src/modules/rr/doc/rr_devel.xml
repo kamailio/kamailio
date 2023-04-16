@@ -94,7 +94,7 @@ record_route_advertised_address("1.2.3.4:5090");
 
 	<section>
 		<title>
-		<function moreinfo="none">add_rr_param( msg, param)</function>
+		<function moreinfo="none">add_rr_param(msg, param)</function>
 		</title>
 		<para>
 		Adds a parameter to the requests's Record-Route URI (param must be in 
@@ -122,7 +122,7 @@ record_route_advertised_address("1.2.3.4:5090");
 
 	<section>
 		<title>
-		<function moreinfo="none">check_route_param( msg, re)</function>
+		<function moreinfo="none">check_route_param(msg, re)</function>
 		</title>
 		<para>
 		The function checks for the request <quote>msg</quote> if the URI 
@@ -150,7 +150,7 @@ record_route_advertised_address("1.2.3.4:5090");
 
 	<section>
 		<title>
-		<function moreinfo="none">is_direction( msg, dir)</function>
+		<function moreinfo="none">is_direction(msg, dir)</function>
 		</title>
 		<para>
 		The function checks the flow direction of the request 
@@ -182,7 +182,7 @@ record_route_advertised_address("1.2.3.4:5090");
 
 	<section>
 		<title>
-		<function moreinfo="none">get_route_param( msg, name, val)</function>
+		<function moreinfo="none">get_route_param(msg, name, val)</function>
 		</title>
 		<para>
 		The function search in to the <quote>msg</quote>'s Route header 
@@ -217,7 +217,7 @@ record_route_advertised_address("1.2.3.4:5090");
 
 	<section>
 		<title>
-		<function moreinfo="none">register_rrcb( callback, param)</function>
+		<function moreinfo="none">register_rrcb(callback, param)</function>
 		</title>
 		<para>
 		The function register a new callback (along with its parameter). The

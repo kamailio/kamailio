@@ -177,7 +177,7 @@ void deinit_contact_slot(contact_hslot_t* _s)
 
 
 /*!
- * \brief Add an element to an slot's linked list
+ * \brief Add an element to a slot's linked list
  * \param _s hash slot
  * \param _r added record
  */

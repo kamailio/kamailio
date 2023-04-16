@@ -374,7 +374,7 @@ error:
 
 
 
-/* handles an new connect on one of the watched stream connections
+/* handles a new connect on one of the watched stream connections
  *
  * params: cs - pointer to the control socket for which we have an io ev.
  * returns:  handle_* return convention:

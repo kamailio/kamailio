@@ -20,7 +20,7 @@
 		DB1_STR,      /**< represents a string of 'str' type        */
 		DB1_DATETIME, /**< represents date and time                 */
 		DB1_BLOB,     /**< represents a large binary object         */
-		DB1_BITMAP    /**< an one-dimensional array of 32 flags     */
+		DB1_BITMAP    /**< a one-dimensional array of 32 flags     */
 			/* validation */
 		P_HOST_PORT  /**< represents [proto:]host[:port]       */
 		P_IPV4_PORT  /**< represents [proto:]IPv4[:port]       */

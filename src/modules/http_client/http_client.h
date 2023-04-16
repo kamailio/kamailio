@@ -2,7 +2,9 @@
  * header file of http_client.c
  *
  * Copyright (C) 2008 Juha Heinanen
- *
+ * 
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ * 
  * This file is part of Kamailio, a free SIP server.
  *
  * Kamailio is free software; you can redistribute it and/or modify

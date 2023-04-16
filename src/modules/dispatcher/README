@@ -2099,7 +2099,7 @@ route[WITHINDLG] {
                 return;
         }
 
-        # sequential request withing a dialog should
+        # sequential request within a dialog should
         # take the path determined by record-routing
         if (loose_route()) {
                 if (is_method("BYE")) {
@@ -2259,7 +2259,7 @@ Chapter 2. Frequently Asked Questions
 
    E-mails regarding any stable version should be sent to
    <sr-users@lists.kamailio.org> and e-mail regarding development versions
-   or GIT snapshots should be send to <sr-dev@lists.kamailio.org>.
+   or GIT snapshots should be sent to <sr-dev@lists.kamailio.org>.
 
    2.5.
 
