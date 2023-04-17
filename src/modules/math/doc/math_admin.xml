@@ -146,5 +146,27 @@
 </programlisting>
 		</example>
 	</section>
+	<section id="math.f.sqrt">
+		<title>
+		<function moreinfo="none">math_sqrt(x, res)</function>
+		</title>
+		<para>
+		The function computes the square root of x and stores the result
+		in res.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>math_sqrt</function> usage</title>
+		<programlisting format="linespecific">
+...
+    math_sqrt("16", "$var(res)");
+    $var(x) = 16;
+    math_sqrt("$var(x)", "$var(res)");
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 </chapter>
