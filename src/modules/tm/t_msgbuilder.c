@@ -1526,7 +1526,7 @@ static inline char* print_callid(char* w, dlg_t* dialog, struct cell* t)
 
 	w = print_callid_mini(w, dialog->id.call_id);
 
-	t->callid_val.s = t->callid_val.s + CALLID_LEN;
+	t->callid_val.s = t->callid_hdr.s + CALLID_LEN;
 	t->callid_val.len = dialog->id.call_id.len;
 	trim(&t->callid_val);
 
