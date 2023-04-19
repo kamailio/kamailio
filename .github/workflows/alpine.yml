@@ -1,0 +1,47 @@
+---
+name: alpine docker image
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - '5.6.*'
+      - '5.5.*'
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+permissions:
+  contents: read # to fetch code (actions/checkout)
+
+# This environments for backward compatability with build script for DockerHub
+env:
+  DOCKER_REPO: kamailio/kamailio-ci
+  SOURCE_BRANCH: ${{ github.ref_name }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Compile Kamailio source
+      run: |
+        git submodule init
+        git submodule update
+        cd `pwd`/pkg/docker/alpine
+        ./hooks/pre_build || true
+    - name: Build the Docker images
+      run: |
+        cd `pwd`/pkg/docker/alpine
+        sudo chown -R ${USER}:${USER} `pwd`
+        ./hooks/build
+    - name: Login to Docker Hub
+      if: ${{ env.GITHUB_BASE_REF == '' }}
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+    - name: Push images to DockerHub
+      if: ${{ env.GITHUB_BASE_REF == '' }}
+      run: |
+        cd `pwd`/pkg/docker/alpine
+        ./hooks/push
+        ./hooks/post_push
