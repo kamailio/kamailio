@@ -1,0 +1,179 @@
+---
+name: alpine docker image
+on:
+  schedule:
+  - cron: '41 3 * * *'
+  push:
+    tags:
+    - '[0-9]+.[0-9]+.[0-9]+'
+
+env:
+  IMAGE_NAME: kamailio-ci
+  SOURCE_BRANCH: ${{ github.ref_name }}
+
+jobs:
+  x86_64:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: print latest_commit
+      run: echo ${{ github.sha }}
+
+    # is required nightly build?
+    # More info at https://stackoverflow.com/questions/63014786/how-to-schedule-a-github-actions-nightly-build-but-run-it-only-when-there-where
+    - id: should_run
+      continue-on-error: true
+      name: check latest commit is less than a day
+      if: ${{ github.event_name == 'schedule' }}
+      run: test -z "$(git rev-list --after='24 hours' ${{ github.sha }})" && echo "should_run=false" >> $GITHUB_OUTPUT || echo "should_run=true" >> $GITHUB_OUTPUT
+
+    - name: Compile Kamailio source
+      if: ${{ steps.should_run.outputs.should_run != 'false' }}
+      run: |
+        git submodule init
+        git submodule update
+        cd pkg/docker/alpine
+        ./hooks/pre_build || true
+
+    - name: Docker meta
+      if: ${{ steps.should_run.outputs.should_run != 'false' }}
+      id: meta
+      uses: docker/metadata-action@v4
+      with:
+        # list of Docker images to use as base name for tags
+        images: |
+          ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}
+        # generate Docker tags based on the following events/attributes
+        tags: |
+          type=pep440,pattern={{version}}
+          type=pep440,pattern={{major}}.{{minor}}
+          type=pep440,pattern={{major}}
+          type=ref,event=branch
+        flavor: |
+          suffix=
+          latest=auto
+
+    - name: Docker meta "-alpine"
+      if: ${{ steps.should_run.outputs.should_run != 'false' }}
+      id: meta-alpine
+      uses: docker/metadata-action@v4
+      with:
+        # list of Docker images to use as base name for tags
+        images: |
+          ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}
+        # generate Docker tags based on the following events/attributes
+        tags: |
+          type=pep440,pattern={{version}}
+          type=pep440,pattern={{major}}.{{minor}}
+          type=pep440,pattern={{major}}
+          type=ref,event=branch
+        flavor: |
+          suffix=-alpine
+          latest=false
+
+    - name: Docker meta "-debug"
+      if: ${{ steps.should_run.outputs.should_run != 'false' }}
+      id: meta-debug
+      uses: docker/metadata-action@v4
+      with:
+        # list of Docker images to use as base name for tags
+        images: |
+          ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}
+        # generate Docker tags based on the following events/attributes
+        tags: |
+          type=pep440,pattern={{version}}
+          type=pep440,pattern={{major}}.{{minor}}
+          type=pep440,pattern={{major}}
+          type=ref,event=branch
+        flavor: |
+          suffix=-debug
+          latest=false
+
+    - name: Login to GitHub Container Registry
+      if: ${{ steps.should_run.outputs.should_run != 'false' }}
+      uses: docker/login-action@v2
+      with:
+        registry: ghcr.io
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: temporal workarround for "-alpine" and "-debug" builds
+      if: ${{ steps.should_run.outputs.should_run != 'false' }}
+      run: |
+        sudo chown -R ${USER}:${USER} ${{ github.workspace }}/pkg/docker/alpine
+        cd pkg/docker/alpine
+        mkdir repackage
+        tar xz --directory=repackage -f kamailio_min-without_os_files.tar.gz
+        rm -f kamailio_min-without_os_files.tar.gz
+        tar cz --directory=repackage -f kamailio_min-without_os_files.tar.gz $(ls -A repackage)
+
+    - name: Prepare local repo for "-debug" build
+      if: ${{ steps.should_run.outputs.should_run != 'false' }}
+      run: |
+        docker network create kamailio-build
+        docker run \
+               --detach \
+               --network kamailio-build \
+               --name local-repo \
+               --hostname local-repo \
+               --rm=true \
+               --volume=${{ github.workspace }}/pkg/docker/alpine/apk_files:/usr/share/nginx/html:ro \
+               nginx
+        LOCAL_REPO_IP=$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' local-repo)
+        sed -i -e "s/local-repo/${LOCAL_REPO_IP}/" pkg/docker/alpine/Dockerfile.debug
+
+    - name: Create custom builder for "-debug" build
+      if: ${{ steps.should_run.outputs.should_run != 'false' }}
+      id: local-repo
+      uses: docker/setup-buildx-action@v2
+      with:
+        driver-opts: |
+          network=kamailio-build
+
+    - name: Build and push "-debug" build
+      if: ${{ steps.should_run.outputs.should_run != 'false' }}
+      uses: docker/build-push-action@v4
+      with:
+        context: pkg/docker/alpine
+        file: pkg/docker/alpine/Dockerfile.debug
+        builder: ${{ steps.local-repo.outputs.name }}
+        push: ${{ github.event_name != 'pull_request' }}
+        tags: ${{ steps.meta-debug.outputs.tags }}
+        labels: ${{ steps.meta-debug.outputs.labels }}
+
+    - name: Cleanup after "-debug" build
+      if: ${{ steps.should_run.outputs.should_run != 'false' }}
+      run: |
+        docker buildx stop ${{ steps.local-repo.outputs.name }}
+        docker buildx rm ${{ steps.local-repo.outputs.name }}
+        docker stop local-repo
+        docker network rm kamailio-build
+
+    - name: Build and push "-alpine" build
+      if: ${{ steps.should_run.outputs.should_run != 'false' }}
+      uses: docker/build-push-action@v4
+      with:
+        context: pkg/docker/alpine
+        file: pkg/docker/alpine/Dockerfile.alpine
+        push: ${{ github.event_name != 'pull_request' }}
+        tags: ${{ steps.meta-alpine.outputs.tags }}
+        labels: ${{ steps.meta-alpine.outputs.labels }}
+
+    - name: Build and push
+      if: ${{ steps.should_run.outputs.should_run != 'false' }}
+      uses: docker/build-push-action@v4
+      with:
+        context: pkg/docker/alpine
+        file: pkg/docker/alpine/Dockerfile
+        push: ${{ github.event_name != 'pull_request' }}
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+
+    - name: Delete untagged images
+      if: ${{ steps.should_run.outputs.should_run != 'false' }}
+      uses: camargo/delete-untagged-action@v1
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        package-name: ${{ env.IMAGE_NAME }}
