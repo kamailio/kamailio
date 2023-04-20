@@ -24,6 +24,8 @@ jobs:
         git submodule init
         git submodule update
         tar cz -C pkg/docker/alpine -f kamailio_img.tar.gz Dockerfile
+        pwd
+        find pkg/docker/alpine
 
     - name: Build and push minimal
       uses: docker/build-push-action@v4
