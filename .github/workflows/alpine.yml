@@ -20,14 +20,6 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Login to GitHub Container Registry
-      if: ${{ env.GITHUB_BASE_REF == '' }}
-      uses: docker/login-action@v2
-      with:
-        registry: ghcr.io
-        username: ${{ github.repository_owner }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-
     - name: Compile Kamailio source
       run: |
         git submodule init
@@ -55,11 +47,51 @@ jobs:
           type=semver,pattern={{major}}
           type=ref,event=branch
 
+    - name: Docker meta alpine
+      id: meta-alpine
+      uses: docker/metadata-action@v4
+      with:
+        # list of Docker images to use as base name for tags
+        images: |
+          ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}
+        # generate Docker tags based on the following events/attributes
+        tags: |
+          type=semver,pattern={{version}}
+          type=semver,pattern={{major}}.{{minor}}
+          type=semver,pattern={{major}}
+          type=ref,event=branch-alpine
+        flavor: |
+          suffix=-alpine
+
+    - name: Docker meta debug
+      id: meta-debug
+      uses: docker/metadata-action@v4
+      with:
+        # list of Docker images to use as base name for tags
+        images: |
+          ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}
+        # generate Docker tags based on the following events/attributes
+        tags: |
+          type=semver,pattern={{version}}
+          type=semver,pattern={{major}}.{{minor}}
+          type=semver,pattern={{major}}
+          type=ref,event=branch-alpine
+        flavor: |
+          suffix=-debug
+
+    - name: Login to GitHub Container Registry
+      if: ${{ github.event_name != 'pull_request' }}
+      uses: docker/login-action@v2
+      with:
+        registry: ghcr.io
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
     - name: Build and push minimal
       uses: docker/build-push-action@v4
       with:
         context: pkg/docker/alpine
-        file: Dockerfile
+        file: pkg/docker/alpine/Dockerfile
         push: ${{ github.event_name != 'pull_request' }}
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
@@ -68,16 +100,16 @@ jobs:
       uses: docker/build-push-action@v4
       with:
         context: pkg/docker/alpine
-        file: Dockerfile.alpine
+        file: {context}/Dockerfile.alpine
         push: ${{ github.event_name != 'pull_request' }}
-        tags: ${{ steps.meta.outputs.tags }}
-        labels: ${{ steps.meta.outputs.labels }}
+        tags: ${{ steps.meta-alpine.outputs.tags }}
+        labels: ${{ steps.meta-alpine.outputs.labels }}
 
     - name: Build and push with debug
       uses: docker/build-push-action@v4
       with:
         context: pkg/docker/alpine
-        file: Dockerfile.debug
+        file: {context}/Dockerfile.debug
         push: ${{ github.event_name != 'pull_request' }}
-        tags: ${{ steps.meta.outputs.tags }}
-        labels: ${{ steps.meta.outputs.labels }}
+        tags: ${{ steps.meta-debug.outputs.tags }}
+        labels: ${{ steps.meta-debug.outputs.labels }}
