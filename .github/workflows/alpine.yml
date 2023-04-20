@@ -27,7 +27,10 @@ jobs:
         tar cz -f pkg/docker/alpine/kamailio_img.tar.gz pkg/docker/alpine/Dockerfile
         pwd
         find pkg/docker/alpine
-        /usr/bin/docker buildx build --file Dockerfile pkg/docker/alpine
+        cp -R pkg/docker/alpine/* .
+        /usr/bin/docker buildx build .
+        /usr/bin/docker buildx build --file Dockerfile .
+        echo /usr/bin/docker buildx build --file Dockerfile pkg/docker/alpine
 
     - name: Build and push minimal
       uses: docker/build-push-action@v4
