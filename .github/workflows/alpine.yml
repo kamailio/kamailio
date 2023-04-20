@@ -19,6 +19,20 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
+    - name: test
+      run: |
+        git submodule init
+        git submodule update
+        tar cz -C pkg/docker/alpine -f kamailio_img.tar.gz Dockerfile
+
+    - name: Build and push minimal
+      uses: docker/build-push-action@v4
+      with:
+        context: pkg/docker/alpine
+        file: Dockerfile
+        push: false
+        tags: master
+
     - name: Compile Kamailio source
       run: |
         git submodule init
@@ -99,7 +113,7 @@ jobs:
       uses: docker/build-push-action@v4
       with:
         context: pkg/docker/alpine
-        file: pkg/docker//Dockerfile.alpine
+        file: pkg/docker/Dockerfile.alpine
         push: ${{ github.event_name != 'pull_request' }}
         tags: ${{ steps.meta-alpine.outputs.tags }}
         labels: ${{ steps.meta-alpine.outputs.labels }}
@@ -108,7 +122,7 @@ jobs:
       uses: docker/build-push-action@v4
       with:
         context: pkg/docker/alpine
-        file: pkg/docker//Dockerfile.debug
+        file: pkg/docker/Dockerfile.debug
         push: ${{ github.event_name != 'pull_request' }}
         tags: ${{ steps.meta-debug.outputs.tags }}
         labels: ${{ steps.meta-debug.outputs.labels }}
