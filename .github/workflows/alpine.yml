@@ -11,7 +11,6 @@ on:
 # This environments for backward compatability with build script for DockerHub
 env:
   IMAGE_NAME: kamailio-ci
-  DOCKER_REPO: kamailio/kamailio-ci
   SOURCE_BRANCH: ${{ github.ref_name }}
 
 jobs:
@@ -42,9 +41,9 @@ jobs:
           ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}
         # generate Docker tags based on the following events/attributes
         tags: |
-          type=semver,pattern={{version}}
-          type=semver,pattern={{major}}.{{minor}}
-          type=semver,pattern={{major}}
+          type=pep440,pattern={{version}}
+          type=pep440,pattern={{major}}.{{minor}}
+          type=pep440,pattern={{major}}
           type=ref,event=branch
 
     - name: Docker meta alpine
@@ -56,10 +55,10 @@ jobs:
           ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}
         # generate Docker tags based on the following events/attributes
         tags: |
-          type=semver,pattern={{version}}
-          type=semver,pattern={{major}}.{{minor}}
-          type=semver,pattern={{major}}
-          type=ref,event=branch-alpine
+          type=pep440,pattern={{version}}
+          type=pep440,pattern={{major}}.{{minor}}
+          type=pep440,pattern={{major}}
+          type=ref,event=branch
         flavor: |
           suffix=-alpine
 
@@ -72,10 +71,10 @@ jobs:
           ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}
         # generate Docker tags based on the following events/attributes
         tags: |
-          type=semver,pattern={{version}}
-          type=semver,pattern={{major}}.{{minor}}
-          type=semver,pattern={{major}}
-          type=ref,event=branch-alpine
+          type=pep440,pattern={{version}}
+          type=pep440,pattern={{major}}.{{minor}}
+          type=pep440,pattern={{major}}
+          type=ref,event=branch
         flavor: |
           suffix=-debug
 
