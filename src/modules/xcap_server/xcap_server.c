@@ -171,7 +171,7 @@ static int mod_init(void)
 	xcaps_buf.s = (char*)pkg_malloc(xcaps_buf.len+1);
 	if(xcaps_buf.s==NULL)
 	{
-		LM_ERR("no pkg\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 
@@ -266,7 +266,7 @@ static int xcaps_send_reply(sip_msg_t *msg, int code, str *reason,
 
 		if (tbuf.len==0)
 		{
-			LM_ERR("out of pkg memory\n");
+			PKG_MEM_ERROR;
 			return -1;
 		}
 		memcpy(tbuf.s, "Content-Type: ", sizeof("Content-Type: ") - 1);
@@ -545,7 +545,7 @@ static int ki_xcaps_put(sip_msg_t* msg, str* uri, str* path,
 		body.s = (char*)pkg_malloc(pbody->len+1);
 		if(body.s==NULL)
 		{
-			LM_ERR("no more pkg\n");
+			PKG_MEM_ERROR;
 			goto error;
 		}
 		memcpy(body.s, pbody->s, pbody->len);
@@ -1033,6 +1033,11 @@ static int xcaps_get_directory(struct sip_msg *msg, str *user, str *domain, str 
 			else
 			{
 				server_name.s = pkg_malloc(IP6_MAX_STR_SIZE + 6);
+				if(!server_name.s)
+				{
+					PKG_MEM_ERROR;
+					goto error;
+				}
 				server_name.len = ip_addr2sbuf(&msg->rcv.dst_ip, server_name.s, IP6_MAX_STR_SIZE);
 				directory->len += snprintf(directory->s + directory->len,
 							xcaps_buf.len - directory->len,
@@ -1172,7 +1177,7 @@ static int ki_xcaps_get(sip_msg_t* msg, str* uri, str* path)
 		{
 			if((new_body.s = pkg_malloc(body.len))==NULL)
 			{
-				LM_ERR("allocating package memory\n");
+				PKG_MEM_ERROR;
 				goto error;
 			}
 			new_body.len = body.len;

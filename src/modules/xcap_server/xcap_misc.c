@@ -589,7 +589,7 @@ int xcaps_xpath_set(str *inbuf, str *xpaths, str *val, str *outbuf)
 	outbuf->s = (char*)pkg_malloc(size+1);
 	if(outbuf->s==NULL)
 	{
-		LM_ERR("no pkg for output\n");
+		PKG_MEM_ERROR_FMT("for output\n");
 		xmlFree(xmem);
 		goto error;
 	}
@@ -643,7 +643,7 @@ int xcaps_xpath_ns_param(modparam_t type, void *val)
 
 	if(ns==NULL)
 	{
-		LM_ERR("no more pkg\n");
+		PKG_MEM_ERROR;
 		goto error;
 	}
 	memset(ns, 0, sizeof(param_t));
@@ -735,7 +735,7 @@ pv_xcap_uri_t *pv_xcap_uri_get_struct(str *name)
 	it = (pv_xcap_uri_t*)pkg_malloc(sizeof(pv_xcap_uri_t));
 	if(it==NULL)
 	{
-		LM_ERR("no more pkg\n");
+		PKG_MEM_ERROR;
 		return NULL;
 	}
 	memset(it, 0, sizeof(pv_xcap_uri_t));
@@ -762,8 +762,10 @@ int pv_parse_xcap_uri_name(pv_spec_p sp, str *in)
 
 	pxs = (pv_xcap_uri_spec_t*)pkg_malloc(sizeof(pv_xcap_uri_spec_t));
 	if(pxs==NULL)
+	{
+		PKG_MEM_ERROR;
 		return -1;
-
+	}
 	memset(pxs, 0, sizeof(pv_xcap_uri_spec_t));
 
 	p = in->s;
