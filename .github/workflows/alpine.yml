@@ -58,7 +58,7 @@ jobs:
         push: ${{ github.event_name == 'pull_request' }}
         tags: ${{ steps.meta-debug.outputs.tags }}
         labels: ${{ steps.meta-debug.outputs.labels }}
-        add-hosts: local-repo:${{ env.LOCAL_REPO_IP }}
+        add-hosts: local-repo:192.168.55.55
 
     - name: Docker meta
       id: meta
