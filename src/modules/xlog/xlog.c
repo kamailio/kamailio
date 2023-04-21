@@ -234,6 +234,7 @@ static int mod_init(void)
 		_xlog_prefix_buf = (char*)pkg_malloc((buf_size+1)*sizeof(char));
 		if(_xlog_prefix_buf==NULL)
 		{
+			pkg_free(_xlog_buf);
 			PKG_MEM_ERROR;
 			return -1;
 		}
