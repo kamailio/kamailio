@@ -26,6 +26,32 @@ jobs:
         cd `pwd`/pkg/docker/alpine
         ./hooks/pre_build || true
 
+    - name: test
+      run: |
+        #git submodule init
+        #git submodule update
+        #tar cz -C ./pkg/docker/alpine -f kamailio_img.tar.gz Dockerfile
+        #tar cz -f pkg/docker/alpine/kamailio_img.tar.gz pkg/docker/alpine/Dockerfile
+        pwd
+        find pkg/docker/alpine
+        #cp -R pkg/docker/alpine/* .
+        #/usr/bin/docker buildx build .
+        #/usr/bin/docker buildx build --file Dockerfile .
+        /usr/bin/docker buildx build --file Dockerfile ./pkg/docker/alpine || true
+        cp -R pkg/docker/alpine/* .
+        /usr/bin/docker buildx build --file Dockerfile.alpine . || true
+        cd pkg/docker/alpine
+        /usr/bin/docker buildx build --file Dockerfile.alpine . || true
+        
+
+    - name: Build and push minimal
+      uses: docker/build-push-action@v4
+      with:
+        context: pkg/docker/alpine
+        file: Dockerfile
+        push: false
+        tags: master
+
     - name: Build image archives and apk files
       run: |
         cd `pwd`/pkg/docker/alpine
@@ -45,6 +71,8 @@ jobs:
           type=pep440,pattern={{major}}.{{minor}}
           type=pep440,pattern={{major}}
           type=ref,event=branch
+        flavor: |
+          suffix=
 
     - name: Docker meta alpine
       id: meta-alpine
@@ -98,7 +126,7 @@ jobs:
     - name: Build and push with apk
       uses: docker/build-push-action@v4
       with:
-        context: pkg/docker/alpine
+        context: ./pkg/docker/alpine
         file: Dockerfile.alpine
         push: ${{ github.event_name != 'pull_request' }}
         tags: ${{ steps.meta-alpine.outputs.tags }}
@@ -107,7 +135,7 @@ jobs:
     - name: Build and push with debug
       uses: docker/build-push-action@v4
       with:
-        context: pkg/docker/alpine
+        context: ./pkg/docker/alpine
         file: Dockerfile.debug
         push: ${{ github.event_name != 'pull_request' }}
         tags: ${{ steps.meta-debug.outputs.tags }}
