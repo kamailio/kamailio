@@ -90,6 +90,7 @@ static int w_sip_trace0(struct sip_msg *, char *p1, char *p2);
 static int w_sip_trace1(struct sip_msg *, char *dest, char *p2);
 static int w_sip_trace2(struct sip_msg *, char *dest, char *correlation_id);
 static int w_sip_trace3(struct sip_msg *, char *dest, char *correlation_id, char *trace_type);
+static int w_sip_trace_msg(sip_msg_t *msg, char *dest, char *correlation_id, char *vmsg);
 static int fixup_siptrace(void **param, int param_no);
 static int fixup_free_siptrace(void **param, int param_no);
 static int w_sip_trace_mode(sip_msg_t *msg, char *pmode, char *p2);
@@ -215,6 +216,8 @@ static cmd_export_t cmds[] = {
 	{"sip_trace", (cmd_function)w_sip_trace2, 2, fixup_siptrace, fixup_free_siptrace,
 		ANY_ROUTE},
 	{"sip_trace", (cmd_function)w_sip_trace3, 3, fixup_siptrace, fixup_free_siptrace,
+		ANY_ROUTE},
+	{"sip_trace_msg", (cmd_function)w_sip_trace_msg, 4, fixup_spve_all, fixup_free_spve_all,
 		ANY_ROUTE},
 	{"hlog", (cmd_function)w_hlog1, 1, fixup_spve_null, 0,
 		ANY_ROUTE},
@@ -774,12 +777,12 @@ static int fixup_siptrace(void **param, int param_no)
 	str sflags;
 	enum siptrace_type_t trace_type;
 
-	if(param_no < 1 || param_no > 3) {
+	if(param_no < 1 || param_no > 4) {
 		LM_DBG("params:%s\n", (char *)*param);
 		return 0;
 	}
 
-	if (param_no == 1 || param_no == 2) {
+	if (param_no == 1 || param_no == 2 || param_no == 4) {
 		/* correlation id */
 		return fixup_spve_all(param, param_no);
 	} else if (param_no == 3) {
@@ -806,7 +809,7 @@ static int fixup_siptrace(void **param, int param_no)
 
 static int fixup_free_siptrace(void **param, int param_no)
 {
-	if (param_no == 1 || param_no == 2) {
+	if (param_no == 1 || param_no == 2 || param_no == 4) {
 		/* correlation id */
 		return fixup_free_spve_all(param, param_no);
 	} if (param_no == 3) {
@@ -1161,6 +1164,67 @@ static int w_sip_trace3(sip_msg_t *msg, char *dest, char *correlation_id, char *
 	return sip_trace_helper(msg, (dest)?&dest_info:NULL,
 			(dest)?&dup_uri_param_str:NULL,
 			(correlation_id)?&correlation_id_str:NULL, NULL, trace_type);
+}
+
+/**
+ *
+ */
+static int w_sip_trace_msg(sip_msg_t *msg, char *dest, char *correlation_id, char *vmsg)
+{
+	str vmsg_str = {0, 0};
+	sip_msg_t *nmsg = NULL;
+	sip_msg_t tmsg;
+	char tbuf[BUF_SIZE];
+	int ret;
+
+	if (vmsg) {
+		if(fixup_get_svalue(msg, (gparam_t*)vmsg, &vmsg_str) != 0) {
+			LM_ERR("unable to parse the msg data parameter\n");
+			return -1;
+		}
+		memset(&tmsg, 0, sizeof(sip_msg_t));
+		memcpy(tbuf, vmsg_str.s, vmsg_str.len);
+		tbuf[vmsg_str.len] = 0;
+		tmsg.buf = tbuf;
+		tmsg.len = vmsg_str.len;
+		if (parse_msg(tmsg.buf, tmsg.len, &tmsg)!=0) {
+			LM_ERR("parse msg failed\n");
+			return -1;
+		}
+		if (parse_headers(msg, HDR_EOH_F, 0)==-1) {
+			LM_DBG("parsing headers failed [[%.*s]]\n",
+					msg->len, msg->buf);
+			goto error;
+		}
+
+		if(parse_from_header(msg)<0) {
+			LM_ERR("cannot parse FROM header\n");
+			goto error;
+		}
+
+		if(parse_to_header(msg)<0 || msg->to==NULL) {
+			LM_ERR("cannot parse TO header\n");
+			goto error;
+		}
+		tmsg.id = msg->id;
+		tmsg.pid = msg->pid;
+		tmsg.rcv = msg->rcv;
+		nmsg = &tmsg;
+	} else {
+		nmsg = msg;
+	}
+
+	ret = w_sip_trace3(msg, dest, correlation_id, NULL);
+
+	if(nmsg != msg) {
+		free_sip_msg(&tmsg);
+	}
+
+	return ret;
+
+error:
+	free_sip_msg(&tmsg);
+	return -1;
 }
 
 /**
