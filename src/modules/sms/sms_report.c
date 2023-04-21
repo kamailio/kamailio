@@ -126,7 +126,7 @@ int init_report_queue(void)
 	report_queue = (struct report_cell*)
 		shm_malloc(NR_CELLS*sizeof(struct report_cell));
 	if (!report_queue) {
-		LM_ERR("no more free pkg_mem!\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	memset( report_queue , 0 , NR_CELLS*sizeof(struct report_cell) );

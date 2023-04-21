@@ -540,7 +540,7 @@ int global_init(void)
 		domain.len = si->name.len + i*(si->port_no_str.len+1);
 		domain.s = (char*)pkg_malloc(domain.len);
 		if (!domain.s) {
-			LM_ERR("no free pkg memory!\n");
+			PKG_MEM_ERROR;
 			goto error;
 		}
 		p = domain.s;
@@ -584,7 +584,7 @@ int global_init(void)
 	/* alloc in shm for queued_msgs */
 	queued_msgs = (int*)shm_malloc(sizeof(int));
 	if (!queued_msgs) {
-		LM_ERR("cannot get shm memory!\n");
+		SHM_MEM_ERROR;
 		goto error;
 	}
 	*queued_msgs = 0;
