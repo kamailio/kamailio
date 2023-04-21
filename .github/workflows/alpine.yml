@@ -26,19 +26,6 @@ jobs:
         cd pkg/docker/alpine
         ./hooks/pre_build || true
 
-    - name: test
-      run: |
-        pwd
-        find pkg/docker/alpine
-        sudo chown -R ${USER}:${USER} `pwd`
-
-    - name: Build image archives and apk files
-      run: |
-        cd pkg/docker/alpine
-        sudo chown -R ${USER}:${USER} `pwd`
-        mv kamailio_min.tar.gz.without_os_files kamailio_min-without_os_files.tar.gz
-        # ./hooks/build
-
     - name: Docker meta
       id: meta
       uses: docker/metadata-action@v4
@@ -104,6 +91,13 @@ jobs:
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
 
+    - name: deporal workarround
+      run: |
+        sudo chown -R ${USER}:${USER} ${{ github.workspace }}/pkg/docker/alpine
+        cd pkg/docker/alpine
+        mv kamailio_min.tar.gz.without_os_files kamailio_min-without_os_files.tar.gz
+        ls -l .
+
     - name: Build and push with apk
       uses: docker/build-push-action@v4
       with:
@@ -113,6 +107,18 @@ jobs:
         tags: ${{ steps.meta-alpine.outputs.tags }}
         labels: ${{ steps.meta-alpine.outputs.labels }}
 
+    - name: Prepare local repo
+      run: |
+        docker network create kamailio-build
+        docker run \
+               --detach \
+               --network kamailio-build \
+               --name local-repo \
+               --hostname local-repo \
+               --rm=true \
+               --volume=${{ github.workspace }}/apk_files:/usr/share/nginx/html:ro \
+               nginx
+
     - name: Build and push with debug
       uses: docker/build-push-action@v4
       with:
@@ -121,3 +127,9 @@ jobs:
         push: ${{ github.event_name != 'pull_request' }}
         tags: ${{ steps.meta-debug.outputs.tags }}
         labels: ${{ steps.meta-debug.outputs.labels }}
+
+    - name: Cleanup
+      run: |
+        docker stop local-repo
+        docker network rm kamailio-build
+        rm -Rf ${{ github.workspace }}/*
