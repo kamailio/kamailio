@@ -90,7 +90,7 @@ int sl_startup()
 	sl_timeout = (unsigned int*)shm_malloc(sizeof(unsigned int));
 	if (!sl_timeout)
 	{
-		LM_ERR("no more free memory!\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	*(sl_timeout)=get_ticks_raw();
@@ -244,13 +244,13 @@ int sl_reply_helper(struct sip_msg *msg, int code, char *reason, str *tag)
 
 				if ((hf = (hdr_field_t*) pkg_malloc(sizeof(struct hdr_field))) == NULL)
 				{
-					LM_ERR("out of package memory\n");
+					PKG_MEM_ERROR;
 					goto event_route_error;
 				}
 
 				if ((cseqb = (struct cseq_body *) pkg_malloc(sizeof(struct cseq_body))) == NULL)
 				{
-					LM_ERR("out of package memory\n");
+					PKG_MEM_ERROR;
 					pkg_free(hf);
 					goto event_route_error;
 				}
@@ -259,7 +259,7 @@ int sl_reply_helper(struct sip_msg *msg, int code, char *reason, str *tag)
 						* (msg->first_line.u.request.method.len + 5);
 				if ((tmp = (char *) pkg_malloc(tsize)) == NULL)
 				{
-					LM_ERR("out of package memory\n");
+					PKG_MEM_ERROR;
 					pkg_free(cseqb);
 					pkg_free(hf);
 					goto event_route_error;
@@ -518,7 +518,7 @@ int sl_register_callback(sl_cbelem_t *cbe)
 	p1 = (sl_cbelem_t*)pkg_malloc(sizeof(sl_cbelem_t));
 
 	if(p1==NULL) {
-		LM_ERR("no more pkg\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 

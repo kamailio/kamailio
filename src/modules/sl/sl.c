@@ -498,7 +498,7 @@ static int w_sl_forward_reply(sip_msg_t* msg, str* code, str* reason)
 		}
 		rbuf = (char *)pkg_malloc(reason->len);
 		if (rbuf==NULL) {
-			LM_ERR("not enough memory\n");
+			PKG_MEM_ERROR;
 			ret = -1;
 			goto restore;
 		}

@@ -109,7 +109,7 @@ int init_sl_stats(void)
 {
 	sl_stats = (struct sl_stats**)shm_malloc(sizeof(struct sl_stats*));
 	if (!sl_stats) {
-		ERR("Unable to allocated shared memory for sl statistics\n");
+		SHM_MEM_ERROR_FMT("for sl statistics\n");
 		return -1;
 	}
 	*sl_stats = 0;
@@ -124,7 +124,7 @@ int init_sl_stats_child(void)
 	len = sizeof(struct sl_stats) * get_max_procs();
 	*sl_stats = shm_malloc(len);
 	if (*sl_stats == 0) {
-		ERR("No shmem\n");
+		SHM_MEM_ERROR;
 		shm_free(sl_stats);
 		return -1;
 	}
