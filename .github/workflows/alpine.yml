@@ -19,26 +19,46 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
+    - name: Compile Kamailio source
+      run: |
+        #git submodule init
+        #git submodule update
+        cd pkg/docker/alpine
+        sudo chown -R ${USER}:${USER} ${{ github.workspace }}/pkg/docker/alpine
+        #sed -i -e 's/3.12/3.17/' ${{ github.workspace }}/pkg/docker/alpine/Dockerfile*
+        #sed -i -e 's/3.12/3.17/' ${{ github.workspace }}/pkg/docker/alpine/hooks/pre_build
+        # ./hooks/pre_build || true
+
     - name: Prepare local repo
       run: |
         docker network create kamailio-build
+        docker run \
+               --detach \
+               --network kamailio-build \
+               --name local-repo \
+               --hostname local-repo \
+               --rm=true \
+               --volume=${{ github.workspace }}/pkg/docker/alpine/apk_files:/usr/share/nginx/html:ro \
+               nginx
+        export LOCAL_REPO_IP=$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' local-repo)
 
-    - name: Prepare local repo
+    - name: Prepare builder with local repo
       id: local-repo
       uses: docker/setup-buildx-action@v2
       with:
         driver-opts: |
           network=kamailio-build
 
-    - name: Compile Kamailio source
-      run: |
-        git submodule init
-        git submodule update
-        cd pkg/docker/alpine
-        sudo chown -R ${USER}:${USER} ${{ github.workspace }}/pkg/docker/alpine
-        #sed -i -e 's/3.12/3.17/' ${{ github.workspace }}/pkg/docker/alpine/Dockerfile*
-        #sed -i -e 's/3.12/3.17/' ${{ github.workspace }}/pkg/docker/alpine/hooks/pre_build
-        ./hooks/pre_build || true
+    - name: Build and push with debug
+      uses: docker/build-push-action@v4
+      with:
+        context: pkg/docker/alpine
+        file: pkg/docker/alpine/Dockerfile.debug
+        builder: ${{ steps.local-repo.outputs.name }}
+        push: ${{ github.event_name != 'pull_request' }}
+        tags: ${{ steps.meta-debug.outputs.tags }}
+        labels: ${{ steps.meta-debug.outputs.labels }}
+        add-hosts: local-repo:${{ env.LOCAL_REPO_IP }}
 
     - name: Docker meta
       id: meta
@@ -121,29 +141,9 @@ jobs:
         tags: ${{ steps.meta-alpine.outputs.tags }}
         labels: ${{ steps.meta-alpine.outputs.labels }}
 
-    - name: Prepare local repo
-      run: |
-        #docker network create kamailio-build
-        docker run \
-               --detach \
-               --network kamailio-build \
-               --name local-repo \
-               --hostname local-repo \
-               --rm=true \
-               --volume=${{ github.workspace }}/apk_files:/usr/share/nginx/html:ro \
-               nginx
-
-    - name: Build and push with debug
-      uses: docker/build-push-action@v4
-      with:
-        context: pkg/docker/alpine
-        file: pkg/docker/alpine/Dockerfile.debug
-        builder: ${{ steps.local-repo.outputs.name }}
-        push: ${{ github.event_name != 'pull_request' }}
-        tags: ${{ steps.meta-debug.outputs.tags }}
-        labels: ${{ steps.meta-debug.outputs.labels }}
-
     - name: Delete local repo
       run: |
+        docker buildx stop ${{ steps.local-repo.outputs.name }}
+        docker buildx rm ${{ steps.local-repo.outputs.name }}
         docker stop local-repo
         docker network rm kamailio-build
