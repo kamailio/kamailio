@@ -105,7 +105,7 @@ static int mod_init(void)
 	log_buf = (char*)pkg_malloc((buf_size+1)*sizeof(char));
 	if(log_buf==NULL)
 	{
-		LOG(L_ERR, "mod_init: ERROR: no more memory\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 
@@ -215,7 +215,7 @@ static int xplog_fixup(void** param, int param_no)
 		 * needs to be created */
 		p = (fparam_t*)pkg_malloc(sizeof(fparam_t));
 		if (!p) {
-			LOG(L_ERR, "xplog_fixup: not enough memory\n");
+			PKG_MEM_ERROR;
 			return -1;
 		}
 		p->v.i = level;

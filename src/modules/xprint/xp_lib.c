@@ -1062,7 +1062,17 @@ static int _xl_parse_format(char *s, xl_elog_p *el, int shm, xl_parse_cb parse_c
 		else
 			e = pkg_malloc(sizeof(xl_elog_t));
 		if(!e)
+		{
+			if(shm)
+			{
+				SHM_MEM_ERROR;
+			}
+			else
+			{
+				PKG_MEM_ERROR;
+			}
 			goto error;
+		}
 		memset(e, 0, sizeof(xl_elog_t));
 		n++;
 		if(*el == NULL)
@@ -1843,7 +1853,11 @@ int xl_mod_init()
 	int i;
 
 	s=(char*)pkg_malloc(HOSTNAME_MAX);
-	if (!s) return -1;
+	if (!s)
+	{
+		PKG_MEM_ERROR;
+		return -1;
+	}
 	if (gethostname(s, HOSTNAME_MAX)<0) {
 		str_fullname.len = 0;
 		str_fullname.s = NULL;
@@ -1872,6 +1886,7 @@ int xl_mod_init()
 		}
 		s=(char*)pkg_malloc(HOSTNAME_MAX);
 		if (!s) {
+			PKG_MEM_ERROR;
 			pkg_free(str_fullname.s);
 			return -1;
 		}
@@ -1896,8 +1911,9 @@ int xl_mod_init()
 								memcpy(str_ipaddr.s, s, str_ipaddr.len);
 								str_ipaddr.s[str_ipaddr.len] = '\0';
 							} else {
+								pkg_free(s);
 								str_ipaddr.len=0;
-								LOG(L_ERR, "ERROR: xl_mod_init: No memory left for str_ipaddr\n");
+								PKG_MEM_ERROR_FMT("for str_ipaddr\n");
 							}
 						} else if (strncmp(str_ipaddr.s, s, str_ipaddr.len)!=0) {
 							LOG(L_WARN, "WARNING: xl_mod_init: more IP %s not used\n", s);
