@@ -219,6 +219,7 @@ static int mod_init(void)
 	th_uri_prefix.s = (char*)pkg_malloc(th_uri_prefix.len+1);
 	if(th_uri_prefix.s==NULL)
 	{
+		pkg_free(th_via_prefix.s);
 		PKG_MEM_ERROR_FMT("uri prefix parameter\n");
 		goto error;
 	}
