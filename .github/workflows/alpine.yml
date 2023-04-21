@@ -35,7 +35,7 @@ jobs:
         git submodule update
         cd pkg/docker/alpine
         sudo chown -R ${USER}:${USER} ${{ github.workspace }}/pkg/docker/alpine
-        sed -i -e 's/3.12/3.17/' ${{ github.workspace }}/pkg/docker/alpine/Dockerfile*/*
+        sed -i -e 's/3.12/3.17/' ${{ github.workspace }}/pkg/docker/alpine/Dockerfile*
         sed -i -e 's/3.12/3.17/' ${{ github.workspace }}/pkg/docker/alpine/hooks/pre_build/*
         ./hooks/pre_build || true
 
