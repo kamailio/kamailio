@@ -23,7 +23,8 @@ jobs:
       run: |
         docker network create kamailio-build
 
-    - name: local-repo
+    - name: Prepare local repo
+      id: local-repo
       uses: docker/setup-buildx-action@v2
       with:
         driver-opts: |
@@ -36,7 +37,7 @@ jobs:
         cd pkg/docker/alpine
         sudo chown -R ${USER}:${USER} ${{ github.workspace }}/pkg/docker/alpine
         sed -i -e 's/3.12/3.17/' ${{ github.workspace }}/pkg/docker/alpine/Dockerfile*
-        sed -i -e 's/3.12/3.17/' ${{ github.workspace }}/pkg/docker/alpine/hooks/pre_build/*
+        sed -i -e 's/3.12/3.17/' ${{ github.workspace }}/pkg/docker/alpine/hooks/pre_build
         ./hooks/pre_build || true
 
     - name: Docker meta
@@ -137,7 +138,7 @@ jobs:
       with:
         context: pkg/docker/alpine
         file: pkg/docker/alpine/Dockerfile.debug
-        builder: local-repo
+        builder: ${{ steps.local-repo.outputs.name }}
         push: ${{ github.event_name != 'pull_request' }}
         tags: ${{ steps.meta-debug.outputs.tags }}
         labels: ${{ steps.meta-debug.outputs.labels }}
