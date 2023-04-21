@@ -23,6 +23,7 @@ jobs:
       run: |
         git submodule init
         git submodule update
+        /usr/bin/docker buildx build --file Dockerfile ${{ github.workspace }}/pkg/docker/alpine || true
         cd `pwd`/pkg/docker/alpine
         ./hooks/pre_build || true
 
@@ -34,20 +35,18 @@ jobs:
         #tar cz -f pkg/docker/alpine/kamailio_img.tar.gz pkg/docker/alpine/Dockerfile
         pwd
         find pkg/docker/alpine
-        #cp -R pkg/docker/alpine/* .
+        sudo chown -R ${USER}:${USER} `pwd`
+        cp -R pkg/docker/alpine/* . | true
         #/usr/bin/docker buildx build .
-        #/usr/bin/docker buildx build --file Dockerfile .
-        /usr/bin/docker buildx build --file Dockerfile ./pkg/docker/alpine || true
-        cp -R pkg/docker/alpine/* .
-        /usr/bin/docker buildx build --file Dockerfile.alpine . || true
-        cd pkg/docker/alpine
-        /usr/bin/docker buildx build --file Dockerfile.alpine . || true
-        
+        /usr/bin/docker buildx build --file Dockerfile . | true
+        /usr/bin/docker buildx build --file Dockerfile ${{ github.workspace }}/pkg/docker/alpine || true
+        ls -l pkg/docker/alpine
+        /usr/bin/docker buildx build --file Dockerfile.alpine ${{ github.workspace }}/pkg/docker/alpine || true
 
     - name: Build and push minimal
       uses: docker/build-push-action@v4
       with:
-        context: pkg/docker/alpine
+        context: ${{ github.workspace }}/pkg/docker/alpine
         file: Dockerfile
         push: false
         tags: master
@@ -117,7 +116,7 @@ jobs:
     - name: Build and push minimal
       uses: docker/build-push-action@v4
       with:
-        context: ./pkg/docker/alpine
+        context: ${{ github.workspace }}/pkg/docker/alpine
         file: Dockerfile
         push: ${{ github.event_name != 'pull_request' }}
         tags: ${{ steps.meta.outputs.tags }}
@@ -126,7 +125,7 @@ jobs:
     - name: Build and push with apk
       uses: docker/build-push-action@v4
       with:
-        context: ./pkg/docker/alpine
+        context: ${{ github.workspace }}/pkg/docker/alpine
         file: Dockerfile.alpine
         push: ${{ github.event_name != 'pull_request' }}
         tags: ${{ steps.meta-alpine.outputs.tags }}
@@ -135,7 +134,7 @@ jobs:
     - name: Build and push with debug
       uses: docker/build-push-action@v4
       with:
-        context: ./pkg/docker/alpine
+        context: ${{ github.workspace }}/pkg/docker/alpine
         file: Dockerfile.debug
         push: ${{ github.event_name != 'pull_request' }}
         tags: ${{ steps.meta-debug.outputs.tags }}
