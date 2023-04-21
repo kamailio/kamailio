@@ -1990,7 +1990,7 @@ static int sdp_set_sess_version(sip_msg_t* msg, str* disabled_old_sess_version, 
 	new_sess_version.s = pkg_malloc((new_sess_version.len * sizeof(char)));
 	if (new_sess_version.s == NULL)
 	{
-		LM_ERR("Out of pkg memory\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 
