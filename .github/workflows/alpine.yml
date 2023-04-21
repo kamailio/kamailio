@@ -23,39 +23,21 @@ jobs:
       run: |
         git submodule init
         git submodule update
-        /usr/bin/docker buildx build --file pkg/docker/alpine/Dockerfile pkg/docker/alpine || true
         cd pkg/docker/alpine
         ./hooks/pre_build || true
 
     - name: test
       run: |
-        #git submodule init
-        #git submodule update
-        #tar cz -C ./pkg/docker/alpine -f kamailio_img.tar.gz Dockerfile
-        #tar cz -f pkg/docker/alpine/kamailio_img.tar.gz pkg/docker/alpine/Dockerfile
         pwd
         find pkg/docker/alpine
         sudo chown -R ${USER}:${USER} `pwd`
-        cp -R pkg/docker/alpine/* . | true
-        #/usr/bin/docker buildx build .
-        /usr/bin/docker buildx build --file pkg/docker/alpine/Dockerfile . | true
-        /usr/bin/docker buildx build --file pkg/docker/alpine/Dockerfilepkg/docker/alpine || true
-        ls -l pkg/docker/alpine
-        /usr/bin/docker buildx build --file pkg/docker/alpine/Dockerfile.alpine pkg/docker/alpine || true
-
-    - name: Build and push minimal
-      uses: docker/build-push-action@v4
-      with:
-        context: pkg/docker/alpine
-        file: pkg/docker/alpine/Dockerfile
-        push: false
-        tags: master
 
     - name: Build image archives and apk files
       run: |
         cd pkg/docker/alpine
         sudo chown -R ${USER}:${USER} `pwd`
-        ./hooks/build
+        mv kamailio_min.tar.gz.without_os_files kamailio_min-without_os_files.tar.gz
+        # ./hooks/build
 
     - name: Docker meta
       id: meta
