@@ -1214,7 +1214,7 @@ static int w_sip_trace_msg(sip_msg_t *msg, char *dest, char *correlation_id, cha
 		nmsg = msg;
 	}
 
-	ret = w_sip_trace3(msg, dest, correlation_id, NULL);
+	ret = w_sip_trace3(nmsg, dest, correlation_id, NULL);
 
 	if(nmsg != msg) {
 		free_sip_msg(&tmsg);
