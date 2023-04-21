@@ -40,7 +40,8 @@ jobs:
                --rm=true \
                --volume=${{ github.workspace }}/pkg/docker/alpine/apk_files:/usr/share/nginx/html:ro \
                nginx
-        export LOCAL_REPO_IP=$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' local-repo)
+        LOCAL_REPO_IP=$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' local-repo)
+        sed -i -e "s/local-repo/${LOCAL_REPO_IP}/" pkg/docker/alpine/Dockerfile.debug
 
     - name: Prepare builder with local repo
       id: local-repo
