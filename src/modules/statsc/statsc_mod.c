@@ -202,7 +202,7 @@ int statsc_nmap_add(str *sname, str *rname)
 		+ STRLEN_ROUNDUP(sname->len) + STRLEN_ROUNDUP(rname->len);
 	sm = shm_malloc(sz);
 	if(sm==NULL) {
-		LM_ERR("no more shared memory\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	memset(sm, 0, sz);
@@ -241,7 +241,7 @@ int statsc_init(void)
 
 	_statsc_info = shm_malloc(sizeof(statsc_info_t));
 	if(_statsc_info==NULL) {
-		LM_ERR("no more shared memory\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	memset(_statsc_info, 0, sizeof(statsc_info_t));
@@ -250,7 +250,8 @@ int statsc_init(void)
 	sz = sizeof(statsc_nmap_t) + statsc_items * sizeof(int64_t);
 	sm = shm_malloc(sz);
 	if(sm==NULL) {
-		LM_ERR("no more shared memory\n");
+		SHM_MEM_ERROR;
+		shm_free(_statsc_info);
 		return -1;
 	}
 	memset(sm, 0, sz);
