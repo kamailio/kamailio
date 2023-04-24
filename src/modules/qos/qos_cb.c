@@ -34,7 +34,7 @@ int init_qos_callbacks(void)
 {
 	create_cbs = (struct qos_head_cbl*)shm_malloc(sizeof(struct qos_head_cbl));
 	if (create_cbs==0) {
-		LM_ERR("no more shm mem\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	create_cbs->first = 0;
@@ -88,7 +88,7 @@ int register_qoscb(qos_ctx_t *qos, int types, qos_cb f, void *param )
 	}
 	cb = (struct qos_callback*)shm_malloc(sizeof(struct qos_callback));
 	if (cb==0) {
-		LM_ERR("no more shm mem\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 

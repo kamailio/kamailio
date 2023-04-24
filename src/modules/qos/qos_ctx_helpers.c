@@ -52,7 +52,7 @@ qos_ctx_t *build_new_qos_ctx(void) {
 	if (ctx!=NULL) {
 		memset(ctx, 0, sizeof(qos_ctx_t));
 	} else {
-		LM_ERR("No enough shared memory\n");
+		SHM_MEM_ERROR;
 		return NULL;
 	}
 	if (!lock_init(&ctx->lock)) {
@@ -342,7 +342,7 @@ int add_pending_sdp_session(qos_ctx_t *qos_ctx, unsigned int dir, str *cseq_numb
 	qos_sdp = (qos_sdp_t *)shm_malloc(len);
 	LM_DBG("alloc qos_sdp: %p\n", qos_sdp);
 	if (qos_sdp==NULL) {
-		LM_ERR("oom %d\n", len);
+		SHM_MEM_ERROR_FMT("missing %d\n", len);
 		return -1;
 	} else {
 		memset(qos_sdp, 0, len);
