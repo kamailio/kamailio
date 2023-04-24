@@ -329,7 +329,7 @@ static int sip_add_charging_vector(struct sip_msg *msg)
 
 	s = (char*)pkg_malloc(pcv.len);
 	if (!s) {
-		LM_ERR("no pkg memory left\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	memcpy(s, pcv.s, pcv.len );

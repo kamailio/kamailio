@@ -388,7 +388,7 @@ int ki_add_uri_param(struct sip_msg* _msg, str* param)
 		}
 		new_uri.s = pkg_malloc(new_uri.len);
 		if (new_uri.s == 0) {
-			LM_ERR("add_uri_param(): Memory allocation failure\n");
+			PKG_MEM_ERROR;
 			return -1;
 		}
 		memcpy(new_uri.s, cur_uri->s, cur_uri->len);
@@ -416,7 +416,7 @@ int ki_add_uri_param(struct sip_msg* _msg, str* param)
 
 	new_uri.s = pkg_malloc(new_uri.len);
 	if (new_uri.s == 0) {
-		LM_ERR("no more pkg memory\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 
@@ -603,7 +603,7 @@ int tel2sip(struct sip_msg* _msg, char* _uri, char* _hostpart, char* _res)
 	/* reserve memory for clean tel uri */
 	tel_uri.s = pkg_malloc(uri.len+1);
 	if (tel_uri.s == 0) {
-		LM_ERR("no more pkg memory\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 
@@ -629,7 +629,7 @@ int tel2sip(struct sip_msg* _msg, char* _uri, char* _hostpart, char* _res)
 	sip_uri.len = 4 + tel_uri.len - 4 + 1 + hostpart.len + 1 + 10;
 	sip_uri.s = pkg_malloc(sip_uri.len+1);
 	if (sip_uri.s == 0) {
-		LM_ERR("no more pkg memory\n");
+		PKG_MEM_ERROR;
 		pkg_free(tel_uri.s);
 		return -1;
 	}

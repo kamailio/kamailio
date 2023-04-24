@@ -373,9 +373,8 @@ int encode_uri(str uri, char *encoding_prefix, char *public_ip, char separator,
 	result->s = pkg_malloc(result->len);
 	pos = result->s;
 	if(pos == NULL) {
-		LM_DBG("unable to alloc result [%d] end=[%d]\n", result->len,
+		PKG_MEM_ERROR_FMT("unable to alloc result [%d] end=[%d]\n", result->len,
 				format.second);
-		LM_ERR("unable to alloc pkg memory\n");
 		return -3;
 	}
 	LM_DBG("pass=[%d]i: allocated [%d], bytes.first=[%d] lengthsec=[%d];"
@@ -581,11 +580,10 @@ int decode_uri(str uri, char separator, str *result)
 	/* adding one comes from * */
 	result->s = pkg_malloc(result->len + 1); /* NULL termination */
 	if(result->s == NULL) {
-		LM_ERR("unable to allocate pkg memory\n");
+		PKG_MEM_ERROR;
 		return -4;
 	}
 	pos = result->s;
-
 	LM_DBG("Adding [%.*s]\n", format.first, uri.s);
 
 	memcpy(pos, uri.s, format.first); /* till sip: */

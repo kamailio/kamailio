@@ -100,7 +100,7 @@ patch_content_length (struct sip_msg *msg, unsigned int newValue)
 	s = pkg_malloc (len);
 	if (s == NULL)
 	{
-		LM_ERR("unable to allocate %d bytes in pkg mem\n", len);
+		PKG_MEM_ERROR_FMT("missing %d bytes\n", len);
 		return -3;
 	}
 	memcpy (s, pos, len);

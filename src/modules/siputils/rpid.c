@@ -162,7 +162,7 @@ int append_rpid_hf(struct sip_msg* _m, char* _s1, char* _s2)
 					+ rpid_suffix.len + CRLF_LEN;
 	rpid_hf.s = pkg_malloc(rpid_hf.len);
 	if (!rpid_hf.s) {
-		LM_ERR("no memory left\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 
@@ -228,7 +228,7 @@ int append_rpid_hf_p(struct sip_msg* _m, char* _prefix, char* _suffix)
 	rpid_hf.len = RPID_HF_NAME_LEN + p->len + rpid.len + s->len + CRLF_LEN;
 	rpid_hf.s = pkg_malloc(rpid_hf.len);
 	if (!rpid_hf.s) {
-		LM_ERR("no pkg memory left\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 

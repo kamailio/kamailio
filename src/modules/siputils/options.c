@@ -68,7 +68,7 @@ int ki_opt_reply(struct sip_msg* _msg) {
 			+ opt_accept_lang.len + opt_supported.len;
 	rpl_hf.s = (char*)pkg_malloc(rpl_hf.len);
 	if (!rpl_hf.s) {
-		LM_CRIT("out of pkg memory\n");
+		PKG_MEM_CRITICAL;
 		goto error;
 	}
 
