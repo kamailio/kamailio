@@ -101,7 +101,7 @@ static int mod_init(void)
 
 	if ((ob_key.s = shm_malloc(OB_KEY_LEN)) == NULL)
 	{
-		LM_ERR("Failed to allocate memory for flow-token key\n");
+		SHM_MEM_ERROR_FMT("for flow-token key\n");
 		return -1;
 	}
 	ob_key.len = OB_KEY_LEN;
@@ -210,7 +210,7 @@ int encode_flow_token(str *flow_token, struct receive_info *rcv)
 	flow_token->s = pkg_malloc(base64_enc_len(pos));
 	if (flow_token->s == NULL)
 	{
-		LM_ERR("allocating package memory\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	flow_token->len = base64_enc(unenc_flow_token, pos,
