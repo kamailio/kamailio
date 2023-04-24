@@ -203,7 +203,7 @@ void usrloc_get_all_ucontact(dmq_node_t* node)
 		len = rval * 2;
 		buf = dmq_usrloc_malloc(len);
 		if (buf == NULL) {
-			LM_ERR("out of pkg memory\n");
+			PKG_MEM_ERROR;
 			goto done;
 		}
 		rval = dmq_ul.get_all_ucontacts(buf, len, 0, 0, 1, 0);
@@ -453,7 +453,7 @@ static int init_usrloc_dmq_recv() {
 		LM_DBG("Initializing usrloc_dmq_recv for pid (%d)\n", my_pid());
 		usrloc_dmq_recv = (int*)pkg_malloc(sizeof(int));
 		if (!usrloc_dmq_recv) {
-			LM_ERR("no more pkg memory\n");
+			PKG_MEM_ERROR;
 			return -1;
 		}
 		*usrloc_dmq_recv = 0;
