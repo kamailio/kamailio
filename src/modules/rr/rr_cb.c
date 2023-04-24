@@ -59,7 +59,7 @@ int register_rrcb( rr_cb_t f, void *param )
 
 	/* build a new callback structure */
 	if (!(cbp=pkg_malloc( sizeof( struct rr_callback)))) {
-		LM_ERR("no more pkg mem\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 

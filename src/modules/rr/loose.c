@@ -316,7 +316,7 @@ static inline int save_ruri(struct sip_msg* _m)
 			+ ROUTE_SUFFIX_LEN;
 	s = (char*)pkg_malloc(len);
 	if (!s) {
-		LM_ERR("No memory pkg left\n");
+		PKG_MEM_ERROR;
 		return -3;
 	}
 

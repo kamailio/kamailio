@@ -172,7 +172,7 @@ static inline struct lump *insert_rr_param_lump(struct lump *before,
 	/* duplicate data in pkg mem */
 	s1 = (char*)pkg_malloc(l);
 	if (s1==0) {
-		LM_ERR("no more pkg mem (%d)\n",l);
+		PKG_MEM_ERROR_FMT("missing (%d)\n",l);
 		return 0;
 	}
 	memcpy( s1, s, l);
@@ -233,7 +233,7 @@ static inline int build_rr(struct lump* _l, struct lump* _l2, str* user,
 	r2 = pkg_malloc(RR_R2_LEN);
 
 	if (!prefix || !suffix || !term || !r2) {
-		LM_ERR("No more pkg memory\n");
+		PKG_MEM_ERROR;
 		if (suffix) pkg_free(suffix);
 		if (prefix) pkg_free(prefix);
 		if (term) pkg_free(term);
@@ -356,7 +356,7 @@ static int copy_flow_token(str *token, struct sip_msg *_m)
 
 		token->s = pkg_malloc(puri.user.len * sizeof(char));
 		if (token->s == NULL) {
-			LM_ERR("allocating memory\n");
+			PKG_MEM_ERROR;
 			return -1;
 		}
 		memcpy(token->s, puri.user.s, puri.user.len);
@@ -593,7 +593,7 @@ int record_route_preset(struct sip_msg* _m, str* _data)
 	suffix.s = pkg_malloc(suffix.len);
 	term.s = pkg_malloc(term.len);
 	if (!hdr.s || !suffix.s || !term.s) {
-		LM_ERR("no pkg memory left\n");
+		PKG_MEM_ERROR;
 		if(hdr.s) pkg_free(hdr.s);
 		if(suffix.s) pkg_free(suffix.s);
 		if(term.s) pkg_free(term.s);
@@ -719,7 +719,7 @@ static inline int build_advertised_rr(struct lump* _l, struct lump* _l2, str *_d
 	r2 = pkg_malloc(RR_R2_LEN);
 	term = pkg_malloc(RR_TERM_LEN);
 	if (!hdr || !trans || !suffix || !term || !r2) {
-		LM_ERR("no pkg memory left\n");
+		PKG_MEM_ERROR;
 		if (hdr) pkg_free(hdr);
 		if (trans) pkg_free(trans);
 		if (suffix) pkg_free(suffix);
