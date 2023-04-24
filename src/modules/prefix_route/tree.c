@@ -72,7 +72,7 @@ struct tree_item *tree_item_alloc(void)
 
 	root = (struct tree_item *)shm_malloc(sizeof(*root));
 	if (NULL == root) {
-		LM_CRIT("shared memory alloc failed\n");
+		SHM_MEM_CRITICAL;
 		return NULL;
 	}
 
@@ -241,8 +241,10 @@ static struct tree *tree_alloc(void)
 	struct tree *tree;
 
 	tree = (struct tree *)shm_malloc(sizeof(*tree));
-	if (NULL == tree)
+	if (NULL == tree) {
+		SHM_MEM_CRITICAL;
 		return NULL;
+	}
 
 	tree->root    = NULL;
 	atomic_set(&tree->refcnt, 0);
@@ -325,6 +327,7 @@ int tree_init(void)
 	/* Pointer to global tree must be in shared memory */
 	shared_tree = (struct tree **)shm_malloc(sizeof(*shared_tree));
 	if (NULL == shared_tree) {
+		SHM_MEM_ERROR;
 		lock_destroy(shared_tree_lock);
 		lock_dealloc(shared_tree_lock);
 		shared_tree_lock=0;
