@@ -408,7 +408,7 @@ static int stun_create_response(
 	 */
 	res->msg.buf.s = (char *) pkg_malloc(sizeof(char)*STUN_MSG_LEN);
 	if (res->msg.buf.s == NULL) {
-		LOG(L_ERR, "ERROR: STUN: out of memory\n");
+		PKG_MEM_ERROR;
 		return FATAL_ERROR;
 	}
 	
@@ -822,7 +822,7 @@ static struct stun_unknown_att* stun_alloc_unknown_attr(USHORT_T type)
 
 	attr = (struct stun_unknown_att *) pkg_malloc(sizeof(struct stun_unknown_att));
 	if (attr == NULL) {
-		LOG(L_ERR, "ERROR: STUN: out of memory\n");
+		PKG_MEM_ERROR;
 		return NULL;
 	}
 	
