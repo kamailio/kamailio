@@ -68,8 +68,10 @@ static char *path_strzdup(char *src, int len)
 	if(len<0) {
 		len = strlen(src);
 	}
-	if (!(res = (char *) pkg_malloc(len + 1)))
+	if (!(res = (char *) pkg_malloc(len + 1))) {
+		PKG_MEM_ERROR;
 		return NULL;
+	}
 	strncpy(res, src, len);
 	res[len] = 0;
 
@@ -112,7 +114,7 @@ static int prepend_path(sip_msg_t* _m, str *user, path_param_t param,
 
 	cp = suffix = pkg_malloc(suffix_len);
 	if (!suffix) {
-		LM_ERR("no pkg memory left for suffix\n");
+		PKG_MEM_ERROR_FMT("for suffix\n");
 		goto out1;
 	}
 
@@ -165,7 +167,7 @@ static int prepend_path(sip_msg_t* _m, str *user, path_param_t param,
 	prefix_len = PATH_PREFIX_LEN + (user ? user->len : 0) + 2;
 	prefix = pkg_malloc(prefix_len);
 	if (!prefix) {
-		LM_ERR("no pkg memory left for prefix\n");
+		PKG_MEM_ERROR_FMT("for prefix\n");
 		goto out2;
 	}
 	if (user && user->len)
