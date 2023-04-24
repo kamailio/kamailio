@@ -217,7 +217,7 @@ static cmd_export_t cmds[] = {
 		ANY_ROUTE},
 	{"sip_trace", (cmd_function)w_sip_trace3, 3, fixup_siptrace, fixup_free_siptrace,
 		ANY_ROUTE},
-	{"sip_trace_msg", (cmd_function)w_sip_trace_msg, 4, fixup_spve_all, fixup_free_spve_all,
+	{"sip_trace_msg", (cmd_function)w_sip_trace_msg, 3, fixup_spve_all, fixup_free_spve_all,
 		ANY_ROUTE},
 	{"hlog", (cmd_function)w_hlog1, 1, fixup_spve_null, 0,
 		ANY_ROUTE},
