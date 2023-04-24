@@ -1113,6 +1113,14 @@ static int ki_www_challenge(struct sip_msg *msg, str* realm, int flags)
 /**
  *
  */
+static int ki_proxy_challenge(struct sip_msg *msg, str* realm, int flags)
+{
+	return auth_challenge_hftype(msg, realm, flags, HDR_PROXYAUTH_T);
+}
+
+/**
+ *
+ */
 static int w_auth_challenge(struct sip_msg *msg, char* realm, char *flags)
 {
 	int vflags = 0;
@@ -1269,6 +1277,11 @@ static sr_kemi_t sr_kemi_auth_exports[] = {
 	},
 	{ str_init("auth"), str_init("www_challenge"),
 		SR_KEMIP_INT, ki_www_challenge,
+		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("auth"), str_init("proxy_challenge"),
+		SR_KEMIP_INT, ki_proxy_challenge,
 		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
