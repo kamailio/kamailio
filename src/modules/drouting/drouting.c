@@ -346,7 +346,7 @@ static int dr_init(void)
 	/* data pointer in shm */
 	rdata = (rt_data_t **)shm_malloc(sizeof(rt_data_t *));
 	if(rdata == 0) {
-		LM_CRIT("failed to get shm mem for data ptr\n");
+		SHM_MEM_CRITICAL_FMT("for data ptr\n");
 		goto error;
 	}
 	*rdata = 0;
@@ -363,7 +363,9 @@ static int dr_init(void)
 	data_refcnt = (int *)shm_malloc(sizeof(int));
 	reload_flag = (int *)shm_malloc(sizeof(int));
 	if(!data_refcnt || !reload_flag) {
-		LM_ERR("no more shared memory\n");
+		SHM_MEM_ERROR;
+		if(data_refcnt) shm_free(data_refcnt);
+		if(reload_flag) shm_free(reload_flag);
 		goto error;
 	}
 	*data_refcnt = 0;

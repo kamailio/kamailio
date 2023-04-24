@@ -74,7 +74,10 @@ dr_ac_tm_p dr_ac_tm_new(void)
 	dr_ac_tm_p _atp = NULL;
 	_atp = (dr_ac_tm_p)shm_malloc(sizeof(dr_ac_tm_t));
 	if(!_atp)
+	{
+		SHM_MEM_ERROR;
 		return NULL;
+	}
 	memset(_atp, 0, sizeof(dr_ac_tm_t));
 
 	return _atp;
@@ -190,7 +193,10 @@ dr_ac_maxval_p dr_ac_get_maxval(dr_ac_tm_p _atp, int mode)
 	if(mode==1) {
 		_amp = (dr_ac_maxval_p)shm_malloc(sizeof(dr_ac_maxval_t));
 		if(!_amp)
+		{
+			SHM_MEM_ERROR;
 			return NULL;
+		}
 	} else {
 		_amp = &_amv;
 	}
@@ -270,7 +276,10 @@ dr_tr_byxxx_p dr_tr_byxxx_new(void)
 	dr_tr_byxxx_p _bxp = NULL;
 	_bxp = (dr_tr_byxxx_p)shm_malloc(sizeof(dr_tr_byxxx_t));
 	if(!_bxp)
+	{
+		SHM_MEM_ERROR;
 		return NULL;
+	}
 	memset(_bxp, 0, sizeof(dr_tr_byxxx_t));
 	return _bxp;
 }
@@ -282,9 +291,13 @@ int dr_tr_byxxx_init(dr_tr_byxxx_p _bxp, int _nr)
 	_bxp->nr = _nr;
 	_bxp->xxx = (int *)shm_malloc(_nr * sizeof(int));
 	if(!_bxp->xxx)
+	{
+		SHM_MEM_ERROR;
 		return -1;
+	}
 	_bxp->req = (int *)shm_malloc(_nr * sizeof(int));
 	if(!_bxp->req) {
+		SHM_MEM_ERROR;
 		shm_free(_bxp->xxx);
 		return -1;
 	}
@@ -313,7 +326,10 @@ dr_tmrec_p dr_tmrec_new(void)
 	dr_tmrec_p _trp = NULL;
 	_trp = (dr_tmrec_p)shm_malloc(sizeof(dr_tmrec_t));
 	if(!_trp)
+	{
+		SHM_MEM_ERROR;
 		return NULL;
+	}
 	memset(_trp, 0, sizeof(dr_tmrec_t));
 	localtime_r(&_trp->dtstart, &(_trp->ts));
 	return _trp;

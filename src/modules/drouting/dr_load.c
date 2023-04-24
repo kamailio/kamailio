@@ -138,7 +138,7 @@ static int add_tmp_gw_list(unsigned int id, char *list)
 	list_len = strlen(list) + 1;
 	tmp = (struct dr_gwl_tmp *)pkg_malloc(sizeof(struct dr_gwl_tmp) + list_len);
 	if(tmp == NULL) {
-		LM_ERR("no more pkg mem\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	tmp->id = id;
@@ -183,7 +183,7 @@ static inline dr_tmrec_t *parse_time_def(char *time_str)
 
 	time_rec = (dr_tmrec_t *)shm_malloc(sizeof(dr_tmrec_t));
 	if(time_rec == 0) {
-		LM_ERR("no more pkg mem\n");
+		PKG_MEM_ERROR;
 		goto error;
 	}
 	memset(time_rec, 0, sizeof(dr_tmrec_t));
