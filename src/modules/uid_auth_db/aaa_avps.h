@@ -76,7 +76,7 @@ static int aaa_avps_init(str *avp_list, str **parsed_avps, int *avps_n)
 
 	cp = pkg_malloc(avp_list->len + 1);
 	if (cp == NULL) {
-		LM_ERR("can't allocate memory\n");
+		PKG_MEM_ERROR;
 		errcode = -1;
 		goto bad;
 	}

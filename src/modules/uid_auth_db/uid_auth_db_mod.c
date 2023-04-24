@@ -172,7 +172,7 @@ static int generate_queries(authdb_table_info_t *info)
 	len = sizeof(*result_cols) * (credentials_n + 3);
 	result_cols = pkg_malloc(len);
 	if (!result_cols) {
-		ERR("can't allocate pkg mem\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	memset(result_cols, 0, len);
@@ -321,7 +321,7 @@ static authdb_table_info_t *register_table(str *table)
 	info = (authdb_table_info_t*)pkg_malloc(sizeof(authdb_table_info_t)
 			+ table->len + 1);
 	if (!info) {
-		LM_ERR("can't allocate pkg mem\n");
+		PKG_MEM_ERROR;
 		return NULL;
 	}
 
