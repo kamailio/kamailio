@@ -76,7 +76,7 @@ int reg_statistic( char* name)
 
 	se = (stat_elem*)pkg_malloc( sizeof(stat_elem) );
 	if (se==0) {
-		LM_ERR("no more pkg mem\n");
+		PKG_MEM_ERROR;
 		goto error;
 	}
 

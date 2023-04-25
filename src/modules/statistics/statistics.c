@@ -125,7 +125,7 @@ static int fixup_stat(void** param, int param_no)
 		/* var name - string or pv */
 		sopv = (struct stat_or_pv *)pkg_malloc(sizeof(struct stat_or_pv));
 		if (sopv==NULL) {
-			LM_ERR("no more pkg mem\n");
+			PKG_MEM_ERROR;
 			return E_OUT_OF_MEM;
 		}
 		memset( sopv, 0 , sizeof(struct stat_or_pv) );
@@ -151,7 +151,7 @@ static int fixup_stat(void** param, int param_no)
 	} else if (param_no==2) {
 		lopv = (struct long_or_pv *) pkg_malloc(sizeof(struct long_or_pv));
 		if (lopv == NULL) {
-			LM_ERR("no more pkg mem\n");
+			PKG_MEM_ERROR;
 			return E_OUT_OF_MEM;
 		}
 		memset(lopv, 0, sizeof(struct long_or_pv));
