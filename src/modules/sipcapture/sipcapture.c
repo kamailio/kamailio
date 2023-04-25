@@ -487,7 +487,7 @@ int parse_table_names(str table_name, str **table_names)
 
 	table_name_cpy = (char *)pkg_malloc(sizeof(char) * table_name.len + 1);
 	if(table_name_cpy == NULL) {
-		LM_ERR("no more pkg memory left\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	memcpy(table_name_cpy, table_name.s, table_name.len);
@@ -504,7 +504,7 @@ int parse_table_names(str table_name, str **table_names)
 
 	names = (str *)pkg_malloc(sizeof(str) * no_tables);
 	if(names == NULL) {
-		LM_ERR("no more pkg memory left\n");
+		PKG_MEM_ERROR;
 		pkg_free(table_name_cpy);
 		return -1;
 	}
@@ -513,6 +513,18 @@ int parse_table_names(str table_name, str **table_names)
 		LM_INFO("INFO: table name:%s\n", p);
 		names[i].len = strlen(p);
 		names[i].s = (char *)pkg_malloc(sizeof(char) * names[i].len);
+		if(!(names[i].s)) {
+			PKG_MEM_ERROR;
+			i--;
+			while(i>=0)
+			{
+				pkg_free(names[i].s);
+				i--;
+			}
+			pkg_free(table_name_cpy);
+			pkg_free(names);
+			return -1;
+		}
 		memcpy(names[i].s, p, names[i].len);
 		i++;
 		p = strtok(NULL, "| \t");
@@ -576,7 +588,7 @@ int capture_mode_set_params(_capture_mode_data_t *n, str *params)
 			n->db_url.len = pit->body.len;
 			n->db_url.s = (char *)pkg_malloc(sizeof(char) * n->db_url.len);
 			if(!n->db_url.s) {
-				LM_ERR("no more pkg memory\n");
+				PKG_MEM_ERROR;
 				goto error;
 			}
 			memcpy(n->db_url.s, pit->body.s, n->db_url.len);
@@ -675,7 +687,7 @@ void *capture_mode_init(str *name, str *params)
 	id = core_case_hash(name, 0, 0);
 	n = (_capture_mode_data_t *)pkg_malloc(sizeof(_capture_mode_data_t));
 	if(!n) {
-		LM_ERR("no more pkg memory\n");
+		PKG_MEM_ERROR;
 		goto error;
 	}
 	memset(n, 0, sizeof(_capture_mode_data_t));
@@ -683,13 +695,13 @@ void *capture_mode_init(str *name, str *params)
 	n->name.len = name->len;
 	n->name.s = (char *)pkg_malloc(sizeof(char) * n->name.len);
 	if(!n->name.s) {
-		LM_ERR("no more pkg memory\n");
+		PKG_MEM_ERROR;
 		goto error;
 	}
 	memcpy(n->name.s, name->s, n->name.len);
 	n->table_names = (str *)pkg_malloc(sizeof(str));
 	if(!n->table_names) {
-		LM_ERR("no more pkg memory\n");
+		PKG_MEM_ERROR;
 		goto error;
 	}
 
@@ -818,6 +830,10 @@ static int mod_init(void)
 				"db_url=%s;table_name=%s;mt_mode=%s;hash_source=%s",
 				db_url.s, table_name.s, mt_mode.s, hash_source.s)
 			+ 1);
+	if(!def_params) {
+		PKG_MEM_ERROR;
+		return -1;
+	}
 	sprintf(def_params, "db_url=%s;table_name=%s;mt_mode=%s;hash_source=%s",
 			db_url.s, table_name.s, mt_mode.s, hash_source.s);
 
@@ -853,7 +869,10 @@ static int mod_init(void)
 	/*requests and replies for each mode + 1 zero-filled stat_export */
 	stat_export_t *stats =
 		(stat_export_t *)shm_malloc(sizeof(stat_export_t) * cnt * 2 + 1);
-
+	if(!(stats)) {
+		SHM_MEM_ERROR;
+		return -1;
+	}
 	c = capture_modes_root;
 
 	while(c) {
@@ -866,6 +885,11 @@ static int mod_init(void)
 						: "captured_requests[%.*s]",
 						(def) ? 0 : c->name.len, (def) ? "" : c->name.s)
 					+ 1));
+		if(!stat_name) {
+			SHM_MEM_ERROR;
+			shm_free(stats);
+			return -1;
+		}
 		sprintf(stat_name,
 				(def) ? "captured_requests%.*s" : "captured_requests[%.*s]",
 				(def) ? 0 : c->name.len, (def) ? "" : c->name.s);
@@ -880,6 +904,11 @@ static int mod_init(void)
 						: "captured_replies[%.*s]",
 						(def) ? 0 : c->name.len, (def) ? "" : c->name.s)
 					+ 1));
+		if(!stat_name) {
+			SHM_MEM_ERROR;
+			shm_free(stats);
+			return -1;
+		}
 		sprintf(stat_name,
 				(def) ? "captured_replies%.*s" : "captured_replies[%.*s]",
 				(def) ? 0 : c->name.len, (def) ? "" : c->name.s);
@@ -909,7 +938,7 @@ static int mod_init(void)
 
 	capture_on_flag = (int *)shm_malloc(sizeof(int));
 	if(capture_on_flag == NULL) {
-		LM_ERR("no more shm memory left\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 
@@ -1347,7 +1376,7 @@ static int child_init(int rank)
 
 	heptime = (struct hep_timeinfo *)pkg_malloc(sizeof(struct hep_timeinfo));
 	if(heptime == NULL) {
-		LM_ERR("no more pkg memory left\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 
@@ -2461,7 +2490,7 @@ int raw_capture_rcv_loop(int rsock, int port1, int port2, int ipip)
 			/* a little bit memory */
 			si = (struct socket_info *)pkg_malloc(sizeof(struct socket_info));
 			if(si == 0) {
-				LOG(L_ERR, "ERROR: new_sock_info: memory allocation error\n");
+				PKG_MEM_ERROR_FMT("for socket_info\n");
 				return 0;
 			}
 
