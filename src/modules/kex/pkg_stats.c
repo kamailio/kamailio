@@ -78,7 +78,10 @@ int pkg_proc_stats_init(void)
 	_pkg_proc_stats_list = (pkg_proc_stats_t*)shm_malloc(
 			_pkg_proc_stats_no*sizeof(pkg_proc_stats_t));
 	if(_pkg_proc_stats_list==NULL)
+	{
+		SHM_MEM_ERROR;
 		return -1;
+	}
 	memset(_pkg_proc_stats_list, 0,
 			_pkg_proc_stats_no*sizeof(pkg_proc_stats_t));
 	return 0;

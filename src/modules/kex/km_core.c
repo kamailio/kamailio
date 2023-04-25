@@ -76,7 +76,7 @@ int pv_printf_fixup(void** param, int param_no)
 		spec = (pv_spec_t*)pkg_malloc(sizeof(pv_spec_t));
 		if(spec==NULL)
 		{
-			LM_ERR("out of pkg\n");
+			PKG_MEM_ERROR;
 			return -1;
 		}
 		memset(spec, 0, sizeof(pv_spec_t));
