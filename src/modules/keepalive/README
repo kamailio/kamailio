@@ -178,7 +178,7 @@ modparam("keepalive", "destination", "sip.provider.com")
 
 2.3.3. delete_counter(int)
 
-   Unsuccessful attemps increase delete_counter. After passing it,
+   Unsuccessful attempts increase delete_counter. After passing it,
    keepalive module doesn't try to send options requests. Ignored if it's
    set to 0.
 
@@ -206,7 +206,7 @@ modparam("keepalive", "ping_from", "sip:keepalive@kamailio.org")
 
    Get destination status.
 
-   The Parameter destination is destination you want to check status
+   The parameter destination is destination you want to check status
 
    Returned value:
      * 1 if destination is up
@@ -230,10 +230,10 @@ if(ka_is_alive("192.168.10.20") == 1) {
    Meaning of the parameters:
      * sip_uri (string) - address of destination to monitor. Valid format
        is [protoschema:]ip[:port], with: 'protoschema' being one of 'sip'
-       or 'sips' (SIP over TLS) - if omitted, 'sip'is used by default;
+       or 'sips' (SIP over TLS) - if omitted, 'sip' is used by default;
        'port' is optional (using default standard port 5060 for sip and
        5061 for sips)
-     * owner (string) - module name âowningâ the destination (for
+     * owner (string) - module name “owning” the destination (for
        informational purpose)
 
    Returned value:
@@ -260,10 +260,10 @@ ka_add_destination("sip:192.168.1.10:5060;transport=tcp", "config");
    Meaning of the parameters:
      * sip_uri (string) - address of monitored destination. Valid format
        is [protoschema:]ip[:port], with: 'protoschema' being one of 'sip'
-       or 'sips' (SIP over TLS) - if omitted, 'sip'is used by default;
+       or 'sips' (SIP over TLS) - if omitted, 'sip' is used by default;
        'port' is optional (using default standard port 5060 for sip and
        5061 for sips)
-     * owner (string) - module name âowningâ the destination (for
+     * owner (string) - module name “owning” the destination (for
        informational purpose)
 
    Returned value:

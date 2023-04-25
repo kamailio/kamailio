@@ -122,7 +122,7 @@ modparam("jwt", "key_mode", 1)
 
    The parameters are:
      * prvkey - path to private key
-     * alg - the algoritm to build the signature, as supported by the
+     * alg - the algorithm to build the signature, as supported by the
        libjwt (e.g., RS256, HS256, ES256, ...)
      * claims - the list of claims to be added to JWT, in the format
        "name1=value1;name2=value2;..." (same as the SIP parameters
@@ -151,7 +151,7 @@ modparam("jwt", "key_mode", 1)
 
    The parameters are:
      * pubkeypath - path to public key file
-     * alg - the algoritm to build the signature, as supported by the
+     * alg - the algorithm to build the signature, as supported by the
        libjwt (e.g., RS256, HS256, ES256, ...)
      * claims - the list of claims to be checked they are in the JWT, in
        the format "name1=value1;name2=value2;..." (same as the SIP
@@ -176,7 +176,7 @@ modparam("jwt", "key_mode", 1)
 
    The parameters are:
      * pubkeyval - public key value
-     * alg - the algoritm to build the signature, as supported by the
+     * alg - the algorithm to build the signature, as supported by the
        libjwt (e.g., RS256, HS256, ES256, ...)
      * claims - the list of claims to be checked they are in the JWT, in
        the format "name1=value1;name2=value2;..." (same as the SIP

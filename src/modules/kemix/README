@@ -44,7 +44,7 @@ Chapter 1. Admin Guide
    It does not provide functions for the native Kamailio.cfg.
 
    To see the KEMI functions exported by this module, see:
-     * http://kamailio.org/docs/tutorials/devel/kamailio-kemi-framework/
+     * https://kamailio.org/docs/tutorials/devel/kamailio-kemi-framework/
 
 2. Dependencies
 

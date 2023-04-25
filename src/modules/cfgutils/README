@@ -230,8 +230,8 @@ Chapter 1. Admin Guide
 
 2. Dependencies
 
-   The module depends on the following modules (in the other words the
-   listed modules must be loaded before this module):
+   The module depends on the following modules (in other words the listed
+   modules must be loaded before this module):
      * none
 
 3. Parameters

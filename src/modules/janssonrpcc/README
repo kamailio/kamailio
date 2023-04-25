@@ -167,7 +167,7 @@ modparam("janssonrpcc", "server", "conn=tests;srv=_test1._tcp.example.net");
 modparam("janssonrpcc", "server", "conn=tests;srv=_test2._tcp.example.net");
 modparam("janssonrpcc", "server", "conn=local;addr=localhost;port=8080;priority=
 10;weight=10");
-modparam("janssonrpcc", "server", "conn=user_db;addr=rpc.prod.exmaple.net;port=5
+modparam("janssonrpcc", "server", "conn=user_db;addr=rpc.prod.example.net;port=5
 060;priority=10;weight=10");
 ...
 
