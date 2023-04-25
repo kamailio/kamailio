@@ -260,6 +260,10 @@ cc_parse_param(void *val, AVP_List** avps) {
 	}
 
     p0 = (char*) pkg_malloc (content.len + 1);
+    if(!(p0)) {
+        PKG_MEM_ERROR;
+        return -1;
+    }
     CHECK_ALLOC(p0);
     memset(p0, 0, content.len + 1);
     p = p0;
@@ -270,10 +274,22 @@ cc_parse_param(void *val, AVP_List** avps) {
     for (;*p != '\0';) {
 
         mp = (AVP_List*) pkg_malloc (sizeof(AVP_List));
+        if(!(mp)) {
+            PKG_MEM_ERROR;
+            pkg_free(p0);
+            return -1;
+        }
         CHECK_ALLOC(mp);
         memset(mp, 0, sizeof(AVP_List));
         mp->next = *avps;
         mp->pv = (pv_spec_p) pkg_malloc (sizeof(pv_spec_t));
+        if(!(mp->next))
+        {
+            PKG_MEM_ERROR;
+            pkg_free(p0);
+            pkg_free(mp);
+            return -1;
+        }
         CHECK_ALLOC(mp->pv);
         memset(mp->pv, 0, sizeof(pv_spec_t));
 
