@@ -192,7 +192,7 @@ int sworker_send_task(sip_msg_t *msg, str *gname)
 	}
 	at = (async_task_t *)shm_malloc(dsize);
 	if(at == NULL) {
-		LM_ERR("no more shm memory\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	memset(at, 0, dsize);
