@@ -477,50 +477,45 @@ p_lost_geolist_t lost_get_geolocation_header(struct sip_msg *msg, int *items)
  */
 char *lost_get_pai_header(struct sip_msg *msg, int *lgth)
 {
-	p_id_body_t *p_body;
-
-	char *tmp = NULL;
+	to_body_t *p_pai;
 	char *res = NULL;
-	int len = 0;
 
 	*lgth = 0;
 
-	if(parse_pai_header(msg) == -1) {
-		
-		LM_DBG("failed to parse P-A-I header\n");
-		
+	if((parse_pai_header(msg) == 0) && (msg->pai) && (msg->pai->parsed)) {
+		/* return the first header entry */
+		p_pai = get_pai(msg)->id;
+		if((p_pai->parsed_uri.user.s == NULL)
+				&& (parse_uri(p_pai->uri.s, p_pai->uri.len, &p_pai->parsed_uri)
+						< 0)) {
+
+			LM_DBG("failed to parse P-A-I header\n");
+
+			return res;
+		}
+	} else {
+
+		LM_DBG("P-A-I header not found or failed to parse\n");
+
 		return res;
 	}
 
-	if(msg->pai == NULL || get_pai(msg) == NULL) {
-		LM_ERR("P-A-I header not found\n");
-		return res;
-	}
-	p_body = get_pai(msg);
-
-	/* warning in case multiple P-A-I headers were found and use first */
-	if(p_body->num_ids > 1) {
-		LM_WARN("multiple P-A-I headers found, selecting first!\n");
+	/* warning in case multiple P-A-I headers were found */
+	if(get_pai(msg)->num_ids > 1) {
+		LM_WARN("multiple P-A-I headers found, selected first!\n");
 	}
 
-	LM_DBG("P-A-I body: [%.*s]\n", p_body->id->body.len, p_body->id->body.s);
+	LM_DBG("P-A-I uri: [%.*s]\n", p_pai->uri.len, p_pai->uri.s);
 
-	/* accept any identity string (body), but remove <..> if present */ 
-	tmp = p_body->id->body.s;
-	len = p_body->id->body.len;
-	if(tmp[0] == '<' && tmp[len - 1] == '>') {
-		tmp++;
-		len -= 2;
-	}
 	/* allocate memory, copy and \0 terminate string */
-	res = (char *)pkg_malloc((len + 1) * sizeof(char));
+	res = (char *)pkg_malloc((p_pai->uri.len + 1) * sizeof(char));
 	if(res == NULL) {
 		PKG_MEM_ERROR;
 		return res;
 	} else {
-		memset(res, 0, len);
-		memcpy(res, tmp, len);
-		res[len] = '\0';
+		memset(res, 0, p_pai->uri.len);
+		memcpy(res, p_pai->uri.s, p_pai->uri.len);
+		res[p_pai->uri.len] = '\0';
 		*lgth = strlen(res);
 	}
 
