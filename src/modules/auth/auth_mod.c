@@ -1263,6 +1263,43 @@ static int fixup_auth_get_www_authenticate(void **param, int param_no)
 /**
  *
  */
+static int ki_auth_get_www_authenticate(sip_msg_t* msg, str* realm,
+		int flags, str *pvdst)
+{
+	str hf = {0};
+	pv_spec_t *pvs;
+	pv_value_t val;
+	int ret;
+
+	pvs = pv_cache_get(pvdst);
+	if(pvs==NULL) {
+		LM_ERR("cannot get pv spec for [%.*s]\n", pvdst->len, pvdst->s);
+		return -1;
+	}
+
+	ret = auth_challenge_helper(NULL, realm, flags,
+			HDR_AUTHORIZATION_T, &hf);
+
+	if(ret<0)
+		return ret;
+
+	val.rs.s = pv_get_buffer();
+	val.rs.len = 0;
+	if(hf.s!=NULL) {
+		memcpy(val.rs.s, hf.s, hf.len);
+		val.rs.len = hf.len;
+		val.rs.s[val.rs.len] = '\0';
+		pkg_free(hf.s);
+	}
+	val.flags = PV_VAL_STR;
+	pvs->setf(msg, &pvs->pvp, (int)EQ_T, &val);
+
+	return (ret==0)?1:ret;
+}
+
+/**
+ *
+ */
 /* clang-format off */
 static sr_kemi_t sr_kemi_auth_exports[] = {
 	{ str_init("auth"), str_init("consume_credentials"),
@@ -1293,6 +1330,11 @@ static sr_kemi_t sr_kemi_auth_exports[] = {
 	{ str_init("auth"), str_init("has_credentials"),
 		SR_KEMIP_INT, ki_has_credentials,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("auth"), str_init("auth_get_www_authenticate"),
+		SR_KEMIP_INT, ki_auth_get_www_authenticate,
+		{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_STR,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
