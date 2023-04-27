@@ -71,6 +71,27 @@ extern sruid_t _reg_sruid;
 static int q_override_msg_id;
 static qvalue_t q_override_value;
 
+int reg_get_cfg_tcpconnid(void)
+{
+       int n;
+       sr_xavp_t *vavp=NULL;
+       str vname = {"tcpconn_id", 10};
+
+       n = 0;
+
+       if(reg_xavp_cfg.s!=NULL)
+       {
+               vavp = xavp_get_child_with_ival(&reg_xavp_cfg, &vname);
+               if(vavp!=NULL)
+               {
+                       n = vavp->val.v.i;
+                       LM_DBG("using tcpconn_id value from xavp: %d\n", n);
+               }
+       }
+
+       return n;
+}
+
 /*! \brief
  * Process request that contained a star (*) as a contact, in that case,
  * we will remove all bindings with the given username
@@ -277,6 +298,9 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 		} else {
 			ci.tcpconn_id = -1;
 		}
+		/* if a tcp connectionid is set, use it */
+		if (reg_get_cfg_tcpconnid())
+			ci.tcpconn_id = reg_get_cfg_tcpconnid();
 
 		/* additional info from message */
 		if (parse_headers(_m, HDR_USERAGENT_F, 0) != -1 && _m->user_agent &&
