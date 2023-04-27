@@ -444,6 +444,11 @@ int www_authenticate2(struct sip_msg* _m, char* _realm, char* _table, char *_met
 					&smethod);
 }
 
+int ki_www_authenticate_method(sip_msg_t *msg, str *realm, str *table, str *method)
+{
+	return digest_authenticate(msg, realm, table, HDR_AUTHORIZATION_T, method);
+}
+
 /**
  *
  */
