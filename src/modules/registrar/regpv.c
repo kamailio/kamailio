@@ -275,6 +275,8 @@ int pv_get_ulc(struct sip_msg *msg,  pv_param_t *param,
 				return  pv_get_strval(msg, param, res, &c->instance);
 		break;
 		case 21: /* conid */
+			if (c->tcpconn_id > 0)
+				return pv_get_sintval(msg, param, res, c->tcpconn_id);
 			if (c->sock && (c->sock->proto == PROTO_TCP || c->sock->proto == PROTO_TLS || c->sock->proto == PROTO_WS || c->sock->proto == PROTO_WSS))
 				return pv_get_sintval(msg, param, res, c->tcpconn_id);
 		break;
@@ -662,6 +664,10 @@ int pv_fetch_contacts_helper(sip_msg_t* msg, udomain_t* dt, str* uri,
 				|| ptr->sock->proto == PROTO_TLS || ptr->sock->proto == PROTO_WS
 				|| ptr->sock->proto == PROTO_WSS))
 		{
+			c0->tcpconn_id = ptr->tcpconn_id;
+		}
+		if (ptr->tcpconn_id > 0) {
+			LM_DBG("preset tcpconn_id : %d\n", ptr->tcpconn_id);
 			c0->tcpconn_id = ptr->tcpconn_id;
 		}
 

@@ -798,6 +798,13 @@ modparam("registrar", "reg_callid_avp", "$avp(s:avp)")
 				Used in save().
 			</para>
 		</listitem>
+		<listitem>
+			<para>
+				<emphasis>tcpconn_id</emphasis> This can be set with $conid, the TCP connection ID of the connection the current message.
+				This is useful when calling save() on a reply route to set the connecion of the original request.
+				Used in save().
+			</para>
+		</listitem>
 		</itemizedlist>
 		<para>
 			For example. if this parameter is set to 'reg', then the number
