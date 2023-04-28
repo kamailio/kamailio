@@ -50,6 +50,18 @@
                         </para></listitem>
                 </itemizedlist>
 	</section>
+	<section id="tls.r.tls.kill">
+		<title><function>tls.kill</function></title>
+		<para>
+			Kill a TLS session by id.
+		</para>
+		<para>Parameters: </para>
+                <itemizedlist>
+                        <listitem><para>
+                                None.
+                        </para></listitem>
+                </itemizedlist>
+	</section>
 	<section id="tls.r.tls.reload">
 		<title><function>tls.reload</function></title>
 		<para>
