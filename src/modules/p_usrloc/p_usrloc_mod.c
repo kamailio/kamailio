@@ -147,6 +147,7 @@ str last_mod_col     = str_init(LAST_MOD_COL);		/*!< Name of column containing t
 str uniq_col        = str_init(UNIQ_COL);		/*!< Name of column containing the uniq value*/
 int db_mode         = 3;				/*!< Database sync scheme:  1-write through, 2-write back, 3-only db */
 int use_domain      = 0;				/*!< Whether usrloc should use domain part of aor */
+int use_domain_crc32 = 1;				/*!< Whether usrloc should use domain part of aor when calculating crc32 */
 int desc_time_order = 0;				/*!< By default do not enable timestamp ordering */
 
 int ul_fetch_rows = 2000;				/*!< number of rows to fetch from result */
@@ -212,6 +213,7 @@ static param_export_t params[] = {
 	{"cflags_column",     PARAM_STR, &cflags_col    },
 	{"db_mode",           INT_PARAM, &db_mode         },
 	{"use_domain",        INT_PARAM, &use_domain      },
+	{"use_domain_crc32",  INT_PARAM, &use_domain_crc32 },
 	{"desc_time_order",   INT_PARAM, &desc_time_order },
 	{"user_agent_column", PARAM_STR, &user_agent_col},
 	{"received_column",   PARAM_STR, &received_col  },
