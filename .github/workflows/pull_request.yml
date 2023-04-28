@@ -12,7 +12,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     container:
-      image: kamailio/pkg-kamailio-docker:master-${{ matrix.distribution }}
+      image: ghcr.io/kamailio/pkg-kamailio-docker:master-${{ matrix.distribution }}
       volumes:
         - ${{ github.workspace }}:/code
       env:
@@ -27,7 +27,7 @@ jobs:
             compilier: clang
     steps:
       - uses: actions/checkout@v2
-      - uses: ammaraskar/gcc-problem-matcher@0.1
+      - uses: ammaraskar/gcc-problem-matcher@0.2.0
       - name: build
         run: |
           cd /code
