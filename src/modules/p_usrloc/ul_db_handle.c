@@ -461,7 +461,7 @@ static int compute_id(str* first, str* second){
 		return -1;
 	}
 	
-	if(use_domain){
+	if(use_domain && use_domain_crc32) {
 		//compute crc32(user@domain)
 		LM_DBG("XDBGX: compute_id HAS second key : %.*s", first->len, first->s);
 		if(!second){

@@ -88,6 +88,7 @@ extern str uniq_col;
 
 extern int db_mode;
 extern int use_domain;
+extern int use_domain_crc32;
 extern int desc_time_order;
 extern int cseq_delay;
 extern int ul_fetch_rows;
