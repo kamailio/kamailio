@@ -275,7 +275,41 @@ static void tls_options(rpc_t* rpc, void* c)
 		);
 }
 
+static const char* tls_kill_doc[2] = {
+	"Kills a tls session, identified via id.",
+	0 };
 
+static void tls_kill(rpc_t* rpc, void* c)
+{
+	struct tcp_connection* con;
+	int i, kill_id = 0;
+
+	if (rpc->scan(c, "d", &kill_id) < 0) {
+		/* Reply is set automatically by scan upon failure,
+		* no need to do anything here
+		*/
+		return;
+	}
+
+	TCPCONN_LOCK;
+	for(i = 0; i < TCP_ID_HASH_SIZE; i++) {
+		for (con = tcpconn_id_hash[i]; con; con = con->id_next) {
+			if (con->rcv.proto != PROTO_TLS) continue;
+			if (con->id == kill_id) {
+				con->state = -2;
+				con->timeout = get_ticks_raw();
+
+				TCPCONN_UNLOCK;
+
+				rpc->add(c, "s", "OK");
+				return;
+			}
+		}
+	}
+	TCPCONN_UNLOCK;
+
+	rpc->add(c, "s", "TLS connection id not found");
+}
 
 
 rpc_export_t tls_rpc[] = {
@@ -283,5 +317,6 @@ rpc_export_t tls_rpc[] = {
 	{"tls.list",   tls_list,   tls_list_doc,   RET_ARRAY},
 	{"tls.info",   tls_info,   tls_info_doc, 0},
 	{"tls.options",tls_options, tls_options_doc, 0},
+	{"tls.kill",   tls_kill, tls_kill_doc, 0},
 	{0, 0, 0, 0}
 };
