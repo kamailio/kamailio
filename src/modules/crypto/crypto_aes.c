@@ -25,6 +25,7 @@
 #include <string.h>
 
 #include "../../core/dprint.h"
+#include "../../core/mem/pkg.h"
 
 #include "crypto_aes.h"
 
@@ -139,7 +140,7 @@ unsigned char *crypto_aes_encrypt(EVP_CIPHER_CTX *e, unsigned char *plaintext,
 	unsigned char *ciphertext = (unsigned char *)malloc(c_len);
 
 	if(ciphertext == NULL) {
-		LM_ERR("no more system memory\n");
+		SYS_MEM_ERROR;
 		return NULL;
 	}
 	/* allows reusing of 'e' for multiple encryption cycles */
@@ -179,7 +180,7 @@ unsigned char *crypto_aes_decrypt(EVP_CIPHER_CTX *e, unsigned char *ciphertext,
 	unsigned char *plaintext = (unsigned char *)malloc(p_len);
 
 	if(plaintext==NULL) {
-		LM_ERR("no more system memory\n");
+		SYS_MEM_ERROR;
 		return NULL;
 	}
 	if(!EVP_DecryptInit_ex(e, NULL, NULL, NULL, NULL)){
