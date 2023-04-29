@@ -654,7 +654,9 @@ faked_error:
 	presentity->remote_contact.s= (char*)shm_malloc(contact.len* sizeof(char));
 	if(presentity->remote_contact.s==NULL)
 	{
-		ERR_MEM(SHARE_MEM);
+		SHM_MEM_ERROR;
+		shm_free(presentity);
+		return;
 	}
 	memcpy(presentity->remote_contact.s, contact.s, contact.len);
 	presentity->remote_contact.len= contact.len;

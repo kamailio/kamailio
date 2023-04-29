@@ -229,6 +229,9 @@ void update_htable(ua_pres_t* p, time_t desired_expires, int expires,
 			if(p->remote_contact.s== NULL)
 			{
 				SHM_MEM_ERROR;
+				if(etag) {
+					shm_free(p->etag.s);
+				}
 				return;
 			}
 			memcpy(p->remote_contact.s, contact->s, contact->len);

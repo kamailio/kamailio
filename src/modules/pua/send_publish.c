@@ -409,6 +409,7 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 	if(presentity->etag.s== NULL)
 	{
 		SHM_MEM_ERROR;
+		shm_free(presentity);
 		goto error;
 	}
 	memcpy(presentity->etag.s, etag.s, etag.len);

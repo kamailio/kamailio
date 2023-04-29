@@ -601,6 +601,9 @@ static int db_restore(void)
 				if(p->etag.s==  NULL)
 				{
 					SHM_MEM_ERROR;
+					if(watcher_uri.s && watcher_uri.len) {
+						shm_free(p->remote_contact.s);
+					}
 					goto error;
 				}
 				memcpy(p->etag.s, etag.s, etag.len);
