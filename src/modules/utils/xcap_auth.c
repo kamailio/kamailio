@@ -416,12 +416,12 @@ int get_rules_doc(str* user, str* domain, int type, str** rules_doc)
 
 	doc= (str*)pkg_malloc(sizeof(str));
 	if (doc== NULL) {
-		ERR_MEM(PKG_MEM_STR);
+		PKG_MEM_ERROR;
 	}
 	doc->s= (char*)pkg_malloc(body.len* sizeof(char));
 	if (doc->s== NULL) {
 		pkg_free(doc);
-		ERR_MEM(PKG_MEM_STR);
+		PKG_MEM_ERROR;
 	}
 	memcpy(doc->s, body.s, body.len);
 	doc->len= body.len;
