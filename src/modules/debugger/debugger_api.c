@@ -557,7 +557,10 @@ int dbg_init_bp_list(void)
 		return -1;
 	_dbg_bp_list = (dbg_bp_t*)shm_malloc(sizeof(dbg_bp_t));
 	if(_dbg_bp_list==NULL)
+	{
+		SHM_MEM_ERROR;
 		return -1;
+	}
 	memset(_dbg_bp_list, 0, sizeof(dbg_bp_t));
 	if(_dbg_breakpoint==1)
 		_dbg_bp_list->set |= DBG_ABKPOINT_ON;
@@ -580,7 +583,10 @@ int dbg_add_breakpoint(struct action *a, int bpon)
 	len += sizeof(dbg_bp_t) + 1;
 	nbp = (dbg_bp_t*)shm_malloc(len);
 	if(nbp==NULL)
+	{
+		SHM_MEM_ERROR;
 		return -1;
+	}
 	memset(nbp, 0, len);
 	nbp->set |= (bpon)?DBG_ABKPOINT_ON:0;
 	nbp->cline = a->cline;
@@ -605,7 +611,10 @@ int dbg_init_pid_list(void)
 		return -1;
 	_dbg_pid_list = (dbg_pid_t*)shm_malloc(_dbg_pid_no*sizeof(dbg_pid_t));
 	if(_dbg_pid_list==NULL)
+	{
+		SHM_MEM_ERROR;
 		return -1;
+	}
 	memset(_dbg_pid_list, 0, _dbg_pid_no*sizeof(dbg_pid_t));
 	return 0;
 }
@@ -1202,7 +1211,7 @@ int dbg_init_mod_levels(int dbg_mod_hash_size)
 	_dbg_mod_table = (dbg_mod_slot_t*)shm_malloc(_dbg_mod_table_size*sizeof(dbg_mod_slot_t));
 	if(_dbg_mod_table==NULL)
 	{
-		LM_ERR("no more shm.\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	memset(_dbg_mod_table, 0, _dbg_mod_table_size*sizeof(dbg_mod_slot_t));
@@ -1367,8 +1376,9 @@ int dbg_set_mod_debug_level(char *mname, int mnlen, int *mlevel)
 		return 0;
 	}
 	itn = (dbg_mod_level_t*)shm_malloc(sizeof(dbg_mod_level_t) + (mnlen+1)*sizeof(char));
-	if(itn==NULL) {
-		LM_ERR("no more shm\n");
+	if(itn==NULL)
+	{
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	memset(itn, 0, sizeof(dbg_mod_level_t) + (mnlen+1)*sizeof(char));
@@ -1444,7 +1454,7 @@ int dbg_set_mod_debug_facility(char *mname, int mnlen, int *mfacility)
 	}
 	itn = (dbg_mod_facility_t*)shm_malloc(sizeof(dbg_mod_facility_t) + (mnlen+1)*sizeof(char));
 	if(itn==NULL) {
-		LM_ERR("no more shm\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	memset(itn, 0, sizeof(dbg_mod_facility_t) + (mnlen+1)*sizeof(char));
@@ -1594,7 +1604,7 @@ int dbg_init_pvcache()
 	_dbg_pvcache = (dbg_pvcache_t**)pkg_malloc(sizeof(dbg_pvcache_t*)*DBG_PVCACHE_SIZE);
 	if(_dbg_pvcache==NULL)
 	{
-		LM_ERR("no more memory.\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	memset(_dbg_pvcache, 0, sizeof(dbg_pvcache_t*)*DBG_PVCACHE_SIZE);
@@ -1616,7 +1626,7 @@ int dbg_assign_add(str *name, pv_spec_t *spec)
 	pvn = (dbg_pvcache_t*)pkg_malloc(sizeof(dbg_pvcache_t));
 	if(pvn==NULL)
 	{
-		LM_ERR("no more memory\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	memset(pvn, 0, sizeof(dbg_pvcache_t));
