@@ -296,7 +296,7 @@ int ws_handle_handshake(struct sip_msg *msg)
 	reply_key.s =
 			(char *)pkg_malloc((key.len + str_ws_guid.len) * sizeof(char));
 	if(reply_key.s == NULL) {
-		LM_ERR("allocating pkg memory\n");
+		PKG_MEM_ERROR;
 		ws_send_reply(msg, 500, &str_status_internal_server_error, NULL);
 		goto end;
 	}

@@ -100,7 +100,7 @@ int wsconn_init(void)
 	wsconn_id_hash = (ws_connection_t **)shm_malloc(
 			TCP_ID_HASH_SIZE * sizeof(ws_connection_t *));
 	if(wsconn_id_hash == NULL) {
-		LM_ERR("allocating WebSocket hash-table\n");
+		SHM_MEM_ERROR_FMT("for WebSocket hash-table\n");
 		goto error;
 	}
 	memset((void *)wsconn_id_hash, 0,
@@ -109,7 +109,7 @@ int wsconn_init(void)
 	wsconn_used_list = (ws_connection_list_t *)shm_malloc(
 			sizeof(ws_connection_list_t));
 	if(wsconn_used_list == NULL) {
-		LM_ERR("allocating WebSocket used list\n");
+		SHM_MEM_ERROR_FMT("for WebSocket used list\n");
 		goto error;
 	}
 	memset((void *)wsconn_used_list, 0, sizeof(ws_connection_list_t));
@@ -197,7 +197,7 @@ int wsconn_add(struct receive_info *rcv, unsigned int sub_protocol)
 	/* Allocate and fill in new WebSocket connection */
 	wsc = shm_malloc(sizeof(ws_connection_t) + BUF_SIZE + 1);
 	if(wsc == NULL) {
-		LM_ERR("allocating shared memory\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	memset(wsc, 0, sizeof(ws_connection_t) + BUF_SIZE + 1);
@@ -530,9 +530,10 @@ ws_connection_t **wsconn_get_list(void)
 	/* allocate a NULL terminated list of wsconn pointers */
 	list_size = (list_len + 1) * sizeof(ws_connection_t *);
 	list = pkg_malloc(list_size);
-	if(!list)
+	if(!list) {
+		PKG_MEM_ERROR;
 		goto end;
-
+	}
 	memset(list, 0, list_size);
 
 	/* copy */
@@ -618,9 +619,10 @@ ws_connection_id_t *wsconn_get_list_ids(int idx)
 	/* allocate a NULL terminated list of wsconn pointers */
 	list_size = (list_len + 1) * sizeof(ws_connection_id_t);
 	list = pkg_malloc(list_size);
-	if(!list)
+	if(!list) {
+		PKG_MEM_ERROR;
 		goto end;
-
+	}
 	memset(list, 0, list_size);
 
 	/* copy */

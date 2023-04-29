@@ -203,7 +203,7 @@ static int encode_and_send_ws_frame(ws_frame_t *frame, conn_close_t conn_close)
 	/* Allocate send buffer and build frame */
 	frame_length = frame->payload_len + extended_length + 2;
 	if((send_buf = pkg_malloc(sizeof(char) * frame_length)) == NULL) {
-		LM_ERR("allocating send buffer from pkg memory\n");
+		PKG_MEM_ERROR_FMT("for send buffer\n");
 		return -1;
 	}
 	memset(send_buf, 0, sizeof(char) * frame_length);
@@ -316,7 +316,7 @@ static int close_connection(ws_connection_t **p_wsc, ws_close_type_t type,
 	if(wsc->state == WS_S_OPEN) {
 		data = pkg_malloc(sizeof(char) * (reason.len + 2));
 		if(data == NULL) {
-			LM_ERR("allocating pkg memory\n");
+			PKG_MEM_ERROR;
 			return -1;
 		}
 
