@@ -402,6 +402,14 @@ int www_authenticate(struct sip_msg* _m, char* _realm, char* _table)
 					&_m->first_line.u.request.method);
 }
 
+int ki_www_authenticate(struct sip_msg* _m, str *realm, str *table)
+{
+	LM_DBG("realm value [%.*s]\n", realm->len, realm->s);
+
+	return digest_authenticate(_m, realm, table, HDR_AUTHORIZATION_T,
+					&_m->first_line.u.request.method);
+}
+
 int www_authenticate2(struct sip_msg* _m, char* _realm, char* _table, char *_method)
 {
 	str srealm;

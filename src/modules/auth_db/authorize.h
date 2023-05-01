@@ -46,6 +46,7 @@ int proxy_authenticate(struct sip_msg* _msg, char* _realm, char* _table);
 int www_authenticate(struct sip_msg* _msg, char* _realm, char* _table);
 int www_authenticate2(struct sip_msg* _msg, char* _realm, char* _table, char *_method);
 
+int ki_www_authenticate(struct sip_msg* _m, str *realm, str *table);
 int ki_www_authenticate_method(sip_msg_t *msg, str *realm, str *table, str *method);
 
 /*
