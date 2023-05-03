@@ -27,6 +27,7 @@
 #include <stdint.h>
 #include <regex.h>
 #include <fnmatch.h>
+#include <inttypes.h>
 
 #include "../../core/dprint.h"
 #include "../../core/ut.h"
@@ -658,7 +659,7 @@ int dlgs_ht_dbg(void)
 			LM_ERR("\tdst: %.*s\n", it->dst.len, it->dst.s);
 			LM_ERR("\tdata: %.*s\n", it->data.len, it->data.s);
 			LM_ERR("\truid: %.*s\n", it->ruid.len, it->ruid.s);
-			LM_ERR("\thashid: %u ts_init: %llu ts_answer: %llu\n", it->hashid,
+			LM_ERR("\thashid: %u ts_init: %" PRIu64 " ts_answer: %" PRIu64 "\n", it->hashid,
 					(uint64_t)it->ts_init, (uint64_t)it->ts_answer);
 			it = it->next;
 		}
