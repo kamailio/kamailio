@@ -410,8 +410,8 @@ static void statsc_rpc_report(rpc_t* rpc, void* ctx)
 		rpc->fault(ctx, 500, "Error creating rpc (1)");
 		return;
 	}
-	if(rpc->struct_add(th, "u[",
-				"timestamp", (uint64_t)tn,
+	if(rpc->struct_add(th, "J[",
+				"timestamp", (unsigned long long)tn,
 				"stats",     &ts)<0) {
 		rpc->fault(ctx, 500, "Error creating rpc (2)");
 		return;
