@@ -276,7 +276,7 @@ static int w_check_sqli(str val)
 
 	cval = (char *)pkg_malloc(val.len + 1);
 	if(cval == NULL) {
-		LM_CRIT("Cannot allocate pkg memory\n");
+		PKG_MEM_CRITICAL;
 		return -2;
 	}
 	memset(cval, 0, val.len + 1);
@@ -752,6 +752,7 @@ int secf_init_data(void)
 	secf_data_2 = (secf_data_p)shm_malloc(sizeof(secf_data_t));
 	if(!secf_data_2) {
 		SHM_MEM_ERROR;
+		shm_free(secf_data_1);
 		return -1;
 	}
 	memset(secf_data_2, 0, sizeof(secf_data_t));
@@ -759,10 +760,20 @@ int secf_init_data(void)
 	secf_data = shm_malloc(sizeof(secf_data_t));
 	if(secf_data == NULL) {
 		SHM_MEM_ERROR;
+		shm_free(secf_data_1);
+		shm_free(secf_data_2);
 		return -1;
 	}
 
 	secf_stats = shm_malloc(total_data * sizeof(int));
+	if(!secf_stats)
+	{
+		SHM_MEM_ERROR;
+		shm_free(secf_data_1);
+		shm_free(secf_data_2);
+		shm_free(secf_data);
+		return -1;
+	}
 	memset(secf_stats, 0, total_data * sizeof(int));
 	
 	if(secf_dst_exact_match != 0)
