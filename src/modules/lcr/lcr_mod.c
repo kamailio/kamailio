@@ -2299,6 +2299,11 @@ static int ki_load_gws_furi(
 		}
 	}
 
+	if((lcr_id < 1) || (lcr_id > lcr_count_param)) {
+		LM_ERR("invalid lcr_id parameter value %d\n", lcr_id);
+		return -1;
+	}
+
 	/* Use rules and gws with index lcr_id */
 	rules = rule_pt[lcr_id];
 	gws = gw_pt[lcr_id];
@@ -2493,10 +2498,7 @@ static int load_gws(struct sip_msg *_m, int argc, action_u_t argv[])
 		LM_ERR("invalid lcr_id parameter %s\n", argv[0].u.string);
 		return -1;
 	}
-	if((lcr_id < 1) || (lcr_id > lcr_count_param)) {
-		LM_ERR("invalid lcr_id parameter value %d\n", lcr_id);
-		return -1;
-	}
+
 	if(argc > 1) {
 		ruri_user = argv[1].u.str;
 	} else {
