@@ -352,7 +352,7 @@ int kfk_conf_parse(char *spec)
 
 	kconf = (kfk_conf_t*)pkg_malloc(sizeof(kfk_conf_t));
 	if (kconf == NULL) {
-		LM_ERR("No more pkg memory\n");
+		PKG_MEM_ERROR;
 		goto error;
 	}
 	memset(kconf, 0, sizeof(kfk_conf_t));
@@ -364,7 +364,7 @@ int kfk_conf_parse(char *spec)
 		kfk_conf_node_t *knode = NULL;
 		knode = (kfk_conf_node_t*)pkg_malloc(sizeof(kfk_conf_node_t));
 		if (knode == NULL) {
-			LM_ERR("No more pkg memory\n");
+			PKG_MEM_ERROR;
 			goto error;
 		}
 		memset(knode, 0, sizeof(kfk_conf_node_t));
@@ -504,7 +504,7 @@ int kfk_topic_parse(char *spec)
 
 	ktopic = (kfk_topic_t*)pkg_malloc(sizeof(kfk_topic_t));
 	if (ktopic == NULL) {
-		LM_ERR("No more pkg memory\n");
+		PKG_MEM_ERROR;
 		goto error;
 	}
 	memset(ktopic, 0, sizeof(kfk_topic_t));
@@ -527,7 +527,7 @@ int kfk_topic_parse(char *spec)
 			kfk_conf_node_t *knode = NULL;
 			knode = (kfk_conf_node_t*)pkg_malloc(sizeof(kfk_conf_node_t));
 			if (knode == NULL) {
-				LM_ERR("No more pkg memory\n");
+				PKG_MEM_ERROR;
 				goto error;
 			}
 			memset(knode, 0, sizeof(kfk_conf_node_t));
@@ -898,7 +898,7 @@ int kfk_stats_init()
 
 	stats_general = shm_malloc(sizeof(kfk_stats_t));
 	if (!stats_general) {
-		LM_ERR("Out of shared memory\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	memset(stats_general, 0, sizeof(kfk_stats_t));
@@ -971,21 +971,21 @@ static kfk_stats_t* kfk_stats_topic_new(const char *topic, rd_kafka_resp_err_t e
 	
 	st = shm_malloc(sizeof(kfk_stats_t));
 	if (!st) {
-		LM_ERR("Out of shared memory\n");
+		SHM_MEM_ERROR;
 		goto error;
 	}
 	memset(st, 0, sizeof(kfk_stats_t));
 
 	st->topic_name = shm_malloc(sizeof(str));
 	if (!st->topic_name) {
-		LM_ERR("Out of shared memory\n");
+		SHM_MEM_ERROR;
 		goto error;
 	}
 	memset(st->topic_name, 0, sizeof(str));
 
 	st->topic_name->s = shm_malloc(topic_len + 1);
 	if (!st->topic_name->s) {
-		LM_ERR("Out of shared memory\n");
+		SHM_MEM_ERROR;
 		goto error;
 	}
 	memcpy(st->topic_name->s, topic, topic_len);
