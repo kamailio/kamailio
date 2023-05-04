@@ -48,7 +48,7 @@ int rule_hash_table_insert(struct rule_info **hash_table, unsigned int lcr_id,
 
 	rule = (struct rule_info *)shm_malloc(sizeof(struct rule_info));
 	if(rule == NULL) {
-		LM_ERR("no shm memory for rule hash table entry\n");
+		SHM_MEM_ERROR_FMT("for rule hash table entry\n");
 		if(from_uri_re)
 			shm_free(from_uri_re);
 		if(request_uri_re)
@@ -97,7 +97,12 @@ int rule_hash_table_insert(struct rule_info **hash_table, unsigned int lcr_id,
 	/* Add rule_id info to rule_id hash table */
 	rid = (struct rule_id_info *)pkg_malloc(sizeof(struct rule_id_info));
 	if(rid == NULL) {
-		LM_ERR("no pkg memory for rule_id hash table entry\n");
+		PKG_MEM_ERROR_FMT("for rule_id hash table entry\n");
+		if(from_uri_re)
+			shm_free(from_uri_re);
+		if(request_uri_re)
+			shm_free(request_uri_re);
+		shm_free(rule);
 		return 0;
 	}
 	memset(rid, 0, sizeof(struct rule_id_info));
@@ -143,7 +148,7 @@ int rule_hash_table_insert_target(struct rule_info **hash_table,
 
 	target = (struct target *)shm_malloc(sizeof(struct target));
 	if(target == NULL) {
-		LM_ERR("cannot allocate memory for rule target\n");
+		SHM_MEM_ERROR_FMT("for rule target\n");
 		return 0;
 	}
 
