@@ -207,7 +207,7 @@ int flat_db_insert(const db1_con_t* h, const db_key_t* k, const db_val_t* v,
 			break;
 
 		case DB1_DATETIME:
-			fprintf(f, "%u", (unsigned int)VAL_TIME(v + i));
+			fprintf(f, "%llu", (unsigned long long)VAL_TIME(v + i));
 			break;
 
 		case DB1_BLOB:

@@ -142,7 +142,7 @@ int flat_put(db_res_t* res, db_cmd_t* cmd)
 			break;
 
 		case DB_DATETIME:
-			if (fprintf(f, "%u", (unsigned int)cmd->vals[i].v.time) < 0) 
+			if (fprintf(f, "%llu", (unsigned long long)cmd->vals[i].v.time) < 0) 
 				goto error;
 			break;
 
