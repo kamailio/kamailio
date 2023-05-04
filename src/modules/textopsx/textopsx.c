@@ -332,7 +332,7 @@ static int ki_change_reply_status(sip_msg_t *msg, int code, str *reason)
 	/* clone the reason phrase, the lumps need to be pkg allocated */
 	ch = (char *)pkg_malloc(reason->len);
 	if(!ch) {
-		LM_ERR("Not enough memory\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	memcpy(ch, reason->s, reason->len);
@@ -723,8 +723,10 @@ static int fixup_hname_param(char *hname, struct hname_data **h)
 	char *savep, savec;
 
 	*h = pkg_malloc(sizeof(**h));
-	if(!*h)
+	if(!*h) {
+		PKG_MEM_ERROR;
 		return E_OUT_OF_MEM;
+	}
 	memset(*h, 0, sizeof(**h));
 
 	memset(&hdr, 0, sizeof(hdr));
@@ -1142,7 +1144,7 @@ static int insert_header_lump(struct sip_msg *msg, char *msg_position,
 
 	s = (char *)pkg_malloc(len);
 	if(!s) {
-		LM_ERR("not enough memory\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 
@@ -1180,7 +1182,7 @@ static int insert_value_lump(struct sip_msg *msg, struct hdr_field *hf,
 
 	s = (char *)pkg_malloc(len);
 	if(!s) {
-		LM_ERR("not enough memory\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 
@@ -1463,7 +1465,7 @@ static int assign_hf_do_lumping(struct sip_msg *msg, struct hdr_field *hf,
 			len = 1 + value->len;
 			s = pkg_malloc(len);
 			if(!s) {
-				LM_ERR("not enough memory\n");
+				PKG_MEM_ERROR;
 				return -1;
 			}
 			s[0] = '=';
@@ -1487,7 +1489,7 @@ static int assign_hf_do_lumping(struct sip_msg *msg, struct hdr_field *hf,
 		len = 1 + hname->param.len + (value->len ? value->len + 1 : 0);
 		s = pkg_malloc(len);
 		if(!s) {
-			LM_ERR("not enough memory\n");
+			PKG_MEM_ERROR;
 			return -1;
 		}
 		if(delim) {
@@ -2205,7 +2207,7 @@ static int ki_hf_iterator_append(sip_msg_t *msg, str *iname, str *htext)
 	}
 	sval.s = (char*)pkg_malloc(htext->len + 1);
 	if(sval.s==NULL) {
-		LM_ERR("failed append hdr after %.*s\n", _hf_iterators[k].it->name.len,
+		PKG_MEM_ERROR_FMT("failed append hdr after %.*s\n", _hf_iterators[k].it->name.len,
 				_hf_iterators[k].it->name.s);
 		return -1;
 	}
@@ -2261,7 +2263,7 @@ static int ki_hf_iterator_insert(sip_msg_t *msg, str *iname, str *htext)
 	}
 	sval.s = (char*)pkg_malloc(htext->len + 1);
 	if(sval.s==NULL) {
-		LM_ERR("failed to insert hdr after %.*s\n", _hf_iterators[k].it->name.len,
+		PKG_MEM_ERROR_FMT("failed to insert hdr after %.*s\n", _hf_iterators[k].it->name.len,
 				_hf_iterators[k].it->name.s);
 		return -1;
 	}
@@ -2687,7 +2689,7 @@ static int ki_bl_iterator_append(sip_msg_t *msg, str *iname, str *text)
 	}
 	sval.s = (char*)pkg_malloc(text->len + 1);
 	if(sval.s==NULL) {
-		LM_ERR("failed append text after %.*s\n", _bl_iterators[k].it.len,
+		PKG_MEM_ERROR_FMT("failed append text after %.*s\n", _bl_iterators[k].it.len,
 				_bl_iterators[k].it.s);
 		return -1;
 	}
@@ -2743,7 +2745,7 @@ static int ki_bl_iterator_insert(sip_msg_t *msg, str *iname, str *text)
 	}
 	sval.s = (char*)pkg_malloc(text->len + 1);
 	if(sval.s==NULL) {
-		LM_ERR("failed to insert text after %.*s\n", _bl_iterators[k].it.len,
+		PKG_MEM_ERROR_FMT("failed to insert text after %.*s\n", _bl_iterators[k].it.len,
 				_bl_iterators[k].it.s);
 		return -1;
 	}
@@ -2874,8 +2876,11 @@ static int sel_hf_value_name(str *res, select_t *s, struct sip_msg *msg)
 
 		if(s->params[1].type == SEL_PARAM_STR) {
 			hname = pkg_malloc(sizeof(*hname));
-			if(!hname)
+			if(!hname) {
+				PKG_MEM_ERROR;
 				return E_OUT_OF_MEM;
+			}
+
 			memset(hname, 0, sizeof(*hname));
 
 			for(i = s->params[1].v.s.len - 1; i > 0; i--) {
@@ -2985,7 +2990,7 @@ static int sel_hf_value_name(str *res, select_t *s, struct sip_msg *msg)
 											  + _ALLOC_INC_SIZE;
 									buf = pkg_malloc(buf_len);
 									if(!buf) {
-										LM_ERR("out of memory\n");
+										PKG_MEM_ERROR;
 										res->len = 0;
 										return E_OUT_OF_MEM;
 									}
@@ -3079,7 +3084,7 @@ static int sel_hf_value_name(str *res, select_t *s, struct sip_msg *msg)
 											  + _ALLOC_INC_SIZE;
 									buf = pkg_malloc(buf_len);
 									if(!buf) {
-										LM_ERR("out of memory\n");
+										PKG_MEM_ERROR;
 										res->len = 0;
 										return E_OUT_OF_MEM;
 									}
