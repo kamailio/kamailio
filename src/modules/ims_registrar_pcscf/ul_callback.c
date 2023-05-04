@@ -156,7 +156,7 @@ str* build_reginfo_partial(ppublic_t *impu, struct pcontact* c, int type) {
 	/* create the body */
 	body = (str*) pkg_malloc(sizeof(str));
 	if (body == NULL) {
-		LM_ERR("while allocating memory\n");
+		PKG_MEM_ERROR;
 		goto error;
 	}
 	memset(body, 0, sizeof(str));
@@ -201,7 +201,7 @@ int send_partial_publish(ppublic_t *impu, struct pcontact *c, int type)
 	int len = strlen(P_ASSERTED_IDENTITY_HDR_PREFIX) + pcscf_uri.len + 1 + CRLF_LEN;
 	p_asserted_identity_header.s = (char *)pkg_malloc( len );
 	if ( p_asserted_identity_header.s == NULL ) {
-	    LM_ERR( "insert_asserted_identity: pkg_malloc %d bytes failed", len );
+	    PKG_MEM_ERROR_FMT("%d bytes failed", len );
 	    goto error;
 	}
 	

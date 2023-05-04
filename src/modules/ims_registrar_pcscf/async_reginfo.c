@@ -61,7 +61,7 @@ int init_reginfo_event_list()
 
 	reginfo_event_list = shm_malloc(sizeof(reginfo_event_list_t));
 	if (!reginfo_event_list) {
-		LM_ERR("No more SHM mem\n");
+		SHM_MEM_ERROR;
 		return 0;
 	}
 	memset(reginfo_event_list, 0, sizeof(reginfo_event_list_t));
@@ -133,7 +133,7 @@ reginfo_event_t* new_reginfo_event (int event, str *publ_body, str *publ_id, str
 	new_event = (reginfo_event_t*) shm_malloc(len);
 	
 	if (!new_event) {
-		LM_ERR("No more shm mem\n");
+		SHM_MEM_ERROR;
 		return NULL;
 	}
 	memset(new_event, 0, len);

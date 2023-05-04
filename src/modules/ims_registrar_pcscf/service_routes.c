@@ -593,7 +593,7 @@ int force_service_routes(struct sip_msg* _m, udomain_t* _d) {
 		/* Allocate the memory for this new header: */
 		new_route_header.s = pkg_malloc(new_route_header.len);
 		if (!new_route_header.s) {
-			LM_ERR("Error allocating %d bytes\n", new_route_header.len);
+			PKG_MEM_ERROR_FMT("allocating %d bytes\n", new_route_header.len);
 			goto error;
 		}
 		
@@ -734,7 +734,7 @@ int assert_called_identity(struct sip_msg* _m, udomain_t* _d) {
 		x.len = p_asserted_identity_s.len+p_asserted_identity_m.len+called_party_id.len+p_asserted_identity_e.len;
 		x.s = pkg_malloc(x.len);
 		if (!x.s){
-			LM_ERR("P_assert_called_identity: Error allocating %d bytes\n",	x.len);
+			PKG_MEM_ERROR_FMT("allocating %d bytes\n", x.len);
 			x.len=0;
 			goto error;		
 		}

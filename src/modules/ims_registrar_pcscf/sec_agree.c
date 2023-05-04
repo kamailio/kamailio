@@ -33,6 +33,7 @@ static uint32_t parse_digits(str value)
     char* buf = (char*)malloc(buf_len);
 
     if(!buf) {
+        SYS_MEM_ERROR;
         return ret;
     }
 
@@ -62,6 +63,7 @@ static void trim_whitespaces(str* string) {
 #define SEC_COPY_STR_PARAM(DST, SRC)\
         DST.s = shm_malloc(SRC.len);\
         if(DST.s == NULL) {\
+            SHM_MEM_ERROR;\
             return -1;\
         }\
         memcpy(DST.s, SRC.s, SRC.len);\
@@ -130,13 +132,13 @@ static security_t* parse_sec_agree(struct hdr_field* h)
 
     // allocate shm memory for security_t (it will be saved in contact)
     if ((params = shm_malloc(sizeof(security_t))) == NULL) {
-        LM_ERR("Error allocating shm memory for security_t parameters during sec-agree parsing\n");
+        SHM_MEM_ERROR_FMT("for security_t parameters during sec-agree parsing\n");
         return NULL;
     }
     memset(params, 0, sizeof(security_t));
 
     if((params->sec_header.s = shm_malloc(h->name.len)) == NULL) {
-        LM_ERR("Error allocating shm memory for security_t sec_header parameter during sec-agree parsing\n");
+        SHM_MEM_ERROR_FMT("for security_t sec_header parameter during sec-agree parsing\n");
         goto cleanup;
     }
     memcpy(params->sec_header.s, h->name.s, h->name.len);
@@ -145,7 +147,7 @@ static security_t* parse_sec_agree(struct hdr_field* h)
     // allocate memory for ipsec_t in security_t
     params->data.ipsec = shm_malloc(sizeof(ipsec_t));
     if(!params->data.ipsec) {
-        LM_ERR("Error allocating memory for ipsec parameters during sec-agree parsing\n");
+        SHM_MEM_ERROR_FMT("for ipsec parameters during sec-agree parsing\n");
         goto cleanup;
     }
     memset(params->data.ipsec, 0, sizeof(ipsec_t));
@@ -211,7 +213,7 @@ cleanup:
     // Keep them in sync!
     if (params) {
         shm_free(params->sec_header.s);
-
+        shm_free(params->data.ipsec);
         if(params->type == SECURITY_IPSEC && params->data.ipsec) {
             shm_free(params->data.ipsec->ealg.s);
             shm_free(params->data.ipsec->r_ealg.s);
