@@ -44,7 +44,7 @@ int check_from(struct sip_msg *_msg, char *_str1, char *_str2);
 
 /*
  * Checks username part of the supplied sip URI.
- * Optinal with supplied credentials.
+ * Optional with supplied credentials.
  */
 int check_uri(struct sip_msg *msg, char *uri, char *username, char *realm);
 
