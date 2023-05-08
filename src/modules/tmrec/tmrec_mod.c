@@ -202,7 +202,7 @@ static int ki_tmrec_match_timestamp(sip_msg_t *msg, str *rv, int ti)
 	if(ac_tm_set_time(&act, tv) < 0)
 		goto error;
 
-	/* match the specified recurence */
+	/* match the specified recurrence */
 	if(tr_check_recurrence(&tmr, &act, 0) != 0)
 		goto error;
 
