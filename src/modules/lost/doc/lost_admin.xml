@@ -56,7 +56,7 @@
         hop in a Route header.
         </para>
         <para>
-        The http_client module use the CURL library setting up connections.
+        The http_client module uses the CURL library setting up connections.
         The CURL library by default use the system configured DNS resolver,
         not the Kamailio resolver.
         </para>
@@ -374,7 +374,7 @@
                     </para></listitem>
 			    </itemizedlist>
 			<para>
-			The return value is 200 on success, 400 if an internal error occured, or 500 if an
+			The return value is 200 on success, 400 if an internal error occurred, or 500 if an
             error code is returned in the HELD locationRequest response.
 	    	</para>
 			<para>
@@ -403,7 +403,7 @@ xlog("L_INFO", "HELD locationRequest: Result code $var(res)\nUrl: $var(url)\n$va
 				<function moreinfo="none">lost_held_dereference(url, rtime, rtype, pidf-lo, error)</function>
 			</title>
 			<para>
-			Sends a HELD POST locationRequest to a given URL. Attributes are responseTime and resposeType.
+			Sends a HELD POST locationRequest to a given URL. Attributes are responseTime and responseType.
             The <emphasis>locationType</emphasis> property "exact" is set to "false".
 	    	</para>
 			    <itemizedlist>
@@ -429,7 +429,7 @@ xlog("L_INFO", "HELD locationRequest: Result code $var(res)\nUrl: $var(url)\n$va
                     </para></listitem>
 			    </itemizedlist>
 			<para>
-			The return value is 200..203 on success, 400 if an internal error occured, or 500 if an
+			The return value is 200..203 on success, 400 if an internal error occurred, or 500 if an
             error code is returned in the HELD response. Success codes in detail are as follows:
 	    	</para>
 			<itemizedlist>
@@ -500,7 +500,7 @@ if ($hdr(Geolocation)=~"^&lt;http.*$") {
                 </para></listitem>
 			</itemizedlist>
 			<para>
-			The return value is 200 on success, 400 if an internal error occured, or 500 if an
+			The return value is 200 on success, 400 if an internal error occurred, or 500 if an
             error code is returned in the LOST findServiceResponse.
 	    	</para>
 			<para>
