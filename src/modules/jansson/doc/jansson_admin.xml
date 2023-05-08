@@ -265,7 +265,7 @@ xlog("foo is $xavp(js=>foo)");
         </title>
         <para>
             Encode the items in the xavp 'xavp' as JSON and store the result in a pv.
-            Nested xavps's are not supported.
+            Nested xavp's are not supported.
         </para>
         <example>
         <title><function>jansson_xencode</function> usage</title>
