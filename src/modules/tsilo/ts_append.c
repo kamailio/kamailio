@@ -125,13 +125,13 @@ int ts_append_to(struct sip_msg *msg, int tindex, int tlabel, char *table,
 
 	/* check if the dialog is still in the early stage */
 	if(t->flags & T_CANCELED) {
-		LM_DBG("trasaction [%u:%u] was cancelled\n", tindex, tlabel);
+		LM_DBG("transaction [%u:%u] was cancelled\n", tindex, tlabel);
 		ret = -2;
 		goto done;
 	}
 
 	if(t->uas.status >= 200) {
-		LM_DBG("trasaction [%u:%u] sent out a final response already - %d\n",
+		LM_DBG("transaction [%u:%u] sent out a final response already - %d\n",
 				tindex, tlabel, t->uas.status);
 		ret = -3;
 		goto done;
