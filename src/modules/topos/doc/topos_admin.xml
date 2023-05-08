@@ -415,7 +415,7 @@ modparam("topos", "xavu_field_a_contact", "a_contact")
 	<section id="topos.p.xavu_field_a_contact">
 		<title><varname>xavu_field_a_contact</varname> (str)</title>
 		<para>
-			Name of the field inside root XAVU specifed by `xavu_cfg`
+			Name of the field inside root XAVU specified by `xavu_cfg`
 			to evaluate for the A-side Contact Header user part. This parameter
 			is only necessary in contact_mode (2).
 		</para>
@@ -439,7 +439,7 @@ modparam("topos", "xavu_field_a_contact", "a_contact")
 	<section id="topos.p.xavu_field_b_contact">
 		<title><varname>xavu_field_b_contact</varname> (str)</title>
 		<para>
-			Name of the field inside root XAVU specifed by `xavu_cfg`
+			Name of the field inside root XAVU specified by `xavu_cfg`
 			to evaluate for the B-side Contact Header user part. This parameter
 			is only necessary in contact_mode (2).
 		</para>
@@ -583,7 +583,7 @@ modparam("topos", "header_mode", 1)
 	<section id="topos.p.methods_noinitial">
 		<title><varname>methods_noinitial</varname> (str)</title>
 		<para>
-			List of SIP methods to skip doing topos if it is an intial request
+			List of SIP methods to skip doing topos if it is an initial request
 			(no To-tag).
 		</para>
 		<para>
@@ -722,7 +722,7 @@ event_route[topos:msg-incoming] {
 		to be sent out.
 		</para>
 		<example>
-		<title>Usage of event_route[topos:msg-receoving]</title>
+		<title>Usage of event_route[topos:msg-receiving]</title>
 		<programlisting format="linespecific">
 ...
 event_route[topos:msg-receiving] {
