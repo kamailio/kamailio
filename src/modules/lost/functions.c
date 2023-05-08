@@ -296,7 +296,7 @@ int lost_held_function(struct sip_msg *_m, char *_con, char *_pidf, char *_url,
 		/* we have no connection ... do a NAPTR lookup */
 		if(lost_parse_host(did.s, &host, &flag) > 0) {
 
-			LM_DBG("no conn. trying NATPR lookup [%.*s]\n", host.len, host.s);
+			LM_DBG("no conn. trying NAPTR lookup [%.*s]\n", host.len, host.s);
 
 			/* remove '[' and ']' from string (IPv6) */
 			if(flag == AF_INET6) {
@@ -338,7 +338,7 @@ int lost_held_function(struct sip_msg *_m, char *_con, char *_pidf, char *_url,
 			goto err;
 		}
 
-		LM_DBG("NATPR lookup returned [%.*s]\n", url.len, url.s);
+		LM_DBG("NAPTR lookup returned [%.*s]\n", url.len, url.s);
 
 		/* curl doesn't like str */
 		len = 0;
