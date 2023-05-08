@@ -69,7 +69,7 @@ int add_credential(unsigned int type, void *val);
 
 void destroy_credentials(void);
 
-struct hdr_field *get_autenticate_hdr(struct sip_msg *rpl, int rpl_code);
+struct hdr_field *get_authenticate_hdr(struct sip_msg *rpl, int rpl_code);
 
 int uac_auth(sip_msg_t *msg);
 int uac_auth_mode(sip_msg_t *msg, int mode);
