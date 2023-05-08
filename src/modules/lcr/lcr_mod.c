@@ -188,7 +188,7 @@ unsigned int lcr_gw_count_param = DEF_LCR_GW_COUNT;
 /* can gws be defuncted */
 static unsigned int defunct_capability_param = 0;
 
-/* dont strip or tag param */
+/* don't strip or tag param */
 static int dont_strip_or_prefix_flag_param = -1;
 
 /* ping related params */
@@ -846,7 +846,7 @@ static int comp_matched(const void *m1, const void *m2)
 		if(mi1->priority < mi2->priority)
 			return 1;
 		if(mi1->priority == mi2->priority) {
-			/* Sort by randomized weigth */
+			/* Sort by randomized weight */
 			if(mi1->weight > mi2->weight)
 				return 1;
 			if(mi1->weight == mi2->weight)
@@ -863,7 +863,7 @@ static int comp_matched(const void *m1, const void *m2)
 		if(mi1->priority < mi2->priority)
 			return 1;
 		if(mi1->priority == mi2->priority) {
-			/* Sort by randomized weigth */
+			/* Sort by randomized weight */
 			if(mi1->weight > mi2->weight)
 				return 1;
 			if(mi1->weight == mi2->weight)
