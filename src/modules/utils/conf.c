@@ -284,7 +284,7 @@ static int update_proxy(int id, char *host_str, char *port_str)
 		free_shm_proxy(fwd_settings[id].proxy);
 		shm_free(fwd_settings[id].proxy);
 	}
-	fwd_settings[id].proxy = proxy; /* new proxy is now acitvated */
+	fwd_settings[id].proxy = proxy; /* new proxy is now activated */
 
 	return 0;
 }
