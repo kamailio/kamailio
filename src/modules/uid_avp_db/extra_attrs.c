@@ -465,7 +465,7 @@ int extra_attrs_fixup(void **param, int param_no)
 
 gen_lock_t *locks = NULL; /* set of mutexes allocated in shared memory */
 int lock_counters
-		[LOCK_CNT]; /* set of counters (each proces has its own counters) */
+		[LOCK_CNT]; /* set of counters (each process has its own counters) */
 
 static int avpdb_post_script_cb(
 		struct sip_msg *msg, unsigned int flags, void *param)
