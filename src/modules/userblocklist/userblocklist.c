@@ -884,7 +884,7 @@ static void dump_dtrie_mi(const struct dtrie_node_t *root,
 
 	/* If data found, add a new node to the reply tree */
 	if(root->data) {
-		/* Create new node and add it to the roots's kids */
+		/* Create new node and add it to the roots' kids */
 		if(!(crt_node = add_mi_node_child(
 					 &reply->node, MI_DUP_NAME, prefix, *length, 0, 0))) {
 			LM_ERR("cannot add the child node to the tree\n");
@@ -1004,7 +1004,7 @@ static struct mi_root *check_list_mi(struct mi_root *cmd, int list_type)
 	}
 	lock_release(lock);
 
-	/* Create new node and add it to the reply roots's kids */
+	/* Create new node and add it to the reply roots' kids */
 	if(!(crt_node = add_mi_node_child(
 				 &tmp->node, MI_DUP_NAME, prefix.s, prefix.len, 0, 0))) {
 		LM_ERR("cannot add the child node to the tree\n");
@@ -1150,7 +1150,7 @@ static struct mi_root *check_userlist_mi(struct mi_root *cmd, int list_type)
 	}
 
 
-	/* Create new node and add it to the reply roots's kids */
+	/* Create new node and add it to the reply roots' kids */
 	if(!(crt_node = add_mi_node_child(
 				 &tmp->node, MI_DUP_NAME, prefix.s, prefix.len, 0, 0))) {
 		LM_ERR("cannot add the child node to the tree\n");
