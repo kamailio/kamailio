@@ -335,7 +335,7 @@ int tmx_check_pretran(sip_msg_t *msg)
 			if(_tmx_proc_ptran->vbranch.len != it->vbranch.len)
 				continue;
 			/* shortcut - check last char in Via branch
-			 * - kamailio/ser adds there branch index => in case of paralel
+			 * - kamailio/ser adds there branch index => in case of parallel
 			 *   forking by previous hop, catch it here quickly */
 			if(_tmx_proc_ptran->vbranch.s[it->vbranch.len - 1]
 					!= it->vbranch.s[it->vbranch.len - 1])
