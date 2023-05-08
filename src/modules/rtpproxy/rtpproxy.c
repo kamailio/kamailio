@@ -434,8 +434,8 @@ static int add_rtpproxy_socks(struct rtpp_set *rtpp_list, char *rtpproxy)
 }
 
 
-/*	0-succes
- *  -1 - erorr
+/*	0-success
+ *  -1 - error
  * */
 static int rtpproxy_add_rtpproxy_set(char *rtp_proxies)
 {

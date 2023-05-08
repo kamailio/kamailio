@@ -299,7 +299,7 @@ modparam("rtpproxy", "extra_id_pv", "$avp(extra_id)")
 		<title>Set <varname>db_url</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("rtpproxy", "db_url", "mysql://user:passwb@localhost/database")
+modparam("rtpproxy", "db_url", "mysql://user:passwd@localhost/database")
 ...
 </programlisting>
 		</example>
@@ -475,7 +475,7 @@ rtpproxy_offer();
 				<listitem><para>
 				<emphasis>f</emphasis> - instructs rtpproxy to ignore marks
 				inserted by another rtpproxy in transit to indicate that the
-				session is already goes through another proxy. Allows creating
+				session already goes through another proxy. Allows creating
 				a chain of proxies.
 				</para></listitem>
 				<listitem><para>
