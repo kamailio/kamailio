@@ -38,7 +38,7 @@
 	</para>
 	<para>
 	Please note that only numerical strings for matching are supported at the
-	moment (the used library supports this already, but its not yet implemented
+	moment (the used library supports this already, but it is not yet implemented
 	in the module). Non-digits on the beginning of the matched string are skipped,
 	any later non-digits will stop the matching on this position.
 	</para>
@@ -49,7 +49,7 @@
 		<section>
 			<title>&kamailio; Modules</title>
 			<para>
-			The module depends on the following modules (in the other words 
+			The module depends on the following modules (in other words 
 			the listed modules must be loaded before this module):
 			</para>
 			<itemizedlist>
