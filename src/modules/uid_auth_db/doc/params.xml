@@ -167,7 +167,7 @@ modparam("auth_db", "plain_password_column", "password")
 	    of column holding pre-calculated HA1 string that were calculated
 	    including the domain in the username. This parameter is used only
 	    when <varname>calculate_ha1</varname> is set to 0 and user agent
-	    send a credentials containing the domain in the username.
+	    sends credentials containing the domain in the username.
 	</para>
 	<para>
 	    Default value of the parameter is ha1b.

@@ -328,7 +328,7 @@ static authdb_table_info_t *register_table(str *table)
 	memcpy(info->table.s, table->s, table->len);
 	info->table.s[table->len] = 0;
 
-	/* append to the begining (we don't care about order) */
+	/* append to the beginning (we don't care about order) */
 	info->next = registered_tables;
 	registered_tables = info;
 

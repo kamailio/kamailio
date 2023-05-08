@@ -46,7 +46,7 @@
     <section id="uid_auth_db.dep">
 	<title>Dependencies</title>
 	<para>
-	    The module depends on the following modules (in the other words the listed modules
+	    The module depends on the following modules (in other words the listed modules
 	    must be loaded before this module):
 	    <itemizedlist>
 		<listitem>
