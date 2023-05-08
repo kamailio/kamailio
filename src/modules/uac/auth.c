@@ -211,7 +211,7 @@ void destroy_credentials(void)
 }
 
 
-struct hdr_field *get_autenticate_hdr(struct sip_msg *rpl, int rpl_code)
+struct hdr_field *get_authenticate_hdr(struct sip_msg *rpl, int rpl_code)
 {
 	struct hdr_field *hdr;
 	str hdr_name;
@@ -360,7 +360,7 @@ static inline int apply_urihdr_changes(struct sip_msg *req, str *uri, str *hdr)
 	}
 
 	if(insert_new_lump_before(anchor, hdr->s, hdr->len, 0) == 0) {
-		LM_ERR("faield to insert lump\n");
+		LM_ERR("failed to insert lump\n");
 		goto error;
 	}
 
@@ -412,7 +412,7 @@ int uac_auth_mode(sip_msg_t *msg, int mode)
 		goto error;
 	}
 
-	hdr = get_autenticate_hdr(rpl, code);
+	hdr = get_authenticate_hdr(rpl, code);
 	if(hdr == 0) {
 		LM_ERR("failed to extract authenticate hdr\n");
 		goto error;
