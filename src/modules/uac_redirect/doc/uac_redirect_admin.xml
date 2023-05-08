@@ -19,7 +19,7 @@
 		<para>
 		UAC REDIRECT - User Agent Client redirection - module enhances &kamailio;
 		with the functionality of being able to handle (interpret, filter,
-		log and follow) redirect responses ( 3xx replies class).
+		log and follow) redirect responses (3xx replies class).
 		</para>
 		<para>
 		UAC REDIRECT module offers stateful processing, gathering the
@@ -154,7 +154,7 @@ modparam("uac_redirect","default_filter","deny")
 			of them will be accepted for redirection.
 			</para>
 			<para>
-			The parameter may be defined only one - multiple definition will
+			The parameter may be defined only once - multiple definition will
 			overwrite the previous definitions. If more regular expression 
 			need to be defined, use the 
 			<function moreinfo="none">set_deny_filter()</function> scripting
@@ -162,8 +162,7 @@ modparam("uac_redirect","default_filter","deny")
 			</para>
 			<para>
 				<emphasis>
-					This parameter is optional, it's default 
-					value being NULL.
+					The default value is NULL.
 				</emphasis>
 			</para>
 			<example>
@@ -186,7 +185,7 @@ modparam("uac_redirect","deny_filter",".*@siphub\.net")
 			of them will be rejected for redirection.
 			</para>
 			<para>
-			The parameter may be defined only one - multiple definition will
+			The parameter may be defined only once - multiple definition will
 			overwrite the previous definitions. If more regular expression 
 			need to be defined, use the 
 			<function moreinfo="none">set_accept_filter()</function> scripting
@@ -194,8 +193,7 @@ modparam("uac_redirect","deny_filter",".*@siphub\.net")
 			</para>
 			<para>
 				<emphasis>
-					This parameter is optional, it's default 
-					value being NULL.
+					The default value is NULL.
 				</emphasis>
 			</para>
 			<example>
@@ -276,8 +274,7 @@ modparam("uac_redirect","acc_db_table","acc_redirect")
 			</para>
 			<para>
 				<emphasis>
-					This parameter is optional, it's default 
-					value being 0.
+					The default value is 0.
 				</emphasis>
 			</para>
 			<example>
@@ -531,7 +528,7 @@ get_redirects("*");
 				function, but it will produce accounting records.
 			</para>
 			<para>
-				The accounting records will be mark by the 
+				The accounting records will be marked by the 
 				<emphasis>reason</emphasis> phrase.
 			</para>
 			<para>
