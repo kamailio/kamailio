@@ -779,6 +779,30 @@ sip_trace_mode("t");
 		</example>
 	</section>
 
+	<section id="siptrace.f.sip_trace_msg">
+		<title>
+		<function moreinfo="none">sip_trace_msg(vmsg, saddr, taddr, daddr, corrid)</function>
+		</title>
+		<para>
+			Send the value of vmsg to the HEP capture server located at daddr, by
+			setting saddr as source address and taddr as target address for vmsg.
+			Correlation ID can be provided with corrid parameter or left as an
+			empty string. The saddr and taddr have to be provided in socket
+			address format (proto:ip:port) and the daddr in SIP URI format.
+		</para>
+		<para>
+		This function can be used in ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>sip_trace_msg()</function> usage</title>
+		<programlisting format="linespecific">
+...
+sip_trace_msg("$var(msg)", "udp:127.0.0.1:5062", "udp:127.0.0.1:5064", "sip:127.0.0.1:5090", "");
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="siptrace.f.hlog">
 		<title>
 		<function moreinfo="none">hlog([correlation_id,] message)</function>
