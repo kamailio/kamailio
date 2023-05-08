@@ -114,7 +114,7 @@ static void free_domain(domain_t *d)
 
 
 /*
- * Create a new domain structure which will initialy have
+ * Create a new domain structure which will initially have
  * one domain name
  */
 static domain_t *new_domain(str *did, str *domain, unsigned int flags)
