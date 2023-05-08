@@ -70,7 +70,8 @@ Camille Oudot
 
               4.1. sip_trace([address][, correlation_id][, mode])
               4.2. sip_trace_mode(tmode)
-              4.3. hlog([correlation_id,] message)
+              4.3. sip_trace_msg(vmsg, saddr, taddr, daddr, corrid)
+              4.4. hlog([correlation_id,] message)
 
         5. RPC Commands
 
@@ -112,8 +113,9 @@ Camille Oudot
    1.25. Set trace_dialog_spiral parameter
    1.26. sip_trace() usage
    1.27. sip_trace_mode() usage
-   1.28. hlog() usage
-   1.29. Send relayed ACK message
+   1.28. sip_trace_msg() usage
+   1.29. hlog() usage
+   1.30. Send relayed ACK message
 
 Chapter 1. Admin Guide
 
@@ -158,7 +160,8 @@ Chapter 1. Admin Guide
 
         4.1. sip_trace([address][, correlation_id][, mode])
         4.2. sip_trace_mode(tmode)
-        4.3. hlog([correlation_id,] message)
+        4.3. sip_trace_msg(vmsg, saddr, taddr, daddr, corrid)
+        4.4. hlog([correlation_id,] message)
 
    5. RPC Commands
 
@@ -603,7 +606,8 @@ modparam("siptrace", "trace_dialog_spiral", 1)
 
    4.1. sip_trace([address][, correlation_id][, mode])
    4.2. sip_trace_mode(tmode)
-   4.3. hlog([correlation_id,] message)
+   4.3. sip_trace_msg(vmsg, saddr, taddr, daddr, corrid)
+   4.4. hlog([correlation_id,] message)
 
 4.1.  sip_trace([address][, correlation_id][, mode])
 
@@ -660,7 +664,23 @@ sip_trace("sip:10.1.1.2:5085", "$ci-abc", "d");
 sip_trace_mode("t");
 ...
 
-4.3.  hlog([correlation_id,] message)
+4.3.  sip_trace_msg(vmsg, saddr, taddr, daddr, corrid)
+
+   Send the value of vmsg to the HEP capture server located at daddr, by
+   setting saddr as source address and taddr as target address for vmsg.
+   Correlation ID can be provided with corrid parameter or left as an
+   empty string. The saddr and taddr have to be provided in socket address
+   format (proto:ip:port) and the daddr in SIP URI format.
+
+   This function can be used in ANY_ROUTE.
+
+   Example 1.28. sip_trace_msg() usage
+...
+sip_trace_msg("$var(msg)", "udp:127.0.0.1:5062", "udp:127.0.0.1:5064", "sip:127.
+0.0.1:5090", "");
+...
+
+4.4.  hlog([correlation_id,] message)
 
    Sends a log event as a HEP3 packet to the homer host configured in
    duplicate_uri.
@@ -672,7 +692,7 @@ sip_trace_mode("t");
      * message - The text to send to Homer as log event. (This parameter
        may contain PVs)
 
-   Example 1.28. hlog() usage
+   Example 1.29. hlog() usage
 ...
 hlog("[cfg:$cfg(line)] This is a log from kamailio to Homer");
 ...
@@ -746,7 +766,7 @@ event_route[siptrace:msg] {
    this name will result in overlapping internal avp used by the module
    therefore causing unknown consequences.
 
-   Example 1.29. Send relayed ACK message
+   Example 1.30. Send relayed ACK message
 ...
 onsend_route {
     if (is_method("ACK")) {
