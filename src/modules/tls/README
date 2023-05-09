@@ -81,7 +81,8 @@ Olle E. Johansson
               12.1. tls.info
               12.2. tls.list
               12.3. tls.options
-              12.4. tls.reload
+              12.4. tls.kill
+              12.5. tls.reload
 
         13. Status
 
@@ -213,7 +214,8 @@ Chapter 1. Admin Guide
         12.1. tls.info
         12.2. tls.list
         12.3. tls.options
-        12.4. tls.reload
+        12.4. tls.kill
+        12.5. tls.reload
 
    13. Status
 
@@ -1641,7 +1643,8 @@ verify_client = optional_no_ca
    12.1. tls.info
    12.2. tls.list
    12.3. tls.options
-   12.4. tls.reload
+   12.4. tls.kill
+   12.5. tls.reload
 
 12.1. tls.info
 
@@ -1665,7 +1668,14 @@ verify_client = optional_no_ca
    Parameters:
      * None.
 
-12.4. tls.reload
+12.4. tls.kill
+
+   Kill a TLS session by id.
+
+   Parameters:
+     * None.
+
+12.5. tls.reload
 
    Reload the external TLS configuration file (aka tls.cfg). It does not
    reload modparam() parameters. Note that existing active TLS connections
