@@ -12,6 +12,8 @@
 
 #define BENCODE_HASH_BUCKETS		31 /* prime numbers work best */
 
+#define BENCODE_ALLOC_ALIGN		8
+
 struct __bencode_buffer_piece {
 	char *tail;
 	unsigned int left;
@@ -76,7 +78,7 @@ static struct __bencode_buffer_piece *__bencode_piece_new(unsigned int size) {
 
 	if (size < BENCODE_MIN_BUFFER_PIECE_LEN)
 		size = BENCODE_MIN_BUFFER_PIECE_LEN;
-	ret = BENCODE_MALLOC(sizeof(*ret) + size);
+	ret = BENCODE_MALLOC(sizeof(*ret) + size + BENCODE_ALLOC_ALIGN);
 	if (!ret)
 		return NULL;
 
@@ -99,6 +101,7 @@ int bencode_buffer_init(bencode_buffer_t *buf) {
 static void *__bencode_alloc(bencode_buffer_t *buf, unsigned int size) {
 	struct __bencode_buffer_piece *piece;
 	void *ret;
+	unsigned int align_size = ((size + BENCODE_ALLOC_ALIGN - 1) / BENCODE_ALLOC_ALIGN) * BENCODE_ALLOC_ALIGN;
 
 	if (!buf)
 		return NULL;
@@ -121,9 +124,12 @@ static void *__bencode_alloc(bencode_buffer_t *buf, unsigned int size) {
 	assert(size <= piece->left);
 
 alloc:
-	piece->left -= size;
+	if (piece->left >= align_size)
+		piece->left -= align_size;
+	else
+		piece->left = 0;
 	ret = piece->tail;
-	piece->tail += size;
+	piece->tail += align_size;
 	return ret;
 }
 
