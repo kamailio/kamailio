@@ -90,6 +90,38 @@ pv_cache_t **pv_cache_get_table(void)
 	return NULL;
 }
 
+static void pv_cache_dump(int level)
+{
+	int i;
+	pv_cache_t *pvi = NULL;
+
+	if(_pv_cache_set == 0) {
+		LM_DBG("PV cache not initialized\n");
+		return;
+	}
+
+	for(i = 0; i < PV_CACHE_SIZE; i++) {
+		pvi = _pv_cache[i];
+		while(pvi) {
+			LOG(level, "pvar [%.*s] found in cache[%d]\n", pvi->pvname.len,
+					pvi->pvname.s, i);
+			pvi = pvi->next;
+		}
+	}
+}
+
+/* Dumps pv cache.
+ * Per-child process callback that is called
+ * when pv_cache_dump cfg var is changed.
+ */
+void pv_cache_dump_cb(str *gname, str *name)
+{
+	if(cfg_get(core, core_cfg, pv_cache_dump) == my_pid()) {
+		pv_cache_dump(cfg_get(core, core_cfg, memlog));
+		cfg_get(core, core_cfg, pv_cache_dump) = 0;
+	}
+}
+
 /**
  * @brief Check if a char is valid according to the PV syntax
  * @param c checked char

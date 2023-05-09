@@ -22,6 +22,7 @@
 
 #ifndef __pvapi_h__
 #define __pvapi_h__
+#include "str.h"
 
 int pv_init_api(void);
 void pv_destroy_api(void);
@@ -34,6 +35,7 @@ int pv_get_buffer_size(void);
 int pv_get_buffer_slots(void);
 void pv_set_buffer_size(int n);
 void pv_set_buffer_slots(int n);
+void pv_cache_dump_cb(str *gname, str *name);
 
 #endif /*__pvapi_h__*/
 

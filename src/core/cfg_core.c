@@ -55,6 +55,7 @@
 #include "sock_ut.h"
 #include "cfg/cfg.h"
 #include "cfg_core.h"
+#include "pvapi.h"
 
 struct cfg_group_core default_core_cfg = {
 		L_WARN,		/*!<  print only msg. < L_WARN */
@@ -121,6 +122,7 @@ struct cfg_group_core default_core_cfg = {
 		0,	   /*!< latency limit db */
 		0,	   /*!< latency limit action */
 		0,	   /*!< latency limit cfg */
+		0,	   /*!< pv_cache_dump */
 		2048,  /*!< pv_cache_limit */
 		0	   /*!< pv_cache_action */
 };
@@ -336,6 +338,8 @@ cfg_def_t core_cfg_def[] = {
 				"limit in ms for alerting on time consuming config actions"},
 		{"latency_limit_cfg", CFG_VAR_INT | CFG_ATOMIC, 0, 0, 0, 0,
 				"limit in ms for alerting on time consuming config execution"},
+		{"pv_cache_dump", CFG_VAR_INT, 0, 0, 0, pv_cache_dump_cb,
+				"dump process pv cache, parameter: pid_number"},
 		{"pv_cache_limit", CFG_VAR_INT | CFG_ATOMIC, 0, 0, 0, 0,
 				"limit to alert if too many vars in pv cache"},
 		{"pv_cache_action", CFG_VAR_INT | CFG_ATOMIC, 0, 0, 0, 0,
