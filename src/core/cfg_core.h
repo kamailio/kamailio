@@ -112,6 +112,7 @@ struct cfg_group_core
 	int latency_limit_db;	  /*!< alert limit of running db commands */
 	int latency_limit_action; /*!< alert limit of running cfg actions */
 	int latency_limit_cfg;	  /*!< alert limit of running cfg routing script */
+	int pv_cache_dump;	 /*!< dump process pv cache, parameter: pid_number */
 	int pv_cache_limit;	 /*!< alert limit of having too many vars in pv cache */
 	int pv_cache_action; /*!< action to be taken on pv cache limit */
 };
