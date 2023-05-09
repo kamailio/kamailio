@@ -84,7 +84,7 @@ int reg_get_cfg_tcpconnid(void)
                vavp = xavp_get_child_with_ival(&reg_xavp_cfg, &vname);
                if(vavp!=NULL)
                {
-                       n = vavp->val.v.i;
+                       n = (int)vavp->val.v.l;
                        LM_DBG("using tcpconn_id value from xavp: %d\n", n);
                }
        }
