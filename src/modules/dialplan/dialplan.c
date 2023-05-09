@@ -872,9 +872,12 @@ static int ki_dp_translate(sip_msg_t* msg, int id, str *input_spv, str *output_s
 	if (!msg)
 		return -1;
 
-	if (input_spv == NULL || input_spv->s == NULL || input_spv->len <= 0 ||
-	    output_spv == NULL || output_spv->s == NULL || output_spv->len <= 0) {
-		LM_ERR("invalid destination var name for input or output\n");
+	if (input_spv != NULL && (input_spv->s == NULL || input_spv->len <= 0)) {
+		LM_ERR("invalid destination var name for input\n");
+		return -1;
+	}
+	if (output_spv != NULL && (output_spv->s == NULL || output_spv->len <= 0)) {
+		LM_ERR("invalid destination var name for output\n");
 		return -1;
 	}
 
