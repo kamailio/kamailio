@@ -1226,6 +1226,18 @@ static int w_sip_trace_msg(sip_msg_t *msg, char *vmsg, char *saddr, char *taddr,
 }
 
 /**
+ *
+ */
+static int ki_sip_trace_msg(sip_msg_t *msg, str *vmsg, str *saddr, str *taddr,
+		str *duri, str *corrid)
+{
+	trace_send_hep_duplicate(vmsg, saddr, taddr, (duri && duri->len>0)?&duri:NULL,
+			(corrid && corrid->len>0)?corrid:NULL);
+
+	return 1;
+}
+
+/**
  * link call-id, method, from-tag and to-tag
  */
 static int sip_trace_msg_attrs(sip_msg_t *msg, siptrace_data_t *sto)
@@ -2599,6 +2611,11 @@ static sr_kemi_t sr_kemi_siptrace_exports[] = {
 		SR_KEMIP_INT, ki_sip_trace_mode,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("siptrace"), str_init("sip_trace_msg"),
+		SR_KEMIP_INT, ki_sip_trace_msg,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE }
 	},
 
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
