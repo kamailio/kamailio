@@ -273,7 +273,7 @@ modparam("pipelimit", "plp_pipeid_column", "name")
 
    Name of 'limit' column.
 
-   Default value is “limit”.
+   Default value is “plimit”.
 
    Example 1.5. Set plp_limit_column parameter
 ...
