@@ -970,8 +970,8 @@ int ht_dbg(void)
 			while(it)
 			{
 				LM_ERR("\tcell: %.*s\n", it->name.len, it->name.s);
-				LM_ERR("\thid: %u msize: %u flags: %d expire: %u\n", it->cellid,
-						it->msize, it->flags, (unsigned int)it->expire);
+				LM_ERR("\thid: %u msize: %u flags: %d expire: %llu\n", it->cellid,
+						it->msize, it->flags, (unsigned long long)it->expire);
 				if(it->flags&AVP_VAL_STR)
 					LM_ERR("\tv-s:%.*s\n", it->value.s.len, it->value.s.s);
 				else
@@ -1268,7 +1268,7 @@ int ht_set_cell_expire(ht_t *ht, str *name, int type, int_str *val)
 	now = 0;
 	if(val->n>0)
 		now = time(NULL) + val->n;
-	LM_DBG("set auto-expire to %u (%ld)\n", (unsigned int)now,
+	LM_DBG("set auto-expire to %llu (%ld)\n", (unsigned long long)now,
 			val->n);
 
 	ht_slot_lock(ht, idx);

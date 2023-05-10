@@ -196,7 +196,7 @@ int ht_db_load_table(ht_t *ht, str *dbtable, int mode)
 	int i;
 	int ret;
 	int cnt;
-	int now;
+	long now;
 	int ncols;
 	int c;
 
@@ -272,7 +272,7 @@ int ht_db_load_table(ht_t *ht, str *dbtable, int mode)
 	pname.s = "";
 	n = 0;
 	last_ktype = 0;
-	now = (int)time(NULL);
+	now = (long)time(NULL);
 	do {
 		for(i=0; i<RES_ROW_N(db_res); i++)
 		{
