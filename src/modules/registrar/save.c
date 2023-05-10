@@ -71,7 +71,11 @@ extern sruid_t _reg_sruid;
 static int q_override_msg_id;
 static qvalue_t q_override_value;
 
-int reg_get_cfg_tcpconnid(void)
+
+/**
+ *
+ */
+static int reg_get_cfg_tcpconnid(void)
 {
        int n;
        sr_xavp_t *vavp=NULL;
@@ -254,6 +258,7 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 	static struct sip_msg *m = 0;
 	static struct socket_info si = {0};
 	int_str val;
+	int tcid;
 
 	if (_m!=0) {
 		memset( &ci, 0, sizeof(ucontact_info_t));
@@ -298,9 +303,11 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 		} else {
 			ci.tcpconn_id = -1;
 		}
-		/* if a tcp connectionid is set, use it */
-		if (reg_get_cfg_tcpconnid())
-			ci.tcpconn_id = reg_get_cfg_tcpconnid();
+		/* if a tcp connectionid is set via xavp, use it */
+		tcid = reg_get_cfg_tcpconnid();
+		if(tcid > 0) {
+			ci.tcpconn_id = tcid;
+		}
 
 		/* additional info from message */
 		if (parse_headers(_m, HDR_USERAGENT_F, 0) != -1 && _m->user_agent &&
