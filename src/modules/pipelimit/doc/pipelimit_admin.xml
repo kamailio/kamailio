@@ -218,7 +218,7 @@ modparam("pipelimit", "plp_pipeid_column", "name")
 	    </para>
 	    <para>
 		<emphasis>
-		    Default value is <quote>limit</quote>.
+		    Default value is <quote>plimit</quote>.
 		</emphasis>
 	    </para>
 	    <example>
