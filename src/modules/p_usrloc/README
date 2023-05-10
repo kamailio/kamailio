@@ -54,6 +54,7 @@ Patric Marschall
               3.27. default_db_url(str)
               3.28. matching_mode(int)
               3.29. UTC_timestamps(int)
+              3.30. use_domain_crc32(str)
 
         4. Changes from usrloc module
 
@@ -126,8 +127,9 @@ Patric Marschall
    1.27. Set default_db_type parameter
    1.28. Set matching_mode parameter
    1.29. Set UTC_timestamps parameter
-   1.30. Set db_mode parameter
-   1.31. Example database content - reg_table (locdb) table
+   1.30. Set use_domain_crc32 parameter
+   1.31. Set db_mode parameter
+   1.32. Example database content - reg_table (locdb) table
 
 Chapter 1. User's Guide
 
@@ -170,6 +172,7 @@ Chapter 1. User's Guide
         3.27. default_db_url(str)
         3.28. matching_mode(int)
         3.29. UTC_timestamps(int)
+        3.30. use_domain_crc32(str)
 
    4. Changes from usrloc module
 
@@ -289,6 +292,7 @@ Warning
    3.27. default_db_url(str)
    3.28. matching_mode(int)
    3.29. UTC_timestamps(int)
+   3.30. use_domain_crc32(str)
 
 3.1. write_db_url (string)
 
@@ -696,6 +700,18 @@ kamcmd cfg.get p_usrloc matching_mode
 modparam("p_usrloc", "UTC_timestamps", 1)
 ...
 
+3.30. use_domain_crc32(str)
+
+   Enables or disables the crc32 of domain part for user@domain. If
+   disabled, will calculate crc32 only for user part.
+
+   Default value is “1” (enabled).
+
+   Example 1.30. Set use_domain_crc32 parameter
+...
+modparam("p_usrloc", "use_domain_crc32", "0")
+...
+
 4.  Changes from usrloc module
 
    4.1. db_mode (integer)
@@ -718,7 +734,7 @@ modparam("p_usrloc", "UTC_timestamps", 1)
 
    Default value is 3.
 
-   Example 1.30. Set db_mode parameter
+   Example 1.31. Set db_mode parameter
 ...
 modparam("p_usrloc", "db_mode", 2)
 ...
@@ -752,7 +768,7 @@ modparam("p_usrloc", "db_mode", 2)
    complete database documentation on the project webpage,
    https://www.kamailio.org/docs/db-tables/kamailio-db-devel.html.
 
-   Example 1.31. Example database content - reg_table (locdb) table
+   Example 1.32. Example database content - reg_table (locdb) table
 ...
 +----+----+------+--------+--------+---------------------+-------+----+
 | id | no | url  | status | errors | failover            | spare | rg |
