@@ -55,7 +55,7 @@ struct cpl_interpreter {
 	str user;              /* user */
 	str script;            /* CPL script */
 	char *ip;              /* instruction pointer */
-	int recv_time;         /* receiving time stamp */
+	time_t recv_time;      /* receiving time stamp */
 	struct sip_msg *msg;
 	struct location *loc_set;     /* location set */
 	/* pointers to the string-headers needed for switches; can point directly
