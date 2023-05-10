@@ -33,7 +33,7 @@
 
 static inline unsigned int get_current_timestamp()
 {
-	return time(NULL);
+	return (unsigned int)(unsigned long long)time(NULL);
 }
 
 static inline int timestamp2isodt(str *dest, unsigned int timestamp)
