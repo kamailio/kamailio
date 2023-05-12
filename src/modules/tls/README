@@ -676,11 +676,12 @@ Place holder
 
    If RFC 3261 conformance is desired, at least TLSv1 must be used. For
    compatibility with older clients SSLv23 is the option, but again, be
-   aware of security concerns, SSLv2/3 being considered very insecure by
-   2014. For current information about what's considered secure, please
-   consult, IETF BCP 195, currently RFC 7525 - "Recommendations for Secure
-   Use of Transport Layer Security (TLS) and Datagram Transport Layer
-   Security (DTLS)"
+   aware of security concerns, SSLv2/3 as well as TLS v1.0 and v1.1 are
+   being considered very insecure and are therefore deprecated since March
+   2021 (RFC 8996). For current information about what's considered
+   secure, please consult, IETF BCP 195, currently RFC 9325 -
+   "Recommendations for Secure Use of Transport Layer Security (TLS) and
+   Datagram Transport Layer Security (DTLS)"
 
    Example 1.3. Set tls_method parameter
 ...
