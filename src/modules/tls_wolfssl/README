@@ -64,6 +64,10 @@ loadmodule "tls_wolfssl.so"
    The wolfSSL TLS module is intended to be compiled with a recent version
    of wolfSSL (5.2.0+).
 
+   Default compilations of the library will not work with Kamailio's own
+   memory allocation. See https://github.com/wolfSSL/wolfssl/issues/5264
+   for more details.
+
 4. Compiling the wolfSSL TLS Module
 
    The development package for wolfSSL is required (libwolfssl-dev or
