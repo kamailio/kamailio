@@ -50,6 +50,7 @@ Build-Depends:
  libunistring-dev,
  libval-dev,
  libwebsockets-dev,
+ libwolfssl-dev,
  libxml2-dev,
  openssl,
  pkg-config,
@@ -657,6 +658,23 @@ Description: TLS support for the Kamailio SIP server (authentication, transport)
  per second even on low-budget hardware.
  .
  This package provides TLS support for encrypted and authenticated
+ SIP connections as well as generic TLS support for many Kamailio modules.
+
+Package: kamailio-wolftls-modules
+Architecture: any
+Multi-Arch: same
+Pre-Depends:
+ ${misc:Pre-Depends},
+Depends:
+ kamailio (= ${binary:Version}),
+ ${misc:Depends},
+ ${shlibs:Depends},
+Description: TLS support for the Kamailio SIP server (authentication, transport)
+ Kamailio is a very fast and flexible SIP (RFC3261)
+ server. Written entirely in C, Kamailio can handle thousands calls
+ per second even on low-budget hardware.
+ .
+ This package provides TLS support for encrypted and authenticated using wolfssl
  SIP connections as well as generic TLS support for many Kamailio modules.
 
 Package: kamailio-outbound-modules
