@@ -946,14 +946,22 @@ int tps_request_received(sip_msg_t *msg, int dialog)
 		}
 	}
 
-	if(use_branch && direction == TPS_DIR_DOWNSTREAM) {
+	if(use_branch) {
+		LM_DBG("use branch for routing information, request from direction %d\n", direction);
 		if(tps_reappend_route(msg, &stsd, &stsd.s_rr, 1) < 0) {
 			LM_ERR("failed to reappend s-route\n");
 			return -1;
 		}
-		if(tps_reappend_route(msg, &stsd, &stsd.y_rr, 1) < 0) {
-			LM_ERR("failed to reappend b-route\n");
-			return -1;
+		if (direction == TPS_DIR_UPSTREAM) {
+			if(tps_reappend_route(msg, &stsd, &stsd.x_rr, 0) < 0) {
+				LM_ERR("failed to reappend a-route\n");
+				return -1;
+			}
+		} else {
+			if(tps_reappend_route(msg, &stsd, &stsd.y_rr, 1) < 0) {
+				LM_ERR("failed to reappend b-route\n");
+				return -1;
+			}
 		}
 	} else {
 		if(tps_reappend_route(msg, &stsd, &stsd.s_rr,
