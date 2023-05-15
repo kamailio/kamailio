@@ -3,9 +3,7 @@ name: build
 'on':
   push:
     branches:
-      - master
-      - '5.6'
-      - '5.5'
+      - '5.7'
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 permissions:
