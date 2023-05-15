@@ -1,4 +1,4 @@
-	<!-- mohqcalls provisioning -->
+	<!-- mohqcalls provisionning -->
 	<mod><mod_name>mohqcalls</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>mohqcalls</db_table_id>
@@ -48,7 +48,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- mohqueues provisioning -->
+	<!-- mohqueues provisionning -->
 	<mod><mod_name>mohqueues</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>mohqueues</db_table_id>

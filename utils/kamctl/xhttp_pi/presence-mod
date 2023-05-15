@@ -1,4 +1,4 @@
-	<!-- presentity provisioning -->
+	<!-- presentity provisionning -->
 	<mod><mod_name>presentity</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>presentity</db_table_id>
@@ -60,7 +60,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- active_watchers provisioning -->
+	<!-- active_watchers provisionning -->
 	<mod><mod_name>active_watchers</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>active_watchers</db_table_id>
@@ -170,7 +170,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- watchers provisioning -->
+	<!-- watchers provisionning -->
 	<mod><mod_name>watchers</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>watchers</db_table_id>
@@ -223,7 +223,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- xcap provisioning -->
+	<!-- xcap provisionning -->
 	<mod><mod_name>xcap</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>xcap</db_table_id>
@@ -279,7 +279,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- pua provisioning -->
+	<!-- pua provisionning -->
 	<mod><mod_name>pua</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>pua</db_table_id>

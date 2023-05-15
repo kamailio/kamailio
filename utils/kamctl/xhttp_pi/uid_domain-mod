@@ -1,4 +1,4 @@
-	<!-- uid_domain provisioning -->
+	<!-- uid_domain provisionning -->
 	<mod><mod_name>uid_domain</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>uid_domain</db_table_id>
@@ -39,7 +39,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- uid_domain_attrs provisioning -->
+	<!-- uid_domain_attrs provisionning -->
 	<mod><mod_name>uid_domain_attrs</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>uid_domain_attrs</db_table_id>

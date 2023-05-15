@@ -1,4 +1,4 @@
-	<!-- imc_rooms provisioning -->
+	<!-- imc_rooms provisionning -->
 	<mod><mod_name>imc_rooms</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>imc_rooms</db_table_id>
@@ -39,7 +39,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- imc_members provisioning -->
+	<!-- imc_members provisionning -->
 	<mod><mod_name>imc_members</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>imc_members</db_table_id>

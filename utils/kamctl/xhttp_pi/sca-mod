@@ -1,4 +1,4 @@
-	<!-- sca_subscriptions provisioning -->
+	<!-- sca_subscriptions provisionning -->
 	<mod><mod_name>sca_subscriptions</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>sca_subscriptions</db_table_id>

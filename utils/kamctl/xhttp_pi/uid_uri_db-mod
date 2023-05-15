@@ -1,4 +1,4 @@
-	<!-- uid_uri provisioning -->
+	<!-- uid_uri provisionning -->
 	<mod><mod_name>uid_uri</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>uid_uri</db_table_id>
@@ -45,7 +45,7 @@
 			</clause_cols>
 		</cmd>
 	</mod>
-	<!-- uid_uri_attrs provisioning -->
+	<!-- uid_uri_attrs provisionning -->
 	<mod><mod_name>uid_uri_attrs</mod_name>
 		<cmd><cmd_name>show</cmd_name>
 			<db_table_id>uid_uri_attrs</db_table_id>
