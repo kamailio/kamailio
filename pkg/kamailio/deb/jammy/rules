@@ -66,6 +66,7 @@ PACKAGE_GROUPS += ruby
 PACKAGE_GROUPS += ims
 PACKAGE_GROUPS += sctp
 PACKAGE_GROUPS += tls
+PACKAGE_GROUPS += tls_wolfssl
 PACKAGE_GROUPS += outbound
 PACKAGE_GROUPS += websocket
 PACKAGE_GROUPS += autheph
