@@ -760,33 +760,30 @@ int tps_mask_callid(sip_msg_t *msg)
 	str out;
 	str in;
 
-	if(_tps_param_mask_callid==0)
+	if(_tps_param_mask_callid==0) {
 		return 0;
+	}
 
-	if(msg->callid==NULL)
-	{
+	if(msg->callid==NULL) {
 		LM_ERR("cannot get Call-Id header\n");
 		return -1;
 	}
-	LM_DBG("CALL-ID : [%.*s]\n", msg->callid->body.len, msg->callid->body.s);
+	LM_DBG("incoming call-id: [%.*s]\n", msg->callid->body.len, msg->callid->body.s);
 	in=msg->callid->body;
-	
+
 	if(thb.mask_callid(&in, &out) != 0) {
-			LM_ERR("cannot encode callid\n");
-			return -1;
+		LM_ERR("cannot encode callid\n");
+		return -1;
 	}
-	
-	
-	LM_DBG("Updated CALL-ID : [%.*s]\n",out.len, out.s);
-	if(out.s==NULL)
-	{
+
+	LM_DBG("updated (masked) call-id: [%.*s]\n",out.len, out.s);
+	if(out.s==NULL) {
 		LM_ERR("cannot encode callid\n");
 		return -1;
 	}
 
 	l=del_lump(msg, msg->callid->body.s-msg->buf, msg->callid->body.len, 0);
-	if (l==0)
-	{
+	if (l==0) {
 		LM_ERR("failed deleting callid\n");
 		pkg_free(out.s);
 		return -1;
@@ -809,30 +806,27 @@ int tps_unmask_callid(sip_msg_t *msg)
 	str out;
 	str in;
 	int umask_ret;
-	
 
-	if(_tps_param_mask_callid==0)
+	if(_tps_param_mask_callid==0) {
 		return 0;
+	}
 
-	if(msg->callid==NULL)
-	{
+	if(msg->callid==NULL) {
 		LM_ERR("cannot get Call-Id header\n");
 		return -1;
 	}
 
-	
-
-	LM_DBG("CALL-ID : [%.*s]\n", msg->callid->body.len, msg->callid->body.s);
+	LM_DBG("incoming call-id: [%.*s]\n", msg->callid->body.len, msg->callid->body.s);
 	in=msg->callid->body;
 	umask_ret=thb.unmask_callid(&in, &out);
 	if(umask_ret == 1) {
 		LM_DBG("Unmask not required\n");
 		return 0;
 	}else if(umask_ret != 0) {
-			LM_ERR("cannot decode callid\n");
-			return -1;
+		LM_ERR("cannot decode callid\n");
+		return -1;
 	}
-	LM_DBG("Updated (unmasked) CALL-ID : [%.*s]\n",out.len, out.s);
+	LM_DBG("updated (unmasked) call-id: [%.*s]\n", out.len, out.s);
 	if(out.s==NULL)
 	{
 		LM_ERR("cannot decode callid\n");
