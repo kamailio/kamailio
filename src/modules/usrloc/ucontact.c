@@ -1000,6 +1000,11 @@ int db_update_ucontact_ruid(ucontact_t* _c)
 		return -1;
 	}
 
+	if (ul_dbh==NULL) {
+		LM_ERR("database connection handle not initialized\n");
+		return -1;
+	}
+
 	n1 = 0;
 	keys1[n1] = &ul_ruid_col;
 	vals1[n1].type = DB1_STR;
