@@ -1633,7 +1633,9 @@ modparam("usrloc", "db_clean_tcp", 1)
 		<function moreinfo="none">ul.flush</function>
 		</title>
 		<para>
-		Triggers the flush of USRLOC memory cache into DB.
+		Triggers the flush of USRLOC memory cache into DB from the RPC process. It
+		succeeds only if the the db_mode is set to a value that enables connectivity
+		to database.
 		</para>
 	</section>
 	<section id="usrloc.r.add">
