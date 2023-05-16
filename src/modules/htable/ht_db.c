@@ -249,6 +249,7 @@ int ht_db_load_table(ht_t *ht, str *dbtable, int mode)
 			if(RES_ROW_N(db_res)==0)
 			{
 				ht_dbf.free_result(ht_db_con, db_res);
+				ht->dbload = 1;
 				LM_DBG("Nothing to be loaded in hash table\n");
 				return 0;
 			}
@@ -261,6 +262,7 @@ int ht_db_load_table(ht_t *ht, str *dbtable, int mode)
 			if( ret==0)
 			{
 				ht_dbf.free_result(ht_db_con, db_res);
+				ht->dbload = 1;
 				return 0;
 			} else {
 				goto error;
