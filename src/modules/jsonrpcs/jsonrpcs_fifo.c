@@ -464,7 +464,7 @@ static void jsonrpc_fifo_server(FILE *fifo_stream)
 		srpath.len = 128;
 		spath.s = buf_spath;
 		spath.len = 128;
-		if(jsonrpc_exec_ex(&scmd, &srpath, NULL)<0) {
+		if(jsonrpc_exec_ex(&scmd, &srpath, &spath)<0) {
 			LM_ERR("failed to execute the json document from fifo stream\n");
 			continue;
 		}
