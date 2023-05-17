@@ -70,8 +70,8 @@ stat_var *expired_sst = 0;
  * code will set the dialog lifetime when it returns from the INVITE
  * and IN_ROUTE callbacks.
  */
-pv_spec_t timeout_avp; 
-static char* timeout_spec = 0; /*!< Place holder for the passed in name */
+pv_spec_t timeout_avp;
+static char *timeout_spec = 0; /*!< Place holder for the passed in name */
 
 /*!
  * The default or script parameter for the requested MIN-SE: value for
@@ -79,7 +79,7 @@ static char* timeout_spec = 0; /*!< Place holder for the passed in name */
  * proxy will except any value from the UAC as its min-SE value. If
  * the value is NOT set then the default will be asserted.
  */
-unsigned int sst_minSE = 90; 
+unsigned int sst_minSE = 90;
 
 /*!
  * Should the PROXY (us) reject (with a 422 reply) and SE < sst_minSE
@@ -100,44 +100,39 @@ struct dlg_binds *dlg_binds = &dialog_st;
 /*
  * Script commands we export.
  */
-static cmd_export_t cmds[]={
-	{"sstCheckMin", (cmd_function)sst_check_min, 1, 0, 0, REQUEST_ROUTE | ONREPLY_ROUTE },
-	{0,0,0,0,0,0}
-};
+static cmd_export_t cmds[] = {{"sstCheckMin", (cmd_function)sst_check_min, 1, 0,
+									  0, REQUEST_ROUTE | ONREPLY_ROUTE},
+		{0, 0, 0, 0, 0, 0}};
 
 /*
  * Script parameters
  */
-static param_export_t mod_params[]={
-	{ "enable_stats", INT_PARAM, &sst_enable_stats			},
-	{ "min_se", INT_PARAM, &sst_minSE				},
-	{ "timeout_avp", PARAM_STRING, &timeout_spec			},
-	{ "reject_to_small",		INT_PARAM, &sst_reject 		},
-	{ "sst_flag",				INT_PARAM, &sst_flag	},
-	{ 0,0,0 }
-};
+static param_export_t mod_params[] = {
+		{"enable_stats", INT_PARAM, &sst_enable_stats},
+		{"min_se", INT_PARAM, &sst_minSE},
+		{"timeout_avp", PARAM_STRING, &timeout_spec},
+		{"reject_to_small", INT_PARAM, &sst_reject},
+		{"sst_flag", INT_PARAM, &sst_flag}, {0, 0, 0}};
 
 #ifdef STATISTICS
 /*
  * Export the statistics we have
  */
 static stat_export_t mod_stats[] = {
-	{"expired_sst", 0,  &expired_sst},
-	{0,0,0}
-};
+		{"expired_sst", 0, &expired_sst}, {0, 0, 0}};
 #endif /* STATISTICS */
 
-struct module_exports exports= {
-	"sst",           /* module's name */
-	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,            /* exported functions */
-	mod_params,      /* param exports */
-	0,               /* RPC method exports */
-	0,               /* exported pseudo-variables */
-	0,               /* reply processing function */
-	mod_init,        /* module initialization function */
-	0,               /* per-child init function */
-	0                /* Destroy function */
+struct module_exports exports = {
+		"sst",			 /* module's name */
+		DEFAULT_DLFLAGS, /* dlopen flags */
+		cmds,			 /* exported functions */
+		mod_params,		 /* param exports */
+		0,				 /* RPC method exports */
+		0,				 /* exported pseudo-variables */
+		0,				 /* reply processing function */
+		mod_init,		 /* module initialization function */
+		0,				 /* per-child init function */
+		0				 /* Destroy function */
 };
 
 /**
@@ -150,15 +145,14 @@ struct module_exports exports= {
  * @return 0 to continue to load the Kamailio, -1 to stop the loading
  * and abort Kamailio.
  */
-static int mod_init(void) 
+static int mod_init(void)
 {
 	str s;
 
 #ifdef STATISTICS
 	/* register statistics */
-	if (sst_enable_stats!=0)
-	{
-		if (register_module_stats( exports.name, mod_stats)!=0 ) {
+	if(sst_enable_stats != 0) {
+		if(register_module_stats(exports.name, mod_stats) != 0) {
 			LM_ERR("failed to register core statistics\n");
 			return -1;
 		}
@@ -166,20 +160,20 @@ static int mod_init(void)
 #endif
 
 
-	if (sst_flag == -1) {
+	if(sst_flag == -1) {
 		LM_ERR("no sst flag set!!\n");
 		return -1;
-	} 
-	else if (sst_flag > MAX_FLAG) {
+	} else if(sst_flag > MAX_FLAG) {
 		LM_ERR("invalid sst flag %d!!\n", sst_flag);
 		return -1;
 	}
 
-	if (timeout_spec != NULL) {
+	if(timeout_spec != NULL) {
 		LM_DBG("Dialog AVP is %s", timeout_spec);
-		s.s = timeout_spec; s.len = strlen(s.s);
-		if (pv_parse_spec(&s, &timeout_avp)==0 
-		&& (timeout_avp.type != PVT_AVP)){
+		s.s = timeout_spec;
+		s.len = strlen(s.s);
+		if(pv_parse_spec(&s, &timeout_avp) == 0
+				&& (timeout_avp.type != PVT_AVP)) {
 			LM_ERR("malformed or non AVP timeout AVP definition in '%s'\n",
 					timeout_spec);
 			return -1;
@@ -187,23 +181,24 @@ static int mod_init(void)
 	}
 
 	/* bind the SL API */
-	if (sl_load_api(&slb)!=0) {
+	if(sl_load_api(&slb) != 0) {
 		LM_ERR("cannot bind to SL API\n");
 		return -1;
 	}
 
 	/* Init the handlers */
-	sst_handler_init((timeout_spec?&timeout_avp:0), sst_minSE, 
-			sst_flag, sst_reject);
+	sst_handler_init(
+			(timeout_spec ? &timeout_avp : 0), sst_minSE, sst_flag, sst_reject);
 
 	/* Register the main (static) dialog call back. */
-	if (load_dlg_api(&dialog_st) != 0) {
+	if(load_dlg_api(&dialog_st) != 0) {
 		LM_ERR("failed to load dialog hooks");
-		return(-1);
+		return (-1);
 	}
 
 	/* Load dialog hooks */
-	dialog_st.register_dlgcb(NULL, DLGCB_CREATED, sst_dialog_created_CB, NULL, NULL);
+	dialog_st.register_dlgcb(
+			NULL, DLGCB_CREATED, sst_dialog_created_CB, NULL, NULL);
 
 	return 0;
 }

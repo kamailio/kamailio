@@ -38,13 +38,13 @@
 /*! \brief
  * The dialog rpc helper function.
  */
-void sst_dialog_rpc_context_CB(struct dlg_cell* did, int type,
-		struct dlg_cb_params * params)
+void sst_dialog_rpc_context_CB(
+		struct dlg_cell *did, int type, struct dlg_cb_params *params)
 {
-	rpc_cb_ctx_t *rpc_cb = (rpc_cb_ctx_t*)(params->dlg_data);
+	rpc_cb_ctx_t *rpc_cb = (rpc_cb_ctx_t *)(params->dlg_data);
 	rpc_t *rpc = rpc_cb->rpc;
 	void *c = rpc_cb->c;
-	sst_info_t* sst_info = (sst_info_t*)*(params->param);
+	sst_info_t *sst_info = (sst_info_t *)*(params->param);
 
 	rpc->rpl_printf(c, "sst_requester_flags: %d", sst_info->requester);
 	rpc->rpl_printf(c, "sst_supported_flags: %d", sst_info->supported);
