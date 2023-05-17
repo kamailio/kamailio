@@ -44,18 +44,20 @@ extern str ht_event_callback;
 ht_t *_ht_root = NULL;
 ht_cell_t *ht_expired_cell;
 
-typedef struct _keyvalue {
+typedef struct _keyvalue
+{
 	str key;
 	str value;
 	int type;
-	union {
+	union
+	{
 		param_t *params;
 	} u;
 } keyvalue_t;
 
 
-#define KEYVALUE_TYPE_NONE		0
-#define KEYVALUE_TYPE_PARAMS	1
+#define KEYVALUE_TYPE_NONE 0
+#define KEYVALUE_TYPE_PARAMS 1
 
 /**
  * parse a string like: 'key=>value'
@@ -68,8 +70,7 @@ int keyvalue_parse_str(str *data, int type, keyvalue_t *res)
 	str in;
 	param_hooks_t phooks;
 
-	if(data==NULL || data->s==NULL || data->len<=0 || res==NULL)
-	{
+	if(data == NULL || data->s == NULL || data->len <= 0 || res == NULL) {
 		LM_ERR("invalid parameters\n");
 		return -1;
 	}
@@ -80,32 +81,33 @@ int keyvalue_parse_str(str *data, int type, keyvalue_t *res)
 	in.len = data->len;
 
 	p = in.s;
-	while(p<in.s+in.len && (*p==' ' || *p=='\t' || *p=='\n' || *p=='\r'))
+	while(p < in.s + in.len
+			&& (*p == ' ' || *p == '\t' || *p == '\n' || *p == '\r'))
 		p++;
-	if(p>in.s+in.len || *p=='\0')
+	if(p > in.s + in.len || *p == '\0')
 		goto error;
 	res->key.s = p;
-	while(p < in.s + in.len)
-	{
-		if(*p=='=' || *p==' ' || *p=='\t' || *p=='\n' || *p=='\r')
+	while(p < in.s + in.len) {
+		if(*p == '=' || *p == ' ' || *p == '\t' || *p == '\n' || *p == '\r')
 			break;
 		p++;
 	}
-	if(p>in.s+in.len || *p=='\0')
+	if(p > in.s + in.len || *p == '\0')
 		goto error;
 	res->key.len = (int)(p - res->key.s);
-	if(*p!='=')
-	{
-		while(p<in.s+in.len && (*p==' ' || *p=='\t' || *p=='\n' || *p=='\r'))
+	if(*p != '=') {
+		while(p < in.s + in.len
+				&& (*p == ' ' || *p == '\t' || *p == '\n' || *p == '\r'))
 			p++;
-		if(p>in.s+in.len || *p=='\0' || *p!='=')
+		if(p > in.s + in.len || *p == '\0' || *p != '=')
 			goto error;
 	}
 	p++;
-	if(*p!='>')
+	if(*p != '>')
 		goto error;
 	p++;
-	while(p<in.s+in.len && (*p==' ' || *p=='\t' || *p=='\n' || *p=='\r'))
+	while(p < in.s + in.len
+			&& (*p == ' ' || *p == '\t' || *p == '\n' || *p == '\r'))
 		p++;
 
 	s.s = p;
@@ -113,12 +115,10 @@ int keyvalue_parse_str(str *data, int type, keyvalue_t *res)
 	res->value.s = s.s;
 	res->value.len = s.len;
 	res->type = type;
-	if(type==KEYVALUE_TYPE_PARAMS)
-	{
-		if(s.s[s.len-1]==';')
+	if(type == KEYVALUE_TYPE_PARAMS) {
+		if(s.s[s.len - 1] == ';')
 			s.len--;
-		if (parse_params(&s, CLASS_ANY, &phooks, &res->u.params)<0)
-		{
+		if(parse_params(&s, CLASS_ANY, &phooks, &res->u.params) < 0) {
 			LM_ERR("failed parsing params value\n");
 			goto error;
 		}
@@ -126,17 +126,16 @@ int keyvalue_parse_str(str *data, int type, keyvalue_t *res)
 	return 0;
 error:
 	LM_ERR("invalid input parameter [%.*s] at [%d]\n", in.len, in.s,
-			(int)(p-in.s));
+			(int)(p - in.s));
 	return -1;
 }
 
 void keyvalue_destroy(keyvalue_t *res)
 {
-	if(res==NULL)
+	if(res == NULL)
 		return;
-	if(res->type==KEYVALUE_TYPE_PARAMS)
-	{
-		if(res->u.params!=NULL)
+	if(res->type == KEYVALUE_TYPE_PARAMS) {
+		if(res->u.params != NULL)
 			free_params(res->u.params);
 	}
 	memset(res, 0, sizeof(keyvalue_t));
@@ -150,7 +149,7 @@ void ht_slot_lock(ht_t *ht, int idx)
 	int mypid;
 
 	mypid = my_pid();
-	if (likely(atomic_get(&ht->entries[idx].locker_pid) != mypid)) {
+	if(likely(atomic_get(&ht->entries[idx].locker_pid) != mypid)) {
 		lock_get(&ht->entries[idx].lock);
 		atomic_set(&ht->entries[idx].locker_pid, mypid);
 	} else {
@@ -164,28 +163,27 @@ void ht_slot_lock(ht_t *ht, int idx)
  */
 void ht_slot_unlock(ht_t *ht, int idx)
 {
-	if (likely(ht->entries[idx].rec_lock_level == 0)) {
+	if(likely(ht->entries[idx].rec_lock_level == 0)) {
 		atomic_set(&ht->entries[idx].locker_pid, 0);
 		lock_release(&ht->entries[idx].lock);
-	} else  {
+	} else {
 		/* recursive locked => decrease lock count */
 		ht->entries[idx].rec_lock_level--;
 	}
 }
 
-ht_cell_t* ht_cell_new(str *name, int type, int_str *val, unsigned int cellid)
+ht_cell_t *ht_cell_new(str *name, int type, int_str *val, unsigned int cellid)
 {
 	ht_cell_t *cell;
 	unsigned int msize;
 
-	msize = sizeof(ht_cell_t) + (name->len + 1)*sizeof(char);
+	msize = sizeof(ht_cell_t) + (name->len + 1) * sizeof(char);
 
-	if(type&AVP_VAL_STR)
-		msize += (val->s.len + 1)*sizeof(char);
+	if(type & AVP_VAL_STR)
+		msize += (val->s.len + 1) * sizeof(char);
 
-	cell = (ht_cell_t*)shm_malloc(msize);
-	if(cell==NULL)
-	{
+	cell = (ht_cell_t *)shm_malloc(msize);
+	if(cell == NULL) {
 		LM_ERR("no more shm\n");
 		return NULL;
 	}
@@ -195,12 +193,11 @@ ht_cell_t* ht_cell_new(str *name, int type, int_str *val, unsigned int cellid)
 	cell->cellid = cellid;
 	cell->flags = type;
 	cell->name.len = name->len;
-	cell->name.s = (char*)cell + sizeof(ht_cell_t);
+	cell->name.s = (char *)cell + sizeof(ht_cell_t);
 	memcpy(cell->name.s, name->s, name->len);
 	cell->name.s[name->len] = '\0';
-	if(type&AVP_VAL_STR)
-	{
-		cell->value.s.s = (char*)cell->name.s + name->len + 1;
+	if(type & AVP_VAL_STR) {
+		cell->value.s.s = (char *)cell->name.s + name->len + 1;
 		cell->value.s.len = val->s.len;
 		memcpy(cell->value.s.s, val->s.s, val->s.len);
 		cell->value.s.s[val->s.len] = '\0';
@@ -212,7 +209,7 @@ ht_cell_t* ht_cell_new(str *name, int type, int_str *val, unsigned int cellid)
 
 int ht_cell_free(ht_cell_t *cell)
 {
-	if(cell==NULL)
+	if(cell == NULL)
 		return -1;
 	shm_free(cell);
 	return 0;
@@ -220,7 +217,7 @@ int ht_cell_free(ht_cell_t *cell)
 
 int ht_cell_pkg_free(ht_cell_t *cell)
 {
-	if(cell==NULL)
+	if(cell == NULL)
 		return -1;
 	pkg_free(cell);
 	return 0;
@@ -232,12 +229,12 @@ ht_t *ht_get_root(void)
 	return _ht_root;
 }
 
-ht_t* ht_get_table(str *name)
+ht_t *ht_get_table(str *name)
 {
 	unsigned int htid;
 	ht_t *ht;
 
-	if(name==NULL || name->s==NULL) {
+	if(name == NULL || name->s == NULL) {
 		LM_WARN("invalid name parameter\n");
 		return NULL;
 	}
@@ -245,11 +242,9 @@ ht_t* ht_get_table(str *name)
 
 	/* does it exist */
 	ht = _ht_root;
-	while(ht!=NULL)
-	{
-		if(htid == ht->htid && name->len==ht->name.len
-				&& strncmp(name->s, ht->name.s, name->len)==0)
-		{
+	while(ht != NULL) {
+		if(htid == ht->htid && name->len == ht->name.len
+				&& strncmp(name->s, ht->name.s, name->len) == 0) {
 			LM_DBG("htable found [%.*s]\n", name->len, name->s);
 			return ht;
 		}
@@ -267,7 +262,7 @@ int ht_add_table(str *name, int autoexp, str *dbtable, str *dbcols, int size,
 	int c;
 	int i;
 
-	if(name==NULL || name->s==NULL) {
+	if(name == NULL || name->s == NULL) {
 		LM_WARN("invalid name parameter\n");
 		return -1;
 	}
@@ -275,72 +270,71 @@ int ht_add_table(str *name, int autoexp, str *dbtable, str *dbcols, int size,
 
 	/* does it exist */
 	ht = _ht_root;
-	while(ht!=NULL)
-	{
-		if(htid == ht->htid && name->len==ht->name.len
-				&& strncmp(name->s, ht->name.s, name->len)==0)
-		{
+	while(ht != NULL) {
+		if(htid == ht->htid && name->len == ht->name.len
+				&& strncmp(name->s, ht->name.s, name->len) == 0) {
 			LM_ERR("htable already configured [%.*s]\n", name->len, name->s);
 			return -1;
 		}
 		ht = ht->next;
 	}
 
-	ht = (ht_t*)shm_malloc(sizeof(ht_t));
-	if(ht==NULL)
-	{
+	ht = (ht_t *)shm_malloc(sizeof(ht_t));
+	if(ht == NULL) {
 		LM_ERR("no more shared memory\n");
 		return -1;
 	}
 	memset(ht, 0, sizeof(ht_t));
 
-	if(size<=1)
+	if(size <= 1)
 		ht->htsize = 8;
-	else if(size>31)
-		ht->htsize = 1<<14;
-	else ht->htsize = 1<<size;
+	else if(size > 31)
+		ht->htsize = 1 << 14;
+	else
+		ht->htsize = 1 << size;
 	ht->htid = htid;
 	ht->htexpire = autoexp;
 	ht->updateexpire = updateexpire;
 	ht->name = *name;
-	if(dbtable!=NULL && dbtable->len>0)
+	if(dbtable != NULL && dbtable->len > 0)
 		ht->dbtable = *dbtable;
 	ht->dbmode = dbmode;
 	ht->flags = itype;
-	if(ival!=NULL)
+	if(ival != NULL)
 		ht->initval = *ival;
 	ht->dmqreplicate = dmqreplicate;
 
-	if(dbcols!=NULL && dbcols->s!=NULL && dbcols->len>0) {
-		ht->scols[0].s = (char*)shm_malloc((1+dbcols->len)*sizeof(char));
-		if(ht->scols[0].s==NULL) {
+	if(dbcols != NULL && dbcols->s != NULL && dbcols->len > 0) {
+		ht->scols[0].s = (char *)shm_malloc((1 + dbcols->len) * sizeof(char));
+		if(ht->scols[0].s == NULL) {
 			LM_ERR("no more shared memory\n");
 			shm_free(ht);
 			return -1;
 		}
-		memset(ht->scols[0].s, 0, (1+dbcols->len)*sizeof(char));
+		memset(ht->scols[0].s, 0, (1 + dbcols->len) * sizeof(char));
 		memcpy(ht->scols[0].s, dbcols->s, dbcols->len);
 		ht->scols[0].len = dbcols->len;
 		c = 0;
-		for(i=0; i<dbcols->len; i++) {
-			if(ht->scols[0].s[i]==',') {
+		for(i = 0; i < dbcols->len; i++) {
+			if(ht->scols[0].s[i] == ',') {
 				ht->scols[c].len = (ht->scols[0].s + i - ht->scols[c].s);
-				LM_DBG("db table column[%d]='%.*s'\n", c,
-						ht->scols[c].len, ht->scols[c].s);
+				LM_DBG("db table column[%d]='%.*s'\n", c, ht->scols[c].len,
+						ht->scols[c].s);
 				c++;
-				if(c>=HT_MAX_COLS) {
+				if(c >= HT_MAX_COLS) {
 					LM_ERR("too many columns %d\n", c);
 					shm_free(ht->scols[0].s);
 					shm_free(ht);
 					return -1;
 				}
 				ht->scols[c].s = ht->scols[0].s + i + 1;
-				ht->scols[c].len = ht->scols[0].s + dbcols->len - ht->scols[c].s;
+				ht->scols[c].len =
+						ht->scols[0].s + dbcols->len - ht->scols[c].s;
 			}
 		}
-		LM_DBG("db table column[%d]='%.*s'\n", c,
-				ht->scols[c].len, ht->scols[c].s);
-		if(c==0) {
+		LM_DBG("db table column[%d]='%.*s'\n", c, ht->scols[c].len,
+				ht->scols[c].s);
+		if(c == 0) {
 			LM_ERR("there must be at least two columns (prefix, value)\n");
 			shm_free(ht->scols[0].s);
 			shm_free(ht);
@@ -364,12 +358,10 @@ int ht_init_tables(void)
 
 	ht = _ht_root;
 
-	while(ht)
-	{
+	while(ht) {
 		LM_DBG("initializing htable [%.*s] with nr. of slots: %d\n",
 				ht->name.len, ht->name.s, ht->htsize);
-		if(ht->name.len + sizeof("htable:expired:") <  HT_EVEX_NAME_SIZE)
-		{
+		if(ht->name.len + sizeof("htable:expired:") < HT_EVEX_NAME_SIZE) {
 			strcpy(ht->evex_name_buf, "htable:expired:");
 			strncat(ht->evex_name_buf, ht->name.s, ht->name.len);
 			ht->evex_name.s = ht->evex_name_buf;
@@ -377,11 +369,10 @@ int ht_init_tables(void)
 
 			ht->evex_index = route_lookup(&event_rt, ht->evex_name_buf);
 
-			if (ht->evex_index < 0
-					|| event_rt.rlist[ht->evex_index] == NULL)
-			{
+			if(ht->evex_index < 0 || event_rt.rlist[ht->evex_index] == NULL) {
 				ht->evex_index = -1;
-				LM_DBG("event route for expired items in [%.*s] does not exist\n",
+				LM_DBG("event route for expired items in [%.*s] does not "
+					   "exist\n",
 						ht->name.len, ht->name.s);
 			} else {
 				LM_DBG("event route for expired items in [%.*s] exists\n",
@@ -389,32 +380,29 @@ int ht_init_tables(void)
 			}
 		} else {
 			LM_WARN("event route name for expired items in htable [%.*s]"
-					" is too long\n", ht->name.len, ht->name.s);
+					" is too long\n",
+					ht->name.len, ht->name.s);
 		}
-		ht->entries = (ht_entry_t*)shm_malloc(ht->htsize*sizeof(ht_entry_t));
-		if(ht->entries==NULL)
-		{
-			LM_ERR("no more shared memory for [%.*s]\n", ht->name.len, ht->name.s);
+		ht->entries = (ht_entry_t *)shm_malloc(ht->htsize * sizeof(ht_entry_t));
+		if(ht->entries == NULL) {
+			LM_ERR("no more shared memory for [%.*s]\n", ht->name.len,
+					ht->name.s);
 			return -1;
 		}
-		memset(ht->entries, 0, ht->htsize*sizeof(ht_entry_t));
+		memset(ht->entries, 0, ht->htsize * sizeof(ht_entry_t));
 
-		for(i=0; i<ht->htsize; i++)
-		{
-			if(lock_init(&ht->entries[i].lock)==0)
-			{
+		for(i = 0; i < ht->htsize; i++) {
+			if(lock_init(&ht->entries[i].lock) == 0) {
 				LM_ERR("cannot initialize lock[%d] in [%.*s]\n", i,
 						ht->name.len, ht->name.s);
 				i--;
-				while(i>=0)
-				{
+				while(i >= 0) {
 					lock_destroy(&ht->entries[i].lock);
 					i--;
 				}
 				shm_free(ht->entries);
 				ht->entries = NULL;
 				return -1;
-
 			}
 		}
 		ht = ht->next;
@@ -430,21 +418,17 @@ int ht_destroy(void)
 	ht_t *ht;
 	ht_t *ht0;
 
-	if(_ht_root==NULL)
+	if(_ht_root == NULL)
 		return -1;
 
 	ht = _ht_root;
-	while(ht)
-	{
+	while(ht) {
 		ht0 = ht->next;
-		if(ht->entries!=NULL)
-		{
-			for(i=0; i<ht->htsize; i++)
-			{
+		if(ht->entries != NULL) {
+			for(i = 0; i < ht->htsize; i++) {
 				/* free entries */
 				it = ht->entries[i].first;
-				while(it)
-				{
+				while(it) {
 					it0 = it;
 					it = it->next;
 					ht_cell_free(it0);
@@ -462,19 +446,19 @@ int ht_destroy(void)
 }
 
 
-int ht_set_cell_ex(ht_t *ht, str *name, int type, int_str *val, int mode,
-		int exv)
+int ht_set_cell_ex(
+		ht_t *ht, str *name, int type, int_str *val, int mode, int exv)
 {
 	unsigned int idx;
 	unsigned int hid;
 	ht_cell_t *it, *prev, *cell;
 	time_t now;
 
-	if(ht==NULL || ht->entries==NULL) {
+	if(ht == NULL || ht->entries == NULL) {
 		LM_WARN("invalid htable parameter\n");
 		return -1;
 	}
-	if(name==NULL || name->s==NULL) {
+	if(name == NULL || name->s == NULL) {
 		LM_WARN("invalid name parameter\n");
 		return -1;
 	}
@@ -484,34 +468,29 @@ int ht_set_cell_ex(ht_t *ht, str *name, int type, int_str *val, int mode,
 	idx = ht_get_entry(hid, ht->htsize);
 
 	now = 0;
-	if(ht->htexpire>0)
+	if(ht->htexpire > 0)
 		now = time(NULL);
 	prev = NULL;
-	if(mode) ht_slot_lock(ht, idx);
+	if(mode)
+		ht_slot_lock(ht, idx);
 	it = ht->entries[idx].first;
-	while(it!=NULL && it->cellid < hid)
-	{
+	while(it != NULL && it->cellid < hid) {
 		prev = it;
 		it = it->next;
 	}
-	while(it!=NULL && it->cellid == hid)
-	{
-		if(name->len==it->name.len
-				&& strncmp(name->s, it->name.s, name->len)==0)
-		{
+	while(it != NULL && it->cellid == hid) {
+		if(name->len == it->name.len
+				&& strncmp(name->s, it->name.s, name->len) == 0) {
 			/* update value */
-			if(it->flags&AVP_VAL_STR)
-			{
-				if(type&AVP_VAL_STR)
-				{
-					if(it->value.s.len >= val->s.len)
-					{
+			if(it->flags & AVP_VAL_STR) {
+				if(type & AVP_VAL_STR) {
+					if(it->value.s.len >= val->s.len) {
 						/* copy */
 						it->value.s.len = val->s.len;
 						memcpy(it->value.s.s, val->s.s, val->s.len);
 						it->value.s.s[it->value.s.len] = '\0';
 
-						if(exv<=0) {
+						if(exv <= 0) {
 							if(ht->updateexpire) {
 								it->expire = now + ht->htexpire;
 							}
@@ -521,15 +500,15 @@ int ht_set_cell_ex(ht_t *ht, str *name, int type, int_str *val, int mode,
 					} else {
 						/* new */
 						cell = ht_cell_new(name, type, val, hid);
-						if(cell == NULL)
-						{
+						if(cell == NULL) {
 							LM_ERR("cannot create new cell\n");
-							if(mode) ht_slot_unlock(ht, idx);
+							if(mode)
+								ht_slot_unlock(ht, idx);
 							return -1;
 						}
 						cell->next = it->next;
 						cell->prev = it->prev;
-						if(exv<=0) {
+						if(exv <= 0) {
 							if(ht->updateexpire) {
 								cell->expire = now + ht->htexpire;
 							} else {
@@ -550,7 +529,7 @@ int ht_set_cell_ex(ht_t *ht, str *name, int type, int_str *val, int mode,
 					it->flags &= ~AVP_VAL_STR;
 					it->value.n = val->n;
 
-					if(exv<=0) {
+					if(exv <= 0) {
 						if(ht->updateexpire) {
 							it->expire = now + ht->htexpire;
 						}
@@ -558,20 +537,20 @@ int ht_set_cell_ex(ht_t *ht, str *name, int type, int_str *val, int mode,
 						it->expire = now + exv;
 					}
 				}
-				if(mode) ht_slot_unlock(ht, idx);
+				if(mode)
+					ht_slot_unlock(ht, idx);
 				return 0;
 			} else {
-				if(type&AVP_VAL_STR)
-				{
+				if(type & AVP_VAL_STR) {
 					/* new */
 					cell = ht_cell_new(name, type, val, hid);
-					if(cell == NULL)
-					{
+					if(cell == NULL) {
 						LM_ERR("cannot create new cell.\n");
-						if(mode) ht_slot_unlock(ht, idx);
+						if(mode)
+							ht_slot_unlock(ht, idx);
 						return -1;
 					}
-					if(exv<=0) {
+					if(exv <= 0) {
 						if(ht->updateexpire) {
 							cell->expire = now + ht->htexpire;
 						} else {
@@ -593,7 +572,7 @@ int ht_set_cell_ex(ht_t *ht, str *name, int type, int_str *val, int mode,
 				} else {
 					it->value.n = val->n;
 
-					if(exv<=0) {
+					if(exv <= 0) {
 						if(ht->updateexpire) {
 							it->expire = now + ht->htexpire;
 						}
@@ -601,7 +580,8 @@ int ht_set_cell_ex(ht_t *ht, str *name, int type, int_str *val, int mode,
 						it->expire = now + exv;
 					}
 				}
-				if(mode) ht_slot_unlock(ht, idx);
+				if(mode)
+					ht_slot_unlock(ht, idx);
 				return 0;
 			}
 		}
@@ -612,16 +592,17 @@ int ht_set_cell_ex(ht_t *ht, str *name, int type, int_str *val, int mode,
 	cell = ht_cell_new(name, type, val, hid);
 	if(cell == NULL) {
 		LM_ERR("cannot create new cell.\n");
-		if(mode) ht_slot_unlock(ht, idx);
+		if(mode)
+			ht_slot_unlock(ht, idx);
 		return -1;
 	}
-	if(exv<=0) {
+	if(exv <= 0) {
 		cell->expire = now + ht->htexpire;
 	} else {
 		cell->expire = now + exv;
 	}
-	if(prev==NULL) {
-		if(ht->entries[idx].first!=NULL) {
+	if(prev == NULL) {
+		if(ht->entries[idx].first != NULL) {
 			cell->next = ht->entries[idx].first;
 			ht->entries[idx].first->prev = cell;
 		}
@@ -634,7 +615,8 @@ int ht_set_cell_ex(ht_t *ht, str *name, int type, int_str *val, int mode,
 		prev->next = cell;
 	}
 	ht->entries[idx].esize++;
-	if(mode) ht_slot_unlock(ht, idx);
+	if(mode)
+		ht_slot_unlock(ht, idx);
 	return 0;
 }
 
@@ -645,7 +627,7 @@ int ht_set_cell(ht_t *ht, str *name, int type, int_str *val, int mode)
 
 static void ht_cell_unlink(ht_t *ht, int idx, ht_cell_t *it)
 {
-	if(it->prev==NULL)
+	if(it->prev == NULL)
 		ht->entries[idx].first = it->next;
 	else
 		it->prev->next = it->next;
@@ -665,7 +647,7 @@ int ht_del_cell(ht_t *ht, str *name)
 	int ret;
 
 	ret = ht_del_cell_confirm(ht, name);
-	if (ret == -1)
+	if(ret == -1)
 		return -1;
 	return 0;
 }
@@ -686,10 +668,10 @@ int ht_del_cell_confirm(ht_t *ht, str *name)
 	unsigned int hid;
 	ht_cell_t *it;
 
-	if(ht==NULL || ht->entries==NULL)
+	if(ht == NULL || ht->entries == NULL)
 		return -1;
 
-	if(name==NULL || name->s==NULL) {
+	if(name == NULL || name->s == NULL) {
 		LM_WARN("invalid name parameter\n");
 		return -1;
 	}
@@ -698,18 +680,16 @@ int ht_del_cell_confirm(ht_t *ht, str *name)
 	idx = ht_get_entry(hid, ht->htsize);
 
 	/* head test and return */
-	if(ht->entries[idx].first==NULL)
+	if(ht->entries[idx].first == NULL)
 		return 0;
 
 	ht_slot_lock(ht, idx);
 	it = ht->entries[idx].first;
-	while(it!=NULL && it->cellid < hid)
+	while(it != NULL && it->cellid < hid)
 		it = it->next;
-	while(it!=NULL && it->cellid == hid)
-	{
-		if(name->len==it->name.len
-				&& strncmp(name->s, it->name.s, name->len)==0)
-		{
+	while(it != NULL && it->cellid == hid) {
+		if(name->len == it->name.len
+				&& strncmp(name->s, it->name.s, name->len) == 0) {
 			/* found */
 			ht_cell_unlink(ht, idx, it);
 			ht_slot_unlock(ht, idx);
@@ -722,7 +702,7 @@ int ht_del_cell_confirm(ht_t *ht, str *name)
 	return 0;
 }
 
-ht_cell_t* ht_cell_value_add(ht_t *ht, str *name, int val, ht_cell_t *old)
+ht_cell_t *ht_cell_value_add(ht_t *ht, str *name, int val, ht_cell_t *old)
 {
 	unsigned int idx;
 	unsigned int hid;
@@ -730,10 +710,10 @@ ht_cell_t* ht_cell_value_add(ht_t *ht, str *name, int val, ht_cell_t *old)
 	time_t now;
 	int_str isval;
 
-	if(ht==NULL || ht->entries==NULL)
+	if(ht == NULL || ht->entries == NULL)
 		return NULL;
 
-	if(name==NULL || name->s==NULL) {
+	if(name == NULL || name->s == NULL) {
 		LM_WARN("invalid name parameter\n");
 		return NULL;
 	}
@@ -742,26 +722,23 @@ ht_cell_t* ht_cell_value_add(ht_t *ht, str *name, int val, ht_cell_t *old)
 	idx = ht_get_entry(hid, ht->htsize);
 
 	now = 0;
-	if(ht->htexpire>0)
+	if(ht->htexpire > 0)
 		now = time(NULL);
 	prev = NULL;
 	ht_slot_lock(ht, idx);
 	it = ht->entries[idx].first;
-	while(it!=NULL && it->cellid < hid)
-	{
+	while(it != NULL && it->cellid < hid) {
 		prev = it;
 		it = it->next;
 	}
-	while(it!=NULL && it->cellid == hid)
-	{
-		if(name->len==it->name.len
-				&& strncmp(name->s, it->name.s, name->len)==0)
-		{
+	while(it != NULL && it->cellid == hid) {
+		if(name->len == it->name.len
+				&& strncmp(name->s, it->name.s, name->len) == 0) {
 			/* found */
-			if(now>0 && it->expire!=0 && it->expire<now) {
+			if(now > 0 && it->expire != 0 && it->expire < now) {
 				/* entry has expired */
 
-				if(ht->flags==PV_VAL_INT) {
+				if(ht->flags == PV_VAL_INT) {
 					/* initval is integer, use it to create a fresh entry */
 					it->flags &= ~AVP_VAL_STR;
 					it->value.n = ht->initval.n;
@@ -772,8 +749,7 @@ ht_cell_t* ht_cell_value_add(ht_t *ht, str *name, int val, ht_cell_t *old)
 				}
 			}
 			/* update value */
-			if(it->flags&AVP_VAL_STR)
-			{
+			if(it->flags & AVP_VAL_STR) {
 				/* string value cannot be incremented */
 				ht_slot_unlock(ht, idx);
 				return NULL;
@@ -781,17 +757,15 @@ ht_cell_t* ht_cell_value_add(ht_t *ht, str *name, int val, ht_cell_t *old)
 				it->value.n += val;
 				if(ht->updateexpire)
 					it->expire = now + ht->htexpire;
-				if(old!=NULL)
-				{
-					if(old->msize>=it->msize)
-					{
+				if(old != NULL) {
+					if(old->msize >= it->msize) {
 						memcpy(old, it, it->msize);
 						ht_slot_unlock(ht, idx);
 						return old;
 					}
 				}
-				cell = (ht_cell_t*)pkg_malloc(it->msize);
-				if(cell!=NULL)
+				cell = (ht_cell_t *)pkg_malloc(it->msize);
+				if(cell != NULL)
 					memcpy(cell, it, it->msize);
 
 				ht_slot_unlock(ht, idx);
@@ -802,24 +776,20 @@ ht_cell_t* ht_cell_value_add(ht_t *ht, str *name, int val, ht_cell_t *old)
 		it = it->next;
 	}
 	/* add val if htable has an integer init value */
-	if(ht->flags!=PV_VAL_INT)
-	{
+	if(ht->flags != PV_VAL_INT) {
 		ht_slot_unlock(ht, idx);
 		return NULL;
 	}
 	isval.n = ht->initval.n + val;
 	it = ht_cell_new(name, 0, &isval, hid);
-	if(it == NULL)
-	{
+	if(it == NULL) {
 		LM_ERR("cannot create new cell.\n");
 		ht_slot_unlock(ht, idx);
 		return NULL;
 	}
 	it->expire = now + ht->htexpire;
-	if(prev==NULL)
-	{
-		if(ht->entries[idx].first!=NULL)
-		{
+	if(prev == NULL) {
+		if(ht->entries[idx].first != NULL) {
 			it->next = ht->entries[idx].first;
 			ht->entries[idx].first->prev = it;
 		}
@@ -832,17 +802,15 @@ ht_cell_t* ht_cell_value_add(ht_t *ht, str *name, int val, ht_cell_t *old)
 		prev->next = it;
 	}
 	ht->entries[idx].esize++;
-	if(old!=NULL)
-	{
-		if(old->msize>=it->msize)
-		{
+	if(old != NULL) {
+		if(old->msize >= it->msize) {
 			memcpy(old, it, it->msize);
 			ht_slot_unlock(ht, idx);
 			return old;
 		}
 	}
-	cell = (ht_cell_t*)pkg_malloc(it->msize);
-	if(cell!=NULL)
+	cell = (ht_cell_t *)pkg_malloc(it->msize);
+	if(cell != NULL)
 		memcpy(cell, it, it->msize);
 
 	ht_slot_unlock(ht, idx);
@@ -850,16 +818,16 @@ ht_cell_t* ht_cell_value_add(ht_t *ht, str *name, int val, ht_cell_t *old)
 }
 
 
-ht_cell_t* ht_cell_pkg_copy(ht_t *ht, str *name, ht_cell_t *old)
+ht_cell_t *ht_cell_pkg_copy(ht_t *ht, str *name, ht_cell_t *old)
 {
 	unsigned int idx;
 	unsigned int hid;
 	ht_cell_t *it, *cell;
 
-	if(ht==NULL || ht->entries==NULL)
+	if(ht == NULL || ht->entries == NULL)
 		return NULL;
 
-	if(name==NULL || name->s==NULL) {
+	if(name == NULL || name->s == NULL) {
 		LM_WARN("invalid name parameter\n");
 		return NULL;
 	}
@@ -868,35 +836,31 @@ ht_cell_t* ht_cell_pkg_copy(ht_t *ht, str *name, ht_cell_t *old)
 	idx = ht_get_entry(hid, ht->htsize);
 
 	/* head test and return */
-	if(ht->entries[idx].first==NULL)
+	if(ht->entries[idx].first == NULL)
 		return NULL;
 
 	ht_slot_lock(ht, idx);
 	it = ht->entries[idx].first;
-	while(it!=NULL && it->cellid < hid)
+	while(it != NULL && it->cellid < hid)
 		it = it->next;
-	while(it!=NULL && it->cellid == hid)
-	{
-		if(name->len==it->name.len
-				&& strncmp(name->s, it->name.s, name->len)==0)
-		{
+	while(it != NULL && it->cellid == hid) {
+		if(name->len == it->name.len
+				&& strncmp(name->s, it->name.s, name->len) == 0) {
 			/* found */
-			if(ht->htexpire>0 && it->expire!=0 && it->expire<time(NULL)) {
+			if(ht->htexpire > 0 && it->expire != 0 && it->expire < time(NULL)) {
 				/* entry has expired, return NULL */
 				ht_slot_unlock(ht, idx);
 				return NULL;
 			}
-			if(old!=NULL)
-			{
-				if(old->msize>=it->msize)
-				{
+			if(old != NULL) {
+				if(old->msize >= it->msize) {
 					memcpy(old, it, it->msize);
 					ht_slot_unlock(ht, idx);
 					return old;
 				}
 			}
-			cell = (ht_cell_t*)pkg_malloc(it->msize);
-			if(cell!=NULL)
+			cell = (ht_cell_t *)pkg_malloc(it->msize);
+			if(cell != NULL)
 				memcpy(cell, it, it->msize);
 			ht_slot_unlock(ht, idx);
 			return cell;
@@ -913,10 +877,10 @@ int ht_cell_exists(ht_t *ht, str *name)
 	unsigned int hid;
 	ht_cell_t *it;
 
-	if(ht==NULL || ht->entries==NULL)
+	if(ht == NULL || ht->entries == NULL)
 		return 0;
 
-	if(name==NULL || name->s==NULL) {
+	if(name == NULL || name->s == NULL) {
 		LM_WARN("invalid name parameter\n");
 		return -1;
 	}
@@ -925,18 +889,18 @@ int ht_cell_exists(ht_t *ht, str *name)
 	idx = ht_get_entry(hid, ht->htsize);
 
 	/* head test and return */
-	if(ht->entries[idx].first==NULL)
+	if(ht->entries[idx].first == NULL)
 		return 0;
 
 	ht_slot_lock(ht, idx);
 	it = ht->entries[idx].first;
-	while(it!=NULL && it->cellid < hid)
+	while(it != NULL && it->cellid < hid)
 		it = it->next;
-	while(it!=NULL && it->cellid == hid) {
-		if(name->len==it->name.len
-				&& strncmp(name->s, it->name.s, name->len)==0) {
+	while(it != NULL && it->cellid == hid) {
+		if(name->len == it->name.len
+				&& strncmp(name->s, it->name.s, name->len) == 0) {
 			/* found */
-			if(ht->htexpire>0 && it->expire!=0 && it->expire<time(NULL)) {
+			if(ht->htexpire > 0 && it->expire != 0 && it->expire < time(NULL)) {
 				/* entry has expired */
 				ht_slot_unlock(ht, idx);
 				return 0;
@@ -958,21 +922,19 @@ int ht_dbg(void)
 	ht_t *ht;
 
 	ht = _ht_root;
-	while(ht)
-	{
-		LM_ERR("htable[%.*s] hid: %u exp: %u>\n", ht->name.len,
-				ht->name.s, ht->htid, ht->htexpire);
-		for(i=0; i<ht->htsize; i++)
-		{
+	while(ht) {
+		LM_ERR("htable[%.*s] hid: %u exp: %u>\n", ht->name.len, ht->name.s,
+				ht->htid, ht->htexpire);
+		for(i = 0; i < ht->htsize; i++) {
 			ht_slot_lock(ht, i);
 			LM_ERR("htable[%d] -- <%d>\n", i, ht->entries[i].esize);
 			it = ht->entries[i].first;
-			while(it)
-			{
+			while(it) {
 				LM_ERR("\tcell: %.*s\n", it->name.len, it->name.s);
-				LM_ERR("\thid: %u msize: %u flags: %d expire: %llu\n", it->cellid,
-						it->msize, it->flags, (unsigned long long)it->expire);
-				if(it->flags&AVP_VAL_STR)
+				LM_ERR("\thid: %u msize: %u flags: %d expire: %llu\n",
+						it->cellid, it->msize, it->flags,
+						(unsigned long long)it->expire);
+				if(it->flags & AVP_VAL_STR)
 					LM_ERR("\tv-s:%.*s\n", it->value.s.len, it->value.s.s);
 				else
 					LM_ERR("\tv-i:%ld\n", it->value.n);
@@ -990,7 +952,7 @@ int ht_table_spec(char *spec)
 	keyvalue_t kval;
 	str name;
 	str dbtable = {0, 0};
-	str dbcols  = {0, 0};
+	str dbcols = {0, 0};
 	unsigned int autoexpire = 0;
 	unsigned int size = 4;
 	unsigned int dbmode = 0;
@@ -998,20 +960,18 @@ int ht_table_spec(char *spec)
 	unsigned int dmqreplicate = 0;
 	str in;
 	str tok;
-	param_t *pit=NULL;
+	param_t *pit = NULL;
 	int_str ival;
 	int itype;
 
-	if(!shm_initialized())
-	{
+	if(!shm_initialized()) {
 		LM_ERR("shared memory was not initialized\n");
 		return -1;
 	}
 	/* parse: name=>dbtable=abc;autoexpire=123;size=123 */
 	in.s = spec;
 	in.len = strlen(in.s);
-	if(keyvalue_parse_str(&in, KEYVALUE_TYPE_PARAMS, &kval)<0)
-	{
+	if(keyvalue_parse_str(&in, KEYVALUE_TYPE_PARAMS, &kval) < 0) {
 		LM_ERR("failed parsing: %.*s\n", in.len, in.s);
 		return -1;
 	}
@@ -1019,49 +979,54 @@ int ht_table_spec(char *spec)
 	itype = PV_VAL_NONE;
 	memset(&ival, 0, sizeof(int_str));
 
-	for (pit = kval.u.params; pit; pit=pit->next)
-	{
+	for(pit = kval.u.params; pit; pit = pit->next) {
 		tok = pit->body;
-		if(pit->name.len==7 && strncmp(pit->name.s, "dbtable", 7)==0) {
+		if(pit->name.len == 7 && strncmp(pit->name.s, "dbtable", 7) == 0) {
 			dbtable = tok;
 			LM_DBG("htable [%.*s] - dbtable [%.*s]\n", name.len, name.s,
 					dbtable.len, dbtable.s);
-		} else if(pit->name.len==4 && strncmp(pit->name.s, "cols", 4)==0) {
+		} else if(pit->name.len == 4 && strncmp(pit->name.s, "cols", 4) == 0) {
 			dbcols = tok;
 			LM_DBG("htable [%.*s] - dbcols [%.*s]\n", name.len, name.s,
 					dbcols.len, dbcols.s);
-		} else if(pit->name.len==10 && strncmp(pit->name.s, "autoexpire", 10)==0) {
-			if(str2int(&tok, &autoexpire)!=0)
+		} else if(pit->name.len == 10
+				  && strncmp(pit->name.s, "autoexpire", 10) == 0) {
+			if(str2int(&tok, &autoexpire) != 0)
 				goto error;
 			LM_DBG("htable [%.*s] - expire [%u]\n", name.len, name.s,
 					autoexpire);
-		} else if(pit->name.len==4 && strncmp(pit->name.s, "size", 4)==0) {
-			if(str2int(&tok, &size)!=0)
+		} else if(pit->name.len == 4 && strncmp(pit->name.s, "size", 4) == 0) {
+			if(str2int(&tok, &size) != 0)
 				goto error;
-			LM_DBG("htable [%.*s] - size [%u]\n", name.len, name.s,
-					size);
-		} else if(pit->name.len==6 && strncmp(pit->name.s, "dbmode", 6)==0) {
-			if(str2int(&tok, &dbmode)!=0)
+			LM_DBG("htable [%.*s] - size [%u]\n", name.len, name.s, size);
+		} else if(pit->name.len == 6
+				  && strncmp(pit->name.s, "dbmode", 6) == 0) {
+			if(str2int(&tok, &dbmode) != 0)
 				goto error;
-			LM_DBG("htable [%.*s] - dbmode [%u]\n", name.len, name.s,
-					dbmode);
-		} else if(pit->name.len==7 && strncmp(pit->name.s, "initval", 7)==0) {
-			if(str2slong(&tok, &ival.n)!=0)
+			LM_DBG("htable [%.*s] - dbmode [%u]\n", name.len, name.s, dbmode);
+		} else if(pit->name.len == 7
+				  && strncmp(pit->name.s, "initval", 7) == 0) {
+			if(str2slong(&tok, &ival.n) != 0)
 				goto error;
 			itype = PV_VAL_INT;
-			LM_DBG("htable [%.*s] - initval [%ld]\n", name.len, name.s,
-					ival.n);
-		} else if(pit->name.len == 12 && strncmp(pit->name.s, "updateexpire", 12) == 0) {
+			LM_DBG("htable [%.*s] - initval [%ld]\n", name.len, name.s, ival.n);
+		} else if(pit->name.len == 12
+				  && strncmp(pit->name.s, "updateexpire", 12) == 0) {
 			if(str2int(&tok, &updateexpire) != 0)
 				goto error;
 
-			LM_DBG("htable [%.*s] - updateexpire [%u]\n", name.len, name.s, updateexpire);
-		} else if(pit->name.len == 12 && strncmp(pit->name.s, "dmqreplicate", 12) == 0) {
+			LM_DBG("htable [%.*s] - updateexpire [%u]\n", name.len, name.s,
+					updateexpire);
+		} else if(pit->name.len == 12
+				  && strncmp(pit->name.s, "dmqreplicate", 12) == 0) {
 			if(str2int(&tok, &dmqreplicate) != 0)
 				goto error;
 
-			LM_DBG("htable [%.*s] - dmqreplicate [%u]\n", name.len, name.s, dmqreplicate);
-		} else { goto error; }
+			LM_DBG("htable [%.*s] - dmqreplicate [%u]\n", name.len, name.s,
+					dmqreplicate);
+		} else {
+			goto error;
+		}
 	}
 
 	return ht_add_table(&name, autoexpire, &dbtable, &dbcols, size, dbmode,
@@ -1077,14 +1042,11 @@ int ht_db_load_tables(void)
 	ht_t *ht;
 
 	ht = _ht_root;
-	while(ht)
-	{
-		if(ht->dbtable.len>0)
-		{
-			LM_DBG("loading db table [%.*s] in ht [%.*s]\n",
-					ht->dbtable.len, ht->dbtable.s,
-					ht->name.len, ht->name.s);
-			if(ht_db_load_table(ht, &ht->dbtable, 0)!=0)
+	while(ht) {
+		if(ht->dbtable.len > 0) {
+			LM_DBG("loading db table [%.*s] in ht [%.*s]\n", ht->dbtable.len,
+					ht->dbtable.s, ht->name.len, ht->name.s);
+			if(ht_db_load_table(ht, &ht->dbtable, 0) != 0)
 				return -1;
 		}
 		ht = ht->next;
@@ -1097,17 +1059,15 @@ int ht_db_sync_tables(void)
 	ht_t *ht;
 
 	ht = _ht_root;
-	while(ht)
-	{
-		if(ht->dbtable.len>0 && ht->dbmode!=0 && ht->dbload!=0 && ht->ncols==0)
-		{
-			LM_DBG("sync db table [%.*s] from ht [%.*s]\n",
-					ht->dbtable.len, ht->dbtable.s,
-					ht->name.len, ht->name.s);
+	while(ht) {
+		if(ht->dbtable.len > 0 && ht->dbmode != 0 && ht->dbload != 0
+				&& ht->ncols == 0) {
+			LM_DBG("sync db table [%.*s] from ht [%.*s]\n", ht->dbtable.len,
+					ht->dbtable.s, ht->name.len, ht->name.s);
 			ht_db_delete_records(&ht->dbtable);
-			if(ht_db_save_table(ht, &ht->dbtable)!=0)
-				LM_ERR("failed syncing hash table [%.*s] to db\n",
-					ht->name.len, ht->name.s);
+			if(ht_db_save_table(ht, &ht->dbtable) != 0)
+				LM_ERR("failed syncing hash table [%.*s] to db\n", ht->name.len,
+						ht->name.s);
 		}
 		ht = ht->next;
 	}
@@ -1118,13 +1078,12 @@ int ht_has_autoexpire(void)
 {
 	ht_t *ht;
 
-	if(_ht_root==NULL)
+	if(_ht_root == NULL)
 		return 0;
 
 	ht = _ht_root;
-	while(ht)
-	{
-		if(ht->htexpire>0)
+	while(ht) {
+		if(ht->htexpire > 0)
 			return 1;
 		ht = ht->next;
 	}
@@ -1143,33 +1102,30 @@ void ht_timer(unsigned int ticks, void *param)
 	int istart;
 	int istep;
 
-	if(_ht_root==NULL)
+	if(_ht_root == NULL)
 		return;
 
 	now = time(NULL);
 
 	istart = (int)(long)param;
-	if(ht_timer_procs<=0) istep = 1;
-	else istep = ht_timer_procs;
+	if(ht_timer_procs <= 0)
+		istep = 1;
+	else
+		istep = ht_timer_procs;
 
 	ht = _ht_root;
-	while(ht)
-	{
-		if(ht->htexpire>0)
-		{
-			for(i=istart; i<ht->htsize; i+=istep)
-			{
+	while(ht) {
+		if(ht->htexpire > 0) {
+			for(i = istart; i < ht->htsize; i += istep) {
 				/* free entries */
 				ht_slot_lock(ht, i);
 				it = ht->entries[i].first;
-				while(it)
-				{
+				while(it) {
 					it0 = it->next;
-					if(it->expire!=0 && it->expire<now)
-					{
+					if(it->expire != 0 && it->expire < now) {
 						/* expired */
 						ht_handle_expired_record(ht, it);
-						if(it->prev==NULL)
+						if(it->prev == NULL)
 							ht->entries[i].first = it->next;
 						else
 							it->prev->next = it->next;
@@ -1194,24 +1150,24 @@ void ht_handle_expired_record(ht_t *ht, ht_cell_t *cell)
 	sip_msg_t *fmsg;
 	sr_kemi_eng_t *keng = NULL;
 
-	if(ht_event_callback.s==NULL || ht_event_callback.len<=0) {
-		if (ht->evex_index < 0 || event_rt.rlist[ht->evex_index] == NULL) {
+	if(ht_event_callback.s == NULL || ht_event_callback.len <= 0) {
+		if(ht->evex_index < 0 || event_rt.rlist[ht->evex_index] == NULL) {
 			LM_DBG("route does not exist\n");
 			return;
 		}
 	} else {
 		keng = sr_kemi_eng_get();
-		if(keng==NULL) {
+		if(keng == NULL) {
 			LM_DBG("event callback (%s) set, but no cfg engine\n",
 					ht_event_callback.s);
 			return;
 		}
 	}
 
-	LM_DBG("running event_route[htable:expired:%.*s]\n",
-			ht->name.len, ht->name.s);
+	LM_DBG("running event_route[htable:expired:%.*s]\n", ht->name.len,
+			ht->name.s);
 
-	if (faked_msg_init() < 0) {
+	if(faked_msg_init() < 0) {
 		LM_ERR("faked_msg_init() failed\n");
 		return;
 	}
@@ -1227,9 +1183,10 @@ void ht_handle_expired_record(ht_t *ht, ht_cell_t *cell)
 	if(ht->evex_index >= 0) {
 		run_top_route(event_rt.rlist[ht->evex_index], fmsg, 0);
 	} else {
-		if(keng!=NULL) {
-			if(sr_kemi_route(keng, fmsg, EVENT_ROUTE,
-						&ht_event_callback, &ht->evex_name)<0) {
+		if(keng != NULL) {
+			if(sr_kemi_route(keng, fmsg, EVENT_ROUTE, &ht_event_callback,
+					   &ht->evex_name)
+					< 0) {
 				LM_ERR("error running event route kemi callback\n");
 			}
 		}
@@ -1247,17 +1204,17 @@ int ht_set_cell_expire(ht_t *ht, str *name, int type, int_str *val)
 	ht_cell_t *it;
 	time_t now;
 
-	if(ht==NULL || ht->entries==NULL)
+	if(ht == NULL || ht->entries == NULL)
 		return -1;
 
 	/* str value - ignore */
-	if(type&AVP_VAL_STR)
+	if(type & AVP_VAL_STR)
 		return 0;
 	/* not auto-expire htable */
-	if(ht->htexpire==0)
+	if(ht->htexpire == 0)
 		return 0;
 
-	if(name==NULL || name->s==NULL) {
+	if(name == NULL || name->s == NULL) {
 		LM_WARN("invalid name parameter\n");
 		return -1;
 	}
@@ -1266,20 +1223,17 @@ int ht_set_cell_expire(ht_t *ht, str *name, int type, int_str *val)
 	idx = ht_get_entry(hid, ht->htsize);
 
 	now = 0;
-	if(val->n>0)
+	if(val->n > 0)
 		now = time(NULL) + val->n;
-	LM_DBG("set auto-expire to %llu (%ld)\n", (unsigned long long)now,
-			val->n);
+	LM_DBG("set auto-expire to %llu (%ld)\n", (unsigned long long)now, val->n);
 
 	ht_slot_lock(ht, idx);
 	it = ht->entries[idx].first;
-	while(it!=NULL && it->cellid < hid)
+	while(it != NULL && it->cellid < hid)
 		it = it->next;
-	while(it!=NULL && it->cellid == hid)
-	{
-		if(name->len==it->name.len
-				&& strncmp(name->s, it->name.s, name->len)==0)
-		{
+	while(it != NULL && it->cellid == hid) {
+		if(name->len == it->name.len
+				&& strncmp(name->s, it->name.s, name->len) == 0) {
 			/* update value */
 			it->expire = now;
 			ht_slot_unlock(ht, idx);
@@ -1298,15 +1252,15 @@ int ht_get_cell_expire(ht_t *ht, str *name, unsigned int *val)
 	ht_cell_t *it;
 	time_t now;
 
-	if(ht==NULL || ht->entries==NULL)
+	if(ht == NULL || ht->entries == NULL)
 		return -1;
 
 	*val = 0;
 	/* not auto-expire htable */
-	if(ht->htexpire==0)
+	if(ht->htexpire == 0)
 		return 0;
 
-	if(name==NULL || name->s==NULL) {
+	if(name == NULL || name->s == NULL) {
 		LM_WARN("invalid name parameter\n");
 		return -1;
 	}
@@ -1317,13 +1271,11 @@ int ht_get_cell_expire(ht_t *ht, str *name, unsigned int *val)
 	now = time(NULL);
 	ht_slot_lock(ht, idx);
 	it = ht->entries[idx].first;
-	while(it!=NULL && it->cellid < hid)
+	while(it != NULL && it->cellid < hid)
 		it = it->next;
-	while(it!=NULL && it->cellid == hid)
-	{
-		if(name->len==it->name.len
-				&& strncmp(name->s, it->name.s, name->len)==0)
-		{
+	while(it != NULL && it->cellid == hid) {
+		if(name->len == it->name.len
+				&& strncmp(name->s, it->name.s, name->len) == 0) {
 			/* update value */
 			*val = (unsigned int)(it->expire - now);
 			ht_slot_unlock(ht, idx);
@@ -1344,36 +1296,31 @@ int ht_rm_cell_re(str *sre, ht_t *ht, int mode)
 	int match;
 	regmatch_t pmatch;
 
-	if(sre==NULL || sre->len<=0 || ht==NULL)
+	if(sre == NULL || sre->len <= 0 || ht == NULL)
 		return -1;
 
-	if (regcomp(&re, sre->s, REG_EXTENDED|REG_ICASE|REG_NEWLINE))
-	{
+	if(regcomp(&re, sre->s, REG_EXTENDED | REG_ICASE | REG_NEWLINE)) {
 		LM_ERR("bad re %s\n", sre->s);
 		return -1;
 	}
 
-	for(i=0; i<ht->htsize; i++)
-	{
+	for(i = 0; i < ht->htsize; i++) {
 		/* free entries */
 		ht_slot_lock(ht, i);
 		it = ht->entries[i].first;
-		while(it)
-		{
+		while(it) {
 			it0 = it->next;
 			match = 0;
-			if(mode==0)
-			{
-				if (regexec(&re, it->name.s, 1, &pmatch, 0)==0)
+			if(mode == 0) {
+				if(regexec(&re, it->name.s, 1, &pmatch, 0) == 0)
 					match = 1;
 			} else {
-				if(it->flags&AVP_VAL_STR)
-					if (regexec(&re, it->value.s.s, 1, &pmatch, 0)==0)
+				if(it->flags & AVP_VAL_STR)
+					if(regexec(&re, it->value.s.s, 1, &pmatch, 0) == 0)
 						match = 1;
 			}
-			if(match==1)
-			{
-				if(it->prev==NULL)
+			if(match == 1) {
+				if(it->prev == NULL)
 					ht->entries[i].first = it->next;
 				else
 					it->prev->next = it->next;
@@ -1397,39 +1344,36 @@ int ht_rm_cell_op(str *sre, ht_t *ht, int mode, int op)
 	int match;
 	int i;
 
-	if(sre==NULL || sre->len<=0 || ht==NULL)
+	if(sre == NULL || sre->len <= 0 || ht == NULL)
 		return -1;
 
-	for(i=0; i<ht->htsize; i++)
-	{
+	for(i = 0; i < ht->htsize; i++) {
 		/* free entries */
 		ht_slot_lock(ht, i);
 		it = ht->entries[i].first;
-		while(it)
-		{
+		while(it) {
 			it0 = it->next;
 			match = 0;
-			if(mode==0)
-			{
-				if(op==HT_RM_OP_SW) {
-					if(sre->len<=it->name.len
-							&& strncmp(it->name.s, sre->s, sre->len)==0) {
+			if(mode == 0) {
+				if(op == HT_RM_OP_SW) {
+					if(sre->len <= it->name.len
+							&& strncmp(it->name.s, sre->s, sre->len) == 0) {
 						match = 1;
 					}
 				}
 			} else {
-				if(op==HT_RM_OP_SW) {
-					if(it->flags&AVP_VAL_STR) {
-						if(sre->len<=it->value.s.len
-								&& strncmp(it->value.s.s, sre->s, sre->len)==0) {
+				if(op == HT_RM_OP_SW) {
+					if(it->flags & AVP_VAL_STR) {
+						if(sre->len <= it->value.s.len
+								&& strncmp(it->value.s.s, sre->s, sre->len)
+										   == 0) {
 							match = 1;
 						}
 					}
 				}
 			}
-			if(match==1)
-			{
-				if(it->prev==NULL)
+			if(match == 1) {
+				if(it->prev == NULL)
 					ht->entries[i].first = it->next;
 				else
 					it->prev->next = it->next;
@@ -1454,57 +1398,57 @@ int ht_match_cell_op_str(str *sre, ht_t *ht, int mode, int op)
 	regex_t re;
 	regmatch_t pmatch;
 
-	if(sre==NULL || sre->len<=0 || ht==NULL)
+	if(sre == NULL || sre->len <= 0 || ht == NULL)
 		return -1;
 
 	if(op == HT_RM_OP_RE) {
-		if (regcomp(&re, sre->s, REG_EXTENDED|REG_ICASE|REG_NEWLINE)) {
+		if(regcomp(&re, sre->s, REG_EXTENDED | REG_ICASE | REG_NEWLINE)) {
 			LM_ERR("bad re %s\n", sre->s);
 			return -1;
 		}
 	}
 
-	for(i=0; i<ht->htsize; i++) {
+	for(i = 0; i < ht->htsize; i++) {
 		/* free entries */
 		ht_slot_lock(ht, i);
 		it = ht->entries[i].first;
 		while(it) {
 			nomatch = 0;
-			if(mode==0) {
+			if(mode == 0) {
 				sm = it->name;
 			} else {
-				if(it->flags&AVP_VAL_STR) {
+				if(it->flags & AVP_VAL_STR) {
 					sm = it->value.s;
 				} else {
 					/* no str value - skip matching */
 					nomatch = 1;
 				}
 			}
-			if(nomatch==0) {
+			if(nomatch == 0) {
 				switch(op) {
 					case HT_RM_OP_EQ:
-						if(sre->len==sm.len
-									&& strncmp(sm.s, sre->s, sre->len)==0) {
+						if(sre->len == sm.len
+								&& strncmp(sm.s, sre->s, sre->len) == 0) {
 							goto matched;
 						}
-					break;
+						break;
 					case HT_RM_OP_NE:
-						if(sre->len!=sm.len
-									|| strncmp(sm.s, sre->s, sre->len)!=0) {
+						if(sre->len != sm.len
+								|| strncmp(sm.s, sre->s, sre->len) != 0) {
 							goto matched;
 						}
-					break;
+						break;
 					case HT_RM_OP_SW:
-						if(sre->len<=sm.len
-									&& strncmp(sm.s, sre->s, sre->len)==0) {
+						if(sre->len <= sm.len
+								&& strncmp(sm.s, sre->s, sre->len) == 0) {
 							goto matched;
 						}
-					break;
+						break;
 					case HT_RM_OP_RE:
-						if (regexec(&re, sm.s, 1, &pmatch, 0)==0) {
+						if(regexec(&re, sm.s, 1, &pmatch, 0) == 0) {
 							goto matched;
 						}
-					break;
+						break;
 					default:
 						ht_slot_unlock(ht, i);
 						LM_ERR("unsupported matching operator: %d\n", op);
@@ -1515,14 +1459,14 @@ int ht_match_cell_op_str(str *sre, ht_t *ht, int mode, int op)
 		}
 		ht_slot_unlock(ht, i);
 	}
-	if(op==HT_RM_OP_RE) {
+	if(op == HT_RM_OP_RE) {
 		regfree(&re);
 	}
 	return -1;
 
 matched:
 	ht_slot_unlock(ht, i);
-	if(op==HT_RM_OP_RE) {
+	if(op == HT_RM_OP_RE) {
 		regfree(&re);
 	}
 	return 1;
@@ -1534,18 +1478,16 @@ int ht_reset_content(ht_t *ht)
 	ht_cell_t *it0;
 	int i;
 
-	if(ht==NULL)
+	if(ht == NULL)
 		return -1;
 
-	for(i=0; i<ht->htsize; i++)
-	{
+	for(i = 0; i < ht->htsize; i++) {
 		/* free entries */
 		ht_slot_lock(ht, i);
 		it = ht->entries[i].first;
-		while(it)
-		{
+		while(it) {
 			it0 = it->next;
-			if(it->prev==NULL)
+			if(it->prev == NULL)
 				ht->entries[i].first = it->next;
 			else
 				it->prev->next = it->next;
@@ -1573,69 +1515,67 @@ int ht_count_cells_re(str *sre, ht_t *ht, int mode)
 	str tval;
 	int ival = 0;
 
-	if(sre==NULL || sre->len<=0 || ht==NULL)
+	if(sre == NULL || sre->len <= 0 || ht == NULL)
 		return 0;
 
-	if(sre->len>=2)
-	{
+	if(sre->len >= 2) {
 		switch(sre->s[0]) {
 			case '~':
 				switch(sre->s[1]) {
 					case '~':
 						op = 1; /* regexp */
-					break;
+						break;
 					case '%':
 						op = 2; /* rlike */
-					break;
+						break;
 				}
-			break;
+				break;
 			case '%':
 				switch(sre->s[1]) {
 					case '~':
 						op = 3; /* llike */
-					break;
+						break;
 				}
-			break;
+				break;
 			case '=':
 				switch(sre->s[1]) {
 					case '=':
 						op = 4; /* str eq */
-					break;
+						break;
 				}
-			break;
+				break;
 			case 'e':
 				switch(sre->s[1]) {
 					case 'q':
 						op = 5; /* int eq */
-					break;
+						break;
 				}
-			break;
+				break;
 			case '*':
 				switch(sre->s[1]) {
 					case '*':
 						op = 6; /* int eq */
-					break;
+						break;
 				}
-			break;
+				break;
 		}
 	}
 
-	if(op==6) {
+	if(op == 6) {
 		/* count all */
-		for(i=0; i<ht->htsize; i++)
+		for(i = 0; i < ht->htsize; i++)
 			cnt += ht->entries[i].esize;
 		return cnt;
 	}
 
 	if(op > 0) {
-		if(sre->len<=2)
+		if(sre->len <= 2)
 			return 0;
 		sval = *sre;
 		sval.s += 2;
 		sval.len -= 2;
-		if(op==5) {
-			if(mode==0)
-			{
+		if(op == 5) {
+			if(mode == 0) {
 				/* match by name */
 				return 0;
 			}
@@ -1646,60 +1586,56 @@ int ht_count_cells_re(str *sre, ht_t *ht, int mode)
 		op = 1;
 	}
 
-	if(op==1)
-	{
-		if (regcomp(&re, sval.s, REG_EXTENDED|REG_ICASE|REG_NEWLINE))
-		{
+	if(op == 1) {
+		if(regcomp(&re, sval.s, REG_EXTENDED | REG_ICASE | REG_NEWLINE)) {
 			LM_ERR("bad re %s\n", sre->s);
 			return 0;
 		}
 	}
 
-	for(i=0; i<ht->htsize; i++)
-	{
+	for(i = 0; i < ht->htsize; i++) {
 		/* free entries */
 		ht_slot_lock(ht, i);
 		it = ht->entries[i].first;
-		while(it)
-		{
+		while(it) {
 			it0 = it->next;
-			if(op==5)
-			{
-				if(!(it->flags&AVP_VAL_STR))
-					if( it->value.n==ival)
+			if(op == 5) {
+				if(!(it->flags & AVP_VAL_STR))
+					if(it->value.n == ival)
 						cnt++;
 			} else {
 				tval.len = -1;
-				if(mode==0)
-				{
+				if(mode == 0) {
 					/* match by name */
 					tval = it->name;
 				} else {
-					if(it->flags&AVP_VAL_STR)
+					if(it->flags & AVP_VAL_STR)
 						tval = it->value.s;
 				}
-				if(tval.len>-1) {
+				if(tval.len > -1) {
 					switch(op) {
 						case 1: /* regexp */
-							if (regexec(&re, tval.s, 1, &pmatch, 0)==0)
+							if(regexec(&re, tval.s, 1, &pmatch, 0) == 0)
 								cnt++;
-						break;
+							break;
 						case 2: /* rlike */
-							if(sval.len<=tval.len
+							if(sval.len <= tval.len
 									&& strncmp(sval.s,
-										tval.s+tval.len-sval.len, sval.len)==0)
+											   tval.s + tval.len - sval.len,
+											   sval.len)
+											   == 0)
 								cnt++;
-						break;
+							break;
 						case 3: /* llike */
-							if(sval.len<=tval.len
-									&& strncmp(sval.s, tval.s, sval.len)==0)
+							if(sval.len <= tval.len
+									&& strncmp(sval.s, tval.s, sval.len) == 0)
 								cnt++;
-						break;
+							break;
 						case 4: /* str eq */
-							if(sval.len==tval.len
-									&& strncmp(sval.s, tval.s, sval.len)==0)
+							if(sval.len == tval.len
+									&& strncmp(sval.s, tval.s, sval.len) == 0)
 								cnt++;
-						break;
+							break;
 					}
 				}
 			}
@@ -1707,15 +1643,16 @@ int ht_count_cells_re(str *sre, ht_t *ht, int mode)
 		}
 		ht_slot_unlock(ht, i);
 	}
-	if(op==1)
+	if(op == 1)
 		regfree(&re);
 	return cnt;
 }
 
-#define HT_ITERATOR_SIZE	4
-#define HT_ITERATOR_NAME_SIZE	32
+#define HT_ITERATOR_SIZE 4
+#define HT_ITERATOR_NAME_SIZE 32
 
-typedef struct ht_iterator {
+typedef struct ht_iterator
+{
 	str name;
 	char bname[HT_ITERATOR_NAME_SIZE];
 	ht_t *ht;
@@ -1727,7 +1664,7 @@ static ht_iterator_t _ht_iterators[HT_ITERATOR_SIZE];
 
 void ht_iterator_init(void)
 {
-	memset(_ht_iterators, 0, HT_ITERATOR_SIZE*sizeof(ht_iterator_t));
+	memset(_ht_iterators, 0, HT_ITERATOR_SIZE * sizeof(ht_iterator_t));
 }
 
 static inline int ht_iterator_find(str *iname)
@@ -1736,15 +1673,17 @@ static inline int ht_iterator_find(str *iname)
 	int k;
 
 	k = -1;
-	for(i=0; i<HT_ITERATOR_SIZE; i++) {
-		if(_ht_iterators[i].name.len>0) {
-			if(_ht_iterators[i].name.len==iname->len
-					&& strncmp(_ht_iterators[i].name.s, iname->s, iname->len)==0) {
+	for(i = 0; i < HT_ITERATOR_SIZE; i++) {
+		if(_ht_iterators[i].name.len > 0) {
+			if(_ht_iterators[i].name.len == iname->len
+					&& strncmp(_ht_iterators[i].name.s, iname->s, iname->len)
+							   == 0) {
 				k = i;
 				break;
 			}
 		} else {
-			if(k==-1) k = i;
+			if(k == -1)
+				k = i;
 		}
 	}
 	return k;
@@ -1755,25 +1694,21 @@ int ht_iterator_start(str *iname, str *hname)
 	int k;
 
 	k = ht_iterator_find(iname);
-	if(k==-1)
-	{
+	if(k == -1) {
 		LM_ERR("no iterator available - max number is %d\n", HT_ITERATOR_SIZE);
 		return -1;
 	}
-	if(_ht_iterators[k].name.len>0)
-	{
-		if(_ht_iterators[k].ht!=NULL && _ht_iterators[k].it!=NULL)
-		{
-			if(_ht_iterators[k].slot>=0 && _ht_iterators[k].slot<_ht_iterators[k].ht->htsize)
-			{
+	if(_ht_iterators[k].name.len > 0) {
+		if(_ht_iterators[k].ht != NULL && _ht_iterators[k].it != NULL) {
+			if(_ht_iterators[k].slot >= 0
+					&& _ht_iterators[k].slot < _ht_iterators[k].ht->htsize) {
 				ht_slot_unlock(_ht_iterators[k].ht, _ht_iterators[k].slot);
 			}
 		}
 	} else {
-		if(iname->len>=HT_ITERATOR_NAME_SIZE)
-		{
-			LM_ERR("iterator name is too big [%.*s] (max %d)\n",
-					iname->len, iname->s, HT_ITERATOR_NAME_SIZE);
+		if(iname->len >= HT_ITERATOR_NAME_SIZE) {
+			LM_ERR("iterator name is too big [%.*s] (max %d)\n", iname->len,
+					iname->s, HT_ITERATOR_NAME_SIZE);
 			return -1;
 		}
 		strncpy(_ht_iterators[k].bname, iname->s, iname->len);
@@ -1784,8 +1719,7 @@ int ht_iterator_start(str *iname, str *hname)
 	_ht_iterators[k].it = NULL;
 	_ht_iterators[k].slot = 0;
 	_ht_iterators[k].ht = ht_get_table(hname);
-	if(_ht_iterators[k].ht==NULL)
-	{
+	if(_ht_iterators[k].ht == NULL) {
 		LM_ERR("cannot get hash table [%.*s]\n", hname->len, hname->s);
 		return -1;
 	}
@@ -1797,24 +1731,20 @@ int ht_iterator_next(str *iname)
 	int k;
 
 	k = ht_iterator_find(iname);
-	if(k==-1)
-	{
+	if(k == -1) {
 		LM_ERR("iterator not found [%.*s]\n", iname->len, iname->s);
 		return -1;
 	}
-	if(_ht_iterators[k].ht==NULL)
-	{
+	if(_ht_iterators[k].ht == NULL) {
 		LM_ERR("iterator not initialized [%.*s]\n", iname->len, iname->s);
 		return -1;
 	}
-	if(_ht_iterators[k].it==NULL)
-	{
+	if(_ht_iterators[k].it == NULL) {
 		/* first execution - start from first slot */
-		_ht_iterators[k].slot=0;
+		_ht_iterators[k].slot = 0;
 	} else {
 		_ht_iterators[k].it = _ht_iterators[k].it->next;
-		if(_ht_iterators[k].it!=NULL)
-		{
+		if(_ht_iterators[k].it != NULL) {
 			/* next item is in the same slot */
 			return 0;
 		}
@@ -1824,12 +1754,12 @@ int ht_iterator_next(str *iname)
 		_ht_iterators[k].slot++;
 	}
 
-	for( ; _ht_iterators[k].slot<_ht_iterators[k].ht->htsize; _ht_iterators[k].slot++)
-	{
+	for(; _ht_iterators[k].slot < _ht_iterators[k].ht->htsize;
+			_ht_iterators[k].slot++) {
 		ht_slot_lock(_ht_iterators[k].ht, _ht_iterators[k].slot);
-		if(_ht_iterators[k].ht->entries[_ht_iterators[k].slot].first!=NULL)
-		{
-			_ht_iterators[k].it = _ht_iterators[k].ht->entries[_ht_iterators[k].slot].first;
+		if(_ht_iterators[k].ht->entries[_ht_iterators[k].slot].first != NULL) {
+			_ht_iterators[k].it =
+					_ht_iterators[k].ht->entries[_ht_iterators[k].slot].first;
 			return 0;
 		}
 		ht_slot_unlock(_ht_iterators[k].ht, _ht_iterators[k].slot);
@@ -1842,16 +1772,14 @@ int ht_iterator_end(str *iname)
 	int k;
 
 	k = ht_iterator_find(iname);
-	if(k==-1 || _ht_iterators[k].name.len<=0)
-	{
+	if(k == -1 || _ht_iterators[k].name.len <= 0) {
 		LM_ERR("iterator not found [%.*s]\n", iname->len, iname->s);
 		return -1;
 	}
 
-	if(_ht_iterators[k].ht!=NULL && _ht_iterators[k].it!=NULL)
-	{
-		if(_ht_iterators[k].slot>=0 && _ht_iterators[k].slot<_ht_iterators[k].ht->htsize)
-		{
+	if(_ht_iterators[k].ht != NULL && _ht_iterators[k].it != NULL) {
+		if(_ht_iterators[k].slot >= 0
+				&& _ht_iterators[k].slot < _ht_iterators[k].ht->htsize) {
 			ht_slot_unlock(_ht_iterators[k].ht, _ht_iterators[k].slot);
 		}
 	}
@@ -1865,15 +1793,15 @@ int ht_iterator_rm(str *iname)
 	ht_cell_t *itb;
 
 	k = ht_iterator_find(iname);
-	if(k==-1) {
+	if(k == -1) {
 		LM_ERR("iterator not found [%.*s]\n", iname->len, iname->s);
 		return -1;
 	}
-	if(_ht_iterators[k].ht==NULL) {
+	if(_ht_iterators[k].ht == NULL) {
 		LM_ERR("iterator not initialized [%.*s]\n", iname->len, iname->s);
 		return -1;
 	}
-	if(_ht_iterators[k].it==NULL) {
+	if(_ht_iterators[k].it == NULL) {
 		LM_ERR("iterator not used [%.*s]\n", iname->len, iname->s);
 		return -1;
 	}
@@ -1884,7 +1812,7 @@ int ht_iterator_rm(str *iname)
 	ht_cell_unlink(_ht_iterators[k].ht, _ht_iterators[k].slot, itb);
 	ht_cell_free(itb);
 
-	if(_ht_iterators[k].it!=NULL) {
+	if(_ht_iterators[k].it != NULL) {
 		/* next item is in the same slot */
 		return 0;
 	}
@@ -1892,10 +1820,12 @@ int ht_iterator_rm(str *iname)
 	ht_slot_unlock(_ht_iterators[k].ht, _ht_iterators[k].slot);
 	_ht_iterators[k].slot++;
 
-	for( ; _ht_iterators[k].slot<_ht_iterators[k].ht->htsize; _ht_iterators[k].slot++) {
+	for(; _ht_iterators[k].slot < _ht_iterators[k].ht->htsize;
+			_ht_iterators[k].slot++) {
 		ht_slot_lock(_ht_iterators[k].ht, _ht_iterators[k].slot);
-		if(_ht_iterators[k].ht->entries[_ht_iterators[k].slot].first!=NULL) {
-			_ht_iterators[k].it = _ht_iterators[k].ht->entries[_ht_iterators[k].slot].first;
+		if(_ht_iterators[k].ht->entries[_ht_iterators[k].slot].first != NULL) {
+			_ht_iterators[k].it =
+					_ht_iterators[k].ht->entries[_ht_iterators[k].slot].first;
 			return 0;
 		}
 		ht_slot_unlock(_ht_iterators[k].ht, _ht_iterators[k].slot);
@@ -1912,15 +1842,15 @@ int ht_iterator_sets(str *iname, str *sval)
 	int_str isvalue;
 
 	k = ht_iterator_find(iname);
-	if(k==-1) {
+	if(k == -1) {
 		LM_ERR("iterator not found [%.*s]\n", iname->len, iname->s);
 		return -1;
 	}
-	if(_ht_iterators[k].ht==NULL) {
+	if(_ht_iterators[k].ht == NULL) {
 		LM_ERR("iterator not initialized [%.*s]\n", iname->len, iname->s);
 		return -1;
 	}
-	if(_ht_iterators[k].it==NULL) {
+	if(_ht_iterators[k].it == NULL) {
 		LM_ERR("iterator not used [%.*s]\n", iname->len, iname->s);
 		return -1;
 	}
@@ -1928,7 +1858,7 @@ int ht_iterator_sets(str *iname, str *sval)
 	itb = _ht_iterators[k].it;
 
 	/* update value */
-	if(itb->flags&AVP_VAL_STR) {
+	if(itb->flags & AVP_VAL_STR) {
 		if(itb->value.s.len >= sval->len) {
 			/* copy */
 			itb->value.s.len = sval->len;
@@ -1976,15 +1906,15 @@ int ht_iterator_seti(str *iname, int ival)
 	ht_cell_t *itb;
 
 	k = ht_iterator_find(iname);
-	if(k==-1) {
+	if(k == -1) {
 		LM_ERR("iterator not found [%.*s]\n", iname->len, iname->s);
 		return -1;
 	}
-	if(_ht_iterators[k].ht==NULL) {
+	if(_ht_iterators[k].ht == NULL) {
 		LM_ERR("iterator not initialized [%.*s]\n", iname->len, iname->s);
 		return -1;
 	}
-	if(_ht_iterators[k].it==NULL) {
+	if(_ht_iterators[k].it == NULL) {
 		LM_ERR("iterator not used [%.*s]\n", iname->len, iname->s);
 		return -1;
 	}
@@ -1992,7 +1922,7 @@ int ht_iterator_seti(str *iname, int ival)
 	itb = _ht_iterators[k].it;
 
 	/* update value */
-	if(itb->flags&AVP_VAL_STR) {
+	if(itb->flags & AVP_VAL_STR) {
 		itb->flags &= ~AVP_VAL_STR;
 	}
 	itb->value.n = ival;
@@ -2009,15 +1939,15 @@ int ht_iterator_setex(str *iname, int exval)
 	ht_cell_t *itb;
 
 	k = ht_iterator_find(iname);
-	if(k==-1) {
+	if(k == -1) {
 		LM_ERR("iterator not found [%.*s]\n", iname->len, iname->s);
 		return -1;
 	}
-	if(_ht_iterators[k].ht==NULL) {
+	if(_ht_iterators[k].ht == NULL) {
 		LM_ERR("iterator not initialized [%.*s]\n", iname->len, iname->s);
 		return -1;
 	}
-	if(_ht_iterators[k].it==NULL) {
+	if(_ht_iterators[k].it == NULL) {
 		LM_ERR("iterator not used [%.*s]\n", iname->len, iname->s);
 		return -1;
 	}
@@ -2030,15 +1960,15 @@ int ht_iterator_setex(str *iname, int exval)
 	return 0;
 }
 
-ht_cell_t* ht_iterator_get_current(str *iname)
+ht_cell_t *ht_iterator_get_current(str *iname)
 {
 	int k;
 
-	if(iname==NULL || iname->len<=0)
+	if(iname == NULL || iname->len <= 0)
 		return NULL;
 
 	k = ht_iterator_find(iname);
-	if(k==-1 || _ht_iterators[k].name.len<=0) {
+	if(k == -1 || _ht_iterators[k].name.len <= 0) {
 		LM_DBG("iterator not found [%.*s]\n", iname->len, iname->s);
 		return NULL;
 	}

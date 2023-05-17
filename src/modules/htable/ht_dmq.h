@@ -28,24 +28,29 @@
 #include "../../core/parser/parse_content.h"
 
 extern dmq_api_t ht_dmqb;
-extern dmq_peer_t* ht_dmq_peer;
+extern dmq_peer_t *ht_dmq_peer;
 extern dmq_resp_cback_t ht_dmq_resp_callback;
 
-typedef enum {
-		HT_DMQ_NONE,
-        HT_DMQ_SYNC,
-        HT_DMQ_SET_CELL,
-        HT_DMQ_SET_CELL_EXPIRE,
-        HT_DMQ_DEL_CELL,
-        HT_DMQ_RM_CELL_RE,
-        HT_DMQ_RM_CELL_SW
+typedef enum
+{
+	HT_DMQ_NONE,
+	HT_DMQ_SYNC,
+	HT_DMQ_SET_CELL,
+	HT_DMQ_SET_CELL_EXPIRE,
+	HT_DMQ_DEL_CELL,
+	HT_DMQ_RM_CELL_RE,
+	HT_DMQ_RM_CELL_SW
 } ht_dmq_action_t;
 
 int ht_dmq_initialize();
-int ht_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp, dmq_node_t* dmq_node);
-int ht_dmq_replicate_action(ht_dmq_action_t action, str* htname, str* cname, int type, int_str* val, int mode);
-int ht_dmq_replay_action(ht_dmq_action_t action, str* htname, str* cname, int type, int_str* val, int mode);
+int ht_dmq_handle_msg(
+		struct sip_msg *msg, peer_reponse_t *resp, dmq_node_t *dmq_node);
+int ht_dmq_replicate_action(ht_dmq_action_t action, str *htname, str *cname,
+		int type, int_str *val, int mode);
+int ht_dmq_replay_action(ht_dmq_action_t action, str *htname, str *cname,
+		int type, int_str *val, int mode);
 int ht_dmq_request_sync();
-int ht_dmq_resp_callback_f(struct sip_msg* msg, int code, dmq_node_t* node, void* param);
+int ht_dmq_resp_callback_f(
+		struct sip_msg *msg, int code, dmq_node_t *node, void *param);
 
 #endif
