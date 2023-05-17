@@ -50,46 +50,53 @@
 #include "diameter_api.h"
 
 /** Diameter Transaction representation */
-typedef struct _cdp_trans_t{
-	struct timeval started;			/**< Time the transaction was created - used to measure response times */
-	AAAMsgIdentifier endtoendid;	/**< End-to-end id of the messages */
-	AAAMsgIdentifier hopbyhopid;	/**< Hop-by-hop id of the messages */
-	AAATransactionCallback_f *cb;	/**< transactional callback function */
-	void **ptr;						/**< generic pointer to pass to the callback */
-	AAAMessage *ans;				/**< answer for the transaction */
-	time_t expires;					/**< time of expiration, when a time-out event will happen */
-	int auto_drop;					/**< if to drop automatically the transaction on event or to let the app do it later */
-	struct _cdp_trans_t *next;		/**< the next transaction in the transaction list */
-	struct _cdp_trans_t *prev;		/**< the previous transaction in the transaction list */
+typedef struct _cdp_trans_t
+{
+	struct timeval
+			started; /**< Time the transaction was created - used to measure response times */
+	AAAMsgIdentifier endtoendid;  /**< End-to-end id of the messages */
+	AAAMsgIdentifier hopbyhopid;  /**< Hop-by-hop id of the messages */
+	AAATransactionCallback_f *cb; /**< transactional callback function */
+	void **ptr;		 /**< generic pointer to pass to the callback */
+	AAAMessage *ans; /**< answer for the transaction */
+	time_t expires; /**< time of expiration, when a time-out event will happen */
+	int auto_drop; /**< if to drop automatically the transaction on event or to let the app do it later */
+	struct _cdp_trans_t
+			*next; /**< the next transaction in the transaction list */
+	struct _cdp_trans_t
+			*prev; /**< the previous transaction in the transaction list */
 } cdp_trans_t;
 
 /** Diameter Transaction list */
-typedef struct {
-	gen_lock_t *lock;				/**< lock for list operations */
-	cdp_trans_t *head,*tail;		/**< first, last transactions in the list */
+typedef struct
+{
+	gen_lock_t *lock;		  /**< lock for list operations */
+	cdp_trans_t *head, *tail; /**< first, last transactions in the list */
 } cdp_trans_list_t;
 
 int cdp_trans_init();
 int cdp_trans_destroy();
 
-cdp_trans_t* cdp_add_trans(AAAMessage *msg,AAATransactionCallback_f *cb, void *ptr,int timeout,int auto_drop);
+cdp_trans_t *cdp_add_trans(AAAMessage *msg, AAATransactionCallback_f *cb,
+		void *ptr, int timeout, int auto_drop);
 void del_trans(AAAMessage *msg);
-cdp_trans_t* cdp_take_trans(AAAMessage *msg);
+cdp_trans_t *cdp_take_trans(AAAMessage *msg);
 void cdp_free_trans(cdp_trans_t *x);
 
-int cdp_trans_timer(time_t now, void* ptr);
+int cdp_trans_timer(time_t now, void *ptr);
 
 /*            API Exported    */
 
 /** Timeout for Diameter transactions (this is quite big,
  * but increase in case that you have a slow peer) */
 
-AAATransaction *AAACreateTransaction(AAAApplicationId app_id,AAACommandCode cmd_code);
-typedef AAATransaction * (*AAACreateTransaction_f)(AAAApplicationId app_id,AAACommandCode cmd_code);
+AAATransaction *AAACreateTransaction(
+		AAAApplicationId app_id, AAACommandCode cmd_code);
+typedef AAATransaction *(*AAACreateTransaction_f)(
+		AAAApplicationId app_id, AAACommandCode cmd_code);
 
 int AAADropTransaction(AAATransaction *trans);
 typedef int (*AAADropTransaction_f)(AAATransaction *trans);
-
 
 
 #endif /*TRANSACTION_H_*/
