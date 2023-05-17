@@ -45,56 +45,49 @@
 
 MODULE_VERSION
 
-static int  mod_init(void);
-static int  child_init(int);
+static int mod_init(void);
+static int child_init(int);
 static void mod_destroy(void);
 
-static int w_tmrec_match(struct sip_msg* msg, char* rec, char* t);
-static int fixup_tmrec_match(void** param, int param_no);
-static int w_is_leap_year(struct sip_msg* msg, char* t, char* p2);
-static int fixup_is_leap_year(void** param, int param_no);
-static int fixup_time_period_match(void** param, int param_no);
-static int w_time_period_match(struct sip_msg* msg, char* period, char* t);
+static int w_tmrec_match(struct sip_msg *msg, char *rec, char *t);
+static int fixup_tmrec_match(void **param, int param_no);
+static int w_is_leap_year(struct sip_msg *msg, char *t, char *p2);
+static int fixup_is_leap_year(void **param, int param_no);
+static int fixup_time_period_match(void **param, int param_no);
+static int w_time_period_match(struct sip_msg *msg, char *period, char *t);
 
 int tmrec_wday = 0;
 char tmrec_separator = '|';
 char *tmrec_separator_param = NULL;
 
-static cmd_export_t cmds[]={
-	{"tmrec_match", (cmd_function)w_tmrec_match, 1, fixup_tmrec_match,
-		0, ANY_ROUTE},
-	{"tmrec_match", (cmd_function)w_tmrec_match, 2, fixup_tmrec_match,
-		0, ANY_ROUTE},
-	{"is_leap_year", (cmd_function)w_is_leap_year, 0, fixup_is_leap_year,
-		0, ANY_ROUTE},
-	{"is_leap_year", (cmd_function)w_is_leap_year, 1, fixup_is_leap_year,
-		0, ANY_ROUTE},
-	{"time_period_match", (cmd_function)w_time_period_match, 1, fixup_time_period_match,
-		0, ANY_ROUTE},
-	{"time_period_match", (cmd_function)w_time_period_match, 2, fixup_time_period_match,
-		0, ANY_ROUTE},
-	{0, 0, 0, 0, 0, 0}
-};
+static cmd_export_t cmds[] = {{"tmrec_match", (cmd_function)w_tmrec_match, 1,
+									  fixup_tmrec_match, 0, ANY_ROUTE},
+		{"tmrec_match", (cmd_function)w_tmrec_match, 2, fixup_tmrec_match, 0,
+				ANY_ROUTE},
+		{"is_leap_year", (cmd_function)w_is_leap_year, 0, fixup_is_leap_year, 0,
+				ANY_ROUTE},
+		{"is_leap_year", (cmd_function)w_is_leap_year, 1, fixup_is_leap_year, 0,
+				ANY_ROUTE},
+		{"time_period_match", (cmd_function)w_time_period_match, 1,
+				fixup_time_period_match, 0, ANY_ROUTE},
+		{"time_period_match", (cmd_function)w_time_period_match, 2,
+				fixup_time_period_match, 0, ANY_ROUTE},
+		{0, 0, 0, 0, 0, 0}};
 
-static param_export_t params[]={
-	{"wday",		INT_PARAM,   &tmrec_wday},
-	{"separator",   PARAM_STRING,   &tmrec_separator_param},
-	{0, 0, 0}
-};
+static param_export_t params[] = {{"wday", INT_PARAM, &tmrec_wday},
+		{"separator", PARAM_STRING, &tmrec_separator_param}, {0, 0, 0}};
 
 struct module_exports exports = {
-	"tmrec",
-	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,            /* exported functions */
-	params,          /* exported parameters */
-	0,               /* exported rpc functions */
-	0,               /* exported pseudo-variables */
-	0,               /* response function */
-	mod_init,        /* module init function */
-	child_init,      /* per child init function */
-	mod_destroy      /* destroy function */
+		"tmrec", DEFAULT_DLFLAGS, /* dlopen flags */
+		cmds,					  /* exported functions */
+		params,					  /* exported parameters */
+		0,						  /* exported rpc functions */
+		0,						  /* exported pseudo-variables */
+		0,						  /* response function */
+		mod_init,				  /* module init function */
+		child_init,				  /* per child init function */
+		mod_destroy				  /* destroy function */
 };
-
 
 
 /**
@@ -102,7 +95,7 @@ struct module_exports exports = {
  */
 static int mod_init(void)
 {
-	if(tmrec_separator_param!=NULL)
+	if(tmrec_separator_param != NULL)
 		tmrec_separator = tmrec_separator_param[0];
 	return 0;
 }
@@ -112,7 +105,7 @@ static int mod_init(void)
  */
 static int child_init(int rank)
 {
-	if (rank!=PROC_MAIN)
+	if(rank != PROC_MAIN)
 		return 0;
 
 	return 0;
@@ -125,19 +118,17 @@ static void mod_destroy(void)
 	return;
 }
 
-static int w_is_leap_year(struct sip_msg* msg, char* t, char* str2)
+static int w_is_leap_year(struct sip_msg *msg, char *t, char *str2)
 {
 	time_t tv;
 	struct tm tb;
 	int y;
 
-	if(msg==NULL)
+	if(msg == NULL)
 		return -1;
 
-	if(t!=NULL)
-	{
-		if(fixup_get_ivalue(msg, (gparam_t*)t, &y)!=0)
-		{
+	if(t != NULL) {
+		if(fixup_get_ivalue(msg, (gparam_t *)t, &y) != 0) {
 			LM_ERR("invalid time parameter value\n");
 			return -1;
 		}
@@ -152,7 +143,7 @@ static int w_is_leap_year(struct sip_msg* msg, char* t, char* str2)
 	return -1;
 }
 
-static int ki_is_leap_year_now(sip_msg_t* msg)
+static int ki_is_leap_year_now(sip_msg_t *msg)
 {
 	time_t tv;
 	struct tm tb;
@@ -167,31 +158,31 @@ static int ki_is_leap_year_now(sip_msg_t* msg)
 	return -1;
 }
 
-static int ki_is_leap_year(sip_msg_t* msg, int y)
+static int ki_is_leap_year(sip_msg_t *msg, int y)
 {
 	if(tr_is_leap_year(y))
 		return 1;
 	return -1;
 }
 
-static int fixup_is_leap_year(void** param, int param_no)
+static int fixup_is_leap_year(void **param, int param_no)
 {
-	if(param_no==1)
+	if(param_no == 1)
 		return fixup_igp_null(param, param_no);
 
 	return 0;
 }
 
-static int ki_tmrec_match_timestamp(sip_msg_t* msg, str *rv, int ti)
+static int ki_tmrec_match_timestamp(sip_msg_t *msg, str *rv, int ti)
 {
 	time_t tv;
 	ac_tm_t act;
 	tmrec_t tmr;
 
-	if(msg==NULL)
+	if(msg == NULL)
 		return -1;
 
-	if(ti!=0) {
+	if(ti != 0) {
 		tv = (time_t)ti;
 	} else {
 		tv = time(NULL);
@@ -200,19 +191,19 @@ static int ki_tmrec_match_timestamp(sip_msg_t* msg, str *rv, int ti)
 	memset(&tmr, 0, sizeof(tmr));
 
 	/* parse time recurrence definition */
-	if(tr_parse_recurrence_string(&tmr, rv->s, tmrec_separator)<0)
+	if(tr_parse_recurrence_string(&tmr, rv->s, tmrec_separator) < 0)
 		return -1;
 
 	/* if there is no dstart, timerec is valid */
-	if (tmr.dtstart==0)
+	if(tmr.dtstart == 0)
 		goto done;
 
 	/* set current time */
-	if (ac_tm_set_time(&act, tv)<0)
+	if(ac_tm_set_time(&act, tv) < 0)
 		goto error;
 
 	/* match the specified recurence */
-	if (tr_check_recurrence(&tmr, &act, 0)!=0)
+	if(tr_check_recurrence(&tmr, &act, 0) != 0)
 		goto error;
 
 done:
@@ -226,26 +217,23 @@ error:
 	return -1;
 }
 
-static int ki_tmrec_match(sip_msg_t* msg, str *rv)
+static int ki_tmrec_match(sip_msg_t *msg, str *rv)
 {
 	return ki_tmrec_match_timestamp(msg, rv, 0);
 }
 
-static int w_tmrec_match(struct sip_msg* msg, char* rec, char* t)
+static int w_tmrec_match(struct sip_msg *msg, char *rec, char *t)
 {
 	str rv;
 	int ti = 0;
 
-	if(fixup_get_svalue(msg, (gparam_t*)rec, &rv)!=0)
-	{
+	if(fixup_get_svalue(msg, (gparam_t *)rec, &rv) != 0) {
 		LM_ERR("invalid time recurrence parameter value\n");
 		return -1;
 	}
 
-	if(t!=NULL)
-	{
-		if(fixup_get_ivalue(msg, (gparam_t*)t, &ti)!=0)
-		{
+	if(t != NULL) {
+		if(fixup_get_ivalue(msg, (gparam_t *)t, &ti) != 0) {
 			LM_ERR("invalid time stamp parameter value\n");
 			return -1;
 		}
@@ -254,53 +242,48 @@ static int w_tmrec_match(struct sip_msg* msg, char* rec, char* t)
 	return ki_tmrec_match_timestamp(msg, &rv, ti);
 }
 
-static int fixup_tmrec_match(void** param, int param_no)
+static int fixup_tmrec_match(void **param, int param_no)
 {
-	if(param_no==1)
-	{
-		if(fixup_spve_null(param, 1)<0)
+	if(param_no == 1) {
+		if(fixup_spve_null(param, 1) < 0)
 			return -1;
 		return 0;
-	} else if(param_no==2) {
-		if(fixup_igp_null(param, 1)<0)
+	} else if(param_no == 2) {
+		if(fixup_igp_null(param, 1) < 0)
 			return -1;
 	}
 	return 0;
 }
 
-static int fixup_time_period_match(void** param, int param_no)
+static int fixup_time_period_match(void **param, int param_no)
 {
-	if(param_no==1)
-	{
-		if(fixup_spve_null(param, 1)<0)
+	if(param_no == 1) {
+		if(fixup_spve_null(param, 1) < 0)
 			return -1;
 		return 0;
-	} else if(param_no==2) {
-		if(fixup_igp_null(param, 1)<0)
+	} else if(param_no == 2) {
+		if(fixup_igp_null(param, 1) < 0)
 			return -1;
 	}
 	return 0;
 }
 
-static int w_time_period_match(struct sip_msg* msg, char* period, char* t)
+static int w_time_period_match(struct sip_msg *msg, char *period, char *t)
 {
 	str rv;
 	time_t tv;
 	int ti;
 
-	if(msg==NULL)
+	if(msg == NULL)
 		return -2;
 
-	if(fixup_get_svalue(msg, (gparam_t*)period, &rv)!=0)
-	{
+	if(fixup_get_svalue(msg, (gparam_t *)period, &rv) != 0) {
 		LM_ERR("invalid period parameter value\n");
 		return -3;
 	}
 
-	if(t!=NULL)
-	{
-		if(fixup_get_ivalue(msg, (gparam_t*)t, &ti)!=0)
-		{
+	if(t != NULL) {
+		if(fixup_get_ivalue(msg, (gparam_t *)t, &ti) != 0) {
 			LM_ERR("invalid time stamp parameter value\n");
 			return -4;
 		}
@@ -309,26 +292,26 @@ static int w_time_period_match(struct sip_msg* msg, char* period, char* t)
 		tv = time(NULL);
 	}
 
-	if (in_period(tv, rv.s))
+	if(in_period(tv, rv.s))
 		return 1;
 	return -1;
 }
 
-static int ki_time_period_match_timestamp(sip_msg_t* msg, str* period, int ti)
+static int ki_time_period_match_timestamp(sip_msg_t *msg, str *period, int ti)
 {
 	time_t tv;
 
-	if(ti!=0) {
+	if(ti != 0) {
 		tv = (time_t)ti;
 	} else {
 		tv = time(NULL);
 	}
-	if (in_period(tv, period->s))
+	if(in_period(tv, period->s))
 		return 1;
 	return -1;
 }
 
-static int ki_time_period_match(sip_msg_t* msg, str* period)
+static int ki_time_period_match(sip_msg_t *msg, str *period)
 {
 	return ki_time_period_match_timestamp(msg, period, 0);
 }
