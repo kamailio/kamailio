@@ -48,30 +48,28 @@ usrloc_api_t dmq_ul;
 
 MODULE_VERSION
 
-static param_export_t params[] = {
-	{"enable", INT_PARAM, &dmq_usrloc_enable},
-	{"sync",   INT_PARAM, &_dmq_usrloc_sync},
-	{"replicate_socket_info",   INT_PARAM, &_dmq_usrloc_replicate_socket_info},
-	{"batch_msg_contacts",   INT_PARAM, &_dmq_usrloc_batch_msg_contacts},
-	{"batch_msg_size",   INT_PARAM, &_dmq_usrloc_batch_msg_size},
-	{"batch_size",   INT_PARAM, &_dmq_usrloc_batch_size},
-	{"batch_usleep", INT_PARAM, &_dmq_usrloc_batch_usleep},
-	{"usrloc_domain", PARAM_STR, &_dmq_usrloc_domain},
-	{"usrloc_delete", INT_PARAM, &_dmq_usrloc_delete},
-	{0, 0, 0}
-};
+static param_export_t params[] = {{"enable", INT_PARAM, &dmq_usrloc_enable},
+		{"sync", INT_PARAM, &_dmq_usrloc_sync},
+		{"replicate_socket_info", INT_PARAM,
+				&_dmq_usrloc_replicate_socket_info},
+		{"batch_msg_contacts", INT_PARAM, &_dmq_usrloc_batch_msg_contacts},
+		{"batch_msg_size", INT_PARAM, &_dmq_usrloc_batch_msg_size},
+		{"batch_size", INT_PARAM, &_dmq_usrloc_batch_size},
+		{"batch_usleep", INT_PARAM, &_dmq_usrloc_batch_usleep},
+		{"usrloc_domain", PARAM_STR, &_dmq_usrloc_domain},
+		{"usrloc_delete", INT_PARAM, &_dmq_usrloc_delete}, {0, 0, 0}};
 
 struct module_exports exports = {
-	"dmq_usrloc",		/* module name */
-	DEFAULT_DLFLAGS,	/* dlopen flags */
-	0,					/* exported functions */
-	params,				/* exported parameters */
-	0,					/* RPC method exports */
-	0,					/* exported pseudo-variables */
-	0,					/* response handling function */
-	mod_init,			/* module initialization function */
-	child_init,			/* per-child init function */
-	0					/* module destroy function */
+		"dmq_usrloc",	 /* module name */
+		DEFAULT_DLFLAGS, /* dlopen flags */
+		0,				 /* exported functions */
+		params,			 /* exported parameters */
+		0,				 /* RPC method exports */
+		0,				 /* exported pseudo-variables */
+		0,				 /* response handling function */
+		mod_init,		 /* module initialization function */
+		child_init,		 /* per-child init function */
+		0				 /* module destroy function */
 };
 
 
@@ -81,33 +79,34 @@ static int mod_init(void)
 	LM_INFO("dmq usrloc replication mode = %d\n", dmq_usrloc_enable);
 
 	if(_dmq_usrloc_batch_msg_size > 60000) {
-		LM_ERR("batch_msg_size too high[%d] setting to [60000]\n", _dmq_usrloc_batch_msg_size);
+		LM_ERR("batch_msg_size too high[%d] setting to [60000]\n",
+				_dmq_usrloc_batch_msg_size);
 		_dmq_usrloc_batch_msg_size = 60000;
 	}
 	if(_dmq_usrloc_batch_msg_contacts > 150) {
-		LM_ERR("batch_msg_contacts too high[%d] setting to [150]\n", _dmq_usrloc_batch_msg_contacts);
+		LM_ERR("batch_msg_contacts too high[%d] setting to [150]\n",
+				_dmq_usrloc_batch_msg_contacts);
 		_dmq_usrloc_batch_msg_contacts = 150;
 	}
 
-	if (dmq_usrloc_enable) {
+	if(dmq_usrloc_enable) {
 
 		bind_usrloc = (bind_usrloc_t)find_export("ul_bind_usrloc", 1, 0);
-		if (!bind_usrloc) {
+		if(!bind_usrloc) {
 			LM_ERR("can't bind usrloc\n");
 			return -1;
 		}
-		if (bind_usrloc(&dmq_ul) < 0) {
+		if(bind_usrloc(&dmq_ul) < 0) {
 			LM_ERR("Can't bind ul\n");
 			return -1;
 		}
 		if(dmq_ul.register_ulcb != NULL) {
-			if(dmq_ul.register_ulcb(ULCB_MAX, dmq_ul_cb_contact, 0)< 0)
-			{
+			if(dmq_ul.register_ulcb(ULCB_MAX, dmq_ul_cb_contact, 0) < 0) {
 				LM_ERR("can not register callback for expired contacts\n");
 				return -1;
 			}
 		}
-		if (!usrloc_dmq_initialize()){
+		if(!usrloc_dmq_initialize()) {
 			LM_DBG("dmq_usrloc initialized\n");
 		} else {
 			LM_ERR("Error in dmq_usrloc_initialize()\n");
@@ -119,7 +118,7 @@ static int mod_init(void)
 static int child_init(int rank)
 {
 
-	if (rank == PROC_MAIN) {
+	if(rank == PROC_MAIN) {
 		LM_DBG("child_init PROC_MAIN\n");
 		return 0;
 	}
