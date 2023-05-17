@@ -24,35 +24,37 @@
 #ifndef _SECSIPID_PAPI_H_
 #define _SECSIPID_PAPI_H_
 
-typedef struct secsipid_papi {
-	int (*SecSIPIDSignJSONHP)(char* headerJSON, char* payloadJSON,
-			char* prvkeyPath, char** outPtr);
+typedef struct secsipid_papi
+{
+	int (*SecSIPIDSignJSONHP)(char *headerJSON, char *payloadJSON,
+			char *prvkeyPath, char **outPtr);
 
-	int (*SecSIPIDGetIdentity)(char* origTN, char* destTN, char* attestVal,
-			char* origID, char* x5uVal, char* prvkeyPath, char** outPtr);
+	int (*SecSIPIDGetIdentity)(char *origTN, char *destTN, char *attestVal,
+			char *origID, char *x5uVal, char *prvkeyPath, char **outPtr);
 
-	int (*SecSIPIDGetIdentityPrvKey)(char* origTN, char* destTN, char* attestVal,
-			char* origID, char* x5uVal, char* prvkeyData, char** outPtr);
+	int (*SecSIPIDGetIdentityPrvKey)(char *origTN, char *destTN,
+			char *attestVal, char *origID, char *x5uVal, char *prvkeyData,
+			char **outPtr);
 
-	int (*SecSIPIDCheck)(char* identityVal, int identityLen, int expireVal,
-			char* pubkeyPath, int timeoutVal);
+	int (*SecSIPIDCheck)(char *identityVal, int identityLen, int expireVal,
+			char *pubkeyPath, int timeoutVal);
 
-	int (*SecSIPIDCheckFull)(char* identityVal, int identityLen, int expireVal,
-			char* pubkeyPath, int timeoutVal);
+	int (*SecSIPIDCheckFull)(char *identityVal, int identityLen, int expireVal,
+			char *pubkeyPath, int timeoutVal);
 
-	int (*SecSIPIDCheckFullPubKey)(char* identityVal, int identityLen,
-			int expireVal, char* pubkeyVal, int pubkeyLen);
+	int (*SecSIPIDCheckFullPubKey)(char *identityVal, int identityLen,
+			int expireVal, char *pubkeyVal, int pubkeyLen);
 
-	int (*SecSIPIDSetFileCacheOptions)(char* dirPath, int expireVal);
+	int (*SecSIPIDSetFileCacheOptions)(char *dirPath, int expireVal);
 
-	int (*SecSIPIDGetURLContent)(char* urlVal, int timeoutVal, char** outPtr,
-			int* outLen);
+	int (*SecSIPIDGetURLContent)(
+			char *urlVal, int timeoutVal, char **outPtr, int *outLen);
 
-	int (*SecSIPIDOptSetS)(char* optName, char* optVal);
+	int (*SecSIPIDOptSetS)(char *optName, char *optVal);
 
-	int (*SecSIPIDOptSetN)(char* optName, int optVal);
+	int (*SecSIPIDOptSetN)(char *optName, int optVal);
 
-	int (*SecSIPIDOptSetV)(char* optNameVal);
+	int (*SecSIPIDOptSetV)(char *optNameVal);
 
 } secsipid_papi_t;
 
