@@ -48,23 +48,24 @@
 #include "notify_body.h"
 #include "pidf.h"
 
-str* aggregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n);
-int check_relevant_state (xmlChar * dialog_id, xmlDocPtr * xml_array,
-		int total_nodes);
+str *aggregate_xmls(str *pres_user, str *pres_domain, str **body_array, int n);
+int check_relevant_state(
+		xmlChar *dialog_id, xmlDocPtr *xml_array, int total_nodes);
 
 extern int force_single_dialog;
 extern int force_dummy_dialog;
 
-void free_xml_body(char* body)
+void free_xml_body(char *body)
 {
-	if(body== NULL)
+	if(body == NULL)
 		return;
 
 	xmlFree(body);
-	body= NULL;
+	body = NULL;
 }
 
-#define DIALOGINFO_EMPTY_BODY "<dialog-info>\
+#define DIALOGINFO_EMPTY_BODY \
+	"<dialog-info>\
 	<dialog id=\"615293b33c62dec073e05d9421e9f48b\" direction=\"recipient\">\
 	<state>terminated</state>\
 	</dialog>\
@@ -72,23 +73,23 @@ void free_xml_body(char* body)
 
 #define DIALOGINFO_EMPTY_BODY_SIZE 512
 
-str* dlginfo_agg_nbody_empty(str* pres_user, str* pres_domain)
+str *dlginfo_agg_nbody_empty(str *pres_user, str *pres_domain)
 {
-	str* n_body= NULL;
-	str* body_array;
-	char* body;
+	str *n_body = NULL;
+	str *body_array;
+	char *body;
 
 	LM_DBG("creating empty dialog for [pres_user]=%.*s [pres_domain]= %.*s\n",
 			pres_user->len, pres_user->s, pres_domain->len, pres_domain->s);
 
 	/* dcm: note to double check - pkg allocation might not be needed */
-	body_array = (str*)pkg_malloc(sizeof(str));
-	if(body_array==NULL) {
+	body_array = (str *)pkg_malloc(sizeof(str));
+	if(body_array == NULL) {
 		LM_ERR("No more pkg\n");
 		return NULL;
 	}
-	body = (char*)pkg_malloc(DIALOGINFO_EMPTY_BODY_SIZE);
-	if(body==NULL) {
+	body = (char *)pkg_malloc(DIALOGINFO_EMPTY_BODY_SIZE);
+	if(body == NULL) {
 		LM_ERR("No more pkg\n");
 		pkg_free(body_array);
 		return NULL;
@@ -99,10 +100,10 @@ str* dlginfo_agg_nbody_empty(str* pres_user, str* pres_domain)
 	body_array->len = strlen(body);
 
 
-	n_body= aggregate_xmls(pres_user, pres_domain, &body_array, 1);
+	n_body = aggregate_xmls(pres_user, pres_domain, &body_array, 1);
 	LM_DBG("[n_body]=%p\n", n_body);
-	if(n_body!=NULL) {
-		LM_DBG("[*n_body]=%.*s\n",n_body->len, n_body->s);
+	if(n_body != NULL) {
+		LM_DBG("[*n_body]=%.*s\n", n_body->len, n_body->s);
 	} else {
 		LM_ERR("issues while aggregating body\n");
 	}
@@ -117,28 +118,26 @@ str* dlginfo_agg_nbody_empty(str* pres_user, str* pres_domain)
 	return n_body;
 }
 
-str* dlginfo_agg_nbody(str* pres_user, str* pres_domain, str** body_array,
+str *dlginfo_agg_nbody(str *pres_user, str *pres_domain, str **body_array,
 		int n, int off_index)
 {
-	str* n_body= NULL;
+	str *n_body = NULL;
 
-	LM_DBG("[pres_user]=%.*s [pres_domain]= %.*s, [n]=%d\n",
-			pres_user->len, pres_user->s, pres_domain->len, pres_domain->s, n);
+	LM_DBG("[pres_user]=%.*s [pres_domain]= %.*s, [n]=%d\n", pres_user->len,
+			pres_user->s, pres_domain->len, pres_domain->s, n);
 
-	if(body_array== NULL && (!force_dummy_dialog))
+	if(body_array == NULL && (!force_dummy_dialog))
 		return NULL;
 
-	if(body_array== NULL)
+	if(body_array == NULL)
 		return dlginfo_agg_nbody_empty(pres_user, pres_domain);
 
-	n_body= aggregate_xmls(pres_user, pres_domain, body_array, n);
+	n_body = aggregate_xmls(pres_user, pres_domain, body_array, n);
 	LM_DBG("[n_body]=%p\n", n_body);
 	if(n_body) {
-		LM_DBG("[*n_body]=%.*s\n",
-				n_body->len, n_body->s);
+		LM_DBG("[*n_body]=%.*s\n", n_body->len, n_body->s);
 	}
-	if(n_body== NULL && n!= 0)
-	{
+	if(n_body == NULL && n != 0) {
 		LM_ERR("while aggregating body\n");
 	}
 
@@ -148,17 +147,17 @@ str* dlginfo_agg_nbody(str* pres_user, str* pres_domain, str** body_array,
 	return n_body;
 }
 
-str* aggregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n)
+str *aggregate_xmls(str *pres_user, str *pres_domain, str **body_array, int n)
 {
-	int i, j= 0;
+	int i, j = 0;
 
-	xmlDocPtr  doc = NULL;
+	xmlDocPtr doc = NULL;
 	xmlNodePtr root_node = NULL;
-	xmlNsPtr   namespace = NULL;
+	xmlNsPtr namespace = NULL;
 	/*int winner_priority = -1, priority;*/
 
-	xmlNodePtr p_root= NULL;
-	xmlDocPtr* xml_array ;
+	xmlNodePtr p_root = NULL;
+	xmlDocPtr *xml_array;
 	xmlNodePtr node = NULL;
 	xmlNodePtr terminated_node = NULL;
 	xmlNodePtr early_node = NULL;
@@ -172,44 +171,40 @@ str* aggregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n)
 	xmlChar *dialog_id = NULL;
 	int node_id = -1;
 
-	xmlNodePtr winner_dialog_node = NULL ;
-	str *body= NULL;
+	xmlNodePtr winner_dialog_node = NULL;
+	str *body = NULL;
 
-	char buf[MAX_URI_SIZE+1];
+	char buf[MAX_URI_SIZE + 1];
 
-	LM_DBG("[pres_user]=%.*s [pres_domain]= %.*s, [n]=%d\n",
-			pres_user->len, pres_user->s, pres_domain->len, pres_domain->s, n);
+	LM_DBG("[pres_user]=%.*s [pres_domain]= %.*s, [n]=%d\n", pres_user->len,
+			pres_user->s, pres_domain->len, pres_domain->s, n);
 
-	xml_array = (xmlDocPtr*)pkg_malloc( n*sizeof(xmlDocPtr));
-	if(xml_array== NULL)
-	{
+	xml_array = (xmlDocPtr *)pkg_malloc(n * sizeof(xmlDocPtr));
+	if(xml_array == NULL) {
 		LM_ERR("while allocating memory");
 		return NULL;
 	}
-	memset(xml_array, 0, n*sizeof(xmlDocPtr)) ;
+	memset(xml_array, 0, n * sizeof(xmlDocPtr));
 
 	/* parse all the XML documents */
-	for(i=0; i<n; i++)
-	{
-		if(body_array[i] == NULL )
+	for(i = 0; i < n; i++) {
+		if(body_array[i] == NULL)
 			continue;
 
 		xml_array[j] = NULL;
-		xml_array[j] = xmlParseMemory( body_array[i]->s, body_array[i]->len );
+		xml_array[j] = xmlParseMemory(body_array[i]->s, body_array[i]->len);
 
 		/* LM_DBG("parsing XML body: [n]=%d, [i]=%d, [j]=%d xml_array[j]=%p\n",
 		 *			n, i, j, xml_array[j] ); */
 
-		if( xml_array[j]== NULL)
-		{
+		if(xml_array[j] == NULL) {
 			LM_ERR("while parsing xml body message\n");
 			goto error;
 		}
 		j++;
-
 	}
 
-	if(j== 0)  /* no body */
+	if(j == 0) /* no body */
 	{
 		LM_DBG("no body to be built\n");
 		goto error;
@@ -222,30 +217,30 @@ str* aggregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n)
 	 *			" useful bodies [j]=%d\n", n, j ); */
 
 	/* create the new NOTIFY body  */
-	if ( (pres_user->len + pres_domain->len + 1 + 4 + 1) >= MAX_URI_SIZE) {
+	if((pres_user->len + pres_domain->len + 1 + 4 + 1) >= MAX_URI_SIZE) {
 		LM_ERR("entity URI too long, maximum=%d\n", MAX_URI_SIZE);
 		goto error;
 	}
 	memcpy(buf, "sip:", 4);
-	memcpy(buf+4, pres_user->s, pres_user->len);
-	buf[pres_user->len+4] = '@';
+	memcpy(buf + 4, pres_user->s, pres_user->len);
+	buf[pres_user->len + 4] = '@';
 	memcpy(buf + pres_user->len + 5, pres_domain->s, pres_domain->len);
-	buf[pres_user->len + 5 + pres_domain->len]= '\0';
+	buf[pres_user->len + 5 + pres_domain->len] = '\0';
 
 	doc = xmlNewDoc(BAD_CAST "1.0");
-	if(doc==0) {
+	if(doc == 0) {
 		LM_ERR("unable to create xml document\n");
 		goto error;
 	}
 
 	root_node = xmlNewNode(NULL, BAD_CAST "dialog-info");
-	if(root_node==0)
+	if(root_node == 0)
 		goto error;
 
 	xmlDocSetRootElement(doc, root_node);
-	namespace = xmlNewNs(root_node,
-			BAD_CAST "urn:ietf:params:xml:ns:dialog-info", NULL);
-	if (!namespace) {
+	namespace = xmlNewNs(
+			root_node, BAD_CAST "urn:ietf:params:xml:ns:dialog-info", NULL);
+	if(!namespace) {
 		LM_ERR("creating namespace failed\n");
 	}
 	xmlSetNs(root_node, namespace);
@@ -260,23 +255,22 @@ str* aggregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n)
 	 * signed int) has max. 10 characters + 1 character for the sign
 	 */
 	xmlNewProp(root_node, BAD_CAST "version", BAD_CAST "00000000000");
-	xmlNewProp(root_node, BAD_CAST  "state",  BAD_CAST "full" );
-	xmlNewProp(root_node, BAD_CAST "entity",  BAD_CAST buf);
+	xmlNewProp(root_node, BAD_CAST "state", BAD_CAST "full");
+	xmlNewProp(root_node, BAD_CAST "entity", BAD_CAST buf);
 
 	/* loop over all bodies and create the aggregated body */
-	for(i=0; i<j; i++)
-	{
+	for(i = 0; i < j; i++) {
 		/* LM_DBG("[n]=%d, [i]=%d, [j]=%d xml_array[i]=%p\n",
 		 *			n, i, j, xml_array[j] ); */
-		p_root= xmlDocGetRootElement(xml_array[i]);
-		if(p_root ==NULL) {
+		p_root = xmlDocGetRootElement(xml_array[i]);
+		if(p_root == NULL) {
 			LM_ERR("the xml_tree root element is null\n");
 			goto error;
 		}
-		if (p_root->children) {
-			for (node = p_root->children; node; node = next_node) {
+		if(p_root->children) {
+			for(node = p_root->children; node; node = next_node) {
 				next_node = node->next;
-				if (node->type != XML_ELEMENT_NODE) {
+				if(node->type != XML_ELEMENT_NODE) {
 					continue;
 				}
 				LM_DBG("node type: Element, name: %s\n", node->name);
@@ -318,57 +312,57 @@ str* aggregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n)
 							LM_DBG("found terminated state\n");
 							terminated_node = node;
 						} else if(strcasecmp(state, "confirmed") == 0
-								&& node_id == i) {
+								  && node_id == i) {
 							/*  here we check if confirmed is terminated or not
 							 *  if it is not we are in the middle of the conversation
 							 */
 							if(check_relevant_state(dialog_id, xml_array, j)
 									>= DEF_TERMINATED_NODE) {
 								LM_DBG("confirmed state for dialog %s, but it "
-										"is not latest state\n",
+									   "is not latest state\n",
 										dialog_id);
 							} else {
 								LM_DBG("confirmed state for dialog %s and "
-										"latest state for this dialog\n",
+									   "latest state for this dialog\n",
 										dialog_id);
 								confirmed_node = node;
 							}
 						} else if(strcasecmp(state, "early") == 0
-								&& node_id == i) {
+								  && node_id == i) {
 							if(check_relevant_state(dialog_id, xml_array, j)
 									>= DEF_CONFIRMED_NODE) {
 								LM_DBG("early state for dialog %s, but it is "
-										"not latest state\n",
+									   "not latest state\n",
 										dialog_id);
 							} else {
 								LM_DBG("early state for dialog %s and latest "
-										"state for this dialog\n",
+									   "state for this dialog\n",
 										dialog_id);
 								early_node = node;
 							}
 						} else if(strcasecmp(state, "proceeding") == 0
-								&& node_id == i) {
+								  && node_id == i) {
 							if(check_relevant_state(dialog_id, xml_array, j)
 									>= DEF_EARLY_NODE) {
 								LM_DBG("proceeding state for dialog %s, but it "
-										"is not latest state\n",
+									   "is not latest state\n",
 										dialog_id);
 							} else {
 								LM_DBG("proceeding state for dialog %s and "
-										"latest state for this dialog\n",
+									   "latest state for this dialog\n",
 										dialog_id);
 								proceed_node = node;
 							}
 						} else if(strcasecmp(state, "trying") == 0
-								&& node_id == i) {
+								  && node_id == i) {
 							if(check_relevant_state(dialog_id, xml_array, j)
 									>= DEF_PROCEEDING_NODE) {
 								LM_DBG("trying state for dialog %s, but it is "
-										"not latest state\n",
+									   "not latest state\n",
 										dialog_id);
 							} else {
 								LM_DBG("trying state for dialog %s and latest "
-										"state for this dialog\n",
+									   "state for this dialog\n",
 										dialog_id);
 								trying_node = node;
 							}
@@ -395,34 +389,36 @@ str* aggregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n)
 		}
 	}
 
-	if (force_single_dialog && (j!=1)) {
+	if(force_single_dialog && (j != 1)) {
 		if(winner_dialog_node == NULL) {
 			LM_ERR("no winning node found\n");
 			goto error;
 		}
 		xmlUnlinkNode(winner_dialog_node);
-		if(xmlAddChild(root_node, winner_dialog_node)== NULL) {
+		if(xmlAddChild(root_node, winner_dialog_node) == NULL) {
 			xmlFreeNode(winner_dialog_node);
 			LM_ERR("while adding winner-child\n");
 			goto error;
 		}
 	}
 
-	body = (str*)pkg_malloc(sizeof(str));
+	body = (str *)pkg_malloc(sizeof(str));
 	if(body == NULL) {
 		ERR_MEM(PKG_MEM_STR);
 	}
 
-	xmlDocDumpFormatMemory(doc,(xmlChar**)(void*)&body->s,
-			&body->len, 1);
+	xmlDocDumpFormatMemory(doc, (xmlChar **)(void *)&body->s, &body->len, 1);
 
-	if(dialog_id!=NULL) xmlFree(dialog_id);
-	for(i=0; i<j; i++) {
-		if(xml_array[i]!=NULL)
-			xmlFreeDoc( xml_array[i]);
+	if(dialog_id != NULL)
+		xmlFree(dialog_id);
+	for(i = 0; i < j; i++) {
+		if(xml_array[i] != NULL)
+			xmlFreeDoc(xml_array[i]);
 	}
-	if(doc) xmlFreeDoc(doc);
-	if(xml_array) pkg_free(xml_array);
+	if(doc)
+		xmlFreeDoc(doc);
+	if(xml_array)
+		pkg_free(xml_array);
 
 	xmlCleanupParser();
 	xmlMemoryDump();
@@ -430,26 +426,27 @@ str* aggregate_xmls(str* pres_user, str* pres_domain, str** body_array, int n)
 	return body;
 
 error:
-	if(xml_array!=NULL)
-	{
-		for(i=0; i<j; i++)
-		{
-			if(xml_array[i]!=NULL)
-				xmlFreeDoc( xml_array[i]);
+	if(xml_array != NULL) {
+		for(i = 0; i < j; i++) {
+			if(xml_array[i] != NULL)
+				xmlFreeDoc(xml_array[i]);
 		}
 		pkg_free(xml_array);
 	}
-	if(body) pkg_free(body);
-	if(dialog_id) xmlFree(dialog_id);
-	if(doc) xmlFreeDoc(doc);
+	if(body)
+		pkg_free(body);
+	if(dialog_id)
+		xmlFree(dialog_id);
+	if(doc)
+		xmlFreeDoc(doc);
 
 	return NULL;
 }
 
 
 /* returns 16 -> terminated, 8 -> confirmed, 4 -> early */
-int check_relevant_state (xmlChar * dialog_id, xmlDocPtr * xml_array,
-		int total_nodes)
+int check_relevant_state(
+		xmlChar *dialog_id, xmlDocPtr *xml_array, int total_nodes)
 {
 	int result = 0;
 	int i = 0;
@@ -459,22 +456,19 @@ int check_relevant_state (xmlChar * dialog_id, xmlDocPtr * xml_array,
 	xmlNodePtr p_root;
 	xmlNodePtr node = NULL;
 
-	if(dialog_id==NULL) {
+	if(dialog_id == NULL) {
 		LM_WARN("dialog id is null\n");
 		return 0;
 	}
 
-	for (i = 0; i < total_nodes; i++)
-	{
-		p_root = xmlDocGetRootElement (xml_array[i]);
-		if (p_root == NULL)
-		{
-			LM_DBG ("the xml_tree root element is null\n");
+	for(i = 0; i < total_nodes; i++) {
+		p_root = xmlDocGetRootElement(xml_array[i]);
+		if(p_root == NULL) {
+			LM_DBG("the xml_tree root element is null\n");
 		} else {
-			if (p_root->children) {
-				for (node = p_root->children; node; node = node->next)
-				{
-					if (node->type != XML_ELEMENT_NODE) {
+			if(p_root->children) {
+				for(node = p_root->children; node; node = node->next) {
+					if(node->type != XML_ELEMENT_NODE) {
 						continue;
 					}
 					if(strcasecmp((char *)node->name, "dialog") == 0) {
@@ -495,8 +489,8 @@ int check_relevant_state (xmlChar * dialog_id, xmlDocPtr * xml_array,
 						if((strcasecmp(state, "terminated") == 0)
 								&& (node_id == i) && (node_id >= 0)
 								&& (strcasecmp((char *)dialog_id_tmp,
-										(char *)dialog_id)
-									== 0)) {
+											(char *)dialog_id)
+										== 0)) {
 							LM_DBG("Found terminated in dialog %s\n",
 									dialog_id);
 							result += DEF_TERMINATED_NODE;
@@ -505,24 +499,24 @@ int check_relevant_state (xmlChar * dialog_id, xmlDocPtr * xml_array,
 						if((strcasecmp(state, "confirmed") == 0)
 								&& (node_id == i) && (node_id >= 0)
 								&& (strcasecmp((char *)dialog_id_tmp,
-										(char *)dialog_id)
-									== 0)) {
+											(char *)dialog_id)
+										== 0)) {
 							LM_DBG("Found confirmed in dialog %s\n", dialog_id);
 							result += DEF_CONFIRMED_NODE;
 						}
 						if((strcasecmp(state, "early") == 0) && (node_id == i)
 								&& (node_id >= 0)
 								&& (strcasecmp((char *)dialog_id_tmp,
-										(char *)dialog_id)
-									== 0)) {
+											(char *)dialog_id)
+										== 0)) {
 							LM_DBG("Found early in dialog %s\n", dialog_id);
 							result += DEF_EARLY_NODE;
 						}
 						if((strcasecmp(state, "proceeding") == 0)
 								&& (node_id == i) && (node_id >= 0)
 								&& (strcasecmp((char *)dialog_id_tmp,
-										(char *)dialog_id)
-									== 0)) {
+											(char *)dialog_id)
+										== 0)) {
 							LM_DBG("Found proceeding in dialog %s\n",
 									dialog_id);
 							result += DEF_PROCEEDING_NODE;
@@ -530,8 +524,8 @@ int check_relevant_state (xmlChar * dialog_id, xmlDocPtr * xml_array,
 						if((strcasecmp(state, "trying") == 0) && (node_id == i)
 								&& (node_id >= 0)
 								&& (strcasecmp((char *)dialog_id_tmp,
-										(char *)dialog_id)
-									== 0)) {
+											(char *)dialog_id)
+										== 0)) {
 							LM_DBG("Found trying in dialog %s\n", dialog_id);
 							result += DEF_TRYING_NODE;
 						}
@@ -541,31 +535,32 @@ int check_relevant_state (xmlChar * dialog_id, xmlDocPtr * xml_array,
 			}
 		}
 	}
-	if(dialog_id_tmp) xmlFree(dialog_id_tmp);
-	LM_DBG ("result checking dialog %s is %d\n", dialog_id, result);
+	if(dialog_id_tmp)
+		xmlFree(dialog_id_tmp);
+	LM_DBG("result checking dialog %s is %d\n", dialog_id, result);
 	return result;
 }
 
 
 str *dlginfo_body_setversion(subs_t *subs, str *body)
 {
-	char *version_start=0;
+	char *version_start = 0;
 	char version[MAX_INT_LEN + 2]; /* +2 because of trailing " and \0 */
 	int version_len;
-	str* aux_body = NULL;
+	str *aux_body = NULL;
 
-	if (!body) {
+	if(!body) {
 		return NULL;
 	}
 
 	/* xmlDocDumpFormatMemory creates \0 terminated string */
 	/* version parameters starts at minimum at character 34 */
-	if (body->len < 41) {
+	if(body->len < 41) {
 		LM_ERR("body string too short!\n");
 		return NULL;
 	}
 	version_start = strstr(body->s + 34, "version=");
-	if (!version_start) {
+	if(!version_start) {
 		LM_ERR("version string not found!\n");
 		return NULL;
 	}
@@ -573,31 +568,29 @@ str *dlginfo_body_setversion(subs_t *subs, str *body)
 
 	/* safety check for placeholder - if it is body not set by the module,
 	 * don't update the version */
-	if(strncmp(version_start, "00000000000\"", 12)!=0)
+	if(strncmp(version_start, "00000000000\"", 12) != 0)
 		return NULL;
 
-	version_len = snprintf(version, MAX_INT_LEN + 2,"%d\"", subs->version);
-	if (version_len >= MAX_INT_LEN + 2) {
+	version_len = snprintf(version, MAX_INT_LEN + 2, "%d\"", subs->version);
+	if(version_len >= MAX_INT_LEN + 2) {
 		LM_ERR("failed to convert 'version' to string\n");
 		return NULL;
 	}
 
-	aux_body= (str*)pkg_malloc(sizeof(str));
-	if(aux_body== NULL)
-	{
+	aux_body = (str *)pkg_malloc(sizeof(str));
+	if(aux_body == NULL) {
 		LM_ERR("error allocating memory for aux body str\n");
 		return NULL;
 	}
 	memset(aux_body, 0, sizeof(str));
-	aux_body->s= (char*)pkg_malloc( body->len * sizeof(char));
-	if(aux_body->s== NULL)
-	{
+	aux_body->s = (char *)pkg_malloc(body->len * sizeof(char));
+	if(aux_body->s == NULL) {
 		pkg_free(aux_body);
 		LM_ERR("error allocating memory for aux body buffer\n");
 		return NULL;
 	}
 	memcpy(aux_body->s, body->s, body->len);
-	aux_body->len= body->len;
+	aux_body->len = body->len;
 
 	/* again but on the copied str, no checks needed */
 	version_start = strstr(aux_body->s + 34, "version=");
@@ -605,21 +598,21 @@ str *dlginfo_body_setversion(subs_t *subs, str *body)
 	/* Replace the placeholder 00000000000 with the version.
 	 * Put the padding behind the ""
 	 */
-	LM_DBG("replace version with \"%s\n",version);
+	LM_DBG("replace version with \"%s\n", version);
 	memcpy(version_start, version, version_len);
 	memset(version_start + version_len, ' ', 12 - version_len);
 
-	xmlDocPtr doc = xmlReadMemory(aux_body->s, aux_body->len, "noname.xml",
-			NULL, 0);
-	if (doc == NULL) {
+	xmlDocPtr doc =
+			xmlReadMemory(aux_body->s, aux_body->len, "noname.xml", NULL, 0);
+	if(doc == NULL) {
 		LM_ERR("error allocation xmldoc\n");
 		pkg_free(aux_body->s);
 		pkg_free(aux_body);
 		return NULL;
 	}
 	pkg_free(aux_body->s);
-	xmlDocDumpFormatMemory(doc,(xmlChar**)(void*)&aux_body->s,
-			&aux_body->len, 1);
+	xmlDocDumpFormatMemory(
+			doc, (xmlChar **)(void *)&aux_body->s, &aux_body->len, 1);
 	xmlFreeDoc(doc);
 	xmlCleanupParser();
 	xmlMemoryDump();

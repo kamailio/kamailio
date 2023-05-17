@@ -32,10 +32,10 @@
 #ifndef _NBODY_H_
 #define _NBODY_H_
 
-str* dlginfo_agg_nbody(str* pres_user, str* pres_domain, str** body_array,
+str *dlginfo_agg_nbody(str *pres_user, str *pres_domain, str **body_array,
 		int n, int off_index);
-str* dlginfo_body_setversion(subs_t *subs, str* body);
-void free_xml_body(char* body);
+str *dlginfo_body_setversion(subs_t *subs, str *body);
+void free_xml_body(char *body);
 int get_dialog_state_priority(char *state);
 
 #endif

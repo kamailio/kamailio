@@ -43,7 +43,7 @@ int dlginfo_add_events(void)
 	event.content_type.s = "application/dialog-info+xml";
 	event.content_type.len = 27;
 
-	event.default_expires= pres_dlginfo_default_expires;
+	event.default_expires = pres_dlginfo_default_expires;
 	event.type = PUBL_TYPE;
 	event.req_auth = 0;
 	event.evs_publ_handl = 0;
@@ -56,7 +56,7 @@ int dlginfo_add_events(void)
 	event.aux_body_processing = dlginfo_body_setversion;
 	event.aux_free_body = free_xml_body;
 
-	if (pres_add_event(&event) < 0) {
+	if(pres_add_event(&event) < 0) {
 		LM_ERR("failed to add event \"dialog\"\n");
 		return -1;
 	}
