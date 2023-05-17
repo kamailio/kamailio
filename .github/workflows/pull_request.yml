@@ -12,7 +12,7 @@ jobs:
   check-format:
     runs-on: ubuntu-latest
     steps:
-      - uses: wolletd/clang-format-checker@v1
+      - uses: wolletd/clang-format-checker@v1.10
         with:
           target-ref: main
   build:
