@@ -40,24 +40,26 @@ struct secret
 	struct secret *next;
 };
 
-typedef enum {
-	AUTHEPH_USERNAME_NON_IETF	= 0,
-	AUTHEPH_USERNAME_IETF		= 1,
+typedef enum
+{
+	AUTHEPH_USERNAME_NON_IETF = 0,
+	AUTHEPH_USERNAME_IETF = 1,
 } autheph_username_format_t;
 extern autheph_username_format_t autheph_username_format;
 
-typedef enum {
-	AUTHEPH_SHA1	= 0,
-	AUTHEPH_SHA256	= 1,
-	AUTHEPH_SHA384	= 2,
-	AUTHEPH_SHA512	= 3,
+typedef enum
+{
+	AUTHEPH_SHA1 = 0,
+	AUTHEPH_SHA256 = 1,
+	AUTHEPH_SHA384 = 2,
+	AUTHEPH_SHA512 = 3,
 } autheph_sha_alg_t;
 extern autheph_sha_alg_t autheph_sha_alg;
 
 extern auth_api_s_t eph_auth_api;
 
 extern gen_lock_t *autheph_secret_lock;
-#define SECRET_LOCK	lock_get(autheph_secret_lock)
-#define SECRET_UNLOCK	lock_release(autheph_secret_lock)
+#define SECRET_LOCK lock_get(autheph_secret_lock)
+#define SECRET_UNLOCK lock_release(autheph_secret_lock)
 
 #endif /* AUTHEPH_MOD_H */
