@@ -45,7 +45,8 @@ extern str pxml_single_body_lookup_element;
 
 str *offline_nbody(str *body);
 str *aggregate_xmls(str *pres_user, str *pres_domain, str **body_array, int n);
-str *aggregate_xmls_priority(str *pres_user, str *pres_domain, str **body_array, int n);
+str *aggregate_xmls_priority(
+		str *pres_user, str *pres_domain, str **body_array, int n);
 str *get_final_notify_body(
 		subs_t *subs, str *notify_body, xmlNodePtr rule_node);
 
@@ -645,7 +646,8 @@ error:
 	return NULL;
 }
 
-str *aggregate_xmls_priority(str *pres_user, str *pres_domain, str **body_array, int n)
+str *aggregate_xmls_priority(
+		str *pres_user, str *pres_domain, str **body_array, int n)
 {
 	int i, j = 0, idx = 0;
 	xmlNodePtr p_root = NULL, new_p_root = NULL;
@@ -684,13 +686,14 @@ str *aggregate_xmls_priority(str *pres_user, str *pres_domain, str **body_array,
 
 	idx = --j;
 	if(strlen(pxml_single_body_priorities.s) > 0
-				&& strlen(pxml_single_body_lookup_element.s) > 0) {
+			&& strlen(pxml_single_body_lookup_element.s) > 0) {
 		p_root = xmlDocGetNodeByName(xml_array[j], "presence", NULL);
 		if(p_root == NULL) {
 			LM_ERR("while getting the xml_tree root\n");
 			goto error;
 		}
-		cur = xmlNodeGetNodeContentByName(p_root, pxml_single_body_lookup_element.s, NULL);
+		cur = xmlNodeGetNodeContentByName(
+				p_root, pxml_single_body_lookup_element.s, NULL);
 		if(cur) {
 			priority = strstr(pxml_single_body_priorities.s, cur);
 		}
@@ -702,8 +705,9 @@ str *aggregate_xmls_priority(str *pres_user, str *pres_domain, str **body_array,
 				goto error;
 			}
 
-			cmp = xmlNodeGetNodeContentByName(new_p_root, pxml_single_body_lookup_element.s, NULL);
-			if(cur != NULL && cmp != NULL && strcasecmp(cur,cmp)) {
+			cmp = xmlNodeGetNodeContentByName(
+					new_p_root, pxml_single_body_lookup_element.s, NULL);
+			if(cur != NULL && cmp != NULL && strcasecmp(cur, cmp)) {
 				char *x1 = strstr(pxml_single_body_priorities.s, cmp);
 				if(x1 > priority) {
 					idx = i;

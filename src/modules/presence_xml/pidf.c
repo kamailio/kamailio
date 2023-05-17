@@ -95,9 +95,9 @@ xmlNodePtr xmlNodeGetNodeByName(
 		if(xmlStrcasecmp(cur->name, (unsigned char *)name) == 0) {
 			if(!ns
 					|| (cur->ns
-							   && xmlStrcasecmp(
-										  cur->ns->prefix, (unsigned char *)ns)
-										  == 0))
+							&& xmlStrcasecmp(
+									   cur->ns->prefix, (unsigned char *)ns)
+									   == 0))
 				return cur;
 		}
 		match = xmlNodeGetNodeByName(cur->children, name, ns);
