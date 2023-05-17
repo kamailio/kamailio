@@ -42,13 +42,13 @@ int th_unmask_ruri(sip_msg_t *msg);
 int th_unmask_route(sip_msg_t *msg);
 int th_unmask_refer_to(sip_msg_t *msg);
 int th_update_hdr_replaces(sip_msg_t *msg);
-char* th_msg_update(sip_msg_t *msg, unsigned int *olen);
+char *th_msg_update(sip_msg_t *msg, unsigned int *olen);
 int th_add_via_cookie(sip_msg_t *msg, struct via_body *via);
 int th_add_hdr_cookie(sip_msg_t *msg);
 hdr_field_t *th_get_hdr_cookie(sip_msg_t *msg);
 int th_add_cookie(sip_msg_t *msg);
 int th_route_direction(sip_msg_t *msg);
-char* th_get_cookie(sip_msg_t *msg, int *clen);
+char *th_get_cookie(sip_msg_t *msg, int *clen);
 int th_del_cookie(sip_msg_t *msg);
 int th_skip_msg(sip_msg_t *msg);
 

@@ -30,7 +30,7 @@
 #include "../../core/str.h"
 
 void th_mask_init(void);
-char* th_mask_encode(char *in, int ilen, str *prefix, int *olen);
-char* th_mask_decode(char *in, int ilen, str *prefix, int extra, int *olen);
+char *th_mask_encode(char *in, int ilen, str *prefix, int *olen);
+char *th_mask_decode(char *in, int ilen, str *prefix, int extra, int *olen);
 
 #endif
