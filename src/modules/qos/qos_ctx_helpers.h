@@ -27,28 +27,30 @@
 #include "../../core/parser/sdp/sdp.h"
 #include "qos_cb.h"
 
-#define QOS_CALLER  0
-#define QOS_CALLEE  1
+#define QOS_CALLER 0
+#define QOS_CALLEE 1
 
-typedef struct qos_sdp_st {
+typedef struct qos_sdp_st
+{
 	struct qos_sdp_st *prev;
 	struct qos_sdp_st *next;
-	unsigned int method_dir;     /* the transaction initiator: CALLER/CALLEE */
-	int          method_id;      /* the method id that is carrying the sdp */
-	str          method;         /* the method that is carrying the sdp */
-	str          cseq;           /* the cseq of the method */
-	unsigned int negotiation;    /* the negotiation type */
+	unsigned int method_dir;  /* the transaction initiator: CALLER/CALLEE */
+	int method_id;			  /* the method id that is carrying the sdp */
+	str method;				  /* the method that is carrying the sdp */
+	str cseq;				  /* the cseq of the method */
+	unsigned int negotiation; /* the negotiation type */
 	sdp_session_cell_t *sdp_session[2]; /* CALLER's and CALLEE's sdp */
 } qos_sdp_t;
 
 /**
  * The QoS context.
  */
-typedef struct qos_ctx_st {
-	qos_sdp_t           *negotiated_sdp;
-	qos_sdp_t           *pending_sdp;
+typedef struct qos_ctx_st
+{
+	qos_sdp_t *negotiated_sdp;
+	qos_sdp_t *pending_sdp;
 	gen_lock_t lock;
-	struct qos_head_cbl  cbs;
+	struct qos_head_cbl cbs;
 } qos_ctx_t;
 
 /*
@@ -102,10 +104,12 @@ qos_ctx:
 
  */
 
-qos_ctx_t* build_new_qos_ctx();
+qos_ctx_t *build_new_qos_ctx();
 void destroy_qos_ctx(qos_ctx_t *ctx);
 
-void add_sdp(qos_ctx_t *qos_ctx, unsigned int dir, struct sip_msg *_m, unsigned int role, unsigned int other_role);
-void remove_sdp(qos_ctx_t *qos_ctx, unsigned int dir, struct sip_msg *_m, unsigned int role, unsigned int other_role);
+void add_sdp(qos_ctx_t *qos_ctx, unsigned int dir, struct sip_msg *_m,
+		unsigned int role, unsigned int other_role);
+void remove_sdp(qos_ctx_t *qos_ctx, unsigned int dir, struct sip_msg *_m,
+		unsigned int role, unsigned int other_role);
 
 #endif /* _QOS_CTX_HELPERS_H_ */

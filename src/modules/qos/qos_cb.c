@@ -26,14 +26,14 @@
 #include "qos_ctx_helpers.h"
 #include "qos_cb.h"
 
-static struct qos_head_cbl* create_cbs = 0;
+static struct qos_head_cbl *create_cbs = 0;
 
 static struct qos_cb_params params = {NULL, NULL, 0, NULL};
 
 int init_qos_callbacks(void)
 {
-	create_cbs = (struct qos_head_cbl*)shm_malloc(sizeof(struct qos_head_cbl));
-	if (create_cbs==0) {
+	create_cbs = (struct qos_head_cbl *)shm_malloc(sizeof(struct qos_head_cbl));
+	if(create_cbs == 0) {
 		SHM_MEM_ERROR;
 		return -1;
 	}
@@ -59,7 +59,7 @@ void destroy_qos_callbacks_list(struct qos_callback *cb)
 
 void destroy_qos_callbacks(void)
 {
-	if (create_cbs==0)
+	if(create_cbs == 0)
 		return;
 
 	destroy_qos_callbacks_list(create_cbs->first);
@@ -68,26 +68,26 @@ void destroy_qos_callbacks(void)
 }
 
 
-int register_qoscb(qos_ctx_t *qos, int types, qos_cb f, void *param )
+int register_qoscb(qos_ctx_t *qos, int types, qos_cb f, void *param)
 {
 	struct qos_callback *cb;
 
 	LM_DBG("registering qos CB\n");
 
-	if ( types&QOSCB_CREATED ) {
-		if (types!=QOSCB_CREATED) {
+	if(types & QOSCB_CREATED) {
+		if(types != QOSCB_CREATED) {
 			LM_CRIT("QOSCB_CREATED type must be register alone!\n");
 			return -1;
 		}
 	} else {
-		if (qos==0) {
+		if(qos == 0) {
 			LM_CRIT("non-QOSCB_CREATED type "
-				"must be register to a qos (qos missing)!\n");
+					"must be register to a qos (qos missing)!\n");
 			return -1;
 		}
 	}
-	cb = (struct qos_callback*)shm_malloc(sizeof(struct qos_callback));
-	if (cb==0) {
+	cb = (struct qos_callback *)shm_malloc(sizeof(struct qos_callback));
+	if(cb == 0) {
 		SHM_MEM_ERROR;
 		return -1;
 	}
@@ -98,7 +98,7 @@ int register_qoscb(qos_ctx_t *qos, int types, qos_cb f, void *param )
 	cb->callback = f;
 	cb->param = param;
 
-	if ( types&QOSCB_CREATED ) {
+	if(types & QOSCB_CREATED) {
 		cb->next = create_cbs->first;
 		create_cbs->first = cb;
 		create_cbs->types |= types;
@@ -106,8 +106,8 @@ int register_qoscb(qos_ctx_t *qos, int types, qos_cb f, void *param )
 		cb->next = qos->cbs.first;
 		qos->cbs.first = cb;
 		qos->cbs.types |= types;
-		LM_DBG("qos=%p qos->cbs=%p types=%d\n",
-			qos, &(qos->cbs), qos->cbs.types);
+		LM_DBG("qos=%p qos->cbs=%p types=%d\n", qos, &(qos->cbs),
+				qos->cbs.types);
 	}
 
 	return 0;
@@ -118,7 +118,7 @@ void run_create_cbs(struct qos_ctx_st *qos, struct sip_msg *msg)
 {
 	struct qos_callback *cb;
 
-	if (create_cbs->first==0)
+	if(create_cbs->first == 0)
 		return;
 
 	params.msg = msg;
@@ -127,27 +127,26 @@ void run_create_cbs(struct qos_ctx_st *qos, struct sip_msg *msg)
 	params.role = 0;
 	params.param = NULL;
 
-	for ( cb=create_cbs->first; cb; cb=cb->next)  {
-		LM_DBG("qos=%p\n",qos);
+	for(cb = create_cbs->first; cb; cb = cb->next) {
+		LM_DBG("qos=%p\n", qos);
 		params.param = &cb->param;
-		cb->callback( qos, QOSCB_CREATED, &params );
+		cb->callback(qos, QOSCB_CREATED, &params);
 	}
 	return;
 }
 
 
-void run_qos_callbacks(int type, struct qos_ctx_st *qos,
-			struct qos_sdp_st *sdp, unsigned int role,
-			struct sip_msg *msg)
+void run_qos_callbacks(int type, struct qos_ctx_st *qos, struct qos_sdp_st *sdp,
+		unsigned int role, struct sip_msg *msg)
 {
 	struct qos_callback *cb;
 
-	if (qos == NULL)
+	if(qos == NULL)
 		return;
 
-	LM_DBG("qos=%p qos->cbs=%p, qos->cbs.types=%d\n",
-		qos, &(qos->cbs),  qos->cbs.types);
-	if (qos->cbs.first==0 || ((qos->cbs.types)&type)==0 )
+	LM_DBG("qos=%p qos->cbs=%p, qos->cbs.types=%d\n", qos, &(qos->cbs),
+			qos->cbs.types);
+	if(qos->cbs.first == 0 || ((qos->cbs.types) & type) == 0)
 		return;
 
 	params.sdp = sdp;
@@ -155,11 +154,11 @@ void run_qos_callbacks(int type, struct qos_ctx_st *qos,
 	params.msg = msg;
 
 	LM_DBG("searching in %p\n", qos->cbs.first);
-	for ( cb=qos->cbs.first; cb; cb=cb->next)  {
-		if ( (cb->types)&type ) {
+	for(cb = qos->cbs.first; cb; cb = cb->next) {
+		if((cb->types) & type) {
 			LM_DBG("qos=%p, type=%d\n", qos, type);
 			params.param = &cb->param;
-			cb->callback( qos, type, &params );
+			cb->callback(qos, type, &params);
 		}
 	}
 	return;

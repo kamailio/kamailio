@@ -31,6 +31,7 @@
 /**
  * The static (opening) callback function for all dialog creations
  */
-void qos_dialog_created_CB(struct dlg_cell *did, int type, struct dlg_cb_params * params);
+void qos_dialog_created_CB(
+		struct dlg_cell *did, int type, struct dlg_cb_params *params);
 
 #endif /* _QOS_HANDLERS_H_ */
