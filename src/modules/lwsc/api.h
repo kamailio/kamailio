@@ -30,18 +30,19 @@
 
 #include "../../core/str.h"
 
-typedef int (*lwsc_api_request_f)(str *wsurl, str *wsproto, str *sdata,
-		str *rdata, int rtimeout);
+typedef int (*lwsc_api_request_f)(
+		str *wsurl, str *wsproto, str *sdata, str *rdata, int rtimeout);
 
 /**
  * @brief Stateless (sl) API structure
  */
-typedef struct lwsc_api {
+typedef struct lwsc_api
+{
 	int loaded;
-	lwsc_api_request_f  request; /* send and receice data */
+	lwsc_api_request_f request; /* send and receice data */
 } lwsc_api_t;
 
-typedef int (*bind_lwsc_f)(lwsc_api_t* api);
+typedef int (*bind_lwsc_f)(lwsc_api_t *api);
 
 /**
  * @brief Load the LWSX API
@@ -51,11 +52,11 @@ static inline int lwsc_load_api(lwsc_api_t *lwscb)
 	bind_lwsc_f bindlwsc;
 
 	bindlwsc = (bind_lwsc_f)find_export("bind_lwsc", 0, 0);
-	if ( bindlwsc == 0) {
+	if(bindlwsc == 0) {
 		LM_ERR("cannot find bind_lwsc exported function\n");
 		return -1;
 	}
-	if (bindlwsc(lwscb)==-1) {
+	if(bindlwsc(lwscb) == -1) {
 		LM_ERR("cannot bind lwsc api\n");
 		return -1;
 	}
