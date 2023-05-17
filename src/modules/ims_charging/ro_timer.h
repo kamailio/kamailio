@@ -6,7 +6,7 @@
  */
 
 #ifndef RO_TIMER_H
-#define	RO_TIMER_H
+#define RO_TIMER_H
 
 #include "../../core/locking.h"
 #include "../../core/timer.h"
@@ -14,16 +14,18 @@
 extern struct interim_ccr *i_req;
 
 /*! ro timeout list */
-struct ro_tl {
-    struct ro_tl *next;
-    struct ro_tl *prev;
-    volatile unsigned int timeout; /*!< timeout in seconds */
+struct ro_tl
+{
+	struct ro_tl *next;
+	struct ro_tl *prev;
+	volatile unsigned int timeout; /*!< timeout in seconds */
 };
 
 /*! ro_session timer */
-struct ro_timer {
-    struct ro_tl first; /*!< ro session timeout list */
-    gen_lock_t *lock; /*!< lock for the list */
+struct ro_timer
+{
+	struct ro_tl first; /*!< ro session timeout list */
+	gen_lock_t *lock;	/*!< lock for the list */
 };
 
 /*! ro_session timer handler */
@@ -80,14 +82,14 @@ int update_ro_timer(struct ro_tl *tl, int timeout);
  * \param time for expiration checks on credit reservations
  * \param attr unused
  */
-void ro_timer_routine(unsigned int ticks, void * attr);
+void ro_timer_routine(unsigned int ticks, void *attr);
 
 /* this is the function called when a we need to request more funds/credit. We need to try and reserve more credit.
  * If we can't we need to put a new timer to kill the call at the appropriate time
  */
 void ro_session_ontimeout(struct ro_tl *tl);
 
-void resume_ro_session_ontimeout(struct interim_ccr *i_req, int timeour_or_error);
+void resume_ro_session_ontimeout(
+		struct interim_ccr *i_req, int timeour_or_error);
 
-#endif	/* RO_TIMER_H */
-
+#endif /* RO_TIMER_H */
