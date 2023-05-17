@@ -29,9 +29,9 @@
 #ifndef _CONF_NBODY_H_
 #define _CONF_NBODY_H_
 
-str* conf_agg_nbody(str* pres_user, str* pres_domain, str** body_array,
-		int n, int off_index);
-str* conf_body_setversion(subs_t *subs, str* body);
-void free_xml_body(char* body);
+str *conf_agg_nbody(str *pres_user, str *pres_domain, str **body_array, int n,
+		int off_index);
+str *conf_body_setversion(subs_t *subs, str *body);
+void free_xml_body(char *body);
 
 #endif
