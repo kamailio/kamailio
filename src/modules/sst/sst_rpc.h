@@ -38,7 +38,7 @@
 /**
  * The dialog mi helper function.
  */
-void sst_dialog_rpc_context_CB(struct dlg_cell* did, int type,
-		struct dlg_cb_params * params);
+void sst_dialog_rpc_context_CB(
+		struct dlg_cell *did, int type, struct dlg_cb_params *params);
 
 #endif /* _SST_RPC_H_ */
