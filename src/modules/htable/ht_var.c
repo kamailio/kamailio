@@ -24,104 +24,97 @@
 #include "ht_dmq.h"
 
 /* pkg copy */
-static ht_cell_t *_htc_local=NULL;
+static ht_cell_t *_htc_local = NULL;
 extern ht_cell_t *ht_expired_cell;
 
-int pv_get_ht_cell(struct sip_msg *msg,  pv_param_t *param,
-		pv_value_t *res)
+int pv_get_ht_cell(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	str htname;
-	ht_cell_t *htc=NULL;
+	ht_cell_t *htc = NULL;
 	ht_pv_t *hpv;
 
-	hpv = (ht_pv_t*)param->pvn.u.dname;
+	hpv = (ht_pv_t *)param->pvn.u.dname;
 
-	if(hpv->ht==NULL)
-	{
+	if(hpv->ht == NULL) {
 		hpv->ht = ht_get_table(&hpv->htname);
-		if(hpv->ht==NULL)
+		if(hpv->ht == NULL)
 			return pv_get_null(msg, param, res);
 	}
-	if(pv_printf_s(msg, hpv->pve, &htname)!=0)
-	{
+	if(pv_printf_s(msg, hpv->pve, &htname) != 0) {
 		LM_ERR("cannot get $sht name\n");
 		return -1;
 	}
 	htc = ht_cell_pkg_copy(hpv->ht, &htname, _htc_local);
-	if(_htc_local!=htc)
-	{
+	if(_htc_local != htc) {
 		ht_cell_pkg_free(_htc_local);
-		_htc_local=htc;
+		_htc_local = htc;
 	}
-	if(htc==NULL)
-	{
-		if(hpv->ht->flags==PV_VAL_INT)
+	if(htc == NULL) {
+		if(hpv->ht->flags == PV_VAL_INT)
 			return pv_get_sintval(msg, param, res, hpv->ht->initval.n);
 		return pv_get_null(msg, param, res);
 	}
 
-	if(htc->flags&AVP_VAL_STR)
+	if(htc->flags & AVP_VAL_STR)
 		return pv_get_strval(msg, param, res, &htc->value.s);
 
 	/* integer */
 	return pv_get_sintval(msg, param, res, htc->value.n);
 }
 
-int pv_set_ht_cell(struct sip_msg* msg, pv_param_t *param,
-		int op, pv_value_t *val)
+int pv_set_ht_cell(
+		struct sip_msg *msg, pv_param_t *param, int op, pv_value_t *val)
 {
 	str htname;
 	int_str isval;
 	ht_pv_t *hpv;
 
-	hpv = (ht_pv_t*)param->pvn.u.dname;
+	hpv = (ht_pv_t *)param->pvn.u.dname;
 
-	if(hpv->ht==NULL)
+	if(hpv->ht == NULL)
 		hpv->ht = ht_get_table(&hpv->htname);
-	if(hpv->ht==NULL)
+	if(hpv->ht == NULL)
 		return -1;
 
-	if(pv_printf_s(msg, hpv->pve, &htname)!=0)
-	{
+	if(pv_printf_s(msg, hpv->pve, &htname) != 0) {
 		LM_ERR("cannot get $sht name\n");
 		return -1;
 	}
 	LM_DBG("set value for $sht(%.*s=>%.*s)\n", hpv->htname.len, hpv->htname.s,
 			htname.len, htname.s);
-	if((val==NULL) || (val->flags&PV_VAL_NULL))
-	{
+	if((val == NULL) || (val->flags & PV_VAL_NULL)) {
 		/* delete it */
-		if (hpv->ht->dmqreplicate>0
-				&& ht_dmq_replicate_action(HT_DMQ_DEL_CELL, &hpv->htname,
-					&htname, 0, NULL, 0)!=0) {
+		if(hpv->ht->dmqreplicate > 0
+				&& ht_dmq_replicate_action(
+						   HT_DMQ_DEL_CELL, &hpv->htname, &htname, 0, NULL, 0)
+						   != 0) {
 			LM_ERR("dmq replication failed\n");
 		}
 		ht_del_cell(hpv->ht, &htname);
 		return 0;
 	}
 
-	if(val->flags&PV_TYPE_INT)
-	{
+	if(val->flags & PV_TYPE_INT) {
 		isval.n = val->ri;
-		if (hpv->ht->dmqreplicate>0
-				&& ht_dmq_replicate_action(HT_DMQ_SET_CELL, &hpv->htname,
-					&htname, 0, &isval, 1)!=0) {
+		if(hpv->ht->dmqreplicate > 0
+				&& ht_dmq_replicate_action(
+						   HT_DMQ_SET_CELL, &hpv->htname, &htname, 0, &isval, 1)
+						   != 0) {
 			LM_ERR("dmq replication failed\n");
 		}
-		if(ht_set_cell(hpv->ht, &htname, 0, &isval, 1)!=0)
-		{
+		if(ht_set_cell(hpv->ht, &htname, 0, &isval, 1) != 0) {
 			LM_ERR("cannot set $sht(%.*s)\n", htname.len, htname.s);
 			return -1;
 		}
 	} else {
 		isval.s = val->rs;
-		if (hpv->ht->dmqreplicate>0
+		if(hpv->ht->dmqreplicate > 0
 				&& ht_dmq_replicate_action(HT_DMQ_SET_CELL, &hpv->htname,
-					&htname, AVP_VAL_STR, &isval, 1)!=0) {
+						   &htname, AVP_VAL_STR, &isval, 1)
+						   != 0) {
 			LM_ERR("dmq replication failed\n");
 		}
-		if(ht_set_cell(hpv->ht, &htname, AVP_VAL_STR, &isval, 1)!=0)
-		{
+		if(ht_set_cell(hpv->ht, &htname, AVP_VAL_STR, &isval, 1) != 0) {
 			LM_ERR("cannot set $sht(%.*s)\n", htname.len, htname.s);
 			return -1;
 		}
@@ -132,14 +125,14 @@ int pv_set_ht_cell(struct sip_msg* msg, pv_param_t *param,
 void pv_ht_free_name(void *p)
 {
 	pv_name_t *pn;
-	ht_pv_t *hpv=NULL;
+	ht_pv_t *hpv = NULL;
 
-	if(p==NULL)
+	if(p == NULL)
 		return;
 
-	pn = (pv_name_t*)p;
-	hpv = (ht_pv_t*)pn->u.dname;
-	if(hpv==NULL)
+	pn = (pv_name_t *)p;
+	hpv = (ht_pv_t *)pn->u.dname;
+	if(hpv == NULL)
 		return;
 	if(hpv->pve)
 		pv_elem_free_all(hpv->pve);
@@ -148,44 +141,44 @@ void pv_ht_free_name(void *p)
 
 int pv_parse_ht_name(pv_spec_p sp, str *in)
 {
-	ht_pv_t *hpv=NULL;
+	ht_pv_t *hpv = NULL;
 	char *p;
 	str pvs;
 
-	if(in->s==NULL || in->len<=0)
+	if(in->s == NULL || in->len <= 0)
 		return -1;
 
-	hpv = (ht_pv_t*)pkg_malloc(sizeof(ht_pv_t));
-	if(hpv==NULL)
+	hpv = (ht_pv_t *)pkg_malloc(sizeof(ht_pv_t));
+	if(hpv == NULL)
 		return -1;
 
 	memset(hpv, 0, sizeof(ht_pv_t));
 
 	p = in->s;
 
-	while(p<in->s+in->len && (*p==' ' || *p=='\t' || *p=='\n' || *p=='\r'))
+	while(p < in->s + in->len
+			&& (*p == ' ' || *p == '\t' || *p == '\n' || *p == '\r'))
 		p++;
-	if(p>in->s+in->len || *p=='\0')
+	if(p > in->s + in->len || *p == '\0')
 		goto error;
 	hpv->htname.s = p;
-	while(p < in->s + in->len)
-	{
-		if(*p=='=' || *p==' ' || *p=='\t' || *p=='\n' || *p=='\r')
+	while(p < in->s + in->len) {
+		if(*p == '=' || *p == ' ' || *p == '\t' || *p == '\n' || *p == '\r')
 			break;
 		p++;
 	}
-	if(p>in->s+in->len || *p=='\0')
+	if(p > in->s + in->len || *p == '\0')
 		goto error;
 	hpv->htname.len = p - hpv->htname.s;
-	if(*p!='=')
-	{
-		while(p<in->s+in->len && (*p==' ' || *p=='\t' || *p=='\n' || *p=='\r'))
+	if(*p != '=') {
+		while(p < in->s + in->len
+				&& (*p == ' ' || *p == '\t' || *p == '\n' || *p == '\r'))
 			p++;
-		if(p>in->s+in->len || *p=='\0' || *p!='=')
+		if(p > in->s + in->len || *p == '\0' || *p != '=')
 			goto error;
 	}
 	p++;
-	if(*p!='>')
+	if(*p != '>')
 		goto error;
 	p++;
 
@@ -193,81 +186,78 @@ int pv_parse_ht_name(pv_spec_p sp, str *in)
 	pvs.s = p;
 	LM_DBG("htable [%.*s] - key [%.*s]\n", hpv->htname.len, hpv->htname.s,
 			pvs.len, pvs.s);
-	if(pv_parse_format(&pvs, &hpv->pve)<0 || hpv->pve==NULL)
-	{
+	if(pv_parse_format(&pvs, &hpv->pve) < 0 || hpv->pve == NULL) {
 		LM_ERR("wrong format[%.*s]\n", in->len, in->s);
 		goto error;
 	}
 	hpv->ht = ht_get_table(&hpv->htname);
-	sp->pvp.pvn.u.dname = (void*)hpv;
+	sp->pvp.pvn.u.dname = (void *)hpv;
 	sp->pvp.pvn.type = PV_NAME_OTHER;
 	sp->pvp.pvn.nfree = pv_ht_free_name;
 	return 0;
 
 error:
-	if(hpv!=NULL)
+	if(hpv != NULL)
 		pkg_free(hpv);
 	return -1;
 }
 
-int pv_get_ht_cell_expire(struct sip_msg *msg,  pv_param_t *param,
-		pv_value_t *res)
+int pv_get_ht_cell_expire(
+		struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	str htname;
 	ht_pv_t *hpv;
 	unsigned int now;
 
-	hpv = (ht_pv_t*)param->pvn.u.dname;
+	hpv = (ht_pv_t *)param->pvn.u.dname;
 
-	if(hpv->ht==NULL)
-	{
+	if(hpv->ht == NULL) {
 		hpv->ht = ht_get_table(&hpv->htname);
-		if(hpv->ht==NULL)
+		if(hpv->ht == NULL)
 			return pv_get_null(msg, param, res);
 	}
-	if(pv_printf_s(msg, hpv->pve, &htname)!=0)
-	{
+	if(pv_printf_s(msg, hpv->pve, &htname) != 0) {
 		LM_ERR("cannot get $sht name\n");
 		return -1;
 	}
-	if(ht_get_cell_expire(hpv->ht, &htname, &now)!=0)
+	if(ht_get_cell_expire(hpv->ht, &htname, &now) != 0)
 		return pv_get_null(msg, param, res);
 	/* integer */
 	return pv_get_uintval(msg, param, res, now);
 }
 
-int pv_set_ht_cell_expire(struct sip_msg* msg, pv_param_t *param,
-		int op, pv_value_t *val)
+int pv_set_ht_cell_expire(
+		struct sip_msg *msg, pv_param_t *param, int op, pv_value_t *val)
 {
 	str htname;
 	int_str isval;
 	ht_pv_t *hpv;
 
-	hpv = (ht_pv_t*)param->pvn.u.dname;
+	hpv = (ht_pv_t *)param->pvn.u.dname;
 
-	if(hpv->ht==NULL)
+	if(hpv->ht == NULL)
 		hpv->ht = ht_get_table(&hpv->htname);
-	if(hpv->ht==NULL)
+	if(hpv->ht == NULL)
 		return -1;
 
-	if(pv_printf_s(msg, hpv->pve, &htname)!=0)
-	{
+	if(pv_printf_s(msg, hpv->pve, &htname) != 0) {
 		LM_ERR("cannot get $sht name\n");
 		return -1;
 	}
 	LM_DBG("set expire value for $sht(%.*s=>%.*s)\n", hpv->htname.len,
 			hpv->htname.s, htname.len, htname.s);
 	isval.n = 0;
-	if(val!=NULL)
-	{
-		if(val->flags&PV_TYPE_INT)
+	if(val != NULL) {
+		if(val->flags & PV_TYPE_INT)
 			isval.n = val->ri;
 	}
-	if (hpv->ht->dmqreplicate>0 && ht_dmq_replicate_action(HT_DMQ_SET_CELL_EXPIRE, &hpv->htname, &htname, 0, &isval, 0)!=0) {
+	if(hpv->ht->dmqreplicate > 0
+			&& ht_dmq_replicate_action(HT_DMQ_SET_CELL_EXPIRE, &hpv->htname,
+					   &htname, 0, &isval, 0)
+					   != 0) {
 		LM_ERR("dmq replication failed\n");
 	}
-	if(ht_set_cell_expire(hpv->ht, &htname, 0, &isval)!=0)
-	{
+	if(ht_set_cell_expire(hpv->ht, &htname, 0, &isval) != 0) {
 		LM_ERR("cannot set $sht(%.*s)\n", htname.len, htname.s);
 		return -1;
 	}
@@ -275,23 +265,20 @@ int pv_set_ht_cell_expire(struct sip_msg* msg, pv_param_t *param,
 	return 0;
 }
 
-int pv_get_ht_cn(struct sip_msg *msg,  pv_param_t *param,
-		pv_value_t *res)
+int pv_get_ht_cn(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	str htname;
 	ht_pv_t *hpv;
 	int cnt = 0;
 
-	hpv = (ht_pv_t*)param->pvn.u.dname;
+	hpv = (ht_pv_t *)param->pvn.u.dname;
 
-	if(hpv->ht==NULL)
-	{
+	if(hpv->ht == NULL) {
 		hpv->ht = ht_get_table(&hpv->htname);
-		if(hpv->ht==NULL)
+		if(hpv->ht == NULL)
 			return pv_get_null(msg, param, res);
 	}
-	if(pv_printf_s(msg, hpv->pve, &htname)!=0)
-	{
+	if(pv_printf_s(msg, hpv->pve, &htname) != 0) {
 		LM_ERR("cannot get $sht name\n");
 		return -1;
 	}
@@ -302,23 +289,20 @@ int pv_get_ht_cn(struct sip_msg *msg,  pv_param_t *param,
 	return pv_get_sintval(msg, param, res, cnt);
 }
 
-int pv_get_ht_cv(struct sip_msg *msg,  pv_param_t *param,
-		pv_value_t *res)
+int pv_get_ht_cv(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	str htname;
 	ht_pv_t *hpv;
 	int cnt = 0;
 
-	hpv = (ht_pv_t*)param->pvn.u.dname;
+	hpv = (ht_pv_t *)param->pvn.u.dname;
 
-	if(hpv->ht==NULL)
-	{
+	if(hpv->ht == NULL) {
 		hpv->ht = ht_get_table(&hpv->htname);
-		if(hpv->ht==NULL)
+		if(hpv->ht == NULL)
 			return pv_get_null(msg, param, res);
 	}
-	if(pv_printf_s(msg, hpv->pve, &htname)!=0)
-	{
+	if(pv_printf_s(msg, hpv->pve, &htname) != 0) {
 		LM_ERR("cannot get $sht name\n");
 		return -1;
 	}
@@ -329,81 +313,76 @@ int pv_get_ht_cv(struct sip_msg *msg,  pv_param_t *param,
 	return pv_get_sintval(msg, param, res, cnt);
 }
 
-int pv_get_ht_add(struct sip_msg *msg,  pv_param_t *param,
-		pv_value_t *res, int val)
+int pv_get_ht_add(
+		struct sip_msg *msg, pv_param_t *param, pv_value_t *res, int val)
 {
 	str htname;
-	ht_cell_t *htc=NULL;
+	ht_cell_t *htc = NULL;
 	ht_pv_t *hpv;
 
-	hpv = (ht_pv_t*)param->pvn.u.dname;
+	hpv = (ht_pv_t *)param->pvn.u.dname;
 
-	if(hpv->ht==NULL)
-	{
+	if(hpv->ht == NULL) {
 		hpv->ht = ht_get_table(&hpv->htname);
-		if(hpv->ht==NULL)
+		if(hpv->ht == NULL)
 			return pv_get_null(msg, param, res);
 	}
-	if(pv_printf_s(msg, hpv->pve, &htname)!=0)
-	{
+	if(pv_printf_s(msg, hpv->pve, &htname) != 0) {
 		LM_ERR("cannot get $sht name\n");
 		return -1;
 	}
 	htc = ht_cell_value_add(hpv->ht, &htname, val, _htc_local);
-	if(_htc_local!=htc)
-	{
+	if(_htc_local != htc) {
 		ht_cell_pkg_free(_htc_local);
-		_htc_local=htc;
+		_htc_local = htc;
 	}
-	if(htc==NULL)
-	{
+	if(htc == NULL) {
 		return pv_get_null(msg, param, res);
 	}
 
-	if(htc->flags&AVP_VAL_STR)
+	if(htc->flags & AVP_VAL_STR)
 		return pv_get_null(msg, param, res);
 
 	/* integer */
-	if (hpv->ht->dmqreplicate>0) {
-		if (ht_dmq_replicate_action(HT_DMQ_SET_CELL, &hpv->htname, &htname, 0, &htc->value, 1)!=0) {
+	if(hpv->ht->dmqreplicate > 0) {
+		if(ht_dmq_replicate_action(
+				   HT_DMQ_SET_CELL, &hpv->htname, &htname, 0, &htc->value, 1)
+				!= 0) {
 			LM_ERR("dmq replication failed\n");
 		}
 	}
 	return pv_get_sintval(msg, param, res, htc->value.n);
 }
 
-int pv_get_ht_inc(struct sip_msg *msg,  pv_param_t *param,
-		pv_value_t *res)
+int pv_get_ht_inc(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	return pv_get_ht_add(msg, param, res, 1);
 }
 
-int pv_get_ht_dec(struct sip_msg *msg,  pv_param_t *param,
-		pv_value_t *res)
+int pv_get_ht_dec(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	return pv_get_ht_add(msg, param, res, -1);
 }
 
 int pv_parse_ht_expired_cell(pv_spec_t *sp, str *in)
 {
-	if(sp==NULL || in==NULL || in->len<=0)
+	if(sp == NULL || in == NULL || in->len <= 0)
 		return -1;
-	switch(in->len)
-	{
+	switch(in->len) {
 		case 3:
-			if(strncmp(in->s, "key", in->len)==0) {
+			if(strncmp(in->s, "key", in->len) == 0) {
 				sp->pvp.pvn.u.isname.name.n = 0;
 			} else {
 				goto error;
 			}
-		break;
+			break;
 		case 5:
-			if(strncmp(in->s, "value", in->len)==0) {
+			if(strncmp(in->s, "value", in->len) == 0) {
 				sp->pvp.pvn.u.isname.name.n = 1;
 			} else {
 				goto error;
 			}
-		break;
+			break;
 		default:
 			goto error;
 	}
@@ -417,22 +396,23 @@ error:
 	return -1;
 }
 
-int pv_get_ht_expired_cell(struct sip_msg *msg, pv_param_t *param,
-		pv_value_t *res)
+int pv_get_ht_expired_cell(
+		struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
-	if (res == NULL || ht_expired_cell == NULL) {
+	if(res == NULL || ht_expired_cell == NULL) {
 		return -1;
 	}
 
-	switch(param->pvn.u.isname.name.n)
-	{
+	switch(param->pvn.u.isname.name.n) {
 		case 0:
 			return pv_get_strval(msg, param, res, &ht_expired_cell->name);
 		case 1:
-			if(ht_expired_cell->flags&AVP_VAL_STR) {
-				return pv_get_strval(msg, param, res, &ht_expired_cell->value.s);
+			if(ht_expired_cell->flags & AVP_VAL_STR) {
+				return pv_get_strval(
+						msg, param, res, &ht_expired_cell->value.s);
 			} else {
-				return pv_get_sintval(msg, param, res, ht_expired_cell->value.n);
+				return pv_get_sintval(
+						msg, param, res, ht_expired_cell->value.n);
 			}
 		default:
 			return pv_get_null(msg, param, res);
@@ -441,8 +421,7 @@ int pv_get_ht_expired_cell(struct sip_msg *msg, pv_param_t *param,
 
 int pv_parse_iterator_name(pv_spec_t *sp, str *in)
 {
-	if(in->len<=0)
-	{
+	if(in->len <= 0) {
 		return -1;
 	}
 
@@ -456,14 +435,13 @@ int pv_parse_iterator_name(pv_spec_t *sp, str *in)
 
 int pv_get_iterator_key(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 {
-	ht_cell_t *it=NULL;
-	if (res == NULL)
-	{
+	ht_cell_t *it = NULL;
+	if(res == NULL) {
 		return -1;
 	}
 
 	it = ht_iterator_get_current(&param->pvn.u.isname.name.s);
-	if(it==NULL) {
+	if(it == NULL) {
 		return pv_get_null(msg, param, res);
 	}
 	return pv_get_strval(msg, param, res, &it->name);
@@ -471,17 +449,16 @@ int pv_get_iterator_key(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 
 int pv_get_iterator_val(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 {
-	ht_cell_t *it=NULL;
-	if (res == NULL)
-	{
+	ht_cell_t *it = NULL;
+	if(res == NULL) {
 		return -1;
 	}
 
 	it = ht_iterator_get_current(&param->pvn.u.isname.name.s);
-	if(it==NULL) {
+	if(it == NULL) {
 		return pv_get_null(msg, param, res);
 	}
-	if(it->flags&AVP_VAL_STR)
+	if(it->flags & AVP_VAL_STR)
 		return pv_get_strval(msg, param, res, &it->value.s);
 
 	/* integer */

@@ -25,20 +25,21 @@
 #include "../../core/sr_module.h"
 #include "../../core/usr_avp.h"
 
-typedef int (*ht_api_set_cell_f)(str *hname, str *name, int type,
-		int_str *val, int mode);
-typedef ht_cell_t* (*ht_api_get_cell_clone_f)(str *hname, str *name);
+typedef int (*ht_api_set_cell_f)(
+		str *hname, str *name, int type, int_str *val, int mode);
+typedef ht_cell_t *(*ht_api_get_cell_clone_f)(str *hname, str *name);
 typedef int (*ht_api_del_cell_f)(str *hname, str *name);
 
-typedef int (*ht_api_set_cell_expire_f)(str *hname, str *name,
-		int type, int_str *val);
-typedef int (*ht_api_get_cell_expire_f)(str *hname, str *name,
-		unsigned int *val);
+typedef int (*ht_api_set_cell_expire_f)(
+		str *hname, str *name, int type, int_str *val);
+typedef int (*ht_api_get_cell_expire_f)(
+		str *hname, str *name, unsigned int *val);
 
 typedef int (*ht_api_rm_cell_re_f)(str *hname, str *sre, int mode);
 typedef int (*ht_api_count_cells_re_f)(str *hname, str *sre, int mode);
 
-typedef struct htable_api {
+typedef struct htable_api
+{
 	ht_api_set_cell_f set;
 	ht_api_get_cell_clone_f get_clone;
 	ht_api_del_cell_f rm;
@@ -48,8 +49,8 @@ typedef struct htable_api {
 	ht_api_count_cells_re_f count_re;
 } htable_api_t;
 
-typedef int (*bind_htable_f)(htable_api_t* api);
-int bind_htable(htable_api_t* api);
+typedef int (*bind_htable_f)(htable_api_t *api);
+int bind_htable(htable_api_t *api);
 
 /**
  * @brief Load the Sanity API
@@ -63,8 +64,7 @@ static inline int htable_load_api(htable_api_t *api)
 		LM_ERR("cannot find bind_htable\n");
 		return -1;
 	}
-	if(bindhtable(api)<0)
-	{
+	if(bindhtable(api) < 0) {
 		LM_ERR("cannot bind htable api\n");
 		return -1;
 	}

@@ -18,33 +18,28 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-		       
+
 #ifndef _HT_VAR_H_
 #define _HT_VAR_H_
 
 #include "../../core/pvar.h"
 
-int pv_get_ht_cell(struct sip_msg *msg, pv_param_t *param,
-		pv_value_t *res);
-int pv_set_ht_cell(struct sip_msg* msg, pv_param_t *param,
-		int op, pv_value_t *val);
+int pv_get_ht_cell(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
+int pv_set_ht_cell(
+		struct sip_msg *msg, pv_param_t *param, int op, pv_value_t *val);
 int pv_parse_ht_name(pv_spec_p sp, str *in);
-int pv_get_ht_cell_expire(struct sip_msg *msg, pv_param_t *param,
-		pv_value_t *res);
-int pv_set_ht_cell_expire(struct sip_msg* msg, pv_param_t *param,
-		int op, pv_value_t *val);
-int pv_get_ht_cn(struct sip_msg *msg,  pv_param_t *param,
-		pv_value_t *res);
-int pv_get_ht_cv(struct sip_msg *msg,  pv_param_t *param,
-		pv_value_t *res);
-int pv_get_ht_inc(struct sip_msg *msg,  pv_param_t *param,
-		pv_value_t *res);
-int pv_get_ht_dec(struct sip_msg *msg,  pv_param_t *param,
-		pv_value_t *res);
+int pv_get_ht_cell_expire(
+		struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
+int pv_set_ht_cell_expire(
+		struct sip_msg *msg, pv_param_t *param, int op, pv_value_t *val);
+int pv_get_ht_cn(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
+int pv_get_ht_cv(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
+int pv_get_ht_inc(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
+int pv_get_ht_dec(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 
 int pv_parse_ht_expired_cell(pv_spec_t *sp, str *in);
-int pv_get_ht_expired_cell(struct sip_msg *msg, pv_param_t *param,
-		pv_value_t *res);
+int pv_get_ht_expired_cell(
+		struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 
 int pv_parse_iterator_name(pv_spec_t *sp, str *in);
 int pv_get_iterator_key(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
