@@ -22,7 +22,6 @@
  */
 
 
-
 #ifndef _IMC_H_
 #define _IMC_H_
 
@@ -39,7 +38,8 @@ extern str extra_hdrs;
 extern int imc_create_on_join;
 extern int imc_check_on_create;
 
-struct imc_uri {
+struct imc_uri
+{
 	str uri;
 	struct sip_uri parsed;
 };
