@@ -96,8 +96,8 @@
 #endif
 
 /* BSD variant */
-#if defined(DUK_F_FREEBSD) || defined(DUK_F_NETBSD) || defined(DUK_F_OPENBSD) || \
-    defined(__bsdi__) || defined(__DragonFly__)
+#if defined(DUK_F_FREEBSD) || defined(DUK_F_NETBSD) || defined(DUK_F_OPENBSD) \
+		|| defined(__bsdi__) || defined(__DragonFly__)
 #define DUK_F_BSD
 #endif
 
@@ -138,8 +138,8 @@
 #endif
 
 /* Windows, both 32-bit and 64-bit */
-#if defined(_WIN32) || defined(WIN32) || defined(_WIN64) || defined(WIN64) || \
-    defined(__WIN32__) || defined(__TOS_WIN__) || defined(__WINDOWS__)
+#if defined(_WIN32) || defined(WIN32) || defined(_WIN64) || defined(WIN64) \
+		|| defined(__WIN32__) || defined(__TOS_WIN__) || defined(__WINDOWS__)
 #define DUK_F_WINDOWS
 #if defined(_WIN64) || defined(WIN64)
 #define DUK_F_WIN64
@@ -220,8 +220,8 @@
 #endif
 
 /* Generic Unix (includes Cygwin) */
-#if defined(__unix) || defined(__unix__) || defined(unix) || \
-    defined(DUK_F_LINUX) || defined(DUK_F_BSD)
+#if defined(__unix) || defined(__unix__) || defined(unix) \
+		|| defined(DUK_F_LINUX) || defined(DUK_F_BSD)
 #define DUK_F_UNIX
 #endif
 
@@ -232,18 +232,17 @@
  * With DUK_F_OLD_SOLARIS the <sys/isa_defs.h> header must be included
  * before this.
  */
-#if defined(__amd64__) || defined(__amd64) || \
-    defined(__x86_64__) || defined(__x86_64) || \
-    defined(_M_X64) || defined(_M_AMD64)
+#if defined(__amd64__) || defined(__amd64) || defined(__x86_64__) \
+		|| defined(__x86_64) || defined(_M_X64) || defined(_M_AMD64)
 #if defined(__ILP32__) || defined(_ILP32)
 #define DUK_F_X32
 #else
 #define DUK_F_X64
 #endif
-#elif defined(i386) || defined(__i386) || defined(__i386__) || \
-      defined(__i486__) || defined(__i586__) || defined(__i686__) || \
-      defined(__IA32__) || defined(_M_IX86) || defined(__X86__) || \
-      defined(_X86_) || defined(__THW_INTEL__) || defined(__I86__)
+#elif defined(i386) || defined(__i386) || defined(__i386__)            \
+		|| defined(__i486__) || defined(__i586__) || defined(__i686__) \
+		|| defined(__IA32__) || defined(_M_IX86) || defined(__X86__)   \
+		|| defined(_X86_) || defined(__THW_INTEL__) || defined(__I86__)
 #if defined(__LP64__) || defined(_LP64)
 /* This should not really happen, but would indicate x64. */
 #define DUK_F_X64
@@ -253,9 +252,11 @@
 #endif
 
 /* ARM */
-#if defined(__arm__) || defined(__thumb__) || defined(_ARM) || defined(_M_ARM) || defined(_M_ARM64) || defined(__aarch64__)
+#if defined(__arm__) || defined(__thumb__) || defined(_ARM) || defined(_M_ARM) \
+		|| defined(_M_ARM64) || defined(__aarch64__)
 #define DUK_F_ARM
-#if defined(__LP64__) || defined(_LP64) || defined(__arm64) || defined(__arm64__) || defined(_M_ARM64) || defined(__aarch64__)
+#if defined(__LP64__) || defined(_LP64) || defined(__arm64) \
+		|| defined(__arm64__) || defined(_M_ARM64) || defined(__aarch64__)
 #define DUK_F_ARM64
 #else
 #define DUK_F_ARM32
@@ -263,14 +264,14 @@
 #endif
 
 /* MIPS.  Related defines: __MIPSEB__, __MIPSEL__, __mips_isa_rev, __LP64__ */
-#if defined(__mips__) || defined(mips) || defined(_MIPS_ISA) || \
-    defined(_R3000) || defined(_R4000) || defined(_R5900) || \
-    defined(_MIPS_ISA_MIPS1) || defined(_MIPS_ISA_MIPS2) || \
-    defined(_MIPS_ISA_MIPS3) || defined(_MIPS_ISA_MIPS4) || \
-    defined(__mips) || defined(__MIPS__)
+#if defined(__mips__) || defined(mips) || defined(_MIPS_ISA)     \
+		|| defined(_R3000) || defined(_R4000) || defined(_R5900) \
+		|| defined(_MIPS_ISA_MIPS1) || defined(_MIPS_ISA_MIPS2)  \
+		|| defined(_MIPS_ISA_MIPS3) || defined(_MIPS_ISA_MIPS4)  \
+		|| defined(__mips) || defined(__MIPS__)
 #define DUK_F_MIPS
-#if defined(__LP64__) || defined(_LP64) || defined(__mips64) || \
-    defined(__mips64__) || defined(__mips_n64)
+#if defined(__LP64__) || defined(_LP64) || defined(__mips64) \
+		|| defined(__mips64__) || defined(__mips_n64)
 #define DUK_F_MIPS64
 #else
 #define DUK_F_MIPS32
@@ -291,9 +292,9 @@
 #if defined(__riscv)
 #define DUK_F_RISCV
 #if defined(__riscv_xlen)
-#if (__riscv_xlen == 32)
+#if(__riscv_xlen == 32)
 #define DUK_F_RISCV32
-#elif (__riscv_xlen == 64)
+#elif(__riscv_xlen == 64)
 #define DUK_F_RISCV64
 #else
 #error __riscv_xlen has unsupported value (not 32 or 64)
@@ -301,15 +302,13 @@
 #else
 #error __riscv defined without __riscv_xlen
 #endif
-#endif  /* __riscv */
+#endif /* __riscv */
 
 /* SuperH */
-#if defined(__sh__) || \
-    defined(__sh1__) || defined(__SH1__) || \
-    defined(__sh2__) || defined(__SH2__) || \
-    defined(__sh3__) || defined(__SH3__) || \
-    defined(__sh4__) || defined(__SH4__) || \
-    defined(__sh5__) || defined(__SH5__)
+#if defined(__sh__) || defined(__sh1__) || defined(__SH1__)         \
+		|| defined(__sh2__) || defined(__SH2__) || defined(__sh3__) \
+		|| defined(__SH3__) || defined(__sh4__) || defined(__SH4__) \
+		|| defined(__sh5__) || defined(__SH5__)
 #define DUK_F_SUPERH
 #endif
 
@@ -341,7 +340,8 @@
 #define DUK_F_GCC
 #if defined(__GNUC__) && defined(__GNUC_MINOR__) && defined(__GNUC_PATCHLEVEL__)
 /* Convenience, e.g. gcc 4.5.1 == 40501; http://stackoverflow.com/questions/6031819/emulating-gccs-builtin-unreachable */
-#define DUK_F_GCC_VERSION  (__GNUC__ * 10000L + __GNUC_MINOR__ * 100L + __GNUC_PATCHLEVEL__)
+#define DUK_F_GCC_VERSION \
+	(__GNUC__ * 10000L + __GNUC_MINOR__ * 100L + __GNUC_PATCHLEVEL__)
 #else
 #error cannot figure out gcc version
 #endif
@@ -360,13 +360,13 @@
  */
 #define DUK_F_MSVC
 #if defined(_MSC_FULL_VER)
-#if (_MSC_FULL_VER > 100000000)
+#if(_MSC_FULL_VER > 100000000)
 #define DUK_F_MSVC_FULL_VER _MSC_FULL_VER
 #else
 #define DUK_F_MSCV_FULL_VER (_MSC_FULL_VER * 10)
 #endif
 #endif
-#endif  /* _MSC_VER */
+#endif /* _MSC_VER */
 
 /* TinyC */
 #if defined(__TINYC__)
@@ -422,9 +422,9 @@
 #endif
 
 /* Use _setjmp() on Apple by default, see GH-55. */
-#define DUK_JMPBUF_TYPE       jmp_buf
-#define DUK_SETJMP(jb)        _setjmp((jb))
-#define DUK_LONGJMP(jb)       _longjmp((jb), 1)
+#define DUK_JMPBUF_TYPE jmp_buf
+#define DUK_SETJMP(jb) _setjmp((jb))
+#define DUK_LONGJMP(jb) _longjmp((jb), 1)
 #elif defined(DUK_F_ORBIS)
 /* --- Orbis --- */
 /* Orbis = PS4 */
@@ -438,7 +438,7 @@
 #include <sys/time.h>
 #include <time.h>
 
-#define DUK_USE_OS_STRING  "orbis"
+#define DUK_USE_OS_STRING "orbis"
 #elif defined(DUK_F_OPENBSD)
 /* --- OpenBSD --- */
 /* http://www.monkey.org/openbsd/archive/ports/0401/msg00089.html */
@@ -452,7 +452,7 @@
 #include <sys/time.h>
 #include <time.h>
 
-#define DUK_USE_OS_STRING  "openbsd"
+#define DUK_USE_OS_STRING "openbsd"
 #elif defined(DUK_F_BSD)
 /* --- Generic BSD --- */
 #define DUK_USE_DATE_NOW_GETTIMEOFDAY
@@ -465,7 +465,7 @@
 #include <sys/time.h>
 #include <time.h>
 
-#define DUK_USE_OS_STRING  "bsd"
+#define DUK_USE_OS_STRING "bsd"
 #elif defined(DUK_F_TOS)
 /* --- Atari ST TOS --- */
 #define DUK_USE_DATE_NOW_TIME
@@ -474,7 +474,7 @@
 #define DUK_USE_DATE_FMT_STRFTIME
 #include <time.h>
 
-#define DUK_USE_OS_STRING  "tos"
+#define DUK_USE_OS_STRING "tos"
 
 /* TOS on M68K is always big endian. */
 #if !defined(DUK_USE_BYTEORDER) && defined(DUK_F_M68K)
@@ -590,8 +590,8 @@
 /* QueryPerformanceCounter() may go backwards in Windows XP, so enable for
  * Vista and later: https://msdn.microsoft.com/en-us/library/windows/desktop/dn553408(v=vs.85).aspx#qpc_support_in_windows_versions
  */
-#if !defined(DUK_USE_GET_MONOTONIC_TIME_WINDOWS_QPC) && \
-    defined(_WIN32_WINNT) && (_WIN32_WINNT >= 0x0600)
+#if !defined(DUK_USE_GET_MONOTONIC_TIME_WINDOWS_QPC) && defined(_WIN32_WINNT) \
+		&& (_WIN32_WINNT >= 0x0600)
 #define DUK_USE_GET_MONOTONIC_TIME_WINDOWS_QPC
 #endif
 
@@ -623,8 +623,8 @@
 /* --- QNX --- */
 #if defined(DUK_F_QNX) && defined(DUK_COMPILING_DUKTAPE)
 /* See: /opt/qnx650/target/qnx6/usr/include/sys/platform.h */
-#define _XOPEN_SOURCE    600
-#define _POSIX_C_SOURCE  200112L
+#define _XOPEN_SOURCE 600
+#define _POSIX_C_SOURCE 200112L
 #endif
 
 #define DUK_USE_DATE_NOW_GETTIMEOFDAY
@@ -640,7 +640,7 @@
 #elif defined(DUK_F_TINSPIRE)
 /* --- TI-Nspire --- */
 #if defined(DUK_COMPILING_DUKTAPE) && !defined(_XOPEN_SOURCE)
-#define _XOPEN_SOURCE    /* e.g. strptime */
+#define _XOPEN_SOURCE /* e.g. strptime */
 #endif
 
 #define DUK_USE_DATE_NOW_GETTIMEOFDAY
@@ -657,22 +657,22 @@
 /* --- Emscripten --- */
 #if defined(DUK_COMPILING_DUKTAPE)
 #if !defined(_POSIX_C_SOURCE)
-#define _POSIX_C_SOURCE  200809L
+#define _POSIX_C_SOURCE 200809L
 #endif
 #if !defined(_GNU_SOURCE)
-#define _GNU_SOURCE      /* e.g. getdate_r */
+#define _GNU_SOURCE /* e.g. getdate_r */
 #endif
 #if !defined(_XOPEN_SOURCE)
-#define _XOPEN_SOURCE    /* e.g. strptime */
+#define _XOPEN_SOURCE /* e.g. strptime */
 #endif
-#endif  /* DUK_COMPILING_DUKTAPE */
+#endif /* DUK_COMPILING_DUKTAPE */
 
 #include <sys/types.h>
 #if defined(DUK_F_BCC)
 /* no endian.h */
 #else
 #include <endian.h>
-#endif  /* DUK_F_BCC */
+#endif /* DUK_F_BCC */
 #include <sys/param.h>
 #include <sys/time.h>
 #include <time.h>
@@ -688,15 +688,15 @@
 /* --- Android --- */
 #if defined(DUK_COMPILING_DUKTAPE)
 #if !defined(_POSIX_C_SOURCE)
-#define _POSIX_C_SOURCE  200809L
+#define _POSIX_C_SOURCE 200809L
 #endif
 #if !defined(_GNU_SOURCE)
-#define _GNU_SOURCE      /* e.g. getdate_r */
+#define _GNU_SOURCE /* e.g. getdate_r */
 #endif
 #if !defined(_XOPEN_SOURCE)
-#define _XOPEN_SOURCE    /* e.g. strptime */
+#define _XOPEN_SOURCE /* e.g. strptime */
 #endif
-#endif  /* DUK_COMPILING_DUKTAPE */
+#endif /* DUK_COMPILING_DUKTAPE */
 
 #include <sys/types.h>
 #if defined(DUK_F_BCC)
@@ -704,7 +704,7 @@
 #else
 #include <endian.h>
 #include <stdint.h>
-#endif  /* DUK_F_BCC */
+#endif /* DUK_F_BCC */
 #include <sys/param.h>
 #include <sys/time.h>
 #include <time.h>
@@ -714,7 +714,7 @@
 #define DUK_USE_DATE_PRS_STRPTIME
 #define DUK_USE_DATE_FMT_STRFTIME
 
-#if 0  /* XXX: safe condition? */
+#if 0 /* XXX: safe condition? */
 #define DUK_USE_GET_MONOTONIC_TIME_CLOCK_GETTIME
 #endif
 
@@ -723,15 +723,15 @@
 /* --- Linux --- */
 #if defined(DUK_COMPILING_DUKTAPE)
 #if !defined(_POSIX_C_SOURCE)
-#define _POSIX_C_SOURCE  200809L
+#define _POSIX_C_SOURCE 200809L
 #endif
 #if !defined(_GNU_SOURCE)
-#define _GNU_SOURCE      /* e.g. getdate_r */
+#define _GNU_SOURCE /* e.g. getdate_r */
 #endif
 #if !defined(_XOPEN_SOURCE)
-#define _XOPEN_SOURCE    /* e.g. strptime */
+#define _XOPEN_SOURCE /* e.g. strptime */
 #endif
-#endif  /* DUK_COMPILING_DUKTAPE */
+#endif /* DUK_COMPILING_DUKTAPE */
 
 #include <sys/types.h>
 #if defined(DUK_F_BCC)
@@ -739,7 +739,7 @@
 #else
 #include <endian.h>
 #include <stdint.h>
-#endif  /* DUK_F_BCC */
+#endif /* DUK_F_BCC */
 #include <sys/param.h>
 #include <sys/time.h>
 #include <time.h>
@@ -749,7 +749,7 @@
 #define DUK_USE_DATE_PRS_STRPTIME
 #define DUK_USE_DATE_FMT_STRFTIME
 
-#if 0  /* XXX: safe condition? */
+#if 0 /* XXX: safe condition? */
 #define DUK_USE_GET_MONOTONIC_TIME_CLOCK_GETTIME
 #endif
 
@@ -768,9 +768,9 @@
 #if !defined(DUK_USE_BYTEORDER)
 #define DUK_USE_BYTEORDER 3
 #endif
-#else  /* DUK_F_OLD_SOLARIS */
+#else /* DUK_F_OLD_SOLARIS */
 #include <sys/param.h>
-#endif  /* DUK_F_OLD_SOLARIS */
+#endif /* DUK_F_OLD_SOLARIS */
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -831,9 +831,9 @@
 #include <sys/time.h>
 #include <time.h>
 
-#define DUK_JMPBUF_TYPE       jmp_buf
-#define DUK_SETJMP(jb)        _setjmp((jb))
-#define DUK_LONGJMP(jb)       _longjmp((jb), 1)
+#define DUK_JMPBUF_TYPE jmp_buf
+#define DUK_SETJMP(jb) _setjmp((jb))
+#define DUK_LONGJMP(jb) _longjmp((jb), 1)
 
 #define DUK_USE_OS_STRING "windows"
 #elif defined(DUK_F_UNIX)
@@ -865,15 +865,15 @@
 #include <time.h>
 
 #define DUK_USE_OS_STRING "unknown"
-#endif  /* autodetect platform */
+#endif /* autodetect platform */
 
 /* Shared includes: C89 */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdarg.h>  /* varargs */
+#include <stdarg.h> /* varargs */
 #include <setjmp.h>
-#include <stddef.h>  /* e.g. ptrdiff_t */
+#include <stddef.h> /* e.g. ptrdiff_t */
 #include <math.h>
 #include <limits.h>
 
@@ -908,8 +908,8 @@
 /* FreeBSD, -m32, and clang prior to 5.0 has union aliasing issues which
  * break duk_tval copying.  Disable packed duk_tval automatically.
  */
-#if defined(DUK_F_FREEBSD) && defined(DUK_F_X86) && \
-    defined(__clang__) && defined(__clang_major__) && (__clang_major__ < 5)
+#if defined(DUK_F_FREEBSD) && defined(DUK_F_X86) && defined(__clang__) \
+		&& defined(__clang_major__) && (__clang_major__ < 5)
 #undef DUK_USE_PACKED_TVAL
 #endif
 #define DUK_F_PACKED_TVAL_PROVIDED
@@ -1018,7 +1018,7 @@
 /* These are necessary wild guesses. */
 #define DUK_USE_ARCH_STRING "generic"
 /* Rely on autodetection for byte order, alignment, and packed tval. */
-#endif  /* autodetect architecture */
+#endif /* autodetect architecture */
 
 /*
  *  Compiler autodetection
@@ -1028,33 +1028,36 @@
 /* --- Clang --- */
 #if defined(DUK_F_C99) || defined(DUK_F_CPP11)
 /* C99 / C++11 and above: rely on va_copy() which is required. */
-#define DUK_VA_COPY(dest,src) va_copy(dest,src)
+#define DUK_VA_COPY(dest, src) va_copy(dest, src)
 #else
 /* Clang: assume we have __va_copy() in non-C99 mode. */
-#define DUK_VA_COPY(dest,src) __va_copy(dest,src)
+#define DUK_VA_COPY(dest, src) __va_copy(dest, src)
 #endif
 
-#define DUK_NORETURN(decl)  decl __attribute__((noreturn))
+#define DUK_NORETURN(decl) decl __attribute__((noreturn))
 
 #if defined(__clang__) && defined(__has_builtin)
 #if __has_builtin(__builtin_unreachable)
-#define DUK_UNREACHABLE()  do { __builtin_unreachable(); } while (0)
+#define DUK_UNREACHABLE()        \
+	do {                         \
+		__builtin_unreachable(); \
+	} while(0)
 #endif
 #endif
 
 #define DUK_USE_BRANCH_HINTS
-#define DUK_LIKELY(x)    __builtin_expect((x), 1)
-#define DUK_UNLIKELY(x)  __builtin_expect((x), 0)
+#define DUK_LIKELY(x) __builtin_expect((x), 1)
+#define DUK_UNLIKELY(x) __builtin_expect((x), 0)
 #if defined(__clang__) && defined(__has_builtin)
 #if __has_builtin(__builtin_unpredictable)
-#define DUK_UNPREDICTABLE(x)  __builtin_unpredictable((x))
+#define DUK_UNPREDICTABLE(x) __builtin_unpredictable((x))
 #endif
 #endif
 
 #if defined(DUK_F_C99) || defined(DUK_F_CPP11)
-#define DUK_NOINLINE        __attribute__((noinline))
-#define DUK_INLINE          inline
-#define DUK_ALWAYS_INLINE   inline __attribute__((always_inline))
+#define DUK_NOINLINE __attribute__((noinline))
+#define DUK_INLINE inline
+#define DUK_ALWAYS_INLINE inline __attribute__((always_inline))
 #endif
 
 /* DUK_HOT */
@@ -1065,48 +1068,52 @@
  * compiling Duktape or the application.
  */
 #if defined(DUK_COMPILING_DUKTAPE)
-#define DUK_EXTERNAL_DECL  extern __declspec(dllexport)
-#define DUK_EXTERNAL       __declspec(dllexport)
+#define DUK_EXTERNAL_DECL extern __declspec(dllexport)
+#define DUK_EXTERNAL __declspec(dllexport)
 #else
-#define DUK_EXTERNAL_DECL  extern __declspec(dllimport)
-#define DUK_EXTERNAL       should_not_happen
+#define DUK_EXTERNAL_DECL extern __declspec(dllimport)
+#define DUK_EXTERNAL should_not_happen
 #endif
 #if defined(DUK_SINGLE_FILE)
-#define DUK_INTERNAL_DECL  static
-#define DUK_INTERNAL       static
+#define DUK_INTERNAL_DECL static
+#define DUK_INTERNAL static
 #else
-#define DUK_INTERNAL_DECL  extern
-#define DUK_INTERNAL       /*empty*/
+#define DUK_INTERNAL_DECL extern
+#define DUK_INTERNAL /*empty*/
 #endif
-#define DUK_LOCAL_DECL     static
-#define DUK_LOCAL          static
+#define DUK_LOCAL_DECL static
+#define DUK_LOCAL static
 #else
-#define DUK_EXTERNAL_DECL  __attribute__ ((visibility("default"))) extern
-#define DUK_EXTERNAL       __attribute__ ((visibility("default")))
+#define DUK_EXTERNAL_DECL __attribute__((visibility("default"))) extern
+#define DUK_EXTERNAL __attribute__((visibility("default")))
 #if defined(DUK_SINGLE_FILE)
-#if (defined(DUK_F_GCC_VERSION) && DUK_F_GCC_VERSION >= 30101) || defined(DUK_F_CLANG)
+#if(defined(DUK_F_GCC_VERSION) && DUK_F_GCC_VERSION >= 30101) \
+		|| defined(DUK_F_CLANG)
 /* Minimize warnings for unused internal functions with GCC >= 3.1.1 and
  * Clang.  Based on documentation it should suffice to have the attribute
  * in the declaration only, but in practice some warnings are generated unless
  * the attribute is also applied to the definition.
  */
-#define DUK_INTERNAL_DECL  static __attribute__ ((unused))
-#define DUK_INTERNAL       static __attribute__ ((unused))
+#define DUK_INTERNAL_DECL static __attribute__((unused))
+#define DUK_INTERNAL static __attribute__((unused))
 #else
-#define DUK_INTERNAL_DECL  static
-#define DUK_INTERNAL       static
+#define DUK_INTERNAL_DECL static
+#define DUK_INTERNAL static
 #endif
 #else
-#if (defined(DUK_F_GCC_VERSION) && DUK_F_GCC_VERSION >= 30101) || defined(DUK_F_CLANG)
-#define DUK_INTERNAL_DECL  __attribute__ ((visibility("hidden"))) __attribute__ ((unused)) extern
-#define DUK_INTERNAL       __attribute__ ((visibility("hidden"))) __attribute__ ((unused))
+#if(defined(DUK_F_GCC_VERSION) && DUK_F_GCC_VERSION >= 30101) \
+		|| defined(DUK_F_CLANG)
+#define DUK_INTERNAL_DECL \
+	__attribute__((visibility("hidden"))) __attribute__((unused)) extern
+#define DUK_INTERNAL \
+	__attribute__((visibility("hidden"))) __attribute__((unused))
 #else
-#define DUK_INTERNAL_DECL  __attribute__ ((visibility("hidden"))) extern
-#define DUK_INTERNAL       __attribute__ ((visibility("hidden")))
+#define DUK_INTERNAL_DECL __attribute__((visibility("hidden"))) extern
+#define DUK_INTERNAL __attribute__((visibility("hidden")))
 #endif
 #endif
-#define DUK_LOCAL_DECL     static
-#define DUK_LOCAL          static
+#define DUK_LOCAL_DECL static
+#define DUK_LOCAL static
 #endif
 
 #if defined(DUK_F_CPP)
@@ -1136,37 +1143,41 @@
 
 #if defined(__clang__) && defined(__has_builtin)
 #if __has_builtin(__builtin_bswap64)
-#define DUK_BSWAP64(x) ((duk_uint64_t) __builtin_bswap64((duk_uint64_t) (x)))
+#define DUK_BSWAP64(x) ((duk_uint64_t)__builtin_bswap64((duk_uint64_t)(x)))
 #endif
 #if __has_builtin(__builtin_bswap32)
-#define DUK_BSWAP32(x) ((duk_uint32_t) __builtin_bswap32((duk_uint32_t) (x)))
+#define DUK_BSWAP32(x) ((duk_uint32_t)__builtin_bswap32((duk_uint32_t)(x)))
 #endif
 #if __has_builtin(__builtin_bswap16)
-#define DUK_BSWAP16(x) ((duk_uint16_t) __builtin_bswap16((duk_uint16_t) (x)))
+#define DUK_BSWAP16(x) ((duk_uint16_t)__builtin_bswap16((duk_uint16_t)(x)))
 #endif
 #endif
 #elif defined(DUK_F_GCC)
 /* --- GCC --- */
 #if defined(DUK_F_C99) || defined(DUK_F_CPP11)
 /* C99 / C++11 and above: rely on va_copy() which is required. */
-#define DUK_VA_COPY(dest,src) va_copy(dest,src)
+#define DUK_VA_COPY(dest, src) va_copy(dest, src)
 #else
 /* GCC: assume we have __va_copy() in non-C99 mode. */
-#define DUK_VA_COPY(dest,src) __va_copy(dest,src)
+#define DUK_VA_COPY(dest, src) __va_copy(dest, src)
 #endif
 
-#if defined(DUK_F_GCC_VERSION) && (DUK_F_GCC_VERSION >= 20500L) && (DUK_F_GCC_VERSION < 50000L)
+#if defined(DUK_F_GCC_VERSION) && (DUK_F_GCC_VERSION >= 20500L) \
+		&& (DUK_F_GCC_VERSION < 50000L)
 /* Since gcc-2.5.
  *
  * Disabled temporarily in GCC 5+ because of an unresolved noreturn-related
  * issue: https://github.com/svaarala/duktape/issues/2155.
  */
-#define DUK_NORETURN(decl)  decl __attribute__((noreturn))
+#define DUK_NORETURN(decl) decl __attribute__((noreturn))
 #endif
 
 #if defined(DUK_F_GCC_VERSION) && (DUK_F_GCC_VERSION >= 40500L)
 /* Since gcc-4.5. */
-#define DUK_UNREACHABLE()  do { __builtin_unreachable(); } while (0)
+#define DUK_UNREACHABLE()        \
+	do {                         \
+		__builtin_unreachable(); \
+	} while(0)
 #endif
 
 #define DUK_USE_BRANCH_HINTS
@@ -1174,22 +1185,22 @@
 /* GCC: test not very accurate; enable only in relatively recent builds
  * because of bugs in gcc-4.4 (http://lists.debian.org/debian-gcc/2010/04/msg00000.html)
  */
-#define DUK_LIKELY(x)    __builtin_expect((x), 1)
-#define DUK_UNLIKELY(x)  __builtin_expect((x), 0)
+#define DUK_LIKELY(x) __builtin_expect((x), 1)
+#define DUK_UNLIKELY(x) __builtin_expect((x), 0)
 #endif
 /* XXX: equivalent of clang __builtin_unpredictable? */
 
-#if (defined(DUK_F_C99) || defined(DUK_F_CPP11)) && \
-    defined(DUK_F_GCC_VERSION) && (DUK_F_GCC_VERSION >= 30101)
-#define DUK_NOINLINE        __attribute__((noinline))
-#define DUK_INLINE          inline
-#define DUK_ALWAYS_INLINE   inline __attribute__((always_inline))
+#if(defined(DUK_F_C99) || defined(DUK_F_CPP11)) && defined(DUK_F_GCC_VERSION) \
+		&& (DUK_F_GCC_VERSION >= 30101)
+#define DUK_NOINLINE __attribute__((noinline))
+#define DUK_INLINE inline
+#define DUK_ALWAYS_INLINE inline __attribute__((always_inline))
 #endif
 
-#if (defined(DUK_F_C99) || defined(DUK_F_CPP11)) && \
-    defined(DUK_F_GCC_VERSION) && (DUK_F_GCC_VERSION >= 40300)
-#define DUK_HOT             __attribute__((hot))
-#define DUK_COLD            __attribute__((cold))
+#if(defined(DUK_F_C99) || defined(DUK_F_CPP11)) && defined(DUK_F_GCC_VERSION) \
+		&& (DUK_F_GCC_VERSION >= 40300)
+#define DUK_HOT __attribute__((hot))
+#define DUK_COLD __attribute__((cold))
 #endif
 
 #if defined(DUK_F_DLL_BUILD) && defined(DUK_F_WINDOWS)
@@ -1197,48 +1208,52 @@
  * compiling Duktape or the application.
  */
 #if defined(DUK_COMPILING_DUKTAPE)
-#define DUK_EXTERNAL_DECL  extern __declspec(dllexport)
-#define DUK_EXTERNAL       __declspec(dllexport)
+#define DUK_EXTERNAL_DECL extern __declspec(dllexport)
+#define DUK_EXTERNAL __declspec(dllexport)
 #else
-#define DUK_EXTERNAL_DECL  extern __declspec(dllimport)
-#define DUK_EXTERNAL       should_not_happen
+#define DUK_EXTERNAL_DECL extern __declspec(dllimport)
+#define DUK_EXTERNAL should_not_happen
 #endif
 #if defined(DUK_SINGLE_FILE)
-#define DUK_INTERNAL_DECL  static
-#define DUK_INTERNAL       static
+#define DUK_INTERNAL_DECL static
+#define DUK_INTERNAL static
 #else
-#define DUK_INTERNAL_DECL  extern
-#define DUK_INTERNAL       /*empty*/
+#define DUK_INTERNAL_DECL extern
+#define DUK_INTERNAL /*empty*/
 #endif
-#define DUK_LOCAL_DECL     static
-#define DUK_LOCAL          static
+#define DUK_LOCAL_DECL static
+#define DUK_LOCAL static
 #elif defined(DUK_F_GCC_VERSION) && (DUK_F_GCC_VERSION >= 40000)
-#define DUK_EXTERNAL_DECL  __attribute__ ((visibility("default"))) extern
-#define DUK_EXTERNAL       __attribute__ ((visibility("default")))
+#define DUK_EXTERNAL_DECL __attribute__((visibility("default"))) extern
+#define DUK_EXTERNAL __attribute__((visibility("default")))
 #if defined(DUK_SINGLE_FILE)
-#if (defined(DUK_F_GCC_VERSION) && DUK_F_GCC_VERSION >= 30101) || defined(DUK_F_CLANG)
+#if(defined(DUK_F_GCC_VERSION) && DUK_F_GCC_VERSION >= 30101) \
+		|| defined(DUK_F_CLANG)
 /* Minimize warnings for unused internal functions with GCC >= 3.1.1 and
  * Clang.  Based on documentation it should suffice to have the attribute
  * in the declaration only, but in practice some warnings are generated unless
  * the attribute is also applied to the definition.
  */
-#define DUK_INTERNAL_DECL  static __attribute__ ((unused))
-#define DUK_INTERNAL       static __attribute__ ((unused))
+#define DUK_INTERNAL_DECL static __attribute__((unused))
+#define DUK_INTERNAL static __attribute__((unused))
 #else
-#define DUK_INTERNAL_DECL  static
-#define DUK_INTERNAL       static
+#define DUK_INTERNAL_DECL static
+#define DUK_INTERNAL static
 #endif
 #else
-#if (defined(DUK_F_GCC_VERSION) && DUK_F_GCC_VERSION >= 30101) || defined(DUK_F_CLANG)
-#define DUK_INTERNAL_DECL  __attribute__ ((visibility("hidden"))) __attribute__ ((unused)) extern
-#define DUK_INTERNAL       __attribute__ ((visibility("hidden"))) __attribute__ ((unused))
+#if(defined(DUK_F_GCC_VERSION) && DUK_F_GCC_VERSION >= 30101) \
+		|| defined(DUK_F_CLANG)
+#define DUK_INTERNAL_DECL \
+	__attribute__((visibility("hidden"))) __attribute__((unused)) extern
+#define DUK_INTERNAL \
+	__attribute__((visibility("hidden"))) __attribute__((unused))
 #else
-#define DUK_INTERNAL_DECL  __attribute__ ((visibility("hidden"))) extern
-#define DUK_INTERNAL       __attribute__ ((visibility("hidden")))
+#define DUK_INTERNAL_DECL __attribute__((visibility("hidden"))) extern
+#define DUK_INTERNAL __attribute__((visibility("hidden")))
 #endif
 #endif
-#define DUK_LOCAL_DECL     static
-#define DUK_LOCAL          static
+#define DUK_LOCAL_DECL static
+#define DUK_LOCAL static
 #endif
 
 #if defined(DUK_F_MINGW)
@@ -1285,14 +1300,14 @@
  * these to be safe.
  */
 #if defined(DUK_F_GCC_VERSION) && (DUK_F_GCC_VERSION >= 50000L)
-#define DUK_BSWAP64(x) ((duk_uint64_t) __builtin_bswap64((duk_uint64_t) (x)))
-#define DUK_BSWAP32(x) ((duk_uint32_t) __builtin_bswap32((duk_uint32_t) (x)))
-#define DUK_BSWAP16(x) ((duk_uint16_t) __builtin_bswap16((duk_uint16_t) (x)))
+#define DUK_BSWAP64(x) ((duk_uint64_t)__builtin_bswap64((duk_uint64_t)(x)))
+#define DUK_BSWAP32(x) ((duk_uint32_t)__builtin_bswap32((duk_uint32_t)(x)))
+#define DUK_BSWAP16(x) ((duk_uint16_t)__builtin_bswap16((duk_uint16_t)(x)))
 #endif
 #elif defined(DUK_F_MSVC)
 /* --- MSVC --- */
 /* http://msdn.microsoft.com/en-us/library/aa235362(VS.60).aspx */
-#define DUK_NORETURN(decl)  __declspec(noreturn) decl
+#define DUK_NORETURN(decl) __declspec(noreturn) decl
 
 /* XXX: DUK_UNREACHABLE for msvc? */
 
@@ -1306,21 +1321,21 @@
  * compiling Duktape or the application.
  */
 #if defined(DUK_COMPILING_DUKTAPE)
-#define DUK_EXTERNAL_DECL  extern __declspec(dllexport)
-#define DUK_EXTERNAL       __declspec(dllexport)
+#define DUK_EXTERNAL_DECL extern __declspec(dllexport)
+#define DUK_EXTERNAL __declspec(dllexport)
 #else
-#define DUK_EXTERNAL_DECL  extern __declspec(dllimport)
-#define DUK_EXTERNAL       should_not_happen
+#define DUK_EXTERNAL_DECL extern __declspec(dllimport)
+#define DUK_EXTERNAL should_not_happen
 #endif
 #if defined(DUK_SINGLE_FILE)
-#define DUK_INTERNAL_DECL  static
-#define DUK_INTERNAL       static
+#define DUK_INTERNAL_DECL static
+#define DUK_INTERNAL static
 #else
-#define DUK_INTERNAL_DECL  extern
-#define DUK_INTERNAL       /*empty*/
+#define DUK_INTERNAL_DECL extern
+#define DUK_INTERNAL /*empty*/
 #endif
-#define DUK_LOCAL_DECL     static
-#define DUK_LOCAL          static
+#define DUK_LOCAL_DECL static
+#define DUK_LOCAL static
 #endif
 
 #if defined(DUK_F_CPP)
@@ -1365,29 +1380,32 @@
  * too but not enabled by default.
  */
 #if defined(_MSC_VER) && (_MSC_VER >= 1500)
-#define DUK_NOINLINE        __declspec(noinline)
-#define DUK_INLINE          __inline
-#define DUK_ALWAYS_INLINE   __forceinline
+#define DUK_NOINLINE __declspec(noinline)
+#define DUK_INLINE __inline
+#define DUK_ALWAYS_INLINE __forceinline
 #endif
 
 #if defined(_MSC_VER) && (_MSC_VER >= 1900)
-#define DUK_SNPRINTF     snprintf
-#define DUK_VSNPRINTF    vsnprintf
+#define DUK_SNPRINTF snprintf
+#define DUK_VSNPRINTF vsnprintf
 #else
 /* (v)snprintf() is missing before MSVC 2015.  Note that _(v)snprintf() does
  * NOT NUL terminate on truncation, but Duktape code never assumes that.
  * http://stackoverflow.com/questions/2915672/snprintf-and-visual-studio-2010
  */
-#define DUK_SNPRINTF     _snprintf
-#define DUK_VSNPRINTF    _vsnprintf
+#define DUK_SNPRINTF _snprintf
+#define DUK_VSNPRINTF _vsnprintf
 #endif
 
 /* Avoid warning when doing DUK_UNREF(some_function). */
 #if defined(_MSC_VER) && (_MSC_VER < 1500)
-#pragma warning(disable: 4100 4101 4550 4551)
+#pragma warning(disable : 4100 4101 4550 4551)
 #define DUK_UNREF(x)
 #else
-#define DUK_UNREF(x)  do { __pragma(warning(suppress:4100 4101 4550 4551)) (x); } while (0)
+#define DUK_UNREF(x)                                          \
+	do {                                                      \
+		__pragma(warning(suppress : 4100 4101 4550 4551))(x); \
+	} while(0)
 #endif
 
 /* Older versions of MSVC don't support the LL/ULL suffix. */
@@ -1395,55 +1413,62 @@
 #define DUK_I64_CONSTANT(x) x##i64
 #elif defined(DUK_F_EMSCRIPTEN)
 /* --- Emscripten --- */
-#define DUK_NORETURN(decl)  decl __attribute__((noreturn))
+#define DUK_NORETURN(decl) decl __attribute__((noreturn))
 
 #if defined(__clang__) && defined(__has_builtin)
 #if __has_builtin(__builtin_unreachable)
-#define DUK_UNREACHABLE()  do { __builtin_unreachable(); } while (0)
+#define DUK_UNREACHABLE()        \
+	do {                         \
+		__builtin_unreachable(); \
+	} while(0)
 #endif
 #endif
 
 #define DUK_USE_BRANCH_HINTS
-#define DUK_LIKELY(x)    __builtin_expect((x), 1)
-#define DUK_UNLIKELY(x)  __builtin_expect((x), 0)
+#define DUK_LIKELY(x) __builtin_expect((x), 1)
+#define DUK_UNLIKELY(x) __builtin_expect((x), 0)
 #if defined(__clang__) && defined(__has_builtin)
 #if __has_builtin(__builtin_unpredictable)
-#define DUK_UNPREDICTABLE(x)  __builtin_unpredictable((x))
+#define DUK_UNPREDICTABLE(x) __builtin_unpredictable((x))
 #endif
 #endif
 
 #if defined(DUK_F_C99) || defined(DUK_F_CPP11)
-#define DUK_NOINLINE        __attribute__((noinline))
-#define DUK_INLINE          inline
-#define DUK_ALWAYS_INLINE   inline __attribute__((always_inline))
+#define DUK_NOINLINE __attribute__((noinline))
+#define DUK_INLINE inline
+#define DUK_ALWAYS_INLINE inline __attribute__((always_inline))
 #endif
 
-#define DUK_EXTERNAL_DECL  __attribute__ ((visibility("default"))) extern
-#define DUK_EXTERNAL       __attribute__ ((visibility("default")))
+#define DUK_EXTERNAL_DECL __attribute__((visibility("default"))) extern
+#define DUK_EXTERNAL __attribute__((visibility("default")))
 #if defined(DUK_SINGLE_FILE)
-#if (defined(DUK_F_GCC_VERSION) && DUK_F_GCC_VERSION >= 30101) || defined(DUK_F_CLANG)
+#if(defined(DUK_F_GCC_VERSION) && DUK_F_GCC_VERSION >= 30101) \
+		|| defined(DUK_F_CLANG)
 /* Minimize warnings for unused internal functions with GCC >= 3.1.1 and
  * Clang.  Based on documentation it should suffice to have the attribute
  * in the declaration only, but in practice some warnings are generated unless
  * the attribute is also applied to the definition.
  */
-#define DUK_INTERNAL_DECL  static __attribute__ ((unused))
-#define DUK_INTERNAL       static __attribute__ ((unused))
+#define DUK_INTERNAL_DECL static __attribute__((unused))
+#define DUK_INTERNAL static __attribute__((unused))
 #else
-#define DUK_INTERNAL_DECL  static
-#define DUK_INTERNAL       static
+#define DUK_INTERNAL_DECL static
+#define DUK_INTERNAL static
 #endif
 #else
-#if (defined(DUK_F_GCC_VERSION) && DUK_F_GCC_VERSION >= 30101) || defined(DUK_F_CLANG)
-#define DUK_INTERNAL_DECL  __attribute__ ((visibility("hidden"))) __attribute__ ((unused)) extern
-#define DUK_INTERNAL       __attribute__ ((visibility("hidden"))) __attribute__ ((unused))
+#if(defined(DUK_F_GCC_VERSION) && DUK_F_GCC_VERSION >= 30101) \
+		|| defined(DUK_F_CLANG)
+#define DUK_INTERNAL_DECL \
+	__attribute__((visibility("hidden"))) __attribute__((unused)) extern
+#define DUK_INTERNAL \
+	__attribute__((visibility("hidden"))) __attribute__((unused))
 #else
-#define DUK_INTERNAL_DECL  __attribute__ ((visibility("hidden"))) extern
-#define DUK_INTERNAL       __attribute__ ((visibility("hidden")))
+#define DUK_INTERNAL_DECL __attribute__((visibility("hidden"))) extern
+#define DUK_INTERNAL __attribute__((visibility("hidden")))
 #endif
 #endif
-#define DUK_LOCAL_DECL     static
-#define DUK_LOCAL          static
+#define DUK_LOCAL_DECL static
+#define DUK_LOCAL static
 
 #define DUK_USE_COMPILER_STRING "emscripten"
 
@@ -1562,7 +1587,7 @@
 
 /* Most portable, potentially wastes space */
 #define DUK_USE_PACK_DUMMY_MEMBER
-#endif  /* autodetect compiler */
+#endif /* autodetect compiler */
 
 /* uclibc */
 #if defined(__UCLIBC__)
@@ -1615,19 +1640,19 @@
 /* Pointer size determination based on __WORDSIZE or architecture when
  * that's not available.
  */
-#if defined(DUK_F_X86) || defined(DUK_F_X32) || \
-    defined(DUK_F_M68K) || defined(DUK_F_PPC32) || \
-    defined(DUK_F_BCC) || \
-    (defined(__WORDSIZE) && (__WORDSIZE == 32)) || \
-    ((defined(DUK_F_OLD_SOLARIS) || defined(DUK_F_AIX) || \
-      defined(DUK_F_HPUX)) && defined(_ILP32)) || \
-    defined(DUK_F_ARM32)
+#if defined(DUK_F_X86) || defined(DUK_F_X32) || defined(DUK_F_M68K) \
+		|| defined(DUK_F_PPC32) || defined(DUK_F_BCC)               \
+		|| (defined(__WORDSIZE) && (__WORDSIZE == 32))              \
+		|| ((defined(DUK_F_OLD_SOLARIS) || defined(DUK_F_AIX)       \
+					|| defined(DUK_F_HPUX))                         \
+				&& defined(_ILP32))                                 \
+		|| defined(DUK_F_ARM32)
 #define DUK_F_32BIT_PTRS
-#elif defined(DUK_F_X64) || \
-      (defined(__WORDSIZE) && (__WORDSIZE == 64)) || \
-   ((defined(DUK_F_OLD_SOLARIS) || defined(DUK_F_AIX) || \
-     defined(DUK_F_HPUX)) && defined(_LP64)) || \
-    defined(DUK_F_ARM64)
+#elif defined(DUK_F_X64) || (defined(__WORDSIZE) && (__WORDSIZE == 64)) \
+		|| ((defined(DUK_F_OLD_SOLARIS) || defined(DUK_F_AIX)           \
+					|| defined(DUK_F_HPUX))                             \
+				&& defined(_LP64))                                      \
+		|| defined(DUK_F_ARM64)
 #define DUK_F_64BIT_PTRS
 #else
 /* not sure, not needed with C99 anyway */
@@ -1635,8 +1660,8 @@
 
 /* Intermediate define for 'have inttypes.h' */
 #undef DUK_F_HAVE_INTTYPES
-#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L) && \
-    !(defined(DUK_F_AMIGAOS) && defined(DUK_F_VBCC))
+#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L) \
+		&& !(defined(DUK_F_AMIGAOS) && defined(DUK_F_VBCC))
 /* vbcc + AmigaOS has C99 but no inttypes.h */
 #define DUK_F_HAVE_INTTYPES
 #elif defined(__cplusplus) && (__cplusplus >= 201103L)
@@ -1682,70 +1707,70 @@ typedef intptr_t duk_intptr_t;
 typedef uintmax_t duk_uintmax_t;
 typedef intmax_t duk_intmax_t;
 
-#define DUK_UINT8_MIN         0
-#define DUK_UINT8_MAX         UINT8_MAX
-#define DUK_INT8_MIN          INT8_MIN
-#define DUK_INT8_MAX          INT8_MAX
-#define DUK_UINT_LEAST8_MIN   0
-#define DUK_UINT_LEAST8_MAX   UINT_LEAST8_MAX
-#define DUK_INT_LEAST8_MIN    INT_LEAST8_MIN
-#define DUK_INT_LEAST8_MAX    INT_LEAST8_MAX
-#define DUK_UINT_FAST8_MIN    0
-#define DUK_UINT_FAST8_MAX    UINT_FAST8_MAX
-#define DUK_INT_FAST8_MIN     INT_FAST8_MIN
-#define DUK_INT_FAST8_MAX     INT_FAST8_MAX
-#define DUK_UINT16_MIN        0
-#define DUK_UINT16_MAX        UINT16_MAX
-#define DUK_INT16_MIN         INT16_MIN
-#define DUK_INT16_MAX         INT16_MAX
-#define DUK_UINT_LEAST16_MIN  0
-#define DUK_UINT_LEAST16_MAX  UINT_LEAST16_MAX
-#define DUK_INT_LEAST16_MIN   INT_LEAST16_MIN
-#define DUK_INT_LEAST16_MAX   INT_LEAST16_MAX
-#define DUK_UINT_FAST16_MIN   0
-#define DUK_UINT_FAST16_MAX   UINT_FAST16_MAX
-#define DUK_INT_FAST16_MIN    INT_FAST16_MIN
-#define DUK_INT_FAST16_MAX    INT_FAST16_MAX
-#define DUK_UINT32_MIN        0
-#define DUK_UINT32_MAX        UINT32_MAX
-#define DUK_INT32_MIN         INT32_MIN
-#define DUK_INT32_MAX         INT32_MAX
-#define DUK_UINT_LEAST32_MIN  0
-#define DUK_UINT_LEAST32_MAX  UINT_LEAST32_MAX
-#define DUK_INT_LEAST32_MIN   INT_LEAST32_MIN
-#define DUK_INT_LEAST32_MAX   INT_LEAST32_MAX
-#define DUK_UINT_FAST32_MIN   0
-#define DUK_UINT_FAST32_MAX   UINT_FAST32_MAX
-#define DUK_INT_FAST32_MIN    INT_FAST32_MIN
-#define DUK_INT_FAST32_MAX    INT_FAST32_MAX
-#define DUK_UINT64_MIN        0
-#define DUK_UINT64_MAX        UINT64_MAX
-#define DUK_INT64_MIN         INT64_MIN
-#define DUK_INT64_MAX         INT64_MAX
-#define DUK_UINT_LEAST64_MIN  0
-#define DUK_UINT_LEAST64_MAX  UINT_LEAST64_MAX
-#define DUK_INT_LEAST64_MIN   INT_LEAST64_MIN
-#define DUK_INT_LEAST64_MAX   INT_LEAST64_MAX
-#define DUK_UINT_FAST64_MIN   0
-#define DUK_UINT_FAST64_MAX   UINT_FAST64_MAX
-#define DUK_INT_FAST64_MIN    INT_FAST64_MIN
-#define DUK_INT_FAST64_MAX    INT_FAST64_MAX
+#define DUK_UINT8_MIN 0
+#define DUK_UINT8_MAX UINT8_MAX
+#define DUK_INT8_MIN INT8_MIN
+#define DUK_INT8_MAX INT8_MAX
+#define DUK_UINT_LEAST8_MIN 0
+#define DUK_UINT_LEAST8_MAX UINT_LEAST8_MAX
+#define DUK_INT_LEAST8_MIN INT_LEAST8_MIN
+#define DUK_INT_LEAST8_MAX INT_LEAST8_MAX
+#define DUK_UINT_FAST8_MIN 0
+#define DUK_UINT_FAST8_MAX UINT_FAST8_MAX
+#define DUK_INT_FAST8_MIN INT_FAST8_MIN
+#define DUK_INT_FAST8_MAX INT_FAST8_MAX
+#define DUK_UINT16_MIN 0
+#define DUK_UINT16_MAX UINT16_MAX
+#define DUK_INT16_MIN INT16_MIN
+#define DUK_INT16_MAX INT16_MAX
+#define DUK_UINT_LEAST16_MIN 0
+#define DUK_UINT_LEAST16_MAX UINT_LEAST16_MAX
+#define DUK_INT_LEAST16_MIN INT_LEAST16_MIN
+#define DUK_INT_LEAST16_MAX INT_LEAST16_MAX
+#define DUK_UINT_FAST16_MIN 0
+#define DUK_UINT_FAST16_MAX UINT_FAST16_MAX
+#define DUK_INT_FAST16_MIN INT_FAST16_MIN
+#define DUK_INT_FAST16_MAX INT_FAST16_MAX
+#define DUK_UINT32_MIN 0
+#define DUK_UINT32_MAX UINT32_MAX
+#define DUK_INT32_MIN INT32_MIN
+#define DUK_INT32_MAX INT32_MAX
+#define DUK_UINT_LEAST32_MIN 0
+#define DUK_UINT_LEAST32_MAX UINT_LEAST32_MAX
+#define DUK_INT_LEAST32_MIN INT_LEAST32_MIN
+#define DUK_INT_LEAST32_MAX INT_LEAST32_MAX
+#define DUK_UINT_FAST32_MIN 0
+#define DUK_UINT_FAST32_MAX UINT_FAST32_MAX
+#define DUK_INT_FAST32_MIN INT_FAST32_MIN
+#define DUK_INT_FAST32_MAX INT_FAST32_MAX
+#define DUK_UINT64_MIN 0
+#define DUK_UINT64_MAX UINT64_MAX
+#define DUK_INT64_MIN INT64_MIN
+#define DUK_INT64_MAX INT64_MAX
+#define DUK_UINT_LEAST64_MIN 0
+#define DUK_UINT_LEAST64_MAX UINT_LEAST64_MAX
+#define DUK_INT_LEAST64_MIN INT_LEAST64_MIN
+#define DUK_INT_LEAST64_MAX INT_LEAST64_MAX
+#define DUK_UINT_FAST64_MIN 0
+#define DUK_UINT_FAST64_MAX UINT_FAST64_MAX
+#define DUK_INT_FAST64_MIN INT_FAST64_MIN
+#define DUK_INT_FAST64_MAX INT_FAST64_MAX
 
-#define DUK_UINTPTR_MIN       0
-#define DUK_UINTPTR_MAX       UINTPTR_MAX
-#define DUK_INTPTR_MIN        INTPTR_MIN
-#define DUK_INTPTR_MAX        INTPTR_MAX
+#define DUK_UINTPTR_MIN 0
+#define DUK_UINTPTR_MAX UINTPTR_MAX
+#define DUK_INTPTR_MIN INTPTR_MIN
+#define DUK_INTPTR_MAX INTPTR_MAX
 
-#define DUK_UINTMAX_MIN       0
-#define DUK_UINTMAX_MAX       UINTMAX_MAX
-#define DUK_INTMAX_MIN        INTMAX_MIN
-#define DUK_INTMAX_MAX        INTMAX_MAX
+#define DUK_UINTMAX_MIN 0
+#define DUK_UINTMAX_MAX UINTMAX_MAX
+#define DUK_INTMAX_MIN INTMAX_MIN
+#define DUK_INTMAX_MAX INTMAX_MAX
 
-#define DUK_SIZE_MIN          0
-#define DUK_SIZE_MAX          SIZE_MAX
+#define DUK_SIZE_MIN 0
+#define DUK_SIZE_MAX SIZE_MAX
 #undef DUK_SIZE_MAX_COMPUTED
 
-#else  /* C99 types */
+#else /* C99 types */
 
 /* When C99 types are not available, we use heuristic detection to get
  * the basic 8, 16, 32, and (possibly) 64 bit types.  The fast/least
@@ -1758,8 +1783,8 @@ typedef intmax_t duk_intmax_t;
  * and defines that won't work correctly on some exotic platform.
  */
 
-#if (defined(CHAR_BIT) && (CHAR_BIT == 8)) || \
-    (defined(UCHAR_MAX) && (UCHAR_MAX == 255))
+#if(defined(CHAR_BIT) && (CHAR_BIT == 8)) \
+		|| (defined(UCHAR_MAX) && (UCHAR_MAX == 255))
 typedef unsigned char duk_uint8_t;
 typedef signed char duk_int8_t;
 #else
@@ -1803,28 +1828,28 @@ typedef signed long duk_int32_t;
  */
 #undef DUK_F_HAVE_64BIT
 #if !defined(DUK_F_HAVE_64BIT) && defined(ULONG_MAX)
-#if (ULONG_MAX > 4294967295UL)
+#if(ULONG_MAX > 4294967295UL)
 #define DUK_F_HAVE_64BIT
 typedef unsigned long duk_uint64_t;
 typedef signed long duk_int64_t;
 #endif
 #endif
 #if !defined(DUK_F_HAVE_64BIT) && defined(ULLONG_MAX)
-#if (ULLONG_MAX > 4294967295UL)
+#if(ULLONG_MAX > 4294967295UL)
 #define DUK_F_HAVE_64BIT
 typedef unsigned long long duk_uint64_t;
 typedef signed long long duk_int64_t;
 #endif
 #endif
 #if !defined(DUK_F_HAVE_64BIT) && defined(__ULONG_LONG_MAX__)
-#if (__ULONG_LONG_MAX__ > 4294967295UL)
+#if(__ULONG_LONG_MAX__ > 4294967295UL)
 #define DUK_F_HAVE_64BIT
 typedef unsigned long long duk_uint64_t;
 typedef signed long long duk_int64_t;
 #endif
 #endif
 #if !defined(DUK_F_HAVE_64BIT) && defined(__LONG_LONG_MAX__)
-#if (__LONG_LONG_MAX__ > 2147483647L)
+#if(__LONG_LONG_MAX__ > 2147483647L)
 #define DUK_F_HAVE_64BIT
 typedef unsigned long long duk_uint64_t;
 typedef signed long long duk_int64_t;
@@ -1874,60 +1899,60 @@ typedef duk_int32_t duk_intmax_t;
  * 64-bit values are intentional as the obvious forms (e.g. -0x80000000L) are
  * -not- portable.  See code-issues.txt for a detailed discussion.
  */
-#define DUK_UINT8_MIN         0UL
-#define DUK_UINT8_MAX         0xffUL
-#define DUK_INT8_MIN          (-0x80L)
-#define DUK_INT8_MAX          0x7fL
-#define DUK_UINT_LEAST8_MIN   0UL
-#define DUK_UINT_LEAST8_MAX   0xffUL
-#define DUK_INT_LEAST8_MIN    (-0x80L)
-#define DUK_INT_LEAST8_MAX    0x7fL
-#define DUK_UINT_FAST8_MIN    0UL
-#define DUK_UINT_FAST8_MAX    0xffUL
-#define DUK_INT_FAST8_MIN     (-0x80L)
-#define DUK_INT_FAST8_MAX     0x7fL
-#define DUK_UINT16_MIN        0UL
-#define DUK_UINT16_MAX        0xffffUL
-#define DUK_INT16_MIN         (-0x7fffL - 1L)
-#define DUK_INT16_MAX         0x7fffL
-#define DUK_UINT_LEAST16_MIN  0UL
-#define DUK_UINT_LEAST16_MAX  0xffffUL
-#define DUK_INT_LEAST16_MIN   (-0x7fffL - 1L)
-#define DUK_INT_LEAST16_MAX   0x7fffL
-#define DUK_UINT_FAST16_MIN   0UL
-#define DUK_UINT_FAST16_MAX   0xffffUL
-#define DUK_INT_FAST16_MIN    (-0x7fffL - 1L)
-#define DUK_INT_FAST16_MAX    0x7fffL
-#define DUK_UINT32_MIN        0UL
-#define DUK_UINT32_MAX        0xffffffffUL
-#define DUK_INT32_MIN         (-0x7fffffffL - 1L)
-#define DUK_INT32_MAX         0x7fffffffL
-#define DUK_UINT_LEAST32_MIN  0UL
-#define DUK_UINT_LEAST32_MAX  0xffffffffUL
-#define DUK_INT_LEAST32_MIN   (-0x7fffffffL - 1L)
-#define DUK_INT_LEAST32_MAX   0x7fffffffL
-#define DUK_UINT_FAST32_MIN   0UL
-#define DUK_UINT_FAST32_MAX   0xffffffffUL
-#define DUK_INT_FAST32_MIN    (-0x7fffffffL - 1L)
-#define DUK_INT_FAST32_MAX    0x7fffffffL
+#define DUK_UINT8_MIN 0UL
+#define DUK_UINT8_MAX 0xffUL
+#define DUK_INT8_MIN (-0x80L)
+#define DUK_INT8_MAX 0x7fL
+#define DUK_UINT_LEAST8_MIN 0UL
+#define DUK_UINT_LEAST8_MAX 0xffUL
+#define DUK_INT_LEAST8_MIN (-0x80L)
+#define DUK_INT_LEAST8_MAX 0x7fL
+#define DUK_UINT_FAST8_MIN 0UL
+#define DUK_UINT_FAST8_MAX 0xffUL
+#define DUK_INT_FAST8_MIN (-0x80L)
+#define DUK_INT_FAST8_MAX 0x7fL
+#define DUK_UINT16_MIN 0UL
+#define DUK_UINT16_MAX 0xffffUL
+#define DUK_INT16_MIN (-0x7fffL - 1L)
+#define DUK_INT16_MAX 0x7fffL
+#define DUK_UINT_LEAST16_MIN 0UL
+#define DUK_UINT_LEAST16_MAX 0xffffUL
+#define DUK_INT_LEAST16_MIN (-0x7fffL - 1L)
+#define DUK_INT_LEAST16_MAX 0x7fffL
+#define DUK_UINT_FAST16_MIN 0UL
+#define DUK_UINT_FAST16_MAX 0xffffUL
+#define DUK_INT_FAST16_MIN (-0x7fffL - 1L)
+#define DUK_INT_FAST16_MAX 0x7fffL
+#define DUK_UINT32_MIN 0UL
+#define DUK_UINT32_MAX 0xffffffffUL
+#define DUK_INT32_MIN (-0x7fffffffL - 1L)
+#define DUK_INT32_MAX 0x7fffffffL
+#define DUK_UINT_LEAST32_MIN 0UL
+#define DUK_UINT_LEAST32_MAX 0xffffffffUL
+#define DUK_INT_LEAST32_MIN (-0x7fffffffL - 1L)
+#define DUK_INT_LEAST32_MAX 0x7fffffffL
+#define DUK_UINT_FAST32_MIN 0UL
+#define DUK_UINT_FAST32_MAX 0xffffffffUL
+#define DUK_INT_FAST32_MIN (-0x7fffffffL - 1L)
+#define DUK_INT_FAST32_MAX 0x7fffffffL
 
 /* 64-bit constants.  Since LL / ULL constants are not always available,
  * use computed values.  These values can't be used in preprocessor
  * comparisons; flag them as such.
  */
 #if defined(DUK_F_HAVE_64BIT)
-#define DUK_UINT64_MIN        ((duk_uint64_t) 0)
-#define DUK_UINT64_MAX        ((duk_uint64_t) -1)
-#define DUK_INT64_MIN         ((duk_int64_t) (~(DUK_UINT64_MAX >> 1)))
-#define DUK_INT64_MAX         ((duk_int64_t) (DUK_UINT64_MAX >> 1))
-#define DUK_UINT_LEAST64_MIN  DUK_UINT64_MIN
-#define DUK_UINT_LEAST64_MAX  DUK_UINT64_MAX
-#define DUK_INT_LEAST64_MIN   DUK_INT64_MIN
-#define DUK_INT_LEAST64_MAX   DUK_INT64_MAX
-#define DUK_UINT_FAST64_MIN   DUK_UINT64_MIN
-#define DUK_UINT_FAST64_MAX   DUK_UINT64_MAX
-#define DUK_INT_FAST64_MIN    DUK_INT64_MIN
-#define DUK_INT_FAST64_MAX    DUK_INT64_MAX
+#define DUK_UINT64_MIN ((duk_uint64_t)0)
+#define DUK_UINT64_MAX ((duk_uint64_t)-1)
+#define DUK_INT64_MIN ((duk_int64_t)(~(DUK_UINT64_MAX >> 1)))
+#define DUK_INT64_MAX ((duk_int64_t)(DUK_UINT64_MAX >> 1))
+#define DUK_UINT_LEAST64_MIN DUK_UINT64_MIN
+#define DUK_UINT_LEAST64_MAX DUK_UINT64_MAX
+#define DUK_INT_LEAST64_MIN DUK_INT64_MIN
+#define DUK_INT_LEAST64_MAX DUK_INT64_MAX
+#define DUK_UINT_FAST64_MIN DUK_UINT64_MIN
+#define DUK_UINT_FAST64_MAX DUK_UINT64_MAX
+#define DUK_INT_FAST64_MIN DUK_INT64_MIN
+#define DUK_INT_FAST64_MAX DUK_INT64_MAX
 #define DUK_UINT64_MIN_COMPUTED
 #define DUK_UINT64_MAX_COMPUTED
 #define DUK_INT64_MIN_COMPUTED
@@ -1943,36 +1968,36 @@ typedef duk_int32_t duk_intmax_t;
 #endif
 
 #if defined(DUK_F_HAVE_64BIT)
-#define DUK_UINTMAX_MIN       DUK_UINT64_MIN
-#define DUK_UINTMAX_MAX       DUK_UINT64_MAX
-#define DUK_INTMAX_MIN        DUK_INT64_MIN
-#define DUK_INTMAX_MAX        DUK_INT64_MAX
+#define DUK_UINTMAX_MIN DUK_UINT64_MIN
+#define DUK_UINTMAX_MAX DUK_UINT64_MAX
+#define DUK_INTMAX_MIN DUK_INT64_MIN
+#define DUK_INTMAX_MAX DUK_INT64_MAX
 #define DUK_UINTMAX_MIN_COMPUTED
 #define DUK_UINTMAX_MAX_COMPUTED
 #define DUK_INTMAX_MIN_COMPUTED
 #define DUK_INTMAX_MAX_COMPUTED
 #else
-#define DUK_UINTMAX_MIN       0UL
-#define DUK_UINTMAX_MAX       0xffffffffUL
-#define DUK_INTMAX_MIN        (-0x7fffffffL - 1L)
-#define DUK_INTMAX_MAX        0x7fffffffL
+#define DUK_UINTMAX_MIN 0UL
+#define DUK_UINTMAX_MAX 0xffffffffUL
+#define DUK_INTMAX_MIN (-0x7fffffffL - 1L)
+#define DUK_INTMAX_MAX 0x7fffffffL
 #endif
 
 /* This detection is not very reliable. */
 #if defined(DUK_F_32BIT_PTRS)
 typedef duk_int32_t duk_intptr_t;
 typedef duk_uint32_t duk_uintptr_t;
-#define DUK_UINTPTR_MIN       DUK_UINT32_MIN
-#define DUK_UINTPTR_MAX       DUK_UINT32_MAX
-#define DUK_INTPTR_MIN        DUK_INT32_MIN
-#define DUK_INTPTR_MAX        DUK_INT32_MAX
+#define DUK_UINTPTR_MIN DUK_UINT32_MIN
+#define DUK_UINTPTR_MAX DUK_UINT32_MAX
+#define DUK_INTPTR_MIN DUK_INT32_MIN
+#define DUK_INTPTR_MAX DUK_INT32_MAX
 #elif defined(DUK_F_64BIT_PTRS) && defined(DUK_F_HAVE_64BIT)
 typedef duk_int64_t duk_intptr_t;
 typedef duk_uint64_t duk_uintptr_t;
-#define DUK_UINTPTR_MIN       DUK_UINT64_MIN
-#define DUK_UINTPTR_MAX       DUK_UINT64_MAX
-#define DUK_INTPTR_MIN        DUK_INT64_MIN
-#define DUK_INTPTR_MAX        DUK_INT64_MAX
+#define DUK_UINTPTR_MIN DUK_UINT64_MIN
+#define DUK_UINTPTR_MAX DUK_UINT64_MAX
+#define DUK_INTPTR_MIN DUK_INT64_MIN
+#define DUK_INTPTR_MAX DUK_INT64_MAX
 #define DUK_UINTPTR_MIN_COMPUTED
 #define DUK_UINTPTR_MAX_COMPUTED
 #define DUK_INTPTR_MIN_COMPUTED
@@ -1985,12 +2010,12 @@ typedef duk_uint64_t duk_uintptr_t;
 #undef DUK_SIZE_MAX_COMPUTED
 #if !defined(SIZE_MAX)
 #define DUK_SIZE_MAX_COMPUTED
-#define SIZE_MAX              ((size_t) (-1))
+#define SIZE_MAX ((size_t)(-1))
 #endif
-#define DUK_SIZE_MIN          0
-#define DUK_SIZE_MAX          SIZE_MAX
+#define DUK_SIZE_MIN 0
+#define DUK_SIZE_MAX SIZE_MAX
 
-#endif  /* C99 types */
+#endif /* C99 types */
 
 /* A few types are assumed to always exist. */
 typedef size_t duk_size_t;
@@ -2003,17 +2028,17 @@ typedef ptrdiff_t duk_ptrdiff_t;
 #if defined(UINT_MAX) && (UINT_MAX >= 0xffffffffUL)
 typedef int duk_int_t;
 typedef unsigned int duk_uint_t;
-#define DUK_INT_MIN           INT_MIN
-#define DUK_INT_MAX           INT_MAX
-#define DUK_UINT_MIN          0
-#define DUK_UINT_MAX          UINT_MAX
+#define DUK_INT_MIN INT_MIN
+#define DUK_INT_MAX INT_MAX
+#define DUK_UINT_MIN 0
+#define DUK_UINT_MAX UINT_MAX
 #else
 typedef duk_int_fast32_t duk_int_t;
 typedef duk_uint_fast32_t duk_uint_t;
-#define DUK_INT_MIN           DUK_INT_FAST32_MIN
-#define DUK_INT_MAX           DUK_INT_FAST32_MAX
-#define DUK_UINT_MIN          DUK_UINT_FAST32_MIN
-#define DUK_UINT_MAX          DUK_UINT_FAST32_MAX
+#define DUK_INT_MIN DUK_INT_FAST32_MIN
+#define DUK_INT_MAX DUK_INT_FAST32_MAX
+#define DUK_UINT_MIN DUK_UINT_FAST32_MIN
+#define DUK_UINT_MAX DUK_UINT_FAST32_MAX
 #endif
 
 /* Same as 'duk_int_t' but guaranteed to be a 'fast' variant if this
@@ -2022,67 +2047,67 @@ typedef duk_uint_fast32_t duk_uint_t;
  */
 typedef duk_int_fast32_t duk_int_fast_t;
 typedef duk_uint_fast32_t duk_uint_fast_t;
-#define DUK_INT_FAST_MIN      DUK_INT_FAST32_MIN
-#define DUK_INT_FAST_MAX      DUK_INT_FAST32_MAX
-#define DUK_UINT_FAST_MIN     DUK_UINT_FAST32_MIN
-#define DUK_UINT_FAST_MAX     DUK_UINT_FAST32_MAX
+#define DUK_INT_FAST_MIN DUK_INT_FAST32_MIN
+#define DUK_INT_FAST_MAX DUK_INT_FAST32_MAX
+#define DUK_UINT_FAST_MIN DUK_UINT_FAST32_MIN
+#define DUK_UINT_FAST_MAX DUK_UINT_FAST32_MAX
 
 /* Small integers (16 bits or more) can fall back to the 'int' type, but
  * have a typedef so they are marked "small" explicitly.
  */
 typedef int duk_small_int_t;
 typedef unsigned int duk_small_uint_t;
-#define DUK_SMALL_INT_MIN     INT_MIN
-#define DUK_SMALL_INT_MAX     INT_MAX
-#define DUK_SMALL_UINT_MIN    0
-#define DUK_SMALL_UINT_MAX    UINT_MAX
+#define DUK_SMALL_INT_MIN INT_MIN
+#define DUK_SMALL_INT_MAX INT_MAX
+#define DUK_SMALL_UINT_MIN 0
+#define DUK_SMALL_UINT_MAX UINT_MAX
 
 /* Fast variants of small integers, again for really fast paths like the
  * executor.
  */
 typedef duk_int_fast16_t duk_small_int_fast_t;
 typedef duk_uint_fast16_t duk_small_uint_fast_t;
-#define DUK_SMALL_INT_FAST_MIN    DUK_INT_FAST16_MIN
-#define DUK_SMALL_INT_FAST_MAX    DUK_INT_FAST16_MAX
-#define DUK_SMALL_UINT_FAST_MIN   DUK_UINT_FAST16_MIN
-#define DUK_SMALL_UINT_FAST_MAX   DUK_UINT_FAST16_MAX
+#define DUK_SMALL_INT_FAST_MIN DUK_INT_FAST16_MIN
+#define DUK_SMALL_INT_FAST_MAX DUK_INT_FAST16_MAX
+#define DUK_SMALL_UINT_FAST_MIN DUK_UINT_FAST16_MIN
+#define DUK_SMALL_UINT_FAST_MAX DUK_UINT_FAST16_MAX
 
 /* Boolean values are represented with the platform 'unsigned int'. */
 typedef duk_small_uint_t duk_bool_t;
-#define DUK_BOOL_MIN              DUK_SMALL_UINT_MIN
-#define DUK_BOOL_MAX              DUK_SMALL_UINT_MAX
+#define DUK_BOOL_MIN DUK_SMALL_UINT_MIN
+#define DUK_BOOL_MAX DUK_SMALL_UINT_MAX
 
 /* Index values must have at least 32-bit signed range. */
 typedef duk_int_t duk_idx_t;
-#define DUK_IDX_MIN               DUK_INT_MIN
-#define DUK_IDX_MAX               DUK_INT_MAX
+#define DUK_IDX_MIN DUK_INT_MIN
+#define DUK_IDX_MAX DUK_INT_MAX
 
 /* Unsigned index variant. */
 typedef duk_uint_t duk_uidx_t;
-#define DUK_UIDX_MIN              DUK_UINT_MIN
-#define DUK_UIDX_MAX              DUK_UINT_MAX
+#define DUK_UIDX_MIN DUK_UINT_MIN
+#define DUK_UIDX_MAX DUK_UINT_MAX
 
 /* Array index values, could be exact 32 bits.
  * Currently no need for signed duk_arridx_t.
  */
 typedef duk_uint_t duk_uarridx_t;
-#define DUK_UARRIDX_MIN           DUK_UINT_MIN
-#define DUK_UARRIDX_MAX           DUK_UINT_MAX
+#define DUK_UARRIDX_MIN DUK_UINT_MIN
+#define DUK_UARRIDX_MAX DUK_UINT_MAX
 
 /* Duktape/C function return value, platform int is enough for now to
  * represent 0, 1, or negative error code.  Must be compatible with
  * assigning truth values (e.g. duk_ret_t rc = (foo == bar);).
  */
 typedef duk_small_int_t duk_ret_t;
-#define DUK_RET_MIN               DUK_SMALL_INT_MIN
-#define DUK_RET_MAX               DUK_SMALL_INT_MAX
+#define DUK_RET_MIN DUK_SMALL_INT_MIN
+#define DUK_RET_MAX DUK_SMALL_INT_MAX
 
 /* Error codes are represented with platform int.  High bits are used
  * for flags and such, so 32 bits are needed.
  */
 typedef duk_int_t duk_errcode_t;
-#define DUK_ERRCODE_MIN           DUK_INT_MIN
-#define DUK_ERRCODE_MAX           DUK_INT_MAX
+#define DUK_ERRCODE_MIN DUK_INT_MIN
+#define DUK_ERRCODE_MAX DUK_INT_MAX
 
 /* Codepoint type.  Must be 32 bits or more because it is used also for
  * internal codepoints.  The type is signed because negative codepoints
@@ -2093,10 +2118,10 @@ typedef duk_int_t duk_errcode_t;
  */
 typedef duk_int_t duk_codepoint_t;
 typedef duk_uint_t duk_ucodepoint_t;
-#define DUK_CODEPOINT_MIN         DUK_INT_MIN
-#define DUK_CODEPOINT_MAX         DUK_INT_MAX
-#define DUK_UCODEPOINT_MIN        DUK_UINT_MIN
-#define DUK_UCODEPOINT_MAX        DUK_UINT_MAX
+#define DUK_CODEPOINT_MIN DUK_INT_MIN
+#define DUK_CODEPOINT_MAX DUK_INT_MAX
+#define DUK_UCODEPOINT_MIN DUK_UINT_MIN
+#define DUK_UCODEPOINT_MAX DUK_UINT_MAX
 
 /* IEEE float/double typedef. */
 typedef float duk_float_t;
@@ -2143,20 +2168,20 @@ typedef struct duk_hthread duk_context;
 
 /* An abort()-like primitive is needed by the default fatal error handler. */
 #if !defined(DUK_ABORT)
-#define DUK_ABORT             abort
+#define DUK_ABORT abort
 #endif
 
 #if !defined(DUK_SETJMP)
-#define DUK_JMPBUF_TYPE       jmp_buf
-#define DUK_SETJMP(jb)        setjmp((jb))
-#define DUK_LONGJMP(jb)       longjmp((jb), 1)
+#define DUK_JMPBUF_TYPE jmp_buf
+#define DUK_SETJMP(jb) setjmp((jb))
+#define DUK_LONGJMP(jb) longjmp((jb), 1)
 #endif
 
 #if 0
 /* sigsetjmp() alternative */
-#define DUK_JMPBUF_TYPE       sigjmp_buf
-#define DUK_SETJMP(jb)        sigsetjmp((jb))
-#define DUK_LONGJMP(jb)       siglongjmp((jb), 1)
+#define DUK_JMPBUF_TYPE sigjmp_buf
+#define DUK_SETJMP(jb) sigsetjmp((jb))
+#define DUK_LONGJMP(jb) siglongjmp((jb), 1)
 #endif
 
 /* Special naming to avoid conflict with e.g. DUK_FREE() in duk_heap.h
@@ -2164,16 +2189,16 @@ typedef struct duk_hthread duk_context;
  * some compilers don't handle zero length or NULL correctly in realloc().
  */
 #if !defined(DUK_ANSI_MALLOC)
-#define DUK_ANSI_MALLOC      malloc
+#define DUK_ANSI_MALLOC malloc
 #endif
 #if !defined(DUK_ANSI_REALLOC)
-#define DUK_ANSI_REALLOC     realloc
+#define DUK_ANSI_REALLOC realloc
 #endif
 #if !defined(DUK_ANSI_CALLOC)
-#define DUK_ANSI_CALLOC      calloc
+#define DUK_ANSI_CALLOC calloc
 #endif
 #if !defined(DUK_ANSI_FREE)
-#define DUK_ANSI_FREE        free
+#define DUK_ANSI_FREE free
 #endif
 
 /* ANSI C (various versions) and some implementations require that the
@@ -2202,80 +2227,80 @@ typedef struct duk_hthread duk_context;
 /* Old uclibcs have a broken memcpy so use memmove instead (this is overly wide
  * now on purpose): http://lists.uclibc.org/pipermail/uclibc-cvs/2008-October/025511.html
  */
-#define DUK_MEMCPY       memmove
+#define DUK_MEMCPY memmove
 #else
-#define DUK_MEMCPY       memcpy
+#define DUK_MEMCPY memcpy
 #endif
 #endif
 #if !defined(DUK_MEMMOVE)
-#define DUK_MEMMOVE      memmove
+#define DUK_MEMMOVE memmove
 #endif
 #if !defined(DUK_MEMCMP)
-#define DUK_MEMCMP       memcmp
+#define DUK_MEMCMP memcmp
 #endif
 #if !defined(DUK_MEMSET)
-#define DUK_MEMSET       memset
+#define DUK_MEMSET memset
 #endif
 #if !defined(DUK_STRLEN)
-#define DUK_STRLEN       strlen
+#define DUK_STRLEN strlen
 #endif
 #if !defined(DUK_STRCMP)
-#define DUK_STRCMP       strcmp
+#define DUK_STRCMP strcmp
 #endif
 #if !defined(DUK_STRNCMP)
-#define DUK_STRNCMP      strncmp
+#define DUK_STRNCMP strncmp
 #endif
 #if !defined(DUK_SPRINTF)
-#define DUK_SPRINTF      sprintf
+#define DUK_SPRINTF sprintf
 #endif
 #if !defined(DUK_SNPRINTF)
 /* snprintf() is technically not part of C89 but usually available. */
-#define DUK_SNPRINTF     snprintf
+#define DUK_SNPRINTF snprintf
 #endif
 #if !defined(DUK_VSPRINTF)
-#define DUK_VSPRINTF     vsprintf
+#define DUK_VSPRINTF vsprintf
 #endif
 #if !defined(DUK_VSNPRINTF)
 /* vsnprintf() is technically not part of C89 but usually available. */
-#define DUK_VSNPRINTF    vsnprintf
+#define DUK_VSNPRINTF vsnprintf
 #endif
 #if !defined(DUK_SSCANF)
-#define DUK_SSCANF       sscanf
+#define DUK_SSCANF sscanf
 #endif
 #if !defined(DUK_VSSCANF)
-#define DUK_VSSCANF      vsscanf
+#define DUK_VSSCANF vsscanf
 #endif
 #if !defined(DUK_MEMZERO)
-#define DUK_MEMZERO(p,n) DUK_MEMSET((p), 0, (n))
+#define DUK_MEMZERO(p, n) DUK_MEMSET((p), 0, (n))
 #endif
 
 #if !defined(DUK_DOUBLE_INFINITY)
 #undef DUK_USE_COMPUTED_INFINITY
 #if defined(DUK_F_GCC_VERSION) && (DUK_F_GCC_VERSION < 40600)
 /* GCC older than 4.6: avoid overflow warnings related to using INFINITY */
-#define DUK_DOUBLE_INFINITY  (__builtin_inf())
+#define DUK_DOUBLE_INFINITY (__builtin_inf())
 #elif defined(INFINITY)
-#define DUK_DOUBLE_INFINITY  ((double) INFINITY)
-#elif !defined(DUK_F_VBCC) && !defined(DUK_F_MSVC) && !defined(DUK_F_BCC) && \
-      !defined(DUK_F_OLD_SOLARIS) && !defined(DUK_F_AIX)
-#define DUK_DOUBLE_INFINITY  (1.0 / 0.0)
+#define DUK_DOUBLE_INFINITY ((double)INFINITY)
+#elif !defined(DUK_F_VBCC) && !defined(DUK_F_MSVC) && !defined(DUK_F_BCC) \
+		&& !defined(DUK_F_OLD_SOLARIS) && !defined(DUK_F_AIX)
+#define DUK_DOUBLE_INFINITY (1.0 / 0.0)
 #else
 /* In VBCC (1.0 / 0.0) results in a warning and 0.0 instead of infinity.
  * Use a computed infinity (initialized when a heap is created at the
  * latest).
  */
 #define DUK_USE_COMPUTED_INFINITY
-#define DUK_DOUBLE_INFINITY  duk_computed_infinity
+#define DUK_DOUBLE_INFINITY duk_computed_infinity
 #endif
 #endif
 
 #if !defined(DUK_DOUBLE_NAN)
 #undef DUK_USE_COMPUTED_NAN
 #if defined(NAN)
-#define DUK_DOUBLE_NAN       NAN
-#elif !defined(DUK_F_VBCC) && !defined(DUK_F_MSVC) && !defined(DUK_F_BCC) && \
-      !defined(DUK_F_OLD_SOLARIS) && !defined(DUK_F_AIX)
-#define DUK_DOUBLE_NAN       (0.0 / 0.0)
+#define DUK_DOUBLE_NAN NAN
+#elif !defined(DUK_F_VBCC) && !defined(DUK_F_MSVC) && !defined(DUK_F_BCC) \
+		&& !defined(DUK_F_OLD_SOLARIS) && !defined(DUK_F_AIX)
+#define DUK_DOUBLE_NAN (0.0 / 0.0)
 #else
 /* In VBCC (0.0 / 0.0) results in a warning and 0.0 instead of NaN.
  * In MSVC (VS2010 Express) (0.0 / 0.0) results in a compile error.
@@ -2283,7 +2308,7 @@ typedef struct duk_hthread duk_context;
  * latest).
  */
 #define DUK_USE_COMPUTED_NAN
-#define DUK_DOUBLE_NAN       duk_computed_nan
+#define DUK_DOUBLE_NAN duk_computed_nan
 #endif
 #endif
 
@@ -2299,8 +2324,8 @@ typedef struct duk_hthread duk_context;
 
 /* Complex condition broken into separate parts. */
 #undef DUK_F_USE_REPL_ALL
-#if !(defined(FP_NAN) && defined(FP_INFINITE) && defined(FP_ZERO) && \
-      defined(FP_SUBNORMAL) && defined(FP_NORMAL))
+#if !(defined(FP_NAN) && defined(FP_INFINITE) && defined(FP_ZERO) \
+		&& defined(FP_SUBNORMAL) && defined(FP_NORMAL))
 /* Missing some obvious constants. */
 #define DUK_F_USE_REPL_ALL
 #elif defined(DUK_F_AMIGAOS) && defined(DUK_F_VBCC)
@@ -2334,27 +2359,27 @@ typedef struct duk_hthread duk_context;
 #define DUK_USE_REPL_ISFINITE
 #define DUK_USE_REPL_ISNAN
 #define DUK_USE_REPL_ISINF
-#define DUK_FPCLASSIFY       duk_repl_fpclassify
-#define DUK_SIGNBIT          duk_repl_signbit
-#define DUK_ISFINITE         duk_repl_isfinite
-#define DUK_ISNAN            duk_repl_isnan
-#define DUK_ISINF            duk_repl_isinf
-#define DUK_FP_NAN           0
-#define DUK_FP_INFINITE      1
-#define DUK_FP_ZERO          2
-#define DUK_FP_SUBNORMAL     3
-#define DUK_FP_NORMAL        4
+#define DUK_FPCLASSIFY duk_repl_fpclassify
+#define DUK_SIGNBIT duk_repl_signbit
+#define DUK_ISFINITE duk_repl_isfinite
+#define DUK_ISNAN duk_repl_isnan
+#define DUK_ISINF duk_repl_isinf
+#define DUK_FP_NAN 0
+#define DUK_FP_INFINITE 1
+#define DUK_FP_ZERO 2
+#define DUK_FP_SUBNORMAL 3
+#define DUK_FP_NORMAL 4
 #else
-#define DUK_FPCLASSIFY       fpclassify
-#define DUK_SIGNBIT          signbit
-#define DUK_ISFINITE         isfinite
-#define DUK_ISNAN            isnan
-#define DUK_ISINF            isinf
-#define DUK_FP_NAN           FP_NAN
-#define DUK_FP_INFINITE      FP_INFINITE
-#define DUK_FP_ZERO          FP_ZERO
-#define DUK_FP_SUBNORMAL     FP_SUBNORMAL
-#define DUK_FP_NORMAL        FP_NORMAL
+#define DUK_FPCLASSIFY fpclassify
+#define DUK_SIGNBIT signbit
+#define DUK_ISFINITE isfinite
+#define DUK_ISNAN isnan
+#define DUK_ISINF isinf
+#define DUK_FP_NAN FP_NAN
+#define DUK_FP_INFINITE FP_INFINITE
+#define DUK_FP_ZERO FP_ZERO
+#define DUK_FP_SUBNORMAL FP_SUBNORMAL
+#define DUK_FP_NORMAL FP_NORMAL
 #endif
 
 #if defined(DUK_F_USE_REPL_ALL)
@@ -2366,49 +2391,49 @@ typedef struct duk_hthread duk_context;
  * to be defined as concrete C functions (not macros).
  */
 #if !defined(DUK_FABS)
-#define DUK_FABS             fabs
+#define DUK_FABS fabs
 #endif
 #if !defined(DUK_FLOOR)
-#define DUK_FLOOR            floor
+#define DUK_FLOOR floor
 #endif
 #if !defined(DUK_CEIL)
-#define DUK_CEIL             ceil
+#define DUK_CEIL ceil
 #endif
 #if !defined(DUK_FMOD)
-#define DUK_FMOD             fmod
+#define DUK_FMOD fmod
 #endif
 #if !defined(DUK_POW)
-#define DUK_POW              pow
+#define DUK_POW pow
 #endif
 #if !defined(DUK_ACOS)
-#define DUK_ACOS             acos
+#define DUK_ACOS acos
 #endif
 #if !defined(DUK_ASIN)
-#define DUK_ASIN             asin
+#define DUK_ASIN asin
 #endif
 #if !defined(DUK_ATAN)
-#define DUK_ATAN             atan
+#define DUK_ATAN atan
 #endif
 #if !defined(DUK_ATAN2)
-#define DUK_ATAN2            atan2
+#define DUK_ATAN2 atan2
 #endif
 #if !defined(DUK_SIN)
-#define DUK_SIN              sin
+#define DUK_SIN sin
 #endif
 #if !defined(DUK_COS)
-#define DUK_COS              cos
+#define DUK_COS cos
 #endif
 #if !defined(DUK_TAN)
-#define DUK_TAN              tan
+#define DUK_TAN tan
 #endif
 #if !defined(DUK_EXP)
-#define DUK_EXP              exp
+#define DUK_EXP exp
 #endif
 #if !defined(DUK_LOG)
-#define DUK_LOG              log
+#define DUK_LOG log
 #endif
 #if !defined(DUK_SQRT)
-#define DUK_SQRT             sqrt
+#define DUK_SQRT sqrt
 #endif
 
 /* The functions below exist only in C99/C++11 or later and need a workaround
@@ -2416,21 +2441,22 @@ typedef struct duk_hthread duk_context;
  * these functions also exist in MSVC 2013 and later so include a clause for
  * that too.  Android doesn't have log2; disable all of these for Android.
  */
-#if (defined(DUK_F_C99) || defined(DUK_F_CPP11) || (defined(_MSC_VER) && (_MSC_VER >= 1800))) && \
-    !defined(DUK_F_ANDROID) && !defined(DUK_F_MINT)
+#if(defined(DUK_F_C99) || defined(DUK_F_CPP11)        \
+		|| (defined(_MSC_VER) && (_MSC_VER >= 1800))) \
+		&& !defined(DUK_F_ANDROID) && !defined(DUK_F_MINT)
 #if !defined(DUK_CBRT)
-#define DUK_CBRT             cbrt
+#define DUK_CBRT cbrt
 #endif
 #if !defined(DUK_LOG2)
-#define DUK_LOG2             log2
+#define DUK_LOG2 log2
 #endif
 #if !defined(DUK_LOG10)
-#define DUK_LOG10            log10
+#define DUK_LOG10 log10
 #endif
 #if !defined(DUK_TRUNC)
-#define DUK_TRUNC            trunc
+#define DUK_TRUNC trunc
 #endif
-#endif  /* DUK_F_C99 etc */
+#endif /* DUK_F_C99 etc */
 
 /* NetBSD 6.0 x86 (at least) has a few problems with pow() semantics,
  * see test-bug-netbsd-math-pow.js.  MinGW has similar (but different)
@@ -2497,32 +2523,36 @@ typedef struct duk_hthread duk_context;
  * http://gcc.gnu.org/onlinedocs/cpp/Common-Predefined-Macros.html
  */
 #if !defined(DUK_USE_BYTEORDER) && defined(__BYTE_ORDER__)
-#if defined(__ORDER_LITTLE_ENDIAN__) && (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
-#if defined(__FLOAT_WORD_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) && (__FLOAT_WORD_ORDER__ == __ORDER_LITTLE_ENDIAN__)
+#if defined(__ORDER_LITTLE_ENDIAN__) \
+		&& (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
+#if defined(__FLOAT_WORD_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) \
+		&& (__FLOAT_WORD_ORDER__ == __ORDER_LITTLE_ENDIAN__)
 #define DUK_USE_BYTEORDER 1
-#elif defined(__FLOAT_WORD_ORDER__) && defined(__ORDER_BIG_ENDIAN__) && (__FLOAT_WORD_ORDER__ == __ORDER_BIG_ENDIAN__)
+#elif defined(__FLOAT_WORD_ORDER__) && defined(__ORDER_BIG_ENDIAN__) \
+		&& (__FLOAT_WORD_ORDER__ == __ORDER_BIG_ENDIAN__)
 #define DUK_USE_BYTEORDER 2
 #elif !defined(__FLOAT_WORD_ORDER__)
 /* Float word order not known, assume not a hybrid. */
 #define DUK_USE_BYTEORDER 1
 #else
 /* Byte order is little endian but cannot determine IEEE double word order. */
-#endif  /* float word order */
+#endif /* float word order */
 #elif defined(__ORDER_BIG_ENDIAN__) && (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
-#if defined(__FLOAT_WORD_ORDER__) && defined(__ORDER_BIG_ENDIAN__) && (__FLOAT_WORD_ORDER__ == __ORDER_BIG_ENDIAN__)
+#if defined(__FLOAT_WORD_ORDER__) && defined(__ORDER_BIG_ENDIAN__) \
+		&& (__FLOAT_WORD_ORDER__ == __ORDER_BIG_ENDIAN__)
 #define DUK_USE_BYTEORDER 3
 #elif !defined(__FLOAT_WORD_ORDER__)
 /* Float word order not known, assume not a hybrid. */
 #define DUK_USE_BYTEORDER 3
 #else
 /* Byte order is big endian but cannot determine IEEE double word order. */
-#endif  /* float word order */
+#endif /* float word order */
 #else
 /* Cannot determine byte order; __ORDER_PDP_ENDIAN__ is related to 32-bit
  * integer ordering and is not relevant.
  */
-#endif  /* integer byte order */
-#endif  /* !defined(DUK_USE_BYTEORDER) && defined(__BYTE_ORDER__) */
+#endif /* integer byte order */
+#endif /* !defined(DUK_USE_BYTEORDER) && defined(__BYTE_ORDER__) */
 
 /* More or less standard endianness predefines provided by header files.
  * The ARM hybrid case is detected by assuming that __FLOAT_WORD_ORDER
@@ -2531,37 +2561,47 @@ typedef struct duk_hthread duk_context;
  * causes comparisons to fail: https://github.com/svaarala/duktape/issues/453.
  */
 #if !defined(DUK_USE_BYTEORDER)
-#if defined(__BYTE_ORDER) && defined(__LITTLE_ENDIAN) && (__BYTE_ORDER == __LITTLE_ENDIAN) || \
-    defined(_BYTE_ORDER) && defined(_LITTLE_ENDIAN) && (_BYTE_ORDER == _LITTLE_ENDIAN) || \
-    defined(__LITTLE_ENDIAN__)
-#if defined(__FLOAT_WORD_ORDER) && defined(__LITTLE_ENDIAN) && (__FLOAT_WORD_ORDER == __LITTLE_ENDIAN) || \
-    defined(_FLOAT_WORD_ORDER) && defined(_LITTLE_ENDIAN) && (_FLOAT_WORD_ORDER == _LITTLE_ENDIAN)
+#if defined(__BYTE_ORDER) && defined(__LITTLE_ENDIAN)      \
+				&& (__BYTE_ORDER == __LITTLE_ENDIAN)       \
+		|| defined(_BYTE_ORDER) && defined(_LITTLE_ENDIAN) \
+				   && (_BYTE_ORDER == _LITTLE_ENDIAN)      \
+		|| defined(__LITTLE_ENDIAN__)
+#if defined(__FLOAT_WORD_ORDER) && defined(__LITTLE_ENDIAN)      \
+				&& (__FLOAT_WORD_ORDER == __LITTLE_ENDIAN)       \
+		|| defined(_FLOAT_WORD_ORDER) && defined(_LITTLE_ENDIAN) \
+				   && (_FLOAT_WORD_ORDER == _LITTLE_ENDIAN)
 #define DUK_USE_BYTEORDER 1
-#elif defined(__FLOAT_WORD_ORDER) && defined(__BIG_ENDIAN) && (__FLOAT_WORD_ORDER == __BIG_ENDIAN) || \
-      defined(_FLOAT_WORD_ORDER) && defined(_BIG_ENDIAN) && (_FLOAT_WORD_ORDER == _BIG_ENDIAN)
+#elif defined(__FLOAT_WORD_ORDER) && defined(__BIG_ENDIAN)    \
+				&& (__FLOAT_WORD_ORDER == __BIG_ENDIAN)       \
+		|| defined(_FLOAT_WORD_ORDER) && defined(_BIG_ENDIAN) \
+				   && (_FLOAT_WORD_ORDER == _BIG_ENDIAN)
 #define DUK_USE_BYTEORDER 2
 #elif !defined(__FLOAT_WORD_ORDER) && !defined(_FLOAT_WORD_ORDER)
 /* Float word order not known, assume not a hybrid. */
 #define DUK_USE_BYTEORDER 1
 #else
 /* Byte order is little endian but cannot determine IEEE double word order. */
-#endif  /* float word order */
-#elif defined(__BYTE_ORDER) && defined(__BIG_ENDIAN) && (__BYTE_ORDER == __BIG_ENDIAN) || \
-      defined(_BYTE_ORDER) && defined(_BIG_ENDIAN) && (_BYTE_ORDER == _BIG_ENDIAN) || \
-      defined(__BIG_ENDIAN__)
-#if defined(__FLOAT_WORD_ORDER) && defined(__BIG_ENDIAN) && (__FLOAT_WORD_ORDER == __BIG_ENDIAN) || \
-    defined(_FLOAT_WORD_ORDER) && defined(_BIG_ENDIAN) && (_FLOAT_WORD_ORDER == _BIG_ENDIAN)
+#endif /* float word order */
+#elif defined(__BYTE_ORDER) && defined(__BIG_ENDIAN)    \
+				&& (__BYTE_ORDER == __BIG_ENDIAN)       \
+		|| defined(_BYTE_ORDER) && defined(_BIG_ENDIAN) \
+				   && (_BYTE_ORDER == _BIG_ENDIAN)      \
+		|| defined(__BIG_ENDIAN__)
+#if defined(__FLOAT_WORD_ORDER) && defined(__BIG_ENDIAN)      \
+				&& (__FLOAT_WORD_ORDER == __BIG_ENDIAN)       \
+		|| defined(_FLOAT_WORD_ORDER) && defined(_BIG_ENDIAN) \
+				   && (_FLOAT_WORD_ORDER == _BIG_ENDIAN)
 #define DUK_USE_BYTEORDER 3
 #elif !defined(__FLOAT_WORD_ORDER) && !defined(_FLOAT_WORD_ORDER)
 /* Float word order not known, assume not a hybrid. */
 #define DUK_USE_BYTEORDER 3
 #else
 /* Byte order is big endian but cannot determine IEEE double word order. */
-#endif  /* float word order */
+#endif /* float word order */
 #else
 /* Cannot determine byte order. */
-#endif  /* integer byte order */
-#endif  /* !defined(DUK_USE_BYTEORDER) */
+#endif /* integer byte order */
+#endif /* !defined(DUK_USE_BYTEORDER) */
 
 /* QNX gcc cross compiler seems to define e.g. __LITTLEENDIAN__ or __BIGENDIAN__:
  *  $ /opt/qnx650/host/linux/x86/usr/bin/i486-pc-nto-qnx6.5.0-gcc -dM -E - </dev/null | grep -ni endian
@@ -2601,8 +2641,9 @@ typedef struct duk_hthread duk_context;
  * http://stackoverflow.com/questions/11130109/c-struct-size-alignment
  * http://stackoverflow.com/questions/10951039/specifying-64-bit-alignment
  */
-#if !(defined(DUK_USE_PACK_MSVC_PRAGMA) || defined(DUK_USE_PACK_GCC_ATTR) || \
-      defined(DUK_USE_PACK_CLANG_ATTR) || defined(DUK_USE_PACK_DUMMY_MEMBER))
+#if !(defined(DUK_USE_PACK_MSVC_PRAGMA) || defined(DUK_USE_PACK_GCC_ATTR) \
+		|| defined(DUK_USE_PACK_CLANG_ATTR)                               \
+		|| defined(DUK_USE_PACK_DUMMY_MEMBER))
 #define DUK_USE_PACK_DUMMY_MEMBER
 #endif
 
@@ -2624,14 +2665,17 @@ typedef struct duk_hthread duk_context;
  * Omit parenthesis on macro right side on purpose to minimize differences
  * to direct use.
  */
-#define DUK_VA_COPY(dest,src) va_copy(dest,src)
+#define DUK_VA_COPY(dest, src) va_copy(dest, src)
 #else
 /* Pre-C99: va_list type is implementation dependent.  This replacement
  * assumes it is a plain value so that a simple assignment will work.
  * This is not the case on all platforms (it may be a single-array element,
  * for instance).
  */
-#define DUK_VA_COPY(dest,src) do { (dest) = (src); } while (0)
+#define DUK_VA_COPY(dest, src) \
+	do {                       \
+		(dest) = (src);        \
+	} while(0)
 #endif
 #endif
 
@@ -2639,15 +2683,18 @@ typedef struct duk_hthread duk_context;
 /* Macro hackery to convert e.g. __LINE__ to a string without formatting,
  * see: http://stackoverflow.com/questions/240353/convert-a-preprocessor-token-to-a-string
  */
-#define DUK_MACRO_STRINGIFY_HELPER(x)  #x
-#define DUK_MACRO_STRINGIFY(x)  DUK_MACRO_STRINGIFY_HELPER(x)
+#define DUK_MACRO_STRINGIFY_HELPER(x) #x
+#define DUK_MACRO_STRINGIFY(x) DUK_MACRO_STRINGIFY_HELPER(x)
 #endif
 
 #if !defined(DUK_CAUSE_SEGFAULT)
 /* This can be used for testing; valgrind will then indicate the C call stack
  * leading to the call site.
  */
-#define DUK_CAUSE_SEGFAULT()  do { *((volatile duk_uint32_t *) NULL) = (duk_uint32_t) 0xdeadbeefUL; } while (0)
+#define DUK_CAUSE_SEGFAULT()                                           \
+	do {                                                               \
+		*((volatile duk_uint32_t *)NULL) = (duk_uint32_t)0xdeadbeefUL; \
+	} while(0)
 #endif
 
 #if !defined(DUK_UNREF)
@@ -2657,7 +2704,10 @@ typedef struct duk_hthread duk_context;
  * it is unreferenced when debug printing is disabled.  May cause warnings
  * for volatile arguments.
  */
-#define DUK_UNREF(x)  do { (void) (x); } while (0)
+#define DUK_UNREF(x) \
+	do {             \
+		(void)(x);   \
+	} while(0)
 #endif
 
 /* Fillin for DUK_NORETURN; DUK_WO_NORETURN() is used to insert dummy
@@ -2671,21 +2721,33 @@ typedef struct duk_hthread duk_context;
  * and they're only included to satisfy the compiler.
  */
 #if defined(DUK_NORETURN)
-#define DUK_WO_NORETURN(stmt) do { } while (0)
+#define DUK_WO_NORETURN(stmt) \
+	do {                      \
+	} while(0)
 #else
-#define DUK_NORETURN(decl)  decl
-#define DUK_WO_NORETURN(stmt) do { stmt } while (0)
+#define DUK_NORETURN(decl) decl
+#define DUK_WO_NORETURN(stmt) \
+	do {                      \
+		stmt                  \
+	} while(0)
 #endif
 
 #if defined(DUK_UNREACHABLE)
-#define DUK_WO_UNREACHABLE(stmt) do { } while (0)
+#define DUK_WO_UNREACHABLE(stmt) \
+	do {                         \
+	} while(0)
 #else
 /* Don't know how to declare unreachable point, so don't do it; this
  * may cause some spurious compilation warnings (e.g. "variable used
  * uninitialized").
  */
-#define DUK_UNREACHABLE()  do { } while (0)
-#define DUK_WO_UNREACHABLE(stmt) do { stmt } while (0)
+#define DUK_UNREACHABLE() \
+	do {                  \
+	} while(0)
+#define DUK_WO_UNREACHABLE(stmt) \
+	do {                         \
+		stmt                     \
+	} while(0)
 #endif
 
 #if !defined(DUK_LOSE_CONST)
@@ -2693,122 +2755,123 @@ typedef struct duk_hthread duk_context;
  * This is not fully portable because casting through duk_uintptr_t may
  * not work on all architectures (e.g. those with long, segmented pointers).
  */
-#define DUK_LOSE_CONST(src) ((void *) (duk_uintptr_t) (src))
+#define DUK_LOSE_CONST(src) ((void *)(duk_uintptr_t)(src))
 #endif
 
 #if !defined(DUK_LIKELY)
-#define DUK_LIKELY(x)    (x)
+#define DUK_LIKELY(x) (x)
 #endif
 #if !defined(DUK_UNLIKELY)
-#define DUK_UNLIKELY(x)  (x)
+#define DUK_UNLIKELY(x) (x)
 #endif
 #if !defined(DUK_UNPREDICTABLE)
-#define DUK_UNPREDICTABLE(x)  (x)
+#define DUK_UNPREDICTABLE(x) (x)
 #endif
 
 #if !defined(DUK_NOINLINE)
-#define DUK_NOINLINE       /*nop*/
+#define DUK_NOINLINE /*nop*/
 #endif
 #if !defined(DUK_INLINE)
-#define DUK_INLINE         /*nop*/
+#define DUK_INLINE /*nop*/
 #endif
 #if !defined(DUK_ALWAYS_INLINE)
-#define DUK_ALWAYS_INLINE  /*nop*/
+#define DUK_ALWAYS_INLINE /*nop*/
 #endif
 
 #if !defined(DUK_HOT)
-#define DUK_HOT            /*nop*/
+#define DUK_HOT /*nop*/
 #endif
 #if !defined(DUK_COLD)
-#define DUK_COLD           /*nop*/
+#define DUK_COLD /*nop*/
 #endif
 
 #if !defined(DUK_EXTERNAL_DECL)
-#define DUK_EXTERNAL_DECL  extern
+#define DUK_EXTERNAL_DECL extern
 #endif
 #if !defined(DUK_EXTERNAL)
-#define DUK_EXTERNAL       /*empty*/
+#define DUK_EXTERNAL /*empty*/
 #endif
 #if !defined(DUK_INTERNAL_DECL)
 #if defined(DUK_SINGLE_FILE)
-#define DUK_INTERNAL_DECL  static
+#define DUK_INTERNAL_DECL static
 #else
-#define DUK_INTERNAL_DECL  extern
+#define DUK_INTERNAL_DECL extern
 #endif
 #endif
 #if !defined(DUK_INTERNAL)
 #if defined(DUK_SINGLE_FILE)
-#define DUK_INTERNAL       static
+#define DUK_INTERNAL static
 #else
-#define DUK_INTERNAL       /*empty*/
+#define DUK_INTERNAL /*empty*/
 #endif
 #endif
 #if !defined(DUK_LOCAL_DECL)
-#define DUK_LOCAL_DECL     static
+#define DUK_LOCAL_DECL static
 #endif
 #if !defined(DUK_LOCAL)
-#define DUK_LOCAL          static
+#define DUK_LOCAL static
 #endif
 
 #if !defined(DUK_FILE_MACRO)
-#define DUK_FILE_MACRO  __FILE__
+#define DUK_FILE_MACRO __FILE__
 #endif
 #if !defined(DUK_LINE_MACRO)
-#define DUK_LINE_MACRO  __LINE__
+#define DUK_LINE_MACRO __LINE__
 #endif
 #if !defined(DUK_FUNC_MACRO)
 #if defined(DUK_F_C99) || defined(DUK_F_CPP11)
-#define DUK_FUNC_MACRO  __func__
+#define DUK_FUNC_MACRO __func__
 #elif defined(__FUNCTION__)
-#define DUK_FUNC_MACRO  __FUNCTION__
+#define DUK_FUNC_MACRO __FUNCTION__
 #else
-#define DUK_FUNC_MACRO  "unknown"
+#define DUK_FUNC_MACRO "unknown"
 #endif
 #endif
 
 #if defined(DUK_F_HAVE_64BIT)
 #if !defined(DUK_BSWAP64)
-#define DUK_BSWAP64(x) \
-	((((duk_uint64_t) (x)) >> 56U) | \
-	 ((((duk_uint64_t) (x)) >> 40U) & DUK_U64_CONSTANT(0xff00)) | \
-	 ((((duk_uint64_t) (x)) >> 24U) & DUK_U64_CONSTANT(0xff0000)) | \
-	 ((((duk_uint64_t) (x)) >> 8U) & DUK_U64_CONSTANT(0xff000000)) | \
-	 ((((duk_uint64_t) (x)) << 8U) & DUK_U64_CONSTANT(0xff00000000)) | \
-	 ((((duk_uint64_t) (x)) << 24U) & DUK_U64_CONSTANT(0xff0000000000)) | \
-	 ((((duk_uint64_t) (x)) << 40U) & DUK_U64_CONSTANT(0xff000000000000)) | \
-	 (((duk_uint64_t) (x)) << 56U))
+#define DUK_BSWAP64(x)                                                       \
+	((((duk_uint64_t)(x)) >> 56U)                                            \
+			| ((((duk_uint64_t)(x)) >> 40U) & DUK_U64_CONSTANT(0xff00))      \
+			| ((((duk_uint64_t)(x)) >> 24U) & DUK_U64_CONSTANT(0xff0000))    \
+			| ((((duk_uint64_t)(x)) >> 8U) & DUK_U64_CONSTANT(0xff000000))   \
+			| ((((duk_uint64_t)(x)) << 8U) & DUK_U64_CONSTANT(0xff00000000)) \
+			| ((((duk_uint64_t)(x)) << 24U)                                  \
+					& DUK_U64_CONSTANT(0xff0000000000))                      \
+			| ((((duk_uint64_t)(x)) << 40U)                                  \
+					& DUK_U64_CONSTANT(0xff000000000000))                    \
+			| (((duk_uint64_t)(x)) << 56U))
 #endif
 #endif
 #if !defined(DUK_BSWAP32)
-#define DUK_BSWAP32(x) \
-	((((duk_uint32_t) (x)) >> 24U) | \
-	 ((((duk_uint32_t) (x)) >> 8U) & 0xff00UL) | \
-	 ((((duk_uint32_t) (x)) << 8U) & 0xff0000UL) | \
-	 (((duk_uint32_t) (x)) << 24U))
+#define DUK_BSWAP32(x)                                                       \
+	((((duk_uint32_t)(x)) >> 24U) | ((((duk_uint32_t)(x)) >> 8U) & 0xff00UL) \
+			| ((((duk_uint32_t)(x)) << 8U) & 0xff0000UL)                     \
+			| (((duk_uint32_t)(x)) << 24U))
 #endif
 #if !defined(DUK_BSWAP16)
-#define DUK_BSWAP16(x) \
-	((duk_uint16_t) (x) >> 8U) | \
-	((duk_uint16_t) (x) << 8U)
+#define DUK_BSWAP16(x) ((duk_uint16_t)(x) >> 8U) | ((duk_uint16_t)(x) << 8U)
 #endif
 
 /* DUK_USE_VARIADIC_MACROS: required from compilers, so no fill-in. */
 /* DUK_USE_UNION_INITIALIZERS: required from compilers, so no fill-in. */
 
-#if !(defined(DUK_USE_FLEX_C99) || defined(DUK_USE_FLEX_ZEROSIZE) || defined(DUK_USE_FLEX_ONESIZE))
+#if !(defined(DUK_USE_FLEX_C99) || defined(DUK_USE_FLEX_ZEROSIZE) \
+		|| defined(DUK_USE_FLEX_ONESIZE))
 #if defined(DUK_F_C99)
 #define DUK_USE_FLEX_C99
 #else
-#define DUK_USE_FLEX_ZEROSIZE  /* Not standard but common enough */
+#define DUK_USE_FLEX_ZEROSIZE /* Not standard but common enough */
 #endif
 #endif
 
-#if !(defined(DUK_USE_PACK_GCC_ATTR) || defined(DUK_USE_PACK_CLANG_ATTR) || \
-      defined(DUK_USE_PACK_MSVC_PRAGMA) || defined(DUK_USE_PACK_DUMMY_MEMBER))
+#if !(defined(DUK_USE_PACK_GCC_ATTR) || defined(DUK_USE_PACK_CLANG_ATTR) \
+		|| defined(DUK_USE_PACK_MSVC_PRAGMA)                             \
+		|| defined(DUK_USE_PACK_DUMMY_MEMBER))
 #define DUK_USE_PACK_DUMMY_MEMBER
 #endif
 
-#if 0  /* not defined by default */
+#if 0 /* not defined by default */
 #undef DUK_USE_GCC_PRAGMAS
 #endif
 
@@ -2819,9 +2882,9 @@ typedef struct duk_hthread duk_context;
 #undef DUK_NOINLINE
 #undef DUK_INLINE
 #undef DUK_ALWAYS_INLINE
-#define DUK_NOINLINE       /*nop*/
-#define DUK_INLINE         /*nop*/
-#define DUK_ALWAYS_INLINE  /*nop*/
+#define DUK_NOINLINE	  /*nop*/
+#define DUK_INLINE		  /*nop*/
+#define DUK_ALWAYS_INLINE /*nop*/
 #endif
 
 /*
@@ -2838,21 +2901,23 @@ typedef struct duk_hthread duk_context;
 
 /* Strict C99 case: DUK_UINTPTR_MAX (= UINTPTR_MAX) should be very reliable */
 #if !defined(DUK_F_PACKED_TVAL_POSSIBLE) && defined(DUK_UINTPTR_MAX)
-#if (DUK_UINTPTR_MAX <= 0xffffffffUL)
+#if(DUK_UINTPTR_MAX <= 0xffffffffUL)
 #define DUK_F_PACKED_TVAL_POSSIBLE
 #endif
 #endif
 
 /* Non-C99 case, still relying on DUK_UINTPTR_MAX, as long as it is not a computed value */
-#if !defined(DUK_F_PACKED_TVAL_POSSIBLE) && defined(DUK_UINTPTR_MAX) && !defined(DUK_UINTPTR_MAX_COMPUTED)
-#if (DUK_UINTPTR_MAX <= 0xffffffffUL)
+#if !defined(DUK_F_PACKED_TVAL_POSSIBLE) && defined(DUK_UINTPTR_MAX) \
+		&& !defined(DUK_UINTPTR_MAX_COMPUTED)
+#if(DUK_UINTPTR_MAX <= 0xffffffffUL)
 #define DUK_F_PACKED_TVAL_POSSIBLE
 #endif
 #endif
 
 /* DUK_SIZE_MAX (= SIZE_MAX) is often reliable */
-#if !defined(DUK_F_PACKED_TVAL_POSSIBLE) && defined(DUK_SIZE_MAX) && !defined(DUK_SIZE_MAX_COMPUTED)
-#if (DUK_SIZE_MAX <= 0xffffffffUL)
+#if !defined(DUK_F_PACKED_TVAL_POSSIBLE) && defined(DUK_SIZE_MAX) \
+		&& !defined(DUK_SIZE_MAX_COMPUTED)
+#if(DUK_SIZE_MAX <= 0xffffffffUL)
 #define DUK_F_PACKED_TVAL_POSSIBLE
 #endif
 #endif
@@ -2863,7 +2928,7 @@ typedef struct duk_hthread duk_context;
 #endif
 #undef DUK_F_PACKED_TVAL_POSSIBLE
 
-#endif  /* DUK_F_PACKED_TVAL_PROVIDED */
+#endif /* DUK_F_PACKED_TVAL_PROVIDED */
 /* Object property allocation layout has implications for memory and code
  * footprint and generated code size/speed.  The best layout also depends
  * on whether the platform has alignment requirements or benefits from
@@ -2872,7 +2937,7 @@ typedef struct duk_hthread duk_context;
 #undef DUK_USE_HOBJECT_LAYOUT_1
 #undef DUK_USE_HOBJECT_LAYOUT_2
 #undef DUK_USE_HOBJECT_LAYOUT_3
-#if (DUK_USE_ALIGN_BY == 1)
+#if(DUK_USE_ALIGN_BY == 1)
 /* On platforms without any alignment issues, layout 1 is preferable
  * because it compiles to slightly less code and provides direct access
  * to property keys.
@@ -3102,8 +3167,8 @@ typedef struct duk_hthread duk_context;
  */
 
 #if defined(DUK_F_CPP) && defined(DUK_USE_CPP_EXCEPTIONS)
-#include <exception>  /* std::exception */
-#include <stdexcept>  /* std::runtime_error */
+#include <exception> /* std::exception */
+#include <stdexcept> /* std::runtime_error */
 #endif
 
 /*
@@ -3119,25 +3184,29 @@ typedef struct duk_hthread duk_context;
 #if defined(DUK_USE_DATE_GET_NOW)
 /* External provider already defined. */
 #elif defined(DUK_USE_DATE_NOW_GETTIMEOFDAY)
-#define DUK_USE_DATE_GET_NOW(ctx)            duk_bi_date_get_now_gettimeofday()
+#define DUK_USE_DATE_GET_NOW(ctx) duk_bi_date_get_now_gettimeofday()
 #elif defined(DUK_USE_DATE_NOW_TIME)
-#define DUK_USE_DATE_GET_NOW(ctx)            duk_bi_date_get_now_time()
+#define DUK_USE_DATE_GET_NOW(ctx) duk_bi_date_get_now_time()
 #elif defined(DUK_USE_DATE_NOW_WINDOWS)
-#define DUK_USE_DATE_GET_NOW(ctx)            duk_bi_date_get_now_windows()
+#define DUK_USE_DATE_GET_NOW(ctx) duk_bi_date_get_now_windows()
 #elif defined(DUK_USE_DATE_NOW_WINDOWS_SUBMS)
-#define DUK_USE_DATE_GET_NOW(ctx)            duk_bi_date_get_now_windows_subms()
+#define DUK_USE_DATE_GET_NOW(ctx) duk_bi_date_get_now_windows_subms()
 #else
 #error no provider for DUK_USE_DATE_GET_NOW()
 #endif
 
 #if defined(DUK_USE_DATE_GET_LOCAL_TZOFFSET)
 /* External provider already defined. */
-#elif defined(DUK_USE_DATE_TZO_GMTIME_R) || defined(DUK_USE_DATE_TZO_GMTIME_S) || defined(DUK_USE_DATE_TZO_GMTIME)
-#define DUK_USE_DATE_GET_LOCAL_TZOFFSET(d)   duk_bi_date_get_local_tzoffset_gmtime((d))
+#elif defined(DUK_USE_DATE_TZO_GMTIME_R) || defined(DUK_USE_DATE_TZO_GMTIME_S) \
+		|| defined(DUK_USE_DATE_TZO_GMTIME)
+#define DUK_USE_DATE_GET_LOCAL_TZOFFSET(d) \
+	duk_bi_date_get_local_tzoffset_gmtime((d))
 #elif defined(DUK_USE_DATE_TZO_WINDOWS)
-#define DUK_USE_DATE_GET_LOCAL_TZOFFSET(d)   duk_bi_date_get_local_tzoffset_windows((d))
+#define DUK_USE_DATE_GET_LOCAL_TZOFFSET(d) \
+	duk_bi_date_get_local_tzoffset_windows((d))
 #elif defined(DUK_USE_DATE_TZO_WINDOWS_NO_DST)
-#define DUK_USE_DATE_GET_LOCAL_TZOFFSET(d)   duk_bi_date_get_local_tzoffset_windows_no_dst((d))
+#define DUK_USE_DATE_GET_LOCAL_TZOFFSET(d) \
+	duk_bi_date_get_local_tzoffset_windows_no_dst((d))
 #else
 #error no provider for DUK_USE_DATE_GET_LOCAL_TZOFFSET()
 #endif
@@ -3145,9 +3214,11 @@ typedef struct duk_hthread duk_context;
 #if defined(DUK_USE_DATE_PARSE_STRING)
 /* External provider already defined. */
 #elif defined(DUK_USE_DATE_PRS_STRPTIME)
-#define DUK_USE_DATE_PARSE_STRING(ctx,str)   duk_bi_date_parse_string_strptime((ctx), (str))
+#define DUK_USE_DATE_PARSE_STRING(ctx, str) \
+	duk_bi_date_parse_string_strptime((ctx), (str))
 #elif defined(DUK_USE_DATE_PRS_GETDATE)
-#define DUK_USE_DATE_PARSE_STRING(ctx,str)   duk_bi_date_parse_string_getdate((ctx), (str))
+#define DUK_USE_DATE_PARSE_STRING(ctx, str) \
+	duk_bi_date_parse_string_getdate((ctx), (str))
 #else
 /* No provider for DUK_USE_DATE_PARSE_STRING(), fall back to ISO 8601 only. */
 #endif
@@ -3155,7 +3226,7 @@ typedef struct duk_hthread duk_context;
 #if defined(DUK_USE_DATE_FORMAT_STRING)
 /* External provider already defined. */
 #elif defined(DUK_USE_DATE_FMT_STRFTIME)
-#define DUK_USE_DATE_FORMAT_STRING(ctx,parts,tzoffset,flags) \
+#define DUK_USE_DATE_FORMAT_STRING(ctx, parts, tzoffset, flags) \
 	duk_bi_date_format_parts_strftime((ctx), (parts), (tzoffset), (flags))
 #else
 /* No provider for DUK_USE_DATE_FORMAT_STRING(), fall back to ISO 8601 only. */
@@ -3164,14 +3235,16 @@ typedef struct duk_hthread duk_context;
 #if defined(DUK_USE_GET_MONOTONIC_TIME)
 /* External provider already defined. */
 #elif defined(DUK_USE_GET_MONOTONIC_TIME_CLOCK_GETTIME)
-#define DUK_USE_GET_MONOTONIC_TIME(ctx)  duk_bi_date_get_monotonic_time_clock_gettime()
+#define DUK_USE_GET_MONOTONIC_TIME(ctx) \
+	duk_bi_date_get_monotonic_time_clock_gettime()
 #elif defined(DUK_USE_GET_MONOTONIC_TIME_WINDOWS_QPC)
-#define DUK_USE_GET_MONOTONIC_TIME(ctx)  duk_bi_date_get_monotonic_time_windows_qpc()
+#define DUK_USE_GET_MONOTONIC_TIME(ctx) \
+	duk_bi_date_get_monotonic_time_windows_qpc()
 #else
 /* No provider for DUK_USE_GET_MONOTONIC_TIME(), fall back to DUK_USE_DATE_GET_NOW(). */
 #endif
 
-#endif  /* DUK_COMPILING_DUKTAPE */
+#endif /* DUK_COMPILING_DUKTAPE */
 
 /*
  *  Checks for legacy feature options (DUK_OPT_xxx)
@@ -3760,20 +3833,20 @@ typedef struct duk_hthread duk_context;
  */
 
 #if defined(DUK_USE_BYTEORDER)
-#if (DUK_USE_BYTEORDER == 1)
+#if(DUK_USE_BYTEORDER == 1)
 #define DUK_USE_INTEGER_LE
 #define DUK_USE_DOUBLE_LE
-#elif (DUK_USE_BYTEORDER == 2)
-#define DUK_USE_INTEGER_LE  /* integer endianness is little on purpose */
+#elif(DUK_USE_BYTEORDER == 2)
+#define DUK_USE_INTEGER_LE /* integer endianness is little on purpose */
 #define DUK_USE_DOUBLE_ME
-#elif (DUK_USE_BYTEORDER == 3)
+#elif(DUK_USE_BYTEORDER == 3)
 #define DUK_USE_INTEGER_BE
 #define DUK_USE_DOUBLE_BE
 #else
 #error unsupported: byte order invalid
-#endif  /* byte order */
+#endif /* byte order */
 #else
 #error unsupported: byte order detection failed
-#endif  /* defined(DUK_USE_BYTEORDER) */
+#endif /* defined(DUK_USE_BYTEORDER) */
 
-#endif  /* DUK_CONFIG_H_INCLUDED */
+#endif /* DUK_CONFIG_H_INCLUDED */
