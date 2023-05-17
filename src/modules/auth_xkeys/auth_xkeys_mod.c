@@ -39,52 +39,43 @@
 MODULE_VERSION
 
 
-static int  mod_init(void);
-static int  child_init(int);
+static int mod_init(void);
+static int child_init(int);
 static void mod_destroy(void);
 
-int authx_xkey_param(modparam_t type, void* val);
+int authx_xkey_param(modparam_t type, void *val);
 
-static int w_auth_xkeys_add(sip_msg_t* msg, char* hdr, char* key,
-		char* alg, char* data);
-static int fixup_auth_xkeys_add(void** param, int param_no);
-static int w_auth_xkeys_check(sip_msg_t* msg, char* hdr, char* key,
-		char* alg, char* data);
-static int fixup_auth_xkeys_check(void** param, int param_no);
+static int w_auth_xkeys_add(
+		sip_msg_t *msg, char *hdr, char *key, char *alg, char *data);
+static int fixup_auth_xkeys_add(void **param, int param_no);
+static int w_auth_xkeys_check(
+		sip_msg_t *msg, char *hdr, char *key, char *alg, char *data);
+static int fixup_auth_xkeys_check(void **param, int param_no);
 
 /* timer for cleaning up the expired keys */
 /* int auth_xkeys_timer_mode = 0; */
 
 
-static cmd_export_t cmds[]={
-	{"auth_xkeys_add", (cmd_function)w_auth_xkeys_add,
-		4, fixup_auth_xkeys_add,
-		0, ANY_ROUTE},
-	{"auth_xkeys_check", (cmd_function)w_auth_xkeys_check,
-		4, fixup_auth_xkeys_check,
-		0, ANY_ROUTE},
-	{0, 0, 0, 0, 0, 0}
-};
+static cmd_export_t cmds[] = {{"auth_xkeys_add", (cmd_function)w_auth_xkeys_add,
+									  4, fixup_auth_xkeys_add, 0, ANY_ROUTE},
+		{"auth_xkeys_check", (cmd_function)w_auth_xkeys_check, 4,
+				fixup_auth_xkeys_check, 0, ANY_ROUTE},
+		{0, 0, 0, 0, 0, 0}};
 
-static param_export_t params[]={
-	{"xkey",           PARAM_STRING|USE_FUNC_PARAM, (void*)authx_xkey_param},
-	/* {"timer_mode",     PARAM_INT,   &auth_xkeys_timer_mode}, */
-	{0, 0, 0}
-};
+static param_export_t params[] = {
+		{"xkey", PARAM_STRING | USE_FUNC_PARAM, (void *)authx_xkey_param},
+		/* {"timer_mode",     PARAM_INT,   &auth_xkeys_timer_mode}, */
+		{0, 0, 0}};
 
 struct module_exports exports = {
-	"auth_xkeys",
-	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,
-	params,
-	0,              /* exported RPC methods */
-	0,              /* exported pseudo-variables */
-	0,              /* response function */
-	mod_init,       /* module initialization function */
-	child_init,     /* per child init function */
-	mod_destroy     /* destroy function */
+		"auth_xkeys", DEFAULT_DLFLAGS, /* dlopen flags */
+		cmds, params, 0,			   /* exported RPC methods */
+		0,							   /* exported pseudo-variables */
+		0,							   /* response function */
+		mod_init,					   /* module initialization function */
+		child_init,					   /* per child init function */
+		mod_destroy					   /* destroy function */
 };
-
 
 
 /**
@@ -92,8 +83,7 @@ struct module_exports exports = {
  */
 static int mod_init(void)
 {
-	if(auth_xkeys_init_rpc()<0)
-	{
+	if(auth_xkeys_init_rpc() < 0) {
 		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}
@@ -118,36 +108,32 @@ static void mod_destroy(void)
 /**
  *
  */
-static int w_auth_xkeys_add(sip_msg_t* msg, char* hdr, char* key,
-		char* alg, char* data)
+static int w_auth_xkeys_add(
+		sip_msg_t *msg, char *hdr, char *key, char *alg, char *data)
 {
 	str shdr;
 	str skey;
 	str salg;
 	str sdata;
 
-	if(fixup_get_svalue(msg, (gparam_t*)hdr, &shdr)!=0)
-	{
+	if(fixup_get_svalue(msg, (gparam_t *)hdr, &shdr) != 0) {
 		LM_ERR("cannot get the header name\n");
 		return -1;
 	}
-	if(fixup_get_svalue(msg, (gparam_t*)key, &skey)!=0)
-	{
+	if(fixup_get_svalue(msg, (gparam_t *)key, &skey) != 0) {
 		LM_ERR("cannot get the key id\n");
 		return -1;
 	}
-	if(fixup_get_svalue(msg, (gparam_t*)alg, &salg)!=0)
-	{
+	if(fixup_get_svalue(msg, (gparam_t *)alg, &salg) != 0) {
 		LM_ERR("cannot get the algorithm\n");
 		return -1;
 	}
-	if(fixup_get_svalue(msg, (gparam_t*)data, &sdata)!=0)
-	{
+	if(fixup_get_svalue(msg, (gparam_t *)data, &sdata) != 0) {
 		LM_ERR("cannot get the hasing data\n");
 		return -1;
 	}
 
-	if(auth_xkeys_add(msg, &shdr, &skey, &salg, &sdata)<0)
+	if(auth_xkeys_add(msg, &shdr, &skey, &salg, &sdata) < 0)
 		return -1;
 
 	return 1;
@@ -156,10 +142,10 @@ static int w_auth_xkeys_add(sip_msg_t* msg, char* hdr, char* key,
 /**
  *
  */
-static int ki_auth_xkeys_add(sip_msg_t* msg, str *shdr, str *skey, str *salg,
-			str *sdata)
+static int ki_auth_xkeys_add(
+		sip_msg_t *msg, str *shdr, str *skey, str *salg, str *sdata)
 {
-	if(auth_xkeys_add(msg, shdr, skey, salg, sdata)<0)
+	if(auth_xkeys_add(msg, shdr, skey, salg, sdata) < 0)
 		return -1;
 
 	return 1;
@@ -168,36 +154,32 @@ static int ki_auth_xkeys_add(sip_msg_t* msg, str *shdr, str *skey, str *salg,
 /**
  *
  */
-static int w_auth_xkeys_check(sip_msg_t* msg, char* hdr, char* key,
-		char* alg, char* data)
+static int w_auth_xkeys_check(
+		sip_msg_t *msg, char *hdr, char *key, char *alg, char *data)
 {
 	str shdr;
 	str skey;
 	str salg;
 	str sdata;
 
-	if(fixup_get_svalue(msg, (gparam_t*)hdr, &shdr)!=0)
-	{
+	if(fixup_get_svalue(msg, (gparam_t *)hdr, &shdr) != 0) {
 		LM_ERR("cannot get the header name\n");
 		return -1;
 	}
-	if(fixup_get_svalue(msg, (gparam_t*)key, &skey)!=0)
-	{
+	if(fixup_get_svalue(msg, (gparam_t *)key, &skey) != 0) {
 		LM_ERR("cannot get the key id\n");
 		return -1;
 	}
-	if(fixup_get_svalue(msg, (gparam_t*)alg, &salg)!=0)
-	{
+	if(fixup_get_svalue(msg, (gparam_t *)alg, &salg) != 0) {
 		LM_ERR("cannot get the algorithm\n");
 		return -1;
 	}
-	if(fixup_get_svalue(msg, (gparam_t*)data, &sdata)!=0)
-	{
+	if(fixup_get_svalue(msg, (gparam_t *)data, &sdata) != 0) {
 		LM_ERR("cannot get the hasing data\n");
 		return -1;
 	}
 
-	if(auth_xkeys_check(msg, &shdr, &skey, &salg, &sdata)<0)
+	if(auth_xkeys_check(msg, &shdr, &skey, &salg, &sdata) < 0)
 		return -1;
 
 	return 1;
@@ -206,10 +188,10 @@ static int w_auth_xkeys_check(sip_msg_t* msg, char* hdr, char* key,
 /**
  *
  */
-static int ki_auth_xkeys_check(sip_msg_t* msg, str *shdr, str *skey, str *salg,
-			str *sdata)
+static int ki_auth_xkeys_check(
+		sip_msg_t *msg, str *shdr, str *skey, str *salg, str *sdata)
 {
-	if(auth_xkeys_check(msg, shdr, skey, salg, sdata)<0)
+	if(auth_xkeys_check(msg, shdr, skey, salg, sdata) < 0)
 		return -1;
 
 	return 1;
@@ -218,9 +200,9 @@ static int ki_auth_xkeys_check(sip_msg_t* msg, str *shdr, str *skey, str *salg,
 /**
  *
  */
-static int fixup_auth_xkeys_add(void** param, int param_no)
+static int fixup_auth_xkeys_add(void **param, int param_no)
 {
-	if(fixup_spve_null(param, 1)<0)
+	if(fixup_spve_null(param, 1) < 0)
 		return -1;
 	return 0;
 }
@@ -228,9 +210,9 @@ static int fixup_auth_xkeys_add(void** param, int param_no)
 /**
  *
  */
-static int fixup_auth_xkeys_check(void** param, int param_no)
+static int fixup_auth_xkeys_check(void **param, int param_no)
 {
-	if(fixup_spve_null(param, 1)<0)
+	if(fixup_spve_null(param, 1) < 0)
 		return -1;
 	return 0;
 }
@@ -238,13 +220,13 @@ static int fixup_auth_xkeys_check(void** param, int param_no)
 /**
  *
  */
-int authx_xkey_param(modparam_t type, void* val)
+int authx_xkey_param(modparam_t type, void *val)
 {
 	str s;
 
-	if(val==NULL)
+	if(val == NULL)
 		return -1;
-	s.s = (char*)val;
+	s.s = (char *)val;
 	s.len = strlen(s.s);
 	return authx_xkey_add_params(&s);
 }
