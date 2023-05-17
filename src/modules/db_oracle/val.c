@@ -34,17 +34,18 @@
 /*
  * Convert value to sql-string as db bind index
  */
-int db_oracle_val2str(const db1_con_t* _c, const db_val_t* _v, char* _s, int* _len)
+int db_oracle_val2str(
+		const db1_con_t *_c, const db_val_t *_v, char *_s, int *_len)
 {
 	int ret;
 
-	if (!_c || !_v || !_s || !_len || *_len <= 0) {
+	if(!_c || !_v || !_s || !_len || *_len <= 0) {
 		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
 
 	ret = snprintf(_s, *_len, ":%u", ++CON_ORA(_c)->bindpos);
-	if ((unsigned)ret >= (unsigned)*_len)
+	if((unsigned)ret >= (unsigned)*_len)
 		return sql_buf_small();
 	*_len = ret;
 	return 0;
@@ -53,113 +54,108 @@ int db_oracle_val2str(const db1_con_t* _c, const db_val_t* _v, char* _s, int* _l
 /*
  * Called after val2str to really binding
  */
-int db_oracle_val2bind(bmap_t* _m, const db_val_t* _v, OCIDate* _o)
+int db_oracle_val2bind(bmap_t *_m, const db_val_t *_v, OCIDate *_o)
 {
-	if (VAL_NULL(_v)) {
+	if(VAL_NULL(_v)) {
 		_m->addr = NULL;
 		_m->size = 0;
-		switch (VAL_TYPE(_v)) {
-		case DB1_INT:
-			_m->type = SQLT_INT;
-			break;
-		case DB1_BIGINT:
-			LM_ERR("BIGINT not supported");
-			return -1;
-		case DB1_BITMAP:
-			_m->type = SQLT_UIN;
-			break;
-		case DB1_DOUBLE:
-			_m->type = SQLT_FLT;
-			break;
-		case DB1_STRING:
-			_m->type = SQLT_STR;
-			break;
-		case DB1_STR:
-			_m->type = SQLT_CHR;
-			break;
-		case DB1_DATETIME:
-			_m->type = SQLT_ODT;
-			break;
-		case DB1_BLOB:
-			_m->type = SQLT_CLOB;
-			break;
-		default:
-			LM_ERR("unknown data type\n");
-			return -1;
+		switch(VAL_TYPE(_v)) {
+			case DB1_INT:
+				_m->type = SQLT_INT;
+				break;
+			case DB1_BIGINT:
+				LM_ERR("BIGINT not supported");
+				return -1;
+			case DB1_BITMAP:
+				_m->type = SQLT_UIN;
+				break;
+			case DB1_DOUBLE:
+				_m->type = SQLT_FLT;
+				break;
+			case DB1_STRING:
+				_m->type = SQLT_STR;
+				break;
+			case DB1_STR:
+				_m->type = SQLT_CHR;
+				break;
+			case DB1_DATETIME:
+				_m->type = SQLT_ODT;
+				break;
+			case DB1_BLOB:
+				_m->type = SQLT_CLOB;
+				break;
+			default:
+				LM_ERR("unknown data type\n");
+				return -1;
 		}
 		return 0;
 	}
 
-	switch (VAL_TYPE(_v)) {
-	case DB1_INT:
-		_m->addr = (int*)&VAL_INT(_v);
-		_m->size = sizeof(VAL_INT(_v));
-		_m->type = SQLT_INT;
-		break;
+	switch(VAL_TYPE(_v)) {
+		case DB1_INT:
+			_m->addr = (int *)&VAL_INT(_v);
+			_m->size = sizeof(VAL_INT(_v));
+			_m->type = SQLT_INT;
+			break;
 
-	case DB1_BIGINT:
-		LM_ERR("BIGINT not supported");
-		return -1;
+		case DB1_BIGINT:
+			LM_ERR("BIGINT not supported");
+			return -1;
 
-	case DB1_BITMAP:
-		_m->addr = (unsigned*)&VAL_BITMAP(_v);
-		_m->size = sizeof(VAL_BITMAP(_v));
-		_m->type = SQLT_UIN;
-		break;
+		case DB1_BITMAP:
+			_m->addr = (unsigned *)&VAL_BITMAP(_v);
+			_m->size = sizeof(VAL_BITMAP(_v));
+			_m->type = SQLT_UIN;
+			break;
 
-	case DB1_DOUBLE:
-		_m->addr = (double*)&VAL_DOUBLE(_v);
-		_m->size = sizeof(VAL_DOUBLE(_v));
-		_m->type = SQLT_FLT;
-		break;
+		case DB1_DOUBLE:
+			_m->addr = (double *)&VAL_DOUBLE(_v);
+			_m->size = sizeof(VAL_DOUBLE(_v));
+			_m->type = SQLT_FLT;
+			break;
 
-	case DB1_STRING:
-		_m->addr = (char*)VAL_STRING(_v);
-		_m->size = strlen(VAL_STRING(_v))+1;
-		_m->type = SQLT_STR;
-		break;
+		case DB1_STRING:
+			_m->addr = (char *)VAL_STRING(_v);
+			_m->size = strlen(VAL_STRING(_v)) + 1;
+			_m->type = SQLT_STR;
+			break;
 
-	case DB1_STR:
-		{
+		case DB1_STR: {
 			unsigned len = VAL_STR(_v).len;
 			char *estr, *pstr = VAL_STR(_v).s;
 
-			estr = (char*)memchr(pstr, 0, len);
-			if (estr) {
-				LM_WARN("truncate STR len from %u to: '%s'\n",
-					len, pstr);
+			estr = (char *)memchr(pstr, 0, len);
+			if(estr) {
+				LM_WARN("truncate STR len from %u to: '%s'\n", len, pstr);
 				len = (unsigned)(estr - pstr) + 1;
 			}
 			_m->size = len;
 			_m->addr = pstr;
 			_m->type = SQLT_CHR;
-		}
-		break;
+		} break;
 
-	case DB1_DATETIME:
-		{
-			struct tm* tm = localtime(&VAL_TIME(_v));
-			if (tm->tm_sec == 60)
+		case DB1_DATETIME: {
+			struct tm *tm = localtime(&VAL_TIME(_v));
+			if(tm->tm_sec == 60)
 				--tm->tm_sec;
-			OCIDateSetDate(_o, (ub2)(tm->tm_year + 1900),
-				(ub1)(tm->tm_mon + 1), (ub1)tm->tm_mday);
-			OCIDateSetTime(_o, (ub1)tm->tm_hour, (ub1)tm->tm_min,
-				(ub1)tm->tm_sec);
+			OCIDateSetDate(_o, (ub2)(tm->tm_year + 1900), (ub1)(tm->tm_mon + 1),
+					(ub1)tm->tm_mday);
+			OCIDateSetTime(
+					_o, (ub1)tm->tm_hour, (ub1)tm->tm_min, (ub1)tm->tm_sec);
 			_m->addr = _o;
 			_m->size = sizeof(*_o);
 			_m->type = SQLT_ODT;
-		}
-		break;
+		} break;
 
-	case DB1_BLOB:
-		_m->addr = VAL_BLOB(_v).s;
-		_m->size = VAL_BLOB(_v).len;
-		_m->type = SQLT_CLOB;
-		break;
+		case DB1_BLOB:
+			_m->addr = VAL_BLOB(_v).s;
+			_m->size = VAL_BLOB(_v).len;
+			_m->type = SQLT_CLOB;
+			break;
 
-	default:
-		LM_ERR("unknown data type\n");
-		return -1;
+		default:
+			LM_ERR("unknown data type\n");
+			return -1;
 	}
 	return 0;
 }

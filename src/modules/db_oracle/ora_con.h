@@ -29,31 +29,33 @@
 #include "../../lib/srdb1/db_val.h"
 
 /* Temporary -- callback data for submit_query/store_result */
-struct query_data {
-    OCIStmt** _rs;
-    const db_val_t* _v;
-    int _n;
-    const db_val_t* _w;
-    int _nw;
+struct query_data
+{
+	OCIStmt **_rs;
+	const db_val_t *_v;
+	int _n;
+	const db_val_t *_w;
+	int _nw;
 };
 typedef struct query_data query_data_t;
 
 
-struct ora_con {
-	struct pool_con hdr;	/* Standard fields */
+struct ora_con
+{
+	struct pool_con hdr; /* Standard fields */
 
-	OCIError *errhp;        /* Error */
-	OCISvcCtx *svchp;	/* Server Context */
-	OCIEnv *envhp;          /* Environment */
-	OCISession *authp;	/* Authorized Session */
-	OCIServer *srvhp;	/* Server */
+	OCIError *errhp;   /* Error */
+	OCISvcCtx *svchp;  /* Server Context */
+	OCIEnv *envhp;	   /* Environment */
+	OCISession *authp; /* Authorized Session */
+	OCIServer *srvhp;  /* Server */
 
-	int connected;		/* Authorized session started */
-	int bindpos;		/* Last Bind handle position */
-	
-	query_data_t* pqdata;	/* Temporary: cb data for submit_query/store_result */
+	int connected; /* Authorized session started */
+	int bindpos;   /* Last Bind handle position */
 
-	int  uri_len;
+	query_data_t *pqdata; /* Temporary: cb data for submit_query/store_result */
+
+	int uri_len;
 	char uri[];
 };
 typedef struct ora_con ora_con_t;
@@ -62,37 +64,37 @@ typedef struct ora_con ora_con_t;
 /*
  * Some convenience wrappers
  */
-#define CON_ORA(db_con)		((ora_con_t*)db_con->tail)
+#define CON_ORA(db_con) ((ora_con_t *)db_con->tail)
 
 
 /*
  * Create a new connection structure,
  * open the Oracle connection and set reference count to 1
  */
-ora_con_t* db_oracle_new_connection(const struct db_id* id);
+ora_con_t *db_oracle_new_connection(const struct db_id *id);
 
 
 /*
  * Close the connection and release memory
  */
-void db_oracle_free_connection(ora_con_t* con);
+void db_oracle_free_connection(ora_con_t *con);
 
 
 /*
  * Disconnect after network error
  */
-void db_oracle_disconnect(ora_con_t* con);
+void db_oracle_disconnect(ora_con_t *con);
 
 
 /*
  * Reconnect to server (after error)
  */
-sword db_oracle_reconnect(ora_con_t* con);
+sword db_oracle_reconnect(ora_con_t *con);
 
 
 /*
  * Decode oracle error
  */
-const char* db_oracle_error(ora_con_t* con, sword status);
+const char *db_oracle_error(ora_con_t *con, sword status);
 
 #endif /* ORA_CON_H */
