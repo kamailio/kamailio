@@ -36,23 +36,23 @@
  * The given list of location will be freed, returning 0 instead.
  * Returns:  0 - OK
  *          -1 - error */
-int cpl_proxy_to_loc_set( struct sip_msg *msg, struct location **locs,
-													unsigned char flag)
+int cpl_proxy_to_loc_set(
+		struct sip_msg *msg, struct location **locs, unsigned char flag)
 {
 	struct location *foo;
 	struct action act;
 	struct run_act_ctx ra_ctx;
 	int bflags;
 
-	if (!*locs) {
+	if(!*locs) {
 		LM_ERR("empty loc set!!\n");
 		goto error;
 	}
 
 	/* if it's the first time when this sip_msg is proxied, use the first addr
 	 * in loc_set to rewrite the RURI */
-	if (!(flag&CPL_PROXY_DONE)) {
-		LM_DBG("rewriting Request-URI with <%s>\n",(*locs)->addr.uri.s);
+	if(!(flag & CPL_PROXY_DONE)) {
+		LM_DBG("rewriting Request-URI with <%s>\n", (*locs)->addr.uri.s);
 		/* build a new action for setting the URI */
 		memset(&act, '\0', sizeof(act));
 		act.type = SET_URI_T;
@@ -60,15 +60,16 @@ int cpl_proxy_to_loc_set( struct sip_msg *msg, struct location **locs,
 		act.val[0].u.string = (*locs)->addr.uri.s;
 		init_run_actions_ctx(&ra_ctx);
 		/* push the action */
-		if (do_action(&ra_ctx, &act, msg) < 0) {
+		if(do_action(&ra_ctx, &act, msg) < 0) {
 			LM_ERR("do_action failed\n");
 			goto error;
 		}
 		/* build a new action for setting the DSTURI */
 		if((*locs)->addr.received.s && (*locs)->addr.received.len) {
 			LM_DBG("rewriting Destination URI "
-				"with <%s>\n",(*locs)->addr.received.s);
-			if (set_dst_uri(msg, &(*locs)->addr.received) < 0) {
+				   "with <%s>\n",
+					(*locs)->addr.received.s);
+			if(set_dst_uri(msg, &(*locs)->addr.received) < 0) {
 				LM_ERR("Error while setting the dst uri\n");
 				goto error;
 			}
@@ -77,40 +78,39 @@ int cpl_proxy_to_loc_set( struct sip_msg *msg, struct location **locs,
 			ruri_mark_new(); /* re-use uri for serial forking */
 		}
 		/* is the location NATED? */
-		if ((*locs)->flags&CPL_LOC_NATED)
-			setbflag( 0, cpl_fct.ulb.nat_flag );
+		if((*locs)->flags & CPL_LOC_NATED)
+			setbflag(0, cpl_fct.ulb.nat_flag);
 		/* free the location and point to the next one */
 		foo = (*locs)->next;
-		free_location( *locs );
+		free_location(*locs);
 		*locs = foo;
 	}
 
 	/* add the rest of the locations as branches */
 	while(*locs) {
-		bflags = ((*locs)->flags&CPL_LOC_NATED) ? cpl_fct.ulb.nat_flag : 0 ;
-		LM_DBG("appending branch <%.*s>, flags %d\n",
-			(*locs)->addr.uri.len, (*locs)->addr.uri.s, bflags);
-		if(append_branch(msg, &(*locs)->addr.uri,
-				 &(*locs)->addr.received, 0,
-				 Q_UNSPECIFIED, bflags, 0, 0, 0, 0, 0)==-1){
-			LM_ERR("failed when appending branch <%s>\n",
-			       (*locs)->addr.uri.s);
+		bflags = ((*locs)->flags & CPL_LOC_NATED) ? cpl_fct.ulb.nat_flag : 0;
+		LM_DBG("appending branch <%.*s>, flags %d\n", (*locs)->addr.uri.len,
+				(*locs)->addr.uri.s, bflags);
+		if(append_branch(msg, &(*locs)->addr.uri, &(*locs)->addr.received, 0,
+				   Q_UNSPECIFIED, bflags, 0, 0, 0, 0, 0)
+				== -1) {
+			LM_ERR("failed when appending branch <%s>\n", (*locs)->addr.uri.s);
 			goto error;
 		}
 		/* free the location and point to the next one */
 		foo = (*locs)->next;
-		free_location( *locs );
+		free_location(*locs);
 		*locs = foo;
 	}
 
 	/* run what proxy route is set */
-	if (cpl_env.proxy_route) {
+	if(cpl_env.proxy_route) {
 		/* do not alter route type - it might be REQUEST or FAILURE */
-		run_top_route( main_rt.rlist[cpl_env.proxy_route], msg, 0);
+		run_top_route(main_rt.rlist[cpl_env.proxy_route], msg, 0);
 	}
 
 	/* do t_forward */
-	if (cpl_fct.tmb.t_relay(msg, 0, 0)==-1) {
+	if(cpl_fct.tmb.t_relay(msg, 0, 0) == -1) {
 		LM_ERR("t_relay failed !\n");
 		goto error;
 	}
@@ -119,5 +119,3 @@ int cpl_proxy_to_loc_set( struct sip_msg *msg, struct location **locs,
 error:
 	return -1;
 }
-
-

@@ -26,9 +26,8 @@
 
 #include "cpl_run.h"
 
-int cpl_proxy_to_loc_set( struct sip_msg *msg, struct location **loc_set,
-													unsigned char flag);
+int cpl_proxy_to_loc_set(
+		struct sip_msg *msg, struct location **loc_set, unsigned char flag);
 
 
 #endif
-

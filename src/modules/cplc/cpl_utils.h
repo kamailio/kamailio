@@ -36,23 +36,19 @@
 /* looks for s2 into s1 */
 static inline char *strcasestr_str(str *s1, str *s2)
 {
-	int i,j;
-	for(i=0;i<s1->len-s2->len;i++) {
-		for(j=0;j<s2->len;j++) {
-			if ( !((s1->s[i+j]==s2->s[j]) ||
-			( isalpha((int)s1->s[i+j]) && ((s1->s[i+j])^(s2->s[j]))==0x20 )) )
+	int i, j;
+	for(i = 0; i < s1->len - s2->len; i++) {
+		for(j = 0; j < s2->len; j++) {
+			if(!((s1->s[i + j] == s2->s[j])
+					   || (isalpha((int)s1->s[i + j])
+							   && ((s1->s[i + j]) ^ (s2->s[j])) == 0x20)))
 				break;
 		}
-		if (j==s2->len)
-			return s1->s+i;
+		if(j == s2->len)
+			return s1->s + i;
 	}
 	return 0;
 }
 
 
-
 #endif
-
-
-
-

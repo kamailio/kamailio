@@ -41,50 +41,51 @@
 #include "CPL_tree.h"
 
 
-#define MAX_LOG_FILE_NAME      32
+#define MAX_LOG_FILE_NAME 32
 
-#define FILE_NAME_SUFFIX        ".log"
-#define FILE_NAME_SUFFIX_LEN    (sizeof(FILE_NAME_SUFFIX)-1)
+#define FILE_NAME_SUFFIX ".log"
+#define FILE_NAME_SUFFIX_LEN (sizeof(FILE_NAME_SUFFIX) - 1)
 
-#define LOG_SEPARATOR          ": "
-#define LOG_SEPARATOR_LEN      (sizeof(LOG_SEPARATOR)-1)
+#define LOG_SEPARATOR ": "
+#define LOG_SEPARATOR_LEN (sizeof(LOG_SEPARATOR) - 1)
 
-#define DEFAULT_LOG_NAME       "default_log"
-#define DEFAULT_LOG_NAME_LEN   (sizeof(DEFAULT_LOG_NAME)-1)
+#define DEFAULT_LOG_NAME "default_log"
+#define DEFAULT_LOG_NAME_LEN (sizeof(DEFAULT_LOG_NAME) - 1)
 
-#define LOG_TERMINATOR          "\n"
-#define LOG_TERMINATOR_LEN      (sizeof(LOG_TERMINATOR)-1)
+#define LOG_TERMINATOR "\n"
+#define LOG_TERMINATOR_LEN (sizeof(LOG_TERMINATOR) - 1)
 
 
-static char file[MAX_LOG_DIR_SIZE+1+MAX_LOG_FILE_NAME+FILE_NAME_SUFFIX_LEN+1];
+static char file[MAX_LOG_DIR_SIZE + 1 + MAX_LOG_FILE_NAME + FILE_NAME_SUFFIX_LEN
+				 + 1];
 static char *file_ptr;
 
 
-static inline void write_log( struct cpl_cmd *cmd)
+static inline void write_log(struct cpl_cmd *cmd)
 {
-	struct iovec  wr_vec[5];
+	struct iovec wr_vec[5];
 	time_t now;
 	char *time_ptr;
 	int fd;
 	int ret;
 
 	/* build file name (cmd->s1 is the user name)*/
-	if (cmd->s1.len>MAX_LOG_FILE_NAME)
+	if(cmd->s1.len > MAX_LOG_FILE_NAME)
 		cmd->s1.len = MAX_LOG_FILE_NAME;
-	memcpy(file_ptr, cmd->s1.s, cmd->s1.len );
-	memcpy(file_ptr+cmd->s1.len,FILE_NAME_SUFFIX,FILE_NAME_SUFFIX_LEN);
-	file_ptr[cmd->s1.len+FILE_NAME_SUFFIX_LEN] = 0;
+	memcpy(file_ptr, cmd->s1.s, cmd->s1.len);
+	memcpy(file_ptr + cmd->s1.len, FILE_NAME_SUFFIX, FILE_NAME_SUFFIX_LEN);
+	file_ptr[cmd->s1.len + FILE_NAME_SUFFIX_LEN] = 0;
 
 	/* get current date+time -> wr_vec[0] */
-	time( &now );
-	time_ptr = ctime( &now );
+	time(&now);
+	time_ptr = ctime(&now);
 	wr_vec[0].iov_base = time_ptr;
-	wr_vec[0].iov_len = strlen( time_ptr );
+	wr_vec[0].iov_len = strlen(time_ptr);
 	/* ctime_r adds a \n at the end -> overwrite it with space */
-	time_ptr[ wr_vec[0].iov_len-1 ] = ' ';
+	time_ptr[wr_vec[0].iov_len - 1] = ' ';
 
 	/* log name (cmd->s2) ->  wr_vec[1] */
-	if (cmd->s2.s==0 || cmd->s2.len==0) {
+	if(cmd->s2.s == 0 || cmd->s2.len == 0) {
 		wr_vec[1].iov_base = DEFAULT_LOG_NAME;
 		wr_vec[1].iov_len = DEFAULT_LOG_NAME_LEN;
 	} else {
@@ -105,60 +106,56 @@ static inline void write_log( struct cpl_cmd *cmd)
 	wr_vec[4].iov_len = LOG_TERMINATOR_LEN;
 
 	/* [create+]open the file */
-	fd = open( file, O_CREAT|O_APPEND|O_WRONLY, 0664);
-	if (fd==-1) {
-		LM_ERR("cannot open file [%s] : %s\n",
-			file, strerror(errno) );
+	fd = open(file, O_CREAT | O_APPEND | O_WRONLY, 0664);
+	if(fd == -1) {
+		LM_ERR("cannot open file [%s] : %s\n", file, strerror(errno));
 		return;
 	}
 	/* get the log */
-	LM_DBG("logging into [%s]... \n",file);
+	LM_DBG("logging into [%s]... \n", file);
 	/* I'm really not interested in the return code for write ;-) */
-	while ( (ret=writev( fd, wr_vec, 5))==-1 ) {
-		if (errno==EINTR)
+	while((ret = writev(fd, wr_vec, 5)) == -1) {
+		if(errno == EINTR)
 			continue;
-		LM_ERR("writing to log file [%s] : %s\n",
-			file, strerror(errno) );
+		LM_ERR("writing to log file [%s] : %s\n", file, strerror(errno));
 	}
-	close (fd);
+	close(fd);
 
-	shm_free( cmd->s1.s );
+	shm_free(cmd->s1.s);
 }
 
 
-
-static inline void send_mail( struct cpl_cmd *cmd)
+static inline void send_mail(struct cpl_cmd *cmd)
 {
 	char *argv[5];
 	int pfd[2];
-	pid_t  pid;
+	pid_t pid;
 	int i;
 
-	if (pipe(pfd) < 0) {
-		LM_ERR("pipe failed: %s\n",strerror(errno));
+	if(pipe(pfd) < 0) {
+		LM_ERR("pipe failed: %s\n", strerror(errno));
 		return;
 	}
 
 	/* even if I haven't fork yet, I push the date on the pipe just to get
 	 * rid of one more malloc + copy */
-	if (cmd->s3.len && cmd->s3.s) {
-		if ( (i=write( pfd[1], cmd->s3.s, cmd->s3.len ))!=cmd->s3.len ) {
-			LM_ERR("write returned error %s\n",
-				strerror(errno));
+	if(cmd->s3.len && cmd->s3.s) {
+		if((i = write(pfd[1], cmd->s3.s, cmd->s3.len)) != cmd->s3.len) {
+			LM_ERR("write returned error %s\n", strerror(errno));
 			goto error;
 		}
 	}
 
-	if ( (pid = fork()) < 0) {
-		LM_ERR("fork failed: %s\n",strerror(errno));
+	if((pid = fork()) < 0) {
+		LM_ERR("fork failed: %s\n", strerror(errno));
 		goto error;
-	} else if (pid==0) {
+	} else if(pid == 0) {
 		/* child -> close all descriptors excepting pfd[0] */
 		/* 32 is the maximum number of inherited open file descriptors */
-		for (i=3; i < 32; i++)
-			if (i!=pfd[0])
+		for(i = 3; i < 32; i++)
+			if(i != pfd[0])
 				close(i);
-		if (pfd[0] != STDIN_FILENO) {
+		if(pfd[0] != STDIN_FILENO) {
 			dup2(pfd[0], STDIN_FILENO);
 			close(pfd[0]);
 		}
@@ -166,44 +163,44 @@ static inline void send_mail( struct cpl_cmd *cmd)
 		/* set the argument vector*/
 		argv[0] = "mail";
 		argv[1] = "-s";
-		if (cmd->s2.s && cmd->s2.len) {
+		if(cmd->s2.s && cmd->s2.len) {
 			/* put the subject in this format : <"$subject"\0> */
-			if ( (argv[2]=(char*)pkg_malloc(1+cmd->s2.len+1+1))==0) {
+			if((argv[2] = (char *)pkg_malloc(1 + cmd->s2.len + 1 + 1)) == 0) {
 				PKG_MEM_ERROR;
 				goto child_exit;
 			}
 			argv[2][0] = '\"';
-			memcpy(argv[2]+1,cmd->s2.s,cmd->s2.len);
-			argv[2][cmd->s2.len+1] = '\"';
-			argv[2][cmd->s2.len+2] = 0;
+			memcpy(argv[2] + 1, cmd->s2.s, cmd->s2.len);
+			argv[2][cmd->s2.len + 1] = '\"';
+			argv[2][cmd->s2.len + 2] = 0;
 		} else {
 			argv[2] = "\"[CPL notification]\"";
 		}
 		/* put the TO in <$to\0> format*/
-		if ( (argv[3]=(char*)pkg_malloc(cmd->s1.len+1))==0) {
+		if((argv[3] = (char *)pkg_malloc(cmd->s1.len + 1)) == 0) {
 			PKG_MEM_ERROR;
 			pkg_free(argv[2]);
 			goto child_exit;
 		}
-		memcpy(argv[3],cmd->s1.s,cmd->s1.len);
+		memcpy(argv[3], cmd->s1.s, cmd->s1.len);
 		argv[3][cmd->s1.len] = 0;
 		/* last element in vector mist be a null pointer */
-		argv[4] = (char*)0;
+		argv[4] = (char *)0;
 		/* just debug */
-		for(i=0;i<sizeof(argv)/sizeof(char*);i++)
-			LM_DBG("argv[%d] = %s\n",i,argv[i]);
+		for(i = 0; i < sizeof(argv) / sizeof(char *); i++)
+			LM_DBG("argv[%d] = %s\n", i, argv[i]);
 		/* once I copy locally all the data from shm mem -> free the shm */
-		shm_free( cmd->s1.s );
+		shm_free(cmd->s1.s);
 
 		/* set an alarm -> sending the email shouldn't take more than 10 sec */
 		alarm(10);
 		/* run the external mailer */
 		LM_DBG("new forked process created -> "
-			"doing execv..\n");
-		execv("/usr/bin/mail",argv);
+			   "doing execv..\n");
+		execv("/usr/bin/mail", argv);
 		/* if we got here means execv exit with error :-( */
-		LM_ERR("execv failed! (%s)\n",strerror(errno));
-child_exit:
+		LM_ERR("execv failed! (%s)\n", strerror(errno));
+	child_exit:
 		_exit(127);
 	}
 
@@ -212,30 +209,28 @@ child_exit:
 	close(pfd[1]);
 	return;
 error:
-	shm_free( cmd->s1.s );
+	shm_free(cmd->s1.s);
 	close(pfd[0]);
 	close(pfd[1]);
 	return;
 }
 
 
-
-
-void cpl_aux_process( int cmd_out, char *log_dir)
+void cpl_aux_process(int cmd_out, char *log_dir)
 {
 	struct cpl_cmd cmd;
 	int len;
 
 	/* this process will ignore SIGCHLD signal */
-	if (signal( SIGCHLD, SIG_IGN)==SIG_ERR) {
+	if(signal(SIGCHLD, SIG_IGN) == SIG_ERR) {
 		LM_ERR("cannot set to IGNORE SIGCHLD signal\n");
 	}
 
 	file[0] = '\0';
 	file_ptr = file;
 	/* set the path for logging */
-	if (log_dir) {
-		if(strlen(log_dir)>=MAX_LOG_DIR_SIZE) {
+	if(log_dir) {
+		if(strlen(log_dir) >= MAX_LOG_DIR_SIZE) {
 			/* fallback */
 			LM_ERR("log dir path is too long, ignoring - check workdir\n");
 		} else {
@@ -247,32 +242,32 @@ void cpl_aux_process( int cmd_out, char *log_dir)
 
 	while(1) {
 		/* let's read a command from pipe */
-		len = read( cmd_out, &cmd, sizeof(struct cpl_cmd));
-		if (len!=sizeof(struct cpl_cmd)) {
-			if (len>=0) {
+		len = read(cmd_out, &cmd, sizeof(struct cpl_cmd));
+		if(len != sizeof(struct cpl_cmd)) {
+			if(len >= 0) {
 				LM_ERR("truncated message"
-					" read from pipe! -> discarded\n");
-			} else if (errno!=EAGAIN) {
+					   " read from pipe! -> discarded\n");
+			} else if(errno != EAGAIN) {
 				LM_ERR("pipe reading failed: "
-					" : %s\n",strerror(errno));
+					   " : %s\n",
+						strerror(errno));
 			}
 			sleep(1);
 			continue;
 		}
 
 		/* process the command*/
-		switch (cmd.code) {
+		switch(cmd.code) {
 			case CPL_LOG_CMD:
-				write_log( &cmd );
+				write_log(&cmd);
 				break;
 			case CPL_MAIL_CMD:
-				send_mail( &cmd );
+				send_mail(&cmd);
 				break;
 			default:
 				LM_ERR("unknown command (%d) "
-					"received! -> ignoring\n",cmd.code);
+					   "received! -> ignoring\n",
+						cmd.code);
 		} /* end switch*/
-
 	}
 }
-

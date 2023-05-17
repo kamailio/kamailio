@@ -23,15 +23,16 @@
 #ifndef _CPL_SUB_LIST_H
 #define _CPL_SUB_LIST_H
 
-struct node {
-	char         *offset;
-	char         *name;
-	struct node  *next;
+struct node
+{
+	char *offset;
+	char *name;
+	struct node *next;
 };
 
 
-struct node*  append_to_list(struct node *head, char *offdet, char *name);
-char*         search_the_list(struct node *head, char *name);
-void          delete_list(struct node *head );
+struct node *append_to_list(struct node *head, char *offdet, char *name);
+char *search_the_list(struct node *head, char *name);
+void delete_list(struct node *head);
 
 #endif

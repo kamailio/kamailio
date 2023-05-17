@@ -25,8 +25,3 @@
 int cpl_rpc_init(void);
 
 #endif
-
-
-
-
-
