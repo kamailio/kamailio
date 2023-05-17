@@ -40,31 +40,33 @@
 #include "../../lib/srdb2/db_gen.h"
 
 
-static void ld_res_free(db_res_t* res, struct ld_res* payload)
+static void ld_res_free(db_res_t *res, struct ld_res *payload)
 {
 	db_drv_free(&payload->gen);
-	if (payload->msg) ldap_msgfree(payload->msg);
+	if(payload->msg)
+		ldap_msgfree(payload->msg);
 	payload->msg = NULL;
 	pkg_free(payload);
 }
 
 
-int ld_res(db_res_t* res)
+int ld_res(db_res_t *res)
 {
-	struct ld_res* lres;
+	struct ld_res *lres;
 
-	lres = (struct ld_res*)pkg_malloc(sizeof(struct ld_res));
-	if (lres == NULL) {
+	lres = (struct ld_res *)pkg_malloc(sizeof(struct ld_res));
+	if(lres == NULL) {
 		ERR("ldap: No memory left\n");
 		return -1;
 	}
 	memset(lres, '\0', sizeof(struct ld_res));
-	if (db_drv_init(&lres->gen, ld_res_free) < 0) goto error;
+	if(db_drv_init(&lres->gen, ld_res_free) < 0)
+		goto error;
 	DB_SET_PAYLOAD(res, lres);
 	return 0;
-	
- error:
-	if (lres) {
+
+error:
+	if(lres) {
 		db_drv_free(&lres->gen);
 		pkg_free(lres);
 	}
