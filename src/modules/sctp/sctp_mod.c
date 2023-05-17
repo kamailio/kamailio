@@ -40,46 +40,43 @@ static int sctp_mod_pre_init(void);
 #endif
 
 
-static cmd_export_t cmds[] = {
-	{0, 0, 0, 0, 0, 0}
-};
+static cmd_export_t cmds[] = {{0, 0, 0, 0, 0, 0}};
 
 static param_export_t params[] = {
-	{"sctp_socket_rcvbuf", PARAM_INT, &sctp_default_cfg.so_rcvbuf},
-	{"sctp_socket_sndbuf", PARAM_INT, &sctp_default_cfg.so_sndbuf},
-	{"sctp_autoclose", PARAM_INT, &sctp_default_cfg.autoclose},
-	{"sctp_send_ttl", PARAM_INT, &sctp_default_cfg.send_ttl},
-	{"sctp_send_retries", PARAM_INT, &sctp_default_cfg.send_retries},
-	{"sctp_assoc_tracking", PARAM_INT, &sctp_default_cfg.assoc_tracking},
-	{"sctp_assoc_reuse", PARAM_INT, &sctp_default_cfg.assoc_reuse},
-	{"sctp_max_assocs", PARAM_INT, &sctp_default_cfg.max_assocs},
-	{"sctp_srto_initial", PARAM_INT, &sctp_default_cfg.srto_initial},
-	{"sctp_srto_max", PARAM_INT, &sctp_default_cfg.srto_max},
-	{"sctp_srto_min", PARAM_INT, &sctp_default_cfg.srto_min},
-	{"sctp_asocmaxrxt", PARAM_INT, &sctp_default_cfg.asocmaxrxt},
-	{"sctp_init_max_attempts", PARAM_INT,
-			&sctp_default_cfg.init_max_attempts},
-	{"sctp_init_max_timeo", PARAM_INT, &sctp_default_cfg.init_max_timeo},
-	{"sctp_hbinterval", PARAM_INT, &sctp_default_cfg.hbinterval},
-	{"sctp_pathmaxrxt", PARAM_INT, &sctp_default_cfg.pathmaxrxt},
-	{"sctp_sack_delay", PARAM_INT, &sctp_default_cfg.sack_delay},
-	{"sctp_sack_freq", PARAM_INT, &sctp_default_cfg.sack_freq},
-	{"sctp_max_burst", PARAM_INT, &sctp_default_cfg.max_burst},
+		{"sctp_socket_rcvbuf", PARAM_INT, &sctp_default_cfg.so_rcvbuf},
+		{"sctp_socket_sndbuf", PARAM_INT, &sctp_default_cfg.so_sndbuf},
+		{"sctp_autoclose", PARAM_INT, &sctp_default_cfg.autoclose},
+		{"sctp_send_ttl", PARAM_INT, &sctp_default_cfg.send_ttl},
+		{"sctp_send_retries", PARAM_INT, &sctp_default_cfg.send_retries},
+		{"sctp_assoc_tracking", PARAM_INT, &sctp_default_cfg.assoc_tracking},
+		{"sctp_assoc_reuse", PARAM_INT, &sctp_default_cfg.assoc_reuse},
+		{"sctp_max_assocs", PARAM_INT, &sctp_default_cfg.max_assocs},
+		{"sctp_srto_initial", PARAM_INT, &sctp_default_cfg.srto_initial},
+		{"sctp_srto_max", PARAM_INT, &sctp_default_cfg.srto_max},
+		{"sctp_srto_min", PARAM_INT, &sctp_default_cfg.srto_min},
+		{"sctp_asocmaxrxt", PARAM_INT, &sctp_default_cfg.asocmaxrxt},
+		{"sctp_init_max_attempts", PARAM_INT,
+				&sctp_default_cfg.init_max_attempts},
+		{"sctp_init_max_timeo", PARAM_INT, &sctp_default_cfg.init_max_timeo},
+		{"sctp_hbinterval", PARAM_INT, &sctp_default_cfg.hbinterval},
+		{"sctp_pathmaxrxt", PARAM_INT, &sctp_default_cfg.pathmaxrxt},
+		{"sctp_sack_delay", PARAM_INT, &sctp_default_cfg.sack_delay},
+		{"sctp_sack_freq", PARAM_INT, &sctp_default_cfg.sack_freq},
+		{"sctp_max_burst", PARAM_INT, &sctp_default_cfg.max_burst},
 
-	{0, 0, 0}
-};
+		{0, 0, 0}};
 
 struct module_exports exports = {
-	"sctp",          /* module name */
-	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,            /* cmd exports */
-	params,          /* param exports */
-	0,               /* exported RPC functions */
-	0,               /* exported pseudo-variables */
-	0,               /* response handling function */
-	mod_init,        /* module initialization function */
-	0,               /* per child init function */
-	0                /* destroy function */
+		"sctp",			 /* module name */
+		DEFAULT_DLFLAGS, /* dlopen flags */
+		cmds,			 /* cmd exports */
+		params,			 /* param exports */
+		0,				 /* exported RPC functions */
+		0,				 /* exported pseudo-variables */
+		0,				 /* response handling function */
+		mod_init,		 /* module initialization function */
+		0,				 /* per child init function */
+		0				 /* destroy function */
 };
 
 int mod_register(char *path, int *dlflags, void *p1, void *p2)
@@ -115,7 +112,7 @@ static int mod_init(void)
 		return -1;
 	}
 	return 0;
-#else /* USE_SCTP */
+#else  /* USE_SCTP */
 	LOG(L_CRIT, "sctp core support not enabled\n");
 	return -1;
 #endif /* USE_SCTP */
