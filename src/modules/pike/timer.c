@@ -27,11 +27,10 @@
 #include "ip_tree.h"
 
 
-
-void append_to_timer(pike_list_link_t *head, pike_list_link_t *new_ll )
+void append_to_timer(pike_list_link_t *head, pike_list_link_t *new_ll)
 {
-	LM_DBG("%p in %p(%p,%p)\n",	new_ll, head,head->prev,head->next);
-	assert( !has_timer_set(new_ll) );
+	LM_DBG("%p in %p(%p,%p)\n", new_ll, head, head->prev, head->next);
+	assert(!has_timer_set(new_ll));
 
 	new_ll->prev = head->prev;
 	head->prev->next = new_ll;
@@ -40,11 +39,10 @@ void append_to_timer(pike_list_link_t *head, pike_list_link_t *new_ll )
 }
 
 
-
 void remove_from_timer(pike_list_link_t *head, pike_list_link_t *ll)
 {
-	LM_DBG("%p from %p(%p,%p)\n", ll, head,head->prev,head->next);
-	assert( has_timer_set(ll) );
+	LM_DBG("%p from %p(%p,%p)\n", ll, head, head->prev, head->next);
+	assert(has_timer_set(ll));
 
 	ll->next->prev = ll->prev;
 	ll->prev->next = ll->next;
@@ -53,32 +51,32 @@ void remove_from_timer(pike_list_link_t *head, pike_list_link_t *ll)
 }
 
 
-
 /* "head" list MUST not be empty */
 void check_and_split_timer(pike_list_link_t *head, unsigned int time,
-							pike_list_link_t *split, unsigned char *mask)
+		pike_list_link_t *split, unsigned char *mask)
 {
 	pike_list_link_t *ll;
-	pike_ip_node_t   *node;
+	pike_ip_node_t *node;
 	unsigned char b;
 	int i;
 
 	/*  reset the mask */
-	for(i=0;i<32;mask[i++]=0);
+	for(i = 0; i < 32; mask[i++] = 0)
+		;
 
 	ll = head->next;
-	while( ll!=head && (node=ll2ipnode(ll))->expires<=time) {
-		LM_DBG("splitting %p(%p,%p)node=%p\n", ll,ll->prev,ll->next, node);
+	while(ll != head && (node = ll2ipnode(ll))->expires <= time) {
+		LM_DBG("splitting %p(%p,%p)node=%p\n", ll, ll->prev, ll->next, node);
 		/* mark the node as expired and un-mark it as being in timer list */
 		node->flags |= NODE_EXPIRED_FLAG;
 		node->flags &= ~NODE_INTIMER_FLAG;
 		b = node->branch;
-		ll=ll->next;
+		ll = ll->next;
 		/*LM_DBG("b=%d; [%d,%d]\n",	b,b>>3,1<<(b&0x07));*/
-		mask[b>>3] |= (1<<(b&0x07));
+		mask[b >> 3] |= (1 << (b & 0x07));
 	}
 
-	if (ll==head->next) {
+	if(ll == head->next) {
 		/* nothing to return */
 		split->next = split->prev = split;
 	} else {
@@ -93,7 +91,7 @@ void check_and_split_timer(pike_list_link_t *head, unsigned int time,
 		ll->prev = head;
 	}
 
-	LM_DBG("succeeded to split (h=%p)(p=%p,n=%p)\n", head, head->prev, head->next);
+	LM_DBG("succeeded to split (h=%p)(p=%p,n=%p)\n", head, head->prev,
+			head->next);
 	return;
 }
-
