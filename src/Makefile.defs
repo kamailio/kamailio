@@ -181,7 +181,7 @@ LD_EXTRA_OPTS ?=
 
 
 # enable workaround for libssl 1.1+ to set shared mutex attribute
-LIBSSL_SET_MUTEX_SHARED ?=
+LIBSSL_SET_MUTEX_SHARED ?= 1
 ifneq ($(LIBSSL_SET_MUTEX_SHARED), 1)
 
 ifeq ($(CROSS_COMPILE),)
