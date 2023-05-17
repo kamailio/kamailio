@@ -40,7 +40,8 @@ static int mod_init(void);
 static void mod_destroy(void);
 static int child_init(int);
 
-static rms_dialog_info_t *rms_dialog_create_leg(rms_dialog_info_t *di, struct sip_msg *msg);
+static rms_dialog_info_t *rms_dialog_create_leg(
+		rms_dialog_info_t *di, struct sip_msg *msg);
 static int fixup_rms_action_play(void **param, int param_no);
 static int fixup_rms_bridge(void **param, int param_no);
 static int fixup_rms_answer(void **param, int param_no);
@@ -55,11 +56,11 @@ static int rms_dialog_check_f(struct sip_msg *);
 static int rms_hangup_f(struct sip_msg *);
 static int rms_bridge_f(struct sip_msg *, char *, char *);
 
-static int rms_update_media_sockets(struct sip_msg *msg,
-		rms_dialog_info_t *di, rms_sdp_info_t *sdp_info);
+static int rms_update_media_sockets(
+		struct sip_msg *msg, rms_dialog_info_t *di, rms_sdp_info_t *sdp_info);
 
-static cmd_export_t cmds[] = {
-		{"rms_answer", (cmd_function)rms_answer_f, 1, fixup_rms_answer, 0, EVENT_ROUTE},
+static cmd_export_t cmds[] = {{"rms_answer", (cmd_function)rms_answer_f, 1,
+									  fixup_rms_answer, 0, EVENT_ROUTE},
 		{"rms_sip_request", (cmd_function)rms_sip_request_f, 0, 0, 0,
 				EVENT_ROUTE},
 		{"rms_play", (cmd_function)rms_action_play_f, 2, fixup_rms_action_play,
@@ -77,9 +78,16 @@ static param_export_t mod_params[] = {
 		{"log_file_name", PARAM_STR, &log_fn}, {0, 0, 0}};
 
 struct module_exports exports = {
-		"rtp_media_server", DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds, mod_params, 0,				 /* RPC export */
-		0, 0, mod_init, child_init, mod_destroy,
+		"rtp_media_server",
+		DEFAULT_DLFLAGS, /* dlopen flags */
+		cmds,
+		mod_params,
+		0, /* RPC export */
+		0,
+		0,
+		mod_init,
+		child_init,
+		mod_destroy,
 };
 
 static void run_action_route(rms_dialog_info_t *di, char *route)
@@ -156,7 +164,7 @@ static int fixup_rms_answer(void **param, int param_no)
 
 static int fixup_rms_action_play(void **param, int param_no)
 {
-	if(param_no == 1 || param_no == 2 || param_no ==3)
+	if(param_no == 1 || param_no == 2 || param_no == 3)
 		return fixup_spve_null(param, 1);
 	LM_ERR("invalid parameter count [%d]\n", param_no);
 	return -1;
@@ -240,13 +248,13 @@ static rms_dialog_info_t *rms_stop(rms_dialog_info_t *di)
 static rms_dialog_info_t *rms_dialog_action_check(rms_dialog_info_t *di)
 {
 	rms_action_t *a;
-	if (!di) {
+	if(!di) {
 		LM_ERR("Dialog info NULL\n");
 		return NULL;
 	}
 	clist_foreach(&di->action, a, next)
 	{
-		if (!a) {
+		if(!a) {
 			LM_ERR("dialog action NULL\n");
 			continue;
 		}
@@ -376,7 +384,7 @@ static int parse_from(struct sip_msg *msg, rms_dialog_info_t *di)
 static int rms_sip_reply(
 		struct cell *cell, rms_dialog_info_t *di, int code, char *_reason)
 {
-	if (di->state == RMS_ST_CONNECTED) {
+	if(di->state == RMS_ST_CONNECTED) {
 		return 1;
 	}
 	str reason = str_init(_reason);
@@ -406,7 +414,7 @@ static int rms_answer_call(
 	char buffer[128];
 	str reason = str_init("OK");
 	str contact_hdr;
-	if (di->state == RMS_ST_CONNECTED) {
+	if(di->state == RMS_ST_CONNECTED) {
 		return 1;
 	}
 
@@ -497,11 +505,11 @@ static void bridge_cb(struct cell *ptrans, int ntype, struct tmcb_params *pcbp)
 		return;
 	} else if(ntype == TMCB_LOCAL_COMPLETED) {
 		LM_NOTICE("COMPLETED [%d]\n", pcbp->code);
-		if (pcbp->code >= 300)
+		if(pcbp->code >= 300)
 			return;
-	} else if(ntype == TMCB_LOCAL_RESPONSE_IN){
+	} else if(ntype == TMCB_LOCAL_RESPONSE_IN) {
 		LM_NOTICE("RESPONSE [%d]\n", pcbp->code);
-		if (pcbp->code != 180 && pcbp->code != 183)
+		if(pcbp->code != 180 && pcbp->code != 183)
 			return;
 	} else {
 		LM_NOTICE("TMCB_TYPE[%d][%d]\n", ntype, pcbp->code);
@@ -538,7 +546,7 @@ static void bridge_cb(struct cell *ptrans, int ntype, struct tmcb_params *pcbp)
 
 	LM_NOTICE("dialog updated [%s][%s][%s]\n", di->callid.s, di->remote_tag.s,
 			di->local_tag.s);
-	if (pcbp->code == 180 || pcbp->code == 183) {
+	if(pcbp->code == 180 || pcbp->code == 183) {
 		return; // early media not tested/handled properly
 	}
 
@@ -601,14 +609,17 @@ static int rms_bridging_call(rms_dialog_info_t *di, rms_action_t *a)
 		goto error;
 	}
 
-	snprintf(buff, 256, "Max-Forwards: 70\r\nContact: "
-						"<sip:rms@%s:%d>\r\nContent-Type: application/sdp\r\n",
+	snprintf(buff, 256,
+			"Max-Forwards: 70\r\nContact: "
+			"<sip:rms@%s:%d>\r\nContent-Type: application/sdp\r\n",
 			di->local_ip.s, di->local_port);
 	headers.len = strlen(buff);
 	headers.s = buff;
-	LM_INFO("si[%p]call-id[%.*s]cseq[%d]ruri[%d|%s]remote_uri[%s]local_uri[%s]\n", di,
-			di->callid.len, di->callid.s, di->bridged_di->cseq, param_uri->len, param_uri->s,
-			di->bridged_di->remote_uri.s, di->bridged_di->local_uri.s);
+	LM_INFO("si[%p]call-id[%.*s]cseq[%d]ruri[%d|%s]remote_uri[%s]local_uri[%s]"
+			"\n",
+			di, di->callid.len, di->callid.s, di->bridged_di->cseq,
+			param_uri->len, param_uri->s, di->bridged_di->remote_uri.s,
+			di->bridged_di->local_uri.s);
 	dlg_t *dialog = NULL;
 	if(tmb.new_dlg_uac(&di->bridged_di->callid, &di->bridged_di->local_tag,
 			   di->bridged_di->cseq, &di->bridged_di->local_uri,
@@ -622,7 +633,8 @@ static int rms_bridging_call(rms_dialog_info_t *di, rms_action_t *a)
 	rms_sdp_info_t *sdp_info = &di->bridged_di->sdp_info_offer;
 
 	set_uac_req(&uac_r, &method_invite, &headers, &sdp_info->new_body, dialog,
-			TMCB_LOCAL_COMPLETED | TMCB_LOCAL_RESPONSE_IN | TMCB_ON_FAILURE, bridge_cb, a);
+			TMCB_LOCAL_COMPLETED | TMCB_LOCAL_RESPONSE_IN | TMCB_ON_FAILURE,
+			bridge_cb, a);
 	result = tmb.t_request_within(&uac_r);
 	di->bridged_di->cseq = dialog->loc_seq.value;
 	if(result < 0) {
@@ -645,8 +657,9 @@ static int rms_hangup_call(rms_dialog_info_t *di)
 	str headers = str_init("Max-Forwards: 70" CRLF);
 	str method_bye = str_init("BYE");
 
-	LM_INFO("si[%p]callid[%.*s]cseq[%d]remote_uri[%s]local_uri[%s]\n", di, di->callid.len, di->callid.s,
-			di->cseq, di->remote_uri.s, di->local_uri.s);
+	LM_INFO("si[%p]callid[%.*s]cseq[%d]remote_uri[%s]local_uri[%s]\n", di,
+			di->callid.len, di->callid.s, di->cseq, di->remote_uri.s,
+			di->local_uri.s);
 	LM_INFO("contact[%.*s]\n", di->contact_uri.len, di->contact_uri.s);
 	dlg_t *dialog = NULL;
 
@@ -677,7 +690,8 @@ static int rms_hangup_call(rms_dialog_info_t *di)
 /*
  * Create a new dialog info that will be used for bridging
  */
-static rms_dialog_info_t *rms_dialog_create_leg(rms_dialog_info_t *di, struct sip_msg *msg)
+static rms_dialog_info_t *rms_dialog_create_leg(
+		rms_dialog_info_t *di, struct sip_msg *msg)
 {
 	if(!di)
 		return NULL;
@@ -697,7 +711,8 @@ static rms_dialog_info_t *rms_dialog_create_leg(rms_dialog_info_t *di, struct si
 	if(!rms_str_dup(&di->bridged_di->local_ip, &di->local_ip, 1))
 		goto error;
 
-	rms_update_media_sockets(msg, di->bridged_di, &di->bridged_di->sdp_info_offer);
+	rms_update_media_sockets(
+			msg, di->bridged_di, &di->bridged_di->sdp_info_offer);
 	rms_sdp_prepare_new_body(&di->bridged_di->sdp_info_offer, di->media.pt);
 	clist_init(&di->bridged_di->action, next, prev);
 	return di->bridged_di;
@@ -718,9 +733,9 @@ static int rms_get_udp_port(void)
 }
 
 
-
 // update media IP and port
-static int rms_update_media_sockets(struct sip_msg *msg, rms_dialog_info_t *di, rms_sdp_info_t *sdp_info)
+static int rms_update_media_sockets(
+		struct sip_msg *msg, rms_dialog_info_t *di, rms_sdp_info_t *sdp_info)
 {
 	call_leg_media_t *m = &di->media;
 	if(!m->local_port)
@@ -735,9 +750,8 @@ static int rms_update_media_sockets(struct sip_msg *msg, rms_dialog_info_t *di, 
 	m->remote_ip.len = sdp_info->remote_ip.len;
 	m->di = di;
 
-	LM_INFO("remote_socket[%s:%d] local_socket[%s:%d]\n",
-			sdp_info->remote_ip.s, sdp_info->remote_port, m->local_ip.s,
-			m->local_port);
+	LM_INFO("remote_socket[%s:%d] local_socket[%s:%d]\n", sdp_info->remote_ip.s,
+			sdp_info->remote_port, m->local_ip.s, m->local_port);
 	return 1;
 }
 
@@ -838,11 +852,12 @@ static int rms_bridge_f(struct sip_msg *msg, char *_target, char *_route)
 	if(!rms_check_msg(msg))
 		return -1;
 
-	if (di) {
-		if (di->state == RMS_ST_CONNECTED) {
+	if(di) {
+		if(di->state == RMS_ST_CONNECTED) {
 			LM_INFO("already connected, bridging\n");
 		} else {
-			LM_ERR("Can not bridge an existing call leg that is not connected.\n");
+			LM_ERR("Can not bridge an existing call leg that is not "
+				   "connected.\n");
 			return -1;
 		}
 	} else {
@@ -858,7 +873,7 @@ static int rms_bridge_f(struct sip_msg *msg, char *_target, char *_route)
 
 	// parameter 1 : target URI
 	if(get_str_fparam(&target, msg, (gparam_p)_target) != 0) {
-		if (di->state != RMS_ST_CONNECTED) {
+		if(di->state != RMS_ST_CONNECTED) {
 			LM_ERR("rms_bridge: missing target\n");
 			tmb.t_reply(msg, 404, "Not found");
 		}
@@ -872,7 +887,7 @@ static int rms_bridge_f(struct sip_msg *msg, char *_target, char *_route)
 
 	LM_NOTICE("rms_bridge[%s][%d]\n", target.s, target.len);
 
-	if (di->state == RMS_ST_DEFAULT) {
+	if(di->state == RMS_ST_DEFAULT) {
 		str to_tag;
 		parse_from(msg, di);
 		tmb.t_get_reply_totag(msg, &to_tag);
@@ -902,17 +917,17 @@ static int rms_bridge_f(struct sip_msg *msg, char *_target, char *_route)
 	if(!rms_str_dup(&a->param, &target, 1)) {
 		goto error;
 	}
-	if (a->param.s[a->param.len-1] != ';') {
+	if(a->param.s[a->param.len - 1] != ';') {
 		a->param.s = shm_realloc(a->param.s, a->param.len + 2);
-		a->param.s[a->param.len]=';';
+		a->param.s[a->param.len] = ';';
 		a->param.len++;
-		a->param.s[a->param.len]= '\0';
+		a->param.s[a->param.len] = '\0';
 		LM_NOTICE("remote >>> target[%.*s]\n", a->param.len, a->param.s);
 	}
 	a->route.len = route.len;
 	a->route.s = route.s;
 
-	if (di->state != RMS_ST_CONNECTED) { // a_leg: suspend transaction
+	if(di->state != RMS_ST_CONNECTED) { // a_leg: suspend transaction
 		a->cell = tmb.t_gett();
 		tmb.t_reply(msg, 100, "Trying");
 		if(tmb.t_suspend(msg, &a->tm_info.hash_index, &a->tm_info.label) < 0) {
@@ -929,7 +944,7 @@ static int rms_bridge_f(struct sip_msg *msg, char *_target, char *_route)
 	LM_INFO("adding b_leg dialog\n");
 	rms_dialog_add(di->bridged_di);
 	LM_INFO("di_1[%p]di_2[%p]\n", di, di->bridged_di);
-	if (di->state != RMS_ST_CONNECTED)
+	if(di->state != RMS_ST_CONNECTED)
 		rms_dialog_add(di);
 	return 0;
 error:
@@ -949,8 +964,9 @@ static int rms_sip_cancel(struct sip_msg *msg, str *callid_s, str *cseq_s)
 
 	bkt = tmb.t_gett();
 	bkb = tmb.t_gett_branch();
-	if (tmb.t_lookup_callid(&trans, *callid_s, *cseq_s) < 0 ) {
-		LM_NOTICE("Lookup failed - no transaction [%s][%s]\n", callid_s->s, cseq_s->s);
+	if(tmb.t_lookup_callid(&trans, *callid_s, *cseq_s) < 0) {
+		LM_NOTICE("Lookup failed - no transaction [%s][%s]\n", callid_s->s,
+				cseq_s->s);
 		tmb.t_sett(bkt, bkb);
 		if(!tmb.t_reply(msg, 481, "Call/Transaction Does Not Exist")) {
 			return -1;
@@ -987,8 +1003,9 @@ static int rms_sip_forward(
 	di->action.cell = tmb.t_gett();
 	di->action.di = di;
 
-	if (strncmp(method->s, "CANCEL", 6) == 0) {
-		LM_INFO("[CANCEL][%s][%.*s]\n", di->bridged_di->remote_uri.s, di->remote_tag.len, di->remote_tag.s);
+	if(strncmp(method->s, "CANCEL", 6) == 0) {
+		LM_INFO("[CANCEL][%s][%.*s]\n", di->bridged_di->remote_uri.s,
+				di->remote_tag.len, di->remote_tag.s);
 		str cseq;
 		cseq.s = buff;
 		cseq.len = snprintf(buff, 1024, "%d", di->bridged_di->cseq);
@@ -1003,16 +1020,18 @@ static int rms_sip_forward(
 		return 0;
 	}
 
-	snprintf(buff, 256, "Max-Forwards: 70\r\nContact: "
-						"<sip:rms@%s:%d>\r\nContent-Type: application/sdp\r\n",
+	snprintf(buff, 256,
+			"Max-Forwards: 70\r\nContact: "
+			"<sip:rms@%s:%d>\r\nContent-Type: application/sdp\r\n",
 			di->local_ip.s, di->local_port);
 	headers.len = strlen(buff);
 	headers.s = buff;
 
-	LM_INFO("di[%p]callid[%.*s]cseq[%d]ruri[%d|%s]remote_uri[%s]local_uri[%s]\n", di, di->callid.len,
-			di->callid.s, di->bridged_di->cseq, di->bridged_di->contact_uri.len,
-			di->bridged_di->contact_uri.s, di->bridged_di->remote_uri.s,
-			di->bridged_di->local_uri.s);
+	LM_INFO("di[%p]callid[%.*s]cseq[%d]ruri[%d|%s]remote_uri[%s]local_uri[%s]"
+			"\n",
+			di, di->callid.len, di->callid.s, di->bridged_di->cseq,
+			di->bridged_di->contact_uri.len, di->bridged_di->contact_uri.s,
+			di->bridged_di->remote_uri.s, di->bridged_di->local_uri.s);
 	dlg_t *dialog = NULL;
 
 	if(tmb.new_dlg_uac(&di->bridged_di->callid, &di->bridged_di->local_tag,
@@ -1088,11 +1107,11 @@ static int rms_sip_request_f(struct sip_msg *msg)
 		LM_NOTICE("initial INVITE\n");
 		return 1;
 	} else {
-		if (di->state == RMS_ST_DISCONNECTING) {
+		if(di->state == RMS_ST_DISCONNECTING) {
 			return -1; // ignore in dialog message in this state
-		} else if (di->state == RMS_ST_DISCONNECTED) {
+		} else if(di->state == RMS_ST_DISCONNECTED) {
 			rms_create_trans(msg);
-			if (!tmb.t_reply(msg, 481, "Call/Transaction Does Not Exist"))
+			if(!tmb.t_reply(msg, 481, "Call/Transaction Does Not Exist"))
 				return -1;
 			return 1;
 		}
@@ -1102,7 +1121,7 @@ static int rms_sip_request_f(struct sip_msg *msg)
 	return 1;
 }
 
-static int rms_answer_f(struct sip_msg *msg, char * _route)
+static int rms_answer_f(struct sip_msg *msg, char *_route)
 {
 	str to_tag;
 	str route;

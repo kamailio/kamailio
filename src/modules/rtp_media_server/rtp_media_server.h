@@ -42,7 +42,6 @@
 extern gen_lock_t *dialog_list_mutex;
 
 
-
 typedef struct rms
 {
 	int udp_start_port;

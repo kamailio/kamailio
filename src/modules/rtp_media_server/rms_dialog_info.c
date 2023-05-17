@@ -28,7 +28,8 @@ gen_lock_t *dialog_list_mutex = NULL;
 static void rms_action_free(rms_dialog_info_t *si)
 {
 	rms_action_t *a, *tmp;
-	if (!si->action.prev) return;
+	if(!si->action.prev)
+		return;
 	clist_foreach(&si->action, a, next)
 	{
 		tmp = a;
@@ -64,26 +65,36 @@ int rms_dialog_list_init()
 void rms_dialog_list_free()
 {
 	lock_destroy(dialog_list_mutex);
-	lock_dealloc((void*)dialog_list_mutex);
+	lock_dealloc((void *)dialog_list_mutex);
 	shm_free(rms_dialog_list);
 }
 
-char *rms_dialog_state_toa(rms_dialog_state_t state) {
-	if (state == 0) return "RMS_ST_DEFAULT";
-	else if (state == 1) return "RMS_ST_CONNECTING";
-	else if (state == 2) return "RMS_ST_CONNECTED";
-	else if (state == 3) return "RMS_ST_CONNECTED_ACK";
-	else if (state == 4) return "RMS_ST_DISCONNECTING";
-	else if (state == 5) return "RMS_ST_DISCONNECTED";
+char *rms_dialog_state_toa(rms_dialog_state_t state)
+{
+	if(state == 0)
+		return "RMS_ST_DEFAULT";
+	else if(state == 1)
+		return "RMS_ST_CONNECTING";
+	else if(state == 2)
+		return "RMS_ST_CONNECTED";
+	else if(state == 3)
+		return "RMS_ST_CONNECTED_ACK";
+	else if(state == 4)
+		return "RMS_ST_DISCONNECTING";
+	else if(state == 5)
+		return "RMS_ST_DISCONNECTED";
 	return "RMS_ST_UNKNOWN";
 }
 
 int rms_dialog_info_set_state(rms_dialog_info_t *di, rms_dialog_state_t state)
 {
-	if (state <= di->state) {
-		LM_ERR("[%s] >> [%s] (invalid state transition) call-id[%s]\n", rms_dialog_state_toa(di->state), rms_dialog_state_toa(state), di->callid.s);
+	if(state <= di->state) {
+		LM_ERR("[%s] >> [%s] (invalid state transition) call-id[%s]\n",
+				rms_dialog_state_toa(di->state), rms_dialog_state_toa(state),
+				di->callid.s);
 	} else {
-		LM_NOTICE("[%s] >> [%s] call-id[%s]\n", rms_dialog_state_toa(di->state), rms_dialog_state_toa(state), di->callid.s);
+		LM_NOTICE("[%s] >> [%s] call-id[%s]\n", rms_dialog_state_toa(di->state),
+				rms_dialog_state_toa(state), di->callid.s);
 		di->state = state;
 	}
 	return 1;
@@ -130,7 +141,7 @@ rms_dialog_info_t *rms_dialog_search_sync(struct sip_msg *msg)
 
 void rms_dialog_add(rms_dialog_info_t *si)
 {
-	if (in_rms_process) {
+	if(in_rms_process) {
 		clist_append(rms_dialog_list, si, next, prev);
 	} else {
 		lock(dialog_list_mutex);
@@ -141,7 +152,7 @@ void rms_dialog_add(rms_dialog_info_t *si)
 
 void rms_dialog_rm(rms_dialog_info_t *si)
 {
-	if (in_rms_process) {
+	if(in_rms_process) {
 		clist_append(rms_dialog_list, si, next, prev);
 	} else {
 		lock(dialog_list_mutex);
@@ -156,7 +167,9 @@ int rms_dialog_free(rms_dialog_info_t *si)
 	rms_sdp_info_free(&si->sdp_info_offer);
 	rms_sdp_info_free(&si->sdp_info_answer);
 	if(si->media.pt) {
-		shm_free(si->media.pt); // TODO: should be destroyed in  compatible way from MS manager process
+		shm_free(
+				si->media
+						.pt); // TODO: should be destroyed in  compatible way from MS manager process
 		si->media.pt = NULL;
 	}
 	if(si->callid.s) {

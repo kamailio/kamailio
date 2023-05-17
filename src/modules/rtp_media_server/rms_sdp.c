@@ -154,15 +154,17 @@ int rms_sdp_prepare_new_body(rms_sdp_info_t *sdp_info, PayloadType *pt)
 	body->len += strlen(sdp_c);
 
 	char sdp_m[128];
-	snprintf(sdp_m, 128, "m=audio %d RTP/AVP %d\r\n", sdp_info->udp_local_port, pt->type);
+	snprintf(sdp_m, 128, "m=audio %d RTP/AVP %d\r\n", sdp_info->udp_local_port,
+			pt->type);
 	body->len += strlen(sdp_m);
 
 	char sdp_a[128];
-	if (pt->type >= 96) {
-		if (strcasecmp(pt->mime_type,"opus") == 0) {
+	if(pt->type >= 96) {
+		if(strcasecmp(pt->mime_type, "opus") == 0) {
 			snprintf(sdp_a, 128, "a=rtpmap:%d opus/48000/2\r\n", pt->type);
 		} else {
-			snprintf(sdp_a, 128, "a=rtpmap:%d %s/%d/%d\r\n", pt->type, pt->mime_type, pt->clock_rate, pt->channels);
+			snprintf(sdp_a, 128, "a=rtpmap:%d %s/%d/%d\r\n", pt->type,
+					pt->mime_type, pt->clock_rate, pt->channels);
 		}
 		body->len += strlen(sdp_a);
 	}
@@ -177,7 +179,7 @@ int rms_sdp_prepare_new_body(rms_sdp_info_t *sdp_info, PayloadType *pt)
 	strcat(body->s, sdp_t);
 	strcat(body->s, sdp_m);
 
-	if (pt->type >= 96) {
+	if(pt->type >= 96) {
 		strcat(body->s, sdp_a);
 	}
 	return 1;
@@ -200,42 +202,44 @@ PayloadType *rms_sdp_check_payload_type(PayloadType *pt, rms_sdp_info_t *sdp)
 	pt->clock_rate = 8000;
 	pt->channels = 1;
 	pt->mime_type = NULL;
-	if (pt->type > 127) {
+	if(pt->type > 127) {
 		return NULL;
-	} else if (pt->type >= 96) {
+	} else if(pt->type >= 96) {
 		char *rtpmap = rms_sdp_get_rtpmap(sdp->recv_body, pt->type);
-		if (!rtpmap) return NULL;
-		char *s_mime_type = strtok(rtpmap,"/");
-		if (!s_mime_type) {
+		if(!rtpmap)
+			return NULL;
+		char *s_mime_type = strtok(rtpmap, "/");
+		if(!s_mime_type) {
 			shm_free(rtpmap);
 			return NULL;
 		}
-		if (strcasecmp(s_mime_type,"opus") == 0) {
+		if(strcasecmp(s_mime_type, "opus") == 0) {
 			int payload_type = pt->type;
 			memcpy(pt, &payload_type_opus, sizeof(PayloadType));
 			pt->type = payload_type;
-			char * s_clock_rate = strtok(NULL,"/");
-			char * s_channels = strtok(NULL,"/");
-			if (s_clock_rate) {
+			char *s_clock_rate = strtok(NULL, "/");
+			char *s_channels = strtok(NULL, "/");
+			if(s_clock_rate) {
 				pt->clock_rate = atoi(s_clock_rate);
 			} else {
 				pt->clock_rate = 8000;
 			}
-			if (s_channels) {
+			if(s_channels) {
 				pt->channels = atoi(s_channels);
 			} else {
 				pt->channels = 2;
 			}
 			shm_free(rtpmap);
-			LM_INFO("[%p][%d][%s|%d|%d]\n", pt, pt->type, pt->mime_type, pt->clock_rate, pt->channels);
+			LM_INFO("[%p][%d][%s|%d|%d]\n", pt, pt->type, pt->mime_type,
+					pt->clock_rate, pt->channels);
 			return pt;
 		}
 		shm_free(pt->mime_type);
 		shm_free(rtpmap);
 
-	} else if (pt->type == 0) {
+	} else if(pt->type == 0) {
 		pt->mime_type = rms_char_dup("pcmu", 1); /* ia=rtpmap:0 PCMU/8000*/
-	} else if (pt->type == 8) {
+	} else if(pt->type == 8) {
 		pt->mime_type = rms_char_dup("pcma", 1);
 	}
 	//	} else if (pt->type == 9) {
@@ -254,16 +258,17 @@ PayloadType *rms_sdp_select_payload(rms_sdp_info_t *sdp)
 	char *payloads = sdp->payloads.s;
 	char *payload_type_number = strtok(payloads, " ");
 
-	if (!pt) {
+	if(!pt) {
 		return NULL;
 	}
-	while (payload_type_number) {
+	while(payload_type_number) {
 		pt->type = atoi(payload_type_number);
 		pt = rms_sdp_check_payload_type(pt, sdp);
-		if (pt->mime_type) return pt;
+		if(pt->mime_type)
+			return pt;
 		payload_type_number = strtok(NULL, " ");
 	}
-	if (!pt->mime_type) {
+	if(!pt->mime_type) {
 		LM_INFO("unsuported codec\n");
 		shm_free(pt); // payload_type_destroy(pt);
 		return NULL;
