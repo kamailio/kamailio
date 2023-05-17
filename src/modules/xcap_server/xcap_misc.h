@@ -21,7 +21,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-		       
+
 #ifndef _XCAP_MISC_H_
 #define _XCAP_MISC_H_
 
@@ -29,12 +29,13 @@
 #include "../../core/sr_module.h"
 #include "../../core/pvar.h"
 
-#define XCAP_MAX_URI_SIZE	255
+#define XCAP_MAX_URI_SIZE 255
 /* Node Selector Separator */
-#define XCAP_NSS	"~~"
+#define XCAP_NSS "~~"
 
-typedef struct xcap_uri {
-	char buf[XCAP_MAX_URI_SIZE+1];
+typedef struct xcap_uri
+{
+	char buf[XCAP_MAX_URI_SIZE + 1];
 	str uri;
 	str root;
 	str auid;
@@ -50,7 +51,8 @@ typedef struct xcap_uri {
 	str domain;
 } xcap_uri_t;
 
-typedef struct xcaps_auid_list {
+typedef struct xcaps_auid_list
+{
 	str auid;  /* auid value */
 	char term; /* ending char (next one after auid) */
 	int type;  /* internal type id for auid */
@@ -63,10 +65,9 @@ int xcaps_xpath_set(str *inbuf, str *xpaths, str *val, str *outbuf);
 int xcaps_xpath_get(str *inbuf, str *xpaths, str *outbuf);
 int xcaps_check_doc_validity(str *doc);
 
-int pv_get_xcap_uri(struct sip_msg *msg,  pv_param_t *param,
-		pv_value_t *res);
-int pv_set_xcap_uri(struct sip_msg* msg, pv_param_t *param,
-		int op, pv_value_t *val);
+int pv_get_xcap_uri(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
+int pv_set_xcap_uri(
+		struct sip_msg *msg, pv_param_t *param, int op, pv_value_t *val);
 int pv_parse_xcap_uri_name(pv_spec_p sp, str *in);
 
 #endif
