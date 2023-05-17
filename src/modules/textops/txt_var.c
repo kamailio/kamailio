@@ -39,35 +39,33 @@
 
 #include "txt_var.h"
 
-int tr_txt_eval_re(struct sip_msg *msg, tr_param_t *tp, int subtype,
-		pv_value_t *val)
+int tr_txt_eval_re(
+		struct sip_msg *msg, tr_param_t *tp, int subtype, pv_value_t *val)
 {
 	struct subst_expr *se = NULL;
 	int nmatches;
-	str* result;
-#define TR_TXT_BUF_SIZE	8192
+	str *result;
+#define TR_TXT_BUF_SIZE 8192
 	static char tr_txt_buf[TR_TXT_BUF_SIZE];
 	pv_value_t v;
 
-	if(val==NULL || (!(val->flags&PV_VAL_STR)) || val->rs.len<=0)
+	if(val == NULL || (!(val->flags & PV_VAL_STR)) || val->rs.len <= 0)
 		return -1;
 
-	switch(subtype)
-	{
+	switch(subtype) {
 		case TR_TXT_RE_SUBST:
-			if (tp->type == TR_PARAM_SUBST) {
-				se = (struct subst_expr*)tp->v.data;
-				if (se==NULL)
+			if(tp->type == TR_PARAM_SUBST) {
+				se = (struct subst_expr *)tp->v.data;
+				if(se == NULL)
 					return 0;
-			} else if (tp->type == TR_PARAM_SPEC) {
-				if (pv_get_spec_value(msg, (pv_spec_p)tp->v.data, &v)!=0
-						|| (!(v.flags&PV_VAL_STR)) || v.rs.len<=0)
-				{
+			} else if(tp->type == TR_PARAM_SPEC) {
+				if(pv_get_spec_value(msg, (pv_spec_p)tp->v.data, &v) != 0
+						|| (!(v.flags & PV_VAL_STR)) || v.rs.len <= 0) {
 					LM_ERR("Can't evaluate regexp\n");
 					return -1;
 				}
-				se=subst_parser(&v.rs);
-				if (se==0) {
+				se = subst_parser(&v.rs);
+				if(se == 0) {
 					LM_ERR("Can't compile regexp\n");
 					return -1;
 				}
@@ -75,8 +73,7 @@ int tr_txt_eval_re(struct sip_msg *msg, tr_param_t *tp, int subtype,
 				LM_ERR("Unknown parameter type\n");
 				return -1;
 			}
-			if(val->rs.len>=TR_TXT_BUF_SIZE-1)
-			{
+			if(val->rs.len >= TR_TXT_BUF_SIZE - 1) {
 				LM_ERR("PV value too big %d, increase buffer size\n",
 						val->rs.len);
 				goto error;
@@ -84,20 +81,17 @@ int tr_txt_eval_re(struct sip_msg *msg, tr_param_t *tp, int subtype,
 			memcpy(tr_txt_buf, val->rs.s, val->rs.len);
 			tr_txt_buf[val->rs.len] = '\0';
 			/* pkg malloc'ed result */
-			result=subst_str(tr_txt_buf, msg, se, &nmatches);
-			if (result == NULL)
-			{
-				if (nmatches==0)
-				{
+			result = subst_str(tr_txt_buf, msg, se, &nmatches);
+			if(result == NULL) {
+				if(nmatches == 0) {
 					LM_DBG("no match for subst expression\n");
 					break;
 				}
-				if (nmatches<0)
+				if(nmatches < 0)
 					LM_ERR("subst failed\n");
 				goto error;
 			}
-			if(result->len>=TR_TXT_BUF_SIZE-1)
-			{
+			if(result->len >= TR_TXT_BUF_SIZE - 1) {
 				LM_ERR("subst result too big %d, increase buffer size\n",
 						result->len);
 				pkg_free(result->s);
@@ -118,19 +112,19 @@ int tr_txt_eval_re(struct sip_msg *msg, tr_param_t *tp, int subtype,
 			goto error;
 	}
 
-	if (tp->type == TR_PARAM_SPEC) {
+	if(tp->type == TR_PARAM_SPEC) {
 		subst_expr_free(se);
 	}
 	return 0;
 
 error:
-	if (tp->type == TR_PARAM_SPEC && se!=NULL) {
+	if(tp->type == TR_PARAM_SPEC && se != NULL) {
 		subst_expr_free(se);
 	}
 	return -1;
 }
 
-char* tr_txt_parse_re(str *in, trans_t *t)
+char *tr_txt_parse_re(str *in, trans_t *t)
 {
 	char *p;
 	str name;
@@ -141,7 +135,7 @@ char* tr_txt_parse_re(str *in, trans_t *t)
 	pv_spec_t *spec = NULL;
 
 
-	if(in==NULL || t==NULL)
+	if(in == NULL || t == NULL)
 		return NULL;
 
 	p = in->s;
@@ -150,54 +144,50 @@ char* tr_txt_parse_re(str *in, trans_t *t)
 	t->trf = tr_txt_eval_re;
 
 	/* find next token */
-	while(is_in_str(p, in) && *p!=TR_PARAM_MARKER && *p!=TR_RBRACKET) p++;
-	if(*p=='\0')
+	while(is_in_str(p, in) && *p != TR_PARAM_MARKER && *p != TR_RBRACKET)
+		p++;
+	if(*p == '\0')
 		goto error;
 	name.len = p - name.s;
 	trim(&name);
 
-	if(name.len==5 && strncasecmp(name.s, "subst", 5)==0)
-	{
+	if(name.len == 5 && strncasecmp(name.s, "subst", 5) == 0) {
 		t->subtype = TR_TXT_RE_SUBST;
-		if(*p!=TR_PARAM_MARKER)
+		if(*p != TR_PARAM_MARKER)
 			goto error;
 		p++;
-		if(*p==PV_MARKER) {
-			spec = (pv_spec_t*)pkg_malloc(sizeof(pv_spec_t));
-			if(spec==NULL)
-			{
+		if(*p == PV_MARKER) {
+			spec = (pv_spec_t *)pkg_malloc(sizeof(pv_spec_t));
+			if(spec == NULL) {
 				LM_ERR("no more private memory!\n");
 				return 0;
 			}
-			tok.s = p; tok.len = in->s + in->len - p;
+			tok.s = p;
+			tok.len = in->s + in->len - p;
 			p = pv_parse_spec(&tok, spec);
-			if(p==NULL)
-			{
-				LM_ERR("invalid pv spec in transformation: %.*s!\n",
-					in->len, in->s);
+			if(p == NULL) {
+				LM_ERR("invalid pv spec in transformation: %.*s!\n", in->len,
+						in->s);
 				pkg_free(spec);
 				return 0;
 			}
 
-			tp = (tr_param_t*)pkg_malloc(sizeof(tr_param_t));
-			if(tp==NULL)
-			{
+			tp = (tr_param_t *)pkg_malloc(sizeof(tr_param_t));
+			if(tp == NULL) {
 				LM_ERR("no more private memory!\n");
 				pkg_free(spec);
 				goto error;
 			}
 			tp->type = TR_PARAM_SPEC;
-			tp->v.data = (void*)spec;
+			tp->v.data = (void *)spec;
 		} else {
 			/* get trans here */
 			n = 0;
 			tok.s = p;
-			while(is_in_str(p, in))
-			{
-				if(*p==TR_RBRACKET)
-				{
-					if(n==0)
-							break;
+			while(is_in_str(p, in)) {
+				if(*p == TR_RBRACKET) {
+					if(n == 0)
+						break;
 					n--;
 				}
 				if(*p == TR_LBRACKET)
@@ -206,44 +196,43 @@ char* tr_txt_parse_re(str *in, trans_t *t)
 			}
 			if(!is_in_str(p, in))
 				goto error;
-			if(p==tok.s)
+			if(p == tok.s)
 				goto error;
 			tok.len = p - tok.s;
-			tp = (tr_param_t*)pkg_malloc(sizeof(tr_param_t));
-			if(tp==NULL)
-			{
+			tp = (tr_param_t *)pkg_malloc(sizeof(tr_param_t));
+			if(tp == NULL) {
 				LM_ERR("no more private memory!\n");
 				goto error;
 			}
 			memset(tp, 0, sizeof(tr_param_t));
 
-			se=subst_parser(&tok);
+			se = subst_parser(&tok);
 
-			if (se==0)
+			if(se == 0)
 				goto error;
 			tp->type = TR_PARAM_SUBST;
-			tp->v.data = (void*)se;
+			tp->v.data = (void *)se;
 		}
 		t->params = tp;
 
-		while(*p && (*p==' ' || *p=='\t' || *p=='\n')) p++;
-		if(*p!=TR_RBRACKET)
+		while(*p && (*p == ' ' || *p == '\t' || *p == '\n'))
+			p++;
+		if(*p != TR_RBRACKET)
 			goto error;
 		goto done;
 	}
 
-	LM_ERR("unknown transformation: %.*s/%.*s/%d!\n", in->len, in->s,
-			name.len, name.s, name.len);
+	LM_ERR("unknown transformation: %.*s/%.*s/%d!\n", in->len, in->s, name.len,
+			name.s, name.len);
 error:
 	LM_ERR("invalid transformation [%.*s] <%d>\n", in->len, in->s,
-			(int)(p-in->s));
-	if(tp!=NULL)
+			(int)(p - in->s));
+	if(tp != NULL)
 		pkg_free(tp);
-	if(se!=NULL)
+	if(se != NULL)
 		subst_expr_free(se);
 	return NULL;
 done:
 	t->name = name;
 	return p;
 }
-

@@ -31,16 +31,18 @@
 #define TEXTOPS_H_
 #include "../../core/mod_fix.h"
 
-int search_f(struct sip_msg*, char*, char*);
-int search_append_f(struct sip_msg*, char*, char*);
-int remove_hf_f(struct sip_msg* msg, char* str_hf, char* foo);
-int add_hf_helper(struct sip_msg* msg, str *str1, str *str2, gparam_p hfval, int mode, gparam_p hfanc);
-int is_privacy_f(struct sip_msg *msg, char *privacy, char *str2 );
+int search_f(struct sip_msg *, char *, char *);
+int search_append_f(struct sip_msg *, char *, char *);
+int remove_hf_f(struct sip_msg *msg, char *str_hf, char *foo);
+int add_hf_helper(struct sip_msg *msg, str *str1, str *str2, gparam_p hfval,
+		int mode, gparam_p hfanc);
+int is_privacy_f(struct sip_msg *msg, char *privacy, char *str2);
 int set_body(struct sip_msg *msg, str *body, str *content_type);
 int set_body_multipart(struct sip_msg *msg);
-int append_body_part(struct sip_msg *msg, str *body, str *content_type, str *content_disposition);
+int append_body_part(struct sip_msg *msg, str *body, str *content_type,
+		str *content_disposition);
 
-int fixup_regexp_none(void** param, int param_no);
-int fixup_free_regexp_none(void** param, int param_no);
-int fixup_privacy(void** param, int param_no);
+int fixup_regexp_none(void **param, int param_no);
+int fixup_free_regexp_none(void **param, int param_no);
+int fixup_privacy(void **param, int param_no);
 #endif /*TEXTOPS_H_*/
