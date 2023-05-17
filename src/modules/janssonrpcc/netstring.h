@@ -26,27 +26,29 @@
 #include <string.h>
 #include <event2/bufferevent.h>
 
-typedef struct {
-	char* buffer;
-	char* string;
+typedef struct
+{
+	char *buffer;
+	char *string;
 	unsigned int start, read, length;
 } netstring_t;
 
-void free_netstring(netstring_t* netstring);
+void free_netstring(netstring_t *netstring);
 
 int netstring_read_evbuffer(struct bufferevent *bev, netstring_t **netstring);
 
 int netstring_read_fd(int fd, netstring_t **netstring);
 
-int netstring_read(char *buffer, size_t buffer_length,
-		   char **netstring_start, size_t *netstring_length);
+int netstring_read(char *buffer, size_t buffer_length, char **netstring_start,
+		size_t *netstring_length);
 
 size_t netstring_buffer_size(size_t data_length);
 
 size_t netstring_encode_new(char **netstring, char *data, size_t len);
 
 /* Errors that can occur during netstring parsing */
-typedef enum {
+typedef enum
+{
 	NETSTRING_ERROR_TOO_LONG = -1000,
 	NETSTRING_ERROR_NO_COLON,
 	NETSTRING_ERROR_TOO_SHORT,
