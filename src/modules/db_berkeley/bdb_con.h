@@ -61,7 +61,7 @@ typedef struct _bdb_con
 {
 	db_pool_entry_t gen; /**< Generic part of the structure */
 	bdb_db_t *dbp;		 /**< DB structure handle */
-	unsigned int flags;  /**< Flags */
+	unsigned int flags;	 /**< Flags */
 } bdb_con_t, *bdb_con_p;
 
 /** Create a new bdb_con structure.
