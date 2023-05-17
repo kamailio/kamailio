@@ -41,4 +41,3 @@ extern rd_buf_t *rb;
 
 
 #endif /* AUTHDIAM_MOD_H */
- 

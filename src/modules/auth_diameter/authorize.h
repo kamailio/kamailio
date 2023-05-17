@@ -31,40 +31,38 @@
 #include "../../core/str.h"
 #include "defs.h"
 
-typedef enum auth_diam_result {
-	NONCE_REUSED = -6,  /*!< Returned if nonce is used more than once */
-	AUTH_ERROR,         /*!< Error occurred, a reply has not been sent out */
-	NO_CREDENTIALS,     /*!< Credentials missing */
-	STALE_NONCE,        /*!< Stale nonce */
-	INVALID_PASSWORD,   /*!< Invalid password */
-	USER_UNKNOWN,       /*!< User non existent */
-	ERROR,              /*!< Error occurred, a reply has been sent out,
+typedef enum auth_diam_result
+{
+	NONCE_REUSED = -6, /*!< Returned if nonce is used more than once */
+	AUTH_ERROR,		   /*!< Error occurred, a reply has not been sent out */
+	NO_CREDENTIALS,	   /*!< Credentials missing */
+	STALE_NONCE,	   /*!< Stale nonce */
+	INVALID_PASSWORD,  /*!< Invalid password */
+	USER_UNKNOWN,	   /*!< User non existent */
+	ERROR,			   /*!< Error occurred, a reply has been sent out,
 	                        return 0 to the kamailio core */
-	AUTHORIZED,         /*!< Authorized. If returned by pre_auth,
+	AUTHORIZED,		   /*!< Authorized. If returned by pre_auth,
 	                         no digest authorization necessary */
-	DO_AUTHORIZATION,   /*!< Can only be returned by pre_auth. */
-	                    /*!< Means to continue doing authorization */
+	DO_AUTHORIZATION,  /*!< Can only be returned by pre_auth. */
+					   /*!< Means to continue doing authorization */
 } auth_diam_result_t;
 
 
+int get_uri(struct sip_msg *m, str **uri);
 
-int get_uri(struct sip_msg* m, str** uri);
+int get_realm(struct sip_msg *m, int hftype, struct sip_uri *u);
 
-int get_realm(struct sip_msg* m, int hftype, struct sip_uri* u);
+auth_diam_result_t diam_pre_auth(
+		struct sip_msg *m, str *realm, int hftype, struct hdr_field **h);
 
-auth_diam_result_t diam_pre_auth(struct sip_msg* m, str* realm, int hftype, 
-						struct hdr_field** h);
+int authorize(struct sip_msg *msg, pv_elem_t *realm, int hftype);
 
-int authorize(struct sip_msg* msg, pv_elem_t* realm, int hftype);
+int diameter_authorize(struct hdr_field *cred, str *p_method, sip_uri_t *uri,
+		sip_uri_t *ruri, unsigned int m_id, rd_buf_t *response);
 
-int diameter_authorize(struct hdr_field* cred, str* p_method, 
-					sip_uri_t *uri,	sip_uri_t *ruri,
-					unsigned int m_id, rd_buf_t *response);
+int srv_response(struct sip_msg *msg, rd_buf_t *rb, int hftype);
 
-int srv_response(struct sip_msg* msg, rd_buf_t* rb, int hftype);
-
-int send_resp(struct sip_msg* _m, int _code, str* _reason,
-					char* _hdr, int _hdr_len);
+int send_resp(
+		struct sip_msg *_m, int _code, str *_reason, char *_hdr, int _hdr_len);
 
 #endif /* DIAMETER_AUTHORIZE_H */
- 
