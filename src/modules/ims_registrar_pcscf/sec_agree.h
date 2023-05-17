@@ -30,7 +30,7 @@
  * @param params - ptr to struct sec_agree_params, where parsed values will be saved
  * @returns 0 on success, error code on failure
  */
-security_t* cscf_get_security(struct sip_msg *msg);
+security_t *cscf_get_security(struct sip_msg *msg);
 
 /**
  * Looks for the Security-Verify header
@@ -38,6 +38,6 @@ security_t* cscf_get_security(struct sip_msg *msg);
  * @param params - ptr to struct sec_agree_params, where parsed values will be saved
  * @returns 0 on success, error code on failure
  */
-security_t* cscf_get_security_verify(struct sip_msg *msg);
+security_t *cscf_get_security_verify(struct sip_msg *msg);
 
 #endif // SEC_AGREE_H

@@ -39,9 +39,11 @@ extern pua_api_t pua;
 extern str pcscf_uri;
 extern str force_icscf_uri;
 
-#define P_ASSERTED_IDENTITY_HDR_PREFIX	"P-Asserted-Identity: <"
+#define P_ASSERTED_IDENTITY_HDR_PREFIX "P-Asserted-Identity: <"
 
-int reginfo_subscribe_real(struct sip_msg* msg, pv_elem_t* uri, str* service_routes, int expires) {
+int reginfo_subscribe_real(
+		struct sip_msg *msg, pv_elem_t *uri, str *service_routes, int expires)
+{
 	str uri_str = {0, 0};
 	char uri_buf[512];
 	int uri_buf_len = 512;
@@ -49,59 +51,65 @@ int reginfo_subscribe_real(struct sip_msg* msg, pv_elem_t* uri, str* service_rou
 	str p_asserted_identity_header;
 	reginfo_event_t *new_event;
 	str *subs_outbound_proxy = 0;
-	
-	int len = strlen(P_ASSERTED_IDENTITY_HDR_PREFIX) + pcscf_uri.len + 1 + CRLF_LEN;
-	p_asserted_identity_header.s = (char *)pkg_malloc( len );
-	if ( p_asserted_identity_header.s == NULL ) {
-	    SHM_MEM_ERROR_FMT("%d bytes failed", len );
-	    goto error;
+
+	int len = strlen(P_ASSERTED_IDENTITY_HDR_PREFIX) + pcscf_uri.len + 1
+			  + CRLF_LEN;
+	p_asserted_identity_header.s = (char *)pkg_malloc(len);
+	if(p_asserted_identity_header.s == NULL) {
+		SHM_MEM_ERROR_FMT("%d bytes failed", len);
+		goto error;
 	}
 
-	memcpy(p_asserted_identity_header.s, P_ASSERTED_IDENTITY_HDR_PREFIX, strlen(P_ASSERTED_IDENTITY_HDR_PREFIX));
+	memcpy(p_asserted_identity_header.s, P_ASSERTED_IDENTITY_HDR_PREFIX,
+			strlen(P_ASSERTED_IDENTITY_HDR_PREFIX));
 	p_asserted_identity_header.len = strlen(P_ASSERTED_IDENTITY_HDR_PREFIX);
-	memcpy(p_asserted_identity_header.s + p_asserted_identity_header.len, pcscf_uri.s, pcscf_uri.len);
+	memcpy(p_asserted_identity_header.s + p_asserted_identity_header.len,
+			pcscf_uri.s, pcscf_uri.len);
 	p_asserted_identity_header.len += pcscf_uri.len;
 	*(p_asserted_identity_header.s + p_asserted_identity_header.len) = '>';
-	p_asserted_identity_header.len ++;
-	memcpy( p_asserted_identity_header.s + p_asserted_identity_header.len, CRLF, CRLF_LEN );
+	p_asserted_identity_header.len++;
+	memcpy(p_asserted_identity_header.s + p_asserted_identity_header.len, CRLF,
+			CRLF_LEN);
 	p_asserted_identity_header.len += CRLF_LEN;
-	
-	if (pv_printf(msg, uri, uri_buf, &uri_buf_len) < 0) {
-	    LM_ERR("cannot print uri into the format\n");
-	    goto error;
+
+	if(pv_printf(msg, uri, uri_buf, &uri_buf_len) < 0) {
+		LM_ERR("cannot print uri into the format\n");
+		goto error;
 	}
 	uri_str.s = uri_buf;
 	uri_str.len = uri_buf_len;
-	
-	LM_DBG("p_asserted_identity_header: [%.*s]", p_asserted_identity_header.len, p_asserted_identity_header.s);
+
+	LM_DBG("p_asserted_identity_header: [%.*s]", p_asserted_identity_header.len,
+			p_asserted_identity_header.s);
 
 	LM_DBG("Subscribing to %.*s\n", uri_str.len, uri_str.s);
 
 	if(force_icscf_uri.s && force_icscf_uri.len) {
-	    subs_outbound_proxy= &force_icscf_uri;
+		subs_outbound_proxy = &force_icscf_uri;
 	}
-	
-	new_event = new_reginfo_event(REG_EVENT_SUBSCRIBE, 0, 0, 0, &uri_str, &pcscf_uri, &pcscf_uri,
-	subs_outbound_proxy, expires, UPDATE_TYPE, REGINFO_SUBSCRIBE, REGINFO_EVENT, &p_asserted_identity_header, &uri_str);
-	
-	if (!new_event) {
-            LM_ERR("Unable to create event for cdp callback\n");
-            goto error;
-        }
-        //push the new event onto the stack (FIFO)
-        push_reginfo_event(new_event);
-	
-	if (p_asserted_identity_header.s) {
+
+	new_event = new_reginfo_event(REG_EVENT_SUBSCRIBE, 0, 0, 0, &uri_str,
+			&pcscf_uri, &pcscf_uri, subs_outbound_proxy, expires, UPDATE_TYPE,
+			REGINFO_SUBSCRIBE, REGINFO_EVENT, &p_asserted_identity_header,
+			&uri_str);
+
+	if(!new_event) {
+		LM_ERR("Unable to create event for cdp callback\n");
+		goto error;
+	}
+	//push the new event onto the stack (FIFO)
+	push_reginfo_event(new_event);
+
+	if(p_asserted_identity_header.s) {
 		pkg_free(p_asserted_identity_header.s);
 	}
 
 	return 1;
-	
-    error:
-    
-	if (p_asserted_identity_header.s) {
+
+error:
+
+	if(p_asserted_identity_header.s) {
 		pkg_free(p_asserted_identity_header.s);
 	}
 	return -1;
-	
 }

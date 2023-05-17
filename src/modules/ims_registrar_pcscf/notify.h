@@ -32,6 +32,6 @@
 
 #include "../../core/parser/msg_parser.h"
 
-int reginfo_handle_notify(struct sip_msg*, char*, char*);
+int reginfo_handle_notify(struct sip_msg *, char *, char *);
 
 #endif

@@ -53,9 +53,9 @@
 #include "../../modules/sl/sl.h"
 #include "../../modules/tm/tm_load.h"
 
-#define RECEIVED_MAX_SIZE      255
-#define USERNAME_MAX_SIZE      64
-#define DOMAIN_MAX_SIZE        128
+#define RECEIVED_MAX_SIZE 255
+#define USERNAME_MAX_SIZE 64
+#define DOMAIN_MAX_SIZE 128
 
 extern unsigned short rcv_avp_type;
 extern int_str rcv_avp_name;

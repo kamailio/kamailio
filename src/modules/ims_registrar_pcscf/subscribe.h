@@ -34,8 +34,7 @@
 #include "../../core/parser/msg_parser.h"
 
 
-
-
-int reginfo_subscribe_real(struct sip_msg* msg, pv_elem_t* uri, str* service_routes, int expires);
+int reginfo_subscribe_real(
+		struct sip_msg *msg, pv_elem_t *uri, str *service_routes, int expires);
 
 #endif

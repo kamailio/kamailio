@@ -72,11 +72,12 @@
 #include "service_routes.h"
 MODULE_VERSION
 
-usrloc_api_t ul;						/**!< Structure containing pointers to usrloc functions*/
-sl_api_t slb;							/**!< SL API structure */
-struct tm_binds tmb;					/**!< TM API structure */
-pua_api_t pua; 							/**!< PUA API structure */
-ipsec_pcscf_api_t ipsec_pcscf;			/**!< Structure containing pointers to ipsec pcscf functions*/
+usrloc_api_t ul;	 /**!< Structure containing pointers to usrloc functions*/
+sl_api_t slb;		 /**!< SL API structure */
+struct tm_binds tmb; /**!< TM API structure */
+pua_api_t pua;		 /**!< PUA API structure */
+ipsec_pcscf_api_t
+		ipsec_pcscf; /**!< Structure containing pointers to ipsec pcscf functions*/
 
 int publish_reginfo = 0;
 int subscribe_to_reginfo = 0;
@@ -91,130 +92,145 @@ time_t time_now;
 str pcscf_uri = str_init("sip:pcscf.ims.smilecoms.com:4060");
 str force_icscf_uri = str_init("");
 
-unsigned int pending_reg_expires = 30;			/**!< parameter for expiry time of a pending registration before receiving confirmation from SCSCF */
+unsigned int pending_reg_expires =
+		30; /**!< parameter for expiry time of a pending registration before receiving confirmation from SCSCF */
 
 int is_registered_fallback2ip = 0;
 
-int reginfo_queue_size_threshold = 0;			/**Threshold for size of reginfo queue after which a warning is logged */
+int reginfo_queue_size_threshold =
+		0; /**Threshold for size of reginfo queue after which a warning is logged */
 
 
-char* rcv_avp_param = 0;
+char *rcv_avp_param = 0;
 unsigned short rcv_avp_type = 0;
 int_str rcv_avp_name;
 
 // static str orig_prefix = {"sip:orig@",9};
 
 /*! \brief Module init & destroy function */
-static int  mod_init(void);
-static int  child_init(int);
+static int mod_init(void);
+static int child_init(int);
 static void mod_destroy(void);
-static int w_save(struct sip_msg* _m, char* _d, char* _cflags);
-static int w_save_pending(struct sip_msg* _m, char* _d, char* _cflags);
+static int w_save(struct sip_msg *_m, char *_d, char *_cflags);
+static int w_save_pending(struct sip_msg *_m, char *_d, char *_cflags);
 
-static int w_follows_service_routes(struct sip_msg* _m, char* _d, char* _foo);
-static int w_force_service_routes(struct sip_msg* _m, char* _d, char* _foo);
-static int w_is_registered(struct sip_msg* _m, char* _d, char* _foo);
-static int w_reginfo_handle_notify(struct sip_msg* _m, char* _d, char* _foo);
+static int w_follows_service_routes(struct sip_msg *_m, char *_d, char *_foo);
+static int w_force_service_routes(struct sip_msg *_m, char *_d, char *_foo);
+static int w_is_registered(struct sip_msg *_m, char *_d, char *_foo);
+static int w_reginfo_handle_notify(struct sip_msg *_m, char *_d, char *_foo);
 
-static int w_assert_identity(struct sip_msg* _m, char* _d, char* _preferred_uri);
-static int w_assert_called_identity(struct sip_msg* _m, char* _d, char* _foo);
+static int w_assert_identity(
+		struct sip_msg *_m, char *_d, char *_preferred_uri);
+static int w_assert_called_identity(struct sip_msg *_m, char *_d, char *_foo);
 
-static int w_unregister(struct sip_msg* _m, char* _d, char* _aor, char* _received_host, char* _received_port);
+static int w_unregister(struct sip_msg *_m, char *_d, char *_aor,
+		char *_received_host, char *_received_port);
 
 /*! \brief Fixup functions */
-static int domain_fixup(void** param, int param_no);
-static int save_fixup2(void** param, int param_no);
-static int assert_identity_fixup(void ** param, int param_no);
+static int domain_fixup(void **param, int param_no);
+static int save_fixup2(void **param, int param_no);
+static int assert_identity_fixup(void **param, int param_no);
 
 /* Pseudo-Variables */
-static int pv_get_asserted_identity_f(struct sip_msg *, pv_param_t *, pv_value_t *);
-static int pv_get_registration_contact_f(struct sip_msg *, pv_param_t *, pv_value_t *);
-static int unregister_fixup(void ** param, int param_no);
+static int pv_get_asserted_identity_f(
+		struct sip_msg *, pv_param_t *, pv_value_t *);
+static int pv_get_registration_contact_f(
+		struct sip_msg *, pv_param_t *, pv_value_t *);
+static int unregister_fixup(void **param, int param_no);
 
 /**
  * Update the time.
  */
 inline void pcscf_act_time()
 {
-        time_now=time(0);
+	time_now = time(0);
 }
 
 /*! \brief
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"pcscf_save",     		(cmd_function)w_save,                   1,  	save_fixup2,            0,ONREPLY_ROUTE },
-	{"pcscf_save_pending",          (cmd_function)w_save_pending,       	1,  	save_fixup2,            0,REQUEST_ROUTE },
-	{"pcscf_follows_service_routes",(cmd_function)w_follows_service_routes, 1,  	save_fixup2,            0,REQUEST_ROUTE },
-	{"pcscf_force_service_routes",  (cmd_function)w_force_service_routes,   1,  	save_fixup2,            0,REQUEST_ROUTE },
-	{"pcscf_is_registered",         (cmd_function)w_is_registered,          1,  	save_fixup2,            0,REQUEST_ROUTE|ONREPLY_ROUTE },
-	{"pcscf_assert_identity",       (cmd_function)w_assert_identity,        2,  	assert_identity_fixup,  0,REQUEST_ROUTE },
-	{"pcscf_assert_called_identity",(cmd_function)w_assert_called_identity, 1,      assert_identity_fixup,  0,ONREPLY_ROUTE },
-	{"reginfo_handle_notify",       (cmd_function)w_reginfo_handle_notify,  1,      domain_fixup,           0,REQUEST_ROUTE},
-	{"pcscf_unregister",		(cmd_function)w_unregister,		4,      unregister_fixup,       0,ANY_ROUTE},
-	{0, 0, 0, 0, 0, 0}
-};
+		{"pcscf_save", (cmd_function)w_save, 1, save_fixup2, 0, ONREPLY_ROUTE},
+		{"pcscf_save_pending", (cmd_function)w_save_pending, 1, save_fixup2, 0,
+				REQUEST_ROUTE},
+		{"pcscf_follows_service_routes", (cmd_function)w_follows_service_routes,
+				1, save_fixup2, 0, REQUEST_ROUTE},
+		{"pcscf_force_service_routes", (cmd_function)w_force_service_routes, 1,
+				save_fixup2, 0, REQUEST_ROUTE},
+		{"pcscf_is_registered", (cmd_function)w_is_registered, 1, save_fixup2,
+				0, REQUEST_ROUTE | ONREPLY_ROUTE},
+		{"pcscf_assert_identity", (cmd_function)w_assert_identity, 2,
+				assert_identity_fixup, 0, REQUEST_ROUTE},
+		{"pcscf_assert_called_identity", (cmd_function)w_assert_called_identity,
+				1, assert_identity_fixup, 0, ONREPLY_ROUTE},
+		{"reginfo_handle_notify", (cmd_function)w_reginfo_handle_notify, 1,
+				domain_fixup, 0, REQUEST_ROUTE},
+		{"pcscf_unregister", (cmd_function)w_unregister, 4, unregister_fixup, 0,
+				ANY_ROUTE},
+		{0, 0, 0, 0, 0, 0}};
 
 
 /*! \brief
  * Exported parameters
  */
-static param_export_t params[] = {
-	{"pcscf_uri",                   PARAM_STR, &pcscf_uri                           },
-	{"pending_reg_expires",         INT_PARAM, &pending_reg_expires			},
-	{"received_avp",                PARAM_STR, &rcv_avp_param       		},
-	{"is_registered_fallback2ip",	INT_PARAM, &is_registered_fallback2ip           },
-	{"publish_reginfo",             INT_PARAM, &publish_reginfo                     },
-	{"subscribe_to_reginfo",        INT_PARAM, &subscribe_to_reginfo                },
-	{"subscription_expires",        INT_PARAM, &subscription_expires                },
-	{"ignore_contact_rxport_check", INT_PARAM, &ignore_contact_rxport_check         },
-	{"ignore_reg_state",		INT_PARAM, &ignore_reg_state			},
-	{"force_icscf_uri",		PARAM_STR, &force_icscf_uri			},
-	{"reginfo_queue_size_threshold",	INT_PARAM, &reginfo_queue_size_threshold		},
-//	{"store_profile_dereg",	INT_PARAM, &store_data_on_dereg},
-	{0, 0, 0}
-};
-
+static param_export_t params[] = {{"pcscf_uri", PARAM_STR, &pcscf_uri},
+		{"pending_reg_expires", INT_PARAM, &pending_reg_expires},
+		{"received_avp", PARAM_STR, &rcv_avp_param},
+		{"is_registered_fallback2ip", INT_PARAM, &is_registered_fallback2ip},
+		{"publish_reginfo", INT_PARAM, &publish_reginfo},
+		{"subscribe_to_reginfo", INT_PARAM, &subscribe_to_reginfo},
+		{"subscription_expires", INT_PARAM, &subscription_expires},
+		{"ignore_contact_rxport_check", INT_PARAM,
+				&ignore_contact_rxport_check},
+		{"ignore_reg_state", INT_PARAM, &ignore_reg_state},
+		{"force_icscf_uri", PARAM_STR, &force_icscf_uri},
+		{"reginfo_queue_size_threshold", INT_PARAM,
+				&reginfo_queue_size_threshold},
+		//	{"store_profile_dereg",	INT_PARAM, &store_data_on_dereg},
+		{0, 0, 0}};
 
 
 static pv_export_t mod_pvs[] = {
-	{{"pcscf_asserted_identity", (sizeof("pcscf_asserted_identity")-1)}, /* The first identity of the contact. */
-	PVT_OTHER, pv_get_asserted_identity_f, 0, 0, 0, 0, 0},
-	{{"pcscf_registration_contact", (sizeof("pcscf_registration_contact")-1)}, /* The contact used during REGISTER */
-	PVT_OTHER, pv_get_registration_contact_f, 0, 0, 0, 0, 0},
-	{{0, 0}, 0, 0, 0, 0, 0, 0, 0}
-};
+		{{"pcscf_asserted_identity",
+				 (sizeof("pcscf_asserted_identity")
+						 - 1)}, /* The first identity of the contact. */
+				PVT_OTHER, pv_get_asserted_identity_f, 0, 0, 0, 0, 0},
+		{{"pcscf_registration_contact",
+				 (sizeof("pcscf_registration_contact")
+						 - 1)}, /* The contact used during REGISTER */
+				PVT_OTHER, pv_get_registration_contact_f, 0, 0, 0, 0, 0},
+		{{0, 0}, 0, 0, 0, 0, 0, 0, 0}};
 
 /*! \brief
  * Module exports structure
  */
 struct module_exports exports = {
-	"ims_registrar_pcscf",
-	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,        	/* Exported functions */
-	params,      	/* Exported parameters */
-	0,           	/* exported RPC methods */
-	mod_pvs,     	/* exported pseudo-variables */
-	0,           	/* response handling function */
-	mod_init,    	/* module initialization function */
-	child_init,  	/* Per-child init function */
-	mod_destroy 	/* destroy function */
+		"ims_registrar_pcscf", DEFAULT_DLFLAGS, /* dlopen flags */
+		cmds,									/* Exported functions */
+		params,									/* Exported parameters */
+		0,										/* exported RPC methods */
+		mod_pvs,								/* exported pseudo-variables */
+		0,										/* response handling function */
+		mod_init,	/* module initialization function */
+		child_init, /* Per-child init function */
+		mod_destroy /* destroy function */
 };
 
-int fix_parameters() {
+int fix_parameters()
+{
 	str s;
 	pv_spec_t avp_spec;
 
-	if (rcv_avp_param && *rcv_avp_param) {
-		s.s = rcv_avp_param; s.len = strlen(s.s);
-		if (pv_parse_spec(&s, &avp_spec)==0
-				|| avp_spec.type!=PVT_AVP) {
+	if(rcv_avp_param && *rcv_avp_param) {
+		s.s = rcv_avp_param;
+		s.len = strlen(s.s);
+		if(pv_parse_spec(&s, &avp_spec) == 0 || avp_spec.type != PVT_AVP) {
 			LM_ERR("malformed or non AVP %s AVP definition\n", rcv_avp_param);
 			return -1;
 		}
 
-		if(pv_get_avp_name(0, &avp_spec.pvp, &rcv_avp_name, &rcv_avp_type)!=0)
-		{
+		if(pv_get_avp_name(0, &avp_spec.pvp, &rcv_avp_name, &rcv_avp_type)
+				!= 0) {
 			LM_ERR("[%s]- invalid AVP definition\n", rcv_avp_param);
 			return -1;
 		}
@@ -229,88 +245,93 @@ int fix_parameters() {
 /*! \brief
  * Initialize parent
  */
-static int mod_init(void) {
+static int mod_init(void)
+{
 	bind_usrloc_t bind_usrloc;
 	bind_pua_t bind_pua;
 	bind_ipsec_pcscf_t bind_ipsec_pcscf;
 
 	/*register space for event processor*/
 	register_procs(1);
-	
-	if (!fix_parameters()) goto error;
+
+	if(!fix_parameters())
+		goto error;
 
 	/* bind the SL API */
-	if (sl_load_api(&slb) != 0) {
+	if(sl_load_api(&slb) != 0) {
 		LM_ERR("cannot bind to SL API\n");
 		return -1;
 	}
 	LM_DBG("Successfully bound to SL module\n");
 
 	/* load the TM API */
-	if (load_tm_api(&tmb) != 0) {
+	if(load_tm_api(&tmb) != 0) {
 		LM_ERR("can't load TM API\n");
 		return -1;
 	}
 	LM_DBG("Successfully bound to TM module\n");
 
-	bind_usrloc = (bind_usrloc_t) find_export("ul_bind_ims_usrloc_pcscf", 1, 0);
-	if (!bind_usrloc) {
+	bind_usrloc = (bind_usrloc_t)find_export("ul_bind_ims_usrloc_pcscf", 1, 0);
+	if(!bind_usrloc) {
 		LM_ERR("can't bind ims_usrloc_pcscf\n");
 		return -1;
 	}
 
-	if (bind_usrloc(&ul) < 0) {
+	if(bind_usrloc(&ul) < 0) {
 		return -1;
 	}
-	if (ul.db_mode == DB_ONLY){
-		if (!(ul.register_ulcb_method(NULL, PCSCF_CONTACT_UPDATE, callback_pcscf_contact_cb, NULL) == 1)){
+	if(ul.db_mode == DB_ONLY) {
+		if(!(ul.register_ulcb_method(NULL, PCSCF_CONTACT_UPDATE,
+					 callback_pcscf_contact_cb, NULL)
+				   == 1)) {
 			LM_ERR("Can't register ulcb method\n");
 			return -1;
 		}
 	}
 	LM_DBG("Successfully bound to PCSCF Usrloc module\n");
 
-	bind_ipsec_pcscf = (bind_ipsec_pcscf_t) find_export("bind_ims_ipsec_pcscf", 1, 0);
-	if (!bind_ipsec_pcscf) {
+	bind_ipsec_pcscf =
+			(bind_ipsec_pcscf_t)find_export("bind_ims_ipsec_pcscf", 1, 0);
+	if(!bind_ipsec_pcscf) {
 		LM_ERR("can't bind ims_ipsec_pcscf\n");
 		return -1;
 	}
 
-	if (bind_ipsec_pcscf(&ipsec_pcscf) < 0) {
+	if(bind_ipsec_pcscf(&ipsec_pcscf) < 0) {
 		return -1;
 	}
 	LM_INFO("Successfully bound to PCSCF IPSEC module\n");
 
-	if(subscribe_to_reginfo == 1){
+	if(subscribe_to_reginfo == 1) {
 		/* Bind to PUA: */
-		bind_pua = (bind_pua_t) find_export("bind_pua", 1, 0);
-		if (!bind_pua) {
+		bind_pua = (bind_pua_t)find_export("bind_pua", 1, 0);
+		if(!bind_pua) {
 			LM_ERR("Can't bind pua\n");
 			return -1;
 		}
-		if (bind_pua(&pua) < 0) {
+		if(bind_pua(&pua) < 0) {
 			LM_ERR("Can't bind pua\n");
 			return -1;
 		}
 		/* Check for Publish/Subscribe methods */
-		if (pua.send_publish == NULL) {
+		if(pua.send_publish == NULL) {
 			LM_ERR("Could not import send_publish\n");
 			return -1;
 		}
-		if (pua.send_subscribe == NULL) {
+		if(pua.send_subscribe == NULL) {
 			LM_ERR("Could not import send_subscribe\n");
 			return -1;
 		}
-		if (pua.get_subs_list == NULL) {
+		if(pua.get_subs_list == NULL) {
 			LM_ERR("Could not import get_subs_list\n");
 			return -1;
 		}
 		LM_DBG("Successfully bound to PUA module\n");
 
 		/*init cdb cb event list*/
-		if (!init_reginfo_event_list()) {
-		    LM_ERR("unable to initialise reginfo_event_list\n");
-		    return -1;
+		if(!init_reginfo_event_list()) {
+			LM_ERR("unable to initialise reginfo_event_list\n");
+			return -1;
 		}
 		LM_DBG("Successfully initialised reginfo_event_list\n");
 	}
@@ -323,51 +344,50 @@ error:
 
 static void mod_destroy(void)
 {
-
 }
 
 static int child_init(int rank)
 {
-    
+
 	LM_DBG("Initialization of module in child [%d] \n", rank);
-	if ((subscribe_to_reginfo == 1) && (rank == PROC_MAIN)) {
+	if((subscribe_to_reginfo == 1) && (rank == PROC_MAIN)) {
 		LM_DBG("Creating RegInfo Event Processor process\n");
-	    int pid = fork_process(PROC_NOCHLDINIT, "RegInfo Event Processor", 1);
-	    if (pid < 0)
+		int pid = fork_process(PROC_NOCHLDINIT, "RegInfo Event Processor", 1);
+		if(pid < 0)
 			return -1; //error
-	    if (pid == 0) {
-			if (cfg_child_init())
+		if(pid == 0) {
+			if(cfg_child_init())
 				return -1; //error
 			reginfo_event_process();
-	    }
+		}
 	}
-    
-	if (rank == PROC_MAIN || rank == PROC_TCP_MAIN)
+
+	if(rank == PROC_MAIN || rank == PROC_TCP_MAIN)
 		return 0;
-	if (rank == 1) {
+	if(rank == 1) {
 		/* init stats */
 		//TODO if parameters are modified via cfg framework do i change them?
 		//update_stat( max_expires_stat, default_registrar_cfg.max_expires ); update_stat( max_contacts_stat, default_registrar_cfg.max_contacts ); update_stat( default_expire_stat, default_registrar_cfg.default_expires );
 	}
 
 	/* don't do anything for main process and TCP manager process */
-	if (rank == PROC_MAIN || rank == PROC_TCP_MAIN)
+	if(rank == PROC_MAIN || rank == PROC_TCP_MAIN)
 		return 0;
 
 	return 0;
 }
 
 /* fixups */
-static int domain_fixup(void** param, int param_no)
+static int domain_fixup(void **param, int param_no)
 {
-	udomain_t* d;
+	udomain_t *d;
 
-	if (param_no == 1) {
-		if (ul.register_udomain((char*)*param, &d) < 0) {
+	if(param_no == 1) {
+		if(ul.register_udomain((char *)*param, &d) < 0) {
 			LM_ERR("failed to register domain\n");
 			return E_UNSPEC;
 		}
-		*param = (void*)d;
+		*param = (void *)d;
 	}
 	return 0;
 }
@@ -375,10 +395,10 @@ static int domain_fixup(void** param, int param_no)
 /*! \brief
  * Fixup for "save" function - both domain and flags
  */
-static int save_fixup2(void** param, int param_no)
+static int save_fixup2(void **param, int param_no)
 {
-	if (param_no == 1) {
-		return domain_fixup(param,param_no);
+	if(param_no == 1) {
+		return domain_fixup(param, param_no);
 	}
 	return 0;
 }
@@ -386,28 +406,29 @@ static int save_fixup2(void** param, int param_no)
 /*! \brief
  * Fixup for "assert_identity" function - both domain and URI to be asserted
  */
-static int assert_identity_fixup(void ** param, int param_no) {
-	if (param_no == 1) {
-		return domain_fixup(param,param_no);
+static int assert_identity_fixup(void **param, int param_no)
+{
+	if(param_no == 1) {
+		return domain_fixup(param, param_no);
 	}
-	if (param_no == 2) {
-		pv_elem_t *model=NULL;
+	if(param_no == 2) {
+		pv_elem_t *model = NULL;
 		str s;
 
 		/* convert to str */
-		s.s = (char*)*param;
+		s.s = (char *)*param;
 		s.len = strlen(s.s);
 
 		model = NULL;
-		if(s.len==0) {
+		if(s.len == 0) {
 			LM_ERR("no param!\n");
 			return E_CFG;
 		}
-		if(pv_parse_format(&s, &model)<0 || model==NULL) {
+		if(pv_parse_format(&s, &model) < 0 || model == NULL) {
 			LM_ERR("wrong format [%s]!\n", s.s);
 			return E_CFG;
 		}
-		*param = (void*)model;
+		*param = (void *)model;
 		return 0;
 	}
 	return E_CFG;
@@ -416,37 +437,38 @@ static int assert_identity_fixup(void ** param, int param_no) {
 /*! \brief
  * Wrapper to save(location)
  */
-static int w_save(struct sip_msg* _m, char* _d, char* _cflags)
+static int w_save(struct sip_msg *_m, char *_d, char *_cflags)
 {
-	return save(_m, (udomain_t*)_d, ((int)(unsigned long)_cflags));
+	return save(_m, (udomain_t *)_d, ((int)(unsigned long)_cflags));
 }
 
-static int w_save_pending(struct sip_msg* _m, char* _d, char* _cflags)
+static int w_save_pending(struct sip_msg *_m, char *_d, char *_cflags)
 {
-	return save_pending(_m, (udomain_t*)_d);
+	return save_pending(_m, (udomain_t *)_d);
 }
 
-static int w_follows_service_routes(struct sip_msg* _m, char* _d, char* _foo)
+static int w_follows_service_routes(struct sip_msg *_m, char *_d, char *_foo)
 {
-	return check_service_routes(_m, (udomain_t*)_d);
+	return check_service_routes(_m, (udomain_t *)_d);
 }
 
-static int w_force_service_routes(struct sip_msg* _m, char* _d, char* _foo)
+static int w_force_service_routes(struct sip_msg *_m, char *_d, char *_foo)
 {
-	return force_service_routes(_m, (udomain_t*)_d);
+	return force_service_routes(_m, (udomain_t *)_d);
 }
 
-static int w_is_registered(struct sip_msg* _m, char* _d, char* _foo)
+static int w_is_registered(struct sip_msg *_m, char *_d, char *_foo)
 {
-	return is_registered(_m, (udomain_t*)_d);
+	return is_registered(_m, (udomain_t *)_d);
 }
 
-static int w_reginfo_handle_notify(struct sip_msg* _m, char* _d, char* _foo)
+static int w_reginfo_handle_notify(struct sip_msg *_m, char *_d, char *_foo)
 {
-       return reginfo_handle_notify(_m, _d, _foo);
+	return reginfo_handle_notify(_m, _d, _foo);
 }
 
-static int w_assert_identity(struct sip_msg* _m, char* _d, char* _preferred_uri) {
+static int w_assert_identity(struct sip_msg *_m, char *_d, char *_preferred_uri)
+{
 	pv_elem_t *model;
 	str identity;
 
@@ -455,112 +477,118 @@ static int w_assert_identity(struct sip_msg* _m, char* _d, char* _preferred_uri)
 		return -1;
 	}
 
-	model = (pv_elem_t*)_preferred_uri;
-	if (pv_printf_s(_m, model, &identity)<0) {
+	model = (pv_elem_t *)_preferred_uri;
+	if(pv_printf_s(_m, model, &identity) < 0) {
 		LM_ERR("error - cannot print the format\n");
 		return -1;
 	}
 
-	return assert_identity( _m, (udomain_t*)_d, identity);
+	return assert_identity(_m, (udomain_t *)_d, identity);
 }
 
-static int w_assert_called_identity(struct sip_msg* _m, char* _d, char* _foo) {
-	return assert_called_identity( _m, (udomain_t*)_d);
+static int w_assert_called_identity(struct sip_msg *_m, char *_d, char *_foo)
+{
+	return assert_called_identity(_m, (udomain_t *)_d);
 }
 
 /*
  * Get the asserted Identity for the current user
  */
-static int
-pv_get_asserted_identity_f(struct sip_msg *msg, pv_param_t *param,
-		  pv_value_t *res)
+static int pv_get_asserted_identity_f(
+		struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
-	str * ret_val = get_asserted_identity(msg);
-	if (ret_val != NULL) return pv_get_strval(msg, param, res, ret_val);
-	else return -1;
+	str *ret_val = get_asserted_identity(msg);
+	if(ret_val != NULL)
+		return pv_get_strval(msg, param, res, ret_val);
+	else
+		return -1;
 }
 
 
 /*
  * Get the asserted Identity for the current user
  */
-static int
-pv_get_registration_contact_f(struct sip_msg *msg, pv_param_t *param,
-		  pv_value_t *res)
+static int pv_get_registration_contact_f(
+		struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
-	str * ret_val = get_registration_contact(msg);
-	if (ret_val != NULL) return pv_get_strval(msg, param, res, ret_val);
-	else return -1;
+	str *ret_val = get_registration_contact(msg);
+	if(ret_val != NULL)
+		return pv_get_strval(msg, param, res, ret_val);
+	else
+		return -1;
 }
 
 
 /*! \brief
  * Fixup for "assert_identity" function - both domain and URI to be asserted
  */
-static int unregister_fixup(void ** param, int param_no) {
-	if (param_no == 1) {
-		return domain_fixup(param,param_no);
+static int unregister_fixup(void **param, int param_no)
+{
+	if(param_no == 1) {
+		return domain_fixup(param, param_no);
 	} else {
-		pv_elem_t *model=NULL;
+		pv_elem_t *model = NULL;
 		str s;
 
 		/* convert to str */
-		s.s = (char*)*param;
+		s.s = (char *)*param;
 		s.len = strlen(s.s);
 
 		model = NULL;
-		if(s.len==0) {
+		if(s.len == 0) {
 			LM_ERR("no param!\n");
 			return E_CFG;
 		}
-		if(pv_parse_format(&s, &model)<0 || model==NULL) {
+		if(pv_parse_format(&s, &model) < 0 || model == NULL) {
 			LM_ERR("wrong format [%s]!\n", s.s);
 			return E_CFG;
 		}
-		*param = (void*)model;
+		*param = (void *)model;
 		return 0;
 	}
 	return E_CFG;
 }
 
 
-static int w_unregister(struct sip_msg* _m, char* _d, char* _aor, char* _received_host, char* _received_port) {
+static int w_unregister(struct sip_msg *_m, char *_d, char *_aor,
+		char *_received_host, char *_received_port)
+{
 	pv_elem_t *model;
 	str aor;
 	str received_host;
 	str received_port;
 	int port = 0;
 
-	if ((_aor == NULL) || (_received_host == NULL) || (_received_port == NULL)) {
+	if((_aor == NULL) || (_received_host == NULL) || (_received_port == NULL)) {
 		LM_ERR("error - bad parameters\n");
 		return -1;
 	}
 
-	model = (pv_elem_t*)_aor;
-	if (pv_printf_s(_m, model, &aor)<0) {
+	model = (pv_elem_t *)_aor;
+	if(pv_printf_s(_m, model, &aor) < 0) {
 		LM_ERR("error - cannot print the format\n");
 		return -1;
 	}
 	LM_DBG("URI: %.*s\n", aor.len, aor.s);
 
-	model = (pv_elem_t*)_received_host;
-	if (pv_printf_s(_m, model, &received_host)<0) {
+	model = (pv_elem_t *)_received_host;
+	if(pv_printf_s(_m, model, &received_host) < 0) {
 		LM_ERR("error - cannot print the format\n");
 		return -1;
 	}
 	LM_DBG("Received-Host: %.*s\n", received_host.len, received_host.s);
 
-	model = (pv_elem_t*)_received_port;
-	if (pv_printf_s(_m, model, &received_port)<0) {
+	model = (pv_elem_t *)_received_port;
+	if(pv_printf_s(_m, model, &received_port) < 0) {
 		LM_ERR("error - cannot print the format\n");
 		return -1;
 	}
 	LM_DBG("Received-Port: %.*s\n", received_port.len, received_port.s);
-	if (str2sint(&received_port, &port) != 0) {
-		LM_ERR("error - cannot convert %.*s to an int!\n", received_port.len, received_port.s);
+	if(str2sint(&received_port, &port) != 0) {
+		LM_ERR("error - cannot convert %.*s to an int!\n", received_port.len,
+				received_port.s);
 		return -1;
 	}
 
-	return pcscf_unregister((udomain_t*)_d, &aor, &received_host, port);
+	return pcscf_unregister((udomain_t *)_d, &aor, &received_host, port);
 }
-
