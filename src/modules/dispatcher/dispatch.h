@@ -81,7 +81,8 @@
 #define DS_DNS_MODE_QSRV   (1<<3)
 
 /* clang-format on */
-typedef struct ds_rctx {
+typedef struct ds_rctx
+{
 	int flags;
 	int code;
 	str reason;
@@ -142,14 +143,14 @@ void ds_disconnect_db(void);
 int ds_load_db(void);
 int ds_reload_db(void);
 int ds_destroy_list(void);
-int ds_select_dst_limit(sip_msg_t *msg, int set, int alg, uint32_t limit,
-		int mode);
+int ds_select_dst_limit(
+		sip_msg_t *msg, int set, int alg, uint32_t limit, int mode);
 int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode);
 int ds_update_dst(struct sip_msg *msg, int upos, int mode);
 int ds_add_dst(int group, str *address, int flags, int priority, str *attrs);
 int ds_remove_dst(int group, str *address);
-int ds_update_state(sip_msg_t *msg, int group, str *address, int state,
-		ds_rctx_t *rctx);
+int ds_update_state(
+		sip_msg_t *msg, int group, str *address, int state, ds_rctx_t *rctx);
 int ds_reinit_state(int group, str *address, int state);
 int ds_reinit_state_all(int group, int state);
 int ds_reinit_duid_state(int group, str *vduid, int state);
@@ -287,7 +288,7 @@ void ds_avl_destroy(ds_set_t **node);
 
 int ds_manage_routes(sip_msg_t *msg, ds_select_state_t *rstate);
 
-ds_rctx_t* ds_get_rctx(void);
+ds_rctx_t *ds_get_rctx(void);
 unsigned int ds_get_hash(str *x, str *y);
 
 #endif

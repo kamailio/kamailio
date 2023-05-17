@@ -335,8 +335,8 @@ int ds_ht_dbg(ds_ht_t *dsht)
 		while(it) {
 			LM_ERR("\tcell: %.*s\n", it->callid.len, it->callid.s);
 			LM_ERR("\tduid: %.*s\n", it->duid.len, it->duid.s);
-			LM_ERR("\thid: %u expire: %" PRIu64 " initexpire: %" PRIu64 "\n", it->cellid,
-					(uint64_t)it->expire, (uint64_t)it->initexpire);
+			LM_ERR("\thid: %u expire: %" PRIu64 " initexpire: %" PRIu64 "\n",
+					it->cellid, (uint64_t)it->expire, (uint64_t)it->initexpire);
 			LM_ERR("\tdset:%d\n", it->dset);
 			it = it->next;
 		}
