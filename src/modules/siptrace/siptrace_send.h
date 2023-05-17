@@ -37,40 +37,42 @@ int trace_send_duplicate(char *buf, int len, struct dest_info *dst2);
 /**
  *
  */
-#define siptrace_copy_proto_olen(vproto, vbuf, vlen) do { \
-		switch(vproto) { \
-			case PROTO_TCP: \
-				strcpy(vbuf, "tcp:"); \
-				vlen = 4; \
-			break; \
-			case PROTO_TLS: \
-				strcpy(vbuf, "tls:"); \
-				vlen = 4; \
-			break; \
-			case PROTO_SCTP: \
-				strcpy(vbuf, "sctp:"); \
-				vlen = 5; \
-			break; \
-			case PROTO_WS: \
-				strcpy(vbuf, "ws:"); \
-				vlen = 3; \
-			break; \
-			case PROTO_WSS: \
-				strcpy(vbuf, "wss:"); \
-				vlen = 4; \
-			break; \
-			default: \
-				strcpy(vbuf, "udp:"); \
-				vlen = 4; \
-		} \
+#define siptrace_copy_proto_olen(vproto, vbuf, vlen) \
+	do {                                             \
+		switch(vproto) {                             \
+			case PROTO_TCP:                          \
+				strcpy(vbuf, "tcp:");                \
+				vlen = 4;                            \
+				break;                               \
+			case PROTO_TLS:                          \
+				strcpy(vbuf, "tls:");                \
+				vlen = 4;                            \
+				break;                               \
+			case PROTO_SCTP:                         \
+				strcpy(vbuf, "sctp:");               \
+				vlen = 5;                            \
+				break;                               \
+			case PROTO_WS:                           \
+				strcpy(vbuf, "ws:");                 \
+				vlen = 3;                            \
+				break;                               \
+			case PROTO_WSS:                          \
+				strcpy(vbuf, "wss:");                \
+				vlen = 4;                            \
+				break;                               \
+			default:                                 \
+				strcpy(vbuf, "udp:");                \
+				vlen = 4;                            \
+		}                                            \
 	} while(0)
 
-#define siptrace_copy_proto(vproto, vbuf) do { \
-		int __olen; \
+#define siptrace_copy_proto(vproto, vbuf)               \
+	do {                                                \
+		int __olen;                                     \
 		siptrace_copy_proto_olen(vproto, vbuf, __olen); \
-		(void)__olen; \
+		(void)__olen;                                   \
 	} while(0)
 
-char* siptrace_proto_name(int vproto);
+char *siptrace_proto_name(int vproto);
 
 #endif
