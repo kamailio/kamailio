@@ -25,15 +25,16 @@
 
 #include "../cdp/diameter_api.h"
 
-str get_avp(AAAMessage *msg,int avp_code,int vendor_id, const char *func);
+str get_avp(AAAMessage *msg, int avp_code, int vendor_id, const char *func);
 str getSession(AAAMessage *msg);
 int getRecordNummber(AAAMessage *msg);
-str getSubscriptionId1(AAAMessage *msg, int * type);
+str getSubscriptionId1(AAAMessage *msg, int *type);
 int isOrig(AAAMessage *msg);
 str getCalledParty(AAAMessage *msg);
-int getUnits(AAAMessage *msg, int * used, int * service, int * group);
+int getUnits(AAAMessage *msg, int *used, int *service, int *group);
 str getAccessNetwork(AAAMessage *msg);
 
-int ocs_build_answer(AAAMessage *ccr, AAAMessage *cca, int result_code, int granted_units, int final_unit);
+int ocs_build_answer(AAAMessage *ccr, AAAMessage *cca, int result_code,
+		int granted_units, int final_unit);
 
 #endif /* OCS_AVP_HELPER_H */

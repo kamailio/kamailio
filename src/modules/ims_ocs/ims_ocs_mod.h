@@ -22,7 +22,7 @@
 
 
 #ifndef IMS_OCS_MOD_H
-#define	IMS_OCS_MOD_H
+#define IMS_OCS_MOD_H
 
 /** callback functions */
 
@@ -31,7 +31,6 @@ extern cdp_avp_bind_t *cdp_avp;
 
 struct AAAMessage;
 
-AAAMessage* callback_cdp_request(AAAMessage *request, void *param);
+AAAMessage *callback_cdp_request(AAAMessage *request, void *param);
 
-#endif	/* IMS_OCS_MOD_H */
-
+#endif /* IMS_OCS_MOD_H */
