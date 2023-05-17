@@ -57,7 +57,7 @@ int msrp_sruid_init(void)
  */
 int msrp_citem_free(msrp_citem_t *it)
 {
-	if(it==NULL)
+	if(it == NULL)
 		return -1;
 	shm_free(it);
 	return 0;
@@ -70,35 +70,30 @@ int msrp_cmap_init(int msize)
 {
 	int i;
 
-	_msrp_cmap_head = (msrp_cmap_t*)shm_malloc(sizeof(msrp_cmap_t));
-	if(_msrp_cmap_head==NULL)
-	{
+	_msrp_cmap_head = (msrp_cmap_t *)shm_malloc(sizeof(msrp_cmap_t));
+	if(_msrp_cmap_head == NULL) {
 		SHM_MEM_ERROR;
 		return -1;
 	}
 	memset(_msrp_cmap_head, 0, sizeof(msrp_cmap_t));
 	_msrp_cmap_head->mapsize = msize;
 
-	_msrp_cmap_head->cslots = (msrp_centry_t*)shm_malloc(
-							_msrp_cmap_head->mapsize*sizeof(msrp_centry_t) );
-	if(_msrp_cmap_head->cslots==NULL)
-	{
+	_msrp_cmap_head->cslots = (msrp_centry_t *)shm_malloc(
+			_msrp_cmap_head->mapsize * sizeof(msrp_centry_t));
+	if(_msrp_cmap_head->cslots == NULL) {
 		SHM_MEM_ERROR;
 		shm_free(_msrp_cmap_head);
 		_msrp_cmap_head = NULL;
 		return -1;
 	}
 	memset(_msrp_cmap_head->cslots, 0,
-						_msrp_cmap_head->mapsize*sizeof(msrp_centry_t));
+			_msrp_cmap_head->mapsize * sizeof(msrp_centry_t));
 
-	for(i=0; i<_msrp_cmap_head->mapsize; i++)
-	{
-		if(lock_init(&_msrp_cmap_head->cslots[i].lock)==0)
-		{
+	for(i = 0; i < _msrp_cmap_head->mapsize; i++) {
+		if(lock_init(&_msrp_cmap_head->cslots[i].lock) == 0) {
 			LM_ERR("cannot initialize lock[%d]\n", i);
 			i--;
-			while(i>=0)
-			{
+			while(i >= 0) {
 				lock_destroy(&_msrp_cmap_head->cslots[i].lock);
 				i--;
 			}
@@ -120,15 +115,13 @@ int msrp_cmap_destroy(void)
 	int i;
 	msrp_citem_t *ita, *itb;
 
-	if(_msrp_cmap_head==NULL)
+	if(_msrp_cmap_head == NULL)
 		return -1;
 
-	for(i=0; i<_msrp_cmap_head->mapsize; i++)
-	{
+	for(i = 0; i < _msrp_cmap_head->mapsize; i++) {
 		/* free entries */
 		ita = _msrp_cmap_head->cslots[i].first;
-		while(ita)
-		{
+		while(ita) {
 			itb = ita;
 			ita = ita->next;
 			msrp_citem_free(itb);
@@ -142,8 +135,8 @@ int msrp_cmap_destroy(void)
 	return 0;
 }
 
-#define msrp_get_hashid(_s)        core_case_hash(_s,0,0)
-#define msrp_get_slot(_h, _size)    (_h)&((_size)-1)
+#define msrp_get_hashid(_s) core_case_hash(_s, 0, 0)
+#define msrp_get_slot(_h, _size) (_h) & ((_size)-1)
 
 
 static str msrp_reply_200_code = {"200", 3};
@@ -159,7 +152,7 @@ int msrp_cmap_save(msrp_frame_t *mf)
 	unsigned int idx;
 	unsigned int hid;
 	str fpeer;
-#define MSRP_SBUF_SIZE	256
+#define MSRP_SBUF_SIZE 256
 	char sbuf[MSRP_SBUF_SIZE];
 	str srcaddr;
 	str srcsock;
@@ -168,79 +161,71 @@ int msrp_cmap_save(msrp_frame_t *mf)
 	msrp_citem_t *it;
 	msrp_citem_t *itb;
 
-	if(_msrp_cmap_head==NULL || mf==NULL)
+	if(_msrp_cmap_head == NULL || mf == NULL)
 		return -1;
-	if(mf->fline.rtypeid!=MSRP_REQ_AUTH)
-	{
+	if(mf->fline.rtypeid != MSRP_REQ_AUTH) {
 		LM_DBG("save can be used only for AUTH\n");
 		return -2;
 	}
 
-	if(msrp_frame_get_expires(mf, &expires)<0)
+	if(msrp_frame_get_expires(mf, &expires) < 0)
 		expires = msrp_auth_max_expires;
-	if(expires<msrp_auth_min_expires)
-	{
+	if(expires < msrp_auth_min_expires) {
 		LM_DBG("expires is lower than min value\n");
 		srcaddr.len = snprintf(sbuf, MSRP_SBUF_SIZE, "Min-Expires: %d\r\n",
 				msrp_auth_min_expires);
-		msrp_reply(mf, &msrp_reply_423_code, &msrp_reply_423_text,
-				&srcaddr);
+		msrp_reply(mf, &msrp_reply_423_code, &msrp_reply_423_text, &srcaddr);
 		return -3;
 	}
-	if(expires>msrp_auth_max_expires)
-	{
+	if(expires > msrp_auth_max_expires) {
 		LM_DBG("expires is greater than max value\n");
 		srcaddr.len = snprintf(sbuf, MSRP_SBUF_SIZE, "Max-Expires: %d\r\n",
 				msrp_auth_max_expires);
-		msrp_reply(mf, &msrp_reply_423_code, &msrp_reply_423_text,
-				&srcaddr);
+		msrp_reply(mf, &msrp_reply_423_code, &msrp_reply_423_text, &srcaddr);
 		return -4;
 	}
-	if(msrp_frame_get_first_from_path(mf, &fpeer)<0)
-	{
+	if(msrp_frame_get_first_from_path(mf, &fpeer) < 0) {
 		LM_ERR("cannot get first path uri\n");
 		return -1;
 	}
 
-	if(sruid_next(&_msrp_sruid)<0)
-	{
+	if(sruid_next(&_msrp_sruid) < 0) {
 		LM_ERR("cannot get next msrp uid\n");
 		return -1;
 	}
-	hid = msrp_get_hashid(&_msrp_sruid.uid);	
+	hid = msrp_get_hashid(&_msrp_sruid.uid);
 	idx = msrp_get_slot(hid, _msrp_cmap_head->mapsize);
 
 	srcaddr.len = snprintf(sbuf, MSRP_SBUF_SIZE, "msrp%s://%s:%d",
-						(msrp_tls_module_loaded)?"s":"",
-						ip_addr2a(&mf->tcpinfo->rcv->src_ip),
-						(int)mf->tcpinfo->rcv->src_port);
-	if(srcaddr.len<0 || srcaddr.len>=MSRP_SBUF_SIZE) {
+			(msrp_tls_module_loaded) ? "s" : "",
+			ip_addr2a(&mf->tcpinfo->rcv->src_ip),
+			(int)mf->tcpinfo->rcv->src_port);
+	if(srcaddr.len < 0 || srcaddr.len >= MSRP_SBUF_SIZE) {
 		LM_ERR("failure or address length too big (%d)\n", srcaddr.len);
 		return -1;
 	}
 	srcaddr.s = sbuf;
 
 	srcsock = mf->tcpinfo->rcv->bind_address->sock_str;
-	LM_DBG("saving connection info for [%.*s] [%.*s] (%u/%u)\n",
-			fpeer.len, fpeer.s, _msrp_sruid.uid.len, _msrp_sruid.uid.s,
-			idx, hid);
-	LM_DBG("frame received from [%.*s] via [%.*s]\n",
-			srcaddr.len, srcaddr.s, srcsock.len, srcsock.s);
+	LM_DBG("saving connection info for [%.*s] [%.*s] (%u/%u)\n", fpeer.len,
+			fpeer.s, _msrp_sruid.uid.len, _msrp_sruid.uid.s, idx, hid);
+	LM_DBG("frame received from [%.*s] via [%.*s]\n", srcaddr.len, srcaddr.s,
+			srcsock.len, srcsock.s);
 
-	msize = sizeof(msrp_citem_t) + (_msrp_sruid.uid.len
-			+ fpeer.len + srcaddr.len + srcsock.len + 4)*sizeof(char);
+	msize = sizeof(msrp_citem_t)
+			+ (_msrp_sruid.uid.len + fpeer.len + srcaddr.len + srcsock.len + 4)
+					  * sizeof(char);
 
 	/* build the item */
-	it = (msrp_citem_t*)shm_malloc(msize);
-	if(it==NULL)
-	{
+	it = (msrp_citem_t *)shm_malloc(msize);
+	if(it == NULL) {
 		SHM_MEM_ERROR;
 		return -1;
 	}
 	memset(it, 0, msize);
 	it->citemid = hid;
 
-	it->sessionid.s = (char*)it +  + sizeof(msrp_citem_t);
+	it->sessionid.s = (char *)it + +sizeof(msrp_citem_t);
 	it->sessionid.len = _msrp_sruid.uid.len;
 	memcpy(it->sessionid.s, _msrp_sruid.uid.s, _msrp_sruid.uid.len);
 	it->sessionid.s[it->sessionid.len] = '\0';
@@ -265,15 +250,14 @@ int msrp_cmap_save(msrp_frame_t *mf)
 
 	/* insert item in cmap */
 	lock_get(&_msrp_cmap_head->cslots[idx].lock);
-	if(_msrp_cmap_head->cslots[idx].first==NULL) {
+	if(_msrp_cmap_head->cslots[idx].first == NULL) {
 		_msrp_cmap_head->cslots[idx].first = it;
 	} else {
-		for(itb=_msrp_cmap_head->cslots[idx].first; itb; itb=itb->next)
-		{
-			if(itb->citemid>it->citemid) {
+		for(itb = _msrp_cmap_head->cslots[idx].first; itb; itb = itb->next) {
+			if(itb->citemid > it->citemid) {
 				/* insert before current item */
 				it->next = itb;
-				if(itb->prev==NULL) {
+				if(itb->prev == NULL) {
 					_msrp_cmap_head->cslots[idx].first = it;
 				} else {
 					itb->prev->next = it;
@@ -281,9 +265,9 @@ int msrp_cmap_save(msrp_frame_t *mf)
 				it->prev = itb->prev;
 				itb->prev = it;
 				break;
-			} else if(itb->next==NULL) {
+			} else if(itb->next == NULL) {
 				/* insert after last item */
-				itb->next=it;
+				itb->next = it;
 				it->prev = itb;
 				break;
 			}
@@ -292,26 +276,25 @@ int msrp_cmap_save(msrp_frame_t *mf)
 	_msrp_cmap_head->cslots[idx].lsize++;
 	lock_release(&_msrp_cmap_head->cslots[idx].lock);
 
-	if(mf->tcpinfo->rcv->proto==PROTO_TLS || mf->tcpinfo->rcv->proto==PROTO_WSS)
-	{
+	if(mf->tcpinfo->rcv->proto == PROTO_TLS
+			|| mf->tcpinfo->rcv->proto == PROTO_WSS) {
 		srcaddr.len = snprintf(sbuf, MSRP_SBUF_SIZE,
 				"Use-Path: msrps://%.*s/%.*s;tcp\r\nExpires: %d\r\n",
-				(msrp_use_path_addr.s)?msrp_use_path_addr.len:(srcsock.len-4),
-				(msrp_use_path_addr.s)?msrp_use_path_addr.s:(srcsock.s+4),
-				_msrp_sruid.uid.len, _msrp_sruid.uid.s,
-				expires);
+				(msrp_use_path_addr.s) ? msrp_use_path_addr.len
+									   : (srcsock.len - 4),
+				(msrp_use_path_addr.s) ? msrp_use_path_addr.s : (srcsock.s + 4),
+				_msrp_sruid.uid.len, _msrp_sruid.uid.s, expires);
 	} else {
 		srcaddr.len = snprintf(sbuf, MSRP_SBUF_SIZE,
 				"Use-Path: msrp://%.*s/%.*s;tcp\r\nExpires: %d\r\n",
-				(msrp_use_path_addr.s)?msrp_use_path_addr.len:(srcsock.len-4),
-				(msrp_use_path_addr.s)?msrp_use_path_addr.s:(srcsock.s+4),
-				_msrp_sruid.uid.len, _msrp_sruid.uid.s,
-				expires);
+				(msrp_use_path_addr.s) ? msrp_use_path_addr.len
+									   : (srcsock.len - 4),
+				(msrp_use_path_addr.s) ? msrp_use_path_addr.s : (srcsock.s + 4),
+				_msrp_sruid.uid.len, _msrp_sruid.uid.s, expires);
 	}
 	srcaddr.s = sbuf;
 
-	if(msrp_reply(mf, &msrp_reply_200_code, &msrp_reply_200_text,
-				&srcaddr)<0)
+	if(msrp_reply(mf, &msrp_reply_200_code, &msrp_reply_200_text, &srcaddr) < 0)
 		return -5;
 	return 0;
 }
@@ -327,33 +310,30 @@ int msrp_cmap_lookup(msrp_frame_t *mf)
 	msrp_citem_t *itb;
 	int ret;
 
-	if(_msrp_cmap_head==NULL || mf==NULL)
+	if(_msrp_cmap_head == NULL || mf == NULL)
 		return -1;
-	if(mf->fline.rtypeid==MSRP_REQ_AUTH)
-	{
+	if(mf->fline.rtypeid == MSRP_REQ_AUTH) {
 		LM_DBG("save cannot be used for AUTH\n");
 		return -2;
 	}
-	if(msrp_frame_get_sessionid(mf, &sesid)<0)
-	{
+	if(msrp_frame_get_sessionid(mf, &sesid) < 0) {
 		LM_ERR("cannot get session id\n");
 		return -3;
 	}
 
 	LM_DBG("searching for session [%.*s]\n", sesid.len, sesid.s);
 
-	hid = msrp_get_hashid(&sesid);	
+	hid = msrp_get_hashid(&sesid);
 	idx = msrp_get_slot(hid, _msrp_cmap_head->mapsize);
 
 	ret = 0;
 	lock_get(&_msrp_cmap_head->cslots[idx].lock);
-	for(itb=_msrp_cmap_head->cslots[idx].first; itb; itb=itb->next)
-	{
-		if(itb->citemid>hid) {
+	for(itb = _msrp_cmap_head->cslots[idx].first; itb; itb = itb->next) {
+		if(itb->citemid > hid) {
 			break;
 		} else {
 			if(itb->sessionid.len == sesid.len
-					&& memcmp(itb->sessionid.s, sesid.s, sesid.len)==0) {
+					&& memcmp(itb->sessionid.s, sesid.s, sesid.len) == 0) {
 				LM_DBG("found session [%.*s]\n", sesid.len, sesid.s);
 				ret = msrp_env_set_dstinfo(mf, &itb->addr, &itb->sock, 0);
 				break;
@@ -361,9 +341,9 @@ int msrp_cmap_lookup(msrp_frame_t *mf)
 		}
 	}
 	lock_release(&_msrp_cmap_head->cslots[idx].lock);
-	if(itb==NULL)
+	if(itb == NULL)
 		return -4;
-	return (ret<0)?-5:0;
+	return (ret < 0) ? -5 : 0;
 }
 
 /**
@@ -376,24 +356,22 @@ int msrp_cmap_clean(void)
 	msrp_citem_t *itb;
 	int i;
 
-	if(_msrp_cmap_head==NULL)
+	if(_msrp_cmap_head == NULL)
 		return -1;
 	tnow = time(NULL);
-	for(i=0; i<_msrp_cmap_head->mapsize; i++)
-	{
+	for(i = 0; i < _msrp_cmap_head->mapsize; i++) {
 		lock_get(&_msrp_cmap_head->cslots[i].lock);
 		ita = _msrp_cmap_head->cslots[i].first;
-		while(ita)
-		{
+		while(ita) {
 			itb = ita;
 			ita = ita->next;
-			if(itb->expires<tnow) {
-				if(itb->prev==NULL) {
+			if(itb->expires < tnow) {
+				if(itb->prev == NULL) {
 					_msrp_cmap_head->cslots[i].first = itb->next;
 				} else {
 					itb->prev->next = ita;
 				}
-				if(ita!=NULL)
+				if(ita != NULL)
 					ita->prev = itb->prev;
 				msrp_citem_free(itb);
 				_msrp_cmap_head->cslots[i].lsize--;
@@ -405,56 +383,47 @@ int msrp_cmap_clean(void)
 	return 0;
 }
 
-static const char* msrp_cmap_rpc_list_doc[2] = {
-	"Return the content of dispatcher sets",
-	0
-};
+static const char *msrp_cmap_rpc_list_doc[2] = {
+		"Return the content of dispatcher sets", 0};
 
 
 /*
  * RPC command to print connections map table
  */
-static void msrp_cmap_rpc_list(rpc_t* rpc, void* ctx)
+static void msrp_cmap_rpc_list(rpc_t *rpc, void *ctx)
 {
-	void* th;
-	void* ih;
-	void* vh;
+	void *th;
+	void *ih;
+	void *vh;
 	msrp_citem_t *it;
 	int i;
 	int n;
 	char t_buf[26] = {0};
 	str edate;
 
-	if(_msrp_cmap_head==NULL)
-	{
+	if(_msrp_cmap_head == NULL) {
 		LM_ERR("no connections map table\n");
 		rpc->fault(ctx, 500, "No Connections Map Table");
 		return;
 	}
 
 	/* add entry node */
-	if (rpc->add(ctx, "{", &th) < 0)
-	{
+	if(rpc->add(ctx, "{", &th) < 0) {
 		rpc->fault(ctx, 500, "Internal error root reply");
 		return;
 	}
 
-	if(rpc->struct_add(th, "d{",
-				"MAP_SIZE", _msrp_cmap_head->mapsize,
-				"CONLIST",  &ih)<0)
-	{
+	if(rpc->struct_add(
+			   th, "d{", "MAP_SIZE", _msrp_cmap_head->mapsize, "CONLIST", &ih)
+			< 0) {
 		rpc->fault(ctx, 500, "Internal error set structure");
 		return;
 	}
 	n = 0;
-	for(i=0; i<_msrp_cmap_head->mapsize; i++)
-	{
+	for(i = 0; i < _msrp_cmap_head->mapsize; i++) {
 		lock_get(&_msrp_cmap_head->cslots[i].lock);
-		for(it=_msrp_cmap_head->cslots[i].first; it; it=it->next)
-		{
-			if(rpc->struct_add(ih, "{",
-						"CONDATA", &vh)<0)
-			{
+		for(it = _msrp_cmap_head->cslots[i].first; it; it = it->next) {
+			if(rpc->struct_add(ih, "{", "CONDATA", &vh) < 0) {
 				rpc->fault(ctx, 500, "Internal error creating connection");
 				lock_release(&_msrp_cmap_head->cslots[i].lock);
 				return;
@@ -462,16 +431,11 @@ static void msrp_cmap_rpc_list(rpc_t* rpc, void* ctx)
 			ctime_r(&it->expires, t_buf);
 			edate.s = t_buf;
 			edate.len = 24;
-			if(rpc->struct_add(vh, "dSSSSSdd",
-						"CITEMID", it->citemid,
-						"SESSIONID", &it->sessionid,
-						"PEER", &it->peer,
-						"ADDR", &it->addr,
-						"SOCK", &it->sock,
-						"EXPIRES", &edate,
-						"CONID", it->conid,
-						"FLAGS", it->cflags)<0)
-			{
+			if(rpc->struct_add(vh, "dSSSSSdd", "CITEMID", it->citemid,
+					   "SESSIONID", &it->sessionid, "PEER", &it->peer, "ADDR",
+					   &it->addr, "SOCK", &it->sock, "EXPIRES", &edate, "CONID",
+					   it->conid, "FLAGS", it->cflags)
+					< 0) {
 				rpc->fault(ctx, 500, "Internal error creating dest struct");
 				lock_release(&_msrp_cmap_head->cslots[i].lock);
 				return;
@@ -480,8 +444,7 @@ static void msrp_cmap_rpc_list(rpc_t* rpc, void* ctx)
 		}
 		lock_release(&_msrp_cmap_head->cslots[i].lock);
 	}
-	if(rpc->struct_add(th, "d", "CONCOUNT", n)<0)
-	{
+	if(rpc->struct_add(th, "d", "CONCOUNT", n) < 0) {
 		rpc->fault(ctx, 500, "Internal error connection counter");
 		return;
 	}
@@ -489,18 +452,15 @@ static void msrp_cmap_rpc_list(rpc_t* rpc, void* ctx)
 }
 
 rpc_export_t msrp_cmap_rpc_cmds[] = {
-	{"msrp.cmaplist",   msrp_cmap_rpc_list,
-		msrp_cmap_rpc_list_doc,   0},
-	{0, 0, 0, 0}
-};
+		{"msrp.cmaplist", msrp_cmap_rpc_list, msrp_cmap_rpc_list_doc, 0},
+		{0, 0, 0, 0}};
 
 /**
  *
  */
 int msrp_cmap_init_rpc(void)
 {
-	if (rpc_register_array(msrp_cmap_rpc_cmds)!=0)
-	{
+	if(rpc_register_array(msrp_cmap_rpc_cmds) != 0) {
 		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}
