@@ -48,23 +48,28 @@
  * @param con A generic db_con connection structure.
  * @param payload Flatstore specific payload to be freed.
  */
-static void flat_con_free(db_con_t* con, struct flat_con* payload)
+static void flat_con_free(db_con_t *con, struct flat_con *payload)
 {
 	int i;
-	if (!payload) return;
+	if(!payload)
+		return;
 
 	/* delete the structure only if there are no more references
 	 * to it in the connection pool
 	 */
-	if (db_pool_remove((db_pool_entry_t*)payload) == 0) return;
-	
+	if(db_pool_remove((db_pool_entry_t *)payload) == 0)
+		return;
+
 	db_pool_entry_free(&payload->gen);
 
-	if (payload->file) {
+	if(payload->file) {
 		for(i = 0; i < payload->n; i++) {
-			if (payload->file[i].filename) pkg_free(payload->file[i].filename);
-			if (payload->file[i].table.s) pkg_free(payload->file[i].table.s);
-			if (payload->file[i].f) fclose(payload->file[i].f);
+			if(payload->file[i].filename)
+				pkg_free(payload->file[i].filename);
+			if(payload->file[i].table.s)
+				pkg_free(payload->file[i].table.s);
+			if(payload->file[i].f)
+				fclose(payload->file[i].f);
 		}
 		pkg_free(payload->file);
 	}
@@ -72,36 +77,37 @@ static void flat_con_free(db_con_t* con, struct flat_con* payload)
 }
 
 
-int flat_con(db_con_t* con)
+int flat_con(db_con_t *con)
 {
-	struct flat_con* fcon;
+	struct flat_con *fcon;
 
 	/* First try to lookup the connection in the connection pool and
 	 * re-use it if a match is found
 	 */
-	fcon = (struct flat_con*)db_pool_get(con->uri);
-	if (fcon) {
+	fcon = (struct flat_con *)db_pool_get(con->uri);
+	if(fcon) {
 		DBG("flatstore: A handle to %.*s found in the connection pool\n",
-			STR_FMT(&con->uri->body));
+				STR_FMT(&con->uri->body));
 		goto found;
 	}
 
-	fcon = (struct flat_con*)pkg_malloc(sizeof(struct flat_con));
-	if (fcon == NULL) {
+	fcon = (struct flat_con *)pkg_malloc(sizeof(struct flat_con));
+	if(fcon == NULL) {
 		PKG_MEM_ERROR;
 		goto error;
 	}
 	memset(fcon, '\0', sizeof(struct flat_con));
-	if (db_pool_entry_init(&fcon->gen, flat_con_free, con->uri) < 0) goto error;
+	if(db_pool_entry_init(&fcon->gen, flat_con_free, con->uri) < 0)
+		goto error;
 
-	DBG("flastore: Preparing new file handles to files in %.*s\n", 
-		STR_FMT(&con->uri->body));
-	
+	DBG("flastore: Preparing new file handles to files in %.*s\n",
+			STR_FMT(&con->uri->body));
+
 	/* Put the newly created flatstore connection into the pool */
-	db_pool_put((struct db_pool_entry*)fcon);
+	db_pool_put((struct db_pool_entry *)fcon);
 	DBG("flatstore: Handle stored in connection pool\n");
 
- found:
+found:
 	/* Attach driver payload to the db_con structure and set connect and
 	 * disconnect functions
 	 */
@@ -110,8 +116,8 @@ int flat_con(db_con_t* con)
 	con->disconnect = flat_con_disconnect;
 	return 0;
 
- error:
-	if (fcon) {
+error:
+	if(fcon) {
 		db_pool_entry_free(&fcon->gen);
 		pkg_free(fcon);
 	}
@@ -119,58 +125,60 @@ int flat_con(db_con_t* con)
 }
 
 
-int flat_con_connect(db_con_t* con)
+int flat_con_connect(db_con_t *con)
 {
-	struct flat_con* fcon;
+	struct flat_con *fcon;
 	int i;
-	
-	fcon = DB_GET_PAYLOAD(con);
-	
-	/* Do not reconnect already connected connections */
-	if (fcon->flags & FLAT_OPENED) return 0;
 
-	DBG("flatstore: Opening handles to files in '%.*s'\n", 
-		STR_FMT(&con->uri->body));
+	fcon = DB_GET_PAYLOAD(con);
+
+	/* Do not reconnect already connected connections */
+	if(fcon->flags & FLAT_OPENED)
+		return 0;
+
+	DBG("flatstore: Opening handles to files in '%.*s'\n",
+			STR_FMT(&con->uri->body));
 
 	/* FIXME: Make sure the directory exists, is accessible,
 	 * and we can create files there
 	 */
 
-	DBG("flatstore: Directory '%.*s' opened successfully\n", 
-		STR_FMT(&con->uri->body));
+	DBG("flatstore: Directory '%.*s' opened successfully\n",
+			STR_FMT(&con->uri->body));
 
 	for(i = 0; i < fcon->n; i++) {
-		if (fcon->file[i].f) {
+		if(fcon->file[i].f) {
 			fclose(fcon->file[i].f);
 		}
 		fcon->file[i].f = fopen(fcon->file[i].filename, "a");
-		if (fcon->file[i].f == NULL) {
-			ERR("flatstore: Error while opening file handle to '%s': %s\n", 
-				fcon->file[i].filename, strerror(errno));
+		if(fcon->file[i].f == NULL) {
+			ERR("flatstore: Error while opening file handle to '%s': %s\n",
+					fcon->file[i].filename, strerror(errno));
 			return -1;
 		}
 	}
 
 	fcon->flags |= FLAT_OPENED;
 	return 0;
-
 }
 
 
-void flat_con_disconnect(db_con_t* con)
+void flat_con_disconnect(db_con_t *con)
 {
-	struct flat_con* fcon;
+	struct flat_con *fcon;
 	int i;
 
 	fcon = DB_GET_PAYLOAD(con);
 
-	if ((fcon->flags & FLAT_OPENED) == 0) return;
+	if((fcon->flags & FLAT_OPENED) == 0)
+		return;
 
-	DBG("flatstore: Closing handles to files in '%.*s'\n", 
-		STR_FMT(&con->uri->body));
+	DBG("flatstore: Closing handles to files in '%.*s'\n",
+			STR_FMT(&con->uri->body));
 
 	for(i = 0; i < fcon->n; i++) {
-		if (fcon->file[i].f == NULL) continue;
+		if(fcon->file[i].f == NULL)
+			continue;
 		fclose(fcon->file[i].f);
 		fcon->file[i].f = NULL;
 	}
@@ -180,84 +188,83 @@ void flat_con_disconnect(db_con_t* con)
 
 
 /* returns a pkg_malloc'ed file name */
-static char* get_filename(str* dir, str* name)
+static char *get_filename(str *dir, str *name)
 {
-    char* buf, *p;
-    int buf_len, total_len;
+	char *buf, *p;
+	int buf_len, total_len;
 
-    buf_len = pathmax();
+	buf_len = pathmax();
 
-    total_len = dir->len + 1 /* / */ + 
-		name->len + 1 /* _ */+
-		flat_pid.len +
-		flat_suffix.len + 1 /* \0 */;
+	total_len = dir->len + 1 /* / */ + name->len + 1 /* _ */ + flat_pid.len
+				+ flat_suffix.len + 1 /* \0 */;
 
-    if (buf_len < total_len) {
-        ERR("flatstore: The path is too long (%d and PATHMAX is %d)\n",
-            total_len, buf_len);
-        return 0;
-    }
+	if(buf_len < total_len) {
+		ERR("flatstore: The path is too long (%d and PATHMAX is %d)\n",
+				total_len, buf_len);
+		return 0;
+	}
 
-    if ((buf = pkg_malloc(buf_len)) == NULL) {
-        PKG_MEM_ERROR;
-        return 0;
-    }
-    p = buf;
+	if((buf = pkg_malloc(buf_len)) == NULL) {
+		PKG_MEM_ERROR;
+		return 0;
+	}
+	p = buf;
 
-    memcpy(p, dir->s, dir->len);
-    p += dir->len;
+	memcpy(p, dir->s, dir->len);
+	p += dir->len;
 
-    *p++ = '/';
+	*p++ = '/';
 
-    memcpy(p, name->s, name->len);
-    p += name->len;
+	memcpy(p, name->s, name->len);
+	p += name->len;
 
-    *p++ = '_';
+	*p++ = '_';
 
-    memcpy(p, flat_pid.s, flat_pid.len);
-    p += flat_pid.len;
+	memcpy(p, flat_pid.s, flat_pid.len);
+	p += flat_pid.len;
 
-    memcpy(p, flat_suffix.s, flat_suffix.len);
-    p += flat_suffix.len;
+	memcpy(p, flat_suffix.s, flat_suffix.len);
+	p += flat_suffix.len;
 
-    *p = '\0';
-    return buf;
+	*p = '\0';
+	return buf;
 }
 
 
-
-int flat_open_table(int* idx, db_con_t* con, str* name)
+int flat_open_table(int *idx, db_con_t *con, str *name)
 {
-	struct flat_uri* furi;
-	struct flat_con* fcon;
-	struct flat_file* new;
+	struct flat_uri *furi;
+	struct flat_con *fcon;
+	struct flat_file *new;
 	int i;
-	char* filename, *table;
+	char *filename, *table;
 
 	new = NULL;
 	filename = NULL;
 	table = NULL;
 	fcon = DB_GET_PAYLOAD(con);
 	furi = DB_GET_PAYLOAD(con->uri);
-	
+
 	for(i = 0; i < fcon->n; i++) {
-		if (name->len == fcon->file[i].table.len &&
-			!strncmp(name->s, fcon->file[i].table.s, name->len))
+		if(name->len == fcon->file[i].table.len
+				&& !strncmp(name->s, fcon->file[i].table.s, name->len))
 			break;
 	}
-	if (fcon->n == i) {
+	if(fcon->n == i) {
 		/* Perform operations that can fail first (before resizing
 		 * fcon->file, so that we can fail gracefully if one of the
 		 * operations fail. 
 		 */
-		if ((filename = get_filename(&furi->path, name)) == NULL)
+		if((filename = get_filename(&furi->path, name)) == NULL)
 			goto no_mem;
 
-		if ((table = pkg_malloc(name->len)) == NULL) goto no_mem;
+		if((table = pkg_malloc(name->len)) == NULL)
+			goto no_mem;
 		memcpy(table, name->s, name->len);
 
 		new = pkg_realloc(fcon->file, sizeof(struct flat_file) * (fcon->n + 1));
-		if (new == NULL) goto no_mem;
+		if(new == NULL)
+			goto no_mem;
 
 		fcon->file = new;
 		new = new + fcon->n; /* Advance to the new (last) element */
@@ -268,28 +275,30 @@ int flat_open_table(int* idx, db_con_t* con, str* name)
 		new->filename = filename;
 
 		/* Also open the file if we are connected already */
-		if (fcon->flags & FLAT_OPENED) {
-			if ((new->f = fopen(new->filename, "a")) == NULL) {
-				ERR("flatstore: Error while opening file handle to '%s': %s\n", 
-					new->filename, strerror(errno));
+		if(fcon->flags & FLAT_OPENED) {
+			if((new->f = fopen(new->filename, "a")) == NULL) {
+				ERR("flatstore: Error while opening file handle to '%s': %s\n",
+						new->filename, strerror(errno));
 				return -1;
-			}			
+			}
 		} else {
 			new->f = NULL;
 		}
-		
+
 		*idx = fcon->n - 1;
 	} else {
 		*idx = i;
 	}
-	DBG("flatstore: Handle to file '%s' opened successfully\n", 
-		fcon->file[*idx].filename);
+	DBG("flatstore: Handle to file '%s' opened successfully\n",
+			fcon->file[*idx].filename);
 	return 0;
 
- no_mem:
+no_mem:
 	PKG_MEM_ERROR;
-	if (filename) pkg_free(filename);
-	if (table) pkg_free(table);
+	if(filename)
+		pkg_free(filename);
+	if(table)
+		pkg_free(table);
 	return -1;
 }
 

@@ -26,23 +26,22 @@
 #include "km_flat_id.h"
 
 
-
 /*
  * Create a new connection identifier
  */
-struct flat_id* new_flat_id(char* dir, char* table)
+struct flat_id *new_flat_id(char *dir, char *table)
 {
-	struct flat_id* ptr;
-	char* t;
+	struct flat_id *ptr;
+	char *t;
 	int t_len;
 
-	if (!dir || !table) {
+	if(!dir || !table) {
 		LM_ERR("invalid parameter(s)\n");
 		return 0;
 	}
 
-	ptr = (struct flat_id*)pkg_malloc(sizeof(struct flat_id));
-	if (!ptr) {
+	ptr = (struct flat_id *)pkg_malloc(sizeof(struct flat_id));
+	if(!ptr) {
 		PKG_MEM_ERROR;
 		return 0;
 	}
@@ -50,8 +49,8 @@ struct flat_id* new_flat_id(char* dir, char* table)
 
 	/* alloc memory for the table name */
 	t_len = strlen(table);
-	t = (char*)pkg_malloc(t_len+1);
-	if (!t) {
+	t = (char *)pkg_malloc(t_len + 1);
+	if(!t) {
 		PKG_MEM_ERROR;
 		pkg_free(ptr);
 		return 0;
@@ -72,14 +71,19 @@ struct flat_id* new_flat_id(char* dir, char* table)
 /*
  * Compare two connection identifiers
  */
-unsigned char cmp_flat_id(struct flat_id* id1, struct flat_id* id2)
+unsigned char cmp_flat_id(struct flat_id *id1, struct flat_id *id2)
 {
-	if (!id1 || !id2) return 0;
-	if (id1->dir.len != id2->dir.len) return 0;
-	if (id1->table.len != id2->table.len) return 0;
+	if(!id1 || !id2)
+		return 0;
+	if(id1->dir.len != id2->dir.len)
+		return 0;
+	if(id1->table.len != id2->table.len)
+		return 0;
 
-	if (memcmp(id1->dir.s, id2->dir.s, id1->dir.len)) return 0;
-	if (memcmp(id1->table.s, id2->table.s, id1->table.len)) return 0;
+	if(memcmp(id1->dir.s, id2->dir.s, id1->dir.len))
+		return 0;
+	if(memcmp(id1->table.s, id2->table.s, id1->table.len))
+		return 0;
 	return 1;
 }
 
@@ -87,10 +91,11 @@ unsigned char cmp_flat_id(struct flat_id* id1, struct flat_id* id2)
 /*
  * Free a connection identifier
  */
-void free_flat_id(struct flat_id* id)
+void free_flat_id(struct flat_id *id)
 {
-	if (!id) return;
-	if (id->table.s)
+	if(!id)
+		return;
+	if(id->table.s)
 		pkg_free(id->table.s);
 	pkg_free(id);
 }

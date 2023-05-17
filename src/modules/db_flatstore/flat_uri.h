@@ -38,10 +38,11 @@
  * db_uri structures in the database API in SER. The structure is used to
  * convert relative pathnames in flatstore URIs to absolute.
  */
-struct flat_uri {
+struct flat_uri
+{
 	db_drv_t drv;
 	/** Absolute pathname to the database directory, zero terminated */
-    str path;  
+	str path;
 };
 
 
@@ -52,7 +53,7 @@ struct flat_uri {
  * @retval 0 on success
  * @retval A negative number on error.
  */
-int flat_uri(db_uri_t* uri);
+int flat_uri(db_uri_t *uri);
 
 
 /** @} */
