@@ -39,12 +39,12 @@ static int start_filters[NR_FILTER_TYPES];
 
 void init_filters(void)
 {
-	memset( rd_filters , 0, NR_FILTER_TYPES*MAX_FILTERS*sizeof(regex_t*));
+	memset(rd_filters, 0, NR_FILTER_TYPES * MAX_FILTERS * sizeof(regex_t *));
 	reset_filters();
 }
 
 
-void set_default_rule( int type )
+void set_default_rule(int type)
 {
 	default_rule = type;
 }
@@ -53,33 +53,33 @@ void set_default_rule( int type )
 void reset_filters(void)
 {
 	nr_filters[ACCEPT_FILTER] = 1;
-	nr_filters[DENY_FILTER]   = 1;
+	nr_filters[DENY_FILTER] = 1;
 	start_filters[ACCEPT_FILTER] = 0;
-	start_filters[DENY_FILTER]   = 0;
+	start_filters[DENY_FILTER] = 0;
 }
 
 
-void add_default_filter( int type, regex_t *filter)
+void add_default_filter(int type, regex_t *filter)
 {
 	rd_filters[type][0] = filter;
 }
 
 
-int add_filter( int type, regex_t *filter, int flags)
+int add_filter(int type, regex_t *filter, int flags)
 {
-	if ( nr_filters[type]==MAX_FILTERS ) {
+	if(nr_filters[type] == MAX_FILTERS) {
 		LM_ERR("too many filters type %d\n", type);
 		return -1;
 	}
 
 	/* flags? */
-	if (flags&RESET_ADDED)
+	if(flags & RESET_ADDED)
 		nr_filters[type] = 1;
-	if (flags&RESET_DEFAULT)
+	if(flags & RESET_DEFAULT)
 		start_filters[type] = 1;
 
 	/* set filter */
-	rd_filters[type][ nr_filters[type]++ ] = filter;
+	rd_filters[type][nr_filters[type]++] = filter;
 	return 0;
 }
 
@@ -90,25 +90,24 @@ int run_filters(char *s)
 	int i;
 
 	/* check for accept filters */
-	for( i=start_filters[ACCEPT_FILTER] ; i<nr_filters[ACCEPT_FILTER] ; i++ ) {
-		if (rd_filters[ACCEPT_FILTER][i]==0)
+	for(i = start_filters[ACCEPT_FILTER]; i < nr_filters[ACCEPT_FILTER]; i++) {
+		if(rd_filters[ACCEPT_FILTER][i] == 0)
 			continue;
-		if (regexec(rd_filters[ACCEPT_FILTER][i], s, 1, &pmatch, 0)==0)
+		if(regexec(rd_filters[ACCEPT_FILTER][i], s, 1, &pmatch, 0) == 0)
 			return 1;
 	}
 
 	/* if default rule is deny, don' check the deny rules */
-	if (default_rule!=DENY_RULE) {
+	if(default_rule != DENY_RULE) {
 		/* check for deny filters */
-		for( i=start_filters[DENY_FILTER] ; i<nr_filters[DENY_FILTER] ; i++ ) {
-			if (rd_filters[DENY_FILTER][i]==0)
+		for(i = start_filters[DENY_FILTER]; i < nr_filters[DENY_FILTER]; i++) {
+			if(rd_filters[DENY_FILTER][i] == 0)
 				continue;
-			if (regexec(rd_filters[DENY_FILTER][i], s, 1, &pmatch, 0)==0)
+			if(regexec(rd_filters[DENY_FILTER][i], s, 1, &pmatch, 0) == 0)
 				return -1;
 		}
 	}
 
 	/* return default */
-	return (default_rule==ACCEPT_RULE)?1:-1;
+	return (default_rule == ACCEPT_RULE) ? 1 : -1;
 }
-
