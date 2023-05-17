@@ -25,7 +25,7 @@
 #define SCTP_CONN_REUSE
 #endif
 
-#define DEFAULT_SCTP_AUTOCLOSE 180  /* seconds */
+#define DEFAULT_SCTP_AUTOCLOSE 180	/* seconds */
 #define DEFAULT_SCTP_SEND_TTL 32000 /* in ms (32s)  */
 #define DEFAULT_SCTP_SEND_RETRIES 0
 #define MAX_SCTP_SEND_RETRIES 9
@@ -36,23 +36,23 @@ struct cfg_group_sctp
 	int so_rcvbuf;
 	int so_sndbuf;
 	unsigned int autoclose; /* in seconds */
-	unsigned int send_ttl;  /* in milliseconds */
+	unsigned int send_ttl;	/* in milliseconds */
 	unsigned int send_retries;
-	int assoc_tracking;		   /* track associations */
-	int assoc_reuse;		   /* reuse the request connection for sending the reply,
+	int assoc_tracking; /* track associations */
+	int assoc_reuse;	/* reuse the request connection for sending the reply,
 					    depends on assoc_tracking */
-	int max_assocs;			   /* maximum associations, -1 means disabled */
-	unsigned int srto_initial; /** initial retr. timeout */
-	unsigned int srto_max;	 /** max retr. timeout */
-	unsigned int srto_min;	 /** min retr. timeout */
-	unsigned int asocmaxrxt;   /** max. retr. attempts per association */
+	int max_assocs;		/* maximum associations, -1 means disabled */
+	unsigned int srto_initial;		/** initial retr. timeout */
+	unsigned int srto_max;			/** max retr. timeout */
+	unsigned int srto_min;			/** min retr. timeout */
+	unsigned int asocmaxrxt;		/** max. retr. attempts per association */
 	unsigned int init_max_attempts; /** max., INIT retr. attempts */
 	unsigned int init_max_timeo;	/** rto max for INIT */
 	unsigned int hbinterval;		/** heartbeat interval in msecs */
 	unsigned int pathmaxrxt;		/** max. retr. attempts per path */
 	unsigned int sack_delay; /** msecs after which a delayed SACK is sent */
-	unsigned int sack_freq;  /** no. of packets after which a SACK is sent */
-	unsigned int max_burst;  /** maximum burst of packets per assoc. */
+	unsigned int sack_freq;	 /** no. of packets after which a SACK is sent */
+	unsigned int max_burst;	 /** maximum burst of packets per assoc. */
 };
 
 extern struct cfg_group_sctp sctp_default_cfg;
