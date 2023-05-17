@@ -309,7 +309,7 @@ int pvh_avp_is_null(sr_xavp_t *avp)
 
 	if(avp->val.type == SR_XTYPE_NULL
 			|| (avp->val.type == SR_XTYPE_STR
-					   && (strncasecmp(avp->val.v.s.s, "NULL", 4) == 0))) {
+					&& (strncasecmp(avp->val.v.s.s, "NULL", 4) == 0))) {
 		return 1;
 	}
 
@@ -772,7 +772,7 @@ int pvh_get_uri(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 		case 9: // displayname to
 			sval = c_data->to_b.display;
 			break;
-		case 5:  // from tag
+		case 5:	 // from tag
 		case 10: // to tag
 			sval = c_data->to_b.tag_value;
 			break;
