@@ -156,8 +156,8 @@ int exec_str(struct sip_msg *msg, char *cmd, char *param, int param_len)
 		/* trim from right */
 		while(uri.len
 				&& (uri.s[uri.len - 1] == '\r' || uri.s[uri.len - 1] == '\n'
-						   || uri.s[uri.len - 1] == '\t'
-						   || uri.s[uri.len - 1] == ' ')) {
+						|| uri.s[uri.len - 1] == '\t'
+						|| uri.s[uri.len - 1] == ' ')) {
 			LM_DBG("rtrim\n");
 			uri.len--;
 		}
@@ -248,8 +248,8 @@ int exec_avp(struct sip_msg *msg, char *cmd, pvname_list_p avpl)
 		/* trim from right */
 		while(res.len
 				&& (res.s[res.len - 1] == '\r' || res.s[res.len - 1] == '\n'
-						   || res.s[res.len - 1] == '\t'
-						   || res.s[res.len - 1] == ' ')) {
+						|| res.s[res.len - 1] == '\t'
+						|| res.s[res.len - 1] == ' ')) {
 			res.len--;
 		}
 		/* skip empty line */
@@ -328,15 +328,15 @@ int exec_cmd(sip_msg_t *msg, char *cmd)
 		/* return false if script exited with non-zero status */
 		if(WEXITSTATUS(exit_status) != 0) {
 			LM_DBG("cmd %s with non-zero status - exit_status=%d,"
-					" wexitstatus: %d, errno=%d: %s\n",
-					cmd, exit_status, WEXITSTATUS(exit_status),
-					errno, strerror(errno));
+				   " wexitstatus: %d, errno=%d: %s\n",
+					cmd, exit_status, WEXITSTATUS(exit_status), errno,
+					strerror(errno));
 			ret = -1;
 		}
 	} else { /* exited erroneously */
 		LM_ERR("cmd %s failed. exit_status=%d, wexitstatus: %d, errno=%d: %s\n",
-				cmd, exit_status, WEXITSTATUS(exit_status),
-				errno, strerror(errno));
+				cmd, exit_status, WEXITSTATUS(exit_status), errno,
+				strerror(errno));
 		ret = -1;
 	}
 
