@@ -87,7 +87,7 @@ static char *acc_log_facility_str = 0;
 static char *acc_json_pre_encoded_prefix_str = 0;
 str acc_json_pre_encoded_prefix = {0, 0};
 
-int cdr_enable  = 0;
+int cdr_enable = 0;
 static char *cdr_extra_str = 0;
 acc_extra_t *cdr_extra = 0;
 int cdr_expired_dlg_enable = 0;
@@ -101,41 +101,40 @@ str cdr_json_pre_encoded_prefix = {0, 0};
 static cmd_export_t cmds[] = {{0, 0, 0, 0, 0, 0}};
 
 
-static param_export_t params[] = {
-	{"acc_flag", INT_PARAM, &acc_flag},
-	{"acc_missed_flag", INT_PARAM, &acc_missed_flag},
-	{"acc_extra", PARAM_STRING, &acc_extra_str},
-	{"acc_pre_encoded_prefix", PARAM_STRING, &acc_json_pre_encoded_prefix_str},
-	{"acc_time_mode", INT_PARAM, &acc_time_mode},
-	{"acc_time_format", PARAM_STRING, &acc_time_format},
-	{"acc_log_level", INT_PARAM, &acc_log_level},
-	{"acc_log_facility", PARAM_STRING, &acc_log_facility_str},
-	{"acc_output_mqueue", PARAM_STRING, &acc_output_mqueue_str},
-	{"acc_output_syslog", INT_PARAM, &acc_output_syslog},
-	{"cdr_extra", PARAM_STRING, &cdr_extra_str},
-	{"cdr_pre_encoded_prefix", PARAM_STRING, &cdr_json_pre_encoded_prefix_str},
-	{"cdr_enable", INT_PARAM, &cdr_enable},
-	{"cdr_expired_dlg_enable", INT_PARAM, &cdr_expired_dlg_enable},
-	{"cdr_log_level", INT_PARAM, &cdr_log_level},
-	{"cdr_log_facility", PARAM_STRING, &cdr_log_facility_str},
-	{"cdr_output_mqueue", PARAM_STRING, &cdr_output_mqueue_str},
-	{"cdr_output_syslog", INT_PARAM, &cdr_output_syslog},
+static param_export_t params[] = {{"acc_flag", INT_PARAM, &acc_flag},
+		{"acc_missed_flag", INT_PARAM, &acc_missed_flag},
+		{"acc_extra", PARAM_STRING, &acc_extra_str},
+		{"acc_pre_encoded_prefix", PARAM_STRING,
+				&acc_json_pre_encoded_prefix_str},
+		{"acc_time_mode", INT_PARAM, &acc_time_mode},
+		{"acc_time_format", PARAM_STRING, &acc_time_format},
+		{"acc_log_level", INT_PARAM, &acc_log_level},
+		{"acc_log_facility", PARAM_STRING, &acc_log_facility_str},
+		{"acc_output_mqueue", PARAM_STRING, &acc_output_mqueue_str},
+		{"acc_output_syslog", INT_PARAM, &acc_output_syslog},
+		{"cdr_extra", PARAM_STRING, &cdr_extra_str},
+		{"cdr_pre_encoded_prefix", PARAM_STRING,
+				&cdr_json_pre_encoded_prefix_str},
+		{"cdr_enable", INT_PARAM, &cdr_enable},
+		{"cdr_expired_dlg_enable", INT_PARAM, &cdr_expired_dlg_enable},
+		{"cdr_log_level", INT_PARAM, &cdr_log_level},
+		{"cdr_log_facility", PARAM_STRING, &cdr_log_facility_str},
+		{"cdr_output_mqueue", PARAM_STRING, &cdr_output_mqueue_str},
+		{"cdr_output_syslog", INT_PARAM, &cdr_output_syslog},
 
-	{0, 0, 0}
-};
+		{0, 0, 0}};
 
 
 struct module_exports exports = {
-	"acc_json",
-	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,		 /* exported functions */
-	params,		 /* exported params */
-	0,		 /* exported RPC methods */
-	0,		 /* exported pseudo-variables */
-	0,		 /* response function */
-	mod_init,	 /* initialization module */
-	child_init,	 /* per-child init function */
-	destroy	 	 /* destroy function */
+		"acc_json", DEFAULT_DLFLAGS, /* dlopen flags */
+		cmds,						 /* exported functions */
+		params,						 /* exported params */
+		0,							 /* exported RPC methods */
+		0,							 /* exported pseudo-variables */
+		0,							 /* response function */
+		mod_init,					 /* initialization module */
+		child_init,					 /* per-child init function */
+		destroy						 /* destroy function */
 };
 
 
@@ -147,11 +146,11 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if( cdr_enable < 0 || cdr_enable > 1) {
+	if(cdr_enable < 0 || cdr_enable > 1) {
 		LM_ERR("cdr_enable is out of range\n");
 		return -1;
 	}
-	if( cdr_expired_dlg_enable < 0 || cdr_expired_dlg_enable > 1) {
+	if(cdr_expired_dlg_enable < 0 || cdr_expired_dlg_enable > 1) {
 		LM_ERR("cdr_expired_dlg_enable is out of range\n");
 		return -1;
 	}
@@ -171,9 +170,9 @@ static int mod_init(void)
 		}
 	}
 
-	if (cdr_log_facility_str) {
+	if(cdr_log_facility_str) {
 		int tmp = str2facility(cdr_log_facility_str);
-		if (tmp != -1)
+		if(tmp != -1)
 			cdr_log_facility = tmp;
 		else {
 			LM_ERR("invalid log facility configured");
@@ -181,17 +180,20 @@ static int mod_init(void)
 		}
 	}
 	/* prefix to handle pre-encoded json fields */
-	if (acc_json_pre_encoded_prefix_str) {
+	if(acc_json_pre_encoded_prefix_str) {
 		acc_json_pre_encoded_prefix.s = acc_json_pre_encoded_prefix_str;
-		acc_json_pre_encoded_prefix.len = strlen(acc_json_pre_encoded_prefix_str);
+		acc_json_pre_encoded_prefix.len =
+				strlen(acc_json_pre_encoded_prefix_str);
 	}
-	if (cdr_json_pre_encoded_prefix_str) {
+	if(cdr_json_pre_encoded_prefix_str) {
 		cdr_json_pre_encoded_prefix.s = cdr_json_pre_encoded_prefix_str;
-		cdr_json_pre_encoded_prefix.len = strlen(cdr_json_pre_encoded_prefix_str);
+		cdr_json_pre_encoded_prefix.len =
+				strlen(cdr_json_pre_encoded_prefix_str);
 	}
 
 	/* load the MQUEUE API */
-	if((acc_output_mqueue_str || cdr_output_mqueue_str) && (load_mq_api(&mq_api) != 0)) {
+	if((acc_output_mqueue_str || cdr_output_mqueue_str)
+			&& (load_mq_api(&mq_api) != 0)) {
 		LM_ERR("can't load mqueue module API, disabling json acc to mqueue\n");
 		acc_output_mqueue_str = NULL;
 	}
@@ -223,13 +225,14 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if (cdr_enable) {
-		if(load_dlg_api( &dlgb) != 0) {
+	if(cdr_enable) {
+		if(load_dlg_api(&dlgb) != 0) {
 			LM_ERR("can't load dialog API\n");
 			return -1;
 		}
 		/* parse the extra string, if any */
-		if(cdr_extra_str && (cdr_extra = accb.parse_extra(cdr_extra_str)) == 0) {
+		if(cdr_extra_str
+				&& (cdr_extra = accb.parse_extra(cdr_extra_str)) == 0) {
 			LM_ERR("failed to parse cdr_extra param\n");
 			return -1;
 		}
@@ -239,7 +242,7 @@ static int mod_init(void)
 		_cdr_json_engine.cdr_init = cdr_json_init;
 		memcpy(_cdr_json_engine.name, "json", 4);
 
-		if (!accb.register_cdr_engine
+		if(!accb.register_cdr_engine
 				|| (accb.register_cdr_engine
 						&& (accb.register_cdr_engine(&_cdr_json_engine) < 0))) {
 			LM_ERR("cannot register ACC CDR JSON engine\n");
@@ -310,11 +313,13 @@ int acc_json_send_request(struct sip_msg *req, acc_info_t *inf)
 		} else {
 			t = gmtime(&inf->env->ts);
 		}
-		if(strftime(acc_time_format_buf, ACC_TIME_FORMAT_SIZE, acc_time_format, t)
+		if(strftime(acc_time_format_buf, ACC_TIME_FORMAT_SIZE, acc_time_format,
+				   t)
 				<= 0) {
 			acc_time_format_buf[0] = '\0';
 		}
-		json_object_set_new(object, acc_time_key.s, json_string(acc_time_format_buf));
+		json_object_set_new(
+				object, acc_time_key.s, json_string(acc_time_format_buf));
 	} else { // default acc_time_mode==1
 		json_object_set_new(object, acc_time_key.s, json_integer(inf->env->ts));
 	}
@@ -354,15 +359,18 @@ int acc_json_send_request(struct sip_msg *req, acc_info_t *inf)
 				inf->varr[i].s);
 		char *tmp = strndup(inf->varr[i].s, inf->varr[i].len);
 		json_t *value;
-		if (acc_json_pre_encoded_prefix.len && inf->varr[i].len
-				&& extra->name.len>=acc_json_pre_encoded_prefix.len
-				&& strncmp(extra->name.s,acc_json_pre_encoded_prefix.s, sizeof(char)*acc_json_pre_encoded_prefix.len) == 0) {
+		if(acc_json_pre_encoded_prefix.len && inf->varr[i].len
+				&& extra->name.len >= acc_json_pre_encoded_prefix.len
+				&& strncmp(extra->name.s, acc_json_pre_encoded_prefix.s,
+						   sizeof(char) * acc_json_pre_encoded_prefix.len)
+						   == 0) {
 			LM_DBG("[%d][%s] json content \n", i, extra->name.s);
 			json_error_t jerr;
 			value = json_loads(tmp, 0, &jerr);
-			if (!value) {
-				LM_ERR("error loading json in[%s]: %s:%d:%d: %s\n", extra->name.s,
-				jerr.source, jerr.line, jerr.column, jerr.text);
+			if(!value) {
+				LM_ERR("error loading json in[%s]: %s:%d:%d: %s\n",
+						extra->name.s, jerr.source, jerr.line, jerr.column,
+						jerr.text);
 				value = json_string("INVALID_JSON");
 			}
 		} else {
@@ -378,7 +386,7 @@ int acc_json_send_request(struct sip_msg *req, acc_info_t *inf)
 	/* add leginfo fields */
 	if(inf->leg_info) {
 		o = accb.get_leg_attrs(inf->leg_info, req, inf->varr + attr_cnt,
-			inf->iarr + attr_cnt, inf->tarr + attr_cnt, 1);
+				inf->iarr + attr_cnt, inf->tarr + attr_cnt, 1);
 		attr_cnt += o;
 		m = attr_cnt;
 
@@ -445,7 +453,7 @@ int cdr_json_write(struct dlg_cell *dlg, struct sip_msg *req, cdr_info_t *inf)
 	json_t *object = json_object();
 
 	/* get default values */
-	core_cnt = accb.get_core_cdr_attrs( dlg, inf->varr, inf->iarr, inf->tarr);
+	core_cnt = accb.get_core_cdr_attrs(dlg, inf->varr, inf->iarr, inf->tarr);
 	attr_cnt += core_cnt;
 
 	for(i = 0; i < attr_cnt; i++) {
@@ -465,41 +473,36 @@ int cdr_json_write(struct dlg_cell *dlg, struct sip_msg *req, cdr_info_t *inf)
 	}
 
 	/* get extra values */
-	if (req)
-	{
+	if(req) {
 		/* free memory allocated by get_extra_attrs */
-		extra_cnt += accb.get_extra_attrs( cdr_extra,
-				req,
-				inf->varr + attr_cnt,
-				inf->iarr + attr_cnt,
-				inf->tarr + attr_cnt);
+		extra_cnt += accb.get_extra_attrs(cdr_extra, req, inf->varr + attr_cnt,
+				inf->iarr + attr_cnt, inf->tarr + attr_cnt);
 		attr_cnt += extra_cnt;
-	} else if (cdr_expired_dlg_enable){
-		extra_cnt += accb.get_extra_dlg_attrs( cdr_extra,
-				dlg,
-				inf->varr + attr_cnt,
-				inf->iarr + attr_cnt,
-				inf->tarr + attr_cnt,
-				&dlgb);
+	} else if(cdr_expired_dlg_enable) {
+		extra_cnt +=
+				accb.get_extra_dlg_attrs(cdr_extra, dlg, inf->varr + attr_cnt,
+						inf->iarr + attr_cnt, inf->tarr + attr_cnt, &dlgb);
 		attr_cnt += extra_cnt;
 	}
 
 	struct acc_extra *extra = cdr_extra;
-	for( ; i < attr_cnt; i++)
-	{
+	for(; i < attr_cnt; i++) {
 		LM_DBG("[%d][%s][%.*s]\n", i, extra->name.s, inf->varr[i].len,
-						inf->varr[i].s);
+				inf->varr[i].s);
 		char *tmp = strndup(inf->varr[i].s, inf->varr[i].len);
 		json_t *value;
-		if (cdr_json_pre_encoded_prefix.len && inf->varr[i].len
-				&& extra->name.len>=cdr_json_pre_encoded_prefix.len
-				&& strncmp(extra->name.s,cdr_json_pre_encoded_prefix.s, sizeof(char)*cdr_json_pre_encoded_prefix.len) == 0) {
+		if(cdr_json_pre_encoded_prefix.len && inf->varr[i].len
+				&& extra->name.len >= cdr_json_pre_encoded_prefix.len
+				&& strncmp(extra->name.s, cdr_json_pre_encoded_prefix.s,
+						   sizeof(char) * cdr_json_pre_encoded_prefix.len)
+						   == 0) {
 			LM_DBG("[%d][%s] json content \n", i, extra->name.s);
 			json_error_t jerr;
 			value = json_loads(tmp, 0, &jerr);
-			if (!value) {
-				LM_ERR("error loading json in[%s]: %s:%d:%d: %s\n", extra->name.s,
-				jerr.source, jerr.line, jerr.column, jerr.text);
+			if(!value) {
+				LM_ERR("error loading json in[%s]: %s:%d:%d: %s\n",
+						extra->name.s, jerr.source, jerr.line, jerr.column,
+						jerr.text);
 				value = json_string("INVALID_JSON");
 			}
 		} else {
@@ -522,9 +525,9 @@ int cdr_json_write(struct dlg_cell *dlg, struct sip_msg *req, cdr_info_t *inf)
 		str cdr_str = {json_string, strlen(json_string)};
 
 		// json acc output to mqueue
-		if (cdr_output_mqueue_str) {
+		if(cdr_output_mqueue_str) {
 			str key = str_init("cdr");
-			if (mq_api.add(&cdr_q_name, &key, &cdr_str)) {
+			if(mq_api.add(&cdr_q_name, &key, &cdr_str)) {
 				LM_DBG("CDR queued [%d][%s]\n", cdr_str.len, cdr_str.s);
 			} else {
 				LM_DBG("CDR mqueue add error [%d][%s]\n", cdr_str.len,
