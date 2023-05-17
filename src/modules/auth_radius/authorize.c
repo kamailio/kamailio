@@ -70,8 +70,8 @@ static inline int get_uri_user(struct sip_msg *_m, str **_uri_user)
 /*
  * Authorize digest credentials
  */
-static int ki_authorize(sip_msg_t *_msg, str *srealm,
-		str *suser, hdr_types_t _hftype)
+static int ki_authorize(
+		sip_msg_t *_msg, str *srealm, str *suser, hdr_types_t _hftype)
 {
 	int res;
 	auth_cfg_result_t ret;
@@ -133,8 +133,8 @@ static int ki_authorize(sip_msg_t *_msg, str *srealm,
 	/* get uri_user from _uri_user pvap (if exists) or
        from To/From URI */
 	if(suser != NULL && suser->len > 0) {
-		res = radius_authorize_sterman(_msg, &cred->digest,
-					&_msg->first_line.u.request.method, suser);
+		res = radius_authorize_sterman(
+				_msg, &cred->digest, &_msg->first_line.u.request.method, suser);
 	} else {
 		if(get_uri_user(_msg, &uri_user) < 0) {
 			LM_ERR("To/From URI not found\n");
@@ -201,13 +201,13 @@ static inline int authorize(struct sip_msg *_msg, gparam_t *_realm,
 
 	/* get pre_auth domain from _realm param (if exists) */
 	if(_realm) {
-		if(fixup_get_svalue(_msg, _realm, &srealm)<0) {
+		if(fixup_get_svalue(_msg, _realm, &srealm) < 0) {
 			LM_ERR("failed to get realm value\n");
 			return -5;
 		}
 	}
 	if(_uri_user) {
-		if(fixup_get_svalue(_msg, _uri_user, &suser)<0) {
+		if(fixup_get_svalue(_msg, _uri_user, &suser) < 0) {
 			LM_ERR("cannot get uri user value\n");
 			return AUTH_ERROR;
 		}
@@ -253,8 +253,7 @@ int ki_radius_www_authorize_user(sip_msg_t *msg, str *srealm, str *suser)
 int radius_proxy_authorize_1(struct sip_msg *_msg, char *_realm, char *_s2)
 {
 	/* realm parameter is converted in fixup */
-	return authorize(
-			_msg, (gparam_t *)_realm, (gparam_t *)0, HDR_PROXYAUTH_T);
+	return authorize(_msg, (gparam_t *)_realm, (gparam_t *)0, HDR_PROXYAUTH_T);
 }
 
 

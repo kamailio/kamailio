@@ -150,7 +150,7 @@ static int generate_avps(VALUE_PAIR *received)
 		vp = rc_avpair_get(vp, attrs[A_SIP_AVP].v, 0);
 	for(; vp; vp = ((ar_radius_avps_mode) ? vp->next
 										  : rc_avpair_get(vp->next,
-													attrs[A_SIP_AVP].v, 0))) {
+												  attrs[A_SIP_AVP].v, 0))) {
 		flags = 0;
 		if(!extract_avp(vp, &flags, &name, &val)) {
 			LM_ERR("error while extracting AVP '%.*s'\n", (int)strlen(vp->name),
