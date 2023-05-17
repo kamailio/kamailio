@@ -30,7 +30,8 @@
 
 #include "json_funcs.h"
 
-int _json_get_field(struct sip_msg *msg, char *json, char *field, char *dst, int field_type)
+int _json_get_field(
+		struct sip_msg *msg, char *json, char *field, char *dst, int field_type)
 {
 	str json_s;
 	str field_s;
@@ -41,12 +42,12 @@ int _json_get_field(struct sip_msg *msg, char *json, char *field, char *dst, int
 	struct json_object *oj = NULL;
 	int ret;
 
-	if (fixup_get_svalue(msg, (gparam_p)json, &json_s) != 0) {
+	if(fixup_get_svalue(msg, (gparam_p)json, &json_s) != 0) {
 		LM_ERR("cannot get json string value\n");
 		return -1;
 	}
 
-	if (fixup_get_svalue(msg, (gparam_p)field, &field_s) != 0) {
+	if(fixup_get_svalue(msg, (gparam_p)field, &field_s) != 0) {
 		LM_ERR("cannot get field string value\n");
 		return -1;
 	}
@@ -55,17 +56,17 @@ int _json_get_field(struct sip_msg *msg, char *json, char *field, char *dst, int
 
 	j = json_tokener_parse(json_s.s);
 
-	if (j==NULL) {
+	if(j == NULL) {
 		LM_ERR("empty or invalid JSON\n");
 		return -1;
 	}
 
 	json_object_object_get_ex(j, field_s.s, &oj);
-	if(oj!=NULL) {
-		if (field_type == JSON_FIELD_STRING) {
-			value = (char*)json_object_get_string(oj);
+	if(oj != NULL) {
+		if(field_type == JSON_FIELD_STRING) {
+			value = (char *)json_object_get_string(oj);
 		} else {
-			value = (char*)json_object_to_json_string(oj);
+			value = (char *)json_object_to_json_string(oj);
 		}
 		dst_val.rs.s = value;
 		dst_val.rs.len = strlen(value);
@@ -80,13 +81,13 @@ int _json_get_field(struct sip_msg *msg, char *json, char *field, char *dst, int
 	return ret;
 }
 
-int json_get_field(struct sip_msg* msg, char* json, char* field, char* dst)
+int json_get_field(struct sip_msg *msg, char *json, char *field, char *dst)
 {
 	return _json_get_field(msg, json, field, dst, JSON_FIELD_DEFAULT);
 }
 
 
-int json_get_string(struct sip_msg* msg, char* json, char* field, char* dst)
+int json_get_string(struct sip_msg *msg, char *json, char *field, char *dst)
 {
 	return _json_get_field(msg, json, field, dst, JSON_FIELD_STRING);
 }
@@ -173,7 +174,7 @@ struct json_object *tr_json_get_field_object(str *json, str *field)
 	struct json_object *j = json_tokener_parse(dup);
 	pkg_free(dup);
 
-	if(j==NULL) {
+	if(j == NULL) {
 		LM_ERR("empty or invalid JSON\n");
 		return NULL;
 	}
@@ -309,8 +310,7 @@ struct json_object *json_parse(const char *str)
 	return obj;
 }
 
-struct json_object *json_get_object(
-		struct json_object *jso, const char *key)
+struct json_object *json_get_object(struct json_object *jso, const char *key)
 {
 	struct json_object *result = NULL;
 	json_object_object_get_ex(jso, key, &result);
