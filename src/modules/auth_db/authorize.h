@@ -30,42 +30,45 @@
 
 extern int force_generate_avps;
 
-int auth_db_init(const str* db_url);
-int auth_db_bind(const str* db_url);
+int auth_db_init(const str *db_url);
+int auth_db_bind(const str *db_url);
 void auth_db_close(void);
 
 /*
  * Authorize using Proxy-Authorization header field
  */
-int proxy_authenticate(struct sip_msg* _msg, char* _realm, char* _table);
+int proxy_authenticate(struct sip_msg *_msg, char *_realm, char *_table);
 
 
 /*
  * Authorize using WWW-Authorization header field
  */
-int www_authenticate(struct sip_msg* _msg, char* _realm, char* _table);
-int www_authenticate2(struct sip_msg* _msg, char* _realm, char* _table, char *_method);
+int www_authenticate(struct sip_msg *_msg, char *_realm, char *_table);
+int www_authenticate2(
+		struct sip_msg *_msg, char *_realm, char *_table, char *_method);
 
-int ki_www_authenticate(struct sip_msg* _m, str *realm, str *table);
-int ki_www_authenticate_method(sip_msg_t *msg, str *realm, str *table, str *method);
+int ki_www_authenticate(struct sip_msg *_m, str *realm, str *table);
+int ki_www_authenticate_method(
+		sip_msg_t *msg, str *realm, str *table, str *method);
 
 /*
  * Authenticate using WWW/Proxy-Authorize header field
  */
 int auth_check(sip_msg_t *_m, str *srealm, str *stable, int iflags);
-int w_auth_check(struct sip_msg* _m, char* _realm, char* _table, char *_flags);
+int w_auth_check(struct sip_msg *_m, char *_realm, char *_table, char *_flags);
 
 
-#define AUTH_DB_SUBS_USE_DOMAIN	1<<0
-#define AUTH_DB_SUBS_SKIP_CREDENTIALS	1<<1
+#define AUTH_DB_SUBS_USE_DOMAIN 1 << 0
+#define AUTH_DB_SUBS_SKIP_CREDENTIALS 1 << 1
 /*
  * Fetch credentials for a specific user
  */
-int fetch_credentials(sip_msg_t *msg, str *user, str* domain, str *table, int flags);
+int fetch_credentials(
+		sip_msg_t *msg, str *user, str *domain, str *table, int flags);
 
 /*
  * Bind to AUTH_DB API
  */
-int bind_auth_db(auth_db_api_t* api);
+int bind_auth_db(auth_db_api_t *api);
 
 #endif /* AUTHORIZE_H */
