@@ -43,8 +43,8 @@
 struct tm_binds tmb;
 
 static void ka_run_route(sip_msg_t *msg, str *uri, char *route);
-static void ka_options_callback(struct cell *t, int type,
-		struct tmcb_params *ps);
+static void ka_options_callback(
+		struct cell *t, int type, struct tmcb_params *ps);
 
 extern str ka_ping_from;
 /*! \brief
@@ -52,7 +52,7 @@ extern str ka_ping_from;
  *
  * This timer is regularly fired.
  */
-ticks_t ka_check_timer(ticks_t ticks, struct timer_ln* tl, void* param)
+ticks_t ka_check_timer(ticks_t ticks, struct timer_ln *tl, void *param)
 {
 	ka_dest_t *ka_dest;
 	str ka_ping_method = str_init("OPTIONS");
@@ -61,30 +61,31 @@ ticks_t ka_check_timer(ticks_t ticks, struct timer_ln* tl, void* param)
 
 	ka_dest = (ka_dest_t *)param;
 
-    LM_DBG("dest: %.*s\n", ka_dest->uri.len, ka_dest->uri.s);
+	LM_DBG("dest: %.*s\n", ka_dest->uri.len, ka_dest->uri.s);
 
-    if(ka_counter_del > 0 && ka_dest->counter > ka_counter_del) {
-        return (ticks_t)(0); /* stops the timer */
-    }
+	if(ka_counter_del > 0 && ka_dest->counter > ka_counter_del) {
+		return (ticks_t)(0); /* stops the timer */
+	}
 
 	str *uuid = shm_malloc(sizeof(str));
 	ka_str_copy(&(ka_dest->uuid), uuid, NULL);
-    /* Send ping using TM-Module.
+	/* Send ping using TM-Module.
      * int request(str* m, str* ruri, str* to, str* from, str* h,
      *		str* b, str *oburi,
      *		transaction_cb cb, void* cbp); */
-    set_uac_req(&uac_r, &ka_ping_method, 0, 0, 0, TMCB_LOCAL_COMPLETED,
-            ka_options_callback, (void *)uuid);
+	set_uac_req(&uac_r, &ka_ping_method, 0, 0, 0, TMCB_LOCAL_COMPLETED,
+			ka_options_callback, (void *)uuid);
 
-    if(tmb.t_request(&uac_r, &ka_dest->uri, &ka_dest->uri, &ka_ping_from,
-               &ka_outbound_proxy)
-            < 0) {
-        LM_ERR("unable to ping [%.*s]\n", ka_dest->uri.len, ka_dest->uri.s);
-    }
+	if(tmb.t_request(&uac_r, &ka_dest->uri, &ka_dest->uri, &ka_ping_from,
+			   &ka_outbound_proxy)
+			< 0) {
+		LM_ERR("unable to ping [%.*s]\n", ka_dest->uri.len, ka_dest->uri.s);
+	}
 
-    ka_dest->last_checked = time(NULL);
+	ka_dest->last_checked = time(NULL);
 
-	return ka_dest->ping_interval; /* periodical, but based on dest->ping_interval, not on initial_timeout */
+	return ka_dest
+			->ping_interval; /* periodical, but based on dest->ping_interval, not on initial_timeout */
 }
 
 /*! \brief
@@ -107,15 +108,16 @@ static void ka_options_callback(
 
 	// Retrieve ka_dest by uuid from destination list
 	ka_lock_destination_list();
-	ka_dest_t *ka_dest=0,*hollow=0;
-	if (!ka_find_destination_by_uuid(*uuid, &ka_dest, &hollow)) {
+	ka_dest_t *ka_dest = 0, *hollow = 0;
+	if(!ka_find_destination_by_uuid(*uuid, &ka_dest, &hollow)) {
 		LM_ERR("Couldn't find destination \r\n");
 		shm_free(uuid->s);
 		shm_free(uuid);
 		ka_unlock_destination_list();
 		return;
 	}
-	lock_get(&ka_dest->lock); // Lock record so we prevent to be removed in the meantime
+	lock_get(
+			&ka_dest->lock); // Lock record so we prevent to be removed in the meantime
 	shm_free(uuid->s);
 	shm_free(uuid);
 	ka_unlock_destination_list();
@@ -130,7 +132,7 @@ static void ka_options_callback(
 	if(ps->code >= 200 && ps->code <= 299) {
 		state = KA_STATE_UP;
 		ka_dest->last_down = time(NULL);
-		ka_dest->counter=0;
+		ka_dest->counter = 0;
 	} else {
 		state = KA_STATE_DOWN;
 		ka_dest->last_up = time(NULL);

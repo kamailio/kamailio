@@ -54,13 +54,12 @@ static void keepalive_rpc_get(rpc_t *rpc, void *ctx);
 static void keepalive_rpc_flush(rpc_t *rpc, void *ctx);
 
 rpc_export_t keepalive_rpc_cmds[] = {
-	{"keepalive.list", keepalive_rpc_list, keepalive_rpc_list_doc, 0},
-	{"keepalive.add", keepalive_rpc_add, keepalive_rpc_add_doc, 0},
-	{"keepalive.del", keepalive_rpc_del, keepalive_rpc_del_doc, 0},
-	{"keepalive.get", keepalive_rpc_get, keepalive_rpc_get_doc, 0},
-	{"keepalive.flush", keepalive_rpc_flush, keepalive_rpc_flush_doc, 0},
-	{0, 0, 0, 0}
-};
+		{"keepalive.list", keepalive_rpc_list, keepalive_rpc_list_doc, 0},
+		{"keepalive.add", keepalive_rpc_add, keepalive_rpc_add_doc, 0},
+		{"keepalive.del", keepalive_rpc_del, keepalive_rpc_del_doc, 0},
+		{"keepalive.get", keepalive_rpc_get, keepalive_rpc_get_doc, 0},
+		{"keepalive.flush", keepalive_rpc_flush, keepalive_rpc_flush_doc, 0},
+		{0, 0, 0, 0}};
 
 int ka_init_rpc(void)
 {
@@ -91,7 +90,7 @@ static void keepalive_rpc_list(rpc_t *rpc, void *ctx)
 		rpc->struct_add(sub, "s", "last up", t_buf);
 		ctime_r(&dest->last_down, t_buf);
 		rpc->struct_add(sub, "s", "last down", t_buf);
-		rpc->struct_add(sub, "d", "state", (int) dest->state);
+		rpc->struct_add(sub, "d", "state", (int)dest->state);
 	}
 
 	return;
@@ -99,27 +98,28 @@ static void keepalive_rpc_list(rpc_t *rpc, void *ctx)
 
 static void keepalive_rpc_add(rpc_t *rpc, void *ctx)
 {
-	str sip_address = {0,0};
-	str table_name ={0,0};
+	str sip_address = {0, 0};
+	str table_name = {0, 0};
 	int ret = 0;
 
-	ret = rpc->scan(ctx, "SS",&sip_address,&table_name);
+	ret = rpc->scan(ctx, "SS", &sip_address, &table_name);
 
-	if (ret < 2) {
+	if(ret < 2) {
 		LM_ERR("not enough parameters - read so far: %d\n", ret);
 		rpc->fault(ctx, 500, "Not enough parameters or wrong format");
 		return;
 	}
 
 	LM_DBG("keepalive add [%.*s]\n", sip_address.len, sip_address.s);
-	if(sip_address.len<1 || table_name.len <1){
-		LM_ERR("parameter is len less than 1  \n"  );
+	if(sip_address.len < 1 || table_name.len < 1) {
+		LM_ERR("parameter is len less than 1  \n");
 		rpc->fault(ctx, 500, "parameter is len less than 1");
 		return;
 	}
 
-	if(ka_add_dest(&sip_address,&table_name,0,ka_ping_interval,0,0,0) < 0 ){
-		LM_ERR("couldn't add data to list \n"  );
+	if(ka_add_dest(&sip_address, &table_name, 0, ka_ping_interval, 0, 0, 0)
+			< 0) {
+		LM_ERR("couldn't add data to list \n");
 		rpc->fault(ctx, 500, "couldn't add data to list");
 		return;
 	}
@@ -127,17 +127,19 @@ static void keepalive_rpc_add(rpc_t *rpc, void *ctx)
 	return;
 }
 static const char *keepalive_rpc_add_doc[2] = {
-		"add new destination to keepalive memory. Usage: keepalive.add sip:user@domain listname", 0};
+		"add new destination to keepalive memory. Usage: keepalive.add "
+		"sip:user@domain listname",
+		0};
 
 static void keepalive_rpc_del(rpc_t *rpc, void *ctx)
 {
-	str sip_address = {0,0};
-	str table_name ={0,0};
+	str sip_address = {0, 0};
+	str table_name = {0, 0};
 	int ret = 0;
 
-	ret = rpc->scan(ctx, "SS",&sip_address,&table_name);
+	ret = rpc->scan(ctx, "SS", &sip_address, &table_name);
 
-	if (ret < 2) {
+	if(ret < 2) {
 		LM_ERR("not enough parameters - read so far: %d\n", ret);
 		rpc->fault(ctx, 500, "Not enough parameters or wrong format");
 		return;
@@ -145,14 +147,14 @@ static void keepalive_rpc_del(rpc_t *rpc, void *ctx)
 
 	LM_DBG("keepalive delete [%.*s]\n", sip_address.len, sip_address.s);
 
-	if(sip_address.len < 1 || table_name.len < 1){
+	if(sip_address.len < 1 || table_name.len < 1) {
 		LM_ERR("parameter is len less than 1  \n");
 		rpc->fault(ctx, 500, "parameter is len less than 1");
 		return;
 	}
 
-	if(ka_del_destination(&sip_address,&table_name) < 0 ){
-		LM_ERR("couldn't delete data from list \n"  );
+	if(ka_del_destination(&sip_address, &table_name) < 0) {
+		LM_ERR("couldn't delete data from list \n");
 		rpc->fault(ctx, 500, "couldn't delete data from list");
 		return;
 	}
@@ -160,43 +162,45 @@ static void keepalive_rpc_del(rpc_t *rpc, void *ctx)
 	return;
 }
 static const char *keepalive_rpc_del_doc[2] = {
-		"delete destination from keepalive memory. Usage: keepalive.del sip:user@domain listname", 0};
+		"delete destination from keepalive memory. Usage: keepalive.del "
+		"sip:user@domain listname",
+		0};
 
 static void keepalive_rpc_get(rpc_t *rpc, void *ctx)
 {
-	str sip_address = {0,0};
-	str table_name ={0,0};
+	str sip_address = {0, 0};
+	str table_name = {0, 0};
 	int ret = 0;
-	ka_dest_t *target=0 , *head =0;
+	ka_dest_t *target = 0, *head = 0;
 	void *sub;
 
-	ret = rpc->scan(ctx, "SS",&sip_address,&table_name);
+	ret = rpc->scan(ctx, "SS", &sip_address, &table_name);
 
-	if (ret < 2) {
+	if(ret < 2) {
 		LM_ERR("not enough parameters - read so far: %d\n", ret);
 		rpc->fault(ctx, 500, "Not enough parameters or wrong format");
 		return;
 	}
 
-	LM_DBG("keepalive get [%.*s]\n", sip_address.len , sip_address.s);
+	LM_DBG("keepalive get [%.*s]\n", sip_address.len, sip_address.s);
 
-	if(sip_address.len < 1 || table_name.len < 1){
+	if(sip_address.len < 1 || table_name.len < 1) {
 		LM_ERR("parameter is len less than 1  \n");
 		rpc->fault(ctx, 500, "parameter is len less than 1");
 		return;
 	}
 	ka_lock_destination_list();
 
-	if(ka_find_destination(&sip_address, &table_name, &target, &head) < 0 ){
-		LM_ERR("couldn't get data from list \n"  );
+	if(ka_find_destination(&sip_address, &table_name, &target, &head) < 0) {
+		LM_ERR("couldn't get data from list \n");
 		rpc->fault(ctx, 500, "couldn't get data from list");
 		ka_unlock_destination_list();
 
 		return;
 	}
 
-	if(!target){
-		LM_ERR("Target is empty \n"  );
+	if(!target) {
+		LM_ERR("Target is empty \n");
 		rpc->fault(ctx, 500, "couldn't get data from list");
 		ka_unlock_destination_list();
 		return;
@@ -204,14 +208,17 @@ static void keepalive_rpc_get(rpc_t *rpc, void *ctx)
 
 	rpc->add(ctx, "{", &sub);
 
-	rpc->struct_add(sub, "SSd", "uri", &target->uri, "owner", &target->owner,"state", target->state);
+	rpc->struct_add(sub, "SSd", "uri", &target->uri, "owner", &target->owner,
+			"state", target->state);
 
 	ka_unlock_destination_list();
 
 	return;
 }
 static const char *keepalive_rpc_get_doc[2] = {
-		"get destination details from keepalive memory. Usage: keepalive.get sip:user@domain listname", 0};
+		"get destination details from keepalive memory. Usage: keepalive.get "
+		"sip:user@domain listname",
+		0};
 
 
 static void keepalive_rpc_flush(rpc_t *rpc, void *ctx)
