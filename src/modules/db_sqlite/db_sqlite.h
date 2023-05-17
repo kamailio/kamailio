@@ -25,9 +25,10 @@
 #ifndef DBSQLITE_H
 #define DBSQLITE_H
 
-typedef struct db_param_list {
-	struct db_param_list* next;
-	struct db_param_list* prev;
+typedef struct db_param_list
+{
+	struct db_param_list *next;
+	struct db_param_list *prev;
 	str database;
 	int readonly;
 	str journal_mode;
