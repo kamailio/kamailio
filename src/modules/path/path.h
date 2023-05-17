@@ -29,7 +29,6 @@
  */
 
 
-
 #ifndef MOD_PATH_H
 #define MOD_PATH_H
 
@@ -38,35 +37,35 @@
 /*
  * Prepend own uri to Path header
  */
-int add_path(struct sip_msg* _msg, char* _a, char* _b);
+int add_path(struct sip_msg *_msg, char *_a, char *_b);
 
-int ki_add_path(struct sip_msg* _msg);
+int ki_add_path(struct sip_msg *_msg);
 
 /*
  * Prepend own uri to Path header and take care of given
  * user.
  */
-int add_path_usr(struct sip_msg* _msg, char* _a, char* _b);
+int add_path_usr(struct sip_msg *_msg, char *_a, char *_b);
 
-int ki_add_path_user(sip_msg_t* _msg, str* _user);
-int ki_add_path_user_params(sip_msg_t* _msg, str* _user, str* _params);
+int ki_add_path_user(sip_msg_t *_msg, str *_user);
+int ki_add_path_user_params(sip_msg_t *_msg, str *_user, str *_params);
 
 /*
  * Prepend own uri to Path header and append received address as
  * "received"-param to that uri.
  */
-int add_path_received(struct sip_msg* _msg, char* _a, char* _b);
+int add_path_received(struct sip_msg *_msg, char *_a, char *_b);
 
-int ki_add_path_received(struct sip_msg* _msg);
+int ki_add_path_received(struct sip_msg *_msg);
 
 /*
  * Prepend own uri to Path header and append received address as
  * "received"-param to that uri and take care of given user.
  */
-int add_path_received_usr(struct sip_msg* _msg, char* _a, char* _b);
+int add_path_received_usr(struct sip_msg *_msg, char *_a, char *_b);
 
-int ki_add_path_received_user(sip_msg_t* _msg, str* _user);
-int ki_add_path_received_user_params(sip_msg_t* _msg, str* _user, str* _params);
+int ki_add_path_received_user(sip_msg_t *_msg, str *_user);
+int ki_add_path_received_user_params(sip_msg_t *_msg, str *_user, str *_params);
 
 /*
  * rr callback for setting dst-uri

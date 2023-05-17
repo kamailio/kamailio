@@ -42,7 +42,6 @@
  */
 
 
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -88,66 +87,62 @@ ob_api_t path_obb;
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{ "add_path",          (cmd_function)add_path,              0,
-			0,              0,  REQUEST_ROUTE },
-	{ "add_path",          (cmd_function)add_path_usr,          1,
-			fixup_spve_null, 0, REQUEST_ROUTE },
-	{ "add_path",          (cmd_function)add_path_usr,          2,
-			fixup_spve_spve, 0, REQUEST_ROUTE },
-	{ "add_path_received", (cmd_function)add_path_received,     0,
-			0,              0, REQUEST_ROUTE },
-	{ "add_path_received", (cmd_function)add_path_received_usr, 1,
-			fixup_spve_null, 0, REQUEST_ROUTE },
-	{ "add_path_received", (cmd_function)add_path_received_usr, 2,
-			fixup_spve_spve, 0, REQUEST_ROUTE },
-	{ 0, 0, 0, 0, 0, 0 }
-};
+		{"add_path", (cmd_function)add_path, 0, 0, 0, REQUEST_ROUTE},
+		{"add_path", (cmd_function)add_path_usr, 1, fixup_spve_null, 0,
+				REQUEST_ROUTE},
+		{"add_path", (cmd_function)add_path_usr, 2, fixup_spve_spve, 0,
+				REQUEST_ROUTE},
+		{"add_path_received", (cmd_function)add_path_received, 0, 0, 0,
+				REQUEST_ROUTE},
+		{"add_path_received", (cmd_function)add_path_received_usr, 1,
+				fixup_spve_null, 0, REQUEST_ROUTE},
+		{"add_path_received", (cmd_function)add_path_received_usr, 2,
+				fixup_spve_spve, 0, REQUEST_ROUTE},
+		{0, 0, 0, 0, 0, 0}};
 
 
 /*! \brief
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"use_received",    INT_PARAM, &path_use_received },
-	{"received_format", INT_PARAM, &path_received_format },
-	{"enable_r2",       INT_PARAM, &path_enable_r2 },
-	{"sockname_mode",   INT_PARAM, &path_sockname_mode },
-	{"received_name",   PARAM_STR, &path_received_name },
-	{ 0, 0, 0 }
-};
+		{"use_received", INT_PARAM, &path_use_received},
+		{"received_format", INT_PARAM, &path_received_format},
+		{"enable_r2", INT_PARAM, &path_enable_r2},
+		{"sockname_mode", INT_PARAM, &path_sockname_mode},
+		{"received_name", PARAM_STR, &path_received_name}, {0, 0, 0}};
 
 
 /*! \brief
  * Module interface
  */
 struct module_exports exports = {
-	"path",          /* module name */
-	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,            /* Exported functions */
-	params,          /* Exported parameters */
-	0,               /* RPC method exports */
-	0,               /* exported pseudo-variables */
-	0,               /* response function */
-	mod_init,        /* module initialization function */
-	0,               /* child initialization function */
-	0                /* destroy function */
+		"path",			 /* module name */
+		DEFAULT_DLFLAGS, /* dlopen flags */
+		cmds,			 /* Exported functions */
+		params,			 /* Exported parameters */
+		0,				 /* RPC method exports */
+		0,				 /* exported pseudo-variables */
+		0,				 /* response function */
+		mod_init,		 /* module initialization function */
+		0,				 /* child initialization function */
+		0				 /* destroy function */
 };
 
 
 static int mod_init(void)
 {
-	if (path_use_received) {
-		if (load_rr_api(&path_rrb) != 0) {
+	if(path_use_received) {
+		if(load_rr_api(&path_rrb) != 0) {
 			LM_ERR("failed to load rr-API\n");
 			return -1;
 		}
-		if (path_rrb.register_rrcb(path_rr_callback, 0) != 0) {
+		if(path_rrb.register_rrcb(path_rr_callback, 0) != 0) {
 			LM_ERR("failed to register rr callback\n");
 			return -1;
 		}
 	}
 
-	if (ob_load_api(&path_obb) == 0)
+	if(ob_load_api(&path_obb) == 0)
 		LM_DBG("Bound path module to outbound module\n");
 	else {
 		LM_INFO("outbound module not available\n");
