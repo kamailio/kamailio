@@ -296,12 +296,12 @@ int cfgt_get_json(struct sip_msg *msg, unsigned int mask, srjson_doc_t *jdoc,
 					   || el->spec.type == PVT_XAVP
 					   || el->spec.type == PVT_OTHER)
 					|| !((el->spec.type == PVT_AVP && mask & CFGT_DP_AVP)
-							   || (el->spec.type == PVT_XAVP
-										  && mask & CFGT_DP_XAVP)
-							   || (el->spec.type == PVT_SCRIPTVAR
-										  && mask & CFGT_DP_SCRIPTVAR)
-							   || (el->spec.type == PVT_OTHER
-										  && mask & CFGT_DP_OTHER))
+							|| (el->spec.type == PVT_XAVP
+									&& mask & CFGT_DP_XAVP)
+							|| (el->spec.type == PVT_SCRIPTVAR
+									&& mask & CFGT_DP_SCRIPTVAR)
+							|| (el->spec.type == PVT_OTHER
+									&& mask & CFGT_DP_OTHER))
 					|| (el->spec.trans != NULL)) {
 				el = el->next;
 				continue;
@@ -312,7 +312,7 @@ int cfgt_get_json(struct sip_msg *msg, unsigned int mask, srjson_doc_t *jdoc,
 			if(el->spec.type == PVT_AVP) {
 				if(el->spec.pvp.pvi.type == PV_IDX_ALL
 						|| (el->spec.pvp.pvi.type == PV_IDX_INT
-								   && el->spec.pvp.pvi.u.ival != 0)) {
+								&& el->spec.pvp.pvi.u.ival != 0)) {
 					el = el->next;
 					continue;
 				} else {
@@ -324,8 +324,9 @@ int cfgt_get_json(struct sip_msg *msg, unsigned int mask, srjson_doc_t *jdoc,
 						el = el->next;
 						continue;
 					}
-					if(jobj == NULL || (srjson_GetArraySize(jdoc, jobj) == 0
-							&& !(mask & CFGT_DP_NULL))) {
+					if(jobj == NULL
+							|| (srjson_GetArraySize(jdoc, jobj) == 0
+									&& !(mask & CFGT_DP_NULL))) {
 						el = el->next;
 						continue;
 					}
@@ -358,7 +359,8 @@ int cfgt_get_json(struct sip_msg *msg, unsigned int mask, srjson_doc_t *jdoc,
 					continue;
 				}
 				if(strchr(el->pvname.s + 1, 36) != NULL) {
-					LM_DBG("skip dynamic format [%.*s]\n", el->pvname.len, el->pvname.s);
+					LM_DBG("skip dynamic format [%.*s]\n", el->pvname.len,
+							el->pvname.s);
 					el = el->next;
 					continue;
 				}
