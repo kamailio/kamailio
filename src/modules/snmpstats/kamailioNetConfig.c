@@ -178,8 +178,9 @@ int handle_kamailioNetConfUdpDtlsTransport(netsnmp_mib_handler *handler,
 
 		default:
 			/* we should never get here, so this is a really bad error */
-			snmp_log(LOG_ERR, "unknown mode (%d) in "
-							  "handle_kamailioNetConfUdpDtlsTransport\n",
+			snmp_log(LOG_ERR,
+					"unknown mode (%d) in "
+					"handle_kamailioNetConfUdpDtlsTransport\n",
 					reqinfo->mode);
 			return SNMP_ERR_GENERR;
 	}
@@ -243,8 +244,9 @@ int handle_kamailioNetConfTcpTlsTransport(netsnmp_mib_handler *handler,
 
 		default:
 			/* we should never get here, so this is a really bad error */
-			snmp_log(LOG_ERR, "unknown mode (%d) in "
-							  "handle_kamailioNetConfTcpTlsTransport\n",
+			snmp_log(LOG_ERR,
+					"unknown mode (%d) in "
+					"handle_kamailioNetConfTcpTlsTransport\n",
 					reqinfo->mode);
 			return SNMP_ERR_GENERR;
 	}
@@ -271,8 +273,9 @@ int handle_kamailioNetConfSctpTransport(netsnmp_mib_handler *handler,
 
 		default:
 			/* we should never get here, so this is a really bad error */
-			snmp_log(LOG_ERR, "unknown mode (%d) in "
-							  "handle_kamailioNetConfSctpTransport\n",
+			snmp_log(LOG_ERR,
+					"unknown mode (%d) in "
+					"handle_kamailioNetConfSctpTransport\n",
 					reqinfo->mode);
 			return SNMP_ERR_GENERR;
 	}
@@ -295,8 +298,9 @@ int handle_kamailioNetConfSctpTlsTransport(netsnmp_mib_handler *handler,
 
 		default:
 			/* we should never get here, so this is a really bad error */
-			snmp_log(LOG_ERR, "unknown mode (%d) in "
-							  "handle_kamailioNetConfSctpTlsTransport\n",
+			snmp_log(LOG_ERR,
+					"unknown mode (%d) in "
+					"handle_kamailioNetConfSctpTlsTransport\n",
 					reqinfo->mode);
 			return SNMP_ERR_GENERR;
 	}
@@ -354,8 +358,9 @@ int handle_kamailioNetConfWsTlsTransport(netsnmp_mib_handler *handler,
 
 		default:
 			/* we should never get here, so this is a really bad error */
-			snmp_log(LOG_ERR, "unknown mode (%d) in "
-							  "handle_kamailioNetConfWsTlsTransport\n",
+			snmp_log(LOG_ERR,
+					"unknown mode (%d) in "
+					"handle_kamailioNetConfWsTlsTransport\n",
 					reqinfo->mode);
 			return SNMP_ERR_GENERR;
 	}

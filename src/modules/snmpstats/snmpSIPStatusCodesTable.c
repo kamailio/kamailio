@@ -163,7 +163,7 @@ int kamailioSIPStatusCodesTable_extract_index(
 		netsnmp_assert(ctx->index.oids == NULL);
 		if((hdr->len > MAX_OID_LEN)
 				|| snmp_clone_mem((void *)&ctx->index.oids, hdr->oids,
-						   hdr->len * sizeof(oid))) {
+						hdr->len * sizeof(oid))) {
 			return -1;
 		}
 

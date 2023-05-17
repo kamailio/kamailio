@@ -297,7 +297,7 @@ void initialize_table_kamailioSIPRegUserTable(void)
 
 	/* create the table structure itself */
 	table_info = SNMP_MALLOC_TYPEDEF(netsnmp_table_registration_info);
-	if(table_info==NULL) {
+	if(table_info == NULL) {
 		snmp_log(LOG_ERR, "failed to allocate table_info\n");
 		return;
 	}

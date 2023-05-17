@@ -202,8 +202,8 @@ int createContactRow(int userIndex, int contactIndex, char *contactName,
 	theRow->kamailioSIPContactIndex = contactIndex;
 
 	/* Fill in the rest of the rows columns */
-	theRow->kamailioSIPContactURI =
-			(unsigned char *)pkg_malloc((stringLength + 1) * sizeof(unsigned char));
+	theRow->kamailioSIPContactURI = (unsigned char *)pkg_malloc(
+			(stringLength + 1) * sizeof(unsigned char));
 	if(theRow->kamailioSIPContactURI == NULL) {
 		pkg_free(OIDIndex);
 		free(theRow);
@@ -290,7 +290,7 @@ void initialize_table_kamailioSIPContactTable(void)
 
 	/** create the table structure itself */
 	table_info = SNMP_MALLOC_TYPEDEF(netsnmp_table_registration_info);
-	if(table_info==NULL) {
+	if(table_info == NULL) {
 		snmp_log(LOG_ERR, "failed to allocate table_info\n");
 		return;
 	}

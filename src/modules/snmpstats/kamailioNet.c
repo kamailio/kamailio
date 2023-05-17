@@ -315,8 +315,9 @@ int handle_kamailioNetTcpConnEstablished(netsnmp_mib_handler *handler,
 
 		default:
 			/* we should never get here, so this is a really bad error */
-			snmp_log(LOG_ERR, "unknown mode (%d) in "
-							  "handle_kamailioNetTcpConnEstablished\n",
+			snmp_log(LOG_ERR,
+					"unknown mode (%d) in "
+					"handle_kamailioNetTcpConnEstablished\n",
 					reqinfo->mode);
 			return SNMP_ERR_GENERR;
 	}
@@ -436,8 +437,9 @@ int handle_kamailioNetTcpConnPassiveOpen(netsnmp_mib_handler *handler,
 
 		default:
 			/* we should never get here, so this is a really bad error */
-			snmp_log(LOG_ERR, "unknown mode (%d) in "
-							  "handle_kamailioNetTcpConnPassiveOpen\n",
+			snmp_log(LOG_ERR,
+					"unknown mode (%d) in "
+					"handle_kamailioNetTcpConnPassiveOpen\n",
 					reqinfo->mode);
 			return SNMP_ERR_GENERR;
 	}
@@ -756,8 +758,9 @@ int handle_kamailioNetTcpAsyncConnWqMax(netsnmp_mib_handler *handler,
 
 		default:
 			/* we should never get here, so this is a really bad error */
-			snmp_log(LOG_ERR, "unknown mode (%d) in "
-							  "handle_kamailioNetTcpAsyncConnWqMax\n",
+			snmp_log(LOG_ERR,
+					"unknown mode (%d) in "
+					"handle_kamailioNetTcpAsyncConnWqMax\n",
 					reqinfo->mode);
 			return SNMP_ERR_GENERR;
 	}
@@ -1228,8 +1231,9 @@ int handle_kamailioNetWsConnsClosedLocal(netsnmp_mib_handler *handler,
 
 		default:
 			/* we should never get here, so this is a really bad error */
-			snmp_log(LOG_ERR, "unknown mode (%d) in "
-							  "handle_kamailioNetWsConnsClosedLocal\n",
+			snmp_log(LOG_ERR,
+					"unknown mode (%d) in "
+					"handle_kamailioNetWsConnsClosedLocal\n",
 					reqinfo->mode);
 			return SNMP_ERR_GENERR;
 	}
@@ -1252,8 +1256,9 @@ int handle_kamailioNetWsConnsClosedRemote(netsnmp_mib_handler *handler,
 
 		default:
 			/* we should never get here, so this is a really bad error */
-			snmp_log(LOG_ERR, "unknown mode (%d) in "
-							  "handle_kamailioNetWsConnsClosedRemote\n",
+			snmp_log(LOG_ERR,
+					"unknown mode (%d) in "
+					"handle_kamailioNetWsConnsClosedRemote\n",
 					reqinfo->mode);
 			return SNMP_ERR_GENERR;
 	}
@@ -1324,8 +1329,9 @@ int handle_kamailioNetWsHandshakeSuccess(netsnmp_mib_handler *handler,
 
 		default:
 			/* we should never get here, so this is a really bad error */
-			snmp_log(LOG_ERR, "unknown mode (%d) in "
-							  "handle_kamailioNetWsHandshakeSuccess\n",
+			snmp_log(LOG_ERR,
+					"unknown mode (%d) in "
+					"handle_kamailioNetWsHandshakeSuccess\n",
 					reqinfo->mode);
 			return SNMP_ERR_GENERR;
 	}
@@ -1348,8 +1354,9 @@ int handle_kamailioNetWsHandshakeFailed(netsnmp_mib_handler *handler,
 
 		default:
 			/* we should never get here, so this is a really bad error */
-			snmp_log(LOG_ERR, "unknown mode (%d) in "
-							  "handle_kamailioNetWsHandshakeFailed\n",
+			snmp_log(LOG_ERR,
+					"unknown mode (%d) in "
+					"handle_kamailioNetWsHandshakeFailed\n",
 					reqinfo->mode);
 			return SNMP_ERR_GENERR;
 	}
