@@ -11,14 +11,16 @@
 #define GO_CGO_EXPORT_PROLOGUE_H
 
 #ifndef GO_CGO_GOSTRING_TYPEDEF
-typedef struct { const char *p; ptrdiff_t n; } _GoString_;
+typedef struct
+{
+	const char *p;
+	ptrdiff_t n;
+} _GoString_;
 #endif
 
 #endif
 
 /* Start of preamble from import "C" comments.  */
-
-
 
 
 /* End of preamble from import "C" comments.  */
@@ -50,131 +52,151 @@ typedef double _Complex GoComplex128;
   static assertion to make sure the file is being used on architecture
   at least with matching size of GoInt.
 */
-typedef char _check_for_64_bit_pointer_matching_GoInt[sizeof(void*)==64/8 ? 1:-1];
+typedef char _check_for_64_bit_pointer_matching_GoInt[sizeof(void *) == 64 / 8
+															  ? 1
+															  : -1];
 
 #ifndef GO_CGO_GOSTRING_TYPEDEF
 typedef _GoString_ GoString;
 #endif
 typedef void *GoMap;
 typedef void *GoChan;
-typedef struct { void *t; void *v; } GoInterface;
-typedef struct { void *data; GoInt len; GoInt cap; } GoSlice;
+typedef struct
+{
+	void *t;
+	void *v;
+} GoInterface;
+typedef struct
+{
+	void *data;
+	GoInt len;
+	GoInt cap;
+} GoSlice;
 
 #endif
 
 /* End of boilerplate cgo prologue.  */
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 
-// SecSIPIDSignJSONHP --
-// * sign the JSON header and payload with provided private key
-// * headerJSON -  header part in JSON format (0-terminated string)
-// * payloadJSON -  payload part in JSON format (0-terminated string)
-// * prvkeyPath - path to private key to be used to generate the signature
-// * outPtr - to be set to the pointer containing the output (it is a
-//   0-terminated string); the `*outPtr` must be freed after use
-// * return: the length of `*outPtr`
-extern int SecSIPIDSignJSONHP(char* headerJSON, char* payloadJSON, char* prvkeyPath, char** outPtr);
+	// SecSIPIDSignJSONHP --
+	// * sign the JSON header and payload with provided private key
+	// * headerJSON -  header part in JSON format (0-terminated string)
+	// * payloadJSON -  payload part in JSON format (0-terminated string)
+	// * prvkeyPath - path to private key to be used to generate the signature
+	// * outPtr - to be set to the pointer containing the output (it is a
+	//   0-terminated string); the `*outPtr` must be freed after use
+	// * return: the length of `*outPtr`
+	extern int SecSIPIDSignJSONHP(char *headerJSON, char *payloadJSON,
+			char *prvkeyPath, char **outPtr);
 
-// SecSIPIDGetIdentity --
-// Generate the Identity header content using the input attributes
-// * origTN - calling number
-// * destTN - called number
-// * attestVal - attestation level
-// * origID - unique ID for tracking purposes, if empty string a UUID is generated
-// * x5uVal - location of public certificate
-// * prvkeyPath - path to private key to be used to generate the signature
-// * outPtr - to be set to the pointer containing the output (it is a
-//   0-terminated string); the `*outPtr` must be freed after use
-// * return: the length of `*outPtr`
-extern int SecSIPIDGetIdentity(char* origTN, char* destTN, char* attestVal, char* origID, char* x5uVal, char* prvkeyPath, char** outPtr);
+	// SecSIPIDGetIdentity --
+	// Generate the Identity header content using the input attributes
+	// * origTN - calling number
+	// * destTN - called number
+	// * attestVal - attestation level
+	// * origID - unique ID for tracking purposes, if empty string a UUID is generated
+	// * x5uVal - location of public certificate
+	// * prvkeyPath - path to private key to be used to generate the signature
+	// * outPtr - to be set to the pointer containing the output (it is a
+	//   0-terminated string); the `*outPtr` must be freed after use
+	// * return: the length of `*outPtr`
+	extern int SecSIPIDGetIdentity(char *origTN, char *destTN, char *attestVal,
+			char *origID, char *x5uVal, char *prvkeyPath, char **outPtr);
 
-// SecSIPIDGetIdentityPrvKey --
-// Generate the Identity header content using the input attributes
-// * origTN - calling number
-// * destTN - called number
-// * attestVal - attestation level
-// * origID - unique ID for tracking purposes, if empty string a UUID is generated
-// * x5uVal - location of public certificate
-// * prvkeyData - content of private key to be used to generate the signature
-// * outPtr - to be set to the pointer containing the output (it is a
-//   0-terminated string); the `*outPtr` must be freed after use
-// * return: the length of `*outPtr`
-extern int SecSIPIDGetIdentityPrvKey(char* origTN, char* destTN, char* attestVal, char* origID, char* x5uVal, char* prvkeyData, char** outPtr);
+	// SecSIPIDGetIdentityPrvKey --
+	// Generate the Identity header content using the input attributes
+	// * origTN - calling number
+	// * destTN - called number
+	// * attestVal - attestation level
+	// * origID - unique ID for tracking purposes, if empty string a UUID is generated
+	// * x5uVal - location of public certificate
+	// * prvkeyData - content of private key to be used to generate the signature
+	// * outPtr - to be set to the pointer containing the output (it is a
+	//   0-terminated string); the `*outPtr` must be freed after use
+	// * return: the length of `*outPtr`
+	extern int SecSIPIDGetIdentityPrvKey(char *origTN, char *destTN,
+			char *attestVal, char *origID, char *x5uVal, char *prvkeyData,
+			char **outPtr);
 
-// SecSIPIDCheck --
-// check the Identity header value
-// * identityVal - identity header value
-// * identityLen - length of identityVal, if is 0, identityVal is expected
-//   to be 0-terminated
-// * expireVal - number of seconds until the validity is considered expired
-// * pubkeyPath - file path or URL to public key
-// * timeoutVal - timeout in seconds to try to fetch the public key via HTTP
-// * return: 0 - if validity is ok; <0 - on error or validity is not ok
-extern int SecSIPIDCheck(char* identityVal, int identityLen, int expireVal, char* pubkeyPath, int timeoutVal);
+	// SecSIPIDCheck --
+	// check the Identity header value
+	// * identityVal - identity header value
+	// * identityLen - length of identityVal, if is 0, identityVal is expected
+	//   to be 0-terminated
+	// * expireVal - number of seconds until the validity is considered expired
+	// * pubkeyPath - file path or URL to public key
+	// * timeoutVal - timeout in seconds to try to fetch the public key via HTTP
+	// * return: 0 - if validity is ok; <0 - on error or validity is not ok
+	extern int SecSIPIDCheck(char *identityVal, int identityLen, int expireVal,
+			char *pubkeyPath, int timeoutVal);
 
-// SecSIPIDCheckFull --
-// check the Identity header value
-// * identityVal - identity header value with header parameters
-// * identityLen - length of identityVal, if it is 0, identityVal is expected
-//   to be 0-terminated
-// * expireVal - number of seconds until the validity is considered expired
-// * pubkeyPath - file path or URL to public key
-// * timeoutVal - timeout in seconds to try to fetch the public key via HTTP
-// * return: 0 - if validity is ok; <0 - on error or validity is not ok
-extern int SecSIPIDCheckFull(char* identityVal, int identityLen, int expireVal, char* pubkeyPath, int timeoutVal);
+	// SecSIPIDCheckFull --
+	// check the Identity header value
+	// * identityVal - identity header value with header parameters
+	// * identityLen - length of identityVal, if it is 0, identityVal is expected
+	//   to be 0-terminated
+	// * expireVal - number of seconds until the validity is considered expired
+	// * pubkeyPath - file path or URL to public key
+	// * timeoutVal - timeout in seconds to try to fetch the public key via HTTP
+	// * return: 0 - if validity is ok; <0 - on error or validity is not ok
+	extern int SecSIPIDCheckFull(char *identityVal, int identityLen,
+			int expireVal, char *pubkeyPath, int timeoutVal);
 
-// SecSIPIDCheckFullPubKey --
-// check the Identity header value
-// * identityVal - identity header value with header parameters
-// * identityLen - length of identityVal, if it is 0, identityVal is expected
-//   to be 0-terminated
-// * expireVal - number of seconds until the validity is considered expired
-// * pubkeyVal - the value of the public key
-// * pubkeyLen - the length of the public key, if it is 0, then the pubkeyVal
-//   is expected to be 0-terminated
-// * return: 0 - if validity is ok; <0 - on error or validity is not ok
-extern int SecSIPIDCheckFullPubKey(char* identityVal, int identityLen, int expireVal, char* pubkeyVal, int pubkeyLen);
+	// SecSIPIDCheckFullPubKey --
+	// check the Identity header value
+	// * identityVal - identity header value with header parameters
+	// * identityLen - length of identityVal, if it is 0, identityVal is expected
+	//   to be 0-terminated
+	// * expireVal - number of seconds until the validity is considered expired
+	// * pubkeyVal - the value of the public key
+	// * pubkeyLen - the length of the public key, if it is 0, then the pubkeyVal
+	//   is expected to be 0-terminated
+	// * return: 0 - if validity is ok; <0 - on error or validity is not ok
+	extern int SecSIPIDCheckFullPubKey(char *identityVal, int identityLen,
+			int expireVal, char *pubkeyVal, int pubkeyLen);
 
-// SecSIPIDSetFileCacheOptions --
-// set the options for local file caching of public keys
-// * dirPath - path to local directory where to store the files
-// * expireVal - number of the seconds after which to invalidate the cached file
-// * return: 0
-extern int SecSIPIDSetFileCacheOptions(char* dirPath, int expireVal);
+	// SecSIPIDSetFileCacheOptions --
+	// set the options for local file caching of public keys
+	// * dirPath - path to local directory where to store the files
+	// * expireVal - number of the seconds after which to invalidate the cached file
+	// * return: 0
+	extern int SecSIPIDSetFileCacheOptions(char *dirPath, int expireVal);
 
-// SecSIPIDGetURLContent --
-// get the content of an URL
-// * urlVal - the HTTP or HTTPS URL
-// * timeoutVal - timeout in seconds to try to get the content of the HTTP URL
-// * outPtr - to be set to the pointer containing the output (it is a
-//   0-terminated string); the `*outPtr` must be freed after use
-// * outLen: to be set to the length of `*outPtr`
-// * return: 0 - on success; -1 - on failure
-extern int SecSIPIDGetURLContent(char* urlVal, int timeoutVal, char** outPtr, int* outLen);
+	// SecSIPIDGetURLContent --
+	// get the content of an URL
+	// * urlVal - the HTTP or HTTPS URL
+	// * timeoutVal - timeout in seconds to try to get the content of the HTTP URL
+	// * outPtr - to be set to the pointer containing the output (it is a
+	//   0-terminated string); the `*outPtr` must be freed after use
+	// * outLen: to be set to the length of `*outPtr`
+	// * return: 0 - on success; -1 - on failure
+	extern int SecSIPIDGetURLContent(
+			char *urlVal, int timeoutVal, char **outPtr, int *outLen);
 
-// SecSIPIDOptSetS --
-// set a string option for the library
-// * optName - name of the option
-// * optVal - value of the option
-// * return: 0 if option was set, -1 otherwise
-extern int SecSIPIDOptSetS(char* optName, char* optVal);
+	// SecSIPIDOptSetS --
+	// set a string option for the library
+	// * optName - name of the option
+	// * optVal - value of the option
+	// * return: 0 if option was set, -1 otherwise
+	extern int SecSIPIDOptSetS(char *optName, char *optVal);
 
-// SecSIPIDOptSetN --
-// set a number (integer) option for the library
-// * optName - name of the option
-// * optVal - value of the option
-// * 0 if option was set, -1 otherwise
-extern int SecSIPIDOptSetN(char* optName, int optVal);
+	// SecSIPIDOptSetN --
+	// set a number (integer) option for the library
+	// * optName - name of the option
+	// * optVal - value of the option
+	// * 0 if option was set, -1 otherwise
+	extern int SecSIPIDOptSetN(char *optName, int optVal);
 
-// SecSIPIDOptSetV --
-// set an option for the library
-// * optNameVal - string with name=value of the option
-// * 0 if option was set, -1 otherwise
-extern int SecSIPIDOptSetV(char* optNameVal);
+	// SecSIPIDOptSetV --
+	// set an option for the library
+	// * optNameVal - string with name=value of the option
+	// * 0 if option was set, -1 otherwise
+	extern int SecSIPIDOptSetV(char *optNameVal);
 
 #ifdef __cplusplus
 }
