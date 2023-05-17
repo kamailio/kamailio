@@ -562,8 +562,6 @@ int th_mask_callid_str(str *icallid, str *ocallid)
 		LM_ERR("cannot encode call-id\n");
 		return -1;
 	}
-	
-	out.s[out.len] = '\0';
 	ocallid->s = out.s;
 	ocallid->len = out.len;
 
@@ -572,7 +570,6 @@ int th_mask_callid_str(str *icallid, str *ocallid)
 
 int th_unmask_callid_str(str *icallid, str *ocallid)
 {
-	
 	str out;
 
 	if(th_param_mask_callid==0)
@@ -597,8 +594,6 @@ int th_unmask_callid_str(str *icallid, str *ocallid)
 		LM_ERR("failed to decode call-id\n");
 		return -2;
 	}
-	
-	out.s[out.len] = '\0';
 	ocallid->s = out.s;
 	ocallid->len = out.len;
 

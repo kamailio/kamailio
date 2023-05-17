@@ -96,19 +96,20 @@ char* th_mask_encode(char *in, int ilen, str *prefix, int *olen)
 
 	*olen = (((ilen+2)/3)<<2) + ((prefix!=NULL&&prefix->len>0)?prefix->len:0);
 	out = (char*)pkg_malloc((*olen+1)*sizeof(char));
-	if(out==NULL)
-	{
+	if(out==NULL) {
 		PKG_MEM_ERROR;
 		*olen = 0;
 		return NULL;
 	}
+
+	/* set 0 at the end of the value */
 	memset(out, 0, (*olen+1)*sizeof(char));
-	if(prefix!=NULL&&prefix->len>0)
+	if(prefix!=NULL&&prefix->len>0) {
 		memcpy(out, prefix->s, prefix->len);
+	}
 
 	p = out + (int)((prefix!=NULL&&prefix->len>0)?prefix->len:0);
-	for(idx=0; idx<ilen; idx+=3)
-	{
+	for(idx=0; idx<ilen; idx+=3) {
 		left = ilen - idx - 1 ;
 		left = (left>1)?2:left;
 
@@ -149,24 +150,21 @@ char* th_mask_decode(char *in, int ilen, str *prefix, int extra, int *olen)
 
 	out = (char*)pkg_malloc((*olen+1+extra)*sizeof(char));
 
-	if(out==NULL)
-	{
+	if(out==NULL) {
 		PKG_MEM_ERROR;
 		*olen = 0;
 		return NULL;
 	}
+	/* set 0 at the end of the value */
 	memset(out, 0, (*olen+1+extra)*sizeof(char));
 
 	end = ilen - n;
 	i = (prefix!=NULL&&prefix->len>0)?prefix->len:0;
-	for(idx=0; i<end; idx+=3)
-	{
+	for(idx=0; i<end; idx+=3) {
 		block = 0;
-		for(j=0; j<4 && i<end ; j++)
-		{
+		for(j=0; j<4 && i<end ; j++) {
 			c = _th_DB64[(int)in[i++]];
-			if(c<0)
-			{
+			if(c<0) {
 				LM_ERR("invalid input string\"%.*s\"\n", ilen, in);
 				pkg_free(out);
 				*olen = 0;
@@ -175,11 +173,11 @@ char* th_mask_decode(char *in, int ilen, str *prefix, int extra, int *olen)
 			block += c << (18 - 6*j);
 		}
 
-		for(j=0, n=16; j<3 && idx+j< *olen; j++, n-=8)
+		for(j=0, n=16; j<3 && idx+j< *olen; j++, n-=8) {
 			out[idx+j] = (char)((block >> n) & 0xff);
+		}
 	}
 
 	return out;
 }
-
 
