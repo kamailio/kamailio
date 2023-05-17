@@ -28,30 +28,32 @@
 #include "../../core/parser/msg_parser.h"
 #include "../../core/kemi.h"
 
-typedef VALUE (*app_ruby_function)(int argc, VALUE* argv, VALUE self);
+typedef VALUE (*app_ruby_function)(int argc, VALUE *argv, VALUE self);
 
-typedef struct _ksr_ruby_context {
+typedef struct _ksr_ruby_context
+{
 	int ctxid;
 } ksr_ruby_context_t;
 
-typedef struct _ksr_ruby_export {
+typedef struct _ksr_ruby_export
+{
 	char *mname;
 	char *fname;
 	app_ruby_function func;
 } ksr_ruby_export_t;
 
-VALUE sr_kemi_ruby_exec_func(ksr_ruby_context_t *R, int eidx, int argc,
-		VALUE* argv, VALUE self);
+VALUE sr_kemi_ruby_exec_func(
+		ksr_ruby_context_t *R, int eidx, int argc, VALUE *argv, VALUE self);
 
 int app_ruby_proc_init_child(void);
 void app_ruby_proc_mod_destroy(void);
-int app_ruby_proc_run_ex(sip_msg_t *msg, char *func, char *p1, char *p2,
-		char *p3, int emode);
-int app_ruby_proc_opt_set_s(char* optName, str* optVal);
-int app_ruby_proc_opt_set_n(char* optName, int optVal);
-int app_ruby_proc_opt_set_p(char* optName, void* optVal);
+int app_ruby_proc_run_ex(
+		sip_msg_t *msg, char *func, char *p1, char *p2, char *p3, int emode);
+int app_ruby_proc_opt_set_s(char *optName, str *optVal);
+int app_ruby_proc_opt_set_n(char *optName, int optVal);
+int app_ruby_proc_opt_set_p(char *optName, void *optVal);
 int app_ruby_proc_get_export_size(void);
-sr_kemi_t* app_ruby_proc_get_export(int idx);
+sr_kemi_t *app_ruby_proc_get_export(int idx);
 int app_ruby_proc_initialized(void);
 int app_ruby_proc_local_version(void);
 
