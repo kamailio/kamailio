@@ -33,7 +33,8 @@
 #include "../../core/rpc.h"
 #include "../../core/timer.h"
 
-typedef enum {
+typedef enum
+{
 	WS_S_CONNECTING = 0, /* Never used - included for completeness */
 	WS_S_OPEN,
 	WS_S_CLOSING,
@@ -77,7 +78,8 @@ typedef struct
 	ws_connection_t *tail;
 } ws_connection_list_t;
 
-typedef enum {
+typedef enum
+{
 	WSCONN_EVENTROUTE_NO = 0,
 	WSCONN_EVENTROUTE_YES
 } ws_conn_eventroute_t;

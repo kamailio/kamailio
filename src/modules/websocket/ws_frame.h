@@ -34,7 +34,11 @@
 #include "../../core/rpc.h"
 #include "ws_conn.h"
 
-typedef enum { LOCAL_CLOSE = 0, REMOTE_CLOSE } ws_close_type_t;
+typedef enum
+{
+	LOCAL_CLOSE = 0,
+	REMOTE_CLOSE
+} ws_close_type_t;
 
 enum
 {
