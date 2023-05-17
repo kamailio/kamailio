@@ -37,7 +37,8 @@ int mongodbc_exec(str *srv, str *dname, str *cname, str *cmd, str *res);
 int mongodbc_find(str *srv, str *dname, str *cname, str *cmd, str *res);
 int mongodbc_find_one(str *srv, str *dname, str *cname, str *cmd, str *res);
 
-typedef struct mongodbc_server {
+typedef struct mongodbc_server
+{
 	str *sname;
 	str *uri;
 	unsigned int hname;
@@ -46,7 +47,8 @@ typedef struct mongodbc_server {
 	struct mongodbc_server *next;
 } mongodbc_server_t;
 
-typedef struct mongodbc_reply {
+typedef struct mongodbc_reply
+{
 	str rname;
 	unsigned int hname;
 	mongoc_collection_t *collection;
@@ -55,7 +57,8 @@ typedef struct mongodbc_reply {
 	struct mongodbc_reply *next;
 } mongodbc_reply_t;
 
-typedef struct mongodbc_pv {
+typedef struct mongodbc_pv
+{
 	str rname;
 	mongodbc_reply_t *reply;
 	str rkey;
@@ -63,7 +66,7 @@ typedef struct mongodbc_pv {
 } mongodbc_pv_t;
 
 /* Server related functions */
-mongodbc_server_t* mongodbc_get_server(str *name);
+mongodbc_server_t *mongodbc_get_server(str *name);
 int mongodbc_reconnect_server(mongodbc_server_t *rsrv);
 
 /* Command related functions */
