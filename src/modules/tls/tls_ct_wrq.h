@@ -33,7 +33,6 @@
 #include "../../core/tcp_conn.h"
 
 
-
 /**
  * @brief Init clear text write queues support
  * @return 0 on success, < 0 on error.
@@ -52,8 +51,8 @@ void tls_ct_wq_destroy();
  */
 unsigned int tls_ct_wq_total_bytes();
 
-#define tls_ct_wq_empty(tc_q) (*(tc_q)==0 || (*(tc_q))->first==0)
-#define tls_ct_wq_non_empty(bq) (*(tc_q) && (*(tc_q))->first!=0)
+#define tls_ct_wq_empty(tc_q) (*(tc_q) == 0 || (*(tc_q))->first == 0)
+#define tls_ct_wq_non_empty(bq) (*(tc_q) && (*(tc_q))->first != 0)
 
 /**
  * @brief Wrapper over tls_ct_q_flush()
@@ -67,8 +66,8 @@ unsigned int tls_ct_wq_total_bytes();
  * @return -1 on internal error, or the number of bytes flushed on success
  *         (>=0).
  */
-int tls_ct_wq_flush(struct tcp_connection* c, tls_ct_q** tc_q,
-					int* flags, int* ssl_err);
+int tls_ct_wq_flush(
+		struct tcp_connection *c, tls_ct_q **tc_q, int *flags, int *ssl_err);
 
 /**
  * @brief Wrapper over tls_ct_q_add()
@@ -82,7 +81,7 @@ int tls_ct_wq_flush(struct tcp_connection* c, tls_ct_q** tc_q,
  * @return 0 on success, < 0 on error (-1 memory allocation, -2 queue size
  *         too big).
  */
-int tls_ct_wq_add(tls_ct_q** ct_q, const void* data, unsigned int size);
+int tls_ct_wq_add(tls_ct_q **ct_q, const void *data, unsigned int size);
 
 /**
  * @brief Wrapper over tls_ct_q_destroy()
@@ -91,7 +90,7 @@ int tls_ct_wq_add(tls_ct_q** ct_q, const void* data, unsigned int size);
  * @param ct_q clear text queue
  * @return number of bytes that used to be queued (>=0),
  */
-unsigned int tls_ct_wq_free(tls_ct_q** ct_q);
+unsigned int tls_ct_wq_free(tls_ct_q **ct_q);
 
 #endif /*__tls_ct_wrq_h*/
 
