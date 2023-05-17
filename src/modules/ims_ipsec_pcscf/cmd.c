@@ -81,17 +81,17 @@ extern struct tm_binds tmb;
 /* if set - start searching from the last element */
 #define IPSEC_REVERSE_SEARCH 2
 /* if set - use destination address for IPSec tunnel search */
-#define IPSEC_DSTADDR_SEARCH (1<<2)
+#define IPSEC_DSTADDR_SEARCH (1 << 2)
 /* if set - use new r-uri address for IPSec tunnel search */
-#define IPSEC_RURIADDR_SEARCH (1<<3)
+#define IPSEC_RURIADDR_SEARCH (1 << 3)
 /* if set - do not use alias for IPSec tunnel received details */
-#define IPSEC_NOALIAS_SEARCH (1<<4)
+#define IPSEC_NOALIAS_SEARCH (1 << 4)
 /* if set - do not reset dst uri for IPsec forward */
-#define IPSEC_NODSTURI_RESET (1<<5)
+#define IPSEC_NODSTURI_RESET (1 << 5)
 /* if set - use user equipment client port as target for requests over TCP */
-#define IPSEC_TCPPORT_UEC (1<<6)
+#define IPSEC_TCPPORT_UEC (1 << 6)
 /* if set - build new dst uri with transport parameter for TCP */
-#define IPSEC_SETDSTURI_FULL (1<<7)
+#define IPSEC_SETDSTURI_FULL (1 << 7)
 
 /* if set - delete unused tunnels before every registration */
 #define IPSEC_CREATE_DELETE_UNUSED_TUNNELS 0x01
@@ -183,24 +183,24 @@ static int fill_contact(
 
 		memset(&uri, 0, sizeof(struct sip_uri));
 
-		if((sflags & IPSEC_DSTADDR_SEARCH) && m->dst_uri.s!=NULL
-				&& m->dst_uri.len>0) {
+		if((sflags & IPSEC_DSTADDR_SEARCH) && m->dst_uri.s != NULL
+				&& m->dst_uri.len > 0) {
 			suri = m->dst_uri;
-			LM_DBG("using dst uri for contact filling: %.*s\n",
-					suri.len, suri.s);
-		} else if((sflags & IPSEC_RURIADDR_SEARCH) && m->new_uri.s!=NULL
-				&& m->new_uri.len>0) {
+			LM_DBG("using dst uri for contact filling: %.*s\n", suri.len,
+					suri.s);
+		} else if((sflags & IPSEC_RURIADDR_SEARCH) && m->new_uri.s != NULL
+				  && m->new_uri.len > 0) {
 			suri = m->new_uri;
-			LM_DBG("using new r-uri for contact filling: %.*s\n",
-					suri.len, suri.s);
+			LM_DBG("using new r-uri for contact filling: %.*s\n", suri.len,
+					suri.s);
 		} else {
 			suri = m->first_line.u.request.uri;
-			LM_DBG("using original uri for contact filling: %.*s\n",
-					suri.len, suri.s);
+			LM_DBG("using original uri for contact filling: %.*s\n", suri.len,
+					suri.s);
 		}
-		if(parse_uri(suri.s, suri.len, &uri)<0) {
-			LM_ERR("failed to parse the URI: %.*s / flags: 0x%x\n",
-					suri.len, suri.s, sflags);
+		if(parse_uri(suri.s, suri.len, &uri) < 0) {
+			LM_ERR("failed to parse the URI: %.*s / flags: 0x%x\n", suri.len,
+					suri.s, sflags);
 			return -1;
 		}
 
@@ -231,7 +231,7 @@ static int fill_contact(
 		if((!(sflags & IPSEC_NOALIAS_SEARCH)) && uri.params.len > 6) {
 			alias_start = _strnistr(uri.params.s, "alias=", uri.params.len);
 		}
-		if(alias_start!=NULL && *(alias_start-1)==';') {
+		if(alias_start != NULL && *(alias_start - 1) == ';') {
 			char *p, *port_s, *proto_s;
 			char portbuf[5];
 			str alias_s;
@@ -902,7 +902,7 @@ int ipsec_forward(struct sip_msg *m, udomain_t *d, int _cflags)
 	//    from URI
 	//int uri_len = 4 /* strlen("sip:") */ + ci.via_host.len + 5 /* max len of port number */ ;
 
-	if(!(_cflags & IPSEC_NODSTURI_RESET) && (m->dst_uri.s!=NULL)) {
+	if(!(_cflags & IPSEC_NODSTURI_RESET) && (m->dst_uri.s != NULL)) {
 		LM_DBG("resetting dst uri [%.*s]\n", m->dst_uri.len, m->dst_uri.s);
 		pkg_free(m->dst_uri.s);
 		m->dst_uri.s = NULL;
@@ -920,7 +920,8 @@ int ipsec_forward(struct sip_msg *m, udomain_t *d, int _cflags)
 		dst_port = dst_proto == PROTO_TCP ? s->port_uc : s->port_us;
 
 		// Check send socket
-		client_sock = grep_sock_info(via_host.af == AF_INET ? &ipsec_listen_addr
+		client_sock =
+				grep_sock_info(via_host.af == AF_INET ? &ipsec_listen_addr
 													  : &ipsec_listen_addr6,
 						src_port, dst_proto);
 		if(!client_sock) {
@@ -951,11 +952,12 @@ int ipsec_forward(struct sip_msg *m, udomain_t *d, int _cflags)
 		char buf[1024];
 		int buf_len;
 		if((_cflags & IPSEC_SETDSTURI_FULL) && (dst_proto == PROTO_TCP)) {
-			buf_len = snprintf(buf, sizeof(buf) - 1, "sip:%.*s:%d;transport=tcp",
-					ci.via_host.len, ci.via_host.s, dst_port);
+			buf_len =
+					snprintf(buf, sizeof(buf) - 1, "sip:%.*s:%d;transport=tcp",
+							ci.via_host.len, ci.via_host.s, dst_port);
 		} else {
-			buf_len = snprintf(buf, sizeof(buf) - 1, "sip:%.*s:%d", ci.via_host.len,
-					ci.via_host.s, dst_port);
+			buf_len = snprintf(buf, sizeof(buf) - 1, "sip:%.*s:%d",
+					ci.via_host.len, ci.via_host.s, dst_port);
 		}
 
 		if((m->dst_uri.s = pkg_malloc(buf_len + 1)) == NULL) {
