@@ -225,8 +225,8 @@ int ki_radius_load_caller_avps(struct sip_msg *_m, str *user)
 
 	send = received = 0;
 
-	if(!rc_avpair_add(
-			rh, &send, caller_attrs[SA_USER_NAME].v, user->s, user->len, 0)) {
+	if(!rc_avpair_add(rh, &send, caller_attrs[SA_USER_NAME].v, user->s,
+			   user->len, 0)) {
 		LM_ERR("in adding SA_USER_NAME\n");
 		return -1;
 	}
@@ -321,8 +321,8 @@ int ki_radius_load_callee_avps(struct sip_msg *_m, str *user)
 
 	send = received = 0;
 
-	if(!rc_avpair_add(
-			rh, &send, callee_attrs[SA_USER_NAME].v, user->s, user->len, 0)) {
+	if(!rc_avpair_add(rh, &send, callee_attrs[SA_USER_NAME].v, user->s,
+			   user->len, 0)) {
 		LM_ERR("in adding SA_USER_NAME\n");
 		return -1;
 	}
@@ -498,8 +498,8 @@ int radius_is_user_in(struct sip_msg *_m, char *_user, char *_group)
 		LM_ERR("invalid user parameter");
 		return -1;
 	}
-	if((_group == NULL) || (fixup_get_svalue(_m, (gparam_p)_group,
-					&group) != 0)) {
+	if((_group == NULL)
+			|| (fixup_get_svalue(_m, (gparam_p)_group, &group) != 0)) {
 		LM_ERR("invalid group parameter");
 		return -1;
 	}
@@ -544,7 +544,7 @@ int radius_does_uri_user_host_exist(struct sip_msg *_m, str *user, str *host)
 		at += host->len;
 		*at = '\0';
 		if(!rc_avpair_add(
-					rh, &send, uri_attrs[SA_USER_NAME].v, user_host, -1, 0)) {
+				   rh, &send, uri_attrs[SA_USER_NAME].v, user_host, -1, 0)) {
 			LM_ERR("in adding SA_USER_NAME\n");
 			pkg_free(user_host);
 			return -1;
@@ -552,13 +552,13 @@ int radius_does_uri_user_host_exist(struct sip_msg *_m, str *user, str *host)
 	} else {
 		/* Send user in SA_USER_NAME attribute and host in SA_SIP_URI_HOST
 		   attribute */
-		if(!rc_avpair_add(
-				rh, &send, uri_attrs[SA_USER_NAME].v, user->s, user->len, 0)) {
+		if(!rc_avpair_add(rh, &send, uri_attrs[SA_USER_NAME].v, user->s,
+				   user->len, 0)) {
 			LM_ERR("adding User-Name failed\n");
 			return -1;
 		}
 		if(!rc_avpair_add(rh, &send, uri_attrs[SA_SIP_URI_HOST].v, host->s,
-					host->len, 0)) {
+				   host->len, 0)) {
 			LM_ERR("adding SIP-URI-Host failed\n");
 			goto error;
 		}
@@ -566,7 +566,7 @@ int radius_does_uri_user_host_exist(struct sip_msg *_m, str *user, str *host)
 
 	service = uri_vals[UV_CALL_CHECK].v;
 	if(!rc_avpair_add(
-				rh, &send, uri_attrs[SA_SERVICE_TYPE].v, &service, -1, 0)) {
+			   rh, &send, uri_attrs[SA_SERVICE_TYPE].v, &service, -1, 0)) {
 		LM_ERR("in adding SA_SERVICE_TYPE <%u>\n", service);
 		goto error;
 	}
@@ -668,7 +668,7 @@ int radius_does_uri_exist_1(struct sip_msg *_m, char *_sp, char *_s2)
 {
 	str suri;
 
-	if(fixup_get_svalue(_m, (gparam_t*)_sp, &suri)<0) {
+	if(fixup_get_svalue(_m, (gparam_t *)_sp, &suri) < 0) {
 		LM_ERR("cannot get uri value\n");
 		return -1;
 	}
@@ -784,7 +784,7 @@ int radius_does_uri_user_exist_1(struct sip_msg *_m, char *_sp, char *_s2)
 {
 	str suser;
 
-	if(fixup_get_svalue(_m, (gparam_t*)_sp, &suser)<0) {
+	if(fixup_get_svalue(_m, (gparam_t *)_sp, &suser) < 0) {
 		LM_ERR("cannot get user value\n");
 		return -1;
 	}
