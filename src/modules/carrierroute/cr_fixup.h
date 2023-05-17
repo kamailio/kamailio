@@ -40,9 +40,9 @@
  *
  * @return 0 on success, -1 on failure
  */
-int cr_route_fixup(void ** param, int param_no);
+int cr_route_fixup(void **param, int param_no);
 
-int cr_route_fixup_free(void ** param, int param_no);
+int cr_route_fixup_free(void **param, int param_no);
 
 
 /**
@@ -53,9 +53,9 @@ int cr_route_fixup_free(void ** param, int param_no);
  *
  * @return 0 on success, -1 on failure
  */
-int cr_load_user_carrier_fixup(void ** param, int param_no);
+int cr_load_user_carrier_fixup(void **param, int param_no);
 
-int cr_load_user_carrier_fixup_free(void ** param, int param_no);
+int cr_load_user_carrier_fixup_free(void **param, int param_no);
 
 /**
  * Fixes the module functions' parameters, i.e. it maps
@@ -67,8 +67,8 @@ int cr_load_user_carrier_fixup_free(void ** param, int param_no);
  *
  * @return 0 on success, -1 on failure
  */
-int cr_load_next_domain_fixup(void ** param, int param_no);
+int cr_load_next_domain_fixup(void **param, int param_no);
 
-int cr_load_next_domain_fixup_free(void ** param, int param_no);
+int cr_load_next_domain_fixup_free(void **param, int param_no);
 
 #endif

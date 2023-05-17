@@ -37,15 +37,18 @@
 /**
  * contains all routing data.
  */
-struct route_data_t {
-	struct name_map_t * carrier_map; /*!< holds the map between carrier names and numbers */
-	struct name_map_t * domain_map; /*!< holds the map between domain names and numbers */
-	struct carrier_data_t ** carriers; /*!< array of carriers */
-	size_t carrier_num; /*!< number of carriers */
+struct route_data_t
+{
+	struct name_map_t *
+			carrier_map; /*!< holds the map between carrier names and numbers */
+	struct name_map_t
+			*domain_map; /*!< holds the map between domain names and numbers */
+	struct carrier_data_t **carriers; /*!< array of carriers */
+	size_t carrier_num;				  /*!< number of carriers */
 	size_t first_empty_carrier; /*!< the index of the first empty entry in carriers */
-	size_t domain_num; /*!< total number of different domains */
+	size_t domain_num;			/*!< total number of different domains */
 	int default_carrier_id;
-	int proc_cnt; /*!< a ref counter for the shm data */
+	int proc_cnt;	 /*!< a ref counter for the shm data */
 	gen_lock_t lock; /*!< lock for ref counter updates */
 };
 
@@ -79,7 +82,8 @@ void clear_route_data(struct route_data_t *data);
  *
  * @return 0 on success, -1 on failure
  */
-int add_carrier_data(struct route_data_t * rd, struct carrier_data_t * carrier_data);
+int add_carrier_data(
+		struct route_data_t *rd, struct carrier_data_t *carrier_data);
 
 
 /**
@@ -99,7 +103,7 @@ int reload_route_data(void);
  * @return pointer to the global routing data on success,
  * NULL on failure
 */
-struct route_data_t * get_data(void);
+struct route_data_t *get_data(void);
 
 
 /**
@@ -119,7 +123,8 @@ void release_data(struct route_data_t *data);
  *
  * @return a pointer to the desired carrier data, NULL if not found.
  */
-struct carrier_data_t *get_carrier_data(struct route_data_t * rd, int carrier_id);
+struct carrier_data_t *get_carrier_data(
+		struct route_data_t *rd, int carrier_id);
 
 
 /**
@@ -152,11 +157,12 @@ struct carrier_data_t *get_carrier_data(struct route_data_t * rd, int carrier_id
  *
  * @return 0 on success, -1 on error in which case it LOGs a message.
  */
-int add_route(struct route_data_t * rd, int carrier_id,
-		int domain_id, const str * scan_prefix, flag_t flags, flag_t mask, int max_targets,
-		double prob, const str * rewrite_hostpart, int strip, const str * rewrite_local_prefix,
-		const str * rewrite_local_suffix, int status, int hash_index, int backup, int * backed_up,
-		const str * comment);
+int add_route(struct route_data_t *rd, int carrier_id, int domain_id,
+		const str *scan_prefix, flag_t flags, flag_t mask, int max_targets,
+		double prob, const str *rewrite_hostpart, int strip,
+		const str *rewrite_local_prefix, const str *rewrite_local_suffix,
+		int status, int hash_index, int backup, int *backed_up,
+		const str *comment);
 
 
 /**
@@ -178,9 +184,9 @@ int add_route(struct route_data_t * rd, int carrier_id,
  *
  * @return 0 on success, -1 on error in which case it LOGs a message.
  */
-int add_failure_route(struct route_data_t * rd, int carrier_id, int domain_id,
-		const str * scan_prefix, const str * host, const str * reply_code,
-		flag_t flags, flag_t mask, int next_domain_id, const str * comment);
+int add_failure_route(struct route_data_t *rd, int carrier_id, int domain_id,
+		const str *scan_prefix, const str *host, const str *reply_code,
+		flag_t flags, flag_t mask, int next_domain_id, const str *comment);
 
 
 /**
@@ -191,7 +197,7 @@ int add_failure_route(struct route_data_t * rd, int carrier_id, int domain_id,
  *
  * @return 0 on success, -1 on failure
  */
-int rule_fixup(struct route_data_t * rd);
+int rule_fixup(struct route_data_t *rd);
 
 
 #endif

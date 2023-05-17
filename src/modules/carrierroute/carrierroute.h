@@ -35,16 +35,16 @@
 
 #define SUBSCRIBER_COLUMN_NUM 3
 #define SUBSCRIBER_USERNAME_COL 0
-#define SUBSCRIBER_DOMAIN_COL   1
-#define SUBSCRIBER_CARRIER_COL  2
+#define SUBSCRIBER_DOMAIN_COL 1
+#define SUBSCRIBER_CARRIER_COL 2
 
 #define CARRIERROUTE_MODE_DB 1
 #define CARRIERROUTE_MODE_FILE 2
 
 extern str subscriber_table;
-extern str * subscriber_columns[];
-extern char * config_source;
-extern char * config_file;
+extern str *subscriber_columns[];
+extern char *config_source;
+extern char *config_file;
 extern str default_tree;
 
 extern const str CR_EMPTY_PREFIX;

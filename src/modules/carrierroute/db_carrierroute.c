@@ -23,7 +23,7 @@
 /* TODO assign read-write or read-only URI, introduce a parameter in XML */
 
 //extern str carrierroute_db_url;
-db1_con_t * carrierroute_dbh = NULL;
+db1_con_t *carrierroute_dbh = NULL;
 db_func_t carrierroute_dbf;
 
 str carrierroute_table = str_init("carrierroute");
@@ -84,8 +84,9 @@ const unsigned int domain_name_version = 1;
 /*
  * Closes the DB connection.
  */
-void carrierroute_db_close(void) {
-	if (carrierroute_dbh) {
+void carrierroute_db_close(void)
+{
+	if(carrierroute_dbh) {
 		carrierroute_dbf.close(carrierroute_dbh);
 		carrierroute_dbh = NULL;
 	}
@@ -98,40 +99,46 @@ void carrierroute_db_close(void) {
  *
  * \return 0 means ok, -1 means an error occurred.
  */
-int carrierroute_db_init(void) {
-	if (!carrierroute_db_url.s || !carrierroute_db_url.len) {
+int carrierroute_db_init(void)
+{
+	if(!carrierroute_db_url.s || !carrierroute_db_url.len) {
 		LM_ERR("you have to set the db_url module parameter.\n");
 		return -1;
 	}
-	if (db_bind_mod(&carrierroute_db_url, &carrierroute_dbf) < 0) {
+	if(db_bind_mod(&carrierroute_db_url, &carrierroute_dbf) < 0) {
 		LM_ERR("can't bind database module.\n");
 		return -1;
 	}
-	if ((carrierroute_dbh = carrierroute_dbf.init(&carrierroute_db_url)) == NULL) {
+	if((carrierroute_dbh = carrierroute_dbf.init(&carrierroute_db_url))
+			== NULL) {
 		LM_ERR("can't connect to database.\n");
 		return -1;
 	}
-	if (!DB_CAPABILITY(carrierroute_dbf, DB_CAP_RAW_QUERY)) {
+	if(!DB_CAPABILITY(carrierroute_dbf, DB_CAP_RAW_QUERY)) {
 		LM_ERR("database does not support required raw queries capability\n");
 		return -1;
 	}
-	if (db_check_table_version(&carrierroute_dbf, carrierroute_dbh,
-			&carrierroute_table, carrierroute_version) < 0) {
+	if(db_check_table_version(&carrierroute_dbf, carrierroute_dbh,
+			   &carrierroute_table, carrierroute_version)
+			< 0) {
 		DB_TABLE_VERSION_ERROR(carrierroute_table);
 		goto dberror;
 	}
-	if (db_check_table_version(&carrierroute_dbf, carrierroute_dbh,
-			&carrierfailureroute_table, carrierfailureroute_version) < 0) {
+	if(db_check_table_version(&carrierroute_dbf, carrierroute_dbh,
+			   &carrierfailureroute_table, carrierfailureroute_version)
+			< 0) {
 		DB_TABLE_VERSION_ERROR(carrierfailureroute_table);
 		goto dberror;
 	}
-	if (db_check_table_version(&carrierroute_dbf, carrierroute_dbh,
-			&carrier_name_table, carrier_name_version) < 0) {
+	if(db_check_table_version(&carrierroute_dbf, carrierroute_dbh,
+			   &carrier_name_table, carrier_name_version)
+			< 0) {
 		DB_TABLE_VERSION_ERROR(carrier_name_table);
 		goto dberror;
 	}
-	if (db_check_table_version(&carrierroute_dbf, carrierroute_dbh,
-			&domain_name_table, domain_name_version) < 0) {
+	if(db_check_table_version(&carrierroute_dbf, carrierroute_dbh,
+			   &domain_name_table, domain_name_version)
+			< 0) {
 		DB_TABLE_VERSION_ERROR(domain_name_table);
 		goto dberror;
 	}
@@ -152,14 +159,15 @@ dberror:
  *
  * \return 0 means ok, -1 means an error occurred.
  */
-int carrierroute_db_open(void) {
-	if (carrierroute_dbh) {
+int carrierroute_db_open(void)
+{
+	if(carrierroute_dbh) {
 		carrierroute_dbf.close(carrierroute_dbh);
 	}
-	if ((carrierroute_dbh = carrierroute_dbf.init(&carrierroute_db_url)) == NULL) {
+	if((carrierroute_dbh = carrierroute_dbf.init(&carrierroute_db_url))
+			== NULL) {
 		LM_ERR("can't connect to database.\n");
 		return -1;
 	}
 	return 0;
 }
-

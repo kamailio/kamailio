@@ -39,59 +39,66 @@ struct route_rule_p_list;
  * Second stage of processing: Try to map the end of the user part of the URI
  * to a given suffix. Then rewrite with given parameters.
  */
-struct route_rule {
+struct route_rule
+{
 	int dice_to; /*!< prob * DICE_MAX */
 	double prob; /*!< The probability for that rule, only useful when using crc32 hashing */
 	double orig_prob; /*!< The original probability for that rule, only useful when using crc32 hashing */
-	str host; /*!< The new target host for the request */
+	str host;		  /*!< The new target host for the request */
 	int strip; /*!< the number of digits to be stripped off from uri before prepending prefix */
 	str local_prefix; /*!< the pefix to be attached to the new destination */
 	str local_suffix; /*!< the suffix to be appended to the localpart of the new destination */
 	str comment; /*!< A comment for the route rule */
-	str prefix; /*!< The prefix for which the route is valid */
+	str prefix;	 /*!< The prefix for which the route is valid */
 	int status; /*!< The status of the route rule, only useful when using prime number hashing */
-	struct route_rule_p_list * backed_up; /*!< indicates if the rule is already backup route for another */
-	struct route_rule_p_list * backup; /*!< if not NULL, it points to a route rule which shall be used instead (only used if status is 0) */
+	struct route_rule_p_list *
+			backed_up; /*!< indicates if the rule is already backup route for another */
+	struct route_rule_p_list *
+			backup; /*!< if not NULL, it points to a route rule which shall be used instead (only used if status is 0) */
 	int hash_index; /*!< The hash index of the route rule, only useful when using prime number hashing */
-	struct route_rule * next; /*!< A pointer to the next route rule */
+	struct route_rule *next; /*!< A pointer to the next route rule */
 };
 
 /**
  * list of routing rules with hash index
  */
-struct route_rule_p_list {
-	struct route_rule * rr;
+struct route_rule_p_list
+{
+	struct route_rule *rr;
 	int hash_index;
-	struct route_rule_p_list * next;
+	struct route_rule_p_list *next;
 };
 
 /**
  * Use route rules only if message flags match stored mask/flags.
  */
-struct route_flags {
-	flag_t flags;  /*!< The flags for which the route ist valid */
+struct route_flags
+{
+	flag_t flags; /*!< The flags for which the route ist valid */
 	flag_t mask;  /*!< The mask for the flags field */
-	struct route_rule * rule_list; /*!< Each node MAY contain a rule list */
-	struct route_rule ** rules; /*!< The array points to the rules in order of hash indices */
-	int rule_num; /*!< The number of rules */
+	struct route_rule *rule_list; /*!< Each node MAY contain a rule list */
+	struct route_rule **
+			rules; /*!< The array points to the rules in order of hash indices */
+	int rule_num;  /*!< The number of rules */
 	int dice_max; /*!< The DICE_MAX value for the rule set, calculated by rule_fixup */
 	int max_targets; /*!< upper edge of hashing via prime number algorithm, must be eqal to rule_num */
-	struct route_flags * next; /*!< A pointer to the next route flags struct */
+	struct route_flags *next; /*!< A pointer to the next route flags struct */
 };
 
 /**
  * Second stage of processing: Try to map the end of the user part of the URI
  * to a given suffix. Then rewrite with given parameters.
  */
-struct failure_route_rule {
-	str host; /*!< The new target host for the request */
-	str comment; /*!< A comment for the route rule */
-	str prefix; /*!< The prefix for which the route ist valid */
-	str reply_code;  /*!< The reply code for which the route ist valid */
-	int next_domain;  /*!< The domain id where to continue routing */
-	flag_t flags;  /*!< The flags for which the route ist valid */
-	flag_t mask;  /*!< The mask for the flags field */
-	struct failure_route_rule * next; /*!< A pointer to the next route rule */
+struct failure_route_rule
+{
+	str host;		 /*!< The new target host for the request */
+	str comment;	 /*!< A comment for the route rule */
+	str prefix;		 /*!< The prefix for which the route ist valid */
+	str reply_code;	 /*!< The reply code for which the route ist valid */
+	int next_domain; /*!< The domain id where to continue routing */
+	flag_t flags;	 /*!< The flags for which the route ist valid */
+	flag_t mask;	 /*!< The mask for the flags field */
+	struct failure_route_rule *next; /*!< A pointer to the next route rule */
 };
 
 
@@ -119,11 +126,11 @@ struct failure_route_rule {
  *
  * @see add_route_to_tree()
  */
-int add_route_rule(struct route_flags *rf, const str * prefix,
-		int max_targets, double prob, const str * rewrite_hostpart, int strip,
-		const str * rewrite_local_prefix, const str * rewrite_local_suffix,
-		int status, int hash_index, int backup, int * backed_up,
-		const str * comment);
+int add_route_rule(struct route_flags *rf, const str *prefix, int max_targets,
+		double prob, const str *rewrite_hostpart, int strip,
+		const str *rewrite_local_prefix, const str *rewrite_local_suffix,
+		int status, int hash_index, int backup, int *backed_up,
+		const str *comment);
 
 
 /**
@@ -131,7 +138,7 @@ int add_route_rule(struct route_flags *rf, const str * prefix,
  *
  * @param rr route rule to be destroyed
  */
-void destroy_route_rule(struct route_rule * rr);
+void destroy_route_rule(struct route_rule *rr);
 
 
 /**
@@ -144,7 +151,8 @@ void destroy_route_rule(struct route_rule * rr);
  * @return pointer to the route_flags struct on success, NULL on failure.
  *
  */
-struct route_flags * add_route_flags(struct route_flags **rf_head, const flag_t flags, const flag_t mask);
+struct route_flags *add_route_flags(
+		struct route_flags **rf_head, const flag_t flags, const flag_t mask);
 
 
 /**
@@ -172,9 +180,10 @@ void destroy_route_flags(struct route_flags *rf);
  *
  * @see add_failure_route_to_tree()
  */
-struct failure_route_rule *add_failure_route_rule(struct failure_route_rule **frr_head,
-		const str * prefix, const str * host, const str * reply_code,
-		flag_t flags, flag_t mask, const int next_domain, const str * comment);
+struct failure_route_rule *add_failure_route_rule(
+		struct failure_route_rule **frr_head, const str *prefix,
+		const str *host, const str *reply_code, flag_t flags, flag_t mask,
+		const int next_domain, const str *comment);
 
 
 /**
@@ -182,16 +191,17 @@ struct failure_route_rule *add_failure_route_rule(struct failure_route_rule **fr
  *
  * @param frr route rule to be destroyed
  */
-void destroy_failure_route_rule(struct failure_route_rule * frr);
+void destroy_failure_route_rule(struct failure_route_rule *frr);
 
-struct route_rule * find_rule_by_hash(struct route_flags * rf, int hash);
+struct route_rule *find_rule_by_hash(struct route_flags *rf, int hash);
 
-struct route_rule * find_rule_by_host(struct route_flags * rf, str * host);
+struct route_rule *find_rule_by_host(struct route_flags *rf, str *host);
 
-int add_backup_rule(struct route_rule * rule, struct route_rule * backup);
+int add_backup_rule(struct route_rule *rule, struct route_rule *backup);
 
-int remove_backed_up(struct route_rule * rule);
+int remove_backed_up(struct route_rule *rule);
 
-struct route_rule * find_auto_backup(struct route_flags * rf, struct route_rule * rule);
+struct route_rule *find_auto_backup(
+		struct route_flags *rf, struct route_rule *rule);
 
 #endif

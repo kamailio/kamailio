@@ -35,11 +35,12 @@
 /**
  * The struct for a carrier.
  */
-struct carrier_data_t {
-	int id; /*!< id of the carrier */
-	str * name; /*!< name of the carrier. This points to the name in carrier_map to avoid duplication. */
-	struct domain_data_t ** domains; /*!< array of routing domains */
-	size_t domain_num; /*!< number of routing domains */
+struct carrier_data_t
+{
+	int id;	   /*!< id of the carrier */
+	str *name; /*!< name of the carrier. This points to the name in carrier_map to avoid duplication. */
+	struct domain_data_t **domains; /*!< array of routing domains */
+	size_t domain_num;				/*!< number of routing domains */
 	size_t first_empty_domain; /*!< the index of the first empty entry in domains */
 };
 
@@ -54,7 +55,8 @@ struct carrier_data_t {
  * @return a pointer to the newly allocated carrier data or NULL on
  * error, in which case it LOGs an error message.
  */
-struct carrier_data_t * create_carrier_data(int carrier_id, str *carrier_name, int domains);
+struct carrier_data_t *create_carrier_data(
+		int carrier_id, str *carrier_name, int domains);
 
 
 /**
@@ -75,7 +77,8 @@ void destroy_carrier_data(struct carrier_data_t *carrier_data);
  *
  * @return 0 on success, -1 on failure
  */
-int add_domain_data(struct carrier_data_t * carrier_data, struct domain_data_t * domain_data, int index);
+int add_domain_data(struct carrier_data_t *carrier_data,
+		struct domain_data_t *domain_data, int index);
 
 
 /**
@@ -87,7 +90,8 @@ int add_domain_data(struct carrier_data_t * carrier_data, struct domain_data_t *
  *
  * @return a pointer to the desired domain data, NULL if not found.
  */
-struct domain_data_t *get_domain_data(struct carrier_data_t * carrier_data, int domain_id);
+struct domain_data_t *get_domain_data(
+		struct carrier_data_t *carrier_data, int domain_id);
 
 
 /**
