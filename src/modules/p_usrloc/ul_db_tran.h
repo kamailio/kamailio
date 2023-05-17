@@ -25,11 +25,11 @@
 #include "../../lib/srdb1/db.h"
 #include "ul_db_handle.h"
 
-int ul_db_tran_start(ul_db_handle_t * handle, int working[]);
+int ul_db_tran_start(ul_db_handle_t *handle, int working[]);
 
-int ul_db_tran_commit(ul_db_handle_t * handle, int working[]);
+int ul_db_tran_commit(ul_db_handle_t *handle, int working[]);
 
-int ul_db_tran_rollback(ul_db_handle_t * handle, int working[]);
+int ul_db_tran_rollback(ul_db_handle_t *handle, int working[]);
 
 int get_working_sum(int working[], int no);
 

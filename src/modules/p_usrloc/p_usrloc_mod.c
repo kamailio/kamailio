@@ -46,10 +46,10 @@
 #include "../../core/rpc_lookup.h"
 #include "../../core/timer_proc.h"
 #include "../../core/globals.h"
-#include "../../core/ut.h"        /* str_init */
-#include "udomain.h"         /* {insert,delete,get,release}_urecord */
-#include "urecord.h"         /* {insert,delete,get}_ucontact */
-#include "ucontact.h"        /* update_ucontact */
+#include "../../core/ut.h" /* str_init */
+#include "udomain.h"	   /* {insert,delete,get,release}_urecord */
+#include "urecord.h"	   /* {insert,delete,get}_ucontact */
+#include "ucontact.h"	   /* update_ucontact */
 #include "ul_mi.h"
 #include "../usrloc/ul_callback.h"
 #include "ul_db_api.h"
@@ -62,30 +62,30 @@
 
 MODULE_VERSION
 
-#define RUID_COL       "ruid"
-#define USER_COL       "username"
-#define DOMAIN_COL     "domain"
-#define CONTACT_COL    "contact"
-#define EXPIRES_COL    "expires"
-#define Q_COL          "q"
-#define CALLID_COL     "callid"
-#define CSEQ_COL       "cseq"
-#define FLAGS_COL      "flags"
-#define CFLAGS_COL 	"cflags"
+#define RUID_COL "ruid"
+#define USER_COL "username"
+#define DOMAIN_COL "domain"
+#define CONTACT_COL "contact"
+#define EXPIRES_COL "expires"
+#define Q_COL "q"
+#define CALLID_COL "callid"
+#define CSEQ_COL "cseq"
+#define FLAGS_COL "flags"
+#define CFLAGS_COL "cflags"
 #define USER_AGENT_COL "user_agent"
-#define RECEIVED_COL   "received"
-#define PATH_COL       "path"
-#define SOCK_COL       "socket"
-#define METHODS_COL    "methods"
-#define INSTANCE_COL   "instance"
-#define REG_ID_COL     "reg_id"
-#define LAST_MOD_COL   "last_modified"
-#define UNIQ_COL       "uniq"
+#define RECEIVED_COL "received"
+#define PATH_COL "path"
+#define SOCK_COL "socket"
+#define METHODS_COL "methods"
+#define INSTANCE_COL "instance"
+#define REG_ID_COL "reg_id"
+#define LAST_MOD_COL "last_modified"
+#define UNIQ_COL "uniq"
 
-static int mod_init(void);                          /*!< Module initialization function */
-static void destroy(void);                          /*!< Module destroy function */
-static int child_init(int rank);                    /*!< Per-child init function */
-extern int bind_usrloc(usrloc_api_t* api);
+static int mod_init(void);		 /*!< Module initialization function */
+static void destroy(void);		 /*!< Module destroy function */
+static int child_init(int rank); /*!< Per-child init function */
+extern int bind_usrloc(usrloc_api_t *api);
 extern int ul_locks_no;
 
 /*
@@ -126,176 +126,182 @@ extern int ul_locks_no;
  * @param alg_location defines the algorithm for the location matching - based on crc32 for  now
  */
 
-str ruid_col        = str_init(RUID_COL); 		/*!< Name of column containing record unique id */
-str user_col        = str_init(USER_COL); 		/*!< Name of column containing usernames */
-str domain_col      = str_init(DOMAIN_COL); 		/*!< Name of column containing domains */
-str contact_col     = str_init(CONTACT_COL);		/*!< Name of column containing contact addresses */
-str expires_col     = str_init(EXPIRES_COL);		/*!< Name of column containing expires values */
-str q_col           = str_init(Q_COL);			/*!< Name of column containing q values */
-str callid_col      = str_init(CALLID_COL);		/*!< Name of column containing callid string */
-str cseq_col        = str_init(CSEQ_COL);		/*!< Name of column containing cseq values */
-str flags_col       = str_init(FLAGS_COL);		/*!< Name of column containing internal flags */
-str cflags_col       = str_init(CFLAGS_COL);
-str user_agent_col  = str_init(USER_AGENT_COL);		/*!< Name of column containing user agent string */
-str received_col    = str_init(RECEIVED_COL);		/*!< Name of column containing transport info of REGISTER */
-str path_col        = str_init(PATH_COL);		/*!< Name of column containing the Path header */
-str sock_col        = str_init(SOCK_COL);		/*!< Name of column containing the received socket */
-str methods_col     = str_init(METHODS_COL);		/*!< Name of column containing the supported methods */
-str instance_col    = str_init(INSTANCE_COL);	/*!< Name of column containing the SIP instance value */
-str reg_id_col      = str_init(REG_ID_COL);		/*!< Name of column containing the reg-id value */
-str last_mod_col     = str_init(LAST_MOD_COL);		/*!< Name of column containing the last modified date */
-str uniq_col        = str_init(UNIQ_COL);		/*!< Name of column containing the uniq value*/
-int db_mode         = 3;				/*!< Database sync scheme:  1-write through, 2-write back, 3-only db */
-int use_domain      = 0;				/*!< Whether usrloc should use domain part of aor */
-int use_domain_crc32 = 1;				/*!< Whether usrloc should use domain part of aor when calculating crc32 */
-int desc_time_order = 0;				/*!< By default do not enable timestamp ordering */
+str ruid_col =
+		str_init(RUID_COL); /*!< Name of column containing record unique id */
+str user_col = str_init(USER_COL); /*!< Name of column containing usernames */
+str domain_col = str_init(DOMAIN_COL); /*!< Name of column containing domains */
+str contact_col = str_init(
+		CONTACT_COL); /*!< Name of column containing contact addresses */
+str expires_col =
+		str_init(EXPIRES_COL); /*!< Name of column containing expires values */
+str q_col = str_init(Q_COL);   /*!< Name of column containing q values */
+str callid_col =
+		str_init(CALLID_COL); /*!< Name of column containing callid string */
+str cseq_col = str_init(CSEQ_COL); /*!< Name of column containing cseq values */
+str flags_col =
+		str_init(FLAGS_COL); /*!< Name of column containing internal flags */
+str cflags_col = str_init(CFLAGS_COL);
+str user_agent_col = str_init(
+		USER_AGENT_COL); /*!< Name of column containing user agent string */
+str received_col = str_init(
+		RECEIVED_COL); /*!< Name of column containing transport info of REGISTER */
+str path_col =
+		str_init(PATH_COL); /*!< Name of column containing the Path header */
+str sock_col = str_init(
+		SOCK_COL); /*!< Name of column containing the received socket */
+str methods_col = str_init(
+		METHODS_COL); /*!< Name of column containing the supported methods */
+str instance_col = str_init(
+		INSTANCE_COL); /*!< Name of column containing the SIP instance value */
+str reg_id_col =
+		str_init(REG_ID_COL); /*!< Name of column containing the reg-id value */
+str last_mod_col = str_init(
+		LAST_MOD_COL); /*!< Name of column containing the last modified date */
+str uniq_col =
+		str_init(UNIQ_COL); /*!< Name of column containing the uniq value*/
+int db_mode =
+		3; /*!< Database sync scheme:  1-write through, 2-write back, 3-only db */
+int use_domain = 0; /*!< Whether usrloc should use domain part of aor */
+int use_domain_crc32 =
+		1; /*!< Whether usrloc should use domain part of aor when calculating crc32 */
+int desc_time_order = 0; /*!< By default do not enable timestamp ordering */
 
-int ul_fetch_rows = 2000;				/*!< number of rows to fetch from result */
+int ul_fetch_rows = 2000; /*!< number of rows to fetch from result */
 int ul_hash_size = 9;
-str write_db_url         = str_init(DEFAULT_DB_URL);
-str read_db_url          = str_init(DEFAULT_DB_URL);
-str reg_table            = str_init(REG_TABLE);
-str id_col               = str_init(ID_COL);
-str url_col              = str_init(URL_COL);
-str num_col              = str_init(NUM_COL);
-str status_col           = str_init(STATUS_COL);
-str failover_time_col    = str_init(FAILOVER_T_COL);
-str spare_col            = str_init(SPARE_COL);
-str error_col            = str_init(ERROR_COL);
-str risk_group_col       = str_init(RISK_GROUP_COL);
-int retry_interval       = DB_RETRY;
-int policy               = DB_DEFAULT_POLICY;
-int db_write             = 0;
-int db_master_write      = 0;
-int alg_location         = 0;
+str write_db_url = str_init(DEFAULT_DB_URL);
+str read_db_url = str_init(DEFAULT_DB_URL);
+str reg_table = str_init(REG_TABLE);
+str id_col = str_init(ID_COL);
+str url_col = str_init(URL_COL);
+str num_col = str_init(NUM_COL);
+str status_col = str_init(STATUS_COL);
+str failover_time_col = str_init(FAILOVER_T_COL);
+str spare_col = str_init(SPARE_COL);
+str error_col = str_init(ERROR_COL);
+str risk_group_col = str_init(RISK_GROUP_COL);
+int retry_interval = DB_RETRY;
+int policy = DB_DEFAULT_POLICY;
+int db_write = 0;
+int db_master_write = 0;
+int alg_location = 0;
 int mdb_availability_control = 0;
 
-int db_use_transactions  = 0;
+int db_use_transactions = 0;
 str db_transaction_level = str_init(DB_DEFAULT_TRANSACTION_LEVEL);
-char * isolation_level;
-int connection_expires   = DB_DEFAULT_CONNECTION_EXPIRES;
-int max_loc_nr  = 0 ;
+char *isolation_level;
+int connection_expires = DB_DEFAULT_CONNECTION_EXPIRES;
+int max_loc_nr = 0;
 
 
 /* flags */
 unsigned int nat_bflag = (unsigned int)-1;
 unsigned int init_flag = 0;
 
-str default_db_url    = str_init(DEFAULT_DB_URL);
-str default_db_type   = str_init(DEFAULT_DB_TYPE);
-str domain_db         = str_init(DEFAULT_DOMAIN_DB);
-int default_dbt       = 0;
-int expire            = 0;
+str default_db_url = str_init(DEFAULT_DB_URL);
+str default_db_type = str_init(DEFAULT_DB_TYPE);
+str domain_db = str_init(DEFAULT_DOMAIN_DB);
+int default_dbt = 0;
+int expire = 0;
 int *mdb_w_available;
 
 /*! \brief
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"ul_bind_usrloc",        (cmd_function)bind_usrloc,        1, 0, 0, 0},
-	{0, 0, 0, 0, 0, 0}
-};
+		{"ul_bind_usrloc", (cmd_function)bind_usrloc, 1, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0}};
 
 
 /*! \brief
  * Exported parameters 
  */
-static param_export_t params[] = {
-	{"ruid_column",       PARAM_STR, &ruid_col      },
-	{"user_column",       PARAM_STR, &user_col      },
-	{"domain_column",     PARAM_STR, &domain_col    },
-	{"contact_column",    PARAM_STR, &contact_col   },
-	{"expires_column",    PARAM_STR, &expires_col   },
-	{"q_column",          PARAM_STR, &q_col         },
-	{"callid_column",     PARAM_STR, &callid_col    },
-	{"cseq_column",       PARAM_STR, &cseq_col      },
-	{"flags_column",      PARAM_STR, &flags_col     },
-	{"cflags_column",     PARAM_STR, &cflags_col    },
-	{"db_mode",           INT_PARAM, &db_mode         },
-	{"use_domain",        INT_PARAM, &use_domain      },
-	{"use_domain_crc32",  INT_PARAM, &use_domain_crc32 },
-	{"desc_time_order",   INT_PARAM, &desc_time_order },
-	{"user_agent_column", PARAM_STR, &user_agent_col},
-	{"received_column",   PARAM_STR, &received_col  },
-	{"path_column",       PARAM_STR, &path_col      },
-	{"socket_column",     PARAM_STR, &sock_col      },
-	{"methods_column",    PARAM_STR, &methods_col   },
-	{"matching_mode",     INT_PARAM, &default_p_usrloc_cfg.matching_mode},
-	{"cseq_delay",        INT_PARAM, &cseq_delay      },
-	{"fetch_rows",        INT_PARAM, &ul_fetch_rows   },
-	{"hash_size",         INT_PARAM, &ul_hash_size    },
-	{"nat_bflag",         INT_PARAM, &nat_bflag       },
-	{"default_db_url",    PARAM_STR, &default_db_url    },
-	{"default_db_type",   PARAM_STR, &default_db_type   },
-	{"domain_db",         PARAM_STR, &domain_db         },
-	{"instance_column",      PARAM_STR, &instance_col  	 },
-	{"reg_id_column",      	 PARAM_STR, &reg_id_col        },
-	{"write_db_url",         PARAM_STR, &write_db_url      },
-	{"read_db_url",          PARAM_STR, &read_db_url       },
-	{"reg_db_table",         PARAM_STR, &reg_table         },
-	{"id_column",            PARAM_STR, &id_col            },
-	{"num_column",           PARAM_STR, &num_col           },
-	{"url_column",           PARAM_STR, &url_col           },
-	{"status_column",        PARAM_STR, &status_col        },
-	{"failover_time_column", PARAM_STR, &failover_time_col },
-	{"spare_flag_column",    PARAM_STR, &spare_col         },
-	{"error_column",         PARAM_STR, &error_col         },
-	{"risk_group_column",    PARAM_STR, &risk_group_col    },
-	{"expire_time",          INT_PARAM, &default_p_usrloc_cfg.expire_time},
-	{"UTC_timestamps",       INT_PARAM, &default_p_usrloc_cfg.utc_timestamps},
-	{"db_err_threshold",     INT_PARAM, &default_p_usrloc_cfg.db_err_threshold},
-	{"failover_level",       INT_PARAM, &default_p_usrloc_cfg.failover_level},
-	{"db_retry_interval",    INT_PARAM, &retry_interval      },
-	{"db_use_transactions",  INT_PARAM, &db_use_transactions },
-	{"db_transaction_level", INT_PARAM, &db_transaction_level},
-	{"write_on_db",          INT_PARAM, &db_write            },
-	{"write_on_master_db",   INT_PARAM, &db_master_write     },
-	{"connection_expires",   INT_PARAM, &connection_expires  },
-	{"alg_location",         INT_PARAM, &alg_location },
-	{"db_ops_ruid",          INT_PARAM, &default_p_usrloc_cfg.db_ops_ruid},
-	{"db_update_as_insert",  INT_PARAM, &default_p_usrloc_cfg.db_update_as_insert},
-	{"mdb_availability_control", INT_PARAM, &mdb_availability_control},
-	{0, 0, 0}
-};
+static param_export_t params[] = {{"ruid_column", PARAM_STR, &ruid_col},
+		{"user_column", PARAM_STR, &user_col},
+		{"domain_column", PARAM_STR, &domain_col},
+		{"contact_column", PARAM_STR, &contact_col},
+		{"expires_column", PARAM_STR, &expires_col},
+		{"q_column", PARAM_STR, &q_col},
+		{"callid_column", PARAM_STR, &callid_col},
+		{"cseq_column", PARAM_STR, &cseq_col},
+		{"flags_column", PARAM_STR, &flags_col},
+		{"cflags_column", PARAM_STR, &cflags_col},
+		{"db_mode", INT_PARAM, &db_mode},
+		{"use_domain", INT_PARAM, &use_domain},
+		{"use_domain_crc32", INT_PARAM, &use_domain_crc32},
+		{"desc_time_order", INT_PARAM, &desc_time_order},
+		{"user_agent_column", PARAM_STR, &user_agent_col},
+		{"received_column", PARAM_STR, &received_col},
+		{"path_column", PARAM_STR, &path_col},
+		{"socket_column", PARAM_STR, &sock_col},
+		{"methods_column", PARAM_STR, &methods_col},
+		{"matching_mode", INT_PARAM, &default_p_usrloc_cfg.matching_mode},
+		{"cseq_delay", INT_PARAM, &cseq_delay},
+		{"fetch_rows", INT_PARAM, &ul_fetch_rows},
+		{"hash_size", INT_PARAM, &ul_hash_size},
+		{"nat_bflag", INT_PARAM, &nat_bflag},
+		{"default_db_url", PARAM_STR, &default_db_url},
+		{"default_db_type", PARAM_STR, &default_db_type},
+		{"domain_db", PARAM_STR, &domain_db},
+		{"instance_column", PARAM_STR, &instance_col},
+		{"reg_id_column", PARAM_STR, &reg_id_col},
+		{"write_db_url", PARAM_STR, &write_db_url},
+		{"read_db_url", PARAM_STR, &read_db_url},
+		{"reg_db_table", PARAM_STR, &reg_table},
+		{"id_column", PARAM_STR, &id_col}, {"num_column", PARAM_STR, &num_col},
+		{"url_column", PARAM_STR, &url_col},
+		{"status_column", PARAM_STR, &status_col},
+		{"failover_time_column", PARAM_STR, &failover_time_col},
+		{"spare_flag_column", PARAM_STR, &spare_col},
+		{"error_column", PARAM_STR, &error_col},
+		{"risk_group_column", PARAM_STR, &risk_group_col},
+		{"expire_time", INT_PARAM, &default_p_usrloc_cfg.expire_time},
+		{"UTC_timestamps", INT_PARAM, &default_p_usrloc_cfg.utc_timestamps},
+		{"db_err_threshold", INT_PARAM, &default_p_usrloc_cfg.db_err_threshold},
+		{"failover_level", INT_PARAM, &default_p_usrloc_cfg.failover_level},
+		{"db_retry_interval", INT_PARAM, &retry_interval},
+		{"db_use_transactions", INT_PARAM, &db_use_transactions},
+		{"db_transaction_level", INT_PARAM, &db_transaction_level},
+		{"write_on_db", INT_PARAM, &db_write},
+		{"write_on_master_db", INT_PARAM, &db_master_write},
+		{"connection_expires", INT_PARAM, &connection_expires},
+		{"alg_location", INT_PARAM, &alg_location},
+		{"db_ops_ruid", INT_PARAM, &default_p_usrloc_cfg.db_ops_ruid},
+		{"db_update_as_insert", INT_PARAM,
+				&default_p_usrloc_cfg.db_update_as_insert},
+		{"mdb_availability_control", INT_PARAM, &mdb_availability_control},
+		{0, 0, 0}};
 
 
 stat_export_t mod_stats[] = {
-	{"registered_users" ,  STAT_IS_FUNC, (stat_var**)get_number_of_users  },
-	{0,0,0}
-};
+		{"registered_users", STAT_IS_FUNC, (stat_var **)get_number_of_users},
+		{0, 0, 0}};
 
 #ifdef MI_REMOVED
 static mi_export_t mi_cmds[] = {
-	{ MI_USRLOC_RM,           mi_usrloc_rm_aor,       0,                 0,
-				mi_child_init },
-	{ MI_USRLOC_RM_CONTACT,   mi_usrloc_rm_contact,   0,                 0,
-				mi_child_init },
-	{ MI_USRLOC_DUMP,         mi_usrloc_dump,         0,                 0,
-				0             },
-	{ MI_USRLOC_FLUSH,        mi_usrloc_flush,        MI_NO_INPUT_FLAG,  0,
-				mi_child_init },
-	{ MI_USRLOC_ADD,          mi_usrloc_add,          0,                 0,
-				mi_child_init },
-	{ MI_USRLOC_SHOW_CONTACT, mi_usrloc_show_contact, 0,                 0,
-				mi_child_init },
-	{ "loc_refresh", mi_ul_db_refresh, MI_NO_INPUT_FLAG,  0, mi_child_init },
-	{ "loc_nr_refresh", mi_loc_nr_refresh, MI_NO_INPUT_FLAG,  0, mi_child_loc_nr_init },
-	{ 0, 0, 0, 0, 0}
-};
+		{MI_USRLOC_RM, mi_usrloc_rm_aor, 0, 0, mi_child_init},
+		{MI_USRLOC_RM_CONTACT, mi_usrloc_rm_contact, 0, 0, mi_child_init},
+		{MI_USRLOC_DUMP, mi_usrloc_dump, 0, 0, 0},
+		{MI_USRLOC_FLUSH, mi_usrloc_flush, MI_NO_INPUT_FLAG, 0, mi_child_init},
+		{MI_USRLOC_ADD, mi_usrloc_add, 0, 0, mi_child_init},
+		{MI_USRLOC_SHOW_CONTACT, mi_usrloc_show_contact, 0, 0, mi_child_init},
+		{"loc_refresh", mi_ul_db_refresh, MI_NO_INPUT_FLAG, 0, mi_child_init},
+		{"loc_nr_refresh", mi_loc_nr_refresh, MI_NO_INPUT_FLAG, 0,
+				mi_child_loc_nr_init},
+		{0, 0, 0, 0, 0}};
 #endif
 
 
 struct module_exports exports = {
-	"p_usrloc", /*!< module name  */
-	DEFAULT_DLFLAGS, /*!< dlopen flags */
-	cmds,       /*!< exported functions */
-	params,     /*!< export parameters */
-	0,          /*!< exported rpc functions */
-	0,          /*!< exported pseudo-variables */
-	0,          /*!< response handling function */
-	mod_init,   /*!< module init function */
-	child_init, /*!< child init function */
-	destroy     /*!< module destroy function */
+		"p_usrloc",		 /*!< module name  */
+		DEFAULT_DLFLAGS, /*!< dlopen flags */
+		cmds,			 /*!< exported functions */
+		params,			 /*!< export parameters */
+		0,				 /*!< exported rpc functions */
+		0,				 /*!< exported pseudo-variables */
+		0,				 /*!< response handling function */
+		mod_init,		 /*!< module init function */
+		child_init,		 /*!< child init function */
+		destroy			 /*!< module destroy function */
 };
 
 
@@ -308,24 +314,25 @@ static int mod_init(void)
 
 #ifdef STATISTICS
 	/* register statistics */
-	if (register_module_stats( exports.name, mod_stats)!=0 ) {
+	if(register_module_stats(exports.name, mod_stats) != 0) {
 		LM_ERR("failed to register core statistics\n");
 		return -1;
 	}
 #endif
 
-	if(ul_hash_size<=1)
+	if(ul_hash_size <= 1)
 		ul_hash_size = 512;
 	else
-		ul_hash_size = 1<<ul_hash_size;
+		ul_hash_size = 1 << ul_hash_size;
 	ul_locks_no = ul_hash_size;
 
-	if(cfg_declare("p_usrloc", p_usrloc_cfg_def, &default_p_usrloc_cfg, cfg_sizeof(p_usrloc), &p_usrloc_cfg)){
+	if(cfg_declare("p_usrloc", p_usrloc_cfg_def, &default_p_usrloc_cfg,
+			   cfg_sizeof(p_usrloc), &p_usrloc_cfg)) {
 		LM_ERR("Fail to declare the configuration\n");
-	        return -1;
+		return -1;
 	}
 	/* check matching mode */
-	switch (matching_mode_cfg) {
+	switch(matching_mode_cfg) {
 		case CONTACT_ONLY:
 		case CONTACT_CALLID:
 		case CONTACT_PATH:
@@ -334,71 +341,74 @@ static int mod_init(void)
 			LM_ERR("invalid matching mode %d\n", matching_mode_cfg);
 	}
 
-	if(ul_init_locks()!=0)
-	{
+	if(ul_init_locks() != 0) {
 		LM_ERR("locks array initialization failed\n");
 		return -1;
 	}
 
 	/* init the callbacks list */
-	if ( init_ulcb_list() < 0) {
+	if(init_ulcb_list() < 0) {
 		LM_ERR("usrloc/callbacks initialization failed\n");
 		return -1;
 	}
 
-	if (db_mode != DB_ONLY) {
-		LM_ERR("DB_ONLY is the only mode possible for partitioned usrloc. Please set db_mode to 3\n");
-		return  -1;
+	if(db_mode != DB_ONLY) {
+		LM_ERR("DB_ONLY is the only mode possible for partitioned usrloc. "
+			   "Please set db_mode to 3\n");
+		return -1;
 	}
 
 	/* Shall we use database ? */
-	if (db_mode != NO_DB) { /* Yes */
-		if(!default_db_url.s || default_db_url.len<=0){
+	if(db_mode != NO_DB) { /* Yes */
+		if(!default_db_url.s || default_db_url.len <= 0) {
 			LM_ERR("must set default_db_url parameter\n");
 			return -1;
 		}
 
-		if(strcmp(DB_TYPE_CLUSTER_STR, default_db_type.s) == 0){
+		if(strcmp(DB_TYPE_CLUSTER_STR, default_db_type.s) == 0) {
 			default_dbt = DB_TYPE_CLUSTER;
 		} else {
 			default_dbt = DB_TYPE_SINGLE;
 		}
 
-		if (ul_db_layer_init() < 0) {
+		if(ul_db_layer_init() < 0) {
 			return -1;
 		}
 
-		if(ul_fetch_rows<=0) {
+		if(ul_fetch_rows <= 0) {
 			LM_ERR("invalid fetch_rows number '%d'\n", ul_fetch_rows);
 			return -1;
 		}
 	}
 
-	if (nat_bflag==(unsigned int)-1) {
+	if(nat_bflag == (unsigned int)-1) {
 		nat_bflag = 0;
-	} else if ( nat_bflag>=8*sizeof(nat_bflag) ) {
+	} else if(nat_bflag >= 8 * sizeof(nat_bflag)) {
 		LM_ERR("bflag index (%d) too big!\n", nat_bflag);
 		return -1;
 	} else {
-		nat_bflag = 1<<nat_bflag;
+		nat_bflag = 1 << nat_bflag;
 	}
 
 	init_flag = 1;
-	
-	if((isolation_level = pkg_malloc(strlen("SET TRANSACTION ISOLATION LEVEL ") + db_transaction_level.len + 1)) == NULL){
+
+	if((isolation_level = pkg_malloc(strlen("SET TRANSACTION ISOLATION LEVEL ")
+									 + db_transaction_level.len + 1))
+			== NULL) {
 		LM_ERR("couldn't allocate private memory.\n");
 		return -1;
 	}
-	sprintf(isolation_level, "SET TRANSACTION ISOLATION LEVEL %s", db_transaction_level.s);
+	sprintf(isolation_level, "SET TRANSACTION ISOLATION LEVEL %s",
+			db_transaction_level.s);
 	if(init_list() < 0) {
 		LM_ERR("could not init check list.\n");
 		return -1;
 	}
-	if(ul_db_init() < 0){
+	if(ul_db_init() < 0) {
 		LM_ERR("could not initialise databases.\n");
 		return -1;
 	}
-	if(ul_db_watch_init() < 0){
+	if(ul_db_watch_init() < 0) {
 		LM_ERR("could not init database watch environment.\n");
 		return -1;
 	}
@@ -407,10 +417,10 @@ static int mod_init(void)
 		LM_ERR("couldn't allocate shared memory. \n");
 		return -1;
 	}
-	if (db_master_write) {
+	if(db_master_write) {
 		/* register extra dummy timer to be created in init_db_check() */
 		register_dummy_timers(1);
-		if (mdb_availability_control) {
+		if(mdb_availability_control) {
 			check_master_db();
 		}
 	}
@@ -420,18 +430,18 @@ static int mod_init(void)
 
 static int child_init(int _rank)
 {
-	if(_rank==PROC_INIT) {
-		if(init_db_check() < 0){
+	if(_rank == PROC_INIT) {
+		if(init_db_check() < 0) {
 			LM_ERR("could not initialise database check.\n");
 			return -1;
 		}
 		return 0;
 	}
-	if(ul_db_child_init() < 0){
+	if(ul_db_child_init() < 0) {
 		LM_ERR("could not initialise databases.\n");
 		return -1;
 	}
-	
+
 
 	return 0;
 }
@@ -449,51 +459,55 @@ static void destroy(void)
 	ul_destroy_locks();
 	/* free callbacks list */
 	destroy_ulcb_list();
-	
+
 	ul_db_shutdown();
 	destroy_list();
 	ul_db_watch_destroy();
-	
 }
 
 
 #ifdef MI_REMOVED
 static int mi_child_loc_nr_init(void)
 {
-	if(ul_db_child_locnr_init() < 0){
-		LM_ERR("could not retrieve location number from database. Try to reinitialize the db handles\n");
+	if(ul_db_child_locnr_init() < 0) {
+		LM_ERR("could not retrieve location number from database. Try to "
+			   "reinitialize the db handles\n");
 		return -1;
 	}
 	return 0;
 }
 
 
-struct mi_root*  mi_ul_db_refresh(struct mi_root* cmd_tree, void* param) {
+struct mi_root *mi_ul_db_refresh(struct mi_root *cmd_tree, void *param)
+{
 	int ret;
 	ret = set_must_refresh();
-	
+
 	LM_INFO("sp-ul_db location databases were refreshed (%i elements).\n", ret);
 
-	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
+	return init_mi_tree(200, MI_OK_S, MI_OK_LEN);
 }
 
 
-struct mi_root*  mi_loc_nr_refresh(struct mi_root* cmd_tree, void* param) {
+struct mi_root *mi_loc_nr_refresh(struct mi_root *cmd_tree, void *param)
+{
 	/* this function does nothing, all work is done per each child in the mi_child_loc_nr_init function */
-	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
+	return init_mi_tree(200, MI_OK_S, MI_OK_LEN);
 }
 #endif
 
-time_t ul_db_datetime_set(time_t v) {
-	if (cfg_get(p_usrloc, p_usrloc_cfg, utc_timestamps) == 1) {
+time_t ul_db_datetime_set(time_t v)
+{
+	if(cfg_get(p_usrloc, p_usrloc_cfg, utc_timestamps) == 1) {
 		return local2utc(v);
 	} else {
 		return v;
 	}
 }
 
-time_t ul_db_datetime_get(time_t v) {
-	if (cfg_get(p_usrloc, p_usrloc_cfg, utc_timestamps) == 1) {
+time_t ul_db_datetime_get(time_t v)
+{
+	if(cfg_get(p_usrloc, p_usrloc_cfg, utc_timestamps) == 1) {
 		return utc2local(v);
 	} else {
 		return v;

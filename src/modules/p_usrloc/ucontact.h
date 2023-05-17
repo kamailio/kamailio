@@ -47,15 +47,15 @@
  * \param _ci contact informations
  * \return new created contact on success, 0 on failure
  */
-ucontact_t* new_ucontact(str* _dom, str* _aor, str* _contact,
-		ucontact_info_t* _ci);
+ucontact_t *new_ucontact(
+		str *_dom, str *_aor, str *_contact, ucontact_info_t *_ci);
 
 
 /*!
  * \brief Free all memory associated with given contact structure
  * \param _c freed contact
  */
-void free_ucontact(ucontact_t* _c);
+void free_ucontact(ucontact_t *_c);
 
 
 /*!
@@ -63,7 +63,7 @@ void free_ucontact(ucontact_t* _c);
  * \param _f output file
  * \param _c printed contact
  */
-void print_ucontact(FILE* _f, ucontact_t* _c);
+void print_ucontact(FILE *_f, ucontact_t *_c);
 
 
 /*!
@@ -72,7 +72,7 @@ void print_ucontact(FILE* _f, ucontact_t* _c);
  * \param _ci contact informations
  * \return 0
  */
-int mem_update_ucontact(ucontact_t* _c, ucontact_info_t *_ci);
+int mem_update_ucontact(ucontact_t *_c, ucontact_info_t *_ci);
 
 
 /* ===== State transition functions - for write back cache scheme ======== */
@@ -81,7 +81,7 @@ int mem_update_ucontact(ucontact_t* _c, ucontact_info_t *_ci);
  * \brief Update state of the contact if we are using write-back scheme
  * \param _c updated contact
  */
-void st_update_ucontact(ucontact_t* _c);
+void st_update_ucontact(ucontact_t *_c);
 
 
 /*!
@@ -89,7 +89,7 @@ void st_update_ucontact(ucontact_t* _c);
  * \param _c updated contact
  * \return 1 if the contact should be deleted from memory immediately, 0 otherwise
  */
-int st_delete_ucontact(ucontact_t* _c);
+int st_delete_ucontact(ucontact_t *_c);
 
 
 /*!
@@ -97,7 +97,7 @@ int st_delete_ucontact(ucontact_t* _c);
  * \param _c expired contact
  * \return 1 if the contact should be removed from the database and 0 otherwise
  */
-int st_expired_ucontact(ucontact_t* _c);
+int st_expired_ucontact(ucontact_t *_c);
 
 
 /*!
@@ -105,7 +105,7 @@ int st_expired_ucontact(ucontact_t* _c);
  * \param _c flushed contact
  * \return 1 if the contact should be inserted, 2 if update and 0 otherwise
  */
-int st_flush_ucontact(ucontact_t* _c);
+int st_flush_ucontact(ucontact_t *_c);
 
 
 /* ==== Database related functions ====== */
@@ -115,7 +115,7 @@ int st_flush_ucontact(ucontact_t* _c);
  * \param _c inserted contact
  * \return 0 on success, -1 on failure
  */
-int db_insert_ucontact(ucontact_t* _c);
+int db_insert_ucontact(ucontact_t *_c);
 
 
 /*!
@@ -123,7 +123,7 @@ int db_insert_ucontact(ucontact_t* _c);
  * \param _c updated contact
  * \return 0 on success, -1 on failure
  */
-int db_update_ucontact(ucontact_t* _c);
+int db_update_ucontact(ucontact_t *_c);
 
 
 /*!
@@ -131,7 +131,7 @@ int db_update_ucontact(ucontact_t* _c);
  * \param _c deleted contact
  * \return 0 on success, -1 on failure
  */
-int db_delete_ucontact(ucontact_t* _c);
+int db_delete_ucontact(ucontact_t *_c);
 
 
 /* ====== Module interface ====== */
@@ -145,8 +145,7 @@ struct urecord;
  * \param _ci new contact informations
  * \return 0 on success, -1 on failure
  */
-int update_ucontact(struct urecord* _r, ucontact_t* _c, ucontact_info_t* _ci);
-
+int update_ucontact(struct urecord *_r, ucontact_t *_c, ucontact_info_t *_ci);
 
 
 #endif

@@ -26,16 +26,18 @@
 #include "../../lib/srdb1/db.h"
 
 #define FAILOVER_MODE_NONE 1
-#define FAILOVER_MODE_NORMAL (1<<1)
-#define FAILOVER_MODE_LAST (1<<2)
+#define FAILOVER_MODE_NORMAL (1 << 1)
+#define FAILOVER_MODE_LAST (1 << 2)
 
-int db_failover(db_func_t * dbf, db1_con_t * dbh, ul_db_handle_t * handle, int no);
+int db_failover(db_func_t *dbf, db1_con_t *dbh, ul_db_handle_t *handle, int no);
 
-int db_failover_deactivate(db_func_t * dbf, db1_con_t * dbh, ul_db_handle_t * handle, int no);
+int db_failover_deactivate(
+		db_func_t *dbf, db1_con_t *dbh, ul_db_handle_t *handle, int no);
 
-int db_failover_reactivate(db_func_t * dbf, db1_con_t * dbh, ul_db_handle_t * handle, int no);
+int db_failover_reactivate(
+		db_func_t *dbf, db1_con_t *dbh, ul_db_handle_t *handle, int no);
 
-int db_failover_reset(db_func_t * dbf, db1_con_t * dbh, int id, int no);
+int db_failover_reset(db_func_t *dbf, db1_con_t *dbh, int id, int no);
 
 
 #endif

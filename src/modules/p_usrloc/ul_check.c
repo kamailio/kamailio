@@ -26,22 +26,25 @@
 #include "ul_check.h"
 #include "time.h"
 
-static struct check_list_head * head = NULL;
+static struct check_list_head *head = NULL;
 
-static struct check_list_element * initialise_element(void);
+static struct check_list_element *initialise_element(void);
 
-static void destroy_element(struct check_list_element * element);
+static void destroy_element(struct check_list_element *element);
 
-int init_list(void) {
-	if(!head){
-		if((head = (struct check_list_head *)shm_malloc(sizeof(struct check_list_head))) == NULL){
+int init_list(void)
+{
+	if(!head) {
+		if((head = (struct check_list_head *)shm_malloc(
+					sizeof(struct check_list_head)))
+				== NULL) {
 			LM_ERR("couldn't allocate shared memory.\n");
 			return -1;
 		}
 	}
 	memset(head, 0, sizeof(struct check_list_head));
-	
-	if(lock_init(&head->list_lock) == 0){
+
+	if(lock_init(&head->list_lock) == 0) {
 		LM_ERR("cannot initialise lock.\n");
 		shm_free(head);
 		return -1;
@@ -49,21 +52,22 @@ int init_list(void) {
 	return 0;
 }
 
-struct check_data * get_new_element(void) {
-	struct check_list_element * ret;
-	if(!head){
+struct check_data *get_new_element(void)
+{
+	struct check_list_element *ret;
+	if(!head) {
 		LM_ERR("list not initialised.\n");
 		return NULL;
 	}
 	LM_DBG("start.\n");
 	lock_get(&head->list_lock);
-	
-	if((ret = initialise_element()) == NULL){
+
+	if((ret = initialise_element()) == NULL) {
 		lock_release(&head->list_lock);
 		return NULL;
 	}
 	head->element_count++;
-	if(head->first == NULL){
+	if(head->first == NULL) {
 		LM_DBG("new element is the first.\n");
 		LM_DBG("element_count: %i\n", head->element_count);
 		head->first = ret;
@@ -78,7 +82,8 @@ struct check_data * get_new_element(void) {
 	return ret->data;
 }
 
-int must_refresh(struct check_data * element) {
+int must_refresh(struct check_data *element)
+{
 	int ret;
 	lock_get(&element->flag_lock);
 	ret = element->refresh_flag;
@@ -88,7 +93,8 @@ int must_refresh(struct check_data * element) {
 	return ret;
 }
 
-int must_reconnect(struct check_data * element) {
+int must_reconnect(struct check_data *element)
+{
 	int ret;
 	lock_get(&element->flag_lock);
 	ret = element->reconnect_flag;
@@ -98,12 +104,13 @@ int must_reconnect(struct check_data * element) {
 	return ret;
 }
 
-int set_must_refresh(void) {
-	struct check_list_element * tmp;
+int set_must_refresh(void)
+{
+	struct check_list_element *tmp;
 	int i = 0;
 	lock_get(&head->list_lock);
 	tmp = head->first;
-	while(tmp){
+	while(tmp) {
 		lock_get(&tmp->data->flag_lock);
 		tmp->data->refresh_flag = 1;
 		lock_release(&tmp->data->flag_lock);
@@ -115,12 +122,13 @@ int set_must_refresh(void) {
 	return i;
 }
 
-int set_must_reconnect(void) {
-	struct check_list_element * tmp;
+int set_must_reconnect(void)
+{
+	struct check_list_element *tmp;
 	int i = 0;
 	lock_get(&head->list_lock);
 	tmp = head->first;
-	while(tmp){
+	while(tmp) {
 		lock_get(&tmp->data->flag_lock);
 		tmp->data->reconnect_flag = 1;
 		lock_release(&tmp->data->flag_lock);
@@ -133,25 +141,27 @@ int set_must_reconnect(void) {
 }
 
 
-int must_retry(time_t *timer, time_t interval){
-	if(!timer){
+int must_retry(time_t *timer, time_t interval)
+{
+	if(!timer) {
 		return -1;
 	}
-	LM_DBG("must_retry: time is at %" PRIu64 ", retry at %" PRIu64 ".\n", (uint64_t)time(NULL),
-			(uint64_t)(*timer));
-	if(*timer <= time(NULL)){
+	LM_DBG("must_retry: time is at %" PRIu64 ", retry at %" PRIu64 ".\n",
+			(uint64_t)time(NULL), (uint64_t)(*timer));
+	if(*timer <= time(NULL)) {
 		*timer = time(NULL) + interval;
 		return 1;
 	}
 	return 0;
 }
 
-void destroy_list(void) {
-	struct check_list_element * tmp;
-	struct check_list_element * del;
-	if(head){
+void destroy_list(void)
+{
+	struct check_list_element *tmp;
+	struct check_list_element *del;
+	if(head) {
 		tmp = head->first;
-		while(tmp){
+		while(tmp) {
 			del = tmp;
 			tmp = tmp->next;
 			destroy_element(del);
@@ -162,22 +172,26 @@ void destroy_list(void) {
 	return;
 }
 
-static struct check_list_element * initialise_element(void){
-	struct check_list_element * ret;
-	if((ret = (struct check_list_element *)shm_malloc(sizeof(struct check_list_element))) == NULL){
+static struct check_list_element *initialise_element(void)
+{
+	struct check_list_element *ret;
+	if((ret = (struct check_list_element *)shm_malloc(
+				sizeof(struct check_list_element)))
+			== NULL) {
 		LM_ERR("couldn't allocate shared memory.\n");
 		return NULL;
 	}
 	memset(ret, 0, sizeof(struct check_list_element));
-	
-	if((ret->data = (struct check_data *)shm_malloc(sizeof(struct check_data))) == NULL){
+
+	if((ret->data = (struct check_data *)shm_malloc(sizeof(struct check_data)))
+			== NULL) {
 		LM_ERR("couldn't allocate shared memory.\n");
 		shm_free(ret);
 		return NULL;
 	}
 	memset(ret->data, 0, sizeof(struct check_data));
-	
-	if(lock_init(&ret->data->flag_lock) == 0){
+
+	if(lock_init(&ret->data->flag_lock) == 0) {
 		LM_ERR("cannot initialise flag lock.\n");
 		shm_free(ret->data);
 		shm_free(ret);
@@ -186,12 +200,13 @@ static struct check_list_element * initialise_element(void){
 	return ret;
 }
 
-static void destroy_element(struct check_list_element * element){
-	if(element){
-		if(element->data){
-/*		if(element->data->flag_lock){ */
-				lock_destroy(&element->data->flag_lock);
-/*			}*/
+static void destroy_element(struct check_list_element *element)
+{
+	if(element) {
+		if(element->data) {
+			/*		if(element->data->flag_lock){ */
+			lock_destroy(&element->data->flag_lock);
+			/*			}*/
 			shm_free(element->data);
 		}
 		shm_free(element);

@@ -36,10 +36,11 @@
 /*!
  * List of all domains registered with usrloc
  */
-struct domain_list_item {
+struct domain_list_item
+{
 	str name;
 	udomain_t domain;
-	struct domain_list_item*next;
+	struct domain_list_item *next;
 };
 
 
@@ -72,7 +73,7 @@ unsigned long get_number_of_users(void);
  * \param _d new created domain
  * \return 0 on success, -1 on failure
  */
-int register_udomain(const char* _n, udomain_t** _d);
+int register_udomain(const char *_n, udomain_t **_d);
 
 /*!
  * \brief Get all contacts from the usrloc, in partitions if wanted
@@ -106,8 +107,8 @@ int register_udomain(const char* _n, udomain_t** _d);
  * \param part_max maximal part
  * \return 0 on success, positive if buffer size was not sufficient, negative on failure
  */
-int get_all_ucontacts(void *, int, unsigned int,
-           unsigned int part_idx, unsigned int part_max, int options);
+int get_all_ucontacts(void *, int, unsigned int, unsigned int part_idx,
+		unsigned int part_max, int options);
 
 /*!
  * \brief Find a particular domain, small wrapper around find_dlist
@@ -115,7 +116,7 @@ int get_all_ucontacts(void *, int, unsigned int,
  * \param _p pointer to domain if found
  * \return 1 if domain was found, 0 otherwise
  */
-int find_domain(str* _d, udomain_t** _p);
+int find_domain(str *_d, udomain_t **_p);
 
 
 #endif

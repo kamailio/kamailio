@@ -26,30 +26,33 @@
 
 #include "../../core/lock_ops.h"
 
-struct check_data {
+struct check_data
+{
 	int refresh_flag;
 	int reconnect_flag;
 	gen_lock_t flag_lock;
 };
 
-struct check_list_element{
-	struct check_data * data;
-	struct check_list_element * next;
+struct check_list_element
+{
+	struct check_data *data;
+	struct check_list_element *next;
 };
 
-struct check_list_head{
+struct check_list_head
+{
 	gen_lock_t list_lock;
 	int element_count;
-	struct check_list_element * first;
+	struct check_list_element *first;
 };
 
 int init_list(void);
 
-struct check_data * get_new_element(void);
+struct check_data *get_new_element(void);
 
-int must_refresh(struct check_data * element);
+int must_refresh(struct check_data *element);
 
-int must_reconnect(struct check_data * element);
+int must_reconnect(struct check_data *element);
 
 int set_must_refresh(void);
 
@@ -57,7 +60,7 @@ int set_must_reconnect(void);
 
 void destroy_list(void);
 
-int must_retry(time_t * timer, time_t interval);
+int must_retry(time_t *timer, time_t interval);
 
 
 #endif

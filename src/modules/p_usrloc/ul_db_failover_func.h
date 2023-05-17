@@ -25,16 +25,17 @@
 #include "../../lib/srdb1/db.h"
 #include "ul_db_handle.h"
 
-int ul_db_failover_prepare(db_func_t * dbf, db1_con_t * dbh);
+int ul_db_failover_prepare(db_func_t *dbf, db1_con_t *dbh);
 
-int ul_db_failover_commit(db_func_t * dbf, db1_con_t * dbh);
+int ul_db_failover_commit(db_func_t *dbf, db1_con_t *dbh);
 
-int ul_db_failover_rollback(db_func_t * dbf, db1_con_t * dbh);
+int ul_db_failover_rollback(db_func_t *dbf, db1_con_t *dbh);
 
-int get_max_no_of_db_id(db_func_t * dbf, db1_con_t * dbh, int id);
+int get_max_no_of_db_id(db_func_t *dbf, db1_con_t *dbh, int id);
 
-int store_handle_data(db_func_t * dbf, db1_con_t * dbh, ul_db_t * db, int id, int old_num, int new_id);
+int store_handle_data(db_func_t *dbf, db1_con_t *dbh, ul_db_t *db, int id,
+		int old_num, int new_id);
 
-int check_handle_data(db_func_t * dbf, db1_con_t * dbh, ul_db_t * db, int id);
+int check_handle_data(db_func_t *dbf, db1_con_t *dbh, ul_db_t *db, int id);
 
 #endif

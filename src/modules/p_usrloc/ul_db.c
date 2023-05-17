@@ -37,30 +37,33 @@ ul_db_handle_t dbh_tmp;
 
 ul_master_db_set_t mdb;
 
-int required_caps = DB_CAP_QUERY | DB_CAP_RAW_QUERY | DB_CAP_INSERT | DB_CAP_DELETE | DB_CAP_UPDATE | DB_CAP_INSERT_UPDATE;
+int required_caps = DB_CAP_QUERY | DB_CAP_RAW_QUERY | DB_CAP_INSERT
+					| DB_CAP_DELETE | DB_CAP_UPDATE | DB_CAP_INSERT_UPDATE;
 
 static char query[UL_DB_QUERY_LEN];
 
-typedef struct db_dbf_dbres {
-	db1_res_t * res;
-	db_func_t * dbf;
+typedef struct db_dbf_dbres
+{
+	db1_res_t *res;
+	db_func_t *dbf;
 } db_dbf_dbres_t;
 
 #define UL_DB_RES_LIMIT 20
 
 db_dbf_dbres_t results[UL_DB_RES_LIMIT];
 
-static int add_dbf(db1_res_t * res, db_func_t * dbf);
+static int add_dbf(db1_res_t *res, db_func_t *dbf);
 
-static db_func_t * get_and_remove_dbf(db1_res_t * res);
+static db_func_t *get_and_remove_dbf(db1_res_t *res);
 
-int ul_db_init(void) {
+int ul_db_init(void)
+{
 	mdb.read.url = &read_db_url;
 	mdb.write.url = &write_db_url;
-	
+
 	memset(results, 0, sizeof(results));
 
-	if(db_master_write){
+	if(db_master_write) {
 		if(db_bind_mod(mdb.write.url, &mdb.write.dbf) < 0) {
 			LM_ERR("could not bind api for write db.\n");
 			return -1;
@@ -71,7 +74,7 @@ int ul_db_init(void) {
 		}
 		LM_INFO("write db initialized\n");
 	}
-	
+
 	if(db_bind_mod(mdb.read.url, &mdb.read.dbf) < 0) {
 		LM_ERR("could not bind db api for read db.\n");
 		return -1;
@@ -84,31 +87,32 @@ int ul_db_init(void) {
 	return 0;
 }
 
-int ul_db_child_init(void) {
-	if(mdb.read.dbh){
+int ul_db_child_init(void)
+{
+	if(mdb.read.dbh) {
 		mdb.read.dbf.close(mdb.read.dbh);
 		mdb.read.dbh = NULL;
 	}
-	if(mdb.write.dbh){
+	if(mdb.write.dbh) {
 		mdb.write.dbf.close(mdb.write.dbh);
 		mdb.write.dbh = NULL;
 	}
-	if((mdb.read.dbh  = mdb.read.dbf.init(mdb.read.url)) == NULL) {
+	if((mdb.read.dbh = mdb.read.dbf.init(mdb.read.url)) == NULL) {
 		LM_ERR("could not connect to sip master db (read).\n");
 		return -1;
 	}
 	LM_INFO("read db connection for children initialized\n");
-	
-	if(ul_db_child_locnr_init() == -1) return -1;
-	
+
+	if(ul_db_child_locnr_init() == -1)
+		return -1;
+
 	LM_INFO("location number is %d\n", max_loc_nr);
-	if(db_master_write){
-		if((mdb.write.dbh  = mdb.write.dbf.init(mdb.write.url)) == NULL) {
-			if (mdb_availability_control) {
+	if(db_master_write) {
+		if((mdb.write.dbh = mdb.write.dbf.init(mdb.write.url)) == NULL) {
+			if(mdb_availability_control) {
 				LM_INFO("starting with no connection to sip master db write\n");
 				return 0;
-			}
-			else {
+			} else {
 				LM_ERR("could not connect to sip master db (write).\n");
 				return -1;
 			}
@@ -118,36 +122,39 @@ int ul_db_child_init(void) {
 	return 0;
 }
 
-int ul_db_child_locnr_init(void) {
-	if(!mdb.read.dbh){
+int ul_db_child_locnr_init(void)
+{
+	if(!mdb.read.dbh) {
 		LM_ERR("Sip master DB connection(read) is down\n");
 		return -1;
 	}
-	if(load_location_number(&mdb.read.dbf, mdb.read.dbh, &max_loc_nr) != 0){
+	if(load_location_number(&mdb.read.dbf, mdb.read.dbh, &max_loc_nr) != 0) {
 		LM_ERR("could not load location number\n");
 		return -1;
 	}
 	return 0;
 }
 
-void ul_db_shutdown(void) {
+void ul_db_shutdown(void)
+{
 	destroy_handles();
-	if(mdb.read.dbh){
+	if(mdb.read.dbh) {
 		mdb.read.dbf.close(mdb.read.dbh);
 	}
-	if(mdb.write.dbh){
+	if(mdb.write.dbh) {
 		mdb.write.dbf.close(mdb.write.dbh);
 	}
 	return;
 }
 
-int init_w_dbh(ul_master_db_t *write) {
-	if (mdb_availability_control) {
-		if (!(*mdb_w_available)) {
+int init_w_dbh(ul_master_db_t *write)
+{
+	if(mdb_availability_control) {
+		if(!(*mdb_w_available)) {
 			return -1;
 		}
-		if (write->dbh == NULL) {
-			if((write->dbh  = write->dbf.init(write->url)) == NULL) {
+		if(write->dbh == NULL) {
+			if((write->dbh = write->dbf.init(write->url)) == NULL) {
 				LM_ERR("Could not recreate connection to master write db.\n");
 				return -1;
 			}
@@ -157,43 +164,44 @@ int init_w_dbh(ul_master_db_t *write) {
 	return 0;
 }
 
-int db_handle_error(ul_db_handle_t * handle, int no) {
+int db_handle_error(ul_db_handle_t *handle, int no)
+{
 	int query_len;
-	ul_db_t * db;
+	ul_db_t *db;
 	int i;
 	str tmp;
-	
-	if(!handle){
+
+	if(!handle) {
 		LM_ERR("NULL pointer in parameter.\n");
 		return -1;
 	}
 
-	if (!db_master_write) {
+	if(!db_master_write) {
 		return 0;
 	}
 
-	query_len = 35 + reg_table.len
-			+ error_col.len * 2 + id_col.len;
-	
-	if(query_len > UL_DB_QUERY_LEN){
+	query_len = 35 + reg_table.len + error_col.len * 2 + id_col.len;
+
+	if(query_len > UL_DB_QUERY_LEN) {
 		LM_ERR("query too long\n");
 		return -1;
 	}
-	
-	if((db = get_db_by_num(handle, no)) == NULL){
+
+	if((db = get_db_by_num(handle, no)) == NULL) {
 		LM_ERR("can't get db.\n");
 		return -1;
 	}
 
-	if (db->errors < cfg_get(p_usrloc, p_usrloc_cfg, db_err_threshold)) {
-		if (sprintf(query, "UPDATE %.*s "
-						"SET %.*s=%.*s+1 "
-						"WHERE %.*s=%i "
-						"AND %.*s=%i",
-						reg_table.len, reg_table.s,
-						error_col.len, error_col.s, error_col.len, error_col.s,
-						id_col.len, id_col.s, handle->id,
-						num_col.len, num_col.s, db->no) < 0) {
+	if(db->errors < cfg_get(p_usrloc, p_usrloc_cfg, db_err_threshold)) {
+		if(sprintf(query,
+				   "UPDATE %.*s "
+				   "SET %.*s=%.*s+1 "
+				   "WHERE %.*s=%i "
+				   "AND %.*s=%i",
+				   reg_table.len, reg_table.s, error_col.len, error_col.s,
+				   error_col.len, error_col.s, id_col.len, id_col.s, handle->id,
+				   num_col.len, num_col.s, db->no)
+				< 0) {
 			LM_ERR("could not print the query\n");
 			return -1;
 		}
@@ -201,39 +209,40 @@ int db_handle_error(ul_db_handle_t * handle, int no) {
 		tmp.s = query;
 		tmp.len = strlen(query);
 
-		if (init_w_dbh(&mdb.write) < 0)
+		if(init_w_dbh(&mdb.write) < 0)
 			return -1;
 
-		if (mdb.write.dbf.raw_query(mdb.write.dbh, &tmp, NULL)) {
+		if(mdb.write.dbf.raw_query(mdb.write.dbh, &tmp, NULL)) {
 			LM_ERR("error in database update.\n");
 			return -1;
 		}
 	}
 
-	for(i=0; i<DB_NUM; i++){
-		if (handle->db[i].dbh && handle->db[i].dbf.close){
+	for(i = 0; i < DB_NUM; i++) {
+		if(handle->db[i].dbh && handle->db[i].dbf.close) {
 			handle->db[i].dbf.close(handle->db[i].dbh);
 			handle->db[i].dbh = NULL;
 		}
 	}
 
-	if(load_data(&mdb.read.dbf, mdb.read.dbh, &dbh_tmp, handle->id) < 0){
+	if(load_data(&mdb.read.dbf, mdb.read.dbh, &dbh_tmp, handle->id) < 0) {
 		LM_ERR("could not load id %i\n", handle->id);
 		return -1;
 	}
 	refresh_handle(handle, &dbh_tmp, 0);
 	LM_ERR("error on id %i, db %i, "
-		    "errors occurred: %i, threshold: %i\n",
-		handle->id, db->no, db->errors, cfg_get(p_usrloc, p_usrloc_cfg, db_err_threshold));
+		   "errors occurred: %i, threshold: %i\n",
+			handle->id, db->no, db->errors,
+			cfg_get(p_usrloc, p_usrloc_cfg, db_err_threshold));
 	if(db->errors >= cfg_get(p_usrloc, p_usrloc_cfg, db_err_threshold)) {
 		LM_DBG("db_handle_error: now doing failover\n");
-		if (init_w_dbh(&mdb.write) < 0)
+		if(init_w_dbh(&mdb.write) < 0)
 			return -1;
 		if((db_failover(&mdb.write.dbf, mdb.write.dbh, handle, no)) < 0) {
 			LM_ERR("error in doing failover.\n");
 			return -1;
 		}
-		if(load_data(&mdb.read.dbf, mdb.read.dbh, &dbh_tmp, handle->id) < 0){
+		if(load_data(&mdb.read.dbf, mdb.read.dbh, &dbh_tmp, handle->id) < 0) {
 			return -1;
 		}
 		refresh_handle(handle, &dbh_tmp, 0);
@@ -242,204 +251,235 @@ int db_handle_error(ul_db_handle_t * handle, int no) {
 	return 0;
 }
 
-int db_check_policy(int pol, int ok, int working) {
+int db_check_policy(int pol, int ok, int working)
+{
 #define DB_POL_N_1 0
 #define DB_POL_N_HALF 1
 #define DB_POL_N_ALL 2
 
 	switch(policy) {
-			case DB_POL_N_1:
+		case DB_POL_N_1:
 			switch(pol) {
-					case DB_POL_OP: if(ok >= (DB_NUM - 1)) {
+				case DB_POL_OP:
+					if(ok >= (DB_NUM - 1)) {
 						return 0;
 					} else {
 						return -1;
 					}
 					break;
-					case DB_POL_QUERY: if(ok >= 1) {
+				case DB_POL_QUERY:
+					if(ok >= 1) {
 						return 0;
 					} else {
 						return -1;
 					}
-					case DB_POL_MOD: if((ok == working) && (working >= (DB_NUM - 1))) {
+				case DB_POL_MOD:
+					if((ok == working) && (working >= (DB_NUM - 1))) {
 						return 0;
 					} else {
 						return -1;
 					}
-					default: LM_ERR("wrong mode given.\n");
-						return -1;
-					}
-			case DB_POL_N_HALF:
-			switch(pol) {
-					case DB_POL_OP: if(ok >= (DB_NUM / 2)) {
-						return 0;
-					} else {
-						return -1;
-					}
-					break;
-					case DB_POL_QUERY: if(ok >= 1) {
-						return 0;
-					} else {
-						return -1;
-					}
-					case DB_POL_MOD: if((ok == working) && (working >= (DB_NUM / 2))) {
-						return 0;
-					} else {
-						return -1;
-					}
-					default: LM_ERR("wrong mode given.\n");
-						return -1;
-					}
-
-			case DB_POL_N_ALL:
-			switch(pol) {
-					case DB_POL_OP: if(ok == DB_NUM) {
-						return 0;
-					} else {
-						return -1;
-					}
-					break;
-					case DB_POL_QUERY: if(ok >= 1) {
-						return 0;
-					} else {
-						return -1;
-					}
-					case DB_POL_MOD: if(ok == DB_NUM) {
-						return 0;
-					} else {
-						return -1;
-					}
-					default: LM_ERR("wrong mode given.\n");
+				default:
+					LM_ERR("wrong mode given.\n");
 					return -1;
 			}
-			default:
-				return -1;
+		case DB_POL_N_HALF:
+			switch(pol) {
+				case DB_POL_OP:
+					if(ok >= (DB_NUM / 2)) {
+						return 0;
+					} else {
+						return -1;
+					}
+					break;
+				case DB_POL_QUERY:
+					if(ok >= 1) {
+						return 0;
+					} else {
+						return -1;
+					}
+				case DB_POL_MOD:
+					if((ok == working) && (working >= (DB_NUM / 2))) {
+						return 0;
+					} else {
+						return -1;
+					}
+				default:
+					LM_ERR("wrong mode given.\n");
+					return -1;
+			}
+
+		case DB_POL_N_ALL:
+			switch(pol) {
+				case DB_POL_OP:
+					if(ok == DB_NUM) {
+						return 0;
+					} else {
+						return -1;
+					}
+					break;
+				case DB_POL_QUERY:
+					if(ok >= 1) {
+						return 0;
+					} else {
+						return -1;
+					}
+				case DB_POL_MOD:
+					if(ok == DB_NUM) {
+						return 0;
+					} else {
+						return -1;
+					}
+				default:
+					LM_ERR("wrong mode given.\n");
+					return -1;
+			}
+		default:
+			return -1;
 	}
 }
 
-int ul_db_insert(str * table, str * first, str * second,
-                 db_key_t* _k, db_val_t* _v, int _n) {
-	ul_db_handle_t * handle;
-	if(!db_write){
+int ul_db_insert(
+		str *table, str *first, str *second, db_key_t *_k, db_val_t *_v, int _n)
+{
+	ul_db_handle_t *handle;
+	if(!db_write) {
 		LM_ERR("not allowed in read only mode, abort.\n");
 		return -1;
 	}
-	if((handle = get_handle(&mdb.read.dbf, mdb.read.dbh, first, second))  == NULL) {
+	if((handle = get_handle(&mdb.read.dbf, mdb.read.dbh, first, second))
+			== NULL) {
 		LM_ERR("could not retrieve db handle.\n");
 		return -1;
 	}
 	return db_insert(handle, table, _k, _v, _n);
 }
 
-int ul_db_replace(str * table, str * first, str * second,
-                 db_key_t* _k, db_val_t* _v, int _n, int  _un) {
-	ul_db_handle_t * handle;
-	if(!db_write){
+int ul_db_replace(str *table, str *first, str *second, db_key_t *_k,
+		db_val_t *_v, int _n, int _un)
+{
+	ul_db_handle_t *handle;
+	if(!db_write) {
 		LM_ERR("not allowed in read only mode, abort.\n");
 		return -1;
 	}
-	if((handle = get_handle(&mdb.read.dbf, mdb.read.dbh, first, second))  == NULL) {
+	if((handle = get_handle(&mdb.read.dbf, mdb.read.dbh, first, second))
+			== NULL) {
 		LM_ERR("could not retrieve db handle.\n");
 		return -1;
 	}
 	return db_replace(handle, table, _k, _v, _n, _un);
 }
 
-int ul_db_update(str * table, str * first, str * second,
-				db_key_t* _k, db_op_t * _op, db_val_t* _v,
-				db_key_t* _uk, db_val_t* _uv, int _n, int _un) {
-	ul_db_handle_t * handle;
-	if(!db_write){
+int ul_db_update(str *table, str *first, str *second, db_key_t *_k,
+		db_op_t *_op, db_val_t *_v, db_key_t *_uk, db_val_t *_uv, int _n,
+		int _un)
+{
+	ul_db_handle_t *handle;
+	if(!db_write) {
 		LM_ERR("not allowed in read only mode, abort.\n");
 		return -1;
 	}
-	if((handle = get_handle(&mdb.read.dbf, mdb.read.dbh, first, second))  == NULL) {
+	if((handle = get_handle(&mdb.read.dbf, mdb.read.dbh, first, second))
+			== NULL) {
 		LM_ERR("could not retrieve db handle.\n");
 		return -1;
 	}
 	return db_update(handle, table, _k, _op, _v, _uk, _uv, _n, _un);
 }
 
-int ul_db_insert_update(str * table, str * first, str * second,
-                        db_key_t* _k, db_val_t* _v, int _n) {
-	ul_db_handle_t * handle;
-	if(!db_write){
+int ul_db_insert_update(
+		str *table, str *first, str *second, db_key_t *_k, db_val_t *_v, int _n)
+{
+	ul_db_handle_t *handle;
+	if(!db_write) {
 		LM_ERR("not allowed in read only mode, abort.\n");
 		return -1;
 	}
-	if((handle = get_handle(&mdb.read.dbf, mdb.read.dbh, first, second))  == NULL) {
+	if((handle = get_handle(&mdb.read.dbf, mdb.read.dbh, first, second))
+			== NULL) {
 		LM_ERR("could not retrieve db handle.\n");
 		return -1;
 	}
 	return db_insert_update(handle, table, _k, _v, _n);
 }
 
-int ul_db_delete(str * table, str * first, str * second,
-                 db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n) {
-	ul_db_handle_t * handle;
-	if(!db_write){
+int ul_db_delete(str *table, str *first, str *second, db_key_t *_k, db_op_t *_o,
+		db_val_t *_v, int _n)
+{
+	ul_db_handle_t *handle;
+	if(!db_write) {
 		LM_ERR("not allowed in read only mode, abort.\n");
 		return -1;
 	}
-	if((handle = get_handle(&mdb.read.dbf, mdb.read.dbh, first, second))  == NULL) {
+	if((handle = get_handle(&mdb.read.dbf, mdb.read.dbh, first, second))
+			== NULL) {
 		LM_ERR("could not retrieve db handle.\n");
 		return -1;
 	}
 	return db_delete(handle, table, _k, _o, _v, _n);
 }
 
-int ul_db_query(str * table, str * first, str * second, db1_con_t *** _r_h, 
-				db_key_t* _k, db_op_t* _op,	db_val_t* _v,
-                db_key_t* _c, int _n, int _nc,	db_key_t _o, db1_res_t** _r) {
-	ul_db_handle_t * handle;
-	db_func_t * f;
+int ul_db_query(str *table, str *first, str *second, db1_con_t ***_r_h,
+		db_key_t *_k, db_op_t *_op, db_val_t *_v, db_key_t *_c, int _n, int _nc,
+		db_key_t _o, db1_res_t **_r)
+{
+	ul_db_handle_t *handle;
+	db_func_t *f;
 	int ret;
-	if((handle = get_handle(&mdb.read.dbf, mdb.read.dbh, first, second)) == NULL) {
+	if((handle = get_handle(&mdb.read.dbf, mdb.read.dbh, first, second))
+			== NULL) {
 		LM_ERR("could not retrieve db handle.\n");
 		return -1;
 	}
-	if((ret = db_query(handle, _r_h, &f, table, _k, _op, _v, _c, _n, _nc, _o, _r, db_master_write)) < 0){
+	if((ret = db_query(handle, _r_h, &f, table, _k, _op, _v, _c, _n, _nc, _o,
+				_r, db_master_write))
+			< 0) {
 		return ret;
 	}
 	add_dbf(*_r, f);
 	return ret;
 }
 
-int ul_db_free_result(db1_con_t ** dbh, db1_res_t * res){
-	db_func_t * f;
-	if(!dbh){
+int ul_db_free_result(db1_con_t **dbh, db1_res_t *res)
+{
+	db_func_t *f;
+	if(!dbh) {
 		LM_ERR("NULL pointer in parameter.\n");
 		return -1;
 	}
-	if((f = get_and_remove_dbf(res)) == NULL){
+	if((f = get_and_remove_dbf(res)) == NULL) {
 		return -1;
 	}
 	return f->free_result(*dbh, res);
 }
 
-int db_reactivate(ul_db_handle_t * handle, int no){
-	if(!db_master_write){
+int db_reactivate(ul_db_handle_t *handle, int no)
+{
+	if(!db_master_write) {
 		LM_ERR("running in read only mode, abort.\n");
 		return -1;
 	}
-	if (init_w_dbh(&mdb.write) < 0)
+	if(init_w_dbh(&mdb.write) < 0)
 		return -1;
 	return db_failover_reactivate(&mdb.write.dbf, mdb.write.dbh, handle, no);
 }
 
-int db_reset_failover_time(ul_db_handle_t * handle, int no){
-	if(!db_master_write){
+int db_reset_failover_time(ul_db_handle_t *handle, int no)
+{
+	if(!db_master_write) {
 		LM_ERR("running in read only mode, abort.\n");
 		return -1;
 	}
-	if (init_w_dbh(&mdb.write) < 0)
+	if(init_w_dbh(&mdb.write) < 0)
 		return -1;
 	return db_failover_reset(&mdb.write.dbf, mdb.write.dbh, handle->id, no);
 }
 
-int ul_db_check(ul_db_handle_t * handle){
-	if(db_master_write){
-		if (init_w_dbh(&mdb.write) < 0)
+int ul_db_check(ul_db_handle_t *handle)
+{
+	if(db_master_write) {
+		if(init_w_dbh(&mdb.write) < 0)
 			return -1;
 		return check_handle(&mdb.write.dbf, mdb.write.dbh, handle);
 	} else {
@@ -448,10 +488,11 @@ int ul_db_check(ul_db_handle_t * handle){
 	}
 }
 
-static int add_dbf(db1_res_t * res, db_func_t * dbf){
-	int i=0;
-	for(i=0;i<UL_DB_RES_LIMIT;i++){
-		if(!results[i].res){
+static int add_dbf(db1_res_t *res, db_func_t *dbf)
+{
+	int i = 0;
+	for(i = 0; i < UL_DB_RES_LIMIT; i++) {
+		if(!results[i].res) {
 			results[i].res = res;
 			results[i].dbf = dbf;
 			return 0;
@@ -461,11 +502,12 @@ static int add_dbf(db1_res_t * res, db_func_t * dbf){
 	return -1;
 }
 
-static db_func_t * get_and_remove_dbf(db1_res_t * res){
-	int i=0;
-	db_func_t * f;
-	for(i=0; i<UL_DB_RES_LIMIT; i++){
-		if(results[i].res == res){
+static db_func_t *get_and_remove_dbf(db1_res_t *res)
+{
+	int i = 0;
+	db_func_t *f;
+	for(i = 0; i < UL_DB_RES_LIMIT; i++) {
+		if(results[i].res == res) {
 			f = results[i].dbf;
 			memset(&results[i], 0, sizeof(db_dbf_dbres_t));
 			return f;
