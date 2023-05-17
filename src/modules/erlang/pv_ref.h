@@ -27,8 +27,8 @@
 #include "../../core/pvar.h"
 
 int pv_ref_parse_name(pv_spec_t *sp, str *in);
-int pv_ref_set(struct sip_msg* msg,  pv_param_t* param, int op, pv_value_t* val);
-int pv_ref_get(struct sip_msg*, pv_param_t*, pv_value_t*);
+int pv_ref_set(struct sip_msg *msg, pv_param_t *param, int op, pv_value_t *val);
+int pv_ref_get(struct sip_msg *, pv_param_t *, pv_value_t *);
 
 sr_xavp_t *pv_ref_get_ref(str *name);
 

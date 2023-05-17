@@ -47,7 +47,7 @@ typedef struct worker_handler_s
 	int (*handle_f)(handler_common_t *phandler_t);
 	int (*wait_tmo_f)(handler_common_t *phandler_t);
 	int (*destroy_f)(handler_common_t *handler);
-	int sockfd; /* kamailio to cnode socket r/w */
+	int sockfd;	 /* kamailio to cnode socket r/w */
 	ei_cnode ec; /* erlang C node (actually it's me) */
 
 } worker_handler_t;

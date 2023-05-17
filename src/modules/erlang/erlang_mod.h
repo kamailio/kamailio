@@ -29,7 +29,7 @@
 #include "../../core/xavp.h"
 #include "erl_api.h"
 
-extern str cookie; /* Erlang cookie */
+extern str cookie;		/* Erlang cookie */
 extern int trace_level; /* Tracing level on the distribution */
 extern str cnode_alivename;
 extern str cnode_host;
@@ -46,13 +46,14 @@ extern int *usocks[2];
 
 extern int csockfd; /* socket to cnode process */
 
-#define KSOCKET	0
-#define CSOCKET	1
+#define KSOCKET 0
+#define CSOCKET 1
 
 /**
  * types of command parameter
  */
-typedef enum {
+typedef enum
+{
 	ERL_PARAM_FPARAM,
 	ERL_PARAM_XBUFF_SPEC
 } erl_param_type;
@@ -62,9 +63,11 @@ typedef enum {
  *
  * combine str and PV
  */
-typedef struct erl_param_s {
+typedef struct erl_param_s
+{
 	erl_param_type type;
-	union {
+	union
+	{
 		fparam_t *fp;
 		pv_spec_t sp;
 	} value;
