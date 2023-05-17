@@ -46,19 +46,20 @@
 #include "uid_auth_db_mod.h"
 
 
-#define IS_NULL(f)	((f).flags & DB_NULL)
+#define IS_NULL(f) ((f).flags & DB_NULL)
 
-static inline int get_ha1(struct username* username, str* did, str* realm,
-		authdb_table_info_t *table_info, char* ha1, db_res_t** res, db_rec_t** row)
+static inline int get_ha1(struct username *username, str *did, str *realm,
+		authdb_table_info_t *table_info, char *ha1, db_res_t **res,
+		db_rec_t **row)
 {
 	str result;
 	db_cmd_t *q = NULL;
 
-	if (calc_ha1) {
+	if(calc_ha1) {
 		q = table_info->query_password;
 		LM_DBG("querying plain password\n");
 	} else {
-		if (username->domain.len) {
+		if(username->domain.len) {
 			q = table_info->query_pass2;
 			LM_DBG("querying ha1b\n");
 		} else {
@@ -70,26 +71,29 @@ static inline int get_ha1(struct username* username, str* did, str* realm,
 	q->match[0].v.lstr = username->user;
 	q->match[1].v.lstr = *realm;
 
-	if (use_did) q->match[2].v.lstr = *did;
+	if(use_did)
+		q->match[2].v.lstr = *did;
 
-	if (db_exec(res, q) < 0 ) {
+	if(db_exec(res, q) < 0) {
 		LM_ERR("Error while querying database\n");
 		return -1;
 	}
 
-	if (*res) *row = db_first(*res);
-	else *row = NULL;
-	while (*row) {
-		if (IS_NULL((*row)->fld[0]) || IS_NULL((*row)->fld[1])) {
+	if(*res)
+		*row = db_first(*res);
+	else
+		*row = NULL;
+	while(*row) {
+		if(IS_NULL((*row)->fld[0]) || IS_NULL((*row)->fld[1])) {
 			LM_ERR("Credentials for '%.*s'@'%.*s' contain NULL value,"
-					" skipping\n",
-					username->user.len, ZSW(username->user.s),
-					realm->len, ZSW(realm->s));
+				   " skipping\n",
+					username->user.len, ZSW(username->user.s), realm->len,
+					ZSW(realm->s));
 		} else {
-			if ((*row)->fld[1].v.int4 & SRDB_DISABLED) {
+			if((*row)->fld[1].v.int4 & SRDB_DISABLED) {
 				/* disabled rows ignored */
 			} else {
-				if ((*row)->fld[1].v.int4 & SRDB_LOAD_SER) {
+				if((*row)->fld[1].v.int4 & SRDB_LOAD_SER) {
 					/* *row = i; */
 					break;
 				}
@@ -98,17 +102,16 @@ static inline int get_ha1(struct username* username, str* did, str* realm,
 		*row = db_next(*res);
 	}
 
-	if (!*row) {
-		LM_DBG("Credentials for '%.*s'@'%.*s' not found\n",
-				username->user.len, ZSW(username->user.s),
-				realm->len, ZSW(realm->s));
+	if(!*row) {
+		LM_DBG("Credentials for '%.*s'@'%.*s' not found\n", username->user.len,
+				ZSW(username->user.s), realm->len, ZSW(realm->s));
 		return 1;
 	}
 
 	result.s = (*row)->fld[0].v.cstr;
 	result.len = strlen(result.s);
 
-	if (calc_ha1) {
+	if(calc_ha1) {
 		/* Only plaintext passwords are stored in database,
 		 * we have to calculate HA1 */
 		auth_api.calc_HA1(HA_MD5, &username->whole, realm, &result, 0, 0, ha1);
@@ -125,7 +128,7 @@ static inline int get_ha1(struct username* username, str* did, str* realm,
  * Calculate the response and compare with the given response string
  * Authorization is successful if this two strings are same
  */
-static inline int check_response(dig_cred_t* cred, str* method, char* ha1)
+static inline int check_response(dig_cred_t *cred, str *method, char *ha1)
 {
 	HASHHEX resp, hent;
 
@@ -133,7 +136,7 @@ static inline int check_response(dig_cred_t* cred, str* method, char* ha1)
 	 * First, we have to verify that the response received has
 	 * the same length as responses created by us
 	 */
-	if (cred->response.len != 32) {
+	if(cred->response.len != 32) {
 		LM_DBG("Receive response len != 32\n");
 		return 1;
 	}
@@ -142,10 +145,9 @@ static inline int check_response(dig_cred_t* cred, str* method, char* ha1)
 	 * Now, calculate our response from parameters received
 	 * from the user agent
 	 */
-	auth_api.calc_response(ha1, &(cred->nonce),
-			&(cred->nc), &(cred->cnonce),
-			&(cred->qop.qop_str), cred->qop.qop_parsed == QOP_AUTHINT,
-			method, &(cred->uri), hent, resp);
+	auth_api.calc_response(ha1, &(cred->nonce), &(cred->nc), &(cred->cnonce),
+			&(cred->qop.qop_str), cred->qop.qop_parsed == QOP_AUTHINT, method,
+			&(cred->uri), hent, resp);
 
 	LM_DBG("Our result = \'%s\'\n", resp);
 
@@ -153,7 +155,7 @@ static inline int check_response(dig_cred_t* cred, str* method, char* ha1)
 	 * And simply compare the strings, the user is
 	 * authorized if they match
 	 */
-	if (!memcmp(resp, cred->response.s, 32)) {
+	if(!memcmp(resp, cred->response.s, 32)) {
 		LM_DBG("Authorization is OK\n");
 		return 0;
 	} else {
@@ -166,20 +168,20 @@ static inline int check_response(dig_cred_t* cred, str* method, char* ha1)
 /*
  * Generate AVPs from the database result
  */
-static int generate_avps(db_res_t* result, db_rec_t *row)
+static int generate_avps(db_res_t *result, db_rec_t *row)
 {
 	int i;
 	int_str iname, ivalue;
 	str value;
 	char buf[32];
 
-	for (i = 2; i < credentials_n + 2; i++) {
+	for(i = 2; i < credentials_n + 2; i++) {
 		value = row->fld[i].v.lstr;
 
-		if (IS_NULL(row->fld[i]))
+		if(IS_NULL(row->fld[i]))
 			continue;
 
-		switch (row->fld[i].type) {
+		switch(row->fld[i].type) {
 			case DB_STR:
 				value = row->fld[i].v.lstr;
 				break;
@@ -194,20 +196,20 @@ static int generate_avps(db_res_t* result, db_rec_t *row)
 				break;
 		}
 
-		if (value.s == NULL)
+		if(value.s == NULL)
 			continue;
 
 		iname.s = credentials[i - 2];
 		ivalue.s = value;
 
-		if (add_avp(AVP_NAME_STR | AVP_VAL_STR | AVP_CLASS_USER,
-					iname, ivalue) < 0) {
+		if(add_avp(AVP_NAME_STR | AVP_VAL_STR | AVP_CLASS_USER, iname, ivalue)
+				< 0) {
 			LM_ERR("Error while creating AVPs\n");
 			return -1;
 		}
 
-		LM_DBG("set string AVP \'%.*s = %.*s\'\n",
-				iname.s.len, ZSW(iname.s.s), value.len, ZSW(value.s));
+		LM_DBG("set string AVP \'%.*s = %.*s\'\n", iname.s.len, ZSW(iname.s.s),
+				value.len, ZSW(value.s));
 	}
 
 	return 0;
@@ -222,73 +224,71 @@ static int generate_avps(db_res_t* result, db_rec_t *row)
  * WARNING: if -1 is returned res _must_ _not_ be freed (it's empty)
  *
  */
-static inline int check_all_ha1(struct sip_msg* msg, struct hdr_field* hdr,
-		dig_cred_t* dig, str* method, str* did, str* realm,
-		authdb_table_info_t *table_info, db_res_t** res)
+static inline int check_all_ha1(struct sip_msg *msg, struct hdr_field *hdr,
+		dig_cred_t *dig, str *method, str *did, str *realm,
+		authdb_table_info_t *table_info, db_res_t **res)
 {
 	char ha1[256];
 	db_rec_t *row;
 	str result;
 	db_cmd_t *q;
 
-	if (calc_ha1) {
+	if(calc_ha1) {
 		q = table_info->query_password;
 		LM_DBG("querying plain password\n");
-	}
-	else {
-		if (dig->username.domain.len) {
+	} else {
+		if(dig->username.domain.len) {
 			q = table_info->query_pass2;
 			LM_DBG("querying ha1b\n");
-		}
-		else {
+		} else {
 			q = table_info->query_pass;
 			LM_DBG("querying ha1\n");
 		}
 	}
 
 	q->match[0].v.lstr = dig->username.user;
-	if (dig->username.domain.len)
+	if(dig->username.domain.len)
 		q->match[1].v.lstr = dig->username.domain;
 	else
 		q->match[1].v.lstr = *realm;
 
-	if (use_did) q->match[2].v.lstr = *did;
+	if(use_did)
+		q->match[2].v.lstr = *did;
 
-	if (db_exec(res, q) < 0 ) {
+	if(db_exec(res, q) < 0) {
 		LM_ERR("Error while querying database\n");
 	}
 
-	if (*res) row = db_first(*res);
-	else row = NULL;
-	while (row) {
-		if (IS_NULL(row->fld[0]) || IS_NULL(row->fld[1])) {
+	if(*res)
+		row = db_first(*res);
+	else
+		row = NULL;
+	while(row) {
+		if(IS_NULL(row->fld[0]) || IS_NULL(row->fld[1])) {
 			LM_ERR("Credentials for '%.*s'@'%.*s' contain NULL value,"
-					" skipping\n",
+				   " skipping\n",
 					dig->username.user.len, ZSW(dig->username.user.s),
 					realm->len, ZSW(realm->s));
-		}
-		else {
-			if (row->fld[1].v.int4 & SRDB_DISABLED) {
+		} else {
+			if(row->fld[1].v.int4 & SRDB_DISABLED) {
 				/* disabled rows ignored */
-			}
-			else {
-				if (row->fld[1].v.int4 & SRDB_LOAD_SER) {
+			} else {
+				if(row->fld[1].v.int4 & SRDB_LOAD_SER) {
 					result.s = row->fld[0].v.cstr;
 					result.len = strlen(result.s);
-					if (calc_ha1) {
+					if(calc_ha1) {
 						/* Only plaintext passwords are stored in database,
 						 * we have to calculate HA1 */
-						auth_api.calc_HA1(HA_MD5, &(dig->username.whole),
-								realm, &result, 0, 0, ha1);
+						auth_api.calc_HA1(HA_MD5, &(dig->username.whole), realm,
+								&result, 0, 0, ha1);
 						LM_DBG("HA1 string calculated: %s\n", ha1);
 					} else {
 						memcpy(ha1, result.s, result.len);
 						ha1[result.len] = '\0';
 					}
 
-					if (!check_response(dig, method, ha1)) {
-						if (auth_api.post_auth(msg, hdr, ha1)
-								== AUTHENTICATED) {
+					if(!check_response(dig, method, ha1)) {
+						if(auth_api.post_auth(msg, hdr, ha1) == AUTHENTICATED) {
 							generate_avps(*res, row);
 							return 0;
 						}
@@ -299,14 +299,12 @@ static inline int check_all_ha1(struct sip_msg* msg, struct hdr_field* hdr,
 		row = db_next(*res);
 	}
 
-	if (!row) {
+	if(!row) {
 		LM_DBG("Credentials for '%.*s'@'%.*s' not found",
-				dig->username.user.len, ZSW(dig->username.user.s),
-				realm->len, ZSW(realm->s));
+				dig->username.user.len, ZSW(dig->username.user.s), realm->len,
+				ZSW(realm->s));
 	}
 	return 1;
-
-
 }
 
 
@@ -318,15 +316,15 @@ static inline int check_all_ha1(struct sip_msg* msg, struct hdr_field* hdr,
  *      -1 -- Authentication failed
  *       1 -- Authentication successful
  */
-static inline int authenticate(struct sip_msg* msg, str* realm,
+static inline int authenticate(struct sip_msg *msg, str *realm,
 		authdb_table_info_t *table, hdr_types_t hftype)
 {
 	char ha1[256];
 	int res, ret;
 	db_rec_t *row;
-	struct hdr_field* h;
-	auth_body_t* cred;
-	db_res_t* result;
+	struct hdr_field *h;
+	auth_body_t *cred;
+	db_res_t *result;
 	str did;
 
 	cred = 0;
@@ -371,15 +369,15 @@ static inline int authenticate(struct sip_msg* msg, str* realm,
 			goto end;
 	}
 
-	cred = (auth_body_t*)h->parsed;
+	cred = (auth_body_t *)h->parsed;
 
-	if (use_did) {
-		if (msg->REQ_METHOD == METHOD_REGISTER) {
+	if(use_did) {
+		if(msg->REQ_METHOD == METHOD_REGISTER) {
 			ret = get_to_did(&did, msg);
 		} else {
 			ret = get_from_did(&did, msg);
 		}
-		if (ret == 0) {
+		if(ret == 0) {
 			did.s = DEFAULT_DID;
 			did.len = sizeof(DEFAULT_DID) - 1;
 		}
@@ -389,29 +387,27 @@ static inline int authenticate(struct sip_msg* msg, str* realm,
 	}
 
 
-	if (check_all) {
+	if(check_all) {
 		res = check_all_ha1(msg, h, &(cred->digest),
 				&msg->first_line.u.request.method, &did, realm, table, &result);
-		if (res < 0) {
+		if(res < 0) {
 			ret = -2;
 			goto end;
-		}
-		else if (res > 0) {
+		} else if(res > 0) {
 			ret = -1;
 			goto end;
-		}
-		else {
+		} else {
 			ret = 1;
 			goto end;
 		}
 	} else {
-		res = get_ha1(&cred->digest.username, &did, realm, table, ha1,
-				&result, &row);
-		if (res < 0) {
+		res = get_ha1(
+				&cred->digest.username, &did, realm, table, ha1, &result, &row);
+		if(res < 0) {
 			ret = -2;
 			goto end;
 		}
-		if (res > 0) {
+		if(res > 0) {
 			/* Username not found in the database */
 			ret = -1;
 			goto end;
@@ -419,8 +415,8 @@ static inline int authenticate(struct sip_msg* msg, str* realm,
 	}
 
 	/* Recalculate response, it must be same to authorize successfully */
-	if (!check_response(&(cred->digest), &msg->first_line.u.request.method,
-				ha1)) {
+	if(!check_response(
+			   &(cred->digest), &msg->first_line.u.request.method, ha1)) {
 		switch(auth_api.post_auth(msg, h, ha1)) {
 			case ERROR:
 			case BAD_CREDENTIALS:
@@ -445,10 +441,12 @@ static inline int authenticate(struct sip_msg* msg, str* realm,
 	}
 
 end:
-	if (result) db_res_free(result);
-	if (ret < 0) {
-		if (auth_api.build_challenge(msg, (cred ? cred->stale : 0), realm,
-					NULL, NULL, hftype) < 0) {
+	if(result)
+		db_res_free(result);
+	if(ret < 0) {
+		if(auth_api.build_challenge(
+				   msg, (cred ? cred->stale : 0), realm, NULL, NULL, hftype)
+				< 0) {
 			LM_ERR("Error while creating challenge\n");
 			ret = -2;
 		}
@@ -460,33 +458,34 @@ end:
 /*
  * Authenticate using Proxy-Authorize header field
  */
-int proxy_authenticate(struct sip_msg* msg, char* p1, char* p2)
+int proxy_authenticate(struct sip_msg *msg, char *p1, char *p2)
 {
 	str realm;
 
-	if (get_str_fparam(&realm, msg, (fparam_t*)p1) < 0) {
+	if(get_str_fparam(&realm, msg, (fparam_t *)p1) < 0) {
 		LM_ERR("Cannot obtain digest realm from parameter '%s'\n",
-				((fparam_t*)p1)->orig);
+				((fparam_t *)p1)->orig);
 		return -1;
 	}
 
-	return authenticate(msg, &realm, (authdb_table_info_t*)p2, HDR_PROXYAUTH_T);
+	return authenticate(
+			msg, &realm, (authdb_table_info_t *)p2, HDR_PROXYAUTH_T);
 }
 
 
 /*
  * Authorize using WWW-Authorize header field
  */
-int www_authenticate(struct sip_msg* msg, char* p1, char* p2)
+int www_authenticate(struct sip_msg *msg, char *p1, char *p2)
 {
 	str realm;
 
-	if (get_str_fparam(&realm, msg, (fparam_t*)p1) < 0) {
+	if(get_str_fparam(&realm, msg, (fparam_t *)p1) < 0) {
 		LM_ERR("Cannot obtain digest realm from parameter '%s'\n",
-				((fparam_t*)p1)->orig);
+				((fparam_t *)p1)->orig);
 		return -1;
 	}
 
-	return authenticate(msg, &realm, (authdb_table_info_t*)p2,
-			HDR_AUTHORIZATION_T);
+	return authenticate(
+			msg, &realm, (authdb_table_info_t *)p2, HDR_AUTHORIZATION_T);
 }

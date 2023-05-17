@@ -39,16 +39,16 @@
  * Parse list of tokens separated by some char and put each token
  * into result array. Caller frees result array!
  */
-static inline int parse_token_list(char *p, char *pend, char separator,
-		str **result)
+static inline int parse_token_list(
+		char *p, char *pend, char separator, str **result)
 {
 	int i;
 
 	i = 0;
 	*result = NULL;
-	while ((pend - p) > 0) {
+	while((pend - p) > 0) {
 		*result = pkg_reallocxf(*result, sizeof(**result) * (i + 1));
-		if (*result == NULL)
+		if(*result == NULL)
 			return -1;
 		(*result)[i].s = p;
 		p = eat_token2_end(p, pend, separator) + 1;
@@ -68,34 +68,34 @@ static int aaa_avps_init(str *avp_list, str **parsed_avps, int *avps_n)
 	int errcode, i;
 	char *cp;
 
-	if (!avp_list->s || !avp_list->len) {
+	if(!avp_list->s || !avp_list->len) {
 		/* AVPs disabled, nothing to do */
 		*avps_n = 0;
 		return 1;
 	}
 
 	cp = pkg_malloc(avp_list->len + 1);
-	if (cp == NULL) {
+	if(cp == NULL) {
 		PKG_MEM_ERROR;
 		errcode = -1;
 		goto bad;
 	}
 	memcpy(cp, avp_list->s, avp_list->len);
 	*avps_n = parse_token_list(cp, cp + avp_list->len, '|', parsed_avps);
-	if (*avps_n == -1) {
+	if(*avps_n == -1) {
 		LM_ERR("can't parse avps_column_int parameter\n");
 		errcode = -2;
 		pkg_free(cp);
 		goto bad;
 	}
 
-	for (i = 0; i < *avps_n; i++) {
+	for(i = 0; i < *avps_n; i++) {
 		(*parsed_avps)[i].s[(*parsed_avps)[i].len] = '\0';
 	}
 
 	return 0;
 bad:
-	if (*parsed_avps != NULL) {
+	if(*parsed_avps != NULL) {
 		pkg_free((*parsed_avps)[0].s);
 		pkg_free(*parsed_avps);
 	}
