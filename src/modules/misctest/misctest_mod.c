@@ -203,14 +203,14 @@ static int mod_init(void)
 		goto error;
 	}
 
-	if(misctest_memory!=0) {
-		if(misctest_memory_init()<0) {
+	if(misctest_memory != 0) {
+		if(misctest_memory_init() < 0) {
 			goto error;
 		}
 	}
 
-	if(misctest_message!=0) {
-		if(misctest_message_init()<0) {
+	if(misctest_message != 0) {
+		if(misctest_message_init() < 0) {
 			goto error;
 		}
 		return -1;
@@ -224,7 +224,7 @@ error:
 
 static void mod_destroy()
 {
-	if(misctest_memory!=0) {
+	if(misctest_memory != 0) {
 		if(rndt_lst) {
 			mem_destroy_all_tests();
 			lock_destroy(&rndt_lst->lock);
@@ -243,8 +243,7 @@ static void mod_destroy()
 static int misctest_memory_init(void)
 {
 	alloc_lst = shm_malloc(sizeof(*alloc_lst));
-	if(alloc_lst == 0)
-	{
+	if(alloc_lst == 0) {
 		SHM_MEM_ERROR;
 		goto error;
 	}
@@ -255,8 +254,7 @@ static int misctest_memory_init(void)
 	if(lock_init(&alloc_lst->lock) == 0)
 		goto error;
 	rndt_lst = shm_malloc(sizeof(*rndt_lst));
-	if(rndt_lst == 0)
-	{
+	if(rndt_lst == 0) {
 		SHM_MEM_ERROR;
 		goto error;
 	}
@@ -272,31 +270,31 @@ error:
 
 static int misctest_message_init(void)
 {
-	char tbuf[4*BUF_SIZE];
+	char tbuf[4 * BUF_SIZE];
 	FILE *f;
 	long fsize;
-	sip_msg_t tmsg = { };
+	sip_msg_t tmsg = {};
 
-	if(misctest_message_data.s!=0 && misctest_message_data.len>0) {
-		if(misctest_message_data.len>=4*BUF_SIZE-2) {
+	if(misctest_message_data.s != 0 && misctest_message_data.len > 0) {
+		if(misctest_message_data.len >= 4 * BUF_SIZE - 2) {
 			LM_ERR("the data is too big\n");
 			return -1;
 		}
 		memcpy(tbuf, misctest_message_data.s, misctest_message_data.len);
 		tbuf[misctest_message_data.len] = '\0';
 		tmsg.len = misctest_message_data.len;
-	} else if(misctest_message_file.s!=0 && misctest_message_file.len>0) {
+	} else if(misctest_message_file.s != 0 && misctest_message_file.len > 0) {
 		LM_DBG("reading data from file: %.*s\n", misctest_message_file.len,
 				misctest_message_file.s);
 		f = fopen(misctest_message_file.s, "r");
-		if(f==NULL) {
+		if(f == NULL) {
 			LM_ERR("cannot open file: %.*s\n", misctest_message_file.len,
 					misctest_message_file.s);
 			return -1;
 		}
 		fseek(f, 0, SEEK_END);
 		fsize = ftell(f);
-		if(fsize<0) {
+		if(fsize < 0) {
 			LM_ERR("ftell failed on file: %.*s\n", misctest_message_file.len,
 					misctest_message_file.s);
 			fclose(f);
@@ -304,16 +302,15 @@ static int misctest_message_init(void)
 		}
 		fseek(f, 0, SEEK_SET);
 
-		if(fsize>=4*BUF_SIZE-2) {
+		if(fsize >= 4 * BUF_SIZE - 2) {
 			LM_ERR("the file data is too big\n");
 			fclose(f);
 			return -1;
-
 		}
 		if(fread(tbuf, fsize, 1, f) != fsize) {
 			if(ferror(f)) {
 				LM_ERR("error reading from file: %.*s\n",
-					misctest_message_file.len, misctest_message_file.s);
+						misctest_message_file.len, misctest_message_file.s);
 			}
 		}
 		fclose(f);
@@ -333,7 +330,7 @@ static int misctest_message_init(void)
 
 	misctest_hexprint(tmsg.buf, tmsg.len, 20, 10);
 
-	if (parse_msg(tmsg.buf, tmsg.len, &tmsg) < 0) {
+	if(parse_msg(tmsg.buf, tmsg.len, &tmsg) < 0) {
 		goto cleanup;
 	}
 
@@ -403,23 +400,23 @@ int misctest_hexprint(void *data, size_t length, int linelen, int split)
 		return -1;
 	}
 
-	while (remaining > 0) {
+	while(remaining > 0) {
 		int lrem;
 		int splitcount;
 		ptr = buffer;
 
 		lrem = remaining;
 		splitcount = 0;
-		for (pos = 0; pos < linelen; pos++) {
+		for(pos = 0; pos < linelen; pos++) {
 
-			if (split == splitcount++) {
+			if(split == splitcount++) {
 				sprintf(ptr, "  ");
 				ptr += 2;
 				splitcount = 1;
 			}
 
-			if (lrem) {
-				sprintf(ptr, "%02x ", *((unsigned char *) inptr + pos));
+			if(lrem) {
+				sprintf(ptr, "%02x ", *((unsigned char *)inptr + pos));
 				lrem--;
 			} else {
 				sprintf(ptr, "   ");
@@ -432,18 +429,18 @@ int misctest_hexprint(void *data, size_t length, int linelen, int split)
 
 		lrem = remaining;
 		splitcount = 0;
-		for (pos = 0; pos < linelen; pos++) {
+		for(pos = 0; pos < linelen; pos++) {
 			unsigned char c;
 
-			if (split == splitcount++) {
+			if(split == splitcount++) {
 				sprintf(ptr, "  ");
 				ptr += 2;
 				splitcount = 1;
 			}
 
-			if (lrem) {
-				c = *((unsigned char *) inptr + pos);
-				if (c > 31 && c < 127) {
+			if(lrem) {
+				c = *((unsigned char *)inptr + pos);
+				if(c > 31 && c < 127) {
 					sprintf(ptr, "%c", c);
 				} else {
 					sprintf(ptr, ".");
@@ -475,8 +472,7 @@ static int mem_track(void *addr, unsigned long size)
 	unsigned long r, i;
 
 	mc = shm_malloc(sizeof(*mc));
-	if(mc == 0)
-	{
+	if(mc == 0) {
 		SHM_MEM_ERROR;
 		goto error;
 	}
@@ -791,8 +787,7 @@ static int mem_leak_time_test(unsigned long min, unsigned long max,
 	int id;
 
 	tst = shm_malloc(sizeof(*tst));
-	if(tst == 0)
-	{
+	if(tst == 0) {
 		SHM_MEM_ERROR;
 		goto error;
 	}
