@@ -44,7 +44,7 @@
 #ifndef IS_CSCF_CXDX_AVP_H
 #define IS_CSCF_CXDX_AVP_H
 
-extern struct cdp_binds cdpb;            /**< Structure with pointers to cdp funcs 		*/
+extern struct cdp_binds cdpb; /**< Structure with pointers to cdp funcs 		*/
 extern struct tm_binds tmb;
 
 struct AAAMessage;
@@ -65,7 +65,7 @@ int cxdx_add_destination_realm(AAAMessage *msg, str data);
  * @param data - the value for the AVP payload
  * @returns 1 on success or 0 on error
  */
-int cxdx_add_destination_host(AAAMessage *msg,str data);
+int cxdx_add_destination_host(AAAMessage *msg, str data);
 
 /**
  * Creates and adds a Vendor-Specifig-Application-ID AVP.
@@ -75,7 +75,8 @@ int cxdx_add_destination_host(AAAMessage *msg,str data);
  * @param acct_id - the accounting application id
  * @returns 1 on success or 0 on error
  */
-int cxdx_add_vendor_specific_appid(AAAMessage *msg,unsigned int vendor_id,unsigned int auth_id,unsigned int acct_id);
+int cxdx_add_vendor_specific_appid(AAAMessage *msg, unsigned int vendor_id,
+		unsigned int auth_id, unsigned int acct_id);
 
 /**
  * Creates and adds an Auth-Session-State AVP.
@@ -83,7 +84,7 @@ int cxdx_add_vendor_specific_appid(AAAMessage *msg,unsigned int vendor_id,unsign
  * @param data - the value for the AVP payload
  * @returns 1 on success or 0 on error
  */
-int cxdx_add_auth_session_state(AAAMessage *msg,unsigned int data);
+int cxdx_add_auth_session_state(AAAMessage *msg, unsigned int data);
 
 /**
  * Creates and adds a User-Name AVP.
@@ -91,7 +92,7 @@ int cxdx_add_auth_session_state(AAAMessage *msg,unsigned int data);
  * @param data - the value for the AVP payload
  * @returns 1 on success or 0 on error
  */
-int cxdx_add_user_name(AAAMessage *msg,str data);
+int cxdx_add_user_name(AAAMessage *msg, str data);
 
 /**
  * Creates and adds a Public Identity AVP.
@@ -99,7 +100,7 @@ int cxdx_add_user_name(AAAMessage *msg,str data);
  * @param data - the value for the AVP payload
  * @returns 1 on success or 0 on error
  */
-int cxdx_add_public_identity(AAAMessage *msg,str data);
+int cxdx_add_public_identity(AAAMessage *msg, str data);
 
 /**
  * Creates and adds a Visited-Network-ID AVP.
@@ -107,7 +108,7 @@ int cxdx_add_public_identity(AAAMessage *msg,str data);
  * @param data - the value for the AVP payload
  * @returns 1 on success or 0 on error
  */
-int cxdx_add_visited_network_id(AAAMessage *msg,str data);
+int cxdx_add_visited_network_id(AAAMessage *msg, str data);
 
 /**
  * Creates and adds a UAR-Flags AVP.
@@ -123,7 +124,7 @@ int cxdx_add_UAR_flags(AAAMessage *msg, unsigned int sos_reg);
  * @param data - the value for the AVP payload
  * @returns 1 on success or 0 on error
  */
-int cxdx_add_authorization_type(AAAMessage *msg,unsigned int data);
+int cxdx_add_authorization_type(AAAMessage *msg, unsigned int data);
 
 /**
  * Returns the Result-Code AVP from a Diameter message.
@@ -155,7 +156,8 @@ str cxdx_get_server_name(AAAMessage *msg);
  * @param o_cnt - size of the array above to be filled
  * @returns 1 on success 0 on fail
  */
-int cxdx_get_capabilities(AAAMessage *msg,int **m,int *m_cnt,int **o,int *o_cnt,	str **p,int *p_cnt);
+int cxdx_get_capabilities(AAAMessage *msg, int **m, int *m_cnt, int **o,
+		int *o_cnt, str **p, int *p_cnt);
 
 /**
  * Creates and adds a SIP-Number-Auth-Items AVP.
@@ -163,7 +165,7 @@ int cxdx_get_capabilities(AAAMessage *msg,int **m,int *m_cnt,int **o,int *o_cnt,
  * @param data - the value for the AVP payload
  * @returns 1 on success or 0 on error
  */
-int cxdx_add_sip_number_auth_items(AAAMessage *msg,unsigned int data);
+int cxdx_add_sip_number_auth_items(AAAMessage *msg, unsigned int data);
 
 /**
  * Creates and adds a SIP-Auth-Data-Item AVP.
@@ -172,7 +174,8 @@ int cxdx_add_sip_number_auth_items(AAAMessage *msg,unsigned int data);
  * @param auth - the value for the authorization AVP
  * @returns 1 on success or 0 on error
  */
-int cxdx_add_sip_auth_data_item_request(AAAMessage *msg, str auth_scheme, str auth, str username, str realm,str method, str server_name);
+int cxdx_add_sip_auth_data_item_request(AAAMessage *msg, str auth_scheme,
+		str auth, str username, str realm, str method, str server_name);
 
 /**
  * Creates and adds a Server-Name AVP.
@@ -180,7 +183,7 @@ int cxdx_add_sip_auth_data_item_request(AAAMessage *msg, str auth_scheme, str au
  * @param data - the value for the AVP payload
  * @returns 1 on success or 0 on error
  */
-int cxdx_add_server_name(AAAMessage *msg,str data);
+int cxdx_add_server_name(AAAMessage *msg, str data);
 
 /**
  * Returns the SIP-Number-Auth-Items AVP from a Diameter message.
@@ -202,11 +205,9 @@ int cxdx_get_sip_number_auth_items(AAAMessage *msg, int *data);
  * @returns the AVP payload on success or an empty string on error
  */
 int cxdx_get_auth_data_item_answer(AAAMessage *msg, AAA_AVP **auth_data,
-	int *item_number,str *auth_scheme,str *authenticate,str *authorization,
-	str *ck,str *ik,
-	str *ip, 
-	str *ha1, str *response_auth, str *digest_realm,
-	str *line_identifier);
+		int *item_number, str *auth_scheme, str *authenticate,
+		str *authorization, str *ck, str *ik, str *ip, str *ha1,
+		str *response_auth, str *digest_realm, str *line_identifier);
 
 /**
  * Creates and adds an ETSI_sip_authorization AVP.
@@ -220,7 +221,8 @@ int cxdx_get_auth_data_item_answer(AAAMessage *msg, AAA_AVP **auth_data,
  * @param hash - Enitity-Body-Hash
  * @returns grouped str on success
  */
-str cxdx_ETSI_sip_authorization(str username, str realm, str nonce, str URI, str response, str algorithm, str method, str hash);
+str cxdx_ETSI_sip_authorization(str username, str realm, str nonce, str URI,
+		str response, str algorithm, str method, str hash);
 
 /**
  * Returns the User-Data from a Diameter message.
@@ -235,7 +237,8 @@ str cxdx_get_user_data(AAAMessage *msg);
  * @param msg - the Diameter message
  * @returns the AVP payload on success or an empty string on error
  */
-int cxdx_get_charging_info(AAAMessage *msg,str *ccf1,str *ccf2,str *ecf1,str *ecf2);
+int cxdx_get_charging_info(
+		AAAMessage *msg, str *ccf1, str *ccf2, str *ecf1, str *ecf2);
 
 /**
  * Creates and adds a Server-Assignment-Type AVP.
@@ -243,7 +246,7 @@ int cxdx_get_charging_info(AAAMessage *msg,str *ccf1,str *ccf2,str *ecf1,str *ec
  * @param data - the value for the AVP payload
  * @returns 1 on success or 0 on error
  */
-int cxdx_add_server_assignment_type(AAAMessage *msg,unsigned int data);
+int cxdx_add_server_assignment_type(AAAMessage *msg, unsigned int data);
 
 /**
  * Creates and adds Userdata-Available AVP.
@@ -251,7 +254,7 @@ int cxdx_add_server_assignment_type(AAAMessage *msg,unsigned int data);
  * @param data - the value for the AVP payload
  * @returns 1 on success or 0 on error
  */
-int cxdx_add_userdata_available(AAAMessage *msg,unsigned int data);
+int cxdx_add_userdata_available(AAAMessage *msg, unsigned int data);
 
 /**
  * Finds out the next Public-Identity AVP from a Diameter message.
@@ -262,7 +265,8 @@ int cxdx_add_userdata_available(AAAMessage *msg,unsigned int data);
  * @param func - the name of the calling function for debugging purposes
  * @returns the AVP payload on success or an empty string on error
  */
-AAA_AVP* cxdx_get_next_public_identity(AAAMessage *msg,AAA_AVP* pos,int avp_code,int vendor_id,const char *func);
+AAA_AVP *cxdx_get_next_public_identity(AAAMessage *msg, AAA_AVP *pos,
+		int avp_code, int vendor_id, const char *func);
 
 /**
  * Returns the User-Name AVP from a Diameter message.
@@ -277,7 +281,7 @@ str cxdx_get_user_name(AAAMessage *msg);
  * @param data - the value for the AVP payload
  * @returns 1 on success or 0 on error
  */
-int cxdx_add_result_code(AAAMessage *msg,unsigned int data);
+int cxdx_add_result_code(AAAMessage *msg, unsigned int data);
 
 /**
  * Transactional SIP response - tries to create a transaction if none found.

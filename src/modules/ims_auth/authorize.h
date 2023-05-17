@@ -55,135 +55,144 @@
 
 
 #define NONCE_LEN 16
-#define RAND_LEN  16
+#define RAND_LEN 16
 
 
-
-enum authorization_types {
-	AUTH_UNKNOWN			= 0,
-/* 3GPP */	
-	AUTH_AKAV1_MD5			= 1,
-	AUTH_AKAV2_MD5			= 2,
-	AUTH_EARLY_IMS			= 3,
-/* FOKUS */
-	AUTH_MD5				= 4,
-/* CableLabs */	
-	AUTH_DIGEST				= 5,
-/* 3GPP */	
-	AUTH_SIP_DIGEST			= 6,
-/* TISPAN */	
-	AUTH_HTTP_DIGEST_MD5	= 7,	
-	AUTH_NASS_BUNDLED		= 8
+enum authorization_types
+{
+	AUTH_UNKNOWN = 0,
+	/* 3GPP */
+	AUTH_AKAV1_MD5 = 1,
+	AUTH_AKAV2_MD5 = 2,
+	AUTH_EARLY_IMS = 3,
+	/* FOKUS */
+	AUTH_MD5 = 4,
+	/* CableLabs */
+	AUTH_DIGEST = 5,
+	/* 3GPP */
+	AUTH_SIP_DIGEST = 6,
+	/* TISPAN */
+	AUTH_HTTP_DIGEST_MD5 = 7,
+	AUTH_NASS_BUNDLED = 8
 };
 
 /** Enumeration for the Authorization Vector status */
-enum auth_vector_status {
+enum auth_vector_status
+{
 	AUTH_VECTOR_UNUSED = 0,
 	AUTH_VECTOR_SENT = 1,
-	AUTH_VECTOR_USELESS = 2,	/**< invalidated, marked for deletion 		*/
-	AUTH_VECTOR_USED = 3		/**< the vector has been successfully used	*/
-} ;
+	AUTH_VECTOR_USELESS = 2, /**< invalidated, marked for deletion 		*/
+	AUTH_VECTOR_USED = 3	 /**< the vector has been successfully used	*/
+};
 
 /** Authorization Vector storage structure */
-typedef struct _auth_vector {
+typedef struct _auth_vector
+{
 	int item_number;	/**< index of the auth vector		*/
-	unsigned char type;	/**< type of authentication vector 	*/
+	unsigned char type; /**< type of authentication vector 	*/
 	str authenticate;	/**< challenge (rand|autn in AKA)	*/
-	str authorization; 	/**< expected response				*/
+	str authorization;	/**< expected response				*/
 	str ck;				/**< Cypher Key						*/
 	str ik;				/**< Integrity Key					*/
-	time_t expires;/**< expires in (after it is sent)	*/
-	uint32_t use_nb;		/**< number of use (nonce count)*/
-	
-	enum auth_vector_status status;/**< current status		*/
-	struct _auth_vector *next;/**< next av in the list		*/
-	struct _auth_vector *prev;/**< previous av in the list	*/
+	time_t expires;		/**< expires in (after it is sent)	*/
+	uint32_t use_nb;	/**< number of use (nonce count)*/
+
+	enum auth_vector_status status; /**< current status		*/
+	struct _auth_vector *next;		/**< next av in the list		*/
+	struct _auth_vector *prev;		/**< previous av in the list	*/
 } auth_vector;
 
 /** Set of auth_vectors used by a private id */
-typedef struct _auth_userdata{
-	unsigned int hash;		/**< hash of the auth data		*/
-	str private_identity;	/**< authorization username		*/
-	str public_identity;	/**< public identity linked to	*/
-	time_t expires;			/**< expires in					*/
+typedef struct _auth_userdata
+{
+	unsigned int hash;	  /**< hash of the auth data		*/
+	str private_identity; /**< authorization username		*/
+	str public_identity;  /**< public identity linked to	*/
+	time_t expires;		  /**< expires in					*/
 
-	auth_vector *head;		/**< first auth vector in list	*/
-	auth_vector *tail;		/**< last auth vector in list	*/
-	
-	struct _auth_userdata *next;/**< next element in list	*/
-	struct _auth_userdata *prev;/**< previous element in list*/
+	auth_vector *head; /**< first auth vector in list	*/
+	auth_vector *tail; /**< last auth vector in list	*/
+
+	struct _auth_userdata *next; /**< next element in list	*/
+	struct _auth_userdata *prev; /**< previous element in list*/
 } auth_userdata;
 
 /** Authorization user data hash slot */
-typedef struct {
-	auth_userdata *head;				/**< first in the slot			*/ 
-	auth_userdata *tail;				/**< last in the slot			*/
-	gen_lock_t *lock;			/**< slot lock 							*/	
+typedef struct
+{
+	auth_userdata *head; /**< first in the slot			*/
+	auth_userdata *tail; /**< last in the slot			*/
+	gen_lock_t *lock;	 /**< slot lock 							*/
 } auth_hash_slot_t;
 
 
-
-int auth_db_init(const str* db_url);
-int auth_db_bind(const str* db_url);
+int auth_db_init(const str *db_url);
+int auth_db_bind(const str *db_url);
 void auth_db_close(void);
 
 /*
  * Authorize using Proxy-Authorization header field
  */
-int proxy_authenticate(struct sip_msg* _msg, char* _realm, char* _table);
-int proxy_challenge(struct sip_msg* msg, char* route, char* _realm, char* str2);
+int proxy_authenticate(struct sip_msg *_msg, char *_realm, char *_table);
+int proxy_challenge(struct sip_msg *msg, char *route, char *_realm, char *str2);
 
 /*
  * Authorize using WWW-Authorization header field
  */
-int www_authenticate(struct sip_msg* _msg, char* _realm, char* _table);
-int www_challenge2(struct sip_msg* msg, char* route, char* _realm, char* str2);
-int www_challenge3(struct sip_msg* msg, char* route, char* _realm, char* str2);
-int www_resync_auth(struct sip_msg* msg, char* _route, char* str1, char* str2);
+int www_authenticate(struct sip_msg *_msg, char *_realm, char *_table);
+int www_challenge2(struct sip_msg *msg, char *route, char *_realm, char *str2);
+int www_challenge3(struct sip_msg *msg, char *route, char *_realm, char *str2);
+int www_resync_auth(struct sip_msg *msg, char *_route, char *str1, char *str2);
 
 
 /*
  * Bind to IMS_AUTH API
  */
-int bind_ims_auth(ims_auth_api_t* api);
+int bind_ims_auth(ims_auth_api_t *api);
 
-auth_vector* get_auth_vector(str private_identity,str public_identity,int status,str *nonce,unsigned int *hash);
+auth_vector *get_auth_vector(str private_identity, str public_identity,
+		int status, str *nonce, unsigned int *hash);
 /*
  * Storage of authentication vectors
  */
 
 void auth_data_lock(unsigned int hash);
 void auth_data_unlock(unsigned int hash);
- 
+
 int auth_data_init(int size);
 
 void auth_data_destroy();
 
-auth_vector *new_auth_vector(int item_number,str auth_scheme,str authenticate,
-			str authorization,str ck,str ik);
+auth_vector *new_auth_vector(int item_number, str auth_scheme, str authenticate,
+		str authorization, str ck, str ik);
 void free_auth_vector(auth_vector *av);
 
-auth_userdata *new_auth_userdata(str private_identity,str public_identity);
-void free_auth_userdata(auth_userdata *aud);					
+auth_userdata *new_auth_userdata(str private_identity, str public_identity);
+void free_auth_userdata(auth_userdata *aud);
 
-unsigned int get_hash_auth(str private_identity,str public_identity);
+unsigned int get_hash_auth(str private_identity, str public_identity);
 
-int add_auth_vector(str private_identity,str public_identity,auth_vector *av);
-auth_vector* get_auth_vector(str private_identity,str public_identity,int status,str *nonce,unsigned int *hash);
+int add_auth_vector(str private_identity, str public_identity, auth_vector *av);
+auth_vector *get_auth_vector(str private_identity, str public_identity,
+		int status, str *nonce, unsigned int *hash);
 
-int drop_auth_userdata(str private_identity,str public_identity);
-auth_userdata* get_auth_userdata(str private_identity,str public_identity);
+int drop_auth_userdata(str private_identity, str public_identity);
+auth_userdata *get_auth_userdata(str private_identity, str public_identity);
 
-int stateful_request_reply(struct sip_msg *msg, int code,  char *text);
-int stateful_request_reply_async(struct cell* t, struct sip_msg *msg, int code, char *text);
+int stateful_request_reply(struct sip_msg *msg, int code, char *text);
+int stateful_request_reply_async(
+		struct cell *t, struct sip_msg *msg, int code, char *text);
 
-int multimedia_auth_request(struct sip_msg *msg, str public_identity, str private_identity,
-					int count,str auth_scheme,str nonce,str auts,str servername, saved_transaction_t* transaction_data);
-int pack_challenge(struct sip_msg *msg,str realm,auth_vector *av, int is_proxy_auth);
-int add_authinfo_resp_hdr(struct sip_msg *msg, str nextnonce, str qop, HASHHEX rspauth, str cnonce, str nc);
+int multimedia_auth_request(struct sip_msg *msg, str public_identity,
+		str private_identity, int count, str auth_scheme, str nonce, str auts,
+		str servername, saved_transaction_t *transaction_data);
+int pack_challenge(
+		struct sip_msg *msg, str realm, auth_vector *av, int is_proxy_auth);
+int add_authinfo_resp_hdr(struct sip_msg *msg, str nextnonce, str qop,
+		HASHHEX rspauth, str cnonce, str nc);
 
 void start_reg_await_timer(auth_vector *av);
-void reg_await_timer(unsigned int ticks, void* param);
+void reg_await_timer(unsigned int ticks, void *param);
 
 unsigned char get_algorithm_type(str algorithm);
 

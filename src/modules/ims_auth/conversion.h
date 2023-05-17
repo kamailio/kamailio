@@ -40,7 +40,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  * 
  */
- 
+
 /**
  * \file
  * 
@@ -49,14 +49,14 @@
  *  \author Dragos Vingarzan vingarzan -at- fokus dot fraunhofer dot de
  * 
  */
- 
+
 #ifndef PIS_CSCF_CONVERSION_H_
 #define PIS_CSCF_CONVERSION_H_
 
-int bin_to_base16(char *from,int len, char *to);
-int base16_to_bin(char *from,int len, char *to);
+int bin_to_base16(char *from, int len, char *to);
+int base16_to_bin(char *from, int len, char *to);
 
-int bin_to_base64(char *src,int src_len,char* ptr);
-int base64_to_bin(char *src,int src_len,char* ptr);
+int bin_to_base64(char *src, int src_len, char *ptr);
+int base64_to_bin(char *src, int src_len, char *ptr);
 
 #endif //PIS_CSCF_CONVERSION_H_
