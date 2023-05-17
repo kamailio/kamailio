@@ -32,10 +32,12 @@
 #include "../../core/fmsg.h"
 #include "nsq.h"
 
-int nsq_pv_get_event_payload(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
+int nsq_pv_get_event_payload(
+		struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 int nsq_consumer_fire_event(char *routename);
 int nsq_consumer_event(char *payload, char *channel, char *topic);
 
-void nsq_message_handler(struct NSQReader *rdr, struct NSQDConnection *conn, struct NSQMessage *msg, void *ctx);
+void nsq_message_handler(struct NSQReader *rdr, struct NSQDConnection *conn,
+		struct NSQMessage *msg, void *ctx);
 
 #endif /* __NSQ_READER_H_ */
