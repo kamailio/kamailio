@@ -25,9 +25,9 @@
 
 int crypto_evcb_enable(void);
 
-int crypto_nio_in(sip_msg_t* msg);
-int crypto_nio_out(sip_msg_t* msg);
-int crypto_nio_encrypt(sip_msg_t* msg);
-int crypto_nio_decrypt(sip_msg_t* msg);
+int crypto_nio_in(sip_msg_t *msg);
+int crypto_nio_out(sip_msg_t *msg);
+int crypto_nio_encrypt(sip_msg_t *msg);
+int crypto_nio_decrypt(sip_msg_t *msg);
 
 #endif
