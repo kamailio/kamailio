@@ -31,12 +31,13 @@
 /* database variables */
 
 extern str userblocklist_db_url;
-extern db1_con_t * userblocklist_dbh;
+extern db1_con_t *userblocklist_dbh;
 extern db_func_t userblocklist_dbf;
 
-#define userblocklist_DB_URL { "db_url", PARAM_STR, &userblocklist_db_url },
+#define userblocklist_DB_URL {"db_url", PARAM_STR, &userblocklist_db_url},
 
-#define userblocklist_DB_TABLE { "userblocklist_table", PARAM_STR, &userblocklist_table },
+#define userblocklist_DB_TABLE \
+	{"userblocklist_table", PARAM_STR, &userblocklist_table},
 
 extern str userblocklist_table;
 
@@ -46,17 +47,22 @@ extern str userblocklist_username_col;
 extern str userblocklist_domain_col;
 extern str userblocklist_prefix_col;
 extern str userblocklist_allowlist_col;
-#define userblocklist_DB_COLS \
-{ "userblocklist_id_col", PARAM_STR, &userblocklist_id_col }, \
-{ "userblocklist_username_col", PARAM_STR, &userblocklist_username_col }, \
-{ "userblocklist_domain_col", PARAM_STR, &userblocklist_domain_col }, \
-{ "userblocklist_prefix_col", PARAM_STR, &userblocklist_prefix_col }, \
-{ "userblocklist_allowlist_col", PARAM_STR, &userblocklist_allowlist_col }, \
+#define userblocklist_DB_COLS                                   \
+	{"userblocklist_id_col", PARAM_STR, &userblocklist_id_col}, \
+			{"userblocklist_username_col", PARAM_STR,           \
+					&userblocklist_username_col},               \
+			{"userblocklist_domain_col", PARAM_STR,             \
+					&userblocklist_domain_col},                 \
+			{"userblocklist_prefix_col", PARAM_STR,             \
+					&userblocklist_prefix_col},                 \
+			{"userblocklist_allowlist_col", PARAM_STR,          \
+					&userblocklist_allowlist_col},
 
 /* table version */
 extern const unsigned int userblocklist_version;
 
-#define globalblocklist_DB_TABLE { "globalblocklist_table", PARAM_STR, &globalblocklist_table },
+#define globalblocklist_DB_TABLE \
+	{"globalblocklist_table", PARAM_STR, &globalblocklist_table},
 
 extern str globalblocklist_table;
 
@@ -65,11 +71,14 @@ extern str globalblocklist_id_col;
 extern str globalblocklist_prefix_col;
 extern str globalblocklist_allowlist_col;
 extern str globalblocklist_description_col;
-#define globalblocklist_DB_COLS \
-{ "globalblocklist_id_col", PARAM_STR, &globalblocklist_id_col }, \
-{ "globalblocklist_prefix_col", PARAM_STR, &globalblocklist_prefix_col }, \
-{ "globalblocklist_allowlist_col", PARAM_STR, &globalblocklist_allowlist_col }, \
-{ "globalblocklist_description_col", PARAM_STR, &globalblocklist_description_col }, \
+#define globalblocklist_DB_COLS                                     \
+	{"globalblocklist_id_col", PARAM_STR, &globalblocklist_id_col}, \
+			{"globalblocklist_prefix_col", PARAM_STR,               \
+					&globalblocklist_prefix_col},                   \
+			{"globalblocklist_allowlist_col", PARAM_STR,            \
+					&globalblocklist_allowlist_col},                \
+			{"globalblocklist_description_col", PARAM_STR,          \
+					&globalblocklist_description_col},
 
 /* table version */
 extern const unsigned int globalblocklist_version;
