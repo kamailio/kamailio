@@ -1231,7 +1231,14 @@ static int w_sip_trace_msg(sip_msg_t *msg, char *vmsg, char *saddr, char *taddr,
 static int ki_sip_trace_msg(sip_msg_t *msg, str *vmsg, str *saddr, str *taddr,
 		str *duri, str *corrid)
 {
-	trace_send_hep_duplicate(vmsg, saddr, taddr, (duri && duri->len>0)?&duri:NULL,
+	dest_info_t dest;
+	if(duri && duri->len>0) {
+		if (siptrace_parse_uri(duri, &dest) < 0) {
+			LM_ERR("failed to parse mirroring destination uri\n");
+			return -1;
+		}
+	}
+	trace_send_hep_duplicate(vmsg, saddr, taddr, (duri && duri->len>0)?&dest:NULL,
 			(corrid && corrid->len>0)?corrid:NULL);
 
 	return 1;
