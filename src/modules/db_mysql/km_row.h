@@ -44,6 +44,6 @@
  * \param _r database result row
  * \return 0 on success, -1 on failure
  */
-int db_mysql_convert_row(const db1_con_t* _h, db1_res_t* _res, db_row_t* _r);
+int db_mysql_convert_row(const db1_con_t *_h, db1_res_t *_res, db_row_t *_r);
 
 #endif

@@ -28,7 +28,6 @@
  */
 
 
-
 #ifndef KM_DBASE_H
 #define KM_DBASE_H
 
@@ -44,129 +43,128 @@
 /*! \brief
  * Initialize database connection
  */
-db1_con_t* db_mysql_init(const str* _sqlurl);
+db1_con_t *db_mysql_init(const str *_sqlurl);
 
 
 /*! \brief
  * Close a database connection
  */
-void db_mysql_close(db1_con_t* _h);
+void db_mysql_close(db1_con_t *_h);
 
 
 /*! \brief
  * Free all memory allocated by get_result
  */
-int db_mysql_free_result(const db1_con_t* _h, db1_res_t* _r);
+int db_mysql_free_result(const db1_con_t *_h, db1_res_t *_r);
 
 
 /*! \brief
  * Do a query
  */
-int db_mysql_query(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _op,
-		const db_val_t* _v, const db_key_t* _c, const int _n, const int _nc,
-		const db_key_t _o, db1_res_t** _r);
+int db_mysql_query(const db1_con_t *_h, const db_key_t *_k, const db_op_t *_op,
+		const db_val_t *_v, const db_key_t *_c, const int _n, const int _nc,
+		const db_key_t _o, db1_res_t **_r);
 
 
 /*! \brief
  * fetch rows from a result
  */
-int db_mysql_fetch_result(const db1_con_t* _h, db1_res_t** _r, const int nrows);
+int db_mysql_fetch_result(const db1_con_t *_h, db1_res_t **_r, const int nrows);
 
 
 /*! \brief
  * Raw SQL query
  */
-int db_mysql_raw_query(const db1_con_t* _h, const str* _s, db1_res_t** _r);
+int db_mysql_raw_query(const db1_con_t *_h, const str *_s, db1_res_t **_r);
 
 
 /*! \brief
  * Raw SQL query via async framework
  */
-int db_mysql_raw_query_async(const db1_con_t* _h, const str* _s);
+int db_mysql_raw_query_async(const db1_con_t *_h, const str *_s);
 
 
 /*! \brief
  * Insert a row into table
  */
-int db_mysql_insert(const db1_con_t* _h, const db_key_t* _k,
-		const db_val_t* _v, const int _n);
+int db_mysql_insert(const db1_con_t *_h, const db_key_t *_k, const db_val_t *_v,
+		const int _n);
 
 
 /*! \brief
  * Delete a row from table
  */
-int db_mysql_delete(const db1_con_t* _h, const db_key_t* _k, const
-	db_op_t* _o, const db_val_t* _v, const int _n);
+int db_mysql_delete(const db1_con_t *_h, const db_key_t *_k, const db_op_t *_o,
+		const db_val_t *_v, const int _n);
 
 
 /*! \brief
  * Update a row in table
  */
-int db_mysql_update(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _o,
-	const db_val_t* _v, const db_key_t* _uk, const db_val_t* _uv, const int _n,
-	const int _un);
+int db_mysql_update(const db1_con_t *_h, const db_key_t *_k, const db_op_t *_o,
+		const db_val_t *_v, const db_key_t *_uk, const db_val_t *_uv,
+		const int _n, const int _un);
 
 
 /*! \brief
  * Just like insert, but replace the row if it exists
  */
-int db_mysql_replace(const db1_con_t* handle, const db_key_t* keys,
-		const db_val_t* vals, const int n, const int _un, const int _m);
+int db_mysql_replace(const db1_con_t *handle, const db_key_t *keys,
+		const db_val_t *vals, const int n, const int _un, const int _m);
 
 /*! \brief
  * Returns the last inserted ID
  */
-int db_mysql_last_inserted_id(const db1_con_t* _h);
+int db_mysql_last_inserted_id(const db1_con_t *_h);
 
 
 /*! \brief
  * Returns number of affected rows for last query
  */
-int db_mysql_affected_rows(const db1_con_t* _h);
+int db_mysql_affected_rows(const db1_con_t *_h);
 
 /*! \brief
  * Starts transaction
  */
-int db_mysql_start_transaction(db1_con_t* _h, db_locking_t _l);
+int db_mysql_start_transaction(db1_con_t *_h, db_locking_t _l);
 
 /*! \brief
  * Commits transaction
  */
-int db_mysql_end_transaction(db1_con_t* _h);
+int db_mysql_end_transaction(db1_con_t *_h);
 
 /*! \brief
  * Aborts transaction
  */
-int db_mysql_abort_transaction(db1_con_t* _h);
+int db_mysql_abort_transaction(db1_con_t *_h);
 
 
 /*! \brief
  * Insert a row into table, update on duplicate key
  */
-int db_mysql_insert_update(const db1_con_t* _h, const db_key_t* _k,
-		const db_val_t* _v,
-	const int _n);
+int db_mysql_insert_update(const db1_con_t *_h, const db_key_t *_k,
+		const db_val_t *_v, const int _n);
 
 
 /*! \brief
  * Insert a row into table
  */
-int db_mysql_insert_delayed(const db1_con_t* _h, const db_key_t* _k,
-		const db_val_t* _v, const int _n);
+int db_mysql_insert_delayed(const db1_con_t *_h, const db_key_t *_k,
+		const db_val_t *_v, const int _n);
 
 
 /*! \brief
  * Insert a row into table via async framework
  */
-int db_mysql_insert_async(const db1_con_t* _h, const db_key_t* _k,
-		const db_val_t* _v, const int _n);
+int db_mysql_insert_async(const db1_con_t *_h, const db_key_t *_k,
+		const db_val_t *_v, const int _n);
 
 
 /*! \brief
  * Store name of table that will be used by
  * subsequent database functions
  */
-int db_mysql_use_table(db1_con_t* _h, const str* _t);
+int db_mysql_use_table(db1_con_t *_h, const str *_t);
 
 
 #endif /* KM_DBASE_H */

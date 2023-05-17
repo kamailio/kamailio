@@ -66,22 +66,23 @@ static char *mysql_sql_buf;
  * \param _s executed query
  * \return zero on success, negative value on failure
  */
-static int db_mysql_submit_query(const db1_con_t* _h, const str* _s)
+static int db_mysql_submit_query(const db1_con_t *_h, const str *_s)
 {
 	time_t t;
 	int i, code;
 
-	if (!_h || !_s || !_s->s) {
+	if(!_h || !_s || !_s->s) {
 		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
 
-	if (my_ping_interval) {
+	if(my_ping_interval) {
 		t = time(0);
-		if ((t - CON_TIMESTAMP(_h)) > my_ping_interval) {
-			for (i=0; i < (db_mysql_auto_reconnect ? 3 : 1); i++) {
-				if (mysql_ping(CON_CONNECTION(_h))) {
-					LM_INFO("driver error on ping: %s\n", mysql_error(CON_CONNECTION(_h)));
+		if((t - CON_TIMESTAMP(_h)) > my_ping_interval) {
+			for(i = 0; i < (db_mysql_auto_reconnect ? 3 : 1); i++) {
+				if(mysql_ping(CON_CONNECTION(_h))) {
+					LM_INFO("driver error on ping: %s\n",
+							mysql_error(CON_CONNECTION(_h)));
 					counter_inc(mysql_cnts_h.driver_err);
 				} else {
 					break;
@@ -107,14 +108,15 @@ static int db_mysql_submit_query(const db1_con_t* _h, const str* _s)
 	 * iteration. In the case of CR_SERVER_GONE_ERROR and CR_SERVER_LOST the
 	 * driver error counter is increased
 	 */
-	for (i=0; i < (db_mysql_auto_reconnect ? 3 : 1); i++) {
-		if (mysql_real_query(CON_CONNECTION(_h), _s->s, _s->len) == 0) {
+	for(i = 0; i < (db_mysql_auto_reconnect ? 3 : 1); i++) {
+		if(mysql_real_query(CON_CONNECTION(_h), _s->s, _s->len) == 0) {
 			return 0;
 		}
 		code = mysql_errno(CON_CONNECTION(_h));
-		if (code!=CR_SERVER_GONE_ERROR && code!=CR_SERVER_LOST
-				&& code!=CR_SSL_CONNECTION_ERROR && code!=CR_CONNECTION_ERROR
-				&& code!=CR_CONN_HOST_ERROR && code!=CR_SERVER_LOST_EXTENDED) {
+		if(code != CR_SERVER_GONE_ERROR && code != CR_SERVER_LOST
+				&& code != CR_SSL_CONNECTION_ERROR
+				&& code != CR_CONNECTION_ERROR && code != CR_CONN_HOST_ERROR
+				&& code != CR_SERVER_LOST_EXTENDED) {
 			break;
 		}
 		counter_inc(mysql_cnts_h.driver_err);
@@ -131,19 +133,19 @@ static int db_mysql_submit_query(const db1_con_t* _h, const str* _s)
 void db_mysql_async_exec_task(void *param)
 {
 	str *p;
-	db1_con_t* dbc;
+	db1_con_t *dbc;
 
-	p = (str*)param;
+	p = (str *)param;
 
 	dbc = db_mysql_init(&p[0]);
 
-	if(dbc==NULL) {
+	if(dbc == NULL) {
 		LM_ERR("failed to open connection for [%.*s]\n", p[0].len, p[0].s);
 		return;
 	}
-	if(db_mysql_submit_query(dbc, &p[1])<0) {
+	if(db_mysql_submit_query(dbc, &p[1]) < 0) {
 		LM_ERR("failed to execute query [%.*s] on async worker\n",
-				(p[1].len>100)?100:p[1].len, p[1].s);
+				(p[1].len > 100) ? 100 : p[1].len, p[1].s);
 	}
 	db_mysql_close(dbc);
 }
@@ -154,34 +156,34 @@ void db_mysql_async_exec_task(void *param)
  * \param _s raw query string
  * \return zero on success, negative value on failure
  */
-int db_mysql_submit_query_async(const db1_con_t* _h, const str* _s)
+int db_mysql_submit_query_async(const db1_con_t *_h, const str *_s)
 {
-	struct db_id* di;
+	struct db_id *di;
 	async_task_t *atask;
 	int asize;
 	str *p;
 
-	di = ((struct pool_con*)_h->tail)->id;
+	di = ((struct pool_con *)_h->tail)->id;
 
-	asize = sizeof(async_task_t) + 2*sizeof(str) + di->url.len + _s->len + 2;
+	asize = sizeof(async_task_t) + 2 * sizeof(str) + di->url.len + _s->len + 2;
 	atask = shm_malloc(asize);
-	if(atask==NULL) {
+	if(atask == NULL) {
 		SHM_MEM_ERROR_FMT("size %d\n", asize);
 		return -1;
 	}
 
 	atask->exec = db_mysql_async_exec_task;
-	atask->param = (char*)atask + sizeof(async_task_t);
+	atask->param = (char *)atask + sizeof(async_task_t);
 
-	p = (str*)((char*)atask + sizeof(async_task_t));
-	p[0].s = (char*)p + 2*sizeof(str);
+	p = (str *)((char *)atask + sizeof(async_task_t));
+	p[0].s = (char *)p + 2 * sizeof(str);
 	p[0].len = di->url.len;
 	strncpy(p[0].s, di->url.s, di->url.len);
 	p[1].s = p[0].s + p[0].len + 1;
 	p[1].len = _s->len;
 	strncpy(p[1].s, _s->s, _s->len);
 
-	if (async_task_push(atask)<0) {
+	if(async_task_push(atask) < 0) {
 		shm_free(atask);
 		return -1;
 	}
@@ -196,11 +198,12 @@ static char *db_mysql_tquote = "`";
  * \param _url URL used for initialization
  * \return zero on success, negative value on failure
  */
-db1_con_t* db_mysql_init(const str* _url)
+db1_con_t *db_mysql_init(const str *_url)
 {
 	db1_con_t *c;
 	c = db_do_init(_url, (void *)db_mysql_new_connection);
-	if(c) CON_TQUOTE(c) = db_mysql_tquote;
+	if(c)
+		CON_TQUOTE(c) = db_mysql_tquote;
 	return c;
 }
 
@@ -211,7 +214,7 @@ db1_con_t* db_mysql_init(const str* _url)
  * \param _h handle to the closed connection
  * \return zero on success, negative value on failure
  */
-void db_mysql_close(db1_con_t* _h)
+void db_mysql_close(db1_con_t *_h)
 {
 	db_do_close(_h, db_mysql_free_connection);
 }
@@ -223,30 +226,30 @@ void db_mysql_close(db1_con_t* _h)
  * \param _r result set that should be retrieved
  * \return zero on success, negative value on failure
  */
-static int db_mysql_store_result(const db1_con_t* _h, db1_res_t** _r)
+static int db_mysql_store_result(const db1_con_t *_h, db1_res_t **_r)
 {
 	int code;
-	if ((!_h) || (!_r)) {
+	if((!_h) || (!_r)) {
 		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
 
 	*_r = db_mysql_new_result();
-	if (*_r == 0) {
+	if(*_r == 0) {
 		LM_ERR("no memory left\n");
 		return -2;
 	}
 
 	RES_RESULT(*_r) = mysql_store_result(CON_CONNECTION(_h));
-	if (!RES_RESULT(*_r)) {
-		if (mysql_field_count(CON_CONNECTION(_h)) == 0) {
+	if(!RES_RESULT(*_r)) {
+		if(mysql_field_count(CON_CONNECTION(_h)) == 0) {
 			(*_r)->col.n = 0;
 			(*_r)->n = 0;
 			goto done;
 		} else {
 			LM_ERR("driver error: %s\n", mysql_error(CON_CONNECTION(_h)));
 			code = mysql_errno(CON_CONNECTION(_h));
-			if (code == CR_SERVER_GONE_ERROR || code == CR_SERVER_LOST) {
+			if(code == CR_SERVER_GONE_ERROR || code == CR_SERVER_LOST) {
 				counter_inc(mysql_cnts_h.driver_err);
 			}
 			db_mysql_free_result(_h, *_r);
@@ -255,7 +258,7 @@ static int db_mysql_store_result(const db1_con_t* _h, db1_res_t** _r)
 		}
 	}
 
-	if (db_mysql_convert_result(_h, *_r) < 0) {
+	if(db_mysql_convert_result(_h, *_r) < 0) {
 		LM_ERR("error while converting result\n");
 		LM_DBG("freeing result set at %p\n", _r);
 		/* all mem on Kamailio API side is already freed by
@@ -264,9 +267,10 @@ static int db_mysql_store_result(const db1_con_t* _h, db1_res_t** _r)
 		 * and *_r */
 		db_mysql_free_result(_h, *_r);
 		*_r = 0;
-#if (MYSQL_VERSION_ID >= 40100)
-		while( mysql_more_results(CON_CONNECTION(_h)) && mysql_next_result(CON_CONNECTION(_h)) == 0 ) {
-			MYSQL_RES *res = mysql_store_result( CON_CONNECTION(_h) );
+#if(MYSQL_VERSION_ID >= 40100)
+		while(mysql_more_results(CON_CONNECTION(_h))
+				&& mysql_next_result(CON_CONNECTION(_h)) == 0) {
+			MYSQL_RES *res = mysql_store_result(CON_CONNECTION(_h));
 			mysql_free_result(res);
 		}
 #endif
@@ -274,9 +278,10 @@ static int db_mysql_store_result(const db1_con_t* _h, db1_res_t** _r)
 	}
 
 done:
-#if (MYSQL_VERSION_ID >= 40100)
-	while( mysql_more_results(CON_CONNECTION(_h)) && mysql_next_result(CON_CONNECTION(_h)) == 0 ) {
-		MYSQL_RES *res = mysql_store_result( CON_CONNECTION(_h) );
+#if(MYSQL_VERSION_ID >= 40100)
+	while(mysql_more_results(CON_CONNECTION(_h))
+			&& mysql_next_result(CON_CONNECTION(_h)) == 0) {
+		MYSQL_RES *res = mysql_store_result(CON_CONNECTION(_h));
 		mysql_free_result(res);
 	}
 #endif
@@ -291,9 +296,9 @@ done:
  * \param _r result set that should be freed
  * \return zero on success, negative value on failure
  */
-int db_mysql_free_result(const db1_con_t* _h, db1_res_t* _r)
+int db_mysql_free_result(const db1_con_t *_h, db1_res_t *_r)
 {
-	if ((!_h) || (!_r)) {
+	if((!_h) || (!_r)) {
 		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
@@ -302,7 +307,7 @@ int db_mysql_free_result(const db1_con_t* _h, db1_res_t* _r)
 	RES_RESULT(_r) = 0;
 	pkg_free(RES_PTR(_r));
 
-	if (db_free_result(_r) < 0) {
+	if(db_free_result(_r) < 0) {
 		LM_ERR("unable to free result structure\n");
 		return -1;
 	}
@@ -323,12 +328,12 @@ int db_mysql_free_result(const db1_con_t* _h, db1_res_t* _r)
  * \param _r pointer to a structure representing the result
  * \return zero on success, negative value on failure
  */
-int db_mysql_query(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _op,
-		const db_val_t* _v, const db_key_t* _c, const int _n, const int _nc,
-		const db_key_t _o, db1_res_t** _r)
+int db_mysql_query(const db1_con_t *_h, const db_key_t *_k, const db_op_t *_op,
+		const db_val_t *_v, const db_key_t *_c, const int _n, const int _nc,
+		const db_key_t _o, db1_res_t **_r)
 {
-	return db_do_query(_h, _k, _op, _v, _c, _n, _nc, _o, _r,
-	db_mysql_val2str, db_mysql_submit_query, db_mysql_store_result);
+	return db_do_query(_h, _k, _op, _v, _c, _n, _nc, _o, _r, db_mysql_val2str,
+			db_mysql_submit_query, db_mysql_store_result);
 }
 
 /**
@@ -346,40 +351,40 @@ int db_mysql_query(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _op,
  * \param nrows number of fetched rows
  * \return zero on success, negative value on failure
  */
-int db_mysql_fetch_result(const db1_con_t* _h, db1_res_t** _r, const int nrows)
+int db_mysql_fetch_result(const db1_con_t *_h, db1_res_t **_r, const int nrows)
 {
 	int rows, i, code;
 
-	if (!_h || !_r || nrows < 0) {
+	if(!_h || !_r || nrows < 0) {
 		LM_ERR("Invalid parameter value\n");
 		return -1;
 	}
 
 	/* exit if the fetch count is zero */
-	if (nrows == 0) {
+	if(nrows == 0) {
 		db_mysql_free_result(_h, *_r);
 		*_r = 0;
 		return 0;
 	}
 
-	if(*_r==0) {
+	if(*_r == 0) {
 		/* Allocate a new result structure */
 		*_r = db_mysql_new_result();
-		if (*_r == 0) {
+		if(*_r == 0) {
 			LM_ERR("could not allocate new result\n");
 			return -2;
 		}
 
 		RES_RESULT(*_r) = mysql_store_result(CON_CONNECTION(_h));
-		if (!RES_RESULT(*_r)) {
-			if (mysql_field_count(CON_CONNECTION(_h)) == 0) {
+		if(!RES_RESULT(*_r)) {
+			if(mysql_field_count(CON_CONNECTION(_h)) == 0) {
 				(*_r)->col.n = 0;
 				(*_r)->n = 0;
 				return 0;
 			} else {
 				LM_ERR("driver error: %s\n", mysql_error(CON_CONNECTION(_h)));
 				code = mysql_errno(CON_CONNECTION(_h));
-				if (code == CR_SERVER_GONE_ERROR || code == CR_SERVER_LOST) {
+				if(code == CR_SERVER_GONE_ERROR || code == CR_SERVER_LOST) {
 					counter_inc(mysql_cnts_h.driver_err);
 				}
 				db_mysql_free_result(_h, *_r);
@@ -387,13 +392,13 @@ int db_mysql_fetch_result(const db1_con_t* _h, db1_res_t** _r, const int nrows)
 				return -3;
 			}
 		}
-		if (db_mysql_get_columns(_h, *_r) < 0) {
+		if(db_mysql_get_columns(_h, *_r) < 0) {
 			LM_ERR("error while getting column names\n");
 			return -4;
 		}
 
 		RES_NUM_ROWS(*_r) = mysql_num_rows(RES_RESULT(*_r));
-		if (!RES_NUM_ROWS(*_r)) {
+		if(!RES_NUM_ROWS(*_r)) {
 			LM_DBG("no rows returned from the query\n");
 			RES_ROWS(*_r) = 0;
 			return 0;
@@ -401,7 +406,7 @@ int db_mysql_fetch_result(const db1_con_t* _h, db1_res_t** _r, const int nrows)
 
 	} else {
 		/* free old rows */
-		if(RES_ROWS(*_r)!=0)
+		if(RES_ROWS(*_r) != 0)
 			db_free_rows(*_r);
 		RES_ROWS(*_r) = 0;
 		RES_ROW_N(*_r) = 0;
@@ -411,7 +416,7 @@ int db_mysql_fetch_result(const db1_con_t* _h, db1_res_t** _r, const int nrows)
 	rows = RES_NUM_ROWS(*_r) - RES_LAST_ROW(*_r);
 
 	/* If there aren't any more rows left to process, exit */
-	if(rows<=0)
+	if(rows <= 0)
 		return 0;
 
 	/* if the fetch count is less than the remaining rows to process                 */
@@ -424,21 +429,21 @@ int db_mysql_fetch_result(const db1_con_t* _h, db1_res_t** _r, const int nrows)
 	LM_DBG("converting row %d of %d count %d\n", RES_LAST_ROW(*_r),
 			RES_NUM_ROWS(*_r), RES_ROW_N(*_r));
 
-	RES_ROWS(*_r) = (struct db_row*)pkg_malloc(sizeof(db_row_t) * rows);
-	if (!RES_ROWS(*_r)) {
+	RES_ROWS(*_r) = (struct db_row *)pkg_malloc(sizeof(db_row_t) * rows);
+	if(!RES_ROWS(*_r)) {
 		PKG_MEM_ERROR;
 		return -5;
 	}
 
 	for(i = 0; i < rows; i++) {
 		RES_ROW(*_r) = mysql_fetch_row(RES_RESULT(*_r));
-		if (!RES_ROW(*_r)) {
+		if(!RES_ROW(*_r)) {
 			LM_ERR("driver error: %s\n", mysql_error(CON_CONNECTION(_h)));
 			RES_ROW_N(*_r) = i;
 			db_free_rows(*_r);
 			return -6;
 		}
-		if (db_mysql_convert_row(_h, *_r, &(RES_ROWS(*_r)[i])) < 0) {
+		if(db_mysql_convert_row(_h, *_r, &(RES_ROWS(*_r)[i])) < 0) {
 			LM_ERR("error while converting row #%d\n", i);
 			RES_ROW_N(*_r) = i;
 			db_free_rows(*_r);
@@ -458,10 +463,10 @@ int db_mysql_fetch_result(const db1_con_t* _h, db1_res_t** _r, const int nrows)
  * \param _r result set for storage
  * \return zero on success, negative value on failure
  */
-int db_mysql_raw_query(const db1_con_t* _h, const str* _s, db1_res_t** _r)
+int db_mysql_raw_query(const db1_con_t *_h, const str *_s, db1_res_t **_r)
 {
-	return db_do_raw_query(_h, _s, _r, db_mysql_submit_query,
-	db_mysql_store_result);
+	return db_do_raw_query(
+			_h, _s, _r, db_mysql_submit_query, db_mysql_store_result);
 }
 
 /**
@@ -470,7 +475,7 @@ int db_mysql_raw_query(const db1_con_t* _h, const str* _s, db1_res_t** _r)
  * \param _s raw query string
  * \return zero on success, negative value on failure
  */
-int db_mysql_raw_query_async(const db1_con_t* _h, const str* _s)
+int db_mysql_raw_query_async(const db1_con_t *_h, const str *_s)
 {
 	return db_mysql_submit_query_async(_h, _s);
 }
@@ -483,15 +488,15 @@ int db_mysql_raw_query_async(const db1_con_t* _h, const str* _s)
  * \param _n number of key=value pairs
  * \return zero on success, negative value on failure
  */
-int db_mysql_insert(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v,
+int db_mysql_insert(const db1_con_t *_h, const db_key_t *_k, const db_val_t *_v,
 		const int _n)
 {
-	if(unlikely(db_mysql_insert_all_delayed==1))
-		return db_do_insert_delayed(_h, _k, _v, _n, db_mysql_val2str,
-				db_mysql_submit_query);
+	if(unlikely(db_mysql_insert_all_delayed == 1))
+		return db_do_insert_delayed(
+				_h, _k, _v, _n, db_mysql_val2str, db_mysql_submit_query);
 	else
-		return db_do_insert(_h, _k, _v, _n, db_mysql_val2str,
-				db_mysql_submit_query);
+		return db_do_insert(
+				_h, _k, _v, _n, db_mysql_val2str, db_mysql_submit_query);
 }
 
 
@@ -504,11 +509,11 @@ int db_mysql_insert(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v,
  * \param _n number of key=value pairs
  * \return zero on success, negative value on failure
  */
-int db_mysql_delete(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _o,
-	const db_val_t* _v, const int _n)
+int db_mysql_delete(const db1_con_t *_h, const db_key_t *_k, const db_op_t *_o,
+		const db_val_t *_v, const int _n)
 {
-	return db_do_delete(_h, _k, _o, _v, _n, db_mysql_val2str,
-	db_mysql_submit_query);
+	return db_do_delete(
+			_h, _k, _o, _v, _n, db_mysql_val2str, db_mysql_submit_query);
 }
 
 
@@ -524,12 +529,12 @@ int db_mysql_delete(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _o,
  * \param _un number of columns to update
  * \return zero on success, negative value on failure
  */
-int db_mysql_update(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _o,
-	const db_val_t* _v, const db_key_t* _uk, const db_val_t* _uv, const int _n,
-	const int _un)
+int db_mysql_update(const db1_con_t *_h, const db_key_t *_k, const db_op_t *_o,
+		const db_val_t *_v, const db_key_t *_uk, const db_val_t *_uv,
+		const int _n, const int _un)
 {
 	return db_do_update(_h, _k, _o, _v, _uk, _uv, _n, _un, db_mysql_val2str,
-	db_mysql_submit_query);
+			db_mysql_submit_query);
 }
 
 
@@ -543,11 +548,11 @@ int db_mysql_update(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _o,
  * \param _m unused for db_mysql
  * \return zero on success, negative value on failure
  */
-int db_mysql_replace(const db1_con_t* _h, const db_key_t* _k,
-		const db_val_t* _v, const int _n, const int _un, const int _m)
+int db_mysql_replace(const db1_con_t *_h, const db_key_t *_k,
+		const db_val_t *_v, const int _n, const int _un, const int _m)
 {
-	return db_do_replace(_h, _k, _v, _n, db_mysql_val2str,
-	db_mysql_submit_query);
+	return db_do_replace(
+			_h, _k, _v, _n, db_mysql_val2str, db_mysql_submit_query);
 }
 
 
@@ -557,9 +562,9 @@ int db_mysql_replace(const db1_con_t* _h, const db_key_t* _k,
  * \return returns the ID as integer or returns 0 if the previous statement
  * does not use an AUTO_INCREMENT value.
  */
-int db_mysql_last_inserted_id(const db1_con_t* _h)
+int db_mysql_last_inserted_id(const db1_con_t *_h)
 {
-	if (!_h) {
+	if(!_h) {
 		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
@@ -572,9 +577,9 @@ int db_mysql_last_inserted_id(const db1_con_t* _h)
  * \param _h database handle
  * \return returns the affected rows as integer or -1 on error.
  */
-int db_mysql_affected_rows(const db1_con_t* _h)
+int db_mysql_affected_rows(const db1_con_t *_h)
 {
-	if (!_h) {
+	if(!_h) {
 		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
@@ -587,70 +592,72 @@ int db_mysql_affected_rows(const db1_con_t* _h)
  * \param _l database locking , supports no locking or full locking
  * \return 0 on success, negative on failure
  */
-int db_mysql_start_transaction(db1_con_t* _h, db_locking_t _l)
+int db_mysql_start_transaction(db1_con_t *_h, db_locking_t _l)
 {
 	str begin_str = str_init("SET autocommit=0");
 	str lock_start_str = str_init("LOCK TABLES ");
-	str lock_end_str  = str_init(" WRITE");
+	str lock_end_str = str_init(" WRITE");
 	str lock_str = {0, 0};
 
-	if (!_h) {
+	if(!_h) {
 		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
 
-	if (CON_TRANSACTION(_h) == 1) {
+	if(CON_TRANSACTION(_h) == 1) {
 		LM_ERR("transaction already started\n");
 		return -1;
 	}
 
-	if (db_mysql_raw_query(_h, &begin_str, NULL) < 0)
-	{
+	if(db_mysql_raw_query(_h, &begin_str, NULL) < 0) {
 		LM_ERR("executing raw_query\n");
 		return -1;
 	}
 
 	CON_TRANSACTION(_h) = 1;
 
-	switch(_l)
-	{
-	case DB_LOCKING_NONE:
-		break;
-	case DB_LOCKING_FULL:
-		/* Fall-thru */
-	case DB_LOCKING_WRITE:
-		if ((lock_str.s = pkg_malloc((lock_start_str.len + CON_TABLE(_h)->len + lock_end_str.len) * sizeof(char))) == NULL)
-		{
-			PKG_MEM_ERROR;
+	switch(_l) {
+		case DB_LOCKING_NONE:
+			break;
+		case DB_LOCKING_FULL:
+			/* Fall-thru */
+		case DB_LOCKING_WRITE:
+			if((lock_str.s = pkg_malloc((lock_start_str.len + CON_TABLE(_h)->len
+												+ lock_end_str.len)
+										* sizeof(char)))
+					== NULL) {
+				PKG_MEM_ERROR;
+				goto error;
+			}
+
+			memcpy(lock_str.s, lock_start_str.s, lock_start_str.len);
+			lock_str.len += lock_start_str.len;
+			memcpy(lock_str.s + lock_str.len, CON_TABLE(_h)->s,
+					CON_TABLE(_h)->len);
+			lock_str.len += CON_TABLE(_h)->len;
+			memcpy(lock_str.s + lock_str.len, lock_end_str.s, lock_end_str.len);
+			lock_str.len += lock_end_str.len;
+
+			if(db_mysql_raw_query(_h, &lock_str, NULL) < 0) {
+				LM_ERR("executing raw_query\n");
+				goto error;
+			}
+
+			if(lock_str.s)
+				pkg_free(lock_str.s);
+			CON_LOCKEDTABLES(_h) = 1;
+			break;
+
+		default:
+			LM_WARN("unrecognised lock type\n");
 			goto error;
-		}
-
-		memcpy(lock_str.s, lock_start_str.s, lock_start_str.len);
-		lock_str.len += lock_start_str.len;
-		memcpy(lock_str.s + lock_str.len, CON_TABLE(_h)->s, CON_TABLE(_h)->len);
-		lock_str.len += CON_TABLE(_h)->len;
-		memcpy(lock_str.s + lock_str.len, lock_end_str.s, lock_end_str.len);
-		lock_str.len += lock_end_str.len;
-
-		if (db_mysql_raw_query(_h, &lock_str, NULL) < 0)
-		{
-			LM_ERR("executing raw_query\n");
-			goto error;
-		}
-
-		if (lock_str.s) pkg_free(lock_str.s);
-		CON_LOCKEDTABLES(_h) = 1;
-		break;
-
-	default:
-		LM_WARN("unrecognised lock type\n");
-		goto error;
 	}
 
 	return 0;
 
 error:
-	if (lock_str.s) pkg_free(lock_str.s);
+	if(lock_str.s)
+		pkg_free(lock_str.s);
 	db_mysql_abort_transaction(_h);
 	return -1;
 }
@@ -660,22 +667,21 @@ error:
  * \param _h database handle
  * \return 0 on success, negative on failure
  */
-int db_mysql_unlock_tables(db1_con_t* _h)
+int db_mysql_unlock_tables(db1_con_t *_h)
 {
 	str query_str = str_init("UNLOCK TABLES");
 
-	if (!_h) {
+	if(!_h) {
 		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
 
-	if (CON_LOCKEDTABLES(_h) == 0) {
+	if(CON_LOCKEDTABLES(_h) == 0) {
 		LM_DBG("no active locked tables\n");
 		return 0;
 	}
 
-	if (db_mysql_raw_query(_h, &query_str, NULL) < 0)
-	{
+	if(db_mysql_raw_query(_h, &query_str, NULL) < 0) {
 		LM_ERR("executing raw_query\n");
 		return -1;
 	}
@@ -689,29 +695,27 @@ int db_mysql_unlock_tables(db1_con_t* _h)
  * \param _h database handle
  * \return 0 on success, negative on failure
  */
-int db_mysql_end_transaction(db1_con_t* _h)
+int db_mysql_end_transaction(db1_con_t *_h)
 {
 	str commit_query_str = str_init("COMMIT");
 	str set_query_str = str_init("SET autocommit=1");
 
-	if (!_h) {
+	if(!_h) {
 		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
 
-	if (CON_TRANSACTION(_h) == 0) {
+	if(CON_TRANSACTION(_h) == 0) {
 		LM_ERR("transaction not in progress\n");
 		return -1;
 	}
 
-	if (db_mysql_raw_query(_h, &commit_query_str, NULL) < 0)
-	{
+	if(db_mysql_raw_query(_h, &commit_query_str, NULL) < 0) {
 		LM_ERR("executing raw_query\n");
 		return -1;
 	}
 
-	if (db_mysql_raw_query(_h, &set_query_str, NULL) < 0)
-	{
+	if(db_mysql_raw_query(_h, &set_query_str, NULL) < 0) {
 		LM_ERR("executing raw_query\n");
 		return -1;
 	}
@@ -721,7 +725,7 @@ int db_mysql_end_transaction(db1_con_t* _h)
 	 * to clean-up, a ROLLBACK will be sent to the DB. */
 	CON_TRANSACTION(_h) = 0;
 
-	if(db_mysql_unlock_tables(_h)<0)
+	if(db_mysql_unlock_tables(_h) < 0)
 		return -1;
 
 	return 0;
@@ -732,18 +736,18 @@ int db_mysql_end_transaction(db1_con_t* _h)
  * \param _h database handle
  * \return 1 if there was something to rollback, 0 if not, negative on failure
  */
-int db_mysql_abort_transaction(db1_con_t* _h)
+int db_mysql_abort_transaction(db1_con_t *_h)
 {
 	str rollback_query_str = str_init("ROLLBACK");
 	str set_query_str = str_init("SET autocommit=1");
 	int ret;
 
-	if (!_h) {
+	if(!_h) {
 		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
 
-	if (CON_TRANSACTION(_h) == 0) {
+	if(CON_TRANSACTION(_h) == 0) {
 		LM_DBG("nothing to rollback\n");
 		ret = 0;
 		goto done;
@@ -753,15 +757,13 @@ int db_mysql_abort_transaction(db1_con_t* _h)
 	 * transaction now or all future starts will fail */
 	CON_TRANSACTION(_h) = 0;
 
-	if (db_mysql_raw_query(_h, &rollback_query_str, NULL) < 0)
-	{
+	if(db_mysql_raw_query(_h, &rollback_query_str, NULL) < 0) {
 		LM_ERR("executing raw_query\n");
 		ret = -1;
 		goto done;
 	}
 
-	if (db_mysql_raw_query(_h, &set_query_str, NULL) < 0)
-	{
+	if(db_mysql_raw_query(_h, &set_query_str, NULL) < 0) {
 		LM_ERR("executing raw_query\n");
 		ret = -1;
 		goto done;
@@ -782,47 +784,58 @@ done:
  * \param _v values of the keys
  * \param _n number of key=value pairs
  */
-int db_mysql_insert_update(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v,
-	const int _n)
+int db_mysql_insert_update(const db1_con_t *_h, const db_key_t *_k,
+		const db_val_t *_v, const int _n)
 {
 	int off, ret;
-	static str  sql_str;
+	static str sql_str;
 
-	if ((!_h) || (!_k) || (!_v) || (!_n)) {
+	if((!_h) || (!_k) || (!_v) || (!_n)) {
 		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
 
 	ret = snprintf(mysql_sql_buf, sql_buffer_size, "insert into %s%.*s%s (",
-			CON_TQUOTESZ(_h), CON_TABLE(_h)->len, CON_TABLE(_h)->s, CON_TQUOTESZ(_h));
-	if (ret < 0 || ret >= sql_buffer_size) goto error;
+			CON_TQUOTESZ(_h), CON_TABLE(_h)->len, CON_TABLE(_h)->s,
+			CON_TQUOTESZ(_h));
+	if(ret < 0 || ret >= sql_buffer_size)
+		goto error;
 	off = ret;
 
-	ret = db_print_columns(mysql_sql_buf + off, sql_buffer_size - off, _k, _n, CON_TQUOTESZ(_h));
-	if (ret < 0) return -1;
+	ret = db_print_columns(mysql_sql_buf + off, sql_buffer_size - off, _k, _n,
+			CON_TQUOTESZ(_h));
+	if(ret < 0)
+		return -1;
 	off += ret;
 
 	ret = snprintf(mysql_sql_buf + off, sql_buffer_size - off, ") values (");
-	if (ret < 0 || ret >= (sql_buffer_size - off)) goto error;
+	if(ret < 0 || ret >= (sql_buffer_size - off))
+		goto error;
 	off += ret;
-	ret = db_print_values(_h, mysql_sql_buf + off, sql_buffer_size - off, _v, _n, db_mysql_val2str);
-	if (ret < 0) return -1;
+	ret = db_print_values(_h, mysql_sql_buf + off, sql_buffer_size - off, _v,
+			_n, db_mysql_val2str);
+	if(ret < 0)
+		return -1;
 	off += ret;
 
 	*(mysql_sql_buf + off++) = ')';
 
-	ret = snprintf(mysql_sql_buf + off, sql_buffer_size - off, " on duplicate key update ");
-	if (ret < 0 || ret >= (sql_buffer_size - off)) goto error;
+	ret = snprintf(mysql_sql_buf + off, sql_buffer_size - off,
+			" on duplicate key update ");
+	if(ret < 0 || ret >= (sql_buffer_size - off))
+		goto error;
 	off += ret;
 
-	ret = db_print_set(_h, mysql_sql_buf + off, sql_buffer_size - off, _k, _v, _n, db_mysql_val2str);
-	if (ret < 0) return -1;
+	ret = db_print_set(_h, mysql_sql_buf + off, sql_buffer_size - off, _k, _v,
+			_n, db_mysql_val2str);
+	if(ret < 0)
+		return -1;
 	off += ret;
 
 	sql_str.s = mysql_sql_buf;
 	sql_str.len = off;
 
-	if (db_mysql_submit_query(_h, &sql_str) < 0) {
+	if(db_mysql_submit_query(_h, &sql_str) < 0) {
 		LM_ERR("error while submitting query\n");
 		return -2;
 	}
@@ -842,11 +855,11 @@ error:
  * \param _n number of key=value pairs
  * \return zero on success, negative value on failure
  */
-int db_mysql_insert_delayed(const db1_con_t* _h, const db_key_t* _k,
-		const db_val_t* _v, const int _n)
+int db_mysql_insert_delayed(const db1_con_t *_h, const db_key_t *_k,
+		const db_val_t *_v, const int _n)
 {
-	return db_do_insert_delayed(_h, _k, _v, _n, db_mysql_val2str,
-	db_mysql_submit_query);
+	return db_do_insert_delayed(
+			_h, _k, _v, _n, db_mysql_val2str, db_mysql_submit_query);
 }
 
 /**
@@ -857,13 +870,12 @@ int db_mysql_insert_delayed(const db1_con_t* _h, const db_key_t* _k,
  * \param _n number of key=value pairs
  * \return zero on success, negative value on failure
  */
-int db_mysql_insert_async(const db1_con_t* _h, const db_key_t* _k,
-		const db_val_t* _v, const int _n)
+int db_mysql_insert_async(const db1_con_t *_h, const db_key_t *_k,
+		const db_val_t *_v, const int _n)
 {
-	return db_do_insert(_h, _k, _v, _n, db_mysql_val2str,
-	db_mysql_submit_query_async);
+	return db_do_insert(
+			_h, _k, _v, _n, db_mysql_val2str, db_mysql_submit_query_async);
 }
-
 
 
 /**
@@ -872,7 +884,7 @@ int db_mysql_insert_async(const db1_con_t* _h, const db_key_t* _k,
  * \param _t table name
  * \return zero on success, negative value on failure
  */
-int db_mysql_use_table(db1_con_t* _h, const str* _t)
+int db_mysql_use_table(db1_con_t *_h, const str *_t)
 {
 	return db_use_table(_h, _t);
 }
@@ -885,14 +897,13 @@ int db_mysql_use_table(db1_con_t* _h, const str* _t)
  */
 int db_mysql_alloc_buffer(void)
 {
-	if (db_api_init())
-	{
+	if(db_api_init()) {
 		LM_ERR("Failed to initialise db api\n");
 		return -1;
 	}
 
-	mysql_sql_buf = (char*)malloc(sql_buffer_size);
-	if (mysql_sql_buf == NULL) {
+	mysql_sql_buf = (char *)malloc(sql_buffer_size);
+	if(mysql_sql_buf == NULL) {
 		SYS_MEM_ERROR;
 		return -1;
 	} else {

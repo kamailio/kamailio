@@ -44,6 +44,7 @@
  * \param _len target string length
  * \return 0 on success, negative on error
  */
-int db_mysql_val2str(const db1_con_t* _con, const db_val_t* _v, char* _s, int* _len);
+int db_mysql_val2str(
+		const db1_con_t *_con, const db_val_t *_v, char *_s, int *_len);
 
 #endif

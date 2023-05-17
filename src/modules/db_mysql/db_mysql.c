@@ -36,25 +36,26 @@
 #include "../../lib/srdb2/db.h"
 #include "../../core/dprint.h"
 
-int my_ping_interval = 5 * 60; /* Default is 5 minutes */
+int my_ping_interval = 5 * 60;	/* Default is 5 minutes */
 unsigned int my_connect_to = 2; /* 2 s by default */
-unsigned int my_send_to = 0; /*  enabled only for mysql >= 5.25  */
-unsigned int my_recv_to = 0; /* enabled only for mysql >= 5.25 */
-unsigned int my_retries = 1;    /* Number of retries when command fails */
-unsigned int my_server_timezone = 0; /* Use FROM_UNIXTIME() for date conversion */
+unsigned int my_send_to = 0;	/*  enabled only for mysql >= 5.25  */
+unsigned int my_recv_to = 0;	/* enabled only for mysql >= 5.25 */
+unsigned int my_retries = 1;	/* Number of retries when command fails */
+unsigned int my_server_timezone =
+		0; /* Use FROM_UNIXTIME() for date conversion */
 
 unsigned long my_client_ver = 0;
 int db_mysql_unsigned_type = 0;
 int db_mysql_opt_ssl_mode = 0;
 
 struct mysql_counters_h mysql_cnts_h;
-counter_def_t mysql_cnt_defs[] =  {
-	{&mysql_cnts_h.driver_err, "driver_errors", 0, 0, 0,
-		"incremented each time a Mysql error happened because the server/connection has failed."},
-	{0, 0, 0, 0, 0, 0 }
-};
-#define DEFAULT_MY_SEND_TO  2   /* in seconds */
-#define DEFAULT_MY_RECV_TO  4   /* in seconds */
+counter_def_t mysql_cnt_defs[] = {
+		{&mysql_cnts_h.driver_err, "driver_errors", 0, 0, 0,
+				"incremented each time a Mysql error happened because the "
+				"server/connection has failed."},
+		{0, 0, 0, 0, 0, 0}};
+#define DEFAULT_MY_SEND_TO 2 /* in seconds */
+#define DEFAULT_MY_RECV_TO 4 /* in seconds */
 
 static int mysql_mod_init(void);
 
@@ -64,65 +65,61 @@ MODULE_VERSION
 /*
  * MySQL database module interface
  */
-static cmd_export_t cmds[] = {
-	{"db_ctx",    (cmd_function)NULL,         0, 0, 0, 0},
-	{"db_con",    (cmd_function)my_con,       0, 0, 0, 0},
-	{"db_uri",    (cmd_function)my_uri,       0, 0, 0, 0},
-	{"db_cmd",    (cmd_function)my_cmd,       0, 0, 0, 0},
-	{"db_put",    (cmd_function)my_cmd_exec,  0, 0, 0, 0},
-	{"db_del",    (cmd_function)my_cmd_exec,  0, 0, 0, 0},
-	{"db_get",    (cmd_function)my_cmd_exec,  0, 0, 0, 0},
-	{"db_upd",    (cmd_function)my_cmd_exec,  0, 0, 0, 0},
-	{"db_sql",    (cmd_function)my_cmd_exec,  0, 0, 0, 0},
-	{"db_res",    (cmd_function)my_res,       0, 0, 0, 0},
-	{"db_fld",    (cmd_function)my_fld,       0, 0, 0, 0},
-	{"db_first",  (cmd_function)my_cmd_first, 0, 0, 0, 0},
-	{"db_next",   (cmd_function)my_cmd_next,  0, 0, 0, 0},
-	{"db_setopt", (cmd_function)my_setopt,    0, 0, 0, 0},
-	{"db_getopt", (cmd_function)my_getopt,    0, 0, 0, 0},
-	{"db_bind_api", (cmd_function)db_mysql_bind_api, 0, 0, 0, 0},
-	{0, 0, 0, 0, 0, 0}
-};
+static cmd_export_t cmds[] = {{"db_ctx", (cmd_function)NULL, 0, 0, 0, 0},
+		{"db_con", (cmd_function)my_con, 0, 0, 0, 0},
+		{"db_uri", (cmd_function)my_uri, 0, 0, 0, 0},
+		{"db_cmd", (cmd_function)my_cmd, 0, 0, 0, 0},
+		{"db_put", (cmd_function)my_cmd_exec, 0, 0, 0, 0},
+		{"db_del", (cmd_function)my_cmd_exec, 0, 0, 0, 0},
+		{"db_get", (cmd_function)my_cmd_exec, 0, 0, 0, 0},
+		{"db_upd", (cmd_function)my_cmd_exec, 0, 0, 0, 0},
+		{"db_sql", (cmd_function)my_cmd_exec, 0, 0, 0, 0},
+		{"db_res", (cmd_function)my_res, 0, 0, 0, 0},
+		{"db_fld", (cmd_function)my_fld, 0, 0, 0, 0},
+		{"db_first", (cmd_function)my_cmd_first, 0, 0, 0, 0},
+		{"db_next", (cmd_function)my_cmd_next, 0, 0, 0, 0},
+		{"db_setopt", (cmd_function)my_setopt, 0, 0, 0, 0},
+		{"db_getopt", (cmd_function)my_getopt, 0, 0, 0, 0},
+		{"db_bind_api", (cmd_function)db_mysql_bind_api, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0}};
 
 
 /*
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"ping_interval",   PARAM_INT, &my_ping_interval},
-	{"connect_timeout", PARAM_INT, &my_connect_to},
-	{"send_timeout",    PARAM_INT, &my_send_to},
-	{"receive_timeout", PARAM_INT, &my_recv_to},
-	{"retries",         PARAM_INT, &my_retries},
-	{"server_timezone", PARAM_INT, &my_server_timezone},
+		{"ping_interval", PARAM_INT, &my_ping_interval},
+		{"connect_timeout", PARAM_INT, &my_connect_to},
+		{"send_timeout", PARAM_INT, &my_send_to},
+		{"receive_timeout", PARAM_INT, &my_recv_to},
+		{"retries", PARAM_INT, &my_retries},
+		{"server_timezone", PARAM_INT, &my_server_timezone},
 
-	{"timeout_interval", INT_PARAM, &db_mysql_timeout_interval},
-	{"auto_reconnect",   INT_PARAM, &db_mysql_auto_reconnect},
-	{"insert_delayed",   INT_PARAM, &db_mysql_insert_all_delayed},
-	{"update_affected_found", INT_PARAM, &db_mysql_update_affected_found},
-	{"unsigned_type",    PARAM_INT, &db_mysql_unsigned_type},
-	{"opt_ssl_mode",     PARAM_INT, &db_mysql_opt_ssl_mode},
-	{0, 0, 0}
-};
+		{"timeout_interval", INT_PARAM, &db_mysql_timeout_interval},
+		{"auto_reconnect", INT_PARAM, &db_mysql_auto_reconnect},
+		{"insert_delayed", INT_PARAM, &db_mysql_insert_all_delayed},
+		{"update_affected_found", INT_PARAM, &db_mysql_update_affected_found},
+		{"unsigned_type", PARAM_INT, &db_mysql_unsigned_type},
+		{"opt_ssl_mode", PARAM_INT, &db_mysql_opt_ssl_mode}, {0, 0, 0}};
 
 
 struct module_exports exports = {
-	"db_mysql",      /* module name*/
-	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,            /* exported functions */
-	params,          /* exported parameters */
-	0,               /* exported RPC methods */
-	0,               /* exported pseudo-variables */
-	0,               /* response handling function*/
-	mysql_mod_init,  /* module init function */
-	0,               /* per-child init function */
-	0                /* module destroy function */
+		"db_mysql",		 /* module name*/
+		DEFAULT_DLFLAGS, /* dlopen flags */
+		cmds,			 /* exported functions */
+		params,			 /* exported parameters */
+		0,				 /* exported RPC methods */
+		0,				 /* exported pseudo-variables */
+		0,				 /* response handling function*/
+		mysql_mod_init,	 /* module init function */
+		0,				 /* per-child init function */
+		0				 /* module destroy function */
 };
 
 
 int mod_register(char *path, int *dlflags, void *p1, void *p2)
 {
-	if(db_mysql_alloc_buffer()<0)
+	if(db_mysql_alloc_buffer() < 0)
 		return -1;
 	return 0;
 }
@@ -131,30 +128,30 @@ static int mysql_mod_init(void)
 {
 #if MYSQL_VERSION_ID >= 40101
 	my_client_ver = mysql_get_client_version();
-	if ((my_client_ver >= 50025) ||
-		((my_client_ver >= 40122) &&
-			(my_client_ver < 50000))) {
-		if (my_send_to == 0) {
-			my_send_to= DEFAULT_MY_SEND_TO;
+	if((my_client_ver >= 50025)
+			|| ((my_client_ver >= 40122) && (my_client_ver < 50000))) {
+		if(my_send_to == 0) {
+			my_send_to = DEFAULT_MY_SEND_TO;
 		}
-		if (my_recv_to == 0) {
-			my_recv_to= DEFAULT_MY_RECV_TO;
+		if(my_recv_to == 0) {
+			my_recv_to = DEFAULT_MY_RECV_TO;
 		}
-	} else if (my_recv_to || my_send_to) {
+	} else if(my_recv_to || my_send_to) {
 		LM_WARN("WARNING: mysql send or received timeout set, but "
-			" not supported by the installed mysql client library"
-			" (needed at least 4.1.22 or 5.0.25, but installed %ld)\n",
-			my_client_ver);
+				" not supported by the installed mysql client library"
+				" (needed at least 4.1.22 or 5.0.25, but installed %ld)\n",
+				my_client_ver);
 	}
 #else
-	if (my_recv_to || my_send_to) {
+	if(my_recv_to || my_send_to) {
 		LM_WARN("WARNING: mysql send or received timeout set, but "
-			" not supported by the mysql client library used to compile"
-			" the mysql module (needed at least 4.1.1 but "
-			" compiled against %ld)\n", MYSQL_VERSION_ID);
+				" not supported by the mysql client library used to compile"
+				" the mysql module (needed at least 4.1.1 but "
+				" compiled against %ld)\n",
+				MYSQL_VERSION_ID);
 	}
 #endif
-	if (counter_register_array("mysql", mysql_cnt_defs) < 0)
+	if(counter_register_array("mysql", mysql_cnt_defs) < 0)
 		goto error;
 
 	return kam_mysql_mod_init();

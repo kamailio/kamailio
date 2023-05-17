@@ -20,15 +20,16 @@
  */
 
 #ifndef _MY_RES_H
-#define _MY_RES_H  1
+#define _MY_RES_H 1
 
 #include "../../lib/srdb2/db_drv.h"
 #include "../../lib/srdb2/db_res.h"
 
-struct my_res {
+struct my_res
+{
 	db_drv_t gen;
 };
 
-int my_res(db_res_t* cmd);
+int my_res(db_res_t *cmd);
 
 #endif /* _MY_RES_H */

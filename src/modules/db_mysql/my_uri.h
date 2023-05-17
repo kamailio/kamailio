@@ -27,18 +27,18 @@
 #include "../../lib/srdb2/db_uri.h"
 #include "../../lib/srdb2/db_drv.h"
 
-struct my_uri {
+struct my_uri
+{
 	db_drv_t drv;
-	char* username;
-	char* password;
-	char* host;
+	char *username;
+	char *password;
+	char *host;
 	unsigned short port;
-	char* database;
+	char *database;
 };
 
 
-int my_uri(db_uri_t* uri);
+int my_uri(db_uri_t *uri);
 
 
 #endif /* _MY_URI_H */
-

@@ -27,8 +27,9 @@
 
 /* counter struct
 */
-struct mysql_counters_h {
-    counter_handle_t driver_err;
+struct mysql_counters_h
+{
+	counter_handle_t driver_err;
 };
 /* defined in km_dbase.c */
 extern struct mysql_counters_h mysql_cnts_h;
