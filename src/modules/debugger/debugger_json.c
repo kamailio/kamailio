@@ -29,9 +29,8 @@
 #include "debugger_api.h"
 #include "debugger_json.h"
 
-int _dbg_get_array_avp_vals(struct sip_msg *msg,
-		pv_param_t *param, srjson_doc_t *jdoc, srjson_t **jobj,
-		str *item_name)
+int _dbg_get_array_avp_vals(struct sip_msg *msg, pv_param_t *param,
+		srjson_doc_t *jdoc, srjson_t **jobj, str *item_name)
 {
 	struct usr_avp *avp;
 	unsigned short name_type;
@@ -41,69 +40,60 @@ int _dbg_get_array_avp_vals(struct sip_msg *msg,
 	srjson_t *jobjt;
 	memset(&state, 0, sizeof(struct search_state));
 
-	if(pv_get_avp_name(msg, param, &avp_name, &name_type)!=0)
-	{
+	if(pv_get_avp_name(msg, param, &avp_name, &name_type) != 0) {
 		LM_ERR("invalid name\n");
 		return -1;
 	}
 	*jobj = srjson_CreateArray(jdoc);
-	if(*jobj==NULL)
-	{
+	if(*jobj == NULL) {
 		LM_ERR("cannot create json object\n");
 		return -1;
 	}
-	if ((avp=search_first_avp(name_type, avp_name, &avp_value, &state))==0)
-	{
+	if((avp = search_first_avp(name_type, avp_name, &avp_value, &state)) == 0) {
 		goto ok;
 	}
-	do
-	{
-		if(avp->flags & AVP_VAL_STR)
-		{
+	do {
+		if(avp->flags & AVP_VAL_STR) {
 			jobjt = srjson_CreateStr(jdoc, avp_value.s.s, avp_value.s.len);
-			if(jobjt==NULL)
-			{
+			if(jobjt == NULL) {
 				LM_ERR("cannot create json object\n");
 				return -1;
 			}
 		} else {
 			jobjt = srjson_CreateNumber(jdoc, avp_value.n);
-			if(jobjt==NULL)
-			{
+			if(jobjt == NULL) {
 				LM_ERR("cannot create json object\n");
 				return -1;
 			}
 		}
 		srjson_AddItemToArray(jdoc, *jobj, jobjt);
-	} while ((avp=search_next_avp(&state, &avp_value))!=0);
+	} while((avp = search_next_avp(&state, &avp_value)) != 0);
 ok:
 	item_name->s = avp_name.s.s;
 	item_name->len = avp_name.s.len;
 	return 0;
 }
 #define DBG_XAVP_DUMP_SIZE 32
-static str* _dbg_xavp_dump[DBG_XAVP_DUMP_SIZE];
+static str *_dbg_xavp_dump[DBG_XAVP_DUMP_SIZE];
 int _dbg_xavp_dump_lookup(pv_param_t *param)
 {
 	unsigned int i = 0;
 	pv_xavp_name_t *xname;
 
-	if(param==NULL)
+	if(param == NULL)
 		return -1;
 
-	xname = (pv_xavp_name_t*)param->pvn.u.dname;
+	xname = (pv_xavp_name_t *)param->pvn.u.dname;
 
-	while(i<DBG_XAVP_DUMP_SIZE && _dbg_xavp_dump[i]!=NULL)
-	{
-		if(_dbg_xavp_dump[i]->len==xname->name.len)
-		{
-			if(strncmp(_dbg_xavp_dump[i]->s, xname->name.s, xname->name.len)==0)
+	while(i < DBG_XAVP_DUMP_SIZE && _dbg_xavp_dump[i] != NULL) {
+		if(_dbg_xavp_dump[i]->len == xname->name.len) {
+			if(strncmp(_dbg_xavp_dump[i]->s, xname->name.s, xname->name.len)
+					== 0)
 				return 1; /* already dump before */
 		}
 		i++;
 	}
-	if(i==DBG_XAVP_DUMP_SIZE)
-	{
+	if(i == DBG_XAVP_DUMP_SIZE) {
 		LM_WARN("full _dbg_xavp_dump cache array\n");
 		return 0; /* end cache names */
 	}
@@ -119,58 +109,56 @@ void _dbg_get_obj_xavp_val(sr_xavp_t *avp, srjson_doc_t *jdoc, srjson_t **jobj)
 	switch(avp->val.type) {
 		case SR_XTYPE_NULL:
 			*jobj = srjson_CreateNull(jdoc);
-		break;
+			break;
 		case SR_XTYPE_LONG:
 			*jobj = srjson_CreateNumber(jdoc, avp->val.v.l);
-		break;
+			break;
 		case SR_XTYPE_STR:
 			*jobj = srjson_CreateStr(jdoc, avp->val.v.s.s, avp->val.v.s.len);
-		break;
+			break;
 		case SR_XTYPE_TIME:
-			result = snprintf(_pv_xavp_buf, 128, "%lu", (long unsigned)avp->val.v.t);
-		break;
+			result = snprintf(
+					_pv_xavp_buf, 128, "%lu", (long unsigned)avp->val.v.t);
+			break;
 		case SR_XTYPE_LLONG:
 			result = snprintf(_pv_xavp_buf, 128, "%lld", avp->val.v.ll);
-		break;
+			break;
 		case SR_XTYPE_XAVP:
-			result = snprintf(_pv_xavp_buf, 128, "<<xavp:%p>>", avp->val.v.xavp);
-		break;
+			result =
+					snprintf(_pv_xavp_buf, 128, "<<xavp:%p>>", avp->val.v.xavp);
+			break;
 		case SR_XTYPE_DATA:
-			result = snprintf(_pv_xavp_buf, 128, "<<data:%p>>", avp->val.v.data);
-		break;
+			result =
+					snprintf(_pv_xavp_buf, 128, "<<data:%p>>", avp->val.v.data);
+			break;
 		default:
 			LM_WARN("unknown data type\n");
 			*jobj = srjson_CreateNull(jdoc);
 	}
-	if(result<0)
-	{
+	if(result < 0) {
 		LM_ERR("cannot convert to str\n");
 		*jobj = srjson_CreateNull(jdoc);
-	}
-	else if(*jobj==NULL)
-	{
+	} else if(*jobj == NULL) {
 		*jobj = srjson_CreateStr(jdoc, _pv_xavp_buf, 128);
 	}
 }
 
-int _dbg_get_obj_avp_vals(str name, sr_xavp_t *xavp, srjson_doc_t *jdoc, srjson_t **jobj)
+int _dbg_get_obj_avp_vals(
+		str name, sr_xavp_t *xavp, srjson_doc_t *jdoc, srjson_t **jobj)
 {
 	sr_xavp_t *avp = NULL;
 	srjson_t *jobjt = NULL;
 
 	*jobj = srjson_CreateArray(jdoc);
-	if(*jobj==NULL)
-	{
+	if(*jobj == NULL) {
 		LM_ERR("cannot create json object\n");
 		return -1;
 	}
 	avp = xavp;
-	while(avp!=NULL&&!STR_EQ(avp->name,name))
-	{
+	while(avp != NULL && !STR_EQ(avp->name, name)) {
 		avp = avp->next;
 	}
-	while(avp!=NULL)
-	{
+	while(avp != NULL) {
 		_dbg_get_obj_xavp_val(avp, jdoc, &jobjt);
 		srjson_AddItemToArray(jdoc, *jobj, jobjt);
 		jobjt = NULL;
@@ -180,11 +168,10 @@ int _dbg_get_obj_avp_vals(str name, sr_xavp_t *xavp, srjson_doc_t *jdoc, srjson_
 	return 0;
 }
 
-int _dbg_get_obj_xavp_vals(struct sip_msg *msg,
-		pv_param_t *param, srjson_doc_t *jdoc, srjson_t **jobjr,
-		str *item_name)
+int _dbg_get_obj_xavp_vals(struct sip_msg *msg, pv_param_t *param,
+		srjson_doc_t *jdoc, srjson_t **jobjr, str *item_name)
 {
-	pv_xavp_name_t *xname = (pv_xavp_name_t*)param->pvn.u.dname;
+	pv_xavp_name_t *xname = (pv_xavp_name_t *)param->pvn.u.dname;
 	sr_xavp_t *xavp = NULL;
 	sr_xavp_t *avp = NULL;
 	srjson_t *jobj = NULL;
@@ -193,8 +180,7 @@ int _dbg_get_obj_xavp_vals(struct sip_msg *msg,
 	struct str_list *k;
 
 	*jobjr = srjson_CreateArray(jdoc);
-	if(*jobjr==NULL)
-	{
+	if(*jobjr == NULL) {
 		LM_ERR("cannot create json object\n");
 		return -1;
 	}
@@ -202,49 +188,42 @@ int _dbg_get_obj_xavp_vals(struct sip_msg *msg,
 	item_name->s = xname->name.s;
 	item_name->len = xname->name.len;
 	xavp = xavp_get_by_index(&xname->name, 0, NULL);
-	if(xavp==NULL)
-	{
+	if(xavp == NULL) {
 		return 0; /* empty */
 	}
 
-	do
-	{
-		if(xavp->val.type==SR_XTYPE_XAVP)
-		{
+	do {
+		if(xavp->val.type == SR_XTYPE_XAVP) {
 			avp = xavp->val.v.xavp;
 			jobj = srjson_CreateObject(jdoc);
-			if(jobj==NULL)
-			{
+			if(jobj == NULL) {
 				LM_ERR("cannot create json object\n");
 				return -1;
 			}
 			keys = xavp_get_list_key_names(xavp);
-			if(keys!=NULL)
-			{
-				do
-				{
+			if(keys != NULL) {
+				do {
 					_dbg_get_obj_avp_vals(keys->s, avp, jdoc, &jobjt);
-					srjson_AddStrItemToObject(jdoc, jobj, keys->s.s,
-						keys->s.len, jobjt);
+					srjson_AddStrItemToObject(
+							jdoc, jobj, keys->s.s, keys->s.len, jobjt);
 					k = keys;
 					keys = keys->next;
 					pkg_free(k);
 					jobjt = NULL;
-				}while(keys!=NULL);
+				} while(keys != NULL);
 			}
 		}
-		if(jobj!=NULL)
-		{
+		if(jobj != NULL) {
 			srjson_AddItemToArray(jdoc, *jobjr, jobj);
 			jobj = NULL;
 		}
-	}while((xavp = xavp_get_next(xavp))!=0);
+	} while((xavp = xavp_get_next(xavp)) != 0);
 
 	return 0;
 }
 
-int dbg_get_json(struct sip_msg* msg, unsigned int mask, srjson_doc_t *jdoc,
-	srjson_t *head)
+int dbg_get_json(struct sip_msg *msg, unsigned int mask, srjson_doc_t *jdoc,
+		srjson_t *head)
 {
 	int i;
 	pv_value_t value;
@@ -254,36 +233,33 @@ int dbg_get_json(struct sip_msg* msg, unsigned int mask, srjson_doc_t *jdoc,
 	str item_name = STR_NULL;
 	static char iname[128];
 
-	if(_pv_cache==NULL)
-	{
+	if(_pv_cache == NULL) {
 		LM_ERR("cannot access pv_cache\n");
 		return -1;
 	}
-	if(jdoc==NULL){
+	if(jdoc == NULL) {
 		LM_ERR("jdoc is null\n");
 		return -1;
 	}
-	if(head==NULL){
+	if(head == NULL) {
 		LM_ERR("head is null\n");
 		return -1;
 	}
 
-	memset(_dbg_xavp_dump, 0, sizeof(str*)*DBG_XAVP_DUMP_SIZE);
-	for(i=0;i<PV_CACHE_SIZE;i++)
-	{
+	memset(_dbg_xavp_dump, 0, sizeof(str *) * DBG_XAVP_DUMP_SIZE);
+	for(i = 0; i < PV_CACHE_SIZE; i++) {
 		el = _pv_cache[i];
-		while(el)
-		{
-			if(!(el->spec.type==PVT_AVP||
-				el->spec.type==PVT_SCRIPTVAR||
-				el->spec.type==PVT_XAVP||
-				el->spec.type==PVT_OTHER)||
-				!((el->spec.type==PVT_AVP&&mask&DBG_DP_AVP)||
-				(el->spec.type==PVT_XAVP&&mask&DBG_DP_XAVP)||
-				(el->spec.type==PVT_SCRIPTVAR&&mask&DBG_DP_SCRIPTVAR)||
-				(el->spec.type==PVT_OTHER&&mask&DBG_DP_OTHER))||
-				(el->spec.trans!=NULL))
-			{
+		while(el) {
+			if(!(el->spec.type == PVT_AVP || el->spec.type == PVT_SCRIPTVAR
+					   || el->spec.type == PVT_XAVP
+					   || el->spec.type == PVT_OTHER)
+					|| !((el->spec.type == PVT_AVP && mask & DBG_DP_AVP)
+							|| (el->spec.type == PVT_XAVP && mask & DBG_DP_XAVP)
+							|| (el->spec.type == PVT_SCRIPTVAR
+									&& mask & DBG_DP_SCRIPTVAR)
+							|| (el->spec.type == PVT_OTHER
+									&& mask & DBG_DP_OTHER))
+					|| (el->spec.trans != NULL)) {
 				el = el->next;
 				continue;
 			}
@@ -291,89 +267,80 @@ int dbg_get_json(struct sip_msg* msg, unsigned int mask, srjson_doc_t *jdoc,
 			item_name.len = 0;
 			item_name.s = 0;
 			iname[0] = '\0';
-			if(el->spec.type==PVT_AVP)
-			{
-				if(el->spec.pvp.pvi.type==PV_IDX_ALL||
-					(el->spec.pvp.pvi.type==PV_IDX_INT&&el->spec.pvp.pvi.u.ival!=0))
-				{
+			if(el->spec.type == PVT_AVP) {
+				if(el->spec.pvp.pvi.type == PV_IDX_ALL
+						|| (el->spec.pvp.pvi.type == PV_IDX_INT
+								&& el->spec.pvp.pvi.u.ival != 0)) {
 					el = el->next;
 					continue;
-				}
-				else
-				{
-					if(_dbg_get_array_avp_vals(msg, &el->spec.pvp, jdoc, &jobj, &item_name)!=0)
-					{
-						LM_WARN("can't get value[%.*s]\n", el->pvname.len, el->pvname.s);
+				} else {
+					if(_dbg_get_array_avp_vals(
+							   msg, &el->spec.pvp, jdoc, &jobj, &item_name)
+							!= 0) {
+						LM_WARN("can't get value[%.*s]\n", el->pvname.len,
+								el->pvname.s);
 						el = el->next;
 						continue;
 					}
-					if(srjson_GetArraySize(jdoc, jobj)==0 && !(mask&DBG_DP_NULL))
-					{
+					if(srjson_GetArraySize(jdoc, jobj) == 0
+							&& !(mask & DBG_DP_NULL)) {
 						el = el->next;
 						continue;
 					}
-					snprintf(iname, 128, "$avp(%.*s)", item_name.len, item_name.s);
+					snprintf(iname, 128, "$avp(%.*s)", item_name.len,
+							item_name.s);
 				}
-			}
-			else if(el->spec.type==PVT_XAVP)
-			{
-				if(_dbg_xavp_dump_lookup(&el->spec.pvp)!=0)
-				{
+			} else if(el->spec.type == PVT_XAVP) {
+				if(_dbg_xavp_dump_lookup(&el->spec.pvp) != 0) {
 					el = el->next;
 					continue;
 				}
-				if(_dbg_get_obj_xavp_vals(msg, &el->spec.pvp, jdoc, &jobj, &item_name)!=0)
-				{
-					LM_WARN("can't get value[%.*s]\n", el->pvname.len, el->pvname.s);
+				if(_dbg_get_obj_xavp_vals(
+						   msg, &el->spec.pvp, jdoc, &jobj, &item_name)
+						!= 0) {
+					LM_WARN("can't get value[%.*s]\n", el->pvname.len,
+							el->pvname.s);
 					el = el->next;
 					continue;
 				}
-				if(srjson_GetArraySize(jdoc, jobj)==0 && !(mask&DBG_DP_NULL))
-				{
+				if(srjson_GetArraySize(jdoc, jobj) == 0
+						&& !(mask & DBG_DP_NULL)) {
 					el = el->next;
 					continue;
 				}
 				snprintf(iname, 128, "$xavp(%.*s)", item_name.len, item_name.s);
-			}
-			else
-			{
-				if(pv_get_spec_value(msg, &el->spec, &value)!=0)
-				{
-					LM_WARN("can't get value[%.*s]\n", el->pvname.len, el->pvname.s);
+			} else {
+				if(pv_get_spec_value(msg, &el->spec, &value) != 0) {
+					LM_WARN("can't get value[%.*s]\n", el->pvname.len,
+							el->pvname.s);
 					el = el->next;
 					continue;
 				}
-				if(value.flags&(PV_VAL_NULL|PV_VAL_EMPTY|PV_VAL_NONE))
-				{
-					if(mask&DBG_DP_NULL)
-					{
+				if(value.flags & (PV_VAL_NULL | PV_VAL_EMPTY | PV_VAL_NONE)) {
+					if(mask & DBG_DP_NULL) {
 						jobj = srjson_CreateNull(jdoc);
-					}
-					else
-					{
+					} else {
 						el = el->next;
 						continue;
 					}
-				}else if(value.flags&(PV_VAL_INT)){
+				} else if(value.flags & (PV_VAL_INT)) {
 					jobj = srjson_CreateNumber(jdoc, value.ri);
-				}else if(value.flags&(PV_VAL_STR)){
+				} else if(value.flags & (PV_VAL_STR)) {
 					jobj = srjson_CreateStr(jdoc, value.rs.s, value.rs.len);
-				}else {
-					LM_WARN("el->pvname[%.*s] value[%d] unhandled\n", el->pvname.len, el->pvname.s,
-						value.flags);
+				} else {
+					LM_WARN("el->pvname[%.*s] value[%d] unhandled\n",
+							el->pvname.len, el->pvname.s, value.flags);
 					el = el->next;
 					continue;
 				}
-				if(jobj==NULL)
-				{
-					LM_ERR("el->pvname[%.*s] empty json object\n", el->pvname.len,
-						el->pvname.s);
+				if(jobj == NULL) {
+					LM_ERR("el->pvname[%.*s] empty json object\n",
+							el->pvname.len, el->pvname.s);
 					goto error;
 				}
 				snprintf(iname, 128, "%.*s", el->pvname.len, el->pvname.s);
 			}
-			if(jobj!=NULL)
-			{
+			if(jobj != NULL) {
 				srjson_AddItemToObject(jdoc, head, iname, jobj);
 			}
 			el = el->next;
@@ -386,26 +353,24 @@ error:
 	return -1;
 }
 
-int dbg_dump_json(struct sip_msg* msg, unsigned int mask, int level)
+int dbg_dump_json(struct sip_msg *msg, unsigned int mask, int level)
 {
 	char *output = NULL;
 	srjson_doc_t jdoc;
 
 	srjson_InitDoc(&jdoc, NULL);
-	if(jdoc.root==NULL)
-	{
+	if(jdoc.root == NULL) {
 		jdoc.root = srjson_CreateObject(&jdoc);
-		if(jdoc.root==NULL)
-		{
+		if(jdoc.root == NULL) {
 			LM_ERR("cannot create json root\n");
 			goto error;
 		}
 	}
 
-	if(dbg_get_json(msg, mask, &jdoc, jdoc.root)<0) goto error;
+	if(dbg_get_json(msg, mask, &jdoc, jdoc.root) < 0)
+		goto error;
 	output = srjson_PrintUnformatted(&jdoc, jdoc.root);
-	if(output==NULL)
-	{
+	if(output == NULL) {
 		LM_ERR("cannot print json doc\n");
 		srjson_DestroyDoc(&jdoc);
 	}

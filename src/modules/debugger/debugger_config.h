@@ -32,16 +32,17 @@
 #include "../../core/cfg/cfg.h"
 #include "../../core/str.h"
 
-struct cfg_group_dbg {
+struct cfg_group_dbg
+{
 	unsigned int mod_level_mode;
 	unsigned int mod_facility_mode;
 	unsigned int mod_hash_size;
 };
 
-extern struct cfg_group_dbg	default_dbg_cfg;
-extern void	*dbg_cfg;
+extern struct cfg_group_dbg default_dbg_cfg;
+extern void *dbg_cfg;
 extern cfg_def_t dbg_cfg_def[];
 
-extern int dbg_mode_fixup(void *temp_handle,
-	str *group_name, str *var_name, void **value);
+extern int dbg_mode_fixup(
+		void *temp_handle, str *group_name, str *var_name, void **value);
 #endif
