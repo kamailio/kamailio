@@ -56,19 +56,23 @@ static struct ev_io socket_notify;
 // the kemi callback name, see mqtt_mod.c
 extern str _mqtt_event_callback;
 
-void mqtt_socket_notify(struct ev_loop *loop, struct ev_io *watcher, int revents);
-void mqtt_request_notify(struct ev_loop *loop, struct ev_io *watcher, int revents);
+void mqtt_socket_notify(
+		struct ev_loop *loop, struct ev_io *watcher, int revents);
+void mqtt_request_notify(
+		struct ev_loop *loop, struct ev_io *watcher, int revents);
 void mqtt_timer_notify(struct ev_loop *loop, ev_timer *timer, int revents);
 void mqtt_on_connect(struct mosquitto *, void *, int);
 void mqtt_on_disconnect(struct mosquitto *, void *, int);
-void mqtt_on_message(struct mosquitto *, void *, const struct mosquitto_message *);
-int  mqtt_run_cfg_route( int rt, str *rtname, sip_msg_t *fake_message);
-int  mqtt_publish(str *topic, str *payload, int qos);
-int  mqtt_subscribe(str *topic, int qos);
-int  mqtt_unsubscribe(str *topic);
+void mqtt_on_message(
+		struct mosquitto *, void *, const struct mosquitto_message *);
+int mqtt_run_cfg_route(int rt, str *rtname, sip_msg_t *fake_message);
+int mqtt_publish(str *topic, str *payload, int qos);
+int mqtt_subscribe(str *topic, int qos);
+int mqtt_unsubscribe(str *topic);
 
 // pointers for event routes, initialized in mqtt_init_environment()
-typedef struct _mqtt_evroutes {
+typedef struct _mqtt_evroutes
+{
 	int connected;
 	str connected_name;
 	int disconnected;
@@ -88,19 +92,21 @@ void mqtt_init_environment()
 	_mqtt_rts.connected_name.s = "mqtt:connected";
 	_mqtt_rts.connected_name.len = strlen(_mqtt_rts.connected_name.s);
 	_mqtt_rts.connected = route_lookup(&event_rt, "mqtt:connected");
-	if (_mqtt_rts.connected < 0 || event_rt.rlist[_mqtt_rts.connected] == NULL)
+	if(_mqtt_rts.connected < 0 || event_rt.rlist[_mqtt_rts.connected] == NULL)
 		_mqtt_rts.connected = -1;
 
 	_mqtt_rts.disconnected_name.s = "mqtt:disconnected";
 	_mqtt_rts.disconnected_name.len = strlen(_mqtt_rts.disconnected_name.s);
 	_mqtt_rts.disconnected = route_lookup(&event_rt, "mqtt:disconnected");
-	if (_mqtt_rts.disconnected < 0 || event_rt.rlist[_mqtt_rts.disconnected] == NULL)
+	if(_mqtt_rts.disconnected < 0
+			|| event_rt.rlist[_mqtt_rts.disconnected] == NULL)
 		_mqtt_rts.disconnected = -1;
 
 	_mqtt_rts.msg_received_name.s = "mqtt:message";
 	_mqtt_rts.msg_received_name.len = strlen(_mqtt_rts.msg_received_name.s);
 	_mqtt_rts.msg_received = route_lookup(&event_rt, "mqtt:message");
-	if (_mqtt_rts.msg_received < 0 || event_rt.rlist[_mqtt_rts.msg_received] == NULL)
+	if(_mqtt_rts.msg_received < 0
+			|| event_rt.rlist[_mqtt_rts.msg_received] == NULL)
 		_mqtt_rts.msg_received = -1;
 }
 
@@ -109,7 +115,7 @@ void mqtt_init_environment()
  */
 int mqtt_init_notify_sockets(void)
 {
-	if (socketpair(PF_UNIX, SOCK_STREAM, 0, _mqtt_notify_sockets) < 0) {
+	if(socketpair(PF_UNIX, SOCK_STREAM, 0, _mqtt_notify_sockets) < 0) {
 		LM_ERR("opening notify stream socket pair\n");
 		return -1;
 	}
@@ -143,36 +149,38 @@ void mqtt_close_notify_sockets_parent(void)
 /**
  * Main loop of the dispatcher process (blocking)
  */
-int mqtt_run_dispatcher(mqtt_dispatcher_cfg_t* cfg)
+int mqtt_run_dispatcher(mqtt_dispatcher_cfg_t *cfg)
 {
 	int res, cert_req;
 	struct ev_io request_notify;
 
 	// prepare and init libmosquitto handle
 	LM_DBG("starting mqtt dispatcher processing\n");
-	if (mosquitto_lib_init() != MOSQ_ERR_SUCCESS) {
+	if(mosquitto_lib_init() != MOSQ_ERR_SUCCESS) {
 		LM_ERR("failed to init libmosquitto\n");
 		return -1;
 	}
 
 	_mosquitto = mosquitto_new(cfg->id, true, 0);
-	if (_mosquitto == 0) {
+	if(_mosquitto == 0) {
 		LM_ERR("failed to allocate mosquitto struct\n");
 		return -1;
 	}
 
-	if (cfg->will != NULL && cfg->will_topic != NULL) {
+	if(cfg->will != NULL && cfg->will_topic != NULL) {
 		LM_DBG("setting will to [%s] -> [%s]\n", cfg->will_topic, cfg->will);
-		res = mosquitto_will_set(_mosquitto, cfg->will_topic, strlen(cfg->will), cfg->will, 0, false);
-		if (res != MOSQ_ERR_SUCCESS) {
+		res = mosquitto_will_set(_mosquitto, cfg->will_topic, strlen(cfg->will),
+				cfg->will, 0, false);
+		if(res != MOSQ_ERR_SUCCESS) {
 			LM_DBG("unable to set will: code=[%d]\n", res);
 			return -1;
 		}
 	}
 
-	if (cfg->username != NULL && cfg->password != NULL) {
-		res = mosquitto_username_pw_set(_mosquitto, cfg->username, cfg->password);
-		if (res != MOSQ_ERR_SUCCESS) {
+	if(cfg->username != NULL && cfg->password != NULL) {
+		res = mosquitto_username_pw_set(
+				_mosquitto, cfg->username, cfg->password);
+		if(res != MOSQ_ERR_SUCCESS) {
 			LM_DBG("unable to set password: code=[%d]\n", res);
 			return -1;
 		}
@@ -187,13 +195,14 @@ int mqtt_run_dispatcher(mqtt_dispatcher_cfg_t* cfg)
 
 	// prepare event loop
 	loop = ev_default_loop(0);
-	if(loop==NULL) {
+	if(loop == NULL) {
 		LM_ERR("cannot get libev loop\n");
 		return -1;
 	}
 
-	// listen for data on internal ipc socket 
-	ev_io_init(&request_notify, mqtt_request_notify, _mqtt_notify_sockets[0], EV_READ);
+	// listen for data on internal ipc socket
+	ev_io_init(&request_notify, mqtt_request_notify, _mqtt_notify_sockets[0],
+			EV_READ);
 	ev_io_start(loop, &request_notify);
 
 	// periodic timer for mqtt keepalive
@@ -202,55 +211,64 @@ int mqtt_run_dispatcher(mqtt_dispatcher_cfg_t* cfg)
 
 
 	// prepare tls configuration if at least a ca is configured
-	if (cfg->ca_file != NULL || cfg->ca_path != NULL) {
+	if(cfg->ca_file != NULL || cfg->ca_path != NULL) {
 		LM_DBG("Preparing TLS connection");
-		if (cfg->verify_certificate == 0) {
+		if(cfg->verify_certificate == 0) {
 			cert_req = 0;
-		} else if (cfg->verify_certificate == 1) {
+		} else if(cfg->verify_certificate == 1) {
 			cert_req = 1;
 		} else {
 			LM_ERR("invalid verify_certificate parameter\n");
 			return -1;
 		}
-		res = mosquitto_tls_opts_set(_mosquitto, cert_req, cfg->tls_method, cfg->cipher_list);
-		if (res != MOSQ_ERR_SUCCESS) {
+		res = mosquitto_tls_opts_set(
+				_mosquitto, cert_req, cfg->tls_method, cfg->cipher_list);
+		if(res != MOSQ_ERR_SUCCESS) {
 			LM_ERR("invalid tls_method or cipher_list parameters\n");
-			LM_ERR("mosquitto_tls_opts_set() failed: %d %s\n",errno, strerror(errno));
+			LM_ERR("mosquitto_tls_opts_set() failed: %d %s\n", errno,
+					strerror(errno));
 			return -1;
 		}
-		res = mosquitto_tls_set(_mosquitto, cfg->ca_file, cfg->ca_path, cfg->certificate, cfg->private_key, NULL);
-		if (res != MOSQ_ERR_SUCCESS) {
-			LM_ERR("invalid ca_file, ca_path, certificate or private_key parameters\n");
-			LM_ERR("mosquitto_tls_set() failed: %d %s\n",errno, strerror(errno));
+		res = mosquitto_tls_set(_mosquitto, cfg->ca_file, cfg->ca_path,
+				cfg->certificate, cfg->private_key, NULL);
+		if(res != MOSQ_ERR_SUCCESS) {
+			LM_ERR("invalid ca_file, ca_path, certificate or private_key "
+				   "parameters\n");
+			LM_ERR("mosquitto_tls_set() failed: %d %s\n", errno,
+					strerror(errno));
 			return -1;
 		}
-		if (cfg->tls_alpn != NULL) {
+		if(cfg->tls_alpn != NULL) {
 #if LIBMOSQUITTO_VERSION_NUMBER >= 1006000
-			res = mosquitto_string_option(_mosquitto, MOSQ_OPT_TLS_ALPN, cfg->tls_alpn);
-			if (res != MOSQ_ERR_SUCCESS) {
-				LM_ERR("mosquitto_string_option() failed setting TLS ALPN: %d %s\n",errno, strerror(errno));
+			res = mosquitto_string_option(
+					_mosquitto, MOSQ_OPT_TLS_ALPN, cfg->tls_alpn);
+			if(res != MOSQ_ERR_SUCCESS) {
+				LM_ERR("mosquitto_string_option() failed setting TLS ALPN: %d "
+					   "%s\n",
+						errno, strerror(errno));
 				return -1;
 			}
 #else
-			LM_WARN("unable to set TLS ALPN due to outdated mosquitto library version, upgrade it to >= 1.6.0\n");
+			LM_WARN("unable to set TLS ALPN due to outdated mosquitto library "
+					"version, upgrade it to >= 1.6.0\n");
 #endif
 		}
 	}
 
 	res = mosquitto_connect(_mosquitto, cfg->host, cfg->port, cfg->keepalive);
-	if (res == MOSQ_ERR_INVAL) {
+	if(res == MOSQ_ERR_INVAL) {
 		LM_ERR("invalid connect parameters\n");
 		return -1;
 	}
-	if (res == MOSQ_ERR_ERRNO) {
-		// it's not a problem if the initial connection failed, 
+	if(res == MOSQ_ERR_ERRNO) {
+		// it's not a problem if the initial connection failed,
 		// we will retry periodically to reconnect
-		LM_DBG("mosquitto_connect() failed: %d %s\n",errno, strerror(errno));
+		LM_DBG("mosquitto_connect() failed: %d %s\n", errno, strerror(errno));
 	}
 
-	// the actual main loop, it drives libev 
+	// the actual main loop, it drives libev
 	while(1) {
-		ev_loop (loop, 0);
+		ev_loop(loop, 0);
 	}
 
 	return 0;
@@ -259,7 +277,8 @@ int mqtt_run_dispatcher(mqtt_dispatcher_cfg_t* cfg)
 /**
  * libev notifies us because some data is waiting on the mosquitto socket.
  */
-void mqtt_socket_notify(struct ev_loop *loop, struct ev_io *watcher, int revents)
+void mqtt_socket_notify(
+		struct ev_loop *loop, struct ev_io *watcher, int revents)
 {
 
 	if(EV_ERROR & revents) {
@@ -268,8 +287,7 @@ void mqtt_socket_notify(struct ev_loop *loop, struct ev_io *watcher, int revents
 	}
 
 	// delegate mosquitto loop to read data from sockets
-	mqtt_timer_notify(loop,0, 0);
-
+	mqtt_timer_notify(loop, 0, 0);
 }
 
 /**
@@ -284,7 +302,7 @@ void mqtt_timer_notify(struct ev_loop *loop, ev_timer *timer, int revents)
 	// spend up to 30 secs in the mosquitto loop
 	// the loop will delegate work to mosquitto_on_..... callbacks.
 	res = mosquitto_loop(_mosquitto, 30, 1);
-	switch (res) {
+	switch(res) {
 		case MOSQ_ERR_SUCCESS:
 			break;
 		case MOSQ_ERR_ERRNO:
@@ -293,14 +311,14 @@ void mqtt_timer_notify(struct ev_loop *loop, ev_timer *timer, int revents)
 		case MOSQ_ERR_NO_CONN:
 		case MOSQ_ERR_CONN_LOST:
 			// is it time to reconnect?
-			if (wait_ticks > 0) {
+			if(wait_ticks > 0) {
 				// not yet...
-				wait_ticks --;
+				wait_ticks--;
 				break;
 			}
 			LM_DBG("Reconnecting\n");
 			recres = mosquitto_reconnect(_mosquitto);
-			if (recres != MOSQ_ERR_SUCCESS) {
+			if(recres != MOSQ_ERR_SUCCESS) {
 				LM_ERR("mosquitto_reconnect() failed: %d\n", recres);
 				// let's wait again N ticks
 				wait_ticks = _reconnect_wait_ticks;
@@ -314,12 +332,11 @@ void mqtt_timer_notify(struct ev_loop *loop, ev_timer *timer, int revents)
 			break;
 	}
 
-	if (timer != 0) {
+	if(timer != 0) {
 		// be sure to keep the timer going.
 		timer->repeat = _mqtt_timer_freq;
-		ev_timer_again (loop, timer);
+		ev_timer_again(loop, timer);
 	}
-
 }
 
 /**
@@ -328,7 +345,7 @@ void mqtt_timer_notify(struct ev_loop *loop, ev_timer *timer, int revents)
 void mqtt_on_connect(struct mosquitto *mosquitto, void *userdata, int rc)
 {
 	int mosquitto_fd;
-	if (rc == 0) {
+	if(rc == 0) {
 		LM_DBG("mqtt connected\n");
 
 		// listen for incoming data on mqtt connection
@@ -359,7 +376,8 @@ void mqtt_on_disconnect(struct mosquitto *mosquitto, void *userdata, int rc)
 /**
  * libmosquitto received a messag
  */
-void mqtt_on_message(struct mosquitto *mosquitto, void *userdata, const struct mosquitto_message *message)
+void mqtt_on_message(struct mosquitto *mosquitto, void *userdata,
+		const struct mosquitto_message *message)
 {
 	sip_msg_t *fmsg;
 	sip_msg_t tmsg;
@@ -368,7 +386,7 @@ void mqtt_on_message(struct mosquitto *mosquitto, void *userdata, const struct m
 	int qos;
 	topic.s = message->topic;
 	topic.len = strlen(message->topic);
-	payload.s = (char*) message->payload;
+	payload.s = (char *)message->payload;
 	payload.len = message->payloadlen;
 	qos = message->qos;
 	LM_DBG("mqtt message [%s] -> [%s] (qos %d)\n", topic.s, payload.s, qos);
@@ -379,8 +397,9 @@ void mqtt_on_message(struct mosquitto *mosquitto, void *userdata, const struct m
 	memcpy(&tmsg, fmsg, sizeof(sip_msg_t));
 	fmsg = &tmsg;
 	// use hdr date as pointer for the mqtt-message, not used in faked msg
-	fmsg->date=(hdr_field_t*)message;
-	mqtt_run_cfg_route(_mqtt_rts.msg_received, &_mqtt_rts.msg_received_name, fmsg);
+	fmsg->date = (hdr_field_t *)message;
+	mqtt_run_cfg_route(
+			_mqtt_rts.msg_received, &_mqtt_rts.msg_received_name, fmsg);
 }
 
 /**
@@ -395,11 +414,13 @@ int mqtt_run_cfg_route(int rt, str *rtname, sip_msg_t *fake_msg)
 	sr_kemi_eng_t *keng = NULL;
 
 	// check for valid route pointer
-	if((rt<0) && (_mqtt_event_callback.s==NULL || _mqtt_event_callback.len<=0))
+	if((rt < 0)
+			&& (_mqtt_event_callback.s == NULL
+					|| _mqtt_event_callback.len <= 0))
 		return 0;
 
 	// create empty fake message, if needed
-	if (fake_msg == NULL) {
+	if(fake_msg == NULL) {
 		fmsg = faked_msg_next();
 		memcpy(&tmsg, fmsg, sizeof(sip_msg_t));
 		fmsg = &tmsg;
@@ -410,13 +431,14 @@ int mqtt_run_cfg_route(int rt, str *rtname, sip_msg_t *fake_msg)
 	set_route_type(EVENT_ROUTE);
 	init_run_actions_ctx(&ctx);
 	LM_DBG("Run route [%.*s] [%s]\n", rtname->len, rtname->s, my_desc());
-	if(rt>=0) {
+	if(rt >= 0) {
 		run_top_route(event_rt.rlist[rt], fmsg, 0);
 	} else {
 		keng = sr_kemi_eng_get();
-		if(keng!=NULL) {
-			if(sr_kemi_route(keng, fmsg, EVENT_ROUTE,
-						&_mqtt_event_callback, rtname)<0) {
+		if(keng != NULL) {
+			if(sr_kemi_route(
+					   keng, fmsg, EVENT_ROUTE, &_mqtt_event_callback, rtname)
+					< 0) {
 				LM_ERR("error running event route kemi callback\n");
 			}
 		}
@@ -430,23 +452,24 @@ int mqtt_run_cfg_route(int rt, str *rtname, sip_msg_t *fake_msg)
  */
 int pv_parse_mqtt_name(pv_spec_t *sp, str *in)
 {
-	if(sp==NULL || in==NULL || in->len<=0)
+	if(sp == NULL || in == NULL || in->len <= 0)
 		return -1;
 
-	switch(in->len)
-	{
+	switch(in->len) {
 		case 3:
-			if(strncmp(in->s, "msg", 3)==0)
+			if(strncmp(in->s, "msg", 3) == 0)
 				sp->pvp.pvn.u.isname.name.n = 1;
-			else if(strncmp(in->s, "qos", 3)==0)
+			else if(strncmp(in->s, "qos", 3) == 0)
 				sp->pvp.pvn.u.isname.name.n = 2;
-			else goto error;
-		break;
+			else
+				goto error;
+			break;
 		case 5:
-			if(strncmp(in->s, "topic", 5)==0)
+			if(strncmp(in->s, "topic", 5) == 0)
 				sp->pvp.pvn.u.isname.name.n = 0;
-			else goto error;
-		break;
+			else
+				goto error;
+			break;
 		default:
 			goto error;
 	}
@@ -465,31 +488,30 @@ error:
  */
 int pv_get_mqtt(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 {
-	struct mosquitto_message* message;
+	struct mosquitto_message *message;
 	str topic, payload;
 	int qos;
 
-	if(param==NULL || res==NULL)
+	if(param == NULL || res == NULL)
 		return -1;
 
 
 	// check fake message date hdr, it should point to a mosquitto message
-	message = (struct mosquitto_message*)msg->date;
+	message = (struct mosquitto_message *)msg->date;
 
-	if (message==NULL) {
+	if(message == NULL) {
 		return pv_get_null(msg, param, res);
 	} else {
 		topic.s = message->topic;
 		topic.len = strlen(message->topic);
-		payload.s = (char*) message->payload;
+		payload.s = (char *)message->payload;
 		payload.len = message->payloadlen;
 		qos = message->qos;
 	}
 
 	// populate value depeding on the param name
 	// see pv_parse_mqtt_name()
-	switch(param->pvn.u.isname.name.n)
-	{
+	switch(param->pvn.u.isname.name.n) {
 		case 0:
 			return pv_get_strval(msg, param, res, &topic);
 		case 1:
@@ -506,8 +528,7 @@ int pv_get_mqtt(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 /**
  * The pv $mqtt is read only, nothing to do here.
  */
-int pv_set_mqtt(sip_msg_t *msg, pv_param_t *param, int op,
-		pv_value_t *val)
+int pv_set_mqtt(sip_msg_t *msg, pv_param_t *param, int op, pv_value_t *val)
 {
 	return 0;
 }
@@ -520,46 +541,45 @@ int mqtt_prepare_publish(str *topic, str *payload, int qos)
 	int len;
 	mqtt_request_t *request;
 
-	if(topic->s==NULL || topic->len == 0) {
+	if(topic->s == NULL || topic->len == 0) {
 		LM_ERR("invalid topic parameter\n");
 		return -1;
 	}
-	if(payload->s==NULL || payload->len == 0) {
+	if(payload->s == NULL || payload->len == 0) {
 		LM_ERR("invalid payload parameter\n");
 		return -1;
 	}
-	if(qos<0 || qos>2) {
+	if(qos < 0 || qos > 2) {
 		LM_ERR("invalid qos level\n");
 		return -1;
 	}
 
-	LM_DBG("publishing [%.*s] -> [%.*s]\n",
-			topic->len, topic->s, payload->len, payload->s);
+	LM_DBG("publishing [%.*s] -> [%.*s]\n", topic->len, topic->s, payload->len,
+			payload->s);
 
 	len = sizeof(mqtt_request_t);
-	len += topic->len+16;
-	len += payload->len+16;
+	len += topic->len + 16;
+	len += payload->len + 16;
 
-	request = (mqtt_request_t*)shm_malloc(len);
-	if(request==NULL) {
+	request = (mqtt_request_t *)shm_malloc(len);
+	if(request == NULL) {
 		LM_ERR("no more shared memory\n");
 		return -1;
 	}
 	memset(request, 0, len);
 	request->type = PUBLISH;
 	request->qos = qos;
-	request->topic.s = (char*)request + sizeof(mqtt_request_t);
-	request->topic.len = snprintf(request->topic.s, topic->len+16, 
-				"%.*s",
-				topic->len, topic->s);
-	request->payload.s = request->topic.s + topic->len+16;
-	request->payload.len = snprintf(request->payload.s, payload->len+16, 
-				"%.*s",
-				payload->len, payload->s);
+	request->topic.s = (char *)request + sizeof(mqtt_request_t);
+	request->topic.len = snprintf(
+			request->topic.s, topic->len + 16, "%.*s", topic->len, topic->s);
+	request->payload.s = request->topic.s + topic->len + 16;
+	request->payload.len = snprintf(request->payload.s, payload->len + 16,
+			"%.*s", payload->len, payload->s);
 
-	if(_mqtt_notify_sockets[1]!=-1) {
-		len = write(_mqtt_notify_sockets[1], &request, sizeof(mqtt_request_t*));
-		if(len<=0) {
+	if(_mqtt_notify_sockets[1] != -1) {
+		len = write(
+				_mqtt_notify_sockets[1], &request, sizeof(mqtt_request_t *));
+		if(len <= 0) {
 			shm_free(request);
 			LM_ERR("failed to pass the pointer to mqtt dispatcher\n");
 			return -1;
@@ -576,7 +596,8 @@ int mqtt_prepare_publish(str *topic, str *payload, int qos)
 /**
  * 
  */
-void mqtt_request_notify(struct ev_loop *loop, struct ev_io *watcher, int revents)
+void mqtt_request_notify(
+		struct ev_loop *loop, struct ev_io *watcher, int revents)
 {
 	mqtt_request_t *request = NULL;
 	int rlen;
@@ -589,15 +610,15 @@ void mqtt_request_notify(struct ev_loop *loop, struct ev_io *watcher, int revent
 	cfg_update();
 
 	/* read message from client */
-	rlen = read(watcher->fd, &request, sizeof(mqtt_request_t*));
+	rlen = read(watcher->fd, &request, sizeof(mqtt_request_t *));
 
-	if(rlen != sizeof(mqtt_request_t*) || request==NULL) {
+	if(rlen != sizeof(mqtt_request_t *) || request == NULL) {
 		LM_ERR("cannot read the sip worker message\n");
 		return;
 	}
 
-	LM_DBG("received [%p] [%i] [%.*s]\n", request,
-			request->type, request->topic.len, request->topic.s);
+	LM_DBG("received [%p] [%i] [%.*s]\n", request, request->type,
+			request->topic.len, request->topic.s);
 	switch(request->type) {
 		case PUBLISH:
 			mqtt_publish(&request->topic, &request->payload, request->qos);
@@ -617,13 +638,17 @@ void mqtt_request_notify(struct ev_loop *loop, struct ev_io *watcher, int revent
 /**
  * 
  */
-int  mqtt_publish(str *topic, str *payload,int qos) {
+int mqtt_publish(str *topic, str *payload, int qos)
+{
 	int res;
 
-	LM_DBG("publish [%s] %s -> %s (%d)\n", my_desc(), topic->s, payload->s, payload->len);
-	res = mosquitto_publish(_mosquitto, NULL, topic->s, payload->len, payload->s, qos, false);
-	if (res != MOSQ_ERR_SUCCESS) {
-		LM_WARN("unable to publish [%s] -> [%s], rc=%d\n", topic->s, payload->s, res);
+	LM_DBG("publish [%s] %s -> %s (%d)\n", my_desc(), topic->s, payload->s,
+			payload->len);
+	res = mosquitto_publish(
+			_mosquitto, NULL, topic->s, payload->len, payload->s, qos, false);
+	if(res != MOSQ_ERR_SUCCESS) {
+		LM_WARN("unable to publish [%s] -> [%s], rc=%d\n", topic->s, payload->s,
+				res);
 		return -1;
 	}
 	return 0;
@@ -637,36 +662,36 @@ int mqtt_prepare_subscribe(str *topic, int qos)
 	int len;
 	mqtt_request_t *request;
 
-	if(topic->s==NULL || topic->len == 0) {
+	if(topic->s == NULL || topic->len == 0) {
 		LM_ERR("invalid topic parameter\n");
 		return -1;
 	}
 
-	if(qos<0 || qos>2) {
+	if(qos < 0 || qos > 2) {
 		LM_ERR("invalid qos level\n");
 		return -1;
 	}
 
 	LM_DBG("prepare subscribe [%s] [%.*s]\n", my_desc(), topic->len, topic->s);
 	len = sizeof(mqtt_request_t);
-	len += topic->len+16;
+	len += topic->len + 16;
 
-	request = (mqtt_request_t*)shm_malloc(len);
-	if(request==NULL) {
+	request = (mqtt_request_t *)shm_malloc(len);
+	if(request == NULL) {
 		LM_ERR("no more shared memory\n");
 		return -1;
 	}
 	memset(request, 0, len);
 	request->type = SUBSCRIBE;
 	request->qos = qos;
-	request->topic.s = (char*)request + sizeof(mqtt_request_t);
-	request->topic.len = snprintf(request->topic.s, topic->len+16, 
-				"%.*s",
-				topic->len, topic->s);
+	request->topic.s = (char *)request + sizeof(mqtt_request_t);
+	request->topic.len = snprintf(
+			request->topic.s, topic->len + 16, "%.*s", topic->len, topic->s);
 
-	if(_mqtt_notify_sockets[1]!=-1) {
-		len = write(_mqtt_notify_sockets[1], &request, sizeof(mqtt_request_t*));
-		if(len<=0) {
+	if(_mqtt_notify_sockets[1] != -1) {
+		len = write(
+				_mqtt_notify_sockets[1], &request, sizeof(mqtt_request_t *));
+		if(len <= 0) {
 			shm_free(request);
 			LM_ERR("failed to pass the pointer to mqtt dispatcher\n");
 			return -1;
@@ -678,18 +703,18 @@ int mqtt_prepare_subscribe(str *topic, int qos)
 	}
 
 	return 0;
-
 }
 
 /**
  * 
  */
-int mqtt_subscribe(str *topic, int qos) {
+int mqtt_subscribe(str *topic, int qos)
+{
 	int res;
 
 	LM_DBG("subscribe [%s] %s\n", my_desc(), topic->s);
-	res = mosquitto_subscribe(_mosquitto, NULL, topic->s,  qos);
-	if (res != MOSQ_ERR_SUCCESS) {
+	res = mosquitto_subscribe(_mosquitto, NULL, topic->s, qos);
+	if(res != MOSQ_ERR_SUCCESS) {
 		LM_WARN("unable to subscribe [%s], rc=%d\n", topic->s, res);
 		return -1;
 	}
@@ -704,31 +729,32 @@ int mqtt_prepare_unsubscribe(str *topic)
 	int len;
 	mqtt_request_t *request;
 
-	if(topic->s==NULL || topic->len == 0) {
+	if(topic->s == NULL || topic->len == 0) {
 		LM_ERR("invalid topic parameter\n");
 		return -1;
 	}
 
 
-	LM_DBG("prepare unsubscribe [%s] [%.*s]\n", my_desc(), topic->len, topic->s);
+	LM_DBG("prepare unsubscribe [%s] [%.*s]\n", my_desc(), topic->len,
+			topic->s);
 	len = sizeof(mqtt_request_t);
-	len += topic->len+16;
+	len += topic->len + 16;
 
-	request = (mqtt_request_t*)shm_malloc(len);
-	if(request==NULL) {
+	request = (mqtt_request_t *)shm_malloc(len);
+	if(request == NULL) {
 		LM_ERR("no more shared memory\n");
 		return -1;
 	}
 	memset(request, 0, len);
 	request->type = UNSUBSCRIBE;
-	request->topic.s = (char*)request + sizeof(mqtt_request_t);
-	request->topic.len = snprintf(request->topic.s, topic->len+16, 
-				"%.*s",
-				topic->len, topic->s);
+	request->topic.s = (char *)request + sizeof(mqtt_request_t);
+	request->topic.len = snprintf(
+			request->topic.s, topic->len + 16, "%.*s", topic->len, topic->s);
 
-	if(_mqtt_notify_sockets[1]!=-1) {
-		len = write(_mqtt_notify_sockets[1], &request, sizeof(mqtt_request_t*));
-		if(len<=0) {
+	if(_mqtt_notify_sockets[1] != -1) {
+		len = write(
+				_mqtt_notify_sockets[1], &request, sizeof(mqtt_request_t *));
+		if(len <= 0) {
 			shm_free(request);
 			LM_ERR("failed to pass the pointer to mqtt dispatcher\n");
 			return -1;
@@ -740,18 +766,18 @@ int mqtt_prepare_unsubscribe(str *topic)
 	}
 
 	return 0;
-
 }
 
 /**
  * 
  */
-int mqtt_unsubscribe(str *topic) {
+int mqtt_unsubscribe(str *topic)
+{
 	int res;
 
 	LM_DBG("unsubscribe %s\n", topic->s);
 	res = mosquitto_unsubscribe(_mosquitto, NULL, topic->s);
-	if (res != MOSQ_ERR_SUCCESS) {
+	if(res != MOSQ_ERR_SUCCESS) {
 		LM_WARN("unable to subscribe [%s], rc=%d\n", topic->s, res);
 		return -1;
 	}
