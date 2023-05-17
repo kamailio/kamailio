@@ -36,16 +36,18 @@ typedef int (*tps_insert_dialog_f)(tps_data_t *td);
 typedef int (*tps_clean_dialogs_f)(void);
 typedef int (*tps_insert_branch_f)(tps_data_t *td);
 typedef int (*tps_clean_branches_f)(void);
-typedef int (*tps_load_branch_f)(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
-		uint32_t mode);
-typedef int (*tps_load_dialog_f)(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd);
-typedef int (*tps_update_branch_f)(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
-		uint32_t mode);
-typedef int (*tps_update_dialog_f)(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
-		uint32_t mode);
+typedef int (*tps_load_branch_f)(
+		sip_msg_t *msg, tps_data_t *md, tps_data_t *sd, uint32_t mode);
+typedef int (*tps_load_dialog_f)(
+		sip_msg_t *msg, tps_data_t *md, tps_data_t *sd);
+typedef int (*tps_update_branch_f)(
+		sip_msg_t *msg, tps_data_t *md, tps_data_t *sd, uint32_t mode);
+typedef int (*tps_update_dialog_f)(
+		sip_msg_t *msg, tps_data_t *md, tps_data_t *sd, uint32_t mode);
 typedef int (*tps_end_dialog_f)(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd);
 
-typedef struct tps_storage_api {
+typedef struct tps_storage_api
+{
 	tps_insert_dialog_f insert_dialog;
 	tps_clean_dialogs_f clean_dialogs;
 	tps_insert_branch_f insert_branch;
@@ -67,13 +69,14 @@ typedef int (*tps_get_branch_expire_f)(void);
 /**
  * @brief TOPOS API structure
  */
-typedef struct topos_api {
+typedef struct topos_api
+{
 	tps_set_storage_api_f set_storage_api;
 	tps_get_dialog_expire_f get_dialog_expire;
 	tps_get_branch_expire_f get_branch_expire;
 } topos_api_t;
 
-typedef int (*bind_topos_f)(topos_api_t* api);
+typedef int (*bind_topos_f)(topos_api_t *api);
 
 /**
  * @brief Load the TOPOS API
@@ -87,7 +90,7 @@ static inline int topos_load_api(topos_api_t *api)
 		LM_ERR("cannot find bind_topos\n");
 		return -1;
 	}
-	if (bindtopos(api)==-1) {
+	if(bindtopos(api) == -1) {
 		LM_ERR("cannot bind topos api\n");
 		return -1;
 	}

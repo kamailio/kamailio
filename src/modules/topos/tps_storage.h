@@ -31,21 +31,22 @@
 
 #include "../../core/parser/msg_parser.h"
 
-#define TPS_DIR_DOWNSTREAM	0
-#define TPS_DIR_UPSTREAM	1
+#define TPS_DIR_DOWNSTREAM 0
+#define TPS_DIR_UPSTREAM 1
 
-#define TPS_IFLAG_INIT	1
-#define TPS_IFLAG_DLGON	2
+#define TPS_IFLAG_INIT 1
+#define TPS_IFLAG_DLGON 2
 
-#define TPS_DBU_CONTACT		(1<<0)
-#define TPS_DBU_RPLATTRS	(1<<1)
-#define TPS_DBU_ARR		(1<<2)
-#define TPS_DBU_BRR		(1<<3)
-#define TPS_DBU_TIME		(1<<4)
-#define TPS_DBU_ALL		(0xffffffff)
+#define TPS_DBU_CONTACT (1 << 0)
+#define TPS_DBU_RPLATTRS (1 << 1)
+#define TPS_DBU_ARR (1 << 2)
+#define TPS_DBU_BRR (1 << 3)
+#define TPS_DBU_TIME (1 << 4)
+#define TPS_DBU_ALL (0xffffffff)
 
-#define TPS_DATA_SIZE	8192
-typedef struct tps_data {
+#define TPS_DATA_SIZE 8192
+typedef struct tps_data
+{
 	char cbuf[TPS_DATA_SIZE];
 	char *cp;
 	str a_uuid;
@@ -93,13 +94,13 @@ int tps_storage_branch_save(sip_msg_t *msg, tps_data_t *td);
 int tps_storage_branch_rm(sip_msg_t *msg, tps_data_t *td);
 
 int tps_storage_record(sip_msg_t *msg, tps_data_t *td, int dialog, int dir);
-int tps_storage_load_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
-		uint32_t mode);
-int tps_storage_update_branch(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
-		uint32_t mode);
+int tps_storage_load_branch(
+		sip_msg_t *msg, tps_data_t *md, tps_data_t *sd, uint32_t mode);
+int tps_storage_update_branch(
+		sip_msg_t *msg, tps_data_t *md, tps_data_t *sd, uint32_t mode);
 int tps_storage_load_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd);
-int tps_storage_update_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd,
-		uint32_t mode);
+int tps_storage_update_dialog(
+		sip_msg_t *msg, tps_data_t *md, tps_data_t *sd, uint32_t mode);
 int tps_storage_end_dialog(sip_msg_t *msg, tps_data_t *md, tps_data_t *sd);
 
 int tps_storage_lock_set_init(void);
@@ -109,6 +110,6 @@ int tps_storage_lock_set_destroy(void);
 
 int tps_storage_link_msg(sip_msg_t *msg, tps_data_t *td, int dir);
 
-void tps_storage_clean(unsigned int ticks, void* param);
+void tps_storage_clean(unsigned int ticks, void *param);
 
 #endif
