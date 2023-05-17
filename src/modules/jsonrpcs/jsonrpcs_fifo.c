@@ -38,90 +38,93 @@
 #include "jsonrpcs_mod.h"
 
 /* FIFO server parameters */
-char *jsonrpc_fifo = NAME "_rpc.fifo";		/*!< FIFO file name */
-char *jsonrpc_fifo_reply_dir = "/tmp/"; 	/*!< dir where reply fifos are allowed */
-int  jsonrpc_fifo_uid = -1;				/*!< Fifo default UID */
-char *jsonrpc_fifo_uid_s = 0;			/*!< Fifo default User ID name */
-int  jsonrpc_fifo_gid = -1;				/*!< Fifo default Group ID */
-char *jsonrpc_fifo_gid_s = 0;			/*!< Fifo default Group ID name */
-int  jsonrpc_fifo_mode = S_IRUSR| S_IWUSR| S_IRGRP| S_IWGRP; /* Default file mode rw-rw---- */
+char *jsonrpc_fifo = NAME "_rpc.fifo"; /*!< FIFO file name */
+char *jsonrpc_fifo_reply_dir =
+		"/tmp/";			  /*!< dir where reply fifos are allowed */
+int jsonrpc_fifo_uid = -1;	  /*!< Fifo default UID */
+char *jsonrpc_fifo_uid_s = 0; /*!< Fifo default User ID name */
+int jsonrpc_fifo_gid = -1;	  /*!< Fifo default Group ID */
+char *jsonrpc_fifo_gid_s = 0; /*!< Fifo default Group ID name */
+int jsonrpc_fifo_mode =
+		S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP; /* Default file mode rw-rw---- */
 
 
 static FILE *_jsonrpcs_fifo_stream = NULL;
 
 
-static int  jsonrpc_fifo_read = 0;
-static int  jsonrpc_fifo_write = 0;
-#define JSONRPC_MAX_FILENAME	128
+static int jsonrpc_fifo_read = 0;
+static int jsonrpc_fifo_write = 0;
+#define JSONRPC_MAX_FILENAME 128
 static char *jsonrpc_reply_fifo_s = NULL;
 static int jsonrpc_reply_fifo_len = 0;
 
 /*! \brief Initialize Fifo server */
-FILE *jsonrpc_init_fifo_server(char *fifo_name, int fifo_mode,
-						int fifo_uid, int fifo_gid, char* fifo_reply_dir)
+FILE *jsonrpc_init_fifo_server(char *fifo_name, int fifo_mode, int fifo_uid,
+		int fifo_gid, char *fifo_reply_dir)
 {
 	FILE *fifo_stream;
 	long opt;
 
 	/* create FIFO ... */
-	if ((mkfifo(fifo_name, fifo_mode)<0)) {
+	if((mkfifo(fifo_name, fifo_mode) < 0)) {
 		LM_ERR("Can't create FIFO: %s (mode=%d)\n", strerror(errno), fifo_mode);
 		return 0;
 	}
 
-	LM_DBG("FIFO created @ %s\n", fifo_name );
+	LM_DBG("FIFO created @ %s\n", fifo_name);
 
-	if ((chmod(fifo_name, fifo_mode)<0)) {
+	if((chmod(fifo_name, fifo_mode) < 0)) {
 		LM_ERR("Can't chmod FIFO: %s (mode=%d)\n", strerror(errno), fifo_mode);
 		return 0;
 	}
 
-	if ((fifo_uid!=-1) || (fifo_gid!=-1)){
-		if (chown(fifo_name, fifo_uid, fifo_gid)<0){
-			LM_ERR("Failed to change the owner/group for %s  to %d.%d; %s[%d]\n",
-				fifo_name, fifo_uid, fifo_gid, strerror(errno), errno);
+	if((fifo_uid != -1) || (fifo_gid != -1)) {
+		if(chown(fifo_name, fifo_uid, fifo_gid) < 0) {
+			LM_ERR("Failed to change the owner/group for %s  to %d.%d; "
+				   "%s[%d]\n",
+					fifo_name, fifo_uid, fifo_gid, strerror(errno), errno);
 			return 0;
 		}
 	}
 
-	LM_DBG("fifo %s opened, mode=%o\n", fifo_name, fifo_mode );
+	LM_DBG("fifo %s opened, mode=%o\n", fifo_name, fifo_mode);
 
 	/* open it non-blocking or else wait here until someone
 	 * opens it for writing */
-	jsonrpc_fifo_read=open(fifo_name, O_RDONLY|O_NONBLOCK, 0);
-	if (jsonrpc_fifo_read<0) {
+	jsonrpc_fifo_read = open(fifo_name, O_RDONLY | O_NONBLOCK, 0);
+	if(jsonrpc_fifo_read < 0) {
 		LM_ERR("Can't open fifo %s for reading - fifo_read did not open: %s\n",
 				fifo_name, strerror(errno));
 		return 0;
 	}
 
 	fifo_stream = fdopen(jsonrpc_fifo_read, "r");
-	if (fifo_stream==NULL) {
+	if(fifo_stream == NULL) {
 		LM_ERR("fdopen failed on %s: %s\n", fifo_name, strerror(errno));
 		return 0;
 	}
 
 	/* make sure the read fifo will not close */
-	jsonrpc_fifo_write=open(fifo_name, O_WRONLY|O_NONBLOCK, 0);
-	if (jsonrpc_fifo_write<0) {
+	jsonrpc_fifo_write = open(fifo_name, O_WRONLY | O_NONBLOCK, 0);
+	if(jsonrpc_fifo_write < 0) {
 		LM_ERR("fifo_write did not open: %s\n", strerror(errno));
 		fclose(fifo_stream);
 		return 0;
 	}
 	/* set read fifo blocking mode */
-	if ((opt=fcntl(jsonrpc_fifo_read, F_GETFL))==-1){
+	if((opt = fcntl(jsonrpc_fifo_read, F_GETFL)) == -1) {
 		LM_ERR("fcntl(F_GETFL) failed: %s [%d]\n", strerror(errno), errno);
 		fclose(fifo_stream);
 		return 0;
 	}
-	if (fcntl(jsonrpc_fifo_read, F_SETFL, opt & (~O_NONBLOCK))==-1){
+	if(fcntl(jsonrpc_fifo_read, F_SETFL, opt & (~O_NONBLOCK)) == -1) {
 		LM_ERR("cntl(F_SETFL) failed: %s [%d]\n", strerror(errno), errno);
 		fclose(fifo_stream);
 		return 0;
 	}
 
 	jsonrpc_reply_fifo_s = pkg_malloc(JSONRPC_MAX_FILENAME);
-	if (jsonrpc_reply_fifo_s==NULL) {
+	if(jsonrpc_reply_fifo_s == NULL) {
 		LM_ERR("no more private memory\n");
 		fclose(fifo_stream);
 		return 0;
@@ -129,7 +132,8 @@ FILE *jsonrpc_init_fifo_server(char *fifo_name, int fifo_mode,
 
 	/* init fifo reply dir buffer */
 	jsonrpc_reply_fifo_len = strlen(fifo_reply_dir);
-	memcpy(jsonrpc_reply_fifo_s, jsonrpc_fifo_reply_dir, jsonrpc_reply_fifo_len);
+	memcpy(jsonrpc_reply_fifo_s, jsonrpc_fifo_reply_dir,
+			jsonrpc_reply_fifo_len);
 	jsonrpc_reply_fifo_s[jsonrpc_reply_fifo_len] = '\0';
 
 	return fifo_stream;
@@ -142,24 +146,24 @@ int jsonrpc_init_fifo_file(void)
 	struct stat filestat;
 
 	/* checking the jsonrpc_fifo module param */
-	if (jsonrpc_fifo==NULL || *jsonrpc_fifo == 0) {
-		jsonrpc_fifo=NULL;
+	if(jsonrpc_fifo == NULL || *jsonrpc_fifo == 0) {
+		jsonrpc_fifo = NULL;
 		LM_DBG("No fifo configured\n");
 		return 0;
 	}
 
 	LM_DBG("testing if fifo file exists ...\n");
-	n=stat(jsonrpc_fifo, &filestat);
-	if (n==0) {
+	n = stat(jsonrpc_fifo, &filestat);
+	if(n == 0) {
 		/* FIFO exist, delete it (safer) if no config check */
-		if(config_check==0) {
-			if (unlink(jsonrpc_fifo)<0){
-				LM_ERR("Cannot delete old fifo (%s): %s\n",
-					jsonrpc_fifo, strerror(errno));
+		if(config_check == 0) {
+			if(unlink(jsonrpc_fifo) < 0) {
+				LM_ERR("Cannot delete old fifo (%s): %s\n", jsonrpc_fifo,
+						strerror(errno));
 				return -1;
 			}
 		}
-	} else if (n<0 && errno!=ENOENT){
+	} else if(n < 0 && errno != ENOENT) {
 		LM_ERR("MI FIFO stat failed: %s\n", strerror(errno));
 		return -1;
 	}
@@ -172,40 +176,43 @@ int jsonrpc_init_fifo_file(void)
 
 	/* Check if the directory for the reply fifo exists */
 	n = stat(jsonrpc_fifo_reply_dir, &filestat);
-	if(n < 0){
-		LM_ERR("Directory stat for MI Fifo reply failed: %s\n", strerror(errno));
+	if(n < 0) {
+		LM_ERR("Directory stat for MI Fifo reply failed: %s\n",
+				strerror(errno));
 		return -1;
 	}
 
-	if(S_ISDIR(filestat.st_mode) == 0){
+	if(S_ISDIR(filestat.st_mode) == 0) {
 		LM_ERR("fifo_reply_dir parameter is not a directory\n");
 		return -1;
 	}
 
 	/* check fifo_mode */
-	if(!jsonrpc_fifo_mode){
+	if(!jsonrpc_fifo_mode) {
 		LM_WARN("cannot specify fifo_mode = 0, forcing it to rw-------\n");
 		jsonrpc_fifo_mode = S_IRUSR | S_IWUSR;
 	}
 
-	if (jsonrpc_fifo_uid_s){
-		if (user2uid(&jsonrpc_fifo_uid, &jsonrpc_fifo_gid, jsonrpc_fifo_uid_s)<0){
+	if(jsonrpc_fifo_uid_s) {
+		if(user2uid(&jsonrpc_fifo_uid, &jsonrpc_fifo_gid, jsonrpc_fifo_uid_s)
+				< 0) {
 			LM_ERR("Bad user name %s\n", jsonrpc_fifo_uid_s);
 			return -1;
 		}
 	}
 
-	if (jsonrpc_fifo_gid_s){
-		if (group2gid(&jsonrpc_fifo_gid, jsonrpc_fifo_gid_s)<0){
+	if(jsonrpc_fifo_gid_s) {
+		if(group2gid(&jsonrpc_fifo_gid, jsonrpc_fifo_gid_s) < 0) {
 			LM_ERR("Bad group name %s\n", jsonrpc_fifo_gid_s);
 			return -1;
 		}
 	}
 
 
-	_jsonrpcs_fifo_stream = jsonrpc_init_fifo_server( jsonrpc_fifo, jsonrpc_fifo_mode,
-		jsonrpc_fifo_uid, jsonrpc_fifo_gid, jsonrpc_fifo_reply_dir);
-	if ( _jsonrpcs_fifo_stream==NULL ) {
+	_jsonrpcs_fifo_stream =
+			jsonrpc_init_fifo_server(jsonrpc_fifo, jsonrpc_fifo_mode,
+					jsonrpc_fifo_uid, jsonrpc_fifo_gid, jsonrpc_fifo_reply_dir);
+	if(_jsonrpcs_fifo_stream == NULL) {
 		LM_CRIT("failed to init jsonrpc fifo server file stream\n");
 		return -1;
 	}
@@ -231,7 +238,7 @@ int jsonrpc_read_stream(char *b, int max, FILE *stream, int *lread)
 	int stype;
 
 	sstate = 0;
-	retry_cnt=0;
+	retry_cnt = 0;
 
 	*lread = 0;
 	p = b;
@@ -240,59 +247,59 @@ int jsonrpc_read_stream(char *b, int max, FILE *stream, int *lread)
 	stype = 0;
 
 	while(1) {
-		len = fread (p, 1, 1, stream);
-		if(len==0) {
+		len = fread(p, 1, 1, stream);
+		if(len == 0) {
 			LM_ERR("fifo server fread failed: %s\n", strerror(errno));
 			/* on Linux, sometimes returns ESPIPE -- give
 			   it few more chances
 			*/
-			if (errno==ESPIPE) {
+			if(errno == ESPIPE) {
 				retry_cnt++;
-				if (retry_cnt>4)
+				if(retry_cnt > 4)
 					return -1;
 				continue;
 			}
 			/* interrupted by signal or ... */
-			if ((errno==EINTR)||(errno==EAGAIN))
+			if((errno == EINTR) || (errno == EAGAIN))
 				continue;
 			return -1;
 		}
-		if(*p=='"' && (sstate==0 || stype==1)) {
-			if(*lread>0) {
-				if(*(p-1)!='\\') {
-					sstate = (sstate+1) % 2;
+		if(*p == '"' && (sstate == 0 || stype == 1)) {
+			if(*lread > 0) {
+				if(*(p - 1) != '\\') {
+					sstate = (sstate + 1) % 2;
 					stype = 1;
 				}
 			} else {
-				sstate = (sstate+1) % 2;
+				sstate = (sstate + 1) % 2;
 				stype = 1;
 			}
-		} else if(*p=='\'' && (sstate==0 || stype==2)) {
-			if(*lread>0) {
-				if(*(p-1)!='\\') {
-					sstate = (sstate+1) % 2;
+		} else if(*p == '\'' && (sstate == 0 || stype == 2)) {
+			if(*lread > 0) {
+				if(*(p - 1) != '\\') {
+					sstate = (sstate + 1) % 2;
 					stype = 2;
 				}
 			} else {
-				sstate = (sstate+1) % 2;
+				sstate = (sstate + 1) % 2;
 				stype = 2;
 			}
-		} else if(*p=='{') {
-			if(sstate==0) {
+		} else if(*p == '{') {
+			if(sstate == 0) {
 				pfound = 1;
 				pcount++;
 			}
-		} else if(*p=='}') {
-			if(sstate==0)
+		} else if(*p == '}') {
+			if(sstate == 0)
 				pcount--;
 		}
 		*lread = *lread + 1;
-		if(*lread>=max-1) {
+		if(*lread >= max - 1) {
 			LM_WARN("input data too large (%d)\n", *lread);
 			return -1;
 		}
 		p++;
-		if(pfound==1 && pcount==0) {
+		if(pfound == 1 && pcount == 0) {
 			*p = 0;
 			return 0;
 		}
@@ -306,41 +313,42 @@ int jsonrpc_read_stream(char *b, int max, FILE *stream, int *lread)
  * checks if fd is a fifo, is not hardlinked and it's not a softlink
  * opened file descriptor + file name (for soft link check)
  * \return 0 if ok, <0 if not */
-static int jsonrpc_fifo_check(int fd, char* fname)
+static int jsonrpc_fifo_check(int fd, char *fname)
 {
 	struct stat fst;
 	struct stat lst;
 
-	if (fstat(fd, &fst)<0){
+	if(fstat(fd, &fst) < 0) {
 		LM_ERR("security: fstat on %s failed: %s\n", fname, strerror(errno));
 		return -1;
 	}
 	/* check if fifo */
-	if (!S_ISFIFO(fst.st_mode)){
+	if(!S_ISFIFO(fst.st_mode)) {
 		LM_ERR("security: %s is not a fifo\n", fname);
 		return -1;
 	}
 	/* check if hard-linked */
-	if (fst.st_nlink>1){
-		LM_ERR("security: fifo_check: %s is hard-linked %d times\n", fname, (unsigned)fst.st_nlink);
+	if(fst.st_nlink > 1) {
+		LM_ERR("security: fifo_check: %s is hard-linked %d times\n", fname,
+				(unsigned)fst.st_nlink);
 		return -1;
 	}
 
 	/* lstat to check for soft links */
-	if (lstat(fname, &lst)<0){
+	if(lstat(fname, &lst) < 0) {
 		LM_ERR("security: lstat on %s failed: %s\n", fname, strerror(errno));
 		return -1;
 	}
-	if (S_ISLNK(lst.st_mode)){
+	if(S_ISLNK(lst.st_mode)) {
 		LM_ERR("security: fifo_check: %s is a soft link\n", fname);
 		return -1;
 	}
 	/* if this is not a symbolic link, check to see if the inode didn't
 	 * change to avoid possible sym.link, rm sym.link & replace w/ fifo race
 	 */
-	if ((lst.st_dev!=fst.st_dev)||(lst.st_ino!=fst.st_ino)){
+	if((lst.st_dev != fst.st_dev) || (lst.st_ino != fst.st_ino)) {
 		LM_ERR("security: fifo_check: inode/dev number differ: %d %d (%s)\n",
-			(int)fst.st_ino, (int)lst.st_ino, fname);
+				(int)fst.st_ino, (int)lst.st_ino, fname);
 		return -1;
 	}
 	/* success */
@@ -350,47 +358,47 @@ static int jsonrpc_fifo_check(int fd, char* fname)
 #define JSONRPC_REPLY_RETRIES 4
 FILE *jsonrpc_open_reply_fifo(str *srpath)
 {
-	int retries=JSONRPC_REPLY_RETRIES;
+	int retries = JSONRPC_REPLY_RETRIES;
 	int fifofd;
 	FILE *file_handle;
 	int flags;
 
-	if ( memchr(srpath->s, '.', srpath->len)
+	if(memchr(srpath->s, '.', srpath->len)
 			|| memchr(srpath->s, '/', srpath->len)
-			|| memchr(srpath->s, '\\', srpath->len) ) {
-		LM_ERR("Forbidden reply fifo filename: %.*s\n",
-				srpath->len, srpath->s);
+			|| memchr(srpath->s, '\\', srpath->len)) {
+		LM_ERR("Forbidden reply fifo filename: %.*s\n", srpath->len, srpath->s);
 		return 0;
 	}
 
-	if (jsonrpc_reply_fifo_len + srpath->len + 1 > JSONRPC_MAX_FILENAME) {
+	if(jsonrpc_reply_fifo_len + srpath->len + 1 > JSONRPC_MAX_FILENAME) {
 		LM_ERR("Reply fifo filename too long %d\n",
 				jsonrpc_reply_fifo_len + srpath->len);
 		return 0;
 	}
 
-	memcpy(jsonrpc_reply_fifo_s + jsonrpc_reply_fifo_len, srpath->s, srpath->len);
-	jsonrpc_reply_fifo_s[jsonrpc_reply_fifo_len + srpath->len]=0;
+	memcpy(jsonrpc_reply_fifo_s + jsonrpc_reply_fifo_len, srpath->s,
+			srpath->len);
+	jsonrpc_reply_fifo_s[jsonrpc_reply_fifo_len + srpath->len] = 0;
 
 
 tryagain:
 	/* open non-blocking to make sure that a broken client will not
 	 * block the FIFO server forever */
-	fifofd=open( jsonrpc_reply_fifo_s, O_WRONLY | O_NONBLOCK );
-	if (fifofd==-1) {
+	fifofd = open(jsonrpc_reply_fifo_s, O_WRONLY | O_NONBLOCK);
+	if(fifofd == -1) {
 		/* retry several times if client is not yet ready for getting
 		   feedback via a reply pipe
 		*/
-		if (errno==ENXIO) {
+		if(errno == ENXIO) {
 			/* give up on the client - we can't afford server blocking */
-			if (retries==0) {
-				LM_ERR("no client at %s\n", jsonrpc_reply_fifo_s );
+			if(retries == 0) {
+				LM_ERR("no client at %s\n", jsonrpc_reply_fifo_s);
 				return 0;
 			}
 			/* don't be noisy on the very first try */
-			if (retries != JSONRPC_REPLY_RETRIES)
-				LM_DBG("mi_fifo retry countdown: %d\n", retries );
-			sleep_us( 80000 );
+			if(retries != JSONRPC_REPLY_RETRIES)
+				LM_DBG("mi_fifo retry countdown: %d\n", retries);
+			sleep_us(80000);
 			retries--;
 			goto tryagain;
 		}
@@ -401,25 +409,26 @@ tryagain:
 
 	/* security checks: is this really a fifo?, is
 	 * it hardlinked? is it a soft link? */
-	if (jsonrpc_fifo_check(fifofd, jsonrpc_reply_fifo_s)<0)
+	if(jsonrpc_fifo_check(fifofd, jsonrpc_reply_fifo_s) < 0)
 		goto error;
 
 	/* we want server blocking for big writes */
-	if ( (flags=fcntl(fifofd, F_GETFL, 0))<0) {
-		LM_ERR("pipe (%s): getfl failed: %s\n", jsonrpc_reply_fifo_s, strerror(errno));
+	if((flags = fcntl(fifofd, F_GETFL, 0)) < 0) {
+		LM_ERR("pipe (%s): getfl failed: %s\n", jsonrpc_reply_fifo_s,
+				strerror(errno));
 		goto error;
 	}
-	flags&=~O_NONBLOCK;
-	if (fcntl(fifofd, F_SETFL, flags)<0) {
-		LM_ERR("pipe (%s): setfl cntl failed: %s\n", jsonrpc_reply_fifo_s, strerror(errno));
+	flags &= ~O_NONBLOCK;
+	if(fcntl(fifofd, F_SETFL, flags) < 0) {
+		LM_ERR("pipe (%s): setfl cntl failed: %s\n", jsonrpc_reply_fifo_s,
+				strerror(errno));
 		goto error;
 	}
 
 	/* create an I/O stream */
-	file_handle=fdopen( fifofd, "w");
-	if (file_handle==NULL) {
-		LM_ERR("open error (%s): %s\n",
-			jsonrpc_reply_fifo_s, strerror(errno));
+	file_handle = fdopen(fifofd, "w");
+	if(file_handle == NULL) {
+		LM_ERR("open error (%s): %s\n", jsonrpc_reply_fifo_s, strerror(errno));
 		goto error;
 	}
 	return file_handle;
@@ -428,7 +437,7 @@ error:
 	return 0;
 }
 
-#define JSONRPC_BUF_IN_SIZE	8192
+#define JSONRPC_BUF_IN_SIZE 8192
 static void jsonrpc_fifo_server(FILE *fifo_stream)
 {
 	FILE *reply_stream;
@@ -438,7 +447,7 @@ static void jsonrpc_fifo_server(FILE *fifo_stream)
 	str scmd;
 	str srpath;
 	int nw;
-	jsonrpc_plain_reply_t* jr = NULL;
+	jsonrpc_plain_reply_t *jr = NULL;
 	char buf_spath[128];
 	char resbuf[JSONRPC_RESPONSE_STORING_BUFSIZE];
 	str spath = STR_NULL;
@@ -451,8 +460,9 @@ static void jsonrpc_fifo_server(FILE *fifo_stream)
 
 		reply_stream = NULL;
 		lread = 0;
-		if(jsonrpc_read_stream(buf_in, JSONRPC_BUF_IN_SIZE,
-					fifo_stream, &lread)<0 || lread<=0) {
+		if(jsonrpc_read_stream(buf_in, JSONRPC_BUF_IN_SIZE, fifo_stream, &lread)
+						< 0
+				|| lread <= 0) {
 			LM_DBG("failed to get the json document from fifo stream\n");
 			continue;
 		}
@@ -464,26 +474,25 @@ static void jsonrpc_fifo_server(FILE *fifo_stream)
 		srpath.len = 128;
 		spath.s = buf_spath;
 		spath.len = 128;
-		if(jsonrpc_exec_ex(&scmd, &srpath, &spath)<0) {
+		if(jsonrpc_exec_ex(&scmd, &srpath, &spath) < 0) {
 			LM_ERR("failed to execute the json document from fifo stream\n");
 			continue;
 		}
 
 		jr = jsonrpc_plain_reply_get();
 		LM_DBG("command executed - result: [%.*s] [%d] [%p] [%.*s]\n",
-				srpath.len, srpath.s,
-				jr->rcode, jr->rbody.s,
-				jr->rbody.len, jr->rbody.s);
-		if(srpath.len>0) {
+				srpath.len, srpath.s, jr->rcode, jr->rbody.s, jr->rbody.len,
+				jr->rbody.s);
+		if(srpath.len > 0) {
 			reply_stream = jsonrpc_open_reply_fifo(&srpath);
-			if (reply_stream==NULL) {
+			if(reply_stream == NULL) {
 				LM_ERR("cannot open reply fifo: %.*s\n", srpath.len, srpath.s);
 				continue;
 			}
-			if(spath.len>0) {
+			if(spath.len > 0) {
 				sid = jsonrpcs_stored_id_get();
 				f = fopen(spath.s, "w");
-				if(f==NULL) {
+				if(f == NULL) {
 					LM_ERR("cannot write to file: %.*s\n", spath.len, spath.s);
 					snprintf(resbuf, JSONRPC_RESPONSE_STORING_BUFSIZE,
 							JSONRPC_RESPONSE_STORING_FAILED, sid);
@@ -500,8 +509,8 @@ static void jsonrpc_fifo_server(FILE *fifo_stream)
 
 			nw = fwrite(jr->rbody.s, 1, jr->rbody.len, reply_stream);
 			if(nw < jr->rbody.len) {
-				LM_ERR("failed to write the reply to fifo: %d out of %d\n",
-						nw, jr->rbody.len);
+				LM_ERR("failed to write the reply to fifo: %d out of %d\n", nw,
+						jr->rbody.len);
 			}
 			fclose(reply_stream);
 		}
@@ -511,14 +520,14 @@ static void jsonrpc_fifo_server(FILE *fifo_stream)
 
 static void jsonrpc_fifo_process(int rank)
 {
-	LM_DBG("new process with pid = %d created\n",getpid());
+	LM_DBG("new process with pid = %d created\n", getpid());
 
-	if ( _jsonrpcs_fifo_stream==NULL ) {
+	if(_jsonrpcs_fifo_stream == NULL) {
 		LM_CRIT("fifo server stream not initialized\n");
 		exit(-1);
 	}
 
-	jsonrpc_fifo_server( _jsonrpcs_fifo_stream );
+	jsonrpc_fifo_server(_jsonrpcs_fifo_stream);
 
 	LM_CRIT("failed to run jsonrpc fifo server\n");
 	exit(-1);
@@ -533,33 +542,34 @@ int jsonrpc_fifo_mod_init(void)
 	int sep;
 	char *p;
 
-	if(jsonrpc_fifo == NULL || *jsonrpc_fifo==0) {
+	if(jsonrpc_fifo == NULL || *jsonrpc_fifo == 0) {
 		LM_ERR("no fifo file path provided\n");
 		return -1;
 	}
 
 	if(*jsonrpc_fifo != '/') {
-		if(runtime_dir!=NULL && *runtime_dir!=0) {
+		if(runtime_dir != NULL && *runtime_dir != 0) {
 			len = strlen(runtime_dir);
 			sep = 0;
-			if(runtime_dir[len-1]!='/') {
+			if(runtime_dir[len - 1] != '/') {
 				sep = 1;
 			}
 			len += sep + strlen(jsonrpc_fifo);
 			p = pkg_malloc(len + 1);
-			if(p==NULL) {
+			if(p == NULL) {
 				LM_ERR("no more pkg\n");
 				return -1;
 			}
 			strcpy(p, runtime_dir);
-			if(sep) strcat(p, "/");
+			if(sep)
+				strcat(p, "/");
 			strcat(p, jsonrpc_fifo);
 			jsonrpc_fifo = p;
 			LM_DBG("fifo path is [%s]\n", jsonrpc_fifo);
 		}
 	}
 
-	if(jsonrpc_init_fifo_file()<0) {
+	if(jsonrpc_init_fifo_file() < 0) {
 		LM_ERR("cannot initialize fifo transport\n");
 		return -1;
 	}
@@ -578,16 +588,16 @@ int jsonrpc_fifo_child_init(int rank)
 		LM_ERR("invalid fifo file path\n");
 	}
 
-	pid=fork_process(PROC_RPC, "JSONRPCS FIFO", 1);
-	if (pid<0) {
+	pid = fork_process(PROC_RPC, "JSONRPCS FIFO", 1);
+	if(pid < 0) {
 		return -1; /* error */
 	}
 
-	if(pid==0) {
+	if(pid == 0) {
 		/* child */
 
 		/* initialize the config framework */
-		if (cfg_child_init())
+		if(cfg_child_init())
 			return -1;
 
 		jsonrpc_fifo_process(1);
@@ -604,22 +614,22 @@ int jsonrpc_fifo_destroy(void)
 	int n;
 	struct stat filestat;
 
-	if(jsonrpc_fifo==NULL) {
+	if(jsonrpc_fifo == NULL) {
 		return 0;
 	}
 
 	/* destroying the fifo file */
-	n=stat(jsonrpc_fifo, &filestat);
-	if (n==0){
+	n = stat(jsonrpc_fifo, &filestat);
+	if(n == 0) {
 		/* FIFO exist, delete it (safer) if not config check */
-		if(config_check==0) {
-			if (unlink(jsonrpc_fifo)<0){
-				LM_ERR("cannot delete the fifo (%s): %s\n",
-					jsonrpc_fifo, strerror(errno));
+		if(config_check == 0) {
+			if(unlink(jsonrpc_fifo) < 0) {
+				LM_ERR("cannot delete the fifo (%s): %s\n", jsonrpc_fifo,
+						strerror(errno));
 				goto error;
 			}
 		}
-	} else if (n<0 && errno!=ENOENT) {
+	} else if(n < 0 && errno != ENOENT) {
 		LM_ERR("FIFO stat failed: %s\n", strerror(errno));
 		goto error;
 	}
