@@ -55,114 +55,86 @@ autheph_sha_alg_t autheph_sha_alg = AUTHEPH_SHA1;
 
 auth_api_s_t eph_auth_api;
 
-static cmd_export_t cmds[]=
-{
-	{ "autheph_check", (cmd_function) autheph_check,
-	  1, fixup_var_str_1, 0,
-	  REQUEST_ROUTE },
-	{ "autheph_www", (cmd_function) autheph_www,
-	  1, fixup_var_str_1, 0,
-	  REQUEST_ROUTE },
-	{ "autheph_www", (cmd_function) autheph_www2,
-	  2, fixup_var_str_12, 0,
-	  REQUEST_ROUTE },
-	{ "autheph_proxy", (cmd_function) autheph_proxy,
-	  1, fixup_var_str_1, 0,
-	  REQUEST_ROUTE },
-	{ "autheph_authenticate", (cmd_function) autheph_authenticate,
-	  2, fixup_var_str_12, 0,
-	  REQUEST_ROUTE },
-	{ "autheph_check_from", (cmd_function) autheph_check_from0,
-	  0, 0, 0,
-	  REQUEST_ROUTE },
-	{ "autheph_check_from", (cmd_function) autheph_check_from1,
-	  1, fixup_var_str_1, 0,
-	  REQUEST_ROUTE },
-	{ "autheph_check_to", (cmd_function) autheph_check_to0,
-	  0, 0, 0,
-	  REQUEST_ROUTE },
-	{ "autheph_check_to", (cmd_function) autheph_check_to1,
-	  1, fixup_var_str_1, 0,
-	  REQUEST_ROUTE },
-	{ "autheph_check_timestamp", (cmd_function) autheph_check_timestamp,
-	  1, fixup_var_str_1, 0,
-	  REQUEST_ROUTE },
-	{0, 0, 0, 0, 0, 0}
-};
+static cmd_export_t cmds[] = {{"autheph_check", (cmd_function)autheph_check, 1,
+									  fixup_var_str_1, 0, REQUEST_ROUTE},
+		{"autheph_www", (cmd_function)autheph_www, 1, fixup_var_str_1, 0,
+				REQUEST_ROUTE},
+		{"autheph_www", (cmd_function)autheph_www2, 2, fixup_var_str_12, 0,
+				REQUEST_ROUTE},
+		{"autheph_proxy", (cmd_function)autheph_proxy, 1, fixup_var_str_1, 0,
+				REQUEST_ROUTE},
+		{"autheph_authenticate", (cmd_function)autheph_authenticate, 2,
+				fixup_var_str_12, 0, REQUEST_ROUTE},
+		{"autheph_check_from", (cmd_function)autheph_check_from0, 0, 0, 0,
+				REQUEST_ROUTE},
+		{"autheph_check_from", (cmd_function)autheph_check_from1, 1,
+				fixup_var_str_1, 0, REQUEST_ROUTE},
+		{"autheph_check_to", (cmd_function)autheph_check_to0, 0, 0, 0,
+				REQUEST_ROUTE},
+		{"autheph_check_to", (cmd_function)autheph_check_to1, 1,
+				fixup_var_str_1, 0, REQUEST_ROUTE},
+		{"autheph_check_timestamp", (cmd_function)autheph_check_timestamp, 1,
+				fixup_var_str_1, 0, REQUEST_ROUTE},
+		{0, 0, 0, 0, 0, 0}};
 
-static param_export_t params[]=
-{
-	{ "secret",		PARAM_STRING|USE_FUNC_PARAM,
-	  (void *) secret_param },
-	{ "username_format",	INT_PARAM,
-	  &autheph_username_format },
-	{ "sha_algorithm",	INT_PARAM,
-	  &autheph_sha_alg },
-	{0, 0, 0}
-};
+static param_export_t params[] = {
+		{"secret", PARAM_STRING | USE_FUNC_PARAM, (void *)secret_param},
+		{"username_format", INT_PARAM, &autheph_username_format},
+		{"sha_algorithm", INT_PARAM, &autheph_sha_alg}, {0, 0, 0}};
 
-struct module_exports exports=
-{
-	"auth_ephemeral",
-	DEFAULT_DLFLAGS,	/* dlopen flags */
-	cmds,			/* Exported functions */
-	params,			/* Exported parameters */
-	0,			/* exported RPC methods */
-	0,			/* exported pseudo-variables */
-	0,			/* response function */
-	mod_init,		/* module initialization function */
-	0,			/* child initialization function */
-	destroy			/* destroy function */
+struct module_exports exports = {
+		"auth_ephemeral", DEFAULT_DLFLAGS, /* dlopen flags */
+		cmds,							   /* Exported functions */
+		params,							   /* Exported parameters */
+		0,								   /* exported RPC methods */
+		0,								   /* exported pseudo-variables */
+		0,								   /* response function */
+		mod_init,						   /* module initialization function */
+		0,								   /* child initialization function */
+		destroy							   /* destroy function */
 };
 
 static int mod_init(void)
 {
 	bind_auth_s_t bind_auth;
 
-	if (autheph_init_rpc()<0)
-	{
+	if(autheph_init_rpc() < 0) {
 		LM_ERR("registering RPC commands\n");
 		return -1;
 	}
 
-	if (secret_list == NULL || *secret_list == NULL)
-	{
+	if(secret_list == NULL || *secret_list == NULL) {
 		LM_ERR("secret modparam not set\n");
 		return -1;
 	}
 
-	switch(autheph_username_format)
-	{
-	case AUTHEPH_USERNAME_NON_IETF:
-		LM_WARN("the %d value for the username_format modparam is "
-			"deprecated. You should update the web-service that "
-			"generates credentials to use the format specified in "
-			"draft-uberti-rtcweb-turn-rest.\n",
-			autheph_username_format);
-		/* Fall-thru */
-	case AUTHEPH_USERNAME_IETF:
-		break;
+	switch(autheph_username_format) {
+		case AUTHEPH_USERNAME_NON_IETF:
+			LM_WARN("the %d value for the username_format modparam is "
+					"deprecated. You should update the web-service that "
+					"generates credentials to use the format specified in "
+					"draft-uberti-rtcweb-turn-rest.\n",
+					autheph_username_format);
+			/* Fall-thru */
+		case AUTHEPH_USERNAME_IETF:
+			break;
 
-	default:
-		LM_ERR("bad value for username_format modparam: %d\n",
-			autheph_username_format);
-		return -1;
+		default:
+			LM_ERR("bad value for username_format modparam: %d\n",
+					autheph_username_format);
+			return -1;
 	}
 
-	bind_auth = (bind_auth_s_t) find_export("bind_auth_s", 0, 0);
-	if (bind_auth)
-	{
-		if (bind_auth(&eph_auth_api) < 0)
-		{
+	bind_auth = (bind_auth_s_t)find_export("bind_auth_s", 0, 0);
+	if(bind_auth) {
+		if(bind_auth(&eph_auth_api) < 0) {
 			LM_ERR("unable to bind to auth module\n");
 			return -1;
 		}
-	}
-	else
-	{
+	} else {
 		memset(&eph_auth_api, 0, sizeof(auth_api_s_t));
 		LM_INFO("auth module not loaded - digest authentication and "
-			"check functions will not be available\n");
+				"check functions will not be available\n");
 	}
 
 	return 0;
@@ -172,17 +144,14 @@ static void destroy(void)
 {
 	struct secret *secret_struct;
 
-	if (secret_list != NULL && *secret_list != NULL)
-	{
+	if(secret_list != NULL && *secret_list != NULL) {
 		SECRET_UNLOCK;
 		SECRET_LOCK;
-		while (*secret_list != NULL)
-		{
+		while(*secret_list != NULL) {
 			secret_struct = *secret_list;
 			*secret_list = secret_struct->next;
 
-			if (secret_struct->secret_key.s != NULL)
-			{
+			if(secret_struct->secret_key.s != NULL) {
 				shm_free(secret_struct->secret_key.s);
 			}
 			shm_free(secret_struct);
@@ -190,14 +159,13 @@ static void destroy(void)
 		SECRET_UNLOCK;
 	}
 
-	if (secret_list != NULL) {
+	if(secret_list != NULL) {
 		shm_free(secret_list);
 	}
 
-	if (autheph_secret_lock != NULL)
-	{
+	if(autheph_secret_lock != NULL) {
 		lock_destroy(autheph_secret_lock);
-		lock_dealloc((void *) autheph_secret_lock);
+		lock_dealloc((void *)autheph_secret_lock);
 	}
 }
 
@@ -205,44 +173,37 @@ static inline int add_secret(str _secret_key)
 {
 	struct secret *secret_struct;
 
-	if (autheph_secret_lock == NULL)
-	{
+	if(autheph_secret_lock == NULL) {
 		autheph_secret_lock = lock_alloc();
-		if (autheph_secret_lock == NULL)
-		{
+		if(autheph_secret_lock == NULL) {
 			LM_ERR("allocating lock\n");
 			return -1;
 		}
-		if (lock_init(autheph_secret_lock) == 0)
-		{
+		if(lock_init(autheph_secret_lock) == 0) {
 			LM_ERR("initialising lock\n");
 			return -1;
 		}
 	}
 
-	secret_struct = (struct secret *) shm_malloc(sizeof(struct secret));
-	if (secret_struct == NULL)
-	{
+	secret_struct = (struct secret *)shm_malloc(sizeof(struct secret));
+	if(secret_struct == NULL) {
 		SHM_MEM_ERROR;
 		return -1;
 	}
 
-	memset(secret_struct, 0, sizeof (struct secret));
+	memset(secret_struct, 0, sizeof(struct secret));
 	secret_struct->secret_key = _secret_key;
 	SECRET_LOCK;
-	if (secret_list == NULL)
-	{
-		secret_list = (struct secret **) shm_malloc(sizeof(struct secret *));
-		if (secret_list == NULL)
-		{
+	if(secret_list == NULL) {
+		secret_list = (struct secret **)shm_malloc(sizeof(struct secret *));
+		if(secret_list == NULL) {
 			LM_ERR("unable to allocate shared memory\n");
 			shm_free(secret_struct);
 			return -1;
 		}
 		*secret_list = NULL;
 	}
-	if (*secret_list != NULL)
-	{
+	if(*secret_list != NULL) {
 		(*secret_list)->prev = secret_struct;
 	}
 	secret_struct->next = *secret_list;
@@ -257,28 +218,22 @@ static inline int rm_secret(int _id)
 	int pos = 0;
 	struct secret *secret_struct;
 
-	if (secret_list == NULL || *secret_list == NULL)
-	{
+	if(secret_list == NULL || *secret_list == NULL) {
 		LM_ERR("secret list empty\n");
 		return -1;
 	}
 
 	SECRET_LOCK;
 	secret_struct = *secret_list;
-	while (pos <= _id && secret_struct != NULL)
-	{
-		if (pos == _id)
-		{
-			if (secret_struct->prev != NULL)
-			{
+	while(pos <= _id && secret_struct != NULL) {
+		if(pos == _id) {
+			if(secret_struct->prev != NULL) {
 				secret_struct->prev->next = secret_struct->next;
 			}
-			if (secret_struct->next != NULL)
-			{
+			if(secret_struct->next != NULL) {
 				secret_struct->next->prev = secret_struct->prev;
 			}
-			if (pos == 0)
-			{
+			if(pos == 0) {
 				*secret_list = secret_struct->next;
 			}
 			SECRET_UNLOCK;
@@ -289,7 +244,6 @@ static inline int rm_secret(int _id)
 
 		pos++;
 		secret_struct = secret_struct->next;
-
 	}
 	SECRET_UNLOCK;
 
@@ -301,45 +255,39 @@ static int secret_param(modparam_t _type, void *_val)
 {
 	str sval;
 
-	if (_val == NULL)
-	{
+	if(_val == NULL) {
 		LM_ERR("bad parameter\n");
 		return -1;
 	}
 
-	LM_INFO("adding %s to secret list\n", (char *) _val);
+	LM_INFO("adding %s to secret list\n", (char *)_val);
 
-	sval.len = strlen((char *) _val);
-	sval.s = (char *) shm_malloc(sizeof(char) * sval.len);
-	if (sval.s == NULL)
-	{
+	sval.len = strlen((char *)_val);
+	sval.s = (char *)shm_malloc(sizeof(char) * sval.len);
+	if(sval.s == NULL) {
 		SHM_MEM_ERROR;
 		return -1;
 	}
-	memcpy(sval.s, (char *) _val, sval.len);
+	memcpy(sval.s, (char *)_val, sval.len);
 
 	return add_secret(sval);
 }
 
-void autheph_rpc_dump_secrets(rpc_t* rpc, void* ctx)
+void autheph_rpc_dump_secrets(rpc_t *rpc, void *ctx)
 {
 	int pos = 0;
 	struct secret *secret_struct;
-	if (secret_list == NULL)
-	{
+	if(secret_list == NULL) {
 		return;
 	}
 
 	secret_struct = *secret_list;
 
 	SECRET_LOCK;
-	while (secret_struct != NULL)
-	{
-		if (rpc->rpl_printf(ctx,
-					"ID %d: %.*s", pos++,
-					secret_struct->secret_key.len,
-					secret_struct->secret_key.s) < 0)
-		{
+	while(secret_struct != NULL) {
+		if(rpc->rpl_printf(ctx, "ID %d: %.*s", pos++,
+				   secret_struct->secret_key.len, secret_struct->secret_key.s)
+				< 0) {
 			rpc->fault(ctx, 500, "Failure building the response");
 			SECRET_UNLOCK;
 			return;
@@ -349,80 +297,68 @@ void autheph_rpc_dump_secrets(rpc_t* rpc, void* ctx)
 	SECRET_UNLOCK;
 }
 
-void autheph_rpc_add_secret(rpc_t* rpc, void* ctx)
+void autheph_rpc_add_secret(rpc_t *rpc, void *ctx)
 {
 	str tval;
 	str sval;
 
-	if(rpc->scan(ctx, "S", &tval)<1) {
+	if(rpc->scan(ctx, "S", &tval) < 1) {
 		LM_WARN("not enough parameters\n");
 		rpc->fault(ctx, 500, "Not enough parameters");
 		return;
 	}
 	sval.len = tval.len;
 	sval.s = shm_malloc(sizeof(char) * sval.len);
-	if (sval.s == NULL)
-	{
+	if(sval.s == NULL) {
 		SHM_MEM_ERROR;
 		rpc->fault(ctx, 500, "Not enough memory");
 		return;
 	}
 	memcpy(sval.s, tval.s, sval.len);
 
-	if (add_secret(sval) != 0) {
+	if(add_secret(sval) != 0) {
 		LM_ERR("failed adding secret\n");
 		rpc->fault(ctx, 500, "Failed adding secret");
 		return;
 	}
 }
 
-void autheph_rpc_rm_secret(rpc_t* rpc, void* ctx)
+void autheph_rpc_rm_secret(rpc_t *rpc, void *ctx)
 {
 	unsigned int id;
-	if(rpc->scan(ctx, "d", (int*)(&id))<1) {
+	if(rpc->scan(ctx, "d", (int *)(&id)) < 1) {
 		LM_WARN("no id parameter\n");
 		rpc->fault(ctx, 500, "Not enough parameters");
 		return;
 	}
-	if (rm_secret(id) != 0) {
+	if(rm_secret(id) != 0) {
 		LM_ERR("failed removing secret\n");
 		rpc->fault(ctx, 500, "Failed removing secret");
 		return;
 	}
 }
 
-static const char* autheph_rpc_dump_secrets_doc[2] = {
-	"List secret tokens",
-	0
-};
+static const char *autheph_rpc_dump_secrets_doc[2] = {"List secret tokens", 0};
 
-static const char* autheph_rpc_add_secret_doc[2] = {
-	"Add a secret",
-	0
-};
+static const char *autheph_rpc_add_secret_doc[2] = {"Add a secret", 0};
 
-static const char* autheph_rpc_rm_secret_doc[2] = {
-	"Remove a secret",
-	0
-};
+static const char *autheph_rpc_rm_secret_doc[2] = {"Remove a secret", 0};
 
 rpc_export_t autheph_rpc_cmds[] = {
-	{"autheph.dump_secrets", autheph_rpc_dump_secrets,
-		autheph_rpc_dump_secrets_doc, RET_ARRAY},
-	{"autheph.add_secret", autheph_rpc_add_secret,
-		autheph_rpc_add_secret_doc, 0},
-	{"autheph.rm_secret", autheph_rpc_rm_secret,
-		autheph_rpc_rm_secret_doc, 0},
-	{0, 0, 0, 0}
-};
+		{"autheph.dump_secrets", autheph_rpc_dump_secrets,
+				autheph_rpc_dump_secrets_doc, RET_ARRAY},
+		{"autheph.add_secret", autheph_rpc_add_secret,
+				autheph_rpc_add_secret_doc, 0},
+		{"autheph.rm_secret", autheph_rpc_rm_secret, autheph_rpc_rm_secret_doc,
+				0},
+		{0, 0, 0, 0}};
 
 /**
  * register RPC commands
  */
 static int autheph_init_rpc(void)
 {
-	if (rpc_register_array(autheph_rpc_cmds)!=0)
-	{
+	if(rpc_register_array(autheph_rpc_cmds) != 0) {
 		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}
