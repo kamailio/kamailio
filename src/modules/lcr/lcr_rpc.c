@@ -48,7 +48,8 @@ static void reload(rpc_t *rpc, void *c)
 static const char *dump_gws_doc[2] = {"Dump the contents of lcr_gws table.", 0};
 
 
-static void dump_gw(rpc_t *rpc, void *st, struct gw_info *gw, unsigned int gw_index, unsigned int lcr_id)
+static void dump_gw(rpc_t *rpc, void *st, struct gw_info *gw,
+		unsigned int gw_index, unsigned int lcr_id)
 {
 	str scheme, gw_name, hostname, params, transport;
 	str prefix, tag;
@@ -72,14 +73,10 @@ static void dump_gw(rpc_t *rpc, void *st, struct gw_info *gw, unsigned int gw_in
 			break;
 		case AF_INET6:
 			rpc->struct_printf(st, "ip_addr", "%x:%x:%x:%x:%x:%x:%x:%x",
-					gw->ip_addr.u.addr16[0],
-					gw->ip_addr.u.addr16[1],
-					gw->ip_addr.u.addr16[2],
-					gw->ip_addr.u.addr16[3],
-					gw->ip_addr.u.addr16[4],
-					gw->ip_addr.u.addr16[5],
-					gw->ip_addr.u.addr16[6],
-					gw->ip_addr.u.addr16[7]);
+					gw->ip_addr.u.addr16[0], gw->ip_addr.u.addr16[1],
+					gw->ip_addr.u.addr16[2], gw->ip_addr.u.addr16[3],
+					gw->ip_addr.u.addr16[4], gw->ip_addr.u.addr16[5],
+					gw->ip_addr.u.addr16[6], gw->ip_addr.u.addr16[7]);
 			break;
 		case 0:
 			rpc->struct_add(st, "s", "ip_addr", "0.0.0.0");
@@ -99,11 +96,10 @@ static void dump_gw(rpc_t *rpc, void *st, struct gw_info *gw, unsigned int gw_in
 	prefix.len = gw->prefix_len;
 	tag.s = gw->tag;
 	tag.len = gw->tag_len;
-	start = int2strbuf(
-			gw->defunct_until, &(buf[0]), INT2STR_MAX_LEN, &len);
-	rpc->struct_add(st, "dSSdds", "strip", gw->strip, "prefix",
-			&prefix, "tag", &tag, "flags", gw->flags, "state",
-			gw->state, "defunct_until", start);
+	start = int2strbuf(gw->defunct_until, &(buf[0]), INT2STR_MAX_LEN, &len);
+	rpc->struct_add(st, "dSSdds", "strip", gw->strip, "prefix", &prefix, "tag",
+			&tag, "flags", gw->flags, "state", gw->state, "defunct_until",
+			start);
 }
 
 static void dump_gws(rpc_t *rpc, void *c)
@@ -119,7 +115,7 @@ static void dump_gws(rpc_t *rpc, void *c)
 		gws = gw_pt[j];
 
 		for(i = 1; i <= gws[0].ip_addr.u.addr32[0]; i++) {
-			if (srec==NULL) {
+			if(srec == NULL) {
 				/* We create one array per lcr_id */
 				if(rpc->add(c, "{", &rec) < 0)
 					return;
@@ -143,7 +139,7 @@ static void dump_rules(rpc_t *rpc, void *c)
 	int i, j;
 	int _filter_by_prefix = 0;
 	int _lcr_id = 0;
-	str _prefix = {NULL,0};
+	str _prefix = {NULL, 0};
 	struct rule_info **rules, *rule;
 	struct target *t;
 	void *rec = NULL;
@@ -151,29 +147,32 @@ static void dump_rules(rpc_t *rpc, void *c)
 	void *st, *sst, *ssst;
 	str prefix, from_uri, request_uri;
 
-	if (rpc->scan(c, "d", &_lcr_id)>0) {
-		if (rpc->scan(c, ".S", &_prefix)>0) {
+	if(rpc->scan(c, "d", &_lcr_id) > 0) {
+		if(rpc->scan(c, ".S", &_prefix) > 0) {
 			_filter_by_prefix = 1;
 		}
 	}
 
 	for(j = 1; j <= lcr_count_param; j++) {
 
-		if (_lcr_id && _lcr_id!=j) continue;
+		if(_lcr_id && _lcr_id != j)
+			continue;
 
 		rules = rule_pt[j];
 
 		for(i = 0; i < lcr_rule_hash_size_param; i++) {
 			rule = rules[i];
 			while(rule) {
-				if (_filter_by_prefix && _prefix.len && _prefix.s) {
-					if (_prefix.len < rule->prefix_len ||
-						strncmp(_prefix.s, rule->prefix,  rule->prefix_len)!=0) {
+				if(_filter_by_prefix && _prefix.len && _prefix.s) {
+					if(_prefix.len < rule->prefix_len
+							|| strncmp(_prefix.s, rule->prefix,
+									   rule->prefix_len)
+									   != 0) {
 						rule = rule->next;
 						continue;
 					}
 				}
-				if (srec==NULL) {
+				if(srec == NULL) {
 					/* We create one array per lcr_id */
 					if(rpc->add(c, "{", &rec) < 0)
 						return;
@@ -192,11 +191,11 @@ static void dump_rules(rpc_t *rpc, void *c)
 						rule->rule_id, "prefix", &prefix, "from_uri", &from_uri,
 						"request_uri", &request_uri, "stopper", rule->stopper);
 				t = rule->targets;
-				if (t) {
-					if (rpc->struct_add(st, "[", "gw", &sst) < 0)
+				if(t) {
+					if(rpc->struct_add(st, "[", "gw", &sst) < 0)
 						return;
 					while(t) {
-						if (rpc->array_add(sst, "{", &ssst) < 0)
+						if(rpc->array_add(sst, "{", &ssst) < 0)
 							return;
 						rpc->struct_add(ssst, "ddd", "gw_index", t->gw_index,
 								"priority", t->priority, "weight", t->weight);
@@ -210,10 +209,10 @@ static void dump_rules(rpc_t *rpc, void *c)
 		/* Mark the end of rule array */
 		srec = NULL;
 
-		if (_filter_by_prefix)
+		if(_filter_by_prefix)
 			continue;
 		rule = rules[lcr_rule_hash_size_param];
-		if (rule) {
+		if(rule) {
 			if(rpc->struct_add(rec, "[", "prefix_len", &st) < 0)
 				return;
 			while(rule) {
@@ -222,7 +221,8 @@ static void dump_rules(rpc_t *rpc, void *c)
 			}
 		}
 	}
-	if (rec==NULL) rpc->fault(c, 404, "Empty reply");
+	if(rec == NULL)
+		rpc->fault(c, 404, "Empty reply");
 }
 
 
@@ -269,8 +269,9 @@ static void load_gws(rpc_t *rpc, void *c)
 
 	ret = rpc->scan(c, "dS*SS", &lcr_id, &uri_user, &caller_uri, &request_uri);
 	if(ret == -1) {
-		rpc->fault(c, 400, "parameter error; if using cli, remember to prefix "
-						   "numeric uri_user param value with 's:'");
+		rpc->fault(c, 400,
+				"parameter error; if using cli, remember to prefix "
+				"numeric uri_user param value with 's:'");
 		return;
 	}
 
@@ -289,7 +290,7 @@ static void load_gws(rpc_t *rpc, void *c)
 
 	gws = gw_pt[lcr_id];
 	for(j = 0; j < gw_count; j++) {
-		if (rec==NULL) {
+		if(rec == NULL) {
 			if(rpc->add(c, "[", &rec) < 0)
 				return;
 		}
