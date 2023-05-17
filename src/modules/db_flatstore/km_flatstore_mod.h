@@ -37,14 +37,14 @@ extern int km_flat_pid;
 /*
  * Delmiter delimiting columns
  */
-extern char* km_flat_delimiter;
+extern char *km_flat_delimiter;
 
 
 /*
  * The timestamp of log rotation request from
  * the FIFO interface
  */
-extern time_t* km_flat_rotate;
+extern time_t *km_flat_rotate;
 
 
 /*

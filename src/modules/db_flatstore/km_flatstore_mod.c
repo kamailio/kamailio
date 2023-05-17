@@ -42,14 +42,14 @@ int km_flat_pid;
 /*
  * Delimiter delimiting columns
  */
-char* km_flat_delimiter = "|";
+char *km_flat_delimiter = "|";
 
 
 /*
  * Timestamp of the last log rotation request from
  * the FIFO interface
  */
-time_t* km_flat_rotate;
+time_t *km_flat_rotate;
 
 time_t km_local_timestamp;
 
@@ -57,47 +57,44 @@ time_t km_local_timestamp;
  * Flatstore database module interface
  */
 static cmd_export_t cmds[] = {
-	{"db_bind_api",    (cmd_function)db_flat_bind_api,      0, 0, 0, 0},
-	{0, 0, 0, 0, 0, 0}
-};
+		{"db_bind_api", (cmd_function)db_flat_bind_api, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0}};
 
 /*
  * Exported parameters
  */
-static param_export_t params[] = {
-	{0, 0, 0}
-};
+static param_export_t params[] = {{0, 0, 0}};
 
 static rpc_export_t k_rpc_methods[];
 
 struct module_exports km_exports = {
-	"db_flatstore",		/* module name */
-	DEFAULT_DLFLAGS,	/* dlopen flags */
-	cmds,				/* exported functions */
-	params,				/* exported parameters */
-	0,					/* RPC method exports */
-	0,					/* exported pseudo-variables */
-	0,					/* response handling function */
-	km_mod_init,		/* module initialization function */
-	km_child_init,		/* per-child init function */
-	km_mod_destroy		/* module destroy function */
+		"db_flatstore",	 /* module name */
+		DEFAULT_DLFLAGS, /* dlopen flags */
+		cmds,			 /* exported functions */
+		params,			 /* exported parameters */
+		0,				 /* RPC method exports */
+		0,				 /* exported pseudo-variables */
+		0,				 /* response handling function */
+		km_mod_init,	 /* module initialization function */
+		km_child_init,	 /* per-child init function */
+		km_mod_destroy	 /* module destroy function */
 };
 
 
 int km_mod_init(void)
 {
-	if (rpc_register_array(k_rpc_methods)!=0) {
+	if(rpc_register_array(k_rpc_methods) != 0) {
 		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}
 
-	if (strlen(km_flat_delimiter) != 1) {
+	if(strlen(km_flat_delimiter) != 1) {
 		LM_ERR("delimiter has to be exactly one character\n");
 		return -1;
 	}
 
-	km_flat_rotate = (time_t*)shm_malloc(sizeof(time_t));
-	if (!km_flat_rotate) {
+	km_flat_rotate = (time_t *)shm_malloc(sizeof(time_t));
+	if(!km_flat_rotate) {
 		SHM_MEM_ERROR;
 		return -1;
 	}
@@ -111,14 +108,15 @@ int km_mod_init(void)
 
 void km_mod_destroy(void)
 {
-	if (km_flat_rotate) shm_free(km_flat_rotate);
+	if(km_flat_rotate)
+		shm_free(km_flat_rotate);
 }
 
 
 int km_child_init(int rank)
 {
-	if (rank <= 0) {
-		km_flat_pid = - rank;
+	if(rank <= 0) {
+		km_flat_pid = -rank;
 	} else {
 		km_flat_pid = rank - PROC_MIN;
 	}
@@ -127,23 +125,22 @@ int km_child_init(int rank)
 
 int db_flat_bind_api(db_func_t *dbb)
 {
-	if(dbb==NULL)
+	if(dbb == NULL)
 		return -1;
 
 	memset(dbb, 0, sizeof(db_func_t));
 
-	dbb->use_table        = flat_use_table;
-	dbb->init             = flat_db_init;
-	dbb->close            = flat_db_close;
-	dbb->insert           = flat_db_insert;
+	dbb->use_table = flat_use_table;
+	dbb->init = flat_db_init;
+	dbb->close = flat_db_close;
+	dbb->insert = flat_db_insert;
 
 	return 0;
 }
 
 /* rpc function documentation */
 static const char *rpc_k_rotate_doc[2] = {
-	"Close and reopen flatrotate files during log rotation.", 0
-};
+		"Close and reopen flatrotate files during log rotation.", 0};
 
 /* rpc function implementations */
 static void rpc_k_rotate(rpc_t *rpc, void *c)
@@ -153,7 +150,6 @@ static void rpc_k_rotate(rpc_t *rpc, void *c)
 }
 
 static rpc_export_t k_rpc_methods[] = {
-	{"flatstore.k_rotate", rpc_k_rotate, rpc_k_rotate_doc, 0},
-	{0, 0, 0, 0},
+		{"flatstore.k_rotate", rpc_k_rotate, rpc_k_rotate_doc, 0},
+		{0, 0, 0, 0},
 };
-

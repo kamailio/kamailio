@@ -41,15 +41,17 @@
 /** 
  * Per-connection flags for flatstore connections.
  */
-enum flat_con_flags {
-	FLAT_OPENED      = (1 << 0), /**< Handle opened successfully */
+enum flat_con_flags
+{
+	FLAT_OPENED = (1 << 0), /**< Handle opened successfully */
 };
 
 
-struct flat_file {
-	char* filename; /**< Name of file within the directory */
-	str table;      /**< Table name the file belongs to */
-	FILE* f;        /**< File handle of the file */
+struct flat_file
+{
+	char *filename; /**< Name of file within the directory */
+	str table;		/**< Table name the file belongs to */
+	FILE *f;		/**< File handle of the file */
 };
 
 
@@ -60,11 +62,12 @@ struct flat_file {
  * file handles to files in that directory. The file handles are then used
  * from commands to write data in them.
  */
-struct flat_con {
-	db_pool_entry_t gen;    /**< Generic part of the structure */
-	struct flat_file* file;
-	int n;                  /**< Size of the file array */
-	unsigned int flags;     /**< Flags */
+struct flat_con
+{
+	db_pool_entry_t gen; /**< Generic part of the structure */
+	struct flat_file *file;
+	int n;				/**< Size of the file array */
+	unsigned int flags; /**< Flags */
 };
 
 
@@ -75,16 +78,16 @@ struct flat_con {
  * @retval 0 on success
  * @retval A negative number on error
  */
-int flat_con(db_con_t* con);
+int flat_con(db_con_t *con);
 
 
-int flat_con_connect(db_con_t* con);
+int flat_con_connect(db_con_t *con);
 
 
-void flat_con_disconnect(db_con_t* con);
+void flat_con_disconnect(db_con_t *con);
 
 
-int flat_open_table(int *idx, db_con_t* con, str* name);
+int flat_open_table(int *idx, db_con_t *con, str *name);
 
 /** @} */
 

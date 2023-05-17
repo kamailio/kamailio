@@ -97,7 +97,7 @@ str flat_suffix = STR_STATIC_INIT(".log");
  * This variable holds the timestamp of the last file rotation request
  * received through the management interface.
  */
-time_t* flat_rotate;
+time_t *flat_rotate;
 
 
 /** Timestamp of last file rotation.
@@ -107,71 +107,66 @@ time_t flat_local_timestamp;
 
 
 /* Flatstore database module interface */
-static cmd_export_t cmds[] = {
-	{"db_uri", (cmd_function)flat_uri, 0, 0, 0, 0},
-	{"db_con", (cmd_function)flat_con, 0, 0, 0, 0},
-	{"db_cmd", (cmd_function)flat_cmd, 0, 0, 0, 0},
-	{"db_put", (cmd_function)flat_put, 0, 0, 0, 0},
-	{"db_bind_api", (cmd_function)db_flat_bind_api,      0, 0, 0, 0},
-	{0, 0, 0, 0, 0, 0}
-};
+static cmd_export_t cmds[] = {{"db_uri", (cmd_function)flat_uri, 0, 0, 0, 0},
+		{"db_con", (cmd_function)flat_con, 0, 0, 0, 0},
+		{"db_cmd", (cmd_function)flat_cmd, 0, 0, 0, 0},
+		{"db_put", (cmd_function)flat_put, 0, 0, 0, 0},
+		{"db_bind_api", (cmd_function)db_flat_bind_api, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0}};
 
 
 /* Exported parameters */
-static param_export_t params[] = {
-	{"flush",            PARAM_INT, &flat_flush},
-	{"encode_delimiter", PARAM_INT, &encode_delimiter},
-	{"field_delimiter",  PARAM_STR, &flat_delimiter},
-	{"record_delimiter", PARAM_STR, &flat_record_delimiter},
-	{"escape_char",      PARAM_STR, &flat_escape},
-	{"file_suffix",      PARAM_STR, &flat_suffix},
-	{0, 0, 0}
-};
+static param_export_t params[] = {{"flush", PARAM_INT, &flat_flush},
+		{"encode_delimiter", PARAM_INT, &encode_delimiter},
+		{"field_delimiter", PARAM_STR, &flat_delimiter},
+		{"record_delimiter", PARAM_STR, &flat_record_delimiter},
+		{"escape_char", PARAM_STR, &flat_escape},
+		{"file_suffix", PARAM_STR, &flat_suffix}, {0, 0, 0}};
 
 
 struct module_exports exports = {
-	"db_flatstore",		/* module name */
-	DEFAULT_DLFLAGS,	/* dlopen flags */
-	cmds,				/* exported functions */
-	params,				/* exported parameters */
-	flat_rpc,			/* RPC method exports */
-	0,					/* exported pseudo-variables */
-	0,					/* response handling function */
-	mod_init,			/* module initialization function */
-	child_init,			/* per-child init function */
-	mod_destroy			/* module destroy function */
+		"db_flatstore",	 /* module name */
+		DEFAULT_DLFLAGS, /* dlopen flags */
+		cmds,			 /* exported functions */
+		params,			 /* exported parameters */
+		flat_rpc,		 /* RPC method exports */
+		0,				 /* exported pseudo-variables */
+		0,				 /* response handling function */
+		mod_init,		 /* module initialization function */
+		child_init,		 /* per-child init function */
+		mod_destroy		 /* module destroy function */
 };
 
 
 int mod_register(char *path, int *dlflags, void *p1, void *p2)
 {
-	if(db_api_init()<0)
+	if(db_api_init() < 0)
 		return -1;
 	return 0;
 }
 
 static int mod_init(void)
 {
-	if (flat_delimiter.len != 1) {
+	if(flat_delimiter.len != 1) {
 		ERR("flatstore: Parameter 'field_delimiter' "
 			"must be exactly one character long.\n");
 		return -1;
 	}
 
-	if (flat_record_delimiter.len != 1) {
+	if(flat_record_delimiter.len != 1) {
 		ERR("flatstore: Parameter 'record_delimiter' "
 			"must be exactly one character long.\n");
 		return -1;
 	}
 
-	if (flat_escape.len != 1) {
+	if(flat_escape.len != 1) {
 		ERR("flatstore: Parameter 'escape_char' "
 			"must be exaactly one character long.\n");
 		return -1;
 	}
 
-	flat_rotate = (time_t*)shm_malloc(sizeof(time_t));
-	if (!flat_rotate) {
+	flat_rotate = (time_t *)shm_malloc(sizeof(time_t));
+	if(!flat_rotate) {
 		SHM_MEM_ERROR;
 		return -1;
 	}
@@ -186,8 +181,10 @@ static int mod_init(void)
 static void mod_destroy(void)
 {
 	km_mod_destroy();
-	if (flat_pid.s) free(flat_pid.s);
-	if (flat_rotate) shm_free(flat_rotate);
+	if(flat_pid.s)
+		free(flat_pid.s);
+	if(flat_rotate)
+		shm_free(flat_rotate);
 }
 
 
@@ -200,26 +197,26 @@ static void mod_destroy(void)
  */
 static int child_init(int rank)
 {
-	char* tmp;
+	char *tmp;
 	unsigned int v;
 
-	if(rank==PROC_INIT)
+	if(rank == PROC_INIT)
 		return 0;
 
 	km_child_init(rank);
 
-	if (rank <= 0) {
+	if(rank <= 0) {
 		v = -rank;
 	} else {
 		v = rank - PROC_MIN;
 	}
 
-    if ((tmp = int2str(v, &flat_pid.len)) == NULL) {
+	if((tmp = int2str(v, &flat_pid.len)) == NULL) {
 		BUG("flatstore: Error while converting process id to number\n");
 		return -1;
 	}
 
-	if ((flat_pid.s = strdup(tmp)) == NULL) {
+	if((flat_pid.s = strdup(tmp)) == NULL) {
 		ERR("flatstore: No memory left\n");
 		return -1;
 	}
@@ -228,4 +225,3 @@ static int child_init(int rank)
 }
 
 /** @} */
-

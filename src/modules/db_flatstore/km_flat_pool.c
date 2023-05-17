@@ -27,7 +27,7 @@
 
 
 /* The head of the pool */
-static struct flat_con* pool = 0;
+static struct flat_con *pool = 0;
 
 /*
  * Pid of the process that added the last
@@ -37,37 +37,37 @@ static struct flat_con* pool = 0;
 static int pool_pid;
 
 
-
 /*
  * Get a connection from the pool, reuse existing
  * if possible, otherwise create a new one
  */
-struct flat_con* flat_get_connection(char* dir, char* table)
+struct flat_con *flat_get_connection(char *dir, char *table)
 {
-	struct flat_id* id;
-	struct flat_con* ptr;
+	struct flat_id *id;
+	struct flat_con *ptr;
 	int pid;
 
-	if (!dir || !table) {
+	if(!dir || !table) {
 		LM_ERR("invalid parameter value\n");
 		return 0;
 	}
 
 	pid = getpid();
-	if (pool && (pool_pid != pid)) {
+	if(pool && (pool_pid != pid)) {
 		LM_ERR("inherited open database connections, "
-				"this is not a good idea\n");
+			   "this is not a good idea\n");
 		return 0;
 	}
 
 	pool_pid = pid;
 
 	id = new_flat_id(dir, table);
-	if (!id) return 0;
+	if(!id)
+		return 0;
 
 	ptr = pool;
-	while (ptr) {
-		if (cmp_flat_id(id, ptr->id)) {
+	while(ptr) {
+		if(cmp_flat_id(id, ptr->id)) {
 			LM_DBG("connection found in the pool\n");
 			ptr->ref++;
 			free_flat_id(id);
@@ -78,7 +78,7 @@ struct flat_con* flat_get_connection(char* dir, char* table)
 
 	LM_DBG("connection not found in the pool\n");
 	ptr = flat_new_connection(id);
-	if (!ptr) {
+	if(!ptr) {
 		free_flat_id(id);
 		return 0;
 	}
@@ -94,14 +94,15 @@ struct flat_con* flat_get_connection(char* dir, char* table)
  * in the pool if ref count != 0, otherwise it
  * will be deleted completely
  */
-void flat_release_connection(struct flat_con* con)
+void flat_release_connection(struct flat_con *con)
 {
-	struct flat_con* ptr;
+	struct flat_con *ptr;
 
-	if (!con) return;
+	if(!con)
+		return;
 
-	if (con->ref > 1) {
-		     /* There are still other users, just
+	if(con->ref > 1) {
+		/* There are still other users, just
 		      * decrease the reference count and return
 		      */
 		LM_DBG("connection still kept in the pool\n");
@@ -111,18 +112,19 @@ void flat_release_connection(struct flat_con* con)
 
 	LM_DBG("removing connection from the pool\n");
 
-	if (pool == con) {
+	if(pool == con) {
 		pool = pool->next;
 	} else {
 		ptr = pool;
 		while(ptr) {
-			if (ptr->next == con) break;
+			if(ptr->next == con)
+				break;
 			ptr = ptr->next;
 		}
-		if (!ptr) {
+		if(!ptr) {
 			LM_ERR("weird, connection not found in the pool\n");
 		} else {
-			     /* Remove the connection from the pool */
+			/* Remove the connection from the pool */
 			ptr->next = con->next;
 		}
 	}
@@ -136,11 +138,11 @@ void flat_release_connection(struct flat_con* con)
  */
 int flat_rotate_logs(void)
 {
-	struct flat_con* ptr;
+	struct flat_con *ptr;
 
 	ptr = pool;
 	while(ptr) {
-		if (flat_reopen_connection(ptr)) {
+		if(flat_reopen_connection(ptr)) {
 			return -1;
 		}
 		ptr = ptr->next;

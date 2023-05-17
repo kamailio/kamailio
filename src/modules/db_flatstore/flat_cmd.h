@@ -39,7 +39,8 @@
  * This data structure extends the generic data structure db_cmd in the
  * database API with data specific to the flatstore driver.
  */
-struct flat_cmd {
+struct flat_cmd
+{
 	db_drv_t gen; /**< Generic part of the data structure (must be first) */
 	int file_index;
 };
@@ -52,7 +53,7 @@ struct flat_cmd {
  * @param cmd A generic db_cmd structure to which the newly created flat_cmd
  *            structure will be attached.
  */
-int flat_cmd(db_cmd_t* cmd);
+int flat_cmd(db_cmd_t *cmd);
 
 
 /** The main execution function in the flat driver.
@@ -66,7 +67,7 @@ int flat_cmd(db_cmd_t* cmd);
  * @retval A negative number if the database server failed to execute command
  * @retval A positive number if there was an error on client side (SER)
  */
-int flat_put(db_res_t* res, db_cmd_t* cmd);
+int flat_put(db_res_t *res, db_cmd_t *cmd);
 
 
 /** @} */
