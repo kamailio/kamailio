@@ -30,7 +30,7 @@
 
 static char char2digit(char localchar)
 {
-	switch (localchar) {
+	switch(localchar) {
 		case '0':
 			return 0;
 		case '1':
@@ -69,144 +69,136 @@ static char char2digit(char localchar)
 	}
 }
 
-static void isup_put_number(unsigned char *dest, char *src, int *len, int *oddeven)
+static void isup_put_number(
+		unsigned char *dest, char *src, int *len, int *oddeven)
 {
 	int i = 0;
 	int numlen = strlen(src);
 
-	if (numlen % 2) {
+	if(numlen % 2) {
 		*oddeven = 1;
-		*len = numlen/2 + 1;
+		*len = numlen / 2 + 1;
 	} else {
 		*oddeven = 0;
-		*len = numlen/2;
+		*len = numlen / 2;
 	}
-	
 
-	while (i < numlen) {
-		if (!(i % 2))
-			dest[i/2] = char2digit(src[i]) & 0xf;
-		else
-		{
-			dest[i/2] |= (char2digit(src[i]) << 4) & 0xf0;
+
+	while(i < numlen) {
+		if(!(i % 2))
+			dest[i / 2] = char2digit(src[i]) & 0xf;
+		else {
+			dest[i / 2] |= (char2digit(src[i]) << 4) & 0xf0;
 		}
 		i++;
 	}
 }
 
-static int encode_called_party(char * number, unsigned char * flags, int nai, unsigned char * buf, int len)
+static int encode_called_party(char *number, unsigned char *flags, int nai,
+		unsigned char *buf, int len)
 {
 	int numlen, oddeven;
-	buf[0] = flags[0]&0x7F;
+	buf[0] = flags[0] & 0x7F;
 	buf[1] = flags[1];
 
 	isup_put_number(&buf[2], number, &numlen, &oddeven);
 
-	if(oddeven)
-	{
+	if(oddeven) {
 		buf[0] |= 0x80;
 	}
-	
-	if(nai)
-	{
+
+	if(nai) {
 		buf[0] &= 0x80;
-		buf[0] |= (unsigned char)(nai&0x7F);
+		buf[0] |= (unsigned char)(nai & 0x7F);
 	}
 
 	return numlen + 2;
 }
 
-static int encode_calling_party(char * number, int nai, int presentation, int screening, unsigned char * buf, int len) 
+static int encode_calling_party(char *number, int nai, int presentation,
+		int screening, unsigned char *buf, int len)
 {
-        int oddeven, datalen;
+	int oddeven, datalen;
 
-        if (!number[0] && presentation != SS7_PRESENTATION_ADDR_NOT_AVAILABLE)
-                return 0;
+	if(!number[0] && presentation != SS7_PRESENTATION_ADDR_NOT_AVAILABLE)
+		return 0;
 
-        if (number[0] && presentation != SS7_PRESENTATION_ADDR_NOT_AVAILABLE)
-	{
-                isup_put_number(&buf[2], number, &datalen, &oddeven);
+	if(number[0] && presentation != SS7_PRESENTATION_ADDR_NOT_AVAILABLE) {
+		isup_put_number(&buf[2], number, &datalen, &oddeven);
+	} else {
+		datalen = 0;
+		oddeven = 0;
+		nai = 0;
 	}
-        else 
-	{
-                datalen = 0;
-                oddeven = 0;
-                nai = 0;
-        }
 
-        buf[0] = (oddeven << 7) | nai;      /* Nature of Address Indicator */
-         /* Assume E.164 ISDN numbering plan, calling number complete */
-        buf[1] = ((presentation == SS7_PRESENTATION_ADDR_NOT_AVAILABLE) ? 0 : (1 << 4)) |
-                ((presentation & 0x3) << 2) |
-                (screening & 0x3);
+	buf[0] = (oddeven << 7) | nai; /* Nature of Address Indicator */
+	/* Assume E.164 ISDN numbering plan, calling number complete */
+	buf[1] = ((presentation == SS7_PRESENTATION_ADDR_NOT_AVAILABLE) ? 0
+																	: (1 << 4))
+			 | ((presentation & 0x3) << 2) | (screening & 0x3);
 
-        return datalen + 2;
+	return datalen + 2;
 }
 
-static int encode_forwarding_number(char * number, int nai, unsigned char * buf, int len) 
+static int encode_forwarding_number(
+		char *number, int nai, unsigned char *buf, int len)
 {
-        int oddeven, datalen;
+	int oddeven, datalen;
 
-        isup_put_number(&buf[2], number, &datalen, &oddeven);
+	isup_put_number(&buf[2], number, &datalen, &oddeven);
 
-        buf[0] = (oddeven << 7) | nai;      /* Nature of Address Indicator */
-         /* Assume E.164 ISDN numbering plan, calling number complete */
-        buf[1] = 0x14;
+	buf[0] = (oddeven << 7) | nai; /* Nature of Address Indicator */
+	/* Assume E.164 ISDN numbering plan, calling number complete */
+	buf[1] = 0x14;
 
-        return datalen + 2;
+	return datalen + 2;
 }
 
 // returns start of specified optional header of IAM or CPG, otherwise return -1
-static int get_optional_header(unsigned char header, unsigned char *buf, int len)
+static int get_optional_header(
+		unsigned char header, unsigned char *buf, int len)
 {
 	int offset = 0;
 	int res;
-	union isup_msg * message = (union isup_msg*)buf;
+	union isup_msg *message = (union isup_msg *)buf;
 	unsigned char optional_pointer = 0;
 
 
-	if(message->type == ISUP_IAM)
-	{
+	if(message->type == ISUP_IAM) {
 		len -= offsetof(struct isup_iam_fixed, optional_pointer);
 		offset += offsetof(struct isup_iam_fixed, optional_pointer);
 		optional_pointer = message->iam.optional_pointer;
-	}
-	else if(message->type == ISUP_ACM || message->type == ISUP_COT)
-	{
+	} else if(message->type == ISUP_ACM || message->type == ISUP_COT) {
 		len -= offsetof(struct isup_acm_fixed, optional_pointer);
 		offset += offsetof(struct isup_acm_fixed, optional_pointer);
 		optional_pointer = message->acm.optional_pointer;
-	}
-	else if(message->type == ISUP_CPG)
-	{
+	} else if(message->type == ISUP_CPG) {
 		len -= offsetof(struct isup_cpg_fixed, optional_pointer);
 		offset += offsetof(struct isup_cpg_fixed, optional_pointer);
 		optional_pointer = message->cpg.optional_pointer;
-	}
-	else
-	{
+	} else {
 		// don't recognize the type? do nothing
 		return -1;
 	}
 
 
-	if (len < 1)
+	if(len < 1)
 		return -1;
 
 	offset += optional_pointer;
 	len -= optional_pointer;
 
-	if (len < 1 )
+	if(len < 1)
 		return -1;
 
 	/* Optional paramter parsing code */
-	if (optional_pointer) {
-		while ((len > 0) && (buf[offset] != 0)) {
-			struct isup_parm_opt *optparm = (struct isup_parm_opt *)(buf + offset);
+	if(optional_pointer) {
+		while((len > 0) && (buf[offset] != 0)) {
+			struct isup_parm_opt *optparm =
+					(struct isup_parm_opt *)(buf + offset);
 
-			res = optparm->len+2;
-			if(optparm->type == header)
-			{
+			res = optparm->len + 2;
+			if(optparm->type == header) {
 				return offset;
 			}
 
@@ -219,29 +211,27 @@ static int get_optional_header(unsigned char header, unsigned char *buf, int len
 
 int isup_get_hop_counter(unsigned char *buf, int len)
 {
-	int  offset = get_optional_header(ISUP_PARM_HOP_COUNTER, buf, len);
+	int offset = get_optional_header(ISUP_PARM_HOP_COUNTER, buf, len);
 
-	if(offset != -1 && len-offset-2 > 0)
-	{
-		return buf[offset+2] & 0x1F;
+	if(offset != -1 && len - offset - 2 > 0) {
+		return buf[offset + 2] & 0x1F;
 	}
 	return -1;
 }
 
 int isup_get_event_info(unsigned char *buf, int len)
 {
-	struct isup_cpg_fixed * message = (struct isup_cpg_fixed*)buf;
+	struct isup_cpg_fixed *message = (struct isup_cpg_fixed *)buf;
 
 	// not a CPG? do nothing
-	if(message->type != ISUP_CPG)
-	{
+	if(message->type != ISUP_CPG) {
 		return -1;
 	}
 
 	/* Message Type = 1 */
 	len -= offsetof(struct isup_cpg_fixed, event_info);
 
-	if (len < 1)
+	if(len < 1)
 		return -1;
 
 	return (int)message->event_info;
@@ -249,18 +239,17 @@ int isup_get_event_info(unsigned char *buf, int len)
 
 int isup_get_cpc(unsigned char *buf, int len)
 {
-	struct isup_iam_fixed * message = (struct isup_iam_fixed*)buf;
+	struct isup_iam_fixed *message = (struct isup_iam_fixed *)buf;
 
 	// not an iam? do nothing
-	if(message->type != ISUP_IAM)
-	{
+	if(message->type != ISUP_IAM) {
 		return -1;
 	}
 
 	/* Message Type = 1 */
 	len -= offsetof(struct isup_iam_fixed, calling_party_category);
 
-	if (len < 1)
+	if(len < 1)
 		return -1;
 
 	return (int)message->calling_party_category;
@@ -269,35 +258,33 @@ int isup_get_cpc(unsigned char *buf, int len)
 
 int isup_get_calling_party_nai(unsigned char *buf, int len)
 {
-	int  offset = get_optional_header(ISUP_PARM_CALLING_PARTY_NUM, buf, len);
+	int offset = get_optional_header(ISUP_PARM_CALLING_PARTY_NUM, buf, len);
 
-	if(offset != -1 && len-offset-2 > 0)
-	{
-		return buf[offset+2] & 0x7F;
+	if(offset != -1 && len - offset - 2 > 0) {
+		return buf[offset + 2] & 0x7F;
 	}
 	return -1;
 }
 
-int isup_get_calling_party(unsigned char *buf, int len, char* sb_buf)
+int isup_get_calling_party(unsigned char *buf, int len, char *sb_buf)
 {
 	int sbparamlen;
-	int sb_i=0;
-	int sb_j=0;
+	int sb_i = 0;
+	int sb_j = 0;
 	int oddeven;
 	int offset = get_optional_header(ISUP_PARM_CALLING_PARTY_NUM, buf, len);
 
-	if(offset != -1 && len-offset-2 > 1)
-	{
-		sbparamlen = (buf[offset+1] & 0xFF) - 2;
-		oddeven = (buf[offset+2] >> 7) & 0x1;
+	if(offset != -1 && len - offset - 2 > 1) {
+		sbparamlen = (buf[offset + 1] & 0xFF) - 2;
+		oddeven = (buf[offset + 2] >> 7) & 0x1;
 
-		while ((sbparamlen > 0) && (buf[offset] != 0)) {
-			sb_buf[sb_i]="0123456789ABCDEF"[(buf[offset+4+sb_j] & 0x0F)];
-			if(sbparamlen > 1 || oddeven == 0) 
-			{
-				sb_buf[sb_i+1]="0123456789ABCDEF"[(buf[offset+4+sb_j] >>4 & 0x0F)];
+		while((sbparamlen > 0) && (buf[offset] != 0)) {
+			sb_buf[sb_i] = "0123456789ABCDEF"[(buf[offset + 4 + sb_j] & 0x0F)];
+			if(sbparamlen > 1 || oddeven == 0) {
+				sb_buf[sb_i + 1] = "0123456789ABCDEF"[(
+						buf[offset + 4 + sb_j] >> 4 & 0x0F)];
 			}
-			sb_i=sb_i+2;
+			sb_i = sb_i + 2;
 			sbparamlen--;
 			sb_j++;
 		}
@@ -309,75 +296,72 @@ int isup_get_calling_party(unsigned char *buf, int len, char* sb_buf)
 
 int isup_get_screening(unsigned char *buf, int len)
 {
-	int  offset = get_optional_header(ISUP_PARM_CALLING_PARTY_NUM, buf, len);
+	int offset = get_optional_header(ISUP_PARM_CALLING_PARTY_NUM, buf, len);
 
-	if(offset != -1 && len-offset-3 > 0)
-	{
-		return buf[offset+3] & 0x03;
+	if(offset != -1 && len - offset - 3 > 0) {
+		return buf[offset + 3] & 0x03;
 	}
 	return -1;
 }
 
 int isup_get_presentation(unsigned char *buf, int len)
 {
-	int  offset = get_optional_header(ISUP_PARM_CALLING_PARTY_NUM, buf, len);
+	int offset = get_optional_header(ISUP_PARM_CALLING_PARTY_NUM, buf, len);
 
-	if(offset != -1 && len-offset-3 > 0)
-	{
-		return (buf[offset+3]>>2) & 0x03;
+	if(offset != -1 && len - offset - 3 > 0) {
+		return (buf[offset + 3] >> 2) & 0x03;
 	}
 	return -1;
 }
 
 int isup_get_called_party_nai(unsigned char *buf, int len)
 {
-	struct isup_iam_fixed * message = (struct isup_iam_fixed*)buf;
+	struct isup_iam_fixed *message = (struct isup_iam_fixed *)buf;
 
 	// not an iam? do nothing
-	if(message->type != ISUP_IAM)
-	{
+	if(message->type != ISUP_IAM) {
 		return -1;
 	}
 
 	/* Message Type = 1 */
 	len -= offsetof(struct isup_iam_fixed, called_party_number);
 
-	if (len < 1)
+	if(len < 1)
 		return -1;
-	return message->called_party_number[1]&0x7F;
+	return message->called_party_number[1] & 0x7F;
 }
 
-int isup_get_called_party(unsigned char *buf, int len, char* sb_buf)
+int isup_get_called_party(unsigned char *buf, int len, char *sb_buf)
 {
-	struct isup_iam_fixed * message = (struct isup_iam_fixed*)buf;
+	struct isup_iam_fixed *message = (struct isup_iam_fixed *)buf;
 	int sbparamlen;
 	int oddeven;
-	int sb_i=0;
-	int sb_j=0;
+	int sb_i = 0;
+	int sb_j = 0;
 	int offset = 3;
 
 	// not an iam? do nothing
-	if(message->type != ISUP_IAM)
-	{
+	if(message->type != ISUP_IAM) {
 		return -1;
 	}
 
 	/* Message Type = 1 */
 	len -= offsetof(struct isup_iam_fixed, called_party_number);
 
-	if (len < 1)
+	if(len < 1)
 		return -1;
 
 	sbparamlen = (message->called_party_number[0] & 0xFF) - 2;
 	oddeven = (message->called_party_number[1] >> 7) & 0x1;
 
-	while ((sbparamlen > 0) && (message->called_party_number[offset] != 0)) {
-		sb_buf[sb_i]="0123456789ABCDEF"[(message->called_party_number[offset+sb_j] & 0x0F)];
-		if(sbparamlen > 1 || oddeven == 0) 
-		{
-			sb_buf[sb_i+1]="0123456789ABCDEF"[(message->called_party_number[offset+sb_j] >>4 & 0x0F)];
+	while((sbparamlen > 0) && (message->called_party_number[offset] != 0)) {
+		sb_buf[sb_i] = "0123456789ABCDEF"[(
+				message->called_party_number[offset + sb_j] & 0x0F)];
+		if(sbparamlen > 1 || oddeven == 0) {
+			sb_buf[sb_i + 1] = "0123456789ABCDEF"[(
+					message->called_party_number[offset + sb_j] >> 4 & 0x0F)];
 		}
-		sb_i=sb_i+2;
+		sb_i = sb_i + 2;
 		sbparamlen--;
 		sb_j++;
 	}
@@ -385,17 +369,17 @@ int isup_get_called_party(unsigned char *buf, int len, char* sb_buf)
 	return 1;
 }
 
-int isup_get_charging_indicator(unsigned char *buf, int len) {
-	struct isup_acm_fixed * orig_message = (struct isup_acm_fixed*)buf;
+int isup_get_charging_indicator(unsigned char *buf, int len)
+{
+	struct isup_acm_fixed *orig_message = (struct isup_acm_fixed *)buf;
 
 	// not an acm or cot? do nothing
-	if(orig_message->type != ISUP_ACM && orig_message->type != ISUP_COT)
-	{
+	if(orig_message->type != ISUP_ACM && orig_message->type != ISUP_COT) {
 		return -1;
 	}
 
 	// add minus 1 because the pointer is optional
-	if (len < sizeof(struct isup_acm_fixed) -1 )
+	if(len < sizeof(struct isup_acm_fixed) - 1)
 		return -1;
 
 	return (orig_message->backwards_call_ind[0] & 0x03);
@@ -403,72 +387,69 @@ int isup_get_charging_indicator(unsigned char *buf, int len) {
 
 int isup_get_redirection_info(unsigned char *buf, int len)
 {
-       int  offset = get_optional_header(ISUP_PARM_GENERIC_NOTIFICATION_IND, buf, len);
+	int offset =
+			get_optional_header(ISUP_PARM_GENERIC_NOTIFICATION_IND, buf, len);
 
-       int call_is_diverting = 0;
-       int diversion_reason = 0;
+	int call_is_diverting = 0;
+	int diversion_reason = 0;
 
-       if(offset != -1 && len-offset > 1)
-       {
-               call_is_diverting = (buf[offset+2]) & 0x7F;
+	if(offset != -1 && len - offset > 1) {
+		call_is_diverting = (buf[offset + 2]) & 0x7F;
 
-               if ( call_is_diverting == 123 ) {
-                       int  offset1 = get_optional_header(ISUP_PARM_DIVERSION_INFORMATION, buf, len);
+		if(call_is_diverting == 123) {
+			int offset1 = get_optional_header(
+					ISUP_PARM_DIVERSION_INFORMATION, buf, len);
 
-                       if(offset1 != -1 && len-offset1 > 1)
-                       {
-                               diversion_reason = (buf[offset1+2]>>3 & 0x0F);
-                               return diversion_reason;
-                       }
-               }
-               return -1;
-
-       }
-        return -1;
+			if(offset1 != -1 && len - offset1 > 1) {
+				diversion_reason = (buf[offset1 + 2] >> 3 & 0x0F);
+				return diversion_reason;
+			}
+		}
+		return -1;
+	}
+	return -1;
 }
 
 int isup_get_redirection_number_nai(unsigned char *buf, int len)
 {
-       int  offset = get_optional_header(ISUP_PARM_REDIRECTION_NUMBER, buf, len);
+	int offset = get_optional_header(ISUP_PARM_REDIRECTION_NUMBER, buf, len);
 
-       if(offset != -1 && len-offset-2 > 1)
-       {
-               return buf[offset+2] & 0x7F;
-       }
-       return -1;
+	if(offset != -1 && len - offset - 2 > 1) {
+		return buf[offset + 2] & 0x7F;
+	}
+	return -1;
 }
 
-int isup_get_redirection_number(unsigned char *buf, int len, char* sb_buf)
+int isup_get_redirection_number(unsigned char *buf, int len, char *sb_buf)
 {
-       int sbparamlen;
-       int sb_i=0;
-       int sb_j=0;
-       int  offset = get_optional_header(ISUP_PARM_REDIRECTION_NUMBER, buf, len);
+	int sbparamlen;
+	int sb_i = 0;
+	int sb_j = 0;
+	int offset = get_optional_header(ISUP_PARM_REDIRECTION_NUMBER, buf, len);
 
-       if(offset != -1 && len-offset-2 > 1)
-       {
-               sbparamlen = (buf[offset+1] & 0xFF) - 2;
+	if(offset != -1 && len - offset - 2 > 1) {
+		sbparamlen = (buf[offset + 1] & 0xFF) - 2;
 
-               while ((sbparamlen > 0) && (buf[offset] != 0)) {
-                   sb_buf[sb_i]="0123456789ABCDEF"[(buf[offset+4+sb_j] & 0x0F)];
-                   sb_buf[sb_i+1]="0123456789ABCDEF"[(buf[offset+4+sb_j] >>4 & 0x0F)];
-                   sb_i=sb_i+2;
-                   sbparamlen--;
-                   sb_j++;
-               }
-               sb_buf[sb_i] = '\x0';
-               return 1;
-       }
-       return -1;
+		while((sbparamlen > 0) && (buf[offset] != 0)) {
+			sb_buf[sb_i] = "0123456789ABCDEF"[(buf[offset + 4 + sb_j] & 0x0F)];
+			sb_buf[sb_i + 1] =
+					"0123456789ABCDEF"[(buf[offset + 4 + sb_j] >> 4 & 0x0F)];
+			sb_i = sb_i + 2;
+			sbparamlen--;
+			sb_j++;
+		}
+		sb_buf[sb_i] = '\x0';
+		return 1;
+	}
+	return -1;
 }
 
 int isup_get_redirection_reason(unsigned char *buf, int len)
 {
 	int offset = get_optional_header(ISUP_PARM_REDIRECTION_INFO, buf, len);
 
-	if(offset != -1 && len-offset-2 > 1)
-	{
-		return (buf[offset+3]>>4 & 0x0F);
+	if(offset != -1 && len - offset - 2 > 1) {
+		return (buf[offset + 3] >> 4 & 0x0F);
 	}
 	return -1;
 }
@@ -477,9 +458,8 @@ int isup_get_original_redirection_reason(unsigned char *buf, int len)
 {
 	int offset = get_optional_header(ISUP_PARM_REDIRECTION_INFO, buf, len);
 
-	if(offset != -1 && len-offset-2 > 1)
-	{
-		return (buf[offset+2]>>4 & 0x0F);
+	if(offset != -1 && len - offset - 2 > 1) {
+		return (buf[offset + 2] >> 4 & 0x0F);
 	}
 	return -1;
 }
@@ -488,33 +468,31 @@ int isup_get_redirecting_number_nai(unsigned char *buf, int len)
 {
 	int offset = get_optional_header(ISUP_PARM_REDIRECTING_NUMBER, buf, len);
 
-	if(offset != -1 && len-offset-2 > 1)
-	{
-		return buf[offset+2] & 0x7F;
+	if(offset != -1 && len - offset - 2 > 1) {
+		return buf[offset + 2] & 0x7F;
 	}
 	return -1;
 }
 
-int isup_get_redirecting_number(unsigned char *buf, int len, char* sb_buf)
+int isup_get_redirecting_number(unsigned char *buf, int len, char *sb_buf)
 {
 	int sbparamlen;
 	int oddeven;
-	int sb_i=0;
-	int sb_j=0;
+	int sb_i = 0;
+	int sb_j = 0;
 	int offset = get_optional_header(ISUP_PARM_REDIRECTING_NUMBER, buf, len);
 
-	if(offset != -1 && len-offset-2 > 1)
-	{
-		sbparamlen = (buf[offset+1] & 0xFF) - 2;
-		oddeven = (buf[offset+2] >> 7) & 0x1;
+	if(offset != -1 && len - offset - 2 > 1) {
+		sbparamlen = (buf[offset + 1] & 0xFF) - 2;
+		oddeven = (buf[offset + 2] >> 7) & 0x1;
 
-		while ((sbparamlen > 0) && (buf[offset] != 0)) {
-			sb_buf[sb_i]="0123456789ABCDEF"[(buf[offset+4+sb_j] & 0x0F)];
-			if(sbparamlen > 1 || oddeven == 0) 
-			{
-				sb_buf[sb_i+1]="0123456789ABCDEF"[(buf[offset+4+sb_j] >>4 & 0x0F)];
+		while((sbparamlen > 0) && (buf[offset] != 0)) {
+			sb_buf[sb_i] = "0123456789ABCDEF"[(buf[offset + 4 + sb_j] & 0x0F)];
+			if(sbparamlen > 1 || oddeven == 0) {
+				sb_buf[sb_i + 1] = "0123456789ABCDEF"[(
+						buf[offset + 4 + sb_j] >> 4 & 0x0F)];
 			}
-			sb_i=sb_i+2;
+			sb_i = sb_i + 2;
 			sbparamlen--;
 			sb_j++;
 		}
@@ -528,33 +506,31 @@ int isup_get_original_called_number_nai(unsigned char *buf, int len)
 {
 	int offset = get_optional_header(ISUP_PARM_ORIGINAL_CALLED_NUM, buf, len);
 
-	if(offset != -1 && len-offset-2 > 1)
-	{
-		return buf[offset+2] & 0x7F;
+	if(offset != -1 && len - offset - 2 > 1) {
+		return buf[offset + 2] & 0x7F;
 	}
 	return -1;
 }
 
-int isup_get_original_called_number(unsigned char *buf, int len, char* sb_buf)
+int isup_get_original_called_number(unsigned char *buf, int len, char *sb_buf)
 {
 	int sbparamlen;
 	int oddeven;
-	int sb_i=0;
-	int sb_j=0;
+	int sb_i = 0;
+	int sb_j = 0;
 	int offset = get_optional_header(ISUP_PARM_ORIGINAL_CALLED_NUM, buf, len);
 
-	if(offset != -1 && len-offset-2 > 1)
-	{
-		sbparamlen = (buf[offset+1] & 0xFF) - 2;
-		oddeven = (buf[offset+2] >> 7) & 0x1;
+	if(offset != -1 && len - offset - 2 > 1) {
+		sbparamlen = (buf[offset + 1] & 0xFF) - 2;
+		oddeven = (buf[offset + 2] >> 7) & 0x1;
 
-		while ((sbparamlen > 0) && (buf[offset] != 0)) {
-			sb_buf[sb_i]="0123456789ABCDEF"[(buf[offset+4+sb_j] & 0x0F)];
-			if(sbparamlen > 1 || oddeven == 0) 
-			{
-				sb_buf[sb_i+1]="0123456789ABCDEF"[(buf[offset+4+sb_j] >>4 & 0x0F)];
+		while((sbparamlen > 0) && (buf[offset] != 0)) {
+			sb_buf[sb_i] = "0123456789ABCDEF"[(buf[offset + 4 + sb_j] & 0x0F)];
+			if(sbparamlen > 1 || oddeven == 0) {
+				sb_buf[sb_i + 1] = "0123456789ABCDEF"[(
+						buf[offset + 4 + sb_j] >> 4 & 0x0F)];
 			}
-			sb_i=sb_i+2;
+			sb_i = sb_i + 2;
 			sbparamlen--;
 			sb_j++;
 		}
@@ -568,33 +544,31 @@ int isup_get_generic_number_nai(unsigned char *buf, int len)
 {
 	int offset = get_optional_header(ISUP_PARM_GENERIC_ADDR, buf, len);
 
-	if(offset != -1 && len-offset-2 > 1)
-	{
-		 return buf[offset+3] & 0x7F;
+	if(offset != -1 && len - offset - 2 > 1) {
+		return buf[offset + 3] & 0x7F;
 	}
 	return -1;
 }
 
-int isup_get_generic_number(unsigned char *buf, int len, char* sb_buf)
+int isup_get_generic_number(unsigned char *buf, int len, char *sb_buf)
 {
 	int sbparamlen;
 	int oddeven;
-	int sb_i=0;
-	int sb_j=0;
+	int sb_i = 0;
+	int sb_j = 0;
 	int offset = get_optional_header(ISUP_PARM_GENERIC_ADDR, buf, len);
 
-	if(offset != -1 && len-offset-2 > 1)
-	{
-		sbparamlen = (buf[offset+1] & 0xFF) - 2;
-		oddeven = (buf[offset+3] >> 7) & 0x1;
+	if(offset != -1 && len - offset - 2 > 1) {
+		sbparamlen = (buf[offset + 1] & 0xFF) - 2;
+		oddeven = (buf[offset + 3] >> 7) & 0x1;
 
-		while ((sbparamlen > 0) && (buf[offset] != 0)) {
-			sb_buf[sb_i]="0123456789ABCDEF"[(buf[offset+5+sb_j] & 0x0F)];
-			if(sbparamlen > 1 || oddeven == 0) 
-			{
-				sb_buf[sb_i+1]="0123456789ABCDEF"[(buf[offset+5+sb_j] >>4 & 0x0F)];
+		while((sbparamlen > 0) && (buf[offset] != 0)) {
+			sb_buf[sb_i] = "0123456789ABCDEF"[(buf[offset + 5 + sb_j] & 0x0F)];
+			if(sbparamlen > 1 || oddeven == 0) {
+				sb_buf[sb_i + 1] = "0123456789ABCDEF"[(
+						buf[offset + 5 + sb_j] >> 4 & 0x0F)];
 			}
-			sb_i=sb_i+2;
+			sb_i = sb_i + 2;
 			sbparamlen--;
 			sb_j++;
 		}
@@ -604,56 +578,56 @@ int isup_get_generic_number(unsigned char *buf, int len, char* sb_buf)
 	return -1;
 }
 
-int isup_update_bci_1(struct sdp_mangler * mangle, int charge_indicator, int called_status, int called_category, int e2e_indicator, unsigned char *buf, int len)
+int isup_update_bci_1(struct sdp_mangler *mangle, int charge_indicator,
+		int called_status, int called_category, int e2e_indicator,
+		unsigned char *buf, int len)
 {
-	struct isup_acm_fixed * orig_message = (struct isup_acm_fixed*)buf;
+	struct isup_acm_fixed *orig_message = (struct isup_acm_fixed *)buf;
 	unsigned char bci;
 
 	// not an acm or cot? do nothing
-	if(orig_message->type != ISUP_ACM && orig_message->type != ISUP_COT)
-	{
+	if(orig_message->type != ISUP_ACM && orig_message->type != ISUP_COT) {
 		return 1;
 	}
 
 	// add minus 1 because the pointer is optional
-	if (len < sizeof(struct isup_acm_fixed) -1 )
+	if(len < sizeof(struct isup_acm_fixed) - 1)
 		return -1;
 
-	bci = (charge_indicator & 0x3) | ((called_status & 0x3)<<2) |
-		((called_category & 0x3)<<4) | ((e2e_indicator & 0x3)<<6);
+	bci = (charge_indicator & 0x3) | ((called_status & 0x3) << 2)
+		  | ((called_category & 0x3) << 4) | ((e2e_indicator & 0x3) << 6);
 
-	replace_body_segment(mangle, offsetof(struct isup_acm_fixed, backwards_call_ind), 1, &bci, 1);
+	replace_body_segment(mangle,
+			offsetof(struct isup_acm_fixed, backwards_call_ind), 1, &bci, 1);
 
 	return sizeof(struct isup_acm_fixed);
 }
 
-int isup_update_destination(struct sdp_mangler * mangle, char * dest, int hops, int nai, unsigned char *buf, int len)
+int isup_update_destination(struct sdp_mangler *mangle, char *dest, int hops,
+		int nai, unsigned char *buf, int len)
 {
 	int offset = 0;
 	int res, res2;
-	struct isup_iam_fixed * orig_message = (struct isup_iam_fixed*)buf;
+	struct isup_iam_fixed *orig_message = (struct isup_iam_fixed *)buf;
 	unsigned char tmp_buf[255];
 
 
 	// not an iam? do nothing
-	if(orig_message->type != ISUP_IAM)
-	{
+	if(orig_message->type != ISUP_IAM) {
 		return 1;
 	}
 
 	// bounds checking
-	if(hops > 31)
-	{
+	if(hops > 31) {
 		hops = 31;
 	}
-
 
 
 	/* Copy the fixed parms */
 	len -= 6;
 	offset += 6;
 
-	if (len < 1)
+	if(len < 1)
 		return -1;
 
 	/* IAM has one Fixed variable param, Called party number, we need to modify this */
@@ -667,39 +641,40 @@ int isup_update_destination(struct sdp_mangler * mangle, char * dest, int hops, 
 
 
 	// modify the mandatory fixed header
-	res2 = encode_called_party(dest, buf+offset+1, nai, tmp_buf+2, 255-1);
+	res2 = encode_called_party(
+			dest, buf + offset + 1, nai, tmp_buf + 2, 255 - 1);
 	tmp_buf[1] = (char)res2;
-	res = buf[offset]+1;
+	res = buf[offset] + 1;
 
 	// set the new optional part pointer
-	tmp_buf[0] = (char)res2+2;
-	
+	tmp_buf[0] = (char)res2 + 2;
+
 	// replace the mandatory fixed header + optional pointer
-	replace_body_segment(mangle, offset - 1,res+1,tmp_buf, res2+2);
+	replace_body_segment(mangle, offset - 1, res + 1, tmp_buf, res2 + 2);
 
 	offset += res;
 	len -= res;
-	
-	if (len < 1 )
+
+	if(len < 1)
 		return -1;
 
 
 	/* Optional paramter parsing code */
-	if (orig_message->optional_pointer) {
+	if(orig_message->optional_pointer) {
 
 		bool has_hops = 0;
-		
-		while ((len > 0) && (buf[offset] != 0)) {
-			struct isup_parm_opt *optparm = (struct isup_parm_opt *)(buf + offset);
+
+		while((len > 0) && (buf[offset] != 0)) {
+			struct isup_parm_opt *optparm =
+					(struct isup_parm_opt *)(buf + offset);
 
 
-			res = optparm->len+2;
-			switch(optparm->type)
-			{
+			res = optparm->len + 2;
+			switch(optparm->type) {
 				case ISUP_PARM_HOP_COUNTER:
 					tmp_buf[0] = ISUP_PARM_HOP_COUNTER;
 					tmp_buf[1] = 1;
-					tmp_buf[2] = ((optparm->data[0]&0x1F)-1)&0x1F;
+					tmp_buf[2] = ((optparm->data[0] & 0x1F) - 1) & 0x1F;
 					replace_body_segment(mangle, offset, res, tmp_buf, 3);
 					has_hops = 1;
 					break;
@@ -712,28 +687,27 @@ int isup_update_destination(struct sdp_mangler * mangle, char * dest, int hops, 
 		}
 
 		// add missing headers
-		if(!has_hops && len >= 0)
-		{
+		if(!has_hops && len >= 0) {
 			tmp_buf[0] = ISUP_PARM_HOP_COUNTER;
 			tmp_buf[1] = 1;
 			tmp_buf[2] = hops & 0x1F;
 			has_hops = 1;
-			add_body_segment(mangle, offset,tmp_buf,3);
+			add_body_segment(mangle, offset, tmp_buf, 3);
 		}
 	}
 
 	return offset;
 }
 
-int isup_update_calling(struct sdp_mangler * mangle, char * origin, int nai, int presentation, int screening, unsigned char * buf, int len)
+int isup_update_calling(struct sdp_mangler *mangle, char *origin, int nai,
+		int presentation, int screening, unsigned char *buf, int len)
 {
 	int offset = 0;
 	int res;
-	struct isup_iam_fixed * orig_message = (struct isup_iam_fixed*)buf;
+	struct isup_iam_fixed *orig_message = (struct isup_iam_fixed *)buf;
 
 	// not an iam? do nothing
-	if(orig_message->type != ISUP_IAM)
-	{
+	if(orig_message->type != ISUP_IAM) {
 		return 1;
 	}
 
@@ -741,7 +715,7 @@ int isup_update_calling(struct sdp_mangler * mangle, char * origin, int nai, int
 	len -= offsetof(struct isup_iam_fixed, called_party_number);
 	offset += offsetof(struct isup_iam_fixed, called_party_number);
 
-	if (len < 1)
+	if(len < 1)
 		return -1;
 
 
@@ -750,31 +724,33 @@ int isup_update_calling(struct sdp_mangler * mangle, char * origin, int nai, int
 
 	// add the new mandatory fixed header
 	res = buf[offset];
-	offset += res+1;
-	len -= res+1;
-	
-	if (len < 1 )
+	offset += res + 1;
+	len -= res + 1;
+
+	if(len < 1)
 		return -1;
 
 
 	/* Optional paramter parsing code */
-	if (orig_message->optional_pointer) {
+	if(orig_message->optional_pointer) {
 
 		bool has_calling = 0;
-		
-		while ((len > 0) && (buf[offset] != 0)) {
+
+		while((len > 0) && (buf[offset] != 0)) {
 			int res2 = 0;
-			struct isup_parm_opt *optparm = (struct isup_parm_opt *)(buf + offset);
+			struct isup_parm_opt *optparm =
+					(struct isup_parm_opt *)(buf + offset);
 			unsigned char new_party[255];
 
 
-			res = optparm->len+2;
-			switch(optparm->type)
-			{
+			res = optparm->len + 2;
+			switch(optparm->type) {
 				case ISUP_PARM_CALLING_PARTY_NUM:
-					res2 = encode_calling_party(origin, nai, presentation, screening, &new_party[1], 255-1);
+					res2 = encode_calling_party(origin, nai, presentation,
+							screening, &new_party[1], 255 - 1);
 					new_party[0] = (char)res2;
-					replace_body_segment(mangle, offset+1,(int)buf[offset+1]+1,new_party, res2+1);
+					replace_body_segment(mangle, offset + 1,
+							(int)buf[offset + 1] + 1, new_party, res2 + 1);
 
 					has_calling = 1;
 					break;
@@ -788,30 +764,29 @@ int isup_update_calling(struct sdp_mangler * mangle, char * origin, int nai, int
 
 
 		// add missing headers
-		if(!has_calling && len >= 0)
-		{
+		if(!has_calling && len >= 0) {
 			unsigned char new_party[255];
 			new_party[0] = ISUP_PARM_CALLING_PARTY_NUM;
-			res = encode_calling_party(origin, nai, presentation, screening, new_party+2, 255-2);
+			res = encode_calling_party(origin, nai, presentation, screening,
+					new_party + 2, 255 - 2);
 			new_party[1] = (char)res;
 
-			add_body_segment(mangle, offset,new_party, res+2);
+			add_body_segment(mangle, offset, new_party, res + 2);
 		}
-
 	}
 
 	return offset;
 }
 
-int isup_update_forwarding(struct sdp_mangler * mangle, char * forwardn, int nai, unsigned char *buf, int len)
+int isup_update_forwarding(struct sdp_mangler *mangle, char *forwardn, int nai,
+		unsigned char *buf, int len)
 {
 	int offset = 0;
 	int res;
-	struct isup_iam_fixed * orig_message = (struct isup_iam_fixed*)buf;
+	struct isup_iam_fixed *orig_message = (struct isup_iam_fixed *)buf;
 
 	// not an iam? do nothing
-	if(orig_message->type != ISUP_IAM)
-	{
+	if(orig_message->type != ISUP_IAM) {
 		return 1;
 	}
 
@@ -819,7 +794,7 @@ int isup_update_forwarding(struct sdp_mangler * mangle, char * forwardn, int nai
 	len -= offsetof(struct isup_iam_fixed, called_party_number);
 	offset += offsetof(struct isup_iam_fixed, called_party_number);
 
-	if (len < 1)
+	if(len < 1)
 		return -1;
 
 
@@ -828,32 +803,36 @@ int isup_update_forwarding(struct sdp_mangler * mangle, char * forwardn, int nai
 
 	// add the new mandatory fixed header
 	res = buf[offset];
-	offset += res+1;
-	len -= res+1;
-	
-	if (len < 1 )
+	offset += res + 1;
+	len -= res + 1;
+
+	if(len < 1)
 		return -1;
 
 	/* Optional paramter parsing code */
-	if (orig_message->optional_pointer) {
-	
-		while ((len > 0) && (buf[offset] != 0)) {
+	if(orig_message->optional_pointer) {
+
+		while((len > 0) && (buf[offset] != 0)) {
 			int res2 = 0;
-			struct isup_parm_opt *optparm = (struct isup_parm_opt *)(buf + offset);
+			struct isup_parm_opt *optparm =
+					(struct isup_parm_opt *)(buf + offset);
 			unsigned char new_party[255];
 
-			res = optparm->len+2;
-			switch(optparm->type)
-			{
+			res = optparm->len + 2;
+			switch(optparm->type) {
 				case ISUP_PARM_REDIRECTING_NUMBER:
-					res2 = encode_forwarding_number(forwardn, nai, &new_party[1], 255-1);
+					res2 = encode_forwarding_number(
+							forwardn, nai, &new_party[1], 255 - 1);
 					new_party[0] = (char)res2;
-					replace_body_segment(mangle, offset+1,(int)buf[offset+1]+1,new_party, res2+1);
+					replace_body_segment(mangle, offset + 1,
+							(int)buf[offset + 1] + 1, new_party, res2 + 1);
 					break;
-                                case ISUP_PARM_ORIGINAL_CALLED_NUM:
-					res2 = encode_forwarding_number(forwardn, nai, &new_party[1], 255-1);
+				case ISUP_PARM_ORIGINAL_CALLED_NUM:
+					res2 = encode_forwarding_number(
+							forwardn, nai, &new_party[1], 255 - 1);
 					new_party[0] = (char)res2;
-					replace_body_segment(mangle, offset+1,(int)buf[offset+1]+1,new_party, res2+1);
+					replace_body_segment(mangle, offset + 1,
+							(int)buf[offset + 1] + 1, new_party, res2 + 1);
 				default:
 					break;
 			}
@@ -861,7 +840,6 @@ int isup_update_forwarding(struct sdp_mangler * mangle, char * forwardn, int nai
 			len -= res;
 			offset += res;
 		}
-
 	}
 
 	return offset;
