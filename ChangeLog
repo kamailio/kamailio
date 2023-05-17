@@ -3,6 +3,140 @@
 ===================== Changes Since Version 5.6.0 ===========================
 
 
+commit 4ef477e6c33af829d9b7064019741eefcfdbfc44
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed May 17 11:30:37 2023 +0200
+
+    Makefile.defs: version set to 5.7.0
+
+commit c5a22a4bfc9310f41facf8dfe8aa9c610f432817
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed May 17 11:21:08 2023 +0200
+
+    Makefile.defs: set LIBSSL_SET_MUTEX_SHARED by default to 1
+    
+    - one can set LIBSSL_SET_MUTEX_SHARED=0 in make command line to switch
+      to detection mode if it is need to set it or not based on libssl
+      version
+    - GH #3458, GH #3384
+    
+    (cherry picked from commit 5e0fb402a7755ea22c41c0b8fcefbdf9694442b8)
+
+commit 520d1b4acb749b1052a13c12a51fae188df1378d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed May 17 09:57:20 2023 +0200
+
+    topoh: don't set 0 twice at the end of masked/unmasked call-id
+    
+    - fomatting updates
+    
+    (cherry picked from commit 4c524547e1fdd4aa6dfa0ed0ada57b002296a258)
+
+commit f34ae12f63f0ed8d0577de3b36843cd5b96a7a36
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed May 17 09:52:37 2023 +0200
+
+    topos: small formatting fixes
+    
+    (cherry picked from commit 991de5e51e799a0110b7aa489eb27f4f01f5dfd2)
+
+commit ac118abdcb89e5e4ace524d9dbd27c0795f178d9
+Author: harish <toharishs@gmail.com>
+Date:   Wed May 17 00:21:21 2023 +0530
+
+    topoh: memory leak fix for API call
+    
+    th_mask_callid_str & th_unmask_callid_str funtions used for API call to
+    encode/decode call-ID uses static array declaration for callid_mbuf was
+    unable to free callid data lump after use and leads to memory leak.
+    when these futions was used through API call for topos memory leak bug
+    as reported
+    qm_free(): BUG: bad pointer 0x7faec4a7xxxx (out of memory block!) called
+    from core: core/data_lump.c: free_lump(470)
+    
+    (cherry picked from commit 85b62cefa8d33bc736f1ab16e7c40646c903c812)
+
+commit a651304380283854f916b8e6fae8ff0a4937d411
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Wed May 17 09:23:07 2023 +0300
+
+    pkg/kamailio/obs: packaged math module
+    
+    (cherry picked from commit bafefbc841eb7a6929baeff0b3fbe185860f4290)
+
+commit 72db97b7b8618e6cc9eed80ef670495547b7c2d0
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue May 16 12:58:47 2023 +0200
+
+    pkg/kamailio/deb: version set 5.7.0 [skip ci]
+
+commit 422d469fb52c31074ff00eec445eff45fdfebb39
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Tue May 16 18:16:35 2023 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 7e53506f27a6198d5f64799f2a8d672c5212d69c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue May 16 13:32:35 2023 +0200
+
+    topos: formatting and debug cleanup after last commit with callid masking
+    
+    (cherry picked from commit f4dc688548aa7753af93ce6e9089b53e9fc4c7ec)
+
+commit 7e1f330e2dc916138aa9a899da49c452b9f59740
+Author: harish <toharishs@gmail.com>
+Date:   Fri Jan 27 01:20:59 2023 +0530
+
+    Topos: Added CallID Mask Document for Topos
+    
+    Added document for Call-ID Mask in Topos Module
+    
+    (cherry picked from commit 14d4b2422c0fed27fecf01665197f9d0669aa24e)
+
+commit a16f4e43b75da4bf9c486efd5127cde223f16416
+Author: harish <toharishs@gmail.com>
+Date:   Fri Jan 27 01:15:46 2023 +0530
+
+    Topos: Added Call ID mask when sending to Downstream
+    
+    Added Call-ID mask while sending the request to Downstream and unmasking
+    when receiveing from downstream
+    
+    (cherry picked from commit d98ff2aab3d3e379fa27da187fbd069c23fb0fe9)
+
+commit 27ab4b757805083c231ceb109a46f5501b1baa7c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue May 16 17:28:02 2023 +0200
+
+    htable: set dbload filed on empty db result
+    
+    (cherry picked from commit ba9d663c5d382edef3c98b31aa4341b21c307a34)
+
+commit 94717b13f2b75522fcc60180ab192710bdc7ca71
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue May 16 12:45:57 2023 +0200
+
+    core: use unsigned long (j) for rpc core.shmmem
+    
+    - GH #3450
+    
+    (cherry picked from commit 94dd64a5238b4bf60ca21e09e216c01166f4a93f)
+
+commit 20ca1f8164dd5da70b0490300f2a57f65ff9a663
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue May 16 12:20:36 2023 +0200
+
+    jsonrpcs: give spath parameter for storing result
+    
+    (cherry picked from commit 1d5722e18e04e8935b342d303fe265c5d8f06e8e)
+
+commit 55b39daa32c46c33d01d610c3a1dcf836d4dfb3c
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue May 16 09:02:51 2023 +0200
+
+    ChangeLog: preparing content for v5.7.0
+
 commit 2cff2d5117521ce02a2847cc7d1db54203bbccce
 Author: Daniel-Constantin Mierla <miconda@gmail.com>
 Date:   Tue May 16 08:45:33 2023 +0200
