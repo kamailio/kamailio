@@ -41,19 +41,19 @@ int init_http_m_table(unsigned int size)
 {
 	unsigned int i;
 
-	hm_table = (struct http_m_table*)shm_malloc
-		( sizeof(struct http_m_table) + size*sizeof(struct http_m_entry) );
-	if (hm_table==0) {
+	hm_table = (struct http_m_table *)shm_malloc(
+			sizeof(struct http_m_table) + size * sizeof(struct http_m_entry));
+	if(hm_table == 0) {
 		LM_ERR("no more shm mem\n");
 		return -1;
 	}
 
-	memset( hm_table, 0, sizeof(struct http_m_table) );
+	memset(hm_table, 0, sizeof(struct http_m_table));
 	hm_table->size = size;
-	hm_table->entries = (struct http_m_entry*)(hm_table+1);
+	hm_table->entries = (struct http_m_entry *)(hm_table + 1);
 
-	for( i=0 ; i<size; i++ ) {
-		memset( &(hm_table->entries[i]), 0, sizeof(struct http_m_entry) );
+	for(i = 0; i < size; i++) {
+		memset(&(hm_table->entries[i]), 0, sizeof(struct http_m_entry));
 	}
 
 	LM_DBG("hash table %p initialized with size %d\n", hm_table, size);
@@ -62,13 +62,13 @@ int init_http_m_table(unsigned int size)
 
 unsigned int build_hash_key(void *p)
 {
-	str			hash_str;
-	char		pointer_str[20];
+	str hash_str;
+	char pointer_str[20];
 
 	unsigned int hash;
 
 	hash_str.len = snprintf(pointer_str, 20, "%p", p);
-	if(hash_str.len<=0 || hash_str.len>=20) {
+	if(hash_str.len <= 0 || hash_str.len >= 20) {
 		LM_ERR("failed to print the pointer address\n");
 		return 0;
 	}
@@ -82,22 +82,21 @@ unsigned int build_hash_key(void *p)
 	LM_DBG("hash for %p is %d\n", p, hash);
 
 	return hash;
-
 }
 
-struct http_m_cell* build_http_m_cell(void *p)
+struct http_m_cell *build_http_m_cell(void *p)
 {
-	struct http_m_cell *cell= NULL;
+	struct http_m_cell *cell = NULL;
 	int len;
 
 	len = sizeof(struct http_m_cell);
-	cell = (struct http_m_cell*)shm_malloc(len);
-	if (cell==0) {
+	cell = (struct http_m_cell *)shm_malloc(len);
+	if(cell == 0) {
 		LM_ERR("no more shm mem\n");
 		return 0;
 	}
 
-	memset( cell, 0, len);
+	memset(cell, 0, len);
 
 	cell->hmt_entry = build_hash_key(p);
 	cell->easy = p;
@@ -113,12 +112,12 @@ void link_http_m_cell(struct http_m_cell *cell)
 
 	hmt_entry = &(hm_table->entries[cell->hmt_entry]);
 
-	LM_DBG("linking new cell %p to table %p [%u]\n", cell, hm_table, cell->hmt_entry);
-	if (hmt_entry->first==0) {
+	LM_DBG("linking new cell %p to table %p [%u]\n", cell, hm_table,
+			cell->hmt_entry);
+	if(hmt_entry->first == 0) {
 		hmt_entry->first = cell;
 		hmt_entry->first = hmt_entry->last = cell;
-	}
-	else {
+	} else {
 		hmt_entry->last->next = cell;
 		cell->prev = hmt_entry->last;
 		hmt_entry->last = cell;
@@ -129,18 +128,20 @@ void link_http_m_cell(struct http_m_cell *cell)
 
 struct http_m_cell *http_m_cell_lookup(CURL *p)
 {
-	struct http_m_entry	*hmt_entry;
-	struct http_m_cell	*current_cell;
+	struct http_m_entry *hmt_entry;
+	struct http_m_cell *current_cell;
 
-	unsigned int		entry_idx;
+	unsigned int entry_idx;
 
 	entry_idx = build_hash_key(p);
 
 	hmt_entry = &(hm_table->entries[entry_idx]);
 
-	for (current_cell = hmt_entry->first; current_cell; current_cell = current_cell->next) {
-		if (current_cell->easy == p) {
-			LM_DBG("http_m_cell with easy=%p found on table entry %u\n\n", p, entry_idx);
+	for(current_cell = hmt_entry->first; current_cell;
+			current_cell = current_cell->next) {
+		if(current_cell->easy == p) {
+			LM_DBG("http_m_cell with easy=%p found on table entry %u\n\n", p,
+					entry_idx);
 			return current_cell;
 		}
 	}
@@ -152,15 +153,17 @@ struct http_m_cell *http_m_cell_lookup(CURL *p)
 
 void free_http_m_cell(struct http_m_cell *cell)
 {
-	if (!cell) return;
+	if(!cell)
+		return;
 
 	if(cell->params.headers) {
-		if(cell->params.headers) curl_slist_free_all(cell->params.headers);
+		if(cell->params.headers)
+			curl_slist_free_all(cell->params.headers);
 	}
 
-	if (cell->reply) {
-		if (cell->reply->result) {
-			if (cell->reply->result->s) {
+	if(cell->reply) {
+		if(cell->reply->result) {
+			if(cell->reply->result->s) {
 				shm_free(cell->reply->result->s);
 			}
 			shm_free(cell->reply->result);
@@ -168,8 +171,8 @@ void free_http_m_cell(struct http_m_cell *cell)
 		shm_free(cell->reply);
 	}
 
-	if (cell->url) shm_free(cell->url);
+	if(cell->url)
+		shm_free(cell->url);
 
 	shm_free(cell);
 }
-

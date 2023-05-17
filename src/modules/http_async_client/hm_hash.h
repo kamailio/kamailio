@@ -77,21 +77,22 @@ typedef struct http_m_global
 	int still_running;
 } http_m_global_t;
 
-typedef struct hm_params {
+typedef struct hm_params
+{
 	int timeout;
 	int tls_verify_host;
 	int tls_verify_peer;
-	struct curl_slist* headers;
+	struct curl_slist *headers;
 	int method;
-	char* tls_client_cert;
-	char* tls_client_key;
-	char* tls_ca_path;
+	char *tls_client_cert;
+	char *tls_client_key;
+	char *tls_ca_path;
 	str body;
-	
+
 	unsigned int authmethod;
-	unsigned int follow_redirect:1;
-	char* username;
-	char* password;
+	unsigned int follow_redirect : 1;
+	char *username;
+	char *password;
 	int tcp_keepalive;
 	int tcp_ka_idle;
 	int tcp_ka_interval;
@@ -99,10 +100,10 @@ typedef struct hm_params {
 
 typedef struct http_m_cell
 {
-	struct http_m_cell	*next;
-	struct http_m_cell	*prev;
+	struct http_m_cell *next;
+	struct http_m_cell *prev;
 	//unsigned int 		hmt_id;
-	unsigned int 		hmt_entry;
+	unsigned int hmt_entry;
 
 	struct http_m_global *global;
 
@@ -125,34 +126,34 @@ typedef struct http_m_cell
 
 typedef struct http_m_entry
 {
-	struct http_m_cell 	*first;
-	struct http_m_cell 	*last;
+	struct http_m_cell *first;
+	struct http_m_cell *last;
 } http_m_entry_t;
 
 /*! main http multi table */
 typedef struct http_m_table
 {
-	unsigned int 		size;
-	struct http_m_entry	*entries;
+	unsigned int size;
+	struct http_m_entry *entries;
 } http_m_table_t;
 
 int init_http_m_table(unsigned int size);
-struct http_m_cell* build_http_m_cell(void *p);
+struct http_m_cell *build_http_m_cell(void *p);
 void link_http_m_cell(struct http_m_cell *cell);
 struct http_m_cell *http_m_cell_lookup(CURL *p);
 void free_http_m_cell(struct http_m_cell *cell);
 
 static inline void unlink_http_m_cell(struct http_m_cell *hmt_cell)
 {
-	struct http_m_entry	*hmt_entry;
+	struct http_m_entry *hmt_entry;
 
-	if (hmt_cell) {
+	if(hmt_cell) {
 		hmt_entry = &(hm_table->entries[hmt_cell->hmt_entry]);
-		if (hmt_cell->next)
+		if(hmt_cell->next)
 			hmt_cell->next->prev = hmt_cell->prev;
 		else
 			hmt_entry->last = hmt_cell->prev;
-		if (hmt_cell->prev)
+		if(hmt_cell->prev)
 			hmt_cell->prev->next = hmt_cell->next;
 		else
 			hmt_entry->first = hmt_cell->next;
