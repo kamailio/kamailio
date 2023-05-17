@@ -47,7 +47,8 @@
 /**
  * @brief enumeration of metric types.
  */
-typedef enum metric_type {
+typedef enum metric_type
+{
 	M_UNSET = 0,
 	M_COUNTER = 1,
 	M_GAUGE = 2,
@@ -57,7 +58,8 @@ typedef enum metric_type {
 /**
  * @brief Struct to store a string (node of a list)
  */
-typedef struct prom_lb_node_s {
+typedef struct prom_lb_node_s
+{
 	str n;
 	struct prom_lb_node_s *next;
 } prom_lb_node_t;
@@ -65,7 +67,8 @@ typedef struct prom_lb_node_s {
 /**
  * @brief Struct to store a list of strings (labels)
  */
-typedef struct prom_lb_s {
+typedef struct prom_lb_s
+{
 	int n_elem; /**< Number of strings. */
 	struct prom_lb_node_s *lb;
 } prom_lb_t;
@@ -73,9 +76,10 @@ typedef struct prom_lb_s {
 /**
  * @brief Struct to store histogram sum, counters, etc.
  */
-typedef struct prom_hist_value_s {
-	uint64_t count; /**< Total counter equal Inf */
-	double sum; /**< Total sum */
+typedef struct prom_hist_value_s
+{
+	uint64_t count;			 /**< Total counter equal Inf */
+	double sum;				 /**< Total sum */
 	uint64_t *buckets_count; /**< Array of counters for buckets. */
 } prom_hist_value_t;
 
@@ -84,12 +88,14 @@ typedef struct prom_metric_s prom_metric_t;
 /**
  * @brief Struct to store a value of a label.
  */
-typedef struct prom_lvalue_s {
+typedef struct prom_lvalue_s
+{
 	prom_lb_t lval; /**< values for labels in current metric. */
-	uint64_t ts; /**< timespan. Last time metric was modified. */
-	union {
-		uint64_t cval; /**< Counter value. */
-		double gval; /**< Gauge value. */
+	uint64_t ts;	/**< timespan. Last time metric was modified. */
+	union
+	{
+		uint64_t cval;			 /**< Counter value. */
+		double gval;			 /**< Gauge value. */
 		prom_hist_value_t *hval; /**< Pointer to histogram data. */
 	} m;
 	struct prom_metric_s *metric; /**< Metric associated to current lvalue. */
@@ -99,19 +105,22 @@ typedef struct prom_lvalue_s {
 /**
  * @brief Struct to store number of buckets and their upper values.
  */
-typedef struct prom_buckets_upper_s {
-	int count;                  /**< Number of buckets. */
-	double *upper_bounds;       /**< Upper bounds for buckets. */
+typedef struct prom_buckets_upper_s
+{
+	int count;			  /**< Number of buckets. */
+	double *upper_bounds; /**< Upper bounds for buckets. */
 } prom_buckets_upper_t;
 
 /**
  * @brief Struct to store a metric.
  */
-struct prom_metric_s {
-	metric_type_t type; /**< Metric type. */
-	str name; /**< Name of the metric. */
+struct prom_metric_s
+{
+	metric_type_t type;		   /**< Metric type. */
+	str name;				   /**< Name of the metric. */
 	struct prom_lb_s *lb_name; /**< Names of labels. */
-	struct prom_buckets_upper_s *buckets_upper; /**< Upper bounds for buckets. */
+	struct prom_buckets_upper_s
+			*buckets_upper; /**< Upper bounds for buckets. */
 	struct prom_lvalue_s *lval_list;
 	struct prom_metric_s *next;
 };
@@ -121,7 +130,8 @@ struct prom_metric_s {
  */
 static prom_metric_t *prom_metric_list = NULL;
 static gen_lock_t *prom_lock = NULL; /**< Lock to protect Prometheus metrics. */
-static uint64_t lvalue_timeout; /**< Timeout in milliseconds for old lvalue struct. */
+static uint64_t
+		lvalue_timeout; /**< Timeout in milliseconds for old lvalue struct. */
 
 static void prom_counter_free(prom_metric_t *m_cnt);
 static void prom_gauge_free(prom_metric_t *m_gg);
@@ -146,13 +156,13 @@ static void prom_histogram_value_free(prom_hist_value_t *phv);
 int double_parse_str(str *s_number, double *pnumber)
 {
 	char *s = NULL;
-	
-	if (!s_number || !s_number->s || s_number->len == 0) {
+
+	if(!s_number || !s_number->s || s_number->len == 0) {
 		LM_ERR("Bad s_number to convert to double\n");
 		goto error;
 	}
 
-	if (!pnumber) {
+	if(!pnumber) {
 		LM_ERR("No double passed by reference\n");
 		goto error;
 	}
@@ -162,7 +172,7 @@ int double_parse_str(str *s_number, double *pnumber)
 	/* We set last character to zero to get a zero terminated string. */
 	int len = s_number->len;
 	s = pkg_malloc(len + 1);
-	if (!s) {
+	if(!s) {
 		PKG_MEM_ERROR;
 		goto error;
 	}
@@ -178,7 +188,7 @@ int double_parse_str(str *s_number, double *pnumber)
 	return 0;
 
 error:
-	if (s) {
+	if(s) {
 		pkg_free(s);
 	}
 	return -1;
@@ -192,7 +202,7 @@ static void prom_metric_list_free()
 	prom_metric_t *p, *next;
 
 	p = prom_metric_list;
-	while (p) {
+	while(p) {
 		next = p->next;
 		prom_metric_free(p);
 		p = next;
@@ -207,21 +217,21 @@ static void prom_metric_list_free()
 int prom_metric_init()
 {
 	/* Initialize timeout. minutes to milliseconds. */
-	if (timeout_minutes < 0) {
+	if(timeout_minutes < 0) {
 		LM_ERR("Invalid timeout: %d\n", timeout_minutes);
 		return -1;
 	}
 	lvalue_timeout = ((uint64_t)timeout_minutes) * 60000;
 	LM_DBG("lvalue_timeout set to %" PRIu64 "\n", lvalue_timeout);
-	
+
 	/* Initialize lock. */
 	prom_lock = lock_alloc();
-	if (!prom_lock) {
+	if(!prom_lock) {
 		LM_ERR("Cannot allocate lock\n");
 		return -1;
 	}
 
-	if (lock_init(prom_lock) == NULL) {
+	if(lock_init(prom_lock) == NULL) {
 		LM_ERR("Cannot initialize the lock\n");
 		lock_dealloc(prom_lock);
 		prom_lock = NULL;
@@ -238,7 +248,7 @@ int prom_metric_init()
 void prom_metric_close()
 {
 	/* Free lock */
-	if (prom_lock) {
+	if(prom_lock) {
 		LM_DBG("Freeing lock\n");
 		lock_destroy(prom_lock);
 		lock_dealloc(prom_lock);
@@ -246,7 +256,7 @@ void prom_metric_close()
 	}
 
 	/* Free metric list. */
-	if (prom_metric_list) {
+	if(prom_metric_list) {
 		LM_DBG("Freeing list of Prometheus metrics\n");
 		prom_metric_list_free();
 	}
@@ -259,11 +269,11 @@ static void prom_metric_free(prom_metric_t *metric)
 {
 	assert(metric);
 
-	if (metric->type == M_COUNTER) {
+	if(metric->type == M_COUNTER) {
 		prom_counter_free(metric);
-	} else if (metric->type == M_GAUGE) {
+	} else if(metric->type == M_GAUGE) {
 		prom_gauge_free(metric);
-	} else if (metric->type == M_HISTOGRAM) {
+	} else if(metric->type == M_HISTOGRAM) {
 		prom_histogram_free(metric);
 	} else {
 		LM_ERR("Unknown metric: %d\n", metric->type);
@@ -280,14 +290,14 @@ static void prom_counter_free(prom_metric_t *m_cnt)
 
 	assert(m_cnt->type == M_COUNTER);
 
-	if (m_cnt->name.s) {
+	if(m_cnt->name.s) {
 		shm_free(m_cnt->name.s);
 	}
 
 	prom_lb_free(m_cnt->lb_name, 1);
 
 	prom_lvalue_list_free(m_cnt->lval_list);
-	
+
 	shm_free(m_cnt);
 }
 
@@ -297,12 +307,13 @@ static void prom_counter_free(prom_metric_t *m_cnt)
  * @return pointer to metric on success.
  * @return NULL on error.
  */
-static prom_metric_t* prom_metric_get(str *s_name)
+static prom_metric_t *prom_metric_get(str *s_name)
 {
 	prom_metric_t *p = prom_metric_list;
 
-	while (p) {
-		if (s_name->len == p->name.len && strncmp(s_name->s, p->name.s, s_name->len) == 0) {
+	while(p) {
+		if(s_name->len == p->name.len
+				&& strncmp(s_name->s, p->name.s, s_name->len) == 0) {
 			LM_DBG("Metric found: %.*s\n", p->name.len, p->name.s);
 			break;
 		}
@@ -319,62 +330,62 @@ static prom_metric_t* prom_metric_get(str *s_name)
  */
 static int prom_lb_compare(prom_lb_t *plb, str *l1, str *l2, str *l3)
 {
-	if (plb == NULL) {
-		if (l1 != NULL) {
+	if(plb == NULL) {
+		if(l1 != NULL) {
 			return -1;
 		}
 		return 0;
 	}
 
-	if (l1 == NULL) {
-		if (plb->n_elem != 0) {
+	if(l1 == NULL) {
+		if(plb->n_elem != 0) {
 			return -1;
 		}
 		return 0;
 	}
 
 	/* At least one label. */
-	prom_lb_node_t *p = plb->lb;	
-	if (p == NULL) {
+	prom_lb_node_t *p = plb->lb;
+	if(p == NULL) {
 		return -1;
 	}
-	if (l1->len != p->n.len || strncmp(l1->s, p->n.s, l1->len)) {
+	if(l1->len != p->n.len || strncmp(l1->s, p->n.s, l1->len)) {
 		return -1;
 	}
 
 	p = p->next;
-	if (l2 == NULL) {
-		if (plb->n_elem != 1) {
+	if(l2 == NULL) {
+		if(plb->n_elem != 1) {
 			return -1;
 		}
 		return 0;
 	}
 
 	/* At least two labels. */
-	if (p == NULL) {
+	if(p == NULL) {
 		return -1;
 	}
-	if (l2->len != p->n.len || strncmp(l2->s, p->n.s, l2->len)) {
+	if(l2->len != p->n.len || strncmp(l2->s, p->n.s, l2->len)) {
 		return -1;
 	}
 
 	p = p->next;
-	if (l3 == NULL) {
-		if (plb->n_elem != 2) {
+	if(l3 == NULL) {
+		if(plb->n_elem != 2) {
 			return -1;
 		}
 		return 0;
 	}
 
 	/* At least three labels. */
-	if (p == NULL) {
+	if(p == NULL) {
 		return -1;
 	}
-	if (l3->len != p->n.len || strncmp(l3->s, p->n.s, l3->len)) {
+	if(l3->len != p->n.len || strncmp(l3->s, p->n.s, l3->len)) {
 		return -1;
 	}
 
-	return 0; 
+	return 0;
 }
 
 /**
@@ -384,12 +395,12 @@ static int prom_lb_compare(prom_lb_t *plb, str *l1, str *l2, str *l3)
  */
 static int prom_lvalue_compare(prom_lvalue_t *p, str *l1, str *l2, str *l3)
 {
-	if (p == NULL) {
+	if(p == NULL) {
 		LM_ERR("No lvalue structure\n");
 		return -1;
 	}
 
-	if (prom_lb_compare(&p->lval, l1, l2, l3)) {
+	if(prom_lb_compare(&p->lval, l1, l2, l3)) {
 		return -1;
 	}
 
@@ -404,23 +415,23 @@ static int prom_lvalue_compare(prom_lvalue_t *p, str *l1, str *l2, str *l3)
  */
 static void prom_lvalue_free(prom_lvalue_t *plv)
 {
-	if (plv == NULL) {
+	if(plv == NULL) {
 		return;
 	}
 
 	/* Free hval member of structure. */
-	if (plv->metric->type == M_HISTOGRAM && plv->m.hval) {
+	if(plv->metric->type == M_HISTOGRAM && plv->m.hval) {
 		prom_histogram_value_free(plv->m.hval);
 	}
-	
+
 	/* Free list of strings. */
 	prom_lb_node_t *lb_node = plv->lval.lb;
-	while (lb_node) {
+	while(lb_node) {
 		prom_lb_node_t *next = lb_node->next;
 		prom_lb_node_free(lb_node, 1);
 		lb_node = next;
 	}
-	
+
 	shm_free(plv);
 }
 
@@ -431,7 +442,7 @@ static void prom_lvalue_free(prom_lvalue_t *plv)
  */
 static void prom_lvalue_list_free(prom_lvalue_t *plv)
 {
-	while (plv) {
+	while(plv) {
 		prom_lvalue_t *next = plv->next;
 		prom_lvalue_free(plv);
 		plv = next;
@@ -448,7 +459,7 @@ static void prom_lvalue_list_free(prom_lvalue_t *plv)
  */
 static int prom_lvalue_lb_create(prom_lvalue_t *lv, str *l1, str *l2, str *l3)
 {
-	if (lv == NULL) {
+	if(lv == NULL) {
 		LM_ERR("No lvalue structure\n");
 		return -1;
 	}
@@ -458,33 +469,33 @@ static int prom_lvalue_lb_create(prom_lvalue_t *lv, str *l1, str *l2, str *l3)
 	p->n_elem = 0;
 	p->lb = NULL;
 
-	if (l1 == NULL) {
+	if(l1 == NULL) {
 		/* No labels. */
 		return 0;
 	}
 
 	/* At least 1 label. */
-	if (prom_lb_node_add(p, l1->s, l1->len, 1)) {
+	if(prom_lb_node_add(p, l1->s, l1->len, 1)) {
 		LM_ERR("Cannot add label string\n");
 		return -1;
 	}
-	
-	if (l2 == NULL) {
+
+	if(l2 == NULL) {
 		return 0;
 	}
 
 	/* At least 2 labels. */
-	if (prom_lb_node_add(p, l2->s, l2->len, 1)) {
+	if(prom_lb_node_add(p, l2->s, l2->len, 1)) {
 		LM_ERR("Cannot add label string\n");
 		return -1;
 	}
 
-	if (l3 == NULL) {
+	if(l3 == NULL) {
 		return 0;
 	}
 
 	/* 3 labels. */
-	if (prom_lb_node_add(p, l3->s, l3->len, 1)) {
+	if(prom_lb_node_add(p, l3->s, l3->len, 1)) {
 		LM_ERR("Cannot add label string\n");
 		return -1;
 	}
@@ -501,16 +512,17 @@ static int prom_lvalue_lb_create(prom_lvalue_t *lv, str *l1, str *l2, str *l3)
  * @return pointer to newly created structure on success.
  * @return NULL on error.
  */
-static prom_lvalue_t* prom_metric_lvalue_create(prom_metric_t *p_m, str *l1, str *l2, str *l3)
+static prom_lvalue_t *prom_metric_lvalue_create(
+		prom_metric_t *p_m, str *l1, str *l2, str *l3)
 {
-	if (p_m == NULL) {
+	if(p_m == NULL) {
 		LM_ERR("No metric found\n");
 		return NULL;
 	}
 
 	prom_lvalue_t *plv = NULL;
-	plv = (prom_lvalue_t*)shm_malloc(sizeof(*plv));
-	if (plv == NULL) {
+	plv = (prom_lvalue_t *)shm_malloc(sizeof(*plv));
+	if(plv == NULL) {
 		SHM_MEM_ERROR;
 		return NULL;
 	}
@@ -518,15 +530,15 @@ static prom_lvalue_t* prom_metric_lvalue_create(prom_metric_t *p_m, str *l1, str
 
 	/* Set link to metric */
 	plv->metric = p_m;
-	
-	if (prom_lvalue_lb_create(plv, l1, l2, l3)) {
+
+	if(prom_lvalue_lb_create(plv, l1, l2, l3)) {
 		LM_ERR("Cannot create list of strings\n");
 		goto error;
 	}
 
 	/* Place plv at the end of lvalue list. */
 	prom_lvalue_t **l = &p_m->lval_list;
-	while (*l != NULL) {
+	while(*l != NULL) {
 		l = &((*l)->next);
 	}
 	*l = plv;
@@ -548,39 +560,40 @@ error:
  * @return pointer to lvalue on success.
  * @return NULL on error.
  */
-static prom_lvalue_t* prom_lvalue_get_create(prom_metric_t *p_m, str *l1, str *l2, str *l3)
+static prom_lvalue_t *prom_lvalue_get_create(
+		prom_metric_t *p_m, str *l1, str *l2, str *l3)
 {
-	if (!p_m) {
+	if(!p_m) {
 		LM_ERR("No metric found\n");
 		return NULL;
 	}
 
 	/* Check number of elements in labels. */
-	if (l1 == NULL) {
-		if (p_m->lb_name != NULL) {
+	if(l1 == NULL) {
+		if(p_m->lb_name != NULL) {
 			LM_ERR("Number of labels does not match for metric: %.*s\n",
-				   p_m->name.len, p_m->name.s);
+					p_m->name.len, p_m->name.s);
 			return NULL;
 		}
 
-	} else if (l2 == NULL) {
-		if (!p_m || !p_m->lb_name || p_m->lb_name->n_elem != 1) {
+	} else if(l2 == NULL) {
+		if(!p_m || !p_m->lb_name || p_m->lb_name->n_elem != 1) {
 			LM_ERR("Number of labels does not match for metric: %.*s\n",
-				   p_m->name.len, p_m->name.s);
+					p_m->name.len, p_m->name.s);
 			return NULL;
 		}
 
-	} else if (l3 == NULL) {
-		if (!p_m || !p_m->lb_name || p_m->lb_name->n_elem != 2) {
+	} else if(l3 == NULL) {
+		if(!p_m || !p_m->lb_name || p_m->lb_name->n_elem != 2) {
 			LM_ERR("Number of labels does not match for metric: %.*s\n",
-				   p_m->name.len, p_m->name.s);
+					p_m->name.len, p_m->name.s);
 			return NULL;
 		}
 
 	} else {
-		if (!p_m || !p_m->lb_name || p_m->lb_name->n_elem != 3) {
+		if(!p_m || !p_m->lb_name || p_m->lb_name->n_elem != 3) {
 			LM_ERR("Number of labels does not match for metric: %.*s\n",
-				   p_m->name.len, p_m->name.s);
+					p_m->name.len, p_m->name.s);
 			return NULL;
 		}
 
@@ -588,8 +601,8 @@ static prom_lvalue_t* prom_lvalue_get_create(prom_metric_t *p_m, str *l1, str *l
 
 	/* Find existing prom_lvalue_t structure. */
 	prom_lvalue_t *p = p_m->lval_list;
-	while (p) {
-		if (prom_lvalue_compare(p, l1, l2, l3) == 0) {
+	while(p) {
+		if(prom_lvalue_compare(p, l1, l2, l3) == 0) {
 			LM_DBG("LValue structure found\n");
 			return p;
 		}
@@ -599,7 +612,7 @@ static prom_lvalue_t* prom_lvalue_get_create(prom_metric_t *p_m, str *l1, str *l
 	LM_DBG("Creating lvalue %.*s\n", p_m->name.len, p_m->name.s);
 	/* No lvalue structure found. Create and insert a new one. */
 	p = prom_metric_lvalue_create(p_m, l1, l2, l3);
-	if (p == NULL) {
+	if(p == NULL) {
 		LM_ERR("Cannot create a new lvalue structure\n");
 		return NULL;
 	}
@@ -614,23 +627,23 @@ static prom_lvalue_t* prom_lvalue_get_create(prom_metric_t *p_m, str *l1, str *l
  */
 static void prom_metric_timeout_delete(prom_metric_t *p_m)
 {
-	if (p_m == NULL) {
+	if(p_m == NULL) {
 		return;
 	}
 
 	/* Get timestamp. */
 	uint64_t ts;
-	if (get_timestamp(&ts)) {
+	if(get_timestamp(&ts)) {
 		LM_ERR("Fail to get timestamp\n");
 		return;
 	}
 
 	/* Parse lvalue list deleting outdated items. */
 	prom_lvalue_t **l = &p_m->lval_list;
-	while (*l != NULL) {
+	while(*l != NULL) {
 		prom_lvalue_t *current = *l;
-		
-		if (ts - current->ts > lvalue_timeout) {
+
+		if(ts - current->ts > lvalue_timeout) {
 			LM_DBG("Timeout found\n");
 			*l = (*l)->next;
 
@@ -640,18 +653,18 @@ static void prom_metric_timeout_delete(prom_metric_t *p_m)
 		} else {
 			l = &((*l)->next);
 		}
-		
+
 	} /* while *l != NULL */
 }
 
 /**
  * @brief Delete old lvalue structures in list of metrics.
  */
-static void	prom_metric_list_timeout_delete()
+static void prom_metric_list_timeout_delete()
 {
 	prom_metric_t *p = prom_metric_list;
 
-	while (p) {
+	while(p) {
 		prom_metric_timeout_delete(p);
 		p = p->next;
 	}
@@ -665,47 +678,48 @@ static void	prom_metric_list_timeout_delete()
  * @return NULL if no lvalue was found or created.
  * @return pointer to lvalue on success.
  */
-static prom_lvalue_t* prom_metric_lvalue_get(str *s_name, metric_type_t m_type,
-											 str *l1, str *l2, str *l3)
+static prom_lvalue_t *prom_metric_lvalue_get(
+		str *s_name, metric_type_t m_type, str *l1, str *l2, str *l3)
 {
-	if (!s_name || s_name->len == 0 || s_name->s == NULL) {
+	if(!s_name || s_name->len == 0 || s_name->s == NULL) {
 		LM_ERR("No name for metric\n");
 		return NULL;
 	}
 
 	/* Delete old lvalue structures. */
-	if (lvalue_timeout > 0) {
+	if(lvalue_timeout > 0) {
 		prom_metric_list_timeout_delete();
 	}
 
-    prom_metric_t *p_m = prom_metric_get(s_name);
-	if (p_m == NULL) {
+	prom_metric_t *p_m = prom_metric_get(s_name);
+	if(p_m == NULL) {
 		LM_ERR("No metric found for name: %.*s\n", s_name->len, s_name->s);
 		return NULL;
 	}
 
-	if (p_m->type != m_type) {
-		LM_ERR("Metric type does not match for metric: %.*s\n", s_name->len, s_name->s);
+	if(p_m->type != m_type) {
+		LM_ERR("Metric type does not match for metric: %.*s\n", s_name->len,
+				s_name->s);
 		return NULL;
 	}
 
 	/* Get timestamp. */
 	uint64_t ts;
-	if (get_timestamp(&ts)) {
+	if(get_timestamp(&ts)) {
 		LM_ERR("Fail to get timestamp\n");
 		return NULL;
 	}
 
 	prom_lvalue_t *p_lv = NULL;
 	p_lv = prom_lvalue_get_create(p_m, l1, l2, l3);
-	if (p_lv == NULL) {
+	if(p_lv == NULL) {
 		LM_ERR("Failed to create lvalue\n");
 		return NULL;
 	}
 
 	p_lv->ts = ts;
 	LM_DBG("New timestamp: %" PRIu64 "\n", p_lv->ts);
-	
+
 	return p_lv;
 }
 
@@ -714,27 +728,26 @@ static prom_lvalue_t* prom_metric_lvalue_get(str *s_name, metric_type_t m_type,
  */
 static void prom_lb_node_free(prom_lb_node_t *lb_node, int shared_mem)
 {
-	if (lb_node == NULL) {
+	if(lb_node == NULL) {
 		return;
 	}
 
 	/* Free the str. */
-	if (shared_mem) {
-		if (lb_node->n.s) {
+	if(shared_mem) {
+		if(lb_node->n.s) {
 			shm_free(lb_node->n.s);
 		}
 	} else {
-		if (lb_node->n.s) {
+		if(lb_node->n.s) {
 			pkg_free(lb_node->n.s);
-		}	
+		}
 	}
-	
-	if (shared_mem) {
+
+	if(shared_mem) {
 		shm_free(lb_node);
 	} else {
 		pkg_free(lb_node);
 	}
-
 }
 
 /**
@@ -744,27 +757,27 @@ static void prom_lb_node_free(prom_lb_node_t *lb_node, int shared_mem)
  */
 static void prom_lb_free(prom_lb_t *prom_lb, int shared_mem)
 {
-	if (prom_lb == NULL) {
+	if(prom_lb == NULL) {
 		return;
 	}
 
 	/* Free nodes. */
 	prom_lb_node_t *lb_node = prom_lb->lb;
-	while (lb_node) {
+	while(lb_node) {
 		prom_lb_node_t *next = lb_node->next;
 		prom_lb_node_free(lb_node, shared_mem);
 		lb_node = next;
 	}
 
 	/* Free prom_bl_t object. */
-	if (shared_mem) {
+	if(shared_mem) {
 		shm_free(prom_lb);
 	} else {
 		pkg_free(prom_lb);
 	}
 }
 
-#define LABEL_SEP ':'  /**< Field separator for labels. */
+#define LABEL_SEP ':' /**< Field separator for labels. */
 
 /**
  * @brief Add a string to list of strings.
@@ -778,17 +791,17 @@ static void prom_lb_free(prom_lb_t *prom_lb, int shared_mem)
  */
 static int prom_lb_node_add(prom_lb_t *m_lb, char *s, int len, int shared_mem)
 {
-	if (len <= 0) {
+	if(len <= 0) {
 		LM_ERR("Void string to add\n");
 		return -1;
 	}
-	
+
 	LM_DBG("Label: adding (%.*s)\n", len, s);
 	prom_lb_node_t *lb_node;
-	if (shared_mem) {
+	if(shared_mem) {
 		/* Shared memory */
-		lb_node = (prom_lb_node_t*)shm_malloc(sizeof(*lb_node));
-		if (lb_node == NULL) {
+		lb_node = (prom_lb_node_t *)shm_malloc(sizeof(*lb_node));
+		if(lb_node == NULL) {
 			SHM_MEM_ERROR;
 			goto error;
 		}
@@ -796,8 +809,8 @@ static int prom_lb_node_add(prom_lb_t *m_lb, char *s, int len, int shared_mem)
 
 	} else {
 		/* Pkg memory */
-		lb_node = (prom_lb_node_t*)pkg_malloc(sizeof(*lb_node));
-		if (lb_node == NULL) {
+		lb_node = (prom_lb_node_t *)pkg_malloc(sizeof(*lb_node));
+		if(lb_node == NULL) {
 			PKG_MEM_ERROR;
 			goto error;
 		}
@@ -806,22 +819,22 @@ static int prom_lb_node_add(prom_lb_t *m_lb, char *s, int len, int shared_mem)
 	} /* if shared_mem */
 
 	/* Allocate space for str. */
-	if (shared_mem) {
+	if(shared_mem) {
 		/* Shared memory */
 		/* We left space for zero at the end. */
-		lb_node->n.s = (char*)shm_malloc(len + 1);
-		if (lb_node->n.s == NULL) {
+		lb_node->n.s = (char *)shm_malloc(len + 1);
+		if(lb_node->n.s == NULL) {
 			SHM_MEM_ERROR;
 			goto error;
 		}
 		memcpy(lb_node->n.s, s, len);
 		lb_node->n.len = len;
-		
+
 	} else {
 		/* Pkg memory */
 		/* We left space for zero at the end. */
-		lb_node->n.s = (char*)shm_malloc(len + 1);
-		if (lb_node->n.s == NULL) {
+		lb_node->n.s = (char *)shm_malloc(len + 1);
+		if(lb_node->n.s == NULL) {
 			SHM_MEM_ERROR;
 			goto error;
 		}
@@ -831,17 +844,17 @@ static int prom_lb_node_add(prom_lb_t *m_lb, char *s, int len, int shared_mem)
 	} /* if shared_mem */
 
 	LM_DBG("Node str: %.*s\n", lb_node->n.len, lb_node->n.s);
-	
+
 	/* Place node at the end of string list. */
 	prom_lb_node_t **l = &m_lb->lb;
-	while (*l != NULL) {
+	while(*l != NULL) {
 		l = &((*l)->next);
 	}
 	*l = lb_node;
 	lb_node->next = NULL;
 
 	m_lb->n_elem++;
-	
+
 	/* Everything went fine. */
 	return 0;
 
@@ -858,19 +871,19 @@ error:
  * @return pointer to prom_lb_t struct on success.
  * @return NULL on error.
  */
-static prom_lb_t* prom_lb_create(str *lb_str, int shared_mem)
+static prom_lb_t *prom_lb_create(str *lb_str, int shared_mem)
 {
 	prom_lb_t *m_lb = NULL;
 
-	if (!lb_str || lb_str->len == 0 || lb_str->s == NULL) {
+	if(!lb_str || lb_str->len == 0 || lb_str->s == NULL) {
 		LM_ERR("No label string\n");
 		goto error;
 	}
-	
-	if (shared_mem) {
+
+	if(shared_mem) {
 		/* Shared memory */
-		m_lb = (prom_lb_t*)shm_malloc(sizeof(*m_lb));
-		if (m_lb == NULL) {
+		m_lb = (prom_lb_t *)shm_malloc(sizeof(*m_lb));
+		if(m_lb == NULL) {
 			SHM_MEM_ERROR;
 			goto error;
 		}
@@ -878,8 +891,8 @@ static prom_lb_t* prom_lb_create(str *lb_str, int shared_mem)
 
 	} else {
 		/* Pkg memory */
-		m_lb = (prom_lb_t*)pkg_malloc(sizeof(*m_lb));
-		if (m_lb == NULL) {
+		m_lb = (prom_lb_t *)pkg_malloc(sizeof(*m_lb));
+		if(m_lb == NULL) {
 			PKG_MEM_ERROR;
 			goto error;
 		}
@@ -891,9 +904,10 @@ static prom_lb_t* prom_lb_create(str *lb_str, int shared_mem)
 	int len = lb_str->len;
 	char *s = lb_str->s;
 	int pos_end = 0, pos_start = 0;
-	while (pos_end < len) {
-		if (s[pos_end] == LABEL_SEP) {
-			if (prom_lb_node_add(m_lb, s + pos_start, pos_end - pos_start, shared_mem)) {
+	while(pos_end < len) {
+		if(s[pos_end] == LABEL_SEP) {
+			if(prom_lb_node_add(
+					   m_lb, s + pos_start, pos_end - pos_start, shared_mem)) {
 				LM_ERR("Cannot add label string\n");
 				goto error;
 			}
@@ -903,13 +917,14 @@ static prom_lb_t* prom_lb_create(str *lb_str, int shared_mem)
 		pos_end++;
 	}
 	/* Add last string if it does exist. */
-	if (pos_end > pos_start) {
-		if (prom_lb_node_add(m_lb, s + pos_start, pos_end - pos_start, shared_mem)) {
+	if(pos_end > pos_start) {
+		if(prom_lb_node_add(
+				   m_lb, s + pos_start, pos_end - pos_start, shared_mem)) {
 			LM_ERR("Cannot add label string\n");
 			goto error;
 		}
 	}
-	
+
 	/* Everything fine */
 	return m_lb;
 
@@ -925,17 +940,17 @@ error:
  */
 static int prom_label_create(prom_metric_t *mt, str *lb_str)
 {
-	if (mt == NULL) {
+	if(mt == NULL) {
 		LM_ERR("No metric available\n");
 		return -1;
 	}
-	
-	if (lb_str == NULL || lb_str->len == 0 || lb_str->s == NULL) {
+
+	if(lb_str == NULL || lb_str->len == 0 || lb_str->s == NULL) {
 		LM_ERR("No label available\n");
 		return -1;
 	}
 
-	if (mt->lb_name != NULL) {
+	if(mt->lb_name != NULL) {
 		LM_ERR("Label already created\n");
 		return -1;
 	}
@@ -943,7 +958,7 @@ static int prom_label_create(prom_metric_t *mt, str *lb_str)
 	/* Create new label name in shared memory */
 	prom_lb_t *new_lb;
 	new_lb = prom_lb_create(lb_str, 1);
-	if (new_lb == NULL) {
+	if(new_lb == NULL) {
 		LM_ERR("Cannot create label: %.*s\n", lb_str->len, lb_str->s);
 		return -1;
 	}
@@ -960,61 +975,61 @@ static int prom_label_create(prom_metric_t *mt, str *lb_str)
  */
 int prom_counter_create(char *spec)
 {
-	param_t *pit=NULL;
+	param_t *pit = NULL;
 	param_hooks_t phooks;
 	prom_metric_t *m_cnt = NULL;
 	str s;
 
 	s.s = spec;
 	s.len = strlen(spec);
-	if(s.s[s.len-1]==';')
+	if(s.s[s.len - 1] == ';')
 		s.len--;
-	if (parse_params(&s, CLASS_ANY, &phooks, &pit)<0)
-	{
+	if(parse_params(&s, CLASS_ANY, &phooks, &pit) < 0) {
 		LM_ERR("failed parsing params value\n");
 		goto error;
 	}
-	m_cnt = (prom_metric_t*)shm_malloc(sizeof(prom_metric_t));
-	if (m_cnt == NULL) {
+	m_cnt = (prom_metric_t *)shm_malloc(sizeof(prom_metric_t));
+	if(m_cnt == NULL) {
 		SHM_MEM_ERROR;
 		goto error;
 	}
 	memset(m_cnt, 0, sizeof(*m_cnt));
 	m_cnt->type = M_COUNTER;
-	
+
 	param_t *p = NULL;
-	for (p = pit; p; p = p->next) {
-		if (p->name.len == 5 && strncmp(p->name.s, "label", 5) == 0) {
+	for(p = pit; p; p = p->next) {
+		if(p->name.len == 5 && strncmp(p->name.s, "label", 5) == 0) {
 			/* Fill counter label. */
-			if (prom_label_create(m_cnt, &p->body)) {
+			if(prom_label_create(m_cnt, &p->body)) {
 				LM_ERR("Error creating label: %.*s\n", p->body.len, p->body.s);
 				goto error;
 			}
 			LM_DBG("label = %.*s\n", p->body.len, p->body.s);
 
-		} else if (p->name.len == 4 && strncmp(p->name.s, "name", 4) == 0) {
+		} else if(p->name.len == 4 && strncmp(p->name.s, "name", 4) == 0) {
 			/* Fill counter name. */
-			if (shm_str_dup(&m_cnt->name, &p->body)) {
-				LM_ERR("Error creating counter name: %.*s\n", p->body.len, p->body.s);
+			if(shm_str_dup(&m_cnt->name, &p->body)) {
+				LM_ERR("Error creating counter name: %.*s\n", p->body.len,
+						p->body.s);
 				goto error;
 			}
 			LM_DBG("name = %.*s\n", m_cnt->name.len, m_cnt->name.s);
 
 		} else {
 			LM_ERR("Unknown field: %.*s (%.*s)\n", p->name.len, p->name.s,
-				   p->body.len, p->body.s);
+					p->body.len, p->body.s);
 			goto error;
 		}
 	} /* for p = pit */
 
-	if (m_cnt->name.s == NULL || m_cnt->name.len == 0) {
+	if(m_cnt->name.s == NULL || m_cnt->name.len == 0) {
 		LM_ERR("No counter name\n");
 		goto error;
 	}
 
 	/* Place counter at the end of list. */
 	prom_metric_t **l = &prom_metric_list;
-	while (*l != NULL) {
+	while(*l != NULL) {
 		l = &((*l)->next);
 	}
 	*l = m_cnt;
@@ -1024,10 +1039,10 @@ int prom_counter_create(char *spec)
 	return 0;
 
 error:
-	if (pit != NULL) {
+	if(pit != NULL) {
 		free_params(pit);
 	}
-	if (m_cnt != NULL) {
+	if(m_cnt != NULL) {
 		prom_counter_free(m_cnt);
 	}
 	return -1;
@@ -1042,14 +1057,14 @@ static void prom_gauge_free(prom_metric_t *m_gg)
 
 	assert(m_gg->type == M_GAUGE);
 
-	if (m_gg->name.s) {
+	if(m_gg->name.s) {
 		shm_free(m_gg->name.s);
 	}
 
 	prom_lb_free(m_gg->lb_name, 1);
 
 	prom_lvalue_list_free(m_gg->lval_list);
-	
+
 	shm_free(m_gg);
 }
 
@@ -1058,61 +1073,61 @@ static void prom_gauge_free(prom_metric_t *m_gg)
  */
 int prom_gauge_create(char *spec)
 {
-	param_t *pit=NULL;
+	param_t *pit = NULL;
 	param_hooks_t phooks;
 	prom_metric_t *m_gg = NULL;
 	str s;
 
 	s.s = spec;
 	s.len = strlen(spec);
-	if(s.s[s.len-1]==';')
+	if(s.s[s.len - 1] == ';')
 		s.len--;
-	if (parse_params(&s, CLASS_ANY, &phooks, &pit)<0)
-	{
+	if(parse_params(&s, CLASS_ANY, &phooks, &pit) < 0) {
 		LM_ERR("failed parsing params value\n");
 		goto error;
 	}
-	m_gg = (prom_metric_t*)shm_malloc(sizeof(prom_metric_t));
-	if (m_gg == NULL) {
+	m_gg = (prom_metric_t *)shm_malloc(sizeof(prom_metric_t));
+	if(m_gg == NULL) {
 		SHM_MEM_ERROR;
 		goto error;
 	}
 	memset(m_gg, 0, sizeof(*m_gg));
 	m_gg->type = M_GAUGE;
-	
+
 	param_t *p = NULL;
-	for (p = pit; p; p = p->next) {
-		if (p->name.len == 5 && strncmp(p->name.s, "label", 5) == 0) {
+	for(p = pit; p; p = p->next) {
+		if(p->name.len == 5 && strncmp(p->name.s, "label", 5) == 0) {
 			/* Fill gauge label. */
-			if (prom_label_create(m_gg, &p->body)) {
+			if(prom_label_create(m_gg, &p->body)) {
 				LM_ERR("Error creating label: %.*s\n", p->body.len, p->body.s);
 				goto error;
 			}
 			LM_DBG("label = %.*s\n", p->body.len, p->body.s);
 
-		} else if (p->name.len == 4 && strncmp(p->name.s, "name", 4) == 0) {
+		} else if(p->name.len == 4 && strncmp(p->name.s, "name", 4) == 0) {
 			/* Fill gauge name. */
-			if (shm_str_dup(&m_gg->name, &p->body)) {
-				LM_ERR("Error creating gauge name: %.*s\n", p->body.len, p->body.s);
+			if(shm_str_dup(&m_gg->name, &p->body)) {
+				LM_ERR("Error creating gauge name: %.*s\n", p->body.len,
+						p->body.s);
 				goto error;
 			}
 			LM_DBG("name = %.*s\n", m_gg->name.len, m_gg->name.s);
 
 		} else {
 			LM_ERR("Unknown field: %.*s (%.*s)\n", p->name.len, p->name.s,
-				   p->body.len, p->body.s);
+					p->body.len, p->body.s);
 			goto error;
 		}
 	} /* for p = pit */
 
-	if (m_gg->name.s == NULL || m_gg->name.len == 0) {
+	if(m_gg->name.s == NULL || m_gg->name.len == 0) {
 		LM_ERR("No gauge name\n");
 		goto error;
 	}
 
 	/* Place gauge at the end of list. */
 	prom_metric_t **l = &prom_metric_list;
-	while (*l != NULL) {
+	while(*l != NULL) {
 		l = &((*l)->next);
 	}
 	*l = m_gg;
@@ -1122,10 +1137,10 @@ int prom_gauge_create(char *spec)
 	return 0;
 
 error:
-	if (pit != NULL) {
+	if(pit != NULL) {
 		free_params(pit);
 	}
-	if (m_gg != NULL) {
+	if(m_gg != NULL) {
 		prom_gauge_free(m_gg);
 	}
 	return -1;
@@ -1141,7 +1156,7 @@ int prom_counter_inc(str *s_name, int number, str *l1, str *l2, str *l3)
 	/* Find a lvalue based on its metric name and labels. */
 	prom_lvalue_t *p = NULL;
 	p = prom_metric_lvalue_get(s_name, M_COUNTER, l1, l2, l3);
-	if (!p) {
+	if(!p) {
 		LM_ERR("Cannot find counter: %.*s\n", s_name->len, s_name->s);
 		lock_release(prom_lock);
 		return -1;
@@ -1149,7 +1164,7 @@ int prom_counter_inc(str *s_name, int number, str *l1, str *l2, str *l3)
 
 	/* Add to counter value. */
 	p->m.cval += number;
-	
+
 	lock_release(prom_lock);
 	return 0;
 }
@@ -1164,7 +1179,7 @@ int prom_counter_reset(str *s_name, str *l1, str *l2, str *l3)
 	/* Find a lvalue based on its metric name and labels. */
 	prom_lvalue_t *p = NULL;
 	p = prom_metric_lvalue_get(s_name, M_COUNTER, l1, l2, l3);
-	if (!p) {
+	if(!p) {
 		LM_ERR("Cannot find counter: %.*s\n", s_name->len, s_name->s);
 		lock_release(prom_lock);
 		return -1;
@@ -1172,7 +1187,7 @@ int prom_counter_reset(str *s_name, str *l1, str *l2, str *l3)
 
 	/* Reset counter value. */
 	p->m.cval = 0;
-	
+
 	lock_release(prom_lock);
 	return 0;
 }
@@ -1187,7 +1202,7 @@ int prom_gauge_set(str *s_name, double number, str *l1, str *l2, str *l3)
 	/* Find a lvalue based on its metric name and labels. */
 	prom_lvalue_t *p = NULL;
 	p = prom_metric_lvalue_get(s_name, M_GAUGE, l1, l2, l3);
-	if (!p) {
+	if(!p) {
 		LM_ERR("Cannot find gauge: %.*s\n", s_name->len, s_name->s);
 		lock_release(prom_lock);
 		return -1;
@@ -1195,7 +1210,7 @@ int prom_gauge_set(str *s_name, double number, str *l1, str *l2, str *l3)
 
 	/* Set gauge value. */
 	p->m.gval = number;
-		
+
 	lock_release(prom_lock);
 	return 0;
 }
@@ -1210,7 +1225,7 @@ int prom_gauge_reset(str *s_name, str *l1, str *l2, str *l3)
 	/* Find a lvalue based on its metric name and labels. */
 	prom_lvalue_t *p = NULL;
 	p = prom_metric_lvalue_get(s_name, M_GAUGE, l1, l2, l3);
-	if (!p) {
+	if(!p) {
 		LM_ERR("Cannot find gauge: %.*s\n", s_name->len, s_name->s);
 		lock_release(prom_lock);
 		return -1;
@@ -1218,12 +1233,12 @@ int prom_gauge_reset(str *s_name, str *l1, str *l2, str *l3)
 
 	/* Reset counter value. */
 	p->m.gval = 0.0;
-		
+
 	lock_release(prom_lock);
 	return 0;
 }
 
-#define BUCKET_SEP ':'  /**< Field separator for buckets. */
+#define BUCKET_SEP ':' /**< Field separator for buckets. */
 
 /**
  * @brief Create upper bounds for histogram buckets.
@@ -1238,8 +1253,8 @@ int prom_buckets_create(prom_metric_t *m_hist, str *bucket_str)
 	int cnt;
 	prom_buckets_upper_t *b_upper = NULL;
 
-	b_upper = (prom_buckets_upper_t*)shm_malloc(sizeof(prom_buckets_upper_t));
-	if (b_upper == NULL) {
+	b_upper = (prom_buckets_upper_t *)shm_malloc(sizeof(prom_buckets_upper_t));
+	if(b_upper == NULL) {
 		SHM_MEM_ERROR;
 		goto error;
 	}
@@ -1247,15 +1262,16 @@ int prom_buckets_create(prom_metric_t *m_hist, str *bucket_str)
 
 	/* Parse bucket_str */
 
-	if (bucket_str == NULL) {
+	if(bucket_str == NULL) {
 		LM_DBG("Setting default configuration for histogram buckets\n");
 
 		/* Default bucket configuration. */
 		/* [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10] */
 
 		b_upper->count = 11; /* We do not count Inf bucket. */
-		b_upper->upper_bounds = (double*)shm_malloc(sizeof(double) * b_upper->count);
-		if (b_upper->upper_bounds == NULL) {
+		b_upper->upper_bounds =
+				(double *)shm_malloc(sizeof(double) * b_upper->count);
+		if(b_upper->upper_bounds == NULL) {
 			SHM_MEM_ERROR;
 			goto error;
 		}
@@ -1270,11 +1286,11 @@ int prom_buckets_create(prom_metric_t *m_hist, str *bucket_str)
 		b_upper->upper_bounds[8] = 2.5;
 		b_upper->upper_bounds[9] = 5.0;
 		b_upper->upper_bounds[10] = 10.0;
-		
+
 	} else {
 		/* bucket_str exits. */
 
-		if (bucket_str->len == 0 || bucket_str->s == NULL) {
+		if(bucket_str->len == 0 || bucket_str->s == NULL) {
 			LM_ERR("Void bucket string\n");
 			goto error;
 		}
@@ -1283,8 +1299,8 @@ int prom_buckets_create(prom_metric_t *m_hist, str *bucket_str)
 		cnt = 1; /* At least one bucket. */
 		int i = 0;
 		s = bucket_str->s;
-		while (i < bucket_str->len) {
-			if (s[i] == BUCKET_SEP) {
+		while(i < bucket_str->len) {
+			if(s[i] == BUCKET_SEP) {
 				cnt++;
 			}
 			i++;
@@ -1292,8 +1308,9 @@ int prom_buckets_create(prom_metric_t *m_hist, str *bucket_str)
 		LM_DBG("Preliminarily found %d buckets\n", cnt);
 
 		b_upper->count = cnt; /* We do not count Inf bucket. */
-		b_upper->upper_bounds = (double*)shm_malloc(sizeof(double) * b_upper->count);
-		if (b_upper->upper_bounds == NULL) {
+		b_upper->upper_bounds =
+				(double *)shm_malloc(sizeof(double) * b_upper->count);
+		if(b_upper->upper_bounds == NULL) {
 			SHM_MEM_ERROR;
 			goto error;
 		}
@@ -1303,14 +1320,14 @@ int prom_buckets_create(prom_metric_t *m_hist, str *bucket_str)
 		s = bucket_str->s;
 		int pos_end = 0, pos_start = 0;
 		cnt = 0;
-		while (pos_end < len) {
-			if (s[pos_end] == BUCKET_SEP) {
+		while(pos_end < len) {
+			if(s[pos_end] == BUCKET_SEP) {
 				str st;
 				st.len = pos_end - pos_start;
 				st.s = s + pos_start;
-				if (double_parse_str(&st, b_upper->upper_bounds + cnt)) {
-					LM_ERR("Cannot add double to bucket (%d): %.*s\n",
-						   cnt, bucket_str->len, bucket_str->s);
+				if(double_parse_str(&st, b_upper->upper_bounds + cnt)) {
+					LM_ERR("Cannot add double to bucket (%d): %.*s\n", cnt,
+							bucket_str->len, bucket_str->s);
 					goto error;
 				}
 				pos_start = pos_end + 1;
@@ -1320,45 +1337,45 @@ int prom_buckets_create(prom_metric_t *m_hist, str *bucket_str)
 			pos_end++;
 		}
 		/* Add last string if it does exist. */
-		if (pos_end > pos_start) {
+		if(pos_end > pos_start) {
 			str st;
 			st.len = pos_end - pos_start;
 			st.s = s + pos_start;
-			if (double_parse_str(&st, b_upper->upper_bounds + cnt)) {
-				LM_ERR("Cannot add double to bucket (%d): %.*s\n",
-					   cnt, bucket_str->len, bucket_str->s);
+			if(double_parse_str(&st, b_upper->upper_bounds + cnt)) {
+				LM_ERR("Cannot add double to bucket (%d): %.*s\n", cnt,
+						bucket_str->len, bucket_str->s);
 				goto error;
 			}
 			cnt++;
 		}
-		if (cnt < 1) {
+		if(cnt < 1) {
 			LM_ERR("At least one bucket needed\n");
 			goto error;
 		}
-		if (cnt != b_upper->count) {
+		if(cnt != b_upper->count) {
 			LM_ERR("Wrong number of parsed buckets. Expected %d found %d\n",
-				   b_upper->count, cnt);
+					b_upper->count, cnt);
 			goto error;
 		}
 
 		/* Check buckets increase. */
-		for (cnt = 1; cnt < b_upper->count; cnt++) {
-			if (b_upper->upper_bounds[cnt] < b_upper->upper_bounds[cnt - 1]) {
+		for(cnt = 1; cnt < b_upper->count; cnt++) {
+			if(b_upper->upper_bounds[cnt] < b_upper->upper_bounds[cnt - 1]) {
 				LM_ERR("Buckets must increase\n");
 				goto error;
 			}
 		}
-		
+
 	} /* if (bucket_str == NULL) */
-	
+
 	/* Everything OK. */
 	m_hist->buckets_upper = b_upper;
 	return 0;
-	
+
 error:
 
-	if (b_upper) {
-		if (b_upper->upper_bounds) {
+	if(b_upper) {
+		if(b_upper->upper_bounds) {
 			shm_free(b_upper->upper_bounds);
 		}
 		shm_free(b_upper);
@@ -1376,22 +1393,22 @@ static void prom_histogram_free(prom_metric_t *m_hist)
 
 	assert(m_hist->type == M_HISTOGRAM);
 
-	if (m_hist->name.s) {
+	if(m_hist->name.s) {
 		shm_free(m_hist->name.s);
 	}
 
 	/* Free buckets_upper. */
-	if (m_hist->buckets_upper) {
-		if (m_hist->buckets_upper->upper_bounds) {
+	if(m_hist->buckets_upper) {
+		if(m_hist->buckets_upper->upper_bounds) {
 			shm_free(m_hist->buckets_upper->upper_bounds);
 		}
 		shm_free(m_hist->buckets_upper);
 	}
-	
+
 	prom_lb_free(m_hist->lb_name, 1);
 
 	prom_lvalue_list_free(m_hist->lval_list);
-	
+
 	shm_free(m_hist);
 }
 
@@ -1402,22 +1419,21 @@ static void prom_histogram_free(prom_metric_t *m_hist)
  */
 int prom_histogram_create(char *spec)
 {
-	param_t *pit=NULL;
+	param_t *pit = NULL;
 	param_hooks_t phooks;
 	prom_metric_t *m_hist = NULL;
 	str s;
 
 	s.s = spec;
 	s.len = strlen(spec);
-	if(s.s[s.len-1]==';')
+	if(s.s[s.len - 1] == ';')
 		s.len--;
-	if (parse_params(&s, CLASS_ANY, &phooks, &pit)<0)
-	{
+	if(parse_params(&s, CLASS_ANY, &phooks, &pit) < 0) {
 		LM_ERR("failed parsing params value\n");
 		goto error;
 	}
-	m_hist = (prom_metric_t*)shm_malloc(sizeof(prom_metric_t));
-	if (m_hist == NULL) {
+	m_hist = (prom_metric_t *)shm_malloc(sizeof(prom_metric_t));
+	if(m_hist == NULL) {
 		SHM_MEM_ERROR;
 		goto error;
 	}
@@ -1425,55 +1441,57 @@ int prom_histogram_create(char *spec)
 	m_hist->type = M_HISTOGRAM;
 
 	param_t *p = NULL;
-	for (p = pit; p; p = p->next) {
-		if (p->name.len == 5 && strncmp(p->name.s, "label", 5) == 0) {
+	for(p = pit; p; p = p->next) {
+		if(p->name.len == 5 && strncmp(p->name.s, "label", 5) == 0) {
 			/* Fill histogram label. */
-			if (prom_label_create(m_hist, &p->body)) {
+			if(prom_label_create(m_hist, &p->body)) {
 				LM_ERR("Error creating label: %.*s\n", p->body.len, p->body.s);
 				goto error;
 			}
 			LM_DBG("label = %.*s\n", p->body.len, p->body.s);
 
-		} else if (p->name.len == 4 && strncmp(p->name.s, "name", 4) == 0) {
+		} else if(p->name.len == 4 && strncmp(p->name.s, "name", 4) == 0) {
 			/* Fill histogram name. */
-			if (shm_str_dup(&m_hist->name, &p->body)) {
-				LM_ERR("Error creating histogram name: %.*s\n", p->body.len, p->body.s);
+			if(shm_str_dup(&m_hist->name, &p->body)) {
+				LM_ERR("Error creating histogram name: %.*s\n", p->body.len,
+						p->body.s);
 				goto error;
 			}
 			LM_DBG("name = %.*s\n", m_hist->name.len, m_hist->name.s);
 
-		} else if (p->name.len == 7 && strncmp(p->name.s, "buckets", 7) == 0) {
+		} else if(p->name.len == 7 && strncmp(p->name.s, "buckets", 7) == 0) {
 			/* Fill histogram buckets. */
-			if (prom_buckets_create(m_hist, &p->body)) {
-				LM_ERR("Error creating buckets: %.*s\n", p->body.len, p->body.s);
+			if(prom_buckets_create(m_hist, &p->body)) {
+				LM_ERR("Error creating buckets: %.*s\n", p->body.len,
+						p->body.s);
 				goto error;
 			}
 			LM_DBG("buckets = %.*s\n", p->body.len, p->body.s);
-			
+
 		} else {
 			LM_ERR("Unknown field: %.*s (%.*s)\n", p->name.len, p->name.s,
-				   p->body.len, p->body.s);
+					p->body.len, p->body.s);
 			goto error;
 		}
 	} /* for p = pit */
 
-	if (m_hist->name.s == NULL || m_hist->name.len == 0) {
+	if(m_hist->name.s == NULL || m_hist->name.len == 0) {
 		LM_ERR("No histogram name\n");
 		goto error;
 	}
 
 	/* Set default buckets. */
-	if (m_hist->buckets_upper == NULL) {
+	if(m_hist->buckets_upper == NULL) {
 		LM_DBG("Setting default buckets\n");
-		if (prom_buckets_create(m_hist, NULL)) {
+		if(prom_buckets_create(m_hist, NULL)) {
 			LM_ERR("Failed to create default buckets\n");
 			goto error;
 		}
 	}
-	
+
 	/* Place histogram at the end of list. */
 	prom_metric_t **l = &prom_metric_list;
-	while (*l != NULL) {
+	while(*l != NULL) {
 		l = &((*l)->next);
 	}
 	*l = m_hist;
@@ -1481,18 +1499,19 @@ int prom_histogram_create(char *spec)
 
 	/* For debugging purpose show upper bounds for buckets. */
 	int i;
-	for (i = 0; i < m_hist->buckets_upper->count; i++) {
-		LM_DBG("Bucket (%d) -> %f\n", i, m_hist->buckets_upper->upper_bounds[i]);
+	for(i = 0; i < m_hist->buckets_upper->count; i++) {
+		LM_DBG("Bucket (%d) -> %f\n", i,
+				m_hist->buckets_upper->upper_bounds[i]);
 	}
-	
+
 	/* Everything went fine. */
 	return 0;
 
 error:
-	if (pit != NULL) {
+	if(pit != NULL) {
 		free_params(pit);
 	}
-	if (m_hist != NULL) {
+	if(m_hist != NULL) {
 		prom_histogram_free(m_hist);
 	}
 	return -1;
@@ -1503,11 +1522,11 @@ error:
  */
 static void prom_histogram_value_free(prom_hist_value_t *phv)
 {
-	if (!phv) {
+	if(!phv) {
 		return;
 	}
 
-	if (phv->buckets_count) {
+	if(phv->buckets_count) {
 		shm_free(phv->buckets_count);
 	}
 
@@ -1523,14 +1542,14 @@ static int prom_histogram_value_create(prom_lvalue_t *hlv)
 {
 	assert(hlv);
 
-	if (hlv->m.hval) {
+	if(hlv->m.hval) {
 		/* Return if prom_hist_value_t structure already exists. */
 		return 0;
 	}
 
 	prom_hist_value_t *phv = NULL;
-	phv = (prom_hist_value_t*)shm_malloc(sizeof(*phv));
-	if (phv == NULL) {
+	phv = (prom_hist_value_t *)shm_malloc(sizeof(*phv));
+	if(phv == NULL) {
 		SHM_MEM_ERROR;
 		goto error;
 	}
@@ -1538,18 +1557,18 @@ static int prom_histogram_value_create(prom_lvalue_t *hlv)
 
 	int count = hlv->metric->buckets_upper->count;
 	LM_DBG("Setting array for %d buckets\n", count);
-	phv->buckets_count = (uint64_t*)shm_malloc(sizeof(uint64_t) * count);
-	if (!phv->buckets_count) {
+	phv->buckets_count = (uint64_t *)shm_malloc(sizeof(uint64_t) * count);
+	if(!phv->buckets_count) {
 		SHM_MEM_ERROR;
 		goto error;
 	}
 	memset(phv->buckets_count, 0, sizeof(uint64_t) * count);
-	
+
 	hlv->m.hval = phv;
 	return 0;
-	
+
 error:
-	if (phv) {
+	if(phv) {
 		prom_histogram_value_free(phv);
 	}
 
@@ -1566,7 +1585,7 @@ static int prom_histogram_lvalue_observe(prom_lvalue_t *hlv, double number)
 	assert(hlv);
 
 	/* Create prom_hist_value_t structure if needed. */
-	if (prom_histogram_value_create(hlv)) {
+	if(prom_histogram_value_create(hlv)) {
 		LM_ERR("Failed to create histogram_value\n");
 		goto error;
 	}
@@ -1574,8 +1593,8 @@ static int prom_histogram_lvalue_observe(prom_lvalue_t *hlv, double number)
 	int i;
 	int cnt = hlv->metric->buckets_upper->count;
 	double *buck_up = hlv->metric->buckets_upper->upper_bounds;
-	for (i = cnt - 1; i >= 0; i--) {
-		if (number <= buck_up[i]) {
+	for(i = cnt - 1; i >= 0; i--) {
+		if(number <= buck_up[i]) {
 			hlv->m.hval->buckets_count[i]++;
 		} else {
 			break;
@@ -1588,11 +1607,11 @@ static int prom_histogram_lvalue_observe(prom_lvalue_t *hlv, double number)
 	LM_DBG("bucket_count: %" PRIu64 "\n", hlv->m.hval->count);
 	LM_DBG("bucket_sum: %f\n", hlv->m.hval->sum);
 
-	for (i = 0; i < cnt; i++) {
-		LM_DBG("bucket (%d) [%f] -> %" PRIu64 "\n",
-			   i, buck_up[i], hlv->m.hval->buckets_count[i]);
+	for(i = 0; i < cnt; i++) {
+		LM_DBG("bucket (%d) [%f] -> %" PRIu64 "\n", i, buck_up[i],
+				hlv->m.hval->buckets_count[i]);
 	}
-	
+
 	/* Everything fine. */
 	return 0;
 
@@ -1606,22 +1625,23 @@ error:
  *
  * @param number value to observe.
  */
-int prom_histogram_observe(str *s_name, double number, str *l1, str *l2, str *l3)
+int prom_histogram_observe(
+		str *s_name, double number, str *l1, str *l2, str *l3)
 {
 	lock_get(prom_lock);
 
 	/* Find a lvalue based on its metric name and labels. */
 	prom_lvalue_t *p = NULL;
 	p = prom_metric_lvalue_get(s_name, M_HISTOGRAM, l1, l2, l3);
-	if (!p) {
+	if(!p) {
 		LM_ERR("Cannot find histogram: %.*s\n", s_name->len, s_name->s);
 		goto error;
 	}
 
 	/* Observe value in histogram related structure. */
-	if (prom_histogram_lvalue_observe(p, number)) {
+	if(prom_histogram_lvalue_observe(p, number)) {
 		LM_ERR("Cannot observe number %f in lvalue for histogram: %.*s\n",
-			   number, s_name->len, s_name->s);
+				number, s_name->len, s_name->s);
 		goto error;
 	}
 
@@ -1638,53 +1658,48 @@ error:
  *
  * @return 0 on success.
  */
-static int prom_label_print(prom_ctx_t *ctx, prom_lb_t *lb_name, prom_lb_t *plval)
+static int prom_label_print(
+		prom_ctx_t *ctx, prom_lb_t *lb_name, prom_lb_t *plval)
 {
-	if (!ctx) {
+	if(!ctx) {
 		LM_ERR("No context\n");
 		goto error;
 	}
 
-	if (!plval) {
+	if(!plval) {
 		goto error;
 	}
 
-	if (plval->n_elem == 0) {
+	if(plval->n_elem == 0) {
 		/* Nothing to print. */
 		return 0;
-	}	
-	
-	if (!lb_name || lb_name->n_elem == 0) {
+	}
+
+	if(!lb_name || lb_name->n_elem == 0) {
 		/* Nothing to print. */
 		return 0;
 	}
 
 	prom_lb_node_t *lb_name_node = lb_name->lb;
 	prom_lb_node_t *plval_node = plval->lb;
-	while (lb_name_node && plval_node) {
-		if (lb_name_node == lb_name->lb) {
+	while(lb_name_node && plval_node) {
+		if(lb_name_node == lb_name->lb) {
 			/* First label */
-			if (prom_body_printf(ctx,
-								 "{"
-					) == -1) {
+			if(prom_body_printf(ctx, "{") == -1) {
 				LM_ERR("Fail to print\n");
 				goto error;
 			}
 		} else {
 			/* Not the first label */
-			if (prom_body_printf(ctx,
-								 ", "
-					) == -1) {
+			if(prom_body_printf(ctx, ", ") == -1) {
 				LM_ERR("Fail to print\n");
 				goto error;
 			}
 		}
-		
-		if (prom_body_printf(ctx,
-							 "%.*s=\"%.*s\"",
-							 lb_name_node->n.len, lb_name_node->n.s,
-							 plval_node->n.len, plval_node->n.s
-				) == -1) {
+
+		if(prom_body_printf(ctx, "%.*s=\"%.*s\"", lb_name_node->n.len,
+				   lb_name_node->n.s, plval_node->n.len, plval_node->n.s)
+				== -1) {
 			LM_ERR("Fail to print\n");
 			goto error;
 		}
@@ -1694,16 +1709,14 @@ static int prom_label_print(prom_ctx_t *ctx, prom_lb_t *lb_name, prom_lb_t *plva
 	} /* while (lb_name_node && plval_node) */
 
 	/* Close labels. */
-	if (prom_body_printf(ctx,
-						 "}"
-			) == -1) {
+	if(prom_body_printf(ctx, "}") == -1) {
 		LM_ERR("Fail to print\n");
 		goto error;
 	}
 
 	/* Everything fine. */
 	return 0;
-	
+
 error:
 
 	return -1;
@@ -1716,31 +1729,28 @@ error:
  *
  * @return 0 on success.
  */
-static int prom_label_print_le(prom_ctx_t *ctx, prom_lb_t *lb_name, prom_lb_t *plval, char *le_s)
+static int prom_label_print_le(
+		prom_ctx_t *ctx, prom_lb_t *lb_name, prom_lb_t *plval, char *le_s)
 {
-	if (!ctx) {
+	if(!ctx) {
 		LM_ERR("No context\n");
 		goto error;
 	}
 
-	if (prom_body_printf(ctx,
-						 "{"
-			) == -1) {
+	if(prom_body_printf(ctx, "{") == -1) {
 		LM_ERR("Fail to print\n");
 		goto error;
 	}
 
-	if (plval && plval->n_elem != 0 && lb_name && lb_name->n_elem != 0) {
+	if(plval && plval->n_elem != 0 && lb_name && lb_name->n_elem != 0) {
 		/* There are labels different from le one. */
 		prom_lb_node_t *lb_name_node = lb_name->lb;
 		prom_lb_node_t *plval_node = plval->lb;
-		while (lb_name_node && plval_node) {
-		
-			if (prom_body_printf(ctx,
-								 "%.*s=\"%.*s\", ",
-								 lb_name_node->n.len, lb_name_node->n.s,
-								 plval_node->n.len, plval_node->n.s
-					) == -1) {
+		while(lb_name_node && plval_node) {
+
+			if(prom_body_printf(ctx, "%.*s=\"%.*s\", ", lb_name_node->n.len,
+					   lb_name_node->n.s, plval_node->n.len, plval_node->n.s)
+					== -1) {
 				LM_ERR("Fail to print\n");
 				goto error;
 			}
@@ -1752,25 +1762,20 @@ static int prom_label_print_le(prom_ctx_t *ctx, prom_lb_t *lb_name, prom_lb_t *p
 	} /* if plval && plval->n_elem != 0 */
 
 	/* Print le label. */
-	if (prom_body_printf(ctx,
-						 "le=\"%s\"",
-						 le_s
-			) == -1) {
+	if(prom_body_printf(ctx, "le=\"%s\"", le_s) == -1) {
 		LM_ERR("Fail to print\n");
 		goto error;
 	}
-	
+
 	/* Close labels. */
-	if (prom_body_printf(ctx,
-						 "}"
-			) == -1) {
+	if(prom_body_printf(ctx, "}") == -1) {
 		LM_ERR("Fail to print\n");
 		goto error;
 	}
 
 	/* Everything fine. */
 	return 0;
-	
+
 error:
 
 	return -1;
@@ -1783,259 +1788,205 @@ error:
  *
  * @return 0 on success.
  */
-static int prom_metric_lvalue_print(prom_ctx_t *ctx, prom_metric_t *p, prom_lvalue_t *pvl)
+static int prom_metric_lvalue_print(
+		prom_ctx_t *ctx, prom_metric_t *p, prom_lvalue_t *pvl)
 {
-	if (!ctx) {
+	if(!ctx) {
 		LM_ERR("No context\n");
 		goto error;
 	}
 
-	if (!p) {
+	if(!p) {
 		LM_ERR("No metric\n");
 		goto error;
 	}
 
-	if (!pvl) {
+	if(!pvl) {
 		LM_ERR("No lvalue structure\n");
 		goto error;
 	}
-	
-	if (p->type == M_COUNTER) {
+
+	if(p->type == M_COUNTER) {
 
 		uint64_t ts;
-		if (get_timestamp(&ts)) {
+		if(get_timestamp(&ts)) {
 			LM_ERR("Fail to get timestamp\n");
 			goto error;
 		}
-		LM_DBG("Counter %.*s%.*s %" PRIu64 "\n",
-			   xhttp_prom_beginning.len, xhttp_prom_beginning.s,
-			   p->name.len, p->name.s,
-			   ts
-			);
-		if (prom_body_printf(ctx,
-							 "%.*s%.*s",
-							 xhttp_prom_beginning.len, xhttp_prom_beginning.s,
-							 p->name.len, p->name.s
-				) == -1) {
+		LM_DBG("Counter %.*s%.*s %" PRIu64 "\n", xhttp_prom_beginning.len,
+				xhttp_prom_beginning.s, p->name.len, p->name.s, ts);
+		if(prom_body_printf(ctx, "%.*s%.*s", xhttp_prom_beginning.len,
+				   xhttp_prom_beginning.s, p->name.len, p->name.s)
+				== -1) {
 			LM_ERR("Fail to print\n");
 			goto error;
 		}
 
 		/* Print labels */
-		if (prom_label_print(ctx, p->lb_name, &pvl->lval)) {
+		if(prom_label_print(ctx, p->lb_name, &pvl->lval)) {
 			LM_ERR("Fail to print labels\n");
 			goto error;
 		}
 
-		if (prom_body_printf(ctx,
-							 " %" PRIu64,
-							 pvl->m.cval
-				) == -1) {
+		if(prom_body_printf(ctx, " %" PRIu64, pvl->m.cval) == -1) {
 			LM_ERR("Fail to print\n");
 			goto error;
 		}
 
-		if (prom_body_printf(ctx,
-							 " %" PRIu64 "\n",
-							 ts
-				) == -1) {
+		if(prom_body_printf(ctx, " %" PRIu64 "\n", ts) == -1) {
 			LM_ERR("Fail to print\n");
 			goto error;
 		}
 
-	} else if (p->type == M_GAUGE) {
+	} else if(p->type == M_GAUGE) {
 		uint64_t ts;
-		if (get_timestamp(&ts)) {
+		if(get_timestamp(&ts)) {
 			LM_ERR("Fail to get timestamp\n");
 			goto error;
 		}
-		LM_DBG("Gauge %.*s%.*s %" PRId64 "\n",
-			   xhttp_prom_beginning.len, xhttp_prom_beginning.s,
-			   p->name.len, p->name.s,
-			   ts
-			);
-		
-		if (prom_body_printf(ctx,
-							 "%.*s%.*s",
-							 xhttp_prom_beginning.len, xhttp_prom_beginning.s,
-							 p->name.len, p->name.s
-				) == -1) {
+		LM_DBG("Gauge %.*s%.*s %" PRId64 "\n", xhttp_prom_beginning.len,
+				xhttp_prom_beginning.s, p->name.len, p->name.s, ts);
+
+		if(prom_body_printf(ctx, "%.*s%.*s", xhttp_prom_beginning.len,
+				   xhttp_prom_beginning.s, p->name.len, p->name.s)
+				== -1) {
 			LM_ERR("Fail to print\n");
 			goto error;
 		}
-		
+
 		/* Print labels */
-		if (prom_label_print(ctx, p->lb_name, &pvl->lval)) {
+		if(prom_label_print(ctx, p->lb_name, &pvl->lval)) {
 			LM_ERR("Fail to print labels\n");
 			goto error;
 		}
 
-		if (prom_body_printf(ctx,
-							 " %f",
-							 pvl->m.gval
-				) == -1) {
+		if(prom_body_printf(ctx, " %f", pvl->m.gval) == -1) {
 			LM_ERR("Fail to print\n");
 			goto error;
 		}
 
-		if (prom_body_printf(ctx,
-							 " %" PRIu64 "\n",
-							 ts
-				) == -1) {
+		if(prom_body_printf(ctx, " %" PRIu64 "\n", ts) == -1) {
 			LM_ERR("Fail to print\n");
 			goto error;
 		}
 
-	} else if (p->type == M_HISTOGRAM) {
+	} else if(p->type == M_HISTOGRAM) {
 		uint64_t ts;
-		if (get_timestamp(&ts)) {
+		if(get_timestamp(&ts)) {
 			LM_ERR("Fail to get timestamp\n");
 			goto error;
 		}
-		LM_DBG("Histogram %.*s%.*s %" PRId64 "\n",
-			   xhttp_prom_beginning.len, xhttp_prom_beginning.s,
-			   p->name.len, p->name.s,
-			   ts
-			);
+		LM_DBG("Histogram %.*s%.*s %" PRId64 "\n", xhttp_prom_beginning.len,
+				xhttp_prom_beginning.s, p->name.len, p->name.s, ts);
 
 		/* Display buckets. */
 		char le_val_s[LE_LABEL_LEN];
 		int count = p->buckets_upper->count; /* Number of buckets. */
 		int i;
-		for (i = 0; i < count; i++) {
+		for(i = 0; i < count; i++) {
 			/* Display a bucket. */
-			if (prom_body_printf(ctx,
-								 "%.*s%.*s_bucket",
-								 xhttp_prom_beginning.len, xhttp_prom_beginning.s,
-								 p->name.len, p->name.s
-					) == -1) {
+			if(prom_body_printf(ctx, "%.*s%.*s_bucket",
+					   xhttp_prom_beginning.len, xhttp_prom_beginning.s,
+					   p->name.len, p->name.s)
+					== -1) {
 				LM_ERR("Fail to print\n");
 				goto error;
 			}
-		
+
 			/* Print labels */
 			snprintf(le_val_s, LE_LABEL_LEN, "%f",
-					 pvl->metric->buckets_upper->upper_bounds[i]);
-			
-			if (prom_label_print_le(ctx, p->lb_name, &pvl->lval, le_val_s)) {
+					pvl->metric->buckets_upper->upper_bounds[i]);
+
+			if(prom_label_print_le(ctx, p->lb_name, &pvl->lval, le_val_s)) {
 				LM_ERR("Fail to print labels\n");
 				goto error;
 			}
 
-			if (prom_body_printf(ctx,
-								 " %" PRIu64,
-								 pvl->m.hval->buckets_count[i]
-					) == -1) {
+			if(prom_body_printf(ctx, " %" PRIu64, pvl->m.hval->buckets_count[i])
+					== -1) {
 				LM_ERR("Fail to print\n");
 				goto error;
 			}
 
-			if (prom_body_printf(ctx,
-								 " %" PRIu64 "\n",
-								 ts
-					) == -1) {
+			if(prom_body_printf(ctx, " %" PRIu64 "\n", ts) == -1) {
 				LM_ERR("Fail to print\n");
 				goto error;
 			}
 
 		} /* for i = 0 */
-		
+
 		/* Write Inf bucket. */
-		if (prom_body_printf(ctx,
-							 "%.*s%.*s_bucket",
-							 xhttp_prom_beginning.len, xhttp_prom_beginning.s,
-							 p->name.len, p->name.s
-				) == -1) {
+		if(prom_body_printf(ctx, "%.*s%.*s_bucket", xhttp_prom_beginning.len,
+				   xhttp_prom_beginning.s, p->name.len, p->name.s)
+				== -1) {
 			LM_ERR("Fail to print\n");
 			goto error;
 		}
-		
+
 		/* Print Inf le labels */
-		if (prom_label_print_le(ctx, p->lb_name, &pvl->lval, "+Inf")) {
+		if(prom_label_print_le(ctx, p->lb_name, &pvl->lval, "+Inf")) {
 			LM_ERR("Fail to print labels\n");
 			goto error;
 		}
 
-		if (prom_body_printf(ctx,
-							 " %" PRIu64,
-							 pvl->m.hval->count
-				) == -1) {
+		if(prom_body_printf(ctx, " %" PRIu64, pvl->m.hval->count) == -1) {
 			LM_ERR("Fail to print\n");
 			goto error;
 		}
 
-		if (prom_body_printf(ctx,
-							 " %" PRIu64 "\n",
-							 ts
-				) == -1) {
+		if(prom_body_printf(ctx, " %" PRIu64 "\n", ts) == -1) {
 			LM_ERR("Fail to print\n");
 			goto error;
 		}
-		
+
 		/* Display histogram sum. */
-		if (prom_body_printf(ctx,
-							 "%.*s%.*s_sum",
-							 xhttp_prom_beginning.len, xhttp_prom_beginning.s,
-							 p->name.len, p->name.s
-				) == -1) {
+		if(prom_body_printf(ctx, "%.*s%.*s_sum", xhttp_prom_beginning.len,
+				   xhttp_prom_beginning.s, p->name.len, p->name.s)
+				== -1) {
 			LM_ERR("Fail to print\n");
 			goto error;
 		}
-		
+
 		/* Print labels */
-		if (prom_label_print(ctx, p->lb_name, &pvl->lval)) {
+		if(prom_label_print(ctx, p->lb_name, &pvl->lval)) {
 			LM_ERR("Fail to print labels\n");
 			goto error;
 		}
 
-		if (prom_body_printf(ctx,
-							 " %f",
-							 pvl->m.hval->sum
-				) == -1) {
+		if(prom_body_printf(ctx, " %f", pvl->m.hval->sum) == -1) {
 			LM_ERR("Fail to print\n");
 			goto error;
 		}
 
-		if (prom_body_printf(ctx,
-							 " %" PRIu64 "\n",
-							 ts
-				) == -1) {
+		if(prom_body_printf(ctx, " %" PRIu64 "\n", ts) == -1) {
 			LM_ERR("Fail to print\n");
 			goto error;
 		}
 
 		/* Display histogram counter. */
-		if (prom_body_printf(ctx,
-							 "%.*s%.*s_count",
-							 xhttp_prom_beginning.len, xhttp_prom_beginning.s,
-							 p->name.len, p->name.s
-				) == -1) {
+		if(prom_body_printf(ctx, "%.*s%.*s_count", xhttp_prom_beginning.len,
+				   xhttp_prom_beginning.s, p->name.len, p->name.s)
+				== -1) {
 			LM_ERR("Fail to print\n");
 			goto error;
 		}
-		
+
 		/* Print labels */
-		if (prom_label_print(ctx, p->lb_name, &pvl->lval)) {
+		if(prom_label_print(ctx, p->lb_name, &pvl->lval)) {
 			LM_ERR("Fail to print labels\n");
 			goto error;
 		}
 
-		if (prom_body_printf(ctx,
-							 " %" PRIu64,
-							 pvl->m.hval->count
-				) == -1) {
+		if(prom_body_printf(ctx, " %" PRIu64, pvl->m.hval->count) == -1) {
 			LM_ERR("Fail to print\n");
 			goto error;
 		}
 
-		if (prom_body_printf(ctx,
-							 " %" PRIu64 "\n",
-							 ts
-				) == -1) {
+		if(prom_body_printf(ctx, " %" PRIu64 "\n", ts) == -1) {
 			LM_ERR("Fail to print\n");
 			goto error;
 		}
-		
+
 	} else {
 		LM_DBG("Unknown metric type: %d\n", p->type);
 	}
@@ -2055,38 +2006,36 @@ error:
 int prom_metric_list_print(prom_ctx_t *ctx)
 {
 	lock_get(prom_lock);
-	
+
 	prom_metric_t *p = prom_metric_list;
-	if (p) {
-		if (prom_body_printf(
-				ctx, "# User defined metrics\n") == -1) {
+	if(p) {
+		if(prom_body_printf(ctx, "# User defined metrics\n") == -1) {
 			LM_ERR("Fail to print\n");
 			goto error;
 		}
 	} else {
-		if (prom_body_printf(
-				ctx, "# NO User defined metrics\n") == -1) {
+		if(prom_body_printf(ctx, "# NO User defined metrics\n") == -1) {
 			LM_ERR("Fail to print\n");
 			goto error;
 		}
 	} /* if p */
 
-	while (p) {
+	while(p) {
 
 		prom_lvalue_t *pvl = p->lval_list;
-		
-		while (pvl) {
-			if (prom_metric_lvalue_print(ctx, p, pvl)) {
+
+		while(pvl) {
+			if(prom_metric_lvalue_print(ctx, p, pvl)) {
 				LM_ERR("Failed to print\n");
 				goto error;
 			}
-			
+
 			pvl = pvl->next;
-			
+
 		} /* while pvl */
 
 		p = p->next;
-		
+
 	} /* while p */
 
 	lock_release(prom_lock);
@@ -2096,4 +2045,3 @@ error:
 	lock_release(prom_lock);
 	return -1;
 }
-

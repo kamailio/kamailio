@@ -57,9 +57,9 @@ void prom_body_delete(prom_ctx_t *ctx)
 int prom_body_printf(prom_ctx_t *ctx, char *fmt, ...)
 {
 	struct xhttp_prom_reply *reply = &ctx->reply;
-	
+
 	va_list ap;
-	
+
 	va_start(ap, fmt);
 
 	LM_DBG("Body current length: %d\n", reply->body.len);
@@ -70,10 +70,10 @@ int prom_body_printf(prom_ctx_t *ctx, char *fmt, ...)
 
 	/* int vsnprintf(char *str, size_t size, const char *format, va_list ap); */
 	int len = vsnprintf(p, remaining_len, fmt, ap);
-	if (len < 0) {
+	if(len < 0) {
 		LM_ERR("Error printing body buffer\n");
 		goto error;
-	} else if (len >= remaining_len) {
+	} else if(len >= remaining_len) {
 		LM_ERR("Error body buffer overflow: %d (%d)\n", len, remaining_len);
 		goto error;
 	} else {
@@ -101,9 +101,9 @@ error:
 int prom_body_name_printf(prom_ctx_t *ctx, char *fmt, ...)
 {
 	struct xhttp_prom_reply *reply = &ctx->reply;
-	
+
 	va_list ap;
-	
+
 	va_start(ap, fmt);
 
 	LM_DBG("Body current length: %d\n", reply->body.len);
@@ -114,10 +114,10 @@ int prom_body_name_printf(prom_ctx_t *ctx, char *fmt, ...)
 
 	/* int vsnprintf(char *str, size_t size, const char *format, va_list ap); */
 	int len = vsnprintf(p, remaining_len, fmt, ap);
-	if (len < 0) {
+	if(len < 0) {
 		LM_ERR("Error printing body buffer\n");
 		goto error;
-	} else if (len >= remaining_len) {
+	} else if(len >= remaining_len) {
 		LM_ERR("Error body buffer overflow: %d (%d)\n", len, remaining_len);
 		goto error;
 	} else {
@@ -125,12 +125,12 @@ int prom_body_name_printf(prom_ctx_t *ctx, char *fmt, ...)
 
 		/* Change - into _ to accomplish with Prometheus guidelines for metric names */
 		int i;
-		for (i=0; i<len; i++) {
-			if (p[i] == '-') {
+		for(i = 0; i < len; i++) {
+			if(p[i] == '-') {
 				p[i] = '_';
 			}
 		}
-		
+
 		reply->body.len += len;
 		LM_DBG("Body new length: %d\n", reply->body.len);
 	}
@@ -152,16 +152,16 @@ error:
 int get_timestamp(uint64_t *ts)
 {
 	assert(ts);
-	
+
 	struct timeval current_time;
-	if (gettimeofday(&current_time, NULL) < 0) {
+	if(gettimeofday(&current_time, NULL) < 0) {
 		LM_ERR("failed to get current time!\n");
 		return -1;
 	}
 
-	*ts = (uint64_t)current_time.tv_sec*1000 +
-		(uint64_t)current_time.tv_usec/1000;
-	
+	*ts = (uint64_t)current_time.tv_sec * 1000
+		  + (uint64_t)current_time.tv_usec / 1000;
+
 	return 0;
 }
 
@@ -170,31 +170,32 @@ int get_timestamp(uint64_t *ts)
  *
  * @return 0 on success.
  */
-static int metric_generate(prom_ctx_t *ctx, str *group, str *name, counter_handle_t *h)
+static int metric_generate(
+		prom_ctx_t *ctx, str *group, str *name, counter_handle_t *h)
 {
 	long counter_val = counter_get_val(*h);
 
 	/* Calculate timestamp. */
 	uint64_t ts;
-	if (get_timestamp(&ts)) {
+	if(get_timestamp(&ts)) {
 		LM_ERR("Error getting current timestamp\n");
 		return -1;
 	}
 
 	LM_DBG("metric -> group: %.*s  name: %.*s  value: %lu  TS: %" PRIu64 "\n",
-		   group->len, group->s, name->len, name->s,
-		   counter_val, (uint64_t)ts);
+			group->len, group->s, name->len, name->s, counter_val,
+			(uint64_t)ts);
 
 	/* Print metric name. */
-	if (prom_body_name_printf(ctx, "%.*s%.*s_%.*s",
-						 xhttp_prom_beginning.len, xhttp_prom_beginning.s,
-						 group->len, group->s, name->len, name->s) == -1) {
+	if(prom_body_name_printf(ctx, "%.*s%.*s_%.*s", xhttp_prom_beginning.len,
+			   xhttp_prom_beginning.s, group->len, group->s, name->len, name->s)
+			== -1) {
 		LM_ERR("Fail to print\n");
 		return -1;
 	}
-						 
-	if (prom_body_printf(ctx, " %lu %" PRIu64 "\n",
-						 counter_val, (uint64_t)ts) == -1) {
+
+	if(prom_body_printf(ctx, " %lu %" PRIu64 "\n", counter_val, (uint64_t)ts)
+			== -1) {
 		LM_ERR("Fail to print\n");
 		return -1;
 	}
@@ -205,7 +206,7 @@ static int metric_generate(prom_ctx_t *ctx, str *group, str *name, counter_handl
 /**
  * @brief Statistic getter callback.
  */
-static void prom_get_grp_vars_cbk(void* p, str* g, str* n, counter_handle_t h)
+static void prom_get_grp_vars_cbk(void *p, str *g, str *n, counter_handle_t h)
 {
 	metric_generate(p, g, n, &h);
 }
@@ -213,7 +214,7 @@ static void prom_get_grp_vars_cbk(void* p, str* g, str* n, counter_handle_t h)
 /**
  * @brief Group statistic getter callback.
  */
-static void prom_get_all_grps_cbk(void* p, str* g)
+static void prom_get_all_grps_cbk(void *p, str *g)
 {
 	counter_iterate_grp_vars(g->s, prom_get_grp_vars_cbk, p);
 }
@@ -227,15 +228,15 @@ static void prom_get_all_grps_cbk(void* p, str* g)
  */
 int prom_stats_get(prom_ctx_t *ctx, str *stat)
 {
-	if (stat == NULL) {
+	if(stat == NULL) {
 		LM_ERR("No stats set\n");
 		return -1;
 	}
 
 	prom_body_delete(ctx);
-	
+
 	LM_DBG("User defined statistics\n");
-	if (prom_metric_list_print(ctx)) {
+	if(prom_metric_list_print(ctx)) {
 		LM_ERR("Fail to print user defined metrics\n");
 		return -1;
 	}
@@ -246,31 +247,30 @@ int prom_stats_get(prom_ctx_t *ctx, str *stat)
 
 	stat_var *s_stat;
 
-	if (len == 0) {
+	if(len == 0) {
 		LM_DBG("Do not show Kamailio statistics\n");
 
-	}
-	else if (len==3 && strncmp("all", stat->s, 3)==0) {
+	} else if(len == 3 && strncmp("all", stat->s, 3) == 0) {
 		LM_DBG("Showing all statistics\n");
-		if (prom_body_printf(
-				ctx, "\n# Kamailio whole internal statistics\n") == -1) {
+		if(prom_body_printf(ctx, "\n# Kamailio whole internal statistics\n")
+				== -1) {
 			LM_ERR("Fail to print\n");
 			return -1;
-		}	
+		}
 
 		counter_iterate_grp_names(prom_get_all_grps_cbk, ctx);
-	}
-	else if (stat->s[len-1]==':') {
+	} else if(stat->s[len - 1] == ':') {
 		LM_DBG("Showing statistics for group: %.*s\n", stat->len, stat->s);
 
-		if (len == 1) {
+		if(len == 1) {
 			LM_ERR("Void group for statistics: %.*s\n", stat->len, stat->s);
 			return -1;
-			
+
 		} else {
-			if (prom_body_printf(
-					ctx, "\n# Kamailio statistics for group: %.*s\n",
-					stat->len, stat->s) == -1) {
+			if(prom_body_printf(ctx,
+					   "\n# Kamailio statistics for group: %.*s\n", stat->len,
+					   stat->s)
+					== -1) {
 				LM_ERR("Fail to print\n");
 				return -1;
 			}
@@ -278,54 +278,52 @@ int prom_stats_get(prom_ctx_t *ctx, str *stat)
 			/* Temporary stat_tmp string. */
 			char stat_tmp[STATS_MAX_LEN];
 			memcpy(stat_tmp, stat->s, len);
-			stat_tmp[len-1] = '\0';
+			stat_tmp[len - 1] = '\0';
 			counter_iterate_grp_vars(stat_tmp, prom_get_grp_vars_cbk, ctx);
-			stat_tmp[len-1] = ':';
+			stat_tmp[len - 1] = ':';
 		}
-	}
-	else {
+	} else {
 		LM_DBG("Showing statistic for: %.*s\n", stat->len, stat->s);
 
 		s_stat = get_stat(stat);
-		if (s_stat) {
+		if(s_stat) {
 			str group_str, name_str;
 			group_str.s = get_stat_module(s_stat);
-			if (group_str.s) {
+			if(group_str.s) {
 				group_str.len = strlen(group_str.s);
 			} else {
 				group_str.len = 0;
 			}
-			
+
 			name_str.s = get_stat_name(s_stat);
-			if (name_str.s) {
+			if(name_str.s) {
 				name_str.len = strlen(name_str.s);
 			} else {
 				name_str.len = 0;
 			}
-			
-			LM_DBG("%s:%s = %lu\n",
-				   ZSW(get_stat_module(s_stat)), ZSW(get_stat_name(s_stat)),
-				   get_stat_val(s_stat));
 
-			if (group_str.len && name_str.len && s_stat) {
-				if (prom_body_printf(
-						ctx, "\n# Kamailio statistics for: %.*s\n",
-						stat->len, stat->s) == -1) {
+			LM_DBG("%s:%s = %lu\n", ZSW(get_stat_module(s_stat)),
+					ZSW(get_stat_name(s_stat)), get_stat_val(s_stat));
+
+			if(group_str.len && name_str.len && s_stat) {
+				if(prom_body_printf(ctx, "\n# Kamailio statistics for: %.*s\n",
+						   stat->len, stat->s)
+						== -1) {
 					LM_ERR("Fail to print\n");
 					return -1;
 				}
 
 				counter_handle_t stat_handle;
 				stat_handle.id = (unsigned short)(unsigned long)s_stat;
-				if (metric_generate(ctx, &group_str, &name_str, &stat_handle)) {
+				if(metric_generate(ctx, &group_str, &name_str, &stat_handle)) {
 					LM_ERR("Failed to generate metric: %.*s - %.*s\n",
-						   group_str.len, group_str.s,
-						   name_str.len, name_str.s);
+							group_str.len, group_str.s, name_str.len,
+							name_str.s);
 					return -1;
 				}
 			} else {
 				LM_ERR("Not enough length for group (%d) or name (%d)\n",
-					   group_str.len, name_str.len);
+						group_str.len, name_str.len);
 				return -1;
 			}
 		} /* if s_stat */
@@ -337,4 +335,3 @@ int prom_stats_get(prom_ctx_t *ctx, str *stat)
 
 	return 0;
 } /* prom_stats_get */
-
