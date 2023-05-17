@@ -10,11 +10,12 @@
 #include <sys/types.h>
 
 
-enum enum_ip_type {
-  ip_type_ipv4 = 1,
-  ip_type_ipv6,
-  ip_type_ipv6_reference,
-  ip_type_error
+enum enum_ip_type
+{
+	ip_type_ipv4 = 1,
+	ip_type_ipv6,
+	ip_type_ipv6_reference,
+	ip_type_error
 };
 
 
