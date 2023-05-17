@@ -26,12 +26,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
- /* History:
+/* History:
  * --------
  *  2007-03-16  created by andrei
  */
-
-
 
 
 #include "../../core/sr_module.h"
@@ -39,30 +37,26 @@
 
 MODULE_VERSION
 
-static int print_f(struct sip_msg*, char*,char*);
+static int print_f(struct sip_msg *, char *, char *);
 static int mod_init(void);
 
 
-static cmd_export_t cmds[]={
-	{"print_stderr", print_f, 1, 0, 0, REQUEST_ROUTE},
-	{0, 0, 0, 0, 0, 0}
-};
+static cmd_export_t cmds[] = {
+		{"print_stderr", print_f, 1, 0, 0, REQUEST_ROUTE}, {0, 0, 0, 0, 0, 0}};
 
-static param_export_t params[]={
-	{0,0,0}
-};
+static param_export_t params[] = {{0, 0, 0}};
 
 struct module_exports exports = {
-	"print_stderr",		/* module name */
-	DEFAULT_DLFLAGS,	/* dlopen flags */
-	cmds,				/* exported functions */
-	params,				/* exported parameters */
-	0,					/* RPC method exports */
-	0,					/* exported pseudo-variables */
-	0,					/* response handling function */
-	mod_init,			/* module initialization function */
-	0,					/* per-child init function */
-	0					/* module destroy function */
+		"print_stderr",	 /* module name */
+		DEFAULT_DLFLAGS, /* dlopen flags */
+		cmds,			 /* exported functions */
+		params,			 /* exported parameters */
+		0,				 /* RPC method exports */
+		0,				 /* exported pseudo-variables */
+		0,				 /* response handling function */
+		mod_init,		 /* module initialization function */
+		0,				 /* per-child init function */
+		0				 /* module destroy function */
 };
 
 
@@ -73,9 +67,8 @@ static int mod_init(void)
 }
 
 
-static int print_f(struct sip_msg* msg, char* s1, char* s2)
+static int print_f(struct sip_msg *msg, char *s1, char *s2)
 {
 	stderr_println(s1);
 	return 1;
 }
-
