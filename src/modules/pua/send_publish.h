@@ -33,30 +33,30 @@
 typedef struct publ_info
 {
 	str id;
-	str* pres_uri;
-	str* body;
+	str *pres_uri;
+	str *body;
 	int expires;
 	int flag;
 	int source_flag;
 	int event;
-	str content_type;  /*! the content_type of the body if present(optional if the
+	str content_type; /*! the content_type of the body if present(optional if the
 				same as the default value for that event) */
-	str* etag;
-	str* outbound_proxy;
-	str* extra_headers;
-	void* cb_param;   /*! the parameter for the function to be called on the callback 
+	str *etag;
+	str *outbound_proxy;
+	str *extra_headers;
+	void *cb_param; /*! the parameter for the function to be called on the callback 
 				for the received reply; it must be allocated in share memory;
 				a reference to it will be found in the cb_param filed of the ua_pres_structure
 				received as a parameter for the registered function*/
-}publ_info_t;
+} publ_info_t;
 
-typedef int (*send_publish_t)(publ_info_t* publ);
-int send_publish( publ_info_t* publ );
+typedef int (*send_publish_t)(publ_info_t *publ);
+int send_publish(publ_info_t *publ);
 
 void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps);
-str* publ_build_hdr(int expires, pua_event_t* event, str* content_type, str* etag,
-		str* extra_headers, int is_body);
-ua_pres_t* publish_cbparam(publ_info_t* publ, str* body, str* tuple_id,
-		int ua_flag);
+str *publ_build_hdr(int expires, pua_event_t *event, str *content_type,
+		str *etag, str *extra_headers, int is_body);
+ua_pres_t *publish_cbparam(
+		publ_info_t *publ, str *body, str *tuple_id, int ua_flag);
 
 #endif

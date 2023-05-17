@@ -29,32 +29,32 @@
 
 struct publ_info;
 
-typedef int (evs_process_body_t)(struct publ_info* , str** final_body, 
-		 int ver, str** tuple);
+typedef int(evs_process_body_t)(
+		struct publ_info *, str **final_body, int ver, str **tuple);
 
 typedef struct pua_event
 {
-	int ev_flag;                   
+	int ev_flag;
 	str name;
-	str content_type;         /* default content type for that event*/	
-	evs_process_body_t* process_body;
-	struct pua_event* next;
+	str content_type; /* default content type for that event*/
+	evs_process_body_t *process_body;
+	struct pua_event *next;
 
-}pua_event_t;
+} pua_event_t;
 
-extern pua_event_t* pua_evlist;
+extern pua_event_t *pua_evlist;
 
-pua_event_t* init_pua_evlist(void);
+pua_event_t *init_pua_evlist(void);
 
-int add_pua_event(int ev_flag, char* name, char* content_type,
-		evs_process_body_t* process_body);
+int add_pua_event(int ev_flag, char *name, char *content_type,
+		evs_process_body_t *process_body);
 
-typedef int (*add_pua_event_t)(int ev_flag, char* name, char* content_type,
-		evs_process_body_t* process_body);
+typedef int (*add_pua_event_t)(int ev_flag, char *name, char *content_type,
+		evs_process_body_t *process_body);
 
-pua_event_t* contains_pua_event(str* name);
+pua_event_t *contains_pua_event(str *name);
 
-pua_event_t* get_event(int ev_flag);
+pua_event_t *get_event(int ev_flag);
 
 void destroy_pua_evlist(void);
 

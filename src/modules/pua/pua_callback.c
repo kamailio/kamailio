@@ -27,14 +27,13 @@
 #include "pua_callback.h"
 
 
-struct puacb_head_list* puacb_list = 0;
+struct puacb_head_list *puacb_list = 0;
 
 int init_puacb_list(void)
 {
-	puacb_list = (struct puacb_head_list*)shm_malloc
-		( sizeof(struct puacb_head_list) );
-	if (puacb_list==0)
-	{
+	puacb_list = (struct puacb_head_list *)shm_malloc(
+			sizeof(struct puacb_head_list));
+	if(puacb_list == 0) {
 		SHM_MEM_ERROR;
 		return -1;
 	}
@@ -48,44 +47,40 @@ void destroy_puacb_list(void)
 {
 	struct pua_callback *cbp, *cbp_tmp;
 
-	if (!puacb_list)
+	if(!puacb_list)
 		return;
 
-	for( cbp=puacb_list->first; cbp ; )
-	{
+	for(cbp = puacb_list->first; cbp;) {
 		cbp_tmp = cbp;
 		cbp = cbp->next;
-		if (cbp_tmp->param)
-			shm_free( cbp_tmp->param );
-		shm_free( cbp_tmp );
+		if(cbp_tmp->param)
+			shm_free(cbp_tmp->param);
+		shm_free(cbp_tmp);
 	}
 	shm_free(puacb_list);
 }
 
 
-
 /* register a callback function 'f' for 'types' mask of events;
 */
-int register_puacb( int types, pua_cb f, void* param )
+int register_puacb(int types, pua_cb f, void *param)
 {
 	struct pua_callback *cbp;
 
 	/* are the callback types valid?... */
-	if ( types<0 || types>PUACB_MAX )
-	{
-		LM_CRIT("invalid callback types: mask=%d\n",types);
+	if(types < 0 || types > PUACB_MAX) {
+		LM_CRIT("invalid callback types: mask=%d\n", types);
 		return E_BUG;
 	}
 	/* we don't register null functions */
-	if (f==0)
-	{
+	if(f == 0) {
 		LM_CRIT("null callback function\n");
 		return E_BUG;
 	}
 
 	/* build a new callback structure */
-	if (!(cbp=(struct pua_callback*)shm_malloc(sizeof( struct pua_callback))))
-	{
+	if(!(cbp = (struct pua_callback *)shm_malloc(
+				 sizeof(struct pua_callback)))) {
 		SHM_MEM_ERROR;
 		return E_OUT_OF_MEM;
 	}
@@ -96,13 +91,12 @@ int register_puacb( int types, pua_cb f, void* param )
 	puacb_list->reg_types |= types;
 
 	cbp->callback = f;
-    cbp->param= param;
+	cbp->param = param;
 	cbp->types = types;
-	if (cbp->next)
-		cbp->id = cbp->next->id+1;
+	if(cbp->next)
+		cbp->id = cbp->next->id + 1;
 	else
 		cbp->id = 0;
 
 	return 1;
 }
-

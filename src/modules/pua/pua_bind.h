@@ -28,7 +28,8 @@
 #include "pua_callback.h"
 #include "hash.h"
 
-typedef struct pua_api {
+typedef struct pua_api
+{
 	send_subscribe_t send_subscribe;
 	send_publish_t send_publish;
 	register_puacb_t register_puacb;
@@ -38,6 +39,6 @@ typedef struct pua_api {
 	get_subs_list_t get_subs_list;
 } pua_api_t;
 
-typedef int (*bind_pua_t)(pua_api_t* api);
+typedef int (*bind_pua_t)(pua_api_t *api);
 
 #endif
