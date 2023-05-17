@@ -94,9 +94,9 @@ static cfg_option_t tls_versions[] = {
 
 static cfg_option_t http_client_options[] = {
 		{"url", .f = cfg_parse_str_opt, .flags = CFG_STR_PKGMEM},		/* 0 */
-		{"username", .f = cfg_parse_str_opt, .flags = CFG_STR_PKGMEM},  /* 1 */
-		{"password", .f = cfg_parse_str_opt, .flags = CFG_STR_PKGMEM},  /* 2 */
-		{"failover", .f = cfg_parse_str_opt, .flags = CFG_STR_PKGMEM},  /* 3 */
+		{"username", .f = cfg_parse_str_opt, .flags = CFG_STR_PKGMEM},	/* 1 */
+		{"password", .f = cfg_parse_str_opt, .flags = CFG_STR_PKGMEM},	/* 2 */
+		{"failover", .f = cfg_parse_str_opt, .flags = CFG_STR_PKGMEM},	/* 3 */
 		{"useragent", .f = cfg_parse_str_opt, .flags = CFG_STR_PKGMEM}, /* 4 */
 		{"verify_peer", .f = cfg_parse_bool_opt},						/* 5 */
 		{"verify_host", .f = cfg_parse_bool_opt},						/* 6 */
@@ -138,8 +138,7 @@ int http_connection_exists(str *name)
 		return 1;
 	}
 
-	LM_DBG("no success in looking for httpcon: [%.*s]\n",
-			name->len, name->s);
+	LM_DBG("no success in looking for httpcon: [%.*s]\n", name->len, name->s);
 	return 0;
 }
 
@@ -151,8 +150,7 @@ curl_con_t *curl_get_connection(str *name)
 	unsigned int conid;
 
 	conid = core_case_hash(name, 0, 0);
-	LM_DBG("looking for httpcon: [%.*s] ID %u\n", name->len,
-			name->s, conid);
+	LM_DBG("looking for httpcon: [%.*s] ID %u\n", name->len, name->s, conid);
 
 	cc = _curl_con_root;
 	while(cc) {
@@ -162,8 +160,8 @@ curl_con_t *curl_get_connection(str *name)
 		}
 		cc = cc->next;
 	}
-	LM_DBG("no success in looking for httpcon: [%.*s] (list: %p)\n",
-			name->len, name->s, _curl_con_root);
+	LM_DBG("no success in looking for httpcon: [%.*s] (list: %p)\n", name->len,
+			name->s, _curl_con_root);
 	return NULL;
 }
 
@@ -818,8 +816,8 @@ curl_con_t *curl_init_con(str *name)
 	}
 
 	/* Connection structures are shared by all children processes */
-	cc = (curl_con_t *)shm_malloc(sizeof(curl_con_t)
-			+ (name->len + 1)*sizeof(char));
+	cc = (curl_con_t *)shm_malloc(
+			sizeof(curl_con_t) + (name->len + 1) * sizeof(char));
 	if(cc == NULL) {
 		LM_ERR("no shm memory\n");
 		return NULL;
@@ -827,8 +825,8 @@ curl_con_t *curl_init_con(str *name)
 
 	/* Each structure is allocated in package memory so each process can write into it without
 	   any locks or such stuff */
-	ccp = (curl_con_pkg_t *)pkg_malloc(sizeof(curl_con_pkg_t)
-			+ (name->len + 1)*sizeof(char));
+	ccp = (curl_con_pkg_t *)pkg_malloc(
+			sizeof(curl_con_pkg_t) + (name->len + 1) * sizeof(char));
 	if(ccp == NULL) {
 		/* We failed to allocate ccp, so let's free cc and quit */
 		shm_free(cc);
@@ -836,19 +834,19 @@ curl_con_t *curl_init_con(str *name)
 		return NULL;
 	}
 
-	memset(cc, 0, sizeof(curl_con_t) + (name->len + 1)*sizeof(char));
+	memset(cc, 0, sizeof(curl_con_t) + (name->len + 1) * sizeof(char));
 	cc->next = _curl_con_root;
 	cc->conid = conid;
-	cc->name.s = (char*)cc + sizeof(curl_con_t);
+	cc->name.s = (char *)cc + sizeof(curl_con_t);
 	memcpy(cc->name.s, name->s, name->len);
 	cc->name.len = name->len;
 	_curl_con_root = cc;
 
 	/* Put the new ccp first in line */
-	memset(ccp, 0, sizeof(curl_con_pkg_t) + (name->len + 1)*sizeof(char));
+	memset(ccp, 0, sizeof(curl_con_pkg_t) + (name->len + 1) * sizeof(char));
 	ccp->next = _curl_con_pkg_root;
 	ccp->conid = conid;
-	ccp->name.s = (char*)ccp + sizeof(curl_con_pkg_t);
+	ccp->name.s = (char *)ccp + sizeof(curl_con_pkg_t);
 	memcpy(ccp->name.s, name->s, name->len);
 	ccp->name.len = name->len;
 	_curl_con_pkg_root = ccp;

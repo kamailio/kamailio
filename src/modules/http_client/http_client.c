@@ -84,11 +84,11 @@ str default_tls_clientcert =
 str default_tls_clientkey =
 		STR_NULL; /*!< File name: Key in PEM format that belongs to client cert */
 str default_cipher_suite_list = STR_NULL; /*!< List of allowed cipher suites */
-unsigned int default_tls_version = 0;	 /*!< 0 = Use libcurl default */
+unsigned int default_tls_version = 0;	  /*!< 0 = Use libcurl default */
 unsigned int default_tls_verify_peer =
 		1; /*!< 0 = Do not verify TLS server cert. 1 = Verify TLS cert (default) */
 unsigned int default_tls_verify_host =
-		2;								  /*!< 0 = Do not verify TLS server CN/SAN  2 = Verify TLS server CN/SAN (default) */
+		2; /*!< 0 = Do not verify TLS server CN/SAN  2 = Verify TLS server CN/SAN (default) */
 str default_http_proxy = STR_NULL;		  /*!< Default HTTP proxy to use */
 unsigned int default_http_proxy_port = 0; /*!< Default HTTP proxy port to use */
 unsigned int default_http_follow_redirect =
@@ -245,7 +245,7 @@ struct module_exports exports = {
 
 counter_handle_t connections; /* Number of connection definitions */
 counter_handle_t connok;	  /* Successful Connection attempts */
-counter_handle_t connfail;	/* Failed Connection attempts */
+counter_handle_t connfail;	  /* Failed Connection attempts */
 
 
 static int init_shmlock(void)
@@ -606,8 +606,8 @@ static int fixup_free_curl_connect(void **param, int param_no)
 /*
  * Wrapper for Curl_connect (GET)
  */
-static int ki_curl_connect_helper(sip_msg_t *_m, str *con, str *url,
-		pv_spec_t *dst)
+static int ki_curl_connect_helper(
+		sip_msg_t *_m, str *con, str *url, pv_spec_t *dst)
 {
 	str result = {NULL, 0};
 	pv_value_t val;
@@ -637,11 +637,11 @@ static int ki_curl_connect(sip_msg_t *_m, str *con, str *url, str *dpv)
 	pv_spec_t *dst;
 
 	dst = pv_cache_get(dpv);
-	if(dst==NULL) {
+	if(dst == NULL) {
 		LM_ERR("failed to get pv spec for: %.*s\n", dpv->len, dpv->s);
 		return -1;
 	}
-	if(dst->setf==NULL) {
+	if(dst->setf == NULL) {
 		LM_ERR("target pv is not writable: %.*s\n", dpv->len, dpv->s);
 		return -1;
 	}
@@ -705,17 +705,17 @@ static int ki_curl_connect_post_helper(sip_msg_t *_m, str *con, str *url,
 /*
  * Kemi wrapper for Curl_connect (POST)
  */
-static int ki_curl_connect_post(sip_msg_t *_m, str *con, str *url,
-		str *ctype, str *data, str *dpv)
+static int ki_curl_connect_post(
+		sip_msg_t *_m, str *con, str *url, str *ctype, str *data, str *dpv)
 {
 	pv_spec_t *dst;
 
 	dst = pv_cache_get(dpv);
-	if(dst==NULL) {
+	if(dst == NULL) {
 		LM_ERR("failed to get pv spec for: %.*s\n", dpv->len, dpv->s);
 		return -1;
 	}
-	if(dst->setf==NULL) {
+	if(dst->setf == NULL) {
 		LM_ERR("target pv is not writable: %.*s\n", dpv->len, dpv->s);
 		return -1;
 	}
@@ -735,7 +735,7 @@ static int w_curl_connect_post_raw(struct sip_msg *_m, char *_con, char *_url,
 	str data = {NULL, 0};
 	pv_spec_t *dst;
 
-	if(_con == NULL || _url == NULL || _ctype==NULL || _data == NULL
+	if(_con == NULL || _url == NULL || _ctype == NULL || _data == NULL
 			|| _result == NULL) {
 		LM_ERR("http_connect: Invalid parameters\n");
 		return -1;
@@ -773,7 +773,7 @@ static int w_curl_connect_post(struct sip_msg *_m, char *_con, char *_url,
 	str data = {NULL, 0};
 	pv_spec_t *dst;
 
-	if(_con == NULL || _url == NULL || _ctype==NULL || _data == NULL
+	if(_con == NULL || _url == NULL || _ctype == NULL || _data == NULL
 			|| _result == NULL) {
 		LM_ERR("http_connect: Invalid parameters\n");
 		return -1;
@@ -890,20 +890,20 @@ static int fixup_free_http_query_post_hdr(void **param, int param_no)
 /*!
  * helper for HTTP-Query function
  */
-static int ki_http_query_helper(sip_msg_t *_m, str *url, str *post, str *hdrs,
-		pv_spec_t *dst)
+static int ki_http_query_helper(
+		sip_msg_t *_m, str *url, str *post, str *hdrs, pv_spec_t *dst)
 {
 	int ret = 0;
 	str result = {NULL, 0};
 	pv_value_t val;
 
-	if(url==NULL || url->s==NULL) {
+	if(url == NULL || url->s == NULL) {
 		LM_ERR("invalid url parameter\n");
 		return -1;
 	}
 	ret = http_client_query(_m, url->s, &result,
-			(post && post->s && post->len>0)?post->s:NULL,
-			(hdrs && hdrs->s && hdrs->len>0)?hdrs->s:NULL);
+			(post && post->s && post->len > 0) ? post->s : NULL,
+			(hdrs && hdrs->s && hdrs->len > 0) ? hdrs->s : NULL);
 
 	val.rs = result;
 	val.flags = PV_VAL_STR;
@@ -919,17 +919,17 @@ static int ki_http_query_helper(sip_msg_t *_m, str *url, str *post, str *hdrs,
 	return (ret == 0) ? -1 : ret;
 }
 
-static int ki_http_query_post_hdrs(sip_msg_t *_m, str *url, str *post, str *hdrs,
-		str *dpv)
+static int ki_http_query_post_hdrs(
+		sip_msg_t *_m, str *url, str *post, str *hdrs, str *dpv)
 {
 	pv_spec_t *dst;
 
 	dst = pv_cache_get(dpv);
-	if(dst==NULL) {
+	if(dst == NULL) {
 		LM_ERR("failed to get pv spec for: %.*s\n", dpv->len, dpv->s);
 		return -1;
 	}
-	if(dst->setf==NULL) {
+	if(dst->setf == NULL) {
 		LM_ERR("target pv is not writable: %.*s\n", dpv->len, dpv->s);
 		return -1;
 	}
@@ -950,8 +950,8 @@ static int ki_http_query(sip_msg_t *_m, str *url, str *dpv)
 /*!
  * Wrapper for HTTP-Query function for cfg script
  */
-static int w_http_query_script(sip_msg_t *_m, char *_url, char *_post,
-		char *_hdrs, char *_result)
+static int w_http_query_script(
+		sip_msg_t *_m, char *_url, char *_post, char *_hdrs, char *_result)
 {
 	str url = {NULL, 0};
 	str post = {NULL, 0};
@@ -1012,21 +1012,21 @@ static int w_http_query_post_hdr(
 /*!
  * helper for HTTP-Query function
  */
-static int ki_http_request_helper(sip_msg_t *_m, str *met, str *url, str *body,
-		str *hdrs, pv_spec_t *dst)
+static int ki_http_request_helper(
+		sip_msg_t *_m, str *met, str *url, str *body, str *hdrs, pv_spec_t *dst)
 {
 	int ret = 0;
 	str result = {NULL, 0};
 	pv_value_t val;
 
-	if(url==NULL || url->s==NULL) {
+	if(url == NULL || url->s == NULL) {
 		LM_ERR("invalid url parameter\n");
 		return -1;
 	}
 	ret = http_client_request(_m, url->s, &result,
-			(body && body->s && body->len>0)?body->s:NULL,
-			(hdrs && hdrs->s && hdrs->len>0)?hdrs->s:NULL,
-			(met && met->s && met->len>0)?met->s:NULL);
+			(body && body->s && body->len > 0) ? body->s : NULL,
+			(hdrs && hdrs->s && hdrs->len > 0) ? hdrs->s : NULL,
+			(met && met->s && met->len > 0) ? met->s : NULL);
 
 	val.rs = result;
 	val.flags = PV_VAL_STR;
@@ -1045,18 +1045,18 @@ static int ki_http_request_helper(sip_msg_t *_m, str *met, str *url, str *body,
 /*!
  * KEMI function to perform GET with headers and body
  */
-static int ki_http_get_hdrs(sip_msg_t *_m, str *url, str *body,
-		str *hdrs, str *dpv)
+static int ki_http_get_hdrs(
+		sip_msg_t *_m, str *url, str *body, str *hdrs, str *dpv)
 {
 	str met = str_init("GET");
 	pv_spec_t *dst;
 
 	dst = pv_cache_get(dpv);
-	if(dst==NULL) {
+	if(dst == NULL) {
 		LM_ERR("failed to get pv spec for: %.*s\n", dpv->len, dpv->s);
 		return -1;
 	}
-	if(dst->setf==NULL) {
+	if(dst->setf == NULL) {
 		LM_ERR("target pv is not writable: %.*s\n", dpv->len, dpv->s);
 		return -1;
 	}
@@ -1067,8 +1067,8 @@ static int ki_http_get_hdrs(sip_msg_t *_m, str *url, str *body,
 /*!
  * Wrapper for HTTP-Query function for cfg script
  */
-static int w_http_get_script(sip_msg_t *_m, char *_url, char *_body,
-		char *_hdrs, char *_result)
+static int w_http_get_script(
+		sip_msg_t *_m, char *_url, char *_body, char *_hdrs, char *_result)
 {
 	str met = str_init("GET");
 	str url = {NULL, 0};
