@@ -25,23 +25,22 @@
 #define _PIKE_TIMER_H
 
 
-typedef struct pike_list_link {
+typedef struct pike_list_link
+{
 	struct pike_list_link *next;
 	struct pike_list_link *prev;
 } pike_list_link_t;
 
 
-#define has_timer_set(_ll) \
-	((_ll)->prev || (_ll)->next)
+#define has_timer_set(_ll) ((_ll)->prev || (_ll)->next)
 
-#define is_list_empty(_head) \
-	((_head)->next == (_head))
+#define is_list_empty(_head) ((_head)->next == (_head))
 
-#define update_in_timer(_head, _ll) \
-	do { \
-		remove_from_timer(_head, _ll);\
-		append_to_timer(_head, _ll); \
-	}while(0)
+#define update_in_timer(_head, _ll)    \
+	do {                               \
+		remove_from_timer(_head, _ll); \
+		append_to_timer(_head, _ll);   \
+	} while(0)
 
 
 void append_to_timer(pike_list_link_t *head, pike_list_link_t *ll);
@@ -53,4 +52,3 @@ void check_and_split_timer(pike_list_link_t *head, unsigned int time,
 
 
 #endif
-

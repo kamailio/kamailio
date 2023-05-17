@@ -31,11 +31,10 @@
 #include "ip_tree.h"
 
 
+static pike_ip_tree_t *pike_root = 0;
 
-static pike_ip_tree_t*  pike_root = 0;
 
-
-static inline pike_ip_node_t* prv_get_tree_branch(unsigned char b)
+static inline pike_ip_node_t *prv_get_tree_branch(unsigned char b)
 {
 	return pike_root->entries[b].node;
 }
@@ -48,7 +47,6 @@ static inline void prv_lock_tree_branch(unsigned char b)
 }
 
 
-
 /* unlocks a tree branch */
 static inline void prv_unlock_tree_branch(unsigned char b)
 {
@@ -57,7 +55,7 @@ static inline void prv_unlock_tree_branch(unsigned char b)
 
 
 /* wrapper functions */
-pike_ip_node_t* get_tree_branch(unsigned char b)
+pike_ip_node_t *get_tree_branch(unsigned char b)
 {
 	return prv_get_tree_branch(b);
 }
@@ -72,23 +70,23 @@ void unlock_tree_branch(unsigned char b)
 
 
 /* size must be a power of 2  */
-static gen_lock_set_t* init_lock_set(int *size)
+static gen_lock_set_t *init_lock_set(int *size)
 {
 	gen_lock_set_t *lset;
 
-	lset=0; /* kill warnings */
-	for( ; *size ; *size=((*size)>>1) ) {
+	lset = 0; /* kill warnings */
+	for(; *size; *size = ((*size) >> 1)) {
 		LM_INFO("probing %d set size\n", *size);
 		/* create a lock set */
-		lset = lock_set_alloc( *size );
-		if (lset==0) {
+		lset = lock_set_alloc(*size);
+		if(lset == 0) {
 			LM_INFO("cannot get %d locks\n", *size);
 			continue;
 		}
 		/* init lock set */
-		if (lock_set_init(lset)==0) {
+		if(lock_set_init(lset) == 0) {
 			LM_INFO("cannot init %d locks\n", *size);
-			lock_set_dealloc( lset );
+			lock_set_dealloc(lset);
 			lset = 0;
 			continue;
 		}
@@ -96,13 +94,12 @@ static gen_lock_set_t* init_lock_set(int *size)
 		break;
 	}
 
-	if (*size==0) {
+	if(*size == 0) {
 		LM_ERR("cannot get a lock set\n");
 		return 0;
 	}
 	return lset;
 }
-
 
 
 /* Builds and Inits a new IP tree */
@@ -112,8 +109,8 @@ int init_ip_tree(int maximum_hits)
 	int i;
 
 	/* create the pike_root */
-	pike_root = (pike_ip_tree_t*)shm_malloc(sizeof(pike_ip_tree_t));
-	if (pike_root==0) {
+	pike_root = (pike_ip_tree_t *)shm_malloc(sizeof(pike_ip_tree_t));
+	if(pike_root == 0) {
 		SHM_MEM_ERROR;
 		goto error;
 	}
@@ -121,13 +118,13 @@ int init_ip_tree(int maximum_hits)
 
 	/* init lock set */
 	size = MAX_IP_BRANCHES;
-	pike_root->entry_lock_set = init_lock_set( &size );
-	if (pike_root->entry_lock_set==0) {
+	pike_root->entry_lock_set = init_lock_set(&size);
+	if(pike_root->entry_lock_set == 0) {
 		LM_ERR("failed to create locks\n");
 		goto error;
 	}
 	/* assign to each branch a lock */
-	for(i=0;i<MAX_IP_BRANCHES;i++) {
+	for(i = 0; i < MAX_IP_BRANCHES; i++) {
 		pike_root->entries[i].node = 0;
 		pike_root->entries[i].lock_idx = i % size;
 	}
@@ -136,7 +133,7 @@ int init_ip_tree(int maximum_hits)
 
 	return 0;
 error:
-	if (pike_root) {
+	if(pike_root) {
 		shm_free(pike_root);
 		pike_root = NULL;
 	}
@@ -155,7 +152,7 @@ static inline void destroy_ip_node(pike_ip_node_t *node)
 	pike_ip_node_t *foo, *bar;
 
 	foo = node->kids;
-	while (foo){
+	while(foo) {
 		bar = foo;
 		foo = foo->next;
 		destroy_ip_node(bar);
@@ -165,32 +162,30 @@ static inline void destroy_ip_node(pike_ip_node_t *node)
 }
 
 
-
 /* destroy and free the IP tree */
 void destroy_ip_tree(void)
 {
 	int i;
 
-	if (pike_root==0)
+	if(pike_root == 0)
 		return;
 
 	/* destroy and free the lock set */
-	if (pike_root->entry_lock_set) {
+	if(pike_root->entry_lock_set) {
 		lock_set_destroy(pike_root->entry_lock_set);
 		lock_set_dealloc(pike_root->entry_lock_set);
 	}
 
 	/* destroy all the nodes */
-	for(i=0;i<MAX_IP_BRANCHES;i++)
-		if (pike_root->entries[i].node)
+	for(i = 0; i < MAX_IP_BRANCHES; i++)
+		if(pike_root->entries[i].node)
 			destroy_ip_node(pike_root->entries[i].node);
 
-	shm_free( pike_root );
+	shm_free(pike_root);
 	pike_root = 0;
 
 	return;
 }
-
 
 
 /* builds a new ip_node corresponding to a byte value */
@@ -198,34 +193,33 @@ static inline pike_ip_node_t *new_ip_node(unsigned char byte)
 {
 	pike_ip_node_t *new_node;
 
-	new_node = (pike_ip_node_t*)shm_malloc(sizeof(pike_ip_node_t));
-	if (!new_node) {
+	new_node = (pike_ip_node_t *)shm_malloc(sizeof(pike_ip_node_t));
+	if(!new_node) {
 		SHM_MEM_ERROR;
 		return 0;
 	}
-	memset( new_node, 0, sizeof(pike_ip_node_t));
+	memset(new_node, 0, sizeof(pike_ip_node_t));
 	new_node->byte = byte;
 	return new_node;
 }
 
 
-
 /* splits from the current node (dad) a new child */
-pike_ip_node_t *split_node(pike_ip_node_t* dad, unsigned char byte)
+pike_ip_node_t *split_node(pike_ip_node_t *dad, unsigned char byte)
 {
 	pike_ip_node_t *new_node;
 
 	/* create a new node */
-	if ( (new_node=new_ip_node(byte))==0 )
+	if((new_node = new_ip_node(byte)) == 0)
 		return 0;
 	/* the child node inherits a part of his father hits */
-	if (dad->hits[CURR_POS]>=1)
-		new_node->hits[CURR_POS] = (dad->hits[CURR_POS])-1;
-	if (dad->leaf_hits[CURR_POS]>=1)
-		new_node->leaf_hits[PREV_POS] = (dad->leaf_hits[PREV_POS])-1;
+	if(dad->hits[CURR_POS] >= 1)
+		new_node->hits[CURR_POS] = (dad->hits[CURR_POS]) - 1;
+	if(dad->leaf_hits[CURR_POS] >= 1)
+		new_node->leaf_hits[PREV_POS] = (dad->leaf_hits[PREV_POS]) - 1;
 	/* link the child into father's kids list -> insert it at the beginning,
 	 * is much faster */
-	if (dad->kids) {
+	if(dad->kids) {
 		dad->kids->prev = new_node;
 		new_node->next = dad->kids;
 	}
@@ -237,23 +231,24 @@ pike_ip_node_t *split_node(pike_ip_node_t* dad, unsigned char byte)
 }
 
 
-#define is_hot_non_leaf(_node) \
-	( (_node)->hits[PREV_POS]>=pike_root->max_hits>>2 ||\
-		(_node)->hits[CURR_POS]>=pike_root->max_hits>>2 ||\
-		(((_node)->hits[PREV_POS]+(_node)->hits[CURR_POS])>>1)>=\
-			pike_root->max_hits>>2 )
+#define is_hot_non_leaf(_node)                                            \
+	((_node)->hits[PREV_POS] >= pike_root->max_hits >> 2                  \
+			|| (_node)->hits[CURR_POS] >= pike_root->max_hits >> 2        \
+			|| (((_node)->hits[PREV_POS] + (_node)->hits[CURR_POS]) >> 1) \
+					   >= pike_root->max_hits >> 2)
 
-#define is_hot_leaf(_node) \
-	( (_node)->leaf_hits[PREV_POS]>=pike_root->max_hits ||\
-		(_node)->leaf_hits[CURR_POS]>=pike_root->max_hits ||\
-		(((_node)->leaf_hits[PREV_POS]+(_node)->leaf_hits[CURR_POS])>>1)>=\
-			pike_root->max_hits )
+#define is_hot_leaf(_node)                                                    \
+	((_node)->leaf_hits[PREV_POS] >= pike_root->max_hits                      \
+			|| (_node)->leaf_hits[CURR_POS] >= pike_root->max_hits            \
+			|| (((_node)->leaf_hits[PREV_POS] + (_node)->leaf_hits[CURR_POS]) \
+					   >> 1)                                                  \
+					   >= pike_root->max_hits)
 
 #define is_warm_leaf(_node) \
-	( (_node)->hits[CURR_POS]>=pike_root->max_hits>>2 )
+	((_node)->hits[CURR_POS] >= pike_root->max_hits >> 2)
 
 #define MAX_TYPE_VAL(_x) \
-	(( (1<<(8*sizeof(_x)-1))-1 )|( (1<<(8*sizeof(_x)-1)) ))
+	(((1 << (8 * sizeof(_x) - 1)) - 1) | ((1 << (8 * sizeof(_x) - 1))))
 
 
 int is_node_hot_leaf(pike_ip_node_t *node)
@@ -265,88 +260,88 @@ int is_node_hot_leaf(pike_ip_node_t *node)
 char *node_status_array[] = {"", "WARM", "HOT", "ALL"};
 pike_node_status_t node_status(pike_ip_node_t *node)
 {
-	if ( is_hot_leaf(node) )
+	if(is_hot_leaf(node))
 		return NODE_STATUS_HOT;
 
-	if ( is_warm_leaf(node) )
+	if(is_warm_leaf(node))
 		return NODE_STATUS_WARM;
 
 	return NODE_STATUS_OK;
 }
 
 
-
 /* mark with one more hit the given IP address - */
-pike_ip_node_t* mark_node(unsigned char *ip,int ip_len,
-							pike_ip_node_t **father,unsigned char *flag)
+pike_ip_node_t *mark_node(unsigned char *ip, int ip_len,
+		pike_ip_node_t **father, unsigned char *flag)
 {
 	pike_ip_node_t *node;
 	pike_ip_node_t *kid;
-	int    byte_pos;
+	int byte_pos;
 
-	kid = pike_root->entries[ ip[0] ].node;
+	kid = pike_root->entries[ip[0]].node;
 	node = NULL;
 	byte_pos = 0;
 
-	LM_DBG("search on branch %d (top=%p)\n", ip[0],kid);
+	LM_DBG("search on branch %d (top=%p)\n", ip[0], kid);
 	/* search into the ip tree the longest prefix matching the given IP */
-	while (kid && byte_pos<ip_len) {
-		while (kid && kid->byte!=(unsigned char)ip[byte_pos]) {
-				kid = kid->next;
+	while(kid && byte_pos < ip_len) {
+		while(kid && kid->byte != (unsigned char)ip[byte_pos]) {
+			kid = kid->next;
 		}
-		if (kid) {
+		if(kid) {
 			node = kid;
 			kid = kid->kids;
 			byte_pos++;
 		}
 	}
 
-	LM_DBG("only first %d were matched!\n",byte_pos);
+	LM_DBG("only first %d were matched!\n", byte_pos);
 	*flag = 0;
 	*father = 0;
 
 	/* what have we found? */
-	if (byte_pos==ip_len) {
+	if(byte_pos == ip_len) {
 		/* we found the entire address */
 		node->flags |= NODE_IPLEAF_FLAG;
 		/* increment it, but be careful not to overflow the value */
-		if(node->leaf_hits[CURR_POS]<MAX_TYPE_VAL(node->leaf_hits[CURR_POS])-1)
+		if(node->leaf_hits[CURR_POS]
+				< MAX_TYPE_VAL(node->leaf_hits[CURR_POS]) - 1)
 			node->leaf_hits[CURR_POS]++;
 		/* becoming red node? */
-		if ( (node->flags&NODE_ISRED_FLAG)==0 ) {
-			if (is_hot_leaf(node) ) {
-				*flag |= RED_NODE|NEWRED_NODE;
+		if((node->flags & NODE_ISRED_FLAG) == 0) {
+			if(is_hot_leaf(node)) {
+				*flag |= RED_NODE | NEWRED_NODE;
 				node->flags |= NODE_ISRED_FLAG;
 			}
 		} else {
 			*flag |= RED_NODE;
 		}
-	} else if (byte_pos==0) {
+	} else if(byte_pos == 0) {
 		/* we hit an empty branch in the IP tree */
-		assert(node==0);
+		assert(node == 0);
 		/* add a new node containing the start byte of the IP address */
-		if ( (node=new_ip_node(ip[0]))==0)
+		if((node = new_ip_node(ip[0])) == 0)
 			return 0;
 		node->hits[CURR_POS] = 1;
 		node->branch = ip[0];
-		*flag = NEW_NODE ;
+		*flag = NEW_NODE;
 		/* set this node as pike_root of the branch starting with first byte of IP*/
-		pike_root->entries[ ip[0] ].node = node;
-	} else{
+		pike_root->entries[ip[0]].node = node;
+	} else {
 		/* only a non-empty prefix of the IP was found */
-		if ( node->hits[CURR_POS]<MAX_TYPE_VAL(node->hits[CURR_POS])-1 )
+		if(node->hits[CURR_POS] < MAX_TYPE_VAL(node->hits[CURR_POS]) - 1)
 			node->hits[CURR_POS]++;
-		if ( is_hot_non_leaf(node) ) {
+		if(is_hot_non_leaf(node)) {
 			/* we have to split the node */
-			*flag = NEW_NODE ;
-			LM_DBG("splitting node %p [%d]\n",node,node->byte);
+			*flag = NEW_NODE;
+			LM_DBG("splitting node %p [%d]\n", node, node->byte);
 			*father = node;
-			node = split_node(node,ip[byte_pos]);
+			node = split_node(node, ip[byte_pos]);
 		} else {
 			/* to reduce memory usage, force to expire non-leaf nodes if they
 			 * have just a few hits -> basically, don't update the timer for
 			 * them the nr of hits is small */
-			if ( !is_warm_leaf(node) )
+			if(!is_warm_leaf(node))
 				*flag = NO_UPDATE;
 		}
 	}
@@ -355,24 +350,23 @@ pike_ip_node_t* mark_node(unsigned char *ip,int ip_len,
 }
 
 
-
 /* remove and destroy an IP node along with its subtree */
 void remove_node(pike_ip_node_t *node)
 {
-	LM_DBG("destroying node %p\n",node);
+	LM_DBG("destroying node %p\n", node);
 	/* is it a branch pike_root node? (these nodes have no prev (father)) */
-	if (node->prev==0) {
-		assert(pike_root->entries[node->byte].node==node);
+	if(node->prev == 0) {
+		assert(pike_root->entries[node->byte].node == node);
 		pike_root->entries[node->byte].node = 0;
 	} else {
 		/* unlink it from kids list */
-		if (node->prev->kids==node)
+		if(node->prev->kids == node)
 			/* it's the head of the list! */
 			node->prev->kids = node->next;
 		else
 			/* it's somewhere in the list */
 			node->prev->next = node->next;
-		if (node->next)
+		if(node->next)
 			node->next->prev = node->prev;
 	}
 
@@ -381,44 +375,45 @@ void remove_node(pike_ip_node_t *node)
 	destroy_ip_node(node);
 }
 
-static void print_node(pike_ip_node_t *node,int sp, FILE *f)
+static void print_node(pike_ip_node_t *node, int sp, FILE *f)
 {
 	pike_ip_node_t *foo;
 
 	/* print current node */
-	if (!f) {
+	if(!f) {
 		DBG("[l%d] node %p; brh=%d byte=%d flags=%d, hits={%d,%d} , "
 			"leaf_hits={%d,%d]\n",
-			sp, node, node->branch, node->byte, node->flags,
-			node->hits[PREV_POS],node->hits[CURR_POS],
-			node->leaf_hits[PREV_POS],node->leaf_hits[CURR_POS]);
+				sp, node, node->branch, node->byte, node->flags,
+				node->hits[PREV_POS], node->hits[CURR_POS],
+				node->leaf_hits[PREV_POS], node->leaf_hits[CURR_POS]);
 	} else {
-		fprintf(f,"[l%d] node %p; brh=%d byte=%d flags=%d, hits={%d,%d} , "
-			"leaf_hits={%d,%d]\n",
-			sp, node, node->branch, node->byte, node->flags,
-			node->hits[PREV_POS],node->hits[CURR_POS],
-			node->leaf_hits[PREV_POS],node->leaf_hits[CURR_POS]);
+		fprintf(f,
+				"[l%d] node %p; brh=%d byte=%d flags=%d, hits={%d,%d} , "
+				"leaf_hits={%d,%d]\n",
+				sp, node, node->branch, node->byte, node->flags,
+				node->hits[PREV_POS], node->hits[CURR_POS],
+				node->leaf_hits[PREV_POS], node->leaf_hits[CURR_POS]);
 	}
 
 	/* print all the kids */
 	foo = node->kids;
-	while(foo){
-		print_node(foo,sp+1,f);
+	while(foo) {
+		print_node(foo, sp + 1, f);
 		foo = foo->next;
 	}
 }
 
-void print_tree(  FILE *f )
+void print_tree(FILE *f)
 {
 	int i;
 
 	DBG("DEBUG:pike:print_tree: printing IP tree\n");
-	for(i=0;i<MAX_IP_BRANCHES;i++) {
-		if (prv_get_tree_branch(i)==0)
+	for(i = 0; i < MAX_IP_BRANCHES; i++) {
+		if(prv_get_tree_branch(i) == 0)
 			continue;
 		prv_lock_tree_branch(i);
-		if (prv_get_tree_branch(i))
-			print_node( prv_get_tree_branch(i), 0, f);
+		if(prv_get_tree_branch(i))
+			print_node(prv_get_tree_branch(i), 0, f);
 		prv_unlock_tree_branch(i);
 	}
 }

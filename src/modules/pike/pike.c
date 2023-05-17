@@ -46,94 +46,86 @@
 MODULE_VERSION
 
 
-
 static int pike_init(void);
 void pike_exit(void);
 
 
-
 /* parameters */
 static int pike_time_unit = 2;
-static int pike_max_reqs  = 30;
-int pike_timeout   = 120;
+static int pike_max_reqs = 30;
+int pike_timeout = 120;
 int pike_log_level = L_WARN;
 
 /* global variables */
-gen_lock_t       *pike_timer_lock = 0;
+gen_lock_t *pike_timer_lock = 0;
 pike_list_link_t *pike_timer = 0;
 
 
-static cmd_export_t cmds[]={
-	{"pike_check_req",    (cmd_function)w_pike_check_req,  0,
-		0, 0, REQUEST_ROUTE|ONREPLY_ROUTE},
-	{"pike_check_ip", (cmd_function)w_pike_check_ip,       1,
-		fixup_spve_null, fixup_free_spve_null, REQUEST_ROUTE|ONREPLY_ROUTE},
-	{0,0,0,0,0,0}
+static cmd_export_t cmds[] = {{"pike_check_req", (cmd_function)w_pike_check_req,
+									  0, 0, 0, REQUEST_ROUTE | ONREPLY_ROUTE},
+		{"pike_check_ip", (cmd_function)w_pike_check_ip, 1, fixup_spve_null,
+				fixup_free_spve_null, REQUEST_ROUTE | ONREPLY_ROUTE},
+		{0, 0, 0, 0, 0, 0}};
+
+static param_export_t params[] = {
+		{"sampling_time_unit", INT_PARAM, &pike_time_unit},
+		{"reqs_density_per_unit", INT_PARAM, &pike_max_reqs},
+		{"remove_latency", INT_PARAM, &pike_timeout},
+		{"pike_log_level", INT_PARAM, &pike_log_level}, {0, 0, 0}};
+
+
+struct module_exports exports = {
+		"pike",			 /* module name */
+		DEFAULT_DLFLAGS, /* dlopen flags */
+		cmds,			 /* cmd exports */
+		params,			 /* param exports */
+		0,				 /* RPC method exports */
+		0,				 /* exported pseudo-variables */
+		0,				 /* response handling function */
+		pike_init,		 /* module initialization function */
+		0,				 /* per-child init function */
+		pike_exit		 /* module exit function */
 };
-
-static param_export_t params[]={
-	{"sampling_time_unit",    INT_PARAM,  &pike_time_unit},
-	{"reqs_density_per_unit", INT_PARAM,  &pike_max_reqs},
-	{"remove_latency",        INT_PARAM,  &pike_timeout},
-	{"pike_log_level",        INT_PARAM,  &pike_log_level},
-	{0,0,0}
-};
-
-
-struct module_exports exports= {
-	"pike",          /* module name */
-	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,            /* cmd exports */
-	params,          /* param exports */
-	0,               /* RPC method exports */
-	0,               /* exported pseudo-variables */
-	0,               /* response handling function */
-	pike_init,       /* module initialization function */
-	0,               /* per-child init function */
-	pike_exit        /* module exit function */
-};
-
-
 
 
 static int pike_init(void)
 {
 	LOG(L_INFO, "PIKE - initializing\n");
 
-	if (rpc_register_array(pike_rpc_methods)!=0) {
+	if(rpc_register_array(pike_rpc_methods) != 0) {
 		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}
 
 	/* alloc the timer lock */
-	pike_timer_lock=lock_alloc();
-	if (pike_timer_lock==0) {
+	pike_timer_lock = lock_alloc();
+	if(pike_timer_lock == 0) {
 		LM_ERR(" alloc locks failed!\n");
 		goto error1;
 	}
 	/* init the lock */
-	if (lock_init(pike_timer_lock)==0){
+	if(lock_init(pike_timer_lock) == 0) {
 		LM_ERR(" init lock failed\n");
 		goto error1;
 	}
 
 	/* init the IP tree */
-	if ( init_ip_tree(pike_max_reqs)!=0 ) {
+	if(init_ip_tree(pike_max_reqs) != 0) {
 		LM_ERR(" ip_tree creation failed!\n");
 		goto error2;
 	}
 
 	/* init timer list */
-	pike_timer = (pike_list_link_t*)shm_malloc(sizeof(pike_list_link_t));
-	if (pike_timer==0) {
+	pike_timer = (pike_list_link_t *)shm_malloc(sizeof(pike_list_link_t));
+	if(pike_timer == 0) {
 		SHM_MEM_ERROR_FMT("for timer!\n");
 		goto error3;
 	}
 	pike_timer->next = pike_timer->prev = pike_timer;
 
 	/* registering timing functions  */
-	register_timer( clean_routine , 0, 1 );
-	register_timer( swap_routine , 0, pike_time_unit );
+	register_timer(clean_routine, 0, 1);
+	register_timer(swap_routine, 0, pike_time_unit);
 
 	/* Register counter */
 	pike_counter_init();
@@ -144,23 +136,23 @@ error3:
 error2:
 	lock_destroy(pike_timer_lock);
 error1:
-	if (pike_timer_lock) lock_dealloc(pike_timer_lock);
+	if(pike_timer_lock)
+		lock_dealloc(pike_timer_lock);
 	pike_timer_lock = 0;
 	return -1;
 }
 
 
-
 void pike_exit(void)
 {
 	/* destroy semaphore */
-	if (pike_timer_lock) {
+	if(pike_timer_lock) {
 		lock_destroy(pike_timer_lock);
 		lock_dealloc(pike_timer_lock);
 	}
 
 	/* empty the timer list head */
-	if (pike_timer) {
+	if(pike_timer) {
 		shm_free(pike_timer);
 		pike_timer = 0;
 	}
