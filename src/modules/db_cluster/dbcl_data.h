@@ -27,7 +27,6 @@
  */
 
 
-
 #ifndef _DBCL_DATA_H_
 #define _DBCL_DATA_H_
 
@@ -35,10 +34,10 @@
 #include "../../lib/srdb1/db.h"
 #include "../../core/str.h"
 
-#define DBCL_PRIO_SIZE	10
-#define DBCL_CLIST_SIZE	5
+#define DBCL_PRIO_SIZE 10
+#define DBCL_CLIST_SIZE 5
 
-#define DBCL_CON_INACTIVE	1
+#define DBCL_CON_INACTIVE 1
 
 typedef struct dbcl_shared
 {
@@ -51,7 +50,7 @@ typedef struct dbcl_con
 	str name;
 	unsigned int conid;
 	str db_url;
-	db1_con_t  *dbh;
+	db1_con_t *dbh;
 	db_func_t dbf;
 	int flags;
 	dbcl_shared_t *sinfo;
