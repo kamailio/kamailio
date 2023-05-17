@@ -34,56 +34,51 @@ int nio_intercept_init(void)
 	int route_no;
 	pv_spec_t avp_spec;
 
-	route_no=route_get(&event_rt, "network:msg");
+	route_no = route_get(&event_rt, "network:msg");
 
-	if (route_no==-1)
-	{
+	if(route_no == -1) {
 		LM_ERR("failed to find event_route[network:msg]\n");
 		return -1;
 	}
 
-	if (event_rt.rlist[route_no]==0)
-	{
+	if(event_rt.rlist[route_no] == 0) {
 		LM_ERR("event_route[network:msg] is empty\n");
 		return -1;
 	}
 
-	nio_route_no=route_no;
+	nio_route_no = route_no;
 
-	if (nio_min_msg_len < 0)
-	{
+	if(nio_min_msg_len < 0) {
 		LM_WARN("min_msg_len is less than zero, setting it to zero");
 		nio_min_msg_len = 0;
 	}
 
-	if (nio_msg_avp_param.s && nio_msg_avp_param.len > 0)
-	{
-		if (pv_parse_spec(&nio_msg_avp_param, &avp_spec)==0
-				|| avp_spec.type!=PVT_AVP)
-		{
+	if(nio_msg_avp_param.s && nio_msg_avp_param.len > 0) {
+		if(pv_parse_spec(&nio_msg_avp_param, &avp_spec) == 0
+				|| avp_spec.type != PVT_AVP) {
 			LM_ERR("malformed or non AVP %.*s AVP definition\n",
 					nio_msg_avp_param.len, nio_msg_avp_param.s);
 			return -1;
 		}
 
-		if(pv_get_avp_name(0, &(avp_spec.pvp), &nio_msg_avp_name,
-					&nio_msg_avp_type)!=0)
-		{
-			LM_ERR("[%.*s]- invalid AVP definition\n",
-					nio_msg_avp_param.len, nio_msg_avp_param.s);
+		if(pv_get_avp_name(
+				   0, &(avp_spec.pvp), &nio_msg_avp_name, &nio_msg_avp_type)
+				!= 0) {
+			LM_ERR("[%.*s]- invalid AVP definition\n", nio_msg_avp_param.len,
+					nio_msg_avp_param.s);
 			return -1;
 		}
 	} else {
 		LM_WARN("no AVP defined to store modified message\n");
 	}
 
-    /* register network hooks */
-    sr_event_register_cb(SREV_NET_DATA_IN, nio_msg_received);
-    sr_event_register_cb(SREV_NET_DATA_OUT, nio_msg_sent);
+	/* register network hooks */
+	sr_event_register_cb(SREV_NET_DATA_IN, nio_msg_received);
+	sr_event_register_cb(SREV_NET_DATA_OUT, nio_msg_sent);
 #ifdef USE_TCP
-    tcp_set_clone_rcvbuf(1);
+	tcp_set_clone_rcvbuf(1);
 #endif
-    return 0;
+	return 0;
 }
 
 /**
@@ -91,52 +86,52 @@ int nio_intercept_init(void)
  */
 int nio_msg_received(sr_event_param_t *evp)
 {
-    sip_msg_t msg;
-    str *obuf;
-    char *nbuf = NULL;
-    int_str avp_value;
-    struct usr_avp *avp;
-    struct run_act_ctx ra_ctx;
+	sip_msg_t msg;
+	str *obuf;
+	char *nbuf = NULL;
+	int_str avp_value;
+	struct usr_avp *avp;
+	struct run_act_ctx ra_ctx;
 
-    obuf = (str*)evp->data;
+	obuf = (str *)evp->data;
 
-    if (obuf->len < nio_min_msg_len) {
-        return -1;
-    }
+	if(obuf->len < nio_min_msg_len) {
+		return -1;
+	}
 
-    memset(&msg, 0, sizeof(sip_msg_t));
-    msg.buf = obuf->s;
-    msg.len = obuf->len;
+	memset(&msg, 0, sizeof(sip_msg_t));
+	msg.buf = obuf->s;
+	msg.len = obuf->len;
 
-    nio_is_incoming = 1;
-    init_run_actions_ctx(&ra_ctx);
-    run_actions(&ra_ctx, event_rt.rlist[nio_route_no], &msg);
+	nio_is_incoming = 1;
+	init_run_actions_ctx(&ra_ctx);
+	run_actions(&ra_ctx, event_rt.rlist[nio_route_no], &msg);
 
-    if(nio_msg_avp_name.n!=0) {
-        avp = NULL;
-        avp=search_first_avp(nio_msg_avp_type, nio_msg_avp_name,
-            &avp_value, 0);
-        if(avp!=NULL && is_avp_str_val(avp)) {
-            msg.buf = avp_value.s.s;
-            msg.len = avp_value.s.len;
-            nbuf = nio_msg_update(&msg, (unsigned int*)&obuf->len);
-            if(obuf->len>=BUF_SIZE) {
-                LM_ERR("new buffer overflow (%d)\n", obuf->len);
-                pkg_free(nbuf);
-                return -1;
-            }
-            memcpy(obuf->s, nbuf, obuf->len);
-            obuf->s[obuf->len] = '\0';
-        } else {
-            LM_WARN("no value set for AVP %.*s, using unmodified message\n",
-                nio_msg_avp_param.len, nio_msg_avp_param.s);
-        }
-    }
+	if(nio_msg_avp_name.n != 0) {
+		avp = NULL;
+		avp = search_first_avp(
+				nio_msg_avp_type, nio_msg_avp_name, &avp_value, 0);
+		if(avp != NULL && is_avp_str_val(avp)) {
+			msg.buf = avp_value.s.s;
+			msg.len = avp_value.s.len;
+			nbuf = nio_msg_update(&msg, (unsigned int *)&obuf->len);
+			if(obuf->len >= BUF_SIZE) {
+				LM_ERR("new buffer overflow (%d)\n", obuf->len);
+				pkg_free(nbuf);
+				return -1;
+			}
+			memcpy(obuf->s, nbuf, obuf->len);
+			obuf->s[obuf->len] = '\0';
+		} else {
+			LM_WARN("no value set for AVP %.*s, using unmodified message\n",
+					nio_msg_avp_param.len, nio_msg_avp_param.s);
+		}
+	}
 
-    if(nbuf!=NULL)
-        pkg_free(nbuf);
-    free_sip_msg(&msg);
-    return 0;
+	if(nbuf != NULL)
+		pkg_free(nbuf);
+	free_sip_msg(&msg);
+	return 0;
 }
 
 /**
@@ -144,36 +139,36 @@ int nio_msg_received(sr_event_param_t *evp)
  */
 int nio_msg_sent(sr_event_param_t *evp)
 {
-    sip_msg_t msg;
-    str *obuf;
-    int_str avp_value;
-    struct usr_avp *avp;
-    struct run_act_ctx ra_ctx;
-    str nbuf = STR_NULL;
+	sip_msg_t msg;
+	str *obuf;
+	int_str avp_value;
+	struct usr_avp *avp;
+	struct run_act_ctx ra_ctx;
+	str nbuf = STR_NULL;
 
-    obuf = (str*)evp->data;
+	obuf = (str *)evp->data;
 
-    if (obuf->len < nio_min_msg_len) {
-        return -1;
-    }
+	if(obuf->len < nio_min_msg_len) {
+		return -1;
+	}
 
-    memset(&msg, 0, sizeof(sip_msg_t));
-    msg.buf = obuf->s;
-    msg.len = obuf->len;
+	memset(&msg, 0, sizeof(sip_msg_t));
+	msg.buf = obuf->s;
+	msg.len = obuf->len;
 
-    nio_is_incoming = 0;
-    init_run_actions_ctx(&ra_ctx);
-    run_actions(&ra_ctx, event_rt.rlist[nio_route_no], &msg);
+	nio_is_incoming = 0;
+	init_run_actions_ctx(&ra_ctx);
+	run_actions(&ra_ctx, event_rt.rlist[nio_route_no], &msg);
 
-    if(nio_msg_avp_name.n!=0) {
-        avp = NULL;
-        avp=search_first_avp(nio_msg_avp_type, nio_msg_avp_name,
-                &avp_value, 0);
-        if(avp!=NULL && is_avp_str_val(avp)) {
-            msg.buf = avp_value.s.s;
-            msg.len = avp_value.s.len;
-            nbuf.s = nio_msg_update(&msg, (unsigned int*)&nbuf.len);
-			if(nbuf.s!=NULL) {
+	if(nio_msg_avp_name.n != 0) {
+		avp = NULL;
+		avp = search_first_avp(
+				nio_msg_avp_type, nio_msg_avp_name, &avp_value, 0);
+		if(avp != NULL && is_avp_str_val(avp)) {
+			msg.buf = avp_value.s.s;
+			msg.len = avp_value.s.len;
+			nbuf.s = nio_msg_update(&msg, (unsigned int *)&nbuf.len);
+			if(nbuf.s != NULL) {
 				LM_DBG("new outbound buffer generated\n");
 				pkg_free(obuf->s);
 				obuf->s = nbuf.s;
@@ -181,14 +176,14 @@ int nio_msg_sent(sr_event_param_t *evp)
 			} else {
 				LM_ERR("failed to generate new outbound buffer\n");
 			}
-        } else {
-            LM_WARN("no value set for AVP %.*s, using unmodified message\n",
-                nio_msg_avp_param.len, nio_msg_avp_param.s);
-        }
-    }
+		} else {
+			LM_WARN("no value set for AVP %.*s, using unmodified message\n",
+					nio_msg_avp_param.len, nio_msg_avp_param.s);
+		}
+	}
 
-    free_sip_msg(&msg);
-    return 0;
+	free_sip_msg(&msg);
+	return 0;
 }
 
 /**
@@ -196,19 +191,18 @@ int nio_msg_sent(sr_event_param_t *evp)
  */
 int nio_check_incoming(void)
 {
-    return (nio_is_incoming) ? 1 : -1;
+	return (nio_is_incoming) ? 1 : -1;
 }
 
 /**
  *
  */
-char* nio_msg_update(sip_msg_t *msg, unsigned int *olen)
+char *nio_msg_update(sip_msg_t *msg, unsigned int *olen)
 {
-    struct dest_info dst;
+	struct dest_info dst;
 
-    init_dest_info(&dst);
-    dst.proto = PROTO_UDP;
-    return build_req_buf_from_sip_req(msg,
-            olen, &dst, BUILD_NO_LOCAL_VIA|BUILD_NO_VIA1_UPDATE);
+	init_dest_info(&dst);
+	dst.proto = PROTO_UDP;
+	return build_req_buf_from_sip_req(
+			msg, olen, &dst, BUILD_NO_LOCAL_VIA | BUILD_NO_VIA1_UPDATE);
 }
-

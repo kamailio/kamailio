@@ -27,7 +27,7 @@ int corex_append_branch(sip_msg_t *msg, str *uri, str *qv);
 int corex_send(sip_msg_t *msg, gparam_t *pu, enum sip_protos proto);
 int corex_send_data(str *puri, str *psock, str *pdata);
 
-int corex_add_alias_subdomains(char* aliasval);
+int corex_add_alias_subdomains(char *aliasval);
 
 int corex_register_check_self(void);
 
