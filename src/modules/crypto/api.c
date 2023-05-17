@@ -22,7 +22,7 @@
 #include "api.h"
 #include "crypto_uuid.h"
 
-int load_crypto( struct crypto_binds *cb )
+int load_crypto(struct crypto_binds *cb)
 {
 	cb->SHA1 = crypto_generate_SHA1;
 

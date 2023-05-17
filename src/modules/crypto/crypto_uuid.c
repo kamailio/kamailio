@@ -50,8 +50,9 @@ static unsigned char crypto_callid_counter[CTR_LEN] = {0};
  * \param x unsigned char byte
  * \return lowercase hex charater
  */
-static inline char crypto_byte2hex(unsigned char x) {
-	return x < 10 ? '0' + x : 'a' + (x-10);
+static inline char crypto_byte2hex(unsigned char x)
+{
+	return x < 10 ? '0' + x : 'a' + (x - 10);
 }
 
 /**
@@ -62,13 +63,16 @@ static inline char crypto_byte2hex(unsigned char x) {
  * \param buf_len number of bytes of buf
  * \return 0 on success, -1 on error
  */
-static inline int crypto_bytes2hex(char *sbuf, size_t sbuf_len,
-							unsigned char *buf, size_t buf_len) {
+static inline int crypto_bytes2hex(
+		char *sbuf, size_t sbuf_len, unsigned char *buf, size_t buf_len)
+{
 	size_t i, j;
-	if (sbuf_len < 2*buf_len) return -1;
-	for (i=0, j=(2*buf_len)-1; i<sbuf_len; i++, j--) {
-		sbuf[i] = crypto_byte2hex((buf[j/2] >> (j%2 ? 0 : 4)) % 0x0f);
-		if (j == 0) break;
+	if(sbuf_len < 2 * buf_len)
+		return -1;
+	for(i = 0, j = (2 * buf_len) - 1; i < sbuf_len; i++, j--) {
+		sbuf[i] = crypto_byte2hex((buf[j / 2] >> (j % 2 ? 0 : 4)) % 0x0f);
+		if(j == 0)
+			break;
 	}
 	return 0;
 }
@@ -80,14 +84,14 @@ static inline int crypto_bytes2hex(char *sbuf, size_t sbuf_len,
  */
 int crypto_init_callid(void)
 {
-	static char crypto_callid_seed_str[2*SEED_LEN] = {0};
-	if (!(RAND_bytes(crypto_callid_seed,sizeof(crypto_callid_seed)))) {
+	static char crypto_callid_seed_str[2 * SEED_LEN] = {0};
+	if(!(RAND_bytes(crypto_callid_seed, sizeof(crypto_callid_seed)))) {
 		LOG(L_ERR, "ERROR: Unable to get random bytes for Call-ID seed\n");
 		return -1;
 	}
 	crypto_bytes2hex(crypto_callid_seed_str, sizeof(crypto_callid_seed_str),
 			crypto_callid_seed, sizeof(crypto_callid_seed));
-	DBG("Call-ID initialization: '0x%.*s'\n", 2*SEED_LEN,
+	DBG("Call-ID initialization: '0x%.*s'\n", 2 * SEED_LEN,
 			crypto_callid_seed_str);
 	return 0;
 }
@@ -100,9 +104,9 @@ int crypto_init_callid(void)
  */
 int crypto_child_init_callid(int rank)
 {
-	static char crypto_callid_seed_str[2*SEED_LEN] = {0};
+	static char crypto_callid_seed_str[2 * SEED_LEN] = {0};
 	unsigned int pid = my_pid();
-	if (SEED_LEN < 2) {
+	if(SEED_LEN < 2) {
 		LOG(L_CRIT, "BUG: Call-ID seed is too short\n");
 		return -1;
 	}
@@ -110,7 +114,7 @@ int crypto_child_init_callid(int rank)
 	crypto_callid_seed[1] ^= (pid >> 8) % 0xff;
 	crypto_bytes2hex(crypto_callid_seed_str, sizeof(crypto_callid_seed_str),
 			crypto_callid_seed, sizeof(crypto_callid_seed));
-	DBG("Call-ID initialization: '0x%.*s'\n", 2*SEED_LEN,
+	DBG("Call-ID initialization: '0x%.*s'\n", 2 * SEED_LEN,
 			crypto_callid_seed_str);
 	return 0;
 }
@@ -122,12 +126,13 @@ int crypto_child_init_callid(int rank)
  * \param len length of byte array
  * \return void
  */
-static inline void crypto_inc_counter(unsigned char* ctr, size_t len)
+static inline void crypto_inc_counter(unsigned char *ctr, size_t len)
 {
 	size_t i;
-	for (i=0; i < len; i++) {
+	for(i = 0; i < len; i++) {
 		ctr[i] += 1;
-		if (ctr[i]) break;
+		if(ctr[i])
+			break;
 	}
 }
 
@@ -141,23 +146,26 @@ static inline void crypto_inc_counter(unsigned char* ctr, size_t len)
  * \return 0 on success, -1 on error
  */
 #define UUID_LEN 36
-static inline int crypto_format_rfc4122_uuid(char *sbuf, size_t sbuf_len,
-		unsigned char *buf, size_t buf_len)
+static inline int crypto_format_rfc4122_uuid(
+		char *sbuf, size_t sbuf_len, unsigned char *buf, size_t buf_len)
 {
 	size_t i, j;
-	if (sbuf_len < UUID_LEN) return -1;
-	if (buf_len < UUID_LEN/2) return -1;
+	if(sbuf_len < UUID_LEN)
+		return -1;
+	if(buf_len < UUID_LEN / 2)
+		return -1;
 	buf[6] &= 0x0f;
 	buf[6] |= 4 << 4;
 	buf[8] &= 0x3f;
 	buf[8] |= 2 << 6;
-	for (i=0, j=0; i<UUID_LEN; i++) {
-		if (i == 8 || i == 13 || i == 18 || i == 23) {
+	for(i = 0, j = 0; i < UUID_LEN; i++) {
+		if(i == 8 || i == 13 || i == 18 || i == 23) {
 			sbuf[i] = '-';
 			continue;
 		}
-		sbuf[i] = crypto_byte2hex((buf[j/2] >> (j%2 ? 0 : 4)) % 0x0f);
-		if (!(++j/2 < buf_len)) break;
+		sbuf[i] = crypto_byte2hex((buf[j / 2] >> (j % 2 ? 0 : 4)) % 0x0f);
+		if(!(++j / 2 < buf_len))
+			break;
 	}
 	return 0;
 }
@@ -167,7 +175,7 @@ static inline int crypto_format_rfc4122_uuid(char *sbuf, size_t sbuf_len,
  * \brief Get a unique Call-ID
  * \param callid returned Call-ID
  */
-void crypto_generate_callid(str* callid)
+void crypto_generate_callid(str *callid)
 {
 	static SHA_CTX crypto_ctx = {0};
 	static unsigned char crypto_buf[SHA_DIGEST_LENGTH] = {0};
@@ -177,8 +185,8 @@ void crypto_generate_callid(str* callid)
 	SHA1_Update(&crypto_ctx, crypto_callid_seed, SEED_LEN);
 	SHA1_Update(&crypto_ctx, crypto_callid_counter, CTR_LEN);
 	SHA1_Final(crypto_buf, &crypto_ctx);
-	crypto_format_rfc4122_uuid(crypto_sbuf, sizeof(crypto_sbuf),
-			crypto_buf, sizeof(crypto_buf));
+	crypto_format_rfc4122_uuid(
+			crypto_sbuf, sizeof(crypto_sbuf), crypto_buf, sizeof(crypto_buf));
 	callid->s = crypto_sbuf;
 	callid->len = sizeof(crypto_sbuf);
 }
@@ -189,7 +197,7 @@ void crypto_generate_callid(str* callid)
  */
 int crypto_register_callid_func(void)
 {
-	if(sr_register_callid_func(crypto_generate_callid)<0) {
+	if(sr_register_callid_func(crypto_generate_callid) < 0) {
 		LM_ERR("unable to register callid func\n");
 		return -1;
 	}
@@ -202,22 +210,23 @@ int crypto_register_callid_func(void)
  * \param str to apply hash over
  * \param SHA1 hash
  */
-int crypto_generate_SHA1(str* in, str* hash)
+int crypto_generate_SHA1(str *in, str *hash)
 {
 	static unsigned char crypto_buf[SHA_DIGEST_LENGTH];
 
-	if (in == NULL || in->s == NULL) {
+	if(in == NULL || in->s == NULL) {
 		LM_ERR("Invalid input string!\n");
 		return -1;
 	}
 
-	if (hash == NULL) {
+	if(hash == NULL) {
 		LM_ERR("Invalid output hash str!\n");
 		return -1;
 	}
 
-	void* ret;
-	if ((ret=SHA1((unsigned char *)in->s, in->len, crypto_buf)) != crypto_buf) {
+	void *ret;
+	if((ret = SHA1((unsigned char *)in->s, in->len, crypto_buf))
+			!= crypto_buf) {
 		LM_ERR("SHA1 algorithm failed!\n");
 		LM_DBG("return value from library %p\n", ret);
 		return -1;

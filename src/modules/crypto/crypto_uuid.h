@@ -51,14 +51,14 @@ int crypto_child_init_callid(int rank);
 /**
  * \brief TM API export
  */
-typedef void (*generate_callid_f)(str*);
+typedef void (*generate_callid_f)(str *);
 
 
 /**
  * \brief Get a unique Call-ID
  * \param callid returned Call-ID
  */
-void crypto_generate_callid(str* callid);
+void crypto_generate_callid(str *callid);
 
 /**
  *
@@ -71,6 +71,6 @@ int crypto_register_callid_func(void);
  * \param str to apply hash over
  * \param SHA1 hash
  */
-int crypto_generate_SHA1(str* in, str* hash);
+int crypto_generate_SHA1(str *in, str *hash);
 
 #endif /* CALLID_H */
