@@ -40,9 +40,9 @@
 #define MAX_DLG_RR_PARAM_NAME 32
 
 /* values for the sequential match mode */
-#define SEQ_MATCH_STRICT_ID  0
-#define SEQ_MATCH_FALLBACK   1
-#define SEQ_MATCH_NO_ID      2
+#define SEQ_MATCH_STRICT_ID 0
+#define SEQ_MATCH_FALLBACK 1
+#define SEQ_MATCH_NO_ID 2
 
 
 /*!
@@ -53,9 +53,8 @@
  * \param default_timeout_p default timeout
  * \param seq_match_mode_p matching mode
  */
-void init_dlg_handlers(char *rr_param, int dlg_flag,
-		pv_spec_t *timeout_avp, int default_timeout,
-		int seq_match_mode, int keep_proxy_rr);
+void init_dlg_handlers(char *rr_param, int dlg_flag, pv_spec_t *timeout_avp,
+		int default_timeout, int seq_match_mode, int keep_proxy_rr);
 
 
 /*!
@@ -77,8 +76,8 @@ void destroy_dlg_handlers(void);
  * \note for a request: get record route in normal order, for a reply get
  * in reverse order, skipping the ones from the request and the proxies' own
  */
-int populate_leg_info(dlg_cell_t *dlg, sip_msg_t *msg,
-	tm_cell_t *t, unsigned int leg, str *tag);
+int populate_leg_info(dlg_cell_t *dlg, sip_msg_t *msg, tm_cell_t *t,
+		unsigned int leg, str *tag);
 
 
 /*!
@@ -124,7 +123,7 @@ void dlg_ontimeout(dlg_tl_t *tl);
  * \param t transaction
  * \param run_initial_cbs if set zero, initial callbacks are not executed
  * \return 0 on success, -1 on failure
- */ 
+ */
 int dlg_new_dialog(sip_msg_t *req, tm_cell_t *t, const int run_initial_cbs);
 
 
@@ -135,8 +134,7 @@ int dlg_new_dialog(sip_msg_t *req, tm_cell_t *t, const int run_initial_cbs);
  * \param res pseudo-variable result
  * \return 0 on success, -1 on failure
  */
-int pv_get_dlg_lifetime(sip_msg_t *msg, pv_param_t *param,
-		pv_value_t *res);
+int pv_get_dlg_lifetime(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
 
 
 /*!
@@ -146,8 +144,7 @@ int pv_get_dlg_lifetime(sip_msg_t *msg, pv_param_t *param,
  * \param res pseudo-variable result
  * \return 0 on success, -1 on failure
  */
-int pv_get_dlg_status(sip_msg_t *msg, pv_param_t *param,
-		pv_value_t *res);
+int pv_get_dlg_status(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
 
 
 /*!

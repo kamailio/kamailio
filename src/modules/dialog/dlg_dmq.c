@@ -27,15 +27,15 @@
 #include "dlg_var.h"
 
 static str dlg_dmq_content_type = str_init("application/json");
-static str dmq_200_rpl  = str_init("OK");
-static str dmq_400_rpl  = str_init("Bad Request");
-static str dmq_500_rpl  = str_init("Server Internal Error");
+static str dmq_200_rpl = str_init("OK");
+static str dmq_400_rpl = str_init("Bad Request");
+static str dmq_500_rpl = str_init("Server Internal Error");
 
 dmq_api_t dlg_dmqb;
-dmq_peer_t* dlg_dmq_peer = NULL;
+dmq_peer_t *dlg_dmq_peer = NULL;
 dmq_resp_cback_t dlg_dmq_resp_callback = {&dlg_dmq_resp_callback_f, 0};
 
-int dmq_send_all_dlgs(dmq_node_t* dmq_node);
+int dmq_send_all_dlgs(dmq_node_t *dmq_node);
 int dlg_dmq_request_sync();
 
 extern int dlg_enable_stats;
@@ -48,7 +48,7 @@ int dlg_dmq_initialize()
 	dmq_peer_t not_peer;
 
 	/* load the DMQ API */
-	if (dmq_load_api(&dlg_dmqb)!=0) {
+	if(dmq_load_api(&dlg_dmqb) != 0) {
 		LM_ERR("cannot load dmq api\n");
 		return -1;
 	} else {
@@ -74,19 +74,20 @@ error:
 }
 
 
-int dlg_dmq_send(str* body, dmq_node_t* node) {
-	if (!dlg_dmq_peer) {
+int dlg_dmq_send(str *body, dmq_node_t *node)
+{
+	if(!dlg_dmq_peer) {
 		LM_ERR("dlg_dmq_peer is null!\n");
 		return -1;
 	}
-	if (node) {
+	if(node) {
 		LM_DBG("sending dmq message ...\n");
 		dlg_dmqb.send_message(dlg_dmq_peer, body, node, &dlg_dmq_resp_callback,
 				1, &dlg_dmq_content_type);
 	} else {
 		LM_DBG("sending dmq broadcast...\n");
-		dlg_dmqb.bcast_message(dlg_dmq_peer, body, 0, &dlg_dmq_resp_callback,
-				1, &dlg_dmq_content_type);
+		dlg_dmqb.bcast_message(dlg_dmq_peer, body, 0, &dlg_dmq_resp_callback, 1,
+				&dlg_dmq_content_type);
 	}
 	return 0;
 }
@@ -95,7 +96,8 @@ int dlg_dmq_send(str* body, dmq_node_t* node) {
 /**
 * @brief ht dmq callback
 */
-int dlg_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp, dmq_node_t* node)
+int dlg_dmq_handle_msg(
+		struct sip_msg *msg, peer_reponse_t *resp, dmq_node_t *node)
 {
 	int content_length;
 	str body;
@@ -107,10 +109,11 @@ int dlg_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp, dmq_node_t* no
 
 	dlg_dmq_action_t action = DLG_DMQ_NONE;
 	dlg_iuid_t iuid = {0};
-	str profiles = {0, 0}, callid = {0, 0}, tag1 = {0,0}, tag2 = {0,0},
-		contact1 = {0,0}, contact2 = {0,0}, k={0,0}, v={0,0};
-	str cseq1 = {0,0}, cseq2 = {0,0}, route_set1 = {0,0}, route_set2 = {0,0},
-		from_uri = {0,0}, to_uri = {0,0}, req_uri = {0,0};
+	str profiles = {0, 0}, callid = {0, 0}, tag1 = {0, 0}, tag2 = {0, 0},
+		contact1 = {0, 0}, contact2 = {0, 0}, k = {0, 0}, v = {0, 0};
+	str cseq1 = {0, 0}, cseq2 = {0, 0}, route_set1 = {0, 0},
+		route_set2 = {0, 0}, from_uri = {0, 0}, to_uri = {0, 0},
+		req_uri = {0, 0};
 	unsigned int init_ts = 0, start_ts = 0, lifetime = 0;
 	unsigned int state = 1;
 	srjson_t *vj;
@@ -133,7 +136,7 @@ int dlg_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp, dmq_node_t* no
 	body.s = get_body(msg);
 	body.len = content_length;
 
-	if (!body.s) {
+	if(!body.s) {
 		LM_ERR("unable to get body\n");
 		goto error;
 	}
@@ -146,70 +149,69 @@ int dlg_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp, dmq_node_t* no
 
 	if(jdoc.root == NULL) {
 		jdoc.root = srjson_Parse(&jdoc, jdoc.buf.s);
-		if(jdoc.root == NULL)
-		{
+		if(jdoc.root == NULL) {
 			LM_ERR("invalid json doc [[%s]]\n", jdoc.buf.s);
 			goto invalid;
 		}
 	}
 
-	for(it=jdoc.root->child; it; it = it->next)
-	{
-		if ((it->string == NULL) || (strcmp(it->string, "vars")==0)) continue;
+	for(it = jdoc.root->child; it; it = it->next) {
+		if((it->string == NULL) || (strcmp(it->string, "vars") == 0))
+			continue;
 
 		LM_DBG("found field: %s\n", it->string);
 
-		if (strcmp(it->string, "action")==0) {
+		if(strcmp(it->string, "action") == 0) {
 			action = SRJSON_GET_UINT(it);
-		} else if (strcmp(it->string, "h_entry")==0) {
+		} else if(strcmp(it->string, "h_entry") == 0) {
 			iuid.h_entry = SRJSON_GET_UINT(it);
-		} else if (strcmp(it->string, "h_id")==0) {
+		} else if(strcmp(it->string, "h_id") == 0) {
 			iuid.h_id = SRJSON_GET_UINT(it);
-		} else if (strcmp(it->string, "init_ts")==0) {
+		} else if(strcmp(it->string, "init_ts") == 0) {
 			init_ts = SRJSON_GET_UINT(it);
-		} else if (strcmp(it->string, "start_ts")==0) {
+		} else if(strcmp(it->string, "start_ts") == 0) {
 			start_ts = SRJSON_GET_UINT(it);
-		} else if (strcmp(it->string, "state")==0) {
+		} else if(strcmp(it->string, "state") == 0) {
 			state = SRJSON_GET_UINT(it);
-		} else if (strcmp(it->string, "lifetime")==0) {
+		} else if(strcmp(it->string, "lifetime") == 0) {
 			lifetime = SRJSON_GET_UINT(it);
-		} else if (strcmp(it->string, "callid")==0) {
+		} else if(strcmp(it->string, "callid") == 0) {
 			callid.s = it->valuestring;
 			callid.len = strlen(callid.s);
-		} else if (strcmp(it->string, "profiles")==0) {
+		} else if(strcmp(it->string, "profiles") == 0) {
 			profiles.s = it->valuestring;
 			profiles.len = strlen(profiles.s);
-		} else if (strcmp(it->string, "tag1")==0) {
+		} else if(strcmp(it->string, "tag1") == 0) {
 			tag1.s = it->valuestring;
 			tag1.len = strlen(tag1.s);
-		} else if (strcmp(it->string, "tag2")==0) {
+		} else if(strcmp(it->string, "tag2") == 0) {
 			tag2.s = it->valuestring;
 			tag2.len = strlen(tag2.s);
-		} else if (strcmp(it->string, "cseq1")==0) {
+		} else if(strcmp(it->string, "cseq1") == 0) {
 			cseq1.s = it->valuestring;
 			cseq1.len = strlen(cseq1.s);
-		} else if (strcmp(it->string, "cseq2")==0) {
+		} else if(strcmp(it->string, "cseq2") == 0) {
 			cseq2.s = it->valuestring;
 			cseq2.len = strlen(cseq2.s);
-		} else if (strcmp(it->string, "route_set1")==0) {
+		} else if(strcmp(it->string, "route_set1") == 0) {
 			route_set1.s = it->valuestring;
 			route_set1.len = strlen(route_set1.s);
-		} else if (strcmp(it->string, "route_set2")==0) {
+		} else if(strcmp(it->string, "route_set2") == 0) {
 			route_set2.s = it->valuestring;
 			route_set2.len = strlen(route_set2.s);
-		} else if (strcmp(it->string, "contact1")==0) {
+		} else if(strcmp(it->string, "contact1") == 0) {
 			contact1.s = it->valuestring;
 			contact1.len = strlen(contact1.s);
-		} else if (strcmp(it->string, "contact2")==0) {
+		} else if(strcmp(it->string, "contact2") == 0) {
 			contact2.s = it->valuestring;
 			contact2.len = strlen(contact2.s);
-		} else if (strcmp(it->string, "from_uri")==0) {
+		} else if(strcmp(it->string, "from_uri") == 0) {
 			from_uri.s = it->valuestring;
 			from_uri.len = strlen(from_uri.s);
-		} else if (strcmp(it->string, "to_uri")==0) {
+		} else if(strcmp(it->string, "to_uri") == 0) {
 			to_uri.s = it->valuestring;
 			to_uri.len = strlen(to_uri.s);
-		} else if (strcmp(it->string, "req_uri")==0) {
+		} else if(strcmp(it->string, "req_uri") == 0) {
 			req_uri.s = it->valuestring;
 			req_uri.len = strlen(req_uri.s);
 		} else {
@@ -218,7 +220,7 @@ int dlg_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp, dmq_node_t* no
 	}
 
 	dlg = dlg_get_by_iuid_mode(&iuid, 1);
-	if (dlg) {
+	if(dlg) {
 		LM_DBG("found dialog [%u:%u] at %p\n", iuid.h_entry, iuid.h_id, dlg);
 		d_entry = &(d_table->entries[dlg->h_entry]);
 		unref++;
@@ -226,18 +228,19 @@ int dlg_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp, dmq_node_t* no
 
 	switch(action) {
 		case DLG_DMQ_UPDATE:
-			LM_DBG("Updating dlg [%u:%u] with callid [%.*s]\n", iuid.h_entry, iuid.h_id,
-					callid.len, callid.s);
-			if (!dlg) {
-				dlg = build_new_dlg(&callid, &from_uri, &to_uri, &tag1, &req_uri);
-				if (!dlg) {
+			LM_DBG("Updating dlg [%u:%u] with callid [%.*s]\n", iuid.h_entry,
+					iuid.h_id, callid.len, callid.s);
+			if(!dlg) {
+				dlg = build_new_dlg(
+						&callid, &from_uri, &to_uri, &tag1, &req_uri);
+				if(!dlg) {
 					LM_ERR("failed to build new dialog\n");
 					goto error;
 				}
 
-				if(dlg->h_entry != iuid.h_entry){
+				if(dlg->h_entry != iuid.h_entry) {
 					LM_ERR("inconsistent hash data from peer: "
-						"make sure all Kamailio's use the same hash size\n");
+						   "make sure all Kamailio's use the same hash size\n");
 					shm_free(dlg);
 					dlg = NULL;
 					goto error;
@@ -249,12 +252,12 @@ int dlg_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp, dmq_node_t* no
 				/* override generated h_id */
 				dlg->h_id = iuid.h_id;
 				/* prevent DB sync */
-				dlg->dflags &= ~(DLG_FLAG_NEW|DLG_FLAG_CHANGED);
+				dlg->dflags &= ~(DLG_FLAG_NEW | DLG_FLAG_CHANGED);
 				dlg->iflags |= DLG_IFLAG_DMQ_SYNC;
 				newdlg = 1;
 			} else {
 				/* remove existing profiles */
-				if (dlg->profile_links!=NULL) {
+				if(dlg->profile_links != NULL) {
 					destroy_linkers(dlg->profile_links);
 					dlg->profile_links = NULL;
 				}
@@ -264,74 +267,80 @@ int dlg_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp, dmq_node_t* no
 			dlg->start_ts = start_ts;
 
 			vj = srjson_GetObjectItem(&jdoc, jdoc.root, "vars");
-			if(vj!=NULL) {
-				for(it=vj->child; it; it = it->next)
-				{
-					k.s = it->string;        k.len = strlen(k.s);
-					v.s = it->valuestring;   v.len = strlen(v.s);
+			if(vj != NULL) {
+				for(it = vj->child; it; it = it->next) {
+					k.s = it->string;
+					k.len = strlen(k.s);
+					v.s = it->valuestring;
+					v.len = strlen(v.s);
 					set_dlg_variable(dlg, &k, &v);
 				}
 			}
 			/* add profiles */
-			if(profiles.s!=NULL) {
+			if(profiles.s != NULL) {
 				srjson_InitDoc(&prof_jdoc, NULL);
 				prof_jdoc.buf = profiles;
 				dlg_json_to_profiles(dlg, &prof_jdoc);
 				srjson_DestroyDoc(&prof_jdoc);
 			}
-			if (state == dlg->state) {
+			if(state == dlg->state) {
 				break;
 			}
 			/* intentional fallthrough */
 
 		case DLG_DMQ_STATE:
-			if (!dlg) {
+			if(!dlg) {
 				LM_ERR("dialog [%u:%u] not found\n", iuid.h_entry, iuid.h_id);
 				goto error;
 			}
-			if (state < dlg->state) {
+			if(state < dlg->state) {
 				LM_NOTICE("Ignoring backwards state change on dlg [%u:%u]"
-						" with callid [%.*s] from state [%u] to state [%u]\n",
-					iuid.h_entry, iuid.h_id,
-					dlg->callid.len, dlg->callid.s, dlg->state, state);
+						  " with callid [%.*s] from state [%u] to state [%u]\n",
+						iuid.h_entry, iuid.h_id, dlg->callid.len, dlg->callid.s,
+						dlg->state, state);
 				break;
 			}
 			LM_DBG("State update dlg [%u:%u] with callid [%.*s] from state [%u]"
-					" to state [%u]\n", iuid.h_entry, iuid.h_id,
-					dlg->callid.len, dlg->callid.s, dlg->state, state);
-			switch (state) {
+				   " to state [%u]\n",
+					iuid.h_entry, iuid.h_id, dlg->callid.len, dlg->callid.s,
+					dlg->state, state);
+			switch(state) {
 				case DLG_STATE_EARLY:
 					dlg->start_ts = start_ts;
 					dlg->lifetime = lifetime;
-					dlg_set_leg_info(dlg, &tag1, &route_set1, &contact1, &cseq1, 0);
+					dlg_set_leg_info(
+							dlg, &tag1, &route_set1, &contact1, &cseq1, 0);
 					break;
 				case DLG_STATE_CONFIRMED:
 					dlg->start_ts = start_ts;
 					dlg->lifetime = lifetime;
-					dlg_set_leg_info(dlg, &tag1, &route_set1, &contact1, &cseq1, 0);
-					dlg_set_leg_info(dlg, &tag2, &route_set2, &contact2, &cseq2, 1);
-					if (insert_dlg_timer( &dlg->tl, dlg->lifetime ) != 0) {
-						LM_CRIT("Unable to insert dlg timer %p [%u:%u]\n",
-							dlg, dlg->h_entry, dlg->h_id);
+					dlg_set_leg_info(
+							dlg, &tag1, &route_set1, &contact1, &cseq1, 0);
+					dlg_set_leg_info(
+							dlg, &tag2, &route_set2, &contact2, &cseq2, 1);
+					if(insert_dlg_timer(&dlg->tl, dlg->lifetime) != 0) {
+						LM_CRIT("Unable to insert dlg timer %p [%u:%u]\n", dlg,
+								dlg->h_entry, dlg->h_id);
 					} else {
 						/* dialog pointer inserted in timer list */
 						dlg_ref(dlg, 1);
 					}
 					break;
 				case DLG_STATE_DELETED:
-					if (dlg->state == DLG_STATE_CONFIRMED) {
+					if(dlg->state == DLG_STATE_CONFIRMED) {
 						ret = remove_dialog_timer(&dlg->tl);
-						if (ret == 0) {
+						if(ret == 0) {
 							/* one extra unref due to removal from timer list */
 							unref++;
-						} else if (ret < 0) {
-							LM_CRIT("unable to unlink the timer on dlg %p [%u:%u]\n",
-								dlg, dlg->h_entry, dlg->h_id);
+						} else if(ret < 0) {
+							LM_CRIT("unable to unlink the timer on dlg %p "
+									"[%u:%u]\n",
+									dlg, dlg->h_entry, dlg->h_id);
 						}
 					}
 
 					/* remove dialog from profiles when no longer active */
-					if (dlg->profile_links!=NULL) {
+					if(dlg->profile_links != NULL) {
 						destroy_linkers(dlg->profile_links);
 						dlg->profile_links = NULL;
 					}
@@ -347,10 +356,11 @@ int dlg_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp, dmq_node_t* no
 					dlg_unref(dlg, unref);
 					goto error;
 			}
-			if(newdlg==1) {
-				if (state==DLG_STATE_CONFIRMED_NA || state==DLG_STATE_CONFIRMED) {
+			if(newdlg == 1) {
+				if(state == DLG_STATE_CONFIRMED_NA
+						|| state == DLG_STATE_CONFIRMED) {
 					if_update_stat(dlg_enable_stats, active_dlgs, 1);
-				} else if (dlg->state==DLG_STATE_EARLY) {
+				} else if(dlg->state == DLG_STATE_EARLY) {
 					if_update_stat(dlg_enable_stats, early_dlgs, 1);
 				}
 			}
@@ -358,27 +368,28 @@ int dlg_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp, dmq_node_t* no
 			break;
 
 		case DLG_DMQ_RM:
-			if (!dlg) {
+			if(!dlg) {
 				LM_DBG("dialog [%u:%u] not found\n", iuid.h_entry, iuid.h_id);
 				goto error;
 			}
 			LM_DBG("Removed dlg [%u:%u] with callid [%.*s] int state [%u]\n",
-					iuid.h_entry, iuid.h_id,
-					dlg->callid.len, dlg->callid.s, dlg->state);
-			if (dlg->state==DLG_STATE_CONFIRMED
-					|| dlg->state==DLG_STATE_EARLY) {
+					iuid.h_entry, iuid.h_id, dlg->callid.len, dlg->callid.s,
+					dlg->state);
+			if(dlg->state == DLG_STATE_CONFIRMED
+					|| dlg->state == DLG_STATE_EARLY) {
 				ret = remove_dialog_timer(&dlg->tl);
-				if (ret == 0) {
+				if(ret == 0) {
 					/* one extra unref due to removal from timer list */
 					unref++;
-				} else if (ret < 0) {
+				} else if(ret < 0) {
 					LM_CRIT("unable to unlink the timer on dlg %p [%u:%u]\n",
-						dlg, dlg->h_entry, dlg->h_id);
+							dlg, dlg->h_entry, dlg->h_id);
 				}
 			}
-			if (state==DLG_STATE_CONFIRMED_NA || state==DLG_STATE_CONFIRMED) {
+			if(state == DLG_STATE_CONFIRMED_NA
+					|| state == DLG_STATE_CONFIRMED) {
 				if_update_stat(dlg_enable_stats, active_dlgs, -1);
-			} else if (dlg->state==DLG_STATE_EARLY) {
+			} else if(dlg->state == DLG_STATE_EARLY) {
 				if_update_stat(dlg_enable_stats, early_dlgs, -1);
 			}
 			/* prevent DB sync */
@@ -394,12 +405,12 @@ int dlg_dmq_handle_msg(struct sip_msg* msg, peer_reponse_t* resp, dmq_node_t* no
 		case DLG_DMQ_NONE:
 			break;
 	}
-	if (dlg) {
+	if(dlg) {
 		if(unref) {
 			dlg_unref(dlg, unref);
 		}
 	}
-	if(newdlg == 0 && d_entry!=NULL) {
+	if(newdlg == 0 && d_entry != NULL) {
 		dlg_unlock(d_table, d_entry);
 	}
 
@@ -416,7 +427,7 @@ invalid2:
 	return 0;
 
 error:
-	if(newdlg == 0 && d_entry!=NULL) {
+	if(newdlg == 0 && d_entry != NULL) {
 		dlg_unlock(d_table, d_entry);
 	}
 	srjson_DestroyDoc(&jdoc);
@@ -426,7 +437,8 @@ error:
 }
 
 
-int dlg_dmq_request_sync() {
+int dlg_dmq_request_sync()
+{
 	srjson_doc_t jdoc;
 
 	LM_DBG("requesting sync from dmq peers\n");
@@ -434,20 +446,20 @@ int dlg_dmq_request_sync() {
 	srjson_InitDoc(&jdoc, NULL);
 
 	jdoc.root = srjson_CreateObject(&jdoc);
-	if(jdoc.root==NULL) {
+	if(jdoc.root == NULL) {
 		LM_ERR("cannot create json root\n");
 		goto error;
 	}
 
 	srjson_AddNumberToObject(&jdoc, jdoc.root, "action", DLG_DMQ_SYNC);
 	jdoc.buf.s = srjson_PrintUnformatted(&jdoc, jdoc.root);
-	if(jdoc.buf.s==NULL) {
+	if(jdoc.buf.s == NULL) {
 		LM_ERR("unable to serialize data\n");
 		goto error;
 	}
 	jdoc.buf.len = strlen(jdoc.buf.s);
 	LM_DBG("sending serialized data %.*s\n", jdoc.buf.len, jdoc.buf.s);
-	if (dlg_dmq_send(&jdoc.buf, 0)!=0) {
+	if(dlg_dmq_send(&jdoc.buf, 0) != 0) {
 		goto error;
 	}
 
@@ -457,7 +469,7 @@ int dlg_dmq_request_sync() {
 	return 0;
 
 error:
-	if(jdoc.buf.s!=NULL) {
+	if(jdoc.buf.s != NULL) {
 		jdoc.free_fn(jdoc.buf.s);
 		jdoc.buf.s = NULL;
 	}
@@ -466,8 +478,9 @@ error:
 }
 
 
-int dlg_dmq_replicate_action(dlg_dmq_action_t action, dlg_cell_t* dlg,
-		int needlock, dmq_node_t *node ) {
+int dlg_dmq_replicate_action(dlg_dmq_action_t action, dlg_cell_t *dlg,
+		int needlock, dmq_node_t *node)
+{
 
 	srjson_doc_t jdoc, prof_jdoc;
 	dlg_var_t *var;
@@ -475,19 +488,20 @@ int dlg_dmq_replicate_action(dlg_dmq_action_t action, dlg_cell_t* dlg,
 	LM_DBG("replicating action [%d] on [%u:%u] to dmq peers\n", action,
 			dlg->h_entry, dlg->h_id);
 
-	if (action == DLG_DMQ_UPDATE) {
-		if (!node && (dlg->iflags & DLG_IFLAG_DMQ_SYNC)
+	if(action == DLG_DMQ_UPDATE) {
+		if(!node && (dlg->iflags & DLG_IFLAG_DMQ_SYNC)
 				&& ((dlg->dflags & DLG_FLAG_CHANGED_PROF) == 0)) {
 			LM_DBG("dlg not changed, no sync\n");
 			return 1;
 		}
-	} else if ( (dlg->iflags & DLG_IFLAG_DMQ_SYNC) == 0 ) {
+	} else if((dlg->iflags & DLG_IFLAG_DMQ_SYNC) == 0) {
 		LM_DBG("dlg not synced, no sync\n");
 		return 1;
 	}
-	if (action == DLG_DMQ_STATE && (dlg->state != DLG_STATE_CONFIRMED
-				&& dlg->state != DLG_STATE_DELETED
-				&& dlg->state != DLG_STATE_EARLY)) {
+	if(action == DLG_DMQ_STATE
+			&& (dlg->state != DLG_STATE_CONFIRMED
+					&& dlg->state != DLG_STATE_DELETED
+					&& dlg->state != DLG_STATE_EARLY)) {
 		LM_DBG("not syncing state %u\n", dlg->state);
 		return 1;
 	}
@@ -495,12 +509,12 @@ int dlg_dmq_replicate_action(dlg_dmq_action_t action, dlg_cell_t* dlg,
 	srjson_InitDoc(&jdoc, NULL);
 
 	jdoc.root = srjson_CreateObject(&jdoc);
-	if(jdoc.root==NULL) {
+	if(jdoc.root == NULL) {
 		LM_ERR("cannot create json root\n");
 		goto error;
 	}
 
-	if (needlock)
+	if(needlock)
 		dlg_lock(d_table, &(d_table->entries[dlg->h_entry]));
 
 	srjson_AddNumberToObject(&jdoc, jdoc.root, "action", action);
@@ -511,42 +525,41 @@ int dlg_dmq_replicate_action(dlg_dmq_action_t action, dlg_cell_t* dlg,
 		case DLG_DMQ_UPDATE:
 			dlg->iflags |= DLG_IFLAG_DMQ_SYNC;
 			dlg->dflags &= ~DLG_FLAG_CHANGED_PROF;
-			srjson_AddNumberToObject(&jdoc, jdoc.root, "init_ts",
-					dlg->init_ts);
-			srjson_AddStrToObject(&jdoc, jdoc.root, "callid",
-					dlg->callid.s, dlg->callid.len);
+			srjson_AddNumberToObject(&jdoc, jdoc.root, "init_ts", dlg->init_ts);
+			srjson_AddStrToObject(
+					&jdoc, jdoc.root, "callid", dlg->callid.s, dlg->callid.len);
 
-			srjson_AddStrToObject(&jdoc, jdoc.root, "from_uri",
-					dlg->from_uri.s, dlg->from_uri.len);
-			srjson_AddStrToObject(&jdoc, jdoc.root, "to_uri",
-					dlg->to_uri.s, dlg->to_uri.len);
-			srjson_AddStrToObject(&jdoc, jdoc.root, "req_uri",
-					dlg->req_uri.s, dlg->req_uri.len);
-			srjson_AddStrToObject(&jdoc, jdoc.root, "tag1",
-					dlg->tag[0].s, dlg->tag[0].len);
-			srjson_AddStrToObject(&jdoc, jdoc.root, "cseq1",
-					dlg->cseq[0].s, dlg->cseq[0].len);
+			srjson_AddStrToObject(&jdoc, jdoc.root, "from_uri", dlg->from_uri.s,
+					dlg->from_uri.len);
+			srjson_AddStrToObject(
+					&jdoc, jdoc.root, "to_uri", dlg->to_uri.s, dlg->to_uri.len);
+			srjson_AddStrToObject(&jdoc, jdoc.root, "req_uri", dlg->req_uri.s,
+					dlg->req_uri.len);
+			srjson_AddStrToObject(
+					&jdoc, jdoc.root, "tag1", dlg->tag[0].s, dlg->tag[0].len);
+			srjson_AddStrToObject(&jdoc, jdoc.root, "cseq1", dlg->cseq[0].s,
+					dlg->cseq[0].len);
 			srjson_AddStrToObject(&jdoc, jdoc.root, "route_set1",
 					dlg->route_set[0].s, dlg->route_set[0].len);
 			srjson_AddStrToObject(&jdoc, jdoc.root, "contact1",
 					dlg->contact[0].s, dlg->contact[0].len);
 
-			if (dlg->vars != NULL) {
+			if(dlg->vars != NULL) {
 				srjson_t *pj = NULL;
 				pj = srjson_CreateObject(&jdoc);
-				for(var=dlg->vars ; var ; var=var->next) {
-					srjson_AddStrToObject(&jdoc, pj, var->key.s,
-							var->value.s, var->value.len);
+				for(var = dlg->vars; var; var = var->next) {
+					srjson_AddStrToObject(&jdoc, pj, var->key.s, var->value.s,
+							var->value.len);
 				}
 				srjson_AddItemToObject(&jdoc, jdoc.root, "vars", pj);
 			}
 
-			if (dlg->profile_links) {
+			if(dlg->profile_links) {
 				srjson_InitDoc(&prof_jdoc, NULL);
 				dlg_profiles_to_json(dlg, &prof_jdoc);
-				if(prof_jdoc.buf.s!=NULL) {
-					LM_DBG("adding profiles: [%.*s]\n",
-							prof_jdoc.buf.len, prof_jdoc.buf.s);
+				if(prof_jdoc.buf.s != NULL) {
+					LM_DBG("adding profiles: [%.*s]\n", prof_jdoc.buf.len,
+							prof_jdoc.buf.s);
 					srjson_AddStrToObject(&jdoc, jdoc.root, "profiles",
 							prof_jdoc.buf.s, prof_jdoc.buf.len);
 					prof_jdoc.free_fn(prof_jdoc.buf.s);
@@ -558,12 +571,12 @@ int dlg_dmq_replicate_action(dlg_dmq_action_t action, dlg_cell_t* dlg,
 
 		case DLG_DMQ_STATE:
 			srjson_AddNumberToObject(&jdoc, jdoc.root, "state", dlg->state);
-			switch (dlg->state) {
+			switch(dlg->state) {
 				case DLG_STATE_EARLY:
-					srjson_AddNumberToObject(&jdoc, jdoc.root, "start_ts",
-							dlg->start_ts);
-					srjson_AddNumberToObject(&jdoc, jdoc.root, "lifetime",
-							dlg->lifetime);
+					srjson_AddNumberToObject(
+							&jdoc, jdoc.root, "start_ts", dlg->start_ts);
+					srjson_AddNumberToObject(
+							&jdoc, jdoc.root, "lifetime", dlg->lifetime);
 
 					srjson_AddStrToObject(&jdoc, jdoc.root, "tag1",
 							dlg->tag[0].s, dlg->tag[0].len);
@@ -575,10 +588,10 @@ int dlg_dmq_replicate_action(dlg_dmq_action_t action, dlg_cell_t* dlg,
 							dlg->contact[0].s, dlg->contact[0].len);
 					break;
 				case DLG_STATE_CONFIRMED:
-					srjson_AddNumberToObject(&jdoc, jdoc.root, "start_ts",
-							dlg->start_ts);
-					srjson_AddNumberToObject(&jdoc, jdoc.root, "lifetime",
-							dlg->lifetime);
+					srjson_AddNumberToObject(
+							&jdoc, jdoc.root, "start_ts", dlg->start_ts);
+					srjson_AddNumberToObject(
+							&jdoc, jdoc.root, "lifetime", dlg->lifetime);
 
 					srjson_AddStrToObject(&jdoc, jdoc.root, "tag1",
 							dlg->tag[0].s, dlg->tag[0].len);
@@ -615,17 +628,17 @@ int dlg_dmq_replicate_action(dlg_dmq_action_t action, dlg_cell_t* dlg,
 		case DLG_DMQ_SYNC:
 			break;
 	}
-	if (needlock)
+	if(needlock)
 		dlg_unlock(d_table, &(d_table->entries[dlg->h_entry]));
 
 	jdoc.buf.s = srjson_PrintUnformatted(&jdoc, jdoc.root);
-	if(jdoc.buf.s==NULL) {
+	if(jdoc.buf.s == NULL) {
 		LM_ERR("unable to serialize data\n");
 		goto error;
 	}
 	jdoc.buf.len = strlen(jdoc.buf.s);
 	LM_DBG("sending serialized data %.*s\n", jdoc.buf.len, jdoc.buf.s);
-	if (dlg_dmq_send(&jdoc.buf, node)!=0) {
+	if(dlg_dmq_send(&jdoc.buf, node) != 0) {
 		goto error;
 	}
 
@@ -635,7 +648,7 @@ int dlg_dmq_replicate_action(dlg_dmq_action_t action, dlg_cell_t* dlg,
 	return 0;
 
 error:
-	if(jdoc.buf.s!=NULL) {
+	if(jdoc.buf.s != NULL) {
 		jdoc.free_fn(jdoc.buf.s);
 		jdoc.buf.s = NULL;
 	}
@@ -644,24 +657,25 @@ error:
 }
 
 
-int dmq_send_all_dlgs(dmq_node_t* dmq_node) {
+int dmq_send_all_dlgs(dmq_node_t *dmq_node)
+{
 	int index;
 	dlg_entry_t *entry;
 	dlg_cell_t *dlg;
 
 	LM_DBG("sending all dialogs \n");
 
-	for(index = 0; index< d_table->size; index++){
+	for(index = 0; index < d_table->size; index++) {
 		/* lock the whole entry */
 		entry = &d_table->entries[index];
-		dlg_lock( d_table, entry);
+		dlg_lock(d_table, entry);
 
-		for(dlg = entry->first; dlg != NULL; dlg = dlg->next){
+		for(dlg = entry->first; dlg != NULL; dlg = dlg->next) {
 			dlg->dflags |= DLG_FLAG_CHANGED_PROF;
 			dlg_dmq_replicate_action(DLG_DMQ_UPDATE, dlg, 0, dmq_node);
 		}
 
-		dlg_unlock( d_table, entry);
+		dlg_unlock(d_table, entry);
 	}
 
 	return 0;
@@ -671,8 +685,8 @@ int dmq_send_all_dlgs(dmq_node_t* dmq_node) {
 /**
 * @brief dmq response callback
 */
-int dlg_dmq_resp_callback_f(struct sip_msg* msg, int code,
-		dmq_node_t* node, void* param)
+int dlg_dmq_resp_callback_f(
+		struct sip_msg *msg, int code, dmq_node_t *node, void *param)
 {
 	LM_DBG("dmq response callback triggered [%p %d %p]\n", msg, code, param);
 	return 0;

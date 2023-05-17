@@ -32,9 +32,10 @@
 #include "../../core/pvar.h"
 #include "dlg_hash.h"
 
-#define DLG_TOROUTE_SIZE	32
+#define DLG_TOROUTE_SIZE 32
 /*! dialog context */
-typedef struct _dlg_ctx {
+typedef struct _dlg_ctx
+{
 	int on;
 	unsigned int flags;
 	unsigned int iflags;
@@ -47,32 +48,35 @@ typedef struct _dlg_ctx {
 	int cpid;
 	int set;
 	unsigned int dir;
-	int t;				/* set to 1 if tm req in callback executed */
-	int expect_t;		/* set to 1 if expects that t is set after config */
+	int t;		  /* set to 1 if tm req in callback executed */
+	int expect_t; /* set to 1 if expects that t is set after config */
 } dlg_ctx_t;
 
 /* A dialog-variable */
-typedef struct dlg_var {
+typedef struct dlg_var
+{
 	str key;
 	str value;
-	unsigned int vflags;		/*!< internal variable flags */
+	unsigned int vflags; /*!< internal variable flags */
 	struct dlg_var *next;
 } dlg_var_t;
 
-str* get_dlg_varref(dlg_cell_t *dlg, str *key);
+str *get_dlg_varref(dlg_cell_t *dlg, str *key);
 int get_dlg_varval(dlg_cell_t *dlg, str *key, str *val);
 int get_dlg_vardup(dlg_cell_t *dlg, str *key, str *val);
 int get_dlg_varstatus(dlg_cell_t *dlg, str *key);
 int set_dlg_variable(dlg_cell_t *dlg, str *key, str *val);
 
-int get_dlg_variable_uintval(struct dlg_cell *dlg, str *key, unsigned int *uval);
+int get_dlg_variable_uintval(
+		struct dlg_cell *dlg, str *key, unsigned int *uval);
 int set_dlg_variable_uintval(struct dlg_cell *dlg, str *key, unsigned int uval);
 
 int pv_parse_dialog_var_name(pv_spec_p sp, str *in);
 
 int pv_get_dlg_variable(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
 
-int pv_set_dlg_variable(sip_msg_t *msg, pv_param_t *param, int op, pv_value_t *val);
+int pv_set_dlg_variable(
+		sip_msg_t *msg, pv_param_t *param, int op, pv_value_t *val);
 
 /*! Retrieve the current var-list */
 dlg_var_t *get_local_varlist_pointer(sip_msg_t *msg, int clear_pointer);
@@ -83,22 +87,19 @@ int set_dlg_variable_unsafe(dlg_cell_t *dlg, str *key, str *val);
 extern dlg_ctx_t _dlg_ctx;
 
 /* statistic variables */
-extern stat_var *active_dlgs;		/*!< number of active dialogs */
-extern stat_var *early_dlgs; 		/*!< number of early dialogs */
-extern stat_var *processed_dlgs;	/*!< number of processed dialogs */
-extern stat_var *expired_dlgs;		/*!< number of expired dialogs */
-extern stat_var *failed_dlgs;		/*!< number of failed dialogs */
+extern stat_var *active_dlgs;	 /*!< number of active dialogs */
+extern stat_var *early_dlgs;	 /*!< number of early dialogs */
+extern stat_var *processed_dlgs; /*!< number of processed dialogs */
+extern stat_var *expired_dlgs;	 /*!< number of expired dialogs */
+extern stat_var *failed_dlgs;	 /*!< number of failed dialogs */
 
 extern int debug_variables_list;
 
-int pv_get_dlg_ctx(sip_msg_t *msg,  pv_param_t *param,
-		pv_value_t *res);
-int pv_set_dlg_ctx(sip_msg_t *msg, pv_param_t *param,
-		int op, pv_value_t *val);
+int pv_get_dlg_ctx(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
+int pv_set_dlg_ctx(sip_msg_t *msg, pv_param_t *param, int op, pv_value_t *val);
 int pv_parse_dlg_ctx_name(pv_spec_p sp, str *in);
 
-int pv_get_dlg(sip_msg_t *msg,  pv_param_t *param,
-		pv_value_t *res);
+int pv_get_dlg(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
 int pv_parse_dlg_name(pv_spec_p sp, str *in);
 
 int dlg_cfg_cb(sip_msg_t *foo, unsigned int flags, void *bar);
@@ -107,9 +108,9 @@ int cb_dlg_locals_reset(sip_msg_t *msg, unsigned int flags, void *cbp);
 
 void dlg_set_ctx_iuid(dlg_cell_t *dlg);
 void dlg_reset_ctx_iuid(void);
-dlg_cell_t* dlg_get_ctx_dialog(void);
+dlg_cell_t *dlg_get_ctx_dialog(void);
 
-dlg_ctx_t* dlg_get_dlg_ctx(void);
+dlg_ctx_t *dlg_get_dlg_ctx(void);
 
 int spiral_detect_reset(sip_msg_t *foo, unsigned int flags, void *bar);
 

@@ -36,38 +36,39 @@
 #include "../../core/sr_module.h"
 
 /* terminate_dlg function prototype */
-typedef int (*terminate_dlg_f)(struct dlg_cell* dlg, str *hdrs);
+typedef int (*terminate_dlg_f)(struct dlg_cell *dlg, str *hdrs);
 
 typedef struct dlg_cell *(*get_dlg_f)(struct sip_msg *msg);
 
 typedef void (*release_dlg_f)(struct dlg_cell *dlg);
 
-struct dlg_binds {
-	register_dlgcb_f    register_dlgcb;
-	terminate_dlg_f     terminate_dlg;
-	set_dlg_variable_f  set_dlg_var;
-	get_dlg_varref_f    get_dlg_varref;
-	get_dlg_varval_f    get_dlg_varval;
-	get_dlg_vardup_f    get_dlg_vardup;
+struct dlg_binds
+{
+	register_dlgcb_f register_dlgcb;
+	terminate_dlg_f terminate_dlg;
+	set_dlg_variable_f set_dlg_var;
+	get_dlg_varref_f get_dlg_varref;
+	get_dlg_varval_f get_dlg_varval;
+	get_dlg_vardup_f get_dlg_vardup;
 	get_dlg_varstatus_f get_dlg_varstatus;
-	get_dlg_f           get_dlg;
-	release_dlg_f       release_dlg;
+	get_dlg_f get_dlg;
+	release_dlg_f release_dlg;
 };
 
 
-typedef int(*load_dlg_f)( struct dlg_binds *dlgb );
-int load_dlg( struct dlg_binds *dlgb);
+typedef int (*load_dlg_f)(struct dlg_binds *dlgb);
+int load_dlg(struct dlg_binds *dlgb);
 
-static inline int load_dlg_api( struct dlg_binds *dlgb )
+static inline int load_dlg_api(struct dlg_binds *dlgb)
 {
 	load_dlg_f load_dlg;
 
 	/* import the DLG auto-loading function */
-	if ( !(load_dlg=(load_dlg_f)find_export("load_dlg", 0, 0)))
+	if(!(load_dlg = (load_dlg_f)find_export("load_dlg", 0, 0)))
 		return -1;
 
 	/* let the auto-loading function load all DLG stuff */
-	if (load_dlg( dlgb )==-1)
+	if(load_dlg(dlgb) == -1)
 		return -1;
 
 	return 0;

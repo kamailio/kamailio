@@ -66,12 +66,11 @@ gen_lock_t *dlg_ka_list_lock = NULL;
  * \param _dlg dialog
  * \param _cnt increment for the reference counter
  */
-#define ref_dlg_unsafe(_dlg,_cnt)     \
-	do { \
-		(_dlg)->ref += (_cnt); \
-		LM_DBG("ref dlg %p with %d -> %d\n", \
-			(_dlg),(_cnt),(_dlg)->ref); \
-	}while(0)
+#define ref_dlg_unsafe(_dlg, _cnt)                                         \
+	do {                                                                   \
+		(_dlg)->ref += (_cnt);                                             \
+		LM_DBG("ref dlg %p with %d -> %d\n", (_dlg), (_cnt), (_dlg)->ref); \
+	} while(0)
 
 
 /*!
@@ -80,33 +79,31 @@ gen_lock_t *dlg_ka_list_lock = NULL;
  * \param _cnt decrement for the reference counter
  * \param _d_entry dialog entry
  */
-#define unref_dlg_unsafe(_dlg,_cnt,_d_entry)   \
-	do { \
-		if((_dlg)->ref <= 0 ) { \
-			LM_WARN("invalid unref'ing dlg %p with ref %d by %d\n",\
-					(_dlg),(_dlg)->ref,(_cnt));\
-			break; \
-		} \
-		(_dlg)->ref -= (_cnt); \
-		LM_DBG("unref dlg %p with %d -> %d\n",\
-			(_dlg),(_cnt),(_dlg)->ref);\
-		if ((_dlg)->ref<0) {\
-			LM_CRIT("bogus ref %d with cnt %d for dlg %p [%u:%u] "\
-				"with clid '%.*s' and tags '%.*s' '%.*s'\n",\
-				(_dlg)->ref, _cnt, _dlg,\
-				(_dlg)->h_entry, (_dlg)->h_id,\
-				(_dlg)->callid.len, (_dlg)->callid.s,\
-				(_dlg)->tag[DLG_CALLER_LEG].len,\
-				(_dlg)->tag[DLG_CALLER_LEG].s,\
-				(_dlg)->tag[DLG_CALLEE_LEG].len,\
-				(_dlg)->tag[DLG_CALLEE_LEG].s); \
-		}\
-		if ((_dlg)->ref<=0) { \
-			unlink_unsafe_dlg( _d_entry, _dlg);\
-			LM_DBG("ref <=0 for dialog %p\n",_dlg);\
-			destroy_dlg(_dlg);\
-		}\
-	}while(0)
+#define unref_dlg_unsafe(_dlg, _cnt, _d_entry)                               \
+	do {                                                                     \
+		if((_dlg)->ref <= 0) {                                               \
+			LM_WARN("invalid unref'ing dlg %p with ref %d by %d\n", (_dlg),  \
+					(_dlg)->ref, (_cnt));                                    \
+			break;                                                           \
+		}                                                                    \
+		(_dlg)->ref -= (_cnt);                                               \
+		LM_DBG("unref dlg %p with %d -> %d\n", (_dlg), (_cnt), (_dlg)->ref); \
+		if((_dlg)->ref < 0) {                                                \
+			LM_CRIT("bogus ref %d with cnt %d for dlg %p [%u:%u] "           \
+					"with clid '%.*s' and tags '%.*s' '%.*s'\n",             \
+					(_dlg)->ref, _cnt, _dlg, (_dlg)->h_entry, (_dlg)->h_id,  \
+					(_dlg)->callid.len, (_dlg)->callid.s,                    \
+					(_dlg)->tag[DLG_CALLER_LEG].len,                         \
+					(_dlg)->tag[DLG_CALLER_LEG].s,                           \
+					(_dlg)->tag[DLG_CALLEE_LEG].len,                         \
+					(_dlg)->tag[DLG_CALLEE_LEG].s);                          \
+		}                                                                    \
+		if((_dlg)->ref <= 0) {                                               \
+			unlink_unsafe_dlg(_d_entry, _dlg);                               \
+			LM_DBG("ref <=0 for dialog %p\n", _dlg);                         \
+			destroy_dlg(_dlg);                                               \
+		}                                                                    \
+	} while(0)
 
 /**
  * add item to keep-alive list
@@ -116,13 +113,13 @@ int dlg_ka_add(dlg_cell_t *dlg)
 {
 	dlg_ka_t *dka;
 
-	if(dlg_ka_interval<=0)
+	if(dlg_ka_interval <= 0)
 		return 0;
 	if(!(dlg->iflags & (DLG_IFLAG_KA_SRC | DLG_IFLAG_KA_DST)))
 		return 0;
 
-	dka = (dlg_ka_t*)shm_malloc(sizeof(dlg_ka_t));
-	if(dka==NULL) {
+	dka = (dlg_ka_t *)shm_malloc(sizeof(dlg_ka_t));
+	if(dka == NULL) {
 		LM_ERR("no more shm mem\n");
 		return -1;
 	}
@@ -133,9 +130,9 @@ int dlg_ka_add(dlg_cell_t *dlg)
 	dka->iflags = dlg->iflags;
 
 	lock_get(dlg_ka_list_lock);
-	if(*dlg_ka_list_tail!=NULL)
+	if(*dlg_ka_list_tail != NULL)
 		(*dlg_ka_list_tail)->next = dka;
-	if(*dlg_ka_list_head==NULL)
+	if(*dlg_ka_list_head == NULL)
 		*dlg_ka_list_head = dka;
 	*dlg_ka_list_tail = dka;
 	lock_release(dlg_ka_list_lock);
@@ -152,13 +149,13 @@ int dlg_ka_run(ticks_t ti)
 	dlg_ka_t *dka;
 	dlg_cell_t *dlg;
 
-	if(dlg_ka_interval<=0)
+	if(dlg_ka_interval <= 0)
 		return 0;
 
 	while(1) {
 		/* get head item */
 		lock_get(dlg_ka_list_lock);
-		if(*dlg_ka_list_head==NULL) {
+		if(*dlg_ka_list_head == NULL) {
 			lock_release(dlg_ka_list_lock);
 			return 0;
 		}
@@ -169,7 +166,7 @@ int dlg_ka_run(ticks_t ti)
 				dka->iuid.h_entry, dka->iuid.h_id,
 				(unsigned long)dka->katime);
 #endif
-		if(dka->katime>ti) {
+		if(dka->katime > ti) {
 			lock_release(dlg_ka_list_lock);
 			return 0;
 		}
@@ -183,30 +180,29 @@ int dlg_ka_run(ticks_t ti)
 
 		/* send keep-alive for dka */
 		dlg = dlg_get_by_iuid(&dka->iuid);
-		if(dlg==NULL) {
+		if(dlg == NULL) {
 			shm_free(dka);
 			dka = NULL;
 		} else {
 			if((dka->iflags & DLG_IFLAG_KA_SRC)
-					&& (dlg->state==DLG_STATE_CONFIRMED))
+					&& (dlg->state == DLG_STATE_CONFIRMED))
 				dlg_send_ka(dlg, DLG_CALLER_LEG);
 			if((dka->iflags & DLG_IFLAG_KA_DST)
-					&& (dlg->state==DLG_STATE_CONFIRMED))
+					&& (dlg->state == DLG_STATE_CONFIRMED))
 				dlg_send_ka(dlg, DLG_CALLEE_LEG);
-			if(dlg->state==DLG_STATE_DELETED) {
+			if(dlg->state == DLG_STATE_DELETED) {
 				shm_free(dka);
 				dka = NULL;
 			}
 			dlg_release(dlg);
 		}
 		/* append to tail */
-		if(dka!=NULL)
-		{
+		if(dka != NULL) {
 			dka->katime = ti + dlg_ka_interval;
 			lock_get(dlg_ka_list_lock);
-			if(*dlg_ka_list_tail!=NULL)
+			if(*dlg_ka_list_tail != NULL)
 				(*dlg_ka_list_tail)->next = dka;
-			if(*dlg_ka_list_head==NULL)
+			if(*dlg_ka_list_head == NULL)
 				*dlg_ka_list_head = dka;
 			*dlg_ka_list_tail = dka;
 			lock_release(dlg_ka_list_lock);
@@ -228,31 +224,31 @@ int dlg_clean_run(ticks_t ti)
 	dlg_cell_t *tdlg;
 
 	tm = (unsigned int)time(NULL);
-	for(i=0; i<d_table->size; i++)
-	{
+	for(i = 0; i < d_table->size; i++) {
 		dlg_lock(d_table, &d_table->entries[i]);
 		dlg = d_table->entries[i].first;
-		while (dlg) {
+		while(dlg) {
 			tdlg = dlg;
 			dlg = dlg->next;
-			if(tdlg->state<=DLG_STATE_EARLY && tdlg->init_ts>0
-					&& tdlg->init_ts<tm-dlg_early_timeout) {
+			if(tdlg->state <= DLG_STATE_EARLY && tdlg->init_ts > 0
+					&& tdlg->init_ts < tm - dlg_early_timeout) {
 				/* dialog in unconfirmed or early state older than expected */
 				LM_NOTICE("dialog in early state is too old (%p ref %d)\n",
 						tdlg, tdlg->ref);
 				unlink_unsafe_dlg(&d_table->entries[i], tdlg);
 				destroy_dlg(tdlg);
 			}
-			if(tdlg->state==DLG_STATE_CONFIRMED_NA && tdlg->start_ts>0
-					&& tdlg->start_ts<tm-dlg_noack_timeout) {
-				if(update_dlg_timer(&tdlg->tl, 10)<0) {
-					LM_ERR("failed to update dialog lifetime in long non-ack state\n");
+			if(tdlg->state == DLG_STATE_CONFIRMED_NA && tdlg->start_ts > 0
+					&& tdlg->start_ts < tm - dlg_noack_timeout) {
+				if(update_dlg_timer(&tdlg->tl, 10) < 0) {
+					LM_ERR("failed to update dialog lifetime in long non-ack "
+						   "state\n");
 				}
 				tdlg->lifetime = 10;
 				tdlg->dflags |= DLG_FLAG_CHANGED;
 			}
-			if(tdlg->state==DLG_STATE_DELETED && tdlg->end_ts>0
-					&& tdlg->end_ts<tm-dlg_end_timeout) {
+			if(tdlg->state == DLG_STATE_DELETED && tdlg->end_ts > 0
+					&& tdlg->end_ts < tm - dlg_end_timeout) {
 				/* dialog in deleted state older than 5min */
 				LM_NOTICE("dialog in delete state is too old (%p ref %d)\n",
 						tdlg, tdlg->ref);
@@ -275,57 +271,58 @@ int init_dlg_table(unsigned int size)
 	unsigned int i;
 
 	dlg_ka_list_head = (dlg_ka_t **)shm_malloc(sizeof(dlg_ka_t *));
-	if(dlg_ka_list_head==NULL) {
+	if(dlg_ka_list_head == NULL) {
 		LM_ERR("no more shm mem (h)\n");
 		goto error0;
 	}
 	dlg_ka_list_tail = (dlg_ka_t **)shm_malloc(sizeof(dlg_ka_t *));
-	if(dlg_ka_list_tail==NULL) {
+	if(dlg_ka_list_tail == NULL) {
 		LM_ERR("no more shm mem (t)\n");
 		goto error0;
 	}
 	*dlg_ka_list_head = NULL;
 	*dlg_ka_list_tail = NULL;
-	dlg_ka_list_lock = (gen_lock_t*)shm_malloc(sizeof(gen_lock_t));
-	if(dlg_ka_list_lock==NULL) {
+	dlg_ka_list_lock = (gen_lock_t *)shm_malloc(sizeof(gen_lock_t));
+	if(dlg_ka_list_lock == NULL) {
 		LM_ERR("no more shm mem (l)\n");
 		goto error0;
 	}
 	lock_init(dlg_ka_list_lock);
 
-	d_table = (struct dlg_table*)shm_malloc
-		( sizeof(struct dlg_table) + size*sizeof(struct dlg_entry));
-	if (d_table==0) {
+	d_table = (struct dlg_table *)shm_malloc(
+			sizeof(struct dlg_table) + size * sizeof(struct dlg_entry));
+	if(d_table == 0) {
 		LM_ERR("no more shm mem (1)\n");
 		goto error0;
 	}
 
-	memset( d_table, 0, sizeof(struct dlg_table) );
+	memset(d_table, 0, sizeof(struct dlg_table));
 	d_table->size = size;
-	d_table->entries = (struct dlg_entry*)(d_table+1);
+	d_table->entries = (struct dlg_entry *)(d_table + 1);
 
-	for( i=0 ; i<size; i++ ) {
-		memset( &(d_table->entries[i]), 0, sizeof(struct dlg_entry) );
-		if(lock_init(&d_table->entries[i].lock)<0) {
+	for(i = 0; i < size; i++) {
+		memset(&(d_table->entries[i]), 0, sizeof(struct dlg_entry));
+		if(lock_init(&d_table->entries[i].lock) < 0) {
 			LM_ERR("failed to init lock for slot: %d\n", i);
 			goto error1;
 		}
-		if(dlg_h_id_step>1) {
-			d_table->entries[i].next_id = dlg_h_id_start
-					+ (dlg_h_id_step * ((kam_rand() % (3*size)) + 1));
+		if(dlg_h_id_step > 1) {
+			d_table->entries[i].next_id =
+					dlg_h_id_start
+					+ (dlg_h_id_step * ((kam_rand() % (3 * size)) + 1));
 		} else {
-			d_table->entries[i].next_id = kam_rand() % (3*size);
+			d_table->entries[i].next_id = kam_rand() % (3 * size);
 		}
 	}
 
 	return 0;
 error1:
-	shm_free( d_table );
+	shm_free(d_table);
 	d_table = NULL;
 error0:
-	if(dlg_ka_list_head!=NULL)
+	if(dlg_ka_list_head != NULL)
 		shm_free(dlg_ka_list_head);
-	if(dlg_ka_list_tail!=NULL)
+	if(dlg_ka_list_tail != NULL)
 		shm_free(dlg_ka_list_tail);
 	dlg_ka_list_head = NULL;
 	dlg_ka_list_tail = NULL;
@@ -345,66 +342,64 @@ void destroy_dlg(struct dlg_cell *dlg)
 	LM_DBG("destroying dialog %p (ref %d)\n", dlg, dlg->ref);
 
 	ret = remove_dialog_timer(&dlg->tl);
-	if (ret < 0) {
+	if(ret < 0) {
 		LM_CRIT("unable to unlink the timer on dlg %p [%u:%u] "
-			"with clid '%.*s' and tags '%.*s' '%.*s'\n",
-			dlg, dlg->h_entry, dlg->h_id,
-			dlg->callid.len, dlg->callid.s,
-			dlg->tag[DLG_CALLER_LEG].len, dlg->tag[DLG_CALLER_LEG].s,
-			dlg->tag[DLG_CALLEE_LEG].len, dlg->tag[DLG_CALLEE_LEG].s);
-	} else if (ret > 0) {
+				"with clid '%.*s' and tags '%.*s' '%.*s'\n",
+				dlg, dlg->h_entry, dlg->h_id, dlg->callid.len, dlg->callid.s,
+				dlg->tag[DLG_CALLER_LEG].len, dlg->tag[DLG_CALLER_LEG].s,
+				dlg->tag[DLG_CALLEE_LEG].len, dlg->tag[DLG_CALLEE_LEG].s);
+	} else if(ret > 0) {
 		LM_DBG("removed timer for dlg %p [%u:%u] "
-			"with clid '%.*s' and tags '%.*s' '%.*s'\n",
-			dlg, dlg->h_entry, dlg->h_id,
-			dlg->callid.len, dlg->callid.s,
-			dlg->tag[DLG_CALLER_LEG].len, dlg->tag[DLG_CALLER_LEG].s,
-			dlg->tag[DLG_CALLEE_LEG].len, dlg->tag[DLG_CALLEE_LEG].s);
+			   "with clid '%.*s' and tags '%.*s' '%.*s'\n",
+				dlg, dlg->h_entry, dlg->h_id, dlg->callid.len, dlg->callid.s,
+				dlg->tag[DLG_CALLER_LEG].len, dlg->tag[DLG_CALLER_LEG].s,
+				dlg->tag[DLG_CALLEE_LEG].len, dlg->tag[DLG_CALLEE_LEG].s);
 	}
 
-	run_dlg_callbacks( DLGCB_DESTROY , dlg, NULL, NULL, DLG_DIR_NONE, 0);
+	run_dlg_callbacks(DLGCB_DESTROY, dlg, NULL, NULL, DLG_DIR_NONE, 0);
 
-	if (dlg_enable_dmq && (dlg->iflags & DLG_IFLAG_DMQ_SYNC) )
+	if(dlg_enable_dmq && (dlg->iflags & DLG_IFLAG_DMQ_SYNC))
 		dlg_dmq_replicate_action(DLG_DMQ_RM, dlg, 0, 0);
 
 	/* delete the dialog from DB*/
-	if (dlg_db_mode)
+	if(dlg_db_mode)
 		remove_dialog_from_db(dlg);
 
-	if (dlg->cbs.first)
+	if(dlg->cbs.first)
 		destroy_dlg_callbacks_list(dlg->cbs.first);
 
-	if (dlg->profile_links)
+	if(dlg->profile_links)
 		destroy_linkers(dlg->profile_links);
 
-	if (dlg->tag[DLG_CALLER_LEG].s)
+	if(dlg->tag[DLG_CALLER_LEG].s)
 		shm_free(dlg->tag[DLG_CALLER_LEG].s);
 
-	if (dlg->tag[DLG_CALLEE_LEG].s)
+	if(dlg->tag[DLG_CALLEE_LEG].s)
 		shm_free(dlg->tag[DLG_CALLEE_LEG].s);
 
-	if (dlg->contact[DLG_CALLER_LEG].s)
+	if(dlg->contact[DLG_CALLER_LEG].s)
 		shm_free(dlg->contact[DLG_CALLER_LEG].s);
 
-	if (dlg->contact[DLG_CALLEE_LEG].s)
+	if(dlg->contact[DLG_CALLEE_LEG].s)
 		shm_free(dlg->contact[DLG_CALLEE_LEG].s);
 
-	if (dlg->cseq[DLG_CALLER_LEG].s)
+	if(dlg->cseq[DLG_CALLER_LEG].s)
 		shm_free(dlg->cseq[DLG_CALLER_LEG].s);
 
-	if (dlg->cseq[DLG_CALLEE_LEG].s)
+	if(dlg->cseq[DLG_CALLEE_LEG].s)
 		shm_free(dlg->cseq[DLG_CALLEE_LEG].s);
 
-	if (dlg->route_set[DLG_CALLER_LEG].s)
+	if(dlg->route_set[DLG_CALLER_LEG].s)
 		shm_free(dlg->route_set[DLG_CALLER_LEG].s);
 
-	if (dlg->route_set[DLG_CALLEE_LEG].s)
+	if(dlg->route_set[DLG_CALLEE_LEG].s)
 		shm_free(dlg->route_set[DLG_CALLEE_LEG].s);
 
-	if (dlg->toroute_name.s)
+	if(dlg->toroute_name.s)
 		shm_free(dlg->toroute_name.s);
 
-	
-	while (dlg->vars) {
+
+	while(dlg->vars) {
 		var = dlg->vars;
 		dlg->vars = dlg->vars->next;
 		shm_free(var->key.s);
@@ -426,12 +421,12 @@ void destroy_dlg_table(void)
 	struct dlg_cell *dlg, *l_dlg;
 	unsigned int i;
 
-	if (d_table==0)
+	if(d_table == 0)
 		return;
 
-	for( i=0 ; i<d_table->size; i++ ) {
+	for(i = 0; i < d_table->size; i++) {
 		dlg = d_table->entries[i].first;
-		while (dlg) {
+		while(dlg) {
 			l_dlg = dlg;
 			dlg = dlg->next;
 			l_dlg->iflags &= ~DLG_IFLAG_DMQ_SYNC;
@@ -456,8 +451,8 @@ void destroy_dlg_table(void)
  * \param req_uri dialog r-uri
  * \return created dialog structure on success, NULL otherwise
  */
-struct dlg_cell* build_new_dlg( str *callid, str *from_uri, str *to_uri,
-		str *from_tag, str *req_uri)
+struct dlg_cell *build_new_dlg(
+		str *callid, str *from_uri, str *to_uri, str *from_tag, str *req_uri)
 {
 	struct dlg_cell *dlg;
 	int len;
@@ -465,10 +460,10 @@ struct dlg_cell* build_new_dlg( str *callid, str *from_uri, str *to_uri,
 
 	/* space for dialog  structure and values with 0-ending char */
 	len = sizeof(struct dlg_cell) + callid->len + 1 + from_uri->len + 1
-		+ to_uri->len + 1 + req_uri->len + 1;
-	dlg = (struct dlg_cell*)shm_malloc( len );
-	if (dlg==0) {
-		LM_ERR("no more shm mem (%d)\n",len);
+		  + to_uri->len + 1 + req_uri->len + 1;
+	dlg = (struct dlg_cell *)shm_malloc(len);
+	if(dlg == 0) {
+		LM_ERR("no more shm mem (%d)\n", len);
 		return 0;
 	}
 
@@ -476,10 +471,10 @@ struct dlg_cell* build_new_dlg( str *callid, str *from_uri, str *to_uri,
 	dlg->state = DLG_STATE_UNCONFIRMED;
 	dlg->init_ts = (unsigned int)time(NULL);
 
-	dlg->h_entry = core_hash( callid, 0, d_table->size);
-	LM_DBG("new dialog on hash %u\n",dlg->h_entry);
+	dlg->h_entry = core_hash(callid, 0, d_table->size);
+	LM_DBG("new dialog on hash %u\n", dlg->h_entry);
 
-	p = (char*)(dlg+1);
+	p = (char *)(dlg + 1);
 
 	dlg->callid.s = p;
 	dlg->callid.len = callid->len;
@@ -501,7 +496,7 @@ struct dlg_cell* build_new_dlg( str *callid, str *from_uri, str *to_uri,
 	memcpy(p, req_uri->s, req_uri->len);
 	p += req_uri->len + 1;
 
-	if ( p!=(((char*)dlg)+len) ) {
+	if(p != (((char *)dlg) + len)) {
 		LM_CRIT("buffer overflow\n");
 		shm_free(dlg);
 		return 0;
@@ -521,67 +516,63 @@ struct dlg_cell* build_new_dlg( str *callid, str *from_uri, str *to_uri,
  * \param leg must be either DLG_CALLER_LEG, or DLG_CALLEE_LEG
  * \return 0 on success, -1 on failure
  */
-int dlg_set_leg_info(struct dlg_cell *dlg, str* tag, str *rr, str *contact,
-					str *cseq, unsigned int leg)
+int dlg_set_leg_info(struct dlg_cell *dlg, str *tag, str *rr, str *contact,
+		str *cseq, unsigned int leg)
 {
 	str cs = {"0", 1};
 
 	/* if we don't have cseq, set it to 0 */
-	if(cseq->len>0) {
+	if(cseq->len > 0) {
 		cs = *cseq;
 	}
 
 	if(dlg->tag[leg].s)
 		shm_free(dlg->tag[leg].s);
-	dlg->tag[leg].s = (char*)shm_malloc(tag->len);
+	dlg->tag[leg].s = (char *)shm_malloc(tag->len);
 
 	if(dlg->cseq[leg].s) {
-		if (dlg->cseq[leg].len < cs.len) {
+		if(dlg->cseq[leg].len < cs.len) {
 			shm_free(dlg->cseq[leg].s);
-			dlg->cseq[leg].s = (char*)shm_malloc(cs.len);
+			dlg->cseq[leg].s = (char *)shm_malloc(cs.len);
 		}
 	} else {
-		dlg->cseq[leg].s = (char*)shm_malloc( cs.len );
+		dlg->cseq[leg].s = (char *)shm_malloc(cs.len);
 	}
 
 	if(dlg->contact[leg].s) {
-		if (dlg->contact[leg].len < contact->len) {
+		if(dlg->contact[leg].len < contact->len) {
 			shm_free(dlg->contact[leg].s);
-			dlg->contact[leg].s = (char*)shm_malloc(contact->len);
+			dlg->contact[leg].s = (char *)shm_malloc(contact->len);
 		}
 	} else {
-		dlg->contact[leg].s = (char*)shm_malloc( contact->len );
+		dlg->contact[leg].s = (char *)shm_malloc(contact->len);
 	}
 
 	if(dlg->route_set[leg].s) {
-		if (dlg->route_set[leg].len < rr->len) {
+		if(dlg->route_set[leg].len < rr->len) {
 			shm_free(dlg->route_set[leg].s);
-			dlg->route_set[leg].s = (char*)shm_malloc(rr->len);
+			dlg->route_set[leg].s = (char *)shm_malloc(rr->len);
 		}
 	} else {
-		dlg->route_set[leg].s = (char*)shm_malloc(rr->len);
+		dlg->route_set[leg].s = (char *)shm_malloc(rr->len);
 	}
 
-	if ( dlg->tag[leg].s==NULL || dlg->cseq[leg].s==NULL
-			|| dlg->contact[leg].s==NULL || dlg->route_set[leg].s==NULL) {
+	if(dlg->tag[leg].s == NULL || dlg->cseq[leg].s == NULL
+			|| dlg->contact[leg].s == NULL || dlg->route_set[leg].s == NULL) {
 		LM_ERR("no more shm mem\n");
-		if (dlg->tag[leg].s)
-		{
+		if(dlg->tag[leg].s) {
 			shm_free(dlg->tag[leg].s);
 			dlg->tag[leg].s = NULL;
 		}
-		if (dlg->cseq[leg].s)
-		{
+		if(dlg->cseq[leg].s) {
 			shm_free(dlg->cseq[leg].s);
 			dlg->cseq[leg].s = NULL;
 		}
-		if (dlg->contact[leg].s)
-		{
+		if(dlg->contact[leg].s) {
 			shm_free(dlg->contact[leg].s);
 			dlg->contact[leg].s = NULL;
 		}
-		if (dlg->route_set[leg].s)
-		{
+		if(dlg->route_set[leg].s) {
 			shm_free(dlg->route_set[leg].s);
 			dlg->route_set[leg].s = NULL;
 		}
@@ -591,10 +582,10 @@ int dlg_set_leg_info(struct dlg_cell *dlg, str* tag, str *rr, str *contact,
 
 	/* tag */
 	dlg->tag[leg].len = tag->len;
-	memcpy( dlg->tag[leg].s, tag->s, tag->len);
+	memcpy(dlg->tag[leg].s, tag->s, tag->len);
 
 	/* rr */
-	if (rr->len) {
+	if(rr->len) {
 		dlg->route_set[leg].len = rr->len;
 		memcpy(dlg->route_set[leg].s, rr->s, rr->len);
 	}
@@ -604,13 +595,13 @@ int dlg_set_leg_info(struct dlg_cell *dlg, str* tag, str *rr, str *contact,
 	if(contact->s) {
 		memcpy(dlg->contact[leg].s, contact->s, contact->len);
 	} else {
-		if(contact->len>0) {
+		if(contact->len > 0) {
 			memset(dlg->contact[leg].s, 0, contact->len);
 		}
 	}
 	/* cseq */
 	dlg->cseq[leg].len = cs.len;
-	memcpy( dlg->cseq[leg].s, cs.s, cs.len);
+	memcpy(dlg->cseq[leg].s, cs.s, cs.len);
 
 	return 0;
 }
@@ -623,31 +614,32 @@ int dlg_set_leg_info(struct dlg_cell *dlg, str* tag, str *rr, str *contact,
  * \param cseq CSEQ of caller or callee
  * \return 0 on success, -1 on failure
  */
-int dlg_update_cseq(struct dlg_cell * dlg, unsigned int leg, str *cseq)
-{	dlg_entry_t *d_entry;
+int dlg_update_cseq(struct dlg_cell *dlg, unsigned int leg, str *cseq)
+{
+	dlg_entry_t *d_entry;
 
 	d_entry = &(d_table->entries[dlg->h_entry]);
 
 	dlg_lock(d_table, d_entry);
 
-	if ( dlg->cseq[leg].s ) {
-		if (dlg->cseq[leg].len < cseq->len) {
+	if(dlg->cseq[leg].s) {
+		if(dlg->cseq[leg].len < cseq->len) {
 			shm_free(dlg->cseq[leg].s);
-			dlg->cseq[leg].s = (char*)shm_malloc(cseq->len);
-			if (dlg->cseq[leg].s==NULL)
+			dlg->cseq[leg].s = (char *)shm_malloc(cseq->len);
+			if(dlg->cseq[leg].s == NULL)
 				goto error;
 		}
 	} else {
-		dlg->cseq[leg].s = (char*)shm_malloc(cseq->len);
-		if (dlg->cseq[leg].s==NULL)
+		dlg->cseq[leg].s = (char *)shm_malloc(cseq->len);
+		if(dlg->cseq[leg].s == NULL)
 			goto error;
 	}
 
-	memcpy( dlg->cseq[leg].s, cseq->s, cseq->len );
+	memcpy(dlg->cseq[leg].s, cseq->s, cseq->len);
 	dlg->cseq[leg].len = cseq->len;
 
-	LM_DBG("cseq of leg[%d] is %.*s\n", leg,
-			dlg->cseq[leg].len, dlg->cseq[leg].s);
+	LM_DBG("cseq of leg[%d] is %.*s\n", leg, dlg->cseq[leg].len,
+			dlg->cseq[leg].s);
 	dlg_unlock(d_table, d_entry);
 	return 0;
 error:
@@ -664,7 +656,7 @@ error:
  * \param ct Contact of caller or callee
  * \return 0 on success, -1 on failure
  */
-int dlg_update_contact(struct dlg_cell * dlg, unsigned int leg, str *ct)
+int dlg_update_contact(struct dlg_cell *dlg, unsigned int leg, str *ct)
 {
 	dlg_entry_t *d_entry;
 
@@ -672,30 +664,30 @@ int dlg_update_contact(struct dlg_cell * dlg, unsigned int leg, str *ct)
 
 	dlg_lock(d_table, d_entry);
 
-	if ( dlg->contact[leg].s ) {
+	if(dlg->contact[leg].s) {
 		if(dlg->contact[leg].len == ct->len
-				&& memcmp(dlg->contact[leg].s, ct->s, ct->len)==0) {
+				&& memcmp(dlg->contact[leg].s, ct->s, ct->len) == 0) {
 			LM_DBG("same contact for leg[%d] - [%.*s]\n", leg,
-				dlg->contact[leg].len, dlg->contact[leg].s);
+					dlg->contact[leg].len, dlg->contact[leg].s);
 			goto done;
 		}
-		if (dlg->contact[leg].len < ct->len) {
+		if(dlg->contact[leg].len < ct->len) {
 			shm_free(dlg->contact[leg].s);
-			dlg->contact[leg].s = (char*)shm_malloc(ct->len);
-			if (dlg->contact[leg].s==NULL)
+			dlg->contact[leg].s = (char *)shm_malloc(ct->len);
+			if(dlg->contact[leg].s == NULL)
 				goto error;
 		}
 	} else {
-		dlg->contact[leg].s = (char*)shm_malloc(ct->len);
-		if (dlg->contact[leg].s==NULL)
+		dlg->contact[leg].s = (char *)shm_malloc(ct->len);
+		if(dlg->contact[leg].s == NULL)
 			goto error;
 	}
 
-	memcpy( dlg->contact[leg].s, ct->s, ct->len );
+	memcpy(dlg->contact[leg].s, ct->s, ct->len);
 	dlg->contact[leg].len = ct->len;
 
-	LM_DBG("contact of leg[%d] is %.*s\n", leg,
-			dlg->contact[leg].len, dlg->contact[leg].s);
+	LM_DBG("contact of leg[%d] is %.*s\n", leg, dlg->contact[leg].len,
+			dlg->contact[leg].s);
 done:
 	dlg_unlock(d_table, d_entry);
 	return 0;
@@ -713,7 +705,7 @@ error:
  * \param rr routeset
  * \return 0 on success, -1 on failure
  */
-int dlg_update_rr_set(struct dlg_cell * dlg, unsigned int leg, str *rr)
+int dlg_update_rr_set(struct dlg_cell *dlg, unsigned int leg, str *rr)
 {
 	dlg_entry_t *d_entry;
 
@@ -721,30 +713,30 @@ int dlg_update_rr_set(struct dlg_cell * dlg, unsigned int leg, str *rr)
 
 	dlg_lock(d_table, d_entry);
 
-	if ( dlg->route_set[leg].s ) {
+	if(dlg->route_set[leg].s) {
 		if(dlg->route_set[leg].len == rr->len
-				&& memcmp(dlg->route_set[leg].s, rr->s, rr->len)==0) {
+				&& memcmp(dlg->route_set[leg].s, rr->s, rr->len) == 0) {
 			LM_DBG("same route_set for leg[%d] - [%.*s]\n", leg,
-				dlg->route_set[leg].len, dlg->route_set[leg].s);
+					dlg->route_set[leg].len, dlg->route_set[leg].s);
 			goto done;
 		}
-		if (dlg->route_set[leg].len < rr->len) {
+		if(dlg->route_set[leg].len < rr->len) {
 			shm_free(dlg->route_set[leg].s);
-			dlg->route_set[leg].s = (char*)shm_malloc(rr->len);
-			if (dlg->route_set[leg].s==NULL)
+			dlg->route_set[leg].s = (char *)shm_malloc(rr->len);
+			if(dlg->route_set[leg].s == NULL)
 				goto error;
 		}
 	} else {
-		dlg->route_set[leg].s = (char*)shm_malloc(rr->len);
-		if (dlg->route_set[leg].s==NULL)
+		dlg->route_set[leg].s = (char *)shm_malloc(rr->len);
+		if(dlg->route_set[leg].s == NULL)
 			goto error;
 	}
 
-	memcpy( dlg->route_set[leg].s, rr->s, rr->len );
+	memcpy(dlg->route_set[leg].s, rr->s, rr->len);
 	dlg->route_set[leg].len = rr->len;
 
-	LM_DBG("route_set of leg[%d] is %.*s\n", leg,
-			dlg->route_set[leg].len, dlg->route_set[leg].s);
+	LM_DBG("route_set of leg[%d] is %.*s\n", leg, dlg->route_set[leg].len,
+			dlg->route_set[leg].s);
 done:
 	dlg_unlock(d_table, d_entry);
 	return 0;
@@ -770,20 +762,20 @@ dlg_cell_t *dlg_lookup_mode(unsigned int h_entry, unsigned int h_id, int lmode)
 	dlg_cell_t *dlg;
 	dlg_entry_t *d_entry;
 
-	if(d_table==NULL)
+	if(d_table == NULL)
 		return 0;
 
-	if (h_entry>=d_table->size)
+	if(h_entry >= d_table->size)
 		goto not_found;
 
 	d_entry = &(d_table->entries[h_entry]);
 
 	dlg_lock(d_table, d_entry);
 
-	for( dlg=d_entry->first ; dlg ; dlg=dlg->next ) {
-		if (dlg->h_id == h_id) {
+	for(dlg = d_entry->first; dlg; dlg = dlg->next) {
+		if(dlg->h_id == h_id) {
 			ref_dlg_unsafe(dlg, 1);
-			if (likely(lmode == 0)) {
+			if(likely(lmode == 0)) {
 				dlg_unlock(d_table, d_entry);
 			}
 			LM_DBG("dialog id=%u found on entry %u\n", h_id, h_entry);
@@ -821,11 +813,11 @@ dlg_cell_t *dlg_lookup(unsigned int h_entry, unsigned int h_id)
  * \param lmode id if 0, then dlg table entry is unlocked, otherwise is locked
  * \return dialog structure on success, NULL on failure
  */
-dlg_cell_t* dlg_get_by_iuid_mode(dlg_iuid_t *diuid, int lmode)
+dlg_cell_t *dlg_get_by_iuid_mode(dlg_iuid_t *diuid, int lmode)
 {
-	if(diuid==NULL)
+	if(diuid == NULL)
 		return NULL;
-	if(diuid->h_id==0)
+	if(diuid->h_id == 0)
 		return NULL;
 	/* dlg ref counter is increased by next line */
 	return dlg_lookup_mode(diuid->h_entry, diuid->h_id, lmode);
@@ -839,11 +831,11 @@ dlg_cell_t* dlg_get_by_iuid_mode(dlg_iuid_t *diuid, int lmode)
  * \param diuid internal unique id per dialog
  * \return dialog structure on success, NULL on failure
  */
-dlg_cell_t* dlg_get_by_iuid(dlg_iuid_t *diuid)
+dlg_cell_t *dlg_get_by_iuid(dlg_iuid_t *diuid)
 {
-	if(diuid==NULL)
+	if(diuid == NULL)
 		return NULL;
-	if(diuid->h_id==0)
+	if(diuid->h_id == 0)
 		return NULL;
 	/* dlg ref counter is increased by next line */
 	return dlg_lookup_mode(diuid->h_entry, diuid->h_id, 0);
@@ -860,49 +852,49 @@ dlg_cell_t* dlg_get_by_iuid(dlg_iuid_t *diuid)
  * \param mode let hash table slot locked or not, even when dlg is not found
  * \return dialog structure on success, NULL on failure
  */
-static inline struct dlg_cell* internal_get_dlg(unsigned int h_entry,
-						str *callid, str *ftag, str *ttag,
-						unsigned int *dir, int mode)
+static inline struct dlg_cell *internal_get_dlg(unsigned int h_entry,
+		str *callid, str *ftag, str *ttag, unsigned int *dir, int mode)
 {
 	struct dlg_cell *dlg;
-	struct dlg_cell *dlg_no_totag=NULL;
+	struct dlg_cell *dlg_no_totag = NULL;
 	struct dlg_entry *d_entry;
 	unsigned int dir_no_totag = DLG_DIR_NONE;
 
 	d_entry = &(d_table->entries[h_entry]);
 
-	dlg_lock( d_table, d_entry);
+	dlg_lock(d_table, d_entry);
 
-	for( dlg = d_entry->first ; dlg ; dlg = dlg->next ) {
+	for(dlg = d_entry->first; dlg; dlg = dlg->next) {
 		/* check callid / fromtag / totag */
-		if (match_dialog( dlg, callid, ftag, ttag, dir)==1) {
+		if(match_dialog(dlg, callid, ftag, ttag, dir) == 1) {
 			/* if to-tag is empty continue to search in case another dialog
 			 * is found with a matching to-tag. */
-			if (dlg->tag[DLG_CALLEE_LEG].len == 0) {
+			if(dlg->tag[DLG_CALLEE_LEG].len == 0) {
 				dlg_no_totag = dlg;
 				dir_no_totag = *dir;
 				continue;
 			}
 
 			ref_dlg_unsafe(dlg, 1);
-			if(likely(mode==0)) {
-				dlg_unlock( d_table, d_entry);
+			if(likely(mode == 0)) {
+				dlg_unlock(d_table, d_entry);
 			}
-			LM_DBG("dialog callid='%.*s' found on entry %u, dir=%d to-tag='%.*s'\n",
-				callid->len, callid->s, h_entry, *dir,
-				dlg->tag[DLG_CALLEE_LEG].len, dlg->tag[DLG_CALLEE_LEG].s);
+			LM_DBG("dialog callid='%.*s' found on entry %u, dir=%d "
+				   "to-tag='%.*s'\n",
+					callid->len, callid->s, h_entry, *dir,
+					dlg->tag[DLG_CALLEE_LEG].len, dlg->tag[DLG_CALLEE_LEG].s);
 
 			return dlg;
 		}
 	}
 
-	if (dlg_no_totag) {
+	if(dlg_no_totag) {
 		ref_dlg_unsafe(dlg_no_totag, 1);
 	}
-	if(likely(mode==0)) {
+	if(likely(mode == 0)) {
 		dlg_unlock(d_table, d_entry);
 	}
-	if (dlg_no_totag) {
+	if(dlg_no_totag) {
 		*dir = dir_no_totag;
 		LM_DBG("dialog callid='%.*s' found on entry %u, dir=%d no-to-tag\n",
 				callid->len, callid->s, h_entry, *dir);
@@ -912,7 +904,6 @@ static inline struct dlg_cell* internal_get_dlg(unsigned int h_entry,
 	LM_DBG("no dialog callid='%.*s' found\n", callid->len, callid->s);
 	return 0;
 }
-
 
 
 /*!
@@ -931,19 +922,19 @@ static inline struct dlg_cell* internal_get_dlg(unsigned int h_entry,
  * \param dir direction
  * \return dialog structure on success, NULL on failure
  */
-struct dlg_cell* get_dlg( str *callid, str *ftag, str *ttag, unsigned int *dir)
+struct dlg_cell *get_dlg(str *callid, str *ftag, str *ttag, unsigned int *dir)
 {
 	struct dlg_cell *dlg;
 	unsigned int he;
 
-	if(d_table==NULL) {
+	if(d_table == NULL) {
 		LM_ERR("dialog hash table not available\n");
 		return 0;
 	}
 	he = core_hash(callid, 0, d_table->size);
 	dlg = internal_get_dlg(he, callid, ftag, ttag, dir, 0);
 
-	if (dlg == 0) {
+	if(dlg == 0) {
 		LM_DBG("no dialog callid='%.*s' found\n", callid->len, callid->s);
 		return 0;
 	}
@@ -969,7 +960,7 @@ struct dlg_cell* get_dlg( str *callid, str *ftag, str *ttag, unsigned int *dir)
  * \param dir direction
  * \return dialog structure on success, NULL on failure (and slot locked)
  */
-dlg_cell_t* dlg_search( str *callid, str *ftag, str *ttag, unsigned int *dir)
+dlg_cell_t *dlg_search(str *callid, str *ftag, str *ttag, unsigned int *dir)
 {
 	struct dlg_cell *dlg;
 	unsigned int he;
@@ -977,7 +968,7 @@ dlg_cell_t* dlg_search( str *callid, str *ftag, str *ttag, unsigned int *dir)
 	he = core_hash(callid, 0, d_table->size);
 	dlg = internal_get_dlg(he, callid, ftag, ttag, dir, 1);
 
-	if (dlg == 0) {
+	if(dlg == 0) {
 		LM_DBG("dialog with callid='%.*s' not found\n", callid->len, callid->s);
 		return 0;
 	}
@@ -1027,11 +1018,12 @@ void link_dlg(struct dlg_cell *dlg, int n, int mode)
 
 	d_entry = &(d_table->entries[dlg->h_entry]);
 
-	if(unlikely(mode==0)) dlg_lock( d_table, d_entry);
+	if(unlikely(mode == 0))
+		dlg_lock(d_table, d_entry);
 
 	/* keep id 0 for special cases */
-	if(dlg_h_id_step>1) {
-		if((d_entry->next_id==0)
+	if(dlg_h_id_step > 1) {
+		if((d_entry->next_id == 0)
 				|| (d_entry->next_id + dlg_h_id_step < d_entry->next_id)) {
 			d_entry->next_id = dlg_h_id_start + dlg_h_id_step;
 		}
@@ -1039,10 +1031,11 @@ void link_dlg(struct dlg_cell *dlg, int n, int mode)
 		d_entry->next_id += dlg_h_id_step;
 	} else {
 		dlg->h_id = 1 + d_entry->next_id++;
-		if(dlg->h_id == 0) dlg->h_id = 1;
+		if(dlg->h_id == 0)
+			dlg->h_id = 1;
 	}
 	LM_DBG("linking dialog [%u:%u]\n", dlg->h_entry, dlg->h_id);
-	if (d_entry->first==0) {
+	if(d_entry->first == 0) {
 		d_entry->first = d_entry->last = dlg;
 	} else {
 		d_entry->last->next = dlg;
@@ -1050,9 +1043,10 @@ void link_dlg(struct dlg_cell *dlg, int n, int mode)
 		d_entry->last = dlg;
 	}
 
-	ref_dlg_unsafe(dlg, 1+n);
+	ref_dlg_unsafe(dlg, 1 + n);
 
-	if(unlikely(mode==0)) dlg_unlock( d_table, d_entry);
+	if(unlikely(mode == 0))
+		dlg_unlock(d_table, d_entry);
 	return;
 }
 
@@ -1063,17 +1057,17 @@ void link_dlg(struct dlg_cell *dlg, int n, int mode)
  * \param dlg dialog
  * \param cnt increment for the reference counter
  */
-void dlg_ref_helper(dlg_cell_t *dlg, unsigned int cnt, const char *fname,
-		int fline)
+void dlg_ref_helper(
+		dlg_cell_t *dlg, unsigned int cnt, const char *fname, int fline)
 {
 	dlg_entry_t *d_entry;
 
 	LM_DBG("ref op on %p with %d from %s:%d\n", dlg, cnt, fname, fline);
 	d_entry = &(d_table->entries[dlg->h_entry]);
 
-	dlg_lock( d_table, d_entry);
-	ref_dlg_unsafe( dlg, cnt);
-	dlg_unlock( d_table, d_entry);
+	dlg_lock(d_table, d_entry);
+	ref_dlg_unsafe(dlg, cnt);
+	dlg_unlock(d_table, d_entry);
 }
 
 
@@ -1083,17 +1077,17 @@ void dlg_ref_helper(dlg_cell_t *dlg, unsigned int cnt, const char *fname,
  * \param dlg dialog
  * \param cnt decrement for the reference counter
  */
-void dlg_unref_helper(dlg_cell_t *dlg, unsigned int cnt, const char *fname,
-		int fline)
+void dlg_unref_helper(
+		dlg_cell_t *dlg, unsigned int cnt, const char *fname, int fline)
 {
 	dlg_entry_t *d_entry;
 
 	LM_DBG("unref op on %p with %d from %s:%d\n", dlg, cnt, fname, fline);
 	d_entry = &(d_table->entries[dlg->h_entry]);
 
-	dlg_lock( d_table, d_entry);
-	unref_dlg_unsafe( dlg, cnt, d_entry);
-	dlg_unlock( d_table, d_entry);
+	dlg_lock(d_table, d_entry);
+	unref_dlg_unsafe(dlg, cnt, d_entry);
+	dlg_unlock(d_table, d_entry);
 }
 
 
@@ -1104,7 +1098,7 @@ void dlg_unref_helper(dlg_cell_t *dlg, unsigned int cnt, const char *fname,
  */
 void dlg_release(dlg_cell_t *dlg)
 {
-	if(dlg==NULL)
+	if(dlg == NULL)
 		return;
 	dlg_unref(dlg, 1);
 }
@@ -1116,13 +1110,15 @@ void dlg_release(dlg_cell_t *dlg)
  * \param dlg dialog data
  * \see next_state_dlg
  */
-#define log_next_state_dlg(event, dlg) do { \
-		LM_CRIT("bogus event %d in state %d for dlg %p [%u:%u]" \
-			" with clid '%.*s' and tags" \
-			" '%.*s' '%.*s'\n", event, (dlg)->state, (dlg), \
-			(dlg)->h_entry, (dlg)->h_id, (dlg)->callid.len, (dlg)->callid.s, \
-			(dlg)->tag[DLG_CALLER_LEG].len, (dlg)->tag[DLG_CALLER_LEG].s, \
-			(dlg)->tag[DLG_CALLEE_LEG].len, (dlg)->tag[DLG_CALLEE_LEG].s); \
+#define log_next_state_dlg(event, dlg)                                         \
+	do {                                                                       \
+		LM_CRIT("bogus event %d in state %d for dlg %p [%u:%u]"                \
+				" with clid '%.*s' and tags"                                   \
+				" '%.*s' '%.*s'\n",                                            \
+				event, (dlg)->state, (dlg), (dlg)->h_entry, (dlg)->h_id,       \
+				(dlg)->callid.len, (dlg)->callid.s,                            \
+				(dlg)->tag[DLG_CALLER_LEG].len, (dlg)->tag[DLG_CALLER_LEG].s,  \
+				(dlg)->tag[DLG_CALLEE_LEG].len, (dlg)->tag[DLG_CALLEE_LEG].s); \
 	} while(0)
 
 
@@ -1139,8 +1135,8 @@ void dlg_release(dlg_cell_t *dlg)
  * \param new_state new dialog state
  * \param unref set to 1 when the dialog was deleted, 0 otherwise
  */
-void next_state_dlg(dlg_cell_t *dlg, int event,
-		int *old_state, int *new_state, int *unref)
+void next_state_dlg(
+		dlg_cell_t *dlg, int event, int *old_state, int *new_state, int *unref)
 {
 	dlg_entry_t *d_entry;
 
@@ -1148,22 +1144,22 @@ void next_state_dlg(dlg_cell_t *dlg, int event,
 
 	*unref = 0;
 
-	dlg_lock( d_table, d_entry);
+	dlg_lock(d_table, d_entry);
 
 	*old_state = dlg->state;
 
-	switch (event) {
+	switch(event) {
 		case DLG_EVENT_TDEL:
-			switch (dlg->state) {
+			switch(dlg->state) {
 				case DLG_STATE_UNCONFIRMED:
 				case DLG_STATE_EARLY:
 					dlg->state = DLG_STATE_DELETED;
-					unref_dlg_unsafe(dlg,1,d_entry);
+					unref_dlg_unsafe(dlg, 1, d_entry);
 					*unref = 1;
 					break;
 				case DLG_STATE_CONFIRMED_NA:
 				case DLG_STATE_CONFIRMED:
-					unref_dlg_unsafe(dlg,1,d_entry);
+					unref_dlg_unsafe(dlg, 1, d_entry);
 					break;
 				case DLG_STATE_DELETED:
 					*unref = 1;
@@ -1173,7 +1169,7 @@ void next_state_dlg(dlg_cell_t *dlg, int event,
 			}
 			break;
 		case DLG_EVENT_RPL1xx:
-			switch (dlg->state) {
+			switch(dlg->state) {
 				case DLG_STATE_UNCONFIRMED:
 				case DLG_STATE_EARLY:
 					dlg->state = DLG_STATE_EARLY;
@@ -1183,7 +1179,7 @@ void next_state_dlg(dlg_cell_t *dlg, int event,
 			}
 			break;
 		case DLG_EVENT_RPL3xx:
-			switch (dlg->state) {
+			switch(dlg->state) {
 				case DLG_STATE_UNCONFIRMED:
 				case DLG_STATE_EARLY:
 					dlg->state = DLG_STATE_DELETED;
@@ -1194,18 +1190,21 @@ void next_state_dlg(dlg_cell_t *dlg, int event,
 			}
 			break;
 		case DLG_EVENT_RPL2xx:
-			switch (dlg->state) {
+			switch(dlg->state) {
 				case DLG_STATE_DELETED:
-					if (dlg->dflags&DLG_FLAG_HASBYE) {
+					if(dlg->dflags & DLG_FLAG_HASBYE) {
 						LM_CRIT("bogus event %d in state %d (with BYE) "
-							"for dlg %p [%u:%u] with clid '%.*s' and tags '%.*s' '%.*s'\n",
-							event, dlg->state, dlg, dlg->h_entry, dlg->h_id,
-							dlg->callid.len, dlg->callid.s,
-							dlg->tag[DLG_CALLER_LEG].len, dlg->tag[DLG_CALLER_LEG].s,
-							dlg->tag[DLG_CALLEE_LEG].len, dlg->tag[DLG_CALLEE_LEG].s);
+								"for dlg %p [%u:%u] with clid '%.*s' and tags "
+								"'%.*s' '%.*s'\n",
+								event, dlg->state, dlg, dlg->h_entry, dlg->h_id,
+								dlg->callid.len, dlg->callid.s,
+								dlg->tag[DLG_CALLER_LEG].len,
+								dlg->tag[DLG_CALLER_LEG].s,
+								dlg->tag[DLG_CALLEE_LEG].len,
+								dlg->tag[DLG_CALLEE_LEG].s);
 						break;
 					}
-					ref_dlg_unsafe(dlg,1);
+					ref_dlg_unsafe(dlg, 1);
 				case DLG_STATE_UNCONFIRMED:
 				case DLG_STATE_EARLY:
 					dlg->state = DLG_STATE_CONFIRMED_NA;
@@ -1218,7 +1217,7 @@ void next_state_dlg(dlg_cell_t *dlg, int event,
 			}
 			break;
 		case DLG_EVENT_REQACK:
-			switch (dlg->state) {
+			switch(dlg->state) {
 				case DLG_STATE_CONFIRMED_NA:
 					dlg->state = DLG_STATE_CONFIRMED;
 					break;
@@ -1231,7 +1230,7 @@ void next_state_dlg(dlg_cell_t *dlg, int event,
 			}
 			break;
 		case DLG_EVENT_REQBYE:
-			switch (dlg->state) {
+			switch(dlg->state) {
 				case DLG_STATE_CONFIRMED_NA:
 				case DLG_STATE_CONFIRMED:
 					dlg->dflags |= DLG_FLAG_HASBYE;
@@ -1246,7 +1245,7 @@ void next_state_dlg(dlg_cell_t *dlg, int event,
 			}
 			break;
 		case DLG_EVENT_REQPRACK:
-			switch (dlg->state) {
+			switch(dlg->state) {
 				case DLG_STATE_EARLY:
 				case DLG_STATE_CONFIRMED_NA:
 					dlg->iflags |= DLG_IFLAG_PRACK;
@@ -1258,7 +1257,7 @@ void next_state_dlg(dlg_cell_t *dlg, int event,
 			}
 			break;
 		case DLG_EVENT_REQ:
-			switch (dlg->state) {
+			switch(dlg->state) {
 				case DLG_STATE_EARLY:
 				case DLG_STATE_CONFIRMED_NA:
 				case DLG_STATE_CONFIRMED:
@@ -1270,26 +1269,27 @@ void next_state_dlg(dlg_cell_t *dlg, int event,
 			break;
 		default:
 			LM_CRIT("unknown event %d in state %d "
-				"for dlg %p [%u:%u] with clid '%.*s' and tags '%.*s' '%.*s'\n",
-				event, dlg->state, dlg, dlg->h_entry, dlg->h_id,
-				dlg->callid.len, dlg->callid.s,
-				dlg->tag[DLG_CALLER_LEG].len, dlg->tag[DLG_CALLER_LEG].s,
-				dlg->tag[DLG_CALLEE_LEG].len, dlg->tag[DLG_CALLEE_LEG].s);
+					"for dlg %p [%u:%u] with clid '%.*s' and tags '%.*s' "
+					"'%.*s'\n",
+					event, dlg->state, dlg, dlg->h_entry, dlg->h_id,
+					dlg->callid.len, dlg->callid.s,
+					dlg->tag[DLG_CALLER_LEG].len, dlg->tag[DLG_CALLER_LEG].s,
+					dlg->tag[DLG_CALLEE_LEG].len, dlg->tag[DLG_CALLEE_LEG].s);
 	}
 	*new_state = dlg->state;
 
 	/* remove the dialog from profiles when is not no longer active */
-	if(*new_state==DLG_STATE_DELETED && dlg->profile_links!=NULL
-				&& *old_state!=*new_state) {
+	if(*new_state == DLG_STATE_DELETED && dlg->profile_links != NULL
+			&& *old_state != *new_state) {
 		destroy_linkers(dlg->profile_links);
 		dlg->profile_links = NULL;
 	}
 
-	dlg_unlock( d_table, d_entry);
+	dlg_unlock(d_table, d_entry);
 
 	LM_DBG("dialog %p changed from state %d to "
-		"state %d, due event %d (ref %d)\n", dlg, *old_state, *new_state, event,
-		dlg->ref);
+		   "state %d, due event %d (ref %d)\n",
+			dlg, *old_state, *new_state, event, dlg->ref);
 }
 
 /**
@@ -1297,15 +1297,15 @@ void next_state_dlg(dlg_cell_t *dlg, int event,
  */
 int dlg_set_toroute(struct dlg_cell *dlg, str *route)
 {
-	if(dlg==NULL || route==NULL || route->len<=0)
+	if(dlg == NULL || route == NULL || route->len <= 0)
 		return 0;
-	if(dlg->toroute_name.s!=NULL) {
+	if(dlg->toroute_name.s != NULL) {
 		shm_free(dlg->toroute_name.s);
 		dlg->toroute_name.s = NULL;
 		dlg->toroute_name.len = 0;
 	}
-	dlg->toroute_name.s = (char*)shm_malloc((route->len+1)*sizeof(char));
-	if(dlg->toroute_name.s==NULL) {
+	dlg->toroute_name.s = (char *)shm_malloc((route->len + 1) * sizeof(char));
+	if(dlg->toroute_name.s == NULL) {
 		LM_ERR("no more shared memory\n");
 		return -1;
 	}
@@ -1321,10 +1321,9 @@ int dlg_set_toroute(struct dlg_cell *dlg, str *route)
  * various userland functions that touch the dialog timeout.
  */
 
-int	update_dlg_timeout(dlg_cell_t *dlg, int timeout)
+int update_dlg_timeout(dlg_cell_t *dlg, int timeout)
 {
-	if(dlg->state!=DLG_STATE_UNCONFIRMED
-			&& dlg->state!=DLG_STATE_EARLY) {
+	if(dlg->state != DLG_STATE_UNCONFIRMED && dlg->state != DLG_STATE_EARLY) {
 		if(update_dlg_timer(&dlg->tl, timeout) < 0) {
 			LM_ERR("failed to update dialog lifetime\n");
 			dlg_release(dlg);

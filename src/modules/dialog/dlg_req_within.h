@@ -32,26 +32,27 @@
 #include "dlg_hash.h"
 #include "../../modules/tm/tm_load.h"
 
-#define MAX_FWD			"70"
-#define MAX_SIZE		256
-#define RCV_BYE_REPLY	1
+#define MAX_FWD "70"
+#define MAX_SIZE 256
+#define RCV_BYE_REPLY 1
 
-#define MI_DIALOG_NOT_FOUND 		"Requested Dialog not found"
-#define MI_DIALOG_NOT_FOUND_LEN 	(sizeof(MI_DIALOG_NOT_FOUND)-1)
-#define MI_DLG_OPERATION_ERR		"Operation failed"
-#define MI_DLG_OPERATION_ERR_LEN	(sizeof(MI_DLG_OPERATION_ERR)-1)
+#define MI_DIALOG_NOT_FOUND "Requested Dialog not found"
+#define MI_DIALOG_NOT_FOUND_LEN (sizeof(MI_DIALOG_NOT_FOUND) - 1)
+#define MI_DLG_OPERATION_ERR "Operation failed"
+#define MI_DLG_OPERATION_ERR_LEN (sizeof(MI_DLG_OPERATION_ERR) - 1)
 
 extern struct tm_binds d_tmb;
 extern int dlg_enable_stats;
-extern stat_var * active_dlgs;
+extern stat_var *active_dlgs;
 
-struct mi_root * mi_terminate_dlg(struct mi_root *cmd_tree, void *param );
+struct mi_root *mi_terminate_dlg(struct mi_root *cmd_tree, void *param);
 
-dlg_t* build_dlg_t(struct dlg_cell * cell, int dir);
+dlg_t *build_dlg_t(struct dlg_cell *cell, int dir);
 int free_tm_dlg(dlg_t *td);
 int dlg_bye(struct dlg_cell *dlg, str *hdrs, int side);
 int dlg_bye_all(struct dlg_cell *dlg, str *hdrs);
 int dlg_send_ka(dlg_cell_t *dlg, int dir);
-int dlg_request_within(struct sip_msg *msg, struct dlg_cell *dlg, int side, str * method, str * hdrs, str * content_type, str * content);
+int dlg_request_within(struct sip_msg *msg, struct dlg_cell *dlg, int side,
+		str *method, str *hdrs, str *content_type, str *content);
 
 #endif

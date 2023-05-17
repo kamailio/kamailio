@@ -36,17 +36,17 @@
 /*! dialog timeout list */
 typedef struct dlg_tl
 {
-	struct dlg_tl     *next;
-	struct dlg_tl     *prev;
-	volatile unsigned int  timeout; /*!< timeout in seconds */
+	struct dlg_tl *next;
+	struct dlg_tl *prev;
+	volatile unsigned int timeout; /*!< timeout in seconds */
 } dlg_tl_t;
 
 
 /*! dialog timer */
 typedef struct dlg_timer
 {
-	struct dlg_tl   first; /*!< dialog timeout list */
-	gen_lock_t      *lock; /*!< lock for the list */
+	struct dlg_tl first; /*!< dialog timeout list */
+	gen_lock_t *lock;	 /*!< lock for the list */
 } dlg_timer_t;
 
 
@@ -104,6 +104,6 @@ int update_dlg_timer(struct dlg_tl *tl, int timeout);
  * \param ticks time for expiration checks
  * \param attr unused
  */
-void dlg_timer_routine(unsigned int ticks , void * attr);
+void dlg_timer_routine(unsigned int ticks, void *attr);
 
 #endif
