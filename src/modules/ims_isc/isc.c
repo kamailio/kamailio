@@ -56,7 +56,9 @@
  * @param mark  - the isc_mark that should be used to mark the message
  * @returns #ISC_RETURN_TRUE if OK, #ISC_RETURN_ERROR if not
  */
-int isc_forward(struct sip_msg *msg, isc_match *m, isc_mark *mark, int firstflag) {
+int isc_forward(
+		struct sip_msg *msg, isc_match *m, isc_mark *mark, int firstflag)
+{
 	struct cell *t;
 	unsigned int hash, label;
 	ticks_t fr_timeout, fr_inv_timeout;
@@ -64,10 +66,10 @@ int isc_forward(struct sip_msg *msg, isc_match *m, isc_mark *mark, int firstflag
 
 	isc_mark_set(msg, m, mark);
 	/* change destination so it forwards to the app server */
-	if (msg->dst_uri.s)
+	if(msg->dst_uri.s)
 		pkg_free(msg->dst_uri.s);
 	msg->dst_uri.s = pkg_malloc(m->server_name.len + 1);
-	if (!msg->dst_uri.s) {
+	if(!msg->dst_uri.s) {
 		LM_ERR("error allocating %d bytes\n", m->server_name.len);
 		return ISC_RETURN_ERROR;
 	}
@@ -76,17 +78,18 @@ int isc_forward(struct sip_msg *msg, isc_match *m, isc_mark *mark, int firstflag
 	msg->dst_uri.s[msg->dst_uri.len] = '\0';
 
 	/* append branch if last trigger failed */
-	if (is_route_type(FAILURE_ROUTE) && !firstflag)
-		append_branch(msg, &(msg->first_line.u.request.uri), &(msg->dst_uri), 0, Q_UNSPECIFIED, 0, 0, 0, 0, 0, 0);
+	if(is_route_type(FAILURE_ROUTE) && !firstflag)
+		append_branch(msg, &(msg->first_line.u.request.uri), &(msg->dst_uri), 0,
+				Q_UNSPECIFIED, 0, 0, 0, 0, 0, 0);
 
 	// Determines the tm transaction identifiers.
 	// If no transaction, then creates one
 
-	if (isc_tmb.t_get_trans_ident(msg, &hash, &label) < 0) {
+	if(isc_tmb.t_get_trans_ident(msg, &hash, &label) < 0) {
 		LM_DBG("SIP message without transaction. OK - first request\n");
-		if (isc_tmb.t_newtran(msg) < 0)
+		if(isc_tmb.t_newtran(msg) < 0)
 			LM_INFO("Failed creating SIP transaction\n");
-		if (isc_tmb.t_get_trans_ident(msg, &hash, &label) < 0) {
+		if(isc_tmb.t_get_trans_ident(msg, &hash, &label) < 0) {
 			LM_INFO("SIP message still without transaction\n");
 		} else {
 			LM_DBG("New SIP message transaction %u %u\n", hash, label);

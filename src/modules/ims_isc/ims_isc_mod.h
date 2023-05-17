@@ -51,27 +51,30 @@
 #include "../../core/qvalue.h"
 #include "../ims_usrloc_scscf/usrloc.h"
 
-#define STR_APPEND(dst,src)\
-        {memcpy((dst).s+(dst).len,(src).s,(src).len);\
-        (dst).len = (dst).len + (src).len;}
+#define STR_APPEND(dst, src)                             \
+	{                                                    \
+		memcpy((dst).s + (dst).len, (src).s, (src).len); \
+		(dst).len = (dst).len + (src).len;               \
+	}
 
 /** SER routing script return and break execution */
-#define ISC_RETURN_BREAK	 0
+#define ISC_RETURN_BREAK 0
 /** SER routing script return true */
-#define ISC_RETURN_TRUE		 1
+#define ISC_RETURN_TRUE 1
 /** SER routing script return false */
-#define ISC_RETURN_FALSE	-1
+#define ISC_RETURN_FALSE -1
 /** retargeting has happened */
-#define ISC_RETURN_RETARGET	-2
+#define ISC_RETURN_RETARGET -2
 /** SER routing script return error */
-#define ISC_RETURN_ERROR 	-3
+#define ISC_RETURN_ERROR -3
 
 /** Direction of the dialog */
-enum dialog_direction {
+enum dialog_direction
+{
 	DLG_MOBILE_ORIGINATING = 0, /** Originating */
 	DLG_MOBILE_TERMINATING = 1, /** Terminating */
 	DLG_MOBILE_UNKNOWN = 2
-/** Unknown 	*/
+	/** Unknown 	*/
 };
 
 /* Various constants */

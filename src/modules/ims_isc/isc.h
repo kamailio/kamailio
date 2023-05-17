@@ -55,18 +55,21 @@
 
 #define IFC_AS_UNAVAILABLE_STATUS_CODE 555
 
-extern struct tm_binds isc_tmb;		/**< Structure with pointers to tm funcs 		*/
+extern struct tm_binds
+		isc_tmb; /**< Structure with pointers to tm funcs 		*/
 
-extern str isc_my_uri;				/**< Uri of myself to loop the message in str	*/
-extern str isc_my_uri_sip;			/**< Uri of myself to loop the message in str with leading "sip:" */
+extern str isc_my_uri; /**< Uri of myself to loop the message in str	*/
+extern str
+		isc_my_uri_sip; /**< Uri of myself to loop the message in str with leading "sip:" */
 
-extern int isc_fr_timeout;			/**< default ISC response timeout in ms */
-extern int isc_fr_inv_timeout;		/**< default ISC INVITE response timeout in ms */
+extern int isc_fr_timeout;	   /**< default ISC response timeout in ms */
+extern int isc_fr_inv_timeout; /**< default ISC INVITE response timeout in ms */
 
 /**	SIP Status Code to send to client on Session Termination because AS did not respond */
 
 
-int isc_forward( struct sip_msg *msg, isc_match *m,isc_mark *mark, int firstflag);
+int isc_forward(
+		struct sip_msg *msg, isc_match *m, isc_mark *mark, int firstflag);
 
 
 #endif

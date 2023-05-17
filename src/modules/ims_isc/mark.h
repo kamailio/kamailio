@@ -54,29 +54,30 @@
 
 #include "../../lib/ims/ims_getters.h"
 
-/** username to be used in the Route */ 
+/** username to be used in the Route */
 #define ISC_MARK_USERNAME "sip:iscmark"
 /** length of #ISC_MARK_USERNAME */
 #define ISC_MARK_USERNAME_LEN 11
 
-extern str isc_my_uri;				/**< Uri of myself to loop the message in str	*/
+extern str isc_my_uri; /**< Uri of myself to loop the message in str	*/
 
 /** ISC marking structure */
-typedef struct _isc_mark{
+typedef struct _isc_mark
+{
 	int skip;		/**< how many IFCs to skip */
 	char handling;	/**< handling to apply on failure to contact the AS */
-	char direction;	/**< session case: orig,term,term unreg */
+	char direction; /**< session case: orig,term,term unreg */
 	str aor;		/**< the save user aor - terminating or originating */
 } isc_mark;
 
 
-int isc_mark_get_from_msg(struct sip_msg *msg,isc_mark *mark);
-void isc_mark_get(str x,isc_mark *mark);
-int base16_to_bin(char *from,int len, char *to);
+int isc_mark_get_from_msg(struct sip_msg *msg, isc_mark *mark);
+void isc_mark_get(str x, isc_mark *mark);
+int base16_to_bin(char *from, int len, char *to);
 int isc_mark_drop_route(struct sip_msg *msg);
 int isc_mark_set(struct sip_msg *msg, isc_match *match, isc_mark *mark);
-int isc_mark_write_route(struct sip_msg *msg,str *as,str *iscmark);
+int isc_mark_write_route(struct sip_msg *msg, str *as, str *iscmark);
 int isc_mark_write_psu(struct sip_msg *msg, isc_mark *mark);
-int bin_to_base16(char *from,int len, char *to);
+int bin_to_base16(char *from, int len, char *to);
 
 #endif
