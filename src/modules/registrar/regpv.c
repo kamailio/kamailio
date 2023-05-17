@@ -44,53 +44,51 @@
 
 extern str reg_event_callback;
 
-typedef struct _regpv_profile {
+typedef struct _regpv_profile
+{
 	str pname;
 	str domain;
 	str aor;
 	int flags;
 	unsigned int aorhash;
 	int nrc;
-	ucontact_t* contacts;
+	ucontact_t *contacts;
 	struct _regpv_profile *next;
 } regpv_profile_t;
 
-typedef struct _regpv_name {
+typedef struct _regpv_name
+{
 	regpv_profile_t *rp;
 	int attr;
 } regpv_name_t;
 
 static regpv_profile_t *_regpv_profile_list = NULL;
 
-static inline regpv_profile_t* regpv_get_profile(str *name)
+static inline regpv_profile_t *regpv_get_profile(str *name)
 {
 	regpv_profile_t *rp;
 
-	if(name==NULL || name->len<=0)
-	{
+	if(name == NULL || name->len <= 0) {
 		LM_ERR("invalid parameters\n");
 		return NULL;
 	}
 
 	rp = _regpv_profile_list;
-	while(rp)
-	{
+	while(rp) {
 		if(rp->pname.len == name->len
-				&& strncmp(rp->pname.s, name->s, name->len)==0)
+				&& strncmp(rp->pname.s, name->s, name->len) == 0)
 			return rp;
 		rp = rp->next;
 	}
 
-	rp = (regpv_profile_t*)pkg_malloc(sizeof(regpv_profile_t));
-	if(rp==NULL)
-	{
+	rp = (regpv_profile_t *)pkg_malloc(sizeof(regpv_profile_t));
+	if(rp == NULL) {
 		LM_ERR("no more pkg\n");
 		return NULL;
 	}
 	memset(rp, 0, sizeof(regpv_profile_t));
-	rp->pname.s = (char*)pkg_malloc((name->len+1)*sizeof(char));
-	if(rp->pname.s==NULL)
-	{
+	rp->pname.s = (char *)pkg_malloc((name->len + 1) * sizeof(char));
+	if(rp->pname.s == NULL) {
 		LM_ERR("no more pkg\n");
 		pkg_free(rp);
 		return NULL;
@@ -106,26 +104,23 @@ static inline regpv_profile_t* regpv_get_profile(str *name)
 
 static void regpv_free_profile(regpv_profile_t *rpp)
 {
-	ucontact_t* ptr;
-	ucontact_t* ptr0;
+	ucontact_t *ptr;
+	ucontact_t *ptr0;
 
-	if(rpp==NULL)
+	if(rpp == NULL)
 		return;
 
 	ptr = rpp->contacts;
-	while(ptr)
-	{
+	while(ptr) {
 		ptr0 = ptr;
 		ptr = ptr->next;
 		pkg_free(ptr0);
 	}
-	if(rpp->domain.s!=NULL)
-	{
+	if(rpp->domain.s != NULL) {
 		rpp->domain.s = 0;
 		rpp->domain.len = 0;
 	}
-	if(rpp->aor.s!=NULL)
-	{
+	if(rpp->aor.s != NULL) {
 		pkg_free(rpp->aor.s);
 		rpp->aor.s = 0;
 		rpp->aor.len = 0;
@@ -135,7 +130,6 @@ static void regpv_free_profile(regpv_profile_t *rpp)
 	rpp->aorhash = 0;
 	rpp->nrc = 0;
 	rpp->contacts = 0;
-
 }
 
 void regpv_free_profiles(void)
@@ -145,9 +139,8 @@ void regpv_free_profiles(void)
 
 	rp = _regpv_profile_list;
 
-	while(rp)
-	{
-		if(rp->pname.s!=NULL)
+	while(rp) {
+		if(rp->pname.s != NULL)
 			pkg_free(rp->pname.s);
 		rp0 = rp;
 		regpv_free_profile(rp0);
@@ -156,8 +149,7 @@ void regpv_free_profiles(void)
 	_regpv_profile_list = 0;
 }
 
-int pv_get_ulc(struct sip_msg *msg,  pv_param_t *param,
-		pv_value_t *res)
+int pv_get_ulc(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	regpv_name_t *rp;
 	regpv_profile_t *rpp;
@@ -165,131 +157,127 @@ int pv_get_ulc(struct sip_msg *msg,  pv_param_t *param,
 	int idx;
 	int i;
 
-	if(param==NULL)
-	{
+	if(param == NULL) {
 		LM_ERR("invalid params\n");
 		return -1;
 	}
-	rp = (regpv_name_t*)param->pvn.u.dname;
-	if(rp==NULL || rp->rp==NULL)
-	{
+	rp = (regpv_name_t *)param->pvn.u.dname;
+	if(rp == NULL || rp->rp == NULL) {
 		LM_DBG("no profile in params\n");
 		return pv_get_null(msg, param, res);
 	}
 	rpp = rp->rp;
 
-	if(rpp->flags==0 || rpp->contacts==NULL)
-	{
+	if(rpp->flags == 0 || rpp->contacts == NULL) {
 		LM_DBG("profile not set or no contacts there\n");
 		return pv_get_null(msg, param, res);
 	}
 	/* get index */
-	if(pv_get_spec_index(msg, param, &idx, &i)!=0)
-	{
+	if(pv_get_spec_index(msg, param, &idx, &i) != 0) {
 		LM_ERR("invalid index\n");
 		return -1;
 	}
 
 	/* work only with positive indexes by now */
-	if(idx<0)
+	if(idx < 0)
 		idx = 0;
 
 	/* get contact */
 	i = 0;
 	c = rpp->contacts;
-	while(c)
-	{
+	while(c) {
 		if(i == idx)
 			break;
 		i++;
 		c = c->next;
 	}
-	if(c==NULL)
+	if(c == NULL)
 		return pv_get_null(msg, param, res);
 
-	switch(rp->attr)
-	{
+	switch(rp->attr) {
 		case 0: /* aor */
-			return  pv_get_strval(msg, param, res, &rpp->aor);
-		break;
+			return pv_get_strval(msg, param, res, &rpp->aor);
+			break;
 		case 1: /* domain */
-			return  pv_get_strval(msg, param, res, &rpp->domain);
-		break;
+			return pv_get_strval(msg, param, res, &rpp->domain);
+			break;
 		case 2: /* aorhash */
 			return pv_get_uintval(msg, param, res, rpp->aorhash);
-		break;
+			break;
 		case 3: /* addr */
-			return  pv_get_strval(msg, param, res, &c->c);
-		break;
+			return pv_get_strval(msg, param, res, &c->c);
+			break;
 		case 4: /* path */
-			return  pv_get_strval(msg, param, res, &c->path);
-		break;
+			return pv_get_strval(msg, param, res, &c->path);
+			break;
 		case 5: /* received */
-			return  pv_get_strval(msg, param, res, &c->received);
-		break;
+			return pv_get_strval(msg, param, res, &c->received);
+			break;
 		case 6: /* expires */
-			return pv_get_uintval(msg, param, res,
-					(unsigned int)c->expires);
-		break;
+			return pv_get_uintval(msg, param, res, (unsigned int)c->expires);
+			break;
 		case 7: /* callid */
-			return  pv_get_strval(msg, param, res, &c->callid);
-		break;
+			return pv_get_strval(msg, param, res, &c->callid);
+			break;
 		case 8: /* q */
 			return pv_get_sintval(msg, param, res, (int)c->q);
-		break;
+			break;
 		case 9: /* cseq */
 			return pv_get_sintval(msg, param, res, c->cseq);
-		break;
+			break;
 		case 10: /* flags */
 			return pv_get_uintval(msg, param, res, c->flags);
-		break;
+			break;
 		case 11: /* cflags */
 			return pv_get_uintval(msg, param, res, c->cflags);
-		break;
+			break;
 		case 12: /* user agent */
-			return  pv_get_strval(msg, param, res, &c->user_agent);
-		break;
+			return pv_get_strval(msg, param, res, &c->user_agent);
+			break;
 		case 14: /* socket */
-			if(c->sock==NULL)
+			if(c->sock == NULL)
 				return pv_get_null(msg, param, res);
 			return pv_get_strval(msg, param, res, &c->sock->sock_str);
-		break;
+			break;
 		case 15: /* modified */
-			return pv_get_uintval(msg, param, res,
-					(unsigned int)c->last_modified);
-		break;
+			return pv_get_uintval(
+					msg, param, res, (unsigned int)c->last_modified);
+			break;
 		case 16: /* methods */
 			return pv_get_uintval(msg, param, res, c->methods);
-		break;
+			break;
 		case 17: /* count */
 			return pv_get_sintval(msg, param, res, rpp->nrc);
-		break;
+			break;
 		case 18: /* ruid */
-			return  pv_get_strval(msg, param, res, &c->ruid);
-		break;
+			return pv_get_strval(msg, param, res, &c->ruid);
+			break;
 		case 19: /* reg-id */
 			return pv_get_uintval(msg, param, res, c->reg_id);
-		break;
+			break;
 		case 20: /* instance */
-			if(c->instance.len>0)
-				return  pv_get_strval(msg, param, res, &c->instance);
-		break;
+			if(c->instance.len > 0)
+				return pv_get_strval(msg, param, res, &c->instance);
+			break;
 		case 21: /* conid */
-			if (c->tcpconn_id > 0)
+			if(c->tcpconn_id > 0)
 				return pv_get_sintval(msg, param, res, c->tcpconn_id);
-			if (c->sock && (c->sock->proto == PROTO_TCP || c->sock->proto == PROTO_TLS || c->sock->proto == PROTO_WS || c->sock->proto == PROTO_WSS))
+			if(c->sock
+					&& (c->sock->proto == PROTO_TCP
+							|| c->sock->proto == PROTO_TLS
+							|| c->sock->proto == PROTO_WS
+							|| c->sock->proto == PROTO_WSS))
 				return pv_get_sintval(msg, param, res, c->tcpconn_id);
-		break;
+			break;
 		case 22: /* server_id */
 			return pv_get_uintval(msg, param, res, c->server_id);
-		break;
+			break;
 	}
 
 	return pv_get_null(msg, param, res);
 }
 
-int pv_set_ulc(struct sip_msg* msg, pv_param_t *param,
-		int op, pv_value_t *val)
+int pv_set_ulc(struct sip_msg *msg, pv_param_t *param, int op, pv_value_t *val)
 {
 	return 0;
 }
@@ -301,24 +289,21 @@ int pv_parse_ulc_name(pv_spec_p sp, str *in)
 	regpv_name_t *rp = NULL;
 	regpv_profile_t *rpp = NULL;
 
-	if(sp==NULL || in==NULL || in->len<=0)
+	if(sp == NULL || in == NULL || in->len <= 0)
 		return -1;
 
 	pa.s = in->s;
-	while(pa.s < in->s + in->len - 2)
-	{
-		if(*pa.s=='=')
+	while(pa.s < in->s + in->len - 2) {
+		if(*pa.s == '=')
 			break;
 		pa.s++;
 	}
 
-	if(pa.s >= in->s + in->len - 2)
-	{
+	if(pa.s >= in->s + in->len - 2) {
 		LM_ERR("invalid contact pv name %.*s\n", in->len, in->s);
 		return -1;
 	}
-	if(*(pa.s+1) != '>')
-	{
+	if(*(pa.s + 1) != '>') {
 		LM_ERR("invalid contact pv name %.*s.\n", in->len, in->s);
 		return -1;
 	}
@@ -329,8 +314,7 @@ int pv_parse_ulc_name(pv_spec_p sp, str *in)
 	LM_DBG("get profile [%.*s]\n", pn.len, pn.s);
 
 	rpp = regpv_get_profile(&pn);
-	if(rpp==NULL)
-	{
+	if(rpp == NULL) {
 		LM_ERR("cannot get profile [%.*s]\n", pn.len, pn.s);
 		return -1;
 	}
@@ -338,97 +322,104 @@ int pv_parse_ulc_name(pv_spec_p sp, str *in)
 	pa.len = in->s + in->len - pa.s;
 	LM_DBG("get attr [%.*s]\n", pa.len, pa.s);
 
-	rp = (regpv_name_t*)pkg_malloc(sizeof(regpv_name_t));
-	if(rp==0)
-	{
+	rp = (regpv_name_t *)pkg_malloc(sizeof(regpv_name_t));
+	if(rp == 0) {
 		LM_ERR("no more pkg\n");
 		return -1;
 	}
 	memset(rp, 0, sizeof(regpv_name_t));
 	rp->rp = rpp;
 
-	switch(pa.len)
-	{
+	switch(pa.len) {
 		case 1:
-			if(strncmp(pa.s, "q", 1)==0)
+			if(strncmp(pa.s, "q", 1) == 0)
 				rp->attr = 8;
-			else goto error;
-		break;
+			else
+				goto error;
+			break;
 		case 3:
-			if(strncmp(pa.s, "aor", 3)==0)
+			if(strncmp(pa.s, "aor", 3) == 0)
 				rp->attr = 0;
-			else goto error;
-		break;
+			else
+				goto error;
+			break;
 		case 4:
-			if(strncmp(pa.s, "addr", 4)==0)
+			if(strncmp(pa.s, "addr", 4) == 0)
 				rp->attr = 3;
-			else if(strncmp(pa.s, "path", 4)==0)
+			else if(strncmp(pa.s, "path", 4) == 0)
 				rp->attr = 4;
-			else if(strncmp(pa.s, "cseq", 4)==0)
+			else if(strncmp(pa.s, "cseq", 4) == 0)
 				rp->attr = 9;
-			else if(strncmp(pa.s, "ruid", 4)==0)
+			else if(strncmp(pa.s, "ruid", 4) == 0)
 				rp->attr = 18;
-			else goto error;
-		break;
+			else
+				goto error;
+			break;
 		case 5:
-			if(strncmp(pa.s, "flags", 5)==0)
+			if(strncmp(pa.s, "flags", 5) == 0)
 				rp->attr = 10;
-			else if(strncmp(pa.s, "count", 5)==0)
+			else if(strncmp(pa.s, "count", 5) == 0)
 				rp->attr = 17;
-			else if(strncmp(pa.s, "regid", 5)==0)
+			else if(strncmp(pa.s, "regid", 5) == 0)
 				rp->attr = 19;
-			else if(strncmp(pa.s, "conid", 5)==0)
+			else if(strncmp(pa.s, "conid", 5) == 0)
 				rp->attr = 21;
-			else goto error;
-		break;
+			else
+				goto error;
+			break;
 		case 6:
-			if(strncmp(pa.s, "domain", 6)==0)
+			if(strncmp(pa.s, "domain", 6) == 0)
 				rp->attr = 1;
-			else if(strncmp(pa.s, "callid", 6)==0)
+			else if(strncmp(pa.s, "callid", 6) == 0)
 				rp->attr = 7;
-			else if(strncmp(pa.s, "cflags", 6)==0)
+			else if(strncmp(pa.s, "cflags", 6) == 0)
 				rp->attr = 11;
-			else if(strncmp(pa.s, "socket", 6)==0)
+			else if(strncmp(pa.s, "socket", 6) == 0)
 				rp->attr = 14;
-			else goto error;
-		break;
+			else
+				goto error;
+			break;
 		case 7:
-			if(strncmp(pa.s, "aorhash", 7)==0)
+			if(strncmp(pa.s, "aorhash", 7) == 0)
 				rp->attr = 2;
-			else if(strncmp(pa.s, "expires", 7)==0)
+			else if(strncmp(pa.s, "expires", 7) == 0)
 				rp->attr = 6;
-			else if(strncmp(pa.s, "methods", 7)==0)
+			else if(strncmp(pa.s, "methods", 7) == 0)
 				rp->attr = 16;
-			else goto error;
-		break;
+			else
+				goto error;
+			break;
 		case 8:
-			if(strncmp(pa.s, "received", 8)==0)
+			if(strncmp(pa.s, "received", 8) == 0)
 				rp->attr = 5;
-			else if(strncmp(pa.s, "modified", 8)==0)
+			else if(strncmp(pa.s, "modified", 8) == 0)
 				rp->attr = 15;
-			else if(strncmp(pa.s, "instance", 8)==0)
+			else if(strncmp(pa.s, "instance", 8) == 0)
 				rp->attr = 20;
-			else goto error;
-		break;
+			else
+				goto error;
+			break;
 		case 9:
-			if(strncmp(pa.s, "server_id", 9)==0)
+			if(strncmp(pa.s, "server_id", 9) == 0)
 				rp->attr = 22;
-		break;
+			break;
 		case 10:
-			if(strncmp(pa.s, "user_agent", 10)==0)
+			if(strncmp(pa.s, "user_agent", 10) == 0)
 				rp->attr = 12;
-			else goto error;
-		break;
+			else
+				goto error;
+			break;
 		default:
 			goto error;
 	}
-	sp->pvp.pvn.u.dname = (void*)rp;
+	sp->pvp.pvn.u.dname = (void *)rp;
 	sp->pvp.pvn.type = PV_NAME_PVAR;
 
 	return 0;
 
 error:
-	if(rp) pkg_free(rp);
+	if(rp)
+		pkg_free(rp);
 	LM_ERR("unknown contact attr name in %.*s\n", in->len, in->s);
 	return -1;
 }
@@ -438,12 +429,12 @@ error:
  */
 static sr_kemi_xval_t _sr_kemi_reg_ulc_xval = {0};
 
-sr_kemi_xval_t* ki_reg_ulc_rget(sip_msg_t* msg, str* rid, str* attr)
+sr_kemi_xval_t *ki_reg_ulc_rget(sip_msg_t *msg, str *rid, str *attr)
 {
 	regpv_profile_t *rpp = NULL;
 
 	memset(&_sr_kemi_reg_ulc_xval, 0, sizeof(sr_kemi_xval_t));
-	if(rid==NULL || rid->s==NULL || attr==NULL || attr->s==NULL) {
+	if(rid == NULL || rid->s == NULL || attr == NULL || attr->s == NULL) {
 		LM_WARN("invalid parameters - return value 0\n");
 		_sr_kemi_reg_ulc_xval.vtype = SR_KEMIP_INT;
 		_sr_kemi_reg_ulc_xval.v.n = 0;
@@ -451,32 +442,32 @@ sr_kemi_xval_t* ki_reg_ulc_rget(sip_msg_t* msg, str* rid, str* attr)
 	}
 
 	rpp = regpv_get_profile(rid);
-	if(rpp==0) {
-		LM_WARN("result [%.*s] is not defined - return value 0\n",
-				rid->len, rid->s);
+	if(rpp == 0) {
+		LM_WARN("result [%.*s] is not defined - return value 0\n", rid->len,
+				rid->s);
 		_sr_kemi_reg_ulc_xval.vtype = SR_KEMIP_INT;
 		_sr_kemi_reg_ulc_xval.v.n = 0;
 		return &_sr_kemi_reg_ulc_xval;
 	}
 
-	if(attr->len==5 && strncmp(attr->s, "count", 5)==0) {
+	if(attr->len == 5 && strncmp(attr->s, "count", 5) == 0) {
 		_sr_kemi_reg_ulc_xval.vtype = SR_KEMIP_INT;
 		_sr_kemi_reg_ulc_xval.v.n = rpp->nrc;
 		return &_sr_kemi_reg_ulc_xval;
-	} else if(attr->len==3 && strncmp(attr->s, "aor", 3)==0) {
+	} else if(attr->len == 3 && strncmp(attr->s, "aor", 3) == 0) {
 		_sr_kemi_reg_ulc_xval.vtype = SR_KEMIP_STR;
 		_sr_kemi_reg_ulc_xval.v.s = rpp->aor;
 		return &_sr_kemi_reg_ulc_xval;
 	}
 
-	LM_WARN("attribute [%.*s] is not defined - return value 0\n",
-			attr->len, attr->s);
+	LM_WARN("attribute [%.*s] is not defined - return value 0\n", attr->len,
+			attr->s);
 	_sr_kemi_reg_ulc_xval.vtype = SR_KEMIP_INT;
 	_sr_kemi_reg_ulc_xval.v.n = 0;
 	return &_sr_kemi_reg_ulc_xval;
 }
 
-sr_kemi_xval_t* ki_reg_ulc_cget(sip_msg_t* msg, str* rid, str* attr, int idx)
+sr_kemi_xval_t *ki_reg_ulc_cget(sip_msg_t *msg, str *rid, str *attr, int idx)
 {
 	regpv_profile_t *rpp = NULL;
 	ucontact_t *c = NULL;
@@ -484,7 +475,7 @@ sr_kemi_xval_t* ki_reg_ulc_cget(sip_msg_t* msg, str* rid, str* attr, int idx)
 
 
 	memset(&_sr_kemi_reg_ulc_xval, 0, sizeof(sr_kemi_xval_t));
-	if(rid==NULL || rid->s==NULL || attr==NULL || attr->s==NULL) {
+	if(rid == NULL || rid->s == NULL || attr == NULL || attr->s == NULL) {
 		LM_WARN("invalid parameters - return value 0\n");
 		_sr_kemi_reg_ulc_xval.vtype = SR_KEMIP_INT;
 		_sr_kemi_reg_ulc_xval.v.n = 0;
@@ -492,21 +483,21 @@ sr_kemi_xval_t* ki_reg_ulc_cget(sip_msg_t* msg, str* rid, str* attr, int idx)
 	}
 
 	rpp = regpv_get_profile(rid);
-	if(rpp==0) {
-		LM_WARN("result [%.*s] is not defined - return value 0\n",
-				rid->len, rid->s);
+	if(rpp == 0) {
+		LM_WARN("result [%.*s] is not defined - return value 0\n", rid->len,
+				rid->s);
 		_sr_kemi_reg_ulc_xval.vtype = SR_KEMIP_INT;
 		_sr_kemi_reg_ulc_xval.v.n = 0;
 		return &_sr_kemi_reg_ulc_xval;
 	}
 
 	/* work only with positive indexes by now */
-	if(idx<0) {
+	if(idx < 0) {
 		idx = 0;
 	}
 	/* get contact by index */
 	i = 0;
-	for(c = rpp->contacts; c!=NULL; c = c->next) {
+	for(c = rpp->contacts; c != NULL; c = c->next) {
 		if(i == idx) {
 			break;
 		}
@@ -519,12 +510,12 @@ sr_kemi_xval_t* ki_reg_ulc_cget(sip_msg_t* msg, str* rid, str* attr, int idx)
 		return &_sr_kemi_reg_ulc_xval;
 	}
 
-	if(attr->len==4 && strncmp(attr->s, "addr", 4)==0) {
+	if(attr->len == 4 && strncmp(attr->s, "addr", 4) == 0) {
 		_sr_kemi_reg_ulc_xval.vtype = SR_KEMIP_STR;
 		_sr_kemi_reg_ulc_xval.v.s = c->c;
 		return &_sr_kemi_reg_ulc_xval;
-	} else if(attr->len==6 && strncmp(attr->s, "socket", 6)==0) {
-		if(c->sock==NULL) {
+	} else if(attr->len == 6 && strncmp(attr->s, "socket", 6) == 0) {
+		if(c->sock == NULL) {
 			sr_kemi_xval_null(&_sr_kemi_reg_ulc_xval, SR_KEMI_XVAL_NULL_EMPTY);
 			return &_sr_kemi_reg_ulc_xval;
 		}
@@ -533,20 +524,20 @@ sr_kemi_xval_t* ki_reg_ulc_cget(sip_msg_t* msg, str* rid, str* attr, int idx)
 		return &_sr_kemi_reg_ulc_xval;
 	}
 
-	LM_WARN("attribute [%.*s] is not defined - return value 0\n",
-			attr->len, attr->s);
+	LM_WARN("attribute [%.*s] is not defined - return value 0\n", attr->len,
+			attr->s);
 	_sr_kemi_reg_ulc_xval.vtype = SR_KEMIP_INT;
 	_sr_kemi_reg_ulc_xval.v.n = 0;
 	return &_sr_kemi_reg_ulc_xval;
 }
 
-int pv_fetch_contacts_helper(sip_msg_t* msg, udomain_t* dt, str* uri,
-		str* profile)
+int pv_fetch_contacts_helper(
+		sip_msg_t *msg, udomain_t *dt, str *uri, str *profile)
 {
-	urecord_t* r;
-	ucontact_t* ptr;
-	ucontact_t* ptr0;
-	ucontact_t* c0;
+	urecord_t *r;
+	ucontact_t *ptr;
+	ucontact_t *ptr0;
+	ucontact_t *c0;
 	regpv_profile_t *rpp;
 	str aor = {0, 0};
 	int res;
@@ -555,9 +546,8 @@ int pv_fetch_contacts_helper(sip_msg_t* msg, udomain_t* dt, str* uri,
 	int n;
 	char *p;
 
-	rpp = regpv_get_profile((str*)profile);
-	if(rpp==0)
-	{
+	rpp = regpv_get_profile((str *)profile);
+	if(rpp == 0) {
 		LM_ERR("invalid parameters\n");
 		return -1;
 	}
@@ -566,28 +556,27 @@ int pv_fetch_contacts_helper(sip_msg_t* msg, udomain_t* dt, str* uri,
 	if(rpp->flags)
 		regpv_free_profile(rpp);
 
-	if (extract_aor(uri, &aor, NULL) < 0) {
+	if(extract_aor(uri, &aor, NULL) < 0) {
 		LM_ERR("failed to extract Address Of Record\n");
 		return -1;
 	}
 
 	/* copy aor and ul domain */
-	rpp->aor.s = (char*)pkg_malloc(aor.len*sizeof(char));
-	if(rpp->aor.s==NULL)
-	{
+	rpp->aor.s = (char *)pkg_malloc(aor.len * sizeof(char));
+	if(rpp->aor.s == NULL) {
 		LM_ERR("no more pkg\n");
 		return -1;
 	}
 	memcpy(rpp->aor.s, aor.s, aor.len);
 	rpp->aor.len = aor.len;
-	rpp->domain = *((udomain_head_t*)dt)->name;
+	rpp->domain = *((udomain_head_t *)dt)->name;
 	rpp->flags = 1;
 
 	/* copy contacts */
 	ilen = sizeof(ucontact_t);
 	ul.lock_udomain(dt, &aor);
 	res = ul.get_urecord(dt, &aor, &r);
-	if (res > 0) {
+	if(res > 0) {
 		LM_DBG("'%.*s' Not found in usrloc\n", aor.len, ZSW(aor.s));
 		ul.unlock_udomain(dt, &aor);
 		return -1;
@@ -596,14 +585,14 @@ int pv_fetch_contacts_helper(sip_msg_t* msg, udomain_t* dt, str* uri,
 	ptr = r->contacts;
 	ptr0 = NULL;
 	n = 0;
-	while(ptr)
-	{
-		olen = (ptr->c.len + ptr->received.len + ptr->path.len
-			+ ptr->callid.len + ptr->user_agent.len + ptr->ruid.len
-			+ ptr->instance.len)*sizeof(char) + ilen;
-		c0 = (ucontact_t*)pkg_malloc(olen);
-		if(c0==NULL)
-		{
+	while(ptr) {
+		olen = (ptr->c.len + ptr->received.len + ptr->path.len + ptr->callid.len
+					   + ptr->user_agent.len + ptr->ruid.len
+					   + ptr->instance.len)
+					   * sizeof(char)
+			   + ilen;
+		c0 = (ucontact_t *)pkg_malloc(olen);
+		if(c0 == NULL) {
 			LM_ERR("no more pkg\n");
 			ul.release_urecord(r);
 			ul.unlock_udomain(dt, &aor);
@@ -615,20 +604,18 @@ int pv_fetch_contacts_helper(sip_msg_t* msg, udomain_t* dt, str* uri,
 		c0->next = NULL;
 		c0->prev = NULL;
 
-		c0->c.s = (char*)c0 + ilen;
+		c0->c.s = (char *)c0 + ilen;
 		memcpy(c0->c.s, ptr->c.s, ptr->c.len);
 		c0->c.len = ptr->c.len;
 		p = c0->c.s + c0->c.len;
 
-		if(ptr->received.s!=NULL)
-		{
+		if(ptr->received.s != NULL) {
 			c0->received.s = p;
 			memcpy(c0->received.s, ptr->received.s, ptr->received.len);
 			c0->received.len = ptr->received.len;
 			p += c0->received.len;
 		}
-		if(ptr->path.s!=NULL)
-		{
+		if(ptr->path.s != NULL) {
 			c0->path.s = p;
 			memcpy(c0->path.s, ptr->path.s, ptr->path.len);
 			c0->path.len = ptr->path.len;
@@ -638,41 +625,38 @@ int pv_fetch_contacts_helper(sip_msg_t* msg, udomain_t* dt, str* uri,
 		memcpy(c0->callid.s, ptr->callid.s, ptr->callid.len);
 		c0->callid.len = ptr->callid.len;
 		p += c0->callid.len;
-		if(ptr->user_agent.s!=NULL)
-		{
+		if(ptr->user_agent.s != NULL) {
 			c0->user_agent.s = p;
 			memcpy(c0->user_agent.s, ptr->user_agent.s, ptr->user_agent.len);
 			c0->user_agent.len = ptr->user_agent.len;
 			p += c0->user_agent.len;
 		}
-		if(ptr->ruid.s!=NULL)
-		{
+		if(ptr->ruid.s != NULL) {
 			c0->ruid.s = p;
 			memcpy(c0->ruid.s, ptr->ruid.s, ptr->ruid.len);
 			c0->ruid.len = ptr->ruid.len;
 			p += c0->ruid.len;
 		}
-		if(ptr->instance.s!=NULL)
-		{
+		if(ptr->instance.s != NULL) {
 			c0->instance.s = p;
 			memcpy(c0->instance.s, ptr->instance.s, ptr->instance.len);
 			c0->instance.len = ptr->instance.len;
 			p += c0->instance.len;
 		}
 		LM_DBG("memory block between %p - %p\n", c0, p);
-		if ((ptr->sock) && (ptr->sock->proto == PROTO_TCP
-				|| ptr->sock->proto == PROTO_TLS || ptr->sock->proto == PROTO_WS
-				|| ptr->sock->proto == PROTO_WSS))
-		{
+		if((ptr->sock)
+				&& (ptr->sock->proto == PROTO_TCP
+						|| ptr->sock->proto == PROTO_TLS
+						|| ptr->sock->proto == PROTO_WS
+						|| ptr->sock->proto == PROTO_WSS)) {
 			c0->tcpconn_id = ptr->tcpconn_id;
 		}
-		if (ptr->tcpconn_id > 0) {
+		if(ptr->tcpconn_id > 0) {
 			LM_DBG("preset tcpconn_id : %d\n", ptr->tcpconn_id);
 			c0->tcpconn_id = ptr->tcpconn_id;
 		}
 
-		if(ptr0==NULL)
-		{
+		if(ptr0 == NULL) {
 			rpp->contacts = c0;
 		} else {
 			ptr0->next = c0;
@@ -685,8 +669,8 @@ int pv_fetch_contacts_helper(sip_msg_t* msg, udomain_t* dt, str* uri,
 	ul.release_urecord(r);
 	ul.unlock_udomain(dt, &aor);
 	rpp->nrc = n;
-	LM_DBG("fetched <%d> contacts for <%.*s> in [%.*s]\n",
-			n, aor.len, aor.s, rpp->pname.len, rpp->pname.s);
+	LM_DBG("fetched <%d> contacts for <%.*s> in [%.*s]\n", n, aor.len, aor.s,
+			rpp->pname.len, rpp->pname.s);
 	return 1;
 
 error:
@@ -694,23 +678,23 @@ error:
 	return -1;
 }
 
-int pv_fetch_contacts(sip_msg_t* msg, char* table, char* uri, char* profile)
+int pv_fetch_contacts(sip_msg_t *msg, char *table, char *uri, char *profile)
 {
 	str u = STR_NULL;
 
-	if(fixup_get_svalue(msg, (gparam_t*)uri, &u)!=0 || u.len<=0)
-	{
+	if(fixup_get_svalue(msg, (gparam_t *)uri, &u) != 0 || u.len <= 0) {
 		LM_ERR("invalid uri parameter\n");
 		return -1;
 	}
-	return pv_fetch_contacts_helper(msg, (udomain_t*)table, &u, (str*)profile);
+	return pv_fetch_contacts_helper(
+			msg, (udomain_t *)table, &u, (str *)profile);
 }
 
-int ki_reg_fetch_contacts(sip_msg_t* msg, str* dtable, str* uri, str* profile)
+int ki_reg_fetch_contacts(sip_msg_t *msg, str *dtable, str *uri, str *profile)
 {
-	udomain_t* d;
+	udomain_t *d;
 
-	if(ul.get_udomain(dtable->s, &d)<0) {
+	if(ul.get_udomain(dtable->s, &d) < 0) {
 		LM_ERR("usrloc domain [%s] not found\n", dtable->s);
 		return -1;
 	}
@@ -718,12 +702,12 @@ int ki_reg_fetch_contacts(sip_msg_t* msg, str* dtable, str* uri, str* profile)
 	return pv_fetch_contacts_helper(msg, d, uri, profile);
 }
 
-int ki_reg_free_contacts(sip_msg_t* msg, str* profile)
+int ki_reg_free_contacts(sip_msg_t *msg, str *profile)
 {
 	regpv_profile_t *rpp;
 
 	rpp = regpv_get_profile(profile);
-	if(rpp==0)
+	if(rpp == 0)
 		return -1;
 
 	regpv_free_profile(rpp);
@@ -731,16 +715,16 @@ int ki_reg_free_contacts(sip_msg_t* msg, str* profile)
 	return 1;
 }
 
-int pv_free_contacts(struct sip_msg* msg, char* profile, char* s2)
+int pv_free_contacts(struct sip_msg *msg, char *profile, char *s2)
 {
-	return ki_reg_free_contacts(msg, (str*)profile);
+	return ki_reg_free_contacts(msg, (str *)profile);
 }
 
-void reg_ul_expired_contact(ucontact_t* ptr, int type, void* param)
+void reg_ul_expired_contact(ucontact_t *ptr, int type, void *param)
 {
 	str profile = {"exp", 3};
 	regpv_profile_t *rpp;
-	ucontact_t* c0;
+	ucontact_t *c0;
 	int backup_rt;
 	struct run_act_ctx ctx;
 	sip_msg_t *fmsg;
@@ -749,18 +733,16 @@ void reg_ul_expired_contact(ucontact_t* ptr, int type, void* param)
 	char *p;
 	sr_kemi_eng_t *keng = NULL;
 
-	if(reg_expire_event_rt<0 && reg_event_callback.s==NULL)
+	if(reg_expire_event_rt < 0 && reg_event_callback.s == NULL)
 		return;
 
-	if (faked_msg_init() < 0)
-	{
+	if(faked_msg_init() < 0) {
 		LM_ERR("faked_msg_init() failed\n");
 		return;
 	}
 
 	rpp = regpv_get_profile(&profile);
-	if(rpp==0)
-	{
+	if(rpp == 0) {
 		LM_ERR("error getting profile structure\n");
 		return;
 	}
@@ -769,9 +751,8 @@ void reg_ul_expired_contact(ucontact_t* ptr, int type, void* param)
 		regpv_free_profile(rpp);
 
 	/* copy aor and ul domain */
-	rpp->aor.s = (char*)pkg_malloc(ptr->aor->len*sizeof(char));
-	if(rpp->aor.s==NULL)
-	{
+	rpp->aor.s = (char *)pkg_malloc(ptr->aor->len * sizeof(char));
+	if(rpp->aor.s == NULL) {
 		LM_ERR("no more pkg\n");
 		return;
 	}
@@ -783,12 +764,12 @@ void reg_ul_expired_contact(ucontact_t* ptr, int type, void* param)
 	/* copy contact */
 	ilen = sizeof(ucontact_t);
 
-	olen = (ptr->c.len + ptr->received.len + ptr->path.len
-			+ ptr->callid.len + ptr->user_agent.len + ptr->ruid.len
-			+ ptr->instance.len)*sizeof(char) + ilen;
-	c0 = (ucontact_t*)pkg_malloc(olen);
-	if(c0==NULL)
-	{
+	olen = (ptr->c.len + ptr->received.len + ptr->path.len + ptr->callid.len
+				   + ptr->user_agent.len + ptr->ruid.len + ptr->instance.len)
+				   * sizeof(char)
+		   + ilen;
+	c0 = (ucontact_t *)pkg_malloc(olen);
+	if(c0 == NULL) {
 		LM_ERR("no more pkg\n");
 		goto error;
 	}
@@ -798,20 +779,18 @@ void reg_ul_expired_contact(ucontact_t* ptr, int type, void* param)
 	c0->next = NULL;
 	c0->prev = NULL;
 
-	c0->c.s = (char*)c0 + ilen;
+	c0->c.s = (char *)c0 + ilen;
 	memcpy(c0->c.s, ptr->c.s, ptr->c.len);
 	c0->c.len = ptr->c.len;
 	p = c0->c.s + c0->c.len;
 
-	if(ptr->received.s!=NULL)
-	{
+	if(ptr->received.s != NULL) {
 		c0->received.s = p;
 		memcpy(c0->received.s, ptr->received.s, ptr->received.len);
 		c0->received.len = ptr->received.len;
 		p += c0->received.len;
 	}
-	if(ptr->path.s!=NULL)
-	{
+	if(ptr->path.s != NULL) {
 		c0->path.s = p;
 		memcpy(c0->path.s, ptr->path.s, ptr->path.len);
 		c0->path.len = ptr->path.len;
@@ -821,22 +800,19 @@ void reg_ul_expired_contact(ucontact_t* ptr, int type, void* param)
 	memcpy(c0->callid.s, ptr->callid.s, ptr->callid.len);
 	c0->callid.len = ptr->callid.len;
 	p += c0->callid.len;
-	if(ptr->user_agent.s!=NULL)
-	{
+	if(ptr->user_agent.s != NULL) {
 		c0->user_agent.s = p;
 		memcpy(c0->user_agent.s, ptr->user_agent.s, ptr->user_agent.len);
 		c0->user_agent.len = ptr->user_agent.len;
 		p += c0->user_agent.len;
 	}
-	if(ptr->ruid.s!=NULL)
-	{
+	if(ptr->ruid.s != NULL) {
 		c0->ruid.s = p;
 		memcpy(c0->ruid.s, ptr->ruid.s, ptr->ruid.len);
 		c0->ruid.len = ptr->ruid.len;
 		p += c0->ruid.len;
 	}
-	if(ptr->instance.s!=NULL)
-	{
+	if(ptr->instance.s != NULL) {
 		c0->instance.s = p;
 		memcpy(c0->instance.s, ptr->instance.s, ptr->instance.len);
 		c0->instance.len = ptr->instance.len;
@@ -845,22 +821,23 @@ void reg_ul_expired_contact(ucontact_t* ptr, int type, void* param)
 
 	rpp->contacts = c0;
 	rpp->nrc = 1;
-	LM_DBG("saved contact for <%.*s> in [%.*s]\n",
-			ptr->aor->len, ptr->aor->s, rpp->pname.len, rpp->pname.s);
+	LM_DBG("saved contact for <%.*s> in [%.*s]\n", ptr->aor->len, ptr->aor->s,
+			rpp->pname.len, rpp->pname.s);
 
 	fmsg = faked_msg_next();
 	backup_rt = get_route_type();
 	set_route_type(REQUEST_ROUTE);
 	init_run_actions_ctx(&ctx);
 
-	if (reg_expire_event_rt >= 0) {
+	if(reg_expire_event_rt >= 0) {
 		run_top_route(event_rt.rlist[reg_expire_event_rt], fmsg, 0);
 	} else {
 		keng = sr_kemi_eng_get();
-		if (keng!=NULL) {
+		if(keng != NULL) {
 			str evname = str_init("usrloc:contact-expired");
-			if(sr_kemi_route(keng, fmsg, EVENT_ROUTE,
-					&reg_event_callback, &evname)<0) {
+			if(sr_kemi_route(
+					   keng, fmsg, EVENT_ROUTE, &reg_event_callback, &evname)
+					< 0) {
 				LM_ERR("error running event route kemi callback\n");
 			}
 		}
@@ -873,27 +850,27 @@ error:
 	return;
 }
 
-int ki_lookup_xavp(sip_msg_t* msg, str *utname, str* uri,
-		str* rxname, str *cxname)
+int ki_lookup_xavp(
+		sip_msg_t *msg, str *utname, str *uri, str *rxname, str *cxname)
 {
-	udomain_t* dt;
-	urecord_t* r;
-	ucontact_t* ptr;
+	udomain_t *dt;
+	urecord_t *r;
+	ucontact_t *ptr;
 	str aor = {0, 0};
-	sr_xavp_t *rxavp=NULL;
-	sr_xavp_t *cxavp=NULL;
-	sr_xavp_t *pxavp=NULL;
+	sr_xavp_t *rxavp = NULL;
+	sr_xavp_t *cxavp = NULL;
+	sr_xavp_t *pxavp = NULL;
 	sr_xval_t nxval;
 	str fxname = {0, 0};
 	int res;
 	int n;
 
-	if (extract_aor(uri, &aor, NULL) < 0) {
+	if(extract_aor(uri, &aor, NULL) < 0) {
 		LM_ERR("failed to extract Address Of Record\n");
 		return -1;
 	}
 
-	if(ul.get_udomain(utname->s, &dt)<0) {
+	if(ul.get_udomain(utname->s, &dt) < 0) {
 		LM_ERR("usrloc domain [%s] not found\n", utname->s);
 		return -1;
 	}
@@ -903,7 +880,7 @@ int ki_lookup_xavp(sip_msg_t* msg, str *utname, str* uri,
 	nxval.type = SR_XTYPE_STR;
 	nxval.v.s = aor;
 	STR_STATIC_SET(fxname, "aor");
-	if(xavp_add_value(&fxname, &nxval, &rxavp)==NULL) {
+	if(xavp_add_value(&fxname, &nxval, &rxavp) == NULL) {
 		LM_ERR("failed to add xavp %.*s field\n", fxname.len, fxname.s);
 		return -1;
 	}
@@ -911,7 +888,7 @@ int ki_lookup_xavp(sip_msg_t* msg, str *utname, str* uri,
 	/* copy contacts */
 	ul.lock_udomain(dt, &aor);
 	res = ul.get_urecord(dt, &aor, &r);
-	if (res > 0) {
+	if(res > 0) {
 		LM_DBG("'%.*s' not found in usrloc\n", aor.len, ZSW(aor.s));
 		ul.unlock_udomain(dt, &aor);
 		xavp_destroy_list(&rxavp);
@@ -926,7 +903,7 @@ int ki_lookup_xavp(sip_msg_t* msg, str *utname, str* uri,
 		nxval.type = SR_XTYPE_STR;
 		nxval.v.s = ptr->c;
 		STR_STATIC_SET(fxname, "uri");
-		if(xavp_add_value(&fxname, &nxval, &cxavp)==NULL) {
+		if(xavp_add_value(&fxname, &nxval, &cxavp) == NULL) {
 			LM_ERR("failed to add xavp %.*s field\n", fxname.len, fxname.s);
 			goto error;
 		}
@@ -935,17 +912,17 @@ int ki_lookup_xavp(sip_msg_t* msg, str *utname, str* uri,
 			nxval.type = SR_XTYPE_STR;
 			nxval.v.s = ptr->sock->sock_str;
 			STR_STATIC_SET(fxname, "socket");
-			if(xavp_add_value(&fxname, &nxval, &cxavp)==NULL) {
+			if(xavp_add_value(&fxname, &nxval, &cxavp) == NULL) {
 				LM_ERR("failed to add xavp %.*s field\n", fxname.len, fxname.s);
 				goto error;
 			}
 		}
-		if(ptr->received.s!=NULL) {
+		if(ptr->received.s != NULL) {
 			memset(&nxval, 0, sizeof(sr_xval_t));
 			nxval.type = SR_XTYPE_STR;
 			nxval.v.s = ptr->received;
 			STR_STATIC_SET(fxname, "dsturi");
-			if(xavp_add_value(&fxname, &nxval, &cxavp)==NULL) {
+			if(xavp_add_value(&fxname, &nxval, &cxavp) == NULL) {
 				LM_ERR("failed to add xavp %.*s field\n", fxname.len, fxname.s);
 				goto error;
 			}
@@ -954,7 +931,7 @@ int ki_lookup_xavp(sip_msg_t* msg, str *utname, str* uri,
 		memset(&nxval, 0, sizeof(sr_xval_t));
 		nxval.type = SR_XTYPE_XAVP;
 		nxval.v.xavp = cxavp;
-		if((pxavp = xavp_add_value_after(cxname, &nxval, pxavp))==NULL) {
+		if((pxavp = xavp_add_value_after(cxname, &nxval, pxavp)) == NULL) {
 			LM_ERR("cannot add dst xavp to root list\n");
 			goto error;
 		}
@@ -970,7 +947,7 @@ int ki_lookup_xavp(sip_msg_t* msg, str *utname, str* uri,
 	nxval.type = SR_XTYPE_LONG;
 	nxval.v.l = n;
 	STR_STATIC_SET(fxname, "count");
-	if(xavp_add_value(&fxname, &nxval, &rxavp)==NULL) {
+	if(xavp_add_value(&fxname, &nxval, &rxavp) == NULL) {
 		LM_ERR("failed to add xavp %.*s field\n", fxname.len, fxname.s);
 		xavp_destroy_list(&rxavp);
 		return -1;
@@ -980,50 +957,50 @@ int ki_lookup_xavp(sip_msg_t* msg, str *utname, str* uri,
 	memset(&nxval, 0, sizeof(sr_xval_t));
 	nxval.type = SR_XTYPE_XAVP;
 	nxval.v.xavp = rxavp;
-	if((pxavp = xavp_add_value(rxname, &nxval, NULL))==NULL) {
+	if((pxavp = xavp_add_value(rxname, &nxval, NULL)) == NULL) {
 		LM_ERR("cannot add rxavp to root list\n");
 		xavp_destroy_list(&rxavp);
 		return -1;
 	}
 
-	LM_DBG("fetched <%d> contacts for <%.*s> in [%.*s]\n",
-			n, aor.len, aor.s, cxname->len, cxname->s);
+	LM_DBG("fetched <%d> contacts for <%.*s> in [%.*s]\n", n, aor.len, aor.s,
+			cxname->len, cxname->s);
 	return 1;
 
 error:
 	ul.release_urecord(r);
 	ul.unlock_udomain(dt, &aor);
-	if(cxavp!=NULL) {
+	if(cxavp != NULL) {
 		xavp_destroy_list(&cxavp);
 	}
-	if(rxavp!=NULL) {
+	if(rxavp != NULL) {
 		xavp_destroy_list(&rxavp);
 	}
 	return -1;
 }
 
 #define REG_FROM_USER_MPORT (1)
-#define REG_FROM_USER_MPROTO (1<<1)
+#define REG_FROM_USER_MPROTO (1 << 1)
 /**
  *
  */
-int ki_reg_from_user(sip_msg_t* msg, str *utname, str* uri, int vmode)
+int ki_reg_from_user(sip_msg_t *msg, str *utname, str *uri, int vmode)
 {
-	udomain_t* dt;
-	urecord_t* r;
-	ucontact_t* ptr;
+	udomain_t *dt;
+	urecord_t *r;
+	ucontact_t *ptr;
 	str aor = {0, 0};
 	sip_uri_t rcvuri;
 	int res = -1;
 	int ret = -1;
 	ip_addr_t ipb;
 
-	if (extract_aor(uri, &aor, NULL) < 0) {
+	if(extract_aor(uri, &aor, NULL) < 0) {
 		LM_ERR("failed to extract Address Of Record\n");
 		return -1;
 	}
 
-	if(ul.get_udomain(utname->s, &dt)<0) {
+	if(ul.get_udomain(utname->s, &dt) < 0) {
 		LM_ERR("usrloc domain [%s] not found\n", utname->s);
 		return -1;
 	}
@@ -1031,41 +1008,41 @@ int ki_reg_from_user(sip_msg_t* msg, str *utname, str* uri, int vmode)
 	/* copy contacts */
 	ul.lock_udomain(dt, &aor);
 	res = ul.get_urecord(dt, &aor, &r);
-	if (res > 0) {
+	if(res > 0) {
 		LM_DBG("'%.*s' not found in usrloc\n", aor.len, ZSW(aor.s));
 		ul.unlock_udomain(dt, &aor);
 		return -1;
 	}
 
 	for(ptr = r->contacts; ptr; ptr = ptr->next) {
-		if(ptr->received.s!=NULL) {
-			if (parse_uri(ptr->received.s, ptr->received.len, &rcvuri) < 0) {
-				LM_ERR("failed to parse rcv uri [%.*s]\n",
-						ptr->received.len, ptr->received.s);
+		if(ptr->received.s != NULL) {
+			if(parse_uri(ptr->received.s, ptr->received.len, &rcvuri) < 0) {
+				LM_ERR("failed to parse rcv uri [%.*s]\n", ptr->received.len,
+						ptr->received.s);
 				goto error;
 			}
 		} else {
-			if (parse_uri(ptr->c.s, ptr->c.len, &rcvuri) < 0) {
+			if(parse_uri(ptr->c.s, ptr->c.len, &rcvuri) < 0) {
 				LM_ERR("failed to parse contact uri [%.*s]\n",
 						ptr->received.len, ptr->received.s);
 				goto error;
 			}
 		}
 		if(str2ipxbuf(&rcvuri.host, &ipb) < 0) {
-			LM_WARN("failed to convert ip [%.*s] - ignoring\n",
-					rcvuri.host.len, rcvuri.host.s);
+			LM_WARN("failed to convert ip [%.*s] - ignoring\n", rcvuri.host.len,
+					rcvuri.host.s);
 			continue;
 		}
 		if(!ip_addr_cmp(&msg->rcv.src_ip, &ipb)) {
 			continue;
 		}
 		if(vmode & REG_FROM_USER_MPORT) {
-			if(msg->rcv.src_port!=rcvuri.port_no) {
+			if(msg->rcv.src_port != rcvuri.port_no) {
 				continue;
 			}
 		}
 		if(vmode & REG_FROM_USER_MPROTO) {
-			if(msg->rcv.proto!=rcvuri.proto) {
+			if(msg->rcv.proto != rcvuri.proto) {
 				continue;
 			}
 		}
@@ -1083,6 +1060,4 @@ error:
 	ul.release_urecord(r);
 	ul.unlock_udomain(dt, &aor);
 	return -1;
-
 }
-

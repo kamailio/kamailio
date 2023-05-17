@@ -43,17 +43,17 @@
  *          -2 : found but method not allowed
  *          -3 : error
  */
-int lookup_helper(struct sip_msg* _m, udomain_t* _d, str* _uri, int _mode);
+int lookup_helper(struct sip_msg *_m, udomain_t *_d, str *_uri, int _mode);
 
 /*! \brief
  * Lookup a contact in usrloc and rewrite R-URI if found
  */
-int lookup(struct sip_msg* _m, udomain_t* _d, str* _uri);
+int lookup(struct sip_msg *_m, udomain_t *_d, str *_uri);
 
 /*! \brief
  * Lookup a contact in usrloc and add the records to the dset structure
  */
-int lookup_to_dset(struct sip_msg* _m, udomain_t* _d, str* _uri);
+int lookup_to_dset(struct sip_msg *_m, udomain_t *_d, str *_uri);
 
 /*! \brief
  * Lookup r-uri and additional branches in usrloc
@@ -63,15 +63,16 @@ int lookup_branches(sip_msg_t *msg, udomain_t *d);
 /*! \brief
  * add xavp with details of the record (ruid, ...)
  */
-int xavp_rcd_helper(ucontact_t* ptr);
+int xavp_rcd_helper(ucontact_t *ptr);
 
 /*! \brief
  * Return true if the AOR in the Request-URI is registered,
  * it is similar to lookup but registered neither rewrites
  * the Request-URI nor appends branches
  */
-int registered(struct sip_msg* _m, udomain_t* _d, str* _uri);
-int registered3(struct sip_msg* _m, udomain_t* _d, str* _uri, int match_flag);
-int registered4(struct sip_msg* _m, udomain_t* _d, str* _uri, int match_flag, int match_action_flag);
+int registered(struct sip_msg *_m, udomain_t *_d, str *_uri);
+int registered3(struct sip_msg *_m, udomain_t *_d, str *_uri, int match_flag);
+int registered4(struct sip_msg *_m, udomain_t *_d, str *_uri, int match_flag,
+		int match_action_flag);
 
 #endif /* LOOKUP_H */
