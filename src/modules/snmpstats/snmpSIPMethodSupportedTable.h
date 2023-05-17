@@ -29,7 +29,8 @@
 #define KAMAILIOSIPMETHODSUPPORTEDTABLE_H
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 
@@ -39,55 +40,56 @@ extern "C" {
 
 #include "../../core/config.h"
 
-/* 
+	/* 
  * This strucutre represents a single row in the SNMP table, and is mostly
  * auto-generated. 
  */
-typedef struct kamailioSIPMethodSupportedTable_context_s
-{
+	typedef struct kamailioSIPMethodSupportedTable_context_s
+	{
 
-	netsnmp_index index;
+		netsnmp_index index;
 
-	/** KamailioSIPMethodIdentifier = ASN_UNSIGNED */
-	unsigned long kamailioSIPMethodSupportedIndex;
+		/** KamailioSIPMethodIdentifier = ASN_UNSIGNED */
+		unsigned long kamailioSIPMethodSupportedIndex;
 
-	/** SnmpAdminString = ASN_OCTET_STR */
-	unsigned char *kamailioSIPMethodName;
+		/** SnmpAdminString = ASN_OCTET_STR */
+		unsigned char *kamailioSIPMethodName;
 
-	long kamailioSIPMethodName_len;
+		long kamailioSIPMethodName_len;
 
-	void *data;
+		void *data;
 
-} kamailioSIPMethodSupportedTable_context;
+	} kamailioSIPMethodSupportedTable_context;
 
 
-/* Initializes the kamailioSIPMethodSupportedTable, and populates the tables 
+	/* Initializes the kamailioSIPMethodSupportedTable, and populates the tables 
  * contents */
-void init_kamailioSIPMethodSupportedTable(void);
+	void init_kamailioSIPMethodSupportedTable(void);
 
-/* Defines kamailioSIPMethodSupportedTable's structure and callback mechanisms */
-void initialize_table_kamailioSIPMethodSupportedTable(void);
+	/* Defines kamailioSIPMethodSupportedTable's structure and callback mechanisms */
+	void initialize_table_kamailioSIPMethodSupportedTable(void);
 
 
-/* 
+	/* 
  * This routine is called to process get requests for elements of the table.
  *
  * The function is pretty much left as is from the auto-generated code. 
  */
-int kamailioSIPMethodSupportedTable_get_value(
-		netsnmp_request_info *, netsnmp_index *, netsnmp_table_request_info *);
+	int kamailioSIPMethodSupportedTable_get_value(netsnmp_request_info *,
+			netsnmp_index *, netsnmp_table_request_info *);
 
-const kamailioSIPMethodSupportedTable_context *
-kamailioSIPMethodSupportedTable_get_by_idx(netsnmp_index *);
+	const kamailioSIPMethodSupportedTable_context *
+	kamailioSIPMethodSupportedTable_get_by_idx(netsnmp_index *);
 
-const kamailioSIPMethodSupportedTable_context *
-kamailioSIPMethodSupportedTable_get_by_idx_rs(netsnmp_index *, int row_status);
+	const kamailioSIPMethodSupportedTable_context *
+	kamailioSIPMethodSupportedTable_get_by_idx_rs(
+			netsnmp_index *, int row_status);
 
-/*
+	/*
  * oid declarations
  */
-extern oid kamailioSIPMethodSupportedTable_oid[];
-extern size_t kamailioSIPMethodSupportedTable_oid_len;
+	extern oid kamailioSIPMethodSupportedTable_oid[];
+	extern size_t kamailioSIPMethodSupportedTable_oid_len;
 
 #define kamailioSIPMethodSupportedTable_TABLE_OID KAMAILIO_OID, 3, 1, 1, 1, 1, 7
 
