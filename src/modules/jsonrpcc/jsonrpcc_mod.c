@@ -42,13 +42,13 @@ MODULE_VERSION
 
 static int mod_init(void);
 static int child_init(int);
-static int fixup_request(void** param, int param_no);
-static int fixup_notification(void** param, int param_no);
-static int fixup_request_free(void** param, int param_no);
-int        fixup_pvar_shm(void** param, int param_no);
+static int fixup_request(void **param, int param_no);
+static int fixup_notification(void **param, int param_no);
+static int fixup_request_free(void **param, int param_no);
+int fixup_pvar_shm(void **param, int param_no);
 
 char *servers_param;
-int  pipe_fds[2] = {-1,-1};
+int pipe_fds[2] = {-1, -1};
 int cmd_pipe = -1;
 
 extern int _jsonrpcc_max_conn_retry; /* max retries to connect */
@@ -58,90 +58,88 @@ struct tm_binds tmb;
 /*
  * Exported Functions
  */
-static cmd_export_t cmds[]={
-	{"jsonrpc_request", (cmd_function)jsonrpc_request, 5, fixup_request, fixup_request_free, ANY_ROUTE},
-	{"jsonrpc_notification", (cmd_function)jsonrpc_notification, 2, fixup_notification, 0, ANY_ROUTE},
-	{0, 0, 0, 0, 0, 0}
-};
+static cmd_export_t cmds[] = {
+		{"jsonrpc_request", (cmd_function)jsonrpc_request, 5, fixup_request,
+				fixup_request_free, ANY_ROUTE},
+		{"jsonrpc_notification", (cmd_function)jsonrpc_notification, 2,
+				fixup_notification, 0, ANY_ROUTE},
+		{0, 0, 0, 0, 0, 0}};
 
 
 /*
  * Script Parameters
  */
-static param_export_t mod_params[]={
-	{"servers", PARAM_STRING, &servers_param},
-	{"max_conn_attempts", INT_PARAM, &_jsonrpcc_max_conn_retry},
-	{ 0,0,0 }
-};
+static param_export_t mod_params[] = {{"servers", PARAM_STRING, &servers_param},
+		{"max_conn_attempts", INT_PARAM, &_jsonrpcc_max_conn_retry}, {0, 0, 0}};
 
 
 /*
  * Exports
  */
 struct module_exports exports = {
-	"jsonrpcc",      /* module name */
-	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,            /* cmd (cfg function) exports */
-	mod_params,      /* param exports */
-	0,               /* RPC method exports */
-	0,               /* pseudo-variables exports */
-	0,               /* response handling function */
-	mod_init,        /* module init function */
-	child_init,      /* per-child init function */
-	0                /* module destroy function */
+		"jsonrpcc",		 /* module name */
+		DEFAULT_DLFLAGS, /* dlopen flags */
+		cmds,			 /* cmd (cfg function) exports */
+		mod_params,		 /* param exports */
+		0,				 /* RPC method exports */
+		0,				 /* pseudo-variables exports */
+		0,				 /* response handling function */
+		mod_init,		 /* module init function */
+		child_init,		 /* per-child init function */
+		0				 /* module destroy function */
 };
 
 
-static int mod_init(void) {
-	load_tm_f  load_tm;
+static int mod_init(void)
+{
+	load_tm_f load_tm;
 
 	/* load the tm functions  */
-	if ( !(load_tm=(load_tm_f)find_export("load_tm", NO_SCRIPT, 0)))
-	{
+	if(!(load_tm = (load_tm_f)find_export("load_tm", NO_SCRIPT, 0))) {
 		LM_ERR("failed find tm - cannot import load_tm\n");
 		return -1;
 	}
 	/* let the auto-loading function load all TM stuff */
-	if (load_tm( &tmb )==-1) {
+	if(load_tm(&tmb) == -1) {
 		LM_ERR("failed to bind to tm api\n");
 		return -1;
 	}
 
-	if (servers_param == NULL) {
+	if(servers_param == NULL) {
 		LM_ERR("servers parameter missing.\n");
 		return -1;
 	}
 
 	register_procs(1);
 
-	if (pipe(pipe_fds) < 0) {
+	if(pipe(pipe_fds) < 0) {
 		LM_ERR("pipe() failed\n");
 		return -1;
 	}
 
-	return(0);
+	return (0);
 }
 
 static int child_init(int rank)
 {
 	int pid;
 
-	if (rank!=PROC_INIT)
+	if(rank != PROC_INIT)
 		cmd_pipe = pipe_fds[1];
 
-	if (rank!=PROC_MAIN)
+	if(rank != PROC_MAIN)
 		return 0;
 
-	pid=fork_process(PROC_NOCHLDINIT, "jsonrpc io handler", 1);
-	if (pid<0) {
+	pid = fork_process(PROC_NOCHLDINIT, "jsonrpc io handler", 1);
+	if(pid < 0) {
 		LM_ERR("failed to fork jsonrpc io handler\n");
 		return -1; /* error */
 	}
-	if(pid==0){
+	if(pid == 0) {
 		/* child */
 		close(pipe_fds[1]);
 		/* initialize the config framework */
-		if (cfg_child_init())
+		if(cfg_child_init())
 			return -1;
 		return jsonrpc_io_child_process(pipe_fds[0], servers_param);
 	}
@@ -150,31 +148,31 @@ static int child_init(int rank)
 
 /* Fixup Functions */
 
-static int fixup_request(void** param, int param_no)
+static int fixup_request(void **param, int param_no)
 {
-	if (param_no <= 4) {
+	if(param_no <= 4) {
 		return fixup_spve_null(param, 1);
-	} else if (param_no == 5) {
+	} else if(param_no == 5) {
 		return fixup_pvar_null(param, 1);
 	}
 	LM_ERR("jsonrpc_request takes exactly 5 parameters.\n");
 	return -1;
 }
 
-static int fixup_notification(void** param, int param_no)
+static int fixup_notification(void **param, int param_no)
 {
-	if (param_no <= 2) {
+	if(param_no <= 2) {
 		return fixup_spve_null(param, 1);
 	}
 	LM_ERR("jsonrpc_notification takes exactly 2 parameters.\n");
 	return -1;
 }
 
-static int fixup_request_free(void** param, int param_no)
+static int fixup_request_free(void **param, int param_no)
 {
-	if (param_no <= 4) {
+	if(param_no <= 4) {
 		return 0;
-	} else if (param_no == 5) {
+	} else if(param_no == 5) {
 		return fixup_free_pvar_null(param, 1);
 	}
 	LM_ERR("jsonrpc_request takes exactly 5 parameters.\n");
