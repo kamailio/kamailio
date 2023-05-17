@@ -114,7 +114,8 @@ MODULE_VERSION
 
 typedef bool (*NatTestFunction)(struct sip_msg *msg);
 
-typedef enum {
+typedef enum
+{
 	NTNone = 0,
 	NTPrivateContact = 1,
 	NTSourceAddress = 2,
@@ -256,73 +257,67 @@ stat_var *registered_endpoints = 0;
 stat_var *subscribed_endpoints = 0;
 stat_var *dialog_endpoints = 0;
 
-static NetInfo rfc1918nets[] = {
-	{"10.0.0.0", 0x0a000000UL, 0xff000000UL},
-	{"172.16.0.0", 0xac100000UL, 0xfff00000UL},
-	{"192.168.0.0", 0xc0a80000UL, 0xffff0000UL},
-	{"100.64.0.0", 0x64400000UL, 0xffc00000UL}, // include rfc6598 shared address space as technically the same for our purpose
-	{"192.0.0.0", 0xc0000000UL, 0xfffffff8UL}, // include rfc7335 IPv4 Service Continuity Prefix
-	{NULL, 0UL, 0UL}
-};
+static NetInfo rfc1918nets[] = {{"10.0.0.0", 0x0a000000UL, 0xff000000UL},
+		{"172.16.0.0", 0xac100000UL, 0xfff00000UL},
+		{"192.168.0.0", 0xc0a80000UL, 0xffff0000UL},
+		{"100.64.0.0", 0x64400000UL,
+				0xffc00000UL}, // include rfc6598 shared address space as technically the same for our purpose
+		{"192.0.0.0", 0xc0000000UL,
+				0xfffffff8UL}, // include rfc7335 IPv4 Service Continuity Prefix
+		{NULL, 0UL, 0UL}};
 
-static NatTest NAT_Tests[] = {
-	{NTPrivateContact, test_private_contact},
-	{NTSourceAddress, test_source_address},
-	{NTPrivateVia, test_private_via}, {NTNone, NULL}
-};
+static NatTest NAT_Tests[] = {{NTPrivateContact, test_private_contact},
+		{NTSourceAddress, test_source_address},
+		{NTPrivateVia, test_private_via}, {NTNone, NULL}};
 
 /** SL API structure */
 sl_api_t slb;
 
 static cmd_export_t commands[] = {
-	{"nat_keepalive", (cmd_function)w_NAT_Keepalive, 0, NULL, 0,
-		REQUEST_ROUTE},
-	{"fix_contact", (cmd_function)w_FixContact, 0, NULL, 0,
-		ANY_ROUTE},
-	{"client_nat_test", (cmd_function)w_ClientNatTest, 1, fixup_igp_null, 0,
-		ANY_ROUTE},
-	{0, 0, 0, 0, 0, 0}
-};
+		{"nat_keepalive", (cmd_function)w_NAT_Keepalive, 0, NULL, 0,
+				REQUEST_ROUTE},
+		{"fix_contact", (cmd_function)w_FixContact, 0, NULL, 0, ANY_ROUTE},
+		{"client_nat_test", (cmd_function)w_ClientNatTest, 1, fixup_igp_null, 0,
+				ANY_ROUTE},
+		{0, 0, 0, 0, 0, 0}};
 
 static param_export_t parameters[] = {
-	{"keepalive_interval", INT_PARAM, &keepalive_interval},
-	{"keepalive_method", PARAM_STRING, &keepalive_params.method},
-	{"keepalive_from", PARAM_STRING, &keepalive_params.from},
-	{"keepalive_extra_headers", PARAM_STRING,
-			&keepalive_params.extra_headers},
-	{"keepalive_state_file", PARAM_STRING, &keepalive_state_file},
-	{"contact_match", PARAM_INT, &natt_contact_match},
+		{"keepalive_interval", INT_PARAM, &keepalive_interval},
+		{"keepalive_method", PARAM_STRING, &keepalive_params.method},
+		{"keepalive_from", PARAM_STRING, &keepalive_params.from},
+		{"keepalive_extra_headers", PARAM_STRING,
+				&keepalive_params.extra_headers},
+		{"keepalive_state_file", PARAM_STRING, &keepalive_state_file},
+		{"contact_match", PARAM_INT, &natt_contact_match},
 
-	{0, 0, 0}
-};
+		{0, 0, 0}};
 
 static pv_export_t pvars[] = {
-	{str_init("keepalive.socket"), PVT_OTHER, pv_get_keepalive_socket, NULL,
-			pv_parse_nat_contact_name, NULL, NULL, 0},
-	{str_init("source_uri"), PVT_OTHER, pv_get_source_uri, NULL, NULL, NULL,
-			NULL, 0},
-	{{0, 0}, 0, 0, 0, 0, 0, 0, 0}
-};
+		{str_init("keepalive.socket"), PVT_OTHER, pv_get_keepalive_socket, NULL,
+				pv_parse_nat_contact_name, NULL, NULL, 0},
+		{str_init("source_uri"), PVT_OTHER, pv_get_source_uri, NULL, NULL, NULL,
+				NULL, 0},
+		{{0, 0}, 0, 0, 0, 0, 0, 0, 0}};
 
 #ifdef STATISTICS
 static stat_export_t statistics[] = {
-	{"keepalive_endpoints", STAT_NO_RESET, &keepalive_endpoints},
-	{"registered_endpoints", STAT_NO_RESET, &registered_endpoints},
-	{"subscribed_endpoints", STAT_NO_RESET, &subscribed_endpoints},
-	{"dialog_endpoints", STAT_NO_RESET, &dialog_endpoints}, {0, 0, 0}};
+		{"keepalive_endpoints", STAT_NO_RESET, &keepalive_endpoints},
+		{"registered_endpoints", STAT_NO_RESET, &registered_endpoints},
+		{"subscribed_endpoints", STAT_NO_RESET, &subscribed_endpoints},
+		{"dialog_endpoints", STAT_NO_RESET, &dialog_endpoints}, {0, 0, 0}};
 #endif
 
 struct module_exports exports = {
-	"nat_traversal", // module name
-	DEFAULT_DLFLAGS, // dlopen flags
-	commands,	 // exported functions
-	parameters,	 // exported parameters
-	0,		 // exported RPC methods
-	pvars,		 // exported pseudo-variables
-	reply_filter, 	 // reply processing function
-	mod_init,	 // module init function (before fork. kids will inherit)
-	child_init, 	 // child init function
-	mod_destroy  	 // destroy function
+		"nat_traversal", // module name
+		DEFAULT_DLFLAGS, // dlopen flags
+		commands,		 // exported functions
+		parameters,		 // exported parameters
+		0,				 // exported RPC methods
+		pvars,			 // exported pseudo-variables
+		reply_filter,	 // reply processing function
+		mod_init,	// module init function (before fork. kids will inherit)
+		child_init, // child init function
+		mod_destroy // destroy function
 };
 
 
@@ -903,11 +898,12 @@ static time_t get_register_expire(
 				r_contact_body = (contact_body_t *)r_hdr->parsed;
 				for(r_contact = r_contact_body->contacts; r_contact;
 						r_contact = r_contact->next) {
-					if((natt_contact_match==0
-								&& STR_MATCH_STR(contact->uri, r_contact->uri))
-							|| (natt_contact_match==1
-								&& cmp_uri_light_str(&contact->uri,
-									&r_contact->uri)==0)){
+					if((natt_contact_match == 0
+							   && STR_MATCH_STR(contact->uri, r_contact->uri))
+							|| (natt_contact_match == 1
+									&& cmp_uri_light_str(
+											   &contact->uri, &r_contact->uri)
+											   == 0)) {
 						expires_param = r_contact->expires;
 						if(expires_param && expires_param->body.len
 								&& str2int(&expires_param->body, &exp) == 0)
@@ -1486,18 +1482,19 @@ static int FixContact(struct sip_msg *msg)
 	}
 
 	if(msg->rcv.src_ip.af == AF_INET6) {
-		buf.len = snprintf(buf.s, len, "%.*s[%s]:%d%.*s", before_host.len, before_host.s,
-				newip.s, newport, after.len, after.s);
+		buf.len = snprintf(buf.s, len, "%.*s[%s]:%d%.*s", before_host.len,
+				before_host.s, newip.s, newport, after.len, after.s);
 	} else {
-		buf.len = snprintf(buf.s, len, "%.*s%s:%d%.*s", before_host.len, before_host.s,
-				newip.s, newport, after.len, after.s);
+		buf.len = snprintf(buf.s, len, "%.*s%s:%d%.*s", before_host.len,
+				before_host.s, newip.s, newport, after.len, after.s);
 	}
-	if(buf.len < 0 || buf.len>=len) {
+	if(buf.len < 0 || buf.len >= len) {
 		pkg_free(buf.s);
 		return -1;
 	}
 
-	if(insert_new_lump_after(anchor, buf.s, buf.len, (enum _hdr_types_t)HDR_CONTACT_F)
+	if(insert_new_lump_after(
+			   anchor, buf.s, buf.len, (enum _hdr_types_t)HDR_CONTACT_F)
 			== 0) {
 		pkg_free(buf.s);
 		return -1;
@@ -1531,7 +1528,7 @@ static int w_ClientNatTest(struct sip_msg *msg, char *ptests, char *p2)
 {
 	int tests;
 
-	if(fixup_get_ivalue(msg, (gparam_t*)ptests, &tests)<0) {
+	if(fixup_get_ivalue(msg, (gparam_t *)ptests, &tests) < 0) {
 		LM_ERR("failed to get tests parameter\n");
 		return -1;
 	}
@@ -1556,7 +1553,7 @@ static void send_keepalive(NAT_Contact *contact)
 	unsigned short lport;
 	char lproto;
 
-	if(contact==NULL || contact->socket==NULL) {
+	if(contact == NULL || contact->socket == NULL) {
 		LM_ERR("invalid parameters\n");
 		return;
 	}
@@ -1727,7 +1724,8 @@ static void restore_keepalive_state(void)
 	res = fscanf(f, STATE_FILE_HEADER); // skip header
 
 	while(true) {
-		res = fscanf(f, "%63s %63s %" TIME_T_FMT " %" TIME_T_FMT, uri, socket, &ll_1, &ll_2);
+		res = fscanf(f, "%63s %63s %" TIME_T_FMT " %" TIME_T_FMT, uri, socket,
+				&ll_1, &ll_2);
 		rtime = ll_1;
 		stime = ll_2;
 		if(res == EOF) {
@@ -1778,7 +1776,7 @@ static int mod_init(void)
 	int *param;
 	modparam_t type;
 
-	if(natt_contact_match!=0) {
+	if(natt_contact_match != 0) {
 		natt_contact_match = 1;
 	}
 
