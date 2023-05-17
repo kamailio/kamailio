@@ -31,31 +31,31 @@
 #ifndef _OSP_MOD_H_
 #define _OSP_MOD_H_
 
-#define MODULE_RETURNCODE_TRUE          1
-#define MODULE_RETURNCODE_STOPROUTE     0
-#define MODULE_RETURNCODE_FALSE         -1
-#define MODULE_RETURNCODE_ERROR         -2
+#define MODULE_RETURNCODE_TRUE 1
+#define MODULE_RETURNCODE_STOPROUTE 0
+#define MODULE_RETURNCODE_FALSE -1
+#define MODULE_RETURNCODE_ERROR -2
 
-#define OSP_DEF_SPS                     16
-#define OSP_DEF_WEIGHT                  1000
-#define OSP_DEF_HW                      0
-#define OSP_DEF_CALLID                  1    /* Validate call ids, set to 0 to disable */
-#define OSP_DEF_TOKEN                   2
-#define OSP_DEF_SSLLIFE                 300
-#define OSP_DEF_PERSISTENCE             (60 * 1000)
-#define OSP_DEF_DELAY                   0
-#define OSP_DEF_RETRY                   2
-#define OSP_DEF_TIMEOUT                 (60 * 1000)
-#define OSP_DEF_DESTS                   5
-#define OSP_DEF_USERPID                 1
-#define OSP_DEF_REDIRURI                0   /* 0 for "xxxxxxxxxx@xxx.xxx.xxx.xxx", 1 for "<xxxxxxxxxx@xxx.xxx.xxx.xxx>" format */
-#define OSP_DEF_SNIDAVP                 "$avp(s:_osp_source_networkid_)"
+#define OSP_DEF_SPS 16
+#define OSP_DEF_WEIGHT 1000
+#define OSP_DEF_HW 0
+#define OSP_DEF_CALLID 1 /* Validate call ids, set to 0 to disable */
+#define OSP_DEF_TOKEN 2
+#define OSP_DEF_SSLLIFE 300
+#define OSP_DEF_PERSISTENCE (60 * 1000)
+#define OSP_DEF_DELAY 0
+#define OSP_DEF_RETRY 2
+#define OSP_DEF_TIMEOUT (60 * 1000)
+#define OSP_DEF_DESTS 5
+#define OSP_DEF_USERPID 1
+#define OSP_DEF_REDIRURI \
+	0 /* 0 for "xxxxxxxxxx@xxx.xxx.xxx.xxx", 1 for "<xxxxxxxxxx@xxx.xxx.xxx.xxx>" format */
+#define OSP_DEF_SNIDAVP "$avp(s:_osp_source_networkid_)"
 
-#define OSP_KEYBUF_SIZE                 256
-#define OSP_STRBUF_SIZE                 256
-#define OSP_E164BUF_SIZE                1024
-#define OSP_TOKENBUF_SIZE               2048
-#define OSP_HEADERBUF_SIZE              3072
+#define OSP_KEYBUF_SIZE 256
+#define OSP_STRBUF_SIZE 256
+#define OSP_E164BUF_SIZE 1024
+#define OSP_TOKENBUF_SIZE 2048
+#define OSP_HEADERBUF_SIZE 3072
 
 #endif /* _OSP_MOD_H_ */
-

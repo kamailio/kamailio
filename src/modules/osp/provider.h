@@ -35,4 +35,3 @@ int ospSetupProvider(void);
 int ospDeleteProvider(void);
 
 #endif /* _OSP_MOD_PROVIDER_H_ */
-

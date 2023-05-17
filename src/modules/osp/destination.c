@@ -43,8 +43,8 @@
 const str OSP_ORIGDEST_NAME = {"_osp_orig_dests_", 16};
 const str OSP_TERMDEST_NAME = {"_osp_term_dests_", 16};
 
-static int ospSaveDestination(osp_dest* dest, const str* name);
-static void ospRecordCode(int code, osp_dest* dest);
+static int ospSaveDestination(osp_dest *dest, const str *name);
+static void ospRecordCode(int code, osp_dest *dest);
 static int ospIsToReportUsage(int code);
 
 /*
@@ -52,17 +52,17 @@ static int ospIsToReportUsage(int code);
  * param dest Destination data structure
  * return initialized destination sturcture
  */
-osp_dest* ospInitDestination(
-    osp_dest* dest)
+osp_dest *ospInitDestination(osp_dest *dest)
 {
-    memset(dest, 0, sizeof(osp_dest));
+	memset(dest, 0, sizeof(osp_dest));
 
-    dest->callidsize = sizeof(dest->callid);
-    dest->tokensize = sizeof(dest->token);
+	dest->callidsize = sizeof(dest->callid);
+	dest->tokensize = sizeof(dest->token);
 
-    LM_DBG("callidsize '%d' tokensize '%d'\n", dest->callidsize, dest->tokensize);
+	LM_DBG("callidsize '%d' tokensize '%d'\n", dest->callidsize,
+			dest->tokensize);
 
-    return dest;
+	return dest;
 }
 
 /* 
@@ -73,28 +73,27 @@ osp_dest* ospInitDestination(
  * param name Name of AVP
  * return 0 success, -1 failure
  */
-static int ospSaveDestination(
-    osp_dest* dest, 
-    const str* name)
+static int ospSaveDestination(osp_dest *dest, const str *name)
 {
-    str wrapper;
-    int result = -1;
+	str wrapper;
+	int result = -1;
 
-    wrapper.s = (char*)dest;
-    wrapper.len = sizeof(osp_dest);
+	wrapper.s = (char *)dest;
+	wrapper.len = sizeof(osp_dest);
 
-    /* 
+	/* 
      * add_avp will make a private copy of both the name and value in shared memory 
      * which will be released by TM at the end of the transaction
      */
-    if (add_avp(AVP_NAME_STR | AVP_VAL_STR, (int_str)*name, (int_str)wrapper) == 0) {
-        LM_DBG("destination saved\n");
-        result = 0;
-    } else {
-        LM_ERR("failed to save destination\n");
-    }
+	if(add_avp(AVP_NAME_STR | AVP_VAL_STR, (int_str)*name, (int_str)wrapper)
+			== 0) {
+		LM_DBG("destination saved\n");
+		result = 0;
+	} else {
+		LM_ERR("failed to save destination\n");
+	}
 
-    return result;
+	return result;
 }
 
 /*
@@ -102,10 +101,9 @@ static int ospSaveDestination(
  * param dest Originate destination structure
  * return 0 success, -1 failure
  */
-int ospSaveOrigDestination(
-    osp_dest* dest)
+int ospSaveOrigDestination(osp_dest *dest)
 {
-    return ospSaveDestination(dest, &OSP_ORIGDEST_NAME);
+	return ospSaveDestination(dest, &OSP_ORIGDEST_NAME);
 }
 
 /*
@@ -113,10 +111,9 @@ int ospSaveOrigDestination(
  * param dest Terminate destination structure
  * return 0 success, -1 failure
  */
-int ospSaveTermDestination(
-    osp_dest* dest)
+int ospSaveTermDestination(osp_dest *dest)
 {
-    return ospSaveDestination(dest, &OSP_TERMDEST_NAME);
+	return ospSaveDestination(dest, &OSP_TERMDEST_NAME);
 }
 
 /* 
@@ -128,39 +125,38 @@ int ospSaveTermDestination(
  */
 int ospCheckOrigDestination(void)
 {
-    struct usr_avp* destavp = NULL;
-    int_str destval;
-    osp_dest* dest = NULL;
-    int result = -1;
+	struct usr_avp *destavp = NULL;
+	int_str destval;
+	osp_dest *dest = NULL;
+	int result = -1;
 	struct search_state st;
 
-    for (destavp = search_first_avp(AVP_NAME_STR | AVP_VAL_STR, (int_str)OSP_ORIGDEST_NAME, NULL, &st);
-        destavp != NULL;
-		 destavp = search_next_avp(&st, NULL))
-    {
-        get_avp_val(destavp, &destval);
+	for(destavp = search_first_avp(AVP_NAME_STR | AVP_VAL_STR,
+				(int_str)OSP_ORIGDEST_NAME, NULL, &st);
+			destavp != NULL; destavp = search_next_avp(&st, NULL)) {
+		get_avp_val(destavp, &destval);
 
-        /* OSP destintaion is wrapped in a string */
-        dest = (osp_dest*)destval.s.s;
+		/* OSP destintaion is wrapped in a string */
+		dest = (osp_dest *)destval.s.s;
 
-        if (dest->used == 0) {
-            if (dest->supported == 1) {
-                LM_DBG("orig dest exist\n");
-                result = 0;
-                break;
-            } else {
-                LM_DBG("destination does not been supported\n");
-            }
-        } else {
-            LM_DBG("destination has already been used\n");
-        }
-    }
+		if(dest->used == 0) {
+			if(dest->supported == 1) {
+				LM_DBG("orig dest exist\n");
+				result = 0;
+				break;
+			} else {
+				LM_DBG("destination does not been supported\n");
+			}
+		} else {
+			LM_DBG("destination has already been used\n");
+		}
+	}
 
-    if (result == -1) {
-        LM_DBG("there is not unused destination\n");
-    }
+	if(result == -1) {
+		LM_DBG("there is not unused destination\n");
+	}
 
-    return result;
+	return result;
 }
 
 /* 
@@ -172,46 +168,45 @@ int ospCheckOrigDestination(void)
  *     return it, and mark it as used (used==1).
  * return NULL on failure
  */
-osp_dest* ospGetNextOrigDestination(void)
+osp_dest *ospGetNextOrigDestination(void)
 {
-    struct usr_avp* destavp = NULL;
-    int_str destval;
-    osp_dest* dest = NULL;
-    osp_dest* result = NULL;
+	struct usr_avp *destavp = NULL;
+	int_str destval;
+	osp_dest *dest = NULL;
+	osp_dest *result = NULL;
 	struct search_state st;
 
-    for (destavp = search_first_avp(AVP_NAME_STR | AVP_VAL_STR, (int_str)OSP_ORIGDEST_NAME, NULL, &st);
-        destavp != NULL;
-		 destavp = search_next_avp(&st, NULL))
-    {
-        get_avp_val(destavp, &destval);
+	for(destavp = search_first_avp(AVP_NAME_STR | AVP_VAL_STR,
+				(int_str)OSP_ORIGDEST_NAME, NULL, &st);
+			destavp != NULL; destavp = search_next_avp(&st, NULL)) {
+		get_avp_val(destavp, &destval);
 
-        /* OSP destintaion is wrapped in a string */
-        dest = (osp_dest*)destval.s.s;
+		/* OSP destintaion is wrapped in a string */
+		dest = (osp_dest *)destval.s.s;
 
-        if (dest->used == 0) {
-            if (dest->supported == 1) {
-                LM_DBG("orig dest found\n");
-                dest->used = 1;
-                result = dest;
-                break;
-            } else {
-                /* Make it looks like used */
-                dest->used = 1;
-                /* 111 means wrong protocol */
-                dest->lastcode = 111;
-                LM_DBG("destination does not been supported\n");
-            }
-        } else {
-            LM_DBG("destination has already been used\n");
-        }
-    }
+		if(dest->used == 0) {
+			if(dest->supported == 1) {
+				LM_DBG("orig dest found\n");
+				dest->used = 1;
+				result = dest;
+				break;
+			} else {
+				/* Make it looks like used */
+				dest->used = 1;
+				/* 111 means wrong protocol */
+				dest->lastcode = 111;
+				LM_DBG("destination does not been supported\n");
+			}
+		} else {
+			LM_DBG("destination has already been used\n");
+		}
+	}
 
-    if (result == NULL) {
-        LM_DBG("there is not unused destination\n");
-    }
+	if(result == NULL) {
+		LM_DBG("there is not unused destination\n");
+	}
 
-    return result;
+	return result;
 }
 
 /*
@@ -225,34 +220,33 @@ osp_dest* ospGetNextOrigDestination(void)
  *    be wrong for loop condition.
  *  return NULL on failure
  */
-osp_dest* ospGetLastOrigDestination(void)
+osp_dest *ospGetLastOrigDestination(void)
 {
-    struct usr_avp* destavp = NULL;
-    int_str destval;
-    osp_dest* dest = NULL;
-    osp_dest* lastdest = NULL;
+	struct usr_avp *destavp = NULL;
+	int_str destval;
+	osp_dest *dest = NULL;
+	osp_dest *lastdest = NULL;
 	struct search_state st;
 
-    for (destavp = search_first_avp(AVP_NAME_STR | AVP_VAL_STR, (int_str)OSP_ORIGDEST_NAME, NULL, &st);
-        destavp != NULL;
-		 destavp = search_next_avp(&st, NULL))
-    {
-        get_avp_val(destavp, &destval);
+	for(destavp = search_first_avp(AVP_NAME_STR | AVP_VAL_STR,
+				(int_str)OSP_ORIGDEST_NAME, NULL, &st);
+			destavp != NULL; destavp = search_next_avp(&st, NULL)) {
+		get_avp_val(destavp, &destval);
 
-        /* OSP destination is wrapped in a string */
-        dest = (osp_dest*)destval.s.s;
+		/* OSP destination is wrapped in a string */
+		dest = (osp_dest *)destval.s.s;
 
-        if (dest->used == 1) {
-            if (dest->supported == 1) {
-                lastdest = dest;
-                LM_DBG("curent destination '%s'\n", lastdest->host);
-            }
-        } else {
-            break;
-        }
-    }
+		if(dest->used == 1) {
+			if(dest->supported == 1) {
+				lastdest = dest;
+				LM_DBG("curent destination '%s'\n", lastdest->host);
+			}
+		} else {
+			break;
+		}
+	}
 
-    return lastdest;
+	return lastdest;
 }
 
 /* 
@@ -262,19 +256,21 @@ osp_dest* ospGetLastOrigDestination(void)
  *     There can be 0 or 1 term destinations. Find and return it.
  *  return NULL on failure (no terminate destination)
  */
-osp_dest* ospGetTermDestination(void)
+osp_dest *ospGetTermDestination(void)
 {
-    int_str destval;
-    osp_dest* dest = NULL;
+	int_str destval;
+	osp_dest *dest = NULL;
 
-    if (search_first_avp(AVP_NAME_STR | AVP_VAL_STR, (int_str)OSP_TERMDEST_NAME, &destval, 0) != NULL) {
-        /* OSP destination is wrapped in a string */
-        dest = (osp_dest*)destval.s.s;
+	if(search_first_avp(AVP_NAME_STR | AVP_VAL_STR, (int_str)OSP_TERMDEST_NAME,
+			   &destval, 0)
+			!= NULL) {
+		/* OSP destination is wrapped in a string */
+		dest = (osp_dest *)destval.s.s;
 
-        LM_DBG("term dest found\n");
-    }
+		LM_DBG("term dest found\n");
+	}
 
-    return dest;
+	return dest;
 }
 
 /*
@@ -282,42 +278,40 @@ osp_dest* ospGetTermDestination(void)
  * param code Destination status
  * param dest Destination
  */
-static void ospRecordCode(
-    int code, 
-    osp_dest* dest)
+static void ospRecordCode(int code, osp_dest *dest)
 {
-    LM_DBG("code '%d'\n", code);
-    dest->lastcode = code;
+	LM_DBG("code '%d'\n", code);
+	dest->lastcode = code;
 
-    switch (code) {
-        case 100:
-            if (!dest->time100) {
-                dest->time100 = time(NULL);
-            } else {
-                LM_DBG("100 already recorded\n");
-            }
-            break;
-        case 180:
-        case 181:
-        case 182:
-        case 183:
-            if (!dest->time180) {
-                dest->time180 = time(NULL);
-            } else {
-                LM_DBG("180, 181, 182 or 183 allready recorded\n");
-            }
-            break;
-        case 200:
-        case 202:
-            if (!dest->time200) {
-                dest->time200 = time(NULL);
-            } else {
-                LM_DBG("200 or 202 allready recorded\n");
-            }
-            break;
-        default:
-            LM_DBG("will not record time for '%d'\n", code);
-    }
+	switch(code) {
+		case 100:
+			if(!dest->time100) {
+				dest->time100 = time(NULL);
+			} else {
+				LM_DBG("100 already recorded\n");
+			}
+			break;
+		case 180:
+		case 181:
+		case 182:
+		case 183:
+			if(!dest->time180) {
+				dest->time180 = time(NULL);
+			} else {
+				LM_DBG("180, 181, 182 or 183 allready recorded\n");
+			}
+			break;
+		case 200:
+		case 202:
+			if(!dest->time200) {
+				dest->time200 = time(NULL);
+			} else {
+				LM_DBG("200 or 202 allready recorded\n");
+			}
+			break;
+		default:
+			LM_DBG("will not record time for '%d'\n", code);
+	}
 }
 
 /*
@@ -325,17 +319,16 @@ static void ospRecordCode(
  * param code Destination status
  * return 1 should report, 0 should not report
  */
-static int ospIsToReportUsage(
-    int code)
+static int ospIsToReportUsage(int code)
 {
-    int istime = 0;
+	int istime = 0;
 
-    LM_DBG("code '%d'\n", code);
-    if (code >= 200) {
-        istime = 1;
-    }
+	LM_DBG("code '%d'\n", code);
+	if(code >= 200) {
+		istime = 1;
+	}
 
-    return istime;
+	return istime;
 }
 
 /*
@@ -343,44 +336,41 @@ static int ospIsToReportUsage(
  * param clientcode Client status
  * param servercode Server status
  */
-void ospRecordEvent(
-    int clientcode, 
-    int servercode)
+void ospRecordEvent(int clientcode, int servercode)
 {
-    osp_dest* dest;
+	osp_dest *dest;
 
-    LM_DBG("client status '%d'\n", clientcode);
-    if ((clientcode != 0) && (dest = ospGetLastOrigDestination())) {
-        ospRecordCode(clientcode, dest);
+	LM_DBG("client status '%d'\n", clientcode);
+	if((clientcode != 0) && (dest = ospGetLastOrigDestination())) {
+		ospRecordCode(clientcode, dest);
 
-        if (ospIsToReportUsage(servercode) == 1) {
-            ospReportOrigSetupUsage();
-        }
-    }
+		if(ospIsToReportUsage(servercode) == 1) {
+			ospReportOrigSetupUsage();
+		}
+	}
 
-    LM_DBG("server status '%d'\n", servercode);
-    if ((servercode != 0) && (dest = ospGetTermDestination())) {
-        ospRecordCode(servercode, dest);
+	LM_DBG("server status '%d'\n", servercode);
+	if((servercode != 0) && (dest = ospGetTermDestination())) {
+		ospRecordCode(servercode, dest);
 
-        if (ospIsToReportUsage(servercode) == 1) {
-            ospReportTermSetupUsage();
-        }
-    }
+		if(ospIsToReportUsage(servercode) == 1) {
+			ospReportTermSetupUsage();
+		}
+	}
 }
 
 /*
  * Dump destination information
  * param dest Destination
  */
-void ospDumpDestination(
-    osp_dest* dest)
+void ospDumpDestination(osp_dest *dest)
 {
-    LM_DBG("dest->host..........'%s'\n", dest->host);
-    LM_DBG("dest->used..........'%d'\n", dest->used);
-    LM_DBG("dest->lastcode......'%d'\n", dest->lastcode);
-    LM_DBG("dest->time100.......'%d'\n", (unsigned int)dest->time100);
-    LM_DBG("dest->time180.......'%d'\n", (unsigned int)dest->time180);
-    LM_DBG("dest->time200.......'%d'\n", (unsigned int)dest->time200);
+	LM_DBG("dest->host..........'%s'\n", dest->host);
+	LM_DBG("dest->used..........'%d'\n", dest->used);
+	LM_DBG("dest->lastcode......'%d'\n", dest->lastcode);
+	LM_DBG("dest->time100.......'%d'\n", (unsigned int)dest->time100);
+	LM_DBG("dest->time180.......'%d'\n", (unsigned int)dest->time180);
+	LM_DBG("dest->time200.......'%d'\n", (unsigned int)dest->time200);
 }
 
 /*
@@ -388,39 +378,40 @@ void ospDumpDestination(
  */
 void ospDumpAllDestination(void)
 {
-    struct usr_avp* destavp = NULL;
-    int_str destval;
-    osp_dest* dest = NULL;
-    int count = 0;
+	struct usr_avp *destavp = NULL;
+	int_str destval;
+	osp_dest *dest = NULL;
+	int count = 0;
 	struct search_state st;
 
-    for (destavp = search_first_avp(AVP_NAME_STR | AVP_VAL_STR, (int_str)OSP_ORIGDEST_NAME, NULL, &st);
-        destavp != NULL;
-		 destavp = search_next_avp(&st, NULL))
-    {
-        get_avp_val(destavp, &destval);
+	for(destavp = search_first_avp(AVP_NAME_STR | AVP_VAL_STR,
+				(int_str)OSP_ORIGDEST_NAME, NULL, &st);
+			destavp != NULL; destavp = search_next_avp(&st, NULL)) {
+		get_avp_val(destavp, &destval);
 
-        /* OSP destination is wrapped in a string */
-        dest = (osp_dest*)destval.s.s;
+		/* OSP destination is wrapped in a string */
+		dest = (osp_dest *)destval.s.s;
 
-        LM_DBG("....originate '%d'....\n", count++);
+		LM_DBG("....originate '%d'....\n", count++);
 
-        ospDumpDestination(dest);
-    }
-    if (count == 0) {
-        LM_DBG("there is not originate destination AVP\n");
-    }
+		ospDumpDestination(dest);
+	}
+	if(count == 0) {
+		LM_DBG("there is not originate destination AVP\n");
+	}
 
-    if (search_first_avp(AVP_NAME_STR | AVP_VAL_STR, (int_str)OSP_TERMDEST_NAME, &destval, 0) != NULL) {
-        /* OSP destination is wrapped in a string */
-        dest = (osp_dest*)destval.s.s;
+	if(search_first_avp(AVP_NAME_STR | AVP_VAL_STR, (int_str)OSP_TERMDEST_NAME,
+			   &destval, 0)
+			!= NULL) {
+		/* OSP destination is wrapped in a string */
+		dest = (osp_dest *)destval.s.s;
 
-        LM_DBG("....terminate....\n");
+		LM_DBG("....terminate....\n");
 
-        ospDumpDestination(dest);
-    } else {
-        LM_DBG("there is not terminate destination AVP\n");
-    }
+		ospDumpDestination(dest);
+	} else {
+		LM_DBG("there is not terminate destination AVP\n");
+	}
 }
 
 /*
@@ -429,17 +420,13 @@ void ospDumpAllDestination(void)
  * param dst Destination address
  * param buffersize Size of dst buffer
  */
-void ospConvertAddress(
-    char* src,
-    char* dst,
-    int buffersize)
+void ospConvertAddress(char *src, char *dst, int buffersize)
 {
-    struct in_addr inp;
+	struct in_addr inp;
 
-    if (inet_aton(src, &inp) != 0) {
-        snprintf(dst, buffersize, "[%s]", src);
-    } else {
-        snprintf(dst, buffersize, "%s", src);
-    }
+	if(inet_aton(src, &inp) != 0) {
+		snprintf(dst, buffersize, "[%s]", src);
+	} else {
+		snprintf(dst, buffersize, "%s", src);
+	}
 }
-

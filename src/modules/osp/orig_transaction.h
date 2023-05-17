@@ -33,11 +33,10 @@
 
 #include "../../core/parser/msg_parser.h"
 
-int ospRequestRouting(struct sip_msg*, char*, char*);
-int ospCheckRoute(struct sip_msg*, char*, char*);
-int ospPrepareRoute(struct sip_msg*, char*, char*);
-int ospPrepareAllRoutes(struct sip_msg*, char*, char*);
-int ospCheckTranslation(struct sip_msg*, char*, char*);
+int ospRequestRouting(struct sip_msg *, char *, char *);
+int ospCheckRoute(struct sip_msg *, char *, char *);
+int ospPrepareRoute(struct sip_msg *, char *, char *);
+int ospPrepareAllRoutes(struct sip_msg *, char *, char *);
+int ospCheckTranslation(struct sip_msg *, char *, char *);
 
 #endif /* _OSP_MOD_ORIG_TRANSACTION_H_ */
-

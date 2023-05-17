@@ -49,11 +49,13 @@
  * Actual conversation duration maybe calculated using connect time (from the call
  * set up usage) and stop time (from the duration usage). 
  */
-void ospRecordOrigTransaction(struct sip_msg* msg, unsigned long long transid, char* uac, char* from, char* to, time_t authtime, unsigned destinationCount);
-void ospRecordTermTransaction(struct sip_msg* msg, unsigned long long transid, char* uac, char* from, char* to, time_t authtime);
+void ospRecordOrigTransaction(struct sip_msg *msg, unsigned long long transid,
+		char *uac, char *from, char *to, time_t authtime,
+		unsigned destinationCount);
+void ospRecordTermTransaction(struct sip_msg *msg, unsigned long long transid,
+		char *uac, char *from, char *to, time_t authtime);
 void ospReportOrigSetupUsage(void);
 void ospReportTermSetupUsage(void);
-int  ospReportUsage(struct sip_msg* msg, char* whorelease, char* ignore2);
+int ospReportUsage(struct sip_msg *msg, char *whorelease, char *ignore2);
 
 #endif /* _OSP_MOD_USAGE_H_ */
-
