@@ -26,13 +26,13 @@
 * module function declarations
 **********/
 
-rtpmap **find_MOH (char *, char *);
-int mohq_count (sip_msg_t *, char *, pv_spec_t *);
-void mohq_debug (mohq_lst *, char *, ...);
-int mohq_process (sip_msg_t *);
-int mohq_retrieve (sip_msg_t *, char *, char *);
-void mohqueue_rpc_debug (rpc_t *, void *);
-void mohqueue_rpc_drop_call (rpc_t *, void *);
-int mohq_send (sip_msg_t *, char *);
+rtpmap **find_MOH(char *, char *);
+int mohq_count(sip_msg_t *, char *, pv_spec_t *);
+void mohq_debug(mohq_lst *, char *, ...);
+int mohq_process(sip_msg_t *);
+int mohq_retrieve(sip_msg_t *, char *, char *);
+void mohqueue_rpc_debug(rpc_t *, void *);
+void mohqueue_rpc_drop_call(rpc_t *, void *);
+int mohq_send(sip_msg_t *, char *);
 
 #endif /* MOHQ_FUNCS_H */

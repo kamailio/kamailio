@@ -27,19 +27,19 @@
 **********/
 
 typedef struct
-  {
-  gen_lock_t *plock;
-  int lock_cnt;
-  } mohq_lock;
+{
+	gen_lock_t *plock;
+	int lock_cnt;
+} mohq_lock;
 
 /**********
 * function declarations
 **********/
 
-int mohq_lock_change (mohq_lock *, int);
-void mohq_lock_destroy (mohq_lock *);
-int mohq_lock_init (mohq_lock *);
-void mohq_lock_release (mohq_lock *);
-int mohq_lock_set (mohq_lock *, int, int);
+int mohq_lock_change(mohq_lock *, int);
+void mohq_lock_destroy(mohq_lock *);
+int mohq_lock_init(mohq_lock *);
+void mohq_lock_release(mohq_lock *);
+int mohq_lock_set(mohq_lock *, int, int);
 
 #endif /* MOHQ_LOCKS_H */
