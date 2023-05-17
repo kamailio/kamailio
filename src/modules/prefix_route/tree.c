@@ -37,29 +37,32 @@
 #include "tree.h"
 
 
-enum {
+enum
+{
 	DIGITS = 10
 };
 
 
 /** Defines a route item in the prefix tree */
-struct tree_item {
-	struct tree_item *digits[DIGITS];  /**< Child items for each digit */
-	char name[16];                     /**< Route name (for dump)      */
-	int route;                         /**< Valid route number if >0   */
+struct tree_item
+{
+	struct tree_item *digits[DIGITS]; /**< Child items for each digit */
+	char name[16];					  /**< Route name (for dump)      */
+	int route;						  /**< Valid route number if >0   */
 };
 
 
 /** Defines a locked prefix tree */
-struct tree {
-	struct tree_item *root;  /**< Root item of tree    */
-	atomic_t refcnt;         /**< Reference counting   */
+struct tree
+{
+	struct tree_item *root; /**< Root item of tree    */
+	atomic_t refcnt;		/**< Reference counting   */
 };
 
 
 /* Local variables */
 static struct tree **shared_tree = NULL;
-static gen_lock_t* shared_tree_lock;
+static gen_lock_t *shared_tree_lock;
 
 
 /**
@@ -71,12 +74,12 @@ struct tree_item *tree_item_alloc(void)
 	int i;
 
 	root = (struct tree_item *)shm_malloc(sizeof(*root));
-	if (NULL == root) {
+	if(NULL == root) {
 		SHM_MEM_CRITICAL;
 		return NULL;
 	}
 
-	for (i=0; i<DIGITS; i++)
+	for(i = 0; i < DIGITS; i++)
 		root->digits[i] = NULL;
 
 	root->route = 0;
@@ -92,10 +95,10 @@ void tree_item_free(struct tree_item *item)
 {
 	int i;
 
-	if (NULL == item)
+	if(NULL == item)
 		return;
 
-	for (i=0; i<DIGITS; i++) {
+	for(i = 0; i < DIGITS; i++) {
 		tree_item_free(item->digits[i]);
 	}
 
@@ -106,29 +109,29 @@ void tree_item_free(struct tree_item *item)
 /**
  * Add a route prefix rule to the tree
  */
-int tree_item_add(struct tree_item *root, const char *prefix,
-			const char *route, int route_ix)
+int tree_item_add(struct tree_item *root, const char *prefix, const char *route,
+		int route_ix)
 {
 	struct tree_item *item;
 	const char *p;
 	int err;
 
-	if (NULL == root || NULL == prefix || route_ix <= 0)
+	if(NULL == root || NULL == prefix || route_ix <= 0)
 		return -1;
 
 	item = root;
-	for (p = prefix; '\0' != *p; p++) {
+	for(p = prefix; '\0' != *p; p++) {
 		int digit;
 
-		if (!isdigit(*p))
+		if(!isdigit(*p))
 			continue;
 
 		digit = *p - '0';
 
 		/* exist? */
-		if (!item->digits[digit]) {
+		if(!item->digits[digit]) {
 			item->digits[digit] = tree_item_alloc();
-			if (!item->digits[digit]) {
+			if(!item->digits[digit]) {
 				LM_CRIT("alloc failed\n");
 				err = -1;
 				goto out;
@@ -138,13 +141,13 @@ int tree_item_add(struct tree_item *root, const char *prefix,
 		item = item->digits[digit];
 	}
 
-	if (NULL == item) {
+	if(NULL == item) {
 		LM_CRIT("internal error (no item)\n");
 		err = -1;
 		goto out;
 	}
 
-	if (item->route > 0) {
+	if(item->route > 0) {
 		LM_ERR("prefix %s already set to %s\n", prefix, item->name);
 	}
 
@@ -152,8 +155,8 @@ int tree_item_add(struct tree_item *root, const char *prefix,
 	item->route = route_ix;
 
 	/* Copy the route name (used in tree dump) */
-	strncpy(item->name, route, sizeof(item->name)-1);
-	item->name[sizeof(item->name)-1] = '\0';
+	strncpy(item->name, route, sizeof(item->name) - 1);
+	item->name[sizeof(item->name) - 1] = '\0';
 
 	err = 0;
 
@@ -171,27 +174,27 @@ int tree_item_get(const struct tree_item *root, const str *user)
 	const char *p, *pmax;
 	int route = 0;
 
-	if (NULL == root || NULL == user || NULL == user->s || !user->len)
+	if(NULL == root || NULL == user || NULL == user->s || !user->len)
 		return -1;
 
 	pmax = user->s + user->len;
 	item = root;
-	for (p = user->s; p < pmax ; p++) {
+	for(p = user->s; p < pmax; p++) {
 		int digit;
 
-		if (!isdigit(*p)) {
+		if(!isdigit(*p)) {
 			continue;
 		}
 
 		digit = *p - '0';
 
 		/* Update route with best match so far */
-		if (item->route > 0) {
+		if(item->route > 0) {
 			route = item->route;
 		}
 
 		/* exist? */
-		if (NULL == item->digits[digit]) {
+		if(NULL == item->digits[digit]) {
 			break;
 		}
 
@@ -209,26 +212,26 @@ void tree_item_print(const struct tree_item *item, FILE *f, int level)
 {
 	int i;
 
-	if (NULL == item || NULL == f)
+	if(NULL == item || NULL == f)
 		return;
 
-	if (item->route > 0) {
+	if(item->route > 0) {
 		fprintf(f, " \t--> route[%s] ", item->name);
 	}
 
-	for (i=0; i<DIGITS; i++) {
+	for(i = 0; i < DIGITS; i++) {
 		int j;
 
-		if (!item->digits[i]) {
+		if(!item->digits[i]) {
 			continue;
 		}
 
 		fputc('\n', f);
-		for (j=0; j<level; j++)
+		for(j = 0; j < level; j++)
 			fputc(' ', f);
 
 		fprintf(f, "%d ", i);
-		tree_item_print(item->digits[i], f, level+1);
+		tree_item_print(item->digits[i], f, level + 1);
 	}
 }
 
@@ -241,12 +244,12 @@ static struct tree *tree_alloc(void)
 	struct tree *tree;
 
 	tree = (struct tree *)shm_malloc(sizeof(*tree));
-	if (NULL == tree) {
+	if(NULL == tree) {
 		SHM_MEM_CRITICAL;
 		return NULL;
 	}
 
-	tree->root    = NULL;
+	tree->root = NULL;
 	atomic_set(&tree->refcnt, 0);
 
 	return tree;
@@ -258,14 +261,14 @@ static struct tree *tree_alloc(void)
  */
 static void tree_flush(struct tree *tree)
 {
-	if (NULL == tree)
+	if(NULL == tree)
 		return;
 
 	/* Wait for old tree to be released */
-	for (;;) {
+	for(;;) {
 		const int refcnt = atomic_get(&tree->refcnt);
 
-		if (refcnt <= 0)
+		if(refcnt <= 0)
 			break;
 
 		LM_NOTICE("waiting refcnt=%d\n", refcnt);
@@ -309,7 +312,7 @@ static struct tree *tree_ref(void)
 
 struct tree *tree_deref(struct tree *tree)
 {
-	if (tree)
+	if(tree)
 		atomic_dec(&tree->refcnt);
 	return tree;
 }
@@ -319,18 +322,18 @@ int tree_init(void)
 {
 	/* Initialize lock */
 	shared_tree_lock = lock_alloc();
-	if (NULL == shared_tree_lock) {
+	if(NULL == shared_tree_lock) {
 		return -1;
 	}
 	lock_init(shared_tree_lock);
 
 	/* Pointer to global tree must be in shared memory */
 	shared_tree = (struct tree **)shm_malloc(sizeof(*shared_tree));
-	if (NULL == shared_tree) {
+	if(NULL == shared_tree) {
 		SHM_MEM_ERROR;
 		lock_destroy(shared_tree_lock);
 		lock_dealloc(shared_tree_lock);
-		shared_tree_lock=0;
+		shared_tree_lock = 0;
 		return -1;
 	}
 
@@ -342,13 +345,13 @@ int tree_init(void)
 
 void tree_close(void)
 {
-	if (shared_tree)
+	if(shared_tree)
 		tree_flush(tree_get());
 	shared_tree = NULL;
-	if (shared_tree_lock) {
+	if(shared_tree_lock) {
 		lock_destroy(shared_tree_lock);
 		lock_dealloc(shared_tree_lock);
-		shared_tree_lock=0;
+		shared_tree_lock = 0;
 	}
 }
 
@@ -358,7 +361,7 @@ int tree_swap(struct tree_item *root)
 	struct tree *new_tree, *old_tree;
 
 	new_tree = tree_alloc();
-	if (NULL == new_tree)
+	if(NULL == new_tree)
 		return -1;
 
 	new_tree->root = root;
@@ -385,7 +388,7 @@ int tree_route_get(const str *user)
 
 	/* Find match in tree */
 	tree = tree_ref();
-	if (NULL == tree) {
+	if(NULL == tree) {
 		return -1;
 	}
 
@@ -404,12 +407,10 @@ void tree_print(FILE *f)
 
 	fprintf(f, "Prefix route tree:\n");
 
-	if (tree) {
-		fprintf(f, " reference count: %d\n",
-			atomic_get(&tree->refcnt));
+	if(tree) {
+		fprintf(f, " reference count: %d\n", atomic_get(&tree->refcnt));
 		tree_item_print(tree->root, f, 0);
-	}
-	else {
+	} else {
 		fprintf(f, " (no tree)\n");
 	}
 
