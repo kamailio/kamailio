@@ -42,7 +42,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  * 
  */
- 
+
 #include "../../core/ip_addr.h"
 #include "../../core/dprint.h"
 
@@ -52,125 +52,126 @@
 #include "pcontact.h"
 #include "utime.h"
 
-static const char* ul_rpc_dump_doc[2] = {
-	"Dump PCSCF contacts and associated identitites",
-	0
-};
+static const char *ul_rpc_dump_doc[2] = {
+		"Dump PCSCF contacts and associated identitites", 0};
 
-static void ul_rpc_dump(rpc_t* rpc, void* ctx) {
-	dlist_t* dl;
-	udomain_t* dom;
+static void ul_rpc_dump(rpc_t *rpc, void *ctx)
+{
+	dlist_t *dl;
+	udomain_t *dom;
 	time_t t;
-	void* th;
-	void* ah;
-	void* sh;
+	void *th;
+	void *ah;
+	void *sh;
 	int max, n, i;
 
-        pcontact_t* c;
+	pcontact_t *c;
 
 	t = time(0);
-	for (dl = root; dl; dl = dl->next) {
+	for(dl = root; dl; dl = dl->next) {
 		dom = dl->d;
-		if (rpc->add(ctx, "{", &th) < 0) {
+		if(rpc->add(ctx, "{", &th) < 0) {
 			rpc->fault(ctx, 500, "Internal error creating top rpc");
 			return;
 		}
-		if (rpc->struct_add(th, "Sd{", "Domain", &dl->name, "Size",
-				(int) dom->size, "AoRs", &ah) < 0) {
+		if(rpc->struct_add(th, "Sd{", "Domain", &dl->name, "Size",
+				   (int)dom->size, "AoRs", &ah)
+				< 0) {
 			rpc->fault(ctx, 500, "Internal error creating inner struct");
 			return;
 		}
 
-		for (i = 0, n = 0, max = 0; i < dom->size; i++) {
+		for(i = 0, n = 0, max = 0; i < dom->size; i++) {
 			lock_ulslot(dom, i);
 			n += dom->table[i].n;
-			if (max < dom->table[i].n)
+			if(max < dom->table[i].n)
 				max = dom->table[i].n;
-			for (c = dom->table[i].first; c; c = c->next) {
-				if (rpc->struct_add(ah, "S", "AoR", &c->aor) < 0) {
+			for(c = dom->table[i].first; c; c = c->next) {
+				if(rpc->struct_add(ah, "S", "AoR", &c->aor) < 0) {
 					unlock_ulslot(dom, i);
 					rpc->fault(ctx, 500, "Internal error creating aor struct");
 					return;
 				}
-				if (rpc->struct_add(ah, "s", "State", reg_state_to_string(c->reg_state)) < 0) {
+				if(rpc->struct_add(
+						   ah, "s", "State", reg_state_to_string(c->reg_state))
+						< 0) {
 					unlock_ulslot(dom, i);
-					rpc->fault(ctx, 500, "Internal error creating reg state struct");
+					rpc->fault(ctx, 500,
+							"Internal error creating reg state struct");
 					return;
 				}
-				if (c->expires == 0) {
-					if (rpc->struct_add(ah, "s", "Expires", "permanent") < 0) {
+				if(c->expires == 0) {
+					if(rpc->struct_add(ah, "s", "Expires", "permanent") < 0) {
 						unlock_ulslot(dom, i);
 						rpc->fault(ctx, 500, "Internal error adding expire");
 						return;
 					}
-				} else if (c->expires == -1/*UL_EXPIRED_TIME*/) {
-					if (rpc->struct_add(ah, "s", "Expires", "deleted") < 0) {
+				} else if(c->expires == -1 /*UL_EXPIRED_TIME*/) {
+					if(rpc->struct_add(ah, "s", "Expires", "deleted") < 0) {
 						unlock_ulslot(dom, i);
 						rpc->fault(ctx, 500, "Internal error adding expire");
 						return;
 					}
-				} else if (t > c->expires) {
-					if (rpc->struct_add(ah, "s", "Expires", "expired") < 0) {
+				} else if(t > c->expires) {
+					if(rpc->struct_add(ah, "s", "Expires", "expired") < 0) {
 						unlock_ulslot(dom, i);
 						rpc->fault(ctx, 500, "Internal error adding expire");
 						return;
 					}
 				} else {
-					if (rpc->struct_add(ah, "d", "Expires", (int) (c->expires - t)) < 0) {
+					if(rpc->struct_add(
+							   ah, "d", "Expires", (int)(c->expires - t))
+							< 0) {
 						unlock_ulslot(dom, i);
 						rpc->fault(ctx, 500, "Internal error adding expire");
 						return;
 					}
 				}
 
-				if (rpc->struct_add(ah, "S", "Path", &c->path) < 0) {
+				if(rpc->struct_add(ah, "S", "Path", &c->path) < 0) {
 					unlock_ulslot(dom, i);
 					rpc->fault(ctx, 500, "Internal error creating path struct");
 					return;
 				}
 
-		//		if (rpc->struct_add(ah, "{", "Service Routes", &sr) < 0) {
-		//			unlock_ulslot(dom, i);
-		//			rpc->fault(ctx, 500, "Internal error creating Service Routes");
-		//			return;
-		//		}
+				//		if (rpc->struct_add(ah, "{", "Service Routes", &sr) < 0) {
+				//			unlock_ulslot(dom, i);
+				//			rpc->fault(ctx, 500, "Internal error creating Service Routes");
+				//			return;
+				//		}
 
-          //				for (j = 0; j < c->num_service_routes; j++) {
-	//				if (rpc->struct_add(sr, "S", "Route", &c->service_routes[j]) < 0) {
-	//					unlock_ulslot(dom, i);
-	//					rpc->fault(ctx, 500, "Internal error creating Service Route struct");
-	//					return;
-	//				}
-		//		}
+				//				for (j = 0; j < c->num_service_routes; j++) {
+				//				if (rpc->struct_add(sr, "S", "Route", &c->service_routes[j]) < 0) {
+				//					unlock_ulslot(dom, i);
+				//					rpc->fault(ctx, 500, "Internal error creating Service Route struct");
+				//					return;
+				//				}
+				//		}
 
-	//			if (rpc->struct_add(ah, "{", "Public Identities", &ih) < 0) {
-	//				unlock_ulslot(dom, i);
-	//				rpc->fault(ctx, 500, "Internal error creating IMPU struct");
-	//				return;
-	//			}
+				//			if (rpc->struct_add(ah, "{", "Public Identities", &ih) < 0) {
+				//				unlock_ulslot(dom, i);
+				//				rpc->fault(ctx, 500, "Internal error creating IMPU struct");
+				//				return;
+				//			}
 
-	//			for (p = c->head; p; p = p->next) {
-	//				if (rpc->struct_add(ih, "S", "IMPU", &p->public_identity) < 0) {
-	//					unlock_ulslot(dom, i);
-	//					rpc->fault(ctx, 500, "Internal error creating IMPU struct");
-	//					return;
-	//				}
-	//			}
+				//			for (p = c->head; p; p = p->next) {
+				//				if (rpc->struct_add(ih, "S", "IMPU", &p->public_identity) < 0) {
+				//					unlock_ulslot(dom, i);
+				//					rpc->fault(ctx, 500, "Internal error creating IMPU struct");
+				//					return;
+				//				}
+				//			}
 			}
 			unlock_ulslot(dom, i);
 		}
-		if (rpc->struct_add(ah, "{", "Stats", &sh) > 0) {
+		if(rpc->struct_add(ah, "{", "Stats", &sh) > 0) {
 			rpc->fault(ctx, 500, "Internal error creating stats");
 		}
-		if (rpc->struct_add(sh, "dd", "Records", n, "Max-Slots", max) < 0) {
+		if(rpc->struct_add(sh, "dd", "Records", n, "Max-Slots", max) < 0) {
 			rpc->fault(ctx, 500, "Internal error creating stats struct");
 		}
 	}
 }
 
 rpc_export_t ul_rpc[] = {
-	{"ulpcscf.status",   ul_rpc_dump,   ul_rpc_dump_doc,   0},
-	{0, 0, 0, 0}
-};
-
-
+		{"ulpcscf.status", ul_rpc_dump, ul_rpc_dump_doc, 0}, {0, 0, 0, 0}};
