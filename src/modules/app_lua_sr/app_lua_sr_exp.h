@@ -29,4 +29,3 @@ int lua_sr_exp_init_mod(void);
 void lua_sr_exp_openlibs(lua_State *L);
 
 #endif
-
