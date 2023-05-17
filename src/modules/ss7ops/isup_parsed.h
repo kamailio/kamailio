@@ -30,11 +30,13 @@
 /**
  * State structure
  */
-struct isup_state {
-	srjson_doc_t*	json;
+struct isup_state
+{
+	srjson_doc_t *json;
 };
 
-enum {
+enum
+{
 	ISUP_JSON_STRING,
 	ISUP_FIELD_METHOD,
 	ISUP_FIELD_OPC,
