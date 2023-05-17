@@ -25,7 +25,7 @@
  */
 
 #ifndef _PERLVDB_H
-#define _PERLVDB_H 
+#define _PERLVDB_H
 
 
 #include "../../lib/srdb1/db.h"
@@ -36,7 +36,7 @@
 
 /* lock_ops.h defines union semun, perl does not need to redefine it */
 #ifdef USE_SYSV_SEM
-# define HAS_UNION_SEMUN
+#define HAS_UNION_SEMUN
 #endif
 
 #undef OP_LT
@@ -52,23 +52,23 @@
 #include "perlvdb_oohelpers.h"
 #include "perlvdbfunc.h"
 
-#define PERL_VDB_BASECLASS	"Kamailio::VDB"
+#define PERL_VDB_BASECLASS "Kamailio::VDB"
 
-#define PERL_VDB_USETABLEMETHOD	"use_table"
-#define PERL_VDB_INSERTMETHOD	"_insert"
-#define PERL_VDB_REPLACEMETHOD	"_replace"
-#define PERL_VDB_UPDATEMETHOD	"_update"
-#define PERL_VDB_DELETEMETHOD	"_delete"
-#define PERL_VDB_QUERYMETHOD	"_query"
+#define PERL_VDB_USETABLEMETHOD "use_table"
+#define PERL_VDB_INSERTMETHOD "_insert"
+#define PERL_VDB_REPLACEMETHOD "_replace"
+#define PERL_VDB_UPDATEMETHOD "_update"
+#define PERL_VDB_DELETEMETHOD "_delete"
+#define PERL_VDB_QUERYMETHOD "_query"
 
-#define PERL_VDB_COLDEFSMETHOD	"coldefs"
-#define PERL_VDB_TYPEMETHOD	"type"
-#define PERL_VDB_NAMEMETHOD	"name"
-#define PERL_VDB_ROWSMETHOD	"rows"
-#define PERL_VDB_DATAMETHOD	"data"
+#define PERL_VDB_COLDEFSMETHOD "coldefs"
+#define PERL_VDB_TYPEMETHOD "type"
+#define PERL_VDB_NAMEMETHOD "name"
+#define PERL_VDB_ROWSMETHOD "rows"
+#define PERL_VDB_DATAMETHOD "data"
 
-extern PerlInterpreter* my_perl;
+extern PerlInterpreter *my_perl;
 
-extern SV* vdbmod;
+extern SV *vdbmod;
 
 #endif /* _PERLVDB_H */

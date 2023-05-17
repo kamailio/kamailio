@@ -37,11 +37,12 @@
  * including decreasing ref cnt
  */
 
-long IV2int(SV *in) {
+long IV2int(SV *in)
+{
 	int ret = -1;
 
-	if (SvOK(in)) {
-		if (SvIOK(in)) {
+	if(SvOK(in)) {
+		if(SvIOK(in)) {
 			ret = SvIV(in);
 		}
 		SvREFCNT_dec(in);
@@ -53,31 +54,34 @@ long IV2int(SV *in) {
 /*
  * Returns the class part of the URI
  */
-char *parseurl(const str* url) {
+char *parseurl(const str *url)
+{
 	char *cn;
 
 	cn = strchr(url->s, ':') + 1;
-	if (strlen(cn) > 0)
+	if(strlen(cn) > 0)
 		return cn;
 	else
 		return NULL;
 }
 
 
-SV *newvdbobj(const char* cn) {
-	SV* obj;
+SV *newvdbobj(const char *cn)
+{
+	SV *obj;
 	SV *class;
 
 	class = newSVpv(cn, 0);
 
-	obj = perlvdb_perlmethod(class, PERL_CONSTRUCTOR_NAME,
-			NULL, NULL, NULL, NULL);
+	obj = perlvdb_perlmethod(
+			class, PERL_CONSTRUCTOR_NAME, NULL, NULL, NULL, NULL);
 
 	return obj;
 }
 
-SV *getobj(const db1_con_t *con) {
-	return ((SV*)CON_TAIL(con));
+SV *getobj(const db1_con_t *con)
+{
+	return ((SV *)CON_TAIL(con));
 }
 
 /*
@@ -87,11 +91,12 @@ SV *getobj(const db1_con_t *con) {
  * - an object
  * - derived from Kamailio::VDB
  */
-int checkobj(SV* obj) {
-	if (obj != NULL) {
-		if (obj != &PL_sv_undef) {
-			if (sv_isobject(obj)) {
-				if (sv_derived_from(obj, PERL_VDB_BASECLASS)) {
+int checkobj(SV *obj)
+{
+	if(obj != NULL) {
+		if(obj != &PL_sv_undef) {
+			if(sv_isobject(obj)) {
+				if(sv_derived_from(obj, PERL_VDB_BASECLASS)) {
 					return 1;
 				}
 			}
@@ -105,34 +110,35 @@ int checkobj(SV* obj) {
  * Initialize database module
  * No function should be called before this
  */
-db1_con_t* perlvdb_db_init(const str* url) {
-	db1_con_t* res;
+db1_con_t *perlvdb_db_init(const str *url)
+{
+	db1_con_t *res;
 
 	char *cn;
 	SV *obj = NULL;
-	
+
 	int consize = sizeof(db1_con_t) + sizeof(SV);
-	
-	if (!url) {
+
+	if(!url) {
 		LM_ERR("invalid parameter value\n");
 		return NULL;
 	}
 
 	cn = parseurl(url);
-	if (!cn) {
+	if(!cn) {
 		LM_ERR("invalid perl vdb url.\n");
 		return NULL;
 	}
 
 	obj = newvdbobj(cn);
-	if (!checkobj(obj)) {
+	if(!checkobj(obj)) {
 		LM_ERR("could not initialize module. Not inheriting from %s?\n",
 				PERL_VDB_BASECLASS);
 		return NULL;
 	}
 
 	res = pkg_malloc(consize);
-	if (!res) {
+	if(!res) {
 		LM_ERR("no pkg memory left\n");
 		return NULL;
 	}
@@ -147,10 +153,11 @@ db1_con_t* perlvdb_db_init(const str* url) {
  * Store name of table that will be used by
  * subsequent database functions
  */
-int perlvdb_use_table(db1_con_t* h, const str* t) {
+int perlvdb_use_table(db1_con_t *h, const str *t)
+{
 	SV *ret;
-	
-	if (!h || !t || !t->s) {
+
+	if(!h || !t || !t->s) {
 		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
@@ -162,8 +169,9 @@ int perlvdb_use_table(db1_con_t* h, const str* t) {
 }
 
 
-void perlvdb_db_close(db1_con_t* h) {
-	if (!h) {
+void perlvdb_db_close(db1_con_t *h)
+{
+	if(!h) {
 		LM_ERR("invalid parameter value\n");
 		return;
 	}
@@ -179,31 +187,35 @@ void perlvdb_db_close(db1_con_t* h) {
  * v: values of the keys
  * n: number of key=value pairs
  */
-int perlvdb_db_insertreplace(const db1_con_t* h, const db_key_t* k, const db_val_t* v,
-		const int n, char *insertreplace) {
+int perlvdb_db_insertreplace(const db1_con_t *h, const db_key_t *k,
+		const db_val_t *v, const int n, char *insertreplace)
+{
 	AV *arr;
 	SV *arrref;
 	SV *ret;
 
 	arr = pairs2perlarray(k, v, n);
-	arrref = newRV_noinc((SV*)arr);
-	ret = perlvdb_perlmethod(getobj(h), insertreplace,
-			arrref, NULL, NULL, NULL);
+	arrref = newRV_noinc((SV *)arr);
+	ret = perlvdb_perlmethod(
+			getobj(h), insertreplace, arrref, NULL, NULL, NULL);
 
 	av_undef(arr);
 
 	return IV2int(ret);
 }
 
-int perlvdb_db_insert(const db1_con_t* h, const db_key_t* k, const db_val_t* v, const int n) {
+int perlvdb_db_insert(
+		const db1_con_t *h, const db_key_t *k, const db_val_t *v, const int n)
+{
 	return perlvdb_db_insertreplace(h, k, v, n, PERL_VDB_INSERTMETHOD);
 }
 
 /*
  * Just like insert, but replace the row if it exists
  */
-int perlvdb_db_replace(const db1_con_t* h, const db_key_t* k, const db_val_t* v,
-		const int n, const int un, const int m) {
+int perlvdb_db_replace(const db1_con_t *h, const db_key_t *k, const db_val_t *v,
+		const int n, const int un, const int m)
+{
 	return perlvdb_db_insertreplace(h, k, v, n, PERL_VDB_REPLACEMETHOD);
 }
 
@@ -215,16 +227,17 @@ int perlvdb_db_replace(const db1_con_t* h, const db_key_t* k, const db_val_t* v,
  * v: values of the keys that must match
  * n: number of key=value pairs
  */
-int perlvdb_db_delete(const db1_con_t* h, const db_key_t* k, const db_op_t* o,
-		const db_val_t* v, const int n) {
+int perlvdb_db_delete(const db1_con_t *h, const db_key_t *k, const db_op_t *o,
+		const db_val_t *v, const int n)
+{
 	AV *arr;
 	SV *arrref;
 	SV *ret;
 
 	arr = conds2perlarray(k, o, v, n);
-	arrref = newRV_noinc((SV*)arr);
-	ret = perlvdb_perlmethod(getobj(h), PERL_VDB_DELETEMETHOD,
-			arrref, NULL, NULL, NULL);
+	arrref = newRV_noinc((SV *)arr);
+	ret = perlvdb_perlmethod(
+			getobj(h), PERL_VDB_DELETEMETHOD, arrref, NULL, NULL, NULL);
 
 	av_undef(arr);
 
@@ -243,9 +256,10 @@ int perlvdb_db_delete(const db1_con_t* h, const db_key_t* k, const db_op_t* o,
  * _n: number of key=value pairs
  * _un: number of columns to update
  */
-int perlvdb_db_update(const db1_con_t* h, const db_key_t* k, const db_op_t* o,
-		const db_val_t* v, const db_key_t* uk, const db_val_t* uv,
-		const int n, const int un) {
+int perlvdb_db_update(const db1_con_t *h, const db_key_t *k, const db_op_t *o,
+		const db_val_t *v, const db_key_t *uk, const db_val_t *uv, const int n,
+		const int un)
+{
 
 	AV *condarr;
 	AV *updatearr;
@@ -258,11 +272,11 @@ int perlvdb_db_update(const db1_con_t* h, const db_key_t* k, const db_op_t* o,
 	condarr = conds2perlarray(k, o, v, n);
 	updatearr = pairs2perlarray(uk, uv, un);
 
-	condarrref = newRV_noinc((SV*)condarr);
-	updatearrref = newRV_noinc((SV*)updatearr);
-	
-	ret = perlvdb_perlmethod(getobj(h), PERL_VDB_UPDATEMETHOD,
-			condarrref, updatearrref, NULL, NULL);
+	condarrref = newRV_noinc((SV *)condarr);
+	updatearrref = newRV_noinc((SV *)updatearr);
+
+	ret = perlvdb_perlmethod(getobj(h), PERL_VDB_UPDATEMETHOD, condarrref,
+			updatearrref, NULL, NULL);
 
 	av_undef(condarr);
 	av_undef(updatearr);
@@ -282,9 +296,10 @@ int perlvdb_db_update(const db1_con_t* h, const db_key_t* k, const db_op_t* o,
  * nc: number of columns to return
  * o: order by the specified column
  */
-int perlvdb_db_query(const db1_con_t* h, const db_key_t* k, const db_op_t* op,
-		const db_val_t* v, const db_key_t* c, const int n, const int nc,
-		const db_key_t o, db1_res_t** r) {
+int perlvdb_db_query(const db1_con_t *h, const db_key_t *k, const db_op_t *op,
+		const db_val_t *v, const db_key_t *c, const int n, const int nc,
+		const db_key_t o, db1_res_t **r)
+{
 
 
 	AV *condarr;
@@ -302,29 +317,31 @@ int perlvdb_db_query(const db1_con_t* h, const db_key_t* k, const db_op_t* op,
 	condarr = conds2perlarray(k, op, v, n);
 	retkeysarr = keys2perlarray(c, nc);
 
-	if (o) order = newSVpv(o->s, o->len);
-	else order = &PL_sv_undef;
+	if(o)
+		order = newSVpv(o->s, o->len);
+	else
+		order = &PL_sv_undef;
 
 
-	condarrref = newRV_noinc((SV*)condarr);
-	retkeysref = newRV_noinc((SV*)retkeysarr);
+	condarrref = newRV_noinc((SV *)condarr);
+	retkeysref = newRV_noinc((SV *)retkeysarr);
 
 	/* Call perl method */
-	resultset = perlvdb_perlmethod(getobj(h), PERL_VDB_QUERYMETHOD,
-			condarrref, retkeysref, order, NULL);
+	resultset = perlvdb_perlmethod(getobj(h), PERL_VDB_QUERYMETHOD, condarrref,
+			retkeysref, order, NULL);
 
 	av_undef(condarr);
 	av_undef(retkeysarr);
 
 	/* Transform perl result set to Kamailio result set */
-	if (!resultset) {
+	if(!resultset) {
 		/* No results. */
 		LM_ERR("no perl result set.\n");
 		retval = -1;
 	} else {
-		if (sv_isa(resultset, "Kamailio::VDB::Result")) {
+		if(sv_isa(resultset, "Kamailio::VDB::Result")) {
 			retval = perlresult2dbres(resultset, r);
-		/* Nested refs are decreased/deleted inside the routine */
+			/* Nested refs are decreased/deleted inside the routine */
 			SvREFCNT_dec(resultset);
 		} else {
 			LM_ERR("invalid result set retrieved from perl call.\n");
@@ -339,20 +356,21 @@ int perlvdb_db_query(const db1_con_t* h, const db_key_t* k, const db_op_t* op,
 /*
  * Release a result set from memory
  */
-int perlvdb_db_free_result(db1_con_t* _h, db1_res_t* _r) {
+int perlvdb_db_free_result(db1_con_t *_h, db1_res_t *_r)
+{
 	int i;
 
-	if (_r) {
-		for (i = 0; i < _r->n; i++) {
-			if (_r->rows[i].values)
+	if(_r) {
+		for(i = 0; i < _r->n; i++) {
+			if(_r->rows[i].values)
 				pkg_free(_r->rows[i].values);
 		}
 
-		if (_r->col.types)
+		if(_r->col.types)
 			pkg_free(_r->col.types);
-		if (_r->col.names)
+		if(_r->col.names)
 			pkg_free(_r->col.names);
-		if (_r->rows)
+		if(_r->rows)
 			pkg_free(_r->rows);
 		pkg_free(_r);
 	}

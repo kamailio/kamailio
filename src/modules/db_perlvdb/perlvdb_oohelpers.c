@@ -28,21 +28,18 @@
 
 #include "../../core/mem/mem.h"
 
-SV *perlvdb_perlmethod(SV *class,
-		       const char* method,
-		       SV *param1,
-		       SV *param2,
-		       SV *param3,
-		       SV *param4) {
-	
+SV *perlvdb_perlmethod(SV *class, const char *method, SV *param1, SV *param2,
+		SV *param3, SV *param4)
+{
+
 	I32 res;
 	SV *retval = NULL;
-	
+
 	dSP;
-	
-	               ENTER;
-		                      SAVETMPS;
-				      
+
+	ENTER;
+	SAVETMPS;
+
 	PUSHMARK(SP);
 
 	/* passed stack:
@@ -50,19 +47,19 @@ SV *perlvdb_perlmethod(SV *class,
 	 */
 	XPUSHs(class);
 
-	if (param1) {
+	if(param1) {
 		XPUSHs(param1);
 	}
 
-	if (param2) {
+	if(param2) {
 		XPUSHs(param2);
 	}
 
-	if (param3) {
+	if(param3) {
 		XPUSHs(param3);
 	}
 
-	if (param4) {
+	if(param4) {
 		XPUSHs(param4);
 	}
 
@@ -72,14 +69,14 @@ SV *perlvdb_perlmethod(SV *class,
 
 	SPAGAIN;
 
-	if (res == 0) {
+	if(res == 0) {
 		retval = &PL_sv_undef;
-	} else if (res == 1) {
+	} else if(res == 1) {
 		retval = POPs;
 	} else {
 		/* More than one result in Scalar context??? */
 		LM_CRIT("got more than one result from scalar method!");
-		while (res--) { /* Try to clean stack. This
+		while(res--) { /* Try to clean stack. This
 				   should never happen anyway.*/
 			retval = POPs;
 		}
@@ -87,12 +84,11 @@ SV *perlvdb_perlmethod(SV *class,
 
 	SPAGAIN;
 
-//	if (sv_isobject(retval))
-		SvREFCNT_inc(retval);
+	//	if (sv_isobject(retval))
+	SvREFCNT_inc(retval);
 
 	FREETMPS;
 	LEAVE;
 
 	return retval;
 }
-
