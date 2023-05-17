@@ -43,30 +43,36 @@
 
 #ifndef CDP_AVP_REFERENCE
 
-	#include "../cdp/cdp_load.h"
+#include "../cdp/cdp_load.h"
 
-	int cdp_avp_add_new_to_list(AAA_AVP_LIST *list,int avp_code,int avp_flags,int avp_vendorid,str data,AVPDataStatus data_do);
-	typedef int (*cdp_avp_add_new_to_list_f)(AAA_AVP_LIST *list,int avp_code,int avp_flags,int avp_vendorid,str data,AVPDataStatus data_do);
+int cdp_avp_add_new_to_list(AAA_AVP_LIST *list, int avp_code, int avp_flags,
+		int avp_vendorid, str data, AVPDataStatus data_do);
+typedef int (*cdp_avp_add_new_to_list_f)(AAA_AVP_LIST *list, int avp_code,
+		int avp_flags, int avp_vendorid, str data, AVPDataStatus data_do);
 
-	int cdp_avp_add_new_to_msg(AAAMessage *msg,int avp_code,int avp_flags,int avp_vendorid,str data,AVPDataStatus data_do);
-	typedef int (*cdp_avp_add_new_to_msg_f)(AAAMessage *msg,int avp_code,int avp_flags,int avp_vendorid,str data,AVPDataStatus data_do);
+int cdp_avp_add_new_to_msg(AAAMessage *msg, int avp_code, int avp_flags,
+		int avp_vendorid, str data, AVPDataStatus data_do);
+typedef int (*cdp_avp_add_new_to_msg_f)(AAAMessage *msg, int avp_code,
+		int avp_flags, int avp_vendorid, str data, AVPDataStatus data_do);
 
-	int cdp_avp_add_to_list(AAA_AVP_LIST *list,AAA_AVP *avp);
-	typedef int (*cdp_avp_add_to_list_f)(AAA_AVP_LIST *list,AAA_AVP *avp);
+int cdp_avp_add_to_list(AAA_AVP_LIST *list, AAA_AVP *avp);
+typedef int (*cdp_avp_add_to_list_f)(AAA_AVP_LIST *list, AAA_AVP *avp);
 
-	int cdp_avp_add_to_msg(AAAMessage *msg,AAA_AVP *avp);
-	typedef int (*cdp_avp_add_to_msg_f)(AAAMessage *msg,AAA_AVP *avp);
+int cdp_avp_add_to_msg(AAAMessage *msg, AAA_AVP *avp);
+typedef int (*cdp_avp_add_to_msg_f)(AAAMessage *msg, AAA_AVP *avp);
 
 #else
-	
-	int basic.add_new_to_list(AAA_AVP_LIST *list,int avp_code,int avp_flags,int avp_vendorid,str data,AVPDataStatus data_do);
 
-	int basic.add_new_to_msg(AAAMessage *msg,int avp_code,int avp_flags,int avp_vendorid,str data,AVPDataStatus data_do);
+int basic.add_new_to_list(AAA_AVP_LIST *list, int avp_code, int avp_flags,
+		int avp_vendorid, str data, AVPDataStatus data_do);
 
-	int basic.add_to_list(AAA_AVP_LIST *list,AAA_AVP *avp);
+int basic.add_new_to_msg(AAAMessage *msg, int avp_code, int avp_flags,
+		int avp_vendorid, str data, AVPDataStatus data_do);
 
-	int basic.add_to_msg(AAAMessage *msg,AAA_AVP *avp);
-	
+int basic.add_to_list(AAA_AVP_LIST *list, AAA_AVP *avp);
+
+int basic.add_to_msg(AAAMessage *msg, AAA_AVP *avp);
+
 #endif
 
 

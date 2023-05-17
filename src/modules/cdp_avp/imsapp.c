@@ -56,9 +56,6 @@ extern struct cdp_binds *cdp;
 
 #define CDP_AVP_DEFINITION
 
-	#include "imsapp.h"
+#include "imsapp.h"
 
 #undef CDP_AVP_DEFINITION
-
-
-

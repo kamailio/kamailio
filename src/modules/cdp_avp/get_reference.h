@@ -48,7 +48,7 @@
  * 
  *  \author Dragos Vingarzan dragos dot vingarzan -at- fokus dot fraunhofer dot de
  * 
- */ 
+ */
 
 #undef CDP_AVP_REFERENCE
 #define CDP_AVP_REFERENCE
@@ -66,4 +66,3 @@
 #include "ccapp.h"
 #include "imsapp.h"
 #include "epcapp.h"
-
