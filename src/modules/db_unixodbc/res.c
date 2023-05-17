@@ -35,12 +35,12 @@
 /*
  * Get and convert columns from a result
  */
-int db_unixodbc_get_columns(const db1_con_t* _h, db1_res_t* _r)
+int db_unixodbc_get_columns(const db1_con_t *_h, db1_res_t *_r)
 {
 	int col;
 	SQLSMALLINT cols; /* because gcc don't like RES_COL_N */
 
-	if ((!_h) || (!_r)) {
+	if((!_h) || (!_r)) {
 		LM_ERR("invalid parameter\n");
 		return -1;
 	}
@@ -48,28 +48,27 @@ int db_unixodbc_get_columns(const db1_con_t* _h, db1_res_t* _r)
 	/* Save number of columns in the result structure */
 	SQLNumResultCols(CON_RESULT(_h), &cols);
 	RES_COL_N(_r) = cols;
-	if (!RES_COL_N(_r)) {
+	if(!RES_COL_N(_r)) {
 		LM_ERR("no columns returned from the query\n");
 		return -2;
 	} else {
 		LM_DBG("%d columns returned from the query\n", RES_COL_N(_r));
 	}
 
-	if (db_allocate_columns(_r, RES_COL_N(_r)) != 0) {
+	if(db_allocate_columns(_r, RES_COL_N(_r)) != 0) {
 		LM_ERR("could not allocate columns\n");
 		return -3;
 	}
 
-	for(col = 0; col < RES_COL_N(_r); col++)
-	{
-		RES_NAMES(_r)[col] = (str*)pkg_malloc(sizeof(str));
-		if (! RES_NAMES(_r)[col]) {
+	for(col = 0; col < RES_COL_N(_r); col++) {
+		RES_NAMES(_r)[col] = (str *)pkg_malloc(sizeof(str));
+		if(!RES_NAMES(_r)[col]) {
 			LM_ERR("no private memory left\n");
 			db_free_columns(_r);
 			return -4;
 		}
 		LM_DBG("allocate %lu bytes for RES_NAMES[%d] at %p\n",
-			(unsigned long)sizeof(str),col,	RES_NAMES(_r)[col]);
+				(unsigned long)sizeof(str), col, RES_NAMES(_r)[col]);
 
 		char columnname[80];
 		SQLRETURN ret;
@@ -77,11 +76,11 @@ int db_unixodbc_get_columns(const db1_con_t* _h, db1_res_t* _r)
 		SQLULEN columnsize;
 
 		ret = SQLDescribeCol(CON_RESULT(_h), col + 1, (SQLCHAR *)columnname, 80,
-			&namelength, &datatype, &columnsize, &decimaldigits, &nullable);
+				&namelength, &datatype, &columnsize, &decimaldigits, &nullable);
 		if(!SQL_SUCCEEDED(ret)) {
 			LM_ERR("SQLDescribeCol failed: %d\n", ret);
-			db_unixodbc_extract_error("SQLExecDirect", CON_RESULT(_h), SQL_HANDLE_STMT,
-				NULL);
+			db_unixodbc_extract_error(
+					"SQLExecDirect", CON_RESULT(_h), SQL_HANDLE_STMT, NULL);
 			// FIXME should we fail here completly?
 		}
 		/* The pointer that is here returned is part of the result structure. */
@@ -91,8 +90,7 @@ int db_unixodbc_get_columns(const db1_con_t* _h, db1_res_t* _r)
 		LM_DBG("RES_NAMES(%p)[%d]=[%.*s]\n", RES_NAMES(_r)[col], col,
 				RES_NAMES(_r)[col]->len, RES_NAMES(_r)[col]->s);
 
-		switch(datatype)
-		{
+		switch(datatype) {
 			case SQL_SMALLINT:
 			case SQL_INTEGER:
 			case SQL_TINYINT:
@@ -144,8 +142,9 @@ int db_unixodbc_get_columns(const db1_con_t* _h, db1_res_t* _r)
 
 			default:
 				LM_WARN("unhandled data type column (%.*s) type id (%d), "
-						"use DB1_STRING as default\n", RES_NAMES(_r)[col]->len,
-						RES_NAMES(_r)[col]->s, datatype);
+						"use DB1_STRING as default\n",
+						RES_NAMES(_r)[col]->len, RES_NAMES(_r)[col]->s,
+						datatype);
 				RES_TYPES(_r)[col] = DB1_STRING;
 				break;
 		}
@@ -156,13 +155,13 @@ int db_unixodbc_get_columns(const db1_con_t* _h, db1_res_t* _r)
 /*
  * Convert rows from UNIXODBC to db API representation
  */
-static inline int db_unixodbc_convert_rows(const db1_con_t* _h, db1_res_t* _r)
+static inline int db_unixodbc_convert_rows(const db1_con_t *_h, db1_res_t *_r)
 {
 	int i = 0, ret = 0;
 	SQLSMALLINT columns;
-	list* rows = NULL;
-	list* rowstart = NULL;
-	strn* temp_row = NULL;
+	list *rows = NULL;
+	list *rowstart = NULL;
+	strn *temp_row = NULL;
 
 	if((!_h) || (!_r)) {
 		LM_ERR("invalid parameter\n");
@@ -171,23 +170,22 @@ static inline int db_unixodbc_convert_rows(const db1_con_t* _h, db1_res_t* _r)
 
 	SQLNumResultCols(CON_RESULT(_h), (SQLSMALLINT *)&columns);
 
-	while(SQL_SUCCEEDED(ret = SQLFetch(CON_RESULT(_h))))
-	{
+	while(SQL_SUCCEEDED(ret = SQLFetch(CON_RESULT(_h)))) {
 		temp_row = db_unixodbc_new_cellrow(columns);
-		if (!temp_row) {
+		if(!temp_row) {
 			LM_ERR("no private memory left\n");
 			return -1;
 		}
 
-		for(i=0; i < columns; i++)
-		{
-			if (!db_unixodbc_load_cell(_h, i+1, temp_row + i, RES_TYPES(_r)[i])) {
-			    db_unixodbc_free_cellrow(columns, temp_row);
-			    return -5;
+		for(i = 0; i < columns; i++) {
+			if(!db_unixodbc_load_cell(
+					   _h, i + 1, temp_row + i, RES_TYPES(_r)[i])) {
+				db_unixodbc_free_cellrow(columns, temp_row);
+				return -5;
 			}
 		}
 
-		if (db_unixodbc_list_insert(&rowstart, &rows, columns, temp_row) < 0) {
+		if(db_unixodbc_list_insert(&rowstart, &rows, columns, temp_row) < 0) {
 			LM_ERR("insert failed\n");
 			db_unixodbc_free_cellrow(columns, temp_row);
 			return -5;
@@ -200,12 +198,12 @@ static inline int db_unixodbc_convert_rows(const db1_con_t* _h, db1_res_t* _r)
 	}
 	CON_ROW(_h) = NULL;
 
-	if (!RES_ROW_N(_r)) {
+	if(!RES_ROW_N(_r)) {
 		RES_ROWS(_r) = 0;
 		return 0;
 	}
 
-	if (db_allocate_rows(_r) != 0) {
+	if(db_allocate_rows(_r) != 0) {
 		LM_ERR("could not allocate rows");
 		db_unixodbc_list_destroy(rowstart);
 		return -2;
@@ -213,18 +211,17 @@ static inline int db_unixodbc_convert_rows(const db1_con_t* _h, db1_res_t* _r)
 
 	i = 0;
 	rows = rowstart;
-	while(rows)
-	{
+	while(rows) {
 		CON_ROW(_h) = rows->data;
-		if (!CON_ROW(_h))
-		{
+		if(!CON_ROW(_h)) {
 			LM_ERR("string null\n");
 			RES_ROW_N(_r) = i;
 			db_free_rows(_r);
 			db_unixodbc_list_destroy(rowstart);
 			return -3;
 		}
-		if (db_unixodbc_convert_row(_h, _r, &(RES_ROWS(_r)[i]), rows->lengths) < 0) {
+		if(db_unixodbc_convert_row(_h, _r, &(RES_ROWS(_r)[i]), rows->lengths)
+				< 0) {
 			LM_ERR("converting row failed #%d\n", i);
 			RES_ROW_N(_r) = i;
 			db_free_rows(_r);
@@ -242,19 +239,19 @@ static inline int db_unixodbc_convert_rows(const db1_con_t* _h, db1_res_t* _r)
 /*
  * Fill the structure with data from database
  */
-int db_unixodbc_convert_result(const db1_con_t* _h, db1_res_t* _r)
+int db_unixodbc_convert_result(const db1_con_t *_h, db1_res_t *_r)
 {
-	if (!_h || !_r) {
+	if(!_h || !_r) {
 		LM_ERR("invalid parameter\n");
 		return -1;
 	}
 
-	if (db_unixodbc_get_columns(_h, _r) < 0) {
+	if(db_unixodbc_get_columns(_h, _r) < 0) {
 		LM_ERR("getting column names failed\n");
 		return -2;
 	}
 
-	if (db_unixodbc_convert_rows(_h, _r) < 0) {
+	if(db_unixodbc_convert_rows(_h, _r) < 0) {
 		LM_ERR("converting rows failed\n");
 		db_free_columns(_r);
 		return -3;
