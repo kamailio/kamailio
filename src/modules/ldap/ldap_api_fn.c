@@ -177,9 +177,10 @@ int ldap_params_search(int *_ld_result_count, char *_lds_name, char *_dn,
 			   _ld_result_count, &rc)
 			!= 0) {
 		/* try again if LDAP API ERROR */
-		if(LDAP_API_ERROR(rc) && (lds_search(_lds_name, _dn, _scope, filter_str,
-										  _attrs, NULL, _ld_result_count, &rc)
-										 != 0)) {
+		if(LDAP_API_ERROR(rc)
+				&& (lds_search(_lds_name, _dn, _scope, filter_str, _attrs, NULL,
+							_ld_result_count, &rc)
+						!= 0)) {
 			LM_ERR("[%s]: LDAP search (dn [%s], scope [%d],"
 				   " filter [%s]) failed: %s\n",
 					_lds_name, _dn, _scope, filter_str, ldap_err2string(rc));
@@ -368,7 +369,7 @@ int lds_search(char *_lds_name, char *_dn, int _scope, char *_filter,
 	LM_INFO("[%s]: LDAP search took [%d] usecs\n", _lds_name,
 			(int)((after_search.tv_sec * 1000000 + after_search.tv_usec)
 					- (before_search.tv_sec * 1000000
-							  + before_search.tv_usec)));
+							+ before_search.tv_usec)));
 #endif
 
 	if(*_ld_error != LDAP_SUCCESS) {
