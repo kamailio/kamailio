@@ -65,11 +65,11 @@ static sr_kemi_xval_t _sr_kemi_kx_xval = {0};
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_get_ruri(sip_msg_t *msg)
+static sr_kemi_xval_t *ki_kx_get_ruri(sip_msg_t *msg)
 {
 	memset(&_sr_kemi_kx_xval, 0, sizeof(sr_kemi_xval_t));
 
-	if(msg==NULL) {
+	if(msg == NULL) {
 		sr_kemi_xval_null(&_sr_kemi_kx_xval, 0);
 		return &_sr_kemi_kx_xval;
 	}
@@ -80,14 +80,15 @@ static sr_kemi_xval_t* ki_kx_get_ruri(sip_msg_t *msg)
 		return &_sr_kemi_kx_xval;
 	}
 
-	if(msg->parsed_uri_ok==0 /* R-URI not parsed*/ && parse_sip_msg_uri(msg)<0) {
+	if(msg->parsed_uri_ok == 0 /* R-URI not parsed*/
+			&& parse_sip_msg_uri(msg) < 0) {
 		LM_ERR("failed to parse the R-URI\n");
 		sr_kemi_xval_null(&_sr_kemi_kx_xval, 0);
 		return &_sr_kemi_kx_xval;
 	}
 
 	_sr_kemi_kx_xval.vtype = SR_KEMIP_STR;
-	if (msg->new_uri.s!=NULL) {
+	if(msg->new_uri.s != NULL) {
 		_sr_kemi_kx_xval.v.s = msg->new_uri;
 	} else {
 		_sr_kemi_kx_xval.v.s = msg->first_line.u.request.uri;
@@ -98,11 +99,11 @@ static sr_kemi_xval_t* ki_kx_get_ruri(sip_msg_t *msg)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_get_ouri(sip_msg_t *msg)
+static sr_kemi_xval_t *ki_kx_get_ouri(sip_msg_t *msg)
 {
 	memset(&_sr_kemi_kx_xval, 0, sizeof(sr_kemi_xval_t));
 
-	if(msg==NULL) {
+	if(msg == NULL) {
 		sr_kemi_xval_null(&_sr_kemi_kx_xval, 0);
 		return &_sr_kemi_kx_xval;
 	}
@@ -113,7 +114,8 @@ static sr_kemi_xval_t* ki_kx_get_ouri(sip_msg_t *msg)
 		return &_sr_kemi_kx_xval;
 	}
 
-	if(msg->parsed_uri_ok==0 /* R-URI not parsed*/ && parse_sip_msg_uri(msg)<0) {
+	if(msg->parsed_uri_ok == 0 /* R-URI not parsed*/
+			&& parse_sip_msg_uri(msg) < 0) {
 		LM_ERR("failed to parse the R-URI\n");
 		sr_kemi_xval_null(&_sr_kemi_kx_xval, 0);
 		return &_sr_kemi_kx_xval;
@@ -127,22 +129,22 @@ static sr_kemi_xval_t* ki_kx_get_ouri(sip_msg_t *msg)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_get_furi(sip_msg_t *msg)
+static sr_kemi_xval_t *ki_kx_get_furi(sip_msg_t *msg)
 {
 	to_body_t *xto = NULL;
 
 	memset(&_sr_kemi_kx_xval, 0, sizeof(sr_kemi_xval_t));
 
-	if(msg==NULL) {
+	if(msg == NULL) {
 		sr_kemi_xval_null(&_sr_kemi_kx_xval, 0);
 		return &_sr_kemi_kx_xval;
 	}
-	if(parse_from_header(msg)<0) {
+	if(parse_from_header(msg) < 0) {
 		LM_ERR("cannot parse From header\n");
 		sr_kemi_xval_null(&_sr_kemi_kx_xval, 0);
 		return &_sr_kemi_kx_xval;
 	}
-	if(msg->from==NULL || get_from(msg)==NULL) {
+	if(msg->from == NULL || get_from(msg) == NULL) {
 		LM_DBG("no From header\n");
 		sr_kemi_xval_null(&_sr_kemi_kx_xval, 0);
 		return &_sr_kemi_kx_xval;
@@ -157,22 +159,22 @@ static sr_kemi_xval_t* ki_kx_get_furi(sip_msg_t *msg)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_get_turi(sip_msg_t *msg)
+static sr_kemi_xval_t *ki_kx_get_turi(sip_msg_t *msg)
 {
 	to_body_t *xto = NULL;
 
 	memset(&_sr_kemi_kx_xval, 0, sizeof(sr_kemi_xval_t));
 
-	if(msg==NULL) {
+	if(msg == NULL) {
 		sr_kemi_xval_null(&_sr_kemi_kx_xval, 0);
 		return &_sr_kemi_kx_xval;
 	}
-	if(parse_to_header(msg)<0) {
+	if(parse_to_header(msg) < 0) {
 		LM_ERR("cannot parse To header\n");
 		sr_kemi_xval_null(&_sr_kemi_kx_xval, 0);
 		return &_sr_kemi_kx_xval;
 	}
-	if(msg->to==NULL || get_to(msg)==NULL) {
+	if(msg->to == NULL || get_to(msg) == NULL) {
 		LM_DBG("no To header\n");
 		sr_kemi_xval_null(&_sr_kemi_kx_xval, 0);
 		return &_sr_kemi_kx_xval;
@@ -187,21 +189,21 @@ static sr_kemi_xval_t* ki_kx_get_turi(sip_msg_t *msg)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_get_xuri_attr(sip_msg_t *msg, sip_uri_t *puri,
-		int iattr, int xmode)
+static sr_kemi_xval_t *ki_kx_get_xuri_attr(
+		sip_msg_t *msg, sip_uri_t *puri, int iattr, int xmode)
 {
-	if(iattr==1) {
+	if(iattr == 1) {
 		/* username */
-		if(puri->user.s==NULL || puri->user.len<=0) {
+		if(puri->user.s == NULL || puri->user.len <= 0) {
 			sr_kemi_xval_null(&_sr_kemi_kx_xval, xmode);
 			return &_sr_kemi_kx_xval;
 		}
 		_sr_kemi_kx_xval.vtype = SR_KEMIP_STR;
 		_sr_kemi_kx_xval.v.s = puri->user;
 		return &_sr_kemi_kx_xval;
-	} else if(iattr==2) {
+	} else if(iattr == 2) {
 		/* domain */
-		if(puri->host.s==NULL || puri->host.len<=0) {
+		if(puri->host.s == NULL || puri->host.len <= 0) {
 			sr_kemi_xval_null(&_sr_kemi_kx_xval, xmode);
 			return &_sr_kemi_kx_xval;
 		}
@@ -217,16 +219,17 @@ static sr_kemi_xval_t* ki_kx_get_xuri_attr(sip_msg_t *msg, sip_uri_t *puri,
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_get_ruri_attr(sip_msg_t *msg, int iattr, int xmode)
+static sr_kemi_xval_t *ki_kx_get_ruri_attr(sip_msg_t *msg, int iattr, int xmode)
 {
 	memset(&_sr_kemi_kx_xval, 0, sizeof(sr_kemi_xval_t));
 
-	if(msg==NULL || msg->first_line.type == SIP_REPLY) {
+	if(msg == NULL || msg->first_line.type == SIP_REPLY) {
 		sr_kemi_xval_null(&_sr_kemi_kx_xval, xmode);
 		return &_sr_kemi_kx_xval;
 	}
 
-	if(msg->parsed_uri_ok==0 /* R-URI not parsed*/ && parse_sip_msg_uri(msg)<0) {
+	if(msg->parsed_uri_ok == 0 /* R-URI not parsed*/
+			&& parse_sip_msg_uri(msg) < 0) {
 		LM_ERR("failed to parse the R-URI\n");
 		sr_kemi_xval_null(&_sr_kemi_kx_xval, xmode);
 		return &_sr_kemi_kx_xval;
@@ -237,7 +240,7 @@ static sr_kemi_xval_t* ki_kx_get_ruri_attr(sip_msg_t *msg, int iattr, int xmode)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_get_ruser(sip_msg_t *msg)
+static sr_kemi_xval_t *ki_kx_get_ruser(sip_msg_t *msg)
 {
 	return ki_kx_get_ruri_attr(msg, 1, SR_KEMI_XVAL_NULL_NONE);
 }
@@ -245,7 +248,7 @@ static sr_kemi_xval_t* ki_kx_get_ruser(sip_msg_t *msg)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_getw_ruser(sip_msg_t *msg)
+static sr_kemi_xval_t *ki_kx_getw_ruser(sip_msg_t *msg)
 {
 	return ki_kx_get_ruri_attr(msg, 1, SR_KEMI_XVAL_NULL_PRINT);
 }
@@ -253,7 +256,7 @@ static sr_kemi_xval_t* ki_kx_getw_ruser(sip_msg_t *msg)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_gete_ruser(sip_msg_t *msg)
+static sr_kemi_xval_t *ki_kx_gete_ruser(sip_msg_t *msg)
 {
 	return ki_kx_get_ruri_attr(msg, 1, SR_KEMI_XVAL_NULL_EMPTY);
 }
@@ -261,7 +264,7 @@ static sr_kemi_xval_t* ki_kx_gete_ruser(sip_msg_t *msg)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_get_rhost(sip_msg_t *msg)
+static sr_kemi_xval_t *ki_kx_get_rhost(sip_msg_t *msg)
 {
 	return ki_kx_get_ruri_attr(msg, 2, SR_KEMI_XVAL_NULL_NONE);
 }
@@ -269,7 +272,7 @@ static sr_kemi_xval_t* ki_kx_get_rhost(sip_msg_t *msg)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_getw_rhost(sip_msg_t *msg)
+static sr_kemi_xval_t *ki_kx_getw_rhost(sip_msg_t *msg)
 {
 	return ki_kx_get_ruri_attr(msg, 2, SR_KEMI_XVAL_NULL_PRINT);
 }
@@ -277,7 +280,7 @@ static sr_kemi_xval_t* ki_kx_getw_rhost(sip_msg_t *msg)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_gete_rhost(sip_msg_t *msg)
+static sr_kemi_xval_t *ki_kx_gete_rhost(sip_msg_t *msg)
 {
 	return ki_kx_get_ruri_attr(msg, 2, SR_KEMI_XVAL_NULL_EMPTY);
 }
@@ -285,13 +288,13 @@ static sr_kemi_xval_t* ki_kx_gete_rhost(sip_msg_t *msg)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_get_furi_attr(sip_msg_t *msg, int iattr, int xmode)
+static sr_kemi_xval_t *ki_kx_get_furi_attr(sip_msg_t *msg, int iattr, int xmode)
 {
 	sip_uri_t *uri;
 
 	memset(&_sr_kemi_kx_xval, 0, sizeof(sr_kemi_xval_t));
-	uri=parse_from_uri(msg);
-	if(uri==NULL) {
+	uri = parse_from_uri(msg);
+	if(uri == NULL) {
 		sr_kemi_xval_null(&_sr_kemi_kx_xval, xmode);
 		return &_sr_kemi_kx_xval;
 	}
@@ -302,7 +305,7 @@ static sr_kemi_xval_t* ki_kx_get_furi_attr(sip_msg_t *msg, int iattr, int xmode)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_get_fuser(sip_msg_t *msg)
+static sr_kemi_xval_t *ki_kx_get_fuser(sip_msg_t *msg)
 {
 	return ki_kx_get_furi_attr(msg, 1, SR_KEMI_XVAL_NULL_NONE);
 }
@@ -310,7 +313,7 @@ static sr_kemi_xval_t* ki_kx_get_fuser(sip_msg_t *msg)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_getw_fuser(sip_msg_t *msg)
+static sr_kemi_xval_t *ki_kx_getw_fuser(sip_msg_t *msg)
 {
 	return ki_kx_get_furi_attr(msg, 1, SR_KEMI_XVAL_NULL_PRINT);
 }
@@ -318,7 +321,7 @@ static sr_kemi_xval_t* ki_kx_getw_fuser(sip_msg_t *msg)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_gete_fuser(sip_msg_t *msg)
+static sr_kemi_xval_t *ki_kx_gete_fuser(sip_msg_t *msg)
 {
 	return ki_kx_get_furi_attr(msg, 1, SR_KEMI_XVAL_NULL_EMPTY);
 }
@@ -326,7 +329,7 @@ static sr_kemi_xval_t* ki_kx_gete_fuser(sip_msg_t *msg)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_get_fhost(sip_msg_t *msg)
+static sr_kemi_xval_t *ki_kx_get_fhost(sip_msg_t *msg)
 {
 	return ki_kx_get_furi_attr(msg, 2, SR_KEMI_XVAL_NULL_NONE);
 }
@@ -334,7 +337,7 @@ static sr_kemi_xval_t* ki_kx_get_fhost(sip_msg_t *msg)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_getw_fhost(sip_msg_t *msg)
+static sr_kemi_xval_t *ki_kx_getw_fhost(sip_msg_t *msg)
 {
 	return ki_kx_get_furi_attr(msg, 2, SR_KEMI_XVAL_NULL_PRINT);
 }
@@ -342,7 +345,7 @@ static sr_kemi_xval_t* ki_kx_getw_fhost(sip_msg_t *msg)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_gete_fhost(sip_msg_t *msg)
+static sr_kemi_xval_t *ki_kx_gete_fhost(sip_msg_t *msg)
 {
 	return ki_kx_get_furi_attr(msg, 2, SR_KEMI_XVAL_NULL_EMPTY);
 }
@@ -350,13 +353,13 @@ static sr_kemi_xval_t* ki_kx_gete_fhost(sip_msg_t *msg)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_get_turi_attr(sip_msg_t *msg, int iattr, int xmode)
+static sr_kemi_xval_t *ki_kx_get_turi_attr(sip_msg_t *msg, int iattr, int xmode)
 {
 	sip_uri_t *uri;
 
 	memset(&_sr_kemi_kx_xval, 0, sizeof(sr_kemi_xval_t));
-	uri=parse_to_uri(msg);
-	if(uri==NULL) {
+	uri = parse_to_uri(msg);
+	if(uri == NULL) {
 		sr_kemi_xval_null(&_sr_kemi_kx_xval, xmode);
 		return &_sr_kemi_kx_xval;
 	}
@@ -367,7 +370,7 @@ static sr_kemi_xval_t* ki_kx_get_turi_attr(sip_msg_t *msg, int iattr, int xmode)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_get_tuser(sip_msg_t *msg)
+static sr_kemi_xval_t *ki_kx_get_tuser(sip_msg_t *msg)
 {
 	return ki_kx_get_turi_attr(msg, 1, SR_KEMI_XVAL_NULL_NONE);
 }
@@ -375,7 +378,7 @@ static sr_kemi_xval_t* ki_kx_get_tuser(sip_msg_t *msg)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_getw_tuser(sip_msg_t *msg)
+static sr_kemi_xval_t *ki_kx_getw_tuser(sip_msg_t *msg)
 {
 	return ki_kx_get_turi_attr(msg, 1, SR_KEMI_XVAL_NULL_PRINT);
 }
@@ -383,7 +386,7 @@ static sr_kemi_xval_t* ki_kx_getw_tuser(sip_msg_t *msg)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_gete_tuser(sip_msg_t *msg)
+static sr_kemi_xval_t *ki_kx_gete_tuser(sip_msg_t *msg)
 {
 	return ki_kx_get_turi_attr(msg, 1, SR_KEMI_XVAL_NULL_EMPTY);
 }
@@ -391,7 +394,7 @@ static sr_kemi_xval_t* ki_kx_gete_tuser(sip_msg_t *msg)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_get_thost(sip_msg_t *msg)
+static sr_kemi_xval_t *ki_kx_get_thost(sip_msg_t *msg)
 {
 	return ki_kx_get_turi_attr(msg, 2, SR_KEMI_XVAL_NULL_NONE);
 }
@@ -399,7 +402,7 @@ static sr_kemi_xval_t* ki_kx_get_thost(sip_msg_t *msg)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_getw_thost(sip_msg_t *msg)
+static sr_kemi_xval_t *ki_kx_getw_thost(sip_msg_t *msg)
 {
 	return ki_kx_get_turi_attr(msg, 2, SR_KEMI_XVAL_NULL_PRINT);
 }
@@ -407,7 +410,7 @@ static sr_kemi_xval_t* ki_kx_getw_thost(sip_msg_t *msg)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_gete_thost(sip_msg_t *msg)
+static sr_kemi_xval_t *ki_kx_gete_thost(sip_msg_t *msg)
 {
 	return ki_kx_get_turi_attr(msg, 2, SR_KEMI_XVAL_NULL_EMPTY);
 }
@@ -415,15 +418,16 @@ static sr_kemi_xval_t* ki_kx_gete_thost(sip_msg_t *msg)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_get_ua_mode(sip_msg_t *msg, int rmode)
+static sr_kemi_xval_t *ki_kx_get_ua_mode(sip_msg_t *msg, int rmode)
 {
 	memset(&_sr_kemi_kx_xval, 0, sizeof(sr_kemi_xval_t));
-	if(msg==NULL) {
+	if(msg == NULL) {
 		sr_kemi_xval_null(&_sr_kemi_kx_xval, rmode);
 		return &_sr_kemi_kx_xval;
 	}
-	if(msg->user_agent==NULL && ((parse_headers(msg, HDR_USERAGENT_F, 0)==-1)
-			|| (msg->user_agent==NULL))) {
+	if(msg->user_agent == NULL
+			&& ((parse_headers(msg, HDR_USERAGENT_F, 0) == -1)
+					|| (msg->user_agent == NULL))) {
 		sr_kemi_xval_null(&_sr_kemi_kx_xval, rmode);
 		return &_sr_kemi_kx_xval;
 	}
@@ -436,7 +440,7 @@ static sr_kemi_xval_t* ki_kx_get_ua_mode(sip_msg_t *msg, int rmode)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_get_ua(sip_msg_t *msg)
+static sr_kemi_xval_t *ki_kx_get_ua(sip_msg_t *msg)
 {
 	return ki_kx_get_ua_mode(msg, SR_KEMI_XVAL_NULL_NONE);
 }
@@ -444,7 +448,7 @@ static sr_kemi_xval_t* ki_kx_get_ua(sip_msg_t *msg)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_gete_ua(sip_msg_t *msg)
+static sr_kemi_xval_t *ki_kx_gete_ua(sip_msg_t *msg)
 {
 	return ki_kx_get_ua_mode(msg, SR_KEMI_XVAL_NULL_EMPTY);
 }
@@ -452,7 +456,7 @@ static sr_kemi_xval_t* ki_kx_gete_ua(sip_msg_t *msg)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_getw_ua(sip_msg_t *msg)
+static sr_kemi_xval_t *ki_kx_getw_ua(sip_msg_t *msg)
 {
 	return ki_kx_get_ua_mode(msg, SR_KEMI_XVAL_NULL_PRINT);
 }
@@ -460,10 +464,10 @@ static sr_kemi_xval_t* ki_kx_getw_ua(sip_msg_t *msg)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_get_srcip(sip_msg_t *msg)
+static sr_kemi_xval_t *ki_kx_get_srcip(sip_msg_t *msg)
 {
 	memset(&_sr_kemi_kx_xval, 0, sizeof(sr_kemi_xval_t));
-	if(msg==NULL) {
+	if(msg == NULL) {
 		sr_kemi_xval_null(&_sr_kemi_kx_xval, SR_KEMI_XVAL_NULL_NONE);
 		return &_sr_kemi_kx_xval;
 	}
@@ -477,10 +481,10 @@ static sr_kemi_xval_t* ki_kx_get_srcip(sip_msg_t *msg)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_get_srcport(sip_msg_t *msg)
+static sr_kemi_xval_t *ki_kx_get_srcport(sip_msg_t *msg)
 {
 	memset(&_sr_kemi_kx_xval, 0, sizeof(sr_kemi_xval_t));
-	if(msg==NULL) {
+	if(msg == NULL) {
 		_sr_kemi_kx_xval.vtype = SR_KEMIP_INT;
 		_sr_kemi_kx_xval.v.n = 0;
 		return &_sr_kemi_kx_xval;
@@ -494,10 +498,10 @@ static sr_kemi_xval_t* ki_kx_get_srcport(sip_msg_t *msg)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_get_send_sock(sip_msg_t *msg)
+static sr_kemi_xval_t *ki_kx_get_send_sock(sip_msg_t *msg)
 {
 	memset(&_sr_kemi_kx_xval, 0, sizeof(sr_kemi_xval_t));
-	if (msg==NULL || msg->force_send_socket==0) {
+	if(msg == NULL || msg->force_send_socket == 0) {
 		sr_kemi_xval_null(&_sr_kemi_kx_xval, SR_KEMI_XVAL_NULL_NONE);
 		return &_sr_kemi_kx_xval;
 	}
@@ -510,11 +514,11 @@ static sr_kemi_xval_t* ki_kx_get_send_sock(sip_msg_t *msg)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_get_send_sock_name(sip_msg_t *msg)
+static sr_kemi_xval_t *ki_kx_get_send_sock_name(sip_msg_t *msg)
 {
 	memset(&_sr_kemi_kx_xval, 0, sizeof(sr_kemi_xval_t));
-	if (msg==NULL || msg->force_send_socket==0
-			|| msg->force_send_socket->sockname.s==0) {
+	if(msg == NULL || msg->force_send_socket == 0
+			|| msg->force_send_socket->sockname.s == 0) {
 		sr_kemi_xval_null(&_sr_kemi_kx_xval, SR_KEMI_XVAL_NULL_NONE);
 		return &_sr_kemi_kx_xval;
 	}
@@ -529,7 +533,7 @@ static sr_kemi_xval_t* ki_kx_get_send_sock_name(sip_msg_t *msg)
  */
 static int ki_kx_get_send_sock_port(sip_msg_t *msg)
 {
-	if (msg==NULL || msg->force_send_socket==0) {
+	if(msg == NULL || msg->force_send_socket == 0) {
 		return 0;
 	}
 	return (int)msg->force_send_socket->port_no;
@@ -538,11 +542,11 @@ static int ki_kx_get_send_sock_port(sip_msg_t *msg)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_get_rcvip(sip_msg_t *msg)
+static sr_kemi_xval_t *ki_kx_get_rcvip(sip_msg_t *msg)
 {
 	memset(&_sr_kemi_kx_xval, 0, sizeof(sr_kemi_xval_t));
-	if(msg==NULL || msg->rcv.bind_address==NULL
-			|| msg->rcv.bind_address->address_str.s==NULL) {
+	if(msg == NULL || msg->rcv.bind_address == NULL
+			|| msg->rcv.bind_address->address_str.s == NULL) {
 		sr_kemi_xval_null(&_sr_kemi_kx_xval, SR_KEMI_XVAL_NULL_NONE);
 		return &_sr_kemi_kx_xval;
 	}
@@ -555,10 +559,10 @@ static sr_kemi_xval_t* ki_kx_get_rcvip(sip_msg_t *msg)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_get_rcvport(sip_msg_t *msg)
+static sr_kemi_xval_t *ki_kx_get_rcvport(sip_msg_t *msg)
 {
 	memset(&_sr_kemi_kx_xval, 0, sizeof(sr_kemi_xval_t));
-	if(msg==NULL || msg->rcv.bind_address==NULL) {
+	if(msg == NULL || msg->rcv.bind_address == NULL) {
 		_sr_kemi_kx_xval.vtype = SR_KEMIP_INT;
 		_sr_kemi_kx_xval.v.n = 0;
 		return &_sr_kemi_kx_xval;
@@ -572,11 +576,11 @@ static sr_kemi_xval_t* ki_kx_get_rcvport(sip_msg_t *msg)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_get_rcv_sock_name(sip_msg_t *msg)
+static sr_kemi_xval_t *ki_kx_get_rcv_sock_name(sip_msg_t *msg)
 {
 	memset(&_sr_kemi_kx_xval, 0, sizeof(sr_kemi_xval_t));
-	if(msg==NULL || msg->rcv.bind_address==NULL
-			|| msg->rcv.bind_address->sockname.s==NULL) {
+	if(msg == NULL || msg->rcv.bind_address == NULL
+			|| msg->rcv.bind_address->sockname.s == NULL) {
 		sr_kemi_xval_null(&_sr_kemi_kx_xval, SR_KEMI_XVAL_NULL_NONE);
 		return &_sr_kemi_kx_xval;
 	}
@@ -589,20 +593,20 @@ static sr_kemi_xval_t* ki_kx_get_rcv_sock_name(sip_msg_t *msg)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_get_rcvaddr_sock(sip_msg_t *msg)
+static sr_kemi_xval_t *ki_kx_get_rcvaddr_sock(sip_msg_t *msg)
 {
-	if(msg==NULL) {
-		sr_kemi_xval_null(&_sr_kemi_kx_xval, SR_KEMI_XVAL_NULL_EMPTY);
-		return &_sr_kemi_kx_xval;
-
-	}
-
-	if(msg->rcv.bind_address==NULL || msg->rcv.bind_address->sock_str.s==NULL) {
+	if(msg == NULL) {
 		sr_kemi_xval_null(&_sr_kemi_kx_xval, SR_KEMI_XVAL_NULL_EMPTY);
 		return &_sr_kemi_kx_xval;
 	}
 
-	if (msg->rcv.bind_address->sock_str.len + 1 >= pv_get_buffer_size()) {
+	if(msg->rcv.bind_address == NULL
+			|| msg->rcv.bind_address->sock_str.s == NULL) {
+		sr_kemi_xval_null(&_sr_kemi_kx_xval, SR_KEMI_XVAL_NULL_EMPTY);
+		return &_sr_kemi_kx_xval;
+	}
+
+	if(msg->rcv.bind_address->sock_str.len + 1 >= pv_get_buffer_size()) {
 		LM_ERR("local buffer size exceeded\n");
 		sr_kemi_xval_null(&_sr_kemi_kx_xval, SR_KEMI_XVAL_NULL_EMPTY);
 		return &_sr_kemi_kx_xval;
@@ -621,10 +625,10 @@ static sr_kemi_xval_t* ki_kx_get_rcvaddr_sock(sip_msg_t *msg)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_get_rcvadvip(sip_msg_t *msg)
+static sr_kemi_xval_t *ki_kx_get_rcvadvip(sip_msg_t *msg)
 {
 	memset(&_sr_kemi_kx_xval, 0, sizeof(sr_kemi_xval_t));
-	if(msg->rcv.bind_address!=NULL
+	if(msg->rcv.bind_address != NULL
 			&& msg->rcv.bind_address->useinfo.address_str.len > 0) {
 		_sr_kemi_kx_xval.vtype = SR_KEMIP_STR;
 		_sr_kemi_kx_xval.v.s = msg->rcv.bind_address->useinfo.address_str;
@@ -637,10 +641,10 @@ static sr_kemi_xval_t* ki_kx_get_rcvadvip(sip_msg_t *msg)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_get_rcvadvport(sip_msg_t *msg)
+static sr_kemi_xval_t *ki_kx_get_rcvadvport(sip_msg_t *msg)
 {
 	memset(&_sr_kemi_kx_xval, 0, sizeof(sr_kemi_xval_t));
-	if(msg->rcv.bind_address!=NULL
+	if(msg->rcv.bind_address != NULL
 			&& msg->rcv.bind_address->useinfo.port_no_str.len > 0) {
 		_sr_kemi_kx_xval.vtype = SR_KEMIP_INT;
 		_sr_kemi_kx_xval.v.n = (int)msg->rcv.bind_address->useinfo.port_no;
@@ -653,16 +657,17 @@ static sr_kemi_xval_t* ki_kx_get_rcvadvport(sip_msg_t *msg)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_get_proto(sip_msg_t *msg)
+static sr_kemi_xval_t *ki_kx_get_proto(sip_msg_t *msg)
 {
 	memset(&_sr_kemi_kx_xval, 0, sizeof(sr_kemi_xval_t));
-	if(msg==NULL) {
+	if(msg == NULL) {
 		sr_kemi_xval_null(&_sr_kemi_kx_xval, SR_KEMI_XVAL_NULL_EMPTY);
 		return &_sr_kemi_kx_xval;
 	}
 
 	_sr_kemi_kx_xval.vtype = SR_KEMIP_STR;
-	if(get_valid_proto_string(msg->rcv.proto, 0, 0, &_sr_kemi_kx_xval.v.s)<0) {
+	if(get_valid_proto_string(msg->rcv.proto, 0, 0, &_sr_kemi_kx_xval.v.s)
+			< 0) {
 		sr_kemi_xval_null(&_sr_kemi_kx_xval, SR_KEMI_XVAL_NULL_EMPTY);
 	}
 
@@ -674,7 +679,7 @@ static sr_kemi_xval_t* ki_kx_get_proto(sip_msg_t *msg)
  */
 static int ki_kx_get_protoid(sip_msg_t *msg)
 {
-	if(msg==NULL) {
+	if(msg == NULL) {
 		return -1;
 	}
 	memset(&_sr_kemi_kx_xval, 0, sizeof(sr_kemi_xval_t));
@@ -686,33 +691,32 @@ static int ki_kx_get_protoid(sip_msg_t *msg)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_get_auth_attr(sip_msg_t *msg, int iattr, int xmode)
+static sr_kemi_xval_t *ki_kx_get_auth_attr(sip_msg_t *msg, int iattr, int xmode)
 {
 	hdr_field_t *hdr;
 
 	memset(&_sr_kemi_kx_xval, 0, sizeof(sr_kemi_xval_t));
-	if(msg==NULL) {
+	if(msg == NULL) {
 		sr_kemi_xval_null(&_sr_kemi_kx_xval, xmode);
 		return &_sr_kemi_kx_xval;
 	}
 
-	if ((msg->REQ_METHOD == METHOD_ACK) ||
-			(msg->REQ_METHOD == METHOD_CANCEL)) {
+	if((msg->REQ_METHOD == METHOD_ACK) || (msg->REQ_METHOD == METHOD_CANCEL)) {
 		LM_DBG("no [Proxy-]Authorization header\n");
 		sr_kemi_xval_null(&_sr_kemi_kx_xval, xmode);
 		return &_sr_kemi_kx_xval;
 	}
 
-	if ((parse_headers(msg, HDR_PROXYAUTH_F|HDR_AUTHORIZATION_F, 0)==-1)
-			|| (msg->proxy_auth==0 && msg->authorization==0)) {
+	if((parse_headers(msg, HDR_PROXYAUTH_F | HDR_AUTHORIZATION_F, 0) == -1)
+			|| (msg->proxy_auth == 0 && msg->authorization == 0)) {
 		LM_DBG("no [Proxy-]Authorization header\n");
 		sr_kemi_xval_null(&_sr_kemi_kx_xval, xmode);
 		return &_sr_kemi_kx_xval;
 	}
 
-	hdr = (msg->proxy_auth==0)?msg->authorization:msg->proxy_auth;
+	hdr = (msg->proxy_auth == 0) ? msg->authorization : msg->proxy_auth;
 
-	if(parse_credentials(hdr)!=0) {
+	if(parse_credentials(hdr) != 0) {
 		LM_ERR("failed to parse credentials\n");
 		sr_kemi_xval_null(&_sr_kemi_kx_xval, xmode);
 		return &_sr_kemi_kx_xval;
@@ -720,13 +724,15 @@ static sr_kemi_xval_t* ki_kx_get_auth_attr(sip_msg_t *msg, int iattr, int xmode)
 	switch(iattr) {
 		case 1:
 			_sr_kemi_kx_xval.vtype = SR_KEMIP_STR;
-			_sr_kemi_kx_xval.v.s = ((auth_body_t*)(hdr->parsed))->digest.username.user;
+			_sr_kemi_kx_xval.v.s =
+					((auth_body_t *)(hdr->parsed))->digest.username.user;
 			return &_sr_kemi_kx_xval;
 
-		break;
+			break;
 		default:
 			_sr_kemi_kx_xval.vtype = SR_KEMIP_STR;
-			_sr_kemi_kx_xval.v.s = ((auth_body_t*)(hdr->parsed))->digest.username.whole;
+			_sr_kemi_kx_xval.v.s =
+					((auth_body_t *)(hdr->parsed))->digest.username.whole;
 			return &_sr_kemi_kx_xval;
 	}
 }
@@ -734,7 +740,7 @@ static sr_kemi_xval_t* ki_kx_get_auth_attr(sip_msg_t *msg, int iattr, int xmode)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_get_au(sip_msg_t *msg)
+static sr_kemi_xval_t *ki_kx_get_au(sip_msg_t *msg)
 {
 	return ki_kx_get_auth_attr(msg, 1, SR_KEMI_XVAL_NULL_NONE);
 }
@@ -742,7 +748,7 @@ static sr_kemi_xval_t* ki_kx_get_au(sip_msg_t *msg)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_getw_au(sip_msg_t *msg)
+static sr_kemi_xval_t *ki_kx_getw_au(sip_msg_t *msg)
 {
 	return ki_kx_get_auth_attr(msg, 1, SR_KEMI_XVAL_NULL_PRINT);
 }
@@ -750,7 +756,7 @@ static sr_kemi_xval_t* ki_kx_getw_au(sip_msg_t *msg)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_gete_au(sip_msg_t *msg)
+static sr_kemi_xval_t *ki_kx_gete_au(sip_msg_t *msg)
 {
 	return ki_kx_get_auth_attr(msg, 1, SR_KEMI_XVAL_NULL_EMPTY);
 }
@@ -758,10 +764,10 @@ static sr_kemi_xval_t* ki_kx_gete_au(sip_msg_t *msg)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_get_method(sip_msg_t *msg)
+static sr_kemi_xval_t *ki_kx_get_method(sip_msg_t *msg)
 {
 	memset(&_sr_kemi_kx_xval, 0, sizeof(sr_kemi_xval_t));
-	if(msg==NULL) {
+	if(msg == NULL) {
 		sr_kemi_xval_null(&_sr_kemi_kx_xval, SR_KEMI_XVAL_NULL_NONE);
 		return &_sr_kemi_kx_xval;
 	}
@@ -772,8 +778,9 @@ static sr_kemi_xval_t* ki_kx_get_method(sip_msg_t *msg)
 		return &_sr_kemi_kx_xval;
 	}
 
-	if(msg->cseq==NULL && ((parse_headers(msg, HDR_CSEQ_F, 0)==-1) ||
-				(msg->cseq==NULL))) {
+	if(msg->cseq == NULL
+			&& ((parse_headers(msg, HDR_CSEQ_F, 0) == -1)
+					|| (msg->cseq == NULL))) {
 		LM_ERR("no CSEQ header\n");
 		sr_kemi_xval_null(&_sr_kemi_kx_xval, SR_KEMI_XVAL_NULL_NONE);
 		return &_sr_kemi_kx_xval;
@@ -788,7 +795,7 @@ static sr_kemi_xval_t* ki_kx_get_method(sip_msg_t *msg)
  */
 static int ki_kx_get_status(sip_msg_t *msg)
 {
-	if(msg==NULL) {
+	if(msg == NULL) {
 		return -1;
 	}
 	if(msg->first_line.type != SIP_REPLY) {
@@ -800,10 +807,10 @@ static int ki_kx_get_status(sip_msg_t *msg)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_gets_status(sip_msg_t *msg)
+static sr_kemi_xval_t *ki_kx_gets_status(sip_msg_t *msg)
 {
 	memset(&_sr_kemi_kx_xval, 0, sizeof(sr_kemi_xval_t));
-	if(msg==NULL) {
+	if(msg == NULL) {
 		sr_kemi_xval_null(&_sr_kemi_kx_xval, SR_KEMI_XVAL_NULL_NONE);
 		return &_sr_kemi_kx_xval;
 	}
@@ -819,11 +826,11 @@ static sr_kemi_xval_t* ki_kx_gets_status(sip_msg_t *msg)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_get_body_mode(sip_msg_t *msg, int rmode)
+static sr_kemi_xval_t *ki_kx_get_body_mode(sip_msg_t *msg, int rmode)
 {
 	str s;
 	memset(&_sr_kemi_kx_xval, 0, sizeof(sr_kemi_xval_t));
-	if(msg==NULL) {
+	if(msg == NULL) {
 		sr_kemi_xval_null(&_sr_kemi_kx_xval, rmode);
 		return &_sr_kemi_kx_xval;
 	}
@@ -835,7 +842,7 @@ static sr_kemi_xval_t* ki_kx_get_body_mode(sip_msg_t *msg, int rmode)
 		return &_sr_kemi_kx_xval;
 	}
 	s.len = msg->buf + msg->len - s.s;
-	if(s.len <=0) {
+	if(s.len <= 0) {
 		sr_kemi_xval_null(&_sr_kemi_kx_xval, rmode);
 		return &_sr_kemi_kx_xval;
 	}
@@ -848,7 +855,7 @@ static sr_kemi_xval_t* ki_kx_get_body_mode(sip_msg_t *msg, int rmode)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_get_body(sip_msg_t *msg)
+static sr_kemi_xval_t *ki_kx_get_body(sip_msg_t *msg)
 {
 	return ki_kx_get_body_mode(msg, SR_KEMI_XVAL_NULL_NONE);
 }
@@ -856,7 +863,7 @@ static sr_kemi_xval_t* ki_kx_get_body(sip_msg_t *msg)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_gete_body(sip_msg_t *msg)
+static sr_kemi_xval_t *ki_kx_gete_body(sip_msg_t *msg)
 {
 	return ki_kx_get_body_mode(msg, SR_KEMI_XVAL_NULL_EMPTY);
 }
@@ -864,7 +871,7 @@ static sr_kemi_xval_t* ki_kx_gete_body(sip_msg_t *msg)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_getw_body(sip_msg_t *msg)
+static sr_kemi_xval_t *ki_kx_getw_body(sip_msg_t *msg)
 {
 	return ki_kx_get_body_mode(msg, SR_KEMI_XVAL_NULL_PRINT);
 }
@@ -876,7 +883,7 @@ static int ki_kx_get_bodylen(sip_msg_t *msg)
 {
 	str s;
 	memset(&_sr_kemi_kx_xval, 0, sizeof(sr_kemi_xval_t));
-	if(msg==NULL) {
+	if(msg == NULL) {
 		return 0;
 	}
 
@@ -886,7 +893,7 @@ static int ki_kx_get_bodylen(sip_msg_t *msg)
 		return 0;
 	}
 	s.len = msg->buf + msg->len - s.s;
-	if(s.len <=0) {
+	if(s.len <= 0) {
 		return 0;
 	}
 
@@ -896,10 +903,10 @@ static int ki_kx_get_bodylen(sip_msg_t *msg)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_get_duri_mode(sip_msg_t *msg, int xmode)
+static sr_kemi_xval_t *ki_kx_get_duri_mode(sip_msg_t *msg, int xmode)
 {
 	memset(&_sr_kemi_kx_xval, 0, sizeof(sr_kemi_xval_t));
-	if(msg->dst_uri.s==NULL || msg->dst_uri.len<=0) {
+	if(msg->dst_uri.s == NULL || msg->dst_uri.len <= 0) {
 		sr_kemi_xval_null(&_sr_kemi_kx_xval, xmode);
 		return &_sr_kemi_kx_xval;
 	}
@@ -912,7 +919,7 @@ static sr_kemi_xval_t* ki_kx_get_duri_mode(sip_msg_t *msg, int xmode)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_get_duri(sip_msg_t *msg)
+static sr_kemi_xval_t *ki_kx_get_duri(sip_msg_t *msg)
 {
 	return ki_kx_get_duri_mode(msg, SR_KEMI_XVAL_NULL_NONE);
 }
@@ -920,7 +927,7 @@ static sr_kemi_xval_t* ki_kx_get_duri(sip_msg_t *msg)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_getw_duri(sip_msg_t *msg)
+static sr_kemi_xval_t *ki_kx_getw_duri(sip_msg_t *msg)
 {
 	return ki_kx_get_duri_mode(msg, SR_KEMI_XVAL_NULL_PRINT);
 }
@@ -928,7 +935,7 @@ static sr_kemi_xval_t* ki_kx_getw_duri(sip_msg_t *msg)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_gete_duri(sip_msg_t *msg)
+static sr_kemi_xval_t *ki_kx_gete_duri(sip_msg_t *msg)
 {
 	return ki_kx_get_duri_mode(msg, SR_KEMI_XVAL_NULL_EMPTY);
 }
@@ -936,10 +943,10 @@ static sr_kemi_xval_t* ki_kx_gete_duri(sip_msg_t *msg)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_get_nhuri(sip_msg_t *msg)
+static sr_kemi_xval_t *ki_kx_get_nhuri(sip_msg_t *msg)
 {
 	memset(&_sr_kemi_kx_xval, 0, sizeof(sr_kemi_xval_t));
-	if(msg->dst_uri.s==NULL || msg->dst_uri.len<=0) {
+	if(msg->dst_uri.s == NULL || msg->dst_uri.len <= 0) {
 		return ki_kx_get_ruri(msg);
 	}
 
@@ -959,15 +966,16 @@ static int ki_kx_get_timestamp(sip_msg_t *msg)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_get_callid(sip_msg_t *msg)
+static sr_kemi_xval_t *ki_kx_get_callid(sip_msg_t *msg)
 {
 	memset(&_sr_kemi_kx_xval, 0, sizeof(sr_kemi_xval_t));
-	if(msg==NULL) {
+	if(msg == NULL) {
 		sr_kemi_xval_null(&_sr_kemi_kx_xval, SR_KEMI_XVAL_NULL_EMPTY);
 		return &_sr_kemi_kx_xval;
 	}
-	if(msg->callid==NULL && ((parse_headers(msg, HDR_CALLID_F, 0)==-1)
-			|| (msg->callid==NULL))) {
+	if(msg->callid == NULL
+			&& ((parse_headers(msg, HDR_CALLID_F, 0) == -1)
+					|| (msg->callid == NULL))) {
 		sr_kemi_xval_null(&_sr_kemi_kx_xval, SR_KEMI_XVAL_NULL_EMPTY);
 		return &_sr_kemi_kx_xval;
 	}
@@ -985,10 +993,10 @@ static int ki_kx_get_conid(sip_msg_t *msg)
 	tcp_connection_t *con;
 	int conid;
 
-	if (msg == NULL)
+	if(msg == NULL)
 		return -1;
 
-	if ((con = tcpconn_get(msg->rcv.proto_reserved1, 0, 0, 0, 0)) == NULL)
+	if((con = tcpconn_get(msg->rcv.proto_reserved1, 0, 0, 0, 0)) == NULL)
 		return -1;
 
 	conid = con->id;
@@ -1000,10 +1008,10 @@ static int ki_kx_get_conid(sip_msg_t *msg)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_get_msgbuf(sip_msg_t *msg)
+static sr_kemi_xval_t *ki_kx_get_msgbuf(sip_msg_t *msg)
 {
 	memset(&_sr_kemi_kx_xval, 0, sizeof(sr_kemi_xval_t));
-	if(msg==NULL) {
+	if(msg == NULL) {
 		sr_kemi_xval_null(&_sr_kemi_kx_xval, SR_KEMI_XVAL_NULL_EMPTY);
 		return &_sr_kemi_kx_xval;
 	}
@@ -1019,7 +1027,7 @@ static sr_kemi_xval_t* ki_kx_get_msgbuf(sip_msg_t *msg)
  */
 static int ki_kx_get_msglen(sip_msg_t *msg)
 {
-	if(msg==NULL) {
+	if(msg == NULL) {
 		return -1;
 	}
 
@@ -1031,7 +1039,7 @@ static int ki_kx_get_msglen(sip_msg_t *msg)
  */
 static int ki_kx_get_msgtype(sip_msg_t *msg)
 {
-	if(msg==NULL) {
+	if(msg == NULL) {
 		return -1;
 	}
 
@@ -1048,7 +1056,7 @@ static int ki_kx_get_msgtype(sip_msg_t *msg)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_get_cturi_mode(sip_msg_t *msg, int xmode)
+static sr_kemi_xval_t *ki_kx_get_cturi_mode(sip_msg_t *msg, int xmode)
 {
 	contact_t *c;
 
@@ -1060,13 +1068,13 @@ static sr_kemi_xval_t* ki_kx_get_cturi_mode(sip_msg_t *msg, int xmode)
 		return &_sr_kemi_kx_xval;
 	}
 
-	if (((contact_body_t*)msg->contact->parsed)->star == 1) {
+	if(((contact_body_t *)msg->contact->parsed)->star == 1) {
 		sr_kemi_xval_null(&_sr_kemi_kx_xval, xmode);
 		return &_sr_kemi_kx_xval;
 	}
 
-	c = (((contact_body_t*)msg->contact->parsed)->contacts);
-	if(c==NULL || c->uri.s==NULL || c->uri.len<=0) {
+	c = (((contact_body_t *)msg->contact->parsed)->contacts);
+	if(c == NULL || c->uri.s == NULL || c->uri.len <= 0) {
 		sr_kemi_xval_null(&_sr_kemi_kx_xval, xmode);
 		return &_sr_kemi_kx_xval;
 	}
@@ -1079,7 +1087,7 @@ static sr_kemi_xval_t* ki_kx_get_cturi_mode(sip_msg_t *msg, int xmode)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_get_cturi(sip_msg_t *msg)
+static sr_kemi_xval_t *ki_kx_get_cturi(sip_msg_t *msg)
 {
 	return ki_kx_get_cturi_mode(msg, SR_KEMI_XVAL_NULL_NONE);
 }
@@ -1087,7 +1095,7 @@ static sr_kemi_xval_t* ki_kx_get_cturi(sip_msg_t *msg)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_getw_cturi(sip_msg_t *msg)
+static sr_kemi_xval_t *ki_kx_getw_cturi(sip_msg_t *msg)
 {
 	return ki_kx_get_cturi_mode(msg, SR_KEMI_XVAL_NULL_PRINT);
 }
@@ -1095,7 +1103,7 @@ static sr_kemi_xval_t* ki_kx_getw_cturi(sip_msg_t *msg)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_gete_cturi(sip_msg_t *msg)
+static sr_kemi_xval_t *ki_kx_gete_cturi(sip_msg_t *msg)
 {
 	return ki_kx_get_cturi_mode(msg, SR_KEMI_XVAL_NULL_EMPTY);
 }
@@ -1103,22 +1111,21 @@ static sr_kemi_xval_t* ki_kx_gete_cturi(sip_msg_t *msg)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_get_srcuri(sip_msg_t *msg)
+static sr_kemi_xval_t *ki_kx_get_srcuri(sip_msg_t *msg)
 {
 	str ssock;
 
-	if(msg==NULL) {
-		sr_kemi_xval_null(&_sr_kemi_kx_xval, SR_KEMI_XVAL_NULL_EMPTY);
-		return &_sr_kemi_kx_xval;
-
-	}
-
-	if(get_src_uri(msg, 0, &ssock)<0) {
+	if(msg == NULL) {
 		sr_kemi_xval_null(&_sr_kemi_kx_xval, SR_KEMI_XVAL_NULL_EMPTY);
 		return &_sr_kemi_kx_xval;
 	}
 
-	if (ssock.len + 1 >= pv_get_buffer_size()) {
+	if(get_src_uri(msg, 0, &ssock) < 0) {
+		sr_kemi_xval_null(&_sr_kemi_kx_xval, SR_KEMI_XVAL_NULL_EMPTY);
+		return &_sr_kemi_kx_xval;
+	}
+
+	if(ssock.len + 1 >= pv_get_buffer_size()) {
 		LM_ERR("local buffer size exceeded\n");
 		sr_kemi_xval_null(&_sr_kemi_kx_xval, SR_KEMI_XVAL_NULL_EMPTY);
 		return &_sr_kemi_kx_xval;
@@ -1136,22 +1143,21 @@ static sr_kemi_xval_t* ki_kx_get_srcuri(sip_msg_t *msg)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_get_srcaddr_sock(sip_msg_t *msg)
+static sr_kemi_xval_t *ki_kx_get_srcaddr_sock(sip_msg_t *msg)
 {
 	str ssock;
 
-	if(msg==NULL) {
-		sr_kemi_xval_null(&_sr_kemi_kx_xval, SR_KEMI_XVAL_NULL_EMPTY);
-		return &_sr_kemi_kx_xval;
-
-	}
-
-	if(get_src_address_socket(msg, &ssock)<0) {
+	if(msg == NULL) {
 		sr_kemi_xval_null(&_sr_kemi_kx_xval, SR_KEMI_XVAL_NULL_EMPTY);
 		return &_sr_kemi_kx_xval;
 	}
 
-	if (ssock.len + 1 >= pv_get_buffer_size()) {
+	if(get_src_address_socket(msg, &ssock) < 0) {
+		sr_kemi_xval_null(&_sr_kemi_kx_xval, SR_KEMI_XVAL_NULL_EMPTY);
+		return &_sr_kemi_kx_xval;
+	}
+
+	if(ssock.len + 1 >= pv_get_buffer_size()) {
 		LM_ERR("local buffer size exceeded\n");
 		sr_kemi_xval_null(&_sr_kemi_kx_xval, SR_KEMI_XVAL_NULL_EMPTY);
 		return &_sr_kemi_kx_xval;
@@ -1169,14 +1175,14 @@ static sr_kemi_xval_t* ki_kx_get_srcaddr_sock(sip_msg_t *msg)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_get_def(sip_msg_t *msg, str *dname)
+static sr_kemi_xval_t *ki_kx_get_def(sip_msg_t *msg, str *dname)
 {
 	str *val;
 
 	val = pp_define_get(dname->len, dname->s);
 
 	memset(&_sr_kemi_kx_xval, 0, sizeof(sr_kemi_xval_t));
-	if (val==NULL) {
+	if(val == NULL) {
 		sr_kemi_xval_null(&_sr_kemi_kx_xval, SR_KEMI_XVAL_NULL_EMPTY);
 		return &_sr_kemi_kx_xval;
 	}
@@ -1197,7 +1203,7 @@ static int ki_kx_get_defn(sip_msg_t *msg, str *dname)
 
 	val = pp_define_get(dname->len, dname->s);
 
-	if (val != NULL) {
+	if(val != NULL) {
 		str2sint(val, &n);
 	}
 
@@ -1213,7 +1219,7 @@ static int ki_kx_ifdef(sip_msg_t *msg, str *dname)
 
 	val = pp_define_get(dname->len, dname->s);
 
-	if (val!=NULL) {
+	if(val != NULL) {
 		return SR_KEMI_TRUE;
 	}
 	return SR_KEMI_FALSE;
@@ -1228,7 +1234,7 @@ static int ki_kx_ifndef(sip_msg_t *msg, str *dname)
 
 	val = pp_define_get(dname->len, dname->s);
 
-	if (val==NULL) {
+	if(val == NULL) {
 		return SR_KEMI_TRUE;
 	}
 	return SR_KEMI_FALSE;
@@ -1237,18 +1243,18 @@ static int ki_kx_ifndef(sip_msg_t *msg, str *dname)
 /**
  *
  */
-static sr_kemi_xval_t* ki_kx_get_env(sip_msg_t *msg, str *envname)
+static sr_kemi_xval_t *ki_kx_get_env(sip_msg_t *msg, str *envname)
 {
 	char *val;
 
 	memset(&_sr_kemi_kx_xval, 0, sizeof(sr_kemi_xval_t));
-	if(envname==NULL || envname->s==NULL || envname->len<=0) {
+	if(envname == NULL || envname->s == NULL || envname->len <= 0) {
 		sr_kemi_xval_null(&_sr_kemi_kx_xval, SR_KEMI_XVAL_NULL_EMPTY);
 		return &_sr_kemi_kx_xval;
 	}
 
 	val = getenv(envname->s);
-	if (val == NULL) {
+	if(val == NULL) {
 		sr_kemi_xval_null(&_sr_kemi_kx_xval, SR_KEMI_XVAL_NULL_EMPTY);
 		return &_sr_kemi_kx_xval;
 	}
@@ -1267,12 +1273,12 @@ static int ki_kx_get_envn(sip_msg_t *msg, str *envname)
 	str val;
 	int r = 0;
 
-	if(envname==NULL || envname->s==NULL || envname->len<=0) {
+	if(envname == NULL || envname->s == NULL || envname->len <= 0) {
 		return 0;
 	}
 
 	val.s = getenv(envname->s);
-	if (val.s) {
+	if(val.s) {
 		val.len = strlen(val.s);
 		str2sint(&val, &r);
 		return r;
