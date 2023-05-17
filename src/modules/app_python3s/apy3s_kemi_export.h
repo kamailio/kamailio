@@ -29,9 +29,10 @@
 #include <Python.h>
 #include "../../core/kemi.h"
 
-#define SR_APY_KEMI_EXPORT_SIZE	1536
+#define SR_APY_KEMI_EXPORT_SIZE 1536
 
-typedef struct sr_apy_kemi_export {
+typedef struct sr_apy_kemi_export
+{
 	PyCFunction pfunc;
 	sr_kemi_t *ket;
 } sr_apy_kemi_export_t;

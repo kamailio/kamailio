@@ -45,10 +45,10 @@ void apy3s_handle_exception(const char *fmt, ...)
 	va_list ap;
 
 	// We don't want to generate traceback when no errors occurred
-	if (!PyErr_Occurred())
+	if(!PyErr_Occurred())
 		return;
 
-	if (fmt == NULL)
+	if(fmt == NULL)
 		srcbuf = NULL;
 	else {
 		va_start(ap, fmt);
@@ -58,16 +58,18 @@ void apy3s_handle_exception(const char *fmt, ...)
 
 	PyErr_Fetch(&exception, &v, &tb);
 	PyErr_Clear();
-	if (exception == NULL) {
+	if(exception == NULL) {
 		LM_ERR("Can't get traceback, PyErr_Fetch() has failed.\n");
-		if (srcbuf) pkg_free(srcbuf);
+		if(srcbuf)
+			pkg_free(srcbuf);
 		return;
 	}
 
 	PyErr_NormalizeException(&exception, &v, &tb);
-	if (exception == NULL) {
+	if(exception == NULL) {
 		LM_ERR("Can't get traceback, PyErr_NormalizeException() has failed.\n");
-		if (srcbuf) pkg_free(srcbuf);
+		if(srcbuf)
+			pkg_free(srcbuf);
 		return;
 	}
 
@@ -76,51 +78,57 @@ void apy3s_handle_exception(const char *fmt, ...)
 	Py_XDECREF(exception);
 	Py_XDECREF(v);
 	Py_XDECREF(tb);
-	if (args == NULL) {
+	if(args == NULL) {
 		LM_ERR("Can't get traceback, PyTuple_Pack() has failed.\n");
-		if (srcbuf) pkg_free(srcbuf);
+		if(srcbuf)
+			pkg_free(srcbuf);
 		return;
 	}
 
 	pResult = PyObject_CallObject(_sr_apy3s_format_exc_obj, args);
 	Py_DECREF(args);
-	if (pResult == NULL) {
-		LM_ERR("Can't get traceback, traceback.format_exception() has failed.\n");
-		if (srcbuf) pkg_free(srcbuf);
+	if(pResult == NULL) {
+		LM_ERR("Can't get traceback, traceback.format_exception() has "
+			   "failed.\n");
+		if(srcbuf)
+			pkg_free(srcbuf);
 		return;
 	}
 
 	buflen = 1;
 	buf = (char *)pkg_realloc(NULL, buflen * sizeof(char));
-	if (!buf)
-	{
+	if(!buf) {
 		LM_ERR("Can't allocate memory (%lu bytes), pkg_realloc() has failed."
-				" Not enough memory.\n", (unsigned long)(buflen * sizeof(char *)));
-		if (srcbuf) pkg_free(srcbuf);
+			   " Not enough memory.\n",
+				(unsigned long)(buflen * sizeof(char *)));
+		if(srcbuf)
+			pkg_free(srcbuf);
 		return;
 	}
 	memset(buf, 0, buflen * sizeof(char));
 
-	for (i = 0; i < PySequence_Size(pResult); i++) {
+	for(i = 0; i < PySequence_Size(pResult); i++) {
 		line = PySequence_GetItem(pResult, i);
-		if (line == NULL) {
+		if(line == NULL) {
 			LM_ERR("Can't get traceback, PySequence_GetItem() has failed.\n");
 			Py_DECREF(pResult);
-			if (buf)
+			if(buf)
 				pkg_free(buf);
-			if (srcbuf) pkg_free(srcbuf);
+			if(srcbuf)
+				pkg_free(srcbuf);
 			return;
 		}
 
 		msg = PyUnicode_AsUTF8(line);
 
-		if (msg == NULL) {
+		if(msg == NULL) {
 			LM_ERR("Can't get traceback, PyUnicode_AsUTF8() has failed.\n");
 			Py_DECREF(line);
 			Py_DECREF(pResult);
-			if (buf)
+			if(buf)
 				pkg_free(buf);
-			if (srcbuf) pkg_free(srcbuf);
+			if(srcbuf)
+				pkg_free(srcbuf);
 			return;
 		}
 
@@ -128,22 +136,24 @@ void apy3s_handle_exception(const char *fmt, ...)
 		buflen += ++msglen;
 
 		buf = (char *)pkg_reallocxf(buf, buflen * sizeof(char));
-		if (!buf)
-		{
-			LM_ERR("Can't allocate memory (%lu bytes), pkg_realloc() has failed."
-					" Not enough memory.\n", (unsigned long)(buflen * sizeof(char *)));
+		if(!buf) {
+			LM_ERR("Can't allocate memory (%lu bytes), pkg_realloc() has "
+				   "failed."
+				   " Not enough memory.\n",
+					(unsigned long)(buflen * sizeof(char *)));
 			Py_DECREF(line);
 			Py_DECREF(pResult);
-			if (srcbuf) pkg_free(srcbuf);
+			if(srcbuf)
+				pkg_free(srcbuf);
 			return;
 		}
 
-		strncat(buf, msg, msglen >= buflen ? buflen-1 : msglen);
+		strncat(buf, msg, msglen >= buflen ? buflen - 1 : msglen);
 
 		Py_DECREF(line);
 	}
 
-	if (srcbuf == NULL) {
+	if(srcbuf == NULL) {
 		if(exc_exit) {
 			LM_DBG("Unhandled exception in the Python code:\n%s", buf);
 		} else {
@@ -151,16 +161,18 @@ void apy3s_handle_exception(const char *fmt, ...)
 		}
 	} else {
 		if(exc_exit) {
-			LM_DBG("%s: Unhandled exception in the Python code:\n%s", srcbuf, buf);
+			LM_DBG("%s: Unhandled exception in the Python code:\n%s", srcbuf,
+					buf);
 		} else {
-			LM_ERR("%s: Unhandled exception in the Python code:\n%s", srcbuf, buf);
+			LM_ERR("%s: Unhandled exception in the Python code:\n%s", srcbuf,
+					buf);
 		}
 	}
 
-	if (buf)
+	if(buf)
 		pkg_free(buf);
 
-	if (srcbuf)
+	if(srcbuf)
 		pkg_free(srcbuf);
 
 	Py_DECREF(pResult);
@@ -172,16 +184,16 @@ PyObject *InitTracebackModule()
 	PyObject *pModule, *pTracebackObject;
 
 	pModule = PyImport_ImportModule("traceback");
-	if (pModule == NULL) {
+	if(pModule == NULL) {
 		LM_ERR("Cannot import module 'traceback'.\n");
 		return NULL;
 	}
 
 	pTracebackObject = PyObject_GetAttrString(pModule, "format_exception");
 	Py_DECREF(pModule);
-	if (pTracebackObject == NULL || !PyCallable_Check(pTracebackObject)) {
+	if(pTracebackObject == NULL || !PyCallable_Check(pTracebackObject)) {
 		LM_ERR("AttributeError: 'module' object 'traceback' has no attribute"
-				" 'format_exception'.\n");
+			   " 'format_exception'.\n");
 		Py_XDECREF(pTracebackObject);
 		return NULL;
 	}
@@ -196,42 +208,41 @@ static char *apy3s_make_message(const char *fmt, va_list ap)
 	size_t size;
 	char *p, *np;
 
-	size = 100;     /* Guess we need no more than 100 bytes. */
+	size = 100; /* Guess we need no more than 100 bytes. */
 	p = (char *)pkg_realloc(NULL, size * sizeof(char));
-	if (!p)
-	{
+	if(!p) {
 		LM_ERR("Can't allocate memory (%lu bytes), pkg_malloc() has failed:"
-				" Not enough memory.\n", (unsigned long)(size * sizeof(char)));
+			   " Not enough memory.\n",
+				(unsigned long)(size * sizeof(char)));
 		return NULL;
 	}
 	memset(p, 0, size * sizeof(char));
 
-	while (1)
-	{
+	while(1) {
 		n = vsnprintf(p, size, fmt, ap);
 
-		if (n > -1 && n < size)
+		if(n > -1 && n < size)
 			return p;
 
-		if (n > -1)    /* glibc 2.1 */
-			size = n+1;
-		else           /* glibc 2.0 */
+		if(n > -1) /* glibc 2.1 */
+			size = n + 1;
+		else /* glibc 2.0 */
 			size *= 2;
 
 		np = (char *)pkg_realloc(p, size * sizeof(char));
-		if (!np)
-		{
-			LM_ERR("Can't allocate memory (%lu bytes), pkg_realloc() has failed:"
-					" Not enough memory.\n", (unsigned long)size * sizeof(char));
-			if (p)
+		if(!np) {
+			LM_ERR("Can't allocate memory (%lu bytes), pkg_realloc() has "
+				   "failed:"
+				   " Not enough memory.\n",
+					(unsigned long)size * sizeof(char));
+			if(p)
 				pkg_free(p);
 			return NULL;
-		}
-		else
+		} else
 			p = np;
 	}
 
-	return NULL;	// shall not happened, but who knows ;)
+	return NULL; // shall not happened, but who knows ;)
 }
 
 #if PY_VERSION_HEX >= 0x03070000
@@ -248,8 +259,7 @@ char *get_class_name(PyObject *y)
 #endif
 
 	p = PyObject_GetAttrString(y, "__name__");
-	if (p == NULL || p == Py_None)
-	{
+	if(p == NULL || p == Py_None) {
 		Py_XDECREF(p);
 		return NULL;
 	}
@@ -275,15 +285,13 @@ char *get_instance_class_name(PyObject *y)
 #endif
 
 	n = PyObject_GetAttrString(y, "__class__");
-	if (n == NULL || n == Py_None)
-	{
+	if(n == NULL || n == Py_None) {
 		Py_XDECREF(n);
 		return NULL;
 	}
 
 	p = PyObject_GetAttrString(n, "__name__");
-	if (p == NULL || p == Py_None)
-	{
+	if(p == NULL || p == Py_None) {
 		Py_XDECREF(p);
 		return NULL;
 	}
