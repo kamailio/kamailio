@@ -15,7 +15,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: wolletd/clang-format-checker@v1.10
         with:
-          target-ref: main
+          target-ref: master
   build:
     runs-on: ubuntu-latest
     container:
