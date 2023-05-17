@@ -145,15 +145,16 @@ void ps_presentity_db_timer_clean(unsigned int ticks, void *param)
 
 			if(uandd_to_uri(pres.user, pres.domain, &uri) < 0) {
 				LM_ERR("constructing uri from [user]=%.*s  [domain]=%.*s\n",
-					STR_FMT(&pres.user), STR_FMT(&pres.domain));
+						STR_FMT(&pres.user), STR_FMT(&pres.domain));
 				goto simple_error;
 			}
 
 			/* delete from hash table */
-			if(publ_cache_mode==PS_PCACHE_HYBRID
+			if(publ_cache_mode == PS_PCACHE_HYBRID
 					&& delete_phtable(&uri, pres.event->evp->type) < 0) {
-				LM_ERR("deleting uri[%.*s] event[%.*s] from presentity hash table\n",
-					STR_FMT(&uri), STR_FMT(&event));
+				LM_ERR("deleting uri[%.*s] event[%.*s] from presentity hash "
+					   "table\n",
+						STR_FMT(&uri), STR_FMT(&event));
 				goto simple_error;
 			}
 
@@ -167,7 +168,8 @@ void ps_presentity_db_timer_clean(unsigned int ticks, void *param)
 				}
 			} else if(pres_notifier_processes > 0) {
 				if(pa_dbf.start_transaction) {
-					if(pa_dbf.start_transaction(pa_db, pres_db_table_lock) < 0) {
+					if(pa_dbf.start_transaction(pa_db, pres_db_table_lock)
+							< 0) {
 						LM_ERR("in start_transaction\n");
 						goto error;
 					}
@@ -192,7 +194,8 @@ void ps_presentity_db_timer_clean(unsigned int ticks, void *param)
 					}
 				} else {
 					if(delete_presentity(&pres, NULL) < 0) {
-						LM_ERR("Deleting presentity uri[%.*s]\n", STR_FMT(&uri));
+						LM_ERR("Deleting presentity uri[%.*s]\n",
+								STR_FMT(&uri));
 						goto next;
 					}
 				}
@@ -216,11 +219,11 @@ void ps_presentity_db_timer_clean(unsigned int ticks, void *param)
 				}
 			}
 
-simple_error:
+		simple_error:
 			if(num_watchers == 0 && delete_presentity(&pres, NULL) < 0) {
 				LM_ERR("Deleting presentity\n");
 			}
-next:
+		next:
 			if(uri.s) {
 				pkg_free(uri.s);
 				uri.s = NULL;
@@ -281,7 +284,7 @@ void ps_ptable_timer_clean(unsigned int ticks, void *param)
 	eval = (int)time(NULL);
 	ptlist = ps_ptable_get_expired(eval);
 
-	if(ptlist==NULL) {
+	if(ptlist == NULL) {
 		return;
 	}
 	for(ptn = ptlist; ptn != NULL; ptn = ptn->next) {
@@ -298,7 +301,7 @@ void ps_ptable_timer_clean(unsigned int ticks, void *param)
 
 		if(uandd_to_uri(pres.user, pres.domain, &uri) < 0) {
 			LM_ERR("constructing uri from [user]=%.*s  [domain]=%.*s\n",
-				STR_FMT(&pres.user), STR_FMT(&pres.domain));
+					STR_FMT(&pres.user), STR_FMT(&pres.domain));
 			goto next;
 		}
 
@@ -306,15 +309,15 @@ void ps_ptable_timer_clean(unsigned int ticks, void *param)
 				pres.user.len, pres.user.s, pres.domain.len, pres.domain.s);
 
 		if(pres_force_delete == 1) {
-			if(ps_ptable_remove(ptn) <0) {
+			if(ps_ptable_remove(ptn) < 0) {
 				LM_ERR("Deleting presentity\n");
 				goto next;
 			}
 		} else {
 			if(pres.event->get_rules_doc
 					&& pres.event->get_rules_doc(
-								&pres.user, &pres.domain, &rules_doc)
-								< 0) {
+							   &pres.user, &pres.domain, &rules_doc)
+							   < 0) {
 				LM_ERR("getting rules doc\n");
 				goto next;
 			}
@@ -324,7 +327,7 @@ void ps_ptable_timer_clean(unsigned int ticks, void *param)
 			}
 		}
 
-next:
+	next:
 		if(uri.s) {
 			pkg_free(uri.s);
 			uri.s = NULL;
@@ -339,7 +342,7 @@ next:
 	}
 
 	for(ptn = ptlist; ptn != NULL; ptn = ptn->next) {
-		if(ps_ptable_remove(ptn) <0) {
+		if(ps_ptable_remove(ptn) < 0) {
 			LM_ERR("failed deleting presentity item\n");
 		}
 	}
@@ -546,8 +549,9 @@ int ki_handle_publish_uri(struct sip_msg *msg, str *sender_uri)
 	}
 
 	/* query the database and update or insert */
-	if(update_presentity(msg, presentity, &body, etag_gen, &sent_reply,
-			sphere, NULL, NULL, 0) < 0) {
+	if(update_presentity(msg, presentity, &body, etag_gen, &sent_reply, sphere,
+			   NULL, NULL, 0)
+			< 0) {
 		LM_ERR("when updating presentity\n");
 		goto error;
 	}
