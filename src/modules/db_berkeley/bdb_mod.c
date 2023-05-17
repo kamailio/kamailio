@@ -62,23 +62,21 @@ static void bdb_mod_destroy(void);
 /*
  * Exported functions
  */
-static cmd_export_t cmds[] = {
-	{"db_ctx", (cmd_function)NULL, 0, 0, 0, 0},
-	{"db_con", (cmd_function)bdb_con, 0, 0, 0, 0},
-	{"db_uri", (cmd_function)bdb_uri, 0, 0, 0, 0},
-	{"db_cmd", (cmd_function)bdb_cmd, 0, 0, 0, 0},
-	{"db_put", (cmd_function)bdb_cmd_exec, 0, 0, 0, 0},
-	{"db_del", (cmd_function)bdb_cmd_exec, 0, 0, 0, 0},
-	{"db_get", (cmd_function)bdb_cmd_exec, 0, 0, 0, 0},
-	{"db_upd", (cmd_function)bdb_cmd_exec, 0, 0, 0, 0},
-	{"db_sql", (cmd_function)bdb_cmd_exec, 0, 0, 0, 0},
-	{"db_first", (cmd_function)bdb_cmd_first, 0, 0, 0, 0},
-	{"db_next", (cmd_function)bdb_cmd_next, 0, 0, 0, 0},
-	{"db_res", (cmd_function)bdb_res, 0, 0, 0, 0},
-	{"db_fld", (cmd_function)bdb_fld, 0, 0, 0, 0},
-	{"db_bind_api", (cmd_function)bdb_bind_api, 0, 0, 0, 0},
-	{0, 0, 0, 0, 0, 0}
-};
+static cmd_export_t cmds[] = {{"db_ctx", (cmd_function)NULL, 0, 0, 0, 0},
+		{"db_con", (cmd_function)bdb_con, 0, 0, 0, 0},
+		{"db_uri", (cmd_function)bdb_uri, 0, 0, 0, 0},
+		{"db_cmd", (cmd_function)bdb_cmd, 0, 0, 0, 0},
+		{"db_put", (cmd_function)bdb_cmd_exec, 0, 0, 0, 0},
+		{"db_del", (cmd_function)bdb_cmd_exec, 0, 0, 0, 0},
+		{"db_get", (cmd_function)bdb_cmd_exec, 0, 0, 0, 0},
+		{"db_upd", (cmd_function)bdb_cmd_exec, 0, 0, 0, 0},
+		{"db_sql", (cmd_function)bdb_cmd_exec, 0, 0, 0, 0},
+		{"db_first", (cmd_function)bdb_cmd_first, 0, 0, 0, 0},
+		{"db_next", (cmd_function)bdb_cmd_next, 0, 0, 0, 0},
+		{"db_res", (cmd_function)bdb_res, 0, 0, 0, 0},
+		{"db_fld", (cmd_function)bdb_fld, 0, 0, 0, 0},
+		{"db_bind_api", (cmd_function)bdb_bind_api, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0}};
 
 /*
  * Exported parameters
@@ -89,16 +87,16 @@ static param_export_t params[] = {{"auto_reload", INT_PARAM, &auto_reload},
 		{0, 0, 0}};
 
 struct module_exports exports = {
-	"db_berkeley",   /* module name */
-	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,            /* cmd (cfg function) exports */
-	params,          /* param exports */
-	0,               /* RPC method exports */
-	0,               /* pseudo-variables exports */
-	0,               /* response handling function */
-	bdb_mod_init,    /* module init function */
-	0,               /* per-child init function */
-	bdb_mod_destroy  /* module destroy function */
+		"db_berkeley",	 /* module name */
+		DEFAULT_DLFLAGS, /* dlopen flags */
+		cmds,			 /* cmd (cfg function) exports */
+		params,			 /* param exports */
+		0,				 /* RPC method exports */
+		0,				 /* pseudo-variables exports */
+		0,				 /* response handling function */
+		bdb_mod_init,	 /* module init function */
+		0,				 /* per-child init function */
+		bdb_mod_destroy	 /* module destroy function */
 };
 
 int mod_register(char *path, int *dlflags, void *p1, void *p2)

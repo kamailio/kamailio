@@ -138,7 +138,7 @@ int bdblib_close(bdb_db_p _db_p, str *dirpath)
 
 			if(_tbc->dtp->name.len == dirpath->len
 					&& !strncasecmp(
-							   _tbc->dtp->name.s, dirpath->s, dirpath->len)) {
+							_tbc->dtp->name.s, dirpath->s, dirpath->len)) {
 				DBG("DB %.*s \n", dirpath->len, dirpath->s);
 				_db = _tbc->dtp->db;
 				if(_db)
@@ -229,7 +229,7 @@ int bdblib_reopen(bdb_db_p _db_p, str *dirpath)
 
 			if(_tbc->dtp->name.len == dirpath->len
 					&& !strncasecmp(
-							   _tbc->dtp->name.s, dirpath->s, dirpath->len)) {
+							_tbc->dtp->name.s, dirpath->s, dirpath->len)) {
 				ERR("DB %.*s \n", dirpath->len, dirpath->s);
 				if(!_tbc->dtp->db) {
 					if((rc = db_create(&_db, _env, 0)) != 0) {

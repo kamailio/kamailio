@@ -96,8 +96,8 @@ typedef struct _table
 	int nkeys;
 	int ro;		  /*db readonly flag*/
 	int logflags; /*flags indication what-where to journal log */
-	FILE *fp;	 /*jlog file pointer */
-	time_t t;	 /*jlog creation time */
+	FILE *fp;	  /*jlog file pointer */
+	time_t t;	  /*jlog creation time */
 	ino_t ino;
 } table_t, *table_p;
 
