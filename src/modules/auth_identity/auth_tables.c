@@ -38,56 +38,57 @@
 #include "../../core/hashes.h"
 #include "auth_identity.h"
 
-#define lock_element(_cell)            lock_get(&((_cell)->lock))
-#define release_element(_cell)         lock_release(&((_cell)->lock))
+#define lock_element(_cell) lock_get(&((_cell)->lock))
+#define release_element(_cell) lock_release(&((_cell)->lock))
 
 static int insert_into_table(ttable *ptable, void *pdata, unsigned int uhash);
 static void remove_from_table_unsafe(ttable *ptable, titem *pitem);
 static void remove_least(ttable *ptable, unsigned int uhash);
-static void* search_item_in_table_unsafe(ttable *ptable,
-								  		 const void *pneedle,
-								  		 unsigned int uhash);
+static void *search_item_in_table_unsafe(
+		ttable *ptable, const void *pneedle, unsigned int uhash);
 
-time_t glb_tnow=0;	/* we need for this for certificate expiration check when
+time_t glb_tnow = 0; /* we need for this for certificate expiration check when
 					 * we've to remove the least item from a table */
 
-int init_table(ttable **ptable,	/* table we'd like to init */
-			   unsigned int ubucknum,	/* number of buckets */
-			   unsigned int uitemlim,	/* maximum number of table intems */
-			   table_item_cmp *fcmp,	/* compare function used by search */
-			   table_item_searchinit *fsinit, /* inits the least item searcher function */
-			   table_item_cmp *fleast,	/* returns the less item;
+int init_table(ttable **ptable, /* table we'd like to init */
+		unsigned int ubucknum,	/* number of buckets */
+		unsigned int uitemlim,	/* maximum number of table intems */
+		table_item_cmp *fcmp,	/* compare function used by search */
+		table_item_searchinit
+				*fsinit,		/* inits the least item searcher function */
+		table_item_cmp *fleast, /* returns the less item;
 										 * used by item remover */
-			   table_item_free *ffree,	/* frees the data part of an item */
-			   table_item_gc *fgc)	/* tells whether an item is garbage  */
+		table_item_free *ffree, /* frees the data part of an item */
+		table_item_gc *fgc)		/* tells whether an item is garbage  */
 {
 	int i1;
 
-	if (!(*ptable = (ttable *) shm_malloc(sizeof(**ptable)))) {
+	if(!(*ptable = (ttable *)shm_malloc(sizeof(**ptable)))) {
 		SHM_MEM_ERROR;
 		return -1;
 	}
 	memset(*ptable, 0, sizeof(**ptable));
 
-	if (!((*ptable)->entries = (tbucket *) shm_malloc(sizeof(tbucket)*ubucknum))) {
+	if(!((*ptable)->entries =
+					   (tbucket *)shm_malloc(sizeof(tbucket) * ubucknum))) {
 		SHM_MEM_ERROR;
 		shm_free(*ptable);
 		return -1;
 	}
-	memset((*ptable)->entries, 0, sizeof(tbucket)*ubucknum);
-	for (i1=0; i1<ubucknum; i1++) {
+	memset((*ptable)->entries, 0, sizeof(tbucket) * ubucknum);
+	for(i1 = 0; i1 < ubucknum; i1++) {
 		(*ptable)->entries[i1].pfirst = NULL;
 		lock_init(&(*ptable)->entries[i1].lock);
 	}
 
-	(*ptable)->uitemlim=uitemlim;
-	(*ptable)->ubuckets=ubucknum;
+	(*ptable)->uitemlim = uitemlim;
+	(*ptable)->ubuckets = ubucknum;
 
-	(*ptable)->fcmp=fcmp;
-	(*ptable)->fsearchinit=fsinit;
-	(*ptable)->fleast=fleast;
-	(*ptable)->ffree=ffree;
-	(*ptable)->fgc=fgc;
+	(*ptable)->fcmp = fcmp;
+	(*ptable)->fsearchinit = fsinit;
+	(*ptable)->fleast = fleast;
+	(*ptable)->ffree = ffree;
+	(*ptable)->fgc = fgc;
 
 	return 0;
 }
@@ -97,13 +98,12 @@ void free_table(ttable *ptable)
 	unsigned int u1;
 	titem *pitem, *previtem;
 
-	if (ptable) {
-		for (u1=0; u1 < ptable->ubuckets; u1++)
-		{
-			pitem=ptable->entries[u1].pfirst;
-			while (pitem) {
-				previtem=pitem;
-				pitem=pitem->pnext;
+	if(ptable) {
+		for(u1 = 0; u1 < ptable->ubuckets; u1++) {
+			pitem = ptable->entries[u1].pfirst;
+			while(pitem) {
+				previtem = pitem;
+				pitem = pitem->pnext;
 
 				ptable->ffree(previtem->pdata);
 				shm_free(previtem);
@@ -119,25 +119,25 @@ static int insert_into_table(ttable *ptable, void *pdata, unsigned int uhash)
 {
 	tbucket *pbucket;
 	titem *pitem;
-	char bneed2remove=0;
+	char bneed2remove = 0;
 
-	if (!(pitem=(titem *)shm_malloc(sizeof(*pitem)))) {
+	if(!(pitem = (titem *)shm_malloc(sizeof(*pitem)))) {
 		SHM_MEM_ERROR;
 		return -1;
 	}
 
 	memset(pitem, 0, sizeof(*pitem));
-	pitem->uhash=uhash;
-	pitem->pdata=pdata;
+	pitem->uhash = uhash;
+	pitem->pdata = pdata;
 
 	lock_element(ptable);
 	/* if there is not enough room for this item then we'll remove one */
-	if (ptable->unum >= ptable->uitemlim)
-		bneed2remove=1;
+	if(ptable->unum >= ptable->uitemlim)
+		bneed2remove = 1;
 	ptable->unum++;
 	release_element(ptable);
 
-	if (bneed2remove)
+	if(bneed2remove)
 		remove_least(ptable, uhash);
 
 	/* locates the appropriate bucket */
@@ -145,10 +145,11 @@ static int insert_into_table(ttable *ptable, void *pdata, unsigned int uhash)
 
 	/* insert into that bucket */
 	lock_element(pbucket);
-	if (pbucket->plast) {
+	if(pbucket->plast) {
 		pbucket->plast->pnext = pitem;
 		pitem->pprev = pbucket->plast;
-	} else pbucket->pfirst = pitem;
+	} else
+		pbucket->pfirst = pitem;
 	pbucket->plast = pitem;
 	release_element(pbucket);
 
@@ -162,17 +163,17 @@ static void remove_from_table_unsafe(ttable *ptable, titem *pitem)
 	tbucket *pbucket = &(ptable->entries[pitem->uhash]);
 
 	/* unlink the cell from entry list */
-	if (pitem->pprev)
+	if(pitem->pprev)
 		pitem->pprev->pnext = pitem->pnext;
 	else
 		pbucket->pfirst = pitem->pnext;
 
-	if (pitem->pnext)
+	if(pitem->pnext)
 		pitem->pnext->pprev = pitem->pprev;
 	else
 		pbucket->plast = pitem->pprev;
 
-	if (ptable->ffree)
+	if(ptable->ffree)
 		ptable->ffree(pitem->pdata);
 
 	shm_free(pitem);
@@ -184,23 +185,23 @@ static void remove_least(ttable *ptable, unsigned int uhash)
 {
 	tbucket *pbucket;
 	unsigned int u1, uhashnow;
-	titem *pleastitem=NULL, *pnow;
+	titem *pleastitem = NULL, *pnow;
 	int ires;
 
-	if (!ptable->fleast)
-		return ;
-	if (ptable->fsearchinit)
+	if(!ptable->fleast)
+		return;
+	if(ptable->fsearchinit)
 		ptable->fsearchinit();
 
-	for (uhashnow=uhash,u1=0, pbucket=&(ptable->entries[uhash]);
-		 u1 < ptable->ubuckets;
-		 u1++,pbucket=&(ptable->entries[uhashnow])) {
+	for(uhashnow = uhash, u1 = 0, pbucket = &(ptable->entries[uhash]);
+			u1 < ptable->ubuckets;
+			u1++, pbucket = &(ptable->entries[uhashnow])) {
 
 		lock_element(pbucket);
 		/* if there any item in this bucket */
-		for (pnow=pbucket->pfirst;pnow;pnow=pnow->pnext) {
-			if (!pleastitem) {
-				pleastitem=pnow;
+		for(pnow = pbucket->pfirst; pnow; pnow = pnow->pnext) {
+			if(!pleastitem) {
+				pleastitem = pnow;
 				continue;
 			}
 
@@ -212,18 +213,18 @@ static void remove_least(ttable *ptable, unsigned int uhash)
 			-2	s1 is the least
 			-3  s2 is the least
 			 */
-			ires=ptable->fleast(pleastitem->pdata, pnow->pdata);
-			if (ires==1)
-				pleastitem=pnow;
-			if (ires==-2)
+			ires = ptable->fleast(pleastitem->pdata, pnow->pdata);
+			if(ires == 1)
+				pleastitem = pnow;
+			if(ires == -2)
 				break;
-			if (ires==-3) {
-				pleastitem=pnow;
+			if(ires == -3) {
+				pleastitem = pnow;
 				break;
 			}
 		}
 		/* we found the least item in this bucket */
-		if (pleastitem) {
+		if(pleastitem) {
 
 			lock_element(ptable);
 			ptable->unum--;
@@ -231,35 +232,34 @@ static void remove_least(ttable *ptable, unsigned int uhash)
 
 			remove_from_table_unsafe(ptable, pleastitem);
 			release_element(pbucket);
-			return ;
+			return;
 		}
 		release_element(pbucket);
 
 
 		/* we're in the last bucket so we start with the first one */
-		if (uhashnow + 1 == ptable->ubuckets)
-			uhashnow=0;
+		if(uhashnow + 1 == ptable->ubuckets)
+			uhashnow = 0;
 		else
-		/* we step to the next bucket */
+			/* we step to the next bucket */
 			uhashnow++;
 	}
 }
 
 /* looks for an item in the scepifiad bucket */
-static void* search_item_in_table_unsafe(ttable *ptable,
-										 const void *pneedle,
-										 unsigned int uhash)
+static void *search_item_in_table_unsafe(
+		ttable *ptable, const void *pneedle, unsigned int uhash)
 {
 	tbucket *pbucket = &(ptable->entries[uhash]);
 	titem *pnow;
-	void *pret=NULL;
+	void *pret = NULL;
 
-	if (!ptable->fcmp)
+	if(!ptable->fcmp)
 		return NULL;
 
-	for (pnow=pbucket->pfirst;pnow;pnow=pnow->pnext) {
-		if (!ptable->fcmp(pneedle, pnow->pdata)) {
-			pret=pnow->pdata;
+	for(pnow = pbucket->pfirst; pnow; pnow = pnow->pnext) {
+		if(!ptable->fcmp(pneedle, pnow->pdata)) {
+			pret = pnow->pdata;
 			break;
 		}
 	}
@@ -277,38 +277,38 @@ void garbage_collect(ttable *ptable, int ihashstart, int ihashend)
 
 
 	/* there is not any garbage collector function available */
-	if (!ptable->fgc)
+	if(!ptable->fgc)
 		return;
 
-	if (ptable->fsearchinit)
+	if(ptable->fsearchinit)
 		ptable->fsearchinit();
 
 	lock_element(ptable);
-	unum=ptable->unum;
+	unum = ptable->unum;
 	release_element(ptable);
 
 	/* if the half of the table is used or there is not so many items in a bucket
 	   then we return */
-// 	if (unum < ptable->uitemlim/2 && unum < ptable->ubuckets*ITEM_IN_BUCKET_LIMIT)
-// 		return ;
- 	if (!unum)
- 		return ;
+	// 	if (unum < ptable->uitemlim/2 && unum < ptable->ubuckets*ITEM_IN_BUCKET_LIMIT)
+	// 		return ;
+	if(!unum)
+		return;
 
-	for (i1=ihashstart; i1<=ihashend; i1++) {
-		uremoved=0;
-		pbucket=&(ptable->entries[i1]);
+	for(i1 = ihashstart; i1 <= ihashend; i1++) {
+		uremoved = 0;
+		pbucket = &(ptable->entries[i1]);
 
 		lock_element(pbucket);
-		for (pnow=pbucket->pfirst;pnow;pnow=pnow->pnext) {
-			if (ptable->fgc(pnow->pdata)) {
+		for(pnow = pbucket->pfirst; pnow; pnow = pnow->pnext) {
+			if(ptable->fgc(pnow->pdata)) {
 				remove_from_table_unsafe(ptable, pnow);
 				uremoved++;
 			}
 		}
 		/* if we removed any item from table then we would update the item counter */
-		if (uremoved) {
+		if(uremoved) {
 			lock_element(ptable);
-			ptable->unum-=uremoved;
+			ptable->unum -= uremoved;
 			release_element(ptable);
 		}
 		release_element(pbucket);
@@ -319,11 +319,11 @@ void garbage_collect(ttable *ptable, int ihashstart, int ihashend)
 /*
  * Make a copy of a str structure using shm_malloc
  */
-static int str_duplicate(str* _d, str* _s)
+static int str_duplicate(str *_d, str *_s)
 {
 
-	_d->s = (char *)shm_malloc(sizeof(char)*(_s->len));
-	if (!_d->s) {
+	_d->s = (char *)shm_malloc(sizeof(char) * (_s->len));
+	if(!_d->s) {
 		SHM_MEM_ERROR;
 		return -1;
 	}
@@ -340,26 +340,28 @@ static int str_duplicate(str* _d, str* _s)
  */
 int cert_item_cmp(const void *s1, const void *s2)
 {
-	tcert_item *p1=(tcert_item*)s1, *p2=(tcert_item*)s2;
+	tcert_item *p1 = (tcert_item *)s1, *p2 = (tcert_item *)s2;
 
-	return !(p1->surl.len==p2->surl.len && !memcmp(p1->surl.s, p2->surl.s, p2->surl.len));
+	return !(p1->surl.len == p2->surl.len
+			 && !memcmp(p1->surl.s, p2->surl.s, p2->surl.len));
 }
 
 void cert_item_init()
 {
 	/* we need for this for certificate expiration check when
 	 * we've to remove an item from the table */
-	glb_tnow=time(0);
+	glb_tnow = time(0);
 }
 
 /* we remove a certificate if expired or if accessed less than another */
 int cert_item_least(const void *s1, const void *s2)
 {
-	if (((tcert_item *)s1)->ivalidbefore < glb_tnow)
+	if(((tcert_item *)s1)->ivalidbefore < glb_tnow)
 		return -2;
-	if (((tcert_item *)s2)->ivalidbefore < glb_tnow)
+	if(((tcert_item *)s2)->ivalidbefore < glb_tnow)
 		return -3;
-	return (((tcert_item *)s1)->uaccessed < ((tcert_item *)s2)->uaccessed) ? -1 : 1;
+	return (((tcert_item *)s1)->uaccessed < ((tcert_item *)s2)->uaccessed) ? -1
+																		   : 1;
 }
 
 /* frees a certificate item */
@@ -374,28 +376,27 @@ void cert_item_free(const void *sitem)
    table item */
 int get_cert_from_table(ttable *ptable, str *skey, tcert_item *ptarget)
 {
-	tcert_item* tmp_tcert_item;
+	tcert_item *tmp_tcert_item;
 	unsigned int uhash;
-	int iret=0;
+	int iret = 0;
 
-	uhash=get_hash1_raw(skey->s, skey->len) & (CERTIFICATE_TABLE_ENTRIES-1);
+	uhash = get_hash1_raw(skey->s, skey->len) & (CERTIFICATE_TABLE_ENTRIES - 1);
 
 	/* we lock the whole bucket */
 	lock_element(&ptable->entries[uhash]);
 
-	tmp_tcert_item = search_item_in_table_unsafe(ptable,
-												 (const void *)skey,
-												 uhash);
+	tmp_tcert_item =
+			search_item_in_table_unsafe(ptable, (const void *)skey, uhash);
 	/* make a copy of found certificate and after the certificate
 	 * verification we'll add it to certificate table */
-	if (tmp_tcert_item) {
-		memcpy(ptarget->scertpem.s, tmp_tcert_item->scertpem.s, tmp_tcert_item->scertpem.len);
-		ptarget->scertpem.len=tmp_tcert_item->scertpem.len;
+	if(tmp_tcert_item) {
+		memcpy(ptarget->scertpem.s, tmp_tcert_item->scertpem.s,
+				tmp_tcert_item->scertpem.len);
+		ptarget->scertpem.len = tmp_tcert_item->scertpem.len;
 		/* we accessed this certificate */
 		tmp_tcert_item->uaccessed++;
-	}
-	else
-		iret=1;
+	} else
+		iret = 1;
 
 	release_element(&ptable->entries[uhash]);
 
@@ -408,23 +409,24 @@ int addcert2table(ttable *ptable, tcert_item *pcert)
 	tcert_item *pshmcert;
 	unsigned int uhash;
 
-	if (!(pshmcert=(tcert_item *)shm_malloc(sizeof(*pshmcert)))) {
+	if(!(pshmcert = (tcert_item *)shm_malloc(sizeof(*pshmcert)))) {
 		SHM_MEM_ERROR;
 		return -1;
 	}
 	memset(pshmcert, 0, sizeof(*pshmcert));
-	if (str_duplicate(&pshmcert->surl, &pcert->surl))
+	if(str_duplicate(&pshmcert->surl, &pcert->surl))
 		return -2;
 
-	if (str_duplicate(&pshmcert->scertpem, &pcert->scertpem))
+	if(str_duplicate(&pshmcert->scertpem, &pcert->scertpem))
 		return -3;
 
-	pshmcert->ivalidbefore=pcert->ivalidbefore;
-	pshmcert->uaccessed=1;
+	pshmcert->ivalidbefore = pcert->ivalidbefore;
+	pshmcert->uaccessed = 1;
 
-	uhash=get_hash1_raw(pcert->surl.s, pcert->surl.len) & (CERTIFICATE_TABLE_ENTRIES-1);
+	uhash = get_hash1_raw(pcert->surl.s, pcert->surl.len)
+			& (CERTIFICATE_TABLE_ENTRIES - 1);
 
-	if (insert_into_table(ptable, (void*)pshmcert, uhash))
+	if(insert_into_table(ptable, (void *)pshmcert, uhash))
 		return -4;
 
 	return 0;
@@ -438,25 +440,28 @@ int addcert2table(ttable *ptable, tcert_item *pcert)
 
 int cid_item_cmp(const void *s1, const void *s2)
 {
-	tcid_item *p1=(tcid_item*)s1, *p2=(tcid_item*)s2;
+	tcid_item *p1 = (tcid_item *)s1, *p2 = (tcid_item *)s2;
 
-	return !(p1->scid.len==p2->scid.len && !memcmp(p1->scid.s, p2->scid.s, p2->scid.len));
+	return !(p1->scid.len == p2->scid.len
+			 && !memcmp(p1->scid.s, p2->scid.s, p2->scid.len));
 }
 
 void cid_item_init()
 {
-	glb_tnow=time(0);
+	glb_tnow = time(0);
 }
 
 /* we remove a call-id if older than another */
 int cid_item_least(const void *s1, const void *s2)
 {
-	if (((tcid_item *)s1)->ivalidbefore < glb_tnow)
+	if(((tcid_item *)s1)->ivalidbefore < glb_tnow)
 		return -2;
-	if (((tcid_item *)s2)->ivalidbefore < glb_tnow)
+	if(((tcid_item *)s2)->ivalidbefore < glb_tnow)
 		return -3;
 
-	return (((tcid_item *)s1)->ivalidbefore < ((tcid_item *)s2)->ivalidbefore) ? -1 : 1;
+	return (((tcid_item *)s1)->ivalidbefore < ((tcid_item *)s2)->ivalidbefore)
+				   ? -1
+				   : 1;
 }
 
 /* tells whether an item is garbage */
@@ -468,28 +473,25 @@ int cid_item_gc(const void *s1)
 /* frees a call-id item */
 void cid_item_free(const void *sitem)
 {
-	tcid_item *pcid=(tcid_item *)sitem;
+	tcid_item *pcid = (tcid_item *)sitem;
 	tdlg_item *pdlgs, *pdlgs_next;
 
 	shm_free(pcid->scid.s);
 
-	pdlgs_next=pcid->pdlgs;
-	while (pdlgs_next) {
-		pdlgs=pdlgs_next;
-		pdlgs_next=pdlgs_next->pnext;
-		shm_free (pdlgs->sftag.s);
-		shm_free (pdlgs);
+	pdlgs_next = pcid->pdlgs;
+	while(pdlgs_next) {
+		pdlgs = pdlgs_next;
+		pdlgs_next = pdlgs_next->pnext;
+		shm_free(pdlgs->sftag.s);
+		shm_free(pdlgs);
 	}
 
 	shm_free((tcert_item *)sitem);
 }
 
 /* inserts a callid item to table, and removes the least item if the table is full */
-int proc_cid(ttable *ptable,
-			 str *scid,
-			 str *sftag,
-			 unsigned int ucseq,
-			 time_t ivalidbefore)
+int proc_cid(ttable *ptable, str *scid, str *sftag, unsigned int ucseq,
+		time_t ivalidbefore)
 {
 	tcid_item *pshmcid, *pcid_item;
 	tdlg_item *pshmdlg, *pdlg_item, *pdlg_item_prev;
@@ -497,33 +499,32 @@ int proc_cid(ttable *ptable,
 
 	/* we suppose that this SIP request is not replayed so it doesn't exist in
 	   the table so we prepare to insert */
-	if (!(pshmdlg=(tdlg_item *)shm_malloc(sizeof(*pshmdlg)))) {
+	if(!(pshmdlg = (tdlg_item *)shm_malloc(sizeof(*pshmdlg)))) {
 		SHM_MEM_ERROR;
 		return -1;
 	}
 	memset(pshmdlg, 0, sizeof(*pshmdlg));
-	if (str_duplicate(&pshmdlg->sftag, sftag))
+	if(str_duplicate(&pshmdlg->sftag, sftag))
 		return -2;
-	pshmdlg->ucseq=ucseq;
+	pshmdlg->ucseq = ucseq;
 
 
 	/* we're looking for this call-id item if exists */
-	uhash=get_hash1_raw(scid->s, scid->len) & (CALLID_TABLE_ENTRIES-1);
+	uhash = get_hash1_raw(scid->s, scid->len) & (CALLID_TABLE_ENTRIES - 1);
 
 	lock_element(&ptable->entries[uhash]);
 
 	pcid_item = search_item_in_table_unsafe(ptable,
-											(const void *)scid, /* Call-id is the key */
-											uhash);
+			(const void *)scid, /* Call-id is the key */
+			uhash);
 	/* we've found one call-id so we're looking for the required SIP request */
-	if (pcid_item) {
-		for (pdlg_item=pcid_item->pdlgs, pdlg_item_prev=NULL;
-		     pdlg_item;
-			 pdlg_item=pdlg_item->pnext) {
-			if (pdlg_item->sftag.len==sftag->len
-				&& !memcmp(pdlg_item->sftag.s, sftag->s, sftag->len)) {
+	if(pcid_item) {
+		for(pdlg_item = pcid_item->pdlgs, pdlg_item_prev = NULL; pdlg_item;
+				pdlg_item = pdlg_item->pnext) {
+			if(pdlg_item->sftag.len == sftag->len
+					&& !memcmp(pdlg_item->sftag.s, sftag->s, sftag->len)) {
 				/* we found this call with this from tag */
-				if (pdlg_item->ucseq>=ucseq) {
+				if(pdlg_item->ucseq >= ucseq) {
 					/* we've found this or older request in the table!
 					   this call is replayed! */
 					release_element(&ptable->entries[uhash]);
@@ -534,7 +535,7 @@ int proc_cid(ttable *ptable,
 				} else {
 					/* this is another later request whithin this dialog so we
 					   update the saved cseq */
-					pdlg_item->ucseq=ucseq;
+					pdlg_item->ucseq = ucseq;
 					release_element(&ptable->entries[uhash]);
 
 					shm_free(pshmdlg->sftag.s);
@@ -543,33 +544,32 @@ int proc_cid(ttable *ptable,
 				}
 			}
 			/* we save the previous dialog item in order to append a new item more easily */
-			pdlg_item_prev ?
-				(pdlg_item_prev=pdlg_item_prev->pnext) :
-				(pdlg_item_prev=pdlg_item);
+			pdlg_item_prev ? (pdlg_item_prev = pdlg_item_prev->pnext)
+						   : (pdlg_item_prev = pdlg_item);
 		}
 		/* we append this to item dialogs*/
-		pdlg_item_prev->pnext=pshmdlg;
+		pdlg_item_prev->pnext = pshmdlg;
 		/* this is the latest request; we hold all request concerned this
 		   call-id until the latest request is valid */
-		pcid_item->ivalidbefore=ivalidbefore;
+		pcid_item->ivalidbefore = ivalidbefore;
 	}
 
 	release_element(&ptable->entries[uhash]);
 
-	if (!pcid_item) {
+	if(!pcid_item) {
 		/* this is the first request with this call-id */
-		if (!(pshmcid=(tcid_item *)shm_malloc(sizeof(*pshmcid)))) {
+		if(!(pshmcid = (tcid_item *)shm_malloc(sizeof(*pshmcid)))) {
 			SHM_MEM_ERROR;
 			shm_free(pshmdlg);
 			return -4;
 		}
 		memset(pshmcid, 0, sizeof(*pshmcid));
-		if (str_duplicate(&pshmcid->scid, scid)) {
+		if(str_duplicate(&pshmcid->scid, scid)) {
 			return -5;
 		}
-		pshmcid->ivalidbefore=ivalidbefore;
-		pshmcid->pdlgs=pshmdlg;
-		if (insert_into_table(ptable, (void*)pshmcid, uhash))
+		pshmcid->ivalidbefore = ivalidbefore;
+		pshmcid->pdlgs = pshmdlg;
+		if(insert_into_table(ptable, (void *)pshmcid, uhash))
 			return -6;
 	}
 
