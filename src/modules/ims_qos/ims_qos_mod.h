@@ -45,7 +45,7 @@
 
 
 #ifndef MOD_H
-#define	MOD_H
+#define MOD_H
 
 #define MOD_NAME "ims_qos"
 
@@ -54,16 +54,15 @@
 struct AAAMessage;
 struct pcontact;
 
-AAAMessage* callback_cdp_request(AAAMessage *request, void *param);
-void callback_for_cdp_session(int event,void *session);
+AAAMessage *callback_cdp_request(AAAMessage *request, void *param);
+void callback_for_cdp_session(int event, void *session);
 
-void callback_dialog(struct dlg_cell* dlg, int type, struct dlg_cb_params * params);
+void callback_dialog(
+		struct dlg_cell *dlg, int type, struct dlg_cb_params *params);
 
 void callback_pcscf_contact_cb(struct pcontact *c, int type, void *param);
 
 int create_return_code(int result);
 
 
-
-#endif	/* MOD_H */
-
+#endif /* MOD_H */

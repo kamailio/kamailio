@@ -44,22 +44,25 @@
  */
 
 #ifndef CDPEVENTPROCESSOR
-#define	CDPEVENTPROCESSOR
+#define CDPEVENTPROCESSOR
 
 #include "../../core/locking.h"
 #include "sem.h"
 #include "rx_authdata.h"
 #include "../../core/str.h"
 
-typedef struct _cdp_cb_event{
-	int event;							/* event id */
-	time_t registered;					/* time event was added to list - useful if we want to report on things that have taken too long to process */
-	rx_authsessiondata_t *session_data;	/* associated auth session data - can be null */
+typedef struct _cdp_cb_event
+{
+	int event;		   /* event id */
+	time_t registered; /* time event was added to list - useful if we want to report on things that have taken too long to process */
+	rx_authsessiondata_t
+			*session_data; /* associated auth session data - can be null */
 	str rx_session_id;
 	struct _cdp_cb_event *next;
 } cdp_cb_event_t;
 
-typedef struct {
+typedef struct
+{
 	gen_lock_t *lock;
 	cdp_cb_event_t *head;
 	cdp_cb_event_t *tail;
@@ -73,10 +76,11 @@ extern str confirmed_qosrelease_headers;
 int init_cdp_cb_event_list();
 void destroy_cdp_cb_event_list();
 
-cdp_cb_event_t* new_cdp_cb_event (int event, str *rx_session_id, rx_authsessiondata_t *session_data); 			/*create new event*/
-void push_cdp_cb_event(cdp_cb_event_t* event);	/*add event to stack*/
-cdp_cb_event_t* pop_cdp_cb_event();				/*pop next (head) event off list*/
-void free_cdp_cb_event(cdp_cb_event_t*);		/*free memory allocated for event*/
+cdp_cb_event_t *new_cdp_cb_event(int event, str *rx_session_id,
+		rx_authsessiondata_t *session_data);   /*create new event*/
+void push_cdp_cb_event(cdp_cb_event_t *event); /*add event to stack*/
+cdp_cb_event_t *pop_cdp_cb_event();		  /*pop next (head) event off list*/
+void free_cdp_cb_event(cdp_cb_event_t *); /*free memory allocated for event*/
 
 void cdp_cb_event_process();
 
