@@ -27,17 +27,17 @@
  * Create a new connection structure,
  * open the mongodb connection and set reference count to 1
  */
-km_mongodb_con_t* db_mongodb_new_connection(const struct db_id* id)
+km_mongodb_con_t *db_mongodb_new_connection(const struct db_id *id)
 {
 	km_mongodb_con_t *ptr;
 
-	if (!id) {
+	if(!id) {
 		LM_ERR("invalid parameter value\n");
 		return 0;
 	}
 
-	ptr = (km_mongodb_con_t*)pkg_malloc(sizeof(km_mongodb_con_t));
-	if (!ptr) {
+	ptr = (km_mongodb_con_t *)pkg_malloc(sizeof(km_mongodb_con_t));
+	if(!ptr) {
 		LM_ERR("no private memory left\n");
 		return 0;
 	}
@@ -46,19 +46,20 @@ km_mongodb_con_t* db_mongodb_new_connection(const struct db_id* id)
 	ptr->ref = 1;
 
 	mongoc_init();
-	ptr->con = mongoc_client_new (id->url.s);
-	if (!ptr->con) {
+	ptr->con = mongoc_client_new(id->url.s);
+	if(!ptr->con) {
 		LM_ERR("cannot open connection: %.*s\n", id->url.len, id->url.s);
 		goto err;
 	}
 
 	LM_DBG("connection open to: %.*s\n", id->url.len, id->url.s);
 
-	ptr->id = (struct db_id*)id;
+	ptr->id = (struct db_id *)id;
 	return ptr;
 
- err:
-	if (ptr) pkg_free(ptr);
+err:
+	if(ptr)
+		pkg_free(ptr);
 	return 0;
 }
 
@@ -66,16 +67,18 @@ km_mongodb_con_t* db_mongodb_new_connection(const struct db_id* id)
 /*! \brief
  * Close the connection and release memory
  */
-void db_mongodb_free_connection(struct pool_con* con)
+void db_mongodb_free_connection(struct pool_con *con)
 {
-	km_mongodb_con_t * _c;
-	
-	if (!con) return;
+	km_mongodb_con_t *_c;
 
-	_c = (km_mongodb_con_t*) con;
+	if(!con)
+		return;
 
-	if (_c->id) free_db_id(_c->id);
-	if (_c->con) {
+	_c = (km_mongodb_con_t *)con;
+
+	if(_c->id)
+		free_db_id(_c->id);
+	if(_c->con) {
 		mongoc_client_destroy(_c->con);
 	}
 	pkg_free(_c);
