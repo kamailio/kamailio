@@ -29,19 +29,18 @@
 
 #include "config.h"
 
-struct cfg_group_siputils	default_siputils_cfg = {
-		0
-	};
+struct cfg_group_siputils default_siputils_cfg = {0};
 
-void	*siputils_cfg = &default_siputils_cfg;
+void *siputils_cfg = &default_siputils_cfg;
 
-cfg_def_t	siputils_cfg_def[] = {
-	{"ring_timeout",	CFG_VAR_INT | CFG_ATOMIC,	0, 0, ring_timeout_fixup, 0,
-		"define how long the Call-id is kept in the internal list" },
-	{0, 0, 0, 0, 0, 0}
-};
+cfg_def_t siputils_cfg_def[] = {
+		{"ring_timeout", CFG_VAR_INT | CFG_ATOMIC, 0, 0, ring_timeout_fixup, 0,
+				"define how long the Call-id is kept in the internal list"},
+		{0, 0, 0, 0, 0, 0}};
 
-int ring_timeout_fixup(void *handle, str* gname, str* name, void **val){
-	if((int)(long)*val > 0) return 0;
+int ring_timeout_fixup(void *handle, str *gname, str *name, void **val)
+{
+	if((int)(long)*val > 0)
+		return 0;
 	return -1;
 }

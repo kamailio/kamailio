@@ -29,7 +29,6 @@
  */
 
 
-
 #ifndef CHECKS_H
 #define CHECKS_H
 
@@ -39,33 +38,33 @@
 /*
  * Check if given username matches those in digest credentials
  */
-int is_user(struct sip_msg* _msg, char* _user, char* _str2);
+int is_user(struct sip_msg *_msg, char *_user, char *_str2);
 
 
 /*
  * Check if message includes a to-tag
  */
-int has_totag(struct sip_msg* _m);
-int w_has_totag(struct sip_msg* _m, char* _foo, char* _bar);
+int has_totag(struct sip_msg *_m);
+int w_has_totag(struct sip_msg *_m, char *_foo, char *_bar);
 
 
 /*
  * Find if Request URI has a given parameter with no value
  */
-int uri_param_1(struct sip_msg* _msg, char* _param, char* _str2);
+int uri_param_1(struct sip_msg *_msg, char *_param, char *_str2);
 
 
 /*
  * Find if Request URI has a given parameter with matching value
  */
-int uri_param_2(struct sip_msg* _msg, char* _param, char* _value);
+int uri_param_2(struct sip_msg *_msg, char *_param, char *_value);
 
 
 /*
  * Adds a new parameter to Request URI
  */
-int add_uri_param(struct sip_msg* _msg, char* _param, char* _s2);
-int ki_add_uri_param(struct sip_msg* _msg, str* param);
+int add_uri_param(struct sip_msg *_msg, char *_param, char *_s2);
+int ki_add_uri_param(struct sip_msg *_msg, str *param);
 
 /*
  * Converts URI, if it is tel URI, to SIP URI.  Returns 1, if
@@ -73,73 +72,73 @@ int ki_add_uri_param(struct sip_msg* _msg, str* param);
  * tel URI.  Returns -1, if conversion failed.  Takes SIP URI hostpart from
  * second parameter and (if needed) writes the result to third parameter.
  */
-int tel2sip(struct sip_msg* _msg, char* _uri, char* _hostpart, char* _res);
+int tel2sip(struct sip_msg *_msg, char *_uri, char *_hostpart, char *_res);
 
 /*
  * Check if pseudo variable contains a valid uri
  */
-int is_uri(struct sip_msg* _m, char* _sp, char* _s2);
+int is_uri(struct sip_msg *_m, char *_sp, char *_s2);
 
 /*
  * Check if user part of URI in pseudo variable is an e164 number
  */
-int w_is_uri_user_e164(struct sip_msg* _m, char* _sp, char* _s2);
+int w_is_uri_user_e164(struct sip_msg *_m, char *_sp, char *_s2);
 int is_uri_user_e164(str *uri);
 
 /*
  * Check if pseudo variable argument value is an e164 number
  */
-int w_is_e164(struct sip_msg* _m, char* _sp, char* _s2);
+int w_is_e164(struct sip_msg *_m, char *_sp, char *_s2);
 
-int siputils_e164_check(str* _user);
+int siputils_e164_check(str *_user);
 
 /*
  * Set userpart of URI
  */
-int set_uri_user(struct sip_msg* _m, char* _uri, char* _value);
+int set_uri_user(struct sip_msg *_m, char *_uri, char *_value);
 
 /*
  * Set hostpart of URI
  */
-int set_uri_host(struct sip_msg* _m, char* _uri, char* _value);
+int set_uri_host(struct sip_msg *_m, char *_uri, char *_value);
 
 /*
  * Return true (1) if SIP message is request, otherwise false (-1)
  */
-int w_is_request(struct sip_msg* msg, char *foo, char *bar);
-int is_request(struct sip_msg* msg);
+int w_is_request(struct sip_msg *msg, char *foo, char *bar);
+int is_request(struct sip_msg *msg);
 
 /*
  * Return true (1) if SIP message is reply, otherwise false (-1)
  */
-int w_is_reply(struct sip_msg* msg, char *foo, char *bar);
-int is_reply(struct sip_msg* msg);
+int w_is_reply(struct sip_msg *msg, char *foo, char *bar);
+int is_reply(struct sip_msg *msg);
 
 /*
  * Find if Request URI has a given parameter with matching value
  */
-int get_uri_param(struct sip_msg* _msg, char* _param, char* _value);
+int get_uri_param(struct sip_msg *_msg, char *_param, char *_value);
 
 /*
  * Check if parameter value has a telephone number format
  */
-int is_tel_number(sip_msg_t *msg, char *_sp, char* _s2);
+int is_tel_number(sip_msg_t *msg, char *_sp, char *_s2);
 
 /*
  * Check if parameter value consists solely of decimal digits
  */
-int is_numeric(sip_msg_t *msg, char *_sp, char* _s2);
+int is_numeric(sip_msg_t *msg, char *_sp, char *_s2);
 
 /*
  * Check if the parameter contains alphanumeric characters
  */
-int ksr_is_alphanum(sip_msg_t *msg, char *_sp, char* _s2);
+int ksr_is_alphanum(sip_msg_t *msg, char *_sp, char *_s2);
 
 /*
  * Check if the parameter contains alphanumeric characters or are part of
  * the second parameter
  */
-int ksr_is_alphanumex(sip_msg_t *msg, char *_sp, char* _se);
+int ksr_is_alphanumex(sip_msg_t *msg, char *_sp, char *_se);
 
 int ki_is_user(sip_msg_t *_m, str *suser);
 
@@ -157,10 +156,10 @@ int ki_is_alphanumex(sip_msg_t *msg, str *tval, str *eset);
 
 int ki_uri_param_rm(sip_msg_t *msg, str *sparam);
 
-int w_uri_param_rm(struct sip_msg* _msg, char* _param, char* _str2);
+int w_uri_param_rm(struct sip_msg *_msg, char *_param, char *_str2);
 
 int ki_uri_param_any(sip_msg_t *msg, str *sparam);
 
-int w_uri_param_any(struct sip_msg* _msg, char* _param, char* _str2);
+int w_uri_param_any(struct sip_msg *_msg, char *_param, char *_str2);
 
 #endif /* CHECKS_H */

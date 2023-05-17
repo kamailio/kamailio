@@ -29,7 +29,7 @@
  */
 
 #ifdef EXTRA_DEBUG
-#include <stdlib.h>   /* required by abort() */
+#include <stdlib.h> /* required by abort() */
 #endif
 #include "options.h"
 #include "../../core/ut.h"
@@ -41,33 +41,33 @@ static str opt_200_rpl = str_init("OK");
 static str opt_500_rpl = str_init("Server internal error");
 
 
-int ki_opt_reply(struct sip_msg* _msg) {
+int ki_opt_reply(struct sip_msg *_msg)
+{
 	str rpl_hf;
 	int offset = 0;
 
 	/* check if it is called for an OPTIONS request */
-	if (_msg->REQ_METHOD!=METHOD_OPTIONS) {
-		LM_ERR("called for non-OPTIONS request (%d!=%d)\n",
-				_msg->REQ_METHOD, METHOD_OPTIONS);
+	if(_msg->REQ_METHOD != METHOD_OPTIONS) {
+		LM_ERR("called for non-OPTIONS request (%d!=%d)\n", _msg->REQ_METHOD,
+				METHOD_OPTIONS);
 		return -1;
 	}
-	if(_msg->parsed_uri_ok==0 && parse_sip_msg_uri(_msg)<0)
-	{
+	if(_msg->parsed_uri_ok == 0 && parse_sip_msg_uri(_msg) < 0) {
 		LM_ERR("ERROR while parsing the R-URI\n");
 		return -1;
 	}
 	/* FIXME: should we additionally check if ruri == server addresses ?! */
-	if (_msg->parsed_uri.user.len != 0) {
+	if(_msg->parsed_uri.user.len != 0) {
 		LM_ERR("ruri contains username\n");
 		return -1;
 	}
 
 	/* calculate the length and allocated the mem */
-	rpl_hf.len = ACPT_STR_LEN + ACPT_ENC_STR_LEN + ACPT_LAN_STR_LEN +
-			SUPT_STR_LEN + 4*HF_SEP_STR_LEN + opt_accept.len + opt_accept_enc.len
-			+ opt_accept_lang.len + opt_supported.len;
-	rpl_hf.s = (char*)pkg_malloc(rpl_hf.len);
-	if (!rpl_hf.s) {
+	rpl_hf.len = ACPT_STR_LEN + ACPT_ENC_STR_LEN + ACPT_LAN_STR_LEN
+				 + SUPT_STR_LEN + 4 * HF_SEP_STR_LEN + opt_accept.len
+				 + opt_accept_enc.len + opt_accept_lang.len + opt_supported.len;
+	rpl_hf.s = (char *)pkg_malloc(rpl_hf.len);
+	if(!rpl_hf.s) {
 		PKG_MEM_CRITICAL;
 		goto error;
 	}
@@ -99,20 +99,19 @@ int ki_opt_reply(struct sip_msg* _msg) {
 
 #ifdef EXTRA_DEBUG
 	offset += HF_SEP_STR_LEN;
-	if (offset != rpl_hf.len) {
+	if(offset != rpl_hf.len) {
 		LM_CRIT("headerlength (%i) != offset (%i)\n", rpl_hf.len, offset);
 		abort();
 	}
 #endif
 
 
-	if (add_lump_rpl( _msg, rpl_hf.s, rpl_hf.len,
-	LUMP_RPL_HDR|LUMP_RPL_NODUP)!=0) {
-		if (opt_slb.freply(_msg, 200, &opt_200_rpl) == -1) {
+	if(add_lump_rpl(_msg, rpl_hf.s, rpl_hf.len, LUMP_RPL_HDR | LUMP_RPL_NODUP)
+			!= 0) {
+		if(opt_slb.freply(_msg, 200, &opt_200_rpl) == -1) {
 			LM_ERR("failed to send 200 via send_reply\n");
 			return -1;
-		}
-		else
+		} else
 			return 1;
 	} else {
 		pkg_free(rpl_hf.s);
@@ -120,14 +119,14 @@ int ki_opt_reply(struct sip_msg* _msg) {
 	}
 
 error:
-	if (opt_slb.freply(_msg, 500, &opt_500_rpl) == -1) {
+	if(opt_slb.freply(_msg, 500, &opt_500_rpl) == -1) {
 		LM_ERR("failed to send 500 via send_reply\n");
 		return -1;
-	}
-	else
+	} else
 		return 1;
 }
 
-int opt_reply(struct sip_msg* _msg, char* _foo, char* _bar) {
+int opt_reply(struct sip_msg *_msg, char *_foo, char *_bar)
+{
 	return ki_opt_reply(_msg);
 }

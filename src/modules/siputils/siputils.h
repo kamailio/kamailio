@@ -23,31 +23,32 @@
 #ifndef _SIPUTILS_H_
 #define _SIPUTILS_H_
 
-typedef int (*siputils_has_totag_t)(struct sip_msg*, char*, char*);
-typedef int (*siputils_is_uri_user_e164_t)(str*);
+typedef int (*siputils_has_totag_t)(struct sip_msg *, char *, char *);
+typedef int (*siputils_is_uri_user_e164_t)(str *);
 
 /*! Siputils module API */
-typedef struct siputils_api {
-	int_str rpid_avp;      /*!< Name of AVP containing Remote-Party-ID */
-	int     rpid_avp_type; /*!< type of the RPID AVP */
+typedef struct siputils_api
+{
+	int_str rpid_avp;  /*!< Name of AVP containing Remote-Party-ID */
+	int rpid_avp_type; /*!< type of the RPID AVP */
 	siputils_has_totag_t has_totag;
 	siputils_is_uri_user_e164_t is_uri_user_e164;
 } siputils_api_t;
 
-typedef int (*bind_siputils_t)(siputils_api_t* api);
+typedef int (*bind_siputils_t)(siputils_api_t *api);
 
 /*!
  * \brief Bind function for the SIPUtils API
  * \param api binded API
  * \return 0 on success, -1 on failure
  */
-int bind_siputils(siputils_api_t* api);
+int bind_siputils(siputils_api_t *api);
 
 inline static int siputils_load_api(siputils_api_t *pxb)
 {
 	bind_siputils_t bind_siputils_exports;
-	if (!(bind_siputils_exports = (bind_siputils_t)find_export("bind_siputils", 1, 0)))
-	{
+	if(!(bind_siputils_exports =
+					   (bind_siputils_t)find_export("bind_siputils", 1, 0))) {
 		LM_ERR("Failed to import bind_siputils\n");
 		return -1;
 	}
