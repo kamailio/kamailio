@@ -29,9 +29,9 @@
 #include "urecord.h"
 
 #define ULKA_NONE 0
-#define ULKA_ALL  1
-#define ULKA_NAT  (1<<1)
-#define ULKA_UDP  (1<<2)
+#define ULKA_ALL 1
+#define ULKA_NAT (1 << 1)
+#define ULKA_UDP (1 << 2)
 
 int ul_ka_urecord(urecord_t *ur);
 int ul_ka_reply_received(sip_msg_t *msg);

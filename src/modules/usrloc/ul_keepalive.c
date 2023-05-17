@@ -62,14 +62,15 @@ Content-Length: 0\r\n\r\n"
 #define ULKA_CALLID_PREFIX "ksrulka-"
 #define ULKA_CALLID_PREFIX_LEN (sizeof(ULKA_CALLID_PREFIX) - 1)
 
-#define ULKA_MSG "%.*s %.*s SIP/2.0\r\n" \
-  "Via: SIP/2.0/%.*s %s%.*s%s:%.*s;branch=z9hG4bKx.%u.%u.0\r\n" \
-  "%s%.*s%.*s" \
-  "From: <%.*s>;tag=%.*s-%x-%lx-%lx-%x.%x\r\n" \
-  "To: <sip:%.*s%s%.*s>\r\n" \
-  "Call-ID: " ULKA_CALLID_PREFIX "%x-%x-%x.%x\r\n" \
-  "CSeq: 80 %.*s\r\n" \
-  "Content-Length: 0\r\n\r\n"
+#define ULKA_MSG                                                  \
+	"%.*s %.*s SIP/2.0\r\n"                                       \
+	"Via: SIP/2.0/%.*s %s%.*s%s:%.*s;branch=z9hG4bKx.%u.%u.0\r\n" \
+	"%s%.*s%.*s"                                                  \
+	"From: <%.*s>;tag=%.*s-%x-%lx-%lx-%x.%x\r\n"                  \
+	"To: <sip:%.*s%s%.*s>\r\n"                                    \
+	"Call-ID: " ULKA_CALLID_PREFIX "%x-%x-%x.%x\r\n"              \
+	"CSeq: 80 %.*s\r\n"                                           \
+	"Content-Length: 0\r\n\r\n"
 
 extern str ul_ka_from;
 extern str ul_ka_domain;
@@ -109,46 +110,47 @@ int ul_ka_urecord(urecord_t *ur)
 	struct timeval tv;
 	time_t tnow = 0;
 
-	if (ul_ka_mode == ULKA_NONE) {
+	if(ul_ka_mode == ULKA_NONE) {
 		return 0;
 	}
 
-	if(likely(destroy_modules_phase()!=0)) {
+	if(likely(destroy_modules_phase() != 0)) {
 		return 0;
 	}
 
 	LM_DBG("keepalive for aor: %.*s\n", ur->aor.len, ur->aor.s);
 	tnow = time(NULL);
 
-	for(i=0; i<ur->aor.len; i++) {
+	for(i = 0; i < ur->aor.len; i++) {
 		if(ur->aor.s[i] == '@') {
 			aortype = 1;
 			break;
 		}
 	}
 	_ul_ka_counter++;
-	for (uc = ur->contacts; uc != NULL; uc = uc->next) {
-		if (uc->c.len <= 0) {
+	for(uc = ur->contacts; uc != NULL; uc = uc->next) {
+		if(uc->c.len <= 0) {
 			continue;
 		}
-		if((ul_ka_filter&GAU_OPT_SERVER_ID) && (uc->server_id != server_id)) {
+		if((ul_ka_filter & GAU_OPT_SERVER_ID) && (uc->server_id != server_id)) {
 			continue;
 		}
 		if(ul_ka_mode & ULKA_NAT) {
 			/* keepalive for natted contacts only */
-			if (ul_nat_bflag == 0) {
+			if(ul_nat_bflag == 0) {
 				continue;
 			}
-			if ((uc->cflags & ul_nat_bflag) != ul_nat_bflag) {
+			if((uc->cflags & ul_nat_bflag) != ul_nat_bflag) {
 				continue;
 			}
 		}
 
-		if(ul_keepalive_timeout>0 && uc->last_keepalive>0) {
-			if(uc->last_keepalive+ul_keepalive_timeout < tnow) {
+		if(ul_keepalive_timeout > 0 && uc->last_keepalive > 0) {
+			if(uc->last_keepalive + ul_keepalive_timeout < tnow) {
 				/* set contact as expired in 10s */
 				LM_DBG("set expired contact on keepalive (%u + %u < %u)"
-						" - aor: %.*s c: %.*s\n", (unsigned int)uc->last_keepalive,
+					   " - aor: %.*s c: %.*s\n",
+						(unsigned int)uc->last_keepalive,
 						(unsigned int)ul_keepalive_timeout, (unsigned int)tnow,
 						ur->aor.len, ur->aor.s, uc->c.len, uc->c.s);
 				if(uc->expires > tnow + 10) {
@@ -160,7 +162,7 @@ int ul_ka_urecord(urecord_t *ur)
 		if(uc->received.len > 0) {
 			sdst = uc->received;
 		} else {
-			if (uc->path.len > 0) {
+			if(uc->path.len > 0) {
 				if(get_path_dst_uri(&uc->path, &sdst) < 0) {
 					LM_ERR("failed to get first uri for path\n");
 					continue;
@@ -204,12 +206,12 @@ int ul_ka_urecord(urecord_t *ur)
 		idst.id = uc->tcpconn_id;
 
 		if(ssock->useinfo.name.len > 0) {
-			if (ssock->useinfo.address.af == AF_INET6) {
+			if(ssock->useinfo.address.af == AF_INET6) {
 				via_ipv6 = 1;
 			}
 			vaddr = ssock->useinfo.name;
 		} else {
-			if (ssock->address.af == AF_INET6) {
+			if(ssock->address.af == AF_INET6) {
 				via_ipv6 = 1;
 			}
 			vaddr = ssock->address_str;
@@ -224,39 +226,29 @@ int ul_ka_urecord(urecord_t *ur)
 		bcnt++;
 		gettimeofday(&tv, NULL);
 		kabuf_len = snprintf(kabuf, ULKA_BUF_SIZE - 1, ULKA_MSG,
-				ul_ka_method.len, ul_ka_method.s,
-				uc->c.len, uc->c.s,
-				sproto.len, sproto.s,
-				(via_ipv6==1)?"[":"",
-				vaddr.len, vaddr.s,
-				(via_ipv6==1)?"]":"",
-				vport.len, vport.s,
-				_ul_ka_counter, bcnt,
-				(uc->path.len>0)?"Route: ":"",
-				(uc->path.len>0)?uc->path.len:0,
-				(uc->path.len>0)?uc->path.s:"",
-				(uc->path.len>0)?2:0,
-				(uc->path.len>0)?"\r\n":"",
-				ul_ka_from.len, ul_ka_from.s,
-				uc->ruid.len, uc->ruid.s, ur->aorhash,
-				(unsigned long)tv.tv_sec, (unsigned long)tv.tv_usec,
-				_ul_ka_counter, bcnt,
-				ur->aor.len, ur->aor.s,
-				(aortype==1)?"":"@",
-				(aortype==1)?0:ul_ka_domain.len, (aortype==1)?"":ul_ka_domain.s,
-				fastrand(), my_pid(),
-				_ul_ka_counter, bcnt,
-				ul_ka_method.len, ul_ka_method.s);
-		if(kabuf_len<=0 || kabuf_len>=ULKA_BUF_SIZE) {
+				ul_ka_method.len, ul_ka_method.s, uc->c.len, uc->c.s,
+				sproto.len, sproto.s, (via_ipv6 == 1) ? "[" : "", vaddr.len,
+				vaddr.s, (via_ipv6 == 1) ? "]" : "", vport.len, vport.s,
+				_ul_ka_counter, bcnt, (uc->path.len > 0) ? "Route: " : "",
+				(uc->path.len > 0) ? uc->path.len : 0,
+				(uc->path.len > 0) ? uc->path.s : "",
+				(uc->path.len > 0) ? 2 : 0, (uc->path.len > 0) ? "\r\n" : "",
+				ul_ka_from.len, ul_ka_from.s, uc->ruid.len, uc->ruid.s,
+				ur->aorhash, (unsigned long)tv.tv_sec,
+				(unsigned long)tv.tv_usec, _ul_ka_counter, bcnt, ur->aor.len,
+				ur->aor.s, (aortype == 1) ? "" : "@",
+				(aortype == 1) ? 0 : ul_ka_domain.len,
+				(aortype == 1) ? "" : ul_ka_domain.s, fastrand(), my_pid(),
+				_ul_ka_counter, bcnt, ul_ka_method.len, ul_ka_method.s);
+		if(kabuf_len <= 0 || kabuf_len >= ULKA_BUF_SIZE) {
 			LM_ERR("failed to print the keepalive request\n");
 		} else {
-			LM_DBG("keepalive request (len: %d) [[\n%.*s]]\n",
-					kabuf_len, kabuf_len, kabuf);
+			LM_DBG("keepalive request (len: %d) [[\n%.*s]]\n", kabuf_len,
+					kabuf_len, kabuf);
 			kamsg.s = kabuf;
 			kamsg.len = kabuf_len;
 			ul_ka_send(&kamsg, &idst);
 		}
-
 	}
 	return 0;
 }
@@ -266,7 +258,7 @@ int ul_ka_urecord(urecord_t *ur)
  */
 static int ul_ka_send(str *kamsg, dest_info_t *kadst)
 {
-	if (kadst->proto == PROTO_UDP) {
+	if(kadst->proto == PROTO_UDP) {
 		return udp_send(kadst, kamsg->s, kamsg->len);
 	}
 
@@ -274,8 +266,7 @@ static int ul_ka_send(str *kamsg, dest_info_t *kadst)
 	else if(kadst->proto == PROTO_WS || kadst->proto == PROTO_WSS) {
 		/*ws-wss*/
 		return wss_send(kadst, kamsg->s, kamsg->len);
-	}
-	else if(kadst->proto == PROTO_TCP) {
+	} else if(kadst->proto == PROTO_TCP) {
 		/*tcp*/
 		return tcp_send(kadst, 0, kamsg->s, kamsg->len);
 	}
@@ -293,8 +284,7 @@ static int ul_ka_send(str *kamsg, dest_info_t *kadst)
 	}
 #endif
 	else {
-		LM_ERR("unknown proto [%d] for sending keepalive\n",
-				kadst->proto);
+		LM_ERR("unknown proto [%d] for sending keepalive\n", kadst->proto);
 		return -1;
 	}
 }
@@ -304,19 +294,25 @@ static int ul_ka_send(str *kamsg, dest_info_t *kadst)
  */
 unsigned long ul_ka_fromhex(str *shex, int *err)
 {
-    unsigned long v = 0;
+	unsigned long v = 0;
 	int i;
 
 	*err = 0;
-    for (i=0; i<shex->len; i++) {
-        char b = shex->s[i];
-        if (b >= '0' && b <= '9') b = b - '0';
-        else if (b >= 'a' && b <='f') b = b - 'a' + 10;
-        else if (b >= 'A' && b <='F') b = b - 'A' + 10;
-		else { *err = 1; return 0; };
-        v = (v << 4) | (b & 0xF);
-    }
-    return v;
+	for(i = 0; i < shex->len; i++) {
+		char b = shex->s[i];
+		if(b >= '0' && b <= '9')
+			b = b - '0';
+		else if(b >= 'a' && b <= 'f')
+			b = b - 'a' + 10;
+		else if(b >= 'A' && b <= 'F')
+			b = b - 'A' + 10;
+		else {
+			*err = 1;
+			return 0;
+		};
+		v = (v << 4) | (b & 0xF);
+	}
+	return v;
 }
 
 /**
@@ -344,7 +340,8 @@ int ul_ka_reply_received(sip_msg_t *msg)
 	if(get_cseq(msg)->method.len != ul_ka_method.len) {
 		return 1;
 	}
-	if(strncmp(get_cseq(msg)->method.s, ul_ka_method.s, ul_ka_method.len) != 0) {
+	if(strncmp(get_cseq(msg)->method.s, ul_ka_method.s, ul_ka_method.len)
+			!= 0) {
 		return 1;
 	}
 
@@ -399,7 +396,7 @@ int ul_ka_reply_received(sip_msg_t *msg)
 	}
 	LM_DBG("tv usec string is [%.*s] (%d)\n", tok.len, tok.s, tok.len);
 	tvm.tv_usec = ul_ka_fromhex(&tok, &err);
-	if(err==1) {
+	if(err == 1) {
 		LM_DBG("invalid tv usec value\n");
 		return 1;
 	}
@@ -421,7 +418,7 @@ int ul_ka_reply_received(sip_msg_t *msg)
 	}
 	LM_DBG("tv sec string is [%.*s] (%d)\n", tok.len, tok.s, tok.len);
 	tvm.tv_sec = ul_ka_fromhex(&tok, &err);
-	if(err==1) {
+	if(err == 1) {
 		LM_DBG("invalid tv sec value\n");
 		return 1;
 	}
@@ -443,7 +440,7 @@ int ul_ka_reply_received(sip_msg_t *msg)
 	}
 	LM_DBG("aor hash string is [%.*s] (%d)\n", tok.len, tok.s, tok.len);
 	aorhash = ul_ka_fromhex(&tok, &err);
-	if(err==1) {
+	if(err == 1) {
 		LM_DBG("invalid aor hash value\n");
 		return 1;
 	}
@@ -459,21 +456,22 @@ int ul_ka_reply_received(sip_msg_t *msg)
 	}
 
 	gettimeofday(&tvn, NULL);
-	tvdiff = (tvn.tv_sec - tvm.tv_sec) * 1000000
-					+ (tvn.tv_usec - tvm.tv_usec);
+	tvdiff = (tvn.tv_sec - tvm.tv_sec) * 1000000 + (tvn.tv_usec - tvm.tv_usec);
 	ul_update_keepalive(aorhash, &ruid, tvn.tv_sec, tvdiff);
 
 	if(ul_ka_loglevel != 255 && ul_ka_logfmt != NULL) {
-		if (pv_printf_s(msg, ul_ka_logfmt, &tok) == 0) {
-			LOG(ul_ka_loglevel, "keepalive roundtrip: %u.%06u sec - ruid [%.*s]%.*s\n",
-					tvdiff/1000000, tvdiff%1000000, ruid.len, ruid.s,
+		if(pv_printf_s(msg, ul_ka_logfmt, &tok) == 0) {
+			LOG(ul_ka_loglevel,
+					"keepalive roundtrip: %u.%06u sec - ruid [%.*s]%.*s\n",
+					tvdiff / 1000000, tvdiff % 1000000, ruid.len, ruid.s,
 					tok.len, tok.s);
 			return 0;
 		}
 	}
 
-	LM_DBG("response of keepalive for ruid [%.*s] aorhash [%u] roundtrip: %u.%06u secs\n",
-			ruid.len, ruid.s, aorhash, tvdiff/1000000, tvdiff%1000000);
+	LM_DBG("response of keepalive for ruid [%.*s] aorhash [%u] roundtrip: "
+		   "%u.%06u secs\n",
+			ruid.len, ruid.s, aorhash, tvdiff / 1000000, tvdiff % 1000000);
 
 	return 0;
 }

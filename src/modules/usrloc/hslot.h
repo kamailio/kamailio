@@ -24,7 +24,6 @@
  */
 
 
-
 #ifndef HSLOT_H
 #define HSLOT_H
 
@@ -38,35 +37,36 @@ struct udomain;
 struct urecord;
 
 
-typedef struct hslot {
-	int n;                  /*!< Number of elements in the collision slot */
-	struct urecord* first;  /*!< First element in the list */
-	struct urecord* last;   /*!< Last element in the list */
-	struct udomain* d;      /*!< Domain we belong to */
-	rec_lock_t rlock;       /*!< Recursive lock for hash entry */
+typedef struct hslot
+{
+	int n;				   /*!< Number of elements in the collision slot */
+	struct urecord *first; /*!< First element in the list */
+	struct urecord *last;  /*!< Last element in the list */
+	struct udomain *d;	   /*!< Domain we belong to */
+	rec_lock_t rlock;	   /*!< Recursive lock for hash entry */
 } hslot_t;
 
 /*! \brief
  * Initialize slot structure
  */
-int init_slot(struct udomain* _d, hslot_t* _s, int n);
+int init_slot(struct udomain *_d, hslot_t *_s, int n);
 
 
 /*! \brief
  * Deinitialize given slot structure
  */
-void deinit_slot(hslot_t* _s);
+void deinit_slot(hslot_t *_s);
 
 
 /*! \brief
  * Add an element to slot linked list
  */
-void slot_add(hslot_t* _s, struct urecord* _r);
+void slot_add(hslot_t *_s, struct urecord *_r);
 
 
 /*! \brief
  * Remove an element from slot linked list
  */
-void slot_rem(hslot_t* _s, struct urecord* _r);
+void slot_rem(hslot_t *_s, struct urecord *_r);
 
 #endif /* HSLOT_H */

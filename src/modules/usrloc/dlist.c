@@ -28,16 +28,16 @@
 
 
 #include "dlist.h"
-#include <stdlib.h>	       /* abort */
-#include <string.h>            /* strlen, memcmp */
-#include <stdio.h>             /* printf */
+#include <stdlib.h> /* abort */
+#include <string.h> /* strlen, memcmp */
+#include <stdio.h>	/* printf */
 #include "../../core/ut.h"
 #include "../../lib/srdb1/db_ut.h"
 #include "../../core/mem/shm_mem.h"
 #include "../../core/dprint.h"
 #include "../../core/ip_addr.h"
 #include "../../core/socket_info.h"
-#include "udomain.h"           /* new_udomain, free_udomain */
+#include "udomain.h" /* new_udomain, free_udomain */
 #include "usrloc.h"
 #include "utime.h"
 #include "ul_keepalive.h"
@@ -64,14 +64,13 @@ void ul_set_max_partition(unsigned int m)
  * \param _d pointer to domain
  * \return 0 if the domain was found and 1 of not
  */
-static inline int find_dlist(str* _n, dlist_t** _d)
+static inline int find_dlist(str *_n, dlist_t **_d)
 {
-	dlist_t* ptr;
+	dlist_t *ptr;
 
 	ptr = _ksr_ul_root;
 	while(ptr) {
-		if ((_n->len == ptr->name.len) &&
-		    !memcmp(_n->s, ptr->name.s, _n->len)) {
+		if((_n->len == ptr->name.len) && !memcmp(_n->s, ptr->name.s, _n->len)) {
 			*_d = ptr;
 			return 0;
 		}
@@ -87,11 +86,11 @@ static inline int find_dlist(str* _n, dlist_t** _d)
  */
 int ul_ka_db_records(int partidx)
 {
-	db1_res_t* res = NULL;
+	db1_res_t *res = NULL;
 	db_row_t *row = NULL;
 	db_key_t keys1[4]; /* where */
 	db_val_t vals1[4];
-	db_op_t  ops1[4];
+	db_op_t ops1[4];
 	db_key_t keys2[9]; /* select */
 	int n[2] = {2, 9}; /* number of dynamic values used on key1/key2 */
 	dlist_t *dom = NULL;
@@ -126,12 +125,12 @@ int ul_ka_db_records(int partidx)
 	ops1[1] = OP_EQ;
 	vals1[1].type = DB1_INT;
 	vals1[1].nul = 0;
-	if(_ul_max_partition>0)
+	if(_ul_max_partition > 0)
 		vals1[1].val.int_val = partidx;
 	else
 		vals1[1].val.int_val = 0;
 
-	if (ul_ka_mode & ULKA_NAT) {
+	if(ul_ka_mode & ULKA_NAT) {
 		keys1[n[0]] = &ul_keepalive_col;
 		ops1[n[0]] = OP_EQ;
 		vals1[n[0]].type = DB1_INT;
@@ -139,7 +138,7 @@ int ul_ka_db_records(int partidx)
 		vals1[n[0]].val.int_val = 1;
 		n[0]++;
 	}
-	if(ul_ka_filter&GAU_OPT_SERVER_ID) {
+	if(ul_ka_filter & GAU_OPT_SERVER_ID) {
 		keys1[n[0]] = &ul_srv_id_col;
 		ops1[n[0]] = OP_EQ;
 		vals1[n[0]].type = DB1_INT;
@@ -148,17 +147,18 @@ int ul_ka_db_records(int partidx)
 		n[0]++;
 	}
 
-	for (dom = _ksr_ul_root; dom!=NULL ; dom=dom->next) {
-		if (ul_dbf.use_table(ul_dbh, dom->d->name) < 0) {
+	for(dom = _ksr_ul_root; dom != NULL; dom = dom->next) {
+		if(ul_dbf.use_table(ul_dbh, dom->d->name) < 0) {
 			LM_ERR("sql use_table failed\n");
 			return -1;
 		}
-		if (ul_dbf.query(ul_dbh, keys1, ops1, vals1, keys2,
-							n[0], n[1], NULL, &res) <0 ) {
+		if(ul_dbf.query(
+				   ul_dbh, keys1, ops1, vals1, keys2, n[0], n[1], NULL, &res)
+				< 0) {
 			LM_ERR("query error\n");
 			return -1;
 		}
-		if( RES_ROW_N(res)==0 ) {
+		if(RES_ROW_N(res) == 0) {
 			ul_dbf.free_result(ul_dbh, res);
 			continue;
 		}
@@ -169,8 +169,9 @@ int ul_ka_db_records(int partidx)
 			memset(&uc, 0, sizeof(ucontact_t));
 
 			/* received */
-			uc.received.s = (char*)VAL_STRING(ROW_VALUES(row));
-			if ( VAL_NULL(ROW_VALUES(row)) || uc.received.s==0 || uc.received.s[0]==0 ) {
+			uc.received.s = (char *)VAL_STRING(ROW_VALUES(row));
+			if(VAL_NULL(ROW_VALUES(row)) || uc.received.s == 0
+					|| uc.received.s[0] == 0) {
 				uc.received.s = NULL;
 				uc.received.len = 0;
 			} else {
@@ -178,8 +179,8 @@ int ul_ka_db_records(int partidx)
 			}
 
 			/* contact */
-			uc.c.s = (char*)VAL_STRING(ROW_VALUES(row)+1);
-			if (VAL_NULL(ROW_VALUES(row)+1) || uc.c.s==0 || uc.c.s[0]==0) {
+			uc.c.s = (char *)VAL_STRING(ROW_VALUES(row) + 1);
+			if(VAL_NULL(ROW_VALUES(row) + 1) || uc.c.s == 0 || uc.c.s[0] == 0) {
 				LM_ERR("empty contact -> skipping\n");
 				continue;
 			} else {
@@ -187,8 +188,9 @@ int ul_ka_db_records(int partidx)
 			}
 
 			/* path */
-			uc.path.s = (char*)VAL_STRING(ROW_VALUES(row)+4);
-			if (VAL_NULL(ROW_VALUES(row)+4) || uc.path.s==0 || uc.path.s[0]==0){
+			uc.path.s = (char *)VAL_STRING(ROW_VALUES(row) + 4);
+			if(VAL_NULL(ROW_VALUES(row) + 4) || uc.path.s == 0
+					|| uc.path.s[0] == 0) {
 				uc.path.s = NULL;
 				uc.path.len = 0;
 			} else {
@@ -196,25 +198,26 @@ int ul_ka_db_records(int partidx)
 			}
 
 			/* ruid */
-			uc.ruid.s = (char*)VAL_STRING(ROW_VALUES(row)+5);
-			if (VAL_NULL(ROW_VALUES(row)+5) || uc.ruid.s==0 || uc.ruid.s[0]==0){
+			uc.ruid.s = (char *)VAL_STRING(ROW_VALUES(row) + 5);
+			if(VAL_NULL(ROW_VALUES(row) + 5) || uc.ruid.s == 0
+					|| uc.ruid.s[0] == 0) {
 				uc.ruid.s = NULL;
 				uc.ruid.len = 0;
 			} else {
 				uc.ruid.len = strlen(uc.ruid.s);
 			}
 			/* sock */
-			p  = (char*)VAL_STRING(ROW_VALUES(row) + 2);
-			if (VAL_NULL(ROW_VALUES(row)+2) || p==0 || p[0]==0){
+			p = (char *)VAL_STRING(ROW_VALUES(row) + 2);
+			if(VAL_NULL(ROW_VALUES(row) + 2) || p == 0 || p[0] == 0) {
 				uc.sock = 0;
 			} else {
-				if (parse_phostport(p, &host.s, &host.len,
-							&port, &proto)!=0) {
+				if(parse_phostport(p, &host.s, &host.len, &port, &proto) != 0) {
 					LM_ERR("bad socket <%s>...set to 0\n", p);
 					uc.sock = 0;
 				} else {
-					uc.sock = grep_sock_info( &host, (unsigned short)port, proto);
-					if (uc.sock==0) {
+					uc.sock =
+							grep_sock_info(&host, (unsigned short)port, proto);
+					if(uc.sock == 0) {
 						LM_DBG("non-local socket <%s>...set to 0\n", p);
 					}
 				}
@@ -231,8 +234,8 @@ int ul_ka_db_records(int partidx)
 			ur.domain = &dom->name;
 
 			/* user */
-			p  = (char*)VAL_STRING(ROW_VALUES(row) + 6);
-			if (VAL_NULL(ROW_VALUES(row)+6) || p==0 || p[0]==0) {
+			p = (char *)VAL_STRING(ROW_VALUES(row) + 6);
+			if(VAL_NULL(ROW_VALUES(row) + 6) || p == 0 || p[0] == 0) {
 				LM_ERR("empty username -> skipping\n");
 				continue;
 			}
@@ -244,8 +247,8 @@ int ul_ka_db_records(int partidx)
 			strcpy(aorbuf, p);
 
 			/* domain */
-			p  = (char*)VAL_STRING(ROW_VALUES(row) + 7);
-			if (!(VAL_NULL(ROW_VALUES(row)+7) || p==0 || p[0]==0)) {
+			p = (char *)VAL_STRING(ROW_VALUES(row) + 7);
+			if(!(VAL_NULL(ROW_VALUES(row) + 7) || p == 0 || p[0] == 0)) {
 				if(ur.aor.len + strlen(p) >= ULKA_AORBUF_SIZE - 2) {
 					LM_DBG("long aor ->skipping\n");
 					continue;
@@ -258,7 +261,7 @@ int ul_ka_db_records(int partidx)
 			ur.contacts = &uc;
 
 			/* tcpconn_id */
-			uc.tcpconn_id = VAL_INT(ROW_VALUES(row)+8);
+			uc.tcpconn_id = VAL_INT(ROW_VALUES(row) + 8);
 
 			ul_ka_urecord(&ur);
 		} /* row cycle */
@@ -281,12 +284,11 @@ int ul_ka_db_records(int partidx)
  * \return 0 on success, positive if buffer size was not sufficient, negative on failure
  */
 static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags,
-								unsigned int part_idx, unsigned int part_max,
-								int options)
+		unsigned int part_idx, unsigned int part_max, int options)
 {
 	struct socket_info *sock;
 	unsigned int dbflags;
-	db1_res_t* res = NULL;
+	db1_res_t *res = NULL;
 	db_row_t *row;
 	dlist_t *dom;
 	int port, proto;
@@ -302,9 +304,9 @@ static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags,
 	int shortage, needed;
 	db_key_t keys1[4]; /* where */
 	db_val_t vals1[4];
-	db_op_t  ops1[4];
+	db_op_t ops1[4];
 	db_key_t keys2[6]; /* select */
-	int n[2] = {2,6}; /* number of dynamic values used on key1/key2 */
+	int n[2] = {2, 6}; /* number of dynamic values used on key1/key2 */
 
 	cp = buf;
 	shortage = 0;
@@ -331,12 +333,12 @@ static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags,
 	ops1[1] = OP_EQ;
 	vals1[1].type = DB1_INT;
 	vals1[1].nul = 0;
-	if(_ul_max_partition>0)
+	if(_ul_max_partition > 0)
 		vals1[1].val.int_val = part_idx;
 	else
 		vals1[1].val.int_val = 0;
 
-	if (flags & ul_nat_bflag) {
+	if(flags & ul_nat_bflag) {
 		keys1[n[0]] = &ul_keepalive_col;
 		ops1[n[0]] = OP_EQ;
 		vals1[n[0]].type = DB1_INT;
@@ -344,7 +346,7 @@ static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags,
 		vals1[n[0]].val.int_val = 1;
 		n[0]++;
 	}
-	if(options&GAU_OPT_SERVER_ID) {
+	if(options & GAU_OPT_SERVER_ID) {
 		keys1[n[0]] = &ul_srv_id_col;
 		ops1[n[0]] = OP_EQ;
 		vals1[n[0]].type = DB1_INT;
@@ -355,17 +357,18 @@ static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags,
 
 	/* TODO: use part_idx and part_max on keys1 */
 
-	for (dom = _ksr_ul_root; dom!=NULL ; dom=dom->next) {
-		if (ul_dbf.use_table(ul_dbh, dom->d->name) < 0) {
+	for(dom = _ksr_ul_root; dom != NULL; dom = dom->next) {
+		if(ul_dbf.use_table(ul_dbh, dom->d->name) < 0) {
 			LM_ERR("sql use_table failed\n");
 			return -1;
 		}
-		if (ul_dbf.query(ul_dbh, keys1, ops1, vals1, keys2,
-							n[0], n[1], NULL, &res) <0 ) {
+		if(ul_dbf.query(
+				   ul_dbh, keys1, ops1, vals1, keys2, n[0], n[1], NULL, &res)
+				< 0) {
 			LM_ERR("query error\n");
 			return -1;
 		}
-		if( RES_ROW_N(res)==0 ) {
+		if(RES_ROW_N(res) == 0) {
 			ul_dbf.free_result(ul_dbh, res);
 			continue;
 		}
@@ -375,28 +378,26 @@ static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags,
 
 
 			/* received */
-			recv.s = (char*)VAL_STRING(ROW_VALUES(row));
-			if ( VAL_NULL(ROW_VALUES(row)) || recv.s==0 || recv.s[0]==0 ) {
+			recv.s = (char *)VAL_STRING(ROW_VALUES(row));
+			if(VAL_NULL(ROW_VALUES(row)) || recv.s == 0 || recv.s[0] == 0) {
 				recv.s = NULL;
 				recv.len = 0;
-			}
-			else {
+			} else {
 				recv.len = strlen(recv.s);
 			}
 
 			/* contact */
-			addr.s = (char*)VAL_STRING(ROW_VALUES(row)+1);
-			if (VAL_NULL(ROW_VALUES(row)+1) || addr.s==0 || addr.s[0]==0) {
+			addr.s = (char *)VAL_STRING(ROW_VALUES(row) + 1);
+			if(VAL_NULL(ROW_VALUES(row) + 1) || addr.s == 0 || addr.s[0] == 0) {
 				LM_ERR("empty contact -> skipping\n");
 				continue;
-			}
-			else {
+			} else {
 				addr.len = strlen(addr.s);
 			}
 
 			/* path */
-			path.s = (char*)VAL_STRING(ROW_VALUES(row)+4);
-			if (VAL_NULL(ROW_VALUES(row)+4) || path.s==0 || path.s[0]==0){
+			path.s = (char *)VAL_STRING(ROW_VALUES(row) + 4);
+			if(VAL_NULL(ROW_VALUES(row) + 4) || path.s == 0 || path.s[0] == 0) {
 				path.s = NULL;
 				path.len = 0;
 			} else {
@@ -404,52 +405,49 @@ static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags,
 			}
 
 			/* ruid */
-			ruid.s = (char*)VAL_STRING(ROW_VALUES(row)+5);
-			if (VAL_NULL(ROW_VALUES(row)+5) || ruid.s==0 || ruid.s[0]==0){
+			ruid.s = (char *)VAL_STRING(ROW_VALUES(row) + 5);
+			if(VAL_NULL(ROW_VALUES(row) + 5) || ruid.s == 0 || ruid.s[0] == 0) {
 				ruid.s = NULL;
 				ruid.len = 0;
 			} else {
 				ruid.len = strlen(ruid.s);
 			}
 
-			needed = (int)(sizeof(addr.len) + addr.len
-					+ sizeof(recv.len) + recv.len
-					+ sizeof(sock) + sizeof(dbflags)
-					+ sizeof(path.len) + path.len
-					+ sizeof(ruid.len) + ruid.len
-					+ sizeof(aorhash));
-			if (len < needed) {
-				shortage += needed ;
+			needed = (int)(sizeof(addr.len) + addr.len + sizeof(recv.len)
+						   + recv.len + sizeof(sock) + sizeof(dbflags)
+						   + sizeof(path.len) + path.len + sizeof(ruid.len)
+						   + ruid.len + sizeof(aorhash));
+			if(len < needed) {
+				shortage += needed;
 				continue;
 			}
 
 			/* write contact */
 			memcpy(cp, &addr.len, sizeof(addr.len));
-			cp = (char*)cp + sizeof(addr.len);
+			cp = (char *)cp + sizeof(addr.len);
 			memcpy(cp, addr.s, addr.len);
-			cp = (char*)cp + addr.len;
+			cp = (char *)cp + addr.len;
 
 			/* write received */
 			memcpy(cp, &recv.len, sizeof(recv.len));
-			cp = (char*)cp + sizeof(recv.len);
+			cp = (char *)cp + sizeof(recv.len);
 			/* copy received only if exist */
-			if(recv.len){
+			if(recv.len) {
 				memcpy(cp, recv.s, recv.len);
-				cp = (char*)cp + recv.len;
+				cp = (char *)cp + recv.len;
 			}
 
 			/* sock */
-			p  = (char*)VAL_STRING(ROW_VALUES(row) + 2);
-			if (VAL_NULL(ROW_VALUES(row)+2) || p==0 || p[0]==0){
+			p = (char *)VAL_STRING(ROW_VALUES(row) + 2);
+			if(VAL_NULL(ROW_VALUES(row) + 2) || p == 0 || p[0] == 0) {
 				sock = 0;
 			} else {
-				if (parse_phostport( p, &host.s, &host.len,
-				&port, &proto)!=0) {
+				if(parse_phostport(p, &host.s, &host.len, &port, &proto) != 0) {
 					LM_ERR("bad socket <%s>...set to 0\n", p);
 					sock = 0;
 				} else {
-					sock = grep_sock_info( &host, (unsigned short)port, proto);
-					if (sock==0) {
+					sock = grep_sock_info(&host, (unsigned short)port, proto);
+					if(sock == 0) {
 						LM_DBG("non-local socket <%s>...set to 0\n", p);
 					}
 				}
@@ -460,31 +458,31 @@ static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags,
 
 			/* write sock and flags */
 			memcpy(cp, &sock, sizeof(sock));
-			cp = (char*)cp + sizeof(sock);
+			cp = (char *)cp + sizeof(sock);
 			memcpy(cp, &dbflags, sizeof(dbflags));
-			cp = (char*)cp + sizeof(dbflags);
+			cp = (char *)cp + sizeof(dbflags);
 
 			/* write path */
 			memcpy(cp, &path.len, sizeof(path.len));
-			cp = (char*)cp + sizeof(path.len);
+			cp = (char *)cp + sizeof(path.len);
 			/* copy path only if exist */
-			if(path.len){
+			if(path.len) {
 				memcpy(cp, path.s, path.len);
-				cp = (char*)cp + path.len;
+				cp = (char *)cp + path.len;
 			}
 
 			/* write ruid */
 			memcpy(cp, &ruid.len, sizeof(ruid.len));
-			cp = (char*)cp + sizeof(ruid.len);
+			cp = (char *)cp + sizeof(ruid.len);
 			/* copy ruid only if exist */
-			if(ruid.len){
+			if(ruid.len) {
 				memcpy(cp, ruid.s, ruid.len);
-				cp = (char*)cp + ruid.len;
+				cp = (char *)cp + ruid.len;
 			}
 			/* aorhash not used for db-only records, but it is added
 			 * (as 0) to match the struct used for mem records */
 			memcpy(cp, &aorhash, sizeof(aorhash));
-			cp = (char*)cp + sizeof(aorhash);
+			cp = (char *)cp + sizeof(aorhash);
 
 			len -= needed;
 		} /* row cycle */
@@ -493,11 +491,11 @@ static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags,
 	} /* domain cycle */
 
 	/* len < 0 is possible, if size of the buffer < sizeof(c->c.len) */
-	if (len >= 0)
+	if(len >= 0)
 		memset(cp, 0, sizeof(addr.len));
 
 	/* Shouldn't happen */
-	if (shortage > 0 && len > shortage) {
+	if(shortage > 0 && len > shortage) {
 		abort();
 	}
 
@@ -519,8 +517,7 @@ static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags,
  * \return 0 on success, positive if buffer size was not sufficient, negative on failure
  */
 static inline int get_all_mem_ucontacts(void *buf, int len, unsigned int flags,
-								unsigned int part_idx, unsigned int part_max,
-								int options)
+		unsigned int part_idx, unsigned int part_max, int options)
 {
 	dlist_t *p;
 	urecord_t *r;
@@ -534,45 +531,42 @@ static inline int get_all_mem_ucontacts(void *buf, int len, unsigned int flags,
 	time_t tnow = 0;
 
 
-	if(ul_keepalive_timeout>0)
+	if(ul_keepalive_timeout > 0)
 		tnow = time(NULL);
 
 	/* Reserve space for terminating 0000 */
 	len -= sizeof(c->c.len);
 
-	for (p = _ksr_ul_root; p != NULL; p = p->next) {
+	for(p = _ksr_ul_root; p != NULL; p = p->next) {
 
-		for(i=0; i<p->d->size; i++) {
+		for(i = 0; i < p->d->size; i++) {
 
-			if ( (i % part_max) != part_idx )
+			if((i % part_max) != part_idx)
 				continue;
 
 			lock_ulslot(p->d, i);
-			if(p->d->table[i].n<=0)
-			{
+			if(p->d->table[i].n <= 0) {
 				unlock_ulslot(p->d, i);
 				continue;
 			}
-			for (r = p->d->table[i].first; r != NULL; r = r->next) {
-				for (c = r->contacts; c != NULL; c = c->next) {
-					if (c->c.len <= 0)
+			for(r = p->d->table[i].first; r != NULL; r = r->next) {
+				for(c = r->contacts; c != NULL; c = c->next) {
+					if(c->c.len <= 0)
 						continue;
 					/*
 					 * List only contacts that have all requested
 					 * flags set
 					 */
-					if ((c->cflags & flags) != flags)
+					if((c->cflags & flags) != flags)
 						continue;
 
-					if(options&GAU_OPT_SERVER_ID && server_id!=c->server_id)
+					if(options & GAU_OPT_SERVER_ID && server_id != c->server_id)
 						continue;
 
-					if(ul_keepalive_timeout>0 && c->last_keepalive>0)
-					{
-						if(c->sock!=NULL && c->sock->proto==PROTO_UDP)
-						{
-							if(c->last_keepalive+ul_keepalive_timeout < tnow)
-							{
+					if(ul_keepalive_timeout > 0 && c->last_keepalive > 0) {
+						if(c->sock != NULL && c->sock->proto == PROTO_UDP) {
+							if(c->last_keepalive + ul_keepalive_timeout
+									< tnow) {
 								/* set contact as expired in 10s */
 								if(c->expires > tnow + 10)
 									c->expires = tnow + 10;
@@ -582,34 +576,34 @@ static inline int get_all_mem_ucontacts(void *buf, int len, unsigned int flags,
 					}
 
 					needed = (int)(sizeof(c->c.len) + c->c.len
-							+ sizeof(c->received.len) + c->received.len
-							+ sizeof(c->sock) + sizeof(c->cflags)
-							+ sizeof(c->path.len) + c->path.len
-							+ sizeof(c->ruid.len) + c->ruid.len
-							+ sizeof(r->aorhash));
-					if (len >= needed) {
+								   + sizeof(c->received.len) + c->received.len
+								   + sizeof(c->sock) + sizeof(c->cflags)
+								   + sizeof(c->path.len) + c->path.len
+								   + sizeof(c->ruid.len) + c->ruid.len
+								   + sizeof(r->aorhash));
+					if(len >= needed) {
 						memcpy(cp, &c->c.len, sizeof(c->c.len));
-						cp = (char*)cp + sizeof(c->c.len);
+						cp = (char *)cp + sizeof(c->c.len);
 						memcpy(cp, c->c.s, c->c.len);
-						cp = (char*)cp + c->c.len;
-						memcpy(cp,&c->received.len,sizeof(c->received.len));
-						cp = (char*)cp + sizeof(c->received.len);
+						cp = (char *)cp + c->c.len;
+						memcpy(cp, &c->received.len, sizeof(c->received.len));
+						cp = (char *)cp + sizeof(c->received.len);
 						memcpy(cp, c->received.s, c->received.len);
-						cp = (char*)cp + c->received.len;
+						cp = (char *)cp + c->received.len;
 						memcpy(cp, &c->sock, sizeof(c->sock));
-						cp = (char*)cp + sizeof(c->sock);
+						cp = (char *)cp + sizeof(c->sock);
 						memcpy(cp, &c->cflags, sizeof(c->cflags));
-						cp = (char*)cp + sizeof(c->cflags);
+						cp = (char *)cp + sizeof(c->cflags);
 						memcpy(cp, &c->path.len, sizeof(c->path.len));
-						cp = (char*)cp + sizeof(c->path.len);
+						cp = (char *)cp + sizeof(c->path.len);
 						memcpy(cp, c->path.s, c->path.len);
-						cp = (char*)cp + c->path.len;
+						cp = (char *)cp + c->path.len;
 						memcpy(cp, &c->ruid.len, sizeof(c->ruid.len));
-						cp = (char*)cp + sizeof(c->ruid.len);
+						cp = (char *)cp + sizeof(c->ruid.len);
 						memcpy(cp, c->ruid.s, c->ruid.len);
-						cp = (char*)cp + c->ruid.len;
+						cp = (char *)cp + c->ruid.len;
 						memcpy(cp, &r->aorhash, sizeof(r->aorhash));
-						cp = (char*)cp + sizeof(r->aorhash);
+						cp = (char *)cp + sizeof(r->aorhash);
 						len -= needed;
 					} else {
 						shortage += needed;
@@ -620,11 +614,11 @@ static inline int get_all_mem_ucontacts(void *buf, int len, unsigned int flags,
 		}
 	}
 	/* len < 0 is possible, if size of the buffer < sizeof(c->c.len) */
-	if (len >= 0)
+	if(len >= 0)
 		memset(cp, 0, sizeof(c->c.len));
 
 	/* Shouldn't happen */
-	if (shortage > 0 && len > shortage) {
+	if(shortage > 0 && len > shortage) {
 		abort();
 	}
 
@@ -632,7 +626,6 @@ static inline int get_all_mem_ucontacts(void *buf, int len, unsigned int flags,
 
 	return shortage > 0 ? shortage : 0;
 }
-
 
 
 /*!
@@ -669,21 +662,22 @@ static inline int get_all_mem_ucontacts(void *buf, int len, unsigned int flags,
  * \return 0 on success, positive if buffer size was not sufficient, negative on failure
  */
 int get_all_ucontacts(void *buf, int len, unsigned int flags,
-								unsigned int part_idx, unsigned int part_max,
-								int options)
+		unsigned int part_idx, unsigned int part_max, int options)
 {
-	if (ul_db_mode==DB_ONLY)
-		return get_all_db_ucontacts( buf, len, flags, part_idx, part_max, options);
+	if(ul_db_mode == DB_ONLY)
+		return get_all_db_ucontacts(
+				buf, len, flags, part_idx, part_max, options);
 	else
-		return get_all_mem_ucontacts( buf, len, flags, part_idx, part_max, options);
+		return get_all_mem_ucontacts(
+				buf, len, flags, part_idx, part_max, options);
 }
 
 
 /**
  *
  */
-int ul_update_keepalive(unsigned int _aorhash, str *_ruid, time_t tval,
-		unsigned int rtrip)
+int ul_update_keepalive(
+		unsigned int _aorhash, str *_ruid, time_t tval, unsigned int rtrip)
 {
 	dlist_t *p;
 	urecord_t *r;
@@ -692,32 +686,28 @@ int ul_update_keepalive(unsigned int _aorhash, str *_ruid, time_t tval,
 
 	/* todo: get location domain via param */
 
-	for (p = _ksr_ul_root; p != NULL; p = p->next)
-	{
-		i = _aorhash&(p->d->size-1);
+	for(p = _ksr_ul_root; p != NULL; p = p->next) {
+		i = _aorhash & (p->d->size - 1);
 		lock_ulslot(p->d, i);
-		if(p->d->table[i].n<=0)
-		{
+		if(p->d->table[i].n <= 0) {
 			unlock_ulslot(p->d, i);
 			continue;
 		}
-		for (r = p->d->table[i].first; r != NULL; r = r->next)
-		{
-			if(r->aorhash==_aorhash)
-			{
-				for (c = r->contacts; c != NULL; c = c->next)
-				{
-					if (c->c.len <= 0 || c->ruid.len<=0)
+		for(r = p->d->table[i].first; r != NULL; r = r->next) {
+			if(r->aorhash == _aorhash) {
+				for(c = r->contacts; c != NULL; c = c->next) {
+					if(c->c.len <= 0 || c->ruid.len <= 0)
 						continue;
-					if(c->ruid.len==_ruid->len
-							&& !memcmp(c->ruid.s, _ruid->s, _ruid->len))
-					{
+					if(c->ruid.len == _ruid->len
+							&& !memcmp(c->ruid.s, _ruid->s, _ruid->len)) {
 						/* found */
 						c->last_keepalive = tval;
 						c->ka_roundtrip = rtrip;
-						LM_DBG("updated keepalive for [%.*s:%u] to %u (rtrip: %u)\n",
+						LM_DBG("updated keepalive for [%.*s:%u] to %u (rtrip: "
+							   "%u)\n",
 								_ruid->len, _ruid->s, _aorhash,
-								(unsigned int)c->last_keepalive, c->ka_roundtrip);
+								(unsigned int)c->last_keepalive,
+								c->ka_roundtrip);
 						unlock_ulslot(p->d, i);
 						return 0;
 					}
@@ -746,23 +736,23 @@ int ul_refresh_keepalive(unsigned int _aorhash, str *_ruid)
  * function must be called before the server forks if it should
  * be available to all processes
  */
-static inline int new_dlist(str* _n, dlist_t** _d)
+static inline int new_dlist(str *_n, dlist_t **_d)
 {
-	dlist_t* ptr;
+	dlist_t *ptr;
 
 	/* Domains are created before ser forks,
 	 * so we can create them using pkg_malloc
 	 */
-	ptr = (dlist_t*)shm_malloc(sizeof(dlist_t));
-	if (ptr == 0) {
+	ptr = (dlist_t *)shm_malloc(sizeof(dlist_t));
+	if(ptr == 0) {
 		SHM_MEM_ERROR;
 		return -1;
 	}
 	memset(ptr, 0, sizeof(dlist_t));
 
 	/* copy domain name as null terminated string */
-	ptr->name.s = (char*)shm_malloc(_n->len+1);
-	if (ptr->name.s == 0) {
+	ptr->name.s = (char *)shm_malloc(_n->len + 1);
+	if(ptr->name.s == 0) {
 		SHM_MEM_ERROR;
 		shm_free(ptr);
 		return -2;
@@ -772,7 +762,7 @@ static inline int new_dlist(str* _n, dlist_t** _d)
 	ptr->name.len = _n->len;
 	ptr->name.s[ptr->name.len] = 0;
 
-	if (new_udomain(&(ptr->name), ul_hash_size, &(ptr->d)) < 0) {
+	if(new_udomain(&(ptr->name), ul_hash_size, &(ptr->d)) < 0) {
 		LM_ERR("creating domain structure failed\n");
 		shm_free(ptr->name.s);
 		shm_free(ptr);
@@ -791,9 +781,9 @@ static inline int new_dlist(str* _n, dlist_t** _d)
  * \param _d usrloc domain
  * \return 0 on success, -1 on failure
  */
-int get_udomain(const char* _n, udomain_t** _d)
+int get_udomain(const char *_n, udomain_t **_d)
 {
-	dlist_t* d;
+	dlist_t *d;
 	str s;
 
 	if(_n == NULL) {
@@ -801,14 +791,14 @@ int get_udomain(const char* _n, udomain_t** _d)
 		goto notfound;
 	}
 
-	s.s = (char*)_n;
+	s.s = (char *)_n;
 	s.len = strlen(_n);
 	if(s.len <= 0) {
 		LM_ERR("empty location table name\n");
 		goto notfound;
 	}
 
-	if (find_dlist(&s, &d) == 0) {
+	if(find_dlist(&s, &d) == 0) {
 		*_d = d->d;
 		return 0;
 	}
@@ -828,21 +818,21 @@ notfound:
  * \param _d new created domain
  * \return 0 on success, -1 on failure
  */
-int register_udomain(const char* _n, udomain_t** _d)
+int register_udomain(const char *_n, udomain_t **_d)
 {
-	dlist_t* d;
+	dlist_t *d;
 	str s;
-	db1_con_t* con;
+	db1_con_t *con;
 
-	s.s = (char*)_n;
+	s.s = (char *)_n;
 	s.len = strlen(_n);
 
-	if (find_dlist(&s, &d) == 0) {
+	if(find_dlist(&s, &d) == 0) {
 		*_d = d->d;
 		return 0;
 	}
 
-	if (new_dlist(&s, &d) < 0) {
+	if(new_dlist(&s, &d) < 0) {
 		LM_ERR("failed to create new domain\n");
 		return -1;
 	}
@@ -850,20 +840,21 @@ int register_udomain(const char* _n, udomain_t** _d)
 	/* Test tables from database if we are gonna
 	 * to use database
 	 */
-	if (ul_db_mode != NO_DB) {
+	if(ul_db_mode != NO_DB) {
 		con = ul_dbf.init(&ul_db_url);
-		if (!con) {
+		if(!con) {
 			LM_ERR("failed to open database connection\n");
 			goto dberror;
 		}
 
 		if(ul_version_table != 0
-				&& db_check_table_version(&ul_dbf, con, &s, UL_TABLE_VERSION) < 0) {
+				&& db_check_table_version(&ul_dbf, con, &s, UL_TABLE_VERSION)
+						   < 0) {
 			DB_TABLE_VERSION_ERROR(s);
 			goto dberror;
 		}
 		/* test if DB really exists */
-		if (testdb_udomain(con, d->d) < 0) {
+		if(testdb_udomain(con, d->d) < 0) {
 			LM_ERR("testing domain '%.*s' failed\n", s.len, ZSW(s.s));
 			goto dberror;
 		}
@@ -879,7 +870,8 @@ int register_udomain(const char* _n, udomain_t** _d)
 	return 0;
 
 dberror:
-	if (con) ul_dbf.close(con);
+	if(con)
+		ul_dbf.close(con);
 	con = 0;
 	free_udomain(d->d);
 	shm_free(d->name.s);
@@ -893,7 +885,7 @@ dberror:
  */
 void free_all_udomains(void)
 {
-	dlist_t* ptr;
+	dlist_t *ptr;
 
 	while(_ksr_ul_root) {
 		ptr = _ksr_ul_root;
@@ -910,9 +902,9 @@ void free_all_udomains(void)
  * \brief Print all domains, just for debugging
  * \param _f output file
  */
-void print_all_udomains(FILE* _f)
+void print_all_udomains(FILE *_f)
 {
-	dlist_t* ptr;
+	dlist_t *ptr;
 
 	ptr = _ksr_ul_root;
 
@@ -933,14 +925,13 @@ unsigned long get_number_of_users(void)
 {
 	long numberOfUsers = 0;
 
-	dlist_t* current_dlist;
+	dlist_t *current_dlist;
 
 	current_dlist = _ksr_ul_root;
 
-	while (current_dlist)
-	{
+	while(current_dlist) {
 		numberOfUsers += get_stat_val(current_dlist->d->users);
-		current_dlist  = current_dlist->next;
+		current_dlist = current_dlist->next;
 	}
 
 	return numberOfUsers;
@@ -954,21 +945,21 @@ unsigned long get_number_of_users(void)
 int synchronize_all_udomains(int istart, int istep)
 {
 	int res = 0;
-	dlist_t* ptr;
+	dlist_t *ptr;
 
 	ul_get_act_time(); /* Get and save actual time */
 
-	if (ul_db_mode==DB_ONLY) {
+	if(ul_db_mode == DB_ONLY) {
 		if(istart == 0) {
-			for( ptr=_ksr_ul_root ; ptr ; ptr=ptr->next) {
+			for(ptr = _ksr_ul_root; ptr; ptr = ptr->next) {
 				res |= db_timer_udomain(ptr->d);
 			}
 		}
-		if (ul_ka_mode != ULKA_NONE) {
+		if(ul_ka_mode != ULKA_NONE) {
 			ul_ka_db_records((unsigned int)istart);
 		}
 	} else {
-		for( ptr=_ksr_ul_root ; ptr ; ptr=ptr->next) {
+		for(ptr = _ksr_ul_root; ptr; ptr = ptr->next) {
 			mem_timer_udomain(ptr->d, istart, istep);
 		}
 	}
@@ -983,11 +974,11 @@ int synchronize_all_udomains(int istart, int istep)
 int ul_db_clean_udomains(void)
 {
 	int res = 0;
-	dlist_t* ptr;
+	dlist_t *ptr;
 
 	ul_get_act_time(); /* Get and save actual time */
 
-	for( ptr=_ksr_ul_root ; ptr ; ptr=ptr->next)
+	for(ptr = _ksr_ul_root; ptr; ptr = ptr->next)
 		res |= db_timer_udomain(ptr->d);
 
 	return res;
@@ -999,12 +990,12 @@ int ul_db_clean_udomains(void)
  * \param _p pointer to domain if found
  * \return 1 if domain was found, 0 otherwise
  */
-int find_domain(str* _d, udomain_t** _p)
+int find_domain(str *_d, udomain_t **_p)
 {
-	dlist_t* d;
+	dlist_t *d;
 
-	if (find_dlist(_d, &d) == 0) {
-	        *_p = d->d;
+	if(find_dlist(_d, &d) == 0) {
+		*_p = d->d;
 		return 0;
 	}
 
