@@ -24,19 +24,20 @@
 
 #include "../../core/cfg/cfg.h"
 
-#define MAX_RTPP_TRIED_NODES            30
+#define MAX_RTPP_TRIED_NODES 30
 
-struct cfg_group_rtpengine {
-	unsigned int	rtpengine_disable_tout;
-	unsigned int	aggressive_redetection;
-	unsigned int	rtpengine_tout_ms;
-	unsigned int    queried_nodes_limit;
-	unsigned int	rtpengine_retr;
+struct cfg_group_rtpengine
+{
+	unsigned int rtpengine_disable_tout;
+	unsigned int aggressive_redetection;
+	unsigned int rtpengine_tout_ms;
+	unsigned int queried_nodes_limit;
+	unsigned int rtpengine_retr;
 };
 
-extern struct cfg_group_rtpengine	default_rtpengine_cfg;
-extern void	*rtpengine_cfg;
-extern cfg_def_t	rtpengine_cfg_def[];
+extern struct cfg_group_rtpengine default_rtpengine_cfg;
+extern void *rtpengine_cfg;
+extern cfg_def_t rtpengine_cfg_def[];
 
 
 #endif
