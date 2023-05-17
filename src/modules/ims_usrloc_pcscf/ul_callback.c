@@ -52,12 +52,13 @@
 #include "../../core/mem/shm_mem.h"
 //#include "ul_callback.h"
 #include "../ims_usrloc_pcscf/usrloc.h"
-struct ulcb_head_list* ulcb_list = 0;			/*<! list for create callbacks */
+struct ulcb_head_list *ulcb_list = 0; /*<! list for create callbacks */
 
 int init_ulcb_list(void)
 {
-	ulcb_list = (struct ulcb_head_list*)shm_malloc( sizeof(struct ulcb_head_list) );
-	if (ulcb_list==0) {
+	ulcb_list =
+			(struct ulcb_head_list *)shm_malloc(sizeof(struct ulcb_head_list));
+	if(ulcb_list == 0) {
 		LM_CRIT("no more shared mem\n");
 		return -1;
 	}
@@ -70,84 +71,87 @@ void destroy_ulcb_list(void)
 {
 	struct ul_callback *cbp, *cbp_tmp;
 
-	if (!ulcb_list)
+	if(!ulcb_list)
 		return;
 
-	for( cbp=ulcb_list->first; cbp ; ) {
+	for(cbp = ulcb_list->first; cbp;) {
 		cbp_tmp = cbp;
 		cbp = cbp->next;
-		if (cbp_tmp->param) shm_free( cbp_tmp->param );
-		shm_free( cbp_tmp );
+		if(cbp_tmp->param)
+			shm_free(cbp_tmp->param);
+		shm_free(cbp_tmp);
 	}
 
 	shm_free(ulcb_list);
 }
 
-void destroy_ul_callbacks_list(struct ul_callback* cb) {
+void destroy_ul_callbacks_list(struct ul_callback *cb)
+{
 
 	struct ul_callback *cb_t;
 
-	while (cb) {
+	while(cb) {
 		cb_t = cb;
 		cb = cb->next;
-//		if (cb_t->callback_param_free && cb_t->param) {
-//			cb_t->callback_param_free(cb_t->param);
-//			cb_t->param = NULL;
-//		} //TODO: this is if we need/require a freeparam function
+		//		if (cb_t->callback_param_free && cb_t->param) {
+		//			cb_t->callback_param_free(cb_t->param);
+		//			cb_t->param = NULL;
+		//		} //TODO: this is if we need/require a freeparam function
 		shm_free(cb_t);
 	}
 }
 
-int register_ulcb_method( struct pcontact *c, int types, ul_cb f, void *param )
+int register_ulcb_method(struct pcontact *c, int types, ul_cb f, void *param)
 {
-        //struct ul_callback *cbp;
-
-        /* are the callback types valid?... */
-        if ( types<0 || types>PCSCF_MAX ) {
-                LM_CRIT("invalid callback types: mask=%d\n",types);
-                return E_BUG;
-        }
-        /* we don't register null functions */
-        if (f==0) {
-                LM_CRIT("null callback function\n");
-                return E_BUG;
-        }
-
-        /* build a new callback structure */
-        if ( types & PCSCF_CONTACT_UPDATE){
-            if (!(cbp_registrar=(struct ul_callback*)shm_malloc(sizeof( struct ul_callback)))) {
-                LM_ERR("no more share mem\n");
-                return E_OUT_OF_MEM;
-            }
-            cbp_registrar->callback = f;
-        }
-        else{
-            if (!(cbp_qos=(struct ul_callback*)shm_malloc(sizeof( struct ul_callback)))) {
-                LM_ERR("no more share mem\n");
-                return E_OUT_OF_MEM;
-            }
-            cbp_qos->callback = f;
-        }
-        return 1;
-}
-
-int register_ulcb( struct pcontact *c, int types, ul_cb f, void *param )
-{
-	struct ul_callback *cbp;
+	//struct ul_callback *cbp;
 
 	/* are the callback types valid?... */
-	if ( types<0 || types>PCSCF_MAX ) {
-		LM_CRIT("invalid callback types: mask=%d\n",types);
+	if(types < 0 || types > PCSCF_MAX) {
+		LM_CRIT("invalid callback types: mask=%d\n", types);
 		return E_BUG;
 	}
 	/* we don't register null functions */
-	if (f==0) {
+	if(f == 0) {
 		LM_CRIT("null callback function\n");
 		return E_BUG;
 	}
 
 	/* build a new callback structure */
-	if (!(cbp=(struct ul_callback*)shm_malloc(sizeof( struct ul_callback)))) {
+	if(types & PCSCF_CONTACT_UPDATE) {
+		if(!(cbp_registrar = (struct ul_callback *)shm_malloc(
+					 sizeof(struct ul_callback)))) {
+			LM_ERR("no more share mem\n");
+			return E_OUT_OF_MEM;
+		}
+		cbp_registrar->callback = f;
+	} else {
+		if(!(cbp_qos = (struct ul_callback *)shm_malloc(
+					 sizeof(struct ul_callback)))) {
+			LM_ERR("no more share mem\n");
+			return E_OUT_OF_MEM;
+		}
+		cbp_qos->callback = f;
+	}
+	return 1;
+}
+
+int register_ulcb(struct pcontact *c, int types, ul_cb f, void *param)
+{
+	struct ul_callback *cbp;
+
+	/* are the callback types valid?... */
+	if(types < 0 || types > PCSCF_MAX) {
+		LM_CRIT("invalid callback types: mask=%d\n", types);
+		return E_BUG;
+	}
+	/* we don't register null functions */
+	if(f == 0) {
+		LM_CRIT("null callback function\n");
+		return E_BUG;
+	}
+
+	/* build a new callback structure */
+	if(!(cbp = (struct ul_callback *)shm_malloc(sizeof(struct ul_callback)))) {
 		LM_ERR("no more share mem\n");
 		return E_OUT_OF_MEM;
 	}
@@ -156,7 +160,7 @@ int register_ulcb( struct pcontact *c, int types, ul_cb f, void *param )
 	cbp->param = param;
 	cbp->types = types;
 
-	if ( types==PCSCF_CONTACT_INSERT ) {
+	if(types == PCSCF_CONTACT_INSERT) {
 		LM_DBG("TODO: check for registering callback before/after init\n");
 		/* link it into the proper place... */
 		cbp->next = ulcb_list->first;
@@ -172,21 +176,24 @@ int register_ulcb( struct pcontact *c, int types, ul_cb f, void *param )
 	return 1;
 }
 
-void delete_ulcb(struct pcontact* c, int type)
+void delete_ulcb(struct pcontact *c, int type)
 {
-	struct ul_callback* cur;
-	struct ul_callback* prev;
+	struct ul_callback *cur;
+	struct ul_callback *prev;
 
-	if(c->cbs.first == 0 || ((c->cbs.reg_types) & type) == 0){
+	if(c->cbs.first == 0 || ((c->cbs.reg_types) & type) == 0) {
 		return;
 	}
 
 	// if the target is the first callback
 	cur = c->cbs.first;
-	if(cur->types & type){
-		if(cur->param){
-			if(*((unsigned short*)cur->param) == c->received_port){
-				LM_DBG("Removed ulcb from the head for contact: aor[%.*s], via port %u, received port %u, types 0x%02X\n", c->aor.len, c->aor.s, c->via_port, c->received_port, cur->types);
+	if(cur->types & type) {
+		if(cur->param) {
+			if(*((unsigned short *)cur->param) == c->received_port) {
+				LM_DBG("Removed ulcb from the head for contact: aor[%.*s], via "
+					   "port %u, received port %u, types 0x%02X\n",
+						c->aor.len, c->aor.s, c->via_port, c->received_port,
+						cur->types);
 				c->cbs.first = cur->next;
 				shm_free(cur);
 				return;
@@ -196,12 +203,15 @@ void delete_ulcb(struct pcontact* c, int type)
 
 	prev = c->cbs.first;
 	cur = c->cbs.first->next;
-	while(cur){
-		if(cur->types & type){
-			if(cur->param){
-				if(*((unsigned short*)cur->param) == c->received_port){
+	while(cur) {
+		if(cur->types & type) {
+			if(cur->param) {
+				if(*((unsigned short *)cur->param) == c->received_port) {
 					prev->next = cur->next;
-					LM_DBG("Removed ulcb for contact: aor[%.*s], via port %u, received port %u, types 0x%02X\n", c->aor.len, c->aor.s, c->via_port, c->received_port, cur->types);
+					LM_DBG("Removed ulcb for contact: aor[%.*s], via port %u, "
+						   "received port %u, types 0x%02X\n",
+							c->aor.len, c->aor.s, c->via_port, c->received_port,
+							cur->types);
 					shm_free(cur);
 					return;
 				}
@@ -212,34 +222,36 @@ void delete_ulcb(struct pcontact* c, int type)
 		cur = cur->next;
 	}
 
-	LM_DBG("No ulcb has been deleted for contact: aor[%.*s], via port %u, received port %u\n", c->aor.len, c->aor.s, c->via_port, c->received_port);
+	LM_DBG("No ulcb has been deleted for contact: aor[%.*s], via port %u, "
+		   "received port %u\n",
+			c->aor.len, c->aor.s, c->via_port, c->received_port);
 }
 
-int is_ulcb_registered( struct pcontact *c, ul_cb f)
+int is_ulcb_registered(struct pcontact *c, ul_cb f)
 {
 	struct ul_callback *cbp;
 
-  for (cbp=c->cbs.first; cbp; cbp=cbp->next) {
-    if (cbp->callback == f)
-      return 1;
-  }
-  return 0;
-
+	for(cbp = c->cbs.first; cbp; cbp = cbp->next) {
+		if(cbp->callback == f)
+			return 1;
+	}
+	return 0;
 };
 
 
 /*! \brief run all transaction callbacks for an event type */
-void run_ul_callbacks( int type , struct pcontact *c)
+void run_ul_callbacks(int type, struct pcontact *c)
 {
 	struct ul_callback *cbp;
 
-	if (c->cbs.first == 0 || ((c->cbs.reg_types) & type) == 0)
+	if(c->cbs.first == 0 || ((c->cbs.reg_types) & type) == 0)
 		return;
 
-	for (cbp=c->cbs.first; cbp; cbp=cbp->next) {
-		if ((cbp->types) & type) {
-			LM_DBG("contact=%p, callback type %d/%d entered\n", c, type, cbp->types);
-			cbp->callback( c, type, cbp->param );
+	for(cbp = c->cbs.first; cbp; cbp = cbp->next) {
+		if((cbp->types) & type) {
+			LM_DBG("contact=%p, callback type %d/%d entered\n", c, type,
+					cbp->types);
+			cbp->callback(c, type, cbp->param);
 		}
 	}
 	return;
@@ -249,9 +261,8 @@ void run_ul_create_callbacks(struct pcontact *c)
 {
 	struct ul_callback *cbp;
 
-	for (cbp = ulcb_list->first; cbp; cbp = cbp->next) {
-			LM_DBG("contact=%p, callback type PCSCF_CONTACT_INSERT entered\n", c);
+	for(cbp = ulcb_list->first; cbp; cbp = cbp->next) {
+		LM_DBG("contact=%p, callback type PCSCF_CONTACT_INSERT entered\n", c);
 		cbp->callback(c, PCSCF_CONTACT_INSERT, cbp->param);
 	}
 }
-

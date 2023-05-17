@@ -54,24 +54,25 @@
 /*!
  * List of all domains registered with usrloc
  */
-typedef struct dlist {
-	str name;            /*!< Name of the domain (null terminated) */
-	udomain_t* d;        /*!< Payload */
-	struct dlist* next;  /*!< Next element in the list */
+typedef struct dlist
+{
+	str name;			/*!< Name of the domain (null terminated) */
+	udomain_t *d;		/*!< Payload */
+	struct dlist *next; /*!< Next element in the list */
 } dlist_t;
 
 /*! \brief Global list of all registered domains */
-extern dlist_t* root;
+extern dlist_t *root;
 
-int register_udomain(const char* _n, udomain_t** _d);
+int register_udomain(const char *_n, udomain_t **_d);
 void free_all_udomains(void);
-void print_all_udomains(FILE* _f);
+void print_all_udomains(FILE *_f);
 int synchronize_all_udomains(void);
 int get_all_ucontacts(void *buf, int len, unsigned int flags,
 		unsigned int part_idx, unsigned int part_max);
-int get_udomain(const char* _n, udomain_t** _d);
+int get_udomain(const char *_n, udomain_t **_d);
 unsigned long get_number_of_users(void);
-int find_domain(str* _d, udomain_t** _p);
+int find_domain(str *_d, udomain_t **_p);
 
 /* stat retrieval functions */
 unsigned long get_number_of_contacts(void);

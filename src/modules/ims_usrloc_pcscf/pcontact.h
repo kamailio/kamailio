@@ -53,25 +53,29 @@
 #include "../../core/qvalue.h"
 #include "usrloc.h"
 
-struct hslot; 	/*!< Hash table slot */
+struct hslot; /*!< Hash table slot */
 
 
-void insert_ppublic(struct pcontact* _c, ppublic_t* _p);
-int new_ppublic(str* public_identity, int is_default, ppublic_t** _p);
-void free_ppublic(ppublic_t* _p);
+void insert_ppublic(struct pcontact *_c, ppublic_t *_p);
+int new_ppublic(str *public_identity, int is_default, ppublic_t **_p);
+void free_ppublic(ppublic_t *_p);
 
-int new_pcontact(/*str* _dom, str* public_identity, int reg_state, int barring, ims_subscription** s, str* ccf1, str* ccf2, str* ecf1, str* ecf2, impurecord_t** _r*/);
-void free_pcontact(pcontact_t* _c);
-void print_pcontact(FILE* _f, pcontact_t* _r);
-ppublic_t* mem_insert_ppublic(pcontact_t* _r/*, str* _c, ucontact_info_t* _ci*/);
-void mem_remove_ppublic(pcontact_t* _r/*, ucontact_t* _c*/);
-void mem_delete_ppublic(pcontact_t* _r/*, ucontact_t* _c*/);
-void timer_pcontact(pcontact_t* _r);
-int delete_ppublic(pcontact_t* _r/*, struct ucontact* _c*/);
-int get_ppublic(pcontact_t* _r);
-int aor_to_contact(str* aor, str* contact);
-unsigned int get_hash_slot(udomain_t* _d, str* via_host, unsigned short via_port, unsigned short via_proto);
-unsigned int get_aor_hash(udomain_t* _d, str* via_host, unsigned short via_port, unsigned short via_proto);
+int new_pcontact(
+		/*str* _dom, str* public_identity, int reg_state, int barring, ims_subscription** s, str* ccf1, str* ccf2, str* ecf1, str* ecf2, impurecord_t** _r*/);
+void free_pcontact(pcontact_t *_c);
+void print_pcontact(FILE *_f, pcontact_t *_r);
+ppublic_t *mem_insert_ppublic(
+		pcontact_t *_r /*, str* _c, ucontact_info_t* _ci*/);
+void mem_remove_ppublic(pcontact_t *_r /*, ucontact_t* _c*/);
+void mem_delete_ppublic(pcontact_t *_r /*, ucontact_t* _c*/);
+void timer_pcontact(pcontact_t *_r);
+int delete_ppublic(pcontact_t *_r /*, struct ucontact* _c*/);
+int get_ppublic(pcontact_t *_r);
+int aor_to_contact(str *aor, str *contact);
+unsigned int get_hash_slot(udomain_t *_d, str *via_host,
+		unsigned short via_port, unsigned short via_proto);
+unsigned int get_aor_hash(udomain_t *_d, str *via_host, unsigned short via_port,
+		unsigned short via_proto);
 
 
 #endif

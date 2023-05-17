@@ -49,23 +49,24 @@
 #include "../../core/locking.h"
 
 /** reg Subscription Structure */
-typedef struct _reginfo_subscription {
+typedef struct _reginfo_subscription
+{
 	unsigned int hash;
-	str req_uri; 					/**< public id of the user, same thing for To:  */
-	int duration; 					/**< duration of subscription  */
-	time_t expires; 				/**< time of expiration    */
-	char attempts_left; 			/**< number of unsuccessful attempts to subscribe*/
+	str req_uri;		/**< public id of the user, same thing for To:  */
+	int duration;		/**< duration of subscription  */
+	time_t expires;		/**< time of expiration    */
+	char attempts_left; /**< number of unsuccessful attempts to subscribe*/
 
 	struct _reginfo_subscription *next, *prev;
 } reginfo_subscription;
 
 /** Subscription list */
-typedef struct {
-	gen_lock_t *lock; 				/**< lock for subscription list operations       */
-	reginfo_subscription *head; 	/**< first subscription in the list    */
-	reginfo_subscription *tail; 	/**< last subscription in the list   */
+typedef struct
+{
+	gen_lock_t *lock; /**< lock for subscription list operations       */
+	reginfo_subscription *head; /**< first subscription in the list    */
+	reginfo_subscription *tail; /**< last subscription in the list   */
 } reginfo_subscription_hash_slot;
-
 
 
 #endif /* REGINFO_H_ */

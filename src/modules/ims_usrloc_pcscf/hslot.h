@@ -56,22 +56,23 @@ struct udomain;
 struct pcontact;
 
 
-typedef struct hslot {
-	int n;                  	/*!< Number of elements in the collision slot */
-	struct pcontact* first;  	/*!< First element in the list */
-	struct pcontact* last;   	/*!< Last element in the list */
-	struct udomain* d;      	/*!< Domain we belong to */
+typedef struct hslot
+{
+	int n;					/*!< Number of elements in the collision slot */
+	struct pcontact *first; /*!< First element in the list */
+	struct pcontact *last;	/*!< Last element in the list */
+	struct udomain *d;		/*!< Domain we belong to */
 #ifdef GEN_LOCK_T_PREFERED
-	gen_lock_t *lock;       	/*!< Lock for hash entry - fastlock */
+	gen_lock_t *lock; /*!< Lock for hash entry - fastlock */
 #else
-	int lockidx;            	/*!< Lock index for hash entry - the rest*/
+	int lockidx; /*!< Lock index for hash entry - the rest*/
 #endif
 } hslot_t;
 
-void init_slot(struct udomain* _d, hslot_t* _s, int n);
-void deinit_slot(hslot_t* _s);
-void slot_add(hslot_t* _s, struct pcontact* _r);
-void slot_rem(hslot_t* _s, struct pcontact* _r);
+void init_slot(struct udomain *_d, hslot_t *_s, int n);
+void deinit_slot(hslot_t *_s);
+void slot_add(hslot_t *_s, struct pcontact *_r);
+void slot_rem(hslot_t *_s, struct pcontact *_r);
 int ul_init_locks(void);
 void ul_unlock_locks(void);
 void ul_destroy_locks(void);
