@@ -44,13 +44,13 @@
 
 
 /* to-tag including pre-calculated and fixed part */
-static char           sl_tag_buf[TOTAG_VALUE_LEN];
-static str            sl_tag = {sl_tag_buf,TOTAG_VALUE_LEN};
+static char sl_tag_buf[TOTAG_VALUE_LEN];
+static str sl_tag = {sl_tag_buf, TOTAG_VALUE_LEN};
 /* from here, the variable prefix begins */
-static char           *tag_suffix;
+static char *tag_suffix;
 /* if we for this time did not send any stateless reply,
  * we do not filter */
-static unsigned int  *sl_timeout;
+static unsigned int *sl_timeout;
 
 static int _sl_filtered_ack_route = -1; /* default disabled */
 
@@ -67,13 +67,14 @@ extern str _sl_event_callback_lres_sent;
  */
 void sl_lookup_event_routes(void)
 {
-	_sl_filtered_ack_route=route_lookup(&event_rt, "sl:filtered-ack");
-	if (_sl_filtered_ack_route>=0 && event_rt.rlist[_sl_filtered_ack_route]==0)
-		_sl_filtered_ack_route=-1; /* disable */
+	_sl_filtered_ack_route = route_lookup(&event_rt, "sl:filtered-ack");
+	if(_sl_filtered_ack_route >= 0
+			&& event_rt.rlist[_sl_filtered_ack_route] == 0)
+		_sl_filtered_ack_route = -1; /* disable */
 
 	_sl_evrt_local_response = route_lookup(&event_rt, "sl:local-response");
-	if (_sl_evrt_local_response>=0
-			&& event_rt.rlist[_sl_evrt_local_response]==NULL)
+	if(_sl_evrt_local_response >= 0
+			&& event_rt.rlist[_sl_evrt_local_response] == NULL)
 		_sl_evrt_local_response = -1;
 }
 
@@ -82,18 +83,15 @@ void sl_lookup_event_routes(void)
  */
 int sl_startup()
 {
-	init_tags( sl_tag.s, &tag_suffix,
-			"KAMAILIO-stateless",
-			SL_TOTAG_SEPARATOR );
+	init_tags(sl_tag.s, &tag_suffix, "KAMAILIO-stateless", SL_TOTAG_SEPARATOR);
 
 	/*timeout*/
-	sl_timeout = (unsigned int*)shm_malloc(sizeof(unsigned int));
-	if (!sl_timeout)
-	{
+	sl_timeout = (unsigned int *)shm_malloc(sizeof(unsigned int));
+	if(!sl_timeout) {
 		SHM_MEM_ERROR;
 		return -1;
 	}
-	*(sl_timeout)=get_ticks_raw();
+	*(sl_timeout) = get_ticks_raw();
 
 	return 1;
 }
@@ -103,7 +101,7 @@ int sl_startup()
  */
 int sl_shutdown()
 {
-	if (sl_timeout)
+	if(sl_timeout)
 		shm_free(sl_timeout);
 	return 1;
 }
@@ -113,7 +111,7 @@ int sl_shutdown()
  */
 int sl_get_reply_totag(struct sip_msg *msg, str *totag)
 {
-	if(msg==NULL || totag==NULL)
+	if(msg == NULL || totag == NULL)
 		return -1;
 	calc_crc_suffix(msg, tag_suffix);
 	*totag = sl_tag;
@@ -140,7 +138,7 @@ int sl_reply_helper(struct sip_msg *msg, int code, char *reason, str *tag)
 	str evname = str_init("sl:local-response");
 	struct sip_msg pmsg;
 
-	if (msg->first_line.u.request.method_value==METHOD_ACK)
+	if(msg->first_line.u.request.method_value == METHOD_ACK)
 		goto error;
 
 	if(msg->msg_flags & FL_MSG_NOREPLY) {
@@ -149,19 +147,19 @@ int sl_reply_helper(struct sip_msg *msg, int code, char *reason, str *tag)
 	}
 
 	init_dest_info(&dst);
-	if (reply_to_via) {
-		if (update_sock_struct_from_via(&dst.to, msg, msg->via1 )==-1)
-		{
-			LM_ERR("cannot lookup reply dst: %.*s\n",
-					msg->via1->host.len, msg->via1->host.s);
+	if(reply_to_via) {
+		if(update_sock_struct_from_via(&dst.to, msg, msg->via1) == -1) {
+			LM_ERR("cannot lookup reply dst: %.*s\n", msg->via1->host.len,
+					msg->via1->host.s);
 			goto error;
 		}
-	} else update_sock_struct_from_ip(&dst.to, msg);
+	} else
+		update_sock_struct_from_ip(&dst.to, msg);
 
 	/* if that is a redirection message, dump current message set to it */
-	if (code>=300 && code<400) {
-		dset.s=print_dset(msg, &dset.len, sl_rich_redirect);
-		if (dset.s) {
+	if(code >= 300 && code < 400) {
+		dset.s = print_dset(msg, &dset.len, sl_rich_redirect);
+		if(dset.s) {
 			add_lump_rpl(msg, dset.s, dset.len, LUMP_RPL_HDR);
 		}
 	}
@@ -170,23 +168,23 @@ int sl_reply_helper(struct sip_msg *msg, int code, char *reason, str *tag)
 	text.len = strlen(reason);
 
 	/* add a to-tag if there is a To header field without it */
-	if ( code>=180 &&
-		(msg->to || (parse_headers(msg,HDR_TO_F, 0)!=-1 && msg->to))
-		&& (get_to(msg)->tag_value.s==0 || get_to(msg)->tag_value.len==0) )
-	{
-		if(tag!=NULL && tag->s!=NULL) {
-			buf.s = build_res_buf_from_sip_req(code, &text, tag,
-						msg, (unsigned int*)&buf.len, &dummy_bm);
+	if(code >= 180
+			&& (msg->to || (parse_headers(msg, HDR_TO_F, 0) != -1 && msg->to))
+			&& (get_to(msg)->tag_value.s == 0
+					|| get_to(msg)->tag_value.len == 0)) {
+		if(tag != NULL && tag->s != NULL) {
+			buf.s = build_res_buf_from_sip_req(
+					code, &text, tag, msg, (unsigned int *)&buf.len, &dummy_bm);
 		} else {
-			calc_crc_suffix( msg, tag_suffix );
+			calc_crc_suffix(msg, tag_suffix);
 			buf.s = build_res_buf_from_sip_req(code, &text, &sl_tag, msg,
-					(unsigned int*)&buf.len, &dummy_bm);
+					(unsigned int *)&buf.len, &dummy_bm);
 		}
 	} else {
-		buf.s = build_res_buf_from_sip_req(code, &text, 0, msg,
-				(unsigned int*)&buf.len, &dummy_bm);
+		buf.s = build_res_buf_from_sip_req(
+				code, &text, 0, msg, (unsigned int *)&buf.len, &dummy_bm);
 	}
-	if (!buf.s) {
+	if(!buf.s) {
 		LM_DBG("response building failed\n");
 		goto error;
 	}
@@ -200,39 +198,37 @@ int sl_reply_helper(struct sip_msg *msg, int code, char *reason, str *tag)
 	 * (there is no known use for mhomed for locally generated replies;
 	 * note: forwarded cross-interface replies do benefit of mhomed!
 	 */
-	backup_mhomed=mhomed;
-	mhomed=0;
+	backup_mhomed = mhomed;
+	mhomed = 0;
 	/* use for sending the received interface -bogdan*/
-	dst.proto=msg->rcv.proto;
-	dst.send_sock=msg->rcv.bind_address;
-	dst.id=msg->rcv.proto_reserved1;
+	dst.proto = msg->rcv.proto;
+	dst.send_sock = msg->rcv.bind_address;
+	dst.id = msg->rcv.proto_reserved1;
 #ifdef USE_COMP
-	dst.comp=msg->via1->comp_no;
+	dst.comp = msg->via1->comp_no;
 #endif
-	dst.send_flags=msg->rpl_send_flags;
+	dst.send_flags = msg->rpl_send_flags;
 	if(sip_check_fline(buf.s, buf.len) == 0)
 		ret = msg_send_buffer(&dst, buf.s, buf.len, 0);
 	else
 		ret = msg_send_buffer(&dst, buf.s, buf.len, 1);
 
-	mhomed=backup_mhomed;
+	mhomed = backup_mhomed;
 
 	keng = sr_kemi_eng_get();
-	if (_sl_evrt_local_response >= 0 || keng!=NULL
-			|| sr_event_enabled(SREV_SIP_REPLY_OUT))
-	{
-		if (likely(build_sip_msg_from_buf(&pmsg, buf.s, buf.len,
-				inc_msg_no()) == 0))
-		{
+	if(_sl_evrt_local_response >= 0 || keng != NULL
+			|| sr_event_enabled(SREV_SIP_REPLY_OUT)) {
+		if(likely(build_sip_msg_from_buf(&pmsg, buf.s, buf.len, inc_msg_no())
+				   == 0)) {
 			char *tmp = NULL;
 			struct onsend_info onsnd_info;
 
-			onsnd_info.to=&dst.to;
-			onsnd_info.send_sock=dst.send_sock;
-			onsnd_info.buf=buf.s;
-			onsnd_info.len=buf.len;
+			onsnd_info.to = &dst.to;
+			onsnd_info.send_sock = dst.send_sock;
+			onsnd_info.buf = buf.s;
+			onsnd_info.len = buf.len;
 
-			if (unlikely(!IS_SIP(msg))) {
+			if(unlikely(!IS_SIP(msg))) {
 				/* This is an HTTP reply...  So fudge in a CSeq into
 				 * the parsed message message structure so that $rm will
 				 * work in the route */
@@ -242,14 +238,15 @@ int sl_reply_helper(struct sip_msg *msg, int code, char *reason, str *tag)
 				int len;
 				int tsize;
 
-				if ((hf = (hdr_field_t*) pkg_malloc(sizeof(struct hdr_field))) == NULL)
-				{
+				if((hf = (hdr_field_t *)pkg_malloc(sizeof(struct hdr_field)))
+						== NULL) {
 					PKG_MEM_ERROR;
 					goto event_route_error;
 				}
 
-				if ((cseqb = (struct cseq_body *) pkg_malloc(sizeof(struct cseq_body))) == NULL)
-				{
+				if((cseqb = (struct cseq_body *)pkg_malloc(
+							sizeof(struct cseq_body)))
+						== NULL) {
 					PKG_MEM_ERROR;
 					pkg_free(hf);
 					goto event_route_error;
@@ -257,8 +254,7 @@ int sl_reply_helper(struct sip_msg *msg, int code, char *reason, str *tag)
 
 				tsize = sizeof(char)
 						* (msg->first_line.u.request.method.len + 5);
-				if ((tmp = (char *) pkg_malloc(tsize)) == NULL)
-				{
+				if((tmp = (char *)pkg_malloc(tsize)) == NULL) {
 					PKG_MEM_ERROR;
 					pkg_free(cseqb);
 					pkg_free(hf);
@@ -271,7 +267,7 @@ int sl_reply_helper(struct sip_msg *msg, int code, char *reason, str *tag)
 				len = snprintf(tmp, tsize, "0 %.*s\r\n",
 						msg->first_line.u.request.method.len,
 						msg->first_line.u.request.method.s);
-				if(len<0 || len>=tsize) {
+				if(len < 0 || len >= tsize) {
 					LM_ERR("failed to print the tmp cseq\n");
 					pkg_free(tmp);
 					pkg_free(cseqb);
@@ -285,14 +281,14 @@ int sl_reply_helper(struct sip_msg *msg, int code, char *reason, str *tag)
 				hf->body.len = tmp2 - tmp;
 				hf->parsed = cseqb;
 
-				pmsg.parsed_flag|=HDR_CSEQ_F;
+				pmsg.parsed_flag |= HDR_CSEQ_F;
 				pmsg.cseq = hf;
-				if (pmsg.last_header==0) {
-					pmsg.headers=hf;
-					pmsg.last_header=hf;
+				if(pmsg.last_header == 0) {
+					pmsg.headers = hf;
+					pmsg.last_header = hf;
 				} else {
-					pmsg.last_header->next=hf;
-					pmsg.last_header=hf;
+					pmsg.last_header->next = hf;
+					pmsg.last_header = hf;
 				}
 			}
 
@@ -309,34 +305,35 @@ int sl_reply_helper(struct sip_msg *msg, int code, char *reason, str *tag)
 				sr_event_exec(SREV_SIP_REPLY_OUT, &evp);
 			}
 
-			p_onsend=&onsnd_info;
+			p_onsend = &onsnd_info;
 			backup_rt = get_route_type();
 			set_route_type(LOCAL_ROUTE);
 			init_run_actions_ctx(&ctx);
 
-			if(_sl_evrt_local_response>=0) {
-				run_top_route(event_rt.rlist[_sl_evrt_local_response], &pmsg, 0);
-			} else if (keng!=NULL) {
+			if(_sl_evrt_local_response >= 0) {
+				run_top_route(
+						event_rt.rlist[_sl_evrt_local_response], &pmsg, 0);
+			} else if(keng != NULL) {
 				bctx = sr_kemi_act_ctx_get();
 				sr_kemi_act_ctx_set(&ctx);
 				(void)sr_kemi_route(keng, msg, EVENT_ROUTE,
-							&_sl_event_callback_lres_sent, &evname);
+						&_sl_event_callback_lres_sent, &evname);
 				sr_kemi_act_ctx_set(bctx);
 			}
 			set_route_type(backup_rt);
-			p_onsend=0;
+			p_onsend = 0;
 
-			if (tmp != NULL)
+			if(tmp != NULL)
 				pkg_free(tmp);
 
-event_route_error:
+		event_route_error:
 			free_sip_msg(&pmsg);
 		}
 	}
 
 	pkg_free(buf.s);
 
-	if (ret<0) {
+	if(ret < 0) {
 		goto error;
 	}
 
@@ -360,12 +357,11 @@ int sl_send_reply_str(struct sip_msg *msg, int code, str *reason)
 	char *r;
 	int ret;
 
-	if(reason->s[reason->len-1]=='\0') {
+	if(reason->s[reason->len - 1] == '\0') {
 		r = reason->s;
 	} else {
 		r = as_asciiz(reason);
-		if (r == NULL)
-		{
+		if(r == NULL) {
 			LM_ERR("no pkg for reason phrase\n");
 			return -1;
 		}
@@ -373,7 +369,8 @@ int sl_send_reply_str(struct sip_msg *msg, int code, str *reason)
 
 	ret = sl_reply_helper(msg, code, r, 0);
 
-	if (r!=reason->s) pkg_free(r);
+	if(r != reason->s)
+		pkg_free(r);
 	return ret;
 }
 
@@ -383,12 +380,11 @@ int sl_send_reply_dlg(struct sip_msg *msg, int code, str *reason, str *tag)
 	char *r;
 	int ret;
 
-	if(reason->s[reason->len-1]=='\0') {
+	if(reason->s[reason->len - 1] == '\0') {
 		r = reason->s;
 	} else {
 		r = as_asciiz(reason);
-		if (r == NULL)
-		{
+		if(r == NULL) {
 			LM_ERR("no pkg for reason phrase\n");
 			return -1;
 		}
@@ -396,11 +392,12 @@ int sl_send_reply_dlg(struct sip_msg *msg, int code, str *reason, str *tag)
 
 	ret = sl_reply_helper(msg, code, r, tag);
 
-	if (r!=reason->s) pkg_free(r);
+	if(r != reason->s)
+		pkg_free(r);
 	return ret;
 }
 
-int sl_reply_error(struct sip_msg *msg )
+int sl_reply_error(struct sip_msg *msg)
 {
 	static char err_buf[MAX_REASON_LEN];
 	int sip_error;
@@ -411,11 +408,11 @@ int sl_reply_error(struct sip_msg *msg )
 		return -2;
 	}
 
-	ret=err2reason_phrase( prev_ser_error, &sip_error,
-		err_buf, sizeof(err_buf), "SL");
-	if (ret>0) {
-		sl_send_reply( msg, sip_error, err_buf );
-		LM_ERR("stateless error reply used: %s\n", err_buf );
+	ret = err2reason_phrase(
+			prev_ser_error, &sip_error, err_buf, sizeof(err_buf), "SL");
+	if(ret > 0) {
+		sl_send_reply(msg, sip_error, err_buf);
+		LM_ERR("stateless error reply used: %s\n", err_buf);
 		return 1;
 	} else {
 		LM_ERR("err2reason failed\n");
@@ -424,13 +421,12 @@ int sl_reply_error(struct sip_msg *msg )
 }
 
 
-
 /* Returns:
  *  0  : ACK to a local reply
  * -1 : error
  *  1  : is not an ACK  or a non-local ACK
 */
-int sl_filter_ACK(struct sip_msg *msg, unsigned int flags, void *bar )
+int sl_filter_ACK(struct sip_msg *msg, unsigned int flags, void *bar)
 {
 	str *tag_str;
 	run_act_ctx_t ctx;
@@ -438,39 +434,36 @@ int sl_filter_ACK(struct sip_msg *msg, unsigned int flags, void *bar )
 	sr_kemi_eng_t *keng = NULL;
 	str evname = str_init("sl:filtered-ack");
 
-	if (msg->first_line.u.request.method_value!=METHOD_ACK)
+	if(msg->first_line.u.request.method_value != METHOD_ACK)
 		goto pass_it;
 
 	/*check the timeout value*/
-	if ( *(sl_timeout)<= get_ticks_raw() )
-	{
+	if(*(sl_timeout) <= get_ticks_raw()) {
 		LM_DBG("too late to be a local ACK!\n");
 		goto pass_it;
 	}
 
 	/*force to parse to header -> we need it for tag param*/
-	if (parse_headers( msg, HDR_TO_F, 0 )==-1)
-	{
+	if(parse_headers(msg, HDR_TO_F, 0) == -1) {
 		LM_ERR("unable to parse To header\n");
 		return -1;
 	}
 
-	if (msg->to) {
+	if(msg->to) {
 		tag_str = &(get_to(msg)->tag_value);
-		if ( tag_str->len==TOTAG_VALUE_LEN )
-		{
+		if(tag_str->len == TOTAG_VALUE_LEN) {
 			/* calculate the variable part of to-tag */
 			calc_crc_suffix(msg, tag_suffix);
 			/* test whether to-tag equal now */
-			if (memcmp(tag_str->s,sl_tag.s,sl_tag.len)==0) {
-				LM_DBG("SL local ACK found -> dropping it!\n" );
+			if(memcmp(tag_str->s, sl_tag.s, sl_tag.len) == 0) {
+				LM_DBG("SL local ACK found -> dropping it!\n");
 				update_sl_filtered_acks();
 				sl_run_callbacks(SLCB_ACK_FILTERED, msg, 0, 0, 0, 0);
 				keng = sr_kemi_eng_get();
-				if(unlikely(_sl_filtered_ack_route>=0)) {
-					run_top_route(event_rt.rlist[_sl_filtered_ack_route],
-							msg, 0);
-				} else if(keng!=NULL) {
+				if(unlikely(_sl_filtered_ack_route >= 0)) {
+					run_top_route(
+							event_rt.rlist[_sl_filtered_ack_route], msg, 0);
+				} else if(keng != NULL) {
 					init_run_actions_ctx(&ctx);
 					bctx = sr_kemi_act_ctx_get();
 					sr_kemi_act_ctx_set(&ctx);
@@ -511,13 +504,13 @@ int sl_register_callback(sl_cbelem_t *cbe)
 {
 	sl_cbelem_t *p1;
 
-	if(cbe==NULL) {
+	if(cbe == NULL) {
 		LM_ERR("invalid parameter\n");
 		return -1;
 	}
-	p1 = (sl_cbelem_t*)pkg_malloc(sizeof(sl_cbelem_t));
+	p1 = (sl_cbelem_t *)pkg_malloc(sizeof(sl_cbelem_t));
 
-	if(p1==NULL) {
+	if(p1 == NULL) {
 		PKG_MEM_ERROR;
 		return -1;
 	}
@@ -530,36 +523,34 @@ int sl_register_callback(sl_cbelem_t *cbe)
 	return 0;
 }
 
-void sl_run_callbacks(unsigned int type, struct sip_msg *req,
-		int code, char *reason, str *reply, struct dest_info *dst)
+void sl_run_callbacks(unsigned int type, struct sip_msg *req, int code,
+		char *reason, str *reply, struct dest_info *dst)
 {
 	sl_cbp_t param;
 	sl_cbelem_t *p1;
 	static str sreason;
 
-	if(likely((_sl_cbelem_mask&type)==0))
+	if(likely((_sl_cbelem_mask & type) == 0))
 		return;
 
 	/* memset(&cbp, 0, sizeof(sl_cbp_t)); */
-	param.type   = type;
-	param.req    = req;
-	param.code   = code;
-	sreason.s    = reason;
+	param.type = type;
+	param.req = req;
+	param.code = code;
+	sreason.s = reason;
 	if(reason)
-		sreason.len  = strlen(reason);
+		sreason.len = strlen(reason);
 	else
-		sreason.len  = 0;
+		sreason.len = 0;
 	param.reason = &sreason;
-	param.reply  = reply;
-	param.dst    = dst;
+	param.reply = reply;
+	param.dst = dst;
 
-	for(p1=_sl_cbelem_list; p1; p1=p1->next) {
-		if (p1->type&type) {
+	for(p1 = _sl_cbelem_list; p1; p1 = p1->next) {
+		if(p1->type & type) {
 			LM_DBG("execute callback for event type %d\n", type);
 			param.cbp = p1->cbp;
 			p1->cbf(&param);
 		}
 	}
 }
-
-
