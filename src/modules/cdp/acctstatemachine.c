@@ -12,63 +12,72 @@
 /**
  * update Granted Service Unit timers based on CCR
  */
-void update_gsu_request_timers(cdp_cc_acc_session_t* session, AAAMessage* msg) {
+void update_gsu_request_timers(cdp_cc_acc_session_t *session, AAAMessage *msg)
+{
 	AAA_AVP *avp;
 
 	avp = AAAFindMatchingAVP(msg, 0, AVP_Event_Timestamp, 0, 0);
-	if (avp && avp->data.len == 4) {
-		session->last_reservation_request_time = ntohl(*((uint32_t*)avp->data.s))-EPOCH_UNIX_TO_EPOCH_NTP;
+	if(avp && avp->data.len == 4) {
+		session->last_reservation_request_time =
+				ntohl(*((uint32_t *)avp->data.s)) - EPOCH_UNIX_TO_EPOCH_NTP;
 	}
 }
 
 /**
  * update Granted Service Unit timers based on CCA, for onw we assume on one MSCC per session and only TIME based supported
  */
-void update_gsu_response_timers(cdp_cc_acc_session_t* session, AAAMessage* msg) {
+void update_gsu_response_timers(cdp_cc_acc_session_t *session, AAAMessage *msg)
+{
 	AAA_AVP *avp;
 	AAA_AVP_LIST mscc_avp_list;
 	AAA_AVP_LIST y;
 	AAA_AVP *z;
 
 	y.head = y.tail = 0;
-	avp = AAAFindMatchingAVP(msg, 0, AVP_Multiple_Services_Credit_Control, 0, 0);
-	if (!avp) {
-		LM_WARN("Trying to update GSU timers but there is no MSCC AVP in the CCA response\n");
+	avp = AAAFindMatchingAVP(
+			msg, 0, AVP_Multiple_Services_Credit_Control, 0, 0);
+	if(!avp) {
+		LM_WARN("Trying to update GSU timers but there is no MSCC AVP in the "
+				"CCA response\n");
 		return;
 	}
 	mscc_avp_list = AAAUngroupAVPS(avp->data);
 	AAA_AVP *mscc_avp = mscc_avp_list.head;
 
-	while (mscc_avp != NULL ) {
-		LM_DBG("MSCC AVP code is [%i] and data length is [%i]\n", mscc_avp->code, mscc_avp->data.len);
-		switch (mscc_avp->code) {
+	while(mscc_avp != NULL) {
+		LM_DBG("MSCC AVP code is [%i] and data length is [%i]\n",
+				mscc_avp->code, mscc_avp->data.len);
+		switch(mscc_avp->code) {
 			case AVP_Granted_Service_Unit:
 				y = AAAUngroupAVPS(mscc_avp->data);
 				z = y.head;
-				while (z) {
-					switch (z->code) {
+				while(z) {
+					switch(z->code) {
 						case AVP_CC_Time:
 							session->reserved_units = get_4bytes(z->data.s);
 							break;
 						default:
-							LM_DBG("ignoring AVP in GSU group with code:[%d]\n", z->code);
+							LM_DBG("ignoring AVP in GSU group with code:[%d]\n",
+									z->code);
 					}
 					z = z->next;
 				}
 				break;
 			case AVP_Validity_Time:
-				session->reserved_units_validity_time = get_4bytes(mscc_avp->data.s);
+				session->reserved_units_validity_time =
+						get_4bytes(mscc_avp->data.s);
 				break;
 			case AVP_Final_Unit_Indication:
 				y = AAAUngroupAVPS(mscc_avp->data);
 				z = y.head;
-				while (z) {
-					switch (z->code) {
+				while(z) {
+					switch(z->code) {
 						case AVP_Final_Unit_Action:
 							session->fua = get_4bytes(z->data.s);
 							break;
 						default:
-							LM_DBG("ignoring AVP in FUI group with code:[%d]\n", z->code);
+							LM_DBG("ignoring AVP in FUI group with code:[%d]\n",
+									z->code);
 					}
 					z = z->next;
 				}
@@ -77,10 +86,10 @@ void update_gsu_response_timers(cdp_cc_acc_session_t* session, AAAMessage* msg) 
 		mscc_avp = mscc_avp->next;
 	}
 
-	if (mscc_avp_list.head)
+	if(mscc_avp_list.head)
 		AAAFreeAVPList(&mscc_avp_list);
-	
-	if (y.head)
+
+	if(y.head)
 		AAAFreeAVPList(&y);
 }
 
@@ -93,27 +102,31 @@ void update_gsu_response_timers(cdp_cc_acc_session_t* session, AAAMessage* msg) 
  * @param msg  - AAAMessage
  * @returns 0 if msg should be given to the upper layer 1 if not
  */
-int cc_acc_client_stateful_sm_process(cdp_session_t* s, int event, AAAMessage* msg)
+int cc_acc_client_stateful_sm_process(
+		cdp_session_t *s, int event, AAAMessage *msg)
 {
-	cdp_cc_acc_session_t* x;
+	cdp_cc_acc_session_t *x;
 	int ret = 0;
-	int rc;		//return code for responses
+	int rc; //return code for responses
 	int record_type;
 
 	x = &(s->u.cc_acc);
-	LM_DBG("cc_acc_client_stateful_sm_process: processing CC App in state [%d] and event [%d]\n", x->state, event);
+	LM_DBG("cc_acc_client_stateful_sm_process: processing CC App in state [%d] "
+		   "and event [%d]\n",
+			x->state, event);
 
 	//first run session callbacks
-	if (s->cb) (s->cb)(event, s);
+	if(s->cb)
+		(s->cb)(event, s);
 	LM_DBG("finished callback of event %i\n", event);
 
-	switch (x->state) {
+	switch(x->state) {
 		case ACC_CC_ST_IDLE:
-			switch (event) {
-				case ACC_CC_EV_SEND_REQ:		//were sending a message - CCR
+			switch(event) {
+				case ACC_CC_EV_SEND_REQ: //were sending a message - CCR
 					//assert this is an initial request. we can't move from IDLE with anything else
 					record_type = get_accounting_record_type(msg);
-					switch (record_type) {
+					switch(record_type) {
 						case 2 /*START RECORD*/:
 							LM_DBG("sending CCR START record on session\n");
 							s->application_id = msg->applicationId;
@@ -122,22 +135,24 @@ int cc_acc_client_stateful_sm_process(cdp_session_t* s, int event, AAAMessage* m
 							update_gsu_request_timers(x, msg);
 							break;
 						default:
-							LM_ERR("Sending CCR with no/incorrect accounting record type AVP. In state IDLE\n");
+							LM_ERR("Sending CCR with no/incorrect accounting "
+								   "record type AVP. In state IDLE\n");
 							break;
 					}
 					break;
 
 				default:
-					LM_ERR("Received unknown event [%d] in state [%d]\n", event, x->state);
+					LM_ERR("Received unknown event [%d] in state [%d]\n", event,
+							x->state);
 					break;
 			}
 			break;
 		case ACC_CC_ST_OPEN:
-			switch (event) {
-				case ACC_CC_EV_SEND_REQ:		//were sending a message - CCR
+			switch(event) {
+				case ACC_CC_EV_SEND_REQ: //were sending a message - CCR
 					//make sure it is either an update or a termination.
 					record_type = get_accounting_record_type(msg);
-					switch (record_type) {
+					switch(record_type) {
 						case 3 /*UPDATE RECORD*/:
 							LM_DBG("sending CCR UPDATE record on session\n");
 							s->u.cc_acc.state = ACC_CC_ST_PENDING_U;
@@ -151,7 +166,9 @@ int cc_acc_client_stateful_sm_process(cdp_session_t* s, int event, AAAMessage* m
 							update_gsu_request_timers(x, msg);
 							break;
 						default:
-							LM_ERR("asked to send CCR with no/incorrect accounting record type AVP. In state IDLE\n");
+							LM_ERR("asked to send CCR with no/incorrect "
+								   "accounting record type AVP. In state "
+								   "IDLE\n");
 							break;
 					}
 					break;
@@ -160,20 +177,21 @@ int cc_acc_client_stateful_sm_process(cdp_session_t* s, int event, AAAMessage* m
 					LM_DBG("Reservation close to expiring\n");
 					break;
 				default:
-					LM_ERR("Received unknown event [%d] in state [%d]\n", event, x->state);
+					LM_ERR("Received unknown event [%d] in state [%d]\n", event,
+							x->state);
 					break;
 			}
 			break;
 		case ACC_CC_ST_PENDING_I:
-			if (event == ACC_CC_EV_RECV_ANS && msg && !is_req(msg)) {
+			if(event == ACC_CC_EV_RECV_ANS && msg && !is_req(msg)) {
 				rc = get_result_code(msg);
-				if (rc >= 2000 && rc < 3000) {
+				if(rc >= 2000 && rc < 3000) {
 					event = ACC_CC_EV_RECV_ANS_SUCCESS;
 				} else {
 					event = ACC_CC_EV_RECV_ANS_UNSUCCESS;
 				}
 			}
-			switch (event) {
+			switch(event) {
 				case ACC_CC_EV_RECV_ANS_SUCCESS:
 					x->state = ACC_CC_ST_OPEN;
 					LM_DBG("received success response for CCR START\n");
@@ -185,27 +203,30 @@ int cc_acc_client_stateful_sm_process(cdp_session_t* s, int event, AAAMessage* m
 					x->state = ACC_CC_ST_DISCON;
 					break;
 				default:
-					LM_ERR("Received unknown event [%d] in state [%d]\n", event, x->state);
+					LM_ERR("Received unknown event [%d] in state [%d]\n", event,
+							x->state);
 					break;
 			}
 			break;
 		case ACC_CC_ST_PENDING_T:
-			if (event == ACC_CC_EV_RECV_ANS && msg && !is_req(msg)) {
+			if(event == ACC_CC_EV_RECV_ANS && msg && !is_req(msg)) {
 				rc = get_result_code(msg);
-				if (rc >= 2000 && rc < 3000) {
+				if(rc >= 2000 && rc < 3000) {
 					event = ACC_CC_EV_RECV_ANS_SUCCESS;
 				} else {
 					event = ACC_CC_EV_RECV_ANS_UNSUCCESS;
 				}
 			}
-			switch (event) {
+			switch(event) {
 				case ACC_CC_EV_RECV_ANS_SUCCESS:
 					x->state = ACC_CC_ST_DISCON;
 					//					update_gsu_response_timers(x, msg);
 				case ACC_CC_EV_RECV_ANS_UNSUCCESS:
 					x->state = ACC_CC_ST_DISCON;
 				default:
-					LM_DBG("Received event [%d] in state [%d] - cleaning up session regardless\n", event, x->state);
+					LM_DBG("Received event [%d] in state [%d] - cleaning up "
+						   "session regardless\n",
+							event, x->state);
 					//have to leave session alone because our client app still has to be given this msg
 					x->discon_time = time(0);
 					//					if (msg) AAAFreeMessage(&msg);
@@ -219,21 +240,24 @@ int cc_acc_client_stateful_sm_process(cdp_session_t* s, int event, AAAMessage* m
 			 * and then receive a CCA-T while in state ACC_CC_ST_PENDING_U (e.g. if update timer and dialog termination at same time)
 			 * In this event you would incorrectly ignore the CCR-T
 			 * Solution is to change state to change state to ACC_CC_ST_PENDING_T if CCR-T is sent while in this state  */
-			if (event == ACC_CC_EV_SEND_REQ && msg && get_accounting_record_type(msg) == 4 /*TERMINATE RECORD*/) {
-				LM_ERR("Received CCR-T while in state ACC_CC_ST_PENDING_U, just going to change to ACC_CC_ST_PENDING_T\n");
+			if(event == ACC_CC_EV_SEND_REQ && msg
+					&& get_accounting_record_type(msg)
+							   == 4 /*TERMINATE RECORD*/) {
+				LM_ERR("Received CCR-T while in state ACC_CC_ST_PENDING_U, "
+					   "just going to change to ACC_CC_ST_PENDING_T\n");
 				s->u.cc_acc.state = ACC_CC_ST_PENDING_T;
 				//update our reservation and its timers...
 				update_gsu_request_timers(x, msg);
 			} else {
-				if (event == ACC_CC_EV_RECV_ANS && msg && !is_req(msg)) {
+				if(event == ACC_CC_EV_RECV_ANS && msg && !is_req(msg)) {
 					rc = get_result_code(msg);
-					if (rc >= 2000 && rc < 3000) {
+					if(rc >= 2000 && rc < 3000) {
 						event = ACC_CC_EV_RECV_ANS_SUCCESS;
 					} else {
 						event = ACC_CC_EV_RECV_ANS_UNSUCCESS;
 					}
 				}
-				switch (event) {
+				switch(event) {
 					case ACC_CC_EV_RECV_ANS_SUCCESS:
 						x->state = ACC_CC_ST_OPEN;
 						LM_DBG("success CCA for UPDATE\n");
@@ -245,30 +269,30 @@ int cc_acc_client_stateful_sm_process(cdp_session_t* s, int event, AAAMessage* m
 						LM_ERR("update failed... going back to IDLE/DISCON\n");
 						break;
 					default:
-						LM_ERR("Received unknown event [%d] in state [%d]\n", event, x->state);
+						LM_ERR("Received unknown event [%d] in state [%d]\n",
+								event, x->state);
 						break;
 				}
 			}
 			break;
 		case ACC_CC_ST_DISCON:
-			switch (event) {
+			switch(event) {
 				case ACC_CC_EV_SESSION_STALE:
 					LM_DBG("stale session about to be cleared\n");
 					cdp_session_cleanup(s, msg);
 					s = 0;
 					break;
 				default:
-					LM_ERR("Received unknown event [%d] in state [%d]\n", event, x->state);
+					LM_ERR("Received unknown event [%d] in state [%d]\n", event,
+							x->state);
 					break;
 			}
 			break;
 	}
 
-	if (s) {
+	if(s) {
 		AAASessionsUnlock(s->hash);
 	}
 
 	return ret;
 }
-
-

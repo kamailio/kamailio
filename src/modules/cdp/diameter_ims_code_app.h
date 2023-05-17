@@ -45,17 +45,19 @@
 #define __DIAMETER_IMS_CODE_APP_H
 
 /* Application Identifiers	*/
-#define IMS_Gq	16777222	/**< Gq interface between P-CSCF and PDF 		*/
-#define IMS_Cx	16777216	/**< Cx interface between I/S-CSCF and HSS 		*/
-#define IMS_Dx	16777216	/**< Cx interface between I/S-CSCF and SLF 		*/
-#define IMS_Sh	16777217	/**< Sh interface between AS and HSS	 		*/
-#define IMS_e2	16777231	/**< e2 interface between CLF and AF	 		*/
-#define IMS_Ph	16777217	/**< Sh interface between PresenceServer and HSS*/
-#define IMS_Rx  16777236	/**< Rx interface between P-CSCF and PCRF 		*/
-#define IMS_Gx	16777224	/**< Gx interface between PCRF and PCEF 		*/
-#define IMS_Rf  16777223    /**< Rf interface between P/I/S-CSCF and CDF,
+#define IMS_Gq 16777222 /**< Gq interface between P-CSCF and PDF 		*/
+#define IMS_Cx 16777216 /**< Cx interface between I/S-CSCF and HSS 		*/
+#define IMS_Dx 16777216 /**< Cx interface between I/S-CSCF and SLF 		*/
+#define IMS_Sh 16777217 /**< Sh interface between AS and HSS	 		*/
+#define IMS_e2 16777231 /**< e2 interface between CLF and AF	 		*/
+#define IMS_Ph 16777217 /**< Sh interface between PresenceServer and HSS*/
+#define IMS_Rx 16777236 /**< Rx interface between P-CSCF and PCRF 		*/
+#define IMS_Gx 16777224 /**< Gx interface between PCRF and PCEF 		*/
+#define IMS_Rf \
+	16777223 /**< Rf interface between P/I/S-CSCF and CDF,
 								according to TS32.299 R7    */
 
-#define IMS_Ro  4               /**< Ro interface between P/I/S-CSCF and OCS, according to TS32.299 R7    */
+#define IMS_Ro \
+	4 /**< Ro interface between P/I/S-CSCF and OCS, according to TS32.299 R7    */
 
 #endif /* __DIAMETER_IMS_CODE_APP_H */

@@ -12,8 +12,10 @@
 #include "session.h"
 #include "config.h"
 
-#define EPOCH_UNIX_TO_EPOCH_NTP 2208988800u // according to http://www.cis.udel.edu/~mills/y2k.html
+#define EPOCH_UNIX_TO_EPOCH_NTP \
+	2208988800u // according to http://www.cis.udel.edu/~mills/y2k.html
 
-int cc_acc_client_stateful_sm_process(cdp_session_t* cc_acc, int event, AAAMessage* msg);
+int cc_acc_client_stateful_sm_process(
+		cdp_session_t *cc_acc, int event, AAAMessage *msg);
 
 #endif /* ACCTSTATEMACHINE_H_ */

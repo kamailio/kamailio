@@ -49,7 +49,6 @@
 #include "utils.h"
 #include "session.h"
 
-peer* get_routing_peer(cdp_session_t* cdp_session, AAAMessage *m);
+peer *get_routing_peer(cdp_session_t *cdp_session, AAAMessage *m);
 
 #endif
-

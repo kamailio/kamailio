@@ -59,9 +59,9 @@ void destroy_memory(int show_status);
 
 extern unsigned int *listening_socks;
 
-extern int *shutdownx;				/**< whether a shutdown is in progress		*/
+extern int *shutdownx;			   /**< whether a shutdown is in progress		*/
 extern gen_lock_t *shutdownx_lock; /**< lock used on shutdown				*/
 
-extern pid_t *dp_first_pid;		/**< first pid that we started from		*/
+extern pid_t *dp_first_pid; /**< first pid that we started from		*/
 
 #endif

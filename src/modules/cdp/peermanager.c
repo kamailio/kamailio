@@ -53,14 +53,14 @@
 #include "globals.h"
 #include "peerstatemachine.h"
 
-peer_list_t *peer_list=0;		/**< list of peers */
-gen_lock_t *peer_list_lock=0;	/**< lock for the list of peers */
+peer_list_t *peer_list = 0;		/**< list of peers */
+gen_lock_t *peer_list_lock = 0; /**< lock for the list of peers */
 
-extern dp_config *config;		/**< Configuration for this diameter peer 	*/
+extern dp_config *config; /**< Configuration for this diameter peer 	*/
 extern char *dp_states[];
-AAAMsgIdentifier *hopbyhop_id=0;/**< Current id for Hop-by-hop */
-AAAMsgIdentifier *endtoend_id=0;/**< Current id for End-to-end */
-gen_lock_t *msg_id_lock;		/**< lock for the message identifier changes */
+AAAMsgIdentifier *hopbyhop_id = 0; /**< Current id for Hop-by-hop */
+AAAMsgIdentifier *endtoend_id = 0; /**< Current id for End-to-end */
+gen_lock_t *msg_id_lock; /**< lock for the message identifier changes */
 
 /**
  * Initializes the Peer Manager.
@@ -85,17 +85,20 @@ int peer_manager_init(dp_config *config)
 	msg_id_lock = lock_init(msg_id_lock);
 
 	*hopbyhop_id = kam_rand();
-	*endtoend_id = (time(0)&0xFFF)<<20;
+	*endtoend_id = (time(0) & 0xFFF) << 20;
 	*endtoend_id |= kam_rand() & 0xFFFFF;
 
-	for(i=0;i<config->peers_cnt;i++){
-		p = new_peer(config->peers[i].fqdn,config->peers[i].realm,config->peers[i].port,config->peers[i].src_addr,config->peers[i].proto);
-		if (!p) continue;
+	for(i = 0; i < config->peers_cnt; i++) {
+		p = new_peer(config->peers[i].fqdn, config->peers[i].realm,
+				config->peers[i].port, config->peers[i].src_addr,
+				config->peers[i].proto);
+		if(!p)
+			continue;
 		p->is_dynamic = 0;
 		add_peer(p);
 	}
 
-	add_timer(1,0,&peer_timer,0);
+	add_timer(1, 0, &peer_timer, 0);
 
 	return 1;
 }
@@ -105,14 +108,16 @@ int peer_manager_init(dp_config *config)
  */
 void peer_manager_destroy()
 {
-	peer *foo,*bar;
+	peer *foo, *bar;
 	lock_get(peer_list_lock);
 	foo = peer_list->head;
-	while(foo){
-		if (foo->I_sock>0) close(foo->I_sock);
-		if (foo->R_sock>0) close(foo->R_sock);
+	while(foo) {
+		if(foo->I_sock > 0)
+			close(foo->I_sock);
+		if(foo->R_sock > 0)
+			close(foo->R_sock);
 		bar = foo->next;
-		free_peer(foo,1);
+		free_peer(foo, 1);
 		foo = bar;
 	}
 
@@ -120,11 +125,11 @@ void peer_manager_destroy()
 	shm_free(hopbyhop_id);
 	shm_free(endtoend_id);
 	lock_destroy(msg_id_lock);
-	lock_dealloc((void*)msg_id_lock);
+	lock_dealloc((void *)msg_id_lock);
 
 	shm_free(peer_list);
 	lock_destroy(peer_list_lock);
-	lock_dealloc((void*)peer_list_lock);
+	lock_dealloc((void *)peer_list_lock);
 	LM_DBG("peer_manager_init(): ...Peer Manager destroyed\n");
 }
 
@@ -134,16 +139,19 @@ void peer_manager_destroy()
  */
 void log_peer_list()
 {
-	if (debug_heavy) {
+	if(debug_heavy) {
 		/* must have lock on peer_list_lock when calling this!!! */
 		peer *p;
 		int i;
 
 		LM_DBG("--- Peer List: ---\n");
-		for(p = peer_list->head;p;p = p->next){
-			LM_DBG("State of peer: %s FQDN: %.*s Port: %d Is dynamic %c\n",dp_states[p->state],p->fqdn.len,p->fqdn.s,p->port,p->is_dynamic?'X':' ');
-			for(i=0;i<p->applications_cnt;i++)
-				LM_DBG("Application ID: %d, Application Vendor: %d \n",p->applications[i].id,p->applications[i].vendor);
+		for(p = peer_list->head; p; p = p->next) {
+			LM_DBG("State of peer: %s FQDN: %.*s Port: %d Is dynamic %c\n",
+					dp_states[p->state], p->fqdn.len, p->fqdn.s, p->port,
+					p->is_dynamic ? 'X' : ' ');
+			for(i = 0; i < p->applications_cnt; i++)
+				LM_DBG("Application ID: %d, Application Vendor: %d \n",
+						p->applications[i].id, p->applications[i].vendor);
 		}
 		LM_DBG("------------------\n");
 	}
@@ -155,12 +163,15 @@ void log_peer_list()
  */
 void add_peer(peer *p)
 {
-	if (!p) return;
+	if(!p)
+		return;
 	lock_get(peer_list_lock);
 	p->next = 0;
 	p->prev = peer_list->tail;
-	if (!peer_list->head) peer_list->head = p;
-	if (peer_list->tail) peer_list->tail->next = p;
+	if(!peer_list->head)
+		peer_list->head = p;
+	if(peer_list->tail)
+		peer_list->tail->next = p;
 	peer_list->tail = p;
 	lock_release(peer_list_lock);
 }
@@ -172,14 +183,20 @@ void add_peer(peer *p)
 void remove_peer(peer *p)
 {
 	peer *i;
-	if (!p) return;
+	if(!p)
+		return;
 	i = peer_list->head;
-	while(i&&i!=p) i = i->next;
-	if (i){
-		if (i->prev) i->prev->next = i->next;
-		else peer_list->head = i->next;
-		if (i->next) i->next->prev = i->prev;
-		else peer_list->tail = i->prev;
+	while(i && i != p)
+		i = i->next;
+	if(i) {
+		if(i->prev)
+			i->prev->next = i->next;
+		else
+			peer_list->head = i->next;
+		if(i->next)
+			i->next->prev = i->prev;
+		else
+			peer_list->tail = i->prev;
 	}
 }
 
@@ -194,7 +211,8 @@ peer *get_peer_from_sock(int sock)
 	lock_get(peer_list_lock);
 
 	i = peer_list->head;
-	while(i&&i->I_sock!=sock&&i->R_sock!=sock) i = i->next;
+	while(i && i->I_sock != sock && i->R_sock != sock)
+		i = i->next;
 	lock_release(peer_list_lock);
 	return i;
 }
@@ -205,23 +223,24 @@ peer *get_peer_from_sock(int sock)
  * @param realm - the Realm to look for
  * @returns the peer* or NULL if not found
  */
-peer *get_peer_from_fqdn(str fqdn,str realm)
+peer *get_peer_from_fqdn(str fqdn, str realm)
 {
 	peer *i;
-	str dumb = {0,0};
+	str dumb = {0, 0};
 
 	lock_get(peer_list_lock);
 	i = peer_list->head;
-	while(i){
-		if (fqdn.len == i->fqdn.len && strncasecmp(fqdn.s,i->fqdn.s,fqdn.len)==0)
+	while(i) {
+		if(fqdn.len == i->fqdn.len
+				&& strncasecmp(fqdn.s, i->fqdn.s, fqdn.len) == 0)
 			break;
 		i = i->next;
 	}
 	lock_release(peer_list_lock);
-	if (!i&&config->accept_unknown_peers){
-		i = new_peer(fqdn,realm,3868,dumb,dumb);
-		if (i){
-			i->is_dynamic=1;
+	if(!i && config->accept_unknown_peers) {
+		i = new_peer(fqdn, realm, 3868, dumb, dumb);
+		if(i) {
+			i->is_dynamic = 1;
 			touch_peer(i);
 			add_peer(i);
 		}
@@ -239,8 +258,9 @@ peer *get_peer_by_fqdn(str *fqdn)
 	peer *i;
 	lock_get(peer_list_lock);
 	i = peer_list->head;
-	while(i){
-		if (fqdn->len == i->fqdn.len && strncasecmp(fqdn->s,i->fqdn.s,fqdn->len)==0)
+	while(i) {
+		if(fqdn->len == i->fqdn.len
+				&& strncasecmp(fqdn->s, i->fqdn.s, fqdn->len) == 0)
 			break;
 		i = i->next;
 	}
@@ -255,39 +275,43 @@ peer *get_peer_by_fqdn(str *fqdn)
  * @param now - time of call
  * @param ptr - generic pointer for timers - not used
  */
-int peer_timer(time_t now,void *ptr)
+int peer_timer(time_t now, void *ptr)
 {
-	peer *p,*n;
+	peer *p, *n;
 	int i;
 	LM_DBG("peer_timer(): taking care of peers...\n");
 	lock_get(peer_list_lock);
 	p = peer_list->head;
-	while(p){
+	while(p) {
 		lock_get(p->lock);
 		n = p->next;
 
-		if (p->disabled && (p->state != Closed || p->state != Closing)) {
-			LM_DBG("Peer [%.*s] has been disabled - shutting down\n", p->fqdn.len, p->fqdn.s);
-			if (p->state == I_Open) sm_process(p, Stop, 0, 1, p->I_sock);
-			if (p->state == R_Open) sm_process(p, Stop, 0, 1, p->R_sock);
+		if(p->disabled && (p->state != Closed || p->state != Closing)) {
+			LM_DBG("Peer [%.*s] has been disabled - shutting down\n",
+					p->fqdn.len, p->fqdn.s);
+			if(p->state == I_Open)
+				sm_process(p, Stop, 0, 1, p->I_sock);
+			if(p->state == R_Open)
+				sm_process(p, Stop, 0, 1, p->R_sock);
 			lock_release(p->lock);
 			p = n;
 			continue;
 		}
 
-		if (p->activity+config->tc<=now){
-			LM_DBG("peer_timer(): Peer %.*s State %d \n",p->fqdn.len,p->fqdn.s,p->state);
-			switch (p->state){
+		if(p->activity + config->tc <= now) {
+			LM_DBG("peer_timer(): Peer %.*s State %d \n", p->fqdn.len,
+					p->fqdn.s, p->state);
+			switch(p->state) {
 				/* initiating connection */
 				case Closed:
-					if (p->is_dynamic && config->drop_unknown_peers){
+					if(p->is_dynamic && config->drop_unknown_peers) {
 						remove_peer(p);
-						free_peer(p,1);
+						free_peer(p, 1);
 						break;
 					}
-					if (!p->disabled) {
+					if(!p->disabled) {
 						touch_peer(p);
-						sm_process(p,Start,0,1,0);
+						sm_process(p, Start, 0, 1, 0);
 					}
 					break;
 					/* timeouts */
@@ -297,23 +321,29 @@ int peer_timer(time_t now,void *ptr)
 				case Wait_Returns:
 				case Wait_Conn_Ack_Elect:
 					touch_peer(p);
-					sm_process(p,Timeout,0,1,0);
+					sm_process(p, Timeout, 0, 1, 0);
 					break;
 					/* inactivity detected */
 				case I_Open:
 				case R_Open:
-					if (p->waitingDWA){
+					if(p->waitingDWA) {
 						p->waitingDWA = 0;
-						if (p->state==I_Open) sm_process(p,I_Peer_Disc,0,1,p->I_sock);
-						if (p->state==R_Open) sm_process(p,R_Peer_Disc,0,1,p->R_sock);
-						LM_WARN("Inactivity on peer [%.*s] and no DWA, Closing peer...\n", p->fqdn.len, p->fqdn.s);
+						if(p->state == I_Open)
+							sm_process(p, I_Peer_Disc, 0, 1, p->I_sock);
+						if(p->state == R_Open)
+							sm_process(p, R_Peer_Disc, 0, 1, p->R_sock);
+						LM_WARN("Inactivity on peer [%.*s] and no DWA, Closing "
+								"peer...\n",
+								p->fqdn.len, p->fqdn.s);
 					} else {
 						p->waitingDWA = 1;
 						Snd_DWR(p);
 						touch_peer(p);
-						if (debug_heavy)
-						{
-							LM_DBG("Inactivity on peer [%.*s], sending DWR... - if we don't get a reply, the peer will be closed\n", p->fqdn.len, p->fqdn.s);
+						if(debug_heavy) {
+							LM_DBG("Inactivity on peer [%.*s], sending DWR... "
+								   "- if we don't get a reply, the peer will "
+								   "be closed\n",
+									p->fqdn.len, p->fqdn.s);
 						}
 					}
 					break;
@@ -321,7 +351,7 @@ int peer_timer(time_t now,void *ptr)
 					/* unknown states */
 				default:
 					LM_ERR("peer_timer(): Peer %.*s inactive  in state %d\n",
-							p->fqdn.len,p->fqdn.s,p->state);
+							p->fqdn.len, p->fqdn.s, p->state);
 			}
 		}
 		lock_release(p->lock);
@@ -329,8 +359,9 @@ int peer_timer(time_t now,void *ptr)
 	}
 	lock_release(peer_list_lock);
 	log_peer_list();
-	i = config->tc/5;
-	if (i<=0) i=1;
+	i = config->tc / 5;
+	if(i <= 0)
+		i = 1;
 	return i;
 }
 
@@ -342,7 +373,7 @@ inline AAAMsgIdentifier next_hopbyhop()
 {
 	AAAMsgIdentifier x;
 	lock_get(msg_id_lock);
-	*hopbyhop_id = (*hopbyhop_id)+1;
+	*hopbyhop_id = (*hopbyhop_id) + 1;
 	x = *hopbyhop_id;
 	lock_release(msg_id_lock);
 	return x;
@@ -356,7 +387,7 @@ inline AAAMsgIdentifier next_endtoend()
 {
 	AAAMsgIdentifier x;
 	lock_get(msg_id_lock);
-	*endtoend_id = (*endtoend_id)+1;
+	*endtoend_id = (*endtoend_id) + 1;
 	x = *endtoend_id;
 	lock_release(msg_id_lock);
 	return x;

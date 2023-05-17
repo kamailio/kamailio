@@ -62,77 +62,78 @@
 #include "../../core/pt.h"
 #include "../../core/cfg/cfg_struct.h"
 
-dp_config *config=0;		/**< Configuration for this diameter peer 	*/
+dp_config *config = 0; /**< Configuration for this diameter peer 	*/
 
-int *shutdownx=0;			/**< whether a shutdown is in progress		*/
+int *shutdownx = 0;			/**< whether a shutdown is in progress		*/
 gen_lock_t *shutdownx_lock; /**< lock used on shutdown				*/
 
-pid_t *dp_first_pid = 0;		/**< first pid that we started from		*/
-pid_list_head_t *pid_list = 0;	/**< list of local processes			*/
-gen_lock_t *pid_list_lock = 0;	/**< lock for list of local processes	*/
+pid_t *dp_first_pid = 0;	   /**< first pid that we started from		*/
+pid_list_head_t *pid_list = 0; /**< list of local processes			*/
+gen_lock_t *pid_list_lock = 0; /**< lock for list of local processes	*/
 
-extern handler_list *handlers; 		/**< list of handlers */
-extern gen_lock_t *handlers_lock;	/**< lock for list of handlers */
+extern handler_list *handlers;	  /**< list of handlers */
+extern gen_lock_t *handlers_lock; /**< lock for list of handlers */
 
-extern peer_list_t *peer_list;		/**< list of peers */
-extern gen_lock_t *peer_list_lock;	/**< lock for the list of peers */
+extern peer_list_t *peer_list;	   /**< list of peers */
+extern gen_lock_t *peer_list_lock; /**< lock for the list of peers */
 
 /**
  * Real initialization, called after the config is parsed
  */
 int diameter_peer_init_real()
 {
-	pid_list_t *i,*j;
+	pid_list_t *i, *j;
 
-	if (!config) {
-		LM_ERR("diameter_peer_init_real(): Configuration was not parsed yet. Aborting...\n");
+	if(!config) {
+		LM_ERR("diameter_peer_init_real(): Configuration was not parsed yet. "
+			   "Aborting...\n");
 		goto error;
 	}
 	log_dp_config(config);
 
 	dp_first_pid = shm_malloc(sizeof(pid_t));
-	if (!dp_first_pid){
-		LOG_NO_MEM("shm",sizeof(pid_t));
+	if(!dp_first_pid) {
+		LOG_NO_MEM("shm", sizeof(pid_t));
 		goto error;
 	}
 	*dp_first_pid = getpid();
 
 	shutdownx = shm_malloc(sizeof(int));
-	if (!shutdownx){
-		LOG_NO_MEM("shm",sizeof(int));
+	if(!shutdownx) {
+		LOG_NO_MEM("shm", sizeof(int));
 		goto error;
 	}
 	*shutdownx = 0;
 
 	shutdownx_lock = lock_alloc();
-	if (!shutdownx_lock){
-		LOG_NO_MEM("shm",sizeof(gen_lock_t));
+	if(!shutdownx_lock) {
+		LOG_NO_MEM("shm", sizeof(gen_lock_t));
 		goto error;
 	}
 	shutdownx_lock = lock_init(shutdownx_lock);
 
 	handlers_lock = lock_alloc();
-	if (!handlers_lock){
-		LOG_NO_MEM("shm",sizeof(gen_lock_t));
+	if(!handlers_lock) {
+		LOG_NO_MEM("shm", sizeof(gen_lock_t));
 		goto error;
 	}
 	handlers_lock = lock_init(handlers_lock);
 
 	handlers = shm_malloc(sizeof(handler_list));
-	if (!handlers){
-		LOG_NO_MEM("shm",sizeof(handler_list));
+	if(!handlers) {
+		LOG_NO_MEM("shm", sizeof(handler_list));
 		goto error;
 	}
-	handlers->head=0;
-	handlers->tail=0;
+	handlers->head = 0;
+	handlers->tail = 0;
 
 	/* init the pid list */
 	pid_list = shm_malloc(sizeof(pid_list_head_t));
-	if (!pid_list){
-		LOG_NO_MEM("shm",sizeof(pid_list_head_t));
+	if(!pid_list) {
+		LOG_NO_MEM("shm", sizeof(pid_list_head_t));
 		goto error;
 	}
-	bzero(pid_list,sizeof(pid_list_head_t));
+	bzero(pid_list, sizeof(pid_list_head_t));
 	pid_list_lock = lock_alloc();
 	pid_list_lock = lock_init(pid_list_lock);
 
@@ -147,19 +148,22 @@ int diameter_peer_init_real()
 	cdp_trans_init();
 
 	/* init the session */
-	if (!cdp_sessions_init(config->sessions_hash_size)) goto error;
+	if(!cdp_sessions_init(config->sessions_hash_size))
+		goto error;
 
 
 	/* add callback for messages - used to implement the API */
-	cb_add(api_callback,0);
+	cb_add(api_callback, 0);
 
 	return 1;
 
 error:
-	if (shutdownx) shm_free(shutdownx);
-	if (config) free_dp_config(config);
+	if(shutdownx)
+		shm_free(shutdownx);
+	if(config)
+		free_dp_config(config);
 	i = pid_list->head;
-	while(i){
+	while(i) {
 		j = i->next;
 		shm_free(i);
 		i = j;
@@ -167,9 +171,8 @@ error:
 	shm_free(pid_list);
 	lock_get(pid_list_lock);
 	lock_destroy(pid_list_lock);
-	lock_dealloc((void*)pid_list_lock);
+	lock_dealloc((void *)pid_list_lock);
 	return 0;
-
 }
 
 
@@ -183,8 +186,9 @@ int diameter_peer_init(char *cfg_filename)
 {
 	xmlDocPtr doc = parse_dp_config_file(cfg_filename);
 	config = parse_dp_config(doc);
-	if (!config) {
-		LM_ERR("init_diameter_peer(): Error loading configuration file. Aborting...\n");
+	if(!config) {
+		LM_ERR("init_diameter_peer(): Error loading configuration file. "
+			   "Aborting...\n");
 		goto error;
 	}
 
@@ -203,8 +207,9 @@ int diameter_peer_init_str(str config_str)
 {
 	xmlDocPtr doc = parse_dp_config_str(config_str);
 	config = parse_dp_config(doc);
-	if (!config) {
-		LM_ERR("init_diameter_peer(): Error loading configuration file. Aborting...\n");
+	if(!config) {
+		LM_ERR("init_diameter_peer(): Error loading configuration file. "
+			   "Aborting...\n");
 		goto error;
 	}
 
@@ -212,7 +217,6 @@ int diameter_peer_init_str(str config_str)
 error:
 	return 0;
 }
-
 
 
 /**
@@ -225,74 +229,82 @@ error:
 int diameter_peer_start(int blocking)
 {
 	int pid;
-	int k=0;
+	int k = 0;
 	int seed;
 	peer *p;
 
 	seed = random();
 	/* fork workers */
-	for(k=0;k<config->workers;k++){
-		pid = fork_process(1001+k,"cdp_worker",1);
-		if (pid==-1){
+	for(k = 0; k < config->workers; k++) {
+		pid = fork_process(1001 + k, "cdp_worker", 1);
+		if(pid == -1) {
 			LM_CRIT("init_diameter_peer(): Error on fork() for worker!\n");
 			return 0;
 		}
-		if (pid==0) {
-			srandom(seed*k);
-			snprintf(pt[process_no].desc, MAX_PT_DESC,"cdp worker child=%d", k );
-			if (cfg_child_init()) return 0;
+		if(pid == 0) {
+			srandom(seed * k);
+			snprintf(
+					pt[process_no].desc, MAX_PT_DESC, "cdp worker child=%d", k);
+			if(cfg_child_init())
+				return 0;
 			worker_process(k);
-			LM_CRIT("init_diameter_peer(): worker_process finished without exit!\n");
+			LM_CRIT("init_diameter_peer(): worker_process finished without "
+					"exit!\n");
 			exit(-1);
-		}else{
+		} else {
 			dp_add_pid(pid);
 		}
 	}
 
 	/* init the fd_exchange pipes */
 	receiver_init(NULL);
-	for(p = peer_list->head,k=0;p;p=p->next,k++)
+	for(p = peer_list->head, k = 0; p; p = p->next, k++)
 		receiver_init(p);
 
 
 	/* fork receiver for unknown peers */
 	seed = random();
-	pid = fork_process(1001+k,"cdp_receiver_peer_unknown",1);
+	pid = fork_process(1001 + k, "cdp_receiver_peer_unknown", 1);
 
-	if (pid==-1){
-		LM_CRIT("init_diameter_peer(): Error on fork() for unknown peer receiver!\n");
+	if(pid == -1) {
+		LM_CRIT("init_diameter_peer(): Error on fork() for unknown peer "
+				"receiver!\n");
 		return 0;
 	}
-	if (pid==0) {
-		srandom(seed*k);
-		snprintf(pt[process_no].desc, MAX_PT_DESC,
-				"cdp receiver peer unknown");
-		if (cfg_child_init()) return 0;
+	if(pid == 0) {
+		srandom(seed * k);
+		snprintf(pt[process_no].desc, MAX_PT_DESC, "cdp receiver peer unknown");
+		if(cfg_child_init())
+			return 0;
 		receiver_process(NULL);
-		LM_CRIT("init_diameter_peer(): receiver_process finished without exit!\n");
+		LM_CRIT("init_diameter_peer(): receiver_process finished without "
+				"exit!\n");
 		exit(-1);
-	}else{
+	} else {
 		dp_add_pid(pid);
 	}
 
 	/* fork receivers for each pre-configured peers */
 	seed = random();
 	lock_get(peer_list_lock);
-	for(p = peer_list->head,k=-1;p;p = p->next,k--){
-		pid = fork_process(1001+k,"cdp_receiver_peer",1);
-		if (pid==-1){
-			LM_CRIT("init_diameter_peer(): Error on fork() for peer receiver!\n");
+	for(p = peer_list->head, k = -1; p; p = p->next, k--) {
+		pid = fork_process(1001 + k, "cdp_receiver_peer", 1);
+		if(pid == -1) {
+			LM_CRIT("init_diameter_peer(): Error on fork() for peer "
+					"receiver!\n");
 			return 0;
 		}
-		if (pid==0) {
-			srandom(seed*k);
-				snprintf(pt[process_no].desc, MAX_PT_DESC,
-					"cdp_receiver_peer=%.*s", p->fqdn.len,p->fqdn.s );
-			if (cfg_child_init()) return 0;
+		if(pid == 0) {
+			srandom(seed * k);
+			snprintf(pt[process_no].desc, MAX_PT_DESC, "cdp_receiver_peer=%.*s",
+					p->fqdn.len, p->fqdn.s);
+			if(cfg_child_init())
+				return 0;
 			receiver_process(p);
-			LM_CRIT("init_diameter_peer(): receiver_process finished without exit!\n");
+			LM_CRIT("init_diameter_peer(): receiver_process finished without "
+					"exit!\n");
 			exit(-1);
-		}else{
+		} else {
 			dp_add_pid(pid);
 		}
 	}
@@ -300,39 +312,43 @@ int diameter_peer_start(int blocking)
 
 
 	/* Fork the acceptor process (after receivers, so it inherits all the right sockets) */
-	pid = fork_process(1000,"cdp_acceptor",1);
+	pid = fork_process(1000, "cdp_acceptor", 1);
 
-	if (pid==-1){
+	if(pid == -1) {
 		LM_CRIT("init_diameter_peer(): Error on fork() for acceptor!\n");
 		return 0;
 	}
-	if (pid==0) {
-		if (cfg_child_init()) return 0;
+	if(pid == 0) {
+		if(cfg_child_init())
+			return 0;
 		acceptor_process(config);
-		LM_CRIT("init_diameter_peer(): acceptor_process finished without exit!\n");
+		LM_CRIT("init_diameter_peer(): acceptor_process finished without "
+				"exit!\n");
 		exit(-1);
-	}else{
+	} else {
 		dp_add_pid(pid);
 	}
 
 	/* fork/become timer */
-	if (blocking) {
+	if(blocking) {
 		dp_add_pid(getpid());
-		if (cfg_child_init()) return 0;
+		if(cfg_child_init())
+			return 0;
 		timer_process(1);
-	}
-	else{
-		pid = fork_process(1001,"cdp_timer",1);
-		if (pid==-1){
+	} else {
+		pid = fork_process(1001, "cdp_timer", 1);
+		if(pid == -1) {
 			LM_CRIT("init_diameter_peer(): Error on fork() for timer!\n");
 			return 0;
 		}
-		if (pid==0) {
-			if (cfg_child_init()) return 0;
+		if(pid == 0) {
+			if(cfg_child_init())
+				return 0;
 			timer_process(0);
-			LM_CRIT("init_diameter_peer(): timer_process finished without exit!\n");
+			LM_CRIT("init_diameter_peer(): timer_process finished without "
+					"exit!\n");
 			exit(-1);
-		}else{
+		} else {
 			dp_add_pid(pid);
 		}
 	}
@@ -346,18 +362,18 @@ int diameter_peer_start(int blocking)
  */
 void diameter_peer_destroy()
 {
-	int pid,status;
+	int pid, status;
 	handler *h;
 
-	if (!shutdownx_lock) {
+	if(!shutdownx_lock) {
 		return;
 	}
 	lock_get(shutdownx_lock);
-	if (*shutdownx) {
+	if(*shutdownx) {
 		/* already other process is cleaning stuff */
 		lock_release(shutdownx_lock);
 		return;
-	}else {
+	} else {
 		/* indicating that we are shutting down */
 		*shutdownx = 1;
 		lock_release(shutdownx_lock);
@@ -365,25 +381,27 @@ void diameter_peer_destroy()
 
 	/* wait for all children to clean up nicely (acceptor, receiver, timer, workers) */
 	LM_INFO("destroy_diameter_peer(): Terminating all children...\n");
-	while(pid_list->tail){
+	while(pid_list->tail) {
 		pid = dp_last_pid();
-		if (pid<=0||pid==getpid()){
+		if(pid <= 0 || pid == getpid()) {
 			dp_del_pid(pid);
 			continue;
 		}
-		LM_INFO("destroy_diameter_peer(): Waiting for child [%d] to terminate...\n",pid);
-		if (waitpid(pid,&status,0)<0){
+		LM_INFO("destroy_diameter_peer(): Waiting for child [%d] to "
+				"terminate...\n",
+				pid);
+		if(waitpid(pid, &status, 0) < 0) {
 			dp_del_pid(pid);
 			continue;
 		}
-		if (!WIFEXITED(status) /*|| WIFSIGNALED(status)*/){
+		if(!WIFEXITED(status) /*|| WIFSIGNALED(status)*/) {
 			sleep(1);
 		} else {
 			dp_del_pid(pid);
 		}
-
 	}
-	LM_INFO("destroy_diameter_peer(): All processes terminated. Cleaning up.\n");
+	LM_INFO("destroy_diameter_peer(): All processes terminated. Cleaning "
+			"up.\n");
 
 	/* clean upt the timer */
 	timer_cdp_destroy();
@@ -401,30 +419,27 @@ void diameter_peer_destroy()
 	cdp_trans_destroy();
 
 	/* cleaning up global vars */
-/*	lock_get(pid_list_lock);*/
+	/*	lock_get(pid_list_lock);*/
 	shm_free(dp_first_pid);
 	shm_free(pid_list);
 	lock_destroy(pid_list_lock);
-	lock_dealloc((void*)pid_list_lock);
+	lock_dealloc((void *)pid_list_lock);
 
 	shm_free(shutdownx);
 
 	lock_destroy(shutdownx_lock);
-	lock_dealloc((void*)shutdownx_lock);
+	lock_dealloc((void *)shutdownx_lock);
 
 	lock_get(handlers_lock);
-	while(handlers->head){
+	while(handlers->head) {
 		h = handlers->head->next;
 		shm_free(handlers->head);
 		handlers->head = h;
 	}
 	lock_destroy(handlers_lock);
-	lock_dealloc((void*)handlers_lock);
+	lock_dealloc((void *)handlers_lock);
 	shm_free(handlers);
 
 	free_dp_config(config);
 	LM_CRIT("destroy_diameter_peer(): Bye Bye from C Diameter Peer test\n");
-
 }
-
-

@@ -55,20 +55,22 @@
 #include "worker.h"
 
 /** Element for the local pid list. */
-typedef struct _pid_list_t{
+typedef struct _pid_list_t
+{
 	pid_t pid;
-	struct _pid_list_t *next,*prev;
+	struct _pid_list_t *next, *prev;
 } pid_list_t;
 
 /** local pid list */
-typedef struct {
-	pid_list_t *head,*tail;
+typedef struct
+{
+	pid_list_t *head, *tail;
 } pid_list_head_t;
 
-extern pid_t *dp_first_pid;		/**< first pid that we started from		*/
+extern pid_t *dp_first_pid; /**< first pid that we started from		*/
 
-extern pid_list_head_t *pid_list;	/**< list of local processes			*/
-extern gen_lock_t *pid_list_lock;	/**< lock for list of local processes	*/
+extern pid_list_head_t *pid_list; /**< list of local processes			*/
+extern gen_lock_t *pid_list_lock; /**< lock for list of local processes	*/
 
 int diameter_peer_init_str(str config_str);
 int diameter_peer_init(char *cfg_filename);
@@ -88,16 +90,18 @@ static inline int dp_add_pid(pid_t pid)
 	pid_list_t *n;
 	lock_get(pid_list_lock);
 	n = shm_malloc(sizeof(pid_list_t));
-	if (!n){
-		LOG_NO_MEM("shm",sizeof(pid_list_t));
+	if(!n) {
+		LOG_NO_MEM("shm", sizeof(pid_list_t));
 		lock_release(pid_list_lock);
 		return 0;
 	}
 	n->pid = pid;
 	n->next = 0;
 	n->prev = pid_list->tail;
-	if (!pid_list->head) pid_list->head = n;
-	if (pid_list->tail) pid_list->tail->next = n;
+	if(!pid_list->head)
+		pid_list->head = n;
+	if(pid_list->tail)
+		pid_list->tail->next = n;
 	pid_list->tail = n;
 	lock_release(pid_list_lock);
 	return 1;
@@ -110,8 +114,10 @@ static inline int dp_last_pid()
 {
 	int pid;
 	lock_get(pid_list_lock);
-	if (pid_list->tail)	pid = pid_list->tail->pid;
-	else pid = -1;
+	if(pid_list->tail)
+		pid = pid_list->tail->pid;
+	else
+		pid = -1;
 	lock_release(pid_list_lock);
 	return pid;
 }
@@ -125,16 +131,21 @@ static inline void dp_del_pid(pid_t pid)
 	pid_list_t *i;
 	lock_get(pid_list_lock);
 	i = pid_list->head;
-	if (!i) {
+	if(!i) {
 		lock_release(pid_list_lock);
 		return;
 	}
-	while(i && i->pid!=pid) i = i->next;
-	if (i){
-		if (i->prev) i->prev->next = i->next;
-		else pid_list->head = i->next;
-		if (i->next) i->next->prev = i->prev;
-		else pid_list->tail = i->prev;
+	while(i && i->pid != pid)
+		i = i->next;
+	if(i) {
+		if(i->prev)
+			i->prev->next = i->next;
+		else
+			pid_list->head = i->next;
+		if(i->next)
+			i->next->prev = i->prev;
+		else
+			pid_list->tail = i->prev;
 		shm_free(i);
 	}
 	lock_release(pid_list_lock);

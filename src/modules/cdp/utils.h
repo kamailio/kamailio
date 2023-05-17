@@ -54,18 +54,22 @@
 #include "sem.h"
 
 #ifndef LOG_NO_MEM
-	#define LOG_NO_MEM(mem_type,data_len) \
-		LM_ERR("%s:%s()[%d]: Out of %s memory allocating %lx bytes\n",\
-			__FILE__,__FUNCTION__,__LINE__, \
-			mem_type,(unsigned long)data_len);
+#define LOG_NO_MEM(mem_type, data_len)                                       \
+	LM_ERR("%s:%s()[%d]: Out of %s memory allocating %lx bytes\n", __FILE__, \
+			__FUNCTION__, __LINE__, mem_type, (unsigned long)data_len);
 #endif
 
 
-#define shm_str_dup_macro(dst,src)\
-{\
-	(dst).s = shm_malloc((src).len+1);\
-	if (!(dst).s){LOG_NO_MEM("shm",(src).len+1);}\
-	else {memcpy((dst).s,(src).s,(src).len);(dst).s[(src).len]=0;(dst).len=(src).len;}\
-}
+#define shm_str_dup_macro(dst, src)              \
+	{                                            \
+		(dst).s = shm_malloc((src).len + 1);     \
+		if(!(dst).s) {                           \
+			LOG_NO_MEM("shm", (src).len + 1);    \
+		} else {                                 \
+			memcpy((dst).s, (src).s, (src).len); \
+			(dst).s[(src).len] = 0;              \
+			(dst).len = (src).len;               \
+		}                                        \
+	}
 
 #endif /*UTILS_H_*/

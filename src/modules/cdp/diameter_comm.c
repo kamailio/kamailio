@@ -51,12 +51,12 @@
 #include "peerstatemachine.h"
 #include "globals.h"
 
-extern dp_config *config;				/**< Configuration for this diameter peer 	*/
-extern unsigned int* latency_threshold_p;	/**<max delay for Diameter call */
+extern dp_config *config; /**< Configuration for this diameter peer 	*/
+extern unsigned int *latency_threshold_p; /**<max delay for Diameter call */
 
 /* CALLBACKS */
-extern handler_list *handlers; 		/**< list of handlers */
-extern gen_lock_t *handlers_lock;	/**< lock for list of handlers */
+extern handler_list *handlers;	  /**< list of handlers */
+extern gen_lock_t *handlers_lock; /**< lock for list of handlers */
 
 /**
  * Add a handler function for incoming requests.
@@ -64,10 +64,10 @@ extern gen_lock_t *handlers_lock;	/**< lock for list of handlers */
  * @param param - generic parameter to be used when calling the callback functions
  * @returns 1 on success, 0 on failure
  */
-int AAAAddRequestHandler(AAARequestHandler_f *f,void *param)
+int AAAAddRequestHandler(AAARequestHandler_f *f, void *param)
 {
 	handler *h = shm_malloc(sizeof(handler));
-	if (!h) {
+	if(!h) {
 		LM_ERR("AAAAddRequestHandler: error allocating %ld bytes in shm\n",
 				(long int)sizeof(handler));
 		return 0;
@@ -78,9 +78,11 @@ int AAAAddRequestHandler(AAARequestHandler_f *f,void *param)
 	h->next = 0;
 	lock_get(handlers_lock);
 	h->prev = handlers->tail;
-	if (handlers->tail) handlers->tail->next = h;
+	if(handlers->tail)
+		handlers->tail->next = h;
 	handlers->tail = h;
-	if (!handlers->head) handlers->head = h;
+	if(!handlers->head)
+		handlers->head = h;
 	lock_release(handlers_lock);
 	return 1;
 }
@@ -91,10 +93,10 @@ int AAAAddRequestHandler(AAARequestHandler_f *f,void *param)
  * @param param - generic parameter to be used when calling the callback functions
  * @returns 1 on success, 0 on failure
  */
-int AAAAddResponseHandler(AAAResponseHandler_f *f,void *param)
+int AAAAddResponseHandler(AAAResponseHandler_f *f, void *param)
 {
 	handler *h = shm_malloc(sizeof(handler));
-	if (!h) {
+	if(!h) {
 		LM_ERR("AAAAddResponseHandler: error allocating %ld bytes in shm\n",
 				(long int)sizeof(handler));
 		return 0;
@@ -105,9 +107,11 @@ int AAAAddResponseHandler(AAAResponseHandler_f *f,void *param)
 	h->next = 0;
 	lock_get(handlers_lock);
 	h->prev = handlers->tail;
-	if (handlers->tail) handlers->tail->next = h;
+	if(handlers->tail)
+		handlers->tail->next = h;
 	handlers->tail = h;
-	if (!handlers->head) handlers->head = h;
+	if(!handlers->head)
+		handlers->head = h;
 	lock_release(handlers_lock);
 	return 1;
 }
@@ -125,38 +129,41 @@ int AAAAddResponseHandler(AAAResponseHandler_f *f,void *param)
  * @returns 1 on success, 0 on failure
  * \todo remove peer_id and add Realm routing
  */
-AAAReturnCode AAASendMessage(
-		AAAMessage *message,
-		AAATransactionCallback_f *callback_f,
-		void *callback_param)
+AAAReturnCode AAASendMessage(AAAMessage *message,
+		AAATransactionCallback_f *callback_f, void *callback_param)
 {
-	cdp_session_t* cdp_session;
+	cdp_session_t *cdp_session;
 	peer *p;
 	cdp_session = cdp_get_session(message->sessionId->data);
 
 	p = get_routing_peer(cdp_session, message);
-	if (cdp_session) {
+	if(cdp_session) {
 		AAASessionsUnlock(cdp_session->hash);
 	}
-	if (!p) {
-		LM_ERR("AAASendMessage(): Can't find a suitable connected peer in the routing table.\n");
+	if(!p) {
+		LM_ERR("AAASendMessage(): Can't find a suitable connected peer in the "
+			   "routing table.\n");
 		goto error;
 	}
-	LM_DBG("Found diameter peer [%.*s] from routing table\n", p->fqdn.len, p->fqdn.s);
-	if (p->state!=I_Open && p->state!=R_Open){
-		LM_ERR("AAASendMessage(): Peer not connected to %.*s\n",p->fqdn.len,p->fqdn.s);
+	LM_DBG("Found diameter peer [%.*s] from routing table\n", p->fqdn.len,
+			p->fqdn.s);
+	if(p->state != I_Open && p->state != R_Open) {
+		LM_ERR("AAASendMessage(): Peer not connected to %.*s\n", p->fqdn.len,
+				p->fqdn.s);
 		goto error;
 	}
 	/* only add transaction following when required */
-	if (callback_f){
-		if (is_req(message))
-			cdp_add_trans(message,callback_f,callback_param,config->transaction_timeout,1);
+	if(callback_f) {
+		if(is_req(message))
+			cdp_add_trans(message, callback_f, callback_param,
+					config->transaction_timeout, 1);
 		else
-			LM_ERR("AAASendMessage(): can't add transaction callback for answer.\n");
+			LM_ERR("AAASendMessage(): can't add transaction callback for "
+				   "answer.\n");
 	}
 
 	//	if (!peer_send_msg(p,message))
-	if (!sm_process(p,Send_Message,message,0,0))
+	if(!sm_process(p, Send_Message, message, 0, 0))
 		goto error;
 
 	return 1;
@@ -175,32 +182,33 @@ error:
  * @returns 1 on success, 0 on failure
  * \todo remove peer_id and add Realm routing
  */
-AAAReturnCode AAASendMessageToPeer(
-		AAAMessage *message,
-		str *peer_id,
-		AAATransactionCallback_f *callback_f,
-		void *callback_param)
+AAAReturnCode AAASendMessageToPeer(AAAMessage *message, str *peer_id,
+		AAATransactionCallback_f *callback_f, void *callback_param)
 {
 	peer *p;
 	p = get_peer_by_fqdn(peer_id);
-	if (!p) {
-		LM_ERR("AAASendMessageToPeer(): Peer unknown %.*s\n",peer_id->len,peer_id->s);
+	if(!p) {
+		LM_ERR("AAASendMessageToPeer(): Peer unknown %.*s\n", peer_id->len,
+				peer_id->s);
 		goto error;
 	}
-	if (p->state!=I_Open && p->state!=R_Open){
-		LM_ERR("AAASendMessageToPeer(): Peer not connected to %.*s\n",peer_id->len,peer_id->s);
+	if(p->state != I_Open && p->state != R_Open) {
+		LM_ERR("AAASendMessageToPeer(): Peer not connected to %.*s\n",
+				peer_id->len, peer_id->s);
 		goto error;
 	}
 	/* only add transaction following when required */
-	if (callback_f){
-		if (is_req(message))
-			cdp_add_trans(message,callback_f,callback_param,config->transaction_timeout,1);
+	if(callback_f) {
+		if(is_req(message))
+			cdp_add_trans(message, callback_f, callback_param,
+					config->transaction_timeout, 1);
 		else
-			LM_ERR("AAASendMessageToPeer(): can't add transaction callback for answer.\n");
+			LM_ERR("AAASendMessageToPeer(): can't add transaction callback for "
+				   "answer.\n");
 	}
 
 	p->last_selected = time(NULL);
-	if (!sm_process(p,Send_Message,message,0,0))
+	if(!sm_process(p, Send_Message, message, 0, 0))
 		goto error;
 
 	return 1;
@@ -221,10 +229,13 @@ error:
  * @param param - generic parameter to call the transactional callback function with
  * @param ans - the answer for the callback
  */
-void sendrecv_cb(int is_timeout,void *param,AAAMessage *ans, long elapsed_msecs)
+void sendrecv_cb(
+		int is_timeout, void *param, AAAMessage *ans, long elapsed_msecs)
 {
-	if (sem_release((gen_sem_t*)param)<0)
-		LM_ERR("sendrecv_cb(): Failed to unlock a transactional sendrecv! > %s\n",strerror(errno));
+	if(sem_release((gen_sem_t *)param) < 0)
+		LM_ERR("sendrecv_cb(): Failed to unlock a transactional sendrecv! > "
+			   "%s\n",
+				strerror(errno));
 }
 
 /**
@@ -236,52 +247,61 @@ void sendrecv_cb(int is_timeout,void *param,AAAMessage *ans, long elapsed_msecs)
  * \todo remove peer_id and add Realm routing
  * \todo replace the busy-waiting lock in here with one that does not consume CPU
  */
-AAAMessage* AAASendRecvMessage(AAAMessage *message)
+AAAMessage *AAASendRecvMessage(AAAMessage *message)
 {
 	peer *p;
-	gen_sem_t *sem=0;
+	gen_sem_t *sem = 0;
 	cdp_trans_t *t;
 	AAAMessage *ans;
 	struct timeval start, stop;
-	long elapsed_usecs=0, elapsed_millis=0;
-	cdp_session_t* cdp_session;
+	long elapsed_usecs = 0, elapsed_millis = 0;
+	cdp_session_t *cdp_session;
 
 	gettimeofday(&start, NULL);
 	cdp_session = cdp_get_session(message->sessionId->data);
 	p = get_routing_peer(cdp_session, message);
-	if (cdp_session) {
+	if(cdp_session) {
 		AAASessionsUnlock(cdp_session->hash);
 	}
-	if (!p) {
-		LM_ERR("AAASendRecvMessage(): Can't find a suitable connected peer in the routing table.\n");
+	if(!p) {
+		LM_ERR("AAASendRecvMessage(): Can't find a suitable connected peer in "
+			   "the routing table.\n");
 		goto error;
 	}
-	if (p->state!=I_Open && p->state!=R_Open){
-		LM_ERR("AAASendRecvMessage(): Peer not connected to %.*s\n",p->fqdn.len,p->fqdn.s);
+	if(p->state != I_Open && p->state != R_Open) {
+		LM_ERR("AAASendRecvMessage(): Peer not connected to %.*s\n",
+				p->fqdn.len, p->fqdn.s);
 		goto error;
 	}
 
 
-	if (is_req(message)){
-		sem_new(sem,0);
-		t = cdp_add_trans(message,sendrecv_cb,(void*)sem,config->transaction_timeout,0);
+	if(is_req(message)) {
+		sem_new(sem, 0);
+		t = cdp_add_trans(message, sendrecv_cb, (void *)sem,
+				config->transaction_timeout, 0);
 
-		if (!sm_process(p,Send_Message,message,0,0)){
+		if(!sm_process(p, Send_Message, message, 0, 0)) {
 			sem_free(sem);
 			goto error;
 		}
 
 		/* block until callback is executed */
-		while(sem_get(sem)<0){
-			if (shutdownx&&(*shutdownx)) goto error;
-			LM_WARN("AAASendRecvMessage(): interrupted by signal or something > %s\n",strerror(errno));
+		while(sem_get(sem) < 0) {
+			if(shutdownx && (*shutdownx))
+				goto error;
+			LM_WARN("AAASendRecvMessage(): interrupted by signal or something "
+					"> %s\n",
+					strerror(errno));
 		}
 		sem_free(sem);
 		gettimeofday(&stop, NULL);
-		elapsed_usecs = (stop.tv_sec - start.tv_sec)*1000000 + (stop.tv_usec - start.tv_usec);
-		elapsed_millis = elapsed_usecs/1000;
-		if (elapsed_millis > *latency_threshold_p) {
-			LM_ERR("CDP response to Send_Message took too long (>%dms) - [%ldms]\n", *latency_threshold_p, elapsed_millis);
+		elapsed_usecs = (stop.tv_sec - start.tv_sec) * 1000000
+						+ (stop.tv_usec - start.tv_usec);
+		elapsed_millis = elapsed_usecs / 1000;
+		if(elapsed_millis > *latency_threshold_p) {
+			LM_ERR("CDP response to Send_Message took too long (>%dms) - "
+				   "[%ldms]\n",
+					*latency_threshold_p, elapsed_millis);
 		}
 		ans = t->ans;
 		cdp_free_trans(t);
@@ -307,48 +327,56 @@ out_of_memory:
  * \todo remove peer_id and add Realm routing
  * \todo replace the busy-waiting lock in here with one that does not consume CPU
  */
-AAAMessage* AAASendRecvMessageToPeer(AAAMessage *message, str *peer_id)
+AAAMessage *AAASendRecvMessageToPeer(AAAMessage *message, str *peer_id)
 {
 	peer *p;
 	gen_sem_t *sem;
 	cdp_trans_t *t;
 	AAAMessage *ans;
 	struct timeval start, stop;
-	long elapsed_usecs=0, elapsed_millis=0;
+	long elapsed_usecs = 0, elapsed_millis = 0;
 
 	gettimeofday(&start, NULL);
 
 	p = get_peer_by_fqdn(peer_id);
-	if (!p) {
-		LM_ERR("AAASendRecvMessageToPeer(): Peer unknown %.*s\n",peer_id->len,peer_id->s);
+	if(!p) {
+		LM_ERR("AAASendRecvMessageToPeer(): Peer unknown %.*s\n", peer_id->len,
+				peer_id->s);
 		goto error;
 	}
-	if (p->state!=I_Open && p->state!=R_Open){
-		LM_ERR("AAASendRecvMessageToPeer(): Peer not connected to %.*s\n",peer_id->len,peer_id->s);
+	if(p->state != I_Open && p->state != R_Open) {
+		LM_ERR("AAASendRecvMessageToPeer(): Peer not connected to %.*s\n",
+				peer_id->len, peer_id->s);
 		goto error;
 	}
 
-	if (is_req(message)){
-		sem_new(sem,0);
-		t = cdp_add_trans(message,sendrecv_cb,(void*)sem,config->transaction_timeout,0);
+	if(is_req(message)) {
+		sem_new(sem, 0);
+		t = cdp_add_trans(message, sendrecv_cb, (void *)sem,
+				config->transaction_timeout, 0);
 
 		//		if (!peer_send_msg(p,message)) {
-		if (!sm_process(p,Send_Message,message,0,0)){
+		if(!sm_process(p, Send_Message, message, 0, 0)) {
 			sem_free(sem);
 			goto error;
 		}
 		/* block until callback is executed */
-		while(sem_get(sem)<0){
-			if (shutdownx&&(*shutdownx)) goto error;
-			LM_WARN("AAASendRecvMessageToPeer(): interrupted by signal or something > %s\n",strerror(errno));
+		while(sem_get(sem) < 0) {
+			if(shutdownx && (*shutdownx))
+				goto error;
+			LM_WARN("AAASendRecvMessageToPeer(): interrupted by signal or "
+					"something > %s\n",
+					strerror(errno));
 		}
 
 		gettimeofday(&stop, NULL);
 		elapsed_usecs = (stop.tv_sec - start.tv_sec) * 1000000
-			+ (stop.tv_usec - start.tv_usec);
+						+ (stop.tv_usec - start.tv_usec);
 		elapsed_millis = elapsed_usecs / 1000;
-		if (elapsed_millis > *latency_threshold_p) {
-			LM_ERR("CDP response to Send_Message took too long (>%dms) - [%ldms]\n", *latency_threshold_p, elapsed_millis);
+		if(elapsed_millis > *latency_threshold_p) {
+			LM_ERR("CDP response to Send_Message took too long (>%dms) - "
+				   "[%ldms]\n",
+					*latency_threshold_p, elapsed_millis);
 		}
 		sem_free(sem);
 
@@ -356,7 +384,8 @@ AAAMessage* AAASendRecvMessageToPeer(AAAMessage *message, str *peer_id)
 		cdp_free_trans(t);
 		return ans;
 	} else {
-		LM_ERR("AAASendRecvMessageToPeer(): can't add wait for answer to answer.\n");
+		LM_ERR("AAASendRecvMessageToPeer(): can't add wait for answer to "
+			   "answer.\n");
 		goto error;
 	}
 
@@ -365,7 +394,4 @@ error:
 out_of_memory:
 	AAAFreeMessage(&message);
 	return 0;
-	}
-
-
-
+}

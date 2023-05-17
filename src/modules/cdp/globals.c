@@ -77,5 +77,3 @@
 void destroy_memory(int show_status)
 {
 }
-
-

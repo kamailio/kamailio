@@ -47,7 +47,7 @@
 #include "peerstatemachine.h"
 #include "cdp_stats.h"
 
-extern unsigned int* latency_threshold_p;	/**<max delay for Diameter call */
+extern unsigned int *latency_threshold_p; /**<max delay for Diameter call */
 extern struct cdp_counters_h cdp_cnts_h;
 
 handler_list *handlers = 0; /**< list of handlers */
@@ -63,7 +63,7 @@ gen_lock_t *handlers_lock;	/**< lock for list of handlers */
  * @param ptr - not used anymore
  * @returns 1 always
  */
-int api_callback(peer *p,AAAMessage *msg,void* ptr)
+int api_callback(peer *p, AAAMessage *msg, void *ptr)
 {
 	cdp_trans_t *t;
 	int auto_drop;
@@ -71,58 +71,62 @@ int api_callback(peer *p,AAAMessage *msg,void* ptr)
 	handler x;
 	enum handler_types type;
 	AAAMessage *rsp;
-	if (is_req(msg)) type = REQUEST_HANDLER;
-	else type=RESPONSE_HANDLER;
+	if(is_req(msg))
+		type = REQUEST_HANDLER;
+	else
+		type = RESPONSE_HANDLER;
 
 	lock_get(handlers_lock);
-	for(h=handlers->head;h;h=h->next){
-		if (h->type==type){
+	for(h = handlers->head; h; h = h->next) {
+		if(h->type == type) {
 			x.handler = h->handler;
-			if (h->type == REQUEST_HANDLER) {
+			if(h->type == REQUEST_HANDLER) {
 				lock_release(handlers_lock);
-				rsp = (x.handler.requestHandler)(msg,h->param);
-				if (rsp) {
+				rsp = (x.handler.requestHandler)(msg, h->param);
+				if(rsp) {
 					//peer_send_msg(p,rsp);
-					sm_process(p,Send_Message,rsp,0,0);
+					sm_process(p, Send_Message, rsp, 0, 0);
 				}
 				lock_get(handlers_lock);
-			}
-			else {
+			} else {
 				lock_release(handlers_lock);
-				(x.handler.responseHandler)(msg,h->param);
+				(x.handler.responseHandler)(msg, h->param);
 				lock_get(handlers_lock);
 			}
 		}
 	}
 	lock_release(handlers_lock);
 
-	if (!is_req(msg)){
+	if(!is_req(msg)) {
 		/* take care of transactional callback if any */
 		t = cdp_take_trans(msg);
-		if (t){
+		if(t) {
 			t->ans = msg;
 			struct timeval stop;
 			gettimeofday(&stop, NULL);
-			long elapsed_usecs =  (stop.tv_sec - t->started.tv_sec)*1000000 + (stop.tv_usec - t->started.tv_usec);
-			long elapsed_msecs = elapsed_usecs/1000;
-			if (elapsed_msecs > *latency_threshold_p) {
-				if (msg->sessionId && msg->sessionId->data.len)
-					LM_ERR("Received diameter response outside of threshold (%d) - %ld (session-id: [%.*s])\n",
-							*latency_threshold_p, elapsed_msecs, msg->sessionId->data.len, msg->sessionId->data.s);
+			long elapsed_usecs = (stop.tv_sec - t->started.tv_sec) * 1000000
+								 + (stop.tv_usec - t->started.tv_usec);
+			long elapsed_msecs = elapsed_usecs / 1000;
+			if(elapsed_msecs > *latency_threshold_p) {
+				if(msg->sessionId && msg->sessionId->data.len)
+					LM_ERR("Received diameter response outside of threshold "
+						   "(%d) - %ld (session-id: [%.*s])\n",
+							*latency_threshold_p, elapsed_msecs,
+							msg->sessionId->data.len, msg->sessionId->data.s);
 				else
-					LM_ERR("Received diameter response outside of threshold (%d) - %ld (no session-id)\n",
+					LM_ERR("Received diameter response outside of threshold "
+						   "(%d) - %ld (no session-id)\n",
 							*latency_threshold_p, elapsed_msecs);
 			}
 			counter_inc(cdp_cnts_h.replies_received);
 			counter_add(cdp_cnts_h.replies_response_time, elapsed_msecs);
 			auto_drop = t->auto_drop;
-			if (t->cb){
-				(t->cb)(0,*(t->ptr),msg, elapsed_msecs);
+			if(t->cb) {
+				(t->cb)(0, *(t->ptr), msg, elapsed_msecs);
 			}
-			if (auto_drop) cdp_free_trans(t);
+			if(auto_drop)
+				cdp_free_trans(t);
 		}
 	}
 	return 1;
 }
-
-

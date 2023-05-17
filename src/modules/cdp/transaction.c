@@ -48,7 +48,7 @@
 #include "cdp_stats.h"
 
 extern struct cdp_counters_h cdp_cnts_h;
-cdp_trans_list_t *trans_list=0;		/**< list of transactions */
+cdp_trans_list_t *trans_list = 0; /**< list of transactions */
 
 /**
  * Initializes the transaction structure.
@@ -58,8 +58,8 @@ cdp_trans_list_t *trans_list=0;		/**< list of transactions */
 int cdp_trans_init()
 {
 	trans_list = shm_malloc(sizeof(cdp_trans_list_t));
-	if (!trans_list){
-		LOG_NO_MEM("shm",sizeof(cdp_trans_list_t));
+	if(!trans_list) {
+		LOG_NO_MEM("shm", sizeof(cdp_trans_list_t));
 		return 0;
 	}
 	trans_list->head = 0;
@@ -67,22 +67,22 @@ int cdp_trans_init()
 	trans_list->lock = lock_alloc();
 	trans_list->lock = lock_init(trans_list->lock);
 
-	add_timer(1,0,cdp_trans_timer,0);
+	add_timer(1, 0, cdp_trans_timer, 0);
 	return 1;
 }
 
 int cdp_trans_destroy()
 {
-	cdp_trans_t *t=0;
-	if (trans_list){
+	cdp_trans_t *t = 0;
+	if(trans_list) {
 		lock_get(trans_list->lock);
-		while(trans_list->head){
+		while(trans_list->head) {
 			t = trans_list->head;
 			trans_list->head = t->next;
 			cdp_free_trans(t);
 		}
 		lock_destroy(trans_list->lock);
-		lock_dealloc((void*)trans_list->lock);
+		lock_dealloc((void *)trans_list->lock);
 		shm_free(trans_list);
 		trans_list = 0;
 	}
@@ -98,18 +98,18 @@ int cdp_trans_destroy()
  * @param auto_drop - whether to auto drop the transaction on event, or let the application do it later
  * @returns the created cdp_trans_t* or NULL on error
  */
-cdp_trans_t* cdp_add_trans(AAAMessage *msg,AAATransactionCallback_f *cb,
-		void *ptr,int timeout,int auto_drop)
+cdp_trans_t *cdp_add_trans(AAAMessage *msg, AAATransactionCallback_f *cb,
+		void *ptr, int timeout, int auto_drop)
 {
 	cdp_trans_t *x;
 	x = shm_malloc(sizeof(cdp_trans_t));
-	if (!x) {
-		LOG_NO_MEM("shm",sizeof(cdp_trans_t));
+	if(!x) {
+		LOG_NO_MEM("shm", sizeof(cdp_trans_t));
 		return 0;
 	}
-	x->ptr = shm_malloc(sizeof(void*));
-	if (!x->ptr) {
-		LOG_NO_MEM("shm",sizeof(void*));
+	x->ptr = shm_malloc(sizeof(void *));
+	if(!x->ptr) {
+		LOG_NO_MEM("shm", sizeof(void *));
 		shm_free(x);
 		return 0;
 	}
@@ -125,9 +125,11 @@ cdp_trans_t* cdp_add_trans(AAAMessage *msg,AAATransactionCallback_f *cb,
 
 	lock_get(trans_list->lock);
 	x->prev = trans_list->tail;
-	if (trans_list->tail) trans_list->tail->next = x;
+	if(trans_list->tail)
+		trans_list->tail->next = x;
 	trans_list->tail = x;
-	if (!trans_list->head) trans_list->head = x;
+	if(!trans_list->head)
+		trans_list->head = x;
 	lock_release(trans_list->lock);
 	return x;
 }
@@ -141,12 +143,18 @@ void del_trans(AAAMessage *msg)
 	cdp_trans_t *x;
 	lock_get(trans_list->lock);
 	x = trans_list->head;
-	while(x&& x->endtoendid!=msg->endtoendId && x->hopbyhopid!=msg->hopbyhopId) x = x->next;
-	if (x){
-		if (x->prev) x->prev->next = x->next;
-		else trans_list->head = x->next;
-		if (x->next) x->next->prev = x->prev;
-		else trans_list->tail = x->prev;
+	while(x && x->endtoendid != msg->endtoendId
+			&& x->hopbyhopid != msg->hopbyhopId)
+		x = x->next;
+	if(x) {
+		if(x->prev)
+			x->prev->next = x->next;
+		else
+			trans_list->head = x->next;
+		if(x->next)
+			x->next->prev = x->prev;
+		else
+			trans_list->tail = x->prev;
 		cdp_free_trans(x);
 	}
 	lock_release(trans_list->lock);
@@ -157,17 +165,23 @@ void del_trans(AAAMessage *msg)
  * @param msg - the message that this transaction relates to
  * @returns the cdp_trans_t* if found or NULL if not
  */
-cdp_trans_t* cdp_take_trans(AAAMessage *msg)
+cdp_trans_t *cdp_take_trans(AAAMessage *msg)
 {
 	cdp_trans_t *x;
 	lock_get(trans_list->lock);
 	x = trans_list->head;
-	while(x&& x->endtoendid!=msg->endtoendId && x->hopbyhopid!=msg->hopbyhopId) x = x->next;
-	if (x){
-		if (x->prev) x->prev->next = x->next;
-		else trans_list->head = x->next;
-		if (x->next) x->next->prev = x->prev;
-		else trans_list->tail = x->prev;
+	while(x && x->endtoendid != msg->endtoendId
+			&& x->hopbyhopid != msg->hopbyhopId)
+		x = x->next;
+	if(x) {
+		if(x->prev)
+			x->prev->next = x->next;
+		else
+			trans_list->head = x->next;
+		if(x->next)
+			x->next->prev = x->prev;
+		else
+			trans_list->tail = x->prev;
 	}
 	lock_release(trans_list->lock);
 	return x;
@@ -179,7 +193,8 @@ cdp_trans_t* cdp_take_trans(AAAMessage *msg)
  */
 void cdp_free_trans(cdp_trans_t *x)
 {
-	if (x->ptr) shm_free(x->ptr);
+	if(x->ptr)
+		shm_free(x->ptr);
 	shm_free(x);
 }
 
@@ -188,27 +203,33 @@ void cdp_free_trans(cdp_trans_t *x)
  * @param now - time of call
  * @param ptr - generic pointer, passed to the transactional callbacks
  */
-int cdp_trans_timer(time_t now, void* ptr)
+int cdp_trans_timer(time_t now, void *ptr)
 {
-	cdp_trans_t *x,*n;
+	cdp_trans_t *x, *n;
 	lock_get(trans_list->lock);
 	x = trans_list->head;
-	while(x)
-	{
-		if (now>x->expires){
-			counter_inc(cdp_cnts_h.timeout);		//Transaction has timed out waiting for response
+	while(x) {
+		if(now > x->expires) {
+			counter_inc(
+					cdp_cnts_h
+							.timeout); //Transaction has timed out waiting for response
 
 			x->ans = 0;
-			if (x->cb){
-				(x->cb)(1,*(x->ptr),0, (now - x->expires));
+			if(x->cb) {
+				(x->cb)(1, *(x->ptr), 0, (now - x->expires));
 			}
 			n = x->next;
 
-			if (x->prev) x->prev->next = x->next;
-			else trans_list->head = x->next;
-			if (x->next) x->next->prev = x->prev;
-			else trans_list->tail = x->prev;
-			if (x->auto_drop) cdp_free_trans(x);
+			if(x->prev)
+				x->prev->next = x->next;
+			else
+				trans_list->head = x->next;
+			if(x->next)
+				x->next->prev = x->prev;
+			else
+				trans_list->tail = x->prev;
+			if(x->auto_drop)
+				cdp_free_trans(x);
 
 			x = n;
 		} else
@@ -219,7 +240,6 @@ int cdp_trans_timer(time_t now, void* ptr)
 }
 
 
-
 /* TRANSACTIONS */
 
 /**
@@ -228,14 +248,16 @@ int cdp_trans_timer(time_t now, void* ptr)
  * @param cmd_code - request's code
  * @returns the AAATransaction*
  */
-AAATransaction *AAACreateTransaction(AAAApplicationId app_id,AAACommandCode cmd_code)
+AAATransaction *AAACreateTransaction(
+		AAAApplicationId app_id, AAACommandCode cmd_code)
 {
 	AAATransaction *t;
 	t = shm_malloc(sizeof(AAATransaction));
-	if (!t) return 0;
-	memset(t,0,sizeof(AAATransaction));
-	t->application_id=app_id;
-	t->command_code=cmd_code;
+	if(!t)
+		return 0;
+	memset(t, 0, sizeof(AAATransaction));
+	t->application_id = app_id;
+	t->command_code = cmd_code;
 	return t;
 }
 
@@ -246,7 +268,8 @@ AAATransaction *AAACreateTransaction(AAAApplicationId app_id,AAACommandCode cmd_
  */
 int AAADropTransaction(AAATransaction *trans)
 {
-	if (!trans) return 0;
+	if(!trans)
+		return 0;
 	shm_free(trans);
 	return 1;
 }

@@ -75,42 +75,45 @@ void dp_del_pid(pid_t pid);
  */
 void acceptor_process(dp_config *cfg)
 {
-	int i,k;
+	int i, k;
 	unsigned int sock;
 
 	LM_INFO("Acceptor process starting up...\n");
-	listening_socks = pkg_malloc((cfg->acceptors_cnt+1)*sizeof(unsigned int));
-	if (!listening_socks){
-		LOG_NO_MEM("pkg",(cfg->acceptors_cnt+1)*sizeof(unsigned int));
+	listening_socks =
+			pkg_malloc((cfg->acceptors_cnt + 1) * sizeof(unsigned int));
+	if(!listening_socks) {
+		LOG_NO_MEM("pkg", (cfg->acceptors_cnt + 1) * sizeof(unsigned int));
 		goto done;
 	}
-	memset(listening_socks,0,(cfg->acceptors_cnt+1)*sizeof(unsigned int));
-	k=0;
-	for(i=0;i<cfg->acceptors_cnt;i++)
-		if (create_socket(cfg->acceptors[i].proto,cfg->acceptors[i].port,cfg->acceptors[i].bind,&sock)){
-			listening_socks[k++]=sock;
+	memset(listening_socks, 0, (cfg->acceptors_cnt + 1) * sizeof(unsigned int));
+	k = 0;
+	for(i = 0; i < cfg->acceptors_cnt; i++)
+		if(create_socket(cfg->acceptors[i].proto, cfg->acceptors[i].port,
+				   cfg->acceptors[i].bind, &sock)) {
+			listening_socks[k++] = sock;
 		}
 
 
 	LM_INFO("Acceptor opened sockets. Entering accept loop ...\n");
 	accept_loop();
 
-	for(i=0;listening_socks[i];i++)
+	for(i = 0; listening_socks[i]; i++)
 		close(listening_socks[i]);
 
-	if (listening_socks) pkg_free(listening_socks);
+	if(listening_socks)
+		pkg_free(listening_socks);
 #ifdef CDP_FOR_SER
 #else
 #ifdef PKG_MALLOC
-	#ifdef PKG_MALLOC
-		LM_DBG("Acceptor Memory status (pkg):\n");
-		//pkg_status();
-		#ifdef pkg_sums
-			pkg_sums();
-		#endif
-	#endif
+#ifdef PKG_MALLOC
+	LM_DBG("Acceptor Memory status (pkg):\n");
+//pkg_status();
+#ifdef pkg_sums
+	pkg_sums();
 #endif
-		dp_del_pid(getpid());
+#endif
+#endif
+	dp_del_pid(getpid());
 #endif
 done:
 	LM_INFO("Acceptor process finished\n");

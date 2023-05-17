@@ -71,26 +71,28 @@
 
 #include "../../core/cfg/cfg_struct.h"
 
-extern dp_config *config;		/**< Configuration for this diameter peer 	*/
+extern dp_config *config; /**< Configuration for this diameter peer 	*/
 
 int dp_add_pid(pid_t pid);
 void dp_del_pid(pid_t pid);
 
 int receive_loop(peer *original_peer);
 
-void receive_message(AAAMessage *msg,serviced_peer_t *sp);
+void receive_message(AAAMessage *msg, serviced_peer_t *sp);
 
 
 /** prefix for the send FIFO pipes */
 #define PIPE_PREFIX "/tmp/cdp_send_"
 
-int local_id=0;						/**< incrementing process local variable, to distinguish between different peer send pies */
+int local_id =
+		0; /**< incrementing process local variable, to distinguish between different peer send pies */
 
 
-int fd_exchange_pipe_unknown_local;		/**< pipe to pass file descriptors towards the receiver process for unknown peers - local end to read from*/
-int fd_exchange_pipe_unknown;		/**< pipe to pass file descriptors towards the receiver process for unknown peers */
+int fd_exchange_pipe_unknown_local; /**< pipe to pass file descriptors towards the receiver process for unknown peers - local end to read from*/
+int fd_exchange_pipe_unknown; /**< pipe to pass file descriptors towards the receiver process for unknown peers */
 
-serviced_peer_t *serviced_peers=0; 	/**< pointer to the list of peers serviced by this process */
+serviced_peer_t *serviced_peers =
+		0; /**< pointer to the list of peers serviced by this process */
 
 
 /**
@@ -99,22 +101,18 @@ serviced_peer_t *serviced_peers=0; 	/**< pointer to the list of peers serviced b
  */
 static void log_serviced_peers()
 {
-	if (debug_heavy) {
+	if(debug_heavy) {
 		serviced_peer_t *sp;
 
-		LM_DBG("--- Receiver %s Serviced Peers: ---\n",
-				pt[process_no].desc);
-		for(sp=serviced_peers;sp;sp=sp->next){
+		LM_DBG("--- Receiver %s Serviced Peers: ---\n", pt[process_no].desc);
+		for(sp = serviced_peers; sp; sp = sp->next) {
 			LM_DBG(" Peer: %.*s  TCP Socket: %d  Recv.State: %d \n",
-					sp->p?sp->p->fqdn.len:0,
-					sp->p?sp->p->fqdn.s:0,
-					sp->tcp_socket,
-					sp->state);
+					sp->p ? sp->p->fqdn.len : 0, sp->p ? sp->p->fqdn.s : 0,
+					sp->tcp_socket, sp->state);
 		}
 		LM_DBG("--------------------------------------------------------\n");
 	}
 }
-
 
 
 /**
@@ -125,28 +123,32 @@ static void log_serviced_peers()
 static int make_send_pipe(serviced_peer_t *sp)
 {
 	local_id++;
-	sp->send_pipe_name.s = shm_malloc(sizeof(PIPE_PREFIX)+64);
-	sprintf(sp->send_pipe_name.s,"%s%d_%d_%d",PIPE_PREFIX,getpid(),local_id,(unsigned int) time(0));
+	sp->send_pipe_name.s = shm_malloc(sizeof(PIPE_PREFIX) + 64);
+	sprintf(sp->send_pipe_name.s, "%s%d_%d_%d", PIPE_PREFIX, getpid(), local_id,
+			(unsigned int)time(0));
 	sp->send_pipe_name.len = strlen(sp->send_pipe_name.s);
 
-	if (mkfifo(sp->send_pipe_name.s, 0666)<0){
-		LM_ERR("make_send_pipe(): FIFO make failed > %s\n",strerror(errno));
+	if(mkfifo(sp->send_pipe_name.s, 0666) < 0) {
+		LM_ERR("make_send_pipe(): FIFO make failed > %s\n", strerror(errno));
 		return 0;
 	}
 	sp->send_pipe_fd = open(sp->send_pipe_name.s, O_RDONLY | O_NDELAY);
-	if (sp->send_pipe_fd<0){
-		LM_ERR("receiver_init(): FIFO open for read failed > %s\n",strerror(errno));
+	if(sp->send_pipe_fd < 0) {
+		LM_ERR("receiver_init(): FIFO open for read failed > %s\n",
+				strerror(errno));
 		return 0;
 	}
 	// we open it for writing just to keep it alive - won't close when all other writers close it
 	sp->send_pipe_fd_out = open(sp->send_pipe_name.s, O_WRONLY);
-	if (sp->send_pipe_fd_out<0){
-		LM_ERR("receiver_init(): FIFO open for write (keep-alive) failed > %s\n",strerror(errno));
+	if(sp->send_pipe_fd_out < 0) {
+		LM_ERR("receiver_init(): FIFO open for write (keep-alive) failed > "
+			   "%s\n",
+				strerror(errno));
 		return 0;
 	}
 
-	if (sp->p)
-		sp->p->send_pipe_name=sp->send_pipe_name;
+	if(sp->p)
+		sp->p->send_pipe_name = sp->send_pipe_name;
 
 	return 1;
 }
@@ -158,16 +160,16 @@ static int make_send_pipe(serviced_peer_t *sp)
 static void close_send_pipe(serviced_peer_t *sp)
 {
 	int tmp;
-	if (sp->send_pipe_name.s) {
+	if(sp->send_pipe_name.s) {
 		close(sp->send_pipe_fd);
 		close(sp->send_pipe_fd_out);
 		tmp = remove(sp->send_pipe_name.s);
-		if (tmp == -1) {
+		if(tmp == -1) {
 			LM_ERR("could not remove send pipe\n");
 		}
 		shm_free(sp->send_pipe_name.s);
-		sp->send_pipe_name.s=0;
-		sp->send_pipe_name.len=0;
+		sp->send_pipe_name.s = 0;
+		sp->send_pipe_name.len = 0;
 		sp->send_pipe_fd = -1;
 		sp->send_pipe_fd_out = -1;
 	}
@@ -180,29 +182,29 @@ static void close_send_pipe(serviced_peer_t *sp)
  * @param p - the peer to add
  * @returns 1 on success or 0 on error
  */
-static serviced_peer_t* add_serviced_peer(peer *p)
+static serviced_peer_t *add_serviced_peer(peer *p)
 {
 	serviced_peer_t *sp;
-	LM_INFO("add_serviced_peer(): Adding serviced_peer_t to receiver for peer [%.*s]\n",
-			p?p->fqdn.len:0,
-			p?p->fqdn.s:0);
+	LM_INFO("add_serviced_peer(): Adding serviced_peer_t to receiver for peer "
+			"[%.*s]\n",
+			p ? p->fqdn.len : 0, p ? p->fqdn.s : 0);
 	sp = pkg_malloc(sizeof(serviced_peer_t));
-	if (!sp){
+	if(!sp) {
 		LM_INFO("add_serviced_peer(): error allocating pkg mem\n");
 		return 0;
 	}
-	memset(sp,0,sizeof(serviced_peer_t));
+	memset(sp, 0, sizeof(serviced_peer_t));
 
 	sp->p = p;
 	sp->tcp_socket = -1;
 	sp->prev = 0;
-	if (serviced_peers) {
+	if(serviced_peers) {
 		serviced_peers->prev = sp;
 		sp->next = serviced_peers;
 	}
 	serviced_peers = sp;
 
-	if (!make_send_pipe(sp)){
+	if(!make_send_pipe(sp)) {
 		pkg_free(sp);
 		return 0;
 	}
@@ -216,19 +218,23 @@ static serviced_peer_t* add_serviced_peer(peer *p)
  * @param sp - the serviced peer to operate on
  * @param locked - if the sp->p has been previously locked
  */
-static void disconnect_serviced_peer(serviced_peer_t *sp,int locked)
+static void disconnect_serviced_peer(serviced_peer_t *sp, int locked)
 {
-	if (!sp) return;
+	if(!sp)
+		return;
 	LM_INFO("drop_serviced_peer(): [%.*s] Disconnecting from peer \n",
-			sp->p?sp->p->fqdn.len:0,
-			sp->p?sp->p->fqdn.s:0);
-	if (sp->p){
-		if (!locked) lock_get(sp->p->lock);
-		if (sp->p->I_sock == sp->tcp_socket) sm_process(sp->p,I_Peer_Disc,0,1,sp->tcp_socket);
-		if (sp->p->R_sock == sp->tcp_socket) sm_process(sp->p,R_Peer_Disc,0,1,sp->tcp_socket);
+			sp->p ? sp->p->fqdn.len : 0, sp->p ? sp->p->fqdn.s : 0);
+	if(sp->p) {
+		if(!locked)
+			lock_get(sp->p->lock);
+		if(sp->p->I_sock == sp->tcp_socket)
+			sm_process(sp->p, I_Peer_Disc, 0, 1, sp->tcp_socket);
+		if(sp->p->R_sock == sp->tcp_socket)
+			sm_process(sp->p, R_Peer_Disc, 0, 1, sp->tcp_socket);
 		sp->p->send_pipe_name.s = 0;
 		sp->p->send_pipe_name.len = 0;
-		if (!locked) lock_release(sp->p->lock);
+		if(!locked)
+			lock_release(sp->p->lock);
 	}
 	sp->tcp_socket = -1;
 	close_send_pipe(sp);
@@ -240,20 +246,25 @@ static void disconnect_serviced_peer(serviced_peer_t *sp,int locked)
  * \note This should only be called from the receiver process!!!
  * @param p - the peer to drop
  */
-static void drop_serviced_peer(serviced_peer_t *sp,int locked)
+static void drop_serviced_peer(serviced_peer_t *sp, int locked)
 {
-	if (!sp) return;
-	LM_INFO("drop_serviced_peer(): Dropping serviced_peer_t from receiver for peer [%.*s]\n",
-			sp->p?sp->p->fqdn.len:0,
-			sp->p?sp->p->fqdn.s:0);
+	if(!sp)
+		return;
+	LM_INFO("drop_serviced_peer(): Dropping serviced_peer_t from receiver for "
+			"peer [%.*s]\n",
+			sp->p ? sp->p->fqdn.len : 0, sp->p ? sp->p->fqdn.s : 0);
 
-	sp->p=0;
+	sp->p = 0;
 	close_send_pipe(sp);
 
-	if (sp->next) sp->next->prev = sp->prev;
-	if (sp->prev) sp->prev->next = sp->next;
-	else serviced_peers = sp->next;
-	if (sp->msg) shm_free(sp->msg);
+	if(sp->next)
+		sp->next->prev = sp->prev;
+	if(sp->prev)
+		sp->prev->next = sp->next;
+	else
+		serviced_peers = sp->next;
+	if(sp->msg)
+		shm_free(sp->msg);
 	sp->msg = 0;
 	pkg_free(sp);
 }
@@ -267,7 +278,7 @@ static void drop_serviced_peer(serviced_peer_t *sp,int locked)
  * @param p - peer associated with the descriptor or null if unknown peer
  * @returns 1 on success, 0 on failure
  */
-static int send_fd(int pipe_fd,int fd, peer *p)
+static int send_fd(int pipe_fd, int fd, peer *p)
 {
 	struct msghdr msg;
 	struct iovec iov[1];
@@ -276,52 +287,53 @@ static int send_fd(int pipe_fd,int fd, peer *p)
 	memset(&msg, 0, sizeof(struct msghdr));
 
 #ifdef HAVE_MSGHDR_MSG_CONTROL
-	struct cmsghdr* cmsg;
+	struct cmsghdr *cmsg;
 	/* make sure msg_control will point to properly aligned data */
-	union {
+	union
+	{
 		struct cmsghdr cm;
 		char control[CMSG_SPACE(sizeof(fd))];
-	}control_un;
+	} control_un;
 
-	msg.msg_control=control_un.control;
+	msg.msg_control = control_un.control;
 	/* openbsd doesn't like "more space", msg_controllen must not
 	 * include the end padding */
-	msg.msg_controllen=CMSG_LEN(sizeof(fd));
+	msg.msg_controllen = CMSG_LEN(sizeof(fd));
 
-	cmsg=CMSG_FIRSTHDR(&msg);
+	cmsg = CMSG_FIRSTHDR(&msg);
 	cmsg->cmsg_level = SOL_SOCKET;
 	cmsg->cmsg_type = SCM_RIGHTS;
 	cmsg->cmsg_len = CMSG_LEN(sizeof(fd));
-	tmp = (int*)CMSG_DATA(cmsg);
+	tmp = (int *)CMSG_DATA(cmsg);
 	*tmp = fd;
-	msg.msg_flags=0;
+	msg.msg_flags = 0;
 #else
-	msg.msg_accrights=(caddr_t) &fd;
-	msg.msg_accrightslen=sizeof(fd);
+	msg.msg_accrights = (caddr_t)&fd;
+	msg.msg_accrightslen = sizeof(fd);
 #endif
 
-	msg.msg_name=0;
-	msg.msg_namelen=0;
+	msg.msg_name = 0;
+	msg.msg_namelen = 0;
 
-	iov[0].iov_base=&p;
-	iov[0].iov_len=sizeof(peer*);
-	msg.msg_iov=iov;
-	msg.msg_iovlen=1;
+	iov[0].iov_base = &p;
+	iov[0].iov_len = sizeof(peer *);
+	msg.msg_iov = iov;
+	msg.msg_iovlen = 1;
 
 again:
-	ret=sendmsg(pipe_fd, &msg, 0);
-	if (ret<0){
-		if (errno==EINTR) goto again;
-		if ((errno!=EAGAIN) && (errno!=EWOULDBLOCK)){
-			LM_CRIT( "send_fd: sendmsg failed on %d: %s\n",
-					pipe_fd, strerror(errno));
+	ret = sendmsg(pipe_fd, &msg, 0);
+	if(ret < 0) {
+		if(errno == EINTR)
+			goto again;
+		if((errno != EAGAIN) && (errno != EWOULDBLOCK)) {
+			LM_CRIT("send_fd: sendmsg failed on %d: %s\n", pipe_fd,
+					strerror(errno));
 			return 0;
 		}
 	}
 
 	return 1;
 }
-
 
 
 /**
@@ -331,7 +343,7 @@ again:
  * @param p - optional pipe to fill
  * @returns 1 on success or 0 on failure
  */
-static int receive_fd(int pipe_fd, int* fd,peer **p)
+static int receive_fd(int pipe_fd, int *fd, peer **p)
 {
 	struct msghdr msg;
 	struct iovec iov[1];
@@ -340,78 +352,85 @@ static int receive_fd(int pipe_fd, int* fd,peer **p)
 	int *tmp = NULL;
 
 #ifdef HAVE_MSGHDR_MSG_CONTROL
-	struct cmsghdr* cmsg;
-	union{
+	struct cmsghdr *cmsg;
+	union
+	{
 		struct cmsghdr cm;
 		char control[CMSG_SPACE(sizeof(new_fd))];
-	}control_un;
+	} control_un;
 
 	memset(&msg, 0, sizeof(struct msghdr));
-	msg.msg_control=control_un.control;
-	msg.msg_controllen=sizeof(control_un.control);
+	msg.msg_control = control_un.control;
+	msg.msg_controllen = sizeof(control_un.control);
 #else
-	msg.msg_accrights=(caddr_t) &new_fd;
-	msg.msg_accrightslen=sizeof(int);
+	msg.msg_accrights = (caddr_t)&new_fd;
+	msg.msg_accrightslen = sizeof(int);
 #endif
 
-	msg.msg_name=0;
-	msg.msg_namelen=0;
+	msg.msg_name = 0;
+	msg.msg_namelen = 0;
 
-	iov[0].iov_base=p;
-	iov[0].iov_len=sizeof(peer*);
-	msg.msg_iov=iov;
-	msg.msg_iovlen=1;
+	iov[0].iov_base = p;
+	iov[0].iov_len = sizeof(peer *);
+	msg.msg_iov = iov;
+	msg.msg_iovlen = 1;
 
 again:
-	ret=recvmsg(pipe_fd, &msg, MSG_DONTWAIT|MSG_WAITALL);
-	if (ret<0){
-		if (errno==EINTR) goto again;
-		if ((errno==EAGAIN)||(errno==EWOULDBLOCK)) goto error;
-		LM_CRIT( "receive_fd: recvmsg on %d failed: %s\n",
-				pipe_fd, strerror(errno));
+	ret = recvmsg(pipe_fd, &msg, MSG_DONTWAIT | MSG_WAITALL);
+	if(ret < 0) {
+		if(errno == EINTR)
+			goto again;
+		if((errno == EAGAIN) || (errno == EWOULDBLOCK))
+			goto error;
+		LM_CRIT("receive_fd: recvmsg on %d failed: %s\n", pipe_fd,
+				strerror(errno));
 		goto error;
 	}
-	if (ret==0){
+	if(ret == 0) {
 		/* EOF */
-		LM_CRIT( "receive_fd: EOF on %d\n", pipe_fd);
+		LM_CRIT("receive_fd: EOF on %d\n", pipe_fd);
 		goto error;
 	}
-	if (ret!=sizeof(peer *)){
-		LM_WARN("receive_fd: different number of bytes received than expected (%d from %ld)"
-				"trying to fix...\n", ret, (long int)sizeof(peer*));
+	if(ret != sizeof(peer *)) {
+		LM_WARN("receive_fd: different number of bytes received than expected "
+				"(%d from %ld)"
+				"trying to fix...\n",
+				ret, (long int)sizeof(peer *));
 		goto error;
 	}
 
 #ifdef HAVE_MSGHDR_MSG_CONTROL
-	cmsg=CMSG_FIRSTHDR(&msg);
-	if ((cmsg!=0) && (cmsg->cmsg_len==CMSG_LEN(sizeof(new_fd)))){
-		if (cmsg->cmsg_type!= SCM_RIGHTS){
+	cmsg = CMSG_FIRSTHDR(&msg);
+	if((cmsg != 0) && (cmsg->cmsg_len == CMSG_LEN(sizeof(new_fd)))) {
+		if(cmsg->cmsg_type != SCM_RIGHTS) {
 			LM_ERR("receive_fd: msg control type != SCM_RIGHTS\n");
 			goto error;
 		}
-		if (cmsg->cmsg_level!= SOL_SOCKET){
+		if(cmsg->cmsg_level != SOL_SOCKET) {
 			LM_ERR("receive_fd: msg level != SOL_SOCKET\n");
 			goto error;
 		}
-		tmp = (int*)CMSG_DATA(cmsg);
+		tmp = (int *)CMSG_DATA(cmsg);
 		*fd = *tmp;
-	}else{
+	} else {
 		if(!cmsg)
 			LM_ERR("receive_fd: no descriptor passed, empty control message\n");
 		else
 			LM_ERR("receive_fd: no descriptor passed, cmsg=%p,"
-					"len=%d\n", cmsg, (unsigned)cmsg->cmsg_len);
-		*fd=-1;
-		*p=0;
+				   "len=%d\n",
+					cmsg, (unsigned)cmsg->cmsg_len);
+		*fd = -1;
+		*p = 0;
 		/* it's not really an error */
 	}
 #else
-	if (msg.msg_accrightslen==sizeof(int)){
-		*fd=new_fd;
-	}else{
+	if(msg.msg_accrightslen == sizeof(int)) {
+		*fd = new_fd;
+	} else {
 		LM_ERR("receive_fd: no descriptor passed,"
-				" accrightslen=%d\n", msg.msg_accrightslen);
-		*fd=-1;
+			   " accrightslen=%d\n",
+				msg.msg_accrightslen);
+		*fd = -1;
 	}
 #endif
 
@@ -427,17 +446,18 @@ error:
  */
 int receiver_init(peer *p)
 {
-	int fd_exchange_pipe[2];/**< pipe to pass file descriptors towards this process */
+	int fd_exchange_pipe
+			[2]; /**< pipe to pass file descriptors towards this process */
 
-	if (socketpair(AF_UNIX, SOCK_STREAM, 0, fd_exchange_pipe)<0){
-		LM_ERR("receiver_init(): socketpair(fd_exchanged_pipe) failed > %s\n",strerror(errno));
+	if(socketpair(AF_UNIX, SOCK_STREAM, 0, fd_exchange_pipe) < 0) {
+		LM_ERR("receiver_init(): socketpair(fd_exchanged_pipe) failed > %s\n",
+				strerror(errno));
 		return 0;
 	}
-	if (p) {
+	if(p) {
 		p->fd_exchange_pipe_local = fd_exchange_pipe[0];
 		p->fd_exchange_pipe = fd_exchange_pipe[1];
-	}
-	else {
+	} else {
 		fd_exchange_pipe_unknown_local = fd_exchange_pipe[0];
 		fd_exchange_pipe_unknown = fd_exchange_pipe[1];
 	}
@@ -452,34 +472,36 @@ int receiver_init(peer *p)
  */
 void receiver_process(peer *p)
 {
-	LM_INFO("receiver_process(): [%.*s] Receiver process doing init on new process...\n",
-			p?p->fqdn.len:0,p?p->fqdn.s:0);
-	if (p)
-		if (!add_serviced_peer(p)) goto done;
+	LM_INFO("receiver_process(): [%.*s] Receiver process doing init on new "
+			"process...\n",
+			p ? p->fqdn.len : 0, p ? p->fqdn.s : 0);
+	if(p)
+		if(!add_serviced_peer(p))
+			goto done;
 
 	LM_INFO("receiver_process(): [%.*s] Receiver process starting up...\n",
-			p?p->fqdn.len:0,p?p->fqdn.s:0);
+			p ? p->fqdn.len : 0, p ? p->fqdn.s : 0);
 
 	log_serviced_peers();
 
-	if (receive_loop(p)<0){
-		LM_INFO("receiver_process(): [%.*s] receive_loop() return -1 (error)!\n",
-				p?p->fqdn.len:0,p?p->fqdn.s:0);
-
+	if(receive_loop(p) < 0) {
+		LM_INFO("receiver_process(): [%.*s] receive_loop() return -1 "
+				"(error)!\n",
+				p ? p->fqdn.len : 0, p ? p->fqdn.s : 0);
 	}
 
 done:
-	if (!*shutdownx){
-		LM_INFO("receiver_process(): [%.*s]... Receiver process cleaning-up - should not happen unless shutting down!\n",
-				p?p->fqdn.len:0,p?p->fqdn.s:0);
-
+	if(!*shutdownx) {
+		LM_INFO("receiver_process(): [%.*s]... Receiver process cleaning-up - "
+				"should not happen unless shutting down!\n",
+				p ? p->fqdn.len : 0, p ? p->fqdn.s : 0);
 	}
 	LM_INFO("receiver_process(): [%.*s]... Receiver process cleaning-up.\n",
-			p?p->fqdn.len:0,p?p->fqdn.s:0);
+			p ? p->fqdn.len : 0, p ? p->fqdn.s : 0);
 
-	while(serviced_peers){
-		disconnect_serviced_peer(serviced_peers,0);
-		drop_serviced_peer(serviced_peers,0);
+	while(serviced_peers) {
+		disconnect_serviced_peer(serviced_peers, 0);
+		drop_serviced_peer(serviced_peers, 0);
 	}
 	/* remove pid from list of running processes */
 	dp_del_pid(getpid());
@@ -489,8 +511,8 @@ done:
 #else
 #ifdef PKG_MALLOC
 #ifdef PKG_MALLOC
-	LM_DBG("Receiver[%.*s] Memory status (pkg):\n",
-			p?p->fqdn.len:0,p?p->fqdn.s:0);
+	LM_DBG("Receiver[%.*s] Memory status (pkg):\n", p ? p->fqdn.len : 0,
+			p ? p->fqdn.s : 0);
 	//pkg_status();
 #ifdef pkg_sums
 	pkg_sums();
@@ -500,7 +522,7 @@ done:
 #endif
 
 	LM_INFO("receiver_process(): [%.*s]... Receiver process finished.\n",
-			p?p->fqdn.len:0,p?p->fqdn.s:0);
+			p ? p->fqdn.len : 0, p ? p->fqdn.s : 0);
 	exit(0);
 }
 
@@ -514,91 +536,88 @@ done:
  */
 static inline int do_receive(serviced_peer_t *sp)
 {
-	int cnt,n,version;
+	int cnt, n, version;
 	char *dst;
 	AAAMessage *dmsg;
 
-	switch (sp->state){
+	switch(sp->state) {
 		case Receiver_Waiting:
 			n = 1; /* wait for version */
 			dst = sp->buf;
 			break;
 
 		case Receiver_Header:
-			n = DIAMETER_HEADER_LEN - sp->buf_len; /* waiting for rest of header */
-			dst = sp->buf+sp->buf_len;
+			n = DIAMETER_HEADER_LEN
+				- sp->buf_len; /* waiting for rest of header */
+			dst = sp->buf + sp->buf_len;
 			break;
 
 		case Receiver_Rest_of_Message:
-			n = sp->length - sp->msg_len;	/* waiting for the rest of the message */
-			dst = sp->msg+sp->msg_len;
+			n = sp->length
+				- sp->msg_len; /* waiting for the rest of the message */
+			dst = sp->msg + sp->msg_len;
 			break;
 
 		default:
 			LM_ERR("do_receive(): [%.*s] Unknown state %d\n",
-					sp->p?sp->p->fqdn.len:0,
-					sp->p?sp->p->fqdn.s:0,
+					sp->p ? sp->p->fqdn.len : 0, sp->p ? sp->p->fqdn.s : 0,
 					sp->state);
 			goto error_and_reset;
 	}
 
-	cnt = recv(sp->tcp_socket,dst,n,0);
+	cnt = recv(sp->tcp_socket, dst, n, 0);
 
-	if (cnt<=0)
+	if(cnt <= 0)
 		goto error_and_reset;
 
-	switch (sp->state){
+	switch(sp->state) {
 		case Receiver_Waiting:
 			version = (unsigned char)(sp->buf[0]);
-			if (version!=1) {
+			if(version != 1) {
 				LM_ERR("do_receive(): [%.*s] Received Unknown version [%d]\n",
-						sp->p->fqdn.len,
-						sp->p->fqdn.s,
+						sp->p->fqdn.len, sp->p->fqdn.s,
 						(unsigned char)sp->buf[0]);
 				goto error_and_reset;
-			}else{
+			} else {
 				sp->state = Receiver_Header;
 				sp->buf_len = 1;
 			}
 			break;
 
 		case Receiver_Header:
-			sp->buf_len+=cnt;
-			if (sp->buf_len==DIAMETER_HEADER_LEN){
-				sp->length = get_3bytes(sp->buf+1);
-				if (sp->length>DP_MAX_MSG_LENGTH){
+			sp->buf_len += cnt;
+			if(sp->buf_len == DIAMETER_HEADER_LEN) {
+				sp->length = get_3bytes(sp->buf + 1);
+				if(sp->length > DP_MAX_MSG_LENGTH) {
 					LM_ERR("do_receive(): [%.*s] Msg too big [%d] bytes\n",
-							sp->p?sp->p->fqdn.len:0,
-							sp->p?sp->p->fqdn.s:0,
-							sp->length);
+							sp->p ? sp->p->fqdn.len : 0,
+							sp->p ? sp->p->fqdn.s : 0, sp->length);
 					goto error_and_reset;
 				}
 				LM_DBG("receive_loop(): [%.*s] Recv Version %d Length %d\n",
-						sp->p?sp->p->fqdn.len:0,
-						sp->p?sp->p->fqdn.s:0,
-						(unsigned char)(sp->buf[0]),
-						sp->length);
+						sp->p ? sp->p->fqdn.len : 0, sp->p ? sp->p->fqdn.s : 0,
+						(unsigned char)(sp->buf[0]), sp->length);
 				sp->msg = shm_malloc(sp->length);
-				if (!sp->msg) {
-					LOG_NO_MEM("shm",sp->length);
+				if(!sp->msg) {
+					LOG_NO_MEM("shm", sp->length);
 					goto error_and_reset;
 				}
 
-				memcpy(sp->msg,sp->buf,sp->buf_len);
-				sp->msg_len=sp->buf_len;
+				memcpy(sp->msg, sp->buf, sp->buf_len);
+				sp->msg_len = sp->buf_len;
 				sp->state = Receiver_Rest_of_Message;
 			}
 			break;
 
 		case Receiver_Rest_of_Message:
-			sp->msg_len+=cnt;
-			if (sp->msg_len==sp->length){
-				dmsg = AAATranslateMessage((unsigned char*)sp->msg,(unsigned int)sp->msg_len,1);
-				if (dmsg) {
+			sp->msg_len += cnt;
+			if(sp->msg_len == sp->length) {
+				dmsg = AAATranslateMessage(
+						(unsigned char *)sp->msg, (unsigned int)sp->msg_len, 1);
+				if(dmsg) {
 					sp->msg = 0;
-					receive_message(dmsg,sp);
-				}
-				else {
+					receive_message(dmsg, sp);
+				} else {
 					shm_free(sp->msg);
 					sp->msg = 0;
 				}
@@ -610,14 +629,13 @@ static inline int do_receive(serviced_peer_t *sp)
 
 		default:
 			LM_ERR("do_receive(): [%.*s] Unknown state %d\n",
-					sp->p?sp->p->fqdn.len:0,
-					sp->p?sp->p->fqdn.s:0,
+					sp->p ? sp->p->fqdn.len : 0, sp->p ? sp->p->fqdn.s : 0,
 					sp->state);
 			goto error_and_reset;
 	}
 	return 1;
 error_and_reset:
-	if (sp->msg){
+	if(sp->msg) {
 		shm_free(sp->msg);
 		sp->msg = 0;
 		sp->msg_len = 0;
@@ -637,202 +655,219 @@ error_and_reset:
  */
 int receive_loop(peer *original_peer)
 {
-	fd_set rfds,efds;
+	fd_set rfds, efds;
 	struct timeval tv;
-	int n,max=0,cnt=0;
-	AAAMessage *msg=0;
-	serviced_peer_t *sp,*sp2;
+	int n, max = 0, cnt = 0;
+	AAAMessage *msg = 0;
+	serviced_peer_t *sp, *sp2;
 	peer *p;
-	int fd=-1;
-	int fd_exchange_pipe_local=0;
+	int fd = -1;
+	int fd_exchange_pipe_local = 0;
 
-	if (original_peer) fd_exchange_pipe_local = original_peer->fd_exchange_pipe_local;
-	else fd_exchange_pipe_local = fd_exchange_pipe_unknown_local;
+	if(original_peer)
+		fd_exchange_pipe_local = original_peer->fd_exchange_pipe_local;
+	else
+		fd_exchange_pipe_local = fd_exchange_pipe_unknown_local;
 
 	//	if (shutdownx) return -1;
 
-	while(shutdownx&&!*shutdownx){
+	while(shutdownx && !*shutdownx) {
 		n = 0;
 
-		while(!n){
-			if (shutdownx&&*shutdownx) break;
+		while(!n) {
+			if(shutdownx && *shutdownx)
+				break;
 			cfg_update();
 
 			log_serviced_peers();
 
-			max =-1;
+			max = -1;
 
 			FD_ZERO(&rfds);
 			FD_ZERO(&efds);
 
-			FD_SET(fd_exchange_pipe_local,&rfds);
-			if (fd_exchange_pipe_local>max) max = fd_exchange_pipe_local;
+			FD_SET(fd_exchange_pipe_local, &rfds);
+			if(fd_exchange_pipe_local > max)
+				max = fd_exchange_pipe_local;
 
-			for(sp=serviced_peers;sp;sp=sp->next){
-				if (sp->tcp_socket>=0){
-					FD_SET(sp->tcp_socket,&rfds);
-					FD_SET(sp->tcp_socket,&efds);
-					if (sp->tcp_socket>max) max = sp->tcp_socket;
+			for(sp = serviced_peers; sp; sp = sp->next) {
+				if(sp->tcp_socket >= 0) {
+					FD_SET(sp->tcp_socket, &rfds);
+					FD_SET(sp->tcp_socket, &efds);
+					if(sp->tcp_socket > max)
+						max = sp->tcp_socket;
 				}
-				if (sp->send_pipe_fd>=0) {
-					FD_SET(sp->send_pipe_fd,&rfds);
-					if (sp->send_pipe_fd>max) max = sp->send_pipe_fd;
+				if(sp->send_pipe_fd >= 0) {
+					FD_SET(sp->send_pipe_fd, &rfds);
+					if(sp->send_pipe_fd > max)
+						max = sp->send_pipe_fd;
 				}
 			}
 
-			tv.tv_sec=1;
-			tv.tv_usec=0;
+			tv.tv_sec = 1;
+			tv.tv_usec = 0;
 
-			n = select(max+1,&rfds,0,&efds,&tv);
-			if (n==-1){
-				if (shutdownx&&*shutdownx) return 0;
-				LM_ERR("select_recv(): %s\n",strerror(errno));
-				for(sp=serviced_peers;sp;sp=sp2){
+			n = select(max + 1, &rfds, 0, &efds, &tv);
+			if(n == -1) {
+				if(shutdownx && *shutdownx)
+					return 0;
+				LM_ERR("select_recv(): %s\n", strerror(errno));
+				for(sp = serviced_peers; sp; sp = sp2) {
 					sp2 = sp->next;
-					disconnect_serviced_peer(sp,0);
-					if (sp->p && sp->p->is_dynamic)
-						drop_serviced_peer(sp,0);
+					disconnect_serviced_peer(sp, 0);
+					if(sp->p && sp->p->is_dynamic)
+						drop_serviced_peer(sp, 0);
 				}
 				sleep(1);
 				break;
-			}else
-				if (n){
+			} else if(n) {
 
-					if (FD_ISSET(fd_exchange_pipe_local,&rfds)){
-						/* fd exchange */
-						LM_DBG("select_recv(): There is something on the fd exchange pipe\n");
-						p = 0;
-						fd = -1;
-						if (!receive_fd(fd_exchange_pipe_local,&fd,&p)){
-							LM_ERR("select_recv(): Error reading from fd exchange pipe\n");
-						}else{
-							LM_DBG("select_recv(): fd exchange pipe says fd [%d] for peer %p:[%.*s]\n",fd,
-									p,
-									p?p->fqdn.len:0,
-									p?p->fqdn.s:"");
-							if (p){
-								sp2=0;
-								for(sp=serviced_peers;sp;sp=sp->next)
-									if (sp->p==p){
-										sp2 = sp;
-										break;
-									}
-								if (!sp2)
-									sp2 = add_serviced_peer(p);
-								else
-									make_send_pipe(sp2);
-								if (!sp2) {
-									LM_ERR("Error on add_serviced_peer()\n");
-									continue;
+				if(FD_ISSET(fd_exchange_pipe_local, &rfds)) {
+					/* fd exchange */
+					LM_DBG("select_recv(): There is something on the fd "
+						   "exchange pipe\n");
+					p = 0;
+					fd = -1;
+					if(!receive_fd(fd_exchange_pipe_local, &fd, &p)) {
+						LM_ERR("select_recv(): Error reading from fd exchange "
+							   "pipe\n");
+					} else {
+						LM_DBG("select_recv(): fd exchange pipe says fd [%d] "
+							   "for peer %p:[%.*s]\n",
+								fd, p, p ? p->fqdn.len : 0, p ? p->fqdn.s : "");
+						if(p) {
+							sp2 = 0;
+							for(sp = serviced_peers; sp; sp = sp->next)
+								if(sp->p == p) {
+									sp2 = sp;
+									break;
 								}
-
-								sp2->tcp_socket = fd;
-								if (p->state == Wait_Conn_Ack){
-									p->I_sock = fd;
-									sm_process(p,I_Rcv_Conn_Ack,0,0,fd);
-								}else{
-									p->R_sock = fd;
-								}
-							}else{
-								sp2 = add_serviced_peer(NULL);
-								if (!sp2) {
-									LM_ERR("Error on add_serviced_peer()\n");
-									continue;
-								}
-								sp2->tcp_socket = fd;
+							if(!sp2)
+								sp2 = add_serviced_peer(p);
+							else
+								make_send_pipe(sp2);
+							if(!sp2) {
+								LM_ERR("Error on add_serviced_peer()\n");
+								continue;
 							}
+
+							sp2->tcp_socket = fd;
+							if(p->state == Wait_Conn_Ack) {
+								p->I_sock = fd;
+								sm_process(p, I_Rcv_Conn_Ack, 0, 0, fd);
+							} else {
+								p->R_sock = fd;
+							}
+						} else {
+							sp2 = add_serviced_peer(NULL);
+							if(!sp2) {
+								LM_ERR("Error on add_serviced_peer()\n");
+								continue;
+							}
+							sp2->tcp_socket = fd;
 						}
 					}
+				}
 
-					for(sp=serviced_peers;sp;){
-						if (sp->tcp_socket>=0 && FD_ISSET(sp->tcp_socket,&efds)) {
-							LM_INFO("select_recv(): [%.*s] Peer socket [%d] found on the exception list... dropping\n",
-									sp->p?sp->p->fqdn.len:0,
-									sp->p?sp->p->fqdn.s:"",
-									sp->tcp_socket);
-							goto drop_peer;
+				for(sp = serviced_peers; sp;) {
+					if(sp->tcp_socket >= 0 && FD_ISSET(sp->tcp_socket, &efds)) {
+						LM_INFO("select_recv(): [%.*s] Peer socket [%d] found "
+								"on the exception list... dropping\n",
+								sp->p ? sp->p->fqdn.len : 0,
+								sp->p ? sp->p->fqdn.s : "", sp->tcp_socket);
+						goto drop_peer;
+					}
+					if(sp->send_pipe_fd >= 0
+							&& FD_ISSET(sp->send_pipe_fd, &rfds)) {
+						/* send */
+						LM_DBG("select_recv(): There is something on the send "
+							   "pipe\n");
+						cnt = read(
+								sp->send_pipe_fd, &msg, sizeof(AAAMessage *));
+						if(cnt == 0) {
+							//This is very stupid and might not work well - dropped messages... to be fixed
+							LM_INFO("select_recv(): ReOpening pipe for read. "
+									"This should not happen...\n");
+							close(sp->send_pipe_fd);
+							sp->send_pipe_fd = open(
+									sp->send_pipe_name.s, O_RDONLY | O_NDELAY);
+							goto receive;
 						}
-						if (sp->send_pipe_fd>=0 && FD_ISSET(sp->send_pipe_fd,&rfds)) {
-							/* send */
-							LM_DBG("select_recv(): There is something on the send pipe\n");
-							cnt = read(sp->send_pipe_fd,&msg,sizeof(AAAMessage *));
-							if (cnt==0){
-								//This is very stupid and might not work well - dropped messages... to be fixed
-								LM_INFO("select_recv(): ReOpening pipe for read. This should not happen...\n");
-								close(sp->send_pipe_fd);
-								sp->send_pipe_fd = open(sp->send_pipe_name.s, O_RDONLY | O_NDELAY);
-								goto receive;
+						if(cnt < sizeof(AAAMessage *)) {
+							if(cnt < 0)
+								LM_ERR("select_recv(): Error reading from send "
+									   "pipe\n");
+							goto receive;
+						}
+						LM_DBG("select_recv(): Send pipe says [%p] %d\n", msg,
+								cnt);
+						if(sp->tcp_socket < 0) {
+							LM_ERR("select_recv(): got a signal to send "
+								   "something, but the connection was not "
+								   "opened\n");
+						} else {
+							while((cnt = write(sp->tcp_socket, msg->buf.s,
+										   msg->buf.len))
+									== -1) {
+								if(errno == EINTR)
+									continue;
+								LM_ERR("select_recv(): [%.*s] write on socket "
+									   "[%d] returned error> %s... dropping\n",
+										sp->p ? sp->p->fqdn.len : 0,
+										sp->p ? sp->p->fqdn.s : "",
+										sp->tcp_socket, strerror(errno));
+								AAAFreeMessage(&msg);
+								close(sp->tcp_socket);
+								goto drop_peer;
 							}
-							if (cnt<sizeof(AAAMessage *)){
-								if (cnt<0) LM_ERR("select_recv(): Error reading from send pipe\n");
-								goto receive;
-							}
-							LM_DBG("select_recv(): Send pipe says [%p] %d\n",msg,cnt);
-							if (sp->tcp_socket<0){
-								LM_ERR("select_recv(): got a signal to send something, but the connection was not opened\n");
-							} else {
-								while( (cnt=write(sp->tcp_socket,msg->buf.s,msg->buf.len))==-1 ) {
-									if (errno==EINTR)
-										continue;
-									LM_ERR("select_recv(): [%.*s] write on socket [%d] returned error> %s... dropping\n",
-											sp->p?sp->p->fqdn.len:0,
-											sp->p?sp->p->fqdn.s:"",
-											sp->tcp_socket,
-											strerror(errno));
-									AAAFreeMessage(&msg);
-									close(sp->tcp_socket);
-									goto drop_peer;
-								}
 
-								if (cnt!=msg->buf.len){
-									LM_ERR("select_recv(): [%.*s] write on socket [%d] only wrote %d/%d bytes... dropping\n",
-											sp->p?sp->p->fqdn.len:0,
-											sp->p?sp->p->fqdn.s:"",
-											sp->tcp_socket,
-											cnt,
-											msg->buf.len);
-									AAAFreeMessage(&msg);
-									close(sp->tcp_socket);
-									goto drop_peer;
-								}
-							}
-							AAAFreeMessage(&msg);
-							//don't return, maybe there is something to read
-						}
-receive:
-						/* receive */
-						if (sp->tcp_socket>=0 && FD_ISSET(sp->tcp_socket,&rfds)) {
-							errno=0;
-							cnt = do_receive(sp);
-							if (cnt<=0) {
-								LM_INFO("select_recv(): [%.*s] read on socket [%d] returned %d > %s... dropping\n",
-										sp->p?sp->p->fqdn.len:0,
-										sp->p?sp->p->fqdn.s:"",
-										sp->tcp_socket,
-										cnt,
-										errno?strerror(errno):"");
+							if(cnt != msg->buf.len) {
+								LM_ERR("select_recv(): [%.*s] write on socket "
+									   "[%d] only wrote %d/%d bytes... "
+									   "dropping\n",
+										sp->p ? sp->p->fqdn.len : 0,
+										sp->p ? sp->p->fqdn.s : "",
+										sp->tcp_socket, cnt, msg->buf.len);
+								AAAFreeMessage(&msg);
+								close(sp->tcp_socket);
 								goto drop_peer;
 							}
 						}
-
-						//next_sp:
-						/* go to next serviced peer */
-						sp=sp->next;
-						continue;
-drop_peer:
-						/* drop this serviced peer on error */
-						sp2 = sp->next;
-						disconnect_serviced_peer(sp,0);
-						if (sp->p && sp->p->is_dynamic)
-							drop_serviced_peer(sp,0);
-						sp = sp2;
+						AAAFreeMessage(&msg);
+						//don't return, maybe there is something to read
 					}
+				receive:
+					/* receive */
+					if(sp->tcp_socket >= 0 && FD_ISSET(sp->tcp_socket, &rfds)) {
+						errno = 0;
+						cnt = do_receive(sp);
+						if(cnt <= 0) {
+							LM_INFO("select_recv(): [%.*s] read on socket [%d] "
+									"returned %d > %s... dropping\n",
+									sp->p ? sp->p->fqdn.len : 0,
+									sp->p ? sp->p->fqdn.s : "", sp->tcp_socket,
+									cnt, errno ? strerror(errno) : "");
+							goto drop_peer;
+						}
+					}
+
+					//next_sp:
+					/* go to next serviced peer */
+					sp = sp->next;
+					continue;
+				drop_peer:
+					/* drop this serviced peer on error */
+					sp2 = sp->next;
+					disconnect_serviced_peer(sp, 0);
+					if(sp->p && sp->p->is_dynamic)
+						drop_serviced_peer(sp, 0);
+					sp = sp2;
 				}
+			}
 		}
 	}
 	return 0;
 }
-
 
 
 /**
@@ -848,131 +883,154 @@ int peer_connect(peer *p)
 	int tmp = 0;
 	unsigned int option = 1;
 
-	struct addrinfo *ainfo=0,*res=0,*sainfo=0,hints;
-	char buf[256],host[256],serv[256];
+	struct addrinfo *ainfo = 0, *res = 0, *sainfo = 0, hints;
+	char buf[256], host[256], serv[256];
 	int error;
 
-	memset (&hints, 0, sizeof(hints));
-	if ((p->proto.len) && (strncasecmp(p->proto.s,"SCTP",4)==0)){
+	memset(&hints, 0, sizeof(hints));
+	if((p->proto.len) && (strncasecmp(p->proto.s, "SCTP", 4) == 0)) {
 		hints.ai_protocol = IPPROTO_SCTP;
-	}else{
+	} else {
 		hints.ai_protocol = IPPROTO_TCP;
 	}
 	hints.ai_flags = AI_ADDRCONFIG;
 	hints.ai_socktype = SOCK_STREAM;
 
-	sprintf(buf,"%d",p->port);
+	sprintf(buf, "%d", p->port);
 
 	error = getaddrinfo(p->fqdn.s, buf, &hints, &res);
 
-	if (error!=0){
+	if(error != 0) {
 		LM_WARN("peer_connect(): Error opening connection to %.*s:%d >%s\n",
-				p->fqdn.len,p->fqdn.s,p->port,gai_strerror(error));
+				p->fqdn.len, p->fqdn.s, p->port, gai_strerror(error));
 		goto error;
 	}
 
-	for(ainfo = res;ainfo;ainfo = ainfo->ai_next)
-	{
-		if (getnameinfo(ainfo->ai_addr,ainfo->ai_addrlen,
-					host,256,serv,256,NI_NUMERICHOST|NI_NUMERICSERV)==0){
-			LM_INFO("peer_connect(): Trying to connect to %s port %s\n",
-					host,serv);
+	for(ainfo = res; ainfo; ainfo = ainfo->ai_next) {
+		if(getnameinfo(ainfo->ai_addr, ainfo->ai_addrlen, host, 256, serv, 256,
+				   NI_NUMERICHOST | NI_NUMERICSERV)
+				== 0) {
+			LM_INFO("peer_connect(): Trying to connect to %s port %s\n", host,
+					serv);
 		}
 
-		if ((sock = socket(ainfo->ai_family, ainfo->ai_socktype, ainfo->ai_protocol)) == -1) {
-			LM_ERR("peer_connect(): error creating client socket to %s port %s >"
-					" %s\n",host,serv,strerror(errno));
+		if((sock = socket(
+					ainfo->ai_family, ainfo->ai_socktype, ainfo->ai_protocol))
+				== -1) {
+			LM_ERR("peer_connect(): error creating client socket to %s port %s "
+				   ">"
+				   " %s\n",
+					host, serv, strerror(errno));
 			continue;
 		}
 
 		/* try to set the local socket used to connect to the peer */
-		if (p->src_addr.s && p->src_addr.len > 0) {
-			LM_DBG("peer_connect(): connecting to peer via src addr=%.*s\n",p->src_addr.len, p->src_addr.s);
-			memset (&hints, 0, sizeof(hints));
+		if(p->src_addr.s && p->src_addr.len > 0) {
+			LM_DBG("peer_connect(): connecting to peer via src addr=%.*s\n",
+					p->src_addr.len, p->src_addr.s);
+			memset(&hints, 0, sizeof(hints));
 			hints.ai_flags = AI_NUMERICHOST;
 			hints.ai_socktype = SOCK_STREAM;
 			error = getaddrinfo(p->src_addr.s, NULL, &hints, &sainfo);
 
-			if (error!=0){
-				LM_ERR("peer_connect(): error getting client socket on %.*s:%s\n",
-						p->src_addr.len,p->src_addr.s,gai_strerror(error));
+			if(error != 0) {
+				LM_ERR("peer_connect(): error getting client socket on "
+					   "%.*s:%s\n",
+						p->src_addr.len, p->src_addr.s, gai_strerror(error));
 			} else {
-				if (bind(sock, sainfo->ai_addr, sainfo->ai_addrlen )) {
-					LM_ERR("peer_connect(): error opening client socket on %.*s:%s\n",
-							p->src_addr.len,p->src_addr.s,strerror(errno));
+				if(bind(sock, sainfo->ai_addr, sainfo->ai_addrlen)) {
+					LM_ERR("peer_connect(): error opening client socket on "
+						   "%.*s:%s\n",
+							p->src_addr.len, p->src_addr.s, strerror(errno));
 				}
 			}
 		}
 
-		{// Connect with timeout
+		{ // Connect with timeout
 			int x;
-			x=fcntl(sock,F_GETFL,0);
-			fcntl(sock,F_SETFL,x | O_NONBLOCK);
-			int res = connect(sock,ainfo->ai_addr,ainfo->ai_addrlen);
-			if (res<0){
-				if (errno==EINPROGRESS){
-					struct timeval tv={
-						.tv_sec = config->connect_timeout,
-						.tv_usec = 0,
+			x = fcntl(sock, F_GETFL, 0);
+			fcntl(sock, F_SETFL, x | O_NONBLOCK);
+			int res = connect(sock, ainfo->ai_addr, ainfo->ai_addrlen);
+			if(res < 0) {
+				if(errno == EINPROGRESS) {
+					struct timeval tv = {
+							.tv_sec = config->connect_timeout,
+							.tv_usec = 0,
 					};
 					fd_set myset;
 					FD_ZERO(&myset);
 					FD_SET(sock, &myset);
-					if (select(sock+1, NULL, &myset, NULL, &tv) > 0) {
+					if(select(sock + 1, NULL, &myset, NULL, &tv) > 0) {
 						socklen_t lon = sizeof(int);
-						int  valopt;
-						getsockopt(sock, SOL_SOCKET, SO_ERROR, (void*)(&valopt), &lon);
-						if (valopt) {
-							LM_ERR("peer_connect(): Error opening connection to to %s port %s >%s\n",host,serv,strerror(valopt));
+						int valopt;
+						getsockopt(sock, SOL_SOCKET, SO_ERROR,
+								(void *)(&valopt), &lon);
+						if(valopt) {
+							LM_ERR("peer_connect(): Error opening connection "
+								   "to to %s port %s >%s\n",
+									host, serv, strerror(valopt));
 							close(sock);
 							sock = -1;
 							continue;
 						}
-					}else{
-						LM_ERR("peer_connect(): Timeout or error opening connection to to %s port %s >%s\n",host,serv,strerror(errno));
+					} else {
+						LM_ERR("peer_connect(): Timeout or error opening "
+							   "connection to to %s port %s >%s\n",
+								host, serv, strerror(errno));
 						close(sock);
 						sock = -1;
 						continue;
 					}
 				}
-			}else{
-				LM_ERR("peer_connect(): Error opening connection to to %s port %s >%s\n",host,serv,strerror(errno));
+			} else {
+				LM_ERR("peer_connect(): Error opening connection to to %s port "
+					   "%s >%s\n",
+						host, serv, strerror(errno));
 				close(sock);
 				sock = -1;
 				continue;
 			}
 
-			x=fcntl(sock,F_GETFL,0);
-			if (x == -1) {
+			x = fcntl(sock, F_GETFL, 0);
+			if(x == -1) {
 				LM_ERR("error during first fcntl operation\n");
 				goto error;
 			}
-			tmp = fcntl(sock,F_SETFL,x & (~O_NONBLOCK));
-			if (tmp == -1) {
+			tmp = fcntl(sock, F_SETFL, x & (~O_NONBLOCK));
+			if(tmp == -1) {
 				LM_ERR("error during second fcntl operation\n");
 				goto error;
 			}
 		}
-		tmp = setsockopt(sock,SOL_SOCKET,SO_REUSEADDR,&option,sizeof(option));
-		if (tmp == -1) {
+		tmp = setsockopt(
+				sock, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option));
+		if(tmp == -1) {
 			LM_ERR("could not set socket options\n");
 			goto error;
 		}
-		LM_INFO("peer_connect(): Peer %.*s:%d connected\n",p->fqdn.len,p->fqdn.s,p->port);
+		LM_INFO("peer_connect(): Peer %.*s:%d connected\n", p->fqdn.len,
+				p->fqdn.s, p->port);
 
-		if (!send_fd(p->fd_exchange_pipe,sock,p)){
-			LM_ERR("peer_connect(): [%.*s] Error sending fd to respective receiver\n",p->fqdn.len,p->fqdn.s);
+		if(!send_fd(p->fd_exchange_pipe, sock, p)) {
+			LM_ERR("peer_connect(): [%.*s] Error sending fd to respective "
+				   "receiver\n",
+					p->fqdn.len, p->fqdn.s);
 			goto error;
 		}
 
-		if (res) freeaddrinfo(res);
-		if (sainfo) freeaddrinfo(sainfo);
+		if(res)
+			freeaddrinfo(res);
+		if(sainfo)
+			freeaddrinfo(sainfo);
 		return sock;
 	}
 error:
-	if (res) freeaddrinfo(res);
-	if (sainfo) freeaddrinfo(sainfo);
-	if (sock!=-1) close(sock);
+	if(res)
+		freeaddrinfo(res);
+	if(sainfo)
+		freeaddrinfo(sainfo);
+	if(sock != -1)
+		close(sock);
 	return -1;
 }
 
@@ -985,12 +1043,12 @@ error:
 int receiver_send_socket(int sock, peer *p)
 {
 	int pipe_fd;
-	if (p)
+	if(p)
 		pipe_fd = p->fd_exchange_pipe;
 	else
 		pipe_fd = fd_exchange_pipe_unknown;
 
-	return send_fd(pipe_fd,sock,p);
+	return send_fd(pipe_fd, sock, p);
 }
 
 
@@ -1004,28 +1062,34 @@ int receiver_send_socket(int sock, peer *p)
  * @param msg - the message to send
  * @returns 1 on success, 0 on failure
  */
-int peer_send_msg(peer *p,AAAMessage *msg)
+int peer_send_msg(peer *p, AAAMessage *msg)
 {
-	int fd,n;
-	if (!AAABuildMsgBuffer(msg)) return 0;
-	if (!p->send_pipe_name.s) {
-		LM_ERR("peer_send_msg(): Peer %.*s has no attached send pipe\n",p->fqdn.len,p->fqdn.s);
+	int fd, n;
+	if(!AAABuildMsgBuffer(msg))
+		return 0;
+	if(!p->send_pipe_name.s) {
+		LM_ERR("peer_send_msg(): Peer %.*s has no attached send pipe\n",
+				p->fqdn.len, p->fqdn.s);
 		return 0;
 	}
-	fd = open(p->send_pipe_name.s,O_WRONLY);
-	if (fd<0){
-		LM_ERR("peer_send_msg(): Peer %.*s error on pipe open > %s\n",p->fqdn.len,p->fqdn.s,strerror(errno));
+	fd = open(p->send_pipe_name.s, O_WRONLY);
+	if(fd < 0) {
+		LM_ERR("peer_send_msg(): Peer %.*s error on pipe open > %s\n",
+				p->fqdn.len, p->fqdn.s, strerror(errno));
 		return 0;
 	}
-	LM_DBG("peer_send_msg(): Pipe push [%p]\n",msg);
-	n = write(fd,&msg,sizeof(AAAMessage *));
-	if (n<0) {
-		LM_ERR("peer_send_msg(): Peer %.*s error on pipe write > %s\n",p->fqdn.len,p->fqdn.s,strerror(errno));
+	LM_DBG("peer_send_msg(): Pipe push [%p]\n", msg);
+	n = write(fd, &msg, sizeof(AAAMessage *));
+	if(n < 0) {
+		LM_ERR("peer_send_msg(): Peer %.*s error on pipe write > %s\n",
+				p->fqdn.len, p->fqdn.s, strerror(errno));
 		close(fd);
 		return 0;
 	}
-	if (n!=sizeof(AAAMessage *)) {
-		LM_ERR("peer_send_msg(): Peer %.*s error on pipe write > only %d bytes written\n",p->fqdn.len,p->fqdn.s,n);
+	if(n != sizeof(AAAMessage *)) {
+		LM_ERR("peer_send_msg(): Peer %.*s error on pipe write > only %d bytes "
+			   "written\n",
+				p->fqdn.len, p->fqdn.s, n);
 		close(fd);
 		return 0;
 	}
@@ -1044,52 +1108,58 @@ int peer_send_msg(peer *p,AAAMessage *msg)
  * @param locked - whether the caller locked the peer already
  * @returns 1 on success, 0 on error
  */
-int peer_send(peer *p,int sock,AAAMessage *msg,int locked)
+int peer_send(peer *p, int sock, AAAMessage *msg, int locked)
 {
 	int n;
 	serviced_peer_t *sp;
 
 
-	if (!p||!msg||sock<0) return 0;
-	LM_DBG("peer_send(): [%.*s] sending direct message to peer\n",
-			p->fqdn.len,
+	if(!p || !msg || sock < 0)
+		return 0;
+	LM_DBG("peer_send(): [%.*s] sending direct message to peer\n", p->fqdn.len,
 			p->fqdn.s);
 
-	if (!AAABuildMsgBuffer(msg)) return 0;
+	if(!AAABuildMsgBuffer(msg))
+		return 0;
 
-	if (!locked) lock_get(p->lock);
+	if(!locked)
+		lock_get(p->lock);
 
-	while( (n=write(sock,msg->buf.s,msg->buf.len))==-1 ) {
-		if (errno==EINTR)
+	while((n = write(sock, msg->buf.s, msg->buf.len)) == -1) {
+		if(errno == EINTR)
 			continue;
-		LM_ERR("peer_send(): write returned error: %s\n",
-				strerror(errno));
-		if (p->I_sock==sock) sm_process(p,I_Peer_Disc,0,1,p->I_sock);
-		if (p->R_sock==sock) sm_process(p,R_Peer_Disc,0,1,p->R_sock);
-		if (!locked) lock_release(p->lock);
+		LM_ERR("peer_send(): write returned error: %s\n", strerror(errno));
+		if(p->I_sock == sock)
+			sm_process(p, I_Peer_Disc, 0, 1, p->I_sock);
+		if(p->R_sock == sock)
+			sm_process(p, R_Peer_Disc, 0, 1, p->R_sock);
+		if(!locked)
+			lock_release(p->lock);
 		AAAFreeMessage(&msg);
 		return 0;
 	}
 
-	if (n!=msg->buf.len){
-		LM_ERR("peer_send(): only wrote %d/%d bytes\n",n,msg->buf.len);
-		if (!locked) lock_release(p->lock);
+	if(n != msg->buf.len) {
+		LM_ERR("peer_send(): only wrote %d/%d bytes\n", n, msg->buf.len);
+		if(!locked)
+			lock_release(p->lock);
 		AAAFreeMessage(&msg);
 		return 0;
 	}
-	if (!locked) lock_release(p->lock);
+	if(!locked)
+		lock_release(p->lock);
 
 	AAAFreeMessage(&msg);
 
 	/* now switch the peer processing to its dedicated process if this is not a dynamic peer */
-	if (!p->is_dynamic){
-		LM_DBG("peer_send(): [%.*s] switching peer to own and dedicated receiver\n",
-				p->fqdn.len,
-				p->fqdn.s);
-		send_fd(p->fd_exchange_pipe,sock,p);
-		for(sp=serviced_peers;sp;sp=sp->next)
-			if (sp->p==p){
-				drop_serviced_peer(sp,locked);
+	if(!p->is_dynamic) {
+		LM_DBG("peer_send(): [%.*s] switching peer to own and dedicated "
+			   "receiver\n",
+				p->fqdn.len, p->fqdn.s);
+		send_fd(p->fd_exchange_pipe, sock, p);
+		for(sp = serviced_peers; sp; sp = sp->next)
+			if(sp->p == p) {
+				drop_serviced_peer(sp, locked);
 				break;
 			}
 	}
@@ -1105,95 +1175,124 @@ int peer_send(peer *p,int sock,AAAMessage *msg,int locked)
  * @param msg - the message received
  * @param sp - the serviced peer that it was receiver on
  */
-void receive_message(AAAMessage *msg,serviced_peer_t *sp)
+void receive_message(AAAMessage *msg, serviced_peer_t *sp)
 {
-	AAA_AVP *avp1,*avp2;
+	AAA_AVP *avp1, *avp2;
 	LM_DBG("receive_message(): [%.*s] Recv msg %d\n",
-			sp->p?sp->p->fqdn.len:0,
-			sp->p?sp->p->fqdn.s:0,
+			sp->p ? sp->p->fqdn.len : 0, sp->p ? sp->p->fqdn.s : 0,
 			msg->commandCode);
 
-	if (!sp->p){
-		switch (msg->commandCode){
+	if(!sp->p) {
+		switch(msg->commandCode) {
 			case Code_CE:
-				if (is_req(msg)){
-					avp1 = AAAFindMatchingAVP(msg,msg->avpList.head,AVP_Origin_Host,0,0);
-					avp2 = AAAFindMatchingAVP(msg,msg->avpList.head,AVP_Origin_Realm,0,0);
-					if (avp1&&avp2){
-						sp->p = get_peer_from_fqdn(avp1->data,avp2->data);
+				if(is_req(msg)) {
+					avp1 = AAAFindMatchingAVP(
+							msg, msg->avpList.head, AVP_Origin_Host, 0, 0);
+					avp2 = AAAFindMatchingAVP(
+							msg, msg->avpList.head, AVP_Origin_Realm, 0, 0);
+					if(avp1 && avp2) {
+						sp->p = get_peer_from_fqdn(avp1->data, avp2->data);
 					}
-					if (!sp->p) {
-						LM_ERR("receive_msg(): Received CER from unknown peer (accept unknown=%d) -ignored\n",
+					if(!sp->p) {
+						LM_ERR("receive_msg(): Received CER from unknown peer "
+							   "(accept unknown=%d) -ignored\n",
 								config->accept_unknown_peers);
 						AAAFreeMessage(&msg);
-					}else{
-						LM_DBG("receive_message(): [%.*s] This receiver has no peer associated\n",
-								sp->p?sp->p->fqdn.len:0,
-								sp->p?sp->p->fqdn.s:0	);
+					} else {
+						LM_DBG("receive_message(): [%.*s] This receiver has no "
+							   "peer associated\n",
+								sp->p ? sp->p->fqdn.len : 0,
+								sp->p ? sp->p->fqdn.s : 0);
 						//set_peer_pipe();
 						make_send_pipe(sp);
-						sm_process(sp->p,R_Conn_CER,msg,0,sp->tcp_socket);
+						sm_process(sp->p, R_Conn_CER, msg, 0, sp->tcp_socket);
 					}
-				}
-				else{
-					LM_ERR("receive_msg(): Received CEA from an unknown peer -ignored\n");
+				} else {
+					LM_ERR("receive_msg(): Received CEA from an unknown peer "
+						   "-ignored\n");
 					AAAFreeMessage(&msg);
 				}
 				break;
 			default:
-				LM_ERR("receive_msg(): Received non-CE from an unknown peer -ignored\n");
+				LM_ERR("receive_msg(): Received non-CE from an unknown peer "
+					   "-ignored\n");
 				AAAFreeMessage(&msg);
 		}
-	}else{
+	} else {
 		touch_peer(sp->p);
-		switch (sp->p->state){
+		switch(sp->p->state) {
 			case Wait_I_CEA:
-				if (msg->commandCode!=Code_CE||is_req(msg)){
-					sm_process(sp->p,I_Rcv_Non_CEA,msg,0,sp->tcp_socket);
-				}else
-					sm_process(sp->p,I_Rcv_CEA,msg,0,sp->tcp_socket);
+				if(msg->commandCode != Code_CE || is_req(msg)) {
+					sm_process(sp->p, I_Rcv_Non_CEA, msg, 0, sp->tcp_socket);
+				} else
+					sm_process(sp->p, I_Rcv_CEA, msg, 0, sp->tcp_socket);
 				break;
 			case I_Open:
-				switch (msg->commandCode){
+				switch(msg->commandCode) {
 					case Code_CE:
-						if (is_req(msg)) sm_process(sp->p,I_Rcv_CER,msg,0,sp->tcp_socket);
-						else sm_process(sp->p,I_Rcv_CEA,msg,0,sp->tcp_socket);
+						if(is_req(msg))
+							sm_process(
+									sp->p, I_Rcv_CER, msg, 0, sp->tcp_socket);
+						else
+							sm_process(
+									sp->p, I_Rcv_CEA, msg, 0, sp->tcp_socket);
 						break;
 					case Code_DW:
-						if (is_req(msg)) sm_process(sp->p,I_Rcv_DWR,msg,0,sp->tcp_socket);
-						else sm_process(sp->p,I_Rcv_DWA,msg,0,sp->tcp_socket);
+						if(is_req(msg))
+							sm_process(
+									sp->p, I_Rcv_DWR, msg, 0, sp->tcp_socket);
+						else
+							sm_process(
+									sp->p, I_Rcv_DWA, msg, 0, sp->tcp_socket);
 						break;
 					case Code_DP:
-						if (is_req(msg)) sm_process(sp->p,I_Rcv_DPR,msg,0,sp->tcp_socket);
-						else sm_process(sp->p,I_Rcv_DPA,msg,0,sp->tcp_socket);
+						if(is_req(msg))
+							sm_process(
+									sp->p, I_Rcv_DPR, msg, 0, sp->tcp_socket);
+						else
+							sm_process(
+									sp->p, I_Rcv_DPA, msg, 0, sp->tcp_socket);
 						break;
 					default:
-						sm_process(sp->p,I_Rcv_Message,msg,0,sp->tcp_socket);
+						sm_process(
+								sp->p, I_Rcv_Message, msg, 0, sp->tcp_socket);
 				}
 				break;
 			case R_Open:
-				switch (msg->commandCode){
+				switch(msg->commandCode) {
 					case Code_CE:
-						if (is_req(msg)) sm_process(sp->p,R_Rcv_CER,msg,0,sp->tcp_socket);
-						else sm_process(sp->p,R_Rcv_CEA,msg,0,sp->tcp_socket);
+						if(is_req(msg))
+							sm_process(
+									sp->p, R_Rcv_CER, msg, 0, sp->tcp_socket);
+						else
+							sm_process(
+									sp->p, R_Rcv_CEA, msg, 0, sp->tcp_socket);
 						break;
 					case Code_DW:
-						if (is_req(msg)) sm_process(sp->p,R_Rcv_DWR,msg,0,sp->tcp_socket);
-						else sm_process(sp->p,R_Rcv_DWA,msg,0,sp->tcp_socket);
+						if(is_req(msg))
+							sm_process(
+									sp->p, R_Rcv_DWR, msg, 0, sp->tcp_socket);
+						else
+							sm_process(
+									sp->p, R_Rcv_DWA, msg, 0, sp->tcp_socket);
 						break;
 					case Code_DP:
-						if (is_req(msg)) sm_process(sp->p,R_Rcv_DPR,msg,0,sp->tcp_socket);
-						else sm_process(sp->p,R_Rcv_DPA,msg,0,sp->tcp_socket);
+						if(is_req(msg))
+							sm_process(
+									sp->p, R_Rcv_DPR, msg, 0, sp->tcp_socket);
+						else
+							sm_process(
+									sp->p, R_Rcv_DPA, msg, 0, sp->tcp_socket);
 						break;
 					default:
-						sm_process(sp->p,R_Rcv_Message,msg,0,sp->tcp_socket);
+						sm_process(
+								sp->p, R_Rcv_Message, msg, 0, sp->tcp_socket);
 				}
 				break;
 			default:
-				LM_ERR("receive_msg(): [%.*s] Received msg while peer in state %d -ignored\n",
-						sp->p->fqdn.len,
-						sp->p->fqdn.s,
-						sp->p->state);
+				LM_ERR("receive_msg(): [%.*s] Received msg while peer in state "
+					   "%d -ignored\n",
+						sp->p->fqdn.len, sp->p->fqdn.s, sp->p->state);
 				AAAFreeMessage(&msg);
 		}
 	}

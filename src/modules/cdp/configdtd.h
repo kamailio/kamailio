@@ -41,7 +41,8 @@
  *
  */
 
-#define DP_CONFIG_DTD "\
+#define DP_CONFIG_DTD \
+	"\
 <?xml version=\"1.0\" encoding=\"UTF-8\"?>\
 <!ELEMENT DiameterPeer (Peer*, Acceptor*, Auth*, Acct*, SupportedVendor*, Realm*, DefaultRoute*)>\
 <!ATTLIST DiameterPeer \
@@ -100,4 +101,3 @@
 	metric		CDATA				#REQUIRED\
 >\
 ";
-

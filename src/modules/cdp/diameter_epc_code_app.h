@@ -47,8 +47,8 @@
 // Diameter Application Identifier used in the EPC
 
 //this applications are specific to the PCC
-#define EPC_Rx 	16777236
-#define EPC_Gx 	16777238
+#define EPC_Rx 16777236
+#define EPC_Gx 16777238
 #define EPC_STa 16777250
 #define EPC_S6a 16777251
 #define EPC_S6d 16777251
@@ -56,10 +56,10 @@
 #define EPC_SWm 16777264
 #define EPC_SWx 16777265
 #define EPC_Gxx 16777266
-#define EPC_S9 	16777267
-#define EPC_S6b	16777272
-#define EPC_Sp	16777280 //not in current standards
-#define EPC_PCRF_MC	16777281	//not in current standards
+#define EPC_S9 16777267
+#define EPC_S6b 16777272
+#define EPC_Sp 16777280		 //not in current standards
+#define EPC_PCRF_MC 16777281 //not in current standards
 
 
 #endif /*DIAMETER_EPC_CODE_APP_H_*/
