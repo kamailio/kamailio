@@ -49,7 +49,7 @@
 
 MODULE_VERSION
 
-#define TABLE_VERSION    2
+#define TABLE_VERSION 2
 #define RE_TABLE_VERSION 1
 
 /*!
@@ -70,10 +70,10 @@ static int child_init(int rank);
 static int mod_init(void);
 
 /*! Header field fixup */
-static int hf_fixup(void** param, int param_no);
+static int hf_fixup(void **param, int param_no);
 
 /*! get user group ID fixup */
-static int get_gid_fixup(void** param, int param_no);
+static int get_gid_fixup(void **param, int param_no);
 
 
 #define TABLE "grp"
@@ -89,73 +89,68 @@ static int get_gid_fixup(void** param, int param_no);
  */
 static str db_url = str_init(DEFAULT_RODB_URL);
 /*! Table name where group definitions are stored */
-str table         = str_init(TABLE);
-str user_column   = str_init(USER_COL);
+str table = str_init(TABLE);
+str user_column = str_init(USER_COL);
 str domain_column = str_init(DOMAIN_COL);
-str group_column  = str_init(GROUP_COL);
-int use_domain    = 0;
+str group_column = str_init(GROUP_COL);
+int use_domain = 0;
 
 /* table and columns used for regular expression-based groups */
-str re_table      = {0, 0};
+str re_table = {0, 0};
 str re_exp_column = str_init(RE_EXP_COL);
 str re_gid_column = str_init(RE_GID_COL);
-int multiple_gid  = 1;
+int multiple_gid = 1;
 
 /* DB functions and handlers */
 db_func_t group_dbf;
-db1_con_t* group_dbh = 0;
+db1_con_t *group_dbh = 0;
 
 
 /*!
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"is_user_in",      (cmd_function)is_user_in,      2,  hf_fixup, 0,
-			REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
-	{"get_user_group",  (cmd_function)get_user_group,  2,  get_gid_fixup, 0,
-			REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
-	{0, 0, 0, 0, 0, 0}
-};
+		{"is_user_in", (cmd_function)is_user_in, 2, hf_fixup, 0,
+				REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | LOCAL_ROUTE},
+		{"get_user_group", (cmd_function)get_user_group, 2, get_gid_fixup, 0,
+				REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | LOCAL_ROUTE},
+		{0, 0, 0, 0, 0, 0}};
 
 
 /*!
  * Exported parameters
  */
-static param_export_t params[] = {
-	{"db_url",        PARAM_STR, &db_url       },
-	{"table",         PARAM_STR, &table        },
-	{"user_column",   PARAM_STR, &user_column  },
-	{"domain_column", PARAM_STR, &domain_column},
-	{"group_column",  PARAM_STR, &group_column },
-	{"use_domain",    INT_PARAM, &use_domain     },
-	{"re_table",      PARAM_STR, &re_table     },
-	{"re_exp_column", PARAM_STR, &re_exp_column},
-	{"re_gid_column", PARAM_STR, &re_gid_column},
-	{"multiple_gid",  INT_PARAM, &multiple_gid   },
-	{0, 0, 0}
-};
+static param_export_t params[] = {{"db_url", PARAM_STR, &db_url},
+		{"table", PARAM_STR, &table}, {"user_column", PARAM_STR, &user_column},
+		{"domain_column", PARAM_STR, &domain_column},
+		{"group_column", PARAM_STR, &group_column},
+		{"use_domain", INT_PARAM, &use_domain},
+		{"re_table", PARAM_STR, &re_table},
+		{"re_exp_column", PARAM_STR, &re_exp_column},
+		{"re_gid_column", PARAM_STR, &re_gid_column},
+		{"multiple_gid", INT_PARAM, &multiple_gid}, {0, 0, 0}};
 
 
 /*!
  * Module interface
  */
 struct module_exports exports = {
-	"group",			/* module name */
-	DEFAULT_DLFLAGS,	/* dlopen flags */
-	cmds,				/* exported functions */
-	params,				/* exported parameters */
-	0,					/* RPC method exports */
-	0,					/* exported pseudo-variables */
-	0,					/* response handling function */
-	mod_init,			/* module initialization function */
-	child_init,			/* per-child init function */
-	destroy				/* module destroy function */
+		"group",		 /* module name */
+		DEFAULT_DLFLAGS, /* dlopen flags */
+		cmds,			 /* exported functions */
+		params,			 /* exported parameters */
+		0,				 /* RPC method exports */
+		0,				 /* exported pseudo-variables */
+		0,				 /* response handling function */
+		mod_init,		 /* module initialization function */
+		child_init,		 /* per-child init function */
+		destroy			 /* module destroy function */
 };
 
 
 static int child_init(int rank)
 {
-	if (rank==PROC_INIT || rank==PROC_MAIN || rank==PROC_TCP_MAIN)
+	if(rank == PROC_INIT || rank == PROC_MAIN || rank == PROC_TCP_MAIN)
 		return 0; /* do nothing for the main process */
 
 	return group_db_init(&db_url);
@@ -165,28 +160,31 @@ static int child_init(int rank)
 static int mod_init(void)
 {
 	/* Find a database module */
-	if (group_db_bind(&db_url)) {
+	if(group_db_bind(&db_url)) {
 		return -1;
 	}
 
-	if (group_db_init(&db_url) < 0 ){
+	if(group_db_init(&db_url) < 0) {
 		LM_ERR("unable to open database connection\n");
 		return -1;
 	}
 
 	/* check version for group table */
-	if (db_check_table_version(&group_dbf, group_dbh, &table, TABLE_VERSION) < 0) {
-			DB_TABLE_VERSION_ERROR(table);
-			goto dberror;
+	if(db_check_table_version(&group_dbf, group_dbh, &table, TABLE_VERSION)
+			< 0) {
+		DB_TABLE_VERSION_ERROR(table);
+		goto dberror;
 	}
 
-	if (re_table.len) {
+	if(re_table.len) {
 		/* check version for group re_group table */
-		if (db_check_table_version(&group_dbf, group_dbh, &re_table, RE_TABLE_VERSION) < 0) {
+		if(db_check_table_version(
+				   &group_dbf, group_dbh, &re_table, RE_TABLE_VERSION)
+				< 0) {
 			DB_TABLE_VERSION_ERROR(re_table);
 			goto dberror;
 		}
-		if (load_re( &re_table )!=0 ) {
+		if(load_re(&re_table) != 0) {
 			LM_ERR("failed to load <%s> table\n", re_table.s);
 			goto dberror;
 		}
@@ -215,9 +213,9 @@ static void destroy(void)
  * \param str1 header field description string
  * \return hdr_field structure on success, NULL on failure
  */
-static group_check_p get_hf( char *str1)
+static group_check_p get_hf(char *str1)
 {
-	group_check_p gcp=NULL;
+	group_check_p gcp = NULL;
 	str s;
 
 	gcp = (group_check_p)pkg_malloc(sizeof(group_check_t));
@@ -227,28 +225,27 @@ static group_check_p get_hf( char *str1)
 	}
 	memset(gcp, 0, sizeof(group_check_t));
 
-	if (!strcasecmp( str1, "Request-URI")) {
+	if(!strcasecmp(str1, "Request-URI")) {
 		gcp->id = 1;
-	} else if (!strcasecmp( str1, "To")) {
+	} else if(!strcasecmp(str1, "To")) {
 		gcp->id = 2;
-	} else if (!strcasecmp( str1, "From")) {
+	} else if(!strcasecmp(str1, "From")) {
 		gcp->id = 3;
-	} else if (!strcasecmp( str1, "Credentials")) {
+	} else if(!strcasecmp(str1, "Credentials")) {
 		gcp->id = 4;
 	} else {
-		s.s = str1; s.len = strlen(s.s);
-		if(pv_parse_spec( &s, &gcp->sp)==NULL
-			|| gcp->sp.type!=PVT_AVP)
-		{
+		s.s = str1;
+		s.len = strlen(s.s);
+		if(pv_parse_spec(&s, &gcp->sp) == NULL || gcp->sp.type != PVT_AVP) {
 			LM_ERR("unsupported User Field identifier\n");
-			pkg_free( gcp );
+			pkg_free(gcp);
 			return 0;
 		}
 		gcp->id = 5;
 	}
 
 	/* do not free all the time, needed by pseudo-variable spec */
-	if(gcp->id!=5)
+	if(gcp->id != 5)
 		pkg_free(str1);
 
 	return gcp;
@@ -261,24 +258,24 @@ static group_check_p get_hf( char *str1)
  * \param param_no number of parameters
  * \return 0 on success, negative on failure
  */
-static int hf_fixup(void** param, int param_no)
+static int hf_fixup(void **param, int param_no)
 {
-	void* ptr;
-	str* s;
+	void *ptr;
+	str *s;
 
-	if (param_no == 1) {
+	if(param_no == 1) {
 		ptr = *param;
-		if ( (*param = (void*)get_hf( ptr ))==0 )
+		if((*param = (void *)get_hf(ptr)) == 0)
 			return E_UNSPEC;
-	} else if (param_no == 2) {
-		s = (str*)pkg_malloc(sizeof(str));
-		if (!s) {
+	} else if(param_no == 2) {
+		s = (str *)pkg_malloc(sizeof(str));
+		if(!s) {
 			LM_ERR("no pkg memory left\n");
 			return E_UNSPEC;
 		}
-		s->s = (char*)*param;
+		s->s = (char *)*param;
 		s->len = strlen(s->s);
-		*param = (void*)s;
+		*param = (void *)s;
 	}
 
 	return 0;
@@ -291,26 +288,25 @@ static int hf_fixup(void** param, int param_no)
  * \param param_no number of parameters
  * \return 0 on success, negative on failure
  */
-static int get_gid_fixup(void** param, int param_no)
+static int get_gid_fixup(void **param, int param_no)
 {
 	pv_spec_t *sp;
 	void *ptr;
-	str  name;
+	str name;
 
-	if (param_no == 1) {
+	if(param_no == 1) {
 		ptr = *param;
-		if ( (*param = (void*)get_hf( ptr ))==0 )
+		if((*param = (void *)get_hf(ptr)) == 0)
 			return E_UNSPEC;
-	} else if (param_no == 2) {
-		name.s = (char*)*param;
+	} else if(param_no == 2) {
+		name.s = (char *)*param;
 		name.len = strlen(name.s);
-		sp = (pv_spec_t*)pkg_malloc(sizeof(pv_spec_t));
-		if (sp == NULL) {
+		sp = (pv_spec_t *)pkg_malloc(sizeof(pv_spec_t));
+		if(sp == NULL) {
 			LM_ERR("no more pkg memory\n");
 			return E_UNSPEC;
 		}
-		if(pv_parse_spec(&name, sp)==NULL || sp->type!=PVT_AVP)
-		{
+		if(pv_parse_spec(&name, sp) == NULL || sp->type != PVT_AVP) {
 			LM_ERR("bad AVP spec <%s>\n", name.s);
 			pv_spec_free(sp);
 			return E_UNSPEC;

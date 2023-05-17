@@ -52,8 +52,8 @@ typedef struct _group_check
  * \param domain stored domain
  * \return 0 on success, -1 on failure
  */
-int get_username_domain(struct sip_msg *msg, group_check_p gcp,
-	str *username, str *domain);
+int get_username_domain(
+		struct sip_msg *msg, group_check_p gcp, str *username, str *domain);
 
 
 /*!
@@ -63,7 +63,7 @@ int get_username_domain(struct sip_msg *msg, group_check_p gcp,
  * \param _grp checked table
  * \return 1 on success, negative on failure 
  */
-int is_user_in(struct sip_msg* _msg, char* _hf, char* _grp);
+int is_user_in(struct sip_msg *_msg, char *_hf, char *_grp);
 
 
 /*!
@@ -71,7 +71,7 @@ int is_user_in(struct sip_msg* _msg, char* _hf, char* _grp);
  * \param db_url database URL
  * \return 0 on success, -1 on failure
  */
-int group_db_init(const str* db_url);
+int group_db_init(const str *db_url);
 
 
 /*!
@@ -79,7 +79,7 @@ int group_db_init(const str* db_url);
  * \param db_url database URL
  * \return 0 on success, -1 on failure
  */
-int group_db_bind(const str* db_url);
+int group_db_bind(const str *db_url);
 
 
 /*!
