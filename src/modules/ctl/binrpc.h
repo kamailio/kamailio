@@ -21,7 +21,6 @@
 /* binrpc is  supposed to be a minimalist binary rpc implementation */
 
 
-
 /* packet header:
  * (big endian where it applies)
  *      4b      4b        4b     2b   2b       <var>          <var>
@@ -98,87 +97,94 @@
 #include <string.h>
 
 #define BINRPC_MAGIC 0xA
-#define BINRPC_VERS  1
+#define BINRPC_VERS 1
 
 /* sizes & offsets */
-#define BINRPC_FIXED_HDR_SIZE	2
-#define BINRPC_TLEN_OFFSET		BINRPC_FIXED_HDR_SIZE
-#define BINRPC_MIN_HDR_SIZE	(BINRPC_FIXED_HDR_SIZE+2)
-#define BINRPC_MAX_HDR_SIZE	(BINRPC_FIXED_HDR_SIZE+4+4)
-#define BINRPC_MIN_RECORD_SIZE	1
+#define BINRPC_FIXED_HDR_SIZE 2
+#define BINRPC_TLEN_OFFSET BINRPC_FIXED_HDR_SIZE
+#define BINRPC_MIN_HDR_SIZE (BINRPC_FIXED_HDR_SIZE + 2)
+#define BINRPC_MAX_HDR_SIZE (BINRPC_FIXED_HDR_SIZE + 4 + 4)
+#define BINRPC_MIN_RECORD_SIZE 1
 /* min pkt size: min header + min. len (1) + min. cookie (1)*/
-#define BINRPC_MIN_PKT_SIZE	BINRPC_MIN_HDR_SIZE
+#define BINRPC_MIN_PKT_SIZE BINRPC_MIN_HDR_SIZE
 
 /* message types */
-#define BINRPC_REQ   0
-#define BINRPC_REPL  1
+#define BINRPC_REQ 0
+#define BINRPC_REPL 1
 #define BINRPC_FAULT 3
 
 /* values types */
-#define BINRPC_T_INT	0
-#define BINRPC_T_STR	1 /* 0 term, for easier parsing */
-#define BINRPC_T_DOUBLE	2
-#define BINRPC_T_STRUCT	3
-#define BINRPC_T_ARRAY	4
-#define BINRPC_T_AVP	5  /* allowed only in structs */
-#define BINRPC_T_BYTES	6 /* like STR, but not 0 term */
+#define BINRPC_T_INT 0
+#define BINRPC_T_STR 1 /* 0 term, for easier parsing */
+#define BINRPC_T_DOUBLE 2
+#define BINRPC_T_STRUCT 3
+#define BINRPC_T_ARRAY 4
+#define BINRPC_T_AVP 5	 /* allowed only in structs */
+#define BINRPC_T_BYTES 6 /* like STR, but not 0 term */
 
-#define BINRPC_T_ALL	0xf /* wildcard type, will match any record type
+#define BINRPC_T_ALL \
+	0xf /* wildcard type, will match any record type
 							   in the packet (not allowed inside the pkt)*/
 
 /* errors */
-#define E_BINRPC_INVAL		-1  /* invalid function call parameters */
-#define E_BINRPC_OVERFLOW	-2  /* buffer overflow */
-#define E_BINRPC_BADPKT		-3  /* something went really bad, the packet is
+#define E_BINRPC_INVAL -1	 /* invalid function call parameters */
+#define E_BINRPC_OVERFLOW -2 /* buffer overflow */
+#define E_BINRPC_BADPKT \
+	-3 /* something went really bad, the packet is
 								   corrupted*/
-#define E_BINRPC_MORE_DATA	-4 /* parsing error: more bytes are needed,
+#define E_BINRPC_MORE_DATA \
+	-4						/* parsing error: more bytes are needed,
 								  just repeat the failed op, when you have
 								  more bytes available */
-#define E_BINRPC_EOP		-5	/* end of packet reached */
-#define E_BINRPC_NOTINIT	-6  /* parse ctx not initialized */
-#define E_BINRPC_TYPE		-7  /* unknown type for record, or requested
+#define E_BINRPC_EOP -5		/* end of packet reached */
+#define E_BINRPC_NOTINIT -6 /* parse ctx not initialized */
+#define E_BINRPC_TYPE \
+	-7					   /* unknown type for record, or requested
 								   type doesn't match record type */
-#define E_BINRPC_RECORD		-8  /* bad record (unexpected, bad struct a.s.o)*/
-#define E_BINRPC_BUG		-9  /* internal error, bug */
-#define E_BINRPC_LAST		-10 /* used to count the errors, keep always
+#define E_BINRPC_RECORD -8 /* bad record (unexpected, bad struct a.s.o)*/
+#define E_BINRPC_BUG -9	   /* internal error, bug */
+#define E_BINRPC_LAST \
+	-10 /* used to count the errors, keep always
 								   last */
 
 /* flags */
-#define BINRPC_F_INIT	1
+#define BINRPC_F_INIT 1
 
-struct binrpc_pkt{  /* binrpc body */
-	unsigned char* body;
-	unsigned char* end;
-	unsigned char* crt; /*private */
+struct binrpc_pkt
+{ /* binrpc body */
+	unsigned char *body;
+	unsigned char *end;
+	unsigned char *crt; /*private */
 };
 
 
-struct binrpc_parse_ctx{
+struct binrpc_parse_ctx
+{
 	/* header */
 	unsigned int tlen; /* total len */
 	unsigned int cookie;
 	int type; /* request, reply, error */
-	
+
 	/* parsing info */
-	unsigned int flags;   /* parsing flags */
+	unsigned int flags;	 /* parsing flags */
 	unsigned int offset; /* current offset (inside payload) */
 	unsigned int in_struct;
 	unsigned int in_array;
 };
 
 
-
-struct binrpc_val{
+struct binrpc_val
+{
 	str name; /* used only in structs */
 	int type;
-	union{
+	union
+	{
 		str strval;
 		double fval;
 		int intval;
 		int end;
-	}u;
+	} u;
 };
-
 
 
 /*  helper functions  */
@@ -188,21 +194,21 @@ struct binrpc_val{
 inline static int binrpc_get_int_len(int i)
 {
 	int size;
-	for (size=4; size && ((i & (0xffu<<24))==0); i<<=8, size--);
+	for(size = 4; size && ((i & (0xffu << 24)) == 0); i <<= 8, size--)
+		;
 	return size;
 }
 
 
-
 /* adds a start or end tag (valid only for STRUCT or ARRAY for now */
-inline static int binrpc_add_tag(struct binrpc_pkt* pkt, int type, int end)
+inline static int binrpc_add_tag(struct binrpc_pkt *pkt, int type, int end)
 {
-	if (pkt->crt>=pkt->end) return E_BINRPC_OVERFLOW;
-	*pkt->crt=(end<<7)|type;
+	if(pkt->crt >= pkt->end)
+		return E_BINRPC_OVERFLOW;
+	*pkt->crt = (end << 7) | type;
 	pkt->crt++;
 	return 0;
 }
-
 
 
 /*  writes a minimal long long, returns the new offset and sets
@@ -210,24 +216,23 @@ inline static int binrpc_add_tag(struct binrpc_pkt* pkt, int type, int end)
  * to check for oveflow use:  returned_value-p != *len
  * (Note: if *len==0 using the test above succeeds even if p>=end)
  */
-inline static unsigned char* binrpc_write_llong(	unsigned char* p,
-												unsigned char* end,
-												long long i, int *len)
+inline static unsigned char *binrpc_write_llong(
+		unsigned char *p, unsigned char *end, long long i, int *len)
 {
 	int size;
 	unsigned long long u;
 
 	u = (unsigned long long)i;
 
-	for (size=8; size && ((u & (0xffull<<56))==0); u<<=8, size--);
-	*len=size;
-	for(; (p<end) && (size); p++, size--){
-		*p=(unsigned char)(u>>56);
-		u<<=8;
+	for(size = 8; size && ((u & (0xffull << 56)) == 0); u <<= 8, size--)
+		;
+	*len = size;
+	for(; (p < end) && (size); p++, size--) {
+		*p = (unsigned char)(u >> 56);
+		u <<= 8;
 	}
 	return p;
 }
-
 
 
 /*  writes a minimal int, returns the new offset and sets
@@ -235,24 +240,23 @@ inline static unsigned char* binrpc_write_llong(	unsigned char* p,
  * to check for oveflow use:  returned_value-p != *len
  * (Note: if *len==0 using the test above succeeds even if p>=end)
  */
-inline static unsigned char* binrpc_write_int(	unsigned char* p,
-												unsigned char* end,
-												int i, int *len)
+inline static unsigned char *binrpc_write_int(
+		unsigned char *p, unsigned char *end, int i, int *len)
 {
 	int size;
 	unsigned int u;
 
 	u = (unsigned int)i;
 
-	for (size=4; size && ((u & (0xffu<<24))==0); u<<=8, size--);
-	*len=size;
-	for(; (p<end) && (size); p++, size--){
-		*p=(unsigned char)(u>>24);
-		u<<=8;
+	for(size = 4; size && ((u & (0xffu << 24)) == 0); u <<= 8, size--)
+		;
+	*len = size;
+	for(; (p < end) && (size); p++, size--) {
+		*p = (unsigned char)(u >> 24);
+		u <<= 8;
 	}
 	return p;
 }
-
 
 
 /* API functions */
@@ -269,34 +273,31 @@ inline static unsigned char* binrpc_write_int(	unsigned char* p,
  *  ...
  *  bytes=binrpc_build_hdr(pkt, BINRPC_REQ, 0x123, hdr_buf, HDR_BUF_LEN);
  *  writev(sock, {{ hdr, bytes}, {pkt->body, pkt->crt-pkt->body}} , 2)*/
-inline static int binrpc_init_pkt(struct binrpc_pkt *pkt,
-								  unsigned char* buf, int b_len)
+inline static int binrpc_init_pkt(
+		struct binrpc_pkt *pkt, unsigned char *buf, int b_len)
 {
-	if (b_len<BINRPC_MIN_RECORD_SIZE)
+	if(b_len < BINRPC_MIN_RECORD_SIZE)
 		return E_BINRPC_OVERFLOW;
-	pkt->body=buf;
-	pkt->end=buf+b_len;
-	pkt->crt=pkt->body;
+	pkt->body = buf;
+	pkt->end = buf + b_len;
+	pkt->crt = pkt->body;
 	return 0;
 };
 
 
-
 /* used to update internal contents if the original buffer 
  * (from binrpc_init_pkt) was realloc'ed (and has grown) */
-inline static int binrpc_pkt_update_buf(struct binrpc_pkt *pkt,
-										unsigned char* new_buf,
-										int new_len)
+inline static int binrpc_pkt_update_buf(
+		struct binrpc_pkt *pkt, unsigned char *new_buf, int new_len)
 {
-	if ((int)(pkt->crt-pkt->body)>new_len){
+	if((int)(pkt->crt - pkt->body) > new_len) {
 		return E_BINRPC_OVERFLOW;
 	}
-	pkt->crt=new_buf+(pkt->crt-pkt->body);
-	pkt->body=new_buf;
-	pkt->end=new_buf+new_len;
+	pkt->crt = new_buf + (pkt->crt - pkt->body);
+	pkt->body = new_buf;
+	pkt->end = new_buf + new_len;
 	return 0;
 }
-
 
 
 /* builds a binrpc header for the binrpc pkt. body pkt and writes it in buf
@@ -306,67 +307,68 @@ inline static int binrpc_pkt_update_buf(struct binrpc_pkt *pkt,
  *          cookie   - binrpc cookie value
  *          buf,len  - destination buffer & len
  * returns -1 on error, number of bytes written on success */
-inline static int binrpc_build_hdr(	int type, int body_len,
-									unsigned int cookie,
-									unsigned char* buf, int b_len) 
+inline static int binrpc_build_hdr(int type, int body_len, unsigned int cookie,
+		unsigned char *buf, int b_len)
 {
-	unsigned char* p;
+	unsigned char *p;
 	int len_len;
 	int c_len;
-	
-	len_len=binrpc_get_int_len(body_len);
-	c_len=binrpc_get_int_len(cookie);
-	if (len_len==0) len_len=1; /* we can't have 0 len */
-	if (c_len==0) c_len=1;  /* we can't have 0 len */
+
+	len_len = binrpc_get_int_len(body_len);
+	c_len = binrpc_get_int_len(cookie);
+	if(len_len == 0)
+		len_len = 1; /* we can't have 0 len */
+	if(c_len == 0)
+		c_len = 1; /* we can't have 0 len */
 	/* size check: 2 bytes header + len_len + cookie len*/
-	if (b_len<(BINRPC_FIXED_HDR_SIZE+len_len+c_len)){
+	if(b_len < (BINRPC_FIXED_HDR_SIZE + len_len + c_len)) {
 		goto error_len;
 	}
-	p=buf;
-	*p=(BINRPC_MAGIC << 4) | BINRPC_VERS;
+	p = buf;
+	*p = (BINRPC_MAGIC << 4) | BINRPC_VERS;
 	p++;
-	*p=(type<<4)|((len_len-1)<<2)|(c_len-1);
+	*p = (type << 4) | ((len_len - 1) << 2) | (c_len - 1);
 	p++;
-	for(;len_len>0; len_len--,p++){
-		*p=(unsigned char)(body_len>>((len_len-1)*8));
+	for(; len_len > 0; len_len--, p++) {
+		*p = (unsigned char)(body_len >> ((len_len - 1) * 8));
 	}
-	for(;c_len>0; c_len--,p++){
-		*p=(unsigned char)(cookie>>((c_len-1)*8));
+	for(; c_len > 0; c_len--, p++) {
+		*p = (unsigned char)(cookie >> ((c_len - 1) * 8));
 	}
-	return (int)(p-buf);
+	return (int)(p - buf);
 error_len:
 	return E_BINRPC_OVERFLOW;
 }
 
 
-
-#define binrpc_pkt_len(pkt)		((int)((pkt)->crt-(pkt)->body))
-
+#define binrpc_pkt_len(pkt) ((int)((pkt)->crt - (pkt)->body))
 
 
 /* changes the length of a header (enough space must be available) */
-inline static int binrpc_hdr_change_len(unsigned char* hdr, int hdr_len,
-										int new_len)
+inline static int binrpc_hdr_change_len(
+		unsigned char *hdr, int hdr_len, int new_len)
 {
 	int len_len;
-	
-	binrpc_write_int(&hdr[BINRPC_TLEN_OFFSET], hdr+hdr_len, new_len, &len_len);
+
+	binrpc_write_int(
+			&hdr[BINRPC_TLEN_OFFSET], hdr + hdr_len, new_len, &len_len);
 	return 0;
 }
 
 
 /* int format:     size TYPE <val>  */
-inline static int binrpc_add_llong_type(struct binrpc_pkt* pkt, long long i, int type)
+inline static int binrpc_add_llong_type(
+		struct binrpc_pkt *pkt, long long i, int type)
 {
 
-	unsigned char* p;
+	unsigned char *p;
 	int size;
 
-	p=binrpc_write_llong(pkt->crt+1, pkt->end, i, &size);
-	if ((pkt->crt>=pkt->end) || ((int)(p-pkt->crt-1)!=size))
+	p = binrpc_write_llong(pkt->crt + 1, pkt->end, i, &size);
+	if((pkt->crt >= pkt->end) || ((int)(p - pkt->crt - 1) != size))
 		goto error_len;
-	*(pkt->crt)=(size<<4) | type;
-	pkt->crt=p;
+	*(pkt->crt) = (size << 4) | type;
+	pkt->crt = p;
 	return 0;
 error_len:
 	return E_BINRPC_OVERFLOW;
@@ -374,43 +376,40 @@ error_len:
 
 
 /* int format:     size BINRPC_T_INT <val>  */
-inline static int binrpc_add_int_type(struct binrpc_pkt* pkt, int i, int type)
+inline static int binrpc_add_int_type(struct binrpc_pkt *pkt, int i, int type)
 {
-	
-	unsigned char* p;
+
+	unsigned char *p;
 	int size;
-	
-	p=binrpc_write_int(pkt->crt+1, pkt->end, i, &size);
-	if ((pkt->crt>=pkt->end) || ((int)(p-pkt->crt-1)!=size))
+
+	p = binrpc_write_int(pkt->crt + 1, pkt->end, i, &size);
+	if((pkt->crt >= pkt->end) || ((int)(p - pkt->crt - 1) != size))
 		goto error_len;
-	*(pkt->crt)=(size<<4) | type;
-	pkt->crt=p;
+	*(pkt->crt) = (size << 4) | type;
+	pkt->crt = p;
 	return 0;
 error_len:
 	return E_BINRPC_OVERFLOW;
 }
 
 
-
 /* double format:  FIXME: for now a hack: fixed point represented in
  *  a long long (=> max 3 decimals, < MAX_LLONG/1000) */
-#define binrpc_add_double_type(pkt, f, type)\
+#define binrpc_add_double_type(pkt, f, type) \
 	binrpc_add_llong_type((pkt), (long long)((f)*1000), (type))
-
 
 
 /* skip bytes bytes (leaves an empty space, for possible future use)
  * WARNING: use with care, low level function
  */
-inline static int binrpc_add_skip(struct binrpc_pkt* pkt, int bytes)
+inline static int binrpc_add_skip(struct binrpc_pkt *pkt, int bytes)
 {
 
-	if ((pkt->crt+bytes)>=pkt->end)
+	if((pkt->crt + bytes) >= pkt->end)
 		return E_BINRPC_OVERFLOW;
-	pkt->crt+=bytes;
+	pkt->crt += bytes;
 	return 0;
 }
-
 
 
 /*
@@ -423,197 +422,185 @@ inline static int binrpc_add_skip(struct binrpc_pkt* pkt, int bytes)
  *  WARNING1: BINRPC_T_STR and BINRPC_T_AVP must be  0 term, the len passed to
  *            this function, must include the \0 in this case.
  */
-inline static int binrpc_add_str_mark(struct binrpc_pkt* pkt, int type,
-										int l)
+inline static int binrpc_add_str_mark(struct binrpc_pkt *pkt, int type, int l)
 {
 	int size;
-	unsigned char* p;
+	unsigned char *p;
 
-	if (pkt->crt>=pkt->end) goto error_len;
-	if (l<8){
-		size=l;
-		p=pkt->crt+1;
-	}else{ /* we need a separate len */
-		p=binrpc_write_int(pkt->crt+1, pkt->end, l, &size);
-		if (((int)(p-pkt->crt-1)!=size))
+	if(pkt->crt >= pkt->end)
+		goto error_len;
+	if(l < 8) {
+		size = l;
+		p = pkt->crt + 1;
+	} else { /* we need a separate len */
+		p = binrpc_write_int(pkt->crt + 1, pkt->end, l, &size);
+		if(((int)(p - pkt->crt - 1) != size))
 			goto error_len;
-		size|=8; /* mark it as having external len  */
+		size |= 8; /* mark it as having external len  */
 	}
-	*(pkt->crt)=(size)<<4|type;
-	pkt->crt=p;
+	*(pkt->crt) = (size) << 4 | type;
+	pkt->crt = p;
 	return 0;
 error_len:
 	return E_BINRPC_OVERFLOW;
 }
 
 
-
-inline static int binrpc_add_str_type(struct binrpc_pkt* pkt, char* s, int len,
-										int type)
+inline static int binrpc_add_str_type(
+		struct binrpc_pkt *pkt, char *s, int len, int type)
 {
 	int size;
 	int l;
 	int zero_term; /* whether or not to add an extra 0 at the end */
-	unsigned char* p;
+	unsigned char *p;
 
-	zero_term=((type==BINRPC_T_STR)||(type==BINRPC_T_AVP));
-	l=len+zero_term;
-	if (l<8){
-		size=l;
-		p=pkt->crt+1;
-	}else{ /* we need a separate len */
-		p=binrpc_write_int(pkt->crt+1, pkt->end, l, &size);
+	zero_term = ((type == BINRPC_T_STR) || (type == BINRPC_T_AVP));
+	l = len + zero_term;
+	if(l < 8) {
+		size = l;
+		p = pkt->crt + 1;
+	} else { /* we need a separate len */
+		p = binrpc_write_int(pkt->crt + 1, pkt->end, l, &size);
 		/* if ((int)(p-pkt->crt)<(size+1)) goto error_len;  - not needed,
 		 *  caught by the next check */
-		size|=8; /* mark it as having external len  */
+		size |= 8; /* mark it as having external len  */
 	}
-	if ((p+l)>pkt->end) goto error_len;
-	*(pkt->crt)=(size)<<4|type;
+	if((p + l) > pkt->end)
+		goto error_len;
+	*(pkt->crt) = (size) << 4 | type;
 	memcpy(p, s, len);
-	if (zero_term) p[len]=0;
-	pkt->crt=p+l;
+	if(zero_term)
+		p[len] = 0;
+	pkt->crt = p + l;
 	return 0;
 error_len:
 	return E_BINRPC_OVERFLOW;
 }
 
 
-
 /* adds an avp (name, value) pair, useful to add structure members */
-inline static int binrpc_addavp(struct binrpc_pkt* pkt, struct binrpc_val* avp)
+inline static int binrpc_addavp(struct binrpc_pkt *pkt, struct binrpc_val *avp)
 {
 	int ret;
-	unsigned char* bak;
+	unsigned char *bak;
 
-	bak=pkt->crt;
-	ret=binrpc_add_str_type(pkt, avp->name.s, avp->name.len, BINRPC_T_AVP);
-	if (ret<0) return ret;
-	switch (avp->type){
+	bak = pkt->crt;
+	ret = binrpc_add_str_type(pkt, avp->name.s, avp->name.len, BINRPC_T_AVP);
+	if(ret < 0)
+		return ret;
+	switch(avp->type) {
 		case BINRPC_T_INT:
-			ret=binrpc_add_int_type(pkt, avp->u.intval, avp->type);
+			ret = binrpc_add_int_type(pkt, avp->u.intval, avp->type);
 			break;
 		case BINRPC_T_STR:
 		case BINRPC_T_BYTES:
-			ret=binrpc_add_str_type(pkt, avp->u.strval.s,
-										avp->u.strval.len,
-										avp->type);
+			ret = binrpc_add_str_type(
+					pkt, avp->u.strval.s, avp->u.strval.len, avp->type);
 			break;
 		case BINRPC_T_STRUCT:
 		case BINRPC_T_ARRAY:
-			ret=binrpc_add_tag(pkt, avp->type, 0);
+			ret = binrpc_add_tag(pkt, avp->type, 0);
 			break;
 		case BINRPC_T_DOUBLE:
-			ret=binrpc_add_double_type(pkt, avp->u.fval, avp->type);
+			ret = binrpc_add_double_type(pkt, avp->u.fval, avp->type);
 			break;
 		default:
-			ret=E_BINRPC_BUG;
+			ret = E_BINRPC_BUG;
 	}
-	if (ret<0)
-		pkt->crt=bak; /* roll back */
+	if(ret < 0)
+		pkt->crt = bak; /* roll back */
 	return ret;
 }
 
 
+#define binrpc_addint(pkt, i) binrpc_add_int_type((pkt), (i), BINRPC_T_INT)
 
-#define binrpc_addint(pkt, i)	binrpc_add_int_type((pkt), (i), BINRPC_T_INT) 
-
-#define binrpc_adddouble(pkt, f)	\
+#define binrpc_adddouble(pkt, f) \
 	binrpc_add_double_type((pkt), (f), BINRPC_T_DOUBLE)
 
-#define binrpc_addstr(pkt, s, len)	\
-	binrpc_add_str_type((pkt), (s), (len), BINRPC_T_STR) 
+#define binrpc_addstr(pkt, s, len) \
+	binrpc_add_str_type((pkt), (s), (len), BINRPC_T_STR)
 
-#define binrpc_addbytes(pkt, s, len)	\
-	binrpc_add_str_type((pkt), (s), (len), BINRPC_T_BYTES) 
+#define binrpc_addbytes(pkt, s, len) \
+	binrpc_add_str_type((pkt), (s), (len), BINRPC_T_BYTES)
 
 /* struct type format:
  *  start :         0000 | BINRPC_T_STRUCT 
  *  end:            1000 | BINRPC_T_STRUCT
  */
-#define  binrpc_start_struct(pkt) binrpc_add_tag((pkt), BINRPC_T_STRUCT, 0)
+#define binrpc_start_struct(pkt) binrpc_add_tag((pkt), BINRPC_T_STRUCT, 0)
 
-#define  binrpc_end_struct(pkt) binrpc_add_tag((pkt), BINRPC_T_STRUCT, 1)
+#define binrpc_end_struct(pkt) binrpc_add_tag((pkt), BINRPC_T_STRUCT, 1)
 
-#define  binrpc_start_array(pkt) binrpc_add_tag((pkt), BINRPC_T_ARRAY, 0)
+#define binrpc_start_array(pkt) binrpc_add_tag((pkt), BINRPC_T_ARRAY, 0)
 
-#define  binrpc_end_array(pkt) binrpc_add_tag((pkt), BINRPC_T_ARRAY, 1)
+#define binrpc_end_array(pkt) binrpc_add_tag((pkt), BINRPC_T_ARRAY, 1)
 
 
-static inline int binrpc_addfault(	struct binrpc_pkt* pkt,
-									int code,
-									char* s, int len)
+static inline int binrpc_addfault(
+		struct binrpc_pkt *pkt, int code, char *s, int len)
 {
 	int ret;
-	unsigned char* bak;
-	
-	bak=pkt->crt;
-	if ((ret=binrpc_addint(pkt, code))<0)
+	unsigned char *bak;
+
+	bak = pkt->crt;
+	if((ret = binrpc_addint(pkt, code)) < 0)
 		return ret;
-	ret=binrpc_addstr(pkt, s, len);
-	if (ret<0)
-		pkt->crt=bak; /* roll back */
+	ret = binrpc_addstr(pkt, s, len);
+	if(ret < 0)
+		pkt->crt = bak; /* roll back */
 	return ret;
 }
 
 /* parsing incoming messages */
 
 
-static inline unsigned char* binrpc_read_llong(	long long* i,
-												int len,
-												unsigned char* s,
-												unsigned char* end,
-												int *err
-												)
+static inline unsigned char *binrpc_read_llong(
+		long long *i, int len, unsigned char *s, unsigned char *end, int *err)
 {
-	unsigned char* start;
+	unsigned char *start;
 	unsigned long long u;
 
-	start=s;
-	*i=0;
+	start = s;
+	*i = 0;
 	u = 0;
-	*err=0;
-	for(;len>0; len--, s++){
-		if (s>=end){
-			*err=E_BINRPC_MORE_DATA;
+	*err = 0;
+	for(; len > 0; len--, s++) {
+		if(s >= end) {
+			*err = E_BINRPC_MORE_DATA;
 			*i = (long long)u;
 			return start;
 		}
-		u<<=8;
-		u|=*s;
+		u <<= 8;
+		u |= *s;
 	};
 	*i = (long long)u;
 	return s;
 }
 
 
-
-static inline unsigned char* binrpc_read_int(	int* i,
-												int len,
-												unsigned char* s,
-												unsigned char* end,
-												int *err
-												)
+static inline unsigned char *binrpc_read_int(
+		int *i, int len, unsigned char *s, unsigned char *end, int *err)
 {
-	unsigned char* start;
+	unsigned char *start;
 	unsigned int u;
 
-	start=s;
-	*i=0;
+	start = s;
+	*i = 0;
 	u = 0;
-	*err=0;
-	for(;len>0; len--, s++){
-		if (s>=end){
-			*err=E_BINRPC_MORE_DATA;
+	*err = 0;
+	for(; len > 0; len--, s++) {
+		if(s >= end) {
+			*err = E_BINRPC_MORE_DATA;
 			*i = (int)u;
 			return start;
 		}
-		u<<=8;
-		u|=*s;
+		u <<= 8;
+		u |= *s;
 	};
 	*i = (int)u;
 	return s;
 }
-
 
 
 /* initialize parsing context, it tries to read the whole message header,
@@ -623,58 +610,54 @@ static inline unsigned char* binrpc_read_int(	int* i,
  * (=> you can discard the content between buf & the returned value).
  * On error buf is returned back, and *err set.
  */
-static inline unsigned char* binrpc_parse_init(	struct binrpc_parse_ctx* ctx,
-												unsigned char* buf,
-												int len,
-												int *err
-												)
+static inline unsigned char *binrpc_parse_init(
+		struct binrpc_parse_ctx *ctx, unsigned char *buf, int len, int *err)
 {
 	int len_len, c_len;
 	unsigned char *p;
 
-	*err=0;
-	ctx->tlen=0;	/* init to 0 */
-	ctx->cookie=0;	/* init to 0 */
-	if (len<BINRPC_MIN_PKT_SIZE){
-		*err=E_BINRPC_MORE_DATA;
+	*err = 0;
+	ctx->tlen = 0;	 /* init to 0 */
+	ctx->cookie = 0; /* init to 0 */
+	if(len < BINRPC_MIN_PKT_SIZE) {
+		*err = E_BINRPC_MORE_DATA;
 		goto error;
 	}
-	if (buf[0]!=((BINRPC_MAGIC<<4)|BINRPC_VERS)){
-		*err=E_BINRPC_BADPKT;
+	if(buf[0] != ((BINRPC_MAGIC << 4) | BINRPC_VERS)) {
+		*err = E_BINRPC_BADPKT;
 		goto error;
 	}
-	ctx->type=buf[1]>>4;
+	ctx->type = buf[1] >> 4;
 	/* type check */
-	switch(ctx->type){
+	switch(ctx->type) {
 		case BINRPC_REQ:
 		case BINRPC_REPL:
 		case BINRPC_FAULT:
 			break;
 		default:
-			*err=E_BINRPC_BADPKT;
+			*err = E_BINRPC_BADPKT;
 			goto error;
 	}
-	len_len=((buf[1]>>2) & 3) + 1;
-	c_len=(buf[1]&3) + 1;
-	if ((BINRPC_TLEN_OFFSET+len_len+c_len)>len){
-		*err=E_BINRPC_MORE_DATA;
+	len_len = ((buf[1] >> 2) & 3) + 1;
+	c_len = (buf[1] & 3) + 1;
+	if((BINRPC_TLEN_OFFSET + len_len + c_len) > len) {
+		*err = E_BINRPC_MORE_DATA;
 		goto error;
 	}
-	p=binrpc_read_int((int*)&ctx->tlen, len_len, &buf[BINRPC_TLEN_OFFSET],
-						&buf[len], err);
+	p = binrpc_read_int((int *)&ctx->tlen, len_len, &buf[BINRPC_TLEN_OFFSET],
+			&buf[len], err);
 	/* empty packets (replies) are allowed
 	   if (ctx->tlen==0){
 		*err=E_BINRPC_BADPKT;
 		goto error;
 	} */
-	p=binrpc_read_int((int*)&ctx->cookie, c_len, p, &buf[len], err);
-	ctx->offset=0;
-	ctx->flags|=BINRPC_F_INIT;
+	p = binrpc_read_int((int *)&ctx->cookie, c_len, p, &buf[len], err);
+	ctx->offset = 0;
+	ctx->flags |= BINRPC_F_INIT;
 	return p;
 error:
 	return buf;
 }
-
 
 
 /* returns bytes needed (till the end of the packet)
@@ -682,11 +665,10 @@ error:
  */
 inline static int binrpc_bytes_needed(struct binrpc_parse_ctx *ctx)
 {
-	if (ctx->flags & BINRPC_F_INIT)
-		return ctx->tlen-ctx->offset;
+	if(ctx->flags & BINRPC_F_INIT)
+		return ctx->tlen - ctx->offset;
 	return E_BINRPC_NOTINIT;
 }
-
 
 
 /* prefill v with the requested type, if type==BINRPC_T_ALL it 
@@ -696,286 +678,281 @@ inline static int binrpc_bytes_needed(struct binrpc_parse_ctx *ctx)
  * not-strict-formatted rpc responses)
  * returns position after the record and *err==0 if successful
  *         original position and *err<0 if not */
-inline static unsigned char* binrpc_read_record(struct binrpc_parse_ctx* ctx,
-												unsigned char* buf,
-												unsigned char* end,
-												struct binrpc_val* v,
-												int smode,
-												int* err
-												)
+inline static unsigned char *binrpc_read_record(struct binrpc_parse_ctx *ctx,
+		unsigned char *buf, unsigned char *end, struct binrpc_val *v, int smode,
+		int *err)
 {
 	int type;
 	int len;
 	int end_tag;
 	int tmp;
-	unsigned char* p;
+	unsigned char *p;
 	long long ll;
 
-	p=buf;
-	end_tag=0;
-	*err=0;
-	if (!(ctx->flags & BINRPC_F_INIT)){
-		*err=E_BINRPC_NOTINIT;
+	p = buf;
+	end_tag = 0;
+	*err = 0;
+	if(!(ctx->flags & BINRPC_F_INIT)) {
+		*err = E_BINRPC_NOTINIT;
 		goto error;
 	}
-	if (ctx->offset>=ctx->tlen){
-		*err=E_BINRPC_EOP;
+	if(ctx->offset >= ctx->tlen) {
+		*err = E_BINRPC_EOP;
 		goto error;
 	}
-	if (p>=end){
-		*err=E_BINRPC_MORE_DATA;
+	if(p >= end) {
+		*err = E_BINRPC_MORE_DATA;
 		goto error;
 	}
 	/* read type_len */
-	type=*p & 0xf;
-	len=*p>>4;
+	type = *p & 0xf;
+	len = *p >> 4;
 	p++;
-	if ((type!=BINRPC_T_DOUBLE) && (len & 8)){
-		end_tag=1; /* possible end mark for array or structs */
+	if((type != BINRPC_T_DOUBLE) && (len & 8)) {
+		end_tag = 1; /* possible end mark for array or structs */
 		/* we have to read len bytes and use them as the new len */
-		p=binrpc_read_int(&len, len&7, p, end, err);
-		if (*err<0)
+		p = binrpc_read_int(&len, len & 7, p, end, err);
+		if(*err < 0)
 			goto error;
 	}
-	if ((p+len)>end){
-		*err=E_BINRPC_MORE_DATA;
+	if((p + len) > end) {
+		*err = E_BINRPC_MORE_DATA;
 		goto error;
 	}
-	if ((v->type!=type) && (v->type !=BINRPC_T_ALL)){
+	if((v->type != type) && (v->type != BINRPC_T_ALL)) {
 		goto error_type;
 	}
-	v->type=type;
-	switch(type){
+	v->type = type;
+	switch(type) {
 		case BINRPC_T_STRUCT:
-			if (ctx->in_struct){
-				if (end_tag){
+			if(ctx->in_struct) {
+				if(end_tag) {
 					ctx->in_struct--;
-					v->u.end=1;
-				}else{
-					if(smode==0) {
+					v->u.end = 1;
+				} else {
+					if(smode == 0) {
 						goto error_record;
 					} else {
-						v->u.end=0;
+						v->u.end = 0;
 						ctx->in_struct++;
 					}
 				}
 			} else {
-				if (end_tag)
+				if(end_tag)
 					goto error_record;
-				v->u.end=0;
+				v->u.end = 0;
 				ctx->in_struct++;
 			}
 			break;
 		case BINRPC_T_AVP:
 			/* name | value */
-			if (ctx->in_struct){
-				v->name.s=(char*)p;
-				v->name.len=(len-1); /* don't include 0 term */
-				p+=len;
-				if (p>=end){
-					*err=E_BINRPC_MORE_DATA;
+			if(ctx->in_struct) {
+				v->name.s = (char *)p;
+				v->name.len = (len - 1); /* don't include 0 term */
+				p += len;
+				if(p >= end) {
+					*err = E_BINRPC_MORE_DATA;
 					goto error;
 				}
 				/* avp value type */
-				type=*p & 0xf;
-				if ((type!=BINRPC_T_AVP) && (type!=BINRPC_T_ARRAY)){
-					tmp=ctx->in_struct;
-					ctx->in_struct=0; /* hack to parse a normal record */
-					v->type=type; /* hack */
-					p=binrpc_read_record(ctx, p, end, v, smode, err);
-					if (*err<0){
-						ctx->in_struct=tmp;
+				type = *p & 0xf;
+				if((type != BINRPC_T_AVP) && (type != BINRPC_T_ARRAY)) {
+					tmp = ctx->in_struct;
+					ctx->in_struct = 0; /* hack to parse a normal record */
+					v->type = type;		/* hack */
+					p = binrpc_read_record(ctx, p, end, v, smode, err);
+					if(*err < 0) {
+						ctx->in_struct = tmp;
 						goto error;
-					}else{
-						ctx->in_struct+=tmp;
+					} else {
+						ctx->in_struct += tmp;
 						/* the offset is already updated => skip */
 						goto no_offs_update;
 					}
-				}else{
-					goto  error_record;
+				} else {
+					goto error_record;
 				}
 			} else {
 				goto error_type;
 			}
 			break;
 		case BINRPC_T_INT:
-			if (ctx->in_struct && smode==0) goto error_record;
-			p=binrpc_read_int(&v->u.intval, len, p, end, err);
+			if(ctx->in_struct && smode == 0)
+				goto error_record;
+			p = binrpc_read_int(&v->u.intval, len, p, end, err);
 			break;
 		case BINRPC_T_STR:
-			if (ctx->in_struct && smode==0) goto error_record;
-			v->u.strval.s=(char*)p;
-			v->u.strval.len=(len-1); /* don't include terminating 0 */
-			p+=len;
+			if(ctx->in_struct && smode == 0)
+				goto error_record;
+			v->u.strval.s = (char *)p;
+			v->u.strval.len = (len - 1); /* don't include terminating 0 */
+			p += len;
 			break;
 		case BINRPC_T_BYTES:
-			if (ctx->in_struct && smode==0) goto error_record;
-			v->u.strval.s=(char*)p;
-			v->u.strval.len=len;
-			p+=len;
+			if(ctx->in_struct && smode == 0)
+				goto error_record;
+			v->u.strval.s = (char *)p;
+			v->u.strval.len = len;
+			p += len;
 			break;
 		case BINRPC_T_ARRAY:
-			if (ctx->in_struct && smode==0) goto error_record;
-			if (end_tag){
-				if (ctx->in_array>0){
+			if(ctx->in_struct && smode == 0)
+				goto error_record;
+			if(end_tag) {
+				if(ctx->in_array > 0) {
 					ctx->in_array--;
-					v->u.end=1;
-				}else{
+					v->u.end = 1;
+				} else {
 					goto error_record;
 				}
-			}else{
+			} else {
 				ctx->in_array++;
-				v->u.end=0;
+				v->u.end = 0;
 			}
 			break;
 		case BINRPC_T_DOUBLE: /* FIXME: hack: represented as fixed point
 		                                      inside a long long */
-			if (ctx->in_struct && smode==0) goto error_record;
-			p=binrpc_read_llong(&ll, len, p, end, err);
-			v->u.fval=((double)ll)/1000;
+			if(ctx->in_struct && smode == 0)
+				goto error_record;
+			p = binrpc_read_llong(&ll, len, p, end, err);
+			v->u.fval = ((double)ll) / 1000;
 			break;
 		default:
-			if (ctx->in_struct){
+			if(ctx->in_struct) {
 				goto error_record;
 			} else {
 				goto error_type;
 			}
 	}
-	ctx->offset+=(int)(p-buf);
+	ctx->offset += (int)(p - buf);
 no_offs_update:
 	return p;
 error_type:
-	*err=E_BINRPC_TYPE;
+	*err = E_BINRPC_TYPE;
 	return buf;
 error_record:
-	*err=E_BINRPC_RECORD;
+	*err = E_BINRPC_RECORD;
 error:
 	return buf;
 }
-
 
 
 /* reads/skips an entire struct
  * the struct start/end are saved in v->u.strval.s, v->u.strval.len 
  * return:  - new buffer position  and set *err to 0 if successfull
  *          - original buffer and *err<0 on error */
-inline static unsigned char* binrpc_read_struct(struct binrpc_parse_ctx* ctx,
-												unsigned char* buf,
-												unsigned char* end,
-												struct binrpc_val* v,
-												int* err
-												)
+inline static unsigned char *binrpc_read_struct(struct binrpc_parse_ctx *ctx,
+		unsigned char *buf, unsigned char *end, struct binrpc_val *v, int *err)
 {
 
 	int type;
 	int len;
 	int end_tag;
-	unsigned char* p;
+	unsigned char *p;
 	int in_struct;
-	
-	*err=0;
-	p=buf;
-	end_tag=0;
-	if (!(ctx->flags & BINRPC_F_INIT)){
-		*err=E_BINRPC_NOTINIT;
+
+	*err = 0;
+	p = buf;
+	end_tag = 0;
+	if(!(ctx->flags & BINRPC_F_INIT)) {
+		*err = E_BINRPC_NOTINIT;
 		goto error;
 	}
-	if (ctx->offset>=ctx->tlen){
-		*err=E_BINRPC_EOP;
+	if(ctx->offset >= ctx->tlen) {
+		*err = E_BINRPC_EOP;
 		goto error;
 	}
-	if (p>=end){
-		*err=E_BINRPC_MORE_DATA;
+	if(p >= end) {
+		*err = E_BINRPC_MORE_DATA;
 		goto error;
 	}
 	/* read type_len */
-	type=*p & 0xf;
-	len=*p>>4;
+	type = *p & 0xf;
+	len = *p >> 4;
 	p++;
-	if (len & 8){
-		end_tag=1; /* possible end mark for array or structs */
+	if(len & 8) {
+		end_tag = 1; /* possible end mark for array or structs */
 		/* we have to read len bytes and use them as the new len */
-		p=binrpc_read_int(&len, len&7, p, end, err);
-		if (*err<0)
+		p = binrpc_read_int(&len, len & 7, p, end, err);
+		if(*err < 0)
 			goto error;
 	}
-	if ((p+len)>=end){
-		*err=E_BINRPC_MORE_DATA;
+	if((p + len) >= end) {
+		*err = E_BINRPC_MORE_DATA;
 		goto error;
 	}
-	if (type!=BINRPC_T_STRUCT){
+	if(type != BINRPC_T_STRUCT) {
 		goto error_type;
 	}
-	if (end_tag){
+	if(end_tag) {
 		goto error_record;
 	}
-	p+=len; /* len should be 0 for a struct tag */
-	in_struct=1;
-	v->type=type;
-	v->u.strval.s=(char*)p; /* it will contain the inside of the struc */
-	while(in_struct){
+	p += len; /* len should be 0 for a struct tag */
+	in_struct = 1;
+	v->type = type;
+	v->u.strval.s = (char *)p; /* it will contain the inside of the struc */
+	while(in_struct) {
 		/* read name */
-		type=*p & 0xf;
-		len=*p>>4;
+		type = *p & 0xf;
+		len = *p >> 4;
 		p++;
-		if (len & 8){
-			end_tag=1; /* possible end mark for array or structs */
+		if(len & 8) {
+			end_tag = 1; /* possible end mark for array or structs */
 			/* we have to read len bytes and use them as the new len */
-			p=binrpc_read_int(&len, len&7, p, end, err);
-			if (*err<0)
+			p = binrpc_read_int(&len, len & 7, p, end, err);
+			if(*err < 0)
 				goto error;
 		}
-		if ((type==BINRPC_T_STRUCT) && end_tag){
+		if((type == BINRPC_T_STRUCT) && end_tag) {
 			in_struct--;
-			if (in_struct<0)
+			if(in_struct < 0)
 				goto error_record;
 			continue;
-		}else if (type!=BINRPC_T_AVP){
+		} else if(type != BINRPC_T_AVP) {
 			goto error_record;
 		}
 		/* skip over it */
-		p+=len;
-		if (p>=end){
-			*err=E_BINRPC_MORE_DATA;
+		p += len;
+		if(p >= end) {
+			*err = E_BINRPC_MORE_DATA;
 			goto error;
 		}
 		/* read value */
-		type=*p & 0xf;
-		len=*p>>4;
+		type = *p & 0xf;
+		len = *p >> 4;
 		p++;
-		if (len & 8){
-			end_tag=1; /* possible end mark for array or structs */
+		if(len & 8) {
+			end_tag = 1; /* possible end mark for array or structs */
 			/* we have to read len bytes and use them as the new len */
-			p=binrpc_read_int(&len, len&7, p, end, err);
-			if (*err<0)
+			p = binrpc_read_int(&len, len & 7, p, end, err);
+			if(*err < 0)
 				goto error;
 		}
-		if (type==BINRPC_T_STRUCT){
-			if (end_tag)
+		if(type == BINRPC_T_STRUCT) {
+			if(end_tag)
 				goto error_record;
 			in_struct++;
 		};
-		p+=len;
-		if (p>=end){
-			*err=E_BINRPC_MORE_DATA;
+		p += len;
+		if(p >= end) {
+			*err = E_BINRPC_MORE_DATA;
 			goto error;
 		}
 	}
 	/* don't include the end tag */;
-	v->u.strval.len=(int)(p-(unsigned char*)v->u.strval.s)-1;
+	v->u.strval.len = (int)(p - (unsigned char *)v->u.strval.s) - 1;
 	return p;
-	
+
 error_type:
-	*err=E_BINRPC_RECORD;
+	*err = E_BINRPC_RECORD;
 	return buf;
 error_record:
-	*err=E_BINRPC_TYPE;
+	*err = E_BINRPC_TYPE;
 error:
 	return buf;
 }
 
 
-
 /* error code to string */
-const char* binrpc_error(int err);
+const char *binrpc_error(int err);
 #endif
