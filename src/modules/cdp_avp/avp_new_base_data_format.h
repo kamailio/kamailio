@@ -43,131 +43,183 @@
 
 #ifndef CDP_AVP_REFERENCE
 
-	#include "../cdp/cdp_load.h"
+#include "../cdp/cdp_load.h"
 
-		#include <inttypes.h>
-		#include <netinet/ip6.h>
+#include <inttypes.h>
+#include <netinet/ip6.h>
 
-		typedef struct {
-			uint16_t ai_family;
-			union{
-				struct in_addr v4;
-				struct in6_addr v6;
-			} ip;
-		} ip_address;
-	
-		typedef struct {
-			uint8_t prefix;
-			ip_address addr;	
-		} ip_address_prefix;
-		
+typedef struct
+{
+	uint16_t ai_family;
+	union
+	{
+		struct in_addr v4;
+		struct in6_addr v6;
+	} ip;
+} ip_address;
 
-	#define EPOCH_UNIX_TO_EPOCH_NTP 2208988800u // according to http://www.cis.udel.edu/~mills/y2k.html
-	
-	
-	/* 
+typedef struct
+{
+	uint8_t prefix;
+	ip_address addr;
+} ip_address_prefix;
+
+
+#define EPOCH_UNIX_TO_EPOCH_NTP \
+	2208988800u // according to http://www.cis.udel.edu/~mills/y2k.html
+
+
+/* 
 	 * RFC 3588 Basic AVP Data Types
 	 * 
 	 * http://tools.ietf.org/html/rfc3588#section-4.2
 	 * 
 	 */
-	
-	AAA_AVP* cdp_avp_new_OctetString(int avp_code,int avp_flags,int avp_vendorid,str data,AVPDataStatus data_do);
-	typedef AAA_AVP* (*cdp_avp_new_OctetString_f)(int avp_code,int avp_flags,int avp_vendorid,str data,AVPDataStatus data_do);
-	
-	AAA_AVP* cdp_avp_new_Integer32(int avp_code,int avp_flags,int avp_vendorid,int32_t data);
-	typedef AAA_AVP* (*cdp_avp_new_Integer32_f)(int avp_code,int avp_flags,int avp_vendorid,int32_t data);
-	
-	
-	AAA_AVP* cdp_avp_new_Integer64(int avp_code,int avp_flags,int avp_vendorid,int64_t data);
-	typedef AAA_AVP* (*cdp_avp_new_Integer64_f)(int avp_code,int avp_flags,int avp_vendorid,int64_t data);
-	
-	
-	AAA_AVP* cdp_avp_new_Unsigned32(int avp_code,int avp_flags,int avp_vendorid,uint32_t data);
-	typedef AAA_AVP* (*cdp_avp_new_Unsigned32_f)(int avp_code,int avp_flags,int avp_vendorid,uint32_t data);
-	
-	
-	AAA_AVP* cdp_avp_new_Unsigned64(int avp_code,int avp_flags,int avp_vendorid,uint64_t data);
-	typedef AAA_AVP* (*cdp_avp_new_Unsigned64_f)(int avp_code,int avp_flags,int avp_vendorid,uint64_t data);
-	
-	
-	AAA_AVP* cdp_avp_new_Float32(int avp_code,int avp_flags,int avp_vendorid,float data);
-	typedef AAA_AVP* (*cdp_avp_new_Float32_f)(int avp_code,int avp_flags,int avp_vendorid,float data);
-	
-	
-	AAA_AVP* cdp_avp_new_Float64(int avp_code,int avp_flags,int avp_vendorid,double data);
-	typedef AAA_AVP* (*cdp_avp_new_Float64_f)(int avp_code,int avp_flags,int avp_vendorid,double data);
-	
-	
-	AAA_AVP* cdp_avp_new_Grouped(int avp_code,int avp_flags,int avp_vendorid,AAA_AVP_LIST *list,AVPDataStatus data_do);
-	typedef AAA_AVP* (*cdp_avp_new_Grouped_f)(int avp_code,int avp_flags,int avp_vendorid,AAA_AVP_LIST *list,AVPDataStatus data_do);
-	
-	
-	/*
+
+AAA_AVP *cdp_avp_new_OctetString(int avp_code, int avp_flags, int avp_vendorid,
+		str data, AVPDataStatus data_do);
+typedef AAA_AVP *(*cdp_avp_new_OctetString_f)(int avp_code, int avp_flags,
+		int avp_vendorid, str data, AVPDataStatus data_do);
+
+AAA_AVP *cdp_avp_new_Integer32(
+		int avp_code, int avp_flags, int avp_vendorid, int32_t data);
+typedef AAA_AVP *(*cdp_avp_new_Integer32_f)(
+		int avp_code, int avp_flags, int avp_vendorid, int32_t data);
+
+
+AAA_AVP *cdp_avp_new_Integer64(
+		int avp_code, int avp_flags, int avp_vendorid, int64_t data);
+typedef AAA_AVP *(*cdp_avp_new_Integer64_f)(
+		int avp_code, int avp_flags, int avp_vendorid, int64_t data);
+
+
+AAA_AVP *cdp_avp_new_Unsigned32(
+		int avp_code, int avp_flags, int avp_vendorid, uint32_t data);
+typedef AAA_AVP *(*cdp_avp_new_Unsigned32_f)(
+		int avp_code, int avp_flags, int avp_vendorid, uint32_t data);
+
+
+AAA_AVP *cdp_avp_new_Unsigned64(
+		int avp_code, int avp_flags, int avp_vendorid, uint64_t data);
+typedef AAA_AVP *(*cdp_avp_new_Unsigned64_f)(
+		int avp_code, int avp_flags, int avp_vendorid, uint64_t data);
+
+
+AAA_AVP *cdp_avp_new_Float32(
+		int avp_code, int avp_flags, int avp_vendorid, float data);
+typedef AAA_AVP *(*cdp_avp_new_Float32_f)(
+		int avp_code, int avp_flags, int avp_vendorid, float data);
+
+
+AAA_AVP *cdp_avp_new_Float64(
+		int avp_code, int avp_flags, int avp_vendorid, double data);
+typedef AAA_AVP *(*cdp_avp_new_Float64_f)(
+		int avp_code, int avp_flags, int avp_vendorid, double data);
+
+
+AAA_AVP *cdp_avp_new_Grouped(int avp_code, int avp_flags, int avp_vendorid,
+		AAA_AVP_LIST *list, AVPDataStatus data_do);
+typedef AAA_AVP *(*cdp_avp_new_Grouped_f)(int avp_code, int avp_flags,
+		int avp_vendorid, AAA_AVP_LIST *list, AVPDataStatus data_do);
+
+
+/*
 	 * RFC 3588 Derived AVP Data Formats
 	 * 
 	 * http://tools.ietf.org/html/rfc3588#section-4.3
 	 * 
 	 */
-	
-	AAA_AVP* cdp_avp_new_Address(int avp_code,int avp_flags,int avp_vendorid,ip_address data);
-	typedef AAA_AVP* (*cdp_avp_new_Address_f)(int avp_code,int avp_flags,int avp_vendorid,ip_address data);
-	
-	AAA_AVP* cdp_avp_new_Time(int avp_code,int avp_flags,int avp_vendorid,time_t data);
-	typedef AAA_AVP* (*cdp_avp_new_Time_f)(int avp_code,int avp_flags,int avp_vendorid,time_t data);
-	
-	AAA_AVP* cdp_avp_new_UTF8String(int avp_code,int avp_flags,int avp_vendorid,str data,AVPDataStatus data_do);
-	typedef AAA_AVP* (*cdp_avp_new_UTF8String_f)(int avp_code,int avp_flags,int avp_vendorid,str data,AVPDataStatus data_do);
-	
-	AAA_AVP* cdp_avp_new_DiameterIdentity(int avp_code,int avp_flags,int avp_vendorid,str data,AVPDataStatus data_do);
-	typedef AAA_AVP* (*cdp_avp_new_DiameterIdentity_f)(int avp_code,int avp_flags,int avp_vendorid,str data,AVPDataStatus data_do);
-	
-	AAA_AVP* cdp_avp_new_DiameterURI(int avp_code,int avp_flags,int avp_vendorid,str data,AVPDataStatus data_do);
-	typedef AAA_AVP* (*cdp_avp_new_DiameterURI_f)(int avp_code,int avp_flags,int avp_vendorid,str data,AVPDataStatus data_do);
-	
-	AAA_AVP* cdp_avp_new_Enumerated(int avp_code,int avp_flags,int avp_vendorid,int32_t data);
-	typedef AAA_AVP* (*cdp_avp_new_Enumerated_f)(int avp_code,int avp_flags,int avp_vendorid,int32_t data);
-	
-	AAA_AVP* cdp_avp_new_IPFilterRule(int avp_code,int avp_flags,int avp_vendorid,str data,AVPDataStatus data_do);
-	typedef AAA_AVP* (*cdp_avp_new_IPFilterRule_f)(int avp_code,int avp_flags,int avp_vendorid,str data,AVPDataStatus data_do);
-	
-	AAA_AVP* cdp_avp_new_QoSFilterRule(int avp_code,int avp_flags,int avp_vendorid,str data,AVPDataStatus data_do);
-	typedef AAA_AVP* (*cdp_avp_new_QoSFilterRule_f)(int avp_code,int avp_flags,int avp_vendorid,str data,AVPDataStatus data_do);
-	
+
+AAA_AVP *cdp_avp_new_Address(
+		int avp_code, int avp_flags, int avp_vendorid, ip_address data);
+typedef AAA_AVP *(*cdp_avp_new_Address_f)(
+		int avp_code, int avp_flags, int avp_vendorid, ip_address data);
+
+AAA_AVP *cdp_avp_new_Time(
+		int avp_code, int avp_flags, int avp_vendorid, time_t data);
+typedef AAA_AVP *(*cdp_avp_new_Time_f)(
+		int avp_code, int avp_flags, int avp_vendorid, time_t data);
+
+AAA_AVP *cdp_avp_new_UTF8String(int avp_code, int avp_flags, int avp_vendorid,
+		str data, AVPDataStatus data_do);
+typedef AAA_AVP *(*cdp_avp_new_UTF8String_f)(int avp_code, int avp_flags,
+		int avp_vendorid, str data, AVPDataStatus data_do);
+
+AAA_AVP *cdp_avp_new_DiameterIdentity(int avp_code, int avp_flags,
+		int avp_vendorid, str data, AVPDataStatus data_do);
+typedef AAA_AVP *(*cdp_avp_new_DiameterIdentity_f)(int avp_code, int avp_flags,
+		int avp_vendorid, str data, AVPDataStatus data_do);
+
+AAA_AVP *cdp_avp_new_DiameterURI(int avp_code, int avp_flags, int avp_vendorid,
+		str data, AVPDataStatus data_do);
+typedef AAA_AVP *(*cdp_avp_new_DiameterURI_f)(int avp_code, int avp_flags,
+		int avp_vendorid, str data, AVPDataStatus data_do);
+
+AAA_AVP *cdp_avp_new_Enumerated(
+		int avp_code, int avp_flags, int avp_vendorid, int32_t data);
+typedef AAA_AVP *(*cdp_avp_new_Enumerated_f)(
+		int avp_code, int avp_flags, int avp_vendorid, int32_t data);
+
+AAA_AVP *cdp_avp_new_IPFilterRule(int avp_code, int avp_flags, int avp_vendorid,
+		str data, AVPDataStatus data_do);
+typedef AAA_AVP *(*cdp_avp_new_IPFilterRule_f)(int avp_code, int avp_flags,
+		int avp_vendorid, str data, AVPDataStatus data_do);
+
+AAA_AVP *cdp_avp_new_QoSFilterRule(int avp_code, int avp_flags,
+		int avp_vendorid, str data, AVPDataStatus data_do);
+typedef AAA_AVP *(*cdp_avp_new_QoSFilterRule_f)(int avp_code, int avp_flags,
+		int avp_vendorid, str data, AVPDataStatus data_do);
+
 
 #else
-		
-	AAA_AVP* basic.new_OctetString(int avp_code,int avp_flags,int avp_vendorid,str data,AVPDataStatus data_do);
-	
-	AAA_AVP* basic.new_Integer32(int avp_code,int avp_flags,int avp_vendorid,int32_t data);
-	
-	AAA_AVP* basic.new_Integer64(int avp_code,int avp_flags,int avp_vendorid,int64_t data);
-	
-	AAA_AVP* basic.new_Unsigned32(int avp_code,int avp_flags,int avp_vendorid,uint32_t data);
-	
-	AAA_AVP* basic.new_Unsigned64(int avp_code,int avp_flags,int avp_vendorid,uint64_t data);
-	
-	AAA_AVP* basic.new_Float32(int avp_code,int avp_flags,int avp_vendorid,float data);
-	
-	AAA_AVP* basic.new_Float64(int avp_code,int avp_flags,int avp_vendorid,double data);
-	
-	AAA_AVP* basic.new_Grouped(int avp_code,int avp_flags,int avp_vendorid,AAA_AVP_LIST *list,AVPDataStatus data_do);
-		
-	AAA_AVP* basic.new_Address(int avp_code,int avp_flags,int avp_vendorid,ip_address data);
-	
-	AAA_AVP* basic.new_Time(int avp_code,int avp_flags,int avp_vendorid,time_t data);
-	
-	AAA_AVP* basic.new_UTF8String(int avp_code,int avp_flags,int avp_vendorid,str data,AVPDataStatus data_do);
-	
-	AAA_AVP* basic.new_DiameterIdentity(int avp_code,int avp_flags,int avp_vendorid,str data,AVPDataStatus data_do);
-	
-	AAA_AVP* basic.new_DiameterURI(int avp_code,int avp_flags,int avp_vendorid,str data,AVPDataStatus data_do);
-	
-	AAA_AVP* basic.new_Enumerated(int avp_code,int avp_flags,int avp_vendorid,int32_t data);
-	
-	AAA_AVP* basic.new_IPFilterRule(int avp_code,int avp_flags,int avp_vendorid,str data,AVPDataStatus data_do);
-	
-	AAA_AVP* basic.new_QoSFilterRule(int avp_code,int avp_flags,int avp_vendorid,str data,AVPDataStatus data_do);
+
+AAA_AVP *basic.new_OctetString(int avp_code, int avp_flags, int avp_vendorid,
+		str data, AVPDataStatus data_do);
+
+AAA_AVP *basic.new_Integer32(
+		int avp_code, int avp_flags, int avp_vendorid, int32_t data);
+
+AAA_AVP *basic.new_Integer64(
+		int avp_code, int avp_flags, int avp_vendorid, int64_t data);
+
+AAA_AVP *basic.new_Unsigned32(
+		int avp_code, int avp_flags, int avp_vendorid, uint32_t data);
+
+AAA_AVP *basic.new_Unsigned64(
+		int avp_code, int avp_flags, int avp_vendorid, uint64_t data);
+
+AAA_AVP *basic.new_Float32(
+		int avp_code, int avp_flags, int avp_vendorid, float data);
+
+AAA_AVP *basic.new_Float64(
+		int avp_code, int avp_flags, int avp_vendorid, double data);
+
+AAA_AVP *basic.new_Grouped(int avp_code, int avp_flags, int avp_vendorid,
+		AAA_AVP_LIST *list, AVPDataStatus data_do);
+
+AAA_AVP *basic.new_Address(
+		int avp_code, int avp_flags, int avp_vendorid, ip_address data);
+
+AAA_AVP *basic.new_Time(
+		int avp_code, int avp_flags, int avp_vendorid, time_t data);
+
+AAA_AVP *basic.new_UTF8String(int avp_code, int avp_flags, int avp_vendorid,
+		str data, AVPDataStatus data_do);
+
+AAA_AVP *basic.new_DiameterIdentity(int avp_code, int avp_flags,
+		int avp_vendorid, str data, AVPDataStatus data_do);
+
+AAA_AVP *basic.new_DiameterURI(int avp_code, int avp_flags, int avp_vendorid,
+		str data, AVPDataStatus data_do);
+
+AAA_AVP *basic.new_Enumerated(
+		int avp_code, int avp_flags, int avp_vendorid, int32_t data);
+
+AAA_AVP *basic.new_IPFilterRule(int avp_code, int avp_flags, int avp_vendorid,
+		str data, AVPDataStatus data_do);
+
+AAA_AVP *basic.new_QoSFilterRule(int avp_code, int avp_flags, int avp_vendorid,
+		str data, AVPDataStatus data_do);
 #endif
 
 

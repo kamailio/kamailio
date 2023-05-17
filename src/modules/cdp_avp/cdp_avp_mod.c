@@ -48,54 +48,51 @@ MODULE_VERSION
 #include "../cdp/cdp_load.h"
 
 struct cdp_binds *cdp;
-	
-int 	cdp_avp_init();
-int 	cdp_avp_child_init(int rank);
-void 	cdp_avp_destroy();
-cdp_avp_bind_t*	cdp_avp_get_bind();
-	
+
+int cdp_avp_init();
+int cdp_avp_child_init(int rank);
+void cdp_avp_destroy();
+cdp_avp_bind_t *cdp_avp_get_bind();
+
 static cmd_export_t cdp_avp_cmds[] = {
-	{"cdp_avp_get_bind",			(cmd_function)cdp_avp_get_bind, 	NO_SCRIPT, 0, 0, 0},
-	
-	{ 0, 0, 0, 0, 0, 0 }
-};
-	
+		{"cdp_avp_get_bind", (cmd_function)cdp_avp_get_bind, NO_SCRIPT, 0, 0,
+				0},
+
+		{0, 0, 0, 0, 0, 0}};
+
 /**
  * Exported SER module interface
  */
-struct module_exports exports = {
-	"cdp_avp",
-	DEFAULT_DLFLAGS, 	/* dlopen flags */
-	cdp_avp_cmds,    	/**< Exported functions */
-	0,               	/**< Exported parameters */
-	0,               	/* RPC method exports */
-        0,       		/* pseudo-variables exports */
-	0,
-	cdp_avp_init,    	/**< Module initialization function */
-	cdp_avp_child_init, 	/**< per-child init function */
-	cdp_avp_destroy
-};
+struct module_exports exports = {"cdp_avp", DEFAULT_DLFLAGS, /* dlopen flags */
+		cdp_avp_cmds,		/**< Exported functions */
+		0,					/**< Exported parameters */
+		0,					/* RPC method exports */
+		0,					/* pseudo-variables exports */
+		0, cdp_avp_init,	/**< Module initialization function */
+		cdp_avp_child_init, /**< per-child init function */
+		cdp_avp_destroy};
 
 
 /** Sample binding */
-cdp_avp_bind_t cdp_avp_bind={
-		0,	/* cdp 		*/
-		
-		{	/* basic 	*/
+cdp_avp_bind_t cdp_avp_bind = {0, /* cdp 		*/
+
+		{
+				/* basic 	*/
 				cdp_avp_new,
-				
+
 				cdp_avp_add_new_to_list,
 				cdp_avp_add_new_to_msg,
 				cdp_avp_add_to_list,
 				cdp_avp_add_to_msg,
-				
+
 				cdp_avp_get_next_from_list,
 				cdp_avp_get_next_from_msg,
 				cdp_avp_get_from_list,
 				cdp_avp_get_from_msg,
 		},
-		
-		{	/* base_data	*/
+
+		{
+				/* base_data	*/
 				cdp_avp_new_OctetString,
 				cdp_avp_new_Integer32,
 				cdp_avp_new_Integer64,
@@ -104,7 +101,7 @@ cdp_avp_bind_t cdp_avp_bind={
 				cdp_avp_new_Float32,
 				cdp_avp_new_Float64,
 				cdp_avp_new_Grouped,
-				
+
 				cdp_avp_new_Address,
 				cdp_avp_new_Time,
 				cdp_avp_new_UTF8String,
@@ -113,8 +110,8 @@ cdp_avp_bind_t cdp_avp_bind={
 				cdp_avp_new_Enumerated,
 				cdp_avp_new_IPFilterRule,
 				cdp_avp_new_QoSFilterRule,
-				
-				
+
+
 				cdp_avp_get_OctetString,
 				cdp_avp_get_Integer32,
 				cdp_avp_get_Integer64,
@@ -134,38 +131,42 @@ cdp_avp_bind_t cdp_avp_bind={
 				cdp_avp_get_IPFilterRule,
 				cdp_avp_get_QoSFilterRule,
 		},
-		
-		{	/*	base 	*/
-				
-				#define CDP_AVP_INIT					
-					#include "base.h"				
-				#undef	CDP_AVP_INIT												
-		},
-		
-		{	/*	ccapp 	*/
-				#define CDP_AVP_INIT			
-					#include "ccapp.h"		
-				#undef	CDP_AVP_INIT
+
+		{
+				/*	base 	*/
+
+#define CDP_AVP_INIT
+#include "base.h"
+#undef CDP_AVP_INIT
 		},
 
-		{	/*  nasapp  */
-				#define CDP_AVP_INIT					
-					#include "nasapp.h"				
-				#undef	CDP_AVP_INIT
+		{
+				/*	ccapp 	*/
+#define CDP_AVP_INIT
+#include "ccapp.h"
+#undef CDP_AVP_INIT
 		},
-		
-		{	/*  imsapp  */
-				#define CDP_AVP_INIT					
-					#include "imsapp.h"				
-				#undef	CDP_AVP_INIT
-		},	
-		
-		{	/*  epcapp  */				
-				#define CDP_AVP_INIT					
-					#include "epcapp.h"				
-				#undef	CDP_AVP_INIT				
-		}
-};
+
+		{
+				/*  nasapp  */
+#define CDP_AVP_INIT
+#include "nasapp.h"
+#undef CDP_AVP_INIT
+		},
+
+		{
+				/*  imsapp  */
+#define CDP_AVP_INIT
+#include "imsapp.h"
+#undef CDP_AVP_INIT
+		},
+
+		{
+				/*  epcapp  */
+#define CDP_AVP_INIT
+#include "epcapp.h"
+#undef CDP_AVP_INIT
+		}};
 
 
 /**
@@ -178,21 +179,23 @@ cdp_avp_bind_t cdp_avp_bind={
  */
 int cdp_avp_init()
 {
-	LOG(L_DBG," Initializing module cdp_avp\n");
+	LOG(L_DBG, " Initializing module cdp_avp\n");
 	load_cdp_f load_cdp;
 	/* bind to the cdp module */
-	if (!(load_cdp = (load_cdp_f)find_export("load_cdp",NO_SCRIPT,0))) {
-		LOG(L_ERR, "ERR"M_NAME":mod_init: Can not import load_cdp. This module requires cdp module\n");
+	if(!(load_cdp = (load_cdp_f)find_export("load_cdp", NO_SCRIPT, 0))) {
+		LOG(L_ERR, "ERR" M_NAME ":mod_init: Can not import load_cdp. This "
+								"module requires cdp module\n");
 		goto error;
 	}
 	cdp = pkg_malloc(sizeof(struct cdp_binds));
-	if (!cdp) return 0;
+	if(!cdp)
+		return 0;
 	/* Load CDP module bindings*/
-	if (load_cdp(cdp) == -1)
+	if(load_cdp(cdp) == -1)
 		goto error;
-	
+
 	cdp_avp_bind.cdp = cdp;
-	
+
 	return 0;
 error:
 	return -1;
@@ -208,11 +211,9 @@ error:
  */
 int cdp_avp_child_init(int rank)
 {
-	LOG(L_DBG,"Initializing child in module cdp_avp for rank [%d]\n",
-			rank);
+	LOG(L_DBG, "Initializing child in module cdp_avp for rank [%d]\n", rank);
 	return 1;
 }
-
 
 
 /**
@@ -222,7 +223,7 @@ int cdp_avp_child_init(int rank)
  */
 void cdp_avp_destroy(void)
 {
-	LOG(L_DBG,"Destroying module cdp_avp\n");
+	LOG(L_DBG, "Destroying module cdp_avp\n");
 	pkg_free(cdp);
 }
 
@@ -232,10 +233,7 @@ void cdp_avp_destroy(void)
  * functions and data to be used from other processes.
  * @return the pointer to the binding.
  */
-cdp_avp_bind_t* cdp_avp_get_bind()
+cdp_avp_bind_t *cdp_avp_get_bind()
 {
 	return &cdp_avp_bind;
 }
-
-
-

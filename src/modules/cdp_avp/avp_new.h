@@ -43,15 +43,18 @@
 
 #ifndef CDP_AVP_REFERENCE
 
-	#include "../cdp/cdp_load.h"
+#include "../cdp/cdp_load.h"
 
-	AAA_AVP* cdp_avp_new(int avp_code,int avp_flags,int avp_vendorid,str data,AVPDataStatus data_do);
-	typedef AAA_AVP* (*cdp_avp_new_f)(int avp_code,int avp_flags,int avp_vendorid,str data,AVPDataStatus data_do);
+AAA_AVP *cdp_avp_new(int avp_code, int avp_flags, int avp_vendorid, str data,
+		AVPDataStatus data_do);
+typedef AAA_AVP *(*cdp_avp_new_f)(int avp_code, int avp_flags, int avp_vendorid,
+		str data, AVPDataStatus data_do);
 
 #else
-	
-	AAA_AVP* basic.new(int avp_code,int avp_flags,int avp_vendorid,str data,AVPDataStatus data_do);
-	
+
+AAA_AVP *basic.new(int avp_code, int avp_flags, int avp_vendorid, str data,
+		AVPDataStatus data_do);
+
 #endif
 
 

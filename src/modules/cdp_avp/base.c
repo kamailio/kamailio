@@ -55,9 +55,6 @@ extern struct cdp_binds *cdp;
 
 #define CDP_AVP_DEFINITION
 
-	#include "base.h"
+#include "base.h"
 
 #undef CDP_AVP_DEFINITION
-
-
-

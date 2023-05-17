@@ -55,22 +55,29 @@ extern struct cdp_binds *cdp;
  * @param data_do
  * @return
  */
-inline int cdp_avp_add_new_to_list(AAA_AVP_LIST *list,int avp_code,int avp_flags,int avp_vendorid,str data,AVPDataStatus data_do)
+inline int cdp_avp_add_new_to_list(AAA_AVP_LIST *list, int avp_code,
+		int avp_flags, int avp_vendorid, str data, AVPDataStatus data_do)
 {
-	AAA_AVP *avp = cdp_avp_new(avp_code,avp_flags,avp_vendorid,data,data_do);
-	if (!list){
-		LOG(L_ERR,"Failed adding to NULL list AVP with Code [%d] Flags [%d] VendorID [%d] from data of length [%d]!\n",
-			avp_code,avp_flags,avp_vendorid,data.len);
-		if (avp) cdp->AAAFreeAVP(&avp);
+	AAA_AVP *avp =
+			cdp_avp_new(avp_code, avp_flags, avp_vendorid, data, data_do);
+	if(!list) {
+		LOG(L_ERR,
+				"Failed adding to NULL list AVP with Code [%d] Flags [%d] "
+				"VendorID [%d] from data of length [%d]!\n",
+				avp_code, avp_flags, avp_vendorid, data.len);
+		if(avp)
+			cdp->AAAFreeAVP(&avp);
 		return 0;
 	}
-	if (!avp){
-		LOG(L_ERR,"Error creating AVP with Code [%d] Flags [%d] VendorID [%d] from data of length [%d]!\n",
-			avp_code,avp_flags,avp_vendorid,data.len);
+	if(!avp) {
+		LOG(L_ERR,
+				"Error creating AVP with Code [%d] Flags [%d] VendorID [%d] "
+				"from data of length [%d]!\n",
+				avp_code, avp_flags, avp_vendorid, data.len);
 		return 0;
 	}
-	cdp->AAAAddAVPToList(list,avp);
-	return 1;			
+	cdp->AAAAddAVPToList(list, avp);
+	return 1;
 }
 
 /**
@@ -84,14 +91,18 @@ inline int cdp_avp_add_new_to_list(AAA_AVP_LIST *list,int avp_code,int avp_flags
  * @param data_do
  * @return 1 on success or 0 on failure
  */
-inline int cdp_avp_add_new_to_msg(AAAMessage *msg,int avp_code,int avp_flags,int avp_vendorid,str data,AVPDataStatus data_do)
+inline int cdp_avp_add_new_to_msg(AAAMessage *msg, int avp_code, int avp_flags,
+		int avp_vendorid, str data, AVPDataStatus data_do)
 {
-	if (!msg){
-		LOG(L_ERR,"Failed adding to NULL message AVP with Code [%d] Flags [%d] VendorID [%d] from data of length [%d]!\n",
-			avp_code,avp_flags,avp_vendorid,data.len);
+	if(!msg) {
+		LOG(L_ERR,
+				"Failed adding to NULL message AVP with Code [%d] Flags [%d] "
+				"VendorID [%d] from data of length [%d]!\n",
+				avp_code, avp_flags, avp_vendorid, data.len);
 		return 0;
 	}
-	return cdp_avp_add_new_to_list(&(msg->avpList),avp_code,avp_flags,avp_vendorid,data,data_do);
+	return cdp_avp_add_new_to_list(
+			&(msg->avpList), avp_code, avp_flags, avp_vendorid, data, data_do);
 }
 
 /**
@@ -101,19 +112,21 @@ inline int cdp_avp_add_new_to_msg(AAAMessage *msg,int avp_code,int avp_flags,int
  * @param avp
  * @return 1 on success or 0 on failure
  */
-inline int cdp_avp_add_to_list(AAA_AVP_LIST *list,AAA_AVP *avp)
+inline int cdp_avp_add_to_list(AAA_AVP_LIST *list, AAA_AVP *avp)
 {
-	if (!avp){
-		LOG(L_ERR,"Can not add NULL AVP to list!\n");
-		return 0;
-	}	
-	if (!list){
-		LOG(L_ERR,"Failed adding to NULL list AVP with Code [%d] Flags [%d] VendorID [%d] from data of length [%d]!\n",
-			avp->code,avp->flags,avp->vendorId,avp->data.len);
+	if(!avp) {
+		LOG(L_ERR, "Can not add NULL AVP to list!\n");
 		return 0;
 	}
-	cdp->AAAAddAVPToList(list,avp);
-	return 1;			
+	if(!list) {
+		LOG(L_ERR,
+				"Failed adding to NULL list AVP with Code [%d] Flags [%d] "
+				"VendorID [%d] from data of length [%d]!\n",
+				avp->code, avp->flags, avp->vendorId, avp->data.len);
+		return 0;
+	}
+	cdp->AAAAddAVPToList(list, avp);
+	return 1;
 }
 
 /**
@@ -123,12 +136,14 @@ inline int cdp_avp_add_to_list(AAA_AVP_LIST *list,AAA_AVP *avp)
  * @param avp
  * @return 1 on success or 0 on failure
  */
-inline int cdp_avp_add_to_msg(AAAMessage *msg,AAA_AVP *avp)
+inline int cdp_avp_add_to_msg(AAAMessage *msg, AAA_AVP *avp)
 {
-	if (!msg){
-		LOG(L_ERR,"Failed adding to NULL message AVP with Code [%d] Flags [%d] VendorID [%d] from data of length [%d]!\n",
-			avp->code,avp->flags,avp->vendorId,avp->data.len);
+	if(!msg) {
+		LOG(L_ERR,
+				"Failed adding to NULL message AVP with Code [%d] Flags [%d] "
+				"VendorID [%d] from data of length [%d]!\n",
+				avp->code, avp->flags, avp->vendorId, avp->data.len);
 		return 0;
 	}
-	return cdp_avp_add_to_list(&(msg->avpList),avp);
+	return cdp_avp_add_to_list(&(msg->avpList), avp);
 }

@@ -51,21 +51,31 @@ extern struct cdp_binds *cdp;
  * @param start_avp - avp where to resume. A null value will trigger a restart of the search.
  * @return the AAA_AVP* or NULL if not found (anymore)
  */
-inline AAA_AVP* cdp_avp_get_next_from_list(AAA_AVP_LIST list,int avp_code,int avp_vendor_id,AAA_AVP *start_avp)
+inline AAA_AVP *cdp_avp_get_next_from_list(
+		AAA_AVP_LIST list, int avp_code, int avp_vendor_id, AAA_AVP *start_avp)
 {
 	AAA_AVP *avp;
-	if (!start_avp)	start_avp = list.head;
-	else start_avp = start_avp->next;
-	LOG(L_DBG,"Looking for AVP with code %d vendor id %d startin at avp %p\n",
-			avp_code,avp_vendor_id,start_avp);
-	
-	if (!start_avp){
-		LOG(L_DBG,"Failed finding AVP with Code %d and VendorId %d - Empty list or at end of list\n",avp_code,avp_vendor_id);
+	if(!start_avp)
+		start_avp = list.head;
+	else
+		start_avp = start_avp->next;
+	LOG(L_DBG, "Looking for AVP with code %d vendor id %d startin at avp %p\n",
+			avp_code, avp_vendor_id, start_avp);
+
+	if(!start_avp) {
+		LOG(L_DBG,
+				"Failed finding AVP with Code %d and VendorId %d - Empty list "
+				"or at end of list\n",
+				avp_code, avp_vendor_id);
 		return 0;
 	}
-	avp = cdp->AAAFindMatchingAVPList(list,start_avp,avp_code,avp_vendor_id,AAA_FORWARD_SEARCH);
-	if (avp==0){
-		LOG(L_DBG,"Failed finding AVP with Code %d and VendorId %d - at end of list\n",avp_code,avp_vendor_id);
+	avp = cdp->AAAFindMatchingAVPList(
+			list, start_avp, avp_code, avp_vendor_id, AAA_FORWARD_SEARCH);
+	if(avp == 0) {
+		LOG(L_DBG,
+				"Failed finding AVP with Code %d and VendorId %d - at end of "
+				"list\n",
+				avp_code, avp_vendor_id);
 		return 0;
 	}
 
@@ -80,9 +90,11 @@ inline AAA_AVP* cdp_avp_get_next_from_list(AAA_AVP_LIST list,int avp_code,int av
  * @param start_avp
  * @return the AAA_AVP* or NULL if not found (anymore)
  */
-inline AAA_AVP* cdp_avp_get_next_from_msg(AAAMessage *msg,int avp_code,int avp_vendor_id,AAA_AVP *start_avp)
+inline AAA_AVP *cdp_avp_get_next_from_msg(
+		AAAMessage *msg, int avp_code, int avp_vendor_id, AAA_AVP *start_avp)
 {
-	return cdp_avp_get_next_from_list(msg->avpList,avp_code,avp_vendor_id,start_avp);
+	return cdp_avp_get_next_from_list(
+			msg->avpList, avp_code, avp_vendor_id, start_avp);
 }
 
 /**
@@ -92,9 +104,10 @@ inline AAA_AVP* cdp_avp_get_next_from_msg(AAAMessage *msg,int avp_code,int avp_v
  * @param avp_vendor_id
  * @return the AAA_AVP* or null if not found
  */
-inline AAA_AVP* cdp_avp_get_from_list(AAA_AVP_LIST list,int avp_code,int avp_vendor_id)
+inline AAA_AVP *cdp_avp_get_from_list(
+		AAA_AVP_LIST list, int avp_code, int avp_vendor_id)
 {
-	return cdp_avp_get_next_from_list(list,avp_code,avp_vendor_id,0);
+	return cdp_avp_get_next_from_list(list, avp_code, avp_vendor_id, 0);
 }
 
 /**
@@ -104,11 +117,15 @@ inline AAA_AVP* cdp_avp_get_from_list(AAA_AVP_LIST list,int avp_code,int avp_ven
  * @param avp_vendor_id
  * @return the AAA_AVP* or null if not found
  */
-inline AAA_AVP* cdp_avp_get_from_msg(AAAMessage *msg,int avp_code,int avp_vendor_id)
+inline AAA_AVP *cdp_avp_get_from_msg(
+		AAAMessage *msg, int avp_code, int avp_vendor_id)
 {
-	if (!msg){
-		LOG(L_ERR,"Failed finding AVP with Code %d and VendorId %d in NULL message!\n",avp_code,avp_vendor_id);
+	if(!msg) {
+		LOG(L_ERR,
+				"Failed finding AVP with Code %d and VendorId %d in NULL "
+				"message!\n",
+				avp_code, avp_vendor_id);
 		return 0;
 	}
-	return cdp_avp_get_from_list(msg->avpList,avp_code,avp_vendor_id);
+	return cdp_avp_get_from_list(msg->avpList, avp_code, avp_vendor_id);
 }

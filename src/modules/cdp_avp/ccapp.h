@@ -50,21 +50,22 @@
 #undef CDP_AVP_MODULE
 #define CDP_AVP_MODULE ccapp
 
-#if !defined(CDP_AVP_DECLARATION) && !defined(CDP_AVP_EXPORT) && !defined(CDP_AVP_INIT) && !defined(CDP_AVP_REFERENCE)
-	#ifndef _CDP_AVP_CCAPP_H_1
-	#define _CDP_AVP_CCAPP_H_1
+#if !defined(CDP_AVP_DECLARATION) && !defined(CDP_AVP_EXPORT) \
+		&& !defined(CDP_AVP_INIT) && !defined(CDP_AVP_REFERENCE)
+#ifndef _CDP_AVP_CCAPP_H_1
+#define _CDP_AVP_CCAPP_H_1
 
-		#include "../cdp/cdp_load.h"
+#include "../cdp/cdp_load.h"
 
-	#else
+#else
 
-		/* undo the macros definition if this was re-included */
-		#define CDP_AVP_EMPTY_MACROS
-			#include "macros.h"
-		#undef CDP_AVP_EMPTY_MACROS
+/* undo the macros definition if this was re-included */
+#define CDP_AVP_EMPTY_MACROS
+#include "macros.h"
+#undef CDP_AVP_EMPTY_MACROS
 
-	#endif
-#endif //_CDP_AVP_CCAPP_H_1	
+#endif
+#endif //_CDP_AVP_CCAPP_H_1
 
 /*
  * The list of AVPs must be declared in the following format:
@@ -154,120 +155,354 @@
  */
 
 
-cdp_avp_ptr		(CC_Correlation_Id,				0,	0,						OctetString,		str)
+cdp_avp_ptr(CC_Correlation_Id, 0, 0, OctetString, str)
 
-cdp_avp			(CC_Input_Octets,				0,	AAA_AVP_FLAG_MANDATORY,	Unsigned64,			uint64_t)
+		cdp_avp(CC_Input_Octets, 0, AAA_AVP_FLAG_MANDATORY, Unsigned64,
+				uint64_t)
 
-cdp_avp_add_ptr	(CC_Money,						0,	AAA_AVP_FLAG_MANDATORY,	Grouped,			AAA_AVP_LIST*)
-cdp_avp_get		(CC_Money,						0,	AAA_AVP_FLAG_MANDATORY,	Grouped,			AAA_AVP_LIST)
+				cdp_avp_add_ptr(CC_Money, 0, AAA_AVP_FLAG_MANDATORY, Grouped,
+						AAA_AVP_LIST *)
+						cdp_avp_get(CC_Money, 0, AAA_AVP_FLAG_MANDATORY,
+								Grouped, AAA_AVP_LIST)
 
-cdp_avp			(CC_Output_Octets,				0,	AAA_AVP_FLAG_MANDATORY,	Unsigned64,			uint64_t)
+								cdp_avp(CC_Output_Octets, 0,
+										AAA_AVP_FLAG_MANDATORY, Unsigned64,
+										uint64_t)
 
-cdp_avp			(CC_Request_Number,				0,	AAA_AVP_FLAG_MANDATORY,	Unsigned32,			uint32_t)
+										cdp_avp(CC_Request_Number, 0,
+												AAA_AVP_FLAG_MANDATORY,
+												Unsigned32, uint32_t)
 
-cdp_avp			(CC_Request_Type,				0,	AAA_AVP_FLAG_MANDATORY,	Enumerated,			int32_t)
+												cdp_avp(CC_Request_Type, 0,
+														AAA_AVP_FLAG_MANDATORY,
+														Enumerated, int32_t)
 
-cdp_avp			(CC_Service_Specific_Units,		0,	AAA_AVP_FLAG_MANDATORY,	Unsigned64,			uint64_t)
+														cdp_avp(CC_Service_Specific_Units,
+																0,
+																AAA_AVP_FLAG_MANDATORY,
+																Unsigned64,
+																uint64_t)
 
-cdp_avp			(CC_Session_Failover,			0,	AAA_AVP_FLAG_MANDATORY,	Enumerated,			int32_t)
+																cdp_avp(CC_Session_Failover,
+																		0,
+																		AAA_AVP_FLAG_MANDATORY,
+																		Enumerated,
+																		int32_t)
 
-cdp_avp			(CC_Sub_Session_Id,				0,	AAA_AVP_FLAG_MANDATORY,	Unsigned64,			uint64_t)
+																		cdp_avp(CC_Sub_Session_Id,
+																				0,
+																				AAA_AVP_FLAG_MANDATORY,
+																				Unsigned64,
+																				uint64_t)
 
-cdp_avp			(CC_Time,						0,	AAA_AVP_FLAG_MANDATORY,	Unsigned32,			uint32_t)
+																				cdp_avp(CC_Time,
+																						0,
+																						AAA_AVP_FLAG_MANDATORY,
+																						Unsigned32,
+																						uint32_t)
 
-cdp_avp			(CC_Total_Octets,				0,	AAA_AVP_FLAG_MANDATORY,	Unsigned64,			uint64_t)
+																						cdp_avp(CC_Total_Octets,
+																								0,
+																								AAA_AVP_FLAG_MANDATORY,
+																								Unsigned64,
+																								uint64_t)
 
-cdp_avp			(CC_Unit_Type,					0,	AAA_AVP_FLAG_MANDATORY,	Enumerated,			int32_t)
+																								cdp_avp(CC_Unit_Type,
+																										0,
+																										AAA_AVP_FLAG_MANDATORY,
+																										Enumerated,
+																										int32_t)
 
-cdp_avp			(Check_Balance_Result,			0,	AAA_AVP_FLAG_MANDATORY,	Enumerated,			int32_t)
+																										cdp_avp(Check_Balance_Result,
+																												0,
+																												AAA_AVP_FLAG_MANDATORY,
+																												Enumerated,
+																												int32_t)
 
-cdp_avp_add_ptr	(Cost_Information,				0,	AAA_AVP_FLAG_MANDATORY,	Grouped,			AAA_AVP_LIST*)
-cdp_avp_get		(Cost_Information,				0,	AAA_AVP_FLAG_MANDATORY,	Grouped,			AAA_AVP_LIST)
+																												cdp_avp_add_ptr(
+																														Cost_Information,
+																														0,
+																														AAA_AVP_FLAG_MANDATORY,
+																														Grouped,
+																														AAA_AVP_LIST
+																																*)
+																														cdp_avp_get(
+																																Cost_Information,
+																																0,
+																																AAA_AVP_FLAG_MANDATORY,
+																																Grouped,
+																																AAA_AVP_LIST)
 
-cdp_avp_ptr		(Cost_Unit,						0,	AAA_AVP_FLAG_MANDATORY,	UTF8String,			str)
+																																cdp_avp_ptr(
+																																		Cost_Unit,
+																																		0,
+																																		AAA_AVP_FLAG_MANDATORY,
+																																		UTF8String,
+																																		str)
 
-cdp_avp			(Credit_Control,				0,	AAA_AVP_FLAG_MANDATORY,	Enumerated,			int32_t)
+																																		cdp_avp(Credit_Control, 0, AAA_AVP_FLAG_MANDATORY,
+																																				Enumerated,
+																																				int32_t)
 
-cdp_avp			(Credit_Control_Failure_Handling,0,	AAA_AVP_FLAG_MANDATORY,	Enumerated,			int32_t)
+																																				cdp_avp(Credit_Control_Failure_Handling,
+																																						0,
+																																						AAA_AVP_FLAG_MANDATORY,
+																																						Enumerated,
+																																						int32_t)
 
-cdp_avp			(Currency_Code,					0,	AAA_AVP_FLAG_MANDATORY,	Unsigned32,			uint32_t)
+																																						cdp_avp(Currency_Code,
+																																								0,
+																																								AAA_AVP_FLAG_MANDATORY,
+																																								Unsigned32,
+																																								uint32_t)
 
-cdp_avp			(Direct_Debiting_Failure_Handling,0,AAA_AVP_FLAG_MANDATORY,	Enumerated,			int32_t)
+																																								cdp_avp(Direct_Debiting_Failure_Handling,
+																																										0,
+																																										AAA_AVP_FLAG_MANDATORY,
+																																										Enumerated,
+																																										int32_t)
 
-cdp_avp			(Exponent,						0,	AAA_AVP_FLAG_MANDATORY,	Integer32,			int32_t)
+																																										cdp_avp(Exponent, 0,
+																																												AAA_AVP_FLAG_MANDATORY,
+																																												Integer32,
+																																												int32_t)
 
-cdp_avp			(Final_Unit_Action,				0,	AAA_AVP_FLAG_MANDATORY,	Enumerated,			int32_t)
+																																												cdp_avp(Final_Unit_Action,
+																																														0,
+																																														AAA_AVP_FLAG_MANDATORY,
+																																														Enumerated,
+																																														int32_t)
 
-cdp_avp_add_ptr	(Final_Unit_Indication,			0,	AAA_AVP_FLAG_MANDATORY,	Grouped,			AAA_AVP_LIST*)
-cdp_avp_get		(Final_Unit_Indication,			0,	AAA_AVP_FLAG_MANDATORY,	Grouped,			AAA_AVP_LIST)
+																																														cdp_avp_add_ptr(Final_Unit_Indication, 0, AAA_AVP_FLAG_MANDATORY, Grouped, AAA_AVP_LIST *) cdp_avp_get(
+																																																Final_Unit_Indication,
+																																																0,
+																																																AAA_AVP_FLAG_MANDATORY,
+																																																Grouped,
+																																																AAA_AVP_LIST)
 
-cdp_avp_add_ptr	(Granted_Service_Unit,			0,	AAA_AVP_FLAG_MANDATORY,	Grouped,			AAA_AVP_LIST*)
-cdp_avp_get		(Granted_Service_Unit,			0,	AAA_AVP_FLAG_MANDATORY,	Grouped,			AAA_AVP_LIST)
+																																																cdp_avp_add_ptr(
+																																																		Granted_Service_Unit,
+																																																		0,
+																																																		AAA_AVP_FLAG_MANDATORY,
+																																																		Grouped,
+																																																		AAA_AVP_LIST
+																																																				*)
+																																																		cdp_avp_get(
+																																																				Granted_Service_Unit,
+																																																				0,
+																																																				AAA_AVP_FLAG_MANDATORY,
+																																																				Grouped,
+																																																				AAA_AVP_LIST)
 
-cdp_avp			(G_S_U_Pool_Identifier,			0,	AAA_AVP_FLAG_MANDATORY,	Unsigned32,			uint32_t)
+																																																				cdp_avp(G_S_U_Pool_Identifier,
+																																																						0,
+																																																						AAA_AVP_FLAG_MANDATORY,
+																																																						Unsigned32,
+																																																						uint32_t)
 
-cdp_avp_add_ptr	(G_S_U_Pool_Reference,			0,	AAA_AVP_FLAG_MANDATORY,	Grouped,			AAA_AVP_LIST*)
-cdp_avp_get		(G_S_U_Pool_Reference,			0,	AAA_AVP_FLAG_MANDATORY,	Grouped,			AAA_AVP_LIST)
+																																																						cdp_avp_add_ptr(
+																																																								G_S_U_Pool_Reference, 0, AAA_AVP_FLAG_MANDATORY, Grouped, AAA_AVP_LIST *)
+																																																								cdp_avp_get(
+																																																										G_S_U_Pool_Reference,
+																																																										0,
+																																																										AAA_AVP_FLAG_MANDATORY,
+																																																										Grouped,
+																																																										AAA_AVP_LIST)
 
-cdp_avp_add_ptr	(Multiple_Services_Credit_Control,0,AAA_AVP_FLAG_MANDATORY,	Grouped,			AAA_AVP_LIST*)
-cdp_avp_get		(Multiple_Services_Credit_Control,0,AAA_AVP_FLAG_MANDATORY,	Grouped,			AAA_AVP_LIST)
+																																																										cdp_avp_add_ptr(
+																																																												Multiple_Services_Credit_Control,
+																																																												0,
+																																																												AAA_AVP_FLAG_MANDATORY,
+																																																												Grouped,
+																																																												AAA_AVP_LIST
+																																																														*)
+																																																												cdp_avp_get(
+																																																														Multiple_Services_Credit_Control,
+																																																														0,
+																																																														AAA_AVP_FLAG_MANDATORY,
+																																																														Grouped,
+																																																														AAA_AVP_LIST)
 
-cdp_avp			(Multiple_Services_Indicator,	0,	AAA_AVP_FLAG_MANDATORY,	Enumerated,			int32_t)
+																																																														cdp_avp(Multiple_Services_Indicator, 0, AAA_AVP_FLAG_MANDATORY,
+																																																																Enumerated,
+																																																																int32_t)
 
-cdp_avp			(Rating_Group,					0,	AAA_AVP_FLAG_MANDATORY,	Unsigned32,			uint32_t)
+																																																																cdp_avp(Rating_Group,
+																																																																		0,
+																																																																		AAA_AVP_FLAG_MANDATORY,
+																																																																		Unsigned32,
+																																																																		uint32_t)
 
-cdp_avp			(Redirect_Address_Type,			0,	AAA_AVP_FLAG_MANDATORY,	Enumerated,			int32_t)
+																																																																		cdp_avp(Redirect_Address_Type,
+																																																																				0,
+																																																																				AAA_AVP_FLAG_MANDATORY,
+																																																																				Enumerated,
+																																																																				int32_t)
 
-cdp_avp_add_ptr	(Redirect_Server,				0,	AAA_AVP_FLAG_MANDATORY,	Grouped,			AAA_AVP_LIST*)
-cdp_avp_get		(Redirect_Server,				0,	AAA_AVP_FLAG_MANDATORY,	Grouped,			AAA_AVP_LIST)
+																																																																				cdp_avp_add_ptr(
+																																																																						Redirect_Server,
+																																																																						0,
+																																																																						AAA_AVP_FLAG_MANDATORY,
+																																																																						Grouped, AAA_AVP_LIST *) cdp_avp_get(Redirect_Server,
+																																																																						0,
+																																																																						AAA_AVP_FLAG_MANDATORY,
+																																																																						Grouped,
+																																																																						AAA_AVP_LIST)
 
-cdp_avp_ptr		(Redirect_Server_Address,		0,	AAA_AVP_FLAG_MANDATORY,	UTF8String,			str)
+																																																																						cdp_avp_ptr(
+																																																																								Redirect_Server_Address, 0, AAA_AVP_FLAG_MANDATORY,
+																																																																								UTF8String,
+																																																																								str)
 
-cdp_avp			(Requested_Action,				0,	AAA_AVP_FLAG_MANDATORY,	Enumerated,			int32_t)
+																																																																								cdp_avp(Requested_Action,
+																																																																										0,
+																																																																										AAA_AVP_FLAG_MANDATORY,
+																																																																										Enumerated,
+																																																																										int32_t)
 
-cdp_avp_add_ptr	(Requested_Service_Unit,		0,	AAA_AVP_FLAG_MANDATORY,	Grouped,			AAA_AVP_LIST*)
-cdp_avp_get		(Requested_Service_Unit,		0,	AAA_AVP_FLAG_MANDATORY,	Grouped,			AAA_AVP_LIST)
+																																																																										cdp_avp_add_ptr(
+																																																																												Requested_Service_Unit,
+																																																																												0,
+																																																																												AAA_AVP_FLAG_MANDATORY,
+																																																																												Grouped,
+																																																																												AAA_AVP_LIST
+																																																																														*) cdp_avp_get(Requested_Service_Unit, 0, AAA_AVP_FLAG_MANDATORY,
+																																																																												Grouped,
+																																																																												AAA_AVP_LIST)
 
-cdp_avp_ptr		(Restriction_Filter_Rule,		0,	AAA_AVP_FLAG_MANDATORY,	IPFilterRule,		str)
+																																																																												cdp_avp_ptr(
+																																																																														Restriction_Filter_Rule,
+																																																																														0,
+																																																																														AAA_AVP_FLAG_MANDATORY,
+																																																																														IPFilterRule,
+																																																																														str)
 
-cdp_avp_ptr		(Service_Context_Id,			0,	AAA_AVP_FLAG_MANDATORY,	UTF8String,			str)
+																																																																														cdp_avp_ptr(
+																																																																																Service_Context_Id,
+																																																																																0,
+																																																																																AAA_AVP_FLAG_MANDATORY,
+																																																																																UTF8String,
+																																																																																str)
 
-cdp_avp			(Service_Identifier,			0,	AAA_AVP_FLAG_MANDATORY,	Unsigned32,			uint32_t)
+																																																																																cdp_avp(Service_Identifier,
+																																																																																		0,
+																																																																																		AAA_AVP_FLAG_MANDATORY,
+																																																																																		Unsigned32,
+																																																																																		uint32_t)
 
-cdp_avp_add_ptr	(Service_Parameter_Info,		0,	0,						Grouped,			AAA_AVP_LIST*)
-cdp_avp_get		(Service_Parameter_Info,		0,	0,						Grouped,			AAA_AVP_LIST)
+																																																																																		cdp_avp_add_ptr(Service_Parameter_Info,
+																																																																																				0,
+																																																																																				0,
+																																																																																				Grouped, AAA_AVP_LIST *)
+																																																																																				cdp_avp_get(
+																																																																																						Service_Parameter_Info, 0, 0, Grouped, AAA_AVP_LIST)
 
-cdp_avp			(Service_Parameter_Type,		0,	0,						Unsigned32,			uint32_t)
+																																																																																						cdp_avp(Service_Parameter_Type,
+																																																																																								0,
+																																																																																								0,
+																																																																																								Unsigned32,
+																																																																																								uint32_t)
 
-cdp_avp_ptr		(Service_Parameter_Value,		0,	0,						OctetString,		str)
+																																																																																								cdp_avp_ptr(
+																																																																																										Service_Parameter_Value,
+																																																																																										0,
+																																																																																										0,
+																																																																																										OctetString,
+																																																																																										str)
 
-cdp_avp_add_ptr	(Subscription_Id,				0,	AAA_AVP_FLAG_MANDATORY,	Grouped,			AAA_AVP_LIST*)
-cdp_avp_get		(Subscription_Id,				0,	AAA_AVP_FLAG_MANDATORY,	Grouped,			AAA_AVP_LIST)
+																																																																																										cdp_avp_add_ptr(
+																																																																																												Subscription_Id,
+																																																																																												0,
+																																																																																												AAA_AVP_FLAG_MANDATORY,
+																																																																																												Grouped,
+																																																																																												AAA_AVP_LIST
+																																																																																														*)
+																																																																																												cdp_avp_get(
+																																																																																														Subscription_Id,
+																																																																																														0,
+																																																																																														AAA_AVP_FLAG_MANDATORY,
+																																																																																														Grouped,
+																																																																																														AAA_AVP_LIST)
 
-cdp_avp_ptr		(Subscription_Id_Data,			0,	AAA_AVP_FLAG_MANDATORY,	UTF8String,			str)
+																																																																																														cdp_avp_ptr(
+																																																																																																Subscription_Id_Data,
+																																																																																																0,
+																																																																																																AAA_AVP_FLAG_MANDATORY,
+																																																																																																UTF8String,
+																																																																																																str)
 
-cdp_avp			(Subscription_Id_Type,			0,	AAA_AVP_FLAG_MANDATORY,	Enumerated,			int32_t)
+																																																																																																cdp_avp(Subscription_Id_Type,
+																																																																																																		0,
+																																																																																																		AAA_AVP_FLAG_MANDATORY, Enumerated,
+																																																																																																		int32_t)
 
-cdp_avp			(Tariff_Change_Usage,			0,	AAA_AVP_FLAG_MANDATORY,	Enumerated,			int32_t)
+																																																																																																		cdp_avp(Tariff_Change_Usage,
+																																																																																																				0,
+																																																																																																				AAA_AVP_FLAG_MANDATORY,
+																																																																																																				Enumerated,
+																																																																																																				int32_t)
 
-cdp_avp			(Tariff_Time_Change,			0,	AAA_AVP_FLAG_MANDATORY,	Time,				time_t)
+																																																																																																				cdp_avp(Tariff_Time_Change, 0, AAA_AVP_FLAG_MANDATORY, Time, time_t)
 
-cdp_avp_add_ptr	(Unit_Value,					0,	AAA_AVP_FLAG_MANDATORY,	Grouped,			AAA_AVP_LIST*)
-cdp_avp_get		(Unit_Value,					0,	AAA_AVP_FLAG_MANDATORY,	Grouped,			AAA_AVP_LIST)
+																																																																																																						cdp_avp_add_ptr(
+																																																																																																								Unit_Value,
+																																																																																																								0,
+																																																																																																								AAA_AVP_FLAG_MANDATORY, Grouped, AAA_AVP_LIST *)
+																																																																																																								cdp_avp_get(
+																																																																																																										Unit_Value,
+																																																																																																										0,
+																																																																																																										AAA_AVP_FLAG_MANDATORY,
+																																																																																																										Grouped,
+																																																																																																										AAA_AVP_LIST)
 
-cdp_avp_add_ptr	(Used_Service_Unit,				0,	AAA_AVP_FLAG_MANDATORY,	Grouped,			AAA_AVP_LIST*)
-cdp_avp_get		(Used_Service_Unit,				0,	AAA_AVP_FLAG_MANDATORY,	Grouped,			AAA_AVP_LIST)
+																																																																																																										cdp_avp_add_ptr(
+																																																																																																												Used_Service_Unit,
+																																																																																																												0,
+																																																																																																												AAA_AVP_FLAG_MANDATORY,
+																																																																																																												Grouped,
+																																																																																																												AAA_AVP_LIST
+																																																																																																														*)
+																																																																																																												cdp_avp_get(
+																																																																																																														Used_Service_Unit,
+																																																																																																														0,
+																																																																																																														AAA_AVP_FLAG_MANDATORY,
+																																																																																																														Grouped,
+																																																																																																														AAA_AVP_LIST)
 
-cdp_avp_add_ptr	(User_Equipment_Info,			0,	0,						Grouped,			AAA_AVP_LIST*)
-cdp_avp_get		(User_Equipment_Info,			0,	0,						Grouped,			AAA_AVP_LIST)
+																																																																																																														cdp_avp_add_ptr(
+																																																																																																																User_Equipment_Info,
+																																																																																																																0,
+																																																																																																																0,
+																																																																																																																Grouped,
+																																																																																																																AAA_AVP_LIST
+																																																																																																																		*) cdp_avp_get(User_Equipment_Info, 0, 0,
+																																																																																																																Grouped,
+																																																																																																																AAA_AVP_LIST)
 
-cdp_avp			(User_Equipment_Info_Type,		0,	0,						Enumerated,			int32_t)
+																																																																																																																cdp_avp(User_Equipment_Info_Type,
+																																																																																																																		0,
+																																																																																																																		0,
+																																																																																																																		Enumerated,
+																																																																																																																		int32_t)
 
-cdp_avp_ptr		(User_Equipment_Info_Value,		0,	0,						OctetString,		str)
+																																																																																																																		cdp_avp_ptr(
+																																																																																																																				User_Equipment_Info_Value,
+																																																																																																																				0,
+																																																																																																																				0,
+																																																																																																																				OctetString,
+																																																																																																																				str)
 
-cdp_avp			(Value_Digits,					0,	AAA_AVP_FLAG_MANDATORY, Integer64,			int64_t)
+																																																																																																																				cdp_avp(Value_Digits,
+																																																																																																																						0,
+																																																																																																																						AAA_AVP_FLAG_MANDATORY,
+																																																																																																																						Integer64,
+																																																																																																																						int64_t)
 
-cdp_avp			(Validity_Time,					0,	AAA_AVP_FLAG_MANDATORY,	Unsigned32,			uint32_t)
+																																																																																																																						cdp_avp(Validity_Time,
+																																																																																																																								0,
+																																																																																																																								AAA_AVP_FLAG_MANDATORY,
+																																																																																																																								Unsigned32,
+																																																																																																																								uint32_t)
 
 /*
  * From here-on you can define/export/init/declare functions which can not be generate with the macros
@@ -275,7 +510,7 @@ cdp_avp			(Validity_Time,					0,	AAA_AVP_FLAG_MANDATORY,	Unsigned32,			uint32_t)
 
 #if defined(CDP_AVP_DEFINITION)
 
-	/*
+		/*
 	 * Put here your supplimentary definitions. Typically:
 	 * 
 	 * int <function1>(param1)
@@ -285,104 +520,120 @@ cdp_avp			(Validity_Time,					0,	AAA_AVP_FLAG_MANDATORY,	Unsigned32,			uint32_t)
 	 * 
 	 * 
 	 */
-	
-	int cdp_avp_add_Subscription_Id_Group(AAA_AVP_LIST *list,int32_t type, str data,AVPDataStatus data_do)
-	{
-		AAA_AVP_LIST list_grp={0,0};	
-		if (!cdp_avp_add_Subscription_Id_Type(&list_grp,type)) goto error;
-		if (!cdp_avp_add_Subscription_Id_Data(&list_grp,data,data_do)) goto error;
-		return cdp_avp_add_to_list(list,
-				cdp_avp_new_Grouped(
-						AVP_Subscription_Id,
-						AAA_AVP_FLAG_MANDATORY,
-						0,
-						&list_grp,
-						AVP_FREE_DATA));	
-		error:
-			if (data_do==AVP_FREE_DATA && data.s) shm_free(data.s);
-			cdp->AAAFreeAVPList(&list_grp);
-		return 0;
-	}
 
-	int cdp_avp_get_Subscription_Id_Group(AAA_AVP_LIST list,int32_t *type,str *data,AAA_AVP **avp_ptr)
-	{
-		AAA_AVP_LIST list_grp={0,0};
-		AAA_AVP *avp = cdp_avp_get_next_from_list(list,
-				AVP_Subscription_Id,
-				0,
-				avp_ptr?*avp_ptr:0);
-		if (avp_ptr) *avp_ptr= avp; 
-		if (!avp) goto error;
-		if (!cdp_avp_get_Grouped(avp,&list_grp)) goto error;
-		if (!cdp_avp_get_Subscription_Id_Type(list_grp,type,0)) goto error;
-		if (!cdp_avp_get_Subscription_Id_Data(list_grp,data,0)) goto error;
-		cdp->AAAFreeAVPList(&list_grp);
-		return 1;
-	error:
-		if (type) *type = 0;
-		if (data) {data->s=0;data->len=0;}
-		cdp->AAAFreeAVPList(&list_grp);
-		return 0;
+		int cdp_avp_add_Subscription_Id_Group(AAA_AVP_LIST *list, int32_t type,
+				str data, AVPDataStatus data_do)
+{
+	AAA_AVP_LIST list_grp = {0, 0};
+	if(!cdp_avp_add_Subscription_Id_Type(&list_grp, type))
+		goto error;
+	if(!cdp_avp_add_Subscription_Id_Data(&list_grp, data, data_do))
+		goto error;
+	return cdp_avp_add_to_list(
+			list, cdp_avp_new_Grouped(AVP_Subscription_Id,
+						  AAA_AVP_FLAG_MANDATORY, 0, &list_grp, AVP_FREE_DATA));
+error:
+	if(data_do == AVP_FREE_DATA && data.s)
+		shm_free(data.s);
+	cdp->AAAFreeAVPList(&list_grp);
+	return 0;
+}
+
+int cdp_avp_get_Subscription_Id_Group(
+		AAA_AVP_LIST list, int32_t *type, str *data, AAA_AVP **avp_ptr)
+{
+	AAA_AVP_LIST list_grp = {0, 0};
+	AAA_AVP *avp = cdp_avp_get_next_from_list(
+			list, AVP_Subscription_Id, 0, avp_ptr ? *avp_ptr : 0);
+	if(avp_ptr)
+		*avp_ptr = avp;
+	if(!avp)
+		goto error;
+	if(!cdp_avp_get_Grouped(avp, &list_grp))
+		goto error;
+	if(!cdp_avp_get_Subscription_Id_Type(list_grp, type, 0))
+		goto error;
+	if(!cdp_avp_get_Subscription_Id_Data(list_grp, data, 0))
+		goto error;
+	cdp->AAAFreeAVPList(&list_grp);
+	return 1;
+error:
+	if(type)
+		*type = 0;
+	if(data) {
+		data->s = 0;
+		data->len = 0;
 	}
+	cdp->AAAFreeAVPList(&list_grp);
+	return 0;
+}
 
 
-	int cdp_avp_add_User_Equipment_Info_Group(AAA_AVP_LIST *list,int32_t type, str data,AVPDataStatus data_do)
-	{
-		AAA_AVP_LIST list_grp={0,0};	
-		if (!cdp_avp_add_User_Equipment_Info_Type(&list_grp,type)) goto error;
-		if (!cdp_avp_add_User_Equipment_Info_Value(&list_grp,data,data_do)) goto error;
-		return cdp_avp_add_to_list(list,
-				cdp_avp_new_Grouped(
-						AVP_User_Equipment_Info,
-						AAA_AVP_FLAG_MANDATORY,
-						0,
-						&list_grp,
-						AVP_FREE_DATA));	
-	error:
-		if (data_do==AVP_FREE_DATA && data.s) shm_free(data.s);
-		cdp->AAAFreeAVPList(&list_grp);
-		return 0;
-	}
+int cdp_avp_add_User_Equipment_Info_Group(
+		AAA_AVP_LIST *list, int32_t type, str data, AVPDataStatus data_do)
+{
+	AAA_AVP_LIST list_grp = {0, 0};
+	if(!cdp_avp_add_User_Equipment_Info_Type(&list_grp, type))
+		goto error;
+	if(!cdp_avp_add_User_Equipment_Info_Value(&list_grp, data, data_do))
+		goto error;
+	return cdp_avp_add_to_list(
+			list, cdp_avp_new_Grouped(AVP_User_Equipment_Info,
+						  AAA_AVP_FLAG_MANDATORY, 0, &list_grp, AVP_FREE_DATA));
+error:
+	if(data_do == AVP_FREE_DATA && data.s)
+		shm_free(data.s);
+	cdp->AAAFreeAVPList(&list_grp);
+	return 0;
+}
 
-	int cdp_avp_get_User_Equipment_Info_Group(AAA_AVP_LIST list,int32_t *type,str *data,AAA_AVP **avp_ptr)
-	{
-		AAA_AVP_LIST list_grp={0,0};
-		AAA_AVP *avp = cdp_avp_get_next_from_list(list,
-				AVP_User_Equipment_Info,
-				0,
-				avp_ptr?*avp_ptr:0);
-		if (avp_ptr) *avp_ptr= avp;  
-		if (!avp) goto error;
-		if (!cdp_avp_get_Grouped(avp,&list_grp)) goto error;
-		if (!cdp_avp_get_User_Equipment_Info_Type(list_grp,type,0)) goto error;
-		if (!cdp_avp_get_User_Equipment_Info_Value(list_grp,data,0)) goto error;
-		cdp->AAAFreeAVPList(&list_grp);
-		return 1;
-	error:
-		if (type) *type = 0;
-		if (data) {data->s=0;data->len=0;}
-		cdp->AAAFreeAVPList(&list_grp);
-		return 0;
+int cdp_avp_get_User_Equipment_Info_Group(
+		AAA_AVP_LIST list, int32_t *type, str *data, AAA_AVP **avp_ptr)
+{
+	AAA_AVP_LIST list_grp = {0, 0};
+	AAA_AVP *avp = cdp_avp_get_next_from_list(
+			list, AVP_User_Equipment_Info, 0, avp_ptr ? *avp_ptr : 0);
+	if(avp_ptr)
+		*avp_ptr = avp;
+	if(!avp)
+		goto error;
+	if(!cdp_avp_get_Grouped(avp, &list_grp))
+		goto error;
+	if(!cdp_avp_get_User_Equipment_Info_Type(list_grp, type, 0))
+		goto error;
+	if(!cdp_avp_get_User_Equipment_Info_Value(list_grp, data, 0))
+		goto error;
+	cdp->AAAFreeAVPList(&list_grp);
+	return 1;
+error:
+	if(type)
+		*type = 0;
+	if(data) {
+		data->s = 0;
+		data->len = 0;
 	}
-	
+	cdp->AAAFreeAVPList(&list_grp);
+	return 0;
+}
+
 #elif defined(CDP_AVP_EXPORT)
 
-	/*
+		/*
 	 * Put here your supplimentary exports in the format: 
 	 * 	<function_type1> <nice_function_name1>; 
 	 *  <function_type2> <nice_function_name1>;
 	 *  ...
 	 *  
 	 */
-	cdp_avp_add_Subscription_Id_Group_f		add_Subscription_Id_Group;
-	cdp_avp_get_Subscription_Id_Group_f		get_Subscription_Id_Group;
-	
-	cdp_avp_add_User_Equipment_Info_Group_f		add_User_Equipment_Info_Group;
-	cdp_avp_get_User_Equipment_Info_Group_f		get_User_Equipment_Info_Group;
-	
+		cdp_avp_add_Subscription_Id_Group_f add_Subscription_Id_Group;
+cdp_avp_get_Subscription_Id_Group_f get_Subscription_Id_Group;
+
+cdp_avp_add_User_Equipment_Info_Group_f add_User_Equipment_Info_Group;
+cdp_avp_get_User_Equipment_Info_Group_f get_User_Equipment_Info_Group;
+
 #elif defined(CDP_AVP_INIT)
 
-	/*
+		/*
 	 * Put here your supplimentary inits in the format: 
 	 * 	<function1>,
 	 *  <function2>,
@@ -391,33 +642,37 @@ cdp_avp			(Validity_Time,					0,	AAA_AVP_FLAG_MANDATORY,	Unsigned32,			uint32_t)
 	 * Make sure you keep the same order as in export!
 	 * 
 	 */
-	cdp_avp_add_Subscription_Id_Group,
-	cdp_avp_get_Subscription_Id_Group,
+		cdp_avp_add_Subscription_Id_Group,
+		cdp_avp_get_Subscription_Id_Group,
 
-	cdp_avp_add_User_Equipment_Info_Group,
-	cdp_avp_get_User_Equipment_Info_Group,
-	
+		cdp_avp_add_User_Equipment_Info_Group,
+		cdp_avp_get_User_Equipment_Info_Group,
+
 #elif defined(CDP_AVP_REFERENCE)
-	/*
+		/*
 	 * Put here what you want to get in the reference. Typically:
 	 * <function1>
 	 * <function2>
 	 * ... 
 	 * 
 	 */
-int CDP_AVP_MODULE.add_Subscription_Id_Group(AAA_AVP_LIST *list,int32_t type,str data,AVPDataStatus data_do);
-int CDP_AVP_MODULE.get_Subscription_Id_Group(AAA_AVP_LIST list,int32_t *type,str *data,AAA_AVP **avp_ptr);
-		
-int CDP_AVP_MODULE.add_User_Equipment_Info_Group(AAA_AVP_LIST *list,int32_t type,str data,AVPDataStatus data_do);
-int CDP_AVP_MODULE.get_User_Equipment_Info_Group(AAA_AVP_LIST list,int32_t *type,str *data,AAA_AVP **avp_ptr);
-	
+		int CDP_AVP_MODULE.add_Subscription_Id_Group(AAA_AVP_LIST *list,
+				int32_t type, str data, AVPDataStatus data_do);
+int CDP_AVP_MODULE.get_Subscription_Id_Group(
+		AAA_AVP_LIST list, int32_t *type, str *data, AAA_AVP **avp_ptr);
+
+int CDP_AVP_MODULE.add_User_Equipment_Info_Group(
+		AAA_AVP_LIST *list, int32_t type, str data, AVPDataStatus data_do);
+int CDP_AVP_MODULE.get_User_Equipment_Info_Group(
+		AAA_AVP_LIST list, int32_t *type, str *data, AAA_AVP **avp_ptr);
+
 #elif defined(CDP_AVP_EMPTY_MACROS)
-	
-	/* this should be left blank */
-	
+
+/* this should be left blank */
+
 #else
 
-	/*
+/*
 	 * Put here your definitions according to the declarations, exports, init, etc above. Typically:
 	 * 
 	 * int <function1(params1);>
@@ -430,34 +685,42 @@ int CDP_AVP_MODULE.get_User_Equipment_Info_Group(AAA_AVP_LIST list,int32_t *type
 	 *  
 	 */
 
-	
-	#ifndef _CDP_AVP_CCAPP_H_2
-	#define _CDP_AVP_CCAPP_H_2
 
-	
-		int cdp_avp_add_Subscription_Id_Group(AAA_AVP_LIST *list,int32_t type, str data,AVPDataStatus data_do);
-		typedef int (*cdp_avp_add_Subscription_Id_Group_f)(AAA_AVP_LIST *list,int32_t type, str data,AVPDataStatus data_do);
+#ifndef _CDP_AVP_CCAPP_H_2
+#define _CDP_AVP_CCAPP_H_2
 
-		int cdp_avp_get_Subscription_Id_Group(AAA_AVP_LIST list,int32_t *type,str *data,AAA_AVP **avp_ptr);
-		typedef int (*cdp_avp_get_Subscription_Id_Group_f)(AAA_AVP_LIST list,int32_t *type,str *data,AAA_AVP **avp_ptr);
-		
 
-		int cdp_avp_add_User_Equipment_Info_Group(AAA_AVP_LIST *list,int32_t type, str data,AVPDataStatus data_do);
-		typedef int (*cdp_avp_add_User_Equipment_Info_Group_f)(AAA_AVP_LIST *list,int32_t type, str data,AVPDataStatus data_do);
+																																																																																																																								int cdp_avp_add_Subscription_Id_Group(
+																																																																																																																										AAA_AVP_LIST
+																																																																																																																												*list,
+																																																																																																																										int32_t type,
+																																																																																																																										str data,
+																																																																																																																										AVPDataStatus
+																																																																																																																												data_do);
+typedef int (*cdp_avp_add_Subscription_Id_Group_f)(
+		AAA_AVP_LIST *list, int32_t type, str data, AVPDataStatus data_do);
 
-		int cdp_avp_get_User_Equipment_Info_Group(AAA_AVP_LIST list,int32_t *type,str *data,AAA_AVP **avp_ptr);
-		typedef int (*cdp_avp_get_User_Equipment_Info_Group_f)(AAA_AVP_LIST list,int32_t *type,str *data,AAA_AVP **avp_ptr);
-		
-	#endif //_CDP_AVP_CCAPP_H_2
-	
+int cdp_avp_get_Subscription_Id_Group(
+		AAA_AVP_LIST list, int32_t *type, str *data, AAA_AVP **avp_ptr);
+typedef int (*cdp_avp_get_Subscription_Id_Group_f)(
+		AAA_AVP_LIST list, int32_t *type, str *data, AAA_AVP **avp_ptr);
+
+
+int cdp_avp_add_User_Equipment_Info_Group(
+		AAA_AVP_LIST *list, int32_t type, str data, AVPDataStatus data_do);
+typedef int (*cdp_avp_add_User_Equipment_Info_Group_f)(
+		AAA_AVP_LIST *list, int32_t type, str data, AVPDataStatus data_do);
+
+int cdp_avp_get_User_Equipment_Info_Group(
+		AAA_AVP_LIST list, int32_t *type, str *data, AAA_AVP **avp_ptr);
+typedef int (*cdp_avp_get_User_Equipment_Info_Group_f)(
+		AAA_AVP_LIST list, int32_t *type, str *data, AAA_AVP **avp_ptr);
+
+#endif //_CDP_AVP_CCAPP_H_2
+
 #endif
 
 
-
 #define CDP_AVP_UNDEF_MACROS
-	#include "macros.h"
+#include "macros.h"
 #undef CDP_AVP_UNDEF_MACROS
-	
-
-
-

@@ -52,9 +52,11 @@ extern struct cdp_binds *cdp;
  * @param data_do - what to do with the data next 
  * @return ptr to the new avp or null on error
  */
-inline AAA_AVP *cdp_avp_new(int avp_code,int avp_flags,int avp_vendorid,str data,AVPDataStatus data_do)
+inline AAA_AVP *cdp_avp_new(int avp_code, int avp_flags, int avp_vendorid,
+		str data, AVPDataStatus data_do)
 {
-	if (avp_vendorid!=0) avp_flags |= AAA_AVP_FLAG_VENDOR_SPECIFIC;
-	return cdp->AAACreateAVP(avp_code,avp_flags,avp_vendorid,data.s,data.len,data_do);	
+	if(avp_vendorid != 0)
+		avp_flags |= AAA_AVP_FLAG_VENDOR_SPECIFIC;
+	return cdp->AAACreateAVP(
+			avp_code, avp_flags, avp_vendorid, data.s, data.len, data_do);
 }
-
