@@ -29,15 +29,13 @@
 #include "config.h"
 
 struct cfg_group_stun default_stun_cfg = {
-		0,	/* Read only variable to mark if stun is enabled */
-	    };
+		0, /* Read only variable to mark if stun is enabled */
+};
 
 void *stun_cfg = &default_stun_cfg;
 
 cfg_def_t stun_cfg_def[] = {
-	{ "stun_enabled", CFG_VAR_INT | CFG_ATOMIC | CFG_READONLY,
-	  0, 0, 0, 0,
-	  "If set to one (true) STUN is enabled." },
+		{"stun_enabled", CFG_VAR_INT | CFG_ATOMIC | CFG_READONLY, 0, 0, 0, 0,
+				"If set to one (true) STUN is enabled."},
 
-	{0, 0, 0, 0, 0, 0}
-};
+		{0, 0, 0, 0, 0, 0}};
