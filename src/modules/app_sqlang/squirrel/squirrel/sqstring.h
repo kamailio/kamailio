@@ -2,31 +2,38 @@
 #ifndef _SQSTRING_H_
 #define _SQSTRING_H_
 
-inline SQHash _hashstr (const SQChar *s, size_t l)
+inline SQHash _hashstr(const SQChar *s, size_t l)
 {
-	SQHash h = (SQHash)l;  /* seed */
-	size_t step = (l >> 5) + 1;  /* if string is too long, don't hash all its chars */
+	SQHash h = (SQHash)l; /* seed */
+	size_t step =
+			(l >> 5) + 1; /* if string is too long, don't hash all its chars */
 	size_t l1;
-	for (l1 = l; l1 >= step; l1 -= step)
+	for(l1 = l; l1 >= step; l1 -= step)
 		h = h ^ ((h << 5) + (h >> 2) + ((unsigned short)s[l1 - 1]));
 	return h;
 }
 
 struct SQString : public SQRefCounted
 {
-    SQString(){}
-    ~SQString(){}
-public:
-    static SQString *Create(SQSharedState *ss, const SQChar *, SQInteger len = -1 );
-    SQInteger Next(const SQObjectPtr &refpos, SQObjectPtr &outkey, SQObjectPtr &outval);
-    void Release();
-    SQSharedState *_sharedstate;
-    SQString *_next; //chain for the string table
-    SQInteger _len;
-    SQHash _hash;
-    SQChar _val[1];
-};
+	SQString()
+	{
+	}
+	~SQString()
+	{
+	}
 
+public:
+	static SQString *Create(
+			SQSharedState *ss, const SQChar *, SQInteger len = -1);
+	SQInteger Next(const SQObjectPtr &refpos, SQObjectPtr &outkey,
+			SQObjectPtr &outval);
+	void Release();
+	SQSharedState *_sharedstate;
+	SQString *_next; //chain for the string table
+	SQInteger _len;
+	SQHash _hash;
+	SQChar _val[1];
+};
 
 
 #endif //_SQSTRING_H_
