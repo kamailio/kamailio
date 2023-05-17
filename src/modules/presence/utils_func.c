@@ -116,7 +116,8 @@ int send_error_reply(struct sip_msg *msg, int reply_code, str reply_str)
 
 		hdr_append.s = buffer;
 		hdr_append.s[0] = '\0';
-		hdr_append.len = sprintf(hdr_append.s, "Min-Expires: %d", pres_min_expires);
+		hdr_append.len =
+				sprintf(hdr_append.s, "Min-Expires: %d", pres_min_expires);
 		if(hdr_append.len < 0) {
 			LM_ERR("unsuccessful sprintf\n");
 			return -1;

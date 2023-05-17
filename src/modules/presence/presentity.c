@@ -476,7 +476,7 @@ int ps_cache_delete_presentity_if_dialog_id_exists(
 		return 0;
 	}
 
-	for(ptx=ptlist; ptx!=NULL; ptx=ptx->next) {
+	for(ptx = ptlist; ptx != NULL; ptx = ptx->next) {
 		if(check_if_dialog(ptx->body, &db_is_dialog, &db_dialog_id) == 0) {
 			// If ID from DB matches the one we supplied
 			if(db_dialog_id && !strcmp(db_dialog_id, dialog_id)) {
@@ -507,11 +507,11 @@ int delete_presentity_if_dialog_id_exists(
 		presentity_t *presentity, char *dialog_id)
 {
 	if(publ_cache_mode == PS_PCACHE_RECORD) {
-		return ps_cache_delete_presentity_if_dialog_id_exists(presentity,
-				dialog_id);
+		return ps_cache_delete_presentity_if_dialog_id_exists(
+				presentity, dialog_id);
 	} else {
-		return ps_db_delete_presentity_if_dialog_id_exists(presentity,
-				dialog_id);
+		return ps_db_delete_presentity_if_dialog_id_exists(
+				presentity, dialog_id);
 	}
 }
 
@@ -627,12 +627,13 @@ int ps_cache_match_dialog_state(presentity_t *presentity, char *vstate)
 
 	ptlist = ps_ptable_search(&ptm, 2, 0);
 
-	if(ptlist==NULL) {
+	if(ptlist == NULL) {
 		return 0;
 	}
 
-	for(ptx=ptlist; ptx!=NULL; ptx=ptx->next) {
-		rmatch = ps_match_dialog_state_from_body(ptx->body, &db_is_dialog, vstate);
+	for(ptx = ptlist; ptx != NULL; ptx = ptx->next) {
+		rmatch = ps_match_dialog_state_from_body(
+				ptx->body, &db_is_dialog, vstate);
 
 		if(rmatch == 1) {
 			/* having a full match */
@@ -753,7 +754,7 @@ static int ps_db_update_presentity(sip_msg_t *msg, presentity_t *presentity,
 
 		/* insert new record in hash_table */
 
-		if(publ_cache_mode==PS_PCACHE_HYBRID
+		if(publ_cache_mode == PS_PCACHE_HYBRID
 				&& insert_phtable(
 						   &pres_uri, presentity->event->evp->type, sphere)
 						   < 0) {
@@ -1208,7 +1209,7 @@ static int ps_db_update_presentity(sip_msg_t *msg, presentity_t *presentity,
 		update_vals[n_update_cols].val.int_val = presentity->priority;
 		n_update_cols++;
 
-		if(body && body->s && body->len>0) {
+		if(body && body->s && body->len > 0) {
 			update_keys[n_update_cols] = &str_body_col;
 			update_vals[n_update_cols].type = DB1_BLOB;
 			update_vals[n_update_cols].nul = 0;
@@ -1525,7 +1526,7 @@ static int ps_cache_update_presentity(sip_msg_t *msg, presentity_t *presentity,
 				ptc.expires = presentity->expires + (int)time(NULL);
 			}
 			/* update/replace in memory */
-			if(ps_ptable_replace(&ptm, &ptc) <0) {
+			if(ps_ptable_replace(&ptm, &ptc) < 0) {
 				LM_ERR("replacing record in database\n");
 				goto error;
 			}
@@ -1546,8 +1547,8 @@ static int ps_cache_update_presentity(sip_msg_t *msg, presentity_t *presentity,
 			p_ruid = *ruid;
 		}
 		if(EVENT_DIALOG_SLA(presentity->event->evp)) {
-			ptx = ps_ptable_get_item(&ptm.user, &ptm.domain, &ptm.event,
-					&ptm.etag);
+			ptx = ps_ptable_get_item(
+					&ptm.user, &ptm.domain, &ptm.event, &ptm.etag);
 			if(ptx == NULL) {
 				LM_DBG("presentity record not found\n");
 				goto send_412;
@@ -1613,7 +1614,7 @@ static int ps_cache_update_presentity(sip_msg_t *msg, presentity_t *presentity,
 									  == 0))
 					bla_update_publish = 0;
 			}
-after_dialog_check:
+		after_dialog_check:
 			ps_presentity_free(ptx, 1);
 			ptx = NULL;
 		}
@@ -1621,8 +1622,8 @@ after_dialog_check:
 		if(presentity->expires <= 0) {
 
 			if(!cache_record_exists) {
-				ptx = ps_ptable_get_item(&ptm.user, &ptm.domain, &ptm.event,
-						&ptm.etag);
+				ptx = ps_ptable_get_item(
+						&ptm.user, &ptm.domain, &ptm.event, &ptm.etag);
 				if(ptx == NULL) {
 					LM_DBG("presentity record not found\n");
 					goto send_412;
@@ -1630,7 +1631,8 @@ after_dialog_check:
 				cache_record_exists = 1;
 				if(!p_ruid.s && ptx->ruid.s) {
 					crt_ruid.len = ptx->ruid.len;
-					crt_ruid.s = (char *)pkg_malloc(sizeof(char) * crt_ruid.len);
+					crt_ruid.s =
+							(char *)pkg_malloc(sizeof(char) * crt_ruid.len);
 					if(!crt_ruid.s) {
 						LM_ERR("no private memory\n");
 						goto error;
@@ -1649,9 +1651,9 @@ after_dialog_check:
 				*sent_reply = 1;
 			}
 
-			if(publ_notify(presentity, pres_uri, body, &presentity->etag,
-						   rules_doc)
-						< 0) {
+			if(publ_notify(
+					   presentity, pres_uri, body, &presentity->etag, rules_doc)
+					< 0) {
 				LM_ERR("while sending notify\n");
 				goto error;
 			}
@@ -1697,7 +1699,8 @@ after_dialog_check:
 			}
 
 			/* generate another etag */
-			LM_DBG("generating a new etag (%d)\n", presentity->event->etag_not_new);
+			LM_DBG("generating a new etag (%d)\n",
+					presentity->event->etag_not_new);
 
 			dot = presentity->etag.s + presentity->etag.len;
 			while(*dot != '.' && str_publ_nr.len < presentity->etag.len) {
@@ -1724,7 +1727,7 @@ after_dialog_check:
 
 			crt_etag = etag;
 
-after_etag_generation:
+		after_etag_generation:
 			ptc.etag = crt_etag;
 		} else {
 			crt_etag = presentity->etag;
@@ -1750,7 +1753,7 @@ after_etag_generation:
 		ptc.expires = presentity->expires + (int)time(NULL);
 		ptc.received_time = presentity->received_time;
 		ptc.priority = presentity->priority;
-		if(body && body->s && body->len>0) {
+		if(body && body->s && body->len > 0) {
 			ptc.body = *body;
 		}
 		if(presentity->sender) {
@@ -1759,10 +1762,9 @@ after_etag_generation:
 
 		/* if there is no support for affected_rows and no previous query has been done,
 		 * or dmq replication is enabled and we don't already know the ruid, do query */
-		if((!cache_record_exists)
-				|| (pres_enable_dmq > 0 && !p_ruid.s)) {
-			ptx = ps_ptable_get_item(&ptm.user, &ptm.domain, &ptm.event,
-					&ptm.etag);
+		if((!cache_record_exists) || (pres_enable_dmq > 0 && !p_ruid.s)) {
+			ptx = ps_ptable_get_item(
+					&ptm.user, &ptm.domain, &ptm.event, &ptm.etag);
 			if(ptx == NULL) {
 				LM_DBG("presentity record not found\n");
 				goto send_412;
@@ -1788,7 +1790,7 @@ after_etag_generation:
 			goto error;
 		}
 		/* if either affected_rows (if exists) or select query show that there is no line in database*/
-		if(affected_rows==0) {
+		if(affected_rows == 0) {
 			LM_DBG("no presentity record found to be updated\n");
 			goto send_412;
 		}
@@ -1899,8 +1901,8 @@ int update_presentity(sip_msg_t *msg, presentity_t *presentity, str *body,
 		return ps_cache_update_presentity(msg, presentity, body, new_t,
 				sent_reply, sphere, etag_override, ruid, replace);
 	} else {
-		return ps_db_update_presentity(msg, presentity, body, new_t,
-				sent_reply, sphere, etag_override, ruid, replace);
+		return ps_db_update_presentity(msg, presentity, body, new_t, sent_reply,
+				sphere, etag_override, ruid, replace);
 	}
 }
 
@@ -2065,9 +2067,9 @@ xmlNodePtr xmlNodeGetNodeByName(
 		if(xmlStrcasecmp(cur->name, (unsigned char *)name) == 0) {
 			if(!ns
 					|| (cur->ns
-							   && xmlStrcasecmp(
-										  cur->ns->prefix, (unsigned char *)ns)
-										  == 0))
+							&& xmlStrcasecmp(
+									   cur->ns->prefix, (unsigned char *)ns)
+									   == 0))
 				return cur;
 		}
 		match = xmlNodeGetNodeByName(cur->children, name, ns);
@@ -2238,7 +2240,7 @@ char *ps_cache_get_sphere(str *pres_uri)
 		ptx = ptx->next;
 	}
 
-	if(ptx->body.s==NULL || ptx->body.len<=0) {
+	if(ptx->body.s == NULL || ptx->body.len <= 0) {
 		ps_presentity_list_free(ptlist, 1);
 		return NULL;
 	}
@@ -2278,7 +2280,7 @@ int mark_presentity_for_delete(presentity_t *pres, str *ruid)
 		goto done;
 	}
 
-	if(pa_db==NULL) {
+	if(pa_db == NULL) {
 		LM_ERR("no database connection setup\n");
 		goto error;
 	}
@@ -2513,7 +2515,7 @@ int delete_offline_presentities(str *pres_uri, pres_ev_t *event)
 	int n_query_cols = 0;
 	struct sip_uri uri;
 
-	if(pa_db==NULL) {
+	if(pa_db == NULL) {
 		LM_ERR("no database connection setup\n");
 		goto error;
 	}
