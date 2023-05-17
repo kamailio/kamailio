@@ -34,42 +34,45 @@
 #define LD_MAXINT (2147483647)
 
 
-struct ld_cfg {
-	str table;      /**< Name of the db api table */
-	str base;       /**< The search base to be used with the table, zero terminated */
-	int scope;      /**< LDAP scope */
-	str filter;   /**< The search filter, zero terminated */
-	str* field;  /**< An array of DB API fields, zero terminated */
-	str* attr;   /**< An array of LDAP attribute names, zero terminated */
-	enum ld_syntax* syntax; /**< An array of configured LDAP syntaxes */
-	int n;          /**< Number of fields in the arrays */
+struct ld_cfg
+{
+	str table; /**< Name of the db api table */
+	str base; /**< The search base to be used with the table, zero terminated */
+	int scope;	/**< LDAP scope */
+	str filter; /**< The search filter, zero terminated */
+	str *field; /**< An array of DB API fields, zero terminated */
+	str *attr;	/**< An array of LDAP attribute names, zero terminated */
+	enum ld_syntax *syntax; /**< An array of configured LDAP syntaxes */
+	int n;					/**< Number of fields in the arrays */
 	int sizelimit; /**< retrieve at most sizelimit entries for a search */
 	int timelimit; /**< wait at most timelimit seconds for a search to complete */
-	int chase_references;  /**< dereference option for LDAP library */
-	int chase_referrals;   /**< follow referrals option for LDAP library */
-	struct ld_cfg* next; /**< The next table in the list */
+	int chase_references; /**< dereference option for LDAP library */
+	int chase_referrals;  /**< follow referrals option for LDAP library */
+	struct ld_cfg *next;  /**< The next table in the list */
 };
 
-struct ld_con_info {
+struct ld_con_info
+{
 	str id;
 	str host;
 	unsigned int port;
 	str username;
 	str password;
 	int authmech;
-	int tls;  /**<  TLS encryption enabled */
+	int tls;	  /**<  TLS encryption enabled */
 	str ca_list;  /**< Path of the file that contains certificates of the CAs */
-	str req_cert;  /**< LDAP level of certificate request behaviour */
-	struct ld_con_info* next;
+	str req_cert; /**< LDAP level of certificate request behaviour */
+	struct ld_con_info *next;
 };
 
-struct ld_cfg* ld_find_cfg(str* table);
+struct ld_cfg *ld_find_cfg(str *table);
 
-char* ld_find_attr_name(enum ld_syntax* syntax, struct ld_cfg* cfg, char* fld_name);
+char *ld_find_attr_name(
+		enum ld_syntax *syntax, struct ld_cfg *cfg, char *fld_name);
 
-struct ld_con_info* ld_find_conn_info(str* conn_id);
+struct ld_con_info *ld_find_conn_info(str *conn_id);
 
-int ld_load_cfg(str* filename);
+int ld_load_cfg(str *filename);
 
 void ld_cfg_free(void);
 
