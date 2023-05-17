@@ -143,7 +143,7 @@ static int mod_init(void)
 		xhttp_route_no = route_no;
 	}
 
-	if(cfg_get(tcp, tcp_cfg, accept_no_cl)==0) {
+	if(cfg_get(tcp, tcp_cfg, accept_no_cl) == 0) {
 		LM_WARN("tcp_accept_no_cl not set - usually required"
 				" to handle HTTP requests with no Content-Length\n");
 	}
@@ -527,11 +527,11 @@ static sr_kemi_xval_t _sr_kemi_xhttp_xval = {0};
 /**
  *
  */
-static sr_kemi_xval_t* ki_xhttp_get_hu(sip_msg_t *msg)
+static sr_kemi_xval_t *ki_xhttp_get_hu(sip_msg_t *msg)
 {
 	memset(&_sr_kemi_xhttp_xval, 0, sizeof(sr_kemi_xval_t));
 
-	if(msg==NULL) {
+	if(msg == NULL) {
 		sr_kemi_xval_null(&_sr_kemi_xhttp_xval, SR_KEMI_XVAL_NULL_EMPTY);
 		return &_sr_kemi_xhttp_xval;
 	}
