@@ -44,8 +44,8 @@ int ap_init_modules(void)
 	init_mod_Core();
 	init_mod_Ranks();
 	init_mod_Logger();
-	if(sr_apy_init_ksr()<0) return -1;
+	if(sr_apy_init_ksr() < 0)
+		return -1;
 
 	return 0;
 }
-

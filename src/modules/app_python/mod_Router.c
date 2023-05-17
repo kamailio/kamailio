@@ -42,9 +42,7 @@
 PyObject *_sr_apy_main_module = NULL;
 PyObject *_sr_apy_main_module_dict = NULL;
 
-PyMethodDef RouterMethods[] = {
-	{NULL, NULL, 0, NULL}
-};
+PyMethodDef RouterMethods[] = {{NULL, NULL, 0, NULL}};
 
 void init_mod_Router(void)
 {
@@ -56,7 +54,6 @@ void init_mod_Router(void)
 #ifdef WITH_EXTRA_DEBUG
 	LM_ERR("Module 'Router' has been initialized\n");
 #endif
-
 }
 
 void destroy_mod_Router(void)
@@ -67,6 +64,4 @@ void destroy_mod_Router(void)
 #ifdef WITH_EXTRA_DEBUG
 	LM_ERR("Module 'Router' has been destroyed\n");
 #endif
-
 }
-
