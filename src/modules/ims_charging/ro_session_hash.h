@@ -6,7 +6,7 @@
  */
 
 #ifndef RO_SESSION_HASH_H
-#define	RO_SESSION_HASH_H
+#define RO_SESSION_HASH_H
 
 #include "ro_timer.h"
 #include "../../core/mem/shm_mem.h"
@@ -16,87 +16,93 @@
 
 
 /* ro session flags */
-#define RO_SESSION_FLAG_NEW          (1<<0) /*!< new ro session */
-#define RO_SESSION_FLAG_INSERTED     (1<<1) /*!< session has been written to DB */
-#define RO_SESSION_FLAG_CHANGED      (1<<2) /*!< ro session has been updated */
-#define RO_SESSION_FLAG_DELETED      (1<<3) /*!< ro session has been deleted */
+#define RO_SESSION_FLAG_NEW (1 << 0)	  /*!< new ro session */
+#define RO_SESSION_FLAG_INSERTED (1 << 1) /*!< session has been written to DB */
+#define RO_SESSION_FLAG_CHANGED (1 << 2)  /*!< ro session has been updated */
+#define RO_SESSION_FLAG_DELETED (1 << 3)  /*!< ro session has been deleted */
 
 #define MAX_PANI_LEN 100
 
 extern struct ims_charging_counters_h ims_charging_cnts_h;
 
-enum ro_session_event_type {
-    pending,
-    answered,
-    no_more_credit,
-    delayed_delete,
-    unknown_error,
+enum ro_session_event_type
+{
+	pending,
+	answered,
+	no_more_credit,
+	delayed_delete,
+	unknown_error,
 };
 
-struct diameter_avp_value {
-    str mac;
+struct diameter_avp_value
+{
+	str mac;
 };
 
 //used to pass data into dialog callbacks
 
-struct impu_data {
-    str identity;
-    str contact;
+struct impu_data
+{
+	str identity;
+	str contact;
 };
 
 extern struct impu_data impu_data_t;
 
-struct ro_session {
-    volatile int ref;
-    int direction;
-    struct ro_session* next;
-    struct ro_session* prev;
-    str ro_session_id;
-    str callid;
-    str asserted_identity;
-    str called_asserted_identity;
-    str incoming_trunk_id;
-    str outgoing_trunk_id;
-    str pani;
-    str app_provided_party;
-    unsigned int hop_by_hop;
-    struct ro_tl ro_tl;
-    unsigned int reserved_secs;
-    unsigned int valid_for;
-    unsigned int dlg_h_entry;
-    unsigned int dlg_h_id;
-    unsigned int h_entry;
-    unsigned int h_id;
-    time_t start_time;
-    time_t last_event_timestamp;
-    time_t last_event_timestamp_backup;
-    enum ro_session_event_type event_type;
-    int auth_appid;
-    int auth_session_type;
-    int active;
-    unsigned int flags;
-    str mac;
-    int rating_group;
-    int service_identifier;
-    unsigned int is_final_allocation;
-    long billed;
-    unsigned int ccr_sent;
+struct ro_session
+{
+	volatile int ref;
+	int direction;
+	struct ro_session *next;
+	struct ro_session *prev;
+	str ro_session_id;
+	str callid;
+	str asserted_identity;
+	str called_asserted_identity;
+	str incoming_trunk_id;
+	str outgoing_trunk_id;
+	str pani;
+	str app_provided_party;
+	unsigned int hop_by_hop;
+	struct ro_tl ro_tl;
+	unsigned int reserved_secs;
+	unsigned int valid_for;
+	unsigned int dlg_h_entry;
+	unsigned int dlg_h_id;
+	unsigned int h_entry;
+	unsigned int h_id;
+	time_t start_time;
+	time_t last_event_timestamp;
+	time_t last_event_timestamp_backup;
+	enum ro_session_event_type event_type;
+	int auth_appid;
+	int auth_session_type;
+	int active;
+	unsigned int flags;
+	str mac;
+	int rating_group;
+	int service_identifier;
+	unsigned int is_final_allocation;
+	long billed;
+	unsigned int ccr_sent;
 };
 
 /*! entries in the main ro_session table */
-struct ro_session_entry {
-    struct ro_session *first; /*!< dialog list */
-    struct ro_session *last; /*!< optimisation, end of the dialog list */
-    unsigned int next_id; /*!< next id */
-    unsigned int lock_idx; /*!< lock index */
+struct ro_session_entry
+{
+	struct ro_session *first; /*!< dialog list */
+	struct ro_session *last;  /*!< optimisation, end of the dialog list */
+	unsigned int next_id;	  /*!< next id */
+	unsigned int lock_idx;	  /*!< lock index */
 };
 
 /*! main ro_session table */
-struct ro_session_table {
-    unsigned int size; /*!< size of the dialog table */
-    struct ro_session_entry *entries; /*!< dialog hash table */
-    unsigned int locks_no; /*!< number of locks */
-    gen_lock_set_t *locks; /*!< lock table */
+struct ro_session_table
+{
+	unsigned int size;				  /*!< size of the dialog table */
+	struct ro_session_entry *entries; /*!< dialog hash table */
+	unsigned int locks_no;			  /*!< number of locks */
+	gen_lock_set_t *locks;			  /*!< lock table */
 };
 
 
@@ -109,8 +115,12 @@ extern struct ro_session_table *ro_session_table;
  * \param _table ro_session table
  * \param _entry locked entry
  */
-#define ro_session_lock(_table, _entry) \
-		{ LM_DBG("LOCKING %d\n", (_entry)->lock_idx); lock_set_get( (_table)->locks, (_entry)->lock_idx); LM_DBG("LOCKED %d\n", (_entry)->lock_idx);}
+#define ro_session_lock(_table, _entry)                    \
+	{                                                      \
+		LM_DBG("LOCKING %d\n", (_entry)->lock_idx);        \
+		lock_set_get((_table)->locks, (_entry)->lock_idx); \
+		LM_DBG("LOCKED %d\n", (_entry)->lock_idx);         \
+	}
 
 
 /*!
@@ -118,20 +128,24 @@ extern struct ro_session_table *ro_session_table;
  * \param _table ro_session table
  * \param _entry locked entry
  */
-#define ro_session_unlock(_table, _entry) \
-		{ LM_DBG("UNLOCKING %d\n", (_entry)->lock_idx); lock_set_release( (_table)->locks, (_entry)->lock_idx); LM_DBG("UNLOCKED %d\n", (_entry)->lock_idx); }
+#define ro_session_unlock(_table, _entry)                      \
+	{                                                          \
+		LM_DBG("UNLOCKING %d\n", (_entry)->lock_idx);          \
+		lock_set_release((_table)->locks, (_entry)->lock_idx); \
+		LM_DBG("UNLOCKED %d\n", (_entry)->lock_idx);           \
+	}
 
 /*!
  * \brief Reference an ro_session without locking
  * \param _ro_session Ro Session
  * \param _cnt increment for the reference counter
  */
-#define ref_ro_session_unsafe(_session,_cnt)     \
-	do { \
-		(_session)->ref += (_cnt); \
-		LM_DBG("ref ro_session %p with %d -> %d (tl=%p)\n", \
-			(_session),(_cnt),(_session)->ref,&(_session)->ro_tl); \
-	}while(0)
+#define ref_ro_session_unsafe(_session, _cnt)                           \
+	do {                                                                \
+		(_session)->ref += (_cnt);                                      \
+		LM_DBG("ref ro_session %p with %d -> %d (tl=%p)\n", (_session), \
+				(_cnt), (_session)->ref, &(_session)->ro_tl);           \
+	} while(0)
 
 
 /*!
@@ -139,20 +153,21 @@ extern struct ro_session_table *ro_session_table;
  * \param _ro_session Ro Session
  * \param _cnt decrement for the reference counter
  */
-#define unref_ro_session_unsafe(_ro_session,_cnt,_ro_session_entry)   \
-	do { \
-		(_ro_session)->ref -= (_cnt); \
-		LM_DBG("unref ro_session %p with %d -> %d (tl=%p)\n",\
-			(_ro_session),(_cnt),(_ro_session)->ref,&(_ro_session)->ro_tl);\
-		if ((_ro_session)->ref<0) {\
-			LM_CRIT("bogus ref for session id < 0 [%d]\n",(_ro_session)->ref);\
-		}\
-		if ((_ro_session)->ref<=0) { \
-			unlink_unsafe_ro_session( _ro_session_entry, _ro_session);\
-			LM_DBG("ref <=0 for ro_session %p\n",_ro_session);\
-                        put_ro_session_on_wait(_ro_session);\
-		}\
-	}while(0)
+#define unref_ro_session_unsafe(_ro_session, _cnt, _ro_session_entry)        \
+	do {                                                                     \
+		(_ro_session)->ref -= (_cnt);                                        \
+		LM_DBG("unref ro_session %p with %d -> %d (tl=%p)\n", (_ro_session), \
+				(_cnt), (_ro_session)->ref, &(_ro_session)->ro_tl);          \
+		if((_ro_session)->ref < 0) {                                         \
+			LM_CRIT("bogus ref for session id < 0 [%d]\n",                   \
+					(_ro_session)->ref);                                     \
+		}                                                                    \
+		if((_ro_session)->ref <= 0) {                                        \
+			unlink_unsafe_ro_session(_ro_session_entry, _ro_session);        \
+			LM_DBG("ref <=0 for ro_session %p\n", _ro_session);              \
+			put_ro_session_on_wait(_ro_session);                             \
+		}                                                                    \
+	} while(0)
 
 /*!
  * \brief Unlink a ro_session from the list without locking
@@ -160,28 +175,29 @@ extern struct ro_session_table *ro_session_table;
  * \param ro_session_entry unlinked entry
  * \param ro_session unlinked ro_session
  */
-static inline void unlink_unsafe_ro_session(struct ro_session_entry *ro_session_entry, struct ro_session *ro_session) {
-	if ((ro_session->next == 0x00) &&
-			(ro_session->prev == 0x00) &&
-			(ro_session != ro_session_entry->first) )
-	{
+static inline void unlink_unsafe_ro_session(
+		struct ro_session_entry *ro_session_entry,
+		struct ro_session *ro_session)
+{
+	if((ro_session->next == 0x00) && (ro_session->prev == 0x00)
+			&& (ro_session != ro_session_entry->first)) {
 		return;
 	}
 
-    if (ro_session->next)
-        ro_session->next->prev = ro_session->prev;
-    else
-        ro_session_entry->last = ro_session->prev;
-    if (ro_session->prev)
-        ro_session->prev->next = ro_session->next;
-    else
-        ro_session_entry->first = ro_session->next;
+	if(ro_session->next)
+		ro_session->next->prev = ro_session->prev;
+	else
+		ro_session_entry->last = ro_session->prev;
+	if(ro_session->prev)
+		ro_session->prev->next = ro_session->next;
+	else
+		ro_session_entry->first = ro_session->next;
 
-    ro_session->next = ro_session->prev = 0;
-    
-    counter_add(ims_charging_cnts_h.active_ro_sessions, -1);
+	ro_session->next = ro_session->prev = 0;
 
-    return;
+	counter_add(ims_charging_cnts_h.active_ro_sessions, -1);
+
+	return;
 }
 
 /*!
@@ -206,9 +222,14 @@ void link_ro_session(struct ro_session *ro_session, int n);
 
 void remove_aaa_session(str *session_id);
 
-struct ro_session* build_new_ro_session(int direction, int auth_appid, int auth_session_type, str *session_id, str *callid, str *asserted_identity, str* called_asserted_identity,
-        str* mac, unsigned int dlg_h_entry, unsigned int dlg_h_id, unsigned int requested_secs, unsigned int validity_timeout,
-        int active_rating_group, int active_service_identifier, str *incoming_trunk_id, str *outgoing_trunk_id, str *pani, str *app_provided_party);
+struct ro_session *build_new_ro_session(int direction, int auth_appid,
+		int auth_session_type, str *session_id, str *callid,
+		str *asserted_identity, str *called_asserted_identity, str *mac,
+		unsigned int dlg_h_entry, unsigned int dlg_h_id,
+		unsigned int requested_secs, unsigned int validity_timeout,
+		int active_rating_group, int active_service_identifier,
+		str *incoming_trunk_id, str *outgoing_trunk_id, str *pani,
+		str *app_provided_party);
 
 /*!
  * \brief Refefence a ro_session with locking
@@ -216,8 +237,10 @@ struct ro_session* build_new_ro_session(int direction, int auth_appid, int auth_
  * \param ro_session Ro Session
  * \param cnt increment for the reference counter
  */
-void ref_ro_session_helper(struct ro_session *ro_session, unsigned int cnt, unsigned int mustlock, char *fname, int fline);
-#define ref_ro_session(ro_session, cnt, mustlock) ref_ro_session_helper(ro_session, cnt, mustlock, __FILE__, __LINE__)
+void ref_ro_session_helper(struct ro_session *ro_session, unsigned int cnt,
+		unsigned int mustlock, char *fname, int fline);
+#define ref_ro_session(ro_session, cnt, mustlock) \
+	ref_ro_session_helper(ro_session, cnt, mustlock, __FILE__, __LINE__)
 
 /*!
  * \brief Unreference a ro_session with locking
@@ -225,15 +248,17 @@ void ref_ro_session_helper(struct ro_session *ro_session, unsigned int cnt, unsi
  * \param ro_session Ro Session
  * \param cnt decrement for the reference counter
  */
-void unref_ro_session_helper(struct ro_session *ro_session, unsigned int cnt, unsigned int mustlock, char *fname, int fline);
-#define unref_ro_session(ro_session, cnt, mustlock) unref_ro_session_helper(ro_session, cnt, mustlock, __FILE__, __LINE__)
+void unref_ro_session_helper(struct ro_session *ro_session, unsigned int cnt,
+		unsigned int mustlock, char *fname, int fline);
+#define unref_ro_session(ro_session, cnt, mustlock) \
+	unref_ro_session_helper(ro_session, cnt, mustlock, __FILE__, __LINE__)
 
-struct ro_session* lookup_ro_session(unsigned int h_entry, str *callid, int direction, unsigned int *del);
+struct ro_session *lookup_ro_session(
+		unsigned int h_entry, str *callid, int direction, unsigned int *del);
 
 void free_impu_data(struct impu_data *impu_data);
 
-int put_ro_session_on_wait(struct ro_session* session);
+int put_ro_session_on_wait(struct ro_session *session);
 
 
-#endif	/* RO_SESSION_HASH_H */
-
+#endif /* RO_SESSION_HASH_H */

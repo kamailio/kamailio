@@ -38,49 +38,51 @@ ro_timer_handler timer_hdl = 0;
  * \param hdl ro_session timer handler
  * \return 0 on success, -1 on failure
  */
-int init_ro_timer(ro_timer_handler hdl) {
-    roi_timer = (struct ro_timer*) shm_malloc(sizeof (struct ro_timer));
-    if (roi_timer == 0) {
-        LM_ERR("no more shm mem\n");
-        return -1;
-    }
-    memset(roi_timer, 0, sizeof (struct ro_timer));
+int init_ro_timer(ro_timer_handler hdl)
+{
+	roi_timer = (struct ro_timer *)shm_malloc(sizeof(struct ro_timer));
+	if(roi_timer == 0) {
+		LM_ERR("no more shm mem\n");
+		return -1;
+	}
+	memset(roi_timer, 0, sizeof(struct ro_timer));
 
-    roi_timer->first.next = roi_timer->first.prev = &(roi_timer->first);
+	roi_timer->first.next = roi_timer->first.prev = &(roi_timer->first);
 
-    roi_timer->lock = lock_alloc();
-    if (roi_timer->lock == 0) {
-        LM_ERR("failed to alloc lock\n");
-        goto error0;
-    }
+	roi_timer->lock = lock_alloc();
+	if(roi_timer->lock == 0) {
+		LM_ERR("failed to alloc lock\n");
+		goto error0;
+	}
 
-    if (lock_init(roi_timer->lock) == 0) {
-        LM_ERR("failed to init lock\n");
-        goto error1;
-    }
+	if(lock_init(roi_timer->lock) == 0) {
+		LM_ERR("failed to init lock\n");
+		goto error1;
+	}
 
-    timer_hdl = hdl;
-    return 0;
+	timer_hdl = hdl;
+	return 0;
 error1:
-    lock_dealloc(roi_timer->lock);
+	lock_dealloc(roi_timer->lock);
 error0:
-    shm_free(roi_timer);
-    roi_timer = 0;
-    return -1;
+	shm_free(roi_timer);
+	roi_timer = 0;
+	return -1;
 }
 
 /*!
  * \brief Destroy global ro_session timer
  */
-void destroy_ro_timer(void) {
-    if (roi_timer == 0)
-        return;
+void destroy_ro_timer(void)
+{
+	if(roi_timer == 0)
+		return;
 
-    lock_destroy(roi_timer->lock);
-    lock_dealloc(roi_timer->lock);
+	lock_destroy(roi_timer->lock);
+	lock_dealloc(roi_timer->lock);
 
-    shm_free(roi_timer);
-    roi_timer = 0;
+	shm_free(roi_timer);
+	roi_timer = 0;
 }
 
 /*!
@@ -88,22 +90,25 @@ void destroy_ro_timer(void) {
  * \see insert_ro_session_timer
  * \param tl ro_session timer list
  */
-static inline void insert_ro_timer_unsafe(struct ro_tl *tl) {
-    struct ro_tl* ptr;
+static inline void insert_ro_timer_unsafe(struct ro_tl *tl)
+{
+	struct ro_tl *ptr;
 
-    /* insert in sorted order */
-    for (ptr = roi_timer->first.prev; ptr != &roi_timer->first; ptr = ptr->prev) {
-        if (ptr->timeout <= tl->timeout)
-            break;
-    }
+	/* insert in sorted order */
+	for(ptr = roi_timer->first.prev; ptr != &roi_timer->first;
+			ptr = ptr->prev) {
+		if(ptr->timeout <= tl->timeout)
+			break;
+	}
 
-    LM_DBG("inserting %p for %d\n", tl, tl->timeout);
-    LM_DBG("BEFORE ptr [%p], ptr->next [%p], ptr->next->prev [%p]\n", ptr, ptr->next, ptr->next->prev);
-    tl->prev = ptr;
-    tl->next = ptr->next;
-    tl->prev->next = tl;
-    tl->next->prev = tl;
-    LM_DBG("AFTER tl->prev [%p], tl->next [%p]\n", tl->prev, tl->next);
+	LM_DBG("inserting %p for %d\n", tl, tl->timeout);
+	LM_DBG("BEFORE ptr [%p], ptr->next [%p], ptr->next->prev [%p]\n", ptr,
+			ptr->next, ptr->next->prev);
+	tl->prev = ptr;
+	tl->next = ptr->next;
+	tl->prev->next = tl;
+	tl->next->prev = tl;
+	LM_DBG("AFTER tl->prev [%p], tl->next [%p]\n", tl->prev, tl->next);
 }
 
 /*!
@@ -112,24 +117,25 @@ static inline void insert_ro_timer_unsafe(struct ro_tl *tl) {
  * \param interval timeout value in seconds
  * \return 0 on success, -1 when the input timer list is invalid
  */
-int insert_ro_timer(struct ro_tl *tl, int interval) {
-    lock_get(roi_timer->lock);
+int insert_ro_timer(struct ro_tl *tl, int interval)
+{
+	lock_get(roi_timer->lock);
 
-    LM_DBG("inserting timer for interval [%i]\n", interval);
-    if (tl->next != 0 || tl->prev != 0) {
-        lock_release(roi_timer->lock);
-        LM_CRIT("Trying to insert a bogus ro tl=%p tl->next=%p tl->prev=%p\n",
-                tl, tl->next, tl->prev);
-        return -1;
-    }
-    tl->timeout = get_ticks() + interval;
-    insert_ro_timer_unsafe(tl);
+	LM_DBG("inserting timer for interval [%i]\n", interval);
+	if(tl->next != 0 || tl->prev != 0) {
+		lock_release(roi_timer->lock);
+		LM_CRIT("Trying to insert a bogus ro tl=%p tl->next=%p tl->prev=%p\n",
+				tl, tl->next, tl->prev);
+		return -1;
+	}
+	tl->timeout = get_ticks() + interval;
+	insert_ro_timer_unsafe(tl);
 
 
-    LM_DBG("TIMER inserted\n");
-    lock_release(roi_timer->lock);
+	LM_DBG("TIMER inserted\n");
+	lock_release(roi_timer->lock);
 
-    return 0;
+	return 0;
 }
 
 /*!
@@ -137,9 +143,10 @@ int insert_ro_timer(struct ro_tl *tl, int interval) {
  * \param tl ro_session timer list
  * \see remove_ro_session_timer
  */
-static inline void remove_ro_timer_unsafe(struct ro_tl *tl) {
-    tl->prev->next = tl->next;
-    tl->next->prev = tl->prev;
+static inline void remove_ro_timer_unsafe(struct ro_tl *tl)
+{
+	tl->prev->next = tl->next;
+	tl->next->prev = tl->prev;
 }
 
 /*!
@@ -148,28 +155,29 @@ static inline void remove_ro_timer_unsafe(struct ro_tl *tl) {
  * \return 1 when the input timer is empty, 0 when the timer was removed,
  * -1 when the input timer list is invalid
  */
-int remove_ro_timer(struct ro_tl *tl) {
-    lock_get(roi_timer->lock);
+int remove_ro_timer(struct ro_tl *tl)
+{
+	lock_get(roi_timer->lock);
 
-    if (tl->prev == NULL && tl->timeout == 0) {
-        lock_release(roi_timer->lock);
-        return 1;
-    }
+	if(tl->prev == NULL && tl->timeout == 0) {
+		lock_release(roi_timer->lock);
+		return 1;
+	}
 
-    if (tl->prev == NULL || tl->next == NULL) {
-        LM_CRIT("bogus tl=%p tl->prev=%p tl->next=%p\n",
-                tl, tl->prev, tl->next);
-        lock_release(roi_timer->lock);
-        return -1;
-    }
-    LM_DBG("TIMER [%p] REMOVED\n", tl);
-    remove_ro_timer_unsafe(tl);
-    tl->next = NULL;
-    tl->prev = NULL;
-    tl->timeout = 0;
+	if(tl->prev == NULL || tl->next == NULL) {
+		LM_CRIT("bogus tl=%p tl->prev=%p tl->next=%p\n", tl, tl->prev,
+				tl->next);
+		lock_release(roi_timer->lock);
+		return -1;
+	}
+	LM_DBG("TIMER [%p] REMOVED\n", tl);
+	remove_ro_timer_unsafe(tl);
+	tl->next = NULL;
+	tl->prev = NULL;
+	tl->timeout = 0;
 
-    lock_release(roi_timer->lock);
-    return 0;
+	lock_release(roi_timer->lock);
+	return 0;
 }
 
 /*!
@@ -179,23 +187,24 @@ int remove_ro_timer(struct ro_tl *tl) {
  * \return 0 on success, -1 when the input list is invalid
  * \note the update is implemented as a remove, insert
  */
-int update_ro_timer(struct ro_tl *tl, int timeout) {
-    lock_get(roi_timer->lock);
+int update_ro_timer(struct ro_tl *tl, int timeout)
+{
+	lock_get(roi_timer->lock);
 
-    LM_DBG("Updating ro timer [%p] with timeout [%d]\n", tl, timeout);
-    if (tl->next) {
-        if (tl->prev == 0) {
-            lock_release(roi_timer->lock);
-            return -1;
-        }
-        remove_ro_timer_unsafe(tl);
-    }
+	LM_DBG("Updating ro timer [%p] with timeout [%d]\n", tl, timeout);
+	if(tl->next) {
+		if(tl->prev == 0) {
+			lock_release(roi_timer->lock);
+			return -1;
+		}
+		remove_ro_timer_unsafe(tl);
+	}
 
-    tl->timeout = get_ticks() + timeout;
-    insert_ro_timer_unsafe(tl);
+	tl->timeout = get_ticks() + timeout;
+	insert_ro_timer_unsafe(tl);
 
-    lock_release(roi_timer->lock);
-    return 0;
+	lock_release(roi_timer->lock);
+	return 0;
 }
 
 /*!
@@ -203,41 +212,49 @@ int update_ro_timer(struct ro_tl *tl, int timeout) {
  * \param time time for expiration check
  * \return list of expired credit reservations on sessions on success, 0 on failure
  */
-static inline struct ro_tl* get_expired_ro_sessions(unsigned int time) {
-    struct ro_tl *tl, *end, *ret;
+static inline struct ro_tl *get_expired_ro_sessions(unsigned int time)
+{
+	struct ro_tl *tl, *end, *ret;
 
-    lock_get(roi_timer->lock);
+	lock_get(roi_timer->lock);
 
-    LM_DBG("my ticks are [%d]\n", time);
+	LM_DBG("my ticks are [%d]\n", time);
 
-    if (roi_timer->first.next == &(roi_timer->first) || roi_timer->first.next->timeout > time) {
-        lock_release(roi_timer->lock);
-        return 0;
-    }
+	if(roi_timer->first.next == &(roi_timer->first)
+			|| roi_timer->first.next->timeout > time) {
+		lock_release(roi_timer->lock);
+		return 0;
+	}
 
-    end = &roi_timer->first;
-    tl = roi_timer->first.next;
-    LM_DBG("start with tl=%p tl->prev=%p tl->next=%p (%d) at %d and end with end=%p end->prev=%p end->next=%p\n", tl, tl->prev, tl->next, tl->timeout, time, end, end->prev, end->next);
-    while (tl != end && tl->timeout <= time) {
-        LM_DBG("getting tl=%p tl->prev=%p tl->next=%p with %d\n", tl, tl->prev, tl->next, tl->timeout);
-        tl->prev = 0;
-        tl->timeout = 0;
-        tl = tl->next;
-    }
-    LM_DBG("end with tl=%p tl->prev=%p tl->next=%p and d_timer->first.next->prev=%p\n", tl, tl->prev, tl->next, roi_timer->first.next->prev);
+	end = &roi_timer->first;
+	tl = roi_timer->first.next;
+	LM_DBG("start with tl=%p tl->prev=%p tl->next=%p (%d) at %d and end with "
+		   "end=%p end->prev=%p end->next=%p\n",
+			tl, tl->prev, tl->next, tl->timeout, time, end, end->prev,
+			end->next);
+	while(tl != end && tl->timeout <= time) {
+		LM_DBG("getting tl=%p tl->prev=%p tl->next=%p with %d\n", tl, tl->prev,
+				tl->next, tl->timeout);
+		tl->prev = 0;
+		tl->timeout = 0;
+		tl = tl->next;
+	}
+	LM_DBG("end with tl=%p tl->prev=%p tl->next=%p and "
+		   "d_timer->first.next->prev=%p\n",
+			tl, tl->prev, tl->next, roi_timer->first.next->prev);
 
-    if (tl == end && roi_timer->first.next->prev) {
-        ret = 0;
-    } else {
-        ret = roi_timer->first.next;
-        tl->prev->next = 0;
-        roi_timer->first.next = tl;
-        tl->prev = &roi_timer->first;
-    }
+	if(tl == end && roi_timer->first.next->prev) {
+		ret = 0;
+	} else {
+		ret = roi_timer->first.next;
+		tl->prev->next = 0;
+		roi_timer->first.next = tl;
+		tl->prev = &roi_timer->first;
+	}
 
-    lock_release(roi_timer->lock);
+	lock_release(roi_timer->lock);
 
-    return ret;
+	return ret;
 }
 
 /*!
@@ -246,248 +263,292 @@ static inline struct ro_tl* get_expired_ro_sessions(unsigned int time) {
  * \param time for expiration checks
  * \param attr unused
  */
-void ro_timer_routine(unsigned int ticks, void * attr) {
+void ro_timer_routine(unsigned int ticks, void *attr)
+{
 
-    struct ro_tl *tl, *ctl;
-    LM_DBG("getting expired ro-sessions\n");
+	struct ro_tl *tl, *ctl;
+	LM_DBG("getting expired ro-sessions\n");
 
-    tl = get_expired_ro_sessions(ticks);
+	tl = get_expired_ro_sessions(ticks);
 
-    while (tl) {
-        ctl = tl;
-        tl = tl->next;
-        ctl->next = NULL;
-        LM_DBG("Ro Session Timer firing: tl=%p next=%p\n", ctl, tl);
-        timer_hdl(ctl);
-    }
+	while(tl) {
+		ctl = tl;
+		tl = tl->next;
+		ctl->next = NULL;
+		LM_DBG("Ro Session Timer firing: tl=%p next=%p\n", ctl, tl);
+		timer_hdl(ctl);
+	}
 }
 
-void resume_ro_session_ontimeout(struct interim_ccr *i_req, int timeout_or_error) {
-    time_t now = get_current_time_micro();
-    long used_secs;
-    struct ro_session_entry *ro_session_entry = NULL;
-    int call_terminated = 0;
+void resume_ro_session_ontimeout(
+		struct interim_ccr *i_req, int timeout_or_error)
+{
+	time_t now = get_current_time_micro();
+	long used_secs;
+	struct ro_session_entry *ro_session_entry = NULL;
+	int call_terminated = 0;
 
-    if (!i_req) {
-        LM_ERR("This is so wrong: i_req is NULL\n");
-        return;
-    }
+	if(!i_req) {
+		LM_ERR("This is so wrong: i_req is NULL\n");
+		return;
+	}
 
-    ro_session_entry = &(ro_session_table->entries[i_req->ro_session->h_entry]);
-    ro_session_lock(ro_session_table, ro_session_entry);
-    LM_DBG("credit=%d credit_valid_for=%d\n", i_req->new_credit, i_req->credit_valid_for);
+	ro_session_entry = &(ro_session_table->entries[i_req->ro_session->h_entry]);
+	ro_session_lock(ro_session_table, ro_session_entry);
+	LM_DBG("credit=%d credit_valid_for=%d\n", i_req->new_credit,
+			i_req->credit_valid_for);
 
-    used_secs = rint((now - ((timeout_or_error==1 && i_req->ro_session->last_event_timestamp_backup>0)?i_req->ro_session->last_event_timestamp_backup : i_req->ro_session->last_event_timestamp)) / (float) 1000000);
+	used_secs = rint(
+			(now
+					- ((timeout_or_error == 1
+							   && i_req->ro_session->last_event_timestamp_backup
+										  > 0)
+									? i_req->ro_session
+											  ->last_event_timestamp_backup
+									: i_req->ro_session->last_event_timestamp))
+			/ (float)1000000);
 
-    /* check to make sure diameter server is giving us sane values */
-    if (i_req->credit_valid_for !=0 && i_req->new_credit > i_req->credit_valid_for) {
-        LM_WARN("That's weird, Diameter server gave us credit with a lower validity period :D. Setting reserved time to validity period instead \n");
-        i_req->new_credit = i_req->credit_valid_for;
-    }
+	/* check to make sure diameter server is giving us sane values */
+	if(i_req->credit_valid_for != 0
+			&& i_req->new_credit > i_req->credit_valid_for) {
+		LM_WARN("That's weird, Diameter server gave us credit with a lower "
+				"validity period :D. Setting reserved time to validity period "
+				"instead \n");
+		i_req->new_credit = i_req->credit_valid_for;
+	}
 
-    if (i_req->new_credit > 0) {
-        //now insert the new timer
-        i_req->ro_session->last_event_timestamp = get_current_time_micro();
-        i_req->ro_session->event_type = answered;
-        i_req->ro_session->valid_for = i_req->credit_valid_for;
-
-        int ret = 0;
-        if (i_req->is_final_allocation) {
-            LM_DBG("This is a final allocation and call will end in %i seconds\n", i_req->new_credit);
-            i_req->ro_session->event_type = no_more_credit;
-            ret = insert_ro_timer(&i_req->ro_session->ro_tl, i_req->new_credit);
-        } else {
-            int timer_timeout = i_req->new_credit;
-
-            if (i_req->new_credit > ro_timer_buffer /*TIMEOUTBUFFER*/) {
-
-                // We haven't finished using our 1st block of units, and we need to set the timer to
-                // (new_credit - ro_timer_buffer[5 secs]) to ensure we get new credit before our previous
-                // reservation is exhausted. This will only be done the first time, because the timer
-                // will always be fired 5 seconds before we run out of time thanks to this operation
-                timer_timeout = i_req->new_credit - ro_timer_buffer;
-            }
-
-            ret = insert_ro_timer(&i_req->ro_session->ro_tl, timer_timeout);
-
-        }
-
-        // update to the new block of units we got
-        i_req->ro_session->reserved_secs = i_req->new_credit;
-
-        if (ret != 0) {
-            LM_CRIT("unable to insert timer for Ro Session [%.*s]\n",
-                    i_req->ro_session->ro_session_id.len, i_req->ro_session->ro_session_id.s);
-        } else {
-            ref_ro_session(i_req->ro_session, 1, 0);
-        }
-
-        if (ro_db_mode == DB_MODE_REALTIME) {
-            i_req->ro_session->flags |= RO_SESSION_FLAG_CHANGED;
-            if (update_ro_dbinfo_unsafe(i_req->ro_session) != 0) {
-                LM_ERR("Failed to update Ro session in DB... continuing\n");
-            }
-        }
-    } else {
-        /* just put the timer back in with however many seconds are left (if any!!! in which case we need to kill */
-        /* also update the event type to no_more_credit to save on processing the next time we get here */
-        i_req->ro_session->event_type = no_more_credit;
-        if (!timeout_or_error)
+	if(i_req->new_credit > 0) {
+		//now insert the new timer
 		i_req->ro_session->last_event_timestamp = get_current_time_micro();
-        
-        int whatsleft = i_req->ro_session->reserved_secs - used_secs;
-        if (whatsleft <= 0) {
-            // TODO we need to handle this situation more precisely.
-            // in case CCR times out, we get a call shutdown but the error message assumes it was due to a lack of credit.
-            //
-            LM_WARN("Immediately killing call due to no more credit *OR* no CCA received (timeout) after reservation request\n");
+		i_req->ro_session->event_type = answered;
+		i_req->ro_session->valid_for = i_req->credit_valid_for;
 
-            //
-            // we need to unlock the session or else we might get a deadlock on dlg_terminated() dialog callback.
-            // Do not unref the session because it will be made inside the dlg_terminated() function.
-            //
+		int ret = 0;
+		if(i_req->is_final_allocation) {
+			LM_DBG("This is a final allocation and call will end in %i "
+				   "seconds\n",
+					i_req->new_credit);
+			i_req->ro_session->event_type = no_more_credit;
+			ret = insert_ro_timer(&i_req->ro_session->ro_tl, i_req->new_credit);
+		} else {
+			int timer_timeout = i_req->new_credit;
 
-            //unref_ro_session_unsafe(i_req->ro_session, 1, ro_session_entry);
-            ro_session_unlock(ro_session_table, ro_session_entry);
+			if(i_req->new_credit > ro_timer_buffer /*TIMEOUTBUFFER*/) {
 
-            dlgb.lookup_terminate_dlg(i_req->ro_session->dlg_h_entry, i_req->ro_session->dlg_h_id, NULL);
-            call_terminated = 1;
-        } else {
-            LM_DBG("No more credit for user - letting call run out of money in [%i] seconds\n", whatsleft);
-            int ret = insert_ro_timer(&i_req->ro_session->ro_tl, whatsleft);
-            if (ret != 0) {
-                LM_CRIT("unable to insert timer for Ro Session [%.*s]\n",
-                        i_req->ro_session->ro_session_id.len, i_req->ro_session->ro_session_id.s);
-            } else {
-                ref_ro_session(i_req->ro_session, 1, 0);
-            }
-        }
-    }
+				// We haven't finished using our 1st block of units, and we need to set the timer to
+				// (new_credit - ro_timer_buffer[5 secs]) to ensure we get new credit before our previous
+				// reservation is exhausted. This will only be done the first time, because the timer
+				// will always be fired 5 seconds before we run out of time thanks to this operation
+				timer_timeout = i_req->new_credit - ro_timer_buffer;
+			}
 
-    //
-    // if call was forcefully terminated, the lock was released before dlgb.lookup_terminate_dlg() function call.
-    //
-    if (!call_terminated) {
-        unref_ro_session(i_req->ro_session, 1, 0); //unref from the initial timer that fired this event.
-        ro_session_unlock(ro_session_table, ro_session_entry);
-    }
+			ret = insert_ro_timer(&i_req->ro_session->ro_tl, timer_timeout);
+		}
 
-    shm_free(i_req);
-    LM_DBG("Exiting async ccr interim nicely\n");
+		// update to the new block of units we got
+		i_req->ro_session->reserved_secs = i_req->new_credit;
+
+		if(ret != 0) {
+			LM_CRIT("unable to insert timer for Ro Session [%.*s]\n",
+					i_req->ro_session->ro_session_id.len,
+					i_req->ro_session->ro_session_id.s);
+		} else {
+			ref_ro_session(i_req->ro_session, 1, 0);
+		}
+
+		if(ro_db_mode == DB_MODE_REALTIME) {
+			i_req->ro_session->flags |= RO_SESSION_FLAG_CHANGED;
+			if(update_ro_dbinfo_unsafe(i_req->ro_session) != 0) {
+				LM_ERR("Failed to update Ro session in DB... continuing\n");
+			}
+		}
+	} else {
+		/* just put the timer back in with however many seconds are left (if any!!! in which case we need to kill */
+		/* also update the event type to no_more_credit to save on processing the next time we get here */
+		i_req->ro_session->event_type = no_more_credit;
+		if(!timeout_or_error)
+			i_req->ro_session->last_event_timestamp = get_current_time_micro();
+
+		int whatsleft = i_req->ro_session->reserved_secs - used_secs;
+		if(whatsleft <= 0) {
+			// TODO we need to handle this situation more precisely.
+			// in case CCR times out, we get a call shutdown but the error message assumes it was due to a lack of credit.
+			//
+			LM_WARN("Immediately killing call due to no more credit *OR* no "
+					"CCA received (timeout) after reservation request\n");
+
+			//
+			// we need to unlock the session or else we might get a deadlock on dlg_terminated() dialog callback.
+			// Do not unref the session because it will be made inside the dlg_terminated() function.
+			//
+
+			//unref_ro_session_unsafe(i_req->ro_session, 1, ro_session_entry);
+			ro_session_unlock(ro_session_table, ro_session_entry);
+
+			dlgb.lookup_terminate_dlg(i_req->ro_session->dlg_h_entry,
+					i_req->ro_session->dlg_h_id, NULL);
+			call_terminated = 1;
+		} else {
+			LM_DBG("No more credit for user - letting call run out of money in "
+				   "[%i] seconds\n",
+					whatsleft);
+			int ret = insert_ro_timer(&i_req->ro_session->ro_tl, whatsleft);
+			if(ret != 0) {
+				LM_CRIT("unable to insert timer for Ro Session [%.*s]\n",
+						i_req->ro_session->ro_session_id.len,
+						i_req->ro_session->ro_session_id.s);
+			} else {
+				ref_ro_session(i_req->ro_session, 1, 0);
+			}
+		}
+	}
+
+	//
+	// if call was forcefully terminated, the lock was released before dlgb.lookup_terminate_dlg() function call.
+	//
+	if(!call_terminated) {
+		unref_ro_session(i_req->ro_session, 1,
+				0); //unref from the initial timer that fired this event.
+		ro_session_unlock(ro_session_table, ro_session_entry);
+	}
+
+	shm_free(i_req);
+	LM_DBG("Exiting async ccr interim nicely\n");
 }
 
 /* this is the function called when a we need to request more funds/credit. We need to try and reserve more credit.
  * If we can't we need to put a new timer to kill the call at the appropriate time
  */
-void ro_session_ontimeout(struct ro_tl *tl) {
-    time_t now, call_time;
-    long used_secs;
-    int adjustment;
-    str default_out_of_credit_hdrs = {"Reason: outofcredit\r\n", 21};
+void ro_session_ontimeout(struct ro_tl *tl)
+{
+	time_t now, call_time;
+	long used_secs;
+	int adjustment;
+	str default_out_of_credit_hdrs = {"Reason: outofcredit\r\n", 21};
 
-    LM_DBG("We have a fired timer [p=%p] and tl=[%i].\n", tl, tl->timeout);
+	LM_DBG("We have a fired timer [p=%p] and tl=[%i].\n", tl, tl->timeout);
 
-    /* find the session id for this timer*/
-    struct ro_session* ro_session = ((struct ro_session*) ((char *) (tl) - (unsigned long) (&((struct ro_session*) 0)->ro_tl)));
-    LM_DBG("offset for ro_tl is [%lu] and ro_session id is [%.*s]\n", (unsigned long) (&((struct ro_session*) 0)->ro_tl), ro_session->ro_session_id.len, ro_session->ro_session_id.s);
+	/* find the session id for this timer*/
+	struct ro_session *ro_session = ((struct ro_session
+					*)((char *)(tl)
+					   - (unsigned long)(&((struct ro_session *)0)->ro_tl)));
+	LM_DBG("offset for ro_tl is [%lu] and ro_session id is [%.*s]\n",
+			(unsigned long)(&((struct ro_session *)0)->ro_tl),
+			ro_session->ro_session_id.len, ro_session->ro_session_id.s);
 
-    if (!ro_session) {
-        LM_ERR("Can't find a session. This is bad\n");
-        return;
-    }
+	if(!ro_session) {
+		LM_ERR("Can't find a session. This is bad\n");
+		return;
+	}
 
-    LM_DBG("event-type=%d\n", ro_session->event_type);
+	LM_DBG("event-type=%d\n", ro_session->event_type);
 
-    //	if (!ro_session->active) {
-    //		LM_ALERT("Looks like this session was terminated while requesting more units\n");
-    //		goto exit;
-    //		return;
-    //	}
+	//	if (!ro_session->active) {
+	//		LM_ALERT("Looks like this session was terminated while requesting more units\n");
+	//		goto exit;
+	//		return;
+	//	}
 
 
-    if(ro_session->is_final_allocation) {
-        now = get_current_time_micro();
-        used_secs = now - ro_session->last_event_timestamp;
-        if((ro_session->reserved_secs - used_secs) > 0) {
-            update_ro_timer(&ro_session->ro_tl, (ro_session->reserved_secs - used_secs));
-            return;
-        }
-        else {
-            ro_session->event_type = no_more_credit;
-        }
-    }
+	if(ro_session->is_final_allocation) {
+		now = get_current_time_micro();
+		used_secs = now - ro_session->last_event_timestamp;
+		if((ro_session->reserved_secs - used_secs) > 0) {
+			update_ro_timer(&ro_session->ro_tl,
+					(ro_session->reserved_secs - used_secs));
+			return;
+		} else {
+			ro_session->event_type = no_more_credit;
+		}
+	}
 
-    switch (ro_session->event_type) {
-        case answered:
-            now = get_current_time_micro();
-            used_secs = rint((now - ro_session->last_event_timestamp) / (float) 1000000);
-            call_time = rint((now - ro_session->start_time) / (float) 1000000);
+	switch(ro_session->event_type) {
+		case answered:
+			now = get_current_time_micro();
+			used_secs = rint(
+					(now - ro_session->last_event_timestamp) / (float)1000000);
+			call_time = rint((now - ro_session->start_time) / (float)1000000);
 
-			if ((used_secs + ro_session->billed) < (call_time)) {
+			if((used_secs + ro_session->billed) < (call_time)) {
 				adjustment = call_time - (used_secs + ro_session->billed);
-				LM_DBG("Making adjustment for Ro interim timer by adding %d seconds\n", adjustment);
+				LM_DBG("Making adjustment for Ro interim timer by adding %d "
+					   "seconds\n",
+						adjustment);
 				used_secs += adjustment;
 			}
-			
-            counter_add(ims_charging_cnts_h.billed_secs, used_secs);
 
-            if (ro_session->callid.s != NULL && ro_session->ro_session_id.s != NULL) {
-                LM_DBG("Found a session to re-apply for timing [%.*s] and user is [%.*s]\n",
-                        ro_session->ro_session_id.len,
-                        ro_session->ro_session_id.s,
-                        ro_session->asserted_identity.len,
-                        ro_session->asserted_identity.s);
+			counter_add(ims_charging_cnts_h.billed_secs, used_secs);
 
-                LM_DBG("Call session has been active for %i seconds. The last reserved secs was [%i] and the last event was [%i seconds] ago\n",
-                        (unsigned int) call_time,
-                        (unsigned int) ro_session->reserved_secs,
-                        (unsigned int) used_secs);
+			if(ro_session->callid.s != NULL
+					&& ro_session->ro_session_id.s != NULL) {
+				LM_DBG("Found a session to re-apply for timing [%.*s] and user "
+					   "is [%.*s]\n",
+						ro_session->ro_session_id.len,
+						ro_session->ro_session_id.s,
+						ro_session->asserted_identity.len,
+						ro_session->asserted_identity.s);
 
-                LM_DBG("Call session [p=%p]: we will now make a request for another [%i] of credit with a usage of [%i] seconds from the last bundle.\n",
-                        ro_session,
-                        interim_request_credits/* new reservation request amount */,
-                        (unsigned int) used_secs/* charged seconds from previous reservation */);
+				LM_DBG("Call session has been active for %i seconds. The last "
+					   "reserved secs was [%i] and the last event was [%i "
+					   "seconds] ago\n",
+						(unsigned int)call_time,
+						(unsigned int)ro_session->reserved_secs,
+						(unsigned int)used_secs);
 
-                // Apply for more credit.
-                //
-                // The function call will return immediately and we will receive the reply asynchronously via a callback
+				LM_DBG("Call session [p=%p]: we will now make a request for "
+					   "another [%i] of credit with a usage of [%i] seconds "
+					   "from the last bundle.\n",
+						ro_session,
+						interim_request_credits /* new reservation request amount */
+						,
+						(unsigned int)
+								used_secs /* charged seconds from previous reservation */);
+
+				// Apply for more credit.
+				//
+				// The function call will return immediately and we will receive the reply asynchronously via a callback
 				ro_session->billed += used_secs;
-                send_ccr_interim(ro_session, (unsigned int) used_secs, interim_request_credits);
-                return;
-            } else {
-                LM_ERR("Hmmm, the session we have either doesn't have all the data or something else has gone wrong.\n");
-                /* put the timer back so the call will be killed according to previous timeout. */
-                ro_session->event_type = unknown_error;
-                int ret = insert_ro_timer(&ro_session->ro_tl,
-                        (ro_session->reserved_secs - used_secs) / 1000000);
-                if (ret != 0) {
-                    LM_CRIT("unable to insert timer for Ro Session [%.*s]\n",
-                            ro_session->ro_session_id.len, ro_session->ro_session_id.s);
-                } else {
-                    ref_ro_session(ro_session, 1, 0);
-                    return;
-                }
-                LM_ERR("Immediately killing call due to unknown error\n");
-            }
-            break;
-        case delayed_delete:
-            destroy_ro_session(ro_session);
-            return;
-        case pending:
-            /* call is not answered yet. No point asking more credit. Just wait for dialog to progress somehow */
-            return;
-        default:
-            LM_ERR("Diameter call session - event [%d]\n", ro_session->event_type);
+				send_ccr_interim(ro_session, (unsigned int)used_secs,
+						interim_request_credits);
+				return;
+			} else {
+				LM_ERR("Hmmm, the session we have either doesn't have all the "
+					   "data or something else has gone wrong.\n");
+				/* put the timer back so the call will be killed according to previous timeout. */
+				ro_session->event_type = unknown_error;
+				int ret = insert_ro_timer(&ro_session->ro_tl,
+						(ro_session->reserved_secs - used_secs) / 1000000);
+				if(ret != 0) {
+					LM_CRIT("unable to insert timer for Ro Session [%.*s]\n",
+							ro_session->ro_session_id.len,
+							ro_session->ro_session_id.s);
+				} else {
+					ref_ro_session(ro_session, 1, 0);
+					return;
+				}
+				LM_ERR("Immediately killing call due to unknown error\n");
+			}
+			break;
+		case delayed_delete:
+			destroy_ro_session(ro_session);
+			return;
+		case pending:
+			/* call is not answered yet. No point asking more credit. Just wait for dialog to progress somehow */
+			return;
+		default:
+			LM_ERR("Diameter call session - event [%d]\n",
+					ro_session->event_type);
 
-            if (ro_session->event_type == no_more_credit)
-                LM_INFO("Call/session must be ended - no more funds.\n");
-            else if (ro_session->event_type == unknown_error)
-                LM_ERR("last event caused an error. We will now tear down this session.\n");
-    }
+			if(ro_session->event_type == no_more_credit)
+				LM_INFO("Call/session must be ended - no more funds.\n");
+			else if(ro_session->event_type == unknown_error)
+				LM_ERR("last event caused an error. We will now tear down this "
+					   "session.\n");
+	}
 
-    counter_inc(ims_charging_cnts_h.killed_calls);
+	counter_inc(ims_charging_cnts_h.killed_calls);
 
-    dlgb.lookup_terminate_dlg(ro_session->dlg_h_entry, ro_session->dlg_h_id, &default_out_of_credit_hdrs);
-    return;
+	dlgb.lookup_terminate_dlg(ro_session->dlg_h_entry, ro_session->dlg_h_id,
+			&default_out_of_credit_hdrs);
+	return;
 }
-
