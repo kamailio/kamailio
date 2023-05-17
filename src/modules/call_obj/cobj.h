@@ -74,9 +74,10 @@ int cobj_free(int num);
 /**
  * \brief Structure to store module statistics.
  */
-typedef struct {
-	int start; /**< First element in the array. */
-	int end; /**< Last element in the array (included). */
+typedef struct
+{
+	int start;	  /**< First element in the array. */
+	int end;	  /**< Last element in the array (included). */
 	int assigned; /**< Number of currently assigned elements. */
 } cobj_stats_t;
 
@@ -96,10 +97,11 @@ void cobj_free_all(void);
 /**
  * \brief Element of a returned object list.
  */
-typedef struct _cobj_elem {
-	int number; /**< Number assigned to the call. */
-	uint64_t timestamp;	/**< Timestamp for the call. */
-	str callid; /**< Call-ID of the call. */
+typedef struct _cobj_elem
+{
+	int number;				 /**< Number assigned to the call. */
+	uint64_t timestamp;		 /**< Timestamp for the call. */
+	str callid;				 /**< Call-ID of the call. */
 	struct _cobj_elem *next; /**< Next element in the list. */
 } cobj_elem_t;
 
