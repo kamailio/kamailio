@@ -54,14 +54,14 @@
 
 MODULE_VERSION
 
-str default_domain= STR_NULL;
+str default_domain = STR_NULL;
 
 int pua_ul_publish = 0;
 int pua_ul_bflag = -1;
 int pua_ul_bmask = 0;
 
 pua_api_t _pu_pua;
-str pres_prefix= STR_NULL;
+str pres_prefix = STR_NULL;
 
 /*! \brief Structure containing pointers to usrloc functions */
 usrloc_api_t ul;
@@ -70,31 +70,28 @@ usrloc_api_t ul;
 
 static int mod_init(void);
 
-static cmd_export_t cmds[]=
-{
-	{"pua_set_publish", (cmd_function)w_pua_set_publish, 0, 0, 0, REQUEST_ROUTE},
-	{"bind_pua_usrloc", (cmd_function)bind_pua_usrloc, 1, 0, 0, 0},
-	{0, 0, 0, 0, 0, 0}
-};
+static cmd_export_t cmds[] = {
+		{"pua_set_publish", (cmd_function)w_pua_set_publish, 0, 0, 0,
+				REQUEST_ROUTE},
+		{"bind_pua_usrloc", (cmd_function)bind_pua_usrloc, 1, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0}};
 
-static param_export_t params[]={
-	{"default_domain",	 PARAM_STR, &default_domain	 },
-	{"entity_prefix",	 PARAM_STR, &pres_prefix		 },
-	{"branch_flag",	     INT_PARAM, &pua_ul_bflag		 },
-	{0,							 0,			0            }
-};
+static param_export_t params[] = {
+		{"default_domain", PARAM_STR, &default_domain},
+		{"entity_prefix", PARAM_STR, &pres_prefix},
+		{"branch_flag", INT_PARAM, &pua_ul_bflag}, {0, 0, 0}};
 
-struct module_exports exports= {
-	"pua_usrloc",		/* module name */
-	DEFAULT_DLFLAGS,	/* dlopen flags */
-	cmds,				/* exported functions */
-	params,				/* exported parameters */
-	0,					/* RPC method exports */
-	0,					/* exported pseudo-variables */
-	0,					/* response handling function */
-	mod_init,			/* module initialization function */
-	0,					/* per-child init function */
-	0					/* module destroy function */
+struct module_exports exports = {
+		"pua_usrloc",	 /* module name */
+		DEFAULT_DLFLAGS, /* dlopen flags */
+		cmds,			 /* exported functions */
+		params,			 /* exported parameters */
+		0,				 /* RPC method exports */
+		0,				 /* exported pseudo-variables */
+		0,				 /* response handling function */
+		mod_init,		 /* module initialization function */
+		0,				 /* per-child init function */
+		0				 /* module destroy function */
 };
 
 /*! \brief
@@ -105,89 +102,77 @@ static int mod_init(void)
 	bind_usrloc_t bind_usrloc;
 	bind_pua_t bind_pua;
 
-	if(!default_domain.s || default_domain.len<=0)
-	{
+	if(!default_domain.s || default_domain.len <= 0) {
 		LM_ERR("default domain parameter not set\n");
 		return -1;
 	}
 
-	if(!pres_prefix.s || pres_prefix.len<=0)
+	if(!pres_prefix.s || pres_prefix.len <= 0)
 		LM_DBG("No pres_prefix configured\n");
 
 	bind_usrloc = (bind_usrloc_t)find_export("ul_bind_usrloc", 1, 0);
-	if (!bind_usrloc)
-	{
+	if(!bind_usrloc) {
 		LM_ERR("Can't bind usrloc\n");
 		return -1;
 	}
-	if (bind_usrloc(&ul) < 0)
-	{
+	if(bind_usrloc(&ul) < 0) {
 		LM_ERR("Can't bind usrloc\n");
 		return -1;
 	}
-	if(ul.register_ulcb == NULL)
-	{
+	if(ul.register_ulcb == NULL) {
 		LM_ERR("Could not import ul_register_ulcb\n");
 		return -1;
 	}
 
-	if(ul.register_ulcb(UL_CONTACT_INSERT, ul_publish, 0)< 0)
-	{
+	if(ul.register_ulcb(UL_CONTACT_INSERT, ul_publish, 0) < 0) {
 		LM_ERR("can not register callback for"
-				" insert\n");
+			   " insert\n");
 		return -1;
 	}
-	if(ul.register_ulcb(UL_CONTACT_EXPIRE, ul_publish, 0)< 0)
-	{
+	if(ul.register_ulcb(UL_CONTACT_EXPIRE, ul_publish, 0) < 0) {
 		LM_ERR("can not register callback for"
-				" expire\n");
+			   " expire\n");
 		return -1;
 	}
 
-	if(ul.register_ulcb(UL_CONTACT_UPDATE, ul_publish, 0)< 0)
-	{
+	if(ul.register_ulcb(UL_CONTACT_UPDATE, ul_publish, 0) < 0) {
 		LM_ERR("can not register callback for update\n");
 		return -1;
 	}
 
-	if(ul.register_ulcb(UL_CONTACT_DELETE, ul_publish, 0)< 0)
-	{
+	if(ul.register_ulcb(UL_CONTACT_DELETE, ul_publish, 0) < 0) {
 		LM_ERR("can not register callback for delete\n");
 		return -1;
 	}
 
-	bind_pua= (bind_pua_t)find_export("bind_pua", 1,0);
-	if (!bind_pua)
-	{
+	bind_pua = (bind_pua_t)find_export("bind_pua", 1, 0);
+	if(!bind_pua) {
 		LM_ERR("Can't bind pua\n");
 		return -1;
 	}
 
-	if (bind_pua(&_pu_pua) < 0)
-	{
+	if(bind_pua(&_pu_pua) < 0) {
 		LM_ERR("Can't bind pua\n");
 		return -1;
 	}
-	if(_pu_pua.send_publish == NULL)
-	{
+	if(_pu_pua.send_publish == NULL) {
 		LM_ERR("Could not import send_publish\n");
 		return -1;
 	}
 
-	if(_pu_pua.send_subscribe == NULL)
-	{
+	if(_pu_pua.send_subscribe == NULL) {
 		LM_ERR("Could not import send_subscribe\n");
 		return -1;
 	}
 
 	/* register post-script pua_unset_publish unset function */
-	if(register_script_cb(pua_unset_publish, POST_SCRIPT_CB|REQUEST_CB, 0)<0)
-	{
+	if(register_script_cb(pua_unset_publish, POST_SCRIPT_CB | REQUEST_CB, 0)
+			< 0) {
 		LM_ERR("failed to register POST request callback\n");
 		return -1;
 	}
 
-	if(pua_ul_bflag!=-1)
+	if(pua_ul_bflag != -1)
 		pua_ul_bmask = 1 << pua_ul_bflag;
 
 	return 0;
@@ -195,9 +180,9 @@ static int mod_init(void)
 
 int bind_pua_usrloc(struct pua_usrloc_binds *pxb)
 {
-	if (pxb == NULL)
-	{
-		LM_WARN("bind_pua_usrloc: Cannot load pua_usrloc API into a NULL pointer\n");
+	if(pxb == NULL) {
+		LM_WARN("bind_pua_usrloc: Cannot load pua_usrloc API into a NULL "
+				"pointer\n");
 		return -1;
 	}
 
