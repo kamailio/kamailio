@@ -57,49 +57,45 @@ jmethodID KamailioID;
 sip_msg_t *_aj_msg = NULL;
 
 /** module parameters */
-static param_export_t params[] = {
-	{"class_name", PARAM_STRING, &class_name},
-	{"child_init_method", PARAM_STRING, &child_init_mname}, /* unused? */
-	{"java_options", PARAM_STRING, &java_options_str},
-	{"force_cmd_exec", INT_PARAM, &force_cmd_exec},
-	{0, 0, 0}
-};
+static param_export_t params[] = {{"class_name", PARAM_STRING, &class_name},
+		{"child_init_method", PARAM_STRING, &child_init_mname}, /* unused? */
+		{"java_options", PARAM_STRING, &java_options_str},
+		{"force_cmd_exec", INT_PARAM, &force_cmd_exec}, {0, 0, 0}};
 
 
 /*
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"java_method_exec", (cmd_function)j_nst_exec_0, 2, NULL, 0, ANY_ROUTE},
-	{"java_method_exec", (cmd_function)j_nst_exec_1, 3, NULL, 0, ANY_ROUTE},
-	{"java_s_method_exec", (cmd_function)j_s_nst_exec_0, 2, NULL, 0,
+		{"java_method_exec", (cmd_function)j_nst_exec_0, 2, NULL, 0, ANY_ROUTE},
+		{"java_method_exec", (cmd_function)j_nst_exec_1, 3, NULL, 0, ANY_ROUTE},
+		{"java_s_method_exec", (cmd_function)j_s_nst_exec_0, 2, NULL, 0,
 				ANY_ROUTE},
-	{"java_s_method_exec", (cmd_function)j_s_nst_exec_1, 3, NULL, 0,
+		{"java_s_method_exec", (cmd_function)j_s_nst_exec_1, 3, NULL, 0,
 				ANY_ROUTE},
-	{"java_staticmethod_exec", (cmd_function)j_st_exec_0, 2, NULL, 0,
+		{"java_staticmethod_exec", (cmd_function)j_st_exec_0, 2, NULL, 0,
 				ANY_ROUTE},
-	{"java_staticmethod_exec", (cmd_function)j_st_exec_1, 3, NULL, 0,
+		{"java_staticmethod_exec", (cmd_function)j_st_exec_1, 3, NULL, 0,
 				ANY_ROUTE},
-	{"java_s_staticmethod_exec", (cmd_function)j_s_st_exec_0, 2, NULL, 0,
+		{"java_s_staticmethod_exec", (cmd_function)j_s_st_exec_0, 2, NULL, 0,
 				ANY_ROUTE},
-	{"java_s_staticmethod_exec", (cmd_function)j_s_st_exec_1, 3, NULL, 0,
+		{"java_s_staticmethod_exec", (cmd_function)j_s_st_exec_1, 3, NULL, 0,
 				ANY_ROUTE},
 
-	{0, 0, 0, 0, 0, 0}
-};
+		{0, 0, 0, 0, 0, 0}};
 
 /** module exports */
 struct module_exports exports = {
-	APP_NAME, /* module name */
-	DEFAULT_DLFLAGS,   /* dlopen flags */
-	cmds,		   /* exported functions */
-	params,		   /* exported parameters */
-	0,		   /* exported RPC methods */
-	0,		   /* exported pseudo-variables */
-	0,	   	   /* response handling function */
-	mod_init,	   /* module initialization function */
-	child_init,	   /* per-child init function */
-	mod_destroy 	   /* destroy function */
+		APP_NAME,		 /* module name */
+		DEFAULT_DLFLAGS, /* dlopen flags */
+		cmds,			 /* exported functions */
+		params,			 /* exported parameters */
+		0,				 /* exported RPC methods */
+		0,				 /* exported pseudo-variables */
+		0,				 /* response handling function */
+		mod_init,		 /* module initialization function */
+		child_init,		 /* per-child init function */
+		mod_destroy		 /* destroy function */
 };
 
 static int mod_init(void)

@@ -414,7 +414,7 @@ int KamExec(JNIEnv *jenv, char *fname, int argc, char **argv)
 			STRING_ST, argv[3],			  /* param. 4 */
 			STRING_ST, argv[4],			  /* param. 5 */
 			STRING_ST, argv[5]			  /* param. 6 */
-			);
+	);
 
 	if(!act) {
 		LM_ERR("%s: KamExec(): action structure couldn't be created\n",
