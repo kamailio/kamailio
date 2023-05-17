@@ -112,7 +112,8 @@ rt_info_t *build_rt_info(int priority, dr_tmrec_t *trec,
 		n++;
 		/* reallocate the array which keeps the parsed indexes */
 		if(n >= idx_size) {
-			if(NULL == ((t_idx) = (int *)shm_malloc(
+			if(NULL
+					== ((t_idx) = (int *)shm_malloc(
 								(idx_size * 2 * 2) * sizeof(int)))) {
 				LM_ERR("out of shm\n");
 				goto err_exit;
@@ -135,7 +136,8 @@ rt_info_t *build_rt_info(int priority, dr_tmrec_t *trec,
 	}
 	/* create the pgwl */
 	rt->pgwa_len = n;
-	if(NULL == (rt->pgwl = (pgw_list_t *)shm_malloc(
+	if(NULL
+			== (rt->pgwl = (pgw_list_t *)shm_malloc(
 						rt->pgwa_len * sizeof(pgw_list_t)))) {
 		SHM_MEM_ERROR;
 		goto err_exit;
@@ -186,7 +188,8 @@ int add_rt_info(ptree_node_t *pn, rt_info_t *r, unsigned int rgid)
 	if(NULL == pn->rg) {
 		/* allocate the routing groups array */
 		pn->rg_len = RG_INIT_LEN;
-		if(NULL == (pn->rg = (rg_entry_t *)shm_malloc(
+		if(NULL
+				== (pn->rg = (rg_entry_t *)shm_malloc(
 							pn->rg_len * sizeof(rg_entry_t)))) {
 			/* recover the old pointer to be able to shm_free mem */
 			SHM_MEM_ERROR;
@@ -201,7 +204,8 @@ int add_rt_info(ptree_node_t *pn, rt_info_t *r, unsigned int rgid)
 	if((i == pn->rg_len - 1) && (pn->rg[i].rgid != rgid)) {
 		/* realloc & copy the old rg */
 		trg = pn->rg;
-		if(NULL == (pn->rg = (rg_entry_t *)shm_malloc(
+		if(NULL
+				== (pn->rg = (rg_entry_t *)shm_malloc(
 							2 * pn->rg_len * sizeof(rg_entry_t)))) {
 			/* recover the old pointer to be able to shm_free mem */
 			SHM_MEM_ERROR;
@@ -285,7 +289,8 @@ int add_dst(rt_data_t *r,
 	pgw = (pgw_t *)shm_malloc(sizeof(pgw_t) + l_ip + l_pri + l_attrs);
 	if(NULL == pgw) {
 		SHM_MEM_ERROR_FMT("missing (%u)\n",
--                               (unsigned int)(sizeof(pgw_t) + l_ip + l_pri + l_attrs));;
+				-(unsigned int)(sizeof(pgw_t) + l_ip + l_pri + l_attrs));
+		;
 		goto err_exit;
 	}
 	memset(pgw, 0, sizeof(pgw_t));
