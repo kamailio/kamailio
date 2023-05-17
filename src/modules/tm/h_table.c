@@ -47,8 +47,9 @@
 #include "uac.h" /* free_local_ack */
 
 
-#define T_UAC_PTR(T) ((tm_ua_client_t*)((char*)T + sizeof(tm_cell_t) \
-								+ MD5_LEN - sizeof(((tm_cell_t*)0)->md5)))
+#define T_UAC_PTR(T)                                            \
+	((tm_ua_client_t *)((char *)T + sizeof(tm_cell_t) + MD5_LEN \
+						- sizeof(((tm_cell_t *)0)->md5)))
 
 
 static enum kill_reason kr;
@@ -131,7 +132,7 @@ void free_cell_helper(
 
 	LM_DBG("freeing transaction %p from %s:%u\n", dead_cell, fname, fline);
 
-	if(dead_cell==NULL) {
+	if(dead_cell == NULL) {
 		return;
 	}
 
@@ -153,10 +154,10 @@ void free_cell_helper(
 	release_cell_lock(dead_cell); /* does nothing */
 
 	dead_cell->fcount++;
-	if(dead_cell->fcount!=1) {
+	if(dead_cell->fcount != 1) {
 		LM_WARN("unexpected fcount value: %d\n", dead_cell->fcount);
 	}
-	if(dead_cell->uac==NULL || dead_cell->uac!=T_UAC_PTR(dead_cell)) {
+	if(dead_cell->uac == NULL || dead_cell->uac != T_UAC_PTR(dead_cell)) {
 		LM_WARN("unexpected tm cell content: %p\n", dead_cell);
 		return;
 	}
@@ -204,8 +205,9 @@ void free_cell_helper(
 #ifdef USE_DNS_FAILOVER
 		if(dead_cell->uac[i].dns_h.a) {
 			LM_DBG("branch %d -> dns_h.srv (%.*s) ref=%d,"
-				" dns_h.a (%.*s) ref=%d\n",
-					i, dead_cell->uac[i].dns_h.srv
+				   " dns_h.a (%.*s) ref=%d\n",
+					i,
+					dead_cell->uac[i].dns_h.srv
 							? dead_cell->uac[i].dns_h.srv->name_len
 							: 0,
 					dead_cell->uac[i].dns_h.srv
@@ -599,21 +601,18 @@ void tm_xdata_replace(tm_xdata_t *newxd, tm_xlinks_t *bakxd)
 void tm_log_transaction(tm_cell_t *tcell, int llev, char *ltext)
 {
 	LOG(llev, "%s [start] transaction %p\n", ltext, tcell);
-	LOG(llev, "%s - tindex=%u tlabel=%u method='%.*s' from_hdr='%.*s'"
+	LOG(llev,
+			"%s - tindex=%u tlabel=%u method='%.*s' from_hdr='%.*s'"
 			" to_hdr='%.*s' callid_hdr='%.*s' cseq_hdr='%.*s' uas_request=%s"
 			" tflags=%u outgoings=%u ref_count=%u lifetime=%u\n",
 			ltext, (unsigned)tcell->hash_index, (unsigned)tcell->label,
-			tcell->method.len, tcell->method.s,
-			tcell->from_hdr.len, tcell->from_hdr.s,
-			tcell->to_hdr.len, tcell->to_hdr.s,
-			tcell->callid_hdr.len, tcell->callid_hdr.s,
-			tcell->cseq_hdr_n.len, tcell->cseq_hdr_n.s,
-			(tcell->uas.request)?"yes":"no",
-			(unsigned)tcell->flags,
-			(unsigned)tcell->nr_of_outgoings,
+			tcell->method.len, tcell->method.s, tcell->from_hdr.len,
+			tcell->from_hdr.s, tcell->to_hdr.len, tcell->to_hdr.s,
+			tcell->callid_hdr.len, tcell->callid_hdr.s, tcell->cseq_hdr_n.len,
+			tcell->cseq_hdr_n.s, (tcell->uas.request) ? "yes" : "no",
+			(unsigned)tcell->flags, (unsigned)tcell->nr_of_outgoings,
 			(unsigned)atomic_get(&tcell->ref_count),
-			(unsigned)TICKS_TO_S(tcell->end_of_life)
-		);
+			(unsigned)TICKS_TO_S(tcell->end_of_life));
 
 	LOG(llev, "%s [end] transaction %p\n", ltext, tcell);
 }
@@ -628,7 +627,7 @@ void tm_clean_lifetime(void)
 
 	texp = get_ticks_raw() - S_TO_TICKS(TM_LIFETIME_LIMIT);
 
-	for (r=0; r<TABLE_ENTRIES; r++) {
+	for(r = 0; r < TABLE_ENTRIES; r++) {
 		/* faster first try without lock */
 		if(clist_empty(&_tm_table->entries[r], next_c)) {
 			continue;

@@ -19,7 +19,6 @@
  */
 
 
-
 #ifndef _T_REPLY_H
 #define _T_REPLY_H
 
@@ -30,9 +29,10 @@
 
 
 /* reply processing status */
-enum rps {
+enum rps
+{
 	/* something bad happened */
-	RPS_ERROR=0,
+	RPS_ERROR = 0,
 	/* transaction completed but we still accept the reply */
 	RPS_PUSHED_AFTER_COMPLETION,
 	/* reply discarded */
@@ -57,7 +57,7 @@ extern int failure_reply_mode;
 extern int faked_reply_prio;
 
 extern int tm_rich_redirect;
- 
+
 /* has this to-tag been never seen in previous 200/INVs? */
 int unmatched_totag(struct cell *t, struct sip_msg *ack);
 
@@ -66,9 +66,9 @@ typedef unsigned int branch_bm_t;
 
 /* reason building blocks (see rfc3326) */
 #define REASON_PREFIX "Reason: SIP;cause="
-#define REASON_PREFIX_LEN (sizeof(REASON_PREFIX)-1)
+#define REASON_PREFIX_LEN (sizeof(REASON_PREFIX) - 1)
 #define REASON_TEXT ";text="
-#define REASON_TEXT_LEN (sizeof(REASON_TEXT)-1)
+#define REASON_TEXT_LEN (sizeof(REASON_TEXT) - 1)
 
 #define CANCEL_REAS_UNKNOWN 0
 #define CANCEL_REAS_PACKED_HDRS -1
@@ -78,41 +78,43 @@ typedef unsigned int branch_bm_t;
 
 
 /** cancel reason structure.*/
-struct cancel_reason {
+struct cancel_reason
+{
 	short cause; /**< 0 = unknown, -1 =  cancel, > 0 final reply code. */
-	union{
+	union
+	{
 		str text; /**< reason text if reason is final reply .*/
-		struct sip_msg* e2e_cancel; /**< cancel msg if reason is cancel. */
-		str packed_hdrs; /**< complete reason headers. */
-	}u;
+		struct sip_msg *e2e_cancel; /**< cancel msg if reason is cancel. */
+		str packed_hdrs;			/**< complete reason headers. */
+	} u;
 };
 
-struct cancel_info {
+struct cancel_info
+{
 	branch_bm_t cancel_bitmap; /**< cancel branch bitmap */
 	struct cancel_reason reason;
 };
 
 
-#define init_cancel_reason(cr) \
-	do {\
-		(cr)->cause=0; \
-		(cr)->u.e2e_cancel=0; \
+#define init_cancel_reason(cr)  \
+	do {                        \
+		(cr)->cause = 0;        \
+		(cr)->u.e2e_cancel = 0; \
 	} while(0)
 
-#define init_cancel_info(ci) \
-	do {\
-		(ci)->cancel_bitmap=0; \
+#define init_cancel_info(ci)               \
+	do {                                   \
+		(ci)->cancel_bitmap = 0;           \
 		init_cancel_reason(&(ci)->reason); \
-	}while (0);
+	} while(0);
 
 
 /* reply export types */
-typedef int (*treply_f)(struct sip_msg * , unsigned int , char * );
-typedef int (*treply_wb_f)( struct cell* trans,
-	unsigned int code, str *text, str *body,
-	str *new_header, str *to_tag);
-typedef int (*treply_trans_f)(struct cell *t, struct sip_msg* p_msg, unsigned int code,
-	char * text);
+typedef int (*treply_f)(struct sip_msg *, unsigned int, char *);
+typedef int (*treply_wb_f)(struct cell *trans, unsigned int code, str *text,
+		str *body, str *new_header, str *to_tag);
+typedef int (*treply_trans_f)(
+		struct cell *t, struct sip_msg *p_msg, unsigned int code, char *text);
 
 /* wrapper function needed after changes in w_t_reply */
 int w_t_reply_wrp(struct sip_msg *m, unsigned int code, char *txt);
@@ -131,17 +133,19 @@ void tm_reply_mutex_unlock(tm_cell_t *t);
  * Returns :   0 - core router stops
  *             1 - core router relay statelessly
  */
-int reply_received( struct sip_msg  *p_msg ) ;
+int reply_received(struct sip_msg *p_msg);
 
 /* return 1 if a failure_route processes */
-int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
-					int code, int extra_flags);
-typedef int (*run_failure_handlers_f)(struct cell*, struct sip_msg*, int, int);
+int run_failure_handlers(
+		struct cell *t, struct sip_msg *rpl, int code, int extra_flags);
+typedef int (*run_failure_handlers_f)(
+		struct cell *, struct sip_msg *, int, int);
 
 /* return 1 if a branch_failure_route processes */
-int run_branch_failure_handlers(struct cell *t, struct sip_msg *rpl,
-					int code, int extra_flags);
-typedef int (*run_branch_failure_handlers_f)(struct cell*, struct sip_msg*, int, int);
+int run_branch_failure_handlers(
+		struct cell *t, struct sip_msg *rpl, int code, int extra_flags);
+typedef int (*run_branch_failure_handlers_f)(
+		struct cell *, struct sip_msg *, int, int);
 
 
 /* Retransmits the last sent inbound reply.
@@ -157,49 +161,49 @@ typedef int (*run_branch_failure_handlers_f)(struct cell*, struct sip_msg*, int,
  */
 
 
-int t_reply_with_body(struct cell *trans, unsigned int code,
-		str *text, str *body, str *new_header, str *to_tag);
+int t_reply_with_body(struct cell *trans, unsigned int code, str *text,
+		str *body, str *new_header, str *to_tag);
 
 
 /* send a UAS reply
  * returns 1 if everything was OK or -1 for error
  */
-int t_reply( struct cell *t, struct sip_msg * , unsigned int , char * );
+int t_reply(struct cell *t, struct sip_msg *, unsigned int, char *);
 /* the same as t_reply, except it does not claim
    REPLY_LOCK -- useful to be called within reply
    processing
 */
-int t_reply_str( struct cell *t, struct sip_msg * , unsigned int , str * );
+int t_reply_str(struct cell *t, struct sip_msg *, unsigned int, str *);
 
-int t_reply_unsafe( struct cell *t, struct sip_msg * , unsigned int , char * );
-int t_reply_str_unsafe( struct cell *t, struct sip_msg * , unsigned int , str * );
+int t_reply_unsafe(struct cell *t, struct sip_msg *, unsigned int, char *);
+int t_reply_str_unsafe(struct cell *t, struct sip_msg *, unsigned int, str *);
 
 
-enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
-	unsigned int msg_status, struct cancel_info *cancel_data,
-	int do_put_on_wait );
+enum rps relay_reply(struct cell *t, struct sip_msg *p_msg, int branch,
+		unsigned int msg_status, struct cancel_info *cancel_data,
+		int do_put_on_wait);
 
-enum rps local_reply( struct cell *t, struct sip_msg *p_msg, int branch,
-	unsigned int msg_status, struct cancel_info *cancel_data );
+enum rps local_reply(struct cell *t, struct sip_msg *p_msg, int branch,
+		unsigned int msg_status, struct cancel_info *cancel_data);
 
-void set_final_timer( /* struct s_table *h_table,*/ struct cell *t );
+void set_final_timer(/* struct s_table *h_table,*/ struct cell *t);
 
-void cleanup_uac_timers( struct cell *t );
+void cleanup_uac_timers(struct cell *t);
 
-void on_failure_reply( struct cell* t, struct sip_msg* msg,
-	int code, void *param  );
+void on_failure_reply(
+		struct cell *t, struct sip_msg *msg, int code, void *param);
 
 /* set which 'reply' structure to take if only negative
    replies arrive
 */
-void t_on_failure( unsigned int go_to );
+void t_on_failure(unsigned int go_to);
 unsigned int get_on_failure(void);
-void t_on_branch_failure( unsigned int go_to );
+void t_on_branch_failure(unsigned int go_to);
 unsigned int get_on_branch_failure(void);
-void t_on_reply( unsigned int go_to );
+void t_on_reply(unsigned int go_to);
 unsigned int get_on_reply(void);
 
-int t_retransmit_reply( struct cell *t );
+int t_retransmit_reply(struct cell *t);
 
 void tm_init_tags(void);
 
@@ -213,12 +217,12 @@ int t_pick_branch_blind(struct cell *t, int *res_code);
  */
 void t_drop_replies(int v);
 
-void rpc_reply(rpc_t* rpc, void* c);
-void rpc_reply_callid(rpc_t* rpc, void* c);
+void rpc_reply(rpc_t *rpc, void *c);
+void rpc_reply_callid(rpc_t *rpc, void *c);
 
-int faked_env(struct cell *t,struct sip_msg *msg, int is_async_env);
-struct sip_msg * fake_req(struct sip_msg *shmem_msg,
-	int extra_flags, struct ua_client *uac, int *len);
+int faked_env(struct cell *t, struct sip_msg *msg, int is_async_env);
+struct sip_msg *fake_req(struct sip_msg *shmem_msg, int extra_flags,
+		struct ua_client *uac, int *len);
 
 void free_faked_req(struct sip_msg *faked_req, int len);
 

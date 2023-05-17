@@ -20,23 +20,22 @@
  */
 
 
-
 #ifndef _TM_T_FIFO_H_
 #define _TM_T_FIFO_H_
 
 #include "../../core/parser/msg_parser.h"
 #include "../../core/sr_module.h"
 
-int fixup_t_write( void** param, int param_no);
+int fixup_t_write(void **param, int param_no);
 
-int parse_tw_append( modparam_t type, void* val);
+int parse_tw_append(modparam_t type, void *val);
 
 int init_twrite_lines(void);
 
 int init_twrite_sock(void);
 
-int t_write_req(struct sip_msg* msg, char* vm_fifo, char* action);
+int t_write_req(struct sip_msg *msg, char *vm_fifo, char *action);
 
-int t_write_unix(struct sip_msg* msg, char* sock_name, char* action);
+int t_write_unix(struct sip_msg *msg, char *sock_name, char *action);
 
 #endif

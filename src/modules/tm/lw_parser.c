@@ -31,14 +31,14 @@
 #define READ(val) \
 	(*(val + 0) + (*(val + 1) << 8) + (*(val + 2) << 16) + (*(val + 3) << 24))
 
-#define LW_HNAME_SET(_p, _end, _hnlen, _type, _htype) \
-	do { \
-		if(_end - _p > _hnlen) { \
+#define LW_HNAME_SET(_p, _end, _hnlen, _type, _htype)    \
+	do {                                                 \
+		if(_end - _p > _hnlen) {                         \
 			if(_p[_hnlen] == ':' || _p[_hnlen] == ' ') { \
-				*_type = _htype; \
-				_p += _hnlen; \
-			} \
-		} \
+				*_type = _htype;                         \
+				_p += _hnlen;                            \
+			}                                            \
+		}                                                \
 	} while(0)
 
 /*
@@ -236,7 +236,7 @@ char *lw_next_line(char *buf, char *buf_end)
 
 	} while((c < buf_end)
 			&& ((*c == ' ')
-					   || (*c == '\t'))); /* next line begins with whitespace line folding */
+					|| (*c == '\t'))); /* next line begins with whitespace line folding */
 
 	return c;
 }
@@ -255,7 +255,7 @@ char *lw_find_via(char *buf, char *buf_end)
 		val = LOWER_DWORD(READ(p));
 		if((val == _via1_) || (val == _via2_)
 				|| ((LOWER_BYTE(*p) == 'v') /* compact header */
-						   && ((*(p + 1) == ' ') || (*(p + 1) == ':'))))
+						&& ((*(p + 1) == ' ') || (*(p + 1) == ':'))))
 			return p;
 
 		p = lw_next_line(p, buf_end);

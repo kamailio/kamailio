@@ -55,7 +55,7 @@
  */
 typedef struct dlg_seq
 {
-	unsigned int value;   /* Sequence value */
+	unsigned int value;	  /* Sequence value */
 	unsigned char is_set; /* is_set flag */
 } dlg_seq_t;
 
@@ -63,9 +63,10 @@ typedef struct dlg_seq
 /*
  * Dialog state
  */
-typedef enum dlg_state {
+typedef enum dlg_state
+{
 	DLG_NEW = 0,   /* New dialog, no reply received yet */
-	DLG_EARLY,	 /* Early dialog, provisional response received */
+	DLG_EARLY,	   /* Early dialog, provisional response received */
 	DLG_CONFIRMED, /* Confirmed dialog, 2xx received */
 	DLG_DESTROYED  /* Destroyed dialog */
 } dlg_state_t;
@@ -95,7 +96,7 @@ typedef struct dlg_hooks
 	str ru;
 	str nh;
 	str *request_uri;  /* This should be put into Request-URI */
-	str *next_hop;	 /* Where the message should be really sent */
+	str *next_hop;	   /* Where the message should be really sent */
 	rr_t *first_route; /* First route to be printed into the message */
 	str *last_route;   /* If not zero add this as the last route */
 } dlg_hooks_t;
@@ -107,8 +108,8 @@ typedef struct dlg_hooks
 typedef struct dlg
 {
 	dlg_id_t id;		  /* Dialog identifier */
-	dlg_seq_t loc_seq;	/* Local sequence number */
-	dlg_seq_t rem_seq;	/* Remote sequence number */
+	dlg_seq_t loc_seq;	  /* Local sequence number */
+	dlg_seq_t rem_seq;	  /* Remote sequence number */
 	str loc_uri;		  /* Local URI */
 	str rem_uri;		  /* Remote URI */
 	str rem_target;		  /* Remote target URI */
@@ -116,9 +117,9 @@ typedef struct dlg
 	str loc_dname;		  /* Local Display Name */
 	str rem_dname;		  /* Remote Display Name */
 	unsigned char secure; /* Secure flag -- currently not used */
-	dlg_state_t state;	/* State of the dialog */
+	dlg_state_t state;	  /* State of the dialog */
 	rr_t *route_set;	  /* Route set */
-	dlg_hooks_t hooks;	/* Various hooks used to store information that
+	dlg_hooks_t hooks;	  /* Various hooks used to store information that
 				 * can be reused when building a message (to
 				 * prevent repeated analyzing of the dialog data
 				 */
@@ -128,7 +129,8 @@ typedef struct dlg
 #endif
 } dlg_t;
 
-typedef enum {
+typedef enum
+{
 	IS_TARGET_REFRESH,
 	IS_NOT_TARGET_REFRESH,
 	TARGET_REFRESH_UNKNOWN

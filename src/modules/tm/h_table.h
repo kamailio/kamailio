@@ -143,9 +143,9 @@ typedef struct retr_buf
 	 * 0 (TYPE_REQUEST) if request, -1 if local CANCEL (TYPE_LOCAL_CANCEL),
 	 * -2 if local ACK (TYPE_LOCAL_ACK) */
 	short rbtype;
-	volatile unsigned short flags;   /* DISABLED, T2 */
+	volatile unsigned short flags;	  /* DISABLED, T2 */
 	volatile unsigned short t_active; /* timer active */
-	unsigned short branch;			 /* no more than 64k branches */
+	unsigned short branch;			  /* no more than 64k branches */
 	int buffer_len;
 	char *buffer;
 	/*the cell that contains this retrans_buff*/
@@ -177,10 +177,10 @@ typedef struct ua_server
 /* User Agent Client content */
 
 /* UAC internal flags */
-#define TM_UAC_FLAG_RR (1)			/* Record-Route applied */
-#define TM_UAC_FLAG_R2 (1 << 1)		/* 2nd Record-Route applied */
-#define TM_UAC_FLAG_FB (1 << 2)		/* Mark first entry in new branch set */
-#define TM_UAC_FLAG_BLIND (1 << 3)	/* A blind uac */
+#define TM_UAC_FLAG_RR (1)		   /* Record-Route applied */
+#define TM_UAC_FLAG_R2 (1 << 1)	   /* 2nd Record-Route applied */
+#define TM_UAC_FLAG_FB (1 << 2)	   /* Mark first entry in new branch set */
+#define TM_UAC_FLAG_BLIND (1 << 3) /* A blind uac */
 
 typedef struct ua_client
 {
@@ -268,14 +268,15 @@ typedef struct async_state
 /* 6xx received => stop forking */
 #define T_6xx (1 << 4)
 
-#define T_IN_AGONY (1 << 5)		/* set if waiting to die (delete timer)
+#define T_IN_AGONY \
+	(1 << 5)					/* set if waiting to die (delete timer)
 								 * TODO: replace it with del on unref */
 #define T_AUTO_INV_100 (1 << 6) /* send an 100 reply automatically  to inv. */
 /* don't generate automatically an ACK for local transaction */
 #define T_NO_AUTO_ACK (1 << 7)
 
-#define T_DISABLE_6xx (1 << 8)		/* treat 6xx as a normal reply */
-#define T_DISABLE_FAILOVER (1 << 9) /* don't perform dns failover */
+#define T_DISABLE_6xx (1 << 8)			 /* treat 6xx as a normal reply */
+#define T_DISABLE_FAILOVER (1 << 9)		 /* don't perform dns failover */
 #define T_NO_E2E_CANCEL_REASON (1 << 10) /* don't propagate CANCEL Reason */
 #define T_DONT_FORK (T_CANCELED | T_6xx)
 
@@ -387,7 +388,7 @@ typedef struct cell
 
 	/* bindings to wait and delete timer */
 	struct timer_ln wait_timer; /* used also for delete */
-	ticks_t wait_start; /* ticks when put on wait first time */
+	ticks_t wait_start;			/* ticks when put on wait first time */
 
 	/* UA Server */
 	struct ua_server uas;
@@ -424,7 +425,7 @@ typedef struct cell
 	ticks_t fr_inv_timeout; /* final inv. response interval for retr_bufs */
 	retr_timeout_t rt_t1_timeout_ms; /* start retr. interval for retr_bufs */
 	retr_timeout_t rt_t2_timeout_ms; /* maximum retr. interval for retr_bufs */
-	ticks_t end_of_life; /* maximum lifetime */
+	ticks_t end_of_life;			 /* maximum lifetime */
 
 	/* nr of replied branch; 0..sr_dst_max_branches=branch value,
 	 * -1 no reply, -2 local reply */
@@ -449,7 +450,8 @@ typedef struct cell
 
 #if 0
 /* warning: padding too much => big size increase */
-#define ENTRY_PAD_TO 128 /* should be a multiple of cacheline size for
+#define ENTRY_PAD_TO \
+	128 /* should be a multiple of cacheline size for
 						 * best performance*/
 #define ENTRY_PAD_BYTES                                            \
 	(ENTRY_PAD_TO - 2 * sizeof(struct cell *) + sizeof(ser_lock_t) \
@@ -468,7 +470,7 @@ typedef struct entry
 	/* sync mutex */
 	ser_lock_t mutex;
 	atomic_t locker_pid; /* pid of the process that holds the lock */
-	int rec_lock_level;  /* recursive lock count */
+	int rec_lock_level;	 /* recursive lock count */
 	/* currently highest sequence number in a synonym list */
 	unsigned int next_label;
 #ifdef TM_HASH_STATS

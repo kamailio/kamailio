@@ -197,7 +197,7 @@ inline static int _set_fr_retr(struct retr_buf *rb, unsigned retr_ms)
 	 *  (for neg. replies we are force to wait for the ACK so use fr) */
 	if(unlikely((rb->rbtype == TYPE_REQUEST)
 				&& ((s_ticks_t)(eol - (ticks + timeout))
-						   < 0))) { /* fr after end of life */
+						< 0))) { /* fr after end of life */
 		timeout = (((s_ticks_t)(eol - ticks)) > 0) ? (eol - ticks)
 												   : 1; /* expire now */
 	}
@@ -343,7 +343,7 @@ inline static void change_end_of_life(struct cell *t, int adj, ticks_t eol)
 				if((t->uac[i].request.rbtype == TYPE_REQUEST)
 						&& ((s_ticks_t)(t->end_of_life
 										- t->uac[i].request.fr_expire)
-								   < 0))
+								< 0))
 					t->uac[i].request.fr_expire = t->end_of_life;
 			}
 		}
@@ -372,16 +372,17 @@ inline static int t_linked_timers(tm_cell_t *t)
 {
 	int i;
 
-	if(t->uas.response.timer.next!=NULL || t->uas.response.timer.prev!=NULL) {
+	if(t->uas.response.timer.next != NULL
+			|| t->uas.response.timer.prev != NULL) {
 		return 1;
 	}
 	for(i = 0; i < t->nr_of_outgoings; i++) {
-		if(t->uac[i].request.timer.next!=NULL
-				|| t->uac[i].request.timer.prev!=NULL) {
+		if(t->uac[i].request.timer.next != NULL
+				|| t->uac[i].request.timer.prev != NULL) {
 			return 1;
 		}
-		if(t->uac[i].local_cancel.timer.next!=NULL
-				|| t->uac[i].local_cancel.timer.prev!=NULL) {
+		if(t->uac[i].local_cancel.timer.next != NULL
+				|| t->uac[i].local_cancel.timer.prev != NULL) {
 			return 1;
 		}
 	}

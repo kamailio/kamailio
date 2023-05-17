@@ -57,7 +57,8 @@
  *
  *   If the contact parameter is given, it must be of syntax:
  *     sip:<user>@<host>:<port>   (without parameters) */
-int t_append_branches(str * contact) {
+int t_append_branches(str *contact)
+{
 	struct cell *t = NULL;
 	struct sip_msg *orig_msg = NULL;
 	struct sip_msg *faked_req;
@@ -69,33 +70,33 @@ int t_append_branches(str * contact) {
 
 	str current_uri;
 	str dst_uri, path, instance, ruid, location_ua;
-	struct socket_info* si;
+	struct socket_info *si;
 	int q, i, found, append;
 	flag_t backup_bflags = 0;
 	flag_t bflags = 0;
 	int new_branch, branch_ret, lowest_ret;
-	branch_bm_t	added_branches;
+	branch_bm_t added_branches;
 	int replies_locked = 0;
 	int ret = 0;
 
 	t = get_t();
-	if(t == NULL)
-	{
+	if(t == NULL) {
 		LM_ERR("cannot get transaction\n");
 		return -1;
 	}
 
-	LM_DBG("transaction %u:%u in status %d\n", t->hash_index, t->label, t->uas.status);
+	LM_DBG("transaction %u:%u in status %d\n", t->hash_index, t->label,
+			t->uas.status);
 
 	/* test if transaction has already been canceled */
-	if (t->flags & T_CANCELED) {
-		ser_error=E_CANCELED;
+	if(t->flags & T_CANCELED) {
+		ser_error = E_CANCELED;
 		return -1;
 	}
 
-	if ((t->uas.status >= 200 && t->uas.status<=399)
+	if((t->uas.status >= 200 && t->uas.status <= 399)
 			|| ((t->uas.status >= 600 && t->uas.status)
-				&& !(t->flags & (T_6xx | T_DISABLE_6xx))) ) {
+					&& !(t->flags & (T_6xx | T_DISABLE_6xx)))) {
 		LM_DBG("transaction %u:%u in status %d: cannot append new branch\n",
 				t->hash_index, t->label, t->uas.status);
 		return -1;
@@ -107,137 +108,142 @@ int t_append_branches(str * contact) {
 	outgoings = t->nr_of_outgoings;
 	orig_msg = t->uas.request;
 
-	LM_DBG("Call %.*s: %d (%d) outgoing branches\n",orig_msg->callid->body.len,
-			orig_msg->callid->body.s,outgoings, nr_branches);
+	LM_DBG("Call %.*s: %d (%d) outgoing branches\n", orig_msg->callid->body.len,
+			orig_msg->callid->body.s, outgoings, nr_branches);
 
-	lowest_ret=E_UNSPEC;
-	added_branches=0;
+	lowest_ret = E_UNSPEC;
+	added_branches = 0;
 
 	/* it's a "late" branch so the on_branch variable has already been
 	reset by previous execution of t_forward_nonack: we use the saved
 	   value  */
-	if (t->on_branch_delayed) {
+	if(t->on_branch_delayed) {
 		/* tell add_uac that it should run branch route actions */
 		set_branch_route(t->on_branch_delayed);
 	}
-	faked_req = fake_req(orig_msg, 0, NULL,	&faked_req_len);
-	if (faked_req==NULL) {
+	faked_req = fake_req(orig_msg, 0, NULL, &faked_req_len);
+	if(faked_req == NULL) {
 		LM_ERR("fake_req failed\n");
 		return -1;
 	}
 
 	/* fake also the env. conforming to the fake msg */
-	faked_env( t, faked_req, 0);
+	faked_env(t, faked_req, 0);
 
 	/* DONE with faking ;-) -> run the failure handlers */
 	init_branch_iterator();
 
-	while((current_uri.s=next_branch( &current_uri.len, &q, &dst_uri, &path,
-										&bflags, &si, &ruid, &instance, &location_ua))) {
-		LM_DBG("Current uri %.*s\n",current_uri.len, current_uri.s);
+	while((current_uri.s = next_branch(&current_uri.len, &q, &dst_uri, &path,
+				   &bflags, &si, &ruid, &instance, &location_ua))) {
+		LM_DBG("Current uri %.*s\n", current_uri.len, current_uri.s);
 
 		/* if the contact parameter is given, then append by
 			an exact location that has been requested for this function call */
-		if (contact->s != NULL && contact->len != 0) {
+		if(contact->s != NULL && contact->len != 0) {
 
-			LM_DBG("Comparing requested contact <%.*s> against location <%.*s>\n",
-							contact->len, contact->s, current_uri.len, current_uri.s);
+			LM_DBG("Comparing requested contact <%.*s> against location "
+				   "<%.*s>\n",
+					contact->len, contact->s, current_uri.len, current_uri.s);
 
 			append = 1;
-			if (strstr(current_uri.s, contact->s) == NULL) {
+			if(strstr(current_uri.s, contact->s) == NULL) {
 				append = 0; /* this while cycle will be stopped */
 			}
 
 			/* do not append the branch if a contact does not match */
-			if (!append)
+			if(!append)
 				continue;
 
-			LM_DBG("Branch will be appended for contact <%.*s>\n", contact->len, contact->s);
+			LM_DBG("Branch will be appended for contact <%.*s>\n", contact->len,
+					contact->s);
 		}
 
 		found = 0;
-		for (i=0; i<outgoings; i++) {
-			if (t->uac[i].ruid.len == ruid.len
+		for(i = 0; i < outgoings; i++) {
+			if(t->uac[i].ruid.len == ruid.len
 					&& !memcmp(t->uac[i].ruid.s, ruid.s, ruid.len)
 					&& t->uac[i].uri.len == current_uri.len
-					&& !memcmp(t->uac[i].uri.s, current_uri.s, current_uri.len)) {
+					&& !memcmp(
+							t->uac[i].uri.s, current_uri.s, current_uri.len)) {
 				LM_DBG("branch already added [%.*s]\n", ruid.len, ruid.s);
 				found = 1;
 				break;
 			}
 		}
-		if (found)
+		if(found)
 			continue;
 
 		setbflagsval(0, bflags);
-		new_branch=add_uac( t, faked_req, &current_uri,
-					(dst_uri.len) ? (&dst_uri) : &current_uri,
-					&path, 0, si, faked_req->fwd_send_flags,
-					PROTO_NONE, (dst_uri.len)?0:UAC_SKIP_BR_DST_F, &instance,
-					&ruid, &location_ua);
+		new_branch = add_uac(t, faked_req, &current_uri,
+				(dst_uri.len) ? (&dst_uri) : &current_uri, &path, 0, si,
+				faked_req->fwd_send_flags, PROTO_NONE,
+				(dst_uri.len) ? 0 : UAC_SKIP_BR_DST_F, &instance, &ruid,
+				&location_ua);
 
-		LM_DBG("added branch [%.*s] with ruid [%.*s]\n",
-				current_uri.len, current_uri.s, ruid.len, ruid.s);
+		LM_DBG("added branch [%.*s] with ruid [%.*s]\n", current_uri.len,
+				current_uri.s, ruid.len, ruid.s);
 
 		/* test if cancel was received meanwhile */
-		if (t->flags & T_CANCELED) goto canceled;
+		if(t->flags & T_CANCELED)
+			goto canceled;
 
-		if (new_branch>=0)
-			added_branches |= 1<<new_branch;
+		if(new_branch >= 0)
+			added_branches |= 1 << new_branch;
 		else
-			lowest_ret=MIN_int(lowest_ret, new_branch);
+			lowest_ret = MIN_int(lowest_ret, new_branch);
 	}
 
 	clear_branches();
 
 	LM_DBG("Call %.*s: %d (%d) outgoing branches after clear_branches()\n",
-			orig_msg->callid->body.len, orig_msg->callid->body.s,outgoings, nr_branches);
+			orig_msg->callid->body.len, orig_msg->callid->body.s, outgoings,
+			nr_branches);
 	setbflagsval(0, backup_bflags);
 
 	/* update message flags, if changed in branch route */
 	t->uas.request->flags = faked_req->flags;
 
-	if (added_branches==0) {
-		if(lowest_ret!=E_CFG)
+	if(added_branches == 0) {
+		if(lowest_ret != E_CFG)
 			LM_ERR("failure to add branches (%d)\n", lowest_ret);
-		ser_error=lowest_ret;
+		ser_error = lowest_ret;
 		ret = lowest_ret;
 		goto done;
 	}
 
-	ser_error=0; /* clear branch adding errors */
+	ser_error = 0; /* clear branch adding errors */
 	/* send them out now */
-	success_branch=0;
+	success_branch = 0;
 	/* since t_append_branch can only be called from REQUEST_ROUTE, always lock replies */
 
-	for (i=outgoings; i<t->nr_of_outgoings; i++) {
-		if (added_branches & (1<<i)) {
-			branch_ret=t_send_branch(t, i, faked_req , 0, 0 /* replies are already locked */ );
-			if (branch_ret>=0){ /* some kind of success */
-				if (branch_ret==i) { /* success */
+	for(i = outgoings; i < t->nr_of_outgoings; i++) {
+		if(added_branches & (1 << i)) {
+			branch_ret = t_send_branch(
+					t, i, faked_req, 0, 0 /* replies are already locked */);
+			if(branch_ret >= 0) {	  /* some kind of success */
+				if(branch_ret == i) { /* success */
 					success_branch++;
-					if (unlikely(has_tran_tmcbs(t, TMCB_REQUEST_OUT)))
-						run_trans_callbacks_with_buf( TMCB_REQUEST_OUT,
-								&t->uac[nr_branches].request,
-								faked_req, 0, TMCB_NONE_F);
-				}
-				else /* new branch added */
-					added_branches |= 1<<branch_ret;
+					if(unlikely(has_tran_tmcbs(t, TMCB_REQUEST_OUT)))
+						run_trans_callbacks_with_buf(TMCB_REQUEST_OUT,
+								&t->uac[nr_branches].request, faked_req, 0,
+								TMCB_NONE_F);
+				} else /* new branch added */
+					added_branches |= 1 << branch_ret;
 			}
 		}
 	}
-	if (success_branch<=0) {
+	if(success_branch <= 0) {
 		/* return always E_SEND for now
 		 * (the real reason could be: denied by onsend routes, blocklisted,
 		 *  send failed or any of the errors listed before + dns failed
 		 *  when attempting dns failover) */
-		ser_error=E_SEND;
+		ser_error = E_SEND;
 		/* else return the last error (?) */
 		ret = -1;
 		goto done;
 	}
 
-	ser_error=0; /* clear branch send errors, we have overall success */
+	ser_error = 0; /* clear branch send errors, we have overall success */
 	set_kr(REQ_FWDED);
 	ret = success_branch;
 	goto done;
@@ -251,17 +257,17 @@ canceled:
 	/* update message flags, if changed in branch route */
 	t->uas.request->flags = faked_req->flags;
 	/* if needed unlock transaction's replies */
-		/* restore the number of outgoing branches
+	/* restore the number of outgoing branches
 		 * since new branches have not been completed */
 	t->nr_of_outgoings = outgoings;
-	ser_error=E_CANCELED;
+	ser_error = E_CANCELED;
 	ret = -1;
 done:
 	/* restore original environment and free the fake msg */
-	faked_env( t, 0, 0);
+	faked_env(t, 0, 0);
 	free_faked_req(faked_req, faked_req_len);
 
-	if (likely(replies_locked)) {
+	if(likely(replies_locked)) {
 		replies_locked = 0;
 		UNLOCK_REPLIES(t);
 	}

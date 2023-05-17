@@ -43,17 +43,21 @@
 #define BUSY_BUFFER ((char *)-1)
 
 /* flags for cancel_uacs(), cancel_branch() */
-#define F_CANCEL_B_KILL 1  /*  will completely stop the  branch (stops the
+#define F_CANCEL_B_KILL \
+	1 /*  will completely stop the  branch (stops the
 							   timers), use only before a put_on_wait()
 							   or set_final_timer()*/
-#define F_CANCEL_B_FAKE_REPLY 2 /* will send a fake 487 to all branches that
+#define F_CANCEL_B_FAKE_REPLY \
+	2 /* will send a fake 487 to all branches that
 								 haven't received any response (>=100). It
 								 assumes the REPLY_LOCK is not held (if it is
 								 => deadlock) */
-#define F_CANCEL_B_FORCE_C 4 /* will send a cancel even if no reply was 
+#define F_CANCEL_B_FORCE_C \
+	4 /* will send a cancel even if no reply was 
 								received; F_CANCEL_B_FAKE_REPLY will be 
 								ignored */
-#define F_CANCEL_B_FORCE_RETR 8  /* will not stop request retr. on a branch
+#define F_CANCEL_B_FORCE_RETR \
+	8					  /* will not stop request retr. on a branch
 									if no provisional response was received;
 									F_CANCEL_B_FORCE_C, F_CANCEL_B_FAKE_REPLY
 									and F_CANCE_B_KILL take precedence */
@@ -61,18 +65,17 @@
 
 
 void prepare_to_cancel(struct cell *t, branch_bm_t *cancel_bm, branch_bm_t s);
-int cancel_uacs( struct cell *t, struct cancel_info* cancel_data, int flags );
+int cancel_uacs(struct cell *t, struct cancel_info *cancel_data, int flags);
 int cancel_all_uacs(struct cell *trans, int how);
-int cancel_branch( struct cell *t, int branch,
-					struct cancel_reason* reason,
-					int flags );
+int cancel_branch(
+		struct cell *t, int branch, struct cancel_reason *reason, int flags);
 
-typedef int(*cancel_uacs_f)(struct cell *t, struct cancel_info* cancel_data,
-		int flags);
+typedef int (*cancel_uacs_f)(
+		struct cell *t, struct cancel_info *cancel_data, int flags);
 typedef int (*cancel_all_uacs_f)(struct cell *trans, int how);
 
-typedef void (*prepare_to_cancel_f)(struct cell *t, branch_bm_t *cancel_bm,
-									branch_bm_t skip_branches);
+typedef void (*prepare_to_cancel_f)(
+		struct cell *t, branch_bm_t *cancel_bm, branch_bm_t skip_branches);
 
 
 /** Check if one branch needs CANCEL-ing and prepare it if it does.
@@ -95,38 +98,37 @@ typedef void (*prepare_to_cancel_f)(struct cell *t, branch_bm_t *cancel_bm,
  *  cancel-in-progress) and 0 if it doesn't (either a CANCEL is not needed or a
  *  CANCEL is in progress: somebody else is trying to CANCEL in the same time).
  */
-inline short static prepare_cancel_branch( struct cell *t, int b, int noreply )
+inline short static prepare_cancel_branch(struct cell *t, int b, int noreply)
 {
 	int last_received;
 	unsigned long old;
 
 	/* blind uac branch (e.g., suspend) without outgoing request */
 	if((t->uac[b].flags & TM_UAC_FLAG_BLIND)
-			&& t->uac[b].request.buffer==NULL)
+			&& t->uac[b].request.buffer == NULL)
 		return 0;
 
-	last_received=t->uac[b].last_received;
+	last_received = t->uac[b].last_received;
 	/* if noreply=1 cancel even if no reply received (in this case
 	 * cancel_branch()  won't actually send the cancel but it will do the
 	 * cleanup) */
-	if (last_received<200 && (noreply || last_received>=100)){
-		old=atomic_cmpxchg_long((void*)&t->uac[b].local_cancel.buffer, 0,
-									(long)(BUSY_BUFFER));
-		return old==0;
+	if(last_received < 200 && (noreply || last_received >= 100)) {
+		old = atomic_cmpxchg_long(
+				(void *)&t->uac[b].local_cancel.buffer, 0, (long)(BUSY_BUFFER));
+		return old == 0;
 	}
 	return 0;
 }
 
-void rpc_cancel(rpc_t* rpc, void* c);
-int cancel_b_flags_fixup(void* handle, str* gname, str* name, void** val);
-int cancel_b_flags_get(unsigned int* f, int m);
+void rpc_cancel(rpc_t *rpc, void *c);
+int cancel_b_flags_fixup(void *handle, str *gname, str *name, void **val);
+int cancel_b_flags_get(unsigned int *f, int m);
 
-typedef unsigned int (*tuaccancel_f)( str *headers,str *body,
-		unsigned int cancelledIdx,unsigned int cancelledLabel,
-		transaction_cb cb, void* cbp);
+typedef unsigned int (*tuaccancel_f)(str *headers, str *body,
+		unsigned int cancelledIdx, unsigned int cancelledLabel,
+		transaction_cb cb, void *cbp);
 
-unsigned int t_uac_cancel(str *headers,str *body,
-		unsigned int cancelledIdx,unsigned int cancelledLabel,
-		transaction_cb cb, void* cbp);
+unsigned int t_uac_cancel(str *headers, str *body, unsigned int cancelledIdx,
+		unsigned int cancelledLabel, transaction_cb cb, void *cbp);
 
 #endif

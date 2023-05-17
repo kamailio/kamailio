@@ -39,7 +39,8 @@
 
 void tm_rpc_response_list_clean(unsigned int ticks, void *param);
 
-typedef struct tm_rpc_response {
+typedef struct tm_rpc_response
+{
 	str ruid;
 	int flags;
 	int rcode;
@@ -48,7 +49,8 @@ typedef struct tm_rpc_response {
 	struct tm_rpc_response *next;
 } tm_rpc_response_t;
 
-typedef struct tm_rpc_response_list {
+typedef struct tm_rpc_response_list
+{
 	gen_lock_t rlock;
 	tm_rpc_response_t *rlist;
 } tm_rpc_response_list_t;
@@ -65,12 +67,12 @@ int tm_rpc_response_list_init(void)
 	if(_tm_rpc_response_list != NULL) {
 		return 0;
 	}
-	if(sruid_init(&_tm_rpc_sruid, '-', "tmrp", SRUID_INC)<0) {
+	if(sruid_init(&_tm_rpc_sruid, '-', "tmrp", SRUID_INC) < 0) {
 		LM_ERR("failed to init sruid\n");
 		return -1;
 	}
-	if(sr_wtimer_add(tm_rpc_response_list_clean, 0,
-				TM_RPC_RESPONSE_TIMERSTEP)<0) {
+	if(sr_wtimer_add(tm_rpc_response_list_clean, 0, TM_RPC_RESPONSE_TIMERSTEP)
+			< 0) {
 		LM_ERR("failed to register timer routine\n");
 		return -1;
 	}
@@ -101,7 +103,7 @@ int tm_rpc_response_list_destroy(void)
 
 	rl1 = _tm_rpc_response_list->rlist;
 
-	while(rl1!=NULL) {
+	while(rl1 != NULL) {
 		rl0 = rl1;
 		rl1 = rl1->next;
 		shm_free(rl0);
@@ -126,21 +128,21 @@ int tm_rpc_response_list_add(str *ruid, int rcode, str *rtext)
 	}
 
 	rsize = sizeof(tm_rpc_response_t) + ruid->len + 2
-				+ ((rtext!=NULL)?rtext->len:0);
+			+ ((rtext != NULL) ? rtext->len : 0);
 
-	ri = (tm_rpc_response_t*)shm_malloc(rsize);
-	if(ri==NULL) {
+	ri = (tm_rpc_response_t *)shm_malloc(rsize);
+	if(ri == NULL) {
 		SHM_MEM_ERROR;
 		return -1;
 	}
 	memset(ri, 0, rsize);
 
-	ri->ruid.s = (char*)ri + sizeof(tm_rpc_response_t);
+	ri->ruid.s = (char *)ri + sizeof(tm_rpc_response_t);
 	ri->ruid.len = ruid->len;
 	memcpy(ri->ruid.s, ruid->s, ruid->len);
 	ri->rtime = time(NULL);
 	ri->rcode = rcode;
-	if(rtext!=NULL) {
+	if(rtext != NULL) {
 		ri->rtext.s = ri->ruid.s + ri->ruid.len + 1;
 		ri->rtext.len = rtext->len;
 		memcpy(ri->rtext.s, rtext->s, rtext->len);
@@ -168,9 +170,9 @@ tm_rpc_response_t *tm_rpc_response_list_get(str *ruid)
 
 	lock_get(&_tm_rpc_response_list->rlock);
 	ri1 = _tm_rpc_response_list->rlist;
-	while(ri1!=NULL) {
-		if(ri1->ruid.len==ruid->len
-				&& memcmp(ri1->ruid.s, ruid->s, ruid->len)==0) {
+	while(ri1 != NULL) {
+		if(ri1->ruid.len == ruid->len
+				&& memcmp(ri1->ruid.s, ruid->s, ruid->len) == 0) {
 			if(ri0 == NULL) {
 				_tm_rpc_response_list->rlist = ri1->next;
 			} else {
@@ -202,7 +204,7 @@ void tm_rpc_response_list_clean(unsigned int ticks, void *param)
 	tnow = time(NULL);
 	lock_get(&_tm_rpc_response_list->rlock);
 	ri1 = _tm_rpc_response_list->rlist;
-	while(ri1!=NULL) {
+	while(ri1 != NULL) {
 		if(ri1->rtime < tnow - TM_RPC_RESPONSE_LIFETIME) {
 			LM_DBG("freeing item [%.*s]\n", ri1->ruid.len, ri1->ruid.s);
 			if(ri0 == NULL) {
@@ -237,44 +239,42 @@ void tm_rpc_response_list_clean(unsigned int ticks, void *param)
  * @callid        - filled on success with a pointer to the callid in the msg.
  * @return -1 on error (and sends the rpc reply), 0 on success
  */
-static int rpc_uac_check_msg(rpc_t *rpc, void* c,
-		struct sip_msg* msg,
-		str* method, str* body,
-		str* fromtag, int *cseq_is, int* cseq,
-		str* callid)
+static int rpc_uac_check_msg(rpc_t *rpc, void *c, struct sip_msg *msg,
+		str *method, str *body, str *fromtag, int *cseq_is, int *cseq,
+		str *callid)
 {
-	struct to_body* parsed_from;
+	struct to_body *parsed_from;
 	struct cseq_body *parsed_cseq;
 	int i;
 	char ch;
 
-	if (body->len && !msg->content_type) {
+	if(body->len && !msg->content_type) {
 		rpc->fault(c, 400, "Content-Type missing");
 		goto err;
 	}
 
-	if (body->len && msg->content_length) {
+	if(body->len && msg->content_length) {
 		rpc->fault(c, 400, "Content-Length disallowed");
 		goto err;
 	}
 
-	if (!msg->to) {
-		rpc->fault(c, 400,  "To missing");
+	if(!msg->to) {
+		rpc->fault(c, 400, "To missing");
 		goto err;
 	}
 
-	if (!msg->from) {
+	if(!msg->from) {
 		rpc->fault(c, 400, "From missing");
 		goto err;
 	}
 
 	/* we also need to know if there is from-tag and add it otherwise */
-	if (parse_from_header(msg) < 0) {
+	if(parse_from_header(msg) < 0) {
 		rpc->fault(c, 400, "Error in From");
 		goto err;
 	}
 
-	parsed_from = (struct to_body*)msg->from->parsed;
+	parsed_from = (struct to_body *)msg->from->parsed;
 	if(parsed_from->tag_value.s && parsed_from->tag_value.len) {
 		fromtag->s = parsed_from->tag_value.s;
 		fromtag->len = parsed_from->tag_value.len;
@@ -284,22 +284,22 @@ static int rpc_uac_check_msg(rpc_t *rpc, void* c,
 	}
 
 	*cseq = 0;
-	if (msg->cseq && (parsed_cseq = get_cseq(msg))) {
+	if(msg->cseq && (parsed_cseq = get_cseq(msg))) {
 		*cseq_is = 1;
-		for (i = 0; i < parsed_cseq->number.len; i++) {
+		for(i = 0; i < parsed_cseq->number.len; i++) {
 			ch = parsed_cseq->number.s[i];
-			if (ch >= '0' && ch <= '9' ) {
+			if(ch >= '0' && ch <= '9') {
 				*cseq = (*cseq) * 10 + ch - '0';
 			} else {
 				LM_DBG("Found non-numerical in CSeq: <%i>='%c'\n",
 						(unsigned int)ch, ch);
-				rpc->fault(c, 400,  "Non-numerical CSeq");
+				rpc->fault(c, 400, "Non-numerical CSeq");
 				goto err;
 			}
 		}
 
-		if (parsed_cseq->method.len != method->len ||
-				memcmp(parsed_cseq->method.s, method->s, method->len) !=0 ) {
+		if(parsed_cseq->method.len != method->len
+				|| memcmp(parsed_cseq->method.s, method->s, method->len) != 0) {
 			rpc->fault(c, 400, "CSeq method mismatch");
 			goto err;
 		}
@@ -307,7 +307,7 @@ static int rpc_uac_check_msg(rpc_t *rpc, void* c,
 		*cseq_is = 0;
 	}
 
-	if (msg->callid) {
+	if(msg->callid) {
 		callid->s = msg->callid->body.s;
 		callid->len = msg->callid->body.len;
 	} else {
@@ -327,7 +327,7 @@ err:
  *         0 on error.
  */
 static int get_hfblock(str *uri, struct hdr_field *hf, int proto,
-		struct socket_info* ssock, str* hout)
+		struct socket_info *ssock, str *hout)
 {
 	struct str_list sl, *last, *i, *foo;
 	int p, frag_len, total_len;
@@ -343,12 +343,13 @@ static int get_hfblock(str *uri, struct hdr_field *hf, int proto,
 	last->next = 0;
 	sock_name = 0;
 	portname = 0;
-	if (ssock){
+	if(ssock) {
 		si_get_signaling_data(ssock, &sock_name, &portname);
 	}
 
-	for (; hf; hf = hf->next) {
-		if (tm_skip_hf(hf)) continue;
+	for(; hf; hf = hf->next) {
+		if(tm_skip_hf(hf))
+			continue;
 
 		begin = needle = hf->name.s;
 		p = hf->len;
@@ -356,8 +357,9 @@ static int get_hfblock(str *uri, struct hdr_field *hf, int proto,
 		/* substitution loop */
 		while(p) {
 			d = q_memchr(needle, SUBST_CHAR, p);
-			if (!d || d + 1 >= needle + p) { /* nothing to substitute */
-				if (!append_str_list(begin, p, &last, &total_len)) goto error;
+			if(!d || d + 1 >= needle + p) { /* nothing to substitute */
+				if(!append_str_list(begin, p, &last, &total_len))
+					goto error;
 				break;
 			} else {
 				frag_len = d - begin;
@@ -365,29 +367,32 @@ static int get_hfblock(str *uri, struct hdr_field *hf, int proto,
 				switch(*d) {
 					case SUBST_CHAR: /* double SUBST_CHAR: IP */
 						/* string before substitute */
-						if (!append_str_list(begin, frag_len, &last, &total_len))
+						if(!append_str_list(begin, frag_len, &last, &total_len))
 							goto error;
 						/* substitute */
-						if (!sock_name) {
-							if (
+						if(!sock_name) {
+							if(
 #ifdef USE_DNS_FAILOVER
 									uri2dst(0, &di, 0, uri, proto)
 #else
 									uri2dst(&di, 0, uri, proto)
 #endif /* USE_DNS_FAILOVER */
-									== 0 ){
+									== 0) {
 								LM_ERR("send_sock failed\n");
 								goto error;
 							}
-							si_get_signaling_data(di.send_sock, &sock_name, &portname);
+							si_get_signaling_data(
+									di.send_sock, &sock_name, &portname);
 						}
-						if (!append_str_list(sock_name->s, sock_name->len, &last,
-									&total_len))
+						if(!append_str_list(sock_name->s, sock_name->len, &last,
+								   &total_len))
 							goto error;
 						/* inefficient - FIXME --andrei*/
-						if (!append_str_list(":", 1, &last, &total_len)) goto error;
-						if (!append_str_list(portname->s, portname->len, &last,
-									&total_len)) goto error;
+						if(!append_str_list(":", 1, &last, &total_len))
+							goto error;
+						if(!append_str_list(portname->s, portname->len, &last,
+								   &total_len))
+							goto error;
 						/* keep going ... */
 						begin = needle = d + 1;
 						p -= frag_len + 2;
@@ -398,18 +403,19 @@ static int get_hfblock(str *uri, struct hdr_field *hf, int proto,
 						needle = d;
 				}
 			} /* possible substitute */
-		} /* substitution loop */
+		}	  /* substitution loop */
 		LM_DBG("one more hf processed\n");
 	} /* header loop */
 
-	if(total_len==0) {
+	if(total_len == 0) {
 		LM_DBG("empty result for headers block\n");
-		return 1;;
+		return 1;
+		;
 	}
 
 	/* construct a single header block now */
 	ret = pkg_malloc(total_len);
-	if (!ret) {
+	if(!ret) {
 		PKG_MEM_ERROR;
 		goto error;
 	}
@@ -437,10 +443,10 @@ error:
 }
 
 
-#define RPC_ROUTE_PREFIX	"Route: "
-#define RPC_ROUTE_PREFIX_LEN	(sizeof(RPC_ROUTE_PREFIX)-1)
-#define RPC_ROUTE_SEPARATOR	", "
-#define RPC_ROUTE_SEPARATOR_LEN	(sizeof(RPC_ROUTE_SEPARATOR)-1)
+#define RPC_ROUTE_PREFIX "Route: "
+#define RPC_ROUTE_PREFIX_LEN (sizeof(RPC_ROUTE_PREFIX) - 1)
+#define RPC_ROUTE_SEPARATOR ", "
+#define RPC_ROUTE_SEPARATOR_LEN (sizeof(RPC_ROUTE_SEPARATOR) - 1)
 
 
 /** internal print routes into rpc reply function.
@@ -450,53 +456,52 @@ error:
  *  @param c - rpc context
  *  @param reply - sip reply
  */
-static void  rpc_print_routes(rpc_t* rpc, void* c,
-		dlg_t* d)
+static void rpc_print_routes(rpc_t *rpc, void *c, dlg_t *d)
 {
-	rr_t* ptr;
+	rr_t *ptr;
 	int size;
-	char* buf;
-	char* p;
+	char *buf;
+	char *p;
 
-	if (d->hooks.first_route == 0){
+	if(d->hooks.first_route == 0) {
 		rpc->add(c, "s", "");
 		return;
 	}
-	size=RPC_ROUTE_PREFIX_LEN;
-	for (ptr=d->hooks.first_route; ptr; ptr=ptr->next)
-		size+=ptr->len+(ptr->next!=0)*RPC_ROUTE_SEPARATOR_LEN;
-	if (d->hooks.last_route)
-		size+=RPC_ROUTE_SEPARATOR_LEN + 1 /* '<' */ +
-			d->hooks.last_route->len +1 /* '>' */;
+	size = RPC_ROUTE_PREFIX_LEN;
+	for(ptr = d->hooks.first_route; ptr; ptr = ptr->next)
+		size += ptr->len + (ptr->next != 0) * RPC_ROUTE_SEPARATOR_LEN;
+	if(d->hooks.last_route)
+		size += RPC_ROUTE_SEPARATOR_LEN + 1 /* '<' */ + d->hooks.last_route->len
+				+ 1 /* '>' */;
 
-	buf=pkg_malloc(size+1);
-	if (buf==0){
+	buf = pkg_malloc(size + 1);
+	if(buf == 0) {
 		PKG_MEM_ERROR;
 		rpc->add(c, "s", "");
 		return;
 	}
-	p=buf;
+	p = buf;
 	memcpy(p, RPC_ROUTE_PREFIX, RPC_ROUTE_PREFIX_LEN);
-	p+=RPC_ROUTE_PREFIX_LEN;
-	for (ptr=d->hooks.first_route; ptr; ptr=ptr->next){
+	p += RPC_ROUTE_PREFIX_LEN;
+	for(ptr = d->hooks.first_route; ptr; ptr = ptr->next) {
 		memcpy(p, ptr->nameaddr.name.s, ptr->len);
-		p+=ptr->len;
-		if (ptr->next!=0){
+		p += ptr->len;
+		if(ptr->next != 0) {
 			memcpy(p, RPC_ROUTE_SEPARATOR, RPC_ROUTE_SEPARATOR_LEN);
-			p+=RPC_ROUTE_SEPARATOR_LEN;
+			p += RPC_ROUTE_SEPARATOR_LEN;
 		}
 	}
-	if (d->hooks.last_route){
+	if(d->hooks.last_route) {
 		memcpy(p, RPC_ROUTE_SEPARATOR, RPC_ROUTE_SEPARATOR_LEN);
-		p+=RPC_ROUTE_SEPARATOR_LEN;
-		*p='<';
+		p += RPC_ROUTE_SEPARATOR_LEN;
+		*p = '<';
 		p++;
 		memcpy(p, d->hooks.last_route->s, d->hooks.last_route->len);
-		p+=d->hooks.last_route->len;
-		*p='>';
+		p += d->hooks.last_route->len;
+		*p = '>';
 		p++;
 	}
-	*p=0;
+	*p = 0;
 	rpc->add(c, "s", buf);
 	pkg_free(buf);
 	return;
@@ -510,30 +515,30 @@ static void  rpc_print_routes(rpc_t* rpc, void* c,
  *  @param c - rpc context
  *  @param reply - sip reply
  */
-static void  rpc_print_uris(rpc_t* rpc, void* c, struct sip_msg* reply)
+static void rpc_print_uris(rpc_t *rpc, void *c, struct sip_msg *reply)
 {
-	dlg_t* dlg;
-	dlg=shm_malloc(sizeof(dlg_t));
-	if (dlg==0){
+	dlg_t *dlg;
+	dlg = shm_malloc(sizeof(dlg_t));
+	if(dlg == 0) {
 		SHM_MEM_ERROR;
 		return;
 	}
 	memset(dlg, 0, sizeof(dlg_t));
-	if (dlg_response_uac(dlg, reply, TARGET_REFRESH_UNKNOWN) < 0) {
+	if(dlg_response_uac(dlg, reply, TARGET_REFRESH_UNKNOWN) < 0) {
 		LM_ERR("failure while filling dialog structure\n");
 		free_dlg(dlg);
 		return;
 	}
-	if (dlg->state != DLG_CONFIRMED) {
+	if(dlg->state != DLG_CONFIRMED) {
 		free_dlg(dlg);
 		return;
 	}
-	if (dlg->hooks.request_uri->s){
+	if(dlg->hooks.request_uri->s) {
 		rpc->add(c, "S", dlg->hooks.request_uri);
-	}else{
+	} else {
 		rpc->add(c, "s", "");
 	}
-	if (dlg->hooks.next_hop->s) {
+	if(dlg->hooks.next_hop->s) {
 		rpc->add(c, "S", dlg->hooks.next_hop);
 	} else {
 		rpc->add(c, "s", "");
@@ -544,58 +549,57 @@ static void  rpc_print_uris(rpc_t* rpc, void* c, struct sip_msg* reply)
 }
 
 
-
 /* t_uac callback */
-static void rpc_uac_callback(struct cell* t, int type, struct tmcb_params* ps)
+static void rpc_uac_callback(struct cell *t, int type, struct tmcb_params *ps)
 {
-	rpc_delayed_ctx_t* dctx;
+	rpc_delayed_ctx_t *dctx;
 	str text;
-	rpc_t* rpc;
-	void* c;
+	rpc_t *rpc;
+	void *c;
 	int code;
-	str* preason;
+	str *preason;
 
-	dctx=(rpc_delayed_ctx_t*)*ps->param;
-	*ps->param=0;
-	if (dctx==0){
+	dctx = (rpc_delayed_ctx_t *)*ps->param;
+	*ps->param = 0;
+	if(dctx == 0) {
 		BUG("null delayed reply ctx\n");
 		return;
 	}
-	rpc=&dctx->rpc;
-	c=dctx->reply_ctx;
-	if (ps->rpl==FAKED_REPLY) {
-		text.s=error_text(ps->code);
-		text.len=strlen(text.s);
-		code=ps->code;
-		preason=&text;
+	rpc = &dctx->rpc;
+	c = dctx->reply_ctx;
+	if(ps->rpl == FAKED_REPLY) {
+		text.s = error_text(ps->code);
+		text.len = strlen(text.s);
+		code = ps->code;
+		preason = &text;
 		rpc->add(c, "dS", code, preason);
 		rpc->add(c, "s", ""); /* request uri (rpc_print_uris)*/
 		rpc->add(c, "s", ""); /* next hop (rpc_print_uris) */
 		rpc->add(c, "s", ""); /* dialog routes (rpc_print_routes) */
 		rpc->add(c, "s", ""); /* rest of the reply */
-	}else{
-		code=ps->rpl->first_line.u.reply.statuscode;
-		preason=&ps->rpl->first_line.u.reply.reason;
+	} else {
+		code = ps->rpl->first_line.u.reply.statuscode;
+		preason = &ps->rpl->first_line.u.reply.reason;
 		rpc->add(c, "dS", code, preason);
 		rpc_print_uris(rpc, c, ps->rpl);
 		/* print all the reply (from the first header) */
 		rpc->add(c, "s", ps->rpl->headers->name.s);
 	}
 	rpc->delayed_ctx_close(dctx);
-	ps->param=0;
+	ps->param = 0;
 }
 
 
 /* t_uac callback */
-static void rpc_uac_block_callback(struct cell* t, int type,
-		struct tmcb_params* ps)
+static void rpc_uac_block_callback(
+		struct cell *t, int type, struct tmcb_params *ps)
 {
 	str *ruid;
 	str rtext;
 
-	ruid = (str*)(*ps->param);
-	*ps->param=0;
-	if (ps->rpl==FAKED_REPLY) {
+	ruid = (str *)(*ps->param);
+	*ps->param = 0;
+	if(ps->rpl == FAKED_REPLY) {
 		rtext.s = error_text(ps->code);
 		rtext.len = strlen(rtext.s);
 	} else {
@@ -629,7 +633,7 @@ static void rpc_uac_block_callback(struct cell* t, int type,
  *                     for the transaction arrives, if 0 immediately send
  *                     an rpc reply (see above).
  */
-static void rpc_t_uac(rpc_t* rpc, void* c, int reply_wait)
+static void rpc_t_uac(rpc_t *rpc, void *c, int reply_wait)
 {
 	/* rpc params */
 	str method, ruri, nexthop, send_socket, headers, body;
@@ -637,7 +641,7 @@ static void rpc_t_uac(rpc_t* rpc, void* c, int reply_wait)
 	str hfb, callid;
 	struct sip_uri p_uri, pnexthop;
 	struct sip_msg faked_msg;
-	struct socket_info* ssock;
+	struct socket_info *ssock;
 	str saddr;
 	int sport, sproto;
 	int ret, sip_error, err_ret, cseq_is, cseq;
@@ -645,105 +649,115 @@ static void rpc_t_uac(rpc_t* rpc, void* c, int reply_wait)
 	char err_buf[MAX_REASON_LEN];
 	dlg_t dlg;
 	uac_req_t uac_req;
-	rpc_delayed_ctx_t* dctx;
+	rpc_delayed_ctx_t *dctx;
 	str *ruid = NULL;
 	tm_rpc_response_t *ritem = NULL;
 	int rcount = 0;
-	void* th = NULL;
+	void *th = NULL;
 
-	body.s=0;
-	body.len=0;
-	dctx=0;
-	if (reply_wait==1 && (rpc->capabilities == 0 ||
-				!(rpc->capabilities(c) & RPC_DELAYED_REPLY))) {
-		rpc->fault(c, 600, "Reply wait/async mode not supported"
+	body.s = 0;
+	body.len = 0;
+	dctx = 0;
+	if(reply_wait == 1
+			&& (rpc->capabilities == 0
+					|| !(rpc->capabilities(c) & RPC_DELAYED_REPLY))) {
+		rpc->fault(c, 600,
+				"Reply wait/async mode not supported"
 				" by this rpc transport");
 		return;
 	}
-	ret=rpc->scan(c, "SSSSS*S",
-			&method, &ruri, &nexthop, &send_socket, &headers, &body);
-	if (ret<5 && ! (-ret == 5)){
-		rpc->fault(c, 400, "too few parameters (%d/5)", ret?ret:-ret);
+	ret = rpc->scan(c, "SSSSS*S", &method, &ruri, &nexthop, &send_socket,
+			&headers, &body);
+	if(ret < 5 && !(-ret == 5)) {
+		rpc->fault(c, 400, "too few parameters (%d/5)", ret ? ret : -ret);
 		return;
 	}
 	/* check and parse parameters */
-	if (method.len==0){
+	if(method.len == 0) {
 		rpc->fault(c, 400, "Empty method");
 		return;
 	}
-	if (parse_uri(ruri.s, ruri.len, &p_uri)<0){
+	if(parse_uri(ruri.s, ruri.len, &p_uri) < 0) {
 		rpc->fault(c, 400, "Invalid request uri \"%s\"", ruri.s);
 		return;
 	}
 	/* old fifo & unixsock backwards compatibility for nexthop: '.' is still
 	   allowed */
-	if (nexthop.len==1 && nexthop.s[0]=='.'){
+	if(nexthop.len == 1 && nexthop.s[0] == '.') {
 		/* empty nextop */
-		nexthop.len=0;
-		nexthop.s=0;
-	}else if (nexthop.len==0){
-		nexthop.s=0;
-	}else if (parse_uri(nexthop.s, nexthop.len, &pnexthop)<0){
+		nexthop.len = 0;
+		nexthop.s = 0;
+	} else if(nexthop.len == 0) {
+		nexthop.s = 0;
+	} else if(parse_uri(nexthop.s, nexthop.len, &pnexthop) < 0) {
 		rpc->fault(c, 400, "Invalid next-hop uri \"%s\"", nexthop.s);
 		return;
 	}
 	/* kamailio backwards compatibility for send_socket: '.' is still
 	   allowed for an empty socket */
-	ssock=0;
-	saddr.s=0;
-	saddr.len=0;
-	if (send_socket.len==1 && send_socket.s[0]=='.'){
+	ssock = 0;
+	saddr.s = 0;
+	saddr.len = 0;
+	if(send_socket.len == 1 && send_socket.s[0] == '.') {
 		/* empty send socket */
-		send_socket.len=0;
-	}else if (send_socket.len &&
-			(parse_phostport(send_socket.s, &saddr.s, &saddr.len,
-							 &sport, &sproto)!=0 ||
-			 /* check also if it's not a MH addr. */
-			 saddr.len==0 || saddr.s[0]=='(')
-			){
+		send_socket.len = 0;
+	} else if(send_socket.len
+			  && (parse_phostport(
+						  send_socket.s, &saddr.s, &saddr.len, &sport, &sproto)
+							  != 0
+					  ||
+					  /* check also if it's not a MH addr. */
+					  saddr.len == 0 || saddr.s[0] == '(')) {
 		rpc->fault(c, 400, "Invalid send socket \"%s\"", send_socket.s);
 		return;
-	}else if (saddr.len && (ssock=grep_sock_info(&saddr, sport, sproto))==0){
+	} else if(saddr.len
+			  && (ssock = grep_sock_info(&saddr, sport, sproto)) == 0) {
 		rpc->fault(c, 400, "No local socket for \"%s\"", send_socket.s);
 		return;
 	}
 	/* check headers using the SIP parser to look in the header list */
 	memset(&faked_msg, 0, sizeof(struct sip_msg));
-	faked_msg.len=headers.len;
-	faked_msg.buf=faked_msg.unparsed=headers.s;
-	if (parse_headers(&faked_msg, HDR_EOH_F, 0)==-1){
+	faked_msg.len = headers.len;
+	faked_msg.buf = faked_msg.unparsed = headers.s;
+	if(parse_headers(&faked_msg, HDR_EOH_F, 0) == -1) {
 		rpc->fault(c, 400, "Invalid headers");
 		return;
 	}
 	/* at this moment all the parameters are parsed => more sanity checks */
-	if (rpc_uac_check_msg(rpc, c, &faked_msg, &method, &body, &fromtag,
-				&cseq_is, &cseq, &callid)<0)
+	if(rpc_uac_check_msg(rpc, c, &faked_msg, &method, &body, &fromtag, &cseq_is,
+			   &cseq, &callid)
+			< 0)
 		goto error;
-	if(get_hfblock(nexthop.len? &nexthop: &ruri, faked_msg.headers,
-			PROTO_NONE, ssock, &hfb)<0) {
+	if(get_hfblock(nexthop.len ? &nexthop : &ruri, faked_msg.headers,
+			   PROTO_NONE, ssock, &hfb)
+			< 0) {
 		rpc->fault(c, 500, "Failed to build headers block");
 		goto error;
 	}
 	/* proceed to transaction creation */
 	memset(&dlg, 0, sizeof(dlg_t));
 	/* fill call-id if call-id present or else generate a callid */
-	if (callid.s && callid.len) dlg.id.call_id=callid;
-	else generate_callid(&dlg.id.call_id);
+	if(callid.s && callid.len)
+		dlg.id.call_id = callid;
+	else
+		generate_callid(&dlg.id.call_id);
 
 	/* We will not fill in dlg->id.rem_tag because
 	 * if present it will be printed within To HF
 	 */
 
 	/* Generate fromtag if not present */
-	if (fromtag.s && fromtag.len) {
+	if(fromtag.s && fromtag.len) {
 		dlg.id.loc_tag = fromtag;
 	} else {
 		generate_fromtag(&dlg.id.loc_tag, &dlg.id.call_id, &ruri);
 	}
 
 	/* Fill in CSeq */
-	if (cseq_is) dlg.loc_seq.value = cseq;
-	else dlg.loc_seq.value = DEFAULT_CSEQ;
+	if(cseq_is)
+		dlg.loc_seq.value = cseq;
+	else
+		dlg.loc_seq.value = DEFAULT_CSEQ;
 	dlg.loc_seq.is_set = 1;
 
 	dlg.loc_uri = get_from(&faked_msg)->uri;
@@ -753,27 +767,28 @@ static void rpc_t_uac(rpc_t* rpc, void* c, int reply_wait)
 	}
 	dlg.rem_target = ruri;
 	dlg.dst_uri = nexthop;
-	dlg.send_sock=ssock;
+	dlg.send_sock = ssock;
 
 	memset(&uac_req, 0, sizeof(uac_req));
-	uac_req.method=&method;
-	if(hfb.s!=NULL && hfb.len>0) uac_req.headers=&hfb;
-	uac_req.body=body.len?&body:0;
-	uac_req.dialog=&dlg;
-	if (reply_wait==1){
-		dctx=rpc->delayed_ctx_new(c);
-		if (dctx==0){
+	uac_req.method = &method;
+	if(hfb.s != NULL && hfb.len > 0)
+		uac_req.headers = &hfb;
+	uac_req.body = body.len ? &body : 0;
+	uac_req.dialog = &dlg;
+	if(reply_wait == 1) {
+		dctx = rpc->delayed_ctx_new(c);
+		if(dctx == 0) {
 			rpc->fault(c, 500, "internal error: failed to create context");
 			return;
 		}
-		uac_req.cb=rpc_uac_callback;
-		uac_req.cbp=dctx;
-		uac_req.cb_flags=TMCB_LOCAL_COMPLETED;
+		uac_req.cb = rpc_uac_callback;
+		uac_req.cbp = dctx;
+		uac_req.cb_flags = TMCB_LOCAL_COMPLETED;
 		/* switch to dctx, in case adding the callback fails and we
 		   want to still send a reply */
-		rpc=&dctx->rpc;
-		c=dctx->reply_ctx;
-	} else if (reply_wait==2) {
+		rpc = &dctx->rpc;
+		c = dctx->reply_ctx;
+	} else if(reply_wait == 2) {
 		sruid_next(&_tm_rpc_sruid);
 		uac_req.cb = rpc_uac_block_callback;
 		ruid = shm_str_dup_block(&_tm_rpc_sruid.uid);
@@ -783,15 +798,15 @@ static void rpc_t_uac(rpc_t* rpc, void* c, int reply_wait)
 
 	ret = t_uac(&uac_req);
 
-	if (ret <= 0) {
-		err_ret = err2reason_phrase(ret, &sip_error, err_buf,
-				sizeof(err_buf), "RPC/UAC") ;
-		if (err_ret > 0 ) {
+	if(ret <= 0) {
+		err_ret = err2reason_phrase(
+				ret, &sip_error, err_buf, sizeof(err_buf), "RPC/UAC");
+		if(err_ret > 0) {
 			rpc->fault(c, sip_error, "%s", err_buf);
 		} else {
 			rpc->fault(c, 500, "RPC/UAC error");
 		}
-		if (dctx) {
+		if(dctx) {
 			rpc->delayed_ctx_close(dctx);
 		}
 		if(ruid) {
@@ -800,8 +815,8 @@ static void rpc_t_uac(rpc_t* rpc, void* c, int reply_wait)
 		goto error01;
 	}
 
-	if(reply_wait==2) {
-		while(ritem==NULL && rcount<800) {
+	if(reply_wait == 2) {
+		while(ritem == NULL && rcount < 800) {
 			sleep_us(100000);
 			rcount++;
 			ritem = tm_rpc_response_list_get(&_tm_rpc_sruid.uid);
@@ -810,12 +825,12 @@ static void rpc_t_uac(rpc_t* rpc, void* c, int reply_wait)
 			rpc->fault(c, 500, "No response");
 		} else {
 			/* add structure node */
-			if (rpc->add(c, "{", &th) < 0) {
+			if(rpc->add(c, "{", &th) < 0) {
 				rpc->fault(c, 500, "Structure error");
 			} else {
-				if(rpc->struct_add(th, "dS",
-						"code", 	ritem->rcode,
-						"text", 	&ritem->rtext)<0) {
+				if(rpc->struct_add(th, "dS", "code", ritem->rcode, "text",
+						   &ritem->rtext)
+						< 0) {
 					rpc->fault(c, 500, "Fields error");
 					return;
 				}
@@ -825,16 +840,18 @@ static void rpc_t_uac(rpc_t* rpc, void* c, int reply_wait)
 	}
 
 error01:
-	if (hfb.s) pkg_free(hfb.s);
+	if(hfb.s)
+		pkg_free(hfb.s);
 error:
-	if (faked_msg.headers) free_hdr_field_lst(faked_msg.headers);
+	if(faked_msg.headers)
+		free_hdr_field_lst(faked_msg.headers);
 }
 
 
 /** t_uac with no reply waiting.
  * @see rpc_t_uac.
  */
-void rpc_t_uac_start(rpc_t* rpc, void* c)
+void rpc_t_uac_start(rpc_t *rpc, void *c)
 {
 	rpc_t_uac(rpc, c, 0);
 }
@@ -842,7 +859,7 @@ void rpc_t_uac_start(rpc_t* rpc, void* c)
 /** t_uac with reply waiting.
  * @see rpc_t_uac.
  */
-void rpc_t_uac_wait(rpc_t* rpc, void* c)
+void rpc_t_uac_wait(rpc_t *rpc, void *c)
 {
 	rpc_t_uac(rpc, c, 1);
 }
@@ -850,49 +867,47 @@ void rpc_t_uac_wait(rpc_t* rpc, void* c)
 /** t_uac with blocking for reply waiting.
  * @see rpc_t_uac.
  */
-void rpc_t_uac_wait_block(rpc_t* rpc, void* c)
+void rpc_t_uac_wait_block(rpc_t *rpc, void *c)
 {
 	rpc_t_uac(rpc, c, 2);
 }
 
 
-static int t_uac_check_msg(struct sip_msg* msg,
-		str* method, str* body,
-		str *fromtag, int *cseq_is, int* cseq,
-		str* callid)
+static int t_uac_check_msg(struct sip_msg *msg, str *method, str *body,
+		str *fromtag, int *cseq_is, int *cseq, str *callid)
 {
-	struct to_body* parsed_from;
+	struct to_body *parsed_from;
 	struct cseq_body *parsed_cseq;
 	int i;
 	char ch;
 
-	if (body->len && !msg->content_type) {
+	if(body->len && !msg->content_type) {
 		LM_ERR("Content-Type missing\n");
 		goto err;
 	}
 
-	if (body->len && msg->content_length) {
+	if(body->len && msg->content_length) {
 		LM_ERR("Content-Length disallowed\n");
 		goto err;
 	}
 
-	if (!msg->to) {
+	if(!msg->to) {
 		LM_ERR("To missing\n");
 		goto err;
 	}
 
-	if (!msg->from) {
+	if(!msg->from) {
 		LM_ERR("From missing\n");
 		goto err;
 	}
 
 	/* we also need to know if there is from-tag and add it otherwise */
-	if (parse_from_header(msg) < 0) {
+	if(parse_from_header(msg) < 0) {
 		LM_ERR("Error in From\n");
 		goto err;
 	}
 
-	parsed_from = (struct to_body*)msg->from->parsed;
+	parsed_from = (struct to_body *)msg->from->parsed;
 	if(parsed_from->tag_value.s && parsed_from->tag_value.len) {
 		fromtag->s = parsed_from->tag_value.s;
 		fromtag->len = parsed_from->tag_value.len;
@@ -902,11 +917,11 @@ static int t_uac_check_msg(struct sip_msg* msg,
 	}
 
 	*cseq = 0;
-	if (msg->cseq && (parsed_cseq = get_cseq(msg))) {
+	if(msg->cseq && (parsed_cseq = get_cseq(msg))) {
 		*cseq_is = 1;
-		for (i = 0; i < parsed_cseq->number.len; i++) {
+		for(i = 0; i < parsed_cseq->number.len; i++) {
 			ch = parsed_cseq->number.s[i];
-			if (ch >= '0' && ch <= '9' ) {
+			if(ch >= '0' && ch <= '9') {
 				*cseq = (*cseq) * 10 + ch - '0';
 			} else {
 				DBG("check_msg: Found non-numerical in CSeq: <%i>='%c'\n",
@@ -916,8 +931,8 @@ static int t_uac_check_msg(struct sip_msg* msg,
 			}
 		}
 
-		if (parsed_cseq->method.len != method->len ||
-				memcmp(parsed_cseq->method.s, method->s, method->len) !=0 ) {
+		if(parsed_cseq->method.len != method->len
+				|| memcmp(parsed_cseq->method.s, method->s, method->len) != 0) {
 			LM_ERR("CSeq method mismatch\n");
 			goto err;
 		}
@@ -925,7 +940,7 @@ static int t_uac_check_msg(struct sip_msg* msg,
 		*cseq_is = 0;
 	}
 
-	if (msg->callid) {
+	if(msg->callid) {
 		callid->s = msg->callid->body.s;
 		callid->len = msg->callid->body.len;
 	} else {
@@ -944,7 +959,7 @@ int t_uac_send(str *method, str *ruri, str *nexthop, str *send_socket,
 	str hfb, callid;
 	struct sip_uri p_uri, pnexthop;
 	struct sip_msg faked_msg;
-	struct socket_info* ssock;
+	struct socket_info *ssock;
 	str saddr;
 	int sport, sproto;
 	int ret, cseq_is, cseq;
@@ -955,81 +970,89 @@ int t_uac_send(str *method, str *ruri, str *nexthop, str *send_socket,
 	ret = -1;
 
 	/* check and parse parameters */
-	if (method->len<=0){
+	if(method->len <= 0) {
 		LM_ERR("Empty method\n");
 		return -1;
 	}
-	if (parse_uri(ruri->s, ruri->len, &p_uri)<0){
+	if(parse_uri(ruri->s, ruri->len, &p_uri) < 0) {
 		LM_ERR("Invalid request uri \"%s\"", ruri->s);
 		return -1;
 	}
-	if (nexthop->len==1 && nexthop->s[0]=='.'){
+	if(nexthop->len == 1 && nexthop->s[0] == '.') {
 		/* empty nextop */
-		nexthop->len=0;
-		nexthop->s=0;
-	}else if (nexthop->len==0){
-		nexthop->s=0;
-	}else if (parse_uri(nexthop->s, nexthop->len, &pnexthop)<0){
+		nexthop->len = 0;
+		nexthop->s = 0;
+	} else if(nexthop->len == 0) {
+		nexthop->s = 0;
+	} else if(parse_uri(nexthop->s, nexthop->len, &pnexthop) < 0) {
 		LM_ERR("Invalid next-hop uri \"%s\"", nexthop->s);
 		return -1;
 	}
-	ssock=0;
-	saddr.s=0;
-	saddr.len=0;
-	if (send_socket->len==1 && send_socket->s[0]=='.'){
+	ssock = 0;
+	saddr.s = 0;
+	saddr.len = 0;
+	if(send_socket->len == 1 && send_socket->s[0] == '.') {
 		/* empty send socket */
-		send_socket->len=0;
-	}else if (send_socket->len &&
-			(parse_phostport(send_socket->s, &saddr.s, &saddr.len,
-							 &sport, &sproto)!=0 ||
-			 /* check also if it's not a MH addr. */
-			 saddr.len==0 || saddr.s[0]=='(')
-			){
+		send_socket->len = 0;
+	} else if(send_socket->len
+			  && (parse_phostport(
+						  send_socket->s, &saddr.s, &saddr.len, &sport, &sproto)
+							  != 0
+					  ||
+					  /* check also if it's not a MH addr. */
+					  saddr.len == 0 || saddr.s[0] == '(')) {
 		LM_ERR("Invalid send socket \"%s\"", send_socket->s);
 		return -1;
-	}else if (saddr.len && (ssock=grep_sock_info(&saddr, sport, sproto))==0){
+	} else if(saddr.len
+			  && (ssock = grep_sock_info(&saddr, sport, sproto)) == 0) {
 		LM_ERR("No local socket for \"%s\"", send_socket->s);
 		return -1;
 	}
 	/* check headers using the SIP parser to look in the header list */
 	memset(&faked_msg, 0, sizeof(struct sip_msg));
-	faked_msg.len=headers->len;
-	faked_msg.buf=faked_msg.unparsed=headers->s;
-	if (parse_headers(&faked_msg, HDR_EOH_F, 0)==-1){
+	faked_msg.len = headers->len;
+	faked_msg.buf = faked_msg.unparsed = headers->s;
+	if(parse_headers(&faked_msg, HDR_EOH_F, 0) == -1) {
 		LM_ERR("Invalid headers\n");
 		return -1;
 	}
 	/* at this moment all the parameters are parsed => more sanity checks */
-	if (t_uac_check_msg(&faked_msg, method, body, &fromtag,
-				&cseq_is, &cseq, &callid)<0) {
+	if(t_uac_check_msg(
+			   &faked_msg, method, body, &fromtag, &cseq_is, &cseq, &callid)
+			< 0) {
 		LM_ERR("checking values failed\n");
 		goto error;
 	}
-	if(get_hfblock(nexthop->len? nexthop: ruri, faked_msg.headers,
-			PROTO_NONE, ssock, &hfb)<0) {
+	if(get_hfblock(nexthop->len ? nexthop : ruri, faked_msg.headers, PROTO_NONE,
+			   ssock, &hfb)
+			< 0) {
 		LM_ERR("failed to get the block of headers\n");
 		goto error;
 	}
 	/* proceed to transaction creation */
 	memset(&dlg, 0, sizeof(dlg_t));
 	/* fill call-id if call-id present or else generate a callid */
-	if (callid.s && callid.len) dlg.id.call_id=callid;
-	else generate_callid(&dlg.id.call_id);
+	if(callid.s && callid.len)
+		dlg.id.call_id = callid;
+	else
+		generate_callid(&dlg.id.call_id);
 
 	/* We will not fill in dlg->id.rem_tag because
 	 * if present it will be printed within To HF
 	 */
 
 	/* Generate fromtag if not present */
-	if (fromtag.s && fromtag.len) {
+	if(fromtag.s && fromtag.len) {
 		dlg.id.loc_tag = fromtag;
 	} else {
 		generate_fromtag(&dlg.id.loc_tag, &dlg.id.call_id, ruri);
 	}
 
 	/* Fill in CSeq */
-	if (cseq_is) dlg.loc_seq.value = cseq;
-	else dlg.loc_seq.value = DEFAULT_CSEQ;
+	if(cseq_is)
+		dlg.loc_seq.value = cseq;
+	else
+		dlg.loc_seq.value = DEFAULT_CSEQ;
 	dlg.loc_seq.is_set = 1;
 
 	dlg.loc_uri = get_from(&faked_msg)->uri;
@@ -1039,24 +1062,27 @@ int t_uac_send(str *method, str *ruri, str *nexthop, str *send_socket,
 	}
 	dlg.rem_target = *ruri;
 	dlg.dst_uri = *nexthop;
-	dlg.send_sock=ssock;
+	dlg.send_sock = ssock;
 
 	memset(&uac_req, 0, sizeof(uac_req));
-	uac_req.method=method;
-	if(hfb.s!=NULL && hfb.len>0) uac_req.headers=&hfb;
-	uac_req.body=body->len?body:0;
-	uac_req.dialog=&dlg;
+	uac_req.method = method;
+	if(hfb.s != NULL && hfb.len > 0)
+		uac_req.headers = &hfb;
+	uac_req.body = body->len ? body : 0;
+	uac_req.dialog = &dlg;
 
 	ret = t_uac(&uac_req);
 
-	if (ret <= 0) {
+	if(ret <= 0) {
 		LM_ERR("UAC error\n");
 		goto error01;
 	}
 error01:
-	if (hfb.s) pkg_free(hfb.s);
+	if(hfb.s)
+		pkg_free(hfb.s);
 error:
-	if (faked_msg.headers) free_hdr_field_lst(faked_msg.headers);
+	if(faked_msg.headers)
+		free_hdr_field_lst(faked_msg.headers);
 
 	return ret;
 }

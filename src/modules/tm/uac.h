@@ -39,32 +39,32 @@
  *  - when TMCB_DESTROY callback is called -- you must
  *    register it explicitly!
  */
-typedef struct uac_req {
-	str	*method;
-	str	*headers;
-	str	*body;
+typedef struct uac_req
+{
+	str *method;
+	str *headers;
+	str *body;
 	str *ssock;
 	str *ssockname;
-	dlg_t	*dialog;
-	int	cb_flags;
-	transaction_cb	*cb;
-	void	*cbp;
-	str	*callid;
+	dlg_t *dialog;
+	int cb_flags;
+	transaction_cb *cb;
+	void *cbp;
+	str *callid;
 } uac_req_t;
 
 /* macro for setting the values of uac_req_t struct */
-#define set_uac_req(_req, \
-		_m, _h, _b, _dlg, _cb_flags, _cb, _cbp) \
-	do { \
-		memset((_req), 0, sizeof(uac_req_t)); \
-		(_req)->method = (_m); \
-		(_req)->headers = (_h); \
-		(_req)->body = (_b); \
-		(_req)->dialog = (_dlg); \
-		(_req)->cb_flags = (_cb_flags); \
-		(_req)->cb = (_cb); \
-		(_req)->cbp = (_cbp); \
-	} while (0)
+#define set_uac_req(_req, _m, _h, _b, _dlg, _cb_flags, _cb, _cbp) \
+	do {                                                          \
+		memset((_req), 0, sizeof(uac_req_t));                     \
+		(_req)->method = (_m);                                    \
+		(_req)->headers = (_h);                                   \
+		(_req)->body = (_b);                                      \
+		(_req)->dialog = (_dlg);                                  \
+		(_req)->cb_flags = (_cb_flags);                           \
+		(_req)->cb = (_cb);                                       \
+		(_req)->cbp = (_cbp);                                     \
+	} while(0)
 
 
 #ifdef WITH_EVENT_LOCAL_REQUEST
@@ -76,21 +76,23 @@ extern int goto_on_local_req;
  * Function prototypes
  */
 typedef int (*reqwith_t)(uac_req_t *uac_r);
-typedef int (*reqout_t)(uac_req_t *uac_r, str* ruri, str* to, str* from, str *next_hop);
-typedef int (*req_t)(uac_req_t *uac_r, str* ruri, str* to, str* from, str *next_hop);
+typedef int (*reqout_t)(
+		uac_req_t *uac_r, str *ruri, str *to, str *from, str *next_hop);
+typedef int (*req_t)(
+		uac_req_t *uac_r, str *ruri, str *to, str *from, str *next_hop);
 typedef int (*t_uac_t)(uac_req_t *uac_r);
-typedef int (*t_uac_with_ids_t)(uac_req_t *uac_r,
-		unsigned int *ret_index, unsigned int *ret_label);
+typedef int (*t_uac_with_ids_t)(
+		uac_req_t *uac_r, unsigned int *ret_index, unsigned int *ret_label);
 typedef int (*ack_local_uac_f)(struct cell *trans, str *hdrs, str *body);
-typedef int (*prepare_request_within_f)(uac_req_t *uac_r,
-		struct retr_buf **dst_req);
+typedef int (*prepare_request_within_f)(
+		uac_req_t *uac_r, struct retr_buf **dst_req);
 typedef void (*send_prepared_request_f)(struct retr_buf *request_dst);
-typedef void (*generate_fromtag_f)(str*, str*, str*);
+typedef void (*generate_fromtag_f)(str *, str *, str *);
 
 /*
  * Generate a fromtag based on given Call-ID
  */
-void generate_fromtag(str* tag, str* callid, str* ruri);
+void generate_fromtag(str *tag, str *callid, str *ruri);
 
 
 /*
@@ -108,8 +110,8 @@ int t_uac(uac_req_t *uac_r);
  * Send a request
  * ret_index and ret_label will identify the new cell
  */
-int t_uac_with_ids(uac_req_t *uac_r,
-	unsigned int *ret_index, unsigned int *ret_label);
+int t_uac_with_ids(
+		uac_req_t *uac_r, unsigned int *ret_index, unsigned int *ret_label);
 /*
  * Send a message within a dialog
  */
@@ -119,11 +121,11 @@ int req_within(uac_req_t *uac_r);
 /*
  * Send an initial request that will start a dialog
  */
-int req_outside(uac_req_t *uac_r, str* ruri, str* to, str* from, str* next_hop);
+int req_outside(uac_req_t *uac_r, str *ruri, str *to, str *from, str *next_hop);
 
 
 struct retr_buf *local_ack_rb(sip_msg_t *rpl_2xx, struct cell *trans,
-					unsigned int branch, str *hdrs, str *body);
+		unsigned int branch, str *hdrs, str *body);
 void free_local_ack(struct retr_buf *lack);
 void free_local_ack_unsafe(struct retr_buf *lack);
 
@@ -135,10 +137,9 @@ int ack_local_uac(struct cell *trans, str *hdrs, str *body);
 /*
  * Send a transactional request, no dialogs involved
  */
-int request(uac_req_t *uac_r, str* ruri, str* to, str* from, str *next_hop);
+int request(uac_req_t *uac_r, str *ruri, str *to, str *from, str *next_hop);
 
-int prepare_req_within(uac_req_t *uac_r,
-		struct retr_buf **dst_req);
+int prepare_req_within(uac_req_t *uac_r, struct retr_buf **dst_req);
 
 void send_prepared_request(struct retr_buf *request);
 

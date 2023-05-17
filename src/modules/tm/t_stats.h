@@ -31,7 +31,8 @@
 
 typedef unsigned long stat_counter;
 
-struct t_proc_stats {
+struct t_proc_stats
+{
 	/* number of transactions in wait state */
 	stat_counter waiting;
 	/* number of server transactions */
@@ -39,8 +40,8 @@ struct t_proc_stats {
 	/* number of UAC transactions (part of transactions) */
 	stat_counter client_transactions;
 	/* number of transactions which completed with this status */
-	stat_counter completed_3xx, completed_4xx, completed_5xx,
-		completed_6xx, completed_2xx;
+	stat_counter completed_3xx, completed_4xx, completed_5xx, completed_6xx,
+			completed_2xx;
 	stat_counter rpl_received;
 	stat_counter rpl_generated;
 	stat_counter rpl_sent;
@@ -55,7 +56,8 @@ struct t_proc_stats {
 #endif /* TM_MORE_STATS */
 };
 
-union t_stats{
+union t_stats
+{
 	struct t_proc_stats s;
 	char _pad[256]; /* pad at least to cache line size
 					 * athlon=64, p4=128, some sparcs=256 */
@@ -82,9 +84,15 @@ inline void static t_stats_delayed_free(void)
 }
 #else /* TM_MORE_STATS  */
 /* do nothing */
-#define t_stats_created()  do{}while(0)
-#define t_stats_freed()  do{}while(0)
-#define t_stats_delayed_free()  do{}while(0)
+#define t_stats_created() \
+	do {                  \
+	} while(0)
+#define t_stats_freed() \
+	do {                \
+	} while(0)
+#define t_stats_delayed_free() \
+	do {                       \
+	} while(0)
 
 #endif /* TM_MORE_STATS */
 
@@ -92,7 +100,8 @@ inline void static t_stats_new(int local)
 {
 	/* keep it in process's piece of shmem */
 	tm_stats[process_no].s.transactions++;
-	if(local) tm_stats[process_no].s.client_transactions++;
+	if(local)
+		tm_stats[process_no].s.client_transactions++;
 }
 
 inline void static t_stats_wait(void)
@@ -101,21 +110,22 @@ inline void static t_stats_wait(void)
 	tm_stats[process_no].s.waiting++;
 }
 
-inline void static t_stats_deleted( int local )
+inline void static t_stats_deleted(int local)
 {
 	tm_stats[process_no].s.deleted++;
 }
 
-inline static void update_reply_stats( int code ) {
-	if (code>=600) {
+inline static void update_reply_stats(int code)
+{
+	if(code >= 600) {
 		tm_stats[process_no].s.completed_6xx++;
-	} else if (code>=500) {
+	} else if(code >= 500) {
 		tm_stats[process_no].s.completed_5xx++;
-	} else if (code>=400) {
+	} else if(code >= 400) {
 		tm_stats[process_no].s.completed_4xx++;
-	} else if (code>=300) {
+	} else if(code >= 300) {
 		tm_stats[process_no].s.completed_3xx++;
-	} else if (code>=200) {
+	} else if(code >= 200) {
 		tm_stats[process_no].s.completed_2xx++;
 	}
 }
@@ -136,18 +146,17 @@ inline void static t_stats_rpl_sent(void)
 }
 
 
-
 int init_tm_stats(void);
 int init_tm_stats_child(void);
 void free_tm_stats(void);
 
-void tm_rpc_stats(rpc_t* rpc, void* c);
+void tm_rpc_stats(rpc_t *rpc, void *c);
 
-void tm_rpc_hash_stats(rpc_t* rpc, void* c);
+void tm_rpc_hash_stats(rpc_t *rpc, void *c);
 
 typedef int (*tm_get_stats_f)(struct t_proc_stats *all);
 int tm_get_stats(struct t_proc_stats *all);
-void tm_rpc_list(rpc_t* rpc, void* c);
-void tm_rpc_clean(rpc_t* rpc, void* c);
+void tm_rpc_list(rpc_t *rpc, void *c);
+void tm_rpc_clean(rpc_t *rpc, void *c);
 
 #endif

@@ -52,47 +52,44 @@
  * 	0  - success
  * 	<0 - failure
  */
-int t_suspend(struct sip_msg *msg,
-		unsigned int *hash_index, unsigned int *label)
+int t_suspend(
+		struct sip_msg *msg, unsigned int *hash_index, unsigned int *label)
 {
-	struct cell	*t;
+	struct cell *t;
 	int branch;
 	int sip_msg_len;
 
 	t = get_t();
-	if (!t || t == T_UNDEFINED) {
+	if(!t || t == T_UNDEFINED) {
 		LM_ERR("transaction has not been created yet\n");
 		return -1;
 	}
 
-	if (t->flags & T_CANCELED) {
+	if(t->flags & T_CANCELED) {
 		/* The transaction has already been canceled */
 		LM_DBG("trying to suspend an already canceled transaction\n");
 		ser_error = E_CANCELED;
 		return 1;
 	}
-	if (t->uas.status >= 200) {
+	if(t->uas.status >= 200) {
 		LM_DBG("trasaction sent out a final response already - %d\n",
 				t->uas.status);
 		return -3;
 	}
 
-	if (msg->first_line.type != SIP_REPLY) {
+	if(msg->first_line.type != SIP_REPLY) {
 		/* send a 100 Trying reply, because the INVITE processing
 		will probably take a long time */
-		if (msg->REQ_METHOD==METHOD_INVITE && (t->flags&T_AUTO_INV_100)
-			&& (t->uas.status < 100)
-		) {
-			if (!t_reply( t, msg , 100 ,
-				cfg_get(tm, tm_cfg, tm_auto_inv_100_r)))
+		if(msg->REQ_METHOD == METHOD_INVITE && (t->flags & T_AUTO_INV_100)
+				&& (t->uas.status < 100)) {
+			if(!t_reply(t, msg, 100, cfg_get(tm, tm_cfg, tm_auto_inv_100_r)))
 				LM_DBG("suspending request processing - sending 100 reply\n");
 		}
 
-		if ((t->nr_of_outgoings==0) && /* if there had already been
+		if((t->nr_of_outgoings == 0) && /* if there had already been
 			an UAC created, then the lumps were
 			saved as well */
-			save_msg_lumps(t->uas.request, msg)
-		) {
+				save_msg_lumps(t->uas.request, msg)) {
 			LM_ERR("failed to save the message lumps\n");
 			return -1;
 		}
@@ -100,7 +97,7 @@ int t_suspend(struct sip_msg *msg,
 		t->uas.request->flags = msg->flags;
 
 		/* add a blind UAC to let the fr timer running */
-		if (add_blind_uac() < 0) {
+		if(add_blind_uac() < 0) {
 			LM_ERR("failed to add the blind UAC\n");
 			return -1;
 		}
@@ -114,25 +111,28 @@ int t_suspend(struct sip_msg *msg,
 		msg->msg_flags |= FL_RPL_SUSPENDED;
 		/* this is a reply suspend find which branch */
 
-		if (t_check( msg  , &branch )==-1){
+		if(t_check(msg, &branch) == -1) {
 			LM_ERR("failed find UAC branch\n");
 			return -1;
 		}
 
-		if (!t->uac[branch].reply) {
+		if(!t->uac[branch].reply) {
 			sip_msg_len = 0;
 			LM_DBG("found a match with branch id [%d] - "
-				"cloning reply message to t->uac[branch].reply\n", branch);
-			t->uac[branch].reply = sip_msg_cloner( msg, &sip_msg_len );
+				   "cloning reply message to t->uac[branch].reply\n",
+					branch);
+			t->uac[branch].reply = sip_msg_cloner(msg, &sip_msg_len);
 
-			if (! t->uac[branch].reply ) {
+			if(!t->uac[branch].reply) {
 				LM_ERR("can't alloc' clone memory\n");
 				return -1;
 			}
-			t->uac[branch].end_reply = ((char*)t->uac[branch].reply) + sip_msg_len;
+			t->uac[branch].end_reply =
+					((char *)t->uac[branch].reply) + sip_msg_len;
 		} else {
 			LM_DBG("found a match with branch id [%d] - "
-				"message already cloned to t->uac[branch].reply\n", branch);
+				   "message already cloned to t->uac[branch].reply\n",
+					branch);
 			// This can happen when suspending more than once in a reply.
 		}
 		LM_DBG("saving transaction data\n");
@@ -174,9 +174,9 @@ static int t_continue_helper(unsigned int hash_index, unsigned int label,
 	void *erpl = NULL;
 	int faked_req_len = 0;
 	struct cancel_info cancel_data;
-	int	branch;
-	struct ua_client *uac =NULL;
-	int	ret;
+	int branch;
+	struct ua_client *uac = NULL;
+	int ret;
 	int cb_type;
 	int msg_status;
 	int last_uac_status;
@@ -192,19 +192,19 @@ static int t_continue_helper(unsigned int hash_index, unsigned int label,
 	backup_T = get_t();
 	backup_T_branch = get_t_branch();
 
-	if (t_lookup_ident_filter(&t, hash_index, label, skip_timer) < 0) {
+	if(t_lookup_ident_filter(&t, hash_index, label, skip_timer) < 0) {
 		set_t(backup_T, backup_T_branch);
 		LM_WARN("active transaction not found\n");
 		return -1;
 	}
 
-	if (!(t->flags & T_ASYNC_SUSPENDED)) {
+	if(!(t->flags & T_ASYNC_SUSPENDED)) {
 		LM_WARN("transaction is not suspended [%u:%u]\n", hash_index, label);
 		set_t(backup_T, backup_T_branch);
 		return -2;
 	}
 
-	if (t->flags & T_CANCELED) {
+	if(t->flags & T_CANCELED) {
 		t->flags &= ~T_ASYNC_SUSPENDED;
 		/* The transaction has already been canceled,
 		 * needless to continue */
@@ -218,15 +218,15 @@ static int t_continue_helper(unsigned int hash_index, unsigned int label,
 	 * form calling t_continue() multiple times simultaneously */
 	LOCK_ASYNC_CONTINUE(t);
 
-	t->flags |= T_ASYNC_CONTINUE;   /* we can now know anywhere in kamailio
+	t->flags |= T_ASYNC_CONTINUE; /* we can now know anywhere in kamailio
 					 * that we are executing post a suspend */
 
 	/* transaction is no longer suspended, resetting the SUSPEND flag */
 	t->flags &= ~T_ASYNC_SUSPENDED;
 
 	/* which route block type were we in when we were suspended */
-	cb_type =  FAILURE_CB_TYPE;
-	switch (t->async_backup.backup_route) {
+	cb_type = FAILURE_CB_TYPE;
+	switch(t->async_backup.backup_route) {
 		case REQUEST_ROUTE:
 			cb_type = FAILURE_CB_TYPE;
 			break;
@@ -245,10 +245,10 @@ static int t_continue_helper(unsigned int hash_index, unsigned int label,
 		/* resume processing of a sip request */
 		/* get the branch of the blind UAC setup during suspend */
 		branch = t->async_backup.blind_uac;
-		if (branch >= 0) {
+		if(branch >= 0) {
 			stop_rb_timers(&t->uac[branch].request);
 
-			if (t->uac[branch].last_received != 0) {
+			if(t->uac[branch].last_received != 0) {
 				/* Either t_continue() has already been
 				* called or the branch has already timed out.
 				* Needless to continue. */
@@ -267,14 +267,14 @@ static int t_continue_helper(unsigned int hash_index, unsigned int label,
 			 * for example when t_reply() is called from
 			 * a failure route => deadlock, because both
 			 * of them need the reply lock to be held. */
-			t->uac[branch].last_received=500;
-			if(t->uac[branch].reply!=NULL) {
+			t->uac[branch].last_received = 500;
+			if(t->uac[branch].reply != NULL) {
 				LM_WARN("reply (%p) already set for suspended transaction"
 						" (branch: %d)\n",
 						t->uac[branch].reply, branch);
 			} else {
 				/* set it as a faked reply */
-				t->uac[branch].reply=FAKED_REPLY;
+				t->uac[branch].reply = FAKED_REPLY;
 			}
 			uac = &t->uac[branch];
 		}
@@ -290,32 +290,33 @@ static int t_continue_helper(unsigned int hash_index, unsigned int label,
 		 */
 
 		/* fake the request and the environment, like in failure_route */
-		faked_req = fake_req(t->uas.request, 0 /* extra flags */, uac,
-			&faked_req_len);
-		if (faked_req==NULL) {
+		faked_req = fake_req(
+				t->uas.request, 0 /* extra flags */, uac, &faked_req_len);
+		if(faked_req == NULL) {
 			LM_ERR("building fake_req failed\n");
 			ret = -1;
 			goto kill_trans;
 		}
-		faked_env( t, faked_req, 1);
+		faked_env(t, faked_req, 1);
 
 		route_type_bk = get_route_type();
 		set_route_type(FAILURE_ROUTE);
 		/* execute the pre/post -script callbacks based on original route block */
-		if (exec_pre_script_cb(faked_req, cb_type)>0) {
-			if(rtact!=NULL) {
-				if (run_top_route(rtact, faked_req, 0)<0) {
+		if(exec_pre_script_cb(faked_req, cb_type) > 0) {
+			if(rtact != NULL) {
+				if(run_top_route(rtact, faked_req, 0) < 0) {
 					LM_ERR("failure inside run_top_route\n");
 				}
 			} else {
-				if(cbname!=NULL && cbname->s!=NULL) {
+				if(cbname != NULL && cbname->s != NULL) {
 					keng = sr_kemi_eng_get();
-					if(keng!=NULL) {
+					if(keng != NULL) {
 						if(cbparam && cbparam->s) {
 							evname = *cbparam;
 						}
 						if(sr_kemi_route(keng, faked_req, FAILURE_ROUTE, cbname,
-								&evname)<0) {
+								   &evname)
+								< 0) {
 							LM_ERR("error running event route kemi callback\n");
 						}
 					} else {
@@ -333,27 +334,24 @@ static int t_continue_helper(unsigned int hash_index, unsigned int label,
 		/* TODO: save_msg_lumps should clone the lumps to shm mem */
 
 		/* restore original environment */
-		faked_env( t, 0, 1);
+		faked_env(t, 0, 1);
 		/* update the flags */
 		t->uas.request->flags = faked_req->flags;
 		/* free the fake msg */
 		free_faked_req(faked_req, faked_req_len);
 
 
-		if (t->uas.status < 200) {
+		if(t->uas.status < 200) {
 			/* No final reply has been sent yet.
 			* Check whether or not there is any pending branch.
 			*/
-			for (	branch = 0;
-				branch < t->nr_of_outgoings;
-				branch++
-			) {
-				if (t->uac[branch].last_received < 200)
+			for(branch = 0; branch < t->nr_of_outgoings; branch++) {
+				if(t->uac[branch].last_received < 200)
 					break;
 			}
 
-			if (branch == t->nr_of_outgoings) {
-			/* There is not any open branch so there is
+			if(branch == t->nr_of_outgoings) {
+				/* There is not any open branch so there is
 			 * no chance that a final response will be received. */
 				ret = 0;
 				goto kill_trans;
@@ -367,32 +365,34 @@ static int t_continue_helper(unsigned int hash_index, unsigned int label,
 		init_cancel_info(&cancel_data);
 
 		LM_DBG("continuing from a suspended reply"
-				" - resetting the suspend branch flag\n");
+			   " - resetting the suspend branch flag\n");
 
-		if (t->uac[branch].reply) {
+		if(t->uac[branch].reply) {
 			t->uac[branch].reply->msg_flags &= ~FL_RPL_SUSPENDED;
 		} else {
 			LM_WARN("no reply in t_continue for branch. not much we can do\n");
 			return 0;
 		}
-		if (t->uas.request) t->uas.request->msg_flags&= ~FL_RPL_SUSPENDED;
+		if(t->uas.request)
+			t->uas.request->msg_flags &= ~FL_RPL_SUSPENDED;
 
-		faked_env( t, t->uac[branch].reply, 1);
+		faked_env(t, t->uac[branch].reply, 1);
 
-		if (exec_pre_script_cb(t->uac[branch].reply, cb_type)>0) {
-			if(rtact!=NULL) {
-				if (run_top_route(rtact, t->uac[branch].reply, 0)<0){
+		if(exec_pre_script_cb(t->uac[branch].reply, cb_type) > 0) {
+			if(rtact != NULL) {
+				if(run_top_route(rtact, t->uac[branch].reply, 0) < 0) {
 					LM_ERR("Error in run_top_route\n");
 				}
 			} else {
-				if(cbname!=NULL && cbname->s!=NULL) {
+				if(cbname != NULL && cbname->s != NULL) {
 					keng = sr_kemi_eng_get();
-					if(keng!=NULL) {
+					if(keng != NULL) {
 						if(cbparam && cbparam->s) {
 							evname = *cbparam;
 						}
 						if(sr_kemi_route(keng, t->uac[branch].reply,
-									TM_ONREPLY_ROUTE, cbname, &evname)<0) {
+								   TM_ONREPLY_ROUTE, cbname, &evname)
+								< 0) {
 							LM_ERR("error running event route kemi callback\n");
 						}
 					} else {
@@ -407,9 +407,9 @@ static int t_continue_helper(unsigned int hash_index, unsigned int label,
 		}
 
 		LM_DBG("restoring previous environment\n");
-		faked_env( t, 0, 1);
+		faked_env(t, 0, 1);
 
-		if (t->flags & T_ASYNC_SUSPENDED) {
+		if(t->flags & T_ASYNC_SUSPENDED) {
 			LM_DBG("The transaction is suspended, so not continuing\n");
 			t->flags &= ~T_ASYNC_CONTINUE;
 			UNLOCK_ASYNC_CONTINUE(t);
@@ -418,81 +418,84 @@ static int t_continue_helper(unsigned int hash_index, unsigned int label,
 		}
 
 		/*lock transaction replies - will be unlocked when reply is relayed*/
-		LOCK_REPLIES( t );
-		if ( is_local(t) ) {
+		LOCK_REPLIES(t);
+		if(is_local(t)) {
 			LM_DBG("t is local - sending reply with status code: [%d]\n",
 					t->uac[branch].reply->first_line.u.reply.statuscode);
-			reply_status = local_reply( t, t->uac[branch].reply, branch,
+			reply_status = local_reply(t, t->uac[branch].reply, branch,
 					t->uac[branch].reply->first_line.u.reply.statuscode,
-					&cancel_data );
-			if (reply_status == RPS_COMPLETED) {
+					&cancel_data);
+			if(reply_status == RPS_COMPLETED) {
 				/* no more UAC FR/RETR (if I received a 2xx, there may
 				* be still pending branches ...
 				*/
-				cleanup_uac_timers( t );
-				if (is_invite(t)) cancel_uacs(t, &cancel_data, F_CANCEL_B_KILL);
+				cleanup_uac_timers(t);
+				if(is_invite(t))
+					cancel_uacs(t, &cancel_data, F_CANCEL_B_KILL);
 				/* There is no need to call set_final_timer because we know
 				* that the transaction is local */
 				put_on_wait(t);
-			}else if (unlikely(cancel_data.cancel_bitmap)){
+			} else if(unlikely(cancel_data.cancel_bitmap)) {
 				/* cancel everything, even non-INVITEs (e.g in case of 6xx), use
 				* cancel_b_method for canceling unreplied branches */
-				cancel_uacs(t, &cancel_data, cfg_get(tm,tm_cfg, cancel_b_flags));
+				cancel_uacs(
+						t, &cancel_data, cfg_get(tm, tm_cfg, cancel_b_flags));
 			}
 
 		} else {
 			LM_DBG("t is not local - relaying reply with status code: [%d]\n",
 					t->uac[branch].reply->first_line.u.reply.statuscode);
 			do_put_on_wait = 0;
-			if(t->uac[branch].reply->first_line.u.reply.statuscode>=200){
+			if(t->uac[branch].reply->first_line.u.reply.statuscode >= 200) {
 				do_put_on_wait = 1;
 			}
-			reply_status=relay_reply( t, t->uac[branch].reply, branch,
+			reply_status = relay_reply(t, t->uac[branch].reply, branch,
 					t->uac[branch].reply->first_line.u.reply.statuscode,
-					&cancel_data, do_put_on_wait );
-			if (reply_status == RPS_COMPLETED) {
+					&cancel_data, do_put_on_wait);
+			if(reply_status == RPS_COMPLETED) {
 				/* no more UAC FR/RETR (if I received a 2xx, there may
 				be still pending branches ...
 				*/
-				cleanup_uac_timers( t );
+				cleanup_uac_timers(t);
 				/* 2xx is a special case: we can have a COMPLETED request
 				* with branches still open => we have to cancel them */
-				if (is_invite(t) && cancel_data.cancel_bitmap)
-					cancel_uacs( t, &cancel_data,  F_CANCEL_B_KILL);
+				if(is_invite(t) && cancel_data.cancel_bitmap)
+					cancel_uacs(t, &cancel_data, F_CANCEL_B_KILL);
 				/* FR for negative INVITES, WAIT anything else */
 				/* Call to set_final_timer is embedded in relay_reply to avoid
 				* race conditions when reply is sent out and an ACK to stop
 				* retransmissions comes before retransmission timer is set.*/
-			}else if (unlikely(cancel_data.cancel_bitmap)){
+			} else if(unlikely(cancel_data.cancel_bitmap)) {
 				/* cancel everything, even non-INVITEs (e.g in case of 6xx), use
 				* cancel_b_method for canceling unreplied branches */
-				cancel_uacs(t, &cancel_data, cfg_get(tm,tm_cfg, cancel_b_flags));
+				cancel_uacs(
+						t, &cancel_data, cfg_get(tm, tm_cfg, cancel_b_flags));
 			}
-
 		}
-		t->uac[branch].request.flags|=F_RB_REPLIED;
+		t->uac[branch].request.flags |= F_RB_REPLIED;
 
-		if (reply_status==RPS_ERROR){
+		if(reply_status == RPS_ERROR) {
 			goto done;
 		}
 
 		/* update FR/RETR timers on provisional replies */
 
-		msg_status=t->uac[branch].reply->REPLY_STATUS;
-		last_uac_status=t->uac[branch].last_received;
+		msg_status = t->uac[branch].reply->REPLY_STATUS;
+		last_uac_status = t->uac[branch].last_received;
 
-		if (is_invite(t) && msg_status<200 &&
-			( cfg_get(tm, tm_cfg, restart_fr_on_each_reply) ||
-			( (last_uac_status<msg_status) &&
-			((msg_status>=180) || (last_uac_status==0)) )
-		) ) { /* provisional now */
+		if(is_invite(t) && msg_status < 200
+				&& (cfg_get(tm, tm_cfg, restart_fr_on_each_reply)
+						|| ((last_uac_status < msg_status)
+								&& ((msg_status >= 180)
+										|| (last_uac_status
+												== 0))))) { /* provisional now */
 #ifdef TIMER_DEBUG
-			LM_DBG("updating FR/RETR timers, \"fr_inv_timeout\": %d\n", t->fr_inv_timeout);
+			LM_DBG("updating FR/RETR timers, \"fr_inv_timeout\": %d\n",
+					t->fr_inv_timeout);
 #endif
-			restart_rb_fr(& t->uac[branch].request, t->fr_inv_timeout);
-			t->uac[branch].request.flags|=F_RB_FR_INV; /* mark fr_inv */
+			restart_rb_fr(&t->uac[branch].request, t->fr_inv_timeout);
+			t->uac[branch].request.flags |= F_RB_FR_INV; /* mark fr_inv */
 		}
-
 	}
 
 done:
@@ -501,13 +504,13 @@ done:
 		/* response handling */
 		/* backup branch reply to free it later and reset it here under lock */
 		brpl = t->uac[branch].reply;
-		erpl = (void*)t->uac[branch].end_reply;
+		erpl = (void *)t->uac[branch].end_reply;
 		t->uac[branch].reply = 0;
 		t->uac[branch].end_reply = 0;
 	}
 	UNLOCK_ASYNC_CONTINUE(t);
 
-	if(t->async_backup.backup_route != TM_ONREPLY_ROUTE){
+	if(t->async_backup.backup_route != TM_ONREPLY_ROUTE) {
 		/* request handling */
 		/* unref the transaction */
 		t_unref(t->uas.request);
@@ -520,15 +523,15 @@ done:
 			LM_DBG("Freeing earlier cloned reply\n");
 
 			/* free lumps that were added during reply processing */
-			del_nonshm_lump( &(brpl->add_rm) );
-			del_nonshm_lump( &(brpl->body_lumps) );
-			del_nonshm_lump_rpl( &(brpl->reply_lump) );
+			del_nonshm_lump(&(brpl->add_rm));
+			del_nonshm_lump(&(brpl->body_lumps));
+			del_nonshm_lump_rpl(&(brpl->reply_lump));
 
 			/* free header's parsed structures that were added */
-			for( hdr=brpl->headers ; hdr ; hdr=hdr->next ) {
-				if (hdr->parsed && hdr_allocs_parse(hdr) &&
-						(hdr->parsed<(void*)brpl ||
-						(erpl && hdr->parsed>=(void*)erpl))) {
+			for(hdr = brpl->headers; hdr; hdr = hdr->next) {
+				if(hdr->parsed && hdr_allocs_parse(hdr)
+						&& (hdr->parsed < (void *)brpl
+								|| (erpl && hdr->parsed >= (void *)erpl))) {
 					clean_hdr_field(hdr);
 					hdr->parsed = 0;
 				}
@@ -537,11 +540,12 @@ done:
 			/* now go through hdr fields themselves
 			 * and remove the pkg allocated space */
 			hdr = brpl->headers;
-			while (hdr) {
-				if ( hdr && ((void*)hdr<(void*)brpl ||
-						(void*)hdr>=(void*)erpl)) {
+			while(hdr) {
+				if(hdr
+						&& ((void *)hdr < (void *)brpl
+								|| (void *)hdr >= (void *)erpl)) {
 					/* this header needs to be freed and removed form the list */
-					if (!prev) {
+					if(!prev) {
 						brpl->headers = hdr->next;
 					} else {
 						prev->next = hdr->next;
@@ -569,8 +573,7 @@ done:
 kill_trans:
 	/* The script has hopefully set the error code. If not,
 	 * let us reply with a default error. */
-	if ((kill_transaction_unsafe(t,
-				tm_error ? tm_error : E_UNSPEC)) <=0) {
+	if((kill_transaction_unsafe(t, tm_error ? tm_error : E_UNSPEC)) <= 0) {
 		LM_ERR("reply generation failed\n");
 		/* The transaction must be explicitely released,
 		 * no more timer is running */
@@ -583,7 +586,7 @@ kill_trans:
 	}
 
 	/* unref the transaction */
-	if(t->async_backup.backup_route != TM_ONREPLY_ROUTE){
+	if(t->async_backup.backup_route != TM_ONREPLY_ROUTE) {
 		/* request handling */
 		t_unref(t->uas.request);
 	} else {
@@ -594,19 +597,19 @@ kill_trans:
 	return ret;
 }
 
-int t_continue(unsigned int hash_index, unsigned int label,
-		struct action *route)
+int t_continue(
+		unsigned int hash_index, unsigned int label, struct action *route)
 {
 	return t_continue_helper(hash_index, label, route, NULL, NULL, 1);
 }
-int t_continue_skip_timer(unsigned int hash_index, unsigned int label,
-		struct action *route)
+int t_continue_skip_timer(
+		unsigned int hash_index, unsigned int label, struct action *route)
 {
 	return t_continue_helper(hash_index, label, route, NULL, NULL, 0);
 }
 
-int t_continue_cb(unsigned int hash_index, unsigned int label,
-		str *cbname, str *cbparam)
+int t_continue_cb(
+		unsigned int hash_index, unsigned int label, str *cbname, str *cbparam)
 {
 	return t_continue_helper(hash_index, label, NULL, cbname, cbparam, 0);
 }
@@ -624,23 +627,21 @@ int t_continue_cb(unsigned int hash_index, unsigned int label,
  */
 int t_cancel_suspend(unsigned int hash_index, unsigned int label)
 {
-	struct cell	*t;
-	int	branch;
+	struct cell *t;
+	int branch;
 
 	t = get_t();
-	if (!t || t == T_UNDEFINED) {
+	if(!t || t == T_UNDEFINED) {
 		LM_ERR("no active transaction\n");
 		return -1;
 	}
 	/* Only to double-check the IDs */
-	if ((t->hash_index != hash_index)
-		|| (t->label != label)
-	) {
+	if((t->hash_index != hash_index) || (t->label != label)) {
 		LM_ERR("transaction id mismatch\n");
 		return -1;
 	}
 
-	if(t->async_backup.backup_route != TM_ONREPLY_ROUTE){
+	if(t->async_backup.backup_route != TM_ONREPLY_ROUTE) {
 		/* The transaction does not need to be locked because this
 		* function is either executed from the original route block
 		* or from failure route which already locks */
@@ -649,11 +650,11 @@ int t_cancel_suspend(unsigned int hash_index, unsigned int label)
 
 		/* Try to find the blind UAC, and cancel its fr timer.
 		* We assume that the last blind uac called this function. */
-		for (	branch = t->nr_of_outgoings-1;
-			branch >= 0 && t->uac[branch].request.buffer;
-			branch--);
+		for(branch = t->nr_of_outgoings - 1;
+				branch >= 0 && t->uac[branch].request.buffer; branch--)
+			;
 
-		if (branch >= 0) {
+		if(branch >= 0) {
 			stop_rb_timers(&t->uac[branch].request);
 			/* Set last_received to something >= 200,
 			* the actual value does not matter, the branch
@@ -663,21 +664,21 @@ int t_cancel_suspend(unsigned int hash_index, unsigned int label)
 			* for example when t_reply() is called from
 			* a failure rute => deadlock, because both
 			* of them need the reply lock to be held. */
-			t->uac[branch].last_received=500;
+			t->uac[branch].last_received = 500;
 		} else {
 			/* Not a huge problem, fr timer will fire, but CANCEL
 			will not be sent. last_received will be set to 408. */
 			return -1;
 		}
-	}else{
+	} else {
 		branch = t->async_backup.backup_branch;
 
 		LM_DBG("This is a cancel suspend for a response\n");
 
 		t->uac[branch].reply->msg_flags &= ~FL_RPL_SUSPENDED;
-		if (t->uas.request) t->uas.request->msg_flags&= ~FL_RPL_SUSPENDED;
+		if(t->uas.request)
+			t->uas.request->msg_flags &= ~FL_RPL_SUSPENDED;
 	}
 
 	return 0;
 }
-
