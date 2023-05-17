@@ -49,37 +49,35 @@ static int dnssec_exit(void);
 
 
 /* parameters */
-static unsigned int flags=0;
+static unsigned int flags = 0;
 
 /* global variables */
-gen_lock_t*             timer_lock=0;
-struct list_link*       timer = 0;
+gen_lock_t *timer_lock = 0;
+struct list_link *timer = 0;
 
 
-static param_export_t params[]={
-	{"general_query_flags", INT_PARAM, &flags},
-	{0,0,0}
-};
+static param_export_t params[] = {
+		{"general_query_flags", INT_PARAM, &flags}, {0, 0, 0}};
 
 
-struct module_exports exports= {
-	"dnssec",			/* module name */
-	DEFAULT_DLFLAGS,	/* dlopen flags */
-	0,					/* exported functions */
-	params,				/* exported parameters */
-	0,					/* RPC method exports */
-	0,					/* exported pseudo-variables */
-	0,					/* response handling function */
-	dnssec_init,		/* module initialization function */
-	0,					/* per-child init function */
-	dnssec_exit			/* module destroy function */
+struct module_exports exports = {
+		"dnssec",		 /* module name */
+		DEFAULT_DLFLAGS, /* dlopen flags */
+		0,				 /* exported functions */
+		params,			 /* exported parameters */
+		0,				 /* RPC method exports */
+		0,				 /* exported pseudo-variables */
+		0,				 /* response handling function */
+		dnssec_init,	 /* module initialization function */
+		0,				 /* per-child init function */
+		dnssec_exit		 /* module destroy function */
 };
 
 
 static int load_dns(void)
 {
 	struct dns_func_t *f = pkg_malloc(sizeof(struct dns_func_t));
-	if( NULL == f ) {
+	if(NULL == f) {
 		return -1;
 	}
 	memset(f, 0, sizeof(struct dns_func_t));
@@ -97,7 +95,8 @@ static int dnssec_init(void)
 	LOG(L_INFO, "DNSSEC  - initializing\n");
 
 	//set parameters
-	if(flags) set_context_flags(flags);
+	if(flags)
+		set_context_flags(flags);
 
 	if(load_dns() != 0) {
 		LM_ERR("loaded dnssec wrappers failed\n");
@@ -107,11 +106,8 @@ static int dnssec_init(void)
 }
 
 
-
 static int dnssec_exit(void)
 {
 	(void)dnssec_res_destroy();
 	return 0;
 }
-
-
