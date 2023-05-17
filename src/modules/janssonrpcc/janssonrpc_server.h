@@ -31,26 +31,28 @@
 #include "netstring.h"
 
 /* interval (in seconds) at which failed servers are retried */
-#define JSONRPC_RECONNECT_INTERVAL  3
+#define JSONRPC_RECONNECT_INTERVAL 3
 
 /* default values */
 #define JSONRPC_DEFAULT_PRIORITY 0
 #define JSONRPC_DEFAULT_WEIGHT 1
 #define JSONRPC_DEFAULT_HWM 0 /* unlimited */
 
-typedef struct jsonrpc_server {
+typedef struct jsonrpc_server
+{
 	str conn, addr, srv; /* shared mem */
 	int port;
-	unsigned int  status, ttl, hwm;
-	unsigned int  req_count;
+	unsigned int status, ttl, hwm;
+	unsigned int req_count;
 	unsigned int priority, weight;
 	bool added;
 	int keep_alive_socket_fd;
-	struct bufferevent* bev; /* local mem */
-	netstring_t* buffer;
+	struct bufferevent *bev; /* local mem */
+	netstring_t *buffer;
 } jsonrpc_server_t;
 
-typedef enum {
+typedef enum
+{
 	CONN_GROUP,
 	PRIORITY_GROUP,
 	WEIGHT_GROUP
@@ -61,71 +63,80 @@ typedef enum {
  * 2) priority
  * 3) weight
  ***/
-typedef struct jsonrpc_server_group {
+typedef struct jsonrpc_server_group
+{
 	server_group_t type;
-	struct jsonrpc_server_group* sub_group; // NULL when type is WEIGHT_GROUP
-	union {
-		str conn; // when type is CONN_GROUP
+	struct jsonrpc_server_group *sub_group; // NULL when type is WEIGHT_GROUP
+	union
+	{
+		str conn;			   // when type is CONN_GROUP
 		unsigned int priority; // when type is PRIORITY_GROUP
-		unsigned int weight; //when type is WEIGHT_GROUP
+		unsigned int weight;   //when type is WEIGHT_GROUP
 	};
-	jsonrpc_server_t* server; // only when type is WEIGHT_GROUP
-	struct jsonrpc_server_group* next;
+	jsonrpc_server_t *server; // only when type is WEIGHT_GROUP
+	struct jsonrpc_server_group *next;
 } jsonrpc_server_group_t;
 
-extern gen_lock_t* jsonrpc_server_group_lock;
+extern gen_lock_t *jsonrpc_server_group_lock;
 
-typedef struct server_list {
-	jsonrpc_server_t* server;
-	struct server_list* next;
+typedef struct server_list
+{
+	jsonrpc_server_t *server;
+	struct server_list *next;
 } server_list_t;
 
 /* where all the servers are stored */
-extern jsonrpc_server_group_t** global_server_group;
+extern jsonrpc_server_group_t **global_server_group;
 
-int jsonrpc_parse_server(char *_server, jsonrpc_server_group_t** group_ptr);
-int jsonrpc_server_from_srv(str conn, str srv,
-		unsigned int hwm, jsonrpc_server_group_t** group_ptr);
+int jsonrpc_parse_server(char *_server, jsonrpc_server_group_t **group_ptr);
+int jsonrpc_server_from_srv(str conn, str srv, unsigned int hwm,
+		jsonrpc_server_group_t **group_ptr);
 
-void close_server(jsonrpc_server_t* server);
+void close_server(jsonrpc_server_t *server);
 /* Do not call close_server() from outside the IO process.
  * Server's have a bufferevent that is part of local memory and free'd
  * at disconnect */
 
-jsonrpc_server_t* create_server();
-void free_server(jsonrpc_server_t* server);
-int create_server_group(server_group_t type, jsonrpc_server_group_t** new_grp);
-int jsonrpc_add_server(jsonrpc_server_t* server, jsonrpc_server_group_t** group);
-unsigned int  server_group_size(jsonrpc_server_group_t* group);
-void free_server_group(jsonrpc_server_group_t** grp);
-int server_eq(jsonrpc_server_t* a, jsonrpc_server_t* b);
-void addto_server_list(jsonrpc_server_t* server, server_list_t** list);
-void free_server_list(server_list_t* list);
+jsonrpc_server_t *create_server();
+void free_server(jsonrpc_server_t *server);
+int create_server_group(server_group_t type, jsonrpc_server_group_t **new_grp);
+int jsonrpc_add_server(
+		jsonrpc_server_t *server, jsonrpc_server_group_t **group);
+unsigned int server_group_size(jsonrpc_server_group_t *group);
+void free_server_group(jsonrpc_server_group_t **grp);
+int server_eq(jsonrpc_server_t *a, jsonrpc_server_t *b);
+void addto_server_list(jsonrpc_server_t *server, server_list_t **list);
+void free_server_list(server_list_t *list);
 
-#define INIT_SERVER_LOOP  \
-	jsonrpc_server_group_t* cgroup = NULL; \
-	jsonrpc_server_group_t* pgroup = NULL; \
-	jsonrpc_server_group_t* wgroup = NULL; \
-	jsonrpc_server_t* server = NULL;
+#define INIT_SERVER_LOOP                   \
+	jsonrpc_server_group_t *cgroup = NULL; \
+	jsonrpc_server_group_t *pgroup = NULL; \
+	jsonrpc_server_group_t *wgroup = NULL; \
+	jsonrpc_server_t *server = NULL;
 
-#define FOREACH_SERVER_IN(ii) \
-	if(ii == NULL) { \
-		cgroup = NULL; \
-	} else { \
-		cgroup = *(ii); \
-	} \
-	pgroup = NULL; \
-	wgroup = NULL; \
-	server = NULL; \
-	for(; cgroup!=NULL; cgroup=cgroup->next) { \
-		for(pgroup=cgroup->sub_group; pgroup!=NULL; pgroup=pgroup->next) { \
-			for(wgroup=pgroup->sub_group; wgroup!=NULL; wgroup=wgroup->next) { \
+#define FOREACH_SERVER_IN(ii)                               \
+	if(ii == NULL) {                                        \
+		cgroup = NULL;                                      \
+	} else {                                                \
+		cgroup = *(ii);                                     \
+	}                                                       \
+	pgroup = NULL;                                          \
+	wgroup = NULL;                                          \
+	server = NULL;                                          \
+	for(; cgroup != NULL; cgroup = cgroup->next) {          \
+		for(pgroup = cgroup->sub_group; pgroup != NULL;     \
+				pgroup = pgroup->next) {                    \
+			for(wgroup = pgroup->sub_group; wgroup != NULL; \
+					wgroup = wgroup->next) {                \
 				server = wgroup->server;
 
-#define ENDFOR }}}
+#define ENDFOR \
+	}          \
+	}          \
+	}
 
 /* debugging only */
-void print_server(jsonrpc_server_t* server);
-void print_group(jsonrpc_server_group_t** group);
+void print_server(jsonrpc_server_t *server);
+void print_group(jsonrpc_server_group_t **group);
 
 #endif /* _JSONRPC_SERVER_H_ */

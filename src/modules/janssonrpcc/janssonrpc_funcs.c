@@ -33,19 +33,16 @@
 
 extern struct tm_binds tmb;
 
-int jsonrpc_request(struct sip_msg* _m,
-		char* _conn,
-		char* _method,
-		char* _params,
-		char* _options)
+int jsonrpc_request(struct sip_msg *_m, char *_conn, char *_method,
+		char *_params, char *_options)
 {
 	str conn;
 	str method;
 	str params;
 	str options;
 	str route;
-	param_t* pit=NULL;
-	param_t* freeme=NULL;
+	param_t *pit = NULL;
+	param_t *freeme = NULL;
 	int retry;
 	int timeout;
 	int retval = -1;
@@ -56,43 +53,42 @@ int jsonrpc_request(struct sip_msg* _m,
 	timeout = JSONRPC_DEFAULT_TIMEOUT;
 	retry = JSONRPC_DEFAULT_RETRY;
 
-	if (get_str_fparam(&conn, _m, (fparam_t*)_conn) != 0) {
+	if(get_str_fparam(&conn, _m, (fparam_t *)_conn) != 0) {
 		ERR("cannot get connection value\n");
 		return -1;
 	}
 
-	if (get_str_fparam(&method, _m, (fparam_t*)_method) != 0) {
+	if(get_str_fparam(&method, _m, (fparam_t *)_method) != 0) {
 		ERR("cannot get method value\n");
 		return -1;
 	}
 
-	if (get_str_fparam(&params, _m, (fparam_t*)_params) != 0) {
+	if(get_str_fparam(&params, _m, (fparam_t *)_params) != 0) {
 		ERR("cannot get params value\n");
 		return -1;
 	}
 
 	if(_options == NULL) {
 
-	} else if (get_str_fparam(&options, _m, (fparam_t*)_options) != 0) {
+	} else if(get_str_fparam(&options, _m, (fparam_t *)_options) != 0) {
 		ERR("cannot get options value\n");
 		return -1;
 
 	} else {
 		if(options.len == 0) {
 			goto skip_parse;
-		}else if (options.len > 0 && options.s[options.len-1] == ';') {
+		} else if(options.len > 0 && options.s[options.len - 1] == ';') {
 			options.len--;
 		}
 
-		if (parse_params(&options, CLASS_ANY, NULL, &pit)<0) {
+		if(parse_params(&options, CLASS_ANY, NULL, &pit) < 0) {
 			ERR("failed parsing params value\n");
 			return -1;
 		}
 
 		freeme = pit;
 
-		for (; pit;pit=pit->next)
-		{
+		for(; pit; pit = pit->next) {
 			if PIT_MATCHES("route") {
 				route = pit->body;
 
@@ -121,68 +117,57 @@ skip_parse:
 		goto end;
 	}
 
-	retval = mod_jsonrpc_request(
-		_m,                     /* sip_msg */
-		conn,                   /* connection group */
-		method,                 /* RPC method */
-		params,                 /* JSON param */
-		route,                  /* result route */
-		false,                  /* notify only */
-		retry,                  /* retry attempts */
-		(unsigned int)timeout   /* request timeout */
-		);
+	retval = mod_jsonrpc_request(_m, /* sip_msg */
+			conn,					 /* connection group */
+			method,					 /* RPC method */
+			params,					 /* JSON param */
+			route,					 /* result route */
+			false,					 /* notify only */
+			retry,					 /* retry attempts */
+			(unsigned int)timeout	 /* request timeout */
+	);
 
 end:
-	if(freeme) free_params(freeme);
+	if(freeme)
+		free_params(freeme);
 	return retval;
 }
 
-int jsonrpc_notification(struct sip_msg* _m,
-		char* _conn,
-		char* _method,
-		char* _params)
+int jsonrpc_notification(
+		struct sip_msg *_m, char *_conn, char *_method, char *_params)
 {
 	str conn;
 	str method;
 	str params;
 
-	if (get_str_fparam(&conn, _m, (fparam_t*)_conn) != 0) {
+	if(get_str_fparam(&conn, _m, (fparam_t *)_conn) != 0) {
 		ERR("cannot get connection value\n");
 		return -1;
 	}
 
-	if (get_str_fparam(&method, _m, (fparam_t*)_method) != 0) {
+	if(get_str_fparam(&method, _m, (fparam_t *)_method) != 0) {
 		ERR("cannot get method value\n");
 		return -1;
 	}
 
-	if (get_str_fparam(&params, _m, (fparam_t*)_params) != 0) {
+	if(get_str_fparam(&params, _m, (fparam_t *)_params) != 0) {
 		ERR("cannot get params value\n");
 		return -1;
 	}
 
-	return mod_jsonrpc_request(
-		_m,          /* sip_msg */
-		conn,        /* connection group */
-		method,      /* RPC method */
-		params,      /* JSON param */
-		null_str,    /* result route */
-		true,        /* notify only */
-		0,           /* retry attempts */
-		0            /* request timeout */
-		);
+	return mod_jsonrpc_request(_m, /* sip_msg */
+			conn,				   /* connection group */
+			method,				   /* RPC method */
+			params,				   /* JSON param */
+			null_str,			   /* result route */
+			true,				   /* notify only */
+			0,					   /* retry attempts */
+			0					   /* request timeout */
+	);
 }
 
-int mod_jsonrpc_request(
-		struct sip_msg* msg,
-		str conn,
-		str method,
-		str params,
-		str route,
-		bool notify_only,
-		int retry,
-		unsigned int timeout
-	)
+int mod_jsonrpc_request(struct sip_msg *msg, str conn, str method, str params,
+		str route, bool notify_only, int retry, unsigned int timeout)
 {
 	unsigned int hash_index;
 	unsigned int label;
@@ -193,8 +178,7 @@ int mod_jsonrpc_request(
 	}
 
 
-
-	jsonrpc_req_cmd_t* req_cmd = create_req_cmd();
+	jsonrpc_req_cmd_t *req_cmd = create_req_cmd();
 	CHECK_MALLOC(req_cmd);
 
 	shm_str_dup(&req_cmd->conn, &conn);
@@ -220,35 +204,34 @@ int mod_jsonrpc_request(
 
 	if(notify_only || route.len <= 0) {
 		req_cmd->route = null_str;
-		if(send_pipe_cmd(CMD_SEND, req_cmd)<0) goto error;
+		if(send_pipe_cmd(CMD_SEND, req_cmd) < 0)
+			goto error;
 		return 1; /* continue script execution */
 	}
 
 	tm_cell_t *t = 0;
 	t = tmb.t_gett();
-	if (t==NULL || t==T_UNDEFINED)
-	{
-		if(tmb.t_newtran(msg)<0)
-		{
+	if(t == NULL || t == T_UNDEFINED) {
+		if(tmb.t_newtran(msg) < 0) {
 			ERR("cannot create the transaction\n");
 			goto error;
 		}
 		t = tmb.t_gett();
-		if (t==NULL || t==T_UNDEFINED)
-		{
+		if(t == NULL || t == T_UNDEFINED) {
 			ERR("cannot look up the transaction\n");
 			goto error;
 		}
 	}
 
-	if (tmb.t_suspend(msg, &hash_index, &label) < 0) {
+	if(tmb.t_suspend(msg, &hash_index, &label) < 0) {
 		ERR("t_suspend() failed\n");
 		goto error;
 	}
 	req_cmd->t_hash = hash_index;
 	req_cmd->t_label = label;
 
-	if(send_pipe_cmd(CMD_SEND, req_cmd)<0) goto error;
+	if(send_pipe_cmd(CMD_SEND, req_cmd) < 0)
+		goto error;
 
 	return 0;
 
@@ -257,4 +240,3 @@ error:
 	ERR("failed to send request to io process\n");
 	return -1;
 }
-

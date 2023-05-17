@@ -35,9 +35,12 @@
 #endif
 
 
-void free_netstring(netstring_t* netstring) {
-	if(!netstring) return;
-	if(netstring->buffer) pkg_free(netstring->buffer);
+void free_netstring(netstring_t *netstring)
+{
+	if(!netstring)
+		return;
+	if(netstring->buffer)
+		pkg_free(netstring->buffer);
 	pkg_free(netstring);
 }
 
@@ -52,51 +55,53 @@ int netstring_read_evbuffer(struct bufferevent *bev, netstring_t **netstring)
 	offset = 0;
 	struct evbuffer *ib = bufferevent_get_input(bev);
 
-	if (*netstring == NULL) {
+	if(*netstring == NULL) {
 		/* No buffer yet. Peek at first 10 bytes, to get length and colon. */
 		unsigned char *lenstr;
 		int i, len;
-		struct evbuffer_ptr *search_end = pkg_malloc(sizeof(struct evbuffer_ptr));
+		struct evbuffer_ptr *search_end =
+				pkg_malloc(sizeof(struct evbuffer_ptr));
 		CHECK_MALLOC(search_end);
 
 		i = evbuffer_get_length(ib);
-		len = ((NETSTRING_PEEKLEN <= i) ? (NETSTRING_PEEKLEN) : (i-1));
+		len = ((NETSTRING_PEEKLEN <= i) ? (NETSTRING_PEEKLEN) : (i - 1));
 		evbuffer_ptr_set(ib, search_end, len, EVBUFFER_PTR_SET);
-		struct evbuffer_ptr loc = evbuffer_search_range(ib, ":", 1, NULL, search_end);
+		struct evbuffer_ptr loc =
+				evbuffer_search_range(ib, ":", 1, NULL, search_end);
 		pkg_free(search_end);
-		if (loc.pos < 0) {
+		if(loc.pos < 0) {
 			// no colon found
-			if (i > NETSTRING_PEEKLEN)
+			if(i > NETSTRING_PEEKLEN)
 				return NETSTRING_ERROR_TOO_LONG;
 			// TODO: peek at what's available and return suitable errors
 			return NETSTRING_INCOMPLETE;
 		}
 
 
-		lenstr = pkg_malloc(loc.pos+1);
+		lenstr = pkg_malloc(loc.pos + 1);
 		CHECK_MALLOC(lenstr);
-		bytes = evbuffer_remove(ib, lenstr, loc.pos+1);
+		bytes = evbuffer_remove(ib, lenstr, loc.pos + 1);
 
 		/* First character must be a digit */
-		if (!isdigit(lenstr[0]))
+		if(!isdigit(lenstr[0]))
 			return NETSTRING_ERROR_NO_LENGTH;
 
 		/* No leading zeros allowed! */
-		if (lenstr[0] == '0' && isdigit(lenstr[1]))
+		if(lenstr[0] == '0' && isdigit(lenstr[1]))
 			return NETSTRING_ERROR_LEADING_ZERO;
-		if (lenstr[loc.pos] != ':') {
+		if(lenstr[loc.pos] != ':') {
 			return NETSTRING_ERROR_NO_COLON;
 		}
 		len = i = 0;
 
 		/* Read the number of bytes */
-		for (i = 0; i < loc.pos; i++) {
+		for(i = 0; i < loc.pos; i++) {
 			/* Accumulate each digit, assuming ASCII. */
-			len = len*10 + (lenstr[i] - '0');
+			len = len * 10 + (lenstr[i] - '0');
 		}
 		pkg_free(lenstr);
 		/* alloc the memory needed for the whole netstring */
-		read_len = len+1;
+		read_len = len + 1;
 		temp_buffer = pkg_malloc(read_len);
 		CHECK_MALLOC(temp_buffer);
 
@@ -110,7 +115,7 @@ int netstring_read_evbuffer(struct bufferevent *bev, netstring_t **netstring)
 	} else {
 		/* Continue reading into an existing buffer. */
 		offset = (*netstring)->read;
-		read_len = (*netstring)->length-offset+1;
+		read_len = (*netstring)->length - offset + 1;
 		temp_buffer = (*netstring)->buffer + offset;
 	}
 
@@ -119,17 +124,17 @@ int netstring_read_evbuffer(struct bufferevent *bev, netstring_t **netstring)
 	int total = (*netstring)->read += bytes;
 
 	/* See if we have the whole netstring yet */
-	if (read_len > bytes) {
+	if(read_len > bytes) {
 		return NETSTRING_INCOMPLETE;
 	}
 
 	/* Test for the trailing comma */
-	if (((*netstring)->buffer)[total-1] != ',') {
+	if(((*netstring)->buffer)[total - 1] != ',') {
 		return NETSTRING_ERROR_NO_COMMA;
 	}
 
 	/* Replace the comma with \0 */
-	(*netstring)->buffer[total-1] = '\0';
+	(*netstring)->buffer[total - 1] = '\0';
 
 	/* Set the string pointer to the "body" of the netstring */
 	(*netstring)->string = (*netstring)->buffer;
@@ -143,38 +148,42 @@ int netstring_read_fd(int fd, netstring_t **netstring)
 	char *temp_buffer;
 	int total;
 	int i, len;
-	char peek[10]={0};
+	char peek[10] = {0};
 	temp_buffer = NULL;
 	offset = 0;
 
-	if (*netstring == NULL) {
+	if(*netstring == NULL) {
 		/* No buffer yet. Peek at first 10 bytes, to get length and colon. */
-		bytes = recv(fd,peek,10,MSG_PEEK);
+		bytes = recv(fd, peek, 10, MSG_PEEK);
 
-		if (bytes < 3) return NETSTRING_INCOMPLETE;
+		if(bytes < 3)
+			return NETSTRING_INCOMPLETE;
 
 		/* No leading zeros allowed! */
-		if (peek[0] == '0' && isdigit(peek[1]))
+		if(peek[0] == '0' && isdigit(peek[1]))
 			return NETSTRING_ERROR_LEADING_ZERO;
 
 		/* The netstring must start with a number */
-		if (!isdigit(peek[0])) return NETSTRING_ERROR_NO_LENGTH;
+		if(!isdigit(peek[0]))
+			return NETSTRING_ERROR_NO_LENGTH;
 
 		len = i = 0;
 
 		/* Read the number of bytes */
-		for (i = 0; i < bytes && isdigit(peek[i]); i++) {
+		for(i = 0; i < bytes && isdigit(peek[i]); i++) {
 			/* Error if more than 9 digits */
-			if (i >= 9) return NETSTRING_ERROR_TOO_LONG;
+			if(i >= 9)
+				return NETSTRING_ERROR_TOO_LONG;
 			/* Accumulate each digit, assuming ASCII. */
-			len = len*10 + (peek[i] - '0');
+			len = len * 10 + (peek[i] - '0');
 		}
 
 		/* Read the colon */
-		if (peek[i++] != ':') return NETSTRING_ERROR_NO_COLON;
+		if(peek[i++] != ':')
+			return NETSTRING_ERROR_NO_COLON;
 
 		/* alloc the memory needed for the whole netstring */
-		read_len = len+i+1;
+		read_len = len + i + 1;
 		temp_buffer = pkg_malloc(read_len);
 		CHECK_MALLOC(temp_buffer);
 
@@ -189,7 +198,7 @@ int netstring_read_fd(int fd, netstring_t **netstring)
 	} else {
 		/* Continue reading into an existing buffer. */
 		offset = (*netstring)->read;
-		read_len = (*netstring)->start+(*netstring)->length-offset+1;
+		read_len = (*netstring)->start + (*netstring)->length - offset + 1;
 		temp_buffer = (*netstring)->buffer + offset;
 	}
 
@@ -199,17 +208,17 @@ int netstring_read_fd(int fd, netstring_t **netstring)
 	total = (*netstring)->read;
 
 	/* See if we have the whole netstring yet */
-	if (read_len > bytes) {
+	if(read_len > bytes) {
 		return NETSTRING_INCOMPLETE;
 	}
 
 	/* Test for the trailing comma */
-	if (((*netstring)->buffer)[total-1] != ',') {
+	if(((*netstring)->buffer)[total - 1] != ',') {
 		return NETSTRING_ERROR_NO_COMMA;
 	}
 
 	/* Replace the comma with \0 */
-	(*netstring)->buffer[total-1] = '\0';
+	(*netstring)->buffer[total - 1] = '\0';
 
 	/* Set the string pointer to the "body" of the netstring */
 	(*netstring)->string = (*netstring)->buffer + (*netstring)->start;
@@ -241,44 +250,52 @@ int netstring_read_fd(int fd, netstring_t **netstring)
 	if (netstring_read("3:foo,", 6, &str, &len) < 0) explode_and_die();
 */
 
-int netstring_read(char *buffer, size_t buffer_length,
-			char **netstring_start, size_t *netstring_length)
+int netstring_read(char *buffer, size_t buffer_length, char **netstring_start,
+		size_t *netstring_length)
 {
 	int i;
 	size_t len = 0;
 
 	/* Write default values for outputs */
-	*netstring_start = NULL; *netstring_length = 0;
+	*netstring_start = NULL;
+	*netstring_length = 0;
 
 	/* Make sure buffer is big enough. Minimum size is 3. */
-	if (buffer_length < 3) return NETSTRING_ERROR_TOO_SHORT;
+	if(buffer_length < 3)
+		return NETSTRING_ERROR_TOO_SHORT;
 
 	/* No leading zeros allowed! */
-	if (buffer[0] == '0' && isdigit(buffer[1]))
+	if(buffer[0] == '0' && isdigit(buffer[1]))
 		return NETSTRING_ERROR_LEADING_ZERO;
 
 	/* The netstring must start with a number */
-	if (!isdigit(buffer[0])) return NETSTRING_ERROR_NO_LENGTH;
+	if(!isdigit(buffer[0]))
+		return NETSTRING_ERROR_NO_LENGTH;
 
 	/* Read the number of bytes */
-	for (i = 0; i < buffer_length && isdigit(buffer[i]); i++) {
+	for(i = 0; i < buffer_length && isdigit(buffer[i]); i++) {
 		/* Error if more than 9 digits */
-		if (i >= 9) return NETSTRING_ERROR_TOO_LONG;
+		if(i >= 9)
+			return NETSTRING_ERROR_TOO_LONG;
 		/* Accumulate each digit, assuming ASCII. */
-		len = len*10 + (buffer[i] - '0');
+		len = len * 10 + (buffer[i] - '0');
 	}
 
 	/* Check buffer length once and for all. Specifically, we make sure
 		 that the buffer is longer than the number we've read, the length
 		 of the string itself, and the colon and comma. */
-	if (i + len + 1 >= buffer_length) return NETSTRING_ERROR_TOO_SHORT;
+	if(i + len + 1 >= buffer_length)
+		return NETSTRING_ERROR_TOO_SHORT;
 
 	/* Read the colon */
-	if (buffer[i++] != ':') return NETSTRING_ERROR_NO_COLON;
+	if(buffer[i++] != ':')
+		return NETSTRING_ERROR_NO_COLON;
 
 	/* Test for the trailing comma, and set the return values */
-	if (buffer[i + len] != ',') return NETSTRING_ERROR_NO_COMMA;
-	*netstring_start = &buffer[i]; *netstring_length = len;
+	if(buffer[i + len] != ',')
+		return NETSTRING_ERROR_NO_COMMA;
+	*netstring_start = &buffer[i];
+	*netstring_length = len;
 
 	return 0;
 }
@@ -287,7 +304,8 @@ int netstring_read(char *buffer, size_t buffer_length,
    `data_length` bytes. */
 size_t netstring_buffer_size(size_t data_length)
 {
-	if (data_length == 0) return 3;
+	if(data_length == 0)
+		return 3;
 	return (size_t)ceil(log10((double)data_length + 1)) + data_length + 2;
 }
 
@@ -301,9 +319,9 @@ size_t netstring_encode_new(char **netstring, char *data, size_t len)
 
 	*netstring = NULL;
 
-	if (len == 0) {
+	if(len == 0) {
 		ns = pkg_malloc(3);
-		if (!ns) {
+		if(!ns) {
 			return JSONRPC_ERROR_NO_MEMORY;
 		}
 		ns[0] = '0';
@@ -312,7 +330,7 @@ size_t netstring_encode_new(char **netstring, char *data, size_t len)
 	} else {
 		num_len = (size_t)ceil(log10((double)len + 1));
 		ns = pkg_malloc(num_len + len + 2);
-		if (!ns) {
+		if(!ns) {
 			return JSONRPC_ERROR_NO_MEMORY;
 		}
 		sprintf(ns, "%lu:", (unsigned long)len);

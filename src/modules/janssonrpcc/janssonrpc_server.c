@@ -43,37 +43,37 @@
 #include "janssonrpc_server.h"
 #include "janssonrpc_connect.h"
 
-gen_lock_t* jsonrpc_server_group_lock = NULL;
+gen_lock_t *jsonrpc_server_group_lock = NULL;
 
 /* where all the servers are stored */
-jsonrpc_server_group_t** global_server_group = NULL;
+jsonrpc_server_group_t **global_server_group = NULL;
 
 /* used for debugging only */
-void print_server(jsonrpc_server_t* server)
+void print_server(jsonrpc_server_t *server)
 {
 	INFO("\t----- server ------\n");
 	INFO("\t|pointer: %p\n", server);
 	INFO("\t|conn: %.*s\n", STR(server->conn));
 	INFO("\t|addr: %.*s\n", STR(server->addr));
-	switch (server->status) {
-	case JSONRPC_SERVER_CONNECTED:
-		INFO("\t|status: connected\n");
-		break;
-	case JSONRPC_SERVER_DISCONNECTED:
-		INFO("\t|status: disconnected\n");
-		break;
-	case JSONRPC_SERVER_FAILURE:
-		INFO("\t|status: failure\n");
-		break;
-	case JSONRPC_SERVER_CLOSING:
-		INFO("\t|status: closing\n");
-		break;
-	case JSONRPC_SERVER_RECONNECTING:
-		INFO("\t|status: reconnecting\n");
-		break;
-	default:
-		INFO("\t|status: invalid (%d)\n", server->status);
-		break;
+	switch(server->status) {
+		case JSONRPC_SERVER_CONNECTED:
+			INFO("\t|status: connected\n");
+			break;
+		case JSONRPC_SERVER_DISCONNECTED:
+			INFO("\t|status: disconnected\n");
+			break;
+		case JSONRPC_SERVER_FAILURE:
+			INFO("\t|status: failure\n");
+			break;
+		case JSONRPC_SERVER_CLOSING:
+			INFO("\t|status: closing\n");
+			break;
+		case JSONRPC_SERVER_RECONNECTING:
+			INFO("\t|status: reconnecting\n");
+			break;
+		default:
+			INFO("\t|status: invalid (%d)\n", server->status);
+			break;
 	}
 	INFO("\t|srv: %.*s\n", STR(server->srv));
 	INFO("\t|ttl: %d\n", server->ttl);
@@ -91,34 +91,34 @@ void print_server(jsonrpc_server_t* server)
 }
 
 /* used for debugging only */
-void print_group(jsonrpc_server_group_t** group)
+void print_group(jsonrpc_server_group_t **group)
 {
-	jsonrpc_server_group_t* grp = NULL;
+	jsonrpc_server_group_t *grp = NULL;
 
 	INFO("group addr is %p\n", group);
 
 	if(group == NULL)
 		return;
 
-	for (grp=*group; grp != NULL; grp=grp->next) {
+	for(grp = *group; grp != NULL; grp = grp->next) {
 		switch(grp->type) {
-		case CONN_GROUP:
-			INFO("Connection group: %.*s\n", STR(grp->conn));
-			print_group(&(grp->sub_group));
-			break;
-		case PRIORITY_GROUP:
-			INFO("Priority group: %d\n", grp->priority);
-			print_group(&(grp->sub_group));
-			break;
-		case WEIGHT_GROUP:
-			INFO("Weight group: %d\n", grp->weight);
-			print_server(grp->server);
-			break;
+			case CONN_GROUP:
+				INFO("Connection group: %.*s\n", STR(grp->conn));
+				print_group(&(grp->sub_group));
+				break;
+			case PRIORITY_GROUP:
+				INFO("Priority group: %d\n", grp->priority);
+				print_group(&(grp->sub_group));
+				break;
+			case WEIGHT_GROUP:
+				INFO("Weight group: %d\n", grp->weight);
+				print_server(grp->server);
+				break;
 		}
 	}
 }
 
-int jsonrpc_parse_server(char* server_s, jsonrpc_server_group_t **group_ptr)
+int jsonrpc_parse_server(char *server_s, jsonrpc_server_group_t **group_ptr)
 {
 	if(group_ptr == NULL) {
 		ERR("Trying to add server to null group ptr\n");
@@ -127,8 +127,8 @@ int jsonrpc_parse_server(char* server_s, jsonrpc_server_group_t **group_ptr)
 
 	str s;
 	param_hooks_t phooks;
-	param_t* pit=NULL;
-	param_t* freeme=NULL;
+	param_t *pit = NULL;
+	param_t *freeme = NULL;
 	str conn;
 	str addr;
 	addr.s = NULL;
@@ -142,18 +142,17 @@ int jsonrpc_parse_server(char* server_s, jsonrpc_server_group_t **group_ptr)
 
 	s.s = server_s;
 	s.len = strlen(server_s);
-	if (s.s[s.len-1] == ';')
+	if(s.s[s.len - 1] == ';')
 		s.len--;
 
-	if (parse_params(&s, CLASS_ANY, &phooks, &pit)<0) {
+	if(parse_params(&s, CLASS_ANY, &phooks, &pit) < 0) {
 		ERR("Failed parsing params value\n");
 		return -1;
 	}
 
 	freeme = pit;
 
-	for (; pit;pit=pit->next)
-	{
+	for(; pit; pit = pit->next) {
 		if PIT_MATCHES("conn") {
 			shm_str_dup(&conn, &pit->body);
 			CHECK_MALLOC(conn.s);
@@ -179,7 +178,7 @@ int jsonrpc_parse_server(char* server_s, jsonrpc_server_group_t **group_ptr)
 			hwm = atoi(pit->body.s);
 
 		} else if PIT_MATCHES("proto") {
-			if(strncmp(pit->body.s, "tcp", sizeof("tcp")-1) != 0) {
+			if(strncmp(pit->body.s, "tcp", sizeof("tcp") - 1) != 0) {
 				ERR("Unsupported proto=%.*s. Only tcp is supported.\n",
 						STR(pit->body));
 				goto error;
@@ -197,25 +196,25 @@ int jsonrpc_parse_server(char* server_s, jsonrpc_server_group_t **group_ptr)
 		goto error;
 	}
 
-	if (srv.s != NULL) {
-		if (addr.s != NULL
-			|| port != 0
-			|| weight != JSONRPC_DEFAULT_WEIGHT
-			|| priority != JSONRPC_DEFAULT_PRIORITY) {
-			ERR("addr, port, weight, and priority are not supported when using srv\n");
+	if(srv.s != NULL) {
+		if(addr.s != NULL || port != 0 || weight != JSONRPC_DEFAULT_WEIGHT
+				|| priority != JSONRPC_DEFAULT_PRIORITY) {
+			ERR("addr, port, weight, and priority are not supported when using "
+				"srv\n");
 			goto error;
 		}
 
-		if (jsonrpc_server_from_srv(conn, srv, hwm, group_ptr)<0) goto error;
+		if(jsonrpc_server_from_srv(conn, srv, hwm, group_ptr) < 0)
+			goto error;
 
 	} else {
 
-		if (addr.s == NULL || port == 0) {
+		if(addr.s == NULL || port == 0) {
 			ERR("no address/port defined\n");
 			goto error;
 		}
 
-		jsonrpc_server_t* server = create_server();
+		jsonrpc_server_t *server = create_server();
 		CHECK_MALLOC(server);
 
 		server->conn = conn;
@@ -225,48 +224,51 @@ int jsonrpc_parse_server(char* server_s, jsonrpc_server_group_t **group_ptr)
 		server->weight = weight;
 		server->hwm = hwm;
 
-		if(jsonrpc_add_server(server, group_ptr)<0) goto error;
+		if(jsonrpc_add_server(server, group_ptr) < 0)
+			goto error;
 	}
 
 	//print_group(group_ptr); /* debug */
 
 	CHECK_AND_FREE(srv.s);
-	if (freeme) free_params(freeme);
+	if(freeme)
+		free_params(freeme);
 	return 0;
 
 error:
 	CHECK_AND_FREE(srv.s);
-	if (freeme) free_params(freeme);
+	if(freeme)
+		free_params(freeme);
 	return -1;
 }
 
-int jsonrpc_server_from_srv(str conn, str srv,
-		unsigned int hwm, jsonrpc_server_group_t** group_ptr)
+int jsonrpc_server_from_srv(
+		str conn, str srv, unsigned int hwm, jsonrpc_server_group_t **group_ptr)
 {
 	struct rdata *l, *head;
 	struct srv_rdata *srv_record;
 	str name;
 	unsigned int ttl = jsonrpc_min_srv_ttl;
 
-	jsonrpc_server_t* server = NULL;
+	jsonrpc_server_t *server = NULL;
 
 	resolv_init();
 
 	head = get_record(srv.s, T_SRV, RES_AR);
-	if (head == NULL) {
+	if(head == NULL) {
 		ERR("No SRV record returned for %.*s\n", STR(srv));
 		goto error;
 	}
-	for (l=head; l; l=l->next) {
-		if (l->type != T_SRV)
+	for(l = head; l; l = l->next) {
+		if(l->type != T_SRV)
 			continue;
-		srv_record = (struct srv_rdata*)l->rdata;
-		if (srv_record == NULL) {
+		srv_record = (struct srv_rdata *)l->rdata;
+		if(srv_record == NULL) {
 			ERR("BUG: null rdata\n");
 			goto error;
 		}
 
-		if (l->ttl < jsonrpc_min_srv_ttl) {
+		if(l->ttl < jsonrpc_min_srv_ttl) {
 			ttl = jsonrpc_min_srv_ttl;
 		} else {
 			ttl = l->ttl;
@@ -295,10 +297,11 @@ int jsonrpc_server_from_srv(str conn, str srv,
 		server->ttl = ttl;
 		server->hwm = hwm;
 
-		if(jsonrpc_add_server(server, group_ptr)<0) goto error;
+		if(jsonrpc_add_server(server, group_ptr) < 0)
+			goto error;
 	}
 
-	jsonrpc_srv_t* new_srv = create_srv(srv, conn, ttl);
+	jsonrpc_srv_t *new_srv = create_srv(srv, conn, ttl);
 	addto_srv_list(new_srv, &global_srv_list);
 
 	free_rdata_list(head);
@@ -306,37 +309,38 @@ int jsonrpc_server_from_srv(str conn, str srv,
 	return 0;
 error:
 	CHECK_AND_FREE(server);
-	if (head) free_rdata_list(head);
+	if(head)
+		free_rdata_list(head);
 
 	return -1;
 }
 
-int create_server_group(server_group_t type, jsonrpc_server_group_t** grp)
+int create_server_group(server_group_t type, jsonrpc_server_group_t **grp)
 {
 	if(grp == NULL) {
 		ERR("Trying to dereference null group pointer\n");
 		return -1;
 	}
 
-	jsonrpc_server_group_t* new_grp =
-		shm_malloc(sizeof(jsonrpc_server_group_t));
+	jsonrpc_server_group_t *new_grp =
+			shm_malloc(sizeof(jsonrpc_server_group_t));
 	CHECK_MALLOC(new_grp);
 
 	switch(type) {
-	case CONN_GROUP:
-		DEBUG("Creating new connection group\n");
-		new_grp->conn.s = NULL;
-		new_grp->conn.len = 0;
-		break;
-	case PRIORITY_GROUP:
-		DEBUG("Creating new priority group\n");
-		new_grp->priority = JSONRPC_DEFAULT_PRIORITY;
-		break;
-	case WEIGHT_GROUP:
-		DEBUG("Creating new weight group\n");
-		new_grp->server = NULL;
-		new_grp->weight = JSONRPC_DEFAULT_WEIGHT;
-		break;
+		case CONN_GROUP:
+			DEBUG("Creating new connection group\n");
+			new_grp->conn.s = NULL;
+			new_grp->conn.len = 0;
+			break;
+		case PRIORITY_GROUP:
+			DEBUG("Creating new priority group\n");
+			new_grp->priority = JSONRPC_DEFAULT_PRIORITY;
+			break;
+		case WEIGHT_GROUP:
+			DEBUG("Creating new weight group\n");
+			new_grp->server = NULL;
+			new_grp->weight = JSONRPC_DEFAULT_WEIGHT;
+			break;
 	}
 
 	new_grp->next = NULL;
@@ -346,22 +350,22 @@ int create_server_group(server_group_t type, jsonrpc_server_group_t** grp)
 	return 0;
 }
 
-void free_server_group(jsonrpc_server_group_t** grp)
+void free_server_group(jsonrpc_server_group_t **grp)
 {
 	if(grp == NULL)
 		return;
 
-	jsonrpc_server_group_t* next = NULL;
-	jsonrpc_server_group_t* cgroup = NULL;
-	jsonrpc_server_group_t* pgroup = NULL;
-	jsonrpc_server_group_t* wgroup = NULL;
+	jsonrpc_server_group_t *next = NULL;
+	jsonrpc_server_group_t *cgroup = NULL;
+	jsonrpc_server_group_t *pgroup = NULL;
+	jsonrpc_server_group_t *wgroup = NULL;
 
-	cgroup=*grp;
-	while(cgroup!=NULL) {
-		pgroup=cgroup->sub_group;
-		while(pgroup!=NULL) {
-			wgroup=pgroup->sub_group;
-			while(wgroup!=NULL) {
+	cgroup = *grp;
+	while(cgroup != NULL) {
+		pgroup = cgroup->sub_group;
+		while(pgroup != NULL) {
+			wgroup = pgroup->sub_group;
+			while(wgroup != NULL) {
 				next = wgroup->next;
 				CHECK_AND_FREE(wgroup);
 				wgroup = next;
@@ -377,37 +381,37 @@ void free_server_group(jsonrpc_server_group_t** grp)
 	}
 }
 
-int insert_server_group(jsonrpc_server_group_t* new_grp,
-		jsonrpc_server_group_t** parent)
+int insert_server_group(
+		jsonrpc_server_group_t *new_grp, jsonrpc_server_group_t **parent)
 {
 	if(parent == NULL) {
 		ERR("Trying to insert into NULL group\n");
 		return -1;
 	}
 
-	jsonrpc_server_group_t* head = *parent;
+	jsonrpc_server_group_t *head = *parent;
 
-	if (head == NULL) {
+	if(head == NULL) {
 		*parent = new_grp;
 	} else {
-		if (new_grp->type != head->type) {
+		if(new_grp->type != head->type) {
 			ERR("Inserting group (%d) into the wrong type of list (%d)\n",
-				new_grp->type, head->type);
+					new_grp->type, head->type);
 			return -1;
 		}
 
-		jsonrpc_server_group_t* current = head;
-		jsonrpc_server_group_t** prev = parent;
+		jsonrpc_server_group_t *current = head;
+		jsonrpc_server_group_t **prev = parent;
 
-		while (1) {
+		while(1) {
 			if(new_grp->type == PRIORITY_GROUP
 					&& new_grp->priority < current->priority) {
-			 /* Priority groups are organized in ascending order.*/
+				/* Priority groups are organized in ascending order.*/
 				new_grp->next = current;
 				*prev = new_grp;
 				break;
-			} else if (new_grp->type == WEIGHT_GROUP ) {
-			/* Weight groups are special in how they are organized in order
+			} else if(new_grp->type == WEIGHT_GROUP) {
+				/* Weight groups are special in how they are organized in order
 		     * to facilitate load balancing and weighted random selection.
 			 *
 			 * The weight in the head of a weight group list represents
@@ -426,7 +430,9 @@ int insert_server_group(jsonrpc_server_group_t* new_grp,
 					return -1;
 				}
 				if(new_grp->server->weight != new_grp->weight) {
-					ERR("Weight of the new node (%d) doesn't match its server (%d). This is a bug. Please report this to the maintainer.\n",
+					ERR("Weight of the new node (%d) doesn't match its server "
+						"(%d). This is a bug. Please report this to the "
+						"maintainer.\n",
 							new_grp->server->weight, new_grp->weight);
 					return -1;
 				}
@@ -444,25 +450,26 @@ int insert_server_group(jsonrpc_server_group_t* new_grp,
 				current->next = new_grp;
 				break;
 			}
-			prev = &((*prev)->next); // This is madness. Madness? THIS IS POINTERS!
+			prev = &(
+					(*prev)->next); // This is madness. Madness? THIS IS POINTERS!
 			current = current->next;
 		}
 	}
 	return 0;
 }
 
-unsigned int server_group_size(jsonrpc_server_group_t* grp)
+unsigned int server_group_size(jsonrpc_server_group_t *grp)
 {
 	unsigned int size = 0;
-	for(;grp != NULL; grp=grp->next) {
+	for(; grp != NULL; grp = grp->next) {
 		size++;
 	}
 	return size;
 }
 
-jsonrpc_server_t* create_server()
+jsonrpc_server_t *create_server()
 {
-	jsonrpc_server_t* server = shm_malloc(sizeof(jsonrpc_server_t));
+	jsonrpc_server_t *server = shm_malloc(sizeof(jsonrpc_server_t));
 	CHECK_MALLOC_NULL(server);
 	memset(server, 0, sizeof(jsonrpc_server_t));
 
@@ -473,7 +480,7 @@ jsonrpc_server_t* create_server()
 	return server;
 }
 
-void free_server(jsonrpc_server_t* server)
+void free_server(jsonrpc_server_t *server)
 {
 	if(!server)
 		return;
@@ -482,52 +489,63 @@ void free_server(jsonrpc_server_t* server)
 	CHECK_AND_FREE(server->addr.s);
 	CHECK_AND_FREE(server->srv.s);
 
-	if ((server->buffer)!=NULL) free_netstring(server->buffer);
+	if((server->buffer) != NULL)
+		free_netstring(server->buffer);
 	memset(server, 0, sizeof(jsonrpc_server_t));
 	shm_free(server);
 	server = NULL;
 }
 
-int server_eq(jsonrpc_server_t* a, jsonrpc_server_t* b)
+int server_eq(jsonrpc_server_t *a, jsonrpc_server_t *b)
 {
 	if(!a || !b)
 		return 0;
 
-	if(!STR_EQ(a->conn, b->conn)) return 0;
-	if(!STR_EQ(a->srv, b->srv)) return 0;
-	if(!STR_EQ(a->addr, b->addr)) return 0;
-	if(a->port != b->port) return 0;
-	if(a->priority != b->priority) return 0;
-	if(a->weight != b->weight) return 0;
+	if(!STR_EQ(a->conn, b->conn))
+		return 0;
+	if(!STR_EQ(a->srv, b->srv))
+		return 0;
+	if(!STR_EQ(a->addr, b->addr))
+		return 0;
+	if(a->port != b->port)
+		return 0;
+	if(a->priority != b->priority)
+		return 0;
+	if(a->weight != b->weight)
+		return 0;
 
 	return 1;
 }
 
-int jsonrpc_add_server(jsonrpc_server_t* server, jsonrpc_server_group_t** group_ptr)
+int jsonrpc_add_server(
+		jsonrpc_server_t *server, jsonrpc_server_group_t **group_ptr)
 {
-	jsonrpc_server_group_t* conn_grp = NULL;
-	jsonrpc_server_group_t* priority_grp = NULL;
-	jsonrpc_server_group_t* weight_grp = NULL;
+	jsonrpc_server_group_t *conn_grp = NULL;
+	jsonrpc_server_group_t *priority_grp = NULL;
+	jsonrpc_server_group_t *weight_grp = NULL;
 
 	if(group_ptr == NULL) {
 		ERR("Trying to add server to null group\n");
 		return -1;
 	}
 
-	if(create_server_group(WEIGHT_GROUP, &weight_grp) < 0) goto error;
+	if(create_server_group(WEIGHT_GROUP, &weight_grp) < 0)
+		goto error;
 
 	weight_grp->weight = server->weight;
 	weight_grp->server = server;
 
 	/* find conn group */
-	for (conn_grp=*group_ptr; conn_grp != NULL; conn_grp=conn_grp->next) {
-		if (strncmp(conn_grp->conn.s, server->conn.s, server->conn.len) == 0)
+	for(conn_grp = *group_ptr; conn_grp != NULL; conn_grp = conn_grp->next) {
+		if(strncmp(conn_grp->conn.s, server->conn.s, server->conn.len) == 0)
 			break;
 	}
 
-	if (conn_grp == NULL) {
-		if(create_server_group(CONN_GROUP, &conn_grp) < 0) goto error;
-		if(create_server_group(PRIORITY_GROUP, &priority_grp) < 0) goto error;
+	if(conn_grp == NULL) {
+		if(create_server_group(CONN_GROUP, &conn_grp) < 0)
+			goto error;
+		if(create_server_group(PRIORITY_GROUP, &priority_grp) < 0)
+			goto error;
 
 		priority_grp->priority = server->priority;
 		priority_grp->sub_group = weight_grp;
@@ -536,34 +554,38 @@ int jsonrpc_add_server(jsonrpc_server_t* server, jsonrpc_server_group_t** group_
 		CHECK_MALLOC_GOTO(conn_grp->conn.s, error);
 
 		conn_grp->sub_group = priority_grp;
-		if(insert_server_group(conn_grp, group_ptr) < 0) goto error;
+		if(insert_server_group(conn_grp, group_ptr) < 0)
+			goto error;
 		goto success;
 	}
 
 	/* find priority group */
-	for (priority_grp=conn_grp->sub_group;
-			priority_grp != NULL;
-			priority_grp=priority_grp->next) {
-		if (priority_grp->priority == server->priority) break;
+	for(priority_grp = conn_grp->sub_group; priority_grp != NULL;
+			priority_grp = priority_grp->next) {
+		if(priority_grp->priority == server->priority)
+			break;
 	}
 
-	if (priority_grp == NULL) {
-		if(create_server_group(PRIORITY_GROUP, &priority_grp) < 0) goto error;
+	if(priority_grp == NULL) {
+		if(create_server_group(PRIORITY_GROUP, &priority_grp) < 0)
+			goto error;
 
 		priority_grp->priority = server->priority;
 		priority_grp->sub_group = weight_grp;
 
-		if(insert_server_group(priority_grp, &(conn_grp->sub_group)) < 0) goto error;
+		if(insert_server_group(priority_grp, &(conn_grp->sub_group)) < 0)
+			goto error;
 		goto success;
 	}
 
-	if(insert_server_group(weight_grp, &(priority_grp->sub_group)) < 0) goto error;
+	if(insert_server_group(weight_grp, &(priority_grp->sub_group)) < 0)
+		goto error;
 
 success:
 	return 0;
 error:
-	ERR("Failed to add server: %s, %s, %d\n",
-			server->conn.s, server->addr.s, server->port);
+	ERR("Failed to add server: %s, %s, %d\n", server->conn.s, server->addr.s,
+			server->port);
 	CHECK_AND_FREE(conn_grp);
 	CHECK_AND_FREE(priority_grp);
 	CHECK_AND_FREE(weight_grp);
@@ -571,48 +593,48 @@ error:
 	return -1;
 }
 
-void addto_server_list(jsonrpc_server_t* server, server_list_t** list)
+void addto_server_list(jsonrpc_server_t *server, server_list_t **list)
 {
-	server_list_t* new_node = (server_list_t*)pkg_malloc(sizeof(server_list_t));
+	server_list_t *new_node =
+			(server_list_t *)pkg_malloc(sizeof(server_list_t));
 	CHECK_MALLOC_VOID(new_node);
 
 	new_node->server = server;
 	new_node->next = NULL;
 
-	if (*list == NULL) {
+	if(*list == NULL) {
 		*list = new_node;
 		return;
 	}
 
-	server_list_t* node = *list;
-	for(; node->next!=NULL; node=node->next);
+	server_list_t *node = *list;
+	for(; node->next != NULL; node = node->next)
+		;
 
 	node->next = new_node;
 }
 
-void free_server_list(server_list_t* list)
+void free_server_list(server_list_t *list)
 {
-	if (!list)
+	if(!list)
 		return;
 
-	server_list_t* node = NULL;
-	server_list_t* next = NULL;
-	for(node=list; node!=NULL; node=next)
-	{
+	server_list_t *node = NULL;
+	server_list_t *next = NULL;
+	for(node = list; node != NULL; node = next) {
 		next = node->next;
 		pkg_free(node);
 	}
 }
 
-void close_server(jsonrpc_server_t* server)
+void close_server(jsonrpc_server_t *server)
 {
 	if(!server)
 		return;
 
-	INFO("Closing server %.*s:%d for conn %.*s.\n",
-			STR(server->addr), server->port, STR(server->conn));
+	INFO("Closing server %.*s:%d for conn %.*s.\n", STR(server->addr),
+			server->port, STR(server->conn));
 	force_disconnect(server);
 
 	free_server(server);
 }
-

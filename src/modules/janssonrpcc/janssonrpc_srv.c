@@ -42,11 +42,11 @@
 #include "janssonrpc_io.h"
 #include "janssonrpc_server.h"
 
-jsonrpc_srv_t* global_srv_list = NULL;
+jsonrpc_srv_t *global_srv_list = NULL;
 
 unsigned int jsonrpc_min_srv_ttl;
 
-int refresh_srv(jsonrpc_srv_t* srv_obj)
+int refresh_srv(jsonrpc_srv_t *srv_obj)
 {
 	DEBUG("Refreshing SRV for %.*s\n", STR(srv_obj->srv));
 	int retval = 0;
@@ -58,7 +58,7 @@ int refresh_srv(jsonrpc_srv_t* srv_obj)
 
 	unsigned int ttl = ABSOLUTE_MIN_SRV_TTL;
 	str srv = srv_obj->srv;
-	jsonrpc_server_group_t* conn_group = srv_obj->cgroup;
+	jsonrpc_server_group_t *conn_group = srv_obj->cgroup;
 
 	if(!conn_group) {
 		ERR("SRV (%.*s) has no connections\n", STR(srv));
@@ -69,32 +69,32 @@ int refresh_srv(jsonrpc_srv_t* srv_obj)
 	struct srv_rdata *srv_record;
 	str name;
 
-	jsonrpc_server_group_t* new_grp = NULL;
+	jsonrpc_server_group_t *new_grp = NULL;
 
 	// dns lookup
 	head = get_record(srv.s, T_SRV, RES_AR);
-	if (head == NULL) {
+	if(head == NULL) {
 		ERR("No SRV record returned for %.*s\n", STR(srv));
 		return -1;
 	}
 
 	// get all the servers from the srv record
-	server_list_t* new_servers = NULL;
-	jsonrpc_server_t* new_server = NULL;
-	server_list_t* rm_servers = NULL;
-	jsonrpc_server_t* rm_server = NULL;
+	server_list_t *new_servers = NULL;
+	jsonrpc_server_t *new_server = NULL;
+	server_list_t *rm_servers = NULL;
+	jsonrpc_server_t *rm_server = NULL;
 	int iter = 0;
-	for (l=head, iter=0; l; l=l->next, iter++) {
-		if (l->type != T_SRV)
+	for(l = head, iter = 0; l; l = l->next, iter++) {
+		if(l->type != T_SRV)
 			continue;
-		srv_record = (struct srv_rdata*)l->rdata;
-		if (srv_record == NULL) {
+		srv_record = (struct srv_rdata *)l->rdata;
+		if(srv_record == NULL) {
 			free_rdata_list(head);
 			ERR("BUG: null rdata\n");
 			return -1;
 		}
 
-		if (l->ttl < jsonrpc_min_srv_ttl) {
+		if(l->ttl < jsonrpc_min_srv_ttl) {
 			ttl = jsonrpc_min_srv_ttl;
 		} else {
 			ttl = l->ttl;
@@ -107,8 +107,8 @@ int refresh_srv(jsonrpc_srv_t* srv_obj)
 
 		DBG("server %s\n", srv_record->name);
 
-		jsonrpc_server_group_t* cgroup = NULL;
-		for(cgroup=conn_group; cgroup!=NULL; cgroup=cgroup->next) {
+		jsonrpc_server_group_t *cgroup = NULL;
+		for(cgroup = conn_group; cgroup != NULL; cgroup = cgroup->next) {
 			new_server = create_server();
 			CHECK_MALLOC_GOTO(new_server, errdup);
 
@@ -132,7 +132,8 @@ int refresh_srv(jsonrpc_srv_t* srv_obj)
 	}
 	free_rdata_list(head);
 
-	if(iter <= 0) goto end;
+	if(iter <= 0)
+		goto end;
 
 	/* aquire global_server_group lock */
 	/* this lock is only released when the old global_server_group
@@ -144,39 +145,39 @@ int refresh_srv(jsonrpc_srv_t* srv_obj)
 	INIT_SERVER_LOOP
 
 	// copy existing servers
-	server_list_t* node;
+	server_list_t *node;
 	FOREACH_SERVER_IN(global_server_group)
-		server->added = false;
-		if(STR_EQ(server->srv, srv)) {
-			for(node=new_servers; node!=NULL; node=node->next) {
-				new_server = node->server;
-				if(server_eq(new_server, server)) {
-					new_server->added = true;
-					server->added = true;
-					server->ttl = srv_obj->ttl;
-					jsonrpc_add_server(server, &new_grp);
-				}
+	server->added = false;
+	if(STR_EQ(server->srv, srv)) {
+		for(node = new_servers; node != NULL; node = node->next) {
+			new_server = node->server;
+			if(server_eq(new_server, server)) {
+				new_server->added = true;
+				server->added = true;
+				server->ttl = srv_obj->ttl;
+				jsonrpc_add_server(server, &new_grp);
 			}
-		} else {
-			server->added = true;
-			jsonrpc_add_server(server, &new_grp);
 		}
+	} else {
+		server->added = true;
+		jsonrpc_add_server(server, &new_grp);
+	}
 	ENDFOR
 
 	FOREACH_SERVER_IN(global_server_group)
-		if(server->added == false) {
-			addto_server_list(server, &rm_servers);
-		}
+	if(server->added == false) {
+		addto_server_list(server, &rm_servers);
+	}
 	ENDFOR
 
 	// add and connect new servers
-	for(node=new_servers; node!=NULL; node=node->next) {
+	for(node = new_servers; node != NULL; node = node->next) {
 		new_server = node->server;
 		if(new_server->added == false) {
 
 			jsonrpc_add_server(new_server, &new_grp);
 
-			if(send_pipe_cmd(CMD_CONNECT, new_server) <0) {
+			if(send_pipe_cmd(CMD_CONNECT, new_server) < 0) {
 				print_server(new_server);
 			}
 
@@ -186,16 +187,16 @@ int refresh_srv(jsonrpc_srv_t* srv_obj)
 	}
 
 	// close old servers
-	for(node=rm_servers; node!=NULL; node=node->next) {
+	for(node = rm_servers; node != NULL; node = node->next) {
 
 		rm_server = node->server;
 
-		if(send_pipe_cmd(CMD_CLOSE, rm_server) <0) {
+		if(send_pipe_cmd(CMD_CLOSE, rm_server) < 0) {
 			print_server(rm_server);
 		}
 	}
 
-	if(send_pipe_cmd(CMD_UPDATE_SERVER_GROUP, new_grp)<0) {
+	if(send_pipe_cmd(CMD_UPDATE_SERVER_GROUP, new_grp) < 0) {
 		free_server_group(&new_grp);
 		lock_release(jsonrpc_server_group_lock);
 	}
@@ -214,7 +215,7 @@ errdup:
 	return -1;
 }
 
-void free_srv(jsonrpc_srv_t* srv)
+void free_srv(jsonrpc_srv_t *srv)
 {
 	if(!srv)
 		return;
@@ -224,21 +225,24 @@ void free_srv(jsonrpc_srv_t* srv)
 	free_server_group(&(srv->cgroup));
 }
 
-jsonrpc_srv_t* create_srv(str srv, str conn, unsigned int ttl)
+jsonrpc_srv_t *create_srv(str srv, str conn, unsigned int ttl)
 {
-	jsonrpc_srv_t* new_srv = shm_malloc(sizeof(jsonrpc_srv_t));
-	if(!new_srv) goto error;
+	jsonrpc_srv_t *new_srv = shm_malloc(sizeof(jsonrpc_srv_t));
+	if(!new_srv)
+		goto error;
 	shm_str_dup(&new_srv->srv, &srv);
 
-	if (ttl < jsonrpc_min_srv_ttl) {
+	if(ttl < jsonrpc_min_srv_ttl) {
 		new_srv->ttl = jsonrpc_min_srv_ttl;
 	} else {
 		new_srv->ttl = ttl;
 	}
 
-	if(create_server_group(CONN_GROUP, &(new_srv->cgroup))<0) goto error;
+	if(create_server_group(CONN_GROUP, &(new_srv->cgroup)) < 0)
+		goto error;
 	shm_str_dup(&new_srv->cgroup->conn, &conn);
-	if(!(new_srv->cgroup->conn.s)) return NULL;
+	if(!(new_srv->cgroup->conn.s))
+		return NULL;
 
 	return new_srv;
 error:
@@ -247,7 +251,7 @@ error:
 	return NULL;
 }
 
-void refresh_srv_cb(unsigned int ticks, void* params)
+void refresh_srv_cb(unsigned int ticks, void *params)
 {
 	if(!params) {
 		ERR("params is (null)\n");
@@ -258,7 +262,7 @@ void refresh_srv_cb(unsigned int ticks, void* params)
 		return;
 	}
 
-	srv_cb_params_t* p = (srv_cb_params_t*)params;
+	srv_cb_params_t *p = (srv_cb_params_t *)params;
 
 	cmd_pipe = p->cmd_pipe;
 	jsonrpc_min_srv_ttl = p->srv_ttl;
@@ -268,37 +272,36 @@ void refresh_srv_cb(unsigned int ticks, void* params)
 		return;
 	}
 
-	jsonrpc_srv_t* srv;
-	for(srv=global_srv_list; srv!=NULL; srv=srv->next) {
+	jsonrpc_srv_t *srv;
+	for(srv = global_srv_list; srv != NULL; srv = srv->next) {
 		if(ticks % srv->ttl == 0) {
 			refresh_srv(srv);
 		}
 	}
-
 }
 
-void addto_srv_list(jsonrpc_srv_t* srv, jsonrpc_srv_t** list)
+void addto_srv_list(jsonrpc_srv_t *srv, jsonrpc_srv_t **list)
 {
-	if (*list == NULL) {
+	if(*list == NULL) {
 		*list = srv;
 		return;
 	}
 
-	jsonrpc_srv_t* node = *list;
-	jsonrpc_srv_t* prev = *list;
-	jsonrpc_server_group_t* cgroup;
-	jsonrpc_server_group_t* cprev;
-	for(node=*list; node!=NULL; prev=node, node=node->next) {
+	jsonrpc_srv_t *node = *list;
+	jsonrpc_srv_t *prev = *list;
+	jsonrpc_server_group_t *cgroup;
+	jsonrpc_server_group_t *cprev;
+	for(node = *list; node != NULL; prev = node, node = node->next) {
 		if(STR_EQ(srv->srv, node->srv)) {
-			for(cgroup=node->cgroup, cprev=node->cgroup;
-					cgroup!=NULL;
-					cprev=cgroup, cgroup=cgroup->next) {
+			for(cgroup = node->cgroup, cprev = node->cgroup; cgroup != NULL;
+					cprev = cgroup, cgroup = cgroup->next) {
 				if(STR_EQ(cgroup->conn, srv->cgroup->conn)) {
 					INFO("Trying to add identical srv\n");
 					goto clean;
 				}
 			}
-			if(create_server_group(CONN_GROUP, &(cprev->next))<0) goto clean;
+			if(create_server_group(CONN_GROUP, &(cprev->next)) < 0)
+				goto clean;
 			shm_str_dup(&cprev->next->conn, &srv->cgroup->conn);
 			CHECK_MALLOC_GOTO(cprev->next->conn.s, clean);
 			node->ttl = srv->ttl;
@@ -312,11 +315,11 @@ clean:
 	free_srv(srv);
 }
 
-void print_srv(jsonrpc_srv_t* list)
+void print_srv(jsonrpc_srv_t *list)
 {
 	INFO("------SRV list------\n");
-	jsonrpc_srv_t* node = NULL;
-	for(node=list; node!=NULL; node=node->next) {
+	jsonrpc_srv_t *node = NULL;
+	for(node = list; node != NULL; node = node->next) {
 		INFO("-----------------\n");
 		INFO("| srv: %.*s\n", STR(node->srv));
 		INFO("| ttl: %d\n", node->ttl);
@@ -324,4 +327,3 @@ void print_srv(jsonrpc_srv_t* list)
 		INFO("-----------------\n");
 	}
 }
-
