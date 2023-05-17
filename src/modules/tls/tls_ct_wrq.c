@@ -34,10 +34,9 @@
 #include <openssl/ssl.h>
 
 
-atomic_t* tls_total_ct_wq; /* total clear text bytes queued for a future
+atomic_t *tls_total_ct_wq; /* total clear text bytes queued for a future
 							  SSL_write() (due to renegotiations/
 							  SSL_WRITE_WANTS_READ ).*/
-
 
 
 /**
@@ -47,12 +46,11 @@ atomic_t* tls_total_ct_wq; /* total clear text bytes queued for a future
 int tls_ct_wq_init()
 {
 	tls_total_ct_wq = shm_malloc(sizeof(*tls_total_ct_wq));
-	if (unlikely(tls_total_ct_wq == 0))
+	if(unlikely(tls_total_ct_wq == 0))
 		return -1;
 	atomic_set(tls_total_ct_wq, 0);
 	return 0;
 }
-
 
 
 /**
@@ -60,12 +58,11 @@ int tls_ct_wq_init()
  */
 void tls_ct_wq_destroy()
 {
-	if (tls_total_ct_wq) {
+	if(tls_total_ct_wq) {
 		shm_free(tls_total_ct_wq);
 		tls_total_ct_wq = 0;
 	}
 }
-
 
 
 /**
@@ -76,7 +73,6 @@ unsigned int tls_ct_wq_total_bytes()
 {
 	return (unsigned)atomic_get(tls_total_ct_wq);
 }
-
 
 
 /**
@@ -90,40 +86,39 @@ unsigned int tls_ct_wq_total_bytes()
  * handled outside)
  * @warning the SSL context must have the wbio and rbio previously set!
  */
-static int ssl_flush(void* tcp_c, void* error, const void* buf, unsigned size)
+static int ssl_flush(void *tcp_c, void *error, const void *buf, unsigned size)
 {
 	int n;
 	int ssl_error;
-	struct tls_extra_data* tls_c;
-	SSL* ssl;
+	struct tls_extra_data *tls_c;
+	SSL *ssl;
 
-	tls_c = ((struct tcp_connection*)tcp_c)->extra_data;
+	tls_c = ((struct tcp_connection *)tcp_c)->extra_data;
 	ssl = tls_c->ssl;
 	ssl_error = SSL_ERROR_NONE;
-	if (unlikely(tls_c->state == S_TLS_CONNECTING)) {
+	if(unlikely(tls_c->state == S_TLS_CONNECTING)) {
 		n = tls_connect(tcp_c, &ssl_error);
-		if (unlikely(n>=1)) {
+		if(unlikely(n >= 1)) {
 			n = SSL_write(ssl, buf, size);
-			if (unlikely(n <= 0))
+			if(unlikely(n <= 0))
 				ssl_error = SSL_get_error(ssl, n);
 		}
-	} else if (unlikely(tls_c->state == S_TLS_ACCEPTING)) {
+	} else if(unlikely(tls_c->state == S_TLS_ACCEPTING)) {
 		n = tls_accept(tcp_c, &ssl_error);
-		if (unlikely(n>=1)) {
+		if(unlikely(n >= 1)) {
 			n = SSL_write(ssl, buf, size);
-			if (unlikely(n <= 0))
+			if(unlikely(n <= 0))
 				ssl_error = SSL_get_error(ssl, n);
 		}
 	} else {
 		n = SSL_write(ssl, buf, size);
-		if (unlikely(n <= 0))
+		if(unlikely(n <= 0))
 			ssl_error = SSL_get_error(ssl, n);
 	}
 
-	*(long*)error = ssl_error;
+	*(long *)error = ssl_error;
 	return n;
 }
-
 
 
 /**
@@ -138,20 +133,19 @@ static int ssl_flush(void* tcp_c, void* error, const void* buf, unsigned size)
  * @return -1 on internal error, or the number of bytes flushed on success
  *         (>=0).
  */
-int tls_ct_wq_flush(struct tcp_connection* c, tls_ct_q** ct_q,
-					int* flags, int* ssl_err)
+int tls_ct_wq_flush(
+		struct tcp_connection *c, tls_ct_q **ct_q, int *flags, int *ssl_err)
 {
 	int ret;
 	long error;
 
 	error = SSL_ERROR_NONE;
-	ret = tls_ct_q_flush(ct_q,  flags, ssl_flush, c, &error);
+	ret = tls_ct_q_flush(ct_q, flags, ssl_flush, c, &error);
 	*ssl_err = (int)error;
-	if (likely(ret > 0))
+	if(likely(ret > 0))
 		atomic_add(tls_total_ct_wq, -ret);
 	return ret;
 }
-
 
 
 /**
@@ -166,23 +160,22 @@ int tls_ct_wq_flush(struct tcp_connection* c, tls_ct_q** ct_q,
  * @return 0 on success, < 0 on error (-1 memory allocation, -2 queue size
  *         too big).
  */
-int tls_ct_wq_add(tls_ct_q** ct_q, const void* data, unsigned int size)
+int tls_ct_wq_add(tls_ct_q **ct_q, const void *data, unsigned int size)
 {
 	int ret;
 
-	if (unlikely( (*ct_q && (((*ct_q)->queued + size) >
-						cfg_get(tls, tls_cfg, con_ct_wq_max))) ||
-				(atomic_get(tls_total_ct_wq) + size) >
-						cfg_get(tls, tls_cfg, ct_wq_max))) {
+	if(unlikely((*ct_q
+						&& (((*ct_q)->queued + size)
+								> cfg_get(tls, tls_cfg, con_ct_wq_max)))
+				|| (atomic_get(tls_total_ct_wq) + size)
+						   > cfg_get(tls, tls_cfg, ct_wq_max))) {
 		return -2;
 	}
-	ret = tls_ct_q_add(ct_q, data, size,
-						cfg_get(tls, tls_cfg, ct_wq_blk_size));
-	if (likely(ret >= 0))
+	ret = tls_ct_q_add(ct_q, data, size, cfg_get(tls, tls_cfg, ct_wq_blk_size));
+	if(likely(ret >= 0))
 		atomic_add(tls_total_ct_wq, size);
 	return ret;
 }
-
 
 
 /**
@@ -192,11 +185,11 @@ int tls_ct_wq_add(tls_ct_q** ct_q, const void* data, unsigned int size)
  * @param ct_q clear text queue
  * @return number of bytes that used to be queued (>=0),
  */
-unsigned int tls_ct_wq_free(tls_ct_q** ct_q)
+unsigned int tls_ct_wq_free(tls_ct_q **ct_q)
 {
 	unsigned int ret;
 
-	if (likely((ret = tls_ct_q_destroy(ct_q)) > 0))
+	if(likely((ret = tls_ct_q_destroy(ct_q)) > 0))
 		atomic_add(tls_total_ct_wq, -ret);
 	return ret;
 }

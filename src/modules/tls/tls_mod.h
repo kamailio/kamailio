@@ -22,7 +22,6 @@
  */
 
 
-
 #ifndef _TLS_MOD_H
 #define _TLS_MOD_H
 
@@ -32,8 +31,8 @@
 
 
 /* Current TLS configuration */
-extern tls_domains_cfg_t** tls_domains_cfg;
-extern gen_lock_t* tls_domains_cfg_lock;
+extern tls_domains_cfg_t **tls_domains_cfg;
+extern gen_lock_t *tls_domains_cfg_lock;
 
 extern tls_domain_t cli_defaults;
 extern tls_domain_t srv_defaults;

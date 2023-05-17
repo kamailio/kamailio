@@ -29,32 +29,35 @@
 #include "../../core/dprint.h"
 #include "../../core/locking.h"
 
-static int n_static_locks=0;
-static gen_lock_set_t* static_locks=0;
+static int n_static_locks = 0;
+static gen_lock_set_t *static_locks = 0;
 
 /* OpenSSL is thread-safe since 1.1.0 */
 #if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
 
 /* "dynamic" locks */
 
-struct CRYPTO_dynlock_value{
+struct CRYPTO_dynlock_value
+{
 	gen_lock_t lock;
 };
 
 
-static struct CRYPTO_dynlock_value* dyn_create_f(const char* file, int line)
+static struct CRYPTO_dynlock_value *dyn_create_f(const char *file, int line)
 {
-	struct CRYPTO_dynlock_value* l;
+	struct CRYPTO_dynlock_value *l;
 
-	l=shm_malloc(sizeof(struct CRYPTO_dynlock_value));
-	if (l==0){
+	l = shm_malloc(sizeof(struct CRYPTO_dynlock_value));
+	if(l == 0) {
 		LM_CRIT("dyn create locking callback out of shm."
-				" memory (called from %s:%d)\n", file, line);
+				" memory (called from %s:%d)\n",
+				file, line);
 		goto error;
 	}
-	if (lock_init(&l->lock)==0){
+	if(lock_init(&l->lock) == 0) {
 		LM_CRIT("dyn create locking callback: lock "
-				"initialization failed (called from %s:%d)\n", file, line);
+				"initialization failed (called from %s:%d)\n",
+				file, line);
 		shm_free(l);
 		goto error;
 	}
@@ -64,30 +67,31 @@ error:
 }
 
 
-static void dyn_lock_f(int mode, struct CRYPTO_dynlock_value* l,
-						const char* file, int line)
+static void dyn_lock_f(
+		int mode, struct CRYPTO_dynlock_value *l, const char *file, int line)
 {
-	if (l==0){
+	if(l == 0) {
 		LM_CRIT("dyn lock locking callback: null lock"
-				" (called from %s:%d)\n", file, line);
+				" (called from %s:%d)\n",
+				file, line);
 		/* try to continue */
 		return;
 	}
-	if (mode & CRYPTO_LOCK){
+	if(mode & CRYPTO_LOCK) {
 		lock_get(&l->lock);
-	}else{
+	} else {
 		lock_release(&l->lock);
 	}
 }
 
 
-
-static void dyn_destroy_f(struct CRYPTO_dynlock_value *l,
-							const char* file, int line)
+static void dyn_destroy_f(
+		struct CRYPTO_dynlock_value *l, const char *file, int line)
 {
-	if (l==0){
+	if(l == 0) {
 		LM_CRIT("dyn destroy locking callback: null lock"
-				" (called from %s:%d)\n", file, line);
+				" (called from %s:%d)\n",
+				file, line);
 		return;
 	}
 	lock_destroy(&l->lock);
@@ -95,22 +99,21 @@ static void dyn_destroy_f(struct CRYPTO_dynlock_value *l,
 }
 
 
-
 /* normal locking callback */
-static void locking_f(int mode, int n, const char* file, int line)
+static void locking_f(int mode, int n, const char *file, int line)
 {
-	if (n<0 || n>=n_static_locks){
+	if(n < 0 || n >= n_static_locks) {
 		LM_CRIT("locking (callback): invalid lock number: "
 				" %d (range 0 - %d), called from %s:%d\n",
 				n, n_static_locks, file, line);
 		abort(); /* quick crash :-) */
 	}
-	if (mode & CRYPTO_LOCK){
+	if(mode & CRYPTO_LOCK) {
 #ifdef EXTRA_DEBUG
 		LM_DBG("lock get (%d): %d (%s:%d)\n", mode, n, file, line);
 #endif
 		lock_set_get(static_locks, n);
-	}else{
+	} else {
 		lock_set_release(static_locks, n);
 #ifdef EXTRA_DEBUG
 		LM_DBG("lock release (%d): %d (%s:%d)\n", mode, n, file, line);
@@ -123,11 +126,11 @@ static void locking_f(int mode, int n, const char* file, int line)
 
 void tls_destroy_locks()
 {
-	if (static_locks){
+	if(static_locks) {
 		lock_set_destroy(static_locks);
 		lock_set_dealloc(static_locks);
-		static_locks=0;
-		n_static_locks=0;
+		static_locks = 0;
+		n_static_locks = 0;
 	}
 }
 
@@ -143,27 +146,27 @@ int tls_init_locks()
 /* OpenSSL is no longer supporting to set locking callbacks since 1.1.0 */
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
 	/* init "static" tls locks */
-	n_static_locks=CRYPTO_num_locks();
-	if (n_static_locks<0){
+	n_static_locks = CRYPTO_num_locks();
+	if(n_static_locks < 0) {
 		LM_CRIT("bad CRYPTO_num_locks %d\n", n_static_locks);
-		n_static_locks=0;
+		n_static_locks = 0;
 	}
-	if (n_static_locks){
-		if (CRYPTO_get_locking_callback()!=NULL) {
+	if(n_static_locks) {
+		if(CRYPTO_get_locking_callback() != NULL) {
 			LM_CRIT("ssl locking callback already set\n");
 			return -1;
 		}
-		static_locks=lock_set_alloc(n_static_locks);
-		if (static_locks==0){
+		static_locks = lock_set_alloc(n_static_locks);
+		if(static_locks == 0) {
 			LM_CRIT("could not allocate lockset with %d locks\n",
 					n_static_locks);
 			goto error;
 		}
-		if (lock_set_init(static_locks)==0){
+		if(lock_set_init(static_locks) == 0) {
 			LM_CRIT("lock set init failed (%d locks)\n", n_static_locks);
 			lock_set_dealloc(static_locks);
-			static_locks=0;
-			n_static_locks=0;
+			static_locks = 0;
+			n_static_locks = 0;
 			goto error;
 		}
 		CRYPTO_set_locking_callback(locking_f);

@@ -46,9 +46,9 @@ static int ksr_krand_bytes(unsigned char *outdata, int size)
 {
 	int r;
 
-	if (size < 0) {
+	if(size < 0) {
 		return 0;
-	} else if (size == 0) {
+	} else if(size == 0) {
 		return 1;
 	}
 
@@ -58,7 +58,7 @@ static int ksr_krand_bytes(unsigned char *outdata, int size)
 		size -= sizeof(int);
 		outdata += sizeof(int);
 	}
-	if(size>0) {
+	if(size > 0) {
 		r = kam_rand();
 		memcpy(outdata, &r, size);
 	}
@@ -67,26 +67,20 @@ static int ksr_krand_bytes(unsigned char *outdata, int size)
 
 static int ksr_krand_pseudorand(unsigned char *outdata, int size)
 {
-    return ksr_krand_bytes(outdata, size);
+	return ksr_krand_bytes(outdata, size);
 }
 
 static int ksr_krand_status(void)
 {
-    return 1;
+	return 1;
 }
 
-const RAND_METHOD _ksr_krand_method = {
-    NULL,
-    ksr_krand_bytes,
-    NULL,
-    NULL,
-    ksr_krand_pseudorand,
-    ksr_krand_status
-};
+const RAND_METHOD _ksr_krand_method = {NULL, ksr_krand_bytes, NULL, NULL,
+		ksr_krand_pseudorand, ksr_krand_status};
 
 const RAND_METHOD *RAND_ksr_krand_method(void)
 {
-    return &_ksr_krand_method;
+	return &_ksr_krand_method;
 }
 
 /*
@@ -98,9 +92,9 @@ static int ksr_fastrand_bytes(unsigned char *outdata, int size)
 {
 	int r;
 
-	if (size < 0) {
+	if(size < 0) {
 		return 0;
-	} else if (size == 0) {
+	} else if(size == 0) {
 		return 1;
 	}
 
@@ -110,7 +104,7 @@ static int ksr_fastrand_bytes(unsigned char *outdata, int size)
 		size -= sizeof(int);
 		outdata += sizeof(int);
 	}
-	if(size>0) {
+	if(size > 0) {
 		r = fastrand();
 		memcpy(outdata, &r, size);
 	}
@@ -119,26 +113,20 @@ static int ksr_fastrand_bytes(unsigned char *outdata, int size)
 
 static int ksr_fastrand_pseudorand(unsigned char *outdata, int size)
 {
-    return ksr_fastrand_bytes(outdata, size);
+	return ksr_fastrand_bytes(outdata, size);
 }
 
 static int ksr_fastrand_status(void)
 {
-    return 1;
+	return 1;
 }
 
-const RAND_METHOD _ksr_fastrand_method = {
-    NULL,
-    ksr_fastrand_bytes,
-    NULL,
-    NULL,
-    ksr_fastrand_pseudorand,
-    ksr_fastrand_status
-};
+const RAND_METHOD _ksr_fastrand_method = {NULL, ksr_fastrand_bytes, NULL, NULL,
+		ksr_fastrand_pseudorand, ksr_fastrand_status};
 
 const RAND_METHOD *RAND_ksr_fastrand_method(void)
 {
-    return &_ksr_fastrand_method;
+	return &_ksr_fastrand_method;
 }
 
 /*
@@ -149,9 +137,9 @@ const RAND_METHOD *RAND_ksr_fastrand_method(void)
  */
 static int ksr_cryptorand_bytes(unsigned char *outdata, int size)
 {
-	if (size < 0) {
+	if(size < 0) {
 		return 0;
-	} else if (size == 0) {
+	} else if(size == 0) {
 		return 1;
 	}
 
@@ -161,25 +149,19 @@ static int ksr_cryptorand_bytes(unsigned char *outdata, int size)
 
 static int ksr_cryptorand_status(void)
 {
-    return 1;
+	return 1;
 }
 
 /*
  * We don't have a dedicated function for pseudo-random
  * bytes, just use the secure version as well for it.
  */
-const RAND_METHOD _ksr_cryptorand_method = {
-    NULL,
-    ksr_cryptorand_bytes,
-    NULL,
-    NULL,
-    ksr_cryptorand_bytes,
-    ksr_cryptorand_status
-};
+const RAND_METHOD _ksr_cryptorand_method = {NULL, ksr_cryptorand_bytes, NULL,
+		NULL, ksr_cryptorand_bytes, ksr_cryptorand_status};
 
 const RAND_METHOD *RAND_ksr_cryptorand_method(void)
 {
-    return &_ksr_cryptorand_method;
+	return &_ksr_cryptorand_method;
 }
 
 /**
@@ -197,7 +179,7 @@ void ksr_kxlibssl_init(void)
 		_ksr_kxlibssl_local_method = RAND_get_rand_method();
 	}
 	mypid = getpid();
-	if(_ksr_kxlibssl_local_lock==NULL || _ksr_kxlibssl_local_pid!=mypid) {
+	if(_ksr_kxlibssl_local_lock == NULL || _ksr_kxlibssl_local_pid != mypid) {
 		_ksr_kxlibssl_local_lock = lock_alloc();
 		if(_ksr_kxlibssl_local_lock == 0) {
 			LM_ERR("failed to allocate the lock\n");
@@ -369,6 +351,6 @@ const RAND_METHOD *RAND_ksr_kxlibssl_method(void)
 		_ksr_kxlibssl_method.status = ksr_kxlibssl_status;
 	}
 
-    return &_ksr_kxlibssl_method;
+	return &_ksr_kxlibssl_method;
 }
 #endif /* OPENSSL_VERSION_NUMBER >= 0x10100000L */

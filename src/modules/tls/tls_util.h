@@ -32,16 +32,15 @@
 #include "../../core/str.h"
 #include "tls_domain.h"
 
-static inline int tls_err_ret(char *s, SSL* ssl,
-		tls_domains_cfg_t **tls_domains_cfg)
+static inline int tls_err_ret(
+		char *s, SSL *ssl, tls_domains_cfg_t **tls_domains_cfg)
 {
 	long err;
 	int ret = 0;
 	const char *sn = NULL;
 
-	if ((*tls_domains_cfg)->srv_default->ctx &&
-		(*tls_domains_cfg)->srv_default->ctx[0])
-	{
+	if((*tls_domains_cfg)->srv_default->ctx
+			&& (*tls_domains_cfg)->srv_default->ctx[0]) {
 		if(ssl) {
 			sn = SSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name);
 		}
@@ -54,28 +53,28 @@ static inline int tls_err_ret(char *s, SSL* ssl,
 	return ret;
 }
 
-#define TLS_ERR_RET(r, s) \
-do { \
-	(r) = tls_err_ret((s), NULL, tls_domains_cfg); \
-} while(0)
+#define TLS_ERR_RET(r, s)                              \
+	do {                                               \
+		(r) = tls_err_ret((s), NULL, tls_domains_cfg); \
+	} while(0)
 
 
-#define TLS_ERR(s) \
-do { \
-	tls_err_ret((s), NULL, tls_domains_cfg); \
-} while(0)
+#define TLS_ERR(s)                               \
+	do {                                         \
+		tls_err_ret((s), NULL, tls_domains_cfg); \
+	} while(0)
 
-#define TLS_ERR_SSL(s, ssl) \
-do { \
-	tls_err_ret((s), (ssl), tls_domains_cfg); \
-} while(0)
+#define TLS_ERR_SSL(s, ssl)                       \
+	do {                                          \
+		tls_err_ret((s), (ssl), tls_domains_cfg); \
+	} while(0)
 
 /*
  * Make a shared memory copy of ASCII zero terminated string
  * Return value: -1 on error
  *                0 on success
  */
-int shm_asciiz_dup(char** dest, char* val);
+int shm_asciiz_dup(char **dest, char *val);
 
 
 /*
