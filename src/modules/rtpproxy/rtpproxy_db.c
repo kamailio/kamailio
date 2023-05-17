@@ -41,10 +41,9 @@ str rtpp_flags_col = str_init("flags");
 
 static int rtpp_connect_db(void)
 {
-	if ((rtpp_db_url.s == NULL) || (rtpp_db_url.len == 0))
+	if((rtpp_db_url.s == NULL) || (rtpp_db_url.len == 0))
 		return -1;
-	if ((rtpp_db_handle = rtpp_dbf.init(&rtpp_db_url)) == NULL)
-	{
+	if((rtpp_db_handle = rtpp_dbf.init(&rtpp_db_url)) == NULL) {
 		LM_ERR("Cannot initialize db connection\n");
 		return -1;
 	}
@@ -53,8 +52,7 @@ static int rtpp_connect_db(void)
 
 static void rtpp_disconnect_db(void)
 {
-	if (rtpp_db_handle)
-	{
+	if(rtpp_db_handle) {
 		rtpp_dbf.close(rtpp_db_handle);
 		rtpp_db_handle = NULL;
 	}
@@ -67,56 +65,50 @@ static int rtpp_load_db(void)
 	db1_res_t *res = NULL;
 	db_val_t *values = NULL;
 	db_row_t *rows = NULL;
-	db_key_t query_cols[] = {&rtpp_setid_col, &rtpp_url_col, &rtpp_weight_col,
-		&rtpp_flags_col};
+	db_key_t query_cols[] = {
+			&rtpp_setid_col, &rtpp_url_col, &rtpp_weight_col, &rtpp_flags_col};
 
 	str set, url;
 	int weight, flags;
 	int n_rows = 0;
 	int n_cols = 4;
 
-	if (rtpp_db_handle == NULL)
-	{
+	if(rtpp_db_handle == NULL) {
 		LM_ERR("invalid db handle\n");
 		return -1;
 	}
-	if (rtpp_dbf.use_table(rtpp_db_handle, &rtpp_table_name) < 0)
-	{
+	if(rtpp_dbf.use_table(rtpp_db_handle, &rtpp_table_name) < 0) {
 		LM_ERR("unable to use table '%.*s'\n", rtpp_table_name.len,
 				rtpp_table_name.s);
 		return -1;
 	}
-	if (rtpp_dbf.query(rtpp_db_handle, 0, 0, 0, query_cols, 0, n_cols, 0, &res) < 0)
-	{
+	if(rtpp_dbf.query(rtpp_db_handle, 0, 0, 0, query_cols, 0, n_cols, 0, &res)
+			< 0) {
 		LM_ERR("error while running db query\n");
 		return -1;
 	}
 
 	n_rows = RES_ROW_N(res);
 	rows = RES_ROWS(res);
-	if (n_rows == 0)
-	{
+	if(n_rows == 0) {
 		LM_WARN("No rtpproxy instances in database\n");
 		return 0;
 	}
-	for (i=0; i<n_rows; i++)
-	{
+	for(i = 0; i < n_rows; i++) {
 		values = ROW_VALUES(rows + i);
 
 		set.s = VAL_STR(values).s;
 		set.len = strlen(set.s);
-		url.s = VAL_STR(values+1).s;
+		url.s = VAL_STR(values + 1).s;
 		url.len = strlen(url.s);
-		weight = VAL_INT(values+2);
-		flags = VAL_INT(values+3);
+		weight = VAL_INT(values + 2);
+		flags = VAL_INT(values + 3);
 
-		if ((rtpp_list = get_rtpp_set(&set)) == NULL)
-		{
+		if((rtpp_list = get_rtpp_set(&set)) == NULL) {
 			LM_ERR("error getting rtpp_list for set '%.*s'\n", set.len, set.s);
 			continue;
 		}
-		if (insert_rtpp_node(rtpp_list, &url, weight, flags) < 0)
-		{
+		if(insert_rtpp_node(rtpp_list, &url, weight, flags) < 0) {
 			LM_ERR("error inserting '%.*s' into set '%.*s'\n", url.len, url.s,
 					set.len, set.s);
 		}
@@ -129,24 +121,23 @@ static int rtpp_load_db(void)
 int init_rtpproxy_db(void)
 {
 	int ret;
-	if (rtpp_db_url.s == NULL)
+	if(rtpp_db_url.s == NULL)
 		/* Database not configured */
 		return 0;
 
-	if (db_bind_mod(&rtpp_db_url, &rtpp_dbf) < 0)
-	{
-		LM_ERR("Unable to bind to db driver - %.*s\n",
-				rtpp_db_url.len, rtpp_db_url.s);
+	if(db_bind_mod(&rtpp_db_url, &rtpp_dbf) < 0) {
+		LM_ERR("Unable to bind to db driver - %.*s\n", rtpp_db_url.len,
+				rtpp_db_url.s);
 		return -1;
 	}
-	if (rtpp_connect_db() != 0)
-	{
+	if(rtpp_connect_db() != 0) {
 		LM_ERR("Unable to connect to db\n");
 		return -1;
 	}
 
-	if (db_check_table_version(&rtpp_dbf, rtpp_db_handle, &rtpp_table_name, RTPP_TABLE_VERSION) < 0)
-	{
+	if(db_check_table_version(
+			   &rtpp_dbf, rtpp_db_handle, &rtpp_table_name, RTPP_TABLE_VERSION)
+			< 0) {
 		DB_TABLE_VERSION_ERROR(rtpp_table_name);
 		ret = -1;
 		goto done;
