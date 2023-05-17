@@ -63,7 +63,7 @@ int ver_name_len;
 
 static int mod_init(void);
 static int child_init(int rank);
-static int xhttp_rpc_dispatch(sip_msg_t* msg, char* s1, char* s2);
+static int xhttp_rpc_dispatch(sip_msg_t *msg, char *s1, char *s2);
 
 
 /** The context of the xhttp_rpc request being processed.
@@ -86,29 +86,26 @@ int buf_size = 0;
 char error_buf[ERROR_REASON_BUF_LEN];
 
 static cmd_export_t cmds[] = {
-	{"dispatch_xhttp_rpc",(cmd_function)xhttp_rpc_dispatch,0,0,0,
-			REQUEST_ROUTE|EVENT_ROUTE},
-	{0, 0, 0, 0, 0, 0}
-};
+		{"dispatch_xhttp_rpc", (cmd_function)xhttp_rpc_dispatch, 0, 0, 0,
+				REQUEST_ROUTE | EVENT_ROUTE},
+		{0, 0, 0, 0, 0, 0}};
 
 static param_export_t params[] = {
-	{"xhttp_rpc_root",	PARAM_STR,	&xhttp_rpc_root},
-	{"xhttp_rpc_buf_size",	INT_PARAM,	&buf_size},
-	{0, 0, 0}
-};
+		{"xhttp_rpc_root", PARAM_STR, &xhttp_rpc_root},
+		{"xhttp_rpc_buf_size", INT_PARAM, &buf_size}, {0, 0, 0}};
 
 /** module exports */
-struct module_exports exports= {
-	"xhttp_rpc",		/* module name */
-	DEFAULT_DLFLAGS,	/* dlopen flags */
-	cmds,				/* cmd (cfg function) exports */
-	params,				/* param exports */
-	0,					/* RPC method exports */
-	0,					/* pv exports */
-	0,					/* response handling function */
-	mod_init,			/* module init function */
-	child_init,			/* per-child init function */
-	0					/* module destroy function */
+struct module_exports exports = {
+		"xhttp_rpc",	 /* module name */
+		DEFAULT_DLFLAGS, /* dlopen flags */
+		cmds,			 /* cmd (cfg function) exports */
+		params,			 /* param exports */
+		0,				 /* RPC method exports */
+		0,				 /* pv exports */
+		0,				 /* response handling function */
+		mod_init,		 /* module init function */
+		child_init,		 /* per-child init function */
+		0				 /* module destroy function */
 };
 
 
@@ -124,7 +121,7 @@ struct module_exports exports= {
  * @param code Reason code.
  * @param fmt Formatting string used to build the reason phrase.
  */
-static void rpc_fault(rpc_ctx_t* ctx, int code, char* fmt, ...)
+static void rpc_fault(rpc_ctx_t *ctx, int code, char *fmt, ...)
 {
 	va_list ap;
 	struct xhttp_rpc_reply *reply = &ctx->reply;
@@ -148,11 +145,11 @@ static void free_data_struct(struct rpc_data_struct *rpc_d)
 {
 	struct rpc_data_struct *ds;
 
-	if (!rpc_d) {
+	if(!rpc_d) {
 		LM_ERR("Attempting to free NULL rpc_data_struct\n");
 		return;
 	}
-	while (rpc_d) {
+	while(rpc_d) {
 		ds = rpc_d->next;
 		pkg_free(rpc_d);
 		rpc_d = ds;
@@ -163,13 +160,14 @@ static void free_data_struct(struct rpc_data_struct *rpc_d)
 
 /**
  */
-static struct rpc_data_struct *new_data_struct(rpc_ctx_t* ctx)
+static struct rpc_data_struct *new_data_struct(rpc_ctx_t *ctx)
 {
 	struct rpc_data_struct *ds;
 
-	if (!ctx) return NULL;
-	ds = (struct rpc_data_struct*)pkg_malloc(sizeof(struct rpc_data_struct));
-	if (!ds) {
+	if(!ctx)
+		return NULL;
+	ds = (struct rpc_data_struct *)pkg_malloc(sizeof(struct rpc_data_struct));
+	if(!ds) {
 		PKG_MEM_ERROR;
 		rpc_fault(ctx, 500, "Internal Server Error (oom)");
 		return NULL;
@@ -196,7 +194,7 @@ static int init_xhttp_rpc_reply(rpc_ctx_t *ctx)
 	reply->code = 200;
 	reply->reason = XHTTP_RPC_REASON_OK;
 	reply->buf.s = pkg_malloc(buf_size);
-	if (!reply->buf.s) {
+	if(!reply->buf.s) {
 		PKG_MEM_ERROR;
 		rpc_fault(ctx, 500, "Internal Server Error (No memory left)");
 		return -1;
@@ -221,37 +219,38 @@ static int init_xhttp_rpc_reply(rpc_ctx_t *ctx)
  * @return 1 if the reply was already sent, 0 on success, a negative number on
  *            error
  */
-static int rpc_send(rpc_ctx_t* ctx)
+static int rpc_send(rpc_ctx_t *ctx)
 {
-	struct xhttp_rpc_reply* reply;
+	struct xhttp_rpc_reply *reply;
 
-	if (ctx->reply_sent) return 1;
+	if(ctx->reply_sent)
+		return 1;
 
 	reply = &ctx->reply;
 
-	if (0!=xhttp_rpc_build_page(ctx)){
+	if(0 != xhttp_rpc_build_page(ctx)) {
 		rpc_fault(ctx, 500, "Internal Server Error");
 	}
 
 	ctx->reply_sent = 1;
-	if (reply->body.len)
+	if(reply->body.len)
 		xhttp_api.reply(ctx->msg, reply->code, &reply->reason,
-			&XHTTP_RPC_CONTENT_TYPE_TEXT_HTML, &reply->body);
+				&XHTTP_RPC_CONTENT_TYPE_TEXT_HTML, &reply->body);
 	else
 		xhttp_api.reply(ctx->msg, reply->code, &reply->reason,
-			&XHTTP_RPC_CONTENT_TYPE_TEXT_HTML, &reply->reason);
+				&XHTTP_RPC_CONTENT_TYPE_TEXT_HTML, &reply->reason);
 
-	if (reply->buf.s) {
+	if(reply->buf.s) {
 		pkg_free(reply->buf.s);
 		reply->buf.s = NULL;
 		reply->buf.len = 0;
 	}
-	if (ctx->arg.s) {
+	if(ctx->arg.s) {
 		pkg_free(ctx->arg.s);
 		ctx->arg.s = NULL;
 		ctx->arg.len = 0;
 	}
-	if (ctx->data_structs) {
+	if(ctx->data_structs) {
 		free_data_struct(ctx->data_structs);
 		ctx->data_structs = NULL;
 	}
@@ -276,7 +275,7 @@ static int rpc_send(rpc_ctx_t* ctx)
  * @param ap A pointer to the array of input parameters.
  *
  */
-static int print_value(rpc_ctx_t* ctx, char fmt, va_list* ap, str *id)
+static int print_value(rpc_ctx_t *ctx, char fmt, va_list *ap, str *id)
 
 {
 	str body;
@@ -286,48 +285,47 @@ static int print_value(rpc_ctx_t* ctx, char fmt, va_list* ap, str *id)
 	struct tm t;
 
 	switch(fmt) {
-	case 'd':
-		body.s = sint2str(va_arg(*ap, int), &body.len);
-		break;
-	case 'f':
-		body.s = buf;
-		body.len = snprintf(buf, PRINT_VALUE_BUF_LEN,
-				"%f", va_arg(*ap, double));
-		if (body.len < 0) {
-			LM_ERR("Error while converting double\n");
+		case 'd':
+			body.s = sint2str(va_arg(*ap, int), &body.len);
+			break;
+		case 'f':
+			body.s = buf;
+			body.len = snprintf(
+					buf, PRINT_VALUE_BUF_LEN, "%f", va_arg(*ap, double));
+			if(body.len < 0) {
+				LM_ERR("Error while converting double\n");
+				return -1;
+			}
+			break;
+		case 'b':
+			body.len = 1;
+			body.s = ((va_arg(*ap, int) == 0) ? "0" : "1");
+			break;
+		case 't':
+			body.s = buf;
+			body.len = sizeof("19980717T14:08:55") - 1;
+			dt = va_arg(*ap, time_t);
+			gmtime_r(&dt, &t);
+			if(strftime(buf, PRINT_VALUE_BUF_LEN, "%Y%m%dT%H:%M:%S", &t) == 0) {
+				LM_ERR("Error while converting time\n");
+				return -1;
+			}
+			break;
+		case 's':
+			body.s = va_arg(*ap, char *);
+			body.len = strlen(body.s);
+			break;
+		case 'S':
+			sp = va_arg(*ap, str *);
+			body = *sp;
+			break;
+		default:
+			body.len = 0;
+			body.s = NULL;
+			LM_ERR("Invalid formatting character [%c]\n", fmt);
 			return -1;
-		}
-		break;
-	case 'b':
-		body.len = 1;
-		body.s = ((va_arg(*ap, int)==0)?"0":"1");
-		break;
-	case 't':
-		body.s = buf;
-		body.len = sizeof("19980717T14:08:55") - 1;
-		dt = va_arg(*ap, time_t);
-		gmtime_r(&dt, &t);
-		if (strftime(buf, PRINT_VALUE_BUF_LEN,
-				"%Y%m%dT%H:%M:%S", &t) == 0) {
-			LM_ERR("Error while converting time\n");
-			return -1;
-		}
-		break;
-	case 's':
-		body.s = va_arg(*ap, char*);
-		body.len = strlen(body.s);
-		break;
-	case 'S':
-		sp = va_arg(*ap, str*);
-		body = *sp;
-		break;
-	default:
-		body.len = 0;
-		body.s = NULL;
-		LM_ERR("Invalid formatting character [%c]\n", fmt);
-		return -1;
 	}
-	if (0!=xhttp_rpc_build_content(ctx, &body, id)) {
+	if(0 != xhttp_rpc_build_content(ctx, &body, id)) {
 		rpc_fault(ctx, 500, "Internal Server Error");
 		return -1;
 	}
@@ -340,27 +338,30 @@ static int print_value(rpc_ctx_t* ctx, char fmt, va_list* ap, str *id)
  * This function will be called when an RPC management function calls
  * rpc->add to add a parameter to the xhttp_rpc reply being generated.
  */
-static int rpc_add(rpc_ctx_t* ctx, char* fmt, ...)
+static int rpc_add(rpc_ctx_t *ctx, char *fmt, ...)
 {
 	void **void_ptr;
 	struct rpc_data_struct *ds;
 	va_list ap;
 
-	if (0!=xhttp_rpc_build_content(ctx, NULL, NULL)) {
+	if(0 != xhttp_rpc_build_content(ctx, NULL, NULL)) {
 		rpc_fault(ctx, 500, "Internal Server Error");
 		return -1;
 	}
 	va_start(ap, fmt);
 	while(*fmt) {
-		if (*fmt == '{' || *fmt == '[') {
-			void_ptr = va_arg(ap, void**);
+		if(*fmt == '{' || *fmt == '[') {
+			void_ptr = va_arg(ap, void **);
 			ds = new_data_struct(ctx);
-			if (!ds) goto err;
-			if (ctx->data_structs) free_data_struct(ctx->data_structs);
+			if(!ds)
+				goto err;
+			if(ctx->data_structs)
+				free_data_struct(ctx->data_structs);
 			ctx->data_structs = ds;
 			*void_ptr = ds;
 		} else {
-			if (print_value(ctx, *fmt, &ap, NULL) < 0) goto err;
+			if(print_value(ctx, *fmt, &ap, NULL) < 0)
+				goto err;
 		}
 		fmt++;
 	}
@@ -380,7 +381,7 @@ err:
  * URL and attempts to convert it to the type requested by the management
  * function that called it.
  */
-static int rpc_scan(rpc_ctx_t* ctx, char* fmt, ...)
+static int rpc_scan(rpc_ctx_t *ctx, char *fmt, ...)
 {
 	int *int_ptr;
 	char **char_ptr;
@@ -391,77 +392,78 @@ static int rpc_scan(rpc_ctx_t* ctx, char* fmt, ...)
 
 	int mandatory_param = 1;
 	int modifiers = 0;
-	char* orig_fmt;
+	char *orig_fmt;
 	va_list ap;
 
-	orig_fmt=fmt;
+	orig_fmt = fmt;
 	va_start(ap, fmt);
 	while(*fmt) {
 		switch(*fmt) {
-		case '*': /* start of optional parameters */
-			mandatory_param = 0;
-			modifiers++;
-			fmt++;
-			continue;
-			break;
-		case '.': /* autoconvert */
-			modifiers++;
-			fmt++;
-			continue;
-			break;
-		case 'b': /* Bool */
-		case 't': /* Date and time */
-		case 'd': /* Integer */
-			xhttp_rpc_get_next_arg(ctx, &arg);
-			if (arg.len==0)
-				goto read_error;
-			int_ptr = va_arg(ap, int*);
-			*int_ptr = strtol(arg.s, 0, 0);
-			break;
-		case 'f': /* double */
-			xhttp_rpc_get_next_arg(ctx, &arg);
-			if (arg.len==0)
-				goto read_error;
-			double_ptr = va_arg(ap, double*);
-			*double_ptr = strtod(arg.s, 0);
-			break;
-		case 's': /* zero terminated string */
-			xhttp_rpc_get_next_arg(ctx, &arg);
-			if (arg.len==0)
-				goto read_error;
-			char_ptr = va_arg(ap, char**);
-			*char_ptr = arg.s;
-			break;
-		case 'S': /* str structure */
-			xhttp_rpc_get_next_arg(ctx, &arg);
-			if (arg.len==0)
-				goto read_error;
-			str_ptr = va_arg(ap, str*);
-			*str_ptr = arg;
-			break;
-		case '{':
-			xhttp_rpc_get_next_arg(ctx, &arg);
-			if (arg.len==0)
-				goto read_error;
-			LM_ERR("Unsupported param type [{]\n");
-			rpc_fault(ctx, 500, "Unsupported param type [{]");
-			goto error;
-			break;
-		default:
-			LM_ERR("Invalid param type in formatting string: [%c]\n", *fmt);
-			rpc_fault(ctx, 500,
-				"Internal Server Error (inval formatting str)");
-			goto error;
+			case '*': /* start of optional parameters */
+				mandatory_param = 0;
+				modifiers++;
+				fmt++;
+				continue;
+				break;
+			case '.': /* autoconvert */
+				modifiers++;
+				fmt++;
+				continue;
+				break;
+			case 'b': /* Bool */
+			case 't': /* Date and time */
+			case 'd': /* Integer */
+				xhttp_rpc_get_next_arg(ctx, &arg);
+				if(arg.len == 0)
+					goto read_error;
+				int_ptr = va_arg(ap, int *);
+				*int_ptr = strtol(arg.s, 0, 0);
+				break;
+			case 'f': /* double */
+				xhttp_rpc_get_next_arg(ctx, &arg);
+				if(arg.len == 0)
+					goto read_error;
+				double_ptr = va_arg(ap, double *);
+				*double_ptr = strtod(arg.s, 0);
+				break;
+			case 's': /* zero terminated string */
+				xhttp_rpc_get_next_arg(ctx, &arg);
+				if(arg.len == 0)
+					goto read_error;
+				char_ptr = va_arg(ap, char **);
+				*char_ptr = arg.s;
+				break;
+			case 'S': /* str structure */
+				xhttp_rpc_get_next_arg(ctx, &arg);
+				if(arg.len == 0)
+					goto read_error;
+				str_ptr = va_arg(ap, str *);
+				*str_ptr = arg;
+				break;
+			case '{':
+				xhttp_rpc_get_next_arg(ctx, &arg);
+				if(arg.len == 0)
+					goto read_error;
+				LM_ERR("Unsupported param type [{]\n");
+				rpc_fault(ctx, 500, "Unsupported param type [{]");
+				goto error;
+				break;
+			default:
+				LM_ERR("Invalid param type in formatting string: [%c]\n", *fmt);
+				rpc_fault(ctx, 500,
+						"Internal Server Error (inval formatting str)");
+				goto error;
 		}
 		fmt++;
 	}
 	va_end(ap);
-	return (int)(fmt-orig_fmt)-modifiers;
+	return (int)(fmt - orig_fmt) - modifiers;
 read_error:
-	if (mandatory_param) rpc_fault(ctx, 400, "Invalid parameter value");
+	if(mandatory_param)
+		rpc_fault(ctx, 400, "Invalid parameter value");
 error:
 	va_end(ap);
-	return -((int)(fmt-orig_fmt)-modifiers);
+	return -((int)(fmt - orig_fmt) - modifiers);
 }
 
 
@@ -470,13 +472,13 @@ error:
  * This function will be called whenever an RPC management function calls
  * rpc-printf to add a parameter to the xhttp_rpc reply being constructed.
  */
-static int rpc_rpl_printf(rpc_ctx_t* ctx, char* fmt, ...)
+static int rpc_rpl_printf(rpc_ctx_t *ctx, char *fmt, ...)
 {
 	int n, size;
 	char *p;
 	va_list ap;
 
-	if (0!=xhttp_rpc_build_content(ctx, NULL, NULL)) {
+	if(0 != xhttp_rpc_build_content(ctx, NULL, NULL)) {
 		rpc_fault(ctx, 500, "Internal Server Error");
 		return -1;
 	}
@@ -486,7 +488,7 @@ static int rpc_rpl_printf(rpc_ctx_t* ctx, char* fmt, ...)
 	va_start(ap, fmt);
 	n = vsnprintf(p, size, fmt, ap);
 	va_end(ap);
-	if (n > -1 && n < size) {
+	if(n > -1 && n < size) {
 		ctx->reply.body.len += n;
 		p += n;
 	} else {
@@ -494,7 +496,7 @@ static int rpc_rpl_printf(rpc_ctx_t* ctx, char* fmt, ...)
 		rpc_fault(ctx, 500, "Internal Server Error (oom)");
 		return -1;
 	}
-	if (0!=xhttp_rpc_insert_break(ctx)) {
+	if(0 != xhttp_rpc_insert_break(ctx)) {
 		LM_ERR("oom\n");
 		rpc_fault(ctx, 500, "Internal Server Error (oom)");
 		return -1;
@@ -506,7 +508,7 @@ static int rpc_rpl_printf(rpc_ctx_t* ctx, char* fmt, ...)
 
 /** Adds a new member to structure.
  */
-static int rpc_struct_add(struct rpc_data_struct* rpc_s, char* fmt, ...)
+static int rpc_struct_add(struct rpc_data_struct *rpc_s, char *fmt, ...)
 {
 	va_list ap;
 	void **void_ptr;
@@ -514,19 +516,19 @@ static int rpc_struct_add(struct rpc_data_struct* rpc_s, char* fmt, ...)
 	rpc_ctx_t *ctx = rpc_s->ctx;
 	struct rpc_data_struct *ds, *s;
 
-	if (!ctx) {
+	if(!ctx) {
 		LM_ERR("Invalid context\n");
 		return -1;
 	}
-	if (!ctx->data_structs) {
+	if(!ctx->data_structs) {
 		LM_ERR("Invalid structs\n");
 		return -1;
 	}
 	s = ds = ctx->data_structs;
 	ctx->struc_depth = 0;
-	while (s) {
-		if (s == rpc_s) {
-			if (s->next) {
+	while(s) {
+		if(s == rpc_s) {
+			if(s->next) {
 				free_data_struct(s->next);
 				s->next = NULL;
 			}
@@ -536,22 +538,24 @@ static int rpc_struct_add(struct rpc_data_struct* rpc_s, char* fmt, ...)
 		ds = s;
 		s = s->next;
 	}
-	if (!s)
+	if(!s)
 		s = ds;
 	va_start(ap, fmt);
 	while(*fmt) {
-		member_name.s = va_arg(ap, char*);
-		member_name.len = (member_name.s?strlen(member_name.s):0);
-		if (*fmt == '{' || *fmt == '[') {
-			void_ptr = va_arg(ap, void**);
+		member_name.s = va_arg(ap, char *);
+		member_name.len = (member_name.s ? strlen(member_name.s) : 0);
+		if(*fmt == '{' || *fmt == '[') {
+			void_ptr = va_arg(ap, void **);
 			ds = new_data_struct(ctx);
-			if (!ds) goto err;
+			if(!ds)
+				goto err;
 			s->next = ds;
 			*void_ptr = ds;
-			if (0!=xhttp_rpc_build_content(ctx, NULL, &member_name))
+			if(0 != xhttp_rpc_build_content(ctx, NULL, &member_name))
 				goto err;
 		} else {
-			if (print_value(ctx, *fmt, &ap, &member_name) < 0) goto err;
+			if(print_value(ctx, *fmt, &ap, &member_name) < 0)
+				goto err;
 		}
 		fmt++;
 	}
@@ -565,26 +569,26 @@ err:
 
 /** Adds a new member to array.
  */
-static int rpc_array_add(struct rpc_data_struct* rpc_s, char* fmt, ...)
+static int rpc_array_add(struct rpc_data_struct *rpc_s, char *fmt, ...)
 {
 	va_list ap;
 	void **void_ptr;
 	rpc_ctx_t *ctx = rpc_s->ctx;
 	struct rpc_data_struct *ds, *s;
 
-	if (!ctx) {
+	if(!ctx) {
 		LM_ERR("Invalid context\n");
 		return -1;
 	}
-	if (!ctx->data_structs) {
+	if(!ctx->data_structs) {
 		LM_ERR("Invalid structs\n");
 		return -1;
 	}
 	s = ds = ctx->data_structs;
 	ctx->struc_depth = 0;
-	while (s) {
-		if (s == rpc_s) {
-			if (s->next) {
+	while(s) {
+		if(s == rpc_s) {
+			if(s->next) {
 				free_data_struct(s->next);
 				s->next = NULL;
 			}
@@ -594,20 +598,22 @@ static int rpc_array_add(struct rpc_data_struct* rpc_s, char* fmt, ...)
 		ds = s;
 		s = s->next;
 	}
-	if (!s)
+	if(!s)
 		s = ds;
 	va_start(ap, fmt);
 	while(*fmt) {
-		if (*fmt == '{' || *fmt == '[') {
-			void_ptr = va_arg(ap, void**);
+		if(*fmt == '{' || *fmt == '[') {
+			void_ptr = va_arg(ap, void **);
 			ds = new_data_struct(ctx);
-			if (!ds) goto err;
+			if(!ds)
+				goto err;
 			s->next = ds;
 			*void_ptr = ds;
-			if (0!=xhttp_rpc_build_content(ctx, NULL, NULL))
+			if(0 != xhttp_rpc_build_content(ctx, NULL, NULL))
 				goto err;
 		} else {
-			if (print_value(ctx, *fmt, &ap, NULL) < 0) goto err;
+			if(print_value(ctx, *fmt, &ap, NULL) < 0)
+				goto err;
 		}
 		fmt++;
 	}
@@ -619,7 +625,7 @@ err:
 }
 
 
-static int rpc_struct_scan(struct rpc_data_struct* rpc_s, char* fmt, ...)
+static int rpc_struct_scan(struct rpc_data_struct *rpc_s, char *fmt, ...)
 {
 	LM_ERR("Not implemented\n");
 	return -1;
@@ -628,23 +634,24 @@ static int rpc_struct_scan(struct rpc_data_struct* rpc_s, char* fmt, ...)
 
 /** Create a new member from formatting string and add it to a structure.
  */
-static int rpc_struct_printf(struct rpc_data_struct* rpc_s, char* member_name, char* fmt, ...)
+static int rpc_struct_printf(
+		struct rpc_data_struct *rpc_s, char *member_name, char *fmt, ...)
 {
 	va_list ap;
 	char buf[PRINT_VALUE_BUF_LEN];
 	int len;
-	str _name,_body;
+	str _name, _body;
 	rpc_ctx_t *ctx = rpc_s->ctx;
 
-	if (!ctx) {
+	if(!ctx) {
 		LM_ERR("Invalid context\n");
 		return -1;
 	}
 
 	va_start(ap, fmt);
-	len=vsnprintf(buf, PRINT_VALUE_BUF_LEN, fmt, ap);
+	len = vsnprintf(buf, PRINT_VALUE_BUF_LEN, fmt, ap);
 	va_end(ap);
-	if ((len<0) || (len>PRINT_VALUE_BUF_LEN)){
+	if((len < 0) || (len > PRINT_VALUE_BUF_LEN)) {
 		LM_ERR("buffer size exceeded [%d]\n", PRINT_VALUE_BUF_LEN);
 		return -1;
 	}
@@ -653,7 +660,8 @@ static int rpc_struct_printf(struct rpc_data_struct* rpc_s, char* member_name, c
 	_name.len = strlen(member_name);
 	_body.s = buf;
 	_body.len = len;
-	if (0!=xhttp_rpc_build_content(ctx, &_body, &_name)) return -1;
+	if(0 != xhttp_rpc_build_content(ctx, &_body, &_name))
+		return -1;
 
 	return 0;
 }
@@ -661,7 +669,7 @@ static int rpc_struct_printf(struct rpc_data_struct* rpc_s, char* member_name, c
 
 /** Returns the RPC capabilities supported by the xmlrpc driver.
  */
-static rpc_capabilities_t rpc_capabilities(rpc_ctx_t* ctx)
+static rpc_capabilities_t rpc_capabilities(rpc_ctx_t *ctx)
 {
 	/* No support for async commands.
 	 */
@@ -677,7 +685,7 @@ static rpc_capabilities_t rpc_capabilities(rpc_ctx_t* ctx)
  *  when finished call rpc_delayed_ctx_close().
  * Note2: adding pieces to the reply in different processes is not supported.
  */
-static struct rpc_delayed_ctx* rpc_delayed_ctx_new(rpc_ctx_t* ctx)
+static struct rpc_delayed_ctx *rpc_delayed_ctx_new(rpc_ctx_t *ctx)
 {
 	return NULL;
 }
@@ -687,7 +695,7 @@ static struct rpc_delayed_ctx* rpc_delayed_ctx_new(rpc_ctx_t* ctx)
  * If no reply has been sent the reply will be built and sent automatically.
  * See the notes from rpc_new_delayed_ctx()
  */
-static void rpc_delayed_ctx_close(struct rpc_delayed_ctx* dctx)
+static void rpc_delayed_ctx_close(struct rpc_delayed_ctx *dctx)
 {
 	return;
 }
@@ -698,22 +706,21 @@ static int mod_init(void)
 	int i;
 
 	/* bind the XHTTP API */
-	if (xhttp_load_api(&xhttp_api) < 0) {
+	if(xhttp_load_api(&xhttp_api) < 0) {
 		LM_ERR("cannot bind to XHTTP API\n");
 		return -1;
 	}
 
 	/* Check xhttp_rpc_buf_size param */
-	if (buf_size == 0)
-		buf_size = pkg_mem_size/3;
+	if(buf_size == 0)
+		buf_size = pkg_mem_size / 3;
 
 	/* Check xhttp_rpc_root param */
-	for(i=0;i<xhttp_rpc_root.len;i++){
-		if ( !isalnum(xhttp_rpc_root.s[i]) && xhttp_rpc_root.s[i]!='_') {
+	for(i = 0; i < xhttp_rpc_root.len; i++) {
+		if(!isalnum(xhttp_rpc_root.s[i]) && xhttp_rpc_root.s[i] != '_') {
 			LM_ERR("bad xhttp_rpc_root param [%.*s], char [%c] "
-				"- use only alphanumerical chars\n",
-				xhttp_rpc_root.len, xhttp_rpc_root.s,
-				xhttp_rpc_root.s[i]);
+				   "- use only alphanumerical chars\n",
+					xhttp_rpc_root.len, xhttp_rpc_root.s, xhttp_rpc_root.s[i]);
 			return -1;
 		}
 	}
@@ -731,7 +738,7 @@ static int mod_init(void)
 	func_param.capabilities = (rpc_capabilities_f)rpc_capabilities;
 	func_param.delayed_ctx_new = (rpc_delayed_ctx_new_f)rpc_delayed_ctx_new;
 	func_param.delayed_ctx_close =
-		(rpc_delayed_ctx_close_f)rpc_delayed_ctx_close;
+			(rpc_delayed_ctx_close_f)rpc_delayed_ctx_close;
 
 	return 0;
 }
@@ -743,15 +750,14 @@ static int child_init(int rank)
 	xhttp_rpc_mod_cmds_t *cmds;
 	/* rpc_export_t *rpc_e; */
 
-	if(rank==PROC_MAIN || rank==PROC_TCP_MAIN)
+	if(rank == PROC_MAIN || rank == PROC_TCP_MAIN)
 		return 0; /* do nothing for the main process */
 
-	if (rank==PROC_INIT)
-	{
+	if(rank == PROC_INIT) {
 		/* building a cache of rpc module commands */
-		xhttp_rpc_mod_cmds =
-			(xhttp_rpc_mod_cmds_t*)pkg_malloc(sizeof(xhttp_rpc_mod_cmds_t));
-		if (xhttp_rpc_mod_cmds==NULL){
+		xhttp_rpc_mod_cmds = (xhttp_rpc_mod_cmds_t *)pkg_malloc(
+				sizeof(xhttp_rpc_mod_cmds_t));
+		if(xhttp_rpc_mod_cmds == NULL) {
 			PKG_MEM_ERROR;
 			return -1;
 		}
@@ -761,39 +767,39 @@ static int child_init(int rank)
 		xhttp_rpc_mod_cmds->size = 0;
 		xhttp_rpc_mod_cmds_size = 1;
 		cmds = xhttp_rpc_mod_cmds;
-		for(i=0; i<rpc_sarray_crt_size; i++){
+		for(i = 0; i < rpc_sarray_crt_size; i++) {
 			len = strlen(rpc_sarray[i]->r.name);
 			j = 0;
-			while (j<len && rpc_sarray[i]->r.name[j]!='.')
+			while(j < len && rpc_sarray[i]->r.name[j] != '.')
 				j++;
-			if (j==len) {
-				LM_DBG("dropping invalid command format [%.*s]\n",
-						len, rpc_sarray[i]->r.name);
+			if(j == len) {
+				LM_DBG("dropping invalid command format [%.*s]\n", len,
+						rpc_sarray[i]->r.name);
 			} else {
-				if (cmds->mod.len==0) {
+				if(cmds->mod.len == 0) {
 					/* this is the first module */
 					cmds->rpc_e_index = i;
-					cmds->mod.s = (char*)&rpc_sarray[i]->r.name[0];
+					cmds->mod.s = (char *)&rpc_sarray[i]->r.name[0];
 					cmds->mod.len = j;
 					cmds->size++;
-				} else if (cmds->mod.len==j &&
-					strncmp(cmds->mod.s,
-						(char*)&rpc_sarray[i]->r.name[0],
-						j)==0){
+				} else if(cmds->mod.len == j
+						  && strncmp(cmds->mod.s,
+									 (char *)&rpc_sarray[i]->r.name[0], j)
+									 == 0) {
 					cmds->size++;
 				} else {
-					cmds = (xhttp_rpc_mod_cmds_t*)
-						pkg_realloc(xhttp_rpc_mod_cmds,
-							(xhttp_rpc_mod_cmds_size+1)*
-							sizeof(xhttp_rpc_mod_cmds_t));
-					if (cmds==NULL){
+					cmds = (xhttp_rpc_mod_cmds_t *)pkg_realloc(
+							xhttp_rpc_mod_cmds,
+							(xhttp_rpc_mod_cmds_size + 1)
+									* sizeof(xhttp_rpc_mod_cmds_t));
+					if(cmds == NULL) {
 						LM_ERR("oom\n");
 						return -1;
 					}
 					xhttp_rpc_mod_cmds = cmds;
 					cmds = &xhttp_rpc_mod_cmds[xhttp_rpc_mod_cmds_size];
 					cmds->rpc_e_index = i;
-					cmds->mod.s = (char*)&rpc_sarray[i]->r.name[0];
+					cmds->mod.s = (char *)&rpc_sarray[i]->r.name[0];
 					cmds->mod.len = j;
 					xhttp_rpc_mod_cmds_size++;
 					cmds->size = 1;
@@ -822,9 +828,9 @@ static int child_init(int rank)
 }
 
 
-static int ki_xhttp_rpc_dispatch(sip_msg_t* msg)
+static int ki_xhttp_rpc_dispatch(sip_msg_t *msg)
 {
-	rpc_exportx_t* rpc_e;
+	rpc_exportx_t *rpc_e;
 	str arg = {NULL, 0};
 	int ret = 0;
 	int i;
@@ -835,31 +841,36 @@ static int ki_xhttp_rpc_dispatch(sip_msg_t* msg)
 	}
 
 	/* Init xhttp_rpc context */
-	if (ctx.reply.buf.s) LM_ERR("Unexpected buf value [%p][%d]\n",
-				ctx.reply.buf.s, ctx.reply.buf.len);
+	if(ctx.reply.buf.s)
+		LM_ERR("Unexpected buf value [%p][%d]\n", ctx.reply.buf.s,
+				ctx.reply.buf.len);
 	memset(&ctx, 0, sizeof(rpc_ctx_t));
 	ctx.msg = msg;
 	ctx.mod = ctx.cmd = -1;
-	if (init_xhttp_rpc_reply(&ctx) < 0) goto send_reply;
+	if(init_xhttp_rpc_reply(&ctx) < 0)
+		goto send_reply;
 
 	/* Extract arguments from url */
-	if (0!=xhttp_rpc_parse_url(&msg->first_line.u.request.uri,
-				&ctx.mod, &ctx.cmd, &arg)){
+	if(0
+			!= xhttp_rpc_parse_url(
+					&msg->first_line.u.request.uri, &ctx.mod, &ctx.cmd, &arg)) {
 		rpc_fault(&ctx, 500, "Bad URL");
 		goto send_reply;
 	}
 
-	if (arg.s) {
-		if (arg.len) {
+	if(arg.s) {
+		if(arg.len) {
 			/* Unescape args */
-			ctx.arg.s = pkg_malloc((arg.len+1)*sizeof(char));
-			if (ctx.arg.s==NULL){
+			ctx.arg.s = pkg_malloc((arg.len + 1) * sizeof(char));
+			if(ctx.arg.s == NULL) {
 				PKG_MEM_ERROR;
 				rpc_fault(&ctx, 500, "Internal Server Error (oom)");
 				goto send_reply;
 			}
-			for(i=0;i<arg.len;i++) if (arg.s[i]=='+') arg.s[i]=' ';
-			if (0>un_escape(&arg, &ctx.arg)) {
+			for(i = 0; i < arg.len; i++)
+				if(arg.s[i] == '+')
+					arg.s[i] = ' ';
+			if(0 > un_escape(&arg, &ctx.arg)) {
 				LM_ERR("unable to escape [%.*s]\n", arg.len, arg.s);
 				rpc_fault(&ctx, 500, "Bad arg in URL");
 				goto send_reply;
@@ -882,18 +893,19 @@ static int ki_xhttp_rpc_dispatch(sip_msg_t* msg)
 		goto send_reply;
 	}
 	*/
-	rpc_e=rpc_sarray[xhttp_rpc_mod_cmds[ctx.mod].rpc_e_index+ctx.cmd];
+	rpc_e = rpc_sarray[xhttp_rpc_mod_cmds[ctx.mod].rpc_e_index + ctx.cmd];
 	rpc_e->r.function(&func_param, &ctx);
 
 send_reply:
-	if (!ctx.reply_sent) {
+	if(!ctx.reply_sent) {
 		ret = rpc_send(&ctx);
 	}
-	if (ret < 0) return -1;
+	if(ret < 0)
+		return -1;
 	return 0;
 }
 
-static int xhttp_rpc_dispatch(sip_msg_t* msg, char* s1, char* s2)
+static int xhttp_rpc_dispatch(sip_msg_t *msg, char *s1, char *s2)
 {
 	return ki_xhttp_rpc_dispatch(msg);
 }
