@@ -29,29 +29,31 @@
 #include "../../lib/srdb1/db_val.h"
 #include "../../core/locking.h"
 
-#define DBT_FLAG_UNSET  0
-#define DBT_FLAG_NULL   1
-#define DBT_FLAG_AUTO   2
+#define DBT_FLAG_UNSET 0
+#define DBT_FLAG_NULL 1
+#define DBT_FLAG_AUTO 2
 
-#define DBT_TBFL_ZERO	0
-#define DBT_TBFL_MODI	1
-#define DBT_TBFL_TEMP	2
+#define DBT_TBFL_ZERO 0
+#define DBT_TBFL_MODI 1
+#define DBT_TBFL_TEMP 2
 
-#define DBT_FL_IGN		-1
-#define DBT_FL_SET		0
-#define DBT_FL_UNSET	1
+#define DBT_FL_IGN -1
+#define DBT_FL_SET 0
+#define DBT_FL_UNSET 1
 
-#define DBT_DELIM_C	' '
-#define DBT_DELIM_R	'\n'
+#define DBT_DELIM_C ' '
+#define DBT_DELIM_R '\n'
 
 /*
  *  * Module parameters variables
  *   */
 extern int db_mode; /* Database usage mode: 0 = no cache, 1 = cache */
-extern int empty_string; /* If TRUE, an empty string is an empty string, otherwise NULL */
-extern int _db_text_read_buffer_size; /* size of the buffer to allocate when reading file */
+extern int
+		empty_string; /* If TRUE, an empty string is an empty string, otherwise NULL */
+extern int
+		_db_text_read_buffer_size; /* size of the buffer to allocate when reading file */
 extern int _dbt_delim;
-extern str _dbt_delim_str; /* the delimiter inside db_text files */
+extern str _dbt_delim_str;			 /* the delimiter inside db_text files */
 extern int _db_text_max_result_rows; /* max result rows */
 
 typedef db_val_t dbt_val_t, *dbt_val_p;
@@ -108,23 +110,22 @@ typedef struct _dbt_cache
 } dbt_cache_t, *dbt_cache_p;
 
 
-
 int dbt_init_cache(void);
 int dbt_cache_destroy(void);
 int dbt_cache_print(int);
 int dbt_cache_print2(int, int);
 
-dbt_cache_p dbt_cache_get_db(str*);
-int dbt_cache_check_db(str*);
-int dbt_cache_del_db(str*);
-dbt_table_p dbt_db_get_table(dbt_cache_p, const str*);
-int dbt_release_table(dbt_cache_p, const str*);
+dbt_cache_p dbt_cache_get_db(str *);
+int dbt_cache_check_db(str *);
+int dbt_cache_del_db(str *);
+dbt_table_p dbt_db_get_table(dbt_cache_p, const str *);
+int dbt_release_table(dbt_cache_p, const str *);
 
 int dbt_cache_free(dbt_cache_p);
 
-dbt_column_p dbt_column_new(char*, int);
+dbt_column_p dbt_column_new(char *, int);
 dbt_row_p dbt_row_new(int);
-dbt_table_p dbt_table_new(const str*, const str*, const char*);
+dbt_table_p dbt_table_new(const str *, const str *, const char *);
 dbt_table_p dbt_db_get_temp_table(dbt_cache_p _dc);
 
 int dbt_row_free(dbt_table_p, dbt_row_p);
@@ -144,10 +145,10 @@ dbt_table_p dbt_load_file(const str *, const str *);
 int dbt_print_table(dbt_table_p, str *);
 int dbt_print_table_header(dbt_table_p _dtp, FILE *fout);
 int dbt_print_table_row(dbt_table_p _dtp, dbt_row_p rowp, FILE *fout);
-int dbt_print_table_row_ex(dbt_table_p _dtp, dbt_row_p rowp, FILE *fout, int newline);
+int dbt_print_table_row_ex(
+		dbt_table_p _dtp, dbt_row_p rowp, FILE *fout, int newline);
 int dbt_print_table_rows(dbt_table_p _dtp, FILE *fout);
 int dbt_print_table_content(dbt_table_p _dtp, FILE *fout);
 int dbt_is_neq_type(db_type_t _t0, db_type_t _t1);
 
 #endif
-

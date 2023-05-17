@@ -35,11 +35,11 @@
  * Retrieve result set
  */
 //int dbt_get_result(db1_res_t** _r, dbt_result_p _dres);
-int dbt_get_result(db1_res_t** _r, dbt_table_p _dres);
-int dbt_init_result(db1_res_t** _r, dbt_table_p _dres);
-int dbt_get_next_result(db1_res_t** _r, int offset, int rows);
+int dbt_get_result(db1_res_t **_r, dbt_table_p _dres);
+int dbt_init_result(db1_res_t **_r, dbt_table_p _dres);
+int dbt_get_next_result(db1_res_t **_r, int offset, int rows);
 
 
-int dbt_use_table(db1_con_t* _h, const str* _t);
+int dbt_use_table(db1_con_t *_h, const str *_t);
 
 #endif

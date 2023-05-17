@@ -31,10 +31,9 @@
 #include "../../lib/srdb1/db_val.h"
 
 
-char** dbt_str_split(char* a_str, const char a_delim, int* c);
-char* dbt_trim(char *str);
-int dbt_build_where(char* where, db_key_t** _k, db_op_t** _op, db_val_t** _v);
-void dbt_clean_where(int n, db_key_t* _k, db_op_t* _op, db_val_t* _v);
+char **dbt_str_split(char *a_str, const char a_delim, int *c);
+char *dbt_trim(char *str);
+int dbt_build_where(char *where, db_key_t **_k, db_op_t **_op, db_val_t **_v);
+void dbt_clean_where(int n, db_key_t *_k, db_op_t *_op, db_val_t *_v);
 
 #endif
-

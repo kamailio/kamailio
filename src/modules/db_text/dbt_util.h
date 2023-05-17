@@ -30,4 +30,3 @@
 int dbt_is_database(str *);
 
 #endif
-
