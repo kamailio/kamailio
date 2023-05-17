@@ -33,11 +33,11 @@
 #include "../../core/sr_module.h"
 
 /* terminate_dlg function prototype */
-typedef int (*ims_terminate_dlg_f)(str *callid, str *ftag, str *ttag, str *hdrs,
-		str *reason);
+typedef int (*ims_terminate_dlg_f)(
+		str *callid, str *ftag, str *ttag, str *hdrs, str *reason);
 
-typedef int (*ims_lookup_terminate_dlg_f)(unsigned int h_entry,
-		unsigned int h_id, str *hdrs);
+typedef int (*ims_lookup_terminate_dlg_f)(
+		unsigned int h_entry, unsigned int h_id, str *hdrs);
 
 /* get the current dialog based on message function prototype */
 typedef struct dlg_cell *(*ims_get_dlg_f)(struct sip_msg *msg);
@@ -47,32 +47,33 @@ typedef time_t (*ims_get_dlg_expires_f)(str *callid, str *ftag, str *ttag);
 
 typedef void (*ims_release_dlg_f)(struct dlg_cell *dlg);
 
-typedef struct ims_dlg_binds {
-	ims_register_dlgcb_f		register_dlgcb;
-	ims_register_dlgcb_nodlg_f	register_dlgcb_nodlg;
-	ims_terminate_dlg_f			terminate_dlg;
-	ims_lookup_terminate_dlg_f	lookup_terminate_dlg;
-	ims_set_dlg_variable_f		set_dlg_var;
-	ims_get_dlg_variable_f		get_dlg_var;
-	ims_get_dlg_expires_f		get_dlg_expires;
-	ims_get_dlg_f				get_dlg;
-	ims_release_dlg_f			release_dlg;
+typedef struct ims_dlg_binds
+{
+	ims_register_dlgcb_f register_dlgcb;
+	ims_register_dlgcb_nodlg_f register_dlgcb_nodlg;
+	ims_terminate_dlg_f terminate_dlg;
+	ims_lookup_terminate_dlg_f lookup_terminate_dlg;
+	ims_set_dlg_variable_f set_dlg_var;
+	ims_get_dlg_variable_f get_dlg_var;
+	ims_get_dlg_expires_f get_dlg_expires;
+	ims_get_dlg_f get_dlg;
+	ims_release_dlg_f release_dlg;
 } ims_dlg_api_t;
 
 
-typedef int(*load_ims_dlg_f)(ims_dlg_api_t *dlgb );
+typedef int (*load_ims_dlg_f)(ims_dlg_api_t *dlgb);
 int load_ims_dlg(ims_dlg_api_t *dlgb);
 
-static inline int load_ims_dlg_api(ims_dlg_api_t *dlgb )
+static inline int load_ims_dlg_api(ims_dlg_api_t *dlgb)
 {
 	load_ims_dlg_f load_ims_dlg_p;
 
 	/* import the DLG auto-loading function */
-	if ( !(load_ims_dlg_p=(load_ims_dlg_f)find_export("load_ims_dlg", 0, 0)))
+	if(!(load_ims_dlg_p = (load_ims_dlg_f)find_export("load_ims_dlg", 0, 0)))
 		return -1;
 
 	/* let the auto-loading function load all DLG stuff */
-	if (load_ims_dlg_p( dlgb )==-1)
+	if(load_ims_dlg_p(dlgb) == -1)
 		return -1;
 
 	return 0;

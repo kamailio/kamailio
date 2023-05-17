@@ -42,17 +42,17 @@
 #include "../../modules/tm/t_hooks.h"
 #include "dlg_timer.h"
 
-#define MI_DIALOG_NOT_FOUND 		"Requested Dialog not found"
-#define MI_DIALOG_NOT_FOUND_LEN 	(sizeof(MI_DIALOG_NOT_FOUND)-1)
-#define MI_DLG_OPERATION_ERR		"Operation failed"
-#define MI_DLG_OPERATION_ERR_LEN	(sizeof(MI_DLG_OPERATION_ERR)-1)
+#define MI_DIALOG_NOT_FOUND "Requested Dialog not found"
+#define MI_DIALOG_NOT_FOUND_LEN (sizeof(MI_DIALOG_NOT_FOUND) - 1)
+#define MI_DLG_OPERATION_ERR "Operation failed"
+#define MI_DLG_OPERATION_ERR_LEN (sizeof(MI_DLG_OPERATION_ERR) - 1)
 
 #define MAX_DLG_RR_PARAM_NAME 32
 
 /* values for the sequential match mode */
-#define SEQ_MATCH_STRICT_ID  0
-#define SEQ_MATCH_FALLBACK   1
-#define SEQ_MATCH_NO_ID      2
+#define SEQ_MATCH_STRICT_ID 0
+#define SEQ_MATCH_FALLBACK 1
+#define SEQ_MATCH_NO_ID 2
 
 
 /*!
@@ -63,9 +63,8 @@
  * \param default_timeout_p default timeout
  * \param seq_match_mode_p matching mode
  */
-void init_dlg_handlers(char *rr_param, int dlg_flag,
-		pv_spec_t *timeout_avp, int default_timeout,
-		int seq_match_mode);
+void init_dlg_handlers(char *rr_param, int dlg_flag, pv_spec_t *timeout_avp,
+		int default_timeout, int seq_match_mode);
 
 
 /*!
@@ -87,8 +86,8 @@ void destroy_dlg_handlers(void);
  * \note for a request: get record route in normal order, for a reply get
  * in reverse order, skipping the ones from the request and the proxies' own
  */
-int populate_leg_info( struct dlg_cell *dlg, struct sip_msg *msg,
-	struct cell* t, unsigned int leg, str *tag);
+int populate_leg_info(struct dlg_cell *dlg, struct sip_msg *msg, struct cell *t,
+		unsigned int leg, str *tag);
 
 /*!
  * \brief Clone dialog internal unique id to shared memory
@@ -108,9 +107,9 @@ void dlg_iuid_sfree(void *iuid);
  * \param type type of the entered callback
  * \param param saved dialog structure in the callback
  */
-void dlg_onreq(struct cell* t, int type, struct tmcb_params *param);
+void dlg_onreq(struct cell *t, int type, struct tmcb_params *param);
 
-void dlg_onreply(struct cell* t, int type, struct tmcb_params *param);
+void dlg_onreply(struct cell *t, int type, struct tmcb_params *param);
 
 /*!
  * \brief Function that is registered as RR callback for dialog tracking
@@ -123,14 +122,14 @@ void dlg_onreply(struct cell* t, int type, struct tmcb_params *param);
  * \param route_params record-route parameter
  * \param param unused
  */
-void dlg_onroute(struct sip_msg* req, str *rr_param, void *param);
+void dlg_onroute(struct sip_msg *req, str *rr_param, void *param);
 
 
 /*!
  * \brief Timer function that removes expired dialogs, run timeout route
  * \param tl dialog timer list
  */
-void dlg_ontimeout( struct dlg_tl *tl);
+void dlg_ontimeout(struct dlg_tl *tl);
 
 
 /*!
@@ -146,8 +145,9 @@ void dlg_ontimeout( struct dlg_tl *tl);
  * \param t transaction
  * \param run_initial_cbs if set zero, initial callbacks are not executed
  * \return 0 on success, -1 on failure
- */ 
-int dlg_new_dialog(struct sip_msg *req, struct cell *t, const int run_initial_cbs);
+ */
+int dlg_new_dialog(
+		struct sip_msg *req, struct cell *t, const int run_initial_cbs);
 
 /*!
  * \brief add dlg structure to tm callbacks
@@ -157,8 +157,8 @@ int dlg_new_dialog(struct sip_msg *req, struct cell *t, const int run_initial_cb
  * \param smode if the sip request was spiraled
  * \return 0 on success, -1 on failure
  */
-int dlg_set_tm_callbacks(tm_cell_t *t, sip_msg_t *req, dlg_cell_t *dlg,
-		int smode);
+int dlg_set_tm_callbacks(
+		tm_cell_t *t, sip_msg_t *req, dlg_cell_t *dlg, int smode);
 
 /*!
  * \brief Function that returns the dialog lifetime as pseudo-variable
@@ -167,8 +167,8 @@ int dlg_set_tm_callbacks(tm_cell_t *t, sip_msg_t *req, dlg_cell_t *dlg,
  * \param res pseudo-variable result
  * \return 0 on success, -1 on failure
  */
-int pv_get_dlg_lifetime(struct sip_msg *msg, pv_param_t *param,
-		pv_value_t *res);
+int pv_get_dlg_lifetime(
+		struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 
 
 /*!
@@ -178,8 +178,7 @@ int pv_get_dlg_lifetime(struct sip_msg *msg, pv_param_t *param,
  * \param res pseudo-variable result
  * \return 0 on success, -1 on failure
  */
-int pv_get_dlg_status(struct sip_msg *msg, pv_param_t *param,
-		pv_value_t *res);
+int pv_get_dlg_status(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 
 
 /*!
@@ -188,7 +187,7 @@ int pv_get_dlg_status(struct sip_msg *msg, pv_param_t *param,
  * \param type unused
  * \param param unused
  */
-void dlg_tmcb_dummy(struct cell* t, int type, struct tmcb_params *param);
+void dlg_tmcb_dummy(struct cell *t, int type, struct tmcb_params *param);
 
 /*!
  * \brief Helper function that prints information for all dialogs
