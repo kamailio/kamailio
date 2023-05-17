@@ -47,7 +47,7 @@
 MODULE_VERSION
 
 
-#define NR_KEYS			3
+#define NR_KEYS 3
 
 int mt_fetch_rows = 1000;
 
@@ -78,9 +78,9 @@ static str db_url = str_init(DEFAULT_DB_URL);
 /* default name created by sql scripts is 'mtrees'
  * - don't set it here with default value, only via config param */
 static str db_table = str_init("");
-static str tname_column   = str_init("tname");
+static str tname_column = str_init("tname");
 static str tprefix_column = str_init("tprefix");
-static str tvalue_column  = str_init("tvalue");
+static str tvalue_column = str_init("tvalue");
 
 /* List of allowed chars for a prefix*/
 str mt_char_list = str_init("0123456789");
@@ -105,60 +105,52 @@ static volatile int mt_tree_refcnt = 0;
 static volatile int mt_reload_flag = 0;
 
 int mt_param(modparam_t type, void *val);
-static int fixup_mt_match(void** param, int param_no);
-static int w_mt_match(struct sip_msg* msg, char* str1, char* str2,
-		char* str3);
+static int fixup_mt_match(void **param, int param_no);
+static int w_mt_match(struct sip_msg *msg, char *str1, char *str2, char *str3);
 
-static int  mod_init(void);
+static int mod_init(void);
 static void mod_destroy(void);
-static int  child_init(int rank);
+static int child_init(int rank);
 static int mtree_init_rpc(void);
-static int bind_mtree(mtree_api_t* api);
+static int bind_mtree(mtree_api_t *api);
 
-static int mt_match(sip_msg_t *msg, str *tname, str *tomatch,
-		int mval);
+static int mt_match(sip_msg_t *msg, str *tname, str *tomatch, int mval);
 
 static int mt_load_db(m_tree_t *pt);
 static int mt_load_db_trees();
 
-static cmd_export_t cmds[]={
-	{"mt_match", (cmd_function)w_mt_match, 3, fixup_mt_match,
-		0, REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE},
-	{"bind_mtree", (cmd_function)bind_mtree, 0, 0, 0},
-	{0, 0, 0, 0, 0, 0}
-};
+static cmd_export_t cmds[] = {
+		{"mt_match", (cmd_function)w_mt_match, 3, fixup_mt_match, 0,
+				REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONREPLY_ROUTE},
+		{"bind_mtree", (cmd_function)bind_mtree, 0, 0, 0}, {0, 0, 0, 0, 0, 0}};
 
-static param_export_t params[]={
-	{"mtree",          PARAM_STRING|USE_FUNC_PARAM, (void*)mt_param},
-	{"db_url",         PARAM_STR, &db_url},
-	{"db_table",       PARAM_STR, &db_table},
-	{"tname_column",   PARAM_STR, &tname_column},
-	{"tprefix_column", PARAM_STR, &tprefix_column},
-	{"tvalue_column",  PARAM_STR, &tvalue_column},
-	{"char_list",      PARAM_STR, &mt_char_list},
-	{"fetch_rows",     INT_PARAM, &mt_fetch_rows},
-	{"pv_value",       PARAM_STR, &value_param},
-	{"pv_values",      PARAM_STR, &values_param},
-	{"pv_dstid",       PARAM_STR, &dstid_param},
-	{"pv_weight",      PARAM_STR, &weight_param},
-	{"pv_count",       PARAM_STR, &count_param},
-	{"mt_tree_type",   INT_PARAM, &_mt_tree_type},
-	{"mt_ignore_duplicates", INT_PARAM, &_mt_ignore_duplicates},
-	{"mt_allow_duplicates", INT_PARAM, &_mt_allow_duplicates},
-	{0, 0, 0}
-};
+static param_export_t params[] = {
+		{"mtree", PARAM_STRING | USE_FUNC_PARAM, (void *)mt_param},
+		{"db_url", PARAM_STR, &db_url}, {"db_table", PARAM_STR, &db_table},
+		{"tname_column", PARAM_STR, &tname_column},
+		{"tprefix_column", PARAM_STR, &tprefix_column},
+		{"tvalue_column", PARAM_STR, &tvalue_column},
+		{"char_list", PARAM_STR, &mt_char_list},
+		{"fetch_rows", INT_PARAM, &mt_fetch_rows},
+		{"pv_value", PARAM_STR, &value_param},
+		{"pv_values", PARAM_STR, &values_param},
+		{"pv_dstid", PARAM_STR, &dstid_param},
+		{"pv_weight", PARAM_STR, &weight_param},
+		{"pv_count", PARAM_STR, &count_param},
+		{"mt_tree_type", INT_PARAM, &_mt_tree_type},
+		{"mt_ignore_duplicates", INT_PARAM, &_mt_ignore_duplicates},
+		{"mt_allow_duplicates", INT_PARAM, &_mt_allow_duplicates}, {0, 0, 0}};
 
 struct module_exports exports = {
-	"mtree",
-	DEFAULT_DLFLAGS,/* dlopen flags */
-	cmds,		/*·exported·functions·*/
-	params,		/*·exported·functions·*/
-	0,		/*·exported·RPC·methods·*/
-	0,		/* exported pseudo-variables */
-	0,		/* response·function */
-	mod_init,	/* module initialization function */
-	child_init,	/* per child init function */
-	mod_destroy	/* destroy function */
+		"mtree", DEFAULT_DLFLAGS, /* dlopen flags */
+		cmds,					  /*·exported·functions·*/
+		params,					  /*·exported·functions·*/
+		0,						  /*·exported·RPC·methods·*/
+		0,						  /* exported pseudo-variables */
+		0,						  /* response·function */
+		mod_init,				  /* module initialization function */
+		child_init,				  /* per child init function */
+		mod_destroy				  /* destroy function */
 };
 
 
@@ -169,51 +161,42 @@ static int mod_init(void)
 {
 	m_tree_t *pt = NULL;
 
-	if(mtree_init_rpc()!=0)
-	{
+	if(mtree_init_rpc() != 0) {
 		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}
 
-	if(pv_parse_spec(&value_param, &pv_value) < 0
-			|| !(pv_is_w(&pv_value)))
-	{
+	if(pv_parse_spec(&value_param, &pv_value) < 0 || !(pv_is_w(&pv_value))) {
 		LM_ERR("cannot parse value pv or pv is read-only\n");
 		return -1;
 	}
 
-	if (pv_parse_spec(&values_param, &pv_values) < 0
+	if(pv_parse_spec(&values_param, &pv_values) < 0
 			|| pv_values.type != PVT_AVP) {
 		LM_ERR("cannot parse values avp\n");
 		return -1;
 	}
 
-	if(pv_parse_spec(&dstid_param, &pv_dstid) < 0
-			|| pv_dstid.type!=PVT_AVP)
-	{
+	if(pv_parse_spec(&dstid_param, &pv_dstid) < 0 || pv_dstid.type != PVT_AVP) {
 		LM_ERR("cannot parse dstid avp\n");
 		return -1;
 	}
 
 	if(pv_parse_spec(&weight_param, &pv_weight) < 0
-			|| pv_weight.type!=PVT_AVP)
-	{
+			|| pv_weight.type != PVT_AVP) {
 		LM_ERR("cannot parse weight avp\n");
 		return -1;
 	}
 
-	if(pv_parse_spec(&count_param, &pv_count) < 0
-			|| !(pv_is_w(&pv_count)))
-	{
+	if(pv_parse_spec(&count_param, &pv_count) < 0 || !(pv_is_w(&pv_count))) {
 		LM_ERR("cannot parse count pv or pv is read-only\n");
 		return -1;
 	}
 
-	if(mt_fetch_rows<=0)
+	if(mt_fetch_rows <= 0)
 		mt_fetch_rows = 1000;
 
-	if(mt_char_list.len<=0)
-	{
+	if(mt_char_list.len <= 0) {
 		LM_ERR("invalid prefix char list\n");
 		return -1;
 	}
@@ -221,52 +204,45 @@ static int mod_init(void)
 	mt_char_table_init();
 
 	/* binding to database module */
-	if(db_bind_mod(&db_url, &mt_dbf))
-	{
+	if(db_bind_mod(&db_url, &mt_dbf)) {
 		LM_ERR("database module not found\n");
 		return -1;
 	}
 
-	if (!DB_CAPABILITY(mt_dbf, DB_CAP_ALL))
-	{
+	if(!DB_CAPABILITY(mt_dbf, DB_CAP_ALL)) {
 		LM_ERR("database module does not "
-				"implement all functions needed by the module\n");
+			   "implement all functions needed by the module\n");
 		return -1;
 	}
 
 	/* open a connection with the database */
 	db_con = mt_dbf.init(&db_url);
-	if(db_con==NULL)
-	{
+	if(db_con == NULL) {
 		LM_ERR("failed to connect to the database\n");
 		return -1;
 	}
 
 	LM_DBG("database connection opened successfully\n");
 
-	if ( (mt_lock=lock_alloc())==0) {
+	if((mt_lock = lock_alloc()) == 0) {
 		LM_CRIT("failed to alloc lock\n");
 		goto error1;
 	}
-	if (lock_init(mt_lock)==0 ) {
+	if(lock_init(mt_lock) == 0) {
 		LM_CRIT("failed to init lock\n");
 		goto error1;
 	}
 
-	if(mt_defined_trees())
-	{
+	if(mt_defined_trees()) {
 		LM_DBG("static trees defined\n");
 
 		pt = mt_get_first_tree();
 
-		while(pt!=NULL)
-		{
-			LM_DBG("loading from tree <%.*s>\n",
-					pt->tname.len, pt->tname.s);
+		while(pt != NULL) {
+			LM_DBG("loading from tree <%.*s>\n", pt->tname.len, pt->tname.s);
 
 			/* loading all information from database */
-			if(mt_load_db(pt)!=0)
-			{
+			if(mt_load_db(pt) != 0) {
 				LM_ERR("cannot load info from database\n");
 				goto error1;
 			}
@@ -276,19 +252,16 @@ static int mod_init(void)
 		db_table.s = "";
 		db_table.len = 0;
 	} else {
-		if(db_table.len<=0)
-		{
+		if(db_table.len <= 0) {
 			LM_ERR("no trees table defined\n");
 			goto error1;
 		}
-		if(mt_init_list_head()<0)
-		{
+		if(mt_init_list_head() < 0) {
 			LM_ERR("unable to init trees list head\n");
 			goto error1;
 		}
 		/* loading all information from database */
-		if(mt_load_db_trees()!=0)
-		{
+		if(mt_load_db_trees() != 0) {
 			LM_ERR("cannot load trees from database\n");
 			goto error1;
 		}
@@ -304,15 +277,14 @@ static int mod_init(void)
 	return 0;
 
 error1:
-	if (mt_lock)
-	{
-		lock_destroy( mt_lock );
-		lock_dealloc( mt_lock );
+	if(mt_lock) {
+		lock_destroy(mt_lock);
+		lock_dealloc(mt_lock);
 		mt_lock = 0;
 	}
 	mt_destroy_trees();
 
-	if(db_con!=NULL)
+	if(db_con != NULL)
 		mt_dbf.close(db_con);
 	db_con = 0;
 	return -1;
@@ -323,12 +295,11 @@ error1:
 static int child_init(int rank)
 {
 	/* skip child init for non-worker process ranks */
-	if (rank==PROC_INIT || rank==PROC_MAIN || rank==PROC_TCP_MAIN)
+	if(rank == PROC_INIT || rank == PROC_MAIN || rank == PROC_TCP_MAIN)
 		return 0;
 
 	db_con = mt_dbf.init(&db_url);
-	if(db_con==NULL)
-	{
+	if(db_con == NULL) {
 		LM_ERR("failed to connect to database\n");
 		return -1;
 	}
@@ -342,24 +313,22 @@ static void mod_destroy(void)
 {
 	LM_DBG("cleaning up\n");
 	mt_destroy_trees();
-	if (db_con!=NULL && mt_dbf.close!=NULL)
+	if(db_con != NULL && mt_dbf.close != NULL)
 		mt_dbf.close(db_con);
 	/* destroy lock */
-	if (mt_lock)
-	{
-		lock_destroy( mt_lock );
-		lock_dealloc( mt_lock );
+	if(mt_lock) {
+		lock_destroy(mt_lock);
+		lock_dealloc(mt_lock);
 		mt_lock = 0;
 	}
-
 }
 
-static int fixup_mt_match(void** param, int param_no)
+static int fixup_mt_match(void **param, int param_no)
 {
-	if(param_no==1 || param_no==2) {
+	if(param_no == 1 || param_no == 2) {
 		return fixup_spve_null(param, 1);
 	}
-	if (param_no != 3)	{
+	if(param_no != 3) {
 		LM_ERR("invalid parameter number %d\n", param_no);
 		return E_UNSPEC;
 	}
@@ -368,77 +337,69 @@ static int fixup_mt_match(void** param, int param_no)
 
 
 /* use tree tn, match var, by mode, output in avp params */
-static int mt_match(sip_msg_t *msg, str *tname, str *tomatch,
-		int mval)
+static int mt_match(sip_msg_t *msg, str *tname, str *tomatch, int mval)
 {
 	m_tree_t *tr = NULL;
 
-	if(msg==NULL) {
+	if(msg == NULL) {
 		LM_ERR("received null msg\n");
 		return -1;
 	}
 
 again:
-	lock_get( mt_lock );
-	if (mt_reload_flag) {
-		lock_release( mt_lock );
+	lock_get(mt_lock);
+	if(mt_reload_flag) {
+		lock_release(mt_lock);
 		sleep_us(5);
 		goto again;
 	}
 	mt_tree_refcnt++;
-	lock_release( mt_lock );
+	lock_release(mt_lock);
 
 	tr = mt_get_tree(tname);
-	if(tr==NULL) {
+	if(tr == NULL) {
 		/* no tree with such name*/
 		goto error;
 	}
 
-	if(mt_match_prefix(msg, tr, tomatch, mval)<0)
-	{
-		LM_DBG("no prefix found in [%.*s] for [%.*s]\n",
-				tname->len, tname->s,
+	if(mt_match_prefix(msg, tr, tomatch, mval) < 0) {
+		LM_DBG("no prefix found in [%.*s] for [%.*s]\n", tname->len, tname->s,
 				tomatch->len, tomatch->s);
 		goto error;
 	}
 
-	lock_get( mt_lock );
+	lock_get(mt_lock);
 	mt_tree_refcnt--;
-	lock_release( mt_lock );
+	lock_release(mt_lock);
 	return 1;
 
 error:
-	lock_get( mt_lock );
+	lock_get(mt_lock);
 	mt_tree_refcnt--;
-	lock_release( mt_lock );
+	lock_release(mt_lock);
 	return -1;
 }
 
-static int w_mt_match(struct sip_msg* msg, char* ptn, char* pvar,
-		char* pmode)
+static int w_mt_match(struct sip_msg *msg, char *ptn, char *pvar, char *pmode)
 {
 	str tname;
 	str tomatch;
 	int mval;
 
-	if(msg==NULL)
-	{
+	if(msg == NULL) {
 		LM_ERR("received null msg\n");
 		return -1;
 	}
 
-	if(fixup_get_svalue(msg, (gparam_t*)ptn, &tname)<0)
-	{
+	if(fixup_get_svalue(msg, (gparam_t *)ptn, &tname) < 0) {
 		LM_ERR("cannot get the tree name\n");
 		return -1;
 	}
-	if(fixup_get_svalue(msg, (gparam_t*)pvar, &tomatch)<0)
-	{
+	if(fixup_get_svalue(msg, (gparam_t *)pvar, &tomatch) < 0) {
 		LM_ERR("cannot get the match var\n");
 		return -1;
 	}
-	if(fixup_get_ivalue(msg, (gparam_t*)pmode, &mval)<0)
-	{
+	if(fixup_get_ivalue(msg, (gparam_t *)pmode, &mval) < 0) {
 		LM_ERR("cannot get the mode\n");
 		return -1;
 	}
@@ -448,17 +409,16 @@ static int w_mt_match(struct sip_msg* msg, char* ptn, char* pvar,
 
 int mt_param(modparam_t type, void *val)
 {
-	if(val==NULL)
+	if(val == NULL)
 		goto error;
 
-	return mt_table_spec((char*)val);
+	return mt_table_spec((char *)val);
 error:
 	return -1;
-
 }
 
-static int mt_pack_values(m_tree_t *pt, db1_res_t* db_res,
-		int row, int cols, str *tvalue)
+static int mt_pack_values(
+		m_tree_t *pt, db1_res_t *db_res, int row, int cols, str *tvalue)
 {
 	static char vbuf[4096];
 	int c;
@@ -467,7 +427,7 @@ static int mt_pack_values(m_tree_t *pt, db1_res_t* db_res,
 	str iv;
 
 	len = 0;
-	for(c=1; c<cols; c++) {
+	for(c = 1; c < cols; c++) {
 		if(VAL_NULL(&RES_ROWS(db_res)[row].values[c])) {
 			len += 1;
 		} else if(RES_ROWS(db_res)[row].values[c].type == DB1_STRING) {
@@ -481,12 +441,12 @@ static int mt_pack_values(m_tree_t *pt, db1_res_t* db_res,
 			return -1;
 		}
 	}
-	if(len + c>=4096) {
-		LM_ERR("too large values (need %d)\n", len+c);
+	if(len + c >= 4096) {
+		LM_ERR("too large values (need %d)\n", len + c);
 		return -1;
 	}
 	p = vbuf;
-	for(c=1; c<cols; c++) {
+	for(c = 1; c < cols; c++) {
 		if(VAL_NULL(&RES_ROWS(db_res)[row].values[c])) {
 			*p = pt->pack[2];
 			p++;
@@ -495,14 +455,15 @@ static int mt_pack_values(m_tree_t *pt, db1_res_t* db_res,
 			p += strlen(RES_ROWS(db_res)[row].values[c].val.string_val);
 		} else if(RES_ROWS(db_res)[row].values[c].type == DB1_STR) {
 			strncpy(p, RES_ROWS(db_res)[row].values[c].val.str_val.s,
-				RES_ROWS(db_res)[row].values[c].val.str_val.len);
+					RES_ROWS(db_res)[row].values[c].val.str_val.len);
 			p += RES_ROWS(db_res)[row].values[c].val.str_val.len;
 		} else if(RES_ROWS(db_res)[row].values[c].type == DB1_INT) {
-			iv.s = sint2str(RES_ROWS(db_res)[row].values[c].val.int_val, &iv.len);
+			iv.s = sint2str(
+					RES_ROWS(db_res)[row].values[c].val.int_val, &iv.len);
 			strncpy(p, iv.s, iv.len);
 			p += iv.len;
 		}
-		if(c+1<cols) {
+		if(c + 1 < cols) {
 			*p = pt->pack[1];
 			p++;
 		}
@@ -520,14 +481,14 @@ static int mt_load_db(m_tree_t *pt)
 	db_op_t op[1] = {OP_EQ};
 	db_val_t vals[1];
 	str tprefix, tvalue;
-	db1_res_t* db_res = NULL;
+	db1_res_t *db_res = NULL;
 	int i, ret, c;
 	m_tree_t new_tree;
 	m_tree_t *old_tree = NULL;
 	mt_node_t *bk_head = NULL;
 
-	if(pt->ncols>0) {
-		for(c=0; c<pt->ncols; c++) {
+	if(pt->ncols > 0) {
+		for(c = 0; c < pt->ncols; c++) {
 			db_cols[c] = &pt->scols[c];
 		}
 	} else {
@@ -540,15 +501,13 @@ static int mt_load_db(m_tree_t *pt)
 	VAL_NULL(vals) = 0;
 	VAL_STRING(vals) = pt->tname.s;
 
-	if(db_con==NULL)
-	{
+	if(db_con == NULL) {
 		LM_ERR("no db connection\n");
 		return -1;
 	}
 
 	old_tree = mt_get_tree(&(pt->tname));
-	if(old_tree==NULL)
-	{
+	if(old_tree == NULL) {
 		LM_ERR("tree definition not found [%.*s]\n", pt->tname.len,
 				pt->tname.s);
 		return -1;
@@ -563,36 +522,31 @@ static int mt_load_db(m_tree_t *pt)
 	new_tree.reload_time = (uint64_t)time(NULL);
 
 
-	if (mt_dbf.use_table(db_con, &old_tree->dbtable) < 0)
-	{
+	if(mt_dbf.use_table(db_con, &old_tree->dbtable) < 0) {
 		LM_ERR("failed to use_table\n");
 		return -1;
 	}
 
-	if (DB_CAPABILITY(mt_dbf, DB_CAP_FETCH)) {
-		if(mt_dbf.query(db_con, key_cols, op, vals, db_cols, pt->multi,
-				c, 0, 0) < 0)
-		{
+	if(DB_CAPABILITY(mt_dbf, DB_CAP_FETCH)) {
+		if(mt_dbf.query(db_con, key_cols, op, vals, db_cols, pt->multi, c, 0, 0)
+				< 0) {
 			LM_ERR("Error while querying db\n");
 			return -1;
 		}
-		if(mt_dbf.fetch_result(db_con, &db_res, mt_fetch_rows)<0)
-		{
+		if(mt_dbf.fetch_result(db_con, &db_res, mt_fetch_rows) < 0) {
 			LM_ERR("Error while fetching result\n");
 			goto error;
 		} else {
-			if(RES_ROW_N(db_res)==0)
-			{
+			if(RES_ROW_N(db_res) == 0) {
 				goto dbreloaded;
 			}
 		}
 	} else {
-		if((ret=mt_dbf.query(db_con, key_cols, op, vals, db_cols,
-						pt->multi, 2, 0, &db_res))!=0
-				|| RES_ROW_N(db_res)<=0 )
-		{
-			if(ret==0)
-			{
+		if((ret = mt_dbf.query(db_con, key_cols, op, vals, db_cols, pt->multi,
+					2, 0, &db_res))
+						!= 0
+				|| RES_ROW_N(db_res) <= 0) {
+			if(ret == 0) {
 				goto dbreloaded;
 			} else {
 				goto error;
@@ -600,11 +554,9 @@ static int mt_load_db(m_tree_t *pt)
 		}
 	}
 
-	if(RES_ROW_N(db_res)>0)
-	{
+	if(RES_ROW_N(db_res) > 0) {
 		if(RES_ROWS(db_res)[0].values[0].type != DB1_STRING
-				|| RES_ROWS(db_res)[0].values[1].type != DB1_STRING)
-		{
+				|| RES_ROWS(db_res)[0].values[1].type != DB1_STRING) {
 			LM_ERR("wrong column types in db table (%d / %d)\n",
 					RES_ROWS(db_res)[0].values[0].type,
 					RES_ROWS(db_res)[0].values[1].type);
@@ -613,59 +565,57 @@ static int mt_load_db(m_tree_t *pt)
 	}
 
 	do {
-		for(i=0; i<RES_ROW_N(db_res); i++)
-		{
+		for(i = 0; i < RES_ROW_N(db_res); i++) {
 			/* check for NULL values ?!?! */
-			tprefix.s = (char*)(RES_ROWS(db_res)[i].values[0].val.string_val);
+			tprefix.s = (char *)(RES_ROWS(db_res)[i].values[0].val.string_val);
 			tprefix.len = strlen(ZSW(tprefix.s));
 
-			if(c>2) {
-				if(mt_pack_values(&new_tree, db_res, i, c, &tvalue)<0) {
+			if(c > 2) {
+				if(mt_pack_values(&new_tree, db_res, i, c, &tvalue) < 0) {
 					LM_ERR("Error packing values\n");
 					goto error;
 				}
 			} else {
-				tvalue.s = (char*)(RES_ROWS(db_res)[i].values[1].val.string_val);
+				tvalue.s =
+						(char *)(RES_ROWS(db_res)[i].values[1].val.string_val);
 				tvalue.len = strlen(ZSW(tvalue.s));
 			}
 
-			if(tprefix.s==NULL || tvalue.s==NULL
-					|| tprefix.len<=0 || tvalue.len<=0)
-			{
+			if(tprefix.s == NULL || tvalue.s == NULL || tprefix.len <= 0
+					|| tvalue.len <= 0) {
 				LM_ERR("Error - bad record in db"
-						" (prefix: %p/%d - value: %p/%d)\n",
+					   " (prefix: %p/%d - value: %p/%d)\n",
 						tprefix.s, tprefix.len, tvalue.s, tvalue.len);
 				continue;
 			}
 
-			if(mt_add_to_tree(&new_tree, &tprefix, &tvalue)<0)
-			{
+			if(mt_add_to_tree(&new_tree, &tprefix, &tvalue) < 0) {
 				LM_ERR("Error adding info to tree\n");
 				goto error;
 			}
 		}
-		if (DB_CAPABILITY(mt_dbf, DB_CAP_FETCH)) {
-			if(mt_dbf.fetch_result(db_con, &db_res, mt_fetch_rows)<0) {
+		if(DB_CAPABILITY(mt_dbf, DB_CAP_FETCH)) {
+			if(mt_dbf.fetch_result(db_con, &db_res, mt_fetch_rows) < 0) {
 				LM_ERR("Error while fetching!\n");
-				if (db_res)
+				if(db_res)
 					mt_dbf.free_result(db_con, db_res);
 				goto error;
 			}
 		} else {
 			break;
 		}
-	}  while(RES_ROW_N(db_res)>0);
+	} while(RES_ROW_N(db_res) > 0);
 
 dbreloaded:
 	mt_dbf.free_result(db_con, db_res);
 
 
 	/* block all readers */
-	lock_get( mt_lock );
+	lock_get(mt_lock);
 	mt_reload_flag = 1;
-	lock_release( mt_lock );
+	lock_release(mt_lock);
 
-	while (mt_tree_refcnt) {
+	while(mt_tree_refcnt) {
 		sleep_us(10);
 	}
 
@@ -675,19 +625,19 @@ dbreloaded:
 	old_tree->nritems = new_tree.nritems;
 	old_tree->memsize = new_tree.memsize;
 	old_tree->reload_count = new_tree.reload_count;
-	old_tree->reload_time  = new_tree.reload_time;
+	old_tree->reload_time = new_tree.reload_time;
 
 	mt_reload_flag = 0;
 
 	/* free old data */
-	if (bk_head!=NULL)
+	if(bk_head != NULL)
 		mt_free_node(bk_head, new_tree.type);
 
 	return 0;
 
 error:
 	mt_dbf.free_result(db_con, db_res);
-	if (new_tree.head!=NULL)
+	if(new_tree.head != NULL)
 		mt_free_node(new_tree.head, new_tree.type);
 	return -1;
 }
@@ -696,51 +646,44 @@ static int mt_load_db_trees()
 {
 	db_key_t db_cols[3] = {&tname_column, &tprefix_column, &tvalue_column};
 	str tprefix, tvalue, tname;
-	db1_res_t* db_res = NULL;
+	db1_res_t *db_res = NULL;
 	int i, ret;
 	m_tree_t *new_head = NULL;
 	m_tree_t *new_tree = NULL;
 	m_tree_t *old_head = NULL;
 
-	if(db_con==NULL)
-	{
+	if(db_con == NULL) {
 		LM_ERR("no db connection\n");
 		return -1;
 	}
 
-	if (mt_dbf.use_table(db_con, &db_table) < 0)
-	{
+	if(mt_dbf.use_table(db_con, &db_table) < 0) {
 		LM_ERR("failed to use_table\n");
 		return -1;
 	}
 
-	if (DB_CAPABILITY(mt_dbf, DB_CAP_FETCH))
-	{
-		if(mt_dbf.query(db_con,0,0,0,db_cols,0,3,&tname_column,0) < 0)
-		{
+	if(DB_CAPABILITY(mt_dbf, DB_CAP_FETCH)) {
+		if(mt_dbf.query(db_con, 0, 0, 0, db_cols, 0, 3, &tname_column, 0) < 0) {
 			LM_ERR("Error while querying db\n");
 			return -1;
 		}
-		if(mt_dbf.fetch_result(db_con, &db_res, mt_fetch_rows)<0)
-		{
+		if(mt_dbf.fetch_result(db_con, &db_res, mt_fetch_rows) < 0) {
 			LM_ERR("Error while fetching result\n");
-			if (db_res)
+			if(db_res)
 				mt_dbf.free_result(db_con, db_res);
 			goto error;
 		} else {
-			if(RES_ROW_N(db_res)==0)
-			{
+			if(RES_ROW_N(db_res) == 0) {
 				return 0;
 			}
 		}
 	} else {
-		if((ret=mt_dbf.query(db_con, NULL, NULL, NULL, db_cols,
-						0, 3, &tname_column, &db_res))!=0
-				|| RES_ROW_N(db_res)<=0 )
-		{
+		if((ret = mt_dbf.query(db_con, NULL, NULL, NULL, db_cols, 0, 3,
+					&tname_column, &db_res))
+						!= 0
+				|| RES_ROW_N(db_res) <= 0) {
 			mt_dbf.free_result(db_con, db_res);
-			if( ret==0)
-			{
+			if(ret == 0) {
 				return 0;
 			} else {
 				goto error;
@@ -749,15 +692,13 @@ static int mt_load_db_trees()
 	}
 
 	do {
-		for(i=0; i<RES_ROW_N(db_res); i++)
-		{
+		for(i = 0; i < RES_ROW_N(db_res); i++) {
 			/* check for NULL values ?!?! */
-			tname.s = (char*)(RES_ROWS(db_res)[i].values[0].val.string_val);
-			tprefix.s = (char*)(RES_ROWS(db_res)[i].values[1].val.string_val);
-			tvalue.s = (char*)(RES_ROWS(db_res)[i].values[2].val.string_val);
+			tname.s = (char *)(RES_ROWS(db_res)[i].values[0].val.string_val);
+			tprefix.s = (char *)(RES_ROWS(db_res)[i].values[1].val.string_val);
+			tvalue.s = (char *)(RES_ROWS(db_res)[i].values[2].val.string_val);
 
-			if(tprefix.s==NULL || tvalue.s==NULL || tname.s==NULL)
-			{
+			if(tprefix.s == NULL || tvalue.s == NULL || tname.s == NULL) {
 				LM_ERR("Error - null fields in db\n");
 				continue;
 			}
@@ -766,43 +707,40 @@ static int mt_load_db_trees()
 			tprefix.len = strlen(tprefix.s);
 			tvalue.len = strlen(tvalue.s);
 
-			if(tname.len<=0 || tprefix.len<=0 || tvalue.len<=0)
-			{
+			if(tname.len <= 0 || tprefix.len <= 0 || tvalue.len <= 0) {
 				LM_ERR("Error - bad values in db\n");
 				continue;
 			}
-			new_tree = mt_add_tree(&new_head, &tname, &db_table, NULL,
-							_mt_tree_type, 0);
-			if(new_tree==NULL)
-			{
+			new_tree = mt_add_tree(
+					&new_head, &tname, &db_table, NULL, _mt_tree_type, 0);
+			if(new_tree == NULL) {
 				LM_ERR("New tree cannot be initialized\n");
 				goto error;
 			}
-			if(mt_add_to_tree(new_tree, &tprefix, &tvalue)<0)
-			{
+			if(mt_add_to_tree(new_tree, &tprefix, &tvalue) < 0) {
 				LM_ERR("Error adding info to tree\n");
 				goto error;
 			}
 		}
-		if (DB_CAPABILITY(mt_dbf, DB_CAP_FETCH)) {
-			if(mt_dbf.fetch_result(db_con, &db_res, mt_fetch_rows)<0) {
+		if(DB_CAPABILITY(mt_dbf, DB_CAP_FETCH)) {
+			if(mt_dbf.fetch_result(db_con, &db_res, mt_fetch_rows) < 0) {
 				LM_ERR("Error while fetching!\n");
-				if (db_res)
+				if(db_res)
 					mt_dbf.free_result(db_con, db_res);
 				goto error;
 			}
 		} else {
 			break;
 		}
-	} while(RES_ROW_N(db_res)>0);
+	} while(RES_ROW_N(db_res) > 0);
 	mt_dbf.free_result(db_con, db_res);
 
 	/* block all readers */
-	lock_get( mt_lock );
+	lock_get(mt_lock);
 	mt_reload_flag = 1;
-	lock_release( mt_lock );
+	lock_release(mt_lock);
 
-	while (mt_tree_refcnt) {
+	while(mt_tree_refcnt) {
 		sleep_us(10);
 	}
 
@@ -810,91 +748,81 @@ static int mt_load_db_trees()
 
 	mt_reload_flag = 0;
 	/* free old data */
-	if (old_head!=NULL)
+	if(old_head != NULL)
 		mt_free_tree(old_head);
 
 	return 0;
 
 error:
 	mt_dbf.free_result(db_con, db_res);
-	if (new_head!=NULL)
+	if(new_head != NULL)
 		mt_free_tree(new_head);
 	return -1;
 }
 
 
 /* RPC commands */
-void rpc_mtree_summary(rpc_t* rpc, void* c)
+void rpc_mtree_summary(rpc_t *rpc, void *c)
 {
 	str tname = {0, 0};
 	m_tree_t *pt;
-	void* th;
-	void* ih;
+	void *th;
+	void *ih;
 	int found;
 
-	if(!mt_defined_trees())
-	{
+	if(!mt_defined_trees()) {
 		rpc->fault(c, 500, "Empty tree list");
 		return;
 	}
 
 	/* read optional tree name */
-	if(rpc->scan(c, "*S", &tname)==0)
-	{
+	if(rpc->scan(c, "*S", &tname) == 0) {
 		tname.s = NULL;
 		tname.len = 0;
 	}
 
 	pt = mt_get_first_tree();
-	if(pt==NULL)
-	{
+	if(pt == NULL) {
 		rpc->fault(c, 404, "No tree");
 		return;
 	}
 
 	found = 0;
-	while(pt!=NULL)
-	{
-		if(tname.s==NULL
-				|| (tname.s!=NULL && pt->tname.len>=tname.len
-					&& strncmp(pt->tname.s, tname.s, tname.len)==0))
-		{
+	while(pt != NULL) {
+		if(tname.s == NULL
+				|| (tname.s != NULL && pt->tname.len >= tname.len
+						&& strncmp(pt->tname.s, tname.s, tname.len) == 0)) {
 			found = 1;
-			if (rpc->add(c, "{", &th) < 0)
-			{
+			if(rpc->add(c, "{", &th) < 0) {
 				rpc->fault(c, 500, "Internal error creating rpc");
 				return;
 			}
-			if(rpc->struct_add(th, "s{",
-						"table", pt->tname.s,
-						"item", &ih) < 0)
-			{
+			if(rpc->struct_add(th, "s{", "table", pt->tname.s, "item", &ih)
+					< 0) {
 				rpc->fault(c, 500, "Internal error creating rpc ih");
 				return;
 			}
-			if(rpc->struct_add(ih, "d", "ttype", pt->type) < 0 ) {
+			if(rpc->struct_add(ih, "d", "ttype", pt->type) < 0) {
 				rpc->fault(c, 500, "Internal error adding type");
 				return;
 			}
-			if(rpc->struct_add(ih, "d", "memsize", pt->memsize) < 0 ) {
+			if(rpc->struct_add(ih, "d", "memsize", pt->memsize) < 0) {
 				rpc->fault(c, 500, "Internal error adding memsize");
 				return;
 			}
-			if(rpc->struct_add(ih, "d", "nrnodes", pt->nrnodes) < 0 ) {
+			if(rpc->struct_add(ih, "d", "nrnodes", pt->nrnodes) < 0) {
 				rpc->fault(c, 500, "Internal error adding nodes");
 				return;
 			}
-			if(rpc->struct_add(ih, "d", "nritems", pt->nritems) < 0 ) {
+			if(rpc->struct_add(ih, "d", "nritems", pt->nritems) < 0) {
 				rpc->fault(c, 500, "Internal error adding items");
 				return;
 			}
-			if(rpc->struct_add(ih, "j", "reload_count",
-						pt->reload_count) < 0 ) {
+			if(rpc->struct_add(ih, "j", "reload_count", pt->reload_count) < 0) {
 				rpc->fault(c, 500, "Internal error adding items");
 				return;
 			}
-			if(rpc->struct_add(ih, "J", "reload_time",
-						pt->reload_time) < 0 ) {
+			if(rpc->struct_add(ih, "J", "reload_time", pt->reload_time) < 0) {
 				rpc->fault(c, 500, "Internal error adding items");
 				return;
 			}
@@ -902,8 +830,7 @@ void rpc_mtree_summary(rpc_t* rpc, void* c)
 		pt = pt->next;
 	}
 
-	if(found==0)
-	{
+	if(found == 0) {
 		rpc->fault(c, 404, "Tree not found");
 		return;
 	}
@@ -911,22 +838,18 @@ void rpc_mtree_summary(rpc_t* rpc, void* c)
 	return;
 }
 
-static const char* rpc_mtree_summary_doc[2] = {
-	"Print summary of loaded mtree tables",
-	0
-};
+static const char *rpc_mtree_summary_doc[2] = {
+		"Print summary of loaded mtree tables", 0};
 
-void rpc_mtree_reload(rpc_t* rpc, void* c)
+void rpc_mtree_reload(rpc_t *rpc, void *c)
 {
 	str tname = {0, 0};
 	m_tree_t *pt = NULL;
 	int treeloaded = 0;
 
-	if(db_table.len>0)
-	{
+	if(db_table.len > 0) {
 		/* re-loading all information from database */
-		if(mt_load_db_trees()!=0)
-		{
+		if(mt_load_db_trees() != 0) {
 			rpc->fault(c, 500, "Can not reload Mtrees from database.");
 			LM_ERR("RPC failed: cannot reload mtrees from database\n");
 			return;
@@ -934,19 +857,18 @@ void rpc_mtree_reload(rpc_t* rpc, void* c)
 		rpc->rpl_printf(c, "Ok. Mtrees reloaded.");
 		return;
 	}
-	if(!mt_defined_trees())
-	{
+	if(!mt_defined_trees()) {
 		rpc->fault(c, 500, "No Mtrees defined.");
 		LM_ERR("RPC failed: No Mtrees defined\n");
 		return;
 	}
 
 	/* read tree name */
-	if (rpc->scan(c, "S", &tname) != 1) {
+	if(rpc->scan(c, "S", &tname) != 1) {
 		tname.s = 0;
 		tname.len = 0;
 	} else {
-		if(*tname.s=='.') {
+		if(*tname.s == '.') {
 			tname.s = 0;
 			tname.len = 0;
 		}
@@ -954,15 +876,12 @@ void rpc_mtree_reload(rpc_t* rpc, void* c)
 
 	pt = mt_get_first_tree();
 
-	while(pt!=NULL)
-	{
-		if(tname.s==NULL
-				|| (tname.s!=NULL && pt->tname.len>=tname.len
-					&& strncmp(pt->tname.s, tname.s, tname.len)==0))
-		{
+	while(pt != NULL) {
+		if(tname.s == NULL
+				|| (tname.s != NULL && pt->tname.len >= tname.len
+						&& strncmp(pt->tname.s, tname.s, tname.len) == 0)) {
 			/* re-loading table from database */
-			if(mt_load_db(pt)!=0)
-			{
+			if(mt_load_db(pt) != 0) {
 				rpc->fault(c, 500, "Mtree Reload Failed");
 				LM_ERR("RPC failed: cannot reload mtrees from database\n");
 				return;
@@ -972,18 +891,16 @@ void rpc_mtree_reload(rpc_t* rpc, void* c)
 		pt = pt->next;
 	}
 	if(treeloaded == 0) {
-		rpc->fault(c, 500, "Can not find specified Mtree");	
+		rpc->fault(c, 500, "Can not find specified Mtree");
 	}
 	rpc->rpl_printf(c, "Ok. Mtree reloaded.");
 	return;
 }
 
-static const char* rpc_mtree_reload_doc[2] = {
-	"Reload mtrees from database to memory",
-	0
-};
+static const char *rpc_mtree_reload_doc[2] = {
+		"Reload mtrees from database to memory", 0};
 
-void rpc_mtree_match(rpc_t* rpc, void* ctx)
+void rpc_mtree_match(rpc_t *rpc, void *ctx)
 {
 	str tname = STR_NULL;
 	str tomatch = STR_NULL;
@@ -991,110 +908,95 @@ void rpc_mtree_match(rpc_t* rpc, void* ctx)
 
 	m_tree_t *tr;
 
-	if(!mt_defined_trees())
-	{
+	if(!mt_defined_trees()) {
 		rpc->fault(ctx, 500, "Empty tree list.");
 		return;
 	}
 
-	if (rpc->scan(ctx, ".SSd", &tname, &tomatch, &mode) < 3) {
+	if(rpc->scan(ctx, ".SSd", &tname, &tomatch, &mode) < 3) {
 		rpc->fault(ctx, 500, "Invalid Parameters");
 		return;
 	}
 
-	if (mode !=0 && mode != 2) {
+	if(mode != 0 && mode != 2) {
 		rpc->fault(ctx, 500, "Invalid parameter 'mode'");
 		return;
 	}
 
 again:
-	lock_get( mt_lock );
-	if (mt_reload_flag) {
-		lock_release( mt_lock );
+	lock_get(mt_lock);
+	if(mt_reload_flag) {
+		lock_release(mt_lock);
 		sleep_us(5);
 		goto again;
 	}
 	mt_tree_refcnt++;
-	lock_release( mt_lock );
+	lock_release(mt_lock);
 
 	tr = mt_get_tree(&tname);
-	if(tr==NULL)
-	{
+	if(tr == NULL) {
 		/* no tree with such name*/
 		rpc->fault(ctx, 404, "Tree not found");
 		goto error;
 	}
 
-	if(mt_rpc_match_prefix(rpc, ctx, tr, &tomatch, mode)<0)
-	{
-		LM_DBG("no prefix found in [%.*s] for [%.*s]\n",
-				tname.len, tname.s,
+	if(mt_rpc_match_prefix(rpc, ctx, tr, &tomatch, mode) < 0) {
+		LM_DBG("no prefix found in [%.*s] for [%.*s]\n", tname.len, tname.s,
 				tomatch.len, tomatch.s);
 		rpc->fault(ctx, 404, "Prefix not found");
 	}
 
 error:
-	lock_get( mt_lock );
+	lock_get(mt_lock);
 	mt_tree_refcnt--;
-	lock_release( mt_lock );
-
+	lock_release(mt_lock);
 }
 
-static const char* rpc_mtree_match_doc[6] = {
-	"Match prefix value against mtree",
-	"uses three required parameters",
-	"tname - tree name",
-	"prefix - prefix for matching",
-	"mode - mode for matching (0 or 2)",
-	0
-};
+static const char *rpc_mtree_match_doc[6] = {"Match prefix value against mtree",
+		"uses three required parameters", "tname - tree name",
+		"prefix - prefix for matching", "mode - mode for matching (0 or 2)", 0};
 
 
-int rpc_mtree_print_node(rpc_t* rpc, void* ctx, m_tree_t *tree, mt_node_t *pt,
+int rpc_mtree_print_node(rpc_t *rpc, void *ctx, m_tree_t *tree, mt_node_t *pt,
 		char *code, int len)
 {
 	int i;
 	mt_is_t *tvalues;
 	str val;
-	void* th = NULL;
-	void* ih = NULL;
+	void *th = NULL;
+	void *ih = NULL;
 
-	if(pt==NULL || len>=MT_MAX_DEPTH)
+	if(pt == NULL || len >= MT_MAX_DEPTH)
 		return 0;
 
-	for(i=0; i<MT_NODE_SIZE; i++)
-	{
-		code[len]=mt_char_list.s[i];
+	for(i = 0; i < MT_NODE_SIZE; i++) {
+		code[len] = mt_char_list.s[i];
 		tvalues = pt[i].tvalues;
-		if (tvalues != NULL)
-		{
+		if(tvalues != NULL) {
 			/* add structure node */
-			if (rpc->add(ctx, "{", &th) < 0)
-			{
+			if(rpc->add(ctx, "{", &th) < 0) {
 				rpc->fault(ctx, 500, "Internal error - node structure");
 				return -1;
 			}
 
 			val.s = code;
-			val.len = len+1;
-			if(rpc->struct_add(th, "SS[",
-				"tname",	&tree->tname,
-				"tprefix", 	&val,
-				"tvalue",	&ih)<0)
-			{
+			val.len = len + 1;
+			if(rpc->struct_add(th, "SS[", "tname", &tree->tname, "tprefix",
+					   &val, "tvalue", &ih)
+					< 0) {
 				rpc->fault(ctx, 500, "Internal error - attribute fields");
 				return -1;
 			}
 
-			while (tvalues != NULL) {
-				if (tree->type == MT_TREE_IVAL) {
-					if(rpc->array_add(ih, "u",
-								(unsigned long)tvalues->tvalue.n)<0) {
+			while(tvalues != NULL) {
+				if(tree->type == MT_TREE_IVAL) {
+					if(rpc->array_add(ih, "u", (unsigned long)tvalues->tvalue.n)
+							< 0) {
 						rpc->fault(ctx, 500, "Internal error - int val");
 						return -1;
 					}
 				} else {
-					if(rpc->array_add(ih, "S", &tvalues->tvalue.s)<0) {
+					if(rpc->array_add(ih, "S", &tvalues->tvalue.s) < 0) {
 						rpc->fault(ctx, 500, "Internal error - str val");
 						return -1;
 					}
@@ -1102,7 +1004,7 @@ int rpc_mtree_print_node(rpc_t* rpc, void* ctx, m_tree_t *tree, mt_node_t *pt,
 				tvalues = tvalues->next;
 			}
 		}
-		if(rpc_mtree_print_node(rpc, ctx, tree, pt[i].child, code, len+1)<0)
+		if(rpc_mtree_print_node(rpc, ctx, tree, pt[i].child, code, len + 1) < 0)
 			goto error;
 	}
 	return 0;
@@ -1116,35 +1018,33 @@ error:
  *
  * 	- '.' (dot) means NULL value and will match anything
  */
-void rpc_mtree_list(rpc_t* rpc, void* ctx)
+void rpc_mtree_list(rpc_t *rpc, void *ctx)
 {
 	str tname = {0, 0};
 	m_tree_t *pt;
-	static char code_buf[MT_MAX_DEPTH+1];
+	static char code_buf[MT_MAX_DEPTH + 1];
 	int len;
 
-	if(!mt_defined_trees())
-	{
+	if(!mt_defined_trees()) {
 		rpc->fault(ctx, 500, "Empty tree list.");
 		return;
 	}
 
-	if(rpc->scan(ctx, "*.S", &tname)!=1) {
+	if(rpc->scan(ctx, "*.S", &tname) != 1) {
 		tname.s = NULL;
 		tname.len = 0;
 	}
 
 	pt = mt_get_first_tree();
 
-	while(pt!=NULL)
-	{
-		if(tname.s==NULL ||
-				(tname.s!=NULL && pt->tname.len>=tname.len &&
-					strncmp(pt->tname.s, tname.s, tname.len)==0))
-		{
+	while(pt != NULL) {
+		if(tname.s == NULL
+				|| (tname.s != NULL && pt->tname.len >= tname.len
+						&& strncmp(pt->tname.s, tname.s, tname.len) == 0)) {
 			len = 0;
 			code_buf[0] = '\0';
-			if(rpc_mtree_print_node(rpc, ctx, pt, pt->head, code_buf, len)<0) {
+			if(rpc_mtree_print_node(rpc, ctx, pt, pt->head, code_buf, len)
+					< 0) {
 				goto error;
 			}
 		}
@@ -1158,26 +1058,21 @@ error:
 	return;
 }
 
-static const char* rpc_mtree_list_doc[6] = {
-	"List the content of one or all trees",
-	"Parameters:",
-	"tname - tree name (optional)",
-	0
-};
+static const char *rpc_mtree_list_doc[6] = {
+		"List the content of one or all trees",
+		"Parameters:", "tname - tree name (optional)", 0};
 
 
 rpc_export_t mtree_rpc[] = {
-	{"mtree.summary", rpc_mtree_summary, rpc_mtree_summary_doc, RET_ARRAY},
-	{"mtree.reload", rpc_mtree_reload, rpc_mtree_reload_doc, 0},
-	{"mtree.match", rpc_mtree_match, rpc_mtree_match_doc, 0},
-	{"mtree.list", rpc_mtree_list, rpc_mtree_list_doc, RET_ARRAY},
-	{0, 0, 0, 0}
-};
+		{"mtree.summary", rpc_mtree_summary, rpc_mtree_summary_doc, RET_ARRAY},
+		{"mtree.reload", rpc_mtree_reload, rpc_mtree_reload_doc, 0},
+		{"mtree.match", rpc_mtree_match, rpc_mtree_match_doc, 0},
+		{"mtree.list", rpc_mtree_list, rpc_mtree_list_doc, RET_ARRAY},
+		{0, 0, 0, 0}};
 
 static int mtree_init_rpc(void)
 {
-	if (rpc_register_array(mtree_rpc) != 0)
-	{
+	if(rpc_register_array(mtree_rpc) != 0) {
 		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}
@@ -1203,9 +1098,9 @@ static sr_kemi_t sr_kemi_mtree_exports[] = {
 /**
  * load mtree module API
  */
-static int bind_mtree(mtree_api_t* api)
+static int bind_mtree(mtree_api_t *api)
 {
-	if (!api) {
+	if(!api) {
 		LM_ERR("Invalid parameter value\n");
 		return -1;
 	}

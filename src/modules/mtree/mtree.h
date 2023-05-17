@@ -31,11 +31,12 @@
 #include "../../core/parser/msg_parser.h"
 #include "../../core/rpc.h"
 
-#define MT_TREE_SVAL	0
-#define MT_TREE_DW	1
-#define MT_TREE_IVAL	2
+#define MT_TREE_SVAL 0
+#define MT_TREE_DW 1
+#define MT_TREE_IVAL 2
 
-typedef union {
+typedef union
+{
 	int n;
 	str s;
 } is_t;
@@ -60,11 +61,11 @@ typedef struct _mt_node
 	struct _mt_node *child;
 } mt_node_t;
 
-#define MT_MAX_DEPTH	64
+#define MT_MAX_DEPTH 64
 
-#define MT_NODE_SIZE	mt_char_list.len
+#define MT_NODE_SIZE mt_char_list.len
 
-#define MT_MAX_COLS	8
+#define MT_MAX_COLS 8
 typedef struct _m_tree
 {
 	str tname;
@@ -87,15 +88,14 @@ typedef struct _m_tree
 /* prefix tree operations */
 int mt_add_to_tree(m_tree_t *pt, str *tprefix, str *svalue);
 
-m_tree_t* mt_get_tree(str *tname);
-m_tree_t* mt_get_first_tree();
+m_tree_t *mt_get_tree(str *tname);
+m_tree_t *mt_get_first_tree();
 
-is_t* mt_get_tvalue(m_tree_t *pt, str *tomatch, int *len);
-int mt_match_prefix(struct sip_msg *msg, m_tree_t *pt,
-			str *tomatch, int mode);
+is_t *mt_get_tvalue(m_tree_t *pt, str *tomatch, int *len);
+int mt_match_prefix(struct sip_msg *msg, m_tree_t *pt, str *tomatch, int mode);
 
-m_tree_t* mt_init_tree(str* tname, str* dbtable, str *scols, int type,
-		int multi);
+m_tree_t *mt_init_tree(
+		str *tname, str *dbtable, str *scols, int type, int multi);
 void mt_free_tree(m_tree_t *pt);
 int mt_print_tree(m_tree_t *pt);
 void mt_free_node(mt_node_t *pn, int type);
@@ -104,16 +104,15 @@ void mt_char_table_init(void);
 int mt_node_set_payload(mt_node_t *node, int type);
 int mt_node_unset_payload(mt_node_t *node, int type);
 
-int mt_table_spec(char* val);
+int mt_table_spec(char *val);
 void mt_destroy_trees(void);
 int mt_defined_trees(void);
 
 m_tree_t *mt_swap_list_head(m_tree_t *ntree);
 int mt_init_list_head(void);
-m_tree_t *mt_add_tree(m_tree_t **dpt, str *tname, str *dbtable,
-			str *cols, int type, int multi);
+m_tree_t *mt_add_tree(m_tree_t **dpt, str *tname, str *dbtable, str *cols,
+		int type, int multi);
 
-int mt_rpc_match_prefix(rpc_t* rpc, void* ctx, m_tree_t *pt,
-			str *tomatch, int mode);
+int mt_rpc_match_prefix(
+		rpc_t *rpc, void *ctx, m_tree_t *pt, str *tomatch, int mode);
 #endif
-
