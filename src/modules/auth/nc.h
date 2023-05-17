@@ -34,7 +34,7 @@ extern int nc_enabled;
 
 /* instead of storing only the 2^k size we store also k
  * for faster operations */
-extern unsigned nc_array_k;    /* array size bits (k in 2^k) */
+extern unsigned nc_array_k;	   /* array size bits (k in 2^k) */
 extern unsigned nc_array_size; /* 2^k == 1<<nc_array_bits */
 
 #ifdef USE_NC
@@ -44,11 +44,11 @@ extern unsigned nc_array_size; /* 2^k == 1<<nc_array_bits */
 
 
 /* default number of maximum in-flight nonces */
-#define DEFAULT_NC_ARRAY_SIZE 1024*1024 /* uses 1Mb of memory */
-#define MIN_NC_ARRAY_SIZE        102400 /* warn if size < 100k */
-#define MAX_NC_ARRAY_SIZE 1024*1024*1024 /* warn if size > 1Gb */
+#define DEFAULT_NC_ARRAY_SIZE 1024 * 1024	 /* uses 1Mb of memory */
+#define MIN_NC_ARRAY_SIZE 102400			 /* warn if size < 100k */
+#define MAX_NC_ARRAY_SIZE 1024 * 1024 * 1024 /* warn if size > 1Gb */
 
-#define MIN_NC_ARRAY_PARTITION   65536 /* warn if a partition is < 65k */
+#define MIN_NC_ARRAY_PARTITION 65536 /* warn if a partition is < 65k */
 
 
 typedef unsigned char nc_t;
@@ -57,18 +57,22 @@ int init_nonce_count();
 void destroy_nonce_count();
 
 
-enum nc_check_ret{
-	NC_OK=0, NC_INV_POOL=-1, NC_ID_OVERFLOW=-2, NC_TOO_BIG=-3,
-	NC_REPLAY=-4
+enum nc_check_ret
+{
+	NC_OK = 0,
+	NC_INV_POOL = -1,
+	NC_ID_OVERFLOW = -2,
+	NC_TOO_BIG = -3,
+	NC_REPLAY = -4
 };
 
 /* check if nonce-count nc w/ index i is expected/valid and record its
  * value */
-enum nc_check_ret nc_check_val(nid_t i, unsigned pool, unsigned int nc, int update);
+enum nc_check_ret nc_check_val(
+		nid_t i, unsigned pool, unsigned int nc, int update);
 
 /* re-init the stored nc for nonce id in pool pool_no */
 nid_t nc_new(nid_t id, unsigned char pool_no);
 
 #endif /* USE_NC */
 #endif /* _nc_h */
-

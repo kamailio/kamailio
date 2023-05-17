@@ -34,8 +34,8 @@
 #include "rfc2617_sha256.h"
 #include "challenge.h"
 
-static int auth_check_hdr_md5_default(struct sip_msg* msg, auth_body_t* auth_body,
-		auth_result_t* auth_res);
+static int auth_check_hdr_md5_default(
+		struct sip_msg *msg, auth_body_t *auth_body, auth_result_t *auth_res);
 
 /*
  * Purpose of this function is to find credentials with given realm,
@@ -45,14 +45,13 @@ static int auth_check_hdr_md5_default(struct sip_msg* msg, auth_body_t* auth_bod
  * @param hdr output param where the Authorize headerfield will be returned.
  * @param check_hdr  pointer to the function checking Authorization header field
  */
-auth_result_t pre_auth(struct sip_msg* msg, str* realm, hdr_types_t hftype,
-		struct hdr_field**  hdr,
-		check_auth_hdr_t check_auth_hdr)
+auth_result_t pre_auth(struct sip_msg *msg, str *realm, hdr_types_t hftype,
+		struct hdr_field **hdr, check_auth_hdr_t check_auth_hdr)
 {
 	int ret;
-	auth_body_t* c;
+	auth_body_t *c;
 	check_auth_hdr_t check_hf;
-	auth_result_t    auth_rv;
+	auth_result_t auth_rv;
 
 	/* ACK and CANCEL must be always authenticated, there is
 	 * no way how to challenge ACK and CANCEL cannot be
@@ -61,7 +60,7 @@ auth_result_t pre_auth(struct sip_msg* msg, str* realm, hdr_types_t hftype,
 	 * PRACK is also not authenticated
 	 */
 
-	if (msg->REQ_METHOD & (METHOD_ACK|METHOD_CANCEL|METHOD_PRACK))
+	if(msg->REQ_METHOD & (METHOD_ACK | METHOD_CANCEL | METHOD_PRACK))
 		return AUTHENTICATED;
 
 	/* Try to find credentials with corresponding realm
@@ -70,36 +69,35 @@ auth_result_t pre_auth(struct sip_msg* msg, str* realm, hdr_types_t hftype,
 	 */
 	strip_realm(realm);
 	ret = find_credentials(msg, realm, hftype, hdr);
-	if (ret < 0) {
+	if(ret < 0) {
 		LM_ERR("Error while looking for credentials\n");
 		return ERROR;
-	} else if (ret > 0) {
-		LM_DBG("Credentials with realm '%.*s' not found\n",
-				realm->len, ZSW(realm->s));
+	} else if(ret > 0) {
+		LM_DBG("Credentials with realm '%.*s' not found\n", realm->len,
+				ZSW(realm->s));
 		return NO_CREDENTIALS;
 	}
 
 	/* Pointer to the parsed credentials */
-	c = (auth_body_t*)((*hdr)->parsed);
+	c = (auth_body_t *)((*hdr)->parsed);
 
 	/* digest headers are in c->digest */
-	LM_DBG("digest-algo: %.*s parsed value: %d\n",
-			c->digest.alg.alg_str.len, c->digest.alg.alg_str.s,
-			c->digest.alg.alg_parsed);
+	LM_DBG("digest-algo: %.*s parsed value: %d\n", c->digest.alg.alg_str.len,
+			c->digest.alg.alg_str.s, c->digest.alg.alg_parsed);
 
-	if (mark_authorized_cred(msg, *hdr) < 0) {
+	if(mark_authorized_cred(msg, *hdr) < 0) {
 		LM_ERR("Error while marking parsed credentials\n");
 		return ERROR;
 	}
 
 	/* check authorization header field's validity */
-	if (check_auth_hdr == NULL) {
+	if(check_auth_hdr == NULL) {
 		check_hf = auth_check_hdr_md5_default;
-	} else {	/* use check function of external authentication module */
+	} else { /* use check function of external authentication module */
 		check_hf = check_auth_hdr;
 	}
 	/* use the right function */
-	if (!check_hf(msg, c, &auth_rv)) {
+	if(!check_hf(msg, c, &auth_rv)) {
 		return auth_rv;
 	}
 
@@ -113,27 +111,27 @@ auth_result_t pre_auth(struct sip_msg* msg, str* realm, hdr_types_t hftype,
  * @result if authentication should continue (1) or not (0)
  *
  */
-int auth_check_hdr_md5(struct sip_msg* msg, auth_body_t* auth,
-		auth_result_t* auth_res, int update_nonce)
+int auth_check_hdr_md5(struct sip_msg *msg, auth_body_t *auth,
+		auth_result_t *auth_res, int update_nonce)
 {
 	int ret;
 
 	/* Check credentials correctness here */
-	if (check_dig_cred(&auth->digest) != E_DIG_OK) {
+	if(check_dig_cred(&auth->digest) != E_DIG_OK) {
 		LM_ERR("Credentials are not filled properly\n");
 		*auth_res = BAD_CREDENTIALS;
 		return 0;
 	}
 
 	ret = check_nonce(auth, &secret1, &secret2, msg, update_nonce);
-	if (ret!=0){
-		if (ret==3 || ret==4){
+	if(ret != 0) {
+		if(ret == 3 || ret == 4) {
 			/* failed auth_extra_checks or stale */
-			auth->stale=1; /* we mark the nonce as stale
+			auth->stale = 1; /* we mark the nonce as stale
 							* (hack that makes our life much easier) */
 			*auth_res = STALE_NONCE;
 			return 0;
-		} else if (ret==6) {
+		} else if(ret == 6) {
 			*auth_res = NONCE_REUSED;
 			return 0;
 		} else {
@@ -145,8 +143,8 @@ int auth_check_hdr_md5(struct sip_msg* msg, auth_body_t* auth,
 	return 1;
 }
 
-static int auth_check_hdr_md5_default(struct sip_msg* msg, auth_body_t* auth,
-		auth_result_t* auth_res)
+static int auth_check_hdr_md5_default(
+		struct sip_msg *msg, auth_body_t *auth, auth_result_t *auth_res)
 {
 	return auth_check_hdr_md5(msg, auth, auth_res, 1);
 }
@@ -156,37 +154,39 @@ static int auth_check_hdr_md5_default(struct sip_msg* msg, auth_body_t* auth,
  * @param msg - SIP message to add the header to
  * @returns 1 on success, 0 on error
  */
-static int add_authinfo_resp_hdr(struct sip_msg *msg, char* next_nonce, int nonce_len, str qop, char* rspauth, str cnonce, str nc)
+static int add_authinfo_resp_hdr(struct sip_msg *msg, char *next_nonce,
+		int nonce_len, str qop, char *rspauth, str cnonce, str nc)
 {
 	str authinfo_hdr;
 	static const char authinfo_fmt[] = "Authentication-Info: "
-		"nextnonce=\"%.*s\", "
-		"qop=%.*s, "
-		"rspauth=\"%.*s\", "
-		"cnonce=\"%.*s\", "
-		"nc=%.*s\r\n";
+									   "nextnonce=\"%.*s\", "
+									   "qop=%.*s, "
+									   "rspauth=\"%.*s\", "
+									   "cnonce=\"%.*s\", "
+									   "nc=%.*s\r\n";
 
-	authinfo_hdr.len = sizeof (authinfo_fmt) + nonce_len + qop.len + hash_hex_len + cnonce.len + nc.len - 20 /* format string parameters */ - 1 /* trailing \0 */;
+	authinfo_hdr.len =
+			sizeof(authinfo_fmt) + nonce_len + qop.len + hash_hex_len
+			+ cnonce.len + nc.len
+			- 20 /* format string parameters */ - 1 /* trailing \0 */;
 	authinfo_hdr.s = pkg_malloc(authinfo_hdr.len + 1);
 
-	if (!authinfo_hdr.s) {
+	if(!authinfo_hdr.s) {
 		LM_ERR("Error allocating %d bytes\n", authinfo_hdr.len);
 		goto error;
 	}
-	snprintf(authinfo_hdr.s, authinfo_hdr.len + 1, authinfo_fmt,
-			nonce_len, next_nonce,
-			qop.len, qop.s,
-			hash_hex_len, rspauth,
-			cnonce.len, cnonce.s,
-			nc.len, nc.s);
+	snprintf(authinfo_hdr.s, authinfo_hdr.len + 1, authinfo_fmt, nonce_len,
+			next_nonce, qop.len, qop.s, hash_hex_len, rspauth, cnonce.len,
+			cnonce.s, nc.len, nc.s);
 	LM_DBG("authinfo hdr built: %.*s", authinfo_hdr.len, authinfo_hdr.s);
-	if (add_lump_rpl(msg, authinfo_hdr.s, authinfo_hdr.len, LUMP_RPL_HDR)!=0) {
+	if(add_lump_rpl(msg, authinfo_hdr.s, authinfo_hdr.len, LUMP_RPL_HDR) != 0) {
 		LM_DBG("authinfo hdr added");
 		pkg_free(authinfo_hdr.s);
 		return 1;
 	}
 error:
-	if (authinfo_hdr.s) pkg_free(authinfo_hdr.s);
+	if(authinfo_hdr.s)
+		pkg_free(authinfo_hdr.s);
 	return 0;
 }
 
@@ -194,11 +194,11 @@ error:
  * Purpose of this function is to do post authentication steps like
  * marking authorized credentials and so on.
  */
-auth_result_t post_auth(struct sip_msg* msg, struct hdr_field* hdr, char* ha1)
+auth_result_t post_auth(struct sip_msg *msg, struct hdr_field *hdr, char *ha1)
 {
 	int res = AUTHENTICATED;
-	auth_body_t* c;
-	dig_cred_t* d;
+	auth_body_t *c;
+	dig_cred_t *d;
 	HASHHEX_SHA256 rspauth;
 #ifdef USE_OT_NONCE
 	char next_nonce[MAX_NONCE_LEN];
@@ -206,11 +206,11 @@ auth_result_t post_auth(struct sip_msg* msg, struct hdr_field* hdr, char* ha1)
 	int cfg;
 #endif
 
-	c = (auth_body_t*)((hdr)->parsed);
+	c = (auth_body_t *)((hdr)->parsed);
 
-	if (c->stale ) {
-		if ((msg->REQ_METHOD == METHOD_ACK) ||
-				(msg->REQ_METHOD == METHOD_CANCEL)) {
+	if(c->stale) {
+		if((msg->REQ_METHOD == METHOD_ACK)
+				|| (msg->REQ_METHOD == METHOD_CANCEL)) {
 			/* Method is ACK or CANCEL, we must accept stale
 			 * nonces because there is no way how to challenge
 			 * with new nonce (ACK has no response associated
@@ -221,21 +221,16 @@ auth_result_t post_auth(struct sip_msg* msg, struct hdr_field* hdr, char* ha1)
 			c->stale = 1;
 			res = NOT_AUTHENTICATED;
 		}
-	}
-	else if (add_authinfo_hdr) {
-		if (unlikely(!ha1)) {
+	} else if(add_authinfo_hdr) {
+		if(unlikely(!ha1)) {
 			LM_ERR("add_authinfo_hdr is configured but the auth_* module "
-				"you are using does not provide the ha1 value to post_auth\n");
-		}
-		else {
+				   "you are using does not provide the ha1 value to "
+				   "post_auth\n");
+		} else {
 			d = &c->digest;
 
 			/* calculate rspauth */
-			calc_response(ha1,
-					&d->nonce,
-					&d->nc,
-					&d->cnonce,
-					&d->qop.qop_str,
+			calc_response(ha1, &d->nonce, &d->nc, &d->cnonce, &d->qop.qop_str,
 					d->qop.qop_parsed == QOP_AUTHINT,
 					0, /* method is empty for rspauth */
 					&d->uri,
@@ -244,21 +239,19 @@ auth_result_t post_auth(struct sip_msg* msg, struct hdr_field* hdr, char* ha1)
 
 			/* calculate new next nonce if otn is enabled */
 #ifdef USE_OT_NONCE
-			if (otn_enabled) {
+			if(otn_enabled) {
 				cfg = get_auth_checks(msg);
 				nonce_len = sizeof(next_nonce);
-				if (unlikely(calc_new_nonce(next_nonce, &nonce_len,
-								cfg, msg) != 0)) {
+				if(unlikely(calc_new_nonce(next_nonce, &nonce_len, cfg, msg)
+							!= 0)) {
 					LM_ERR("calc nonce failed (len %d, needed %d)."
-							" authinfo hdr is not added.\n",
-							(int) sizeof(next_nonce), nonce_len);
-				}
-				else {
+						   " authinfo hdr is not added.\n",
+							(int)sizeof(next_nonce), nonce_len);
+				} else {
 					add_authinfo_resp_hdr(msg, next_nonce, nonce_len,
 							d->qop.qop_str, rspauth, d->cnonce, d->nc);
 				}
-			}
-			else
+			} else
 #endif
 				/* use current nonce as next nonce */
 				add_authinfo_resp_hdr(msg, d->nonce.s, d->nonce.len,
@@ -273,7 +266,7 @@ auth_result_t post_auth(struct sip_msg* msg, struct hdr_field* hdr, char* ha1)
  * Calculate the response and compare with the given response string
  * Authorization is successful if this two strings are same
  */
-int auth_check_response(dig_cred_t* cred, str* method, char* ha1)
+int auth_check_response(dig_cred_t *cred, str *method, char *ha1)
 {
 	HASHHEX_SHA256 resp, hent;
 
@@ -281,7 +274,7 @@ int auth_check_response(dig_cred_t* cred, str* method, char* ha1)
 	 * First, we have to verify that the response received has
 	 * the same length as responses created by us
 	 */
-	if (cred->response.len != hash_hex_len) {
+	if(cred->response.len != hash_hex_len) {
 		LM_DBG("Receive response len != %d\n", hash_hex_len);
 		return BAD_CREDENTIALS;
 	}
@@ -290,10 +283,9 @@ int auth_check_response(dig_cred_t* cred, str* method, char* ha1)
 	 * Now, calculate our response from parameters received
 	 * from the user agent
 	 */
-	calc_response(ha1, &(cred->nonce),
-			&(cred->nc), &(cred->cnonce),
-			&(cred->qop.qop_str), cred->qop.qop_parsed == QOP_AUTHINT,
-			method, &(cred->uri), hent, resp);
+	calc_response(ha1, &(cred->nonce), &(cred->nc), &(cred->cnonce),
+			&(cred->qop.qop_str), cred->qop.qop_parsed == QOP_AUTHINT, method,
+			&(cred->uri), hent, resp);
 
 	LM_DBG("Our result = \'%s\'\n", resp);
 
@@ -301,7 +293,7 @@ int auth_check_response(dig_cred_t* cred, str* method, char* ha1)
 	 * And simply compare the strings, the user is
 	 * authorized if they match
 	 */
-	if (!memcmp(resp, cred->response.s, hash_hex_len)) {
+	if(!memcmp(resp, cred->response.s, hash_hex_len)) {
 		LM_DBG("Authorization is OK\n");
 		return AUTHENTICATED;
 	} else {
@@ -311,9 +303,9 @@ int auth_check_response(dig_cred_t* cred, str* method, char* ha1)
 }
 
 
-int bind_auth_s(auth_api_s_t* api)
+int bind_auth_s(auth_api_s_t *api)
 {
-	if (!api) {
+	if(!api) {
 		LM_ERR("Invalid parameter value\n");
 		return -1;
 	}
