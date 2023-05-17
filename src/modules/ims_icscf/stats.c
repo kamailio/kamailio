@@ -45,25 +45,29 @@
 
 #include "stats.h"
 
-int register_stats() {
+int register_stats()
+{
 	//UAR
-	if (register_stat(MOD_NAME, "uar_replies_response_time", &uar_replies_response_time,0 )
+	if(register_stat(MOD_NAME, "uar_replies_response_time",
+			   &uar_replies_response_time, 0)
 			!= 0) {
 		LM_ERR("failed to register stat\n");
 		return -1;
 	}
-	if (register_stat(MOD_NAME, "uar_replies_received", &uar_replies_received, 0) != 0) {
+	if(register_stat(MOD_NAME, "uar_replies_received", &uar_replies_received, 0)
+			!= 0) {
 		LM_ERR("failed to register stat\n");
 		return -1;
 	}
 
 	//LIR
-	if (register_stat(MOD_NAME, "lir_replies_response_time", &lir_replies_response_time,0 )
+	if(register_stat(MOD_NAME, "lir_replies_response_time",
+			   &lir_replies_response_time, 0)
 			!= 0) {
 		LM_ERR("failed to register stat\n");
 		return -1;
 	}
-	if (register_stat(MOD_NAME, "lir_replies_received", &lir_replies_received, 0)
+	if(register_stat(MOD_NAME, "lir_replies_received", &lir_replies_received, 0)
 			!= 0) {
 		LM_ERR("failed to register stat\n");
 		return -1;
@@ -72,24 +76,22 @@ int register_stats() {
 	return 1;
 }
 
-unsigned long get_avg_uar_response_time() {
+unsigned long get_avg_uar_response_time()
+{
 
 	long rpls_received = get_stat_val(uar_replies_received);
-	if (!rpls_received)
+	if(!rpls_received)
 		return 0;
 
-	return get_stat_val(uar_replies_response_time)/rpls_received;
+	return get_stat_val(uar_replies_response_time) / rpls_received;
 }
 
-unsigned long get_avg_lir_response_time() {
+unsigned long get_avg_lir_response_time()
+{
 
 	long rpls_received = get_stat_val(lir_replies_received);
-	if (!rpls_received)
+	if(!rpls_received)
 		return 0;
 
-	return get_stat_val(lir_replies_response_time)/rpls_received;
+	return get_stat_val(lir_replies_response_time) / rpls_received;
 }
-
-
-
-

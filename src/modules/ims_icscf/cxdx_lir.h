@@ -44,28 +44,28 @@
  */
 
 
-
 #ifndef CXDX_LIR_H
 #define CXDX_LIR_H
 
 
-
 extern struct cdp_binds cdpb;
-extern str cxdx_forced_peer; /**< FQDN of the Diameter peer to send requests to */
-extern str cxdx_dest_realm; 
+extern str
+		cxdx_forced_peer; /**< FQDN of the Diameter peer to send requests to */
+extern str cxdx_dest_realm;
 
 struct sip_msg;
 
 
-typedef struct saved_lir_transaction {
+typedef struct saved_lir_transaction
+{
 	unsigned int tindex;
 	unsigned int tlabel;
 	unsigned int ticks;
-        int orig;
+	int orig;
 	cfg_action_t *act;
 } saved_lir_transaction_t;
 
-void free_saved_lir_transaction_data(saved_lir_transaction_t* data);
+void free_saved_lir_transaction_data(saved_lir_transaction_t *data);
 
 
 /**
@@ -74,10 +74,10 @@ void free_saved_lir_transaction_data(saved_lir_transaction_t* data);
  * @param public_identity - the public identity
  * @param realm - Realm
  */
-int cxdx_send_lir(struct sip_msg *msg, str public_identity, saved_lir_transaction_t* transaction_data);
+int cxdx_send_lir(struct sip_msg *msg, str public_identity,
+		saved_lir_transaction_t *transaction_data);
 
 
 int create_lia_return_code(int result);
 
 #endif
-
