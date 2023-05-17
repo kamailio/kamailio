@@ -31,29 +31,24 @@
 
 void pv_tmx_data_init(void);
 
-int pv_get_t_var_inv(struct sip_msg *msg,  pv_param_t *param,
-		pv_value_t *res);
-int pv_get_t_var_req(struct sip_msg *msg,  pv_param_t *param,
-		pv_value_t *res);
-int pv_get_t_var_rpl(struct sip_msg *msg,  pv_param_t *param,
-		pv_value_t *res);
+int pv_get_t_var_inv(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
+int pv_get_t_var_req(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
+int pv_get_t_var_rpl(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 
 int pv_parse_t_var_name(pv_spec_p sp, str *in);
 
-int pv_get_tm_branch_idx(struct sip_msg *msg, pv_param_t *param,
-		pv_value_t *res);
-int pv_get_tm_reply_ruid(struct sip_msg *msg, pv_param_t *param,
-		pv_value_t *res);
-int pv_get_t_branch(struct sip_msg *msg,  pv_param_t *param,
-		pv_value_t *res);
-int pv_get_tm_reply_code(struct sip_msg *msg, pv_param_t *param,
-		pv_value_t *res);
-int pv_get_tm_reply_reason(struct sip_msg *msg, pv_param_t *param,
-		pv_value_t *res);
-int pv_get_tm_reply_last_received(struct sip_msg *msg, pv_param_t *param,
-		pv_value_t *res);
+int pv_get_tm_branch_idx(
+		struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
+int pv_get_tm_reply_ruid(
+		struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
+int pv_get_t_branch(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
+int pv_get_tm_reply_code(
+		struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
+int pv_get_tm_reply_reason(
+		struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
+int pv_get_tm_reply_last_received(
+		struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 
-int pv_get_t(struct sip_msg *msg,  pv_param_t *param,
-		pv_value_t *res);
+int pv_get_t(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 int pv_parse_t_name(pv_spec_p sp, str *in);
 #endif
