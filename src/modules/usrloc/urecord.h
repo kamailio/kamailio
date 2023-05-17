@@ -39,8 +39,6 @@
 struct hslot; /*!< Hash table slot */
 
 
-
-
 /*!
  * \brief Create and initialize new record structure
  * \param _dom domain name
@@ -48,7 +46,7 @@ struct hslot; /*!< Hash table slot */
  * \param _r pointer to the new record
  * \return 0 on success, negative on failure
  */
-int new_urecord(str* _dom, str* _aor, urecord_t** _r);
+int new_urecord(str *_dom, str *_aor, urecord_t **_r);
 
 
 /*!
@@ -59,7 +57,7 @@ int new_urecord(str* _dom, str* _aor, urecord_t** _r);
  * lists first
  * \param _r freed record list
  */
-void free_urecord(urecord_t* _r);
+void free_urecord(urecord_t *_r);
 
 
 /*!
@@ -67,7 +65,7 @@ void free_urecord(urecord_t* _r);
  * \param _f print output
  * \param _r printed record
  */
-void print_urecord(FILE* _f, urecord_t* _r);
+void print_urecord(FILE *_f, urecord_t *_r);
 
 
 /*!
@@ -80,7 +78,7 @@ void print_urecord(FILE* _f, urecord_t* _r);
  * \param _ci contact information
  * \return pointer to new created contact on success, 0 on failure
  */
-ucontact_t* mem_insert_ucontact(urecord_t* _r, str* _c, ucontact_info_t* _ci);
+ucontact_t *mem_insert_ucontact(urecord_t *_r, str *_c, ucontact_info_t *_ci);
 
 
 /*!
@@ -88,7 +86,7 @@ ucontact_t* mem_insert_ucontact(urecord_t* _r, str* _c, ucontact_info_t* _ci);
  * \param _r record this contact belongs to
  * \param _c removed contact
  */
-void mem_remove_ucontact(urecord_t* _r, ucontact_t* _c);
+void mem_remove_ucontact(urecord_t *_r, ucontact_t *_c);
 
 
 /*!
@@ -96,7 +94,7 @@ void mem_remove_ucontact(urecord_t* _r, ucontact_t* _c);
  * \param _r record this contact belongs to
  * \param _c deleted contact
  */
-void mem_delete_ucontact(urecord_t* _r, ucontact_t* _c);
+void mem_delete_ucontact(urecord_t *_r, ucontact_t *_c);
 
 
 /*!
@@ -106,7 +104,7 @@ void mem_delete_ucontact(urecord_t* _r, ucontact_t* _c);
  * on the db_mode setting.
  * \param _r processed record
  */
-void timer_urecord(urecord_t* _r);
+void timer_urecord(urecord_t *_r);
 
 
 /*!
@@ -114,7 +112,7 @@ void timer_urecord(urecord_t* _r);
  * \param _r deleted record
  * \return 0 on success, -1 on failure
  */
-int db_delete_urecord(urecord_t* _r);
+int db_delete_urecord(urecord_t *_r);
 
 
 /*!
@@ -124,7 +122,7 @@ int db_delete_urecord(urecord_t* _r);
  * \return 0 on success, -1 on failure, and -2 if record was
  * not found
  */
-int delete_urecord_by_ruid(udomain_t* _d, str *_ruid);
+int delete_urecord_by_ruid(udomain_t *_d, str *_ruid);
 
 
 /* ===== Module interface ======== */
@@ -138,7 +136,7 @@ int delete_urecord_by_ruid(udomain_t* _d, str *_ruid);
  * it is not necessary, as this function already releases the record.
  * \param _r released record
  */
-void release_urecord(urecord_t* _r);
+void release_urecord(urecord_t *_r);
 
 
 /*!
@@ -149,8 +147,8 @@ void release_urecord(urecord_t* _r);
  * \param _c new created contact
  * \return 0 on success, -1 on failure
  */
-int insert_ucontact(urecord_t* _r, str* _contact,
-		ucontact_info_t* _ci, ucontact_t** _c);
+int insert_ucontact(
+		urecord_t *_r, str *_contact, ucontact_info_t *_ci, ucontact_t **_c);
 
 
 /*!
@@ -159,7 +157,7 @@ int insert_ucontact(urecord_t* _r, str* _contact,
  * \param _c deleted contact
  * \return 0 on success, -1 on failure
  */
-int delete_ucontact(urecord_t* _r, struct ucontact* _c);
+int delete_ucontact(urecord_t *_r, struct ucontact *_c);
 
 
 /*!
@@ -173,9 +171,8 @@ int delete_ucontact(urecord_t* _r, struct ucontact* _c);
  * \return 0 - found, 1 - not found, -1 - invalid found, 
  * -2 - found, but to be skipped (same cseq)
  */
-int get_ucontact(urecord_t* _r, str* _c, str* _callid, str* _path,
-		int _cseq,
-		struct ucontact** _co);
+int get_ucontact(urecord_t *_r, str *_c, str *_callid, str *_path, int _cseq,
+		struct ucontact **_co);
 
 /*!
  * \brief Get pointer to ucontact with given contact
@@ -186,8 +183,8 @@ int get_ucontact(urecord_t* _r, str* _c, str* _callid, str* _path,
  * \return 0 - found, 1 - not found, -1 - invalid found, 
  * -2 - found, but to be skipped (same cseq)
  */
-int get_ucontact_by_instance(urecord_t* _r, str* _c, ucontact_info_t* _ci,
-		ucontact_t** _co);
+int get_ucontact_by_instance(
+		urecord_t *_r, str *_c, ucontact_info_t *_ci, ucontact_t **_co);
 
 int is_valid_tcpconn(ucontact_t *c);
 
