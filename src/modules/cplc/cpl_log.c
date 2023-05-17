@@ -33,8 +33,8 @@
 #include "../../core/dprint.h"
 
 
-static str  cpl_logs[MAX_LOG_NR];
-static int  nr_logs;
+static str cpl_logs[MAX_LOG_NR];
+static int nr_logs;
 
 
 void reset_logs(void)
@@ -43,31 +43,29 @@ void reset_logs(void)
 }
 
 
-
-void append_log( int nr, ...)
+void append_log(int nr, ...)
 {
 	va_list ap;
-	int     i;
+	int i;
 
 
-	if ( nr_logs+nr>MAX_LOG_NR ) {
+	if(nr_logs + nr > MAX_LOG_NR) {
 		LM_ERR("no more space for logging\n");
 		return;
 	}
 
 	va_start(ap, nr);
 
-	for(i=0;i<nr;i++,nr_logs++) {
-		cpl_logs[nr_logs].s   = va_arg(ap, char *);
-		cpl_logs[nr_logs].len = va_arg(ap, int );
+	for(i = 0; i < nr; i++, nr_logs++) {
+		cpl_logs[nr_logs].s = va_arg(ap, char *);
+		cpl_logs[nr_logs].len = va_arg(ap, int);
 	}
 
 	va_end(ap);
 }
 
 
-
-void compile_logs( str *log)
+void compile_logs(str *log)
 {
 	int i;
 	char *p;
@@ -75,17 +73,17 @@ void compile_logs( str *log)
 	log->s = 0;
 	log->len = 0;
 
-	if (nr_logs==0)
+	if(nr_logs == 0)
 		/* no logs */
 		return;
 
 	/* compile the total len */
-	for(i=0;i<nr_logs;i++)
+	for(i = 0; i < nr_logs; i++)
 		log->len += cpl_logs[i].len;
 
 	/* get a buffer */
-	log->s = (char*)pkg_malloc(log->len+1);
-	if (log->s==0) {
+	log->s = (char *)pkg_malloc(log->len + 1);
+	if(log->s == 0) {
 		PKG_MEM_ERROR;
 		log->len = 0;
 		return;
@@ -93,12 +91,11 @@ void compile_logs( str *log)
 
 	/*copy all logs into buffer */
 	p = log->s;
-	for(i=0;i<nr_logs;i++) {
-		memcpy( p, cpl_logs[i].s, cpl_logs[i].len);
+	for(i = 0; i < nr_logs; i++) {
+		memcpy(p, cpl_logs[i].s, cpl_logs[i].len);
 		p += cpl_logs[i].len;
 	}
 	log->s[log->len] = '\0';
 
 	return;
 }
-

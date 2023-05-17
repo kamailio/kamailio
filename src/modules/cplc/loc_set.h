@@ -34,52 +34,55 @@
 #include "../../core/dprint.h"
 
 
-#define CPL_LOC_DUPL    (1<<0)
-#define CPL_LOC_NATED   (1<<1)
+#define CPL_LOC_DUPL (1 << 0)
+#define CPL_LOC_NATED (1 << 1)
 
 
-struct location {
-	struct address {
+struct location
+{
+	struct address
+	{
 		str uri;
 		str received;
 		unsigned int priority;
-	}addr;
+	} addr;
 	int flags;
 	struct location *next;
 };
 
 
-
-static inline void free_location( struct location *loc)
+static inline void free_location(struct location *loc)
 {
-	shm_free( loc );
+	shm_free(loc);
 }
-
 
 
 /* insert a new location into the set maintaining order by the prio val - the
  * list starts with the smallest prio!
  * For locations having the same prio val, the adding order will be kept */
 static inline int add_location(struct location **loc_set, str *uri,
-								str *received, unsigned int prio, int flags)
+		str *received, unsigned int prio, int flags)
 {
 	struct location *loc;
 	struct location *foo, *bar;
 
 	if(received && received->s && received->len)
-		loc = (struct location*)shm_malloc(sizeof(struct location)+
-				((flags&CPL_LOC_DUPL)?uri->len+1+received->len+1:0) );
-	else 
-		loc = (struct location*)shm_malloc(
-			sizeof(struct location)+((flags&CPL_LOC_DUPL)?uri->len+1:0) );
-	if (!loc) {
+		loc = (struct location *)shm_malloc(
+				sizeof(struct location)
+				+ ((flags & CPL_LOC_DUPL) ? uri->len + 1 + received->len + 1
+										  : 0));
+	else
+		loc = (struct location *)shm_malloc(
+				sizeof(struct location)
+				+ ((flags & CPL_LOC_DUPL) ? uri->len + 1 : 0));
+	if(!loc) {
 		SHM_MEM_ERROR;
 		return -1;
 	}
 
-	if (flags&CPL_LOC_DUPL) {
-		loc->addr.uri.s = ((char*)loc)+sizeof(struct location);
-		memcpy(loc->addr.uri.s,uri->s,uri->len);
+	if(flags & CPL_LOC_DUPL) {
+		loc->addr.uri.s = ((char *)loc) + sizeof(struct location);
+		memcpy(loc->addr.uri.s, uri->s, uri->len);
 		loc->addr.uri.s[uri->len] = 0;
 	} else {
 		loc->addr.uri.s = uri->s;
@@ -89,18 +92,16 @@ static inline int add_location(struct location **loc_set, str *uri,
 	loc->flags = flags;
 
 	if(received && received->s && received->len) {
-		if (flags&CPL_LOC_DUPL) {
-			loc->addr.received.s = ((char*)loc)+sizeof(struct location)+
-				uri->len+1;
-			memcpy(loc->addr.received.s,received->s,received->len);
+		if(flags & CPL_LOC_DUPL) {
+			loc->addr.received.s =
+					((char *)loc) + sizeof(struct location) + uri->len + 1;
+			memcpy(loc->addr.received.s, received->s, received->len);
 			loc->addr.received.s[received->len] = 0;
-		}
-		else {
+		} else {
 			loc->addr.received.s = received->s;
 		}
 		loc->addr.received.len = received->len;
-	}
-	else {
+	} else {
 		loc->addr.received.s = 0;
 		loc->addr.received.len = 0;
 	}
@@ -108,11 +109,11 @@ static inline int add_location(struct location **loc_set, str *uri,
 	/* find the proper place for the new location */
 	foo = *loc_set;
 	bar = 0;
-	while(foo && foo->addr.priority>prio) {
+	while(foo && foo->addr.priority > prio) {
 		bar = foo;
 		foo = foo->next;
 	}
-	if (!bar) {
+	if(!bar) {
 		/* insert at the beginning */
 		loc->next = *loc_set;
 		*loc_set = loc;
@@ -126,58 +127,52 @@ static inline int add_location(struct location **loc_set, str *uri,
 }
 
 
-
-static inline void remove_location(struct location **loc_set, char *uri_s,
-																int uri_len)
+static inline void remove_location(
+		struct location **loc_set, char *uri_s, int uri_len)
 {
 	struct location *loc = *loc_set;
 	struct location *prev_loc = 0;
 
-	for( ; loc ; prev_loc=loc,loc=loc->next ) {
-		if (loc->addr.uri.len==uri_len &&
-		!strncasecmp(loc->addr.uri.s,uri_s,uri_len) )
+	for(; loc; prev_loc = loc, loc = loc->next) {
+		if(loc->addr.uri.len == uri_len
+				&& !strncasecmp(loc->addr.uri.s, uri_s, uri_len))
 			break;
 	}
 
-	if (loc) {
-		LM_DBG("removing from loc_set <%.*s>\n",
-			uri_len,uri_s);
-		if (prev_loc)
-			prev_loc->next=loc->next;
+	if(loc) {
+		LM_DBG("removing from loc_set <%.*s>\n", uri_len, uri_s);
+		if(prev_loc)
+			prev_loc->next = loc->next;
 		else
-			(*loc_set)=loc->next;
-		shm_free( loc );
+			(*loc_set) = loc->next;
+		shm_free(loc);
 	} else {
-		LM_DBG("no matching in loc_set for <%.*s>\n",
-			uri_len,uri_s);
+		LM_DBG("no matching in loc_set for <%.*s>\n", uri_len, uri_s);
 	}
 }
-
 
 
 static inline struct location *remove_first_location(struct location **loc_set)
 {
 	struct location *loc;
 
-	if (!*loc_set)
+	if(!*loc_set)
 		return 0;
 
 	loc = *loc_set;
 	*loc_set = (*loc_set)->next;
 	loc->next = 0;
-	LM_DBG("removing <%.*s>\n",
-		loc->addr.uri.len,loc->addr.uri.s);
+	LM_DBG("removing <%.*s>\n", loc->addr.uri.len, loc->addr.uri.s);
 
 	return loc;
 }
-
 
 
 static inline void empty_location_set(struct location **loc_set)
 {
 	struct location *loc;
 
-	while (*loc_set) {
+	while(*loc_set) {
 		loc = (*loc_set)->next;
 		shm_free(*loc_set);
 		*loc_set = loc;
@@ -188,14 +183,11 @@ static inline void empty_location_set(struct location **loc_set)
 
 static inline void print_location_set(struct location *loc_set)
 {
-	while (loc_set) {
-		LM_DBG("uri=<%s> received=<%s> q=%d\n",
-			loc_set->addr.uri.s, loc_set->addr.received.s,
-			loc_set->addr.priority);
-		loc_set=loc_set->next;
+	while(loc_set) {
+		LM_DBG("uri=<%s> received=<%s> q=%d\n", loc_set->addr.uri.s,
+				loc_set->addr.received.s, loc_set->addr.priority);
+		loc_set = loc_set->next;
 	}
 }
 
 #endif
-
-
