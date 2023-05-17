@@ -88,7 +88,6 @@
  */
 
 
-
 #include "config.h"
 #include "h_table.h"
 #include "timer.h"
@@ -194,9 +193,8 @@ int tm_init_timers(void)
 	LM_DBG("tm init timers - fr=%d fr_inv=%d wait=%d t1=%d t2=%d"
 		   " max_inv_lifetime=%d max_noninv_lifetime=%d\n",
 			default_tm_cfg.fr_timeout, default_tm_cfg.fr_inv_timeout,
-			default_tm_cfg.wait_timeout,
-			default_tm_cfg.rt_t1_timeout_ms, default_tm_cfg.rt_t2_timeout_ms,
-			default_tm_cfg.tm_max_inv_lifetime,
+			default_tm_cfg.wait_timeout, default_tm_cfg.rt_t1_timeout_ms,
+			default_tm_cfg.rt_t2_timeout_ms, default_tm_cfg.tm_max_inv_lifetime,
 			default_tm_cfg.tm_max_noninv_lifetime);
 	return 0;
 error:
@@ -259,7 +257,7 @@ int timer_fixup_ms(void *handle, str *gname, str *name, void **val)
 
 	t = (long)(*val);
 
-/* size fix checks */
+	/* size fix checks */
 	IF_IS_TIMER_NAME(rt_t1_timeout_ms, "retr_timer1")
 	else IF_IS_TIMER_NAME(rt_t2_timeout_ms, "retr_timer2")
 
@@ -293,7 +291,7 @@ static void fake_reply(struct cell *t, int branch, int code)
 		reply_status =
 				relay_reply(t, FAKED_REPLY, branch, code, &cancel_data, 0);
 	}
-	if(reply_status==RPS_TGONE) {
+	if(reply_status == RPS_TGONE) {
 		return;
 	}
 
@@ -322,8 +320,7 @@ inline static ticks_t retransmission_handler(struct retr_buf *r_buf)
 		abort();
 	}
 #endif
-	if(r_buf->rbtype == TYPE_LOCAL_CANCEL
-			|| r_buf->rbtype == TYPE_REQUEST) {
+	if(r_buf->rbtype == TYPE_LOCAL_CANCEL || r_buf->rbtype == TYPE_REQUEST) {
 #ifdef EXTRA_DEBUG
 		LM_DBG("request resending (t=%p, %.9s ... )\n", r_buf->my_T,
 				r_buf->buffer);
@@ -414,7 +411,8 @@ inline static void final_response_handler(
 	if(silent) {
 		UNLOCK_REPLIES(t);
 #ifdef EXTRA_DEBUG
-		LM_DBG("transaction silently dropped (%p), branch %d, last_received %d\n",
+		LM_DBG("transaction silently dropped (%p), branch %d, last_received "
+			   "%d\n",
 				t, r_buf->branch, t->uac[r_buf->branch].last_received);
 #endif
 		put_on_wait(t);
@@ -427,13 +425,13 @@ inline static void final_response_handler(
 			&& /* r_buf->branch is always >=0 */
 			(t->uac[r_buf->branch].last_received == 0)
 			&& (t->uac[r_buf->branch].request.buffer
-					   != NULL) /* not a blind UAC */
-			) {
+					!= NULL) /* not a blind UAC */
+	) {
 /* no reply received */
 #ifdef USE_DST_BLOCKLIST
 		if(r_buf->my_T && r_buf->my_T->uas.request
 				&& (r_buf->my_T->uas.request->REQ_METHOD
-						   & cfg_get(tm, tm_cfg, tm_blst_methods_add)))
+						& cfg_get(tm, tm_cfg, tm_blst_methods_add)))
 			dst_blocklist_add(
 					BLST_ERR_TIMEOUT, &r_buf->dst, r_buf->my_T->uas.request);
 #endif
@@ -514,7 +512,7 @@ ticks_t retr_buf_handler(ticks_t ticks, struct timer_ln *tl, void *p)
 							  nothing bad would happen */
 		rbuf->flags |= F_RB_TIMEOUT;
 #ifdef TIMER_DEBUG
-		if (rbuf->flags & F_RB_FR_INV) {
+		if(rbuf->flags & F_RB_FR_INV) {
 			LM_DBG("reached the \"fr_inv_timeout\"\n");
 		} else {
 			LM_DBG("reached the \"fr_timeout\"\n");
@@ -602,7 +600,7 @@ ticks_t wait_handler(ticks_t ti, struct timer_ln *wait_tl, void *data)
 	int unlinked = 0;
 	int rcount = 0;
 
-	p_cell = (tm_cell_t*)data;
+	p_cell = (tm_cell_t *)data;
 #ifdef TIMER_DEBUG
 	LM_DBG("WAIT timer hit @%d for %p (timer_lm %p)\n", ti, p_cell, wait_tl);
 #endif
@@ -617,7 +615,7 @@ ticks_t wait_handler(ticks_t ti, struct timer_ln *wait_tl, void *data)
 	if(rcount > 1) {
 		/* t still referenced */
 		LM_DBG("transaction: %p referenced with: %d\n", p_cell, rcount);
-		if(p_cell->wait_start==0) {
+		if(p_cell->wait_start == 0) {
 			p_cell->wait_start = ti;
 		}
 		if(p_cell->wait_start + S_TO_TICKS(TM_LIFETIME_LIMIT) < ti) {
