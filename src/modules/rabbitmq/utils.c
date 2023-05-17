@@ -175,7 +175,8 @@ void amqp_dump(void const *buffer, size_t len)
 			if(rows_eq(oldchs, chs)) {
 				if(!showed_dots) {
 					showed_dots = 1;
-					printf("					.. .. .. .. .. .. .. .. : .. .. "
+					printf("					.. .. .. .. .. .. .. .. : .. "
+						   ".. "
 						   ".. .. .. .. .. ..\n");
 				}
 			} else {

@@ -42,7 +42,8 @@
 
 #define RABBITMQ_DEFAULT_AMQP_URL "amqp://guest:guest@localhost:5672/%2F"
 
-typedef enum {
+typedef enum
+{
 	RABBITMQ_OK = 1,
 	RABBITMQ_ERR_CONNECT,
 	RABBITMQ_ERR_CHANNEL,
