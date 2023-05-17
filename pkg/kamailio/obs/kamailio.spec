@@ -1570,6 +1570,7 @@ fi
 %doc %{_docdir}/kamailio/modules/README.kex
 %doc %{_docdir}/kamailio/modules/README.lrkproxy
 %doc %{_docdir}/kamailio/modules/README.mangler
+%doc %{_docdir}/kamailio/modules/README.math
 %doc %{_docdir}/kamailio/modules/README.matrix
 %doc %{_docdir}/kamailio/modules/README.maxfwd
 %doc %{_docdir}/kamailio/modules/README.mediaproxy
@@ -1731,6 +1732,7 @@ fi
 %{_libdir}/kamailio/modules/kex.so
 %{_libdir}/kamailio/modules/lrkproxy.so
 %{_libdir}/kamailio/modules/mangler.so
+%{_libdir}/kamailio/modules/math.so
 %{_libdir}/kamailio/modules/matrix.so
 %{_libdir}/kamailio/modules/maxfwd.so
 %{_libdir}/kamailio/modules/mediaproxy.so
