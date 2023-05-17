@@ -20,7 +20,6 @@
  */
 
 
-
 #ifndef _AVP_OPS_DB_H_
 #define _AVP_OPS_DB_H_
 
@@ -45,24 +44,24 @@ struct db_scheme
 };
 
 
-int avpops_db_bind(const str* db_url);
+int avpops_db_bind(const str *db_url);
 
-int avpops_db_init(const str* db_url, const str* db_table, str **db_columns);
+int avpops_db_init(const str *db_url, const str *db_table, str **db_columns);
 
-db1_res_t *db_load_avp( str *uuid, str *username, str *domain,
-		char *attr, const str *table, struct db_scheme *scheme);
+db1_res_t *db_load_avp(str *uuid, str *username, str *domain, char *attr,
+		const str *table, struct db_scheme *scheme);
 
-void db_close_query( db1_res_t *res );
+void db_close_query(db1_res_t *res);
 
-int db_store_avp( db_key_t *keys, db_val_t *vals, int n, const str *table);
+int db_store_avp(db_key_t *keys, db_val_t *vals, int n, const str *table);
 
-int db_delete_avp( str *uuid, str *username, str *domain,
-		char *attr, const str *table);
+int db_delete_avp(
+		str *uuid, str *username, str *domain, char *attr, const str *table);
 
-int db_query_avp(struct sip_msg* msg, char *query, pvname_list_t* dest);
+int db_query_avp(struct sip_msg *msg, char *query, pvname_list_t *dest);
 
-int avp_add_db_scheme( modparam_t type, void* val);
+int avp_add_db_scheme(modparam_t type, void *val);
 
-struct db_scheme *avp_get_db_scheme( str *name );
+struct db_scheme *avp_get_db_scheme(str *name);
 
 #endif
