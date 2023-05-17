@@ -27,7 +27,7 @@
 #include "../../lib/srdb1/db.h"
 #include "xcap_callbacks.h"
 
-extern xcap_callback_t* xcapcb_list;
+extern xcap_callback_t *xcapcb_list;
 extern str xcap_db_url;
 extern str xcap_db_table;
 
