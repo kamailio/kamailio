@@ -59,11 +59,11 @@ static dlgs_ht_t *_dlgs_htb = NULL;
  */
 int dlgs_init(void)
 {
-	if (_dlgs_htb!=NULL) {
+	if(_dlgs_htb != NULL) {
 		return 0;
 	}
 	_dlgs_htb = dlgs_ht_init();
-	if(_dlgs_htb==NULL) {
+	if(_dlgs_htb == NULL) {
 		return -1;
 	}
 	return 0;
@@ -74,7 +74,7 @@ int dlgs_init(void)
  */
 int dlgs_destroy(void)
 {
-	if (_dlgs_htb!=NULL) {
+	if(_dlgs_htb != NULL) {
 		return 0;
 	}
 	dlgs_ht_destroy();
@@ -94,15 +94,15 @@ int dlgs_sipfields_get(sip_msg_t *msg, dlgs_sipfields_t *sf)
 		LM_ERR("failed to parse the request headers\n");
 		return -1;
 	}
-	if (parse_headers(msg, HDR_CALLID_F|HDR_TO_F, 0)<0 || !msg->callid
-			|| !msg->to ) {
+	if(parse_headers(msg, HDR_CALLID_F | HDR_TO_F, 0) < 0 || !msg->callid
+			|| !msg->to) {
 		LM_ERR("bad request or missing Call-Id or To headers\n");
 		return -1;
 	}
-	if (get_to(msg)->tag_value.len>0) {
+	if(get_to(msg)->tag_value.len > 0) {
 		sf->ttag = get_to(msg)->tag_value;
 	}
-	if (parse_from_header(msg)<0 || get_from(msg)->tag_value.len==0) {
+	if(parse_from_header(msg) < 0 || get_from(msg)->tag_value.len == 0) {
 		LM_ERR("failed to get From header\n");
 		return -1;
 	}
@@ -117,7 +117,7 @@ int dlgs_sipfields_get(sip_msg_t *msg, dlgs_sipfields_t *sf)
 }
 
 dlgs_item_t *dlgs_item_new(sip_msg_t *msg, dlgs_sipfields_t *sf, str *src,
-			str *dst, str *data, unsigned int hashid)
+		str *dst, str *data, unsigned int hashid)
 {
 	dlgs_item_t *item;
 	unsigned int msize;
@@ -129,20 +129,24 @@ dlgs_item_t *dlgs_item_new(sip_msg_t *msg, dlgs_sipfields_t *sf, str *src,
 		return NULL;
 	}
 
-	if(sruid_next_safe(&_dlgs_sruid)<0) {
+	if(sruid_next_safe(&_dlgs_sruid) < 0) {
 		return NULL;
 	}
-	ruid.len = snprintf(ruidbuf, SRUID_SIZE + 16, "%.*s-%x", _dlgs_sruid.uid.len,
-			_dlgs_sruid.uid.s, hashid);
-	if(ruid.len<=0 || ruid.len>=SRUID_SIZE + 16) {
+	ruid.len = snprintf(ruidbuf, SRUID_SIZE + 16, "%.*s-%x",
+			_dlgs_sruid.uid.len, _dlgs_sruid.uid.s, hashid);
+	if(ruid.len <= 0 || ruid.len >= SRUID_SIZE + 16) {
 		LM_ERR("failed to generate dlg ruid\n");
 		return NULL;
 	}
 	ruid.s = ruidbuf;
 
-	msize = sizeof(dlgs_item_t) + (sf->callid.len + 1 + sf->ftag.len + 1
-			+ ((sf->ttag.len>0)?(sf->ttag.len+1):DLGS_TOTAG_SIZE) + ruid.len + 1
-			+ dst->len + 1 + src->len + 1 + data->len + 1) * sizeof(char);
+	msize = sizeof(dlgs_item_t)
+			+ (sf->callid.len + 1 + sf->ftag.len + 1
+					  + ((sf->ttag.len > 0) ? (sf->ttag.len + 1)
+											: DLGS_TOTAG_SIZE)
+					  + ruid.len + 1 + dst->len + 1 + src->len + 1 + data->len
+					  + 1)
+					  * sizeof(char);
 
 	item = (dlgs_item_t *)shm_malloc(msize);
 	if(item == NULL) {
@@ -164,13 +168,14 @@ dlgs_item_t *dlgs_item_new(sip_msg_t *msg, dlgs_sipfields_t *sf, str *src,
 
 	item->ttag.len = sf->ttag.len;
 	item->ttag.s = item->ftag.s + item->ftag.len + 1;
-	if(sf->ttag.len>0) {
+	if(sf->ttag.len > 0) {
 		memcpy(item->ttag.s, sf->ttag.s, sf->ttag.len);
 	}
 
 	item->ruid.len = ruid.len;
-	item->ruid.s = item->ttag.s
-					+ ((item->ttag.len>0)?(item->ttag.len + 1):DLGS_TOTAG_SIZE);
+	item->ruid.s =
+			item->ttag.s
+			+ ((item->ttag.len > 0) ? (item->ttag.len + 1) : DLGS_TOTAG_SIZE);
 	memcpy(item->ruid.s, ruid.s, ruid.len);
 
 	item->src.len = src->len;
@@ -196,7 +201,7 @@ int dlgs_item_free(dlgs_item_t *item)
 	if(item->tags != NULL) {
 		dlgs_tag_t *dti, *dtb;
 		dti = item->tags;
-		while(dti!=NULL) {
+		while(dti != NULL) {
 			dtb = dti;
 			dti = dti->next;
 			shm_free(dtb);
@@ -223,7 +228,7 @@ dlgs_ht_t *dlgs_ht_init(void)
 	dsht->ilifetime = _dlgs_init_lifetime;
 	dsht->flifetime = _dlgs_finish_lifetime;
 
-	dsht->slots = (dlgs_slot_t*)shm_malloc(dsht->htsize * sizeof(dlgs_slot_t));
+	dsht->slots = (dlgs_slot_t *)shm_malloc(dsht->htsize * sizeof(dlgs_slot_t));
 	if(dsht->slots == NULL) {
 		SHM_MEM_ERROR;
 		shm_free(dsht);
@@ -489,13 +494,13 @@ int dlgs_del_item(sip_msg_t *msg)
  */
 int dlgs_parse_field(str *vfield, int *tfield)
 {
-	if(vfield->len==3 && strncasecmp(vfield->s, "any", 3)==0) {
+	if(vfield->len == 3 && strncasecmp(vfield->s, "any", 3) == 0) {
 		*tfield = 0;
-	} else if(vfield->len==3 && strncasecmp(vfield->s, "src", 3)==0) {
+	} else if(vfield->len == 3 && strncasecmp(vfield->s, "src", 3) == 0) {
 		*tfield = 1;
-	} else if(vfield->len==3 && strncasecmp(vfield->s, "dst", 3)==0) {
+	} else if(vfield->len == 3 && strncasecmp(vfield->s, "dst", 3) == 0) {
 		*tfield = 2;
-	} else if(vfield->len==4 && strncasecmp(vfield->s, "data", 4)==0) {
+	} else if(vfield->len == 4 && strncasecmp(vfield->s, "data", 4) == 0) {
 		*tfield = 3;
 	} else {
 		LM_ERR("unknown field: %.*s\n", vfield->len, vfield->s);
@@ -509,15 +514,15 @@ int dlgs_parse_field(str *vfield, int *tfield)
  */
 int dlgs_parse_op(str *vop, int *top)
 {
-	if(vop->len==2 && strncasecmp(vop->s, "eq", 2)==0) {
+	if(vop->len == 2 && strncasecmp(vop->s, "eq", 2) == 0) {
 		*top = 0;
-	} else if(vop->len==2 && strncasecmp(vop->s, "ne", 2)==0) {
+	} else if(vop->len == 2 && strncasecmp(vop->s, "ne", 2) == 0) {
 		*top = 1;
-	} else if(vop->len==2 && strncasecmp(vop->s, "re", 2)==0) {
+	} else if(vop->len == 2 && strncasecmp(vop->s, "re", 2) == 0) {
 		*top = 2;
-	} else if(vop->len==2 && strncasecmp(vop->s, "sw", 2)==0) {
+	} else if(vop->len == 2 && strncasecmp(vop->s, "sw", 2) == 0) {
 		*top = 3;
-	} else if(vop->len==2 && strncasecmp(vop->s, "fm", 2)==0) {
+	} else if(vop->len == 2 && strncasecmp(vop->s, "fm", 2) == 0) {
 		*top = 4;
 	} else {
 		LM_ERR("unknown operator: %.*s\n", vop->len, vop->s);
@@ -529,8 +534,8 @@ int dlgs_parse_op(str *vop, int *top)
 /**
  *
  */
-int dlgs_match_field(dlgs_item_t *it, int tfield, int top, str *vdata,
-		void *rdata)
+int dlgs_match_field(
+		dlgs_item_t *it, int tfield, int top, str *vdata, void *rdata)
 {
 	str mval;
 	regmatch_t pmatch;
@@ -552,33 +557,33 @@ int dlgs_match_field(dlgs_item_t *it, int tfield, int top, str *vdata,
 	switch(top) {
 		case 0:
 			if(mval.len == vdata->len
-					&& strncmp(mval.s, vdata->s, mval.len)==0) {
+					&& strncmp(mval.s, vdata->s, mval.len) == 0) {
 				return 0;
 			}
-		break;
+			break;
 		case 1:
 			if(mval.len != vdata->len
-					|| strncmp(mval.s, vdata->s, mval.len)!=0) {
+					|| strncmp(mval.s, vdata->s, mval.len) != 0) {
 				return 0;
 			}
-		break;
+			break;
 		case 2:
-			if(rdata!=NULL
-					&& regexec((regex_t*)rdata, mval.s, 1, &pmatch, 0)==0) {
+			if(rdata != NULL
+					&& regexec((regex_t *)rdata, mval.s, 1, &pmatch, 0) == 0) {
 				return 0;
 			}
-		break;
+			break;
 		case 3:
 			if(mval.len >= vdata->len
-					&& strncmp(mval.s, vdata->s, vdata->len)==0) {
+					&& strncmp(mval.s, vdata->s, vdata->len) == 0) {
 				return 0;
 			}
-		break;
+			break;
 		case 4:
 			if(fnmatch(vdata->s, mval.s, 0) == 0) {
 				return 0;
 			}
-		break;
+			break;
 	}
 	return -1;
 }
@@ -597,22 +602,22 @@ int dlgs_count(sip_msg_t *msg, str *vfield, str *vop, str *vdata)
 	if(_dlgs_htb == NULL) {
 		return -1;
 	}
-	if(vfield == NULL || vop == NULL || vdata ==NULL) {
+	if(vfield == NULL || vop == NULL || vdata == NULL) {
 		return -1;
 	}
 
-	if(dlgs_parse_field(vfield, &tfield)<0) {
+	if(dlgs_parse_field(vfield, &tfield) < 0) {
 		return -1;
 	}
 
-	if(dlgs_parse_op(vop, &top)<0) {
+	if(dlgs_parse_op(vop, &top) < 0) {
 		return -1;
 	}
 
 	n = 0;
 	if(tfield == 0) {
 		/* count 'any' dialog not-yet-finished */
-		for(i=0; i<_dlgs_htb->htsize; i++) {
+		for(i = 0; i < _dlgs_htb->htsize; i++) {
 			n += _dlgs_htb->slots[i].astats.c_init;
 			n += _dlgs_htb->slots[i].astats.c_progress;
 			n += _dlgs_htb->slots[i].astats.c_answered;
@@ -623,10 +628,10 @@ int dlgs_count(sip_msg_t *msg, str *vfield, str *vop, str *vdata)
 
 	for(i = 0; i < _dlgs_htb->htsize; i++) {
 		lock_get(&_dlgs_htb->slots[i].lock);
-		for(it = _dlgs_htb->slots[i].first; it != NULL; it=it->next) {
+		for(it = _dlgs_htb->slots[i].first; it != NULL; it = it->next) {
 			if(it->state != DLGS_STATE_TERMINATED
 					&& it->state != DLGS_STATE_NOTANSWERED) {
-				if(dlgs_match_field(it, tfield, top, vdata, NULL)==0) {
+				if(dlgs_match_field(it, tfield, top, vdata, NULL) == 0) {
 					n++;
 				}
 			}
@@ -659,8 +664,8 @@ int dlgs_ht_dbg(void)
 			LM_ERR("\tdst: %.*s\n", it->dst.len, it->dst.s);
 			LM_ERR("\tdata: %.*s\n", it->data.len, it->data.s);
 			LM_ERR("\truid: %.*s\n", it->ruid.len, it->ruid.s);
-			LM_ERR("\thashid: %u ts_init: %" PRIu64 " ts_answer: %" PRIu64 "\n", it->hashid,
-					(uint64_t)it->ts_init, (uint64_t)it->ts_answer);
+			LM_ERR("\thashid: %u ts_init: %" PRIu64 " ts_answer: %" PRIu64 "\n",
+					it->hashid, (uint64_t)it->ts_init, (uint64_t)it->ts_answer);
 			it = it->next;
 		}
 		lock_release(&dsht->slots[i].lock);
@@ -718,8 +723,9 @@ int dlgs_update_item(sip_msg_t *msg)
 		}
 	} else {
 		rtype = SIP_REPLY;
-		if(msg->cseq==NULL && ((parse_headers(msg, HDR_CSEQ_F, 0)==-1) ||
-				(msg->cseq==NULL))) {
+		if(msg->cseq == NULL
+				&& ((parse_headers(msg, HDR_CSEQ_F, 0) == -1)
+						|| (msg->cseq == NULL))) {
 			LM_ERR("no CSEQ header\n");
 			return -1;
 		}
@@ -730,7 +736,7 @@ int dlgs_update_item(sip_msg_t *msg)
 	tnow = time(NULL);
 
 	it = dlgs_get_item(msg);
-	if(it==NULL) {
+	if(it == NULL) {
 		LM_DBG("no matching item found\n");
 		return 0;
 	}
@@ -739,68 +745,81 @@ int dlgs_update_item(sip_msg_t *msg)
 	if(rtype == SIP_REQUEST) {
 		switch(rmethod) {
 			case METHOD_ACK:
-				if(it->state==DLGS_STATE_ANSWERED) {
-					dlgs_update_stats(&_dlgs_htb->slots[idx].astats, it->state, -1);
+				if(it->state == DLGS_STATE_ANSWERED) {
+					dlgs_update_stats(
+							&_dlgs_htb->slots[idx].astats, it->state, -1);
 					it->state = DLGS_STATE_CONFIRMED;
-					dlgs_update_stats(&_dlgs_htb->slots[idx].astats, it->state, 1);
+					dlgs_update_stats(
+							&_dlgs_htb->slots[idx].astats, it->state, 1);
 				}
-			break;
+				break;
 			case METHOD_CANCEL:
-				if(it->state<DLGS_STATE_ANSWERED) {
-					dlgs_update_stats(&_dlgs_htb->slots[idx].astats, it->state, -1);
+				if(it->state < DLGS_STATE_ANSWERED) {
+					dlgs_update_stats(
+							&_dlgs_htb->slots[idx].astats, it->state, -1);
 					it->state = DLGS_STATE_NOTANSWERED;
-					dlgs_update_stats(&_dlgs_htb->slots[idx].astats, it->state, 1);
+					dlgs_update_stats(
+							&_dlgs_htb->slots[idx].astats, it->state, 1);
 					it->ts_finish = tnow;
 				}
-			break;
+				break;
 			case METHOD_BYE:
-				if(it->state==DLGS_STATE_ANSWERED
-						|| it->state==DLGS_STATE_CONFIRMED) {
-					dlgs_update_stats(&_dlgs_htb->slots[idx].astats, it->state, -1);
+				if(it->state == DLGS_STATE_ANSWERED
+						|| it->state == DLGS_STATE_CONFIRMED) {
+					dlgs_update_stats(
+							&_dlgs_htb->slots[idx].astats, it->state, -1);
 					it->state = DLGS_STATE_TERMINATED;
-					dlgs_update_stats(&_dlgs_htb->slots[idx].astats, it->state, 1);
+					dlgs_update_stats(
+							&_dlgs_htb->slots[idx].astats, it->state, 1);
 					it->ts_finish = tnow;
 				}
-			break;
+				break;
 		}
 		goto done;
 	}
 
 	switch(rmethod) {
 		case METHOD_INVITE:
-			if(rcode>=100 && rcode<200) {
-				if(it->state==DLGS_STATE_INIT) {
-					dlgs_update_stats(&_dlgs_htb->slots[idx].astats, it->state, -1);
+			if(rcode >= 100 && rcode < 200) {
+				if(it->state == DLGS_STATE_INIT) {
+					dlgs_update_stats(
+							&_dlgs_htb->slots[idx].astats, it->state, -1);
 					it->state = DLGS_STATE_PROGRESS;
-					dlgs_update_stats(&_dlgs_htb->slots[idx].astats, it->state, 1);
+					dlgs_update_stats(
+							&_dlgs_htb->slots[idx].astats, it->state, 1);
 				}
-			} else if(rcode>=200 && rcode<300) {
-				if(it->state==DLGS_STATE_INIT
-						|| it->state==DLGS_STATE_PROGRESS) {
-					dlgs_update_stats(&_dlgs_htb->slots[idx].astats, it->state, -1);
+			} else if(rcode >= 200 && rcode < 300) {
+				if(it->state == DLGS_STATE_INIT
+						|| it->state == DLGS_STATE_PROGRESS) {
+					dlgs_update_stats(
+							&_dlgs_htb->slots[idx].astats, it->state, -1);
 					it->state = DLGS_STATE_ANSWERED;
-					dlgs_update_stats(&_dlgs_htb->slots[idx].astats, it->state, 1);
+					dlgs_update_stats(
+							&_dlgs_htb->slots[idx].astats, it->state, 1);
 					it->ts_answer = tnow;
-					if(it->ttag.len<=0) {
+					if(it->ttag.len <= 0) {
 						to_body_t *tb;
 						tb = get_to(msg);
-						if(tb!=NULL && tb->tag_value.len>0
-								&& (tb->tag_value.len<DLGS_TOTAG_SIZE-1)) {
+						if(tb != NULL && tb->tag_value.len > 0
+								&& (tb->tag_value.len < DLGS_TOTAG_SIZE - 1)) {
 							it->ttag.len = tb->tag_value.len;
-							memcpy(it->ttag.s, tb->tag_value.s, tb->tag_value.len);
+							memcpy(it->ttag.s, tb->tag_value.s,
+									tb->tag_value.len);
 						}
 					}
 				}
-			} else if(rcode>=300) {
-				if(it->state==DLGS_STATE_INIT
-						|| it->state==DLGS_STATE_PROGRESS) {
-					dlgs_update_stats(&_dlgs_htb->slots[idx].astats, it->state, -1);
+			} else if(rcode >= 300) {
+				if(it->state == DLGS_STATE_INIT
+						|| it->state == DLGS_STATE_PROGRESS) {
+					dlgs_update_stats(
+							&_dlgs_htb->slots[idx].astats, it->state, -1);
 					it->state = DLGS_STATE_NOTANSWERED;
-					dlgs_update_stats(&_dlgs_htb->slots[idx].astats, it->state, 1);
+					dlgs_update_stats(
+							&_dlgs_htb->slots[idx].astats, it->state, 1);
 					it->ts_finish = tnow;
 				}
 			}
-		break;
+			break;
 	}
 
 done:
@@ -819,7 +838,7 @@ int dlgs_tags_add(sip_msg_t *msg, str *vtags)
 	dlgs_tag_t *dtag = NULL;
 	unsigned int tsize = 0;
 
-	if(vtags==NULL || vtags->len<=0) {
+	if(vtags == NULL || vtags->len <= 0) {
 		LM_DBG("no tags content\n");
 		return -1;
 	}
@@ -830,14 +849,14 @@ int dlgs_tags_add(sip_msg_t *msg, str *vtags)
 	}
 
 	tsize = sizeof(dlgs_tag_t) + vtags->len + 1;
-	dtag = (dlgs_tag_t*)shm_malloc(tsize);
+	dtag = (dlgs_tag_t *)shm_malloc(tsize);
 	if(dtag == NULL) {
 		SHM_MEM_ERROR;
 		dlgs_unlock_item(msg);
 		return -2;
 	}
 	memset(dtag, 0, tsize);
-	dtag->tname.s = (char*)dtag + sizeof(dlgs_tag_t);
+	dtag->tname.s = (char *)dtag + sizeof(dlgs_tag_t);
 	memcpy(dtag->tname.s, vtags->s, vtags->len);
 	dtag->tname.len = vtags->len;
 	dtag->tname.s[dtag->tname.len] = '\0';
@@ -860,7 +879,7 @@ int dlgs_tags_rm(sip_msg_t *msg, str *vtags)
 	dlgs_item_t *dit = NULL;
 	dlgs_tag_t *dtag = NULL;
 
-	if(vtags==NULL || vtags->len<=0) {
+	if(vtags == NULL || vtags->len <= 0) {
 		LM_DBG("no tags content\n");
 		return -1;
 	}
@@ -869,7 +888,7 @@ int dlgs_tags_rm(sip_msg_t *msg, str *vtags)
 	if(dit == NULL) {
 		return -1;
 	}
-	for(dtag=dit->tags; dtag!=NULL; dtag=dtag->next) {
+	for(dtag = dit->tags; dtag != NULL; dtag = dtag->next) {
 		if(dtag->tname.len == vtags->len
 				&& strncmp(dtag->tname.s, vtags->s, vtags->len) == 0) {
 			break;
@@ -911,12 +930,13 @@ int dlgs_tags_count(sip_msg_t *msg, str *vtags)
 	n = 0;
 	for(i = 0; i < _dlgs_htb->htsize; i++) {
 		lock_get(&_dlgs_htb->slots[i].lock);
-		for(it = _dlgs_htb->slots[i].first; it != NULL; it=it->next) {
+		for(it = _dlgs_htb->slots[i].first; it != NULL; it = it->next) {
 			if(it->state != DLGS_STATE_TERMINATED
 					&& it->state != DLGS_STATE_NOTANSWERED) {
-				for(dtag=it->tags; dtag!=NULL; dtag=dtag->next) {
+				for(dtag = it->tags; dtag != NULL; dtag = dtag->next) {
 					if(dtag->tname.len == vtags->len
-							&& strncmp(dtag->tname.s, vtags->s, vtags->len) == 0) {
+							&& strncmp(dtag->tname.s, vtags->s, vtags->len)
+									   == 0) {
 						n++;
 					}
 				}
@@ -959,23 +979,23 @@ void dlgs_ht_timer(unsigned int ticks, void *param)
 					ite = it;
 				}
 			} else if(it->state == DLGS_STATE_NOTANSWERED
-					|| it->state == DLGS_STATE_TERMINATED) {
+					  || it->state == DLGS_STATE_TERMINATED) {
 				if(it->ts_finish + _dlgs_htb->flifetime < tnow) {
 					ite = it;
 				}
 			}
 			it = it->next;
 			if(ite != NULL) {
-				if(ite==_dlgs_htb->slots[i].first) {
+				if(ite == _dlgs_htb->slots[i].first) {
 					_dlgs_htb->slots[i].first = it;
-					if(it!=NULL) {
+					if(it != NULL) {
 						it->prev = NULL;
 					}
 				} else {
 					if(ite->prev) {
 						ite->prev->next = it;
 					}
-					if(it!=NULL) {
+					if(it != NULL) {
 						it->prev = ite->prev;
 					}
 				}
@@ -989,10 +1009,7 @@ void dlgs_ht_timer(unsigned int ticks, void *param)
 	return;
 }
 
-static const char *dlgs_rpc_stats_doc[2] = {
-	"Stats of the dlgs records",
-	0
-};
+static const char *dlgs_rpc_stats_doc[2] = {"Stats of the dlgs records", 0};
 
 
 /*
@@ -1010,21 +1027,21 @@ static void dlgs_rpc_stats(rpc_t *rpc, void *ctx)
 		return;
 	}
 
-	if (rpc->add(ctx, "{", &th) < 0) {
+	if(rpc->add(ctx, "{", &th) < 0) {
 		rpc->fault(ctx, 500, "Internal error creating rpc");
 		return;
 	}
 	i = 0;
 	do {
-		if(i==0) {
+		if(i == 0) {
 			sti = &_dlgs_htb->fstats;
-			if(rpc->struct_add(th, "{", "final", &ti)<0) {
+			if(rpc->struct_add(th, "{", "final", &ti) < 0) {
 				rpc->fault(ctx, 500, "Internal error creating final stats");
 				return;
 			}
 		} else {
 			memset(&sta, 0, sizeof(dlgs_stats_t));
-			for(i=0; i<_dlgs_htb->htsize; i++) {
+			for(i = 0; i < _dlgs_htb->htsize; i++) {
 				sta.c_init += _dlgs_htb->slots[i].astats.c_init;
 				sta.c_progress += _dlgs_htb->slots[i].astats.c_progress;
 				sta.c_answered += _dlgs_htb->slots[i].astats.c_answered;
@@ -1033,60 +1050,49 @@ static void dlgs_rpc_stats(rpc_t *rpc, void *ctx)
 				sta.c_notanswered += _dlgs_htb->slots[i].astats.c_notanswered;
 			}
 			sti = &sta;
-			if(rpc->struct_add(th, "{", "active", &ti)<0) {
+			if(rpc->struct_add(th, "{", "active", &ti) < 0) {
 				rpc->fault(ctx, 500, "Internal error creating final stats");
 				return;
 			}
 			i = 1;
 		}
-		if(rpc->struct_add(ti, "uuuuuu",
-				"init", sti->c_init,
-				"progress", sti->c_progress,
-				"answered", sti->c_answered,
-				"confirmed", sti->c_confirmed,
-				"terminted", sti->c_terminted,
-				"notanswered", sti->c_notanswered)<0) {
+		if(rpc->struct_add(ti, "uuuuuu", "init", sti->c_init, "progress",
+				   sti->c_progress, "answered", sti->c_answered, "confirmed",
+				   sti->c_confirmed, "terminted", sti->c_terminted,
+				   "notanswered", sti->c_notanswered)
+				< 0) {
 			rpc->fault(ctx, 500, "Internal error creating values");
 			return;
 		}
 		i++;
-	} while(i<2);
+	} while(i < 2);
 }
 
 /*
  * RPC command to add a dlg item to rpc result
  */
-static int dlgs_rpc_add_item(rpc_t *rpc, void *ctx, dlgs_item_t *it, int n,
-		int mode)
+static int dlgs_rpc_add_item(
+		rpc_t *rpc, void *ctx, dlgs_item_t *it, int n, int mode)
 {
 	void *th;
 
-	if (rpc->add(ctx, "{", &th) < 0) {
+	if(rpc->add(ctx, "{", &th) < 0) {
 		rpc->fault(ctx, 500, "Internal error creating rpc");
 		return -1;
 	}
-	if(rpc->struct_add(th, "dSSSSSSSJJu",
-					"count", n,
-					"src", &it->src,
-					"dst", &it->dst,
-					"data", &it->data,
-					"ruid", &it->ruid,
-					"callid", &it->callid,
-					"ftag", &it->ftag,
-					"ttag", &it->ttag,
-					"ts_init", (uint64_t)it->ts_init,
-					"ts_answer", (uint64_t)it->ts_answer,
-					"state", it->state)<0) {
+	if(rpc->struct_add(th, "dSSSSSSSJJu", "count", n, "src", &it->src, "dst",
+			   &it->dst, "data", &it->data, "ruid", &it->ruid, "callid",
+			   &it->callid, "ftag", &it->ftag, "ttag", &it->ttag, "ts_init",
+			   (uint64_t)it->ts_init, "ts_answer", (uint64_t)it->ts_answer,
+			   "state", it->state)
+			< 0) {
 		rpc->fault(ctx, 500, "Internal error creating item");
 		return -1;
 	}
 	return 0;
 }
 
-static const char *dlgs_rpc_list_doc[2] = {
-	"List the dlgs records",
-	0
-};
+static const char *dlgs_rpc_list_doc[2] = {"List the dlgs records", 0};
 
 
 /*
@@ -1117,10 +1123,7 @@ static void dlgs_rpc_list(rpc_t *rpc, void *ctx)
 	}
 }
 
-static const char *dlgs_rpc_briefing_doc[2] = {
-	"Briefing the dlgs records",
-	0
-};
+static const char *dlgs_rpc_briefing_doc[2] = {"Briefing the dlgs records", 0};
 
 
 /*
@@ -1141,17 +1144,15 @@ static void dlgs_rpc_briefing(rpc_t *rpc, void *ctx)
 		lock_get(&_dlgs_htb->slots[i].lock);
 		it = _dlgs_htb->slots[i].first;
 		while(it) {
-			if (rpc->add(ctx, "{", &th) < 0) {
+			if(rpc->add(ctx, "{", &th) < 0) {
 				lock_release(&_dlgs_htb->slots[i].lock);
 				rpc->fault(ctx, 500, "Internal error creating rpc");
 				return;
 			}
-			if(rpc->struct_add(th, "dSSSuu",
-							"count", ++n,
-							"src", &it->src,
-							"dst", &it->dst,
-							"callid", &it->callid,
-							"state", it->state)<0) {
+			if(rpc->struct_add(th, "dSSSuu", "count", ++n, "src", &it->src,
+					   "dst", &it->dst, "callid", &it->callid, "state",
+					   it->state)
+					< 0) {
 				lock_release(&_dlgs_htb->slots[i].lock);
 				rpc->fault(ctx, 500, "Internal error creating item");
 				return;
@@ -1186,19 +1187,20 @@ static void dlgs_rpc_get_limit(rpc_t *rpc, void *ctx, int limit)
 		return;
 	}
 
-	if(dlgs_parse_field(&vfield, &tfield)<0) {
+	if(dlgs_parse_field(&vfield, &tfield) < 0) {
 		rpc->fault(ctx, 500, "Invalid Field");
 		return;
 	}
 
-	if(dlgs_parse_op(&vop, &top)<0) {
+	if(dlgs_parse_op(&vop, &top) < 0) {
 		rpc->fault(ctx, 500, "Invalid Operator");
 		return;
 	}
 
 	if(top == 2) {
 		memset(&mre, 0, sizeof(regex_t));
-		if (regcomp(&mre, vdata.s, REG_EXTENDED|REG_ICASE|REG_NEWLINE)!=0) {
+		if(regcomp(&mre, vdata.s, REG_EXTENDED | REG_ICASE | REG_NEWLINE)
+				!= 0) {
 			LM_ERR("failed to compile regex: %.*s\n", vdata.len, vdata.s);
 			rpc->fault(ctx, 500, "Invalid Matching Value");
 			return;
@@ -1210,7 +1212,9 @@ static void dlgs_rpc_get_limit(rpc_t *rpc, void *ctx, int limit)
 		lock_get(&_dlgs_htb->slots[i].lock);
 		it = _dlgs_htb->slots[i].first;
 		while(it) {
-			if(dlgs_match_field(it, tfield, top, &vdata, (top==2)?&mre:NULL)==0) {
+			if(dlgs_match_field(
+					   it, tfield, top, &vdata, (top == 2) ? &mre : NULL)
+					== 0) {
 				n++;
 				if(dlgs_rpc_add_item(rpc, ctx, it, n, 0) < 0) {
 					lock_release(&_dlgs_htb->slots[i].lock);
@@ -1219,7 +1223,7 @@ static void dlgs_rpc_get_limit(rpc_t *rpc, void *ctx, int limit)
 					}
 					return;
 				}
-				if(limit!=0 && limit==n) {
+				if(limit != 0 && limit == n) {
 					/* finished by limit */
 					lock_release(&_dlgs_htb->slots[i].lock);
 					if(top == 2) {
@@ -1238,9 +1242,7 @@ static void dlgs_rpc_get_limit(rpc_t *rpc, void *ctx, int limit)
 }
 
 static const char *dlgs_rpc_get_doc[2] = {
-	"Get the first dlgs record by filter",
-	0
-};
+		"Get the first dlgs record by filter", 0};
 
 /*
  * RPC command to get first dlgs record by filter
@@ -1251,9 +1253,7 @@ static void dlgs_rpc_get(rpc_t *rpc, void *ctx)
 }
 
 static const char *dlgs_rpc_getall_doc[2] = {
-	"Get all the dlgs records by filter",
-	0
-};
+		"Get all the dlgs records by filter", 0};
 
 /*
  * RPC command to get all dlgs records by filter
