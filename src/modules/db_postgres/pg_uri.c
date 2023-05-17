@@ -105,8 +105,8 @@ static int parse_postgres_uri(struct pg_uri *res, str *uri)
 
 	enum state
 	{
-		ST_SLASH1,	/* First slash */
-		ST_SLASH2,	/* Second slash */
+		ST_SLASH1,	  /* First slash */
+		ST_SLASH2,	  /* Second slash */
 		ST_USER_HOST, /* Username or hostname */
 		ST_PASS_PORT, /* Password or port part */
 		ST_HOST,	  /* Hostname part */
@@ -116,7 +116,7 @@ static int parse_postgres_uri(struct pg_uri *res, str *uri)
 	};
 
 	enum state st;
-	int i, ipv6_flag=0;
+	int i, ipv6_flag = 0;
 	const char *begin;
 	char *prev_token;
 
@@ -226,7 +226,9 @@ static int parse_postgres_uri(struct pg_uri *res, str *uri)
 
 					case ':':
 						st = ST_PORT;
-						if(dupl_string(&res->host, begin, uri->s + i - ipv6_flag) < 0)
+						if(dupl_string(
+								   &res->host, begin, uri->s + i - ipv6_flag)
+								< 0)
 							goto err;
 						begin = uri->s + i + 1;
 						break;
@@ -235,7 +237,9 @@ static int parse_postgres_uri(struct pg_uri *res, str *uri)
 						if(memchr(uri->s + i + 1, '/', uri->len - i - 1)
 								!= NULL)
 							break;
-						if(dupl_string(&res->host, begin, uri->s + i - ipv6_flag) < 0)
+						if(dupl_string(
+								   &res->host, begin, uri->s + i - ipv6_flag)
+								< 0)
 							goto err;
 						if(dupl_string(&res->database, uri->s + i + 1,
 								   uri->s + uri->len)
@@ -277,7 +281,8 @@ static int parse_postgres_uri(struct pg_uri *res, str *uri)
 
 err:
 	if(prev_token) {
-		if(res==NULL || (res->username!=prev_token && res->host!=prev_token))
+		if(res == NULL
+				|| (res->username != prev_token && res->host != prev_token))
 			pkg_free(prev_token);
 	}
 	if(res == NULL)

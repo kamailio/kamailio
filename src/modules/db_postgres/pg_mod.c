@@ -39,7 +39,7 @@
 #include "db_postgres.h"
 
 #include "../../core/sr_module.h"
-#include "../../core/parser/parse_param.h" 
+#include "../../core/parser/parse_param.h"
 
 #ifdef PG_TEST
 #include <limits.h>
@@ -60,59 +60,55 @@ int pg_timeout = 0; /* default = no timeout */
 int pg_keepalive = 0;
 int pg_bytea_output_escape = 1;
 
-pg_con_param_t* pg_con_param_list = 0;
+pg_con_param_t *pg_con_param_list = 0;
 static int pg_con_param(modparam_t type, void *val);
 static int pg_init_com_params();
 
 /*
  * Postgres module interface
  */
-static cmd_export_t cmds[] = {
-	{"db_ctx", (cmd_function)NULL, 0, 0, 0, 0},
-	{"db_con", (cmd_function)pg_con, 0, 0, 0, 0},
-	{"db_uri", (cmd_function)pg_uri, 0, 0, 0, 0},
-	{"db_cmd", (cmd_function)pg_cmd, 0, 0, 0, 0},
-	{"db_put", (cmd_function)pg_cmd_exec, 0, 0, 0, 0},
-	{"db_del", (cmd_function)pg_cmd_exec, 0, 0, 0, 0},
-	{"db_get", (cmd_function)pg_cmd_exec, 0, 0, 0, 0},
-	{"db_upd", (cmd_function)pg_cmd_exec, 0, 0, 0, 0},
-	{"db_sql", (cmd_function)pg_cmd_exec, 0, 0, 0, 0},
-	{"db_res", (cmd_function)pg_res, 0, 0, 0, 0},
-	{"db_fld", (cmd_function)pg_fld, 0, 0, 0, 0},
-	{"db_first", (cmd_function)pg_cmd_first, 0, 0, 0, 0},
-	{"db_next", (cmd_function)pg_cmd_next, 0, 0, 0, 0},
-	{"db_setopt", (cmd_function)pg_setopt, 0, 0, 0, 0},
-	{"db_getopt", (cmd_function)pg_getopt, 0, 0, 0, 0},
-	{"db_bind_api", (cmd_function)db_postgres_bind_api, 0, 0, 0, 0},
-	{0, 0, 0, 0, 0, 0}
-};
+static cmd_export_t cmds[] = {{"db_ctx", (cmd_function)NULL, 0, 0, 0, 0},
+		{"db_con", (cmd_function)pg_con, 0, 0, 0, 0},
+		{"db_uri", (cmd_function)pg_uri, 0, 0, 0, 0},
+		{"db_cmd", (cmd_function)pg_cmd, 0, 0, 0, 0},
+		{"db_put", (cmd_function)pg_cmd_exec, 0, 0, 0, 0},
+		{"db_del", (cmd_function)pg_cmd_exec, 0, 0, 0, 0},
+		{"db_get", (cmd_function)pg_cmd_exec, 0, 0, 0, 0},
+		{"db_upd", (cmd_function)pg_cmd_exec, 0, 0, 0, 0},
+		{"db_sql", (cmd_function)pg_cmd_exec, 0, 0, 0, 0},
+		{"db_res", (cmd_function)pg_res, 0, 0, 0, 0},
+		{"db_fld", (cmd_function)pg_fld, 0, 0, 0, 0},
+		{"db_first", (cmd_function)pg_cmd_first, 0, 0, 0, 0},
+		{"db_next", (cmd_function)pg_cmd_next, 0, 0, 0, 0},
+		{"db_setopt", (cmd_function)pg_setopt, 0, 0, 0, 0},
+		{"db_getopt", (cmd_function)pg_getopt, 0, 0, 0, 0},
+		{"db_bind_api", (cmd_function)db_postgres_bind_api, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0}};
 
 
 /*
  * Exported parameters
  */
-static param_export_t params[] = {
-	{"retries", PARAM_INT, &pg_retries},
-	{"lockset", PARAM_INT, &pg_lockset},
-	{"timeout", PARAM_INT, &pg_timeout},
-	{"tcp_keepalive", PARAM_INT, &pg_keepalive},
-	{"bytea_output_escape", PARAM_INT, &pg_bytea_output_escape},
-	{"con_param",  PARAM_STRING|USE_FUNC_PARAM, (void*)pg_con_param},
-	{0, 0, 0}
-};
+static param_export_t params[] = {{"retries", PARAM_INT, &pg_retries},
+		{"lockset", PARAM_INT, &pg_lockset},
+		{"timeout", PARAM_INT, &pg_timeout},
+		{"tcp_keepalive", PARAM_INT, &pg_keepalive},
+		{"bytea_output_escape", PARAM_INT, &pg_bytea_output_escape},
+		{"con_param", PARAM_STRING | USE_FUNC_PARAM, (void *)pg_con_param},
+		{0, 0, 0}};
 
 
 struct module_exports exports = {
-	"db_postgres",	/* module name */
-	DEFAULT_DLFLAGS,	/* dlopen flags */
-	cmds,			/* exported functions */
-	params,			/* exported parameters */
-	0,				/* exported RPC methods */
-	0,				/* exported pseudo-variables */
-	0,				/* response function*/
-	pg_mod_init,	/* module initialization function */
-	0,				/* per-child init function */
-	pg_mod_destroy	/* destroy function */
+		"db_postgres",	 /* module name */
+		DEFAULT_DLFLAGS, /* dlopen flags */
+		cmds,			 /* exported functions */
+		params,			 /* exported parameters */
+		0,				 /* exported RPC methods */
+		0,				 /* exported pseudo-variables */
+		0,				 /* response function*/
+		pg_mod_init,	 /* module initialization function */
+		0,				 /* per-child init function */
+		pg_mod_destroy	 /* destroy function */
 };
 
 /*
@@ -548,8 +544,8 @@ static int pg_mod_init(void)
 #endif /* PG_TEST */
 	if(pg_init_lock_set(pg_lockset) < 0)
 		return -1;
-	
-	if(pg_init_com_params() < 0){
+
+	if(pg_init_com_params() < 0) {
 		return -1;
 	}
 
@@ -565,14 +561,11 @@ static void free_con_param_list()
 {
 	pg_con_param_t *tmp = NULL;
 	pg_con_param_t *con_param = pg_con_param_list;
-	while(con_param)
-	{
-		if(con_param->name)
-		{
+	while(con_param) {
+		if(con_param->name) {
 			shm_free(con_param->name);
 		}
-		if(con_param->value)
-		{
+		if(con_param->value) {
 			shm_free(con_param->value);
 		}
 		tmp = con_param->next;
@@ -584,27 +577,28 @@ static void free_con_param_list()
 static int add_con_param(str *name, str *value)
 {
 	/* malloc for param */
-	pg_con_param_t *con_param = (pg_con_param_t*)shm_malloc(sizeof(pg_con_param_t));
+	pg_con_param_t *con_param =
+			(pg_con_param_t *)shm_malloc(sizeof(pg_con_param_t));
 	if(con_param == 0) {
 		LM_ERR("no more shm memory\n");
-		goto error;	
+		goto error;
 	}
 
 	/* parse name */
-	con_param->name = (char*)shm_malloc(name->len + 1);
-	if(con_param->name == NULL){
+	con_param->name = (char *)shm_malloc(name->len + 1);
+	if(con_param->name == NULL) {
 		LM_ERR("no more shm memory while parsing name\n");
-		goto error;		
-	}		
+		goto error;
+	}
 	memcpy(con_param->name, name->s, name->len);
 	con_param->name[name->len] = '\0';
 
 	/* parse value */
-	con_param->value = (char*)shm_malloc(value->len + 1);
-	if(con_param->value == NULL){
+	con_param->value = (char *)shm_malloc(value->len + 1);
+	if(con_param->value == NULL) {
 		LM_ERR("no more shm memory while parsing value\n");
-		goto error;	
-	}		
+		goto error;
+	}
 	memcpy(con_param->value, value->s, value->len);
 	con_param->value[value->len] = '\0';
 
@@ -624,17 +618,16 @@ static int pg_init_com_params()
 	int ret = 0;
 
 	int connect_timeout_set = 0;
-	if(pg_con_param_list != NULL)
-	{
+	if(pg_con_param_list != NULL) {
 		LM_INFO("postgres connection params:");
 		pg_con_param_t *con_param = pg_con_param_list;
-		while(con_param)
-		{
+		while(con_param) {
 			LM_INFO("%s=%s", con_param->name, con_param->value);
 
 			/* check if connect_timeout parameter is set */
-			if(strncmp(con_param->name, connect_timeout_str.s, connect_timeout_str.len) == 0)
-			{
+			if(strncmp(con_param->name, connect_timeout_str.s,
+					   connect_timeout_str.len)
+					== 0) {
 				connect_timeout_set = 1;
 			}
 
@@ -643,8 +636,7 @@ static int pg_init_com_params()
 	}
 
 	/* For backward compatibility take pg_timeout param into account */
-	if(pg_timeout > 0 && connect_timeout_set == 0)
-	{
+	if(pg_timeout > 0 && connect_timeout_set == 0) {
 		str connect_timeout_val_str;
 		char timeout_val[16] = {0};
 
@@ -654,49 +646,49 @@ static int pg_init_com_params()
 
 		/* add connect_timeout parameter with pg_timeout value */
 		ret = add_con_param(&connect_timeout_str, &connect_timeout_val_str);
-		LM_INFO("%.*s=%.*s added with given timeout param", 
-				connect_timeout_str.len, connect_timeout_str.s, 
+		LM_INFO("%.*s=%.*s added with given timeout param",
+				connect_timeout_str.len, connect_timeout_str.s,
 				connect_timeout_val_str.len, connect_timeout_val_str.s);
 	}
 
 	return ret;
 }
 
-static int pg_con_param(modparam_t type, void *val) {
-	param_t* params_list=NULL;
+static int pg_con_param(modparam_t type, void *val)
+{
+	param_t *params_list = NULL;
 	param_hooks_t phooks;
-	param_t *pit=NULL;
+	param_t *pit = NULL;
 	str s;
 
-	if(val==NULL){
+	if(val == NULL) {
 		free_con_param_list();
 		return -1;
 	}
-	s.s = (char*)val;
+	s.s = (char *)val;
 	s.len = strlen(s.s);
-	if(s.s[s.len-1]==';'){
+	if(s.s[s.len - 1] == ';') {
 		s.len--;
 	}
 
-	if (parse_params(&s, CLASS_ANY, &phooks, &params_list)<0){
+	if(parse_params(&s, CLASS_ANY, &phooks, &params_list) < 0) {
 		free_con_param_list();
 		return -1;
 	}
 
 	/* parse parameter values */
-	for (pit=params_list; pit; pit=pit->next)	{
-		
+	for(pit = params_list; pit; pit = pit->next) {
+
 		if(pit->name.len == 0 || pit->body.len == 0) {
 			LM_ERR("invalid con_param parameter\n");
 			free_con_param_list();
 			return -1;
 		}
 
-		if(add_con_param(&pit->name, &pit->body) < 0){
+		if(add_con_param(&pit->name, &pit->body) < 0) {
 			free_con_param_list();
 			return -1;
 		}
-
 	}
 	return 0;
 }
