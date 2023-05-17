@@ -26,25 +26,25 @@
 
 #include "defs.h"
 
-#define MAX_WAIT_SEC	2
-#define MAX_WAIT_USEC	0
+#define MAX_WAIT_SEC 2
+#define MAX_WAIT_USEC 0
 
-#define MAX_AAA_MSG_SIZE  65536
+#define MAX_AAA_MSG_SIZE 65536
 
-#define CONN_SUCCESS	 1 
-#define CONN_ERROR		-1
-#define CONN_CLOSED		-2
+#define CONN_SUCCESS 1
+#define CONN_ERROR -1
+#define CONN_CLOSED -2
 
 
 void reset_read_buffer(rd_buf_t *rb);
-int do_read( int socket, rd_buf_t *p);
+int do_read(int socket, rd_buf_t *p);
 
-/* it initializes the TCP connection */ 
-int init_mytcp(char* host, int port);
+/* it initializes the TCP connection */
+int init_mytcp(char *host, int port);
 
 /* send a message over an already opened TCP connection */
-int tcp_send_recv(int sockfd, char* buf, int len, rd_buf_t* resp,
-					 unsigned int id);
+int tcp_send_recv(
+		int sockfd, char *buf, int len, rd_buf_t *resp, unsigned int id);
 
 void close_tcp_connection(int sfd);
 
