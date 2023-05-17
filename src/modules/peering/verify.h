@@ -36,8 +36,8 @@
 
 #include "../../core/parser/msg_parser.h"
 
-int verify_destination(struct sip_msg* _msg, char* s1, char* s2);
+int verify_destination(struct sip_msg *_msg, char *s1, char *s2);
 
-int verify_source(struct sip_msg* _msg, char* s1, char* s2);
+int verify_source(struct sip_msg *_msg, char *s1, char *s2);
 
 #endif /* _PEERING_VERIFY_H_ */
