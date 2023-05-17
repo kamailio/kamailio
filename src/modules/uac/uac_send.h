@@ -17,16 +17,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-		       
+
 #ifndef _UAC_SEND_H_
 #define _UAC_SEND_H_
 
 #include "../../core/pvar.h"
 
-int pv_get_uac_req(struct sip_msg *msg, pv_param_t *param,
-		pv_value_t *res);
-int pv_set_uac_req(struct sip_msg* msg, pv_param_t *param,
-		int op, pv_value_t *val);
+int pv_get_uac_req(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
+int pv_set_uac_req(
+		struct sip_msg *msg, pv_param_t *param, int op, pv_value_t *val);
 int pv_parse_uac_req_name(pv_spec_p sp, str *in);
 void uac_req_init(void);
 int uac_req_send(void);

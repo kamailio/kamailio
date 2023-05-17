@@ -27,16 +27,17 @@
 #include "../../core/str.h"
 #include "../../modules/tm/t_hooks.h"
 
-#define UAC_NO_RESTORE      (0)
-#define UAC_AUTO_RESTORE    (1)
-#define UAC_MANUAL_RESTORE  (2)
+#define UAC_NO_RESTORE (0)
+#define UAC_AUTO_RESTORE (1)
+#define UAC_MANUAL_RESTORE (2)
 
 void init_from_replacer(void);
 
-int replace_uri( struct sip_msg *msg, str *display, str *uri,
-					struct hdr_field *hdr, str *rr_param, str* restore_avp, int check_from);
+int replace_uri(struct sip_msg *msg, str *display, str *uri,
+		struct hdr_field *hdr, str *rr_param, str *restore_avp, int check_from);
 
-int restore_uri( struct sip_msg *msg, str *rr_param, str* restore_avp, int check_from);
+int restore_uri(
+		struct sip_msg *msg, str *rr_param, str *restore_avp, int check_from);
 
 /* RR callback functions */
 void rr_checker(struct sip_msg *msg, str *r_param, void *cb_param);

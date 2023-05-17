@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-		       
+
 #ifndef _UAC_REG_H_
 #define _UAC_REG_H_
 
@@ -39,7 +39,7 @@ extern str reg_db_url;
 extern str reg_db_table;
 extern str uac_default_socket;
 /* just to check for non-local sockets for now */
-extern struct socket_info * uac_default_sockinfo;
+extern struct socket_info *uac_default_sockinfo;
 
 extern str l_uuid_column;
 extern str l_username_column;
@@ -60,9 +60,9 @@ int uac_reg_free_ht(void);
 void uac_reg_timer(unsigned int ticks);
 int uac_reg_init_rpc(void);
 
-int  uac_reg_lookup(struct sip_msg *msg, str *src, pv_spec_t *dst, int mode);
-int  uac_reg_status(struct sip_msg *msg, str *src, int mode);
-int  uac_reg_request_to(struct sip_msg *msg, str *src, unsigned int mode);
+int uac_reg_lookup(struct sip_msg *msg, str *src, pv_spec_t *dst, int mode);
+int uac_reg_status(struct sip_msg *msg, str *src, int mode);
+int uac_reg_request_to(struct sip_msg *msg, str *src, unsigned int mode);
 
 int uac_reg_enable(sip_msg_t *msg, str *attr, str *val);
 int uac_reg_disable(sip_msg_t *msg, str *attr, str *val);
