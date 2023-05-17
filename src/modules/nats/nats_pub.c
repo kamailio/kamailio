@@ -49,7 +49,8 @@ int fixup_publish_get_value_free(void **param, int param_no)
 	return -1;
 }
 
-nats_pub_delivery_ptr _nats_pub_delivery_new(str subject, str payload, str reply)
+nats_pub_delivery_ptr _nats_pub_delivery_new(
+		str subject, str payload, str reply)
 {
 	nats_pub_delivery_ptr p =
 			(nats_pub_delivery_ptr)shm_malloc(sizeof(nats_pub_delivery));
@@ -63,7 +64,7 @@ nats_pub_delivery_ptr _nats_pub_delivery_new(str subject, str payload, str reply
 	strcpy(p->payload, payload.s);
 	p->payload[payload.len] = '\0';
 
-	if (reply.s) {
+	if(reply.s) {
 		p->reply = shm_malloc(reply.len + 1);
 		strcpy(p->reply, reply.s);
 		p->reply[reply.len] = '\0';
@@ -96,7 +97,7 @@ int w_nats_publish_f(sip_msg_t *msg, char *subj, char *payload, char *reply)
 		LM_ERR("failed to get subj value\n");
 		return -1;
 	}
-	if (reply) {
+	if(reply) {
 		if(fixup_get_svalue(msg, (gparam_t *)reply, &reply_s) < 0) {
 			LM_ERR("failed to get reply value\n");
 			return -1;
@@ -128,17 +129,21 @@ void _nats_pub_worker_cb(uv_poll_t *handle, int status, int events)
 		return;
 	}
 
-	if (ptr->reply) {
-		if((s = natsConnection_PublishRequestString(worker->nc->conn, ptr->subject, ptr->reply, ptr->payload))
+	if(ptr->reply) {
+		if((s = natsConnection_PublishRequestString(
+					worker->nc->conn, ptr->subject, ptr->reply, ptr->payload))
 				!= NATS_OK) {
-			LM_ERR("could not publish to subject [%s] payload [%s] error [%s]\n", ptr->subject, ptr->payload,
-					natsStatus_GetText(s));
+			LM_ERR("could not publish to subject [%s] payload [%s] error "
+				   "[%s]\n",
+					ptr->subject, ptr->payload, natsStatus_GetText(s));
 		}
 	} else {
-		if((s = natsConnection_PublishString(worker->nc->conn, ptr->subject, ptr->payload))
+		if((s = natsConnection_PublishString(
+					worker->nc->conn, ptr->subject, ptr->payload))
 				!= NATS_OK) {
-			LM_ERR("could not publish to subject [%s] payload [%s] error [%s]\n", ptr->subject, ptr->payload,
-					natsStatus_GetText(s));
+			LM_ERR("could not publish to subject [%s] payload [%s] error "
+				   "[%s]\n",
+					ptr->subject, ptr->payload, natsStatus_GetText(s));
 		}
 	}
 
