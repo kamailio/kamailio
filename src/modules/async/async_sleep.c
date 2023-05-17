@@ -132,8 +132,8 @@ int async_init_timer_list(void)
 
 int async_init_ms_timer_list(void)
 {
-	_async_ms_list = (struct async_ms_list *)shm_malloc(
-			sizeof(struct async_ms_list));
+	_async_ms_list =
+			(struct async_ms_list *)shm_malloc(sizeof(struct async_ms_list));
 	if(_async_ms_list == NULL) {
 		SHM_MEM_ERROR;
 		return -1;
@@ -150,7 +150,7 @@ int async_init_ms_timer_list(void)
 
 int async_destroy_ms_timer_list(void)
 {
-	if (_async_ms_list) {
+	if(_async_ms_list) {
 		lock_destroy(&_async_ms_list->lock);
 		shm_free(_async_ms_list);
 		_async_ms_list = NULL;
@@ -176,18 +176,20 @@ int async_insert_item(async_ms_item_t *ai)
 {
 	struct timeval *due = &ai->due;
 
-	if (unlikely(_async_ms_list == NULL))
+	if(unlikely(_async_ms_list == NULL))
 		return -1;
 	lock_get(&_async_ms_list->lock);
 	// Check if we want to insert in front
-	if (_async_ms_list->lstart == NULL || timercmp(due, &_async_ms_list->lstart->due, <=)) {
+	if(_async_ms_list->lstart == NULL
+			|| timercmp(due, &_async_ms_list->lstart->due, <=)) {
 		ai->next = _async_ms_list->lstart;
 		_async_ms_list->lstart = ai;
-		if (_async_ms_list->lend == NULL)
+		if(_async_ms_list->lend == NULL)
 			_async_ms_list->lend = ai;
 	} else {
 		// Check if we want to add to the tail
-		if (_async_ms_list->lend && timercmp(due, &_async_ms_list->lend->due, >)) {
+		if(_async_ms_list->lend
+				&& timercmp(due, &_async_ms_list->lend->due, >)) {
 			_async_ms_list->lend->next = ai;
 			_async_ms_list->lend = ai;
 		} else {
@@ -195,8 +197,8 @@ int async_insert_item(async_ms_item_t *ai)
 			// Find the place to insert into a sorted timer list
 			// Most likely head && tail scanarios are covered above
 			int i = 1;
-			for (aip = _async_ms_list->lstart; aip->next; aip = aip->next, i++) {
-				if (timercmp(due, &aip->next->due, <=)) {
+			for(aip = _async_ms_list->lstart; aip->next; aip = aip->next, i++) {
+				if(timercmp(due, &aip->next->due, <=)) {
 					ai->next = aip->next;
 					aip->next = ai;
 					break;
@@ -208,7 +210,6 @@ int async_insert_item(async_ms_item_t *ai)
 	lock_release(&_async_ms_list->lock);
 	return 0;
 }
-
 
 
 int async_sleep(sip_msg_t *msg, int seconds, cfg_action_t *act, str *cbname)
@@ -226,7 +227,7 @@ int async_sleep(sip_msg_t *msg, int seconds, cfg_action_t *act, str *cbname)
 		LM_ERR("max sleep time is %d sec (%d)\n", ASYNC_RING_SIZE, seconds);
 		return -1;
 	}
-	if(cbname && cbname->len>=ASYNC_CBNAME_SIZE-1) {
+	if(cbname && cbname->len >= ASYNC_CBNAME_SIZE - 1) {
 		LM_ERR("callback name is too long: %.*s\n", cbname->len, cbname->s);
 		return -1;
 	}
@@ -253,7 +254,7 @@ int async_sleep(sip_msg_t *msg, int seconds, cfg_action_t *act, str *cbname)
 	memset(ai, 0, sizeof(async_item_t));
 	ai->ticks = ticks;
 	ai->ract = act;
-	if(cbname && cbname->len>0) {
+	if(cbname && cbname->len > 0) {
 		memcpy(ai->cbname, cbname->s, cbname->len);
 		ai->cbname[cbname->len] = '\0';
 		ai->cbname_len = cbname->len;
@@ -316,7 +317,7 @@ void async_timer_exec(unsigned int ticks, void *param)
 				ksr_msg_env_reset();
 			} else {
 				keng = sr_kemi_eng_get();
-				if(keng != NULL && ai->cbname_len>0) {
+				if(keng != NULL && ai->cbname_len > 0) {
 					cbname.s = ai->cbname;
 					cbname.len = ai->cbname_len;
 					tmb.t_continue_cb(ai->tindex, ai->tlabel, &cbname, &evname);
@@ -341,18 +342,18 @@ void async_mstimer_exec(unsigned int ticks, void *param)
 	struct timeval now;
 	gettimeofday(&now, NULL);
 
-	if (_async_ms_list == NULL)
+	if(_async_ms_list == NULL)
 		return;
 	lock_get(&_async_ms_list->lock);
 
 	async_ms_item_t *aip, *next;
 	int i = 0;
-	for (aip = _async_ms_list->lstart; aip; aip = next, i++) {
+	for(aip = _async_ms_list->lstart; aip; aip = next, i++) {
 		next = aip->next;
-		if (timercmp(&now, &aip->due, >=)) {
-			if ((_async_ms_list->lstart = next) == NULL)
+		if(timercmp(&now, &aip->due, >=)) {
+			if((_async_ms_list->lstart = next) == NULL)
 				_async_ms_list->lend = NULL;
-			if (async_task_push(aip->at)<0) {
+			if(async_task_push(aip->at) < 0) {
 				shm_free(aip->at);
 			}
 			_async_ms_list->len--;
@@ -364,7 +365,6 @@ void async_mstimer_exec(unsigned int ticks, void *param)
 	lock_release(&_async_ms_list->lock);
 
 	return;
-
 }
 
 
@@ -397,7 +397,8 @@ void async_exec_task(void *param)
 	/* param is freed along with the async task strucutre in core */
 }
 
-int async_ms_sleep(sip_msg_t *msg, int milliseconds, cfg_action_t *act, str *cbname)
+int async_ms_sleep(
+		sip_msg_t *msg, int milliseconds, cfg_action_t *act, str *cbname)
 {
 	async_ms_item_t *ai;
 	int dsize;
@@ -407,7 +408,7 @@ int async_ms_sleep(sip_msg_t *msg, int milliseconds, cfg_action_t *act, str *cbn
 	async_task_param_t *atp;
 	async_task_t *at;
 
-	if (_async_ms_list==NULL) {
+	if(_async_ms_list == NULL) {
 		LM_ERR("async timer list not initialized - check modparams\n");
 		return -1;
 	}
@@ -423,11 +424,11 @@ int async_ms_sleep(sip_msg_t *msg, int milliseconds, cfg_action_t *act, str *cbn
 		LM_ERR("max sleep queue length exceeded (%d) \n", MAX_MS_SLEEP_QUEUE);
 		return -1;
 	}
-	if(cbname && cbname->len>=ASYNC_CBNAME_SIZE-1) {
+	if(cbname && cbname->len >= ASYNC_CBNAME_SIZE - 1) {
 		LM_ERR("callback name is too long: %.*s\n", cbname->len, cbname->s);
 		return -1;
 	}
-	if(cbname && cbname->len>=ASYNC_CBNAME_SIZE-1) {
+	if(cbname && cbname->len >= ASYNC_CBNAME_SIZE - 1) {
 		LM_ERR("callback name is too long: %.*s\n", cbname->len, cbname->s);
 		return -1;
 	}
@@ -450,7 +451,8 @@ int async_ms_sleep(sip_msg_t *msg, int milliseconds, cfg_action_t *act, str *cbn
 		return -1;
 	}
 
-	dsize = sizeof(async_task_t) + sizeof(async_task_param_t) + sizeof(async_ms_item_t);
+	dsize = sizeof(async_task_t) + sizeof(async_task_param_t)
+			+ sizeof(async_ms_item_t);
 
 	at = (async_task_t *)shm_malloc(dsize);
 	if(at == NULL) {
@@ -460,7 +462,8 @@ int async_ms_sleep(sip_msg_t *msg, int milliseconds, cfg_action_t *act, str *cbn
 	memset(at, 0, dsize);
 	at->param = (char *)at + sizeof(async_task_t);
 	atp = (async_task_param_t *)at->param;
-	ai = (async_ms_item_t *) ((char *)at +  sizeof(async_task_t) + sizeof(async_task_param_t));
+	ai = (async_ms_item_t *)((char *)at + sizeof(async_task_t)
+							 + sizeof(async_task_param_t));
 	ai->at = at;
 
 	at->exec = async_exec_task;
@@ -468,7 +471,7 @@ int async_ms_sleep(sip_msg_t *msg, int milliseconds, cfg_action_t *act, str *cbn
 	atp->ract = act;
 	atp->tindex = tindex;
 	atp->tlabel = tlabel;
-	if(cbname && cbname->len>0) {
+	if(cbname && cbname->len > 0) {
 		memcpy(atp->cbname, cbname->s, cbname->len);
 		atp->cbname[cbname->len] = '\0';
 		atp->cbname_len = cbname->len;
@@ -497,7 +500,7 @@ int async_send_task(sip_msg_t *msg, cfg_action_t *act, str *cbname, str *gname)
 	int dsize;
 	async_task_param_t *atp;
 
-	if(cbname && cbname->len>=ASYNC_CBNAME_SIZE-1) {
+	if(cbname && cbname->len >= ASYNC_CBNAME_SIZE - 1) {
 		LM_ERR("callback name is too long: %.*s\n", cbname->len, cbname->s);
 		return -1;
 	}
@@ -532,19 +535,19 @@ int async_send_task(sip_msg_t *msg, cfg_action_t *act, str *cbname, str *gname)
 	atp->ract = act;
 	atp->tindex = tindex;
 	atp->tlabel = tlabel;
-	if(cbname && cbname->len>0) {
+	if(cbname && cbname->len > 0) {
 		memcpy(atp->cbname, cbname->s, cbname->len);
 		atp->cbname[cbname->len] = '\0';
 		atp->cbname_len = cbname->len;
 	}
 
-	if (gname!=NULL && gname->len>0) {
-		if (async_task_group_push(gname, at)<0) {
+	if(gname != NULL && gname->len > 0) {
+		if(async_task_group_push(gname, at) < 0) {
 			shm_free(at);
 			return -1;
 		}
 	} else {
-		if (async_task_push(at)<0) {
+		if(async_task_push(at) < 0) {
 			shm_free(at);
 			return -1;
 		}
@@ -569,7 +572,7 @@ void async_exec_data(void *param)
 
 	adp = (async_data_param_t *)param;
 	fmsg = faked_msg_next();
-	if (exec_pre_script_cb(fmsg, REQUEST_CB_TYPE)==0) {
+	if(exec_pre_script_cb(fmsg, REQUEST_CB_TYPE) == 0) {
 		return;
 	}
 	rtype = get_route_type();
@@ -583,7 +586,7 @@ void async_exec_data(void *param)
 		if(keng != NULL && adp->cbname_len > 0) {
 			cbname.s = adp->cbname;
 			cbname.len = adp->cbname_len;
-			if(sr_kemi_route(keng, fmsg, EVENT_ROUTE, &cbname, &evname)<0) {
+			if(sr_kemi_route(keng, fmsg, EVENT_ROUTE, &cbname, &evname) < 0) {
 				LM_ERR("error running event route kemi callback [%.*s]\n",
 						cbname.len, cbname.s);
 			}
@@ -599,14 +602,14 @@ void async_exec_data(void *param)
 /**
  *
  */
-int async_send_data(sip_msg_t *msg, cfg_action_t *act, str *cbname, str *gname,
-		str *sdata)
+int async_send_data(
+		sip_msg_t *msg, cfg_action_t *act, str *cbname, str *gname, str *sdata)
 {
 	async_task_t *at;
 	int dsize;
 	async_data_param_t *adp;
 
-	if(cbname && cbname->len>=ASYNC_CBNAME_SIZE-1) {
+	if(cbname && cbname->len >= ASYNC_CBNAME_SIZE - 1) {
 		LM_ERR("callback name is too long: %.*s\n", cbname->len, cbname->s);
 		return -1;
 	}
@@ -621,22 +624,22 @@ int async_send_data(sip_msg_t *msg, cfg_action_t *act, str *cbname, str *gname,
 	at->exec = async_exec_data;
 	at->param = (char *)at + sizeof(async_task_t);
 	adp = (async_data_param_t *)at->param;
-	adp->sval.s = (char*)adp + sizeof(async_data_param_t);
+	adp->sval.s = (char *)adp + sizeof(async_data_param_t);
 	adp->sval.len = sdata->len;
 	memcpy(adp->sval.s, sdata->s, sdata->len);
 	adp->ract = act;
-	if(cbname && cbname->len>0) {
+	if(cbname && cbname->len > 0) {
 		memcpy(adp->cbname, cbname->s, cbname->len);
 		adp->cbname_len = cbname->len;
 	}
 
-	if (gname!=NULL && gname->len>0) {
-		if (async_task_group_push(gname, at)<0) {
+	if(gname != NULL && gname->len > 0) {
+		if(async_task_group_push(gname, at) < 0) {
 			shm_free(at);
 			return -1;
 		}
 	} else {
-		if (async_task_push(at)<0) {
+		if(async_task_push(at) < 0) {
 			shm_free(at);
 			return -1;
 		}
@@ -655,14 +658,15 @@ int pv_get_async(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 
 	switch(param->pvn.u.isname.name.n) {
 		case 0:
-			if(_ksr_async_data_param==NULL || _ksr_async_data_param->sval.s==NULL
-					|| _ksr_async_data_param->sval.len<0) {
+			if(_ksr_async_data_param == NULL
+					|| _ksr_async_data_param->sval.s == NULL
+					|| _ksr_async_data_param->sval.len < 0) {
 				return pv_get_null(msg, param, res);
 			}
 			return pv_get_strval(msg, param, res, &_ksr_async_data_param->sval);
 		case 1:
 			awg = async_task_workers_get_crt();
-			if(awg==NULL || awg->name.s==NULL || awg->name.len<0) {
+			if(awg == NULL || awg->name.s == NULL || awg->name.len < 0) {
 				return pv_get_null(msg, param, res);
 			}
 			return pv_get_strval(msg, param, res, &awg->name);
@@ -676,18 +680,18 @@ int pv_get_async(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
  */
 int pv_parse_async_name(pv_spec_t *sp, str *in)
 {
-	if(sp==NULL || in==NULL || in->len<=0)
+	if(sp == NULL || in == NULL || in->len <= 0)
 		return -1;
 
 	switch(in->len) {
 		case 4:
-			if(strncmp(in->s, "data", 4)==0)
+			if(strncmp(in->s, "data", 4) == 0)
 				sp->pvp.pvn.u.isname.name.n = 0;
-		break;
+			break;
 		case 5:
-			if(strncmp(in->s, "gname", 5)==0)
+			if(strncmp(in->s, "gname", 5) == 0)
 				sp->pvp.pvn.u.isname.name.n = 1;
-		break;
+			break;
 		default:
 			goto error;
 	}
@@ -709,14 +713,14 @@ static sr_kemi_xval_t _ksr_kemi_async_xval = {0};
 /**
  *
  */
-sr_kemi_xval_t* ki_async_get_gname(sip_msg_t *msg)
+sr_kemi_xval_t *ki_async_get_gname(sip_msg_t *msg)
 {
 	async_wgroup_t *awg = NULL;
 
 	memset(&_ksr_kemi_async_xval, 0, sizeof(sr_kemi_xval_t));
 
 	awg = async_task_workers_get_crt();
-	if(awg==NULL || awg->name.s==NULL || awg->name.len<0) {
+	if(awg == NULL || awg->name.s == NULL || awg->name.len < 0) {
 		sr_kemi_xval_null(&_ksr_kemi_async_xval, SR_KEMI_XVAL_NULL_EMPTY);
 		return &_ksr_kemi_async_xval;
 	}
@@ -728,12 +732,12 @@ sr_kemi_xval_t* ki_async_get_gname(sip_msg_t *msg)
 /**
  *
  */
-sr_kemi_xval_t* ki_async_get_data(sip_msg_t *msg)
+sr_kemi_xval_t *ki_async_get_data(sip_msg_t *msg)
 {
 	memset(&_ksr_kemi_async_xval, 0, sizeof(sr_kemi_xval_t));
 
-	if(_ksr_async_data_param==NULL || _ksr_async_data_param->sval.s==NULL
-			|| _ksr_async_data_param->sval.len<0) {
+	if(_ksr_async_data_param == NULL || _ksr_async_data_param->sval.s == NULL
+			|| _ksr_async_data_param->sval.len < 0) {
 		sr_kemi_xval_null(&_ksr_kemi_async_xval, SR_KEMI_XVAL_NULL_EMPTY);
 		return &_ksr_kemi_async_xval;
 	}
