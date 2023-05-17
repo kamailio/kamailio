@@ -50,7 +50,7 @@ typedef struct epmd_handler_s
 	int (*handle_f)(handler_common_t *handler);
 	int (*wait_tmo_f)(handler_common_t *handler);
 	int (*destroy_f)(handler_common_t *handler);
-	int sockfd; /* socket to epmd */
+	int sockfd;	 /* socket to epmd */
 	ei_cnode ec; /* erlang C node (actually it's me) */
 
 } epmd_handler_t;

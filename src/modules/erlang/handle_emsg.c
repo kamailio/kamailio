@@ -39,14 +39,16 @@
 #include "../../core/cfg/cfg_struct.h"
 #include "../../core/fmsg.h"
 
-int handle_msg_req_tuple(cnode_handler_t *phandler, erlang_msg * msg);
-int handle_req_ref_tuple(cnode_handler_t *phandler, erlang_msg * msg);
-int handle_rpc_response(cnode_handler_t *phandler, erlang_msg * msg, int arity);
-int handle_rex_call(cnode_handler_t *phandler,erlang_ref_ex_t *ref, erlang_pid *pid);
-int handle_net_kernel(cnode_handler_t *phandler, erlang_msg * msg);
-void encode_error_msg(ei_x_buff *response, erlang_ref_ex_t *ref, const char *type, const char *msg, ...);
+int handle_msg_req_tuple(cnode_handler_t *phandler, erlang_msg *msg);
+int handle_req_ref_tuple(cnode_handler_t *phandler, erlang_msg *msg);
+int handle_rpc_response(cnode_handler_t *phandler, erlang_msg *msg, int arity);
+int handle_rex_call(
+		cnode_handler_t *phandler, erlang_ref_ex_t *ref, erlang_pid *pid);
+int handle_net_kernel(cnode_handler_t *phandler, erlang_msg *msg);
+void encode_error_msg(ei_x_buff *response, erlang_ref_ex_t *ref,
+		const char *type, const char *msg, ...);
 
-int handle_reg_send(cnode_handler_t *phandler, erlang_msg * msg)
+int handle_reg_send(cnode_handler_t *phandler, erlang_msg *msg)
 {
 	int rt, backup_rt;
 	struct run_act_ctx ctx;
@@ -62,20 +64,21 @@ int handle_reg_send(cnode_handler_t *phandler, erlang_msg * msg)
 	sr_xval_t val;
 	sr_data_t *data = NULL;
 
-	sz = sizeof("erlang")+strlen(msg->toname)+2;
-	route = (char*)pkg_malloc(sz);
-	if (!route) {
+	sz = sizeof("erlang") + strlen(msg->toname) + 2;
+	route = (char *)pkg_malloc(sz);
+	if(!route) {
 		LM_ERR("not enough memory");
 		return -1;
 	}
 
-	snprintf(route,sz,"erlang:%s",msg->toname);
+	snprintf(route, sz, "erlang:%s", msg->toname);
 
 	rt = route_get(&event_rt, route);
-	if (rt < 0 || event_rt.rlist[rt] == NULL) {
+	if(rt < 0 || event_rt.rlist[rt] == NULL) {
 		LM_WARN("ERL_REG_SEND message to unknown process %s\n", route);
 		pkg_free(route);
-		PRINT_DBG_REG_SEND(phandler->conn.nodename, msg->from, phandler->ec.thisnodename, msg->toname,request);
+		PRINT_DBG_REG_SEND(phandler->conn.nodename, msg->from,
+				phandler->ec.thisnodename, msg->toname, request);
 		return 0;
 	}
 
@@ -85,14 +88,14 @@ int handle_reg_send(cnode_handler_t *phandler, erlang_msg * msg)
 	memcpy(&tmsg, fmsg, sizeof(sip_msg_t));
 	fmsg = &tmsg;
 
-	if ((xreq = pv_xbuff_get_xbuff(&msg_name))) {
+	if((xreq = pv_xbuff_get_xbuff(&msg_name))) {
 		LM_DBG("free previous $xbuff(msg) value\n");
 		xavp_destroy_list(&xreq->val.v.xavp);
 	} else {
 		xreq = xbuff_new(&msg_name);
 	}
 
-	if (!xreq) {
+	if(!xreq) {
 		LM_ERR("failed to create $xbuff(msg) variable\n");
 		goto err;
 	}
@@ -101,42 +104,42 @@ int handle_reg_send(cnode_handler_t *phandler, erlang_msg * msg)
 	xreq->val.type = SR_XTYPE_XAVP;
 
 	/* XAVP <- ei_x_buff */
-	if (erl_api.xbuff2xavp(&xreq->val.v.xavp,request)){
+	if(erl_api.xbuff2xavp(&xreq->val.v.xavp, request)) {
 		LM_ERR("failed to decode message\n");
 		goto err;
 	}
 
-	if ((xpid = pv_xbuff_get_xbuff(&pid_name))) {
+	if((xpid = pv_xbuff_get_xbuff(&pid_name))) {
 		LM_DBG("free previous $xbuff(pid) value\n");
 		xavp_destroy_list(&xpid->val.v.xavp);
 	} else {
 		xpid = xbuff_new(&pid_name);
 	}
 
-	if (!xpid) {
+	if(!xpid) {
 		LM_ERR("failed to create $xbuff(pid) variable\n");
 		goto err;
 	}
 
 	/* put erl_pid into $xbuff(pid) */
-	data = (sr_data_t*)shm_malloc(sizeof(sr_data_t)+sizeof(erlang_pid));
-	if (!data) {
+	data = (sr_data_t *)shm_malloc(sizeof(sr_data_t) + sizeof(erlang_pid));
+	if(!data) {
 		LM_ERR("not enough shared memory\n");
 		goto err;
 	}
 
-	memset((void*)data,0,sizeof(sr_data_t)+sizeof(erlang_pid));
+	memset((void *)data, 0, sizeof(sr_data_t) + sizeof(erlang_pid));
 
-	data->p = (void*)data+sizeof(sr_data_t);
+	data->p = (void *)data + sizeof(sr_data_t);
 	data->pfree = xbuff_data_free;
 
-	memcpy(data->p,(void*)&msg->from,sizeof(erlang_pid));
+	memcpy(data->p, (void *)&msg->from, sizeof(erlang_pid));
 
 	val.type = SR_XTYPE_DATA;
 	val.v.data = data;
 
-	xpid->val.v.xavp = xavp_new_value(&pid_name,&val);
-	if (!xpid->val.v.xavp) {
+	xpid->val.v.xavp = xavp_new_value(&pid_name, &val);
+	if(!xpid->val.v.xavp) {
 		LM_ERR("failed to create xavp!\n");
 		goto err;
 	}
@@ -167,21 +170,23 @@ err:
 /*
  * handle ERL_SEND
  */
-int handle_send(cnode_handler_t *phandler, erlang_msg * msg)
+int handle_send(cnode_handler_t *phandler, erlang_msg *msg)
 {
 	int rt, backup_rt;
 	struct run_act_ctx ctx;
 	sip_msg_t *fmsg;
 	sip_msg_t tmsg;
-	char route[]="erlang:self";
+	char route[] = "erlang:self";
 	ei_x_buff *request = &phandler->request;
 	sr_xavp_t *xreq = NULL;
 	str msg_name = str_init("msg");
 
 	rt = route_get(&event_rt, route);
-	if (rt < 0 || event_rt.rlist[rt] == NULL) {
-		LM_WARN("ERL_SEND message not handled, missing event route %s\n", route);
-		PRINT_DBG_REG_SEND(phandler->conn.nodename, msg->from, phandler->ec.thisnodename, msg->toname,request);
+	if(rt < 0 || event_rt.rlist[rt] == NULL) {
+		LM_WARN("ERL_SEND message not handled, missing event route %s\n",
+				route);
+		PRINT_DBG_REG_SEND(phandler->conn.nodename, msg->from,
+				phandler->ec.thisnodename, msg->toname, request);
 		return 0;
 	}
 
@@ -191,14 +196,14 @@ int handle_send(cnode_handler_t *phandler, erlang_msg * msg)
 	memcpy(&tmsg, fmsg, sizeof(sip_msg_t));
 	fmsg = &tmsg;
 
-	if ((xreq = pv_xbuff_get_xbuff(&msg_name))) {
+	if((xreq = pv_xbuff_get_xbuff(&msg_name))) {
 		LM_DBG("free previous value\n");
 		xavp_destroy_list(&xreq->val.v.xavp);
 	} else {
 		xreq = xbuff_new(&msg_name);
 	}
 
-	if (!xreq) {
+	if(!xreq) {
 		LM_ERR("failed to create $xbuff(msg) variable\n");
 		goto err;
 	}
@@ -207,7 +212,7 @@ int handle_send(cnode_handler_t *phandler, erlang_msg * msg)
 	xreq->val.type = SR_XTYPE_XAVP;
 
 	/* XAVP <- ei_x_buff */
-	if (erl_api.xbuff2xavp(&xreq->val.v.xavp,request)){
+	if(erl_api.xbuff2xavp(&xreq->val.v.xavp, request)) {
 		LM_ERR("failed to decode message\n");
 		goto err;
 	}
@@ -228,7 +233,7 @@ err:
 	return -1;
 }
 
-int handle_req_ref_tuple(cnode_handler_t *phandler, erlang_msg * msg)
+int handle_req_ref_tuple(cnode_handler_t *phandler, erlang_msg *msg)
 {
 	erlang_ref ref;
 	erlang_pid pid;
@@ -238,24 +243,19 @@ int handle_req_ref_tuple(cnode_handler_t *phandler, erlang_msg * msg)
 
 	ei_decode_tuple_header(request->buff, &request->index, &arity);
 
-	if (ei_decode_ref(request->buff, &request->index, &ref))
-	{
+	if(ei_decode_ref(request->buff, &request->index, &ref)) {
 		LM_WARN("Invalid reference.\n");
 		return -1;
 	}
 
-	if (ei_decode_pid(request->buff, &request->index, &pid))
-	{
+	if(ei_decode_pid(request->buff, &request->index, &pid)) {
 		LM_ERR("Invalid pid in a reference/pid tuple\n");
 		return -1;
 	}
 
-	if (0)
-	{
+	if(0) {
 		ei_x_encode_atom(response, "ok");
-	}
-	else
-	{
+	} else {
 		ei_x_encode_tuple_header(response, 2);
 		ei_x_encode_atom(response, "error");
 		ei_x_encode_atom(response, "not_found");
@@ -267,28 +267,27 @@ int handle_req_ref_tuple(cnode_handler_t *phandler, erlang_msg * msg)
 /* catch the response to ei_rpc_to (which comes back as {rex, {Ref, Pid}}
  The {Ref,Pid} bit can be handled by handle_ref_tuple
  */
-int handle_rpc_response(cnode_handler_t *phandler, erlang_msg * msg, int arity)
+int handle_rpc_response(cnode_handler_t *phandler, erlang_msg *msg, int arity)
 {
 	int type, size, arity2, tmpindex;
 	ei_x_buff *request = &phandler->request;
 
 	ei_get_type(request->buff, &request->index, &type, &size);
-	switch (type)
-	{
-	case ERL_SMALL_TUPLE_EXT:
-	case ERL_LARGE_TUPLE_EXT:
-		tmpindex = request->index;
-		ei_decode_tuple_header(request->buff, &tmpindex, &arity2);
-		return handle_req_ref_tuple(phandler, msg);
-	default:
-		LM_ERR("Unknown RPC response.\n");
-		break;
+	switch(type) {
+		case ERL_SMALL_TUPLE_EXT:
+		case ERL_LARGE_TUPLE_EXT:
+			tmpindex = request->index;
+			ei_decode_tuple_header(request->buff, &tmpindex, &arity2);
+			return handle_req_ref_tuple(phandler, msg);
+		default:
+			LM_ERR("Unknown RPC response.\n");
+			break;
 	}
 	/* no reply */
 	return -1;
 }
 
-int handle_msg_req_tuple(cnode_handler_t *phandler, erlang_msg * msg)
+int handle_msg_req_tuple(cnode_handler_t *phandler, erlang_msg *msg)
 {
 	char tupletag[MAXATOMLEN];
 	int arity;
@@ -296,18 +295,12 @@ int handle_msg_req_tuple(cnode_handler_t *phandler, erlang_msg * msg)
 	ei_x_buff *request = &phandler->request;
 
 	ei_decode_tuple_header(request->buff, &request->index, &arity);
-	if (ei_decode_atom(request->buff, &request->index, tupletag))
-	{
+	if(ei_decode_atom(request->buff, &request->index, tupletag)) {
 		LM_ERR("error: badarg\n");
-	}
-	else
-	{
-		if (!strncmp(tupletag, "rex", MAXATOMLEN))
-		{
+	} else {
+		if(!strncmp(tupletag, "rex", MAXATOMLEN)) {
 			ret = handle_rpc_response(phandler, msg, arity);
-		}
-		else
-		{
+		} else {
 			LM_ERR("error: undef\n");
 		}
 	}
@@ -319,7 +312,7 @@ int handle_msg_req_tuple(cnode_handler_t *phandler, erlang_msg * msg)
  *
  * {'$gen_call', {<tbe1@tbe.lan.343.0>, #Ref<194674.122.0>}, {is_auth, 'tbe1@tbe.lan'}} for net_kernel
  */
-int handle_net_kernel(cnode_handler_t *phandler, erlang_msg * msg)
+int handle_net_kernel(cnode_handler_t *phandler, erlang_msg *msg)
 {
 	int version, size, type, arity;
 	char atom[MAXATOMLEN];
@@ -333,69 +326,60 @@ int handle_net_kernel(cnode_handler_t *phandler, erlang_msg * msg)
 	ei_decode_version(request->buff, &request->index, &version);
 	ei_get_type(request->buff, &request->index, &type, &size);
 
-	if (type != ERL_SMALL_TUPLE_EXT && type != ERL_SMALL_TUPLE_EXT)
-	{
+	if(type != ERL_SMALL_TUPLE_EXT && type != ERL_SMALL_TUPLE_EXT) {
 		LM_ERR("not a tuple\n");
 		return -1;
 	}
 
 	ei_decode_tuple_header(request->buff, &request->index, &arity);
 
-	if (arity != 3)
-	{
+	if(arity != 3) {
 		LM_ERR("wrong arity\n");
 		return -1;
 	}
 
-	if (ei_decode_atom(request->buff, &request->index, atom) || strncmp(atom,
-			"$gen_call", MAXATOMLEN))
-	{
+	if(ei_decode_atom(request->buff, &request->index, atom)
+			|| strncmp(atom, "$gen_call", MAXATOMLEN)) {
 		LM_ERR("not atom '$gen_call'\n");
 		return -1;
 	}
 
 	ei_get_type(request->buff, &request->index, &type, &size);
 
-	if (type != ERL_SMALL_TUPLE_EXT && type != ERL_SMALL_TUPLE_EXT)
-	{
+	if(type != ERL_SMALL_TUPLE_EXT && type != ERL_SMALL_TUPLE_EXT) {
 		LM_ERR("not a tuple\n");
 		return -1;
 	}
 
 	ei_decode_tuple_header(request->buff, &request->index, &arity);
 
-	if (arity != 2)
-	{
+	if(arity != 2) {
 		LM_ERR("wrong arity\n");
 		return -1;
 	}
 
-	if (ei_decode_pid(request->buff, &request->index, &pid)
-			|| ei_decode_ref(request->buff, &request->index, &ref))
-	{
+	if(ei_decode_pid(request->buff, &request->index, &pid)
+			|| ei_decode_ref(request->buff, &request->index, &ref)) {
 		LM_ERR("decoding pid and ref error\n");
 		return -1;
 	}
 
 	ei_get_type(request->buff, &request->index, &type, &size);
 
-	if (type != ERL_SMALL_TUPLE_EXT)
-	{
+	if(type != ERL_SMALL_TUPLE_EXT) {
 		LM_ERR("not a tuple\n");
 		return -1;
 	}
 
 	ei_decode_tuple_header(request->buff, &request->index, &arity);
 
-	if (arity != 2)
-	{
+	if(arity != 2) {
 		LM_ERR("bad arity\n");
 		return -1;
 	}
 
-	if (ei_decode_atom(request->buff, &request->index, atom) || strncmp(atom,
-			"is_auth", MAXATOMLEN))
-	{
+	if(ei_decode_atom(request->buff, &request->index, atom)
+			|| strncmp(atom, "is_auth", MAXATOMLEN)) {
 		LM_ERR("not is_auth\n");
 		return -1;
 	}
@@ -407,63 +391,66 @@ int handle_net_kernel(cnode_handler_t *phandler, erlang_msg * msg)
 
 	ei_x_print_msg(response, &pid, 1);
 
-	ei_send_tmo(phandler->sockfd, &pid, response->buff, response->index, CONNECT_TIMEOUT);
+	ei_send_tmo(phandler->sockfd, &pid, response->buff, response->index,
+			CONNECT_TIMEOUT);
 
 	return -1;
 }
 
-int erlang_whereis(cnode_handler_t *phandler,erlang_ref_ex_t *ref, erlang_pid *pid)
+int erlang_whereis(
+		cnode_handler_t *phandler, erlang_ref_ex_t *ref, erlang_pid *pid)
 {
 	ei_x_buff *response = &phandler->response;
 	ei_x_buff *request = &phandler->request;
-	char route[sizeof("erlang:")+MAXATOMLEN] = "erlang:";
+	char route[sizeof("erlang:") + MAXATOMLEN] = "erlang:";
 	int arity;
 	int type;
 	int rt;
 
-	ei_decode_list_header(request->buff,&request->index,&arity);
+	ei_decode_list_header(request->buff, &request->index, &arity);
 
-	if (arity != 1) {
+	if(arity != 1) {
 		response->index = 1;
-		encode_error_msg(response, ref, "badarith", "undefined function erlang:whereis/%d",arity);
+		encode_error_msg(response, ref, "badarith",
+				"undefined function erlang:whereis/%d", arity);
 		return 0;
 	}
 
-	ei_get_type(request->buff,&request->index,&type,&arity);
+	ei_get_type(request->buff, &request->index, &type, &arity);
 
-	if (type != ERL_ATOM_EXT) {
+	if(type != ERL_ATOM_EXT) {
 		response->index = 1;
 		encode_error_msg(response, ref, "badarg", "bad argument");
 		return 0;
 	}
 
-	if(ei_decode_atom(request->buff,&request->index,route+sizeof("erlang:")-1)) {
+	if(ei_decode_atom(
+			   request->buff, &request->index, route + sizeof("erlang:") - 1)) {
 		LM_ERR("error: badarg\n");
-		ei_x_encode_atom(response,"badarg");
+		ei_x_encode_atom(response, "badarg");
 		return 0;
 	}
 
 	rt = route_get(&event_rt, route);
-	if (rt < 0 || event_rt.rlist[rt] == NULL) {
+	if(rt < 0 || event_rt.rlist[rt] == NULL) {
 		LM_WARN("can't find pseudo process %s\n", route);
-		ei_x_encode_atom(response,"undefined");
+		ei_x_encode_atom(response, "undefined");
 		return 0;
 	}
 
-	ei_x_encode_pid(response,&phandler->ec.self);
+	ei_x_encode_pid(response, &phandler->ec.self);
 
 	return 0;
 }
 
-static int handle_erlang_calls(cnode_handler_t *phandler,erlang_ref_ex_t *ref, erlang_pid *pid, const char *method)
+static int handle_erlang_calls(cnode_handler_t *phandler, erlang_ref_ex_t *ref,
+		erlang_pid *pid, const char *method)
 {
 	ei_x_buff *response = &phandler->response;
 
-	if (strcmp(method,"whereis")==0)
-	{
-		return erlang_whereis(phandler,ref,pid);
-	}
-	else {
+	if(strcmp(method, "whereis") == 0) {
+		return erlang_whereis(phandler, ref, pid);
+	} else {
 		response->index = 1;
 		encode_error_msg(response, ref, "badrpc", "Method Not Found");
 	}
@@ -478,13 +465,14 @@ static int handle_erlang_calls(cnode_handler_t *phandler,erlang_ref_ex_t *ref, e
  * {call, tbe, dlg_bye, [123, 456], <tbe1@tbe.lan.31.0>}
  *
  */
-int handle_rex_call(cnode_handler_t *phandler,erlang_ref_ex_t *ref, erlang_pid *pid)
+int handle_rex_call(
+		cnode_handler_t *phandler, erlang_ref_ex_t *ref, erlang_pid *pid)
 {
 	char module[MAXATOMLEN];
 	char method[MAXATOMLEN];
-	char proc[2*MAXATOMLEN];
+	char proc[2 * MAXATOMLEN];
 	erl_rpc_ctx_t ctx;
-	rpc_export_t* exp;
+	rpc_export_t *exp;
 	int arity;
 	ei_x_buff *request = &phandler->request;
 	ei_x_buff *response = &phandler->response;
@@ -495,97 +483,88 @@ int handle_rex_call(cnode_handler_t *phandler,erlang_ref_ex_t *ref, erlang_pid *
 	 * module,method...}
 	 */
 
-	ei_get_type(request->buff,&request->index,&type,&size);
+	ei_get_type(request->buff, &request->index, &type, &size);
 #ifdef ERL_SMALL_ATOM_EXT
-	if (type == ERL_ATOM_EXT || type == ERL_SMALL_ATOM_EXT)
-	{
+	if(type == ERL_ATOM_EXT || type == ERL_SMALL_ATOM_EXT) {
 #else
-	if (type == ERL_ATOM_EXT)
-	{
+	if(type == ERL_ATOM_EXT) {
 #endif
-		if (ei_decode_atom(request->buff,&request->index,module))
-		{
-			encode_error_msg(response, ref, "error", "Failed to decode module name");
+		if(ei_decode_atom(request->buff, &request->index, module)) {
+			encode_error_msg(
+					response, ref, "error", "Failed to decode module name");
 			return 0;
 		}
-	}
-	else if (ei_decode_strorbin(request->buff, &request->index, MAXATOMLEN, module))
-	{
-		encode_error_msg(response, ref, "error", "Failed to decode module name");
+	} else if(ei_decode_strorbin(
+					  request->buff, &request->index, MAXATOMLEN, module)) {
+		encode_error_msg(
+				response, ref, "error", "Failed to decode module name");
 		return 0;
 	}
 
-	ei_get_type(request->buff,&request->index,&type,&size);
+	ei_get_type(request->buff, &request->index, &type, &size);
 
 #ifdef ERL_SMALL_ATOM_EXT
-	if (type == ERL_ATOM_EXT || type == ERL_SMALL_ATOM_EXT)
-	{
+	if(type == ERL_ATOM_EXT || type == ERL_SMALL_ATOM_EXT) {
 #else
-	if (type == ERL_ATOM_EXT)
-	{
+	if(type == ERL_ATOM_EXT) {
 #endif
-		if (ei_decode_atom(request->buff,&request->index,method))
-		{
-			encode_error_msg(response, ref, "error", "Failed to decode method name");
+		if(ei_decode_atom(request->buff, &request->index, method)) {
+			encode_error_msg(
+					response, ref, "error", "Failed to decode method name");
 			return 0;
 		}
-	}
-	else if (ei_decode_strorbin(request->buff, &request->index, MAXATOMLEN, method))
-	{
-		encode_error_msg(response, ref, "error", "Failed to decode method name");
+	} else if(ei_decode_strorbin(
+					  request->buff, &request->index, MAXATOMLEN, method)) {
+		encode_error_msg(
+				response, ref, "error", "Failed to decode method name");
 		return 0;
 	}
 
-	if (strcmp(module,"erlang") == 0)
-	{
+	if(strcmp(module, "erlang") == 0) {
 		/* start encoding */
 		ei_x_encode_tuple_header(response, 2);
-		if (ref->with_node)
-		{
-			ei_x_encode_tuple_header(response,2);
+		if(ref->with_node) {
+			ei_x_encode_tuple_header(response, 2);
 			ei_x_encode_ref(response, &ref->ref);
-			ei_x_encode_atom(response,ref->nodename);
-		}
-		else {
+			ei_x_encode_atom(response, ref->nodename);
+		} else {
 			ei_x_encode_ref(response, &ref->ref);
 		}
 
-		return handle_erlang_calls(phandler,ref,pid,method);
+		return handle_erlang_calls(phandler, ref, pid, method);
 	}
 
 	/* be up to date with cfg */
 	cfg_update();
 
-	sprintf(proc,"%s.%s",module,method);
+	sprintf(proc, "%s.%s", module, method);
 
-	exp=find_rpc_export(proc,0);
+	exp = find_rpc_export(proc, 0);
 
-	if (!exp || !exp->function)
-	{
+	if(!exp || !exp->function) {
 		encode_error_msg(response, ref, "badrpc", "Method Not Found");
 
 		return 0;
 	}
 
-	ei_get_type(request->buff,&request->index,&type,&size);
+	ei_get_type(request->buff, &request->index, &type, &size);
 
 	/* open list for decoding */
-	if (ei_decode_list_header(request->buff,&request->index,&arity))
-	{
-		LOG(L_ERR, "Expected list of parameters type=<%c> arity=<%d>\n", type, size);
-		encode_error_msg(response, ref, "badarith", "Expected list of parameters.");
+	if(ei_decode_list_header(request->buff, &request->index, &arity)) {
+		LOG(L_ERR, "Expected list of parameters type=<%c> arity=<%d>\n", type,
+				size);
+		encode_error_msg(
+				response, ref, "badarith", "Expected list of parameters.");
 		return 0;
 	}
 
 	/* start encoding */
 	ei_x_encode_tuple_header(response, 2);
-	if (ref->with_node)
-	{
-		ei_x_encode_tuple_header(response,2);
+	if(ref->with_node) {
+		ei_x_encode_tuple_header(response, 2);
 		ei_x_encode_ref(response, &ref->ref);
-		ei_x_encode_atom(response,ref->nodename);
-	}
-	else {
+		ei_x_encode_atom(response, ref->nodename);
+	} else {
 		ei_x_encode_ref(response, &ref->ref);
 	}
 
@@ -608,23 +587,19 @@ int handle_rex_call(cnode_handler_t *phandler,erlang_ref_ex_t *ref, erlang_pid *
 
 	/* call rpc */
 	rex_call_in_progress = 1;
-	exp->function(&erl_rpc_func_param,(void*)&ctx);
+	exp->function(&erl_rpc_func_param, (void *)&ctx);
 	rex_call_in_progress = 0;
 
-	if (ctx.no_params)
-	{
-		ei_x_encode_list_header(response,ctx.no_params);
+	if(ctx.no_params) {
+		ei_x_encode_list_header(response, ctx.no_params);
 	}
 
-	if (erl_rpc_send(&ctx, 0))
-	{
+	if(erl_rpc_send(&ctx, 0)) {
 		response->index = ctx.response_index;
 		ei_x_encode_atom(response, "error");
-		ei_x_encode_tuple_header(response,2);
+		ei_x_encode_tuple_header(response, 2);
 		ei_x_encode_string(response, "Internal Error: Failed to encode reply");
-	}
-	else
-	{
+	} else {
 		ei_x_encode_empty_list(response);
 	}
 
@@ -635,7 +610,7 @@ int handle_rex_call(cnode_handler_t *phandler,erlang_ref_ex_t *ref, erlang_pid *
 }
 
 /* {'$gen_call', {<tbe1@tbe.lan.14488.1>, #Ref<62147.65.0>}, {call, tbe, dlg_bye, [123, 456], <tbe1@tbe.lan.31.0>}} for rex */
-int handle_rex_msg(cnode_handler_t *phandler, erlang_msg * msg)
+int handle_rex_msg(cnode_handler_t *phandler, erlang_msg *msg)
 {
 	int version, size, type, arity;
 	char atom[MAXATOMLEN];
@@ -644,52 +619,46 @@ int handle_rex_msg(cnode_handler_t *phandler, erlang_msg * msg)
 	ei_x_buff *request = &phandler->request;
 	ei_x_buff *response = &phandler->response;
 
-	memset((void*)&ref,0,sizeof(erlang_ref_ex_t));
+	memset((void *)&ref, 0, sizeof(erlang_ref_ex_t));
 
 	/* start from first arg */
 	request->index = 0;
 	ei_decode_version(request->buff, &request->index, &version);
 	ei_get_type(request->buff, &request->index, &type, &size);
 
-	if (type != ERL_SMALL_TUPLE_EXT && type != ERL_SMALL_TUPLE_EXT)
-	{
+	if(type != ERL_SMALL_TUPLE_EXT && type != ERL_SMALL_TUPLE_EXT) {
 		LM_ERR("not a tuple\n");
 		return -1;
 	}
 
 	ei_decode_tuple_header(request->buff, &request->index, &arity);
 
-	if (arity != 3)
-	{
+	if(arity != 3) {
 		LM_ERR("wrong arity %d\n", arity);
 		return -1;
 	}
 
-	if (ei_decode_atom(request->buff, &request->index, atom) || strncmp(atom,
-			"$gen_call", MAXATOMLEN))
-	{
+	if(ei_decode_atom(request->buff, &request->index, atom)
+			|| strncmp(atom, "$gen_call", MAXATOMLEN)) {
 		LM_ERR("not $gen_call\n");
 		return -1;
 	}
 
 	ei_get_type(request->buff, &request->index, &type, &size);
 
-	if (type != ERL_SMALL_TUPLE_EXT && type != ERL_SMALL_TUPLE_EXT)
-	{
+	if(type != ERL_SMALL_TUPLE_EXT && type != ERL_SMALL_TUPLE_EXT) {
 		LM_ERR("not a tuple\n");
 		goto err;
 	}
 
 	ei_decode_tuple_header(request->buff, &request->index, &arity);
 
-	if (arity != 2)
-	{
+	if(arity != 2) {
 		LM_ERR("wrong arity\n");
 		goto err;
 	}
 
-	if (ei_decode_pid(request->buff, &request->index, &pid) )
-	{
+	if(ei_decode_pid(request->buff, &request->index, &pid)) {
 		LM_ERR("decoding pid error\n");
 		goto err2;
 	}
@@ -697,31 +666,25 @@ int handle_rex_msg(cnode_handler_t *phandler, erlang_msg * msg)
 	ref.with_node = 0;
 	/* we can got with host accompanied {#Ref<18224.110.0>, 'reg-two@pbx.lan'} */
 	ei_get_type(request->buff, &request->index, &type, &size);
-	if (type == ERL_REFERENCE_EXT || type == ERL_NEW_REFERENCE_EXT)
-	{
-		if (ei_decode_ref(request->buff, &request->index, &ref.ref))
-		{
+	if(type == ERL_REFERENCE_EXT || type == ERL_NEW_REFERENCE_EXT) {
+		if(ei_decode_ref(request->buff, &request->index, &ref.ref)) {
 			LM_ERR("decoding ref error\n");
 			goto err2;
 		}
-	}
-	else if (type != ERL_SMALL_TUPLE_EXT)
-	{
+	} else if(type != ERL_SMALL_TUPLE_EXT) {
 		LM_ERR("not a tuple type {#Ref<x.y.z>, 'node@host.tld'} %c\n", type);
 		goto err;
-	}
-	else {
-		if (ei_decode_tuple_header(request->buff, &request->index, &arity) || arity !=2)
+	} else {
+		if(ei_decode_tuple_header(request->buff, &request->index, &arity)
+				|| arity != 2)
 			goto err2;
 
-		if (ei_decode_ref(request->buff, &request->index, &ref.ref))
-		{
+		if(ei_decode_ref(request->buff, &request->index, &ref.ref)) {
 			LM_ERR("decoding ref error\n");
 			goto err2;
 		}
 
-		if (ei_decode_atom(request->buff, &request->index, ref.nodename))
-		{
+		if(ei_decode_atom(request->buff, &request->index, ref.nodename)) {
 			LM_ERR("decoding node in ref error\n");
 			goto err2;
 		}
@@ -730,23 +693,20 @@ int handle_rex_msg(cnode_handler_t *phandler, erlang_msg * msg)
 
 	ei_get_type(request->buff, &request->index, &type, &size);
 
-	if (type != ERL_SMALL_TUPLE_EXT)
-	{
+	if(type != ERL_SMALL_TUPLE_EXT) {
 		LM_ERR("not a tuple\n");
 		goto err;
 	}
 
 	ei_decode_tuple_header(request->buff, &request->index, &arity);
 
-	if (arity != 5)
-	{
+	if(arity != 5) {
 		LM_ERR("bad arity %d\n", arity);
 		goto err;
 	}
 
-	if (ei_decode_atom(request->buff, &request->index, atom) == 0 && strncmp(atom,
-			"call", MAXATOMLEN) == 0)
-	{
+	if(ei_decode_atom(request->buff, &request->index, atom) == 0
+			&& strncmp(atom, "call", MAXATOMLEN) == 0) {
 		return handle_rex_call(phandler, &ref, &pid);
 	}
 
@@ -754,51 +714,49 @@ err:
 	/* To ! {Tag, Reply} */
 	ei_x_encode_tuple_header(response, 2);
 
-	if (ref.with_node)
-	{
-		ei_x_encode_tuple_header(response,2);
+	if(ref.with_node) {
+		ei_x_encode_tuple_header(response, 2);
 		ei_x_encode_ref(response, &ref.ref);
-		ei_x_encode_atom(response,ref.nodename);
-	}
-	else {
+		ei_x_encode_atom(response, ref.nodename);
+	} else {
 		ei_x_encode_ref(response, &ref.ref);
 	}
 
-	ei_x_encode_tuple_header(response,2);
+	ei_x_encode_tuple_header(response, 2);
 	ei_x_encode_atom(response, "badrpc");
 	ei_x_encode_string(response, "Unsupported rex request.");
 
 	ei_x_print_msg(response, &pid, 1);
 
-	ei_send_tmo(phandler->sockfd, &pid, response->buff, response->index, CONNECT_TIMEOUT);
+	ei_send_tmo(phandler->sockfd, &pid, response->buff, response->index,
+			CONNECT_TIMEOUT);
 err2:
 	return -1;
 }
 
 
-int handle_erlang_msg(cnode_handler_t *phandler, erlang_msg * msg)
+int handle_erlang_msg(cnode_handler_t *phandler, erlang_msg *msg)
 {
 	int type, type2, size, version, arity, tmpindex;
 	int ret = 0;
-	ei_x_buff * request = &phandler->request;
-	ei_x_buff * response = &phandler->response;
+	ei_x_buff *request = &phandler->request;
+	ei_x_buff *response = &phandler->response;
 	erlang_pid from;
 
-	if (msg->msgtype == ERL_REG_SEND )
-	{
+	if(msg->msgtype == ERL_REG_SEND) {
 		cnode_reply_to_pid = &msg->from;
 
-		if (!strncmp(msg->toname, "net_kernel",MAXATOMLEN)) {
+		if(!strncmp(msg->toname, "net_kernel", MAXATOMLEN)) {
 			/* respond to ping stuff */
 			ret = handle_net_kernel(phandler, msg);
-		} else if (!strncmp(msg->toname, "rex",MAXATOMLEN)) {
+		} else if(!strncmp(msg->toname, "rex", MAXATOMLEN)) {
 			/* respond to rex stuff */
 			ret = handle_rex_msg(phandler, msg);
 		} else {
 			/* try registered process */
-			handle_reg_send(phandler,msg);
+			handle_reg_send(phandler, msg);
 		}
-	} else if (msg->msgtype == ERL_SEND) {
+	} else if(msg->msgtype == ERL_SEND) {
 		ret = handle_send(phandler, msg);
 	} else {
 		/* TODO: fix below after adding #Pid and #Ref in PVs */
@@ -806,58 +764,55 @@ int handle_erlang_msg(cnode_handler_t *phandler, erlang_msg * msg)
 		ei_decode_version(request->buff, &request->index, &version);
 		ei_get_type(request->buff, &request->index, &type, &size);
 
-		switch (type)
-		{
-		case ERL_SMALL_TUPLE_EXT:
-		case ERL_LARGE_TUPLE_EXT:
-			tmpindex = request->index;
-			ei_decode_tuple_header(request->buff, &tmpindex, &arity);
-			ei_get_type(request->buff, &tmpindex, &type2, &size);
+		switch(type) {
+			case ERL_SMALL_TUPLE_EXT:
+			case ERL_LARGE_TUPLE_EXT:
+				tmpindex = request->index;
+				ei_decode_tuple_header(request->buff, &tmpindex, &arity);
+				ei_get_type(request->buff, &tmpindex, &type2, &size);
 
-			switch (type2)
-			{
-			case ERL_ATOM_EXT:
-				ret = handle_msg_req_tuple(phandler, msg);
-				break;
-			case ERL_REFERENCE_EXT:
-			case ERL_NEW_REFERENCE_EXT:
-				ret = handle_req_ref_tuple(phandler, msg);
-				break;
-			case ERL_PID_EXT:
-				if(ei_decode_pid(request->buff,&tmpindex,&from)) {
-					LM_ERR("failed to decode pid\n");
+				switch(type2) {
+					case ERL_ATOM_EXT:
+						ret = handle_msg_req_tuple(phandler, msg);
+						break;
+					case ERL_REFERENCE_EXT:
+					case ERL_NEW_REFERENCE_EXT:
+						ret = handle_req_ref_tuple(phandler, msg);
+						break;
+					case ERL_PID_EXT:
+						if(ei_decode_pid(request->buff, &tmpindex, &from)) {
+							LM_ERR("failed to decode pid\n");
+						}
+						ret = handle_send(phandler, msg);
+						break;
+					default:
+						LM_ERR("nothing to do with term type=<%d> type2=<%d> "
+							   "-- discarding\n",
+								type, type2);
+						break;
 				}
-				ret = handle_send(phandler, msg);
 				break;
 			default:
-				LM_ERR("nothing to do with term type=<%d> type2=<%d> -- discarding\n", type, type2);
+				LM_ERR("not handled term type=<%d> size=<%d> -- discarding\n",
+						type, size);
 				break;
-			}
-			break;
-		default:
-			LM_ERR("not handled term type=<%d> size=<%d> -- discarding\n", type, size);
-			break;
 		}
 	}
 
-	if (ret)
-	{
+	if(ret) {
 		/* reset pid */
 		cnode_reply_to_pid = NULL;
 		return ret;
-	}
-	else if (response->index > 1 && cnode_reply_to_pid)
-	{
+	} else if(response->index > 1 && cnode_reply_to_pid) {
 		ei_x_print_msg(response, cnode_reply_to_pid, 1);
 
-		if (ei_send(phandler->sockfd, cnode_reply_to_pid, response->buff, response->index))
-		{
+		if(ei_send(phandler->sockfd, cnode_reply_to_pid, response->buff,
+				   response->index)) {
 			LM_ERR("ei_send failed on node=<%s> socket=<%d>, %s\n",
-					phandler->ec.thisnodename,phandler->sockfd, strerror(erl_errno));
+					phandler->ec.thisnodename, phandler->sockfd,
+					strerror(erl_errno));
 		}
-	}
-	else
-	{
+	} else {
 		LM_DBG("** no reply **\n");
 	}
 
@@ -866,29 +821,28 @@ int handle_erlang_msg(cnode_handler_t *phandler, erlang_msg * msg)
 	return 0;
 }
 
-void encode_error_msg(ei_x_buff *response, erlang_ref_ex_t *ref, const char *type, const char *msg, ... )
+void encode_error_msg(ei_x_buff *response, erlang_ref_ex_t *ref,
+		const char *type, const char *msg, ...)
 {
 	char buffer[256];
 	va_list args;
-	va_start (args, msg);
+	va_start(args, msg);
 
-	vsnprintf (buffer, 255, msg, args);
+	vsnprintf(buffer, 255, msg, args);
 
-	va_end (args);
+	va_end(args);
 
 	ei_x_encode_tuple_header(response, 2);
 
-	if (ref->with_node)
-	{
-		ei_x_encode_tuple_header(response,2);
+	if(ref->with_node) {
+		ei_x_encode_tuple_header(response, 2);
 		ei_x_encode_ref(response, &ref->ref);
-		ei_x_encode_atom(response,ref->nodename);
-	}
-	else {
+		ei_x_encode_atom(response, ref->nodename);
+	} else {
 		ei_x_encode_ref(response, &ref->ref);
 	}
 
-	ei_x_encode_tuple_header(response,2);
+	ei_x_encode_tuple_header(response, 2);
 	ei_x_encode_atom(response, type);
 	ei_x_encode_string(response, buffer);
 }
