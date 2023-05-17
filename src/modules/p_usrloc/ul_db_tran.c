@@ -29,11 +29,12 @@ static str commit = str_init("COMMIT");
 static str autocommit_on = str_init("SET AUTOCOMMIT=1");
 static str rollback = str_init("ROLLBACK");
 
-static int submit_tran_start(db_func_t * dbf, db1_con_t * dbh);
-static int submit_tran_commit(db_func_t * dbf, db1_con_t * dbh);
-static int submit_tran_rollback(db_func_t * dbf, db1_con_t * dbh);
+static int submit_tran_start(db_func_t *dbf, db1_con_t *dbh);
+static int submit_tran_commit(db_func_t *dbf, db1_con_t *dbh);
+static int submit_tran_rollback(db_func_t *dbf, db1_con_t *dbh);
 
-int ul_db_tran_start(ul_db_handle_t * handle, int working[]) {
+int ul_db_tran_start(ul_db_handle_t *handle, int working[])
+{
 	int i;
 	int errors = 0;
 	int w = 0;
@@ -43,19 +44,23 @@ int ul_db_tran_start(ul_db_handle_t * handle, int working[]) {
 		return -1;
 	}
 
-	for(i=0; i<DB_NUM; i++) {
+	for(i = 0; i < DB_NUM; i++) {
 		if(handle->db[i].status == DB_ON) {
 			if(submit_tran_start(&handle->db[i].dbf, handle->db[i].dbh) < 0) {
 				LM_ERR("error while starting "
-				    "transaction on id %i, db %i.\n", handle->id, handle->db[i].no);
+					   "transaction on id %i, db %i.\n",
+						handle->id, handle->db[i].no);
 				if(db_handle_error(handle, handle->db[i].no) < 0) {
 					LM_ERR("error during handling error "
-					    "on id %i on db %i, trying again.\n", handle->id, handle->db[i].no);
+						   "on id %i on db %i, trying again.\n",
+							handle->id, handle->db[i].no);
 					errors++;
 				} else {
-					if(submit_tran_start(&handle->db[i].dbf, handle->db[i].dbh) < 0) {
+					if(submit_tran_start(&handle->db[i].dbf, handle->db[i].dbh)
+							< 0) {
 						LM_ERR("error while starting "
-						    "transaction on id %i, db %i.\n", handle->id, handle->db[i].no);
+							   "transaction on id %i, db %i.\n",
+								handle->id, handle->db[i].no);
 						errors++;
 					}
 				}
@@ -72,7 +77,8 @@ int ul_db_tran_start(ul_db_handle_t * handle, int working[]) {
 	return 0;
 }
 
-int ul_db_tran_commit(ul_db_handle_t * handle, int working[]) {
+int ul_db_tran_commit(ul_db_handle_t *handle, int working[])
+{
 	int i;
 	int errors = 0;
 	int w = 0;
@@ -82,14 +88,16 @@ int ul_db_tran_commit(ul_db_handle_t * handle, int working[]) {
 		return -1;
 	}
 
-	for(i=0; i<DB_NUM; i++) {
+	for(i = 0; i < DB_NUM; i++) {
 		if((handle->db[i].status == DB_ON) && (working[i])) {
 			if(submit_tran_commit(&handle->db[i].dbf, handle->db[i].dbh) < 0) {
 				LM_ERR("error while committing "
-				    "transaction on id %i, db %i.\n", handle->id, handle->db[i].no);
+					   "transaction on id %i, db %i.\n",
+						handle->id, handle->db[i].no);
 				if(db_handle_error(handle, handle->db[i].no) < 0) {
 					LM_ERR("error during handling error "
-					    "on id %i on db %i, trying again.\n", handle->id, handle->db[i].no);
+						   "on id %i on db %i, trying again.\n",
+							handle->id, handle->db[i].no);
 				}
 				errors++;
 			} else {
@@ -103,7 +111,8 @@ int ul_db_tran_commit(ul_db_handle_t * handle, int working[]) {
 	return 0;
 }
 
-int ul_db_tran_rollback(ul_db_handle_t * handle, int working[]) {
+int ul_db_tran_rollback(ul_db_handle_t *handle, int working[])
+{
 	int i;
 	int errors = 0;
 	int w = 0;
@@ -113,11 +122,13 @@ int ul_db_tran_rollback(ul_db_handle_t * handle, int working[]) {
 		return -1;
 	}
 
-	for(i=0; i<DB_NUM; i++) {
+	for(i = 0; i < DB_NUM; i++) {
 		if((handle->db[i].status == DB_ON) && (working[i])) {
-			if(submit_tran_rollback(&handle->db[i].dbf, handle->db[i].dbh) < 0) {
+			if(submit_tran_rollback(&handle->db[i].dbf, handle->db[i].dbh)
+					< 0) {
 				LM_ERR("error while rolling back "
-				    "transaction on id %i, db %i.\n", handle->id, handle->db[i].no);
+					   "transaction on id %i, db %i.\n",
+						handle->id, handle->db[i].no);
 				errors++;
 			} else {
 				w++;
@@ -130,25 +141,26 @@ int ul_db_tran_rollback(ul_db_handle_t * handle, int working[]) {
 	return 0;
 }
 
-static int submit_tran_start(db_func_t * dbf, db1_con_t * dbh) {
+static int submit_tran_start(db_func_t *dbf, db1_con_t *dbh)
+{
 	int errors = 0;
 	str tmp;
 	if(dbh) {
 		if(dbf->raw_query(dbh, &autocommit_off, NULL) < 0) {
 			LM_ERR("error while turning off "
-			    "autocommit.\n");
+				   "autocommit.\n");
 			errors++;
 		}
-		tmp.s  = isolation_level;
+		tmp.s = isolation_level;
 		tmp.len = strlen(isolation_level);
 		if(dbf->raw_query(dbh, &tmp, NULL) < 0) {
 			LM_ERR("error while setting "
-			    "isolation level.\n");
+				   "isolation level.\n");
 			errors++;
 		}
 		if(dbf->raw_query(dbh, &start_transaction, NULL) < 0) {
 			LM_ERR("error while starting "
-			    "transaction.\n");
+				   "transaction.\n");
 			errors++;
 		}
 	} else {
@@ -161,7 +173,8 @@ static int submit_tran_start(db_func_t * dbf, db1_con_t * dbh) {
 	return 0;
 }
 
-static int submit_tran_commit(db_func_t * dbf, db1_con_t * dbh) {
+static int submit_tran_commit(db_func_t *dbf, db1_con_t *dbh)
+{
 	int errors = 0;
 
 	if(dbh) {
@@ -171,7 +184,7 @@ static int submit_tran_commit(db_func_t * dbf, db1_con_t * dbh) {
 		}
 		if(dbf->raw_query(dbh, &autocommit_on, NULL) < 0) {
 			LM_ERR("error while turning "
-			    "on autocommit.\n");
+				   "on autocommit.\n");
 			errors++;
 		}
 	} else {
@@ -185,18 +198,19 @@ static int submit_tran_commit(db_func_t * dbf, db1_con_t * dbh) {
 	return 0;
 }
 
-static int submit_tran_rollback(db_func_t * dbf, db1_con_t * dbh) {
+static int submit_tran_rollback(db_func_t *dbf, db1_con_t *dbh)
+{
 	int errors = 0;
 
 	if(dbh) {
 		if(dbf->raw_query(dbh, &rollback, NULL) < 0) {
 			LM_ERR("error during "
-			    "rollback.\n");
+				   "rollback.\n");
 			errors++;
 		}
 		if(dbf->raw_query(dbh, &autocommit_on, NULL) < 0) {
 			LM_ERR("error while "
-			    "turning on autocommit.\n");
+				   "turning on autocommit.\n");
 			errors++;
 		}
 	} else {
@@ -210,13 +224,14 @@ static int submit_tran_rollback(db_func_t * dbf, db1_con_t * dbh) {
 	return 0;
 }
 
-int get_working_sum(int working[], int no) {
+int get_working_sum(int working[], int no)
+{
 	int i;
 	int sum = 0;
 	if(!working) {
 		return -1;
 	}
-	for(i=0; i<no; i++) {
+	for(i = 0; i < no; i++) {
 		sum += working[i];
 	}
 	return sum;

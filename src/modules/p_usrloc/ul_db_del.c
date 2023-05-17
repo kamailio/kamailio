@@ -23,7 +23,9 @@
 #include "ul_db_del.h"
 #include "ul_db_form_query.h"
 
-int db_delete(ul_db_handle_t * handle, str * table, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n) {
-	return db_submit_query(UL_DB_DEL, handle, table, _k, _o, _v, NULL, NULL, _n, 0);
+int db_delete(ul_db_handle_t *handle, str *table, db_key_t *_k, db_op_t *_o,
+		db_val_t *_v, int _n)
+{
+	return db_submit_query(
+			UL_DB_DEL, handle, table, _k, _o, _v, NULL, NULL, _n, 0);
 }
-
