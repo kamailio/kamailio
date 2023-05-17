@@ -26,29 +26,31 @@
 #include "../../core/parser/parse_fline.h"
 #include "../pua/hash.h"
 
-#define PUACB_MAX    		(1<<9)
+#define PUACB_MAX (1 << 9)
 
 /* callback function prototype */
-typedef int (pua_cb)(ua_pres_t* hentity, struct sip_msg*);
+typedef int(pua_cb)(ua_pres_t *hentity, struct sip_msg *);
 /* register callback function prototype */
-typedef int (*register_puacb_t)(int types, pua_cb f, void* param );
+typedef int (*register_puacb_t)(int types, pua_cb f, void *param);
 
 
-struct pua_callback {
-	int id;                      /* id of this callback - useless */
-	int types;                   /* types of events that trigger the callback*/
-	pua_cb* callback;             /* callback function */
-	void* param;
-	struct pua_callback* next;
+struct pua_callback
+{
+	int id;			  /* id of this callback - useless */
+	int types;		  /* types of events that trigger the callback*/
+	pua_cb *callback; /* callback function */
+	void *param;
+	struct pua_callback *next;
 };
 
-struct puacb_head_list {
+struct puacb_head_list
+{
 	struct pua_callback *first;
 	int reg_types;
 };
 
 
-extern struct puacb_head_list*  puacb_list;
+extern struct puacb_head_list *puacb_list;
 
 int init_puacb_list(void);
 
@@ -56,16 +58,15 @@ void destroy_puacb_list(void);
 
 
 /* register a callback for several types of events */
-int register_puacb( int types, pua_cb f, void* param );
+int register_puacb(int types, pua_cb f, void *param);
 
 /* run all transaction callbacks for an event type */
-static inline void run_pua_callbacks(ua_pres_t* hentity, struct sip_msg* msg)
+static inline void run_pua_callbacks(ua_pres_t *hentity, struct sip_msg *msg)
 {
 	struct pua_callback *cbp;
 
-	for (cbp= puacb_list->first; cbp; cbp=cbp->next)  {
-		if(cbp->types & hentity->flag) 
-		{	
+	for(cbp = puacb_list->first; cbp; cbp = cbp->next) {
+		if(cbp->types & hentity->flag) {
 			LM_DBG("found callback\n");
 			cbp->callback(hentity, msg);
 		}
