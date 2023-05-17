@@ -34,7 +34,7 @@
 
 typedef struct _pl_pipe
 {
-    unsigned int cellid;
+	unsigned int cellid;
 	str name;
 
 	/* stuff that gets read as a modparam or set via fifo */
@@ -47,8 +47,8 @@ typedef struct _pl_pipe
 	int load;
 	int unused_intervals;
 
-    struct _pl_pipe *prev;
-    struct _pl_pipe *next;
+	struct _pl_pipe *prev;
+	struct _pl_pipe *next;
 } pl_pipe_t;
 
 typedef struct _rlp_slot
@@ -67,7 +67,7 @@ typedef struct _rlp_htable
 int pl_init_htable(unsigned int hsize);
 int pl_destroy_htable(void);
 void pl_pipe_release(str *pipeid);
-pl_pipe_t* pl_pipe_get(str *pipeid, int mode);
+pl_pipe_t *pl_pipe_get(str *pipeid, int mode);
 int pl_pipe_add(str *pipeid, str *algorithm, int limit);
 int pl_print_pipes(void);
 int pl_pipe_check_feedback_setpoints(int *cfgsp);
@@ -81,7 +81,8 @@ void rpl_pipe_release(int slot);
  *
  * <http://en.wikipedia.org/wiki/PID_controller>
  */
-enum {
+enum
+{
 	PIPE_ALGO_NOP = 0,
 	PIPE_ALGO_RED,
 	PIPE_ALGO_TAILDROP,
@@ -89,31 +90,32 @@ enum {
 	PIPE_ALGO_NETWORK
 };
 
-typedef struct str_map {
-	str     str;
-	int     id;
+typedef struct str_map
+{
+	str str;
+	int id;
 } str_map_t;
 
 extern str_map_t algo_names[];
 
-static inline int str_cmp(const str * a , const str * b)
+static inline int str_cmp(const str *a, const str *b)
 {
-	return ! (a->len == b->len && ! strncmp(a->s, b->s, a->len));
+	return !(a->len == b->len && !strncmp(a->s, b->s, a->len));
 }
 
-static inline int str_i_cmp(const str * a, const str * b)
+static inline int str_i_cmp(const str *a, const str *b)
 {
-	return ! (a->len == b->len && ! strncasecmp(a->s, b->s, a->len));
+	return !(a->len == b->len && !strncasecmp(a->s, b->s, a->len));
 }
 
 /**
  * converts a mapped str to an int
  * \return	0 if found, -1 otherwise
  */
-static inline int str_map_str(const str_map_t * map, const str * key, int * ret)
+static inline int str_map_str(const str_map_t *map, const str *key, int *ret)
 {
-	for (; map->str.s; map++)
-		if (! str_i_cmp(&map->str, key)) {
+	for(; map->str.s; map++)
+		if(!str_i_cmp(&map->str, key)) {
 			*ret = map->id;
 			return 0;
 		}
@@ -125,10 +127,10 @@ static inline int str_map_str(const str_map_t * map, const str * key, int * ret)
  * converts a mapped int to a str
  * \return	0 if found, -1 otherwise
  */
-static inline int str_map_int(const str_map_t * map, int key, str * ret)
+static inline int str_map_int(const str_map_t *map, int key, str *ret)
 {
-	for (; map->str.s; map++)
-		if (map->id == key) {
+	for(; map->str.s; map++)
+		if(map->id == key) {
 			*ret = map->str;
 			return 0;
 		}
@@ -140,11 +142,11 @@ static inline int str_map_int(const str_map_t * map, int key, str * ret)
  * strcpy for str's (does not allocate the str structure but only the .s member)
  * \return	0 if succeeded, -1 otherwise
  */
-static inline int str_cpy(str * dest, str * src)
+static inline int str_cpy(str *dest, str *src)
 {
 	dest->len = src->len;
 	dest->s = shm_malloc(src->len);
-	if (! dest->s) {
+	if(!dest->s) {
 		LM_ERR("out of shared memory: '%.*s'\n", src->len, src->s);
 		return -1;
 	}

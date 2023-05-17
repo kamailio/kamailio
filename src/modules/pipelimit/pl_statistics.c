@@ -51,14 +51,14 @@
  */
 stat_var *get_stat_var_from_num_code(unsigned int numerical_code, int out_codes)
 {
-	static char msg_code[INT2STR_MAX_LEN+4];
+	static char msg_code[INT2STR_MAX_LEN + 4];
 	str stat_name;
 
-	stat_name.s = int2bstr( (unsigned long)numerical_code, msg_code,
-		&stat_name.len);
+	stat_name.s =
+			int2bstr((unsigned long)numerical_code, msg_code, &stat_name.len);
 	stat_name.s[stat_name.len++] = '_';
 
-	if (out_codes) {
+	if(out_codes) {
 		stat_name.s[stat_name.len++] = 'o';
 		stat_name.s[stat_name.len++] = 'u';
 		stat_name.s[stat_name.len++] = 't';
@@ -106,7 +106,8 @@ stat_var *get_stat_var_from_num_code(unsigned int numerical_code, int out_codes)
  *       Therefore it is CRUCIAL that you free ipList when you are done with its
  *       contents, to avoid a nasty memory leak.
  */
-int get_socket_list_from_proto(int **ipList, int protocol) {
+int get_socket_list_from_proto(int **ipList, int protocol)
+{
 	return get_socket_list_from_proto_and_family(ipList, protocol, AF_INET);
 }
 
@@ -132,56 +133,54 @@ int get_socket_list_from_proto(int **ipList, int protocol) {
  *  - iplist[5] will be the first octet of the first ip address,
  *  - and so on.
  */
-int get_socket_list_from_proto_and_family(int **ipList, int protocol, int family) {
+int get_socket_list_from_proto_and_family(
+		int **ipList, int protocol, int family)
+{
 
-	struct socket_info  *si;
-	struct socket_info** list;
+	struct socket_info *si;
+	struct socket_info **list;
 
-	unsigned int num_ip_octets   = 0;
+	unsigned int num_ip_octets = 0;
 	unsigned int numberOfSockets = 0;
-	int currentRow      = 0;
+	int currentRow = 0;
 
 	num_ip_octets = (family == AF_INET) ? NUM_IP_OCTETS : NUM_IPV6_OCTETS;
 
 	/* I hate to use #ifdefs, but this is necessary because of the way
 	 * get_sock_info_list() is defined.  */
 #ifndef USE_TCP
-	if (protocol == PROTO_TCP)
-	{
+	if(protocol == PROTO_TCP) {
 		return 0;
 	}
 #endif
 
 #ifndef USE_TLS
-	if (protocol == PROTO_TLS)
-	{
+	if(protocol == PROTO_TLS) {
 		return 0;
 	}
 #endif
 #ifndef USE_SCTP
-	if (protocol == PROTO_SCTP)
-	{
+	if(protocol == PROTO_SCTP) {
 		return 0;
 	}
 #endif
 	/* We have no "interfaces" for websockets */
-	if (protocol == PROTO_WS || protocol == PROTO_WSS)
+	if(protocol == PROTO_WS || protocol == PROTO_WSS)
 		return 0;
 
 	/* Retrieve the list of sockets with respect to the given protocol. */
-	list=get_sock_info_list(protocol);
+	list = get_sock_info_list(protocol);
 
 	/* Find out how many sockets are in the list.  We need to know this so
 	 * we can malloc an array to assign to ipList. */
-	for(si=list?*list:0; si; si=si->next){
-		if (si->address.af == family) {
+	for(si = list ? *list : 0; si; si = si->next) {
+		if(si->address.af == family) {
 			numberOfSockets++;
 		}
 	}
 
 	/* There are no open sockets with respect to the given protocol. */
-	if (numberOfSockets == 0)
-	{
+	if(numberOfSockets == 0) {
 		return 0;
 	}
 
@@ -189,30 +188,29 @@ int get_socket_list_from_proto_and_family(int **ipList, int protocol, int family
 
 	/* We couldn't allocate memory for the IP List.  So all we can do is
 	 * fail. */
-	if (*ipList == NULL) {
+	if(*ipList == NULL) {
 		LM_ERR("no more pkg memory");
 		return 0;
 	}
 
 
 	/* We need to search the list again.  So find the front of the list. */
-	list=get_sock_info_list(protocol);
+	list = get_sock_info_list(protocol);
 
 	/* Extract out the IP Addresses and ports.  */
-	for(si=list?*list:0; si; si=si->next){
+	for(si = list ? *list : 0; si; si = si->next) {
 		unsigned int i;
 
 		/* We currently only support IPV4. */
-		if (si->address.af != family) {
+		if(si->address.af != family) {
 			continue;
 		}
 
-		for (i = 0; i < num_ip_octets; i++) {
-			(*ipList)[currentRow*(num_ip_octets + 1) + i ] =
-				si->address.u.addr[i];
+		for(i = 0; i < num_ip_octets; i++) {
+			(*ipList)[currentRow * (num_ip_octets + 1) + i] =
+					si->address.u.addr[i];
 		}
-		(*ipList)[currentRow*(num_ip_octets + 1) + i] =
-			si->port_no;
+		(*ipList)[currentRow * (num_ip_octets + 1) + i] = si->port_no;
 
 		currentRow++;
 	}
@@ -257,25 +255,24 @@ static int parse_proc_net_line(char *line, int *ipAddress, int *rx_queue)
 	 * 	6) Parse out the rx_queue.
 	 */
 
-	for (i = 0; i < 4; i++) {
+	for(i = 0; i < 4; i++) {
 
 		currColonLocation = strchr(currentLocationInLine, ':');
 
 		/* We didn't find all the needed ':', so fail. */
-		if (currColonLocation == NULL) {
+		if(currColonLocation == NULL) {
 			return 0;
 		}
 
 		/* Parse out the integer, keeping the location of the next
 		 * non-numerical character.  */
 		parsedInteger[i] =
-			(int) strtol(++currColonLocation, &nextNonNumericalChar,
-					16);
+				(int)strtol(++currColonLocation, &nextNonNumericalChar, 16);
 
 		/* strtol()'s specifications specify that the second parameter
 		 * is set to the first parameter when a number couldn't be
 		 * parsed out.  This means the parse was unsuccessful.  */
-		if (nextNonNumericalChar == currColonLocation) {
+		if(nextNonNumericalChar == currColonLocation) {
 			return 0;
 		}
 
@@ -283,18 +280,15 @@ static int parse_proc_net_line(char *line, int *ipAddress, int *rx_queue)
 		 * character, so that next iteration of this loop, we can find
 		 * the next colon location. */
 		currentLocationInLine = nextNonNumericalChar;
-
 	}
 
 	/* Extract out the segments of the IP Address.  They are stored in
 	 * reverse network byte order. */
-	for (i = 0; i < NUM_IP_OCTETS; i++) {
+	for(i = 0; i < NUM_IP_OCTETS; i++) {
 
-		ipAddress[i] =
-			parsedInteger[0] & (ipOctetExtractionMask << i*8);
+		ipAddress[i] = parsedInteger[0] & (ipOctetExtractionMask << i * 8);
 
-		ipAddress[i] >>= i*8;
-
+		ipAddress[i] >>= i * 8;
 	}
 
 	ipAddress[NUM_IP_OCTETS] = parsedInteger[1];
@@ -319,18 +313,17 @@ static int match_ip_and_port(int *ipOne, int *ipArray, int sizeOf_ipArray)
 	int ipArrayIndex;
 
 	/* Loop over every IP Address */
-	for (curIPAddrIdx = 0; curIPAddrIdx < sizeOf_ipArray; curIPAddrIdx++) {
+	for(curIPAddrIdx = 0; curIPAddrIdx < sizeOf_ipArray; curIPAddrIdx++) {
 
 		/* Check for octets that don't match.  If one is found, skip the
 		 * rest.  */
-		for (curOctetIdx = 0; curOctetIdx < NUM_IP_OCTETS + 1; curOctetIdx++) {
+		for(curOctetIdx = 0; curOctetIdx < NUM_IP_OCTETS + 1; curOctetIdx++) {
 
 			/* We've encoded a 2D array as a 1D array.  So find out
 			 * our position in the 1D array. */
-			ipArrayIndex =
-				curIPAddrIdx * (NUM_IP_OCTETS + 1) + curOctetIdx;
+			ipArrayIndex = curIPAddrIdx * (NUM_IP_OCTETS + 1) + curOctetIdx;
 
-			if (ipOne[curOctetIdx] != ipArray[ipArrayIndex]) {
+			if(ipOne[curOctetIdx] != ipArray[ipArrayIndex]) {
 				break;
 			}
 		}
@@ -338,10 +331,9 @@ static int match_ip_and_port(int *ipOne, int *ipArray, int sizeOf_ipArray)
 		/* If the index from the inner loop is equal to NUM_IP_OCTETS
 		 * + 1, then that means that every octet (and the port with the
 		 * + 1) matched. */
-		if (curOctetIdx == NUM_IP_OCTETS + 1) {
+		if(curOctetIdx == NUM_IP_OCTETS + 1) {
 			return 1;
 		}
-
 	}
 
 	return 0;
@@ -359,17 +351,16 @@ static int match_ip_and_port(int *ipOne, int *ipArray, int sizeOf_ipArray)
  * Note: This only works on linux systems supporting the /proc/net/[tcp|udp]
  *       interface.  On other systems, zero will always be returned.
  */
-static int get_used_waiting_queue(
-		int forTCP, int *interfaceList, int listSize)
+static int get_used_waiting_queue(int forTCP, int *interfaceList, int listSize)
 {
 	FILE *fp;
 	char *fileToOpen;
 
 	char lineBuffer[MAX_PROC_BUFFER];
-	int  ipAddress[NUM_IP_OCTETS+1];
-	int  rx_queue;
+	int ipAddress[NUM_IP_OCTETS + 1];
+	int rx_queue;
 
-	int  waitingQueueSize = 0;
+	int waitingQueueSize = 0;
 
 #ifndef __OS_linux
 	/* /proc/net/tcp and /proc/net/udp only exists on Linux systems, so don't bother with
@@ -378,7 +369,7 @@ static int get_used_waiting_queue(
 #endif
 
 	/* Set up the file we want to open. */
-	if (forTCP) {
+	if(forTCP) {
 		fileToOpen = "/proc/net/tcp";
 	} else {
 		fileToOpen = "/proc/net/udp";
@@ -386,16 +377,17 @@ static int get_used_waiting_queue(
 
 	fp = fopen(fileToOpen, "r");
 
-	if (fp == NULL) {
+	if(fp == NULL) {
 		LM_ERR("Could not open %s. kamailioMsgQueueDepth and its related"
-				" alarms will not be available.\n", fileToOpen);
+			   " alarms will not be available.\n",
+				fileToOpen);
 		return 0;
 	}
 
 	/* Read in every line of the file, parse out the ip address, port, and
 	 * rx_queue, and compare to our list of interfaces we are listening on.
 	 * Add up rx_queue for those lines which match our known interfaces. */
-	while (fgets(lineBuffer, MAX_PROC_BUFFER, fp)!=NULL) {
+	while(fgets(lineBuffer, MAX_PROC_BUFFER, fp) != NULL) {
 
 		/* Parse out the ip address, port, and rx_queue. */
 		if(parse_proc_net_line(lineBuffer, ipAddress, &rx_queue)) {
@@ -405,7 +397,7 @@ static int get_used_waiting_queue(
 			 * check because it is possible that this system has
 			 * other network interfaces that Kamailio has been told
 			 * to ignore. */
-			if (match_ip_and_port(ipAddress, interfaceList, listSize)) {
+			if(match_ip_and_port(ipAddress, interfaceList, listSize)) {
 				waitingQueueSize += rx_queue;
 			}
 		}
@@ -428,69 +420,66 @@ int get_total_bytes_waiting(void)
 {
 	int bytesWaiting = 0;
 
-	int *UDPList  = NULL;
-	int *TCPList  = NULL;
-	int *TLSList  = NULL;
-	int *UDP6List  = NULL;
-	int *TCP6List  = NULL;
-	int *TLS6List  = NULL;
+	int *UDPList = NULL;
+	int *TCPList = NULL;
+	int *TLSList = NULL;
+	int *UDP6List = NULL;
+	int *TCP6List = NULL;
+	int *TLS6List = NULL;
 
-	int numUDPSockets  = 0;
-	int numTCPSockets  = 0;
-	int numTLSSockets  = 0;
-	int numUDP6Sockets  = 0;
-	int numTCP6Sockets  = 0;
-	int numTLS6Sockets  = 0;
+	int numUDPSockets = 0;
+	int numTCPSockets = 0;
+	int numTLSSockets = 0;
+	int numUDP6Sockets = 0;
+	int numTCP6Sockets = 0;
+	int numTLS6Sockets = 0;
 
 	/* Extract out the IP address address for UDP, TCP, and TLS, keeping
 	 * track of the number of IP addresses from each transport  */
-	numUDPSockets  = get_socket_list_from_proto(&UDPList,  PROTO_UDP);
-	numTCPSockets  = get_socket_list_from_proto(&TCPList,  PROTO_TCP);
-	numTLSSockets  = get_socket_list_from_proto(&TLSList,  PROTO_TLS);
+	numUDPSockets = get_socket_list_from_proto(&UDPList, PROTO_UDP);
+	numTCPSockets = get_socket_list_from_proto(&TCPList, PROTO_TCP);
+	numTLSSockets = get_socket_list_from_proto(&TLSList, PROTO_TLS);
 
-	numUDP6Sockets  = get_socket_list_from_proto_and_family(&UDP6List,  PROTO_UDP, AF_INET6);
-	numTCP6Sockets  = get_socket_list_from_proto_and_family(&TCP6List,  PROTO_TCP, AF_INET6);
-	numTLS6Sockets  = get_socket_list_from_proto_and_family(&TLS6List,  PROTO_TLS, AF_INET6);
+	numUDP6Sockets = get_socket_list_from_proto_and_family(
+			&UDP6List, PROTO_UDP, AF_INET6);
+	numTCP6Sockets = get_socket_list_from_proto_and_family(
+			&TCP6List, PROTO_TCP, AF_INET6);
+	numTLS6Sockets = get_socket_list_from_proto_and_family(
+			&TLS6List, PROTO_TLS, AF_INET6);
 
 	/* Deliberately not looking at PROTO_WS or PROTO_WSS here as they are
 	   just upgraded TCP/TLS connections */
 
 	/* Find out the number of bytes waiting on our interface list over all
 	 * UDP and TCP transports. */
-	bytesWaiting  += get_used_waiting_queue(0, UDPList,  numUDPSockets);
-	bytesWaiting  += get_used_waiting_queue(1, TCPList,  numTCPSockets);
-	bytesWaiting  += get_used_waiting_queue(1, TLSList,  numTLSSockets);
+	bytesWaiting += get_used_waiting_queue(0, UDPList, numUDPSockets);
+	bytesWaiting += get_used_waiting_queue(1, TCPList, numTCPSockets);
+	bytesWaiting += get_used_waiting_queue(1, TLSList, numTLSSockets);
 
-	bytesWaiting  += get_used_waiting_queue(0, UDP6List,  numUDP6Sockets);
-	bytesWaiting  += get_used_waiting_queue(1, TCP6List,  numTCP6Sockets);
-	bytesWaiting  += get_used_waiting_queue(1, TLS6List,  numTLS6Sockets);
+	bytesWaiting += get_used_waiting_queue(0, UDP6List, numUDP6Sockets);
+	bytesWaiting += get_used_waiting_queue(1, TCP6List, numTCP6Sockets);
+	bytesWaiting += get_used_waiting_queue(1, TLS6List, numTLS6Sockets);
 
 	/* get_socket_list_from_proto() allocated a chunk of memory, so we need
 	 * to free it. */
-	if (numUDPSockets > 0)
-	{
+	if(numUDPSockets > 0) {
 		pkg_free(UDPList);
 	}
-	if (numUDP6Sockets > 0)
-	{
+	if(numUDP6Sockets > 0) {
 		pkg_free(UDP6List);
 	}
 
-	if (numTCPSockets > 0)
-	{
+	if(numTCPSockets > 0) {
 		pkg_free(TCPList);
 	}
-	if (numTCP6Sockets > 0)
-	{
+	if(numTCP6Sockets > 0) {
 		pkg_free(TCP6List);
 	}
 
-	if (numTLSSockets > 0)
-	{
+	if(numTLSSockets > 0) {
 		pkg_free(TLSList);
 	}
-	if (numTLS6Sockets > 0)
-	{
+	if(numTLS6Sockets > 0) {
 		pkg_free(TLS6List);
 	}
 
