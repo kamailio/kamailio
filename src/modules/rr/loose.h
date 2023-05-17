@@ -33,15 +33,19 @@
 #include "../../core/str.h"
 #include "../../core/parser/msg_parser.h"
 
-#define RR_FLOW_DOWNSTREAM  (1<<0)
-#define RR_FLOW_UPSTREAM    (1<<1)
+#define RR_FLOW_DOWNSTREAM (1 << 0)
+#define RR_FLOW_UPSTREAM (1 << 1)
 
-#define RR_ERROR -1		/*!< An error occurred while processing route set */
-#define RR_DRIVEN 1		/*!< The next hop is determined from the route set */
-#define RR_OB_DRIVEN 2		/*!< The next hop is determined from the route set based on flow-token */
-#define RR_NOT_DRIVEN -1	/*!< The next hop is not determined from the route set */
-#define RR_FLOW_TOKEN_BROKEN -2	/*!< Outbound flow-token shows evidence of tampering */
-#define RR_PRELOADED -3		/*!< The next hop is determined from a preloaded route set */
+#define RR_ERROR -1 /*!< An error occurred while processing route set */
+#define RR_DRIVEN 1 /*!< The next hop is determined from the route set */
+#define RR_OB_DRIVEN \
+	2 /*!< The next hop is determined from the route set based on flow-token */
+#define RR_NOT_DRIVEN \
+	-1 /*!< The next hop is not determined from the route set */
+#define RR_FLOW_TOKEN_BROKEN \
+	-2 /*!< Outbound flow-token shows evidence of tampering */
+#define RR_PRELOADED \
+	-3 /*!< The next hop is determined from a preloaded route set */
 
 
 /*!
@@ -50,7 +54,7 @@
  * \param _mode - 0: try loose or strict routing; 1: try loose routing only
  * \return negative on failure or preloaded, 1 on success
  */
-int loose_route_mode(sip_msg_t* _m, int _mode);
+int loose_route_mode(sip_msg_t *_m, int _mode);
 
 
 /*!
@@ -58,7 +62,7 @@ int loose_route_mode(sip_msg_t* _m, int _mode);
  * \param _m SIP message
  * \return -1 on failure, 1 on success
  */
-int loose_route(struct sip_msg* _m);
+int loose_route(struct sip_msg *_m);
 
 
 /*!
@@ -73,7 +77,7 @@ int loose_route(struct sip_msg* _m);
  * \param re compiled regular expression to be checked against the Route header parameters
  * \return -1 on failure, 1 on success
  */
-int check_route_param(struct sip_msg *msg, regex_t* re);
+int check_route_param(struct sip_msg *msg, regex_t *re);
 
 
 /*!
@@ -104,7 +108,7 @@ int is_direction(struct sip_msg *msg, int dir);
  * It might be an empty string if the parameter had no value.
  * \return 0 if parameter was found (even if it has no value), -1 otherwise
  */
-int get_route_param( struct sip_msg *msg, str *name, str *val);
+int get_route_param(struct sip_msg *msg, str *name, str *val);
 
 
 #endif /* LOOSE_H */
