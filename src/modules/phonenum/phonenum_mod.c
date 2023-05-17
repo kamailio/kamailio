@@ -43,11 +43,11 @@ static int mod_init(void);
 static void mod_destroy(void);
 
 static int w_phonenum_match(struct sip_msg *msg, char *str1, char *str2);
-static int w_phonenum_match_cn(struct sip_msg *msg, char *str1, char *str2,
-		char *str3);
+static int w_phonenum_match_cn(
+		struct sip_msg *msg, char *str1, char *str2, char *str3);
 static int phonenum_match(sip_msg_t *msg, str *tomatch, str *pvclass);
 
-static int phonenum_resid_param(modparam_t type, void* val);
+static int phonenum_resid_param(modparam_t type, void *val);
 
 /* clang-format off */
 static pv_export_t mod_pvs[] = {
@@ -108,14 +108,14 @@ static void mod_destroy(void)
 /**
  *
  */
-static int phonenum_resid_param(modparam_t type, void* val)
+static int phonenum_resid_param(modparam_t type, void *val)
 {
 	str rname;
 
-	rname = *((str*)val);
+	rname = *((str *)val);
 	if(sr_phonenum_add_resid(&rname) < 0) {
-		LM_ERR("failed to register result container with id: %.*s\n",
-				rname.len, rname.s);
+		LM_ERR("failed to register result container with id: %.*s\n", rname.len,
+				rname.s);
 		return -1;
 	}
 	return 0;
@@ -150,15 +150,16 @@ static int w_phonenum_match(sip_msg_t *msg, char *target, char *pvname)
 	return phonenum_match(msg, &tomatch, &pvclass);
 }
 
-static int phonenum_match_cn(sip_msg_t *msg, str *tomatch, str *cnc, str *pvclass)
+static int phonenum_match_cn(
+		sip_msg_t *msg, str *tomatch, str *cnc, str *pvclass)
 {
 	phonenum_pv_reset(pvclass);
 
 	return phonenum_update_pv(tomatch, cnc, pvclass);
 }
 
-static int w_phonenum_match_cn(sip_msg_t *msg, char *target, char *cncstr,
-		char *pvname)
+static int w_phonenum_match_cn(
+		sip_msg_t *msg, char *target, char *cncstr, char *pvname)
 {
 	str tomatch = STR_NULL;
 	str pvclass = STR_NULL;

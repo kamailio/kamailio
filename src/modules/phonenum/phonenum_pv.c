@@ -113,7 +113,7 @@ sr_phonenum_item_t *sr_phonenum_add_item(str *name)
 
 int sr_phonenum_add_resid(str *rname)
 {
-	if(sr_phonenum_add_item(rname)==NULL) {
+	if(sr_phonenum_add_item(rname) == NULL) {
 		return -1;
 	}
 	return 0;
@@ -239,25 +239,25 @@ int pv_get_phonenum(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 		return -1;
 	if(gpv->item == NULL)
 		return pv_get_null(msg, param, res);
-	if(gpv->item->r.record==NULL)
+	if(gpv->item->r.record == NULL)
 		return pv_get_null(msg, param, res);
 
 	switch(gpv->type) {
 		case 1: /* normalized */
-			if(gpv->item->r.record->normalized==NULL)
+			if(gpv->item->r.record->normalized == NULL)
 				return pv_get_null(msg, param, res);
-			return pv_get_strzval(msg, param, res,
-						gpv->item->r.record->normalized);
+			return pv_get_strzval(
+					msg, param, res, gpv->item->r.record->normalized);
 		case 2: /* ltype */
-			if(gpv->item->r.record->ltype==NULL)
+			if(gpv->item->r.record->ltype == NULL)
 				return pv_get_null(msg, param, res);
 			return pv_get_strzval(msg, param, res, gpv->item->r.record->ltype);
 		case 3: /* ndesc */
-			if(gpv->item->r.record->ndesc==NULL)
+			if(gpv->item->r.record->ndesc == NULL)
 				return pv_get_null(msg, param, res);
 			return pv_get_strzval(msg, param, res, gpv->item->r.record->ndesc);
 		case 4: /* error */
-			if(gpv->item->r.record->error==NULL)
+			if(gpv->item->r.record->error == NULL)
 				return pv_get_null(msg, param, res);
 			return pv_get_strzval(msg, param, res, gpv->item->r.record->error);
 		case 5: /* cctel */
@@ -265,11 +265,11 @@ int pv_get_phonenum(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 		case 6: /* valid */
 			return pv_get_sintval(msg, param, res, gpv->item->r.record->valid);
 		case 7: /* ccname */
-			if(gpv->item->r.record->ccname==NULL)
+			if(gpv->item->r.record->ccname == NULL)
 				return pv_get_null(msg, param, res);
 			return pv_get_strzval(msg, param, res, gpv->item->r.record->ccname);
 		default: /* number */
-			if(gpv->item->r.record->number==NULL)
+			if(gpv->item->r.record->number == NULL)
 				return pv_get_null(msg, param, res);
 			return pv_get_strzval(msg, param, res, gpv->item->r.record->number);
 	}
@@ -323,16 +323,16 @@ int phonenum_update_pv(str *tomatch, str *cncode, str *name)
 	strncpy(gr->tomatch, tomatch->s, tomatch->len);
 	gr->tomatch[tomatch->len] = '\0';
 	LM_DBG("attempt to match: %s\n", gr->tomatch);
-	gr->record = telnum_parse(gr->tomatch,
-			(cncode && cncode->len>0)?cncode->s:"ZZ");
+	gr->record = telnum_parse(
+			gr->tomatch, (cncode && cncode->len > 0) ? cncode->s : "ZZ");
 	if(gr->record == NULL) {
 		LM_DBG("no match for: %s\n", gr->tomatch);
 		return -2;
 	}
 	LM_DBG("phonenum PV updated for: %s (%d/%s/%s)\n", gr->tomatch,
 			gr->record->valid,
-			(gr->record->normalized)?gr->record->normalized:"none",
-			(gr->record->error)?gr->record->error:"none");
+			(gr->record->normalized) ? gr->record->normalized : "none",
+			(gr->record->error) ? gr->record->error : "none");
 
 	return 1;
 }
