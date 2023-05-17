@@ -24,9 +24,9 @@
 #include "pv_api.h"
 #include "pv_core.h"
 
-int pv_register_api(pv_api_t* api)
+int pv_register_api(pv_api_t *api)
 {
-	if (!api)
+	if(!api)
 		return 0;
 
 	api->get_body_size = pv_get_body_size;

@@ -23,7 +23,8 @@
 
 #include "../../core/pvar.h"
 
-typedef struct _pv_api {
+typedef struct _pv_api
+{
 	pv_getf_t get_reason;
 	pv_getf_t get_hdr;
 	pv_parse_name_f parse_hdr_name;
@@ -34,4 +35,4 @@ typedef struct _pv_api {
 	pv_getf_t get_msg_len;
 } pv_api_t;
 
-typedef int (*pv_register_api_t)(pv_api_t*);
+typedef int (*pv_register_api_t)(pv_api_t *);

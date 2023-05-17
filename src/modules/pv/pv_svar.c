@@ -37,35 +37,32 @@
 static script_var_t *script_vars = 0;
 static script_var_t *script_vars_null = 0;
 
-script_var_t* add_var(str *name, int vtype)
+script_var_t *add_var(str *name, int vtype)
 {
 	script_var_t *it;
 
-	if(name==0 || name->s==0 || name->len<=0)
+	if(name == 0 || name->s == 0 || name->len <= 0)
 		return 0;
 
-	if(vtype==VAR_TYPE_NULL) {
-		it=script_vars_null;
+	if(vtype == VAR_TYPE_NULL) {
+		it = script_vars_null;
 	} else {
-		it=script_vars;
+		it = script_vars;
 	}
-	for(; it; it=it->next)
-	{
-		if(it->name.len==name->len
-				&& strncmp(name->s, it->name.s, name->len)==0)
+	for(; it; it = it->next) {
+		if(it->name.len == name->len
+				&& strncmp(name->s, it->name.s, name->len) == 0)
 			return it;
 	}
-	it = (script_var_t*)pkg_malloc(sizeof(script_var_t));
-	if(it==0)
-	{
+	it = (script_var_t *)pkg_malloc(sizeof(script_var_t));
+	if(it == 0) {
 		LM_ERR("out of pkg mem\n");
 		return 0;
 	}
 	memset(it, 0, sizeof(script_var_t));
-	it->name.s = (char*)pkg_malloc((name->len+1)*sizeof(char));
+	it->name.s = (char *)pkg_malloc((name->len + 1) * sizeof(char));
 
-	if(it->name.s==0)
-	{
+	if(it->name.s == 0) {
 		pkg_free(it);
 		LM_ERR("out of pkg mem!\n");
 		return 0;
@@ -74,8 +71,8 @@ script_var_t* add_var(str *name, int vtype)
 	memcpy(it->name.s, name->s, name->len);
 	it->name.s[it->name.len] = '\0';
 
-	if(vtype==VAR_TYPE_NULL) {
-		it->v.flags = VAR_VAL_NULL|VAR_TYPE_NULL;
+	if(vtype == VAR_TYPE_NULL) {
+		it->v.flags = VAR_VAL_NULL | VAR_TYPE_NULL;
 		it->next = script_vars_null;
 		script_vars_null = it;
 	} else {
@@ -86,19 +83,17 @@ script_var_t* add_var(str *name, int vtype)
 	return it;
 }
 
-script_var_t* set_var_value(script_var_t* var, int_str *value, int flags)
+script_var_t *set_var_value(script_var_t *var, int_str *value, int flags)
 {
-	if(var==0)
+	if(var == 0)
 		return 0;
-	if(value==NULL)
-	{
-		if(var->v.flags&VAR_VAL_STR)
-		{
+	if(value == NULL) {
+		if(var->v.flags & VAR_VAL_STR) {
 			pkg_free(var->v.value.s.s);
 			var->v.flags &= ~VAR_VAL_STR;
 		}
 
-		if(var->v.flags&VAR_TYPE_NULL)
+		if(var->v.flags & VAR_TYPE_NULL)
 			var->v.flags |= VAR_VAL_NULL;
 
 		memset(&var->v.value, 0, sizeof(int_str));
@@ -107,18 +102,15 @@ script_var_t* set_var_value(script_var_t* var, int_str *value, int flags)
 	}
 
 	var->v.flags &= ~VAR_VAL_NULL;
-	if(flags&VAR_VAL_STR)
-	{
-		if(var->v.flags&VAR_VAL_STR)
-		{ /* old and new value is str */
-			if(value->s.len>var->v.value.s.len)
-			{ /* not enough space to copy */
+	if(flags & VAR_VAL_STR) {
+		if(var->v.flags & VAR_VAL_STR) { /* old and new value is str */
+			if(value->s.len
+					> var->v.value.s.len) { /* not enough space to copy */
 				pkg_free(var->v.value.s.s);
 				memset(&var->v.value, 0, sizeof(int_str));
 				var->v.value.s.s =
-					(char*)pkg_malloc((value->s.len+1)*sizeof(char));
-				if(var->v.value.s.s==0)
-				{
+						(char *)pkg_malloc((value->s.len + 1) * sizeof(char));
+				if(var->v.value.s.s == 0) {
 					LM_ERR("out of pkg mem\n");
 					goto error;
 				}
@@ -126,9 +118,8 @@ script_var_t* set_var_value(script_var_t* var, int_str *value, int flags)
 		} else {
 			memset(&var->v.value, 0, sizeof(int_str));
 			var->v.value.s.s =
-					(char*)pkg_malloc((value->s.len+1)*sizeof(char));
-			if(var->v.value.s.s==0)
-			{
+					(char *)pkg_malloc((value->s.len + 1) * sizeof(char));
+			if(var->v.value.s.s == 0) {
 				LM_ERR("out of pkg mem!\n");
 				goto error;
 			}
@@ -140,8 +131,7 @@ script_var_t* set_var_value(script_var_t* var, int_str *value, int flags)
 		var->v.value.s.len = value->s.len;
 		var->v.value.s.s[value->s.len] = '\0';
 	} else {
-		if(var->v.flags&VAR_VAL_STR)
-		{
+		if(var->v.flags & VAR_VAL_STR) {
 			pkg_free(var->v.value.s.s);
 			var->v.flags &= ~VAR_VAL_STR;
 			memset(&var->v.value, 0, sizeof(int_str));
@@ -157,58 +147,53 @@ error:
 	return NULL;
 }
 
-script_var_t* get_var_by_name(str *name)
+script_var_t *get_var_by_name(str *name)
 {
 	script_var_t *it;
 
-	if(name==0 || name->s==0 || name->len<=0)
+	if(name == 0 || name->s == 0 || name->len <= 0)
 		return 0;
 
-	for(it=script_vars; it; it=it->next)
-	{
-		if(it->name.len==name->len
-				&& strncmp(name->s, it->name.s, name->len)==0)
+	for(it = script_vars; it; it = it->next) {
+		if(it->name.len == name->len
+				&& strncmp(name->s, it->name.s, name->len) == 0)
 			return it;
 	}
 	return 0;
 }
 
-script_var_t* get_varnull_by_name(str *name)
+script_var_t *get_varnull_by_name(str *name)
 {
 	script_var_t *it;
 
-	if(name==0 || name->s==0 || name->len<=0)
+	if(name == 0 || name->s == 0 || name->len <= 0)
 		return 0;
 
-	for(it=script_vars_null; it; it=it->next)
-	{
-		if(it->name.len==name->len
-				&& strncmp(name->s, it->name.s, name->len)==0)
+	for(it = script_vars_null; it; it = it->next) {
+		if(it->name.len == name->len
+				&& strncmp(name->s, it->name.s, name->len) == 0)
 			return it;
 	}
 	return 0;
 }
 
-script_var_t* get_var_all(void) {
+script_var_t *get_var_all(void)
+{
 	return script_vars;
 }
 
 void reset_vars(void)
 {
 	script_var_t *it;
-	for(it=script_vars; it; it=it->next)
-	{
-		if(it->v.flags&VAR_VAL_STR)
-		{
+	for(it = script_vars; it; it = it->next) {
+		if(it->v.flags & VAR_VAL_STR) {
 			pkg_free(it->v.value.s.s);
 			it->v.flags &= ~VAR_VAL_STR;
 		}
 		memset(&it->v.value, 0, sizeof(int_str));
 	}
-	for(it=script_vars_null; it; it=it->next)
-	{
-		if(it->v.flags&VAR_VAL_STR)
-		{
+	for(it = script_vars_null; it; it = it->next) {
+		if(it->v.flags & VAR_VAL_STR) {
 			pkg_free(it->v.value.s.s);
 			it->v.flags &= ~VAR_VAL_STR;
 		}
@@ -223,12 +208,11 @@ void destroy_vars_list(script_var_t *svl)
 	script_var_t *it0;
 
 	it = svl;
-	while(it)
-	{
+	while(it) {
 		it0 = it;
 		it = it->next;
 		pkg_free(it0->name.s);
-		if(it0->v.flags&VAR_VAL_STR)
+		if(it0->v.flags & VAR_VAL_STR)
 			pkg_free(it0->v.value.s.s);
 		pkg_free(it0);
 	}
@@ -252,13 +236,13 @@ int ki_var_seti(sip_msg_t *msg, str *vname, int ival)
 
 	var = add_var(vname, VAR_TYPE_ZERO);
 
-	if(var==NULL) {
+	if(var == NULL) {
 		LM_ERR("$var(%.*s) is not defined\n", vname->len, vname->s);
 		return -1;
 	}
 
 	isv.n = ival;
-	if(set_var_value(var, &isv, 0)==NULL) {
+	if(set_var_value(var, &isv, 0) == NULL) {
 		LM_ERR("error - cannot set $var(%.*s) to ival\n", vname->len, vname->s);
 		return -1;
 	}
@@ -276,13 +260,13 @@ int ki_var_sets(sip_msg_t *msg, str *vname, str *sval)
 
 	var = add_var(vname, VAR_TYPE_ZERO);
 
-	if(var==NULL) {
+	if(var == NULL) {
 		LM_ERR("$var(%.*s) is not defined\n", vname->len, vname->s);
 		return -1;
 	}
 
 	isv.s = *sval;
-	if(set_var_value(var, &isv, VAR_VAL_STR)==NULL) {
+	if(set_var_value(var, &isv, VAR_VAL_STR) == NULL) {
 		LM_ERR("error - cannot set $var(%.*s) to sval\n", vname->len, vname->s);
 		return -1;
 	}
@@ -297,22 +281,22 @@ static sr_kemi_xval_t _sr_kemi_var_xval = {0};
 /**
  *
  */
-sr_kemi_xval_t* ki_var_get(sip_msg_t *msg, str *vname)
+sr_kemi_xval_t *ki_var_get(sip_msg_t *msg, str *vname)
 {
 	script_var_t *var = NULL;
 
 	memset(&_sr_kemi_var_xval, 0, sizeof(sr_kemi_xval_t));
 
 	var = get_var_by_name(vname);
-	if(var==NULL) {
-		LM_WARN("$var(%.*s) is not defined - return value 0\n",
-				vname->len, vname->s);
+	if(var == NULL) {
+		LM_WARN("$var(%.*s) is not defined - return value 0\n", vname->len,
+				vname->s);
 		_sr_kemi_var_xval.vtype = SR_KEMIP_INT;
 		_sr_kemi_var_xval.v.n = 0;
 		return &_sr_kemi_var_xval;
 	}
 
-	if(var->v.flags&VAR_VAL_STR) {
+	if(var->v.flags & VAR_VAL_STR) {
 		_sr_kemi_var_xval.vtype = SR_KEMIP_STR;
 		_sr_kemi_var_xval.v.s = var->v.value.s;
 		return &_sr_kemi_var_xval;
