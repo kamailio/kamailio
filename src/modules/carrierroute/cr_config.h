@@ -41,7 +41,7 @@
  * @return 0 means ok, -1 means an error occurred
  *
  */
-int load_config(struct route_data_t * rd);
+int load_config(struct route_data_t *rd);
 
 
 /**
@@ -52,6 +52,6 @@ int load_config(struct route_data_t * rd);
  * @return 0 means ok, -1 means an error occurred
  *
  */
-int save_config(struct route_data_t * rd);
+int save_config(struct route_data_t *rd);
 
 #endif

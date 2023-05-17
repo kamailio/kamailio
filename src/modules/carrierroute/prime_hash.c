@@ -40,23 +40,23 @@
 #define CR_RANDBUF_S 20
 static char cr_randbuf[CR_RANDBUF_S];
 
-static int determine_source(struct sip_msg *msg, enum hash_source source,
-                            str *source_string);
-static int validate_msg(struct sip_msg * msg);
-static int determine_call_id (struct sip_msg *msg, str *source_string);
-static int determine_fromto_uri (struct to_body *fromto, str *source_string);
-static int determine_fromto_user (struct to_body *fromto, str *source_string);
-static int determine_fromrand(str* source_string);
-static int first_token (str *source_string);
+static int determine_source(
+		struct sip_msg *msg, enum hash_source source, str *source_string);
+static int validate_msg(struct sip_msg *msg);
+static int determine_call_id(struct sip_msg *msg, str *source_string);
+static int determine_fromto_uri(struct to_body *fromto, str *source_string);
+static int determine_fromto_user(struct to_body *fromto, str *source_string);
+static int determine_fromrand(str *source_string);
+static int first_token(str *source_string);
 
 
-int hash_func (struct sip_msg * msg,
-                         enum hash_source source, int denominator) {
+int hash_func(struct sip_msg *msg, enum hash_source source, int denominator)
+{
 	int ret;
 	unsigned int hash;
 	str source_string;
 
-	if(determine_source (msg, source, &source_string) == -1) {
+	if(determine_source(msg, source, &source_string) == -1) {
 		return -1;
 	}
 
@@ -67,8 +67,9 @@ int hash_func (struct sip_msg * msg,
 	return ret;
 }
 
-static int determine_source (struct sip_msg *msg, enum hash_source source,
-                             str *source_string) {
+static int determine_source(
+		struct sip_msg *msg, enum hash_source source, str *source_string)
+{
 	source_string->s = NULL;
 	source_string->len = 0;
 
@@ -76,28 +77,29 @@ static int determine_source (struct sip_msg *msg, enum hash_source source,
 		return -1;
 	}
 
-	switch (source) {
-			case shs_call_id:
-			return determine_call_id (msg, source_string);
-			case shs_from_uri:
-			return determine_fromto_uri (get_from(msg), source_string);
-			case shs_from_user:
-			return determine_fromto_user (get_from(msg), source_string);
-			case shs_to_uri:
-			return determine_fromto_uri (get_to(msg), source_string);
-			case shs_to_user:
-			return determine_fromto_user (get_to(msg), source_string);
-			case shs_rand:
+	switch(source) {
+		case shs_call_id:
+			return determine_call_id(msg, source_string);
+		case shs_from_uri:
+			return determine_fromto_uri(get_from(msg), source_string);
+		case shs_from_user:
+			return determine_fromto_user(get_from(msg), source_string);
+		case shs_to_uri:
+			return determine_fromto_uri(get_to(msg), source_string);
+		case shs_to_user:
+			return determine_fromto_user(get_to(msg), source_string);
+		case shs_rand:
 			return determine_fromrand(source_string); /* msg is not needed */
-			default:
-			LM_ERR("unknown hash source %i.\n",
-			     (int) source);
+		default:
+			LM_ERR("unknown hash source %i.\n", (int)source);
 			return -1;
 	}
 }
 
-static int validate_msg(struct sip_msg * msg) {
-	if(!msg->callid && ((parse_headers(msg, HDR_CALLID_F, 0) == -1) || !msg->callid)) {
+static int validate_msg(struct sip_msg *msg)
+{
+	if(!msg->callid
+			&& ((parse_headers(msg, HDR_CALLID_F, 0) == -1) || !msg->callid)) {
 		LM_ERR("Message has no Call-ID header\n");
 		return -1;
 	}
@@ -105,28 +107,31 @@ static int validate_msg(struct sip_msg * msg) {
 		LM_ERR("Message has no To header\n");
 		return -1;
 	}
-	if(!msg->from && ((parse_headers(msg, HDR_FROM_F, 0) == -1) || !msg->from)) {
+	if(!msg->from
+			&& ((parse_headers(msg, HDR_FROM_F, 0) == -1) || !msg->from)) {
 		LM_ERR("Message has no From header\n");
 		return -1;
 	}
 	//TODO it would make more sense to do the parsing just if it is needed
 	//     but parse_from_header is smart enough, so it is probably not a huge problem
-	if (parse_from_header(msg) < 0) {
+	if(parse_from_header(msg) < 0) {
 		LM_ERR("Error while parsing From header field\n");
 		return -1;
 	}
 	return 0;
 }
 
-static int determine_call_id (struct sip_msg *msg, str *source_string) {
+static int determine_call_id(struct sip_msg *msg, str *source_string)
+{
 	source_string->s = msg->callid->body.s;
 	source_string->len = msg->callid->body.len;
-	first_token (source_string);
+	first_token(source_string);
 	return 0;
 }
 
-static int determine_fromto_uri (struct to_body *fromto, str *source_string) {
-	if (fromto == NULL) {
+static int determine_fromto_uri(struct to_body *fromto, str *source_string)
+{
+	if(fromto == NULL) {
 		LM_ERR("fromto is NULL!\n");
 		return -1;
 	}
@@ -135,14 +140,15 @@ static int determine_fromto_uri (struct to_body *fromto, str *source_string) {
 	return 0;
 }
 
-static int determine_fromto_user (struct to_body *fromto, str *source_string) {
+static int determine_fromto_user(struct to_body *fromto, str *source_string)
+{
 	struct sip_uri uri;
 
-	if (fromto == NULL) {
+	if(fromto == NULL) {
 		LM_ERR("fromto is NULL!\n");
 		return -1;
 	}
-	if (parse_uri (fromto->uri.s, fromto->uri.len, &uri) < 0) {
+	if(parse_uri(fromto->uri.s, fromto->uri.len, &uri) < 0) {
 		LM_ERR("Failed to parse From or To URI.\n");
 		return -1;
 	}
@@ -151,9 +157,10 @@ static int determine_fromto_user (struct to_body *fromto, str *source_string) {
 	return 0;
 }
 
-static int determine_fromrand(str* source_string){
+static int determine_fromrand(str *source_string)
+{
 
-	snprintf(&cr_randbuf[0], CR_RANDBUF_S , "%d", kam_rand());
+	snprintf(&cr_randbuf[0], CR_RANDBUF_S, "%d", kam_rand());
 
 	LM_NOTICE("randbuf is %s\n", cr_randbuf);
 	source_string->s = cr_randbuf;
@@ -162,19 +169,20 @@ static int determine_fromrand(str* source_string){
 	return 0;
 }
 
-static int first_token (str *source_string) {
+static int first_token(str *source_string)
+{
 	size_t len;
 
-	if (source_string->s == NULL || source_string->len == 0) {
+	if(source_string->s == NULL || source_string->len == 0) {
 		return 0;
 	}
 
-	while (source_string->len > 0 && isspace (*source_string->s)) {
+	while(source_string->len > 0 && isspace(*source_string->s)) {
 		++source_string->s;
 		--source_string->len;
 	}
-	for (len = 0; len < source_string->len; ++len) {
-		if (isspace (source_string->s[len])) {
+	for(len = 0; len < source_string->len; ++len) {
+		if(isspace(source_string->s[len])) {
 			source_string->len = len;
 			break;
 		}

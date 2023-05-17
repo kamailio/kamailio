@@ -48,43 +48,55 @@
 #define VISITED 1
 
 #define EXPECTED_END_OF_OPTS 0
-#define ERROR_IN_PARSING  -1
+#define ERROR_IN_PARSING -1
 #define SUCCESSFUL_PARSING 1
 #define EOF_REACHED 2
 
 #define DEFAULT_DOMAIN_NUM 16
 #define MAX_DOMAIN_NUM 64 // must be a power of 2
 
-enum opt_type { CFG_STR=0, CFG_INT, CFG_FLOAT, CFG_INT_LIST, MAX_OPTS};
+enum opt_type
+{
+	CFG_STR = 0,
+	CFG_INT,
+	CFG_FLOAT,
+	CFG_INT_LIST,
+	MAX_OPTS
+};
 
-union opt_data{
+union opt_data
+{
 	int int_data;
 	float float_data;
 	str string_data;
-	int  int_list[INT_LIST_MAX_SIZE];
+	int int_list[INT_LIST_MAX_SIZE];
 };
 
-typedef struct {
-	char           	name[MAX_FIELD_NAME];
-	enum opt_type	type;
-	union opt_data	value;
-	int         	visited;
-	int 		no_elems; // TBD: name should suggest int_list_no_elems
-	char		str_buf[CR_MAX_LINE_SIZE];
+typedef struct
+{
+	char name[MAX_FIELD_NAME];
+	enum opt_type type;
+	union opt_data value;
+	int visited;
+	int no_elems; // TBD: name should suggest int_list_no_elems
+	char str_buf[CR_MAX_LINE_SIZE];
 } option_description;
 
-int get_non_blank_line(str* data, int size, FILE* file, int* full_line_len);
+int get_non_blank_line(str *data, int size, FILE *file, int *full_line_len);
 
-int get_option_position(const char* opt_name, const option_description* opt_list, int no_options);
+int get_option_position(const char *opt_name,
+		const option_description *opt_list, int no_options);
 
-int parse_options(FILE* file, option_description* opts, int no_options, char* end_str);
+int parse_options(
+		FILE *file, option_description *opts, int no_options, char *end_str);
 
-int parse_struct_header(FILE* file, char* expected_struct_type, str* struct_name);
+int parse_struct_header(
+		FILE *file, char *expected_struct_type, str *struct_name);
 
-int next_token_is_eof(FILE* file);
+int next_token_is_eof(FILE *file);
 
-int next_token_is_struct_stop(FILE* file);
+int next_token_is_struct_stop(FILE *file);
 
-int parse_struct_stop(FILE* file);
+int parse_struct_stop(FILE *file);
 
 #endif /* PARSER_CARRIERROUTE_H_ */
