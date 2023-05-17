@@ -87,7 +87,7 @@ str rpid_prefix = {DEF_RPID_PREFIX, sizeof(DEF_RPID_PREFIX) - 1};
 /*! Default Remote-Party-IDD suffix */
 str rpid_suffix = {DEF_RPID_SUFFIX, sizeof(DEF_RPID_SUFFIX) - 1};
 /*! Definition of AVP containing rpid value */
-char* rpid_avp_param = DEF_RPID_AVP;
+char *rpid_avp_param = DEF_RPID_AVP;
 
 /* max length for e164 number including the leading '+' */
 int e164_max_len = 16;
@@ -111,156 +111,146 @@ static int w_contact_param_rm(sip_msg_t *msg, char *pnparam, char *p2);
 static int w_hdr_date_check(sip_msg_t *msg, char *ptdiff, char *p2);
 
 /* Fixup functions to be defined later */
-static int fixup_set_uri(void** param, int param_no);
-static int fixup_free_set_uri(void** param, int param_no);
-static int fixup_tel2sip(void** param, int param_no);
-static int fixup_get_uri_param(void** param, int param_no);
-static int free_fixup_get_uri_param(void** param, int param_no);
-static int fixup_option(void** param, int param_no);
+static int fixup_set_uri(void **param, int param_no);
+static int fixup_free_set_uri(void **param, int param_no);
+static int fixup_tel2sip(void **param, int param_no);
+static int fixup_get_uri_param(void **param, int param_no);
+static int free_fixup_get_uri_param(void **param, int param_no);
+static int fixup_option(void **param, int param_no);
 
 static int ki_is_gruu(sip_msg_t *msg);
 
 char *contact_flds_separator = DEFAULT_SEPARATOR;
 
-static cmd_export_t cmds[]={
-	{"options_reply",      (cmd_function)opt_reply,         0, 0,
-		0, REQUEST_ROUTE},
-	{"is_user",            (cmd_function)is_user,           1, fixup_spve_null,
-		0, REQUEST_ROUTE|LOCAL_ROUTE},
-	{"has_totag", 	       (cmd_function)w_has_totag,         0, 0,
-		0, ANY_ROUTE},
-	{"uri_param",          (cmd_function)uri_param_1,       1, fixup_spve_null,
-		0, REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
-	{"uri_param",          (cmd_function)uri_param_2,       2, fixup_spve_spve,
-		0, REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
-	{"uri_param_any",      (cmd_function)w_uri_param_any,   1, fixup_spve_null,
-		0, REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
-	{"add_uri_param",      (cmd_function)add_uri_param,     1, fixup_str_null,
-		0, REQUEST_ROUTE},
-	{"get_uri_param",      (cmd_function)get_uri_param,     2, fixup_get_uri_param,
-		free_fixup_get_uri_param, REQUEST_ROUTE|LOCAL_ROUTE},
-	{"uri_param_rm",       (cmd_function)w_uri_param_rm,    1, fixup_spve_null,
-		0, REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
-	{"tel2sip", (cmd_function)tel2sip, 3, fixup_tel2sip, 0,
-		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE},
-	{"is_uri",            (cmd_function)is_uri,           1, fixup_spve_null,
-		fixup_free_spve_null, ANY_ROUTE},
-	{"is_e164",            (cmd_function)w_is_e164,           1, fixup_pvar_null,
-		fixup_free_pvar_null, REQUEST_ROUTE|FAILURE_ROUTE|LOCAL_ROUTE},
-	{"is_uri_user_e164",   (cmd_function)w_is_uri_user_e164,  1, fixup_pvar_null,
-		fixup_free_pvar_null, ANY_ROUTE},
-	{"encode_contact",     (cmd_function)encode_contact,    2, 0,
-		0, REQUEST_ROUTE|ONREPLY_ROUTE},
-	{"decode_contact",     (cmd_function)decode_contact,    0, 0,
-		0, REQUEST_ROUTE},
-	{"decode_contact_header", (cmd_function)decode_contact_header, 0, 0,
-		0,REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE},
-	{"cmp_uri",  (cmd_function)w_cmp_uri,                   2, fixup_spve_spve,
-		0, ANY_ROUTE},
-	{"cmp_aor",  (cmd_function)w_cmp_aor,                   2, fixup_spve_spve,
-		0, ANY_ROUTE},
-	{"cmp_hdr_name",  (cmd_function)w_cmp_hdr_name,         2, fixup_spve_spve,
-		0, ANY_ROUTE},
-	{"is_rpid_user_e164",   (cmd_function)is_rpid_user_e164, 0, 0,
-		0, REQUEST_ROUTE},
-	{"append_rpid_hf",      (cmd_function)append_rpid_hf,    0, 0,
-		0, REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
-	{"append_rpid_hf",      (cmd_function)append_rpid_hf_p,  2, fixup_str_str,
-		0, REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
-	{"set_uri_user", (cmd_function)set_uri_user,             2, fixup_set_uri,
-		fixup_free_set_uri,	ANY_ROUTE},
-	{"set_uri_host", (cmd_function)set_uri_host,             2, fixup_set_uri,
-		fixup_free_set_uri,	ANY_ROUTE},
-	{"is_request",          (cmd_function)w_is_request,            0, 0,
-		0, ANY_ROUTE},
-	{"is_reply",            (cmd_function)w_is_reply,              0, 0,
-		0, ANY_ROUTE},
-	{"is_gruu",  (cmd_function)w_is_gruu,                    0, 0,
-		0, ANY_ROUTE},
-	{"is_gruu",  (cmd_function)w_is_gruu,                    1, fixup_spve_null,
-		0, ANY_ROUTE},
-	{"is_supported",  (cmd_function)w_is_supported,          1, fixup_option,
-		0, ANY_ROUTE},
-	{"is_first_hop",  (cmd_function)w_is_first_hop,          0, 0,
-		0, ANY_ROUTE},
-	{"is_first_hop",  (cmd_function)w_is_first_hop,          1, fixup_igp_null,
-		fixup_free_igp_null, ANY_ROUTE},
-	{"is_tel_number", (cmd_function)is_tel_number,           1, fixup_spve_null,
-		0, ANY_ROUTE},
-	{"is_numeric", (cmd_function)is_numeric,                 1, fixup_spve_null,
-		0, ANY_ROUTE},
-	{"is_alphanum", (cmd_function)ksr_is_alphanum,               1, fixup_spve_null,
-		0, ANY_ROUTE},
-	{"is_alphanumex", (cmd_function)ksr_is_alphanumex,           2, fixup_spve_spve,
-		0, ANY_ROUTE},
-	{"sip_p_charging_vector", (cmd_function)sip_handle_pcv,  1, fixup_spve_null,
-		fixup_free_spve_null, ANY_ROUTE},
-	{"contact_param_encode",      (cmd_function)w_contact_param_encode,    2,
-		fixup_spve_spve, fixup_free_spve_spve, REQUEST_ROUTE|ONREPLY_ROUTE},
-	{"contact_param_decode",      (cmd_function)w_contact_param_decode,    1,
-		fixup_spve_null, fixup_free_spve_null, REQUEST_ROUTE|ONREPLY_ROUTE},
-	{"contact_param_decode_ruri", (cmd_function)w_contact_param_decode_ruri, 1,
-		fixup_spve_null, fixup_free_spve_null, REQUEST_ROUTE},
-	{"contact_param_rm",      (cmd_function)w_contact_param_rm,    1,
-		fixup_spve_null, fixup_free_spve_null, REQUEST_ROUTE|ONREPLY_ROUTE},
-	{"hdr_date_check",  (cmd_function)w_hdr_date_check,      1, fixup_igp_null,
-		fixup_free_igp_null, ANY_ROUTE},
+static cmd_export_t cmds[] = {
+		{"options_reply", (cmd_function)opt_reply, 0, 0, 0, REQUEST_ROUTE},
+		{"is_user", (cmd_function)is_user, 1, fixup_spve_null, 0,
+				REQUEST_ROUTE | LOCAL_ROUTE},
+		{"has_totag", (cmd_function)w_has_totag, 0, 0, 0, ANY_ROUTE},
+		{"uri_param", (cmd_function)uri_param_1, 1, fixup_spve_null, 0,
+				REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE},
+		{"uri_param", (cmd_function)uri_param_2, 2, fixup_spve_spve, 0,
+				REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE},
+		{"uri_param_any", (cmd_function)w_uri_param_any, 1, fixup_spve_null, 0,
+				REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE},
+		{"add_uri_param", (cmd_function)add_uri_param, 1, fixup_str_null, 0,
+				REQUEST_ROUTE},
+		{"get_uri_param", (cmd_function)get_uri_param, 2, fixup_get_uri_param,
+				free_fixup_get_uri_param, REQUEST_ROUTE | LOCAL_ROUTE},
+		{"uri_param_rm", (cmd_function)w_uri_param_rm, 1, fixup_spve_null, 0,
+				REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE},
+		{"tel2sip", (cmd_function)tel2sip, 3, fixup_tel2sip, 0,
+				REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONREPLY_ROUTE},
+		{"is_uri", (cmd_function)is_uri, 1, fixup_spve_null,
+				fixup_free_spve_null, ANY_ROUTE},
+		{"is_e164", (cmd_function)w_is_e164, 1, fixup_pvar_null,
+				fixup_free_pvar_null,
+				REQUEST_ROUTE | FAILURE_ROUTE | LOCAL_ROUTE},
+		{"is_uri_user_e164", (cmd_function)w_is_uri_user_e164, 1,
+				fixup_pvar_null, fixup_free_pvar_null, ANY_ROUTE},
+		{"encode_contact", (cmd_function)encode_contact, 2, 0, 0,
+				REQUEST_ROUTE | ONREPLY_ROUTE},
+		{"decode_contact", (cmd_function)decode_contact, 0, 0, 0,
+				REQUEST_ROUTE},
+		{"decode_contact_header", (cmd_function)decode_contact_header, 0, 0, 0,
+				REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
+		{"cmp_uri", (cmd_function)w_cmp_uri, 2, fixup_spve_spve, 0, ANY_ROUTE},
+		{"cmp_aor", (cmd_function)w_cmp_aor, 2, fixup_spve_spve, 0, ANY_ROUTE},
+		{"cmp_hdr_name", (cmd_function)w_cmp_hdr_name, 2, fixup_spve_spve, 0,
+				ANY_ROUTE},
+		{"is_rpid_user_e164", (cmd_function)is_rpid_user_e164, 0, 0, 0,
+				REQUEST_ROUTE},
+		{"append_rpid_hf", (cmd_function)append_rpid_hf, 0, 0, 0,
+				REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE},
+		{"append_rpid_hf", (cmd_function)append_rpid_hf_p, 2, fixup_str_str, 0,
+				REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE},
+		{"set_uri_user", (cmd_function)set_uri_user, 2, fixup_set_uri,
+				fixup_free_set_uri, ANY_ROUTE},
+		{"set_uri_host", (cmd_function)set_uri_host, 2, fixup_set_uri,
+				fixup_free_set_uri, ANY_ROUTE},
+		{"is_request", (cmd_function)w_is_request, 0, 0, 0, ANY_ROUTE},
+		{"is_reply", (cmd_function)w_is_reply, 0, 0, 0, ANY_ROUTE},
+		{"is_gruu", (cmd_function)w_is_gruu, 0, 0, 0, ANY_ROUTE},
+		{"is_gruu", (cmd_function)w_is_gruu, 1, fixup_spve_null, 0, ANY_ROUTE},
+		{"is_supported", (cmd_function)w_is_supported, 1, fixup_option, 0,
+				ANY_ROUTE},
+		{"is_first_hop", (cmd_function)w_is_first_hop, 0, 0, 0, ANY_ROUTE},
+		{"is_first_hop", (cmd_function)w_is_first_hop, 1, fixup_igp_null,
+				fixup_free_igp_null, ANY_ROUTE},
+		{"is_tel_number", (cmd_function)is_tel_number, 1, fixup_spve_null, 0,
+				ANY_ROUTE},
+		{"is_numeric", (cmd_function)is_numeric, 1, fixup_spve_null, 0,
+				ANY_ROUTE},
+		{"is_alphanum", (cmd_function)ksr_is_alphanum, 1, fixup_spve_null, 0,
+				ANY_ROUTE},
+		{"is_alphanumex", (cmd_function)ksr_is_alphanumex, 2, fixup_spve_spve,
+				0, ANY_ROUTE},
+		{"sip_p_charging_vector", (cmd_function)sip_handle_pcv, 1,
+				fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
+		{"contact_param_encode", (cmd_function)w_contact_param_encode, 2,
+				fixup_spve_spve, fixup_free_spve_spve,
+				REQUEST_ROUTE | ONREPLY_ROUTE},
+		{"contact_param_decode", (cmd_function)w_contact_param_decode, 1,
+				fixup_spve_null, fixup_free_spve_null,
+				REQUEST_ROUTE | ONREPLY_ROUTE},
+		{"contact_param_decode_ruri", (cmd_function)w_contact_param_decode_ruri,
+				1, fixup_spve_null, fixup_free_spve_null, REQUEST_ROUTE},
+		{"contact_param_rm", (cmd_function)w_contact_param_rm, 1,
+				fixup_spve_null, fixup_free_spve_null,
+				REQUEST_ROUTE | ONREPLY_ROUTE},
+		{"hdr_date_check", (cmd_function)w_hdr_date_check, 1, fixup_igp_null,
+				fixup_free_igp_null, ANY_ROUTE},
 
-	{"bind_siputils",       (cmd_function)bind_siputils,           1, 0,
-		0, 0},
+		{"bind_siputils", (cmd_function)bind_siputils, 1, 0, 0, 0},
 
-	{0,0,0,0,0,0}
-};
+		{0, 0, 0, 0, 0, 0}};
 
-static param_export_t params[] = {
-	{"options_accept",          PARAM_STR, &opt_accept},
-	{"options_accept_encoding", PARAM_STR, &opt_accept_enc},
-	{"options_accept_language", PARAM_STR, &opt_accept_lang},
-	{"options_support",         PARAM_STR, &opt_supported},
-	{"contact_flds_separator",  PARAM_STRING, &contact_flds_separator},
-	{"rpid_prefix",             PARAM_STR, &rpid_prefix  },
-	{"rpid_suffix",             PARAM_STR, &rpid_suffix  },
-	{"rpid_avp",                PARAM_STRING, &rpid_avp_param },
-	{"e164_max_len",            PARAM_INT, &e164_max_len },
-	{0, 0, 0}
-};
+static param_export_t params[] = {{"options_accept", PARAM_STR, &opt_accept},
+		{"options_accept_encoding", PARAM_STR, &opt_accept_enc},
+		{"options_accept_language", PARAM_STR, &opt_accept_lang},
+		{"options_support", PARAM_STR, &opt_supported},
+		{"contact_flds_separator", PARAM_STRING, &contact_flds_separator},
+		{"rpid_prefix", PARAM_STR, &rpid_prefix},
+		{"rpid_suffix", PARAM_STR, &rpid_suffix},
+		{"rpid_avp", PARAM_STRING, &rpid_avp_param},
+		{"e164_max_len", PARAM_INT, &e164_max_len}, {0, 0, 0}};
 
 
-static pv_export_t mod_pvs[] =  {
-	{ {"pcv", (sizeof("pcv")-1)}, PVT_OTHER, pv_get_charging_vector,
-		0, pv_parse_charging_vector_name, 0, 0, 0},
+static pv_export_t mod_pvs[] = {
+		{{"pcv", (sizeof("pcv") - 1)}, PVT_OTHER, pv_get_charging_vector, 0,
+				pv_parse_charging_vector_name, 0, 0, 0},
 
-	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
-};
+		{{0, 0}, 0, 0, 0, 0, 0, 0, 0}};
 
-struct module_exports exports= {
-	"siputils",      /* module name */
-	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,            /* exported functions */
-	params,          /* param exports */
-	0,               /* exported RPC functions */
-	mod_pvs,         /* exported pseudo-variables */
-	0,               /* response function */
-	mod_init,        /* initialization function */
-	0,               /* child init function */
-	mod_destroy      /* destroy function */
+struct module_exports exports = {
+		"siputils",		 /* module name */
+		DEFAULT_DLFLAGS, /* dlopen flags */
+		cmds,			 /* exported functions */
+		params,			 /* param exports */
+		0,				 /* exported RPC functions */
+		mod_pvs,		 /* exported pseudo-variables */
+		0,				 /* response function */
+		mod_init,		 /* initialization function */
+		0,				 /* child init function */
+		mod_destroy		 /* destroy function */
 };
 
 
 static int mod_init(void)
 {
 	/* bind the SL API */
-	if (sl_load_api(&opt_slb)!=0) {
+	if(sl_load_api(&opt_slb) != 0) {
 		LM_ERR("cannot bind to SL API\n");
 		return -1;
 	}
 
-	if ( init_rpid_avp(rpid_avp_param)<0 ) {
+	if(init_rpid_avp(rpid_avp_param) < 0) {
 		LM_ERR("failed to init rpid AVP name\n");
 		return -1;
 	}
 
-	if(cfg_declare("siputils", siputils_cfg_def, &default_siputils_cfg, cfg_sizeof(siputils), &siputils_cfg)){
+	if(cfg_declare("siputils", siputils_cfg_def, &default_siputils_cfg,
+			   cfg_sizeof(siputils), &siputils_cfg)) {
 		LM_ERR("Fail to declare the configuration\n");
 		return -1;
 	}
@@ -271,7 +261,6 @@ static int mod_init(void)
 
 static void mod_destroy(void)
 {
-
 }
 
 
@@ -280,14 +269,14 @@ static void mod_destroy(void)
  * \param api binded API
  * \return 0 on success, -1 on failure
  */
-int bind_siputils(siputils_api_t* api)
+int bind_siputils(siputils_api_t *api)
 {
-	if (!api) {
+	if(!api) {
 		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
 
-	get_rpid_avp( &api->rpid_avp, &api->rpid_avp_type );
+	get_rpid_avp(&api->rpid_avp, &api->rpid_avp_type);
 	api->has_totag = w_has_totag;
 	api->is_uri_user_e164 = is_uri_user_e164;
 
@@ -297,21 +286,21 @@ int bind_siputils(siputils_api_t* api)
 /*
  * Fix set_uri_* function params: uri (writable pvar) and value (pvar)
  */
-static int fixup_set_uri(void** param, int param_no)
+static int fixup_set_uri(void **param, int param_no)
 {
-	if (param_no == 1) {
-		if (fixup_pvar_null(param, 1) != 0) {
+	if(param_no == 1) {
+		if(fixup_pvar_null(param, 1) != 0) {
 			LM_ERR("failed to fixup uri pvar\n");
 			return -1;
 		}
-		if (((pv_spec_t *)(*param))->setf == NULL) {
+		if(((pv_spec_t *)(*param))->setf == NULL) {
 			LM_ERR("uri pvar is not writeble\n");
 			return -1;
 		}
 		return 0;
 	}
 
-	if (param_no == 2) {
+	if(param_no == 2) {
 		return fixup_pvar_null(param, 1);
 	}
 
@@ -322,7 +311,7 @@ static int fixup_set_uri(void** param, int param_no)
 /*
  * Free set_uri_* params.
  */
-static int fixup_free_set_uri(void** param, int param_no)
+static int fixup_free_set_uri(void **param, int param_no)
 {
 	return fixup_free_pvar_null(param, 1);
 }
@@ -332,22 +321,22 @@ static int fixup_free_set_uri(void** param, int param_no)
  * Fix tel2sip function params: uri and hostpart pvars and
  * result writable pvar.
  */
-static int fixup_tel2sip(void** param, int param_no)
+static int fixup_tel2sip(void **param, int param_no)
 {
-	if ((param_no == 1) || (param_no == 2)) {
-		if (fixup_var_str_12(param, 1) < 0) {
+	if((param_no == 1) || (param_no == 2)) {
+		if(fixup_var_str_12(param, 1) < 0) {
 			LM_ERR("failed to fixup uri or hostpart pvar\n");
 			return -1;
 		}
 		return 0;
 	}
 
-	if (param_no == 3) {
-		if (fixup_pvar_null(param, 1) != 0) {
+	if(param_no == 3) {
+		if(fixup_pvar_null(param, 1) != 0) {
 			LM_ERR("failed to fixup result pvar\n");
 			return -1;
 		}
-		if (((pv_spec_t *)(*param))->setf == NULL) {
+		if(((pv_spec_t *)(*param))->setf == NULL) {
 			LM_ERR("result pvar is not writeble\n");
 			return -1;
 		}
@@ -359,16 +348,17 @@ static int fixup_tel2sip(void** param, int param_no)
 }
 
 /* */
-static int fixup_get_uri_param(void** param, int param_no) {
-	if (param_no == 1) {
+static int fixup_get_uri_param(void **param, int param_no)
+{
+	if(param_no == 1) {
 		return fixup_str_null(param, 1);
 	}
-	if (param_no == 2) {
-		if (fixup_pvar_null(param, 1) != 0) {
+	if(param_no == 2) {
+		if(fixup_pvar_null(param, 1) != 0) {
 			LM_ERR("failed to fixup result pvar\n");
 			return -1;
 		}
-		if (((pv_spec_t *)(*param))->setf == NULL) {
+		if(((pv_spec_t *)(*param))->setf == NULL) {
 			LM_ERR("result pvar is not writeble\n");
 			return -1;
 		}
@@ -380,12 +370,13 @@ static int fixup_get_uri_param(void** param, int param_no) {
 }
 
 /* */
-static int free_fixup_get_uri_param(void** param, int param_no) {
-	if (param_no == 1) {
+static int free_fixup_get_uri_param(void **param, int param_no)
+{
+	if(param_no == 1) {
 		LM_WARN("free function has not been defined for spve\n");
 		return 0;
 	}
-	if (param_no == 2) {
+	if(param_no == 2) {
 		return fixup_free_pvar_null(param, 1);
 	}
 	LM_ERR("invalid parameter number <%d>\n", param_no);
@@ -393,7 +384,8 @@ static int free_fixup_get_uri_param(void** param, int param_no) {
 }
 
 /* */
-static int fixup_option(void** param, int param_no) {
+static int fixup_option(void **param, int param_no)
+{
 
 	char *option;
 	unsigned int option_len, res;
@@ -401,16 +393,16 @@ static int fixup_option(void** param, int param_no) {
 	option = (char *)*param;
 	option_len = strlen(option);
 
-	if (param_no != 1) {
+	if(param_no != 1) {
 		LM_ERR("invalid parameter number <%d>\n", param_no);
 		return -1;
 	}
 
-	switch (option_len) {
+	switch(option_len) {
 		case 4:
-			if (strncasecmp(option, "path", 4) == 0)
+			if(strncasecmp(option, "path", 4) == 0)
 				res = F_OPTION_TAG_PATH;
-			else if (strncasecmp(option, "gruu", 4) == 0)
+			else if(strncasecmp(option, "gruu", 4) == 0)
 				res = F_OPTION_TAG_GRUU;
 			else {
 				LM_ERR("unknown option <%s>\n", option);
@@ -418,7 +410,7 @@ static int fixup_option(void** param, int param_no) {
 			}
 			break;
 		case 5:
-			if (strncasecmp(option, "timer", 5) == 0)
+			if(strncasecmp(option, "timer", 5) == 0)
 				res = F_OPTION_TAG_TIMER;
 			else {
 				LM_ERR("unknown option <%s>\n", option);
@@ -426,7 +418,7 @@ static int fixup_option(void** param, int param_no) {
 			}
 			break;
 		case 6:
-			if (strncasecmp(option, "100rel", 6) == 0)
+			if(strncasecmp(option, "100rel", 6) == 0)
 				res = F_OPTION_TAG_100REL;
 			else {
 				LM_ERR("unknown option <%s>\n", option);
@@ -434,7 +426,7 @@ static int fixup_option(void** param, int param_no) {
 			}
 			break;
 		case 8:
-			if (strncasecmp(option, "outbound", 8) == 0)
+			if(strncasecmp(option, "outbound", 8) == 0)
 				res = F_OPTION_TAG_OUTBOUND;
 			else {
 				LM_ERR("unknown option <%s>\n", option);
@@ -442,7 +434,7 @@ static int fixup_option(void** param, int param_no) {
 			}
 			break;
 		case 9:
-			if (strncasecmp(option, "eventlist", 9) == 0)
+			if(strncasecmp(option, "eventlist", 9) == 0)
 				res = F_OPTION_TAG_EVENTLIST;
 			else {
 				LM_ERR("unknown option <%s>\n", option);
@@ -463,12 +455,12 @@ static int w_contact_param_encode(sip_msg_t *msg, char *pnparam, char *psaddr)
 	str nparam = STR_NULL;
 	str saddr = STR_NULL;
 
-	if(fixup_get_svalue(msg, (gparam_t*)pnparam, &nparam)<0) {
+	if(fixup_get_svalue(msg, (gparam_t *)pnparam, &nparam) < 0) {
 		LM_ERR("failed to get p1\n");
 		return -1;
 	}
 
-	if(fixup_get_svalue(msg, (gparam_t*)psaddr, &saddr)<0) {
+	if(fixup_get_svalue(msg, (gparam_t *)psaddr, &saddr) < 0) {
 		LM_ERR("failed to get p1\n");
 		return -1;
 	}
@@ -479,7 +471,7 @@ static int w_contact_param_decode(sip_msg_t *msg, char *pnparam, char *p2)
 {
 	str nparam = STR_NULL;
 
-	if(fixup_get_svalue(msg, (gparam_t*)pnparam, &nparam)<0) {
+	if(fixup_get_svalue(msg, (gparam_t *)pnparam, &nparam) < 0) {
 		LM_ERR("failed to get p1\n");
 		return -1;
 	}
@@ -491,7 +483,7 @@ static int w_contact_param_decode_ruri(sip_msg_t *msg, char *pnparam, char *p3)
 {
 	str nparam = STR_NULL;
 
-	if(fixup_get_svalue(msg, (gparam_t*)pnparam, &nparam)<0) {
+	if(fixup_get_svalue(msg, (gparam_t *)pnparam, &nparam) < 0) {
 		LM_ERR("failed to get p1\n");
 		return -1;
 	}
@@ -503,7 +495,7 @@ static int w_contact_param_rm(sip_msg_t *msg, char *pnparam, char *p2)
 {
 	str nparam = STR_NULL;
 
-	if(fixup_get_svalue(msg, (gparam_t*)pnparam, &nparam)<0) {
+	if(fixup_get_svalue(msg, (gparam_t *)pnparam, &nparam) < 0) {
 		LM_ERR("failed to get p1\n");
 		return -1;
 	}
@@ -514,14 +506,14 @@ static int w_contact_param_rm(sip_msg_t *msg, char *pnparam, char *p2)
 /*
  * Check if pseudo variable contains a valid uri
  */
-static int ki_is_uri(sip_msg_t* msg, str* suri)
+static int ki_is_uri(sip_msg_t *msg, str *suri)
 {
 	sip_uri_t turi;
 
-	if(suri==NULL || suri->s==NULL || suri->len<=0) {
+	if(suri == NULL || suri->s == NULL || suri->len <= 0) {
 		return -1;
 	}
-	if(parse_uri(suri->s, suri->len, &turi)!=0) {
+	if(parse_uri(suri->s, suri->len, &turi) != 0) {
 		return -1;
 	}
 	return 1;
@@ -530,47 +522,47 @@ static int ki_is_uri(sip_msg_t* msg, str* suri)
 /*
  * Check date header value with time difference
  */
-static int ki_hdr_date_check(sip_msg_t* msg, int tdiff)
+static int ki_hdr_date_check(sip_msg_t *msg, int tdiff)
 {
 	time_t tnow, tmsg;
 
-	if ((!msg->date) && (parse_headers(msg, HDR_DATE_F, 0) == -1)) {
+	if((!msg->date) && (parse_headers(msg, HDR_DATE_F, 0) == -1)) {
 		LM_ERR("failed parsing Date header\n");
 		return -1;
 	}
-	if (!msg->date) {
+	if(!msg->date) {
 		LM_ERR("Date header field is not found\n");
 		return -1;
 	}
-	if ((!(msg->date)->parsed) && (parse_date_header(msg) < 0)) {
+	if((!(msg->date)->parsed) && (parse_date_header(msg) < 0)) {
 		LM_ERR("failed parsing DATE body\n");
 		return -1;
 	}
 
 #ifdef HAVE_TIMEGM
-	tmsg=timegm(&get_date(msg)->date);
+	tmsg = timegm(&get_date(msg)->date);
 #else
-	tmsg=_timegm(&get_date(msg)->date);
+	tmsg = _timegm(&get_date(msg)->date);
 #endif
-	if (tmsg < 0) {
+	if(tmsg < 0) {
 		LM_ERR("timegm error\n");
 		return -2;
 	}
 
-	if ((tnow=time(0)) < 0) {
+	if((tnow = time(0)) < 0) {
 		LM_ERR("time error %s\n", strerror(errno));
 		return -3;
 	}
 
-	if (tnow > tmsg + tdiff) {
-		LM_ERR("outdated date header value (%" TIME_T_FMT " sec)\n", TIME_T_CAST(tnow - tmsg + tdiff));
+	if(tnow > tmsg + tdiff) {
+		LM_ERR("outdated date header value (%" TIME_T_FMT " sec)\n",
+				TIME_T_CAST(tnow - tmsg + tdiff));
 		return -4;
 	} else {
 		LM_ERR("Date header value OK\n");
 	}
 
 	return 1;
-
 }
 
 /**
@@ -580,7 +572,7 @@ static int w_hdr_date_check(sip_msg_t *msg, char *ptdiff, char *p2)
 {
 	int tdiff = 0;
 
-	if(fixup_get_ivalue(msg, (gparam_t*)ptdiff, &tdiff)<0) {
+	if(fixup_get_ivalue(msg, (gparam_t *)ptdiff, &tdiff) < 0) {
 		LM_ERR("failed to get time diff parameter\n");
 		return -1;
 	}
@@ -742,7 +734,8 @@ static sr_kemi_t sr_kemi_siputils_exports[] = {
 };
 /* clang-format on */
 
-static int ki_is_gruu(sip_msg_t *msg) {
+static int ki_is_gruu(sip_msg_t *msg)
+{
 	return w_is_gruu(msg, NULL, NULL);
 }
 
