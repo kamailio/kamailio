@@ -129,7 +129,7 @@ static int create_pg_params(db_cmd_t *cmd)
 	pcmd->params.fmt = (int *)pkg_malloc(sizeof(int) * num);
 
 	if(!pcmd->params.val || !pcmd->params.len || !pcmd->params.fmt) {
-	        PKG_MEM_ERROR;
+		PKG_MEM_ERROR;
 		goto error;
 	}
 
@@ -231,7 +231,7 @@ static int get_types(db_cmd_t *cmd)
 			f = DB_GET_PAYLOAD(cmd->result + i);
 			f->name = pkg_malloc(strlen(PQfname(pcmd->types, i)) + 1);
 			if(f->name == NULL) {
-			        PKG_MEM_ERROR;
+				PKG_MEM_ERROR;
 				goto error;
 			}
 			strcpy(f->name, PQfname(pcmd->types, i));
@@ -298,7 +298,7 @@ int pg_cmd(db_cmd_t *cmd)
 
 	pcmd = (struct pg_cmd *)pkg_malloc(sizeof(struct pg_cmd));
 	if(pcmd == NULL) {
-	        PKG_MEM_ERROR;
+		PKG_MEM_ERROR;
 		goto error;
 	}
 	memset(pcmd, '\0', sizeof(struct pg_cmd));
@@ -329,7 +329,7 @@ int pg_cmd(db_cmd_t *cmd)
 		case DB_SQL:
 			pcmd->sql_cmd.s = (char *)pkg_malloc(cmd->table.len + 1);
 			if(pcmd->sql_cmd.s == NULL) {
-			        PKG_MEM_ERROR;
+				PKG_MEM_ERROR;
 				goto error;
 			}
 			memcpy(pcmd->sql_cmd.s, cmd->table.s, cmd->table.len);

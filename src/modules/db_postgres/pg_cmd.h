@@ -60,7 +60,7 @@ struct pg_params
 struct pg_cmd
 {
 	db_drv_t gen; /**< Generic part of the data structure (must be first */
-	char *name;   /**< Name of the prepared query on the server */
+	char *name;	  /**< Name of the prepared query on the server */
 	str sql_cmd;  /**< Database command represented in SQL language */
 
 	struct pg_params params;

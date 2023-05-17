@@ -68,11 +68,11 @@ enum pg_type_id
 	PG_INT2,	  /**< Integer with 2-byte storage */
 	PG_INT4,	  /**< Integer with 4-byte storage */
 	PG_TEXT,	  /**< Variable-length string, no limit specified */
-	PG_FLOAT4,	/**< Single-precision floating point number, 4-byte storage */
-	PG_FLOAT8,	/**< Double-precision floating point number, 8-byte storage */
+	PG_FLOAT4,	  /**< Single-precision floating point number, 4-byte storage */
+	PG_FLOAT8,	  /**< Double-precision floating point number, 8-byte storage */
 	PG_INET,	  /**< IP address/netmask, host address */
-	PG_BPCHAR,	/**< Blank-padded string, fixed storage length */
-	PG_VARCHAR,   /**< Non-blank padded string, variable storage length */
+	PG_BPCHAR,	  /**< Blank-padded string, fixed storage length */
+	PG_VARCHAR,	  /**< Non-blank padded string, variable storage length */
 	PG_TIMESTAMP, /**< Date and time */
 	PG_TIMESTAMPTZ, /**< Date and time with time zone */
 	PG_BIT,			/**< Fixed-length bit string */

@@ -63,7 +63,7 @@ typedef struct pg_con
 {
 	db_pool_entry_t gen; /**< Generic part of the structure */
 	PGconn *con;		 /**< Postgres connection handle */
-	unsigned int flags;  /**< Flags (currently only binary data format) */
+	unsigned int flags;	 /**< Flags (currently only binary data format) */
 	pg_type_t *oid; /**< Data types and their Oids obtained from the server */
 } pg_con_t;
 

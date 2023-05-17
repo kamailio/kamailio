@@ -91,7 +91,7 @@ struct string_buffer
 {
 	char *s;	   /**< allocated memory itself */
 	int len;	   /**< used memory */
-	int size;	  /**< total size of allocated memory */
+	int size;	   /**< total size of allocated memory */
 	int increment; /**< increment when realloc is necessary */
 };
 
