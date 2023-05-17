@@ -25,4 +25,3 @@
  */
 
 #include "../tls/tls_ct_q.h"
-

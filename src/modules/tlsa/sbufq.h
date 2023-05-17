@@ -25,4 +25,3 @@
  */
 
 #include "../tls/sbufq.h"
-
