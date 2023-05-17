@@ -74,39 +74,36 @@ xmlDocGetNodeByName_t XMLDocGetNodeByName;
 xmlNodeGetNodeByName_t XMLNodeGetNodeByName;
 xmlNodeGetNodeContentByName_t XMLNodeGetNodeContentByName;
 
-str server_address= STR_NULL;
+str server_address = STR_NULL;
 
 /** module functions */
 
 static int mod_init(void);
 static int child_init(int);
 
-static int fixup_pua_xmpp(void** param, int param_no);
+static int fixup_pua_xmpp(void **param, int param_no);
 
-static cmd_export_t cmds[]=
-{
-	{"pua_xmpp_notify", (cmd_function)Notify2Xmpp,	0, 0, 0, REQUEST_ROUTE},
-	{"pua_xmpp_req_winfo", (cmd_function)request_winfo, 2, fixup_pua_xmpp, 0, REQUEST_ROUTE},
-	{0, 0, 0, 0, 0, 0}
-};
+static cmd_export_t cmds[] = {
+		{"pua_xmpp_notify", (cmd_function)Notify2Xmpp, 0, 0, 0, REQUEST_ROUTE},
+		{"pua_xmpp_req_winfo", (cmd_function)request_winfo, 2, fixup_pua_xmpp,
+				0, REQUEST_ROUTE},
+		{0, 0, 0, 0, 0, 0}};
 
-static param_export_t params[]={
-	{"server_address",     PARAM_STR,	&server_address	},
-	{0,			0,		0	}
-};
+static param_export_t params[] = {
+		{"server_address", PARAM_STR, &server_address}, {0, 0, 0}};
 
 /*! \brief module exports */
-struct module_exports exports= {
-	"pua_xmpp",			/* module name */
-	DEFAULT_DLFLAGS,	/* dlopen flags */
-	cmds,				/* exported functions */
-	params,				/* exported parameters */
-	0,					/* RPC method exports */
-	0,					/* exported pseudo-variables */
-	0,					/* response handling function */
-	mod_init,			/* module initialization function */
-	child_init,			/* per-child init function */
-	0					/* module destroy function */
+struct module_exports exports = {
+		"pua_xmpp",		 /* module name */
+		DEFAULT_DLFLAGS, /* dlopen flags */
+		cmds,			 /* exported functions */
+		params,			 /* exported parameters */
+		0,				 /* RPC method exports */
+		0,				 /* exported pseudo-variables */
+		0,				 /* response handling function */
+		mod_init,		 /* module initialization function */
+		child_init,		 /* per-child init function */
+		0				 /* module destroy function */
 };
 
 /*! \brief
@@ -114,174 +111,159 @@ struct module_exports exports= {
  */
 static int mod_init(void)
 {
-	load_tm_f  load_tm;
+	load_tm_f load_tm;
 	bind_pua_t bind_pua;
 	bind_xmpp_t bind_xmpp;
 	bind_libxml_t bind_libxml;
 	libxml_api_t libxml_api;
 
 	/* check if compulsory parameter server_address is set */
-	if(!server_address.s || server_address.len<=0)
-	{
+	if(!server_address.s || server_address.len <= 0) {
 		LM_ERR("compulsory 'server_address' parameter not set!");
 		return -1;
 	}
 
 	/* import the TM auto-loading function */
-	if((load_tm=(load_tm_f)find_export("load_tm", NO_SCRIPT, 0))==NULL)
-	{
+	if((load_tm = (load_tm_f)find_export("load_tm", NO_SCRIPT, 0)) == NULL) {
 		LM_ERR("can't import load_tm\n");
 		return -1;
 	}
 
 	/* let the auto-loading function load all TM stuff */
 
-	if(load_tm(&tmb)==-1)
-	{
+	if(load_tm(&tmb) == -1) {
 		LM_ERR("can't load tm functions\n");
 		return -1;
 	}
 
 	/* bind libxml wrapper functions */
-	if((bind_libxml= (bind_libxml_t)find_export("bind_libxml_api", 1, 0))== NULL)
-	{
+	if((bind_libxml = (bind_libxml_t)find_export("bind_libxml_api", 1, 0))
+			== NULL) {
 		LM_ERR("can't import bind_libxml_api\n");
 		return -1;
 	}
-	if(bind_libxml(&libxml_api)< 0)
-	{
+	if(bind_libxml(&libxml_api) < 0) {
 		LM_ERR("can not bind libxml api\n");
 		return -1;
 	}
-	XMLNodeGetAttrContentByName= libxml_api.xmlNodeGetAttrContentByName;
-	XMLDocGetNodeByName= libxml_api.xmlDocGetNodeByName;
-	XMLNodeGetNodeByName= libxml_api.xmlNodeGetNodeByName;
-	XMLNodeGetNodeContentByName= libxml_api.xmlNodeGetNodeContentByName;
+	XMLNodeGetAttrContentByName = libxml_api.xmlNodeGetAttrContentByName;
+	XMLDocGetNodeByName = libxml_api.xmlDocGetNodeByName;
+	XMLNodeGetNodeByName = libxml_api.xmlNodeGetNodeByName;
+	XMLNodeGetNodeContentByName = libxml_api.xmlNodeGetNodeContentByName;
 
-	if(XMLNodeGetAttrContentByName== NULL || XMLDocGetNodeByName== NULL ||
-		XMLNodeGetNodeByName== NULL || XMLNodeGetNodeContentByName== NULL)
-	{
+	if(XMLNodeGetAttrContentByName == NULL || XMLDocGetNodeByName == NULL
+			|| XMLNodeGetNodeByName == NULL
+			|| XMLNodeGetNodeContentByName == NULL) {
 		LM_ERR("libxml wrapper functions could not be bound\n");
 		return -1;
 	}
 
 
 	/* bind xmpp */
-	bind_xmpp= (bind_xmpp_t)find_export("bind_xmpp", 0,0);
-	if (!bind_xmpp)
-	{
+	bind_xmpp = (bind_xmpp_t)find_export("bind_xmpp", 0, 0);
+	if(!bind_xmpp) {
 		LM_ERR("Can't bind to the XMPP module.\n");
 		return -1;
 	}
-	if(bind_xmpp(&xmpp_api)< 0)
-	{
+	if(bind_xmpp(&xmpp_api) < 0) {
 		LM_ERR("Can't bind to the XMPP module.\n");
 		return -1;
 	}
-	if(xmpp_api.xsubscribe== NULL)
-	{
-		LM_ERR("Could not import xsubscribe from the XMPP module. Version mismatch?\n");
+	if(xmpp_api.xsubscribe == NULL) {
+		LM_ERR("Could not import xsubscribe from the XMPP module. Version "
+			   "mismatch?\n");
 		return -1;
 	}
-	xmpp_subscribe= xmpp_api.xsubscribe;
+	xmpp_subscribe = xmpp_api.xsubscribe;
 
-	if(xmpp_api.xnotify== NULL)
-	{
-		LM_ERR("Could not import xnotify from the XMPP module. Version mismatch?\n");
+	if(xmpp_api.xnotify == NULL) {
+		LM_ERR("Could not import xnotify from the XMPP module. Version "
+			   "mismatch?\n");
 		return -1;
 	}
-	xmpp_notify= xmpp_api.xnotify;
-	
-	if(xmpp_api.xpacket== NULL)
-	{
-		LM_ERR("Could not import xnotify from the XMPP module. Version mismatch?\n");
-		return -1;
-	}
-	xmpp_packet= xmpp_api.xpacket;
+	xmpp_notify = xmpp_api.xnotify;
 
-	if(xmpp_api.register_callback== NULL)
-	{
+	if(xmpp_api.xpacket == NULL) {
+		LM_ERR("Could not import xnotify from the XMPP module. Version "
+			   "mismatch?\n");
+		return -1;
+	}
+	xmpp_packet = xmpp_api.xpacket;
+
+	if(xmpp_api.register_callback == NULL) {
 		LM_ERR("Could not import register_callback"
-				" to xmpp\n");
+			   " to xmpp\n");
 		return -1;
 	}
-	if(xmpp_api.register_callback(XMPP_RCV_PRESENCE, pres_Xmpp2Sip, NULL)< 0)
-	{
+	if(xmpp_api.register_callback(XMPP_RCV_PRESENCE, pres_Xmpp2Sip, NULL) < 0) {
 		LM_ERR("ERROR while registering callback"
-				" to xmpp\n");
+			   " to xmpp\n");
 		return -1;
 	}
-	if(xmpp_api.decode_uri_sip_xmpp== NULL)
-	{
+	if(xmpp_api.decode_uri_sip_xmpp == NULL) {
 		LM_ERR("Could not import decode_uri_sip_xmpp"
-				" from xmpp\n");
+			   " from xmpp\n");
 		return -1;
 	}
-	duri_sip_xmpp= xmpp_api.decode_uri_sip_xmpp;
+	duri_sip_xmpp = xmpp_api.decode_uri_sip_xmpp;
 
-	if(xmpp_api.encode_uri_sip_xmpp== NULL)
-	{
+	if(xmpp_api.encode_uri_sip_xmpp == NULL) {
 		LM_ERR("Could not import encode_uri_sip_xmpp"
-				" from xmpp\n");
+			   " from xmpp\n");
 		return -1;
 	}
-	euri_sip_xmpp= xmpp_api.encode_uri_sip_xmpp;
+	euri_sip_xmpp = xmpp_api.encode_uri_sip_xmpp;
 
-	if(xmpp_api.decode_uri_xmpp_sip== NULL)
-	{
+	if(xmpp_api.decode_uri_xmpp_sip == NULL) {
 		LM_ERR("Could not import decode_uri_xmpp_sip"
-				" from xmpp\n");
+			   " from xmpp\n");
 		return -1;
 	}
-	duri_xmpp_sip= xmpp_api.decode_uri_xmpp_sip;
+	duri_xmpp_sip = xmpp_api.decode_uri_xmpp_sip;
 
-	if(xmpp_api.encode_uri_xmpp_sip== NULL)
-	{
+	if(xmpp_api.encode_uri_xmpp_sip == NULL) {
 		LM_ERR("Could not import encode_uri_xmpp_sip"
-				" from xmpp\n");
+			   " from xmpp\n");
 		return -1;
 	}
-	euri_xmpp_sip= xmpp_api.encode_uri_xmpp_sip;
+	euri_xmpp_sip = xmpp_api.encode_uri_xmpp_sip;
 
 	/* bind pua */
-	bind_pua= (bind_pua_t)find_export("bind_pua", 1,0);
-	if (!bind_pua)
-	{
+	bind_pua = (bind_pua_t)find_export("bind_pua", 1, 0);
+	if(!bind_pua) {
 		LM_ERR("Can't bind to PUA module\n");
 		return -1;
 	}
-	
-	if (bind_pua(&pua) < 0)
-	{
+
+	if(bind_pua(&pua) < 0) {
 		LM_ERR("Can't bind to PUA module\n");
 		return -1;
 	}
-	if(pua.send_publish == NULL)
-	{
-		LM_ERR("Could not import send_publish() in module PUA. Version mismatch?\n");
+	if(pua.send_publish == NULL) {
+		LM_ERR("Could not import send_publish() in module PUA. Version "
+			   "mismatch?\n");
 		return -1;
 	}
-	pua_send_publish= pua.send_publish;
+	pua_send_publish = pua.send_publish;
 
-	if(pua.send_subscribe == NULL)
-	{
-		LM_ERR("Could not import send_publish() in module PUA. Version mismatch?\n");
+	if(pua.send_subscribe == NULL) {
+		LM_ERR("Could not import send_publish() in module PUA. Version "
+			   "mismatch?\n");
 		return -1;
 	}
-	pua_send_subscribe= pua.send_subscribe;
-	
-	if(pua.is_dialog == NULL)
-	{
-		LM_ERR("Could not import send_subscribe() in module PUA. Version mismatch?\n");
-		return -1;
-	}
-	pua_is_dialog= pua.is_dialog;
+	pua_send_subscribe = pua.send_subscribe;
 
-	if(pua.register_puacb(XMPP_INITIAL_SUBS, Sipreply2Xmpp, NULL)< 0)
-	{
+	if(pua.is_dialog == NULL) {
+		LM_ERR("Could not import send_subscribe() in module PUA. Version "
+			   "mismatch?\n");
+		return -1;
+	}
+	pua_is_dialog = pua.is_dialog;
+
+	if(pua.register_puacb(XMPP_INITIAL_SUBS, Sipreply2Xmpp, NULL) < 0) {
 		LM_ERR("Could not register PUA callback\n");
 		return -1;
-	}	
+	}
 
 	return 0;
 }
@@ -292,23 +274,21 @@ static int child_init(int rank)
 	return 0;
 }
 
-static int fixup_pua_xmpp(void** param, int param_no)
+static int fixup_pua_xmpp(void **param, int param_no)
 {
 	pv_elem_t *model;
 	str s;
-	if(*param)
-	{
-		s.s = (char*)(*param); s.len = strlen(s.s);
-		if(pv_parse_format(&s, &model)<0)
-		{
-			LM_ERR("wrong format[%s]\n",(char*)(*param));
+	if(*param) {
+		s.s = (char *)(*param);
+		s.len = strlen(s.s);
+		if(pv_parse_format(&s, &model) < 0) {
+			LM_ERR("wrong format[%s]\n", (char *)(*param));
 			return E_UNSPEC;
 		}
-			
-		*param = (void*)model;
+
+		*param = (void *)model;
 		return 0;
 	}
 	LM_ERR("null format\n");
 	return E_UNSPEC;
 }
-
