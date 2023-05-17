@@ -31,9 +31,10 @@
 #include <lualib.h>
 #include "../../core/kemi.h"
 
-#define SR_KEMI_LUA_EXPORT_SIZE	1536
+#define SR_KEMI_LUA_EXPORT_SIZE 1536
 
-typedef struct sr_kemi_lua_export {
+typedef struct sr_kemi_lua_export
+{
 	lua_CFunction pfunc;
 	sr_kemi_t *ket;
 } sr_kemi_lua_export_t;
