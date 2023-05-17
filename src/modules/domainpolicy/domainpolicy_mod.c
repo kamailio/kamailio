@@ -58,36 +58,37 @@ MODULE_VERSION
 #define DOMAINPOLICY_COL_VAL "val"
 
 /* Default avp names */
-#define DEF_PORT_OVERRIDE_AVP         "portoverride"
-#define DEF_TRANSPORT_OVERRIDE_AVP    "transportoverride"
-#define DEF_DOMAIN_PREFIX_AVP         "domainprefix"
-#define DEF_DOMAIN_SUFFIX_AVP         "domainsuffix"
-#define DEF_DOMAIN_REPLACEMENT_AVP    "domainreplacement"
-#define DEF_SEND_SOCKET_AVP           "sendsocket"
+#define DEF_PORT_OVERRIDE_AVP "portoverride"
+#define DEF_TRANSPORT_OVERRIDE_AVP "transportoverride"
+#define DEF_DOMAIN_PREFIX_AVP "domainprefix"
+#define DEF_DOMAIN_SUFFIX_AVP "domainsuffix"
+#define DEF_DOMAIN_REPLACEMENT_AVP "domainreplacement"
+#define DEF_SEND_SOCKET_AVP "sendsocket"
 
 /*
  * Module parameter variables
  */
-static str db_url         = str_init(DEFAULT_RODB_URL);
-str domainpolicy_table    = str_init(DOMAINPOLICY_TABLE);     /*!< Name of domainpolicy table */
+static str db_url = str_init(DEFAULT_RODB_URL);
+str domainpolicy_table =
+		str_init(DOMAINPOLICY_TABLE); /*!< Name of domainpolicy table */
 str domainpolicy_col_rule = str_init(DOMAINPOLICY_COL_RULE);
 str domainpolicy_col_type = str_init(DOMAINPOLICY_COL_TYPE);
-str domainpolicy_col_att  = str_init(DOMAINPOLICY_COL_ATT);
-str domainpolicy_col_val  = str_init(DOMAINPOLICY_COL_VAL);
+str domainpolicy_col_att = str_init(DOMAINPOLICY_COL_ATT);
+str domainpolicy_col_val = str_init(DOMAINPOLICY_COL_VAL);
 
-str port_override_avp         = str_init(DEF_PORT_OVERRIDE_AVP);
-str transport_override_avp    = str_init(DEF_TRANSPORT_OVERRIDE_AVP);
-str domain_prefix_avp         = str_init(DEF_DOMAIN_PREFIX_AVP);
-str domain_suffix_avp         = str_init(DEF_DOMAIN_SUFFIX_AVP);
-str domain_replacement_avp    = str_init(DEF_DOMAIN_REPLACEMENT_AVP);
-str send_socket_avp           = str_init(DEF_SEND_SOCKET_AVP);
+str port_override_avp = str_init(DEF_PORT_OVERRIDE_AVP);
+str transport_override_avp = str_init(DEF_TRANSPORT_OVERRIDE_AVP);
+str domain_prefix_avp = str_init(DEF_DOMAIN_PREFIX_AVP);
+str domain_suffix_avp = str_init(DEF_DOMAIN_SUFFIX_AVP);
+str domain_replacement_avp = str_init(DEF_DOMAIN_REPLACEMENT_AVP);
+str send_socket_avp = str_init(DEF_SEND_SOCKET_AVP);
 
 /*
  * Other module variables
  */
 
-int_str port_override_name, transport_override_name, domain_prefix_name, 
-	domain_suffix_name, domain_replacement_name, send_socket_name;
+int_str port_override_name, transport_override_name, domain_prefix_name,
+		domain_suffix_name, domain_replacement_name, send_socket_name;
 unsigned short port_override_avp_name_str;
 unsigned short transport_override_avp_name_str;
 unsigned short domain_prefix_avp_name_str;
@@ -98,47 +99,44 @@ unsigned short send_socket_avp_name_str;
 /*
  * Exported functions
  */
-static cmd_export_t cmds[] = {
-	{"dp_can_connect",  (cmd_function)dp_can_connect,  0, 0, 0, REQUEST_ROUTE},
-	{"dp_apply_policy", (cmd_function)dp_apply_policy, 0, 0, 0, REQUEST_ROUTE},
-	{0, 0, 0, 0, 0, 0}
-};
+static cmd_export_t cmds[] = {{"dp_can_connect", (cmd_function)dp_can_connect,
+									  0, 0, 0, REQUEST_ROUTE},
+		{"dp_apply_policy", (cmd_function)dp_apply_policy, 0, 0, 0,
+				REQUEST_ROUTE},
+		{0, 0, 0, 0, 0, 0}};
 
 
 /*
  * Exported parameters
  */
-static param_export_t params[] = {
-	{"db_url",                    PARAM_STR, &db_url                   },
-	{"dp_table",                  PARAM_STR, &domainpolicy_table       },
-	{"dp_col_rule",               PARAM_STR, &domainpolicy_col_rule    },
-	{"dp_col_type",               PARAM_STR, &domainpolicy_col_type    },
-	{"dp_col_att",                PARAM_STR, &domainpolicy_col_att     },
-	{"dp_col_val",                PARAM_STR, &domainpolicy_col_val     },
-	{"port_override_avp",         PARAM_STR, &port_override_avp        },
-	{"transport_override_avp",    PARAM_STR, &transport_override_avp   },
-	{"domain_prefix_avp",         PARAM_STR, &domain_prefix_avp        },
-	{"domain_suffix_avp",         PARAM_STR, &domain_suffix_avp        },
-	{"domain_replacement_avp",    PARAM_STR, &domain_replacement_avp   },
-	{"send_socket_avp",           PARAM_STR, &send_socket_avp          },
-	{0, 0, 0}
-};
+static param_export_t params[] = {{"db_url", PARAM_STR, &db_url},
+		{"dp_table", PARAM_STR, &domainpolicy_table},
+		{"dp_col_rule", PARAM_STR, &domainpolicy_col_rule},
+		{"dp_col_type", PARAM_STR, &domainpolicy_col_type},
+		{"dp_col_att", PARAM_STR, &domainpolicy_col_att},
+		{"dp_col_val", PARAM_STR, &domainpolicy_col_val},
+		{"port_override_avp", PARAM_STR, &port_override_avp},
+		{"transport_override_avp", PARAM_STR, &transport_override_avp},
+		{"domain_prefix_avp", PARAM_STR, &domain_prefix_avp},
+		{"domain_suffix_avp", PARAM_STR, &domain_suffix_avp},
+		{"domain_replacement_avp", PARAM_STR, &domain_replacement_avp},
+		{"send_socket_avp", PARAM_STR, &send_socket_avp}, {0, 0, 0}};
 
 
 /*
  * Module interface
  */
 struct module_exports exports = {
-	"domainpolicy",		/* module name */
-	DEFAULT_DLFLAGS,	/* dlopen flags */
-	cmds,				/* exported functions */
-	params,				/* exported parameters */
-	0,					/* RPC method exports */
-	0,					/* exported pseudo-variables */
-	0,					/* response handling function */
-	mod_init,			/* module initialization function */
-	child_init,			/* per-child init function */
-	0					/* module destroy function */
+		"domainpolicy",	 /* module name */
+		DEFAULT_DLFLAGS, /* dlopen flags */
+		cmds,			 /* exported functions */
+		params,			 /* exported parameters */
+		0,				 /* RPC method exports */
+		0,				 /* exported pseudo-variables */
+		0,				 /* response handling function */
+		mod_init,		 /* module initialization function */
+		child_init,		 /* per-child init function */
+		0				 /* module destroy function */
 };
 
 
@@ -149,22 +147,22 @@ static int mod_init(void)
 	LM_DBG("check for DB module\n");
 
 	/* Check if database module has been loaded */
-	if (domainpolicy_db_bind(&db_url)<0)  {
+	if(domainpolicy_db_bind(&db_url) < 0) {
 		LM_ERR("no database module loaded!"
-			" Please make sure that a DB module is loaded first\n");
+			   " Please make sure that a DB module is loaded first\n");
 		return -1;
 	}
 
 	/* Check table version */
-	if (domainpolicy_db_ver(&db_url) < 0) {
+	if(domainpolicy_db_ver(&db_url) < 0) {
 		LM_ERR("Error during database table version check");
 		return -1;
 	}
 
 	/* Assign AVP parameter names */
 	LM_DBG("AVP\n");
-	if (str2int(&port_override_avp, &par) == 0) {
-		if (!par) {
+	if(str2int(&port_override_avp, &par) == 0) {
+		if(!par) {
 			LM_ERR("port_override_avp not defined!\n");
 			return -1;
 		}
@@ -174,8 +172,8 @@ static int mod_init(void)
 		port_override_name.s = port_override_avp;
 		port_override_avp_name_str = AVP_NAME_STR;
 	}
-	if (str2int(&transport_override_avp, &par) == 0) {
-		if (!par) {
+	if(str2int(&transport_override_avp, &par) == 0) {
+		if(!par) {
 			LM_ERR(" transport_override_avp not defined!\n");
 			return -1;
 		}
@@ -185,8 +183,8 @@ static int mod_init(void)
 		transport_override_name.s = transport_override_avp;
 		transport_override_avp_name_str = AVP_NAME_STR;
 	}
-	if (str2int(&domain_prefix_avp, &par) == 0) {
-		if (!par) {
+	if(str2int(&domain_prefix_avp, &par) == 0) {
+		if(!par) {
 			LM_ERR("domain_prefix_avp not defined!\n");
 			return -1;
 		}
@@ -196,8 +194,8 @@ static int mod_init(void)
 		domain_prefix_name.s = domain_prefix_avp;
 		domain_prefix_avp_name_str = AVP_NAME_STR;
 	}
-	if (str2int(&domain_suffix_avp, &par) == 0) {
-		if (!par) {
+	if(str2int(&domain_suffix_avp, &par) == 0) {
+		if(!par) {
 			LM_ERR(" domain_suffix_avp not defined!\n");
 			return -1;
 		}
@@ -207,8 +205,8 @@ static int mod_init(void)
 		domain_suffix_name.s = domain_suffix_avp;
 		domain_suffix_avp_name_str = AVP_NAME_STR;
 	}
-	if (str2int(&domain_replacement_avp, &par) == 0) {
-		if (!par) {
+	if(str2int(&domain_replacement_avp, &par) == 0) {
+		if(!par) {
 			LM_ERR(" domain_replacement_avp not defined!\n");
 			return -1;
 		}
@@ -218,8 +216,8 @@ static int mod_init(void)
 		domain_replacement_name.s = domain_replacement_avp;
 		domain_replacement_avp_name_str = AVP_NAME_STR;
 	}
-	if (str2int(&send_socket_avp, &par) == 0) {
-		if (!par) {
+	if(str2int(&send_socket_avp, &par) == 0) {
+		if(!par) {
 			LM_ERR(" send_socket_avp not defined!\n");
 			return -1;
 		}
@@ -237,8 +235,8 @@ static int mod_init(void)
 static int child_init(int rank)
 {
 	/* Check if database is needed by child */
-	if (rank > 0)  {
-		if (domainpolicy_db_init(&db_url)<0) {
+	if(rank > 0) {
+		if(domainpolicy_db_init(&db_url) < 0) {
 			LM_ERR("unable to connect to the database\n");
 			return -1;
 		}
