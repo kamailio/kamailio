@@ -31,7 +31,8 @@
 
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 
@@ -40,60 +41,60 @@ extern "C" {
 #include "../../lib/srdb1/db_res.h"
 #include "../../lib/srdb1/db_op.h"
 
-extern unsigned int cassa_auto_reconnect;
-extern unsigned int cassa_retries;
-extern unsigned int cassa_conn_timeout;
-extern unsigned int cassa_send_timeout;
-extern unsigned int cassa_recv_timeout;
+	extern unsigned int cassa_auto_reconnect;
+	extern unsigned int cassa_retries;
+	extern unsigned int cassa_conn_timeout;
+	extern unsigned int cassa_send_timeout;
+	extern unsigned int cassa_recv_timeout;
 
-/*
+	/*
  * Open connection
  */
-void* db_cassa_new_connection(struct db_id* id);
+	void *db_cassa_new_connection(struct db_id *id);
 
-/*
+	/*
  * Free connection
  */
-void db_cassa_free_connection(struct pool_con* con);
+	void db_cassa_free_connection(struct pool_con *con);
 
 
-/*
+	/*
  * Do a query
  */
-int db_cassa_query(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _op,
-		const db_val_t* _v, const db_key_t* _c, int _n, int _nc,
-		const db_key_t _o, db1_res_t** _r);
+	int db_cassa_query(const db1_con_t *_h, const db_key_t *_k,
+			const db_op_t *_op, const db_val_t *_v, const db_key_t *_c, int _n,
+			int _nc, const db_key_t _o, db1_res_t **_r);
 
-/*
+	/*
  * Insert a row into table
  */
-int db_cassa_insert(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v,
-		int _n);
+	int db_cassa_insert(const db1_con_t *_h, const db_key_t *_k,
+			const db_val_t *_v, int _n);
 
 
-/*
+	/*
  * Replace a row into table - same as insert for cassandra
  */
-int db_cassa_replace(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v,
-		int _n, const int _un, const int _m);
+	int db_cassa_replace(const db1_con_t *_h, const db_key_t *_k,
+			const db_val_t *_v, int _n, const int _un, const int _m);
 
-/*
+	/*
  * Delete a row from table
  */
-int db_cassa_delete(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _o,
-		const db_val_t* _v, int _n);
+	int db_cassa_delete(const db1_con_t *_h, const db_key_t *_k,
+			const db_op_t *_o, const db_val_t *_v, int _n);
 
 
-/*
+	/*
  * Update a row in table
  */
-int db_cassa_update(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _o,
-		const db_val_t* _v, const db_key_t* _uk, const db_val_t* _uv,
-		int _n, int _un);
+	int db_cassa_update(const db1_con_t *_h, const db_key_t *_k,
+			const db_op_t *_o, const db_val_t *_v, const db_key_t *_uk,
+			const db_val_t *_uv, int _n, int _un);
 
-int db_cassa_free_result(db1_con_t* _h, db1_res_t* _r);
+	int db_cassa_free_result(db1_con_t *_h, db1_res_t *_r);
 
-int db_cassa_raw_query(const db1_con_t* _h, const str* _s, db1_res_t** _r);
+	int db_cassa_raw_query(const db1_con_t *_h, const str *_s, db1_res_t **_r);
 
 #ifdef __cplusplus
 }

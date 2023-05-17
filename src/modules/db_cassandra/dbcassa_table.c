@@ -42,7 +42,8 @@
 
 #define DBCASSA_TABLE_SIZE 16
 
-typedef struct  rw_lock {
+typedef struct rw_lock
+{
 	gen_lock_t lock;
 	int reload_flag;
 	int data_refcnt;
@@ -68,10 +69,8 @@ int dbcassa_check_mtime(time_t *mt)
 {
 	struct stat s;
 
-	if(stat(full_path_buf, &s) == 0)
-	{
-		if((int)s.st_mtime > (int)*mt)
-		{
+	if(stat(full_path_buf, &s) == 0) {
+		if((int)s.st_mtime > (int)*mt) {
 			*mt = s.st_mtime;
 			LM_DBG("[%s] was updated\n", full_path_buf);
 			return 1;
@@ -99,7 +98,7 @@ dbcassa_table_p dbcassa_table_new(const str *_tbname, const str *_dbname)
 		return 0;
 	}
 
-	size = sizeof(dbcassa_table_t)+_tbname->len+_dbname->len;
+	size = sizeof(dbcassa_table_t) + _tbname->len + _dbname->len;
 	dtp = (dbcassa_table_p)shm_malloc(size);
 	if(!dtp) {
 		LM_ERR("No more shared memory\n");
@@ -108,12 +107,12 @@ dbcassa_table_p dbcassa_table_new(const str *_tbname, const str *_dbname)
 
 	memset(dtp, 0, size);
 	size = sizeof(dbcassa_table_t);
-	dtp->name.s = (char*)dtp + size;
+	dtp->name.s = (char *)dtp + size;
 	memcpy(dtp->name.s, _tbname->s, _tbname->len);
 	dtp->name.len = _tbname->len;
-	size+= _tbname->len;
+	size += _tbname->len;
 
-	dtp->dbname.s = (char*)dtp + size;
+	dtp->dbname.s = (char *)dtp + size;
 	memcpy(dtp->dbname.s, _dbname->s, _dbname->len);
 	dtp->dbname.len = _dbname->len;
 
@@ -130,14 +129,14 @@ dbcassa_column_p dbcassa_column_new(char *_s, int _l)
 	dbcassa_column_p dcp;
 	int size;
 
-	size = sizeof(dbcassa_column_t) + _l+ 1;
+	size = sizeof(dbcassa_column_t) + _l + 1;
 	dcp = (dbcassa_column_p)shm_malloc(size);
 	if(!dcp) {
 		LM_ERR("No more shared memory\n");
 		return 0;
 	}
 	memset(dcp, 0, size);
-	dcp->name.s = (char*)dcp + sizeof(dbcassa_column_t);
+	dcp->name.s = (char *)dcp + sizeof(dbcassa_column_t);
 	memcpy(dcp->name.s, _s, _l);
 	dcp->name.len = _l;
 	dcp->name.s[_l] = '\0';
@@ -156,15 +155,15 @@ int dbcassa_column_free(dbcassa_column_p dcp)
 int dbcassa_table_free(dbcassa_table_p _dtp)
 {
 	dbcassa_column_p _cp, _cp0;
-	
+
 	if(!_dtp)
 		return -1;
 
 	/* cols*/
 	_cp = _dtp->cols;
 	while(_cp) {
-		_cp0=_cp;
-		_cp=_cp->next;
+		_cp0 = _cp;
+		_cp = _cp->next;
 		dbcassa_column_free(_cp0);
 	}
 	/* key */
@@ -181,21 +180,26 @@ int dbcassa_table_free(dbcassa_table_p _dtp)
 /**
  * Load the table schema from file
  */
-dbcassa_table_p dbcassa_load_file(str* dbn, str* tbn)
+dbcassa_table_p dbcassa_load_file(str *dbn, str *tbn)
 {
 #define KEY_MAX_LEN 10
-	FILE *fin=NULL;
+	FILE *fin = NULL;
 	char buf[4096];
 	int c, ccol, bp;
 	dbcassa_table_p dtp = 0;
-	dbcassa_column_p colp= 0;
+	dbcassa_column_p colp = 0;
 	dbcassa_column_p key[KEY_MAX_LEN];
 	dbcassa_column_p sec_key[KEY_MAX_LEN];
 
-	enum {DBCASSA_FLINE_ST, DBCASSA_NLINE_ST, DBCASSA_NLINE2_ST} state;
+	enum
+	{
+		DBCASSA_FLINE_ST,
+		DBCASSA_NLINE_ST,
+		DBCASSA_NLINE2_ST
+	} state;
 
-	memset(key, 0, KEY_MAX_LEN*sizeof(dbcassa_column_p));
-	memset(sec_key, 0, KEY_MAX_LEN*sizeof(dbcassa_column_p));
+	memset(key, 0, KEY_MAX_LEN * sizeof(dbcassa_column_p));
+	memset(sec_key, 0, KEY_MAX_LEN * sizeof(dbcassa_column_p));
 
 	LM_DBG("loading file [%s]\n", full_path_buf);
 	fin = fopen(full_path_buf, "rt");
@@ -210,24 +214,25 @@ dbcassa_table_p dbcassa_load_file(str* dbn, str* tbn)
 
 	state = DBCASSA_FLINE_ST;
 	c = fgetc(fin);
-	while(c!=EOF) {
+	while(c != EOF) {
 		switch(state) {
 			case DBCASSA_FLINE_ST:
 				bp = 0;
-				while(c==DBCASSA_DELIM_C)
+				while(c == DBCASSA_DELIM_C)
 					c = fgetc(fin);
-				if(c==DBCASSA_DELIM_R && !dtp->cols)
+				if(c == DBCASSA_DELIM_R && !dtp->cols)
 					goto clean;
-				if(c==DBCASSA_DELIM_R) {
+				if(c == DBCASSA_DELIM_R) {
 					if(dtp->nrcols <= 0)
 						goto clean;
-					
+
 					state = DBCASSA_NLINE_ST;
 					c = fgetc(fin);
 					break;
 				}
-				while(c!=DBCASSA_DELIM_C && c!='(' && c!=DBCASSA_DELIM_R) {
-					if(c==EOF)
+				while(c != DBCASSA_DELIM_C && c != '('
+						&& c != DBCASSA_DELIM_R) {
+					if(c == EOF)
 						goto clean;
 					buf[bp++] = c;
 					c = fgetc(fin);
@@ -236,49 +241,52 @@ dbcassa_table_p dbcassa_load_file(str* dbn, str* tbn)
 				if(!colp)
 					goto clean;
 				LM_DBG("new col [%.*s]\n", bp, buf);
-				while(c==DBCASSA_DELIM_C)
+				while(c == DBCASSA_DELIM_C)
 					c = fgetc(fin);
-				if(c!='(')
+				if(c != '(')
 					goto clean;
 				c = fgetc(fin);
-				while(c==DBCASSA_DELIM_C)
+				while(c == DBCASSA_DELIM_C)
 					c = fgetc(fin);
 
 				switch(c) {
 					case 's':
 					case 'S':
 						colp->type = DB1_STR;
-						LM_DBG("column[%d] is STR!\n", ccol+1);
-					break;
+						LM_DBG("column[%d] is STR!\n", ccol + 1);
+						break;
 					case 'i':
 					case 'I':
 						colp->type = DB1_INT;
-						LM_DBG("column[%d] is INT!\n", ccol+1);
-					break;
+						LM_DBG("column[%d] is INT!\n", ccol + 1);
+						break;
 					case 'd':
 					case 'D':
 						colp->type = DB1_DOUBLE;
-						LM_DBG("column[%d] is DOUBLE!\n", ccol+1);
-					break;
+						LM_DBG("column[%d] is DOUBLE!\n", ccol + 1);
+						break;
 					case 't':
 					case 'T':
 						colp->type = DB1_DATETIME;
-						LM_DBG("column[%d] is TIME! Timestamp col has name [%s]\n", ccol+1, colp->name.s);
+						LM_DBG("column[%d] is TIME! Timestamp col has name "
+							   "[%s]\n",
+								ccol + 1, colp->name.s);
 						if(dtp->ts_col) {
-							LM_ERR("You can have only one column with type timestamp\n");
+							LM_ERR("You can have only one column with type "
+								   "timestamp\n");
 							goto clean;
 						}
 						dtp->ts_col = colp;
-					break;
+						break;
 					default:
 						LM_DBG("wrong column type!\n");
 						goto clean;
 				}
 
-				while(c!='\n' && c!=EOF && c!=')' && c!= ',') {
-					if(colp->type == DB1_STR && (c=='i'|| c=='I')) {
+				while(c != '\n' && c != EOF && c != ')' && c != ',') {
+					if(colp->type == DB1_STR && (c == 'i' || c == 'I')) {
 						colp->type = DB1_STRING;
-						LM_DBG("column[%d] is actually STRING!\n", ccol+1);
+						LM_DBG("column[%d] is actually STRING!\n", ccol + 1);
 					}
 					c = fgetc(fin);
 				}
@@ -289,16 +297,15 @@ dbcassa_table_p dbcassa_load_file(str* dbn, str* tbn)
 					dtp->cols = colp;
 					dtp->nrcols++;
 					c = fgetc(fin);
-				}
-				else
+				} else
 					goto clean;
 				ccol++;
-			break;
+				break;
 
 			case DBCASSA_NLINE_ST:
 			case DBCASSA_NLINE2_ST:
 				// unique key
-				while(c==DBCASSA_DELIM_C)
+				while(c == DBCASSA_DELIM_C)
 					c = fgetc(fin);
 				if(c == DBCASSA_DELIM_R) {
 					state = DBCASSA_NLINE2_ST;
@@ -308,17 +315,17 @@ dbcassa_table_p dbcassa_load_file(str* dbn, str* tbn)
 
 				if(c == EOF)
 					break;
-				bp= 0;
-				while(c!=DBCASSA_DELIM_C && c!=DBCASSA_DELIM_R)
-				{
-					if(c==EOF)
+				bp = 0;
+				while(c != DBCASSA_DELIM_C && c != DBCASSA_DELIM_R) {
+					if(c == EOF)
 						break;
 					buf[bp++] = c;
 					c = fgetc(fin);
 				}
 				colp = dtp->cols;
 				while(colp) {
-					if(bp==colp->name.len && strncmp(colp->name.s, buf, bp)==0) {
+					if(bp == colp->name.len
+							&& strncmp(colp->name.s, buf, bp) == 0) {
 						if(state == DBCASSA_NLINE_ST)
 							key[dtp->key_len++] = colp;
 						else
@@ -337,27 +344,29 @@ dbcassa_table_p dbcassa_load_file(str* dbn, str* tbn)
 
 	/* copy the keys into the table */
 	if(dtp->key_len) {
-		dtp->key = (dbcassa_column_p*)
-				shm_malloc(dtp->key_len*sizeof(dbcassa_column_p));
+		dtp->key = (dbcassa_column_p *)shm_malloc(
+				dtp->key_len * sizeof(dbcassa_column_p));
 		if(!dtp->key) {
 			LM_ERR("No more share memory\n");
 			goto clean;
 		}
-		for(ccol = 0; ccol< dtp->key_len; ccol++) {
+		for(ccol = 0; ccol < dtp->key_len; ccol++) {
 			dtp->key[ccol] = key[ccol];
-			LM_DBG("col [%.*s] in primary key\n", key[ccol]->name.len, key[ccol]->name.s);
+			LM_DBG("col [%.*s] in primary key\n", key[ccol]->name.len,
+					key[ccol]->name.s);
 		}
 	}
 	if(dtp->seckey_len) {
-		dtp->sec_key = (dbcassa_column_p*)
-				shm_malloc(dtp->seckey_len*sizeof(dbcassa_column_p));
+		dtp->sec_key = (dbcassa_column_p *)shm_malloc(
+				dtp->seckey_len * sizeof(dbcassa_column_p));
 		if(!dtp->sec_key) {
 			LM_ERR("No more share memory\n");
 			goto clean;
 		}
-		for(ccol = 0; ccol< dtp->seckey_len; ccol++) {
+		for(ccol = 0; ccol < dtp->seckey_len; ccol++) {
 			dtp->sec_key[ccol] = sec_key[ccol];
-			LM_DBG("col [%.*s] in secondary key\n", sec_key[ccol]->name.len, sec_key[ccol]->name.s);
+			LM_DBG("col [%.*s] in secondary key\n", sec_key[ccol]->name.len,
+					sec_key[ccol]->name.s);
 		}
 	}
 
@@ -374,57 +383,57 @@ clean:
 }
 
 
-#define ref_read_data(rw_lock) \
-do {\
-	again:\
-	lock_get( &rw_lock.lock ); \
-	if (rw_lock.reload_flag) { \
-		lock_release( &rw_lock.lock ); \
-		usleep(5); \
-		goto again; \
-	} \
-	rw_lock.data_refcnt++; \
-	lock_release( &rw_lock.lock ); \
-} while(0)
+#define ref_read_data(rw_lock)           \
+	do {                                 \
+	again:                               \
+		lock_get(&rw_lock.lock);         \
+		if(rw_lock.reload_flag) {        \
+			lock_release(&rw_lock.lock); \
+			usleep(5);                   \
+			goto again;                  \
+		}                                \
+		rw_lock.data_refcnt++;           \
+		lock_release(&rw_lock.lock);     \
+	} while(0)
 
 
-#define unref_read_data(rw_lock) \
-do {\
-	lock_get( &rw_lock.lock ); \
-	rw_lock.data_refcnt--; \
-	lock_release( &rw_lock.lock ); \
-} while(0)
+#define unref_read_data(rw_lock)     \
+	do {                             \
+		lock_get(&rw_lock.lock);     \
+		rw_lock.data_refcnt--;       \
+		lock_release(&rw_lock.lock); \
+	} while(0)
 
 
-#define ref_write_data(rw_lock)\
-do {\
-	lock_get( &rw_lock.lock ); \
-	rw_lock.reload_flag = 1; \
-	lock_release( &rw_lock.lock ); \
-	while (rw_lock.data_refcnt) \
-		usleep(10); \
-} while(0)
+#define ref_write_data(rw_lock)      \
+	do {                             \
+		lock_get(&rw_lock.lock);     \
+		rw_lock.reload_flag = 1;     \
+		lock_release(&rw_lock.lock); \
+		while(rw_lock.data_refcnt)   \
+			usleep(10);              \
+	} while(0)
 
 
-#define unref_write_data(rw_lock)\
-	rw_lock.reload_flag = 0;
+#define unref_write_data(rw_lock) rw_lock.reload_flag = 0;
 
 /*
  *	Search the table schema
  * */
-dbcassa_table_p dbcassa_db_search_table(int hashidx, int hash,
-		const str* dbn, const str *tbn)
+dbcassa_table_p dbcassa_db_search_table(
+		int hashidx, int hash, const str *dbn, const str *tbn)
 {
 	dbcassa_table_p tbc = NULL;
 	ref_read_data(dbcassa_tbl_htable[hashidx].lock);
 
 	tbc = dbcassa_tbl_htable[hashidx].dtp;
 	while(tbc) {
-		LM_DBG("found dbname=%.*s, table=%.*s\n", tbc->dbname.len, tbc->dbname.s, tbc->name.len, tbc->name.s);
-		if(tbc->hash==hash && tbc->dbname.len == dbn->len
-			&& tbc->name.len == tbn->len
-			&& !strncasecmp(tbc->dbname.s, dbn->s, dbn->len)
-			&& !strncasecmp(tbc->name.s, tbn->s, tbn->len))
+		LM_DBG("found dbname=%.*s, table=%.*s\n", tbc->dbname.len,
+				tbc->dbname.s, tbc->name.len, tbc->name.s);
+		if(tbc->hash == hash && tbc->dbname.len == dbn->len
+				&& tbc->name.len == tbn->len
+				&& !strncasecmp(tbc->dbname.s, dbn->s, dbn->len)
+				&& !strncasecmp(tbc->name.s, tbn->s, tbn->len))
 			return tbc;
 		tbc = tbc->next;
 	}
@@ -436,14 +445,14 @@ dbcassa_table_p dbcassa_db_search_table(int hashidx, int hash,
 /**
  * Get the table schema. If the file was updated, update the table schema.
  */
-dbcassa_table_p dbcassa_db_get_table(const str* dbn, const str *tbn)
+dbcassa_table_p dbcassa_db_get_table(const str *dbn, const str *tbn)
 {
-	dbcassa_table_p tbc = NULL, old_tbc= NULL, new_tbc= NULL, prev_tbc= NULL;
+	dbcassa_table_p tbc = NULL, old_tbc = NULL, new_tbc = NULL, prev_tbc = NULL;
 	int hash;
 	int hashidx;
 	int len;
 
-	if(!dbn || !tbn ) {
+	if(!dbn || !tbn) {
 		LM_ERR("invalid parameter");
 		return NULL;
 	}
@@ -456,8 +465,9 @@ dbcassa_table_p dbcassa_db_get_table(const str* dbn, const str *tbn)
 	tbc = dbcassa_tbl_htable[hashidx].dtp;
 
 	while(tbc) {
-		LM_DBG("found dbname=%.*s, table=%.*s\n", tbc->dbname.len, tbc->dbname.s, tbc->name.len, tbc->name.s);
-		if(tbc->hash==hash && tbc->dbname.len == dbn->len
+		LM_DBG("found dbname=%.*s, table=%.*s\n", tbc->dbname.len,
+				tbc->dbname.s, tbc->name.len, tbc->name.s);
+		if(tbc->hash == hash && tbc->dbname.len == dbn->len
 				&& tbc->name.len == tbn->len
 				&& !strncasecmp(tbc->dbname.s, dbn->s, dbn->len)
 				&& !strncasecmp(tbc->name.s, tbn->s, tbn->len)) {
@@ -480,9 +490,8 @@ dbcassa_table_p dbcassa_db_get_table(const str* dbn, const str *tbn)
 		return NULL;
 
 	/* the file has changed - load again the schema */
-	new_tbc = dbcassa_load_file((str*)dbn, (str*)tbn);
-	if(!new_tbc)
-	{
+	new_tbc = dbcassa_load_file((str *)dbn, (str *)tbn);
+	if(!new_tbc) {
 		LM_ERR("could not load database from file [%.*s]\n", tbn->len, tbn->s);
 		return NULL;
 	}
@@ -525,9 +534,9 @@ int dbcassa_read_table_schemas(void)
 {
 	int i, j;
 	str db_name, tb_name;
-	DIR* srcdir = opendir(dbcassa_schema_path.s);
-	DIR* db_dir;
-	struct dirent* dent;
+	DIR *srcdir = opendir(dbcassa_schema_path.s);
+	DIR *db_dir;
+	struct dirent *dent;
 	int fn_len = dbcassa_schema_path.len;
 	struct stat fstat;
 	int dir_len;
@@ -535,21 +544,19 @@ int dbcassa_read_table_schemas(void)
 	unsigned int hashidx;
 
 	/* init tables' hash table */
-	if (!dbcassa_tbl_htable) {
-		dbcassa_tbl_htable = (dbcassa_tbl_htable_p)shm_malloc(DBCASSA_TABLE_SIZE*
-					sizeof(dbcassa_tbl_htable_t));
-		if(dbcassa_tbl_htable==NULL)
-		{
+	if(!dbcassa_tbl_htable) {
+		dbcassa_tbl_htable = (dbcassa_tbl_htable_p)shm_malloc(
+				DBCASSA_TABLE_SIZE * sizeof(dbcassa_tbl_htable_t));
+		if(dbcassa_tbl_htable == NULL) {
 			LM_CRIT("no enough shm mem\n");
 			return -1;
 		}
-		memset(dbcassa_tbl_htable, 0, DBCASSA_TABLE_SIZE*sizeof(dbcassa_tbl_htable_t));
-		for(i=0; i<DBCASSA_TABLE_SIZE; i++)
-		{
-			if (lock_init(&dbcassa_tbl_htable[i].lock.lock)==0)
-			{
+		memset(dbcassa_tbl_htable, 0,
+				DBCASSA_TABLE_SIZE * sizeof(dbcassa_tbl_htable_t));
+		for(i = 0; i < DBCASSA_TABLE_SIZE; i++) {
+			if(lock_init(&dbcassa_tbl_htable[i].lock.lock) == 0) {
 				LM_CRIT("cannot init tables' sem's\n");
-				for(j=i-1; j>=0; j--)
+				for(j = i - 1; j >= 0; j--)
 					lock_destroy(&dbcassa_tbl_htable[j].rw_lock.lock);
 				return -1;
 			}
@@ -558,40 +565,39 @@ int dbcassa_read_table_schemas(void)
 
 	memset(full_path_buf, 0, _POSIX_PATH_MAX);
 	strcpy(full_path_buf, dbcassa_schema_path.s);
-	if (full_path_buf[dbcassa_schema_path.len - 1] != '/') {
-		full_path_buf[fn_len++]= '/';
+	if(full_path_buf[dbcassa_schema_path.len - 1] != '/') {
+		full_path_buf[fn_len++] = '/';
 		dbcassa_schema_path.len++;
 	}
 
-	if (srcdir == NULL) {
+	if(srcdir == NULL) {
 		perror("opendir");
 		return -1;
 	}
 	LM_DBG("Full name= %.*s\n", fn_len, full_path_buf);
 
-	while((dent = readdir(srcdir)) != NULL)
-	{
+	while((dent = readdir(srcdir)) != NULL) {
 		if(strcmp(dent->d_name, ".") == 0 || strcmp(dent->d_name, "..") == 0)
 			continue;
 
 		/* Calculate full name, check we are in file length limits */
-		if ((fn_len + strlen(dent->d_name) + 1) > _POSIX_PATH_MAX)
+		if((fn_len + strlen(dent->d_name) + 1) > _POSIX_PATH_MAX)
 			continue;
 
 		db_name.s = dent->d_name;
 		db_name.len = strlen(dent->d_name);
-		
-		strcpy(full_path_buf+fn_len, dent->d_name);
+
+		strcpy(full_path_buf + fn_len, dent->d_name);
 		dir_len = fn_len + db_name.len;
 
 		LM_DBG("Full dir name= %.*s\n", dir_len, full_path_buf);
 
-		if (stat(full_path_buf, &fstat) < 0) {
+		if(stat(full_path_buf, &fstat) < 0) {
 			LM_ERR("stat failed %s\n", strerror(errno));
 			continue;
 		}
 
-		if (!S_ISDIR(fstat.st_mode))  {
+		if(!S_ISDIR(fstat.st_mode)) {
 			LM_ERR("not a directory\n");
 			continue;
 		}
@@ -610,25 +616,24 @@ int dbcassa_read_table_schemas(void)
 			LM_ERR("Failed to open dictory %s\n", full_path_buf);
 			continue;
 		}
-		full_path_buf[dir_len++]= '/';
-		while((dent = readdir(db_dir)) != NULL)
-		{
-			if(strcmp(dent->d_name, ".") == 0 || strcmp(dent->d_name, "..") == 0)
+		full_path_buf[dir_len++] = '/';
+		while((dent = readdir(db_dir)) != NULL) {
+			if(strcmp(dent->d_name, ".") == 0
+					|| strcmp(dent->d_name, "..") == 0)
 				continue;
 			LM_DBG("database table %s\n", dent->d_name);
-			if(dir_len + strlen(dent->d_name)+1 > _POSIX_PATH_MAX) {
+			if(dir_len + strlen(dent->d_name) + 1 > _POSIX_PATH_MAX) {
 				LM_ERR("File len too large\n");
 				continue;
 			}
-			strcpy(full_path_buf+dir_len, dent->d_name);
+			strcpy(full_path_buf + dir_len, dent->d_name);
 
 			tb_name.s = dent->d_name;
 			tb_name.len = strlen(dent->d_name);
 
 			LM_DBG("File path= %s\n", full_path_buf);
 			tbc = dbcassa_load_file(&db_name, &tb_name);
-			if(!tbc)
-			{
+			if(!tbc) {
 				LM_ERR("could not load database from file [%s]\n", tb_name.s);
 				return -1;
 			}
@@ -654,10 +659,10 @@ void dbcassa_destroy_htable(void)
 	dbcassa_table_p tbc, tbc0;
 
 	/* destroy tables' hash table*/
-	if(dbcassa_tbl_htable==0)
+	if(dbcassa_tbl_htable == 0)
 		return;
 
-	for(i=0; i<DBCASSA_TABLE_SIZE; i++) {
+	for(i = 0; i < DBCASSA_TABLE_SIZE; i++) {
 		lock_destroy(&dbcassa_tbl_htable[i].rw_lock.lock);
 		tbc = dbcassa_tbl_htable[i].dtp;
 		while(tbc) {
