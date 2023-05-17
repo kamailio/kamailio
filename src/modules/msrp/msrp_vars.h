@@ -27,10 +27,9 @@
 #include "msrp_parser.h"
 
 int pv_parse_msrp_name(pv_spec_t *sp, str *in);
-int pv_get_msrp(sip_msg_t *msg,  pv_param_t *param, pv_value_t *res);
-int pv_set_msrp(sip_msg_t *msg, pv_param_t *param, int op,
-		pv_value_t *val);
+int pv_get_msrp(sip_msg_t *msg, pv_param_t *param, pv_value_t *res);
+int pv_set_msrp(sip_msg_t *msg, pv_param_t *param, int op, pv_value_t *val);
 
-char* tr_parse_msrpuri(str* in, trans_t *t);
+char *tr_parse_msrpuri(str *in, trans_t *t);
 
 #endif
