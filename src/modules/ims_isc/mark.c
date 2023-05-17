@@ -47,7 +47,8 @@
 #include "../../core/str.h"
 #include "../../core/data_lump.h"
 
-const str psu_hdr_s = str_init("P-Served-User: <%.*s>;sescase=%.*s;regstate=%.*s\r\n");
+const str psu_hdr_s =
+		str_init("P-Served-User: <%.*s>;sescase=%.*s;regstate=%.*s\r\n");
 const str sescase_orig = str_init("orig");
 const str sescase_term = str_init("term");
 const str regstate_reg = str_init("reg");
@@ -64,17 +65,18 @@ char *hexchars = "0123456789abcdef";
  * @param to - the output buffer  !!! must have at least len*2 allocated memory 
  * @returns the written length 
  */
-int bin_to_base16(char *from, int len, char *to) {
+int bin_to_base16(char *from, int len, char *to)
+{
 	int i, j;
-	for (i = 0, j = 0; i < len; i++, j += 2) {
-		to[j] = hexchars[(((unsigned char) from[i]) >> 4) & 0x0F];
-		to[j + 1] = hexchars[(((unsigned char) from[i])) & 0x0F];
+	for(i = 0, j = 0; i < len; i++, j += 2) {
+		to[j] = hexchars[(((unsigned char)from[i]) >> 4) & 0x0F];
+		to[j + 1] = hexchars[(((unsigned char)from[i])) & 0x0F];
 	}
 	return 2 * len;
 }
 
 /** char to hex convertor */
-#define HEX_VAL(c)	( (c<='9')?(c-'0'):(c-'A'+10) )
+#define HEX_VAL(c) ((c <= '9') ? (c - '0') : (c - 'A' + 10))
 
 /**
  *	Retrieves the mark from message.
@@ -83,7 +85,8 @@ int bin_to_base16(char *from, int len, char *to) {
  *  @param mark - mark to load into
  *	@returns 1 if found, 0 if not
  */
-int isc_mark_get_from_msg(struct sip_msg *msg, isc_mark *mark) {
+int isc_mark_get_from_msg(struct sip_msg *msg, isc_mark *mark)
+{
 	struct hdr_field *hdr;
 	rr_t *rr;
 	str x;
@@ -93,24 +96,27 @@ int isc_mark_get_from_msg(struct sip_msg *msg, isc_mark *mark) {
 
 	parse_headers(msg, HDR_EOH_F, 0);
 	hdr = msg->headers;
-	while (hdr) {
-		if (hdr->type == HDR_ROUTE_T) {
-			if (!hdr->parsed) {
-				if (parse_rr(hdr) < 0) {
-					LM_ERR("isc_mark_get_from_msg: Error while parsing Route HF\n");
+	while(hdr) {
+		if(hdr->type == HDR_ROUTE_T) {
+			if(!hdr->parsed) {
+				if(parse_rr(hdr) < 0) {
+					LM_ERR("isc_mark_get_from_msg: Error while parsing Route "
+						   "HF\n");
 					hdr = hdr->next;
 					continue;
 				}
 			}
-			rr = (rr_t*) hdr->parsed;
-			while (rr) {
+			rr = (rr_t *)hdr->parsed;
+			while(rr) {
 				x = rr->nameaddr.uri;
-				if (x.len >= ISC_MARK_USERNAME_LEN + 1 + isc_my_uri.len
+				if(x.len >= ISC_MARK_USERNAME_LEN + 1 + isc_my_uri.len
 						&& strncasecmp(x.s, ISC_MARK_USERNAME,
-								ISC_MARK_USERNAME_LEN) == 0
+								   ISC_MARK_USERNAME_LEN)
+								   == 0
 						&& strncasecmp(x.s + ISC_MARK_USERNAME_LEN + 1,
-								isc_my_uri.s, isc_my_uri.len) == 0) {
-					LM_DBG("isc_mark_get_from_msg: Found <%.*s>\n",	x.len, x.s);
+								   isc_my_uri.s, isc_my_uri.len)
+								   == 0) {
+					LM_DBG("isc_mark_get_from_msg: Found <%.*s>\n", x.len, x.s);
 					isc_mark_get(x, mark);
 					return 1;
 				}
@@ -127,45 +133,49 @@ int isc_mark_get_from_msg(struct sip_msg *msg, isc_mark *mark) {
  * @param x - string with the mark, as found in the Route header
  * @param mark - mark to load into
  */
-void isc_mark_get(str x, isc_mark *mark) {
+void isc_mark_get(str x, isc_mark *mark)
+{
 	int i, j, k;
-	str aor_hex = { 0, 0 };
-	if (mark->aor.s)
+	str aor_hex = {0, 0};
+	if(mark->aor.s)
 		pkg_free(mark->aor.s);
 	mark->aor = aor_hex;
-	for (i = 0; i < x.len && x.s[i] != ';'; i++)
+	for(i = 0; i < x.len && x.s[i] != ';'; i++)
 		;
-	while (i < x.len) {
-		if (x.s[i + 1] == '=') {
+	while(i < x.len) {
+		if(x.s[i + 1] == '=') {
 			k = 0;
-			for (j = i + 2; j < x.len && x.s[j] != ';'; j++)
+			for(j = i + 2; j < x.len && x.s[j] != ';'; j++)
 				k = k * 10 + (x.s[j] - '0');
-			switch (x.s[i]) {
-			case 's':
-				mark->skip = k;
-				break;
-			case 'h':
-				mark->handling = k;
-				break;
-			case 'd':
-				mark->direction = k;
-				break;
-			case 'a':
-				aor_hex.s = x.s + i + 2;
-				aor_hex.len = 0;
-				for (j = i + 2; j < x.len && x.s[j] != ';'; j++)
-					aor_hex.len++;
-				mark->aor.len = aor_hex.len / 2;
-				mark->aor.s = pkg_malloc(mark->aor.len);
-				if (!mark->aor.s) {
-					LM_ERR("isc_mark_get: Error allocating %d bytes\n",	mark->aor.len);
-					mark->aor.len = 0;
-				} else {
-					mark->aor.len = base16_to_bin(aor_hex.s, aor_hex.len, mark->aor.s);
-				}
-				break;
-			default:
-				LM_ERR("isc_mark_get: unknown parameter found: %c !\n", x.s[i]);
+			switch(x.s[i]) {
+				case 's':
+					mark->skip = k;
+					break;
+				case 'h':
+					mark->handling = k;
+					break;
+				case 'd':
+					mark->direction = k;
+					break;
+				case 'a':
+					aor_hex.s = x.s + i + 2;
+					aor_hex.len = 0;
+					for(j = i + 2; j < x.len && x.s[j] != ';'; j++)
+						aor_hex.len++;
+					mark->aor.len = aor_hex.len / 2;
+					mark->aor.s = pkg_malloc(mark->aor.len);
+					if(!mark->aor.s) {
+						LM_ERR("isc_mark_get: Error allocating %d bytes\n",
+								mark->aor.len);
+						mark->aor.len = 0;
+					} else {
+						mark->aor.len = base16_to_bin(
+								aor_hex.s, aor_hex.len, mark->aor.s);
+					}
+					break;
+				default:
+					LM_ERR("isc_mark_get: unknown parameter found: %c !\n",
+							x.s[i]);
 			}
 			i = j + 1;
 		} else
@@ -174,8 +184,13 @@ void isc_mark_get(str x, isc_mark *mark) {
 }
 
 /** from base16 char to int */
-#define HEX_DIGIT(x) \
-	((x>='0'&&x<='9')?x-'0':((x>='a'&&x<='f')?x-'a'+10:((x>='A'&&x<='F')?x-'A'+10:0)))
+#define HEX_DIGIT(x)                                                         \
+	((x >= '0' && x <= '9')                                                  \
+					? x - '0'                                                \
+					: ((x >= 'a' && x <= 'f')                                \
+									? x - 'a' + 10                           \
+									: ((x >= 'A' && x <= 'F') ? x - 'A' + 10 \
+															  : 0)))
 /**
  * Converts a hex encoded value to its binary value
  * @param from - buffer containing the input data
@@ -183,10 +198,12 @@ void isc_mark_get(str x, isc_mark *mark) {
  * @param to - the output buffer  !!! must have at least len/2 allocated memory 
  * @returns the written length 
  */
-int base16_to_bin(char *from, int len, char *to) {
+int base16_to_bin(char *from, int len, char *to)
+{
 	int i, j;
-	for (i = 0, j = 0; j < len; i++, j += 2) {
-		to[i] = (unsigned char) (HEX_DIGIT(from[j]) << 4 | HEX_DIGIT(from[j+1]));
+	for(i = 0, j = 0; j < len; i++, j += 2) {
+		to[i] = (unsigned char)(HEX_DIGIT(from[j]) << 4
+								| HEX_DIGIT(from[j + 1]));
 	}
 	return i;
 }
@@ -197,8 +214,9 @@ int base16_to_bin(char *from, int len, char *to) {
  *	@param msg - SIP message to mark
  *	@returns 1 on success
  */
-int isc_mark_drop_route(struct sip_msg *msg) {
-	struct lump* lmp, *tmp;
+int isc_mark_drop_route(struct sip_msg *msg)
+{
+	struct lump *lmp, *tmp;
 
 	parse_headers(msg, HDR_EOH_F, 0);
 
@@ -206,12 +224,13 @@ int isc_mark_drop_route(struct sip_msg *msg) {
 
 	LM_DBG("ifc_mark_drop_route: Start --------- \n");
 	lmp = msg->add_rm;
-	while (lmp) {
+	while(lmp) {
 		tmp = lmp->before;
-		if (tmp && tmp->op == LUMP_ADD && tmp->u.value
+		if(tmp && tmp->op == LUMP_ADD && tmp->u.value
 				&& strstr(tmp->u.value, ISC_MARK_USERNAME)) {
-			LM_DBG("ifc_mark_drop_route: Found lump %s ... dropping\n", tmp->u.value);
-			//tmp->op=LUMP_NOP;			
+			LM_DBG("ifc_mark_drop_route: Found lump %s ... dropping\n",
+					tmp->u.value);
+			//tmp->op=LUMP_NOP;
 			tmp->len = 0;
 			/*lmp->before = tmp->before;
 			 free_lump(tmp);	*/
@@ -232,9 +251,10 @@ int isc_mark_drop_route(struct sip_msg *msg) {
  *	@param mark - pointer to the mark
  *	@returns 1 on success or 0 on failure
  */
-int isc_mark_set(struct sip_msg *msg, isc_match *match, isc_mark *mark) {
-	str route = { 0, 0 };
-	str as = { 0, 0 };
+int isc_mark_set(struct sip_msg *msg, isc_match *match, isc_mark *mark)
+{
+	str route = {0, 0};
+	str as = {0, 0};
 	char chr_mark[256];
 	char aor_hex[256];
 	int len;
@@ -250,11 +270,11 @@ int isc_mark_set(struct sip_msg *msg, isc_match *match, isc_mark *mark) {
 	/* Add it in a lump */
 	route.s = chr_mark;
 	route.len = strlen(chr_mark);
-	if (match)
+	if(match)
 		as = match->server_name;
 	isc_mark_write_route(msg, &as, &route);
-	if (add_p_served_user) {
-	    isc_mark_write_psu(msg, mark);
+	if(add_p_served_user) {
+		isc_mark_write_psu(msg, mark);
 	}
 	LM_DBG("isc_mark_set: NEW mark <%s>\n", chr_mark);
 
@@ -273,19 +293,20 @@ int isc_mark_set(struct sip_msg *msg, isc_match *match, isc_mark *mark) {
  *	@param iscmark - the mark to write
  *	@returns 1 on success, else 0
  */
-int isc_mark_write_route(struct sip_msg *msg, str *as, str *iscmark) {
+int isc_mark_write_route(struct sip_msg *msg, str *as, str *iscmark)
+{
 	struct hdr_field *first;
-	struct lump* anchor;
+	struct lump *anchor;
 	str route;
 
 	parse_headers(msg, HDR_EOH_F, 0);
 	first = msg->headers;
-	if (as && as->len) {
-		route.s = pkg_malloc(21+as->len+iscmark->len);
+	if(as && as->len) {
+		route.s = pkg_malloc(21 + as->len + iscmark->len);
 		sprintf(route.s, "Route: <%.*s;lr>, <%.*s>\r\n", as->len, as->s,
 				iscmark->len, iscmark->s);
 	} else {
-		route.s = pkg_malloc(18+iscmark->len);
+		route.s = pkg_malloc(18 + iscmark->len);
 		sprintf(route.s, "Route: <%.*s>\r\n", iscmark->len, iscmark->s);
 	}
 
@@ -293,12 +314,12 @@ int isc_mark_write_route(struct sip_msg *msg, str *as, str *iscmark) {
 	LM_DBG("isc_mark_write_route: <%.*s>\n", route.len, route.s);
 
 	anchor = anchor_lump(msg, first->name.s - msg->buf, 0, HDR_ROUTE_T);
-	if (anchor == NULL) {
+	if(anchor == NULL) {
 		LM_ERR("isc_mark_write_route: anchor_lump failed\n");
 		return 0;
 	}
 
-	if (!insert_new_lump_before(anchor, route.s, route.len, HDR_ROUTE_T)) {
+	if(!insert_new_lump_before(anchor, route.s, route.len, HDR_ROUTE_T)) {
 		LM_ERR("isc_mark_write_route: error creating lump for header_mark\n");
 	}
 	return 1;
@@ -311,53 +332,59 @@ int isc_mark_write_route(struct sip_msg *msg, str *as, str *iscmark) {
  *  @param mark - the mark containing all required information
  *  @returns 1 on success, else 0
  */
-int isc_mark_write_psu(struct sip_msg *msg, isc_mark *mark) {
-    struct lump *l = msg->add_rm;
-    size_t hlen;
-    char * hstr = NULL;
-    const str *regstate, *sescase;
+int isc_mark_write_psu(struct sip_msg *msg, isc_mark *mark)
+{
+	struct lump *l = msg->add_rm;
+	size_t hlen;
+	char *hstr = NULL;
+	const str *regstate, *sescase;
 
-    switch(mark->direction) {
-    case IFC_ORIGINATING_SESSION:
-        regstate = &regstate_reg;
-        sescase = &sescase_orig;
-        break;
-    case IFC_TERMINATING_SESSION:
-        regstate = &regstate_reg;
-        sescase = &sescase_term;
-        break;
-    case IFC_TERMINATING_UNREGISTERED:
-        regstate = &regstate_unreg;
-        sescase = &sescase_term;
-        break;
-    default:
-        LM_ERR("isc_mark_write_psu: unknown direction: %d\n", mark->direction);
-        return 0;
-    }
+	switch(mark->direction) {
+		case IFC_ORIGINATING_SESSION:
+			regstate = &regstate_reg;
+			sescase = &sescase_orig;
+			break;
+		case IFC_TERMINATING_SESSION:
+			regstate = &regstate_reg;
+			sescase = &sescase_term;
+			break;
+		case IFC_TERMINATING_UNREGISTERED:
+			regstate = &regstate_unreg;
+			sescase = &sescase_term;
+			break;
+		default:
+			LM_ERR("isc_mark_write_psu: unknown direction: %d\n",
+					mark->direction);
+			return 0;
+	}
 
-    hlen = psu_hdr_s.len - /* 3 "%.*s" */ 12 + mark->aor.len + regstate->len + sescase->len + 1;
-    hstr = pkg_malloc(hlen);
-    if (hstr == NULL) {
-        LM_ERR("isc_mark_write_psu: could not allocate %zu bytes\n", hlen);
-        return 0;
-    }
+	hlen = psu_hdr_s.len - /* 3 "%.*s" */ 12 + mark->aor.len + regstate->len
+		   + sescase->len + 1;
+	hstr = pkg_malloc(hlen);
+	if(hstr == NULL) {
+		LM_ERR("isc_mark_write_psu: could not allocate %zu bytes\n", hlen);
+		return 0;
+	}
 
-    int ret = snprintf(hstr, hlen, psu_hdr_s.s,
-            mark->aor.len, mark->aor.s,
-            sescase->len, sescase->s,
-            regstate->len, regstate->s);
-    if (ret >= hlen) {
-        LM_ERR("isc_mark_write_psu: invalid string buffer size: %zu, required: %d\n", hlen, ret);
-        pkg_free(hstr);
-        return 0;
-    }
+	int ret = snprintf(hstr, hlen, psu_hdr_s.s, mark->aor.len, mark->aor.s,
+			sescase->len, sescase->s, regstate->len, regstate->s);
+	if(ret >= hlen) {
+		LM_ERR("isc_mark_write_psu: invalid string buffer size: %zu, required: "
+			   "%d\n",
+				hlen, ret);
+		pkg_free(hstr);
+		return 0;
+	}
 
-    LM_DBG("isc_mark_write_psu: %.*s\n", (int)hlen - 3 /* don't print \r\n\0 */, hstr);
-    if (append_new_lump(&l, hstr, hlen - 1, HDR_OTHER_T) == 0) {
-        LM_ERR("isc_mark_write_psu: append_new_lump(%p, \"%.*s\\\r\\n\", %zu, 0) failed\n", &l, (int)hlen - 3 /* don't print \r\n\0 */, hstr, hlen - 1);
-        pkg_free(hstr);
-        return 0;
-    }
-    /* hstr will be deallocated when msg will be destroyed */
-    return 1;
+	LM_DBG("isc_mark_write_psu: %.*s\n", (int)hlen - 3 /* don't print \r\n\0 */,
+			hstr);
+	if(append_new_lump(&l, hstr, hlen - 1, HDR_OTHER_T) == 0) {
+		LM_ERR("isc_mark_write_psu: append_new_lump(%p, \"%.*s\\\r\\n\", %zu, "
+			   "0) failed\n",
+				&l, (int)hlen - 3 /* don't print \r\n\0 */, hstr, hlen - 1);
+		pkg_free(hstr);
+		return 0;
+	}
+	/* hstr will be deallocated when msg will be destroyed */
+	return 1;
 }

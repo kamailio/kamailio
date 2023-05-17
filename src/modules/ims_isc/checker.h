@@ -57,19 +57,21 @@
 #include "../../core/mem/mem.h"
 #include "ims_isc_mod.h"
 
-extern usrloc_api_t isc_ulb;/*!< Structure containing pointers to usrloc functions*/
+extern usrloc_api_t
+		isc_ulb; /*!< Structure containing pointers to usrloc functions*/
 
 #define TRUE 1
 #define FALSE 0
 
 /** ISC match structure */
-typedef struct {
-	str server_name;		/**< SIP URI of the AS to forward to */
-	char default_handling;	/**< handling to apply on failure to contact the AS */
-	str service_info;		/**< additional service information */
-	int index;				/**< index of the matching IFC */
-	int include_register_request;	/**< additional flag from the HSS */
-	int include_register_response;	/**< additional flag from the HSS */
+typedef struct
+{
+	str server_name;	   /**< SIP URI of the AS to forward to */
+	char default_handling; /**< handling to apply on failure to contact the AS */
+	str service_info;	   /**< additional service information */
+	int index;			   /**< index of the matching IFC */
+	int include_register_request;  /**< additional flag from the HSS */
+	int include_register_response; /**< additional flag from the HSS */
 } isc_match;
 
 
@@ -81,7 +83,8 @@ typedef struct {
  * @param msg - the SIP initial request to check on 
  * @return - TRUE if found, FALSE if none found, end of search space 
  */
-isc_match* isc_checker_find(str uri,char direction,int skip,struct sip_msg *msg,int registered, udomain_t *d);
+isc_match *isc_checker_find(str uri, char direction, int skip,
+		struct sip_msg *msg, int registered, udomain_t *d);
 
 void isc_free_match(isc_match *m);
 int isc_is_registered(str *uri, udomain_t *d);
