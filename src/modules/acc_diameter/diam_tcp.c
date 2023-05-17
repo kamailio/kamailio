@@ -46,7 +46,7 @@
 #define M_NAME "acc"
 
 /*! \brief TCP connection setup */
-int init_mytcp(char* host, int port)
+int init_mytcp(char *host, int port)
 {
 	int sfd;
 	struct sockaddr_in serv_addr;
@@ -54,29 +54,26 @@ int init_mytcp(char* host, int port)
 
 	sfd = socket(PF_INET, SOCK_STREAM, 0);
 
-	if (sfd < 0)
-	{
+	if(sfd < 0) {
 		LM_ERR("failed to create the socket\n");
 		return -1;
 	}
 
 	server = gethostbyname(host);
-	if (server == NULL)
-	{
+	if(server == NULL) {
 		LM_ERR("failed to find the host\n");
 		close(sfd);
 		return -1;
 	}
 
-	memset((char *) &serv_addr, 0, sizeof(serv_addr));
+	memset((char *)&serv_addr, 0, sizeof(serv_addr));
 	serv_addr.sin_family = PF_INET;
 	memcpy((char *)&serv_addr.sin_addr.s_addr, (char *)server->h_addr,
 			server->h_length);
 	serv_addr.sin_port = htons(port);
 
-	if (connect(sfd, (const struct sockaddr *)&serv_addr,
-				sizeof(serv_addr)) < 0)
-	{
+	if(connect(sfd, (const struct sockaddr *)&serv_addr, sizeof(serv_addr))
+			< 0) {
 		LM_ERR("failed to connect to the DIAMETER client\n");
 		close(sfd);
 		return -1;
@@ -86,28 +83,26 @@ int init_mytcp(char* host, int port)
 }
 
 /*! \brief send a message over an already opened TCP connection */
-int tcp_send_recv(int sfd, char* buf, int len, rd_buf_t* rb,
-		unsigned int waited_id)
+int tcp_send_recv(
+		int sfd, char *buf, int len, rd_buf_t *rb, unsigned int waited_id)
 {
 	int n, number_of_tries;
 	fd_set active_fd_set, read_fd_set;
 	struct timeval tv;
 	unsigned long int result_code;
 	AAAMessage *msg;
-	AAA_AVP	*avp;
+	AAA_AVP *avp;
 	unsigned int m_id;
 
 	/* try to write the message to the Diameter client */
-	while( (n=write(sfd, buf, len))==-1 )
-	{
-		if (errno==EINTR)
+	while((n = write(sfd, buf, len)) == -1) {
+		if(errno == EINTR)
 			continue;
 		LM_ERR("write returned error: %s\n", strerror(errno));
 		return AAA_ERROR;
 	}
 
-	if (n!=len)
-	{
+	if(n != len) {
 		LM_ERR("write gave no error but wrote less than asked\n");
 		return AAA_ERROR;
 	}
@@ -116,15 +111,13 @@ int tcp_send_recv(int sfd, char* buf, int len, rd_buf_t* rb,
 	tv.tv_usec = MAX_WAIT_USEC;
 
 	/* Initialize the set of active sockets. */
-	FD_ZERO (&active_fd_set);
-	FD_SET (sfd, &active_fd_set);
+	FD_ZERO(&active_fd_set);
+	FD_SET(sfd, &active_fd_set);
 	number_of_tries = 0;
 
-	while(number_of_tries<MAX_TRIES)
-	{
+	while(number_of_tries < MAX_TRIES) {
 		read_fd_set = active_fd_set;
-		if (select (sfd+1, &read_fd_set, NULL, NULL, &tv) < 0)
-		{
+		if(select(sfd + 1, &read_fd_set, NULL, NULL, &tv) < 0) {
 			LM_ERR("select function failed\n");
 			return AAA_ERROR;
 		}
@@ -136,8 +129,7 @@ int tcp_send_recv(int sfd, char* buf, int len, rd_buf_t* rb,
 		}
 		*/		/* Data arriving on an already-connected socket. */
 		reset_read_buffer(rb);
-		switch( do_read(sfd, rb) )
-		{
+		switch(do_read(sfd, rb)) {
 			case CONN_ERROR:
 				LM_ERR("failed to read from socket\n");
 				return AAA_CONN_CLOSED;
@@ -148,23 +140,20 @@ int tcp_send_recv(int sfd, char* buf, int len, rd_buf_t* rb,
 
 		/* obtain the structure corresponding to the message */
 		msg = AAATranslateMessage(rb->buf, rb->buf_len, 0);
-		if(!msg)
-		{
+		if(!msg) {
 			LM_ERR("message structure not obtained\n");
 			return AAA_ERROR;
 		}
-		avp = AAAFindMatchingAVP(msg, NULL, AVP_SIP_MSGID,
-				vendorID, AAA_FORWARD_SEARCH);
-		if(!avp)
-		{
+		avp = AAAFindMatchingAVP(
+				msg, NULL, AVP_SIP_MSGID, vendorID, AAA_FORWARD_SEARCH);
+		if(!avp) {
 			LM_ERR("AVP_SIP_MSGID not found\n");
 			return AAA_ERROR;
 		}
-		m_id = *((unsigned int*)(avp->data.s));
+		m_id = *((unsigned int *)(avp->data.s));
 		LM_DBG("######## m_id=%d\n", m_id);
-		if(m_id!=waited_id)
-		{
-			number_of_tries ++;
+		if(m_id != waited_id) {
+			number_of_tries++;
 			LM_NOTICE("old message received\n");
 			continue;
 		}
@@ -176,105 +165,90 @@ int tcp_send_recv(int sfd, char* buf, int len, rd_buf_t* rb,
 next:
 
 	/* Finally die correct answer */
-	avp = AAAFindMatchingAVP(msg, NULL, AVP_Service_Type,
-			vendorID, AAA_FORWARD_SEARCH);
-	if(!avp)
-	{
+	avp = AAAFindMatchingAVP(
+			msg, NULL, AVP_Service_Type, vendorID, AAA_FORWARD_SEARCH);
+	if(!avp) {
 		LM_ERR("AVP_Service_Type not found\n");
 		return AAA_ERROR;
 	}
 
-	result_code = ntohl(*((unsigned long int*)(msg->res_code->data.s)));
-	switch(result_code)
-	{
-		case AAA_SUCCESS:					/* 2001 */
+	result_code = ntohl(*((unsigned long int *)(msg->res_code->data.s)));
+	switch(result_code) {
+		case AAA_SUCCESS: /* 2001 */
 			return ACC_SUCCESS;
-		default:							/* error */
+		default: /* error */
 			return ACC_FAILURE;
 	}
 }
 
 void reset_read_buffer(rd_buf_t *rb)
 {
-	rb->first_4bytes	= 0;
-	rb->buf_len			= 0;
+	rb->first_4bytes = 0;
+	rb->buf_len = 0;
 	if(rb->buf)
 		pkg_free(rb->buf);
-	rb->buf				= 0;
+	rb->buf = 0;
 }
 
 /*! \brief read from a socket, an AAA message buffer */
-int do_read( int socket, rd_buf_t *p)
+int do_read(int socket, rd_buf_t *p)
 {
-	unsigned char  *ptr;
-	unsigned int   wanted_len, len;
+	unsigned char *ptr;
+	unsigned int wanted_len, len;
 	int n;
 
-	if (p->buf==0)
-	{
+	if(p->buf == 0) {
 		wanted_len = sizeof(p->first_4bytes) - p->buf_len;
-		ptr = ((unsigned char*)&(p->first_4bytes)) + p->buf_len;
-	}
-	else
-	{
+		ptr = ((unsigned char *)&(p->first_4bytes)) + p->buf_len;
+	} else {
 		wanted_len = p->first_4bytes - p->buf_len;
 		ptr = p->buf + p->buf_len;
 	}
 
-	while( (n=recv( socket, ptr, wanted_len, MSG_DONTWAIT ))>0 )
-	{
+	while((n = recv(socket, ptr, wanted_len, MSG_DONTWAIT)) > 0) {
 		//		LM_DBG("(sock=%d)  -> n=%d (expected=%d)\n", p->sock,n,wanted_len);
 		p->buf_len += n;
-		if (n<wanted_len)
-		{
+		if(n < wanted_len) {
 			//LM_DBG("only %d bytes read from %d expected\n",n,wanted_len);
 			wanted_len -= n;
 			ptr += n;
-		}
-		else
-		{
-			if (p->buf==0)
-			{
+		} else {
+			if(p->buf == 0) {
 				/* I just finished reading the first 4 bytes from msg */
-				len = ntohl(p->first_4bytes)&0x00ffffff;
-				if (len<AAA_MSG_HDR_SIZE || len>MAX_AAA_MSG_SIZE)
-				{
+				len = ntohl(p->first_4bytes) & 0x00ffffff;
+				if(len < AAA_MSG_HDR_SIZE || len > MAX_AAA_MSG_SIZE) {
 					LM_ERR("(sock=%d): invalid message "
-							"length read %u (%x)\n", socket, len, p->first_4bytes);
+						   "length read %u (%x)\n",
+							socket, len, p->first_4bytes);
 					goto error;
 				}
 				//LM_DBG("message length = %d(%x)\n",len,len);
-				if ( (p->buf=pkg_malloc(len))==0  )
-				{
+				if((p->buf = pkg_malloc(len)) == 0) {
 					PKG_MEM_ERROR;
 					goto error;
 				}
-				*((unsigned int*)p->buf) = p->first_4bytes;
+				*((unsigned int *)p->buf) = p->first_4bytes;
 				p->buf_len = sizeof(p->first_4bytes);
 				p->first_4bytes = len;
 				/* update the reading position and len */
 				ptr = p->buf + p->buf_len;
 				wanted_len = p->first_4bytes - p->buf_len;
-			}
-			else
-			{
+			} else {
 				/* I finished reading the whole message */
-				LM_DBG("(sock=%d): whole message read (len=%d)!\n",
-						socket, p->first_4bytes);
+				LM_DBG("(sock=%d): whole message read (len=%d)!\n", socket,
+						p->first_4bytes);
 				return CONN_SUCCESS;
 			}
 		}
 	}
 
-	if (n==0)
-	{
+	if(n == 0) {
 		LM_INFO("(sock=%d): FIN received\n", socket);
 		return CONN_CLOSED;
 	}
-	if ( n==-1 && errno!=EINTR && errno!=EAGAIN )
-	{
-		LM_ERR("(on sock=%d): n=%d , errno=%d (%s)\n",
-				socket, n, errno, strerror(errno));
+	if(n == -1 && errno != EINTR && errno != EAGAIN) {
+		LM_ERR("(on sock=%d): n=%d , errno=%d (%s)\n", socket, n, errno,
+				strerror(errno));
 		goto error;
 	}
 error:
@@ -290,22 +264,18 @@ void close_tcp_connection(int sfd)
 /*! \brief
  * Extract URI depending on the request from To or From header
  */
-int get_uri(struct sip_msg* m, str** uri)
+int get_uri(struct sip_msg *m, str **uri)
 {
-	if ((REQ_LINE(m).method.len == 8) &&
-			(memcmp(REQ_LINE(m).method.s, "REGISTER", 8) == 0))
-	{/* REGISTER */
-		if (!m->to && ((parse_headers(m, HDR_TO_F, 0) == -1) || !m->to ))
-		{
+	if((REQ_LINE(m).method.len == 8)
+			&& (memcmp(REQ_LINE(m).method.s, "REGISTER", 8)
+					== 0)) { /* REGISTER */
+		if(!m->to && ((parse_headers(m, HDR_TO_F, 0) == -1) || !m->to)) {
 			LM_ERR("the To header field was not found or malformed\n");
 			return -1;
 		}
 		*uri = &(get_to(m)->uri);
-	}
-	else
-	{
-		if (parse_from_header(m)<0)
-		{
+	} else {
+		if(parse_from_header(m) < 0) {
 			LM_ERR("failed to parse headers\n");
 			return -2;
 		}
