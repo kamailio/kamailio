@@ -106,4 +106,5 @@ static int child_init(int _rank)
  * Module destroy function
  */
 static void destroy(void)
-{}
+{
+}
