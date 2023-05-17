@@ -21,6 +21,8 @@
 
 #ifndef __ENCODE_CONTENT_DISPOSITION_H__
 #define __ENCODE_CONTENT_DISPOSITION_H__
-int encode_content_disposition(char *hdrstart,int hdrlen,struct disposition *body,unsigned char *where);
-int print_encoded_content_disposition(FILE *fd,char *hdr,int hdrlen,unsigned char* payload,int paylen,char *prefix);
+int encode_content_disposition(char *hdrstart, int hdrlen,
+		struct disposition *body, unsigned char *where);
+int print_encoded_content_disposition(FILE *fd, char *hdr, int hdrlen,
+		unsigned char *payload, int paylen, char *prefix);
 #endif
