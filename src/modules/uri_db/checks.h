@@ -32,38 +32,39 @@
  * Check if To header field contains the same username
  * as digest credentials
  */
-int check_to(struct sip_msg* _msg, char* _str1, char* _str2);
+int check_to(struct sip_msg *_msg, char *_str1, char *_str2);
 
 
 /*
  * Check if From header field contains the same username
  * as digest credentials
  */
-int check_from(struct sip_msg* _msg, char* _str1, char* _str2);
+int check_from(struct sip_msg *_msg, char *_str1, char *_str2);
 
 
 /*
  * Checks username part of the supplied sip URI.
  * Optinal with supplied credentials.
  */
-int check_uri(struct sip_msg* msg, char* uri, char* username, char* realm);
+int check_uri(struct sip_msg *msg, char *uri, char *username, char *realm);
 
 
 /*
  * Check if uri belongs to a local user, contributed by Juha Heinanen
  */
-int does_uri_exist(struct sip_msg* _msg, char* _table, char* _s2);
+int does_uri_exist(struct sip_msg *_msg, char *_table, char *_s2);
 
 
-int uridb_db_init(const str* db_url);
-int uridb_db_bind(const str* db_url);
+int uridb_db_init(const str *db_url);
+int uridb_db_bind(const str *db_url);
 void uridb_db_close(void);
-int uridb_db_ver(const str* db_url);
+int uridb_db_ver(const str *db_url);
 
-int ki_check_to(struct sip_msg* _m);
-int ki_check_from(struct sip_msg* _m);
-int ki_check_uri(struct sip_msg* msg, str *suri);
-int ki_check_uri_realm(struct sip_msg* msg, str *suri, str *susername, str *srealm);
-int ki_does_uri_exist(struct sip_msg* _msg);
+int ki_check_to(struct sip_msg *_m);
+int ki_check_from(struct sip_msg *_m);
+int ki_check_uri(struct sip_msg *msg, str *suri);
+int ki_check_uri_realm(
+		struct sip_msg *msg, str *suri, str *susername, str *srealm);
+int ki_does_uri_exist(struct sip_msg *_msg);
 
 #endif /* CHECKS_H */

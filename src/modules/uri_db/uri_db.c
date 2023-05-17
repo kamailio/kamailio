@@ -38,9 +38,9 @@
 MODULE_VERSION
 
 
-static void destroy(void);       /* Module destroy function */
+static void destroy(void);		 /* Module destroy function */
 static int child_init(int rank); /* Per-child initialization function */
-static int mod_init(void);       /* Module initialization function */
+static int mod_init(void);		 /* Module initialization function */
 
 
 #define URI_TABLE "uri"
@@ -53,66 +53,60 @@ static int mod_init(void);       /* Module initialization function */
 /*
  * Module parameter variables
  */
-static str db_url         = str_init(DEFAULT_RODB_URL);
-str db_table              = str_init(SUBSCRIBER_TABLE);
-str uridb_user_col        = str_init(USER_COL);
-str uridb_domain_col      = str_init(DOMAIN_COL);
-str uridb_uriuser_col     = str_init(URI_USER_COL);
+static str db_url = str_init(DEFAULT_RODB_URL);
+str db_table = str_init(SUBSCRIBER_TABLE);
+str uridb_user_col = str_init(USER_COL);
+str uridb_domain_col = str_init(DOMAIN_COL);
+str uridb_uriuser_col = str_init(URI_USER_COL);
 
-int use_uri_table = 0;     /* Should uri table be used */
-int use_domain = 0;        /* Should does_uri_exist honor the domain part ? */
+int use_uri_table = 0; /* Should uri table be used */
+int use_domain = 0;	   /* Should does_uri_exist honor the domain part ? */
 
-static int fixup_exist(void** param, int param_no);
+static int fixup_exist(void **param, int param_no);
 
-static int w_check_uri1(struct sip_msg* _m, char* _uri, char* _s);
+static int w_check_uri1(struct sip_msg *_m, char *_uri, char *_s);
 
 /*
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"check_to",       (cmd_function)check_to,       0, 0, 0,
-		REQUEST_ROUTE},
-	{"check_from",     (cmd_function)check_from,     0, 0, 0,
-		REQUEST_ROUTE},
-	{"check_uri",      (cmd_function)w_check_uri1,   1, fixup_spve_null, 0,
-		REQUEST_ROUTE},
-	{"check_uri",      (cmd_function)check_uri,      3, fixup_spve_all, 0,
-		REQUEST_ROUTE},
-	{"does_uri_exist", (cmd_function)does_uri_exist, 0, 0, fixup_exist,
-		REQUEST_ROUTE|LOCAL_ROUTE},
-	{0, 0, 0, 0, 0, 0}
-};
+		{"check_to", (cmd_function)check_to, 0, 0, 0, REQUEST_ROUTE},
+		{"check_from", (cmd_function)check_from, 0, 0, 0, REQUEST_ROUTE},
+		{"check_uri", (cmd_function)w_check_uri1, 1, fixup_spve_null, 0,
+				REQUEST_ROUTE},
+		{"check_uri", (cmd_function)check_uri, 3, fixup_spve_all, 0,
+				REQUEST_ROUTE},
+		{"does_uri_exist", (cmd_function)does_uri_exist, 0, 0, fixup_exist,
+				REQUEST_ROUTE | LOCAL_ROUTE},
+		{0, 0, 0, 0, 0, 0}};
 
 
 /*
  * Exported parameters
  */
-static param_export_t params[] = {
-	{"db_url",                   PARAM_STR, &db_url               },
-	{"db_table",                 PARAM_STR, &db_table             },
-	{"user_column",              PARAM_STR, &uridb_user_col       },
-	{"domain_column",            PARAM_STR, &uridb_domain_col     },
-	{"uriuser_column",           PARAM_STR, &uridb_uriuser_col    },
-	{"use_uri_table",            INT_PARAM, &use_uri_table          },
-	{"use_domain",               INT_PARAM, &use_domain             },
-	{0, 0, 0}
-};
+static param_export_t params[] = {{"db_url", PARAM_STR, &db_url},
+		{"db_table", PARAM_STR, &db_table},
+		{"user_column", PARAM_STR, &uridb_user_col},
+		{"domain_column", PARAM_STR, &uridb_domain_col},
+		{"uriuser_column", PARAM_STR, &uridb_uriuser_col},
+		{"use_uri_table", INT_PARAM, &use_uri_table},
+		{"use_domain", INT_PARAM, &use_domain}, {0, 0, 0}};
 
 
 /*
  * Module interface
  */
 struct module_exports exports = {
-	"uri_db",   /* module name */
-	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,       /* exported functions */
-	params,     /* exported parameters */
-	0 ,         /* exported rpc functions */
-	0,          /* exported pseudo-variables */
-	0,          /* response handling function */
-	mod_init,   /* module init function */
-	child_init, /* child init function */
-	destroy     /* module destroy function */
+		"uri_db",		 /* module name */
+		DEFAULT_DLFLAGS, /* dlopen flags */
+		cmds,			 /* exported functions */
+		params,			 /* exported parameters */
+		0,				 /* exported rpc functions */
+		0,				 /* exported pseudo-variables */
+		0,				 /* response handling function */
+		mod_init,		 /* module init function */
+		child_init,		 /* child init function */
+		destroy			 /* module destroy function */
 };
 
 
@@ -121,10 +115,10 @@ struct module_exports exports = {
  */
 static int child_init(int rank)
 {
-	if (rank==PROC_INIT || rank==PROC_MAIN || rank==PROC_TCP_MAIN)
+	if(rank == PROC_INIT || rank == PROC_MAIN || rank == PROC_TCP_MAIN)
 		return 0; /* do nothing for the main process */
 
-	if (db_url.len)
+	if(db_url.len)
 		return uridb_db_init(&db_url);
 	else
 		return 0;
@@ -136,22 +130,22 @@ static int child_init(int rank)
  */
 static int mod_init(void)
 {
-	if (db_url.len == 0) {
-		if (use_uri_table) {
+	if(db_url.len == 0) {
+		if(use_uri_table) {
 			LM_ERR("configuration error - no database URL, "
-				"but use_uri_table is set!\n");
+				   "but use_uri_table is set!\n");
 			return -1;
 		}
 		return 0;
 	}
 
-	if (uridb_db_bind(&db_url)) {
+	if(uridb_db_bind(&db_url)) {
 		LM_ERR("No database module found\n");
 		return -1;
 	}
 
 	/* Check table version */
-	if (uridb_db_ver(&db_url) < 0) {
+	if(uridb_db_ver(&db_url) < 0) {
 		LM_ERR("Error during database table version check");
 		return -1;
 	}
@@ -165,17 +159,18 @@ static void destroy(void)
 }
 
 
-static int fixup_exist(void** param, int param_no)
+static int fixup_exist(void **param, int param_no)
 {
-	if (db_url.len == 0) {
-		LM_ERR("configuration error - does_uri_exist() called with no database URL!\n");
+	if(db_url.len == 0) {
+		LM_ERR("configuration error - does_uri_exist() called with no database "
+			   "URL!\n");
 		return E_CFG;
 	}
 	return 0;
 }
 
 
-static int w_check_uri1(struct sip_msg* msg, char* uri, char* _s)
+static int w_check_uri1(struct sip_msg *msg, char *uri, char *_s)
 {
 	return check_uri(msg, uri, NULL, NULL);
 }
