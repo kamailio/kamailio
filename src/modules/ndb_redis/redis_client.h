@@ -41,32 +41,36 @@
 #define MAXIMUM_PIPELINED_COMMANDS 1000
 #define MAXIMUM_NESTED_KEYS 10
 #define MAXIMUM_SENTINELS 5
-#define LM_DBG_redis_reply(rpl) print_redis_reply(L_DBG,(rpl),0)
+#define LM_DBG_redis_reply(rpl) print_redis_reply(L_DBG, (rpl), 0)
 
 int redisc_init(void);
 int redisc_destroy(void);
 int redisc_add_server(char *spec);
 
-typedef struct redisc_reply {
+typedef struct redisc_reply
+{
 	str rname;
 	unsigned int hname;
 	redisReply *rplRedis;
 	struct redisc_reply *next;
 } redisc_reply_t;
 
-typedef struct redisc_piped_cmds {
+typedef struct redisc_piped_cmds
+{
 	str commands[MAXIMUM_PIPELINED_COMMANDS];
 	redisc_reply_t *replies[MAXIMUM_PIPELINED_COMMANDS];
 	int pending_commands;
 } redisc_piped_cmds_t;
 
-typedef struct redisc_srv_disable {
+typedef struct redisc_srv_disable
+{
 	int disabled;
 	int consecutive_errors;
 	time_t restore_tick;
 } redisc_srv_disable_t;
 
-typedef struct redisc_server {
+typedef struct redisc_server
+{
 	str *sname;
 	unsigned int hname;
 	param_t *attrs;
@@ -77,17 +81,18 @@ typedef struct redisc_server {
 	redisc_srv_disable_t disable;
 } redisc_server_t;
 
-typedef struct redisc_pv {
+typedef struct redisc_pv
+{
 	str rname;
 	redisc_reply_t *reply;
 	str rkey;
 	int rkeyid;
-	gparam_t pos[MAXIMUM_NESTED_KEYS];  /* Array element position. */
+	gparam_t pos[MAXIMUM_NESTED_KEYS]; /* Array element position. */
 	int rkeynum;
 } redisc_pv_t;
 
 /* Server related functions */
-redisc_server_t* redisc_get_server(str *name);
+redisc_server_t *redisc_get_server(str *name);
 int redisc_reconnect_server(redisc_server_t *rsrv);
 
 /* Command related functions */
@@ -97,12 +102,12 @@ int redisc_exec_pipelined_cmd(str *srv);
 int redisc_exec_pipelined(redisc_server_t *rsrv);
 int redisc_create_pipelined_message(redisc_server_t *rsrv);
 void redisc_free_pipelined_cmds(redisc_server_t *rsrv);
-redisReply* redisc_exec_argv(redisc_server_t *rsrv, int argc, const char **argv,
+redisReply *redisc_exec_argv(redisc_server_t *rsrv, int argc, const char **argv,
 		const size_t *argvlen);
 redisc_reply_t *redisc_get_reply(str *name);
 int redisc_free_reply(str *name);
 int redisc_check_auth(redisc_server_t *rsrv, char *pass);
 int redis_check_server(redisc_server_t *rsrv);
 int redis_count_err_and_disable(redisc_server_t *rsrv);
-void print_redis_reply(int log_level, redisReply *rpl,int offset);
+void print_redis_reply(int log_level, redisReply *rpl, int offset);
 #endif
