@@ -49,65 +49,64 @@ extern int _apy_process_rank;
 /**
  *
  */
-int sr_kemi_config_engine_python(sip_msg_t *msg, int rtype, str *rname,
-		str *rparam)
+int sr_kemi_config_engine_python(
+		sip_msg_t *msg, int rtype, str *rname, str *rparam)
 {
 	int ret;
 
 	ret = -1;
-	if(rtype==REQUEST_ROUTE) {
-		if(rname!=NULL && rname->s!=NULL) {
-			ret = apy_exec(msg, rname->s,
-					(rparam && rparam->s)?rparam->s:NULL, 0);
+	if(rtype == REQUEST_ROUTE) {
+		if(rname != NULL && rname->s != NULL) {
+			ret = apy_exec(
+					msg, rname->s, (rparam && rparam->s) ? rparam->s : NULL, 0);
 		} else {
 			ret = apy_exec(msg, "ksr_request_route", NULL, 1);
 		}
-	} else if(rtype==CORE_ONREPLY_ROUTE) {
-		if(kemi_reply_route_callback.len>0) {
+	} else if(rtype == CORE_ONREPLY_ROUTE) {
+		if(kemi_reply_route_callback.len > 0) {
 			ret = apy_exec(msg, kemi_reply_route_callback.s, NULL, 0);
 		}
-	} else if(rtype==BRANCH_ROUTE) {
-		if(rname!=NULL && rname->s!=NULL) {
+	} else if(rtype == BRANCH_ROUTE) {
+		if(rname != NULL && rname->s != NULL) {
 			ret = apy_exec(msg, rname->s, NULL, 0);
 		}
-	} else if(rtype==FAILURE_ROUTE) {
-		if(rname!=NULL && rname->s!=NULL) {
+	} else if(rtype == FAILURE_ROUTE) {
+		if(rname != NULL && rname->s != NULL) {
 			ret = apy_exec(msg, rname->s, NULL, 0);
 		}
-	} else if(rtype==BRANCH_FAILURE_ROUTE) {
-		if(rname!=NULL && rname->s!=NULL) {
+	} else if(rtype == BRANCH_FAILURE_ROUTE) {
+		if(rname != NULL && rname->s != NULL) {
 			ret = apy_exec(msg, rname->s, NULL, 0);
 		}
-	} else if(rtype==TM_ONREPLY_ROUTE) {
-		if(rname!=NULL && rname->s!=NULL) {
+	} else if(rtype == TM_ONREPLY_ROUTE) {
+		if(rname != NULL && rname->s != NULL) {
 			ret = apy_exec(msg, rname->s, NULL, 0);
 		}
-	} else if(rtype==ONSEND_ROUTE) {
-		if(kemi_onsend_route_callback.len>0) {
+	} else if(rtype == ONSEND_ROUTE) {
+		if(kemi_onsend_route_callback.len > 0) {
 			ret = apy_exec(msg, kemi_onsend_route_callback.s, NULL, 0);
 		}
 		return 1;
-	} else if(rtype==EVENT_ROUTE) {
-		if(rname!=NULL && rname->s!=NULL) {
-			ret = apy_exec(msg, rname->s,
-					(rparam && rparam->s)?rparam->s:NULL, 0);
+	} else if(rtype == EVENT_ROUTE) {
+		if(rname != NULL && rname->s != NULL) {
+			ret = apy_exec(
+					msg, rname->s, (rparam && rparam->s) ? rparam->s : NULL, 0);
 		}
 	} else {
-		if(rname!=NULL) {
-			LM_ERR("route type %d with name [%.*s] not implemented\n",
-				rtype, rname->len, rname->s);
+		if(rname != NULL) {
+			LM_ERR("route type %d with name [%.*s] not implemented\n", rtype,
+					rname->len, rname->s);
 		} else {
-			LM_ERR("route type %d with no name not implemented\n",
-				rtype);
+			LM_ERR("route type %d with no name not implemented\n", rtype);
 		}
 	}
 
-	if(rname!=NULL) {
+	if(rname != NULL) {
 		LM_DBG("execution of route type %d with name [%.*s] returned %d\n",
 				rtype, rname->len, rname->s, ret);
 	} else {
-		LM_DBG("execution of route type %d with no name returned %d\n",
-			rtype, ret);
+		LM_DBG("execution of route type %d with no name returned %d\n", rtype,
+				ret);
 	}
 
 	return 1;
@@ -145,8 +144,8 @@ PyObject *sr_apy_kemi_return_none(void)
  */
 PyObject *sr_kemi_apy_return_int(sr_kemi_t *ket, int rval)
 {
-	if(ket!=NULL && ket->rtype==SR_KEMIP_BOOL) {
-		if(rval==SR_KEMI_TRUE) {
+	if(ket != NULL && ket->rtype == SR_KEMIP_BOOL) {
+		if(rval == SR_KEMI_TRUE) {
 			return sr_kemi_apy_return_true();
 		} else {
 			return sr_kemi_apy_return_false();
@@ -186,7 +185,7 @@ PyObject *sr_kemi_apy_return_xval(sr_kemi_t *ket, sr_kemi_xval_t *rx)
 		case SR_KEMIP_STR:
 			return sr_apy_kemi_return_str(ket, rx->v.s.s, rx->v.s.len);
 		case SR_KEMIP_BOOL:
-			if(rx->v.n!=SR_KEMI_FALSE) {
+			if(rx->v.n != SR_KEMI_FALSE) {
 				return sr_kemi_apy_return_true();
 			} else {
 				return sr_kemi_apy_return_false();
@@ -213,8 +212,8 @@ PyObject *sr_kemi_apy_return_xval(sr_kemi_t *ket, sr_kemi_xval_t *rx)
 /**
  *
  */
-PyObject *sr_apy_kemi_exec_func_ex(sr_kemi_t *ket, PyObject *self,
-			PyObject *args, int idx)
+PyObject *sr_apy_kemi_exec_func_ex(
+		sr_kemi_t *ket, PyObject *self, PyObject *args, int idx)
 {
 	str fname;
 	int i;
@@ -229,27 +228,26 @@ PyObject *sr_apy_kemi_exec_func_ex(sr_kemi_t *ket, PyObject *self,
 
 	env_P = sr_apy_env_get();
 
-	if(env_P==NULL) {
+	if(env_P == NULL) {
 		LM_ERR("invalid Python environment attributes\n");
 		return sr_kemi_apy_return_false();
 	}
-	if(env_P->msg==NULL) {
+	if(env_P->msg == NULL) {
 		lmsg = faked_msg_next();
 	} else {
 		lmsg = env_P->msg;
 	}
 
-	if(ket->mname.len>0) {
+	if(ket->mname.len > 0) {
 		LM_DBG("execution of method: %.*s\n", ket->fname.len, ket->fname.s);
 	} else {
-		LM_DBG("execution of method: %.*s.%.*s\n",
-				ket->mname.len, ket->mname.s,
+		LM_DBG("execution of method: %.*s.%.*s\n", ket->mname.len, ket->mname.s,
 				ket->fname.len, ket->fname.s);
 	}
 	fname = ket->fname;
 
-	if(ket->ptypes[0]==SR_KEMIP_NONE) {
-		if(ket->rtype==SR_KEMIP_XVAL) {
+	if(ket->ptypes[0] == SR_KEMIP_NONE) {
+		if(ket->rtype == SR_KEMIP_XVAL) {
 			xret = ((sr_kemi_xfm_f)(ket->func))(lmsg);
 			return sr_kemi_apy_return_xval(ket, xret);
 		} else {
@@ -261,60 +259,62 @@ PyObject *sr_apy_kemi_exec_func_ex(sr_kemi_t *ket, PyObject *self,
 	if(!PyTuple_Check(args)) {
 		LM_ERR("invalid arguments from Python\n");
 		return sr_kemi_apy_return_false();
-
 	}
-	memset(vps, 0, SR_KEMI_PARAMS_MAX*sizeof(sr_kemi_xval_t));
+	memset(vps, 0, SR_KEMI_PARAMS_MAX * sizeof(sr_kemi_xval_t));
 
 	alen = PyTuple_Size(args);
 	LM_DBG("number of arguments: %d\n", (int)alen);
 
-	for(i=0; i<SR_KEMI_PARAMS_MAX; i++) {
-		if(ket->ptypes[i]==SR_KEMIP_NONE) {
+	for(i = 0; i < SR_KEMI_PARAMS_MAX; i++) {
+		if(ket->ptypes[i] == SR_KEMIP_NONE) {
 			break;
 		}
-		if(i>=alen) {
-			LM_ERR("invalid number of parameters - idx: %d argc: %d\n", i, (int)alen);
+		if(i >= alen) {
+			LM_ERR("invalid number of parameters - idx: %d argc: %d\n", i,
+					(int)alen);
 			return sr_kemi_apy_return_false();
 		}
 		pobj = PyList_GetItem(args, i);
-		if(pobj==NULL) {
-			LM_ERR("null parameter - func: %.*s idx: %d argc: %d\n",
-					fname.len, fname.s, i, (int)alen);
+		if(pobj == NULL) {
+			LM_ERR("null parameter - func: %.*s idx: %d argc: %d\n", fname.len,
+					fname.s, i, (int)alen);
 			return sr_kemi_apy_return_false();
 		}
-		if(ket->ptypes[i]==SR_KEMIP_STR) {
+		if(ket->ptypes[i] == SR_KEMIP_STR) {
 			if(!PyString_Check(pobj)) {
 				LM_ERR("non-string parameter - func: %.*s idx: %d argc: %d\n",
 						fname.len, fname.s, i, (int)alen);
 				return sr_kemi_apy_return_false();
 			}
-			if(PyString_AsStringAndSize(pobj, &vps[i].v.s.s, &slen)<0) {
-				LM_ERR("failed to get string parameter - func: %.*s idx: %d argc: %d\n",
+			if(PyString_AsStringAndSize(pobj, &vps[i].v.s.s, &slen) < 0) {
+				LM_ERR("failed to get string parameter - func: %.*s idx: %d "
+					   "argc: %d\n",
 						fname.len, fname.s, i, (int)alen);
 				return sr_kemi_apy_return_false();
 			}
-			if(vps[i].v.s.s==NULL) {
+			if(vps[i].v.s.s == NULL) {
 				LM_ERR("null-string parameter - func: %.*s idx: %d argc: %d\n",
 						fname.len, fname.s, i, (int)alen);
 				return sr_kemi_apy_return_false();
 			}
 			vps[i].v.s.len = (int)slen;
 			vps[i].vtype = SR_KEMIP_STR;
-		} else if((ket->ptypes[i]==SR_KEMIP_INT) || (ket->ptypes[i]==SR_KEMIP_LONG)) {
+		} else if((ket->ptypes[i] == SR_KEMIP_INT)
+				  || (ket->ptypes[i] == SR_KEMIP_LONG)) {
 			if(PyLong_Check(pobj)) {
 				vps[i].v.l = PyLong_AsLong(pobj);
 			} else if(PyInt_Check(pobj)) {
 				vps[i].v.l = PyInt_AsLong(pobj);
-			} else if(pobj==Py_True) {
+			} else if(pobj == Py_True) {
 				vps[i].v.l = 1;
-			} else if(pobj==Py_False) {
+			} else if(pobj == Py_False) {
 				vps[i].v.l = 0;
 			} else {
 				LM_ERR("non-number parameter - func: %.*s idx: %d argc: %d\n",
 						fname.len, fname.s, i, (int)alen);
 				return sr_kemi_apy_return_false();
 			}
-			if(ket->ptypes[i]==SR_KEMIP_INT) {
+			if(ket->ptypes[i] == SR_KEMIP_INT) {
 				vps[i].vtype = SR_KEMIP_INT;
 				ret = (int)vps[i].v.l;
 				vps[i].v.n = ret;
@@ -346,35 +346,41 @@ PyObject *sr_apy_kemi_exec_func(PyObject *self, PyObject *args, int idx)
 	unsigned int tdiff;
 
 	ket = sr_apy_kemi_export_get(idx);
-	if(ket==NULL) {
+	if(ket == NULL) {
 		return sr_kemi_apy_return_false();
 	}
-	if(unlikely(cfg_get(core, core_cfg, latency_limit_action)>0)
+	if(unlikely(cfg_get(core, core_cfg, latency_limit_action) > 0)
 			&& is_printable(cfg_get(core, core_cfg, latency_log))) {
 		gettimeofday(&tvb, &tz);
 	}
 
 	ret = sr_apy_kemi_exec_func_ex(ket, self, args, idx);
 
-	if(unlikely(cfg_get(core, core_cfg, latency_limit_action)>0)
+	if(unlikely(cfg_get(core, core_cfg, latency_limit_action) > 0)
 			&& is_printable(cfg_get(core, core_cfg, latency_log))) {
 		gettimeofday(&tve, &tz);
 		tdiff = (tve.tv_sec - tvb.tv_sec) * 1000000
-				   + (tve.tv_usec - tvb.tv_usec);
+				+ (tve.tv_usec - tvb.tv_usec);
 		if(tdiff >= cfg_get(core, core_cfg, latency_limit_action)) {
 			pstate = PyThreadState_GET();
-			if (pstate != NULL && pstate->frame != NULL) {
+			if(pstate != NULL && pstate->frame != NULL) {
 				pframe = pstate->frame;
 			}
 
 			LOG(cfg_get(core, core_cfg, latency_log),
 					"alert - action KSR.%s%s%s(...)"
 					" took too long [%u us] (file:%s func:%s line:%d)\n",
-					(ket->mname.len>0)?ket->mname.s:"",
-					(ket->mname.len>0)?".":"", ket->fname.s, tdiff,
-					(pframe && pframe->f_code)?PyString_AsString(pframe->f_code->co_filename):"",
-					(pframe && pframe->f_code)?PyString_AsString(pframe->f_code->co_name):"",
-					(pframe && pframe->f_code)?PyCode_Addr2Line(pframe->f_code, pframe->f_lasti):0);
+					(ket->mname.len > 0) ? ket->mname.s : "",
+					(ket->mname.len > 0) ? "." : "", ket->fname.s, tdiff,
+					(pframe && pframe->f_code)
+							? PyString_AsString(pframe->f_code->co_filename)
+							: "",
+					(pframe && pframe->f_code)
+							? PyString_AsString(pframe->f_code->co_name)
+							: "",
+					(pframe && pframe->f_code)
+							? PyCode_Addr2Line(pframe->f_code, pframe->f_lasti)
+							: 0);
 		}
 	}
 
@@ -389,15 +395,16 @@ PyObject *_sr_apy_ksr_module_dict = NULL;
 PyObject **_sr_apy_ksr_modules_list = NULL;
 
 PyMethodDef *_sr_KSRMethods = NULL;
-#define SR_APY_KSR_MODULES_SIZE	256
-#define SR_APY_KSR_METHODS_SIZE	(SR_APY_KEMI_EXPORT_SIZE + SR_APY_KSR_MODULES_SIZE)
+#define SR_APY_KSR_MODULES_SIZE 256
+#define SR_APY_KSR_METHODS_SIZE \
+	(SR_APY_KEMI_EXPORT_SIZE + SR_APY_KSR_MODULES_SIZE)
 
 /**
  *
  */
 static int sr_apy_kemi_f_ktest(sip_msg_t *msg, str *txt)
 {
-	if(txt!=NULL && txt->s!=NULL)
+	if(txt != NULL && txt->s != NULL)
 		LM_DBG("%.*s", txt->len, txt->s);
 	return 0;
 }
@@ -421,9 +428,9 @@ static sr_kemi_t _sr_apy_kemi_test[] = {
  *
  */
 static PyMethodDef _sr_apy_kemi_x_Methods[] = {
-	{"modf", (PyCFunction)msg_call_function, METH_VARARGS,
-		"Invoke function exported by the other module."},
-	{NULL, NULL, 0, NULL} /* sentinel */
+		{"modf", (PyCFunction)msg_call_function, METH_VARARGS,
+				"Invoke function exported by the other module."},
+		{NULL, NULL, 0, NULL} /* sentinel */
 };
 
 /**
@@ -441,44 +448,47 @@ int sr_apy_init_ksr(void)
 	char mname[128];
 
 	/* init faked sip msg */
-	if(faked_msg_init()<0)
-	{
+	if(faked_msg_init() < 0) {
 		LM_ERR("failed to init local faked sip msg\n");
 		return -1;
 	}
 
 	_sr_KSRMethods = malloc(SR_APY_KSR_METHODS_SIZE * sizeof(PyMethodDef));
-	if(_sr_KSRMethods==NULL) {
+	if(_sr_KSRMethods == NULL) {
 		LM_ERR("no more pkg memory\n");
 		return -1;
 	}
-	_sr_apy_ksr_modules_list = malloc(SR_APY_KSR_MODULES_SIZE * sizeof(PyObject*));
-	if(_sr_apy_ksr_modules_list==NULL) {
+	_sr_apy_ksr_modules_list =
+			malloc(SR_APY_KSR_MODULES_SIZE * sizeof(PyObject *));
+	if(_sr_apy_ksr_modules_list == NULL) {
 		LM_ERR("no more pkg memory\n");
 		return -1;
 	}
 	memset(_sr_KSRMethods, 0, SR_APY_KSR_METHODS_SIZE * sizeof(PyMethodDef));
-	memset(_sr_apy_ksr_modules_list, 0, SR_APY_KSR_MODULES_SIZE * sizeof(PyObject*));
+	memset(_sr_apy_ksr_modules_list, 0,
+			SR_APY_KSR_MODULES_SIZE * sizeof(PyObject *));
 
 	emods_size = sr_kemi_modules_size_get();
 	emods = sr_kemi_modules_get();
 
 	n = 0;
 	_sr_crt_KSRMethods = _sr_KSRMethods;
-	if(emods_size==0 || emods[0].kexp==NULL) {
+	if(emods_size == 0 || emods[0].kexp == NULL) {
 		LM_DBG("exporting KSR.%s(...)\n", _sr_apy_kemi_test[0].fname.s);
 		_sr_crt_KSRMethods[0].ml_name = _sr_apy_kemi_test[0].fname.s;
-		_sr_crt_KSRMethods[0].ml_meth = sr_apy_kemi_export_associate(&_sr_apy_kemi_test[0]);
+		_sr_crt_KSRMethods[0].ml_meth =
+				sr_apy_kemi_export_associate(&_sr_apy_kemi_test[0]);
 		_sr_crt_KSRMethods[0].ml_flags = METH_VARARGS;
 		_sr_crt_KSRMethods[0].ml_doc = NAME " exported function";
 	} else {
-		for(i=0; emods[0].kexp[i].func!=NULL; i++) {
+		for(i = 0; emods[0].kexp[i].func != NULL; i++) {
 			LM_DBG("exporting KSR.%s(...)\n", emods[0].kexp[i].fname.s);
 			_sr_crt_KSRMethods[i].ml_name = emods[0].kexp[i].fname.s;
 			_sr_crt_KSRMethods[i].ml_meth =
-				sr_apy_kemi_export_associate(&emods[0].kexp[i]);
+					sr_apy_kemi_export_associate(&emods[0].kexp[i]);
 			if(_sr_crt_KSRMethods[i].ml_meth == NULL) {
-				LM_ERR("failed to associate kemi function with python export\n");
+				LM_ERR("failed to associate kemi function with python "
+					   "export\n");
 				free(_sr_KSRMethods);
 				_sr_KSRMethods = NULL;
 				return -1;
@@ -497,26 +507,27 @@ int sr_apy_init_ksr(void)
 	m = 0;
 
 	/* special sub-modules - x.modf() can have variable number of params */
-	_sr_apy_ksr_modules_list[m] = Py_InitModule("KSR.x",
-			_sr_apy_kemi_x_Methods);
-	PyDict_SetItemString(_sr_apy_ksr_module_dict,
-			"x", _sr_apy_ksr_modules_list[m]);
+	_sr_apy_ksr_modules_list[m] =
+			Py_InitModule("KSR.x", _sr_apy_kemi_x_Methods);
+	PyDict_SetItemString(
+			_sr_apy_ksr_module_dict, "x", _sr_apy_ksr_modules_list[m]);
 	Py_INCREF(_sr_apy_ksr_modules_list[m]);
 	m++;
 
-	if(emods_size>1) {
-		for(k=1; k<emods_size; k++) {
+	if(emods_size > 1) {
+		for(k = 1; k < emods_size; k++) {
 			n++;
 			_sr_crt_KSRMethods = _sr_KSRMethods + n;
 			snprintf(mname, 128, "KSR.%s", emods[k].kexp[0].mname.s);
-			for(i=0; emods[k].kexp[i].func!=NULL; i++) {
+			for(i = 0; emods[k].kexp[i].func != NULL; i++) {
 				LM_DBG("exporting %s.%s(...)\n", mname,
 						emods[k].kexp[i].fname.s);
 				_sr_crt_KSRMethods[i].ml_name = emods[k].kexp[i].fname.s;
 				_sr_crt_KSRMethods[i].ml_meth =
-					sr_apy_kemi_export_associate(&emods[k].kexp[i]);
+						sr_apy_kemi_export_associate(&emods[k].kexp[i]);
 				if(_sr_crt_KSRMethods[i].ml_meth == NULL) {
-					LM_ERR("failed to associate kemi function with python export\n");
+					LM_ERR("failed to associate kemi function with python "
+						   "export\n");
 					free(_sr_KSRMethods);
 					_sr_KSRMethods = NULL;
 					return -1;
@@ -527,7 +538,8 @@ int sr_apy_init_ksr(void)
 			}
 			LM_DBG("initializing kemi sub-module: %s (%s)\n", mname,
 					emods[k].kexp[0].mname.s);
-			_sr_apy_ksr_modules_list[m] = Py_InitModule(mname, _sr_crt_KSRMethods);
+			_sr_apy_ksr_modules_list[m] =
+					Py_InitModule(mname, _sr_crt_KSRMethods);
 			PyDict_SetItemString(_sr_apy_ksr_module_dict,
 					emods[k].kexp[0].mname.s, _sr_apy_ksr_modules_list[m]);
 			Py_INCREF(_sr_apy_ksr_modules_list[m]);
@@ -543,15 +555,15 @@ int sr_apy_init_ksr(void)
  */
 void sr_apy_destroy_ksr(void)
 {
-	if(_sr_apy_ksr_module!=NULL) {
+	if(_sr_apy_ksr_module != NULL) {
 		Py_XDECREF(_sr_apy_ksr_module);
 		_sr_apy_ksr_module = NULL;
 	}
-	if(_sr_apy_ksr_module_dict!=NULL) {
+	if(_sr_apy_ksr_module_dict != NULL) {
 		Py_XDECREF(_sr_apy_ksr_module_dict);
 		_sr_apy_ksr_module_dict = NULL;
 	}
-	if(_sr_KSRMethods!=NULL) {
+	if(_sr_KSRMethods != NULL) {
 		free(_sr_KSRMethods);
 		_sr_KSRMethods = NULL;
 	}
@@ -565,7 +577,7 @@ void sr_apy_destroy_ksr(void)
 int apy_sr_init_mod(void)
 {
 	if(_sr_python_reload_version == NULL) {
-		_sr_python_reload_version = (int*)shm_malloc(sizeof(int));
+		_sr_python_reload_version = (int *)shm_malloc(sizeof(int));
 		if(_sr_python_reload_version == NULL) {
 			SHM_MEM_ERROR;
 			return -1;
@@ -576,17 +588,14 @@ int apy_sr_init_mod(void)
 	return 0;
 }
 
-static const char* app_python_rpc_reload_doc[2] = {
-	"Reload python file",
-	0
-};
+static const char *app_python_rpc_reload_doc[2] = {"Reload python file", 0};
 
 
-static void app_python_rpc_reload(rpc_t* rpc, void* ctx)
+static void app_python_rpc_reload(rpc_t *rpc, void *ctx)
 {
 	void *vh;
 
-	if(_sr_python_load_file.s == NULL && _sr_python_load_file.len<=0) {
+	if(_sr_python_load_file.s == NULL && _sr_python_load_file.len <= 0) {
 		LM_WARN("script file path not provided\n");
 		rpc->fault(ctx, 500, "No script file");
 		return;
@@ -599,64 +608,60 @@ static void app_python_rpc_reload(rpc_t* rpc, void* ctx)
 
 	*_sr_python_reload_version += 1;
 	LM_INFO("marking for reload Python script file: %.*s (%d)\n",
-				_sr_python_load_file.len, _sr_python_load_file.s,
-				*_sr_python_reload_version);
+			_sr_python_load_file.len, _sr_python_load_file.s,
+			*_sr_python_reload_version);
 
-	if (rpc->add(ctx, "{", &vh) < 0) {
+	if(rpc->add(ctx, "{", &vh) < 0) {
 		rpc->fault(ctx, 500, "Server error");
 		return;
 	}
-	rpc->struct_add(vh, "dd",
-			"old", *_sr_python_reload_version-1,
-			"new", *_sr_python_reload_version);
+	rpc->struct_add(vh, "dd", "old", *_sr_python_reload_version - 1, "new",
+			*_sr_python_reload_version);
 
 	return;
 }
 
-static const char* app_python_rpc_api_list_doc[2] = {
-	"List kemi exports to javascript",
-	0
-};
+static const char *app_python_rpc_api_list_doc[2] = {
+		"List kemi exports to javascript", 0};
 
-static void app_python_rpc_api_list(rpc_t* rpc, void* ctx)
+static void app_python_rpc_api_list(rpc_t *rpc, void *ctx)
 {
 	int i;
 	int n;
 	sr_kemi_t *ket;
-	void* th;
-	void* sh;
-	void* ih;
+	void *th;
+	void *sh;
+	void *ih;
 
-	if (rpc->add(ctx, "{", &th) < 0) {
+	if(rpc->add(ctx, "{", &th) < 0) {
 		rpc->fault(ctx, 500, "Internal error root reply");
 		return;
 	}
 	n = 0;
-	for(i=0; i<SR_APY_KSR_METHODS_SIZE ; i++) {
+	for(i = 0; i < SR_APY_KSR_METHODS_SIZE; i++) {
 		ket = sr_apy_kemi_export_get(i);
-		if(ket==NULL) continue;
+		if(ket == NULL)
+			continue;
 		n++;
 	}
 
-	if(rpc->struct_add(th, "d[",
-				"msize", n,
-				"methods",  &ih)<0)
-	{
+	if(rpc->struct_add(th, "d[", "msize", n, "methods", &ih) < 0) {
 		rpc->fault(ctx, 500, "Internal error array structure");
 		return;
 	}
-	for(i=0; i<SR_APY_KSR_METHODS_SIZE; i++) {
+	for(i = 0; i < SR_APY_KSR_METHODS_SIZE; i++) {
 		ket = sr_apy_kemi_export_get(i);
-		if(ket==NULL) continue;
-		if(rpc->struct_add(ih, "{", "func", &sh)<0) {
+		if(ket == NULL)
+			continue;
+		if(rpc->struct_add(ih, "{", "func", &sh) < 0) {
 			rpc->fault(ctx, 500, "Internal error internal structure");
 			return;
 		}
-		if(rpc->struct_add(sh, "SSSS",
-				"ret", sr_kemi_param_map_get_name(ket->rtype),
-				"module", &ket->mname,
-				"name", &ket->fname,
-				"params", sr_kemi_param_map_get_params(ket->ptypes))<0) {
+		if(rpc->struct_add(sh, "SSSS", "ret",
+				   sr_kemi_param_map_get_name(ket->rtype), "module",
+				   &ket->mname, "name", &ket->fname, "params",
+				   sr_kemi_param_map_get_params(ket->ptypes))
+				< 0) {
 			LM_ERR("failed to add the structure with attributes (%d)\n", i);
 			rpc->fault(ctx, 500, "Internal error creating dest struct");
 			return;
@@ -665,20 +670,18 @@ static void app_python_rpc_api_list(rpc_t* rpc, void* ctx)
 }
 
 rpc_export_t app_python_rpc_cmds[] = {
-	{"app_python.reload", app_python_rpc_reload,
-		app_python_rpc_reload_doc, 0},
-	{"app_python.api_list", app_python_rpc_api_list,
-		app_python_rpc_api_list_doc, 0},
-	{0, 0, 0, 0}
-};
+		{"app_python.reload", app_python_rpc_reload, app_python_rpc_reload_doc,
+				0},
+		{"app_python.api_list", app_python_rpc_api_list,
+				app_python_rpc_api_list_doc, 0},
+		{0, 0, 0, 0}};
 
 /**
  * register RPC commands
  */
 int app_python_init_rpc(void)
 {
-	if (rpc_register_array(app_python_rpc_cmds)!=0)
-	{
+	if(rpc_register_array(app_python_rpc_cmds) != 0) {
 		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}

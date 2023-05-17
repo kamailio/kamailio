@@ -51,7 +51,9 @@ static int _sr_apy_exec_pid = 0;
 
 #define PY_GIL_ENSURE gstate = PyGILState_Ensure()
 #define PY_GIL_RELEASE PyGILState_Release(gstate)
-#define LOCK_RELEASE if(locked) _sr_apy_exec_pid = 0
+#define LOCK_RELEASE \
+	if(locked)       \
+	_sr_apy_exec_pid = 0
 
 extern int _sr_python_local_version;
 extern int *_sr_python_reload_version;
@@ -75,15 +77,17 @@ int apy_exec(sip_msg_t *_msg, char *fname, char *fparam, int emode)
 	_sr_apy_env.msg = _msg;
 	mpid = getpid();
 
-	if(_sr_apy_exec_pid!=mpid) {
+	if(_sr_apy_exec_pid != mpid) {
 		_sr_apy_exec_pid = mpid;
 		locked = 1;
 
-		if (_sr_python_reload_version && *_sr_python_reload_version > _sr_python_local_version) {
-			if (apy_reload_script()) {
+		if(_sr_python_reload_version
+				&& *_sr_python_reload_version > _sr_python_local_version) {
+			if(apy_reload_script()) {
 				LM_ERR("Error on reloading script\n");
 			} else {
-				LM_INFO("Reloaded script version %d -> %d\n", _sr_python_local_version, *_sr_python_reload_version);
+				LM_INFO("Reloaded script version %d -> %d\n",
+						_sr_python_local_version, *_sr_python_reload_version);
 				_sr_python_local_version = *_sr_python_reload_version;
 			}
 		}
@@ -92,15 +96,15 @@ int apy_exec(sip_msg_t *_msg, char *fname, char *fparam, int emode)
 	}
 
 	pFunc = PyObject_GetAttrString(_sr_apy_handler_obj, fname);
-	if (pFunc == NULL || !PyCallable_Check(pFunc)) {
-		if(emode==1) {
+	if(pFunc == NULL || !PyCallable_Check(pFunc)) {
+		if(emode == 1) {
 			LM_ERR("%s not found or is not callable\n", fname);
 		} else {
 			LM_DBG("%s not found or is not callable\n", fname);
 		}
 		Py_XDECREF(pFunc);
 		_sr_apy_env.msg = bmsg;
-		if(emode==1) {
+		if(emode == 1) {
 			goto err;
 		} else {
 			rval = 1;
@@ -109,7 +113,7 @@ int apy_exec(sip_msg_t *_msg, char *fname, char *fparam, int emode)
 	}
 
 	pmsg = newmsgobject(_msg);
-	if (pmsg == NULL) {
+	if(pmsg == NULL) {
 		LM_ERR("can't create MSGtype instance\n");
 		Py_DECREF(pFunc);
 		_sr_apy_env.msg = bmsg;
@@ -117,7 +121,7 @@ int apy_exec(sip_msg_t *_msg, char *fname, char *fparam, int emode)
 	}
 
 	pArgs = PyTuple_New(fparam == NULL ? 1 : 2);
-	if (pArgs == NULL) {
+	if(pArgs == NULL) {
 		LM_ERR("PyTuple_New() has failed\n");
 		msg_invalidate(pmsg);
 		Py_DECREF(pmsg);
@@ -128,9 +132,9 @@ int apy_exec(sip_msg_t *_msg, char *fname, char *fparam, int emode)
 	PyTuple_SetItem(pArgs, 0, pmsg);
 	/* Tuple steals pmsg */
 
-	if (fparam != NULL) {
+	if(fparam != NULL) {
 		pValue = PyString_FromString(fparam);
-		if (pValue == NULL) {
+		if(pValue == NULL) {
 			LM_ERR("PyString_FromString(%s) has failed\n", fparam);
 			msg_invalidate(pmsg);
 			Py_DECREF(pArgs);
@@ -146,14 +150,14 @@ int apy_exec(sip_msg_t *_msg, char *fname, char *fparam, int emode)
 	msg_invalidate(pmsg);
 	Py_DECREF(pArgs);
 	Py_DECREF(pFunc);
-	if (PyErr_Occurred()) {
+	if(PyErr_Occurred()) {
 		Py_XDECREF(pResult);
 		python_handle_exception("apy_exec: %s(%s)", fname, fparam);
 		_sr_apy_env.msg = bmsg;
 		goto err;
 	}
 
-	if (pResult == NULL) {
+	if(pResult == NULL) {
 		LM_ERR("PyObject_CallObject() returned NULL\n");
 		if(locked) {
 			_sr_apy_exec_pid = 0;
@@ -165,8 +169,10 @@ int apy_exec(sip_msg_t *_msg, char *fname, char *fparam, int emode)
 	rval = PyInt_AsLong(pResult);
 	Py_DECREF(pResult);
 	_sr_apy_env.msg = bmsg;
- err:
-	if(gstate_init) { PY_GIL_RELEASE; }
+err:
+	if(gstate_init) {
+		PY_GIL_RELEASE;
+	}
 	LOCK_RELEASE;
 	return rval;
 }
@@ -177,7 +183,7 @@ int apy_exec(sip_msg_t *_msg, char *fname, char *fparam, int emode)
 int python_exec1(sip_msg_t *_msg, char *method_name, char *foobar)
 {
 	str method = STR_NULL;
-	if(fixup_get_svalue(_msg, (gparam_t*)method_name, &method)<0) {
+	if(fixup_get_svalue(_msg, (gparam_t *)method_name, &method) < 0) {
 		LM_ERR("cannot get the python method to be executed\n");
 		return -1;
 	}
@@ -191,11 +197,11 @@ int python_exec2(sip_msg_t *_msg, char *method_name, char *mystr)
 {
 	str method = STR_NULL;
 	str param = STR_NULL;
-	if(fixup_get_svalue(_msg, (gparam_t*)method_name, &method)<0) {
+	if(fixup_get_svalue(_msg, (gparam_t *)method_name, &method) < 0) {
 		LM_ERR("cannot get the python method to be executed\n");
 		return -1;
 	}
-	if(fixup_get_svalue(_msg, (gparam_t*)mystr, &param)<0) {
+	if(fixup_get_svalue(_msg, (gparam_t *)mystr, &param) < 0) {
 		LM_ERR("cannot get the parameter of the python method\n");
 		return -1;
 	}
