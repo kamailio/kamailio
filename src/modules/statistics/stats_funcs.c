@@ -27,7 +27,6 @@
  */
 
 
-
 #include <string.h>
 
 #include "../../core/dprint.h"
@@ -37,7 +36,7 @@
 
 
 #define NORESET_FLAG_STR "no_reset"
-#define MODULE_STATS     "script"
+#define MODULE_STATS "script"
 
 
 typedef struct stat_mod_elem_
@@ -50,32 +49,32 @@ typedef struct stat_mod_elem_
 static stat_elem *stat_list = 0;
 
 
-int reg_statistic( char* name)
+int reg_statistic(char *name)
 {
 	stat_elem *se;
 	char *flag_str;
 	int flags;
 
-	if (name==0 || *name==0) {
+	if(name == 0 || *name == 0) {
 		LM_ERR("empty parameter\n");
 		goto error;
 	}
 
 	flags = 0;
-	flag_str = strchr( name, '/');
-	if (flag_str) {
+	flag_str = strchr(name, '/');
+	if(flag_str) {
 		*flag_str = 0;
 		flag_str++;
-		if (strcasecmp( flag_str, NORESET_FLAG_STR)==0) {
+		if(strcasecmp(flag_str, NORESET_FLAG_STR) == 0) {
 			flags |= STAT_NO_RESET;
 		} else {
-			LM_ERR("unsupported flag <%s>\n",flag_str);
+			LM_ERR("unsupported flag <%s>\n", flag_str);
 			goto error;
 		}
 	}
 
-	se = (stat_elem*)pkg_malloc( sizeof(stat_elem) );
-	if (se==0) {
+	se = (stat_elem *)pkg_malloc(sizeof(stat_elem));
+	if(se == 0) {
 		PKG_MEM_ERROR;
 		goto error;
 	}
@@ -91,23 +90,23 @@ error:
 }
 
 
-
 int register_all_mod_stats(void)
 {
-	stat_var  *stat;
+	stat_var *stat;
 	stat_elem *se;
 	stat_elem *se_tmp;
 
 	se = stat_list;
 	stat = NULL;
-	while( se ) {
+	while(se) {
 		se_tmp = se;
 		se = se->next;
 
 		/* register the new variable */
-		if (register_stat(MODULE_STATS, se_tmp->name, &stat, se_tmp->flags)!=0){
-			LM_ERR("failed to register var. <%s> flags %d\n",
-					se_tmp->name,se_tmp->flags);
+		if(register_stat(MODULE_STATS, se_tmp->name, &stat, se_tmp->flags)
+				!= 0) {
+			LM_ERR("failed to register var. <%s> flags %d\n", se_tmp->name,
+					se_tmp->flags);
 			return -1;
 		}
 		pkg_free(se_tmp);
@@ -115,13 +114,3 @@ int register_all_mod_stats(void)
 
 	return 0;
 }
-
-
-
-
-
-
-
-
-
-
