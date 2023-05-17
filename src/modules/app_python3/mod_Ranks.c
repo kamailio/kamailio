@@ -43,23 +43,12 @@
 
 PyObject *_sr_apy_ranks_module = NULL;
 
-PyMethodDef RanksMethods[] = {
-	{NULL, NULL, 0, NULL}
-};
+PyMethodDef RanksMethods[] = {{NULL, NULL, 0, NULL}};
 
-static struct PyModuleDef Router_Ranks_moduledef = {
-        PyModuleDef_HEAD_INIT,
-        "Router.Ranks",
-        NULL,
-        -1,
-        RanksMethods,
-        NULL,
-        NULL,
-        NULL,
-        NULL
-};
+static struct PyModuleDef Router_Ranks_moduledef = {PyModuleDef_HEAD_INIT,
+		"Router.Ranks", NULL, -1, RanksMethods, NULL, NULL, NULL, NULL};
 
-PyObject* get_ranks_module(void)
+PyObject *get_ranks_module(void)
 {
 	_sr_apy_ranks_module = PyModule_Create(&Router_Ranks_moduledef);
 
@@ -67,8 +56,8 @@ PyObject* get_ranks_module(void)
 			PyLong_FromLong((long)PROC_MAIN));
 	PyModule_AddObject(_sr_apy_ranks_module, "PROC_TIMER",
 			PyLong_FromLong((long)PROC_TIMER));
-	PyModule_AddObject(_sr_apy_ranks_module, "PROC_RPC",
-			PyLong_FromLong((long)PROC_RPC));
+	PyModule_AddObject(
+			_sr_apy_ranks_module, "PROC_RPC", PyLong_FromLong((long)PROC_RPC));
 	PyModule_AddObject(_sr_apy_ranks_module, "PROC_FIFO",
 			PyLong_FromLong((long)PROC_FIFO));
 	PyModule_AddObject(_sr_apy_ranks_module, "PROC_TCP_MAIN",
@@ -85,8 +74,8 @@ PyObject* get_ranks_module(void)
 			PyLong_FromLong((long)PROC_SIPINIT));
 	PyModule_AddObject(_sr_apy_ranks_module, "PROC_SIPRPC",
 			PyLong_FromLong((long)PROC_SIPRPC));
-	PyModule_AddObject(_sr_apy_ranks_module, "PROC_MIN",
-			PyLong_FromLong((long)PROC_MIN));
+	PyModule_AddObject(
+			_sr_apy_ranks_module, "PROC_MIN", PyLong_FromLong((long)PROC_MIN));
 
 	Py_INCREF(_sr_apy_ranks_module);
 
@@ -104,6 +93,4 @@ void destroy_mod_Ranks(void)
 #ifdef WITH_EXTRA_DEBUG
 	LM_ERR("Module 'Router.Ranks' has been destroyed\n");
 #endif
-
 }
-

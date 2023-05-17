@@ -20,11 +20,12 @@
 */
 
 #ifndef _PYTHON_EXEC_H
-#define  _PYTHON_EXEC_H
+#define _PYTHON_EXEC_H
 
 #include "../../core/parser/msg_parser.h"
 
-typedef struct sr_apy_env {
+typedef struct sr_apy_env
+{
 	sip_msg_t *msg;
 } sr_apy_env_t;
 

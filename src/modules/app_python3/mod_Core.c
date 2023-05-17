@@ -43,23 +43,12 @@
 
 PyObject *_sr_apy_core_module = NULL;
 
-PyMethodDef CoreMethods[] = {
-	{NULL, NULL, 0, NULL}
-};
+PyMethodDef CoreMethods[] = {{NULL, NULL, 0, NULL}};
 
-static struct PyModuleDef Router_Core_moduledef = {
-        PyModuleDef_HEAD_INIT,
-        "Router.Core",
-        NULL,
-        -1,
-        CoreMethods,
-        NULL,
-        NULL,
-        NULL,
-        NULL
-};
+static struct PyModuleDef Router_Core_moduledef = {PyModuleDef_HEAD_INIT,
+		"Router.Core", NULL, -1, CoreMethods, NULL, NULL, NULL, NULL};
 
-PyObject* get_core_module(void)
+PyObject *get_core_module(void)
 {
 	_sr_apy_core_module = PyModule_Create(&Router_Core_moduledef);
 
@@ -67,7 +56,7 @@ PyObject* get_core_module(void)
 	LM_ERR("Module 'Router.Core' has been initialized\n");
 #endif
 
-        return _sr_apy_core_module;
+	return _sr_apy_core_module;
 }
 
 void destroy_mod_Core(void)
@@ -76,5 +65,4 @@ void destroy_mod_Core(void)
 #ifdef WITH_EXTRA_DEBUG
 	LM_ERR("Module 'Router.Core' has been destroyed\n");
 #endif
-
 }

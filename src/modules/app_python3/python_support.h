@@ -20,7 +20,7 @@
 */
 
 #ifndef _PYTHON_SUPPORT_H
-#define  _PYTHON_SUPPORT_H
+#define _PYTHON_SUPPORT_H
 
 #include <Python.h>
 #include <stdarg.h>
