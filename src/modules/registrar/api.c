@@ -37,10 +37,9 @@
  */
 int regapi_save(sip_msg_t *msg, str *table, int flags)
 {
-	udomain_t* d;
+	udomain_t *d;
 
-	if(ul.get_udomain(table->s, &d)<0)
-	{
+	if(ul.get_udomain(table->s, &d) < 0) {
 		LM_ERR("usrloc domain [%s] not found\n", table->s);
 		return -1;
 	}
@@ -53,10 +52,9 @@ int regapi_save(sip_msg_t *msg, str *table, int flags)
  */
 int regapi_save_uri(sip_msg_t *msg, str *table, int flags, str *uri)
 {
-	udomain_t* d;
+	udomain_t *d;
 
-	if(ul.get_udomain(table->s, &d)<0)
-	{
+	if(ul.get_udomain(table->s, &d) < 0) {
 		LM_ERR("usrloc domain [%s] not found\n", table->s);
 		return -1;
 	}
@@ -69,10 +67,9 @@ int regapi_save_uri(sip_msg_t *msg, str *table, int flags, str *uri)
  */
 int regapi_lookup(sip_msg_t *msg, str *table)
 {
-	udomain_t* d;
+	udomain_t *d;
 
-	if(ul.get_udomain(table->s, &d)<0)
-	{
+	if(ul.get_udomain(table->s, &d) < 0) {
 		LM_ERR("usrloc domain [%s] not found\n", table->s);
 		return -1;
 	}
@@ -85,10 +82,9 @@ int regapi_lookup(sip_msg_t *msg, str *table)
  */
 int regapi_lookup_uri(sip_msg_t *msg, str *table, str *uri)
 {
-	udomain_t* d;
+	udomain_t *d;
 
-	if(ul.get_udomain(table->s, &d)<0)
-	{
+	if(ul.get_udomain(table->s, &d) < 0) {
 		LM_ERR("usrloc domain [%s] not found\n", table->s);
 		return -1;
 	}
@@ -101,10 +97,9 @@ int regapi_lookup_uri(sip_msg_t *msg, str *table, str *uri)
  */
 int regapi_registered(sip_msg_t *msg, str *table)
 {
-	udomain_t* d;
+	udomain_t *d;
 
-	if(ul.get_udomain(table->s, &d)<0)
-	{
+	if(ul.get_udomain(table->s, &d) < 0) {
 		LM_ERR("usrloc domain [%s] not found\n", table->s);
 		return -1;
 	}
@@ -117,8 +112,7 @@ int regapi_registered(sip_msg_t *msg, str *table)
 int regapi_set_q_override(sip_msg_t *msg, str *new_q)
 {
 	int _q;
-	if (str2q(&_q, new_q->s, new_q->len) < 0)
-	{
+	if(str2q(&_q, new_q->s, new_q->len) < 0) {
 		LM_ERR("invalid q parameter\n");
 		return -1;
 	}
@@ -131,10 +125,9 @@ int regapi_set_q_override(sip_msg_t *msg, str *new_q)
  */
 int regapi_lookup_to_dset(sip_msg_t *msg, str *table, str *uri)
 {
-	udomain_t* d;
+	udomain_t *d;
 
-	if(ul.get_udomain(table->s, &d)<0)
-	{
+	if(ul.get_udomain(table->s, &d) < 0) {
 		LM_ERR("usrloc domain [%s] not found\n", table->s);
 		return -1;
 	}
@@ -146,13 +139,13 @@ int regapi_lookup_to_dset(sip_msg_t *msg, str *table, str *uri)
  */
 int bind_registrar(registrar_api_t *api)
 {
-	if (!api) {
+	if(!api) {
 		ERR("Invalid parameter value\n");
 		return -1;
 	}
-	api->save       = regapi_save;
-	api->save_uri   = regapi_save_uri;
-	api->lookup     = regapi_lookup;
+	api->save = regapi_save;
+	api->save_uri = regapi_save_uri;
+	api->lookup = regapi_lookup;
 	api->lookup_uri = regapi_lookup_uri;
 	api->lookup_to_dset = regapi_lookup_to_dset;
 	api->registered = regapi_registered;

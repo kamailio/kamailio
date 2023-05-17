@@ -59,48 +59,51 @@ int build_path_vector(struct sip_msg *_m, str *path, str *received)
 		goto error;
 	}
 
-	for( hdr=_m->path,p=buf ; hdr ; hdr = next_sibling_hdr(hdr)) {
+	for(hdr = _m->path, p = buf; hdr; hdr = next_sibling_hdr(hdr)) {
 		/* check for max. Path length */
-		if( p-buf+hdr->body.len+1 >= MAX_PATH_SIZE) {
+		if(p - buf + hdr->body.len + 1 >= MAX_PATH_SIZE) {
 			LM_ERR("Overall Path body exceeds max. length of %d\n",
 					MAX_PATH_SIZE);
 			goto error;
 		}
-		if(p!=buf)
+		if(p != buf)
 			*(p++) = ',';
-		memcpy( p, hdr->body.s, hdr->body.len);
-		p +=  hdr->body.len;
+		memcpy(p, hdr->body.s, hdr->body.len);
+		p += hdr->body.len;
 	}
 
-	if (p!=buf) {
+	if(p != buf) {
 		/* check if next hop is a loose router */
-		if (parse_rr_body( buf, p-buf, &route) < 0) {
+		if(parse_rr_body(buf, p - buf, &route) < 0) {
 			LM_ERR("failed to parse Path body, no head found\n");
 			goto error;
 		}
-		if (parse_uri(route->nameaddr.uri.s,route->nameaddr.uri.len,&puri)<0){
+		if(parse_uri(route->nameaddr.uri.s, route->nameaddr.uri.len, &puri)
+				< 0) {
 			LM_ERR("failed to parse the first Path URI\n");
 			goto error;
 		}
-		if (!puri.lr.s) {
+		if(!puri.lr.s) {
 			LM_ERR("first Path URI is not a loose-router, not supported\n");
 			goto error;
 		}
-		if (path_use_params) {
+		if(path_use_params) {
 			param_hooks_t hooks;
 			param_t *params;
 
-			if (parse_params(&(puri.params),CLASS_CONTACT,&hooks,&params)!=0){
+			if(parse_params(&(puri.params), CLASS_CONTACT, &hooks, &params)
+					!= 0) {
 				LM_ERR("failed to parse parameters of first hop\n");
 				goto error;
 			}
 			/* Not interested in param body - just the hooks */
 			free_params(params);
 
-			if (hooks.contact.received) {
+			if(hooks.contact.received) {
 				uri_str.s = uri_buf;
 				uri_str.len = MAX_URI_SIZE;
-				if (unescape_user(&(hooks.contact.received->body), &uri_str) < 0) {
+				if(unescape_user(&(hooks.contact.received->body), &uri_str)
+						< 0) {
 					LM_ERR("unescaping received failed\n");
 					goto error;
 				}
@@ -112,11 +115,11 @@ int build_path_vector(struct sip_msg *_m, str *path, str *received)
 	}
 
 	path->s = buf;
-	path->len = p-buf;
+	path->len = p - buf;
 	LM_DBG("path is <%.*s>\n", path->len, path->s);
 	return 0;
 error:
-	if(route) free_rr(&route);
+	if(route)
+		free_rr(&route);
 	return -1;
 }
-

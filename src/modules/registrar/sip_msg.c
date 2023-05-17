@@ -27,27 +27,26 @@
  */
 
 
-
 #include "../../core/parser/hf.h"
 #include "../../core/dprint.h"
 #include "../../core/parser/parse_expires.h"
 #include "../../core/ut.h"
 #include "../../core/qvalue.h"
 #include "../../core/rand/kam_rand.h"
-#include "registrar.h"                     /* Module parameters */
-#include "regtime.h"                     /* act_time */
+#include "registrar.h" /* Module parameters */
+#include "regtime.h"   /* act_time */
 #include "rerrno.h"
 #include "sip_msg.h"
 #include "config.h"
 #include <stdlib.h>
 
-static struct hdr_field* act_contact;
+static struct hdr_field *act_contact;
 
 /* \brief
  * Return randomized expires between expires-range% and expires.
  * RFC allows only value less or equal to the one provided by UAC.
  */
-static inline int randomize_expires( int expires, int range )
+static inline int randomize_expires(int expires, int range)
 {
 	int range_min;
 
@@ -55,9 +54,9 @@ static inline int randomize_expires( int expires, int range )
 	if(range == 0)
 		return expires;
 
-	range_min = expires - (float)range/100 * expires;
+	range_min = expires - (float)range / 100 * expires;
 
-	return range_min + (float)(kam_rand()%100)/100 * ( expires - range_min );
+	return range_min + (float)(kam_rand() % 100) / 100 * (expires - range_min);
 }
 
 
@@ -66,13 +65,13 @@ static inline int randomize_expires( int expires, int range )
  * if the HF exists, if the HF doesn't exist,
  * returns -1;
  */
-static inline int get_expires_hf(struct sip_msg* _m)
+static inline int get_expires_hf(struct sip_msg *_m)
 {
-	exp_body_t* p;
+	exp_body_t *p;
 
-	if (_m->expires) {
-		p = (exp_body_t*)_m->expires->parsed;
-		if (p->valid) {
+	if(_m->expires) {
+		p = (exp_body_t *)_m->expires->parsed;
+		if(p->valid) {
 			return p->val;
 		}
 	}
@@ -84,33 +83,34 @@ static inline int get_expires_hf(struct sip_msg* _m)
  * Parse the whole message and bodies of all header fields
  * that will be needed by registrar
  */
-int parse_message(struct sip_msg* _m)
+int parse_message(struct sip_msg *_m)
 {
-	if (parse_headers(_m, HDR_EOH_F, 0) == -1) {
+	if(parse_headers(_m, HDR_EOH_F, 0) == -1) {
 		rerrno = R_PARSE;
 		LM_ERR("failed to parse headers\n");
 		return -1;
 	}
 
-	if (!_m->to) {
+	if(!_m->to) {
 		rerrno = R_TO_MISS;
 		LM_ERR("To not found\n");
 		return -2;
 	}
 
-	if (!_m->callid) {
+	if(!_m->callid) {
 		rerrno = R_CID_MISS;
 		LM_ERR("Call-ID not found\n");
 		return -3;
 	}
 
-	if (!_m->cseq) {
+	if(!_m->cseq) {
 		rerrno = R_CS_MISS;
 		LM_ERR("CSeq not found\n");
 		return -4;
 	}
 
-	if (_m->expires && !_m->expires->parsed && (parse_expires(_m->expires) < 0)) {
+	if(_m->expires && !_m->expires->parsed
+			&& (parse_expires(_m->expires) < 0)) {
 		rerrno = R_PARSE_EXP;
 		LM_ERR("failed to parse expires body\n");
 		return -5;
@@ -131,26 +131,27 @@ int parse_message(struct sip_msg* _m)
  * The whole message must be parsed before calling the function
  * _s indicates whether the contact was star
  */
-int check_contacts(struct sip_msg* _m, int* _s)
+int check_contacts(struct sip_msg *_m, int *_s)
 {
-	struct hdr_field* p;
-	contact_t*  c;
+	struct hdr_field *p;
+	contact_t *c;
 
 	*_s = 0;
 	/* Message without contacts is OK */
-	if (_m->contact == 0) return 0;
+	if(_m->contact == 0)
+		return 0;
 
-	if (((contact_body_t*)_m->contact->parsed)->star == 1) {
+	if(((contact_body_t *)_m->contact->parsed)->star == 1) {
 		/* The first Contact HF is star */
 		/* Expires must be zero */
-		if (get_expires_hf(_m) != 0) {
+		if(get_expires_hf(_m) != 0) {
 			LM_WARN("expires must be 0 for star contact\n");
 			rerrno = R_STAR_EXP;
 			return 1;
 		}
 
 		/* Message must contain no contacts */
-		if (((contact_body_t*)_m->contact->parsed)->contacts) {
+		if(((contact_body_t *)_m->contact->parsed)->contacts) {
 			LM_WARN("star contact cannot be mixed with other contacts\n");
 			rerrno = R_STAR_CONT;
 			return 1;
@@ -159,7 +160,7 @@ int check_contacts(struct sip_msg* _m, int* _s)
 		/* Message must contain no other Contact HFs */
 		p = _m->contact->next;
 		while(p) {
-			if (p->type == HDR_CONTACT_T) {
+			if(p->type == HDR_CONTACT_T) {
 				LM_WARN("star contact cannot be mixed with other contacts\n");
 				rerrno = R_STAR_CONT;
 				return 1;
@@ -171,21 +172,24 @@ int check_contacts(struct sip_msg* _m, int* _s)
 	} else { /* The first Contact HF is not star */
 		p = _m->contact;
 		while(p) {
-			if (p->type == HDR_CONTACT_T) {
+			if(p->type == HDR_CONTACT_T) {
 				/* Message must contain no star Contact HF */
-				if (((contact_body_t*)p->parsed)->star == 1) {
-					LM_WARN("star contact cannot be mixed with other contacts\n");
+				if(((contact_body_t *)p->parsed)->star == 1) {
+					LM_WARN("star contact cannot be mixed with other "
+							"contacts\n");
 					rerrno = R_STAR_CONT;
 					return 1;
 				}
 				/* check also the length of all contacts */
-				for(c=((contact_body_t*)p->parsed)->contacts ; c ; c=c->next) {
-					if (c->uri.len > contact_max_size) {
-						LM_WARN("contact uri is too long: [%.*s]\n", c->uri.len, c->uri.s);
+				for(c = ((contact_body_t *)p->parsed)->contacts; c;
+						c = c->next) {
+					if(c->uri.len > contact_max_size) {
+						LM_WARN("contact uri is too long: [%.*s]\n", c->uri.len,
+								c->uri.s);
 						rerrno = R_CONTACT_LEN;
 						return 1;
 					}
-					if (c->received && c->received->len>RECEIVED_MAX_SIZE) {
+					if(c->received && c->received->len > RECEIVED_MAX_SIZE) {
 						LM_WARN("received attribute of contact is too long\n");
 						rerrno = R_CONTACT_LEN;
 						return 1;
@@ -203,27 +207,28 @@ int check_contacts(struct sip_msg* _m, int* _s)
 /*! \brief
  * Get the first contact in message
  */
-contact_t* get_first_contact(struct sip_msg* _m)
+contact_t *get_first_contact(struct sip_msg *_m)
 {
-	if (_m->contact == 0) return 0;
+	if(_m->contact == 0)
+		return 0;
 
 	act_contact = _m->contact;
-	return (((contact_body_t*)_m->contact->parsed)->contacts);
+	return (((contact_body_t *)_m->contact->parsed)->contacts);
 }
 
 
 /*! \brief
  * Get next contact in message
  */
-contact_t* get_next_contact(contact_t* _c)
+contact_t *get_next_contact(contact_t *_c)
 {
-	struct hdr_field* p;
-	if (_c->next == 0) {
+	struct hdr_field *p;
+	if(_c->next == 0) {
 		p = act_contact->next;
 		while(p) {
-			if (p->type == HDR_CONTACT_T) {
+			if(p->type == HDR_CONTACT_T) {
 				act_contact = p;
-				return (((contact_body_t*)p->parsed)->contacts);
+				return (((contact_body_t *)p->parsed)->contacts);
 			}
 			p = p->next;
 		}
@@ -243,40 +248,43 @@ contact_t* get_next_contact(contact_t* _c)
  * 3) If the message contained no expires header field, use
  *    the default value
  */
-void calc_contact_expires(struct sip_msg* _m, param_t* _ep, int* _e, int novariation)
+void calc_contact_expires(
+		struct sip_msg *_m, param_t *_ep, int *_e, int novariation)
 {
 	int range = 0;
 	sr_xavp_t *vavp = NULL;
 	str xename = str_init("expires");
 
-	if (reg_xavp_cfg.s != NULL) {
+	if(reg_xavp_cfg.s != NULL) {
 		vavp = xavp_get_child_with_ival(&reg_xavp_cfg, &xename);
 	}
 
-	if (vavp != NULL && vavp->val.v.l >= 0) {
+	if(vavp != NULL && vavp->val.v.l >= 0) {
 		*_e = vavp->val.v.l;
 	} else {
-		if (!_ep || !_ep->body.len) {
+		if(!_ep || !_ep->body.len) {
 			*_e = get_expires_hf(_m);
 
-			if ( *_e < 0 ) {
+			if(*_e < 0) {
 				*_e = cfg_get(registrar, registrar_cfg, default_expires);
-				range = cfg_get(registrar, registrar_cfg, default_expires_range);
+				range = cfg_get(
+						registrar, registrar_cfg, default_expires_range);
 			} else {
 				range = cfg_get(registrar, registrar_cfg, expires_range);
 			}
 		} else {
-			if (str2int(&_ep->body, (unsigned int*)_e) < 0) {
+			if(str2int(&_ep->body, (unsigned int *)_e) < 0) {
 				*_e = cfg_get(registrar, registrar_cfg, default_expires);
-				range = cfg_get(registrar, registrar_cfg, default_expires_range);
+				range = cfg_get(
+						registrar, registrar_cfg, default_expires_range);
 			} else {
 				range = cfg_get(registrar, registrar_cfg, expires_range);
 			}
 		}
 	}
 
-	if ( *_e != 0 ) {
-		if (*_e < cfg_get(registrar, registrar_cfg, min_expires)) {
+	if(*_e != 0) {
+		if(*_e < cfg_get(registrar, registrar_cfg, min_expires)) {
 			if(reg_min_expires_mode) {
 				rerrno = R_LOW_EXP;
 				return;
@@ -285,14 +293,15 @@ void calc_contact_expires(struct sip_msg* _m, param_t* _ep, int* _e, int novaria
 			}
 		}
 
-		if (!novariation) {
-			*_e = randomize_expires( *_e, range );
-			if (*_e < cfg_get(registrar, registrar_cfg, min_expires)) {
+		if(!novariation) {
+			*_e = randomize_expires(*_e, range);
+			if(*_e < cfg_get(registrar, registrar_cfg, min_expires)) {
 				*_e = cfg_get(registrar, registrar_cfg, min_expires);
 			}
 		}
 
-		if (cfg_get(registrar, registrar_cfg, max_expires) && (*_e > cfg_get(registrar, registrar_cfg, max_expires))) {
+		if(cfg_get(registrar, registrar_cfg, max_expires)
+				&& (*_e > cfg_get(registrar, registrar_cfg, max_expires))) {
 			*_e = cfg_get(registrar, registrar_cfg, max_expires);
 		}
 
@@ -308,16 +317,16 @@ void calc_contact_expires(struct sip_msg* _m, param_t* _ep, int* _e, int novaria
  * 2) If q parameter exists in contact, use it
  * 3) If the parameter doesn't exist in contact, use the default value
  */
-int calc_contact_q(param_t* _q, qvalue_t* _r)
+int calc_contact_q(param_t *_q, qvalue_t *_r)
 {
 	sr_xavp_t *vavp = NULL;
 	str xqname = str_init("q");
 
-	if (reg_xavp_cfg.s != NULL)
+	if(reg_xavp_cfg.s != NULL)
 		vavp = xavp_get_child_with_ival(&reg_xavp_cfg, &xqname);
 
-	if (vavp != NULL) {
-		if ((vavp->val.v.l >= 0) && (vavp->val.v.l <= 1000)) {
+	if(vavp != NULL) {
+		if((vavp->val.v.l >= 0) && (vavp->val.v.l <= 1000)) {
 			*_r = vavp->val.v.l;
 			return 0;
 		} else {
@@ -327,10 +336,10 @@ int calc_contact_q(param_t* _q, qvalue_t* _r)
 		}
 	}
 
-	if (!_q || (_q->body.len == 0)) {
+	if(!_q || (_q->body.len == 0)) {
 		*_r = cfg_get(registrar, registrar_cfg, default_q);
 	} else {
-		if (str2q(_r, _q->body.s, _q->body.len) < 0) {
+		if(str2q(_r, _q->body.s, _q->body.len) < 0) {
 			rerrno = R_INV_Q; /* Invalid q parameter */
 			LM_ERR("invalid q parameter\n");
 			return -1;
