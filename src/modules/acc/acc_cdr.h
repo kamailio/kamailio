@@ -44,11 +44,11 @@
 
 extern int cdr_extra_size;
 
-int set_cdr_extra( char* cdr_extra_value);
-int set_cdr_facility( char* cdr_facility);
-int init_cdr_generation( void);
-void destroy_cdr_generation( void);
-int cdr_core2strar( struct dlg_cell* dlg, str* values, int* unused, char* types);
+int set_cdr_extra(char *cdr_extra_value);
+int set_cdr_facility(char *cdr_facility);
+int init_cdr_generation(void);
+void destroy_cdr_generation(void);
+int cdr_core2strar(struct dlg_cell *dlg, str *values, int *unused, char *types);
 
 int cdr_arrays_alloc(void);
 void cdr_arrays_free(void);

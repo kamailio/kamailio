@@ -37,7 +37,7 @@
 #include "acc_api.h"
 
 int acc_parse_code(char *p, struct acc_param *param);
-void acc_onreq( struct cell* t, int type, struct tmcb_params *ps );
+void acc_onreq(struct cell *t, int type, struct tmcb_params *ps);
 
 int w_acc_log_request(struct sip_msg *rq, char *comment, char *foo);
 int ki_acc_log_request(sip_msg_t *rq, str *comment);
@@ -48,9 +48,8 @@ int ki_acc_db_request(sip_msg_t *rq, str *comment, str *dbtable);
 int w_acc_request(sip_msg_t *rq, char *comment, char *table);
 int ki_acc_request(sip_msg_t *rq, str *comment, str *dbtable);
 
-int acc_api_exec(struct sip_msg *rq, acc_engine_t *eng,
-		acc_param_t* comment);
+int acc_api_exec(struct sip_msg *rq, acc_engine_t *eng, acc_param_t *comment);
 int cdr_api_exec(struct dlg_cell *dlg, struct sip_msg *rq, cdr_engine_t *eng,
-		acc_param_t* comment);
+		acc_param_t *comment);
 
 #endif
