@@ -68,8 +68,8 @@ int allow_address(sip_msg_t *_msg, int addr_group, str *ips, int port);
  * given address group and has given ip address and port.  Port value
  * 0 in cached address table matches any port.
  */
-int w_allow_address(struct sip_msg* _msg, char* _addr_group, char* _addr_sp,
-		char* _port_sp);
+int w_allow_address(struct sip_msg *_msg, char *_addr_group, char *_addr_sp,
+		char *_port_sp);
 
 
 int allow_source_address(sip_msg_t *_msg, int addr_group);
@@ -78,7 +78,8 @@ int allow_source_address(sip_msg_t *_msg, int addr_group);
  * w_allow_source_address("group") equals to allow_address("group", "$si", "$sp")
  * but is faster.
  */
-int w_allow_source_address(struct sip_msg* _msg, char* _addr_group, char* _str2);
+int w_allow_source_address(
+		struct sip_msg *_msg, char *_addr_group, char *_str2);
 
 
 /*
@@ -86,17 +87,17 @@ int w_allow_source_address(struct sip_msg* _msg, char* _addr_group, char* _str2)
  * subnet table in any group. If yes, returns that group. If not returns -1.
  * Port value 0 in cached address and group table matches any port.
  */
-int allow_source_address_group(struct sip_msg* _msg, char* _str1, char* _str2);
+int allow_source_address_group(struct sip_msg *_msg, char *_str1, char *_str2);
 
-int ki_allow_source_address_group(sip_msg_t* _msg);
+int ki_allow_source_address_group(sip_msg_t *_msg);
 
 /*
  * Checks if address/port is found in cached address or
  * subnet table in any group. If yes, returns that group. If not returns -1.
  * Port value 0 in cached address and group table matches any port.
  */
-int allow_address_group(struct sip_msg* _msg, char* _addr, char* _port);
+int allow_address_group(struct sip_msg *_msg, char *_addr, char *_port);
 
-int ki_allow_address_group(sip_msg_t* _msg, str* _addr, int _port);
+int ki_allow_address_group(sip_msg_t *_msg, str *_addr, int _port);
 
 #endif /* ADDRESS_H */
