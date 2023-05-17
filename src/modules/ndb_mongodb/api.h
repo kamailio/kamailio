@@ -26,25 +26,30 @@
 
 #include "../../core/sr_module.h"
 
-typedef int (*mongodbc_exec_simple_f)(str *srv, str *dname, str *cname, str *cmd, str *res);
-typedef int (*mongodbc_exec_f)(str *srv, str *dname, str *cname, str *cmd, str *res);
-typedef int (*mongodbc_find_f)(str *srv, str *dname, str *cname, str *cmd, str *res);
-typedef int (*mongodbc_find_one_f)(str *srv, str *dname, str *cname, str *cmd, str *res);
+typedef int (*mongodbc_exec_simple_f)(
+		str *srv, str *dname, str *cname, str *cmd, str *res);
+typedef int (*mongodbc_exec_f)(
+		str *srv, str *dname, str *cname, str *cmd, str *res);
+typedef int (*mongodbc_find_f)(
+		str *srv, str *dname, str *cname, str *cmd, str *res);
+typedef int (*mongodbc_find_one_f)(
+		str *srv, str *dname, str *cname, str *cmd, str *res);
 typedef int (*mongodbc_next_reply_f)(str *name);
 typedef int (*mongodbc_free_reply_f)(str *name);
 
 
-typedef struct ndb_mongodb_api {
+typedef struct ndb_mongodb_api
+{
 	mongodbc_exec_simple_f cmd_simple;
-	mongodbc_exec_f	cmd;
-	mongodbc_find_f	find;
-	mongodbc_find_one_f	find_one;
+	mongodbc_exec_f cmd;
+	mongodbc_find_f find;
+	mongodbc_find_one_f find_one;
 	mongodbc_next_reply_f next_reply;
 	mongodbc_next_reply_f free_reply;
 } ndb_mongodb_api_t;
 
-typedef int (*bind_ndb_mongodb_f)(ndb_mongodb_api_t* api);
-int bind_ndb_mongodb(ndb_mongodb_api_t* api);
+typedef int (*bind_ndb_mongodb_f)(ndb_mongodb_api_t *api);
+int bind_ndb_mongodb(ndb_mongodb_api_t *api);
 
 /**
  * @brief Load the dispatcher API
@@ -58,8 +63,7 @@ static inline int ndb_mongodb_load_api(ndb_mongodb_api_t *api)
 		LM_ERR("cannot find bind_ndb_mongodb\n");
 		return -1;
 	}
-	if(bindndbmongodb(api)<0)
-	{
+	if(bindndbmongodb(api) < 0) {
 		LM_ERR("cannot bind ndb mongodb api\n");
 		return -1;
 	}
