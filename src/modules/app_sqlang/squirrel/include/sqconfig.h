@@ -15,7 +15,8 @@ typedef unsigned int SQUnsignedInteger32;
 #else
 typedef int SQInteger;
 typedef int SQInt32; /*must be 32 bits(also on 64bits processors)*/
-typedef unsigned int SQUnsignedInteger32; /*must be 32 bits(also on 64bits processors)*/
+typedef unsigned int
+		SQUnsignedInteger32; /*must be 32 bits(also on 64bits processors)*/
 typedef unsigned int SQUnsignedInteger;
 typedef unsigned int SQHash; /*should be the same size of a pointer*/
 #endif
@@ -27,15 +28,20 @@ typedef double SQFloat;
 typedef float SQFloat;
 #endif
 
-#if defined(SQUSEDOUBLE) && !defined(_SQ64) || !defined(SQUSEDOUBLE) && defined(_SQ64)
+#if defined(SQUSEDOUBLE) && !defined(_SQ64) \
+		|| !defined(SQUSEDOUBLE) && defined(_SQ64)
 #ifdef _MSC_VER
 typedef __int64 SQRawObjectVal; //must be 64bits
 #else
-typedef long long SQRawObjectVal; //must be 64bits
+typedef long long SQRawObjectVal;  //must be 64bits
 #endif
-#define SQ_OBJECT_RAWINIT() { _unVal.raw = 0; }
+#define SQ_OBJECT_RAWINIT() \
+	{                       \
+		_unVal.raw = 0;     \
+	}
 #else
-typedef SQUnsignedInteger SQRawObjectVal; //is 32 bits on 32 bits builds and 64 bits otherwise
+typedef SQUnsignedInteger
+		SQRawObjectVal; //is 32 bits on 32 bits builds and 64 bits otherwise
 #define SQ_OBJECT_RAWINIT()
 #endif
 
@@ -47,7 +53,7 @@ typedef SQUnsignedInteger SQRawObjectVal; //is 32 bits on 32 bits builds and 64 
 #endif
 #endif
 
-typedef void* SQUserPointer;
+typedef void *SQUserPointer;
 typedef SQUnsignedInteger SQBool;
 typedef SQInteger SQRESULT;
 
@@ -59,23 +65,23 @@ typedef SQInteger SQRESULT;
 typedef wchar_t SQChar;
 
 
-#define scstrcmp    wcscmp
+#define scstrcmp wcscmp
 #ifdef _WIN32
-#define scsprintf   _snwprintf
+#define scsprintf _snwprintf
 #else
-#define scsprintf   swprintf
+#define scsprintf swprintf
 #endif
-#define scstrlen    wcslen
-#define scstrtod    wcstod
+#define scstrlen wcslen
+#define scstrtod wcstod
 #ifdef _SQ64
-#define scstrtol    wcstoll
+#define scstrtol wcstoll
 #else
-#define scstrtol    wcstol
+#define scstrtol wcstol
 #endif
-#define scstrtoul   wcstoul
-#define scvsprintf  vswprintf
-#define scstrstr    wcsstr
-#define scprintf    wprintf
+#define scstrtoul wcstoul
+#define scvsprintf vswprintf
+#define scstrstr wcsstr
+#define scprintf wprintf
 
 #ifdef _WIN32
 #define WCHAR_SIZE 2
@@ -90,48 +96,48 @@ typedef wchar_t SQChar;
 #define _SC(a) L##a
 
 
-#define scisspace   iswspace
-#define scisdigit   iswdigit
-#define scisprint   iswprint
-#define scisxdigit  iswxdigit
-#define scisalpha   iswalpha
-#define sciscntrl   iswcntrl
-#define scisalnum   iswalnum
+#define scisspace iswspace
+#define scisdigit iswdigit
+#define scisprint iswprint
+#define scisxdigit iswxdigit
+#define scisalpha iswalpha
+#define sciscntrl iswcntrl
+#define scisalnum iswalnum
 
 
-#define sq_rsl(l) ((l)<<WCHAR_SHIFT_MUL)
+#define sq_rsl(l) ((l) << WCHAR_SHIFT_MUL)
 
 #else
 typedef char SQChar;
 #define _SC(a) a
-#define scstrcmp    strcmp
+#define scstrcmp strcmp
 #ifdef _MSC_VER
-#define scsprintf   _snprintf
+#define scsprintf _snprintf
 #else
-#define scsprintf   snprintf
+#define scsprintf snprintf
 #endif
-#define scstrlen    strlen
-#define scstrtod    strtod
+#define scstrlen strlen
+#define scstrtod strtod
 #ifdef _SQ64
 #ifdef _MSC_VER
-#define scstrtol    _strtoi64
+#define scstrtol _strtoi64
 #else
-#define scstrtol    strtoll
+#define scstrtol strtoll
 #endif
 #else
-#define scstrtol    strtol
+#define scstrtol strtol
 #endif
-#define scstrtoul   strtoul
-#define scvsprintf  vsnprintf
-#define scstrstr    strstr
-#define scisspace   isspace
-#define scisdigit   isdigit
-#define scisprint   isprint
-#define scisxdigit  isxdigit
-#define sciscntrl   iscntrl
-#define scisalpha   isalpha
-#define scisalnum   isalnum
-#define scprintf    printf
+#define scstrtoul strtoul
+#define scvsprintf vsnprintf
+#define scstrstr strstr
+#define scisspace isspace
+#define scisdigit isdigit
+#define scisprint isprint
+#define scisxdigit isxdigit
+#define sciscntrl iscntrl
+#define scisalpha isalpha
+#define scisalnum isalnum
+#define scprintf printf
 #define MAX_CHAR 0xFF
 
 #define sq_rsl(l) (l)

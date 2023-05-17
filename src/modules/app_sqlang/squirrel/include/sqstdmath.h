@@ -3,10 +3,11 @@
 #define _SQSTD_MATH_H_
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-SQUIRREL_API SQRESULT sqstd_register_mathlib(HSQUIRRELVM v);
+	SQUIRREL_API SQRESULT sqstd_register_mathlib(HSQUIRRELVM v);
 
 #ifdef __cplusplus
 } /*extern "C"*/

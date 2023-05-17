@@ -35,10 +35,9 @@ int sqlang_sr_initialized(void);
 
 int sr_kemi_sqlang_exec_func(HSQUIRRELVM J, int eidx);
 
-int app_sqlang_run_ex(sip_msg_t *msg, char *func, char *p1, char *p2,
-		char *p3, int emode);
-int app_sqlang_run(sip_msg_t *msg, char *func, char *p1, char *p2,
-		char *p3);
+int app_sqlang_run_ex(
+		sip_msg_t *msg, char *func, char *p1, char *p2, char *p3, int emode);
+int app_sqlang_run(sip_msg_t *msg, char *func, char *p1, char *p2, char *p3);
 int app_sqlang_runstring(sip_msg_t *msg, char *script);
 int app_sqlang_dostring(sip_msg_t *msg, char *script);
 int app_sqlang_dofile(sip_msg_t *msg, char *script);

@@ -29,9 +29,10 @@
 #include <squirrel.h>
 #include "../../core/kemi.h"
 
-#define SR_KEMI_SQLANG_EXPORT_SIZE	1024
+#define SR_KEMI_SQLANG_EXPORT_SIZE 1024
 
-typedef struct sr_kemi_sqlang_export {
+typedef struct sr_kemi_sqlang_export
+{
 	SQFUNCTION pfunc;
 	sr_kemi_t *ket;
 } sr_kemi_sqlang_export_t;
