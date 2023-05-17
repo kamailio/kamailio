@@ -24,16 +24,33 @@
 
 #include "../../core/rpc.h"
 
-enum reply_type { RT_1xx = 0,  RT_200, RT_202, RT_2xx,
-		  RT_300, RT_301, RT_302, RT_3xx,
-		  RT_400, RT_401, RT_403, RT_404, RT_407, 
-		  RT_408, RT_483, RT_4xx,
-		  RT_500, RT_5xx, 
-		  RT_6xx,
-		  RT_xxx,
-		  RT_END };
+enum reply_type
+{
+	RT_1xx = 0,
+	RT_200,
+	RT_202,
+	RT_2xx,
+	RT_300,
+	RT_301,
+	RT_302,
+	RT_3xx,
+	RT_400,
+	RT_401,
+	RT_403,
+	RT_404,
+	RT_407,
+	RT_408,
+	RT_483,
+	RT_4xx,
+	RT_500,
+	RT_5xx,
+	RT_6xx,
+	RT_xxx,
+	RT_END
+};
 
-struct sl_stats {
+struct sl_stats
+{
 	unsigned long err[RT_END];
 	unsigned long all_replies;
 	unsigned long err_replies;
@@ -43,10 +60,10 @@ struct sl_stats {
 
 int init_sl_stats(void);
 int init_sl_stats_child(void);
-void update_sl_stats( int code );
-void update_sl_failures( void );
-void update_sl_err_replies( void );
-void update_sl_filtered_acks( void );
+void update_sl_stats(int code);
+void update_sl_failures(void);
+void update_sl_err_replies(void);
+void update_sl_filtered_acks(void);
 void sl_stats_destroy();
 
 extern rpc_export_t sl_rpc[];
