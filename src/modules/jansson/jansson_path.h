@@ -11,7 +11,7 @@
 #include <jansson.h>
 
 json_t *json_path_get(const json_t *json, const char *path);
-int json_path_set(json_t *json, const char *path, json_t *value, unsigned int append);
+int json_path_set(
+		json_t *json, const char *path, json_t *value, unsigned int append);
 
 #endif
-

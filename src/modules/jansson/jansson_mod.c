@@ -34,76 +34,78 @@ MODULE_VERSION
 
 /* module functions */
 static int mod_init(void);
-static int fixup_get_params(void** param, int param_no);
-static int fixup_get_params_free(void** param, int param_no);
-static int fixup_pv_get_params(void** param, int param_no);
-static int fixup_pv_get_params_free(void** param, int param_no);
-static int fixup_set_params(void** param, int param_no);
-static int fixup_set_params_free(void** param, int param_no);
-static int fixup_xencode(void** param, int param_no);
-static int fixup_xencode_free(void** param, int param_no);
+static int fixup_get_params(void **param, int param_no);
+static int fixup_get_params_free(void **param, int param_no);
+static int fixup_pv_get_params(void **param, int param_no);
+static int fixup_pv_get_params_free(void **param, int param_no);
+static int fixup_set_params(void **param, int param_no);
+static int fixup_set_params_free(void **param, int param_no);
+static int fixup_xencode(void **param, int param_no);
+static int fixup_xencode_free(void **param, int param_no);
 
 
-int janssonmod_set_replace(struct sip_msg* msg, char* type_in, char* path_in,
-		char* value_in, char* result){
+int janssonmod_set_replace(struct sip_msg *msg, char *type_in, char *path_in,
+		char *value_in, char *result)
+{
 	return janssonmod_set(0, msg, type_in, path_in, value_in, result);
 }
 
-int janssonmod_set_append(struct sip_msg* msg, char* type_in, char* path_in,
-		char* value_in, char* result) {
+int janssonmod_set_append(struct sip_msg *msg, char *type_in, char *path_in,
+		char *value_in, char *result)
+{
 	return janssonmod_set(1, msg, type_in, path_in, value_in, result);
 }
-int janssonmod_get_field(struct sip_msg* msg, char* jansson_in, char* path_in,
-		char* result) {
+int janssonmod_get_field(
+		struct sip_msg *msg, char *jansson_in, char *path_in, char *result)
+{
 	return janssonmod_get(msg, path_in, jansson_in, result);
 }
 
 /* Exported functions */
-static cmd_export_t cmds[]={
-	{"jansson_get", (cmd_function)janssonmod_get, 3,
-		fixup_get_params, fixup_get_params_free, ANY_ROUTE},
-	{"jansson_pv_get", (cmd_function)janssonmod_pv_get, 3,
-		fixup_pv_get_params, fixup_pv_get_params_free, ANY_ROUTE},
-	{"jansson_array_size", (cmd_function)janssonmod_array_size, 3,
-		fixup_get_params, fixup_get_params_free, ANY_ROUTE},
-	{"jansson_set", (cmd_function)janssonmod_set_replace, 4,
-		fixup_set_params, fixup_set_params_free, ANY_ROUTE},
-	{"jansson_append", (cmd_function)janssonmod_set_append, 4,
-		fixup_set_params, fixup_set_params_free, ANY_ROUTE},
-	{"jansson_xdecode", (cmd_function)jansson_xdecode, 2,
-		fixup_spve_spve, fixup_free_spve_spve, ANY_ROUTE},
-	{"jansson_xencode", (cmd_function)jansson_xencode, 2,
-		fixup_xencode, fixup_xencode_free, ANY_ROUTE},
-	/* for backwards compatibility */
-	{"jansson_get_field", (cmd_function)janssonmod_get_field, 3,
-		fixup_get_params, fixup_get_params_free, ANY_ROUTE},
-	/* non-script functions */
-	{"jansson_to_val", (cmd_function)jansson_to_val, 0, 0, 0, 0},
+static cmd_export_t cmds[] = {
+		{"jansson_get", (cmd_function)janssonmod_get, 3, fixup_get_params,
+				fixup_get_params_free, ANY_ROUTE},
+		{"jansson_pv_get", (cmd_function)janssonmod_pv_get, 3,
+				fixup_pv_get_params, fixup_pv_get_params_free, ANY_ROUTE},
+		{"jansson_array_size", (cmd_function)janssonmod_array_size, 3,
+				fixup_get_params, fixup_get_params_free, ANY_ROUTE},
+		{"jansson_set", (cmd_function)janssonmod_set_replace, 4,
+				fixup_set_params, fixup_set_params_free, ANY_ROUTE},
+		{"jansson_append", (cmd_function)janssonmod_set_append, 4,
+				fixup_set_params, fixup_set_params_free, ANY_ROUTE},
+		{"jansson_xdecode", (cmd_function)jansson_xdecode, 2, fixup_spve_spve,
+				fixup_free_spve_spve, ANY_ROUTE},
+		{"jansson_xencode", (cmd_function)jansson_xencode, 2, fixup_xencode,
+				fixup_xencode_free, ANY_ROUTE},
+		/* for backwards compatibility */
+		{"jansson_get_field", (cmd_function)janssonmod_get_field, 3,
+				fixup_get_params, fixup_get_params_free, ANY_ROUTE},
+		/* non-script functions */
+		{"jansson_to_val", (cmd_function)jansson_to_val, 0, 0, 0, 0},
 
-	{0, 0, 0, 0, 0, 0}
-};
+		{0, 0, 0, 0, 0, 0}};
 
 struct module_exports exports = {
-	"jansson",       /* module name */
-	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,            /* cmd (cfg function) exports */
-	0,               /* param exports */
-	0,               /* RPC method exports */
-	0,               /* pseudo-variables exports */
-	0,               /* response handling function */
-	mod_init,        /* module init function */
-	0,               /* per-child init function */
-	0                /* module destroy function */
+		"jansson",		 /* module name */
+		DEFAULT_DLFLAGS, /* dlopen flags */
+		cmds,			 /* cmd (cfg function) exports */
+		0,				 /* param exports */
+		0,				 /* RPC method exports */
+		0,				 /* pseudo-variables exports */
+		0,				 /* response handling function */
+		mod_init,		 /* module init function */
+		0,				 /* per-child init function */
+		0				 /* module destroy function */
 };
 
 
-static int fixup_get_params(void** param, int param_no)
+static int fixup_get_params(void **param, int param_no)
 {
-	if (param_no <= 2) {
+	if(param_no <= 2) {
 		return fixup_spve_null(param, 1);
 	}
 
-	if (param_no == 3) {
+	if(param_no == 3) {
 		return fixup_pvar_null(param, 1);
 	}
 
@@ -111,13 +113,13 @@ static int fixup_get_params(void** param, int param_no)
 	return -1;
 }
 
-static int fixup_get_params_free(void** param, int param_no)
+static int fixup_get_params_free(void **param, int param_no)
 {
-	if (param_no <= 2) {
+	if(param_no <= 2) {
 		return fixup_free_spve_null(param, 1);
 	}
 
-	if (param_no == 3) {
+	if(param_no == 3) {
 		return fixup_free_pvar_null(param, 1);
 	}
 
@@ -125,13 +127,13 @@ static int fixup_get_params_free(void** param, int param_no)
 	return -1;
 }
 
-static int fixup_pv_get_params(void** param, int param_no)
+static int fixup_pv_get_params(void **param, int param_no)
 {
-	if (param_no == 1) {
+	if(param_no == 1) {
 		return fixup_spve_null(param, 1);
 	}
 
-	if (param_no == 2 || param_no == 3) {
+	if(param_no == 2 || param_no == 3) {
 		return fixup_pvar_null(param, 1);
 	}
 
@@ -139,13 +141,13 @@ static int fixup_pv_get_params(void** param, int param_no)
 	return -1;
 }
 
-static int fixup_pv_get_params_free(void** param, int param_no)
+static int fixup_pv_get_params_free(void **param, int param_no)
 {
-	if (param_no == 1) {
+	if(param_no == 1) {
 		return fixup_free_spve_null(param, 1);
 	}
 
-	if (param_no == 2 || param_no == 3) {
+	if(param_no == 2 || param_no == 3) {
 		return fixup_free_pvar_null(param, 1);
 	}
 
@@ -153,13 +155,13 @@ static int fixup_pv_get_params_free(void** param, int param_no)
 	return -1;
 }
 
-static int fixup_set_params(void** param, int param_no)
+static int fixup_set_params(void **param, int param_no)
 {
 	if(param_no <= 3) {
 		return fixup_spve_null(param, 1);
 	}
 
-	if (param_no == 4) {
+	if(param_no == 4) {
 		return fixup_pvar_null(param, 1);
 	}
 
@@ -167,13 +169,13 @@ static int fixup_set_params(void** param, int param_no)
 	return -1;
 }
 
-static int fixup_set_params_free(void** param, int param_no)
+static int fixup_set_params_free(void **param, int param_no)
 {
-	if (param_no <= 3) {
+	if(param_no <= 3) {
 		return fixup_free_spve_null(param, 1);
 	}
 
-	if (param_no == 4) {
+	if(param_no == 4) {
 		return fixup_free_pvar_null(param, 1);
 	}
 
@@ -181,20 +183,20 @@ static int fixup_set_params_free(void** param, int param_no)
 	return -1;
 }
 
-static int fixup_xencode(void** param, int param_no)
+static int fixup_xencode(void **param, int param_no)
 {
-	if (param_no == 1) {
+	if(param_no == 1) {
 		return fixup_spve_null(param, 1);
 	}
 
-	if (param_no == 2) {
-		if (fixup_pvar_null(param, 1) != 0) {
-		    LM_ERR("failed to fixup result pvar\n");
-		    return -1;
+	if(param_no == 2) {
+		if(fixup_pvar_null(param, 1) != 0) {
+			LM_ERR("failed to fixup result pvar\n");
+			return -1;
 		}
-		if (((pv_spec_t *)(*param))->setf == NULL) {
-		    LM_ERR("result pvar is not writeble\n");
-		    return -1;
+		if(((pv_spec_t *)(*param))->setf == NULL) {
+			LM_ERR("result pvar is not writeble\n");
+			return -1;
 		}
 		return 0;
 	}
@@ -203,14 +205,14 @@ static int fixup_xencode(void** param, int param_no)
 	return -1;
 }
 
-static int fixup_xencode_free(void** param, int param_no)
+static int fixup_xencode_free(void **param, int param_no)
 {
-	if (param_no == 1) {
+	if(param_no == 1) {
 		fixup_free_spve_null(param, 1);
 		return 0;
 	}
 
-	if (param_no == 2) {
+	if(param_no == 2) {
 		return fixup_free_pvar_null(param, 1);
 	}
 
@@ -219,7 +221,8 @@ static int fixup_xencode_free(void** param, int param_no)
 }
 
 /* just used for unit testing */
-static int mod_init(void) {
+static int mod_init(void)
+{
 	return 0;
 }
 
@@ -231,12 +234,12 @@ static int ki_jansson_get(sip_msg_t *msg, str *spath, str *sdoc, str *spv)
 	pv_spec_t *pvs = NULL;
 
 	pvs = pv_cache_get(spv);
-	if(pvs==NULL) {
+	if(pvs == NULL) {
 		LM_ERR("cannot get pv spec for [%.*s]\n", spv->len, spv->s);
 		return -1;
 	}
 
-	if(pvs->setf==NULL) {
+	if(pvs->setf == NULL) {
 		LM_ERR("read only output var [%.*s]\n", spv->len, spv->s);
 		return -1;
 	}
@@ -248,14 +251,11 @@ static int ki_jansson_get(sip_msg_t *msg, str *spath, str *sdoc, str *spv)
  *
  */
 static sr_kemi_t sr_kemi_jansson_exports[] = {
-	{ str_init("jansson"), str_init("get"),
-		SR_KEMIP_INT, ki_jansson_get,
-		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
-			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
-	},
+		{str_init("jansson"), str_init("get"), SR_KEMIP_INT, ki_jansson_get,
+				{SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
+						SR_KEMIP_NONE, SR_KEMIP_NONE}},
 
-	{{0, 0}, {0, 0}, 0, NULL, {0, 0, 0, 0, 0, 0}}
-};
+		{{0, 0}, {0, 0}, 0, NULL, {0, 0, 0, 0, 0, 0}}};
 
 /**
  *
