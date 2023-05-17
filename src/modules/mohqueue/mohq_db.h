@@ -27,38 +27,38 @@
 **********/
 
 /* table versions */
-#define MOHQ_CTABLE_VERSION  1
-#define MOHQ_QTABLE_VERSION  1
+#define MOHQ_CTABLE_VERSION 1
+#define MOHQ_QTABLE_VERSION 1
 
 /* mohqueues columns */
-#define MOHQ_COLCNT   6
-#define MOHQCOL_ID    0
-#define MOHQCOL_URI   1
-#define MOHQCOL_MDIR  2
+#define MOHQ_COLCNT 6
+#define MOHQCOL_ID 0
+#define MOHQCOL_URI 1
+#define MOHQCOL_MDIR 2
 #define MOHQCOL_MFILE 3
-#define MOHQCOL_NAME  4
+#define MOHQCOL_NAME 4
 #define MOHQCOL_DEBUG 5
 
 /* mohqcalls columns */
-#define CALL_COLCNT   6
+#define CALL_COLCNT 6
 #define CALLCOL_STATE 0
-#define CALLCOL_CALL  1
-#define CALLCOL_MOHQ  2
-#define CALLCOL_FROM  3
+#define CALLCOL_CALL 1
+#define CALLCOL_MOHQ 2
+#define CALLCOL_FROM 3
 #define CALLCOL_CNTCT 4
-#define CALLCOL_TIME  5
+#define CALLCOL_TIME 5
 
 /**********
 * DB function declarations
 **********/
 
-void add_call_rec (int);
-void clear_calls (db1_con_t *);
-void delete_call_rec (call_lst *);
-db1_con_t *mohq_dbconnect (void);
-void mohq_dbdisconnect (db1_con_t *);
-void update_call_rec (call_lst *);
-void update_debug (mohq_lst *, int);
-void update_mohq_lst (db1_con_t *pconn);
+void add_call_rec(int);
+void clear_calls(db1_con_t *);
+void delete_call_rec(call_lst *);
+db1_con_t *mohq_dbconnect(void);
+void mohq_dbdisconnect(db1_con_t *);
+void update_call_rec(call_lst *);
+void update_debug(mohq_lst *, int);
+void update_mohq_lst(db1_con_t *pconn);
 
 #endif /* MOHQ_DB_H */
