@@ -32,12 +32,13 @@ typedef int (*cfgutils_unlock_f)(str *lkey);
 /**
  * @brief CFGUTILS API structure
  */
-typedef struct cfgutils_api {
+typedef struct cfgutils_api
+{
 	cfgutils_lock_f mlock;
 	cfgutils_unlock_f munlock;
 } cfgutils_api_t;
 
-typedef int (*bind_cfgutils_f)(cfgutils_api_t* api);
+typedef int (*bind_cfgutils_f)(cfgutils_api_t *api);
 
 /**
  * @brief Load the CFGUTILS API
@@ -51,8 +52,7 @@ static inline int cfgutils_load_api(cfgutils_api_t *api)
 		LM_ERR("cannot find bind_cfgutils\n");
 		return -1;
 	}
-	if (bindcfgutils(api)<0)
-	{
+	if(bindcfgutils(api) < 0) {
 		LM_ERR("cannot bind cfgutils api\n");
 		return -1;
 	}
