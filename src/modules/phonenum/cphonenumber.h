@@ -25,30 +25,32 @@
 #define _CPHONENUMBER_H_
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-// Phone number details
-typedef struct telnum {
-  char* number;
-  char* normalized;
-  char* ltype;
-  char* ndesc;
-  char* ccname;
-  char* error;
-  int cctel;
-  int valid;
-} telnum_t;
+	// Phone number details
+	typedef struct telnum
+	{
+		char *number;
+		char *normalized;
+		char *ltype;
+		char *ndesc;
+		char *ccname;
+		char *error;
+		int cctel;
+		int valid;
+	} telnum_t;
 
-telnum_t* telnum_new(char*);
-void telnum_free(telnum_t*);
+	telnum_t *telnum_new(char *);
+	void telnum_free(telnum_t *);
 
-// test if number is possible
-int telnum_possible(char* number, char* region);
-// parse a number
-telnum_t* telnum_parse(char* number, char* region);
-// get country code for number
-char* telnum_cc(char* number);
+	// test if number is possible
+	int telnum_possible(char *number, char *region);
+	// parse a number
+	telnum_t *telnum_parse(char *number, char *region);
+	// get country code for number
+	char *telnum_cc(char *number);
 
 #ifdef __cplusplus
 }
