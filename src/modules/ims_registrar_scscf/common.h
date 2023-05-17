@@ -26,7 +26,7 @@
  * \file
  * \brief SIP registrar module - common stuff
  * \ingroup registrar   
- */  
+ */
 
 
 #ifndef COMMON_H
@@ -38,7 +38,7 @@
 /*! \brief
  * Extract Address Of Record
  */
-int extract_aor(str* _uri, str* _a);
+int extract_aor(str *_uri, str *_a);
 
 
 #endif /* COMMON_H */

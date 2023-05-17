@@ -43,14 +43,16 @@
 #include "stats.h"
 #include "registrar_notify.h"
 
-int register_stats() {
+int register_stats()
+{
 	//SAR
-	if (register_stat(MOD_NAME, "sar_replies_response_time", &sar_replies_response_time,0 )
+	if(register_stat(MOD_NAME, "sar_replies_response_time",
+			   &sar_replies_response_time, 0)
 			!= 0) {
 		LM_ERR("failed to register stat\n");
 		return -1;
 	}
-	if (register_stat(MOD_NAME, "sar_replies_received", &sar_replies_received, 0)
+	if(register_stat(MOD_NAME, "sar_replies_received", &sar_replies_received, 0)
 			!= 0) {
 		LM_ERR("failed to register stat\n");
 		return -1;
@@ -59,16 +61,17 @@ int register_stats() {
 	return 1;
 }
 
-unsigned long get_avg_sar_response_time() {
+unsigned long get_avg_sar_response_time()
+{
 
 	long rpls_received = get_stat_val(sar_replies_received);
-	if (!rpls_received)
+	if(!rpls_received)
 		return 0;
 
-	return get_stat_val(sar_replies_response_time)/rpls_received;
+	return get_stat_val(sar_replies_response_time) / rpls_received;
 }
 
-unsigned long get_notification_list_size() {
+unsigned long get_notification_list_size()
+{
 	return notification_list->size;
 }
-

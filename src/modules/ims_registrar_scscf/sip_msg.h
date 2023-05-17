@@ -25,7 +25,7 @@
  * \file
  * \brief SIP registrar module - SIP message related functions
  * \ingroup registrar   
- */  
+ */
 
 
 #ifndef SIP_MSG_H
@@ -40,7 +40,7 @@
  * Parse the whole message and bodies of all header fields
  * that will be needed by registrar
  */
-int parse_message_for_register(struct sip_msg* _m);
+int parse_message_for_register(struct sip_msg *_m);
 
 
 /*! \brief
@@ -48,7 +48,7 @@ int parse_message_for_register(struct sip_msg* _m);
  * The whole message must be parsed before calling the function
  * _s indicates whether the contact was star
  */
-int check_contacts(struct sip_msg* _m, int* _s);
+int check_contacts(struct sip_msg *_m, int *_s);
 
 
 /*! \brief
@@ -68,10 +68,10 @@ int check_contacts(struct sip_msg* _m, int* _s);
  * 1) If q parameter exist, use it
  * 2) If the parameter doesn't exist, use default value
  */
-int calc_contact_q(param_t* _q, qvalue_t* _r);
+int calc_contact_q(param_t *_q, qvalue_t *_r);
 
-contact_t* get_first_contact(struct sip_msg* _m);
-contact_t* get_next_contact(contact_t* _c);
+contact_t *get_first_contact(struct sip_msg *_m);
+contact_t *get_next_contact(contact_t *_c);
 
 
 #endif /* SIP_MSG_H */

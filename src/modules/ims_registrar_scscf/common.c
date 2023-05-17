@@ -34,7 +34,7 @@
  * \ingroup registrar
  */
 
-#include <string.h> 
+#include <string.h>
 #include "../../core/dprint.h"
 #include "../../core/parser/parse_uri.h"
 #include "rerrno.h"
@@ -47,7 +47,8 @@
 /*! \brief
  * Extract Address of Record
  */
-int extract_aor(str* _uri, str* _a) {
+int extract_aor(str *_uri, str *_a)
+{
 	static char aor_buf[MAX_AOR_LEN];
 	str tmp;
 	struct sip_uri puri;
@@ -58,9 +59,9 @@ int extract_aor(str* _uri, str* _a) {
 	str realm_prefix;
 
 	memset(aor_buf, 0, MAX_AOR_LEN);
-	if (aor_avp_name.n != 0) {
+	if(aor_avp_name.n != 0) {
 		avp = search_first_avp(aor_avp_type, aor_avp_name, &avp_val, 0);
-		if (avp && is_avp_str_val(avp)) {
+		if(avp && is_avp_str_val(avp)) {
 			uri = &avp_val.s;
 		} else {
 			uri = _uri;
@@ -69,13 +70,13 @@ int extract_aor(str* _uri, str* _a) {
 		uri = _uri;
 	}
 
-	if (parse_uri(uri->s, uri->len, &puri) < 0) {
+	if(parse_uri(uri->s, uri->len, &puri) < 0) {
 		rerrno = R_AOR_PARSE;
 		LM_ERR("failed to parse Address of Record\n");
 		return -1;
 	}
 
-	if ((puri.user.len + puri.host.len + 1 + 4) > MAX_AOR_LEN
+	if((puri.user.len + puri.host.len + 1 + 4) > MAX_AOR_LEN
 			|| puri.user.len > USERNAME_MAX_SIZE
 			|| puri.host.len > DOMAIN_MAX_SIZE) {
 		rerrno = R_AOR_LEN;
@@ -91,20 +92,20 @@ int extract_aor(str* _uri, str* _a) {
 	tmps.s = _a->s + 4;
 	tmps.len = puri.user.len;
 
-	if (un_escape(&puri.user, &tmps) < 0) {
+	if(un_escape(&puri.user, &tmps) < 0) {
 		rerrno = R_UNESCAPE;
 		LM_ERR("failed to unescape username\n");
 		return -3;
 	}
 
-	user_len = tmps.len + 4;//_a->len;
+	user_len = tmps.len + 4; //_a->len;
 
-	if (user_len>4)
+	if(user_len > 4)
 		aor_buf[_a->len++] = '@';
 	/* strip prefix (if defined) */
 	realm_prefix.s = cfg_get(registrar, registrar_cfg, realm_pref);
 	realm_prefix.len = strlen(realm_prefix.s);
-	if (realm_prefix.len && realm_prefix.len < puri.host.len
+	if(realm_prefix.len && realm_prefix.len < puri.host.len
 			&& (memcmp(realm_prefix.s, puri.host.s, realm_prefix.len) == 0)) {
 		memcpy(aor_buf + _a->len, puri.host.s + realm_prefix.len,
 				puri.host.len - realm_prefix.len);
@@ -114,7 +115,7 @@ int extract_aor(str* _uri, str* _a) {
 		_a->len += puri.host.len;
 	}
 
-	if (cfg_get(registrar, registrar_cfg, case_sensitive) && user_len) {
+	if(cfg_get(registrar, registrar_cfg, case_sensitive) && user_len) {
 		tmp.s = _a->s + user_len + 1;
 		tmp.len = _a->s + _a->len - tmp.s;
 		strlower(&tmp);

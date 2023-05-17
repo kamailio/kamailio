@@ -67,245 +67,267 @@
 extern struct cdp_binds cdpb;
 extern unsigned int send_vs_callid_avp;
 
-int create_return_code(int result) {
-    int rc;
-    int_str avp_val, avp_name;
-    avp_name.s.s = "saa_return_code";
-    avp_name.s.len = 15;
+int create_return_code(int result)
+{
+	int rc;
+	int_str avp_val, avp_name;
+	avp_name.s.s = "saa_return_code";
+	avp_name.s.len = 15;
 
-    //build avp spec for saa_return_code
-    avp_val.n = result;
+	//build avp spec for saa_return_code
+	avp_val.n = result;
 
-    rc = add_avp(AVP_NAME_STR, avp_name, avp_val);
+	rc = add_avp(AVP_NAME_STR, avp_name, avp_val);
 
-    if (rc < 0)
-        LM_ERR("couldnt create AVP\n");
-    else
-        LM_INFO("created AVP successfully : [%.*s] - [%d]\n", avp_name.s.len, avp_name.s.s, result);
+	if(rc < 0)
+		LM_ERR("couldnt create AVP\n");
+	else
+		LM_INFO("created AVP successfully : [%.*s] - [%d]\n", avp_name.s.len,
+				avp_name.s.s, result);
 
-    return 1;
+	return 1;
 }
 
-void free_saved_transaction_data(saved_transaction_t* data) {
-    if (!data)
-        return;
+void free_saved_transaction_data(saved_transaction_t *data)
+{
+	if(!data)
+		return;
 
-    if (data->public_identity.s && data->public_identity.len) {
-        shm_free(data->public_identity.s);
-        data->public_identity.len = 0;
-    }
-    free_contact_buf(data->contact_header);
-    shm_free(data);
+	if(data->public_identity.s && data->public_identity.len) {
+		shm_free(data->public_identity.s);
+		data->public_identity.len = 0;
+	}
+	free_contact_buf(data->contact_header);
+	shm_free(data);
 }
 
-void async_cdp_callback(int is_timeout, void *param, AAAMessage *saa, long elapsed_msecs) {
-    struct cell *t = 0;
-    int rc = -1, experimental_rc = -1;
-    int result = CSCF_RETURN_TRUE;
-    saved_transaction_t* data = 0;
-    struct sip_msg* req;
+void async_cdp_callback(
+		int is_timeout, void *param, AAAMessage *saa, long elapsed_msecs)
+{
+	struct cell *t = 0;
+	int rc = -1, experimental_rc = -1;
+	int result = CSCF_RETURN_TRUE;
+	saved_transaction_t *data = 0;
+	struct sip_msg *req;
 
-    str xml_data = {0, 0}, ccf1 = {0, 0}, ccf2 = {0, 0}, ecf1 = {0, 0}, ecf2 = {0, 0};
-    ims_subscription* s = 0;
-    rerrno = R_FINE;
+	str xml_data = {0, 0}, ccf1 = {0, 0}, ccf2 = {0, 0}, ecf1 = {0, 0},
+		ecf2 = {0, 0};
+	ims_subscription *s = 0;
+	rerrno = R_FINE;
 
-    if (!param) {
-        LM_DBG("No transaction data this must have been called from usrloc cb impu deleted - just log result code and then exit");
-        cxdx_get_result_code(saa, &rc);
-        cxdx_get_experimental_result_code(saa, &experimental_rc);
+	if(!param) {
+		LM_DBG("No transaction data this must have been called from usrloc cb "
+			   "impu deleted - just log result code and then exit");
+		cxdx_get_result_code(saa, &rc);
+		cxdx_get_experimental_result_code(saa, &experimental_rc);
 
-        if (saa) cdpb.AAAFreeMessage(&saa);
+		if(saa)
+			cdpb.AAAFreeMessage(&saa);
 
-        if (!rc && !experimental_rc) {
-            LM_ERR("bad SAA result code\n");
-            return;
-        }
-        switch (rc) {
-            case -1:
-                LM_DBG("Received Diameter error\n");
-                return;
+		if(!rc && !experimental_rc) {
+			LM_ERR("bad SAA result code\n");
+			return;
+		}
+		switch(rc) {
+			case -1:
+				LM_DBG("Received Diameter error\n");
+				return;
 
-            case AAA_UNABLE_TO_COMPLY:
-                LM_DBG("Unable to comply\n");
-                return;
+			case AAA_UNABLE_TO_COMPLY:
+				LM_DBG("Unable to comply\n");
+				return;
 
-            case AAA_SUCCESS:
-                LM_DBG("received AAA success\n");
-                return;
+			case AAA_SUCCESS:
+				LM_DBG("received AAA success\n");
+				return;
 
-            default:
-                LM_ERR("Unknown error\n");
-                return;
-        }
+			default:
+				LM_ERR("Unknown error\n");
+				return;
+		}
 
-    } else {
-        LM_DBG("There is transaction data this must have been called from save or assign server unreg");
-        data = (saved_transaction_t*) param;
-        if (tmb.t_lookup_ident(&t, data->tindex, data->tlabel) < 0) {
-            LM_ERR("t_continue: transaction not found and t is now pointing to %p and will be set to NULL\n", t);
-            t = NULL;
-            rerrno = R_SAR_FAILED;
-            goto error_no_send;
-        }
+	} else {
+		LM_DBG("There is transaction data this must have been called from save "
+			   "or assign server unreg");
+		data = (saved_transaction_t *)param;
+		if(tmb.t_lookup_ident(&t, data->tindex, data->tlabel) < 0) {
+			LM_ERR("t_continue: transaction not found and t is now pointing to "
+				   "%p and will be set to NULL\n",
+					t);
+			t = NULL;
+			rerrno = R_SAR_FAILED;
+			goto error_no_send;
+		}
 
-	set_avp_list(AVP_TRACK_FROM | AVP_CLASS_URI, &t->uri_avps_from);
-	set_avp_list(AVP_TRACK_TO | AVP_CLASS_URI, &t->uri_avps_to);
-	set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER, &t->user_avps_from);
-	set_avp_list(AVP_TRACK_TO | AVP_CLASS_USER, &t->user_avps_to);
-	set_avp_list(AVP_TRACK_FROM | AVP_CLASS_DOMAIN, &t->domain_avps_from);
-	set_avp_list(AVP_TRACK_TO | AVP_CLASS_DOMAIN, &t->domain_avps_to);
+		set_avp_list(AVP_TRACK_FROM | AVP_CLASS_URI, &t->uri_avps_from);
+		set_avp_list(AVP_TRACK_TO | AVP_CLASS_URI, &t->uri_avps_to);
+		set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER, &t->user_avps_from);
+		set_avp_list(AVP_TRACK_TO | AVP_CLASS_USER, &t->user_avps_to);
+		set_avp_list(AVP_TRACK_FROM | AVP_CLASS_DOMAIN, &t->domain_avps_from);
+		set_avp_list(AVP_TRACK_TO | AVP_CLASS_DOMAIN, &t->domain_avps_to);
 
-        get_act_time();
+		get_act_time();
 
-        req = get_request_from_tx(t);
-        if (!req) {
-            LM_ERR("Failed to get SIP Request from Transaction\n");
-            goto error_no_send;
-        }
-        
-        if (is_timeout) {
-        	update_stat(stat_sar_timeouts, 1);
-            LM_ERR("Transaction timeout - did not get SAA\n");
-            rerrno = R_SAR_FAILED;
-            goto error;
-        }
-        if (!saa) {
-            LM_ERR("Error sending message via CDP\n");
-            rerrno = R_SAR_FAILED;
-            goto error;
-        }
+		req = get_request_from_tx(t);
+		if(!req) {
+			LM_ERR("Failed to get SIP Request from Transaction\n");
+			goto error_no_send;
+		}
 
-        update_stat(sar_replies_received, 1);
-        update_stat(sar_replies_response_time, elapsed_msecs);
+		if(is_timeout) {
+			update_stat(stat_sar_timeouts, 1);
+			LM_ERR("Transaction timeout - did not get SAA\n");
+			rerrno = R_SAR_FAILED;
+			goto error;
+		}
+		if(!saa) {
+			LM_ERR("Error sending message via CDP\n");
+			rerrno = R_SAR_FAILED;
+			goto error;
+		}
 
-        
-        /* check and see that all the required headers are available and can be parsed */
-        if (parse_message_for_register(req) < 0) {
-            LM_ERR("Unable to parse register message correctly\n");
-            rerrno = R_SAR_FAILED;
-            goto error;
-        }
-		
-		LM_DBG("callid for found transaction is [%.*s]\n", req->callid->body.len, req->callid->body.s);
+		update_stat(sar_replies_received, 1);
+		update_stat(sar_replies_response_time, elapsed_msecs);
 
 
-        cxdx_get_result_code(saa, &rc);
-        cxdx_get_experimental_result_code(saa, &experimental_rc);
-        cxdx_get_charging_info(saa, &ccf1, &ccf2, &ecf1, &ecf2);
+		/* check and see that all the required headers are available and can be parsed */
+		if(parse_message_for_register(req) < 0) {
+			LM_ERR("Unable to parse register message correctly\n");
+			rerrno = R_SAR_FAILED;
+			goto error;
+		}
 
-        if (!rc && !experimental_rc) {
-            LM_ERR("bad SAA result code\n");
-            rerrno = R_SAR_FAILED;
-            goto error;
-        }
+		LM_DBG("callid for found transaction is [%.*s]\n",
+				req->callid->body.len, req->callid->body.s);
 
-        switch (rc) {
-            case -1:
-                LM_DBG("Received Diameter error\n");
-                rerrno = R_SAR_FAILED;
-                goto error;
 
-            case AAA_UNABLE_TO_COMPLY:
-                LM_DBG("Unable to comply\n");
-                rerrno = R_SAR_FAILED;
-                goto error;
+		cxdx_get_result_code(saa, &rc);
+		cxdx_get_experimental_result_code(saa, &experimental_rc);
+		cxdx_get_charging_info(saa, &ccf1, &ccf2, &ecf1, &ecf2);
 
-            case AAA_SUCCESS:
-                LM_DBG("received AAA success for SAR - SAA\n");
-                break;
+		if(!rc && !experimental_rc) {
+			LM_ERR("bad SAA result code\n");
+			rerrno = R_SAR_FAILED;
+			goto error;
+		}
 
-            default:
-                LM_ERR("Unknown error\n");
-                rerrno = R_SAR_FAILED;
-                goto error;
-        }
-        //success
-        //if this is from a save (not a server assign unreg) and expires is zero we don't update usrloc as this is a dereg and usrloc was updated previously
-        if (data->sar_assignment_type != AVP_IMS_SAR_UNREGISTERED_USER && data->expires == 0) {
-            LM_DBG("no need to update usrloc - already done for de-reg\n");
-            result = CSCF_RETURN_TRUE;
-            goto success;
-        }
+		switch(rc) {
+			case -1:
+				LM_DBG("Received Diameter error\n");
+				rerrno = R_SAR_FAILED;
+				goto error;
 
-        xml_data = cxdx_get_user_data(saa);
-        /*If there is XML user data we must be able to parse it*/
-        if (xml_data.s && xml_data.len > 0) {
-            LM_DBG("Parsing user data string from SAA\n");
-            s = parse_user_data(xml_data);
-            if (!s) {
-                LM_ERR("Unable to parse user data XML string\n");
-                rerrno = R_SAR_FAILED;
-                goto error;
-            }
-            LM_DBG("Successfully parse user data XML setting ref to 1 (we are referencing it)\n");
-            s->ref_count = 1; //no need to lock as nobody else will be referencing this piece of memory just yet
-        } else {
-            if (data->require_user_data) {
-                LM_ERR("We require User data for this assignment/register and none was supplied\n");
-                rerrno = R_SAR_FAILED;
-                result = CSCF_RETURN_FALSE;
-                goto done;
-            }
-        }
+			case AAA_UNABLE_TO_COMPLY:
+				LM_DBG("Unable to comply\n");
+				rerrno = R_SAR_FAILED;
+				goto error;
 
-        //here we update the contacts and also build the new contact header for the 200 OK reply
-        if (update_contacts(req, data->domain, &data->public_identity, data->sar_assignment_type, &s, &ccf1, &ccf2, &ecf1, &ecf2, &data->contact_header) <= 0) {
-            LM_ERR("Error processing REGISTER\n");
-            rerrno = R_SAR_FAILED;
-            goto error;
-        }
-        
-        if (data->contact_header) {
-            LM_DBG("Updated contacts: %.*s\n", data->contact_header->data_len, data->contact_header->buf);
-        } else {
-            LM_DBG("Updated unreg contact\n");
-        }
-        
-    }
+			case AAA_SUCCESS:
+				LM_DBG("received AAA success for SAR - SAA\n");
+				break;
+
+			default:
+				LM_ERR("Unknown error\n");
+				rerrno = R_SAR_FAILED;
+				goto error;
+		}
+		//success
+		//if this is from a save (not a server assign unreg) and expires is zero we don't update usrloc as this is a dereg and usrloc was updated previously
+		if(data->sar_assignment_type != AVP_IMS_SAR_UNREGISTERED_USER
+				&& data->expires == 0) {
+			LM_DBG("no need to update usrloc - already done for de-reg\n");
+			result = CSCF_RETURN_TRUE;
+			goto success;
+		}
+
+		xml_data = cxdx_get_user_data(saa);
+		/*If there is XML user data we must be able to parse it*/
+		if(xml_data.s && xml_data.len > 0) {
+			LM_DBG("Parsing user data string from SAA\n");
+			s = parse_user_data(xml_data);
+			if(!s) {
+				LM_ERR("Unable to parse user data XML string\n");
+				rerrno = R_SAR_FAILED;
+				goto error;
+			}
+			LM_DBG("Successfully parse user data XML setting ref to 1 (we are "
+				   "referencing it)\n");
+			s->ref_count =
+					1; //no need to lock as nobody else will be referencing this piece of memory just yet
+		} else {
+			if(data->require_user_data) {
+				LM_ERR("We require User data for this assignment/register and "
+					   "none was supplied\n");
+				rerrno = R_SAR_FAILED;
+				result = CSCF_RETURN_FALSE;
+				goto done;
+			}
+		}
+
+		//here we update the contacts and also build the new contact header for the 200 OK reply
+		if(update_contacts(req, data->domain, &data->public_identity,
+				   data->sar_assignment_type, &s, &ccf1, &ccf2, &ecf1, &ecf2,
+				   &data->contact_header)
+				<= 0) {
+			LM_ERR("Error processing REGISTER\n");
+			rerrno = R_SAR_FAILED;
+			goto error;
+		}
+
+		if(data->contact_header) {
+			LM_DBG("Updated contacts: %.*s\n", data->contact_header->data_len,
+					data->contact_header->buf);
+		} else {
+			LM_DBG("Updated unreg contact\n");
+		}
+	}
 
 success:
-    update_stat(accepted_registrations, 1);
+	update_stat(accepted_registrations, 1);
 
 done:
-    if (data->sar_assignment_type != AVP_IMS_SAR_UNREGISTERED_USER)
-        reg_send_reply_transactional(req, data->contact_header, t);
-    LM_DBG("DBG:SAR Async CDP callback: ... Done resuming transaction\n");
+	if(data->sar_assignment_type != AVP_IMS_SAR_UNREGISTERED_USER)
+		reg_send_reply_transactional(req, data->contact_header, t);
+	LM_DBG("DBG:SAR Async CDP callback: ... Done resuming transaction\n");
 
-    create_return_code(result);
+	create_return_code(result);
 
-    //release our reference on subscription (s)
-    if (s) 
-        ul.unref_subscription(s);
-    
-    //free memory
-    if (saa) cdpb.AAAFreeMessage(&saa);
-    if (t) {
-//        del_nonshm_lump_rpl(&req->reply_lump);
-        tmb.unref_cell(t);
-    }
-    //free path vector pkg memory
-//    reset_path_vector(req);
+	//release our reference on subscription (s)
+	if(s)
+		ul.unref_subscription(s);
 
-    tmb.t_continue_skip_timer(data->tindex, data->tlabel, data->act);
-    free_saved_transaction_data(data);
-    return;
+	//free memory
+	if(saa)
+		cdpb.AAAFreeMessage(&saa);
+	if(t) {
+		//        del_nonshm_lump_rpl(&req->reply_lump);
+		tmb.unref_cell(t);
+	}
+	//free path vector pkg memory
+	//    reset_path_vector(req);
+
+	tmb.t_continue_skip_timer(data->tindex, data->tlabel, data->act);
+	free_saved_transaction_data(data);
+	return;
 
 error:
-    create_return_code(-2);
-    if (data->sar_assignment_type != AVP_IMS_SAR_UNREGISTERED_USER)
-        reg_send_reply_transactional(req, data->contact_header, t);
-		
-error_no_send: //if we don't have the transaction then we can't send a transaction response
-    update_stat(rejected_registrations, 1);
-    //free memory
-    if (saa) cdpb.AAAFreeMessage(&saa);
-    if (t) {
-//        del_nonshm_lump_rpl(&req->reply_lump);
-        tmb.unref_cell(t);
-    }
-    tmb.t_continue(data->tindex, data->tlabel, data->act);
-    free_saved_transaction_data(data);
-    return;
+	create_return_code(-2);
+	if(data->sar_assignment_type != AVP_IMS_SAR_UNREGISTERED_USER)
+		reg_send_reply_transactional(req, data->contact_header, t);
+
+error_no_send
+	: //if we don't have the transaction then we can't send a transaction response
+	update_stat(rejected_registrations, 1);
+	//free memory
+	if(saa)
+		cdpb.AAAFreeMessage(&saa);
+	if(t) {
+		//        del_nonshm_lump_rpl(&req->reply_lump);
+		tmb.unref_cell(t);
+	}
+	tmb.t_continue(data->tindex, data->tlabel, data->act);
+	free_saved_transaction_data(data);
+	return;
 }
 
 /**
@@ -318,60 +340,74 @@ error_no_send: //if we don't have the transaction then we can't send a transacti
  * @param data_available - if the data is already available
  * @returns the SAA
  */
-int cxdx_send_sar(struct sip_msg *msg, str public_identity, str private_identity,
-        str server_name, int assignment_type, int data_available, saved_transaction_t* transaction_data) {
-    AAAMessage *sar = 0;
-    AAASession *session = 0;
-    unsigned int hash = 0, label = 0;
-    struct hdr_field *hdr;
+int cxdx_send_sar(struct sip_msg *msg, str public_identity,
+		str private_identity, str server_name, int assignment_type,
+		int data_available, saved_transaction_t *transaction_data)
+{
+	AAAMessage *sar = 0;
+	AAASession *session = 0;
+	unsigned int hash = 0, label = 0;
+	struct hdr_field *hdr;
 	str call_id;
 
-    session = cdpb.AAACreateSession(0);
+	session = cdpb.AAACreateSession(0);
 
-    sar = cdpb.AAACreateRequest(IMS_Cx, IMS_SAR, Flag_Proxyable, session);
-    if (session) {
-        cdpb.AAADropSession(session);
-        session = 0;
-    }
-    if (!sar) goto error1;
+	sar = cdpb.AAACreateRequest(IMS_Cx, IMS_SAR, Flag_Proxyable, session);
+	if(session) {
+		cdpb.AAADropSession(session);
+		session = 0;
+	}
+	if(!sar)
+		goto error1;
 
-    if (msg && send_vs_callid_avp) {
+	if(msg && send_vs_callid_avp) {
 		call_id = cscf_get_call_id(msg, &hdr);
-		if (call_id.len>0 && call_id.s) {
-			if (!cxdx_add_call_id(sar, call_id)) 
-				LM_WARN("Failed to add call-id to SAR.... continuing... assuming non-critical\n");
+		if(call_id.len > 0 && call_id.s) {
+			if(!cxdx_add_call_id(sar, call_id))
+				LM_WARN("Failed to add call-id to SAR.... continuing... "
+						"assuming non-critical\n");
 		}
 	}
-	
-    if (!cxdx_add_destination_realm(sar, cxdx_dest_realm)) goto error1;
 
-    if (!cxdx_add_vendor_specific_appid(sar, IMS_vendor_id_3GPP, IMS_Cx, 0 /*IMS_Cx*/)) goto error1;
-    if (!cxdx_add_auth_session_state(sar, 1)) goto error1;
+	if(!cxdx_add_destination_realm(sar, cxdx_dest_realm))
+		goto error1;
 
-    if (!cxdx_add_public_identity(sar, public_identity)) goto error1;
-    if (!cxdx_add_server_name(sar, server_name)) goto error1;
-    if (private_identity.len)
-        if (!cxdx_add_user_name(sar, private_identity)) goto error1;
-    if (!cxdx_add_server_assignment_type(sar, assignment_type)) goto error1;
-    if (!cxdx_add_userdata_available(sar, data_available)) goto error1;
+	if(!cxdx_add_vendor_specific_appid(
+			   sar, IMS_vendor_id_3GPP, IMS_Cx, 0 /*IMS_Cx*/))
+		goto error1;
+	if(!cxdx_add_auth_session_state(sar, 1))
+		goto error1;
 
-    if (msg && tmb.t_get_trans_ident(msg, &hash, &label) < 0) {
-        // it's ok cause we can call this async with a message for ul callbacks!
-        LM_DBG("SIP message without transaction... must be a ul callback\n");
-        //return 0;
-    }
+	if(!cxdx_add_public_identity(sar, public_identity))
+		goto error1;
+	if(!cxdx_add_server_name(sar, server_name))
+		goto error1;
+	if(private_identity.len)
+		if(!cxdx_add_user_name(sar, private_identity))
+			goto error1;
+	if(!cxdx_add_server_assignment_type(sar, assignment_type))
+		goto error1;
+	if(!cxdx_add_userdata_available(sar, data_available))
+		goto error1;
 
-    if (cxdx_forced_peer.len)
-        cdpb.AAASendMessageToPeer(sar, &cxdx_forced_peer, (void*) async_cdp_callback, (void*) transaction_data);
-    else
-        cdpb.AAASendMessage(sar, (void*) async_cdp_callback, (void*) transaction_data);
+	if(msg && tmb.t_get_trans_ident(msg, &hash, &label) < 0) {
+		// it's ok cause we can call this async with a message for ul callbacks!
+		LM_DBG("SIP message without transaction... must be a ul callback\n");
+		//return 0;
+	}
 
-    return 0;
+	if(cxdx_forced_peer.len)
+		cdpb.AAASendMessageToPeer(sar, &cxdx_forced_peer,
+				(void *)async_cdp_callback, (void *)transaction_data);
+	else
+		cdpb.AAASendMessage(
+				sar, (void *)async_cdp_callback, (void *)transaction_data);
+
+	return 0;
 
 error1: //Only free SAR IFF it has not been passed to CDP
-    if (sar) cdpb.AAAFreeMessage(&sar);
+	if(sar)
+		cdpb.AAAFreeMessage(&sar);
 
-    return -1;
-
-
+	return -1;
 }

@@ -41,15 +41,14 @@
  */
 
 #ifndef USRLOC_CB_H
-#define	USRLOC_CB_H
+#define USRLOC_CB_H
 
 #include "../ims_usrloc_scscf/usrloc.h"
 
-void ul_impu_removed(impurecord_t* r, ucontact_t* c, int type, void* param);
+void ul_impu_removed(impurecord_t *r, ucontact_t *c, int type, void *param);
 
-void ul_impu_inserted(impurecord_t* r, ucontact_t* c, int type, void* param);
+void ul_impu_inserted(impurecord_t *r, ucontact_t *c, int type, void *param);
 
-void ul_contact_changed(impurecord_t* r, ucontact_t* c, int type, void* param);
+void ul_contact_changed(impurecord_t *r, ucontact_t *c, int type, void *param);
 
-#endif	/* USRLOC_CB_H */
-
+#endif /* USRLOC_CB_H */

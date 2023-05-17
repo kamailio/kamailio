@@ -48,20 +48,23 @@
 
 
 extern struct cdp_binds cdpb;
-extern str cxdx_forced_peer; /**< FQDN of the Diameter peer to send requests to */
+extern str
+		cxdx_forced_peer; /**< FQDN of the Diameter peer to send requests to */
 extern str cxdx_dest_realm;
 
-typedef struct saved_transaction {
+typedef struct saved_transaction
+{
 	unsigned int tindex;
 	unsigned int tlabel;
 	unsigned int ticks;
 	cfg_action_t *act;
-        int expires; //used to see if this is a dereg as then we don't need to touch usrloc! > 0 if not dereg - 0 id de-reg
-        int require_user_data;
-        int sar_assignment_type;
-        str public_identity;
-        udomain_t* domain;
-        contact_for_header_t* contact_header;//used to send the 200 OK with contacts after async callback for dereg where we don't rebuild the contacts
+	int expires; //used to see if this is a dereg as then we don't need to touch usrloc! > 0 if not dereg - 0 id de-reg
+	int require_user_data;
+	int sar_assignment_type;
+	str public_identity;
+	udomain_t *domain;
+	contact_for_header_t *
+			contact_header; //used to send the 200 OK with contacts after async callback for dereg where we don't rebuild the contacts
 } saved_transaction_t;
 
 /**
@@ -75,12 +78,12 @@ typedef struct saved_transaction {
  * @param data_available - if the data is already available
  * @returns the SAA
  */
-int cxdx_send_sar(struct sip_msg *msg, str public_identity, str private_identity,
-					str server_name,int assignment_type, int data_available, saved_transaction_t* transaction_data);
+int cxdx_send_sar(struct sip_msg *msg, str public_identity,
+		str private_identity, str server_name, int assignment_type,
+		int data_available, saved_transaction_t *transaction_data);
 
-void free_saved_transaction_data(saved_transaction_t* data);
+void free_saved_transaction_data(saved_transaction_t *data);
 int create_return_code(int result);
- 
+
 
 #endif
-

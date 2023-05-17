@@ -26,7 +26,7 @@
  * \file
  * \brief SIP registrar module - time related functions
  * \ingroup registrar   
- */  
+ */
 
 
 #ifndef REGTIME_H
