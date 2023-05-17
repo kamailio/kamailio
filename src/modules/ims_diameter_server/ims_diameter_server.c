@@ -30,7 +30,7 @@
 
 MODULE_VERSION
 
-extern gen_lock_t* process_lock; /* lock on the process table */
+extern gen_lock_t *process_lock; /* lock on the process table */
 
 struct cdp_binds cdpb;
 cdp_avp_bind_t *cdp_avp;
@@ -48,59 +48,70 @@ static int mod_init(void);
 static int mod_child_init(int);
 static void mod_destroy(void);
 
-int * callback_singleton; /*< Callback singleton */
+int *callback_singleton; /*< Callback singleton */
 
 int event_route_diameter = 0;
 int event_route_diameter_response = 0;
 
-static int diameter_request(struct sip_msg * msg, char* peer, char* appid, char* commandcode, char* message, int async);
-static int w_diameter_request(struct sip_msg * msg, char* appid, char* commandcode, char* message);
-static int w_diameter_request_peer(struct sip_msg *msg, char* peer, char* appid, char* commandcode, char* message);
-static int w_diameter_request_async(struct sip_msg * msg, char* appid, char* commandcode, char* message);
-static int w_diameter_request_peer_async(struct sip_msg *msg, char* peer, char* appid, char* commandcode, char* message);
+static int diameter_request(struct sip_msg *msg, char *peer, char *appid,
+		char *commandcode, char *message, int async);
+static int w_diameter_request(
+		struct sip_msg *msg, char *appid, char *commandcode, char *message);
+static int w_diameter_request_peer(struct sip_msg *msg, char *peer, char *appid,
+		char *commandcode, char *message);
+static int w_diameter_request_async(
+		struct sip_msg *msg, char *appid, char *commandcode, char *message);
+static int w_diameter_request_peer_async(struct sip_msg *msg, char *peer,
+		char *appid, char *commandcode, char *message);
 
-static int ki_diameter_request(struct sip_msg * msg, str* s_peer, int i_appid, int i_commandcode, str* s_message, int async);
-static int ki_diameter_request_peer(struct sip_msg *msg, str* peer, int appid, int commandcode, str* message);
-static int ki_diameter_request_peer_async(struct sip_msg *msg, str* peer, int appid, int commandcode, str* message);
+static int ki_diameter_request(struct sip_msg *msg, str *s_peer, int i_appid,
+		int i_commandcode, str *s_message, int async);
+static int ki_diameter_request_peer(struct sip_msg *msg, str *peer, int appid,
+		int commandcode, str *message);
+static int ki_diameter_request_peer_async(struct sip_msg *msg, str *peer,
+		int appid, int commandcode, str *message);
 
 static cmd_export_t cmds[] = {
-	{"diameter_request", (cmd_function)w_diameter_request, 3, fixup_var_pve_str_12, 0, ANY_ROUTE},
-	{"diameter_request", (cmd_function)w_diameter_request_peer, 4, fixup_var_pve_str_12, 0, ANY_ROUTE},
-	{"diameter_request_async", (cmd_function)w_diameter_request_async, 3, fixup_var_pve_str_12, 0, ANY_ROUTE},
-	{"diameter_request_async", (cmd_function)w_diameter_request_peer_async, 4, fixup_var_pve_str_12, 0, ANY_ROUTE},
-	{ 0, 0, 0, 0, 0, 0}
-};
+		{"diameter_request", (cmd_function)w_diameter_request, 3,
+				fixup_var_pve_str_12, 0, ANY_ROUTE},
+		{"diameter_request", (cmd_function)w_diameter_request_peer, 4,
+				fixup_var_pve_str_12, 0, ANY_ROUTE},
+		{"diameter_request_async", (cmd_function)w_diameter_request_async, 3,
+				fixup_var_pve_str_12, 0, ANY_ROUTE},
+		{"diameter_request_async", (cmd_function)w_diameter_request_peer_async,
+				4, fixup_var_pve_str_12, 0, ANY_ROUTE},
+		{0, 0, 0, 0, 0, 0}};
 
-static param_export_t params[] = {
-    { 0, 0, 0}
-};
+static param_export_t params[] = {{0, 0, 0}};
 
 static pv_export_t mod_pvs[] = {
-	{ {"diameter_command", sizeof("diameter_command")-1}, PVT_OTHER, pv_get_command, 0, 0, 0, 0, 0 },
-	{ {"diameter_application", sizeof("diameter_application")-1}, PVT_OTHER, pv_get_application, 0, 0, 0, 0, 0 },
-	{ {"diameter_request", sizeof("diameter_request")-1}, PVT_OTHER, pv_get_request, 0, 0, 0, 0, 0 },
-	{ {"diameter_response", sizeof("diameter_response")-1}, PVT_OTHER, pv_get_response, pv_set_response, 0, 0, 0, 0 },
-	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
-};
+		{{"diameter_command", sizeof("diameter_command") - 1}, PVT_OTHER,
+				pv_get_command, 0, 0, 0, 0, 0},
+		{{"diameter_application", sizeof("diameter_application") - 1},
+				PVT_OTHER, pv_get_application, 0, 0, 0, 0, 0},
+		{{"diameter_request", sizeof("diameter_request") - 1}, PVT_OTHER,
+				pv_get_request, 0, 0, 0, 0, 0},
+		{{"diameter_response", sizeof("diameter_response") - 1}, PVT_OTHER,
+				pv_get_response, pv_set_response, 0, 0, 0, 0},
+		{{0, 0}, 0, 0, 0, 0, 0, 0, 0}};
 
 /** module exports */
-struct module_exports exports = {
-	"ims_diameter_server", 
-	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds, 		 /* Exported functions */
-	params,  	 /* exported statistics */
-	0, 		 /* exported RPC methods */
-	mod_pvs, 	 /* exported pseudo-variables */
-	0, 		 /* response handling function */
-	mod_init, 	 /* module initialization function */
-	mod_child_init,  /* per-child init function */
-	mod_destroy
-};
+struct module_exports exports = {"ims_diameter_server",
+		DEFAULT_DLFLAGS, /* dlopen flags */
+		cmds,			 /* Exported functions */
+		params,			 /* exported statistics */
+		0,				 /* exported RPC methods */
+		mod_pvs,		 /* exported pseudo-variables */
+		0,				 /* response handling function */
+		mod_init,		 /* module initialization function */
+		mod_child_init,	 /* per-child init function */
+		mod_destroy};
 
 /**
  * init module function
  */
-static int mod_init(void) {
+static int mod_init(void)
+{
 	LM_DBG("Loading...\n");
 
 	request = 0;
@@ -109,34 +120,36 @@ static int mod_init(void) {
 	requestjson.s = 0;
 	requestjson.len = 0;
 
-	callback_singleton = shm_malloc(sizeof (int));
+	callback_singleton = shm_malloc(sizeof(int));
 	*callback_singleton = 0;
 
 	cdp_avp = 0;
 	/* load the CDP API */
-	if (load_cdp_api(&cdpb) != 0) {
+	if(load_cdp_api(&cdpb) != 0) {
 		LM_ERR("can't load CDP API\n");
-        	goto error;
-	    }
+		goto error;
+	}
 
 	cdp_avp = load_cdp_avp();
-	if (!cdp_avp) {
+	if(!cdp_avp) {
 		LM_ERR("can't load CDP_AVP API\n");
 		goto error;
 	}
 
 	event_route_diameter = route_get(&event_rt, "diameter:request");
-	if (event_route_diameter < 0) {
+	if(event_route_diameter < 0) {
 		LM_ERR("No diameter:request event route found\n");
 		goto error;
 	}
 	LM_DBG("Found Route diameter:request: %i\n", event_route_diameter);
 
 	event_route_diameter_response = route_get(&event_rt, "diameter:response");
-	if (event_route_diameter_response < 0) {
-		LM_WARN("No diameter:response event route found, asynchronous operations disabled.\n");
+	if(event_route_diameter_response < 0) {
+		LM_WARN("No diameter:response event route found, asynchronous "
+				"operations disabled.\n");
 	} else {
-		LM_DBG("Found Route diameter:response: %i\n", event_route_diameter_response);
+		LM_DBG("Found Route diameter:response: %i\n",
+				event_route_diameter_response);
 	}
 
 	return 0;
@@ -148,27 +161,28 @@ error:
 /**
  * Initializes the module in child.
  */
-static int mod_child_init(int rank) {
-    LM_DBG("Initialization of module in child [%d] \n", rank);
+static int mod_child_init(int rank)
+{
+	LM_DBG("Initialization of module in child [%d] \n", rank);
 
-    /* don't do anything for main process and TCP manager process */
-    if (rank == PROC_MAIN || rank == PROC_TCP_MAIN) {
-        return 0;
-    }
+	/* don't do anything for main process and TCP manager process */
+	if(rank == PROC_MAIN || rank == PROC_TCP_MAIN) {
+		return 0;
+	}
 
-    lock_get(process_lock);
-    if ((*callback_singleton) == 0) {
-        *callback_singleton = 1;
-        cdpb.AAAAddRequestHandler(callback_cdp_request, NULL);
-    }
-    lock_release(process_lock);
+	lock_get(process_lock);
+	if((*callback_singleton) == 0) {
+		*callback_singleton = 1;
+		cdpb.AAAAddRequestHandler(callback_cdp_request, NULL);
+	}
+	lock_release(process_lock);
 
-    return 0;
+	return 0;
 }
 
 
-static void mod_destroy(void) {
-
+static void mod_destroy(void)
+{
 }
 
 /**
@@ -177,7 +191,8 @@ static void mod_destroy(void) {
  * @param param - generic pointer
  * @returns the answer to this request
  */
-AAAMessage* callback_cdp_request(AAAMessage *request_in, void *param) {
+AAAMessage *callback_cdp_request(AAAMessage *request_in, void *param)
+{
 	struct sip_msg *fmsg;
 	int backup_rt;
 	struct run_act_ctx ctx;
@@ -185,13 +200,14 @@ AAAMessage* callback_cdp_request(AAAMessage *request_in, void *param) {
 
 	LM_DBG("Got DIAMETER-Request!\n");
 
-	if (is_req(request_in)) {
+	if(is_req(request_in)) {
 		LM_DBG("is request!\n");
 		LM_DBG("Found Route diameter:request: %i\n", event_route_diameter);
 
 		request = request_in;
 		response = cdpb.AAACreateResponse(request_in);
-		if (!response) return 0;
+		if(!response)
+			return 0;
 
 		backup_rt = get_route_type();
 		set_route_type(REQUEST_ROUTE);
@@ -205,7 +221,7 @@ AAAMessage* callback_cdp_request(AAAMessage *request_in, void *param) {
 		set_route_type(backup_rt);
 		LM_DBG("Processed Event-Route!\n");
 
-		if (addAVPsfromJSON(response, NULL)) {
+		if(addAVPsfromJSON(response, NULL)) {
 			return response;
 		} else {
 			return 0;
@@ -214,40 +230,50 @@ AAAMessage* callback_cdp_request(AAAMessage *request_in, void *param) {
 	return 0;
 }
 
-int w_diameter_request(struct sip_msg * msg, char* appid, char* commandcode, char* message) {
+int w_diameter_request(
+		struct sip_msg *msg, char *appid, char *commandcode, char *message)
+{
 	return diameter_request(msg, 0, appid, commandcode, message, 0);
 }
 
-static int w_diameter_request_peer(struct sip_msg *msg, char* peer, char* appid, char* commandcode, char* message) {
+static int w_diameter_request_peer(struct sip_msg *msg, char *peer, char *appid,
+		char *commandcode, char *message)
+{
 	return diameter_request(msg, peer, appid, commandcode, message, 0);
 }
 
-static int w_diameter_request_async(struct sip_msg * msg, char* appid, char* commandcode, char* message) {
+static int w_diameter_request_async(
+		struct sip_msg *msg, char *appid, char *commandcode, char *message)
+{
 	return diameter_request(msg, 0, appid, commandcode, message, 1);
 }
 
-static int w_diameter_request_peer_async(struct sip_msg *msg, char* peer, char* appid, char* commandcode, char* message) {
+static int w_diameter_request_peer_async(struct sip_msg *msg, char *peer,
+		char *appid, char *commandcode, char *message)
+{
 	return diameter_request(msg, peer, appid, commandcode, message, 1);
 }
 
-void async_cdp_diameter_callback(int is_timeout, void *request, AAAMessage *response, long elapsed_msecs) {
+void async_cdp_diameter_callback(
+		int is_timeout, void *request, AAAMessage *response, long elapsed_msecs)
+{
 	struct sip_msg *fmsg;
 	int backup_rt;
 	struct run_act_ctx ctx;
 
-	if (is_timeout != 0) {
+	if(is_timeout != 0) {
 		LM_ERR("Error timeout when sending message via CDP\n");
 		goto error;
 	}
 
-	if (!response) {
+	if(!response) {
 		LM_ERR("Error sending message via CDP\n");
 		goto error;
 	}
-	if (AAAmsg2json(response, &responsejson) != 1) {
+	if(AAAmsg2json(response, &responsejson) != 1) {
 		LM_ERR("Failed to convert response to JSON\n");
 	}
-	request = (AAAMessage*)request;
+	request = (AAAMessage *)request;
 
 	backup_rt = get_route_type();
 	set_route_type(REQUEST_ROUTE);
@@ -260,52 +286,61 @@ void async_cdp_diameter_callback(int is_timeout, void *request, AAAMessage *resp
 	LM_DBG("Processed Event-Route!\n");
 error:
 	//free memory
-	if (response) cdpb.AAAFreeMessage(&response);
+	if(response)
+		cdpb.AAAFreeMessage(&response);
 }
 
-int ki_diameter_request_peer(struct sip_msg * msg, str* s_peer, int i_appid, int i_commandcode, str* s_message)
+int ki_diameter_request_peer(struct sip_msg *msg, str *s_peer, int i_appid,
+		int i_commandcode, str *s_message)
 {
-	return ki_diameter_request(msg, s_peer, i_appid, i_commandcode, s_message, 0);
+	return ki_diameter_request(
+			msg, s_peer, i_appid, i_commandcode, s_message, 0);
 }
 
-int ki_diameter_request_peer_async(struct sip_msg * msg, str* s_peer, int i_appid, int i_commandcode, str* s_message)
+int ki_diameter_request_peer_async(struct sip_msg *msg, str *s_peer,
+		int i_appid, int i_commandcode, str *s_message)
 {
-	return ki_diameter_request(msg, s_peer, i_appid, i_commandcode, s_message, 1);
+	return ki_diameter_request(
+			msg, s_peer, i_appid, i_commandcode, s_message, 1);
 }
 
-int ki_diameter_request(struct sip_msg * msg, str* s_peer, int i_appid, int i_commandcode, str* s_message, int async) {
+int ki_diameter_request(struct sip_msg *msg, str *s_peer, int i_appid,
+		int i_commandcode, str *s_message, int async)
+{
 	AAAMessage *req = 0;
 	AAASession *session = 0;
 	AAAMessage *resp = 0;
 
 	session = cdpb.AAACreateSession(0);
 
-	req = cdpb.AAACreateRequest(i_appid, i_commandcode, Flag_Proxyable, session);
-        if (session) {
-	        cdpb.AAADropSession(session);
-                session = 0;
-        }
+	req = cdpb.AAACreateRequest(
+			i_appid, i_commandcode, Flag_Proxyable, session);
+	if(session) {
+		cdpb.AAADropSession(session);
+		session = 0;
+	}
 
-	if (!req) {
+	if(!req) {
 		LM_ERR("Error occurred trying to send request\n");
 		return -1;
 	}
 
-	if (!addAVPsfromJSON(req, s_message)) {
+	if(!addAVPsfromJSON(req, s_message)) {
 		LM_ERR("Failed to parse JSON Request\n");
 		return -1;
 	}
 
 
-	if (s_peer && (s_peer->len > 0)) {
-		if (async) {
-			cdpb.AAASendMessageToPeer(req, s_peer, (void*) async_cdp_diameter_callback, req);
+	if(s_peer && (s_peer->len > 0)) {
+		if(async) {
+			cdpb.AAASendMessageToPeer(
+					req, s_peer, (void *)async_cdp_diameter_callback, req);
 			LM_DBG("Successfully sent async diameter\n");
 			return 0;
 		} else {
 			resp = cdpb.AAASendRecvMessageToPeer(req, s_peer);
 			LM_DBG("Successfully sent diameter\n");
-			if (resp && AAAmsg2json(resp, &responsejson) == 1) {
+			if(resp && AAAmsg2json(resp, &responsejson) == 1) {
 				return 1;
 			} else {
 				LM_ERR("Failed to convert response to JSON\n");
@@ -313,14 +348,14 @@ int ki_diameter_request(struct sip_msg * msg, str* s_peer, int i_appid, int i_co
 			}
 		}
 	} else {
-		if (async) {
-			cdpb.AAASendMessage(req, (void*) async_cdp_diameter_callback, req);
+		if(async) {
+			cdpb.AAASendMessage(req, (void *)async_cdp_diameter_callback, req);
 			LM_DBG("Successfully sent async diameter\n");
 			return 0;
 		} else {
 			resp = cdpb.AAASendRecvMessage(req);
 			LM_DBG("Successfully sent diameter\n");
-			if (resp && AAAmsg2json(resp, &responsejson) == 1) {
+			if(resp && AAAmsg2json(resp, &responsejson) == 1) {
 				return 1;
 			} else {
 				LM_ERR("Failed to convert response to JSON\n");
@@ -330,67 +365,68 @@ int ki_diameter_request(struct sip_msg * msg, str* s_peer, int i_appid, int i_co
 	}
 }
 
-int diameter_request(struct sip_msg * msg, char* peer, char* appid, char* commandcode, char* message, int async) {
+int diameter_request(struct sip_msg *msg, char *peer, char *appid,
+		char *commandcode, char *message, int async)
+{
 	str s_appid, s_commandcode, s_peer, s_message;
 	unsigned int i_appid, i_commandcode;
 
-	if (async && (event_route_diameter_response < 0)) {
+	if(async && (event_route_diameter_response < 0)) {
 		LM_ERR("Asynchronous operations disabled\n");
 		return -1;
 	}
 
-	if (peer) {
-		if (get_str_fparam(&s_peer, msg, (fparam_t*)peer) < 0) {
-		    LM_ERR("failed to get Peer\n");
-		    return -1;
+	if(peer) {
+		if(get_str_fparam(&s_peer, msg, (fparam_t *)peer) < 0) {
+			LM_ERR("failed to get Peer\n");
+			return -1;
 		}
 		LM_DBG("Peer %.*s\n", s_peer.len, s_peer.s);
 	}
-	if (get_str_fparam(&s_message, msg, (fparam_t*)message) < 0) {
+	if(get_str_fparam(&s_message, msg, (fparam_t *)message) < 0) {
 		LM_ERR("failed to get Message\n");
 		return -1;
 	}
-	if (get_str_fparam(&s_appid, msg, (fparam_t*)appid) < 0) {
+	if(get_str_fparam(&s_appid, msg, (fparam_t *)appid) < 0) {
 		LM_ERR("failed to get App-ID\n");
 		return -1;
 	}
-	if (str2int(&s_appid, &i_appid) != 0) {
+	if(str2int(&s_appid, &i_appid) != 0) {
 		LM_ERR("Invalid App-ID (%.*s)\n", s_appid.len, s_appid.s);
 		return -1;
 	}
 	LM_DBG("App-ID %i\n", i_appid);
 
-	if (get_str_fparam(&s_commandcode, msg, (fparam_t*)commandcode) < 0) {
+	if(get_str_fparam(&s_commandcode, msg, (fparam_t *)commandcode) < 0) {
 		LM_ERR("failed to get Command-Code\n");
 		return -1;
 	}
-	if (str2int(&s_commandcode, &i_commandcode) != 0) {
-		LM_ERR("Invalid Command-Code (%.*s)\n", s_commandcode.len, s_commandcode.s);
+	if(str2int(&s_commandcode, &i_commandcode) != 0) {
+		LM_ERR("Invalid Command-Code (%.*s)\n", s_commandcode.len,
+				s_commandcode.s);
 		return -1;
 	}
 	LM_DBG("Command-Code %i\n", i_commandcode);
 
-	return ki_diameter_request(msg, &s_peer, i_appid, i_commandcode, &s_message, async); 
+	return ki_diameter_request(
+			msg, &s_peer, i_appid, i_commandcode, &s_message, async);
 }
 
 
 static sr_kemi_t ims_diameter_server_kemi_exports[] = {
-    { str_init("ims_diameter_server"), str_init("diameter_request"),
-        SR_KEMIP_INT, ki_diameter_request_peer,
-        { SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_INT,
-            SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE }
-    },
-    { str_init("ims_diameter_server"), str_init("diameter_request_async"),
-        SR_KEMIP_INT, ki_diameter_request_peer_async,
-        { SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_INT,
-            SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE }
-    },
+		{str_init("ims_diameter_server"), str_init("diameter_request"),
+				SR_KEMIP_INT, ki_diameter_request_peer,
+				{SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_INT, SR_KEMIP_STR,
+						SR_KEMIP_NONE, SR_KEMIP_NONE}},
+		{str_init("ims_diameter_server"), str_init("diameter_request_async"),
+				SR_KEMIP_INT, ki_diameter_request_peer_async,
+				{SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_INT, SR_KEMIP_STR,
+						SR_KEMIP_NONE, SR_KEMIP_NONE}},
 
-    { {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
-};
+		{{0, 0}, {0, 0}, 0, NULL, {0, 0, 0, 0, 0, 0}}};
 
 int mod_register(char *path, int *dlflags, void *p1, void *p2)
 {
-    sr_kemi_modules_add(ims_diameter_server_kemi_exports);
-    return 0;
+	sr_kemi_modules_add(ims_diameter_server_kemi_exports);
+	return 0;
 }

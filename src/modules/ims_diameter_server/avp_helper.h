@@ -28,7 +28,7 @@ int pv_get_response(struct sip_msg *, pv_param_t *, pv_value_t *);
 int pv_set_response(struct sip_msg *, pv_param_t *, int, pv_value_t *);
 int pv_get_command(struct sip_msg *, pv_param_t *, pv_value_t *);
 int pv_get_application(struct sip_msg *, pv_param_t *, pv_value_t *);
-int addAVPsfromJSON(AAAMessage *, str * json);
+int addAVPsfromJSON(AAAMessage *, str *json);
 int AAAmsg2json(AAAMessage *, str *);
 
 #endif /* AVP_HELPER_H */

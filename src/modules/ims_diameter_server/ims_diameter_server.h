@@ -22,7 +22,7 @@
 
 
 #ifndef IMS_DIAMETERSERVER_MOD_H
-#define	IMS_DIAMETERSERVER_MOD_H
+#define IMS_DIAMETERSERVER_MOD_H
 
 /** callback functions */
 
@@ -35,7 +35,6 @@ extern AAAMessage *request;
 extern str responsejson;
 extern str requestjson;
 
-AAAMessage* callback_cdp_request(AAAMessage *request, void *param);
+AAAMessage *callback_cdp_request(AAAMessage *request, void *param);
 
-#endif	/* IMS_DIAMETERSERVER_MOD_H */
-
+#endif /* IMS_DIAMETERSERVER_MOD_H */
