@@ -81,7 +81,7 @@ dmq_node_list_t *dmq_node_list = NULL;
 /* dmq module is a peer itself for receiving notifications regarding nodes */
 dmq_peer_t *dmq_notification_peer = NULL;
 /* add notification servers */
-static int dmq_add_notification_address(modparam_t type, void * val);
+static int dmq_add_notification_address(modparam_t type, void *val);
 
 
 /** module functions */
@@ -160,7 +160,7 @@ static int make_socket_str_from_uri(struct sip_uri *uri, str *socket)
 		return -1;
 	}
 
-	if(get_valid_proto_string(uri->proto, 0, 0, &sproto)<0) {
+	if(get_valid_proto_string(uri->proto, 0, 0, &sproto) < 0) {
 		LM_INFO("unknown transport protocol - fall back to udp\n");
 		sproto.s = "udp";
 		sproto.len = 3;
@@ -230,7 +230,7 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if(dmq_server_socket.s==NULL || dmq_server_socket.len<=0) {
+	if(dmq_server_socket.s == NULL || dmq_server_socket.len <= 0) {
 		/* create socket string out of the server_uri */
 		if(make_socket_str_from_uri(&dmq_server_uri, &dmq_server_socket) < 0) {
 			LM_ERR("failed to create socket out of server_uri\n");
@@ -298,7 +298,7 @@ static int child_init(int rank)
 
 	if(rank == PROC_INIT) {
 		for(i = 0; i < dmq_num_workers; i++) {
-			if (init_worker(&dmq_workers[i]) < 0) {
+			if(init_worker(&dmq_workers[i]) < 0) {
 				LM_ERR("failed to init struct for worker[%d]\n", i);
 				return -1;
 			}
@@ -315,7 +315,8 @@ static int child_init(int rank)
 				LM_ERR("failed to fork worker process %d\n", i);
 				return -1;
 			} else if(newpid == 0) {
-				if (cfg_child_init()) return -1;
+				if(cfg_child_init())
+					return -1;
 				/* child - this will loop forever */
 				worker_loop(i);
 			} else {
@@ -336,9 +337,9 @@ static int child_init(int rank)
 			dmq_notification_node =
 					add_server_and_notify(dmq_notification_address_list);
 			if(!dmq_notification_node) {
-				LM_WARN("cannot retrieve initial nodelist, first list entry %.*s\n",
+				LM_WARN("cannot retrieve initial nodelist, first list entry "
+						"%.*s\n",
 						STR_FMT(&dmq_notification_address_list->s));
-
 			}
 		}
 	}
@@ -353,7 +354,8 @@ static int child_init(int rank)
 static void destroy(void)
 {
 	/* TODO unregister dmq node, free resources */
-	if(dmq_notification_address_list && dmq_notification_node && dmq_self_node) {
+	if(dmq_notification_address_list && dmq_notification_node
+			&& dmq_self_node) {
 		LM_DBG("unregistering node %.*s\n", STR_FMT(&dmq_self_node->orig_uri));
 		dmq_self_node->status = DMQ_NODE_DISABLED;
 		request_nodelist(dmq_notification_node, 1);
@@ -363,42 +365,44 @@ static void destroy(void)
 	}
 }
 
-static int dmq_add_notification_address(modparam_t type, void * val)
+static int dmq_add_notification_address(modparam_t type, void *val)
 {
 	str tmp_str;
 	int total_list = 0; /* not used */
 
-	if(val==NULL) {
+	if(val == NULL) {
 		LM_ERR("invalid notification address parameter value\n");
 		return -1;
 	}
-	tmp_str.s = ((str*) val)->s;
-	tmp_str.len = ((str*) val)->len;
-	if(parse_uri(tmp_str.s,  tmp_str.len, &dmq_notification_uri) < 0) {
+	tmp_str.s = ((str *)val)->s;
+	tmp_str.len = ((str *)val)->len;
+	if(parse_uri(tmp_str.s, tmp_str.len, &dmq_notification_uri) < 0) {
 		LM_ERR("could not parse notification address\n");
 		return -1;
 	}
 
 	/* initial allocation */
-	if (dmq_notification_address_list == NULL) {
+	if(dmq_notification_address_list == NULL) {
 		dmq_notification_address_list = pkg_malloc(sizeof(str_list_t));
-		if (dmq_notification_address_list == NULL) {
+		if(dmq_notification_address_list == NULL) {
 			PKG_MEM_ERROR;
 			return -1;
 		}
 		dmq_tmp_list = dmq_notification_address_list;
 		dmq_tmp_list->s = tmp_str;
 		dmq_tmp_list->next = NULL;
-		LM_DBG("Created list and added new notification address to the list %.*s\n",
-			dmq_tmp_list->s.len, dmq_tmp_list->s.s);
+		LM_DBG("Created list and added new notification address to the list "
+			   "%.*s\n",
+				dmq_tmp_list->s.len, dmq_tmp_list->s.s);
 	} else {
-		dmq_tmp_list = append_str_list(tmp_str.s, tmp_str.len, &dmq_tmp_list, &total_list);
-		if (dmq_tmp_list == NULL) {
+		dmq_tmp_list = append_str_list(
+				tmp_str.s, tmp_str.len, &dmq_tmp_list, &total_list);
+		if(dmq_tmp_list == NULL) {
 			LM_ERR("could not append to list\n");
 			return -1;
 		}
 		LM_DBG("added new notification address to the list %.*s\n",
-			dmq_tmp_list->s.len, dmq_tmp_list->s.s);
+				dmq_tmp_list->s.len, dmq_tmp_list->s.s);
 	}
 	return 0;
 }
@@ -418,8 +422,8 @@ static void dmq_rpc_list_nodes(rpc_t *rpc, void *c)
 		if(rpc->struct_add(h, "SSssSdd", "host", &cur->uri.host, "port",
 				   &cur->uri.port, "proto", get_proto_name(cur->uri.proto),
 				   "resolved_ip", ip, "status", dmq_get_status_str(cur->status),
-				   "last_notification", cur->last_notification,
-				   "local", cur->local)
+				   "last_notification", cur->last_notification, "local",
+				   cur->local)
 				< 0)
 			goto error;
 		cur = cur->next;
@@ -433,32 +437,27 @@ error:
 
 static const char *dmq_rpc_list_nodes_doc[2] = {"Print all nodes", 0};
 
-void rpc_dmq_remove(rpc_t* rpc, void* ctx)
+void rpc_dmq_remove(rpc_t *rpc, void *ctx)
 {
 	str taddr = STR_NULL;
 
-	if (rpc->scan(ctx, ".S", &taddr) < 1) {
+	if(rpc->scan(ctx, ".S", &taddr) < 1) {
 		rpc->fault(ctx, 500, "Invalid Parameters");
 		return;
 	}
-	if(dmq_node_del_by_uri(dmq_node_list, &taddr)<0) {
+	if(dmq_node_del_by_uri(dmq_node_list, &taddr) < 0) {
 		rpc->fault(ctx, 500, "Failure");
 		return;
 	}
 	rpc->rpl_printf(ctx, "Ok. DMQ node removed.");
 }
 
-static const char* rpc_dmq_remove_doc[3] = {
-	"Remove a DMQ node",
-	"address - the DMQ node address",
-	0
-};
+static const char *rpc_dmq_remove_doc[3] = {
+		"Remove a DMQ node", "address - the DMQ node address", 0};
 
-static rpc_export_t rpc_methods[] = {
-	{"dmq.list_nodes", dmq_rpc_list_nodes, dmq_rpc_list_nodes_doc, RET_ARRAY},
-	{"dmq.remove",     rpc_dmq_remove,     rpc_dmq_remove_doc, 0},
-	{0, 0, 0, 0}
-};
+static rpc_export_t rpc_methods[] = {{"dmq.list_nodes", dmq_rpc_list_nodes,
+											 dmq_rpc_list_nodes_doc, RET_ARRAY},
+		{"dmq.remove", rpc_dmq_remove, rpc_dmq_remove_doc, 0}, {0, 0, 0, 0}};
 
 /**
  *

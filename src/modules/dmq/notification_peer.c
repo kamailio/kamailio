@@ -28,7 +28,8 @@
 #define MAXDMQHOSTS 30
 
 str dmq_notification_content_type = str_init("text/plain");
-dmq_resp_cback_t dmq_notification_resp_callback = {&notification_resp_callback_f, 0};
+dmq_resp_cback_t dmq_notification_resp_callback = {
+		&notification_resp_callback_f, 0};
 
 int *dmq_init_callback_done = 0;
 
@@ -296,9 +297,9 @@ dmq_node_t *add_server_and_notify(str_list_t *server_list)
 	**********/
 
 	if(!dmq_multi_notify) {
-		while (server_list != NULL) {
-			LM_DBG("adding notification node %.*s\n",
-				server_list->s.len, server_list->s.s);
+		while(server_list != NULL) {
+			LM_DBG("adding notification node %.*s\n", server_list->s.len,
+					server_list->s.s);
 			pfirst = add_dmq_node(dmq_node_list, &server_list->s);
 			server_list = server_list->next;
 		}
@@ -323,7 +324,8 @@ dmq_node_t *add_server_and_notify(str_list_t *server_list)
 		for(index = 0; index < host_cnt; index++) {
 			pstr->s = puri_list[index];
 			pstr->len = strlen(puri_list[index]);
-			if(!find_dmq_node_uri(dmq_node_list, pstr)) { // check for duplicates
+			if(!find_dmq_node_uri(
+					   dmq_node_list, pstr)) { // check for duplicates
 				pnode = add_dmq_node(dmq_node_list, pstr);
 				if(pnode && !pfirst) {
 					pfirst = pnode;
@@ -370,8 +372,9 @@ int extract_node_list(dmq_node_list_t *update_list, struct sip_msg *msg)
 	dmq_node_t *ret, *find;
 	char *tmp, *end, *match;
 
-	if(!msg->content_length && (parse_headers(msg, HDR_CONTENTLENGTH_F, 0) < 0
-									   || !msg->content_length)) {
+	if(!msg->content_length
+			&& (parse_headers(msg, HDR_CONTENTLENGTH_F, 0) < 0
+					|| !msg->content_length)) {
 		LM_ERR("no content length header found\n");
 		return -1;
 	}
@@ -416,8 +419,9 @@ int extract_node_list(dmq_node_list_t *update_list, struct sip_msg *msg)
 			update_list->nodes = cur;
 			update_list->count++;
 			total_nodes++;
-		} else if(!ret->local && find->uri.params.s && 
-					ret->status != find->status && ret->status != DMQ_NODE_DISABLED) {
+		} else if(!ret->local && find->uri.params.s
+				  && ret->status != find->status
+				  && ret->status != DMQ_NODE_DISABLED) {
 			/* don't update the node if it is in ending state */
 			LM_DBG("updating status on %.*s from %d to %d\n", STR_FMT(&tmp_uri),
 					ret->status, find->status);
@@ -540,10 +544,11 @@ str *build_notification_body()
 	lock_get(&dmq_node_list->lock);
 	cur_node = dmq_node_list->nodes;
 	while(cur_node) {
-		if (cur_node->local || cur_node->status == DMQ_NODE_ACTIVE) {
+		if(cur_node->local || cur_node->status == DMQ_NODE_ACTIVE) {
 			LM_DBG("body_len = %d - clen = %d\n", body->len, clen);
 			/* body->len - clen - 2 bytes left to write - including the \r\n */
-			slen = build_node_str(cur_node, body->s + clen, body->len - clen - 2);
+			slen = build_node_str(
+					cur_node, body->s + clen, body->len - clen - 2);
 			if(slen < 0) {
 				LM_ERR("cannot build_node_string\n");
 				goto error;
@@ -607,19 +612,19 @@ int notification_resp_callback_f(
 	} else if(code == 408) {
 		/* TODO this probably do not work for dmq_multi_notify */
 		slp = dmq_notification_address_list;
-		while (slp != NULL) {
+		while(slp != NULL) {
 			if(STR_EQ(node->orig_uri, slp->s)) {
 				LM_ERR("not deleting notification peer [%.*s]\n",
-					STR_FMT(&slp->s));
+						STR_FMT(&slp->s));
 				update_dmq_node_status(dmq_node_list, node, DMQ_NODE_PENDING);
 				return 0;
 			}
 			slp = slp->next;
 		}
-		if (node->status == DMQ_NODE_DISABLED) {
+		if(node->status == DMQ_NODE_DISABLED) {
 			/* deleting node - the server did not respond */
 			LM_ERR("deleting server node %.*s because of failed request\n",
-				STR_FMT(&node->orig_uri));
+					STR_FMT(&node->orig_uri));
 			ret = del_dmq_node(dmq_node_list, node);
 			LM_DBG("del_dmq_node returned %d\n", ret);
 		} else {
