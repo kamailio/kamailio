@@ -20,7 +20,10 @@
 
 #ifndef __ENCODE_DIGEST_H__
 #define __ENCODE_DIGEST_H__
-int encode_digest(char *hdrstart,int hdrlen,dig_cred_t *digest,unsigned char *where);
-int print_encoded_digest(FILE* fd,char *hdr,int hdrlen,unsigned char* payload,int paylen,char *prefix);
-int dump_digest_test(char *hdr,int hdrlen,unsigned char* payload,int paylen,FILE* fd,char segregationLevel);
+int encode_digest(
+		char *hdrstart, int hdrlen, dig_cred_t *digest, unsigned char *where);
+int print_encoded_digest(FILE *fd, char *hdr, int hdrlen,
+		unsigned char *payload, int paylen, char *prefix);
+int dump_digest_test(char *hdr, int hdrlen, unsigned char *payload, int paylen,
+		FILE *fd, char segregationLevel);
 #endif

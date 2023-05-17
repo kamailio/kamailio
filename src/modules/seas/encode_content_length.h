@@ -20,6 +20,7 @@
 
 #ifndef __ENCODE_CONTENT_LENGTH_H__
 #define __ENCODE_CONTENT_LENGTH_H__
-int encode_contentlength(char *hdr,int hdrlen,long int len,char *where);
-int print_encoded_contentlength(FILE* fd,char *hdr,int hdrlen,unsigned char *payload,int paylen,char *prefix);
+int encode_contentlength(char *hdr, int hdrlen, long int len, char *where);
+int print_encoded_contentlength(FILE *fd, char *hdr, int hdrlen,
+		unsigned char *payload, int paylen, char *prefix);
 #endif

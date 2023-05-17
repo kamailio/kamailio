@@ -22,23 +22,25 @@
 
 #ifndef HA_H
 #define HA_H
-#include "../../core/locking.h"/* for get_lock_t define*/
+#include "../../core/locking.h" /* for get_lock_t define*/
 #include <time.h>
-struct ping{
-   unsigned int id;
-   struct timeval sent;
-   struct ping *next;
+struct ping
+{
+	unsigned int id;
+	struct timeval sent;
+	struct ping *next;
 };
 
-struct ha{
-   int timed_out_pings;
-   int timeout;
-   gen_lock_t *mutex;
-   struct ping *pings; 
-   int begin;
-   int end;
-   int count;
-   int size;
+struct ha
+{
+	int timed_out_pings;
+	int timeout;
+	gen_lock_t *mutex;
+	struct ping *pings;
+	int begin;
+	int end;
+	int count;
+	int size;
 };
 
 extern char *jain_ping_config;
@@ -55,10 +57,10 @@ extern struct ping *servlet_pings;
 
 extern int use_ha;
 
-char * create_ping_event(int *evt_len,int flags,unsigned int *seqno);
+char *create_ping_event(int *evt_len, int flags, unsigned int *seqno);
 int prepare_ha(void);
 int spawn_pinger(void);
-int print_pingtable(struct ha *ta,int idx,int lock);
-int init_pingtable(struct ha *table,int timeout,int maxpings);
+int print_pingtable(struct ha *ta, int idx, int lock);
+int init_pingtable(struct ha *table, int timeout, int maxpings);
 void destroy_pingtable(struct ha *table);
 #endif

@@ -22,24 +22,27 @@
 #include "../../core/str.h"
 #include "../../core/parser/msg_parser.h"
 
-#define SIP_OR_TEL_F	0x01
-#define SECURE_F	0x02
-#define USER_F		0x04
-#define PASSWORD_F	0x08
-#define HOST_F		0x10
-#define PORT_F		0x20
-#define PARAMETERS_F	0x40
-#define HEADERS_F	0x80
+#define SIP_OR_TEL_F 0x01
+#define SECURE_F 0x02
+#define USER_F 0x04
+#define PASSWORD_F 0x08
+#define HOST_F 0x10
+#define PORT_F 0x20
+#define PARAMETERS_F 0x40
+#define HEADERS_F 0x80
 
-#define TRANSPORT_F	0x01
-#define TTL_F		0x02
-#define USER_F		0x04
-#define METHOD_F	0x08
-#define MADDR_F		0x10
-#define LR_F		0x20
+#define TRANSPORT_F 0x01
+#define TTL_F 0x02
+#define USER_F 0x04
+#define METHOD_F 0x08
+#define MADDR_F 0x10
+#define LR_F 0x20
 
-#define MAX_XURI_LEN	23
+#define MAX_XURI_LEN 23
 
-int encode_uri2(char *hdr,int hdrlen,str uri_str, struct sip_uri *uri_parsed,unsigned char *where);
-int print_encoded_uri(FILE* fd,unsigned char *payload,int paylen,char *hdr,int hdrlen,char *prefix);
-int print_uri_junit_tests(char *hdrstart,int hdrlen,unsigned char *payload,int paylen,FILE* fd,char also_hdr,char *prefix);
+int encode_uri2(char *hdr, int hdrlen, str uri_str, struct sip_uri *uri_parsed,
+		unsigned char *where);
+int print_encoded_uri(FILE *fd, unsigned char *payload, int paylen, char *hdr,
+		int hdrlen, char *prefix);
+int print_uri_junit_tests(char *hdrstart, int hdrlen, unsigned char *payload,
+		int paylen, FILE *fd, char also_hdr, char *prefix);

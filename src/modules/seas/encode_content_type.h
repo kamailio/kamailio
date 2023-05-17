@@ -20,10 +20,15 @@
 
 #ifndef __ENCODE_CONTENT_TYPE_H__
 #define __ENCODE_CONTENT_TYPE_H__
-int encode_content_type(char *hdrstart,int hdrlen,unsigned int bodi,char *where);
-int encode_accept(char *hdrstart,int hdrlen,unsigned int *bodi,char *where);
-int encode_mime_type(char *hdrstart,int hdrlen,unsigned int bodi,char *where);
-int print_encoded_mime_type(FILE* fd,char *hdr,int hdrlen,unsigned int* payload,int paylen,char *prefix);
-int print_encoded_content_type(FILE* fd,char *hdr,int hdrlen,unsigned char* payload,int paylen,char *prefix);
-int print_encoded_accept(FILE* fd,char *hdr,int hdrlen,unsigned char* payload,int paylen,char *prefix);
+int encode_content_type(
+		char *hdrstart, int hdrlen, unsigned int bodi, char *where);
+int encode_accept(char *hdrstart, int hdrlen, unsigned int *bodi, char *where);
+int encode_mime_type(
+		char *hdrstart, int hdrlen, unsigned int bodi, char *where);
+int print_encoded_mime_type(FILE *fd, char *hdr, int hdrlen,
+		unsigned int *payload, int paylen, char *prefix);
+int print_encoded_content_type(FILE *fd, char *hdr, int hdrlen,
+		unsigned char *payload, int paylen, char *prefix);
+int print_encoded_accept(FILE *fd, char *hdr, int hdrlen,
+		unsigned char *payload, int paylen, char *prefix);
 #endif
