@@ -42,14 +42,15 @@
 /*! \brief utility function that skips spaces and tabs */
 static inline char *eat_sp_tab(char *at, char *over)
 {
-	while((at < over) && ((*at == ' ') || (*at == '\t'))) at++;
+	while((at < over) && ((*at == ' ') || (*at == '\t')))
+		at++;
 	return at;
 }
 
 /*! \brief utility function that skips printable ascii chars */
 static inline char *eat_printable(char *at, char *over)
 {
-	while ((at < over) && ((*at == '\t') || ((*at >= 32) && (*at <= 126))))
+	while((at < over) && ((*at == '\t') || ((*at >= 32) && (*at <= 126))))
 		at++;
 	return at;
 }
@@ -57,16 +58,16 @@ static inline char *eat_printable(char *at, char *over)
 /*! \brief
  * event specific publish handling - check if body format is ok
  */
-int mwi_publ_handl(struct sip_msg* msg)
+int mwi_publ_handl(struct sip_msg *msg)
 {
 	str body;
 	char *at, *over;
 
-	if (get_content_length(msg) == 0)
+	if(get_content_length(msg) == 0)
 		return 1;
 
 	body.s = get_body(msg);
-	if (body.s == NULL) {
+	if(body.s == NULL) {
 		LM_ERR("cannot extract body from msg\n");
 		return -1;
 	}
@@ -77,29 +78,37 @@ int mwi_publ_handl(struct sip_msg* msg)
 	over = body.s + body.len;
 
 	/* check msg-status-line */
-	if (body.len <= 16) goto err;
-	if (strncmp(body.s, "Messages-Waiting", 16) != 0) goto err;
+	if(body.len <= 16)
+		goto err;
+	if(strncmp(body.s, "Messages-Waiting", 16) != 0)
+		goto err;
 	at = at + 16;
 	at = eat_sp_tab(at, over);
-	if ((at >= over) || (*at != ':')) goto err;
+	if((at >= over) || (*at != ':'))
+		goto err;
 	at++;
-	if ((at >= over) || ((*at != ' ') && (*at != '\t'))) goto err;
+	if((at >= over) || ((*at != ' ') && (*at != '\t')))
+		goto err;
 	at++;
 	at = eat_sp_tab(at, over);
-	if (at + 3 >= over) goto err;
-	if (strncmp(at, "yes", 3) == 0) at = at + 3;
+	if(at + 3 >= over)
+		goto err;
+	if(strncmp(at, "yes", 3) == 0)
+		at = at + 3;
+	else if(strncmp(at, "no", 2) == 0)
+		at = at + 2;
 	else
-		if (strncmp(at, "no", 2) == 0) at = at + 2;
-		else
-			goto err;
-	if ((at + 1 >= over) || (*at != '\r') || (*(at + 1) != '\n')) goto err;
+		goto err;
+	if((at + 1 >= over) || (*at != '\r') || (*(at + 1) != '\n'))
+		goto err;
 	at = at + 2;
 
 	/* check that remaining body consists of lines that only contain
 	 * printable ascii chars */
-	while (at < over) {
+	while(at < over) {
 		at = eat_printable(at, over);
-		if ((at + 1 >= over) || (*at != '\r') || (*(at + 1) != '\n')) goto err;
+		if((at + 1 >= over) || (*at != '\r') || (*(at + 1) != '\n'))
+			goto err;
 		at = at + 2;
 	}
 
@@ -109,7 +118,6 @@ err:
 	LM_ERR("check of body <%.*s> failed at character index %d (hexa: 0x%x)\n",
 			body.len, body.s, (int)(at - body.s + 1), (int)(*at));
 	return -1;
-
 }
 
 int mwi_add_events(void)
@@ -124,12 +132,12 @@ int mwi_add_events(void)
 	event.content_type.s = "application/simple-message-summary";
 	event.content_type.len = 34;
 
-	event.default_expires= pres_mwi_default_expires;
+	event.default_expires = pres_mwi_default_expires;
 	event.type = PUBL_TYPE;
 	event.req_auth = 0;
 	event.evs_publ_handl = mwi_publ_handl;
 
-	if (pres_add_event(&event) < 0) {
+	if(pres_add_event(&event) < 0) {
 		LM_ERR("failed to add event \"message-summary\"\n");
 		return -1;
 	}
