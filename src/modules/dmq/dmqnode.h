@@ -41,7 +41,7 @@
 
 typedef struct dmq_node
 {
-	int local;	/* local type set means the dmq dmqnode == self */
+	int local;	  /* local type set means the dmq dmqnode == self */
 	str orig_uri; /* original uri string - e.g. sip:127.0.0.1:5060;passive=true */
 	struct sip_uri uri;		   /* parsed uri string */
 	struct ip_addr ip_address; /* resolved IP address */

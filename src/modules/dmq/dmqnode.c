@@ -341,7 +341,7 @@ int dmq_node_del_filter(dmq_node_list_t *list, dmq_node_t *node, int filter)
 	prev = &list->nodes;
 	while(cur) {
 		if(cmp_dmq_node(cur, node)) {
-			if(filter==0 || cur->local==0) {
+			if(filter == 0 || cur->local == 0) {
 				*prev = cur->next;
 				destroy_dmq_node(cur, 1);
 			}
@@ -360,7 +360,7 @@ int dmq_node_del_filter(dmq_node_list_t *list, dmq_node_t *node, int filter)
  */
 int del_dmq_node(dmq_node_list_t *list, dmq_node_t *node)
 {
-	return  dmq_node_del_filter(list, node, 0);
+	return dmq_node_del_filter(list, node, 0);
 }
 
 /**
@@ -443,9 +443,9 @@ int build_node_str(dmq_node_t *node, char *buf, int buflen)
 	len += 1;
 	memcpy(buf + len, node->uri.port.s, node->uri.port.len);
 	len += node->uri.port.len;
-	if(node->uri.proto!=PROTO_NONE && node->uri.proto!=PROTO_UDP
-			&& node->uri.proto!=PROTO_OTHER) {
-		if(get_valid_proto_string(node->uri.proto, 1, 0, &sproto)<0) {
+	if(node->uri.proto != PROTO_NONE && node->uri.proto != PROTO_UDP
+			&& node->uri.proto != PROTO_OTHER) {
+		if(get_valid_proto_string(node->uri.proto, 1, 0, &sproto) < 0) {
 			LM_WARN("unknown transport protocol - fall back to udp\n");
 			sproto.s = "udp";
 			sproto.len = 3;
