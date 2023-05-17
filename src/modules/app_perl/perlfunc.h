@@ -32,15 +32,15 @@
 /*
  * Run a perl function without a sip message parameter.
  */
-int perl_exec_simple1(struct sip_msg* _msg, char* fnc, char* str2);
-int perl_exec_simple2(struct sip_msg* _msg, char* fnc, char* str2);
+int perl_exec_simple1(struct sip_msg *_msg, char *fnc, char *str2);
+int perl_exec_simple2(struct sip_msg *_msg, char *fnc, char *str2);
 
 /*
  * Run function with a reference to the current SIP message.
  * An optional string may be passed to perl_exec_string.
  */
-int perl_exec1(struct sip_msg* _msg, char* fnc, char *foobar);
-int perl_exec2(struct sip_msg* _msg, char* fnc, char* mystr);
+int perl_exec1(struct sip_msg *_msg, char *fnc, char *foobar);
+int perl_exec2(struct sip_msg *_msg, char *fnc, char *mystr);
 
 int app_perl_reset_interpreter(void);
 
