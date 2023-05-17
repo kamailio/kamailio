@@ -52,31 +52,27 @@ int force_dummy_dialog = 0;
 unsigned int pres_dlginfo_default_expires = 3600;
 
 /* module exported commands */
-static cmd_export_t cmds[] =
-{
-	{0,	0, 0, 0, 0, 0}
-};
+static cmd_export_t cmds[] = {{0, 0, 0, 0, 0, 0}};
 
 /* module exported parameters */
 static param_export_t params[] = {
-	{ "force_single_dialog", INT_PARAM, &force_single_dialog },
-	{ "force_dummy_dialog", INT_PARAM, &force_dummy_dialog },
-	{ "default_expires", INT_PARAM, &pres_dlginfo_default_expires },    
-	{0, 0, 0}
-};
+		{"force_single_dialog", INT_PARAM, &force_single_dialog},
+		{"force_dummy_dialog", INT_PARAM, &force_dummy_dialog},
+		{"default_expires", INT_PARAM, &pres_dlginfo_default_expires},
+		{0, 0, 0}};
 
 /* module exports */
-struct module_exports exports= {
-	"presence_dialoginfo",	/* module name */
-	DEFAULT_DLFLAGS,		/* dlopen flags */
-	cmds,					/* exported functions */
-	params,					/* exported parameters */
-	0,						/* RPC method exports */
-	0,						/* exported pseudo-variables */
-	0,						/* response handling function */
-	mod_init,				/* module initialization function */
-	0,						/* per-child init function */
-	0						/* module destroy function */
+struct module_exports exports = {
+		"presence_dialoginfo", /* module name */
+		DEFAULT_DLFLAGS,	   /* dlopen flags */
+		cmds,				   /* exported functions */
+		params,				   /* exported parameters */
+		0,					   /* RPC method exports */
+		0,					   /* exported pseudo-variables */
+		0,					   /* response handling function */
+		mod_init,			   /* module initialization function */
+		0,					   /* per-child init function */
+		0					   /* module destroy function */
 };
 
 /*
@@ -87,18 +83,18 @@ static int mod_init(void)
 	presence_api_t pres;
 	bind_presence_t bind_presence;
 
-	bind_presence= (bind_presence_t)find_export("bind_presence", 1,0);
-	if (!bind_presence) {
+	bind_presence = (bind_presence_t)find_export("bind_presence", 1, 0);
+	if(!bind_presence) {
 		LM_ERR("can't bind presence\n");
 		return -1;
 	}
-	if (bind_presence(&pres) < 0) {
+	if(bind_presence(&pres) < 0) {
 		LM_ERR("can't bind pua\n");
 		return -1;
 	}
 
 	pres_add_event = pres.add_event;
-	if (pres_add_event == NULL) {
+	if(pres_add_event == NULL) {
 		LM_ERR("could not import add_event\n");
 		return -1;
 	}
