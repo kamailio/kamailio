@@ -32,12 +32,12 @@
 /* database variables */
 
 extern str matrix_db_url;
-extern db1_con_t * matrix_dbh;
+extern db1_con_t *matrix_dbh;
 extern db_func_t matrix_dbf;
 
-#define matrix_DB_URL { "db_url", PARAM_STR, &matrix_db_url },
+#define matrix_DB_URL {"db_url", PARAM_STR, &matrix_db_url},
 
-#define matrix_DB_TABLE { "matrix_table", PARAM_STR, &matrix_table },
+#define matrix_DB_TABLE {"matrix_table", PARAM_STR, &matrix_table},
 
 extern str matrix_table;
 
@@ -45,10 +45,10 @@ extern str matrix_table;
 extern str matrix_first_col;
 extern str matrix_second_col;
 extern str matrix_res_col;
-#define matrix_DB_COLS \
-{ "matrix_first_col", PARAM_STR, &matrix_first_col }, \
-{ "matrix_second_col", PARAM_STR, &matrix_second_col }, \
-{ "matrix_res_col", PARAM_STR, &matrix_res_col }, \
+#define matrix_DB_COLS                                            \
+	{"matrix_first_col", PARAM_STR, &matrix_first_col},           \
+			{"matrix_second_col", PARAM_STR, &matrix_second_col}, \
+			{"matrix_res_col", PARAM_STR, &matrix_res_col},
 
 /* table version */
 extern const unsigned int matrix_version;
