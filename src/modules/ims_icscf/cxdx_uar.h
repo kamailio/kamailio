@@ -48,11 +48,14 @@
 
 #include "../../core/mod_fix.h"
 
-extern struct cdp_binds cdpb; /**< Structure with pointers to cdp funcs 		*/
-extern str cxdx_forced_peer; /**< FQDN of the Diameter peer to send requests to */
+extern struct cdp_binds
+		cdpb; /**< Structure with pointers to cdp funcs 		*/
+extern str
+		cxdx_forced_peer; /**< FQDN of the Diameter peer to send requests to */
 extern str cxdx_dest_realm;
 
-typedef struct saved_transaction {
+typedef struct saved_transaction
+{
 	unsigned int tindex;
 	unsigned int tlabel;
 	unsigned int ticks;
@@ -60,7 +63,7 @@ typedef struct saved_transaction {
 	str callid;
 } saved_uar_transaction_t;
 
-void free_saved_uar_transaction_data(saved_uar_transaction_t* data);
+void free_saved_uar_transaction_data(saved_uar_transaction_t *data);
 
 /**
  * Sends an UAR and returns the parsed UAA struct.
@@ -72,10 +75,10 @@ void free_saved_uar_transaction_data(saved_uar_transaction_t* data);
  * @param realm - Realm
  * @returns 0 on success
  */
-int cxdx_send_uar(struct sip_msg *msg, str private_identity, str public_identity, str visited_network_id,
-        int authorization_type, int sos_reg, saved_uar_transaction_t* transaction_data);
+int cxdx_send_uar(struct sip_msg *msg, str private_identity,
+		str public_identity, str visited_network_id, int authorization_type,
+		int sos_reg, saved_uar_transaction_t *transaction_data);
 
 int create_uaa_return_code(int result);
 
 #endif
-

@@ -46,12 +46,12 @@
 
 #include "../../core/counters.h"
 
-extern stat_var* stat_uar_timeouts;
-extern stat_var* stat_lir_timeouts;
-extern stat_var* uar_replies_received;
-extern stat_var* lir_replies_received;
-extern stat_var* uar_replies_response_time;
-extern stat_var* lir_replies_response_time;
+extern stat_var *stat_uar_timeouts;
+extern stat_var *stat_lir_timeouts;
+extern stat_var *uar_replies_received;
+extern stat_var *lir_replies_received;
+extern stat_var *uar_replies_response_time;
+extern stat_var *lir_replies_response_time;
 
 int register_stats();
 unsigned long get_avg_uar_response_time();

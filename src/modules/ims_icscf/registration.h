@@ -61,10 +61,8 @@ extern struct cdp_binds cdpb;
  * @param str2 - if to do capabilities
  * @returns true if OK, false if not
  */
-int I_perform_user_authorization_request(struct sip_msg* msg, char* route, char* str1, char* str2);
-
-
+int I_perform_user_authorization_request(
+		struct sip_msg *msg, char *route, char *str1, char *str2);
 
 
 #endif
-

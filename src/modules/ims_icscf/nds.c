@@ -42,7 +42,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  * 
  */
- 
+
 /**
  * \file
  * 
@@ -69,17 +69,12 @@ static str str_msg_403 = {MSG_403, 9};
 static str str_msg_500 = {MSG_500, 46};
 
 /** Defines the untrusted headers */
-str untrusted_headers[]={
-	{"P-Asserted-Identity",19},
-	{"P-Access-Network-Info",21},
-	{"P-Charging-Vector",17},
-	{"P-Charging-Function-Addresses",29},
-	{0,0}	
-}; 
+str untrusted_headers[] = {{"P-Asserted-Identity", 19},
+		{"P-Access-Network-Info", 21}, {"P-Charging-Vector", 17},
+		{"P-Charging-Function-Addresses", 29}, {0, 0}};
 
 /** The cached list of trusted domains */
-static str *trusted_domains=0;
-
+static str *trusted_domains = 0;
 
 
 /**
@@ -91,36 +86,40 @@ static str *trusted_domains=0;
  * @param str2 - not used
  * @returns #CSCF_RETURN_TRUE if trusted, #CSCF_RETURN_FALSE if not , #CSCF_RETURN_ERROR on REGISTER or error 
  */
-int I_NDS_check_trusted(struct sip_msg* msg, char* str1, char* str2)
+int I_NDS_check_trusted(struct sip_msg *msg, char *str1, char *str2)
 {
 	int result;
 	LM_DBG("DBG:I_NDS_check_trusted: Starting ...\n");
-	if (msg->first_line.type!=SIP_REQUEST) {
+	if(msg->first_line.type != SIP_REQUEST) {
 		LM_ERR("ERR:I_NDS_check_trusted: The message is not a request\n");
-		result = CSCF_RETURN_TRUE;	
+		result = CSCF_RETURN_TRUE;
 		goto done;
 	}
-	if (I_NDS_is_trusted(msg,str1,str2)){
-		LM_DBG("INF:I_NDS_check_trusted: Message comes from a trusted domain\n");
-		result = CSCF_RETURN_TRUE;	
+	if(I_NDS_is_trusted(msg, str1, str2)) {
+		LM_DBG("INF:I_NDS_check_trusted: Message comes from a trusted "
+			   "domain\n");
+		result = CSCF_RETURN_TRUE;
 		goto done;
 	} else {
-		LM_DBG("INF:I_NDS_check_trusted: Message comes from an untrusted domain\n");
-		result = CSCF_RETURN_FALSE;					
-		if (msg->first_line.u.request.method.len==8 &&
-			memcmp(msg->first_line.u.request.method.s,"REGISTER",8)==0){
-			slb.sreply(msg,403,&str_msg_403);
+		LM_DBG("INF:I_NDS_check_trusted: Message comes from an untrusted "
+			   "domain\n");
+		result = CSCF_RETURN_FALSE;
+		if(msg->first_line.u.request.method.len == 8
+				&& memcmp(msg->first_line.u.request.method.s, "REGISTER", 8)
+						   == 0) {
+			slb.sreply(msg, 403, &str_msg_403);
 			LM_DBG("INF:I_NDS_check_trusted: REGISTER request terminated.\n");
 		} else {
-			if (!I_NDS_strip_headers(msg,str1,str2)){
+			if(!I_NDS_strip_headers(msg, str1, str2)) {
 				result = CSCF_RETURN_ERROR;
-				slb.sreply(msg,500,&str_msg_500);
-				LM_DBG("INF:I_NDS_check_trusted: Stripping untrusted headers failed, Responding with 500.\n");				
+				slb.sreply(msg, 500, &str_msg_500);
+				LM_DBG("INF:I_NDS_check_trusted: Stripping untrusted headers "
+					   "failed, Responding with 500.\n");
 			}
-		}					
+		}
 	}
-	
-done:	
+
+done:
 	LM_DBG("DBG:I_NDS_check_trusted: ... Done\n");
 	return result;
 }
@@ -133,43 +132,44 @@ done:
  * @param str2 - not used
  * @returns #CSCF_RETURN_TRUE if trusted, #CSCF_RETURN_FALSE 
  */
-int I_NDS_is_trusted(struct sip_msg *msg, char* str1, char* str2)
+int I_NDS_is_trusted(struct sip_msg *msg, char *str1, char *str2)
 {
 	struct via_body *vb;
 	str subdomain;
 	int i;
-	
+
 	vb = msg->via1;
-	if (!vb) {
+	if(!vb) {
 		LM_ERR("ERR:I_NDS_is_trusted: Error VIA1 hdr not found\n");
 		return 0;
 	}
-	subdomain=vb->host;
-	LM_DBG("DBG:I_NDS_is_trusted: Message comes from <%.*s>\n",
-		subdomain.len,subdomain.s);
-		
-	i=0;
-	while(trusted_domains[i].len){
-		if (trusted_domains[i].len<=subdomain.len){
-			if (strncasecmp(subdomain.s+subdomain.len-trusted_domains[i].len,
-				trusted_domains[i].s,
-				trusted_domains[i].len)==0 &&
-					(trusted_domains[i].len==subdomain.len ||
-					 subdomain.s[subdomain.len-trusted_domains[i].len-1]=='.'))
-			{  					
+	subdomain = vb->host;
+	LM_DBG("DBG:I_NDS_is_trusted: Message comes from <%.*s>\n", subdomain.len,
+			subdomain.s);
+
+	i = 0;
+	while(trusted_domains[i].len) {
+		if(trusted_domains[i].len <= subdomain.len) {
+			if(strncasecmp(subdomain.s + subdomain.len - trusted_domains[i].len,
+					   trusted_domains[i].s, trusted_domains[i].len)
+							== 0
+					&& (trusted_domains[i].len == subdomain.len
+							|| subdomain.s[subdomain.len
+										   - trusted_domains[i].len - 1]
+									   == '.')) {
 				LM_DBG("DBG:I_NDS_is_trusted: <%.*s> matches <%.*s>\n",
-					subdomain.len,subdomain.s,trusted_domains[i].len,trusted_domains[i].s);
+						subdomain.len, subdomain.s, trusted_domains[i].len,
+						trusted_domains[i].s);
 				return CSCF_RETURN_TRUE;
 			} else {
-//				LM_DBG("DBG:I_NDS_is_trusted: <%.*s> !matches <%.*s>\n",
-//					subdomain.len,subdomain.s,trusted_domains[i].len,trusted_domains[i].s);
-			}					
+				//				LM_DBG("DBG:I_NDS_is_trusted: <%.*s> !matches <%.*s>\n",
+				//					subdomain.len,subdomain.s,trusted_domains[i].len,trusted_domains[i].s);
+			}
 		}
 		i++;
 	}
 	return CSCF_RETURN_FALSE;
 }
-
 
 
 /**
@@ -180,22 +180,24 @@ int I_NDS_is_trusted(struct sip_msg *msg, char* str1, char* str2)
  * @param str2 - not used
  * @returns the number of headers stripped
  */
-int I_NDS_strip_headers(struct sip_msg *msg, char* str1, char* str2)
+int I_NDS_strip_headers(struct sip_msg *msg, char *str1, char *str2)
 {
 	struct hdr_field *hdr;
-	int i,cnt=0;
-	if (parse_headers(msg,HDR_EOH_F,0)<0) return 0;
-	for (hdr = msg->headers;hdr;hdr = hdr->next)
-		for (i=0;untrusted_headers[i].len;i++)
-			if (hdr->name.len == untrusted_headers[i].len &&
-				strncasecmp(hdr->name.s,untrusted_headers[i].s,hdr->name.len)==0){				
+	int i, cnt = 0;
+	if(parse_headers(msg, HDR_EOH_F, 0) < 0)
+		return 0;
+	for(hdr = msg->headers; hdr; hdr = hdr->next)
+		for(i = 0; untrusted_headers[i].len; i++)
+			if(hdr->name.len == untrusted_headers[i].len
+					&& strncasecmp(hdr->name.s, untrusted_headers[i].s,
+							   hdr->name.len)
+							   == 0) {
 				//if (!cscf_del_header(msg,hdr)) return 0; TODO
 				cnt++;
 			}
-	LM_DBG("DBG:I_NDS_strip_headers: Deleted %d headers\n",cnt);			
+	LM_DBG("DBG:I_NDS_strip_headers: Deleted %d headers\n", cnt);
 	return cnt;
 }
-
 
 
 /**
@@ -209,9 +211,9 @@ int I_NDS_get_trusted_domains()
 {
 	int i;
 	/* free the old cache */
-	if (trusted_domains!=0){
-		i=0;
-		while(trusted_domains[i].s){
+	if(trusted_domains != 0) {
+		i = 0;
+		while(trusted_domains[i].s) {
 			shm_free(trusted_domains[i].s);
 			i++;
 		}
@@ -219,4 +221,3 @@ int I_NDS_get_trusted_domains()
 	}
 	return ims_icscf_db_get_nds(&trusted_domains);
 }
-

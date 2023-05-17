@@ -53,208 +53,236 @@
 #include "ims_icscf_mod.h"
 
 //We use pseudo variables to communicate back to config file. This takes the result, converts it to a return code and publishes it a as pseudo variable.
-int create_uaa_return_code(int result) {
-    int rc;
-    int_str avp_val, avp_name;
-    avp_name.s.s = "uaa_return_code";
-    avp_name.s.len = 15;
+int create_uaa_return_code(int result)
+{
+	int rc;
+	int_str avp_val, avp_name;
+	avp_name.s.s = "uaa_return_code";
+	avp_name.s.len = 15;
 
-    //build avp spec for uaa_return_code
-    avp_val.n = result;
+	//build avp spec for uaa_return_code
+	avp_val.n = result;
 
-    rc = add_avp(AVP_NAME_STR, avp_name, avp_val);
+	rc = add_avp(AVP_NAME_STR, avp_name, avp_val);
 
-    if (rc < 0)
-        LM_ERR("couldnt create AVP\n");
-    else
-        LM_INFO("created AVP successfully : [%.*s]\n", avp_name.s.len, avp_name.s.s);
+	if(rc < 0)
+		LM_ERR("couldnt create AVP\n");
+	else
+		LM_INFO("created AVP successfully : [%.*s]\n", avp_name.s.len,
+				avp_name.s.s);
 
-    return 1;
+	return 1;
 }
 
-void free_saved_uar_transaction_data(saved_uar_transaction_t* data) {
-    if (!data)
-        return;
+void free_saved_uar_transaction_data(saved_uar_transaction_t *data)
+{
+	if(!data)
+		return;
 
-    if (data->callid.s && data->callid.len) {
-        shm_free(data->callid.s);
-        data->callid.len = 0;
-    }
-    shm_free(data);
+	if(data->callid.s && data->callid.len) {
+		shm_free(data->callid.s);
+		data->callid.len = 0;
+	}
+	shm_free(data);
 }
 
-void async_cdp_uar_callback(int is_timeout, void *param, AAAMessage *uaa, long elapsed_msecs) {
-    struct run_act_ctx ra_ctx;
-    str server_name;
-    int *m_capab = 0, m_capab_cnt = 0;
-    int *o_capab = 0, o_capab_cnt = 0;
-    str *p_server_names = 0;
-    int p_server_names_cnt = 0;
-    int rc = -1, experimental_rc = -1;
-    saved_uar_transaction_t* data = (saved_uar_transaction_t*) param;
-    struct cell *t = 0;
-    int result = CSCF_RETURN_TRUE;
-    scscf_entry *list = 0;
+void async_cdp_uar_callback(
+		int is_timeout, void *param, AAAMessage *uaa, long elapsed_msecs)
+{
+	struct run_act_ctx ra_ctx;
+	str server_name;
+	int *m_capab = 0, m_capab_cnt = 0;
+	int *o_capab = 0, o_capab_cnt = 0;
+	str *p_server_names = 0;
+	int p_server_names_cnt = 0;
+	int rc = -1, experimental_rc = -1;
+	saved_uar_transaction_t *data = (saved_uar_transaction_t *)param;
+	struct cell *t = 0;
+	int result = CSCF_RETURN_TRUE;
+	scscf_entry *list = 0;
 
-    if (tmb.t_lookup_ident(&t, data->tindex, data->tlabel) < 0) {
-        LM_ERR("ERROR: t_continue: transaction not found\n");
-        //result = CSCF_RETURN_ERROR;//not needed we set by default to error!
-        goto error;
-    }
+	if(tmb.t_lookup_ident(&t, data->tindex, data->tlabel) < 0) {
+		LM_ERR("ERROR: t_continue: transaction not found\n");
+		//result = CSCF_RETURN_ERROR;//not needed we set by default to error!
+		goto error;
+	}
 
-    if (is_timeout != 0) {
-        LM_ERR("Error timeout when  sending message via CDP\n");
-        update_stat(stat_uar_timeouts, 1);
-        goto error;
-    }
+	if(is_timeout != 0) {
+		LM_ERR("Error timeout when  sending message via CDP\n");
+		update_stat(stat_uar_timeouts, 1);
+		goto error;
+	}
 
-    //update stats on response time
-    update_stat(uar_replies_received, 1);
-    update_stat(uar_replies_response_time, elapsed_msecs);
+	//update stats on response time
+	update_stat(uar_replies_received, 1);
+	update_stat(uar_replies_response_time, elapsed_msecs);
 
-    if (!uaa) {
-        LM_ERR("Error sending message via CDP\n");
-        //result = CSCF_RETURN_ERROR;//not needed we set by default to error!
-        goto error;
-    }
+	if(!uaa) {
+		LM_ERR("Error sending message via CDP\n");
+		//result = CSCF_RETURN_ERROR;//not needed we set by default to error!
+		goto error;
+	}
 
-    server_name = cxdx_get_server_name(uaa);
-    if (!server_name.len) {
-        cxdx_get_capabilities(uaa, &m_capab, &m_capab_cnt, &o_capab,
-                &o_capab_cnt, &p_server_names, &p_server_names_cnt);
-    }
+	server_name = cxdx_get_server_name(uaa);
+	if(!server_name.len) {
+		cxdx_get_capabilities(uaa, &m_capab, &m_capab_cnt, &o_capab,
+				&o_capab_cnt, &p_server_names, &p_server_names_cnt);
+	}
 
-    cxdx_get_result_code(uaa, &rc);
-    cxdx_get_experimental_result_code(uaa, &experimental_rc);
+	cxdx_get_result_code(uaa, &rc);
+	cxdx_get_experimental_result_code(uaa, &experimental_rc);
 
-    if (rc && !experimental_rc) {
-        LM_ERR("No result code or experimental result code - responding 480\n");
-        cscf_reply_transactional_async(t, t->uas.request, 480, MSG_480_DIAMETER_MISSING_AVP);
-        result = CSCF_RETURN_FALSE;
-        goto done;
-    }
+	if(rc && !experimental_rc) {
+		LM_ERR("No result code or experimental result code - responding 480\n");
+		cscf_reply_transactional_async(
+				t, t->uas.request, 480, MSG_480_DIAMETER_MISSING_AVP);
+		result = CSCF_RETURN_FALSE;
+		goto done;
+	}
 
-    switch (rc) {
-        case -1:
-            switch (experimental_rc) {
-                case RC_IMS_DIAMETER_ERROR_USER_UNKNOWN:
-                    /* Check, if route is set: */
-                    if (route_uar_user_unknown_no >= 0) {
-                        /* exec routing script */
-                        init_run_actions_ctx(&ra_ctx);
-                        if (run_actions(&ra_ctx, main_rt.rlist[route_uar_user_unknown_no], t->uas.request) < 0) {
-                            LM_DBG("ims_icscf: error while trying script\n");
-                        }
-                    } else {
-                        cscf_reply_transactional_async(t, t->uas.request, 403, MSG_403_USER_UNKNOWN);
-                    }
-                    LM_DBG("RC_IMS_DIAMETER_ERROR_USER_UNKNOWN\n");
-                    result = CSCF_RETURN_FALSE;
-                    goto done;
-                case RC_IMS_DIAMETER_ERROR_IDENTITIES_DONT_MATCH:
-                    LM_DBG("RC_IMS_DIAMETER_ERROR_IDENTITIES_DONT_MATCH returning 403\n");
-                    cscf_reply_transactional_async(t, t->uas.request, 403, MSG_403_IDENTITIES_DONT_MATCH);
-                    result = CSCF_RETURN_FALSE;
-                    goto done;
-                case RC_IMS_DIAMETER_ERROR_ROAMING_NOT_ALLOWED:
-                    LM_DBG("RC_IMS_DIAMETER_ERROR_ROAMING_NOT_ALLOWED returning 403\n");
-                    cscf_reply_transactional_async(t, t->uas.request, 403, MSG_403_ROAMING_NOT_ALLOWED);
-                    result = CSCF_RETURN_FALSE;
-                    goto done;
-                case RC_IMS_DIAMETER_ERROR_IDENTITY_NOT_REGISTERED:
-                    LM_DBG("RC_IMS_DIAMETER_ERROR_IDENTITY_NOT_REGISTERED returning 403\n");
-                    cscf_reply_transactional_async(t, t->uas.request, 403, MSG_403_IDENTITY_NOT_REGISTERED);
-                    result = CSCF_RETURN_FALSE;
-                    goto done;
-                case RC_IMS_DIAMETER_FIRST_REGISTRATION:
-                    goto success;
-                case RC_IMS_DIAMETER_SUBSEQUENT_REGISTRATION:
-                    goto success;
-                case RC_IMS_DIAMETER_SERVER_SELECTION:
-                    goto success;
+	switch(rc) {
+		case -1:
+			switch(experimental_rc) {
+				case RC_IMS_DIAMETER_ERROR_USER_UNKNOWN:
+					/* Check, if route is set: */
+					if(route_uar_user_unknown_no >= 0) {
+						/* exec routing script */
+						init_run_actions_ctx(&ra_ctx);
+						if(run_actions(&ra_ctx,
+								   main_rt.rlist[route_uar_user_unknown_no],
+								   t->uas.request)
+								< 0) {
+							LM_DBG("ims_icscf: error while trying script\n");
+						}
+					} else {
+						cscf_reply_transactional_async(
+								t, t->uas.request, 403, MSG_403_USER_UNKNOWN);
+					}
+					LM_DBG("RC_IMS_DIAMETER_ERROR_USER_UNKNOWN\n");
+					result = CSCF_RETURN_FALSE;
+					goto done;
+				case RC_IMS_DIAMETER_ERROR_IDENTITIES_DONT_MATCH:
+					LM_DBG("RC_IMS_DIAMETER_ERROR_IDENTITIES_DONT_MATCH "
+						   "returning 403\n");
+					cscf_reply_transactional_async(t, t->uas.request, 403,
+							MSG_403_IDENTITIES_DONT_MATCH);
+					result = CSCF_RETURN_FALSE;
+					goto done;
+				case RC_IMS_DIAMETER_ERROR_ROAMING_NOT_ALLOWED:
+					LM_DBG("RC_IMS_DIAMETER_ERROR_ROAMING_NOT_ALLOWED "
+						   "returning 403\n");
+					cscf_reply_transactional_async(t, t->uas.request, 403,
+							MSG_403_ROAMING_NOT_ALLOWED);
+					result = CSCF_RETURN_FALSE;
+					goto done;
+				case RC_IMS_DIAMETER_ERROR_IDENTITY_NOT_REGISTERED:
+					LM_DBG("RC_IMS_DIAMETER_ERROR_IDENTITY_NOT_REGISTERED "
+						   "returning 403\n");
+					cscf_reply_transactional_async(t, t->uas.request, 403,
+							MSG_403_IDENTITY_NOT_REGISTERED);
+					result = CSCF_RETURN_FALSE;
+					goto done;
+				case RC_IMS_DIAMETER_FIRST_REGISTRATION:
+					goto success;
+				case RC_IMS_DIAMETER_SUBSEQUENT_REGISTRATION:
+					goto success;
+				case RC_IMS_DIAMETER_SERVER_SELECTION:
+					goto success;
 
-                default:
-                    LM_ERR("MSG_403_UNKOWN_EXPERIMENTAL_RC returning 500\n");
-                    cscf_reply_transactional_async(t, t->uas.request, 500, MSG_500_UNKOWN_EXPERIMENTAL_RC);
-                    result = CSCF_RETURN_FALSE;
-                    goto done;
-            }
-            break;
+				default:
+					LM_ERR("MSG_403_UNKOWN_EXPERIMENTAL_RC returning 500\n");
+					cscf_reply_transactional_async(t, t->uas.request, 500,
+							MSG_500_UNKOWN_EXPERIMENTAL_RC);
+					result = CSCF_RETURN_FALSE;
+					goto done;
+			}
+			break;
 
-        case AAA_AUTHORIZATION_REJECTED:
-            LM_DBG("AAA_AUTHORIZATION_REJECTED returning 403\n");
-            cscf_reply_transactional_async(t, t->uas.request, 403, MSG_403_AUTHORIZATION_REJECTED);
-            result = CSCF_RETURN_FALSE;
-            goto done;
-        case AAA_UNABLE_TO_COMPLY:
-            LM_DBG("AAA_UNABLE_TO_COMPLY returning 403\n");
-            cscf_reply_transactional_async(t, t->uas.request, 500, MSG_500_UNABLE_TO_COMPLY);
-            result = CSCF_RETURN_FALSE;
-            goto done;
+		case AAA_AUTHORIZATION_REJECTED:
+			LM_DBG("AAA_AUTHORIZATION_REJECTED returning 403\n");
+			cscf_reply_transactional_async(
+					t, t->uas.request, 403, MSG_403_AUTHORIZATION_REJECTED);
+			result = CSCF_RETURN_FALSE;
+			goto done;
+		case AAA_UNABLE_TO_COMPLY:
+			LM_DBG("AAA_UNABLE_TO_COMPLY returning 403\n");
+			cscf_reply_transactional_async(
+					t, t->uas.request, 500, MSG_500_UNABLE_TO_COMPLY);
+			result = CSCF_RETURN_FALSE;
+			goto done;
 
-        case AAA_SUCCESS:
-            goto success;
+		case AAA_SUCCESS:
+			goto success;
 
-        default:
-            LM_DBG("MSG_403_UNKOWN_RC returning 403\n");
-            cscf_reply_transactional_async(t, t->uas.request, 403, MSG_403_UNKOWN_RC);
-            result = CSCF_RETURN_FALSE;
-            goto done;
-    }
+		default:
+			LM_DBG("MSG_403_UNKOWN_RC returning 403\n");
+			cscf_reply_transactional_async(
+					t, t->uas.request, 403, MSG_403_UNKOWN_RC);
+			result = CSCF_RETURN_FALSE;
+			goto done;
+	}
 
 success:
-    LM_DBG("successful UAA response\n");
-    list = I_get_capab_ordered(server_name, m_capab, m_capab_cnt, o_capab, o_capab_cnt, p_server_names, p_server_names_cnt, 0);
+	LM_DBG("successful UAA response\n");
+	list = I_get_capab_ordered(server_name, m_capab, m_capab_cnt, o_capab,
+			o_capab_cnt, p_server_names, p_server_names_cnt, 0);
 
-    if (!list) {
-        LM_ERR("Empty capability list returning 600\n");
-        cscf_reply_transactional_async(t, t->uas.request, 600, MSG_600_EMPTY_LIST);
-        result = CSCF_RETURN_FALSE;
-        goto done;
-    }
+	if(!list) {
+		LM_ERR("Empty capability list returning 600\n");
+		cscf_reply_transactional_async(
+				t, t->uas.request, 600, MSG_600_EMPTY_LIST);
+		result = CSCF_RETURN_FALSE;
+		goto done;
+	}
 
-    if (!data->callid.len || !add_scscf_list(data->callid, list)) {
-        LM_ERR("Error saving capability list 500\n");
-        cscf_reply_transactional_async(t, t->uas.request, 500, MSG_500_ERROR_SAVING_LIST);
-        result = CSCF_RETURN_FALSE;
-        goto done;
-    }
+	if(!data->callid.len || !add_scscf_list(data->callid, list)) {
+		LM_ERR("Error saving capability list 500\n");
+		cscf_reply_transactional_async(
+				t, t->uas.request, 500, MSG_500_ERROR_SAVING_LIST);
+		result = CSCF_RETURN_FALSE;
+		goto done;
+	}
 
-    result = CSCF_RETURN_TRUE;
+	result = CSCF_RETURN_TRUE;
 
 done:
 	//free capabilities if they exist
-	if (m_capab) shm_free(m_capab);
-	if (o_capab) shm_free(o_capab);
-	if (p_server_names) shm_free(p_server_names);
+	if(m_capab)
+		shm_free(m_capab);
+	if(o_capab)
+		shm_free(o_capab);
+	if(p_server_names)
+		shm_free(p_server_names);
 
-    LM_DBG("DBG:UAR Async CDP callback: ... Done resuming transaction\n");
-    set_avp_list(AVP_TRACK_FROM | AVP_CLASS_URI, &t->uri_avps_from);
-    set_avp_list(AVP_TRACK_TO | AVP_CLASS_URI, &t->uri_avps_to);
-    set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER, &t->user_avps_from);
-    set_avp_list(AVP_TRACK_TO | AVP_CLASS_USER, &t->user_avps_to);
-    set_avp_list(AVP_TRACK_FROM | AVP_CLASS_DOMAIN, &t->domain_avps_from);
-    set_avp_list(AVP_TRACK_TO | AVP_CLASS_DOMAIN, &t->domain_avps_to);
+	LM_DBG("DBG:UAR Async CDP callback: ... Done resuming transaction\n");
+	set_avp_list(AVP_TRACK_FROM | AVP_CLASS_URI, &t->uri_avps_from);
+	set_avp_list(AVP_TRACK_TO | AVP_CLASS_URI, &t->uri_avps_to);
+	set_avp_list(AVP_TRACK_FROM | AVP_CLASS_USER, &t->user_avps_from);
+	set_avp_list(AVP_TRACK_TO | AVP_CLASS_USER, &t->user_avps_to);
+	set_avp_list(AVP_TRACK_FROM | AVP_CLASS_DOMAIN, &t->domain_avps_from);
+	set_avp_list(AVP_TRACK_TO | AVP_CLASS_DOMAIN, &t->domain_avps_to);
 
-    create_uaa_return_code(result);
+	create_uaa_return_code(result);
 
-    if (t)tmb.unref_cell(t);
-    //free memory
-    if (uaa) cdpb.AAAFreeMessage(&uaa);
+	if(t)
+		tmb.unref_cell(t);
+	//free memory
+	if(uaa)
+		cdpb.AAAFreeMessage(&uaa);
 
-    tmb.t_continue(data->tindex, data->tlabel, data->act);
-    free_saved_uar_transaction_data(data);
-    return;
+	tmb.t_continue(data->tindex, data->tlabel, data->act);
+	free_saved_uar_transaction_data(data);
+	return;
 
 error:
-    if (t)tmb.unref_cell(t);
-    //free memory
-    if (uaa) cdpb.AAAFreeMessage(&uaa);
+	if(t)
+		tmb.unref_cell(t);
+	//free memory
+	if(uaa)
+		cdpb.AAAFreeMessage(&uaa);
 
-    tmb.t_continue(data->tindex, data->tlabel, data->act);
-    free_saved_uar_transaction_data(data);
-
-
+	tmb.t_continue(data->tindex, data->tlabel, data->act);
+	free_saved_uar_transaction_data(data);
 }
 
 /**
@@ -266,46 +294,58 @@ error:
  * @param authorization_type - if registration or de-registration
  * @returns the status of sending the async UAR - 0 for success, !0 for failure
  */
-int cxdx_send_uar(struct sip_msg *msg, str private_identity, str public_identity, str visited_network_id,
-        int authorization_type, int sos_reg, saved_uar_transaction_t* transaction_data) {
-    AAAMessage *uar = 0;
-    AAASession *session = 0;
+int cxdx_send_uar(struct sip_msg *msg, str private_identity,
+		str public_identity, str visited_network_id, int authorization_type,
+		int sos_reg, saved_uar_transaction_t *transaction_data)
+{
+	AAAMessage *uar = 0;
+	AAASession *session = 0;
 
-    session = cdpb.AAACreateSession(0);
+	session = cdpb.AAACreateSession(0);
 
-    uar = cdpb.AAACreateRequest(IMS_Cx, IMS_UAR, Flag_Proxyable, session);
-    if (session) {
-        cdpb.AAADropSession(session);
-        session = 0;
-    }
-    if (!uar) goto error1;
+	uar = cdpb.AAACreateRequest(IMS_Cx, IMS_UAR, Flag_Proxyable, session);
+	if(session) {
+		cdpb.AAADropSession(session);
+		session = 0;
+	}
+	if(!uar)
+		goto error1;
 
-    if (!cxdx_add_destination_realm(uar, cxdx_dest_realm)) goto error1;
+	if(!cxdx_add_destination_realm(uar, cxdx_dest_realm))
+		goto error1;
 
-    if (!cxdx_add_vendor_specific_appid(uar, IMS_vendor_id_3GPP, IMS_Cx, 0)) goto error1;
-    if (!cxdx_add_auth_session_state(uar, 1)) goto error1;
+	if(!cxdx_add_vendor_specific_appid(uar, IMS_vendor_id_3GPP, IMS_Cx, 0))
+		goto error1;
+	if(!cxdx_add_auth_session_state(uar, 1))
+		goto error1;
 
-    if (!cxdx_add_user_name(uar, private_identity)) goto error1;
-    if (!cxdx_add_public_identity(uar, public_identity)) goto error1;
-    if (!cxdx_add_visited_network_id(uar, visited_network_id)) goto error1;
-    if (!cxdx_add_UAR_flags(uar, sos_reg)) goto error1;
-    if (authorization_type != AVP_IMS_UAR_REGISTRATION)
-        if (!cxdx_add_authorization_type(uar, authorization_type)) goto error1;
+	if(!cxdx_add_user_name(uar, private_identity))
+		goto error1;
+	if(!cxdx_add_public_identity(uar, public_identity))
+		goto error1;
+	if(!cxdx_add_visited_network_id(uar, visited_network_id))
+		goto error1;
+	if(!cxdx_add_UAR_flags(uar, sos_reg))
+		goto error1;
+	if(authorization_type != AVP_IMS_UAR_REGISTRATION)
+		if(!cxdx_add_authorization_type(uar, authorization_type))
+			goto error1;
 
-    if (cxdx_forced_peer.len)
-        cdpb.AAASendMessageToPeer(uar, &cxdx_forced_peer, (void*) async_cdp_uar_callback, (void*) transaction_data);
-    else
-        cdpb.AAASendMessage(uar, (void*) async_cdp_uar_callback, (void*) transaction_data);
+	if(cxdx_forced_peer.len)
+		cdpb.AAASendMessageToPeer(uar, &cxdx_forced_peer,
+				(void *)async_cdp_uar_callback, (void *)transaction_data);
+	else
+		cdpb.AAASendMessage(
+				uar, (void *)async_cdp_uar_callback, (void *)transaction_data);
 
-    LM_DBG("Successfully sent async diameter\n");
+	LM_DBG("Successfully sent async diameter\n");
 
-    return 0;
+	return 0;
 
 error1:
-    //Only free UAR IFF it has not been passed to CDP
-    if (uar) cdpb.AAAFreeMessage(&uar);
-    LM_ERR("Error occurred trying to send UAR\n");
-    return -1;
+	//Only free UAR IFF it has not been passed to CDP
+	if(uar)
+		cdpb.AAAFreeMessage(&uar);
+	LM_ERR("Error occurred trying to send UAR\n");
+	return -1;
 }
-
-

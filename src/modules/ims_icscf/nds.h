@@ -43,7 +43,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  * 
  */
- 
+
 /**
  * \file
  * 
@@ -58,16 +58,16 @@
 #define I_CSCF_NDS_H
 
 #include "../../core/sr_module.h"
- 
-#define MSG_403 "Forbidden" 
+
+#define MSG_403 "Forbidden"
 #define MSG_500 "I-CSCF Error while stripping untrusted headers"
 
 
-int I_NDS_check_trusted(struct sip_msg* msg, char* str1, char* str2);
+int I_NDS_check_trusted(struct sip_msg *msg, char *str1, char *str2);
 
-int I_NDS_is_trusted(struct sip_msg *msg, char* str1, char* str2);
+int I_NDS_is_trusted(struct sip_msg *msg, char *str1, char *str2);
 
-int I_NDS_strip_headers(struct sip_msg *msg, char* str1, char* str2);
+int I_NDS_strip_headers(struct sip_msg *msg, char *str1, char *str2);
 
 int I_NDS_get_trusted_domains();
 

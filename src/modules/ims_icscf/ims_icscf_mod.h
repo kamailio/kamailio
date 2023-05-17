@@ -42,7 +42,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  * 
  */
- 
+
 /**
  * \file
  * 
@@ -75,15 +75,15 @@
 #define MOD_NAME "ims_icscf"
 
 /** Return and break the execution of routng script */
-#define CSCF_RETURN_BREAK	0 
+#define CSCF_RETURN_BREAK 0
 /** Return true in the routing script */
-#define CSCF_RETURN_TRUE	1
+#define CSCF_RETURN_TRUE 1
 /** Return false in the routing script */
 #define CSCF_RETURN_FALSE -1
 /** Return error in the routing script */
 #define CSCF_RETURN_ERROR -2
 
-extern int route_uar_user_unknown_no; 
-extern int route_lir_user_unknown_no; 
+extern int route_uar_user_unknown_no;
+extern int route_lir_user_unknown_no;
 
 #endif /* I_CSCF_MOD_H */
