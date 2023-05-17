@@ -50,29 +50,31 @@
 /**
  * return codes to config by auth functions
  */
-typedef enum auth_cfg_result {
-	AUTH_RESYNC_REQUESTED = -9,	/*!< resync requested from UE via auts param */
-	AUTH_USER_MISMATCH = -8,    /*!< Auth user != From/To user */
-	AUTH_NONCE_REUSED = -6,     /*!< Returned if nonce is used more than once */
-	AUTH_NO_CREDENTIALS = -5,   /*!< Credentials missing */
-	AUTH_STALE_NONCE = -4,      /*!< Stale nonce */
-	AUTH_USER_UNKNOWN = -3,     /*!< User not found */
+typedef enum auth_cfg_result
+{
+	AUTH_RESYNC_REQUESTED = -9, /*!< resync requested from UE via auts param */
+	AUTH_USER_MISMATCH = -8,	/*!< Auth user != From/To user */
+	AUTH_NONCE_REUSED = -6,		/*!< Returned if nonce is used more than once */
+	AUTH_NO_CREDENTIALS = -5,	/*!< Credentials missing */
+	AUTH_STALE_NONCE = -4,		/*!< Stale nonce */
+	AUTH_USER_UNKNOWN = -3,		/*!< User not found */
 	AUTH_INVALID_PASSWORD = -2, /*!< Invalid password */
-	AUTH_ERROR = -1,            /*!< Error occurred */
-	AUTH_DROP = 0,              /*!< Error, stop config execution */
-	AUTH_OK = 1                 /*!< Success */
+	AUTH_ERROR = -1,			/*!< Error occurred */
+	AUTH_DROP = 0,				/*!< Error, stop config execution */
+	AUTH_OK = 1					/*!< Success */
 } auth_cfg_result_t;
 
-typedef int (*digest_authenticate_f)(struct sip_msg* msg, str *realm,
-				str *table, hdr_types_t hftype);
+typedef int (*digest_authenticate_f)(
+		struct sip_msg *msg, str *realm, str *table, hdr_types_t hftype);
 /**
  * @brief IMS_AUTH API structure
  */
-typedef struct ims_auth_api {
+typedef struct ims_auth_api
+{
 	digest_authenticate_f digest_authenticate;
 } ims_auth_api_t;
 
-typedef int (*bind_ims_auth_f)(ims_auth_api_t* api);
+typedef int (*bind_ims_auth_f)(ims_auth_api_t *api);
 
 /**
  * @brief Load the IMS_AUTH API
@@ -86,8 +88,7 @@ static inline int ims_auth_load_api(ims_auth_api_t *api)
 		LM_ERR("cannot find bind_ims_auth\n");
 		return -1;
 	}
-	if (bindauthims(api)==-1)
-	{
+	if(bindauthims(api) == -1) {
 		LM_ERR("cannot bind authims api\n");
 		return -1;
 	}
