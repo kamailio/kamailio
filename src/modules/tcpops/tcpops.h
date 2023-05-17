@@ -32,9 +32,10 @@ extern int tcp_closed_routes[_TCP_CLOSED_REASON_MAX];
 
 int tcpops_get_current_fd(int conid, int *fd);
 int tcpops_acquire_fd_from_tcpmain(int conid, int *fd);
-int tcpops_keepalive_enable(int fd, int idle, int count, int interval, int closefd);
+int tcpops_keepalive_enable(
+		int fd, int idle, int count, int interval, int closefd);
 int tcpops_keepalive_disable(int fd, int closefd);
-int tcpops_set_connection_lifetime(struct tcp_connection* con, int time);
+int tcpops_set_connection_lifetime(struct tcp_connection *con, int time);
 int tcpops_handle_tcp_closed(sr_event_param_t *evp);
 void tcpops_init_evroutes(void);
 
