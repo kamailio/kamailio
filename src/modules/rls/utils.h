@@ -26,6 +26,6 @@
 
 #include "../../core/ut.h"
 
-extern str* normalize_sip_uri(const str *uri);
+extern str *normalize_sip_uri(const str *uri);
 
 #endif

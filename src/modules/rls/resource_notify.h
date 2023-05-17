@@ -26,10 +26,10 @@
 
 #include "../../core/parser/msg_parser.h"
 
-int w_rls_handle_notify(struct sip_msg* msg, char* c1, char* c2);
-void timer_send_notify(unsigned int ticks,void *param);
-void rls_presentity_clean(unsigned int ticks,void *param);
+int w_rls_handle_notify(struct sip_msg *msg, char *c1, char *c2);
+void timer_send_notify(unsigned int ticks, void *param);
+void rls_presentity_clean(unsigned int ticks, void *param);
 
-int ki_rls_handle_notify(sip_msg_t* msg);
+int ki_rls_handle_notify(sip_msg_t *msg);
 
 #endif
