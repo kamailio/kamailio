@@ -50,15 +50,15 @@ static inline int service_match(struct naptr_rdata *naptr, str *service)
 	if(naptr->flags_len == 1) {
 		return (((naptr->flags[0] == 'u') || (naptr->flags[0] == 'U'))
 				&& (naptr->services_len == service->len)
-				&& (strncasecmp(naptr->services, service->s,
-					service->len) == 0));
+				&& (strncasecmp(naptr->services, service->s, service->len)
+						== 0));
 	}
 
 	/* LIS:HELD domain */
 	if(naptr->flags_len == 0) {
 		return ((naptr->services_len == service->len)
-				&& (strncasecmp(naptr->services, service->s,
-					service->len) == 0));
+				&& (strncasecmp(naptr->services, service->s, service->len)
+						== 0));
 	}
 
 	/* no matching service found */
@@ -226,7 +226,8 @@ int lost_naptr_lookup(str hostname, str *service, str *result)
 		}
 
 		if(parse_naptr_regexp(&(naptr->regexp[0]), naptr->regexp_len, &pattern,
-				   &replacement) < 0) {
+				   &replacement)
+				< 0) {
 			free_rdata_list(head); /*clean up*/
 			LM_ERR("parsing of NAPTR regexp failed\n");
 			return 0;
@@ -235,8 +236,8 @@ int lost_naptr_lookup(str hostname, str *service, str *result)
 		pattern.s[pattern.len] = (char)0;
 		replacement.s[replacement.len] = (char)0;
 		/* replace hostname */
-		if(reg_replace(pattern.s, replacement.s, &(hostname.s[0]),
-				result)	< 0) {
+		if(reg_replace(pattern.s, replacement.s, &(hostname.s[0]), result)
+				< 0) {
 			pattern.s[pattern.len] = '!';
 			replacement.s[replacement.len] = '!';
 			LM_ERR("regexp replace failed\n");

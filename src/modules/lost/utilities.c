@@ -308,7 +308,6 @@ void lost_free_string(str *string)
 		pkg_free(ptr.s);
 
 		LM_DBG("### string object removed\n");
-	
 	}
 
 	string->s = NULL;
@@ -454,11 +453,12 @@ p_lost_geolist_t lost_get_geolocation_header(struct sip_msg *msg, int *items)
 		if((hf->type == HDR_OTHER_T)
 				&& (hf->name.len == LOST_GEOLOC_HEADER_SIZE - 2)) {
 			/* possible hit */
-			if(strncasecmp(hf->name.s, LOST_GEOLOC_HEADER,
-					LOST_GEOLOC_HEADER_SIZE) == 0) {
-                
+			if(strncasecmp(
+					   hf->name.s, LOST_GEOLOC_HEADER, LOST_GEOLOC_HEADER_SIZE)
+					== 0) {
+
 				hdr.s = hf->body.s;
-                hdr.len = hf->body.len;
+				hdr.len = hf->body.len;
 
 				LM_DBG("found geolocation header [%.*s]\n", hdr.len, hdr.s);
 
@@ -690,7 +690,8 @@ void lost_free_geoheader_list(p_lost_geolist_t *list)
  * lost_get_geoheader_value(list, type, rtype)
  * returns geoheader value and type (rtype) of given type
  */
-char *lost_get_geoheader_value(p_lost_geolist_t list, lost_geotype_t type, int *rtype)
+char *lost_get_geoheader_value(
+		p_lost_geolist_t list, lost_geotype_t type, int *rtype)
 {
 	p_lost_geolist_t head = list;
 	char *value = NULL;
@@ -802,7 +803,8 @@ int lost_new_geoheader_list(p_lost_geolist_t *list, str hdr)
 					len++;
 				}
 				if((*(ptr + len) == '>') && (len > 6)) {
-					new = (p_lost_geolist_t)pkg_malloc(sizeof(s_lost_geolist_t));
+					new = (p_lost_geolist_t)pkg_malloc(
+							sizeof(s_lost_geolist_t));
 					if(new == NULL) {
 						PKG_MEM_ERROR;
 					} else {
@@ -844,7 +846,8 @@ int lost_new_geoheader_list(p_lost_geolist_t *list, str hdr)
 					len++;
 				}
 				if((*(ptr + len) == '>') && (len > 10)) {
-					new = (p_lost_geolist_t)pkg_malloc(sizeof(s_lost_geolist_t));
+					new = (p_lost_geolist_t)pkg_malloc(
+							sizeof(s_lost_geolist_t));
 					if(new == NULL) {
 						PKG_MEM_ERROR;
 					} else {
@@ -859,8 +862,8 @@ int lost_new_geoheader_list(p_lost_geolist_t *list, str hdr)
 
 							new->type = HTTP;
 						} else if(((*(search + 5) == 's')
-								|| (*(search + 5) == 'S'))
-								&& (*(search + 6) == ':')) {
+										  || (*(search + 5) == 'S'))
+								  && (*(search + 6) == ':')) {
 
 							LM_DBG("adding https url [%s]\n", new->value);
 
@@ -1189,7 +1192,8 @@ int lost_xpath_location(xmlDocPtr doc, char *path, p_lost_loc_t loc)
 				if(i == select) {
 					/* return the current profile */
 					if(s_profile != NULL) {
-						loc->profile = (char *)pkg_malloc(strlen(s_profile) + 1);
+						loc->profile =
+								(char *)pkg_malloc(strlen(s_profile) + 1);
 						if(loc->profile == NULL) {
 							xmlFree(xmlbuff); /* clean up */
 							xmlFreeDoc(new);
@@ -1497,7 +1501,7 @@ int lost_append_via_element(p_lost_list_t *head, xmlNodePtr *parent)
 	int i;
 	p_lost_list_t current = NULL;
 
-	if (head == NULL) {
+	if(head == NULL) {
 		return 0;
 	}
 
@@ -1506,7 +1510,7 @@ int lost_append_via_element(p_lost_list_t *head, xmlNodePtr *parent)
 	cnt++;
 
 	/* check for more <via> elements to add */
-	while (current->next != NULL) {
+	while(current->next != NULL) {
 		cnt++;
 		current = current->next;
 	}
@@ -1515,7 +1519,7 @@ int lost_append_via_element(p_lost_list_t *head, xmlNodePtr *parent)
 	xmlNodePtr ptrVia[cnt];
 
 	/* ad <via> elements to <path> element */
-	for (i = 0; i < cnt; i++) {
+	for(i = 0; i < cnt; i++) {
 		ptrVia[i] = xmlNewChild(*parent, NULL, BAD_CAST "via", NULL);
 		xmlNewProp(ptrVia[i], BAD_CAST "source", BAD_CAST current->value);
 		current = current->next;
@@ -1663,14 +1667,14 @@ https://tools.ietf.org/html/rfc5222
 	snprintf(buf, BUFSIZE, "%s", loc->urn);
 	xmlNewChild(ptrFindService, NULL, BAD_CAST "service", BAD_CAST buf);
 	/* service - element */
-	if (path != NULL) {
+	if(path != NULL) {
 		ptrPath = xmlNewChild(ptrFindService, NULL, BAD_CAST "path", NULL);
 		if(ptrPath == NULL) {
 			LM_ERR("locationRequest xmlNewChild() failed\n");
 			xmlFreeDoc(request);
 			return doc;
 		}
-		if (lost_append_via_element(&path, &ptrPath) == 0) {
+		if(lost_append_via_element(&path, &ptrPath) == 0) {
 			LM_ERR("appending <via> elements to <path> failed\n");
 			xmlFreeDoc(request);
 			return doc;
