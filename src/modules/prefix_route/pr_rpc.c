@@ -35,7 +35,7 @@
 #include "pr.h"
 
 
-static const char *rpc_dump_doc[2]   = {"Dump the prefix route tree",   NULL};
+static const char *rpc_dump_doc[2] = {"Dump the prefix route tree", NULL};
 static const char *rpc_reload_doc[2] = {"Reload prefix routes from DB", NULL};
 
 
@@ -48,7 +48,7 @@ static void rpc_dump(rpc_t *rpc, void *c)
 	FILE *f;
 
 	f = tmpfile();
-	if (!f) {
+	if(!f) {
 		rpc->fault(c, 500, "failed to open temp file");
 		return;
 	}
@@ -57,12 +57,12 @@ static void rpc_dump(rpc_t *rpc, void *c)
 
 	rewind(f);
 
-	while (!feof(f)) {
+	while(!feof(f)) {
 
-		if (!fgets(buf, sizeof(buf), f))
+		if(!fgets(buf, sizeof(buf), f))
 			break;
 
-		buf[strlen(buf)-1] = '\0';
+		buf[strlen(buf) - 1] = '\0';
 
 		rpc->rpl_printf(c, "%s", buf);
 	}
@@ -78,18 +78,14 @@ static void rpc_reload(rpc_t *rpc, void *c)
 {
 	LM_NOTICE("Reloading prefix route tree from DB\n");
 
-	if (0 != pr_db_load()) {
+	if(0 != pr_db_load()) {
 		LM_ERR("db load failed\n");
 		rpc->fault(c, 400, "failed to reload prefix routes");
-	}
-	else {
+	} else {
 		rpc->rpl_printf(c, "Prefix routes reloaded successfully");
 	}
 }
 
 
-rpc_export_t pr_rpc[] = {
-	{"prefix_route.reload", rpc_reload, rpc_reload_doc, 0},
-	{"prefix_route.dump",   rpc_dump,   rpc_dump_doc,   0},
-	{0, 0, 0, 0}
-};
+rpc_export_t pr_rpc[] = {{"prefix_route.reload", rpc_reload, rpc_reload_doc, 0},
+		{"prefix_route.dump", rpc_dump, rpc_dump_doc, 0}, {0, 0, 0, 0}};

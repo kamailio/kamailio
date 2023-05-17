@@ -55,12 +55,12 @@ MODULE_VERSION
 
 
 /* Modules parameters */
-static char *db_url   = DEFAULT_DB_URL;
+static char *db_url = DEFAULT_DB_URL;
 static char *db_table = "prefix_route";
 static int prefix_route_exit = 1;
 
-static int add_route(struct tree_item *root, const char *prefix,
-		const char *route)
+static int add_route(
+		struct tree_item *root, const char *prefix, const char *route)
 {
 	int ix, err;
 
@@ -68,18 +68,18 @@ static int add_route(struct tree_item *root, const char *prefix,
 	 * in the prefix_route() routing function.
 	 */
 	ix = route_lookup(&main_rt, (char *)route);
-	if (ix < 0) {
+	if(ix < 0) {
 		LM_CRIT("route name '%s' is not defined\n", route);
 		return -1;
 	}
 
-	if (ix >= main_rt.entries) {
+	if(ix >= main_rt.entries) {
 		LM_CRIT("route %d > n_entries (%d)\n", ix, main_rt.entries);
 		return -1;
 	}
 
 	err = tree_item_add(root, prefix, route, ix);
-	if (0 != err) {
+	if(0 != err) {
 		LM_CRIT("tree_item_add() failed (%d)\n", err);
 		return err;
 	}
@@ -95,45 +95,43 @@ int pr_db_load(void)
 {
 	db_ctx_t *ctx;
 	db_cmd_t *cmd = NULL;
-	db_res_t* res = NULL;
-	db_rec_t* rec;
+	db_res_t *res = NULL;
+	db_rec_t *rec;
 	struct tree_item *root;
 	int err = -1;
 	int count = 0;
-	db_fld_t match[] = {
-		{ .name = "prefix",  .type = DB_CSTR },
-		{ .name = "route",   .type = DB_CSTR },
-		{ .name = "comment", .type = DB_CSTR },
-		{ .name = NULL,      .type = DB_NONE }
-	};
+	db_fld_t match[] = {{.name = "prefix", .type = DB_CSTR},
+			{.name = "route", .type = DB_CSTR},
+			{.name = "comment", .type = DB_CSTR},
+			{.name = NULL, .type = DB_NONE}};
 
 	ctx = db_ctx("prefix_route");
-	if (!ctx) {
+	if(!ctx) {
 		LM_ERR("db_ctx() failed\n");
 		return -1;
 	}
-	if (db_add_db(ctx, db_url) < 0) {
+	if(db_add_db(ctx, db_url) < 0) {
 		LM_ERR(" could not add db\n");
 		goto out;
 	}
-	if (db_connect(ctx) < 0) {
+	if(db_connect(ctx) < 0) {
 		LM_ERR("could not connect\n");
 		goto out;
 	}
 
 	cmd = db_cmd(DB_GET, ctx, db_table, match, NULL, NULL);
-	if (!cmd) {
+	if(!cmd) {
 		LM_ERR("db_cmd() failed\n");
 		goto out;
 	}
 
-	if (db_exec(&res, cmd) < 0) {
+	if(db_exec(&res, cmd) < 0) {
 		LM_ERR("db_exec() failed\n");
 		goto out;
 	}
 
 	root = tree_item_alloc();
-	if (NULL == root) {
+	if(NULL == root) {
 		LM_ERR("tree alloc failed\n");
 		err = -1;
 		goto out;
@@ -143,26 +141,26 @@ int pr_db_load(void)
 	err = 0;
 
 	/* Read from DB and build tree */
-	for (rec = db_first(res); rec != NULL && !err; rec = db_next(res)) {
+	for(rec = db_first(res); rec != NULL && !err; rec = db_next(res)) {
 		const char *prefix, *route, *comment;
 
 		++count;
 
-		if (rec->fld[0].flags & DB_NULL) {
+		if(rec->fld[0].flags & DB_NULL) {
 			LM_CRIT("bad 'prefix' record in table %s, skipping...\n", db_table);
 			continue;
 		}
-		if (rec->fld[1].flags & DB_NULL) {
+		if(rec->fld[1].flags & DB_NULL) {
 			LM_CRIT("bad 'route' record in table %s, skipping...\n", db_table);
 			continue;
 		}
 
-		prefix  = rec->fld[0].v.cstr;
-		route   = rec->fld[1].v.cstr;
+		prefix = rec->fld[0].v.cstr;
+		route = rec->fld[1].v.cstr;
 		comment = rec->fld[2].v.cstr;
 
-		LM_DBG("  %d: prefix=%-10s  route=%-15s  comment=%s\n",
-				count, prefix, route, comment);
+		LM_DBG("  %d: prefix=%-10s  route=%-15s  comment=%s\n", count, prefix,
+				route, comment);
 
 		err = add_route(root, prefix, route);
 	}
@@ -170,7 +168,7 @@ int pr_db_load(void)
 	LM_NOTICE("Total prefix routes loaded: %d\n", count);
 
 	/* Error */
-	if (0 != err) {
+	if(0 != err) {
 		LM_ERR("error flushing tree\n");
 		tree_item_free(root);
 		goto out;
@@ -178,18 +176,18 @@ int pr_db_load(void)
 
 	/* Swap trees */
 	err = tree_swap(root);
-	if (0 != err)
+	if(0 != err)
 		goto out;
 
 out:
 	/* Free database results */
-	if (res)
+	if(res)
 		db_res_free(res);
-	if (cmd)
+	if(cmd)
 		db_cmd_free(cmd);
 
 	/* Close database connection */
-	if (ctx)
+	if(ctx)
 		db_ctx_free(ctx);
 
 	return err;
@@ -202,13 +200,13 @@ out:
 static int mod_init(void)
 {
 	/* Initialise tree */
-	if (0 != tree_init()) {
+	if(0 != tree_init()) {
 		LM_CRIT("tree init failed\n\n");
 		return -1;
 	}
 
 	/* Populate database */
-	if (0 != pr_db_load()) {
+	if(0 != pr_db_load()) {
 		LM_CRIT("db load failed\n\n");
 		return -1;
 	}
@@ -231,17 +229,17 @@ static void mod_destroy(void)
  * First try to look at the original Request URI and if there
  * is no username use the new Request URI
  */
-static int get_username(struct sip_msg* msg, str *user)
+static int get_username(struct sip_msg *msg, str *user)
 {
-	if (!msg || !user)
+	if(!msg || !user)
 		return -1;
 
-	if (parse_sip_msg_uri(msg) < 0){
+	if(parse_sip_msg_uri(msg) < 0) {
 		LM_ERR("bad sip msg uri\n");
 		return -1; /* error, bad uri */
 	}
 
-	if (msg->parsed_uri.user.s == 0){
+	if(msg->parsed_uri.user.s == 0) {
 		/* no user in uri */
 		LM_ERR("no user in uri\n");
 		return -2;
@@ -263,20 +261,20 @@ static int ki_prefix_route(sip_msg_t *msg, str *ruser)
 	int route;
 
 	route = tree_route_get(ruser);
-	if (route <= 0)
+	if(route <= 0)
 		return -1;
 
 	/* If match send to route[x] */
 	init_run_actions_ctx(&ra_ctx);
 
 	err = run_actions(&ra_ctx, main_rt.rlist[route], msg);
-	if (err < 0) {
+	if(err < 0) {
 		LM_ERR("run_actions failed (%d)\n", err);
 		return -1;
 	}
 
 	/* Success */
-	return (prefix_route_exit)?0:1;
+	return (prefix_route_exit) ? 0 : 1;
 }
 
 /**
@@ -288,7 +286,7 @@ static int ki_prefix_route_uri(sip_msg_t *msg)
 	int err;
 
 	err = get_username(msg, &user);
-	if (0 != err) {
+	if(0 != err) {
 		LM_ERR("could not get username in Request URI (%d)\n", err);
 		return err;
 	}
@@ -308,14 +306,14 @@ static int prefix_route(struct sip_msg *msg, char *p1, char *p2)
 	(void)p2;
 
 	/* Get request URI */
-	if(p1==NULL) {
+	if(p1 == NULL) {
 		err = get_username(msg, &user);
-		if (0 != err) {
+		if(0 != err) {
 			LM_ERR("could not get username in Request URI (%d)\n", err);
 			return err;
 		}
 	} else {
-		if(fixup_get_svalue(msg, (gparam_t*)p1, &user)<0) {
+		if(fixup_get_svalue(msg, (gparam_t *)p1, &user) < 0) {
 			LM_ERR("could not get username in parameter\n");
 			return -1;
 		}
@@ -327,37 +325,32 @@ static int prefix_route(struct sip_msg *msg, char *p1, char *p2)
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"prefix_route", prefix_route, 0, 0, 0,
-		REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
-	{"prefix_route", prefix_route, 1, fixup_spve_null, 0,
-		ANY_ROUTE},
-	{0,              0,            0, 0, 0, 0         }
-};
+		{"prefix_route", prefix_route, 0, 0, 0,
+				REQUEST_ROUTE | BRANCH_ROUTE | FAILURE_ROUTE},
+		{"prefix_route", prefix_route, 1, fixup_spve_null, 0, ANY_ROUTE},
+		{0, 0, 0, 0, 0, 0}};
 
 /*
  * Exported parameters
  */
-static param_export_t params[] = {
-	{"db_url",       PARAM_STRING, &db_url  },
-	{"db_table",     PARAM_STRING, &db_table},
-	{"exit",         INT_PARAM, &prefix_route_exit},
-	{0,              0,         0        }
-};
+static param_export_t params[] = {{"db_url", PARAM_STRING, &db_url},
+		{"db_table", PARAM_STRING, &db_table},
+		{"exit", INT_PARAM, &prefix_route_exit}, {0, 0, 0}};
 
 /*
  * Module description
  */
 struct module_exports exports = {
-	"prefix_route",  /* Module name              */
-	DEFAULT_DLFLAGS, /* dlopen flags             */
-	cmds,            /* exported functions       */
-	params,          /* exported parameters      */
-	pr_rpc,          /* RPC methods              */
-	0,               /* pseudo-variables exports */
-	0,               /* response function        */
-	mod_init,        /* initialization function  */
-	0,               /* per-child init function  */
-	mod_destroy      /* module destroy function  */
+		"prefix_route",	 /* Module name              */
+		DEFAULT_DLFLAGS, /* dlopen flags             */
+		cmds,			 /* exported functions       */
+		params,			 /* exported parameters      */
+		pr_rpc,			 /* RPC methods              */
+		0,				 /* pseudo-variables exports */
+		0,				 /* response function        */
+		mod_init,		 /* initialization function  */
+		0,				 /* per-child init function  */
+		mod_destroy		 /* module destroy function  */
 };
 
 /**
