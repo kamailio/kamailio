@@ -47,6 +47,6 @@ extern pv_export_t tls_pv[];
 
 void tls_set_pv_con(struct tcp_connection *c);
 
-sr_kemi_xval_t* ki_tls_cget_attr(sip_msg_t* msg, str *aname);
+sr_kemi_xval_t *ki_tls_cget_attr(sip_msg_t *msg, str *aname);
 
 #endif /* _TLS_SELECT_H */
