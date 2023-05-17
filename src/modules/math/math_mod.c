@@ -85,23 +85,23 @@ static int w_math_pow(sip_msg_t *msg, char *v1, char *v2, char *r)
 	pv_spec_t *dst;
 	pv_value_t val = {0};
 
-	if(fixup_get_ivalue(msg, (gparam_t*)v1, &vi1)<0) {
+	if(fixup_get_ivalue(msg, (gparam_t *)v1, &vi1) < 0) {
 		LM_ERR("failed to get first parameter value\n");
 		return -1;
 	}
-	if(fixup_get_ivalue(msg, (gparam_t*)v2, &vi2)<0) {
+	if(fixup_get_ivalue(msg, (gparam_t *)v2, &vi2) < 0) {
 		LM_ERR("failed to get second parameter value\n");
 		return -1;
 	}
 
 	dst = (pv_spec_t *)r;
-	if(dst->setf==NULL) {
+	if(dst->setf == NULL) {
 		LM_ERR("target pv is not writable\n");
 		return -1;
 	}
 
 	val.ri = (long)pow((double)vi1, (double)vi2);
-	val.flags = PV_TYPE_INT|PV_VAL_INT;
+	val.flags = PV_TYPE_INT | PV_VAL_INT;
 
 	dst->setf(msg, &dst->pvp, (int)EQ_T, &val);
 
@@ -117,19 +117,19 @@ static int w_math_logN(sip_msg_t *msg, char *v1, char *r)
 	pv_spec_t *dst;
 	pv_value_t val = {0};
 
-	if(fixup_get_ivalue(msg, (gparam_t*)v1, &vi1)<0) {
+	if(fixup_get_ivalue(msg, (gparam_t *)v1, &vi1) < 0) {
 		LM_ERR("failed to get first parameter value\n");
 		return -1;
 	}
 
 	dst = (pv_spec_t *)r;
-	if(dst->setf==NULL) {
+	if(dst->setf == NULL) {
 		LM_ERR("target pv is not writable\n");
 		return -1;
 	}
 
 	val.ri = (long)log((double)vi1);
-	val.flags = PV_TYPE_INT|PV_VAL_INT;
+	val.flags = PV_TYPE_INT | PV_VAL_INT;
 
 	dst->setf(msg, &dst->pvp, (int)EQ_T, &val);
 
@@ -145,19 +145,19 @@ static int w_math_log2(sip_msg_t *msg, char *v1, char *r)
 	pv_spec_t *dst;
 	pv_value_t val = {0};
 
-	if(fixup_get_ivalue(msg, (gparam_t*)v1, &vi1)<0) {
+	if(fixup_get_ivalue(msg, (gparam_t *)v1, &vi1) < 0) {
 		LM_ERR("failed to get first parameter value\n");
 		return -1;
 	}
 
 	dst = (pv_spec_t *)r;
-	if(dst->setf==NULL) {
+	if(dst->setf == NULL) {
 		LM_ERR("target pv is not writable\n");
 		return -1;
 	}
 
 	val.ri = (long)log2((double)vi1);
-	val.flags = PV_TYPE_INT|PV_VAL_INT;
+	val.flags = PV_TYPE_INT | PV_VAL_INT;
 
 	dst->setf(msg, &dst->pvp, (int)EQ_T, &val);
 
@@ -173,19 +173,19 @@ static int w_math_log10(sip_msg_t *msg, char *v1, char *r)
 	pv_spec_t *dst;
 	pv_value_t val = {0};
 
-	if(fixup_get_ivalue(msg, (gparam_t*)v1, &vi1)<0) {
+	if(fixup_get_ivalue(msg, (gparam_t *)v1, &vi1) < 0) {
 		LM_ERR("failed to get first parameter value\n");
 		return -1;
 	}
 
 	dst = (pv_spec_t *)r;
-	if(dst->setf==NULL) {
+	if(dst->setf == NULL) {
 		LM_ERR("target pv is not writable\n");
 		return -1;
 	}
 
 	val.ri = (long)log10((double)vi1);
-	val.flags = PV_TYPE_INT|PV_VAL_INT;
+	val.flags = PV_TYPE_INT | PV_VAL_INT;
 
 	dst->setf(msg, &dst->pvp, (int)EQ_T, &val);
 
@@ -201,19 +201,19 @@ static int w_math_sqrt(sip_msg_t *msg, char *v1, char *r)
 	pv_spec_t *dst;
 	pv_value_t val = {0};
 
-	if(fixup_get_ivalue(msg, (gparam_t*)v1, &vi1)<0) {
+	if(fixup_get_ivalue(msg, (gparam_t *)v1, &vi1) < 0) {
 		LM_ERR("failed to get first parameter value\n");
 		return -1;
 	}
 
 	dst = (pv_spec_t *)r;
-	if(dst->setf==NULL) {
+	if(dst->setf == NULL) {
 		LM_ERR("target pv is not writable\n");
 		return -1;
 	}
 
 	val.ri = (long)sqrt((double)vi1);
-	val.flags = PV_TYPE_INT|PV_VAL_INT;
+	val.flags = PV_TYPE_INT | PV_VAL_INT;
 
 	dst->setf(msg, &dst->pvp, (int)EQ_T, &val);
 
@@ -225,9 +225,9 @@ static int w_math_sqrt(sip_msg_t *msg, char *v1, char *r)
  */
 static int fixup_math_p2(void **param, int param_no)
 {
-	if (param_no==1) {
+	if(param_no == 1) {
 		return fixup_igp_igp(param, param_no);
-	} else if (param_no==2) {
+	} else if(param_no == 2) {
 		return fixup_pvar_null(param, 1);
 	}
 	return 0;
@@ -238,11 +238,10 @@ static int fixup_math_p2(void **param, int param_no)
  */
 static int fixup_math_p3(void **param, int param_no)
 {
-	if (param_no==1 || param_no==2) {
+	if(param_no == 1 || param_no == 2) {
 		return fixup_igp_igp(param, param_no);
-	} else if (param_no==3) {
+	} else if(param_no == 3) {
 		return fixup_pvar_null(param, 1);
 	}
 	return 0;
 }
-
