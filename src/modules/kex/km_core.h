@@ -27,6 +27,6 @@ int w_setdsturi(struct sip_msg *msg, char *uri, str *s2);
 int w_resetdsturi(struct sip_msg *msg, char *uri, str *s2);
 int w_isdsturiset(struct sip_msg *msg, char *uri, str *s2);
 int w_pv_printf(struct sip_msg *msg, char *s1, str *s2);
-int pv_printf_fixup(void** param, int param_no);
+int pv_printf_fixup(void **param, int param_no);
 
 #endif

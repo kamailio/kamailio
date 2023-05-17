@@ -44,7 +44,8 @@
 /**
  *
  */
-typedef struct pkg_proc_stats {
+typedef struct pkg_proc_stats
+{
 	int rank;
 	unsigned int pid;
 	unsigned long used;
@@ -71,19 +72,18 @@ int pkg_proc_stats_init(void)
 {
 	_pkg_proc_stats_no = get_max_procs();
 
-	if(_pkg_proc_stats_no<=0)
+	if(_pkg_proc_stats_no <= 0)
 		return -1;
-	if(_pkg_proc_stats_list!=NULL)
+	if(_pkg_proc_stats_list != NULL)
 		return -1;
-	_pkg_proc_stats_list = (pkg_proc_stats_t*)shm_malloc(
-			_pkg_proc_stats_no*sizeof(pkg_proc_stats_t));
-	if(_pkg_proc_stats_list==NULL)
-	{
+	_pkg_proc_stats_list = (pkg_proc_stats_t *)shm_malloc(
+			_pkg_proc_stats_no * sizeof(pkg_proc_stats_t));
+	if(_pkg_proc_stats_list == NULL) {
 		SHM_MEM_ERROR;
 		return -1;
 	}
 	memset(_pkg_proc_stats_list, 0,
-			_pkg_proc_stats_no*sizeof(pkg_proc_stats_t));
+			_pkg_proc_stats_no * sizeof(pkg_proc_stats_t));
 	return 0;
 }
 
@@ -93,9 +93,9 @@ int pkg_proc_stats_init(void)
 int pkg_proc_stats_myinit(int rank)
 {
 	struct mem_info info;
-	if(_pkg_proc_stats_list==NULL)
+	if(_pkg_proc_stats_list == NULL)
 		return -1;
-	if(process_no>=_pkg_proc_stats_no)
+	if(process_no >= _pkg_proc_stats_no)
 		return -1;
 	_pkg_proc_stats_list[process_no].pid = (unsigned int)my_pid();
 	_pkg_proc_stats_list[process_no].rank = rank;
@@ -115,7 +115,7 @@ int pkg_proc_stats_myinit(int rank)
  */
 int pkg_proc_stats_destroy(void)
 {
-	if(_pkg_proc_stats_list==NULL)
+	if(_pkg_proc_stats_list == NULL)
 		return -1;
 	shm_free(_pkg_proc_stats_list);
 	_pkg_proc_stats_list = 0;
@@ -130,9 +130,9 @@ int pkg_proc_stats_destroy(void)
 static int pkg_proc_update_stats(sr_event_param_t *evp)
 {
 	struct mem_info info;
-	if(unlikely(_pkg_proc_stats_list==NULL))
+	if(unlikely(_pkg_proc_stats_list == NULL))
 		return -1;
-	if(unlikely(process_no>=_pkg_proc_stats_no))
+	if(unlikely(process_no >= _pkg_proc_stats_no))
 		return -1;
 	pkg_info(&info);
 	_pkg_proc_stats_list[process_no].available = info.free_size;
@@ -155,10 +155,8 @@ int register_pkg_proc_stats(void)
 /**
  *
  */
-static const char* rpc_pkg_stats_doc[2] = {
-	"Private memory (pkg) statistics per process",
-	0
-};
+static const char *rpc_pkg_stats_doc[2] = {
+		"Private memory (pkg) statistics per process", 0};
 
 /**
  *
@@ -166,8 +164,7 @@ static const char* rpc_pkg_stats_doc[2] = {
 int pkg_proc_get_pid_index(unsigned int pid)
 {
 	int i;
-	for(i=0; i<_pkg_proc_stats_no; i++)
-	{
+	for(i = 0; i < _pkg_proc_stats_no; i++) {
 		if(_pkg_proc_stats_list[i].pid == pid)
 			return i;
 	}
@@ -177,17 +174,16 @@ int pkg_proc_get_pid_index(unsigned int pid)
 /**
  *
  */
-static void rpc_pkg_stats(rpc_t* rpc, void* ctx)
+static void rpc_pkg_stats(rpc_t *rpc, void *ctx)
 {
 	int i;
 	int limit;
 	int cval;
 	str cname;
-	void* th;
+	void *th;
 	int mode;
 
-	if(_pkg_proc_stats_list==NULL)
-	{
+	if(_pkg_proc_stats_list == NULL) {
 		rpc->fault(ctx, 500, "Not initialized");
 		return;
 	}
@@ -195,66 +191,57 @@ static void rpc_pkg_stats(rpc_t* rpc, void* ctx)
 	mode = 0;
 	cval = 0;
 	limit = _pkg_proc_stats_no;
-	if (rpc->scan(ctx, "*S", &cname) == 1)
-	{
-		if(cname.len==3 && strncmp(cname.s, "pid", 3)==0)
+	if(rpc->scan(ctx, "*S", &cname) == 1) {
+		if(cname.len == 3 && strncmp(cname.s, "pid", 3) == 0)
 			mode = 1;
-		else if(cname.len==4 && strncmp(cname.s, "rank", 4)==0)
+		else if(cname.len == 4 && strncmp(cname.s, "rank", 4) == 0)
 			mode = 2;
-		else if(cname.len==5 && strncmp(cname.s, "index", 5)==0)
+		else if(cname.len == 5 && strncmp(cname.s, "index", 5) == 0)
 			mode = 3;
 		else {
 			rpc->fault(ctx, 500, "Invalid filter type");
 			return;
 		}
 
-		if (rpc->scan(ctx, "d", &cval) < 1)
-		{
+		if(rpc->scan(ctx, "d", &cval) < 1) {
 			rpc->fault(ctx, 500, "One more parameter expected");
 			return;
 		}
-		if(mode==1)
-		{
+		if(mode == 1) {
 			i = pkg_proc_get_pid_index((unsigned int)cval);
-			if(i<0)
-			{
+			if(i < 0) {
 				rpc->fault(ctx, 500, "No such pid");
 				return;
 			}
 			limit = i + 1;
-		} else if(mode==3) {
-			i=cval;
+		} else if(mode == 3) {
+			i = cval;
 			limit = i + 1;
 		}
 	}
 
-	for(; i<limit; i++)
-	{
+	for(; i < limit; i++) {
 		/* add entry node */
-		if(mode!=2 || _pkg_proc_stats_list[i].rank==cval)
-		{
-			if (rpc->add(ctx, "{", &th) < 0)
-			{
+		if(mode != 2 || _pkg_proc_stats_list[i].rank == cval) {
+			if(rpc->add(ctx, "{", &th) < 0) {
 				rpc->fault(ctx, 500, "Internal error creating rpc");
 				return;
 			}
-			if(_pkg_proc_stats_list[i].pid==0) {
+			if(_pkg_proc_stats_list[i].pid == 0) {
 				_pkg_proc_stats_list[i].pid = pt[i].pid;
-				_pkg_proc_stats_list[i].total_size = _pkg_proc_stats_list[0].total_size;
+				_pkg_proc_stats_list[i].total_size =
+						_pkg_proc_stats_list[0].total_size;
 				_pkg_proc_stats_list[i].rank = PROC_NOCHLDINIT;
 			}
-			if(rpc->struct_add(th, "duduuuuus",
-							"entry",     i,
-							"pid",       _pkg_proc_stats_list[i].pid,
-							"rank",      _pkg_proc_stats_list[i].rank,
-							"used",      _pkg_proc_stats_list[i].used,
-							"free",      _pkg_proc_stats_list[i].available,
-							"real_used", _pkg_proc_stats_list[i].real_used,
-							"total_size",  _pkg_proc_stats_list[i].total_size,
-							"total_frags", _pkg_proc_stats_list[i].total_frags,
-							"desc",pt[i].desc
-						)<0)
-			{
+			if(rpc->struct_add(th, "duduuuuus", "entry", i, "pid",
+					   _pkg_proc_stats_list[i].pid, "rank",
+					   _pkg_proc_stats_list[i].rank, "used",
+					   _pkg_proc_stats_list[i].used, "free",
+					   _pkg_proc_stats_list[i].available, "real_used",
+					   _pkg_proc_stats_list[i].real_used, "total_size",
+					   _pkg_proc_stats_list[i].total_size, "total_frags",
+					   _pkg_proc_stats_list[i].total_frags, "desc", pt[i].desc)
+					< 0) {
 				rpc->fault(ctx, 500, "Internal error creating rpc");
 				return;
 			}
@@ -265,25 +252,23 @@ static void rpc_pkg_stats(rpc_t* rpc, void* ctx)
 /**
  *
  */
-static const char* rpc_pkg_info_doc[2] = {
-	"Private memory manager details",
-	0
-};
+static const char *rpc_pkg_info_doc[2] = {"Private memory manager details", 0};
 
 /**
  *
  */
-static void rpc_pkg_info(rpc_t* rpc, void* ctx)
+static void rpc_pkg_info(rpc_t *rpc, void *ctx)
 {
-	void* th;
+	void *th;
 
-	if (rpc->add(ctx, "{", &th) < 0) {
+	if(rpc->add(ctx, "{", &th) < 0) {
 		rpc->fault(ctx, 500, "Internal error creating rpc");
 		return;
 	}
-	if(rpc->struct_add(th, "su",
-			"name", (_pkg_root.mname)?_pkg_root.mname:"unknown",
-			"size", (unsigned int)pkg_mem_size) <0) {
+	if(rpc->struct_add(th, "su", "name",
+			   (_pkg_root.mname) ? _pkg_root.mname : "unknown", "size",
+			   (unsigned int)pkg_mem_size)
+			< 0) {
 		rpc->fault(ctx, 500, "Internal error adding fields");
 		return;
 	}
@@ -293,21 +278,17 @@ static void rpc_pkg_info(rpc_t* rpc, void* ctx)
  *
  */
 rpc_export_t kex_pkg_rpc[] = {
-	{"pkg.stats", rpc_pkg_stats,  rpc_pkg_stats_doc,       RET_ARRAY},
-	{"pkg.info",  rpc_pkg_info,   rpc_pkg_info_doc,        0},
-	{0, 0, 0, 0}
-};
+		{"pkg.stats", rpc_pkg_stats, rpc_pkg_stats_doc, RET_ARRAY},
+		{"pkg.info", rpc_pkg_info, rpc_pkg_info_doc, 0}, {0, 0, 0, 0}};
 
 /**
  *
  */
 int pkg_proc_stats_init_rpc(void)
 {
-	if (rpc_register_array(kex_pkg_rpc)!=0)
-	{
+	if(rpc_register_array(kex_pkg_rpc) != 0) {
 		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}
 	return 0;
 }
-
