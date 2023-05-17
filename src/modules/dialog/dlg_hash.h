@@ -38,128 +38,131 @@
 
 
 /* states of a dialog */
-#define DLG_STATE_UNCONFIRMED  1 /*!< unconfirmed dialog */
-#define DLG_STATE_EARLY        2 /*!< early dialog */
+#define DLG_STATE_UNCONFIRMED 1	 /*!< unconfirmed dialog */
+#define DLG_STATE_EARLY 2		 /*!< early dialog */
 #define DLG_STATE_CONFIRMED_NA 3 /*!< confirmed dialog without an ACK yet */
-#define DLG_STATE_CONFIRMED    4 /*!< confirmed dialog */
-#define DLG_STATE_DELETED      5 /*!< deleted dialog */
+#define DLG_STATE_CONFIRMED 4	 /*!< confirmed dialog */
+#define DLG_STATE_DELETED 5		 /*!< deleted dialog */
 
 /* events for dialog processing */
-#define DLG_EVENT_TDEL         1 /*!< transaction was destroyed */
-#define DLG_EVENT_RPL1xx       2 /*!< 1xx request */
-#define DLG_EVENT_RPL2xx       3 /*!< 2xx request */
-#define DLG_EVENT_RPL3xx       4 /*!< 3xx request */
-#define DLG_EVENT_REQPRACK     5 /*!< PRACK request */
-#define DLG_EVENT_REQACK       6 /*!< ACK request */
-#define DLG_EVENT_REQBYE       7 /*!< BYE request */
-#define DLG_EVENT_REQ          8 /*!< other requests */
+#define DLG_EVENT_TDEL 1	 /*!< transaction was destroyed */
+#define DLG_EVENT_RPL1xx 2	 /*!< 1xx request */
+#define DLG_EVENT_RPL2xx 3	 /*!< 2xx request */
+#define DLG_EVENT_RPL3xx 4	 /*!< 3xx request */
+#define DLG_EVENT_REQPRACK 5 /*!< PRACK request */
+#define DLG_EVENT_REQACK 6	 /*!< ACK request */
+#define DLG_EVENT_REQBYE 7	 /*!< BYE request */
+#define DLG_EVENT_REQ 8		 /*!< other requests */
 
 /* dialog internal flags only in memory */
-#define DLG_FLAG_NEW           (1<<0) /*!< new dialog */
-#define DLG_FLAG_CHANGED       (1<<1) /*!< dialog was changed */
-#define DLG_FLAG_HASBYE        (1<<2) /*!< bye was received */
-#define DLG_FLAG_CALLERBYE     (1<<4) /*!< bye from caller */
-#define DLG_FLAG_CALLEEBYE     (1<<5) /*!< bye from callee */
-#define DLG_FLAG_LOCALDLG      (1<<6) /*!< local dialog, unused */
-#define DLG_FLAG_CHANGED_VARS  (1<<7) /*!< dialog-variables changed */
+#define DLG_FLAG_NEW (1 << 0)		   /*!< new dialog */
+#define DLG_FLAG_CHANGED (1 << 1)	   /*!< dialog was changed */
+#define DLG_FLAG_HASBYE (1 << 2)	   /*!< bye was received */
+#define DLG_FLAG_CALLERBYE (1 << 4)	   /*!< bye from caller */
+#define DLG_FLAG_CALLEEBYE (1 << 5)	   /*!< bye from callee */
+#define DLG_FLAG_LOCALDLG (1 << 6)	   /*!< local dialog, unused */
+#define DLG_FLAG_CHANGED_VARS (1 << 7) /*!< dialog-variables changed */
 
 /* dialog-variable flags (in addition to dialog-flags) */
-#define DLG_FLAG_DEL           (1<<8) /*!< delete this var */
+#define DLG_FLAG_DEL (1 << 8) /*!< delete this var */
 
-#define DLG_FLAG_TM            (1<<9) /*!< dialog is set in transaction */
-#define DLG_FLAG_EXPIRED       (1<<10)/*!< dialog is expired */
-#define DLG_FLAG_CHANGED_PROF  (1<<10)/*!< dialog-profiles changed DMQ*/
-#define DLG_FLAG_DB_LOAD_EXTRA (1<<12)/*!< dialog loaded extra from db */
+#define DLG_FLAG_TM (1 << 9)			 /*!< dialog is set in transaction */
+#define DLG_FLAG_EXPIRED (1 << 10)		 /*!< dialog is expired */
+#define DLG_FLAG_CHANGED_PROF (1 << 10)	 /*!< dialog-profiles changed DMQ*/
+#define DLG_FLAG_DB_LOAD_EXTRA (1 << 12) /*!< dialog loaded extra from db */
 
 /* internal flags stored in db */
-#define DLG_IFLAG_TIMEOUTBYE        (1<<0) /*!< send bye on time-out */
-#define DLG_IFLAG_KA_SRC            (1<<1) /*!< send keep alive to src */
-#define DLG_IFLAG_KA_DST            (1<<2) /*!< send keep alive to dst */
-#define DLG_IFLAG_TIMER_NORESET     (1<<3) /*!< don't reset dialog timers on in-dialog messages reception */
-#define DLG_IFLAG_CSEQ_DIFF         (1<<4) /*!< CSeq changed in dialog */
-#define DLG_IFLAG_PRACK             (1<<5) /*!< PRACK was routed during initial state */
-#define DLG_IFLAG_DMQ_SYNC          (1<<6) /*!< sync this dialog via dmq DMQ*/
+#define DLG_IFLAG_TIMEOUTBYE (1 << 0) /*!< send bye on time-out */
+#define DLG_IFLAG_KA_SRC (1 << 1)	  /*!< send keep alive to src */
+#define DLG_IFLAG_KA_DST (1 << 2)	  /*!< send keep alive to dst */
+#define DLG_IFLAG_TIMER_NORESET \
+	(1 << 3) /*!< don't reset dialog timers on in-dialog messages reception */
+#define DLG_IFLAG_CSEQ_DIFF (1 << 4) /*!< CSeq changed in dialog */
+#define DLG_IFLAG_PRACK (1 << 5) /*!< PRACK was routed during initial state */
+#define DLG_IFLAG_DMQ_SYNC (1 << 6) /*!< sync this dialog via dmq DMQ*/
 
-#define DLG_CALLER_LEG         0 /*!< attribute that belongs to a caller leg */
-#define DLG_CALLEE_LEG         1 /*!< attribute that belongs to a callee leg */
+#define DLG_CALLER_LEG 0 /*!< attribute that belongs to a caller leg */
+#define DLG_CALLEE_LEG 1 /*!< attribute that belongs to a callee leg */
 
-#define DLG_DIR_NONE           0 /*!< dialog has no direction */
-#define DLG_DIR_DOWNSTREAM     1 /*!< dialog has downstream direction */
-#define DLG_DIR_UPSTREAM       2 /*!< dialog has upstream direction */
+#define DLG_DIR_NONE 0		 /*!< dialog has no direction */
+#define DLG_DIR_DOWNSTREAM 1 /*!< dialog has downstream direction */
+#define DLG_DIR_UPSTREAM 2	 /*!< dialog has upstream direction */
 
-#define DLG_EVENTRT_START    0
-#define DLG_EVENTRT_END      1
-#define DLG_EVENTRT_FAILED   2
-#define DLG_EVENTRT_MAX      3
+#define DLG_EVENTRT_START 0
+#define DLG_EVENTRT_END 1
+#define DLG_EVENTRT_FAILED 2
+#define DLG_EVENTRT_MAX 3
 
 /* flags for filtering dialogs processing */
-#define DLG_FILTER_LOCALONLY (1<<0) /*!< processing only local dialogs */
+#define DLG_FILTER_LOCALONLY (1 << 0) /*!< processing only local dialogs */
 
 /*! internal unique ide per dialog */
-typedef struct dlg_iuid {
-	unsigned int         h_id;		/*!< id in the hash table entry (seq nr in slot) */
-	unsigned int         h_entry;	/*!< index of hash table entry (the slot number) */
+typedef struct dlg_iuid
+{
+	unsigned int h_id;	  /*!< id in the hash table entry (seq nr in slot) */
+	unsigned int h_entry; /*!< index of hash table entry (the slot number) */
 } dlg_iuid_t;
 
 /*! entries in the dialog list */
 typedef struct dlg_cell
 {
-	volatile int         ref;		/*!< reference counter */
-	struct dlg_cell      *next;		/*!< next entry in the list */
-	struct dlg_cell      *prev;		/*!< previous entry in the list */
-	unsigned int         h_id;		/*!< id in the hash table entry (seq nr in slot) */
-	unsigned int         h_entry;	/*!< index of hash table entry (the slot number) */
-	unsigned int         state;		/*!< dialog state */
-	unsigned int         lifetime;		/*!< dialog lifetime */
-	unsigned int         init_ts;		/*!< init (creation) time (absolute UNIX ts)*/
-	unsigned int         start_ts;		/*!< start time  (absolute UNIX ts)*/
-	unsigned int         end_ts;		/*!< end time  (absolute UNIX ts)*/
-	unsigned int         dflags;		/*!< internal dialog memory flags */
-	unsigned int         iflags;		/*!< internal dialog persistent flags */
-	unsigned int         sflags;		/*!< script dialog persistent flags */
-	int                  toroute;		/*!< index of route that is executed on timeout */
-	str                  toroute_name;	/*!< name of route that is executed on timeout */
-	unsigned int         from_rr_nb;	/*!< information from record routing */
-	struct dlg_tl        tl;			/*!< dialog timer list */
-	str                  callid;		/*!< callid from SIP message */
-	str                  from_uri;		/*!< from uri from SIP message */
-	str                  to_uri;		/*!< to uri from SIP message */
-	str                  req_uri;		/*!< r-uri from SIP message */
-	str                  tag[2];		/*!< from tags of caller and to tag of callee */
-	str                  cseq[2];		/*!< CSEQ of caller and callee */
-	str                  route_set[2];	/*!< route set of caller and callee */
-	str                  contact[2];	/*!< contact of caller and callee */
-	struct socket_info * bind_addr[2];	/*! binded address of caller and callee */
-	struct dlg_head_cbl  cbs;		/*!< dialog callbacks */
+	volatile int ref;		 /*!< reference counter */
+	struct dlg_cell *next;	 /*!< next entry in the list */
+	struct dlg_cell *prev;	 /*!< previous entry in the list */
+	unsigned int h_id;		 /*!< id in the hash table entry (seq nr in slot) */
+	unsigned int h_entry;	 /*!< index of hash table entry (the slot number) */
+	unsigned int state;		 /*!< dialog state */
+	unsigned int lifetime;	 /*!< dialog lifetime */
+	unsigned int init_ts;	 /*!< init (creation) time (absolute UNIX ts)*/
+	unsigned int start_ts;	 /*!< start time  (absolute UNIX ts)*/
+	unsigned int end_ts;	 /*!< end time  (absolute UNIX ts)*/
+	unsigned int dflags;	 /*!< internal dialog memory flags */
+	unsigned int iflags;	 /*!< internal dialog persistent flags */
+	unsigned int sflags;	 /*!< script dialog persistent flags */
+	int toroute;			 /*!< index of route that is executed on timeout */
+	str toroute_name;		 /*!< name of route that is executed on timeout */
+	unsigned int from_rr_nb; /*!< information from record routing */
+	struct dlg_tl tl;		 /*!< dialog timer list */
+	str callid;				 /*!< callid from SIP message */
+	str from_uri;			 /*!< from uri from SIP message */
+	str to_uri;				 /*!< to uri from SIP message */
+	str req_uri;			 /*!< r-uri from SIP message */
+	str tag[2];				 /*!< from tags of caller and to tag of callee */
+	str cseq[2];			 /*!< CSEQ of caller and callee */
+	str route_set[2];		 /*!< route set of caller and callee */
+	str contact[2];			 /*!< contact of caller and callee */
+	struct socket_info *bind_addr[2]; /*! binded address of caller and callee */
+	struct dlg_head_cbl cbs;		  /*!< dialog callbacks */
 	struct dlg_profile_link *profile_links; /*!< dialog profiles */
-	struct dlg_var       *vars;		/*!< dialog variables */
-	struct cell          *t;            /*!< Reference to Transaction of the INVITE */
-	unsigned int         ka_src_counter;	/*!< keepalive src (caller) counter */
-	unsigned int         ka_dst_counter;	/*!< keepalive dst (callee) counter */
+	struct dlg_var *vars;					/*!< dialog variables */
+	struct cell *t;				 /*!< Reference to Transaction of the INVITE */
+	unsigned int ka_src_counter; /*!< keepalive src (caller) counter */
+	unsigned int ka_dst_counter; /*!< keepalive dst (callee) counter */
 } dlg_cell_t;
 
 
 /*! entries in the main dialog table */
 typedef struct dlg_entry
 {
-	struct dlg_cell    *first;	/*!< dialog list */
-	struct dlg_cell    *last;	/*!< optimisation, end of the dialog list */
-	unsigned int       next_id;	/*!< next id */
-	gen_lock_t lock;     /* mutex to access items in the slot */
-	atomic_t locker_pid; /* pid of the process that holds the lock */
-	int rec_lock_level;  /* recursive lock count */
+	struct dlg_cell *first; /*!< dialog list */
+	struct dlg_cell *last;	/*!< optimisation, end of the dialog list */
+	unsigned int next_id;	/*!< next id */
+	gen_lock_t lock;		/* mutex to access items in the slot */
+	atomic_t locker_pid;	/* pid of the process that holds the lock */
+	int rec_lock_level;		/* recursive lock count */
 } dlg_entry_t;
 
 
 /*! main dialog table */
 typedef struct dlg_table
 {
-	unsigned int       size;	/*!< size of the dialog table */
-	struct dlg_entry   *entries;	/*!< dialog hash table */
+	unsigned int size;		   /*!< size of the dialog table */
+	struct dlg_entry *entries; /*!< dialog hash table */
 } dlg_table_t;
 
 
-typedef struct dlg_ka {
+typedef struct dlg_ka
+{
 	dlg_iuid_t iuid;
 	ticks_t katime;
 	unsigned iflags;
@@ -175,18 +178,18 @@ extern dlg_table_t *d_table;
  * \param _table dialog table
  * \param _entry locked entry
  */
-#define dlg_lock(_table, _entry) \
-		do { \
-			int mypid; \
-			mypid = my_pid(); \
-			if (likely(atomic_get( &(_entry)->locker_pid) != mypid)) { \
-				lock_get( &(_entry)->lock); \
-				atomic_set( &(_entry)->locker_pid, mypid); \
-			} else { \
-				/* locked within the same process that executed us */ \
-				(_entry)->rec_lock_level++; \
-			} \
-		} while(0)
+#define dlg_lock(_table, _entry)                                  \
+	do {                                                          \
+		int mypid;                                                \
+		mypid = my_pid();                                         \
+		if(likely(atomic_get(&(_entry)->locker_pid) != mypid)) {  \
+			lock_get(&(_entry)->lock);                            \
+			atomic_set(&(_entry)->locker_pid, mypid);             \
+		} else {                                                  \
+			/* locked within the same process that executed us */ \
+			(_entry)->rec_lock_level++;                           \
+		}                                                         \
+	} while(0)
 
 
 /*!
@@ -194,16 +197,16 @@ extern dlg_table_t *d_table;
  * \param _table dialog table
  * \param _entry locked entry
  */
-#define dlg_unlock(_table, _entry) \
-		do { \
-			if (likely((_entry)->rec_lock_level == 0)) { \
-				atomic_set( &(_entry)->locker_pid, 0); \
-				lock_release( &(_entry)->lock); \
-			} else  { \
-				/* recursive locked => decrease lock count */ \
-				(_entry)->rec_lock_level--; \
-			} \
-		} while(0)
+#define dlg_unlock(_table, _entry)                        \
+	do {                                                  \
+		if(likely((_entry)->rec_lock_level == 0)) {       \
+			atomic_set(&(_entry)->locker_pid, 0);         \
+			lock_release(&(_entry)->lock);                \
+		} else {                                          \
+			/* recursive locked => decrease lock count */ \
+			(_entry)->rec_lock_level--;                   \
+		}                                                 \
+	} while(0)
 
 /*!
  * \brief Set a dialog lock (re-entrant)
@@ -228,11 +231,11 @@ extern dlg_table_t *d_table;
  */
 static inline void unlink_unsafe_dlg(dlg_entry_t *d_entry, dlg_cell_t *dlg)
 {
-	if (dlg->next)
+	if(dlg->next)
 		dlg->next->prev = dlg->prev;
 	else
 		d_entry->last = dlg->prev;
-	if (dlg->prev)
+	if(dlg->prev)
 		dlg->prev->next = dlg->next;
 	else
 		d_entry->first = dlg->next;
@@ -273,8 +276,8 @@ void destroy_dlg_table(void);
  * \param req_uri dialog r-uri
  * \return created dialog structure on success, NULL otherwise
  */
-dlg_cell_t* build_new_dlg(str *callid, str *from_uri,
-		str *to_uri, str *from_tag, str *req_uri);
+dlg_cell_t *build_new_dlg(
+		str *callid, str *from_uri, str *to_uri, str *from_tag, str *req_uri);
 
 
 /*!
@@ -287,7 +290,7 @@ dlg_cell_t* build_new_dlg(str *callid, str *from_uri,
  * \param leg must be either DLG_CALLER_LEG, or DLG_CALLEE_LEG
  * \return 0 on success, -1 on failure
  */
-int dlg_set_leg_info(dlg_cell_t *dlg, str* tag, str *rr, str *contact,
+int dlg_set_leg_info(dlg_cell_t *dlg, str *tag, str *rr, str *contact,
 		str *cseq, unsigned int leg);
 
 
@@ -298,7 +301,7 @@ int dlg_set_leg_info(dlg_cell_t *dlg, str* tag, str *rr, str *contact,
  * \param ct Contact of caller or callee
  * \return 0 on success, -1 on failure
  */
-int dlg_update_contact(struct dlg_cell * dlg, unsigned int leg, str *ct);
+int dlg_update_contact(struct dlg_cell *dlg, unsigned int leg, str *ct);
 
 
 /*!
@@ -317,7 +320,7 @@ int dlg_update_cseq(dlg_cell_t *dlg, unsigned int leg, str *cseq);
  * \param rr routeset
  * \return 0 on success, -1 on failure
  */
-int dlg_update_rr_set(struct dlg_cell * dlg, unsigned int leg, str *rr);
+int dlg_update_rr_set(struct dlg_cell *dlg, unsigned int leg, str *rr);
 
 /*!
  * \brief Set time-out route
@@ -349,7 +352,7 @@ dlg_cell_t *dlg_lookup_mode(unsigned int h_entry, unsigned int h_id, int lmode);
  * \param h_id id of the hash table entry
  * \return dialog structure on success, NULL on failure
  */
-dlg_cell_t* dlg_lookup(unsigned int h_entry, unsigned int h_id);
+dlg_cell_t *dlg_lookup(unsigned int h_entry, unsigned int h_id);
 
 /*!
  * \brief Search a dialog in the global list by iuid
@@ -360,7 +363,7 @@ dlg_cell_t* dlg_lookup(unsigned int h_entry, unsigned int h_id);
  * \param lmode id if 0, then dlg table entry is unlocked, otherwise is locked
  * \return dialog structure on success, NULL on failure
  */
-dlg_cell_t* dlg_get_by_iuid_mode(dlg_iuid_t *diuid, int lmode);
+dlg_cell_t *dlg_get_by_iuid_mode(dlg_iuid_t *diuid, int lmode);
 
 /*!
  * \brief Search and return dialog in the global list by iuid
@@ -370,7 +373,7 @@ dlg_cell_t* dlg_get_by_iuid_mode(dlg_iuid_t *diuid, int lmode);
  * \param diuid internal unique id per dialog
  * \return dialog structure on success, NULL on failure
  */
-dlg_cell_t* dlg_get_by_iuid(dlg_iuid_t *diuid);
+dlg_cell_t *dlg_get_by_iuid(dlg_iuid_t *diuid);
 
 
 /*!
@@ -389,7 +392,7 @@ dlg_cell_t* dlg_get_by_iuid(dlg_iuid_t *diuid);
  * \param dir direction
  * \return dialog structure on success, NULL on failure
  */
-dlg_cell_t* get_dlg(str *callid, str *ftag, str *ttag, unsigned int *dir);
+dlg_cell_t *get_dlg(str *callid, str *ftag, str *ttag, unsigned int *dir);
 
 
 /*!
@@ -410,7 +413,7 @@ dlg_cell_t* get_dlg(str *callid, str *ftag, str *ttag, unsigned int *dir);
  * \param dir direction
  * \return dialog structure on success, NULL on failure (and slot locked)
  */
-dlg_cell_t* dlg_search(str *callid, str *ftag, str *ttag, unsigned int *dir);
+dlg_cell_t *dlg_search(str *callid, str *ftag, str *ttag, unsigned int *dir);
 
 
 /*!
@@ -442,8 +445,8 @@ void link_dlg(struct dlg_cell *dlg, int n, int mode);
  * \param dlg dialog
  * \param cnt decrement for the reference counter
  */
-void dlg_unref_helper(dlg_cell_t *dlg, unsigned int cnt, const char *fname,
-		int fline);
+void dlg_unref_helper(
+		dlg_cell_t *dlg, unsigned int cnt, const char *fname, int fline);
 
 #define dlg_unref(dlg, cnt) dlg_unref_helper((dlg), (cnt), __FILE__, __LINE__)
 
@@ -453,8 +456,8 @@ void dlg_unref_helper(dlg_cell_t *dlg, unsigned int cnt, const char *fname,
  * \param dlg dialog
  * \param cnt increment for the reference counter
  */
-void dlg_ref_helper(dlg_cell_t *dlg, unsigned int cnt, const char *fname,
-		int fline);
+void dlg_ref_helper(
+		dlg_cell_t *dlg, unsigned int cnt, const char *fname, int fline);
 
 #define dlg_ref(dlg, cnt) dlg_ref_helper((dlg), (cnt), __FILE__, __LINE__)
 
@@ -478,8 +481,8 @@ void dlg_release(dlg_cell_t *dlg);
  * \param new_state new dialog state
  * \param unref set to 1 when the dialog was deleted, 0 otherwise
  */
-void next_state_dlg(dlg_cell_t *dlg, int event,
-		int *old_state, int *new_state, int *unref);
+void next_state_dlg(
+		dlg_cell_t *dlg, int event, int *old_state, int *new_state, int *unref);
 
 
 /*!
@@ -491,89 +494,102 @@ void next_state_dlg(dlg_cell_t *dlg, int event,
  * \param dir direction of the message, if DLG_DIR_NONE it will set
  * \return 1 if dialog structure and message content matches, 0 otherwise
  */
-static inline int match_dialog(dlg_cell_t *dlg, str *callid,
-		str *ftag, str *ttag, unsigned int *dir)
+static inline int match_dialog(
+		dlg_cell_t *dlg, str *callid, str *ftag, str *ttag, unsigned int *dir)
 {
-	if (dlg->tag[DLG_CALLEE_LEG].len == 0) {
+	if(dlg->tag[DLG_CALLEE_LEG].len == 0) {
 		// dialog to tag is undetermined ATM.
-		if (*dir==DLG_DIR_DOWNSTREAM) {
-			if (dlg->callid.len == callid->len &&
-				dlg->tag[DLG_CALLER_LEG].len == ftag->len &&
-				strncmp(dlg->callid.s, callid->s, callid->len)==0 &&
-				strncmp(dlg->tag[DLG_CALLER_LEG].s, ftag->s, ftag->len)==0) {
+		if(*dir == DLG_DIR_DOWNSTREAM) {
+			if(dlg->callid.len == callid->len
+					&& dlg->tag[DLG_CALLER_LEG].len == ftag->len
+					&& strncmp(dlg->callid.s, callid->s, callid->len) == 0
+					&& strncmp(dlg->tag[DLG_CALLER_LEG].s, ftag->s, ftag->len)
+							   == 0) {
 				return 1;
 			}
-		} else if (*dir==DLG_DIR_UPSTREAM) {
-			if (dlg->callid.len == callid->len &&
-				dlg->tag[DLG_CALLER_LEG].len == ttag->len &&
-				strncmp(dlg->callid.s, callid->s, callid->len)==0 &&
-				strncmp(dlg->tag[DLG_CALLER_LEG].s, ttag->s, ttag->len)==0) {
+		} else if(*dir == DLG_DIR_UPSTREAM) {
+			if(dlg->callid.len == callid->len
+					&& dlg->tag[DLG_CALLER_LEG].len == ttag->len
+					&& strncmp(dlg->callid.s, callid->s, callid->len) == 0
+					&& strncmp(dlg->tag[DLG_CALLER_LEG].s, ttag->s, ttag->len)
+							   == 0) {
 				return 1;
 			}
 		} else {
-			if (dlg->callid.len != callid->len)
+			if(dlg->callid.len != callid->len)
 				return 0;
 
-			if (dlg->tag[DLG_CALLER_LEG].len == ttag->len &&
-				strncmp(dlg->tag[DLG_CALLER_LEG].s, ttag->s, ttag->len)==0 &&
-				strncmp(dlg->callid.s, callid->s, callid->len)==0) {
+			if(dlg->tag[DLG_CALLER_LEG].len == ttag->len
+					&& strncmp(dlg->tag[DLG_CALLER_LEG].s, ttag->s, ttag->len)
+							   == 0
+					&& strncmp(dlg->callid.s, callid->s, callid->len) == 0) {
 
 				*dir = DLG_DIR_UPSTREAM;
 				return 1;
-			} else if (dlg->tag[DLG_CALLER_LEG].len == ftag->len
-					&& strncmp(dlg->tag[DLG_CALLER_LEG].s, ftag->s, ftag->len)==0
-					&& strncmp(dlg->callid.s, callid->s, callid->len)==0) {
+			} else if(dlg->tag[DLG_CALLER_LEG].len == ftag->len
+					  && strncmp(dlg->tag[DLG_CALLER_LEG].s, ftag->s, ftag->len)
+								 == 0
+					  && strncmp(dlg->callid.s, callid->s, callid->len) == 0) {
 
 				*dir = DLG_DIR_DOWNSTREAM;
 				return 1;
 			}
 		}
 	} else {
-		if (*dir==DLG_DIR_DOWNSTREAM) {
-			if (dlg->callid.len == callid->len &&
-				dlg->tag[DLG_CALLER_LEG].len == ftag->len &&
-				dlg->tag[DLG_CALLEE_LEG].len == ttag->len &&
-				strncmp(dlg->callid.s, callid->s, callid->len)==0 &&
-				strncmp(dlg->tag[DLG_CALLER_LEG].s, ftag->s, ftag->len)==0 &&
-				strncmp(dlg->tag[DLG_CALLEE_LEG].s, ttag->s, ttag->len)==0) {
+		if(*dir == DLG_DIR_DOWNSTREAM) {
+			if(dlg->callid.len == callid->len
+					&& dlg->tag[DLG_CALLER_LEG].len == ftag->len
+					&& dlg->tag[DLG_CALLEE_LEG].len == ttag->len
+					&& strncmp(dlg->callid.s, callid->s, callid->len) == 0
+					&& strncmp(dlg->tag[DLG_CALLER_LEG].s, ftag->s, ftag->len)
+							   == 0
+					&& strncmp(dlg->tag[DLG_CALLEE_LEG].s, ttag->s, ttag->len)
+							   == 0) {
 				return 1;
 			}
-		} else if (*dir==DLG_DIR_UPSTREAM) {
-			if (dlg->callid.len == callid->len &&
-				dlg->tag[DLG_CALLEE_LEG].len == ftag->len &&
-				dlg->tag[DLG_CALLER_LEG].len == ttag->len &&
-				strncmp(dlg->callid.s, callid->s, callid->len)==0 &&
-				strncmp(dlg->tag[DLG_CALLEE_LEG].s, ftag->s, ftag->len)==0 &&
-				strncmp(dlg->tag[DLG_CALLER_LEG].s, ttag->s, ttag->len)==0) {
+		} else if(*dir == DLG_DIR_UPSTREAM) {
+			if(dlg->callid.len == callid->len
+					&& dlg->tag[DLG_CALLEE_LEG].len == ftag->len
+					&& dlg->tag[DLG_CALLER_LEG].len == ttag->len
+					&& strncmp(dlg->callid.s, callid->s, callid->len) == 0
+					&& strncmp(dlg->tag[DLG_CALLEE_LEG].s, ftag->s, ftag->len)
+							   == 0
+					&& strncmp(dlg->tag[DLG_CALLER_LEG].s, ttag->s, ttag->len)
+							   == 0) {
 				return 1;
 			}
 		} else {
-			if (dlg->callid.len != callid->len)
+			if(dlg->callid.len != callid->len)
 				return 0;
 
-			if (dlg->tag[DLG_CALLEE_LEG].len == ftag->len &&
-				dlg->tag[DLG_CALLER_LEG].len == ttag->len &&
-				strncmp(dlg->tag[DLG_CALLEE_LEG].s, ftag->s, ftag->len)==0 &&
-				strncmp(dlg->tag[DLG_CALLER_LEG].s, ttag->s, ttag->len)==0 &&
-				strncmp(dlg->callid.s, callid->s, callid->len)==0) {
+			if(dlg->tag[DLG_CALLEE_LEG].len == ftag->len
+					&& dlg->tag[DLG_CALLER_LEG].len == ttag->len
+					&& strncmp(dlg->tag[DLG_CALLEE_LEG].s, ftag->s, ftag->len)
+							   == 0
+					&& strncmp(dlg->tag[DLG_CALLER_LEG].s, ttag->s, ttag->len)
+							   == 0
+					&& strncmp(dlg->callid.s, callid->s, callid->len) == 0) {
 
 				*dir = DLG_DIR_UPSTREAM;
 				return 1;
-			} else if (dlg->tag[DLG_CALLER_LEG].len == ftag->len &&
-						dlg->tag[DLG_CALLEE_LEG].len == ttag->len &&
-						strncmp(dlg->tag[DLG_CALLER_LEG].s, ftag->s, ftag->len)==0 &&
-						strncmp(dlg->tag[DLG_CALLEE_LEG].s, ttag->s, ttag->len)==0 &&
-						strncmp(dlg->callid.s, callid->s, callid->len)==0) {
+			} else if(dlg->tag[DLG_CALLER_LEG].len == ftag->len
+					  && dlg->tag[DLG_CALLEE_LEG].len == ttag->len
+					  && strncmp(dlg->tag[DLG_CALLER_LEG].s, ftag->s, ftag->len)
+								 == 0
+					  && strncmp(dlg->tag[DLG_CALLEE_LEG].s, ttag->s, ttag->len)
+								 == 0
+					  && strncmp(dlg->callid.s, callid->s, callid->len) == 0) {
 
 				*dir = DLG_DIR_DOWNSTREAM;
 				return 1;
 			}
 			/* if no ACK yet, might be a lookup of dlg from a TM callback that
 			 * runs on 200ok but with initial INVITE that has no to-tag */
-			if(ttag->len==0 && dlg->state==DLG_STATE_CONFIRMED_NA
-					&& dlg->tag[DLG_CALLER_LEG].len == ftag->len &&
-						strncmp(dlg->tag[DLG_CALLER_LEG].s, ftag->s, ftag->len)==0 &&
-						strncmp(dlg->callid.s, callid->s, callid->len)==0) {
+			if(ttag->len == 0 && dlg->state == DLG_STATE_CONFIRMED_NA
+					&& dlg->tag[DLG_CALLER_LEG].len == ftag->len
+					&& strncmp(dlg->tag[DLG_CALLER_LEG].s, ftag->s, ftag->len)
+							   == 0
+					&& strncmp(dlg->callid.s, callid->s, callid->len) == 0) {
 
 				*dir = DLG_DIR_DOWNSTREAM;
 				return 1;
@@ -592,19 +608,20 @@ static inline int match_dialog(dlg_cell_t *dlg, str *callid,
  * \param ftag SIP message from tag
  * \return 1 if dialog structure matches the SIP dialog, 0 otherwise
  */
-static inline int match_downstream_dialog(dlg_cell_t *dlg, str *callid, str *ftag)
+static inline int match_downstream_dialog(
+		dlg_cell_t *dlg, str *callid, str *ftag)
 {
-	if(dlg==NULL || callid==NULL)
+	if(dlg == NULL || callid == NULL)
 		return 0;
-	if (ftag==NULL) {
-		if (dlg->callid.len!=callid->len ||
-			strncmp(dlg->callid.s,callid->s,callid->len)!=0)
+	if(ftag == NULL) {
+		if(dlg->callid.len != callid->len
+				|| strncmp(dlg->callid.s, callid->s, callid->len) != 0)
 			return 0;
 	} else {
-		if (dlg->callid.len!=callid->len ||
-			dlg->tag[DLG_CALLER_LEG].len!=ftag->len  ||
-			strncmp(dlg->callid.s,callid->s,callid->len)!=0 ||
-			strncmp(dlg->tag[DLG_CALLER_LEG].s,ftag->s,ftag->len)!=0)
+		if(dlg->callid.len != callid->len
+				|| dlg->tag[DLG_CALLER_LEG].len != ftag->len
+				|| strncmp(dlg->callid.s, callid->s, callid->len) != 0
+				|| strncmp(dlg->tag[DLG_CALLER_LEG].s, ftag->s, ftag->len) != 0)
 			return 0;
 	}
 	return 1;
@@ -613,7 +630,8 @@ static inline int match_downstream_dialog(dlg_cell_t *dlg, str *callid, str *fta
 /*!
  *
  */
-int dlg_run_event_route(dlg_cell_t *dlg, sip_msg_t *msg, int ostate, int nstate);
+int dlg_run_event_route(
+		dlg_cell_t *dlg, sip_msg_t *msg, int ostate, int nstate);
 
 
 int dlg_ka_add(dlg_cell_t *dlg);
