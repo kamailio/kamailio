@@ -25,16 +25,17 @@
  * _XOPEN_SOURCE creates conflict in header definitions in Solaris
  */
 #ifndef __OS_solaris
-	#define _XOPEN_SOURCE 600		/* glibc2 on linux, bsd */
-	#define _BSD_SOURCE 1			/* needed on linux to "fix" the effect
+#define _XOPEN_SOURCE 600 /* glibc2 on linux, bsd */
+#define _BSD_SOURCE \
+	1					  /* needed on linux to "fix" the effect
 									 * of the above define on
 									 * features.h/unistd.h syscall() */
-	#define _DEFAULT_SOURCE 1		/* _BSD_SOURCE is deprecated */
-	#define _DARWIN_C_SOURCE 1
+#define _DEFAULT_SOURCE 1 /* _BSD_SOURCE is deprecated */
+#define _DARWIN_C_SOURCE 1
 
-	#define _SVID_SOURCE 1			/* timegm for old glib */
+#define _SVID_SOURCE 1 /* timegm for old glib */
 #else
-	#define _XOPEN_SOURCE_EXTENDED 1   /* solaris */
+#define _XOPEN_SOURCE_EXTENDED 1 /* solaris */
 #endif
 
 #include <time.h>
@@ -65,9 +66,9 @@
 #include "../../core/receive.h" /* needed by process_rpc / receive_msg() */
 #include "../../modules/sl/sl.h"
 #include "../../core/nonsip_hooks.h"
-#include "../../core/action.h" /* run_actions */
-#include "../../core/script_cb.h" /* exec_*_script_cb */
-#include "../../core/route.h" /* route_get */
+#include "../../core/action.h"		  /* run_actions */
+#include "../../core/script_cb.h"	  /* exec_*_script_cb */
+#include "../../core/route.h"		  /* route_get */
 #include "../../core/sip_msg_clone.h" /* sip_msg_shm_clone */
 #include "../../core/rpc_lookup.h"
 #include "../../core/kemi.h"
@@ -159,21 +160,21 @@
 
 MODULE_VERSION
 
-static int process_xmlrpc(sip_msg_t* msg);
-static int w_dispatch_rpc(sip_msg_t* msg, char* s1, char* s2);
-static int w_xmlrpc_reply(sip_msg_t* msg, char* code, char* reason);
+static int process_xmlrpc(sip_msg_t *msg);
+static int w_dispatch_rpc(sip_msg_t *msg, char *s1, char *s2);
+static int w_xmlrpc_reply(sip_msg_t *msg, char *code, char *reason);
 static int mod_init(void);
 
 /* first line (w/o the version) of the sip msg created from the http xmlrpc */
 #define XMLRPC_URI "sip:127.0.0.1:9"
-#define XMLRPC_URI_LEN (sizeof(XMLRPC_URI)-1)
+#define XMLRPC_URI_LEN (sizeof(XMLRPC_URI) - 1)
 
-#define HTTP_GET		"GET"
-#define HTTP_GET_LEN	(sizeof(HTTP_GET)-1)
-#define HTTP_POST		"POST"
-#define HTTP_POST_LEN	(sizeof(HTTP_POST)-1)
-#define N_HTTP_GET		0x00746567U
-#define N_HTTP_POST		0x74736f70U
+#define HTTP_GET "GET"
+#define HTTP_GET_LEN (sizeof(HTTP_GET) - 1)
+#define HTTP_POST "POST"
+#define HTTP_POST_LEN (sizeof(HTTP_POST) - 1)
+#define N_HTTP_GET 0x00746567U
+#define N_HTTP_POST 0x74736f70U
 
 #define LF "\n"
 
@@ -183,26 +184,18 @@ static int mod_init(void);
  * client when the server encountered an error.  It will be immediately
  * followed by a reason phrase.
  */
-#define FAULT_PREFIX         \
-	"<?xml version=\"1.0\"?>" LF \
-"<methodResponse>" LF        \
-"<fault>" LF                 \
-"<value>" LF                 \
-"<struct>" LF                \
-"<member>" LF                \
-"<name>faultCode</name>" LF  \
-"<value><int>"
+#define FAULT_PREFIX                                                     \
+	"<?xml version=\"1.0\"?>" LF "<methodResponse>" LF "<fault>" LF      \
+	"<value>" LF "<struct>" LF "<member>" LF "<name>faultCode</name>" LF \
+	"<value><int>"
 
 
 /** The text of XML document indicating error that goes between reason code
  * and reason phrase.
  */
-#define FAULT_BODY            \
-	"</int></value>" LF           \
-"</member>" LF                \
-"<member>" LF                 \
-"<name>faultString</name>" LF \
-"<value><string>"
+#define FAULT_BODY                                   \
+	"</int></value>" LF "</member>" LF "<member>" LF \
+	"<name>faultString</name>" LF "<value><string>"
 
 
 /** The end of XML document that indicates an error.
@@ -210,62 +203,52 @@ static int mod_init(void);
  * This is the closing part of the XML-RPC document that indicates an error on
  * the server.
  */
-#define FAULT_SUFFIX   \
-	"</string></value>" LF \
-"</member>" LF         \
-"</struct>" LF         \
-"</value>" LF          \
-"</fault>" LF          \
-"</methodResponse>"
+#define FAULT_SUFFIX                                                   \
+	"</string></value>" LF "</member>" LF "</struct>" LF "</value>" LF \
+	"</fault>" LF "</methodResponse>"
 
 
 /** The beginning of XML-RPC reply sent to the client.
 */
-#define SUCCESS_PREFIX       \
-	"<?xml version=\"1.0\"?>" LF \
-"<methodResponse>" LF        \
-"<params>" LF                \
-"<param>" LF                 \
-"<value>"
+#define SUCCESS_PREFIX                                               \
+	"<?xml version=\"1.0\"?>" LF "<methodResponse>" LF "<params>" LF \
+	"<param>" LF "<value>"
 
 
 /** The closing part of XML-RPC reply document sent to
  * the client.
  */
 #define SUCCESS_SUFFIX \
-	"</value>" LF          \
-"</param>" LF          \
-"</params>" LF         \
-"</methodResponse>"
+	"</value>" LF "</param>" LF "</params>" LF "</methodResponse>"
 
-static str fault_prefix   = STR_STATIC_INIT(FAULT_PREFIX);
-static str fault_body     = STR_STATIC_INIT(FAULT_BODY);
-static str fault_suffix   = STR_STATIC_INIT(FAULT_SUFFIX);
+static str fault_prefix = STR_STATIC_INIT(FAULT_PREFIX);
+static str fault_body = STR_STATIC_INIT(FAULT_BODY);
+static str fault_suffix = STR_STATIC_INIT(FAULT_SUFFIX);
 static str success_prefix = STR_STATIC_INIT(SUCCESS_PREFIX);
 static str success_suffix = STR_STATIC_INIT(SUCCESS_SUFFIX);
-static str lf             = STR_STATIC_INIT(LF);
-static str int_prefix     = STR_STATIC_INIT("<int>");
-static str int_suffix     = STR_STATIC_INIT("</int>");
-static str double_prefix  = STR_STATIC_INIT("<double>");
-static str double_suffix  = STR_STATIC_INIT("</double>");
-static str string_prefix  = STR_STATIC_INIT("<string>");
-static str string_suffix  = STR_STATIC_INIT("</string>");
-static str date_prefix    = STR_STATIC_INIT("<dateTime.iso8601>");
-static str date_suffix    = STR_STATIC_INIT("</dateTime.iso8601>");
-static str bool_prefix    = STR_STATIC_INIT("<boolean>");
-static str bool_suffix    = STR_STATIC_INIT("</boolean>");
-static str value_prefix   = STR_STATIC_INIT("<value>");
-static str value_suffix   = STR_STATIC_INIT("</value>");
-static str array_prefix   = STR_STATIC_INIT("<array><data>" LF);
-static str array_suffix   = STR_STATIC_INIT("</data></array>");
-static str struct_prefix  = STR_STATIC_INIT("<struct>");
-static str struct_suffix  = STR_STATIC_INIT("</struct>");
-static str member_prefix  = STR_STATIC_INIT("<member>");
-static str member_suffix  = STR_STATIC_INIT("</member>");
-static str name_prefix    = STR_STATIC_INIT("<name>");
-static str name_suffix    = STR_STATIC_INIT("</name>");
-static str empty_value    = STR_STATIC_INIT("");
-static str nil_value      = STR_STATIC_INIT("<nil/>");
+static str lf = STR_STATIC_INIT(LF);
+static str int_prefix = STR_STATIC_INIT("<int>");
+static str int_suffix = STR_STATIC_INIT("</int>");
+static str double_prefix = STR_STATIC_INIT("<double>");
+static str double_suffix = STR_STATIC_INIT("</double>");
+static str string_prefix = STR_STATIC_INIT("<string>");
+static str string_suffix = STR_STATIC_INIT("</string>");
+static str date_prefix = STR_STATIC_INIT("<dateTime.iso8601>");
+static str date_suffix = STR_STATIC_INIT("</dateTime.iso8601>");
+static str bool_prefix = STR_STATIC_INIT("<boolean>");
+static str bool_suffix = STR_STATIC_INIT("</boolean>");
+static str value_prefix = STR_STATIC_INIT("<value>");
+static str value_suffix = STR_STATIC_INIT("</value>");
+static str array_prefix = STR_STATIC_INIT("<array><data>" LF);
+static str array_suffix = STR_STATIC_INIT("</data></array>");
+static str struct_prefix = STR_STATIC_INIT("<struct>");
+static str struct_suffix = STR_STATIC_INIT("</struct>");
+static str member_prefix = STR_STATIC_INIT("<member>");
+static str member_suffix = STR_STATIC_INIT("</member>");
+static str name_prefix = STR_STATIC_INIT("<name>");
+static str name_suffix = STR_STATIC_INIT("</name>");
+static str empty_value = STR_STATIC_INIT("");
+static str nil_value = STR_STATIC_INIT("<nil/>");
 
 /** Garbage collection data structure.
  *
@@ -279,19 +262,21 @@ static str nil_value      = STR_STATIC_INIT("<nil/>");
  * re-claimed later (when the reply is being sent out).
  *
  */
-static struct garbage {
-	enum {
+static struct garbage
+{
+	enum
+	{
 		JUNK_XMLCHAR,
-		JUNK_RPCSTRUCT,    /**< This type indicates that the memory block was
+		JUNK_RPCSTRUCT,	  /**< This type indicates that the memory block was
 							* allocated for the RPC structure data type, this
 							* type needs to be freed differently as it may
 							* contain more allocated memory blocks
 							*/
-		JUNK_PKGCHAR 	  /** This type indicates a mxr_malloc'ed string */
-	} type;               /**< Type of the memory block */
-	void* ptr;            /**< Pointer to the memory block obtained from
+		JUNK_PKGCHAR	  /** This type indicates a mxr_malloc'ed string */
+	} type;				  /**< Type of the memory block */
+	void *ptr;			  /**< Pointer to the memory block obtained from
 							mxr_malloc */
-	struct garbage* next; /**< The linked list of all allocated memory
+	struct garbage *next; /**< The linked list of all allocated memory
 							blocks */
 } *waste_bin = 0;
 
@@ -301,12 +286,13 @@ static struct garbage {
  * This data structure describes the XML-RPC reply that is being constructed
  * and will be sent to the client.
  */
-struct xmlrpc_reply {
-	int code;     /**< Reply code which indicates the type of the reply */
-	char* reason; /**< Reason phrase text which provides human-readable
+struct xmlrpc_reply
+{
+	int code;	  /**< Reply code which indicates the type of the reply */
+	char *reason; /**< Reason phrase text which provides human-readable
 					* description that augments the reply code */
-	str body;     /**< The XML-RPC document body built so far */
-	str buf;      /**< The memory buffer allocated for the reply, this is
+	str body;	  /**< The XML-RPC document body built so far */
+	str buf;	  /**< The memory buffer allocated for the reply, this is
 					* where the body attribute of the structure points to
 					*/
 };
@@ -320,31 +306,32 @@ struct xmlrpc_reply {
  *
  * There is always one context per XML-RPC request.
  */
-typedef struct rpc_ctx {
-	sip_msg_t* msg;        /**< The SIP/HTTP through which the RPC has been
+typedef struct rpc_ctx
+{
+	sip_msg_t *msg;				/**< The SIP/HTTP through which the RPC has been
 							* received */
-	struct xmlrpc_reply reply;  /**< XML-RPC reply to be sent to the client */
-	struct rpc_struct* structs; /**< Structures to be added to the reply */
-	int msg_shm_block_size; /**< non-zero for delayed reply contexts with
+	struct xmlrpc_reply reply;	/**< XML-RPC reply to be sent to the client */
+	struct rpc_struct *structs; /**< Structures to be added to the reply */
+	int msg_shm_block_size;		/**< non-zero for delayed reply contexts with
 							* shm cloned msgs */
-	int reply_sent;             /**< The flag is set after a reply is sent,
+	int reply_sent;				/**< The flag is set after a reply is sent,
 								* this prevents a single reply being sent
 								* twice */
-	char* method;               /**< Name of the management function to be
+	char *method;				/**< Name of the management function to be
 								* called */
-	unsigned int flags;         /**< Various flags, such as return value
+	unsigned int flags;			/**< Various flags, such as return value
 								* type */
-	xmlDocPtr doc;              /**< Pointer to the XML-RPC request
+	xmlDocPtr doc;				/**< Pointer to the XML-RPC request
 								* document */
-	xmlNodePtr act_param;       /**< Pointer to the parameter being processed
+	xmlNodePtr act_param;		/**< Pointer to the parameter being processed
 								* in the XML-RPC request document */
 } rpc_ctx_t;
 
 
 /* extra rpc_ctx_t flags */
 /* first 8 bits reserved for rpc flags (e.g. RET_ARRAY) */
-#define XMLRPC_DELAYED_CTX_F	256
-#define XMLRPC_DELAYED_REPLY_F	512
+#define XMLRPC_DELAYED_CTX_F 256
+#define XMLRPC_DELAYED_REPLY_F 512
 
 /** The structure represents a XML-RPC document structure.
  *
@@ -353,21 +340,22 @@ typedef struct rpc_ctx {
  * is compound consting of name-value pairs.
  * @sa http://www.xml-rpc.com
  */
-struct rpc_struct {
+struct rpc_struct
+{
 	int vtype;
-	xmlNodePtr struct_in;           /**< Pointer to the structure parameter */
+	xmlNodePtr struct_in;			/**< Pointer to the structure parameter */
 	struct xmlrpc_reply struct_out; /**< Structure to be sent in reply */
-	struct xmlrpc_reply* reply;     /**< Print errors here */
-	int n;                          /**< Number of structure members
+	struct xmlrpc_reply *reply;		/**< Print errors here */
+	int n;							/**< Number of structure members
 									 * created */
-	xmlDocPtr doc;                  /**< XML-RPC document */
-	int offset;                     /**< Offset in the reply where the
+	xmlDocPtr doc;					/**< XML-RPC document */
+	int offset;						/**< Offset in the reply where the
 									* structure should be printed */
-	struct rpc_struct* nnext;	/**< nested structure support - a recursive
+	struct rpc_struct *nnext;		/**< nested structure support - a recursive
 								* list of nested structrures */
-	struct rpc_struct* parent;	/**< access to parent structure
+	struct rpc_struct *parent;		/**< access to parent structure
 								* - used for flattening structure before reply */
-	struct rpc_struct* next;
+	struct rpc_struct *next;
 };
 
 
@@ -379,9 +367,9 @@ struct rpc_struct {
  */
 static rpc_ctx_t ctx;
 
-static void close_doc(rpc_ctx_t* ctx);
-static void set_fault(struct xmlrpc_reply* reply, int code, char* fmt, ...);
-static int fixup_xmlrpc_reply(void** param, int param_no);
+static void close_doc(rpc_ctx_t *ctx);
+static void set_fault(struct xmlrpc_reply *reply, int code, char *fmt, ...);
+static int fixup_xmlrpc_reply(void **param, int param_no);
 
 /** Pointers to the functions that implement the RPC interface
  * of xmlrpc SER module
@@ -393,7 +381,7 @@ static rpc_t func_param;
  * will be available on the server. If set to 0 then the functions will be
  * disabled.
  */
-static char* xmlrpc_route=0; /* default is the main route */
+static char *xmlrpc_route = 0; /* default is the main route */
 
 
 /** Reference to the sl (stateless replies) module of SER The sl module of SER
@@ -401,21 +389,21 @@ static char* xmlrpc_route=0; /* default is the main route */
  */
 sl_api_t slb;
 
-static int xmlrpc_route_no=DEFAULT_RT;
+static int xmlrpc_route_no = DEFAULT_RT;
 /* if set, try autoconverting to the requested type if possible
  * (e.g. convert 1 to "1" if string is requested) */
-static int autoconvert=0;
+static int autoconvert = 0;
 /* in replies, escape CR to &#xD (according to the xml specs) */
-static int escape_cr=1; /* default on */
+static int escape_cr = 1; /* default on */
 /* convert double LF to CR LF (when on, LFLF becomes an escape for CRLF, needed
  * with some xmlrpc clients that are not escaping CR to &#xD; )*/
-static int lflf2crlf=0; /* default off */
+static int lflf2crlf = 0; /* default off */
 /* do not register for non-sip requests */
 static int xmlrpc_mode = 0;
 
-static char* xmlrpc_url_match = NULL;
+static char *xmlrpc_url_match = NULL;
 static regex_t xmlrpc_url_match_regexp;
-static char* xmlrpc_url_skip = NULL;
+static char *xmlrpc_url_skip = NULL;
 static regex_t xmlrpc_url_skip_regexp;
 
 static str xmlrpc_event_callback = STR_NULL;
@@ -424,49 +412,46 @@ static str xmlrpc_event_callback = STR_NULL;
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"dispatch_rpc", w_dispatch_rpc, 0, 0, 0,                  REQUEST_ROUTE},
-	{"xmlrpc_reply", w_xmlrpc_reply, 2, fixup_xmlrpc_reply, 0, REQUEST_ROUTE},
-	{0, 0, 0, 0, 0, 0}
-};
+		{"dispatch_rpc", w_dispatch_rpc, 0, 0, 0, REQUEST_ROUTE},
+		{"xmlrpc_reply", w_xmlrpc_reply, 2, fixup_xmlrpc_reply, 0,
+				REQUEST_ROUTE},
+		{0, 0, 0, 0, 0, 0}};
 
 
 /*
  * Exported parameters
  */
-static param_export_t params[] = {
-	{"route",             PARAM_STRING, &xmlrpc_route},
-	{"autoconversion",    PARAM_INT,    &autoconvert},
-	{"escape_cr",         PARAM_INT,    &escape_cr},
-	{"double_lf_to_crlf", PARAM_INT,    &lflf2crlf},
-	{"mode",              PARAM_INT,    &xmlrpc_mode},
-	{"url_match",         PARAM_STRING, &xmlrpc_url_match},
-	{"url_skip",          PARAM_STRING, &xmlrpc_url_skip},
-	{"event_callback",    PARAM_STR,    &xmlrpc_event_callback},
-	{0, 0, 0}
-};
+static param_export_t params[] = {{"route", PARAM_STRING, &xmlrpc_route},
+		{"autoconversion", PARAM_INT, &autoconvert},
+		{"escape_cr", PARAM_INT, &escape_cr},
+		{"double_lf_to_crlf", PARAM_INT, &lflf2crlf},
+		{"mode", PARAM_INT, &xmlrpc_mode},
+		{"url_match", PARAM_STRING, &xmlrpc_url_match},
+		{"url_skip", PARAM_STRING, &xmlrpc_url_skip},
+		{"event_callback", PARAM_STR, &xmlrpc_event_callback}, {0, 0, 0}};
 
 
 struct module_exports exports = {
-	"xmlrpc",			/* module name */
-	DEFAULT_DLFLAGS,	/* dlopen flags */
-	cmds,				/* cmd (cfg function) exports */
-	params,				/* param exports */
-	0,					/* RPC method exports */
-	0,					/* pv exports */
-	0,					/* response handling function */
-	mod_init,			/* module init function */
-	0,					/* per-child init function */
-	0					/* module destroy function */
+		"xmlrpc",		 /* module name */
+		DEFAULT_DLFLAGS, /* dlopen flags */
+		cmds,			 /* cmd (cfg function) exports */
+		params,			 /* param exports */
+		0,				 /* RPC method exports */
+		0,				 /* pv exports */
+		0,				 /* response handling function */
+		mod_init,		 /* module init function */
+		0,				 /* per-child init function */
+		0				 /* module destroy function */
 };
 
 /* XML-RPC reply helper functions */
 
 #define ESC_LT "&lt;"
 #define ESC_AMP "&amp;"
-#define ESC_CR  "&#xD;"
+#define ESC_CR "&#xD;"
 
 
-static void clean_context(rpc_ctx_t* ctx);
+static void clean_context(rpc_ctx_t *ctx);
 
 
 /** Adds arbitrary text to the XML-RPC reply being constructed, special
@@ -482,18 +467,17 @@ static void clean_context(rpc_ctx_t* ctx);
  * @return -1 on error, 0 if the text was added successfully.
  * @sa add_xmlrpc_reply()
  */
-static int add_xmlrpc_reply_esc(struct xmlrpc_reply* reply, str* text)
+static int add_xmlrpc_reply_esc(struct xmlrpc_reply *reply, str *text)
 {
-	char* p;
+	char *p;
 	int i;
 
 	for(i = 0; i < text->len; i++) {
 		/* 10 must be bigger than size of longest escape sequence */
-		if (reply->body.len >= reply->buf.len - 10) {
+		if(reply->body.len >= reply->buf.len - 10) {
 			p = mxr_malloc(reply->buf.len + 1024);
-			if (!p) {
-				set_fault(reply, 500,
-						"Internal Server Error (No memory left)");
+			if(!p) {
+				set_fault(reply, 500, "Internal Server Error (No memory left)");
 				ERR("No memory left: %d\n", reply->body.len + 1024);
 				return -1;
 			}
@@ -518,7 +502,7 @@ static int add_xmlrpc_reply_esc(struct xmlrpc_reply* reply, str* text)
 				break;
 
 			case '\r':
-				if (likely(escape_cr)){
+				if(likely(escape_cr)) {
 					memcpy(reply->body.s + reply->body.len, ESC_CR,
 							sizeof(ESC_CR) - 1);
 					reply->body.len += sizeof(ESC_CR) - 1;
@@ -548,12 +532,12 @@ static int add_xmlrpc_reply_esc(struct xmlrpc_reply* reply, str* text)
  * @return -1 on error, 0 if the text was added successfully.
  * @sa add_xmlrpc_reply_esc()
  */
-static int add_xmlrpc_reply(struct xmlrpc_reply* reply, str* text)
+static int add_xmlrpc_reply(struct xmlrpc_reply *reply, str *text)
 {
-	char* p;
-	if (text->len > (reply->buf.len - reply->body.len)) {
+	char *p;
+	if(text->len > (reply->buf.len - reply->body.len)) {
 		p = mxr_malloc(reply->buf.len + text->len + 1024);
-		if (!p) {
+		if(!p) {
 			set_fault(reply, 500, "Internal Server Error (No memory left)");
 			ERR("No memory left: %d\n", reply->buf.len + text->len + 1024);
 			return -1;
@@ -586,13 +570,13 @@ static int add_xmlrpc_reply(struct xmlrpc_reply* reply, str* text)
  * @param text The text to be inserted.
  * @return 0 of the text was inserted successfully, a negative number on error.
  */
-static int add_xmlrpc_reply_offset(struct xmlrpc_reply* reply,
-		unsigned int offset, str* text)
+static int add_xmlrpc_reply_offset(
+		struct xmlrpc_reply *reply, unsigned int offset, str *text)
 {
-	char* p;
-	if (text->len > (reply->buf.len - reply->body.len)) {
+	char *p;
+	if(text->len > (reply->buf.len - reply->body.len)) {
 		p = mxr_malloc(reply->buf.len + text->len + 1024);
-		if (!p) {
+		if(!p) {
 			set_fault(reply, 500, "Internal Server Error (No memory left)");
 			ERR("No memory left: %d\n", reply->buf.len + text->len + 1024);
 			return -1;
@@ -616,7 +600,7 @@ static int add_xmlrpc_reply_offset(struct xmlrpc_reply* reply,
  * @param reply The XML-RPC reply being constructed
  * @return Number of bytes of the XML-RPC reply body.
  */
-static unsigned int get_reply_len(struct xmlrpc_reply* reply)
+static unsigned int get_reply_len(struct xmlrpc_reply *reply)
 {
 	return reply->body.len;
 }
@@ -629,7 +613,7 @@ static unsigned int get_reply_len(struct xmlrpc_reply* reply)
  *
  * @param reply The XML-RPC reply being constructed.
  */
-static void reset_xmlrpc_reply(struct xmlrpc_reply* reply)
+static void reset_xmlrpc_reply(struct xmlrpc_reply *reply)
 {
 	reply->body.len = 0;
 }
@@ -642,12 +626,12 @@ static void reset_xmlrpc_reply(struct xmlrpc_reply* reply)
  * @param reply XML-RPC reply structure to be initialized.
  * @return 0 on success, a negative number on error.
  */
-static int init_xmlrpc_reply(struct xmlrpc_reply* reply)
+static int init_xmlrpc_reply(struct xmlrpc_reply *reply)
 {
 	reply->code = 200;
 	reply->reason = "OK";
 	reply->buf.s = mxr_malloc(1024);
-	if (!reply->buf.s) {
+	if(!reply->buf.s) {
 		set_fault(reply, 500, "Internal Server Error (No memory left)");
 		ERR("No memory left\n");
 		return -1;
@@ -662,7 +646,7 @@ static int init_xmlrpc_reply(struct xmlrpc_reply* reply)
  *
  * @param reply XML-RPC reply structure to be cleared.
  */
-static void clear_xmlrpc_reply(struct xmlrpc_reply* reply)
+static void clear_xmlrpc_reply(struct xmlrpc_reply *reply)
 {
 	reply->code = 200;
 	reply->reason = "OK";
@@ -670,23 +654,25 @@ static void clear_xmlrpc_reply(struct xmlrpc_reply* reply)
 
 
 /* if this a delayed reply context, and it's never been use before, fix it */
-static int fix_delayed_reply_ctx(rpc_ctx_t* ctx)
+static int fix_delayed_reply_ctx(rpc_ctx_t *ctx)
 {
-	if  ((ctx->flags & XMLRPC_DELAYED_CTX_F) && (ctx->reply.buf.s==0)){
-		if (init_xmlrpc_reply(&ctx->reply) <0) return -1;
-		if(add_xmlrpc_reply(&ctx->reply, &success_prefix)<0) return -1;
-		if (ctx->flags & RET_ARRAY)
+	if((ctx->flags & XMLRPC_DELAYED_CTX_F) && (ctx->reply.buf.s == 0)) {
+		if(init_xmlrpc_reply(&ctx->reply) < 0)
+			return -1;
+		if(add_xmlrpc_reply(&ctx->reply, &success_prefix) < 0)
+			return -1;
+		if(ctx->flags & RET_ARRAY)
 			return add_xmlrpc_reply(&ctx->reply, &array_prefix);
 	}
 	return 0;
 }
 
 
-
 /** Free all memory used by the XML-RPC reply structure. */
-static void clean_xmlrpc_reply(struct xmlrpc_reply* reply)
+static void clean_xmlrpc_reply(struct xmlrpc_reply *reply)
 {
-	if (reply->buf.s) mxr_free(reply->buf.s);
+	if(reply->buf.s)
+		mxr_free(reply->buf.s);
 }
 
 /** Create XML-RPC reply that indicates an error to the caller.
@@ -696,7 +682,7 @@ static void clean_xmlrpc_reply(struct xmlrpc_reply* reply)
  * SER reports an error. The reply will contain the reason code and reason
  * phrase text provided by the management function that indicated the error.
  */
-static int build_fault_reply(struct xmlrpc_reply* reply)
+static int build_fault_reply(struct xmlrpc_reply *reply)
 {
 	str reason_s, code_s;
 
@@ -704,11 +690,16 @@ static int build_fault_reply(struct xmlrpc_reply* reply)
 	reason_s.len = strlen(reply->reason);
 	code_s.s = int2str(reply->code, &code_s.len);
 	reset_xmlrpc_reply(reply);
-	if (add_xmlrpc_reply(reply, &fault_prefix) < 0) return -1;
-	if (add_xmlrpc_reply_esc(reply, &code_s) < 0) return -1;
-	if (add_xmlrpc_reply(reply, &fault_body) < 0) return -1;
-	if (add_xmlrpc_reply_esc(reply, &reason_s) < 0) return -1;
-	if (add_xmlrpc_reply(reply, &fault_suffix) < 0) return -1;
+	if(add_xmlrpc_reply(reply, &fault_prefix) < 0)
+		return -1;
+	if(add_xmlrpc_reply_esc(reply, &code_s) < 0)
+		return -1;
+	if(add_xmlrpc_reply(reply, &fault_body) < 0)
+		return -1;
+	if(add_xmlrpc_reply_esc(reply, &reason_s) < 0)
+		return -1;
+	if(add_xmlrpc_reply(reply, &fault_suffix) < 0)
+		return -1;
 	return 0;
 }
 
@@ -722,12 +713,12 @@ static int build_fault_reply(struct xmlrpc_reply* reply)
  * @return 0 on success, a negative number on error.
  * @sa collect_garbage()
  */
-static int add_garbage(int type, void* ptr, struct xmlrpc_reply* reply)
+static int add_garbage(int type, void *ptr, struct xmlrpc_reply *reply)
 {
-	struct garbage* p;
+	struct garbage *p;
 
-	p = (struct garbage*)mxr_malloc(sizeof(struct garbage));
-	if (!p) {
+	p = (struct garbage *)mxr_malloc(sizeof(struct garbage));
+	if(!p) {
 		set_fault(reply, 500, "Internal Server Error (No memory left)");
 		ERR("Not enough memory\n");
 		return -1;
@@ -745,27 +736,30 @@ static int add_garbage(int type, void* ptr, struct xmlrpc_reply* reply)
  */
 static void collect_garbage(void)
 {
-	struct rpc_struct* s;
-	struct garbage* p;
+	struct rpc_struct *s;
+	struct garbage *p;
 	/* Collect garbage */
 	while(waste_bin) {
 		p = waste_bin;
 		waste_bin = waste_bin->next;
 		switch(p->type) {
 			case JUNK_XMLCHAR:
-				if (p->ptr) xmlFree(p->ptr);
+				if(p->ptr)
+					xmlFree(p->ptr);
 				break;
 
 			case JUNK_RPCSTRUCT:
-				s = (struct rpc_struct*)p->ptr;
-				if (s && s->struct_out.buf.s) mxr_free(s->struct_out.buf.s);
-				if (s) mxr_free(s);
+				s = (struct rpc_struct *)p->ptr;
+				if(s && s->struct_out.buf.s)
+					mxr_free(s->struct_out.buf.s);
+				if(s)
+					mxr_free(s);
 				break;
 
 			case JUNK_PKGCHAR:
-				if (p->ptr){
+				if(p->ptr) {
 					mxr_free(p->ptr);
-					p->ptr=0;
+					p->ptr = 0;
 				}
 				break;
 
@@ -785,10 +779,10 @@ static void collect_garbage(void)
  * @param msg A structure representing the SIP/HTTP message
  *            carrying the XML-RPC document in body.
  */
-static int get_rpc_document(str* doc, sip_msg_t* msg)
+static int get_rpc_document(str *doc, sip_msg_t *msg)
 {
 	doc->s = get_body(msg);
-	if (!doc->s) {
+	if(!doc->s) {
 		ERR("Error while extracting message body\n");
 		return -1;
 	}
@@ -805,14 +799,14 @@ static int get_rpc_document(str* doc, sip_msg_t* msg)
  * @param msg The request that generated the reply.
  * @param body The text that will be put in the body of the reply.
  */
-static int send_reply(sip_msg_t* msg, str* body)
+static int send_reply(sip_msg_t *msg, str *body)
 {
-	if (add_lump_rpl(msg, body->s, body->len, LUMP_RPL_BODY) == 0) {
+	if(add_lump_rpl(msg, body->s, body->len, LUMP_RPL_BODY) == 0) {
 		ERR("Error while adding reply lump\n");
 		return -1;
 	}
 
-	if (slb.zreply(msg, 200, "OK") == -1) {
+	if(slb.zreply(msg, 200, "OK") == -1) {
 		ERR("Error while sending reply\n");
 		return -1;
 	}
@@ -820,44 +814,55 @@ static int send_reply(sip_msg_t* msg, str* body)
 	return 0;
 }
 
-static int flatten_nests(struct rpc_struct* st, struct xmlrpc_reply* reply) {
-	if (!st)
+static int flatten_nests(struct rpc_struct *st, struct xmlrpc_reply *reply)
+{
+	if(!st)
 		return 1;
 
-	if (!st->nnext) {
+	if(!st->nnext) {
 		if(st->vtype & RET_ARRAY) {
-			if (add_xmlrpc_reply(&st->struct_out, &array_suffix) < 0) return -1;
+			if(add_xmlrpc_reply(&st->struct_out, &array_suffix) < 0)
+				return -1;
 		} else {
-			if (add_xmlrpc_reply(&st->struct_out, &struct_suffix) < 0) return -1;
+			if(add_xmlrpc_reply(&st->struct_out, &struct_suffix) < 0)
+				return -1;
 		}
-		if (add_xmlrpc_reply_offset(&st->parent->struct_out, st->offset,
-					&st->struct_out.body) < 0) return -1;
+		if(add_xmlrpc_reply_offset(
+				   &st->parent->struct_out, st->offset, &st->struct_out.body)
+				< 0)
+			return -1;
 	} else {
 		flatten_nests(st->nnext, reply);
 		if(st->vtype & RET_ARRAY) {
-			if (add_xmlrpc_reply(&st->struct_out, &array_suffix) < 0) return -1;
+			if(add_xmlrpc_reply(&st->struct_out, &array_suffix) < 0)
+				return -1;
 		} else {
-			if (add_xmlrpc_reply(&st->struct_out, &struct_suffix) < 0) return -1;
+			if(add_xmlrpc_reply(&st->struct_out, &struct_suffix) < 0)
+				return -1;
 		}
-		if (add_xmlrpc_reply_offset(&st->parent->struct_out, st->offset,
-					&st->struct_out.body) < 0) return -1;
+		if(add_xmlrpc_reply_offset(
+				   &st->parent->struct_out, st->offset, &st->struct_out.body)
+				< 0)
+			return -1;
 	}
 	return 1;
 }
 
-static int print_structures(struct xmlrpc_reply* reply,
-		struct rpc_struct* st)
+static int print_structures(struct xmlrpc_reply *reply, struct rpc_struct *st)
 {
 	while(st) {
 		/* Close the structure first */
 		if(st->vtype & RET_ARRAY) {
-			if (add_xmlrpc_reply(&st->struct_out, &array_suffix) < 0) return -1;
+			if(add_xmlrpc_reply(&st->struct_out, &array_suffix) < 0)
+				return -1;
 		} else {
-			if (add_xmlrpc_reply(&st->struct_out, &struct_suffix) < 0) return -1;
+			if(add_xmlrpc_reply(&st->struct_out, &struct_suffix) < 0)
+				return -1;
 		}
-		if (flatten_nests(st->nnext, &st->struct_out) < 0) return -1;
-		if (add_xmlrpc_reply_offset(reply, st->offset,
-					&st->struct_out.body) < 0) return -1;
+		if(flatten_nests(st->nnext, &st->struct_out) < 0)
+			return -1;
+		if(add_xmlrpc_reply_offset(reply, st->offset, &st->struct_out.body) < 0)
+			return -1;
 		st = st->next;
 	}
 	return 0;
@@ -877,23 +882,27 @@ static int print_structures(struct xmlrpc_reply* reply,
  * @return 1 if the reply was already sent, 0 on success, a negative number on
  *            error
  */
-static int rpc_send(rpc_ctx_t* ctx)
+static int rpc_send(rpc_ctx_t *ctx)
 {
-	struct xmlrpc_reply* reply;
+	struct xmlrpc_reply *reply;
 
-	if (ctx->reply_sent) return 1;
+	if(ctx->reply_sent)
+		return 1;
 
 	reply = &ctx->reply;
-	if (reply->code >= 300) {
-		if (build_fault_reply(reply) < 0) return -1;
+	if(reply->code >= 300) {
+		if(build_fault_reply(reply) < 0)
+			return -1;
 	} else {
-		if (ctx->flags & RET_ARRAY &&
-				add_xmlrpc_reply(reply, &array_suffix) < 0) return -1;
-		if (ctx->structs &&
-				print_structures(reply, ctx->structs) < 0) return -1;
-		if (add_xmlrpc_reply(reply, &success_suffix) < 0) return -1;
+		if(ctx->flags & RET_ARRAY && add_xmlrpc_reply(reply, &array_suffix) < 0)
+			return -1;
+		if(ctx->structs && print_structures(reply, ctx->structs) < 0)
+			return -1;
+		if(add_xmlrpc_reply(reply, &success_suffix) < 0)
+			return -1;
 	}
-	if (send_reply(ctx->msg, &reply->body) < 0) return -1;
+	if(send_reply(ctx->msg, &reply->body) < 0)
+		return -1;
 	ctx->reply_sent = 1;
 	return 0;
 }
@@ -901,7 +910,7 @@ static int rpc_send(rpc_ctx_t* ctx)
 
 #define REASON_BUF_LEN 1024
 
-static void set_fault(struct xmlrpc_reply* reply, int code, char* fmt, ...)
+static void set_fault(struct xmlrpc_reply *reply, int code, char *fmt, ...)
 {
 	static char buf[REASON_BUF_LEN];
 	va_list ap;
@@ -926,7 +935,7 @@ static void set_fault(struct xmlrpc_reply* reply, int code, char* fmt, ...)
  * @param code Reason code.
  * @param fmt Formatting string used to build the reason phrase.
  */
-static void rpc_fault(rpc_ctx_t* ctx, int code, char* fmt, ...)
+static void rpc_fault(rpc_ctx_t *ctx, int code, char *fmt, ...)
 {
 	static char buf[REASON_BUF_LEN];
 	va_list ap;
@@ -956,13 +965,13 @@ static void rpc_fault(rpc_ctx_t* ctx, int code, char* fmt, ...)
  * @param reply A pointer to xml_reply structure, NULL if it is a structure
  *              coming from a XML-RPC request.
  */
-static struct rpc_struct* new_rpcstruct(xmlDocPtr doc, xmlNodePtr structure,
-		struct xmlrpc_reply* reply, int vtype)
+static struct rpc_struct *new_rpcstruct(xmlDocPtr doc, xmlNodePtr structure,
+		struct xmlrpc_reply *reply, int vtype)
 {
-	struct rpc_struct* p;
+	struct rpc_struct *p;
 
-	p = (struct rpc_struct*)mxr_malloc(sizeof(struct rpc_struct));
-	if (!p) {
+	p = (struct rpc_struct *)mxr_malloc(sizeof(struct rpc_struct));
+	if(!p) {
 		set_fault(reply, 500, "Internal Server Error (No Memory Left");
 		return 0;
 	}
@@ -972,24 +981,29 @@ static struct rpc_struct* new_rpcstruct(xmlDocPtr doc, xmlNodePtr structure,
 	p->reply = reply;
 	p->n = 0;
 	p->vtype = vtype;
-	if (doc && structure) {
+	if(doc && structure) {
 		/* We will be parsing structure from request */
 		p->doc = doc;
 		p->struct_in = structure;
 	} else {
 		/* We will build a reply structure */
-		if (init_xmlrpc_reply(&p->struct_out) < 0) goto err;
+		if(init_xmlrpc_reply(&p->struct_out) < 0)
+			goto err;
 		if(vtype & RET_ARRAY) {
-			if (add_xmlrpc_reply(&p->struct_out, &array_prefix) < 0) goto err;
+			if(add_xmlrpc_reply(&p->struct_out, &array_prefix) < 0)
+				goto err;
 		} else {
-			if (add_xmlrpc_reply(&p->struct_out, &struct_prefix) < 0) goto err;
+			if(add_xmlrpc_reply(&p->struct_out, &struct_prefix) < 0)
+				goto err;
 		}
 	}
-	if (add_garbage(JUNK_RPCSTRUCT, p, reply) < 0) goto err;
+	if(add_garbage(JUNK_RPCSTRUCT, p, reply) < 0)
+		goto err;
 	return p;
 
 err:
-	if (p->struct_out.buf.s) mxr_free(p->struct_out.buf.s);
+	if(p->struct_out.buf.s)
+		mxr_free(p->struct_out.buf.s);
 	mxr_free(p);
 	return 0;
 }
@@ -1012,14 +1026,14 @@ err:
  * @param ap A pointer to the array of input parameters.
  *
  */
-static int print_value(struct xmlrpc_reply* res,
-		struct xmlrpc_reply* err_reply, char fmt, va_list* ap)
+static int print_value(struct xmlrpc_reply *res, struct xmlrpc_reply *err_reply,
+		char fmt, va_list *ap)
 {
 	str prefix, body, suffix;
-	str* sp;
+	str *sp;
 	char buf[256];
 	time_t dt;
-	struct tm* t;
+	struct tm *t;
 
 	switch(fmt) {
 		case 'd':
@@ -1039,7 +1053,7 @@ static int print_value(struct xmlrpc_reply* res,
 			suffix = double_suffix;
 			body.s = buf;
 			body.len = snprintf(buf, 256, "%f", va_arg(*ap, double));
-			if (body.len < 0) {
+			if(body.len < 0) {
 				set_fault(err_reply, 400, "Error While Converting double");
 				ERR("Error while converting double\n");
 				goto err;
@@ -1052,7 +1066,7 @@ static int print_value(struct xmlrpc_reply* res,
 			suffix = double_suffix;
 			body.s = buf;
 			body.len = snprintf(buf, 256, "%ld", va_arg(*ap, long));
-			if (body.len < 0) {
+			if(body.len < 0) {
 				set_fault(err_reply, 400, "Error While Converting long");
 				ERR("Error while converting long\n");
 				goto err;
@@ -1064,8 +1078,9 @@ static int print_value(struct xmlrpc_reply* res,
 			suffix = double_suffix;
 			body.s = buf;
 			body.len = snprintf(buf, 256, "%lu", va_arg(*ap, unsigned long));
-			if (body.len < 0) {
-				set_fault(err_reply, 400, "Error While Converting unsigned long");
+			if(body.len < 0) {
+				set_fault(
+						err_reply, 400, "Error While Converting unsigned long");
 				ERR("Error while converting unsigned long\n");
 				goto err;
 			}
@@ -1076,7 +1091,7 @@ static int print_value(struct xmlrpc_reply* res,
 			suffix = double_suffix;
 			body.s = buf;
 			body.len = snprintf(buf, 256, "%lld", va_arg(*ap, long long));
-			if (body.len < 0) {
+			if(body.len < 0) {
 				set_fault(err_reply, 400, "Error While Converting long long");
 				ERR("Error while converting long\n");
 				goto err;
@@ -1087,9 +1102,11 @@ static int print_value(struct xmlrpc_reply* res,
 			prefix = double_prefix;
 			suffix = double_suffix;
 			body.s = buf;
-			body.len = snprintf(buf, 256, "%llu", va_arg(*ap, unsigned long long));
-			if (body.len < 0) {
-				set_fault(err_reply, 400, "Error While Converting unsigned long long");
+			body.len =
+					snprintf(buf, 256, "%llu", va_arg(*ap, unsigned long long));
+			if(body.len < 0) {
+				set_fault(err_reply, 400,
+						"Error While Converting unsigned long long");
 				ERR("Error while converting unsigned long long\n");
 				goto err;
 			}
@@ -1109,7 +1126,7 @@ static int print_value(struct xmlrpc_reply* res,
 			body.len = sizeof("19980717T14:08:55") - 1;
 			dt = va_arg(*ap, time_t);
 			t = gmtime(&dt);
-			if (strftime(buf, 256, "%Y%m%dT%H:%M:%S", t) == 0) {
+			if(strftime(buf, 256, "%Y%m%dT%H:%M:%S", t) == 0) {
 				set_fault(err_reply, 400, "Error While Converting datetime");
 				ERR("Error while converting time\n");
 				goto err;
@@ -1117,8 +1134,8 @@ static int print_value(struct xmlrpc_reply* res,
 			break;
 
 		case 's':
-			body.s = va_arg(*ap, char*);
-			if(body.s!=NULL) {
+			body.s = va_arg(*ap, char *);
+			if(body.s != NULL) {
 				prefix = string_prefix;
 				suffix = string_suffix;
 				body.len = strlen(body.s);
@@ -1130,8 +1147,8 @@ static int print_value(struct xmlrpc_reply* res,
 			break;
 
 		case 'S':
-			sp = va_arg(*ap, str*);
-			if(sp!=NULL && sp->s!=NULL) {
+			sp = va_arg(*ap, str *);
+			if(sp != NULL && sp->s != NULL) {
 				prefix = string_prefix;
 				suffix = string_suffix;
 				body = *sp;
@@ -1143,15 +1160,18 @@ static int print_value(struct xmlrpc_reply* res,
 			break;
 
 		default:
-			set_fault(err_reply, 500, "Bug In " NAME
-					" (Invalid formatting character)");
+			set_fault(err_reply, 500,
+					"Bug In " NAME " (Invalid formatting character)");
 			ERR("Invalid formatting character [%c]\n", fmt);
 			goto err;
 	}
 
-	if (add_xmlrpc_reply(res, &prefix) < 0) goto err;
-	if (add_xmlrpc_reply_esc(res, &body) < 0) goto err;
-	if (add_xmlrpc_reply(res, &suffix) < 0) goto err;
+	if(add_xmlrpc_reply(res, &prefix) < 0)
+		goto err;
+	if(add_xmlrpc_reply_esc(res, &body) < 0)
+		goto err;
+	if(add_xmlrpc_reply(res, &suffix) < 0)
+		goto err;
 	return 0;
 err:
 	return -1;
@@ -1162,35 +1182,40 @@ err:
  * This function will be called when a management function in SER calls
  * rpc->add to add a parameter to the XML-RPC reply being generated.
  */
-static int rpc_add(rpc_ctx_t* ctx, char* fmt, ...)
+static int rpc_add(rpc_ctx_t *ctx, char *fmt, ...)
 {
-	void* void_ptr;
+	void *void_ptr;
 	va_list ap;
-	struct xmlrpc_reply* reply;
-	struct rpc_struct* p;
+	struct xmlrpc_reply *reply;
+	struct rpc_struct *p;
 
 	fix_delayed_reply_ctx(ctx);
 	va_start(ap, fmt);
 	reply = &ctx->reply;
 
 	while(*fmt) {
-		if ((ctx->flags & RET_ARRAY) &&
-				add_xmlrpc_reply(reply, &value_prefix) < 0) goto err;
-		if (*fmt == '{' || *fmt == '[') {
-			void_ptr = va_arg(ap, void**);
-			p = new_rpcstruct(0, 0, reply, (*fmt=='[')?RET_ARRAY:0);
-			if (!p) goto err;
-			*(struct rpc_struct**)void_ptr = p;
+		if((ctx->flags & RET_ARRAY)
+				&& add_xmlrpc_reply(reply, &value_prefix) < 0)
+			goto err;
+		if(*fmt == '{' || *fmt == '[') {
+			void_ptr = va_arg(ap, void **);
+			p = new_rpcstruct(0, 0, reply, (*fmt == '[') ? RET_ARRAY : 0);
+			if(!p)
+				goto err;
+			*(struct rpc_struct **)void_ptr = p;
 			p->offset = get_reply_len(reply);
 			p->next = ctx->structs;
 			ctx->structs = p;
 		} else {
-			if (print_value(reply, reply, *fmt, &ap) < 0) goto err;
+			if(print_value(reply, reply, *fmt, &ap) < 0)
+				goto err;
 		}
 
-		if ((ctx->flags & RET_ARRAY) &&
-				add_xmlrpc_reply(reply, &value_suffix) < 0) goto err;
-		if (add_xmlrpc_reply(reply, &lf) < 0) goto err;
+		if((ctx->flags & RET_ARRAY)
+				&& add_xmlrpc_reply(reply, &value_suffix) < 0)
+			goto err;
+		if(add_xmlrpc_reply(reply, &lf) < 0)
+			goto err;
 		fmt++;
 	}
 	va_end(ap);
@@ -1202,7 +1227,7 @@ err:
 
 
 /** Convert time in XML-RPC format to time_t */
-static time_t xmlrpc2time(const char* str)
+static time_t xmlrpc2time(const char *str)
 {
 	struct tm time;
 
@@ -1217,23 +1242,22 @@ static time_t xmlrpc2time(const char* str)
 }
 
 
-
 /* get_* flags: */
 #define GET_X_AUTOCONV 1
 #define GET_X_NOREPLY 2
-#define GET_X_LFLF2CRLF 4  /* replace "\n\n" with "\r\n" */
+#define GET_X_LFLF2CRLF 4 /* replace "\n\n" with "\r\n" */
 
 /* xml value types */
-enum xmlrpc_val_type{
+enum xmlrpc_val_type
+{
 	XML_T_STR,
 	XML_T_TXT,
 	XML_T_INT,
 	XML_T_BOOL,
 	XML_T_DATE,
 	XML_T_DOUBLE,
-	XML_T_ERR=-1
+	XML_T_ERR = -1
 };
-
 
 
 /** Returns the XML-RPC value type.
@@ -1241,23 +1265,22 @@ enum xmlrpc_val_type{
  */
 static enum xmlrpc_val_type xml_get_type(xmlNodePtr value)
 {
-	if (!xmlStrcmp(value->name, BAD_CAST "string")){
+	if(!xmlStrcmp(value->name, BAD_CAST "string")) {
 		return XML_T_STR;
-	} else if (!xmlStrcmp(value->name, BAD_CAST "text")) {
+	} else if(!xmlStrcmp(value->name, BAD_CAST "text")) {
 		return XML_T_TXT;
-	} else if ( !xmlStrcmp(value->name, BAD_CAST "i4") ||
-			!xmlStrcmp(value->name, BAD_CAST "int")) {
+	} else if(!xmlStrcmp(value->name, BAD_CAST "i4")
+			  || !xmlStrcmp(value->name, BAD_CAST "int")) {
 		return XML_T_INT;
-	} else if (!xmlStrcmp(value->name, BAD_CAST "boolean")) {
+	} else if(!xmlStrcmp(value->name, BAD_CAST "boolean")) {
 		return XML_T_BOOL;
-	} else if (!xmlStrcmp(value->name, BAD_CAST "dateTime.iso8601")) {
+	} else if(!xmlStrcmp(value->name, BAD_CAST "dateTime.iso8601")) {
 		return XML_T_DATE;
-	}else if (!(xmlStrcmp(value->name, BAD_CAST "double"))){
+	} else if(!(xmlStrcmp(value->name, BAD_CAST "double"))) {
 		return XML_T_DOUBLE;
 	}
 	return XML_T_ERR;
 }
-
 
 
 /** Converts an XML-RPC encoded parameter into integer if possible.
@@ -1278,29 +1301,29 @@ static enum xmlrpc_val_type xml_get_type(xmlNodePtr value)
  *                GET_X_NOREPLY - do not reply
  * @return <0 on error, 0 on success
  */
-static int get_int(int* val, struct xmlrpc_reply* reply,
-		xmlDocPtr doc, xmlNodePtr value, int flags)
+static int get_int(int *val, struct xmlrpc_reply *reply, xmlDocPtr doc,
+		xmlNodePtr value, int flags)
 {
 	enum xmlrpc_val_type type;
 	int ret;
 	xmlNodePtr i4;
-	char* val_str;
-	char* end_ptr;
+	char *val_str;
+	char *end_ptr;
 
-	if (!value || xmlStrcmp(value->name, BAD_CAST "value")) {
-		if (!(flags & GET_X_NOREPLY))
+	if(!value || xmlStrcmp(value->name, BAD_CAST "value")) {
+		if(!(flags & GET_X_NOREPLY))
 			set_fault(reply, 400, "Invalid parameter value");
 		return -1;
 	}
 
 	i4 = value->xmlChildrenNode;
-	if (!i4){
-		if (!(flags & GET_X_NOREPLY))
+	if(!i4) {
+		if(!(flags & GET_X_NOREPLY))
 			set_fault(reply, 400, "Invalid Parameter Type");
 		return -1;
 	}
-	type=xml_get_type(i4);
-	switch(type){
+	type = xml_get_type(i4);
+	switch(type) {
 		case XML_T_INT:
 		case XML_T_BOOL:
 		case XML_T_DATE:
@@ -1308,52 +1331,51 @@ static int get_int(int* val, struct xmlrpc_reply* reply,
 		case XML_T_DOUBLE:
 		case XML_T_STR:
 		case XML_T_TXT:
-			if (flags & GET_X_AUTOCONV)
+			if(flags & GET_X_AUTOCONV)
 				break;
 		case XML_T_ERR:
-			if (!(flags & GET_X_NOREPLY))
+			if(!(flags & GET_X_NOREPLY))
 				set_fault(reply, 400, "Invalid Parameter Type");
 			return -1;
 	}
-	if (type == XML_T_TXT)
-		val_str = (char*)i4->content;
+	if(type == XML_T_TXT)
+		val_str = (char *)i4->content;
 	else
-		val_str = (char*)xmlNodeListGetString(doc, i4->xmlChildrenNode, 1);
-	if (!val_str) {
-		if (!(flags & GET_X_NOREPLY))
+		val_str = (char *)xmlNodeListGetString(doc, i4->xmlChildrenNode, 1);
+	if(!val_str) {
+		if(!(flags & GET_X_NOREPLY))
 			set_fault(reply, 400, "Empty Parameter Value");
 		return -1;
 	}
-	ret=0;
-	switch(type){
+	ret = 0;
+	switch(type) {
 		case XML_T_INT:
 		case XML_T_BOOL:
 		case XML_T_STR:
 		case XML_T_TXT:
 			/* Integer/bool conversion */
 			*val = strtol(val_str, &end_ptr, 10);
-			if (val_str==end_ptr)
-				ret=-1;
+			if(val_str == end_ptr)
+				ret = -1;
 			break;
 		case XML_T_DATE:
 			*val = (int)(uint64_t)xmlrpc2time(val_str);
 			break;
 		case XML_T_DOUBLE:
 			*val = (int)strtod(val_str, &end_ptr);
-			if (val_str==end_ptr)
-				ret=-1;
+			if(val_str == end_ptr)
+				ret = -1;
 			break;
 		case XML_T_ERR:
-			*val=0;
-			ret=-1;
+			*val = 0;
+			ret = -1;
 			break;
 	}
 	xmlFree(val_str);
-	if (ret==-1 && !(flags & GET_X_NOREPLY))
+	if(ret == -1 && !(flags & GET_X_NOREPLY))
 		set_fault(reply, 400, "Invalid Value");
 	return ret;
 }
-
 
 
 /** Converts an XML-RPC encoded parameter into double if possible.
@@ -1373,29 +1395,29 @@ static int get_int(int* val, struct xmlrpc_reply* reply,
  *                GET_X_NOREPLY - do not reply
  * @return <0 on error, 0 on success
  */
-static int get_double(double* val, struct xmlrpc_reply* reply,
-		xmlDocPtr doc, xmlNodePtr value, int flags)
+static int get_double(double *val, struct xmlrpc_reply *reply, xmlDocPtr doc,
+		xmlNodePtr value, int flags)
 {
 	xmlNodePtr dbl;
-	char* val_str;
-	char* end_ptr;
+	char *val_str;
+	char *end_ptr;
 	enum xmlrpc_val_type type;
 	int ret;
 
-	if (!value || xmlStrcmp(value->name, BAD_CAST "value")) {
-		if (!(flags & GET_X_NOREPLY))
+	if(!value || xmlStrcmp(value->name, BAD_CAST "value")) {
+		if(!(flags & GET_X_NOREPLY))
 			set_fault(reply, 400, "Invalid Parameter Value");
 		return -1;
 	}
 
 	dbl = value->xmlChildrenNode;
-	if (!dbl){
-		if (!(flags & GET_X_NOREPLY))
+	if(!dbl) {
+		if(!(flags & GET_X_NOREPLY))
 			set_fault(reply, 400, "Invalid Parameter Type");
 		return -1;
 	}
-	type=xml_get_type(dbl);
-	switch(type){
+	type = xml_get_type(dbl);
+	switch(type) {
 		case XML_T_DOUBLE:
 		case XML_T_INT:
 			break;
@@ -1403,43 +1425,43 @@ static int get_double(double* val, struct xmlrpc_reply* reply,
 		case XML_T_DATE:
 		case XML_T_STR:
 		case XML_T_TXT:
-			if (flags & GET_X_AUTOCONV)
+			if(flags & GET_X_AUTOCONV)
 				break;
 		case XML_T_ERR:
-			if (!(flags & GET_X_NOREPLY))
+			if(!(flags & GET_X_NOREPLY))
 				set_fault(reply, 400, "Invalid Parameter Type");
 			return -1;
 	}
-	if (type == XML_T_TXT)
-		val_str = (char*)dbl->content;
+	if(type == XML_T_TXT)
+		val_str = (char *)dbl->content;
 	else
-		val_str = (char*)xmlNodeListGetString(doc, dbl->xmlChildrenNode, 1);
-	if (!val_str) {
-		if (!(flags & GET_X_NOREPLY))
+		val_str = (char *)xmlNodeListGetString(doc, dbl->xmlChildrenNode, 1);
+	if(!val_str) {
+		if(!(flags & GET_X_NOREPLY))
 			set_fault(reply, 400, "Empty Double Parameter");
 		return -1;
 	}
-	ret=0;
-	switch(type){
+	ret = 0;
+	switch(type) {
 		case XML_T_DOUBLE:
 		case XML_T_INT:
 		case XML_T_BOOL:
 		case XML_T_STR:
 		case XML_T_TXT:
 			*val = strtod(val_str, &end_ptr);
-			if (val_str==end_ptr)
-				ret=-1;
+			if(val_str == end_ptr)
+				ret = -1;
 			break;
 		case XML_T_DATE:
 			*val = (double)xmlrpc2time(val_str);
 			break;
 		case XML_T_ERR:
-			*val=0;
-			ret=-1;
+			*val = 0;
+			ret = -1;
 			break;
 	}
 	xmlFree(val_str);
-	if (ret==-1 && !(flags & GET_X_NOREPLY))
+	if(ret == -1 && !(flags & GET_X_NOREPLY))
 		set_fault(reply, 400, "Invalid Value");
 	return ret;
 }
@@ -1461,35 +1483,35 @@ static int get_double(double* val, struct xmlrpc_reply* reply,
  *              - GET_X_NOREPLY - do not reply
  * @return <0 on error, 0 on success
  */
-static int get_string(char** val, struct xmlrpc_reply* reply,
-		xmlDocPtr doc, xmlNodePtr value, int flags)
+static int get_string(char **val, struct xmlrpc_reply *reply, xmlDocPtr doc,
+		xmlNodePtr value, int flags)
 {
-	static char* null_str = "";
+	static char *null_str = "";
 	xmlNodePtr dbl;
-	char* val_str;
-	char* end_ptr;
-	char* s;
-	char* p;
+	char *val_str;
+	char *end_ptr;
+	char *s;
+	char *p;
 	int i;
 	int len;
 	enum xmlrpc_val_type type;
 	int ret;
 
-	if (!value || xmlStrcmp(value->name, BAD_CAST "value")) {
-		if (!(flags & GET_X_NOREPLY))
+	if(!value || xmlStrcmp(value->name, BAD_CAST "value")) {
+		if(!(flags & GET_X_NOREPLY))
 			set_fault(reply, 400, "Invalid Parameter Value");
 		return -1;
 	}
 
 	dbl = value->xmlChildrenNode;
-	if (!dbl){
-		if (!(flags & GET_X_NOREPLY))
+	if(!dbl) {
+		if(!(flags & GET_X_NOREPLY))
 			set_fault(reply, 400, "Invalid Parameter Type");
 		return -1;
 	}
-	type=xml_get_type(dbl);
+	type = xml_get_type(dbl);
 	LM_DBG("xmlrpc parameter type: %d\n", type);
-	switch(type){
+	switch(type) {
 		case XML_T_STR:
 		case XML_T_TXT:
 			break;
@@ -1497,47 +1519,47 @@ static int get_string(char** val, struct xmlrpc_reply* reply,
 		case XML_T_BOOL:
 		case XML_T_DATE:
 		case XML_T_DOUBLE:
-			if (flags & GET_X_AUTOCONV)
+			if(flags & GET_X_AUTOCONV)
 				break;
 		case XML_T_ERR:
-			if (!(flags & GET_X_NOREPLY))
+			if(!(flags & GET_X_NOREPLY))
 				set_fault(reply, 400, "Invalid Parameter Type");
 			return -1;
 	}
-	if (type == XML_T_TXT)
-		val_str = (char*)xmlNodeGetContent(dbl);
+	if(type == XML_T_TXT)
+		val_str = (char *)xmlNodeGetContent(dbl);
 	else
-		val_str = (char*)xmlNodeListGetString(doc, dbl->xmlChildrenNode, 1);
+		val_str = (char *)xmlNodeListGetString(doc, dbl->xmlChildrenNode, 1);
 
-	if (!val_str) {
-		if (type==XML_T_STR || type==XML_T_TXT){
+	if(!val_str) {
+		if(type == XML_T_STR || type == XML_T_TXT) {
 			*val = null_str;
 			return 0;
-		}else{
-			if (!(flags & GET_X_NOREPLY))
+		} else {
+			if(!(flags & GET_X_NOREPLY))
 				set_fault(reply, 400, "Empty Parameter Value");
 			return -1;
 		}
 	}
-	ret=0;
-	switch(type){
+	ret = 0;
+	switch(type) {
 		case XML_T_STR:
 		case XML_T_TXT:
-			if (flags & GET_X_LFLF2CRLF){
-				p=val_str;
-				while(*p){
-					if (*p=='\n' && *(p+1)=='\n'){
-						*p='\r';
-						p+=2;
+			if(flags & GET_X_LFLF2CRLF) {
+				p = val_str;
+				while(*p) {
+					if(*p == '\n' && *(p + 1) == '\n') {
+						*p = '\r';
+						p += 2;
 						continue;
 					}
 					p++;
 				}
 			}
 			/* no break */
-		case XML_T_DATE:  /* no special conversion */
+		case XML_T_DATE:   /* no special conversion */
 		case XML_T_DOUBLE: /* no special conversion */
-			if (add_garbage(JUNK_XMLCHAR, val_str, reply) < 0){
+			if(add_garbage(JUNK_XMLCHAR, val_str, reply) < 0) {
 				xmlFree(val_str);
 				return -1;
 			}
@@ -1547,30 +1569,30 @@ static int get_string(char** val, struct xmlrpc_reply* reply,
 		case XML_T_BOOL:
 			/* convert str to int and back to str */
 			i = strtol(val_str, &end_ptr, 10);
-			if (val_str==end_ptr){
-				ret=-1;
-			}else{
-				s=sint2str(i, &len);
-				p=mxr_malloc(len+1);
-				if (p && add_garbage(JUNK_PKGCHAR, p, reply) == 0){
+			if(val_str == end_ptr) {
+				ret = -1;
+			} else {
+				s = sint2str(i, &len);
+				p = mxr_malloc(len + 1);
+				if(p && add_garbage(JUNK_PKGCHAR, p, reply) == 0) {
 					memcpy(p, s, len);
-					p[len]=0;
-					*val=p;
-				}else{
-					ret=-1;
-					if (p) mxr_free(p);
+					p[len] = 0;
+					*val = p;
+				} else {
+					ret = -1;
+					if(p)
+						mxr_free(p);
 				}
 			}
 			xmlFree(val_str);
 			break;
 		case XML_T_ERR:
 			xmlFree(val_str);
-			ret=-1;
+			ret = -1;
 			break;
 	}
 	return ret;
 }
-
 
 
 /** Implementation of rpc->scan function required by the management API in
@@ -1582,24 +1604,24 @@ static int get_string(char** val, struct xmlrpc_reply* reply,
  * document and attempts to convert it to the type requested by the management
  * function that called it.
  */
-static int rpc_scan(rpc_ctx_t* ctx, char* fmt, ...)
+static int rpc_scan(rpc_ctx_t *ctx, char *fmt, ...)
 {
 	int read;
 	int ival;
-	int* int_ptr;
-	unsigned int* uint_ptr;
-	long* long_ptr;
-	unsigned long* ulong_ptr;
-	long long* llong_ptr;
-	unsigned long long* ullong_ptr;
-	char** char_ptr;
-	str* str_ptr;
-	double* double_ptr;
+	int *int_ptr;
+	unsigned int *uint_ptr;
+	long *long_ptr;
+	unsigned long *ulong_ptr;
+	long long *llong_ptr;
+	unsigned long long *ullong_ptr;
+	char **char_ptr;
+	str *str_ptr;
+	double *double_ptr;
 	double double_val;
-	void** void_ptr;
+	void **void_ptr;
 	xmlNodePtr value;
-	struct xmlrpc_reply* reply;
-	struct rpc_struct* p;
+	struct xmlrpc_reply *reply;
+	struct rpc_struct *p;
 	int modifiers;
 	int f;
 	va_list ap;
@@ -1610,14 +1632,13 @@ static int rpc_scan(rpc_ctx_t* ctx, char* fmt, ...)
 	clear_xmlrpc_reply(reply);
 
 	va_start(ap, fmt);
-	modifiers=0;
+	modifiers = 0;
 	read = 0;
 	nofault = 0;
-	f=(autoconvert?GET_X_AUTOCONV:0) |
-		(lflf2crlf?GET_X_LFLF2CRLF:0);
+	f = (autoconvert ? GET_X_AUTOCONV : 0) | (lflf2crlf ? GET_X_LFLF2CRLF : 0);
 	while(*fmt) {
-		if (!ctx->act_param) {
-			if(*fmt=='*') {
+		if(!ctx->act_param) {
+			if(*fmt == '*') {
 				break;
 			} else {
 				goto error;
@@ -1630,86 +1651,90 @@ static int rpc_scan(rpc_ctx_t* ctx, char* fmt, ...)
 				modifiers++;
 				read++;
 				fmt++;
-				nofault=1;
-				f|=GET_X_NOREPLY;
+				nofault = 1;
+				f |= GET_X_NOREPLY;
 				continue; /* do not advance ctx->act-param */
-			case '.': /* autoconvert */
+			case '.':	  /* autoconvert */
 				modifiers++;
 				read++;
 				fmt++;
-				f|=GET_X_AUTOCONV;
+				f |= GET_X_AUTOCONV;
 				continue; /* do not advance ctx->act-param */
-			case 'b': /* Bool */
-			case 't': /* Date and time */
-			case 'd': /* Integer */
-				int_ptr = va_arg(ap, int*);
-				if (get_int(int_ptr, reply, ctx->doc, value, f) < 0) goto error;
+			case 'b':	  /* Bool */
+			case 't':	  /* Date and time */
+			case 'd':	  /* Integer */
+				int_ptr = va_arg(ap, int *);
+				if(get_int(int_ptr, reply, ctx->doc, value, f) < 0)
+					goto error;
 				break;
 
 			case 'u': /* Integer */
-				uint_ptr = va_arg(ap, unsigned int*);
-				if (get_int(&ival, reply, ctx->doc, value, f) < 0) goto error;
+				uint_ptr = va_arg(ap, unsigned int *);
+				if(get_int(&ival, reply, ctx->doc, value, f) < 0)
+					goto error;
 				*uint_ptr = (unsigned int)ival;
 				break;
 
 			case 'f': /* double */
-				double_ptr = va_arg(ap, double*);
-				if (get_double(double_ptr, reply, ctx->doc, value, f) < 0) {
+				double_ptr = va_arg(ap, double *);
+				if(get_double(double_ptr, reply, ctx->doc, value, f) < 0) {
 					goto error;
 				}
 				break;
 
 			case 'l': /* long - convert it from a double */
-				long_ptr = va_arg(ap, long*);
-				if (get_double(&double_val, reply, ctx->doc, value, f) < 0) {
+				long_ptr = va_arg(ap, long *);
+				if(get_double(&double_val, reply, ctx->doc, value, f) < 0) {
 					goto error;
 				}
 				*long_ptr = (long)double_val;
 				break;
 
 			case 'j': /* unsigned long - convert it from a double */
-				ulong_ptr = va_arg(ap, unsigned long*);
-				if (get_double(&double_val, reply, ctx->doc, value, f) < 0) {
+				ulong_ptr = va_arg(ap, unsigned long *);
+				if(get_double(&double_val, reply, ctx->doc, value, f) < 0) {
 					goto error;
 				}
 				*ulong_ptr = (unsigned long)double_val;
 				break;
 
 			case 'L': /* long long - convert it from a double */
-				llong_ptr = va_arg(ap, long long*);
-				if (get_double(&double_val, reply, ctx->doc, value, f) < 0) {
+				llong_ptr = va_arg(ap, long long *);
+				if(get_double(&double_val, reply, ctx->doc, value, f) < 0) {
 					goto error;
 				}
 				*llong_ptr = (long long)double_val;
 				break;
 
 			case 'J': /* unsigned long long - convert it from a double */
-				ullong_ptr = va_arg(ap, unsigned long long*);
-				if (get_double(&double_val, reply, ctx->doc, value, f) < 0) {
+				ullong_ptr = va_arg(ap, unsigned long long *);
+				if(get_double(&double_val, reply, ctx->doc, value, f) < 0) {
 					goto error;
 				}
 				*ullong_ptr = (unsigned long long)double_val;
 				break;
 
 			case 's': /* zero terminated string */
-				char_ptr = va_arg(ap, char**);
-				if (get_string(char_ptr, reply, ctx->doc, value, f) < 0)
+				char_ptr = va_arg(ap, char **);
+				if(get_string(char_ptr, reply, ctx->doc, value, f) < 0)
 					goto error;
 				break;
 
 			case 'S': /* str structure */
-				str_ptr = va_arg(ap, str*);
-				if (get_string(&str_ptr->s, reply, ctx->doc, value, f) < 0) {
+				str_ptr = va_arg(ap, str *);
+				if(get_string(&str_ptr->s, reply, ctx->doc, value, f) < 0) {
 					goto error;
 				}
 				str_ptr->len = strlen(str_ptr->s);
 				break;
 
 			case '{':
-				void_ptr = va_arg(ap, void**);
-				if (!value->xmlChildrenNode) goto error;
+				void_ptr = va_arg(ap, void **);
+				if(!value->xmlChildrenNode)
+					goto error;
 				p = new_rpcstruct(ctx->doc, value->xmlChildrenNode, reply, 0);
-				if (!p) goto error;
+				if(!p)
+					goto error;
 				*void_ptr = p;
 				break;
 
@@ -1721,19 +1746,19 @@ static int rpc_scan(rpc_ctx_t* ctx, char* fmt, ...)
 		}
 		ctx->act_param = ctx->act_param->next;
 		/* clear autoconv if not globally on */
-		f=autoconvert?GET_X_AUTOCONV:(f&~GET_X_AUTOCONV);
+		f = autoconvert ? GET_X_AUTOCONV : (f & ~GET_X_AUTOCONV);
 		read++;
 		fmt++;
 	}
 	va_end(ap);
-	return read-modifiers;
+	return read - modifiers;
 
 error:
 	va_end(ap);
-	if(nofault==0)
-		return -(read-modifiers);
+	if(nofault == 0)
+		return -(read - modifiers);
 	else
-		return read-modifiers;
+		return read - modifiers;
 }
 
 #define RPC_BUF_SIZE 1024
@@ -1745,51 +1770,57 @@ error:
  * This function will be called whenever a management function in SER calls
  * rpc-printf to add a parameter to the XML-RPC reply being constructed.
  */
-static int rpc_rpl_printf(rpc_ctx_t* ctx, char* fmt, ...)
+static int rpc_rpl_printf(rpc_ctx_t *ctx, char *fmt, ...)
 {
 	int n, buf_size;
-	char* buf;
+	char *buf;
 	va_list ap;
 	str s;
-	struct xmlrpc_reply* reply;
+	struct xmlrpc_reply *reply;
 
 	fix_delayed_reply_ctx(ctx);
 	reply = &ctx->reply;
-	buf = (char*)mxr_malloc(RPC_BUF_SIZE);
-	if (!buf) {
+	buf = (char *)mxr_malloc(RPC_BUF_SIZE);
+	if(!buf) {
 		set_fault(reply, 500, "Internal Server Error (No memory left)");
 		ERR("No memory left\n");
 		return -1;
 	}
 
 	buf_size = RPC_BUF_SIZE;
-	while (1) {
+	while(1) {
 		/* Try to print in the allocated space. */
 		va_start(ap, fmt);
 		n = vsnprintf(buf, buf_size, fmt, ap);
 		va_end(ap);
 		/* If that worked, return the string. */
-		if (n > -1 && n < buf_size) {
+		if(n > -1 && n < buf_size) {
 			s.s = buf;
 			s.len = n;
-			if ((ctx->flags & RET_ARRAY) &&
-					add_xmlrpc_reply(reply, &value_prefix) < 0) goto err;
-			if (add_xmlrpc_reply(reply, &string_prefix) < 0) goto err;
-			if (add_xmlrpc_reply_esc(reply, &s) < 0) goto err;
-			if (add_xmlrpc_reply(reply, &string_suffix) < 0) goto err;
-			if ((ctx->flags & RET_ARRAY) &&
-					add_xmlrpc_reply(reply, &value_suffix) < 0) goto err;
-			if (add_xmlrpc_reply(reply, &lf) < 0) goto err;
+			if((ctx->flags & RET_ARRAY)
+					&& add_xmlrpc_reply(reply, &value_prefix) < 0)
+				goto err;
+			if(add_xmlrpc_reply(reply, &string_prefix) < 0)
+				goto err;
+			if(add_xmlrpc_reply_esc(reply, &s) < 0)
+				goto err;
+			if(add_xmlrpc_reply(reply, &string_suffix) < 0)
+				goto err;
+			if((ctx->flags & RET_ARRAY)
+					&& add_xmlrpc_reply(reply, &value_suffix) < 0)
+				goto err;
+			if(add_xmlrpc_reply(reply, &lf) < 0)
+				goto err;
 			mxr_free(buf);
 			return 0;
 		}
 		/* Else try again with more space. */
-		if (n > -1) {   /* glibc 2.1 */
+		if(n > -1) {		  /* glibc 2.1 */
 			buf_size = n + 1; /* precisely what is needed */
-		} else {          /* glibc 2.0 */
-			buf_size *= 2;  /* twice the old size */
+		} else {			  /* glibc 2.0 */
+			buf_size *= 2;	  /* twice the old size */
 		}
-		if ((buf = mxr_reallocxf(buf, buf_size)) == 0) {
+		if((buf = mxr_reallocxf(buf, buf_size)) == 0) {
 			set_fault(reply, 500, "Internal Server Error (No memory left)");
 			ERR("No memory left\n");
 			goto err;
@@ -1797,7 +1828,8 @@ static int rpc_rpl_printf(rpc_ctx_t* ctx, char* fmt, ...)
 	}
 	return 0;
 err:
-	if (buf) mxr_free(buf);
+	if(buf)
+		mxr_free(buf);
 	return -1;
 }
 
@@ -1805,13 +1837,13 @@ err:
 
 /** Find a structure member by name.
 */
-static int find_member(xmlNodePtr* value, xmlDocPtr doc, xmlNodePtr structure,
-		struct xmlrpc_reply* reply, char* member_name)
+static int find_member(xmlNodePtr *value, xmlDocPtr doc, xmlNodePtr structure,
+		struct xmlrpc_reply *reply, char *member_name)
 {
-	char* name_str;
+	char *name_str;
 	xmlNodePtr member, name;
 
-	if (!structure) {
+	if(!structure) {
 		set_fault(reply, 400, "Invalid Structure Parameter");
 		return -1;
 	}
@@ -1821,21 +1853,22 @@ static int find_member(xmlNodePtr* value, xmlDocPtr doc, xmlNodePtr structure,
 		name = member->xmlChildrenNode;
 		/* Find <name> node in the member */
 		while(name) {
-			if (!xmlStrcmp(name->name, BAD_CAST "name")) break;
+			if(!xmlStrcmp(name->name, BAD_CAST "name"))
+				break;
 			name = name->next;
 		}
-		if (!name) {
+		if(!name) {
 			set_fault(reply, 400, "Member Name Not Found In Structure");
 			return -1;
 		}
 
 		/* Check the value of <name> node in the structure member */
-		name_str = (char*)xmlNodeListGetString(doc, name->xmlChildrenNode, 1);
-		if (!name_str) {
+		name_str = (char *)xmlNodeListGetString(doc, name->xmlChildrenNode, 1);
+		if(!name_str) {
 			set_fault(reply, 400, "Empty name Element of Structure Parameter");
 			return -1;
 		}
-		if (strcmp(name_str, member_name)) {
+		if(strcmp(name_str, member_name)) {
 			xmlFree(name_str);
 			goto skip;
 		}
@@ -1843,15 +1876,16 @@ static int find_member(xmlNodePtr* value, xmlDocPtr doc, xmlNodePtr structure,
 
 		*value = member->xmlChildrenNode;
 		while(*value) {
-			if (!xmlStrcmp((*value)->name, BAD_CAST "value")) break;
+			if(!xmlStrcmp((*value)->name, BAD_CAST "value"))
+				break;
 			(*value) = (*value)->next;
 		}
-		if (!(*value)) {
+		if(!(*value)) {
 			set_fault(reply, 400, "Member Value Not Found In Structure");
 			return -1;
 		}
 		return 0;
-skip:
+	skip:
 		member = member->next;
 	}
 	return 1;
@@ -1859,52 +1893,65 @@ skip:
 
 /** Adds a new member to structure.
 */
-static int rpc_struct_add(struct rpc_struct* s, char* fmt, ...)
+static int rpc_struct_add(struct rpc_struct *s, char *fmt, ...)
 {
 	va_list ap;
 	str member_name;
-	struct xmlrpc_reply* reply;
-	void* void_ptr;
-	struct rpc_struct* p, *tmp;
+	struct xmlrpc_reply *reply;
+	void *void_ptr;
+	struct rpc_struct *p, *tmp;
 
 	reply = &s->struct_out;
 
 	va_start(ap, fmt);
 	while(*fmt) {
-		member_name.s = va_arg(ap, char*);
+		member_name.s = va_arg(ap, char *);
 		member_name.len = (member_name.s ? strlen(member_name.s) : 0);
 
-		if((s->vtype==RET_ARRAY) && *fmt == '{') {
-			if (add_xmlrpc_reply(reply, &value_prefix) < 0) goto err;
-			if (add_xmlrpc_reply(reply, &struct_prefix) < 0) goto err;
-		}
-		if (add_xmlrpc_reply(reply, &member_prefix) < 0) goto err;
-		if (add_xmlrpc_reply(reply, &name_prefix) < 0) goto err;
-		if (add_xmlrpc_reply_esc(reply, &member_name) < 0) goto err;
-		if (add_xmlrpc_reply(reply, &name_suffix) < 0) goto err;
-		if (add_xmlrpc_reply(reply, &value_prefix) < 0) goto err;
-		if (*fmt == '{' || *fmt == '[') {
-			void_ptr = va_arg(ap, void**);
-			p = new_rpcstruct(0, 0, s->reply, (*fmt=='[')?RET_ARRAY:0);
-			if (!p)
+		if((s->vtype == RET_ARRAY) && *fmt == '{') {
+			if(add_xmlrpc_reply(reply, &value_prefix) < 0)
 				goto err;
-			*(struct rpc_struct**) void_ptr = p;
+			if(add_xmlrpc_reply(reply, &struct_prefix) < 0)
+				goto err;
+		}
+		if(add_xmlrpc_reply(reply, &member_prefix) < 0)
+			goto err;
+		if(add_xmlrpc_reply(reply, &name_prefix) < 0)
+			goto err;
+		if(add_xmlrpc_reply_esc(reply, &member_name) < 0)
+			goto err;
+		if(add_xmlrpc_reply(reply, &name_suffix) < 0)
+			goto err;
+		if(add_xmlrpc_reply(reply, &value_prefix) < 0)
+			goto err;
+		if(*fmt == '{' || *fmt == '[') {
+			void_ptr = va_arg(ap, void **);
+			p = new_rpcstruct(0, 0, s->reply, (*fmt == '[') ? RET_ARRAY : 0);
+			if(!p)
+				goto err;
+			*(struct rpc_struct **)void_ptr = p;
 			p->offset = get_reply_len(reply);
 			p->parent = s;
-			if (!s->nnext) {
+			if(!s->nnext) {
 				s->nnext = p;
 			} else {
-				for (tmp = s; tmp->nnext; tmp=tmp->nnext);
+				for(tmp = s; tmp->nnext; tmp = tmp->nnext)
+					;
 				tmp->nnext = p;
 			}
 		} else {
-			if (print_value(reply, reply, *fmt, &ap) < 0) goto err;
+			if(print_value(reply, reply, *fmt, &ap) < 0)
+				goto err;
 		}
-		if (add_xmlrpc_reply(reply, &value_suffix) < 0) goto err;
-		if (add_xmlrpc_reply(reply, &member_suffix) < 0) goto err;
+		if(add_xmlrpc_reply(reply, &value_suffix) < 0)
+			goto err;
+		if(add_xmlrpc_reply(reply, &member_suffix) < 0)
+			goto err;
 		if((s->vtype & RET_ARRAY) && *fmt == '{') {
-			if (add_xmlrpc_reply(reply, &struct_suffix) < 0) goto err;
-			if (add_xmlrpc_reply(reply, &value_suffix) < 0) goto err;
+			if(add_xmlrpc_reply(reply, &struct_suffix) < 0)
+				goto err;
+			if(add_xmlrpc_reply(reply, &value_suffix) < 0)
+				goto err;
 		}
 		fmt++;
 	}
@@ -1918,12 +1965,12 @@ err:
 
 /** Adds a new value to an array.
 */
-static int rpc_array_add(struct rpc_struct* s, char* fmt, ...)
+static int rpc_array_add(struct rpc_struct *s, char *fmt, ...)
 {
 	va_list ap;
-	struct xmlrpc_reply* reply;
-	void* void_ptr;
-	struct rpc_struct* p, *tmp;
+	struct xmlrpc_reply *reply;
+	void *void_ptr;
+	struct rpc_struct *p, *tmp;
 
 	reply = &s->struct_out;
 	if(!(s->vtype & RET_ARRAY)) {
@@ -1933,25 +1980,29 @@ static int rpc_array_add(struct rpc_struct* s, char* fmt, ...)
 
 	va_start(ap, fmt);
 	while(*fmt) {
-		if (add_xmlrpc_reply(reply, &value_prefix) < 0) goto err;
-		if (*fmt == '{' || *fmt == '[') {
-			void_ptr = va_arg(ap, void**);
-			p = new_rpcstruct(0, 0, s->reply, (*fmt=='[')?RET_ARRAY:0);
-			if (!p)
+		if(add_xmlrpc_reply(reply, &value_prefix) < 0)
+			goto err;
+		if(*fmt == '{' || *fmt == '[') {
+			void_ptr = va_arg(ap, void **);
+			p = new_rpcstruct(0, 0, s->reply, (*fmt == '[') ? RET_ARRAY : 0);
+			if(!p)
 				goto err;
-			*(struct rpc_struct**) void_ptr = p;
+			*(struct rpc_struct **)void_ptr = p;
 			p->offset = get_reply_len(reply);
 			p->parent = s;
-			if (!s->nnext) {
+			if(!s->nnext) {
 				s->nnext = p;
 			} else {
-				for (tmp = s; tmp->nnext; tmp=tmp->nnext);
+				for(tmp = s; tmp->nnext; tmp = tmp->nnext)
+					;
 				tmp->nnext = p;
 			}
 		} else {
-			if (print_value(reply, reply, *fmt, &ap) < 0) goto err;
+			if(print_value(reply, reply, *fmt, &ap) < 0)
+				goto err;
 		}
-		if (add_xmlrpc_reply(reply, &value_suffix) < 0) goto err;
+		if(add_xmlrpc_reply(reply, &value_suffix) < 0)
+			goto err;
 		fmt++;
 	}
 
@@ -1964,61 +2015,71 @@ err:
 
 /** Create a new member from formatting string and add it to a structure.
 */
-static int rpc_struct_printf(struct rpc_struct* s, char* member_name,
-		char* fmt, ...)
+static int rpc_struct_printf(
+		struct rpc_struct *s, char *member_name, char *fmt, ...)
 {
 	int n, buf_size;
-	char* buf;
+	char *buf;
 	va_list ap;
 	str st, name;
-	struct xmlrpc_reply* reply;
-	struct xmlrpc_reply* out;
+	struct xmlrpc_reply *reply;
+	struct xmlrpc_reply *out;
 
 	out = &s->struct_out;
-	buf = (char*)mxr_malloc(RPC_BUF_SIZE);
+	buf = (char *)mxr_malloc(RPC_BUF_SIZE);
 	reply = s->reply;
-	if (!buf) {
+	if(!buf) {
 		set_fault(reply, 500, "Internal Server Error (No memory left)");
 		ERR("No memory left\n");
 		return -1;
 	}
 
 	buf_size = RPC_BUF_SIZE;
-	while (1) {
+	while(1) {
 		/* Try to print in the allocated space. */
 		va_start(ap, fmt);
 		n = vsnprintf(buf, buf_size, fmt, ap);
 		va_end(ap);
 		/* If that worked, return the string. */
-		if (n > -1 && n < buf_size) {
+		if(n > -1 && n < buf_size) {
 			st.s = buf;
 			st.len = n;
 
 			name.s = member_name;
 			name.len = strlen(member_name);
 
-			if (add_xmlrpc_reply(out, &member_prefix) < 0) goto err;
-			if (add_xmlrpc_reply(out, &name_prefix) < 0) goto err;
-			if (add_xmlrpc_reply_esc(out, &name) < 0) goto err;
-			if (add_xmlrpc_reply(out, &name_suffix) < 0) goto err;
-			if (add_xmlrpc_reply(out, &value_prefix) < 0) goto err;
+			if(add_xmlrpc_reply(out, &member_prefix) < 0)
+				goto err;
+			if(add_xmlrpc_reply(out, &name_prefix) < 0)
+				goto err;
+			if(add_xmlrpc_reply_esc(out, &name) < 0)
+				goto err;
+			if(add_xmlrpc_reply(out, &name_suffix) < 0)
+				goto err;
+			if(add_xmlrpc_reply(out, &value_prefix) < 0)
+				goto err;
 
-			if (add_xmlrpc_reply(out, &string_prefix) < 0) goto err;
-			if (add_xmlrpc_reply_esc(out, &st) < 0) goto err;
-			if (add_xmlrpc_reply(out, &string_suffix) < 0) goto err;
+			if(add_xmlrpc_reply(out, &string_prefix) < 0)
+				goto err;
+			if(add_xmlrpc_reply_esc(out, &st) < 0)
+				goto err;
+			if(add_xmlrpc_reply(out, &string_suffix) < 0)
+				goto err;
 
-			if (add_xmlrpc_reply(out, &value_suffix) < 0) goto err;
-			if (add_xmlrpc_reply(out, &member_suffix) < 0) goto err;
+			if(add_xmlrpc_reply(out, &value_suffix) < 0)
+				goto err;
+			if(add_xmlrpc_reply(out, &member_suffix) < 0)
+				goto err;
 
 			return 0;
 		}
 		/* Else try again with more space. */
-		if (n > -1) {   /* glibc 2.1 */
+		if(n > -1) {		  /* glibc 2.1 */
 			buf_size = n + 1; /* precisely what is needed */
-		} else {          /* glibc 2.0 */
-			buf_size *= 2;  /* twice the old size */
+		} else {			  /* glibc 2.0 */
+			buf_size *= 2;	  /* twice the old size */
 		}
-		if ((buf = mxr_reallocxf(buf, buf_size)) == 0) {
+		if((buf = mxr_reallocxf(buf, buf_size)) == 0) {
 			set_fault(reply, 500, "Internal Server Error (No memory left)");
 			ERR("No memory left\n");
 			goto err;
@@ -2026,102 +2087,104 @@ static int rpc_struct_printf(struct rpc_struct* s, char* member_name,
 	}
 	return 0;
 err:
-	if (buf) mxr_free(buf);
+	if(buf)
+		mxr_free(buf);
 	return -1;
-
 }
 
 
-static int rpc_struct_scan(struct rpc_struct* s, char* fmt, ...)
+static int rpc_struct_scan(struct rpc_struct *s, char *fmt, ...)
 {
 	int read;
 	int ival;
 	va_list ap;
-	int* int_ptr;
-	unsigned int* uint_ptr;
-	double* double_ptr;
+	int *int_ptr;
+	unsigned int *uint_ptr;
+	double *double_ptr;
 	double double_val;
-	long* long_ptr;
-	unsigned long* ulong_ptr;
-	long long* llong_ptr;
-	unsigned long long* ullong_ptr;
-	char** char_ptr;
-	str* str_ptr;
+	long *long_ptr;
+	unsigned long *ulong_ptr;
+	long long *llong_ptr;
+	unsigned long long *ullong_ptr;
+	char **char_ptr;
+	str *str_ptr;
 	xmlNodePtr value;
-	char* member_name;
-	struct xmlrpc_reply* reply;
+	char *member_name;
+	struct xmlrpc_reply *reply;
 	int ret;
 	int f;
 
 	read = 0;
-	f=(autoconvert?GET_X_AUTOCONV:0) |
-		(lflf2crlf?GET_X_LFLF2CRLF:0);
+	f = (autoconvert ? GET_X_AUTOCONV : 0) | (lflf2crlf ? GET_X_LFLF2CRLF : 0);
 	va_start(ap, fmt);
 	while(*fmt) {
-		member_name = va_arg(ap, char*);
+		member_name = va_arg(ap, char *);
 		reply = s->reply;
 		/* clear the previously saved error code */
 		clear_xmlrpc_reply(reply);
 		ret = find_member(&value, s->doc, s->struct_in, reply, member_name);
-		if (ret != 0) goto error;
+		if(ret != 0)
+			goto error;
 
 		switch(*fmt) {
 			case 'b': /* Bool */
 			case 't': /* Date and time */
 			case 'd': /* Integer */
-				int_ptr = va_arg(ap, int*);
-				if (get_int(int_ptr, reply, s->doc, value, f) < 0) goto error;
+				int_ptr = va_arg(ap, int *);
+				if(get_int(int_ptr, reply, s->doc, value, f) < 0)
+					goto error;
 				break;
 
 			case 'u': /* Integer */
-				uint_ptr = va_arg(ap, unsigned int*);
-				if (get_int(&ival, reply, s->doc, value, f) < 0) goto error;
+				uint_ptr = va_arg(ap, unsigned int *);
+				if(get_int(&ival, reply, s->doc, value, f) < 0)
+					goto error;
 				*uint_ptr = (unsigned int)ival;
 				break;
 
 			case 'f': /* double */
-				double_ptr = va_arg(ap, double*);
-				if (get_double(double_ptr, reply, s->doc, value, f) < 0)
+				double_ptr = va_arg(ap, double *);
+				if(get_double(double_ptr, reply, s->doc, value, f) < 0)
 					goto error;
 				break;
 
 			case 'l': /* long - convert it from double */
-				long_ptr = va_arg(ap, long*);
-				if (get_double(&double_val, reply, s->doc, value, f) < 0)
+				long_ptr = va_arg(ap, long *);
+				if(get_double(&double_val, reply, s->doc, value, f) < 0)
 					goto error;
 				*long_ptr = (long)double_val;
 				break;
 
 			case 'j': /* unsigned long - convert it from double */
-				ulong_ptr = va_arg(ap, unsigned long*);
-				if (get_double(&double_val, reply, s->doc, value, f) < 0)
+				ulong_ptr = va_arg(ap, unsigned long *);
+				if(get_double(&double_val, reply, s->doc, value, f) < 0)
 					goto error;
 				*ulong_ptr = (unsigned long)double_val;
 				break;
 
 			case 'L': /* long long - convert it from double */
-				llong_ptr = va_arg(ap, long long*);
-				if (get_double(&double_val, reply, s->doc, value, f) < 0)
+				llong_ptr = va_arg(ap, long long *);
+				if(get_double(&double_val, reply, s->doc, value, f) < 0)
 					goto error;
 				*llong_ptr = (long long)double_val;
 				break;
 
 			case 'J': /* unsigned long long - convert it from double */
-				ullong_ptr = va_arg(ap, unsigned long long*);
-				if (get_double(&double_val, reply, s->doc, value, f) < 0)
+				ullong_ptr = va_arg(ap, unsigned long long *);
+				if(get_double(&double_val, reply, s->doc, value, f) < 0)
 					goto error;
 				*ullong_ptr = (unsigned long long)double_val;
 				break;
 
 			case 's': /* zero terminated string */
-				char_ptr = va_arg(ap, char**);
-				if (get_string(char_ptr, reply, s->doc, value, f) < 0)
+				char_ptr = va_arg(ap, char **);
+				if(get_string(char_ptr, reply, s->doc, value, f) < 0)
 					goto error;
 				break;
 
 			case 'S': /* str structure */
-				str_ptr = va_arg(ap, str*);
-				if (get_string(&str_ptr->s, reply, s->doc, value, f) < 0)
+				str_ptr = va_arg(ap, str *);
+				if(get_string(&str_ptr->s, reply, s->doc, value, f) < 0)
 					goto error;
 				str_ptr->len = strlen(str_ptr->s);
 				break;
@@ -2143,7 +2206,7 @@ error:
 
 /** Returns the RPC capabilities supported by the xmlrpc driver.
 */
-static rpc_capabilities_t rpc_capabilities(rpc_ctx_t* ctx)
+static rpc_capabilities_t rpc_capabilities(rpc_ctx_t *ctx)
 {
 	return RPC_DELAYED_REPLY;
 }
@@ -2157,69 +2220,68 @@ static rpc_capabilities_t rpc_capabilities(rpc_ctx_t* ctx)
  *  when finished call rpc_delayed_ctx_close().
  * Note2: adding pieces to the reply in different processes is not supported.
  */
-static struct rpc_delayed_ctx* rpc_delayed_ctx_new(rpc_ctx_t* ctx)
+static struct rpc_delayed_ctx *rpc_delayed_ctx_new(rpc_ctx_t *ctx)
 {
-	struct rpc_delayed_ctx* ret;
+	struct rpc_delayed_ctx *ret;
 	int size;
-	rpc_ctx_t* r_ctx;
-	struct sip_msg* shm_msg;
+	rpc_ctx_t *r_ctx;
+	struct sip_msg *shm_msg;
 	int len;
 
-	ret=0;
-	shm_msg=0;
+	ret = 0;
+	shm_msg = 0;
 
-	if (ctx->reply_sent)
+	if(ctx->reply_sent)
 		return 0; /* no delayed reply if already replied */
 	/* clone the sip msg */
-	shm_msg=sip_msg_shm_clone(ctx->msg, &len, 1);
-	if (shm_msg==0) {
+	shm_msg = sip_msg_shm_clone(ctx->msg, &len, 1);
+	if(shm_msg == 0) {
 		ERR("could not clone SIP message in shared memory\n");
 		goto error;
 	}
 
 	/* alloc into one block */
-	size=ROUND_POINTER(sizeof(*ret))+sizeof(rpc_ctx_t);
-	if ((ret=shm_malloc(size))==0) {
+	size = ROUND_POINTER(sizeof(*ret)) + sizeof(rpc_ctx_t);
+	if((ret = shm_malloc(size)) == 0) {
 		SHM_MEM_ERROR;
 		goto error;
 	}
 	memset(ret, 0, size);
-	ret->rpc=func_param;
-	ret->reply_ctx=(char*)ret+ROUND_POINTER(sizeof(*ret));
-	r_ctx=ret->reply_ctx;
-	r_ctx->flags=ctx->flags | XMLRPC_DELAYED_CTX_F;
+	ret->rpc = func_param;
+	ret->reply_ctx = (char *)ret + ROUND_POINTER(sizeof(*ret));
+	r_ctx = ret->reply_ctx;
+	r_ctx->flags = ctx->flags | XMLRPC_DELAYED_CTX_F;
 	ctx->flags |= XMLRPC_DELAYED_REPLY_F;
-	r_ctx->msg=shm_msg;
-	r_ctx->msg_shm_block_size=len;
+	r_ctx->msg = shm_msg;
+	r_ctx->msg_shm_block_size = len;
 
 	return ret;
 error:
-	if (shm_msg)
+	if(shm_msg)
 		shm_free(shm_msg);
-	if (ret)
+	if(ret)
 		shm_free(ret);
 	return 0;
 }
-
 
 
 /** Closes a "delayed reply" context and sends the reply.
  * If no reply has been sent the reply will be built and sent automatically.
  * See the notes from rpc_new_delayed_ctx()
  */
-static void rpc_delayed_ctx_close(struct rpc_delayed_ctx* dctx)
+static void rpc_delayed_ctx_close(struct rpc_delayed_ctx *dctx)
 {
-	rpc_ctx_t* r_ctx;
-	struct hdr_field* hdr;
+	rpc_ctx_t *r_ctx;
+	struct hdr_field *hdr;
 
-	r_ctx=dctx->reply_ctx;
-	if (unlikely(!(r_ctx->flags & XMLRPC_DELAYED_CTX_F))){
+	r_ctx = dctx->reply_ctx;
+	if(unlikely(!(r_ctx->flags & XMLRPC_DELAYED_CTX_F))) {
 		BUG("reply ctx not marked as async/delayed\n");
 		goto error;
 	}
-	if (fix_delayed_reply_ctx(r_ctx)<0)
+	if(fix_delayed_reply_ctx(r_ctx) < 0)
 		goto error;
-	if (!r_ctx->reply_sent){
+	if(!r_ctx->reply_sent) {
 		rpc_send(r_ctx);
 	}
 error:
@@ -2227,25 +2289,26 @@ error:
 	/* collect possible garbage (e.g. generated by structures) */
 	collect_garbage();
 	/* free added lumps (rpc_send adds a body lump) */
-	del_nonshm_lump( &(r_ctx->msg->add_rm) );
-	del_nonshm_lump( &(r_ctx->msg->body_lumps) );
-	del_nonshm_lump_rpl( &(r_ctx->msg->reply_lump) );
+	del_nonshm_lump(&(r_ctx->msg->add_rm));
+	del_nonshm_lump(&(r_ctx->msg->body_lumps));
+	del_nonshm_lump_rpl(&(r_ctx->msg->reply_lump));
 	/* free header's parsed structures that were added by failure handlers */
-	for( hdr=r_ctx->msg->headers ; hdr ; hdr=hdr->next ) {
-		if ( hdr->parsed && hdr_allocs_parse(hdr) &&
-				(hdr->parsed<(void*)r_ctx->msg ||
-				hdr->parsed>=(void*)(r_ctx->msg+r_ctx->msg_shm_block_size))) {
+	for(hdr = r_ctx->msg->headers; hdr; hdr = hdr->next) {
+		if(hdr->parsed && hdr_allocs_parse(hdr)
+				&& (hdr->parsed < (void *)r_ctx->msg
+						|| hdr->parsed
+								   >= (void *)(r_ctx->msg
+											   + r_ctx->msg_shm_block_size))) {
 			/* header parsed filed doesn't point inside uas.request memory
 			 * chunk -> it was added by failure funcs.-> free it as pkg */
-			DBG("DBG:free_faked_req: removing hdr->parsed %d\n",
-					hdr->type);
+			DBG("DBG:free_faked_req: removing hdr->parsed %d\n", hdr->type);
 			clean_hdr_field(hdr);
 			hdr->parsed = 0;
 		}
 	}
 	shm_free(r_ctx->msg);
-	r_ctx->msg=0;
-	dctx->reply_ctx=0;
+	r_ctx->msg = 0;
+	dctx->reply_ctx = 0;
 	shm_free(dctx);
 }
 
@@ -2253,39 +2316,37 @@ error:
 /** Starts parsing XML-RPC document, get the name of the method to be called
  * and position the cursor at the first parameter in the document.
  */
-static int open_doc(rpc_ctx_t* ctx, sip_msg_t* msg)
+static int open_doc(rpc_ctx_t *ctx, sip_msg_t *msg)
 {
-	str doc = {NULL,0};
+	str doc = {NULL, 0};
 	xmlNodePtr root;
 	xmlNodePtr cur;
-	struct xmlrpc_reply* reply;
+	struct xmlrpc_reply *reply;
 
 	reply = &ctx->reply;
-	if (get_rpc_document(&doc, msg) < 0) {
+	if(get_rpc_document(&doc, msg) < 0) {
 		set_fault(reply, 400, "Malformed Message Body");
 		ERR("Error extracting message body\n");
 		return -1;
 	}
 
 	ctx->doc = xmlReadMemory(doc.s, doc.len, 0, 0,
-			XML_PARSE_NOBLANKS |
-			XML_PARSE_NONET |
-			XML_PARSE_NOCDATA);
+			XML_PARSE_NOBLANKS | XML_PARSE_NONET | XML_PARSE_NOCDATA);
 
-	if (!ctx->doc) {
+	if(!ctx->doc) {
 		set_fault(reply, 400, "Invalid XML-RPC Document");
 		ERR("Invalid XML-RPC document: \n[%.*s]\n", doc.len, doc.s);
 		goto err;
 	}
 
 	root = xmlDocGetRootElement(ctx->doc);
-	if (!root) {
+	if(!root) {
 		set_fault(reply, 400, "Empty XML-RPC Document");
 		ERR("Empty XML-RPC document\n");
 		goto err;
 	}
 
-	if (xmlStrcmp(root->name, (const xmlChar*)"methodCall")) {
+	if(xmlStrcmp(root->name, (const xmlChar *)"methodCall")) {
 		set_fault(reply, 400, "Root Element Is Not methodCall");
 		ERR("Root element is not methodCall\n");
 		goto err;
@@ -2293,10 +2354,10 @@ static int open_doc(rpc_ctx_t* ctx, sip_msg_t* msg)
 
 	cur = root->xmlChildrenNode;
 	while(cur) {
-		if (!xmlStrcmp(cur->name, (const xmlChar*)"methodName")) {
-			ctx->method = (char*)xmlNodeListGetString(ctx->doc,
-					cur->xmlChildrenNode, 1);
-			if (!ctx->method) {
+		if(!xmlStrcmp(cur->name, (const xmlChar *)"methodName")) {
+			ctx->method = (char *)xmlNodeListGetString(
+					ctx->doc, cur->xmlChildrenNode, 1);
+			if(!ctx->method) {
 				set_fault(reply, 400, "Cannot Extract Method Name");
 				ERR("Cannot extract method name\n");
 				goto err;
@@ -2305,20 +2366,21 @@ static int open_doc(rpc_ctx_t* ctx, sip_msg_t* msg)
 		}
 		cur = cur->next;
 	}
-	if (!cur) {
+	if(!cur) {
 		set_fault(reply, 400, "Method Name Not Found");
 		ERR("Method name not found\n");
 		goto err;
 	}
 	cur = root->xmlChildrenNode;
 	while(cur) {
-		if (!xmlStrcmp(cur->name, (const xmlChar*)"params")) {
+		if(!xmlStrcmp(cur->name, (const xmlChar *)"params")) {
 			ctx->act_param = cur->xmlChildrenNode;
 			break;
 		}
 		cur = cur->next;
 	}
-	if (!cur) ctx->act_param = 0;
+	if(!cur)
+		ctx->act_param = 0;
 	return 0;
 
 err:
@@ -2326,37 +2388,42 @@ err:
 	return -1;
 }
 
-static void close_doc(rpc_ctx_t* ctx)
+static void close_doc(rpc_ctx_t *ctx)
 {
-	if (ctx->method) xmlFree(ctx->method);
-	if (ctx->doc) xmlFreeDoc(ctx->doc);
+	if(ctx->method)
+		xmlFree(ctx->method);
+	if(ctx->doc)
+		xmlFreeDoc(ctx->doc);
 	ctx->method = 0;
 	ctx->doc = 0;
 }
 
-static int init_context(rpc_ctx_t* ctx, sip_msg_t* msg)
+static int init_context(rpc_ctx_t *ctx, sip_msg_t *msg)
 {
 	ctx->msg = msg;
-	ctx->msg_shm_block_size=0;
+	ctx->msg_shm_block_size = 0;
 	ctx->method = 0;
 	ctx->reply_sent = 0;
 	ctx->act_param = 0;
 	ctx->doc = 0;
 	ctx->structs = 0;
-	if (init_xmlrpc_reply(&ctx->reply) < 0) return -1;
-	if (add_xmlrpc_reply(&ctx->reply, &success_prefix)<0) return -1;
-	if (open_doc(ctx, msg) < 0) return -1;
+	if(init_xmlrpc_reply(&ctx->reply) < 0)
+		return -1;
+	if(add_xmlrpc_reply(&ctx->reply, &success_prefix) < 0)
+		return -1;
+	if(open_doc(ctx, msg) < 0)
+		return -1;
 	return 0;
 }
 
 
-static void clean_context(rpc_ctx_t* ctx)
+static void clean_context(rpc_ctx_t *ctx)
 {
-	if (!ctx) return;
+	if(!ctx)
+		return;
 	clean_xmlrpc_reply(&ctx->reply);
 	close_doc(ctx);
 }
-
 
 
 /** Creates a SIP message (in "buffer" form) from a HTTP XML-RPC request).
@@ -2364,10 +2431,10 @@ static void clean_context(rpc_ctx_t* ctx)
  * NOTE: the result must be mxr_free()'ed when not needed anymore.
  * @return 0 on error, buffer allocated using mxr_malloc on success.
  */
-static char* http_xmlrpc2sip(sip_msg_t* msg, int* new_msg_len)
+static char *http_xmlrpc2sip(sip_msg_t *msg, int *new_msg_len)
 {
 	unsigned int len, via_len;
-	char* via, *new_msg, *p;
+	char *via, *new_msg, *p;
 	str ip, port;
 	struct hostport hp;
 	struct dest_info dst;
@@ -2380,16 +2447,15 @@ static char* http_xmlrpc2sip(sip_msg_t* msg, int* new_msg_len)
 	hp.port = &port;
 	init_dst_from_rcv(&dst, &msg->rcv);
 	via = via_builder(&via_len, NULL, &dst, 0, 0, &hp);
-	if (via == 0) {
+	if(via == 0) {
 		DEBUG("failed to build via\n");
 		return 0;
 	}
-	len = msg->first_line.u.request.method.len + 1 /* space */ +
-		XMLRPC_URI_LEN + 1 /* space */ +
-		msg->first_line.u.request.version.len + CRLF_LEN + via_len +
-		(msg->len-msg->first_line.len);
+	len = msg->first_line.u.request.method.len + 1 /* space */ + XMLRPC_URI_LEN
+		  + 1 /* space */ + msg->first_line.u.request.version.len + CRLF_LEN
+		  + via_len + (msg->len - msg->first_line.len);
 	p = new_msg = mxr_malloc(len + 1);
-	if (new_msg == 0) {
+	if(new_msg == 0) {
 		DEBUG("memory allocation failure (%d bytes)\n", len);
 		pkg_free(via);
 		return 0;
@@ -2416,7 +2482,7 @@ static char* http_xmlrpc2sip(sip_msg_t* msg, int* new_msg_len)
 	p += CRLF_LEN;
 	memcpy(p, via, via_len);
 	p += via_len;
-	memcpy(p,  SIP_MSG_START(msg) + msg->first_line.len,
+	memcpy(p, SIP_MSG_START(msg) + msg->first_line.len,
 			msg->len - msg->first_line.len);
 	new_msg[len] = 0; /* null terminate, required by receive_msg() */
 	pkg_free(via);
@@ -2425,11 +2491,10 @@ static char* http_xmlrpc2sip(sip_msg_t* msg, int* new_msg_len)
 }
 
 
-
 /** Emulate receive_msg for an XML-RPC request .
 */
-static int em_receive_request(sip_msg_t* orig_msg,
-		char* new_buf, unsigned int new_len)
+static int em_receive_request(
+		sip_msg_t *orig_msg, char *new_buf, unsigned int new_len)
 {
 	int ret;
 	sip_msg_t tmp_msg, *msg;
@@ -2439,8 +2504,8 @@ static int em_receive_request(sip_msg_t* orig_msg,
 	backup_rt = get_route_type();
 	sr_kemi_eng_t *keng = NULL;
 
-	ret=0;
-	if (new_buf && new_len) {
+	ret = 0;
+	if(new_buf && new_len) {
 		memset(&tmp_msg, 0, sizeof(sip_msg_t));
 		tmp_msg.buf = new_buf;
 		tmp_msg.len = new_len;
@@ -2448,7 +2513,7 @@ static int em_receive_request(sip_msg_t* orig_msg,
 		tmp_msg.id = orig_msg->id;
 		tmp_msg.set_global_address = orig_msg->set_global_address;
 		tmp_msg.set_global_port = orig_msg->set_global_port;
-		if (parse_msg(new_buf, new_len, &tmp_msg) != 0) {
+		if(parse_msg(new_buf, new_len, &tmp_msg) != 0) {
 			ERR("xmlrpc: parse_msg failed\n");
 			goto error;
 		}
@@ -2461,27 +2526,28 @@ static int em_receive_request(sip_msg_t* orig_msg,
 	 * clear_branches();
 	 * reset_static_buffer();
 	 * */
-	if ((msg->first_line.type != SIP_REQUEST) || (msg->via1 == 0) ||
-			(msg->via1->error != PARSE_OK)) {
+	if((msg->first_line.type != SIP_REQUEST) || (msg->via1 == 0)
+			|| (msg->via1->error != PARSE_OK)) {
 		BUG("xmlrpc: strange message: %.*s\n", msg->len, msg->buf);
 		goto error;
 	}
-	if (exec_pre_script_cb(msg, REQUEST_CB_TYPE) == 0) {
+	if(exec_pre_script_cb(msg, REQUEST_CB_TYPE) == 0) {
 		goto end; /* drop request */
 	}
 	/* exec routing script */
 	init_run_actions_ctx(&ra_ctx);
-	if(xmlrpc_route_no>=0) {
-		if (run_actions(&ra_ctx, main_rt.rlist[xmlrpc_route_no], msg) < 0) {
-			ret=-1;
+	if(xmlrpc_route_no >= 0) {
+		if(run_actions(&ra_ctx, main_rt.rlist[xmlrpc_route_no], msg) < 0) {
+			ret = -1;
 			DBG("xmlrpc: error while trying script\n");
 			goto end;
 		}
-	}else{
+	} else {
 		keng = sr_kemi_eng_get();
-		if(keng!=NULL) {
-			if(sr_kemi_route(keng, msg, EVENT_ROUTE,
-						&xmlrpc_event_callback, &evrtname)<0) {
+		if(keng != NULL) {
+			if(sr_kemi_route(keng, msg, EVENT_ROUTE, &xmlrpc_event_callback,
+					   &evrtname)
+					< 0) {
 				LM_ERR("error running event route kemi callback\n");
 			}
 		} else {
@@ -2489,9 +2555,10 @@ static int em_receive_request(sip_msg_t* orig_msg,
 		}
 	}
 end:
-	exec_post_script_cb(msg, REQUEST_CB_TYPE); /* needed for example if tm is used */
+	exec_post_script_cb(
+			msg, REQUEST_CB_TYPE); /* needed for example if tm is used */
 	/* reset_avps(); non needed, performed by the real receive_msg */
-	if (msg != orig_msg) { /* avoid double free (freed from receive_msg too) */
+	if(msg != orig_msg) { /* avoid double free (freed from receive_msg too) */
 		free_sip_msg(msg);
 	}
 	set_route_type(backup_rt);
@@ -2504,79 +2571,78 @@ error:
 /** The main handler that will be called when SER core receives a non-SIP
  * request (i.e. HTTP request carrying XML-RPC document in the body).
  */
-static int process_xmlrpc(sip_msg_t* msg)
+static int process_xmlrpc(sip_msg_t *msg)
 {
 	int ret;
-	char* fake_msg;
+	char *fake_msg;
 	int fake_msg_len;
-	unsigned char* method;
+	unsigned char *method;
 	unsigned int method_len, n_method;
 	regmatch_t pmatch;
 	char c;
 
-	ret=NONSIP_MSG_DROP;
-	if (!IS_HTTP(msg))
+	ret = NONSIP_MSG_DROP;
+	if(!IS_HTTP(msg))
 		return NONSIP_MSG_PASS;
 
-	if(xmlrpc_url_skip!=NULL || xmlrpc_url_match!=NULL)
-	{
+	if(xmlrpc_url_skip != NULL || xmlrpc_url_match != NULL) {
 		c = msg->first_line.u.request.uri.s[msg->first_line.u.request.uri.len];
-		msg->first_line.u.request.uri.s[msg->first_line.u.request.uri.len]
-			= '\0';
-		if (xmlrpc_url_skip!=NULL &&
-				regexec(&xmlrpc_url_skip_regexp, msg->first_line.u.request.uri.s,
-					1, &pmatch, 0)==0)
-		{
+		msg->first_line.u.request.uri.s[msg->first_line.u.request.uri.len] =
+				'\0';
+		if(xmlrpc_url_skip != NULL
+				&& regexec(&xmlrpc_url_skip_regexp,
+						   msg->first_line.u.request.uri.s, 1, &pmatch, 0)
+						   == 0) {
 			LM_DBG("URL matched skip re\n");
-			msg->first_line.u.request.uri.s[msg->first_line.u.request.uri.len]
-				= c;
+			msg->first_line.u.request.uri.s[msg->first_line.u.request.uri.len] =
+					c;
 			return NONSIP_MSG_PASS;
 		}
-		if (xmlrpc_url_match!=NULL &&
-				regexec(&xmlrpc_url_match_regexp, msg->first_line.u.request.uri.s,
-					1, &pmatch, 0)!=0)
-		{
+		if(xmlrpc_url_match != NULL
+				&& regexec(&xmlrpc_url_match_regexp,
+						   msg->first_line.u.request.uri.s, 1, &pmatch, 0)
+						   != 0) {
 			LM_DBG("URL not matched\n");
-			msg->first_line.u.request.uri.s[msg->first_line.u.request.uri.len]
-				= c;
+			msg->first_line.u.request.uri.s[msg->first_line.u.request.uri.len] =
+					c;
 			return NONSIP_MSG_PASS;
 		}
 		msg->first_line.u.request.uri.s[msg->first_line.u.request.uri.len] = c;
 	}
 
-	method = (unsigned char*)msg->first_line.u.request.method.s;
+	method = (unsigned char *)msg->first_line.u.request.method.s;
 	method_len = msg->first_line.u.request.method.len;
 	/* first line is always > 4, so it's always safe to try to read the
 	 * 1st 4 bytes from method, even if method is shorter*/
-	n_method = method[0] + (method[1] << 8) + (method[2] << 16) +
-		(method[3] << 24);
+	n_method = method[0] + (method[1] << 8) + (method[2] << 16)
+			   + (method[3] << 24);
 	n_method |= 0x20202020;
 	if(method_len < 4) {
 		n_method &= ((1U << (method_len * 8)) - 1);
 	}
 	/* accept only GET or POST */
-	if ((n_method == N_HTTP_GET) ||
-			((n_method == N_HTTP_POST) && (method_len == HTTP_POST_LEN))) {
-		if (msg->via1 == 0){
+	if((n_method == N_HTTP_GET)
+			|| ((n_method == N_HTTP_POST) && (method_len == HTTP_POST_LEN))) {
+		if(msg->via1 == 0) {
 			/* create a fake sip message */
 			fake_msg = http_xmlrpc2sip(msg, &fake_msg_len);
-			if (fake_msg == 0) {
+			if(fake_msg == 0) {
 				ERR("xmlrpc: out of memory\n");
-				ret=NONSIP_MSG_ERROR;
+				ret = NONSIP_MSG_ERROR;
 			} else {
 				/* send it */
 				DBG("new fake xml msg created (%d bytes):\n<%.*s>\n",
 						fake_msg_len, fake_msg_len, fake_msg);
-				if (em_receive_request(msg, fake_msg, fake_msg_len)<0)
-					ret=NONSIP_MSG_ERROR;
+				if(em_receive_request(msg, fake_msg, fake_msg_len) < 0)
+					ret = NONSIP_MSG_ERROR;
 				mxr_free(fake_msg);
 			}
 			return ret; /* we "ate" the message, stop processing */
-		} else { /* the message has a via */
-			DBG("http xml msg unchanged (%d bytes):\n<%.*s>\n",
-					msg->len, msg->len, msg->buf);
-			if (em_receive_request(msg, 0, 0)<0)
-				ret=NONSIP_MSG_ERROR;
+		} else {		/* the message has a via */
+			DBG("http xml msg unchanged (%d bytes):\n<%.*s>\n", msg->len,
+					msg->len, msg->buf);
+			if(em_receive_request(msg, 0, 0) < 0)
+				ret = NONSIP_MSG_ERROR;
 			return ret;
 		}
 	} else {
@@ -2599,42 +2665,46 @@ static int process_xmlrpc(sip_msg_t* msg)
  * when a function with matching name is found then it will be
  * executed.
  */
-static int ki_dispatch_rpc(sip_msg_t* msg)
+static int ki_dispatch_rpc(sip_msg_t *msg)
 {
-	rpc_exportx_t* exp;
+	rpc_exportx_t *exp;
 	int ret = 1;
 	unsigned int rdata;
 
-	if (init_context(&ctx, msg) < 0) goto skip;
+	if(init_context(&ctx, msg) < 0)
+		goto skip;
 
 	exp = rpc_lookupx(ctx.method, strlen(ctx.method), &rdata);
-	if (!exp || !exp->r.function) {
+	if(!exp || !exp->r.function) {
 		rpc_fault(&ctx, 500, "Method Not Found");
 		goto skip;
 	}
-	if (rdata & RPC_EXEC_DELTA) {
+	if(rdata & RPC_EXEC_DELTA) {
 		LM_ERR("execution of command [%s] is limited by delta [%d]\n",
 				ctx.method, ksr_rpc_exec_delta);
 		rpc_fault(&ctx, 500, "Command Executed Too Fast");
 		goto skip;
 	}
 	ctx.flags = exp->r.flags;
-	if ((exp->r.flags & RET_ARRAY) &&
-			add_xmlrpc_reply(&ctx.reply, &array_prefix) < 0) goto skip;
+	if((exp->r.flags & RET_ARRAY)
+			&& add_xmlrpc_reply(&ctx.reply, &array_prefix) < 0)
+		goto skip;
 	exp->r.function(&func_param, &ctx);
 
 skip:
 	/* The function may have sent the reply itself */
-	if (!ctx.reply_sent && !(ctx.flags&XMLRPC_DELAYED_REPLY_F)) {
+	if(!ctx.reply_sent && !(ctx.flags & XMLRPC_DELAYED_REPLY_F)) {
 		ret = rpc_send(&ctx);
 	}
 	clean_context(&ctx);
 	collect_garbage();
-	if (ret < 0) return -1;
-	else return 1;
+	if(ret < 0)
+		return -1;
+	else
+		return 1;
 }
 
-static int w_dispatch_rpc(sip_msg_t* msg, char* s1, char* s2)
+static int w_dispatch_rpc(sip_msg_t *msg, char *s1, char *s2)
 {
 	return ki_dispatch_rpc(msg);
 }
@@ -2642,46 +2712,58 @@ static int w_dispatch_rpc(sip_msg_t* msg, char* s1, char* s2)
 /** This function can be called from routing scripts to generate
  * an XML-RPC reply.
  */
-static int ki_xmlrpc_reply(sip_msg_t* msg, int rcode, str* reason)
+static int ki_xmlrpc_reply(sip_msg_t *msg, int rcode, str *reason)
 {
 	static str succ = STR_STATIC_INIT("1");
 	struct xmlrpc_reply reply;
 
 	memset(&reply, 0, sizeof(struct xmlrpc_reply));
-	if (init_xmlrpc_reply(&reply) < 0) return -1;
+	if(init_xmlrpc_reply(&reply) < 0)
+		return -1;
 
 	reply.reason = as_asciiz(reason);
-	if (reply.reason == NULL) {
+	if(reply.reason == NULL) {
 		ERR("could not convert string\n");
 		goto error;
 	}
 
-	if (reply.code >= 300) {
-		if (build_fault_reply(&reply) < 0) goto error;
+	if(reply.code >= 300) {
+		if(build_fault_reply(&reply) < 0)
+			goto error;
 	} else {
-		if (add_xmlrpc_reply(&reply, &success_prefix) < 0) goto error;
-		if (add_xmlrpc_reply(&reply, &int_prefix) < 0) goto error;
-		if (add_xmlrpc_reply_esc(&reply, &succ) < 0) goto error;
-		if (add_xmlrpc_reply(&reply, &int_suffix) < 0) goto error;
-		if (add_xmlrpc_reply(&reply, &success_suffix) < 0) return -1;
+		if(add_xmlrpc_reply(&reply, &success_prefix) < 0)
+			goto error;
+		if(add_xmlrpc_reply(&reply, &int_prefix) < 0)
+			goto error;
+		if(add_xmlrpc_reply_esc(&reply, &succ) < 0)
+			goto error;
+		if(add_xmlrpc_reply(&reply, &int_suffix) < 0)
+			goto error;
+		if(add_xmlrpc_reply(&reply, &success_suffix) < 0)
+			return -1;
 	}
-	if (send_reply(msg, &reply.body) < 0) goto error;
-	if (reply.reason) pkg_free(reply.reason);
+	if(send_reply(msg, &reply.body) < 0)
+		goto error;
+	if(reply.reason)
+		pkg_free(reply.reason);
 	clean_xmlrpc_reply(&reply);
 	return 1;
 error:
-	if (reply.reason) pkg_free(reply.reason);
+	if(reply.reason)
+		pkg_free(reply.reason);
 	clean_xmlrpc_reply(&reply);
 	return -1;
 }
 
-static int w_xmlrpc_reply(sip_msg_t* msg, char* p1, char* p2)
+static int w_xmlrpc_reply(sip_msg_t *msg, char *p1, char *p2)
 {
 	str reason;
 	int rcode;
 
-	if (get_int_fparam(&rcode, msg, (fparam_t*)p1) < 0) return -1;
-	if (get_str_fparam(&reason, msg, (fparam_t*)p2) < 0) return -1;
+	if(get_int_fparam(&rcode, msg, (fparam_t *)p1) < 0)
+		return -1;
+	if(get_str_fparam(&reason, msg, (fparam_t *)p2) < 0)
+		return -1;
 
 	return ki_xmlrpc_reply(msg, rcode, &reason);
 }
@@ -2689,57 +2771,63 @@ static int w_xmlrpc_reply(sip_msg_t* msg, char* p1, char* p2)
 /** Implementation of \@xmlrpc.method select that can be used in
  * SER scripts to retrieve the method string from XML-RPC documents
  */
-static int select_method(str* res, struct select* s, sip_msg_t* msg)
+static int select_method(str *res, struct select *s, sip_msg_t *msg)
 {
 	static char buf[1024];
-	str doc = {NULL,0};
+	str doc = {NULL, 0};
 	xmlDocPtr xmldoc;
 	xmlNodePtr cur;
-	char* method;
+	char *method;
 
 	xmldoc = 0;
 	method = 0;
 
-	if (get_rpc_document(&doc, msg) < 0) goto err;
+	if(get_rpc_document(&doc, msg) < 0)
+		goto err;
 	xmldoc = xmlReadMemory(doc.s, doc.len, 0, 0,
-			XML_PARSE_NOBLANKS |
-			XML_PARSE_NONET |
-			XML_PARSE_NOCDATA);
+			XML_PARSE_NOBLANKS | XML_PARSE_NONET | XML_PARSE_NOCDATA);
 
-	if (!xmldoc) goto err;
+	if(!xmldoc)
+		goto err;
 	cur = xmlDocGetRootElement(xmldoc);
-	if (!cur) goto err;
-	if (xmlStrcmp(cur->name, (const xmlChar*)"methodCall")) goto err;
+	if(!cur)
+		goto err;
+	if(xmlStrcmp(cur->name, (const xmlChar *)"methodCall"))
+		goto err;
 	cur = cur->xmlChildrenNode;
 	while(cur) {
-		if (!xmlStrcmp(cur->name, (const xmlChar*)"methodName")) {
-			method = (char*)xmlNodeListGetString(xmldoc, cur->xmlChildrenNode,
-					1);
-			if (!method) goto err;
+		if(!xmlStrcmp(cur->name, (const xmlChar *)"methodName")) {
+			method = (char *)xmlNodeListGetString(
+					xmldoc, cur->xmlChildrenNode, 1);
+			if(!method)
+				goto err;
 			break;
 		}
 		cur = cur->next;
 	}
-	if (!cur) goto err;
+	if(!cur)
+		goto err;
 	res->len = strlen(method);
-	if (res->len >= 1024) goto err;
+	if(res->len >= 1024)
+		goto err;
 	memcpy(buf, method, res->len);
 	res->s = buf;
 	return 0;
 err:
-	if (method) xmlFree(method);
-	if (xmldoc) xmlFreeDoc(xmldoc);
+	if(method)
+		xmlFree(method);
+	if(xmldoc)
+		xmlFreeDoc(xmldoc);
 	return -1;
 }
 
 static ABSTRACT_F(select_xmlrpc);
 
-select_row_t xmlrpc_sel[] = {
-	{ NULL,          SEL_PARAM_STR, STR_STATIC_INIT("xmlrpc"), select_xmlrpc,
-		SEL_PARAM_EXPECTED},
-	{ select_xmlrpc, SEL_PARAM_STR, STR_STATIC_INIT("method"), select_method, 0},
-	{ NULL, SEL_PARAM_INT, STR_NULL, NULL, 0}
-};
+select_row_t xmlrpc_sel[] = {{NULL, SEL_PARAM_STR, STR_STATIC_INIT("xmlrpc"),
+									 select_xmlrpc, SEL_PARAM_EXPECTED},
+		{select_xmlrpc, SEL_PARAM_STR, STR_STATIC_INIT("method"), select_method,
+				0},
+		{NULL, SEL_PARAM_INT, STR_NULL, NULL, 0}};
 
 
 static int mod_init(void)
@@ -2749,30 +2837,30 @@ static int mod_init(void)
 	sr_kemi_eng_t *keng = NULL;
 
 	/* try to fix the xmlrpc route */
-	if(xmlrpc_event_callback.s!=NULL && xmlrpc_event_callback.len>0) {
+	if(xmlrpc_event_callback.s != NULL && xmlrpc_event_callback.len > 0) {
 		keng = sr_kemi_eng_get();
-		if(keng==NULL) {
+		if(keng == NULL) {
 			LM_ERR("failed to find kemi engine\n");
 			return -1;
 		}
-		xmlrpc_route_no=-1;
+		xmlrpc_route_no = -1;
 	} else {
-		if (xmlrpc_route) {
-			route_no=route_get(&main_rt, xmlrpc_route);
-			if (route_no==-1) {
+		if(xmlrpc_route) {
+			route_no = route_get(&main_rt, xmlrpc_route);
+			if(route_no == -1) {
 				ERR("xmlrpc: failed to fix route \"%s\": route_get() failed\n",
 						xmlrpc_route);
 				return -1;
 			}
-			if (main_rt.rlist[route_no]==0) {
+			if(main_rt.rlist[route_no] == 0) {
 				WARN("xmlrpc: xmlrpc route \"%s\" is empty / doesn't exist\n",
 						xmlrpc_route);
 			}
-			xmlrpc_route_no=route_no;
+			xmlrpc_route_no = route_no;
 		}
 	}
 	/* bind the SL API */
-	if (sl_load_api(&slb)!=0) {
+	if(sl_load_api(&slb) != 0) {
 		LM_ERR("cannot bind to SL API\n");
 		return -1;
 	}
@@ -2790,35 +2878,32 @@ static int mod_init(void)
 	func_param.capabilities = (rpc_capabilities_f)rpc_capabilities;
 	func_param.delayed_ctx_new = (rpc_delayed_ctx_new_f)rpc_delayed_ctx_new;
 	func_param.delayed_ctx_close =
-		(rpc_delayed_ctx_close_f)rpc_delayed_ctx_close;
+			(rpc_delayed_ctx_close_f)rpc_delayed_ctx_close;
 	register_select_table(xmlrpc_sel);
 
 	/* register non-sip hooks */
-	if(xmlrpc_mode==0)
-	{
+	if(xmlrpc_mode == 0) {
 		memset(&nsh, 0, sizeof(nsh));
-		nsh.name="xmlrpc";
-		nsh.destroy=0;
-		nsh.on_nonsip_req=process_xmlrpc;
-		if (register_nonsip_msg_hook(&nsh)<0){
+		nsh.name = "xmlrpc";
+		nsh.destroy = 0;
+		nsh.on_nonsip_req = process_xmlrpc;
+		if(register_nonsip_msg_hook(&nsh) < 0) {
 			ERR("Failed to register non sip msg hooks\n");
 			return -1;
 		}
 	}
-	if(xmlrpc_url_match!=NULL)
-	{
+	if(xmlrpc_url_match != NULL) {
 		memset(&xmlrpc_url_match_regexp, 0, sizeof(regex_t));
-		if (regcomp(&xmlrpc_url_match_regexp, xmlrpc_url_match,
-					REG_EXTENDED)!=0) {
+		if(regcomp(&xmlrpc_url_match_regexp, xmlrpc_url_match, REG_EXTENDED)
+				!= 0) {
 			LM_ERR("bad match re %s\n", xmlrpc_url_match);
 			return E_BAD_RE;
 		}
 	}
-	if(xmlrpc_url_skip!=NULL)
-	{
+	if(xmlrpc_url_skip != NULL) {
 		memset(&xmlrpc_url_skip_regexp, 0, sizeof(regex_t));
-		if (regcomp(&xmlrpc_url_skip_regexp, xmlrpc_url_skip,
-					REG_EXTENDED)!=0) {
+		if(regcomp(&xmlrpc_url_skip_regexp, xmlrpc_url_skip, REG_EXTENDED)
+				!= 0) {
 			LM_ERR("bad skip re %s\n", xmlrpc_url_skip);
 			return E_BAD_RE;
 		}
@@ -2828,16 +2913,17 @@ static int mod_init(void)
 }
 
 
-
-static int fixup_xmlrpc_reply(void** param, int param_no)
+static int fixup_xmlrpc_reply(void **param, int param_no)
 {
 	int ret;
 
-	if (param_no == 1) {
+	if(param_no == 1) {
 		ret = fix_param(FPARAM_AVP, param);
-		if (ret <= 0) return ret;
-		if (fix_param(FPARAM_INT, param) != 0) return -1;
-	} else if (param_no == 2) {
+		if(ret <= 0)
+			return ret;
+		if(fix_param(FPARAM_INT, param) != 0)
+			return -1;
+	} else if(param_no == 2) {
 		return fixup_var_str_12(param, 2);
 	}
 	return 0;
