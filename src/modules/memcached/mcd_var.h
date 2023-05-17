@@ -47,7 +47,8 @@ int pv_get_mcd_value(struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
  * \param val value
  * \return 0 on success, -1 on failure
  */
-int pv_set_mcd_value(struct sip_msg* msg, pv_param_t *param, int op, pv_value_t *val);
+int pv_set_mcd_value(
+		struct sip_msg *msg, pv_param_t *param, int op, pv_value_t *val);
 
 
 /*!
@@ -58,7 +59,8 @@ int pv_set_mcd_value(struct sip_msg* msg, pv_param_t *param, int op, pv_value_t 
  * \param val value
  * \return 0 on success, -1 on failure
  */
-int pv_inc_mcd_value(struct sip_msg* msg, pv_param_t *param, int op, pv_value_t *val);
+int pv_inc_mcd_value(
+		struct sip_msg *msg, pv_param_t *param, int op, pv_value_t *val);
 
 
 /*!
@@ -69,7 +71,8 @@ int pv_inc_mcd_value(struct sip_msg* msg, pv_param_t *param, int op, pv_value_t 
  * \param val value
  * \return 0 on success, -1 on failure
  */
-int pv_dec_mcd_value(struct sip_msg* msg, pv_param_t *param, int op, pv_value_t *val);
+int pv_dec_mcd_value(
+		struct sip_msg *msg, pv_param_t *param, int op, pv_value_t *val);
 
 
 /*!
@@ -82,7 +85,8 @@ int pv_dec_mcd_value(struct sip_msg* msg, pv_param_t *param, int op, pv_value_t 
  * \param val value
  * \return 0 on success, -1 on failure
  */
-int pv_set_mcd_expire(struct sip_msg* msg, pv_param_t *param, int op, pv_value_t *val);
+int pv_set_mcd_expire(
+		struct sip_msg *msg, pv_param_t *param, int op, pv_value_t *val);
 
 
 /*!
