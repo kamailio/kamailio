@@ -60,11 +60,11 @@ MODULE_VERSION
 
 static int bm_init_rpc(void);
 static int bm_init_mycfg(void);
-int bm_register_timer_param(modparam_t type, void* val);
+int bm_register_timer_param(modparam_t type, void *val);
 
 /* Exported functions */
-int bm_start_timer(struct sip_msg* _msg, char* timer, char *foobar);
-int bm_log_timer(struct sip_msg* _msg, char* timer, char* mystr);
+int bm_start_timer(struct sip_msg *_msg, char *timer, char *foobar);
+int bm_log_timer(struct sip_msg *_msg, char *timer, char *mystr);
 
 /*
  * Module destroy function prototype
@@ -92,7 +92,8 @@ static int _bm_last_time_diff = 0;
  * Module setup
  */
 
-typedef struct bm_cfg {
+typedef struct bm_cfg
+{
 	int enable_global;
 	int granularity;
 	int loglevel;
@@ -109,57 +110,53 @@ typedef struct bm_cfg {
 
 bm_cfg_t *bm_mycfg = 0;
 
-static inline int fixup_bm_timer(void** param, int param_no);
+static inline int fixup_bm_timer(void **param, int param_no);
 
 /*
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{ "bm_start_timer", (cmd_function)bm_start_timer, 1, fixup_bm_timer, 0,
-		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE },
-	{ "bm_log_timer",   (cmd_function)bm_log_timer, 1, fixup_bm_timer, 0,
-		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE },
-	{"load_bm",         (cmd_function)load_bm, 0, 0, 0, 0},
-	{ 0, 0, 0, 0, 0, 0 }
-};
+		{"bm_start_timer", (cmd_function)bm_start_timer, 1, fixup_bm_timer, 0,
+				REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE
+						| LOCAL_ROUTE},
+		{"bm_log_timer", (cmd_function)bm_log_timer, 1, fixup_bm_timer, 0,
+				REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE
+						| LOCAL_ROUTE},
+		{"load_bm", (cmd_function)load_bm, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}};
 
 
 /*
  * Exported parameters
  */
-static param_export_t params[] = {
-	{"enable",      INT_PARAM, &bm_enable_global},
-	{"granularity", INT_PARAM, &bm_granularity},
-	{"loglevel",    INT_PARAM, &bm_loglevel},
-	{"register",    PARAM_STRING|USE_FUNC_PARAM, (void*)bm_register_timer_param},
+static param_export_t params[] = {{"enable", INT_PARAM, &bm_enable_global},
+		{"granularity", INT_PARAM, &bm_granularity},
+		{"loglevel", INT_PARAM, &bm_loglevel},
+		{"register", PARAM_STRING | USE_FUNC_PARAM,
+				(void *)bm_register_timer_param},
 
-	{ 0, 0, 0 }
-};
+		{0, 0, 0}};
 
 
-static int bm_get_time_diff(struct sip_msg *msg, pv_param_t *param,
-		pv_value_t *res);
+static int bm_get_time_diff(
+		struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 
 static pv_export_t mod_items[] = {
-	{ {"BM_time_diff", sizeof("BM_time_diff")-1}, PVT_OTHER, bm_get_time_diff, 0,
-		0, 0, 0, 0 },
-	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
-};
+		{{"BM_time_diff", sizeof("BM_time_diff") - 1}, PVT_OTHER,
+				bm_get_time_diff, 0, 0, 0, 0, 0},
+		{{0, 0}, 0, 0, 0, 0, 0, 0, 0}};
 
 /*
  * Module interface
  */
 struct module_exports exports = {
-	"benchmark",
-	DEFAULT_DLFLAGS,
-	cmds,       /* Exported functions */
-	params,     /* Exported parameters */
-	0,          /* exported RPC methods */
-	mod_items,  /* exported pseudo-variables */
-	0,          /* response function */
-	mod_init,   /* module initialization function */
-	0,          /* child initialization function */
-	destroy     /* destroy function */
+		"benchmark", DEFAULT_DLFLAGS, cmds, /* Exported functions */
+		params,								/* Exported parameters */
+		0,									/* exported RPC methods */
+		mod_items,							/* exported pseudo-variables */
+		0,									/* response function */
+		mod_init,							/* module initialization function */
+		0,									/* child initialization function */
+		destroy								/* destroy function */
 };
 
 
@@ -172,12 +169,12 @@ struct module_exports exports = {
 static int mod_init(void)
 {
 
-	if(bm_init_rpc()<0) {
+	if(bm_init_rpc() < 0) {
 		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}
 
-	if(bm_init_mycfg()<0) {
+	if(bm_init_mycfg() < 0) {
 		return -1;
 	}
 
@@ -194,17 +191,16 @@ static void destroy(void)
 	benchmark_timer_t *bmt = 0;
 	benchmark_timer_t *bmp = 0;
 
-	if(bm_mycfg!=NULL)
-	{
+	if(bm_mycfg != NULL) {
 		/* free timers list */
 		bmt = bm_mycfg->timers;
-		while(bmt)
-		{
+		while(bmt) {
 			bmp = bmt;
 			bmt = bmt->next;
 			shm_free(bmp);
 		}
-		if(bm_mycfg->tindex) shm_free(bm_mycfg->tindex);
+		if(bm_mycfg->tindex)
+			shm_free(bm_mycfg->tindex);
 		shm_free(bm_mycfg);
 	}
 }
@@ -214,26 +210,26 @@ static void destroy(void)
  */
 static int bm_init_mycfg(void)
 {
-	if(bm_mycfg!=NULL) {
+	if(bm_mycfg != NULL) {
 		LM_DBG("config structure initialized\n");
 		return 0;
 	}
-	bm_mycfg = (bm_cfg_t*)shm_malloc(sizeof(bm_cfg_t));
-	if(bm_mycfg==NULL) {
+	bm_mycfg = (bm_cfg_t *)shm_malloc(sizeof(bm_cfg_t));
+	if(bm_mycfg == NULL) {
 		SHM_MEM_ERROR;
 		return -1;
 	}
 	memset(bm_mycfg, 0, sizeof(bm_cfg_t));
 	bm_mycfg->enable_global = bm_enable_global;
-	bm_mycfg->granularity   = bm_granularity;
-	bm_mycfg->loglevel      = bm_loglevel;
+	bm_mycfg->granularity = bm_granularity;
+	bm_mycfg->loglevel = bm_loglevel;
 
 	return 0;
 }
 
 void bm_reset_timer(int i)
 {
-	if(bm_mycfg==NULL || bm_mycfg->tindex[i]==NULL)
+	if(bm_mycfg == NULL || bm_mycfg->tindex[i] == NULL)
 		return;
 	bm_mycfg->tindex[i]->calls = 0;
 	bm_mycfg->tindex[i]->sum = 0;
@@ -250,10 +246,10 @@ void bm_reset_timer(int i)
 void reset_timers(void)
 {
 	int i;
-	if(bm_mycfg==NULL)
+	if(bm_mycfg == NULL)
 		return;
 
-	for (i = 0; i < bm_mycfg->nrtimers; i++)
+	for(i = 0; i < bm_mycfg->nrtimers; i++)
 		bm_reset_timer(i);
 }
 
@@ -268,7 +264,7 @@ void reset_timers(void)
 
 static inline int timer_active(unsigned int id)
 {
-	if (bm_mycfg->enable_global > 0 || bm_mycfg->timers[id].enabled > 0)
+	if(bm_mycfg->enable_global > 0 || bm_mycfg->timers[id].enabled > 0)
 		return 1;
 	else
 		return 0;
@@ -281,10 +277,8 @@ static inline int timer_active(unsigned int id)
 
 int _bm_start_timer(unsigned int id)
 {
-	if (timer_active(id))
-	{
-		if(bm_get_time(bm_mycfg->tindex[id]->start)!=0)
-		{
+	if(timer_active(id)) {
+		if(bm_get_time(bm_mycfg->tindex[id]->start) != 0) {
 			LM_ERR("error getting current time\n");
 			return -1;
 		}
@@ -293,7 +287,7 @@ int _bm_start_timer(unsigned int id)
 	return 1;
 }
 
-int bm_start_timer(struct sip_msg* _msg, char* timer, char *foobar)
+int bm_start_timer(struct sip_msg *_msg, char *timer, char *foobar)
 {
 	return _bm_start_timer((unsigned int)(unsigned long)timer);
 }
@@ -309,11 +303,10 @@ int _bm_log_timer(unsigned int id)
 	bm_timeval_t now;
 	unsigned long long tdiff;
 
-	if (!timer_active(id))
+	if(!timer_active(id))
 		return 1;
 
-	if(bm_get_time(&now)<0)
-	{
+	if(bm_get_time(&now) < 0) {
 		LM_ERR("error getting current time\n");
 		return -1;
 	}
@@ -330,43 +323,40 @@ int _bm_log_timer(unsigned int id)
 	bm_mycfg->tindex[id]->last_sum += tdiff;
 	bm_mycfg->tindex[id]->calls++;
 
-	if (tdiff < bm_mycfg->tindex[id]->last_min)
+	if(tdiff < bm_mycfg->tindex[id]->last_min)
 		bm_mycfg->tindex[id]->last_min = tdiff;
 
-	if (tdiff > bm_mycfg->tindex[id]->last_max)
+	if(tdiff > bm_mycfg->tindex[id]->last_max)
 		bm_mycfg->tindex[id]->last_max = tdiff;
 
-	if (tdiff < bm_mycfg->tindex[id]->global_min)
+	if(tdiff < bm_mycfg->tindex[id]->global_min)
 		bm_mycfg->tindex[id]->global_min = tdiff;
 
-	if (tdiff > bm_mycfg->tindex[id]->global_max)
+	if(tdiff > bm_mycfg->tindex[id]->global_max)
 		bm_mycfg->tindex[id]->global_max = tdiff;
 
 
-	if ((bm_mycfg->tindex[id]->calls % bm_mycfg->granularity) == 0)
-	{
-		LM_GEN1(bm_mycfg->loglevel, "benchmark (timer %s [%d]): %llu ["
-			" msgs/total/min/max/avg - LR:"
-			" %i/%llu/%llu/%llu/%f | GB: %llu/%llu/%llu/%llu/%f]\n",
-			bm_mycfg->tindex[id]->name,
-			id,
-			tdiff,
-			bm_mycfg->granularity,
-			bm_mycfg->tindex[id]->last_sum,
-			bm_mycfg->tindex[id]->last_min,
-			bm_mycfg->tindex[id]->last_max,
-			((double)bm_mycfg->tindex[id]->last_sum)/bm_mycfg->granularity,
-			bm_mycfg->tindex[id]->calls,
-			bm_mycfg->tindex[id]->sum,
-			bm_mycfg->tindex[id]->global_min,
-			bm_mycfg->tindex[id]->global_max,
-			((double)bm_mycfg->tindex[id]->sum)/bm_mycfg->tindex[id]->calls);
+	if((bm_mycfg->tindex[id]->calls % bm_mycfg->granularity) == 0) {
+		LM_GEN1(bm_mycfg->loglevel,
+				"benchmark (timer %s [%d]): %llu ["
+				" msgs/total/min/max/avg - LR:"
+				" %i/%llu/%llu/%llu/%f | GB: %llu/%llu/%llu/%llu/%f]\n",
+				bm_mycfg->tindex[id]->name, id, tdiff, bm_mycfg->granularity,
+				bm_mycfg->tindex[id]->last_sum, bm_mycfg->tindex[id]->last_min,
+				bm_mycfg->tindex[id]->last_max,
+				((double)bm_mycfg->tindex[id]->last_sum)
+						/ bm_mycfg->granularity,
+				bm_mycfg->tindex[id]->calls, bm_mycfg->tindex[id]->sum,
+				bm_mycfg->tindex[id]->global_min,
+				bm_mycfg->tindex[id]->global_max,
+				((double)bm_mycfg->tindex[id]->sum)
+						/ bm_mycfg->tindex[id]->calls);
 
 		/* Fill data for last period. */
 		bm_mycfg->tindex[id]->period_sum = bm_mycfg->tindex[id]->last_sum;
 		bm_mycfg->tindex[id]->period_max = bm_mycfg->tindex[id]->last_max;
 		bm_mycfg->tindex[id]->period_min = bm_mycfg->tindex[id]->last_min;
-		
+
 		bm_mycfg->tindex[id]->last_sum = 0;
 		bm_mycfg->tindex[id]->last_max = 0;
 		bm_mycfg->tindex[id]->last_min = 0xffffffff;
@@ -375,7 +365,7 @@ int _bm_log_timer(unsigned int id)
 	return 1;
 }
 
-int bm_log_timer(struct sip_msg* _msg, char* timer, char* mystr)
+int bm_log_timer(struct sip_msg *_msg, char *timer, char *mystr)
 {
 	return _bm_log_timer((unsigned int)(unsigned long)timer);
 }
@@ -386,36 +376,32 @@ int _bm_register_timer(char *tname, int mode, unsigned int *id)
 	benchmark_timer_t *bmt = 0;
 	benchmark_timer_t **tidx = 0;
 
-	if(tname==NULL || id==NULL || bm_mycfg==NULL || strlen(tname)==0
-			|| strlen(tname)>BM_NAME_LEN-1)
+	if(tname == NULL || id == NULL || bm_mycfg == NULL || strlen(tname) == 0
+			|| strlen(tname) > BM_NAME_LEN - 1)
 		return -1;
 
 	bmt = bm_mycfg->timers;
-	while(bmt)
-	{
-		if(strcmp(bmt->name, tname)==0)
-		{
+	while(bmt) {
+		if(strcmp(bmt->name, tname) == 0) {
 			*id = bmt->id;
 			return 0;
 		}
 		bmt = bmt->next;
 	}
-	if(mode==0)
+	if(mode == 0)
 		return -1;
 
-	bmt = (benchmark_timer_t*)shm_malloc(sizeof(benchmark_timer_t));
+	bmt = (benchmark_timer_t *)shm_malloc(sizeof(benchmark_timer_t));
 
-	if(bmt==0)
-	{
+	if(bmt == 0) {
 		SHM_MEM_ERROR;
 		return -1;
 	}
 	memset(bmt, 0, sizeof(benchmark_timer_t));
 
 	/* private memory, otherwise we have races */
-	bmt->start = (bm_timeval_t*)pkg_malloc(sizeof(bm_timeval_t));
-	if(bmt->start == NULL)
-	{
+	bmt->start = (bm_timeval_t *)pkg_malloc(sizeof(bm_timeval_t));
+	if(bmt->start == NULL) {
 		shm_free(bmt);
 		PKG_MEM_ERROR;
 		return -1;
@@ -423,36 +409,34 @@ int _bm_register_timer(char *tname, int mode, unsigned int *id)
 	memset(bmt->start, 0, sizeof(bm_timeval_t));
 
 	strcpy(bmt->name, tname);
-	if(bm_mycfg->timers==0)
-	{
+	if(bm_mycfg->timers == 0) {
 		bmt->id = 0;
 		bm_mycfg->timers = bmt;
 	} else {
-		bmt->id = bm_mycfg->timers->id+1;
+		bmt->id = bm_mycfg->timers->id + 1;
 		bmt->next = bm_mycfg->timers;
 		bm_mycfg->timers = bmt;
 	}
 
 	/* do the indexing */
-	if(bmt->id%10==0)
-	{
-		if(bm_mycfg->tindex!=NULL)
+	if(bmt->id % 10 == 0) {
+		if(bm_mycfg->tindex != NULL)
 			tidx = bm_mycfg->tindex;
-		bm_mycfg->tindex = (benchmark_timer_t**)shm_malloc((10+bmt->id)*
-								sizeof(benchmark_timer_t*));
-		if(bm_mycfg->tindex==0)
-		{
+		bm_mycfg->tindex = (benchmark_timer_t **)shm_malloc(
+				(10 + bmt->id) * sizeof(benchmark_timer_t *));
+		if(bm_mycfg->tindex == 0) {
 			SHM_MEM_ERROR;
 			pkg_free(bmt->start);
 			shm_free(bmt);
-			if(tidx!=0)
+			if(tidx != 0)
 				shm_free(tidx);
 			return -1;
 		}
-		memset(bm_mycfg->tindex, 0, (10+bmt->id)*sizeof(benchmark_timer_t*));
-		if(tidx!=0)
-		{
-			memcpy(bm_mycfg->tindex, tidx, bmt->id*sizeof(benchmark_timer_t*));
+		memset(bm_mycfg->tindex, 0,
+				(10 + bmt->id) * sizeof(benchmark_timer_t *));
+		if(tidx != 0) {
+			memcpy(bm_mycfg->tindex, tidx,
+					bmt->id * sizeof(benchmark_timer_t *));
 			shm_free(tidx);
 		}
 	}
@@ -465,80 +449,78 @@ int _bm_register_timer(char *tname, int mode, unsigned int *id)
 	return 0;
 }
 
-int bm_register_timer_param(modparam_t type, void* val)
+int bm_register_timer_param(modparam_t type, void *val)
 {
 	unsigned int tid;
 
-	if(bm_init_mycfg()<0) {
+	if(bm_init_mycfg() < 0) {
 		return -1;
 	}
-	if((_bm_register_timer((char*)val, 1, &tid))!=0) {
-		LM_ERR("cannot find timer [%s]\n", (char*)val);
+	if((_bm_register_timer((char *)val, 1, &tid)) != 0) {
+		LM_ERR("cannot find timer [%s]\n", (char *)val);
 		return -1;
 	}
-	LM_INFO("timer [%s] registered: %u\n", (char*)val, tid);
+	LM_INFO("timer [%s] registered: %u\n", (char *)val, tid);
 	return 0;
 }
 
-static int ki_bm_start_timer(struct sip_msg* _msg, str* tname)
+static int ki_bm_start_timer(struct sip_msg *_msg, str *tname)
 {
 	unsigned int tid;
 
-	if((_bm_register_timer(tname->s, 0, &tid))!=0) {
-			LM_ERR("cannot find timer [%s]\n", tname->s);
-			return -1;
+	if((_bm_register_timer(tname->s, 0, &tid)) != 0) {
+		LM_ERR("cannot find timer [%s]\n", tname->s);
+		return -1;
 	}
 
 	return _bm_start_timer(tid);
 }
 
-static int ki_bm_log_timer(sip_msg_t* _msg, str* tname)
+static int ki_bm_log_timer(sip_msg_t *_msg, str *tname)
 {
 	unsigned int tid;
 
-	if((_bm_register_timer(tname->s, 0, &tid))!=0) {
-			LM_ERR("cannot find timer [%s]\n", tname->s);
-			return -1;
+	if((_bm_register_timer(tname->s, 0, &tid)) != 0) {
+		LM_ERR("cannot find timer [%s]\n", tname->s);
+		return -1;
 	}
 	return _bm_log_timer(tid);
 }
 
 /*! \brief API Binding */
-int load_bm( struct bm_binds *bmb)
+int load_bm(struct bm_binds *bmb)
 {
-	if(bmb==NULL)
+	if(bmb == NULL)
 		return -1;
 
 	bmb->bm_register = _bm_register_timer;
-	bmb->bm_start    = _bm_start_timer;
-	bmb->bm_log	     = _bm_log_timer;
+	bmb->bm_start = _bm_start_timer;
+	bmb->bm_log = _bm_log_timer;
 
 	return 1;
 }
 
 
 /*! \brief PV get function for time diff */
-static int bm_get_time_diff(struct sip_msg *msg, pv_param_t *param,
-		pv_value_t *res)
+static int bm_get_time_diff(
+		struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
-	if(msg==NULL)
+	if(msg == NULL)
 		return -1;
 	return pv_get_sintval(msg, param, res, _bm_last_time_diff);
 }
 
 
-static inline int fixup_bm_timer(void** param, int param_no)
+static inline int fixup_bm_timer(void **param, int param_no)
 {
 	unsigned int tid = 0;
-	if (param_no == 1)
-	{
-		if((_bm_register_timer((char*)(*param), 1, &tid))!=0)
-		{
-			LM_ERR("cannot register timer [%s]\n", (char*)(*param));
+	if(param_no == 1) {
+		if((_bm_register_timer((char *)(*param), 1, &tid)) != 0) {
+			LM_ERR("cannot register timer [%s]\n", (char *)(*param));
 			return E_UNSPEC;
 		}
 		pkg_free(*param);
-		*param = (void*)(unsigned long)tid;
+		*param = (void *)(unsigned long)tid;
 	}
 	return 0;
 }
@@ -549,15 +531,15 @@ static inline int fixup_bm_timer(void** param, int param_no)
 /*! \brief
  * Expects 1 node: 0 for disable, 1 for enable
  */
-void bm_rpc_enable_global(rpc_t* rpc, void* ctx)
+void bm_rpc_enable_global(rpc_t *rpc, void *ctx)
 {
-	int v1=0;
-	if(rpc->scan(ctx, "d", &v1)<1) {
+	int v1 = 0;
+	if(rpc->scan(ctx, "d", &v1) < 1) {
 		LM_WARN("no parameters\n");
 		rpc->fault(ctx, 500, "Invalid Parameters");
 		return;
 	}
-	if ((v1 < -1) || (v1 > 1)) {
+	if((v1 < -1) || (v1 > 1)) {
 		rpc->fault(ctx, 500, "Invalid Parameter Value");
 		return;
 	}
@@ -565,22 +547,22 @@ void bm_rpc_enable_global(rpc_t* rpc, void* ctx)
 }
 
 
-void bm_rpc_enable_timer(rpc_t* rpc, void* ctx)
+void bm_rpc_enable_timer(rpc_t *rpc, void *ctx)
 {
 	char *p1 = NULL;
 	int v2 = 0;
 	unsigned int id = 0;
 
-	if(rpc->scan(ctx, "sd", &p1, &v2)<2) {
+	if(rpc->scan(ctx, "sd", &p1, &v2) < 2) {
 		LM_WARN("invalid parameters\n");
 		rpc->fault(ctx, 500, "Invalid Parameters");
 		return;
 	}
-	if ((v2 < 0) || (v2 > 1)) {
+	if((v2 < 0) || (v2 > 1)) {
 		rpc->fault(ctx, 500, "Invalid Parameter Value");
 		return;
 	}
-	if(_bm_register_timer(p1, 0, &id)!=0) {
+	if(_bm_register_timer(p1, 0, &id) != 0) {
 		rpc->fault(ctx, 500, "Register timer failure");
 		return;
 	}
@@ -588,30 +570,30 @@ void bm_rpc_enable_timer(rpc_t* rpc, void* ctx)
 }
 
 
-void bm_rpc_granularity(rpc_t* rpc, void* ctx)
+void bm_rpc_granularity(rpc_t *rpc, void *ctx)
 {
 	int v1 = 0;
-	if(rpc->scan(ctx, "d", &v1)<1) {
+	if(rpc->scan(ctx, "d", &v1) < 1) {
 		LM_WARN("no parameters\n");
 		rpc->fault(ctx, 500, "Invalid Parameters");
 		return;
 	}
-	if (v1 < 1) {
+	if(v1 < 1) {
 		rpc->fault(ctx, 500, "Invalid Parameter Value");
 		return;
 	}
 	bm_mycfg->granularity = v1;
 }
 
-void bm_rpc_loglevel(rpc_t* rpc, void* ctx)
+void bm_rpc_loglevel(rpc_t *rpc, void *ctx)
 {
 	int v1 = 0;
-	if(rpc->scan(ctx, "d", &v1)<1) {
+	if(rpc->scan(ctx, "d", &v1) < 1) {
 		LM_WARN("no parameters\n");
 		rpc->fault(ctx, 500, "Invalid Parameters");
 		return;
 	}
-	if ((v1 < -1) || (v1 > 1)) {
+	if((v1 < -1) || (v1 > 1)) {
 		rpc->fault(ctx, 500, "Invalid Parameter Value");
 		return;
 	}
@@ -629,110 +611,119 @@ static char buffer_s[BUFFER_S_LEN];
  *
  * /return 0 on success.
  */
-int bm_rpc_timer_struct(rpc_t* rpc, void* ctx, int id)
+int bm_rpc_timer_struct(rpc_t *rpc, void *ctx, int id)
 {
 	void *handle; /* Handle for RPC structure. */
 
 	/* Create empty structure and obtain its handle */
-	if (rpc->add(ctx, "{", &handle) < 0) {
+	if(rpc->add(ctx, "{", &handle) < 0) {
 		return -1;
 	}
-		
+
 	int enabled = timer_active(id);
 
-	if (rpc->struct_add(handle, "s", "name", bm_mycfg->tindex[id]->name) < 0) {
-		return -1;
-	}
-		
-	if (rpc->struct_add(handle, "s", "state", (enabled==0)?"disabled":"enabled") < 0) {
+	if(rpc->struct_add(handle, "s", "name", bm_mycfg->tindex[id]->name) < 0) {
 		return -1;
 	}
 
-	if (rpc->struct_add(handle, "d", "id", id) < 0) {
+	if(rpc->struct_add(
+			   handle, "s", "state", (enabled == 0) ? "disabled" : "enabled")
+			< 0) {
 		return -1;
 	}
 
-	if (rpc->struct_add(handle, "d", "granularity", bm_mycfg->granularity) < 0) {
+	if(rpc->struct_add(handle, "d", "id", id) < 0) {
+		return -1;
+	}
+
+	if(rpc->struct_add(handle, "d", "granularity", bm_mycfg->granularity) < 0) {
 		return -1;
 	}
 
 	/* We use a string to represent long long unsigned integers. */
 	int len;
-	len = snprintf(buffer_s, BUFFER_S_LEN, "%llu", bm_mycfg->tindex[id]->period_sum);
-	if (len <= 0 || len >= BUFFER_S_LEN) {
+	len = snprintf(
+			buffer_s, BUFFER_S_LEN, "%llu", bm_mycfg->tindex[id]->period_sum);
+	if(len <= 0 || len >= BUFFER_S_LEN) {
 		LM_ERR("Buffer overflow\n");
 		return -1;
 	}
-	if (rpc->struct_add(handle, "s", "period_sum", buffer_s) < 0) {
+	if(rpc->struct_add(handle, "s", "period_sum", buffer_s) < 0) {
 		return -1;
 	}
 
-	len = snprintf(buffer_s, BUFFER_S_LEN, "%llu", bm_mycfg->tindex[id]->period_min);
-	if (len <= 0 || len >= BUFFER_S_LEN) {
+	len = snprintf(
+			buffer_s, BUFFER_S_LEN, "%llu", bm_mycfg->tindex[id]->period_min);
+	if(len <= 0 || len >= BUFFER_S_LEN) {
 		LM_ERR("Buffer overflow\n");
 		return -1;
 	}
-	if (rpc->struct_add(handle, "s", "period_min", buffer_s) < 0) {
+	if(rpc->struct_add(handle, "s", "period_min", buffer_s) < 0) {
 		return -1;
 	}
 
-	len = snprintf(buffer_s, BUFFER_S_LEN, "%llu", bm_mycfg->tindex[id]->period_max);
-	if (len <= 0 || len >= BUFFER_S_LEN) {
+	len = snprintf(
+			buffer_s, BUFFER_S_LEN, "%llu", bm_mycfg->tindex[id]->period_max);
+	if(len <= 0 || len >= BUFFER_S_LEN) {
 		LM_ERR("Buffer overflow\n");
 		return -1;
 	}
-	if (rpc->struct_add(handle, "s", "period_max", buffer_s) < 0) {
+	if(rpc->struct_add(handle, "s", "period_max", buffer_s) < 0) {
 		return -1;
 	}
 
-	if (bm_mycfg->granularity > 0) {
-		double media = ((double)bm_mycfg->tindex[id]->period_sum)/bm_mycfg->granularity;
+	if(bm_mycfg->granularity > 0) {
+		double media = ((double)bm_mycfg->tindex[id]->period_sum)
+					   / bm_mycfg->granularity;
 
-		if (rpc->struct_add(handle, "f", "period_media", media) < 0) {
+		if(rpc->struct_add(handle, "f", "period_media", media) < 0) {
 			return -1;
 		}
 	}
 
 	len = snprintf(buffer_s, BUFFER_S_LEN, "%llu", bm_mycfg->tindex[id]->calls);
-	if (len <= 0 || len >= BUFFER_S_LEN) {
+	if(len <= 0 || len >= BUFFER_S_LEN) {
 		LM_ERR("Buffer overflow\n");
 		return -1;
 	}
-	if (rpc->struct_add(handle, "s", "calls", buffer_s) < 0) {
+	if(rpc->struct_add(handle, "s", "calls", buffer_s) < 0) {
 		return -1;
 	}
 
 	len = snprintf(buffer_s, BUFFER_S_LEN, "%llu", bm_mycfg->tindex[id]->sum);
-	if (len <= 0 || len >= BUFFER_S_LEN) {
+	if(len <= 0 || len >= BUFFER_S_LEN) {
 		LM_ERR("Buffer overflow\n");
 		return -1;
 	}
-	if (rpc->struct_add(handle, "s", "sum", buffer_s) < 0) {
+	if(rpc->struct_add(handle, "s", "sum", buffer_s) < 0) {
 		return -1;
 	}
 
-	len = snprintf(buffer_s, BUFFER_S_LEN, "%llu", bm_mycfg->tindex[id]->global_min);
-	if (len <= 0 || len >= BUFFER_S_LEN) {
+	len = snprintf(
+			buffer_s, BUFFER_S_LEN, "%llu", bm_mycfg->tindex[id]->global_min);
+	if(len <= 0 || len >= BUFFER_S_LEN) {
 		LM_ERR("Buffer overflow\n");
 		return -1;
 	}
-	if (rpc->struct_add(handle, "s", "global_min", buffer_s) < 0) {
+	if(rpc->struct_add(handle, "s", "global_min", buffer_s) < 0) {
 		return -1;
 	}
 
-	len = snprintf(buffer_s, BUFFER_S_LEN, "%llu", bm_mycfg->tindex[id]->global_max);
-	if (len <= 0 || len >= BUFFER_S_LEN) {
+	len = snprintf(
+			buffer_s, BUFFER_S_LEN, "%llu", bm_mycfg->tindex[id]->global_max);
+	if(len <= 0 || len >= BUFFER_S_LEN) {
 		LM_ERR("Buffer overflow\n");
 		return -1;
 	}
-	if (rpc->struct_add(handle, "s", "global_max", buffer_s) < 0) {
+	if(rpc->struct_add(handle, "s", "global_max", buffer_s) < 0) {
 		return -1;
 	}
 
-	if (bm_mycfg->tindex[id]->calls > 0) {
-		double media = ((double)bm_mycfg->tindex[id]->sum)/bm_mycfg->tindex[id]->calls;
+	if(bm_mycfg->tindex[id]->calls > 0) {
+		double media = ((double)bm_mycfg->tindex[id]->sum)
+					   / bm_mycfg->tindex[id]->calls;
 
-		if (rpc->struct_add(handle, "f", "global_media", media) < 0) {
+		if(rpc->struct_add(handle, "f", "global_media", media) < 0) {
 			return -1;
 		}
 	}
@@ -740,13 +731,13 @@ int bm_rpc_timer_struct(rpc_t* rpc, void* ctx, int id)
 	return 0;
 }
 
-void bm_rpc_timer_list(rpc_t* rpc, void* ctx)
+void bm_rpc_timer_list(rpc_t *rpc, void *ctx)
 {
 	int id;
-	
-	for (id = 0; id < bm_mycfg->nrtimers; id++) {
 
-		if (bm_rpc_timer_struct(rpc, ctx, id)) {
+	for(id = 0; id < bm_mycfg->nrtimers; id++) {
+
+		if(bm_rpc_timer_struct(rpc, ctx, id)) {
 			LM_ERR("Failure writing RPC structure for timer: %d\n", id);
 			return;
 		}
@@ -756,7 +747,7 @@ void bm_rpc_timer_list(rpc_t* rpc, void* ctx)
 	return;
 }
 
-void bm_rpc_timer_name_list(rpc_t* rpc, void* ctx)
+void bm_rpc_timer_name_list(rpc_t *rpc, void *ctx)
 {
 	char *name = NULL;
 	unsigned int id = 0;
@@ -766,12 +757,12 @@ void bm_rpc_timer_name_list(rpc_t* rpc, void* ctx)
 		rpc->fault(ctx, 400, "Invalid timer name");
 		return;
 	}
-	if(_bm_register_timer(name, 0, &id)!=0) {
+	if(_bm_register_timer(name, 0, &id) != 0) {
 		rpc->fault(ctx, 500, "Register timer failure");
 		return;
 	}
 
-	if (bm_rpc_timer_struct(rpc, ctx, id)) {
+	if(bm_rpc_timer_struct(rpc, ctx, id)) {
 		LM_ERR("Failure writing RPC structure for timer: %d\n", id);
 		return;
 	}
@@ -779,59 +770,40 @@ void bm_rpc_timer_name_list(rpc_t* rpc, void* ctx)
 	return;
 }
 
-static const char* bm_rpc_enable_global_doc[2] = {
-	"Enable/disable benchmarking",
-	0
-};
+static const char *bm_rpc_enable_global_doc[2] = {
+		"Enable/disable benchmarking", 0};
 
-static const char* bm_rpc_enable_timer_doc[2] = {
-	"Enable/disable a benchmark timer",
-	0
-};
+static const char *bm_rpc_enable_timer_doc[2] = {
+		"Enable/disable a benchmark timer", 0};
 
-static const char* bm_rpc_granularity_doc[2] = {
-	"Set benchmarking granularity",
-	0
-};
+static const char *bm_rpc_granularity_doc[2] = {
+		"Set benchmarking granularity", 0};
 
-static const char* bm_rpc_loglevel_doc[2] = {
-	"Set benchmarking log level",
-	0
-};
+static const char *bm_rpc_loglevel_doc[2] = {"Set benchmarking log level", 0};
 
-static const char* bm_rpc_timer_list_doc[2] = {
-	"List all timers",
-	0
-};
+static const char *bm_rpc_timer_list_doc[2] = {"List all timers", 0};
 
-static const char* bm_rpc_timer_name_list_doc[2] = {
-	"List a timer based on its name",
-	0
-};
+static const char *bm_rpc_timer_name_list_doc[2] = {
+		"List a timer based on its name", 0};
 
-rpc_export_t bm_rpc_cmds[] = {
-	{"benchmark.enable_global", bm_rpc_enable_global,
-		bm_rpc_enable_global_doc, 0},
-	{"benchmark.enable_timer", bm_rpc_enable_timer,
-		bm_rpc_enable_timer_doc, 0},
-	{"benchmark.granularity", bm_rpc_granularity,
-		bm_rpc_granularity_doc, 0},
-	{"benchmark.loglevel", bm_rpc_loglevel,
-		bm_rpc_loglevel_doc, 0},
-	{"benchmark.timer_list", bm_rpc_timer_list,
-		bm_rpc_timer_list_doc, 0},
-	{"benchmark.timer_name_list", bm_rpc_timer_name_list,
-		bm_rpc_timer_name_list_doc, 0},
-	{0, 0, 0, 0}
-};
+rpc_export_t bm_rpc_cmds[] = {{"benchmark.enable_global", bm_rpc_enable_global,
+									  bm_rpc_enable_global_doc, 0},
+		{"benchmark.enable_timer", bm_rpc_enable_timer, bm_rpc_enable_timer_doc,
+				0},
+		{"benchmark.granularity", bm_rpc_granularity, bm_rpc_granularity_doc,
+				0},
+		{"benchmark.loglevel", bm_rpc_loglevel, bm_rpc_loglevel_doc, 0},
+		{"benchmark.timer_list", bm_rpc_timer_list, bm_rpc_timer_list_doc, 0},
+		{"benchmark.timer_name_list", bm_rpc_timer_name_list,
+				bm_rpc_timer_name_list_doc, 0},
+		{0, 0, 0, 0}};
 
 /**
  * register RPC commands
  */
 static int bm_init_rpc(void)
 {
-	if (rpc_register_array(bm_rpc_cmds)!=0)
-	{
+	if(rpc_register_array(bm_rpc_cmds) != 0) {
 		LM_ERR("failed to register RPC commands\n");
 		return -1;
 	}

@@ -42,33 +42,32 @@ typedef int (*bm_register_timer_f)(char *tname, int mode, unsigned int *id);
 typedef int (*bm_start_timer_f)(unsigned int id);
 typedef int (*bm_log_timer_f)(unsigned int id);
 
-struct bm_binds {
+struct bm_binds
+{
 	bm_register_timer_f bm_register;
 	bm_start_timer_f bm_start;
 	bm_log_timer_f bm_log;
 };
 
-typedef int(*load_bm_f)(struct bm_binds *bmb);
+typedef int (*load_bm_f)(struct bm_binds *bmb);
 
 int load_bm(struct bm_binds *bmb);
 
-static inline int load_bm_api( struct bm_binds *bmb )
+static inline int load_bm_api(struct bm_binds *bmb)
 {
 	load_bm_f load_bm;
 
 	/* import the benchmark auto-loading function */
-	if ( !(load_bm=(load_bm_f)find_export("load_bm", 0, 0)))
-	{
+	if(!(load_bm = (load_bm_f)find_export("load_bm", 0, 0))) {
 		LM_ERR("can't import load_bm\n");
 		return -1;
 	}
 	/* let the auto-loading function load all benchmarking stuff */
-	if (load_bm( bmb )==-1)
-	{
+	if(load_bm(bmb) == -1) {
 		LM_ERR("load_bm failed\n");
 		return -1;
 	}
-	
+
 	return 0;
 }
 

@@ -42,7 +42,7 @@
 
 #include "benchmark_api.h"
 
-#define BM_NAME_LEN	32
+#define BM_NAME_LEN 32
 
 #ifdef BM_CLOCK_REALTIME
 /* nano seconds */
@@ -57,25 +57,26 @@ typedef struct benchmark_timer
 	char name[BM_NAME_LEN];
 	unsigned int id;
 	int enabled;
-	bm_timeval_t *start;    /* Current timer run */
-	unsigned long long calls;		/* Number of runs of this timer */
-	unsigned long long sum;			/* Accumulated runtime of this timer */
-	unsigned long long last_sum;	/* Accumulated runtime since last logging */
-	unsigned long long last_max;	/* Minimum in current period (between
+	bm_timeval_t *start;		   /* Current timer run */
+	unsigned long long calls;	   /* Number of runs of this timer */
+	unsigned long long sum;		   /* Accumulated runtime of this timer */
+	unsigned long long last_sum;   /* Accumulated runtime since last logging */
+	unsigned long long last_max;   /* Minimum in current period (between
 							   granularity) */
-	unsigned long long last_min;	/* Maximum ... */
-	unsigned long long global_max;	/* Global minimum, since start */
-	unsigned long long global_min;	/* ...    maximum ... */
-	unsigned long long period_sum;  /* Sum for last completed period (between granularity) */
-	unsigned long long period_max;   /* Maximum for last completed period ... */
-	unsigned long long period_min;   /* Minimum for last completed period ... */
+	unsigned long long last_min;   /* Maximum ... */
+	unsigned long long global_max; /* Global minimum, since start */
+	unsigned long long global_min; /* ...    maximum ... */
+	unsigned long long
+			period_sum; /* Sum for last completed period (between granularity) */
+	unsigned long long period_max; /* Maximum for last completed period ... */
+	unsigned long long period_min; /* Minimum for last completed period ... */
 	struct benchmark_timer *next;
 } benchmark_timer_t;
 
 static inline int bm_get_time(bm_timeval_t *t)
 {
 #ifdef BM_CLOCK_REALTIME
-	if(clock_gettime(CLOCK_REALTIME, t)!=0)
+	if(clock_gettime(CLOCK_REALTIME, t) != 0)
 #else
 	if(gettimeofday(t, NULL))
 #endif
@@ -87,16 +88,17 @@ static inline int bm_get_time(bm_timeval_t *t)
 	return 0;
 }
 
-static inline unsigned long long bm_diff_time(bm_timeval_t *t1, bm_timeval_t *t2)
+static inline unsigned long long bm_diff_time(
+		bm_timeval_t *t1, bm_timeval_t *t2)
 {
 	unsigned long long tdiff;
 
 	tdiff = t2->tv_sec - t1->tv_sec;
 
 #ifdef BM_CLOCK_REALTIME
-	tdiff = tdiff*1000000000 + t2->tv_nsec - t1->tv_nsec;
+	tdiff = tdiff * 1000000000 + t2->tv_nsec - t1->tv_nsec;
 #else
-	tdiff = tdiff*1000000 + t2->tv_usec - t1->tv_usec;
+	tdiff = tdiff * 1000000 + t2->tv_usec - t1->tv_usec;
 #endif
 
 	return tdiff;
