@@ -25,7 +25,7 @@
  */
 
 #ifndef _PERLVDB_CONV_H
-#define _PERLVDB_CONV_H 
+#define _PERLVDB_CONV_H
 
 #include "../../lib/srdb1/db_op.h"
 #include "../../lib/srdb1/db_val.h"
@@ -35,30 +35,31 @@
 
 #include <XSUB.h>
 
-#define PERL_CLASS_VALUE	"Kamailio::VDB::Value"
-#define PERL_CLASS_PAIR		"Kamailio::VDB::Pair"
-#define PERL_CLASS_REQCOND	"Kamailio::VDB::ReqCond"
+#define PERL_CLASS_VALUE "Kamailio::VDB::Value"
+#define PERL_CLASS_PAIR "Kamailio::VDB::Pair"
+#define PERL_CLASS_REQCOND "Kamailio::VDB::ReqCond"
 
-#define PERL_CONSTRUCTOR_NAME	"new"
+#define PERL_CONSTRUCTOR_NAME "new"
 
 /* Converts a set of pairs to perl SVs.
  * For insert, and update (second half)
  */
-AV *pairs2perlarray(const db_key_t* keys, const db_val_t* vals, const int n);
+AV *pairs2perlarray(const db_key_t *keys, const db_val_t *vals, const int n);
 
 /* Converts a set of cond's to perl SVs.
  * For delete, update (first half), query
  */
-AV *conds2perlarray(const db_key_t* keys, const db_op_t* ops, const db_val_t* vals, const int n);
+AV *conds2perlarray(const db_key_t *keys, const db_op_t *ops,
+		const db_val_t *vals, const int n);
 
 /* Converts a set of key names to a perl array.
  * Needed in query.
  */
-AV *keys2perlarray(const db_key_t* keys, const int n);
+AV *keys2perlarray(const db_key_t *keys, const int n);
 
-SV *val2perlval(const db_val_t* val);
-SV *pair2perlpair(const db_key_t key, const db_val_t* val);
-SV *cond2perlcond(const db_key_t key, const db_op_t op, const db_val_t* val);
+SV *val2perlval(const db_val_t *val);
+SV *pair2perlpair(const db_key_t key, const db_val_t *val);
+SV *cond2perlcond(const db_key_t key, const db_op_t op, const db_val_t *val);
 
 int perlresult2dbres(SV *perlres, db1_res_t **r);
 
