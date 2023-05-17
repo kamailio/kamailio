@@ -78,8 +78,8 @@ int i_enum_query_2(struct sip_msg *_msg, char *_suffix, char *_service);
  */
 int ki_is_from_user_enum(sip_msg_t *msg);
 int ki_is_from_user_enum_suffix(sip_msg_t *msg, str *vsuffix);
-int ki_is_from_user_enum_suffix_service(sip_msg_t *msg, str *vsuffix,
-		str *vservice);
+int ki_is_from_user_enum_suffix_service(
+		sip_msg_t *msg, str *vsuffix, str *vservice);
 int ki_enum_query(sip_msg_t *msg);
 int ki_enum_query_suffix(sip_msg_t *msg, str *vsuffix);
 int ki_enum_query_suffix_service(sip_msg_t *msg, str *vsuffix, str *vservice);
@@ -88,7 +88,7 @@ int ki_i_enum_query_suffix(sip_msg_t *msg, str *vsuffix);
 int ki_i_enum_query_suffix_service(sip_msg_t *msg, str *vsuffix, str *vservice);
 int ki_enum_pv_query(sip_msg_t *msg, str *ve164);
 int ki_enum_pv_query_suffix(sip_msg_t *msg, str *ve164, str *vsuffix);
-int ki_enum_pv_query_suffix_service(sip_msg_t *msg, str *ve164, str *vsuffix,
-		str *vservice);
+int ki_enum_pv_query_suffix_service(
+		sip_msg_t *msg, str *ve164, str *vsuffix, str *vservice);
 
 #endif /* ENUM_H */
