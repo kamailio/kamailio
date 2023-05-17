@@ -32,8 +32,9 @@
 #include "../../core/ip_addr.h"
 #include "tls_domain.h"
 
-typedef struct sr_tls_methods_s {
-	const SSL_METHOD* TLSMethod;
+typedef struct sr_tls_methods_s
+{
+	const SSL_METHOD *TLSMethod;
 	int TLSMethodMin;
 	int TLSMethodMax;
 } sr_tls_methods_t;
@@ -70,6 +71,6 @@ int tls_h_init_si_f(struct socket_info *si);
  * Make sure that all server domains in the configuration have corresponding
  * listening socket in SER
  */
-int tls_check_sockets(tls_domains_cfg_t* cfg);
+int tls_check_sockets(tls_domains_cfg_t *cfg);
 
 #endif /* _TLS_INIT_H */

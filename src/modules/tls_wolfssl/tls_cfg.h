@@ -34,10 +34,11 @@
 /* maximum accepted lifetime (maximum possible is  ~ MAXINT/2)
  *  (it should be kept in sync w/ MAX_TCP_CON_LIFETIME from tcp_main.c:
  *   MAX_TLS_CON_LIFETIME <= MAX_TCP_CON_LIFETIME )*/
-#define MAX_TLS_CON_LIFETIME	((1U<<(sizeof(ticks_t)*8-1))-1)
+#define MAX_TLS_CON_LIFETIME ((1U << (sizeof(ticks_t) * 8 - 1)) - 1)
 
 
-struct cfg_group_tls {
+struct cfg_group_tls
+{
 	int force_run;
 	str method;
 	str server_name;
@@ -91,8 +92,8 @@ struct cfg_group_tls {
 	int ssl_read_ahead;
 	int low_mem_threshold1;
 	int low_mem_threshold2;
-	int ct_wq_max; /* maximum overall tls write clear text queued bytes */
-	int con_ct_wq_max; /* maximum clear text write queued bytes per con */
+	int ct_wq_max;		/* maximum overall tls write clear text queued bytes */
+	int con_ct_wq_max;	/* maximum clear text write queued bytes per con */
 	int ct_wq_blk_size; /* minimum block size for the clear text write queue */
 	int send_close_notify; /* if set try to be nice and send a shutdown alert
 						    before closing the tcp connection */
@@ -100,11 +101,11 @@ struct cfg_group_tls {
 
 
 extern struct cfg_group_tls default_tls_cfg;
-extern volatile void* tls_cfg;
+extern volatile void *tls_cfg;
 extern cfg_def_t tls_cfg_def[];
 
 
-extern int fix_tls_cfg(struct cfg_group_tls* cfg);
+extern int fix_tls_cfg(struct cfg_group_tls *cfg);
 
 #endif /*__tls_cfg_h*/
 

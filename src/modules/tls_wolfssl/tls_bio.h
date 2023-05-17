@@ -28,23 +28,24 @@
 #include <wolfssl/ssl.h>
 
 /* memory buffer used for tls I/O */
-struct tls_mbuf {
-	unsigned char* buf;
+struct tls_mbuf
+{
+	unsigned char *buf;
 	int pos;  /**< current position in the buffer while reading or writing*/
 	int used; /**< how much it's used  (read or write)*/
 	int size; /**< total buffer size (fixed) */
 };
 
-struct tls_bio_mbuf_data {
-	struct tls_mbuf* rd;
-	struct tls_mbuf* wr;
+struct tls_bio_mbuf_data
+{
+	struct tls_mbuf *rd;
+	struct tls_mbuf *wr;
 };
 
 
-WOLFSSL_BIO_METHOD* tls_BIO_mbuf(void);
-WOLFSSL_BIO* tls_BIO_new_mbuf(struct tls_mbuf* rd, struct tls_mbuf* wr);
-int tls_BIO_mbuf_set(BIO* b, struct tls_mbuf* rd, struct tls_mbuf* wr);
-
+WOLFSSL_BIO_METHOD *tls_BIO_mbuf(void);
+WOLFSSL_BIO *tls_BIO_new_mbuf(struct tls_mbuf *rd, struct tls_mbuf *wr);
+int tls_BIO_mbuf_set(BIO *b, struct tls_mbuf *rd, struct tls_mbuf *wr);
 
 
 /** initialize an mbuf structure.
@@ -54,13 +55,12 @@ int tls_BIO_mbuf_set(BIO* b, struct tls_mbuf* rd, struct tls_mbuf* wr);
  * WARNING: the buffer will not be copied, but referenced.
  */
 #define tls_mbuf_init(mb, b, sz) \
-	do { \
-		(mb)->buf = (b); \
-		(mb)->size = (sz); \
-		(mb)->pos = 0; \
-		(mb)->used = 0; \
+	do {                         \
+		(mb)->buf = (b);         \
+		(mb)->size = (sz);       \
+		(mb)->pos = 0;           \
+		(mb)->used = 0;          \
 	} while(0)
-
 
 
 #endif /*__tls_bio_h*/
