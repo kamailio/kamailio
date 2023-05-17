@@ -70,29 +70,26 @@ pv_xml_t *pv_xml_get_struct(str *name)
 	docid = get_hash1_raw(name->s, name->len);
 	it = _pv_xml_root;
 
-	while(it!=NULL)
-	{
-		if(docid == it->docid && name->len==it->docname.len
-				&& strncmp(name->s, it->docname.s, name->len)==0)
-		{
+	while(it != NULL) {
+		if(docid == it->docid && name->len == it->docname.len
+				&& strncmp(name->s, it->docname.s, name->len) == 0) {
 			LM_DBG("doc found [%.*s]\n", name->len, name->s);
 			return it;
 		}
 		it = it->next;
 	}
 
-	it = (pv_xml_t*)pkg_malloc(sizeof(pv_xml_t)+2*(pv_xml_buf_size+1));
-	if(it==NULL)
-	{
+	it = (pv_xml_t *)pkg_malloc(sizeof(pv_xml_t) + 2 * (pv_xml_buf_size + 1));
+	if(it == NULL) {
 		PKG_MEM_ERROR;
 		return NULL;
 	}
-	memset(it, 0, sizeof(pv_xml_t)+2*(pv_xml_buf_size+1));
+	memset(it, 0, sizeof(pv_xml_t) + 2 * (pv_xml_buf_size + 1));
 
 	it->docid = docid;
 	it->docname = *name;
-	it->inbuf.s = (char*)it + sizeof(pv_xml_t);
-	it->outbuf.s = it->inbuf.s + pv_xml_buf_size+1;
+	it->inbuf.s = (char *)it + sizeof(pv_xml_t);
+	it->outbuf.s = it->inbuf.s + pv_xml_buf_size + 1;
 
 	it->next = _pv_xml_root;
 	_pv_xml_root = it;
@@ -108,53 +105,49 @@ int pv_xpath_nodes_eval(pv_xml_t *xdoc)
 	xmlChar *keyword;
 	xmlBufferPtr psBuf;
 
-	if(xdoc==NULL || xdoc->doc==NULL || xdoc->xpathCtx==NULL
-			|| xdoc->xpathObj==NULL)
+	if(xdoc == NULL || xdoc->doc == NULL || xdoc->xpathCtx == NULL
+			|| xdoc->xpathObj == NULL)
 		return -1;
 
 	nodes = xdoc->xpathObj->nodesetval;
-	if(nodes==NULL)
-	{
+	if(nodes == NULL) {
 		xdoc->outbuf.len = 0;
 		xdoc->outbuf.s[xdoc->outbuf.len] = '\0';
 		return 0;
 	}
 	size = nodes->nodeNr;
 	p = xdoc->outbuf.s;
-	for(i = 0; i < size; ++i)
-	{
-		if(nodes->nodeTab[i]==NULL)
+	for(i = 0; i < size; ++i) {
+		if(nodes->nodeTab[i] == NULL)
 			continue;
-		if(i!=0)
-		{
+		if(i != 0) {
 			*p = ',';
 			p++;
 		}
-		if(nodes->nodeTab[i]->type == XML_ATTRIBUTE_NODE)
-		{
-			keyword = xmlNodeListGetString(xdoc->doc,
-				nodes->nodeTab[i]->children, 0);
-			if(keyword != NULL)
-			{
-				strcpy(p, (char*)keyword);
-				p += strlen((char*)keyword);
+		if(nodes->nodeTab[i]->type == XML_ATTRIBUTE_NODE) {
+			keyword = xmlNodeListGetString(
+					xdoc->doc, nodes->nodeTab[i]->children, 0);
+			if(keyword != NULL) {
+				strcpy(p, (char *)keyword);
+				p += strlen((char *)keyword);
 				xmlFree(keyword);
 				keyword = NULL;
 			}
 		} else {
-			if(nodes->nodeTab[i]->content!=NULL)
-			{
-				strcpy(p, (char*)nodes->nodeTab[i]->content);
-				p += strlen((char*)nodes->nodeTab[i]->content);
+			if(nodes->nodeTab[i]->content != NULL) {
+				strcpy(p, (char *)nodes->nodeTab[i]->content);
+				p += strlen((char *)nodes->nodeTab[i]->content);
 			} else {
 				psBuf = xmlBufferCreate();
-				if(psBuf != NULL && xmlNodeDump(psBuf, xdoc->doc,
-						nodes->nodeTab[i], 0, 0)>0)
-				{
-					strcpy(p, (char*)xmlBufferContent(psBuf));
-					p += strlen((char*)xmlBufferContent(psBuf));
+				if(psBuf != NULL
+						&& xmlNodeDump(
+								   psBuf, xdoc->doc, nodes->nodeTab[i], 0, 0)
+								   > 0) {
+					strcpy(p, (char *)xmlBufferContent(psBuf));
+					p += strlen((char *)xmlBufferContent(psBuf));
 				}
-				if(psBuf != NULL) xmlBufferFree(psBuf);
+				if(psBuf != NULL)
+					xmlBufferFree(psBuf);
 				psBuf = NULL;
 			}
 		}
@@ -167,24 +160,23 @@ int pv_xpath_nodes_eval(pv_xml_t *xdoc)
 int pv_xpath_nodes_update(pv_xml_t *xdoc, str *val)
 {
 	xmlNodeSetPtr nodes;
-	const xmlChar* value;
+	const xmlChar *value;
 	int size;
 	int i;
 
-	if(xdoc==NULL || xdoc->doc==NULL || xdoc->xpathCtx==NULL
-			|| xdoc->xpathObj==NULL || val==NULL)
+	if(xdoc == NULL || xdoc->doc == NULL || xdoc->xpathCtx == NULL
+			|| xdoc->xpathObj == NULL || val == NULL)
 		return -1;
-	if(val->len>pv_xml_buf_size)
-	{
+	if(val->len > pv_xml_buf_size) {
 		LM_ERR("internal buffer overflow - %d\n", val->len);
 		return -1;
 	}
 	nodes = xdoc->xpathObj->nodesetval;
-	if(nodes==NULL)
+	if(nodes == NULL)
 		return 0;
 	size = nodes->nodeNr;
 
-	value = (const xmlChar*)xdoc->outbuf.s;
+	value = (const xmlChar *)xdoc->outbuf.s;
 	memcpy(xdoc->outbuf.s, val->s, val->len);
 	xdoc->outbuf.s[val->len] = '\0';
 	xdoc->outbuf.len = val->len;
@@ -198,7 +190,7 @@ int pv_xpath_nodes_update(pv_xml_t *xdoc, str *val)
 	 *       done carefully !
 	 */
 	for(i = size - 1; i >= 0; i--) {
-		if(nodes->nodeTab[i]==NULL)
+		if(nodes->nodeTab[i] == NULL)
 			continue;
 
 		xmlNodeSetContent(nodes->nodeTab[i], value);
@@ -219,7 +211,7 @@ int pv_xpath_nodes_update(pv_xml_t *xdoc, str *val)
 		 *   - remove the reference to the modified nodes from the node set
 		 *     as they are processed, if they are not namespace nodes.
 		 */
-		if (nodes->nodeTab[i]->type != XML_NAMESPACE_DECL)
+		if(nodes->nodeTab[i]->type != XML_NAMESPACE_DECL)
 			nodes->nodeTab[i] = NULL;
 	}
 	xdoc->outbuf.s[0] = '\0';
@@ -232,36 +224,33 @@ void pv_xml_register_ns(xmlXPathContextPtr xpathCtx)
 	param_t *ns;
 	ns = _pv_xml_ns_root;
 	while(ns) {
-		xmlXPathRegisterNs(xpathCtx, (xmlChar*)ns->name.s,
-				(xmlChar*)ns->body.s);
+		xmlXPathRegisterNs(
+				xpathCtx, (xmlChar *)ns->name.s, (xmlChar *)ns->body.s);
 		ns = ns->next;
 	}
 }
 
-int pv_get_xml(struct sip_msg *msg,  pv_param_t *param,
-		pv_value_t *res)
+int pv_get_xml(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	pv_xml_spec_t *pxs = NULL;
 	str xpaths;
 	int size = 0;
 	xmlChar *xmem = NULL;
 
-	pxs = (pv_xml_spec_t*)param->pvn.u.dname;
-	if(pxs->xdoc==NULL)
+	pxs = (pv_xml_spec_t *)param->pvn.u.dname;
+	if(pxs->xdoc == NULL)
 		return -1;
 
 	switch(pxs->type) {
 		case 0:
 			/* get document */
-			if(pxs->xdoc->inbuf.len<=0)
+			if(pxs->xdoc->inbuf.len <= 0)
 				return pv_get_null(msg, param, res);
 			if(pxs->xdoc->doc == NULL || pxs->xdoc->updated == 0)
 				return pv_get_strval(msg, param, res, &pxs->xdoc->inbuf);
 			xmlDocDumpMemory(pxs->xdoc->doc, &xmem, &size);
-			if(xmem!=NULL)
-			{
-				if(size>pv_xml_buf_size)
-				{
+			if(xmem != NULL) {
+				if(size > pv_xml_buf_size) {
 					xmlFree(xmem);
 					return pv_get_null(msg, param, res);
 				}
@@ -272,31 +261,27 @@ int pv_get_xml(struct sip_msg *msg,  pv_param_t *param,
 				return pv_get_strval(msg, param, res, &pxs->xdoc->outbuf);
 			}
 			return pv_get_null(msg, param, res);
-		break;
+			break;
 		case 1:
 			/* get xpath element */
-			if(pxs->xdoc->doc == NULL)
-			{
-				if(pxs->xdoc->inbuf.len<=0)
+			if(pxs->xdoc->doc == NULL) {
+				if(pxs->xdoc->inbuf.len <= 0)
 					return pv_get_null(msg, param, res);
-				pxs->xdoc->doc = xmlParseMemory(pxs->xdoc->inbuf.s,
-						pxs->xdoc->inbuf.len);
+				pxs->xdoc->doc = xmlParseMemory(
+						pxs->xdoc->inbuf.s, pxs->xdoc->inbuf.len);
 				if(pxs->xdoc->doc == NULL)
 					return pv_get_null(msg, param, res);
 			}
-			if(pxs->xdoc->xpathCtx == NULL)
-			{
+			if(pxs->xdoc->xpathCtx == NULL) {
 				pxs->xdoc->xpathCtx = xmlXPathNewContext(pxs->xdoc->doc);
-				if(pxs->xdoc->xpathCtx == NULL)
-				{
+				if(pxs->xdoc->xpathCtx == NULL) {
 					LM_ERR("unable to create new XPath context\n");
 					xmlFreeDoc(pxs->xdoc->doc);
 					pxs->xdoc->doc = NULL;
 					return pv_get_null(msg, param, res);
 				}
 			}
-			if(pv_printf_s(msg, pxs->pve, &xpaths)!=0)
-			{
+			if(pv_printf_s(msg, pxs->pve, &xpaths) != 0) {
 				LM_ERR("cannot get xpath string\n");
 				return pv_get_null(msg, param, res);
 			}
@@ -304,9 +289,8 @@ int pv_get_xml(struct sip_msg *msg,  pv_param_t *param,
 			/* Evaluate xpath expression */
 			pv_xml_register_ns(pxs->xdoc->xpathCtx);
 			pxs->xdoc->xpathObj = xmlXPathEvalExpression(
-					(const xmlChar*)xpaths.s, pxs->xdoc->xpathCtx);
-			if(pxs->xdoc->xpathObj == NULL)
-			{
+					(const xmlChar *)xpaths.s, pxs->xdoc->xpathCtx);
+			if(pxs->xdoc->xpathObj == NULL) {
 				LM_ERR("unable to evaluate xpath expression [%s/%d]\n",
 						xpaths.s, xpaths.len);
 				xmlXPathFreeContext(pxs->xdoc->xpathCtx);
@@ -316,8 +300,7 @@ int pv_get_xml(struct sip_msg *msg,  pv_param_t *param,
 				return pv_get_null(msg, param, res);
 			}
 			/* Print results */
-			if(pv_xpath_nodes_eval(pxs->xdoc)<0)
-			{
+			if(pv_xpath_nodes_eval(pxs->xdoc) < 0) {
 				xmlXPathFreeObject(pxs->xdoc->xpathObj);
 				xmlXPathFreeContext(pxs->xdoc->xpathCtx);
 				xmlFreeDoc(pxs->xdoc->doc);
@@ -329,39 +312,35 @@ int pv_get_xml(struct sip_msg *msg,  pv_param_t *param,
 			xmlXPathFreeObject(pxs->xdoc->xpathObj);
 			pxs->xdoc->xpathObj = NULL;
 			return pv_get_strval(msg, param, res, &pxs->xdoc->outbuf);
-		break;
+			break;
 		default:
 			return pv_get_null(msg, param, res);
 	}
 }
 
-int pv_set_xml(struct sip_msg* msg, pv_param_t *param,
-		int op, pv_value_t *val)
+int pv_set_xml(struct sip_msg *msg, pv_param_t *param, int op, pv_value_t *val)
 {
 	pv_xml_spec_t *pxs = NULL;
 	str xpaths;
 
-	pxs = (pv_xml_spec_t*)param->pvn.u.dname;
-	if(pxs->xdoc==NULL)
+	pxs = (pv_xml_spec_t *)param->pvn.u.dname;
+	if(pxs->xdoc == NULL)
 		return -1;
-	if(!(val->flags&PV_VAL_STR))
+	if(!(val->flags & PV_VAL_STR))
 		return -1;
 
 	switch(pxs->type) {
 		case 0:
 			/* set document */
-			if(pxs->xdoc->doc!=NULL)
-			{
-				if(pxs->xdoc->xpathCtx!=NULL)
-				{
+			if(pxs->xdoc->doc != NULL) {
+				if(pxs->xdoc->xpathCtx != NULL) {
 					xmlXPathFreeContext(pxs->xdoc->xpathCtx);
 					pxs->xdoc->xpathCtx = NULL;
 				}
 				xmlFreeDoc(pxs->xdoc->doc);
 				pxs->xdoc->doc = NULL;
 			}
-			if(val->rs.len>pv_xml_buf_size)
-			{
+			if(val->rs.len > pv_xml_buf_size) {
 				LM_ERR("local buffer overflow - %d\n", val->rs.len);
 				return -1;
 			}
@@ -370,40 +349,35 @@ int pv_set_xml(struct sip_msg* msg, pv_param_t *param,
 			pxs->xdoc->inbuf.len = val->rs.len;
 			pxs->xdoc->updated = 0;
 			return 0;
-		break;
+			break;
 		case 1:
 			/* set xpath element */
-			if(pxs->xdoc->doc == NULL)
-			{
-				if(pxs->xdoc->inbuf.len<=0)
+			if(pxs->xdoc->doc == NULL) {
+				if(pxs->xdoc->inbuf.len <= 0)
 					return -1;
-				pxs->xdoc->doc = xmlParseMemory(pxs->xdoc->inbuf.s,
-						pxs->xdoc->inbuf.len);
+				pxs->xdoc->doc = xmlParseMemory(
+						pxs->xdoc->inbuf.s, pxs->xdoc->inbuf.len);
 				if(pxs->xdoc->doc == NULL)
 					return -1;
 			}
-			if(pxs->xdoc->xpathCtx == NULL)
-			{
+			if(pxs->xdoc->xpathCtx == NULL) {
 				pxs->xdoc->xpathCtx = xmlXPathNewContext(pxs->xdoc->doc);
-				if(pxs->xdoc->xpathCtx == NULL)
-				{
+				if(pxs->xdoc->xpathCtx == NULL) {
 					LM_ERR("unable to create new XPath context\n");
 					xmlFreeDoc(pxs->xdoc->doc);
 					pxs->xdoc->doc = NULL;
 					return -1;
 				}
 			}
-			if(pv_printf_s(msg, pxs->pve, &xpaths)!=0)
-			{
+			if(pv_printf_s(msg, pxs->pve, &xpaths) != 0) {
 				LM_ERR("cannot get xpath string\n");
 				return -1;
 			}
 
 			/* Evaluate xpath expression */
 			pxs->xdoc->xpathObj = xmlXPathEvalExpression(
-					(const xmlChar*)xpaths.s, pxs->xdoc->xpathCtx);
-			if(pxs->xdoc->xpathObj == NULL)
-			{
+					(const xmlChar *)xpaths.s, pxs->xdoc->xpathCtx);
+			if(pxs->xdoc->xpathObj == NULL) {
 				LM_ERR("unable to evaluate xpath expression [%s]\n", xpaths.s);
 				xmlXPathFreeContext(pxs->xdoc->xpathCtx);
 				xmlFreeDoc(pxs->xdoc->doc);
@@ -412,8 +386,7 @@ int pv_set_xml(struct sip_msg* msg, pv_param_t *param,
 				return -1;
 			}
 			/* Set value */
-			if(pv_xpath_nodes_update(pxs->xdoc, &val->rs)<0)
-			{
+			if(pv_xpath_nodes_update(pxs->xdoc, &val->rs) < 0) {
 				LM_ERR("unable to update xpath [%s] - [%.*s]\n", xpaths.s,
 						val->rs.len, val->rs.s);
 				xmlXPathFreeObject(pxs->xdoc->xpathObj);
@@ -428,7 +401,7 @@ int pv_set_xml(struct sip_msg* msg, pv_param_t *param,
 			xmlXPathFreeObject(pxs->xdoc->xpathObj);
 			pxs->xdoc->xpathObj = NULL;
 			return 0;
-		break;
+			break;
 		default:
 			return -1;
 	}
@@ -442,11 +415,11 @@ int pv_parse_xml_name(pv_spec_p sp, str *in)
 	char *p;
 	str pvs;
 
-	if(in->s==NULL || in->len<=0)
+	if(in->s == NULL || in->len <= 0)
 		return -1;
 
-	pxs = (pv_xml_spec_t*)pkg_malloc(sizeof(pv_xml_spec_t));
-	if(pxs==NULL) {
+	pxs = (pv_xml_spec_t *)pkg_malloc(sizeof(pv_xml_spec_t));
+	if(pxs == NULL) {
 		PKG_MEM_ERROR;
 		return -1;
 	}
@@ -455,29 +428,29 @@ int pv_parse_xml_name(pv_spec_p sp, str *in)
 
 	p = in->s;
 
-	while(p<in->s+in->len && (*p==' ' || *p=='\t' || *p=='\n' || *p=='\r'))
+	while(p < in->s + in->len
+			&& (*p == ' ' || *p == '\t' || *p == '\n' || *p == '\r'))
 		p++;
-	if(p>in->s+in->len || *p=='\0')
+	if(p > in->s + in->len || *p == '\0')
 		goto error;
 	pxs->docname.s = p;
-	while(p < in->s + in->len)
-	{
-		if(*p=='=' || *p==' ' || *p=='\t' || *p=='\n' || *p=='\r')
+	while(p < in->s + in->len) {
+		if(*p == '=' || *p == ' ' || *p == '\t' || *p == '\n' || *p == '\r')
 			break;
 		p++;
 	}
-	if(p>in->s+in->len || *p=='\0')
+	if(p > in->s + in->len || *p == '\0')
 		goto error;
 	pxs->docname.len = p - pxs->docname.s;
-	if(*p!='=')
-	{
-		while(p<in->s+in->len && (*p==' ' || *p=='\t' || *p=='\n' || *p=='\r'))
+	if(*p != '=') {
+		while(p < in->s + in->len
+				&& (*p == ' ' || *p == '\t' || *p == '\n' || *p == '\r'))
 			p++;
-		if(p>in->s+in->len || *p=='\0' || *p!='=')
+		if(p > in->s + in->len || *p == '\0' || *p != '=')
 			goto error;
 	}
 	p++;
-	if(*p!='>')
+	if(*p != '>')
 		goto error;
 	p++;
 
@@ -485,15 +458,14 @@ int pv_parse_xml_name(pv_spec_p sp, str *in)
 	pvs.s = p;
 	LM_DBG("xmldoc [%.*s] - key [%.*s]\n", pxs->docname.len, pxs->docname.s,
 			pvs.len, pvs.s);
-	if(pvs.len>=3 && strncmp(pvs.s, "doc", 3)==0) {
+	if(pvs.len >= 3 && strncmp(pvs.s, "doc", 3) == 0) {
 		pxs->type = 0;
-	} else if(pvs.len>6 && strncmp(pvs.s, "xpath:", 6)==0) {
+	} else if(pvs.len > 6 && strncmp(pvs.s, "xpath:", 6) == 0) {
 		pvs.s += 6;
 		pvs.len -= 6;
 		pxs->type = 1;
 		LM_DBG("*** xpath expr [%.*s]\n", pvs.len, pvs.s);
-		if(pv_parse_format(&pvs, &pxs->pve)<0 || pxs->pve==NULL)
-		{
+		if(pv_parse_format(&pvs, &pxs->pve) < 0 || pxs->pve == NULL) {
 			LM_ERR("wrong xpath format [%.*s]\n", in->len, in->s);
 			goto error;
 		}
@@ -502,12 +474,12 @@ int pv_parse_xml_name(pv_spec_p sp, str *in)
 		goto error;
 	}
 	pxs->xdoc = pv_xml_get_struct(&pxs->docname);
-	sp->pvp.pvn.u.dname = (void*)pxs;
+	sp->pvp.pvn.u.dname = (void *)pxs;
 	sp->pvp.pvn.type = PV_NAME_OTHER;
 	return 0;
 
 error:
-	if(pxs!=NULL)
+	if(pxs != NULL)
 		pkg_free(pxs);
 	return -1;
 }
@@ -517,27 +489,25 @@ int pv_xml_ns_param(modparam_t type, void *val)
 	char *p;
 	param_t *ns;
 
-	if(val==NULL)
+	if(val == NULL)
 		goto error;
-	ns = (param_t*)pkg_malloc(sizeof(param_t));
+	ns = (param_t *)pkg_malloc(sizeof(param_t));
 
-	if(ns==NULL)
-	{
+	if(ns == NULL) {
 		PKG_MEM_ERROR;
 		goto error;
 	}
 	memset(ns, 0, sizeof(param_t));
 
-	p = strchr((const char*)val, '=');
-	if(p==NULL)
-	{
+	p = strchr((const char *)val, '=');
+	if(p == NULL) {
 		ns->name.s = "";
-		ns->body.s = (char*)val;
+		ns->body.s = (char *)val;
 		ns->body.len = strlen(ns->body.s);
 	} else {
 		*p = 0;
 		p++;
-		ns->name.s = (char*)val;
+		ns->name.s = (char *)val;
 		ns->name.len = strlen(ns->name.s);
 		ns->body.s = p;
 		ns->body.len = strlen(ns->body.s);
@@ -547,6 +517,4 @@ int pv_xml_ns_param(modparam_t type, void *val)
 	return 0;
 error:
 	return -1;
-
 }
-
