@@ -24,7 +24,7 @@
 #define MANGLER_MOD_H
 
 #include "../../core/str.h"
-#include "../../core/parser/msg_parser.h"	/* struct sip_msg */
+#include "../../core/parser/msg_parser.h" /* struct sip_msg */
 #include "sdp_mangler.h"
 #include "contact_ops.h"
 

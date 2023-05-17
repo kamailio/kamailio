@@ -26,6 +26,6 @@
 
 /* #define STRICT_CHECK 1 */
 //#define DEBUG 1
-//#define DEMO 1 /* for mangler.c */ 
+//#define DEMO 1 /* for mangler.c */
 
 #endif

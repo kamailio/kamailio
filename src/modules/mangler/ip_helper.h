@@ -23,13 +23,13 @@
 #ifndef IP_HELPER_H
 #define IP_HELPER_H
 
-unsigned int net_address (unsigned int address, unsigned int mask);
-int same_net (unsigned int ip, unsigned int address, unsigned int mask);
-void ip2str (unsigned int address, char **rr);
-int is_positive_number (char *str);
-int parse_ip_address (char *c, unsigned int *address);
-int parse_ip_netmask (char *c, char **ip, unsigned int *mask);
-unsigned int make_mask (unsigned int length);
+unsigned int net_address(unsigned int address, unsigned int mask);
+int same_net(unsigned int ip, unsigned int address, unsigned int mask);
+void ip2str(unsigned int address, char **rr);
+int is_positive_number(char *str);
+int parse_ip_address(char *c, unsigned int *address);
+int parse_ip_netmask(char *c, char **ip, unsigned int *mask);
+unsigned int make_mask(unsigned int length);
 
 
 #endif

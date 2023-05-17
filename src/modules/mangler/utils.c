@@ -22,37 +22,33 @@
 
 #include "utils.h"
 
-#include "../../core/parser/msg_parser.h"	/* struct sip_msg */
+#include "../../core/parser/msg_parser.h" /* struct sip_msg */
 #include "../../core/mem/mem.h"
 #include "../../core/data_lump.h"
 
 #include <stdio.h>
 
 
-int
-patch (struct sip_msg *msg, char *oldstr, unsigned int oldlen, char *newstr,
-       unsigned int newlen)
+int patch(struct sip_msg *msg, char *oldstr, unsigned int oldlen, char *newstr,
+		unsigned int newlen)
 {
 	int off;
 	struct lump *anchor;
 
-	if (oldstr == NULL)
+	if(oldstr == NULL)
 		return -1;
 
-	if (newstr == NULL)
+	if(newstr == NULL)
 		return -2;
 	off = oldstr - msg->buf;
-	if (off < 0)
+	if(off < 0)
 		return -3;
-	if ((anchor = del_lump (msg, off, oldlen, 0)) == 0)
-	{
-		LOG (L_ERR, "ERROR: patch: error lumping with del_lump\n");
+	if((anchor = del_lump(msg, off, oldlen, 0)) == 0) {
+		LOG(L_ERR, "ERROR: patch: error lumping with del_lump\n");
 		return -4;
 	}
-	if ((insert_new_lump_after (anchor, newstr, newlen, 0)) == 0)
-	{
-		LOG (L_ERR,
-		     "ERROR: patch: error lumping with insert_new_lump_after\n");
+	if((insert_new_lump_after(anchor, newstr, newlen, 0)) == 0) {
+		LOG(L_ERR, "ERROR: patch: error lumping with insert_new_lump_after\n");
 		return -5;
 	}
 
@@ -61,8 +57,7 @@ patch (struct sip_msg *msg, char *oldstr, unsigned int oldlen, char *newstr,
 
 
 /* TESTED */
-int
-patch_content_length (struct sip_msg *msg, unsigned int newValue)
+int patch_content_length(struct sip_msg *msg, unsigned int newValue)
 {
 
 	struct hdr_field *contentLength;
@@ -70,41 +65,40 @@ patch_content_length (struct sip_msg *msg, unsigned int newValue)
 	int len;
 
 	contentLength = msg->content_length;
-	if (contentLength == NULL)	/* maybe not yet parsed */
+	if(contentLength == NULL) /* maybe not yet parsed */
 	{
-		if (parse_headers (msg, HDR_CONTENTLENGTH_F, 0) == -1)
-		{
-			LOG (L_ERR,"ERROR: patch_content_length: parse headers on Content-Length failed\n");
+		if(parse_headers(msg, HDR_CONTENTLENGTH_F, 0) == -1) {
+			LOG(L_ERR, "ERROR: patch_content_length: parse headers on "
+					   "Content-Length failed\n");
 			return -1;
 		}
 		contentLength = msg->content_length;
-		if (contentLength == NULL)
-		{
-			LOG (L_ERR,"ERROR: patch_content_length: parse headers on Content-Length succeeded but msg->content_length is still NULL\n");
+		if(contentLength == NULL) {
+			LOG(L_ERR, "ERROR: patch_content_length: parse headers on "
+					   "Content-Length succeeded but msg->content_length is "
+					   "still NULL\n");
 			return -2;
 		}
 	}
 	/* perhaps dangerous because buffer is static ? */
 	//pos = int2str(newValue,&len);
-	len = snprintf ((char *) pos, 10, "%u", newValue);
-	s = pkg_malloc (len);
-	if (s == NULL)
-	{
-		LOG (L_ERR, "ERROR: patch_content_length: unable to allocate %d bytes\n", len);
+	len = snprintf((char *)pos, 10, "%u", newValue);
+	s = pkg_malloc(len);
+	if(s == NULL) {
+		LOG(L_ERR, "ERROR: patch_content_length: unable to allocate %d bytes\n",
+				len);
 		return -3;
 	}
-	memcpy (s, pos, len);
+	memcpy(s, pos, len);
 	/* perhaps we made it and no one called int2str,might use sprintf */
-	if (patch
-	    (msg, contentLength->body.s, contentLength->body.len, s, len) < 0)
-	{
-		pkg_free (s);
-		LOG (L_ERR, "ERROR: patch_content_length: lumping failed\n");
+	if(patch(msg, contentLength->body.s, contentLength->body.len, s, len) < 0) {
+		pkg_free(s);
+		LOG(L_ERR, "ERROR: patch_content_length: lumping failed\n");
 		return -4;
 	}
 
-	DBG ("DEBUG: Succeeded in altering Content-Length to new value %u\n",newValue);
+	DBG("DEBUG: Succeeded in altering Content-Length to new value %u\n",
+			newValue);
 
 	return 0;
-
 }

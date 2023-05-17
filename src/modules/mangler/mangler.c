@@ -52,14 +52,13 @@ MODULE_VERSION
 /*
  * Module destroy function prototype
  */
-static void destroy (void);
-
+static void destroy(void);
 
 
 /*
  * Module initialization function prototype
  */
-static int mod_init (void);
+static int mod_init(void);
 
 #if 0 /* not used -- Wall complains */
 /* Header field fixup */
@@ -72,119 +71,119 @@ static int fixup_char2uint (void **param, int param_no);
 char *contact_flds_separator = DEFAULT_SEPARATOR;
 
 
-
 static param_export_t params[] = {
-								{"contact_flds_separator",PARAM_STRING,&contact_flds_separator},
-								{0, 0, 0}
-								};	/*no params exported,perhaps I should add pre-compiled expressions */
-
+		{"contact_flds_separator", PARAM_STRING, &contact_flds_separator},
+		{0, 0, 0}}; /*no params exported,perhaps I should add pre-compiled expressions */
 
 
 /*
  * Exported functions
  */
-static cmd_export_t cmds[] =
-{
-	{"sdp_mangle_ip", sdp_mangle_ip, 2,0,0, REQUEST_ROUTE|ONREPLY_ROUTE}, // fixup_char2str?
-	{"sdp_mangle_port",sdp_mangle_port, 1,0,0, REQUEST_ROUTE|ONREPLY_ROUTE},// fixup_char2int if I use an int as offset
-	{"encode_contact",encode_contact,2,0,0,REQUEST_ROUTE|ONREPLY_ROUTE},//fixup_char2str
-	{"decode_contact",decode_contact,0,0,0,REQUEST_ROUTE},
-	{"decode_contact_header",decode_contact_header,0,0,0,REQUEST_ROUTE|ONREPLY_ROUTE},
-	{0, 0, 0, 0, 0, 0}
-};
+static cmd_export_t cmds[] = {
+		{"sdp_mangle_ip", sdp_mangle_ip, 2, 0, 0,
+				REQUEST_ROUTE | ONREPLY_ROUTE}, // fixup_char2str?
+		{"sdp_mangle_port", sdp_mangle_port, 1, 0, 0,
+				REQUEST_ROUTE
+						| ONREPLY_ROUTE}, // fixup_char2int if I use an int as offset
+		{"encode_contact", encode_contact, 2, 0, 0,
+				REQUEST_ROUTE | ONREPLY_ROUTE}, //fixup_char2str
+		{"decode_contact", decode_contact, 0, 0, 0, REQUEST_ROUTE},
+		{"decode_contact_header", decode_contact_header, 0, 0, 0,
+				REQUEST_ROUTE | ONREPLY_ROUTE},
+		{0, 0, 0, 0, 0, 0}};
 
 
 /*
  * Module interface
  */
 struct module_exports exports = {
-	"mangler",       /* module name */
-	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,            /* cmd (cfg function) exports */
-	params,          /* param exports */
-	0,               /* RPC method exports */
-	0,               /* pseudo-variables exports */
-	0,               /* response handling function */
-	mod_init,        /* module init function */
-	0,               /* per-child init function */
-	destroy          /* module destroy function */
+		"mangler",		 /* module name */
+		DEFAULT_DLFLAGS, /* dlopen flags */
+		cmds,			 /* cmd (cfg function) exports */
+		params,			 /* param exports */
+		0,				 /* RPC method exports */
+		0,				 /* pseudo-variables exports */
+		0,				 /* response handling function */
+		mod_init,		 /* module init function */
+		0,				 /* per-child init function */
+		destroy			 /* module destroy function */
 };
 
 
 #ifdef DEMO
 /* MANGLING EXAMPLE */
 /* ================================================================= */
-static void func_invite(struct cell *t,struct sip_msg *msg,int code,void *param)
+static void func_invite(
+		struct cell *t, struct sip_msg *msg, int code, void *param)
 {
 	int i;
 	//callback function
-	if (!check_transaction_quadruple(msg))
-		{
+	if(!check_transaction_quadruple(msg)) {
 		//we do not have a correct message from/callid/cseq/to
 		return;
-		}
-	i = encode_contact(msg,"enc_prefix","193.175.135.38");
-	fprintf(stdout,"decode/encode = returned %d\n",i);fflush(stdout);
+	}
+	i = encode_contact(msg, "enc_prefix", "193.175.135.38");
+	fprintf(stdout, "decode/encode = returned %d\n", i);
+	fflush(stdout);
 
-	if (t->is_invite)
-		{
-			if (msg->buf != NULL)
-			{
-			fprintf(stdout,"INVITE:received \n%s\n",msg->buf);fflush(stdout);
-			i = sdp_mangle_port(msg,"1000",NULL);
-			fprintf(stdout,"sdp_mangle_port returned %d\n",i);fflush(stdout);
-			i = sdp_mangle_ip(msg,"10.0.0.0/16","123.124.125.126");
-			fprintf(stdout,"sdp_mangle_ip returned %d\n",i);fflush(stdout);
+	if(t->is_invite) {
+		if(msg->buf != NULL) {
+			fprintf(stdout, "INVITE:received \n%s\n", msg->buf);
+			fflush(stdout);
+			i = sdp_mangle_port(msg, "1000", NULL);
+			fprintf(stdout, "sdp_mangle_port returned %d\n", i);
+			fflush(stdout);
+			i = sdp_mangle_ip(msg, "10.0.0.0/16", "123.124.125.126");
+			fprintf(stdout, "sdp_mangle_ip returned %d\n", i);
+			fflush(stdout);
 
-			}
-			else fprintf(stdout,"INVITE:received NULL\n");fflush(stdout);
-		}
-	else
-		{
-			fprintf(stdout,"NOT INVITE(REGISTER?) received \n%s\n",msg->buf);fflush(stdout);
-			//i = decode_contact(msg,NULL,NULL);
-			//fprintf(stdout,"decode/encode = returned %d\n",i);fflush(stdout);
-		}
+		} else
+			fprintf(stdout, "INVITE:received NULL\n");
+		fflush(stdout);
+	} else {
+		fprintf(stdout, "NOT INVITE(REGISTER?) received \n%s\n", msg->buf);
+		fflush(stdout);
+		//i = decode_contact(msg,NULL,NULL);
+		//fprintf(stdout,"decode/encode = returned %d\n",i);fflush(stdout);
+	}
 	fflush(stdout);
 }
 
 #endif
 
 
-int
-prepare ()
+int prepare()
 {
 
 	/* using pre-compiled expressions to speed things up*/
-	compile_expresions(PORT_REGEX,IP_REGEX);
+	compile_expresions(PORT_REGEX, IP_REGEX);
 
 #ifdef DEMO
 	load_tm_f load_tm;
 
 
-	fprintf(stdout,"===============NEW RUN================\n");
+	fprintf(stdout, "===============NEW RUN================\n");
 	//register callbacks
 
-	if (!(load_tm=(load_tm_f)find_export("load_tm",NO_SCRIPT,0)))
-	{
+	if(!(load_tm = (load_tm_f)find_export("load_tm", NO_SCRIPT, 0))) {
 		printf("Error:FCP:prepare:cannot import load_tm\n");
 		return -1;
 	}
-	if (load_tm(&tmb)==-1) return -1;
+	if(load_tm(&tmb) == -1)
+		return -1;
 
-	if (tmb.register_tmcb(TMCB_REQUEST_OUT, func_invite, 0, 0) <= 0) return -1;
+	if(tmb.register_tmcb(TMCB_REQUEST_OUT, func_invite, 0, 0) <= 0)
+		return -1;
 #endif
 	return 0;
 }
 
 
-
-static int
-mod_init (void)
+static int mod_init(void)
 {
 	ipExpression = NULL;
 	portExpression = NULL;
-	prepare ();
+	prepare();
 	/*
 	 * Might consider to compile at load time some regex to avoid compilation
 	 * every time I use this functions
@@ -193,49 +192,44 @@ mod_init (void)
 }
 
 
-static void
-destroy (void)
+static void destroy(void)
 {
 	/*free some compiled regex expressions */
 	free_compiled_expresions();
 #ifdef DEMO
-	fprintf(stdout,"Freeing pre-compiled expressions\n");
+	fprintf(stdout, "Freeing pre-compiled expressions\n");
 #endif
 
 	return;
 }
 
 #ifdef O
-static int fixup_char2int (void **param, int param_no)
+static int fixup_char2int(void **param, int param_no)
 {
-	int offset,res;
-	if (param_no == 1)
-	{
-		res = sscanf(*param,"%d",&offset);
-		if (res != 1)
-			{
-			LOG (L_ERR,"fixup_char2int:Invalid value %s\n",(char *)(*param));
+	int offset, res;
+	if(param_no == 1) {
+		res = sscanf(*param, "%d", &offset);
+		if(res != 1) {
+			LOG(L_ERR, "fixup_char2int:Invalid value %s\n", (char *)(*param));
 			return -1;
-			}
+		}
 		free(*param);
-		*param = (void *)offset;/* value of offset */
+		*param = (void *)offset; /* value of offset */
 	}
 
 	return 0;
 }
 
-static int fixup_char2uint (void **param, int param_no)
+static int fixup_char2uint(void **param, int param_no)
 {
 	int res;
 	unsigned int newContentLength;
-	if (param_no == 1)
-	{
-		res = sscanf(*param,"%u",&newContentLength);
-		if (res != 1)
-			{
-			LOG (L_ERR,"fixup_char2uint:Invalid value %s\n",(char *)*param);
+	if(param_no == 1) {
+		res = sscanf(*param, "%u", &newContentLength);
+		if(res != 1) {
+			LOG(L_ERR, "fixup_char2uint:Invalid value %s\n", (char *)*param);
 			return -1;
-			}
+		}
 		free(*param);
 		*param = (void *)newContentLength;
 	}
@@ -244,36 +238,30 @@ static int fixup_char2uint (void **param, int param_no)
 }
 
 
-
-static int fixup_char2str(void** param, int param_no)
+static int fixup_char2str(void **param, int param_no)
 {
-	str* s;
+	str *s;
 
-	if (param_no == 1)
-	{
-		s = (str*)pkg_malloc(sizeof(str));
-		if (!s)
-		{
+	if(param_no == 1) {
+		s = (str *)pkg_malloc(sizeof(str));
+		if(!s) {
 			LOG(L_ERR, "fixup_char2str: No memory left\n");
 			return E_UNSPEC;
 		}
 
-		s->s = (char*)*param;
+		s->s = (char *)*param;
 		s->len = strlen(s->s);
-		*param = (void*)s;
-	}
-	else if (param_no == 2)
-	{
-		s = (str*)pkg_malloc(sizeof(str));
-		if (!s)
-		{
+		*param = (void *)s;
+	} else if(param_no == 2) {
+		s = (str *)pkg_malloc(sizeof(str));
+		if(!s) {
 			LOG(L_ERR, "fixup_char2str: No memory left\n");
 			return E_UNSPEC;
 		}
 
-		s->s = (char*)*param;
+		s->s = (char *)*param;
 		s->len = strlen(s->s);
-		*param = (void*)s;
+		*param = (void *)s;
 	}
 
 	return 0;
