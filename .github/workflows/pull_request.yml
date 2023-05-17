@@ -9,6 +9,12 @@ name: checks_pr
 permissions:
   contents: read # to fetch code (actions/checkout)
 jobs:
+  check-format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: wolletd/clang-format-checker@v1
+        with:
+          target-ref: main
   build:
     runs-on: ubuntu-latest
     container:
