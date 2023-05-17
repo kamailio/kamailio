@@ -88,10 +88,10 @@ extern extract_sdialog_info_t pres_extract_sdialog_info;
 /*
  * Matching algorithms
  */
-#define CONTACT_ONLY            (0)
-#define CONTACT_CALLID          (1)
-#define CONTACT_PATH		(2)
-#define CONTACT_PORT_IP_ONLY    (3)
+#define CONTACT_ONLY (0)
+#define CONTACT_CALLID (1)
+#define CONTACT_PATH (2)
+#define CONTACT_PORT_IP_ONLY (3)
 
 extern int matching_mode;
 

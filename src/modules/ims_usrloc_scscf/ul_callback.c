@@ -63,15 +63,14 @@
 #include "ul_callback.h"
 #include "ucontact.h"
 
-struct ulcb_head_list* ulcb_list = 0;
-
+struct ulcb_head_list *ulcb_list = 0;
 
 
 int init_ulcb_list(void)
 {
-	ulcb_list = (struct ulcb_head_list*)shm_malloc
-		( sizeof(struct ulcb_head_list) );
-	if (ulcb_list==0) {
+	ulcb_list =
+			(struct ulcb_head_list *)shm_malloc(sizeof(struct ulcb_head_list));
+	if(ulcb_list == 0) {
 		LM_CRIT("no more shared mem\n");
 		return -1;
 	}
@@ -85,14 +84,15 @@ void destroy_ulcb_list(void)
 {
 	struct ul_callback *cbp, *cbp_tmp;
 
-	if (!ulcb_list)
+	if(!ulcb_list)
 		return;
 
-	for( cbp=ulcb_list->first; cbp ; ) {
+	for(cbp = ulcb_list->first; cbp;) {
 		cbp_tmp = cbp;
 		cbp = cbp->next;
-		if (cbp_tmp->param) shm_free( cbp_tmp->param );
-		shm_free( cbp_tmp );
+		if(cbp_tmp->param)
+			shm_free(cbp_tmp->param);
+		shm_free(cbp_tmp);
 	}
 
 	shm_free(ulcb_list);
@@ -101,76 +101,77 @@ void destroy_ulcb_list(void)
 /*! \brief 
 	register a callback function 'f' for 'types' mask of events;
 */
-int register_ulcb( struct impurecord* r, struct ucontact* c, int types, ul_cb f, void *param )
+int register_ulcb(struct impurecord *r, struct ucontact *c, int types, ul_cb f,
+		void *param)
 {
 	struct ul_callback *cbp;
-	int contact_cb=0;
-	int impurecord_cb=0;
+	int contact_cb = 0;
+	int impurecord_cb = 0;
 
-	struct ulcb_head_list* cb_list=0;
+	struct ulcb_head_list *cb_list = 0;
 
-	if (types & UL_IMPU_INSERT) {
-		if (types != UL_IMPU_INSERT) {
+	if(types & UL_IMPU_INSERT) {
+		if(types != UL_IMPU_INSERT) {
 			LM_CRIT("UL_IMPU_INSERT type must be registered alone!\n");
 			return -1;
 		}
 		cb_list = ulcb_list;
-	} else if (types & UL_CONTACT_INSERT) {
-		if (types != UL_CONTACT_INSERT) {
+	} else if(types & UL_CONTACT_INSERT) {
+		if(types != UL_CONTACT_INSERT) {
 			LM_CRIT("UL_CONTACT_INSERT type must be registered alone!\n");
 			return -1;
 		}
 		cb_list = ulcb_list;
 	} else {
-		contact_cb = (types & UL_CONTACT_DELETE)
-				|| (types & UL_CONTACT_EXPIRE) || (types & UL_CONTACT_UPDATE);
-		impurecord_cb = (types & UL_IMPU_DELETE)
-				|| (types & UL_IMPU_UPDATE)
-				|| (types & UL_IMPU_REG_NC_DELETE)
-				|| (types & UL_IMPU_NR_DELETE)
-				|| (types & UL_IMPU_UNREG_EXPIRED)
-				|| (types & UL_IMPU_UNREG_NC)
-				|| (types & UL_IMPU_UPDATE_CONTACT)
-                                || (types & UL_IMPU_DELETE_CONTACT)
-                                || (types & UL_IMPU_EXPIRE_CONTACT)
-                                || (types & UL_IMPU_NEW_CONTACT);
-                
+		contact_cb = (types & UL_CONTACT_DELETE) || (types & UL_CONTACT_EXPIRE)
+					 || (types & UL_CONTACT_UPDATE);
+		impurecord_cb = (types & UL_IMPU_DELETE) || (types & UL_IMPU_UPDATE)
+						|| (types & UL_IMPU_REG_NC_DELETE)
+						|| (types & UL_IMPU_NR_DELETE)
+						|| (types & UL_IMPU_UNREG_EXPIRED)
+						|| (types & UL_IMPU_UNREG_NC)
+						|| (types & UL_IMPU_UPDATE_CONTACT)
+						|| (types & UL_IMPU_DELETE_CONTACT)
+						|| (types & UL_IMPU_EXPIRE_CONTACT)
+						|| (types & UL_IMPU_NEW_CONTACT);
 
-		if (contact_cb && impurecord_cb) {
+
+		if(contact_cb && impurecord_cb) {
 			LM_CRIT("can't register IMPU and Contact callback in same call\n");
 			return -1;
 		}
-		if (contact_cb && !c) {
+		if(contact_cb && !c) {
 			LM_CRIT("no contact provided for contact callback\n");
 			return -1;
 		}
-		if (impurecord_cb && !r) {
+		if(impurecord_cb && !r) {
 			LM_CRIT("no impurecord provided for contact callback\n");
 			return -1;
 		}
 	}
 
 	/* are the callback types valid?... */
-	if ( types<0 || types>ULCB_MAX ) {
-		LM_CRIT("invalid callback types: mask=%d\n",types);
+	if(types < 0 || types > ULCB_MAX) {
+		LM_CRIT("invalid callback types: mask=%d\n", types);
 		return E_BUG;
 	}
 	/* we don't register null functions */
-	if (f==0) {
+	if(f == 0) {
 		LM_CRIT("null callback function\n");
 		return E_BUG;
 	}
 
-	if (contact_cb) {
+	if(contact_cb) {
 		LM_DBG("installing callback for SCSCF contact with type [%d]\n", types);
 		cb_list = c->cbs;
-	} else if (impurecord_cb) {
-		LM_DBG("installing callback for SCSCF IMPU record with type [%d]\n", types);
+	} else if(impurecord_cb) {
+		LM_DBG("installing callback for SCSCF IMPU record with type [%d]\n",
+				types);
 		cb_list = r->cbs;
 	}
 
 	/* build a new callback structure */
-	if (!(cbp=(struct ul_callback*)shm_malloc(sizeof( struct ul_callback)))) {
+	if(!(cbp = (struct ul_callback *)shm_malloc(sizeof(struct ul_callback)))) {
 		LM_ERR("no more share mem\n");
 		return E_OUT_OF_MEM;
 	}
@@ -183,13 +184,10 @@ int register_ulcb( struct impurecord* r, struct ucontact* c, int types, ul_cb f,
 	cbp->callback = f;
 	cbp->param = param;
 	cbp->types = types;
-	if (cbp->next)
-		cbp->id = cbp->next->id+1;
+	if(cbp->next)
+		cbp->id = cbp->next->id + 1;
 	else
 		cbp->id = 0;
 
 	return 1;
 }
-
-
-

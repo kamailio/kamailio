@@ -55,14 +55,15 @@
 /*!
  * List of all domains registered with usrloc
  */
-typedef struct dlist {
-	str name;            /*!< Name of the domain (null terminated) */
-	udomain_t* d;        /*!< Payload */
-	struct dlist* next;  /*!< Next element in the list */
+typedef struct dlist
+{
+	str name;			/*!< Name of the domain (null terminated) */
+	udomain_t *d;		/*!< Payload */
+	struct dlist *next; /*!< Next element in the list */
 } dlist_t;
 
 /*! \brief Global list of all registered domains */
-extern dlist_t* root;
+extern dlist_t *root;
 
 
 /*!
@@ -75,7 +76,7 @@ extern dlist_t* root;
  * \param _d new created domain
  * \return 0 on success, -1 on failure
  */
-int register_udomain(const char* _n, udomain_t** _d);
+int register_udomain(const char *_n, udomain_t **_d);
 
 
 /*!
@@ -88,7 +89,7 @@ void free_all_udomains(void);
  * \brief Print all domains, just for debugging
  * \param _f output file
  */
-void print_all_udomains(FILE* _f);
+void print_all_udomains(FILE *_f);
 
 
 /*!
@@ -141,7 +142,7 @@ int get_all_scontacts(void *buf, int len, unsigned int flags,
  * \param _d usrloc domain (location table)
  * \return 0 on success, -1 on failure
  */
- int get_udomain(const char* _n, udomain_t** _d);
+int get_udomain(const char *_n, udomain_t **_d);
 
 /*!
  * \brief Find a particular domain, small wrapper around find_dlist
@@ -149,7 +150,7 @@ int get_all_scontacts(void *buf, int len, unsigned int flags,
  * \param _p pointer to domain if found
  * \return 1 if domain was found, 0 otherwise
  */
-int find_domain(str* _d, udomain_t** _p);
+int find_domain(str *_d, udomain_t **_p);
 
 
 #endif

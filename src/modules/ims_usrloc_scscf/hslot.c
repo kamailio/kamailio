@@ -44,13 +44,12 @@
  */
 
 
-
 #include "hslot.h"
 
 /*! number of locks */
-int ul_locks_no=4;
+int ul_locks_no = 4;
 /*! global list of locks */
-gen_lock_set_t* ul_locks=0;
+gen_lock_set_t *ul_locks = 0;
 
 
 /*!
@@ -62,25 +61,22 @@ int ul_init_locks(void)
 	int i;
 	i = ul_locks_no;
 	do {
-		if ((( ul_locks=lock_set_alloc(i))!=0)&&
-				(lock_set_init(ul_locks)!=0))
-		{
+		if(((ul_locks = lock_set_alloc(i)) != 0)
+				&& (lock_set_init(ul_locks) != 0)) {
 			ul_locks_no = i;
 			LM_INFO("locks array size %d\n", ul_locks_no);
 			return 0;
-
 		}
-		if (ul_locks){
+		if(ul_locks) {
 			lock_set_dealloc(ul_locks);
-			ul_locks=0;
+			ul_locks = 0;
 		}
 		i--;
-		if(i==0)
-		{
+		if(i == 0) {
 			LM_ERR("failed to allocate locks\n");
 			return -1;
 		}
-	} while (1);
+	} while(1);
 }
 
 
@@ -91,10 +87,10 @@ void ul_unlock_locks(void)
 {
 	unsigned int i;
 
-	if (ul_locks==0)
+	if(ul_locks == 0)
 		return;
 
-	for (i=0;i<ul_locks_no;i++) {
+	for(i = 0; i < ul_locks_no; i++) {
 #ifdef GEN_LOCK_T_PREFERED
 		lock_release(&ul_locks->locks[i]);
 #else
@@ -109,7 +105,7 @@ void ul_unlock_locks(void)
  */
 void ul_destroy_locks(void)
 {
-	if (ul_locks !=0){
+	if(ul_locks != 0) {
 		lock_set_destroy(ul_locks);
 		lock_set_dealloc(ul_locks);
 	};
@@ -142,7 +138,7 @@ void ul_release_idx(int idx)
  * \param _s hash slot
  * \param n used to get the slot number (modulo number or locks)
  */
-void init_slot(struct udomain* _d, hslot_t* _s, int n)
+void init_slot(struct udomain *_d, hslot_t *_s, int n)
 {
 	_s->n = 0;
 	_s->first = 0;
@@ -150,9 +146,9 @@ void init_slot(struct udomain* _d, hslot_t* _s, int n)
 	_s->d = _d;
 
 #ifdef GEN_LOCK_T_PREFERED
-	_s->lock = &ul_locks->locks[n%ul_locks_no];
+	_s->lock = &ul_locks->locks[n % ul_locks_no];
 #else
-	_s->lockidx = n%ul_locks_no;
+	_s->lockidx = n % ul_locks_no;
 #endif
 }
 
@@ -161,20 +157,20 @@ void init_slot(struct udomain* _d, hslot_t* _s, int n)
  * \brief Deinitialize given slot structure
  * \param _s hash slot
  */
-void deinit_slot(hslot_t* _s)
+void deinit_slot(hslot_t *_s)
 {
-	struct impurecord* ptr;
-	
-	     /* Remove all elements */
+	struct impurecord *ptr;
+
+	/* Remove all elements */
 	while(_s->first) {
 		ptr = _s->first;
 		_s->first = _s->first->next;
 		free_impurecord(ptr);
 	}
-	
+
 	_s->n = 0;
 	_s->last = 0;
-    _s->d = 0;
+	_s->d = 0;
 }
 
 
@@ -183,9 +179,9 @@ void deinit_slot(hslot_t* _s)
  * \param _s hash slot
  * \param _r added record
  */
-void slot_add(hslot_t* _s, struct impurecord* _r)
+void slot_add(hslot_t *_s, struct impurecord *_r)
 {
-	if (_s->n == 0) {
+	if(_s->n == 0) {
 		_s->first = _s->last = _r;
 	} else {
 		_r->prev = _s->last;
@@ -202,22 +198,23 @@ void slot_add(hslot_t* _s, struct impurecord* _r)
  * \param _s hash slot
  * \param _r removed record
  */
-void slot_rem(hslot_t* _s, struct impurecord* _r)
+void slot_rem(hslot_t *_s, struct impurecord *_r)
 {
-    LM_DBG("Removing IMPU [%.*s] from hashtable\n", _r->public_identity.len, _r->public_identity.s);
-    if (_r->prev) {
-        _r->prev->next = _r->next;
-    } else {
-        _s->first = _r->next;
-    }
+	LM_DBG("Removing IMPU [%.*s] from hashtable\n", _r->public_identity.len,
+			_r->public_identity.s);
+	if(_r->prev) {
+		_r->prev->next = _r->next;
+	} else {
+		_s->first = _r->next;
+	}
 
-    if (_r->next) {
-        _r->next->prev = _r->prev;
-    } else {
-        _s->last = _r->prev;
-    }
+	if(_r->next) {
+		_r->next->prev = _r->prev;
+	} else {
+		_s->last = _r->prev;
+	}
 
-    _r->prev = _r->next = 0;
-    _r->slot = 0;
-    _s->n--;
+	_r->prev = _r->next = 0;
+	_r->slot = 0;
+	_s->n--;
 }

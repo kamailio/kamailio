@@ -52,50 +52,60 @@
 struct ucontact;
 struct impurecord;
 
-#define UL_CONTACT_INSERT      	(1<<0)
-#define UL_CONTACT_UPDATE      	(1<<1)
-#define UL_CONTACT_DELETE      	(1<<2)
-#define UL_CONTACT_EXPIRE      	(1<<3)
-#define UL_IMPU_REG_NC_DELETE	(1<<4)		/* reg, no contacts - deleted */
-#define UL_IMPU_NR_DELETE		(1<<5)		/* Not registered - deleted */
-#define UL_IMPU_UNREG_EXPIRED	(1<<6)		/* Unregistered time expired */
-#define UL_IMPU_DELETE			(1<<7)		/* explicit impu delete - for example thru API */
-#define UL_IMPU_INSERT		   	(1<<8)		/* new IMPU record has been added */
-#define UL_IMPU_UPDATE		   	(1<<9)		/* IMPU record has been updated */
-#define UL_IMPU_NEW_CONTACT		(1<<10)		/* a new contact has been inserted for this IMPU */
-#define UL_IMPU_UPDATE_CONTACT		(1<<11)		/* contact has been updated */
-#define UL_IMPU_DELETE_CONTACT		(1<<12)		/* explicit contact delete from IMPU (dereg) */
-#define UL_IMPU_DELETE_CONTACT_IMPLICIT	(1<<13)		/* implicit contact delete frim IMPU (expiry, etc) */
-#define UL_IMPU_EXPIRE_CONTACT		(1<<14)		/* a new contact has been inserted for this IMPU */
-#define UL_IMPU_UNREG_NC                (1<<15)                /* Unregistered no contacts */
-#define ULCB_MAX               	((1<<16)-1)
+#define UL_CONTACT_INSERT (1 << 0)
+#define UL_CONTACT_UPDATE (1 << 1)
+#define UL_CONTACT_DELETE (1 << 2)
+#define UL_CONTACT_EXPIRE (1 << 3)
+#define UL_IMPU_REG_NC_DELETE (1 << 4) /* reg, no contacts - deleted */
+#define UL_IMPU_NR_DELETE (1 << 5)	   /* Not registered - deleted */
+#define UL_IMPU_UNREG_EXPIRED (1 << 6) /* Unregistered time expired */
+#define UL_IMPU_DELETE \
+	(1 << 7) /* explicit impu delete - for example thru API */
+#define UL_IMPU_INSERT (1 << 8) /* new IMPU record has been added */
+#define UL_IMPU_UPDATE (1 << 9) /* IMPU record has been updated */
+#define UL_IMPU_NEW_CONTACT \
+	(1 << 10) /* a new contact has been inserted for this IMPU */
+#define UL_IMPU_UPDATE_CONTACT (1 << 11) /* contact has been updated */
+#define UL_IMPU_DELETE_CONTACT \
+	(1 << 12) /* explicit contact delete from IMPU (dereg) */
+#define UL_IMPU_DELETE_CONTACT_IMPLICIT \
+	(1 << 13) /* implicit contact delete frim IMPU (expiry, etc) */
+#define UL_IMPU_EXPIRE_CONTACT \
+	(1 << 14) /* a new contact has been inserted for this IMPU */
+#define UL_IMPU_UNREG_NC (1 << 15) /* Unregistered no contacts */
+#define ULCB_MAX ((1 << 16) - 1)
 
 /*! \brief callback function prototype */
-typedef void (ul_cb) (struct impurecord* r, struct ucontact *c, int type, void *param);
+typedef void(ul_cb)(
+		struct impurecord *r, struct ucontact *c, int type, void *param);
 /*! \brief register callback function prototype */
-typedef int (*register_ulcb_t)( struct impurecord* r, struct ucontact *c, int cb_types, ul_cb f, void *param);
+typedef int (*register_ulcb_t)(struct impurecord *r, struct ucontact *c,
+		int cb_types, ul_cb f, void *param);
 
 
-struct ul_callback {
-	int id;                      /*!< id of this callback - useless */
-	int types;                   /*!< types of events that trigger the callback*/
-	ul_cb* callback;             /*!< callback function */
-	void *param;                 /*!< param to be passed to callback function */
-	struct ul_callback* next;
+struct ul_callback
+{
+	int id;			 /*!< id of this callback - useless */
+	int types;		 /*!< types of events that trigger the callback*/
+	ul_cb *callback; /*!< callback function */
+	void *param;	 /*!< param to be passed to callback function */
+	struct ul_callback *next;
 };
 
-    struct ulcb_head_list {
+struct ulcb_head_list
+{
 	struct ul_callback *first;
 	int reg_types;
 };
 
-extern struct ulcb_head_list*  ulcb_list;
+extern struct ulcb_head_list *ulcb_list;
 
-static inline int exists_ulcb_type(struct ulcb_head_list* list, int types) {
-	if (list==NULL)
-		return (ulcb_list->reg_types|types);
+static inline int exists_ulcb_type(struct ulcb_head_list *list, int types)
+{
+	if(list == NULL)
+		return (ulcb_list->reg_types | types);
 	else
-		return (list->reg_types|types);
+		return (list->reg_types | types);
 }
 
 int init_ulcb_list(void);
@@ -103,22 +113,25 @@ int init_ulcb_list(void);
 void destroy_ulcb_list(void);
 
 /*! \brief register a callback for several types of events */
-int register_ulcb( struct impurecord* r, struct ucontact* c, int types, ul_cb f, void *param );
+int register_ulcb(struct impurecord *r, struct ucontact *c, int types, ul_cb f,
+		void *param);
 
 /*! \brief run all transaction callbacks for an event type */
-static inline void run_ul_callbacks( struct ulcb_head_list* cb_list, int type , struct impurecord *r, struct ucontact *c)
+static inline void run_ul_callbacks(struct ulcb_head_list *cb_list, int type,
+		struct impurecord *r, struct ucontact *c)
 {
 	struct ul_callback *cbp;
 
-	if (cb_list == NULL) { //must be for global list
+	if(cb_list == NULL) { //must be for global list
 		cb_list = ulcb_list;
 	}
 
-	for (cbp=cb_list->first; cbp; cbp=cbp->next)  {
-		if(cbp->types&type) {
-			LM_DBG("impurecord=%p, contact=%p, callback type %d/%d, id %d entered\n",
-				r, c, type, cbp->types, cbp->id );
-			cbp->callback( r, c, type, cbp->param );
+	for(cbp = cb_list->first; cbp; cbp = cbp->next) {
+		if(cbp->types & type) {
+			LM_DBG("impurecord=%p, contact=%p, callback type %d/%d, id %d "
+				   "entered\n",
+					r, c, type, cbp->types, cbp->id);
+			cbp->callback(r, c, type, cbp->param);
 		}
 	}
 }

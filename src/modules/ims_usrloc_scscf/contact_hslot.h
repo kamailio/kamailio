@@ -44,45 +44,46 @@
  */
 
 #ifndef CONTACT_HSLOT_H
-#define	CONTACT_HSLOT_H
+#define CONTACT_HSLOT_H
 
 #include "../../core/locking.h"
 #include "ucontact.h"
 struct ucontact;
 
-typedef struct contact_hslot {
-	int n;                  /*!< Number of elements in the collision slot */
-	struct ucontact* first;  /*!< First element in the list */
-	struct ucontact* last;   /*!< Last element in the list */
+typedef struct contact_hslot
+{
+	int n;					/*!< Number of elements in the collision slot */
+	struct ucontact *first; /*!< First element in the list */
+	struct ucontact *last;	/*!< Last element in the list */
 #ifdef GEN_LOCK_T_PREFERED
-	gen_lock_t *lock;       /*!< Lock for hash entry - fastlock */
+	gen_lock_t *lock; /*!< Lock for hash entry - fastlock */
 #else
-	int lockidx;            /*!< Lock index for hash entry - the rest*/
+	int lockidx; /*!< Lock index for hash entry - the rest*/
 #endif
 } contact_hslot_t;
 
 /*! \brief
  * Initialize slot structure
  */
-void init_contact_slot(contact_hslot_t* _s, int n);
+void init_contact_slot(contact_hslot_t *_s, int n);
 
 
 /*! \brief
  * Deinitialize given slot structure
  */
-void deinit_contact_slot(contact_hslot_t* _s);
+void deinit_contact_slot(contact_hslot_t *_s);
 
 
 /*! \brief
  * Add an element to slot linked list
  */
-void contact_slot_add(contact_hslot_t* _s, struct ucontact* _c);
+void contact_slot_add(contact_hslot_t *_s, struct ucontact *_c);
 
 
 /*! \brief
  * Remove an element from slot linked list
  */
-void contact_slot_rem(contact_hslot_t* _s, struct ucontact* _c);
+void contact_slot_rem(contact_hslot_t *_s, struct ucontact *_c);
 
 
 /*!
@@ -103,5 +104,4 @@ void lock_contacts_idx(int idx);
 void release_contacts_idx(int idx);
 #endif
 
-#endif	/* CONTACT_HSLOT_H */
-
+#endif /* CONTACT_HSLOT_H */
