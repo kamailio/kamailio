@@ -35,10 +35,10 @@
  */
 rule *new_rule(void)
 {
-	rule	*r;
+	rule *r;
 
 	r = (rule *)pkg_malloc(sizeof(rule));
-	if (!r) {
+	if(!r) {
 		LM_ERR("not enough pkg memory\n");
 		return 0;
 	}
@@ -53,14 +53,20 @@ rule *new_rule(void)
  */
 void free_rule(rule *r)
 {
-	if (!r) return;
+	if(!r)
+		return;
 
-	if (r->left) free_expression(r->left);
-	if (r->left_exceptions) free_expression(r->left_exceptions);
-	if (r->right) free_expression(r->right);
-	if (r->right_exceptions) free_expression(r->right_exceptions);
+	if(r->left)
+		free_expression(r->left);
+	if(r->left_exceptions)
+		free_expression(r->left_exceptions);
+	if(r->right)
+		free_expression(r->right);
+	if(r->right_exceptions)
+		free_expression(r->right_exceptions);
 
-	if (r->next) free_rule(r->next);
+	if(r->next)
+		free_rule(r->next);
 	pkg_free(r);
 }
 
@@ -70,23 +76,31 @@ void free_rule(rule *r)
  */
 void print_rule(rule *r)
 {
-	if (!r) return;
+	if(!r)
+		return;
 
 	printf("\nNEW RULE:\n");
 	printf("\n\tLEFT: ");
-	if (r->left) print_expression(r->left);  else printf("ALL");
-	if (r->left_exceptions) {
+	if(r->left)
+		print_expression(r->left);
+	else
+		printf("ALL");
+	if(r->left_exceptions) {
 		printf("\n\tLEFT EXCEPTIONS: ");
 		print_expression(r->left_exceptions);
 	}
 	printf("\n\tRIGHT: ");
-	if (r->right) print_expression(r->right);  else printf("ALL");
-	if (r->right_exceptions) {
+	if(r->right)
+		print_expression(r->right);
+	else
+		printf("ALL");
+	if(r->right_exceptions) {
 		printf("\n\tRIGHT EXCEPTIONS: ");
 		print_expression(r->right_exceptions);
 	}
 	printf("\n");
-	if (r->next) print_rule(r->next);
+	if(r->next)
+		print_rule(r->next);
 }
 
 
@@ -95,14 +109,15 @@ void print_rule(rule *r)
  */
 int search_rule(rule *r, char *left, char *right)
 {
-	rule	*r1;
+	rule *r1;
 
 	r1 = r;
-	while (r1) {
-		if (( (!r1->left) || (search_expression(r1->left, left)) )
-		&& (!search_expression(r1->left_exceptions, left))
-		&& ( (!r1->right) || (search_expression(r1->right, right)) )
-		&& (!search_expression(r1->right_exceptions, right))) return 1;
+	while(r1) {
+		if(((!r1->left) || (search_expression(r1->left, left)))
+				&& (!search_expression(r1->left_exceptions, left))
+				&& ((!r1->right) || (search_expression(r1->right, right)))
+				&& (!search_expression(r1->right_exceptions, right)))
+			return 1;
 
 		r1 = r1->next;
 	}
@@ -117,31 +132,32 @@ int search_rule(rule *r, char *left, char *right)
  */
 expression *new_expression(char *sv)
 {
-	expression	*e;
+	expression *e;
 
-	if (!sv) return 0;
+	if(!sv)
+		return 0;
 
-	if(strlen(sv)>=EXPRESSION_LENGTH) {
+	if(strlen(sv) >= EXPRESSION_LENGTH) {
 		LM_ERR("expression string is too large (%s)\n", sv);
 		return 0;
 	}
 
 	e = (expression *)pkg_malloc(sizeof(expression));
-	if (!e) {
+	if(!e) {
 		LM_ERR("not enough pkg memory\n");
 		return 0;
 	}
 
 	strcpy(e->value, sv);
 
-	e->reg_value = (regex_t*)pkg_malloc(sizeof(regex_t));
-	if (!e->reg_value) {
+	e->reg_value = (regex_t *)pkg_malloc(sizeof(regex_t));
+	if(!e->reg_value) {
 		LM_ERR("not enough pkg memory\n");
 		pkg_free(e);
 		return 0;
 	}
 
-	if (regcomp(e->reg_value, sv, REG_EXTENDED|REG_NOSUB|REG_ICASE) ) {
+	if(regcomp(e->reg_value, sv, REG_EXTENDED | REG_NOSUB | REG_ICASE)) {
 		LM_ERR("bad regular expression: %s\n", sv);
 		pkg_free(e->reg_value);
 		pkg_free(e);
@@ -158,9 +174,11 @@ expression *new_expression(char *sv)
  */
 void free_expression(expression *e)
 {
-	if (!e) return;
+	if(!e)
+		return;
 
-	if (e->next) free_expression(e->next);
+	if(e->next)
+		free_expression(e->next);
 	regfree(e->reg_value);
 	pkg_free(e);
 }
@@ -171,10 +189,12 @@ void free_expression(expression *e)
  */
 void print_expression(expression *e)
 {
-	if (!e) return;
+	if(!e)
+		return;
 
 	printf("%s, ", e->value);
-	if (e->next) print_expression(e->next);
+	if(e->next)
+		print_expression(e->next);
 }
 
 
@@ -183,11 +203,12 @@ void print_expression(expression *e)
  */
 int search_expression(expression *e, char *value)
 {
-	expression	*e1;
+	expression *e1;
 
 	e1 = e;
-	while (e1) {
-		if (regexec(e1->reg_value, value, 0, 0, 0) == 0) 	return 1;
+	while(e1) {
+		if(regexec(e1->reg_value, value, 0, 0, 0) == 0)
+			return 1;
 		e1 = e1->next;
 	}
 	return 0;
