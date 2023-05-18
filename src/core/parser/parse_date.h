@@ -25,23 +25,23 @@
  */
 
 
-
 #ifndef PARSE_DATE
 #define PARSE_DATE
 
 #include <time.h>
 #include "msg_parser.h"
 
-#define RFC1123DATELENGTH	29
+#define RFC1123DATELENGTH 29
 
-struct date_body{
-	int error;  /* Error code */
+struct date_body
+{
+	int error; /* Error code */
 	struct tm date;
 };
 
 
 /* casting macro for accessing DATE body */
-#define get_date(p_msg) ((struct date_body*)(p_msg)->date->parsed)
+#define get_date(p_msg) ((struct date_body *)(p_msg)->date->parsed)
 
 
 /*

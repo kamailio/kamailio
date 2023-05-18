@@ -20,8 +20,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -35,24 +35,25 @@
 /*
  * Digest parameter types
  */
-typedef enum dig_par {
+typedef enum dig_par
+{
 	PAR_USERNAME,  /* username parameter */
-	PAR_REALM,     /* realm parameter */
-	PAR_NONCE,     /* nonce parameter */
-	PAR_URI,       /* uri parameter */
+	PAR_REALM,	   /* realm parameter */
+	PAR_NONCE,	   /* nonce parameter */
+	PAR_URI,	   /* uri parameter */
 	PAR_RESPONSE,  /* response parameter */
-	PAR_CNONCE,    /* cnonce parameter */
-	PAR_OPAQUE,    /* opaque parameter */
-	PAR_QOP,       /* qop parameter */
-	PAR_NC,        /* nonce-count parameter */
+	PAR_CNONCE,	   /* cnonce parameter */
+	PAR_OPAQUE,	   /* opaque parameter */
+	PAR_QOP,	   /* qop parameter */
+	PAR_NC,		   /* nonce-count parameter */
 	PAR_ALGORITHM, /* algorithm parameter */
-	PAR_OTHER      /* unknown parameter */
+	PAR_OTHER	   /* unknown parameter */
 } dig_par_t;
 
 
 /*
  * Parse digest parameter name
  */
-int parse_param_name(str* _s, dig_par_t* _type);
+int parse_param_name(str *_s, dig_par_t *_type);
 
 #endif /* PARAM_PARSER_H */

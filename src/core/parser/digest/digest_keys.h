@@ -20,8 +20,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -29,15 +29,15 @@
 #ifndef DIGEST_KEYS_H
 #define DIGEST_KEYS_H
 
-#define _user_ 0x72657375   /* "user" */
-#define _name_ 0x656d616e   /* "name" */
-#define _real_ 0x6c616572   /* "real" */
-#define _nonc_ 0x636e6f6e   /* "nonc" */
-#define _resp_ 0x70736572   /* "resp" */
-#define _onse_ 0x65736e6f   /* "onse" */
-#define _cnon_ 0x6e6f6e63   /* "cnon" */
-#define _opaq_ 0x7161706f   /* "opaq" */
-#define _algo_ 0x6f676c61   /* "algo" */
-#define _rith_ 0x68746972   /* "rith" */
+#define _user_ 0x72657375 /* "user" */
+#define _name_ 0x656d616e /* "name" */
+#define _real_ 0x6c616572 /* "real" */
+#define _nonc_ 0x636e6f6e /* "nonc" */
+#define _resp_ 0x70736572 /* "resp" */
+#define _onse_ 0x65736e6f /* "onse" */
+#define _cnon_ 0x6e6f6e63 /* "cnon" */
+#define _opaq_ 0x7161706f /* "opaq" */
+#define _algo_ 0x6f676c61 /* "algo" */
+#define _rith_ 0x68746972 /* "rith" */
 
 #endif /* DIGEST_KEYS_H */

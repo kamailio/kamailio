@@ -13,36 +13,36 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 /*! \file
  * \brief Parser :: Diversion header
- * 
+ *
  * \ingroup parser
  */
 
- 
+
 #ifndef PARSE_DIVERSION_H
 #define PARSE_DIVERSION_H
- 
+
 #include "msg_parser.h"
- 
+
 
 /*! \brief casting macro for accessing Diversion body */
-#define get_diversion(p_msg)  ((struct to_body*)(p_msg)->diversion->parsed)
- 
- 
+#define get_diversion(p_msg) ((struct to_body *)(p_msg)->diversion->parsed)
+
+
 /*! \brief
  * Diversion header field parser
  */
 int parse_diversion_header(struct sip_msg *msg);
- 
+
 /*! \brief
  * Get the value of a given diversion parameter
  */
-str *get_diversion_param(struct sip_msg *msg, str* name);
+str *get_diversion_param(struct sip_msg *msg, str *name);
 
 #endif /* PARSE_DIVERSION_H */

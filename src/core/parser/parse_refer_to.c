@@ -41,23 +41,24 @@
  * returns 0 on success,
  *        -1 on failure.
  */
-int parse_refer_to_header( struct sip_msg *msg )
+int parse_refer_to_header(struct sip_msg *msg)
 {
-	struct to_body* refer_to_b;
+	struct to_body *refer_to_b;
 
-	if ( !msg->refer_to &&
-			(parse_headers(msg, HDR_REFER_TO_F,0)==-1 || !msg->refer_to)) {
+	if(!msg->refer_to
+			&& (parse_headers(msg, HDR_REFER_TO_F, 0) == -1
+					|| !msg->refer_to)) {
 		goto error;
 	}
 
 	/* maybe the header is already parsed! */
-	if (msg->refer_to->parsed)
+	if(msg->refer_to->parsed)
 		return 0;
 
 	/* bad luck! :-( - we have to parse it */
 	/* first, get some memory */
 	refer_to_b = pkg_malloc(sizeof(struct to_body));
-	if (refer_to_b == 0) {
+	if(refer_to_b == 0) {
 		PKG_MEM_ERROR;
 		goto error;
 	}
@@ -65,9 +66,8 @@ int parse_refer_to_header( struct sip_msg *msg )
 	/* now parse it!! */
 	memset(refer_to_b, 0, sizeof(struct to_body));
 	parse_to(msg->refer_to->body.s,
-			msg->refer_to->body.s + msg->refer_to->body.len+1,
-			refer_to_b);
-	if (refer_to_b->error == PARSE_ERROR) {
+			msg->refer_to->body.s + msg->refer_to->body.len + 1, refer_to_b);
+	if(refer_to_b->error == PARSE_ERROR) {
 		LM_ERR("bad Refer-To header\n");
 		free_to(refer_to_b);
 		goto error;

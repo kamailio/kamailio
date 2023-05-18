@@ -35,8 +35,8 @@
 #include "../mem/mem.h"
 
 /* parse cseq header */
-char *parse_cseq(char *const buf, const char *const end,
-		struct cseq_body *const cb)
+char *parse_cseq(
+		char *const buf, const char *const end, struct cseq_body *const cb)
 {
 	char *t, *m, *m_end;
 

@@ -30,30 +30,31 @@
 /*!
  * Parse all Supported headers
  */
-int parse_supported( struct sip_msg *msg)
+int parse_supported(struct sip_msg *msg)
 {
 	unsigned int supported;
-	struct hdr_field  *hdr;
+	struct hdr_field *hdr;
 	struct option_tag_body *sb;
 
 	/* maybe the header is already parsed! */
-	if (msg->supported && msg->supported->parsed)
+	if(msg->supported && msg->supported->parsed)
 		return 0;
 
 	/* parse to the end in order to get all SUPPORTED headers */
-	if (parse_headers(msg,HDR_EOH_F,0)==-1 || !msg->supported)
+	if(parse_headers(msg, HDR_EOH_F, 0) == -1 || !msg->supported)
 		return -1;
 
 	/* bad luck! :-( - we have to parse them */
 	supported = 0;
-	for( hdr=msg->supported ; hdr ; hdr=next_sibling_hdr(hdr)) {
-		if (hdr->parsed) {
-			supported |= ((struct option_tag_body*)hdr->parsed)->option_tags;
+	for(hdr = msg->supported; hdr; hdr = next_sibling_hdr(hdr)) {
+		if(hdr->parsed) {
+			supported |= ((struct option_tag_body *)hdr->parsed)->option_tags;
 			continue;
 		}
 
-		sb = (struct option_tag_body*)pkg_malloc(sizeof(struct option_tag_body));
-		if (sb == 0) {
+		sb = (struct option_tag_body *)pkg_malloc(
+				sizeof(struct option_tag_body));
+		if(sb == 0) {
 			PKG_MEM_ERROR;
 			return -1;
 		}
@@ -61,11 +62,11 @@ int parse_supported( struct sip_msg *msg)
 		parse_option_tag_body(&(hdr->body), &(sb->option_tags));
 		sb->hfree = hf_free_option_tag;
 		sb->option_tags_all = 0;
-		hdr->parsed = (void*)sb;
+		hdr->parsed = (void *)sb;
 		supported |= sb->option_tags;
 	}
 
-	((struct option_tag_body*)msg->supported->parsed)->option_tags_all = 
-		supported;
+	((struct option_tag_body *)msg->supported->parsed)->option_tags_all =
+			supported;
 	return 0;
 }
