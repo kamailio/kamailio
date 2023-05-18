@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2006 iptelorg GmbH
  *
  * This file is part of Kamailio, a free SIP server.
@@ -31,21 +31,19 @@
 #include "nonsip_hooks.h"
 #include "mem/mem.h"
 
-static struct nonsip_hook* nonsip_hooks;
-static unsigned int nonsip_max_hooks=MAX_NONSIP_HOOKS;
-static int last_hook_idx=0;
-
+static struct nonsip_hook *nonsip_hooks;
+static unsigned int nonsip_max_hooks = MAX_NONSIP_HOOKS;
+static int last_hook_idx = 0;
 
 
 int init_nonsip_hooks()
 {
-	nonsip_hooks=pkg_malloc(nonsip_max_hooks*
-									sizeof(struct nonsip_hook));
-	if (nonsip_hooks==0){
+	nonsip_hooks = pkg_malloc(nonsip_max_hooks * sizeof(struct nonsip_hook));
+	if(nonsip_hooks == 0) {
 		PKG_MEM_ERROR;
 		goto error;
 	}
-	memset(nonsip_hooks, 0, nonsip_max_hooks*sizeof(struct nonsip_hook));
+	memset(nonsip_hooks, 0, nonsip_max_hooks * sizeof(struct nonsip_hook));
 	return 0;
 error:
 	PKG_MEM_ERROR;
@@ -53,47 +51,45 @@ error:
 }
 
 
-
 void destroy_nonsip_hooks()
 {
 	int r;
-	
-	if (nonsip_hooks){
-		for (r=0; r<last_hook_idx; r++){
-			if (nonsip_hooks[r].destroy)
+
+	if(nonsip_hooks) {
+		for(r = 0; r < last_hook_idx; r++) {
+			if(nonsip_hooks[r].destroy)
 				nonsip_hooks[r].destroy();
 		}
 		pkg_free(nonsip_hooks);
-		nonsip_hooks=0;
+		nonsip_hooks = 0;
 	}
 }
-
 
 
 /* allocates a new hook
  * returns 0 on success and -1 on error */
 int register_nonsip_msg_hook(struct nonsip_hook *h)
 {
-	struct nonsip_hook* tmp;
+	struct nonsip_hook *tmp;
 	int new_max_hooks;
-	
-	if (nonsip_max_hooks==0)
+
+	if(nonsip_max_hooks == 0)
 		goto error;
-	if (last_hook_idx >= nonsip_max_hooks){
-		new_max_hooks=2*nonsip_max_hooks;
-		tmp=pkg_realloc(nonsip_hooks, 
-				new_max_hooks*sizeof(struct nonsip_hook));
-		if (tmp==0){
+	if(last_hook_idx >= nonsip_max_hooks) {
+		new_max_hooks = 2 * nonsip_max_hooks;
+		tmp = pkg_realloc(
+				nonsip_hooks, new_max_hooks * sizeof(struct nonsip_hook));
+		if(tmp == 0) {
 			goto error;
 		}
-		nonsip_hooks=tmp;
+		nonsip_hooks = tmp;
 		/* init the new chunk */
-		memset(&nonsip_hooks[last_hook_idx+1], 0, 
-					(new_max_hooks-nonsip_max_hooks-1)*
-						sizeof(struct nonsip_hook));
-		nonsip_max_hooks=new_max_hooks;
+		memset(&nonsip_hooks[last_hook_idx + 1], 0,
+				(new_max_hooks - nonsip_max_hooks - 1)
+						* sizeof(struct nonsip_hook));
+		nonsip_max_hooks = new_max_hooks;
 	}
-	nonsip_hooks[last_hook_idx]=*h;
+	nonsip_hooks[last_hook_idx] = *h;
 	last_hook_idx++;
 	return 0;
 error:
@@ -101,19 +97,16 @@ error:
 }
 
 
-
-int nonsip_msg_run_hooks(struct sip_msg* msg)
+int nonsip_msg_run_hooks(struct sip_msg *msg)
 {
 	int r;
 	int ret;
-	
-	ret=NONSIP_MSG_DROP; /* default, if no hook installed, drop */
-	for (r=0; r<last_hook_idx; r++){
-		ret=nonsip_hooks[r].on_nonsip_req(msg);
-		if (ret!=NONSIP_MSG_PASS) break;
+
+	ret = NONSIP_MSG_DROP; /* default, if no hook installed, drop */
+	for(r = 0; r < last_hook_idx; r++) {
+		ret = nonsip_hooks[r].on_nonsip_req(msg);
+		if(ret != NONSIP_MSG_PASS)
+			break;
 	}
 	return ret;
 }
-
-
-

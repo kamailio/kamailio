@@ -71,29 +71,31 @@ WARNING: - lock_set_init may fail for large number of sems (e.g. sysv).
 #include "lock_alloc.h"
 #include "atomic_ops.h"
 
-typedef struct rec_lock {
-	gen_lock_t lock;     /* mutex to access items in the slot */
+typedef struct rec_lock
+{
+	gen_lock_t lock;	 /* mutex to access items in the slot */
 	atomic_t locker_pid; /* pid of the process that holds the lock */
-	int rec_lock_level;  /* recursive lock count */
+	int rec_lock_level;	 /* recursive lock count */
 } rec_lock_t;
 
-rec_lock_t* rec_lock_alloc();
-rec_lock_t* rec_lock_init(rec_lock_t* lock);
-void rec_lock_destroy(rec_lock_t* lock);
-void rec_lock_dealloc(rec_lock_t* lock);
-void rec_lock_get(rec_lock_t* lock);
-void rec_lock_release(rec_lock_t* lock);
+rec_lock_t *rec_lock_alloc();
+rec_lock_t *rec_lock_init(rec_lock_t *lock);
+void rec_lock_destroy(rec_lock_t *lock);
+void rec_lock_dealloc(rec_lock_t *lock);
+void rec_lock_get(rec_lock_t *lock);
+void rec_lock_release(rec_lock_t *lock);
 
-typedef struct rec_lock_set {
+typedef struct rec_lock_set
+{
 	int size;
 	rec_lock_t *locks;
 } rec_lock_set_t;
 
-rec_lock_set_t* rec_lock_set_alloc(int n);
-rec_lock_set_t* rec_lock_set_init(rec_lock_set_t* lset);
-void rec_lock_set_destroy(rec_lock_set_t* lset);
-void rec_lock_set_dealloc(rec_lock_set_t* lset);
-void rec_lock_set_get(rec_lock_set_t* lset, int i);
-void rec_lock_set_release(rec_lock_set_t* lset, int i);
+rec_lock_set_t *rec_lock_set_alloc(int n);
+rec_lock_set_t *rec_lock_set_init(rec_lock_set_t *lset);
+void rec_lock_set_destroy(rec_lock_set_t *lset);
+void rec_lock_set_dealloc(rec_lock_set_t *lset);
+void rec_lock_set_get(rec_lock_set_t *lset, int i);
+void rec_lock_set_release(rec_lock_set_t *lset, int i);
 
 #endif

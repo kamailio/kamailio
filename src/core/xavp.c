@@ -45,7 +45,8 @@ static sr_xavp_t *_xavi_list_head = 0;
 static sr_xavp_t **_xavi_list_crt = &_xavi_list_head;
 
 /*! Helper functions */
-static sr_xavp_t *xavp_get_internal(str *name, sr_xavp_t **list, int idx, sr_xavp_t **prv);
+static sr_xavp_t *xavp_get_internal(
+		str *name, sr_xavp_t **list, int idx, sr_xavp_t **prv);
 static int xavp_rm_internal(str *name, sr_xavp_t **head, int idx);
 
 
@@ -62,11 +63,11 @@ void xavp_shm_free_unsafe(void *p)
 
 void xavp_free(sr_xavp_t *xa)
 {
-	if(xa==NULL) {
+	if(xa == NULL) {
 		return;
 	}
 	if(xa->val.type == SR_XTYPE_DATA) {
-		if(xa->val.v.data!=NULL && xa->val.v.data->pfree!=NULL) {
+		if(xa->val.v.data != NULL && xa->val.v.data->pfree != NULL) {
 			xa->val.v.data->pfree(xa->val.v.data->p, xavp_shm_free);
 			shm_free(xa->val.v.data);
 		}
@@ -82,11 +83,11 @@ void xavp_free(sr_xavp_t *xa)
 
 void xavp_free_unsafe(sr_xavp_t *xa)
 {
-	if(xa==NULL) {
+	if(xa == NULL) {
 		return;
 	}
 	if(xa->val.type == SR_XTYPE_DATA) {
-		if(xa->val.v.data!=NULL && xa->val.v.data->pfree!=NULL) {
+		if(xa->val.v.data != NULL && xa->val.v.data->pfree != NULL) {
 			xa->val.v.data->pfree(xa->val.v.data->p, xavp_shm_free_unsafe);
 			shm_free_unsafe(xa->val.v.data);
 		}
@@ -106,27 +107,26 @@ static sr_xavp_t *xavp_new_value(str *name, sr_xval_t *val)
 	int size;
 	unsigned int id;
 
-	if(name==NULL || name->s==NULL || name->len<=0 || val==NULL)
+	if(name == NULL || name->s == NULL || name->len <= 0 || val == NULL)
 		return NULL;
 	id = get_hash1_raw(name->s, name->len);
 
 	size = sizeof(sr_xavp_t) + name->len + 1;
 	if(val->type == SR_XTYPE_STR)
 		size += val->v.s.len + 1;
-	avp = (sr_xavp_t*)shm_malloc(size);
-	if(avp==NULL) {
+	avp = (sr_xavp_t *)shm_malloc(size);
+	if(avp == NULL) {
 		SHM_MEM_ERROR;
 		return NULL;
 	}
 	memset(avp, 0, size);
 	avp->id = id;
-	avp->name.s = (char*)avp + sizeof(sr_xavp_t);
+	avp->name.s = (char *)avp + sizeof(sr_xavp_t);
 	memcpy(avp->name.s, name->s, name->len);
 	avp->name.s[name->len] = '\0';
 	avp->name.len = name->len;
 	memcpy(&avp->val, val, sizeof(sr_xval_t));
-	if(val->type == SR_XTYPE_STR)
-	{
+	if(val->type == SR_XTYPE_STR) {
 		avp->val.v.s.s = avp->name.s + avp->name.len + 1;
 		memcpy(avp->val.v.s.s, val->v.s.s, val->v.s.len);
 		avp->val.v.s.s[val->v.s.len] = '\0';
@@ -138,7 +138,7 @@ static sr_xavp_t *xavp_new_value(str *name, sr_xval_t *val)
 
 int xavp_add(sr_xavp_t *xavp, sr_xavp_t **list)
 {
-	if (xavp==NULL) {
+	if(xavp == NULL) {
 		return -1;
 	}
 	/* Prepend new xavp to the list */
@@ -158,7 +158,7 @@ int xavp_add_last(sr_xavp_t *xavp, sr_xavp_t **list)
 	sr_xavp_t *prev;
 	sr_xavp_t *crt;
 
-	if (xavp==NULL) {
+	if(xavp == NULL) {
 		return -1;
 	}
 
@@ -171,7 +171,7 @@ int xavp_add_last(sr_xavp_t *xavp, sr_xavp_t **list)
 		crt = xavp_get_next(prev);
 	}
 
-	if(prev==NULL) {
+	if(prev == NULL) {
 		/* Prepend new xavp to the list */
 		if(list) {
 			xavp->next = *list;
@@ -190,11 +190,11 @@ int xavp_add_last(sr_xavp_t *xavp, sr_xavp_t **list)
 
 int xavp_add_after(sr_xavp_t *nxavp, sr_xavp_t *pxavp)
 {
-	if (nxavp==NULL) {
+	if(nxavp == NULL) {
 		return -1;
 	}
 
-	if(pxavp==NULL) {
+	if(pxavp == NULL) {
 		nxavp->next = *_xavp_list_crt;
 		*_xavp_list_crt = nxavp;
 	} else {
@@ -207,10 +207,10 @@ int xavp_add_after(sr_xavp_t *nxavp, sr_xavp_t *pxavp)
 
 sr_xavp_t *xavp_add_value(str *name, sr_xval_t *val, sr_xavp_t **list)
 {
-	sr_xavp_t *avp=0;
+	sr_xavp_t *avp = 0;
 
 	avp = xavp_new_value(name, val);
-	if (avp==NULL)
+	if(avp == NULL)
 		return NULL;
 
 	/* Prepend new value to the list */
@@ -227,10 +227,10 @@ sr_xavp_t *xavp_add_value(str *name, sr_xval_t *val, sr_xavp_t **list)
 
 sr_xavp_t *xavp_add_value_after(str *name, sr_xval_t *val, sr_xavp_t *pxavp)
 {
-	sr_xavp_t *avp=0;
+	sr_xavp_t *avp = 0;
 
 	avp = xavp_new_value(name, val);
-	if (avp==NULL)
+	if(avp == NULL)
 		return NULL;
 
 	/* link new xavp */
@@ -245,14 +245,15 @@ sr_xavp_t *xavp_add_value_after(str *name, sr_xval_t *val, sr_xavp_t *pxavp)
 	return avp;
 }
 
-sr_xavp_t *xavp_add_xavp_value(str *rname, str *name, sr_xval_t *val, sr_xavp_t **list)
+sr_xavp_t *xavp_add_xavp_value(
+		str *rname, str *name, sr_xval_t *val, sr_xavp_t **list)
 {
-	sr_xavp_t *ravp=0;
-	sr_xavp_t *cavp=0;
+	sr_xavp_t *ravp = 0;
+	sr_xavp_t *cavp = 0;
 	sr_xval_t rval;
 
 	cavp = xavp_new_value(name, val);
-	if (cavp==NULL)
+	if(cavp == NULL)
 		return NULL;
 
 	memset(&rval, 0, sizeof(sr_xval_t));
@@ -260,7 +261,7 @@ sr_xavp_t *xavp_add_xavp_value(str *rname, str *name, sr_xval_t *val, sr_xavp_t 
 	rval.v.xavp = cavp;
 
 	ravp = xavp_new_value(rname, &rval);
-	if (ravp==NULL) {
+	if(ravp == NULL) {
 		xavp_destroy_list(&cavp);
 		return NULL;
 	}
@@ -281,18 +282,18 @@ sr_xavp_t *xavp_set_value(str *name, int idx, sr_xval_t *val, sr_xavp_t **list)
 {
 	sr_xavp_t *avp;
 	sr_xavp_t *cur;
-	sr_xavp_t *prv=0;
+	sr_xavp_t *prv = 0;
 
-	if(val==NULL)
+	if(val == NULL)
 		return NULL;
 
 	/* Find the current value */
 	cur = xavp_get_internal(name, list, idx, &prv);
-	if(cur==NULL)
+	if(cur == NULL)
 		return NULL;
 
 	avp = xavp_new_value(name, val);
-	if (avp==NULL)
+	if(avp == NULL)
 		return NULL;
 
 	/* Replace the current value with the new */
@@ -309,13 +310,14 @@ sr_xavp_t *xavp_set_value(str *name, int idx, sr_xval_t *val, sr_xavp_t **list)
 	return avp;
 }
 
-static sr_xavp_t *xavp_get_internal(str *name, sr_xavp_t **list, int idx, sr_xavp_t **prv)
+static sr_xavp_t *xavp_get_internal(
+		str *name, sr_xavp_t **list, int idx, sr_xavp_t **prv)
 {
 	sr_xavp_t *avp;
 	unsigned int id;
 	int n = 0;
 
-	if(name==NULL || name->s==NULL)
+	if(name == NULL || name->s == NULL)
 		return NULL;
 	id = get_hash1_raw(name->s, name->len);
 
@@ -323,12 +325,10 @@ static sr_xavp_t *xavp_get_internal(str *name, sr_xavp_t **list, int idx, sr_xav
 		avp = *list;
 	else
 		avp = *_xavp_list_crt;
-	while(avp)
-	{
-		if(avp->id==id && avp->name.len==name->len
-				&& strncmp(avp->name.s, name->s, name->len)==0)
-		{
-			if(idx==n)
+	while(avp) {
+		if(avp->id == id && avp->name.len == name->len
+				&& strncmp(avp->name.s, name->s, name->len) == 0) {
+			if(idx == n)
 				return avp;
 			n++;
 		}
@@ -341,7 +341,7 @@ static sr_xavp_t *xavp_get_internal(str *name, sr_xavp_t **list, int idx, sr_xav
 
 sr_xavp_t *xavp_get(str *name, sr_xavp_t *start)
 {
-	return xavp_get_internal(name, (start)?&start:NULL, 0, NULL);
+	return xavp_get_internal(name, (start) ? &start : NULL, 0, NULL);
 }
 
 sr_xavp_t *xavp_get_by_index(str *name, int idx, sr_xavp_t **start)
@@ -353,16 +353,15 @@ sr_xavp_t *xavp_get_next(sr_xavp_t *start)
 {
 	sr_xavp_t *avp;
 
-	if(start==NULL)
+	if(start == NULL)
 		return NULL;
 
 	avp = start->next;
-	while(avp)
-	{
-		if(avp->id==start->id && avp->name.len==start->name.len
-				&& strncmp(avp->name.s, start->name.s, start->name.len)==0)
+	while(avp) {
+		if(avp->id == start->id && avp->name.len == start->name.len
+				&& strncmp(avp->name.s, start->name.s, start->name.len) == 0)
 			return avp;
-		avp=avp->next;
+		avp = avp->next;
 	}
 
 	return NULL;
@@ -388,27 +387,26 @@ sr_xavp_t *xavp_get_last(str *xname, sr_xavp_t **list)
 int xavp_rm(sr_xavp_t *xa, sr_xavp_t **head)
 {
 	sr_xavp_t *avp;
-	sr_xavp_t *prv=0;
+	sr_xavp_t *prv = 0;
 
-	if(head!=NULL)
+	if(head != NULL)
 		avp = *head;
 	else
-		avp=*_xavp_list_crt;
+		avp = *_xavp_list_crt;
 
-	while(avp)
-	{
-		if(avp==xa)
-		{
+	while(avp) {
+		if(avp == xa) {
 			if(prv)
-				prv->next=avp->next;
-			else if(head!=NULL)
+				prv->next = avp->next;
+			else if(head != NULL)
 				*head = avp->next;
 			else
 				*_xavp_list_crt = avp->next;
 			xavp_free(avp);
 			return 1;
 		}
-		prv=avp; avp=avp->next;
+		prv = avp;
+		avp = avp->next;
 	}
 	return 0;
 }
@@ -422,36 +420,33 @@ static int xavp_rm_internal(str *name, sr_xavp_t **head, int idx)
 {
 	sr_xavp_t *avp;
 	sr_xavp_t *foo;
-	sr_xavp_t *prv=0;
+	sr_xavp_t *prv = 0;
 	unsigned int id;
-	int n=0;
-	int count=0;
+	int n = 0;
+	int count = 0;
 
-	if(name==NULL || name->s==NULL || name->len<=0)
+	if(name == NULL || name->s == NULL || name->len <= 0)
 		return 0;
 
 	id = get_hash1_raw(name->s, name->len);
-	if(head!=NULL)
+	if(head != NULL)
 		avp = *head;
 	else
 		avp = *_xavp_list_crt;
-	while(avp)
-	{
+	while(avp) {
 		foo = avp;
-		avp=avp->next;
-		if(foo->id==id && foo->name.len==name->len
-				&& strncmp(foo->name.s, name->s, name->len)==0)
-		{
-			if(idx<0 || idx==n)
-			{
-				if(prv!=NULL)
-					prv->next=foo->next;
-				else if(head!=NULL)
+		avp = avp->next;
+		if(foo->id == id && foo->name.len == name->len
+				&& strncmp(foo->name.s, name->s, name->len) == 0) {
+			if(idx < 0 || idx == n) {
+				if(prv != NULL)
+					prv->next = foo->next;
+				else if(head != NULL)
 					*head = foo->next;
 				else
 					*_xavp_list_crt = foo->next;
 				xavp_free(foo);
-				if(idx>=0)
+				if(idx >= 0)
 					return 1;
 				count++;
 			} else {
@@ -467,26 +462,26 @@ static int xavp_rm_internal(str *name, sr_xavp_t **head, int idx)
 
 int xavp_rm_by_name(str *name, int all, sr_xavp_t **head)
 {
-	return xavp_rm_internal(name, head, -1*all);
+	return xavp_rm_internal(name, head, -1 * all);
 }
 
 int xavp_rm_by_index(str *name, int idx, sr_xavp_t **head)
 {
-	if (idx<0)
+	if(idx < 0)
 		return 0;
 	return xavp_rm_internal(name, head, idx);
 }
 
 int xavp_rm_child_by_index(str *rname, str *cname, int idx)
 {
-	sr_xavp_t *avp=NULL;
+	sr_xavp_t *avp = NULL;
 
-	if (idx<0) {
+	if(idx < 0) {
 		return 0;
 	}
 	avp = xavp_get(rname, NULL);
 
-	if(avp == NULL || avp->val.type!=SR_XTYPE_XAVP) {
+	if(avp == NULL || avp->val.type != SR_XTYPE_XAVP) {
 		return 0;
 	}
 	return xavp_rm_internal(cname, &avp->val.v.xavp, idx);
@@ -498,22 +493,20 @@ int xavp_count(str *name, sr_xavp_t **start)
 	unsigned int id;
 	int n = 0;
 
-	if(name==NULL || name->s==NULL || name->len<=0)
+	if(name == NULL || name->s == NULL || name->len <= 0)
 		return -1;
 	id = get_hash1_raw(name->s, name->len);
 
 	if(start)
 		avp = *start;
 	else
-		avp=*_xavp_list_crt;
-	while(avp)
-	{
-		if(avp->id==id && avp->name.len==name->len
-				&& strncmp(avp->name.s, name->s, name->len)==0)
-		{
+		avp = *_xavp_list_crt;
+	while(avp) {
+		if(avp->id == id && avp->name.len == name->len
+				&& strncmp(avp->name.s, name->s, name->len) == 0) {
 			n++;
 		}
-		avp=avp->next;
+		avp = avp->next;
 	}
 
 	return n;
@@ -529,17 +522,17 @@ int xavp_lshift(str *name, sr_xavp_t **head, int idx)
 	sr_xavp_t *lhead_last = NULL;
 	sr_xavp_t *ltail = NULL;
 	sr_xavp_t *ltail_last = NULL;
-	sr_xavp_t *crt=0;
-	sr_xavp_t *prv=0;
+	sr_xavp_t *crt = 0;
+	sr_xavp_t *prv = 0;
 	unsigned int id;
-	int n=0;
+	int n = 0;
 	int xcnt;
 
-	if(name==NULL || name->s==NULL || name->len<=0) {
+	if(name == NULL || name->s == NULL || name->len <= 0) {
 		return 0;
 	}
 
-	if(idx==0) {
+	if(idx == 0) {
 		return 1;
 	}
 	xcnt = xavp_count(name, head);
@@ -549,46 +542,44 @@ int xavp_lshift(str *name, sr_xavp_t **head, int idx)
 	while(idx < 0) {
 		idx = xcnt + idx;
 	}
-	if(idx==0) {
+	if(idx == 0) {
 		return 1;
 	}
 	idx = idx % xcnt;
-	if(idx==0) {
+	if(idx == 0) {
 		return 1;
 	}
 
 	id = get_hash1_raw(name->s, name->len);
-	if(head!=NULL)
+	if(head != NULL)
 		avp = *head;
 	else
 		avp = *_xavp_list_crt;
-	while(avp)
-	{
+	while(avp) {
 		crt = avp;
-		avp=avp->next;
-		if(crt->id==id && crt->name.len==name->len
-				&& strncmp(crt->name.s, name->s, name->len)==0)
-		{
-			if(prv!=NULL)
-				prv->next=crt->next;
-			else if(head!=NULL)
+		avp = avp->next;
+		if(crt->id == id && crt->name.len == name->len
+				&& strncmp(crt->name.s, name->s, name->len) == 0) {
+			if(prv != NULL)
+				prv->next = crt->next;
+			else if(head != NULL)
 				*head = crt->next;
 			else
 				*_xavp_list_crt = crt->next;
 			crt->next = NULL;
 			if(n < idx) {
-				if(ltail==NULL) {
+				if(ltail == NULL) {
 					ltail = crt;
 				}
-				if(ltail_last!=NULL) {
+				if(ltail_last != NULL) {
 					ltail_last->next = crt;
 				}
 				ltail_last = crt;
 			} else {
-				if(lhead==NULL) {
+				if(lhead == NULL) {
 					lhead = crt;
 				}
-				if(lhead_last!=NULL) {
+				if(lhead_last != NULL) {
 					lhead_last->next = crt;
 				}
 				lhead_last = crt;
@@ -603,7 +594,7 @@ int xavp_lshift(str *name, sr_xavp_t **head, int idx)
 		lhead_last->next = ltail;
 	}
 
-	if(head!=NULL) {
+	if(head != NULL) {
 		if(ltail_last) {
 			ltail_last->next = *head;
 		}
@@ -623,8 +614,7 @@ void xavp_destroy_list_unsafe(sr_xavp_t **head)
 	sr_xavp_t *avp, *foo;
 
 	avp = *head;
-	while(avp)
-	{
+	while(avp) {
 		foo = avp;
 		avp = avp->next;
 		xavp_free_unsafe(foo);
@@ -639,8 +629,7 @@ void xavp_destroy_list(sr_xavp_t **head)
 
 	LM_DBG("destroying xavp list %p\n", *head);
 	avp = *head;
-	while(avp)
-	{
+	while(avp) {
 		foo = avp;
 		avp = avp->next;
 		xavp_free(foo);
@@ -651,10 +640,10 @@ void xavp_destroy_list(sr_xavp_t **head)
 
 void xavp_reset_list(void)
 {
-	assert(_xavp_list_crt!=0 );
+	assert(_xavp_list_crt != 0);
 
-	if (_xavp_list_crt!=&_xavp_list_head)
-		_xavp_list_crt=&_xavp_list_head;
+	if(_xavp_list_crt != &_xavp_list_head)
+		_xavp_list_crt = &_xavp_list_head;
 	xavp_destroy_list(_xavp_list_crt);
 }
 
@@ -663,7 +652,7 @@ sr_xavp_t **xavp_set_list(sr_xavp_t **head)
 {
 	sr_xavp_t **avp;
 
-	assert(_xavp_list_crt!=0);
+	assert(_xavp_list_crt != 0);
 
 	avp = _xavp_list_crt;
 	_xavp_list_crt = head;
@@ -672,57 +661,60 @@ sr_xavp_t **xavp_set_list(sr_xavp_t **head)
 
 sr_xavp_t **xavp_get_crt_list(void)
 {
-	assert(_xavp_list_crt!=0);
+	assert(_xavp_list_crt != 0);
 	return _xavp_list_crt;
 }
 
-void xavx_print_list_content(char *name, sr_xavp_t **head, sr_xavp_t **rlist, int level)
+void xavx_print_list_content(
+		char *name, sr_xavp_t **head, sr_xavp_t **rlist, int level)
 {
-	sr_xavp_t *avp=0;
-	sr_xavp_t *start=0;
+	sr_xavp_t *avp = 0;
+	sr_xavp_t *start = 0;
 
-	if(head!=NULL) {
+	if(head != NULL) {
 		start = *head;
 	} else {
-		start=*rlist;
+		start = *rlist;
 	}
-	LM_INFO("+++++ start %s list: %p (%p) (level=%d)\n", name, start, head, level);
+	LM_INFO("+++++ start %s list: %p (%p) (level=%d)\n", name, start, head,
+			level);
 	avp = start;
-	while(avp)
-	{
-		LM_INFO("     *** (l:%d - %p) %s name: %s\n", level, avp, name, avp->name.s);
+	while(avp) {
+		LM_INFO("     *** (l:%d - %p) %s name: %s\n", level, avp, name,
+				avp->name.s);
 		LM_INFO("     %s id: %u\n", name, avp->id);
 		LM_INFO("     %s value type: %d\n", name, avp->val.type);
 		switch(avp->val.type) {
 			case SR_XTYPE_NULL:
 				LM_INFO("     %s value: <null>\n", name);
-			break;
+				break;
 			case SR_XTYPE_STR:
 				LM_INFO("     %s value (str): %s\n", name, avp->val.v.s.s);
-			break;
+				break;
 			case SR_XTYPE_TIME:
 				LM_INFO("     %s value (time): %lu\n", name,
 						(long unsigned int)avp->val.v.t);
-			break;
+				break;
 			case SR_XTYPE_LONG:
 				LM_INFO("     %s value (long): %ld\n", name, avp->val.v.l);
-			break;
+				break;
 			case SR_XTYPE_LLONG:
 				LM_INFO("     %s value (llong): %lld\n", name, avp->val.v.ll);
-			break;
+				break;
 			case SR_XTYPE_XAVP:
 				LM_INFO("     %s value: <xavp:%p>\n", name, avp->val.v.xavp);
-				xavx_print_list_content(name, &avp->val.v.xavp, rlist, level+1);
-			break;
+				xavx_print_list_content(
+						name, &avp->val.v.xavp, rlist, level + 1);
+				break;
 			case SR_XTYPE_VPTR:
 				LM_INFO("     %s value: <vptr:%p>\n", name, avp->val.v.vptr);
-			break;
+				break;
 			case SR_XTYPE_SPTR:
 				LM_INFO("     %s value: <sptr:%p>\n", name, avp->val.v.vptr);
-			break;
+				break;
 			case SR_XTYPE_DATA:
 				LM_INFO("     %s value: <data:%p>\n", name, avp->val.v.data);
-			break;
+				break;
 		}
 		LM_INFO("     *** (l:%d - %p) end\n", level, avp);
 		avp = avp->next;
@@ -764,22 +756,21 @@ struct str_list *xavp_get_list_key_names(sr_xavp_t *xavp)
 	struct str_list *f = NULL;
 	int total = 0;
 
-	if(xavp==NULL){
+	if(xavp == NULL) {
 		LM_ERR("xavp is NULL\n");
 		return 0;
 	}
 
-	if(xavp->val.type!=SR_XTYPE_XAVP){
+	if(xavp->val.type != SR_XTYPE_XAVP) {
 		LM_ERR("%s not xavp?\n", xavp->name.s);
 		return 0;
 	}
 
 	avp = xavp->val.v.xavp;
 
-	if (avp)
-	{
-		result = (struct str_list*)pkg_malloc(sizeof(struct str_list));
-		if (result==NULL) {
+	if(avp) {
+		result = (struct str_list *)pkg_malloc(sizeof(struct str_list));
+		if(result == NULL) {
 			PKG_MEM_ERROR;
 			return 0;
 		}
@@ -790,23 +781,19 @@ struct str_list *xavp_get_list_key_names(sr_xavp_t *xavp)
 		avp = avp->next;
 	}
 
-	while(avp)
-	{
+	while(avp) {
 		f = result;
-		while(f)
-		{
-			if((avp->name.len==f->s.len)&&
-				(strncmp(avp->name.s, f->s.s, f->s.len)==0))
-			{
+		while(f) {
+			if((avp->name.len == f->s.len)
+					&& (strncmp(avp->name.s, f->s.s, f->s.len) == 0)) {
 				break; /* name already on list */
 			}
 			f = f->next;
 		}
-		if (f==NULL)
-		{
+		if(f == NULL) {
 			r = append_str_list(avp->name.s, avp->name.len, &r, &total);
-			if(r==NULL){
-				while(result){
+			if(r == NULL) {
+				while(result) {
 					r = result;
 					result = result->next;
 					pkg_free(r);
@@ -835,39 +822,33 @@ sr_xavp_t *xavp_clone_level_nodata_with_new_name(sr_xavp_t *xold, str *dst_name)
 	sr_xavp_t *oavp = NULL;
 	sr_xavp_t *pavp = NULL;
 
-	if(xold == NULL)
-	{
+	if(xold == NULL) {
 		return NULL;
 	}
-	if(xold->val.type==SR_XTYPE_DATA || xold->val.type==SR_XTYPE_SPTR)
-	{
+	if(xold->val.type == SR_XTYPE_DATA || xold->val.type == SR_XTYPE_SPTR) {
 		LM_INFO("xavp value type is 'data' - ignoring in clone\n");
 		return NULL;
 	}
 	xnew = xavp_new_value(dst_name, &xold->val);
-	if(xnew==NULL)
-	{
+	if(xnew == NULL) {
 		LM_ERR("cannot create cloned root xavp\n");
 		return NULL;
 	}
-	LM_DBG("cloned root xavp [%.*s] >> [%.*s]\n", xold->name.len, xold->name.s, dst_name->len, dst_name->s);
+	LM_DBG("cloned root xavp [%.*s] >> [%.*s]\n", xold->name.len, xold->name.s,
+			dst_name->len, dst_name->s);
 
-	if(xold->val.type!=SR_XTYPE_XAVP)
-	{
+	if(xold->val.type != SR_XTYPE_XAVP) {
 		return xnew;
 	}
 
 	xnew->val.v.xavp = NULL;
 	oavp = xold->val.v.xavp;
 
-	while(oavp)
-	{
-		if(oavp->val.type!=SR_XTYPE_DATA && oavp->val.type!=SR_XTYPE_XAVP
-				&& oavp->val.type!=SR_XTYPE_SPTR)
-		{
-			navp =  xavp_new_value(&oavp->name, &oavp->val);
-			if(navp==NULL)
-			{
+	while(oavp) {
+		if(oavp->val.type != SR_XTYPE_DATA && oavp->val.type != SR_XTYPE_XAVP
+				&& oavp->val.type != SR_XTYPE_SPTR) {
+			navp = xavp_new_value(&oavp->name, &oavp->val);
+			if(navp == NULL) {
 				LM_ERR("cannot create cloned embedded xavp\n");
 				if(xnew->val.v.xavp != NULL) {
 					xavp_destroy_list(&xnew->val.v.xavp);
@@ -876,8 +857,7 @@ sr_xavp_t *xavp_clone_level_nodata_with_new_name(sr_xavp_t *xold, str *dst_name)
 				return NULL;
 			}
 			LM_DBG("cloned inner xavp [%.*s]\n", oavp->name.len, oavp->name.s);
-			if(xnew->val.v.xavp == NULL)
-			{
+			if(xnew->val.v.xavp == NULL) {
 				/* link to val in head xavp */
 				xnew->val.v.xavp = navp;
 			} else {
@@ -889,8 +869,7 @@ sr_xavp_t *xavp_clone_level_nodata_with_new_name(sr_xavp_t *xold, str *dst_name)
 		oavp = oavp->next;
 	}
 
-	if(xnew->val.v.xavp == NULL)
-	{
+	if(xnew->val.v.xavp == NULL) {
 		shm_free(xnew);
 		return NULL;
 	}
@@ -906,22 +885,22 @@ int xavp_insert(sr_xavp_t *xavp, int idx, sr_xavp_t **list)
 	int n = 0;
 	int i = 0;
 
-	if(xavp==NULL) {
+	if(xavp == NULL) {
 		return -1;
 	}
 
 	crt = xavp_get_internal(&xavp->name, list, 0, NULL);
 
-	if (idx == 0 && (!crt || crt->val.type != SR_XTYPE_NULL))
+	if(idx == 0 && (!crt || crt->val.type != SR_XTYPE_NULL))
 		return xavp_add(xavp, list);
 
-	while(crt!=NULL && n<idx) {
+	while(crt != NULL && n < idx) {
 		lst = crt;
 		n++;
 		crt = xavp_get_next(lst);
 	}
 
-	if (crt && crt->val.type == SR_XTYPE_NULL) {
+	if(crt && crt->val.type == SR_XTYPE_NULL) {
 		xavp->next = crt->next;
 		crt->next = xavp;
 
@@ -931,11 +910,11 @@ int xavp_insert(sr_xavp_t *xavp, int idx, sr_xavp_t **list)
 
 	memset(&val, 0, sizeof(sr_xval_t));
 	val.type = SR_XTYPE_NULL;
-	for(i=0; i<idx-n; i++) {
+	for(i = 0; i < idx - n; i++) {
 		crt = xavp_new_value(&xavp->name, &val);
-		if(crt==NULL)
+		if(crt == NULL)
 			return -1;
-		if (lst == NULL) {
+		if(lst == NULL) {
 			xavp_add(crt, list);
 		} else {
 			crt->next = lst->next;
@@ -944,7 +923,7 @@ int xavp_insert(sr_xavp_t *xavp, int idx, sr_xavp_t **list)
 		lst = crt;
 	}
 
-	if(lst==NULL) {
+	if(lst == NULL) {
 		LM_ERR("cannot link the xavp\n");
 		return -1;
 	}
@@ -961,16 +940,16 @@ sr_xavp_t *xavp_extract(str *name, sr_xavp_t **list)
 	sr_xavp_t *prv = 0;
 	unsigned int id;
 
-	if(name==NULL || name->s==NULL || name->len<=0) {
-		if(list!=NULL) {
+	if(name == NULL || name->s == NULL || name->len <= 0) {
+		if(list != NULL) {
 			avp = *list;
-			if(avp!=NULL) {
+			if(avp != NULL) {
 				*list = avp->next;
 				avp->next = NULL;
 			}
 		} else {
 			avp = *_xavp_list_crt;
-			if(avp!=NULL) {
+			if(avp != NULL) {
 				*_xavp_list_crt = avp->next;
 				avp->next = NULL;
 			}
@@ -980,20 +959,18 @@ sr_xavp_t *xavp_extract(str *name, sr_xavp_t **list)
 	}
 
 	id = get_hash1_raw(name->s, name->len);
-	if(list!=NULL)
+	if(list != NULL)
 		avp = *list;
 	else
 		avp = *_xavp_list_crt;
-	while(avp)
-	{
+	while(avp) {
 		foo = avp;
-		avp=avp->next;
-		if(foo->id==id && foo->name.len==name->len
-				&& strncmp(foo->name.s, name->s, name->len)==0)
-		{
-			if(prv!=NULL)
-				prv->next=foo->next;
-			else if(list!=NULL)
+		avp = avp->next;
+		if(foo->id == id && foo->name.len == name->len
+				&& strncmp(foo->name.s, name->s, name->len) == 0) {
+			if(prv != NULL)
+				prv->next = foo->next;
+			else if(list != NULL)
 				*list = foo->next;
 			else
 				*_xavp_list_crt = foo->next;
@@ -1010,12 +987,12 @@ sr_xavp_t *xavp_extract(str *name, sr_xavp_t **list)
  * return child node of an xavp
  * - $xavp(rname=>cname)
  */
-sr_xavp_t* xavp_get_child(str *rname, str *cname)
+sr_xavp_t *xavp_get_child(str *rname, str *cname)
 {
-	sr_xavp_t *ravp=NULL;
+	sr_xavp_t *ravp = NULL;
 
 	ravp = xavp_get(rname, NULL);
-	if(ravp==NULL || ravp->val.type!=SR_XTYPE_XAVP)
+	if(ravp == NULL || ravp->val.type != SR_XTYPE_XAVP)
 		return NULL;
 
 	return xavp_get(cname, ravp->val.v.xavp);
@@ -1026,13 +1003,13 @@ sr_xavp_t* xavp_get_child(str *rname, str *cname)
  * return child node of an xavp if it has int value
  * - $xavp(rname=>cname)
  */
-sr_xavp_t* xavp_get_child_with_ival(str *rname, str *cname)
+sr_xavp_t *xavp_get_child_with_ival(str *rname, str *cname)
 {
-	sr_xavp_t *vavp=NULL;
+	sr_xavp_t *vavp = NULL;
 
 	vavp = xavp_get_child(rname, cname);
 
-	if(vavp==NULL || vavp->val.type!=SR_XTYPE_LONG)
+	if(vavp == NULL || vavp->val.type != SR_XTYPE_LONG)
 		return NULL;
 
 	return vavp;
@@ -1043,13 +1020,13 @@ sr_xavp_t* xavp_get_child_with_ival(str *rname, str *cname)
  * return child node of an xavp if it has string value
  * - $xavp(rname=>cname)
  */
-sr_xavp_t* xavp_get_child_with_sval(str *rname, str *cname)
+sr_xavp_t *xavp_get_child_with_sval(str *rname, str *cname)
 {
-	sr_xavp_t *vavp=NULL;
+	sr_xavp_t *vavp = NULL;
 
 	vavp = xavp_get_child(rname, cname);
 
-	if(vavp==NULL || vavp->val.type!=SR_XTYPE_STR)
+	if(vavp == NULL || vavp->val.type != SR_XTYPE_STR)
 		return NULL;
 
 	return vavp;
@@ -1065,8 +1042,8 @@ sr_xavp_t* xavp_get_child_with_sval(str *rname, str *cname)
  */
 int xavp_set_child_xval(str *rname, str *cname, sr_xval_t *xval)
 {
-	sr_xavp_t *ravp=NULL;
-	sr_xavp_t *cavp=NULL;
+	sr_xavp_t *ravp = NULL;
+	sr_xavp_t *cavp = NULL;
 
 	ravp = xavp_get(rname, NULL);
 	if(ravp) {
@@ -1074,7 +1051,7 @@ int xavp_set_child_xval(str *rname, str *cname, sr_xval_t *xval)
 			/* first root xavp does not have xavp list value - remove it */
 			xavp_rm(ravp, NULL);
 			/* add a new xavp in the root list with a child */
-			if(xavp_add_xavp_value(rname, cname, xval, NULL)==NULL) {
+			if(xavp_add_xavp_value(rname, cname, xval, NULL) == NULL) {
 				return -1;
 			}
 		} else {
@@ -1085,13 +1062,13 @@ int xavp_set_child_xval(str *rname, str *cname, sr_xval_t *xval)
 				/* todo: update in place for int or if allocated size fits */
 				xavp_rm(cavp, &ravp->val.v.xavp);
 			}
-			if(xavp_add_value(cname, xval, &ravp->val.v.xavp)==NULL) {
+			if(xavp_add_value(cname, xval, &ravp->val.v.xavp) == NULL) {
 				return -1;
 			}
 		}
 	} else {
 		/* no xavp with rname in root list found */
-		if(xavp_add_xavp_value(rname, cname, xval, NULL)==NULL) {
+		if(xavp_add_xavp_value(rname, cname, xval, NULL) == NULL) {
 			return -1;
 		}
 	}
@@ -1143,7 +1120,7 @@ int xavp_serialize_fields(str *rname, char *obuf, int olen)
 	int rlen;
 
 	ravp = xavp_get(rname, NULL);
-	if(ravp==NULL || ravp->val.type!=SR_XTYPE_XAVP) {
+	if(ravp == NULL || ravp->val.type != SR_XTYPE_XAVP) {
 		/* not found or not holding subfields */
 		return 0;
 	}
@@ -1155,35 +1132,36 @@ int xavp_serialize_fields(str *rname, char *obuf, int olen)
 		switch(avp->val.type) {
 			case SR_XTYPE_LONG:
 				LM_DBG("     XAVP long int value: %ld\n", avp->val.v.l);
-				ostr.len = snprintf(ostr.s, olen-rlen, "%.*s=%lu;",
-						avp->name.len, avp->name.s, (unsigned long)avp->val.v.l);
-				if(ostr.len<=0 || ostr.len>=olen-rlen) {
-					LM_ERR("failed to serialize int value (%d/%d\n",
-							ostr.len, olen-rlen);
+				ostr.len = snprintf(ostr.s, olen - rlen, "%.*s=%lu;",
+						avp->name.len, avp->name.s,
+						(unsigned long)avp->val.v.l);
+				if(ostr.len <= 0 || ostr.len >= olen - rlen) {
+					LM_ERR("failed to serialize int value (%d/%d\n", ostr.len,
+							olen - rlen);
 					return -1;
 				}
-			break;
+				break;
 			case SR_XTYPE_STR:
 				LM_DBG("     XAVP str value: %s\n", avp->val.v.s.s);
 				if(avp->val.v.s.len == 0) {
-					ostr.len = snprintf(ostr.s, olen-rlen, "%.*s;",
-						avp->name.len, avp->name.s);
+					ostr.len = snprintf(ostr.s, olen - rlen, "%.*s;",
+							avp->name.len, avp->name.s);
 				} else {
-					ostr.len = snprintf(ostr.s, olen-rlen, "%.*s=%.*s;",
-						avp->name.len, avp->name.s,
-						avp->val.v.s.len, avp->val.v.s.s);
+					ostr.len = snprintf(ostr.s, olen - rlen, "%.*s=%.*s;",
+							avp->name.len, avp->name.s, avp->val.v.s.len,
+							avp->val.v.s.s);
 				}
-				if(ostr.len<=0 || ostr.len>=olen-rlen) {
-					LM_ERR("failed to serialize int value (%d/%d\n",
-							ostr.len, olen-rlen);
+				if(ostr.len <= 0 || ostr.len >= olen - rlen) {
+					LM_ERR("failed to serialize int value (%d/%d\n", ostr.len,
+							olen - rlen);
 					return -1;
 				}
-			break;
+				break;
 			default:
 				LM_DBG("skipping value type: %d\n", avp->val.type);
 				ostr.len = 0;
 		}
-		if(ostr.len>0) {
+		if(ostr.len > 0) {
 			ostr.s += ostr.len;
 			rlen += ostr.len;
 		}
@@ -1215,10 +1193,10 @@ void xavu_print_list(sr_xavp_t **head)
  */
 void xavu_reset_list(void)
 {
-	assert(_xavu_list_crt!=0 );
+	assert(_xavu_list_crt != 0);
 
-	if (_xavu_list_crt!=&_xavu_list_head)
-		_xavu_list_crt=&_xavu_list_head;
+	if(_xavu_list_crt != &_xavu_list_head)
+		_xavu_list_crt = &_xavu_list_head;
 	xavp_destroy_list(_xavu_list_crt);
 }
 
@@ -1229,7 +1207,7 @@ sr_xavp_t **xavu_set_list(sr_xavp_t **head)
 {
 	sr_xavp_t **avu;
 
-	assert(_xavu_list_crt!=0);
+	assert(_xavu_list_crt != 0);
 
 	avu = _xavu_list_crt;
 	_xavu_list_crt = head;
@@ -1241,19 +1219,20 @@ sr_xavp_t **xavu_set_list(sr_xavp_t **head)
  */
 sr_xavp_t **xavu_get_crt_list(void)
 {
-	assert(_xavu_list_crt!=0);
+	assert(_xavu_list_crt != 0);
 	return _xavu_list_crt;
 }
 
 /**
  *
  */
-static sr_xavp_t *xavu_get_internal(str *name, sr_xavp_t **list, sr_xavp_t **prv)
+static sr_xavp_t *xavu_get_internal(
+		str *name, sr_xavp_t **list, sr_xavp_t **prv)
 {
 	sr_xavp_t *avu;
 	unsigned int id;
 
-	if(name==NULL || name->s==NULL || name->len<=0) {
+	if(name == NULL || name->s == NULL || name->len <= 0) {
 		return NULL;
 	}
 
@@ -1265,8 +1244,8 @@ static sr_xavp_t *xavu_get_internal(str *name, sr_xavp_t **list, sr_xavp_t **prv
 		avu = *_xavu_list_crt;
 	}
 	while(avu) {
-		if(avu->id==id && avu->name.len==name->len
-				&& strncmp(avu->name.s, name->s, name->len)==0) {
+		if(avu->id == id && avu->name.len == name->len
+				&& strncmp(avu->name.s, name->s, name->len) == 0) {
 			return avu;
 		}
 		if(prv) {
@@ -1282,7 +1261,7 @@ static sr_xavp_t *xavu_get_internal(str *name, sr_xavp_t **list, sr_xavp_t **prv
  */
 sr_xavp_t *xavu_get(str *name, sr_xavp_t *start)
 {
-	return xavu_get_internal(name, (start)?&start:NULL, NULL);
+	return xavu_get_internal(name, (start) ? &start : NULL, NULL);
 }
 
 sr_xavp_t *xavu_lookup(str *name, sr_xavp_t **start)
@@ -1296,18 +1275,18 @@ sr_xavp_t *xavu_lookup(str *name, sr_xavp_t **start)
 int xavu_rm(sr_xavp_t *xa, sr_xavp_t **head)
 {
 	sr_xavp_t *avu;
-	sr_xavp_t *prv=0;
+	sr_xavp_t *prv = 0;
 
-	if(head!=NULL)
+	if(head != NULL)
 		avu = *head;
 	else
-		avu=*_xavu_list_crt;
+		avu = *_xavu_list_crt;
 
 	while(avu) {
-		if(avu==xa) {
+		if(avu == xa) {
 			if(prv) {
-				prv->next=avu->next;
-			} else if(head!=NULL) {
+				prv->next = avu->next;
+			} else if(head != NULL) {
 				*head = avu->next;
 			} else {
 				*_xavu_list_crt = avu->next;
@@ -1315,7 +1294,8 @@ int xavu_rm(sr_xavp_t *xa, sr_xavp_t **head)
 			xavp_free(avu);
 			return 1;
 		}
-		prv=avu; avu=avu->next;
+		prv = avu;
+		avu = avu->next;
 	}
 	return 0;
 }
@@ -1327,16 +1307,16 @@ int xavu_rm_by_name(str *name, sr_xavp_t **head)
 {
 	sr_xavp_t *avu;
 	sr_xavp_t *foo;
-	sr_xavp_t *prv=0;
+	sr_xavp_t *prv = 0;
 	unsigned int id;
 
 
-	if(name==NULL || name->s==NULL || name->len<=0) {
+	if(name == NULL || name->s == NULL || name->len <= 0) {
 		return -1;
 	}
 
 	id = get_hash1_raw(name->s, name->len);
-	if(head!=NULL) {
+	if(head != NULL) {
 		avu = *head;
 	} else {
 		avu = *_xavu_list_crt;
@@ -1344,11 +1324,11 @@ int xavu_rm_by_name(str *name, sr_xavp_t **head)
 	while(avu) {
 		foo = avu;
 		avu = avu->next;
-		if(foo->id==id && foo->name.len==name->len
-				&& strncmp(foo->name.s, name->s, name->len)==0) {
-			if(prv!=NULL) {
-				prv->next=foo->next;
-			} else if(head!=NULL) {
+		if(foo->id == id && foo->name.len == name->len
+				&& strncmp(foo->name.s, name->s, name->len) == 0) {
+			if(prv != NULL) {
+				prv->next = foo->next;
+			} else if(head != NULL) {
 				*head = foo->next;
 			} else {
 				*_xavu_list_crt = foo->next;
@@ -1366,11 +1346,11 @@ int xavu_rm_by_name(str *name, sr_xavp_t **head)
  */
 int xavu_rm_child_by_name(str *rname, str *cname)
 {
-	sr_xavp_t *avu=NULL;
+	sr_xavp_t *avu = NULL;
 
 	avu = xavu_lookup(rname, NULL);
 
-	if(avu == NULL || avu->val.type!=SR_XTYPE_XAVP) {
+	if(avu == NULL || avu->val.type != SR_XTYPE_XAVP) {
 		return 0;
 	}
 	return xavu_rm_by_name(cname, &avu->val.v.xavp);
@@ -1383,20 +1363,20 @@ sr_xavp_t *xavu_set_xval(str *name, sr_xval_t *val, sr_xavp_t **list)
 {
 	sr_xavp_t *avu;
 	sr_xavp_t *crt;
-	sr_xavp_t *prv=0;
+	sr_xavp_t *prv = 0;
 
-	if(val==NULL) {
+	if(val == NULL) {
 		return NULL;
 	}
 
 	avu = xavp_new_value(name, val);
-	if (avu==NULL) {
+	if(avu == NULL) {
 		return NULL;
 	}
 
 	/* find the current value */
 	crt = xavu_get_internal(name, list, &prv);
-	if(crt==NULL) {
+	if(crt == NULL) {
 		/* add a new one in the list */
 		avu->next = *_xavu_list_crt;
 		*_xavu_list_crt = avu;
@@ -1449,14 +1429,15 @@ sr_xavp_t *xavu_set_sval(str *rname, str *sval)
 /**
  *
  */
-sr_xavp_t *xavu_set_xavu_value(str *rname, str *name, sr_xval_t *val, sr_xavp_t **list)
+sr_xavp_t *xavu_set_xavu_value(
+		str *rname, str *name, sr_xval_t *val, sr_xavp_t **list)
 {
-	sr_xavp_t *ravu=0;
-	sr_xavp_t *cavu=0;
+	sr_xavp_t *ravu = 0;
+	sr_xavp_t *cavu = 0;
 	sr_xval_t rval;
 
 	cavu = xavp_new_value(name, val);
-	if (cavu==NULL) {
+	if(cavu == NULL) {
 		return NULL;
 	}
 
@@ -1465,7 +1446,7 @@ sr_xavp_t *xavu_set_xavu_value(str *rname, str *name, sr_xval_t *val, sr_xavp_t 
 	rval.v.xavp = cavu;
 
 	ravu = xavp_new_value(rname, &rval);
-	if (ravu==NULL) {
+	if(ravu == NULL) {
 		xavp_destroy_list(&cavu);
 		return NULL;
 	}
@@ -1490,8 +1471,8 @@ sr_xavp_t *xavu_set_xavu_value(str *rname, str *name, sr_xval_t *val, sr_xavp_t 
  */
 sr_xavp_t *xavu_set_child_xval(str *rname, str *cname, sr_xval_t *xval)
 {
-	sr_xavp_t *ravu=NULL;
-	sr_xavp_t *cavu=NULL;
+	sr_xavp_t *ravu = NULL;
+	sr_xavp_t *cavu = NULL;
 
 	ravu = xavu_get(rname, NULL);
 	if(ravu) {
@@ -1548,12 +1529,12 @@ sr_xavp_t *xavu_set_child_sval(str *rname, str *cname, str *sval)
  * return child node of an xavp
  * - $xavu(rname=>cname)
  */
-sr_xavp_t* xavu_get_child(str *rname, str *cname)
+sr_xavp_t *xavu_get_child(str *rname, str *cname)
 {
-	sr_xavp_t *ravp=NULL;
+	sr_xavp_t *ravp = NULL;
 
 	ravp = xavu_get(rname, NULL);
-	if(ravp==NULL || ravp->val.type!=SR_XTYPE_XAVP)
+	if(ravp == NULL || ravp->val.type != SR_XTYPE_XAVP)
 		return NULL;
 
 	return xavu_get(cname, ravp->val.v.xavp);
@@ -1564,13 +1545,13 @@ sr_xavp_t* xavu_get_child(str *rname, str *cname)
  * return child node of an xavp if it has int value
  * - $xavu(rname=>cname)
  */
-sr_xavp_t* xavu_get_child_with_ival(str *rname, str *cname)
+sr_xavp_t *xavu_get_child_with_ival(str *rname, str *cname)
 {
-	sr_xavp_t *vavp=NULL;
+	sr_xavp_t *vavp = NULL;
 
 	vavp = xavu_get_child(rname, cname);
 
-	if(vavp==NULL || vavp->val.type!=SR_XTYPE_LONG)
+	if(vavp == NULL || vavp->val.type != SR_XTYPE_LONG)
 		return NULL;
 
 	return vavp;
@@ -1581,13 +1562,13 @@ sr_xavp_t* xavu_get_child_with_ival(str *rname, str *cname)
  * return child node of an xavp if it has string value
  * - $xavu(rname=>cname)
  */
-sr_xavp_t* xavu_get_child_with_sval(str *rname, str *cname)
+sr_xavp_t *xavu_get_child_with_sval(str *rname, str *cname)
 {
-	sr_xavp_t *vavp=NULL;
+	sr_xavp_t *vavp = NULL;
 
 	vavp = xavu_get_child(rname, cname);
 
-	if(vavp==NULL || vavp->val.type!=SR_XTYPE_STR)
+	if(vavp == NULL || vavp->val.type != SR_XTYPE_STR)
 		return NULL;
 
 	return vavp;
@@ -1609,7 +1590,7 @@ int xavu_serialize_fields(str *rname, char *obuf, int olen)
 	int rlen;
 
 	ravu = xavu_get(rname, NULL);
-	if(ravu==NULL || ravu->val.type!=SR_XTYPE_XAVP) {
+	if(ravu == NULL || ravu->val.type != SR_XTYPE_XAVP) {
 		/* not found or not holding subfields */
 		return 0;
 	}
@@ -1621,35 +1602,36 @@ int xavu_serialize_fields(str *rname, char *obuf, int olen)
 		switch(avu->val.type) {
 			case SR_XTYPE_LONG:
 				LM_DBG("     XAVP long int value: %ld\n", avu->val.v.l);
-				ostr.len = snprintf(ostr.s, olen-rlen, "%.*s=%lu;",
-						avu->name.len, avu->name.s, (unsigned long)avu->val.v.l);
-				if(ostr.len<=0 || ostr.len>=olen-rlen) {
-					LM_ERR("failed to serialize int value (%d/%d\n",
-							ostr.len, olen-rlen);
+				ostr.len = snprintf(ostr.s, olen - rlen, "%.*s=%lu;",
+						avu->name.len, avu->name.s,
+						(unsigned long)avu->val.v.l);
+				if(ostr.len <= 0 || ostr.len >= olen - rlen) {
+					LM_ERR("failed to serialize int value (%d/%d\n", ostr.len,
+							olen - rlen);
 					return -1;
 				}
-			break;
+				break;
 			case SR_XTYPE_STR:
 				LM_DBG("     XAVP str value: %s\n", avu->val.v.s.s);
 				if(avu->val.v.s.len == 0) {
-					ostr.len = snprintf(ostr.s, olen-rlen, "%.*s;",
-						avu->name.len, avu->name.s);
+					ostr.len = snprintf(ostr.s, olen - rlen, "%.*s;",
+							avu->name.len, avu->name.s);
 				} else {
-					ostr.len = snprintf(ostr.s, olen-rlen, "%.*s=%.*s;",
-						avu->name.len, avu->name.s,
-						avu->val.v.s.len, avu->val.v.s.s);
+					ostr.len = snprintf(ostr.s, olen - rlen, "%.*s=%.*s;",
+							avu->name.len, avu->name.s, avu->val.v.s.len,
+							avu->val.v.s.s);
 				}
-				if(ostr.len<=0 || ostr.len>=olen-rlen) {
-					LM_ERR("failed to serialize int value (%d/%d\n",
-							ostr.len, olen-rlen);
+				if(ostr.len <= 0 || ostr.len >= olen - rlen) {
+					LM_ERR("failed to serialize int value (%d/%d\n", ostr.len,
+							olen - rlen);
 					return -1;
 				}
-			break;
+				break;
 			default:
 				LM_DBG("skipping value type: %d\n", avu->val.type);
 				ostr.len = 0;
 		}
-		if(ostr.len>0) {
+		if(ostr.len > 0) {
 			ostr.s += ostr.len;
 			rlen += ostr.len;
 		}
@@ -1663,7 +1645,8 @@ int xavu_serialize_fields(str *rname, char *obuf, int olen)
  */
 /*** XAVI - eXtended Attribute Value Insensitive case - implementation ***/
 /*! Helper functions */
-static sr_xavp_t *xavi_get_internal(str *name, sr_xavp_t **list, int idx, sr_xavp_t **prv);
+static sr_xavp_t *xavi_get_internal(
+		str *name, sr_xavp_t **list, int idx, sr_xavp_t **prv);
 static int xavi_rm_internal(str *name, sr_xavp_t **head, int idx);
 
 /**
@@ -1675,27 +1658,26 @@ static sr_xavp_t *xavi_new_value(str *name, sr_xval_t *val)
 	int size;
 	unsigned int id;
 
-	if(name==NULL || name->s==NULL || name->len<=0 || val==NULL)
+	if(name == NULL || name->s == NULL || name->len <= 0 || val == NULL)
 		return NULL;
 	id = get_hash1_case_raw(name->s, name->len);
 
 	size = sizeof(sr_xavp_t) + name->len + 1;
 	if(val->type == SR_XTYPE_STR)
 		size += val->v.s.len + 1;
-	avi = (sr_xavp_t*)shm_malloc(size);
-	if(avi==NULL) {
+	avi = (sr_xavp_t *)shm_malloc(size);
+	if(avi == NULL) {
 		SHM_MEM_ERROR;
 		return NULL;
 	}
 	memset(avi, 0, size);
 	avi->id = id;
-	avi->name.s = (char*)avi + sizeof(sr_xavp_t);
+	avi->name.s = (char *)avi + sizeof(sr_xavp_t);
 	memcpy(avi->name.s, name->s, name->len);
 	avi->name.s[name->len] = '\0';
 	avi->name.len = name->len;
 	memcpy(&avi->val, val, sizeof(sr_xval_t));
-	if(val->type == SR_XTYPE_STR)
-	{
+	if(val->type == SR_XTYPE_STR) {
 		avi->val.v.s.s = avi->name.s + avi->name.len + 1;
 		memcpy(avi->val.v.s.s, val->v.s.s, val->v.s.len);
 		avi->val.v.s.s[val->v.s.len] = '\0';
@@ -1710,7 +1692,7 @@ static sr_xavp_t *xavi_new_value(str *name, sr_xval_t *val)
  */
 int xavi_add(sr_xavp_t *xavi, sr_xavp_t **list)
 {
-	if (xavi==NULL) {
+	if(xavi == NULL) {
 		return -1;
 	}
 	/* Prepend new xavi to the list */
@@ -1733,7 +1715,7 @@ int xavi_add_last(sr_xavp_t *xavi, sr_xavp_t **list)
 	sr_xavp_t *prev;
 	sr_xavp_t *crt;
 
-	if (xavi==NULL) {
+	if(xavi == NULL) {
 		return -1;
 	}
 
@@ -1746,7 +1728,7 @@ int xavi_add_last(sr_xavp_t *xavi, sr_xavp_t **list)
 		crt = xavi_get_next(prev);
 	}
 
-	if(prev==NULL) {
+	if(prev == NULL) {
 		/* Prepend new xavi to the list */
 		if(list) {
 			xavi->next = *list;
@@ -1768,11 +1750,11 @@ int xavi_add_last(sr_xavp_t *xavi, sr_xavp_t **list)
  */
 int xavi_add_after(sr_xavp_t *nxavi, sr_xavp_t *pxavi)
 {
-	if (nxavi==NULL) {
+	if(nxavi == NULL) {
 		return -1;
 	}
 
-	if(pxavi==NULL) {
+	if(pxavi == NULL) {
 		nxavi->next = *_xavi_list_crt;
 		*_xavi_list_crt = nxavi;
 	} else {
@@ -1788,10 +1770,10 @@ int xavi_add_after(sr_xavp_t *nxavi, sr_xavp_t *pxavi)
  */
 sr_xavp_t *xavi_add_value(str *name, sr_xval_t *val, sr_xavp_t **list)
 {
-	sr_xavp_t *avi=0;
+	sr_xavp_t *avi = 0;
 
 	avi = xavi_new_value(name, val);
-	if (avi==NULL)
+	if(avi == NULL)
 		return NULL;
 
 	/* Prepend new value to the list */
@@ -1811,10 +1793,10 @@ sr_xavp_t *xavi_add_value(str *name, sr_xval_t *val, sr_xavp_t **list)
  */
 sr_xavp_t *xavi_add_value_after(str *name, sr_xval_t *val, sr_xavp_t *pxavi)
 {
-	sr_xavp_t *avi=0;
+	sr_xavp_t *avi = 0;
 
 	avi = xavi_new_value(name, val);
-	if (avi==NULL)
+	if(avi == NULL)
 		return NULL;
 
 	/* link new xavi */
@@ -1832,14 +1814,15 @@ sr_xavp_t *xavi_add_value_after(str *name, sr_xval_t *val, sr_xavp_t *pxavi)
 /**
  *
  */
-sr_xavp_t *xavi_add_xavi_value(str *rname, str *name, sr_xval_t *val, sr_xavp_t **list)
+sr_xavp_t *xavi_add_xavi_value(
+		str *rname, str *name, sr_xval_t *val, sr_xavp_t **list)
 {
-	sr_xavp_t *ravi=0;
-	sr_xavp_t *cavi=0;
+	sr_xavp_t *ravi = 0;
+	sr_xavp_t *cavi = 0;
 	sr_xval_t rval;
 
 	cavi = xavi_new_value(name, val);
-	if (cavi==NULL)
+	if(cavi == NULL)
 		return NULL;
 
 	memset(&rval, 0, sizeof(sr_xval_t));
@@ -1847,7 +1830,7 @@ sr_xavp_t *xavi_add_xavi_value(str *rname, str *name, sr_xval_t *val, sr_xavp_t 
 	rval.v.xavp = cavi;
 
 	ravi = xavi_new_value(rname, &rval);
-	if (ravi==NULL) {
+	if(ravi == NULL) {
 		xavi_destroy_list(&cavi);
 		return NULL;
 	}
@@ -1871,18 +1854,18 @@ sr_xavp_t *xavi_set_value(str *name, int idx, sr_xval_t *val, sr_xavp_t **list)
 {
 	sr_xavp_t *avi;
 	sr_xavp_t *cur;
-	sr_xavp_t *prv=0;
+	sr_xavp_t *prv = 0;
 
-	if(val==NULL)
+	if(val == NULL)
 		return NULL;
 
 	/* Find the current value */
 	cur = xavi_get_internal(name, list, idx, &prv);
-	if(cur==NULL)
+	if(cur == NULL)
 		return NULL;
 
 	avi = xavi_new_value(name, val);
-	if (avi==NULL)
+	if(avi == NULL)
 		return NULL;
 
 	/* Replace the current value with the new */
@@ -1902,13 +1885,14 @@ sr_xavp_t *xavi_set_value(str *name, int idx, sr_xval_t *val, sr_xavp_t **list)
 /**
  *
  */
-static sr_xavp_t *xavi_get_internal(str *name, sr_xavp_t **list, int idx, sr_xavp_t **prv)
+static sr_xavp_t *xavi_get_internal(
+		str *name, sr_xavp_t **list, int idx, sr_xavp_t **prv)
 {
 	sr_xavp_t *avi;
 	unsigned int id;
 	int n = 0;
 
-	if(name==NULL || name->s==NULL || name->len<=0)
+	if(name == NULL || name->s == NULL || name->len <= 0)
 		return NULL;
 	id = get_hash1_case_raw(name->s, name->len);
 
@@ -1916,12 +1900,10 @@ static sr_xavp_t *xavi_get_internal(str *name, sr_xavp_t **list, int idx, sr_xav
 		avi = *list;
 	else
 		avi = *_xavi_list_crt;
-	while(avi)
-	{
-		if(avi->id==id && avi->name.len==name->len
-				&& strncasecmp(avi->name.s, name->s, name->len)==0)
-		{
-			if(idx==n)
+	while(avi) {
+		if(avi->id == id && avi->name.len == name->len
+				&& strncasecmp(avi->name.s, name->s, name->len) == 0) {
+			if(idx == n)
 				return avi;
 			n++;
 		}
@@ -1937,7 +1919,7 @@ static sr_xavp_t *xavi_get_internal(str *name, sr_xavp_t **list, int idx, sr_xav
  */
 sr_xavp_t *xavi_get(str *name, sr_xavp_t *start)
 {
-	return xavi_get_internal(name, (start)?&start:NULL, 0, NULL);
+	return xavi_get_internal(name, (start) ? &start : NULL, 0, NULL);
 }
 
 /**
@@ -1955,16 +1937,16 @@ sr_xavp_t *xavi_get_next(sr_xavp_t *start)
 {
 	sr_xavp_t *avi;
 
-	if(start==NULL)
+	if(start == NULL)
 		return NULL;
 
 	avi = start->next;
-	while(avi)
-	{
-		if(avi->id==start->id && avi->name.len==start->name.len
-				&& strncasecmp(avi->name.s, start->name.s, start->name.len)==0)
+	while(avi) {
+		if(avi->id == start->id && avi->name.len == start->name.len
+				&& strncasecmp(avi->name.s, start->name.s, start->name.len)
+						   == 0)
 			return avi;
-		avi=avi->next;
+		avi = avi->next;
 	}
 
 	return NULL;
@@ -1996,27 +1978,26 @@ sr_xavp_t *xavi_get_last(str *xname, sr_xavp_t **list)
 int xavi_rm(sr_xavp_t *xa, sr_xavp_t **head)
 {
 	sr_xavp_t *avi;
-	sr_xavp_t *prv=0;
+	sr_xavp_t *prv = 0;
 
-	if(head!=NULL)
+	if(head != NULL)
 		avi = *head;
 	else
-		avi=*_xavi_list_crt;
+		avi = *_xavi_list_crt;
 
-	while(avi)
-	{
-		if(avi==xa)
-		{
+	while(avi) {
+		if(avi == xa) {
 			if(prv)
-				prv->next=avi->next;
-			else if(head!=NULL)
+				prv->next = avi->next;
+			else if(head != NULL)
 				*head = avi->next;
 			else
 				*_xavi_list_crt = avi->next;
 			xavi_free(avi);
 			return 1;
 		}
-		prv=avi; avi=avi->next;
+		prv = avi;
+		avi = avi->next;
 	}
 	return 0;
 }
@@ -2030,36 +2011,33 @@ static int xavi_rm_internal(str *name, sr_xavp_t **head, int idx)
 {
 	sr_xavp_t *avi;
 	sr_xavp_t *foo;
-	sr_xavp_t *prv=0;
+	sr_xavp_t *prv = 0;
 	unsigned int id;
-	int n=0;
-	int count=0;
+	int n = 0;
+	int count = 0;
 
-	if(name==NULL || name->s==NULL || name->len<=0)
+	if(name == NULL || name->s == NULL || name->len <= 0)
 		return 0;
 
 	id = get_hash1_case_raw(name->s, name->len);
-	if(head!=NULL)
+	if(head != NULL)
 		avi = *head;
 	else
 		avi = *_xavi_list_crt;
-	while(avi)
-	{
+	while(avi) {
 		foo = avi;
-		avi=avi->next;
-		if(foo->id==id && foo->name.len==name->len
-				&& strncasecmp(foo->name.s, name->s, name->len)==0)
-		{
-			if(idx<0 || idx==n)
-			{
-				if(prv!=NULL)
-					prv->next=foo->next;
-				else if(head!=NULL)
+		avi = avi->next;
+		if(foo->id == id && foo->name.len == name->len
+				&& strncasecmp(foo->name.s, name->s, name->len) == 0) {
+			if(idx < 0 || idx == n) {
+				if(prv != NULL)
+					prv->next = foo->next;
+				else if(head != NULL)
 					*head = foo->next;
 				else
 					*_xavi_list_crt = foo->next;
 				xavi_free(foo);
-				if(idx>=0)
+				if(idx >= 0)
 					return 1;
 				count++;
 			} else {
@@ -2078,7 +2056,7 @@ static int xavi_rm_internal(str *name, sr_xavp_t **head, int idx)
  */
 int xavi_rm_by_name(str *name, int all, sr_xavp_t **head)
 {
-	return xavi_rm_internal(name, head, -1*all);
+	return xavi_rm_internal(name, head, -1 * all);
 }
 
 /**
@@ -2086,7 +2064,7 @@ int xavi_rm_by_name(str *name, int all, sr_xavp_t **head)
  */
 int xavi_rm_by_index(str *name, int idx, sr_xavp_t **head)
 {
-	if (idx<0)
+	if(idx < 0)
 		return 0;
 	return xavi_rm_internal(name, head, idx);
 }
@@ -2096,14 +2074,14 @@ int xavi_rm_by_index(str *name, int idx, sr_xavp_t **head)
  */
 int xavi_rm_child_by_index(str *rname, str *cname, int idx)
 {
-	sr_xavp_t *avi=NULL;
+	sr_xavp_t *avi = NULL;
 
-	if (idx<0) {
+	if(idx < 0) {
 		return 0;
 	}
 	avi = xavi_get(rname, NULL);
 
-	if(avi == NULL || avi->val.type!=SR_XTYPE_XAVP) {
+	if(avi == NULL || avi->val.type != SR_XTYPE_XAVP) {
 		return 0;
 	}
 	return xavi_rm_internal(cname, &avi->val.v.xavp, idx);
@@ -2118,22 +2096,20 @@ int xavi_count(str *name, sr_xavp_t **start)
 	unsigned int id;
 	int n = 0;
 
-	if(name==NULL || name->s==NULL || name->len<=0)
+	if(name == NULL || name->s == NULL || name->len <= 0)
 		return -1;
 	id = get_hash1_case_raw(name->s, name->len);
 
 	if(start)
 		avi = *start;
 	else
-		avi=*_xavi_list_crt;
-	while(avi)
-	{
-		if(avi->id==id && avi->name.len==name->len
-				&& strncasecmp(avi->name.s, name->s, name->len)==0)
-		{
+		avi = *_xavi_list_crt;
+	while(avi) {
+		if(avi->id == id && avi->name.len == name->len
+				&& strncasecmp(avi->name.s, name->s, name->len) == 0) {
 			n++;
 		}
-		avi=avi->next;
+		avi = avi->next;
 	}
 
 	return n;
@@ -2144,10 +2120,10 @@ int xavi_count(str *name, sr_xavp_t **start)
  */
 void xavi_reset_list(void)
 {
-	assert(_xavi_list_crt!=0 );
+	assert(_xavi_list_crt != 0);
 
-	if (_xavi_list_crt!=&_xavi_list_head)
-		_xavi_list_crt=&_xavi_list_head;
+	if(_xavi_list_crt != &_xavi_list_head)
+		_xavi_list_crt = &_xavi_list_head;
 	xavi_destroy_list(_xavi_list_crt);
 }
 
@@ -2158,7 +2134,7 @@ sr_xavp_t **xavi_set_list(sr_xavp_t **head)
 {
 	sr_xavp_t **avi;
 
-	assert(_xavi_list_crt!=0);
+	assert(_xavi_list_crt != 0);
 
 	avi = _xavi_list_crt;
 	_xavi_list_crt = head;
@@ -2170,7 +2146,7 @@ sr_xavp_t **xavi_set_list(sr_xavp_t **head)
  */
 sr_xavp_t **xavi_get_crt_list(void)
 {
-	assert(_xavi_list_crt!=0);
+	assert(_xavi_list_crt != 0);
 	return _xavi_list_crt;
 }
 
@@ -2214,22 +2190,21 @@ struct str_list *xavi_get_list_key_names(sr_xavp_t *xavi)
 	struct str_list *f = NULL;
 	int total = 0;
 
-	if(xavi==NULL){
+	if(xavi == NULL) {
 		LM_ERR("xavi is NULL\n");
 		return 0;
 	}
 
-	if(xavi->val.type!=SR_XTYPE_XAVP){
+	if(xavi->val.type != SR_XTYPE_XAVP) {
 		LM_ERR("%s not xavp?\n", xavi->name.s);
 		return 0;
 	}
 
 	avi = xavi->val.v.xavp;
 
-	if (avi)
-	{
-		result = (struct str_list*)pkg_malloc(sizeof(struct str_list));
-		if (result==NULL) {
+	if(avi) {
+		result = (struct str_list *)pkg_malloc(sizeof(struct str_list));
+		if(result == NULL) {
 			PKG_MEM_ERROR;
 			return 0;
 		}
@@ -2240,23 +2215,19 @@ struct str_list *xavi_get_list_key_names(sr_xavp_t *xavi)
 		avi = avi->next;
 	}
 
-	while(avi)
-	{
+	while(avi) {
 		f = result;
-		while(f)
-		{
-			if((avi->name.len==f->s.len)&&
-				(strncasecmp(avi->name.s, f->s.s, f->s.len)==0))
-			{
+		while(f) {
+			if((avi->name.len == f->s.len)
+					&& (strncasecmp(avi->name.s, f->s.s, f->s.len) == 0)) {
 				break; /* name already on list */
 			}
 			f = f->next;
 		}
-		if (f==NULL)
-		{
+		if(f == NULL) {
 			r = append_str_list(avi->name.s, avi->name.len, &r, &total);
-			if(r==NULL){
-				while(result){
+			if(r == NULL) {
+				while(result) {
 					r = result;
 					result = result->next;
 					pkg_free(r);
@@ -2285,39 +2256,33 @@ sr_xavp_t *xavi_clone_level_nodata_with_new_name(sr_xavp_t *xold, str *dst_name)
 	sr_xavp_t *oavi = NULL;
 	sr_xavp_t *pavi = NULL;
 
-	if(xold == NULL)
-	{
+	if(xold == NULL) {
 		return NULL;
 	}
-	if(xold->val.type==SR_XTYPE_DATA || xold->val.type==SR_XTYPE_SPTR)
-	{
+	if(xold->val.type == SR_XTYPE_DATA || xold->val.type == SR_XTYPE_SPTR) {
 		LM_INFO("xavi value type is 'data' - ignoring in clone\n");
 		return NULL;
 	}
 	xnew = xavi_new_value(dst_name, &xold->val);
-	if(xnew==NULL)
-	{
+	if(xnew == NULL) {
 		LM_ERR("cannot create cloned root xavi\n");
 		return NULL;
 	}
-	LM_DBG("cloned root xavi [%.*s] >> [%.*s]\n", xold->name.len, xold->name.s, dst_name->len, dst_name->s);
+	LM_DBG("cloned root xavi [%.*s] >> [%.*s]\n", xold->name.len, xold->name.s,
+			dst_name->len, dst_name->s);
 
-	if(xold->val.type!=SR_XTYPE_XAVP)
-	{
+	if(xold->val.type != SR_XTYPE_XAVP) {
 		return xnew;
 	}
 
 	xnew->val.v.xavp = NULL;
 	oavi = xold->val.v.xavp;
 
-	while(oavi)
-	{
-		if(oavi->val.type!=SR_XTYPE_DATA && oavi->val.type!=SR_XTYPE_XAVP
-				&& oavi->val.type!=SR_XTYPE_SPTR)
-		{
-			navi =  xavi_new_value(&oavi->name, &oavi->val);
-			if(navi==NULL)
-			{
+	while(oavi) {
+		if(oavi->val.type != SR_XTYPE_DATA && oavi->val.type != SR_XTYPE_XAVP
+				&& oavi->val.type != SR_XTYPE_SPTR) {
+			navi = xavi_new_value(&oavi->name, &oavi->val);
+			if(navi == NULL) {
 				LM_ERR("cannot create cloned embedded xavi\n");
 				if(xnew->val.v.xavp != NULL) {
 					xavi_destroy_list(&xnew->val.v.xavp);
@@ -2326,8 +2291,7 @@ sr_xavp_t *xavi_clone_level_nodata_with_new_name(sr_xavp_t *xold, str *dst_name)
 				return NULL;
 			}
 			LM_DBG("cloned inner xavi [%.*s]\n", oavi->name.len, oavi->name.s);
-			if(xnew->val.v.xavp == NULL)
-			{
+			if(xnew->val.v.xavp == NULL) {
 				/* link to val in head xavi */
 				xnew->val.v.xavp = navi;
 			} else {
@@ -2339,8 +2303,7 @@ sr_xavp_t *xavi_clone_level_nodata_with_new_name(sr_xavp_t *xold, str *dst_name)
 		oavi = oavi->next;
 	}
 
-	if(xnew->val.v.xavp == NULL)
-	{
+	if(xnew->val.v.xavp == NULL) {
 		shm_free(xnew);
 		return NULL;
 	}
@@ -2356,22 +2319,22 @@ int xavi_insert(sr_xavp_t *xavi, int idx, sr_xavp_t **list)
 	int n = 0;
 	int i = 0;
 
-	if(xavi==NULL) {
+	if(xavi == NULL) {
 		return -1;
 	}
 
 	crt = xavi_get_internal(&xavi->name, list, 0, NULL);
 
-	if (idx == 0 && (!crt || crt->val.type != SR_XTYPE_NULL))
+	if(idx == 0 && (!crt || crt->val.type != SR_XTYPE_NULL))
 		return xavi_add(xavi, list);
 
-	while(crt!=NULL && n<idx) {
+	while(crt != NULL && n < idx) {
 		lst = crt;
 		n++;
 		crt = xavi_get_next(lst);
 	}
 
-	if (crt && crt->val.type == SR_XTYPE_NULL) {
+	if(crt && crt->val.type == SR_XTYPE_NULL) {
 		xavi->next = crt->next;
 		crt->next = xavi;
 
@@ -2381,11 +2344,11 @@ int xavi_insert(sr_xavp_t *xavi, int idx, sr_xavp_t **list)
 
 	memset(&val, 0, sizeof(sr_xval_t));
 	val.type = SR_XTYPE_NULL;
-	for(i=0; i<idx-n; i++) {
+	for(i = 0; i < idx - n; i++) {
 		crt = xavi_new_value(&xavi->name, &val);
-		if(crt==NULL)
+		if(crt == NULL)
 			return -1;
-		if (lst == NULL) {
+		if(lst == NULL) {
 			xavi_add(crt, list);
 		} else {
 			crt->next = lst->next;
@@ -2394,7 +2357,7 @@ int xavi_insert(sr_xavp_t *xavi, int idx, sr_xavp_t **list)
 		lst = crt;
 	}
 
-	if(lst==NULL) {
+	if(lst == NULL) {
 		LM_ERR("cannot link the xavi\n");
 		return -1;
 	}
@@ -2411,16 +2374,16 @@ sr_xavp_t *xavi_extract(str *name, sr_xavp_t **list)
 	sr_xavp_t *prv = 0;
 	unsigned int id;
 
-	if(name==NULL || name->s==NULL || name->len<=0) {
-		if(list!=NULL) {
+	if(name == NULL || name->s == NULL || name->len <= 0) {
+		if(list != NULL) {
 			avi = *list;
-			if(avi!=NULL) {
+			if(avi != NULL) {
 				*list = avi->next;
 				avi->next = NULL;
 			}
 		} else {
 			avi = *_xavi_list_crt;
-			if(avi!=NULL) {
+			if(avi != NULL) {
 				*_xavi_list_crt = avi->next;
 				avi->next = NULL;
 			}
@@ -2430,20 +2393,18 @@ sr_xavp_t *xavi_extract(str *name, sr_xavp_t **list)
 	}
 
 	id = get_hash1_case_raw(name->s, name->len);
-	if(list!=NULL)
+	if(list != NULL)
 		avi = *list;
 	else
 		avi = *_xavi_list_crt;
-	while(avi)
-	{
+	while(avi) {
 		foo = avi;
-		avi=avi->next;
-		if(foo->id==id && foo->name.len==name->len
-				&& strncasecmp(foo->name.s, name->s, name->len)==0)
-		{
-			if(prv!=NULL)
-				prv->next=foo->next;
-			else if(list!=NULL)
+		avi = avi->next;
+		if(foo->id == id && foo->name.len == name->len
+				&& strncasecmp(foo->name.s, name->s, name->len) == 0) {
+			if(prv != NULL)
+				prv->next = foo->next;
+			else if(list != NULL)
 				*list = foo->next;
 			else
 				*_xavi_list_crt = foo->next;
@@ -2460,12 +2421,12 @@ sr_xavp_t *xavi_extract(str *name, sr_xavp_t **list)
  * return child node of an xavi
  * - $xavi(rname=>cname)
  */
-sr_xavp_t* xavi_get_child(str *rname, str *cname)
+sr_xavp_t *xavi_get_child(str *rname, str *cname)
 {
-	sr_xavp_t *ravi=NULL;
+	sr_xavp_t *ravi = NULL;
 
 	ravi = xavi_get(rname, NULL);
-	if(ravi==NULL || ravi->val.type!=SR_XTYPE_XAVP)
+	if(ravi == NULL || ravi->val.type != SR_XTYPE_XAVP)
 		return NULL;
 
 	return xavi_get(cname, ravi->val.v.xavp);
@@ -2476,13 +2437,13 @@ sr_xavp_t* xavi_get_child(str *rname, str *cname)
  * return child node of an xavi if it has int value
  * - $xavi(rname=>cname)
  */
-sr_xavp_t* xavi_get_child_with_ival(str *rname, str *cname)
+sr_xavp_t *xavi_get_child_with_ival(str *rname, str *cname)
 {
-	sr_xavp_t *vavi=NULL;
+	sr_xavp_t *vavi = NULL;
 
 	vavi = xavi_get_child(rname, cname);
 
-	if(vavi==NULL || vavi->val.type!=SR_XTYPE_LONG)
+	if(vavi == NULL || vavi->val.type != SR_XTYPE_LONG)
 		return NULL;
 
 	return vavi;
@@ -2493,13 +2454,13 @@ sr_xavp_t* xavi_get_child_with_ival(str *rname, str *cname)
  * return child node of an xavi if it has string value
  * - $xavi(rname=>cname)
  */
-sr_xavp_t* xavi_get_child_with_sval(str *rname, str *cname)
+sr_xavp_t *xavi_get_child_with_sval(str *rname, str *cname)
 {
-	sr_xavp_t *vavi=NULL;
+	sr_xavp_t *vavi = NULL;
 
 	vavi = xavi_get_child(rname, cname);
 
-	if(vavi==NULL || vavi->val.type!=SR_XTYPE_STR)
+	if(vavi == NULL || vavi->val.type != SR_XTYPE_STR)
 		return NULL;
 
 	return vavi;
@@ -2515,8 +2476,8 @@ sr_xavp_t* xavi_get_child_with_sval(str *rname, str *cname)
  */
 int xavi_set_child_xval(str *rname, str *cname, sr_xval_t *xval)
 {
-	sr_xavp_t *ravi=NULL;
-	sr_xavp_t *cavi=NULL;
+	sr_xavp_t *ravi = NULL;
+	sr_xavp_t *cavi = NULL;
 
 	ravi = xavi_get(rname, NULL);
 	if(ravi) {
@@ -2524,7 +2485,7 @@ int xavi_set_child_xval(str *rname, str *cname, sr_xval_t *xval)
 			/* first root xavi does not have xavi list value - remove it */
 			xavi_rm(ravi, NULL);
 			/* add a new xavi in the root list with a child */
-			if(xavi_add_xavi_value(rname, cname, xval, NULL)==NULL) {
+			if(xavi_add_xavi_value(rname, cname, xval, NULL) == NULL) {
 				return -1;
 			}
 		} else {
@@ -2535,13 +2496,13 @@ int xavi_set_child_xval(str *rname, str *cname, sr_xval_t *xval)
 				/* todo: update in place for int or if allocated size fits */
 				xavi_rm(cavi, &ravi->val.v.xavp);
 			}
-			if(xavi_add_value(cname, xval, &ravi->val.v.xavp)==NULL) {
+			if(xavi_add_value(cname, xval, &ravi->val.v.xavp) == NULL) {
 				return -1;
 			}
 		}
 	} else {
 		/* no xavi with rname in root list found */
-		if(xavi_add_xavi_value(rname, cname, xval, NULL)==NULL) {
+		if(xavi_add_xavi_value(rname, cname, xval, NULL) == NULL) {
 			return -1;
 		}
 	}
@@ -2592,7 +2553,7 @@ int xavi_serialize_fields(str *rname, char *obuf, int olen)
 	int rlen;
 
 	ravi = xavi_get(rname, NULL);
-	if(ravi==NULL || ravi->val.type!=SR_XTYPE_XAVP) {
+	if(ravi == NULL || ravi->val.type != SR_XTYPE_XAVP) {
 		/* not found or not holding subfields */
 		return 0;
 	}
@@ -2604,35 +2565,36 @@ int xavi_serialize_fields(str *rname, char *obuf, int olen)
 		switch(avi->val.type) {
 			case SR_XTYPE_LONG:
 				LM_DBG("     XAVP long int value: %ld\n", avi->val.v.l);
-				ostr.len = snprintf(ostr.s, olen-rlen, "%.*s=%lu;",
-						avi->name.len, avi->name.s, (unsigned long)avi->val.v.l);
-				if(ostr.len<=0 || ostr.len>=olen-rlen) {
-					LM_ERR("failed to serialize int value (%d/%d\n",
-							ostr.len, olen-rlen);
+				ostr.len = snprintf(ostr.s, olen - rlen, "%.*s=%lu;",
+						avi->name.len, avi->name.s,
+						(unsigned long)avi->val.v.l);
+				if(ostr.len <= 0 || ostr.len >= olen - rlen) {
+					LM_ERR("failed to serialize int value (%d/%d\n", ostr.len,
+							olen - rlen);
 					return -1;
 				}
-			break;
+				break;
 			case SR_XTYPE_STR:
 				LM_DBG("     XAVP str value: %s\n", avi->val.v.s.s);
 				if(avi->val.v.s.len == 0) {
-					ostr.len = snprintf(ostr.s, olen-rlen, "%.*s;",
-						avi->name.len, avi->name.s);
+					ostr.len = snprintf(ostr.s, olen - rlen, "%.*s;",
+							avi->name.len, avi->name.s);
 				} else {
-					ostr.len = snprintf(ostr.s, olen-rlen, "%.*s=%.*s;",
-						avi->name.len, avi->name.s,
-						avi->val.v.s.len, avi->val.v.s.s);
+					ostr.len = snprintf(ostr.s, olen - rlen, "%.*s=%.*s;",
+							avi->name.len, avi->name.s, avi->val.v.s.len,
+							avi->val.v.s.s);
 				}
-				if(ostr.len<=0 || ostr.len>=olen-rlen) {
-					LM_ERR("failed to serialize int value (%d/%d\n",
-							ostr.len, olen-rlen);
+				if(ostr.len <= 0 || ostr.len >= olen - rlen) {
+					LM_ERR("failed to serialize int value (%d/%d\n", ostr.len,
+							olen - rlen);
 					return -1;
 				}
-			break;
+				break;
 			default:
 				LM_DBG("skipping value type: %d\n", avi->val.type);
 				ostr.len = 0;
 		}
-		if(ostr.len>0) {
+		if(ostr.len > 0) {
 			ostr.s += ostr.len;
 			rlen += ostr.len;
 		}

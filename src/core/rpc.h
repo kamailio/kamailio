@@ -33,46 +33,57 @@
 #include <time.h>
 #include "locking.h"
 
-enum rpc_flags {
-	RPC_RET_ARRAY  = (1 << 0),
-	RPC_RET_VALUE  = (1 << 1),
+enum rpc_flags
+{
+	RPC_RET_ARRAY = (1 << 0),
+	RPC_RET_VALUE = (1 << 1),
 	RPC_EXEC_DELTA = (1 << 2)
 };
 
 /* compatibility with old rpc flag name */
 #define RET_ARRAY RPC_RET_ARRAY
 
-typedef enum rpc_capabilities {
-	RPC_DELAYED_REPLY = (1 <<0)  /* delayed reply support */
+typedef enum rpc_capabilities
+{
+	RPC_DELAYED_REPLY = (1 << 0) /* delayed reply support */
 } rpc_capabilities_t;
 
 struct rpc_delayed_ctx;
 
 
 /* Send the result to the caller */
-typedef int (*rpc_send_f)(void* ctx);                                      /*!< Send the reply to the client */
-typedef void (*rpc_fault_f)(void* ctx, int code, char* fmt, ...);          /*!< Signal a failure to the client */
-typedef int (*rpc_add_f)(void* ctx, char* fmt, ...);                       /*!< Add a new piece of data to the result */
-typedef int (*rpc_scan_f)(void* ctx, char* fmt, ...);                      /*!< Retrieve request parameters */
-typedef int (*rpc_rpl_printf_f)(void* ctx, char* fmt, ...);                /*!< Add printf-like formatted data to the result set */
-typedef int (*rpc_struct_add_f)(void* ctx, char* fmt, ...);                /*!< Add fields in a structure */
-typedef int (*rpc_array_add_f)(void* ctx, char* fmt, ...);                 /*!< Add values in an array */
-typedef int (*rpc_struct_scan_f)(void* ctx, char* fmt, ...);               /*!< Scan attributes of a structure */
-typedef int (*rpc_struct_printf_f)(void* ctx, char* name, char* fmt, ...); /*!< Struct version of rpc_printf */
+typedef int (*rpc_send_f)(void *ctx); /*!< Send the reply to the client */
+typedef void (*rpc_fault_f)(void *ctx, int code, char *fmt,
+		...); /*!< Signal a failure to the client */
+typedef int (*rpc_add_f)(void *ctx, char *fmt,
+		...); /*!< Add a new piece of data to the result */
+typedef int (*rpc_scan_f)(
+		void *ctx, char *fmt, ...); /*!< Retrieve request parameters */
+typedef int (*rpc_rpl_printf_f)(void *ctx, char *fmt,
+		...); /*!< Add printf-like formatted data to the result set */
+typedef int (*rpc_struct_add_f)(
+		void *ctx, char *fmt, ...); /*!< Add fields in a structure */
+typedef int (*rpc_array_add_f)(
+		void *ctx, char *fmt, ...); /*!< Add values in an array */
+typedef int (*rpc_struct_scan_f)(
+		void *ctx, char *fmt, ...); /*!< Scan attributes of a structure */
+typedef int (*rpc_struct_printf_f)(void *ctx, char *name, char *fmt,
+		...); /*!< Struct version of rpc_printf */
 
 /* returns the supported capabilities */
-typedef rpc_capabilities_t (*rpc_capabilities_f)(void* ctx);
+typedef rpc_capabilities_t (*rpc_capabilities_f)(void *ctx);
 /* create a special "context" for delayed replies */
-typedef struct rpc_delayed_ctx* (*rpc_delayed_ctx_new_f)(void* ctx);
+typedef struct rpc_delayed_ctx *(*rpc_delayed_ctx_new_f)(void *ctx);
 /* close the special "context" for delayed replies */
-typedef void (*rpc_delayed_ctx_close_f)(struct rpc_delayed_ctx* dctx);
+typedef void (*rpc_delayed_ctx_close_f)(struct rpc_delayed_ctx *dctx);
 
 /*
  * RPC context, this is what RPC functions get as a parameter and use
  * it to obtain the value of the parameters of the call and reference
  * to the result structure that will be returned to the caller
  */
-typedef struct rpc {
+typedef struct rpc
+{
 	rpc_fault_f fault;
 	rpc_send_f send;
 	rpc_add_f add;
@@ -88,9 +99,10 @@ typedef struct rpc {
 } rpc_t;
 
 
-typedef struct rpc_delayed_ctx{
+typedef struct rpc_delayed_ctx
+{
 	rpc_t rpc;
-	void* reply_ctx;
+	void *reply_ctx;
 	/* more private data might follow */
 } rpc_delayed_ctx_t;
 
@@ -98,7 +110,7 @@ typedef struct rpc_delayed_ctx{
 /**
  * RPC Function Prototype
  */
-typedef void (*rpc_function_t)(rpc_t* rpc, void* ctx);
+typedef void (*rpc_function_t)(rpc_t *rpc, void *ctx);
 
 /**
  * RPC callback context.
@@ -107,7 +119,8 @@ typedef void (*rpc_function_t)(rpc_t* rpc, void* ctx);
  * (rpc_function_t) parameters and it's not used/needed
  * by the rpc api/interface.
  */
-typedef struct rpc_cb_ctx {
+typedef struct rpc_cb_ctx
+{
 	rpc_t *rpc;
 	void *c;
 } rpc_cb_ctx_t;
@@ -116,19 +129,23 @@ typedef struct rpc_cb_ctx {
 /**
  * Remote Procedure Call Export
  */
-typedef struct rpc_export {
-	const char* name;        /*!< Name of the RPC function (null terminated) */
+typedef struct rpc_export
+{
+	const char *name;		 /*!< Name of the RPC function (null terminated) */
 	rpc_function_t function; /*!< Pointer to the function */
-	const char** doc_str;  /*!< Documentation strings, method signature and description */
-	unsigned int flags;      /*!< Various flags, reserved for future use */
+	const char **
+			doc_str; /*!< Documentation strings, method signature and description */
+	unsigned int flags; /*!< Various flags, reserved for future use */
 } rpc_export_t;
 
-typedef struct rpc_xdata {
+typedef struct rpc_xdata
+{
 	gen_lock_t elock;
 	time_t etime;
 } rpc_xdata_t;
 
-typedef struct rpc_exportx {
+typedef struct rpc_exportx
+{
 	rpc_export_t r;
 	rpc_xdata_t *xdata;
 } rpc_exportx_t;

@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 /*!
@@ -25,13 +25,12 @@
 */
 
 
-
 #ifndef receive_h
 #define receive_h
 
 #include "ip_addr.h"
 
-int receive_msg(char* buf, unsigned int len, struct receive_info *ri);
+int receive_msg(char *buf, unsigned int len, struct receive_info *ri);
 int sip_check_fline(char *buf, unsigned int len);
 unsigned int inc_msg_no(void);
 void ksr_msg_env_reset(void);

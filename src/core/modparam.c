@@ -44,9 +44,9 @@ static char *get_mod_param_type_str(int ptype)
 	if(ptype & PARAM_USE_FUNC) {
 		if(ptype & PARAM_STRING) {
 			return "func-string";
-		} else if (ptype & PARAM_INT) {
+		} else if(ptype & PARAM_INT) {
 			return "func-int";
-		} else if (ptype & PARAM_STR) {
+		} else if(ptype & PARAM_STR) {
 			return "func-str";
 		} else {
 			return "func-unknown";
@@ -54,42 +54,42 @@ static char *get_mod_param_type_str(int ptype)
 	}
 	if(ptype & PARAM_STRING) {
 		return "string";
-	} else if (ptype & PARAM_INT) {
+	} else if(ptype & PARAM_INT) {
 		return "int";
-	} else if (ptype & PARAM_STR) {
+	} else if(ptype & PARAM_STR) {
 		return "str";
 	} else {
 		return "unknown";
 	}
 }
 
-int set_mod_param(char* _mod, char* _name, modparam_t _type, void* _val)
+int set_mod_param(char *_mod, char *_name, modparam_t _type, void *_val)
 {
 	return set_mod_param_regex(_mod, _name, _type, _val);
 }
 
-int set_mod_param_regex(char* regex, char* name, modparam_t type, void* val)
+int set_mod_param_regex(char *regex, char *name, modparam_t type, void *val)
 {
-	struct sr_module* t;
+	struct sr_module *t;
 	regex_t preg;
 	int mod_found, len;
-	char* reg;
+	char *reg;
 	void *ptr, *val2;
 	modparam_t param_type;
 	str s;
 
-	if (!regex) {
+	if(!regex) {
 		LM_ERR("Invalid mod parameter value\n");
 		return -5;
 	}
-	if (!name) {
+	if(!name) {
 		LM_ERR("Invalid name parameter value\n");
 		return -6;
 	}
 
 	len = strlen(regex);
 	reg = pkg_malloc(len + 4 + 1);
-	if (reg == 0) {
+	if(reg == 0) {
 		PKG_MEM_ERROR;
 		return -1;
 	}
@@ -100,7 +100,7 @@ int set_mod_param_regex(char* regex, char* name, modparam_t type, void* val)
 	reg[len + 3] = '$';
 	reg[len + 4] = '\0';
 
-	if (regcomp(&preg, reg, REG_EXTENDED | REG_NOSUB | REG_ICASE)) {
+	if(regcomp(&preg, reg, REG_EXTENDED | REG_NOSUB | REG_ICASE)) {
 		LM_ERR("Error while compiling regular expression\n");
 		pkg_free(reg);
 		return -2;
@@ -108,72 +108,83 @@ int set_mod_param_regex(char* regex, char* name, modparam_t type, void* val)
 
 	mod_found = 0;
 	for(t = modules; t; t = t->next) {
-		if (regexec(&preg, t->exports.name, 0, 0, 0) == 0) {
+		if(regexec(&preg, t->exports.name, 0, 0, 0) == 0) {
 			LM_DBG("'%s' matches module '%s'\n", regex, t->exports.name);
 			mod_found = 1;
 			/* PARAM_STR (PARAM_STRING) may be assigned also to PARAM_STRING(PARAM_STR) so let get both module param */
-			ptr = find_param_export(t, name, type | ((type & (PARAM_STR|PARAM_STRING))?PARAM_STR|PARAM_STRING:0), &param_type);
-			if (ptr) {
-				     /* type casting */
-				if (type == PARAM_STRING && PARAM_TYPE_MASK(param_type) == PARAM_STR) {
-					s.s = (char*)val;
+			ptr = find_param_export(t, name,
+					type
+							| ((type & (PARAM_STR | PARAM_STRING))
+											? PARAM_STR | PARAM_STRING
+											: 0),
+					&param_type);
+			if(ptr) {
+				/* type casting */
+				if(type == PARAM_STRING
+						&& PARAM_TYPE_MASK(param_type) == PARAM_STR) {
+					s.s = (char *)val;
 					s.len = s.s ? strlen(s.s) : 0;
 					val2 = &s;
-				} else if (type == PARAM_STR && PARAM_TYPE_MASK(param_type) == PARAM_STRING) {
-					s = *(str*)val;
-					val2 = s.s;	/* zero terminator expected */
+				} else if(type == PARAM_STR
+						  && PARAM_TYPE_MASK(param_type) == PARAM_STRING) {
+					s = *(str *)val;
+					val2 = s.s; /* zero terminator expected */
 				} else {
 					val2 = val;
 				}
-				LM_DBG("found <%s> in module %s [%s]\n", name, t->exports.name, t->path);
-				if (param_type & PARAM_USE_FUNC) {
-					if ( ((param_func_t)(ptr))(param_type, val2) < 0) {
+				LM_DBG("found <%s> in module %s [%s]\n", name, t->exports.name,
+						t->path);
+				if(param_type & PARAM_USE_FUNC) {
+					if(((param_func_t)(ptr))(param_type, val2) < 0) {
 						regfree(&preg);
 						pkg_free(reg);
 						return -4;
 					}
-				}
-				else {
+				} else {
 					switch(PARAM_TYPE_MASK(param_type)) {
 						case PARAM_STRING:
-							*((char**)ptr) = pkg_malloc(strlen((char*)val2)+1);
-							if (!*((char**)ptr)) {
+							*((char **)ptr) =
+									pkg_malloc(strlen((char *)val2) + 1);
+							if(!*((char **)ptr)) {
 								PKG_MEM_ERROR;
 								regfree(&preg);
 								pkg_free(reg);
 								return -1;
 							}
-							strcpy(*((char**)ptr), (char*)val2);
+							strcpy(*((char **)ptr), (char *)val2);
 							break;
 
 						case PARAM_STR:
-							if( ((str*)val2)->s==NULL) {
+							if(((str *)val2)->s == NULL) {
 								LM_ERR("null value\n");
 								regfree(&preg);
 								pkg_free(reg);
 								return -1;
 							}
-							((str*)ptr)->s = pkg_malloc(((str*)val2)->len+1);
-							if (!((str*)ptr)->s) {
+							((str *)ptr)->s =
+									pkg_malloc(((str *)val2)->len + 1);
+							if(!((str *)ptr)->s) {
 								PKG_MEM_ERROR;
 								regfree(&preg);
 								pkg_free(reg);
 								return -1;
 							}
-							memcpy(((str*)ptr)->s, ((str*)val2)->s, ((str*)val2)->len);
-							((str*)ptr)->len = ((str*)val2)->len;
-							((str*)ptr)->s[((str*)ptr)->len] = 0;
+							memcpy(((str *)ptr)->s, ((str *)val2)->s,
+									((str *)val2)->len);
+							((str *)ptr)->len = ((str *)val2)->len;
+							((str *)ptr)->s[((str *)ptr)->len] = 0;
 							break;
 
 						case PARAM_INT:
-							*((int*)ptr) = (int)(long)val2;
+							*((int *)ptr) = (int)(long)val2;
 							break;
 					}
 				}
-			}
-			else {
-				LM_ERR("parameter <%s> of type <%d:%s> not found in module <%s>\n",
-						name, type, get_mod_param_type_str(type), t->exports.name);
+			} else {
+				LM_ERR("parameter <%s> of type <%d:%s> not found in module "
+					   "<%s>\n",
+						name, type, get_mod_param_type_str(type),
+						t->exports.name);
 				regfree(&preg);
 				pkg_free(reg);
 				return -3;
@@ -183,20 +194,20 @@ int set_mod_param_regex(char* regex, char* name, modparam_t type, void* val)
 
 	regfree(&preg);
 	pkg_free(reg);
-	if (!mod_found) {
+	if(!mod_found) {
 		LM_ERR("No module matching <%s> found\n", regex);
 		return -4;
 	}
 	return 0;
 }
 
-int modparamx_set(char* mname, char* pname, modparam_t ptype, void* pval)
+int modparamx_set(char *mname, char *pname, modparam_t ptype, void *pval)
 {
 	str seval;
 	str sfmt;
 	sip_msg_t *fmsg;
-	char* emname;
-	char* epname;
+	char *emname;
+	char *epname;
 	pv_spec_t *pvs;
 	pv_value_t pvv;
 	str_list_t *sb;
@@ -206,9 +217,9 @@ int modparamx_set(char* mname, char* pname, modparam_t ptype, void* pval)
 		fmsg = faked_msg_get_next();
 		sfmt.s = mname;
 		sfmt.len = strlen(sfmt.s);
-		if(pv_eval_str(fmsg, &seval, &sfmt)>=0) {
+		if(pv_eval_str(fmsg, &seval, &sfmt) >= 0) {
 			sb = str_list_block_add(&_ksr_modparam_strlist, seval.s, seval.len);
-			if(sb==NULL) {
+			if(sb == NULL) {
 				LM_ERR("failed to handle parameter type: %d\n", ptype);
 				return -1;
 			}
@@ -221,9 +232,9 @@ int modparamx_set(char* mname, char* pname, modparam_t ptype, void* pval)
 		fmsg = faked_msg_get_next();
 		sfmt.s = pname;
 		sfmt.len = strlen(sfmt.s);
-		if(pv_eval_str(fmsg, &seval, &sfmt)>=0) {
+		if(pv_eval_str(fmsg, &seval, &sfmt) >= 0) {
 			sb = str_list_block_add(&_ksr_modparam_strlist, seval.s, seval.len);
-			if(sb==NULL) {
+			if(sb == NULL) {
 				LM_ERR("failed to handle parameter type: %d\n", ptype);
 				return -1;
 			}
@@ -233,20 +244,21 @@ int modparamx_set(char* mname, char* pname, modparam_t ptype, void* pval)
 
 	switch(ptype) {
 		case PARAM_STRING:
-			if(strchr((char*)pval, '$') != NULL) {
+			if(strchr((char *)pval, '$') != NULL) {
 				fmsg = faked_msg_get_next();
-				sfmt.s = (char*)pval;
+				sfmt.s = (char *)pval;
 				sfmt.len = strlen(sfmt.s);
-				if(pv_eval_str(fmsg, &seval, &sfmt)>=0) {
-					sb = str_list_block_add(&_ksr_modparam_strlist, seval.s, seval.len);
-					if(sb==NULL) {
+				if(pv_eval_str(fmsg, &seval, &sfmt) >= 0) {
+					sb = str_list_block_add(
+							&_ksr_modparam_strlist, seval.s, seval.len);
+					if(sb == NULL) {
 						LM_ERR("failed to handle parameter type: %d\n", ptype);
 						return -1;
 					}
-					return set_mod_param_regex(emname, epname, PARAM_STRING,
-							(void*)sb->s.s);
+					return set_mod_param_regex(
+							emname, epname, PARAM_STRING, (void *)sb->s.s);
 				} else {
-					LM_ERR("failed to evaluate parameter [%s]\n", (char*)pval);
+					LM_ERR("failed to evaluate parameter [%s]\n", (char *)pval);
 					return -1;
 				}
 			} else {
@@ -255,7 +267,7 @@ int modparamx_set(char* mname, char* pname, modparam_t ptype, void* pval)
 		case PARAM_INT:
 			return set_mod_param_regex(emname, epname, PARAM_INT, pval);
 		case PARAM_VAR:
-			sfmt.s = (char*)pval;
+			sfmt.s = (char *)pval;
 			sfmt.len = strlen(sfmt.s);
 			seval.len = pv_locate_name(&sfmt);
 			if(seval.len != sfmt.len) {
@@ -264,7 +276,7 @@ int modparamx_set(char* mname, char* pname, modparam_t ptype, void* pval)
 				return -1;
 			}
 			pvs = pv_cache_get(&sfmt);
-			if(pvs==NULL) {
+			if(pvs == NULL) {
 				LM_ERR("cannot get pv spec for [%.*s]\n", sfmt.len, sfmt.s);
 				return -1;
 			}
@@ -275,16 +287,17 @@ int modparamx_set(char* mname, char* pname, modparam_t ptype, void* pval)
 				LM_ERR("unable to get pv value for [%.*s]\n", sfmt.len, sfmt.s);
 				return -1;
 			}
-			if(pvv.flags&PV_VAL_NULL) {
+			if(pvv.flags & PV_VAL_NULL) {
 				LM_ERR("unable to get pv value for [%.*s]\n", sfmt.len, sfmt.s);
 				return -1;
 			}
-			if(pvv.flags&PV_TYPE_INT) {
-				return set_mod_param_regex(emname, epname, PARAM_INT,
-						(void*)(long)pvv.ri);
+			if(pvv.flags & PV_TYPE_INT) {
+				return set_mod_param_regex(
+						emname, epname, PARAM_INT, (void *)(long)pvv.ri);
 			}
-			if(pvv.rs.len<0) {
-				LM_ERR("invalid pv string value for [%.*s]\n", sfmt.len, sfmt.s);
+			if(pvv.rs.len < 0) {
+				LM_ERR("invalid pv string value for [%.*s]\n", sfmt.len,
+						sfmt.s);
 				return -1;
 			}
 			if(pvv.rs.s[pvv.rs.len] != '\0') {
@@ -292,21 +305,22 @@ int modparamx_set(char* mname, char* pname, modparam_t ptype, void* pval)
 						sfmt.len, sfmt.s);
 				return -1;
 			}
-			sb = str_list_block_add(&_ksr_modparam_strlist, pvv.rs.s, pvv.rs.len);
-			if(sb==NULL) {
+			sb = str_list_block_add(
+					&_ksr_modparam_strlist, pvv.rs.s, pvv.rs.len);
+			if(sb == NULL) {
 				LM_ERR("failed to handle parameter type: %d\n", ptype);
 				return -1;
 			}
 
-			return set_mod_param_regex(emname, epname, PARAM_STRING,
-							(void*)sb->s.s);
+			return set_mod_param_regex(
+					emname, epname, PARAM_STRING, (void *)sb->s.s);
 		default:
 			LM_ERR("invalid parameter type: %d\n", ptype);
 			return -1;
 	}
 }
 
-int set_mod_param_serialized(char* mval)
+int set_mod_param_serialized(char *mval)
 {
 #define MPARAM_MBUF_SIZE 256
 	char mbuf[MPARAM_MBUF_SIZE];
@@ -324,7 +338,7 @@ int set_mod_param_serialized(char* mval)
 	strcpy(mbuf, mval);
 	mname = mbuf;
 	p = strchr(mbuf, ':');
-	if(p==NULL) {
+	if(p == NULL) {
 		LM_ERR("invalid format for argument: %s\n", mval);
 		return -1;
 	}
@@ -332,22 +346,22 @@ int set_mod_param_serialized(char* mval)
 	p++;
 	mparam = p;
 	p = strchr(p, ':');
-	if(p==NULL) {
+	if(p == NULL) {
 		LM_ERR("invalid format for argument: %s\n", mval);
 		return -1;
 	}
 	*p = '\0';
 	p++;
-	if(*p=='i' || *p=='I') {
+	if(*p == 'i' || *p == 'I') {
 		ptype = PARAM_INT;
-	} else if(*p=='s' || *p=='S') {
+	} else if(*p == 's' || *p == 'S') {
 		ptype = PARAM_STRING;
 	} else {
 		LM_ERR("invalid format for argument: %s\n", mval);
 		return -1;
 	}
 	p++;
-	if(*p!=':') {
+	if(*p != ':') {
 		LM_ERR("invalid format for argument: %s\n", mval);
 		return -1;
 	}
@@ -362,6 +376,7 @@ int set_mod_param_serialized(char* mval)
 			return -1;
 		}
 		strz2sint(sval, &ival);
-		return set_mod_param_regex(mname, mparam, PARAM_INT, (void*)(long)ival);
+		return set_mod_param_regex(
+				mname, mparam, PARAM_INT, (void *)(long)ival);
 	}
 }

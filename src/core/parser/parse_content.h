@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -31,11 +31,11 @@
 #include "msg_parser.h"
 
 
-struct mime_type {
+struct mime_type
+{
 	unsigned short type;
 	unsigned short subtype;
 };
-
 
 
 /*! \name MimeTypes
@@ -43,58 +43,58 @@ struct mime_type {
  */
 /*@{ */
 
-#define TYPE_TEXT            1
-#define TYPE_MESSAGE         2
-#define TYPE_APPLICATION     3
-#define TYPE_MULTIPART       4
-#define TYPE_ALL             0xfe
-#define TYPE_UNKNOWN         0xff
+#define TYPE_TEXT 1
+#define TYPE_MESSAGE 2
+#define TYPE_APPLICATION 3
+#define TYPE_MULTIPART 4
+#define TYPE_ALL 0xfe
+#define TYPE_UNKNOWN 0xff
 
-#define SUBTYPE_PLAIN        1
-#define SUBTYPE_CPIM         2
-#define SUBTYPE_SDP          3
-#define SUBTYPE_CPLXML       4
-#define SUBTYPE_PIDFXML      5
-#define SUBTYPE_RLMIXML      6
-#define SUBTYPE_RELATED      7
-#define SUBTYPE_LPIDFXML     8
-#define SUBTYPE_XPIDFXML     9
-#define SUBTYPE_WATCHERINFOXML     10
-#define SUBTYPE_EXTERNAL_BODY      11
-#define SUBTYPE_XML_MSRTC_PIDF     12
-#define SUBTYPE_CPIM_PIDFXML       13
-#define SUBTYPE_MIXED              14
-#define SUBTYPE_ISUP               15
-#define SUBTYPE_ALL          0xfe
-#define SUBTYPE_UNKNOWN      0xff
+#define SUBTYPE_PLAIN 1
+#define SUBTYPE_CPIM 2
+#define SUBTYPE_SDP 3
+#define SUBTYPE_CPLXML 4
+#define SUBTYPE_PIDFXML 5
+#define SUBTYPE_RLMIXML 6
+#define SUBTYPE_RELATED 7
+#define SUBTYPE_LPIDFXML 8
+#define SUBTYPE_XPIDFXML 9
+#define SUBTYPE_WATCHERINFOXML 10
+#define SUBTYPE_EXTERNAL_BODY 11
+#define SUBTYPE_XML_MSRTC_PIDF 12
+#define SUBTYPE_CPIM_PIDFXML 13
+#define SUBTYPE_MIXED 14
+#define SUBTYPE_ISUP 15
+#define SUBTYPE_ALL 0xfe
+#define SUBTYPE_UNKNOWN 0xff
 
 /*@} */
 
 /*! \brief taken from PA module - will be useful here */
-#define MIMETYPE(x_,y_) ((TYPE_##x_ << 16) | (SUBTYPE_##y_))
+#define MIMETYPE(x_, y_) ((TYPE_##x_ << 16) | (SUBTYPE_##y_))
 
 /*! \brief
- * Maximum number of mimes allowed in Accept header 
+ * Maximum number of mimes allowed in Accept header
  */
-#define MAX_MIMES_NR         128
+#define MAX_MIMES_NR 128
 
 /*! \brief
  * returns the content-length value of a sip_msg as an integer
  */
-#define get_content_length(_msg_)   ((long)((_msg_)->content_length->parsed))
+#define get_content_length(_msg_) ((long)((_msg_)->content_length->parsed))
 
 
 /*! \brief
  * returns the content-type value of a sip_msg as an integer
  */
-#define get_content_type(_msg_)   ((int)(long)((_msg_)->content_type->parsed))
+#define get_content_type(_msg_) ((int)(long)((_msg_)->content_type->parsed))
 
 
 /*! \brief
  * returns the accept values of a sip_msg as a null-terminated array
  * of integer
  */
-#define get_accept(_msg_) ((int*)((_msg_)->accept->parsed))
+#define get_accept(_msg_) ((int *)((_msg_)->accept->parsed))
 
 /*! \brief
  * parse the body of the Content-Type header. Its value is also converted
@@ -103,9 +103,9 @@ struct mime_type {
  *            0        : hdr not found
  *           -1        : error (parse error )
  */
-int parse_content_type_hdr(struct sip_msg* const msg);
+int parse_content_type_hdr(struct sip_msg *const msg);
 
-int parse_accept_body(struct hdr_field* const hdr);
+int parse_accept_body(struct hdr_field *const hdr);
 
 /*! \brief
  * parse the body of the Accept header. Its values are also converted
@@ -114,7 +114,7 @@ int parse_accept_body(struct hdr_field* const hdr);
  *            0 : hdr not found
  *           -1 : error (parse error)
  */
-int parse_accept_hdr(struct sip_msg* const msg);
+int parse_accept_hdr(struct sip_msg *const msg);
 
 
 /*! \brief
@@ -122,11 +122,13 @@ int parse_accept_hdr(struct sip_msg* const msg);
  *  type specified by this header (see the above defines).
  *  Returns the first chr after the end of the header.
  */
-char* parse_content_length(char* const buffer, const char* const end, int* const length);
+char *parse_content_length(
+		char *const buffer, const char *const end, int *const length);
 
 /*! \brief
  * Sets the mime type from the body of a Content-Type header
  */
-char* decode_mime_type(char* const start, const char* const end, unsigned int* const mime_type);
+char *decode_mime_type(char *const start, const char *const end,
+		unsigned int *const mime_type);
 
 #endif

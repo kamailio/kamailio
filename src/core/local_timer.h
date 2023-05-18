@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 /*!
@@ -25,7 +25,7 @@
 * Module: \ref core
 *
  * WARNING: this should be used only from within the same process.
- * The local timers are not multi-process or multi-thread safe 
+ * The local timers are not multi-process or multi-thread safe
  *  (there are no locks)
  *
  */
@@ -37,9 +37,10 @@
 #include "timer_funcs.h"
 
 
-struct local_timer {
+struct local_timer
+{
 	/* private timer information */
-	ticks_t prev_ticks; /* last time we ran the timer */
+	ticks_t prev_ticks;			  /* last time we ran the timer */
 	struct timer_lists timer_lst; /* actual timer lists */
 };
 
@@ -49,12 +50,12 @@ struct local_timer {
 #define local_timer_reinit(tl) timer_reinit((tl))
 
 int init_local_timer(struct local_timer *lt_handle, ticks_t crt_ticks);
-void destroy_local_timer(struct local_timer* lt_handle);
+void destroy_local_timer(struct local_timer *lt_handle);
 
-int local_timer_add(struct local_timer* h, struct timer_ln* tl, ticks_t delta,
-						ticks_t crt_ticks);
+int local_timer_add(struct local_timer *h, struct timer_ln *tl, ticks_t delta,
+		ticks_t crt_ticks);
 
-void local_timer_del(struct local_timer* h, struct timer_ln* tl);
-void local_timer_run(struct local_timer* lt, ticks_t crt_ticks);
+void local_timer_del(struct local_timer *h, struct timer_ln *tl);
+void local_timer_run(struct local_timer *lt, ticks_t crt_ticks);
 
 #endif /* _local_timer_h */

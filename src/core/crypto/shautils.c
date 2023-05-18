@@ -39,9 +39,9 @@ void compute_md5(char *dst, char *src, int src_len)
 {
 	MD5_CTX context;
 	unsigned char digest[16];
-	MD5Init (&context);
-  	MD5Update (&context, src, src_len);
-	U_MD5Final (digest, &context);
+	MD5Init(&context);
+	MD5Update(&context, src, src_len);
+	U_MD5Final(digest, &context);
 	string2hex(digest, 16, dst);
 }
 

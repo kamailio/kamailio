@@ -62,55 +62,52 @@ void km_log_func_set(km_log_f f)
 volatile int dprint_crit = 0;
 #endif
 
-static char* str_fac[]={"LOG_AUTH","LOG_CRON","LOG_DAEMON",
-			"LOG_KERN","LOG_LOCAL0","LOG_LOCAL1",
-			"LOG_LOCAL2","LOG_LOCAL3","LOG_LOCAL4","LOG_LOCAL5",
-			"LOG_LOCAL6","LOG_LOCAL7","LOG_LPR","LOG_MAIL",
-			"LOG_NEWS","LOG_USER","LOG_UUCP",
+static char *str_fac[] = {"LOG_AUTH", "LOG_CRON", "LOG_DAEMON", "LOG_KERN",
+		"LOG_LOCAL0", "LOG_LOCAL1", "LOG_LOCAL2", "LOG_LOCAL3", "LOG_LOCAL4",
+		"LOG_LOCAL5", "LOG_LOCAL6", "LOG_LOCAL7", "LOG_LPR", "LOG_MAIL",
+		"LOG_NEWS", "LOG_USER", "LOG_UUCP",
 #ifndef __OS_solaris
-			"LOG_AUTHPRIV","LOG_FTP","LOG_SYSLOG",
+		"LOG_AUTHPRIV", "LOG_FTP", "LOG_SYSLOG",
 #endif
-			0};
+		0};
 
-static int int_fac[]={LOG_AUTH ,  LOG_CRON , LOG_DAEMON ,
-		      LOG_KERN , LOG_LOCAL0 , LOG_LOCAL1 ,
-		      LOG_LOCAL2 , LOG_LOCAL3 , LOG_LOCAL4 , LOG_LOCAL5 ,
-		      LOG_LOCAL6 , LOG_LOCAL7 , LOG_LPR , LOG_MAIL ,
-		      LOG_NEWS , LOG_USER , LOG_UUCP,
+static int int_fac[] = {LOG_AUTH, LOG_CRON, LOG_DAEMON, LOG_KERN, LOG_LOCAL0,
+		LOG_LOCAL1, LOG_LOCAL2, LOG_LOCAL3, LOG_LOCAL4, LOG_LOCAL5, LOG_LOCAL6,
+		LOG_LOCAL7, LOG_LPR, LOG_MAIL, LOG_NEWS, LOG_USER, LOG_UUCP,
 #ifndef __OS_solaris
-		      LOG_AUTHPRIV,LOG_FTP,LOG_SYSLOG,
+		LOG_AUTHPRIV, LOG_FTP, LOG_SYSLOG,
 #endif
-		      0};
+		0};
 
 struct log_level_info log_level_info[] = {
-	{"ALERT", LOG_ALERT},	  /* L_ALERT */
-	{"BUG", LOG_CRIT},        /* L_BUG */
-	{"CRITICAL", LOG_CRIT},   /* L_CRIT2 */
-	{"",    LOG_CRIT},         /* L_CRIT */
-	{"ERROR", LOG_ERR},       /* L_ERR */
-	{"WARNING", LOG_WARNING}, /* L_WARN */
-	{"NOTICE", LOG_NOTICE},   /* L_NOTICE */
-	{"INFO", LOG_INFO},       /* L_INFO */
-	{"DEBUG", LOG_DEBUG}	  /* L_DBG */
+		{"ALERT", LOG_ALERT},	  /* L_ALERT */
+		{"BUG", LOG_CRIT},		  /* L_BUG */
+		{"CRITICAL", LOG_CRIT},	  /* L_CRIT2 */
+		{"", LOG_CRIT},			  /* L_CRIT */
+		{"ERROR", LOG_ERR},		  /* L_ERR */
+		{"WARNING", LOG_WARNING}, /* L_WARN */
+		{"NOTICE", LOG_NOTICE},	  /* L_NOTICE */
+		{"INFO", LOG_INFO},		  /* L_INFO */
+		{"DEBUG", LOG_DEBUG}	  /* L_DBG */
 };
 
 int str2facility(char *s)
 {
 	int i;
 
-	for (i=0; str_fac[i]; i++) {
-		if (!strcasecmp(s,str_fac[i]))
+	for(i = 0; str_fac[i]; i++) {
+		if(!strcasecmp(s, str_fac[i]))
 			return int_fac[i];
 	}
 	return -1;
 }
 
-char* facility2str(int fl, int *len)
+char *facility2str(int fl, int *len)
 {
 	int i;
 
-	for (i=0; str_fac[i]; i++) {
-		if (fl == int_fac[i]) {
+	for(i = 0; str_fac[i]; i++) {
+		if(fl == int_fac[i]) {
 			*len = strlen(str_fac[i]);
 			return str_fac[i];
 		}
@@ -122,9 +119,9 @@ char* facility2str(int fl, int *len)
 /* fixup function for log_facility cfg parameter */
 int log_facility_fixup(void *handle, str *gname, str *name, void **val)
 {
-	int	i;
+	int i;
 
-	if ((i = str2facility((char *)*val)) == -1) {
+	if((i = str2facility((char *)*val)) == -1) {
 		LM_ERR("invalid log facility: %s\n", (char *)*val);
 		return -1;
 	}
@@ -138,8 +135,8 @@ int log_facility_fixup(void *handle, str *gname, str *name, void **val)
  */
 
 /* value for unset local log level  */
-#define UNSET_LOCAL_DEBUG_LEVEL	    -255
-#define UNSET_LOCAL_DEBUG_FACILITY  -255
+#define UNSET_LOCAL_DEBUG_LEVEL -255
+#define UNSET_LOCAL_DEBUG_FACILITY -255
 
 /* the local debug log level */
 static int _local_debug_level = UNSET_LOCAL_DEBUG_LEVEL;
@@ -165,42 +162,48 @@ void set_module_debug_facility_cb(get_module_debug_facility_f f)
  * @brief return the log level - the local one if it set,
  *   otherwise the global value
  */
-int get_debug_level(char *mname, int mnlen) {
+int get_debug_level(char *mname, int mnlen)
+{
 	int mlevel;
 	/*important -- no LOGs inside, because it will loop */
-	if(unlikely(_module_debug_level!=NULL && mnlen>0)) {
-		if(_module_debug_level(mname, mnlen, &mlevel)==0) {
+	if(unlikely(_module_debug_level != NULL && mnlen > 0)) {
+		if(_module_debug_level(mname, mnlen, &mlevel) == 0) {
 			return mlevel;
 		}
 	}
-	return (_local_debug_level != UNSET_LOCAL_DEBUG_LEVEL) ?
-				_local_debug_level : cfg_get(core, core_cfg, debug);
+	return (_local_debug_level != UNSET_LOCAL_DEBUG_LEVEL)
+				   ? _local_debug_level
+				   : cfg_get(core, core_cfg, debug);
 }
 
 /**
  * @brief return the log level - the local one if it set,
  *   otherwise the global value
  */
-int get_cfg_debug_level(void) {
+int get_cfg_debug_level(void)
+{
 	/*important -- no LOGs inside, because it will loop */
-	return (_local_debug_level != UNSET_LOCAL_DEBUG_LEVEL) ?
-				_local_debug_level : cfg_get(core, core_cfg, debug);
+	return (_local_debug_level != UNSET_LOCAL_DEBUG_LEVEL)
+				   ? _local_debug_level
+				   : cfg_get(core, core_cfg, debug);
 }
 
 /**
  * @brief return the log facility - the local one if it set,
  *   otherwise the global value
  */
-int get_debug_facility(char *mname, int mnlen) {
+int get_debug_facility(char *mname, int mnlen)
+{
 	int mfacility;
 	/*important -- no LOGs inside, because it will loop */
-	if(unlikely(_module_debug_facility!=NULL && mnlen>0)) {
-		if(_module_debug_facility(mname, mnlen, &mfacility)==0) {
+	if(unlikely(_module_debug_facility != NULL && mnlen > 0)) {
+		if(_module_debug_facility(mname, mnlen, &mfacility) == 0) {
 			return mfacility;
 		}
 	}
-	return (_local_debug_facility != UNSET_LOCAL_DEBUG_FACILITY) ?
-				_local_debug_facility : cfg_get(core, core_cfg, log_facility);
+	return (_local_debug_facility != UNSET_LOCAL_DEBUG_FACILITY)
+				   ? _local_debug_facility
+				   : cfg_get(core, core_cfg, log_facility);
 }
 
 
@@ -236,7 +239,8 @@ void reset_local_debug_facility(void)
 	_local_debug_facility = UNSET_LOCAL_DEBUG_FACILITY;
 }
 
-typedef struct log_level_color {
+typedef struct log_level_color
+{
 	char f;
 	char b;
 } log_level_color_t;
@@ -250,7 +254,7 @@ void dprint_init_colors(void)
 	i = 0;
 
 	memset(_log_level_colors, 0,
-			(L_MAX - L_MIN + 1)*sizeof(log_level_color_t));
+			(L_MAX - L_MIN + 1) * sizeof(log_level_color_t));
 
 	/* L_ALERT */
 	_log_level_colors[i].f = 'R'; /* default */
@@ -300,24 +304,24 @@ void dprint_init_colors(void)
 
 #define TERM_COLOR_SIZE 16
 
-#define dprint_termc_add(p, end, s) \
-        do{ \
-                if ((p)+(sizeof(s)-1)<=(end)){ \
-                        memcpy((p), s, sizeof(s)-1); \
-                        (p)+=sizeof(s)-1; \
-                }else{ \
-                        /* overflow */ \
-                        LM_ERR("dprint_termc_add overflow\n"); \
-                        goto error; \
-                } \
-        } while(0)
+#define dprint_termc_add(p, end, s)                \
+	do {                                           \
+		if((p) + (sizeof(s) - 1) <= (end)) {       \
+			memcpy((p), s, sizeof(s) - 1);         \
+			(p) += sizeof(s) - 1;                  \
+		} else {                                   \
+			/* overflow */                         \
+			LM_ERR("dprint_termc_add overflow\n"); \
+			goto error;                            \
+		}                                          \
+	} while(0)
 
 
 void dprint_term_color(char f, char b, str *obuf)
 {
 	static char term_color[TERM_COLOR_SIZE];
-	char* p;
-	char* end;
+	char *p;
+	char *end;
 
 	p = term_color;
 	end = p + TERM_COLOR_SIZE;
@@ -325,10 +329,8 @@ void dprint_term_color(char f, char b, str *obuf)
 	/* escape sequence */
 	dprint_termc_add(p, end, "\033[");
 
-	if(f!='_')
-	{
-		if (islower((int)f))
-		{
+	if(f != '_') {
+		if(islower((int)f)) {
 			/* normal font */
 			dprint_termc_add(p, end, "0;");
 		} else {
@@ -339,69 +341,67 @@ void dprint_term_color(char f, char b, str *obuf)
 	}
 
 	/* foreground */
-	switch(f)
-	{
+	switch(f) {
 		case 'x':
 			dprint_termc_add(p, end, "39;");
-		break;
+			break;
 		case 's':
 			dprint_termc_add(p, end, "30;");
-		break;
+			break;
 		case 'r':
 			dprint_termc_add(p, end, "31;");
-		break;
+			break;
 		case 'g':
 			dprint_termc_add(p, end, "32;");
-		break;
+			break;
 		case 'y':
 			dprint_termc_add(p, end, "33;");
-		break;
+			break;
 		case 'b':
 			dprint_termc_add(p, end, "34;");
-		break;
+			break;
 		case 'p':
 			dprint_termc_add(p, end, "35;");
-		break;
+			break;
 		case 'c':
 			dprint_termc_add(p, end, "36;");
-		break;
+			break;
 		case 'w':
 			dprint_termc_add(p, end, "37;");
-		break;
+			break;
 		default:
 			dprint_termc_add(p, end, "39;");
 	}
 
 	/* background */
-	switch(b)
-	{
+	switch(b) {
 		case 'x':
 			dprint_termc_add(p, end, "49");
-		break;
+			break;
 		case 's':
 			dprint_termc_add(p, end, "40");
-		break;
+			break;
 		case 'r':
 			dprint_termc_add(p, end, "41");
-		break;
+			break;
 		case 'g':
 			dprint_termc_add(p, end, "42");
-		break;
+			break;
 		case 'y':
 			dprint_termc_add(p, end, "43");
-		break;
+			break;
 		case 'b':
 			dprint_termc_add(p, end, "44");
-		break;
+			break;
 		case 'p':
 			dprint_termc_add(p, end, "45");
-		break;
+			break;
 		case 'c':
 			dprint_termc_add(p, end, "46");
-		break;
+			break;
 		case 'w':
 			dprint_termc_add(p, end, "47");
-		break;
+			break;
 		default:
 			dprint_termc_add(p, end, "49");
 	}
@@ -423,11 +423,10 @@ void dprint_color(int level)
 {
 	str obuf;
 
-	if(level<L_MIN || level>L_MAX)
+	if(level < L_MIN || level > L_MAX)
 		return;
 	dprint_term_color(_log_level_colors[level - L_MIN].f,
-			_log_level_colors[level - L_MIN].b,
-			&obuf);
+			_log_level_colors[level - L_MIN].b, &obuf);
 	fprintf(stderr, "%.*s", obuf.len, obuf.s);
 }
 
@@ -441,10 +440,12 @@ void dprint_color_reset(void)
 
 void dprint_color_update(int level, char f, char b)
 {
-	if(level<L_MIN || level>L_MAX)
+	if(level < L_MIN || level > L_MAX)
 		return;
-	if(f && f!='0') _log_level_colors[level - L_MIN].f = f;
-	if(b && b!='0') _log_level_colors[level - L_MIN].b = b;
+	if(f && f != '0')
+		_log_level_colors[level - L_MIN].f = f;
+	if(b && b != '0')
+		_log_level_colors[level - L_MIN].b = b;
 }
 
 
@@ -453,7 +454,7 @@ str *log_prefix_val = NULL;
 int log_prefix_mode = 0;
 static pv_elem_t *log_prefix_pvs = NULL;
 
-#define LOG_PREFIX_SIZE	1024
+#define LOG_PREFIX_SIZE 1024
 static char log_prefix_buf[LOG_PREFIX_SIZE];
 static str log_prefix_str = STR_NULL;
 
@@ -465,23 +466,23 @@ void log_init(void)
 	char hostname[1024];
 
 	hostname[1023] = '\0';
-	gethostname (hostname, 1023);
+	gethostname(hostname, 1023);
 
-	memset (&hints, 0, sizeof (hints));
-	hints.ai_family = AF_UNSPEC;    /*either IPV4 or IPV6 */
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_UNSPEC; /*either IPV4 or IPV6 */
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_flags = AI_CANONNAME;
 
-	if ((gai_result = getaddrinfo (hostname, 0, &hints, &info)) != 0) {
+	if((gai_result = getaddrinfo(hostname, 0, &hints, &info)) != 0) {
 		log_fqdn = "?";
-	} else if (info == NULL) {
+	} else if(info == NULL) {
 		log_fqdn = "?";
 	} else {
-		log_fqdn = strdup (info->ai_canonname);
+		log_fqdn = strdup(info->ai_canonname);
 	}
 
-	if(info!=NULL) {
-		freeaddrinfo (info);
+	if(info != NULL) {
+		freeaddrinfo(info);
 	}
 
 	dprint_init_colors();
@@ -490,12 +491,12 @@ void log_init(void)
 void log_prefix_init(void)
 {
 	str s;
-	if(log_prefix_fmt==NULL)
+	if(log_prefix_fmt == NULL)
 		return;
-	s.s = log_prefix_fmt; s.len = strlen(s.s);
+	s.s = log_prefix_fmt;
+	s.len = strlen(s.s);
 
-	if(pv_parse_format(&s, &log_prefix_pvs)<0)
-	{
+	if(pv_parse_format(&s, &log_prefix_pvs) < 0) {
 		LM_ERR("wrong format[%s]\n", s.s);
 		return;
 	}
@@ -506,15 +507,16 @@ void log_prefix_set(sip_msg_t *msg)
 	log_callid_set(msg);
 	if(log_prefix_pvs == NULL)
 		return;
-	if(msg==NULL || !IS_SIP_MSG(msg)) {
+	if(msg == NULL || !IS_SIP_MSG(msg)) {
 		log_prefix_val = NULL;
 		return;
 	}
 	log_prefix_str.s = log_prefix_buf;
 	log_prefix_str.len = LOG_PREFIX_SIZE;
-	if(pv_printf(msg, log_prefix_pvs, log_prefix_str.s, &log_prefix_str.len)<0)
+	if(pv_printf(msg, log_prefix_pvs, log_prefix_str.s, &log_prefix_str.len)
+			< 0)
 		return;
-	if(log_prefix_str.len<=0)
+	if(log_prefix_str.len <= 0)
 		return;
 	log_prefix_val = &log_prefix_str;
 }
@@ -523,53 +525,79 @@ void log_prefix_set(sip_msg_t *msg)
 
 ksr_slog_f _ksr_slog_func = NULL;
 
-#define LOG_CALLID_SIZE	256
+#define LOG_CALLID_SIZE 256
 static char log_callid_buf[LOG_CALLID_SIZE];
 static str log_callid_str = STR_NULL;
 
 static int _ksr_slog_json_flags = 0;
-#define KSR_SLOGJSON_FL_STRIPMSGNL (1<<0)
-#define KSR_SLOGJSON_FL_NOLOGNL (1<<1)
-#define KSR_SLOGJSON_FL_APPPREFIX (1<<2)
-#define KSR_SLOGJSON_FL_NOAPPPREFIXMSG (1<<3)
-#define KSR_SLOGJSON_FL_CALLID (1<<4)
-#define KSR_SLOGJSON_FL_MSGJSON (1<<5)
-#define KSR_SLOGJSON_FL_PRFJSONFLD (1<<6)
+#define KSR_SLOGJSON_FL_STRIPMSGNL (1 << 0)
+#define KSR_SLOGJSON_FL_NOLOGNL (1 << 1)
+#define KSR_SLOGJSON_FL_APPPREFIX (1 << 2)
+#define KSR_SLOGJSON_FL_NOAPPPREFIXMSG (1 << 3)
+#define KSR_SLOGJSON_FL_CALLID (1 << 4)
+#define KSR_SLOGJSON_FL_MSGJSON (1 << 5)
+#define KSR_SLOGJSON_FL_PRFJSONFLD (1 << 6)
 
 
-#define LOGV_CALLID_STR (((_ksr_slog_json_flags & KSR_SLOGJSON_FL_CALLID) \
-			&& (log_callid_str.len>0))?log_callid_str.s:"")
-#define LOGV_CALLID_LEN (((_ksr_slog_json_flags & KSR_SLOGJSON_FL_CALLID) \
-			&& (log_callid_str.len>0))?log_callid_str.len:0)
+#define LOGV_CALLID_STR                               \
+	(((_ksr_slog_json_flags & KSR_SLOGJSON_FL_CALLID) \
+			 && (log_callid_str.len > 0))             \
+					? log_callid_str.s                \
+					: "")
+#define LOGV_CALLID_LEN                               \
+	(((_ksr_slog_json_flags & KSR_SLOGJSON_FL_CALLID) \
+			 && (log_callid_str.len > 0))             \
+					? log_callid_str.len              \
+					: 0)
 
-#define KSR_SLOG_SYSLOG_JSON_FMT "{ \"level\": \"%s\", \"module\": \"%s\", \"file\": \"%s\"," \
-	" \"line\": %d, \"function\": \"%s\"%.*s%s%s%.*s%s, \"%smessage\": %s%.*s%s }%s"
+#define KSR_SLOG_SYSLOG_JSON_FMT                                         \
+	"{ \"level\": \"%s\", \"module\": \"%s\", \"file\": \"%s\","         \
+	" \"line\": %d, \"function\": \"%s\"%.*s%s%s%.*s%s, \"%smessage\": " \
+	"%s%.*s%s }%s"
 
-#define KSR_SLOG_SYSLOG_JSON_CFMT "{ \"level\": \"%s\", \"module\": \"%s\", \"file\": \"%s\"," \
-	" \"line\": %d, \"function\": \"%s\", \"callid\": \"%.*s\"%s%s%.*s%s, \"%smessage\": %s%.*s%s }%s"
+#define KSR_SLOG_SYSLOG_JSON_CFMT                                           \
+	"{ \"level\": \"%s\", \"module\": \"%s\", \"file\": \"%s\","            \
+	" \"line\": %d, \"function\": \"%s\", \"callid\": \"%.*s\"%s%s%.*s%s, " \
+	"\"%smessage\": %s%.*s%s }%s"
 
-#define KSR_SLOG_SYSLOG_JSON_PFMT "{ \"" NAME ".level\": \"%s\", \"" NAME ".module\": \"%s\", \"" NAME ".file\": \"%s\"," \
-	" \"" NAME ".line\": %d, \"" NAME ".function\": \"%s\"%.*s%s%s%.*s%s, \"%smessage\": %s%.*s%s }%s"
+#define KSR_SLOG_SYSLOG_JSON_PFMT                                        \
+	"{ \"" NAME ".level\": \"%s\", \"" NAME ".module\": \"%s\", \"" NAME \
+	".file\": \"%s\","                                                   \
+	" \"" NAME ".line\": %d, \"" NAME                                    \
+	".function\": \"%s\"%.*s%s%s%.*s%s, \"%smessage\": %s%.*s%s }%s"
 
-#define KSR_SLOG_SYSLOG_JSON_CPFMT "{ \"" NAME ".level\": \"%s\", \"" NAME ".module\": \"%s\", \"" NAME ".file\": \"%s\"," \
-	" \"" NAME ".line\": %d, \"" NAME ".function\": \"%s\", \"" NAME ".callid\": \"%.*s\"%s%s%.*s%s," \
+#define KSR_SLOG_SYSLOG_JSON_CPFMT                                       \
+	"{ \"" NAME ".level\": \"%s\", \"" NAME ".module\": \"%s\", \"" NAME \
+	".file\": \"%s\","                                                   \
+	" \"" NAME ".line\": %d, \"" NAME ".function\": \"%s\", \"" NAME     \
+	".callid\": \"%.*s\"%s%s%.*s%s,"                                     \
 	" \"%smessage\": %s%.*s%s }%s"
 
-#define KSR_SLOG_STDERR_JSON_FMT "{ \"idx\": %d, \"pid\": %d, \"level\": \"%s\"," \
-	" \"module\": \"%s\", \"file\": \"%s\"," \
-	" \"line\": %d, \"function\": \"%s\"%.*s%s%s%.*s%s, \"%smessage\": %s%.*s%s }%s"
+#define KSR_SLOG_STDERR_JSON_FMT                                         \
+	"{ \"idx\": %d, \"pid\": %d, \"level\": \"%s\","                     \
+	" \"module\": \"%s\", \"file\": \"%s\","                             \
+	" \"line\": %d, \"function\": \"%s\"%.*s%s%s%.*s%s, \"%smessage\": " \
+	"%s%.*s%s }%s"
 
-#define KSR_SLOG_STDERR_JSON_CFMT "{ \"idx\": %d, \"pid\": %d, \"level\": \"%s\"," \
-	" \"module\": \"%s\", \"file\": \"%s\"," \
-	" \"line\": %d, \"function\": \"%s\", \"callid\": \"%.*s\"%s%s%.*s%s, \"%smessage\": %s%.*s%s }%s"
+#define KSR_SLOG_STDERR_JSON_CFMT                                           \
+	"{ \"idx\": %d, \"pid\": %d, \"level\": \"%s\","                        \
+	" \"module\": \"%s\", \"file\": \"%s\","                                \
+	" \"line\": %d, \"function\": \"%s\", \"callid\": \"%.*s\"%s%s%.*s%s, " \
+	"\"%smessage\": %s%.*s%s }%s"
 
-#define KSR_SLOG_STDERR_JSON_PFMT "{ \"" NAME ".idx\": %d, \"" NAME ".pid\": %d, \"" NAME ".level\": \"%s\"," \
+#define KSR_SLOG_STDERR_JSON_PFMT                              \
+	"{ \"" NAME ".idx\": %d, \"" NAME ".pid\": %d, \"" NAME    \
+	".level\": \"%s\","                                        \
 	" \"" NAME ".module\": \"%s\", \"" NAME ".file\": \"%s\"," \
-	" \"" NAME ".line\": %d, \"" NAME ".function\": \"%s\"%.*s\"%s%s%.*s%s, \"%smessage\": %s%.*s%s }%s"
+	" \"" NAME ".line\": %d, \"" NAME                          \
+	".function\": \"%s\"%.*s\"%s%s%.*s%s, \"%smessage\": %s%.*s%s }%s"
 
-#define KSR_SLOG_STDERR_JSON_CPFMT "{ \"" NAME ".idx\": %d, \"" NAME ".pid\": %d, \"" NAME ".level\": \"%s\"," \
-	" \"" NAME ".module\": \"%s\", \"" NAME ".file\": \"%s\"," \
-	" \"" NAME ".line\": %d, \"" NAME ".function\": \"%s\", \"" NAME ".callid\": \"%.*s\"%s%s%.*s%s," \
+#define KSR_SLOG_STDERR_JSON_CPFMT                                   \
+	"{ \"" NAME ".idx\": %d, \"" NAME ".pid\": %d, \"" NAME          \
+	".level\": \"%s\","                                              \
+	" \"" NAME ".module\": \"%s\", \"" NAME ".file\": \"%s\","       \
+	" \"" NAME ".line\": %d, \"" NAME ".function\": \"%s\", \"" NAME \
+	".callid\": \"%.*s\"%s%s%.*s%s,"                                 \
 	" \"%smessage\": %s%.*s%s }%s"
 
 #ifdef HAVE_PTHREAD
@@ -577,9 +605,12 @@ static int _ksr_slog_json_flags = 0;
 #else
 #define KSR_SLOG_JSON_CEEFMT_TID ""
 #endif
-#define KSR_SLOG_JSON_CEEFMT "{\"time\":\"%s.%09luZ\",\"proc\":{\"id\":\"%d\"" KSR_SLOG_JSON_CEEFMT_TID "},\"pri\":\"%s\",\"subsys\":\"%s\"," \
-        "\"file\":{\"name\":\"%s\",\"line\":%d},\"native\":{\"function\":\"%s\"},\"msg\":%s%.*s%s," \
-        "\"pname\":\"%s\",\"appname\":\"%s\",\"hostname\":\"%s\"}%s"
+#define KSR_SLOG_JSON_CEEFMT                                                   \
+	"{\"time\":\"%s.%09luZ\",\"proc\":{\"id\":\"%d\"" KSR_SLOG_JSON_CEEFMT_TID \
+	"},\"pri\":\"%s\",\"subsys\":\"%s\","                                      \
+	"\"file\":{\"name\":\"%s\",\"line\":%d},\"native\":{\"function\":\"%s\"}," \
+	"\"msg\":%s%.*s%s,"                                                        \
+	"\"pname\":\"%s\",\"appname\":\"%s\",\"hostname\":\"%s\"}%s"
 
 #define KSR_SLOG_SYSLOG_JSON_CEEFMT "@cee: " KSR_SLOG_JSON_CEEFMT
 
@@ -588,7 +619,7 @@ static int _ksr_slog_json_flags = 0;
 void ksr_slog_json(ksr_logdata_t *kld, const char *format, ...)
 {
 	va_list arglist;
-#define KSR_SLOG_MAX_SIZE 32*1024
+#define KSR_SLOG_MAX_SIZE 32 * 1024
 	char obuf[KSR_SLOG_MAX_SIZE];
 	int n;
 	str s_in = STR_NULL;
@@ -608,8 +639,9 @@ void ksr_slog_json(ksr_logdata_t *kld, const char *format, ...)
 	char *prname = ", \"" NAME ".logprefix\": ";
 
 	va_start(arglist, format);
-	n = vsnprintf(obuf + s_in.len, KSR_SLOG_MAX_SIZE - s_in.len, format, arglist);
-	if(n<0 || n>=KSR_SLOG_MAX_SIZE - s_in.len) {
+	n = vsnprintf(
+			obuf + s_in.len, KSR_SLOG_MAX_SIZE - s_in.len, format, arglist);
+	if(n < 0 || n >= KSR_SLOG_MAX_SIZE - s_in.len) {
 		va_end(arglist);
 		goto error;
 	}
@@ -617,14 +649,15 @@ void ksr_slog_json(ksr_logdata_t *kld, const char *format, ...)
 	va_end(arglist);
 
 	s_in.s = obuf;
-	if (_ksr_slog_json_flags & KSR_SLOGJSON_FL_STRIPMSGNL) {
+	if(_ksr_slog_json_flags & KSR_SLOGJSON_FL_STRIPMSGNL) {
 		if(s_in.s[s_in.len - 1] == '\n') {
 			s_in.len--;
 		}
 	}
 
-	if ((!log_cee) && (_ksr_slog_json_flags & KSR_SLOGJSON_FL_MSGJSON)) {
-		if ((s_in.len>1) && (s_in.s[0] == '{') && (s_in.s[s_in.len - 1] == '}')) {
+	if((!log_cee) && (_ksr_slog_json_flags & KSR_SLOGJSON_FL_MSGJSON)) {
+		if((s_in.len > 1) && (s_in.s[0] == '{')
+				&& (s_in.s[s_in.len - 1] == '}')) {
 			s_out = s_in;
 			smb = "";
 			sme = "";
@@ -632,7 +665,7 @@ void ksr_slog_json(ksr_logdata_t *kld, const char *format, ...)
 			smb = "{ \"text\": \"";
 			sme = "\" }";
 		}
-		if((log_prefix_val!=NULL) && (log_prefix_val->len>1)
+		if((log_prefix_val != NULL) && (log_prefix_val->len > 1)
 				&& (log_prefix_val->s[0] == '{')
 				&& (log_prefix_val->s[log_prefix_val->len - 1] == '}')) {
 			pmb = "";
@@ -675,58 +708,62 @@ void ksr_slog_json(ksr_logdata_t *kld, const char *format, ...)
 			sfmt = KSR_SLOG_SYSLOG_JSON_FMT;
 		}
 	}
-	if ((!log_cee) && (_ksr_slog_json_flags & KSR_SLOGJSON_FL_PRFJSONFLD)) {
-		if( (log_prefix_val==NULL) || (log_prefix_val->len<=0)
-				|| ((log_prefix_val->len>1) && (log_prefix_val->s[0] == ','))) {
+	if((!log_cee) && (_ksr_slog_json_flags & KSR_SLOGJSON_FL_PRFJSONFLD)) {
+		if((log_prefix_val == NULL) || (log_prefix_val->len <= 0)
+				|| ((log_prefix_val->len > 1)
+						&& (log_prefix_val->s[0] == ','))) {
 			prname = "";
 			pmb = "";
 			pme = "";
 		}
 	}
-	ksr_clock_gettime (&_tp);
-	gmtime_r (&_tp.tv_sec, &_tm);
-	strftime (iso8601buf, ISO8601_BUF_SIZE, "%FT%T", &_tm);
-	if (unlikely(log_stderr)) {
-		if (unlikely(log_cee)) {
-			fprintf(stderr, KSR_SLOG_STDERR_JSON_CEEFMT,
-			iso8601buf, _tp.tv_nsec, my_pid(),
+	ksr_clock_gettime(&_tp);
+	gmtime_r(&_tp.tv_sec, &_tm);
+	strftime(iso8601buf, ISO8601_BUF_SIZE, "%FT%T", &_tm);
+	if(unlikely(log_stderr)) {
+		if(unlikely(log_cee)) {
+			fprintf(stderr, KSR_SLOG_STDERR_JSON_CEEFMT, iso8601buf,
+					_tp.tv_nsec, my_pid(),
 #ifdef HAVE_PTHREAD
-                        (uintmax_t)pthread_self(),
+					(uintmax_t)pthread_self(),
 #endif
-                        kld->v_lname,
-			kld->v_mname, kld->v_fname, kld->v_fline, kld->v_func, smb, s_out.len, s_out.s, sme,
-			"kamailio", log_name!=0?log_name:"kamailio", log_fqdn,
-			(_ksr_slog_json_flags & KSR_SLOGJSON_FL_NOLOGNL)?"":"\n");
+					kld->v_lname, kld->v_mname, kld->v_fname, kld->v_fline,
+					kld->v_func, smb, s_out.len, s_out.s, sme, "kamailio",
+					log_name != 0 ? log_name : "kamailio", log_fqdn,
+					(_ksr_slog_json_flags & KSR_SLOGJSON_FL_NOLOGNL) ? ""
+																	 : "\n");
 		} else {
-			if (unlikely(log_color)) dprint_color(kld->v_level);
-			fprintf(stderr,
-				efmt, process_no, my_pid(),
-				kld->v_lname, kld->v_mname, kld->v_fname, kld->v_fline,
-				kld->v_func, LOGV_CALLID_LEN, LOGV_CALLID_STR,
-				prname, pmb, LOGV_PREFIX_LEN, LOGV_PREFIX_STR, pme,
-				prefmsg, smb, s_out.len, s_out.s, sme,
-				(_ksr_slog_json_flags & KSR_SLOGJSON_FL_NOLOGNL)?"":"\n");
-			if (unlikely(log_color)) dprint_color_reset();
+			if(unlikely(log_color))
+				dprint_color(kld->v_level);
+			fprintf(stderr, efmt, process_no, my_pid(), kld->v_lname,
+					kld->v_mname, kld->v_fname, kld->v_fline, kld->v_func,
+					LOGV_CALLID_LEN, LOGV_CALLID_STR, prname, pmb,
+					LOGV_PREFIX_LEN, LOGV_PREFIX_STR, pme, prefmsg, smb,
+					s_out.len, s_out.s, sme,
+					(_ksr_slog_json_flags & KSR_SLOGJSON_FL_NOLOGNL) ? ""
+																	 : "\n");
+			if(unlikely(log_color))
+				dprint_color_reset();
 		}
 	} else {
-		if (unlikely(log_cee)) {
+		if(unlikely(log_cee)) {
 			_km_log_func(kld->v_facility, KSR_SLOG_SYSLOG_JSON_CEEFMT,
-			iso8601buf, _tp.tv_nsec, my_pid(),
+					iso8601buf, _tp.tv_nsec, my_pid(),
 #ifdef HAVE_PTHREAD
-                        pthread_self(),
+					pthread_self(),
 #endif
-                        kld->v_lname,
-			kld->v_mname, kld->v_fname, kld->v_fline, kld->v_func, smb, s_out.len, s_out.s, sme,
-			"kamailio", log_name!=0?log_name:"kamailio", log_fqdn,
-			(_ksr_slog_json_flags & KSR_SLOGJSON_FL_NOLOGNL)?"":"\n");
+					kld->v_lname, kld->v_mname, kld->v_fname, kld->v_fline,
+					kld->v_func, smb, s_out.len, s_out.s, sme, "kamailio",
+					log_name != 0 ? log_name : "kamailio", log_fqdn,
+					(_ksr_slog_json_flags & KSR_SLOGJSON_FL_NOLOGNL) ? ""
+																	 : "\n");
 		} else {
-			_km_log_func(kld->v_facility,
-				sfmt,
-				kld->v_lname, kld->v_mname, kld->v_fname, kld->v_fline,
-				kld->v_func, LOGV_CALLID_LEN, LOGV_CALLID_STR,
-				prname, pmb, LOGV_PREFIX_LEN, LOGV_PREFIX_STR, pme,
-				prefmsg, smb, s_out.len, s_out.s, sme,
-				(_ksr_slog_json_flags & KSR_SLOGJSON_FL_NOLOGNL)?"":"\n");
+			_km_log_func(kld->v_facility, sfmt, kld->v_lname, kld->v_mname,
+					kld->v_fname, kld->v_fline, kld->v_func, LOGV_CALLID_LEN,
+					LOGV_CALLID_STR, prname, pmb, LOGV_PREFIX_LEN,
+					LOGV_PREFIX_STR, pme, prefmsg, smb, s_out.len, s_out.s, sme,
+					(_ksr_slog_json_flags & KSR_SLOGJSON_FL_NOLOGNL) ? ""
+																	 : "\n");
 		}
 	}
 	if(emode && s_out.s) {
@@ -742,7 +779,7 @@ void ksr_slog_init(char *ename)
 	char *p;
 	int elen = 0;
 
-	if (!ename) {
+	if(!ename) {
 		return;
 	}
 
@@ -753,37 +790,37 @@ void ksr_slog_init(char *ename)
 		elen = strlen(ename);
 	}
 
-	if ((elen==4) && (strncasecmp(ename, "json", 4)==0)) {
+	if((elen == 4) && (strncasecmp(ename, "json", 4) == 0)) {
 		_km_log_engine_type = "json";
 		_ksr_slog_func = &ksr_slog_json;
 		if(p) {
 			_km_log_engine_data = p + 1;
-			while (*p) {
-				switch (*p) {
+			while(*p) {
+				switch(*p) {
 					case 'a':
 						_ksr_slog_json_flags |= KSR_SLOGJSON_FL_APPPREFIX;
-					break;
+						break;
 					case 'A':
 						_ksr_slog_json_flags |= KSR_SLOGJSON_FL_NOAPPPREFIXMSG;
-					break;
+						break;
 					case 'c':
 						_ksr_slog_json_flags |= KSR_SLOGJSON_FL_CALLID;
-					break;
+						break;
 					case 'j':
 						_ksr_slog_json_flags |= KSR_SLOGJSON_FL_MSGJSON;
-					break;
+						break;
 					case 'M':
 						_ksr_slog_json_flags |= KSR_SLOGJSON_FL_STRIPMSGNL;
-					break;
+						break;
 					case 'N':
 						_ksr_slog_json_flags |= KSR_SLOGJSON_FL_NOLOGNL;
-					break;
+						break;
 					case 'p':
 						_ksr_slog_json_flags |= KSR_SLOGJSON_FL_PRFJSONFLD;
-					break;
+						break;
 					case 'U':
 						log_cee = 1;
-					break;
+						break;
 				}
 				p++;
 			}
@@ -796,13 +833,14 @@ static void log_callid_set(sip_msg_t *msg)
 	if(!(_ksr_slog_json_flags & KSR_SLOGJSON_FL_CALLID)) {
 		return;
 	}
-	if(msg==NULL) {
+	if(msg == NULL) {
 		log_callid_str.len = 0;
 		log_callid_str.s = NULL;
 		return;
 	}
-	if(msg->callid==NULL && ((parse_headers(msg, HDR_CALLID_F, 0)==-1)
-			|| (msg->callid==NULL))) {
+	if(msg->callid == NULL
+			&& ((parse_headers(msg, HDR_CALLID_F, 0) == -1)
+					|| (msg->callid == NULL))) {
 		log_callid_str.len = 0;
 		log_callid_str.s = NULL;
 		return;

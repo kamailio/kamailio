@@ -57,52 +57,51 @@
 #include <stddef.h> /* for offsetof */
 
 
-struct sr_module* modules=0;
+struct sr_module *modules = 0;
 static str_list_t *_ksr_loadmod_strlist = NULL;
 
 
 /*We need to define this symbol on Solaris becuase libcurl relies on libnspr which looks for this symbol.
   If it is not defined, dynamic module loading (dlsym) fails */
 #ifdef __OS_solaris
-	int nspr_use_zone_allocator = 0;
+int nspr_use_zone_allocator = 0;
 #endif
 
 
 #ifdef STATIC_EXEC
-	extern struct module_exports exec_exports;
+extern struct module_exports exec_exports;
 #endif
 #ifdef STATIC_TM
-	extern struct module_exports tm_exports;
+extern struct module_exports tm_exports;
 #endif
 
 #ifdef STATIC_MAXFWD
-	extern struct module_exports maxfwd_exports;
+extern struct module_exports maxfwd_exports;
 #endif
 
 #ifdef STATIC_AUTH
-	extern struct module_exports auth_exports;
+extern struct module_exports auth_exports;
 #endif
 
 #ifdef STATIC_RR
-	extern struct module_exports rr_exports;
+extern struct module_exports rr_exports;
 #endif
 
 #ifdef STATIC_USRLOC
-	extern struct module_exports usrloc_exports;
+extern struct module_exports usrloc_exports;
 #endif
 
 #ifdef STATIC_SL
-	extern struct module_exports sl_exports;
+extern struct module_exports sl_exports;
 #endif
 
 #ifndef offsetof
 #warning "use null pointer dereference for offsetof"
-#define offsetof(st, m) \
-		((size_t) ( (char *)&((st *)(0))->m - (char *)0 ))
+#define offsetof(st, m) ((size_t)((char *)&((st *)(0))->m - (char *)0))
 #endif
 
-int mod_response_cbk_no=0;
-response_function* mod_response_cbks=0;
+int mod_response_cbk_no = 0;
+response_function *mod_response_cbks = 0;
 
 /* number of usec to wait before initializing a module */
 static unsigned int modinit_delay = 0;
@@ -110,7 +109,7 @@ static unsigned int modinit_delay = 0;
 unsigned int set_modinit_delay(unsigned int v)
 {
 	unsigned int r;
-	r =  modinit_delay;
+	r = modinit_delay;
 	modinit_delay = v;
 	return r;
 }
@@ -121,7 +120,7 @@ static int *_ksr_shutdown_phase = NULL;
 int ksr_shutdown_phase_init(void)
 {
 	if((_ksr_shutdown_phase == NULL) && (shm_initialized())) {
-		_ksr_shutdown_phase = (int*)shm_mallocxz(sizeof(int));
+		_ksr_shutdown_phase = (int *)shm_mallocxz(sizeof(int));
 	}
 	return 0;
 }
@@ -130,7 +129,7 @@ int ksr_shutdown_phase_init(void)
  */
 int ksr_shutdown_phase(void)
 {
-	return (_ksr_shutdown_phase)?(*_ksr_shutdown_phase):0;
+	return (_ksr_shutdown_phase) ? (*_ksr_shutdown_phase) : 0;
 }
 
 /* keep state if server is in destroy modules phase */
@@ -150,8 +149,8 @@ int destroy_modules_phase(void)
  */
 static int child_sip_rpc_mode = 0;
 
-#define CHILD_SIP_RPC	1<<0
-#define CHILD_RPC_SIP	1<<1
+#define CHILD_SIP_RPC 1 << 0
+#define CHILD_RPC_SIP 1 << 1
 
 void set_child_sip_rpc_mode(void)
 {
@@ -165,17 +164,17 @@ void set_child_rpc_sip_mode(void)
 
 int is_rpc_worker(int rank)
 {
-	if(rank==PROC_RPC
-			|| (rank>PROC_MAIN && (child_sip_rpc_mode&CHILD_SIP_RPC)!=0))
+	if(rank == PROC_RPC
+			|| (rank > PROC_MAIN && (child_sip_rpc_mode & CHILD_SIP_RPC) != 0))
 		return 1;
 	return 0;
 }
 
 int is_sip_worker(int rank)
 {
-	if(rank>PROC_MAIN
-			|| ((rank==PROC_RPC || rank==PROC_NOCHLDINIT)
-					&& (child_sip_rpc_mode&CHILD_RPC_SIP)!=0))
+	if(rank > PROC_MAIN
+			|| ((rank == PROC_RPC || rank == PROC_NOCHLDINIT)
+					&& (child_sip_rpc_mode & CHILD_RPC_SIP) != 0))
 		return 1;
 	return 0;
 }
@@ -185,40 +184,47 @@ int register_builtin_modules()
 {
 	int ret;
 
-	ret=0;
+	ret = 0;
 #ifdef STATIC_TM
-	ret=register_module(MODULE_INTERFACE_VER, &tm_exports,"built-in", 0);
-	if (ret<0) return ret;
+	ret = register_module(MODULE_INTERFACE_VER, &tm_exports, "built-in", 0);
+	if(ret < 0)
+		return ret;
 #endif
 
 #ifdef STATIC_EXEC
-	ret=register_module(MODULE_INTERFACE_VER, &exec_exports,"built-in", 0);
-	if (ret<0) return ret;
+	ret = register_module(MODULE_INTERFACE_VER, &exec_exports, "built-in", 0);
+	if(ret < 0)
+		return ret;
 #endif
 
 #ifdef STATIC_MAXFWD
-	ret=register_module(MODULE_INTERFACE_VER, &maxfwd_exports, "built-in", 0);
-	if (ret<0) return ret;
+	ret = register_module(MODULE_INTERFACE_VER, &maxfwd_exports, "built-in", 0);
+	if(ret < 0)
+		return ret;
 #endif
 
 #ifdef STATIC_AUTH
-	ret=register_module(MODULE_INTERFACE_VER, &auth_exports, "built-in", 0);
-	if (ret<0) return ret;
+	ret = register_module(MODULE_INTERFACE_VER, &auth_exports, "built-in", 0);
+	if(ret < 0)
+		return ret;
 #endif
 
 #ifdef STATIC_RR
-	ret=register_module(MODULE_INTERFACE_VER, &rr_exports, "built-in", 0);
-	if (ret<0) return ret;
+	ret = register_module(MODULE_INTERFACE_VER, &rr_exports, "built-in", 0);
+	if(ret < 0)
+		return ret;
 #endif
 
 #ifdef STATIC_USRLOC
-	ret=register_module(MODULE_INTERFACE_VER, &usrloc_exports, "built-in", 0);
-	if (ret<0) return ret;
+	ret = register_module(MODULE_INTERFACE_VER, &usrloc_exports, "built-in", 0);
+	if(ret < 0)
+		return ret;
 #endif
 
 #ifdef STATIC_SL
-	ret=register_module(MODULE_INTERFACE_VER, &sl_exports, "built-in", 0);
-	if (ret<0) return ret;
+	ret = register_module(MODULE_INTERFACE_VER, &sl_exports, "built-in", 0);
+	if(ret < 0)
+		return ret;
 #endif
 
 	return ret;
@@ -227,24 +233,24 @@ int register_builtin_modules()
 
 /* registers a module,  register_f= module register  functions
  * returns <0 on error, 0 on success */
-static int register_module(module_exports_t* e, char* path, void* handle)
+static int register_module(module_exports_t *e, char *path, void *handle)
 {
 	int ret, i;
-	struct sr_module* mod;
+	struct sr_module *mod;
 	char defmod[64];
 	int n = 0;
 
-	ret=-1;
+	ret = -1;
 
 	/* add module to the list */
-	if ((mod=pkg_malloc(sizeof(struct sr_module)))==0){
+	if((mod = pkg_malloc(sizeof(struct sr_module))) == 0) {
 		PKG_MEM_ERROR;
-		ret=E_OUT_OF_MEM;
+		ret = E_OUT_OF_MEM;
 		goto error;
 	}
 	memset(mod, 0, sizeof(struct sr_module));
-	mod->path=path;
-	mod->handle=handle;
+	mod->path = path;
+	mod->handle = handle;
 
 	/* copy and convert fields */
 	mod->exports.name = e->name;
@@ -252,16 +258,17 @@ static int register_module(module_exports_t* e, char* path, void* handle)
 	mod->exports.dlflags = e->dlflags;
 
 	if(e->cmds) {
-		for (n=0; e->cmds[n].name; n++);
+		for(n = 0; e->cmds[n].name; n++)
+			;
 	}
-	mod->exports.cmds = pkg_malloc(sizeof(ksr_cmd_export_t)*(n+1));
-	if (mod->exports.cmds==0) {
+	mod->exports.cmds = pkg_malloc(sizeof(ksr_cmd_export_t) * (n + 1));
+	if(mod->exports.cmds == 0) {
 		PKG_MEM_ERROR;
-		ret=E_OUT_OF_MEM;
+		ret = E_OUT_OF_MEM;
 		goto error;
 	}
-	memset(mod->exports.cmds, 0, sizeof(ksr_cmd_export_t)*(n+1));
-	for (i=0; i < n; i++) {
+	memset(mod->exports.cmds, 0, sizeof(ksr_cmd_export_t) * (n + 1));
+	for(i = 0; i < n; i++) {
 		mod->exports.cmds[i].name = e->cmds[i].name;
 		mod->exports.cmds[i].function = e->cmds[i].function;
 		mod->exports.cmds[i].param_no = e->cmds[i].param_no;
@@ -272,9 +279,9 @@ static int register_module(module_exports_t* e, char* path, void* handle)
 		mod->exports.cmds[i].fixup_flags = 0;
 		mod->exports.cmds[i].module_exports = mod;
 		/* fill known free fixups */
-		if (mod->exports.cmds[i].fixup && mod->exports.cmds[i].free_fixup == 0) {
-			mod->exports.cmds[i].free_fixup
-					= get_fixup_free(mod->exports.cmds[i].fixup);
+		if(mod->exports.cmds[i].fixup && mod->exports.cmds[i].free_fixup == 0) {
+			mod->exports.cmds[i].free_fixup =
+					get_fixup_free(mod->exports.cmds[i].fixup);
 		}
 	}
 
@@ -286,27 +293,27 @@ static int register_module(module_exports_t* e, char* path, void* handle)
 	mod->exports.init_child_f = e->init_child_f;
 	mod->exports.destroy_mod_f = e->destroy_mod_f;
 
-	if (mod->exports.pv_items) {
+	if(mod->exports.pv_items) {
 		/* register module pseudo-variables for kamailio modules */
 		LM_DBG("register PV from: %s\n", mod->exports.name);
-		if (register_pvars_mod(mod->exports.name, mod->exports.pv_items)!=0) {
+		if(register_pvars_mod(mod->exports.name, mod->exports.pv_items) != 0) {
 			LM_ERR("failed to register pseudo-variables for module %s (%s)\n",
-				mod->exports.name, path);
+					mod->exports.name, path);
 			ret = E_UNSPEC;
 			goto error;
 		}
 	}
-	if (mod->exports.rpc_methods){
+	if(mod->exports.rpc_methods) {
 		/* register rpcs for ser modules */
-		i=rpc_register_array(mod->exports.rpc_methods);
-		if (i<0){
+		i = rpc_register_array(mod->exports.rpc_methods);
+		if(i < 0) {
 			LM_ERR("failed to register RPCs for module %s (%s)\n",
 					mod->exports.name, path);
 			ret = E_UNSPEC;
 			goto error;
-		}else if (i>0){
+		} else if(i > 0) {
 			LM_ERR("%d duplicate RPCs name detected while registering RPCs"
-					" declared in module %s (%s)\n",
+				   " declared in module %s (%s)\n",
 					i, mod->exports.name, path);
 			ret = E_UNSPEC;
 			goto error;
@@ -315,25 +322,24 @@ static int register_module(module_exports_t* e, char* path, void* handle)
 	}
 
 	/* add cfg define for each module: MOD_modulename */
-	if(strlen(mod->exports.name)>=60) {
+	if(strlen(mod->exports.name) >= 60) {
 		LM_ERR("too long module name: %s\n", mod->exports.name);
 		goto error;
 	}
 	strcpy(defmod, "MOD_");
 	strcat(defmod, mod->exports.name);
 	pp_define_set_type(KSR_PPDEF_DEFINE);
-	if(pp_define(strlen(defmod), defmod)<0) {
-		LM_ERR("unable to set cfg define for module: %s\n",
-				mod->exports.name);
+	if(pp_define(strlen(defmod), defmod) < 0) {
+		LM_ERR("unable to set cfg define for module: %s\n", mod->exports.name);
 		goto error;
 	}
 
 	/* link module in the list */
-	mod->next=modules;
-	modules=mod;
+	mod->next = modules;
+	modules = mod;
 	return 0;
 error:
-	if (mod)
+	if(mod)
 		pkg_free(mod);
 	return ret;
 }
@@ -345,42 +351,43 @@ int ksr_version_control(void *handle, char *path)
 {
 	char **m_ver;
 	char **m_flags;
-	char* error;
+	char *error;
 
 #ifdef __FreeBSD__
-    (void) dlerror();
+	(void)dlerror();
 #endif
-	m_ver=(char **)dlsym(handle, "module_version");
-	if ((error=(char *)dlerror())!=0) {
+	m_ver = (char **)dlsym(handle, "module_version");
+	if((error = (char *)dlerror()) != 0) {
 		LM_ERR("no version info in module <%s>: %s\n", path, error);
 		return 0;
 	}
-	m_flags=(char **)dlsym(handle, "module_flags");
-	if ((error=(char *)dlerror())!=0) {
+	m_flags = (char **)dlsym(handle, "module_flags");
+	if((error = (char *)dlerror()) != 0) {
 		LM_ERR("no compile flags info in module <%s>: %s\n", path, error);
 		return 0;
 	}
-	if (!m_ver || !(*m_ver)) {
-		LM_ERR("no version in module <%s>\n", path );
+	if(!m_ver || !(*m_ver)) {
+		LM_ERR("no version in module <%s>\n", path);
 		return 0;
 	}
-	if (!m_flags || !(*m_flags)) {
-		LM_ERR("no compile flags in module <%s>\n", path );
+	if(!m_flags || !(*m_flags)) {
+		LM_ERR("no compile flags in module <%s>\n", path);
 		return 0;
 	}
 
-	if (strcmp(SER_FULL_VERSION, *m_ver)==0){
-		if (strcmp(SER_COMPILE_FLAGS, *m_flags)==0)
+	if(strcmp(SER_FULL_VERSION, *m_ver) == 0) {
+		if(strcmp(SER_COMPILE_FLAGS, *m_flags) == 0)
 			return 1;
 		else {
 			LM_ERR("module compile flags mismatch for %s "
-						" \ncore: %s \nmodule: %s\n",
-						path, SER_COMPILE_FLAGS, *m_flags);
+				   " \ncore: %s \nmodule: %s\n",
+					path, SER_COMPILE_FLAGS, *m_flags);
 			return 0;
 		}
 	}
 	LM_ERR("module version mismatch for %s; "
-		"core: %s; module: %s\n", path, SER_FULL_VERSION, *m_ver );
+		   "core: %s; module: %s\n",
+			path, SER_FULL_VERSION, *m_ver);
 	return 0;
 }
 
@@ -395,120 +402,121 @@ int ksr_locate_module(char *mod_path, char **new_path)
 {
 	struct stat stat_buf;
 	str modname;
-	char* mdir;
-	char* nxt_mdir;
-	char* path;
+	char *mdir;
+	char *nxt_mdir;
+	char *path;
 	int mdir_len;
 	int path_type;
 	int len;
 
 	*new_path = NULL;
-	path=mod_path;
+	path = mod_path;
 	path_type = 0;
 	modname.s = path;
 	modname.len = strlen(mod_path);
-	if(modname.len>3 && strcmp(modname.s+modname.len-3, ".so")==0) {
+	if(modname.len > 3 && strcmp(modname.s + modname.len - 3, ".so") == 0) {
 		path_type = 1;
 		modname.len -= 3;
 	}
-	if (!strchr(path, '/'))
+	if(!strchr(path, '/'))
 		path_type |= 2;
-	if((path_type&2) || path[0] != '/') {
+	if((path_type & 2) || path[0] != '/') {
 		/* module name was given, we try to construct the path */
-		mdir=mods_dir; /* search path */
-		do{
-			nxt_mdir=strchr(mdir, ':');
-			if (nxt_mdir) mdir_len=(int)(nxt_mdir-mdir);
-			else mdir_len=strlen(mdir);
+		mdir = mods_dir; /* search path */
+		do {
+			nxt_mdir = strchr(mdir, ':');
+			if(nxt_mdir)
+				mdir_len = (int)(nxt_mdir - mdir);
+			else
+				mdir_len = strlen(mdir);
 
-			if(path_type&2) {
+			if(path_type & 2) {
 				/* try path <MODS_DIR>/<modname>.so */
-				path = (char*)pkg_malloc(mdir_len + 1 /* "/" */ +
-									modname.len + 3 /* ".so" */ + 1);
-				if (path==0) {
+				path = (char *)pkg_malloc(mdir_len + 1 /* "/" */ + modname.len
+										  + 3 /* ".so" */ + 1);
+				if(path == 0) {
 					PKG_MEM_ERROR;
 					goto error;
 				}
 				memcpy(path, mdir, mdir_len);
 				len = mdir_len;
-				if (len != 0 && path[len - 1] != '/'){
-					path[len]='/';
+				if(len != 0 && path[len - 1] != '/') {
+					path[len] = '/';
 					len++;
 				}
-				path[len]=0;
+				path[len] = 0;
 				strcat(path, modname.s);
-				if(!(path_type&1))
+				if(!(path_type & 1))
 					strcat(path, ".so");
 
-				if (stat(path, &stat_buf) == -1) {
+				if(stat(path, &stat_buf) == -1) {
 					LM_DBG("module file not found <%s>\n", path);
 					pkg_free(path);
 
 					/* try path <MODS_DIR>/<modname>/<modname>.so */
-					path = (char*)pkg_malloc(
-						mdir_len + 1 /* "/" */ +
-						modname.len + 1 /* "/" */ +
-						modname.len + 3 /* ".so" */ + 1);
-					if (path==0) {
+					path = (char *)pkg_malloc(
+							mdir_len + 1 /* "/" */ + modname.len
+							+ 1 /* "/" */ + modname.len + 3 /* ".so" */ + 1);
+					if(path == 0) {
 						PKG_MEM_ERROR;
 						goto error;
 					}
 					memcpy(path, mdir, mdir_len);
 					len = mdir_len;
-					if (len != 0 && path[len - 1] != '/') {
-						path[len]='/';
+					if(len != 0 && path[len - 1] != '/') {
+						path[len] = '/';
 						len++;
 					}
-					path[len]=0;
+					path[len] = 0;
 					strncat(path, modname.s, modname.len);
 					strcat(path, "/");
 					strcat(path, modname.s);
-					if(!(path_type&1))
+					if(!(path_type & 1))
 						strcat(path, ".so");
 
-					if (stat(path, &stat_buf) == -1) {
+					if(stat(path, &stat_buf) == -1) {
 						LM_DBG("module file not found <%s>\n", path);
 						pkg_free(path);
-						path=0;
+						path = 0;
 					}
 				}
 			} else {
 				/* try mod_path - S compat */
-				if(path==mod_path) {
-					if (stat(path, &stat_buf) == -1) {
+				if(path == mod_path) {
+					if(stat(path, &stat_buf) == -1) {
 						LM_DBG("module file not found <%s>\n", path);
-						path=0;
+						path = 0;
 					}
 				}
-				if(path==0) {
+				if(path == 0) {
 					/* try path <MODS_DIR>/mod_path - K compat */
-					path = (char*)pkg_malloc(mdir_len + 1 /* "/" */ +
-									strlen(mod_path) + 1);
-					if (path==0) {
+					path = (char *)pkg_malloc(
+							mdir_len + 1 /* "/" */ + strlen(mod_path) + 1);
+					if(path == 0) {
 						PKG_MEM_ERROR;
 						goto error;
 					}
 					memcpy(path, mdir, mdir_len);
 					len = mdir_len;
-					if (len != 0 && path[len - 1] != '/'){
-						path[len]='/';
+					if(len != 0 && path[len - 1] != '/') {
+						path[len] = '/';
 						len++;
 					}
-					path[len]=0;
+					path[len] = 0;
 					strcat(path, mod_path);
 
-					if (stat(path, &stat_buf) == -1) {
+					if(stat(path, &stat_buf) == -1) {
 						LM_DBG("module file not found <%s>\n", path);
 						pkg_free(path);
-						path=0;
+						path = 0;
 					}
 				}
 			}
-			mdir=nxt_mdir?nxt_mdir+1:0;
-		}while(path==0 && mdir);
-		if (path==0){
-			LM_ERR("could not find module <%.*s> in <%s>\n",
-						modname.len, modname.s, mods_dir);
+			mdir = nxt_mdir ? nxt_mdir + 1 : 0;
+		} while(path == 0 && mdir);
+		if(path == 0) {
+			LM_ERR("could not find module <%.*s> in <%s>\n", modname.len,
+					modname.s, mods_dir);
 			goto error;
 		}
 	}
@@ -518,7 +526,7 @@ int ksr_locate_module(char *mod_path, char **new_path)
 	return 0;
 
 error:
-	if(path!=NULL && path!=mod_path) {
+	if(path != NULL && path != mod_path) {
 		pkg_free(path);
 	}
 
@@ -541,20 +549,20 @@ error:
  * @param opts options string
  * @return 0 on success , <0 on error
  */
-int ksr_load_module(char* mod_path, char *opts)
+int ksr_load_module(char *mod_path, char *opts)
 {
-	void* handle;
-	char* error;
+	void *handle;
+	char *error;
 	mod_register_function mr;
-	module_exports_t* exp;
-	struct sr_module* t;
+	module_exports_t *exp;
+	struct sr_module *t;
 	int dlflags;
 	int new_dlflags;
 	int retries;
-	char* path = NULL;
+	char *path = NULL;
 	str expref;
 	char exbuf[64];
-	char* mdir;
+	char *mdir;
 	char *p;
 
 #ifndef RTLD_NOW
@@ -566,18 +574,18 @@ int ksr_load_module(char* mod_path, char *opts)
 #define RTLD_GLOBAL 0
 #endif
 
-	if(ksr_locate_module(mod_path, &path)<0) {
+	if(ksr_locate_module(mod_path, &path) < 0) {
 		return -1;
 	}
 
 	LM_DBG("trying to load <%s>\n", path);
 
-	retries=2;
-	dlflags=RTLD_NOW;
+	retries = 2;
+	dlflags = RTLD_NOW;
 
-	if(opts!=NULL) {
-		for(p=opts; *p!='\0'; p++) {
-			if(*p=='G' || *p=='g') {
+	if(opts != NULL) {
+		for(p = opts; *p != '\0'; p++) {
+			if(*p == 'G' || *p == 'g') {
 				dlflags |= RTLD_GLOBAL;
 			} else {
 				LM_INFO("unknown option: %c\n", *p);
@@ -586,87 +594,91 @@ int ksr_load_module(char* mod_path, char *opts)
 	}
 
 reload:
-	handle=dlopen(path, dlflags); /* resolve all symbols now */
-	if (handle==0){
+	handle = dlopen(path, dlflags); /* resolve all symbols now */
+	if(handle == 0) {
 		LM_ERR("could not open module <%s>: %s\n", path, dlerror());
 		goto error;
 	}
 
-	for(t=modules;t; t=t->next){
-		if (t->handle==handle){
+	for(t = modules; t; t = t->next) {
+		if(t->handle == handle) {
 			LM_WARN("attempting to load the same module twice (%s)\n", path);
 			goto skip;
 		}
 	}
 	/* version control */
-	if (!ksr_version_control(handle, path)) {
+	if(!ksr_version_control(handle, path)) {
 		ksr_exit(-1);
 	}
 	/* launch register */
 	mr = (mod_register_function)dlsym(handle, "mod_register");
-	if (((error =(char*)dlerror())==0) && mr) {
+	if(((error = (char *)dlerror()) == 0) && mr) {
 		/* no error call it */
-		new_dlflags=dlflags;
-		if (mr(path, &new_dlflags, 0, 0)!=0) {
+		new_dlflags = dlflags;
+		if(mr(path, &new_dlflags, 0, 0) != 0) {
 			LM_ERR("%s: mod_register failed\n", path);
 			goto error1;
 		}
-		if (new_dlflags!=dlflags && new_dlflags!=0) {
+		if(new_dlflags != dlflags && new_dlflags != 0) {
 			/* we have to reload the module */
 			dlclose(handle);
-			dlflags=new_dlflags;
+			dlflags = new_dlflags;
 			retries--;
-			if (retries>0) goto reload;
+			if(retries > 0)
+				goto reload;
 			LM_ERR("%s: cannot agree on the dlflags\n", path);
 			goto error;
 		}
 	}
-	exp = (module_exports_t*)dlsym(handle, "exports");
-	if(exp==NULL) {
-		error =(char*)dlerror();
+	exp = (module_exports_t *)dlsym(handle, "exports");
+	if(exp == NULL) {
+		error = (char *)dlerror();
 		LM_DBG("attempt to lookup exports structure failed - dlerror: %s\n",
-				(error)?error:"none");
+				(error) ? error : "none");
 		/* 'exports' structure not found, look up for '_modulename_exports' */
 		mdir = strrchr(mod_path, '/');
-		if (!mdir) {
+		if(!mdir) {
 			expref.s = mod_path;
 		} else {
-			expref.s = mdir+1;
+			expref.s = mdir + 1;
 		}
 		expref.len = strlen(expref.s);
-		if(expref.len>3 && strcmp(expref.s+expref.len-3, ".so")==0)
+		if(expref.len > 3 && strcmp(expref.s + expref.len - 3, ".so") == 0)
 			expref.len -= 3;
 		snprintf(exbuf, 62, "_%.*s_exports", expref.len, expref.s);
 		LM_DBG("looking up exports with name: %s\n", exbuf);
-		exp = (module_exports_t*)dlsym(handle, exbuf);
-		if(exp==NULL || (error =(char*)dlerror())!=0 ){
-			LM_ERR("failure for exports symbol: %s - dlerror: %s\n",
-					exbuf, (error)?error:"none");
+		exp = (module_exports_t *)dlsym(handle, exbuf);
+		if(exp == NULL || (error = (char *)dlerror()) != 0) {
+			LM_ERR("failure for exports symbol: %s - dlerror: %s\n", exbuf,
+					(error) ? error : "none");
 			goto error1;
 		}
 	}
 	/* hack to allow for kamailio style dlflags inside exports */
 	new_dlflags = exp->dlflags;
-	if (new_dlflags!=dlflags && new_dlflags!=DEFAULT_DLFLAGS) {
+	if(new_dlflags != dlflags && new_dlflags != DEFAULT_DLFLAGS) {
 		/* we have to reload the module */
 		dlclose(handle);
 		DEBUG("%s: exports dlflags interface is deprecated and it will not"
-				" be supported in newer versions; consider using"
-				" mod_register() instead\n", path);
-		dlflags=new_dlflags;
+			  " be supported in newer versions; consider using"
+			  " mod_register() instead\n",
+				path);
+		dlflags = new_dlflags;
 		retries--;
-		if (retries>0) goto reload;
+		if(retries > 0)
+			goto reload;
 		LM_ERR("%s: cannot agree on the dlflags\n", path);
 		goto error;
 	}
-	if (register_module(exp, path, handle)<0) goto error1;
+	if(register_module(exp, path, handle) < 0)
+		goto error1;
 	return 0;
 
 error1:
 	dlclose(handle);
 error:
 skip:
-	if (path && path!=mod_path)
+	if(path && path != mod_path)
 		pkg_free(path);
 	return -1;
 }
@@ -675,12 +687,12 @@ skip:
 /**
  *
  */
-int ksr_load_modulex(char* mod_path, char *opts)
+int ksr_load_modulex(char *mod_path, char *opts)
 {
 	str seval;
 	str sfmt;
 	sip_msg_t *fmsg;
-	char* emod;
+	char *emod;
 	str_list_t *sb;
 
 	emod = mod_path;
@@ -688,9 +700,9 @@ int ksr_load_modulex(char* mod_path, char *opts)
 		fmsg = faked_msg_get_next();
 		sfmt.s = mod_path;
 		sfmt.len = strlen(sfmt.s);
-		if(pv_eval_str(fmsg, &seval, &sfmt)>=0) {
+		if(pv_eval_str(fmsg, &seval, &sfmt) >= 0) {
 			sb = str_list_block_add(&_ksr_loadmod_strlist, seval.s, seval.len);
-			if(sb==NULL) {
+			if(sb == NULL) {
 				LM_ERR("failed to handle load module: %s\n", mod_path);
 				return -1;
 			}
@@ -711,7 +723,7 @@ static inline int sr_cmd_flags_match(int cflags, int rflags)
 	if((cflags & rflags) == rflags) {
 		return 1;
 	}
-	if((rflags==EVENT_ROUTE) && (cflags & EVENT_ROUTE)) {
+	if((rflags == EVENT_ROUTE) && (cflags & EVENT_ROUTE)) {
 		return 1;
 	}
 	return 0;
@@ -722,24 +734,23 @@ static inline int sr_cmd_flags_match(int cflags, int rflags)
  * mod==0 is a wildcard matching all modules
  * flags parameter is OR value of all flags that must match
  */
-ksr_cmd_export_t* find_mod_export_record(char* mod, char* name,
-											int param_no, int flags)
+ksr_cmd_export_t *find_mod_export_record(
+		char *mod, char *name, int param_no, int flags)
 {
-	struct sr_module* t;
-	ksr_cmd_export_t* cmd;
+	struct sr_module *t;
+	ksr_cmd_export_t *cmd;
 
-	for(t=modules;t;t=t->next){
-		if (mod!=0 && (strcmp(t->exports.name, mod) !=0))
+	for(t = modules; t; t = t->next) {
+		if(mod != 0 && (strcmp(t->exports.name, mod) != 0))
 			continue;
-		if (t->exports.cmds)
-			for(cmd=&t->exports.cmds[0]; cmd->name; cmd++) {
-				if((strcmp(name, cmd->name) == 0) &&
-					((cmd->param_no == param_no) ||
-					(cmd->param_no==VAR_PARAM_NO)) &&
-					(sr_cmd_flags_match(cmd->flags, flags)==1)
-				){
-					LM_DBG("found export of <%s> in module %s [%s]\n",
-						name, t->exports.name, t->path);
+		if(t->exports.cmds)
+			for(cmd = &t->exports.cmds[0]; cmd->name; cmd++) {
+				if((strcmp(name, cmd->name) == 0)
+						&& ((cmd->param_no == param_no)
+								|| (cmd->param_no == VAR_PARAM_NO))
+						&& (sr_cmd_flags_match(cmd->flags, flags) == 1)) {
+					LM_DBG("found export of <%s> in module %s [%s]\n", name,
+							t->exports.name, t->path);
 					return cmd;
 				}
 			}
@@ -749,31 +760,29 @@ ksr_cmd_export_t* find_mod_export_record(char* mod, char* name,
 }
 
 
-
 /* searches the module list for function name and returns
  *  a pointer to the "name" function record union or 0 if not found
  * mod==0 is a wildcard matching all modules
  * flags parameter is OR value of all flags that must match
  */
-ksr_cmd_export_t* find_export_record(char* name, int param_no, int flags)
+ksr_cmd_export_t *find_export_record(char *name, int param_no, int flags)
 {
 	return find_mod_export_record(0, name, param_no, flags);
 }
 
 
-
-cmd_function find_export(char* name, int param_no, int flags)
+cmd_function find_export(char *name, int param_no, int flags)
 {
-	ksr_cmd_export_t* cmd;
+	ksr_cmd_export_t *cmd;
 
 	cmd = find_export_record(name, param_no, flags);
-	return cmd?cmd->function:0;
+	return cmd ? cmd->function : 0;
 }
 
 
-rpc_export_t* find_rpc_export(char* name, int flags)
+rpc_export_t *find_rpc_export(char *name, int flags)
 {
-	return rpc_lookup((char*)name, strlen(name));
+	return rpc_lookup((char *)name, strlen(name));
 }
 
 
@@ -783,12 +792,12 @@ rpc_export_t* find_rpc_export(char* name, int flags)
  * 0 if not found
  * flags parameter is OR value of all flags that must match
  */
-cmd_function find_mod_export(char* mod, char* name, int param_no, int flags)
+cmd_function find_mod_export(char *mod, char *name, int param_no, int flags)
 {
-	ksr_cmd_export_t* cmd;
+	ksr_cmd_export_t *cmd;
 
-	cmd=find_mod_export_record(mod, name, param_no, flags);
-	if (cmd)
+	cmd = find_mod_export_record(mod, name, param_no, flags);
+	if(cmd)
 		return cmd->function;
 
 	LM_DBG("<%s> in module <%s> not found\n", name, mod);
@@ -796,11 +805,12 @@ cmd_function find_mod_export(char* mod, char* name, int param_no, int flags)
 }
 
 
-struct sr_module* find_module_by_name(char* mod) {
-	struct sr_module* t;
+struct sr_module *find_module_by_name(char *mod)
+{
+	struct sr_module *t;
 
 	for(t = modules; t; t = t->next) {
-		if (strcmp(mod, t->exports.name) == 0) {
+		if(strcmp(mod, t->exports.name) == 0) {
 			return t;
 		}
 	}
@@ -808,7 +818,8 @@ struct sr_module* find_module_by_name(char* mod) {
 	return 0;
 }
 
-sr_module_t* get_loaded_modules(void) {
+sr_module_t *get_loaded_modules(void)
+{
 	return modules;
 }
 
@@ -820,59 +831,59 @@ sr_module_t* get_loaded_modules(void) {
  * \param param_type parameter type
  * \return parameter address in memory, if there is no such parameter, NULL is returned
  */
-void* find_param_export(struct sr_module* mod, char* name,
-						modparam_t type_mask, modparam_t *param_type)
+void *find_param_export(struct sr_module *mod, char *name, modparam_t type_mask,
+		modparam_t *param_type)
 {
-	param_export_t* param;
+	param_export_t *param;
 
-	if (!mod)
+	if(!mod)
 		return 0;
-	for(param = mod->exports.params ;param && param->name ; param++) {
-		if ((strcmp(name, param->name) == 0) &&
-			((param->type & PARAM_TYPE_MASK(type_mask)) != 0)) {
-			LM_DBG("found <%s> in module %s [%s]\n",
-				name, mod->exports.name, mod->path);
+	for(param = mod->exports.params; param && param->name; param++) {
+		if((strcmp(name, param->name) == 0)
+				&& ((param->type & PARAM_TYPE_MASK(type_mask)) != 0)) {
+			LM_DBG("found <%s> in module %s [%s]\n", name, mod->exports.name,
+					mod->path);
 			*param_type = param->type;
 			return param->param_pointer;
 		}
 	}
-	LM_DBG("parameter <%s> not found in module <%s>\n",
-			name, mod->exports.name);
+	LM_DBG("parameter <%s> not found in module <%s>\n", name,
+			mod->exports.name);
 	return 0;
 }
 
 
 void destroy_modules()
 {
-	struct sr_module* t, *foo;
+	struct sr_module *t, *foo;
 
 	_sr_destroy_modules_phase = 1;
-	if(_ksr_shutdown_phase!=NULL) {
+	if(_ksr_shutdown_phase != NULL) {
 		*_ksr_shutdown_phase = 1;
 	}
 
 	LM_DBG("starting modules destroy phase\n");
 
 	/* call first destroy function from each module */
-	t=modules;
+	t = modules;
 	while(t) {
-		foo=t->next;
-		if (t->exports.destroy_mod_f){
+		foo = t->next;
+		if(t->exports.destroy_mod_f) {
 			t->exports.destroy_mod_f();
 		}
-		t=foo;
+		t = foo;
 	}
 	/* free module exports structures */
-	t=modules;
+	t = modules;
 	while(t) {
-		foo=t->next;
+		foo = t->next;
 		pkg_free(t);
-		t=foo;
+		t = foo;
 	}
-	modules=0;
-	if (mod_response_cbks){
+	modules = 0;
+	if(mod_response_cbks) {
 		pkg_free(mod_response_cbks);
-		mod_response_cbks=0;
+		mod_response_cbks = 0;
 	}
 }
 
@@ -882,25 +893,27 @@ void destroy_modules()
  * which modules are loaded in config file
  */
 
-static int init_mod_child( struct sr_module* m, int rank )
+static int init_mod_child(struct sr_module *m, int rank)
 {
 	int ret;
-	if (m) {
+	if(m) {
 		/* iterate through the list; if error occurs,
 		 * propagate it up the stack
 		 */
-		if (init_mod_child(m->next, rank)!=0) return -1;
-		if (m->exports.init_child_f) {
+		if(init_mod_child(m->next, rank) != 0)
+			return -1;
+		if(m->exports.init_child_f) {
 			ret = 0;
-			if(rank!=PROC_POSTCHILDINIT
-					|| (m->modflags&KSRMOD_FLAG_POSTCHILDINIT)) {
+			if(rank != PROC_POSTCHILDINIT
+					|| (m->modflags & KSRMOD_FLAG_POSTCHILDINIT)) {
 				LM_DBG("idx %d rank %d: %s [%s]\n", process_no, rank,
 						m->exports.name, my_desc());
 				ret = m->exports.init_child_f(rank);
-				if(ret<0) {
+				if(ret < 0) {
 					LM_ERR("error while initializing module %s (%s)"
-							" (idx: %d rank: %d desc: [%s])\n",
-							m->exports.name, m->path, process_no, rank, my_desc());
+						   " (idx: %d rank: %d desc: [%s])\n",
+							m->exports.name, m->path, process_no, rank,
+							my_desc());
 					return -1;
 				} else {
 					/* module correctly initialized */
@@ -926,37 +939,60 @@ static int init_mod_child( struct sr_module* m, int rank )
 int init_child(int rank)
 {
 	int ret;
-	char* type;
+	char *type;
 
 	switch(rank) {
-	case PROC_MAIN:          type = "PROC_MAIN";       break;
-	case PROC_TIMER:         type = "PROC_TIMER";      break;
-	case PROC_RPC:           type = "PROC_RPC";        break;
-	case PROC_TCP_MAIN:      type = "PROC_TCP_MAIN";   break;
-	case PROC_UNIXSOCK:      type = "PROC_UNIXSOCK";   break;
-	case PROC_ATTENDANT:     type = "PROC_ATTENDANT";  break;
-	case PROC_INIT:          type = "PROC_INIT";       break;
-	case PROC_NOCHLDINIT:    type = "PROC_NOCHLDINIT"; break;
-	case PROC_SIPINIT:       type = "PROC_SIPINIT";    break;
-	case PROC_SIPRPC:        type = "PROC_SIPRPC";     break;
-	case PROC_POSTCHILDINIT: type = "PROC_POSTCHILDINIT"; break;
-	default:                 type = "CHILD";           break;
+		case PROC_MAIN:
+			type = "PROC_MAIN";
+			break;
+		case PROC_TIMER:
+			type = "PROC_TIMER";
+			break;
+		case PROC_RPC:
+			type = "PROC_RPC";
+			break;
+		case PROC_TCP_MAIN:
+			type = "PROC_TCP_MAIN";
+			break;
+		case PROC_UNIXSOCK:
+			type = "PROC_UNIXSOCK";
+			break;
+		case PROC_ATTENDANT:
+			type = "PROC_ATTENDANT";
+			break;
+		case PROC_INIT:
+			type = "PROC_INIT";
+			break;
+		case PROC_NOCHLDINIT:
+			type = "PROC_NOCHLDINIT";
+			break;
+		case PROC_SIPINIT:
+			type = "PROC_SIPINIT";
+			break;
+		case PROC_SIPRPC:
+			type = "PROC_SIPRPC";
+			break;
+		case PROC_POSTCHILDINIT:
+			type = "PROC_POSTCHILDINIT";
+			break;
+		default:
+			type = "CHILD";
+			break;
 	}
 	LM_DBG("initializing %s with rank %d\n", type, rank);
 
-	if(rank!=PROC_POSTCHILDINIT) {
-		if(async_task_child_init(rank)<0) {
+	if(rank != PROC_POSTCHILDINIT) {
+		if(async_task_child_init(rank) < 0) {
 			return -1;
 		}
 	}
 
 	ret = init_mod_child(modules, rank);
-	if(rank!=PROC_INIT && rank!=PROC_POSTCHILDINIT) {
+	if(rank != PROC_INIT && rank != PROC_POSTCHILDINIT) {
 		pt[process_no].status = 1;
 	}
 	return ret;
 }
-
 
 
 static sr_module_t *ksr_module_init_ptr = NULL;
@@ -966,7 +1002,7 @@ static sr_module_t *ksr_module_init_ptr = NULL;
  */
 void ksr_module_set_flag(unsigned int flag)
 {
-	if(ksr_module_init_ptr==NULL) {
+	if(ksr_module_init_ptr == NULL) {
 		return;
 	}
 	ksr_module_init_ptr->modflags |= flag;
@@ -976,30 +1012,31 @@ void ksr_module_set_flag(unsigned int flag)
  * process the module linear list in the same order in
  * which modules are loaded in config file
 */
-static int init_mod( struct sr_module* m )
+static int init_mod(struct sr_module *m)
 {
 	int ret;
-	if (m) {
+	if(m) {
 		/* iterate through the list; if error occurs,
 		 * propagate it up the stack
 		 */
-		if (init_mod(m->next)!=0) return -1;
-			if(m->exports.init_mod_f) {
-				LM_DBG("%s\n", m->exports.name);
-				ksr_module_init_ptr = m;
-				ret = m->exports.init_mod_f();
-				ksr_module_init_ptr = NULL;
-				if(ret!=0) {
-					LM_ERR("Error while initializing module %s (%s)\n",
-								m->exports.name, m->path);
-					return -1;
-				} else {
-					/* module correctly initialized */
-					return 0;
-				}
+		if(init_mod(m->next) != 0)
+			return -1;
+		if(m->exports.init_mod_f) {
+			LM_DBG("%s\n", m->exports.name);
+			ksr_module_init_ptr = m;
+			ret = m->exports.init_mod_f();
+			ksr_module_init_ptr = NULL;
+			if(ret != 0) {
+				LM_ERR("Error while initializing module %s (%s)\n",
+						m->exports.name, m->path);
+				return -1;
+			} else {
+				/* module correctly initialized */
+				return 0;
 			}
-			/* no init function -- proceed with success */
-			return 0;
+		}
+		/* no init function -- proceed with success */
+		return 0;
 	} else {
 		/* end of list */
 		return 0;
@@ -1012,28 +1049,28 @@ static int init_mod( struct sr_module* m )
  */
 int init_modules(void)
 {
-	struct sr_module* t;
+	struct sr_module *t;
 	int i;
 
-	if(async_task_init()<0)
+	if(async_task_init() < 0)
 		return -1;
 
 	i = init_mod(modules);
-	if(i!=0)
+	if(i != 0)
 		return i;
 
 	for(t = modules; t; t = t->next)
-		if (t->exports.response_f)
+		if(t->exports.response_f)
 			mod_response_cbk_no++;
-	mod_response_cbks=pkg_malloc(mod_response_cbk_no *
-									sizeof(response_function));
-	if (mod_response_cbks==0){
+	mod_response_cbks =
+			pkg_malloc(mod_response_cbk_no * sizeof(response_function));
+	if(mod_response_cbks == 0) {
 		PKG_MEM_ERROR;
 		return -1;
 	}
-	for (t=modules, i=0; t && (i<mod_response_cbk_no); t=t->next)
-		if (t->exports.response_f) {
-			mod_response_cbks[i]=t->exports.response_f;
+	for(t = modules, i = 0; t && (i < mod_response_cbk_no); t = t->next)
+		if(t->exports.response_f) {
+			mod_response_cbks[i] = t->exports.response_f;
 			i++;
 		}
 
@@ -1041,12 +1078,12 @@ int init_modules(void)
 }
 
 
-action_u_t *fixup_get_param(void **cur_param, int cur_param_no,
-							int required_param_no)
+action_u_t *fixup_get_param(
+		void **cur_param, int cur_param_no, int required_param_no)
 {
 	action_u_t *a;
 	/* cur_param points to a->u.string, get pointer to a */
-	a = (void*) ((char *)cur_param - offsetof(action_u_t, u.string));
+	a = (void *)((char *)cur_param - offsetof(action_u_t, u.string));
 	return a + required_param_no - cur_param_no;
 }
 
@@ -1054,22 +1091,21 @@ int fixup_get_param_count(void **cur_param, int cur_param_no)
 {
 	action_u_t *a;
 	a = fixup_get_param(cur_param, cur_param_no, 0);
-	if (a)
+	if(a)
 		return a->u.number;
 	else
 		return -1;
 }
 
 
-
 /** get a pointer to a parameter internal type.
  * @param param
  * @return pointer to the parameter internal type.
  */
-action_param_type* fixup_get_param_ptype(void** param)
+action_param_type *fixup_get_param_ptype(void **param)
 {
-	action_u_t* a;
-	a = (void*)((char*)param - offsetof(action_u_t, u.string));
+	action_u_t *a;
+	a = (void *)((char *)param - offsetof(action_u_t, u.string));
 	return &a->type;
 }
 
@@ -1078,11 +1114,10 @@ action_param_type* fixup_get_param_ptype(void** param)
  * @see fixup_get_param_ptype().
  * @return paramter internal type.
  */
-action_param_type fixup_get_param_type(void** param)
+action_param_type fixup_get_param_type(void **param)
 {
 	return *fixup_get_param_ptype(param);
 }
-
 
 
 /* fixes flag params (resolves possible named flags)
@@ -1091,51 +1126,50 @@ action_param_type fixup_get_param_type(void** param)
  * return fix_flag(type, val, "my_module", "my_param", &flag_var)
  * see also param_func_t.
  */
-int fix_flag( modparam_t type, void* val,
-					char* mod_name, char* param_name, int* flag)
+int fix_flag(
+		modparam_t type, void *val, char *mod_name, char *param_name, int *flag)
 {
 	int num;
 	int err;
 	int f, len;
-	char* s;
+	char *s;
 	char *p;
 
-	if ((type & PARAM_STRING)==0){
-		LM_CRIT("%s: fix_flag(%s): bad parameter type\n",
-					mod_name, param_name);
+	if((type & PARAM_STRING) == 0) {
+		LM_CRIT("%s: fix_flag(%s): bad parameter type\n", mod_name, param_name);
 		return -1;
 	}
-	s=(char*)val;
-	len=strlen(s);
-	f=-1;
+	s = (char *)val;
+	len = strlen(s);
+	f = -1;
 	/* try to see if it's a number */
 	num = str2s(s, len, &err);
-	if (err != 0) {
+	if(err != 0) {
 		/* see if it's in the name:<no> format */
-		p=strchr(s, ':');
-		if (p){
-			f= str2s(p+1, strlen(p+1), &err);
-			if (err!=0){
-				LM_ERR("%s: invalid %s format: \"%s\"",
-						mod_name, param_name, s);
+		p = strchr(s, ':');
+		if(p) {
+			f = str2s(p + 1, strlen(p + 1), &err);
+			if(err != 0) {
+				LM_ERR("%s: invalid %s format: \"%s\"", mod_name, param_name,
+						s);
 				return -1;
 			}
-			*p=0;
+			*p = 0;
 		}
-		if ((num=get_flag_no(s, len))<0){
+		if((num = get_flag_no(s, len)) < 0) {
 			/* not declared yet, declare it */
-			num=register_flag(s, f);
+			num = register_flag(s, f);
 		}
-		if (num<0){
+		if(num < 0) {
 			LM_ERR("%s: bad %s %s\n", mod_name, param_name, s);
 			return -1;
-		} else if ((f>0) && (num!=f)){
+		} else if((f > 0) && (num != f)) {
 			LM_ERR("%s: flag %s already defined"
-					" as %d (and not %d), using %s:%d\n",
+				   " as %d (and not %d), using %s:%d\n",
 					mod_name, s, num, f, s, num);
 		}
 	}
-	*flag=num;
+	*flag = num;
 	return 0;
 }
 
@@ -1153,15 +1187,15 @@ int fix_flag( modparam_t type, void* val,
  *    1 if the param doesn't match the specified type
  *    <0 on failure
  */
-int fix_param(int type, void** param)
+int fix_param(int type, void **param)
 {
-	fparam_t* p;
+	fparam_t *p;
 	str name, s;
 	int num;
 	int err;
 
-	p = (fparam_t*)pkg_malloc(sizeof(fparam_t));
-	if (!p) {
+	p = (fparam_t *)pkg_malloc(sizeof(fparam_t));
+	if(!p) {
 		PKG_MEM_ERROR;
 		return E_OUT_OF_MEM;
 	}
@@ -1176,62 +1210,62 @@ int fix_param(int type, void** param)
 			p->v.asciiz = *param;
 			/* no break */
 		case FPARAM_STR:
-			p->v.str.s = (char*)*param;
+			p->v.str.s = (char *)*param;
 			p->v.str.len = strlen(p->v.str.s);
 			p->fixed = &p->v;
 			break;
 		case FPARAM_INT:
-			s.s = (char*)*param;
+			s.s = (char *)*param;
 			s.len = strlen(s.s);
 			err = str2sint(&s, &num);
-			if (err == 0) {
+			if(err == 0) {
 				p->v.i = (int)num;
 			} else {
 				/* Not a number */
 				pkg_free(p);
 				return 1;
 			}
-			p->fixed = (void*)(long)num;
+			p->fixed = (void *)(long)num;
 			break;
 		case FPARAM_REGEX:
-			if ((p->v.regex = pkg_malloc(sizeof(regex_t))) == 0) {
+			if((p->v.regex = pkg_malloc(sizeof(regex_t))) == 0) {
 				PKG_MEM_ERROR;
 				goto error;
 			}
-			if (regcomp(p->v.regex, *param,
-						REG_EXTENDED|REG_ICASE|REG_NEWLINE)) {
+			if(regcomp(p->v.regex, *param,
+					   REG_EXTENDED | REG_ICASE | REG_NEWLINE)) {
 				pkg_free(p->v.regex);
-				p->v.regex=0;
+				p->v.regex = 0;
 				/* not a valid regex */
 				goto no_match;
 			}
 			p->fixed = p->v.regex;
 			break;
 		case FPARAM_AVP:
-			name.s = (char*)*param;
+			name.s = (char *)*param;
 			name.len = strlen(name.s);
 			trim(&name);
-			if (!name.len || name.s[0] != '$') {
+			if(!name.len || name.s[0] != '$') {
 				/* Not an AVP identifier */
 				goto no_match;
 			}
 			name.s++;
 			name.len--;
-			if (parse_avp_ident(&name, &p->v.avp) < 0) {
+			if(parse_avp_ident(&name, &p->v.avp) < 0) {
 				/* invalid avp identifier (=> no match) */
 				goto no_match;
 			}
 			p->fixed = &p->v;
 			break;
 		case FPARAM_SELECT:
-			name.s = (char*)*param;
+			name.s = (char *)*param;
 			name.len = strlen(name.s);
 			trim(&name);
-			if (!name.len || name.s[0] != '@') {
+			if(!name.len || name.s[0] != '@') {
 				/* Not a select identifier */
 				goto no_match;
 			}
-			if (parse_select(&name.s, &p->v.select) < 0) {
+			if(parse_select(&name.s, &p->v.select) < 0) {
 				LM_ERR("Error while parsing select identifier\n");
 				goto error;
 			}
@@ -1241,37 +1275,37 @@ int fix_param(int type, void** param)
 			s.s = *param;
 			s.len = strlen(s.s);
 			p->v.subst = subst_parser(&s);
-			if (!p->v.subst) {
+			if(!p->v.subst) {
 				LM_ERR("Error while parsing regex substitution\n");
 				goto error;
 			}
 			p->fixed = &p->v;
 			break;
 		case FPARAM_PVS:
-			name.s = (char*)*param;
+			name.s = (char *)*param;
 			name.len = strlen(name.s);
 			trim(&name);
-			if (!name.len || name.s[0] != '$'){
+			if(!name.len || name.s[0] != '$') {
 				/* not a pvs identifier */
 				goto no_match;
 			}
-			p->v.pvs=pkg_malloc(sizeof(pv_spec_t));
-			if (p->v.pvs==0){
+			p->v.pvs = pkg_malloc(sizeof(pv_spec_t));
+			if(p->v.pvs == 0) {
 				PKG_MEM_ERROR;
 				goto error;
 			}
-			if (pv_parse_spec2(&name, p->v.pvs, 1)==0){
+			if(pv_parse_spec2(&name, p->v.pvs, 1) == 0) {
 				/* not a valid pvs identifier (but it might be an avp) */
 				pkg_free(p->v.pvs);
-				p->v.pvs=0;
+				p->v.pvs = 0;
 				goto no_match;
 			}
 			p->fixed = p->v.pvs;
 			break;
 		case FPARAM_PVE:
-			name.s = (char*)*param;
+			name.s = (char *)*param;
 			name.len = strlen(name.s);
-			if (pv_parse_format(&name, &p->v.pve)<0){
+			if(pv_parse_format(&name, &p->v.pve) < 0) {
 				LM_ERR("bad PVE format: \"%.*s\"\n", name.len, name.s);
 				goto error;
 			}
@@ -1280,7 +1314,7 @@ int fix_param(int type, void** param)
 	}
 
 	p->type = type;
-	*param = (void*)p;
+	*param = (void *)p;
 	return 0;
 
 no_match:
@@ -1292,7 +1326,6 @@ error:
 }
 
 
-
 /** fparam_t free function.
  *  Frees the "content" of a fparam, but not the fparam itself.
  *  Note: it doesn't free fp->orig!
@@ -1300,10 +1333,10 @@ error:
  *  @param fp -  fparam to be freed
  *
  */
-void fparam_free_contents(fparam_t* fp)
+void fparam_free_contents(fparam_t *fp)
 {
 
-	if (fp==0)
+	if(fp == 0)
 		return;
 	switch(fp->type) {
 		case FPARAM_UNSPEC:
@@ -1313,37 +1346,37 @@ void fparam_free_contents(fparam_t* fp)
 			/* nothing to do */
 			break;
 		case FPARAM_REGEX:
-			if (fp->v.regex){
+			if(fp->v.regex) {
 				regfree(fp->v.regex);
 				pkg_free(fp->v.regex);
-				fp->v.regex=0;
+				fp->v.regex = 0;
 			}
 			break;
 		case FPARAM_AVP:
 			free_avp_name(&fp->v.avp.flags, &fp->v.avp.name);
 			break;
 		case FPARAM_SELECT:
-			if (fp->v.select){
+			if(fp->v.select) {
 				free_select(fp->v.select);
-				fp->v.select=0;
+				fp->v.select = 0;
 			}
 			break;
 		case FPARAM_SUBST:
-			if (fp->v.subst){
+			if(fp->v.subst) {
 				subst_expr_free(fp->v.subst);
-				fp->v.subst=0;
+				fp->v.subst = 0;
 			}
 			break;
 		case FPARAM_PVS:
-			if (fp->v.pvs){
+			if(fp->v.pvs) {
 				pv_spec_free(fp->v.pvs);
-				fp->v.pvs=0;
+				fp->v.pvs = 0;
 			}
 			break;
 		case FPARAM_PVE:
-			if (fp->v.pve){
+			if(fp->v.pve) {
 				pv_elem_free_all(fp->v.pve);
-				fp->v.pve=0;
+				fp->v.pve = 0;
 			}
 			break;
 	}
@@ -1358,7 +1391,7 @@ void fparam_free_contents(fparam_t* fp)
  * value.
  * @param param freed parameters
  */
-void fparam_free_restore(void** param)
+void fparam_free_restore(void **param)
 {
 	fparam_t *fp;
 	void *orig;
@@ -1372,7 +1405,6 @@ void fparam_free_restore(void** param)
 }
 
 
-
 /** fix a param to one of the given types (mask).
  *
  * @param types - bitmap of the allowed types (e.g. FPARAM_INT|FPARAM_STR)
@@ -1380,24 +1412,25 @@ void fparam_free_restore(void** param)
  * @return - 0 on success, -1 on error, 1 if param doesn't
  *           match any of the types
  */
-int fix_param_types(int types, void** param)
+int fix_param_types(int types, void **param)
 {
 	int ret;
 	int t;
 
-	if (fixup_get_param_type(param) == STRING_RVE_ST &&
-			(types & (FPARAM_INT|FPARAM_STR|FPARAM_STRING))) {
+	if(fixup_get_param_type(param) == STRING_RVE_ST
+			&& (types & (FPARAM_INT | FPARAM_STR | FPARAM_STRING))) {
 		/* if called with a RVE already converted to string =>
 		 * don't try AVP, PVAR or SELECT (to avoid double
 		 * deref., e.g.: $foo="$bar"; f($foo) ) */
-		types &= ~ (FPARAM_AVP|FPARAM_PVS|FPARAM_SELECT|FPARAM_PVE);
+		types &= ~(FPARAM_AVP | FPARAM_PVS | FPARAM_SELECT | FPARAM_PVE);
 	}
-	for (t=types & ~(types-1); types; types&=(types-1), t=types & ~(types-1)){
-		if ((ret=fix_param(t, param))<=0) return ret;
+	for(t = types & ~(types - 1); types;
+			types &= (types - 1), t = types & ~(types - 1)) {
+		if((ret = fix_param(t, param)) <= 0)
+			return ret;
 	}
 	return E_UNSPEC;
 }
-
 
 
 /*
@@ -1409,35 +1442,43 @@ int fix_param_types(int types, void** param)
  * The parameter value will be converted to fparam structure
  * This function returns -1 on an error
  */
-int fixup_var_str_12(void** param, int param_no)
+int fixup_var_str_12(void **param, int param_no)
 {
 	int ret;
-	if (fixup_get_param_type(param) != STRING_RVE_ST) {
+	if(fixup_get_param_type(param) != STRING_RVE_ST) {
 		/* if called with a RVE already converted to string =>
 		 * don't try AVP, PVAR or SELECT (to avoid double
 		 * deref., e.g.: $foo="$bar"; f($foo) ) */
-		if ((ret = fix_param(FPARAM_PVS, param)) <= 0) return ret;
-		if ((ret = fix_param(FPARAM_AVP, param)) <= 0) return ret;
-		if ((ret = fix_param(FPARAM_SELECT, param)) <= 0) return ret;
+		if((ret = fix_param(FPARAM_PVS, param)) <= 0)
+			return ret;
+		if((ret = fix_param(FPARAM_AVP, param)) <= 0)
+			return ret;
+		if((ret = fix_param(FPARAM_SELECT, param)) <= 0)
+			return ret;
 	}
-	if ((ret = fix_param(FPARAM_STR, param)) <= 0) return ret;
+	if((ret = fix_param(FPARAM_STR, param)) <= 0)
+		return ret;
 	LM_ERR("Error while fixing parameter, PV, AVP, SELECT, and str conversions"
-			" failed\n");
+		   " failed\n");
 	return -1;
 }
 
 /* Same as fixup_var_str_12 but applies to the 1st parameter only */
-int fixup_var_str_1(void** param, int param_no)
+int fixup_var_str_1(void **param, int param_no)
 {
-	if (param_no == 1) return fixup_var_str_12(param, param_no);
-	else return 0;
+	if(param_no == 1)
+		return fixup_var_str_12(param, param_no);
+	else
+		return 0;
 }
 
 /* Same as fixup_var_str_12 but applies to the 2nd parameter only */
-int fixup_var_str_2(void** param, int param_no)
+int fixup_var_str_2(void **param, int param_no)
 {
-	if (param_no == 2) return fixup_var_str_12(param, param_no);
-	else return 0;
+	if(param_no == 2)
+		return fixup_var_str_12(param, param_no);
+	else
+		return 0;
 }
 
 /** fixup variable-pve-only-string.
@@ -1450,33 +1491,32 @@ int fixup_var_str_2(void** param, int param_no)
  * @param  param_no - parameter number, ignored.
  * @return -1 on an error, 0 on success.
  */
-int fixup_var_pve_12(void** param, int param_no)
+int fixup_var_pve_12(void **param, int param_no)
 {
 	int ret;
-	fparam_t* fp;
-	if (fixup_get_param_type(param) != STRING_RVE_ST) {
+	fparam_t *fp;
+	if(fixup_get_param_type(param) != STRING_RVE_ST) {
 		/* if called with a RVE already converted to string =>
 		 * don't try PVE again (to avoid double
 		 * deref., e.g.: $foo="$bar"; f($foo) ) */
-		if ((ret = fix_param(FPARAM_PVE, param)) <= 0) {
-			if (ret < 0)
+		if((ret = fix_param(FPARAM_PVE, param)) <= 0) {
+			if(ret < 0)
 				return ret;
 			/* check if it resolved to a dynamic or "static" PVE.
 			 * If the resulting PVE is static (normal string), discard
 			 * it and use the normal string fixup (faster at runtime) */
-			fp = (fparam_t*)*param;
-			if (fp->v.pve->spec == 0 || fp->v.pve->spec->getf == 0)
+			fp = (fparam_t *)*param;
+			if(fp->v.pve->spec == 0 || fp->v.pve->spec->getf == 0)
 				fparam_free_restore(param); /* fallback to STR below */
 			else
 				return ret; /* dynamic PVE => return */
 		}
-
 	}
-	if ((ret = fix_param(FPARAM_STR, param)) <= 0) return ret;
+	if((ret = fix_param(FPARAM_STR, param)) <= 0)
+		return ret;
 	LM_ERR("Error while fixing parameter - PVE or str conversions failed\n");
 	return -1;
 }
-
 
 
 /** fixup variable-pve-string.
@@ -1489,51 +1529,57 @@ int fixup_var_pve_12(void** param, int param_no)
  * @param  param_no - parameter number, ignored.
  * @return -1 on an error, 0 on success.
  */
-int fixup_var_pve_str_12(void** param, int param_no)
+int fixup_var_pve_str_12(void **param, int param_no)
 {
 	int ret;
-	fparam_t* fp;
-	if (fixup_get_param_type(param) != STRING_RVE_ST) {
+	fparam_t *fp;
+	if(fixup_get_param_type(param) != STRING_RVE_ST) {
 		/* if called with a RVE already converted to string =>
 		 * don't try AVP, PVAR, SELECT or PVE again (to avoid double
 		 * deref., e.g.: $foo="$bar"; f($foo) ) */
-		if ((ret = fix_param(FPARAM_PVS, param)) <= 0) return ret;
-		if ((ret = fix_param(FPARAM_AVP, param)) <= 0) return ret;
-		if ((ret = fix_param(FPARAM_SELECT, param)) <= 0) return ret;
-		if ((ret = fix_param(FPARAM_PVE, param)) <= 0) {
-			if (ret < 0)
+		if((ret = fix_param(FPARAM_PVS, param)) <= 0)
+			return ret;
+		if((ret = fix_param(FPARAM_AVP, param)) <= 0)
+			return ret;
+		if((ret = fix_param(FPARAM_SELECT, param)) <= 0)
+			return ret;
+		if((ret = fix_param(FPARAM_PVE, param)) <= 0) {
+			if(ret < 0)
 				return ret;
 			/* check if it resolved to a dynamic or "static" PVE.
 			 * If the resulting PVE is static (normal string), discard
 			 * it and use the normal string fixup (faster at runtime) */
-			fp = (fparam_t*)*param;
-			if (fp->v.pve->spec == 0 || fp->v.pve->spec->getf == 0)
+			fp = (fparam_t *)*param;
+			if(fp->v.pve->spec == 0 || fp->v.pve->spec->getf == 0)
 				fparam_free_restore(param); /* fallback to STR below */
 			else
 				return ret; /* dynamic PVE => return */
 		}
-
 	}
-	if ((ret = fix_param(FPARAM_STR, param)) <= 0) return ret;
+	if((ret = fix_param(FPARAM_STR, param)) <= 0)
+		return ret;
 	LM_ERR("Error while fixing parameter, PV, AVP, SELECT, and str conversions"
-			" failed\n");
+		   " failed\n");
 	return -1;
 }
 
 /* Same as fixup_var_pve_str_12 but applies to the 1st parameter only */
-int fixup_var_pve_str_1(void** param, int param_no)
+int fixup_var_pve_str_1(void **param, int param_no)
 {
-	if (param_no == 1) return fixup_var_pve_str_12(param, param_no);
-	else return 0;
+	if(param_no == 1)
+		return fixup_var_pve_str_12(param, param_no);
+	else
+		return 0;
 }
 
 /* Same as fixup_var_pve_str_12 but applies to the 2nd parameter only */
-int fixup_var_pve_str_2(void** param, int param_no)
+int fixup_var_pve_str_2(void **param, int param_no)
 {
-	if (param_no == 2) return fixup_var_pve_str_12(param, param_no);
-	else return 0;
+	if(param_no == 2)
+		return fixup_var_pve_str_12(param, param_no);
+	else
+		return 0;
 }
-
 
 
 /*
@@ -1545,35 +1591,43 @@ int fixup_var_pve_str_2(void** param, int param_no)
  * The parameter value will be converted to fparam structure
  * This function returns -1 on an error
  */
-int fixup_var_int_12(void** param, int param_no)
+int fixup_var_int_12(void **param, int param_no)
 {
 	int ret;
-	if (fixup_get_param_type(param) != STRING_RVE_ST) {
+	if(fixup_get_param_type(param) != STRING_RVE_ST) {
 		/* if called with a RVE already converted to string =>
 		 * don't try AVP, PVAR or SELECT (to avoid double
 		 * deref., e.g.: $foo="$bar"; f($foo) ) */
-		if ((ret = fix_param(FPARAM_PVS, param)) <= 0) return ret;
-		if ((ret = fix_param(FPARAM_AVP, param)) <= 0) return ret;
-		if ((ret = fix_param(FPARAM_SELECT, param)) <= 0) return ret;
+		if((ret = fix_param(FPARAM_PVS, param)) <= 0)
+			return ret;
+		if((ret = fix_param(FPARAM_AVP, param)) <= 0)
+			return ret;
+		if((ret = fix_param(FPARAM_SELECT, param)) <= 0)
+			return ret;
 	}
-	if ((ret = fix_param(FPARAM_INT, param)) <= 0) return ret;
+	if((ret = fix_param(FPARAM_INT, param)) <= 0)
+		return ret;
 	LM_ERR("Error while fixing parameter, PV, AVP, SELECT, and int conversions"
-			" failed\n");
+		   " failed\n");
 	return -1;
 }
 
 /* Same as fixup_var_int_12 but applies to the 1st parameter only */
-int fixup_var_int_1(void** param, int param_no)
+int fixup_var_int_1(void **param, int param_no)
 {
-	if (param_no == 1) return fixup_var_int_12(param, param_no);
-	else return 0;
+	if(param_no == 1)
+		return fixup_var_int_12(param, param_no);
+	else
+		return 0;
 }
 
 /* Same as fixup_var_int_12 but applies to the 2nd parameter only */
-int fixup_var_int_2(void** param, int param_no)
+int fixup_var_int_2(void **param, int param_no)
 {
-	if (param_no == 2) return fixup_var_int_12(param, param_no);
-	else return 0;
+	if(param_no == 2)
+		return fixup_var_int_12(param, param_no);
+	else
+		return 0;
 }
 
 
@@ -1581,94 +1635,107 @@ int fixup_var_int_2(void** param, int param_no)
  * The parameter must be a regular expression which must compile, the
  * parameter will be converted to compiled regex
  */
-int fixup_regex_12(void** param, int param_no)
+int fixup_regex_12(void **param, int param_no)
 {
 	int ret;
 
-	if ((ret = fix_param(FPARAM_REGEX, param)) <= 0) return ret;
+	if((ret = fix_param(FPARAM_REGEX, param)) <= 0)
+		return ret;
 	LM_ERR("Error while compiling regex in function parameter\n");
 	return -1;
 }
 
 /* Same as fixup_regex_12 but applies to the 1st parameter only */
-int fixup_regex_1(void** param, int param_no)
+int fixup_regex_1(void **param, int param_no)
 {
-	if (param_no == 1) return fixup_regex_12(param, param_no);
-	else return 0;
+	if(param_no == 1)
+		return fixup_regex_12(param, param_no);
+	else
+		return 0;
 }
 
 /* Same as fixup_regex_12 but applies to the 2nd parameter only */
-int fixup_regex_2(void** param, int param_no)
+int fixup_regex_2(void **param, int param_no)
 {
-	if (param_no == 2) return fixup_regex_12(param, param_no);
-	else return 0;
+	if(param_no == 2)
+		return fixup_regex_12(param, param_no);
+	else
+		return 0;
 }
 
 /*
  * The string parameter will be converted to integer
  */
-int fixup_int_12(void** param, int param_no)
+int fixup_int_12(void **param, int param_no)
 {
 	int ret;
 
-	if ((ret = fix_param(FPARAM_INT, param)) <= 0) return ret;
+	if((ret = fix_param(FPARAM_INT, param)) <= 0)
+		return ret;
 	LM_ERR("Cannot function parameter to integer\n");
 	return -1;
-
 }
 
 /* Same as fixup_int_12 but applies to the 1st parameter only */
-int fixup_int_1(void** param, int param_no)
+int fixup_int_1(void **param, int param_no)
 {
-	if (param_no == 1) return fixup_int_12(param, param_no);
-	else return 0;
+	if(param_no == 1)
+		return fixup_int_12(param, param_no);
+	else
+		return 0;
 }
 
 /* Same as fixup_int_12 but applies to the 2nd parameter only */
-int fixup_int_2(void** param, int param_no)
+int fixup_int_2(void **param, int param_no)
 {
-	if (param_no == 2) return fixup_int_12(param, param_no);
-	else return 0;
+	if(param_no == 2)
+		return fixup_int_12(param, param_no);
+	else
+		return 0;
 }
 
 /*
  * Parse the parameter as static string, do not resolve
  * AVPs or selects, convert the parameter to str structure
  */
-int fixup_str_12(void** param, int param_no)
+int fixup_str_12(void **param, int param_no)
 {
 	int ret;
 
-	if ((ret = fix_param(FPARAM_STR, param)) <= 0) return ret;
+	if((ret = fix_param(FPARAM_STR, param)) <= 0)
+		return ret;
 	LM_ERR("Cannot function parameter to string\n");
 	return -1;
 }
 
 /* Same as fixup_str_12 but applies to the 1st parameter only */
-int fixup_str_1(void** param, int param_no)
+int fixup_str_1(void **param, int param_no)
 {
-	if (param_no == 1) return fixup_str_12(param, param_no);
-	else return 0;
+	if(param_no == 1)
+		return fixup_str_12(param, param_no);
+	else
+		return 0;
 }
 
 /* Same as fixup_str_12 but applies to the 2nd parameter only */
-int fixup_str_2(void** param, int param_no)
+int fixup_str_2(void **param, int param_no)
 {
-	if (param_no == 2) return fixup_str_12(param, param_no);
-	else return 0;
+	if(param_no == 2)
+		return fixup_str_12(param, param_no);
+	else
+		return 0;
 }
-
 
 
 /** Get the function parameter value as string.
  *  @return  0 - Success
  *          -1 - Cannot get value
  */
-int get_str_fparam(str* dst, struct sip_msg* msg, fparam_t* param)
+int get_str_fparam(str *dst, struct sip_msg *msg, fparam_t *param)
 {
 	int_str val;
 	int ret;
-	avp_t* avp;
+	avp_t *avp;
 	pv_value_t pv_val;
 
 	switch(param->type) {
@@ -1684,14 +1751,14 @@ int get_str_fparam(str* dst, struct sip_msg* msg, fparam_t* param)
 			*dst = param->v.str;
 			break;
 		case FPARAM_AVP:
-			avp = search_first_avp(param->v.avp.flags, param->v.avp.name,
-									&val, 0);
-			if (unlikely(!avp)) {
+			avp = search_first_avp(
+					param->v.avp.flags, param->v.avp.name, &val, 0);
+			if(unlikely(!avp)) {
 				LM_DBG("Could not find AVP from function parameter '%s'\n",
 						param->orig);
 				return -1;
 			}
-			if (likely(avp->flags & AVP_VAL_STR)) {
+			if(likely(avp->flags & AVP_VAL_STR)) {
 				*dst = val.s;
 			} else {
 				/* The caller does not know of what type the AVP will be so
@@ -1702,23 +1769,25 @@ int get_str_fparam(str* dst, struct sip_msg* msg, fparam_t* param)
 			break;
 		case FPARAM_SELECT:
 			ret = run_select(dst, param->v.select, msg);
-			if (unlikely(ret < 0 || ret > 0)) return -1;
+			if(unlikely(ret < 0 || ret > 0))
+				return -1;
 			break;
 		case FPARAM_PVS:
-			if (likely((pv_get_spec_value(msg, param->v.pvs, &pv_val)==0) &&
-						((pv_val.flags&(PV_VAL_NULL|PV_VAL_STR))==PV_VAL_STR))){
-					*dst=pv_val.rs;
-			}else{
+			if(likely((pv_get_spec_value(msg, param->v.pvs, &pv_val) == 0)
+					   && ((pv_val.flags & (PV_VAL_NULL | PV_VAL_STR))
+							   == PV_VAL_STR))) {
+				*dst = pv_val.rs;
+			} else {
 				LM_ERR("Could not convert PV to str\n");
 				return -1;
 			}
 			break;
 		case FPARAM_PVE:
-			dst->s=pv_get_buffer();
-			dst->len=pv_get_buffer_size();
-			if (unlikely(pv_printf(msg, param->v.pve, dst->s, &dst->len)!=0)){
+			dst->s = pv_get_buffer();
+			dst->len = pv_get_buffer_size();
+			if(unlikely(pv_printf(msg, param->v.pve, dst->s, &dst->len) != 0)) {
 				LM_ERR("Could not convert the PV-formatted string to str\n");
-				dst->len=0;
+				dst->len = 0;
 				return -1;
 			};
 			break;
@@ -1733,15 +1802,15 @@ int get_str_fparam(str* dst, struct sip_msg* msg, fparam_t* param)
  *  @return  0 - Success
  *          -1 - Cannot get value
  */
-int get_strbuf_fparam(str* dst, struct sip_msg* msg, fparam_t* param)
+int get_strbuf_fparam(str *dst, struct sip_msg *msg, fparam_t *param)
 {
 	int_str val;
 	int ret;
-	avp_t* avp;
+	avp_t *avp;
 	pv_value_t pv_val;
 	str sv = STR_NULL;
 
-	if(dst==NULL || dst->s==NULL || dst->len<=0) {
+	if(dst == NULL || dst->s == NULL || dst->len <= 0) {
 		return -1;
 	}
 
@@ -1758,14 +1827,14 @@ int get_strbuf_fparam(str* dst, struct sip_msg* msg, fparam_t* param)
 			sv = param->v.str;
 			break;
 		case FPARAM_AVP:
-			avp = search_first_avp(param->v.avp.flags, param->v.avp.name,
-									&val, 0);
-			if (unlikely(!avp)) {
+			avp = search_first_avp(
+					param->v.avp.flags, param->v.avp.name, &val, 0);
+			if(unlikely(!avp)) {
 				LM_DBG("Could not find AVP from function parameter '%s'\n",
 						param->orig);
 				return -1;
 			}
-			if (likely(avp->flags & AVP_VAL_STR)) {
+			if(likely(avp->flags & AVP_VAL_STR)) {
 				sv = val.s;
 			} else {
 				/* The caller does not know of what type the AVP will be so
@@ -1776,27 +1845,29 @@ int get_strbuf_fparam(str* dst, struct sip_msg* msg, fparam_t* param)
 			break;
 		case FPARAM_SELECT:
 			ret = run_select(&sv, param->v.select, msg);
-			if (unlikely(ret < 0 || ret > 0)) return -1;
+			if(unlikely(ret < 0 || ret > 0))
+				return -1;
 			break;
 		case FPARAM_PVS:
-			if (likely((pv_get_spec_value(msg, param->v.pvs, &pv_val)==0) &&
-						((pv_val.flags&(PV_VAL_NULL|PV_VAL_STR))==PV_VAL_STR))){
-					sv=pv_val.rs;
-			}else{
+			if(likely((pv_get_spec_value(msg, param->v.pvs, &pv_val) == 0)
+					   && ((pv_val.flags & (PV_VAL_NULL | PV_VAL_STR))
+							   == PV_VAL_STR))) {
+				sv = pv_val.rs;
+			} else {
 				LM_ERR("Could not convert PV to str\n");
 				return -1;
 			}
 			break;
 		case FPARAM_PVE:
-			if (unlikely(pv_printf(msg, param->v.pve, dst->s, &dst->len)!=0)){
+			if(unlikely(pv_printf(msg, param->v.pve, dst->s, &dst->len) != 0)) {
 				LM_ERR("Could not convert the PV-formatted string to str\n");
-				dst->len=0;
+				dst->len = 0;
 				return -1;
 			};
 			break;
 	}
 	if(param->type != FPARAM_PVE) {
-		if(sv.len>=dst->len-1) {
+		if(sv.len >= dst->len - 1) {
 			LM_ERR("not enough space in output buffer (size: %d need: %d)\n",
 					dst->len, sv.len);
 			return -1;
@@ -1817,11 +1888,11 @@ int get_strbuf_fparam(str* dst, struct sip_msg* msg, fparam_t* param)
  *  @return  0 - Success
  *          -1 - Cannot get value
  */
-int get_int_fparam(int* dst, struct sip_msg* msg, fparam_t* param)
+int get_int_fparam(int *dst, struct sip_msg *msg, fparam_t *param)
 {
 	int_str val;
 	int ret;
-	avp_t* avp;
+	avp_t *avp;
 	str tmp;
 	pv_value_t pv_val;
 
@@ -1836,15 +1907,15 @@ int get_int_fparam(int* dst, struct sip_msg* msg, fparam_t* param)
 			LM_ERR("Unsupported param type for int value: %d\n", param->type);
 			return -1;
 		case FPARAM_AVP:
-			avp = search_first_avp(param->v.avp.flags, param->v.avp.name,
-									&val, 0);
-			if (unlikely(!avp)) {
+			avp = search_first_avp(
+					param->v.avp.flags, param->v.avp.name, &val, 0);
+			if(unlikely(!avp)) {
 				LM_DBG("Could not find AVP from function parameter '%s'\n",
 						param->orig);
 				return -1;
 			}
-			if (avp->flags & AVP_VAL_STR) {
-				if (str2int(&val.s, (unsigned int*)dst) < 0) {
+			if(avp->flags & AVP_VAL_STR) {
+				if(str2int(&val.s, (unsigned int *)dst) < 0) {
 					LM_ERR("Could not convert AVP string value to int\n");
 					return -1;
 				}
@@ -1854,17 +1925,19 @@ int get_int_fparam(int* dst, struct sip_msg* msg, fparam_t* param)
 			break;
 		case FPARAM_SELECT:
 			ret = run_select(&tmp, param->v.select, msg);
-			if (unlikely(ret < 0 || ret > 0)) return -1;
-			if (unlikely(str2int(&tmp, (unsigned int*)dst) < 0)) {
+			if(unlikely(ret < 0 || ret > 0))
+				return -1;
+			if(unlikely(str2int(&tmp, (unsigned int *)dst) < 0)) {
 				LM_ERR("Could not convert select result to int\n");
 				return -1;
 			}
 			break;
 		case FPARAM_PVS:
-			if (likely((pv_get_spec_value(msg, param->v.pvs, &pv_val)==0) &&
-						((pv_val.flags&(PV_VAL_NULL|PV_VAL_INT))==PV_VAL_INT))){
-					*dst=pv_val.ri;
-			}else{
+			if(likely((pv_get_spec_value(msg, param->v.pvs, &pv_val) == 0)
+					   && ((pv_val.flags & (PV_VAL_NULL | PV_VAL_INT))
+							   == PV_VAL_INT))) {
+				*dst = pv_val.ri;
+			} else {
 				LM_ERR("Could not convert PV to int\n");
 				return -1;
 			}
@@ -1883,11 +1956,12 @@ int get_int_fparam(int* dst, struct sip_msg* msg, fparam_t* param)
  *  @return  0 - Success
  *          -1 - Cannot get value
  */
-int get_is_fparam(int* i_dst, str* s_dst, struct sip_msg* msg, fparam_t* param, unsigned int *flags)
+int get_is_fparam(int *i_dst, str *s_dst, struct sip_msg *msg, fparam_t *param,
+		unsigned int *flags)
 {
 	int_str val;
 	int ret;
-	avp_t* avp;
+	avp_t *avp;
 	str tmp;
 	pv_value_t pv_val;
 
@@ -1909,17 +1983,17 @@ int get_is_fparam(int* i_dst, str* s_dst, struct sip_msg* msg, fparam_t* param, 
 			*flags |= PARAM_STR;
 			break;
 		case FPARAM_AVP:
-			avp = search_first_avp(param->v.avp.flags, param->v.avp.name,
-									&val, 0);
-			if (unlikely(!avp)) {
+			avp = search_first_avp(
+					param->v.avp.flags, param->v.avp.name, &val, 0);
+			if(unlikely(!avp)) {
 				LM_DBG("Could not find AVP from function parameter '%s'\n",
 						param->orig);
 				return -1;
 			}
-			if (avp->flags & AVP_VAL_STR) {
+			if(avp->flags & AVP_VAL_STR) {
 				*s_dst = val.s;
 				*flags |= PARAM_STR;
-				if (str2int(&val.s, (unsigned int*)i_dst) < 0) {
+				if(str2int(&val.s, (unsigned int *)i_dst) < 0) {
 					LM_ERR("Could not convert AVP string value to int\n");
 					return -1;
 				}
@@ -1930,34 +2004,36 @@ int get_is_fparam(int* i_dst, str* s_dst, struct sip_msg* msg, fparam_t* param, 
 			break;
 		case FPARAM_SELECT:
 			ret = run_select(&tmp, param->v.select, msg);
-			if (unlikely(ret < 0 || ret > 0)) return -1;
-			if (unlikely(str2int(&tmp, (unsigned int*)i_dst) < 0)) {
+			if(unlikely(ret < 0 || ret > 0))
+				return -1;
+			if(unlikely(str2int(&tmp, (unsigned int *)i_dst) < 0)) {
 				LM_ERR("Could not convert select result to int\n");
 				return -1;
 			}
 			*flags |= PARAM_INT;
 			break;
 		case FPARAM_PVS:
-			if (likely(pv_get_spec_value(msg, param->v.pvs, &pv_val)==0)) {
-				if ((pv_val.flags&(PV_VAL_NULL|PV_VAL_INT))==PV_VAL_INT){
-					*i_dst=pv_val.ri;
+			if(likely(pv_get_spec_value(msg, param->v.pvs, &pv_val) == 0)) {
+				if((pv_val.flags & (PV_VAL_NULL | PV_VAL_INT)) == PV_VAL_INT) {
+					*i_dst = pv_val.ri;
 					*flags |= PARAM_INT;
 				}
-				if ((pv_val.flags&(PV_VAL_NULL|PV_VAL_STR))==PV_VAL_STR){
-					*s_dst=pv_val.rs;
+				if((pv_val.flags & (PV_VAL_NULL | PV_VAL_STR)) == PV_VAL_STR) {
+					*s_dst = pv_val.rs;
 					*flags |= PARAM_STR;
 				}
-			}else{
+			} else {
 				LM_ERR("Could not get PV\n");
 				return -1;
 			}
 			break;
 		case FPARAM_PVE:
-			s_dst->s=pv_get_buffer();
-			s_dst->len=pv_get_buffer_size();
-			if (unlikely(pv_printf(msg, param->v.pve, s_dst->s, &s_dst->len)!=0)){
+			s_dst->s = pv_get_buffer();
+			s_dst->len = pv_get_buffer_size();
+			if(unlikely(pv_printf(msg, param->v.pve, s_dst->s, &s_dst->len)
+						!= 0)) {
 				LM_ERR("Could not convert the PV-formatted string to str\n");
-				s_dst->len=0;
+				s_dst->len = 0;
 				return -1;
 			}
 			*flags |= PARAM_STR;
@@ -1965,10 +2041,12 @@ int get_is_fparam(int* i_dst, str* s_dst, struct sip_msg* msg, fparam_t* param, 
 	}
 
 	/* Let's convert to int, if possible */
-	if (!(*flags & PARAM_INT) && (*flags & PARAM_STR) && str2sint(s_dst, i_dst) == 0)
+	if(!(*flags & PARAM_INT) && (*flags & PARAM_STR)
+			&& str2sint(s_dst, i_dst) == 0)
 		*flags |= PARAM_INT;
 
-	if (!*flags) return -1;
+	if(!*flags)
+		return -1;
 
 	return 0;
 }
@@ -1977,9 +2055,9 @@ int get_is_fparam(int* i_dst, str* s_dst, struct sip_msg* msg, fparam_t* param, 
  * Retrieve the compiled RegExp.
  * @return: 0 for success, negative on error.
  */
-int get_regex_fparam(regex_t *dst, struct sip_msg* msg, fparam_t* param)
+int get_regex_fparam(regex_t *dst, struct sip_msg *msg, fparam_t *param)
 {
-	switch (param->type) {
+	switch(param->type) {
 		case FPARAM_REGEX:
 			*dst = *param->v.regex;
 			return 0;
@@ -1991,18 +2069,16 @@ int get_regex_fparam(regex_t *dst, struct sip_msg* msg, fparam_t* param)
 }
 
 
-
 /** generic free fixup function for "pure" fparam type fixups.
  * @param  param - double pointer to param, as for normal fixup functions.
  * @param  param_no - parameter number, ignored.
  * @return 0 on success (always).
  */
-int fixup_free_fparam_all(void** param, int param_no)
+int fixup_free_fparam_all(void **param, int param_no)
 {
 	fparam_free_restore(param);
 	return 0;
 }
-
 
 
 /** generic free fixup function for "pure"  first parameter fparam type fixups.
@@ -2011,13 +2087,12 @@ int fixup_free_fparam_all(void** param, int param_no)
  *                     param_no == 1 (first parameter).
  * @return 0 on success (always).
  */
-int fixup_free_fparam_1(void** param, int param_no)
+int fixup_free_fparam_1(void **param, int param_no)
 {
-	if (param_no == 1)
+	if(param_no == 1)
 		fparam_free_restore(param);
 	return 0;
 }
-
 
 
 /** generic free fixup function for "pure"  2nd parameter fparam type fixups.
@@ -2026,13 +2101,12 @@ int fixup_free_fparam_1(void** param, int param_no)
  *                     param_no == 2 (2nd parameter).
  * @return 0 on success (always).
  */
-int fixup_free_fparam_2(void** param, int param_no)
+int fixup_free_fparam_2(void **param, int param_no)
 {
-	if (param_no == 2)
+	if(param_no == 2)
 		fparam_free_restore(param);
 	return 0;
 }
-
 
 
 /** returns true if a fixup is a fparam_t* one.
@@ -2043,25 +2117,13 @@ int fixup_free_fparam_2(void** param, int param_no)
  */
 int is_fparam_rve_fixup(fixup_function f)
 {
-	if (f == fixup_var_str_12 ||
-		f == fixup_var_str_1 ||
-		f == fixup_var_str_2 ||
-		f == fixup_var_pve_str_12 ||
-		f == fixup_var_pve_str_1 ||
-		f == fixup_var_pve_str_2 ||
-		f == fixup_var_int_12 ||
-		f == fixup_var_int_1 ||
-		f == fixup_var_int_2 ||
-		f == fixup_int_12 ||
-		f == fixup_int_1 ||
-		f == fixup_int_2 ||
-		f == fixup_str_12 ||
-		f == fixup_str_1 ||
-		f == fixup_str_2 ||
-		f == fixup_regex_12 ||
-		f == fixup_regex_1 ||
-		f == fixup_regex_2
-		)
+	if(f == fixup_var_str_12 || f == fixup_var_str_1 || f == fixup_var_str_2
+			|| f == fixup_var_pve_str_12 || f == fixup_var_pve_str_1
+			|| f == fixup_var_pve_str_2 || f == fixup_var_int_12
+			|| f == fixup_var_int_1 || f == fixup_var_int_2 || f == fixup_int_12
+			|| f == fixup_int_1 || f == fixup_int_2 || f == fixup_str_12
+			|| f == fixup_str_1 || f == fixup_str_2 || f == fixup_regex_12
+			|| f == fixup_regex_1 || f == fixup_regex_2)
 		return 1;
 	return 0;
 }
@@ -2080,34 +2142,23 @@ free_fixup_function get_fixup_free(fixup_function f)
 {
 	free_fixup_function ret;
 	/* "pure" fparam, all parameters */
-	if (f == fixup_var_str_12 ||
-		f == fixup_var_pve_str_12 ||
-		f == fixup_var_int_12 ||
-		f == fixup_int_12 ||
-		f == fixup_str_12 ||
-		f == fixup_regex_12)
+	if(f == fixup_var_str_12 || f == fixup_var_pve_str_12
+			|| f == fixup_var_int_12 || f == fixup_int_12 || f == fixup_str_12
+			|| f == fixup_regex_12)
 		return fixup_free_fparam_all;
 
 	/* "pure" fparam, 1st parameter */
-	if (f == fixup_var_str_1 ||
-		f == fixup_var_pve_str_1 ||
-		f == fixup_var_int_1 ||
-		f == fixup_int_1 ||
-		f == fixup_str_1 ||
-		f == fixup_regex_1)
+	if(f == fixup_var_str_1 || f == fixup_var_pve_str_1 || f == fixup_var_int_1
+			|| f == fixup_int_1 || f == fixup_str_1 || f == fixup_regex_1)
 		return fixup_free_fparam_1;
 
 	/* "pure" fparam, 2nd parameters */
-	if (f == fixup_var_str_2 ||
-		f == fixup_var_pve_str_2 ||
-		f == fixup_var_int_2 ||
-		f == fixup_int_2 ||
-		f == fixup_str_2 ||
-		f == fixup_regex_2)
+	if(f == fixup_var_str_2 || f == fixup_var_pve_str_2 || f == fixup_var_int_2
+			|| f == fixup_int_2 || f == fixup_str_2 || f == fixup_regex_2)
 		return fixup_free_fparam_2;
 
 	/* mod_fix.h kamailio style fixups */
-	if ((ret = mod_fix_get_fixup_free(f)) != 0)
+	if((ret = mod_fix_get_fixup_free(f)) != 0)
 		return ret;
 
 	/* unknown */

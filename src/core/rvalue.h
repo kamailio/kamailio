@@ -34,78 +34,88 @@
 #include "parser/msg_parser.h"
 #include "action.h"
 
-enum rval_type{
-	RV_NONE, RV_LONG, RV_STR, /* basic types */
-	RV_BEXPR, RV_ACTION_ST,  /* special values */
-	RV_SEL, RV_AVP, RV_PVAR
+enum rval_type
+{
+	RV_NONE,
+	RV_LONG,
+	RV_STR, /* basic types */
+	RV_BEXPR,
+	RV_ACTION_ST, /* special values */
+	RV_SEL,
+	RV_AVP,
+	RV_PVAR
 };
 
-enum rval_expr_op{
-	RVE_NONE_OP,  /**< uninit / empty */
-	RVE_RVAL_OP,  /**< special op, means that the expr. is in fact a rval */
-	RVE_UMINUS_OP, /**< one member expression, returns -(val) */
-	RVE_BOOL_OP,  /**< one member evaluate as bool. : (val!=0)*/
-	RVE_LNOT_OP,  /**< one member evaluate as bool. : (!val)*/
-	RVE_BNOT_OP,  /**< one member evaluate as binary : (~ val)*/
-	RVE_MUL_OP,   /**< 2 members, returns left * right */
-	RVE_DIV_OP,   /**< 2 members, returns left / right */
-	RVE_MOD_OP,   /**< 2 members, returns left % right */
-	RVE_MINUS_OP, /**< 2 members, returns left - right */
-	RVE_BAND_OP,  /**< 2 members, returns left | right */
-	RVE_BOR_OP,   /**< 2 members, returns left & right */
-	RVE_BXOR_OP,   /**< 2 members, returns left XOR right */
+enum rval_expr_op
+{
+	RVE_NONE_OP,	/**< uninit / empty */
+	RVE_RVAL_OP,	/**< special op, means that the expr. is in fact a rval */
+	RVE_UMINUS_OP,	/**< one member expression, returns -(val) */
+	RVE_BOOL_OP,	/**< one member evaluate as bool. : (val!=0)*/
+	RVE_LNOT_OP,	/**< one member evaluate as bool. : (!val)*/
+	RVE_BNOT_OP,	/**< one member evaluate as binary : (~ val)*/
+	RVE_MUL_OP,		/**< 2 members, returns left * right */
+	RVE_DIV_OP,		/**< 2 members, returns left / right */
+	RVE_MOD_OP,		/**< 2 members, returns left % right */
+	RVE_MINUS_OP,	/**< 2 members, returns left - right */
+	RVE_BAND_OP,	/**< 2 members, returns left | right */
+	RVE_BOR_OP,		/**< 2 members, returns left & right */
+	RVE_BXOR_OP,	/**< 2 members, returns left XOR right */
 	RVE_BLSHIFT_OP, /**< 2 members, returns left << right */
 	RVE_BRSHIFT_OP, /**< 2 members, returns left >> right */
-	RVE_LAND_OP,  /**< 2 members, returns left && right */
-	RVE_LOR_OP,   /**< 2 members, returns left || right */
-	RVE_GT_OP,    /**<  2 members, returns left > right */
-	RVE_GTE_OP,   /**<  2 members, returns left >= right */
-	RVE_LT_OP,    /**<  2 members, returns left  < right */
-	RVE_LTE_OP,   /**<  2 members, returns left <= right */
-	RVE_IEQ_OP,   /**<  2 members, int == version, returns left == right */
-	RVE_IDIFF_OP, /**< 2 members, int != version, returns left != right */
-	RVE_IPLUS_OP, /**< 2 members, integer +, returns int(a)+int(b) */
+	RVE_LAND_OP,	/**< 2 members, returns left && right */
+	RVE_LOR_OP,		/**< 2 members, returns left || right */
+	RVE_GT_OP,		/**<  2 members, returns left > right */
+	RVE_GTE_OP,		/**<  2 members, returns left >= right */
+	RVE_LT_OP,		/**<  2 members, returns left  < right */
+	RVE_LTE_OP,		/**<  2 members, returns left <= right */
+	RVE_IEQ_OP,		/**<  2 members, int == version, returns left == right */
+	RVE_IDIFF_OP,	/**< 2 members, int != version, returns left != right */
+	RVE_IPLUS_OP,	/**< 2 members, integer +, returns int(a)+int(b) */
 	/* common int & str */
-	RVE_PLUS_OP,  /**< generic plus (int or str) returns left + right */
-	RVE_EQ_OP,    /**<  2 members, returns left == right  (int)*/
-	RVE_DIFF_OP,  /**<  2 members, returns left != right  (int)*/
+	RVE_PLUS_OP, /**< generic plus (int or str) returns left + right */
+	RVE_EQ_OP,	 /**<  2 members, returns left == right  (int)*/
+	RVE_DIFF_OP, /**<  2 members, returns left != right  (int)*/
 	/* str only */
 	RVE_CONCAT_OP, /**< 2 members, string concat, returns left . right (str)*/
 	RVE_STRLEN_OP, /**< one member, string length:, returns strlen(val) (int)*/
 	RVE_STREMPTY_OP, /**< one member, returns val=="" (bool) */
-	RVE_STREQ_OP,  /**< 2 members, string == , returns left == right (bool)*/
-	RVE_STRDIFF_OP,/**< 2 members, string != , returns left != right (bool)*/
-	RVE_MATCH_OP,  /**< 2 members, string ~),  returns left matches re(right) */
+	RVE_STREQ_OP,	 /**< 2 members, string == , returns left == right (bool)*/
+	RVE_STRDIFF_OP,	 /**< 2 members, string != , returns left != right (bool)*/
+	RVE_MATCH_OP, /**< 2 members, string ~),  returns left matches re(right) */
 	/* tenary expression - (x)?y:z */
-	RVE_SELVALEXP_OP,  /**< selval expression - selval(exp, ...)*/
-	RVE_SELVALOPT_OP,  /**< selval options - selval(exp, opt1, opt2)*/
+	RVE_SELVALEXP_OP, /**< selval expression - selval(exp, ...)*/
+	RVE_SELVALOPT_OP, /**< selval options - selval(exp, opt1, opt2)*/
 	/* avp, pvars a.s.o */
-	RVE_DEFINED_OP, /**< one member, returns is_defined(val) (bool) */
+	RVE_DEFINED_OP,	   /**< one member, returns is_defined(val) (bool) */
 	RVE_NOTDEFINED_OP, /**< one member, returns is_not_defined(val) (bool) */
-	RVE_LONG_OP,   /**< one member, returns (int)val  (int) */
-	RVE_STR_OP    /**< one member, returns (str)val  (str) */
+	RVE_LONG_OP,	   /**< one member, returns (int)val  (int) */
+	RVE_STR_OP		   /**< one member, returns (str)val  (str) */
 };
 
 
-struct str_re{
+struct str_re
+{
 	str s;
-	regex_t* regex;
+	regex_t *regex;
 };
 
-union rval_val{
-	void* p;
-	long  l;
+union rval_val
+{
+	void *p;
+	long l;
 	str s;
 	avp_spec_t avps;
 	select_t sel;
 	pv_spec_t pvs;
-	struct action* action;
-	struct expr* bexpr;
+	struct action *action;
+	struct expr *bexpr;
 	struct str_re re;
 };
 
 
-struct rvalue{
+struct rvalue
+{
 	enum rval_type type;
 	int refcnt; /**< refcnt, on 0 the structure is destroyed */
 	union rval_val v;
@@ -116,27 +126,31 @@ struct rvalue{
 
 
 /* rvalue flags */
-#define RV_CNT_ALLOCED_F  1  /**< free contents  (pkg mem allocated) */
-#define RV_RV_ALLOCED_F   2  /**< free rv itself (pkg_free(rv)) */
-#define RV_ALL_ALLOCED_F  (RV_CNT_ALLOCED|RV_RV_ALLOCED)
-#define RV_RE_F  4 /**< string is a RE with a valid v->re member */
+#define RV_CNT_ALLOCED_F 1 /**< free contents  (pkg mem allocated) */
+#define RV_RV_ALLOCED_F 2  /**< free rv itself (pkg_free(rv)) */
+#define RV_ALL_ALLOCED_F (RV_CNT_ALLOCED | RV_RV_ALLOCED)
+#define RV_RE_F 4		  /**< string is a RE with a valid v->re member */
 #define RV_RE_ALLOCED_F 8 /**< v->re.regex must be freed */
 
-struct rval_expr{
+struct rval_expr
+{
 	enum rval_expr_op op;
-	union{
-		struct rval_expr* rve;
+	union
+	{
+		struct rval_expr *rve;
 		struct rvalue rval;
-	}left;
-	union{
-		struct rval_expr* rve;
+	} left;
+	union
+	{
+		struct rval_expr *rve;
 		struct rvalue rval;
-	}right;
+	} right;
 	struct cfg_pos fpos;
 };
 
 
-enum rval_cache_type{
+enum rval_cache_type
+{
 	RV_CACHE_EMPTY,
 	RV_CACHE_PVAR,
 	RV_CACHE_AVP,
@@ -148,21 +162,22 @@ enum rval_cache_type{
  * Used to optimize functions that would need to
  * get the value repeatedly (e.g. rval_get_btype() and then rval_get_long())
  */
-struct rval_cache{
+struct rval_cache
+{
 	enum rval_cache_type cache_type;
 	enum rval_type val_type;
-	union{
+	union
+	{
 		int_str avp_val; /**< avp value */
 		pv_value_t pval; /**< pvar value */
-	}c;
+	} c;
 	char i2s[INT2STR_MAX_LEN]; /**< space for converting an int to string*/
 };
 
 
-
 /** allocates a new rval (should be freed by rval_destroy()). */
-struct rvalue* rval_new_empty(int extra_size);
-struct rvalue* rval_new_str(str* s, int extra_size);
+struct rvalue *rval_new_empty(int extra_size);
+struct rvalue *rval_new_str(str *s, int extra_size);
 
 /**
  * @brief create a new pk_malloc'ed rvalue from a rval_val union
@@ -172,23 +187,26 @@ struct rvalue* rval_new_str(str* s, int extra_size);
  * (so that future string operation can reuse the space)
  * @return new rv or 0 on error
  */
-struct rvalue* rval_new(enum rval_type t, union rval_val* v, int extra_size);
+struct rvalue *rval_new(enum rval_type t, union rval_val *v, int extra_size);
 
 /** inits a rvalue structure- */
-void rval_init(struct rvalue* rv, enum rval_type t, union rval_val* v,
-					int flags);
+void rval_init(
+		struct rvalue *rv, enum rval_type t, union rval_val *v, int flags);
 /** frees a rval_new(), rval_convert() or rval_expr_eval() returned rval. */
-void rval_destroy(struct rvalue* rv);
+void rval_destroy(struct rvalue *rv);
 
 /** frees a rval contents */
-void rval_clean(struct rvalue* rv);
+void rval_clean(struct rvalue *rv);
 
 /** init a rval_cache struct */
-#define rval_cache_init(rvc) \
-	do{ (rvc)->cache_type=RV_CACHE_EMPTY; (rvc)->val_type=RV_NONE; }while(0)
+#define rval_cache_init(rvc)                \
+	do {                                    \
+		(rvc)->cache_type = RV_CACHE_EMPTY; \
+		(rvc)->val_type = RV_NONE;          \
+	} while(0)
 
 /** destroy a rval_cache struct contents */
-void rval_cache_clean(struct rval_cache* rvc);
+void rval_cache_clean(struct rval_cache *rvc);
 
 
 /**
@@ -208,26 +226,23 @@ void rval_cache_clean(struct rval_cache* rvc);
  * @return pointer to a rvalue (reference to an existing one or a new
  * one, @see rv_chg_in_place() and the above comment), or 0 on error.
  */
-struct rvalue* rval_convert(struct run_act_ctx* h, struct sip_msg* msg,
-							enum rval_type type, struct rvalue* v,
-							struct rval_cache* c);
+struct rvalue *rval_convert(struct run_act_ctx *h, struct sip_msg *msg,
+		enum rval_type type, struct rvalue *v, struct rval_cache *c);
 
 /** get the long int value of an rvalue. */
-long rval_get_long(struct run_act_ctx* h, struct sip_msg* msg, long* i,
-				struct rvalue* rv, struct rval_cache* cache);
+long rval_get_long(struct run_act_ctx *h, struct sip_msg *msg, long *i,
+		struct rvalue *rv, struct rval_cache *cache);
 /** get the string value of an rv. */
-int rval_get_str(struct run_act_ctx* h, struct sip_msg* msg,
-								str* s, struct rvalue* rv,
-								struct rval_cache* cache);
+int rval_get_str(struct run_act_ctx *h, struct sip_msg *msg, str *s,
+		struct rvalue *rv, struct rval_cache *cache);
 /** get the string value of an rv in a tmp variable */
-int rval_get_tmp_str(struct run_act_ctx* h, struct sip_msg* msg,
-								str* tmpv, struct rvalue* rv,
-								struct rval_cache* cache,
-								struct rval_cache* tmp_cache);
+int rval_get_tmp_str(struct run_act_ctx *h, struct sip_msg *msg, str *tmpv,
+		struct rvalue *rv, struct rval_cache *cache,
+		struct rval_cache *tmp_cache);
 
 /** evals a long expr to a long. */
-int rval_expr_eval_long(struct run_act_ctx* h, struct sip_msg* msg,
-						long* res, struct rval_expr* rve);
+int rval_expr_eval_long(struct run_act_ctx *h, struct sip_msg *msg, long *res,
+		struct rval_expr *rve);
 
 /**
  * @brief Evals a rval expression
@@ -239,8 +254,8 @@ int rval_expr_eval_long(struct run_act_ctx* h, struct sip_msg* msg,
  * @param rve rvalue expression
  * @return rvalue on success, 0 on error
  */
-struct rvalue* rval_expr_eval(struct run_act_ctx* h, struct sip_msg* msg,
-								struct rval_expr* rve);
+struct rvalue *rval_expr_eval(
+		struct run_act_ctx *h, struct sip_msg *msg, struct rval_expr *rve);
 
 /**
  * @brief Evals a rval expression into an int or another rv(str)
@@ -259,17 +274,17 @@ struct rvalue* rval_expr_eval(struct run_act_ctx* h, struct sip_msg* msg,
  * when done.
  * @return 0 on success, -1 on error, sets *res_rv or *res_i.
  */
-int rval_expr_eval_rvlong( struct run_act_ctx* h, struct sip_msg* msg,
-						struct rvalue** rv_res, long* i_res,
-						struct rval_expr* rve, struct rval_cache* cache);
+int rval_expr_eval_rvlong(struct run_act_ctx *h, struct sip_msg *msg,
+		struct rvalue **rv_res, long *i_res, struct rval_expr *rve,
+		struct rval_cache *cache);
 
 
 /** guess the type of an expression.  */
-enum rval_type rve_guess_type(struct rval_expr* rve);
+enum rval_type rve_guess_type(struct rval_expr *rve);
 /** returns true if expression is constant. */
-int rve_is_constant(struct rval_expr* rve);
+int rve_is_constant(struct rval_expr *rve);
 /** returns true if the expression can have side-effect */
-int rve_has_side_effects(struct rval_expr* rve);
+int rve_has_side_effects(struct rval_expr *rve);
 
 /**
  * @brief Returns 1 if expression is valid (type-wise)
@@ -284,16 +299,16 @@ int rve_has_side_effects(struct rval_expr* rve);
  * @return 0 or 1 and sets *type to the resulting type
  * (RV_LONG, RV_STR or RV_NONE if it can be found only at runtime)
  */
-int rve_check_type(enum rval_type* type, struct rval_expr* rve,
-					struct rval_expr** bad_rve, enum rval_type* bad_type,
-					enum rval_type* exp_type);
+int rve_check_type(enum rval_type *type, struct rval_expr *rve,
+		struct rval_expr **bad_rve, enum rval_type *bad_type,
+		enum rval_type *exp_type);
 /** returns a string name for type (debugging).*/
-char* rval_type_name(enum rval_type type);
+char *rval_type_name(enum rval_type type);
 
 /** create a RVE_RVAL_OP rval_expr, containing a single rval of the given type
  */
-struct rval_expr* mk_rval_expr_v(enum rval_type rv_type, void* val,
-									struct cfg_pos* pos);
+struct rval_expr *mk_rval_expr_v(
+		enum rval_type rv_type, void *val, struct cfg_pos *pos);
 
 /**
  * @brief Create an unary op. rval_expr
@@ -303,8 +318,8 @@ struct rval_expr* mk_rval_expr_v(enum rval_type rv_type, void* val,
  * @param pos configuration position
  * @return new pkg_malloc'ed rval_expr or 0 on error.
  */
-struct rval_expr* mk_rval_expr1(enum rval_expr_op op, struct rval_expr* rve1,
-									struct cfg_pos* pos);
+struct rval_expr *mk_rval_expr1(
+		enum rval_expr_op op, struct rval_expr *rve1, struct cfg_pos *pos);
 
 /**
  * @brief Create a rval_expr. from 2 other rval exprs, using op
@@ -315,12 +330,11 @@ struct rval_expr* mk_rval_expr1(enum rval_expr_op op, struct rval_expr* rve1,
  * @param pos configuration position
  * @return new pkg_malloc'ed rval_expr or 0 on error.
  */
-struct rval_expr* mk_rval_expr2(enum rval_expr_op op, struct rval_expr* rve1,
-													struct rval_expr* rve2,
-													struct cfg_pos* pos);
+struct rval_expr *mk_rval_expr2(enum rval_expr_op op, struct rval_expr *rve1,
+		struct rval_expr *rve2, struct cfg_pos *pos);
 /** destroys a pkg_malloc'ed rve. */
-void rve_destroy(struct rval_expr* rve);
+void rve_destroy(struct rval_expr *rve);
 
 /** fix a rval_expr. */
-int fix_rval_expr(void* p);
+int fix_rval_expr(void *p);
 #endif /* _rvalue_h */

@@ -41,23 +41,24 @@
 
 #include "cfg/cfg.h"
 
-extern void	*core_cfg;
+extern void *core_cfg;
 
 /*! \brief configuration default values */
-struct cfg_group_core {
-	int	debug;
-	int	log_facility;
+struct cfg_group_core
+{
+	int debug;
+	int log_facility;
 	int memdbg; /*!< log level for memory debugging messages */
 #ifdef USE_DST_BLOCKLIST
 	/* blocklist */
-	int	use_dst_blocklist; /*!< 1 if blocklist is enabled */
-	unsigned int	blst_timeout; /*!< blocklist entry ttl */
-	unsigned int	blst_max_mem; /*!< maximum memory used for the
+	int use_dst_blocklist;		  /*!< 1 if blocklist is enabled */
+	unsigned int blst_timeout;	  /*!< blocklist entry ttl */
+	unsigned int blst_max_mem;	  /*!< maximum memory used for the
 					blocklist entries */
-	unsigned int	blst_udp_imask;  /* ignore mask for udp */
-	unsigned int	blst_tcp_imask;  /* ignore mask for tcp */
-	unsigned int	blst_tls_imask;  /* ignore mask for tls */
-	unsigned int	blst_sctp_imask; /* ignore mask for sctp */
+	unsigned int blst_udp_imask;  /* ignore mask for udp */
+	unsigned int blst_tcp_imask;  /* ignore mask for tcp */
+	unsigned int blst_tls_imask;  /* ignore mask for tls */
+	unsigned int blst_sctp_imask; /* ignore mask for sctp */
 #endif
 	/* resolver */
 	int dns_try_ipv6;
@@ -94,24 +95,24 @@ struct cfg_group_core {
 	int max_while_loops;
 	int udp_mtu; /*!< maximum send size for udp, if > try another protocol*/
 	int udp_mtu_try_proto; /*!< if packet> udp_mtu, try proto (e.g. TCP) */
-	int udp4_raw; /* use raw sockets for sending on udp ipv 4 */
-	int udp4_raw_mtu; /* mtu used when using udp raw socket */
-	int udp4_raw_ttl; /* ttl used when using udp raw sockets */
-	int force_rport; /*!< if set rport will always be forced*/
-	int memlog; /*!< log level for memory status/summary info */
-	int mem_summary; /*!< display memory status/summary info on exit */
-	int mem_safety; /*!< memory safety control option */
-	int mem_join; /*!< memory free fragments join option */
-	int mem_status_mode; /*!< memory status printed for free/all fragments */
+	int udp4_raw;		   /* use raw sockets for sending on udp ipv 4 */
+	int udp4_raw_mtu;	   /* mtu used when using udp raw socket */
+	int udp4_raw_ttl;	   /* ttl used when using udp raw sockets */
+	int force_rport;	   /*!< if set rport will always be forced*/
+	int memlog;			   /*!< log level for memory status/summary info */
+	int mem_summary;	   /*!< display memory status/summary info on exit */
+	int mem_safety;		   /*!< memory safety control option */
+	int mem_join;		   /*!< memory free fragments join option */
+	int mem_status_mode;   /*!< memory status printed for free/all fragments */
 	int sip_parser_log_oneline; /*!< sip msg on one line */
-	int sip_parser_log; /*!< sip msg parser error log level*/
-	int corelog; /*!< log level for non-critcal core error messages */
+	int sip_parser_log;			/*!< sip msg parser error log level*/
+	int corelog;		 /*!< log level for non-critcal core error messages */
 	int latency_cfg_log; /*!< log level for printing latency of routing blocks */
-	int latency_log; /*!< log level for latency limits messages */
-	int latency_limit_db; /*!< alert limit of running db commands */
+	int latency_log;	 /*!< log level for latency limits messages */
+	int latency_limit_db;	  /*!< alert limit of running db commands */
 	int latency_limit_action; /*!< alert limit of running cfg actions */
-	int latency_limit_cfg; /*!< alert limit of running cfg routing script */
-	int pv_cache_limit; /*!< alert limit of having too many vars in pv cache */
+	int latency_limit_cfg;	  /*!< alert limit of running cfg routing script */
+	int pv_cache_limit;	 /*!< alert limit of having too many vars in pv cache */
 	int pv_cache_action; /*!< action to be taken on pv cache limit */
 };
 

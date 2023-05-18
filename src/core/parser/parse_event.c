@@ -34,30 +34,29 @@
 
 
 #include "parse_event.h"
-#include "../mem/mem.h"    /* pkg_malloc, pkg_free */
+#include "../mem/mem.h" /* pkg_malloc, pkg_free */
 #include "../dprint.h"
-#include <string.h>        /* memset */
-#include "../trim.h"       /* trim_leading */
-#include <stdio.h>         /* printf */
+#include <string.h>	 /* memset */
+#include "../trim.h" /* trim_leading */
+#include <stdio.h>	 /* printf */
 #include "../ut.h"
 
-static struct {
+static struct
+{
 	str name;
 	int type;
-} events[] = {
-	{STR_STATIC_INIT("presence"),        EVENT_PRESENCE},
-	{STR_STATIC_INIT("presence.winfo"),  EVENT_PRESENCE_WINFO},
-	{STR_STATIC_INIT("xcap-change"),     EVENT_XCAP_CHANGE},
-	{STR_STATIC_INIT("sip-profile"),     EVENT_SIP_PROFILE},
-	{STR_STATIC_INIT("message-summary"), EVENT_MESSAGE_SUMMARY},
-	{STR_STATIC_INIT("dialog"),          EVENT_DIALOG},
-	{STR_STATIC_INIT("ua-profile"),      EVENT_UA_PROFILE},
-	/* The following must be the last element in the array */
-	{STR_NULL,                           EVENT_OTHER}
-};
+} events[] = {{STR_STATIC_INIT("presence"), EVENT_PRESENCE},
+		{STR_STATIC_INIT("presence.winfo"), EVENT_PRESENCE_WINFO},
+		{STR_STATIC_INIT("xcap-change"), EVENT_XCAP_CHANGE},
+		{STR_STATIC_INIT("sip-profile"), EVENT_SIP_PROFILE},
+		{STR_STATIC_INIT("message-summary"), EVENT_MESSAGE_SUMMARY},
+		{STR_STATIC_INIT("dialog"), EVENT_DIALOG},
+		{STR_STATIC_INIT("ua-profile"), EVENT_UA_PROFILE},
+		/* The following must be the last element in the array */
+		{STR_NULL, EVENT_OTHER}};
 
 
-static inline char* skip_token(char* _b, int _l)
+static inline char *skip_token(char *_b, int _l)
 {
 	int i = 0;
 
@@ -76,15 +75,15 @@ static inline char* skip_token(char* _b, int _l)
 }
 
 
-int event_parser(char* s, int len, event_t* e)
+int event_parser(char *s, int len, event_t *e)
 {
 	int i;
 	str tmp;
-	char* end;
-	param_hooks_t* phooks = NULL;
+	char *end;
+	param_hooks_t *phooks = NULL;
 	enum pclass pclass = CLASS_ANY;
 
-	if (e == NULL) {
+	if(e == NULL) {
 		LM_ERR("Invalid parameter value\n");
 		return -1;
 	}
@@ -93,7 +92,7 @@ int event_parser(char* s, int len, event_t* e)
 	tmp.len = len;
 	trim_leading(&tmp);
 
-	if (tmp.len == 0) {
+	if(tmp.len == 0) {
 		LM_ERR("Empty body\n");
 		return -1;
 	}
@@ -104,8 +103,8 @@ int event_parser(char* s, int len, event_t* e)
 
 	e->type = EVENT_OTHER;
 	for(i = 0; events[i].name.len; i++) {
-		if (e->name.len == events[i].name.len &&
-				!strncasecmp(e->name.s, events[i].name.s, e->name.len)) {
+		if(e->name.len == events[i].name.len
+				&& !strncasecmp(e->name.s, events[i].name.s, e->name.len)) {
 			e->type = events[i].type;
 			break;
 		}
@@ -117,20 +116,22 @@ int event_parser(char* s, int len, event_t* e)
 
 	e->params.list = NULL;
 
-	if (tmp.len && (tmp.s[0] == ';')) {
+	if(tmp.len && (tmp.s[0] == ';')) {
 		/* Shift the semicolon and skip any leading whitespace, this is needed
 		 * for parse_params to work correctly. */
-		tmp.s++; tmp.len--;
+		tmp.s++;
+		tmp.len--;
 		trim_leading(&tmp);
-		if (!tmp.len) return 0;
+		if(!tmp.len)
+			return 0;
 
 		/* We have parameters to parse */
-		if (e->type == EVENT_DIALOG) {
+		if(e->type == EVENT_DIALOG) {
 			pclass = CLASS_EVENT_DIALOG;
-			phooks = (param_hooks_t*)&e->params.hooks;
+			phooks = (param_hooks_t *)&e->params.hooks;
 		}
 
-		if (parse_params(&tmp, pclass, phooks, &e->params.list) < 0) {
+		if(parse_params(&tmp, pclass, phooks, &e->params.list) < 0) {
 			LM_ERR("Error while parsing parameters parameters\n");
 			return -1;
 		}
@@ -142,29 +143,29 @@ int event_parser(char* s, int len, event_t* e)
 /*! \brief
  * Parse Event header field body
  */
-int parse_event(struct hdr_field* _h)
+int parse_event(struct hdr_field *_h)
 {
-	event_t* e;
+	event_t *e;
 
-	if (_h->parsed != 0) {
+	if(_h->parsed != 0) {
 		return 0;
 	}
 
-	e = (event_t*)pkg_malloc(sizeof(event_t));
-	if (e == 0) {
+	e = (event_t *)pkg_malloc(sizeof(event_t));
+	if(e == 0) {
 		PKG_MEM_ERROR;
 		return -1;
 	}
 
 	memset(e, 0, sizeof(event_t));
 
-	if (event_parser(_h->body.s, _h->body.len, e) < 0) {
+	if(event_parser(_h->body.s, _h->body.len, e) < 0) {
 		LM_ERR("Error in event_parser\n");
 		pkg_free(e);
 		return -2;
 	}
 
-	_h->parsed = (void*)e;
+	_h->parsed = (void *)e;
 	return 0;
 }
 
@@ -172,10 +173,11 @@ int parse_event(struct hdr_field* _h)
 /*! \brief
  * Free all memory
  */
-void free_event(event_t** _e)
+void free_event(event_t **_e)
 {
-	if (*_e) {
-		if ((*_e)->params.list) free_params((*_e)->params.list);
+	if(*_e) {
+		if((*_e)->params.list)
+			free_params((*_e)->params.list);
 		pkg_free(*_e);
 		*_e = NULL;
 	}
@@ -185,12 +187,12 @@ void free_event(event_t** _e)
 /*! \brief
  * Print structure, for debugging only
  */
-void print_event(event_t* e)
+void print_event(event_t *e)
 {
 	fprintf(stderr, "===Event===\n");
 	fprintf(stderr, "name  : \'%.*s\'\n", STR_FMT(&e->name));
 	fprintf(stderr, "type: %d\n", e->type);
-	if (e->params.list) {
+	if(e->params.list) {
 		print_params(stderr, e->params.list);
 	}
 	fprintf(stderr, "===/Event===\n");

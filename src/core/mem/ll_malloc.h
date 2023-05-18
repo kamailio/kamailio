@@ -1,5 +1,5 @@
 /*
- * shared memory, multi-process safe, pool based, mostly lockless version of 
+ * shared memory, multi-process safe, pool based, mostly lockless version of
  *  f_malloc
  *
  * This file is part of Kamailio, a free SIP server.
@@ -19,7 +19,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#if !defined(ll_malloc_h)  
+#if !defined(ll_malloc_h)
 #define ll_malloc_h
 
 
@@ -42,63 +42,71 @@
 /* tricky, on sun in 32 bits mode long long must be 64 bits aligned
  * but long can be 32 bits aligned => malloc should return long long
  * aligned memory */
-	#define SF_ROUNDTO	sizeof(long long)
+#define SF_ROUNDTO sizeof(long long)
 #else
-	#define SF_ROUNDTO	sizeof(void*) /* size we round to, must be = 2^n, and
+#define SF_ROUNDTO \
+	sizeof(void *) /* size we round to, must be = 2^n, and
                       sizeof(sfm_frag) must be multiple of SF_ROUNDTO !*/
 #endif
 #else /* DBG_SF_MALLOC */
-	#define SF_ROUNDTO 8UL
+#define SF_ROUNDTO 8UL
 #endif
-#define SF_MIN_FRAG_SIZE	SF_ROUNDTO
+#define SF_MIN_FRAG_SIZE SF_ROUNDTO
 
-#define SFM_POOLS_NO 4U /* the more the better, but higher initial
+#define SFM_POOLS_NO \
+	4U /* the more the better, but higher initial
                             mem. consumption */
 
 #define SF_MALLOC_OPTIMIZE_FACTOR 14UL /*used below */
-#define SF_MALLOC_OPTIMIZE  (1UL<<SF_MALLOC_OPTIMIZE_FACTOR)
-								/* size to optimize for,
+#define SF_MALLOC_OPTIMIZE (1UL << SF_MALLOC_OPTIMIZE_FACTOR)
+/* size to optimize for,
 									(most allocs <= this size),
 									must be 2^k */
 
-#define SF_HASH_POOL_SIZE	(SF_MALLOC_OPTIMIZE/SF_ROUNDTO + 1)
-#define SF_POOL_MAX_SIZE	SF_MALLOC_OPTIMIZE
+#define SF_HASH_POOL_SIZE (SF_MALLOC_OPTIMIZE / SF_ROUNDTO + 1)
+#define SF_POOL_MAX_SIZE SF_MALLOC_OPTIMIZE
 
-#define SF_HASH_SIZE (SF_MALLOC_OPTIMIZE/SF_ROUNDTO + \
-		(sizeof(long)*8-SF_MALLOC_OPTIMIZE_FACTOR)+1)
+#define SF_HASH_SIZE                 \
+	(SF_MALLOC_OPTIMIZE / SF_ROUNDTO \
+			+ (sizeof(long) * 8 - SF_MALLOC_OPTIMIZE_FACTOR) + 1)
 
 /* hash structure:
  * 0 .... SF_MALLOC_OPTIMIZE/SF_ROUNDTO  - small buckets, size increases with
  *                            SF_ROUNDTO from bucket to bucket
  * +1 .... end -  size = 2^k, big buckets */
 
-struct sfm_frag{
-	union{
-		struct sfm_frag* nxt_free;
+struct sfm_frag
+{
+	union
+	{
+		struct sfm_frag *nxt_free;
 		long reserved;
-	}u;
+	} u;
 	unsigned long size;
 	unsigned long id; /* TODO better optimize the size */
 	/* pad to SF_ROUNDTO multiple */
-	char _pad[((3*sizeof(long)+SF_ROUNDTO-1)&~(SF_ROUNDTO-1))-3*sizeof(long)];
+	char _pad[((3 * sizeof(long) + SF_ROUNDTO - 1) & ~(SF_ROUNDTO - 1))
+			  - 3 * sizeof(long)];
 #ifdef DBG_SF_MALLOC
-	const char* file;
-	const char* func;
+	const char *file;
+	const char *func;
 	unsigned long line;
 	unsigned long check;
 #endif
 };
 
-struct sfm_frag_lnk{
-	struct sfm_frag* first;
+struct sfm_frag_lnk
+{
+	struct sfm_frag *first;
 #ifdef SFM_LOCK_PER_BUCKET
 	gen_lock_t lock;
 #endif
 	unsigned long no;
 };
 
-struct sfm_pool_head{
-	struct sfm_frag* first;
+struct sfm_pool_head
+{
+	struct sfm_frag *first;
 #ifdef SFM_LOCK_PER_BUCKET
 	gen_lock_t lock;
 #endif
@@ -106,7 +114,8 @@ struct sfm_pool_head{
 	unsigned long misses;
 };
 
-struct sfm_pool{
+struct sfm_pool
+{
 #ifdef SFM_ONE_LOCK
 	gen_lock_t lock;
 #endif
@@ -116,16 +125,17 @@ struct sfm_pool{
 	struct sfm_pool_head pool_hash[SF_HASH_POOL_SIZE];
 };
 
-struct sfm_block{
+struct sfm_block
+{
 #ifdef SFM_ONE_LOCK
 	gen_lock_t lock;
 #endif
-	atomic_t crt_id; /* current pool */
-	int type; /* type of pool */
+	atomic_t crt_id;	/* current pool */
+	int type;			/* type of pool */
 	unsigned long size; /* total size */
 	/* stats are kept now per bucket */
-	struct sfm_frag* first_frag;
-	struct sfm_frag* last_frag;
+	struct sfm_frag *first_frag;
+	struct sfm_frag *last_frag;
 	unsigned long bitmap; /* only up to SF_MALLOC_OPTIMIZE */
 	struct sfm_frag_lnk free_hash[SF_HASH_SIZE];
 	struct sfm_pool pool[SFM_POOLS_NO];
@@ -135,35 +145,34 @@ struct sfm_block{
 };
 
 
-
-struct sfm_block* sfm_malloc_init(char* address, unsigned long size, int type);
-void sfm_malloc_destroy(struct sfm_block* qm);
+struct sfm_block *sfm_malloc_init(char *address, unsigned long size, int type);
+void sfm_malloc_destroy(struct sfm_block *qm);
 int sfm_pool_reset();
 
 #ifdef DBG_SF_MALLOC
-void* sfm_malloc(struct sfm_block*, unsigned long size,
-					const char* file, const char* func, unsigned int line);
+void *sfm_malloc(struct sfm_block *, unsigned long size, const char *file,
+		const char *func, unsigned int line);
 #else
-void* sfm_malloc(struct sfm_block*, unsigned long size);
+void *sfm_malloc(struct sfm_block *, unsigned long size);
 #endif
 
 #ifdef DBG_SF_MALLOC
-void  sfm_free(struct sfm_block*, void* p, const char* file, const char* func, 
-				unsigned int line);
+void sfm_free(struct sfm_block *, void *p, const char *file, const char *func,
+		unsigned int line);
 #else
-void  sfm_free(struct sfm_block*, void* p);
+void sfm_free(struct sfm_block *, void *p);
 #endif
 
 #ifdef DBG_SF_MALLOC
-void*  sfm_realloc(struct sfm_block*, void* p, unsigned long size, 
-					const char* file, const char* func, unsigned int line);
+void *sfm_realloc(struct sfm_block *, void *p, unsigned long size,
+		const char *file, const char *func, unsigned int line);
 #else
-void*  sfm_realloc(struct sfm_block*, void* p, unsigned long size);
+void *sfm_realloc(struct sfm_block *, void *p, unsigned long size);
 #endif
 
-void  sfm_status(struct sfm_block*);
-void  sfm_info(struct sfm_block*, struct mem_info*);
+void sfm_status(struct sfm_block *);
+void sfm_info(struct sfm_block *, struct mem_info *);
 
-unsigned long sfm_available(struct sfm_block*);
+unsigned long sfm_available(struct sfm_block *);
 
 #endif

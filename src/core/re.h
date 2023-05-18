@@ -38,49 +38,57 @@
 #include <sys/types.h> /* for regex */
 #include <regex.h>
 
-#define WITH_SEP	1
-#define WITHOUT_SEP	0
+#define WITH_SEP 1
+#define WITHOUT_SEP 0
 
-enum replace_special { REPLACE_NMATCH, REPLACE_CHAR, REPLACE_URI,
-					   REPLACE_SPEC };
+enum replace_special
+{
+	REPLACE_NMATCH,
+	REPLACE_CHAR,
+	REPLACE_URI,
+	REPLACE_SPEC
+};
 
-struct replace_with{
+struct replace_with
+{
 	int offset; /* offset in string */
-	int size;   /* size of replace "anchor" in string */
+	int size;	/* size of replace "anchor" in string */
 	enum replace_special type;
-	union{
+	union
+	{
 		int nmatch;
 		char c;
 		pv_spec_t spec;
-	}u;
+	} u;
 };
 
-struct subst_expr{
-	regex_t* re;
+struct subst_expr
+{
+	regex_t *re;
 	str replacement;
 	int replace_all;
-	int n_escapes; /* escapes number (replace[] size) */
-	int max_pmatch ; /* highest () referenced */
+	int n_escapes;					/* escapes number (replace[] size) */
+	int max_pmatch;					/* highest () referenced */
 	struct replace_with replace[1]; /* 0 does not work on all compilers */
 };
 
-struct replace_lst{
+struct replace_lst
+{
 	int offset;
-	int size;   /* at offset, delete size bytes and replace them with rpl */
+	int size; /* at offset, delete size bytes and replace them with rpl */
 	str rpl;
 	struct replace_lst *next;
 };
 
 
-
-void subst_expr_free(struct subst_expr* se);
-void replace_lst_free(struct replace_lst* l);
-int parse_repl(struct replace_with * rw, char ** begin,
-				char * end, int *max_token_nb, int flag);
-struct subst_expr*  subst_parser(str* subst);
-struct replace_lst* subst_run( struct subst_expr* se, const char* input, 
-		                       struct sip_msg* msg, int *count);
-str* subst_str(const char* input, struct sip_msg* msg,
-				struct subst_expr* se, int* count);
+void subst_expr_free(struct subst_expr *se);
+void replace_lst_free(struct replace_lst *l);
+int parse_repl(struct replace_with *rw, char **begin, char *end,
+		int *max_token_nb, int flag);
+struct subst_expr *subst_parser(str *subst);
+struct replace_lst *subst_run(struct subst_expr *se, const char *input,
+		struct sip_msg *msg, int *count);
+str *subst_str(const char *input, struct sip_msg *msg, struct subst_expr *se,
+		int *count);
 
 #endif

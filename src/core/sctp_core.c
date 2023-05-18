@@ -28,7 +28,7 @@
 /**
  *
  */
-static sctp_srapi_t _sctp_srapi = { 0 };
+static sctp_srapi_t _sctp_srapi = {0};
 static int _sctp_srapi_set = 0;
 
 /**
@@ -36,7 +36,7 @@ static int _sctp_srapi_set = 0;
  */
 int sctp_core_init(void)
 {
-	if(_sctp_srapi_set==0) {
+	if(_sctp_srapi_set == 0) {
 		LM_ERR("SCTP API not initialized\n");
 		return -1;
 	}
@@ -49,7 +49,7 @@ int sctp_core_init(void)
  */
 void sctp_core_destroy(void)
 {
-	if(_sctp_srapi_set==0) {
+	if(_sctp_srapi_set == 0) {
 		LM_INFO("SCTP API not initialized\n");
 		return;
 	}
@@ -60,7 +60,7 @@ void sctp_core_destroy(void)
 /**
  *
  */
-int sctp_core_init_sock(struct socket_info* sock_info)
+int sctp_core_init_sock(struct socket_info *sock_info)
 {
 	return _sctp_srapi.init_sock(sock_info);
 }
@@ -70,7 +70,7 @@ int sctp_core_init_sock(struct socket_info* sock_info)
  */
 int sctp_core_check_support(void)
 {
-	if(_sctp_srapi_set==0) {
+	if(_sctp_srapi_set == 0) {
 		LM_INFO("SCTP API not enabled"
 				" - if you want to use it, load sctp module\n");
 		return -1;
@@ -90,7 +90,7 @@ int sctp_core_rcv_loop(void)
 /**
  *
  */
-int sctp_core_msg_send(struct dest_info* dst, char* buf, unsigned len)
+int sctp_core_msg_send(struct dest_info *dst, char *buf, unsigned len)
 {
 	return _sctp_srapi.msg_send(dst, buf, len);
 }
@@ -100,11 +100,11 @@ int sctp_core_msg_send(struct dest_info* dst, char* buf, unsigned len)
  */
 int sctp_core_register_api(sctp_srapi_t *api)
 {
-	if(api==NULL || api->init==NULL) {
+	if(api == NULL || api->init == NULL) {
 		LM_ERR("invalid parameters\n");
 		return -1;
 	}
-	if(_sctp_srapi_set==1) {
+	if(_sctp_srapi_set == 1) {
 		LM_ERR("SCTP API already initialized\n");
 		return -1;
 	}
