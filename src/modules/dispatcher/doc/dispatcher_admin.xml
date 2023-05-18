@@ -384,7 +384,7 @@ modparam("dispatcher", "xavp_dst", "_dsdst_")
 		</para>
 		<para>
 		<emphasis>
-			Default value is <quote>0</quote> (add all fields).
+			Default value is <quote>0</quote> (add grp, uri, sock, attr and optionally dstid fields).
 		</emphasis>
 		</para>
 		<example>
