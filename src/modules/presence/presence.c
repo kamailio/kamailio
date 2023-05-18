@@ -1854,6 +1854,20 @@ static const char *rpc_presence_cleanup_doc[3] = {
 		"presentity, and watchers tables.",
 		0};
 
+
+void rpc_presence_htable_db_restore(rpc_t *rpc, void *c)
+{
+	LM_DBG("Restoring presence publ cache from database.\n");
+	pres_htable_db_restore();
+	return;
+}
+
+static const char *rpc_presence_htable_db_restore_doc[4] = {
+	"Sync publ_cache from database. Syncs changes made to presentity table with the publ_cache.",
+	0
+};
+
+
 /*! \brief
  *  Build the rpc response for listing presentity records
  *	- imode - output attributes control
@@ -2119,6 +2133,8 @@ static const char *rpc_presence_watcher_list_doc[2] = {
 
 
 rpc_export_t presence_rpc[] = {
+		{"presence.htable_db_restore", rpc_presence_htable_db_restore, 
+		 		rpc_presence_htable_db_restore_doc, 0},
 		{"presence.cleanup", rpc_presence_cleanup, rpc_presence_cleanup_doc, 0},
 		{"presence.refreshWatchers", rpc_presence_refresh_watchers,
 				rpc_presence_refresh_watchers_doc, 0},
