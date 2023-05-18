@@ -31,11 +31,16 @@
 
 #include "../../core/str.h"
 
-#define SRUID_SIZE	64
+#define SRUID_SIZE 64
 
-typedef enum {SRUID_INC=0, SRUID_LFSR=1} sruid_mode_t;
+typedef enum
+{
+	SRUID_INC = 0,
+	SRUID_LFSR = 1
+} sruid_mode_t;
 
-typedef struct sruid {
+typedef struct sruid
+{
 	char buf[SRUID_SIZE];
 	char *out;
 	str uid;
@@ -56,7 +61,8 @@ int sruid_nexthid_safe(sruid_t *sid, str *sval);
 
 typedef int (*sruid_uuid_generate_f)(char *out, int *len);
 
-typedef struct sruid_uuid_api {
+typedef struct sruid_uuid_api
+{
 	sruid_uuid_generate_f fgenerate;
 	sruid_uuid_generate_f fgenerate_time;
 	sruid_uuid_generate_f fgenerate_random;
