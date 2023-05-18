@@ -121,9 +121,4 @@ News:
   * https://www.kamailio.org/w/category/news/
   * Twitter @kamailio
 
-## Travis-CI - Testing Build Environment
-
- * [travis-ci](https://travis-ci.org/kamailio/kamailio/builds/)
- * [docker build](/test/travis/README.md)
-
 **Thank you for flying Kamailio!**
