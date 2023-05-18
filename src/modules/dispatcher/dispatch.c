@@ -1834,7 +1834,8 @@ static inline int ds_push_dst(sip_msg_t *msg, str *uri, socket_info_t *sock,
 			break;
 	}
 	if(sock) {
-		msg->force_send_socket = sock;
+		LM_DBG("set send socket to %.*s\n", sock->sock_str.len, sock->sock_str.s);
+		set_force_socket(msg, sock);
 	}
 	return 0;
 }
