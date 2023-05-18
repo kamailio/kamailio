@@ -572,7 +572,8 @@ modparam("dispatcher", "xavp_dst", "_dsdst_")
      * attrs - the attributes - they are added if xavp_dst_mode does not
        have the bit 1 set (value 1).
 
-   Default value is “0” (add all fields).
+   Default value is “0” (add grp, uri, sock, attr and optionally dstid
+   fields).
 
    Example 1.13. Set the “xavp_dst_mode” parameter
 ...
