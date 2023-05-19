@@ -1855,15 +1855,17 @@ static const char *rpc_presence_cleanup_doc[3] = {
 		0};
 
 
-void rpc_presence_htable_db_restore(rpc_t *rpc, void *c)
+void rpc_presence_publish_cache_sync(rpc_t *rpc, void *ctx)
 {
-	LM_DBG("Restoring presence publ cache from database.\n");
-	pres_htable_db_restore();
+	LM_DBG("Synchronizing presentity table with the publish cache.\n");
+	if (pres_htable_db_restore() == -1 ) {
+		rpc->fault(ctx, 500, "Failed to sync presinity table with the publish cache.");
+	};
 	return;
 }
 
-static const char *rpc_presence_htable_db_restore_doc[4] = {
-	"Sync publ_cache from database. Syncs changes made to presentity table with the publ_cache.",
+static const char *rpc_presence_publish_cache_sync_doc[4] = {
+	"Syncs changes made to presentity table with the publish cache.",
 	0
 };
 
@@ -2133,8 +2135,8 @@ static const char *rpc_presence_watcher_list_doc[2] = {
 
 
 rpc_export_t presence_rpc[] = {
-		{"presence.htable_db_restore", rpc_presence_htable_db_restore, 
-		 		rpc_presence_htable_db_restore_doc, 0},
+		{"presence.publish_cache_sync", rpc_presence_publish_cache_sync, 
+		 		rpc_presence_publish_cache_sync_doc, 0},
 		{"presence.cleanup", rpc_presence_cleanup, rpc_presence_cleanup_doc, 0},
 		{"presence.refreshWatchers", rpc_presence_refresh_watchers,
 				rpc_presence_refresh_watchers_doc, 0},
