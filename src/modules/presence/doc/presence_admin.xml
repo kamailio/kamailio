@@ -1286,13 +1286,13 @@ pres_update_watchers("sip:test@kamailio.org", "presence");
     </section>
 	
 <section>
-	<section id="presence.r.htable_db_restore">
+	<section id="presence.r.publish_cache_sync">
 	  <title>presence.htable_db_restore</title>
 	  <para>
-		Manually apply changes to the presenity table to the publ_cache.  
+	  	Synchronize changes made to the presentity table with the publish cache.
 	  </para>
 	  <para>
-		Name: <emphasis>presence.htable_db_restore</emphasis>
+		Name: <emphasis>presence.publish_cache_sync</emphasis>
 	  </para>
 	  <para>Parameters: <emphasis>none</emphasis></para>
 	  <para>
@@ -1300,7 +1300,7 @@ pres_update_watchers("sip:test@kamailio.org", "presence");
 	  </para>
 	  <programlisting  format="linespecific">
 ...
-&kamcmd; presence.htable_db_restore
+&kamcmd; presence.publish_cache_sync
 ...
 </programlisting>
     </section>
