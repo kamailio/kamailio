@@ -40,8 +40,8 @@
 #include "pvapi.h"
 #include "pvar.h"
 
-#define PV_TABLE_SIZE	512  /*!< pseudo-variables table size */
-#define TR_TABLE_SIZE	256  /*!< transformations table size */
+#define PV_TABLE_SIZE 512 /*!< pseudo-variables table size */
+#define TR_TABLE_SIZE 256 /*!< transformations table size */
 
 
 void tr_destroy(trans_t *t);
@@ -54,10 +54,10 @@ typedef struct _pv_item
 	struct _pv_item *next;
 } pv_item_t, *pv_item_p;
 
-static pv_item_t* _pv_table[PV_TABLE_SIZE];
+static pv_item_t *_pv_table[PV_TABLE_SIZE];
 static int _pv_table_set = 0;
 
-static pv_cache_t* _pv_cache[PV_CACHE_SIZE];
+static pv_cache_t *_pv_cache[PV_CACHE_SIZE];
 static int _pv_cache_set = 0;
 static int _pv_cache_counter = 0;
 static int _pv_cache_drop_index = 0;
@@ -67,7 +67,7 @@ static int _pv_cache_drop_index = 0;
  */
 void pv_init_table(void)
 {
-	memset(_pv_table, 0, sizeof(pv_item_t*)*PV_TABLE_SIZE);
+	memset(_pv_table, 0, sizeof(pv_item_t *) * PV_TABLE_SIZE);
 	_pv_table_set = 1;
 }
 
@@ -76,7 +76,7 @@ void pv_init_table(void)
  */
 void pv_init_cache(void)
 {
-	memset(_pv_cache, 0, sizeof(pv_cache_t*)*PV_CACHE_SIZE);
+	memset(_pv_cache, 0, sizeof(pv_cache_t *) * PV_CACHE_SIZE);
 	_pv_cache_set = 1;
 }
 
@@ -85,7 +85,8 @@ void pv_init_cache(void)
  */
 pv_cache_t **pv_cache_get_table(void)
 {
-	if(_pv_cache_set==1) return _pv_cache;
+	if(_pv_cache_set == 1)
+		return _pv_cache;
 	return NULL;
 }
 
@@ -96,8 +97,9 @@ pv_cache_t **pv_cache_get_table(void)
  */
 static int is_pv_valid_char(char c)
 {
-	if((c>='0' && c<='9') || (c>='a' && c<='z') || (c>='A' && c<='Z')
-			|| (c=='_') || (c=='.') || (c=='?') /* ser $? */)
+	if((c >= '0' && c <= '9') || (c >= 'a' && c <= 'z')
+			|| (c >= 'A' && c <= 'Z') || (c == '_') || (c == '.')
+			|| (c == '?') /* ser $? */)
 		return 1;
 	return 0;
 }
@@ -110,47 +112,39 @@ int pv_locate_name(str *in)
 	int i;
 	int pcount;
 
-	if(in==NULL || in->s==NULL || in->len<2)
-	{
+	if(in == NULL || in->s == NULL || in->len < 2) {
 		LM_ERR("bad parameters\n");
 		return -1;
 	}
 
-	if(in->s[0]!=PV_MARKER)
-	{
+	if(in->s[0] != PV_MARKER) {
 		LM_ERR("missing pv marker [%.*s]\n", in->len, in->s);
 		return -1;
 	}
-	if(in->s[1]==PV_MARKER)
-	{
+	if(in->s[1] == PV_MARKER) {
 		return 2;
 	}
 	pcount = 0;
-	if(in->s[1]==PV_LNBRACKET)
-	{
+	if(in->s[1] == PV_LNBRACKET) {
 		/* name with parenthesis: $(...) */
 		pcount = 1;
-		for(i=2; i<in->len; i++)
-		{
-			if(in->s[i]==PV_LNBRACKET)
+		for(i = 2; i < in->len; i++) {
+			if(in->s[i] == PV_LNBRACKET)
 				pcount++;
-			else if(in->s[i]==PV_RNBRACKET)
+			else if(in->s[i] == PV_RNBRACKET)
 				pcount--;
-			if(pcount==0)
-				return i+1;
+			if(pcount == 0)
+				return i + 1;
 		}
 		/* non-closing name parenthesis */
-		LM_ERR("non-closing name parenthesis [%.*s]\n",in->len,in->s);
+		LM_ERR("non-closing name parenthesis [%.*s]\n", in->len, in->s);
 		return -1;
 	}
 
 	/* name without parenthesis: $xyz(...) */
-	for(i=1; i<in->len; i++)
-	{
-		if(!is_pv_valid_char(in->s[i]))
-		{
-			if(in->s[i]==PV_LNBRACKET)
-			{
+	for(i = 1; i < in->len; i++) {
+		if(!is_pv_valid_char(in->s[i])) {
+			if(in->s[i] == PV_LNBRACKET) {
 				/* inner-name parenthesis */
 				pcount = 1;
 				break;
@@ -159,21 +153,20 @@ int pv_locate_name(str *in)
 			}
 		}
 	}
-	if(pcount==0)
+	if(pcount == 0)
 		return i;
 
 	i++;
-	for( ; i<in->len; i++)
-	{
-		if(in->s[i]==PV_LNBRACKET)
+	for(; i < in->len; i++) {
+		if(in->s[i] == PV_LNBRACKET)
 			pcount++;
-		else if(in->s[i]==PV_RNBRACKET)
+		else if(in->s[i] == PV_RNBRACKET)
 			pcount--;
-		if(pcount==0)
-			return i+1;
+		if(pcount == 0)
+			return i + 1;
 	}
 	/* non-closing inner-name parenthesis */
-	LM_ERR("non-closing inner-name parenthesis [%.*s]\n",in->len,in->s);
+	LM_ERR("non-closing inner-name parenthesis [%.*s]\n", in->len, in->s);
 	return -1;
 }
 
@@ -183,30 +176,28 @@ int pv_locate_name(str *in)
 int pv_table_add(pv_export_t *e)
 {
 	char *p;
-	str  *in;
+	str *in;
 	pv_item_t *pvi = NULL;
 	pv_item_t *pvj = NULL;
 	pv_item_t *pvn = NULL;
 	int found;
 	unsigned int pvid;
 
-	if(e==NULL || e->name.s==NULL || e->getf==NULL || e->type==PVT_NONE)
-	{
+	if(e == NULL || e->name.s == NULL || e->getf == NULL
+			|| e->type == PVT_NONE) {
 		LM_ERR("invalid parameters\n");
 		return -1;
 	}
 
-	if(_pv_table_set==0)
-	{
+	if(_pv_table_set == 0) {
 		LM_DBG("PV table not initialized, doing it now\n");
 		pv_init_table();
 	}
 	in = &(e->name);
 	p = in->s;
-	while(is_in_str(p,in) && is_pv_valid_char(*p))
+	while(is_in_str(p, in) && is_pv_valid_char(*p))
 		p++;
-	if(is_in_str(p,in))
-	{
+	if(is_in_str(p, in)) {
 		LM_ERR("invalid char [%c] in [%.*s]\n", *p, in->len, in->s);
 		return -1;
 	}
@@ -214,17 +205,14 @@ int pv_table_add(pv_export_t *e)
 	//pvid = get_hash1_raw(in->s, in->len);
 	pvid = get_hash1_raw(in->s, in->len);
 
-	pvi = _pv_table[pvid%PV_TABLE_SIZE];
-	while(pvi)
-	{
+	pvi = _pv_table[pvid % PV_TABLE_SIZE];
+	while(pvi) {
 		if(pvi->pvid > pvid)
 			break;
-		if(pvi->pve.name.len==in->len)
-		{
+		if(pvi->pve.name.len == in->len) {
 			found = strncmp(pvi->pve.name.s, in->s, in->len);
 
-			if(found==0)
-			{
+			if(found == 0) {
 				LM_ERR("pvar [%.*s] already exists\n", in->len, in->s);
 				return -1;
 			}
@@ -233,9 +221,8 @@ int pv_table_add(pv_export_t *e)
 		pvi = pvi->next;
 	}
 
-	pvn = (pv_item_t*)pkg_malloc(sizeof(pv_item_t));
-	if(pvn==0)
-	{
+	pvn = (pv_item_t *)pkg_malloc(sizeof(pv_item_t));
+	if(pvn == 0) {
 		PKG_MEM_ERROR;
 		return -1;
 	}
@@ -243,10 +230,9 @@ int pv_table_add(pv_export_t *e)
 	memcpy(&(pvn->pve), e, sizeof(pv_export_t));
 	pvn->pvid = pvid;
 
-	if(pvj==0)
-	{
-		pvn->next = _pv_table[pvid%PV_TABLE_SIZE];
-		_pv_table[pvid%PV_TABLE_SIZE] = pvn;
+	if(pvj == 0) {
+		pvn->next = _pv_table[pvid % PV_TABLE_SIZE];
+		_pv_table[pvid % PV_TABLE_SIZE] = pvn;
 		goto done;
 	}
 	pvn->next = pvj->next;
@@ -265,17 +251,17 @@ int pv_cache_drop(void)
 	pv_cache_t *pvp;
 	pv_cache_t *pvi;
 
-	if(_pv_cache_set==0) {
+	if(_pv_cache_set == 0) {
 		LM_DBG("PV cache not initialized\n");
 		return 0;
 	}
 	/* round-robin on slots to find a $sht(...) to drop */
 	_pv_cache_drop_index = (_pv_cache_drop_index + 1) % PV_CACHE_SIZE;
-	for(i=_pv_cache_drop_index; i<PV_CACHE_SIZE; i++) {
+	for(i = _pv_cache_drop_index; i < PV_CACHE_SIZE; i++) {
 		pvi = _pv_cache[i];
 		pvp = NULL;
 		while(pvi) {
-			if(pvi->pvname.len>5 && strncmp(pvi->pvname.s, "$sht(", 5)==0) {
+			if(pvi->pvname.len > 5 && strncmp(pvi->pvname.s, "$sht(", 5) == 0) {
 				LM_DBG("dropping from pv cache [%d]: %.*s\n", i,
 						pvi->pvname.len, pvi->pvname.s);
 				if(pvp) {
@@ -284,7 +270,7 @@ int pv_cache_drop(void)
 					_pv_cache[i] = pvi->next;
 				}
 				if(pvi->spec.pvp.pvn.nfree) {
-					pvi->spec.pvp.pvn.nfree((void*)(&pvi->spec.pvp.pvn));
+					pvi->spec.pvp.pvn.nfree((void *)(&pvi->spec.pvp.pvn));
 				}
 				pkg_free(pvi);
 				_pv_cache_counter--;
@@ -294,11 +280,11 @@ int pv_cache_drop(void)
 			pvi = pvi->next;
 		}
 	}
-	for(i=0; i<_pv_cache_drop_index; i++) {
+	for(i = 0; i < _pv_cache_drop_index; i++) {
 		pvi = _pv_cache[i];
 		pvp = NULL;
 		while(pvi) {
-			if(pvi->pvname.len>5 && strncmp(pvi->pvname.s, "$sht(", 5)==0) {
+			if(pvi->pvname.len > 5 && strncmp(pvi->pvname.s, "$sht(", 5) == 0) {
 				LM_DBG("dropping from pv cache [%d]: %.*s\n", i,
 						pvi->pvname.len, pvi->pvname.s);
 				if(pvp) {
@@ -307,7 +293,7 @@ int pv_cache_drop(void)
 					_pv_cache[i] = pvi->next;
 				}
 				if(pvi->spec.pvp.pvn.nfree) {
-					pvi->spec.pvp.pvn.nfree((void*)(&pvi->spec.pvp.pvn));
+					pvi->spec.pvp.pvn.nfree((void *)(&pvi->spec.pvp.pvn));
 				}
 				pkg_free(pvi);
 				_pv_cache_counter--;
@@ -324,48 +310,45 @@ int pv_cache_drop(void)
 /**
  *
  */
-pv_spec_t* pv_cache_add(str *name)
+pv_spec_t *pv_cache_add(str *name)
 {
 	pv_cache_t *pvn;
 	unsigned int pvid;
 	char *p;
 
-	if(_pv_cache_set==0)
-	{
+	if(_pv_cache_set == 0) {
 		LM_DBG("PV cache not initialized, doing it now\n");
 		pv_init_cache();
 	}
-	if(_pv_cache_counter+1>=cfg_get(core, core_cfg, pv_cache_limit)) {
-		if(_pv_cache_counter+1==cfg_get(core, core_cfg, pv_cache_limit)) {
+	if(_pv_cache_counter + 1 >= cfg_get(core, core_cfg, pv_cache_limit)) {
+		if(_pv_cache_counter + 1 == cfg_get(core, core_cfg, pv_cache_limit)) {
 			LM_WARN("pv cache limit is going to be exceeded"
 					" - pkg memory may get filled with pv declarations\n");
 		} else {
-			if(cfg_get(core, core_cfg, pv_cache_action)==1) {
+			if(cfg_get(core, core_cfg, pv_cache_action) == 1) {
 				pv_cache_drop();
 			}
 		}
 	}
 	pvid = get_hash1_raw(name->s, name->len);
-	pvn = (pv_cache_t*)pkg_malloc(sizeof(pv_cache_t) + name->len + 1);
-	if(pvn==0)
-	{
+	pvn = (pv_cache_t *)pkg_malloc(sizeof(pv_cache_t) + name->len + 1);
+	if(pvn == 0) {
 		PKG_MEM_ERROR;
 		return NULL;
 	}
 	memset(pvn, 0, sizeof(pv_cache_t) + name->len + 1);
 	pvn->pvname.len = name->len;
-	pvn->pvname.s = (char*)pvn + sizeof(pv_cache_t);
+	pvn->pvname.s = (char *)pvn + sizeof(pv_cache_t);
 	memcpy(pvn->pvname.s, name->s, name->len);
 	p = pv_parse_spec(&pvn->pvname, &pvn->spec);
 
-	if(p==NULL)
-	{
+	if(p == NULL) {
 		pkg_free(pvn);
 		return NULL;
 	}
 	pvn->pvid = pvid;
-	pvn->next = _pv_cache[pvid%PV_CACHE_SIZE];
-	_pv_cache[pvid%PV_CACHE_SIZE] = pvn;
+	pvn->next = _pv_cache[pvid % PV_CACHE_SIZE];
+	_pv_cache[pvid % PV_CACHE_SIZE] = pvn;
 	_pv_cache_counter++;
 
 	LM_DBG("pvar [%.*s] added in cache\n", name->len, name->s);
@@ -375,28 +358,24 @@ pv_spec_t* pv_cache_add(str *name)
 /**
  *
  */
-pv_spec_t* pv_cache_lookup(str *name)
+pv_spec_t *pv_cache_lookup(str *name)
 {
 	pv_cache_t *pvi;
 	unsigned int pvid;
 	int found;
 
-	if(_pv_cache_set==0)
+	if(_pv_cache_set == 0)
 		return NULL;
 
 	pvid = get_hash1_raw(name->s, name->len);
-	pvi = _pv_cache[pvid%PV_CACHE_SIZE];
-	while(pvi)
-	{
+	pvi = _pv_cache[pvid % PV_CACHE_SIZE];
+	while(pvi) {
 		if(pvi->pvid == pvid) {
-			if(pvi->pvname.len==name->len)
-			{
+			if(pvi->pvname.len == name->len) {
 				found = strncmp(pvi->pvname.s, name->s, name->len);
 
-				if(found==0)
-				{
-					LM_DBG("pvar [%.*s] found in cache\n",
-							name->len, name->s);
+				if(found == 0) {
+					LM_DBG("pvar [%.*s] found in cache\n", name->len, name->s);
 					return &pvi->spec;
 				}
 			}
@@ -409,13 +388,12 @@ pv_spec_t* pv_cache_lookup(str *name)
 /**
  *
  */
-pv_spec_t* pv_cache_get(str *name)
+pv_spec_t *pv_cache_get(str *name)
 {
 	pv_spec_t *pvs;
 	str tname;
 
-	if(name->s==NULL || name->len==0)
-	{
+	if(name->s == NULL || name->len == 0) {
 		LM_ERR("invalid parameters\n");
 		return NULL;
 	}
@@ -428,34 +406,30 @@ pv_spec_t* pv_cache_get(str *name)
 
 	pvs = pv_cache_lookup(&tname);
 
-	if(pvs!=NULL)
+	if(pvs != NULL)
 		return pvs;
 
 	return pv_cache_add(&tname);
 }
 
-str* pv_cache_get_name(pv_spec_t *spec)
+str *pv_cache_get_name(pv_spec_t *spec)
 {
 	int i;
 	pv_cache_t *pvi;
-	if(spec==NULL)
-	{
+	if(spec == NULL) {
 		LM_ERR("invalid parameters\n");
 		return NULL;
 	}
 
-	if(_pv_cache_set==0)
+	if(_pv_cache_set == 0)
 		return NULL;
 
-	for(i=0;i<PV_CACHE_SIZE;i++)
-	{
+	for(i = 0; i < PV_CACHE_SIZE; i++) {
 		pvi = _pv_cache[i];
-		while(pvi)
-		{
-			if(&pvi->spec == spec)
-			{
+		while(pvi) {
+			if(&pvi->spec == spec) {
 				LM_DBG("pvar[%p]->name[%.*s] found in cache\n", spec,
-					pvi->pvname.len, pvi->pvname.s);
+						pvi->pvname.len, pvi->pvname.s);
 				return &pvi->pvname;
 			}
 			pvi = pvi->next;
@@ -467,15 +441,14 @@ str* pv_cache_get_name(pv_spec_t *spec)
 /**
  *
  */
-pv_spec_t* pv_spec_lookup(str *name, int *len)
+pv_spec_t *pv_spec_lookup(str *name, int *len)
 {
 	pv_spec_t *pvs;
 	str tname;
 
-	if(len!=NULL)
+	if(len != NULL)
 		*len = 0;
-	if(name->s==NULL || name->len==0)
-	{
+	if(name->s == NULL || name->len == 0) {
 		LM_ERR("invalid parameters\n");
 		return NULL;
 	}
@@ -486,12 +459,12 @@ pv_spec_t* pv_spec_lookup(str *name, int *len)
 	if(tname.len < 0)
 		return NULL;
 
-	if(len!=NULL)
+	if(len != NULL)
 		*len = tname.len;
 
 	pvs = pv_cache_lookup(&tname);
 
-	if(pvs!=NULL)
+	if(pvs != NULL)
 		return pvs;
 
 	LM_DBG("PV <%.*s> is not in cache\n", tname.len, tname.s);
@@ -506,12 +479,12 @@ int register_pvars_mod(char *mod_name, pv_export_t *items)
 	int ret;
 	int i;
 
-	if (items==0)
+	if(items == 0)
 		return 0;
 
-	for ( i=0 ; items[i].name.s ; i++ ) {
+	for(i = 0; items[i].name.s; i++) {
 		ret = pv_table_add(&items[i]);
-		if (ret!=0) {
+		if(ret != 0) {
 			LM_ERR("failed to register pseudo-variable <%.*s> for module %s\n",
 					items[i].name.len, items[i].name.s, mod_name);
 		}
@@ -528,17 +501,15 @@ int pv_table_free(void)
 	pv_item_p xe1;
 	int i;
 
-	for(i=0; i<PV_TABLE_SIZE; i++)
-	{
+	for(i = 0; i < PV_TABLE_SIZE; i++) {
 		xe = _pv_table[i];
-		while(xe!=0)
-		{
+		while(xe != 0) {
 			xe1 = xe;
 			xe = xe->next;
 			pkg_free(xe1);
 		}
 	}
-	memset(_pv_table, 0, sizeof(pv_item_t*)*PV_TABLE_SIZE);
+	memset(_pv_table, 0, sizeof(pv_item_t *) * PV_TABLE_SIZE);
 	_pv_table_set = 0;
 
 	return 0;
@@ -548,13 +519,13 @@ int pv_table_free(void)
 /**
  * convert unsigned int to pv_value_t
  */
-int pv_get_uintval(struct sip_msg *msg, pv_param_t *param,
-		pv_value_t *res, unsigned long uival)
+int pv_get_uintval(struct sip_msg *msg, pv_param_t *param, pv_value_t *res,
+		unsigned long uival)
 {
 	int l = 0;
 	char *ch = NULL;
 
-	if(res==NULL)
+	if(res == NULL)
 		return -1;
 
 	ch = int2str(uival, &l);
@@ -562,20 +533,20 @@ int pv_get_uintval(struct sip_msg *msg, pv_param_t *param,
 	res->rs.len = l;
 
 	res->ri = (int)uival;
-	res->flags = PV_VAL_STR|PV_VAL_INT|PV_TYPE_INT;
+	res->flags = PV_VAL_STR | PV_VAL_INT | PV_TYPE_INT;
 	return 0;
 }
 
 /**
  * convert signed int to pv_value_t
  */
-int pv_get_sintval(struct sip_msg *msg, pv_param_t *param,
-		pv_value_t *res, long sival)
+int pv_get_sintval(
+		struct sip_msg *msg, pv_param_t *param, pv_value_t *res, long sival)
 {
 	int l = 0;
 	char *ch = NULL;
 
-	if(res==NULL)
+	if(res == NULL)
 		return -1;
 
 	ch = sint2str(sival, &l);
@@ -583,17 +554,17 @@ int pv_get_sintval(struct sip_msg *msg, pv_param_t *param,
 	res->rs.len = l;
 
 	res->ri = sival;
-	res->flags = PV_VAL_STR|PV_VAL_INT|PV_TYPE_INT;
+	res->flags = PV_VAL_STR | PV_VAL_INT | PV_TYPE_INT;
 	return 0;
 }
 
 /**
  * convert str to pv_value_t
  */
-int pv_get_strval(struct sip_msg *msg, pv_param_t *param,
-		pv_value_t *res, str *sval)
+int pv_get_strval(
+		struct sip_msg *msg, pv_param_t *param, pv_value_t *res, str *sval)
 {
-	if(res==NULL)
+	if(res == NULL)
 		return -1;
 
 	res->rs = *sval;
@@ -604,10 +575,10 @@ int pv_get_strval(struct sip_msg *msg, pv_param_t *param,
 /**
  * convert strz to pv_value_t
  */
-int pv_get_strzval(struct sip_msg *msg, pv_param_t *param,
-		pv_value_t *res, char *sval)
+int pv_get_strzval(
+		struct sip_msg *msg, pv_param_t *param, pv_value_t *res, char *sval)
 {
-	if(res==NULL)
+	if(res == NULL)
 		return -1;
 
 	res->rs.s = sval;
@@ -619,10 +590,10 @@ int pv_get_strzval(struct sip_msg *msg, pv_param_t *param,
 /**
  * convert char* with len to pv_value_t
  */
-int pv_get_strlval(struct sip_msg *msg, pv_param_t *param,
-		pv_value_t *res, char *sval, int slen)
+int pv_get_strlval(struct sip_msg *msg, pv_param_t *param, pv_value_t *res,
+		char *sval, int slen)
 {
-	if(res==NULL)
+	if(res == NULL)
 		return -1;
 
 	res->rs.s = sval;
@@ -634,51 +605,51 @@ int pv_get_strlval(struct sip_msg *msg, pv_param_t *param,
 /**
  * convert str-int to pv_value_t (type is str)
  */
-int pv_get_strintval(struct sip_msg *msg, pv_param_t *param,
-		pv_value_t *res, str *sval, long ival)
+int pv_get_strintval(struct sip_msg *msg, pv_param_t *param, pv_value_t *res,
+		str *sval, long ival)
 {
-	if(res==NULL)
+	if(res == NULL)
 		return -1;
 
 	res->rs = *sval;
 	res->ri = ival;
-	res->flags = PV_VAL_STR|PV_VAL_INT;
+	res->flags = PV_VAL_STR | PV_VAL_INT;
 	return 0;
 }
 
 /**
  * convert int-str to pv_value_t (type is int)
  */
-int pv_get_intstrval(struct sip_msg *msg, pv_param_t *param,
-		pv_value_t *res, long ival, str *sval)
+int pv_get_intstrval(struct sip_msg *msg, pv_param_t *param, pv_value_t *res,
+		long ival, str *sval)
 {
-	if(res==NULL)
+	if(res == NULL)
 		return -1;
 
 	res->rs = *sval;
 	res->ri = ival;
-	res->flags = PV_VAL_STR|PV_VAL_INT|PV_TYPE_INT;
+	res->flags = PV_VAL_STR | PV_VAL_INT | PV_TYPE_INT;
 	return 0;
 }
 
 /*** ============================= ***/
-static str pv_str_marker = { PV_MARKER_STR, 1 };
-static int pv_get_marker(struct sip_msg *msg, pv_param_t *param,
-		pv_value_t *res)
+static str pv_str_marker = {PV_MARKER_STR, 1};
+static int pv_get_marker(
+		struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
-	return pv_get_strintval(msg, param, res, &pv_str_marker,
-			(int)pv_str_marker.s[0]);
+	return pv_get_strintval(
+			msg, param, res, &pv_str_marker, (int)pv_str_marker.s[0]);
 }
 
 static char pv_str_empty_buf[2];
 static char pv_str_null_buf[8];
 
-static str pv_str_empty  = { "", 0 };
-#define PV_STR_NULL_VAL	"<null>"
-static str pv_str_null   = { PV_STR_NULL_VAL, sizeof(PV_STR_NULL_VAL)-1 };
+static str pv_str_empty = {"", 0};
+#define PV_STR_NULL_VAL "<null>"
+static str pv_str_null = {PV_STR_NULL_VAL, sizeof(PV_STR_NULL_VAL) - 1};
 int pv_get_null(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
-	if(res==NULL)
+	if(res == NULL)
 		return -1;
 
 	res->rs = pv_str_empty;
@@ -708,7 +679,7 @@ str *pv_get_empty_str(void)
  */
 int pv_get_strempty(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
-	if(res==NULL)
+	if(res == NULL)
 		return -1;
 
 	res->rs = pv_str_empty;
@@ -721,13 +692,12 @@ int pv_get_strempty(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 /**
  *
  */
-pv_export_t* pv_lookup_spec_name(str *pvname, pv_spec_p e)
+pv_export_t *pv_lookup_spec_name(str *pvname, pv_spec_p e)
 {
 	pv_item_t *pvi;
 	unsigned int pvid;
 
-	if(pvname==0 || e==0)
-	{
+	if(pvname == 0 || e == 0) {
 		LM_ERR("bad parameters\n");
 		return NULL;
 	}
@@ -735,15 +705,13 @@ pv_export_t* pv_lookup_spec_name(str *pvname, pv_spec_p e)
 	/* search in PV table */
 	// pvid = get_hash1_raw(pvname->s, pvname->len);
 	pvid = get_hash1_raw(pvname->s, pvname->len);
-	pvi = _pv_table[pvid%PV_TABLE_SIZE];
-	while(pvi)
-	{
+	pvi = _pv_table[pvid % PV_TABLE_SIZE];
+	while(pvi) {
 		if(pvi->pvid > pvid)
 			break;
 
-		if(pvi->pvid==pvid && pvi->pve.name.len==pvname->len
-			&& memcmp(pvi->pve.name.s, pvname->s, pvname->len)==0)
-		{
+		if(pvi->pvid == pvid && pvi->pve.name.len == pvname->len
+				&& memcmp(pvi->pve.name.s, pvname->s, pvname->len) == 0) {
 			/*LM_DBG("found [%.*s] [%d]\n", pvname->len, pvname->s,
 					_pv_names_table[i].type);*/
 			/* copy data from table to spec */
@@ -768,52 +736,44 @@ int pv_parse_index(pv_spec_p sp, str *in)
 	int sign;
 	pv_spec_p nsp = 0;
 
-	if(in==NULL || in->s==NULL || sp==NULL)
+	if(in == NULL || in->s == NULL || sp == NULL)
 		return -1;
 	p = in->s;
-	if(*p==PV_MARKER)
-	{
+	if(*p == PV_MARKER) {
 		nsp = (pv_spec_p)pkg_malloc(sizeof(pv_spec_t));
-		if(nsp==NULL)
-		{
+		if(nsp == NULL) {
 			PKG_MEM_ERROR;
 			return -1;
 		}
 		s = pv_parse_spec(in, nsp);
-		if(s==NULL)
-		{
+		if(s == NULL) {
 			LM_ERR("invalid index [%.*s]\n", in->len, in->s);
 			pv_spec_free(nsp);
 			return -1;
 		}
 		sp->pvp.pvi.type = PV_IDX_PVAR;
-		sp->pvp.pvi.u.dval = (void*)nsp;
+		sp->pvp.pvi.u.dval = (void *)nsp;
 		return 0;
 	}
-	if(*p=='*' && in->len==1)
-	{
+	if(*p == '*' && in->len == 1) {
 		sp->pvp.pvi.type = PV_IDX_ALL;
 		return 0;
 	}
-	if(*p=='+' && in->len==1)
-	{
+	if(*p == '+' && in->len == 1) {
 		sp->pvp.pvi.type = PV_IDX_ITR;
 		return 0;
 	}
 	sign = 1;
-	if(*p=='-')
-	{
+	if(*p == '-') {
 		sign = -1;
 		p++;
 	}
 	sp->pvp.pvi.u.ival = 0;
-	while(p<in->s+in->len && *p>='0' && *p<='9')
-	{
+	while(p < in->s + in->len && *p >= '0' && *p <= '9') {
 		sp->pvp.pvi.u.ival = sp->pvp.pvi.u.ival * 10 + *p - '0';
 		p++;
 	}
-	if(p!=in->s+in->len)
-	{
+	if(p != in->s + in->len) {
 		LM_ERR("invalid index [%.*s]\n", in->len, in->s);
 		return -1;
 	}
@@ -827,7 +787,7 @@ int pv_parse_index(pv_spec_p sp, str *in)
  */
 int pv_init_iname(pv_spec_p sp, int param)
 {
-	if(sp==NULL)
+	if(sp == NULL)
 		return -1;
 	sp->pvp.pvn.type = PV_NAME_INTSTR;
 	sp->pvp.pvn.u.isname.name.n = param;
@@ -837,7 +797,7 @@ int pv_init_iname(pv_spec_p sp, int param)
 /**
  *
  */
-char* pv_parse_spec2(str *in, pv_spec_p e, int silent)
+char *pv_parse_spec2(str *in, pv_spec_p e, int silent)
 {
 	char *p;
 	str s;
@@ -845,11 +805,11 @@ char* pv_parse_spec2(str *in, pv_spec_p e, int silent)
 	int pvstate;
 	trans_t *tr = NULL;
 	pv_export_t *pte = NULL;
-	int n=0;
+	int n = 0;
 
-	if(in==NULL || in->s==NULL || e==NULL || *in->s!=PV_MARKER)
-	{
-		if (!silent) LM_ERR("bad parameters\n");
+	if(in == NULL || in->s == NULL || e == NULL || *in->s != PV_MARKER) {
+		if(!silent)
+			LM_ERR("bad parameters\n");
 		return NULL;
 	}
 
@@ -860,17 +820,15 @@ char* pv_parse_spec2(str *in, pv_spec_p e, int silent)
 	e->pvp.pvi.type = PV_IDX_NONE;
 	p = in->s;
 	p++;
-	if(*p==PV_LNBRACKET)
-	{
+	if(*p == PV_LNBRACKET) {
 		p++;
 		pvstate = 1;
 	}
 	pvname.s = p;
 	if(*p == PV_MARKER) {
 		p++;
-		if(pvstate==1)
-		{
-			if(*p!=PV_RNBRACKET)
+		if(pvstate == 1) {
+			if(*p != PV_RNBRACKET)
 				goto error;
 			p++;
 		}
@@ -879,34 +837,32 @@ char* pv_parse_spec2(str *in, pv_spec_p e, int silent)
 		pvname.len = 1;
 		goto done_all;
 	}
-	while(is_in_str(p,in) && is_pv_valid_char(*p))
+	while(is_in_str(p, in) && is_pv_valid_char(*p))
 		p++;
 	pvname.len = p - pvname.s;
-	if(pvstate==1)
-	{
-		if(*p==PV_RNBRACKET)
-		{ /* full pv name ended here*/
+	if(pvstate == 1) {
+		if(*p == PV_RNBRACKET) { /* full pv name ended here*/
 			goto done_inm;
-		} else if(*p==PV_LNBRACKET) {
+		} else if(*p == PV_LNBRACKET) {
 			p++;
 			pvstate = 2;
-		} else if(*p==PV_LIBRACKET) {
+		} else if(*p == PV_LIBRACKET) {
 			p++;
 			pvstate = 3;
-		} else if(*p==TR_LBRACKET) {
+		} else if(*p == TR_LBRACKET) {
 			p++;
 			pvstate = 4;
 		} else {
-			if (!silent)
-				LM_ERR("invalid char '%c' in [%.*s] (%d)\n",
-							*p, in->len, in->s, pvstate);
+			if(!silent)
+				LM_ERR("invalid char '%c' in [%.*s] (%d)\n", *p, in->len, in->s,
+						pvstate);
 			goto error;
 		}
 	} else {
 		if(!is_in_str(p, in)) {
 			p--;
 			goto done_inm;
-		} else if(*p==PV_LNBRACKET) {
+		} else if(*p == PV_LNBRACKET) {
 			p++;
 			pvstate = 5;
 		} else {
@@ -918,35 +874,29 @@ char* pv_parse_spec2(str *in, pv_spec_p e, int silent)
 	}
 
 done_inm:
-	if((pte = pv_lookup_spec_name(&pvname, e))==NULL)
-	{
-		if (!silent)
+	if((pte = pv_lookup_spec_name(&pvname, e)) == NULL) {
+		if(!silent)
 			LM_ERR("error searching pvar \"%.*s\"\n", pvname.len, pvname.s);
 		goto error;
 	}
-	if(pte->parse_name!=NULL && pvstate!=2 && pvstate!=5)
-	{
-		if (!silent)
-			LM_ERR("pvar \"%.*s\" expects an inner name\n",
-						pvname.len, pvname.s);
+	if(pte->parse_name != NULL && pvstate != 2 && pvstate != 5) {
+		if(!silent)
+			LM_ERR("pvar \"%.*s\" expects an inner name\n", pvname.len,
+					pvname.s);
 		goto error;
 	}
-	if(pvstate==2 || pvstate==5)
-	{
-		if(pte->parse_name==NULL)
-		{
-			if (!silent)
-				LM_ERR("pvar \"%.*s\" does not get name param\n",
-						pvname.len, pvname.s);
+	if(pvstate == 2 || pvstate == 5) {
+		if(pte->parse_name == NULL) {
+			if(!silent)
+				LM_ERR("pvar \"%.*s\" does not get name param\n", pvname.len,
+						pvname.s);
 			goto error;
 		}
 		s.s = p;
 		n = 0;
-		while(is_in_str(p, in))
-		{
-			if(*p==PV_RNBRACKET)
-			{
-				if(n==0)
+		while(is_in_str(p, in)) {
+			if(*p == PV_RNBRACKET) {
+				if(n == 0)
 					break;
 				n--;
 			}
@@ -958,69 +908,60 @@ done_inm:
 		if(!is_in_str(p, in))
 			goto error;
 
-		if(p==s.s)
-		{
-			if (!silent)
+		if(p == s.s) {
+			if(!silent)
 				LM_ERR("pvar \"%.*s\" does not get empty name param\n",
 						pvname.len, pvname.s);
 			goto error;
 		}
 		s.len = p - s.s;
-		if(pte->parse_name(e, &s)!=0)
-		{
-			if (!silent)
+		if(pte->parse_name(e, &s) != 0) {
+			if(!silent)
 				LM_ERR("pvar \"%.*s\" has an invalid name param [%.*s]\n",
 						pvname.len, pvname.s, s.len, s.s);
 			goto error;
 		}
-		if(pvstate==2)
-		{
+		if(pvstate == 2) {
 			p++;
-			if(*p==PV_RNBRACKET)
-			{ /* full pv name ended here*/
+			if(*p == PV_RNBRACKET) { /* full pv name ended here*/
 				goto done_vnm;
-			} else if(*p==PV_LIBRACKET) {
+			} else if(*p == PV_LIBRACKET) {
 				p++;
 				pvstate = 3;
-			} else if(*p==TR_LBRACKET) {
+			} else if(*p == TR_LBRACKET) {
 				p++;
 				pvstate = 4;
 			} else {
-				if (!silent)
-					LM_ERR("invalid char '%c' in [%.*s] (%d)\n",
-								*p, in->len, in->s, pvstate);
+				if(!silent)
+					LM_ERR("invalid char '%c' in [%.*s] (%d)\n", *p, in->len,
+							in->s, pvstate);
 				goto error;
 			}
 		} else {
-			if(*p==PV_RNBRACKET)
-			{ /* full pv name ended here*/
+			if(*p == PV_RNBRACKET) { /* full pv name ended here*/
 				p++;
 				goto done_all;
 			} else {
-				if (!silent)
-					LM_ERR("invalid char '%c' in [%.*s] (%d)\n",
-								*p, in->len, in->s, pvstate);
+				if(!silent)
+					LM_ERR("invalid char '%c' in [%.*s] (%d)\n", *p, in->len,
+							in->s, pvstate);
 				goto error;
 			}
 		}
 	}
 done_vnm:
-	if(pvstate==3)
-	{
-		if(pte->parse_index==NULL)
-		{
-			if (!silent)
-				LM_ERR("pvar \"%.*s\" does not get index param\n",
-						pvname.len, pvname.s);
+	if(pvstate == 3) {
+		if(pte->parse_index == NULL) {
+			if(!silent)
+				LM_ERR("pvar \"%.*s\" does not get index param\n", pvname.len,
+						pvname.s);
 			goto error;
 		}
 		s.s = p;
 		n = 0;
-		while(is_in_str(p, in))
-		{
-			if(*p==PV_RIBRACKET)
-			{
-				if(n==0)
+		while(is_in_str(p, in)) {
+			if(*p == PV_RIBRACKET) {
+				if(n == 0)
 					break;
 				n--;
 			}
@@ -1031,52 +972,45 @@ done_vnm:
 		if(!is_in_str(p, in))
 			goto error;
 
-		if(p==s.s)
-		{
-			if (!silent)
+		if(p == s.s) {
+			if(!silent)
 				LM_ERR("pvar \"%.*s\" does not get empty index param\n",
 						pvname.len, pvname.s);
 			goto error;
 		}
 		s.len = p - s.s;
-		if(pte->parse_index(e, &s)!=0)
-		{
-			if (!silent)
+		if(pte->parse_index(e, &s) != 0) {
+			if(!silent)
 				LM_ERR("pvar \"%.*s\" has an invalid index param [%.*s]\n",
 						pvname.len, pvname.s, s.len, s.s);
 			goto error;
 		}
 		p++;
-		if(*p==PV_RNBRACKET)
-		{ /* full pv name ended here*/
+		if(*p == PV_RNBRACKET) { /* full pv name ended here*/
 			goto done_idx;
-		} else if(*p==TR_LBRACKET) {
+		} else if(*p == TR_LBRACKET) {
 			p++;
 			pvstate = 4;
 		} else {
-			if (!silent)
-				LM_ERR("invalid char '%c' in [%.*s] (%d)\n",
-							*p, in->len, in->s, pvstate);
+			if(!silent)
+				LM_ERR("invalid char '%c' in [%.*s] (%d)\n", *p, in->len, in->s,
+						pvstate);
 			goto error;
 		}
 	}
 done_idx:
-	if(pvstate==4)
-	{
-		s.s = p-1;
+	if(pvstate == 4) {
+		s.s = p - 1;
 		n = 0;
-		while(is_in_str(p, in))
-		{
-			if(*p==TR_RBRACKET)
-			{
-				if(n==0)
-				{
+		while(is_in_str(p, in)) {
+			if(*p == TR_RBRACKET) {
+				if(n == 0) {
 					/* yet another transformation */
 					p++;
-					while(is_in_str(p, in) && (*p==' ' || *p=='\t')) p++;
+					while(is_in_str(p, in) && (*p == ' ' || *p == '\t'))
+						p++;
 
-					if(!is_in_str(p, in) || *p != TR_LBRACKET)
-					{
+					if(!is_in_str(p, in) || *p != TR_LBRACKET) {
 						p--;
 						break;
 					}
@@ -1090,9 +1024,8 @@ done_idx:
 		if(!is_in_str(p, in))
 			goto error;
 
-		if(p==s.s)
-		{
-			if (!silent)
+		if(p == s.s) {
+			if(!silent)
 				LM_ERR("pvar \"%.*s\" does not get empty index param\n",
 						pvname.len, pvname.s);
 			goto error;
@@ -1100,36 +1033,34 @@ done_idx:
 		s.len = p - s.s + 1;
 
 		p = tr_lookup(&s, &tr);
-		if(p==NULL)
-		{
-			if (!silent)
+		if(p == NULL) {
+			if(!silent)
 				LM_ERR("bad tr in pvar name \"%.*s\"\n", pvname.len, pvname.s);
 			goto error;
 		}
-		if(*p!=PV_RNBRACKET)
-		{
-			if (!silent)
+		if(*p != PV_RNBRACKET) {
+			if(!silent)
 				LM_ERR("bad pvar name \"%.*s\" (%c)!\n", in->len, in->s, *p);
 			goto error;
 		}
-		e->trans = (void*)tr;
+		e->trans = (void *)tr;
 	}
 	p++;
 
 done_all:
-	if(pte!=NULL && pte->init_param)
+	if(pte != NULL && pte->init_param)
 		pte->init_param(e, pte->iparam);
 	return p;
 
 error:
-	if(p!=NULL){
-		if (!silent)
+	if(p != NULL) {
+		if(!silent)
 			LM_ERR("wrong char [%c/%d] in [%.*s] at [%d (%d)]\n", *p, (int)*p,
-					in->len, in->s, (int)(p-in->s), pvstate);
-	}else{
-		if (!silent)
-			LM_ERR("invalid parsing in [%.*s] at (%d)\n",
-						in->len, in->s, pvstate);
+					in->len, in->s, (int)(p - in->s), pvstate);
+	} else {
+		if(!silent)
+			LM_ERR("invalid parsing in [%.*s] at (%d)\n", in->len, in->s,
+					pvstate);
 	}
 	return NULL;
 
@@ -1146,13 +1077,12 @@ int pv_parse_format(str *in, pv_elem_p *el)
 	str s;
 	int len;
 
-	if(in==NULL || in->s==NULL || el==NULL)
+	if(in == NULL || in->s == NULL || el == NULL)
 		return -1;
 
 	/*LM_DBG("parsing [%.*s]\n", in->len, in->s);*/
 
-	if(in->len == 0)
-	{
+	if(in->len == 0) {
 		*el = pkg_malloc(sizeof(pv_elem_t));
 		if(*el == NULL) {
 			PKG_MEM_ERROR;
@@ -1167,8 +1097,7 @@ int pv_parse_format(str *in, pv_elem_p *el)
 	*el = NULL;
 	e = e0 = NULL;
 
-	while(is_in_str(p,in))
-	{
+	while(is_in_str(p, in)) {
 		e0 = e;
 		e = pkg_malloc(sizeof(pv_elem_t));
 		if(!e) {
@@ -1183,16 +1112,16 @@ int pv_parse_format(str *in, pv_elem_p *el)
 			e0->next = e;
 
 		e->text.s = p;
-		while(is_in_str(p,in) && *p!=PV_MARKER)
+		while(is_in_str(p, in) && *p != PV_MARKER)
 			p++;
 		e->text.len = p - e->text.s;
 
-		if(*p == '\0' || !is_in_str(p,in))
+		if(*p == '\0' || !is_in_str(p, in))
 			break;
 		s.s = p;
-		s.len = in->s+in->len-p;
+		s.len = in->s + in->len - p;
 		e->spec = pv_spec_lookup(&s, &len);
-		if(e->spec==NULL)
+		if(e->spec == NULL)
 			goto error;
 		p0 = p + len;
 
@@ -1216,32 +1145,28 @@ error:
 /**
  *
  */
-int pv_get_spec_name(struct sip_msg* msg, pv_param_p ip, pv_value_t *name)
+int pv_get_spec_name(struct sip_msg *msg, pv_param_p ip, pv_value_t *name)
 {
-	if(msg==NULL || ip==NULL || name==NULL)
+	if(msg == NULL || ip == NULL || name == NULL)
 		return -1;
 	memset(name, 0, sizeof(pv_value_t));
 
-	if(ip->pvn.type==PV_NAME_INTSTR)
-	{
-		if(ip->pvn.u.isname.type&AVP_NAME_STR)
-		{
+	if(ip->pvn.type == PV_NAME_INTSTR) {
+		if(ip->pvn.u.isname.type & AVP_NAME_STR) {
 			name->rs = ip->pvn.u.isname.name.s;
 			name->flags = PV_VAL_STR;
 		} else {
 			name->ri = ip->pvn.u.isname.name.n;
-			name->flags = PV_VAL_INT|PV_TYPE_INT;
+			name->flags = PV_VAL_INT | PV_TYPE_INT;
 		}
 		return 0;
-	} else if(ip->pvn.type==PV_NAME_PVAR) {
+	} else if(ip->pvn.type == PV_NAME_PVAR) {
 		/* pvar */
-		if(pv_get_spec_value(msg, (pv_spec_p)(ip->pvn.u.dname), name)!=0)
-		{
+		if(pv_get_spec_value(msg, (pv_spec_p)(ip->pvn.u.dname), name) != 0) {
 			LM_ERR("cannot get name value\n");
 			return -1;
 		}
-		if(name->flags&PV_VAL_NULL || name->flags&PV_VAL_EMPTY)
-		{
+		if(name->flags & PV_VAL_NULL || name->flags & PV_VAL_EMPTY) {
 			LM_ERR("null or empty name\n");
 			return -1;
 		}
@@ -1261,20 +1186,17 @@ int pv_parse_avp_name(pv_spec_p sp, str *in)
 	char *s;
 	pv_spec_p nsp = 0;
 
-	if(in==NULL || in->s==NULL || sp==NULL)
+	if(in == NULL || in->s == NULL || sp == NULL)
 		return -1;
 	p = in->s;
-	if(*p==PV_MARKER)
-	{
+	if(*p == PV_MARKER) {
 		nsp = (pv_spec_p)pkg_malloc(sizeof(pv_spec_t));
-		if(nsp==NULL)
-		{
+		if(nsp == NULL) {
 			PKG_MEM_ERROR;
 			return -1;
 		}
 		s = pv_parse_spec(in, nsp);
-		if(s==NULL)
-		{
+		if(s == NULL) {
 			LM_ERR("invalid name [%.*s]\n", in->len, in->s);
 			pv_spec_free(nsp);
 			return -1;
@@ -1282,13 +1204,13 @@ int pv_parse_avp_name(pv_spec_p sp, str *in)
 		//LM_ERR("dynamic name [%.*s]\n", in->len, in->s);
 		//pv_print_spec(nsp);
 		sp->pvp.pvn.type = PV_NAME_PVAR;
-		sp->pvp.pvn.u.dname = (void*)nsp;
+		sp->pvp.pvn.u.dname = (void *)nsp;
 		return 0;
 	}
 	/*LM_DBG("static name [%.*s]\n", in->len, in->s);*/
-	if(km_parse_avp_spec(in, &sp->pvp.pvn.u.isname.type,
-					&sp->pvp.pvn.u.isname.name)!=0)
-	{
+	if(km_parse_avp_spec(
+			   in, &sp->pvp.pvn.u.isname.type, &sp->pvp.pvn.u.isname.name)
+			!= 0) {
 		LM_ERR("bad avp name [%.*s]\n", in->len, in->s);
 		return -1;
 	}
@@ -1300,20 +1222,18 @@ int pv_parse_avp_name(pv_spec_p sp, str *in)
  * fill avp name details (id and type)
  * @return 0 on success, -1 on error
  */
-int pv_get_avp_name(struct sip_msg* msg, pv_param_p ip, int_str *avp_name,
+int pv_get_avp_name(struct sip_msg *msg, pv_param_p ip, int_str *avp_name,
 		unsigned short *name_type)
 {
 	pv_value_t tv;
-	if(ip==NULL || avp_name==NULL || name_type==NULL)
+	if(ip == NULL || avp_name == NULL || name_type == NULL)
 		return -1;
 	memset(avp_name, 0, sizeof(int_str));
 	*name_type = 0;
 
-	if(ip->pvn.type==PV_NAME_INTSTR)
-	{
+	if(ip->pvn.type == PV_NAME_INTSTR) {
 		*name_type = ip->pvn.u.isname.type;
-		if(ip->pvn.u.isname.type&AVP_NAME_STR)
-		{
+		if(ip->pvn.u.isname.type & AVP_NAME_STR) {
 			avp_name->s = ip->pvn.u.isname.name.s;
 			*name_type |= AVP_NAME_STR;
 		} else {
@@ -1324,19 +1244,16 @@ int pv_get_avp_name(struct sip_msg* msg, pv_param_p ip, int_str *avp_name,
 		return 0;
 	}
 	/* pvar */
-	if(pv_get_spec_value(msg, (pv_spec_p)(ip->pvn.u.dname), &tv)!=0)
-	{
+	if(pv_get_spec_value(msg, (pv_spec_p)(ip->pvn.u.dname), &tv) != 0) {
 		LM_ERR("cannot get avp value\n");
 		return -1;
 	}
-	if(tv.flags&PV_VAL_NULL || tv.flags&PV_VAL_EMPTY)
-	{
+	if(tv.flags & PV_VAL_NULL || tv.flags & PV_VAL_EMPTY) {
 		LM_ERR("null or empty name\n");
 		return -1;
 	}
 
-	if((tv.flags&PV_TYPE_INT) && (tv.flags&PV_VAL_INT))
-	{
+	if((tv.flags & PV_TYPE_INT) && (tv.flags & PV_VAL_INT)) {
 		avp_name->n = tv.ri;
 	} else {
 		avp_name->s = tv.rs;
@@ -1348,10 +1265,10 @@ int pv_get_avp_name(struct sip_msg* msg, pv_param_p ip, int_str *avp_name,
 /**
  *
  */
-int pv_get_spec_index(struct sip_msg* msg, pv_param_p ip, int *idx, int *flags)
+int pv_get_spec_index(struct sip_msg *msg, pv_param_p ip, int *idx, int *flags)
 {
 	pv_value_t tv;
-	if(ip==NULL || idx==NULL || flags==NULL)
+	if(ip == NULL || idx == NULL || flags == NULL)
 		return -1;
 
 	*idx = 0;
@@ -1365,26 +1282,22 @@ int pv_get_spec_index(struct sip_msg* msg, pv_param_p ip, int *idx, int *flags)
 		*flags = PV_IDX_ITR;
 		return 0;
 	}
-	if(ip->pvi.type == PV_IDX_INT)
-	{
+	if(ip->pvi.type == PV_IDX_INT) {
 		*idx = ip->pvi.u.ival;
 		return 0;
 	}
-	if(ip->pvi.type == PV_IDX_NONE)
-	{
+	if(ip->pvi.type == PV_IDX_NONE) {
 		*flags = PV_IDX_NONE;
 		*idx = ip->pvi.u.ival;
 		return 0;
 	}
 
 	/* pvar */
-	if(pv_get_spec_value(msg, (pv_spec_p)ip->pvi.u.dval, &tv)!=0)
-	{
+	if(pv_get_spec_value(msg, (pv_spec_p)ip->pvi.u.dval, &tv) != 0) {
 		LM_ERR("cannot get index value\n");
 		return -1;
 	}
-	if(!(tv.flags&PV_VAL_INT))
-	{
+	if(!(tv.flags & PV_VAL_INT)) {
 		LM_ERR("invalid index value\n");
 		return -1;
 	}
@@ -1395,13 +1308,12 @@ int pv_get_spec_index(struct sip_msg* msg, pv_param_p ip, int *idx, int *flags)
 /**
  *
  */
-int pv_get_spec_value(struct sip_msg* msg, pv_spec_p sp, pv_value_t *value)
+int pv_get_spec_value(struct sip_msg *msg, pv_spec_p sp, pv_value_t *value)
 {
 	int ret = 0;
 
-	if(msg==NULL || sp==NULL || sp->getf==NULL || value==NULL
-			|| sp->type==PVT_NONE)
-	{
+	if(msg == NULL || sp == NULL || sp->getf == NULL || value == NULL
+			|| sp->type == PVT_NONE) {
 		LM_ERR("bad parameters\n");
 		return -1;
 	}
@@ -1409,21 +1321,21 @@ int pv_get_spec_value(struct sip_msg* msg, pv_spec_p sp, pv_value_t *value)
 	memset(value, 0, sizeof(pv_value_t));
 
 	ret = (*sp->getf)(msg, &(sp->pvp), value);
-	if(ret!=0)
+	if(ret != 0)
 		return ret;
 
 	if(sp->trans)
-		return tr_exec(msg, (trans_t*)sp->trans, value);
+		return tr_exec(msg, (trans_t *)sp->trans, value);
 	return ret;
 }
 
 /**
  *
  */
-int pv_set_spec_value(struct sip_msg* msg, pv_spec_p sp, int op,
-		pv_value_t *value)
+int pv_set_spec_value(
+		struct sip_msg *msg, pv_spec_p sp, int op, pv_value_t *value)
 {
-	if(sp==NULL || !pv_is_w(sp))
+	if(sp == NULL || !pv_is_w(sp))
 		return 0; /* no op */
 	if(pv_alter_context(sp) && is_route_type(LOCAL_ROUTE))
 		return 0; /* no op */
@@ -1433,14 +1345,15 @@ int pv_set_spec_value(struct sip_msg* msg, pv_spec_p sp, int op,
 /**
  *
  */
-int pv_printf_mode(sip_msg_t* msg, pv_elem_t *list, int mode, char *buf, int *len)
+int pv_printf_mode(
+		sip_msg_t *msg, pv_elem_t *list, int mode, char *buf, int *len)
 {
 	int n;
 	pv_value_t tok;
 	pv_elem_p it;
 	char *cur;
 
-	if(msg==NULL || list==NULL || buf==NULL || len==NULL) {
+	if(msg == NULL || list == NULL || buf == NULL || len == NULL) {
 		LM_DBG("invalid parameters\n");
 		return -1;
 	}
@@ -1454,42 +1367,38 @@ int pv_printf_mode(sip_msg_t* msg, pv_elem_t *list, int mode, char *buf, int *le
 	cur = buf;
 
 	n = 0;
-	for (it=list; it; it=it->next)
-	{
+	for(it = list; it; it = it->next) {
 		/* put the text */
-		if(it->text.s && it->text.len>0)
-		{
-			if(n+it->text.len < *len)
-			{
+		if(it->text.s && it->text.len > 0) {
+			if(n + it->text.len < *len) {
 				memcpy(cur, it->text.s, it->text.len);
 				n += it->text.len;
 				cur += it->text.len;
 			} else {
 				if(likely(mode)) {
-					LM_ERR("no more space for text value - printed:%d token:%d buffer:%d\n",
-						n, it->text.len, *len);
+					LM_ERR("no more space for text value - printed:%d token:%d "
+						   "buffer:%d\n",
+							n, it->text.len, *len);
 				}
 				goto overflow;
 			}
 		}
 		/* put the value of the specifier */
-		if(it->spec!=NULL && it->spec->type!=PVT_NONE
-				&& pv_get_spec_value(msg, it->spec, &tok)==0)
-		{
-			if(tok.flags&PV_VAL_NULL)
+		if(it->spec != NULL && it->spec->type != PVT_NONE
+				&& pv_get_spec_value(msg, it->spec, &tok) == 0) {
+			if(tok.flags & PV_VAL_NULL)
 				tok.rs = pv_str_null;
-			if(n+tok.rs.len < *len)
-			{
-				if(tok.rs.len>0)
-				{
+			if(n + tok.rs.len < *len) {
+				if(tok.rs.len > 0) {
 					memcpy(cur, tok.rs.s, tok.rs.len);
 					n += tok.rs.len;
 					cur += tok.rs.len;
 				}
 			} else {
 				if(likely(mode)) {
-					LM_ERR("no more space for spec value - printed:%d token:%d buffer:%d\n",
-						n, tok.rs.len, *len);
+					LM_ERR("no more space for spec value - printed:%d token:%d "
+						   "buffer:%d\n",
+							n, tok.rs.len, *len);
 				}
 				goto overflow;
 			}
@@ -1516,7 +1425,7 @@ done:
 /**
  *
  */
-int pv_printf(sip_msg_t* msg, pv_elem_t *list, char *buf, int *len)
+int pv_printf(sip_msg_t *msg, pv_elem_t *list, char *buf, int *len)
 {
 	return pv_printf_mode(msg, list, 1, buf, len);
 }
@@ -1524,27 +1433,26 @@ int pv_printf(sip_msg_t* msg, pv_elem_t *list, char *buf, int *len)
 /**
  *
  */
-int pv_printf_size(sip_msg_t* msg, pv_elem_t *list)
+int pv_printf_size(sip_msg_t *msg, pv_elem_t *list)
 {
 	int n;
 	pv_value_t tok;
 	pv_elem_t *it;
 
-	if(msg==NULL || list==NULL) {
+	if(msg == NULL || list == NULL) {
 		return -1;
 	}
 
 	n = 0;
-	for (it=list; it; it=it->next) {
+	for(it = list; it; it = it->next) {
 		/* count the static text */
-		if(it->text.s && it->text.len>0) {
+		if(it->text.s && it->text.len > 0) {
 			n += it->text.len;
 		}
 		/* count the value of the specifier */
-		if(it->spec!=NULL && it->spec->type!=PVT_NONE
-				&& pv_get_spec_value(msg, it->spec, &tok)==0)
-		{
-			if(tok.flags&PV_VAL_NULL) {
+		if(it->spec != NULL && it->spec->type != PVT_NONE
+				&& pv_get_spec_value(msg, it->spec, &tok) == 0) {
+			if(tok.flags & PV_VAL_NULL) {
 				tok.rs = pv_str_null;
 			}
 			n += tok.rs.len;
@@ -1557,56 +1465,51 @@ int pv_printf_size(sip_msg_t* msg, pv_elem_t *list)
 /**
  *
  */
-pvname_list_t* parse_pvname_list(str *in, unsigned int type)
+pvname_list_t *parse_pvname_list(str *in, unsigned int type)
 {
-	pvname_list_t* head = NULL;
-	pvname_list_t* al = NULL;
-	pvname_list_t* last = NULL;
+	pvname_list_t *head = NULL;
+	pvname_list_t *al = NULL;
+	pvname_list_t *last = NULL;
 	char *p;
 	pv_spec_t spec;
 	str s;
 
-	if(in==NULL || in->s==NULL)
-	{
+	if(in == NULL || in->s == NULL) {
 		LM_ERR("bad parameters\n");
 		return NULL;
 	}
 
 	p = in->s;
-	while(is_in_str(p, in))
-	{
-		while(is_in_str(p, in) && (*p==' '||*p=='\t'||*p==','||*p==';'||*p=='\n'))
+	while(is_in_str(p, in)) {
+		while(is_in_str(p, in)
+				&& (*p == ' ' || *p == '\t' || *p == ',' || *p == ';'
+						|| *p == '\n'))
 			p++;
-		if(!is_in_str(p, in))
-		{
-			if(head==NULL)
+		if(!is_in_str(p, in)) {
+			if(head == NULL)
 				LM_ERR("parse error in name list [%.*s]\n", in->len, in->s);
 			return head;
 		}
 		s.s = p;
 		s.len = in->s + in->len - p;
 		p = pv_parse_spec(&s, &spec);
-		if(p==NULL)
-		{
+		if(p == NULL) {
 			LM_ERR("parse error in item [%.*s]\n", s.len, s.s);
 			goto error;
 		}
-		if(type && spec.type!=type)
-		{
-			LM_ERR("wrong type for item [%.*s]\n", (int)(p-s.s), s.s);
+		if(type && spec.type != type) {
+			LM_ERR("wrong type for item [%.*s]\n", (int)(p - s.s), s.s);
 			goto error;
 		}
-		al = (pvname_list_t*)pkg_malloc(sizeof(pvname_list_t));
-		if(al==NULL)
-		{
+		al = (pvname_list_t *)pkg_malloc(sizeof(pvname_list_t));
+		if(al == NULL) {
 			PKG_MEM_ERROR;
 			goto error;
 		}
 		memset(al, 0, sizeof(pvname_list_t));
 		memcpy(&al->sname, &spec, sizeof(pv_spec_t));
 
-		if(last==NULL)
-		{
+		if(last == NULL) {
 			head = al;
 			last = al;
 		} else {
@@ -1618,10 +1521,9 @@ pvname_list_t* parse_pvname_list(str *in, unsigned int type)
 	return head;
 
 error:
-	while(head)
-	{
+	while(head) {
 		al = head;
-		head=head->next;
+		head = head->next;
 		pkg_free(al);
 	}
 	return NULL;
@@ -1630,13 +1532,13 @@ error:
 /**
  *
  */
-void free_pvname_list(pvname_list_t* head)
+void free_pvname_list(pvname_list_t *head)
 {
-	pvname_list_t* al;
+	pvname_list_t *al;
 
 	while(head) {
 		al = head;
-		head=head->next;
+		head = head->next;
 		pkg_free(al);
 	}
 }
@@ -1646,19 +1548,21 @@ void free_pvname_list(pvname_list_t* head)
  */
 void pv_spec_destroy(pv_spec_t *spec)
 {
-	if(spec==0) return;
+	if(spec == 0)
+		return;
 	/* free name if it is PV */
 	if(spec->pvp.pvn.nfree)
-		spec->pvp.pvn.nfree((void*)(&spec->pvp.pvn));
+		spec->pvp.pvn.nfree((void *)(&spec->pvp.pvn));
 	if(spec->trans)
-		tr_free((trans_t*)spec->trans);
+		tr_free((trans_t *)spec->trans);
 }
 
 /** free the pv_spec_t structure.
  */
 void pv_spec_free(pv_spec_t *spec)
 {
-	if(spec==0) return;
+	if(spec == 0)
+		return;
 	pv_spec_destroy(spec);
 	pkg_free(spec);
 }
@@ -1669,8 +1573,7 @@ void pv_spec_free(pv_spec_t *spec)
 int pv_elem_free_all(pv_elem_p log)
 {
 	pv_elem_p t;
-	while(log)
-	{
+	while(log) {
 		t = log;
 		log = log->next;
 		pkg_free(t);
@@ -1683,19 +1586,22 @@ int pv_elem_free_all(pv_elem_p log)
  */
 void pv_value_destroy(pv_value_t *val)
 {
-	if(val==0) return;
+	if(val == 0)
+		return;
 
-	if(val->flags&PV_VAL_PKG) pkg_free(val->rs.s);
-	else if(val->flags&PV_VAL_SHM) shm_free(val->rs.s);
+	if(val->flags & PV_VAL_PKG)
+		pkg_free(val->rs.s);
+	else if(val->flags & PV_VAL_SHM)
+		shm_free(val->rs.s);
 
 	memset(val, 0, sizeof(pv_value_t));
 }
 
-int pv_printf_s(struct sip_msg* msg, pv_elem_p list, str *s)
+int pv_printf_s(struct sip_msg *msg, pv_elem_p list, str *s)
 {
 	s->s = pv_get_buffer();
 	s->len = pv_get_buffer_size();
-	return pv_printf( msg, list, s->s, &s->len);
+	return pv_printf(msg, list, s->s, &s->len);
 }
 
 /********************************************************
@@ -1705,12 +1611,12 @@ int pv_printf_s(struct sip_msg* msg, pv_elem_p list, str *s)
 /**
  *
  */
-static inline char* tr_get_class(str *in, char *p, str *tclass)
+static inline char *tr_get_class(str *in, char *p, str *tclass)
 {
 	tclass->s = p;
-	while(is_in_str(p, in) && *p!=TR_CLASS_MARKER) p++;
-	if(*p!=TR_CLASS_MARKER || tclass->s == p)
-	{
+	while(is_in_str(p, in) && *p != TR_CLASS_MARKER)
+		p++;
+	if(*p != TR_CLASS_MARKER || tclass->s == p) {
 		LM_ERR("invalid transformation: %.*s (%c)!\n", in->len, in->s, *p);
 		return NULL;
 	}
@@ -1723,13 +1629,12 @@ static inline char* tr_get_class(str *in, char *p, str *tclass)
 /**
  *
  */
-static inline trans_t* tr_new(void)
+static inline trans_t *tr_new(void)
 {
 	trans_t *t = NULL;
 
-	t = (trans_t*)pkg_malloc(sizeof(trans_t));
-	if(t == NULL)
-	{
+	t = (trans_t *)pkg_malloc(sizeof(trans_t));
+	if(t == NULL) {
 		PKG_MEM_ERROR;
 		return NULL;
 	}
@@ -1737,7 +1642,7 @@ static inline trans_t* tr_new(void)
 	return t;
 }
 
-char* tr_lookup(str *in, trans_t **tr)
+char *tr_lookup(str *in, trans_t **tr)
 {
 	char *p;
 	char *p0;
@@ -1747,45 +1652,49 @@ char* tr_lookup(str *in, trans_t **tr)
 	trans_t *t0 = NULL;
 	str s;
 
-	if(in==NULL || in->s==NULL || tr==NULL)
+	if(in == NULL || in->s == NULL || tr == NULL)
 		return NULL;
 
 	p = in->s;
 	do {
-		while(is_in_str(p, in) && (*p==' ' || *p=='\t' || *p=='\n')) p++;
+		while(is_in_str(p, in) && (*p == ' ' || *p == '\t' || *p == '\n'))
+			p++;
 		if(*p != TR_LBRACKET)
 			break;
 		p++;
 
-		if((t = tr_new())==NULL) return NULL;
+		if((t = tr_new()) == NULL)
+			return NULL;
 
-		if(t0==NULL) *tr = t;
-		else t0->next = t;
+		if(t0 == NULL)
+			*tr = t;
+		else
+			t0->next = t;
 		t0 = t;
 
 		/* find transformation class */
 		p = tr_get_class(in, p, &tclass);
-		if(p==NULL) goto error;
+		if(p == NULL)
+			goto error;
 
 		/* locate transformation */
 		te = tr_lookup_class(&tclass);
-		if(te==NULL)
-		{
-			LM_ERR("unknown transformation: [%.*s] in [%.*s]\n",
-				tclass.len, tclass.s, in->len, in->s);
+		if(te == NULL) {
+			LM_ERR("unknown transformation: [%.*s] in [%.*s]\n", tclass.len,
+					tclass.s, in->len, in->s);
 			goto error;
 		}
 
-		s.s = p; s.len = in->s + in->len - p;
+		s.s = p;
+		s.len = in->s + in->len - p;
 		p0 = te->tparse(&s, t);
-		if(p0==NULL)
+		if(p0 == NULL)
 			goto error;
 		p = p0;
 
-		if(*p != TR_RBRACKET)
-		{
-			LM_ERR("invalid transformation: %.*s | %c !!\n", in->len,
-					in->s, *p);
+		if(*p != TR_RBRACKET) {
+			LM_ERR("invalid transformation: %.*s | %c !!\n", in->len, in->s,
+					*p);
 			goto error;
 		}
 
@@ -1798,8 +1707,7 @@ char* tr_lookup(str *in, trans_t **tr)
 error:
 	LM_ERR("error parsing [%.*s]\n", in->len, in->s);
 	t = *tr;
-	while(t)
-	{
+	while(t) {
 		t0 = t;
 		t = t->next;
 		tr_destroy(t0);
@@ -1816,11 +1724,11 @@ void tr_destroy(trans_t *t)
 {
 	tr_param_t *tp;
 	tr_param_t *tp0;
-	if(t==NULL) return;
+	if(t == NULL)
+		return;
 
 	tp = t->params;
-	while(tp)
-	{
+	while(tp) {
 		tp0 = tp;
 		tp = tp->next;
 		tr_param_free(tp0);
@@ -1840,16 +1748,14 @@ int tr_exec(struct sip_msg *msg, trans_t *t, pv_value_t *v)
 	int r;
 	trans_t *i;
 
-	if(t==NULL || v==NULL)
-	{
+	if(t == NULL || v == NULL) {
 		LM_DBG("invalid parameters\n");
 		return -1;
 	}
 
-	for(i = t; i!=NULL; i=i->next)
-	{
+	for(i = t; i != NULL; i = i->next) {
 		r = (*i->trf)(msg, i->params, i->subtype, v);
-		if(r!=0)
+		if(r != 0)
 			return r;
 	}
 	return 0;
@@ -1863,8 +1769,7 @@ void tr_free(trans_t *t)
 {
 	trans_t *t0;
 
-	while(t)
-	{
+	while(t) {
 		t0 = t;
 		t = t->next;
 		tr_destroy(t0);
@@ -1881,13 +1786,13 @@ void tr_param_free(tr_param_t *tp)
 {
 	tr_param_t *tp0;
 
-	if(tp==NULL) return;
-	while(tp)
-	{
+	if(tp == NULL)
+		return;
+	while(tp) {
 		tp0 = tp;
 		tp = tp->next;
-		if(tp0->type==TR_PARAM_SPEC)
-			pv_spec_free((pv_spec_t*)tp0->v.data);
+		if(tp0->type == TR_PARAM_SPEC)
+			pv_spec_free((pv_spec_t *)tp0->v.data);
 		pkg_free(tp0);
 	}
 }
@@ -1899,7 +1804,7 @@ typedef struct _tr_item
 	struct _tr_item *next;
 } tr_item_t, *tr_item_p;
 
-static tr_item_t* _tr_table[TR_TABLE_SIZE];
+static tr_item_t *_tr_table[TR_TABLE_SIZE];
 static int _tr_table_set = 0;
 
 
@@ -1908,7 +1813,7 @@ static int _tr_table_set = 0;
  */
 void tr_init_table(void)
 {
-	memset(_tr_table, 0, sizeof(tr_item_t*)*TR_TABLE_SIZE);
+	memset(_tr_table, 0, sizeof(tr_item_t *) * TR_TABLE_SIZE);
 	_tr_table_set = 1;
 }
 
@@ -1923,14 +1828,12 @@ int tr_table_add(tr_export_t *e)
 	int found;
 	unsigned int trid;
 
-	if(e==NULL || e->tclass.s==NULL)
-	{
+	if(e == NULL || e->tclass.s == NULL) {
 		LM_ERR("invalid parameters\n");
 		return -1;
 	}
 
-	if(_tr_table_set==0)
-	{
+	if(_tr_table_set == 0) {
 		LM_DBG("TR table not initialized, doing it now\n");
 		tr_init_table();
 	}
@@ -1939,14 +1842,11 @@ int tr_table_add(tr_export_t *e)
 	// trid = get_hash1_raw(e->tclass.s, e->tclass.len);
 	trid = get_hash1_raw(e->tclass.s, e->tclass.len);
 
-	tri = _tr_table[trid%TR_TABLE_SIZE];
-	while(tri)
-	{
-		if(tri->tre.tclass.len==e->tclass.len)
-		{
+	tri = _tr_table[trid % TR_TABLE_SIZE];
+	while(tri) {
+		if(tri->tre.tclass.len == e->tclass.len) {
 			found = strncmp(tri->tre.tclass.s, e->tclass.s, e->tclass.len);
-			if(found==0)
-			{
+			if(found == 0) {
 				LM_ERR("TR class [%.*s] already exists\n", e->tclass.len,
 						e->tclass.s);
 				return -1;
@@ -1956,9 +1856,8 @@ int tr_table_add(tr_export_t *e)
 		tri = tri->next;
 	}
 
-	trn = (tr_item_t*)pkg_malloc(sizeof(tr_item_t));
-	if(trn==0)
-	{
+	trn = (tr_item_t *)pkg_malloc(sizeof(tr_item_t));
+	if(trn == 0) {
 		PKG_MEM_ERROR;
 		return -1;
 	}
@@ -1968,10 +1867,9 @@ int tr_table_add(tr_export_t *e)
 
 	//LM_DBG("TR class [%.*s] added to entry [%d]\n", e->tclass.len,
 	//					e->tclass.s, trid%TR_TABLE_SIZE);
-	if(trj==0)
-	{
-		trn->next = _tr_table[trid%TR_TABLE_SIZE];
-		_tr_table[trid%TR_TABLE_SIZE] = trn;
+	if(trj == 0) {
+		trn->next = _tr_table[trid % TR_TABLE_SIZE];
+		_tr_table[trid % TR_TABLE_SIZE] = trn;
 		goto done;
 	}
 	trn->next = trj->next;
@@ -1989,12 +1887,12 @@ int register_trans_mod(char *mod_name, tr_export_t *items)
 	int ret;
 	int i;
 
-	if (items==0)
+	if(items == 0)
 		return 0;
 
-	for ( i=0 ; items[i].tclass.s ; i++ ) {
+	for(i = 0; items[i].tclass.s; i++) {
 		ret = tr_table_add(&items[i]);
-		if (ret!=0) {
+		if(ret != 0) {
 			LM_ERR("failed to register pseudo-variable <%.*s> for module %s\n",
 					items[i].tclass.len, items[i].tclass.s, mod_name);
 		}
@@ -2011,17 +1909,15 @@ int tr_table_free(void)
 	tr_item_p te1;
 	int i;
 
-	for(i=0; i<TR_TABLE_SIZE; i++)
-	{
+	for(i = 0; i < TR_TABLE_SIZE; i++) {
 		te = _tr_table[i];
-		while(te!=0)
-		{
+		while(te != 0) {
 			te1 = te;
 			te = te->next;
 			pkg_free(te1);
 		}
 	}
-	memset(_tr_table, 0, sizeof(tr_item_t*)*TR_TABLE_SIZE);
+	memset(_tr_table, 0, sizeof(tr_item_t *) * TR_TABLE_SIZE);
 	_tr_table_set = 0;
 
 	return 0;
@@ -2030,13 +1926,12 @@ int tr_table_free(void)
 /**
  *
  */
-tr_export_t* tr_lookup_class(str *tclass)
+tr_export_t *tr_lookup_class(str *tclass)
 {
 	tr_item_t *tri;
 	unsigned int trid;
 
-	if(tclass==0 || tclass->s==0)
-	{
+	if(tclass == 0 || tclass->s == 0) {
 		LM_ERR("bad parameters\n");
 		return NULL;
 	}
@@ -2044,11 +1939,10 @@ tr_export_t* tr_lookup_class(str *tclass)
 	/* search in TR table */
 	// trid = get_hash1_raw(tclass->s, tclass->len);
 	trid = get_hash1_raw(tclass->s, tclass->len);
-	tri = _tr_table[trid%TR_TABLE_SIZE];
-	while(tri)
-	{
-		if(tri->trid==trid && tri->tre.tclass.len==tclass->len
-				&& memcmp(tri->tre.tclass.s, tclass->s, tclass->len)==0)
+	tri = _tr_table[trid % TR_TABLE_SIZE];
+	while(tri) {
+		if(tri->trid == trid && tri->tre.tclass.len == tclass->len
+				&& memcmp(tri->tre.tclass.s, tclass->s, tclass->len) == 0)
 			return &(tri->tre);
 		tri = tri->next;
 	}
@@ -2062,12 +1956,10 @@ tr_export_t* tr_lookup_class(str *tclass)
  ********************************************************/
 
 static pv_export_t _core_init_pvs[] = {
-	{{"null", (sizeof("null")-1)}, /* */
-		PVT_NULL, pv_get_null, 0,
-		0, 0, 0, 0},
+		{{"null", (sizeof("null") - 1)}, /* */
+				PVT_NULL, pv_get_null, 0, 0, 0, 0, 0},
 
-	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
-};
+		{{0, 0}, 0, 0, 0, 0, 0, 0, 0}};
 
 /** init pv api (optional).
  * @return 0 on success, -1 on error
@@ -2076,7 +1968,7 @@ int pv_init_api(void)
 {
 	pv_init_table();
 	tr_init_table();
-	if(pv_init_buffer()<0)
+	if(pv_init_buffer() < 0)
 		return -1;
 
 	pv_str_empty_buf[0] = '\0';
@@ -2085,7 +1977,7 @@ int pv_init_api(void)
 	strcpy(pv_str_null_buf, PV_STR_NULL_VAL);
 	pv_str_null.s = pv_str_null_buf;
 
-	if(register_pvars_mod("core", _core_init_pvs)<0)
+	if(register_pvars_mod("core", _core_init_pvs) < 0)
 		return -1;
 	return 0;
 }
@@ -2106,8 +1998,8 @@ void pv_destroy_api(void)
  */
 static char **_pv_print_buffer = NULL;
 #define PV_DEFAULT_PRINT_BUFFER_SIZE 8192 /* 8kB */
-static int _pv_print_buffer_size  = PV_DEFAULT_PRINT_BUFFER_SIZE;
-static int _pv_print_buffer_size_active  = 0;
+static int _pv_print_buffer_size = PV_DEFAULT_PRINT_BUFFER_SIZE;
+static int _pv_print_buffer_size_active = 0;
 /* 6 mod params + 4 direct usage from mods */
 #define PV_DEFAULT_PRINT_BUFFER_SLOTS 40
 static int _pv_print_buffer_slots = PV_DEFAULT_PRINT_BUFFER_SLOTS;
@@ -2122,29 +2014,26 @@ int pv_init_buffer(void)
 	int i;
 
 	/* already initialized ?!? */
-	if(_pv_print_buffer!=NULL)
+	if(_pv_print_buffer != NULL)
 		return 0;
 
 	_pv_print_buffer =
-		(char**)pkg_malloc(_pv_print_buffer_slots*sizeof(char*));
-	if(_pv_print_buffer==NULL)
-	{
+			(char **)pkg_malloc(_pv_print_buffer_slots * sizeof(char *));
+	if(_pv_print_buffer == NULL) {
 		PKG_MEM_ERROR;
 		return -1;
 	}
-	memset(_pv_print_buffer, 0, _pv_print_buffer_slots*sizeof(char*));
-	for(i=0; i<_pv_print_buffer_slots; i++)
-	{
+	memset(_pv_print_buffer, 0, _pv_print_buffer_slots * sizeof(char *));
+	for(i = 0; i < _pv_print_buffer_slots; i++) {
 		_pv_print_buffer[i] =
-			(char*)pkg_malloc(_pv_print_buffer_size*sizeof(char));
-		if(_pv_print_buffer[i]==NULL)
-		{
+				(char *)pkg_malloc(_pv_print_buffer_size * sizeof(char));
+		if(_pv_print_buffer[i] == NULL) {
 			PKG_MEM_ERROR;
 			return -1;
 		}
 	}
-	LM_DBG("PV print buffer initialized to [%d][%d]\n",
-			_pv_print_buffer_slots, _pv_print_buffer_size);
+	LM_DBG("PV print buffer initialized to [%d][%d]\n", _pv_print_buffer_slots,
+			_pv_print_buffer_size);
 	_pv_print_buffer_slots_active = _pv_print_buffer_slots;
 	_pv_print_buffer_size_active = _pv_print_buffer_size;
 	_pv_print_buffer_index = 0;
@@ -2159,11 +2048,10 @@ void pv_destroy_buffer(void)
 {
 	int i;
 
-	if(_pv_print_buffer==NULL)
+	if(_pv_print_buffer == NULL)
 		return;
-	for(i=0; i<_pv_print_buffer_slots_active; i++)
-	{
-		if(_pv_print_buffer[i]!=NULL)
+	for(i = 0; i < _pv_print_buffer_slots_active; i++) {
+		if(_pv_print_buffer[i] != NULL)
 			pkg_free(_pv_print_buffer[i]);
 	}
 	pkg_free(_pv_print_buffer);
@@ -2178,8 +2066,8 @@ void pv_destroy_buffer(void)
  */
 int pv_reinit_buffer(void)
 {
-	if(_pv_print_buffer_size==_pv_print_buffer_size_active
-			&& _pv_print_buffer_slots==_pv_print_buffer_slots_active) {
+	if(_pv_print_buffer_size == _pv_print_buffer_size_active
+			&& _pv_print_buffer_slots == _pv_print_buffer_slots_active) {
 		return 0;
 	}
 	pv_destroy_buffer();
@@ -2189,13 +2077,13 @@ int pv_reinit_buffer(void)
 /**
  *
  */
-char* pv_get_buffer(void)
+char *pv_get_buffer(void)
 {
 	char *p;
 
 	p = _pv_print_buffer[_pv_print_buffer_index];
-	_pv_print_buffer_index = (_pv_print_buffer_index+1)
-			% _pv_print_buffer_slots_active;
+	_pv_print_buffer_index =
+			(_pv_print_buffer_index + 1) % _pv_print_buffer_slots_active;
 
 	return p;
 }
@@ -2222,7 +2110,7 @@ int pv_get_buffer_slots(void)
 void pv_set_buffer_size(int n)
 {
 	_pv_print_buffer_size = n;
-	if(_pv_print_buffer_size<=0)
+	if(_pv_print_buffer_size <= 0)
 		_pv_print_buffer_size = PV_DEFAULT_PRINT_BUFFER_SIZE;
 }
 
@@ -2232,6 +2120,6 @@ void pv_set_buffer_size(int n)
 void pv_set_buffer_slots(int n)
 {
 	_pv_print_buffer_slots = n;
-	if(_pv_print_buffer_slots<=0)
+	if(_pv_print_buffer_slots <= 0)
 		_pv_print_buffer_slots = PV_DEFAULT_PRINT_BUFFER_SLOTS;
 }

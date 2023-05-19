@@ -31,25 +31,29 @@
 #include "cfg_select.h"
 #include "cfg_struct.h"
 
-cfg_group_t	*cfg_group = NULL;	/* linked list of registered cfg groups */
-cfg_block_t	**cfg_global = NULL;	/* pointer to the active cfg block */
-cfg_block_t	*cfg_local = NULL;	/* per-process pointer to the active cfg block.
+cfg_group_t *cfg_group = NULL;	 /* linked list of registered cfg groups */
+cfg_block_t **cfg_global = NULL; /* pointer to the active cfg block */
+cfg_block_t *cfg_local = NULL;	 /* per-process pointer to the active cfg block.
 								 * Updated only when the child process
 								 * finishes working on the SIP message */
-int		cfg_block_size = 0;	/* size of the cfg block including the meta-data (constant) */
-gen_lock_t	*cfg_global_lock = 0;	/* protects *cfg_global */
-gen_lock_t	*cfg_writer_lock = 0;	/* This lock makes sure that two processes do not
+int cfg_block_size =
+		0; /* size of the cfg block including the meta-data (constant) */
+gen_lock_t *cfg_global_lock = 0; /* protects *cfg_global */
+gen_lock_t *cfg_writer_lock =
+		0;			 /* This lock makes sure that two processes do not
 									 * try to clone *cfg_global at the same time.
 									 * Never try to get cfg_writer_lock when
 									 * cfg_global_lock is held */
-int		cfg_shmized = 0;	/* indicates whether the cfg block has been
+int cfg_shmized = 0; /* indicates whether the cfg block has been
 							 * already shmized */
 
-cfg_child_cb_t	**cfg_child_cb_first = NULL;	/* first item of the per-child process
+cfg_child_cb_t **cfg_child_cb_first =
+		NULL; /* first item of the per-child process
 												 * callback list */
-cfg_child_cb_t	**cfg_child_cb_last = NULL;	/* last item of the above list */
-cfg_child_cb_t	*cfg_child_cb = NULL;	/* pointer to the previously executed cb */
-int		cfg_ginst_count = 0;	/* number of group instances set within the child process */
+cfg_child_cb_t **cfg_child_cb_last = NULL; /* last item of the above list */
+cfg_child_cb_t *cfg_child_cb = NULL; /* pointer to the previously executed cb */
+int cfg_ginst_count =
+		0; /* number of group instances set within the child process */
 
 
 /* forward declarations */
@@ -57,38 +61,37 @@ static void del_add_var_list(cfg_group_t *group);
 static int apply_add_var_list(cfg_block_t *block, cfg_group_t *group);
 
 /* creates a new cfg group, and adds it to the linked list */
-cfg_group_t *cfg_new_group(char *name, int name_len,
-		int num, cfg_mapping_t *mapping,
-		char *vars, int size, void **handle)
+cfg_group_t *cfg_new_group(char *name, int name_len, int num,
+		cfg_mapping_t *mapping, char *vars, int size, void **handle)
 {
-	cfg_group_t	*group;
+	cfg_group_t *group;
 
-	if (cfg_shmized) {
+	if(cfg_shmized) {
 		LM_ERR("too late config declaration\n");
 		return NULL;
 	}
 
-	if (num > CFG_MAX_VAR_NUM) {
+	if(num > CFG_MAX_VAR_NUM) {
 		LM_ERR("too many variables (%d) within a single group,"
-				" the limit is %d. Increase CFG_MAX_VAR_NUM, or split the group"
-				" into multiple definitions.\n",
+			   " the limit is %d. Increase CFG_MAX_VAR_NUM, or split the group"
+			   " into multiple definitions.\n",
 				num, CFG_MAX_VAR_NUM);
 		return NULL;
 	}
 
-	group = (cfg_group_t *)pkg_malloc(sizeof(cfg_group_t)+name_len-1);
-	if (!group) {
+	group = (cfg_group_t *)pkg_malloc(sizeof(cfg_group_t) + name_len - 1);
+	if(!group) {
 		PKG_MEM_ERROR;
 		return NULL;
 	}
-	memset(group, 0, sizeof(cfg_group_t)+name_len-1);
+	memset(group, 0, sizeof(cfg_group_t) + name_len - 1);
 
 	group->num = num;
 	group->mapping = mapping;
 	group->vars = vars;
 	group->size = size;
 	group->handle = handle;
-	if (handle)
+	if(handle)
 		group->orig_handle = *handle;
 	group->name_len = name_len;
 	memcpy(&group->name, name, name_len);
@@ -101,8 +104,7 @@ cfg_group_t *cfg_new_group(char *name, int name_len,
 }
 
 /* Set the values of an existing cfg group. */
-void cfg_set_group(cfg_group_t *group,
-		int num, cfg_mapping_t *mapping,
+void cfg_set_group(cfg_group_t *group, int num, cfg_mapping_t *mapping,
 		char *vars, int size, void **handle)
 {
 	group->num = num;
@@ -110,7 +112,7 @@ void cfg_set_group(cfg_group_t *group,
 	group->vars = vars;
 	group->size = size;
 	group->handle = handle;
-	if (handle)
+	if(handle)
 		group->orig_handle = *handle;
 }
 
@@ -119,16 +121,16 @@ void cfg_set_group(cfg_group_t *group,
  */
 int cfg_clone_str(str *src, str *dst)
 {
-	char	*c;
+	char *c;
 
-	if (!src->s) {
+	if(!src->s) {
 		dst->s = NULL;
 		dst->len = 0;
 		return 0;
 	}
 
-	c = (char *)shm_malloc(sizeof(char)*(src->len+1));
-	if (!c) {
+	c = (char *)shm_malloc(sizeof(char) * (src->len + 1));
+	if(!c) {
 		SHM_MEM_ERROR;
 		return -1;
 	}
@@ -144,31 +146,35 @@ int cfg_clone_str(str *src, str *dst)
 /* copies the strings to shared memory */
 static int cfg_shmize_strings(cfg_group_t *group)
 {
-	cfg_mapping_t	*mapping;
-	int	i;
-	str	s;
+	cfg_mapping_t *mapping;
+	int i;
+	str s;
 
 	/* We do not know in advance whether the variable will be changed or not,
 	 * and it can happen that we try to free the shm memory area when
 	 * the variable is changed, hence, it must be already in shm mem */
 	mapping = group->mapping;
-	for (i=0; i<group->num; i++) {
+	for(i = 0; i < group->num; i++) {
 		/* the cfg driver module may have already shmized the variable */
-		if (mapping[i].flag & cfg_var_shmized) continue;
+		if(mapping[i].flag & cfg_var_shmized)
+			continue;
 
-		if (CFG_VAR_TYPE(&mapping[i]) == CFG_VAR_STRING) {
+		if(CFG_VAR_TYPE(&mapping[i]) == CFG_VAR_STRING) {
 			s.s = *(char **)(group->vars + mapping[i].offset);
-			if (!s.s) continue;
+			if(!s.s)
+				continue;
 			s.len = strlen(s.s);
 
-		} else if (CFG_VAR_TYPE(&mapping[i]) == CFG_VAR_STR) {
+		} else if(CFG_VAR_TYPE(&mapping[i]) == CFG_VAR_STR) {
 			memcpy(&s, group->vars + mapping[i].offset, sizeof(str));
-			if (!s.s) continue;
+			if(!s.s)
+				continue;
 
 		} else {
 			continue;
 		}
-		if (cfg_clone_str(&s, &s)) return -1;
+		if(cfg_clone_str(&s, &s))
+			return -1;
 		*(char **)(group->vars + mapping[i].offset) = s.s;
 		mapping[i].flag |= cfg_var_shmized;
 	}
@@ -179,11 +185,12 @@ static int cfg_shmize_strings(cfg_group_t *group)
 /* copy the variables to shm mem */
 int cfg_shmize(void)
 {
-	cfg_group_t	*group;
-	cfg_block_t	*block = NULL;
-	int	size;
+	cfg_group_t *group;
+	cfg_block_t *block = NULL;
+	int size;
 
-	if (!cfg_group) return 0;
+	if(!cfg_group)
+		return 0;
 
 	/* Let us allocate one memory block that
 	 * will contain all the variables + meta-data
@@ -201,10 +208,7 @@ int cfg_shmize(void)
 	 * The additional array for the multiple values
 	 * of the same variable is linked to the meta-data.
 	 */
-	for (size=0, group = cfg_group;
-			group;
-			group=group->next
-			) {
+	for(size = 0, group = cfg_group; group; group = group->next) {
 		size = ROUND_POINTER(size);
 		group->meta_offset = size;
 		size += sizeof(cfg_group_meta_t);
@@ -214,54 +218,55 @@ int cfg_shmize(void)
 		size += group->size;
 	}
 
-	block = (cfg_block_t*)shm_malloc(sizeof(cfg_block_t)+size-1);
-	if (!block) {
+	block = (cfg_block_t *)shm_malloc(sizeof(cfg_block_t) + size - 1);
+	if(!block) {
 		SHM_MEM_ERROR;
 		goto error;
 	}
-	memset(block, 0, sizeof(cfg_block_t)+size-1);
+	memset(block, 0, sizeof(cfg_block_t) + size - 1);
 	cfg_block_size = size;
 
 	/* copy the memory fragments to the single block */
-	for (	group = cfg_group;
-			group;
-			group=group->next
-		) {
-		if (group->dynamic == CFG_GROUP_STATIC) {
+	for(group = cfg_group; group; group = group->next) {
+		if(group->dynamic == CFG_GROUP_STATIC) {
 			/* clone the strings to shm mem */
-			if (cfg_shmize_strings(group)) goto error;
+			if(cfg_shmize_strings(group))
+				goto error;
 
 			/* copy the values to the new block */
 			memcpy(CFG_GROUP_DATA(block, group), group->vars, group->size);
-		} else if (group->dynamic == CFG_GROUP_DYNAMIC) {
+		} else if(group->dynamic == CFG_GROUP_DYNAMIC) {
 			/* The group was declared with NULL values,
 			 * we have to fix it up.
 			 * The fixup function takes care about the values,
 			 * it fills up the block */
-			if (cfg_script_fixup(group, CFG_GROUP_DATA(block, group))) goto error;
+			if(cfg_script_fixup(group, CFG_GROUP_DATA(block, group)))
+				goto error;
 
 			/* Notify the drivers about the new config definition.
 			 * Temporary set the group handle so that the drivers have a chance to
 			 * overwrite the default values. The handle must be reset after this
 			 * because the main process does not have a local configuration. */
 			*(group->handle) = CFG_GROUP_DATA(block, group);
-			cfg_notify_drivers(group->name, group->name_len,
-					group->mapping->def);
+			cfg_notify_drivers(
+					group->name, group->name_len, group->mapping->def);
 			*(group->handle) = NULL;
 		} else {
-			LM_ERR("configuration group is declared without any variable: %.*s\n",
+			LM_ERR("configuration group is declared without any variable: "
+				   "%.*s\n",
 					group->name_len, group->name);
 			goto error;
 		}
 
 		/* Create the additional group instances with applying
 		 * the temporary list. */
-		if (apply_add_var_list(block, group))
+		if(apply_add_var_list(block, group))
 			goto error;
 	}
 
 	/* try to fixup the selects that failed to be fixed-up previously */
-	if (cfg_fixup_selects()) goto error;
+	if(cfg_fixup_selects())
+		goto error;
 
 	/* install the new config */
 	cfg_install_global(block, NULL, NULL, NULL);
@@ -270,18 +275,19 @@ int cfg_shmize(void)
 	return 0;
 
 error:
-	if (block) shm_free(block);
+	if(block)
+		shm_free(block);
 	return -1;
 }
 
 /* deallocate the list of groups, and the shmized strings */
 static void cfg_destory_groups(unsigned char *block)
 {
-	cfg_group_t	*group, *group2;
-	cfg_mapping_t	*mapping;
-	cfg_def_t	*def;
-	void		*old_string;
-	int		i;
+	cfg_group_t *group, *group2;
+	cfg_mapping_t *mapping;
+	cfg_def_t *def;
+	void *old_string;
+	int i;
 
 	group = cfg_group;
 	while(group) {
@@ -289,23 +295,26 @@ static void cfg_destory_groups(unsigned char *block)
 		def = mapping ? mapping->def : NULL;
 
 		/* destory the shmized strings in the block */
-		if (block && def)
-			for (i=0; i<group->num; i++)
-				if (((CFG_VAR_TYPE(&mapping[i]) == CFG_VAR_STRING) ||
-							(CFG_VAR_TYPE(&mapping[i]) == CFG_VAR_STR)) &&
-						mapping[i].flag & cfg_var_shmized) {
+		if(block && def)
+			for(i = 0; i < group->num; i++)
+				if(((CFG_VAR_TYPE(&mapping[i]) == CFG_VAR_STRING)
+						   || (CFG_VAR_TYPE(&mapping[i]) == CFG_VAR_STR))
+						&& mapping[i].flag & cfg_var_shmized) {
 
-					old_string = *(char **)(block + group->var_offset + mapping[i].offset);
-					if (old_string) shm_free(old_string);
+					old_string = *(char **)(block + group->var_offset
+											+ mapping[i].offset);
+					if(old_string)
+						shm_free(old_string);
 				}
 
-		if (group->dynamic == CFG_GROUP_DYNAMIC) {
+		if(group->dynamic == CFG_GROUP_DYNAMIC) {
 			/* the group was dynamically allocated */
 			cfg_script_destroy(group);
 		} else {
 			/* only the mapping was allocated, all the other
 			 * pointers are just set to static variables */
-			if (mapping) pkg_free(mapping);
+			if(mapping)
+				pkg_free(mapping);
 		}
 		/* Delete the additional variable list */
 		del_add_var_list(group);
@@ -321,11 +330,11 @@ int sr_cfg_init(void)
 {
 	/* lock_alloc() is a define for shm_malloc */
 	cfg_global_lock = lock_alloc();
-	if (!cfg_global_lock) {
+	if(!cfg_global_lock) {
 		SHM_MEM_ERROR;
 		goto error;
 	}
-	if (lock_init(cfg_global_lock) == 0) {
+	if(lock_init(cfg_global_lock) == 0) {
 		LM_ERR("failed to init lock\n");
 		lock_dealloc(cfg_global_lock);
 		cfg_global_lock = 0;
@@ -333,11 +342,11 @@ int sr_cfg_init(void)
 	}
 
 	cfg_writer_lock = lock_alloc();
-	if (!cfg_writer_lock) {
+	if(!cfg_writer_lock) {
 		SHM_MEM_ERROR;
 		goto error;
 	}
-	if (lock_init(cfg_writer_lock) == 0) {
+	if(lock_init(cfg_writer_lock) == 0) {
 		LM_ERR("failed to init lock\n");
 		lock_dealloc(cfg_writer_lock);
 		cfg_writer_lock = 0;
@@ -345,21 +354,22 @@ int sr_cfg_init(void)
 	}
 
 	cfg_global = (cfg_block_t **)shm_malloc(sizeof(cfg_block_t *));
-	if (!cfg_global) {
+	if(!cfg_global) {
 		SHM_MEM_ERROR;
 		goto error;
 	}
 	*cfg_global = NULL;
 
-	cfg_child_cb_first = (cfg_child_cb_t **)shm_malloc(sizeof(cfg_child_cb_t *));
-	if (!cfg_child_cb_first) {
+	cfg_child_cb_first =
+			(cfg_child_cb_t **)shm_malloc(sizeof(cfg_child_cb_t *));
+	if(!cfg_child_cb_first) {
 		SHM_MEM_ERROR;
 		goto error;
 	}
 	*cfg_child_cb_first = NULL;
 
 	cfg_child_cb_last = (cfg_child_cb_t **)shm_malloc(sizeof(cfg_child_cb_t *));
-	if (!cfg_child_cb_last) {
+	if(!cfg_child_cb_last) {
 		SHM_MEM_ERROR;
 		goto error;
 	}
@@ -369,9 +379,10 @@ int sr_cfg_init(void)
 	 * This stucture will be the entry point for the child processes, and
 	 * will be freed later, when none of the processes refers to it */
 	*cfg_child_cb_first = *cfg_child_cb_last =
-		cfg_child_cb_new(NULL, NULL, NULL, 0);
+			cfg_child_cb_new(NULL, NULL, NULL, 0);
 
-	if (!*cfg_child_cb_first) goto error;
+	if(!*cfg_child_cb_first)
+		goto error;
 
 	return 0;
 
@@ -388,33 +399,36 @@ void cfg_destroy(void)
 	cfg_ctx_destroy();
 
 	/* free the list of groups */
-	cfg_destory_groups((cfg_global && (*cfg_global)) ? (*cfg_global)->vars : NULL);
+	cfg_destory_groups(
+			(cfg_global && (*cfg_global)) ? (*cfg_global)->vars : NULL);
 
 	/* free the select list */
 	cfg_free_selects();
 
-	if (cfg_child_cb_first) {
-		if (*cfg_child_cb_first) cfg_child_cb_free_list(*cfg_child_cb_first);
+	if(cfg_child_cb_first) {
+		if(*cfg_child_cb_first)
+			cfg_child_cb_free_list(*cfg_child_cb_first);
 		shm_free(cfg_child_cb_first);
 		cfg_child_cb_first = NULL;
 	}
 
-	if (cfg_child_cb_last) {
+	if(cfg_child_cb_last) {
 		shm_free(cfg_child_cb_last);
 		cfg_child_cb_last = NULL;
 	}
 
-	if (cfg_global) {
-		if (*cfg_global) cfg_block_free(*cfg_global);
+	if(cfg_global) {
+		if(*cfg_global)
+			cfg_block_free(*cfg_global);
 		shm_free(cfg_global);
 		cfg_global = NULL;
 	}
-	if (cfg_global_lock) {
+	if(cfg_global_lock) {
 		lock_destroy(cfg_global_lock);
 		lock_dealloc(cfg_global_lock);
 		cfg_global_lock = 0;
 	}
-	if (cfg_writer_lock) {
+	if(cfg_writer_lock) {
 		lock_destroy(cfg_writer_lock);
 		lock_dealloc(cfg_writer_lock);
 		cfg_writer_lock = 0;
@@ -494,15 +508,16 @@ int cfg_child_no_cb_init(void)
  */
 void cfg_child_destroy(void)
 {
-	cfg_child_cb_t	*prev_cb;
+	cfg_child_cb_t *prev_cb;
 
 	/* unref the local config */
-	if (cfg_local) {
+	if(cfg_local) {
 		CFG_UNREF(cfg_local);
 		cfg_local = NULL;
 	}
 
-	if (!cfg_child_cb || cfg_child_cb==CFG_NO_CHILD_CBS) return;
+	if(!cfg_child_cb || cfg_child_cb == CFG_NO_CHILD_CBS)
+		return;
 
 	/* The lock must be held to make sure that the global config
 	 * is not replaced meantime, and the other child processes do not
@@ -514,16 +529,16 @@ void cfg_child_destroy(void)
 	/* go through the list and check whether there is any item that
 	 * has to be freed (similar to cfg_update_local(), but without executing
 	 * the callback functions) */
-	while (cfg_child_cb != *cfg_child_cb_last) {
+	while(cfg_child_cb != *cfg_child_cb_last) {
 		prev_cb = cfg_child_cb;
 		cfg_child_cb = cfg_child_cb->next;
 		atomic_inc(&cfg_child_cb->refcnt);
-		if (atomic_dec_and_test(&prev_cb->refcnt)) {
+		if(atomic_dec_and_test(&prev_cb->refcnt)) {
 			/* No more pocess refers to this callback.
 			 * Did this process block the deletion,
 			 * or is there any other process that has not
 			 * reached	prev_cb yet? */
-			if (*cfg_child_cb_first == prev_cb) {
+			if(*cfg_child_cb_first == prev_cb) {
 				/* yes, this process was blocking the deletion */
 				*cfg_child_cb_first = cfg_child_cb;
 				cfg_child_cb_free_item(prev_cb);
@@ -544,75 +559,66 @@ void cfg_child_destroy(void)
 /* searches a group by name */
 cfg_group_t *cfg_lookup_group(char *name, int len)
 {
-	cfg_group_t	*g;
+	cfg_group_t *g;
 
-	for (	g = cfg_group;
-			g;
-			g = g->next
-		)
-		if ((g->name_len == len)
-				&& (memcmp(g->name, name, len)==0))
+	for(g = cfg_group; g; g = g->next)
+		if((g->name_len == len) && (memcmp(g->name, name, len) == 0))
 			return g;
 
 	return NULL;
 }
 
 /* searches a variable definition by group and variable name */
-int cfg_lookup_var(str *gname, str *vname,
-		cfg_group_t **group, cfg_mapping_t **var)
+int cfg_lookup_var(
+		str *gname, str *vname, cfg_group_t **group, cfg_mapping_t **var)
 {
-	cfg_group_t	*g;
-	int		i;
+	cfg_group_t *g;
+	int i;
 
-	for (g = cfg_group;
-			g;
-			g = g->next
-			)
-		if ((g->name_len == gname->len)
-				&& (memcmp(g->name, gname->s, gname->len)==0)) {
+	for(g = cfg_group; g; g = g->next)
+		if((g->name_len == gname->len)
+				&& (memcmp(g->name, gname->s, gname->len) == 0)) {
 
-			if (!g->mapping) return -1; /* dynamic group is not ready */
+			if(!g->mapping)
+				return -1; /* dynamic group is not ready */
 
-			for (	i = 0;
-					i < g->num;
-					i++
-				) {
-				if ((g->mapping[i].name_len == vname->len)
-						&& (memcmp(g->mapping[i].def->name, vname->s, vname->len)==0)) {
-					if (group) *group = g;
-					if (var) *var = &(g->mapping[i]);
+			for(i = 0; i < g->num; i++) {
+				if((g->mapping[i].name_len == vname->len)
+						&& (memcmp(g->mapping[i].def->name, vname->s,
+									vname->len)
+								== 0)) {
+					if(group)
+						*group = g;
+					if(var)
+						*var = &(g->mapping[i]);
 					return 0;
 				}
 			}
 			break;
 		}
 
-	LM_DBG("variable not found: %.*s.%.*s\n",
-			gname->len, gname->s,
-			vname->len, vname->s);
+	LM_DBG("variable not found: %.*s.%.*s\n", gname->len, gname->s, vname->len,
+			vname->s);
 	return -1;
 }
 
 /* searches a variable definition within a group by its name */
 cfg_mapping_t *cfg_lookup_var2(cfg_group_t *group, char *name, int len)
 {
-	int	i;
+	int i;
 
-	if (!group->mapping) return NULL; /* dynamic group is not ready */
+	if(!group->mapping)
+		return NULL; /* dynamic group is not ready */
 
-	for (	i = 0;
-			i < group->num;
-			i++
-		) {
-		if ((group->mapping[i].name_len == len)
-				&& (memcmp(group->mapping[i].def->name, name, len)==0)) {
+	for(i = 0; i < group->num; i++) {
+		if((group->mapping[i].name_len == len)
+				&& (memcmp(group->mapping[i].def->name, name, len) == 0)) {
 			return &(group->mapping[i]);
 		}
 	}
 
-	LM_DBG("variable not found: %.*s.%.*s\n",
-			group->name_len, group->name,
-			len, name);
+	LM_DBG("variable not found: %.*s.%.*s\n", group->name_len, group->name, len,
+			name);
 	return NULL;
 }
 
@@ -621,14 +627,14 @@ cfg_mapping_t *cfg_lookup_var2(cfg_group_t *group, char *name, int len)
  */
 cfg_block_t *cfg_clone_global(void)
 {
-	cfg_block_t	*block;
+	cfg_block_t *block;
 
-	block = (cfg_block_t*)shm_malloc(sizeof(cfg_block_t)+cfg_block_size-1);
-	if (!block) {
+	block = (cfg_block_t *)shm_malloc(sizeof(cfg_block_t) + cfg_block_size - 1);
+	if(!block) {
 		SHM_MEM_ERROR;
 		return NULL;
 	}
-	memcpy(block, *cfg_global, sizeof(cfg_block_t)+cfg_block_size-1);
+	memcpy(block, *cfg_global, sizeof(cfg_block_t) + cfg_block_size - 1);
 
 	/* reset the reference counter */
 	atomic_set(&block->refcnt, 0);
@@ -639,15 +645,15 @@ cfg_block_t *cfg_clone_global(void)
 /* Clone an array of configuration group instances. */
 cfg_group_inst_t *cfg_clone_array(cfg_group_meta_t *meta, cfg_group_t *group)
 {
-	cfg_group_inst_t	*new_array;
-	int			size;
+	cfg_group_inst_t *new_array;
+	int size;
 
-	if (!meta->array || !meta->num)
+	if(!meta->array || !meta->num)
 		return NULL;
 
 	size = (sizeof(cfg_group_inst_t) + group->size - 1) * meta->num;
 	new_array = (cfg_group_inst_t *)shm_malloc(size);
-	if (!new_array) {
+	if(!new_array) {
 		SHM_MEM_ERROR;
 		return NULL;
 	}
@@ -659,40 +665,37 @@ cfg_group_inst_t *cfg_clone_array(cfg_group_meta_t *meta, cfg_group_t *group)
 /* Extend the array of configuration group instances with one more instance.
  * Only the ID of the new group is set, nothing else. */
 cfg_group_inst_t *cfg_extend_array(cfg_group_meta_t *meta, cfg_group_t *group,
-		unsigned int group_id,
-		cfg_group_inst_t **new_group)
+		unsigned int group_id, cfg_group_inst_t **new_group)
 {
-	int			i;
-	cfg_group_inst_t	*new_array, *old_array;
-	int			inst_size;
+	int i;
+	cfg_group_inst_t *new_array, *old_array;
+	int inst_size;
 
 	inst_size = sizeof(cfg_group_inst_t) + group->size - 1;
 	new_array = (cfg_group_inst_t *)shm_malloc(inst_size * (meta->num + 1));
-	if (!new_array) {
+	if(!new_array) {
 		SHM_MEM_ERROR;
 		return NULL;
 	}
 	/* Find the position of the new group in the array. The array is ordered
 	 * by the group IDs. */
 	old_array = meta->array;
-	for (	i = 0;
-			(i < meta->num)
-			&& (((cfg_group_inst_t *)((char *)old_array + inst_size * i))->id < group_id);
-			i++
-		);
-	if (i > 0)
-		memcpy(	new_array,
-				old_array,
-				(size_t) inst_size * i);
+	for(i = 0; (i < meta->num)
+			   && (((cfg_group_inst_t *)((char *)old_array + inst_size * i))->id
+					   < group_id);
+			i++)
+		;
+	if(i > 0)
+		memcpy(new_array, old_array, (size_t)inst_size * i);
 
-	memset((char*)new_array + inst_size * i, 0, inst_size);
-	*new_group = (cfg_group_inst_t *)((char*)new_array + inst_size * i);
+	memset((char *)new_array + inst_size * i, 0, inst_size);
+	*new_group = (cfg_group_inst_t *)((char *)new_array + inst_size * i);
 	(*new_group)->id = group_id;
 
-	if (i < meta->num)
-		memcpy(	(char*)new_array + inst_size * (i + 1),
-				(char*)old_array + inst_size * i,
-				(size_t) inst_size * (meta->num - i));
+	if(i < meta->num)
+		memcpy((char *)new_array + inst_size * (i + 1),
+				(char *)old_array + inst_size * i,
+				(size_t)inst_size * (meta->num - i));
 
 	return new_array;
 }
@@ -701,36 +704,33 @@ cfg_group_inst_t *cfg_extend_array(cfg_group_meta_t *meta, cfg_group_t *group,
  * inst must point to an instance within meta->array.
  * *_new_array is set to the newly allocated array. */
 int cfg_collapse_array(cfg_group_meta_t *meta, cfg_group_t *group,
-		cfg_group_inst_t *inst,
-		cfg_group_inst_t **_new_array)
+		cfg_group_inst_t *inst, cfg_group_inst_t **_new_array)
 {
-	cfg_group_inst_t	*new_array, *old_array;
-	int			inst_size, offset;
+	cfg_group_inst_t *new_array, *old_array;
+	int inst_size, offset;
 
-	if (!meta->num)
+	if(!meta->num)
 		return -1;
 
-	if (meta->num == 1) {
+	if(meta->num == 1) {
 		*_new_array = NULL;
 		return 0;
 	}
 
 	inst_size = sizeof(cfg_group_inst_t) + group->size - 1;
 	new_array = (cfg_group_inst_t *)shm_malloc(inst_size * (meta->num - 1));
-	if (!new_array) {
+	if(!new_array) {
 		SHM_MEM_ERROR;
 		return -1;
 	}
 
 	old_array = meta->array;
 	offset = (char *)inst - (char *)old_array;
-	if (offset)
-		memcpy(	new_array,
-				old_array,
-				offset);
+	if(offset)
+		memcpy(new_array, old_array, offset);
 
-	if (meta->num * inst_size > offset + inst_size)
-		memcpy( (char *)new_array + offset,
+	if(meta->num * inst_size > offset + inst_size)
+		memcpy((char *)new_array + offset,
 				(char *)old_array + offset + inst_size,
 				(meta->num - 1) * inst_size - offset);
 
@@ -739,21 +739,24 @@ int cfg_collapse_array(cfg_group_meta_t *meta, cfg_group_t *group,
 }
 
 /* Find the group instance within the meta-data based on the group_id */
-cfg_group_inst_t *cfg_find_group(cfg_group_meta_t *meta, int group_size, unsigned int group_id)
+cfg_group_inst_t *cfg_find_group(
+		cfg_group_meta_t *meta, int group_size, unsigned int group_id)
 {
-	int	i;
+	int i;
 	cfg_group_inst_t *ginst;
 
-	if (!meta)
+	if(!meta)
 		return NULL;
 
 	/* For now, search lineary. TODO: improve */
-	for (i = 0; i < meta->num; i++) {
+	for(i = 0; i < meta->num; i++) {
 		ginst = (cfg_group_inst_t *)((char *)meta->array
-				+ (sizeof(cfg_group_inst_t) + group_size - 1) * i);
-		if (ginst->id == group_id)
+									 + (sizeof(cfg_group_inst_t) + group_size
+											   - 1)
+											   * i);
+		if(ginst->id == group_id)
 			return ginst;
-		else if (ginst->id > group_id)
+		else if(ginst->id > group_id)
 			break; /* needless to continue, the array is ordered */
 	}
 	return NULL;
@@ -781,19 +784,20 @@ void cfg_install_child_cb(cfg_child_cb_t *cb_first, cfg_child_cb_t *cb_last)
 void cfg_install_global(cfg_block_t *block, void **replaced,
 		cfg_child_cb_t *cb_first, cfg_child_cb_t *cb_last)
 {
-	cfg_block_t* old_cfg;
+	cfg_block_t *old_cfg;
 
 	CFG_REF(block);
 
-	if (replaced) {
+	if(replaced) {
 		/* The replaced array is specified, it has to be linked to the child cb structure.
 		 * The last child process processing this structure will free the old strings and the array. */
-		if (cb_first) {
+		if(cb_first) {
 			cb_first->replaced = replaced;
 		} else {
 			/* At least one child cb structure is needed. */
-			cb_first = cfg_child_cb_new(NULL, NULL, NULL, 0 /* gname, name, cb, type */);
-			if (cb_first) {
+			cb_first = cfg_child_cb_new(
+					NULL, NULL, NULL, 0 /* gname, name, cb, type */);
+			if(cb_first) {
 				cb_last = cb_first;
 				cb_first->replaced = replaced;
 			} else {
@@ -810,40 +814,39 @@ void cfg_install_global(cfg_block_t *block, void **replaced,
 	old_cfg = *cfg_global;
 	*cfg_global = block;
 
-	if (cb_first)
+	if(cb_first)
 		cfg_install_child_cb(cb_first, cb_last);
 
 	CFG_UNLOCK();
 
-	if (old_cfg)
+	if(old_cfg)
 		CFG_UNREF(old_cfg);
 }
 
 /* creates a structure for a per-child process callback */
-cfg_child_cb_t *cfg_child_cb_new(str *gname, str *name,
-		cfg_on_set_child cb,
-		unsigned int type)
+cfg_child_cb_t *cfg_child_cb_new(
+		str *gname, str *name, cfg_on_set_child cb, unsigned int type)
 {
-	cfg_child_cb_t	*cb_struct;
+	cfg_child_cb_t *cb_struct;
 
 	cb_struct = (cfg_child_cb_t *)shm_malloc(sizeof(cfg_child_cb_t));
-	if (!cb_struct) {
+	if(!cb_struct) {
 		SHM_MEM_ERROR;
 		return NULL;
 	}
 	memset(cb_struct, 0, sizeof(cfg_child_cb_t));
-	if (gname) {
+	if(gname) {
 		cb_struct->gname.s = gname->s;
 		cb_struct->gname.len = gname->len;
 	}
-	if (name) {
+	if(name) {
 		cb_struct->name.s = name->s;
 		cb_struct->name.len = name->len;
 	}
 	cb_struct->cb = cb;
 	atomic_set(&cb_struct->refcnt, 0);
 
-	if (type & CFG_CB_ONLY_ONCE) {
+	if(type & CFG_CB_ONLY_ONCE) {
 		/* The callback needs to be executed only once.
 		 * Set the cb_count value to 1, so the first child
 		 * process that executes the callback will decrement
@@ -856,7 +859,7 @@ cfg_child_cb_t *cfg_child_cb_new(str *gname, str *name,
 		 * so all the child processes will execute the callback,
 		 * the counter will never reach 0.
 		 */
-		atomic_set(&cb_struct->cb_count, (1U<<(sizeof(int)*8-1))-1);
+		atomic_set(&cb_struct->cb_count, (1U << (sizeof(int) * 8 - 1)) - 1);
 	}
 
 	return cb_struct;
@@ -865,12 +868,9 @@ cfg_child_cb_t *cfg_child_cb_new(str *gname, str *name,
 /* free the memory allocated for a child cb list */
 void cfg_child_cb_free_list(cfg_child_cb_t *child_cb_first)
 {
-	cfg_child_cb_t	*cb, *cb_next;
+	cfg_child_cb_t *cb, *cb_next;
 
-	for(cb = child_cb_first;
-			cb;
-			cb = cb_next
-			) {
+	for(cb = child_cb_first; cb; cb = cb_next) {
 		cb_next = cb->next;
 		cfg_child_cb_free_item(cb);
 	}
@@ -885,66 +885,64 @@ void cfg_child_cb_free_list(cfg_child_cb_t *child_cb_first)
 int new_add_var(str *group_name, unsigned int group_id, str *var_name,
 		void *val, unsigned int type)
 {
-	cfg_group_t	*group;
-	cfg_add_var_t	*add_var = NULL, **add_var_p;
-	int		len;
+	cfg_group_t *group;
+	cfg_add_var_t *add_var = NULL, **add_var_p;
+	int len;
 
-	if (type && !var_name) {
+	if(type && !var_name) {
 		LM_ERR("Missing variable specification\n");
 		goto error;
 	}
-	if (type)
+	if(type)
 		LM_DBG("declaring a new variable instance %.*s[%u].%.*s\n",
-				group_name->len, group_name->s,
-				group_id,
-				var_name->len, var_name->s);
+				group_name->len, group_name->s, group_id, var_name->len,
+				var_name->s);
 	else
-		LM_DBG("declaring a new group instance %.*s[%u]\n",
-				group_name->len, group_name->s,
-				group_id);
+		LM_DBG("declaring a new group instance %.*s[%u]\n", group_name->len,
+				group_name->s, group_id);
 
-	if (cfg_shmized) {
+	if(cfg_shmized) {
 		LM_ERR("too late, the configuration has already been shmized\n");
 		goto error;
 	}
 
 	group = cfg_lookup_group(group_name->s, group_name->len);
-	if (!group) {
+	if(!group) {
 		/* create a new group with NULL values, it will be filled in later */
-		group = cfg_new_group(group_name->s, group_name->len,
-				0 /* num */, NULL /* mapping */,
-				NULL /* vars */, 0 /* size */, NULL /* handle */);
+		group = cfg_new_group(group_name->s, group_name->len, 0 /* num */,
+				NULL /* mapping */, NULL /* vars */, 0 /* size */,
+				NULL /* handle */);
 
-		if (!group)
+		if(!group)
 			goto error;
 		/* It is not yet known whether the group will be static or dynamic */
 		group->dynamic = CFG_GROUP_UNKNOWN;
 	}
 
-	add_var = (cfg_add_var_t *)pkg_malloc(sizeof(cfg_add_var_t) +
-			(type ? (var_name->len - 1) : 0));
-	if (!add_var) {
+	add_var = (cfg_add_var_t *)pkg_malloc(
+			sizeof(cfg_add_var_t) + (type ? (var_name->len - 1) : 0));
+	if(!add_var) {
 		PKG_MEM_ERROR;
 		goto error;
 	}
-	memset(add_var, 0, sizeof(cfg_add_var_t) +
-			(type ? (var_name->len - 1) : 0));
+	memset(add_var, 0,
+			sizeof(cfg_add_var_t) + (type ? (var_name->len - 1) : 0));
 
 	add_var->group_id = group_id;
-	if (type) {
+	if(type) {
 		add_var->name_len = var_name->len;
 		memcpy(add_var->name, var_name->s, var_name->len);
 
-		switch (type) {
+		switch(type) {
 			case CFG_VAR_INT:
 				add_var->val.i = (int)(long)val;
 				break;
 
 			case CFG_VAR_STR:
 				len = ((str *)val)->len;
-				if (len) {
+				if(len) {
 					add_var->val.s.s = (char *)pkg_malloc(sizeof(char) * len);
-					if (!add_var->val.s.s) {
+					if(!add_var->val.s.s) {
 						PKG_MEM_ERROR;
 						goto error;
 					}
@@ -956,10 +954,11 @@ int new_add_var(str *group_name, unsigned int group_id, str *var_name,
 				break;
 
 			case CFG_VAR_STRING:
-				if (val) {
+				if(val) {
 					len = strlen((char *)val);
-					add_var->val.ch = (char *)pkg_malloc(sizeof(char) * (len + 1));
-					if (!add_var->val.ch) {
+					add_var->val.ch =
+							(char *)pkg_malloc(sizeof(char) * (len + 1));
+					if(!add_var->val.ch) {
 						PKG_MEM_ERROR;
 						goto error;
 					}
@@ -979,9 +978,10 @@ int new_add_var(str *group_name, unsigned int group_id, str *var_name,
 
 	/* order the list by group_id, it will be easier
 	 * to count the group instances */
-	for(	add_var_p = &group->add_var;
+	for(add_var_p = &group->add_var;
 			*add_var_p && ((*add_var_p)->group_id <= group_id);
-			add_var_p = &((*add_var_p)->next));
+			add_var_p = &((*add_var_p)->next))
+		;
 
 	add_var->next = *add_var_p;
 	*add_var_p = add_var;
@@ -989,16 +989,17 @@ int new_add_var(str *group_name, unsigned int group_id, str *var_name,
 	return 0;
 
 error:
-	if (!type)
+	if(!type)
 		LM_ERR("failed to add the additional group instance: %.*s[%u]\n",
 				group_name->len, group_name->s, group_id);
 	else
-		LM_ERR("failed to add the additional variable instance: %.*s[%u].%.*s\n",
+		LM_ERR("failed to add the additional variable instance: "
+			   "%.*s[%u].%.*s\n",
 				group_name->len, group_name->s, group_id,
-				(var_name)?var_name->len:0,
-				(var_name&&var_name->s)?var_name->s:"");
+				(var_name) ? var_name->len : 0,
+				(var_name && var_name->s) ? var_name->s : "");
 
-	if (add_var)
+	if(add_var)
 		pkg_free(add_var);
 	return -1;
 }
@@ -1006,14 +1007,14 @@ error:
 /* delete the additional variable list */
 static void del_add_var_list(cfg_group_t *group)
 {
-	cfg_add_var_t	*add_var, *add_var2;
+	cfg_add_var_t *add_var, *add_var2;
 
 	add_var = group->add_var;
-	while (add_var) {
+	while(add_var) {
 		add_var2 = add_var->next;
-		if ((add_var->type == CFG_VAR_STR) && add_var->val.s.s)
+		if((add_var->type == CFG_VAR_STR) && add_var->val.s.s)
 			pkg_free(add_var->val.s.s);
-		else if ((add_var->type == CFG_VAR_STRING) && add_var->val.ch)
+		else if((add_var->type == CFG_VAR_STRING) && add_var->val.ch)
 			pkg_free(add_var->val.ch);
 		pkg_free(add_var);
 		add_var = add_var2;
@@ -1024,60 +1025,58 @@ static void del_add_var_list(cfg_group_t *group)
 /* create the array of additional group instances from the linked list */
 static int apply_add_var_list(cfg_block_t *block, cfg_group_t *group)
 {
-	int		i, num, size;
-	unsigned int	group_id;
-	cfg_add_var_t	*add_var;
-	cfg_group_inst_t	*new_array, *ginst;
+	int i, num, size;
+	unsigned int group_id;
+	cfg_add_var_t *add_var;
+	cfg_group_inst_t *new_array, *ginst;
 	cfg_group_meta_t *gm;
 
 	/* count the number of group instances */
-	for (	add_var = group->add_var, num = 0, group_id = 0;
-			add_var;
-			add_var = add_var->next
-		) {
-		if (!num || (group_id != add_var->group_id)) {
+	for(add_var = group->add_var, num = 0, group_id = 0; add_var;
+			add_var = add_var->next) {
+		if(!num || (group_id != add_var->group_id)) {
 			num++;
 			group_id = add_var->group_id;
 		}
 	}
 
-	if (!num)	/* nothing to do */
+	if(!num) /* nothing to do */
 		return 0;
 
 	LM_DBG("creating the group instance array "
-			"for '%.*s' with %d slots\n",
+		   "for '%.*s' with %d slots\n",
 			group->name_len, group->name, num);
 	size = (sizeof(cfg_group_inst_t) + group->size - 1) * num;
 	new_array = (cfg_group_inst_t *)shm_malloc(size);
-	if (!new_array) {
+	if(!new_array) {
 		SHM_MEM_ERROR;
 		return -1;
 	}
 	memset(new_array, 0, size);
 
-	for (i = 0; i < num; i++) {
+	for(i = 0; i < num; i++) {
 		/* Go though each group instance, set the default values,
 		 * and apply the changes */
 
-		if (!group->add_var) {
+		if(!group->add_var) {
 			LM_ERR("BUG: no more additional variable left\n");
 			goto error;
 		}
-		ginst = (cfg_group_inst_t *)((char*)new_array
-				+ (sizeof(cfg_group_inst_t) + group->size - 1) * i);
+		ginst = (cfg_group_inst_t *)((char *)new_array
+									 + (sizeof(cfg_group_inst_t) + group->size
+											   - 1)
+											   * i);
 		ginst->id = group->add_var->group_id;
 		/* fill in the new group instance with the default data */
-		memcpy(	ginst->vars,
-				CFG_GROUP_DATA(block, group),
-				group->size);
+		memcpy(ginst->vars, CFG_GROUP_DATA(block, group), group->size);
 		/* cfg_apply_list() moves the group->add_var pointer to
 		 * the beginning of the new group instance. */
-		if (cfg_apply_list(ginst, group, ginst->id, &group->add_var))
+		if(cfg_apply_list(ginst, group, ginst->id, &group->add_var))
 			goto error;
 	}
 
 #ifdef EXTRA_DEBUG
-	if (group->add_var) {
+	if(group->add_var) {
 		LM_ERR("not all the additional variables have been consumed\n");
 		goto error;
 	}
@@ -1101,23 +1100,23 @@ error:
  * The function executes all the per-child process callbacks which are different
  * in the two instances.
  */
-void cfg_move_handle(cfg_group_t *group, cfg_group_inst_t *src_ginst, cfg_group_inst_t *dst_ginst)
+void cfg_move_handle(cfg_group_t *group, cfg_group_inst_t *src_ginst,
+		cfg_group_inst_t *dst_ginst)
 {
-	cfg_mapping_t		*var;
-	unsigned int		bitmap;
-	int			i, pos;
-	str			gname, vname;
+	cfg_mapping_t *var;
+	unsigned int bitmap;
+	int i, pos;
+	str gname, vname;
 
-	if (src_ginst == dst_ginst)
-		return;	/* nothing to do */
+	if(src_ginst == dst_ginst)
+		return; /* nothing to do */
 
 	/* move the handle to the variables of the dst group instance,
 	 * or to the local config if no dst group instance is specified */
-	*(group->handle) = dst_ginst ?
-		dst_ginst->vars
-		: CFG_GROUP_DATA(cfg_local, group);
+	*(group->handle) =
+			dst_ginst ? dst_ginst->vars : CFG_GROUP_DATA(cfg_local, group);
 
-	if (cfg_child_cb != CFG_NO_CHILD_CBS) {
+	if(cfg_child_cb != CFG_NO_CHILD_CBS) {
 		/* call the per child process callback of those variables
 		 * that have different value in the two group instances */
 		/* TODO: performance optimization: this entire loop can be
@@ -1126,13 +1125,13 @@ void cfg_move_handle(cfg_group_t *group, cfg_group_inst_t *src_ginst, cfg_group_
 		 * structure for this purpose. */
 		gname.s = group->name;
 		gname.len = group->name_len;
-		for (i = 0; i < CFG_MAX_VAR_NUM/(sizeof(int)*8); i++) {
+		for(i = 0; i < CFG_MAX_VAR_NUM / (sizeof(int) * 8); i++) {
 			bitmap = ((src_ginst) ? src_ginst->set[i] : 0U)
-				| ((dst_ginst) ? dst_ginst->set[i] : 0U);
-			while (bitmap) {
+					 | ((dst_ginst) ? dst_ginst->set[i] : 0U);
+			while(bitmap) {
 				pos = bit_scan_forward32(bitmap);
-				var = &group->mapping[pos + i*sizeof(int)*8];
-				if (var->def->on_set_child_cb) {
+				var = &group->mapping[pos + i * sizeof(int) * 8];
+				if(var->def->on_set_child_cb) {
 					vname.s = var->def->name;
 					vname.len = var->name_len;
 					var->def->on_set_child_cb(&gname, &vname);
@@ -1142,12 +1141,12 @@ void cfg_move_handle(cfg_group_t *group, cfg_group_inst_t *src_ginst, cfg_group_
 		}
 	}
 	/* keep track of how many group instances are set in the child process */
-	if (!src_ginst && dst_ginst)
+	if(!src_ginst && dst_ginst)
 		cfg_ginst_count++;
-	else if (!dst_ginst)
+	else if(!dst_ginst)
 		cfg_ginst_count--;
 #ifdef EXTRA_DEBUG
-	if (cfg_ginst_count < 0)
+	if(cfg_ginst_count < 0)
 		LM_ERR("BUG: cfg_ginst_count is negative: %d. group=%.*s\n",
 				cfg_ginst_count, group->name_len, group->name);
 #endif
@@ -1157,45 +1156,45 @@ void cfg_move_handle(cfg_group_t *group, cfg_group_inst_t *src_ginst, cfg_group_
 /* Move the group handle to the specified group instance. */
 int cfg_select(cfg_group_t *group, unsigned int id)
 {
-	cfg_group_inst_t	*ginst;
+	cfg_group_inst_t *ginst;
 
-	if (!cfg_local) {
+	if(!cfg_local) {
 		LM_ERR("The child process has no local configuration\n");
 		return -1;
 	}
 
-	if (!(ginst = cfg_find_group(CFG_GROUP_META(cfg_local, group),
-					group->size,
-					id))
-			) {
-		LM_ERR("group instance '%.*s[%u]' does not exist\n",
-				group->name_len, group->name, id);
+	if(!(ginst = cfg_find_group(
+				 CFG_GROUP_META(cfg_local, group), group->size, id))) {
+		LM_ERR("group instance '%.*s[%u]' does not exist\n", group->name_len,
+				group->name, id);
 		return -1;
 	}
 
 	cfg_move_handle(group,
-			CFG_HANDLE_TO_GINST(*(group->handle)), /* the active group instance */
+			CFG_HANDLE_TO_GINST(
+					*(group->handle)), /* the active group instance */
 			ginst);
 
-	LM_DBG("group instance '%.*s[%u]' has been selected\n",
-			group->name_len, group->name, id);
+	LM_DBG("group instance '%.*s[%u]' has been selected\n", group->name_len,
+			group->name, id);
 	return 0;
 }
 
 /* Reset the group handle to the default, local configuration */
 int cfg_reset(cfg_group_t *group)
 {
-	if (!cfg_local) {
+	if(!cfg_local) {
 		LM_ERR("The child process has no local configuration\n");
 		return -1;
 	}
 
 	cfg_move_handle(group,
-			CFG_HANDLE_TO_GINST(*(group->handle)), /* the active group instance */
+			CFG_HANDLE_TO_GINST(
+					*(group->handle)), /* the active group instance */
 			NULL);
 
-	LM_DBG("default group '%.*s' has been selected\n",
-			group->name_len, group->name);
+	LM_DBG("default group '%.*s' has been selected\n", group->name_len,
+			group->name);
 	return 0;
 }
 
@@ -1209,25 +1208,26 @@ int cfg_reset(cfg_group_t *group)
  */
 int cfg_select_first(cfg_group_t *group)
 {
-	cfg_group_meta_t	*meta;
-	cfg_group_inst_t	*ginst;
+	cfg_group_meta_t *meta;
+	cfg_group_inst_t *ginst;
 
-	if (!cfg_local) {
+	if(!cfg_local) {
 		LM_ERR("The child process has no local configuration\n");
 		return -1;
 	}
 
 	meta = CFG_GROUP_META(cfg_local, group);
-	if (!meta || (meta->num == 0))
+	if(!meta || (meta->num == 0))
 		return -1;
 
 	ginst = (cfg_group_inst_t *)meta->array;
 	cfg_move_handle(group,
-			CFG_HANDLE_TO_GINST(*(group->handle)), /* the active group instance */
+			CFG_HANDLE_TO_GINST(
+					*(group->handle)), /* the active group instance */
 			ginst);
 
-	LM_DBG("group instance '%.*s[%u]' has been selected\n",
-			group->name_len, group->name, ginst->id);
+	LM_DBG("group instance '%.*s[%u]' has been selected\n", group->name_len,
+			group->name, ginst->id);
 	return 0;
 }
 
@@ -1242,35 +1242,34 @@ int cfg_select_first(cfg_group_t *group)
  */
 int cfg_select_next(cfg_group_t *group)
 {
-	cfg_group_meta_t	*meta;
-	cfg_group_inst_t	*old_ginst, *new_ginst;
-	int	size;
+	cfg_group_meta_t *meta;
+	cfg_group_inst_t *old_ginst, *new_ginst;
+	int size;
 
-	if (!cfg_local) {
+	if(!cfg_local) {
 		LM_ERR("The child process has no local configuration\n");
 		return -1;
 	}
 
 	meta = CFG_GROUP_META(cfg_local, group);
 
-	if (!(old_ginst = CFG_HANDLE_TO_GINST(*(group->handle))
-				/* the active group instance */)) {
+	if(!(old_ginst = CFG_HANDLE_TO_GINST(*(group->handle))
+			   /* the active group instance */)) {
 		LM_ERR("No group instance is set currently."
-				"Forgot to call cfg_select_first()?\n");
+			   "Forgot to call cfg_select_first()?\n");
 		return -1;
 	}
 
 	size = sizeof(cfg_group_inst_t) + group->size - 1;
-	if (((char *)old_ginst - (char *)meta->array)/size + 1 >= meta->num)
+	if(((char *)old_ginst - (char *)meta->array) / size + 1 >= meta->num)
 		return -1; /* this is the last group instance */
 
 	new_ginst = (cfg_group_inst_t *)((char *)old_ginst + size);
-	cfg_move_handle(group,
-			old_ginst, /* the active group instance */
+	cfg_move_handle(group, old_ginst, /* the active group instance */
 			new_ginst);
 
-	LM_DBG("group instance '%.*s[%u]' has been selected\n",
-			group->name_len, group->name, new_ginst->id);
+	LM_DBG("group instance '%.*s[%u]' has been selected\n", group->name_len,
+			group->name, new_ginst->id);
 	return 0;
 }
 
@@ -1292,19 +1291,16 @@ void cfg_main_set_local(void)
  */
 void cfg_main_reset_local(void)
 {
-	cfg_group_t	*group;
+	cfg_group_t *group;
 
 	/* Unref the local config, and set it back to NULL.
 	 * Each child will set its own local configuration. */
-	if (cfg_local) {
+	if(cfg_local) {
 		CFG_UNREF(cfg_local);
 		cfg_local = NULL;
 
 		/* restore the original value of the module handles */
-		for (	group = cfg_group;
-				group;
-				group = group->next
-			)
+		for(group = cfg_group; group; group = group->next)
 			*(group->handle) = group->orig_handle;
 		/* The handle might have pointed to a group instance,
 		 * reset the instance counter. */

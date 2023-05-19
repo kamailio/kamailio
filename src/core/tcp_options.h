@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2007 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -44,9 +44,8 @@
 #endif
 
 
-
 /* defer accept */
-#ifndef  NO_TCP_DEFER_ACCEPT
+#ifndef NO_TCP_DEFER_ACCEPT
 #ifdef __OS_linux
 #define HAVE_TCP_DEFER_ACCEPT
 #elif defined __OS_freebsd
@@ -106,40 +105,41 @@
 
 #endif /* USE_TCP */
 
-struct cfg_group_tcp{
+struct cfg_group_tcp
+{
 	/* ser tcp options, low level */
 	int connect_timeout_s; /* in s */
-	int send_timeout; /* in ticks (s fixed to ticks) */
-	int con_lifetime; /* in ticks (s fixed to ticks) */
-	int max_connections; /* max tcp connections (includes tls connections) */
+	int send_timeout;	   /* in ticks (s fixed to ticks) */
+	int con_lifetime;	   /* in ticks (s fixed to ticks) */
+	int max_connections;   /* max tcp connections (includes tls connections) */
 	int max_tls_connections; /* max tls connections */
 	int no_connect; /* do not open any new tcp connection (but accept them) */
-	int fd_cache; /* on /off */
+	int fd_cache;	/* on /off */
 	/* tcp async options */
-	int async; /* on / off */
-	int tcp_connect_wait; /* on / off, depends on async */
+	int async;					 /* on / off */
+	int tcp_connect_wait;		 /* on / off, depends on async */
 	unsigned int tcpconn_wq_max; /* maximum queue len per connection */
-	unsigned int tcp_wq_max; /* maximum overall queued bytes */
+	unsigned int tcp_wq_max;	 /* maximum overall queued bytes */
 
 	/* tcp socket options */
 	int defer_accept; /* on / off */
-	int delayed_ack; /* delay ack on connect */ 
-	int syncnt;     /* numbers of SYNs retrs. before giving up connecting */
-	int linger2;    /* lifetime of orphaned  FIN_WAIT2 state sockets */
-	int keepalive;  /* on /off */
-	int keepidle;   /* idle time (s) before tcp starts sending keepalives */
-	int keepintvl;  /* interval between keep alives */
-	int keepcnt;    /* maximum no. of keepalives before giving up */
-	
+	int delayed_ack;  /* delay ack on connect */
+	int syncnt;		  /* numbers of SYNs retrs. before giving up connecting */
+	int linger2;	  /* lifetime of orphaned  FIN_WAIT2 state sockets */
+	int keepalive;	  /* on /off */
+	int keepidle;	  /* idle time (s) before tcp starts sending keepalives */
+	int keepintvl;	  /* interval between keep alives */
+	int keepcnt;	  /* maximum no. of keepalives before giving up */
+
 	/* other options */
-	int crlf_ping;  /* on/off - reply to double CRLF keepalives */
+	int crlf_ping; /* on/off - reply to double CRLF keepalives */
 	int accept_aliases;
 	int alias_flags;
 	int new_conn_alias_flags;
-	int accept_no_cl;  /* on/off - accept messages without content-length */
-	int reuse_port;  /* enable SO_REUSEPORT */
-	int wait_data_ms;  /* wait for data in milliseconds */
-	int close_rst; /* on /off trigger an RST on connection close */
+	int accept_no_cl; /* on/off - accept messages without content-length */
+	int reuse_port;	  /* enable SO_REUSEPORT */
+	int wait_data_ms; /* wait for data in milliseconds */
+	int close_rst;	  /* on /off trigger an RST on connection close */
 
 	/* internal, "fixed" vars */
 	unsigned int rd_buf_size; /* read buffer size (should be > max. datagram)*/
@@ -149,13 +149,13 @@ struct cfg_group_tcp{
 extern struct cfg_group_tcp tcp_default_cfg;
 
 /* tcp config handle*/
-extern void* tcp_cfg;
+extern void *tcp_cfg;
 
 
 void init_tcp_options(void);
 void tcp_options_check(void);
 int tcp_register_cfg(void);
-void tcp_options_get(struct cfg_group_tcp* t);
+void tcp_options_get(struct cfg_group_tcp *t);
 
 #ifdef USE_TCP
 int tcp_set_clone_rcvbuf(int v);

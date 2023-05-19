@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2008 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -23,7 +23,7 @@
 
 #include "endianness.h"
 
-int _endian_test_int=1 /* used for the runtime endian tests */;
+int _endian_test_int = 1 /* used for the runtime endian tests */;
 
 
 /* return 0 on success, -1 on error (compile time detected endianness is
@@ -32,12 +32,11 @@ int _endian_test_int=1 /* used for the runtime endian tests */;
 int endianness_sanity_check()
 {
 #ifdef __IS_LITTLE_ENDIAN
-	return is_little_endian()-1;
+	return is_little_endian() - 1;
 #elif defined __IS_BIG_ENDIAN
-	return is_big_endian()-1;
+	return is_big_endian() - 1;
 #else
 #warning BUG: endianness macro are not defined
 	return -1;
 #endif
 }
-

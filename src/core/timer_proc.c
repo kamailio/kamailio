@@ -40,7 +40,7 @@
  */
 int register_basic_timers(int timers)
 {
-	if(register_procs(timers)<0)
+	if(register_procs(timers) < 0)
 		return -1;
 	cfg_register_child(timers);
 	return 0;
@@ -63,17 +63,19 @@ int register_basic_timers(int timers)
  * @return pid of the new process on success, -1 on error
  * (doesn't return anything in the child process)
  */
-int fork_basic_timer(int child_id, char* desc, int make_sock,
-						timer_function* f, void* param, int interval)
+int fork_basic_timer(int child_id, char *desc, int make_sock, timer_function *f,
+		void *param, int interval)
 {
 	int pid;
 
-	pid=fork_process(child_id, desc, make_sock);
-	if (pid<0) return -1;
-	if (pid==0){
+	pid = fork_process(child_id, desc, make_sock);
+	if(pid < 0)
+		return -1;
+	if(pid == 0) {
 		/* child */
-		if (cfg_child_init()) return -1;
-		for(;;){
+		if(cfg_child_init())
+			return -1;
+		for(;;) {
 			sleep(interval);
 			cfg_update();
 			f(get_ticks(), param); /* ticks in s for compatibility with old
@@ -84,20 +86,23 @@ int fork_basic_timer(int child_id, char* desc, int make_sock,
 	return pid;
 }
 
-int fork_basic_timer_w(int child_id, char* desc, int make_sock,
-						timer_function_w* f, int worker, void* param, int interval)
+int fork_basic_timer_w(int child_id, char *desc, int make_sock,
+		timer_function_w *f, int worker, void *param, int interval)
 {
 	int pid;
 
-	pid=fork_process(child_id, desc, make_sock);
-	if (pid<0) return -1;
-	if (pid==0){
+	pid = fork_process(child_id, desc, make_sock);
+	if(pid < 0)
+		return -1;
+	if(pid == 0) {
 		/* child */
-		if (cfg_child_init()) return -1;
-		for(;;){
+		if(cfg_child_init())
+			return -1;
+		for(;;) {
 			sleep(interval);
 			cfg_update();
-			f(get_ticks(), worker, param); /* ticks in s for compatibility with old
+			f(get_ticks(), worker,
+					param); /* ticks in s for compatibility with old
 									* timers */
 		}
 	}
@@ -122,18 +127,20 @@ int fork_basic_timer_w(int child_id, char* desc, int make_sock,
  * @return pid of the new process on success, -1 on error
  * (doesn't return anything in the child process)
  */
-int fork_basic_utimer(int child_id, char* desc, int make_sock,
-						utimer_function* f, void* param, int uinterval)
+int fork_basic_utimer(int child_id, char *desc, int make_sock,
+		utimer_function *f, void *param, int uinterval)
 {
 	int pid;
 	ticks_t ts;
 
-	pid=fork_process(child_id, desc, make_sock);
-	if (pid<0) return -1;
-	if (pid==0){
+	pid = fork_process(child_id, desc, make_sock);
+	if(pid < 0)
+		return -1;
+	if(pid == 0) {
 		/* child */
-		if (cfg_child_init()) return -1;
-		for(;;){
+		if(cfg_child_init())
+			return -1;
+		for(;;) {
 			sleep_us(uinterval);
 			cfg_update();
 			ts = get_ticks_raw();
@@ -144,18 +151,20 @@ int fork_basic_utimer(int child_id, char* desc, int make_sock,
 	return pid;
 }
 
-int fork_basic_utimer_w(int child_id, char* desc, int make_sock,
-						utimer_function_w* f, int worker, void* param, int uinterval)
+int fork_basic_utimer_w(int child_id, char *desc, int make_sock,
+		utimer_function_w *f, int worker, void *param, int uinterval)
 {
 	int pid;
 	ticks_t ts;
 
-	pid=fork_process(child_id, desc, make_sock);
-	if (pid<0) return -1;
-	if (pid==0){
+	pid = fork_process(child_id, desc, make_sock);
+	if(pid < 0)
+		return -1;
+	if(pid == 0) {
 		/* child */
-		if (cfg_child_init()) return -1;
-		for(;;){
+		if(cfg_child_init())
+			return -1;
+		for(;;) {
 			sleep_us(uinterval);
 			cfg_update();
 			ts = get_ticks_raw();
@@ -195,21 +204,25 @@ int fork_basic_utimer_w(int child_id, char* desc, int make_sock,
  * @param lt_h      local_timer handler
  * @return pid to the parent, 0 to the child, -1 if error.
  */
-int fork_local_timer_process(int child_id, char* desc, int make_sock,
-						struct local_timer** lt_h)
+int fork_local_timer_process(
+		int child_id, char *desc, int make_sock, struct local_timer **lt_h)
 {
 	int pid;
-	struct local_timer* lt;
+	struct local_timer *lt;
 
-	lt=shm_malloc(sizeof(*lt));
-	if (lt==0) goto error;
-	if (init_local_timer(lt, get_ticks_raw())<0) goto error;
-	pid=fork_process(child_id, desc, make_sock);
-	if (pid<0) goto error;
-	*lt_h=lt;
+	lt = shm_malloc(sizeof(*lt));
+	if(lt == 0)
+		goto error;
+	if(init_local_timer(lt, get_ticks_raw()) < 0)
+		goto error;
+	pid = fork_process(child_id, desc, make_sock);
+	if(pid < 0)
+		goto error;
+	*lt_h = lt;
 	return pid;
 error:
-	if (lt) shm_free(lt);
+	if(lt)
+		shm_free(lt);
 	return -1;
 }
 
@@ -220,7 +233,7 @@ error:
  */
 int register_sync_timers(int timers)
 {
-	if(register_procs(timers)<0)
+	if(register_procs(timers) < 0)
 		return -1;
 	cfg_register_child(timers);
 	return 0;
@@ -243,28 +256,31 @@ int register_sync_timers(int timers)
  * @return pid of the new process on success, -1 on error
  * (doesn't return anything in the child process)
  */
-int fork_sync_timer(int child_id, char* desc, int make_sock,
-						timer_function* f, void* param, int interval)
+int fork_sync_timer(int child_id, char *desc, int make_sock, timer_function *f,
+		void *param, int interval)
 {
 	int pid;
 	ticks_t ts1 = 0;
 	ticks_t ts2 = 0;
 
-	pid=fork_process(child_id, desc, make_sock);
-	if (pid<0) return -1;
-	if (pid==0){
+	pid = fork_process(child_id, desc, make_sock);
+	if(pid < 0)
+		return -1;
+	if(pid == 0) {
 		/* child */
-		interval *= 1000;  /* milliseconds */
+		interval *= 1000; /* milliseconds */
 		ts2 = interval;
-		if (cfg_child_init()) return -1;
-		for(;;){
-			if (ts2>interval)
-				sleep_us(1000);    /* 1 millisecond sleep to catch up */
+		if(cfg_child_init())
+			return -1;
+		for(;;) {
+			if(ts2 > interval)
+				sleep_us(1000); /* 1 millisecond sleep to catch up */
 			else
-				sleep_us(ts2*1000); /* microseconds sleep */
+				sleep_us(ts2 * 1000); /* microseconds sleep */
 			ts1 = get_ticks_raw();
 			cfg_update();
-			f(TICKS_TO_S(ts1), param); /* ticks in sec for compatibility with old
+			f(TICKS_TO_S(ts1),
+					param); /* ticks in sec for compatibility with old
 										* timers */
 			/* adjust the next sleep duration */
 			ts2 = interval - TICKS_TO_MS(get_ticks_raw()) + TICKS_TO_MS(ts1);
@@ -292,21 +308,23 @@ int fork_sync_timer(int child_id, char* desc, int make_sock,
  * @return pid of the new process on success, -1 on error
  * (doesn't return anything in the child process)
  */
-int fork_sync_utimer(int child_id, char* desc, int make_sock,
-						utimer_function* f, void* param, int uinterval)
+int fork_sync_utimer(int child_id, char *desc, int make_sock,
+		utimer_function *f, void *param, int uinterval)
 {
 	int pid;
 	ticks_t ts1 = 0;
 	ticks_t ts2 = 0;
 
-	pid=fork_process(child_id, desc, make_sock);
-	if (pid<0) return -1;
-	if (pid==0){
+	pid = fork_process(child_id, desc, make_sock);
+	if(pid < 0)
+		return -1;
+	if(pid == 0) {
 		/* child */
 		ts2 = uinterval;
-		if (cfg_child_init()) return -1;
-		for(;;){
-			if(ts2>uinterval)
+		if(cfg_child_init())
+			return -1;
+		for(;;) {
+			if(ts2 > uinterval)
 				sleep_us(1);
 			else
 				sleep_us(ts2);
@@ -322,34 +340,37 @@ int fork_sync_utimer(int child_id, char* desc, int make_sock,
 
 
 /* number of slots in the wheel timer */
-#define SR_WTIMER_SIZE	16
+#define SR_WTIMER_SIZE 16
 
-typedef struct sr_wtimer_node {
+typedef struct sr_wtimer_node
+{
 	struct sr_wtimer_node *next;
-	uint32_t interval;  /* frequency of execution (secs) */
-	uint32_t steps;     /* init: interval = loops * SR_WTIMER_SIZE + steps */
+	uint32_t interval; /* frequency of execution (secs) */
+	uint32_t steps;	   /* init: interval = loops * SR_WTIMER_SIZE + steps */
 	uint32_t loops;
 	uint32_t eloop;
-	timer_function* f;
-	void* param;
+	timer_function *f;
+	void *param;
 } sr_wtimer_node_t;
 
-typedef struct sr_wtimer {
+typedef struct sr_wtimer
+{
 	uint32_t itimer;
 	sr_wtimer_node_t *wlist[SR_WTIMER_SIZE];
 } sr_wtimer_t;
 
-static sr_wtimer_t *_sr_wtimer = NULL;;
+static sr_wtimer_t *_sr_wtimer = NULL;
+;
 
 /**
  *
  */
 int sr_wtimer_init(void)
 {
-	if(_sr_wtimer!=NULL)
+	if(_sr_wtimer != NULL)
 		return 0;
 	_sr_wtimer = (sr_wtimer_t *)pkg_malloc(sizeof(sr_wtimer_t));
-	if(_sr_wtimer==NULL) {
+	if(_sr_wtimer == NULL) {
 		PKG_MEM_ERROR;
 		return -1;
 	}
@@ -362,16 +383,16 @@ int sr_wtimer_init(void)
 /**
  *
  */
-int sr_wtimer_add(timer_function* f, void* param, int interval)
+int sr_wtimer_add(timer_function *f, void *param, int interval)
 {
 	sr_wtimer_node_t *wt;
-	if(_sr_wtimer==NULL) {
+	if(_sr_wtimer == NULL) {
 		LM_ERR("wtimer not initialized\n");
 		return -1;
 	}
 
-	wt = (sr_wtimer_node_t*)pkg_malloc(sizeof(sr_wtimer_node_t));
-	if(wt==NULL) {
+	wt = (sr_wtimer_node_t *)pkg_malloc(sizeof(sr_wtimer_node_t));
+	if(wt == NULL) {
 		PKG_MEM_ERROR;
 		return -1;
 	}
@@ -413,7 +434,7 @@ void sr_wtimer_exec(unsigned int ticks, void *param)
 	sr_wtimer_node_t *wp;
 	uint32_t cs;
 
-	if(_sr_wtimer==NULL) {
+	if(_sr_wtimer == NULL) {
 		LM_ERR("wtimer not initialized\n");
 		return;
 	}
@@ -425,14 +446,14 @@ void sr_wtimer_exec(unsigned int ticks, void *param)
 	LM_DBG("wtimer - loop: %u - slot: %u\n", cl, cs); */
 
 	wp = NULL;
-	wt=_sr_wtimer->wlist[cs];
+	wt = _sr_wtimer->wlist[cs];
 	while(wt) {
 		wn = wt->next;
-		if(wt->eloop==0) {
+		if(wt->eloop == 0) {
 			/* execute timer callback function */
 			wt->f(ticks, wt->param);
 			/* extract and reinsert timer item */
-			if(wp==NULL) {
+			if(wp == NULL) {
 				_sr_wtimer->wlist[cs] = wn;
 			} else {
 				wp->next = wn;
@@ -451,13 +472,14 @@ void sr_wtimer_exec(unsigned int ticks, void *param)
  */
 int sr_wtimer_start(void)
 {
-	if(_sr_wtimer==NULL) {
+	if(_sr_wtimer == NULL) {
 		LM_ERR("wtimer not initialized\n");
 		return -1;
 	}
 
-	if(fork_sync_timer(-1 /*PROC_TIMER*/, "secondary timer", 1,
-				sr_wtimer_exec, NULL, 1)<0) {
+	if(fork_sync_timer(
+			   -1 /*PROC_TIMER*/, "secondary timer", 1, sr_wtimer_exec, NULL, 1)
+			< 0) {
 		LM_ERR("wtimer starting failed\n");
 		return -1;
 	}

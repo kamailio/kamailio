@@ -25,7 +25,6 @@
 */
 
 
-
 #ifndef _HASH_FUNC_H_
 #define _HASH_FUNC_H_
 
@@ -33,15 +32,15 @@
 #include "hashes.h"
 
 /* always use a power of 2 for hash table size */
-#define T_TABLE_POWER    16
-#define TABLE_ENTRIES    (1 << (T_TABLE_POWER))
+#define T_TABLE_POWER 16
+#define TABLE_ENTRIES (1 << (T_TABLE_POWER))
 
-unsigned int new_hash( str  call_id, str cseq_nr );
+unsigned int new_hash(str call_id, str cseq_nr);
 
 #define new_hash2(call_id, cseq_nr) \
-	(get_hash2_raw(&(call_id), &(cseq_nr)) & (TABLE_ENTRIES-1))
+	(get_hash2_raw(&(call_id), &(cseq_nr)) & (TABLE_ENTRIES - 1))
 
 
-#define hash( cid, cseq) new_hash2( cid, cseq )
+#define hash(cid, cseq) new_hash2(cid, cseq)
 
 #endif

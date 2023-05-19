@@ -43,11 +43,11 @@
 
 #endif /* __OS_cygwin */
 
-int send_fd(int unix_socket, void* data, int data_len, int fd);
-int receive_fd(int unix_socket, void* data, int data_len, int* fd, int flags);
+int send_fd(int unix_socket, void *data, int data_len, int fd);
+int receive_fd(int unix_socket, void *data, int data_len, int *fd, int flags);
 
-int recv_all(int socket, void* data, int data_len, int flags);
-int send_all(int socket, void* data, int data_len);
+int recv_all(int socket, void *data, int data_len, int flags);
+int send_all(int socket, void *data, int data_len);
 
 
 #endif

@@ -20,8 +20,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * History:
@@ -41,39 +41,40 @@
 /*
  * Structure representing a Contact HF body
  */
-typedef struct contact {
-	str name;               /* Name part */
-	str uri;                /* contact uri */
-	param_t* q;             /* q parameter hook */
-	param_t* expires;       /* expires parameter hook */
-	param_t* methods;       /* methods parameter hook */
-	param_t* received;      /* received parameter hook */
-	param_t* instance;      /* sip.instance parameter hook */
-	param_t* reg_id;        /* reg-id parameter hook */
-	param_t* flags;         /* flags parameter hook */
-	param_t* params;        /* List of all parameters */
-	int len;                /* Total length of the element */
-        struct contact* next; /* Next contact in the list */
+typedef struct contact
+{
+	str name;			  /* Name part */
+	str uri;			  /* contact uri */
+	param_t *q;			  /* q parameter hook */
+	param_t *expires;	  /* expires parameter hook */
+	param_t *methods;	  /* methods parameter hook */
+	param_t *received;	  /* received parameter hook */
+	param_t *instance;	  /* sip.instance parameter hook */
+	param_t *reg_id;	  /* reg-id parameter hook */
+	param_t *flags;		  /* flags parameter hook */
+	param_t *params;	  /* List of all parameters */
+	int len;			  /* Total length of the element */
+	struct contact *next; /* Next contact in the list */
 } contact_t;
 
 
 /*
  * Parse contacts in a Contact HF
  */
-int parse_contacts(str* _s, contact_t** _c);
+int parse_contacts(str *_s, contact_t **_c);
 
 
 /*
  * Free list of contacts
  * _c is head of the list
  */
-void free_contacts(contact_t** _c);
+void free_contacts(contact_t **_c);
 
 
 /*
  * Print list of contacts, just for debugging
  */
-void print_contacts(FILE* _o, contact_t* _c);
+void print_contacts(FILE *_o, contact_t *_c);
 
 
 #endif /* CONTACT_H */

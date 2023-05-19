@@ -28,10 +28,10 @@
 #include "sr_module.h"
 #include "pvar.h"
 
-#define GPARAM_TYPE_INT		FPARAM_INT
-#define GPARAM_TYPE_STR		FPARAM_STR
-#define GPARAM_TYPE_PVS		FPARAM_PVS
-#define GPARAM_TYPE_PVE		FPARAM_PVE
+#define GPARAM_TYPE_INT FPARAM_INT
+#define GPARAM_TYPE_STR FPARAM_STR
+#define GPARAM_TYPE_PVS FPARAM_PVS
+#define GPARAM_TYPE_PVE FPARAM_PVE
 
 /**
  * generic parameter that holds a string, an int, a pseudo-variable
@@ -48,7 +48,7 @@
 
 typedef gparam_t *gparam_p;
 
-int fixup_get_svalue(struct sip_msg* msg, gparam_p gp, str *val);
+int fixup_get_svalue(struct sip_msg *msg, gparam_p gp, str *val);
 
 /** get a string value out of a fparam_t.
   *
@@ -76,102 +76,102 @@ int fixup_get_svalue(struct sip_msg* msg, gparam_p gp, str *val);
   */
 #define fixup_get_ivalue(msg, fp, ival) get_int_fparam(ival, msg, fp)
 
-int fixup_str_null(void** param, int param_no);
-int fixup_str_str(void** param, int param_no);
+int fixup_str_null(void **param, int param_no);
+int fixup_str_str(void **param, int param_no);
 
-int fixup_free_str_null(void** param, int param_no);
-int fixup_free_str_str(void** param, int param_no);
+int fixup_free_str_null(void **param, int param_no);
+int fixup_free_str_str(void **param, int param_no);
 
-int fixup_uint_null(void** param, int param_no);
-int fixup_uint_uint(void** param, int param_no);
+int fixup_uint_null(void **param, int param_no);
+int fixup_uint_uint(void **param, int param_no);
 
 
-int fixup_regexp_null(void** param, int param_no);
-int fixup_free_regexp_null(void** param, int param_no);
-int fixup_regexp_regexp(void** param, int param_no);
-int fixup_free_regexp_regexp(void** param, int param_no);
+int fixup_regexp_null(void **param, int param_no);
+int fixup_free_regexp_null(void **param, int param_no);
+int fixup_regexp_regexp(void **param, int param_no);
+int fixup_free_regexp_regexp(void **param, int param_no);
 
 int fixup_pvar_null(void **param, int param_no);
-int fixup_free_pvar_null(void** param, int param_no);
+int fixup_free_pvar_null(void **param, int param_no);
 
-int fixup_pvar_none(void** param, int param_no);
-int fixup_free_pvar_none(void** param, int param_no);
+int fixup_pvar_none(void **param, int param_no);
+int fixup_free_pvar_none(void **param, int param_no);
 
 int fixup_pvar_pvar(void **param, int param_no);
-int fixup_free_pvar_pvar(void** param, int param_no);
+int fixup_free_pvar_pvar(void **param, int param_no);
 
 int fixup_pvar_pvar_pvar(void **param, int param_no);
-int fixup_free_pvar_pvar_pvar(void** param, int param_no);
+int fixup_free_pvar_pvar_pvar(void **param, int param_no);
 
-int fixup_pvar_str(void** param, int param_no);
-int fixup_free_pvar_str(void** param, int param_no);
+int fixup_pvar_str(void **param, int param_no);
+int fixup_free_pvar_str(void **param, int param_no);
 
-int fixup_pvar_str_str(void** param, int param_no);
-int fixup_free_pvar_str_str(void** param, int param_no);
+int fixup_pvar_str_str(void **param, int param_no);
+int fixup_free_pvar_str_str(void **param, int param_no);
 
-int fixup_pvar_uint(void** param, int param_no);
-int fixup_free_pvar_uint(void** param, int param_no);
+int fixup_pvar_uint(void **param, int param_no);
+int fixup_free_pvar_uint(void **param, int param_no);
 
-int fixup_igp_igp(void** param, int param_no);
-int fixup_free_igp_igp(void** param, int param_no);
-int fixup_igp_null(void** param, int param_no);
-int fixup_free_igp_null(void** param, int param_no);
-int fixup_get_ivalue(struct sip_msg* msg, gparam_p gp, int *val);
+int fixup_igp_igp(void **param, int param_no);
+int fixup_free_igp_igp(void **param, int param_no);
+int fixup_igp_null(void **param, int param_no);
+int fixup_free_igp_null(void **param, int param_no);
+int fixup_get_ivalue(struct sip_msg *msg, gparam_p gp, int *val);
 
-int fixup_igp_pvar(void** param, int param_no);
-int fixup_free_igp_pvar(void** param, int param_no);
+int fixup_igp_pvar(void **param, int param_no);
+int fixup_free_igp_pvar(void **param, int param_no);
 
-int fixup_igp_pvar_pvar(void** param, int param_no);
-int fixup_free_igp_pvar_pvar(void** param, int param_no);
+int fixup_igp_pvar_pvar(void **param, int param_no);
+int fixup_free_igp_pvar_pvar(void **param, int param_no);
 
-int fixup_igp_spve(void** param, int param_no);
-int fixup_free_igp_spve(void** param, int param_no);
+int fixup_igp_spve(void **param, int param_no);
+int fixup_free_igp_spve(void **param, int param_no);
 
-int fixup_pvar_all(void** param, int param_no);
-int fixup_free_pvar_all(void** param, int param_no);
+int fixup_pvar_all(void **param, int param_no);
+int fixup_free_pvar_all(void **param, int param_no);
 
-int fixup_spve_spve(void** param, int param_no);
-int fixup_free_spve_spve(void** param, int param_no);
-int fixup_spve_null(void** param, int param_no);
-int fixup_free_spve_null(void** param, int param_no);
-int fixup_spve_uint(void** param, int param_no);
-int fixup_free_spve_uint(void** param, int param_no);
-int fixup_spve_str(void** param, int param_no);
-int fixup_free_spve_str(void** param, int param_no);
+int fixup_spve_spve(void **param, int param_no);
+int fixup_free_spve_spve(void **param, int param_no);
+int fixup_spve_null(void **param, int param_no);
+int fixup_free_spve_null(void **param, int param_no);
+int fixup_spve_uint(void **param, int param_no);
+int fixup_free_spve_uint(void **param, int param_no);
+int fixup_spve_str(void **param, int param_no);
+int fixup_free_spve_str(void **param, int param_no);
 
-int fixup_spve_all(void** param, int param_no);
-int fixup_free_spve_all(void** param, int param_no);
-int fixup_igp_all(void** param, int param_no);
-int fixup_free_igp_all(void** param, int param_no);
+int fixup_spve_all(void **param, int param_no);
+int fixup_free_spve_all(void **param, int param_no);
+int fixup_igp_all(void **param, int param_no);
+int fixup_free_igp_all(void **param, int param_no);
 
-int fixup_spve_igp(void** param, int param_no);
-int fixup_free_spve_igp(void** param, int param_no);
-int fixup_spve_pvar(void** param, int param_no);
-int fixup_free_spve_pvar(void** param, int param_no);
+int fixup_spve_igp(void **param, int param_no);
+int fixup_free_spve_igp(void **param, int param_no);
+int fixup_spve_pvar(void **param, int param_no);
+int fixup_free_spve_pvar(void **param, int param_no);
 
-int fixup_spve_spve_igp(void** param, int param_no);
-int fixup_free_spve_spve_igp(void** param, int param_no);
+int fixup_spve_spve_igp(void **param, int param_no);
+int fixup_free_spve_spve_igp(void **param, int param_no);
 
-int fixup_none_spve(void** param, int param_no);
-int fixup_free_none_spve(void** param, int param_no);
+int fixup_none_spve(void **param, int param_no);
+int fixup_free_none_spve(void **param, int param_no);
 
 /** get the corresp. free fixup function.*/
 free_fixup_function mod_fix_get_fixup_free(fixup_function f);
 
-int fixup_vstr_all(void** param, int param_no);
-int fixup_free_vstr_all(void** param, int param_no);
+int fixup_vstr_all(void **param, int param_no);
+int fixup_free_vstr_all(void **param, int param_no);
 int fixup_get_vstr_buf(sip_msg_t *msg, pv_elem_t *p, char *buf, int blen);
 
-int fixup_igp_regexp(void** param, int param_no);
-int fixup_free_igp_regexp(void** param, int param_no);
+int fixup_igp_regexp(void **param, int param_no);
+int fixup_free_igp_regexp(void **param, int param_no);
 
-int fixup_ssi(void** param, int param_no);
-int fixup_free_ssi(void** param, int param_no);
+int fixup_ssi(void **param, int param_no);
+int fixup_free_ssi(void **param, int param_no);
 
-int fixup_sssi(void** param, int param_no);
-int fixup_free_sssi(void** param, int param_no);
+int fixup_sssi(void **param, int param_no);
+int fixup_free_sssi(void **param, int param_no);
 
-int fixup_ssii(void** param, int param_no);
-int fixup_free_ssii(void** param, int param_no);
+int fixup_ssii(void **param, int param_no);
+int fixup_free_ssii(void **param, int param_no);
 
 #endif

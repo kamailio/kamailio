@@ -22,30 +22,31 @@
 
 #include "parser/msg_parser.h"
 
-#define SREV_NET_DATA_IN		1
-#define SREV_NET_DATA_OUT		2
-#define SREV_CORE_STATS			3
-#define SREV_CFG_RUN_ACTION		4
-#define SREV_PKG_UPDATE_STATS		5
-#define SREV_RCV_NOSIP			6
-#define SREV_NET_DGRAM_IN		7
-#define SREV_TCP_HTTP_100C		8
-#define SREV_TCP_MSRP_FRAME		9
-#define SREV_TCP_WS_FRAME_IN		10
-#define SREV_TCP_WS_FRAME_OUT		11
-#define SREV_STUN_IN			12
-#define SREV_TCP_CLOSED			13
-#define SREV_NET_DATA_RECV		14
-#define SREV_NET_DATA_SENT		15
-#define SREV_SIP_REPLY_OUT		16
-#define SREV_TCP_WS_CLOSE		17
+#define SREV_NET_DATA_IN 1
+#define SREV_NET_DATA_OUT 2
+#define SREV_CORE_STATS 3
+#define SREV_CFG_RUN_ACTION 4
+#define SREV_PKG_UPDATE_STATS 5
+#define SREV_RCV_NOSIP 6
+#define SREV_NET_DGRAM_IN 7
+#define SREV_TCP_HTTP_100C 8
+#define SREV_TCP_MSRP_FRAME 9
+#define SREV_TCP_WS_FRAME_IN 10
+#define SREV_TCP_WS_FRAME_OUT 11
+#define SREV_STUN_IN 12
+#define SREV_TCP_CLOSED 13
+#define SREV_NET_DATA_RECV 14
+#define SREV_NET_DATA_SENT 15
+#define SREV_SIP_REPLY_OUT 16
+#define SREV_TCP_WS_CLOSE 17
 
-#define SREV_CB_LIST_SIZE	8
+#define SREV_CB_LIST_SIZE 8
 
-typedef struct sr_event_param {
+typedef struct sr_event_param
+{
 	void *data;
 	str obuf;
-	receive_info_t* rcv;
+	receive_info_t *rcv;
 	dest_info_t *dst;
 	sip_msg_t *req;
 	sip_msg_t *rpl;
@@ -55,7 +56,8 @@ typedef struct sr_event_param {
 
 typedef int (*sr_event_cb_f)(sr_event_param_t *evp);
 
-typedef struct sr_event_cb {
+typedef struct sr_event_cb
+{
 	sr_event_cb_f net_data_in[SREV_CB_LIST_SIZE];
 	sr_event_cb_f net_data_out[SREV_CB_LIST_SIZE];
 	sr_event_cb_f core_stats;
@@ -83,25 +85,26 @@ int sr_event_enabled(int type);
 
 /* shortcut types for core event routes */
 /* initial parsing error in message receive function */
-#define SR_CORE_ERT_RECEIVE_PARSE_ERROR		1
+#define SR_CORE_ERT_RECEIVE_PARSE_ERROR 1
 
 void sr_core_ert_init(void);
 void sr_core_ert_run(sip_msg_t *msg, int e);
 
 typedef void (*sr_corecb_void_f)(void);
-typedef struct sr_corecb {
+typedef struct sr_corecb
+{
 	sr_corecb_void_f app_ready;
 	sr_corecb_void_f app_shutdown;
 } sr_corecb_t;
 
 sr_corecb_t *sr_corecb_get(void);
 
-#define sr_corecb_void_exec(fname) \
-	do { \
+#define sr_corecb_void_exec(fname)            \
+	do {                                      \
 		sr_corecb_t *__cbp = sr_corecb_get(); \
-		if(__cbp && __cbp->fname) { \
-			__cbp->fname(); \
-		} \
+		if(__cbp && __cbp->fname) {           \
+			__cbp->fname();                   \
+		}                                     \
 	} while(0);
 
 #endif

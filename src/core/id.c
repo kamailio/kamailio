@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -38,71 +38,77 @@ static str did_name = STR_STATIC_INIT(AVP_DID);
 /**
  * Set From UID
  */
-int set_from_uid(str* uid)
+int set_from_uid(str *uid)
 {
 	struct search_state s;
 	int_str val, name;
-	avp_t* a;
+	avp_t *a;
 
 	name.s = uid_name;
-	a = search_first_avp(AVP_CLASS_USER | AVP_TRACK_FROM | AVP_NAME_STR, name, 0, &s);
+	a = search_first_avp(
+			AVP_CLASS_USER | AVP_TRACK_FROM | AVP_NAME_STR, name, 0, &s);
 	while(a) {
 		destroy_avp(a);
 		a = search_next_avp(&s, 0);
 	}
 
 	val.s = *uid;
-	return add_avp(AVP_CLASS_USER | AVP_TRACK_FROM | AVP_NAME_STR | AVP_VAL_STR, name, val);
+	return add_avp(AVP_CLASS_USER | AVP_TRACK_FROM | AVP_NAME_STR | AVP_VAL_STR,
+			name, val);
 }
 
 
 /** Extract username attribute from authorized credentials */
-static inline str* cred_user(struct sip_msg* msg)
+static inline str *cred_user(struct sip_msg *msg)
 {
-	struct hdr_field* h;
-	auth_body_t* cred;
+	struct hdr_field *h;
+	auth_body_t *cred;
 
 	get_authorized_cred(msg->proxy_auth, &h);
-	if (!h) get_authorized_cred(msg->authorization, &h);
-	if (!h) return 0;
-	cred = (auth_body_t*)(h->parsed);
-	if (!cred || !cred->digest.username.user.len) return 0;
+	if(!h)
+		get_authorized_cred(msg->authorization, &h);
+	if(!h)
+		return 0;
+	cred = (auth_body_t *)(h->parsed);
+	if(!cred || !cred->digest.username.user.len)
+		return 0;
 	return &cred->digest.username.user;
 }
 
 /**
  * Set From UID
  */
-int get_from_uid(str* uid, struct sip_msg* msg)
+int get_from_uid(str *uid, struct sip_msg *msg)
 {
 	static char buf[MAX_URI_SIZE];
-	struct to_body* from;
+	struct to_body *from;
 	struct sip_uri puri;
-	str* du;
+	str *du;
 	int_str val, name;
 
 	name.s = uid_name;
-	if (search_first_avp(AVP_CLASS_USER | AVP_TRACK_FROM | AVP_NAME_STR, name, &val, 0)) {
+	if(search_first_avp(
+			   AVP_CLASS_USER | AVP_TRACK_FROM | AVP_NAME_STR, name, &val, 0)) {
 		*uid = val.s;
 		return 1;
 	} else {
 		du = cred_user(msg);
-		if (du) {
-			     /* Try digest username first */
+		if(du) {
+			/* Try digest username first */
 			*uid = *du;
 		} else {
-			     /* Get From URI username */
-			if (parse_from_header(msg) < 0) {
+			/* Get From URI username */
+			if(parse_from_header(msg) < 0) {
 				LM_ERR("unable to parse From header\n");
 				return -1;
 			}
 			from = get_from(msg);
-			if (parse_uri(from->uri.s, from->uri.len, &puri) == -1) {
+			if(parse_uri(from->uri.s, from->uri.len, &puri) == -1) {
 				LM_ERR("unable to parsie From URI\n");
 				return -1;
 			}
-		
-			if (puri.user.len > MAX_URI_SIZE) {
+
+			if(puri.user.len > MAX_URI_SIZE) {
 				LM_ERR("username too long\n");
 				return -1;
 			}
@@ -111,55 +117,58 @@ int get_from_uid(str* uid, struct sip_msg* msg)
 			uid->len = puri.user.len;
 			strlower(uid);
 		}
-		
+
 		val.s = *uid;
-		add_avp(AVP_CLASS_USER | AVP_TRACK_FROM | AVP_NAME_STR | AVP_VAL_STR, name, val);
+		add_avp(AVP_CLASS_USER | AVP_TRACK_FROM | AVP_NAME_STR | AVP_VAL_STR,
+				name, val);
 		return 0;
 	}
 }
 
 /** Get to UID
  */
-int get_to_uid(str* uid, struct sip_msg* msg)
+int get_to_uid(str *uid, struct sip_msg *msg)
 {
 	static char buf[MAX_URI_SIZE];
-	struct to_body* to;
+	struct to_body *to;
 	struct sip_uri puri;
-	char* p;
+	char *p;
 	int_str val, name;
 
 	name.s = uid_name;
-	if (search_first_avp(AVP_CLASS_USER | AVP_TRACK_TO | AVP_NAME_STR, name, &val, 0)) {
+	if(search_first_avp(
+			   AVP_CLASS_USER | AVP_TRACK_TO | AVP_NAME_STR, name, &val, 0)) {
 		*uid = val.s;
 		return 1;
 	} else {
-		if (msg->REQ_METHOD == METHOD_REGISTER) {
-			if ((msg->to==0) && 
-				(parse_headers(msg, HDR_TO_F, 0) < 0 || msg->to == 0)) {
-				LM_DBG("Error while parsing To URI: to header bad or missing\n");
+		if(msg->REQ_METHOD == METHOD_REGISTER) {
+			if((msg->to == 0)
+					&& (parse_headers(msg, HDR_TO_F, 0) < 0 || msg->to == 0)) {
+				LM_DBG("Error while parsing To URI: to header bad or "
+					   "missing\n");
 				return -1;
 			}
 			to = get_to(msg);
-			if (parse_uri(to->uri.s, to->uri.len, &puri) == -1) {
+			if(parse_uri(to->uri.s, to->uri.len, &puri) == -1) {
 				LM_DBG("Error while parsing To URI\n");
 				return -1;
 			}
 			p = puri.user.s;
 			uid->len = puri.user.len;
 		} else {
-			if (!msg->parsed_uri_ok && (parse_sip_msg_uri(msg) < 0)) {
+			if(!msg->parsed_uri_ok && (parse_sip_msg_uri(msg) < 0)) {
 				LM_DBG("Error while parsing the Request-URI\n");
 				return -1;
 			}
 			p = msg->parsed_uri.user.s;
 			uid->len = msg->parsed_uri.user.len;
 		}
-			
-		if (uid->len > MAX_URI_SIZE) {
+
+		if(uid->len > MAX_URI_SIZE) {
 			LM_DBG("Username too long\n");
 			return -1;
 		}
-		if (p == NULL || uid->len == 0) {
+		if(p == NULL || uid->len == 0) {
 			LM_DBG("Username is empty\n");
 			return -1;
 		}
@@ -168,7 +177,8 @@ int get_to_uid(str* uid, struct sip_msg* msg)
 		strlower(uid);
 
 		val.s = *uid;
-		add_avp(AVP_CLASS_USER | AVP_TRACK_TO | AVP_NAME_STR | AVP_VAL_STR, name, val);
+		add_avp(AVP_CLASS_USER | AVP_TRACK_TO | AVP_NAME_STR | AVP_VAL_STR,
+				name, val);
 		return 0;
 	}
 }
@@ -177,36 +187,38 @@ int get_to_uid(str* uid, struct sip_msg* msg)
 /**
  * Set To UID
  */
-int set_to_uid(str* uid)
+int set_to_uid(str *uid)
 {
 	struct search_state s;
 	int_str val, name;
-	avp_t* a;
+	avp_t *a;
 
 	name.s = uid_name;
-	a = search_first_avp(AVP_CLASS_USER | AVP_TRACK_TO | AVP_NAME_STR, name, 0, &s);
+	a = search_first_avp(
+			AVP_CLASS_USER | AVP_TRACK_TO | AVP_NAME_STR, name, 0, &s);
 	while(a) {
 		destroy_avp(a);
 		a = search_next_avp(&s, 0);
 	}
 
 	val.s = *uid;
-	return add_avp(AVP_CLASS_USER | AVP_TRACK_TO | AVP_NAME_STR | AVP_VAL_STR, name, val);
+	return add_avp(AVP_CLASS_USER | AVP_TRACK_TO | AVP_NAME_STR | AVP_VAL_STR,
+			name, val);
 }
 
 
 /**
  * Return current To domain id
  */
-int get_to_did(str* did, struct sip_msg* msg)
+int get_to_did(str *did, struct sip_msg *msg)
 {
 	int_str val, name;
 
 	name.s = did_name;
-	if (search_first_avp(AVP_TRACK_TO | AVP_NAME_STR, name, &val, 0)) {
+	if(search_first_avp(AVP_TRACK_TO | AVP_NAME_STR, name, &val, 0)) {
 		*did = val.s;
 		return 1;
-	} 
+	}
 	return 0;
 }
 
@@ -214,15 +226,14 @@ int get_to_did(str* did, struct sip_msg* msg)
 /**
  * Return current To domain id
  */
-int get_from_did(str* did, struct sip_msg* msg)
+int get_from_did(str *did, struct sip_msg *msg)
 {
 	int_str val, name;
 
 	name.s = did_name;
-	if (search_first_avp(AVP_TRACK_FROM | AVP_NAME_STR, name, &val, 0)) {
+	if(search_first_avp(AVP_TRACK_FROM | AVP_NAME_STR, name, &val, 0)) {
 		*did = val.s;
 		return 1;
-	} 
+	}
 	return 0;
 }
-

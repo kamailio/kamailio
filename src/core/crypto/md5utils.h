@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of Kamailio, a free SIP server.
@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -30,11 +30,11 @@
 
 #include "../str.h"
 
-#define MD5_LEN	32
+#define MD5_LEN 32
 
 /*!
   * \brief Calculate a MD5 digests over a string array
-  * 
+  *
   * Calculate a MD5 digests over a string array and stores the result in the
   * destination char array. This function assumes 32 bytes in the destination
   * buffer.
@@ -42,6 +42,6 @@
   * \param src string input array
   * \param size elements in the input array
   */
-void MD5StringArray (char *dst, str src[], int size);
+void MD5StringArray(char *dst, str src[], int size);
 
 #endif /* _MD5UTILS_H */

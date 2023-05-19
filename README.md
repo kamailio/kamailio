@@ -2,6 +2,7 @@
 
 [![Build Status](https://github.com/kamailio/kamailio/actions/workflows/main.yml/badge.svg)](https://github.com/kamailio/kamailio/actions)
 [![Code Triage Badge](https://www.codetriage.com/kamailio/kamailio/badges/users.svg)](https://www.codetriage.com/kamailio/kamailio)
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
 
 Project Website:
 
@@ -120,10 +121,5 @@ News:
 
   * https://www.kamailio.org/w/category/news/
   * Twitter @kamailio
-
-## Travis-CI - Testing Build Environment
-
- * [travis-ci](https://travis-ci.org/kamailio/kamailio/builds/)
- * [docker build](/test/travis/README.md)
 
 **Thank you for flying Kamailio!**

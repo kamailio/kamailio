@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -33,13 +33,13 @@
 
 #define ALL_METHODS 0xffffffff
 
-/* 
+/*
  * Parse comma separated list of methods pointed by _body and assign their
  * enum bits to _methods.  Returns 1 on success and 0 on failure.
  */
-int parse_methods(const str* const _body, unsigned int* const _methods);
+int parse_methods(const str *const _body, unsigned int *const _methods);
 
-int parse_method_name(const str* const s, enum request_method* const method);
+int parse_method_name(const str *const s, enum request_method *const method);
 
 
 #endif /* PARSE_METHODS_H */

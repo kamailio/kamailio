@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2010 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -28,12 +28,12 @@
 
 #include "tcp_conn.h"
 
-int tcpconn_send_unsafe(int fd, struct tcp_connection *c,
-						const char* buf, unsigned len, snd_flags_t send_flags);
+int tcpconn_send_unsafe(int fd, struct tcp_connection *c, const char *buf,
+		unsigned len, snd_flags_t send_flags);
 
 /* direct non-blocking, unsafe (assumes locked) send on a tcp connection */
-int _tcpconn_write_nb(int fd, struct tcp_connection* c,
-									const char* buf, int len);
+int _tcpconn_write_nb(
+		int fd, struct tcp_connection *c, const char *buf, int len);
 
 
 #endif /*__tcp_int_send_h*/
