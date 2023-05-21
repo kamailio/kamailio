@@ -20,4 +20,8 @@ else
 	LIBS+=-L$(SYSBASE)/include/lib -L$(LOCALBASE)/lib -lrabbitmq -luuid
 endif
 
+ifneq ("$(wildcard /usr/include/rabbitmq-c/amqp.h)","")
+	DEFS += -DRABBITMQ_DEPRECATION
+endif
+
 include ../../Makefile.modules
