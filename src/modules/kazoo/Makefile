@@ -32,6 +32,10 @@ else
 	LIBS += $(shell $(BUILDER) --libs libevent)
 endif
 
+ifneq ("$(wildcard /usr/include/rabbitmq-c/amqp.h)","")
+	DEFS += -DRABBITMQ_DEPRECATION
+endif
+
 SERLIBPATH=../../lib
 SER_LIBS=$(SERLIBPATH)/srdb1/srdb1
 
