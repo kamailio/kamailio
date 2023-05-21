@@ -51,10 +51,18 @@
 #include <uuid/uuid.h>
 
 #include <stdint.h>
+
+#if RABBITMQ_DEPRECATION
+#include <rabbitmq-c/tcp_socket.h>
+#include <rabbitmq-c/amqp.h>
+#include <rabbitmq-c/framing.h>
+#include <rabbitmq-c/ssl_socket.h>
+#else
 #include <amqp_tcp_socket.h>
 #include <amqp_ssl_socket.h>
 #include <amqp.h>
 #include <amqp_framing.h>
+#endif
 
 #include <assert.h>
 
