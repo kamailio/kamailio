@@ -53,7 +53,7 @@ jobs:
           type=ref,event=branch
         flavor: |
           suffix=
-          latest=auto
+          latest=false
 
     - name: Docker meta "-alpine"
       if: ${{ steps.should_run.outputs.should_run != 'false' }}
