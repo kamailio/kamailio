@@ -32,7 +32,12 @@
 #include <fcntl.h>
 #include <event.h>
 #include <sys/timerfd.h>
+
+#if RABBITMQ_DEPRECATION
+#include <rabbitmq-c/amqp.h>
+#else
 #include <amqp.h>
+#endif
 
 #include "../../core/sr_module.h"
 #include "../../core/str.h"
