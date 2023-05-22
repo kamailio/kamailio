@@ -1860,7 +1860,9 @@ void rpc_presence_publish_cache_sync(rpc_t *rpc, void *ctx)
 	LM_DBG("Synchronizing presentity table with the publish cache.\n");
 	if (pres_htable_db_restore() == -1 ) {
 		rpc->fault(ctx, 500, "Failed to sync presinity table with the publish cache.");
-	};
+	} else {
+		rpc->rpl_printf(ctx, "OK");
+	}
 	return;
 }
 
