@@ -1287,7 +1287,7 @@ pres_update_watchers("sip:test@kamailio.org", "presence");
 	
 <section>
 	<section id="presence.r.publish_cache_sync">
-	  <title>presence.htable_db_restore</title>
+	  <title>presence.publish_cache_sync</title>
 	  <para>
 	  	Synchronize changes made to the presentity table with the publish cache.
 	  </para>
