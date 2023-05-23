@@ -633,7 +633,7 @@ static sr_srv_item_t *_sr_srv_list = NULL;
  *
  * INPUT:
  *   Arg (1) = pvid string pointer
- *   Arg (2) = find flag; <>0=search only
+ *   Arg (2) = find flag; 0 - add if not found; 1 - search only
  * OUTPUT: srv record pointer; NULL=not found
  **********/
 
@@ -1022,9 +1022,9 @@ int srv_update_pv (str *srvcname, str *pvid)
 		LM_DBG ("service name missing: %.*s\n", srvcname->len, srvcname->s);
 		return -2;
 	}
-	pitem = sr_srv_add_item (pvid, 1);
-	if (!pitem) {
-		LM_DBG ("pvid not found: %.*s\n", pvid->len, pvid->s);
+	pitem = sr_srv_add_item(pvid, 0);
+	if(!pitem) {
+		LM_DBG("pvid not found: %.*s\n", pvid->len, pvid->s);
 		return -3;
 	}
 
@@ -1185,7 +1185,7 @@ static sr_naptr_item_t *_sr_naptr_list = NULL;
  *
  * INPUT:
  *   Arg (1) = pvid string pointer
- *   Arg (2) = find flag; <>0=search only
+ *   Arg (2) = find flag; 0 - add if not found, 1 - search only
  * OUTPUT: naptr record pointer; NULL=not found
  **********/
 
@@ -1491,9 +1491,9 @@ int naptr_update_pv(str *naptrname, str *pvid)
 		LM_DBG ("naptr name missing: %.*s\n", naptrname->len, naptrname->s);
 		return -2;
 	}
-	pitem = sr_naptr_add_item(pvid, 1);
-	if (!pitem) {
-		LM_DBG ("pvid not found: %.*s\n", pvid->len, pvid->s);
+	pitem = sr_naptr_add_item(pvid, 0);
+	if(!pitem) {
+		LM_DBG("pvid not found: %.*s\n", pvid->len, pvid->s);
 		return -3;
 	}
 
