@@ -114,81 +114,83 @@ static int w_naptr_query(sip_msg_t *msg, char *str1, char *str2);
 static int w_dns_set_local_ttl(sip_msg_t *, char *, char *);
 static int mod_init(void);
 
+/* clang-format off */
 static pv_export_t mod_pvs[] = {
-		{{"dns", sizeof("dns") - 1}, PVT_OTHER, pv_get_dns, 0,
-				pv_parse_dns_name, 0, 0, 0},
-		{{"srvquery", sizeof("srvquery") - 1}, PVT_OTHER, pv_get_srv, 0,
-				pv_parse_srv_name, 0, 0, 0},
-		{{"naptrquery", sizeof("naptrquery") - 1}, PVT_OTHER, pv_get_naptr, 0,
-				pv_parse_naptr_name, 0, 0, 0},
-		{{"HN", sizeof("HN") - 1}, PVT_OTHER, pv_get_hn, 0, pv_parse_hn_name, 0,
-				0, 0},
-		{{0, 0}, 0, 0, 0, 0, 0, 0, 0}};
+	{{"dns", sizeof("dns") - 1}, PVT_OTHER, pv_get_dns, 0,
+			pv_parse_dns_name, 0, 0, 0},
+	{{"srvquery", sizeof("srvquery") - 1}, PVT_OTHER, pv_get_srv, 0,
+			pv_parse_srv_name, 0, 0, 0},
+	{{"naptrquery", sizeof("naptrquery") - 1}, PVT_OTHER, pv_get_naptr, 0,
+			pv_parse_naptr_name, 0, 0, 0},
+	{{"HN", sizeof("HN") - 1}, PVT_OTHER, pv_get_hn, 0, pv_parse_hn_name, 0,
+			0, 0},
+	{{0, 0}, 0, 0, 0, 0, 0, 0, 0}
+};
 
 /*
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-		{"is_ip", (cmd_function)w_is_ip, 1, fixup_spve_null,
-				fixup_free_spve_null, ANY_ROUTE},
-		{"is_pure_ip", (cmd_function)w_is_pure_ip, 1, fixup_spve_null,
-				fixup_free_spve_null, ANY_ROUTE},
-		{"is_ipv4", (cmd_function)w_is_ipv4, 1, fixup_spve_null,
-				fixup_free_spve_null, ANY_ROUTE},
-		{"is_ipv6", (cmd_function)w_is_ipv6, 1, fixup_spve_null,
-				fixup_free_spve_null, ANY_ROUTE},
-		{"is_ipv6_reference", (cmd_function)w_is_ipv6_reference, 1,
-				fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
-		{"ip_type", (cmd_function)w_ip_type, 1, fixup_spve_null,
-				fixup_free_spve_null, ANY_ROUTE},
-		{"detailed_ipv4_type", (cmd_function)w_detailed_ipv4_type, 2,
-				fixup_detailed_ip_type, fixup_free_detailed_ip_type, ANY_ROUTE},
-		{"detailed_ipv6_type", (cmd_function)w_detailed_ipv6_type, 2,
-				fixup_detailed_ip_type, fixup_free_detailed_ip_type, ANY_ROUTE},
-		{"detailed_ip_type", (cmd_function)w_detailed_ip_type, 2,
-				fixup_detailed_ip_type, fixup_free_detailed_ip_type, ANY_ROUTE},
-		{"compare_ips", (cmd_function)w_compare_ips, 2, fixup_spve_spve,
-				fixup_free_spve_spve, ANY_ROUTE},
-		{"compare_pure_ips", (cmd_function)w_compare_pure_ips, 2,
-				fixup_spve_spve, fixup_free_spve_spve, ANY_ROUTE},
-		{"is_ip_rfc1918", (cmd_function)w_is_ip_rfc1918, 1, fixup_spve_null,
-				fixup_free_spve_null, ANY_ROUTE},
-		{"is_in_subnet", (cmd_function)w_ip_is_in_subnet, 2, fixup_spve_spve,
-				fixup_free_spve_spve, ANY_ROUTE},
-		{"dns_sys_match_ip", (cmd_function)w_dns_sys_match_ip, 2,
-				fixup_spve_spve, fixup_free_spve_spve, ANY_ROUTE},
-		{"dns_int_match_ip", (cmd_function)w_dns_int_match_ip, 2,
-				fixup_spve_spve, fixup_free_spve_spve, ANY_ROUTE},
-		{"dns_query", (cmd_function)w_dns_query, 2, fixup_spve_spve,
-				fixup_free_spve_spve, ANY_ROUTE},
-		{"srv_query", (cmd_function)w_srv_query, 2, fixup_spve_spve,
-				fixup_free_spve_spve, ANY_ROUTE},
-		{"naptr_query", (cmd_function)w_naptr_query, 2, fixup_spve_spve,
-				fixup_free_spve_spve, ANY_ROUTE},
-		{"dns_set_local_ttl", (cmd_function)w_dns_set_local_ttl, 1,
-				fixup_igp_null, fixup_free_igp_null, ANY_ROUTE},
+	{"is_ip", (cmd_function)w_is_ip, 1, fixup_spve_null,
+			fixup_free_spve_null, ANY_ROUTE},
+	{"is_pure_ip", (cmd_function)w_is_pure_ip, 1, fixup_spve_null,
+			fixup_free_spve_null, ANY_ROUTE},
+	{"is_ipv4", (cmd_function)w_is_ipv4, 1, fixup_spve_null,
+			fixup_free_spve_null, ANY_ROUTE},
+	{"is_ipv6", (cmd_function)w_is_ipv6, 1, fixup_spve_null,
+			fixup_free_spve_null, ANY_ROUTE},
+	{"is_ipv6_reference", (cmd_function)w_is_ipv6_reference, 1,
+			fixup_spve_null, fixup_free_spve_null, ANY_ROUTE},
+	{"ip_type", (cmd_function)w_ip_type, 1, fixup_spve_null,
+			fixup_free_spve_null, ANY_ROUTE},
+	{"detailed_ipv4_type", (cmd_function)w_detailed_ipv4_type, 2,
+			fixup_detailed_ip_type, fixup_free_detailed_ip_type, ANY_ROUTE},
+	{"detailed_ipv6_type", (cmd_function)w_detailed_ipv6_type, 2,
+			fixup_detailed_ip_type, fixup_free_detailed_ip_type, ANY_ROUTE},
+	{"detailed_ip_type", (cmd_function)w_detailed_ip_type, 2,
+			fixup_detailed_ip_type, fixup_free_detailed_ip_type, ANY_ROUTE},
+	{"compare_ips", (cmd_function)w_compare_ips, 2, fixup_spve_spve,
+			fixup_free_spve_spve, ANY_ROUTE},
+	{"compare_pure_ips", (cmd_function)w_compare_pure_ips, 2,
+			fixup_spve_spve, fixup_free_spve_spve, ANY_ROUTE},
+	{"is_ip_rfc1918", (cmd_function)w_is_ip_rfc1918, 1, fixup_spve_null,
+			fixup_free_spve_null, ANY_ROUTE},
+	{"is_in_subnet", (cmd_function)w_ip_is_in_subnet, 2, fixup_spve_spve,
+			fixup_free_spve_spve, ANY_ROUTE},
+	{"dns_sys_match_ip", (cmd_function)w_dns_sys_match_ip, 2,
+			fixup_spve_spve, fixup_free_spve_spve, ANY_ROUTE},
+	{"dns_int_match_ip", (cmd_function)w_dns_int_match_ip, 2,
+			fixup_spve_spve, fixup_free_spve_spve, ANY_ROUTE},
+	{"dns_query", (cmd_function)w_dns_query, 2, fixup_spve_spve,
+			fixup_free_spve_spve, ANY_ROUTE},
+	{"srv_query", (cmd_function)w_srv_query, 2, fixup_spve_spve,
+			fixup_free_spve_spve, ANY_ROUTE},
+	{"naptr_query", (cmd_function)w_naptr_query, 2, fixup_spve_spve,
+			fixup_free_spve_spve, ANY_ROUTE},
+	{"dns_set_local_ttl", (cmd_function)w_dns_set_local_ttl, 1,
+			fixup_igp_null, fixup_free_igp_null, ANY_ROUTE},
 
-		{"bind_ipops", (cmd_function)bind_ipops, 0, 0, 0, 0},
+	{"bind_ipops", (cmd_function)bind_ipops, 0, 0, 0, 0},
 
-		{0, 0, 0, 0, 0, 0}};
-
+	{0, 0, 0, 0, 0, 0}
+};
 
 /*
  * Module interface
  */
 struct module_exports exports = {
-		"ipops",		 /* module name */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* cmd (cfg function) exports */
-		0,				 /* param exports*/
-		0,				 /* RPC method exports */
-		mod_pvs,		 /* exported pseudo-variables */
-		0,				 /* response handling function */
-		mod_init,		 /* module init function */
-		0,				 /* per-child init function */
-		0				 /* module destroy function */
+	"ipops",		 /* module name */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,			 /* cmd (cfg function) exports */
+	0,				 /* param exports*/
+	0,				 /* RPC method exports */
+	mod_pvs,		 /* exported pseudo-variables */
+	0,				 /* response handling function */
+	mod_init,		 /* module init function */
+	0,				 /* per-child init function */
+	0				 /* module destroy function */
 };
-
+/* clang-format on */
 
 static int mod_init(void)
 {
