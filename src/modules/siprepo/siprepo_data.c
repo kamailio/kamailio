@@ -242,7 +242,9 @@ int siprepo_msg_set(sip_msg_t *msg, str *msgid, int rmode)
 	it->pid = msg->pid;
 	it->mflags = msg->flags;
 
-	_siprepo_table[slotid].plist->prev = it;
+	if(_siprepo_table[slotid].plist!=NULL) {
+		_siprepo_table[slotid].plist->prev = it;
+	}
 	it->next = _siprepo_table[slotid].plist;
 	_siprepo_table[slotid].plist = it;
 
