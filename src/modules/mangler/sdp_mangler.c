@@ -37,7 +37,7 @@
 #include "../../core/parser/parse_uri.h"
 #include "../../core/parser/contact/parse_contact.h"
 #include "../../core/ut.h"
-#include "../../core/parser/msg_parser.h"	/* struct sip_msg */
+#include "../../core/parser/msg_parser.h" /* struct sip_msg */
 
 regex_t *portExpression = NULL;
 regex_t *ipExpression = NULL;
@@ -65,7 +65,7 @@ int sdp_mangle_port(struct sip_msg *msg, char *offset, char *unused)
 
 	if((msg->content_length == 0)
 			&& ((parse_headers(msg, HDR_CONTENTLENGTH_F, 0) == -1)
-					   || (msg->content_length == 0))) {
+					|| (msg->content_length == 0))) {
 		LOG(L_ERR, "ERROR: sdp_mangle_port: bad or missing "
 				   "Content-Length \n");
 		return -2;
@@ -181,7 +181,7 @@ int sdp_mangle_port(struct sip_msg *msg, char *offset, char *unused)
 		}
 		if((oldPort < MIN_ORIGINAL_PORT)
 				|| (oldPort
-						   > MAX_ORIGINAL_PORT)) /* we silently fail,we ignore this match or return -11 */
+						> MAX_ORIGINAL_PORT)) /* we silently fail,we ignore this match or return -11 */
 		{
 #ifdef EXTRA_DEBUG
 			printf("WARNING: sdp_mangle_port: Silent fail for not matching old "
@@ -189,8 +189,9 @@ int sdp_mangle_port(struct sip_msg *msg, char *offset, char *unused)
 					oldPort);
 #endif
 
-			LOG(L_WARN, "WARNING: sdp_mangle_port: Silent fail for not "
-						"matching old port %d\n",
+			LOG(L_WARN,
+					"WARNING: sdp_mangle_port: Silent fail for not "
+					"matching old port %d\n",
 					oldPort);
 #ifdef STRICT_CHECK
 			if(needToDealocate) {
@@ -209,7 +210,7 @@ int sdp_mangle_port(struct sip_msg *msg, char *offset, char *unused)
 		/* new port is between 1 and 65536, or so should be */
 		if((newPort < MIN_MANGLED_PORT)
 				|| (newPort
-						   > MAX_MANGLED_PORT)) /* we silently fail,we ignore this match */
+						> MAX_MANGLED_PORT)) /* we silently fail,we ignore this match */
 		{
 #ifdef EXTRA_DEBUG
 			printf("WARNING: sdp_mangle_port: Silent fail for not matching new "
@@ -217,8 +218,9 @@ int sdp_mangle_port(struct sip_msg *msg, char *offset, char *unused)
 					newPort);
 #endif
 
-			LOG(L_WARN, "WARNING: sdp_mangle_port: Silent fail for not "
-						"matching new port %d\n",
+			LOG(L_WARN,
+					"WARNING: sdp_mangle_port: Silent fail for not "
+					"matching new port %d\n",
 					newPort);
 #ifdef STRICT_CHECK
 			if(needToDealocate) {
@@ -344,7 +346,7 @@ int sdp_mangle_ip(struct sip_msg *msg, char *oldip, char *newip)
 	}
 	if((msg->content_length == 0)
 			&& ((parse_headers(msg, HDR_CONTENTLENGTH_F, 0) == -1)
-					   || (msg->content_length == 0))) {
+					|| (msg->content_length == 0))) {
 		LOG(L_ERR, "ERROR: sdp_mangle_port: bad or missing "
 				   "Content-Length \n");
 		return -2;
@@ -535,57 +537,54 @@ int sdp_mangle_ip(struct sip_msg *msg, char *oldip, char *newip)
 	return ret + 2;
 }
 
-int compile_expresions(char *port,char *ip)
+int compile_expresions(char *port, char *ip)
 {
 	portExpression = NULL;
 	portExpression = pkg_malloc(sizeof(regex_t));
-	if (portExpression != NULL)
-		{
-		if ((regcomp (portExpression,port, REG_EXTENDED)) != 0)
-			{
-			LOG(L_ERR,"ERROR: compile_expresions: Unable to compile portExpression [%s]\n",port);
+	if(portExpression != NULL) {
+		if((regcomp(portExpression, port, REG_EXTENDED)) != 0) {
+			LOG(L_ERR,
+					"ERROR: compile_expresions: Unable to compile "
+					"portExpression [%s]\n",
+					port);
 			pkg_free(portExpression);
 			portExpression = NULL;
-			}
 		}
-	else
-		{
-			LOG(L_ERR,"ERROR: compile_expresions: Unable to alloc portExpression \n");
-		}
-	
+	} else {
+		LOG(L_ERR,
+				"ERROR: compile_expresions: Unable to alloc portExpression \n");
+	}
+
 	ipExpression = NULL;
 	ipExpression = pkg_malloc(sizeof(regex_t));
-	if (ipExpression != NULL)
-		{
-		if ((regcomp (ipExpression,ip, REG_EXTENDED)) != 0)
-			{
-			LOG(L_ERR,"ERROR: compile_expresions: Unable to compile ipExpression [%s]\n",ip);
+	if(ipExpression != NULL) {
+		if((regcomp(ipExpression, ip, REG_EXTENDED)) != 0) {
+			LOG(L_ERR,
+					"ERROR: compile_expresions: Unable to compile ipExpression "
+					"[%s]\n",
+					ip);
 			pkg_free(ipExpression);
 			ipExpression = NULL;
-			}
 		}
-	else
-		{
-			LOG(L_ERR,"ERROR: compile_expresions: Unable to alloc ipExpression \n");
-		}
-	
+	} else {
+		LOG(L_ERR,
+				"ERROR: compile_expresions: Unable to alloc ipExpression \n");
+	}
+
 	return 0;
 }
 
 int free_compiled_expresions()
 {
-	if (portExpression != NULL) 
-		{
+	if(portExpression != NULL) {
 		regfree(portExpression);
 		pkg_free(portExpression);
 		portExpression = NULL;
-		}
-	if (ipExpression != NULL) 
-		{
+	}
+	if(ipExpression != NULL) {
 		regfree(ipExpression);
 		pkg_free(ipExpression);
 		ipExpression = NULL;
-		}
+	}
 	return 0;
 }
-

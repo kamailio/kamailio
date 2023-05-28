@@ -97,7 +97,7 @@ modparam("pua_usrloc", "default_domain", "kamailio.org")
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>presentity_prefix</varname> parameter</title>
+		<title>Set <varname>entity_prefix</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("pua_usrloc", "entity_prefix", "pres")

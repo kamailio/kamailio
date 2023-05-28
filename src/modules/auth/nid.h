@@ -41,7 +41,7 @@ extern unsigned nid_pool_no; /* number of index pools */
 
 /* id incremenet, to avoid cacheline ping-pong and cover all the
  * array locations it should be a number prime with the array size and
- * bigger then the cacheline. Since this is used also for onetime nonces
+ * bigger than the cacheline. Since this is used also for onetime nonces
  * => NID_INC/8 > CACHELINE
  * This number also limits the maximum pool/partition size, since the
  * id overflow check checks if crt_id - nonce_id >= partition_size*NID_INC
@@ -49,25 +49,26 @@ extern unsigned nid_pool_no; /* number of index pools */
 #define NID_INC 257
 
 #define DEFAULT_NID_POOL_SIZE 1
-#define MAX_NID_POOL_SIZE    64 /* max. 6 bits used for the pool no*/
+#define MAX_NID_POOL_SIZE 64 /* max. 6 bits used for the pool no*/
 
-#define CACHELINE_SIZE 256 /* more then most real-word cachelines */
+#define CACHELINE_SIZE 256 /* more than most real-word cachelines */
 
 /* if larger tables are needed (see NID_INC comments above), consider
  * switching to unsigned long long */
 typedef unsigned int nid_t;
 
-struct pool_index{
+struct pool_index
+{
 	atomic_t id;
-	char pad[CACHELINE_SIZE-sizeof(atomic_t)];/* padding to cacheline size */
+	char pad[CACHELINE_SIZE - sizeof(atomic_t)]; /* padding to cacheline size */
 };
 
-extern struct pool_index* nid_crt;
+extern struct pool_index *nid_crt;
 
 
 /* instead of storing only the 2^k size we store also k
  * for faster operations */
-extern unsigned int nid_pool_k; /* pools no in bits (k in 2^k) */
+extern unsigned int nid_pool_k;	   /* pools no in bits (k in 2^k) */
 extern unsigned int nid_pool_mask; /* mask for computing the current pool*/
 
 int init_nonce_id();
@@ -75,15 +76,13 @@ void destroy_nonce_id();
 
 
 /* get current index in pool p */
-#define nid_get(p) \
-	atomic_get(&nid_crt[(p)].id)
+#define nid_get(p) atomic_get(&nid_crt[(p)].id)
 
 /* get pool for the current process */
-#define nid_get_pool()  (process_no & nid_pool_mask)
+#define nid_get_pool() (process_no & nid_pool_mask)
 
 /* inc the specified index and return its new value */
-#define nid_inc(pool) \
-	((nid_t)atomic_add(&nid_crt[(pool)].id, NID_INC))
+#define nid_inc(pool) ((nid_t)atomic_add(&nid_crt[(pool)].id, NID_INC))
 
 #endif /* #if defined USE_NC || defined USE_OT_NONCE */
 #endif /* _nid_h */

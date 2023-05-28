@@ -271,7 +271,7 @@ sdp_keep_codecs_by_name("PCMU,PCMA,GSM");
 
 4.6.  sdp_with_media(type)
 
-   Return true of the SDP has 'media=type ...' line. Useful to check the
+   Return true if the SDP has 'media=type ...' line. Useful to check the
    content of the RTP sessions, such as 'audio' or 'video'. The parameter
    can be static string or variable holding the media type.
 
@@ -288,7 +288,7 @@ if(sdp_with_media("video"))
 
 4.7.  sdp_with_active_media(type)
 
-   Return true of the SDP has 'media=type ...' line and the media is
+   Return true if the SDP has 'media=type ...' line and the media is
    active. Useful to check the content of the RTP sessions, such as
    'audio' or 'video'. Active media means the port is non-zero and the
    direction is not "inactive" The parameter can be static string or
@@ -340,7 +340,7 @@ sdp_remove_media("video");
 
 4.9.  sdp_with_transport(type)
 
-   Return true of the SDP has 'media=media port type ...' line. Useful to
+   Return true if the SDP has 'media=media port type ...' line. Useful to
    check the transport of the RTP sessions, such as 'RTP/AVP', 'RTP/SAVP',
    'RTP/SAVPF' or 'UDP/TLS/RTP/SAVPF'. The parameter can be static string
    or variable holding the transport type. The function does an exact
@@ -507,8 +507,8 @@ if(sdp_get_line_startswith("$avp(mline)", "m=")) {
 
 4.20.  sdp_get_address_family()
 
-   it helps to get IP address family at c line from sdp body. it returns
-   -1 on error , 4 for IP4 and 6 for IP6
+   It helps to get IP address family at c line from sdp body. It returns
+   -1 on error, 4 for IP4 and 6 for IP6
 
    Example 1.20. sdp_get_address_familyusage
 ...

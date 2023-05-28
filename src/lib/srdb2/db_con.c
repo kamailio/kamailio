@@ -94,7 +94,7 @@ db_con_t* db_con(db_ctx_t* ctx, db_uri_t* uri)
 
 
 /*
- * Releaase all memory used by the structure
+ * Release all memory used by the structure
  */
 void db_con_free(db_con_t* con)
 {

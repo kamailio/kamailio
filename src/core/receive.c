@@ -49,7 +49,7 @@
 #include "select_buf.h"
 #include "locking.h"
 
-#include "tcp_server.h"  /* for tcpconn_add_alias */
+#include "tcp_server.h"	 /* for tcpconn_add_alias */
 #include "tcp_options.h" /* for access to tcp_accept_aliases*/
 #include "cfg/cfg.h"
 #include "core_stats.h"
@@ -69,19 +69,19 @@ str default_via_address = {0, 0};
 str default_via_port = {0, 0};
 
 int ksr_route_locks_size = 0;
-static rec_lock_set_t* ksr_route_locks_set = NULL;
+static rec_lock_set_t *ksr_route_locks_set = NULL;
 
 int ksr_route_locks_set_init(void)
 {
-	if(ksr_route_locks_set!=NULL || ksr_route_locks_size<=0)
+	if(ksr_route_locks_set != NULL || ksr_route_locks_size <= 0)
 		return 0;
 
 	ksr_route_locks_set = rec_lock_set_alloc(ksr_route_locks_size);
-	if(ksr_route_locks_set==NULL) {
+	if(ksr_route_locks_set == NULL) {
 		LM_ERR("failed to allocate route locks set\n");
 		return -1;
 	}
-	if(rec_lock_set_init(ksr_route_locks_set)==NULL) {
+	if(rec_lock_set_init(ksr_route_locks_set) == NULL) {
 		LM_ERR("failed to init route locks set\n");
 		return -1;
 	}
@@ -90,7 +90,7 @@ int ksr_route_locks_set_init(void)
 
 void ksr_route_locks_set_destroy(void)
 {
-	if(ksr_route_locks_set==NULL)
+	if(ksr_route_locks_set == NULL)
 		return;
 
 	rec_lock_set_destroy(ksr_route_locks_set);
@@ -172,20 +172,21 @@ int ksr_evrt_received(char *buf, unsigned int *len, receive_info_t *rcv_info)
 	sip_msg_t *fmsg = NULL;
 	str evname = str_init("core:msg-received");
 
-	if(len==0 || rcv_info==NULL || buf==NULL) {
+	if(len == 0 || rcv_info == NULL || buf == NULL) {
 		LM_ERR("required parameters are not available\n");
 		return -1;
 	}
 
-	if(kemi_received_route_callback.len>0) {
+	if(kemi_received_route_callback.len > 0) {
 		keng = sr_kemi_eng_get();
 		if(keng == NULL) {
-			LM_DBG("kemi enabled with no core:msg-receive event route callback\n");
+			LM_DBG("kemi enabled with no core:msg-receive event route "
+				   "callback\n");
 			return 0;
 		}
 	} else {
 		rt = route_lookup(&event_rt, evname.s);
-		if (rt < 0 || event_rt.rlist[rt] == NULL) {
+		if(rt < 0 || event_rt.rlist[rt] == NULL) {
 			LM_DBG("event route core:msg-received not defined\n");
 			return 0;
 		}
@@ -203,13 +204,13 @@ int ksr_evrt_received(char *buf, unsigned int *len, receive_info_t *rcv_info)
 	if(keng) {
 		bctx = sr_kemi_act_ctx_get();
 		sr_kemi_act_ctx_set(&ra_ctx);
-		ret=sr_kemi_route(keng, fmsg, REQUEST_ROUTE,
-				&kemi_received_route_callback, NULL);
+		ret = sr_kemi_route(
+				keng, fmsg, REQUEST_ROUTE, &kemi_received_route_callback, NULL);
 		sr_kemi_act_ctx_set(bctx);
 	} else {
-		ret=run_actions(&ra_ctx, event_rt.rlist[rt], fmsg);
+		ret = run_actions(&ra_ctx, event_rt.rlist[rt], fmsg);
 	}
-	if(ra_ctx.run_flags&DROP_R_F) {
+	if(ra_ctx.run_flags & DROP_R_F) {
 		LM_DBG("dropping received message\n");
 		ret = -1;
 	}
@@ -242,22 +243,23 @@ int ksr_evrt_pre_routing(sip_msg_t *msg)
 		return 0;
 	}
 
-	if(kemi_pre_routing_callback.len>0) {
+	if(kemi_pre_routing_callback.len > 0) {
 		keng = sr_kemi_eng_get();
 		if(keng == NULL) {
-			LM_DBG("kemi enabled with no core:pre-routing event route callback\n");
+			LM_DBG("kemi enabled with no core:pre-routing event route "
+				   "callback\n");
 			return 0;
 		}
 	} else {
 		if(ksr_evrt_pre_routing_idx == -1) {
 			rt = route_lookup(&event_rt, evname.s);
-			if (rt < 0 || event_rt.rlist[rt] == NULL) {
+			if(rt < 0 || event_rt.rlist[rt] == NULL) {
 				ksr_evrt_pre_routing_idx = -2;
 			}
 		} else {
 			rt = ksr_evrt_pre_routing_idx;
 		}
-		if (rt < 0 || event_rt.rlist[rt] == NULL) {
+		if(rt < 0 || event_rt.rlist[rt] == NULL) {
 			LM_DBG("event route core:pre-routing not defined\n");
 			return 0;
 		}
@@ -270,14 +272,14 @@ int ksr_evrt_pre_routing(sip_msg_t *msg)
 	if(keng) {
 		bctx = sr_kemi_act_ctx_get();
 		sr_kemi_act_ctx_set(&ra_ctx);
-		ret=sr_kemi_route(keng, msg, REQUEST_ROUTE,
-				&kemi_pre_routing_callback, &evname);
+		ret = sr_kemi_route(
+				keng, msg, REQUEST_ROUTE, &kemi_pre_routing_callback, &evname);
 		sr_kemi_act_ctx_set(bctx);
 	} else {
-		ret=run_actions(&ra_ctx, event_rt.rlist[rt], msg);
+		ret = run_actions(&ra_ctx, event_rt.rlist[rt], msg);
 	}
 	msg->rcv.rflags = brflags;
-	if(ra_ctx.run_flags&DROP_R_F) {
+	if(ra_ctx.run_flags & DROP_R_F) {
 		LM_DBG("drop was used\n");
 		return 1;
 	}
@@ -307,14 +309,14 @@ int receive_msg(char *buf, unsigned int len, receive_info_t *rcv_info)
 	int errsipmsg = 0;
 	int exectime = 0;
 
-	if(rcv_info->bind_address==NULL) {
+	if(rcv_info->bind_address == NULL) {
 		LM_ERR("critical - incoming message without local socket [%.*s ...]\n",
-				(len>128)?128:len, buf);
+				(len > 128) ? 128 : len, buf);
 		return -1;
 	}
 
-	if(ksr_evrt_received_mode!=0) {
-		if(ksr_evrt_received(buf, &len, rcv_info)<0) {
+	if(ksr_evrt_received_mode != 0) {
+		if(ksr_evrt_received(buf, &len, rcv_info) < 0) {
 			LM_DBG("dropping the received message\n");
 			goto error00;
 		}
@@ -372,7 +374,7 @@ int receive_msg(char *buf, unsigned int len, receive_info_t *rcv_info)
 			goto end;
 		}
 	}
-	if(errsipmsg==1) {
+	if(errsipmsg == 1) {
 		LOG(cfg_get(core, core_cfg, sip_parser_log),
 				"core parsing of SIP message failed (%s:%d/%d)\n",
 				ip_addr2a(&msg->rcv.src_ip), (int)msg->rcv.src_port,
@@ -381,8 +383,9 @@ int receive_msg(char *buf, unsigned int len, receive_info_t *rcv_info)
 		goto error02;
 	}
 
-	if(unlikely(parse_headers(msg, HDR_FROM_F | HDR_TO_F | HDR_CALLID_F | HDR_CSEQ_F, 0)
-			< 0)) {
+	if(unlikely(parse_headers(msg,
+						HDR_FROM_F | HDR_TO_F | HDR_CALLID_F | HDR_CSEQ_F, 0)
+				< 0)) {
 		LOG(cfg_get(core, core_cfg, sip_parser_log),
 				"parsing relevant headers failed\n");
 	}
@@ -400,7 +403,7 @@ int receive_msg(char *buf, unsigned int len, receive_info_t *rcv_info)
 	clear_branches();
 
 	ret = ksr_evrt_pre_routing(msg);
-	if(ret<0) {
+	if(ret < 0) {
 		goto error02;
 	}
 	if(ret == 1) {
@@ -408,8 +411,8 @@ int receive_msg(char *buf, unsigned int len, receive_info_t *rcv_info)
 		goto end;
 	}
 
-	if(unlikely(ksr_route_locks_set!=NULL && msg->callid && msg->callid->body.s
-			&& msg->callid->body.len >0)) {
+	if(unlikely(ksr_route_locks_set != NULL && msg->callid
+				&& msg->callid->body.s && msg->callid->body.len > 0)) {
 		cidlockidx = get_hash1_raw(msg->callid->body.s, msg->callid->body.len);
 		cidlockidx = cidlockidx % ksr_route_locks_set->size;
 		cidlockset = 1;
@@ -455,9 +458,9 @@ int receive_msg(char *buf, unsigned int len, receive_info_t *rcv_info)
 		if(msg->via1->alias && cfg_get(tcp, tcp_cfg, accept_aliases)
 				&& (((rcv_info->proto == PROTO_TCP) && !tcp_disable)
 #ifdef USE_TLS
-						   || ((rcv_info->proto == PROTO_TLS) && !tls_disable)
+						|| ((rcv_info->proto == PROTO_TLS) && !tls_disable)
 #endif
-								   )) {
+								)) {
 			if(tcpconn_add_alias(rcv_info->proto_reserved1, msg->via1->port,
 					   rcv_info->proto)
 					!= 0) {
@@ -490,7 +493,7 @@ int receive_msg(char *buf, unsigned int len, receive_info_t *rcv_info)
 			keng = sr_kemi_eng_get();
 			if(keng == NULL) {
 				LM_ERR("no request_route {...} and no other config routing"
-						" engine registered\n");
+					   " engine registered\n");
 				goto error_req;
 			}
 			if(unlikely(cidlockset)) {
@@ -523,7 +526,7 @@ int receive_msg(char *buf, unsigned int len, receive_info_t *rcv_info)
 			gettimeofday(&tve, NULL);
 			diff = (tve.tv_sec - tvb.tv_sec) * 1000000
 				   + (tve.tv_usec - tvb.tv_usec);
-			if (cfg_get(core, core_cfg, latency_limit_cfg) == 0
+			if(cfg_get(core, core_cfg, latency_limit_cfg) == 0
 					|| cfg_get(core, core_cfg, latency_limit_cfg) <= diff) {
 				LOG(cfg_get(core, core_cfg, latency_cfg_log),
 						"request-route executed in: %d usec\n", diff);
@@ -566,7 +569,7 @@ int receive_msg(char *buf, unsigned int len, receive_info_t *rcv_info)
 		}
 
 		/* exec the onreply routing script */
-		if(kemi_reply_route_callback.len>0) {
+		if(kemi_reply_route_callback.len > 0) {
 			keng = sr_kemi_eng_get();
 		}
 		if(onreply_rt.rlist[DEFAULT_RT] != NULL || keng != NULL) {
@@ -578,19 +581,23 @@ int receive_msg(char *buf, unsigned int len, receive_info_t *rcv_info)
 				sr_kemi_act_ctx_set(&ctx);
 				if(unlikely(cidlockset)) {
 					rec_lock_set_get(ksr_route_locks_set, cidlockidx);
-					ret = sr_kemi_route(keng, msg, CORE_ONREPLY_ROUTE, NULL, NULL);
+					ret = sr_kemi_route(
+							keng, msg, CORE_ONREPLY_ROUTE, NULL, NULL);
 					rec_lock_set_release(ksr_route_locks_set, cidlockidx);
 				} else {
-					ret = sr_kemi_route(keng, msg, CORE_ONREPLY_ROUTE, NULL, NULL);
+					ret = sr_kemi_route(
+							keng, msg, CORE_ONREPLY_ROUTE, NULL, NULL);
 				}
 				sr_kemi_act_ctx_set(bctx);
 			} else {
 				if(unlikely(cidlockset)) {
 					rec_lock_set_get(ksr_route_locks_set, cidlockidx);
-					ret = run_top_route(onreply_rt.rlist[DEFAULT_RT], msg, &ctx);
+					ret = run_top_route(
+							onreply_rt.rlist[DEFAULT_RT], msg, &ctx);
 					rec_lock_set_release(ksr_route_locks_set, cidlockidx);
-				} else  {
-					ret = run_top_route(onreply_rt.rlist[DEFAULT_RT], msg, &ctx);
+				} else {
+					ret = run_top_route(
+							onreply_rt.rlist[DEFAULT_RT], msg, &ctx);
 				}
 			}
 #ifndef NO_ONREPLY_ROUTE_ERROR
@@ -612,7 +619,7 @@ int receive_msg(char *buf, unsigned int len, receive_info_t *rcv_info)
 			gettimeofday(&tve, NULL);
 			diff = (tve.tv_sec - tvb.tv_sec) * 1000000
 				   + (tve.tv_usec - tvb.tv_usec);
-			if (cfg_get(core, core_cfg, latency_limit_cfg) == 0
+			if(cfg_get(core, core_cfg, latency_limit_cfg) == 0
 					|| cfg_get(core, core_cfg, latency_limit_cfg) <= diff) {
 				LOG(cfg_get(core, core_cfg, latency_cfg_log),
 						"reply-route executed in: %d usec\n", diff);

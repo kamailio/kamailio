@@ -47,7 +47,7 @@
  *
  * This method evaluates the actual arguments for the database query and
  * setups the string that is used for the query in the db module.
- * Then its submit the query and stores the result if necessary. It uses for
+ * Then it submits the query and stores the result if necessary. It uses for
  * its work the implementation in the concrete database module.
  *
  * \param _h structure representing database connection
@@ -56,7 +56,7 @@
  * \param _v values of the keys that must match
  * \param _c column names that should be returned
  * \param _n number of key/value pairs that are compared, if zero then no comparison is done
- * \param _nc number of colums that should be returned
+ * \param _nc number of columns that should be returned
  * \param _o order by the specificied column, optional
  * \param _r the result that is returned, set to NULL if you want to use fetch_result later
  * \param (*val2str) function pointer to the db specific val conversion function
@@ -75,7 +75,7 @@ int db_do_query(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _op,
  *
  * This method evaluates the actual arguments for the database query and
  * setups the string that is used for the query in the db module.
- * Then its submit the query and stores the result if necessary. It uses for
+ * Then it submits the query and stores the result if necessary. It uses for
  * its work the implementation in the concrete database module.
  *
  * \param _h structure representing database connection
@@ -84,7 +84,7 @@ int db_do_query(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _op,
  * \param _v values of the keys that must match
  * \param _c column names that should be returned
  * \param _n number of key/value pairs that are compared, if zero then no comparison is done
- * \param _nc number of colums that should be returned
+ * \param _nc number of columns that should be returned
  * \param _o order by the specificied column, optional
  * \param _r the result that is returned, set to NULL if you want to use fetch_result later
  * \param (*val2str) function pointer to the db specific val conversion function
@@ -103,7 +103,7 @@ int db_do_query_lock(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _op
  *
  * This method evaluates the actual arguments for the database raw query
  * and setups the string that is used for the query in the db module.
- * Then its submit the query and stores the result if necessary.
+ * Then it submits the query and stores the result if necessary.
  * It uses for its work the implementation in the concrete database module.
  *
  * \param _h structure representing database connection
@@ -123,7 +123,7 @@ int db_do_raw_query(const db1_con_t* _h, const str* _s, db1_res_t** _r,
  *
  * This method evaluates the actual arguments for the database operation
  * and setups the string that is used for the insert operation in the db
- * module. Then its submit the query for the operation. It uses for its work
+ * module. Then it submits the query for the operation. It uses for its work
  * the implementation in the concrete database module.
  *
  * \param _h structure representing database connection
@@ -144,7 +144,7 @@ int db_do_insert(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v,
  *
  * This method evaluates the actual arguments for the database operation
  * and setups the string that is used for the delete operation in the db
- * module. Then its submit the query for the operation. It uses for its work
+ * module. Then it submits the query for the operation. It uses for its work
  * the implementation in the concrete database module.
  *
  * \param _h structure representing database connection
@@ -167,7 +167,7 @@ int db_do_delete(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _o,
  *
  * This method evaluates the actual arguments for the database operation
  * and setups the string that is used for the update operation in the db
- * module. Then its submit the query for the operation. It uses for its work
+ * module. Then it submits the query for the operation. It uses for its work
  * the implementation in the concrete database module.
  *
  * \param _h structure representing database connection
@@ -193,7 +193,7 @@ int db_do_update(const db1_con_t* _h, const db_key_t* _k, const db_op_t* _o,
  *
  * This helper method evaluates the actual arguments for the database operation
  * and setups the string that is used for the replace operation in the db
- * module. Then its submit the query for the operation. It uses for its work the
+ * module. Then it submits the query for the operation. It uses for its work the
  * implementation in the concrete database module.
  *
  * \param _h structure representing database connection
@@ -214,7 +214,7 @@ int db_do_replace(const db1_con_t* _h, const db_key_t* _k, const db_val_t* _v,
  *
  * This method evaluates the actual arguments for the database operation
  * and setups the string that is used for the insert delayed operation in the db
- * module. Then its submit the query for the operation. It uses for its work
+ * module. Then it submits the query for the operation. It uses for its work
  * the implementation in the concrete database module.
  *
  * \param _h structure representing database connection

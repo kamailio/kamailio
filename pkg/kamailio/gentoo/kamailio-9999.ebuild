@@ -8,7 +8,7 @@ inherit eutils flag-o-matic toolchain-funcs user
 IUSE="ipv6 mysql radius postgres jabber ssl odbc sctp rtpengine redis pua ims presence sqlite snmp json http ldap geoip2 erlang xml jansson lua evapi"
 
 DESCRIPTION="The Open Source SIP Server"
-HOMEPAGE="http://www.kamailio.org/"
+HOMEPAGE="https://www.kamailio.org/"
 
 if [[ ${PV} == 9999 ]]; then
 	inherit git-r3

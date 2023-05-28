@@ -27,8 +27,8 @@
 #include "../../core/pvar.h"
 #include "../../core/xavp.h"
 
-int pv_tuple_set(struct sip_msg*, pv_param_t*, int, pv_value_t*);
-int pv_tuple_get(struct sip_msg*, pv_param_t*, pv_value_t*);
+int pv_tuple_set(struct sip_msg *, pv_param_t *, int, pv_value_t *);
+int pv_tuple_get(struct sip_msg *, pv_param_t *, pv_value_t *);
 
 sr_xavp_t *pv_tuple_get_tuple(str *name);
 

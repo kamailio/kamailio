@@ -23,7 +23,7 @@
 	servers and a set of settings that apply to the specific connection.
 	</para>
 	<para>
-	The http_client module has multiple settings, some of them applies to
+	The http_client module has multiple settings, some of them apply to
 	a defined connection. You can set timeouts, max data sizes for download
 	and much more either using modparam settings or parameters to the
 	connection definition.
@@ -46,7 +46,7 @@
 	this module.
 	</para>
 	<para>
-	The http_client module use the CURL library setting up connections.
+	The http_client module uses the CURL library setting up connections.
 	The CURL library by default use the system configured DNS resolvers,
 	not the Kamailio resolver.
 	</para>
@@ -731,7 +731,7 @@ modparam("http_client", "netinterface", "eth0")
 				<title><function>http_connect()</function> usage</title>
 				<programlisting format="linespecific">
 ...
-modparam("http_client", "httpcon", "apiserver=>http://kamailio.org/api/");
+modparam("http_client", "httpcon", "apiserver=>https://kamailio.org/api/");
 ...
 # POST Request
 $var(res) = http_connect("apiserver", "/mailbox", "application/json", "{ ok, {200, ok}}", "$avp(gurka)");
@@ -792,7 +792,7 @@ xlog("L_INFO", "API-server HTTP connection: $avp(route) Result code $var(res)\n"
 				<title><function>http_connect_raw()</function> usage</title>
 				<programlisting format="linespecific">
 ...
-modparam("http_client", "httpcon", "apiserver=>http://kamailio.org/api/");
+modparam("http_client", "httpcon", "apiserver=>https://kamailio.org/api/");
 ...
 # POST Request
 $var(res) = http_connect_raw("apiserver", "/mailbox", "application/json", "{ ok, {200, ok}}", "$avp(gurka)");
@@ -863,7 +863,7 @@ http_get_redirect("apiserver", "$var(targeturl)");
 			the first line or the entire reply body (if any) is
 			stored in <quote>result</quote> parameter,
 			which must be a	writable pseudo	variable. See the query_result
-			parameter for controling what value to be stored in the result
+			parameter for controlling what value to be stored in the result
 			variable.
 			</para>
 			<para>

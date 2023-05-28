@@ -27,25 +27,27 @@
 
 /* structure used for temporary storing the variables
  * which are declared in the script */
-typedef struct _cfg_script_var {
-	unsigned int	type;
-	union {
-		str	s;
-		int	i;
+typedef struct _cfg_script_var
+{
+	unsigned int type;
+	union
+	{
+		str s;
+		int i;
 	} val;
-	int	min;
-	int	max;
-	struct _cfg_script_var	*next;
-	int	name_len;
-	char	*name;
-	char	*descr;
+	int min;
+	int max;
+	struct _cfg_script_var *next;
+	int name_len;
+	char *name;
+	char *descr;
 } cfg_script_var_t;
 
 /* allocates memory for a new config script variable
  * The value of the variable is not set!
  */
-cfg_script_var_t *new_cfg_script_var(char *gname, char *vname, unsigned int type,
-					char *descr);
+cfg_script_var_t *new_cfg_script_var(
+		char *gname, char *vname, unsigned int type, char *descr);
 
 /* Rewrite the value of an already declared script variable before forking.
  * Return value:
@@ -53,8 +55,8 @@ cfg_script_var_t *new_cfg_script_var(char *gname, char *vname, unsigned int type
  *	-1: error
  *	 1: variable not found
  */
-int cfg_set_script_var(cfg_group_t *group, str *var_name,
-			void *val, unsigned int val_type);
+int cfg_set_script_var(
+		cfg_group_t *group, str *var_name, void *val, unsigned int val_type);
 
 /* fix-up the dynamically declared group */
 int cfg_script_fixup(cfg_group_t *group, unsigned char *block);

@@ -48,11 +48,10 @@
 
 #define LOAD_ERROR "ERROR: cdp_bind: S-CSCF module function "
 
-#define FIND_EXP(NAME) \
-	if (!( cdpb->NAME=(NAME##_f) \
-		find_export(#NAME, NO_SCRIPT, 0)) ) {\
-		LM_ERR("'"LOAD_ERROR "'"#NAME"' not found\n");\
-		return -1;\
+#define FIND_EXP(NAME)                                               \
+	if(!(cdpb->NAME = (NAME##_f)find_export(#NAME, NO_SCRIPT, 0))) { \
+		LM_ERR("'" LOAD_ERROR "'" #NAME "' not found\n");            \
+		return -1;                                                   \
 	}
 
 
@@ -61,7 +60,7 @@
  * @param *cdpb - target structure to load the bindings into
  * @returns 1 on success, -1 on failure
  */
-int load_cdp( struct cdp_binds *cdpb)
+int load_cdp(struct cdp_binds *cdpb)
 {
 	FIND_EXP(AAACreateRequest);
 	FIND_EXP(AAACreateResponse);

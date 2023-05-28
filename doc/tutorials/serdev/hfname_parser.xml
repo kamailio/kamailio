@@ -48,9 +48,9 @@
     <para>
 	We did some performance measurement and 32-bit parsing is about 3 times
 	faster for a typical <acronym>SIP</acronym> message than corresponding
-	automaton comparing byte by byte. Performance may vary depending on the
+	automation comparing byte by byte. Performance may vary depending on the
 	message size, parsed header fields and header fields type. Test showed
-	that it was always as fast as corresponding 1-byte comparing automaton.
+	that it was always as fast as corresponding 1-byte comparing automation.
     </para>
     <para>
 	Since comparison must be case insensitive in case of header field

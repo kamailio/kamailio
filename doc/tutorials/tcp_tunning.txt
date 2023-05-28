@@ -65,7 +65,7 @@ net.ipv4.tcp_mem
 net.ipv4.tcp_rmem
 net.ipv4.tcp_wmem
 
-  Note: sysctl -w net.ipv4.route.flush=1 - enusre that immediatly subsequent
+  Note: sysctl -w net.ipv4.route.flush=1 - ensure that immediately subsequent
   connections use the values
 
 1.6 Other sysctl that might affect tcp connection rate or the maximum number

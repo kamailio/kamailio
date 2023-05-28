@@ -235,7 +235,7 @@ sip:192.168.40.17:5060;status=active
 
 3.1. server_address(str)
 
-   The local server address. This is the addres with which the local DMQ
+   The local server address. This is the address with which the local DMQ
    node joins the servers group to send/receive messages.
 
    Note: if server_socket is not set, then this address has to match a
@@ -255,7 +255,7 @@ modparam("dmq", "server_address", "sip:10.0.0.20:5061;transport=tls")
    The local listen address. This is the interface over which the DMQ
    engine will send/receive messages.
 
-   Note: if this parameter is not set, the socket to send/receice messages
+   Note: if this parameter is not set, the socket to send/receive messages
    is built from server_address parameter.
 
    Default value is “NULL”.

@@ -745,6 +745,10 @@ modparam("registrar", "reg_callid_avp", "$avp(s:avp)")
      * socket - the string representing the socket on which the register
        request was received, as alternative to using the sock_hdr. Used in
        save().
+     * tcpconn_id This can be set with $conid, the TCP connection ID of
+       the connection the current message. This is useful when calling
+       save() on a reply route to set the connecion of the original
+       request. Used in save().
 
    For example. if this parameter is set to 'reg', then the number of
    maximum contacts can be set in $xavp(reg=>max_contacts).

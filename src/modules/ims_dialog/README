@@ -465,7 +465,7 @@ modparam("ims_dialog", "detect_spirals", 1)
 
    Example 1.8. Set profiles_with_value parameter
 ...
-modparam("dialog", "profiles_with_value", "caller ; my_profile")
+modparam("ims_dialog", "profiles_with_value", "caller ; my_profile")
 ...
 
 5.16.  profiles_no_value (string)
@@ -476,7 +476,7 @@ modparam("dialog", "profiles_with_value", "caller ; my_profile")
 
    Example 1.9. Set profiles_no_value parameter
 ...
-modparam("dialog", "profiles_no_value", "inbound ; outbound")
+modparam("ims_dialog", "profiles_no_value", "inbound ; outbound")
 ...
 
 5.17.  bridge_controller (string)
@@ -487,7 +487,7 @@ modparam("dialog", "profiles_no_value", "inbound ; outbound")
 
    Example 1.10. Set bridge_controller parameter
 ...
-modparam("dialog", "bridge_controller", "sip:ctd@kamailio.org")
+modparam("ims_dialog", "bridge_controller", "sip:ctd@kamailio.org")
 ...
 
 5.18.  initial_cbs_inscript (string)
@@ -651,7 +651,7 @@ dlg_setflag("1");
 
    Example 1.17.  dlg_resetflag usage
 ...
-redlg_setflag("1");
+dlg_resetflag("1");
 ...
 
 6.8.  dlg_terminate
@@ -793,7 +793,7 @@ if(dlg_get("abcdef", "123", "456"))
 
 8.4.  dlg_terminate_dlg
 
-   Terminates a singe dialog, identified by the call_id, ftag, ttag. In
+   Terminates a single dialog, identified by the call_id, ftag, ttag. In
    ims_dialog module this dialog can be terminated in the early or
    confirmed states.
 
@@ -947,12 +947,12 @@ Chapter 2. Developer Guide
    Register a new callback to the dialog.
 
    Meaning of the parameters is as follows:
-     * struct dlg_cell* dlg - dialog to register callback to. If maybe
+     * struct dlg_cell* dlg - dialog to register callback to. It may be
        NULL only for DLGCB_CREATED callback type, which is not a per
        dialog type.
-     * int type - types of callbacks; more types may be register for the
-       same callback function; only DLGCB_CREATED must be register alone.
-       Possible types:
+     * int type - types of callbacks; more types may be registered for the
+       same callback function; only DLGCB_CREATED must be registered
+       alone. Possible types:
           + DLGCB_LOADED
           + DLGCB_CREATED - called when a new dialog is created - it's a
             global type (not associated to any dialog)

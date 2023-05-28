@@ -44,7 +44,7 @@ notifier_t *register_notifier(
 
 void unregister_notifier(notifier_domain_t *domain, notifier_t *info);
 
-/** accepts subscription (internaly adds reference to it), thus it can 
+/** accepts subscription (internally adds reference to it), thus it can
  * be handled by notifier which called this function 
  * MUST be called in notifier's subscribe function, otherwise the 
  * subscription can NOT be accepted 

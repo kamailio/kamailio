@@ -213,10 +213,10 @@ end
 		<title>Functions</title>
 		<section id="nats.f.nats_publish">
 			<title>
-				<function moreinfo="none">nats_publish(subject, payload)</function>
+				<function moreinfo="none">nats_publish(subject, payload, reply)</function>
 			</title>
 			<para>
-				Publishes the payload to subject.
+				Publishes the payload to subject, with an optional reply subject.
 			</para>
 			<example>
 				<title>
@@ -227,6 +227,10 @@ end
 ...
 $var(my_info) = "$ci=" + $ci + " $fU=" + $fU;
 nats_publish("mysubject", "$var(my_info)"); # publish $var(my_info) to "mysubject"
+
+# publish $var(my_info) to "mysubject" with a reply.topic topic, so a response
+# can be published back from the other side, like the NATS Request-Reply mode.
+nats_publish("mysubject", "$var(my_info)", "reply.topic");
 ...
 				</programlisting>
 			</example>

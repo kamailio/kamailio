@@ -97,6 +97,20 @@ Chapter 1. Admin Guide
    $$SIP_OUSER) in the parameters given to exec functions. Otherwise they
    will be evaluated as Kamailio pseudo-variables, throwing errors.
 
+   WARNING: if the exec functions are passed variables that might include
+   malicious input, then remote attackers may abuse the exec functions to
+   execute arbitrary code. Specifically, this may result in OS command
+   injection. In such cases, input validation is required to prevent the
+   vulnerability. The following is an example of how input validation and
+   exec module functions may be used together to prevent exploitation:
+...
+if !($rU =~ "^[0-9]{1,15}$") {
+        xlog("Malformed R-URI username: '$rU'\n");
+        exit;
+}
+exec_msg("echo TEST >> /tmp/$(rU).txt");
+...
+
 2. Dependencies
 
    2.1. Kamailio Modules
@@ -167,7 +181,7 @@ modparam("exec", "time_to_kill", 20)
    Example 1.3. exec_dset usage
 ...
 exec_dset("echo TEST > /tmp/test.txt");
-exec_dset("echo TEST > /tmp/$rU.txt");
+exec_dset("echo TEST > /tmp/$(rU).txt");
 ...
 
 4.2.  exec_msg(command)
@@ -191,7 +205,7 @@ exec_dset("echo TEST > /tmp/$rU.txt");
    Example 1.4. exec_msg usage
 ...
 exec_msg("echo TEST > /tmp/test.txt");
-exec_msg("echo TEST > /tmp/$rU.txt");
+exec_msg("echo TEST > /tmp/$(rU).txt");
 ...
 
 4.3.  exec_avp(command [, avplist])
@@ -235,7 +249,7 @@ exec_avp("echo TEST", "$avp(s:test)");
    Example 1.6. exec_cmd usage
 ...
 exec_cmd("echo TEST > /tmp/test.txt");
-exec_cmd("echo TEST > /tmp/$rU.txt");
+exec_cmd("echo TEST > /tmp/$(rU).txt");
 ...
 
 5. Known Issues

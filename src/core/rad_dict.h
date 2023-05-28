@@ -15,8 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 /*!
@@ -25,25 +25,28 @@
  * \ingroup core
  * Module: \ref core
  *
- * \note WARNING: Don't forget to update sip_router/etc/dictionary.sip-router if you 
+ * \note WARNING: Don't forget to update sip_router/etc/dictionary.sip-router if you
  * update this file !
  */
 
 #ifndef _RAD_DICT_H
 #define _RAD_DICT_H
 
-struct attr {
+struct attr
+{
 	const char *n;
 	int v;
 };
 
-struct val {
+struct val
+{
 	const char *n;
 	int v;
 };
 
-typedef enum rad_attr {
-	     /* Standard attributes according to RFC2865 and RFC2866 */
+typedef enum rad_attr
+{
+	/* Standard attributes according to RFC2865 and RFC2866 */
 	A_USER_NAME = 0,
 	A_NAS_IP_ADDRESS,
 	A_NAS_PORT,
@@ -54,7 +57,7 @@ typedef enum rad_attr {
 	A_ACCT_SESSION_ID,
 	A_ACCT_SESSION_TIME,
 
-	     /* Attributes according to draft-schulzrinne-sipping-radius-accounting-00 */
+	/* Attributes according to draft-schulzrinne-sipping-radius-accounting-00 */
 	A_SIP_METHOD,
 	A_SIP_RESPONSE_CODE,
 	A_SIP_CSEQ,
@@ -64,8 +67,8 @@ typedef enum rad_attr {
 	A_SIP_TRANSLATED_REQUEST_ID,
 	A_SIP_SOURCE_IP_ADDRESS,
 	A_SIP_SOURCE_PORT,
-	
-	     /* Attributes according to draft-sterman-aaa-sip-00 */
+
+	/* Attributes according to draft-sterman-aaa-sip-00 */
 	A_DIGEST_RESPONSE,
 	A_DIGEST_REALM,
 	A_DIGEST_NONCE,
@@ -78,9 +81,9 @@ typedef enum rad_attr {
 	A_DIGEST_NONCE_COUNT,
 	A_DIGEST_USER_NAME,
 
-	     /* To be deprecated in the future */
+	/* To be deprecated in the future */
 
-	     /* SER-specific attributes */
+	/* SER-specific attributes */
 	A_SER_FROM,
 	A_SER_FLAGS,
 	A_SER_ORIGINAL_REQUEST_ID,
@@ -102,24 +105,25 @@ typedef enum rad_attr {
 	A_SER_URI_SCHEME,
 	A_SER_SERVER_ID,
 
-	     /* CISCO Vendor Specific Attributes */
+	/* CISCO Vendor Specific Attributes */
 	A_CISCO_AVPAIR,
 	A_MAX
 } rad_attr_t;
 
 
-typedef enum rad_val {
-	 /* Acct-Status-Type */
+typedef enum rad_val
+{
+	/* Acct-Status-Type */
 	V_START = 0,
 	V_STOP,
 	V_INTERIM_UPDATE,
 	V_FAILED,
 
-	     /* Service-Type */
+	/* Service-Type */
 	V_SIP_SESSION,
 	V_CALL_CHECK,
 
-	     /* SER-Service-Type */
+	/* SER-Service-Type */
 	V_GET_URI_ATTRS,
 	V_GET_USER_ATTRS,
 	V_DIGEST_AUTHENTICATION,
@@ -135,34 +139,32 @@ typedef enum rad_val {
  * Search the RADIUS dictionary for codes of all attributes
  * and values defined above
  */
-#define	INIT_AV(rh, at, vl, fn, e1, e2)					\
-{									\
-	int i;								\
-	DICT_ATTR *da;							\
-	DICT_VALUE *dv;							\
-									\
-	for (i = 0; i < A_MAX; i++) {					\
-		if (at[i].n == NULL)					\
-			continue;					\
-		da = rc_dict_findattr(rh, at[i].n);			\
-		if (da == NULL) {					\
-			LM_ERR("%s: can't get code for %s attr\n",	\
-					fn, at[i].n);			\
-			return e1;					\
-		}							\
-		at[i].v = da->value;					\
-	}								\
-	for (i = 0; i < V_MAX; i++) {					\
-		if (vl[i].n == NULL)					\
-			continue;					\
-		dv = rc_dict_findval(rh, vl[i].n);			\
-		if (dv == NULL) {					\
-			LM_ERR("%s: can't get code for %s attr value\n",\
-					fn, vl[i].n);			\
-			return e2;					\
-		}							\
-		vl[i].v = dv->value;					\
-	}								\
-}
+#define INIT_AV(rh, at, vl, fn, e1, e2)                                        \
+	{                                                                          \
+		int i;                                                                 \
+		DICT_ATTR *da;                                                         \
+		DICT_VALUE *dv;                                                        \
+                                                                               \
+		for(i = 0; i < A_MAX; i++) {                                           \
+			if(at[i].n == NULL)                                                \
+				continue;                                                      \
+			da = rc_dict_findattr(rh, at[i].n);                                \
+			if(da == NULL) {                                                   \
+				LM_ERR("%s: can't get code for %s attr\n", fn, at[i].n);       \
+				return e1;                                                     \
+			}                                                                  \
+			at[i].v = da->value;                                               \
+		}                                                                      \
+		for(i = 0; i < V_MAX; i++) {                                           \
+			if(vl[i].n == NULL)                                                \
+				continue;                                                      \
+			dv = rc_dict_findval(rh, vl[i].n);                                 \
+			if(dv == NULL) {                                                   \
+				LM_ERR("%s: can't get code for %s attr value\n", fn, vl[i].n); \
+				return e2;                                                     \
+			}                                                                  \
+			vl[i].v = dv->value;                                               \
+		}                                                                      \
+	}
 
 #endif /* _RAD_DICT_H */

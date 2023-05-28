@@ -67,7 +67,7 @@ Requirements:
      gcc >= 2.9x; 3.[12] recommended (it will work with older version
      but it might require some options tweaking for best performance)
      clang >= version 3.3
-- bison or yacc (Berkley Yacc)
+- bison or yacc (Berkeley Yacc)
 - flex
 - GNU make (on Linux this is the standard "make", on *BSD and Solaris it is
   called "gmake") version >= 3.80 (recommended 3.81).
@@ -181,7 +181,7 @@ OS Notes:
 	    see README of the module you want to use
     Kamailio have APT deb repositories that allow you to
 	install the binaries easily - see the web site for more details:
-	  - http://kamailio.org
+	  - https://kamailio.org
 
 
  Cygwin  (alpha state, partial support)
@@ -332,7 +332,7 @@ are grouped based on Debian packaging rules. For example:
 	make mode=debug PROFILE=-pg all
   - compile only the print module
 	make modules=modules/print modules
-  - compile by default only the print module, in debuging mode and with
+  - compile by default only the print module, in debugging mode and with
     profiling:
 	make cfg modules=modules/print mode=debug PROFILE=-pg
 	make all
@@ -511,14 +511,14 @@ A) Getting Help
   This guide gives you instructions on how to set up the Kamailio
   on your box quickly. In case the default configuration does not fly, please
   check the documentation at the Kamailio web site
-  http://www.kamailio.org to learn how to configure Kamailio for your site.
+  https://www.kamailio.org to learn how to configure Kamailio for your site.
 
   If the documentation does not resolve your problem you may try contacting
   our user forum by E-mail at sr-users@lists.kamailio.org -- that is the
   mailing list of the Kamailio community. To participate in the mailing list,
   please subscribe at the following web address:
 
-  https://lists.kamailio.org/cgi-bin/mailman/listinfo
+  https://lists.kamailio.org/
 
 B) Disclaimers
 

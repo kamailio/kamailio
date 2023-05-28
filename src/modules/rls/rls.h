@@ -39,13 +39,13 @@
 #define RLS_DB_RESERVED 1
 #define RLS_DB_ONLY 2
 
-#define NO_UPDATE_TYPE     -1 
-#define UPDATED_TYPE        1 
+#define NO_UPDATE_TYPE -1
+#define UPDATED_TYPE 1
 
-#define NOT_KNOWN_STATE     0
-#define ACTIVE_STATE        1<<1
-#define PENDING_STATE       1<<2
-#define TERMINATED_STATE    1<<3
+#define NOT_KNOWN_STATE 0
+#define ACTIVE_STATE 1 << 1
+#define PENDING_STATE 1 << 2
+#define TERMINATED_STATE 1 << 3
 
 typedef struct dialog_id
 {
@@ -53,7 +53,7 @@ typedef struct dialog_id
 	str to_tag;
 	str from_tag;
 
-}dialog_id_t;
+} dialog_id_t;
 
 /*
 	rls_presentity table structure:
@@ -72,14 +72,14 @@ typedef struct rls_resource
 	int auth_state;
 	str reason;
 	int updated;
-	str* instance_id;
-	str* cid;
-	struct rls_resource* next;
+	str *instance_id;
+	str *cid;
+	struct rls_resource *next;
 	/* the last 2 parameters say if a query in database is needed */
-}rls_res_t;
+} rls_res_t;
 
 extern int dbmode;
-extern char* xcap_root;
+extern char *xcap_root;
 extern unsigned int xcap_port;
 extern str rls_server_address;
 extern int waitn_time;
@@ -128,7 +128,7 @@ extern search_shtable_t pres_search_shtable;
 extern update_shtable_t pres_update_shtable;
 extern delete_shtable_t pres_delete_shtable;
 extern destroy_shtable_t pres_destroy_shtable;
-extern mem_copy_subs_t  pres_copy_subs;
+extern mem_copy_subs_t pres_copy_subs;
 extern extract_sdialog_info_t pres_extract_sdialog_info;
 
 /* functions imported from pua module*/
@@ -156,10 +156,11 @@ extern int update_dialog_subscribe_rlsdb(subs_t *s);
 extern int insert_rlsdb(subs_t *s);
 extern int get_dialog_subscribe_rlsdb(subs_t *s);
 subs_t *get_dialog_notify_rlsdb(str callid, str to_tag, str from_tag);
-extern int update_all_subs_rlsdb(str *watcher_user, str *watcher_domain, str *evt);
+extern int update_all_subs_rlsdb(
+		str *watcher_user, str *watcher_domain, str *evt);
 
 extern int rls_get_service_list(str *service_uri, str *user, str *domain,
-			xmlNodePtr *service_node, xmlDocPtr *rootdoc);
+		xmlNodePtr *service_node, xmlDocPtr *rootdoc);
 
 extern str str_rlsubs_did_col;
 extern str str_resource_uri_col;
@@ -196,43 +197,40 @@ extern str str_etag_col;
 extern str str_doc_col;
 extern str str_doc_uri_col;
 
-#define RLS_DID_SEP       ";"
-#define RLS_DID_SEP_LEN   strlen(RLS_DID_SEP)
-#define RLS_DID_INIT_LEN  (2* sizeof(RLS_DID_SEP))
-#define RLS_DID_MAX_LEN	255
+#define RLS_DID_SEP ";"
+#define RLS_DID_SEP_LEN strlen(RLS_DID_SEP)
+#define RLS_DID_INIT_LEN (2 * sizeof(RLS_DID_SEP))
+#define RLS_DID_MAX_LEN 255
 
 /* did_str= *callid*RLS_DID_SEP*from_tag*RLS_DID_SEP*to_tag* */
 
-static inline int CONSTR_RLSUBS_DID(subs_t* subs, str *did)
+static inline int CONSTR_RLSUBS_DID(subs_t *subs, str *did)
 {
 	int len;
 
-	len= (RLS_DID_INIT_LEN+ subs->callid.len+ subs->to_tag.len+
-			subs->from_tag.len+ 10)* sizeof(char);
-	if(len > RLS_DID_MAX_LEN)
-	{
-		LM_ERR("new DID size is too big [%d > %d]\n",
-				len, RLS_DID_MAX_LEN);
+	len = (RLS_DID_INIT_LEN + subs->callid.len + subs->to_tag.len
+				  + subs->from_tag.len + 10)
+		  * sizeof(char);
+	if(len > RLS_DID_MAX_LEN) {
+		LM_ERR("new DID size is too big [%d > %d]\n", len, RLS_DID_MAX_LEN);
 		return -1;
 	}
-	did->s= (char*)pkg_malloc(len);
-	if(did->s== NULL) 
-	{
-		ERR_MEM(PKG_MEM_STR); 
+	did->s = (char *)pkg_malloc(len);
+	if(did->s == NULL) {
+		ERR_MEM(PKG_MEM_STR);
 	}
-	
-	did->len= sprintf(did->s, "%.*s%s%.*s%s%.*s", subs->callid.len, 
-			subs->callid.s, RLS_DID_SEP,subs->from_tag.len, subs->from_tag.s,
+
+	did->len = sprintf(did->s, "%.*s%s%.*s%s%.*s", subs->callid.len,
+			subs->callid.s, RLS_DID_SEP, subs->from_tag.len, subs->from_tag.s,
 			RLS_DID_SEP, subs->to_tag.len, subs->to_tag.s);
 
-	if(did->len>= len)
-	{
+	if(did->len >= len) {
 		LM_ERR("ERROR buffer size overflown\n");
 		pkg_free(did->s);
 		return -1;
 	}
-	did->s[did->len]= '\0';
-	
+	did->s[did->len] = '\0';
+
 	LM_DBG("did= %s\n", did->s);
 	return 0;
 error:

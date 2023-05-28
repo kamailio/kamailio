@@ -450,7 +450,7 @@ if (!cnxcc_terminate_all("$var(customer)")) {
 		<section id="cnxcc.rpc.check_client">
 			<title>cnxcc.check_client</title>
 			<para>
-				Retrives all calls from a particular identifier.
+				Retrieves all calls from a particular identifier.
 			</para>
 			<para>
 				Parameters: <emphasis>client/customer identifier</emphasis>

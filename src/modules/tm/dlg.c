@@ -44,7 +44,7 @@
 #include "callid.h"
 #include "uac.h"
 
-#define NORMAL_ORDER 0  /* Create route set in normal order - UAS */
+#define NORMAL_ORDER 0	/* Create route set in normal order - UAS */
 #define REVERSE_ORDER 1 /* Create route set in reverse order - UAC */
 
 

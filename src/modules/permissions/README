@@ -345,7 +345,7 @@ Chapter 1. Admin Guide
    matches the request. Rules contain the following fields: <source
    address, transport protocol, regular expression>.
 
-   A requests is accepted if there exists a rule, where
+   A request is accepted if there exists a rule, where
      * source address is equal to the source address of the request or the
        source address given in pvar,
      * transport protocol is either "ANY" or equal to the transport
@@ -413,7 +413,7 @@ Chapter 1. Admin Guide
 3.1. default_allow_file (string)
 
    Default allow file used by the functions with no parameters. If you
-   don't specify a full pathname then the directory in which is the main
+   don't specify a full pathname then the directory in which the main
    config file is located will be used.
 
    Default value is “permissions.allow”.
@@ -742,8 +742,7 @@ modparam("permissions", "load_backends", 1)
 
    If set to 0, no rate limit is configured. Note carefully: use this
    configuration only in tests environments because executing two RPC
-   reloads of the same table at the same time can cause to kamailio to
-   crash.
+   reloads of the same table at the same time can cause Kamailio to crash.
 
    Default value is “5”.
 
@@ -1064,7 +1063,7 @@ if (allow_trusted("$si", "any", "$ai")) {
    performance reasons stored in two different tables: address table and
    subnet table depending on the value of the mask field (IPv6: 64 or
    smaller, IPv4: 32 or smaller). Note that there is a rate limiting
-   defined by 'reload_delta' paramenter. By default is allowed maximum one
+   defined by 'reload_delta' parameter. By default is allowed maximum one
    reload in five seconds.
 
    Parameters: none
@@ -1112,7 +1111,7 @@ if (allow_trusted("$si", "any", "$ai")) {
 
    Causes the permissions module to re-read the contents of the trusted
    database table into cache memory. Note that there is a rate limiting
-   defined by 'reload_delta' paramenter. By default is allowed maximum one
+   defined by 'reload_delta' parameter. By default is allowed maximum one
    reload in five seconds.
 
    Parameters: none
@@ -1130,7 +1129,7 @@ if (allow_trusted("$si", "any", "$ai")) {
 
 6. Address File Format
 
-   It is a text file with one record per line. Line starting with '#' are
+   It is a text file with one record per line. Lines starting with '#' are
    considered comments and ignored. Comments can be also at the end of
    records, by using '#' to start the comment part of the line.
 

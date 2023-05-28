@@ -46,7 +46,7 @@ struct pg_fld
 
 	char *name;
 	/**
-	 * A union of varius data types from db_fld, postgres expects binary
+	 * A union of various data types from db_fld, postgres expects binary
 	 * data in network byte order so we use these variables as temporary
 	 * buffer to store values after the conversion.
 	 */
@@ -69,7 +69,7 @@ struct pg_fld
 /** Creates a new PostgreSQL specific payload.
  * This function creates a new PostgreSQL specific payload structure and
  * attaches the structure to the generic db_fld structure.
- * @param fld A generic db_fld structure to be exended.
+ * @param fld A generic db_fld structure to be extended.
  * @param table Name of the table on the server.
  * @return 0 on success, negative number on error.
  */

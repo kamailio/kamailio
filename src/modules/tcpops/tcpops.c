@@ -48,8 +48,9 @@ static str tcpops_evrt_reset = str_init("tcp:reset");
 /* globally enabled by default */
 int tcp_closed_event = 1;
 
-int tcp_closed_routes[_TCP_CLOSED_REASON_MAX] =
-	{[0 ... sizeof(tcp_closed_routes)/sizeof(*tcp_closed_routes)-1] = -1};
+int tcp_closed_routes[_TCP_CLOSED_REASON_MAX] = {
+		[0 ... sizeof(tcp_closed_routes) / sizeof(*tcp_closed_routes) - 1] =
+				-1};
 
 /**
  *
@@ -61,9 +62,12 @@ void tcpops_init_evroutes(void)
 	}
 
 	/* get event routes */
-	tcp_closed_routes[TCP_CLOSED_EOF] = route_get(&event_rt, tcpops_evrt_closed.s);
-	tcp_closed_routes[TCP_CLOSED_TIMEOUT] = route_get(&event_rt, tcpops_evrt_timeout.s);
-	tcp_closed_routes[TCP_CLOSED_RESET] = route_get(&event_rt, tcpops_evrt_reset.s);
+	tcp_closed_routes[TCP_CLOSED_EOF] =
+			route_get(&event_rt, tcpops_evrt_closed.s);
+	tcp_closed_routes[TCP_CLOSED_TIMEOUT] =
+			route_get(&event_rt, tcpops_evrt_timeout.s);
+	tcp_closed_routes[TCP_CLOSED_RESET] =
+			route_get(&event_rt, tcpops_evrt_reset.s);
 }
 
 /**
@@ -77,7 +81,7 @@ void tcpops_init_evroutes(void)
 int tcpops_get_current_fd(int conid, int *fd)
 {
 	struct tcp_connection *s_con;
-	if (unlikely((s_con = tcpconn_get(conid, 0, 0, 0, 0)) == NULL)) {
+	if(unlikely((s_con = tcpconn_get(conid, 0, 0, 0, 0)) == NULL)) {
 		LM_ERR("invalid connection id %d, (must be a TCP connid)\n", conid);
 		return 0;
 	}
@@ -103,7 +107,7 @@ int tcpops_acquire_fd_from_tcpmain(int conid, int *fd)
 	long msg[2];
 	int n;
 
-	if (unlikely((s_con = tcpconn_get(conid, 0, 0, 0, 0)) == NULL)) {
+	if(unlikely((s_con = tcpconn_get(conid, 0, 0, 0, 0)) == NULL)) {
 		LM_ERR("invalid connection id %d, (must be a TCP connid)\n", conid);
 		return 0;
 	}
@@ -112,14 +116,15 @@ int tcpops_acquire_fd_from_tcpmain(int conid, int *fd)
 	msg[1] = CONN_GET_FD;
 
 	n = send_all(unix_tcp_sock, msg, sizeof(msg));
-	if (unlikely(n <= 0)){
+	if(unlikely(n <= 0)) {
 		LM_ERR("failed to send fd request: %s (%d)\n", strerror(errno), errno);
 		goto error_release;
 	}
 
 	n = receive_fd(unix_tcp_sock, &tmp, sizeof(tmp), fd, MSG_WAITALL);
-	if (unlikely(n <= 0)){
-		LM_ERR("failed to get fd (receive_fd): %s (%d)\n", strerror(errno), errno);
+	if(unlikely(n <= 0)) {
+		LM_ERR("failed to get fd (receive_fd): %s (%d)\n", strerror(errno),
+				errno);
 		goto error_release;
 	}
 	tcpconn_put(s_con);
@@ -130,63 +135,70 @@ error_release:
 	return 0;
 }
 
-#if !defined(HAVE_SO_KEEPALIVE) || !defined(HAVE_TCP_KEEPCNT) || !defined(HAVE_TCP_KEEPINTVL)
-	#define KSR_TCPOPS_NOKEEPALIVE
+#if !defined(HAVE_SO_KEEPALIVE) || !defined(HAVE_TCP_KEEPCNT) \
+		|| !defined(HAVE_TCP_KEEPINTVL)
+#define KSR_TCPOPS_NOKEEPALIVE
 #endif
 
 #ifdef KSR_TCPOPS_NOKEEPALIVE
 
 #warning "TCP keepalive options not supported by this platform"
 
-int tcpops_keepalive_enable(int fd, int idle, int count, int interval, int closefd)
+int tcpops_keepalive_enable(
+		int fd, int idle, int count, int interval, int closefd)
 {
-	LM_ERR("tcp_keepalive_enable() failed: this module does not support your platform\n");
+	LM_ERR("tcp_keepalive_enable() failed: this module does not support your "
+		   "platform\n");
 	return -1;
 }
 
 int tcpops_keepalive_disable(int fd, int closefd)
 {
-	LM_ERR("tcp_keepalive_disable() failed: this module does not support your platform\n");
+	LM_ERR("tcp_keepalive_disable() failed: this module does not support your "
+		   "platform\n");
 	return -1;
 }
 
 #else
 
-int tcpops_keepalive_enable(int fd, int idle, int count, int interval, int closefd)
+int tcpops_keepalive_enable(
+		int fd, int idle, int count, int interval, int closefd)
 {
 	static const int enable = 1;
 	int ret = -1;
 
-	if (setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, &enable,
-					sizeof(enable))<0){
+	if(setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, &enable, sizeof(enable)) < 0) {
 		LM_ERR("failed to enable SO_KEEPALIVE: %s\n", strerror(errno));
 		return -1;
 	} else {
 #ifdef HAVE_TCP_KEEPIDLE
-		if (setsockopt(fd, IPPROTO_TCP, TCP_KEEPIDLE, &idle,
-						sizeof(idle))<0){
-			LM_ERR("failed to set keepalive idle interval: %s\n", strerror(errno));
+		if(setsockopt(fd, IPPROTO_TCP, TCP_KEEPIDLE, &idle, sizeof(idle)) < 0) {
+			LM_ERR("failed to set keepalive idle interval: %s\n",
+					strerror(errno));
 		}
 #else
 		LM_DBG("TCP_KEEPIDLE option not available - ignoring\n");
 #endif
 
-		if (setsockopt(fd, IPPROTO_TCP, TCP_KEEPCNT, &count,
-						sizeof(count))<0){
-			LM_ERR("failed to set maximum keepalive count: %s\n", strerror(errno));
+		if(setsockopt(fd, IPPROTO_TCP, TCP_KEEPCNT, &count, sizeof(count))
+				< 0) {
+			LM_ERR("failed to set maximum keepalive count: %s\n",
+					strerror(errno));
 		}
 
-		if (setsockopt(fd, IPPROTO_TCP, TCP_KEEPINTVL, &interval,
-						sizeof(interval))<0){
-			LM_ERR("failed to set keepalive probes interval: %s\n", strerror(errno));
+		if(setsockopt(
+				   fd, IPPROTO_TCP, TCP_KEEPINTVL, &interval, sizeof(interval))
+				< 0) {
+			LM_ERR("failed to set keepalive probes interval: %s\n",
+					strerror(errno));
 		}
 
 		ret = 1;
-		LM_DBG("keepalive enabled for fd=%d, idle=%d, cnt=%d, intvl=%d\n", fd, idle, count, interval);
+		LM_DBG("keepalive enabled for fd=%d, idle=%d, cnt=%d, intvl=%d\n", fd,
+				idle, count, interval);
 	}
 
-	if (closefd)
-	{
+	if(closefd) {
 		close(fd);
 	}
 	return ret;
@@ -197,16 +209,15 @@ int tcpops_keepalive_disable(int fd, int closefd)
 	static const int disable = 0;
 	int ret = -1;
 
-	if (setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, &disable,
-					sizeof(disable))<0){
+	if(setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, &disable, sizeof(disable))
+			< 0) {
 		LM_WARN("failed to disable SO_KEEPALIVE: %s\n", strerror(errno));
 	} else {
 		ret = 1;
 		LM_DBG("keepalive disabled for fd=%d\n", fd);
 	}
 
-	if (closefd)
-	{
+	if(closefd) {
 		close(fd);
 	}
 	return ret;
@@ -214,12 +225,13 @@ int tcpops_keepalive_disable(int fd, int closefd)
 
 #endif
 
-int tcpops_set_connection_lifetime(struct tcp_connection* con, int time) {
-	if (unlikely(con == NULL)) {
+int tcpops_set_connection_lifetime(struct tcp_connection *con, int time)
+{
+	if(unlikely(con == NULL)) {
 		LM_CRIT("BUG: con == NULL");
 		return -1;
 	}
-	if (unlikely(time < 0)) {
+	if(unlikely(time < 0)) {
 		LM_ERR("Invalid timeout value, %d, must be >= 0\n", time);
 		return -1;
 	}
@@ -247,10 +259,11 @@ static void tcpops_tcp_closed_run_route(tcp_closed_event_info_t *tev)
 	} else {
 		rt = tcp_closed_routes[tev->reason];
 		LM_DBG("event reason id: %d rt: %d\n", tev->reason, rt);
-		if (rt == -1) return;
+		if(rt == -1)
+			return;
 	}
 
-	if (faked_msg_init() < 0) {
+	if(faked_msg_init() < 0) {
 		LM_ERR("faked_msg_init() failed\n");
 		return;
 	}
@@ -261,24 +274,25 @@ static void tcpops_tcp_closed_run_route(tcp_closed_event_info_t *tev)
 	set_route_type(EVENT_ROUTE);
 	init_run_actions_ctx(&ctx);
 	if(keng == NULL) {
-		if(rt>=0) {
+		if(rt >= 0) {
 			run_top_route(event_rt.rlist[rt], fmsg, 0);
 		} else {
 			LM_DBG("no event route block to execute\n");
 		}
 	} else {
-		if(tev->reason==TCP_CLOSED_TIMEOUT) {
+		if(tev->reason == TCP_CLOSED_TIMEOUT) {
 			evname = &tcpops_evrt_timeout;
-		} else if(tev->reason==TCP_CLOSED_RESET) {
+		} else if(tev->reason == TCP_CLOSED_RESET) {
 			evname = &tcpops_evrt_reset;
 		} else {
 			evname = &tcpops_evrt_closed;
 		}
-		if(sr_kemi_route(keng, fmsg, EVENT_ROUTE, &tcpops_event_callback,
-					evname)<0) {
+		if(sr_kemi_route(
+				   keng, fmsg, EVENT_ROUTE, &tcpops_event_callback, evname)
+				< 0) {
 			LM_ERR("error running event route kemi callback [%.*s - %.*s]\n",
-						tcpops_event_callback.len, tcpops_event_callback.s,
-						evname->len, evname->s);
+					tcpops_event_callback.len, tcpops_event_callback.s,
+					evname->len, evname->s);
 		}
 	}
 	set_route_type(backup_rt);
@@ -288,7 +302,7 @@ int tcpops_handle_tcp_closed(sr_event_param_t *evp)
 {
 	tcp_closed_event_info_t *tev = (tcp_closed_event_info_t *)evp->data;
 
-	if (tev == NULL || tev->con == NULL) {
+	if(tev == NULL || tev->con == NULL) {
 		LM_WARN("received bad TCP closed event\n");
 		return -1;
 	}
@@ -296,7 +310,7 @@ int tcpops_handle_tcp_closed(sr_event_param_t *evp)
 
 	/* run event route if tcp_closed_event == 1 or if the
 	 * F_CONN_CLOSE_EV flag is explicitly set */
-	if (tcp_closed_event == 1 || (tev->con->flags & F_CONN_CLOSE_EV)) {
+	if(tcp_closed_event == 1 || (tev->con->flags & F_CONN_CLOSE_EV)) {
 		tcpops_tcp_closed_run_route(tev);
 	}
 

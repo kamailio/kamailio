@@ -35,23 +35,28 @@
 
 #include "crypto_aes.h"
 
-#define CRYPTO_NIO_OUT (1<<0)
-#define CRYPTO_NIO_ENCRYPT (1<<1)
-#define CRYPTO_NIO_DECRYPT (1<<2)
+#define CRYPTO_NIO_OUT (1 << 0)
+#define CRYPTO_NIO_ENCRYPT (1 << 1)
+#define CRYPTO_NIO_DECRYPT (1 << 2)
 
 /* set/get crypto env */
-#define crypto_set_msg_env(_msg, _evenv) do { _msg->ldv.vdata=(void*)_evenv; } while(0)
-#define crypto_get_msg_env(_msg) ((crypto_env_t*)_msg->ldv.vdata)
+#define crypto_set_msg_env(_msg, _evenv)  \
+	do {                                  \
+		_msg->ldv.vdata = (void *)_evenv; \
+	} while(0)
+#define crypto_get_msg_env(_msg) ((crypto_env_t *)_msg->ldv.vdata)
 
 int crypto_nio_received(sr_event_param_t *evp);
 int crypto_nio_sent(sr_event_param_t *evp);
 
-typedef struct _crypto_env {
+typedef struct _crypto_env
+{
 	int mflags;
 	sr_event_param_t *evp;
 } crypto_env_t;
 
-typedef struct _crypto_evroutes {
+typedef struct _crypto_evroutes
+{
 	int netio;
 	str netio_name;
 } crypto_evroutes_t;
@@ -74,13 +79,13 @@ int crypto_evcb_enable(void)
 	_crypto_rts.netio_name.s = "crypto:netio";
 	_crypto_rts.netio_name.len = strlen(_crypto_rts.netio_name.s);
 	_crypto_rts.netio = route_lookup(&event_rt, _crypto_rts.netio_name.s);
-	if (_crypto_rts.netio < 0 || event_rt.rlist[_crypto_rts.netio] == NULL) {
+	if(_crypto_rts.netio < 0 || event_rt.rlist[_crypto_rts.netio] == NULL) {
 		_crypto_rts.netio = -1;
 	}
 
-    /* register network hooks */
-    sr_event_register_cb(SREV_NET_DATA_IN, crypto_nio_received);
-    sr_event_register_cb(SREV_NET_DATA_OUT, crypto_nio_sent);
+	/* register network hooks */
+	sr_event_register_cb(SREV_NET_DATA_IN, crypto_nio_received);
+	sr_event_register_cb(SREV_NET_DATA_OUT, crypto_nio_sent);
 
 	return 0;
 }
@@ -97,16 +102,16 @@ int crypto_exec_evroute(crypto_env_t *evenv, int rt, str *kevcb, str *rtname)
 	sr_kemi_eng_t *keng = NULL;
 	onsend_info_t onsnd_info = {0};
 
-	if(evenv==0) {
+	if(evenv == 0) {
 		LM_ERR("crypto env not set\n");
 		return -1;
 	}
 
-	if((rt<0) && (kevcb==NULL || kevcb->s==NULL || kevcb->len<=0)) {
+	if((rt < 0) && (kevcb == NULL || kevcb->s == NULL || kevcb->len <= 0)) {
 		return 0;
 	}
 
-	if(faked_msg_get_new(&tmsg)<0) {
+	if(faked_msg_get_new(&tmsg) < 0) {
 		LM_ERR("failed to get a new faked message\n");
 		return -1;
 	}
@@ -129,12 +134,12 @@ int crypto_exec_evroute(crypto_env_t *evenv, int rt, str *kevcb, str *rtname)
 	backup_rt = get_route_type();
 	set_route_type(EVENT_ROUTE);
 	init_run_actions_ctx(&ctx);
-	if(rt>=0) {
+	if(rt >= 0) {
 		run_top_route(event_rt.rlist[rt], fmsg, 0);
 	} else {
 		keng = sr_kemi_eng_get();
-		if(keng!=NULL) {
-			if(sr_kemi_route(keng, fmsg, EVENT_ROUTE, kevcb, rtname)<0) {
+		if(keng != NULL) {
+			if(sr_kemi_route(keng, fmsg, EVENT_ROUTE, kevcb, rtname) < 0) {
 				LM_ERR("error running event route kemi callback\n");
 			}
 		}
@@ -157,7 +162,7 @@ int crypto_nio_received(sr_event_param_t *evp)
 {
 	int ret;
 	crypto_env_t evenv;
-	EVP_CIPHER_CTX *de=NULL;
+	EVP_CIPHER_CTX *de = NULL;
 	str dtext;
 	str *obuf;
 
@@ -176,30 +181,31 @@ int crypto_nio_received(sr_event_param_t *evp)
 	LM_DBG("decrypting\n");
 
 	de = EVP_CIPHER_CTX_new();
-	if(de==NULL) {
+	if(de == NULL) {
 		LM_ERR("cannot get new cipher context\n");
 		return -1;
 	}
 
 	/* gen key and iv. init the cipher ctx object */
-	if (crypto_aes_init((unsigned char *)_crypto_netio_key.s, _crypto_netio_key.len,
-				(unsigned char*)crypto_get_salt(), NULL, NULL, de)) {
+	if(crypto_aes_init((unsigned char *)_crypto_netio_key.s,
+			   _crypto_netio_key.len, (unsigned char *)crypto_get_salt(), NULL,
+			   NULL, de)) {
 		EVP_CIPHER_CTX_free(de);
 		LM_ERR("couldn't initialize AES cipher\n");
 		return -1;
 	}
 
-	obuf = (str*)evp->data;
+	obuf = (str *)evp->data;
 	dtext.len = obuf->len;
-	dtext.s = (char *)crypto_aes_decrypt(de, (unsigned char *)obuf->s,
-			&dtext.len);
-	if(dtext.s==NULL) {
+	dtext.s = (char *)crypto_aes_decrypt(
+			de, (unsigned char *)obuf->s, &dtext.len);
+	if(dtext.s == NULL) {
 		EVP_CIPHER_CTX_free(de);
 		LM_ERR("AES decryption failed\n");
 		return -1;
 	}
 
-	if(dtext.len>=BUF_SIZE) {
+	if(dtext.len >= BUF_SIZE) {
 		LM_ERR("new buffer overflow (%d)\n", dtext.len);
 		free(dtext.s);
 		EVP_CIPHER_CTX_free(de);
@@ -215,7 +221,7 @@ int crypto_nio_received(sr_event_param_t *evp)
 	free(dtext.s);
 
 done:
-    return 0;
+	return 0;
 }
 
 /**
@@ -246,31 +252,33 @@ int crypto_nio_sent(sr_event_param_t *evp)
 
 	LM_DBG("encrypting\n");
 	en = EVP_CIPHER_CTX_new();
-	if(en==NULL) {
+	if(en == NULL) {
 		LM_ERR("cannot get new cipher context\n");
 		return -1;
 	}
 
 	/* gen key and iv. init the cipher ctx object */
-	if (crypto_aes_init((unsigned char *)_crypto_netio_key.s, _crypto_netio_key.len,
-				(unsigned char*)crypto_get_salt(), NULL, en, NULL)) {
+	if(crypto_aes_init((unsigned char *)_crypto_netio_key.s,
+			   _crypto_netio_key.len, (unsigned char *)crypto_get_salt(), NULL,
+			   en, NULL)) {
 		EVP_CIPHER_CTX_free(en);
 		LM_ERR("couldn't initialize AES cipher\n");
 		return -1;
 	}
 
-	obuf = (str*)evp->data;
+	obuf = (str *)evp->data;
 
 	etext.len = obuf->len;
-	etext.s = (char *)crypto_aes_encrypt(en, (unsigned char *)obuf->s, &etext.len);
-	if(etext.s==NULL) {
+	etext.s = (char *)crypto_aes_encrypt(
+			en, (unsigned char *)obuf->s, &etext.len);
+	if(etext.s == NULL) {
 		EVP_CIPHER_CTX_free(en);
 		LM_ERR("AES encryption failed\n");
 		return -1;
 	}
 
-	nbuf.s = (char*)pkg_malloc(etext.len + 1);
-	if(nbuf.s==NULL) {
+	nbuf.s = (char *)pkg_malloc(etext.len + 1);
+	if(nbuf.s == NULL) {
 		EVP_CIPHER_CTX_free(en);
 		PKG_MEM_ERROR;
 		free(etext.s);
@@ -295,7 +303,7 @@ done:
 /**
  *
  */
-int crypto_nio_in(sip_msg_t* msg)
+int crypto_nio_in(sip_msg_t *msg)
 {
 	crypto_env_t *evenv;
 
@@ -310,7 +318,7 @@ int crypto_nio_in(sip_msg_t* msg)
 /**
  *
  */
-int crypto_nio_out(sip_msg_t* msg)
+int crypto_nio_out(sip_msg_t *msg)
 {
 	crypto_env_t *evenv;
 
@@ -325,7 +333,7 @@ int crypto_nio_out(sip_msg_t* msg)
 /**
  *
  */
-int crypto_nio_encrypt(sip_msg_t* msg)
+int crypto_nio_encrypt(sip_msg_t *msg)
 {
 	crypto_env_t *evenv;
 
@@ -339,7 +347,7 @@ int crypto_nio_encrypt(sip_msg_t* msg)
 /**
  *
  */
-int crypto_nio_decrypt(sip_msg_t* msg)
+int crypto_nio_decrypt(sip_msg_t *msg)
 {
 	crypto_env_t *evenv;
 

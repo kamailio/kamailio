@@ -100,7 +100,7 @@ modparam("erlang", "no_cnodes", 2)
 				<emphasis>alivename</emphasis> is the registered name of the &kamailio; process.
 			</para>
 			<para>
-				<emphasis>Note,</emphasis> if the <varname>no_cnodes</varname> greater then 1,
+				<emphasis>Note,</emphasis> if the <varname>no_cnodes</varname> is greater than 1,
 				then <emphasis>alivename</emphasis> of &kamailio; process will be suffixed with number.
 			</para>
 			<example>

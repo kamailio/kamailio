@@ -22,25 +22,18 @@
 #include "binrpc.h"
 
 /* WARNING: keep in sync with the errors listed in binrpc.h */
-static const char* binrpc_str_errors[]={
-	"no error",
-	"invalid function arguments",
-	"buffer too small (overflow)",
-	"corrupted packet",
-	"more data needed",
-	"end of packet encountered",
-	"binrpc parse context not initialized",
-	"record doesn't match type",
-	"bad record",
-	"bug -- internal error",
-	"unknown/invalid error code"
-};
+static const char *binrpc_str_errors[] = {"no error",
+		"invalid function arguments", "buffer too small (overflow)",
+		"corrupted packet", "more data needed", "end of packet encountered",
+		"binrpc parse context not initialized", "record doesn't match type",
+		"bad record", "bug -- internal error", "unknown/invalid error code"};
 
 
-
-const char* binrpc_error(int err)
+const char *binrpc_error(int err)
 {
-	if (err<0) err=-err;
-	if (err>(-E_BINRPC_LAST)) err=-E_BINRPC_LAST;
+	if(err < 0)
+		err = -err;
+	if(err > (-E_BINRPC_LAST))
+		err = -E_BINRPC_LAST;
 	return binrpc_str_errors[err];
 }

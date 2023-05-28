@@ -20,7 +20,7 @@
 */
 
 #ifndef _PYTHON_MOD_H
-#define  _PYTHON_MOD_H
+#define _PYTHON_MOD_H
 
 #include <Python.h>
 

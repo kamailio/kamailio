@@ -29,10 +29,10 @@
 #define _BIT_COUNT_H
 
 /* fix __CPU_i386 -> __CPU_x86 */
-#if defined __CPU_i386 && ! defined __CPU_x86
+#if defined __CPU_i386 && !defined __CPU_x86
 #define __CPU_x86
 #endif
- 
+
 #ifdef CC_GCC_LIKE_ASM
 #if defined __CPU_x86 || defined __CPU_x86_64
 #ifdef __SSE4_2__
@@ -48,9 +48,9 @@
 /* Returns the number of 1 bits in u. */
 static inline int bit_count(unsigned int u)
 {
-	int	v;
+	int v;
 
-	asm volatile(" popcnt %1, %0 " : "=r" (v) : "rm" (u));
+	asm volatile(" popcnt %1, %0 " : "=r"(v) : "rm"(u));
 	return v;
 }
 
@@ -82,7 +82,7 @@ static inline int bit_count(unsigned int i)
 
 #if 0
 /* number of bits in a byte.
- * (Only slightly faster then the above version,
+ * (Only slightly faster than the above version,
  * It is not worth the extra memory usage.)
  */
 extern int	bits_in_char[256];

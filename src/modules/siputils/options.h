@@ -63,7 +63,7 @@ extern str opt_accept_enc;
 extern str opt_accept_lang;
 extern str opt_supported;
 
-int ki_opt_reply(struct sip_msg* _msg);
-int opt_reply(struct sip_msg* _msg, char* _foo, char* _bar);
+int ki_opt_reply(struct sip_msg *_msg);
+int opt_reply(struct sip_msg *_msg, char *_foo, char *_bar);
 
 #endif

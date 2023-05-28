@@ -39,79 +39,72 @@ MODULE_VERSION
 /** parameters */
 
 int mongodb_srv_param(modparam_t type, void *val);
-static int w_mongodb_find(sip_msg_t* msg, char* ssrv, char *sdname, char *scname,
-		char* scmd, char* sres);
-static int w_mongodb_find_one(sip_msg_t* msg, char* ssrv, char *sdname, char *scname,
-		char* scmd, char* sres);
-static int w_mongodb_cmd_simple(sip_msg_t* msg, char* ssrv, char *sdname, char *scname,
-		char* scmd, char* sres);
-static int w_mongodb_cmd(sip_msg_t* msg, char* ssrv, char *sdname, char *scname,
-		char* scmd, char* sres);
-static int fixup_mongodb_cmd(void** param, int param_no);
-static int w_mongodb_free_reply(struct sip_msg* msg, char* res);
-static int w_mongodb_next_reply(struct sip_msg* msg, char* res);
+static int w_mongodb_find(sip_msg_t *msg, char *ssrv, char *sdname,
+		char *scname, char *scmd, char *sres);
+static int w_mongodb_find_one(sip_msg_t *msg, char *ssrv, char *sdname,
+		char *scname, char *scmd, char *sres);
+static int w_mongodb_cmd_simple(sip_msg_t *msg, char *ssrv, char *sdname,
+		char *scname, char *scmd, char *sres);
+static int w_mongodb_cmd(sip_msg_t *msg, char *ssrv, char *sdname, char *scname,
+		char *scmd, char *sres);
+static int fixup_mongodb_cmd(void **param, int param_no);
+static int w_mongodb_free_reply(struct sip_msg *msg, char *res);
+static int w_mongodb_next_reply(struct sip_msg *msg, char *res);
 
 static void mod_destroy(void);
-static int  child_init(int rank);
+static int child_init(int rank);
 
-static int pv_get_mongodb(struct sip_msg *msg,  pv_param_t *param,
-		pv_value_t *res);
+static int pv_get_mongodb(
+		struct sip_msg *msg, pv_param_t *param, pv_value_t *res);
 static int pv_parse_mongodb_name(pv_spec_p sp, str *in);
 
 static pv_export_t mod_pvs[] = {
-	{ {"mongodb", sizeof("mongodb")-1}, PVT_OTHER, pv_get_mongodb, 0,
-		pv_parse_mongodb_name, 0, 0, 0 },
-	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
-};
+		{{"mongodb", sizeof("mongodb") - 1}, PVT_OTHER, pv_get_mongodb, 0,
+				pv_parse_mongodb_name, 0, 0, 0},
+		{{0, 0}, 0, 0, 0, 0, 0, 0, 0}};
 
 
-static cmd_export_t cmds[]={
-	{"mongodb_find", (cmd_function)w_mongodb_find, 5, fixup_mongodb_cmd,
-		0, ANY_ROUTE},
-	{"mongodb_find_one", (cmd_function)w_mongodb_find_one, 5, fixup_mongodb_cmd,
-		0, ANY_ROUTE},
-	{"mongodb_cmd_simple", (cmd_function)w_mongodb_cmd_simple, 5, fixup_mongodb_cmd,
-		0, ANY_ROUTE},
-	{"mongodb_cmd", (cmd_function)w_mongodb_cmd, 5, fixup_mongodb_cmd,
-		0, ANY_ROUTE},
-	{"mongodb_free", (cmd_function)w_mongodb_free_reply, 1, fixup_spve_null,
-		0, ANY_ROUTE},
-	{"mongodb_next", (cmd_function)w_mongodb_next_reply, 1, fixup_spve_null,
-		0, ANY_ROUTE},
-	{"bind_ndb_mongodb",   (cmd_function)bind_ndb_mongodb,  0,
-		0, 0, 0},
-	{0, 0, 0, 0, 0, 0}
-};
+static cmd_export_t cmds[] = {{"mongodb_find", (cmd_function)w_mongodb_find, 5,
+									  fixup_mongodb_cmd, 0, ANY_ROUTE},
+		{"mongodb_find_one", (cmd_function)w_mongodb_find_one, 5,
+				fixup_mongodb_cmd, 0, ANY_ROUTE},
+		{"mongodb_cmd_simple", (cmd_function)w_mongodb_cmd_simple, 5,
+				fixup_mongodb_cmd, 0, ANY_ROUTE},
+		{"mongodb_cmd", (cmd_function)w_mongodb_cmd, 5, fixup_mongodb_cmd, 0,
+				ANY_ROUTE},
+		{"mongodb_free", (cmd_function)w_mongodb_free_reply, 1, fixup_spve_null,
+				0, ANY_ROUTE},
+		{"mongodb_next", (cmd_function)w_mongodb_next_reply, 1, fixup_spve_null,
+				0, ANY_ROUTE},
+		{"bind_ndb_mongodb", (cmd_function)bind_ndb_mongodb, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0}};
 
-static param_export_t params[]={
-	{"server",         PARAM_STRING|USE_FUNC_PARAM, (void*)mongodb_srv_param},
-	{0, 0, 0}
-};
+static param_export_t params[] = {
+		{"server", PARAM_STRING | USE_FUNC_PARAM, (void *)mongodb_srv_param},
+		{0, 0, 0}};
 
 struct module_exports exports = {
-	"ndb_mongodb",	/* module name */
-	DEFAULT_DLFLAGS,	/* dlopen flags */
-	cmds,		/*·exported·functions·*/
-	params,		/*·exported·params·*/
-	0,			/*·exported·RPC·methods·*/
-	mod_pvs,	/* exported pseudo-variables */
-	0,			/* response function */
-	0,			/* module·initialization·function */
-	child_init,	/* per child init function */
-	mod_destroy	/* destroy function */
+		"ndb_mongodb",	 /* module name */
+		DEFAULT_DLFLAGS, /* dlopen flags */
+		cmds,			 /*·exported·functions·*/
+		params,			 /*·exported·params·*/
+		0,				 /*·exported·RPC·methods·*/
+		mod_pvs,		 /* exported pseudo-variables */
+		0,				 /* response function */
+		0,				 /* module·initialization·function */
+		child_init,		 /* per child init function */
+		mod_destroy		 /* destroy function */
 };
-
 
 
 /* each child get a new connection to the database */
 static int child_init(int rank)
 {
 	/* skip child init for non-worker process ranks */
-	if (rank==PROC_INIT || rank==PROC_MAIN || rank==PROC_TCP_MAIN)
+	if(rank == PROC_INIT || rank == PROC_MAIN || rank == PROC_TCP_MAIN)
 		return 0;
 
-	if(mongodbc_init()<0)
-	{
+	if(mongodbc_init() < 0) {
 		LM_ERR("failed to initialize mongodb connections\n");
 		return -1;
 	}
@@ -130,48 +123,43 @@ static void mod_destroy(void)
 /**
  *
  */
-static int w_mongodb_do_cmd(sip_msg_t* msg, char* ssrv, char *sdname, char *scname,
-		char* scmd, char* sres, int ctype)
+static int w_mongodb_do_cmd(sip_msg_t *msg, char *ssrv, char *sdname,
+		char *scname, char *scmd, char *sres, int ctype)
 {
 	int ret;
 	str s[5];
 
-	if(fixup_get_svalue(msg, (gparam_t*)ssrv, &s[0])!=0)
-	{
+	if(fixup_get_svalue(msg, (gparam_t *)ssrv, &s[0]) != 0) {
 		LM_ERR("no mongodb server name\n");
 		return -1;
 	}
-	if(fixup_get_svalue(msg, (gparam_t*)sdname, &s[1])!=0)
-	{
+	if(fixup_get_svalue(msg, (gparam_t *)sdname, &s[1]) != 0) {
 		LM_ERR("no mongodb database name\n");
 		return -1;
 	}
-	if(fixup_get_svalue(msg, (gparam_t*)scname, &s[2])!=0)
-	{
+	if(fixup_get_svalue(msg, (gparam_t *)scname, &s[2]) != 0) {
 		LM_ERR("no mongodb collection name\n");
 		return -1;
 	}
-	if(fixup_get_svalue(msg, (gparam_t*)scmd, &s[3])!=0)
-	{
+	if(fixup_get_svalue(msg, (gparam_t *)scmd, &s[3]) != 0) {
 		LM_ERR("no mongodb command\n");
 		return -1;
 	}
-	if(fixup_get_svalue(msg, (gparam_t*)sres, &s[4])!=0)
-	{
+	if(fixup_get_svalue(msg, (gparam_t *)sres, &s[4]) != 0) {
 		LM_ERR("no mongodb reply name\n");
 		return -1;
 	}
 	ret = -1;
-	if(ctype==0) {
+	if(ctype == 0) {
 		ret = mongodbc_exec_simple(&s[0], &s[1], &s[2], &s[3], &s[4]);
-	} else if(ctype==1) {
+	} else if(ctype == 1) {
 		ret = mongodbc_exec(&s[0], &s[1], &s[2], &s[3], &s[4]);
-	} else if(ctype==2) {
+	} else if(ctype == 2) {
 		ret = mongodbc_find(&s[0], &s[1], &s[2], &s[3], &s[4]);
-	} else if(ctype==3) {
+	} else if(ctype == 3) {
 		ret = mongodbc_find_one(&s[0], &s[1], &s[2], &s[3], &s[4]);
 	}
-	if(ret<0)
+	if(ret < 0)
 		return -1;
 	return 1;
 }
@@ -179,8 +167,8 @@ static int w_mongodb_do_cmd(sip_msg_t* msg, char* ssrv, char *sdname, char *scna
 /**
  *
  */
-static int ki_mongodbc_exec_simple(sip_msg_t* msg, str* ssrv, str *sdname,
-		str *scname, str* scmd, str* sres)
+static int ki_mongodbc_exec_simple(sip_msg_t *msg, str *ssrv, str *sdname,
+		str *scname, str *scmd, str *sres)
 {
 	return mongodbc_exec_simple(ssrv, sdname, scname, scmd, sres);
 }
@@ -188,8 +176,8 @@ static int ki_mongodbc_exec_simple(sip_msg_t* msg, str* ssrv, str *sdname,
 /**
  *
  */
-static int ki_mongodbc_exec(sip_msg_t* msg, str* ssrv, str *sdname,
-		str *scname, str* scmd, str* sres)
+static int ki_mongodbc_exec(sip_msg_t *msg, str *ssrv, str *sdname, str *scname,
+		str *scmd, str *sres)
 {
 	return mongodbc_exec(ssrv, sdname, scname, scmd, sres);
 }
@@ -197,8 +185,8 @@ static int ki_mongodbc_exec(sip_msg_t* msg, str* ssrv, str *sdname,
 /**
  *
  */
-static int ki_mongodbc_find(sip_msg_t* msg, str* ssrv, str *sdname,
-		str *scname, str* scmd, str* sres)
+static int ki_mongodbc_find(sip_msg_t *msg, str *ssrv, str *sdname, str *scname,
+		str *scmd, str *sres)
 {
 	return mongodbc_find(ssrv, sdname, scname, scmd, sres);
 }
@@ -206,8 +194,8 @@ static int ki_mongodbc_find(sip_msg_t* msg, str* ssrv, str *sdname,
 /**
  *
  */
-static int ki_mongodbc_find_one(sip_msg_t* msg, str* ssrv, str *sdname,
-		str *scname, str* scmd, str* sres)
+static int ki_mongodbc_find_one(sip_msg_t *msg, str *ssrv, str *sdname,
+		str *scname, str *scmd, str *sres)
 {
 	return mongodbc_find_one(ssrv, sdname, scname, scmd, sres);
 }
@@ -215,8 +203,8 @@ static int ki_mongodbc_find_one(sip_msg_t* msg, str* ssrv, str *sdname,
 /**
  *
  */
-static int w_mongodb_cmd_simple(sip_msg_t* msg, char* ssrv, char *sdname, char *scname,
-		char* scmd, char* sres)
+static int w_mongodb_cmd_simple(sip_msg_t *msg, char *ssrv, char *sdname,
+		char *scname, char *scmd, char *sres)
 {
 	return w_mongodb_do_cmd(msg, ssrv, sdname, scname, scmd, sres, 0);
 }
@@ -224,8 +212,8 @@ static int w_mongodb_cmd_simple(sip_msg_t* msg, char* ssrv, char *sdname, char *
 /**
  *
  */
-static int w_mongodb_cmd(sip_msg_t* msg, char* ssrv, char *sdname, char *scname,
-		char* scmd, char* sres)
+static int w_mongodb_cmd(sip_msg_t *msg, char *ssrv, char *sdname, char *scname,
+		char *scmd, char *sres)
 {
 	return w_mongodb_do_cmd(msg, ssrv, sdname, scname, scmd, sres, 1);
 }
@@ -233,8 +221,8 @@ static int w_mongodb_cmd(sip_msg_t* msg, char* ssrv, char *sdname, char *scname,
 /**
  *
  */
-static int w_mongodb_find(sip_msg_t* msg, char* ssrv, char *sdname, char *scname,
-		char* scmd, char* sres)
+static int w_mongodb_find(sip_msg_t *msg, char *ssrv, char *sdname,
+		char *scname, char *scmd, char *sres)
 {
 	return w_mongodb_do_cmd(msg, ssrv, sdname, scname, scmd, sres, 2);
 }
@@ -242,8 +230,8 @@ static int w_mongodb_find(sip_msg_t* msg, char* ssrv, char *sdname, char *scname
 /**
  *
  */
-static int w_mongodb_find_one(sip_msg_t* msg, char* ssrv, char *sdname, char *scname,
-		char* scmd, char* sres)
+static int w_mongodb_find_one(sip_msg_t *msg, char *ssrv, char *sdname,
+		char *scname, char *scmd, char *sres)
 {
 	return w_mongodb_do_cmd(msg, ssrv, sdname, scname, scmd, sres, 3);
 }
@@ -251,7 +239,7 @@ static int w_mongodb_find_one(sip_msg_t* msg, char* ssrv, char *sdname, char *sc
 /**
  *
  */
-static int fixup_mongodb_cmd(void** param, int param_no)
+static int fixup_mongodb_cmd(void **param, int param_no)
 {
 	return fixup_spve_null(param, 1);
 }
@@ -259,17 +247,16 @@ static int fixup_mongodb_cmd(void** param, int param_no)
 /**
  *
  */
-static int w_mongodb_free_reply(struct sip_msg* msg, char* res)
+static int w_mongodb_free_reply(struct sip_msg *msg, char *res)
 {
 	str name;
 
-	if(fixup_get_svalue(msg, (gparam_t*)res, &name)!=0)
-	{
+	if(fixup_get_svalue(msg, (gparam_t *)res, &name) != 0) {
 		LM_ERR("no mongodb reply name\n");
 		return -1;
 	}
 
-	if(mongodbc_free_reply(&name)<0)
+	if(mongodbc_free_reply(&name) < 0)
 		return -1;
 	return 1;
 }
@@ -277,9 +264,9 @@ static int w_mongodb_free_reply(struct sip_msg* msg, char* res)
 /**
  *
  */
-static int ki_mongodbc_free_reply(struct sip_msg* msg, str* name)
+static int ki_mongodbc_free_reply(struct sip_msg *msg, str *name)
 {
-	if(mongodbc_free_reply(name)<0)
+	if(mongodbc_free_reply(name) < 0)
 		return -1;
 	return 1;
 }
@@ -287,29 +274,30 @@ static int ki_mongodbc_free_reply(struct sip_msg* msg, str* name)
 /**
  *
  */
-static int w_mongodb_next_reply(struct sip_msg* msg, char* res)
+static int w_mongodb_next_reply(struct sip_msg *msg, char *res)
 {
 	str name;
 
-	if(fixup_get_svalue(msg, (gparam_t*)res, &name)!=0)
-	{
+	if(fixup_get_svalue(msg, (gparam_t *)res, &name) != 0) {
 		LM_ERR("no mongodb reply name\n");
 		return -1;
 	}
 
-	if(mongodbc_next_reply(&name)<0)
+	if(mongodbc_next_reply(&name) < 0)
 		return -1;
-	return 1;;
+	return 1;
+	;
 }
 
 /**
  *
  */
-static int ki_mongodbc_next_reply(struct sip_msg* msg, str* name)
+static int ki_mongodbc_next_reply(struct sip_msg *msg, str *name)
 {
-	if(mongodbc_next_reply(name)<0)
+	if(mongodbc_next_reply(name) < 0)
 		return -1;
-	return 1;;
+	return 1;
+	;
 }
 
 /**
@@ -317,7 +305,7 @@ static int ki_mongodbc_next_reply(struct sip_msg* msg, str* name)
  */
 int mongodb_srv_param(modparam_t type, void *val)
 {
-	return mongodbc_add_server((char*)val);
+	return mongodbc_add_server((char *)val);
 }
 
 /**
@@ -325,15 +313,15 @@ int mongodb_srv_param(modparam_t type, void *val)
  */
 static int pv_parse_mongodb_name(pv_spec_p sp, str *in)
 {
-	mongodbc_pv_t *rpv=NULL;
+	mongodbc_pv_t *rpv = NULL;
 	str pvs;
 	int i;
 
-	if(in->s==NULL || in->len<=0)
+	if(in->s == NULL || in->len <= 0)
 		return -1;
 
-	rpv = (mongodbc_pv_t*)pkg_malloc(sizeof(mongodbc_pv_t));
-	if(rpv==NULL)
+	rpv = (mongodbc_pv_t *)pkg_malloc(sizeof(mongodbc_pv_t));
+	if(rpv == NULL)
 		return -1;
 
 	memset(rpv, 0, sizeof(mongodbc_pv_t));
@@ -342,50 +330,49 @@ static int pv_parse_mongodb_name(pv_spec_p sp, str *in)
 	trim(&pvs);
 
 	rpv->rname.s = pvs.s;
-	for(i=0; i<pvs.len-2; i++)
-	{
-		if(isspace(pvs.s[i]) || pvs.s[i]=='=') {
+	for(i = 0; i < pvs.len - 2; i++) {
+		if(isspace(pvs.s[i]) || pvs.s[i] == '=') {
 			rpv->rname.len = i;
 			break;
 		}
 	}
 	rpv->rname.len = i;
 
-	if(rpv->rname.len==0)
+	if(rpv->rname.len == 0)
 		goto error_var;
 
-	while(i<pvs.len-2 && isspace(pvs.s[i]))
+	while(i < pvs.len - 2 && isspace(pvs.s[i]))
 		i++;
 
-	if(pvs.s[i]!='=')
+	if(pvs.s[i] != '=')
 		goto error_var;
 
-	if(pvs.s[i+1]!='>')
+	if(pvs.s[i + 1] != '>')
 		goto error_var;
 
 	i += 2;
-	while(i<pvs.len && isspace(pvs.s[i]))
+	while(i < pvs.len && isspace(pvs.s[i]))
 		i++;
 
-	if(i>=pvs.len)
+	if(i >= pvs.len)
 		goto error_key;
 
-	rpv->rkey.s   = pvs.s + i;
+	rpv->rkey.s = pvs.s + i;
 	rpv->rkey.len = pvs.len - i;
 
-	if(rpv->rkey.len>=5 && strncmp(rpv->rkey.s, "value", 5)==0) {
+	if(rpv->rkey.len >= 5 && strncmp(rpv->rkey.s, "value", 5) == 0) {
 		rpv->rkeyid = 1;
-	} else if(rpv->rkey.len>=4 && strncmp(rpv->rkey.s, "type", 4)==0) {
+	} else if(rpv->rkey.len >= 4 && strncmp(rpv->rkey.s, "type", 4) == 0) {
 		rpv->rkeyid = 0;
-	} else if(rpv->rkey.len==4 && strncmp(rpv->rkey.s, "info", 4)==0) {
+	} else if(rpv->rkey.len == 4 && strncmp(rpv->rkey.s, "info", 4) == 0) {
 		rpv->rkeyid = 2;
-	} else if(rpv->rkey.len==4 && strncmp(rpv->rkey.s, "size", 4)==0) {
+	} else if(rpv->rkey.len == 4 && strncmp(rpv->rkey.s, "size", 4) == 0) {
 		rpv->rkeyid = 3;
 	} else {
 		goto error_key;
 	}
 
-	sp->pvp.pvn.u.dname = (void*)rpv;
+	sp->pvp.pvn.u.dname = (void *)rpv;
 	sp->pvp.pvn.type = PV_NAME_OTHER;
 	return 0;
 
@@ -403,16 +390,15 @@ error_key:
 /**
  *
  */
-static int pv_get_mongodb(struct sip_msg *msg,  pv_param_t *param,
-		pv_value_t *res)
+static int pv_get_mongodb(
+		struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 {
 	mongodbc_pv_t *rpv;
 
-	rpv = (mongodbc_pv_t*)param->pvn.u.dname;
-	if(rpv->reply==NULL)
-	{
+	rpv = (mongodbc_pv_t *)param->pvn.u.dname;
+	if(rpv->reply == NULL) {
 		rpv->reply = mongodbc_get_reply(&rpv->rname);
-		if(rpv->reply==NULL)
+		if(rpv->reply == NULL)
 			return pv_get_null(msg, param, res);
 	}
 
@@ -420,7 +406,7 @@ static int pv_get_mongodb(struct sip_msg *msg,  pv_param_t *param,
 	switch(rpv->rkeyid) {
 		case 1:
 			/* value */
-			if(rpv->reply->jsonrpl.s==NULL)
+			if(rpv->reply->jsonrpl.s == NULL)
 				return pv_get_null(msg, param, res);
 			return pv_get_strval(msg, param, res, &rpv->reply->jsonrpl);
 		case 2:

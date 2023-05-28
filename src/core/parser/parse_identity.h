@@ -31,15 +31,16 @@
 #include "../str.h"
 #include "msg_parser.h"
 
-struct identity_body{
-	int error;  		/*!< Error code */
-	int ballocated;  	/*!< Does hash point to an allocated area */
+struct identity_body
+{
+	int error;		/*!< Error code */
+	int ballocated; /*!< Does hash point to an allocated area */
 	str hash;
 };
 
 
 /*! \brief casting macro for accessing IDENTITY body */
-#define get_identity(p_msg) ((struct identity_body*)(p_msg)->identity->parsed)
+#define get_identity(p_msg) ((struct identity_body *)(p_msg)->identity->parsed)
 
 
 /*! \brief

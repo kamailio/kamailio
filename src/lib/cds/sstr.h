@@ -53,7 +53,7 @@ typedef struct {
 
 #define str_len(ptr)	((ptr)?(ptr)->len:0)
 
-/** transalate zero-terminated string to str_t (both uses the input buffer!)*/
+/** translate zero-terminated string to str_t (both uses the input buffer!)*/
 str_t zt2str(char *str);
 
 /** returns 1 if the string is empty */

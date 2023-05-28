@@ -30,7 +30,8 @@
 #define KAMAILIOSIPPORTTABLE_H
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 #include <net-snmp/net-snmp-config.h>
@@ -41,59 +42,59 @@ extern "C" {
 
 #define SIP_PORT_TABLE_STR_INDEX_SIZE 22
 
-/* This structure represents a single row in the table. */
-typedef struct kamailioSIPPortTable_context_s
-{
+	/* This structure represents a single row in the table. */
+	typedef struct kamailioSIPPortTable_context_s
+	{
 
-	netsnmp_index index;
+		netsnmp_index index;
 
-	unsigned char kamailioSIPStringIndex[SIP_PORT_TABLE_STR_INDEX_SIZE];
-	unsigned long kamailioSIPStringIndex_len;
+		unsigned char kamailioSIPStringIndex[SIP_PORT_TABLE_STR_INDEX_SIZE];
+		unsigned long kamailioSIPStringIndex_len;
 
-	unsigned char kamailioSIPTransportRcv[2];
-	long kamailioSIPTransportRcv_len;
+		unsigned char kamailioSIPTransportRcv[2];
+		long kamailioSIPTransportRcv_len;
 
-	void *data;
+		void *data;
 
-} kamailioSIPPortTable_context;
+	} kamailioSIPPortTable_context;
 
 
-/*
+	/*
  * Initializes the kamailioSIPPortTable module.  
  *
  * Specifically, this function will define the tables structure, and then
  * populate it with the ports and transports that Kamailio is listening on.
  *
  */
-void init_kamailioSIPPortTable(void);
+	void init_kamailioSIPPortTable(void);
 
 
-/* Initialize the kamailioSIPPortTable table by defining how it is structured */
-void initialize_table_kamailioSIPPortTable(void);
+	/* Initialize the kamailioSIPPortTable table by defining how it is structured */
+	void initialize_table_kamailioSIPPortTable(void);
 
 
-/*
+	/*
  * This routine is called to process get requests for elements of the table.
  * The function is mostly left in its auto-generated form 
  */
-int kamailioSIPPortTable_get_value(
-		netsnmp_request_info *, netsnmp_index *, netsnmp_table_request_info *);
+	int kamailioSIPPortTable_get_value(netsnmp_request_info *, netsnmp_index *,
+			netsnmp_table_request_info *);
 
-const kamailioSIPPortTable_context *kamailioSIPPortTable_get_by_idx(
-		netsnmp_index *);
+	const kamailioSIPPortTable_context *kamailioSIPPortTable_get_by_idx(
+			netsnmp_index *);
 
-const kamailioSIPPortTable_context *kamailioSIPPortTable_get_by_idx_rs(
-		netsnmp_index *, int row_status);
+	const kamailioSIPPortTable_context *kamailioSIPPortTable_get_by_idx_rs(
+			netsnmp_index *, int row_status);
 
-/*
+	/*
  * oid declarations
  */
-extern oid kamailioSIPPortTable_oid[];
-extern size_t kamailioSIPPortTable_oid_len;
+	extern oid kamailioSIPPortTable_oid[];
+	extern size_t kamailioSIPPortTable_oid_len;
 
 #define kamailioSIPPortTable_TABLE_OID KAMAILIO_OID, 3, 1, 1, 1, 1, 5
 
-/*
+	/*
  * column number definitions for table kamailioSIPPortTable
  */
 

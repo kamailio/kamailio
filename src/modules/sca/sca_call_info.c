@@ -1903,7 +1903,7 @@ int sca_call_info_update(
 	memset(&call_info, 0, sizeof(sca_call_info));
 	call_info_hdr = get_hdr(msg, HDR_CALLINFO_T);
 	if(!SCA_HEADER_EMPTY(call_info_hdr)) {
-		// this needs to accomodate comma-separated appearance info
+		// this needs to accommodate comma-separated appearance info
 		if(sca_call_info_body_parse(&call_info_hdr->body, &call_info) < 0) {
 			LM_ERR("Bad Call-Info header body: %.*s\n",
 					STR_FMT(&call_info_hdr->body));

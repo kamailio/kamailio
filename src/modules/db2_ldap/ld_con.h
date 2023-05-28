@@ -43,8 +43,10 @@
 /** 
  * Per-connection flags for LDAP connections.
  */
-enum ld_con_flags {
-	LD_CONNECTED      = (1 << 0), /**< The connection has been connected successfully */
+enum ld_con_flags
+{
+	LD_CONNECTED =
+			(1 << 0), /**< The connection has been connected successfully */
 };
 
 
@@ -52,10 +54,11 @@ enum ld_con_flags {
  * This structure represents connections to LDAP servers. It contains
  * LDAP specific per-connection data, 
  */
-struct ld_con {
-	db_pool_entry_t gen;  /**< Generic part of the structure */
-	LDAP* con;            /**< LDAP connection handle */
-	unsigned int flags;   /**< Flags */
+struct ld_con
+{
+	db_pool_entry_t gen; /**< Generic part of the structure */
+	LDAP *con;			 /**< LDAP connection handle */
+	unsigned int flags;	 /**< Flags */
 };
 
 
@@ -66,7 +69,7 @@ struct ld_con {
  * @retval 0 on success
  * @retval A negative number on error
  */
-int ld_con(db_con_t* con);
+int ld_con(db_con_t *con);
 
 
 /** Establish a new connection to server.  
@@ -76,14 +79,14 @@ int ld_con(db_con_t* con);
  * @retval 0 on success.
  * @retval A negative number on error.
  */
-int ld_con_connect(db_con_t* con);
+int ld_con_connect(db_con_t *con);
 
 
 /** Disconnected from LDAP server.
  * Disconnects a previously connected connection to LDAP server.
  * @param con A structure representing the connection to be disconnected.
  */
-void ld_con_disconnect(db_con_t* con);
+void ld_con_disconnect(db_con_t *con);
 
 /** @} */
 

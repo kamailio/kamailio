@@ -97,7 +97,7 @@ extern unsigned int ul_init_flag;
 
 extern str ul_xavp_contact_name;
 
-extern db1_con_t* ul_dbh;   /* Database connection handle */
+extern db1_con_t *ul_dbh; /* Database connection handle */
 extern db_func_t ul_dbf;
 
 /* filter on load and during cleanup by server id */
@@ -106,10 +106,10 @@ extern unsigned int ul_db_srvid;
 /*
  * Matching algorithms
  */
-#define CONTACT_ONLY         (0)
-#define CONTACT_CALLID       (1)
-#define CONTACT_PATH         (2)
-#define CONTACT_CALLID_ONLY  (3)
+#define CONTACT_ONLY (0)
+#define CONTACT_CALLID (1)
+#define CONTACT_PATH (2)
+#define CONTACT_CALLID_ONLY (3)
 
 extern int ul_matching_mode;
 
@@ -117,16 +117,18 @@ extern int ul_db_ops_ruid;
 
 extern int ul_expires_type;
 
-#define UL_DB_EXPIRES_SET(r, v)   do { \
-			if(ul_expires_type==1) { \
-				(r)->type = DB1_BIGINT; \
-				(r)->val.ll_val = (long long)(v); \
-			} else { \
-				(r)->type = DB1_DATETIME; \
-				(r)->val.time_val = (time_t)(v); \
-			} \
-		} while(0)
+#define UL_DB_EXPIRES_SET(r, v)               \
+	do {                                      \
+		if(ul_expires_type == 1) {            \
+			(r)->type = DB1_BIGINT;           \
+			(r)->val.ll_val = (long long)(v); \
+		} else {                              \
+			(r)->type = DB1_DATETIME;         \
+			(r)->val.time_val = (time_t)(v);  \
+		}                                     \
+	} while(0)
 
-#define UL_DB_EXPIRES_GET(r)  ((ul_expires_type==1)?(time_t)VAL_BIGINT(r):VAL_TIME(r))
+#define UL_DB_EXPIRES_GET(r) \
+	((ul_expires_type == 1) ? (time_t)VAL_BIGINT(r) : VAL_TIME(r))
 
 #endif /* _USRLOC_MOD_H_ */

@@ -112,7 +112,7 @@ static int initialize_agentx(void)
 	init_kamailioNetConfig();
 	LM_DBG("Done initializing Kamailio OID's for SNMPD MasterX\n");
 
-	/* In case we recevie a request to stop (kill -TERM or kill -INT) */
+	/* In case we receive a request to stop (kill -TERM or kill -INT) */
 	keep_running = 1;
 
 	while(keep_running) {

@@ -34,12 +34,14 @@
 
 #define UL_DB_URL_LEN 260
 
-typedef struct str2s {
+typedef struct str2s
+{
 	char s[UL_DB_URL_LEN];
 	int len;
 } str2;
 
-typedef struct ul_db {
+typedef struct ul_db
+{
 	str2 url;
 	int no;
 	time_t failover_time;
@@ -48,38 +50,42 @@ typedef struct ul_db {
 	int status;
 	int spare;
 	int rg;
-	db1_con_t * dbh;
+	db1_con_t *dbh;
 	db_func_t dbf;
-}ul_db_t;
+} ul_db_t;
 
-typedef struct ul_db_handle {
+typedef struct ul_db_handle
+{
 	unsigned int id;
-	struct check_data * check;
+	struct check_data *check;
 	int working;
 	time_t expires;
 	int active;
 	ul_db_t db[DB_NUM];
-}ul_db_handle_t;
+} ul_db_handle_t;
 
-typedef struct ul_db_handle_list {
-	ul_db_handle_t * handle;
-	struct ul_db_handle_list * next;
-}ul_db_handle_list_t;
+typedef struct ul_db_handle_list
+{
+	ul_db_handle_t *handle;
+	struct ul_db_handle_list *next;
+} ul_db_handle_list_t;
 
 void destroy_handles(void);
 
-int refresh_handles(db_func_t * dbf, db1_con_t * dbh);
+int refresh_handles(db_func_t *dbf, db1_con_t *dbh);
 
-int load_location_number(db_func_t * dbf, db1_con_t * dbh, int*);
+int load_location_number(db_func_t *dbf, db1_con_t *dbh, int *);
 
-ul_db_handle_t * get_handle(db_func_t * dbf, db1_con_t * dbh, str * first, str * second);
+ul_db_handle_t *get_handle(
+		db_func_t *dbf, db1_con_t *dbh, str *first, str *second);
 
-int load_data(db_func_t * dbf, db1_con_t * dbh, ul_db_handle_t * handle, int id);
+int load_data(db_func_t *dbf, db1_con_t *dbh, ul_db_handle_t *handle, int id);
 
-int refresh_handle(ul_db_handle_t * handle, ul_db_handle_t * new_data, int error_handling);
+int refresh_handle(
+		ul_db_handle_t *handle, ul_db_handle_t *new_data, int error_handling);
 
-ul_db_t * get_db_by_num(ul_db_handle_t * handle, int no);
+ul_db_t *get_db_by_num(ul_db_handle_t *handle, int no);
 
-int check_handle(db_func_t * dbf, db1_con_t * dbh, ul_db_handle_t * handle);
+int check_handle(db_func_t *dbf, db1_con_t *dbh, ul_db_handle_t *handle);
 
 #endif

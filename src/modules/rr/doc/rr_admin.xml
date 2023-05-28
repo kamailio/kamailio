@@ -12,7 +12,7 @@
   <section>
     <title>Overview</title>
 
-    <para>The module contains record routing logic</para>
+    <para>The module contains record routing logic.</para>
   </section>
 
   <section id="RR-dialog-id">
@@ -20,7 +20,7 @@
 
     <para>&kamailio; is basically <emphasis>only</emphasis> a transaction
     stateful proxy, without any dialog support build in. There are many
-    features/services which actually requires a dialog awareness, like storing
+    features/services which actually require a dialog awareness, like storing
     the information in the dialog creation stage, information which will be
     used during the whole dialog existence.</para>
 
@@ -246,7 +246,7 @@ modparam("rr", "enable_socket_mismatch_warning", 0)
     <section id="rr.p.custom_user_avp">
       <title><varname>custom_user_avp</varname> (avp string)</title>
 
-      <para>When enable_username is enabled, a call to record_route will add
+      <para>When add_username is enabled, a call to record_route will add
       the username of the RequestURI to the Record-Route URI. This parameter
       allows you to setup an AVP with which you can customise the username to
       be added in the Record-Route URI.</para>
@@ -664,7 +664,7 @@ add_rr_param(";nat=yes");
 
       <para>The function checks if the URI parameters of the local Route
       header (corresponding to the local server) matches the given regular
-      expression. It must be call after loose_route() (see <xref
+      expression. It must be called after loose_route() (see <xref
       linkend="rr.f.loose_route"/>).</para>
 
       <para>Meaning of the parameters is as follows:</para>

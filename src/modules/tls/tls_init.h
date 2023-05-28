@@ -35,26 +35,30 @@
 #if OPENSSL_VERSION_NUMBER < 0x01000000L
 /* alternative: check ifdef SSL_CTRL_SET_TLSEXT_HOSTNAME */
 #define OPENSSL_NO_TLSEXT
-#endif /* OPENSSL_VERION < 1.0 */
+#endif /* OPENSSL_VERSION < 1.0 */
 #ifndef OPENSSL_NO_KRB5
-/* enable workarround for openssl kerberos wrong malloc bug
+/* enable workaround for openssl kerberos wrong malloc bug
  * (kssl code uses libc malloc/free/calloc instead of OPENSSL_malloc &
  * friends)*/
-#define TLS_KSSL_WORKARROUND
+#define TLS_KSSL_WORKAROUND
 extern int openssl_kssl_malloc_bug; /* is openssl bug #1467 present ? */
 #endif
 
 
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
-extern const SSL_METHOD* ssl_methods[];
+extern const SSL_METHOD *ssl_methods[];
 #else
-typedef struct sr_tls_methods_s {
-	const SSL_METHOD* TLSMethod;
+typedef struct sr_tls_methods_s
+{
+	const SSL_METHOD *TLSMethod;
 	int TLSMethodMin;
 	int TLSMethodMax;
 } sr_tls_methods_t;
 extern sr_tls_methods_t sr_tls_methods[];
 #endif
+
+#define TLS_MODE_PTHREAD_LOCK_SHM (1)
+#define TLS_MODE_FORK_PREPARE (1 << 1)
 
 /*
  * just once, pre-initialize the tls subsystem
@@ -87,6 +91,9 @@ int tls_h_init_si_f(struct socket_info *si);
  * Make sure that all server domains in the configuration have corresponding
  * listening socket in SER
  */
-int tls_check_sockets(tls_domains_cfg_t* cfg);
+int tls_check_sockets(tls_domains_cfg_t *cfg);
+
+int ksr_tls_lock_init(void);
+void ksr_tls_lock_destroy(void);
 
 #endif /* _TLS_INIT_H */

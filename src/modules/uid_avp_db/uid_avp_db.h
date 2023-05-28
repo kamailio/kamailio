@@ -29,6 +29,6 @@
 #define UID_AVP_DB_H
 #include "../../lib/srdb2/db.h"
 
-extern db_ctx_t* ctx;
+extern db_ctx_t *ctx;
 extern int auto_unlock;
 #endif

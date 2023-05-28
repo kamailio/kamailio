@@ -37,18 +37,18 @@
 
 #define MI_ALLOW_URI "allow_uri"
 
-void rpc_trusted_reload(rpc_t* rpc, void* c);
+void rpc_trusted_reload(rpc_t *rpc, void *c);
 
-void rpc_trusted_dump(rpc_t* rpc, void* c);
+void rpc_trusted_dump(rpc_t *rpc, void *c);
 
-void rpc_address_reload(rpc_t* rpc, void* c);
+void rpc_address_reload(rpc_t *rpc, void *c);
 
-void rpc_address_dump(rpc_t* rpc, void* c);
+void rpc_address_dump(rpc_t *rpc, void *c);
 
-void rpc_subnet_dump(rpc_t* rpc, void* c);
+void rpc_subnet_dump(rpc_t *rpc, void *c);
 
-void rpc_domain_name_dump(rpc_t* rpc, void* c);
+void rpc_domain_name_dump(rpc_t *rpc, void *c);
 
-void rpc_test_uri(rpc_t* rpc, void* c);
+void rpc_test_uri(rpc_t *rpc, void *c);
 
 #endif

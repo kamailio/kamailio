@@ -49,7 +49,7 @@ typedef struct db_row {
 
 /** Return the columns in the row */
 #define ROW_VALUES(rw) ((rw)->values)
-/** Return the number of colums */
+/** Return the number of columns */
 #define ROW_N(rw)      ((rw)->n)
 
 /**

@@ -27,7 +27,7 @@
  */
 
 #include "ucontact.h"
-#include <string.h>             /* memcpy */
+#include <string.h> /* memcpy */
 #include "../../core/mem/shm_mem.h"
 #include "../../core/ut.h"
 #include "../../core/ip_addr.h"
@@ -50,43 +50,51 @@
  * \param _ci contact informations
  * \return new created contact on success, 0 on failure
  */
-ucontact_t* new_ucontact(str* _dom, str* _aor, str* _contact, ucontact_info_t* _ci)
+ucontact_t *new_ucontact(
+		str *_dom, str *_aor, str *_contact, ucontact_info_t *_ci)
 {
 	ucontact_t *c;
 
-	c = (ucontact_t*)shm_malloc(sizeof(ucontact_t));
-	if (!c) {
+	c = (ucontact_t *)shm_malloc(sizeof(ucontact_t));
+	if(!c) {
 		LM_ERR("no more shm memory\n");
 		return 0;
 	}
 	memset(c, 0, sizeof(ucontact_t));
 
-	if (_contact->s && _contact->len > 0) {
-		if (shm_str_dup( &c->c, _contact) < 0) goto error;
+	if(_contact->s && _contact->len > 0) {
+		if(shm_str_dup(&c->c, _contact) < 0)
+			goto error;
 	}
 
-	if (_ci->callid->s && _ci->callid->len > 0) {
-		if (shm_str_dup( &c->callid, _ci->callid) < 0) goto error;
+	if(_ci->callid->s && _ci->callid->len > 0) {
+		if(shm_str_dup(&c->callid, _ci->callid) < 0)
+			goto error;
 	}
 
-	if (_ci->user_agent->s && _ci->user_agent->len > 0) {
-		if (shm_str_dup( &c->user_agent, _ci->user_agent) < 0) goto error;
+	if(_ci->user_agent->s && _ci->user_agent->len > 0) {
+		if(shm_str_dup(&c->user_agent, _ci->user_agent) < 0)
+			goto error;
 	}
 
-	if (_ci->received.s && _ci->received.len > 0) {
-		if (shm_str_dup( &c->received, &_ci->received) < 0) goto error;
+	if(_ci->received.s && _ci->received.len > 0) {
+		if(shm_str_dup(&c->received, &_ci->received) < 0)
+			goto error;
 	}
 
-	if (_ci->path && _ci->path->len > 0) {
-		if (shm_str_dup( &c->path, _ci->path) < 0) goto error;
+	if(_ci->path && _ci->path->len > 0) {
+		if(shm_str_dup(&c->path, _ci->path) < 0)
+			goto error;
 	}
 
-	if (_ci->ruid.s && _ci->ruid.len > 0) {
-		if (shm_str_dup( &c->ruid, &_ci->ruid) < 0) goto error;
+	if(_ci->ruid.s && _ci->ruid.len > 0) {
+		if(shm_str_dup(&c->ruid, &_ci->ruid) < 0)
+			goto error;
 	}
 
-	if (_ci->instance.s && _ci->instance.len > 0) {
-		if (shm_str_dup( &c->instance, &_ci->instance) < 0) goto error;
+	if(_ci->instance.s && _ci->instance.len > 0) {
+		if(shm_str_dup(&c->instance, &_ci->instance) < 0)
+			goto error;
 	}
 
 	c->domain = _dom;
@@ -105,34 +113,48 @@ ucontact_t* new_ucontact(str* _dom, str* _aor, str* _contact, ucontact_info_t* _
 	return c;
 error:
 	LM_ERR("no more shm memory\n");
-	if (c->path.s) shm_free(c->path.s);
-	if (c->received.s) shm_free(c->received.s);
-	if (c->user_agent.s) shm_free(c->user_agent.s);
-	if (c->callid.s) shm_free(c->callid.s);
-	if (c->c.s) shm_free(c->c.s);
-	if (c->ruid.s) shm_free(c->ruid.s);
-	if (c->instance.s) shm_free(c->instance.s);
+	if(c->path.s)
+		shm_free(c->path.s);
+	if(c->received.s)
+		shm_free(c->received.s);
+	if(c->user_agent.s)
+		shm_free(c->user_agent.s);
+	if(c->callid.s)
+		shm_free(c->callid.s);
+	if(c->c.s)
+		shm_free(c->c.s);
+	if(c->ruid.s)
+		shm_free(c->ruid.s);
+	if(c->instance.s)
+		shm_free(c->instance.s);
 	shm_free(c);
 	return 0;
 }
-
 
 
 /*!
  * \brief Free all memory associated with given contact structure
  * \param _c freed contact
  */
-void free_ucontact(ucontact_t* _c)
+void free_ucontact(ucontact_t *_c)
 {
-	if (!_c) return;
-	if (_c->path.s) shm_free(_c->path.s);
-	if (_c->received.s) shm_free(_c->received.s);
-	if (_c->user_agent.s) shm_free(_c->user_agent.s);
-	if (_c->callid.s) shm_free(_c->callid.s);
-	if (_c->c.s) shm_free(_c->c.s);
-	if (_c->ruid.s) shm_free(_c->ruid.s);
-	if (_c->instance.s) shm_free(_c->instance.s);
-	shm_free( _c );
+	if(!_c)
+		return;
+	if(_c->path.s)
+		shm_free(_c->path.s);
+	if(_c->received.s)
+		shm_free(_c->received.s);
+	if(_c->user_agent.s)
+		shm_free(_c->user_agent.s);
+	if(_c->callid.s)
+		shm_free(_c->callid.s);
+	if(_c->c.s)
+		shm_free(_c->c.s);
+	if(_c->ruid.s)
+		shm_free(_c->ruid.s);
+	if(_c->instance.s)
+		shm_free(_c->instance.s);
+	shm_free(_c);
 }
 
 
@@ -141,16 +163,24 @@ void free_ucontact(ucontact_t* _c)
  * \param _f output file
  * \param _c printed contact
  */
-void print_ucontact(FILE* _f, ucontact_t* _c)
+void print_ucontact(FILE *_f, ucontact_t *_c)
 {
 	time_t t = time(0);
-	char* st;
+	char *st;
 
 	switch(_c->state) {
-	case CS_NEW:   st = "CS_NEW";     break;
-	case CS_SYNC:  st = "CS_SYNC";    break;
-	case CS_DIRTY: st = "CS_DIRTY";   break;
-	default:       st = "CS_UNKNOWN"; break;
+		case CS_NEW:
+			st = "CS_NEW";
+			break;
+		case CS_SYNC:
+			st = "CS_SYNC";
+			break;
+		case CS_DIRTY:
+			st = "CS_DIRTY";
+			break;
+		default:
+			st = "CS_UNKNOWN";
+			break;
 	}
 
 	fprintf(_f, "~~~Contact(%p)~~~\n", _c);
@@ -158,11 +188,11 @@ void print_ucontact(FILE* _f, ucontact_t* _c)
 	fprintf(_f, "aor       : '%.*s'\n", _c->aor->len, ZSW(_c->aor->s));
 	fprintf(_f, "Contact   : '%.*s'\n", _c->c.len, ZSW(_c->c.s));
 	fprintf(_f, "Expires   : ");
-	if (_c->expires == 0) {
+	if(_c->expires == 0) {
 		fprintf(_f, "Permanent\n");
-	} else if (_c->expires == UL_EXPIRED_TIME) {
+	} else if(_c->expires == UL_EXPIRED_TIME) {
 		fprintf(_f, "Deleted\n");
-	} else if (t > _c->expires) {
+	} else if(t > _c->expires) {
 		fprintf(_f, "Expired\n");
 	} else {
 		fprintf(_f, "%u\n", (unsigned int)(_c->expires - t));
@@ -170,25 +200,21 @@ void print_ucontact(FILE* _f, ucontact_t* _c)
 	fprintf(_f, "q         : %s\n", q2str(_c->q, 0));
 	fprintf(_f, "Call-ID   : '%.*s'\n", _c->callid.len, ZSW(_c->callid.s));
 	fprintf(_f, "CSeq      : %d\n", _c->cseq);
-	fprintf(_f, "User-Agent: '%.*s'\n",
-		_c->user_agent.len, ZSW(_c->user_agent.s));
-	fprintf(_f, "received  : '%.*s'\n",
-		_c->received.len, ZSW(_c->received.s));
-	fprintf(_f, "Path      : '%.*s'\n",
-		_c->path.len, ZSW(_c->path.s));
+	fprintf(_f, "User-Agent: '%.*s'\n", _c->user_agent.len,
+			ZSW(_c->user_agent.s));
+	fprintf(_f, "received  : '%.*s'\n", _c->received.len, ZSW(_c->received.s));
+	fprintf(_f, "Path      : '%.*s'\n", _c->path.len, ZSW(_c->path.s));
 	fprintf(_f, "State     : %s\n", st);
 	fprintf(_f, "Flags     : %u\n", _c->flags);
-	if (_c->sock) {
-		fprintf(_f, "Sock      : %.*s (%p)\n",
-				_c->sock->sock_str.len,_c->sock->sock_str.s,_c->sock);
+	if(_c->sock) {
+		fprintf(_f, "Sock      : %.*s (%p)\n", _c->sock->sock_str.len,
+				_c->sock->sock_str.s, _c->sock);
 	} else {
 		fprintf(_f, "Sock      : none (null)\n");
 	}
 	fprintf(_f, "Methods   : %u\n", _c->methods);
-	fprintf(_f, "ruid      : '%.*s'\n",
-		_c->ruid.len, ZSW(_c->ruid.s));
-	fprintf(_f, "instance  : '%.*s'\n",
-		_c->instance.len, ZSW(_c->instance.s));
+	fprintf(_f, "ruid      : '%.*s'\n", _c->ruid.len, ZSW(_c->ruid.s));
+	fprintf(_f, "instance  : '%.*s'\n", _c->instance.len, ZSW(_c->instance.s));
 	fprintf(_f, "reg-id    : %u\n", _c->reg_id);
 	fprintf(_f, "next      : %p\n", _c->next);
 	fprintf(_f, "prev      : %p\n", _c->prev);
@@ -202,57 +228,60 @@ void print_ucontact(FILE* _f, ucontact_t* _c)
  * \param _ci contact informations
  * \return 0 on success, -1 on failure
  */
-int mem_update_ucontact(ucontact_t* _c, ucontact_info_t* _ci)
+int mem_update_ucontact(ucontact_t *_c, ucontact_info_t *_ci)
 {
-#define update_str(_old,_new) \
-	do{\
-		if ((_old)->len < (_new)->len) { \
-			ptr = (char*)shm_malloc((_new)->len); \
-			if (ptr == 0) { \
-				LM_ERR("no more shm memory\n"); \
-				return -1; \
-			}\
-			memcpy(ptr, (_new)->s, (_new)->len);\
-			if ((_old)->s) shm_free((_old)->s);\
-			(_old)->s = ptr;\
-		} else {\
-			memcpy((_old)->s, (_new)->s, (_new)->len);\
-		}\
-		(_old)->len = (_new)->len;\
+#define update_str(_old, _new)                         \
+	do {                                               \
+		if((_old)->len < (_new)->len) {                \
+			ptr = (char *)shm_malloc((_new)->len);     \
+			if(ptr == 0) {                             \
+				LM_ERR("no more shm memory\n");        \
+				return -1;                             \
+			}                                          \
+			memcpy(ptr, (_new)->s, (_new)->len);       \
+			if((_old)->s)                              \
+				shm_free((_old)->s);                   \
+			(_old)->s = ptr;                           \
+		} else {                                       \
+			memcpy((_old)->s, (_new)->s, (_new)->len); \
+		}                                              \
+		(_old)->len = (_new)->len;                     \
 	} while(0)
 
-	char* ptr;
+	char *ptr;
 
 	/* Update gruu */
-	if(_ci->instance.s!=NULL && _ci->instance.len>0) {
-	    update_str (& _c->instance, &_ci->instance);
+	if(_ci->instance.s != NULL && _ci->instance.len > 0) {
+		update_str(&_c->instance, &_ci->instance);
 	}
 	/* Update contact */
-	if(_ci->c!=NULL && _ci->c->s!=NULL && _ci->c->len>0) {
-	    update_str( &_c->c, _ci->c);
+	if(_ci->c != NULL && _ci->c->s != NULL && _ci->c->len > 0) {
+		update_str(&_c->c, _ci->c);
 	}
 	/* Update callid */
-	if(_ci->callid!=NULL && _ci->callid->s!=NULL && _ci->callid->len>0) {
-	    update_str( &_c->callid, _ci->callid);	
+	if(_ci->callid != NULL && _ci->callid->s != NULL && _ci->callid->len > 0) {
+		update_str(&_c->callid, _ci->callid);
 	}
 
 	/* No need to update Callid as it is constant 
 	 * per ucontact (set at insert time)  -bogdan */
 
-	update_str( &_c->user_agent, _ci->user_agent);
+	update_str(&_c->user_agent, _ci->user_agent);
 
-	if (_ci->received.s && _ci->received.len) {
-		update_str( &_c->received, &_ci->received);
+	if(_ci->received.s && _ci->received.len) {
+		update_str(&_c->received, &_ci->received);
 	} else {
-		if (_c->received.s) shm_free(_c->received.s);
+		if(_c->received.s)
+			shm_free(_c->received.s);
 		_c->received.s = 0;
 		_c->received.len = 0;
 	}
-	
-	if (_ci->path) {
-		update_str( &_c->path, _ci->path);
+
+	if(_ci->path) {
+		update_str(&_c->path, _ci->path);
 	} else {
-		if (_c->path.s) shm_free(_c->path.s);
+		if(_c->path.s)
+			shm_free(_c->path.s);
 		_c->path.s = 0;
 		_c->path.len = 0;
 	}
@@ -276,33 +305,33 @@ int mem_update_ucontact(ucontact_t* _c, ucontact_info_t* _ci)
  * \brief Update state of the contact if we are using write-back scheme
  * \param _c updated contact
  */
-void st_update_ucontact(ucontact_t* _c)
+void st_update_ucontact(ucontact_t *_c)
 {
 	switch(_c->state) {
-	case CS_NEW:
-			 /* Contact is new and is not in the database yet,
+		case CS_NEW:
+			/* Contact is new and is not in the database yet,
 			  * we remain in the same state here because the
 			  * contact must be inserted later in the timer
 			  */
-		break;
+			break;
 
-	case CS_SYNC:
-			 /* For db mode 1 & 2 a modified contact needs to be 
+		case CS_SYNC:
+			/* For db mode 1 & 2 a modified contact needs to be 
 			  * updated also in the database, so transit into 
 			  * CS_DIRTY and let the timer to do the update 
 			  * again. For db mode 1 we try to update right
 			  * now and if fails, let the timer to do the job
 			  */
-		if (db_mode == WRITE_BACK || db_mode == WRITE_THROUGH) {
-			_c->state = CS_DIRTY;
-		}
-		break;
+			if(db_mode == WRITE_BACK || db_mode == WRITE_THROUGH) {
+				_c->state = CS_DIRTY;
+			}
+			break;
 
-	case CS_DIRTY:
-			 /* Modification of dirty contact results in
+		case CS_DIRTY:
+			/* Modification of dirty contact results in
 			  * dirty contact again, don't change anything
 			  */
-		break;
+			break;
 	}
 }
 
@@ -312,36 +341,36 @@ void st_update_ucontact(ucontact_t* _c)
  * \param _c updated contact
  * \return 1 if the contact should be deleted from memory immediately, 0 otherwise
  */
-int st_delete_ucontact(ucontact_t* _c)
+int st_delete_ucontact(ucontact_t *_c)
 {
 	switch(_c->state) {
-	case CS_NEW:
-		     /* Contact is new and isn't in the database
+		case CS_NEW:
+			/* Contact is new and isn't in the database
 		      * yet, we can delete it from the memory
 		      * safely.
 		      */
-		return 1;
+			return 1;
 
-	case CS_SYNC:
-	case CS_DIRTY:
-		     /* Contact is in the database,
+		case CS_SYNC:
+		case CS_DIRTY:
+			/* Contact is in the database,
 		      * we cannot remove it from the memory 
 		      * directly, but we can set expires to zero
 		      * and the timer will take care of deleting 
 		      * the contact from the memory as well as 
 		      * from the database
 		      */
-		if (db_mode == WRITE_BACK) {
-			_c->expires = UL_EXPIRED_TIME;
-			return 0;
-		} else {
-			     /* WRITE_THROUGH or NO_DB -- we can
+			if(db_mode == WRITE_BACK) {
+				_c->expires = UL_EXPIRED_TIME;
+				return 0;
+			} else {
+				/* WRITE_THROUGH or NO_DB -- we can
 			      * remove it from memory immediately and
 			      * the calling function would also remove
 			      * it from the database if needed
 			      */
-			return 1;
-		}
+				return 1;
+			}
 	}
 
 	return 0; /* Makes gcc happy */
@@ -353,24 +382,24 @@ int st_delete_ucontact(ucontact_t* _c)
  * \param _c expired contact
  * \return 1 if the contact should be removed from the database and 0 otherwise
  */
-int st_expired_ucontact(ucontact_t* _c)
+int st_expired_ucontact(ucontact_t *_c)
 {
-	     /* There is no need to change contact
+	/* There is no need to change contact
 	      * state, because the contact will
 	      * be deleted anyway
 	      */
 
 	switch(_c->state) {
-	case CS_NEW:
-		     /* Contact is not in the database
+		case CS_NEW:
+			/* Contact is not in the database
 		      * yet, remove it from memory only
 		      */
-		return 0;
+			return 0;
 
-	case CS_SYNC:
-	case CS_DIRTY:
-		     /* Remove from database here */
-		return 1;
+		case CS_SYNC:
+		case CS_DIRTY:
+			/* Remove from database here */
+			return 1;
 	}
 
 	return 0; /* Makes gcc happy */
@@ -382,30 +411,30 @@ int st_expired_ucontact(ucontact_t* _c)
  * \param _c flushed contact
  * \return 1 if the contact should be inserted, 2 if update and 0 otherwise
  */
-int st_flush_ucontact(ucontact_t* _c)
+int st_flush_ucontact(ucontact_t *_c)
 {
 	switch(_c->state) {
-	case CS_NEW:
-		     /* Contact is new and is not in
+		case CS_NEW:
+			/* Contact is new and is not in
 		      * the database yet so we have
 		      * to insert it
 		      */
-		_c->state = CS_SYNC;
-		return 1;
+			_c->state = CS_SYNC;
+			return 1;
 
-	case CS_SYNC:
-		     /* Contact is synchronized, do
+		case CS_SYNC:
+			/* Contact is synchronized, do
 		      * nothing
 		      */
-		return 0;
+			return 0;
 
-	case CS_DIRTY:
-		     /* Contact has been modified and
+		case CS_DIRTY:
+			/* Contact has been modified and
 		      * is in the db already so we
 		      * have to update it
 		      */
-		_c->state = CS_SYNC;
-		return 2;
+			_c->state = CS_SYNC;
+			return 2;
 	}
 
 	return 0; /* Makes gcc happy */
@@ -419,23 +448,23 @@ int st_flush_ucontact(ucontact_t* _c)
  * \param _c inserted contact
  * \return 0 on success, -1 on failure
  */
-int db_insert_ucontact(ucontact_t* _c)
+int db_insert_ucontact(ucontact_t *_c)
 {
-	char* dom;
+	char *dom;
 	db_key_t keys[18];
 	db_val_t vals[18];
 	int nr_cols = 0;
 
 	int nr_cols_key = 0;
-	struct udomain * _d;
-	str user={0, 0};
-	str domain={0, 0};
+	struct udomain *_d;
+	str user = {0, 0};
+	str domain = {0, 0};
 
-	if (_c->flags & FL_MEM) {
+	if(_c->flags & FL_MEM) {
 		return 0;
 	}
 
-	if(register_udomain(_c->domain->s, &_d) < 0){
+	if(register_udomain(_c->domain->s, &_d) < 0) {
 		return -1;
 	}
 	LM_INFO("Domain set for contact %.*s\n", _c->domain->len, _c->domain->s);
@@ -458,7 +487,7 @@ int db_insert_ucontact(ucontact_t* _c)
 		vals[nr_cols].nul = 0;
 
 		dom = memchr(_c->aor->s, '@', _c->aor->len);
-		if (dom==0) {
+		if(dom == 0) {
 			LM_INFO("*** use domain and AOR does not contain @\n");
 			vals[nr_cols].val.str_val.len = 0;
 			vals[nr_cols].val.str_val.s = 0;
@@ -468,8 +497,9 @@ int db_insert_ucontact(ucontact_t* _c)
 			vals[nr_cols].val.str_val.len = _c->aor->s + _c->aor->len - dom - 1;
 		}
 		domain = vals[nr_cols].val.str_val;
-		LM_INFO("** Username=%.*s  Domain=%.*s\n", vals[0].val.str_val.len, vals[0].val.str_val.s,
-				vals[nr_cols].val.str_val.len, vals[nr_cols].val.str_val.s);
+		LM_INFO("** Username=%.*s  Domain=%.*s\n", vals[0].val.str_val.len,
+				vals[0].val.str_val.s, vals[nr_cols].val.str_val.len,
+				vals[nr_cols].val.str_val.s);
 		nr_cols++;
 	}
 	user = vals[0].val.str_val;
@@ -518,7 +548,7 @@ int db_insert_ucontact(ucontact_t* _c)
 
 	keys[nr_cols] = &received_col;
 	vals[nr_cols].type = DB1_STR;
-	if (_c->received.s == 0) {
+	if(_c->received.s == 0) {
 		vals[nr_cols].nul = 1;
 	} else {
 		vals[nr_cols].nul = 0;
@@ -528,7 +558,7 @@ int db_insert_ucontact(ucontact_t* _c)
 
 	keys[nr_cols] = &path_col;
 	vals[nr_cols].type = DB1_STR;
-	if (_c->path.s == 0) {
+	if(_c->path.s == 0) {
 		vals[nr_cols].nul = 1;
 	} else {
 		vals[nr_cols].nul = 0;
@@ -538,7 +568,7 @@ int db_insert_ucontact(ucontact_t* _c)
 
 	keys[nr_cols] = &sock_col;
 	vals[nr_cols].type = DB1_STR;
-	if (_c->sock) {
+	if(_c->sock) {
 		vals[nr_cols].val.str_val = _c->sock->sock_str;
 		vals[nr_cols].nul = 0;
 	} else {
@@ -548,7 +578,7 @@ int db_insert_ucontact(ucontact_t* _c)
 
 	keys[nr_cols] = &methods_col;
 	vals[nr_cols].type = DB1_BITMAP;
-	if (_c->methods == 0xFFFFFFFF) {
+	if(_c->methods == 0xFFFFFFFF) {
 		vals[nr_cols].nul = 1;
 	} else {
 		vals[nr_cols].val.bitmap_val = _c->methods;
@@ -563,8 +593,7 @@ int db_insert_ucontact(ucontact_t* _c)
 	nr_cols++;
 
 	keys[nr_cols] = &ruid_col;
-	if(_c->ruid.len>0)
-	{
+	if(_c->ruid.len > 0) {
 		vals[nr_cols].type = DB1_STR;
 		vals[nr_cols].nul = 0;
 		vals[nr_cols].val.str_val = _c->ruid;
@@ -574,8 +603,7 @@ int db_insert_ucontact(ucontact_t* _c)
 	nr_cols++;
 
 	keys[nr_cols] = &instance_col;
-	if(_c->instance.len>0)
-	{
+	if(_c->instance.len > 0) {
 		vals[nr_cols].type = DB1_STR;
 		vals[nr_cols].nul = 0;
 		vals[nr_cols].val.str_val = _c->instance;
@@ -590,10 +618,11 @@ int db_insert_ucontact(ucontact_t* _c)
 	vals[nr_cols].val.int_val = (int)_c->reg_id;
 	nr_cols++;
 
-	nr_cols_key  = nr_cols;
+	nr_cols_key = nr_cols;
 	/* to prevent errors from the DB because of duplicated entries */
-	
-	if (ul_db_layer_replace(_d, &user, &domain, keys, vals, nr_cols, nr_cols_key) <0) {
+
+	if(ul_db_layer_replace(_d, &user, &domain, keys, vals, nr_cols, nr_cols_key)
+			< 0) {
 		LM_ERR("inserting contact in db failed\n");
 		return -1;
 	}
@@ -608,9 +637,9 @@ int db_insert_ucontact(ucontact_t* _c)
  * \return 0 on success, -1 on failure
  */
 
-int db_update_ucontact_addr_new(ucontact_t* _c)
+int db_update_ucontact_addr_new(ucontact_t *_c)
 {
-	char* dom;
+	char *dom;
 	db_key_t keys1[4];
 	db_val_t vals1[4];
 	int n1 = 0;
@@ -620,12 +649,12 @@ int db_update_ucontact_addr_new(ucontact_t* _c)
 	int nr_cols2 = 0;
 
 
-	if (_c->flags & FL_MEM) {
+	if(_c->flags & FL_MEM) {
 		return 0;
 	}
 
-	struct udomain * _d;
-	if(register_udomain(_c->domain->s, &_d) < 0){
+	struct udomain *_d;
+	if(register_udomain(_c->domain->s, &_d) < 0) {
 		return -1;
 	}
 
@@ -640,10 +669,11 @@ int db_update_ucontact_addr_new(ucontact_t* _c)
 	vals1[n1].type = DB1_STR;
 	vals1[n1].nul = 0;
 	vals1[n1].val.str_val = _c->c;
-	LM_DBG("contact:%.*s\n", vals1[n1].val.str_val.len, vals1[n1].val.str_val.s);
+	LM_DBG("contact:%.*s\n", vals1[n1].val.str_val.len,
+			vals1[n1].val.str_val.s);
 	n1++;
 
-	switch (cfg_get(p_usrloc,p_usrloc_cfg,matching_mode)) {
+	switch(cfg_get(p_usrloc, p_usrloc_cfg, matching_mode)) {
 		case CONTACT_ONLY:
 			/* update call-id */
 			keys2[nr_cols2] = &callid_col;
@@ -654,7 +684,7 @@ int db_update_ucontact_addr_new(ucontact_t* _c)
 			/* update path */
 			keys2[nr_cols2] = &path_col;
 			vals2[nr_cols2].type = DB1_STR;
-			if (_c->path.s == 0) {
+			if(_c->path.s == 0) {
 				vals2[nr_cols2].nul = 1;
 			} else {
 				vals2[nr_cols2].nul = 0;
@@ -667,12 +697,13 @@ int db_update_ucontact_addr_new(ucontact_t* _c)
 			vals1[n1].type = DB1_STR;
 			vals1[n1].nul = 0;
 			vals1[n1].val.str_val = _c->callid;
-			LM_DBG("callid:%.*s\n", vals1[n1].val.str_val.len, vals1[n1].val.str_val.s);
+			LM_DBG("callid:%.*s\n", vals1[n1].val.str_val.len,
+					vals1[n1].val.str_val.s);
 			n1++;
 			/* update path */
 			keys2[nr_cols2] = &path_col;
 			vals2[nr_cols2].type = DB1_STR;
-			if (_c->path.s == 0) {
+			if(_c->path.s == 0) {
 				vals2[nr_cols2].nul = 1;
 			} else {
 				vals2[nr_cols2].nul = 0;
@@ -683,13 +714,14 @@ int db_update_ucontact_addr_new(ucontact_t* _c)
 		case CONTACT_PATH:
 			keys1[n1] = &path_col;
 			vals1[n1].type = DB1_STR;
-			if (_c->path.s == 0) {
+			if(_c->path.s == 0) {
 				vals1[n1].nul = 1;
 				LM_DBG("path: NULL\n");
 			} else {
 				vals1[n1].nul = 0;
 				vals1[n1].val.str_val = _c->path;
-				LM_DBG("path:%.*s\n", vals1[n1].val.str_val.len, vals1[n1].val.str_val.s);
+				LM_DBG("path:%.*s\n", vals1[n1].val.str_val.len,
+						vals1[n1].val.str_val.s);
 			}
 			n1++;
 			/* update call-id */
@@ -700,7 +732,8 @@ int db_update_ucontact_addr_new(ucontact_t* _c)
 			nr_cols2++;
 			break;
 		default:
-			LM_CRIT("unknown matching_mode %d\n", cfg_get(p_usrloc,p_usrloc_cfg,matching_mode));
+			LM_CRIT("unknown matching_mode %d\n",
+					cfg_get(p_usrloc, p_usrloc_cfg, matching_mode));
 			return -1;
 	}
 
@@ -742,7 +775,7 @@ int db_update_ucontact_addr_new(ucontact_t* _c)
 
 	keys2[nr_cols2] = &received_col;
 	vals2[nr_cols2].type = DB1_STR;
-	if (_c->received.s == 0) {
+	if(_c->received.s == 0) {
 		vals2[nr_cols2].nul = 1;
 	} else {
 		vals2[nr_cols2].nul = 0;
@@ -752,7 +785,7 @@ int db_update_ucontact_addr_new(ucontact_t* _c)
 
 	keys2[nr_cols2] = &sock_col;
 	vals2[nr_cols2].type = DB1_STR;
-	if (_c->sock) {
+	if(_c->sock) {
 		vals2[nr_cols2].val.str_val = _c->sock->sock_str;
 		vals2[nr_cols2].nul = 0;
 	} else {
@@ -762,7 +795,7 @@ int db_update_ucontact_addr_new(ucontact_t* _c)
 
 	keys2[nr_cols2] = &methods_col;
 	vals2[nr_cols2].type = DB1_BITMAP;
-	if (_c->methods == 0xFFFFFFFF) {
+	if(_c->methods == 0xFFFFFFFF) {
 		vals2[nr_cols2].nul = 1;
 	} else {
 		vals2[nr_cols2].val.bitmap_val = _c->methods;
@@ -777,8 +810,7 @@ int db_update_ucontact_addr_new(ucontact_t* _c)
 	nr_cols2++;
 
 	keys2[nr_cols2] = &ruid_col;
-	if(_c->ruid.len>0)
-	{
+	if(_c->ruid.len > 0) {
 		vals2[nr_cols2].type = DB1_STR;
 		vals2[nr_cols2].nul = 0;
 		vals2[nr_cols2].val.str_val = _c->ruid;
@@ -788,8 +820,7 @@ int db_update_ucontact_addr_new(ucontact_t* _c)
 	nr_cols2++;
 
 	keys2[nr_cols2] = &instance_col;
-	if(_c->instance.len>0)
-	{
+	if(_c->instance.len > 0) {
 		vals2[nr_cols2].type = DB1_STR;
 		vals2[nr_cols2].nul = 0;
 		vals2[nr_cols2].val.str_val = _c->instance;
@@ -804,35 +835,36 @@ int db_update_ucontact_addr_new(ucontact_t* _c)
 	vals2[nr_cols2].val.int_val = (int)_c->reg_id;
 	nr_cols2++;
 
-        keys2[nr_cols2] = &uniq_col;
-	if(_c->uniq.len>0)
-	{
-	    vals2[nr_cols2].type = DB1_STR;
-	    vals2[nr_cols2].nul = 0;
-	    vals2[nr_cols2].val.str_val = _c->uniq;
+	keys2[nr_cols2] = &uniq_col;
+	if(_c->uniq.len > 0) {
+		vals2[nr_cols2].type = DB1_STR;
+		vals2[nr_cols2].nul = 0;
+		vals2[nr_cols2].val.str_val = _c->uniq;
 	} else {
-	    vals2[nr_cols2].nul = 1;
+		vals2[nr_cols2].nul = 1;
 	}
 	nr_cols2++;
 	keys2[nr_cols2] = &contact_col;
 	vals2[nr_cols2].type = DB1_STR;
 	vals2[nr_cols2].nul = 0;
 	vals2[nr_cols2].val.str_val = _c->c;
-	LM_DBG("contact:%.*s\n", vals2[nr_cols2].val.str_val.len, vals2[nr_cols2].val.str_val.s);
+	LM_DBG("contact:%.*s\n", vals2[nr_cols2].val.str_val.len,
+			vals2[nr_cols2].val.str_val.s);
 	nr_cols2++;
 
 	keys2[nr_cols2] = &user_col;
 	vals2[nr_cols2].type = DB1_STR;
 	vals2[nr_cols2].nul = 0;
 	vals2[nr_cols2].val.str_val = *_c->aor;
-	LM_DBG("aor:%.*s\n", vals2[nr_cols2].val.str_val.len, vals2[nr_cols2].val.str_val.s);
+	LM_DBG("aor:%.*s\n", vals2[nr_cols2].val.str_val.len,
+			vals2[nr_cols2].val.str_val.s);
 	nr_cols2++;
-	if (use_domain) {
+	if(use_domain) {
 		keys1[n1] = &domain_col;
 		vals1[n1].type = DB1_STR;
 		vals1[n1].nul = 0;
 		dom = memchr(_c->aor->s, '@', _c->aor->len);
-		if (dom==0) {
+		if(dom == 0) {
 			vals1[0].val.str_val.len = 0;
 			vals1[n1].val.str_val = *_c->aor;
 		} else {
@@ -842,16 +874,16 @@ int db_update_ucontact_addr_new(ucontact_t* _c)
 		}
 		n1++;
 	}
-/*
+	/*
 	if (ul_dbf.use_table(ul_dbh, _c->domain) < 0) {
 		LM_ERR("sql use_table failed\n");
 		return -1;
 	}
 */
 
-	if (ul_db_layer_update(_d, &vals1[0].val.str_val, &vals1[n1-1].val.str_val, keys1, 0, vals1, keys2, vals2,
-	            n1, nr_cols2) < 0) 
-	{
+	if(ul_db_layer_update(_d, &vals1[0].val.str_val, &vals1[n1 - 1].val.str_val,
+			   keys1, 0, vals1, keys2, vals2, n1, nr_cols2)
+			< 0) {
 		LM_ERR("updating database failed\n");
 		return -1;
 	}
@@ -860,9 +892,9 @@ int db_update_ucontact_addr_new(ucontact_t* _c)
 	return 0;
 }
 
-int db_update_ucontact_addr(ucontact_t* _c)
+int db_update_ucontact_addr(ucontact_t *_c)
 {
-	char* dom;
+	char *dom;
 	db_key_t keys1[4];
 	db_val_t vals1[4];
 	int n1;
@@ -871,11 +903,11 @@ int db_update_ucontact_addr(ucontact_t* _c)
 	db_val_t vals2[14];
 	int nr_cols2;
 
-	if (_c->flags & FL_MEM) {
+	if(_c->flags & FL_MEM) {
 		return 0;
 	}
-	struct udomain * _d;
-	if(register_udomain(_c->domain->s, &_d) < 0){
+	struct udomain *_d;
+	if(register_udomain(_c->domain->s, &_d) < 0) {
 		return -1;
 	}
 
@@ -905,9 +937,9 @@ int db_update_ucontact_addr(ucontact_t* _c)
 	vals1[n1].type = DB1_STR;
 	vals1[n1].nul = 0;
 	vals1[n1].val.str_val = _c->c;
-    
-    n1++;
-    keys1[n1] = &callid_col;
+
+	n1++;
+	keys1[n1] = &callid_col;
 	vals1[n1].type = DB1_STR;
 	vals1[n1].nul = 0;
 	vals1[n1].val.str_val = _c->callid;
@@ -939,15 +971,15 @@ int db_update_ucontact_addr(ucontact_t* _c)
 	vals2[5].val.str_val = _c->user_agent;
 
 	vals2[6].type = DB1_STR;
-	if (_c->received.s == 0) {
+	if(_c->received.s == 0) {
 		vals2[6].nul = 1;
 	} else {
 		vals2[6].nul = 0;
 		vals2[6].val.str_val = _c->received;
 	}
-	
+
 	vals2[7].type = DB1_STR;
-	if (_c->path.s == 0) {
+	if(_c->path.s == 0) {
 		vals2[7].nul = 1;
 	} else {
 		vals2[7].nul = 0;
@@ -955,7 +987,7 @@ int db_update_ucontact_addr(ucontact_t* _c)
 	}
 
 	vals2[8].type = DB1_STR;
-	if (_c->sock) {
+	if(_c->sock) {
 		vals2[8].val.str_val = _c->sock->sock_str;
 		vals2[8].nul = 0;
 	} else {
@@ -963,7 +995,7 @@ int db_update_ucontact_addr(ucontact_t* _c)
 	}
 
 	vals2[9].type = DB1_BITMAP;
-	if (_c->methods == 0xFFFFFFFF) {
+	if(_c->methods == 0xFFFFFFFF) {
 		vals2[9].nul = 1;
 	} else {
 		vals2[9].val.bitmap_val = _c->methods;
@@ -974,19 +1006,17 @@ int db_update_ucontact_addr(ucontact_t* _c)
 	vals2[10].nul = 0;
 	vals2[10].val.time_val = ul_db_datetime_set(_c->last_modified);
 
-    nr_cols2 = 11;
-	if(_c->ruid.len>0)
-	{
+	nr_cols2 = 11;
+	if(_c->ruid.len > 0) {
 		vals2[nr_cols2].type = DB1_STR;
 		vals2[nr_cols2].nul = 0;
 		vals2[nr_cols2].val.str_val = _c->ruid;
 	} else {
 		vals2[nr_cols2].nul = 1;
 	}
-    
-    nr_cols2++;
-	if(_c->instance.len>0)
-	{
+
+	nr_cols2++;
+	if(_c->instance.len > 0) {
 		vals2[nr_cols2].type = DB1_STR;
 		vals2[nr_cols2].nul = 0;
 		vals2[nr_cols2].val.str_val = _c->instance;
@@ -994,19 +1024,19 @@ int db_update_ucontact_addr(ucontact_t* _c)
 		vals2[nr_cols2].nul = 1;
 	}
 
-    nr_cols2++;
+	nr_cols2++;
 	vals2[nr_cols2].type = DB1_INT;
 	vals2[nr_cols2].nul = 0;
 	vals2[nr_cols2].val.int_val = (int)_c->reg_id;
 
 	nr_cols2++;
 
-	if (use_domain) {
-	    keys1[n1] = &domain_col;
-	    vals1[n1].type = DB1_STR;
-	    vals1[n1].nul = 0;
+	if(use_domain) {
+		keys1[n1] = &domain_col;
+		vals1[n1].type = DB1_STR;
+		vals1[n1].nul = 0;
 		dom = memchr(_c->aor->s, '@', _c->aor->len);
-		if (dom==0) {
+		if(dom == 0) {
 			vals1[0].val.str_val.len = 0;
 			vals1[n1].val.str_val = *_c->aor;
 		} else {
@@ -1017,9 +1047,9 @@ int db_update_ucontact_addr(ucontact_t* _c)
 		n1++;
 	}
 
-	if (ul_db_layer_update(_d, &vals1[0].val.str_val, &vals1[n1-1].val.str_val, keys1, 0, vals1, keys2, vals2,
-	            n1, nr_cols2) < 0) 
-	{
+	if(ul_db_layer_update(_d, &vals1[0].val.str_val, &vals1[n1 - 1].val.str_val,
+			   keys1, 0, vals1, keys2, vals2, n1, nr_cols2)
+			< 0) {
 		LM_ERR("updating database failed\n");
 		return -1;
 	}
@@ -1027,181 +1057,180 @@ int db_update_ucontact_addr(ucontact_t* _c)
 	return 0;
 }
 
- /*!
+/*!
  * \brief Update contact in the database by ruid
  * \param _c updated contact
  * \return 0 on success, -1 on failure
  */
-int db_update_ucontact_ruid(ucontact_t* _c)
+int db_update_ucontact_ruid(ucontact_t *_c)
 {
-   db_key_t keys1[1];
-   db_val_t vals1[1];
-   int n1;
+	db_key_t keys1[1];
+	db_val_t vals1[1];
+	int n1;
 
-   db_key_t keys2[17];
-   db_val_t vals2[17];
-   int n2;
+	db_key_t keys2[17];
+	db_val_t vals2[17];
+	int n2;
 
-   char *dom;
-   str user, domain;
+	char *dom;
+	str user, domain;
 
-   if (_c->flags & FL_MEM) {
-       return 0;
-   }
+	if(_c->flags & FL_MEM) {
+		return 0;
+	}
 
-   if(_c->ruid.len<=0) {
-       LM_ERR("updating record in database failed - empty ruid\n");
-       return -1;
-   }
+	if(_c->ruid.len <= 0) {
+		LM_ERR("updating record in database failed - empty ruid\n");
+		return -1;
+	}
 
-   struct udomain * _d;
-   if(register_udomain(_c->domain->s, &_d) < 0){
-       return -1;
-   }
+	struct udomain *_d;
+	if(register_udomain(_c->domain->s, &_d) < 0) {
+		return -1;
+	}
 
-   n1 = 0;
-   keys1[n1] = &ruid_col;
-   vals1[n1].type = DB1_STR;
-   vals1[n1].nul = 0;
-   vals1[n1].val.str_val = _c->ruid;
-   n1++;
+	n1 = 0;
+	keys1[n1] = &ruid_col;
+	vals1[n1].type = DB1_STR;
+	vals1[n1].nul = 0;
+	vals1[n1].val.str_val = _c->ruid;
+	n1++;
 
-   n2 = 0;
-   keys2[n2] = &contact_col;
-   vals2[n2].type = DB1_STR;
-   vals2[n2].nul = 0;
-   vals2[n2].val.str_val = _c->c;
-   n2++;
+	n2 = 0;
+	keys2[n2] = &contact_col;
+	vals2[n2].type = DB1_STR;
+	vals2[n2].nul = 0;
+	vals2[n2].val.str_val = _c->c;
+	n2++;
 
-   keys2[n2] = &expires_col;
-   vals2[n2].type = DB1_DATETIME;
-   vals2[n2].nul = 0;
-   vals2[n2].val.time_val = ul_db_datetime_set(_c->expires);
-   n2++;
+	keys2[n2] = &expires_col;
+	vals2[n2].type = DB1_DATETIME;
+	vals2[n2].nul = 0;
+	vals2[n2].val.time_val = ul_db_datetime_set(_c->expires);
+	n2++;
 
-   keys2[n2] = &q_col;
-   vals2[n2].type = DB1_DOUBLE;
-   vals2[n2].nul = 0;
-   vals2[n2].val.double_val = q2double(_c->q);
-   n2++;
+	keys2[n2] = &q_col;
+	vals2[n2].type = DB1_DOUBLE;
+	vals2[n2].nul = 0;
+	vals2[n2].val.double_val = q2double(_c->q);
+	n2++;
 
-   keys2[n2] = &cseq_col;
-   vals2[n2].type = DB1_INT;
-   vals2[n2].nul = 0;
-   vals2[n2].val.int_val = _c->cseq;
-   n2++;
+	keys2[n2] = &cseq_col;
+	vals2[n2].type = DB1_INT;
+	vals2[n2].nul = 0;
+	vals2[n2].val.int_val = _c->cseq;
+	n2++;
 
-   keys2[n2] = &flags_col;
-   vals2[n2].type = DB1_INT;
-   vals2[n2].nul = 0;
-   vals2[n2].val.bitmap_val = _c->flags;
-   n2++;
+	keys2[n2] = &flags_col;
+	vals2[n2].type = DB1_INT;
+	vals2[n2].nul = 0;
+	vals2[n2].val.bitmap_val = _c->flags;
+	n2++;
 
-   keys2[n2] = &cflags_col;
-   vals2[n2].type = DB1_INT;
-   vals2[n2].nul = 0;
-   vals2[n2].val.bitmap_val = _c->cflags;
-   n2++;
+	keys2[n2] = &cflags_col;
+	vals2[n2].type = DB1_INT;
+	vals2[n2].nul = 0;
+	vals2[n2].val.bitmap_val = _c->cflags;
+	n2++;
 
-   keys2[n2] = &user_agent_col;
-   vals2[n2].type = DB1_STR;
-   vals2[n2].nul = 0;
-   vals2[n2].val.str_val = _c->user_agent;
-   n2++;
+	keys2[n2] = &user_agent_col;
+	vals2[n2].type = DB1_STR;
+	vals2[n2].nul = 0;
+	vals2[n2].val.str_val = _c->user_agent;
+	n2++;
 
-   keys2[n2] = &received_col;
-   vals2[n2].type = DB1_STR;
-   if (_c->received.s == 0) {
-       vals2[n2].nul = 1;
-   } else {
-       vals2[n2].nul = 0;
-       vals2[n2].val.str_val = _c->received;
-   }
-   n2++;
+	keys2[n2] = &received_col;
+	vals2[n2].type = DB1_STR;
+	if(_c->received.s == 0) {
+		vals2[n2].nul = 1;
+	} else {
+		vals2[n2].nul = 0;
+		vals2[n2].val.str_val = _c->received;
+	}
+	n2++;
 
-   keys2[n2] = &path_col;
-   vals2[n2].type = DB1_STR;
-   if (_c->path.s == 0) {
-       vals2[n2].nul = 1;
-   } else {
-       vals2[n2].nul = 0;
-       vals2[n2].val.str_val = _c->path;
-   }
-   n2++;
+	keys2[n2] = &path_col;
+	vals2[n2].type = DB1_STR;
+	if(_c->path.s == 0) {
+		vals2[n2].nul = 1;
+	} else {
+		vals2[n2].nul = 0;
+		vals2[n2].val.str_val = _c->path;
+	}
+	n2++;
 
-   keys2[n2] = &sock_col;
-   vals2[n2].type = DB1_STR;
-   if (_c->sock) {
-       vals2[n2].val.str_val = _c->sock->sock_str;
-       vals2[n2].nul = 0;
-   } else {
-       vals2[n2].nul = 1;
-   }
-   n2++;
+	keys2[n2] = &sock_col;
+	vals2[n2].type = DB1_STR;
+	if(_c->sock) {
+		vals2[n2].val.str_val = _c->sock->sock_str;
+		vals2[n2].nul = 0;
+	} else {
+		vals2[n2].nul = 1;
+	}
+	n2++;
 
-   keys2[n2] = &methods_col;
-   vals2[n2].type = DB1_BITMAP;
-   if (_c->methods == 0xFFFFFFFF) {
-       vals2[n2].nul = 1;
-   } else {
-       vals2[n2].val.bitmap_val = _c->methods;
-       vals2[n2].nul = 0;
-   }
-   n2++;
+	keys2[n2] = &methods_col;
+	vals2[n2].type = DB1_BITMAP;
+	if(_c->methods == 0xFFFFFFFF) {
+		vals2[n2].nul = 1;
+	} else {
+		vals2[n2].val.bitmap_val = _c->methods;
+		vals2[n2].nul = 0;
+	}
+	n2++;
 
-   keys2[n2] = &last_mod_col;
-   vals2[n2].type = DB1_DATETIME;
-   vals2[n2].nul = 0;
-   vals2[n2].val.time_val = ul_db_datetime_set(_c->last_modified);
-   n2++;
+	keys2[n2] = &last_mod_col;
+	vals2[n2].type = DB1_DATETIME;
+	vals2[n2].nul = 0;
+	vals2[n2].val.time_val = ul_db_datetime_set(_c->last_modified);
+	n2++;
 
-   keys2[n2] = &callid_col;
-   vals2[n2].type = DB1_STR;
-   vals2[n2].nul = 0;
-   vals2[n2].val.str_val = _c->callid;
-   n2++;
+	keys2[n2] = &callid_col;
+	vals2[n2].type = DB1_STR;
+	vals2[n2].nul = 0;
+	vals2[n2].val.str_val = _c->callid;
+	n2++;
 
-   keys2[n2] = &instance_col;
-   if(_c->instance.len>0)
-   {
-       vals2[n2].type = DB1_STR;
-       vals2[n2].nul = 0;
-       vals2[n2].val.str_val = _c->instance;
-   } else {
-       vals2[n2].nul = 1;
-   }
-   n2++;
+	keys2[n2] = &instance_col;
+	if(_c->instance.len > 0) {
+		vals2[n2].type = DB1_STR;
+		vals2[n2].nul = 0;
+		vals2[n2].val.str_val = _c->instance;
+	} else {
+		vals2[n2].nul = 1;
+	}
+	n2++;
 
-   keys2[n2] = &reg_id_col;
-   vals2[n2].type = DB1_INT;
-   vals2[n2].nul = 0;
-   vals2[n2].val.int_val = (int)_c->reg_id;
-   n2++;
+	keys2[n2] = &reg_id_col;
+	vals2[n2].type = DB1_INT;
+	vals2[n2].nul = 0;
+	vals2[n2].val.int_val = (int)_c->reg_id;
+	n2++;
 
-   user = *_c->aor;
+	user = *_c->aor;
 
-   if (use_domain) {
-       dom = memchr(_c->aor->s, '@', _c->aor->len);
-       if (dom==0) {
-           user.len = 0;
-           domain = *_c->aor;
-       } else {
-           user.len = dom - _c->aor->s;
-           domain.s = dom + 1;
-           domain.len = _c->aor->s + _c->aor->len - dom - 1;
-       }
-   }
-
-
-   if (ul_db_layer_update(_d, &user, &domain, keys1, 0, vals1, keys2, vals2,
-   n1, n2) < 0) {
-       LM_ERR("updating database failed\n");
-       return -1;
-   }
+	if(use_domain) {
+		dom = memchr(_c->aor->s, '@', _c->aor->len);
+		if(dom == 0) {
+			user.len = 0;
+			domain = *_c->aor;
+		} else {
+			user.len = dom - _c->aor->s;
+			domain.s = dom + 1;
+			domain.len = _c->aor->s + _c->aor->len - dom - 1;
+		}
+	}
 
 
+	if(ul_db_layer_update(
+			   _d, &user, &domain, keys1, 0, vals1, keys2, vals2, n1, n2)
+			< 0) {
+		LM_ERR("updating database failed\n");
+		return -1;
+	}
 
-   return 0;
+
+	return 0;
 }
 
 /*!
@@ -1209,18 +1238,18 @@ int db_update_ucontact_ruid(ucontact_t* _c)
  * \param _c updated contact
  * \return 0 on success, -1 on failure
  */
-int db_update_ucontact(ucontact_t* _c)
+int db_update_ucontact(ucontact_t *_c)
 {
-   unsigned int db_ops_ruid_cfg = cfg_get(p_usrloc, p_usrloc_cfg, db_ops_ruid);
+	unsigned int db_ops_ruid_cfg = cfg_get(p_usrloc, p_usrloc_cfg, db_ops_ruid);
 
-   if (db_ops_ruid_cfg == 0)
-       return db_update_ucontact_addr(_c);
-   else if (db_ops_ruid_cfg == 1)
-       return db_update_ucontact_ruid(_c);
-   else if (db_ops_ruid_cfg == 2)
-       return db_update_ucontact_addr_new(_c);
+	if(db_ops_ruid_cfg == 0)
+		return db_update_ucontact_addr(_c);
+	else if(db_ops_ruid_cfg == 1)
+		return db_update_ucontact_ruid(_c);
+	else if(db_ops_ruid_cfg == 2)
+		return db_update_ucontact_addr_new(_c);
 
-   return -1;
+	return -1;
 }
 
 
@@ -1229,46 +1258,46 @@ int db_update_ucontact(ucontact_t* _c)
  * \param _c deleted contact
  * \return 0 on success, -1 on failure
  */
-int db_delete_ucontact_addr(ucontact_t* _c)
+int db_delete_ucontact_addr(ucontact_t *_c)
 {
-	char* dom;
+	char *dom;
 	db_key_t keys[4];
 	db_val_t vals[4];
 	int n;
 
-	if (_c->flags & FL_MEM) {
+	if(_c->flags & FL_MEM) {
 		return 0;
 	}
-	struct udomain * _d;
-	if(register_udomain(_c->domain->s, &_d) < 0){
+	struct udomain *_d;
+	if(register_udomain(_c->domain->s, &_d) < 0) {
 		return -1;
 	}
 
-    n = 0;
+	n = 0;
 	keys[n] = &user_col;
 	vals[n].type = DB1_STR;
 	vals[n].nul = 0;
 	vals[n].val.str_val = *_c->aor;
 	n++;
 
-    keys[n] = &contact_col;
+	keys[n] = &contact_col;
 	vals[n].type = DB1_STR;
 	vals[n].nul = 0;
 	vals[n].val.str_val = _c->c;
 	n++;
-	
+
 	keys[n] = &callid_col;
 	vals[n].type = DB1_STR;
 	vals[n].nul = 0;
 	vals[n].val.str_val = _c->callid;
 	n++;
 
-	if (use_domain) {
-	    keys[n] = &domain_col;
+	if(use_domain) {
+		keys[n] = &domain_col;
 		vals[n].type = DB1_STR;
 		vals[n].nul = 0;
 		dom = memchr(_c->aor->s, '@', _c->aor->len);
-		if (dom==0) {
+		if(dom == 0) {
 			vals[0].val.str_val.len = 0;
 			vals[n].val.str_val = *_c->aor;
 		} else {
@@ -1279,7 +1308,9 @@ int db_delete_ucontact_addr(ucontact_t* _c)
 		n++;
 	}
 
-	if (ul_db_layer_delete(_d, &vals[0].val.str_val, &vals[3].val.str_val, keys, 0, vals, (use_domain) ? (4) : (3)) < 0) {
+	if(ul_db_layer_delete(_d, &vals[0].val.str_val, &vals[3].val.str_val, keys,
+			   0, vals, (use_domain) ? (4) : (3))
+			< 0) {
 		LM_ERR("deleting from database failed\n");
 		return -1;
 	}
@@ -1292,55 +1323,55 @@ int db_delete_ucontact_addr(ucontact_t* _c)
  * \param _c deleted contact
  * \return 0 on success, -1 on failure
  */
-int db_delete_ucontact_ruid(ucontact_t* _c)
+int db_delete_ucontact_ruid(ucontact_t *_c)
 {
-   db_key_t keys[1];
-   db_val_t vals[1];
-   int n;
-   char * dom;
-   str user, domain;
+	db_key_t keys[1];
+	db_val_t vals[1];
+	int n;
+	char *dom;
+	str user, domain;
 
-   if (_c->flags & FL_MEM) {
-       return 0;
-   }
+	if(_c->flags & FL_MEM) {
+		return 0;
+	}
 
-   if(_c->ruid.len<=0) {
-       LM_ERR("deleting from database failed - empty ruid\n");
-       return -1;
-   }
+	if(_c->ruid.len <= 0) {
+		LM_ERR("deleting from database failed - empty ruid\n");
+		return -1;
+	}
 
-   struct udomain * _d;
-   if(register_udomain(_c->domain->s, &_d) < 0){
-       return -1;
-   }
+	struct udomain *_d;
+	if(register_udomain(_c->domain->s, &_d) < 0) {
+		return -1;
+	}
 
-   n = 0;
-   keys[n] = &ruid_col;
-   vals[n].type = DB1_STR;
-   vals[n].nul = 0;
-   vals[n].val.str_val = _c->ruid;
-   n++;
+	n = 0;
+	keys[n] = &ruid_col;
+	vals[n].type = DB1_STR;
+	vals[n].nul = 0;
+	vals[n].val.str_val = _c->ruid;
+	n++;
 
-   user = *_c->aor;
+	user = *_c->aor;
 
-   if (use_domain) {
-       dom = memchr(_c->aor->s, '@', _c->aor->len);
-       if (dom==0) {
-           user.len = 0;
-           domain = *_c->aor;
-        } else {
-            user.len = dom - _c->aor->s;
-            domain.s = dom + 1;
-            domain.len = _c->aor->s + _c->aor->len - dom - 1;
-        }
-   }
+	if(use_domain) {
+		dom = memchr(_c->aor->s, '@', _c->aor->len);
+		if(dom == 0) {
+			user.len = 0;
+			domain = *_c->aor;
+		} else {
+			user.len = dom - _c->aor->s;
+			domain.s = dom + 1;
+			domain.len = _c->aor->s + _c->aor->len - dom - 1;
+		}
+	}
 
-   if (ul_db_layer_delete(_d, &user, &domain, keys, 0, vals, n) < 0) {
-       LM_ERR("deleting from database failed\n");
-       return -1;
-    }
+	if(ul_db_layer_delete(_d, &user, &domain, keys, 0, vals, n) < 0) {
+		LM_ERR("deleting from database failed\n");
+		return -1;
+	}
 
-   return 0;
+	return 0;
 }
 
 /*!
@@ -1348,18 +1379,18 @@ int db_delete_ucontact_ruid(ucontact_t* _c)
  * \param _c deleted contact
  * \return 0 on success, -1 on failure
  */
-int db_delete_ucontact(ucontact_t* _c)
+int db_delete_ucontact(ucontact_t *_c)
 {
-   unsigned int db_ops_ruid_cfg = cfg_get(p_usrloc, p_usrloc_cfg, db_ops_ruid);
+	unsigned int db_ops_ruid_cfg = cfg_get(p_usrloc, p_usrloc_cfg, db_ops_ruid);
 
-   if (db_ops_ruid_cfg == 0)
-       return db_delete_ucontact_addr(_c);
-   else if (db_ops_ruid_cfg == 1)
-       return db_delete_ucontact_ruid(_c);
-   else if (db_ops_ruid_cfg == 2)
-       return db_delete_ucontact_addr(_c);
+	if(db_ops_ruid_cfg == 0)
+		return db_delete_ucontact_addr(_c);
+	else if(db_ops_ruid_cfg == 1)
+		return db_delete_ucontact_ruid(_c);
+	else if(db_ops_ruid_cfg == 2)
+		return db_delete_ucontact_addr(_c);
 
-   return -1;
+	return -1;
 }
 
 /*!
@@ -1367,16 +1398,16 @@ int db_delete_ucontact(ucontact_t* _c)
  * \param _r record the contact belongs
  * \param _c removed contact
  */
-static inline void unlink_contact(struct urecord* _r, ucontact_t* _c)
+static inline void unlink_contact(struct urecord *_r, ucontact_t *_c)
 {
-	if (_c->prev) {
+	if(_c->prev) {
 		_c->prev->next = _c->next;
-		if (_c->next) {
+		if(_c->next) {
 			_c->next->prev = _c->prev;
 		}
 	} else {
 		_r->contacts = _c->next;
-		if (_c->next) {
+		if(_c->next) {
 			_c->next->prev = 0;
 		}
 	}
@@ -1388,13 +1419,13 @@ static inline void unlink_contact(struct urecord* _r, ucontact_t* _c)
  * \param _r record that holds the sorted contacts
  * \param _c new contact
  */
-static inline void update_contact_pos(struct urecord* _r, ucontact_t* _c)
+static inline void update_contact_pos(struct urecord *_r, ucontact_t *_c)
 {
 	ucontact_t *pos, *ppos;
 
-	if (desc_time_order) {
+	if(desc_time_order) {
 		/* order by time - first the newest */
-		if (_c->prev==0)
+		if(_c->prev == 0)
 			return;
 		unlink_contact(_r, _c);
 		/* insert it at the beginning */
@@ -1404,15 +1435,17 @@ static inline void update_contact_pos(struct urecord* _r, ucontact_t* _c)
 		_r->contacts = _c;
 	} else {
 		/* order by q - first the smaller q */
-		if ( (_c->prev==0 || _c->q<=_c->prev->q)
-		&& (_c->next==0 || _c->q>=_c->next->q)  )
+		if((_c->prev == 0 || _c->q <= _c->prev->q)
+				&& (_c->next == 0 || _c->q >= _c->next->q))
 			return;
 		/* need to move , but where? */
 		unlink_contact(_r, _c);
 		_c->next = _c->prev = 0;
-		for(pos=_r->contacts,ppos=0;pos&&pos->q<_c->q;ppos=pos,pos=pos->next);
-		if (pos) {
-			if (!pos->prev) {
+		for(pos = _r->contacts, ppos = 0; pos && pos->q < _c->q;
+				ppos = pos, pos = pos->next)
+			;
+		if(pos) {
+			if(!pos->prev) {
 				pos->prev = _c;
 				_c->next = pos;
 				_r->contacts = _c;
@@ -1422,7 +1455,7 @@ static inline void update_contact_pos(struct urecord* _r, ucontact_t* _c)
 				pos->prev->next = _c;
 				pos->prev = _c;
 			}
-		} else if (ppos) {
+		} else if(ppos) {
 			ppos->next = _c;
 			_c->prev = ppos;
 		} else {
@@ -1439,30 +1472,29 @@ static inline void update_contact_pos(struct urecord* _r, ucontact_t* _c)
  * \param _ci new contact informations
  * \return 0 on success, -1 on failure
  */
-int update_ucontact(struct urecord* _r, ucontact_t* _c, ucontact_info_t* _ci)
+int update_ucontact(struct urecord *_r, ucontact_t *_c, ucontact_info_t *_ci)
 {
-    int res;
+	int res;
 
 	/* we have to update memory in any case, but database directly
 	 * only in db_mode 1 */
-	if (mem_update_ucontact( _c, _ci) < 0) {
+	if(mem_update_ucontact(_c, _ci) < 0) {
 		LM_ERR("failed to update memory\n");
 		return -1;
 	}
 
 	/* run callbacks for UPDATE event */
-	if (exists_ulcb_type(UL_CONTACT_UPDATE))
-	{
+	if(exists_ulcb_type(UL_CONTACT_UPDATE)) {
 		LM_DBG("exists callback for type= UL_CONTACT_UPDATE\n");
-		run_ul_callbacks( UL_CONTACT_UPDATE, _c);
+		run_ul_callbacks(UL_CONTACT_UPDATE, _c);
 	}
 
-	if (_r && db_mode!=DB_ONLY)
-		update_contact_pos( _r, _c);
+	if(_r && db_mode != DB_ONLY)
+		update_contact_pos(_r, _c);
 
 	st_update_ucontact(_c);
 
-	if (db_mode == WRITE_THROUGH || db_mode==DB_ONLY) {
+	if(db_mode == WRITE_THROUGH || db_mode == DB_ONLY) {
 		/*
 		 * prevent problems when we're in a failover situation: the first DB contains
 		 * the complete location entries, the other misses some of them. Before the
@@ -1470,15 +1502,14 @@ int update_ucontact(struct urecord* _r, ucontact_t* _c, ucontact_info_t* _ci)
 		 * in the second DB will not work. Thus the expire mechanism don't work, it
 		 * takes too long until both DBs have the same number of entries again.
 		 */
-		if (cfg_get(p_usrloc, p_usrloc_cfg, db_update_as_insert))
-		    res = db_insert_ucontact(_c);
-        else
-            res = db_update_ucontact(_c);
-        if (res < 0 ) 
-        {
-            LM_ERR("failed to update database\n");
-            return -1;
-        } else {
+		if(cfg_get(p_usrloc, p_usrloc_cfg, db_update_as_insert))
+			res = db_insert_ucontact(_c);
+		else
+			res = db_update_ucontact(_c);
+		if(res < 0) {
+			LM_ERR("failed to update database\n");
+			return -1;
+		} else {
 			_c->state = CS_SYNC;
 		}
 	}

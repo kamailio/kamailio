@@ -23,7 +23,7 @@
 				<emphasis>msg_timeout</emphasis> parameter). If there is not any Date
 				header then the module adds one. This function also checks whether the certificate
 				of the authentication service (set by <emphasis>certificate_path</emphasis> parameter)
-				has been expired.
+				has expired.
 			</para>
 			<section>
 				<title>Dependencies</title>

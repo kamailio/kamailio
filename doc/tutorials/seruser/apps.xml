@@ -715,7 +715,7 @@ From: controller
 To: caller
 SDP: on hold
 
-#2 calling user answes
+#2 calling user answers
 200 OK
 From: controller
 To: caller

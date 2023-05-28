@@ -45,39 +45,39 @@ extern unsigned int init_flag;
  * \param api usrloc API
  * \return 0 on success, -1 on failure
  */
-int bind_usrloc(usrloc_api_t* api)
+int bind_usrloc(usrloc_api_t *api)
 {
-	if (!api) {
+	if(!api) {
 		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
-	if (init_flag==0) {
+	if(init_flag == 0) {
 		LM_ERR("configuration error - trying to bind to usrloc module"
-				" before being initialized\n");
+			   " before being initialized\n");
 		return -1;
 	}
 
-	api->register_udomain   = register_udomain;
-	api->get_all_ucontacts  = get_all_ucontacts;
-	api->insert_urecord     = insert_urecord;
-	api->delete_urecord     = delete_urecord;
-	api->get_urecord        = get_urecord;
-	api->lock_udomain       = lock_udomain;
-	api->unlock_udomain     = unlock_udomain;
-	api->release_urecord    = release_urecord;
-	api->insert_ucontact    = insert_ucontact;
-	api->delete_ucontact    = delete_ucontact;
-	api->get_ucontact       = get_ucontact;
-	api->update_ucontact    = update_ucontact;
-	api->register_ulcb      = register_ulcb;
-	api->get_aorhash        = ul_get_aorhash;
+	api->register_udomain = register_udomain;
+	api->get_all_ucontacts = get_all_ucontacts;
+	api->insert_urecord = insert_urecord;
+	api->delete_urecord = delete_urecord;
+	api->get_urecord = get_urecord;
+	api->lock_udomain = lock_udomain;
+	api->unlock_udomain = unlock_udomain;
+	api->release_urecord = release_urecord;
+	api->insert_ucontact = insert_ucontact;
+	api->delete_ucontact = delete_ucontact;
+	api->get_ucontact = get_ucontact;
+	api->update_ucontact = update_ucontact;
+	api->register_ulcb = register_ulcb;
+	api->get_aorhash = ul_get_aorhash;
 
-	api->get_urecord_by_ruid      = get_urecord_by_ruid;
+	api->get_urecord_by_ruid = get_urecord_by_ruid;
 	api->get_ucontact_by_instance = get_ucontact_by_instance;
 
 	api->use_domain = use_domain;
-	api->db_mode    = db_mode;
-	api->nat_flag   = nat_bflag;
+	api->db_mode = db_mode;
+	api->nat_flag = nat_bflag;
 
 	return 0;
 }

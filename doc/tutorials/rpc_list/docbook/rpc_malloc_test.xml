@@ -23,7 +23,7 @@ RPC Exports for malloc_test
         one of the other malloc_test functions (e.g. mt.mem_alloc or
         the script mt_mem_alloc). Use b|k|m|g to specify the desired
         size unit. Returns the number of bytes freed (can be higher or
-        smaller then the requested size)
+        smaller than the requested size)
 </para>
 <para>
 </para>

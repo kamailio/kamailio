@@ -23,7 +23,7 @@ mod_list_extra=avp auth_diameter call_control call_obj dmq domainpolicy msrp \
 			carrierroute pdb qos sca seas sms sst timer tmrec uac_redirect \
 			xhttp xhttp_rpc xprint jsonrpcs nosip dmq_usrloc statsd rtjson \
 			log_custom keepalive ss7ops app_sqlang acc_diameter evrexec \
-			sipjson lrkproxy xhttp_prom
+			sipjson lrkproxy math xhttp_prom
 
 # - common modules depending on database
 mod_list_db=acc alias_db auth_db avpops cfg_db db_text db_flatstore \

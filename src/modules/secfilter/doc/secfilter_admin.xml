@@ -265,7 +265,7 @@
 	  </title>
  
  		<para> 
-		It checks if the source IP address is blacklisted. The search is aproximate and data stored
+		It checks if the source IP address is blacklisted. The search is approximate and data stored
 		in the database will be compared as a prefix. For example, if we have blacklisted IP address
 		<emphasis>192.168.1.</emphasis> all messages from IPs like 192.168.1.% will be rejected.
  		</para> 

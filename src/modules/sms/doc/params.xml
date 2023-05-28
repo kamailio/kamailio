@@ -63,7 +63,7 @@ modem_param      = name "=" value
 	    <listitem>
 		<para>
 		    l=looping (optional) - Time for modem to wait before performing a new check
-		    for incomimg/outgoing <acronym>SMS</acronym>/SIP_MSG. Default is 20.
+		    for incoming/outgoing <acronym>SMS</acronym>/SIP_MSG. Default is 20.
 		</para>
 	    </listitem>
 	    <listitem>
@@ -173,7 +173,7 @@ modparam("sms", "links", "NOKIA[D1;d2]")
 	</example>
 	<para>
 	    The modem NOKIA will send <acronym>SMS</acronym> from D1 and D2 net
-	    (in this order !). if in a net queue are more then max_sms_per_call
+	    (in this order !). If in a net queue are more than max_sms_per_call
 	    <acronym>SMS</acronym> the modem will <emphasis>not
 	    sleep</emphasis> before starting the next loop ! Shortly, if
 	    messages are waiting to be sent, the modem will not go in sleep.
@@ -222,7 +222,7 @@ modparam("sms", "max_sms_parts", 10)
 	<title><varname>domain</varname> (string)</title>
 	<para>
 	    Specify a fake domain name to be used by the gateway. The Contact
-	    headers and the From header from request will be construct based on
+	    headers and the From header from the request will be constructed based on
 	    this fake domain name. It's useful when the gateway is
 	    transparently hidden behind a proxy/register (located on different
 	    machines).
@@ -266,7 +266,7 @@ modparam("sms", "use_contact", 1)
 	    from the <acronym>SMS</acronym> Center. If the
 	    <acronym>SMSC</acronym> reply with an error code, the gateway will
 	    send back to SIP user a SIP message containing the text (or
-	    part of it) that couldn't be send. Two report mechanisms are
+	    part of it) that couldn't be sent. Two report mechanisms are
 	    implemented:
 	</para>
 	<itemizedlist>

@@ -4,8 +4,6 @@ name: build
   push:
     branches:
       - master
-      - '5.6'
-      - '5.5'
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 permissions:
@@ -14,7 +12,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     container:
-      image: kamailio/pkg-kamailio-docker:${{ github.ref_name }}-${{ matrix.distribution }}
+      image: ghcr.io/kamailio/pkg-kamailio-docker:${{ github.ref_name }}-${{ matrix.distribution }}
       volumes:
         - ${{ github.workspace }}:/code
       env:
@@ -33,7 +31,7 @@ jobs:
             compilier: clang
     steps:
       - uses: actions/checkout@v2
-      - uses: ammaraskar/gcc-problem-matcher@0.1
+      - uses: ammaraskar/gcc-problem-matcher@0.2.0
       - name: build
         run: |
           cd /code

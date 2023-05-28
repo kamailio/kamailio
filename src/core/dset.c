@@ -84,18 +84,20 @@ str _ksr_contact_salias = str_init(";alias=");
 
 int init_dst_set(void)
 {
-	if(sr_dst_max_branches<=0 || sr_dst_max_branches>=MAX_BRANCHES_LIMIT) {
-		LM_ERR("invalid value for max branches parameter: %u, maximum value: %u\n",
+	if(sr_dst_max_branches <= 0 || sr_dst_max_branches >= MAX_BRANCHES_LIMIT) {
+		LM_ERR("invalid value for max branches parameter: %u, maximum value: "
+			   "%u\n",
 				sr_dst_max_branches, MAX_BRANCHES_LIMIT);
 		return -1;
 	}
 	/* sr_dst_max_branches - 1 : because of the default branch for r-uri, #0 in tm */
-	branches = (branch_t*)pkg_malloc((sr_dst_max_branches-1)*sizeof(branch_t));
-	if(branches==NULL) {
+	branches = (branch_t *)pkg_malloc(
+			(sr_dst_max_branches - 1) * sizeof(branch_t));
+	if(branches == NULL) {
 		PKG_MEM_ERROR;
 		return -1;
 	}
-	memset(branches, 0, (sr_dst_max_branches-1)*sizeof(branch_t));
+	memset(branches, 0, (sr_dst_max_branches - 1) * sizeof(branch_t));
 	return 0;
 }
 
@@ -107,12 +109,11 @@ int init_dst_set(void)
  */
 branch_t *get_sip_branch(int idx)
 {
-	if(nr_branches==0)
+	if(nr_branches == 0)
 		return NULL;
-	if(idx<0)
-	{
+	if(idx < 0) {
 		if((int)nr_branches + idx >= 0)
-			return &branches[nr_branches+idx];
+			return &branches[nr_branches + idx];
 		return NULL;
 	}
 	if(idx < nr_branches)
@@ -128,38 +129,40 @@ branch_t *get_sip_branch(int idx)
  */
 int drop_sip_branch(int idx)
 {
-	if(nr_branches==0 || idx>=nr_branches)
+	if(nr_branches == 0 || idx >= nr_branches)
 		return 0;
-	if(idx<0 && (int)nr_branches+idx<0)
+	if(idx < 0 && (int)nr_branches + idx < 0)
 		return 0;
-	if(idx<0)
+	if(idx < 0)
 		idx += nr_branches;
 	/* last branch */
-	if(idx==nr_branches-1)
-	{
+	if(idx == nr_branches - 1) {
 		nr_branches--;
 		return 0;
 	}
 	/* shift back one position */
-	for(; idx<nr_branches-1; idx++)
-		memcpy(&branches[idx], &branches[idx+1], sizeof(branch_t));
+	for(; idx < nr_branches - 1; idx++)
+		memcpy(&branches[idx], &branches[idx + 1], sizeof(branch_t));
 	nr_branches--;
 	return 0;
 }
 
-static inline flag_t* get_bflags_ptr(unsigned int branch)
+static inline flag_t *get_bflags_ptr(unsigned int branch)
 {
-	if (branch == 0) return &ruri_bflags;
-	if (branch - 1 < nr_branches) return &branches[branch - 1].flags;
+	if(branch == 0)
+		return &ruri_bflags;
+	if(branch - 1 < nr_branches)
+		return &branches[branch - 1].flags;
 	return NULL;
 }
 
 
 int setbflag(unsigned int branch, flag_t flag)
 {
-	flag_t* flags;
+	flag_t *flags;
 
-	if ((flags = get_bflags_ptr(branch)) == NULL) return -1;
+	if((flags = get_bflags_ptr(branch)) == NULL)
+		return -1;
 	(*flags) |= 1 << flag;
 	return 1;
 }
@@ -167,28 +170,32 @@ int setbflag(unsigned int branch, flag_t flag)
 
 int isbflagset(unsigned int branch, flag_t flag)
 {
-	flag_t* flags;
+	flag_t *flags;
 
-	if ((flags = get_bflags_ptr(branch)) == NULL) return -1;
+	if((flags = get_bflags_ptr(branch)) == NULL)
+		return -1;
 	return ((*flags) & (1 << flag)) ? 1 : -1;
 }
 
 
 int resetbflag(unsigned int branch, flag_t flag)
 {
-	flag_t* flags;
+	flag_t *flags;
 
-	if ((flags = get_bflags_ptr(branch)) == NULL) return -1;
-	(*flags) &= ~ (1 << flag);
+	if((flags = get_bflags_ptr(branch)) == NULL)
+		return -1;
+	(*flags) &= ~(1 << flag);
 	return 1;
 }
 
 
-int getbflagsval(unsigned int branch, flag_t* res)
+int getbflagsval(unsigned int branch, flag_t *res)
 {
-	flag_t* flags;
-	if (res == NULL) return -1;
-	if ((flags = get_bflags_ptr(branch)) == NULL) return -1;
+	flag_t *flags;
+	if(res == NULL)
+		return -1;
+	if((flags = get_bflags_ptr(branch)) == NULL)
+		return -1;
 	*res = *flags;
 	return 1;
 }
@@ -196,8 +203,9 @@ int getbflagsval(unsigned int branch, flag_t* res)
 
 int setbflagsval(unsigned int branch, flag_t val)
 {
-	flag_t* flags;
-	if ((flags = get_bflags_ptr(branch)) == NULL) return -1;
+	flag_t *flags;
+	if((flags = get_bflags_ptr(branch)) == NULL)
+		return -1;
 	*flags = val;
 	return 1;
 }
@@ -235,64 +243,62 @@ void set_branch_iterator(int n)
  * array, 0 is returned if there are no
  * more branches
  */
-char* get_branch(unsigned int i, int* len, qvalue_t* q, str* dst_uri,
-		str* path, unsigned int *flags,
-		struct socket_info** force_socket,
-		str *ruid, str *instance, str *location_ua)
+char *get_branch(unsigned int i, int *len, qvalue_t *q, str *dst_uri, str *path,
+		unsigned int *flags, struct socket_info **force_socket, str *ruid,
+		str *instance, str *location_ua)
 {
-	if (i < nr_branches) {
+	if(i < nr_branches) {
 		*len = branches[i].len;
 		*q = branches[i].q;
-		if (dst_uri) {
+		if(dst_uri) {
 			dst_uri->len = branches[i].dst_uri_len;
-			dst_uri->s = (dst_uri->len)?branches[i].dst_uri:0;
+			dst_uri->s = (dst_uri->len) ? branches[i].dst_uri : 0;
 		}
-		if (path) {
+		if(path) {
 			path->len = branches[i].path_len;
-			path->s = (path->len)?branches[i].path:0;
+			path->s = (path->len) ? branches[i].path : 0;
 		}
-		if (force_socket)
+		if(force_socket)
 			*force_socket = branches[i].force_send_socket;
-		if (flags)
+		if(flags)
 			*flags = branches[i].flags;
-		if (ruid) {
+		if(ruid) {
 			ruid->len = branches[i].ruid_len;
-			ruid->s = (ruid->len)?branches[i].ruid:0;
+			ruid->s = (ruid->len) ? branches[i].ruid : 0;
 		}
-		if (instance) {
+		if(instance) {
 			instance->len = branches[i].instance_len;
-			instance->s = (instance->len)?branches[i].instance:0;
+			instance->s = (instance->len) ? branches[i].instance : 0;
 		}
-		if (location_ua) {
+		if(location_ua) {
 			location_ua->len = branches[i].location_ua_len;
-			location_ua->s
-				= (location_ua->len)?branches[i].location_ua:0;
+			location_ua->s = (location_ua->len) ? branches[i].location_ua : 0;
 		}
 		return branches[i].uri;
 	} else {
 		*len = 0;
 		*q = Q_UNSPECIFIED;
-		if (dst_uri) {
+		if(dst_uri) {
 			dst_uri->s = 0;
 			dst_uri->len = 0;
 		}
-		if (path) {
+		if(path) {
 			path->s = 0;
 			path->len = 0;
 		}
-		if (force_socket)
+		if(force_socket)
 			*force_socket = 0;
-		if (flags)
+		if(flags)
 			*flags = 0;
-		if (ruid) {
+		if(ruid) {
 			ruid->s = 0;
 			ruid->len = 0;
 		}
-		if (instance) {
+		if(instance) {
 			instance->s = 0;
 			instance->len = 0;
 		}
-		if (location_ua) {
+		if(location_ua) {
 			location_ua->s = 0;
 			location_ua->len = 0;
 		}
@@ -301,19 +307,18 @@ char* get_branch(unsigned int i, int* len, qvalue_t* q, str* dst_uri,
 }
 
 
-
 /** Return the next branch from the dset array.
  * 0 is returned if there are no more branches
  */
-char* next_branch(int* len, qvalue_t* q, str* dst_uri, str* path,
-		unsigned int* flags, struct socket_info** force_socket,
-		str* ruid, str *instance, str *location_ua)
+char *next_branch(int *len, qvalue_t *q, str *dst_uri, str *path,
+		unsigned int *flags, struct socket_info **force_socket, str *ruid,
+		str *instance, str *location_ua)
 {
-	char* ret;
+	char *ret;
 
-	ret=get_branch(branch_iterator, len, q, dst_uri, path, flags,
+	ret = get_branch(branch_iterator, len, q, dst_uri, path, flags,
 			force_socket, ruid, instance, location_ua);
-	if (likely(ret))
+	if(likely(ret))
 		branch_iterator++;
 	return ret;
 }
@@ -324,34 +329,34 @@ char* next_branch(int* len, qvalue_t* q, str* dst_uri, str* path,
  */
 int get_branch_data(unsigned int i, branch_data_t *vbranch)
 {
-	if(vbranch==NULL) {
+	if(vbranch == NULL) {
 		return -1;
 	}
 	memset(vbranch, 0, sizeof(branch_data_t));
 
-	if (i < nr_branches) {
+	if(i < nr_branches) {
 		vbranch->uri.s = branches[i].uri;
 		vbranch->uri.len = branches[i].len;
 		vbranch->q = branches[i].q;
-		if (branches[i].dst_uri_len > 0) {
+		if(branches[i].dst_uri_len > 0) {
 			vbranch->dst_uri.len = branches[i].dst_uri_len;
 			vbranch->dst_uri.s = branches[i].dst_uri;
 		}
-		if (branches[i].path_len > 0) {
+		if(branches[i].path_len > 0) {
 			vbranch->path.len = branches[i].path_len;
 			vbranch->path.s = branches[i].path;
 		}
 		vbranch->force_socket = branches[i].force_send_socket;
 		vbranch->flags = branches[i].flags;
-		if (branches[i].ruid_len > 0) {
+		if(branches[i].ruid_len > 0) {
 			vbranch->ruid.len = branches[i].ruid_len;
 			vbranch->ruid.s = branches[i].ruid;
 		}
-		if (branches[i].instance_len > 0) {
+		if(branches[i].instance_len > 0) {
 			vbranch->instance.len = branches[i].instance_len;
-			vbranch->instance.s =branches[i].instance;
+			vbranch->instance.s = branches[i].instance;
 		}
-		if (branches[i].location_ua_len > 0) {
+		if(branches[i].location_ua_len > 0) {
 			vbranch->location_ua.len = branches[i].location_ua_len;
 			vbranch->location_ua.s = branches[i].location_ua;
 		}
@@ -371,8 +376,8 @@ int get_branch_data(unsigned int i, branch_data_t *vbranch)
 int next_branch_data(branch_data_t *vbranch)
 {
 	int ret;
-	ret= get_branch_data(branch_iterator, vbranch);
-	if (ret <= 0) {
+	ret = get_branch_data(branch_iterator, vbranch);
+	if(ret <= 0) {
 		return ret;
 	}
 	branch_iterator++;
@@ -391,7 +396,6 @@ void clear_branches(void)
 }
 
 
-
 /**  Add a new branch to the current destination set.
  * @param msg sip message, used for getting the uri if not specified (0).
  * @param uri uri, can be 0 (in which case the uri is taken from msg)
@@ -407,31 +411,29 @@ void clear_branches(void)
  *
  * @return  <0 (-1) on failure, 1 on success (script convention).
  */
-int append_branch(struct sip_msg* msg, str* uri, str* dst_uri, str* path,
-		  qvalue_t q, unsigned int flags,
-		  struct socket_info* force_socket,
-		  str* instance, unsigned int reg_id,
-		  str* ruid, str* location_ua)
+int append_branch(struct sip_msg *msg, str *uri, str *dst_uri, str *path,
+		qvalue_t q, unsigned int flags, struct socket_info *force_socket,
+		str *instance, unsigned int reg_id, str *ruid, str *location_ua)
 {
 	str luri;
 
 	/* if we have already set up the maximum number
 	 * of branches, don't try new ones
 	 */
-	if (unlikely(nr_branches == sr_dst_max_branches - 1)) {
+	if(unlikely(nr_branches == sr_dst_max_branches - 1)) {
 		LM_ERR("max nr of branches exceeded\n");
 		ser_error = E_TOO_MANY_BRANCHES;
 		return -1;
 	}
 
 	/* if not parameterized, take current uri */
-	if (uri==0 || uri->len==0 || uri->s==0) {
-		if(msg==NULL) {
+	if(uri == 0 || uri->len == 0 || uri->s == 0) {
+		if(msg == NULL) {
 			LM_ERR("no new uri and no msg to take r-uri\n");
 			ser_error = E_INVALID_PARAMS;
 			return -1;
 		}
-		if (msg->new_uri.s)
+		if(msg->new_uri.s)
 			luri = msg->new_uri;
 		else
 			luri = msg->first_line.u.request.uri;
@@ -439,14 +441,14 @@ int append_branch(struct sip_msg* msg, str* uri, str* dst_uri, str* path,
 		luri = *uri;
 	}
 
-	if (unlikely(luri.len > MAX_URI_SIZE - 1)) {
+	if(unlikely(luri.len > MAX_URI_SIZE - 1)) {
 		LM_ERR("too long uri: %.*s\n", luri.len, luri.s);
 		return -1;
 	}
 
 	/* copy the dst_uri */
-	if (dst_uri && dst_uri->len && dst_uri->s) {
-		if (unlikely(dst_uri->len > MAX_URI_SIZE - 1)) {
+	if(dst_uri && dst_uri->len && dst_uri->s) {
+		if(unlikely(dst_uri->len > MAX_URI_SIZE - 1)) {
 			LM_ERR("too long dst_uri: %.*s\n", dst_uri->len, dst_uri->s);
 			return -1;
 		}
@@ -459,8 +461,8 @@ int append_branch(struct sip_msg* msg, str* uri, str* dst_uri, str* path,
 	}
 
 	/* copy the path string */
-	if (unlikely(path && path->len && path->s)) {
-		if (unlikely(path->len > MAX_PATH_SIZE - 1)) {
+	if(unlikely(path && path->len && path->s)) {
+		if(unlikely(path->len > MAX_PATH_SIZE - 1)) {
 			LM_ERR("too long path: %.*s\n", path->len, path->s);
 			return -1;
 		}
@@ -482,14 +484,12 @@ int append_branch(struct sip_msg* msg, str* uri, str* dst_uri, str* path,
 	branches[nr_branches].flags = flags;
 
 	/* copy instance string */
-	if (unlikely(instance && instance->len && instance->s)) {
-		if (unlikely(instance->len > MAX_INSTANCE_SIZE - 1)) {
-			LM_ERR("too long instance: %.*s\n",
-			    instance->len, instance->s);
+	if(unlikely(instance && instance->len && instance->s)) {
+		if(unlikely(instance->len > MAX_INSTANCE_SIZE - 1)) {
+			LM_ERR("too long instance: %.*s\n", instance->len, instance->s);
 			return -1;
 		}
-		memcpy(branches[nr_branches].instance, instance->s,
-		       instance->len);
+		memcpy(branches[nr_branches].instance, instance->s, instance->len);
 		branches[nr_branches].instance[instance->len] = 0;
 		branches[nr_branches].instance_len = instance->len;
 	} else {
@@ -501,14 +501,12 @@ int append_branch(struct sip_msg* msg, str* uri, str* dst_uri, str* path,
 	branches[nr_branches].reg_id = reg_id;
 
 	/* copy ruid string */
-	if (unlikely(ruid && ruid->len && ruid->s)) {
-		if (unlikely(ruid->len > MAX_RUID_SIZE - 1)) {
-			LM_ERR("too long ruid: %.*s\n",
-			    ruid->len, ruid->s);
+	if(unlikely(ruid && ruid->len && ruid->s)) {
+		if(unlikely(ruid->len > MAX_RUID_SIZE - 1)) {
+			LM_ERR("too long ruid: %.*s\n", ruid->len, ruid->s);
 			return -1;
 		}
-		memcpy(branches[nr_branches].ruid, ruid->s,
-		       ruid->len);
+		memcpy(branches[nr_branches].ruid, ruid->s, ruid->len);
 		branches[nr_branches].ruid[ruid->len] = 0;
 		branches[nr_branches].ruid_len = ruid->len;
 	} else {
@@ -516,14 +514,14 @@ int append_branch(struct sip_msg* msg, str* uri, str* dst_uri, str* path,
 		branches[nr_branches].ruid_len = 0;
 	}
 
-	if (unlikely(location_ua && location_ua->len && location_ua->s)) {
-		if (unlikely(location_ua->len > MAX_UA_SIZE)) {
-			LM_ERR("too long location_ua: %.*s\n",
-			    location_ua->len, location_ua->s);
+	if(unlikely(location_ua && location_ua->len && location_ua->s)) {
+		if(unlikely(location_ua->len > MAX_UA_SIZE)) {
+			LM_ERR("too long location_ua: %.*s\n", location_ua->len,
+					location_ua->s);
 			return -1;
 		}
 		memcpy(branches[nr_branches].location_ua, location_ua->s,
-		       location_ua->len);
+				location_ua->len);
 		branches[nr_branches].location_ua[location_ua->len] = 0;
 		branches[nr_branches].location_ua_len = location_ua->len;
 	} else {
@@ -551,17 +549,17 @@ int append_branch(struct sip_msg* msg, str* uri, str* dst_uri, str* path,
  *
  * @return NULL on failure, new branch pointer on success.
  */
-branch_t* ksr_push_branch(struct sip_msg* msg, str* uri, str* dst_uri, str* path,
-		  qvalue_t q, unsigned int flags,
-		  struct socket_info* force_socket,
-		  str* instance, unsigned int reg_id,
-		  str* ruid, str* location_ua)
+branch_t *ksr_push_branch(struct sip_msg *msg, str *uri, str *dst_uri,
+		str *path, qvalue_t q, unsigned int flags,
+		struct socket_info *force_socket, str *instance, unsigned int reg_id,
+		str *ruid, str *location_ua)
 {
-	if(append_branch(msg, uri, dst_uri, path, q, flags, force_socket,
-				instance, reg_id, ruid, location_ua)<0) {
+	if(append_branch(msg, uri, dst_uri, path, q, flags, force_socket, instance,
+			   reg_id, ruid, location_ua)
+			< 0) {
 		return NULL;
 	}
-	return &branches[nr_branches-1];
+	return &branches[nr_branches - 1];
 }
 
 /*! \brief
@@ -571,13 +569,14 @@ branch_t* ksr_push_branch(struct sip_msg* msg, str* uri, str* dst_uri, str* path
  * end = end of target buffer
  * Returns 0 on success or -1 on error (buffer is too short)
  */
-static int print_contact_str(char **dest, str *uri, qvalue_t q, str *path, unsigned int flags, char *end, int options)
+static int print_contact_str(char **dest, str *uri, qvalue_t q, str *path,
+		unsigned int flags, char *end, int options)
 {
 	char *p = *dest;
 	str buf;
 
 	/* uri */
-	if (p + uri->len + 2 > end) {
+	if(p + uri->len + 2 > end) {
 		return -1;
 	}
 	*p++ = '<';
@@ -586,8 +585,8 @@ static int print_contact_str(char **dest, str *uri, qvalue_t q, str *path, unsig
 
 	/* uri parameters */
 	/* path vector as route header parameter */
-	if ((options & DS_PATH) && path->len > 0) {
-		if (p + ROUTE_PARAM_LEN + path->len > end) {
+	if((options & DS_PATH) && path->len > 0) {
+		if(p + ROUTE_PARAM_LEN + path->len > end) {
 			return -1;
 		}
 		memcpy(p, ROUTE_PARAM, ROUTE_PARAM_LEN);
@@ -595,7 +594,7 @@ static int print_contact_str(char **dest, str *uri, qvalue_t q, str *path, unsig
 		/* copy escaped path into dest */
 		buf.s = p;
 		buf.len = end - p;
-		if (escape_param(path, &buf) < 0) {
+		if(escape_param(path, &buf) < 0) {
 			return -1;
 		}
 		p += buf.len;
@@ -606,9 +605,9 @@ static int print_contact_str(char **dest, str *uri, qvalue_t q, str *path, unsig
 
 	/* header parameters */
 	/* q value */
-	if (q != Q_UNSPECIFIED) {
-		buf.s = q2str(q, (unsigned int*)&buf.len);
-		if (p + Q_PARAM_LEN + buf.len > end) {
+	if(q != Q_UNSPECIFIED) {
+		buf.s = q2str(q, (unsigned int *)&buf.len);
+		if(p + Q_PARAM_LEN + buf.len > end) {
 			return -1;
 		}
 		memcpy(p, Q_PARAM, Q_PARAM_LEN);
@@ -618,9 +617,9 @@ static int print_contact_str(char **dest, str *uri, qvalue_t q, str *path, unsig
 	}
 
 	/* branch flags (not SIP standard conformant) */
-	if (options & DS_FLAGS) {
+	if(options & DS_FLAGS) {
 		buf.s = int2str(flags, &buf.len);
-		if (p + FLAGS_PARAM_LEN + buf.len > end) {
+		if(p + FLAGS_PARAM_LEN + buf.len > end) {
 			return -1;
 		}
 		memcpy(p, FLAGS_PARAM, FLAGS_PARAM_LEN);
@@ -638,7 +637,7 @@ static int print_contact_str(char **dest, str *uri, qvalue_t q, str *path, unsig
  * Create a Contact header field from the dset
  * array
  */
-char* print_dset(struct sip_msg* msg, int* len, int options)
+char *print_dset(struct sip_msg *msg, int *len, int options)
 {
 	int cnt = 0;
 	qvalue_t q;
@@ -653,15 +652,17 @@ char* print_dset(struct sip_msg* msg, int* len, int options)
 	crt_branch = get_branch_iterator();
 
 	/* contact header name */
-	if (CONTACT_LEN + CRLF_LEN + 1 > MAX_REDIRECTION_LEN) {
+	if(CONTACT_LEN + CRLF_LEN + 1 > MAX_REDIRECTION_LEN) {
 		goto memfail;
 	}
 	memcpy(dset, CONTACT, CONTACT_LEN);
 	p = dset + CONTACT_LEN;
 
 	/* current uri */
-	if (msg->new_uri.s) {
-		if (print_contact_str(&p, &msg->new_uri, ruri_q, &msg->path_vec, ruri_bflags, end, options) < 0) {
+	if(msg->new_uri.s) {
+		if(print_contact_str(&p, &msg->new_uri, ruri_q, &msg->path_vec,
+				   ruri_bflags, end, options)
+				< 0) {
 			goto memfail;
 		}
 		cnt++;
@@ -669,28 +670,28 @@ char* print_dset(struct sip_msg* msg, int* len, int options)
 
 	/* branches */
 	init_branch_iterator();
-	while ((uri.s = next_branch(&uri.len, &q, 0, &path, &flags, 0, 0, 0, 0))) {
-		if (cnt > 0) {
-			if (p + CONTACT_DELIM_LEN > end) {
+	while((uri.s = next_branch(&uri.len, &q, 0, &path, &flags, 0, 0, 0, 0))) {
+		if(cnt > 0) {
+			if(p + CONTACT_DELIM_LEN > end) {
 				goto memfail;
 			}
 			memcpy(p, CONTACT_DELIM, CONTACT_DELIM_LEN);
 			p += CONTACT_DELIM_LEN;
 		}
 
-		if (print_contact_str(&p, &uri, q, &path, flags, end, options) < 0) {
+		if(print_contact_str(&p, &uri, q, &path, flags, end, options) < 0) {
 			goto memfail;
 		}
 
 		cnt++;
 	}
 
-	if (cnt == 0) {
+	if(cnt == 0) {
 		LM_WARN("no r-uri or branches\n");
 		goto error;
 	}
 
-	if (p + CRLF_LEN + 1 > end) {
+	if(p + CRLF_LEN + 1 > end) {
 		goto memfail;
 	}
 	memcpy(p, CRLF " ", CRLF_LEN + 1);
@@ -725,22 +726,21 @@ qvalue_t get_ruri_q(void)
 }
 
 
-
 /*
  * Rewrite Request-URI
  */
-int rewrite_uri(struct sip_msg* _m, str* _s)
+int rewrite_uri(struct sip_msg *_m, str *_s)
 {
 	char *buf = NULL;
 
-	if(_m->new_uri.s==NULL || _m->new_uri.len<_s->len) {
-		buf = (char*)pkg_malloc(_s->len + 1);
-		if (!buf) {
+	if(_m->new_uri.s == NULL || _m->new_uri.len < _s->len) {
+		buf = (char *)pkg_malloc(_s->len + 1);
+		if(!buf) {
 			PKG_MEM_ERROR;
 			return -1;
 		}
 	}
-	if(buf!=NULL) {
+	if(buf != NULL) {
 		if(_m->new_uri.s)
 			pkg_free(_m->new_uri.s);
 	} else {
@@ -768,12 +768,12 @@ int rewrite_uri(struct sip_msg* _m, str* _s)
 int msg_get_src_addr(sip_msg_t *msg, str *uri, int mode)
 {
 	static char buf[80];
-	char* p;
+	char *p;
 	str ip, port;
 	int len;
 	str proto;
 
-	if (msg==NULL || uri==NULL) {
+	if(msg == NULL || uri == NULL) {
 		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
@@ -786,43 +786,44 @@ int msg_get_src_addr(sip_msg_t *msg, str *uri, int mode)
 	switch(msg->rcv.proto) {
 		case PROTO_NONE:
 		case PROTO_UDP:
-			if(mode==0) {
-				proto.s = 0; /* Do not add transport parameter, UDP is default */
+			if(mode == 0) {
+				proto.s =
+						0; /* Do not add transport parameter, UDP is default */
 				proto.len = 0;
 			} else {
 				proto.s = "udp";
 				proto.len = 3;
 			}
-		break;
+			break;
 
 		case PROTO_TCP:
 			proto.s = "tcp";
 			proto.len = 3;
-		break;
+			break;
 
 		case PROTO_TLS:
 			proto.s = "tls";
 			proto.len = 3;
-		break;
+			break;
 
 		case PROTO_SCTP:
 			proto.s = "sctp";
 			proto.len = 4;
-		break;
+			break;
 
 		case PROTO_WS:
 		case PROTO_WSS:
 			proto.s = "ws";
 			proto.len = 2;
-		break;
+			break;
 
 		default:
 			LM_ERR("unknown transport protocol\n");
-		return -1;
+			return -1;
 	}
 
-	len = ip.len + 2*(msg->rcv.src_ip.af==AF_INET6)+ 1 + port.len;
-	if (mode==0) {
+	len = ip.len + 2 * (msg->rcv.src_ip.af == AF_INET6) + 1 + port.len;
+	if(mode == 0) {
 		len += 4;
 		if(proto.s) {
 			len += TRANSPORT_PARAM_LEN;
@@ -832,13 +833,13 @@ int msg_get_src_addr(sip_msg_t *msg, str *uri, int mode)
 		len += proto.len + 1;
 	}
 
-	if (len > 79) {
+	if(len > 79) {
 		LM_ERR("buffer too small\n");
 		return -1;
 	}
 
 	p = buf;
-	if(mode==0) {
+	if(mode == 0) {
 		memcpy(p, "sip:", 4);
 		p += 4;
 	} else {
@@ -847,11 +848,11 @@ int msg_get_src_addr(sip_msg_t *msg, str *uri, int mode)
 		*p++ = ':';
 	}
 
-	if (msg->rcv.src_ip.af==AF_INET6)
+	if(msg->rcv.src_ip.af == AF_INET6)
 		*p++ = '[';
 	memcpy(p, ip.s, ip.len);
 	p += ip.len;
-	if (msg->rcv.src_ip.af==AF_INET6)
+	if(msg->rcv.src_ip.af == AF_INET6)
 		*p++ = ']';
 
 	*p++ = ':';
@@ -859,7 +860,7 @@ int msg_get_src_addr(sip_msg_t *msg, str *uri, int mode)
 	memcpy(p, port.s, port.len);
 	p += port.len;
 
-	if (mode==0 && proto.s) {
+	if(mode == 0 && proto.s) {
 		memcpy(p, TRANSPORT_PARAM, TRANSPORT_PARAM_LEN);
 		p += TRANSPORT_PARAM_LEN;
 
@@ -879,15 +880,15 @@ int msg_get_src_addr(sip_msg_t *msg, str *uri, int mode)
  */
 int ksr_contact_alias_set_name(str *aname)
 {
-	_ksr_contact_salias.s = (char*)pkg_malloc(aname->len + 3);
-	if(_ksr_contact_salias.s==NULL) {
+	_ksr_contact_salias.s = (char *)pkg_malloc(aname->len + 3);
+	if(_ksr_contact_salias.s == NULL) {
 		PKG_MEM_ERROR;
 		return -1;
 	}
 	_ksr_contact_salias.s[0] = ';';
 	memcpy(_ksr_contact_salias.s + 1, aname->s, aname->len);
-	_ksr_contact_salias.s[aname->len+1] = '=';
-	_ksr_contact_salias.s[aname->len+2] = '\0';
+	_ksr_contact_salias.s[aname->len + 1] = '=';
+	_ksr_contact_salias.s[aname->len + 2] = '\0';
 	_ksr_contact_salias.len = aname->len + 2;
 	_ksr_contact_alias.s = _ksr_contact_salias.s + 1;
 	_ksr_contact_alias.len = _ksr_contact_salias.len - 1;
@@ -903,11 +904,11 @@ int ksr_contact_alias_set_name(str *aname)
  */
 int uri_add_rcv_alias(sip_msg_t *msg, str *uri, str *nuri)
 {
-	char* p;
+	char *p;
 	str ip, port;
 	int len;
 
-	if (msg==NULL || uri==NULL || nuri==NULL) {
+	if(msg == NULL || uri == NULL || nuri == NULL) {
 		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
@@ -919,9 +920,9 @@ int uri_add_rcv_alias(sip_msg_t *msg, str *uri, str *nuri)
 
 	/*uri;alias=[ip]~port~proto*/
 	len = uri->len + _ksr_contact_salias.len + ip.len + port.len + 6;
-	if(len>=nuri->len) {
-		LM_ERR("not enough space - new uri len: %d (buf size: %d)\n",
-				len, nuri->len);
+	if(len >= nuri->len) {
+		LM_ERR("not enough space - new uri len: %d (buf size: %d)\n", len,
+				nuri->len);
 		return -1;
 	}
 	p = nuri->s;
@@ -929,11 +930,11 @@ int uri_add_rcv_alias(sip_msg_t *msg, str *uri, str *nuri)
 	p += uri->len;
 	memcpy(p, _ksr_contact_salias.s, _ksr_contact_salias.len);
 	p += _ksr_contact_salias.len;
-	if (msg->rcv.src_ip.af == AF_INET6)
+	if(msg->rcv.src_ip.af == AF_INET6)
 		*p++ = '[';
 	memcpy(p, ip.s, ip.len);
 	p += ip.len;
-	if (msg->rcv.src_ip.af == AF_INET6)
+	if(msg->rcv.src_ip.af == AF_INET6)
 		*p++ = ']';
 	*p++ = '~';
 	memcpy(p, port.s, port.len);
@@ -943,8 +944,7 @@ int uri_add_rcv_alias(sip_msg_t *msg, str *uri, str *nuri)
 	nuri->len = p - nuri->s;
 	nuri->s[nuri->len] = '\0';
 
-	LM_DBG("encoded <%.*s> => [%.*s]\n",
-			uri->len, uri->s, nuri->len, nuri->s);
+	LM_DBG("encoded <%.*s> => [%.*s]\n", uri->len, uri->s, nuri->len, nuri->s);
 	return 0;
 }
 
@@ -955,12 +955,12 @@ int uri_add_rcv_alias(sip_msg_t *msg, str *uri, str *nuri)
  */
 int uri_restore_rcv_alias(str *uri, str *nuri, str *suri)
 {
-	char* p;
+	char *p;
 	str skip;
 	str ip, port, sproto;
 	int proto;
 
-	if (uri==NULL || nuri==NULL || suri==NULL) {
+	if(uri == NULL || nuri == NULL || suri == NULL) {
 		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
@@ -972,65 +972,66 @@ int uri_restore_rcv_alias(str *uri, str *nuri, str *suri)
 	}
 	p = uri->s + uri->len - _ksr_contact_salias.len - 11;
 	skip.s = 0;
-	while(p>uri->s+5) {
-		if(strncmp(p, _ksr_contact_salias.s, _ksr_contact_salias.len)==0) {
+	while(p > uri->s + 5) {
+		if(strncmp(p, _ksr_contact_salias.s, _ksr_contact_salias.len) == 0) {
 			skip.s = p;
 			break;
 		}
 		p--;
 	}
-	if(skip.s==0) {
+	if(skip.s == 0) {
 		/* alias parameter not found */
 		return -2;
 	}
 	p += _ksr_contact_salias.len;
 	ip.s = p;
-	p = (char*)memchr(ip.s, '~', (size_t)(uri->s+uri->len-ip.s));
-	if(p==NULL) {
+	p = (char *)memchr(ip.s, '~', (size_t)(uri->s + uri->len - ip.s));
+	if(p == NULL) {
 		/* proper alias parameter not found */
 		return -2;
 	}
 	ip.len = p - ip.s;
 	p++;
-	if(p>=uri->s+uri->len) {
+	if(p >= uri->s + uri->len) {
 		/* proper alias parameter not found */
 		return -2;
 	}
 	port.s = p;
-	p = (char*)memchr(port.s, '~', (size_t)(uri->s+uri->len-port.s));
-	if(p==NULL) {
+	p = (char *)memchr(port.s, '~', (size_t)(uri->s + uri->len - port.s));
+	if(p == NULL) {
 		/* proper alias parameter not found */
 		return -2;
 	}
 	port.len = p - port.s;
 	p++;
-	if(p>=uri->s+uri->len) {
+	if(p >= uri->s + uri->len) {
 		/* proper alias parameter not found */
 		return -2;
 	}
 	proto = (int)(*p - '0');
 	p++;
 
-	if(p!=uri->s+uri->len && *p!=';') {
+	if(p != uri->s + uri->len && *p != ';') {
 		/* proper alias parameter not found */
 		return -2;
 	}
 	skip.len = (int)(p - skip.s);
 
-	if(suri->len<=4+ip.len+1+port.len+11/*;transport=*/+4) {
+	if(suri->len <= 4 + ip.len + 1 + port.len + 11 /*;transport=*/ + 4) {
 		LM_ERR("address buffer too small\n");
 		return -1;
 	}
-	if(nuri->len<=uri->len - skip.len) {
+	if(nuri->len <= uri->len - skip.len) {
 		LM_ERR("uri buffer too small\n");
 		return -1;
 	}
 
 	p = nuri->s;
-	memcpy(p, uri->s, (size_t)(skip.s-uri->s));
-	p += skip.s-uri->s;
-	memcpy(p, skip.s+skip.len, (size_t)(uri->s+uri->len - skip.s - skip.len));
-	p += uri->s+uri->len - skip.s - skip.len;
+	memcpy(p, uri->s, (size_t)(skip.s - uri->s));
+	p += skip.s - uri->s;
+	memcpy(p, skip.s + skip.len,
+			(size_t)(uri->s + uri->len - skip.s - skip.len));
+	p += uri->s + uri->len - skip.s - skip.len;
 	nuri->len = p - nuri->s;
 
 	p = suri->s;
@@ -1042,7 +1043,7 @@ int uri_restore_rcv_alias(str *uri, str *nuri, str *suri)
 	memcpy(p, port.s, port.len);
 	p += port.len;
 	proto_type_to_str((unsigned short)proto, &sproto);
-	if(sproto.len>0 && proto!=PROTO_UDP) {
+	if(sproto.len > 0 && proto != PROTO_UDP) {
 		memcpy(p, ";transport=", 11);
 		p += 11;
 		memcpy(p, sproto.s, sproto.len);
@@ -1050,8 +1051,8 @@ int uri_restore_rcv_alias(str *uri, str *nuri, str *suri)
 	}
 	suri->len = p - suri->s;
 
-	LM_DBG("decoded <%.*s> => [%.*s] [%.*s]\n",
-			uri->len, uri->s, nuri->len, nuri->s, suri->len, suri->s);
+	LM_DBG("decoded <%.*s> => [%.*s] [%.*s]\n", uri->len, uri->s, nuri->len,
+			nuri->s, suri->len, suri->s);
 
 	return 0;
 }
@@ -1153,7 +1154,7 @@ int ksr_uri_alias_encode(str *iuri, str *ualias)
 	sip_uri_t puri;
 	char *p;
 
-	if (parse_uri (iuri->s, iuri->len, &puri) < 0) {
+	if(parse_uri(iuri->s, iuri->len, &puri) < 0) {
 		LM_ERR("failed to parse uri [%.*s]\n", iuri->len, iuri->s);
 		return -1;
 	}
@@ -1168,11 +1169,11 @@ int ksr_uri_alias_encode(str *iuri, str *ualias)
 	memcpy(p, puri.host.s, puri.host.len);
 	p += puri.host.len;
 	*p++ = '~';
-	if(puri.port.len>0) {
+	if(puri.port.len > 0) {
 		memcpy(p, puri.port.s, puri.port.len);
 		p += puri.port.len;
 	} else {
-		if(puri.proto==PROTO_TLS || puri.proto==PROTO_WSS) {
+		if(puri.proto == PROTO_TLS || puri.proto == PROTO_WSS) {
 			memcpy(p, "5061", 4);
 		} else {
 			memcpy(p, "5060", 4);
@@ -1180,12 +1181,12 @@ int ksr_uri_alias_encode(str *iuri, str *ualias)
 		p += 4;
 	}
 	*p++ = '~';
-	*p++ = ((puri.proto)?puri.proto:1) + '0';
+	*p++ = ((puri.proto) ? puri.proto : 1) + '0';
 	ualias->len = p - ualias->s;
 	ualias->s[ualias->len] = '\0';
 
-	LM_DBG("encoded <%.*s> => [%.*s]\n",
-			iuri->len, iuri->s, ualias->len, ualias->s);
+	LM_DBG("encoded <%.*s> => [%.*s]\n", iuri->len, iuri->s, ualias->len,
+			ualias->s);
 
 	return 0;
 }
@@ -1216,17 +1217,17 @@ int ksr_uri_alias_decode(str *ualias, str *ouri)
 	ouri->s[4 + ualias->len] = '\0';
 	p = ouri->s + 4;
 	n = 0;
-	while(*p!='\0') {
-		if(*p=='~') {
+	while(*p != '\0') {
+		if(*p == '~') {
 			n++;
-			if(n==1) {
+			if(n == 1) {
 				/* port */
 				*p = ':';
-			} else if(n==2) {
+			} else if(n == 2) {
 				/* proto */
 				*p = ';';
 				p++;
-				if(*p=='\0') {
+				if(*p == '\0') {
 					LM_ERR("invalid received format\n");
 					goto error;
 				}
@@ -1234,9 +1235,9 @@ int ksr_uri_alias_decode(str *ualias, str *ouri)
 				if(nproto == PROTO_NONE) {
 					nproto = PROTO_UDP;
 				}
-				if (nproto != PROTO_UDP) {
+				if(nproto != PROTO_UDP) {
 					proto_type_to_str(nproto, &sproto);
-					if (sproto.len == 0) {
+					if(sproto.len == 0) {
 						LM_ERR("unknown proto in received param\n");
 						goto error;
 					}
@@ -1268,7 +1269,7 @@ error:
 
 /* address of record considered case sensitive
  * - 0 = no; 1 = yes */
-static int aor_case_sensitive=0;
+static int aor_case_sensitive = 0;
 
 int set_aor_case_sensitive(int mode)
 {

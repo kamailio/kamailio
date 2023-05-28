@@ -1,7 +1,7 @@
 /*
  *
  *  simple atomic ops testing program
- *  (no paralel stuff, just see if the opcodes are "legal")
+ *  (no parallel stuff, just see if the opcodes are "legal")
  *
  *  Defines: TYPE - not defined => use atomic_t and the corresponding
  *                  atomic functions

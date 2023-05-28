@@ -42,54 +42,42 @@ static inline int check_username(str *_username, struct sip_uri *_uri)
 	str uname, domain = {0, 0};
 	int pos = 0;
 
-	if (_username == NULL || _username->len == 0)
-	{
+	if(_username == NULL || _username->len == 0) {
 		LM_ERR("invalid username\n");
 		return CHECK_ERROR;
 	}
 
-	while (pos < _username->len && _username->s[pos] != ':')
+	while(pos < _username->len && _username->s[pos] != ':')
 		pos++;
 
-	if (pos < _username->len - 1)
-	{
-		if (autheph_username_format == AUTHEPH_USERNAME_NON_IETF)
-		{
+	if(pos < _username->len - 1) {
+		if(autheph_username_format == AUTHEPH_USERNAME_NON_IETF) {
 			uname.s = _username->s;
 			uname.len = pos;
-		}
-		else
-		{
+		} else {
 			uname.s = _username->s + pos + 1;
 			uname.len = _username->len - pos - 1;
 		}
-	}
-	else
-	{
+	} else {
 		return CHECK_NO_USER;
 	}
 
 	pos = 0;
-	while (pos < uname.len && uname.s[pos] != '@')
+	while(pos < uname.len && uname.s[pos] != '@')
 		pos++;
 
-	if (pos < uname.len - 1)
-	{
+	if(pos < uname.len - 1) {
 		domain.s = uname.s + pos + 1;
 		domain.len = uname.len - pos - 1;
 		uname.len = pos;
 	}
 
-	if (uname.len == _uri->user.len
-		&& strncmp(uname.s, _uri->user.s, uname.len) == 0)
-	{
-		if (domain.len == 0)
-		{
+	if(uname.len == _uri->user.len
+			&& strncmp(uname.s, _uri->user.s, uname.len) == 0) {
+		if(domain.len == 0) {
 			return CHECK_OK;
-		}
-		else if (domain.len == _uri->host.len
-			&& strncmp(domain.s, _uri->host.s, domain.len) == 0)
-		{
+		} else if(domain.len == _uri->host.len
+				  && strncmp(domain.s, _uri->host.s, domain.len) == 0) {
 			return CHECK_OK;
 		}
 	}
@@ -99,14 +87,12 @@ static inline int check_username(str *_username, struct sip_uri *_uri)
 
 static inline int check_from(struct sip_msg *_m, str *_username)
 {
-	if (parse_from_header(_m) < 0)
-	{
+	if(parse_from_header(_m) < 0) {
 		LM_ERR("parsing From: header\n");
 		return CHECK_ERROR;
 	}
 
-	if (parse_from_uri(_m) == NULL)
-	{
+	if(parse_from_uri(_m) == NULL) {
 		LM_ERR("parsing From: URI\n");
 		return CHECK_ERROR;
 	}
@@ -119,17 +105,15 @@ static inline int get_cred(struct sip_msg *_m, str *_username)
 	struct hdr_field *h;
 
 	get_authorized_cred(_m->authorization, &h);
-	if (!h)
-	{
+	if(!h) {
 		get_authorized_cred(_m->proxy_auth, &h);
-		if (!h)
-		{
+		if(!h) {
 			LM_ERR("No authorized credentials found\n");
 			return -1;
 		}
 	}
 
-	*_username = ((auth_body_t *) h->parsed)->digest.username.whole;
+	*_username = ((auth_body_t *)h->parsed)->digest.username.whole;
 	return 0;
 }
 
@@ -137,23 +121,20 @@ int autheph_check_from0(struct sip_msg *_m)
 {
 	str username = {0, 0};
 
-	if (eph_auth_api.pre_auth == NULL)
-	{
+	if(eph_auth_api.pre_auth == NULL) {
 		LM_ERR("autheph_check_from() with no username parameter "
-			"cannot be used without the auth module\n");
+			   "cannot be used without the auth module\n");
 		return CHECK_ERROR;
 	}
 
-	if (_m == NULL)
-	{
+	if(_m == NULL) {
 		LM_ERR("invalid parameters\n");
 		return CHECK_ERROR;
 	}
 
-	if (get_cred(_m, &username) < 0)
-	{
+	if(get_cred(_m, &username) < 0) {
 		LM_ERR("call autheph_(check|proxy|www) before calling "
-			" check_from() with no username parameter\n");
+			   " check_from() with no username parameter\n");
 		return CHECK_ERROR;
 	}
 
@@ -164,20 +145,17 @@ int autheph_check_from1(struct sip_msg *_m, char *_username)
 {
 	str susername;
 
-	if (_m == NULL || _username == NULL)
-	{
+	if(_m == NULL || _username == NULL) {
 		LM_ERR("invalid parameters\n");
 		return CHECK_ERROR;
 	}
 
-	if (get_str_fparam(&susername, _m, (fparam_t*)_username) < 0)
-	{
+	if(get_str_fparam(&susername, _m, (fparam_t *)_username) < 0) {
 		LM_ERR("failed to get username value\n");
 		return CHECK_ERROR;
 	}
 
-	if (susername.len == 0)
-	{
+	if(susername.len == 0) {
 		LM_ERR("invalid username parameter - empty value\n");
 		return CHECK_ERROR;
 	}
@@ -188,14 +166,12 @@ int autheph_check_from1(struct sip_msg *_m, char *_username)
 
 static inline int check_to(struct sip_msg *_m, str *_username)
 {
-	if (!_m->to && ((parse_headers(_m, HDR_TO_F, 0) == -1) || (!_m->to)))
-	{
+	if(!_m->to && ((parse_headers(_m, HDR_TO_F, 0) == -1) || (!_m->to))) {
 		LM_ERR("parsing To: header\n");
 		return CHECK_ERROR;
 	}
 
-	if (parse_to_uri(_m) == NULL)
-	{
+	if(parse_to_uri(_m) == NULL) {
 		LM_ERR("parsing To: URI\n");
 		return CHECK_ERROR;
 	}
@@ -207,23 +183,20 @@ int autheph_check_to0(struct sip_msg *_m)
 {
 	str username = {0, 0};
 
-	if (eph_auth_api.pre_auth == NULL)
-	{
+	if(eph_auth_api.pre_auth == NULL) {
 		LM_ERR("autheph_check_to() with no username parameter "
-			"cannot be used without the auth module\n");
+			   "cannot be used without the auth module\n");
 		return CHECK_ERROR;
 	}
 
-	if (_m == NULL)
-	{
+	if(_m == NULL) {
 		LM_ERR("invalid parameters\n");
 		return CHECK_ERROR;
 	}
 
-	if (get_cred(_m, &username) < 0)
-	{
+	if(get_cred(_m, &username) < 0) {
 		LM_ERR("call autheph_(check|proxy|www) before calling "
-			" check_to() with no username parameter\n");
+			   " check_to() with no username parameter\n");
 		return CHECK_ERROR;
 	}
 
@@ -234,20 +207,17 @@ int autheph_check_to1(struct sip_msg *_m, char *_username)
 {
 	str susername;
 
-	if (_m == NULL || _username == NULL)
-	{
+	if(_m == NULL || _username == NULL) {
 		LM_ERR("invalid parameters\n");
 		return CHECK_ERROR;
 	}
 
-	if (get_str_fparam(&susername, _m, (fparam_t*)_username) < 0)
-	{
+	if(get_str_fparam(&susername, _m, (fparam_t *)_username) < 0) {
 		LM_ERR("failed to get username value\n");
 		return CHECK_ERROR;
 	}
 
-	if (susername.len == 0)
-	{
+	if(susername.len == 0) {
 		LM_ERR("invalid username parameter - empty value\n");
 		return CHECK_ERROR;
 	}
@@ -259,26 +229,22 @@ int autheph_check_timestamp(struct sip_msg *_m, char *_username)
 {
 	str susername;
 
-	if (_m == NULL || _username == NULL)
-	{
+	if(_m == NULL || _username == NULL) {
 		LM_ERR("invalid parameters\n");
 		return CHECK_ERROR;
 	}
 
-	if (get_str_fparam(&susername, _m, (fparam_t*)_username) < 0)
-	{
+	if(get_str_fparam(&susername, _m, (fparam_t *)_username) < 0) {
 		LM_ERR("failed to get username value\n");
 		return CHECK_ERROR;
 	}
 
-	if (susername.len == 0)
-	{
+	if(susername.len == 0) {
 		LM_ERR("invalid username parameter - empty value\n");
 		return CHECK_ERROR;
 	}
 
-	if (autheph_verify_timestamp(&susername) < 0)
-	{
+	if(autheph_verify_timestamp(&susername) < 0) {
 		return CHECK_ERROR;
 	}
 

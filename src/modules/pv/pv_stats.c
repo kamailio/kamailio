@@ -32,7 +32,7 @@
  */
 int pv_parse_stat_name(pv_spec_p sp, str *in)
 {
-	if (in == NULL || in->s == NULL || sp == NULL)
+	if(in == NULL || in->s == NULL || sp == NULL)
 		return -1;
 	sp->pvp.pvn.type = PV_NAME_INTSTR;
 	sp->pvp.pvn.u.isname.type = AVP_NAME_STR;
@@ -49,13 +49,12 @@ int pv_get_stat(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
 	stat_var *stat;
 
 	stat = get_stat(&param->pvn.u.isname.name.s);
-	if (stat == NULL) {
-		LM_WARN("No stat variable ``%.*s''\n",
-			param->pvn.u.isname.name.s.len, param->pvn.u.isname.name.s.s);
+	if(stat == NULL) {
+		LM_WARN("No stat variable ``%.*s''\n", param->pvn.u.isname.name.s.len,
+				param->pvn.u.isname.name.s.s);
 		return pv_get_null(msg, param, res);
 	}
-	return pv_get_uintval(msg, param, res,
-			(unsigned int)get_stat_val(stat));
+	return pv_get_uintval(msg, param, res, (unsigned int)get_stat_val(stat));
 }
 
 /**
@@ -63,23 +62,24 @@ int pv_get_stat(struct sip_msg *msg, pv_param_t *param, pv_value_t *res)
  */
 int pv_parse_sr_version_name(pv_spec_p sp, str *in)
 {
-	if(sp==NULL || in==NULL || in->len<=0)
+	if(sp == NULL || in == NULL || in->len <= 0)
 		return -1;
 
-	switch(in->len)
-	{
+	switch(in->len) {
 		case 3:
-			if(strncmp(in->s, "num", 3)==0)
+			if(strncmp(in->s, "num", 3) == 0)
 				sp->pvp.pvn.u.isname.name.n = 0;
-			else goto error;
-		break;
+			else
+				goto error;
+			break;
 		case 4:
-			if(strncmp(in->s, "full", 4)==0)
+			if(strncmp(in->s, "full", 4) == 0)
 				sp->pvp.pvn.u.isname.name.n = 1;
-			else if(strncmp(in->s, "hash", 4)==0)
+			else if(strncmp(in->s, "hash", 4) == 0)
 				sp->pvp.pvn.u.isname.name.n = 2;
-			else goto error;
-		break;
+			else
+				goto error;
+			break;
 		default:
 			goto error;
 	}
@@ -98,17 +98,15 @@ error:
  */
 int pv_get_sr_version(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 {
-	if(param==NULL)
+	if(param == NULL)
 		return -1;
 
-	switch(param->pvn.u.isname.name.n)
-	{
+	switch(param->pvn.u.isname.name.n) {
 		case 1:
-			return pv_get_strzval(msg, param, res, (char*)full_version);
+			return pv_get_strzval(msg, param, res, (char *)full_version);
 		case 2:
-			return pv_get_strzval(msg, param, res, (char*)ver_id);
+			return pv_get_strzval(msg, param, res, (char *)ver_id);
 		default:
-			return pv_get_strzval(msg, param, res, (char*)ver_version);
+			return pv_get_strzval(msg, param, res, (char *)ver_version);
 	}
 }
-

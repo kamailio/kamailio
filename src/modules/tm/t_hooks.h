@@ -33,62 +33,62 @@
 struct sip_msg;
 struct cell;
 
-#define TMCB_REQUEST_IN_N       0
-#define TMCB_RESPONSE_IN_N      1
-#define TMCB_E2EACK_IN_N        2
-#define TMCB_REQUEST_PENDING_N  3
-#define TMCB_REQUEST_FWDED_N    4
-#define TMCB_RESPONSE_FWDED_N   5
-#define TMCB_ON_FAILURE_RO_N    6
-#define TMCB_ON_FAILURE_N       7
-#define TMCB_REQUEST_OUT_N      8
-#define TMCB_RESPONSE_OUT_N     9
-#define TMCB_LOCAL_COMPLETED_N  10
+#define TMCB_REQUEST_IN_N 0
+#define TMCB_RESPONSE_IN_N 1
+#define TMCB_E2EACK_IN_N 2
+#define TMCB_REQUEST_PENDING_N 3
+#define TMCB_REQUEST_FWDED_N 4
+#define TMCB_RESPONSE_FWDED_N 5
+#define TMCB_ON_FAILURE_RO_N 6
+#define TMCB_ON_FAILURE_N 7
+#define TMCB_REQUEST_OUT_N 8
+#define TMCB_RESPONSE_OUT_N 9
+#define TMCB_LOCAL_COMPLETED_N 10
 #define TMCB_LOCAL_RESPONSE_OUT_N 11
-#define TMCB_ACK_NEG_IN_N       12
-#define TMCB_REQ_RETR_IN_N      13
+#define TMCB_ACK_NEG_IN_N 12
+#define TMCB_REQ_RETR_IN_N 13
 #define TMCB_LOCAL_RESPONSE_IN_N 14
-#define TMCB_LOCAL_REQUEST_IN_N  15
-#define TMCB_DLG_N              16
-#define TMCB_DESTROY_N          17  /* called on transaction destroy */
-#define TMCB_E2ECANCEL_IN_N     18
-#define TMCB_E2EACK_RETR_IN_N   19
-#define TMCB_RESPONSE_READY_N	20
-#define TMCB_DONT_ACK_N         21 /* TM shoudn't ACK a local UAC  */
-#define TMCB_REQUEST_SENT_N     22
-#define TMCB_RESPONSE_SENT_N    23
+#define TMCB_LOCAL_REQUEST_IN_N 15
+#define TMCB_DLG_N 16
+#define TMCB_DESTROY_N 17 /* called on transaction destroy */
+#define TMCB_E2ECANCEL_IN_N 18
+#define TMCB_E2EACK_RETR_IN_N 19
+#define TMCB_RESPONSE_READY_N 20
+#define TMCB_DONT_ACK_N 21 /* TM shoudn't ACK a local UAC  */
+#define TMCB_REQUEST_SENT_N 22
+#define TMCB_RESPONSE_SENT_N 23
 #define TMCB_ON_BRANCH_FAILURE_RO_N 24
 #define TMCB_ON_BRANCH_FAILURE_N 25
-#define TMCB_MAX_N              25
+#define TMCB_MAX_N 25
 
 
-#define TMCB_REQUEST_IN       (1<<TMCB_REQUEST_IN_N)
-#define TMCB_RESPONSE_IN      (1<<TMCB_RESPONSE_IN_N)
-#define TMCB_E2EACK_IN        (1<<TMCB_E2EACK_IN_N)
-#define TMCB_REQUEST_PENDING  (1<<TMCB_REQUEST_PENDING_N)
-#define TMCB_REQUEST_FWDED    (1<<TMCB_REQUEST_FWDED_N)
-#define TMCB_RESPONSE_FWDED   (1<<TMCB_RESPONSE_FWDED_N)
-#define TMCB_ON_FAILURE_RO    (1<<TMCB_ON_FAILURE_RO_N)
-#define TMCB_ON_FAILURE       (1<<TMCB_ON_FAILURE_N)
-#define TMCB_REQUEST_OUT      (1<<TMCB_REQUEST_OUT_N)
-#define TMCB_RESPONSE_OUT     (1<<TMCB_RESPONSE_OUT_N)
-#define TMCB_LOCAL_COMPLETED  (1<<TMCB_LOCAL_COMPLETED_N)
-#define TMCB_LOCAL_RESPONSE_OUT (1<<TMCB_LOCAL_RESPONSE_OUT_N)
-#define TMCB_ACK_NEG_IN       (1<<TMCB_ACK_NEG_IN_N)
-#define TMCB_REQ_RETR_IN      (1<<TMCB_REQ_RETR_IN_N)
-#define TMCB_LOCAL_RESPONSE_IN (1<<TMCB_LOCAL_RESPONSE_IN_N)
-#define TMCB_LOCAL_REQUEST_IN (1<<TMCB_LOCAL_REQUEST_IN_N)
-#define TMCB_DLG              (1<<TMCB_DLG_N)
-#define TMCB_DESTROY          (1<<TMCB_DESTROY_N)
-#define TMCB_E2ECANCEL_IN     (1<<TMCB_E2ECANCEL_IN_N)
-#define TMCB_E2EACK_RETR_IN   (1<<TMCB_E2EACK_RETR_IN_N)
-#define TMCB_RESPONSE_READY   (1<<TMCB_RESPONSE_READY_N)
-#define TMCB_DONT_ACK         (1<<TMCB_DONT_ACK_N)
-#define TMCB_REQUEST_SENT      (1<<TMCB_REQUEST_SENT_N)
-#define TMCB_RESPONSE_SENT     (1<<TMCB_RESPONSE_SENT_N)
-#define TMCB_ON_BRANCH_FAILURE (1<<TMCB_ON_BRANCH_FAILURE_N)
-#define TMCB_ON_BRANCH_FAILURE_RO (1<<TMCB_ON_BRANCH_FAILURE_RO_N)
-#define TMCB_MAX              ((1<<(TMCB_MAX_N+1))-1)
+#define TMCB_REQUEST_IN (1 << TMCB_REQUEST_IN_N)
+#define TMCB_RESPONSE_IN (1 << TMCB_RESPONSE_IN_N)
+#define TMCB_E2EACK_IN (1 << TMCB_E2EACK_IN_N)
+#define TMCB_REQUEST_PENDING (1 << TMCB_REQUEST_PENDING_N)
+#define TMCB_REQUEST_FWDED (1 << TMCB_REQUEST_FWDED_N)
+#define TMCB_RESPONSE_FWDED (1 << TMCB_RESPONSE_FWDED_N)
+#define TMCB_ON_FAILURE_RO (1 << TMCB_ON_FAILURE_RO_N)
+#define TMCB_ON_FAILURE (1 << TMCB_ON_FAILURE_N)
+#define TMCB_REQUEST_OUT (1 << TMCB_REQUEST_OUT_N)
+#define TMCB_RESPONSE_OUT (1 << TMCB_RESPONSE_OUT_N)
+#define TMCB_LOCAL_COMPLETED (1 << TMCB_LOCAL_COMPLETED_N)
+#define TMCB_LOCAL_RESPONSE_OUT (1 << TMCB_LOCAL_RESPONSE_OUT_N)
+#define TMCB_ACK_NEG_IN (1 << TMCB_ACK_NEG_IN_N)
+#define TMCB_REQ_RETR_IN (1 << TMCB_REQ_RETR_IN_N)
+#define TMCB_LOCAL_RESPONSE_IN (1 << TMCB_LOCAL_RESPONSE_IN_N)
+#define TMCB_LOCAL_REQUEST_IN (1 << TMCB_LOCAL_REQUEST_IN_N)
+#define TMCB_DLG (1 << TMCB_DLG_N)
+#define TMCB_DESTROY (1 << TMCB_DESTROY_N)
+#define TMCB_E2ECANCEL_IN (1 << TMCB_E2ECANCEL_IN_N)
+#define TMCB_E2EACK_RETR_IN (1 << TMCB_E2EACK_RETR_IN_N)
+#define TMCB_RESPONSE_READY (1 << TMCB_RESPONSE_READY_N)
+#define TMCB_DONT_ACK (1 << TMCB_DONT_ACK_N)
+#define TMCB_REQUEST_SENT (1 << TMCB_REQUEST_SENT_N)
+#define TMCB_RESPONSE_SENT (1 << TMCB_RESPONSE_SENT_N)
+#define TMCB_ON_BRANCH_FAILURE (1 << TMCB_ON_BRANCH_FAILURE_N)
+#define TMCB_ON_BRANCH_FAILURE_RO (1 << TMCB_ON_BRANCH_FAILURE_RO_N)
+#define TMCB_MAX ((1 << (TMCB_MAX_N + 1)) - 1)
 
 
 /*
@@ -327,12 +327,13 @@ struct cell;
 #define TMCB_LOCAL_F 2
 
 /* pack structure with all params passed to callback function */
-struct tmcb_params {
-	struct sip_msg* req;
-	struct sip_msg* rpl;
+struct tmcb_params
+{
+	struct sip_msg *req;
+	struct sip_msg *rpl;
 	void **param;
 	int code;
-	unsigned short flags;  /* set to a combination of:
+	unsigned short flags; /* set to a combination of:
 							* TMCB_RETR_F if this is a _ser_ retransmission
 							* (but not if if it's a "forwarded" retr., like a
 							* retr. 200 Ok for example)
@@ -340,69 +341,70 @@ struct tmcb_params {
 							* (and not forwarded) */
 	unsigned short branch;
 	/* could also be: send_buf, dst, branch */
-	struct retr_buf* t_rbuf;   /* transaction retr. buf., all the information
+	struct retr_buf *t_rbuf; /* transaction retr. buf., all the information
 								* regarding destination, data that is/was
 								* actually sent on the net, branch a.s.o is
 								* inside */
-	struct dest_info* dst; /* destination */
-	str send_buf; /* what was/will be sent on the net, used for ACKs
+	struct dest_info *dst;	 /* destination */
+	str send_buf;			 /* what was/will be sent on the net, used for ACKs
 					(which don't have a retr_buf). */
 };
 
-#define INIT_TMCB_PARAMS(tmcb, request, reply, r_code)\
-do{\
-	memset(&(tmcb), 0, sizeof((tmcb))); \
-	(tmcb).req=(request); (tmcb).rpl=(reply);  \
-	(tmcb).code=(r_code); \
-}while(0)
+#define INIT_TMCB_PARAMS(tmcb, request, reply, r_code) \
+	do {                                               \
+		memset(&(tmcb), 0, sizeof((tmcb)));            \
+		(tmcb).req = (request);                        \
+		(tmcb).rpl = (reply);                          \
+		(tmcb).code = (r_code);                        \
+	} while(0)
 
 #define INIT_TMCB_ONSEND_PARAMS(tmcb, req, repl, rbuf, dest, buf, buf_len, \
-								onsend_flags, t_branch, code) \
-do{ \
-	INIT_TMCB_PARAMS(tmcb, req, repl, code); \
-	tmcb.t_rbuf=(rbuf); tmcb.dst=(dest); \
-	tmcb.send_buf.s=(buf); tmcb.send_buf.len=(buf_len); \
-	tmcb.flags=(onsend_flags); tmcb.branch=(t_branch); \
-}while(0)
+		onsend_flags, t_branch, code)                                      \
+	do {                                                                   \
+		INIT_TMCB_PARAMS(tmcb, req, repl, code);                           \
+		tmcb.t_rbuf = (rbuf);                                              \
+		tmcb.dst = (dest);                                                 \
+		tmcb.send_buf.s = (buf);                                           \
+		tmcb.send_buf.len = (buf_len);                                     \
+		tmcb.flags = (onsend_flags);                                       \
+		tmcb.branch = (t_branch);                                          \
+	} while(0)
 
 /* callback function prototype */
-typedef void (transaction_cb) (struct cell* t, int type, struct tmcb_params*);
+typedef void(transaction_cb)(struct cell *t, int type, struct tmcb_params *);
 /*! \brief function to release the callback param */
-typedef void (release_tmcb_param) (void* param);
+typedef void(release_tmcb_param)(void *param);
 /* register callback function prototype */
-typedef int (*register_tmcb_f)(struct sip_msg* p_msg, struct cell *t,
-			int cb_types, transaction_cb f, void *param,
-			release_tmcb_param func);
+typedef int (*register_tmcb_f)(struct sip_msg *p_msg, struct cell *t,
+		int cb_types, transaction_cb f, void *param, release_tmcb_param func);
 
 
-struct tm_callback {
-	int id;                      /* id of this callback - useless */
-	int types;                   /* types of events that trigger the callback*/
-	transaction_cb* callback;    /* callback function */
-	void *param;                 /* param to be passed to callback function */
-	release_tmcb_param* release; /**< Function to release the callback param
+struct tm_callback
+{
+	int id;						 /* id of this callback - useless */
+	int types;					 /* types of events that trigger the callback*/
+	transaction_cb *callback;	 /* callback function */
+	void *param;				 /* param to be passed to callback function */
+	release_tmcb_param *release; /**< Function to release the callback param
 									* when the callback is deleted */
-	struct tm_callback* next;
+	struct tm_callback *next;
 };
 
-struct tmcb_head_list {
+struct tmcb_head_list
+{
 	struct tm_callback volatile *first;
 	int reg_types;
 };
 
 
-extern struct tmcb_head_list*  req_in_tmcb_hl;
-extern struct tmcb_head_list*  local_req_in_tmcb_hl;
+extern struct tmcb_head_list *req_in_tmcb_hl;
+extern struct tmcb_head_list *local_req_in_tmcb_hl;
 
-void set_early_tmcb_list(struct sip_msg *msg,
-		struct cell *t);
+void set_early_tmcb_list(struct sip_msg *msg, struct cell *t);
 
-#define has_tran_tmcbs(_T_, _types_) \
-	( ((_T_)->tmcb_hl.reg_types)&(_types_) )
-#define has_reqin_tmcbs() \
-	( req_in_tmcb_hl->first!=0 )
-#define has_local_reqin_tmcbs() \
-	( local_req_in_tmcb_hl->first!=0 )
+#define has_tran_tmcbs(_T_, _types_) (((_T_)->tmcb_hl.reg_types) & (_types_))
+#define has_reqin_tmcbs() (req_in_tmcb_hl->first != 0)
+#define has_local_reqin_tmcbs() (local_req_in_tmcb_hl->first != 0)
 
 
 int init_tmcb_lists(void);
@@ -411,32 +413,31 @@ void destroy_tmcb_lists(void);
 
 
 /* register a callback for several types of events */
-int register_tmcb( struct sip_msg* p_msg, struct cell *t, int types,
-			transaction_cb f, void *param, release_tmcb_param rel_func);
+int register_tmcb(struct sip_msg *p_msg, struct cell *t, int types,
+		transaction_cb f, void *param, release_tmcb_param rel_func);
 
 /* inserts a callback into the a callback list */
-int insert_tmcb(struct tmcb_head_list *cb_list, int types,
-				transaction_cb f, void *param,
-				release_tmcb_param rel_func);
+int insert_tmcb(struct tmcb_head_list *cb_list, int types, transaction_cb f,
+		void *param, release_tmcb_param rel_func);
 
 /* run all transaction callbacks for an event type */
-void run_trans_callbacks( int type , struct cell *trans,
-						struct sip_msg *req, struct sip_msg *rpl, int code );
+void run_trans_callbacks(int type, struct cell *trans, struct sip_msg *req,
+		struct sip_msg *rpl, int code);
 /* helper function */
-void run_trans_callbacks_internal(struct tmcb_head_list* cb_lst, int type,
-									struct cell *trans,
-									struct tmcb_params *params);
+void run_trans_callbacks_internal(struct tmcb_head_list *cb_lst, int type,
+		struct cell *trans, struct tmcb_params *params);
 /* run all REQUEST_IN callbacks */
-void run_reqin_callbacks( struct cell *trans, struct sip_msg *req, int code );
-void run_local_reqin_callbacks( struct cell *trans, struct sip_msg *req,
-		int code );
+void run_reqin_callbacks(struct cell *trans, struct sip_msg *req, int code);
+void run_local_reqin_callbacks(
+		struct cell *trans, struct sip_msg *req, int code);
 
 /* like run_trans_callbacks but provide outgoing buffer (i.e., the
  * processed message) to callback */
-void run_trans_callbacks_with_buf(int type, struct retr_buf* rbuf,
-		struct sip_msg* req, struct sip_msg* repl, short flags);
+void run_trans_callbacks_with_buf(int type, struct retr_buf *rbuf,
+		struct sip_msg *req, struct sip_msg *repl, short flags);
 
 /* like run_trans_callbacks but tmcb_params assumed to contain data already */
-void run_trans_callbacks_off_params(int type, struct cell* t, struct tmcb_params* p);
+void run_trans_callbacks_off_params(
+		int type, struct cell *t, struct tmcb_params *p);
 
 #endif

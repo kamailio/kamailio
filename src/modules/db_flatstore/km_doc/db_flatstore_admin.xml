@@ -58,7 +58,7 @@ modparam("acc", "db_url", "flatstore:/var/log/acc")
 &lt;table_name&gt;_&lt;process_name&gt;.log
 </programlisting>
 	<para>
-		For example, entries writen by &kamailio; process 8 into acc table would
+		For example, entries written by &kamailio; process 8 into acc table would
 		be written in file acc_8.log. For each table there will be several
 		files, one file for every &kamailio; process that wrote some data into
 		that table. The main reason why there are several files for each

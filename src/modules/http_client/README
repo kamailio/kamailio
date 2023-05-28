@@ -197,7 +197,7 @@ Chapter 1. Admin Guide
    HTTP sessions in a simple way. A connection has one or multiple servers
    and a set of settings that apply to the specific connection.
 
-   The http_client module has multiple settings, some of them applies to a
+   The http_client module has multiple settings, some of them apply to a
    defined connection. You can set timeouts, max data sizes for download
    and much more either using modparam settings or parameters to the
    connection definition.
@@ -216,9 +216,9 @@ Chapter 1. Admin Guide
    ported from the utils module and now use the same libcurl functions. We
    recommend using the new functionality provided by this module.
 
-   The http_client module use the CURL library setting up connections. The
-   CURL library by default use the system configured DNS resolvers, not
-   the Kamailio resolver.
+   The http_client module uses the CURL library setting up connections.
+   The CURL library by default use the system configured DNS resolvers,
+   not the Kamailio resolver.
 
    The module is limited to using HTTP and HTTPS protocols.
 
@@ -700,7 +700,7 @@ modparam("http_client", "netinterface", "eth0")
 
    Example 1.22. http_connect() usage
 ...
-modparam("http_client", "httpcon", "apiserver=>http://kamailio.org/api/");
+modparam("http_client", "httpcon", "apiserver=>https://kamailio.org/api/");
 ...
 # POST Request
 $var(res) = http_connect("apiserver", "/mailbox", "application/json", "{ ok, {20
@@ -741,7 +741,7 @@ xlog("L_INFO", "API-server HTTP connection: $avp(route) Result code $var(res)\n"
 
    Example 1.23. http_connect_raw() usage
 ...
-modparam("http_client", "httpcon", "apiserver=>http://kamailio.org/api/");
+modparam("http_client", "httpcon", "apiserver=>https://kamailio.org/api/");
 ...
 # POST Request
 $var(res) = http_connect_raw("apiserver", "/mailbox", "application/json", "{ ok,
@@ -790,7 +790,7 @@ http_get_redirect("apiserver", "$var(targeturl)");
    If HTTP server returns a class 2xx, 3xx or 4xx reply, the first line or
    the entire reply body (if any) is stored in “result” parameter, which
    must be a writable pseudo variable. See the query_result parameter for
-   controling what value to be stored in the result variable.
+   controlling what value to be stored in the result variable.
 
    Function returns reply code of HTTP reply or -1 if something went
    wrong.

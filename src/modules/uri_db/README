@@ -45,7 +45,7 @@ Bogdan-Andrei Iancu
    List of Examples
 
    1.1. Set db_url parameter
-   1.2. Set uri_table parameter
+   1.2. Set db_table parameter
    1.3. Set user_column parameter
    1.4. Set domain_column parameter
    1.5. Set uriuser_column parameter
@@ -130,11 +130,11 @@ modparam("uri_db", "db_url", "mysql://username:password@localhost/kamailio")
 
    The DB table that should be used. It is possible to use the
    “subscriber” and “uri” table. If the “uri” table should be used, an
-   additional parameter “use-uri-table”) must be set.
+   additional parameter “use_uri_table”) must be set.
 
    Default value is “subscriber”.
 
-   Example 1.2. Set uri_table parameter
+   Example 1.2. Set db_table parameter
 ...
 modparam("uri_db", "db_table", "uri")
 ...

@@ -156,7 +156,7 @@ int kamailioSIPRegUserLookupTable_extract_index(
 		netsnmp_assert(ctx->index.oids == NULL);
 		if((hdr->len > MAX_OID_LEN)
 				|| snmp_clone_mem((void *)&ctx->index.oids, hdr->oids,
-						   hdr->len * sizeof(oid))) {
+						hdr->len * sizeof(oid))) {
 			return -1;
 		}
 		ctx->index.len = hdr->len;
@@ -480,7 +480,7 @@ void kamailioSIPRegUserLookupTable_set_reserve2(netsnmp_request_group *rg)
 
 /*
  * This function is called only when all the *_reserve[1|2] functions were
- * succeful.  Its purpose is to make any changes to the row before it is
+ * successful.  Its purpose is to make any changes to the row before it is
  * inserted into the table.  
  *
  * In the case of this table, this involves looking up the index of the
@@ -618,7 +618,7 @@ void kamailioSIPRegUserLookupTable_set_commit(netsnmp_request_group *rg)
 
 
 /*
- * This function is called if the *_reserve[1|2] calls failed.  Its supposed to
+ * This function is called if the *_reserve[1|2] calls failed.  It is supposed to
  * free up any resources allocated earlier.  However, we already take care of
  * all these resources in earlier functions.  So for our purposes, the function
  * body is empty. 
@@ -658,7 +658,7 @@ void initialize_table_kamailioSIPRegUserLookupTable(void)
 
 	/** create the table structure itself */
 	table_info = SNMP_MALLOC_TYPEDEF(netsnmp_table_registration_info);
-	if(table_info==NULL) {
+	if(table_info == NULL) {
 		snmp_log(LOG_ERR, "failed to allocate table_info\n");
 		return;
 	}

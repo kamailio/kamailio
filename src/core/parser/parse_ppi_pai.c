@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -33,7 +33,7 @@
 #include "../ut.h"
 #include "../mem/mem.h"
 
-/* 
+/*
  * A P-Asserted-Identity or P-Preferred-Identity header value is an addr-spec or name-addr
  * There can be only one of any URI scheme (sip(s), tel etc), which may occur on separate
  * headers or can be comma separated in a single header.
@@ -53,41 +53,42 @@ int parse_pai_ppi_body(char *buf, int len, p_id_body_t **body)
 	int i;
 	memset(uri_b, 0, NUM_PAI_BODIES * sizeof(to_body_t));
 
-	tmp = parse_addr_spec(buf, buf+len, &uri_b[num_uri], 1);
-	if (uri_b[num_uri].error == PARSE_ERROR)
-	{
+	tmp = parse_addr_spec(buf, buf + len, &uri_b[num_uri], 1);
+	if(uri_b[num_uri].error == PARSE_ERROR) {
 		LM_ERR("Error parsing PAI/PPI body %u '%.*s'\n", num_uri, len, buf);
 		return -1;
 	}
 	/* should be no header params, but in case there are, free them */
 	free_to_params(&uri_b[num_uri]);
 	num_uri++;
-	while ((*tmp == ',') && (num_uri < NUM_PAI_BODIES))
-	{
+	while((*tmp == ',') && (num_uri < NUM_PAI_BODIES)) {
 		tmp++;
-		while(tmp<buf+len && (*tmp==' ' || *tmp=='\t')) tmp++;
-		if(tmp>=buf+len) {
-			LM_ERR("no content after comma when parsing PAI/PPI body %u '%.*s'\n",
+		while(tmp < buf + len && (*tmp == ' ' || *tmp == '\t'))
+			tmp++;
+		if(tmp >= buf + len) {
+			LM_ERR("no content after comma when parsing PAI/PPI body %u "
+				   "'%.*s'\n",
 					num_uri, len, buf);
 			return -1;
 		}
-		if((tmp<buf+len-1 && *tmp=='\n')
-				|| (tmp<buf+len-2 && *tmp=='\r' && *(tmp+1)=='\n')) {
-			if(*tmp=='\n') {
+		if((tmp < buf + len - 1 && *tmp == '\n')
+				|| (tmp < buf + len - 2 && *tmp == '\r'
+						&& *(tmp + 1) == '\n')) {
+			if(*tmp == '\n') {
 				tmp++;
 			} else {
 				tmp += 2;
 			}
-			if(*tmp!=' ' && *tmp!='\t') {
-				LM_ERR("no space after EOL when parsing PAI/PPI body %u '%.*s'\n",
+			if(*tmp != ' ' && *tmp != '\t') {
+				LM_ERR("no space after EOL when parsing PAI/PPI body %u "
+					   "'%.*s'\n",
 						num_uri, len, buf);
 				return -1;
 			}
 			tmp++;
 		}
-		tmp = parse_addr_spec(tmp, buf+len, &uri_b[num_uri], 1);
-		if (uri_b[num_uri].error == PARSE_ERROR)
-		{
+		tmp = parse_addr_spec(tmp, buf + len, &uri_b[num_uri], 1);
+		if(uri_b[num_uri].error == PARSE_ERROR) {
 			LM_ERR("Error parsing PAI/PPI body %u '%.*s'\n", num_uri, len, buf);
 			return -1;
 		}
@@ -95,22 +96,19 @@ int parse_pai_ppi_body(char *buf, int len, p_id_body_t **body)
 		free_to_params(&uri_b[num_uri]);
 		num_uri++;
 	}
-	if (num_uri >= NUM_PAI_BODIES)
-	{
+	if(num_uri >= NUM_PAI_BODIES) {
 		LM_WARN("Too many bodies in PAI/PPI header '%.*s'\n", len, buf);
 		LM_WARN("Ignoring bodies beyond %u\n", NUM_PAI_BODIES);
 	}
 	*body = pkg_malloc(sizeof(p_id_body_t) + num_uri * sizeof(to_body_t));
-	if (*body == NULL)
-	{
+	if(*body == NULL) {
 		PKG_MEM_ERROR;
 		return -1;
 	}
 	memset(*body, 0, sizeof(p_id_body_t));
-	(*body)->id = (to_body_t*)((char*)(*body) + sizeof(p_id_body_t));
+	(*body)->id = (to_body_t *)((char *)(*body) + sizeof(p_id_body_t));
 	(*body)->num_ids = num_uri;
-	for (i=0; i< num_uri; i++)
-	{
+	for(i = 0; i < num_uri; i++) {
 		memcpy(&(*body)->id[i], &uri_b[i], sizeof(to_body_t));
 	}
 	return 0;
@@ -118,8 +116,7 @@ int parse_pai_ppi_body(char *buf, int len, p_id_body_t **body)
 
 int free_pai_ppi_body(p_id_body_t *pid_b)
 {
-	if (pid_b != NULL)
-	{
+	if(pid_b != NULL) {
 		pkg_free(pid_b);
 	}
 	return 0;
@@ -130,43 +127,38 @@ int free_pai_ppi_body(p_id_body_t *pid_b)
  * \param msg The SIP message structure
  * \return 0 on success, -1 on failure
  */
-int parse_pai_header(struct sip_msg* const msg)
+int parse_pai_header(struct sip_msg *const msg)
 {
 	p_id_body_t *pai_b;
 	p_id_body_t **prev_pid_b;
 	hdr_field_t *hf;
 	void **vp;
 
-	if ( !msg->pai )
-	{
-		if (parse_headers(msg, HDR_PAI_F, 0) < 0)
-		{
+	if(!msg->pai) {
+		if(parse_headers(msg, HDR_PAI_F, 0) < 0) {
 			LM_ERR("Error parsing PAI header\n");
 			return -1;
 		}
-		if ( !msg->pai )
+		if(!msg->pai)
 			/* No PAI headers */
 			return -1;
 	}
 
-	if ( msg->pai->parsed )
+	if(msg->pai->parsed)
 		return 0;
 
 	vp = &msg->pai->parsed;
-	prev_pid_b = (p_id_body_t**)vp;
+	prev_pid_b = (p_id_body_t **)vp;
 
-	for (hf = msg->pai; hf != NULL; hf = next_sibling_hdr(hf))
-	{
-		if (parse_pai_ppi_body(hf->body.s, hf->body.len, &pai_b) < 0)
-		{
+	for(hf = msg->pai; hf != NULL; hf = next_sibling_hdr(hf)) {
+		if(parse_pai_ppi_body(hf->body.s, hf->body.len, &pai_b) < 0) {
 			return -1;
 		}
-		hf->parsed = (void*)pai_b;
+		hf->parsed = (void *)pai_b;
 		*prev_pid_b = pai_b;
 		prev_pid_b = &pai_b->next;
 
-		if (parse_headers(msg, HDR_PAI_F, 1) < 0)
-		{
+		if(parse_headers(msg, HDR_PAI_F, 1) < 0) {
 			LM_ERR("Error looking for subsequent PAI header");
 			return -1;
 		}
@@ -179,50 +171,43 @@ int parse_pai_header(struct sip_msg* const msg)
  * \param msg The SIP message structure
  * \return 0 on success, -1 on failure
  */
-int parse_ppi_header(struct sip_msg* const msg)
+int parse_ppi_header(struct sip_msg *const msg)
 {
 	p_id_body_t *ppi_b, *prev_pidb;
 	hdr_field_t *hf;
 
-	if ( !msg->ppi )
-	{
-		if (parse_headers(msg, HDR_PPI_F, 0) < 0)
-		{
+	if(!msg->ppi) {
+		if(parse_headers(msg, HDR_PPI_F, 0) < 0) {
 			LM_ERR("Error parsing PPI header\n");
 			return -1;
 		}
-		if ( !msg->ppi )
+		if(!msg->ppi)
 			/* No PPI headers */
 			return -1;
 	}
 
-	if ( msg->ppi->parsed )
+	if(msg->ppi->parsed)
 		return 0;
 
-	if (parse_pai_ppi_body(msg->ppi->body.s, msg->ppi->body.len, &ppi_b) < 0)
-	{
+	if(parse_pai_ppi_body(msg->ppi->body.s, msg->ppi->body.len, &ppi_b) < 0) {
 		return -1;
 	}
-	msg->ppi->parsed = (void*)ppi_b;
+	msg->ppi->parsed = (void *)ppi_b;
 
-	if (parse_headers(msg, HDR_PPI_F, 1) < 0)
-	{
+	if(parse_headers(msg, HDR_PPI_F, 1) < 0) {
 		LM_ERR("Error looking for subsequent PPI header");
 		return -1;
 	}
 	prev_pidb = ppi_b;
 	hf = msg->ppi;
 
-	if ((hf = next_sibling_hdr(hf)) != NULL)
-	{
-		if (parse_pai_ppi_body(hf->body.s, hf->body.len, &ppi_b) < 0)
-		{
+	if((hf = next_sibling_hdr(hf)) != NULL) {
+		if(parse_pai_ppi_body(hf->body.s, hf->body.len, &ppi_b) < 0) {
 			return -1;
 		}
-		hf->parsed = (void*)ppi_b;
+		hf->parsed = (void *)ppi_b;
 
-		if (parse_headers(msg, HDR_PPI_F, 1) < 0)
-		{
+		if(parse_headers(msg, HDR_PPI_F, 1) < 0) {
 			LM_ERR("Error looking for subsequent PPI header");
 			return -1;
 		}
@@ -231,4 +216,3 @@ int parse_ppi_header(struct sip_msg* const msg)
 	}
 	return 0;
 }
-

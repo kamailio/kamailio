@@ -25,47 +25,52 @@
 struct _sr_xavp;
 
 /* types for xavp values */
-typedef enum {
-	SR_XTYPE_NULL=0,
-	SR_XTYPE_LONG,    /* long value */
-	SR_XTYPE_STR,     /* str value */
-	SR_XTYPE_TIME,    /* timestamp value */
-	SR_XTYPE_LLONG,   /* long long value */
-	SR_XTYPE_XAVP,    /* xavp value */
-	SR_XTYPE_VPTR,    /* void pointer value (no free on destroy) */
-	SR_XTYPE_SPTR,    /* void pointer value (shm free on destroy) */
-	SR_XTYPE_DATA     /* custom data value */
+typedef enum
+{
+	SR_XTYPE_NULL = 0,
+	SR_XTYPE_LONG,	/* long value */
+	SR_XTYPE_STR,	/* str value */
+	SR_XTYPE_TIME,	/* timestamp value */
+	SR_XTYPE_LLONG, /* long long value */
+	SR_XTYPE_XAVP,	/* xavp value */
+	SR_XTYPE_VPTR,	/* void pointer value (no free on destroy) */
+	SR_XTYPE_SPTR,	/* void pointer value (shm free on destroy) */
+	SR_XTYPE_DATA	/* custom data value */
 } sr_xtype_t;
 
 typedef void (*sr_xavp_sfree_f)(void *d);
 typedef void (*sr_data_free_f)(void *d, sr_xavp_sfree_f sfree);
 
 /* structure custom data value */
-typedef struct _sr_data {
+typedef struct _sr_data
+{
 	void *p;
 	sr_data_free_f pfree;
 } sr_data_t;
 
 /* avp value */
-typedef struct _sr_xval {
-	sr_xtype_t type;           /* type of the value */
-	union {
-		str s;                 /* cloned in shared memory */
+typedef struct _sr_xval
+{
+	sr_xtype_t type; /* type of the value */
+	union
+	{
+		str s; /* cloned in shared memory */
 		time_t t;
 		long l;
 		long long ll;
 		struct _sr_xavp *xavp; /* must be given in shm (not cloned) */
-		void *vptr;            /* void pointer - see SR_XTYPE_VPTR, SR_XTYPE_SPTR */
-		sr_data_t *data;       /* must be given in shm (not cloned) */
+		void *vptr;		 /* void pointer - see SR_XTYPE_VPTR, SR_XTYPE_SPTR */
+		sr_data_t *data; /* must be given in shm (not cloned) */
 	} v;
 } sr_xval_t;
 
 /* structure for extended avp */
-typedef struct _sr_xavp {
-	unsigned int id;          /* internal hash id */
-	str name;                 /* name of the xavp */
-	sr_xval_t val;            /* value of the xavp */
-	struct _sr_xavp *next;    /* pointer to next xavp in list */
+typedef struct _sr_xavp
+{
+	unsigned int id;	   /* internal hash id */
+	str name;			   /* name of the xavp */
+	sr_xval_t val;		   /* value of the xavp */
+	struct _sr_xavp *next; /* pointer to next xavp in list */
 } sr_xavp_t;
 
 int xavp_init_head(void);
@@ -76,7 +81,8 @@ int xavp_add_last(sr_xavp_t *xavp, sr_xavp_t **list);
 int xavp_add_after(sr_xavp_t *nxavp, sr_xavp_t *pxavp);
 sr_xavp_t *xavp_add_value(str *name, sr_xval_t *val, sr_xavp_t **list);
 sr_xavp_t *xavp_add_value_after(str *name, sr_xval_t *val, sr_xavp_t *pxavp);
-sr_xavp_t *xavp_add_xavp_value(str *rname, str *name, sr_xval_t *val, sr_xavp_t **list);
+sr_xavp_t *xavp_add_xavp_value(
+		str *rname, str *name, sr_xval_t *val, sr_xavp_t **list);
 sr_xavp_t *xavp_set_value(str *name, int idx, sr_xval_t *val, sr_xavp_t **list);
 sr_xavp_t *xavp_get(str *name, sr_xavp_t *start);
 sr_xavp_t *xavp_get_by_index(str *name, int idx, sr_xavp_t **start);
@@ -101,11 +107,12 @@ int xavp_lshift(str *name, sr_xavp_t **head, int idx);
 void xavp_print_list(sr_xavp_t **head);
 
 sr_xavp_t *xavp_clone_level_nodata(sr_xavp_t *xold);
-sr_xavp_t *xavp_clone_level_nodata_with_new_name(sr_xavp_t *xold, str *dst_name);
+sr_xavp_t *xavp_clone_level_nodata_with_new_name(
+		sr_xavp_t *xold, str *dst_name);
 
-sr_xavp_t* xavp_get_child(str *rname, str *cname);
-sr_xavp_t* xavp_get_child_with_ival(str *rname, str *cname);
-sr_xavp_t* xavp_get_child_with_sval(str *rname, str *cname);
+sr_xavp_t *xavp_get_child(str *rname, str *cname);
+sr_xavp_t *xavp_get_child_with_ival(str *rname, str *cname);
+sr_xavp_t *xavp_get_child_with_sval(str *rname, str *cname);
 int xavp_serialize_fields(str *rname, char *obuf, int olen);
 
 int xavp_set_child_ival(str *rname, str *cname, long ival);
@@ -130,9 +137,9 @@ sr_xavp_t *xavu_set_sval(str *rname, str *sval);
 sr_xavp_t *xavu_set_child_xval(str *rname, str *cname, sr_xval_t *xval);
 sr_xavp_t *xavu_set_child_ival(str *rname, str *cname, long ival);
 sr_xavp_t *xavu_set_child_sval(str *rname, str *cname, str *sval);
-sr_xavp_t* xavu_get_child(str *rname, str *cname);
-sr_xavp_t* xavu_get_child_with_ival(str *rname, str *cname);
-sr_xavp_t* xavu_get_child_with_sval(str *rname, str *cname);
+sr_xavp_t *xavu_get_child(str *rname, str *cname);
+sr_xavp_t *xavu_get_child_with_ival(str *rname, str *cname);
+sr_xavp_t *xavu_get_child_with_sval(str *rname, str *cname);
 
 int xavu_serialize_fields(str *rname, char *obuf, int olen);
 
@@ -145,7 +152,8 @@ int xavi_add_last(sr_xavp_t *xavp, sr_xavp_t **list);
 int xavi_add_after(sr_xavp_t *nxavp, sr_xavp_t *pxavp);
 sr_xavp_t *xavi_add_value(str *name, sr_xval_t *val, sr_xavp_t **list);
 sr_xavp_t *xavi_add_value_after(str *name, sr_xval_t *val, sr_xavp_t *pxavp);
-sr_xavp_t *xavi_add_xavi_value(str *rname, str *name, sr_xval_t *val, sr_xavp_t **list);
+sr_xavp_t *xavi_add_xavi_value(
+		str *rname, str *name, sr_xval_t *val, sr_xavp_t **list);
 sr_xavp_t *xavi_set_value(str *name, int idx, sr_xval_t *val, sr_xavp_t **list);
 sr_xavp_t *xavi_get(str *name, sr_xavp_t *start);
 sr_xavp_t *xavi_get_by_index(str *name, int idx, sr_xavp_t **start);
@@ -169,11 +177,12 @@ sr_xavp_t *xavi_extract(str *name, sr_xavp_t **list);
 void xavi_print_list(sr_xavp_t **head);
 
 sr_xavp_t *xavi_clone_level_nodata(sr_xavp_t *xold);
-sr_xavp_t *xavi_clone_level_nodata_with_new_name(sr_xavp_t *xold, str *dst_name);
+sr_xavp_t *xavi_clone_level_nodata_with_new_name(
+		sr_xavp_t *xold, str *dst_name);
 
-sr_xavp_t* xavi_get_child(str *rname, str *cname);
-sr_xavp_t* xavi_get_child_with_ival(str *rname, str *cname);
-sr_xavp_t* xavi_get_child_with_sval(str *rname, str *cname);
+sr_xavp_t *xavi_get_child(str *rname, str *cname);
+sr_xavp_t *xavi_get_child_with_ival(str *rname, str *cname);
+sr_xavp_t *xavi_get_child_with_sval(str *rname, str *cname);
 int xavi_serialize_fields(str *rname, char *obuf, int olen);
 
 int xavi_set_child_ival(str *rname, str *cname, long ival);

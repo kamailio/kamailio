@@ -43,32 +43,41 @@
 
 #ifndef CDP_AVP_REFERENCE
 
-	#include "../cdp/cdp_load.h"
+#include "../cdp/cdp_load.h"
 
-	AAA_AVP* cdp_avp_get_next_from_list(AAA_AVP_LIST list,int avp_code,int avp_vendor_id,AAA_AVP *start_avp);
-	typedef AAA_AVP* (*cdp_avp_get_next_from_list_f)(AAA_AVP_LIST list,int avp_code,int avp_vendor_id,AAA_AVP *start_avp);
-	
-	AAA_AVP* cdp_avp_get_next_from_msg(AAAMessage *msg,int avp_code,int avp_vendor_id,AAA_AVP *start_avp);
-	typedef AAA_AVP* (*cdp_avp_get_next_from_msg_f)(AAAMessage *msg,int avp_code,int avp_vendor_id,AAA_AVP *start_avp);
-	
-	AAA_AVP* cdp_avp_get_from_list(AAA_AVP_LIST list,int avp_code,int avp_vendor_id);
-	typedef AAA_AVP* (*cdp_avp_get_from_list_f)(AAA_AVP_LIST list,int avp_code,int avp_vendor_id);
-	
-	AAA_AVP* cdp_avp_get_from_msg(AAAMessage *msg,int avp_code,int avp_vendor_id);
-	typedef AAA_AVP* (*cdp_avp_get_from_msg_f)(AAAMessage *msg,int avp_code,int avp_vendor_id);
+AAA_AVP *cdp_avp_get_next_from_list(
+		AAA_AVP_LIST list, int avp_code, int avp_vendor_id, AAA_AVP *start_avp);
+typedef AAA_AVP *(*cdp_avp_get_next_from_list_f)(
+		AAA_AVP_LIST list, int avp_code, int avp_vendor_id, AAA_AVP *start_avp);
+
+AAA_AVP *cdp_avp_get_next_from_msg(
+		AAAMessage *msg, int avp_code, int avp_vendor_id, AAA_AVP *start_avp);
+typedef AAA_AVP *(*cdp_avp_get_next_from_msg_f)(
+		AAAMessage *msg, int avp_code, int avp_vendor_id, AAA_AVP *start_avp);
+
+AAA_AVP *cdp_avp_get_from_list(
+		AAA_AVP_LIST list, int avp_code, int avp_vendor_id);
+typedef AAA_AVP *(*cdp_avp_get_from_list_f)(
+		AAA_AVP_LIST list, int avp_code, int avp_vendor_id);
+
+AAA_AVP *cdp_avp_get_from_msg(AAAMessage *msg, int avp_code, int avp_vendor_id);
+typedef AAA_AVP *(*cdp_avp_get_from_msg_f)(
+		AAAMessage *msg, int avp_code, int avp_vendor_id);
 
 #else
 
-	AAA_AVP* basic.get_next_from_list(AAA_AVP_LIST list,int avp_code,int avp_vendor_id,AAA_AVP *start_avp);
+AAA_AVP *basic.get_next_from_list(
+		AAA_AVP_LIST list, int avp_code, int avp_vendor_id, AAA_AVP *start_avp);
 
-	AAA_AVP* basic.get_next_from_msg(AAAMessage *msg,int avp_code,int avp_vendor_id,AAA_AVP *start_avp);
+AAA_AVP *basic.get_next_from_msg(
+		AAAMessage *msg, int avp_code, int avp_vendor_id, AAA_AVP *start_avp);
 
-	AAA_AVP* basic.get_from_list(AAA_AVP_LIST list,int avp_code,int avp_vendor_id);
+AAA_AVP *basic.get_from_list(
+		AAA_AVP_LIST list, int avp_code, int avp_vendor_id);
 
-	AAA_AVP* basic.get_from_msg(AAAMessage *msg,int avp_code,int avp_vendor_id);
+AAA_AVP *basic.get_from_msg(AAAMessage *msg, int avp_code, int avp_vendor_id);
 
 #endif
-
 
 
 #endif /* __AVP_NEW_H */

@@ -40,7 +40,7 @@
 #include <stdio.h>
 #include <time.h> /* time(), used to initialize random numbers */
 
-#define FORK_DONT_WAIT  /* child doesn't wait for parent before starting
+#define FORK_DONT_WAIT /* child doesn't wait for parent before starting
 						 * => faster startup, but the child should not assume
 						 * the parent fixed the pt[] entry for it */
 
@@ -48,13 +48,13 @@
 #ifdef PROFILING
 #include <sys/gmon.h>
 
-	extern void _start(void);
-	extern void etext(void);
+extern void _start(void);
+extern void etext(void);
 #endif
 
 
-static int estimated_proc_no=0;
-static int estimated_fds_no=0;
+static int estimated_proc_no = 0;
+static int estimated_fds_no = 0;
 
 /* number of usec to wait before forking a process */
 static unsigned int fork_delay = 0;
@@ -62,7 +62,7 @@ static unsigned int fork_delay = 0;
 unsigned int set_fork_delay(unsigned int v)
 {
 	unsigned int r;
-	r =  fork_delay;
+	r = fork_delay;
 	fork_delay = v;
 	return r;
 }
@@ -79,15 +79,12 @@ static int calc_common_open_fds_no(void)
 	 *  + 1 if mhomed (now mhomed keeps a "cached socket" per process)
 	 *  + 1 if mhomed & ipv6
 	 */
-	max_fds_no=estimated_proc_no*4 /* udp|sctp + tcp unix sock +
+	max_fds_no = estimated_proc_no * 4 /* udp|sctp + tcp unix sock +
 									* tmp. tcp send +
 									* tmp dns.*/
-				-1 /* timer (no udp)*/ + 3 /* stdin/out/err */ +
-				2*mhomed
-				;
+				 - 1 /* timer (no udp)*/ + 3 /* stdin/out/err */ + 2 * mhomed;
 	return max_fds_no;
 }
-
 
 
 /* returns 0 on success, -1 on error */
@@ -98,30 +95,30 @@ int init_pt(int proc_no)
 #endif
 
 	LM_DBG("registering new processes: %d (old) + %d (new) = %d (total)\n",
-			estimated_proc_no, proc_no, estimated_proc_no+proc_no);
-	estimated_proc_no+=proc_no;
-	estimated_fds_no+=calc_common_open_fds_no();
+			estimated_proc_no, proc_no, estimated_proc_no + proc_no);
+	estimated_proc_no += proc_no;
+	estimated_fds_no += calc_common_open_fds_no();
 	/*alloc pids*/
-	pt=shm_malloc(sizeof(struct process_table)*estimated_proc_no);
+	pt = shm_malloc(sizeof(struct process_table) * estimated_proc_no);
 	process_count = shm_malloc(sizeof(int));
 	process_lock = lock_alloc();
 	process_lock = lock_init(process_lock);
-	if (pt==0||process_count==0||process_lock==0){
+	if(pt == 0 || process_count == 0 || process_lock == 0) {
 		SHM_MEM_ERROR;
 		return -1;
 	}
-	memset(pt, 0, sizeof(struct process_table)*estimated_proc_no);
+	memset(pt, 0, sizeof(struct process_table) * estimated_proc_no);
 #ifdef USE_TCP
-	for (r=0; r<estimated_proc_no; r++){
-		pt[r].unix_sock=-1;
-		pt[r].idx=-1;
+	for(r = 0; r < estimated_proc_no; r++) {
+		pt[r].unix_sock = -1;
+		pt[r].idx = -1;
 	}
 #endif
-	process_no=0; /*main process number*/
-	pt[process_no].pid=getpid();
-	pt[process_no].rank=PROC_MAIN;
-	memcpy(pt[process_no].desc,"main",5);
-	*process_count=1;
+	process_no = 0; /*main process number*/
+	pt[process_no].pid = getpid();
+	pt[process_no].rank = PROC_MAIN;
+	memcpy(pt[process_no].desc, "main", 5);
+	*process_count = 1;
 	return 0;
 }
 
@@ -132,22 +129,21 @@ int init_pt(int proc_no)
  */
 int register_procs(int no)
 {
-	if (pt){
+	if(pt) {
 		LM_CRIT("(%d) called at runtime\n", no);
 		return -1;
 	}
 	LM_DBG("registering new processes: %d (old) + %d (new) = %d (total)\n",
-			estimated_proc_no, no, estimated_proc_no+no);
-	estimated_proc_no+=no;
+			estimated_proc_no, no, estimated_proc_no + no);
+	estimated_proc_no += no;
 	return 0;
 }
-
 
 
 /* returns the maximum number of processes */
 int get_max_procs()
 {
-	if (pt==0){
+	if(pt == 0) {
 		LM_CRIT("too early (it must _not_ be called from mod_init())\n");
 		abort(); /* crash to quickly catch offenders */
 	}
@@ -166,16 +162,15 @@ int get_max_procs()
 int register_fds(int no)
 {
 	/* can be called at runtime, but should be called from child_init() */
-	estimated_fds_no+=no;
+	estimated_fds_no += no;
 	return 0;
 }
-
 
 
 /* returns the maximum open fd number */
 int get_max_open_fds()
 {
-	if (pt==0){
+	if(pt == 0) {
 		LM_CRIT("too early (it must _not_ be called from mod_init())\n");
 		abort(); /* crash to quickly catch offenders */
 	}
@@ -191,7 +186,7 @@ int my_pid()
 
 
 /* return processes description */
-char* my_desc(void)
+char *my_desc(void)
 {
 	return pt ? pt[process_no].desc : "unknown";
 }
@@ -202,29 +197,31 @@ int close_extra_socks(int child_id, int proc_no)
 {
 #ifdef USE_TCP
 	int r;
-	struct socket_info* si;
+	struct socket_info *si;
 
-	if (child_id!=PROC_TCP_MAIN){
-		for (r=0; r<proc_no; r++){
-			if (pt[r].unix_sock>=0){
+	if(child_id != PROC_TCP_MAIN) {
+		for(r = 0; r < proc_no; r++) {
+			if(pt[r].unix_sock >= 0) {
 				/* we can't change the value in pt[] because it's
 				 * shared so we only close it */
 				close(pt[r].unix_sock);
 			}
 		}
 		/* close all listen sockets (needed only in tcp_main */
-		if (!tcp_disable){
-			for(si=tcp_listen; si; si=si->next){
-				if(si->socket>=0) close(si->socket);
+		if(!tcp_disable) {
+			for(si = tcp_listen; si; si = si->next) {
+				if(si->socket >= 0)
+					close(si->socket);
 				/* safe to change since this is a per process copy */
-				si->socket=-1;
+				si->socket = -1;
 			}
 #ifdef USE_TLS
-			if (!tls_disable){
-				for(si=tls_listen; si; si=si->next){
-					if(si->socket>=0) close(si->socket);
+			if(!tls_disable) {
+				for(si = tls_listen; si; si = si->next) {
+					if(si->socket >= 0)
+						close(si->socket);
 					/* safe to change since this is a per process copy */
-					si->socket=-1;
+					si->socket = -1;
 				}
 			}
 #endif /* USE_TLS */
@@ -235,7 +232,6 @@ int close_extra_socks(int child_id, int proc_no)
 #endif /* USE_TCP */
 	return 0;
 }
-
 
 
 /**
@@ -255,33 +251,32 @@ int fork_process(int child_id, char *desc, int make_sock)
 	int sockfd[2];
 #endif
 
-	if(unlikely(fork_delay>0))
+	if(unlikely(fork_delay > 0))
 		sleep_us(fork_delay);
 
-	ret=-1;
-	#ifdef USE_TCP
-		sockfd[0]=sockfd[1]=-1;
-		if(make_sock && !tcp_disable){
-			if (!_ksr_is_main){
-				LM_CRIT("called from a non "
-						"\"main\" process! If forking from a module's "
-						"child_init() fork only if rank==PROC_MAIN or"
-						" give up tcp send support (use 0 for make_sock)\n");
-				goto error;
-			}
-			if (tcp_main_pid){
-				LM_CRIT("called, but tcp main is already started\n");
-				goto error;
-			}
-			if (socketpair(AF_UNIX, SOCK_STREAM, 0, sockfd)<0){
-				LM_ERR("socketpair failed: %s\n",
-							strerror(errno));
-				goto error;
-			}
+	ret = -1;
+#ifdef USE_TCP
+	sockfd[0] = sockfd[1] = -1;
+	if(make_sock && !tcp_disable) {
+		if(!_ksr_is_main) {
+			LM_CRIT("called from a non "
+					"\"main\" process! If forking from a module's "
+					"child_init() fork only if rank==PROC_MAIN or"
+					" give up tcp send support (use 0 for make_sock)\n");
+			goto error;
 		}
-	#endif
+		if(tcp_main_pid) {
+			LM_CRIT("called, but tcp main is already started\n");
+			goto error;
+		}
+		if(socketpair(AF_UNIX, SOCK_STREAM, 0, sockfd) < 0) {
+			LM_ERR("socketpair failed: %s\n", strerror(errno));
+			goto error;
+		}
+	}
+#endif
 	lock_get(process_lock);
-	if (*process_count>=estimated_proc_no) {
+	if(*process_count >= estimated_proc_no) {
 		LM_CRIT("Process limit of %d exceeded. Will simulate fork fail.\n",
 				estimated_proc_no);
 		lock_release(process_lock);
@@ -289,37 +284,38 @@ int fork_process(int child_id, char *desc, int make_sock)
 	}
 
 	child_process_no = *process_count;
-	new_seed=cryptorand();
+	new_seed = cryptorand();
 	pid = fork();
-	if (pid<0) {
+	if(pid < 0) {
 		lock_release(process_lock);
-		ret=pid;
+		ret = pid;
 		goto error;
-	}else if (pid==0){
+	} else if(pid == 0) {
 		/* child */
-		_ksr_is_main=0; /* a forked process cannot be the "main" one */
-		process_no=child_process_no;
+		_ksr_is_main = 0; /* a forked process cannot be the "main" one */
+		process_no = child_process_no;
 		daemon_status_on_fork_cleanup();
 		/* close tcp unix sockets if this is not tcp main */
 #ifdef USE_TCP
 		close_extra_socks(child_id, process_no);
 #endif /* USE_TCP */
-		new_seed+=getpid()+time(0);
+		new_seed += getpid() + time(0);
 		LM_DBG("seeding PRNG with %u\n", new_seed);
 		cryptorand_seed(new_seed);
 		fastrand_seed(cryptorand());
 		kam_srand(cryptorand());
 		srandom(cryptorand());
-		LM_DBG("test random numbers %u %lu %u %u\n", kam_rand(), random(), fastrand(), cryptorand());
+		LM_DBG("test random numbers %u %lu %u %u\n", kam_rand(), random(),
+				fastrand(), cryptorand());
 		shm_malloc_on_fork();
 #ifdef PROFILING
-		monstartup((u_long) &_start, (u_long) &etext);
+		monstartup((u_long)&_start, (u_long)&etext);
 #endif
 #ifdef FORK_DONT_WAIT
 		/* record pid twice to avoid the child using it, before
 		 * parent gets a chance to set it*/
-		pt[process_no].pid=getpid();
-		pt[process_no].rank=child_id;
+		pt[process_no].pid = getpid();
+		pt[process_no].rank = child_id;
 #else
 		/* wait for parent to get out of critical zone.
 		 * this is actually relevant as the parent updates
@@ -327,13 +323,13 @@ int fork_process(int child_id, char *desc, int make_sock)
 		lock_get(process_lock);
 		lock_release(process_lock);
 #endif
-		#ifdef USE_TCP
-			if (make_sock && !tcp_disable){
-				close(sockfd[0]);
-				unix_tcp_sock=sockfd[1];
-			}
-		#endif
-		if (child_id!=PROC_NOCHLDINIT) {
+#ifdef USE_TCP
+		if(make_sock && !tcp_disable) {
+			close(sockfd[0]);
+			unix_tcp_sock = sockfd[1];
+		}
+#endif
+		if(child_id != PROC_NOCHLDINIT) {
 			if(init_child(child_id) < 0) {
 				LM_ERR("init_child failed for process %d, pid %d, \"%s\"\n",
 						process_no, pt[process_no].pid, pt[process_no].desc);
@@ -350,29 +346,31 @@ int fork_process(int child_id, char *desc, int make_sock)
 		lock_release(process_lock);
 #endif
 		/* add the process to the list in shm */
-		pt[child_process_no].pid=pid;
-		pt[child_process_no].rank=child_id;
-		if (desc){
-			strncpy(pt[child_process_no].desc, desc, MAX_PT_DESC-1);
+		pt[child_process_no].pid = pid;
+		pt[child_process_no].rank = child_id;
+		if(desc) {
+			strncpy(pt[child_process_no].desc, desc, MAX_PT_DESC - 1);
 		}
-		#ifdef USE_TCP
-			if (make_sock && !tcp_disable){
-				close(sockfd[1]);
-				pt[child_process_no].unix_sock=sockfd[0];
-				pt[child_process_no].idx=-1; /* this is not a "tcp" process*/
-			}
-		#endif
+#ifdef USE_TCP
+		if(make_sock && !tcp_disable) {
+			close(sockfd[1]);
+			pt[child_process_no].unix_sock = sockfd[0];
+			pt[child_process_no].idx = -1; /* this is not a "tcp" process*/
+		}
+#endif
 #ifdef FORK_DONT_WAIT
 #else
 		lock_release(process_lock);
 #endif
-		ret=pid;
+		ret = pid;
 		goto end;
 	}
 error:
 #ifdef USE_TCP
-	if (sockfd[0]!=-1) close(sockfd[0]);
-	if (sockfd[1]!=-1) close(sockfd[1]);
+	if(sockfd[0] != -1)
+		close(sockfd[0]);
+	if(sockfd[1] != -1)
+		close(sockfd[1]);
 #endif
 end:
 	return ret;
@@ -397,87 +395,88 @@ int fork_tcp_process(int child_id, char *desc, int r, int *reader_fd_1)
 	unsigned int new_seed2;
 
 	/* init */
-	sockfd[0]=sockfd[1]=-1;
-	reader_fd[0]=reader_fd[1]=-1;
-	ret=-1;
+	sockfd[0] = sockfd[1] = -1;
+	reader_fd[0] = reader_fd[1] = -1;
+	ret = -1;
 
-	if (!_ksr_is_main){
+	if(!_ksr_is_main) {
 		LM_CRIT("called from a non \"main\" process (%d)\n", _ksr_is_main);
 		goto error;
 	}
-	if (tcp_main_pid){
+	if(tcp_main_pid) {
 		LM_CRIT("called _after_ starting tcp main\n");
 		goto error;
 	}
-	if (socketpair(AF_UNIX, SOCK_STREAM, 0, sockfd)<0){
+	if(socketpair(AF_UNIX, SOCK_STREAM, 0, sockfd) < 0) {
 		LM_ERR("socketpair failed: %s\n", strerror(errno));
 		goto error;
 	}
-	if (socketpair(AF_UNIX, SOCK_STREAM, 0, reader_fd)<0){
+	if(socketpair(AF_UNIX, SOCK_STREAM, 0, reader_fd) < 0) {
 		LM_ERR("socketpair failed: %s\n", strerror(errno));
 		goto error;
 	}
-	if (tcp_fix_child_sockets(reader_fd)<0){
+	if(tcp_fix_child_sockets(reader_fd) < 0) {
 		LM_ERR("failed to set non blocking on child sockets\n");
 		/* continue, it's not critical (it will go slower under
 		 * very high connection rates) */
 	}
 	lock_get(process_lock);
 	/* set the local process_no */
-	if (*process_count>=estimated_proc_no) {
+	if(*process_count >= estimated_proc_no) {
 		LM_CRIT("Process limit of %d exceeded. Simulating fork fail\n",
-					estimated_proc_no);
+				estimated_proc_no);
 		lock_release(process_lock);
 		goto error;
 	}
 
 	child_process_no = *process_count;
-	new_seed1=kam_rand();
-	new_seed2=random();
+	new_seed1 = kam_rand();
+	new_seed2 = random();
 	pid = fork();
-	if (pid<0) {
+	if(pid < 0) {
 		lock_release(process_lock);
-		ret=pid;
+		ret = pid;
 		goto end;
 	}
-	if (pid==0){
-		_ksr_is_main=0; /* a forked process cannot be the "main" one */
-		process_no=child_process_no;
+	if(pid == 0) {
+		_ksr_is_main = 0; /* a forked process cannot be the "main" one */
+		process_no = child_process_no;
 		/* close unneeded unix sockets */
 		close_extra_socks(child_id, process_no);
 		/* same for unneeded tcp_children <-> tcp_main unix socks */
-		for (i=0; i<r; i++){
-			if (tcp_children[i].unix_sock>=0){
+		for(i = 0; i < r; i++) {
+			if(tcp_children[i].unix_sock >= 0) {
 				close(tcp_children[i].unix_sock);
 				/* tcp_children is per process, so it's safe to change
 				 * the unix_sock to -1 */
-				tcp_children[i].unix_sock=-1;
+				tcp_children[i].unix_sock = -1;
 			}
 		}
 		daemon_status_on_fork_cleanup();
 		kam_srand(new_seed1);
 		fastrand_seed(kam_rand());
-		srandom(new_seed2+time(0));
+		srandom(new_seed2 + time(0));
 		shm_malloc_on_fork();
 #ifdef PROFILING
-		monstartup((u_long) &_start, (u_long) &etext);
+		monstartup((u_long)&_start, (u_long)&etext);
 #endif
 #ifdef FORK_DONT_WAIT
 		/* record pid twice to avoid the child using it, before
 -		 * parent gets a chance to set it*/
-		pt[process_no].pid=getpid();
+		pt[process_no].pid = getpid();
 #else
 		/* wait for parent to get out of critical zone */
 		lock_get(process_lock);
 		lock_release(process_lock);
 #endif
-		pt[process_no].rank=child_id;
+		pt[process_no].rank = child_id;
 		close(sockfd[0]);
-		unix_tcp_sock=sockfd[1];
+		unix_tcp_sock = sockfd[1];
 		close(reader_fd[0]);
-		if (reader_fd_1) *reader_fd_1=reader_fd[1];
-		if (child_id!=PROC_NOCHLDINIT) {
-			if (init_child(child_id) < 0) {
+		if(reader_fd_1)
+			*reader_fd_1 = reader_fd[1];
+		if(child_id != PROC_NOCHLDINIT) {
+			if(init_child(child_id) < 0) {
 				LM_ERR("init_child failed for process %d, pid %d, \"%s\"\n",
 						process_no, pt[process_no].pid, pt[process_no].desc);
 				return -1;
@@ -493,13 +492,13 @@ int fork_tcp_process(int child_id, char *desc, int r, int *reader_fd_1)
 		lock_release(process_lock);
 #endif
 		/* add the process to the list in shm */
-		pt[child_process_no].pid=pid;
-		pt[child_process_no].rank=child_id;
-		pt[child_process_no].unix_sock=sockfd[0];
-		pt[child_process_no].idx=r;
-		if (desc){
+		pt[child_process_no].pid = pid;
+		pt[child_process_no].rank = child_id;
+		pt[child_process_no].unix_sock = sockfd[0];
+		pt[child_process_no].idx = r;
+		if(desc) {
 			snprintf(pt[child_process_no].desc, MAX_PT_DESC, "%s child=%d",
-						desc, r);
+					desc, r);
 		}
 #ifdef FORK_DONT_WAIT
 #else
@@ -509,20 +508,24 @@ int fork_tcp_process(int child_id, char *desc, int r, int *reader_fd_1)
 		close(sockfd[1]);
 		close(reader_fd[1]);
 
-		tcp_children[r].pid=pid;
-		tcp_children[r].proc_no=child_process_no;
-		tcp_children[r].busy=0;
-		tcp_children[r].n_reqs=0;
-		tcp_children[r].unix_sock=reader_fd[0];
+		tcp_children[r].pid = pid;
+		tcp_children[r].proc_no = child_process_no;
+		tcp_children[r].busy = 0;
+		tcp_children[r].n_reqs = 0;
+		tcp_children[r].unix_sock = reader_fd[0];
 
-		ret=pid;
+		ret = pid;
 		goto end;
 	}
 error:
-	if (sockfd[0]!=-1) close(sockfd[0]);
-	if (sockfd[1]!=-1) close(sockfd[1]);
-	if (reader_fd[0]!=-1) close(reader_fd[0]);
-	if (reader_fd[1]!=-1) close(reader_fd[1]);
+	if(sockfd[0] != -1)
+		close(sockfd[0]);
+	if(sockfd[1] != -1)
+		close(sockfd[1]);
+	if(reader_fd[0] != -1)
+		close(reader_fd[0]);
+	if(reader_fd[1] != -1)
+		close(reader_fd[1]);
 end:
 	return ret;
 }
@@ -535,29 +538,29 @@ end:
  */
 void mem_dump_pkg_cb(str *gname, str *name)
 {
-	int	old_memlog;
+	int old_memlog;
 	int memlog;
 
-	if (cfg_get(core, core_cfg, mem_dump_pkg) == my_pid()) {
+	if(cfg_get(core, core_cfg, mem_dump_pkg) == my_pid()) {
 		/* set memlog to ALERT level to force
 		printing the log messages */
 		old_memlog = cfg_get(core, core_cfg, memlog);
 		memlog = L_ALERT;
 		/* ugly hack to temporarily switch memlog to something visible,
 		 * possible race with a parallel cfg_set */
-		((struct cfg_group_core*)core_cfg)->memlog=memlog;
+		((struct cfg_group_core *)core_cfg)->memlog = memlog;
 
-		if (cfg_get(core, core_cfg, mem_summary) & 1) {
+		if(cfg_get(core, core_cfg, mem_summary) & 1) {
 			LOG(memlog, "Memory status (pkg) of process %d:\n", my_pid());
 			pkg_status();
 		}
-		if (cfg_get(core, core_cfg, mem_summary) & 4) {
+		if(cfg_get(core, core_cfg, mem_summary) & 4) {
 			LOG(memlog, "Memory still-in-use summary (pkg) of process %d:\n",
 					my_pid());
 			pkg_sums();
 		}
 
-		((struct cfg_group_core*)core_cfg)->memlog=old_memlog;
+		((struct cfg_group_core *)core_cfg)->memlog = old_memlog;
 	}
 }
 #endif
@@ -568,23 +571,23 @@ void mem_dump_pkg_cb(str *gname, str *name)
  */
 int mem_dump_shm_fixup(void *handle, str *gname, str *name, void **val)
 {
-	int	old_memlog;
+	int old_memlog;
 	int memlog;
 
-	if ((long)(void*)(*val)) {
+	if((long)(void *)(*val)) {
 		/* set memlog to ALERT level to force
 		printing the log messages */
 		old_memlog = cfg_get(core, core_cfg, memlog);
 		memlog = L_ALERT;
 		/* ugly hack to temporarily switch memlog to something visible,
 		 * possible race with a parallel cfg_set */
-		((struct cfg_group_core*)core_cfg)->memlog=memlog;
+		((struct cfg_group_core *)core_cfg)->memlog = memlog;
 
 		LOG(memlog, "Memory status (shm)\n");
 		shm_status();
 
-		((struct cfg_group_core*)core_cfg)->memlog=old_memlog;
-		*val = (void*)(long)0;
+		((struct cfg_group_core *)core_cfg)->memlog = old_memlog;
+		*val = (void *)(long)0;
 	}
 	return 0;
 }
@@ -598,12 +601,12 @@ static int _sr_instance_ready = 0;
 int sr_instance_ready(void)
 {
 	int i;
-	if(_sr_instance_ready==1) {
+	if(_sr_instance_ready == 1) {
 		return 1;
 	}
-	for (i=0; i<*process_count; i++) {
-		if(pt[i].rank!=PROC_MAIN && pt[i].rank!=PROC_NOCHLDINIT) {
-			if(pt[i].status==0) {
+	for(i = 0; i < *process_count; i++) {
+		if(pt[i].rank != PROC_MAIN && pt[i].rank != PROC_NOCHLDINIT) {
+			if(pt[i].status == 0) {
 				return 0;
 			}
 		}

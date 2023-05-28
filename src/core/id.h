@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -30,24 +30,24 @@
 /*
  * Set From UID
  */
-int set_from_uid(str* uid);
+int set_from_uid(str *uid);
 
 
 /*
  * Get From UID
  */
-int get_from_uid(str* uid, struct sip_msg* msg);
+int get_from_uid(str *uid, struct sip_msg *msg);
 
 /*
  * Set To UID
  */
-int set_to_uid(str* uid);
+int set_to_uid(str *uid);
 
 
 /*
  * Ge To UID
  */
-int get_to_uid(str* uid, struct sip_msg* msg);
+int get_to_uid(str *uid, struct sip_msg *msg);
 
 
 /** Retrieves the UID of the callee. This function retrieves the UID (unique
@@ -65,19 +65,19 @@ int get_to_uid(str* uid, struct sip_msg* msg);
  * store the result.
  * @param uid A pointer to ::str variable where the result will be stored, the
  *            pointer in the variable will be updated to point to a static
- *            buffer in the function.  
- * @param msg The SIP message being processed.  
+ *            buffer in the function.
+ * @param msg The SIP message being processed.
  * @return 1 is returned when the attribute with UID exists and it is used, 0
  *         is returned when the function retrieved the UID from the SIP
  *         message and created the attribute, -1 is returned on error.
  */
-int get_to_did(str* did, struct sip_msg* msg);
+int get_to_did(str *did, struct sip_msg *msg);
 
 
 /*
  * Return current From domain id
  */
-int get_from_did(str* did, struct sip_msg* msg);
+int get_from_did(str *did, struct sip_msg *msg);
 
 
 #endif /* _ID_H */

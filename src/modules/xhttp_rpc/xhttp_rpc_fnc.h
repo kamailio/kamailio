@@ -25,10 +25,9 @@
 
 
 int xhttp_rpc_parse_url(str *url, int *mod, int *cmd, str *arg);
-void xhttp_rpc_get_next_arg(rpc_ctx_t* ctx, str *arg);
+void xhttp_rpc_get_next_arg(rpc_ctx_t *ctx, str *arg);
 int xhttp_rpc_build_content(rpc_ctx_t *ctx, str *val, str *id);
 int xhttp_rpc_insert_break(rpc_ctx_t *ctx);
 int xhttp_rpc_build_page(rpc_ctx_t *ctx);
 
 #endif
-

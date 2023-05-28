@@ -52,7 +52,7 @@
  *
  * - The interprocess buffer was necessary, because NetSNMP's containers can be
  *   very inefficient at adding large amounts of data at a time, such as when
- *   Kamailio first starts up.  It was decided its better to make an SNMP manager
+ *   Kamailio first starts up.  It was decided it is better to make an SNMP manager
  *   wait for data, instead of slowing down the rest of Kamailio while the
  *   sub-agent processes the data. 
  *
@@ -202,8 +202,8 @@ int createContactRow(int userIndex, int contactIndex, char *contactName,
 	theRow->kamailioSIPContactIndex = contactIndex;
 
 	/* Fill in the rest of the rows columns */
-	theRow->kamailioSIPContactURI =
-			(unsigned char *)pkg_malloc((stringLength + 1) * sizeof(unsigned char));
+	theRow->kamailioSIPContactURI = (unsigned char *)pkg_malloc(
+			(stringLength + 1) * sizeof(unsigned char));
 	if(theRow->kamailioSIPContactURI == NULL) {
 		pkg_free(OIDIndex);
 		free(theRow);
@@ -290,7 +290,7 @@ void initialize_table_kamailioSIPContactTable(void)
 
 	/** create the table structure itself */
 	table_info = SNMP_MALLOC_TYPEDEF(netsnmp_table_registration_info);
-	if(table_info==NULL) {
+	if(table_info == NULL) {
 		snmp_log(LOG_ERR, "failed to allocate table_info\n");
 		return;
 	}

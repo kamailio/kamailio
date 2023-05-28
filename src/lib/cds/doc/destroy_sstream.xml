@@ -29,9 +29,9 @@
 <refsect1><title>Description</title>
 <para>
 Destroys serialization stream and frees all internal data buffers. After calling
-this function can NOT be called any other serialization stream manipulation
+this function no other serialization stream manipulation
 function except <function>init_input_sstream</function> or
-<function>init_ouput_stream</function>.
+<function>init_output_stream</function> can be called.
 <!-- detailed description -->
 </para>
 

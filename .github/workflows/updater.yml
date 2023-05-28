@@ -1,0 +1,17 @@
+name: GitHub Actions Version Updater
+on:
+  schedule:
+    # Automatically run on every Sunday
+    - cron:  '0 0 * * 0'
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.WORKFLOW_SECRET }}
+      - name: Run GitHub Actions Version Updater
+        uses: saadmk11/github-actions-version-updater@v0.7.4
+        with:
+          token: ${{ secrets.WORKFLOW_SECRET }}
+          pull_request_user_reviewers: linuxmaniac

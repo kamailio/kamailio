@@ -289,7 +289,7 @@ modparam("snmpstats", "sipEntityType", "proxyServer")
 		</para>
 	</section>
 
-	<section id ="snmpstats.p.MsqQueueMinorTreshold">
+	<section id ="snmpstats.p.MsqQueueMinorThreshold">
 		<title><varname>MsgQueueMinorThreshold</varname> (Integer)</title>
 
 		<para>
@@ -314,7 +314,7 @@ modparam("snmpstats", "MsgQueueMinorThreshold", 2000)
 		</para>
 	</section>
 	
-	<section id ="snmpstats.p.MsqQueueMajorTreshold">
+	<section id ="snmpstats.p.MsqQueueMajorThreshold">
 		<title><varname>MsgQueueMajorThreshold</varname> (Integer)</title>
 
 		<para>
@@ -339,7 +339,7 @@ modparam("snmpstats", "MsgQueueMajorThreshold", 5000)
 		</para>
 	</section>
 
-	<section id ="snmpstats.p.dlg_minor_treshold">
+	<section id ="snmpstats.p.dlg_minor_threshold">
 		<title><varname>dlg_minor_threshold</varname> (Integer)</title>
 
 		<para>
@@ -363,7 +363,7 @@ modparam("snmpstats", "MsgQueueMajorThreshold", 5000)
 		</para>
 	</section>
 
-	<section id ="snmpstats.p.dlg_major_treshold">
+	<section id ="snmpstats.p.dlg_major_threshold">
 		<title><varname>dlg_major_threshold</varname> (Integer)</title>
 
 		<para>

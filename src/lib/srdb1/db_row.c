@@ -48,7 +48,7 @@ int db_free_row(db_row_t* _r)
 	}
 
 	/*
-	 * Loop thru each columm, then check to determine if the storage pointed to
+	 * Loop thru each column, then check to determine if the storage pointed to
 	 * by db_val_t structure must be freed. This is required for all data types
 	 * which use a pointer to a buffer like DB1_STRING, DB1_STR and DB1_BLOB and
 	 * the database module copied them during the assignment.
@@ -88,7 +88,7 @@ int db_free_row(db_row_t* _r)
 				break;
 		}
 	}
-	/* now as we freed all, set number of colums to zero again */
+	/* now as we freed all, set number of columns to zero again */
 	ROW_N(_r) = 0;
 
 	if (ROW_VALUES(_r)) {

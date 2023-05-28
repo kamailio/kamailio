@@ -30,24 +30,25 @@
 #include "t_funcs.h"
 
 
-struct tmcb_head_list* req_in_tmcb_hl = 0;
-struct tmcb_head_list* local_req_in_tmcb_hl = 0;
+struct tmcb_head_list *req_in_tmcb_hl = 0;
+struct tmcb_head_list *local_req_in_tmcb_hl = 0;
 
-struct tm_early_cb {
+struct tm_early_cb
+{
 	unsigned int msgid;
 	struct tmcb_head_list cb_list;
-} tmcb_early_hl = { 0, {0, 0} };
+} tmcb_early_hl = {0, {0, 0}};
 
-struct tmcb_head_list* get_early_tmcb_list(struct sip_msg *msg)
+struct tmcb_head_list *get_early_tmcb_list(struct sip_msg *msg)
 {
 	struct tm_callback *cbp, *cbp_tmp;
-	if (msg->id!=tmcb_early_hl.msgid) {
-		for( cbp=(struct tm_callback*)tmcb_early_hl.cb_list.first; cbp ; ) {
+	if(msg->id != tmcb_early_hl.msgid) {
+		for(cbp = (struct tm_callback *)tmcb_early_hl.cb_list.first; cbp;) {
 			cbp_tmp = cbp;
 			cbp = cbp->next;
-			if (cbp_tmp->param && cbp_tmp->release)
-					cbp_tmp->release( cbp_tmp->param );
-			shm_free( cbp_tmp );
+			if(cbp_tmp->param && cbp_tmp->release)
+				cbp_tmp->release(cbp_tmp->param);
+			shm_free(cbp_tmp);
 		}
 		memset(&tmcb_early_hl.cb_list, 0, sizeof(struct tmcb_head_list));
 		tmcb_early_hl.msgid = msg->id;
@@ -57,7 +58,7 @@ struct tmcb_head_list* get_early_tmcb_list(struct sip_msg *msg)
 
 void set_early_tmcb_list(struct sip_msg *msg, struct cell *t)
 {
-	if (msg->id==tmcb_early_hl.msgid) {
+	if(msg->id == tmcb_early_hl.msgid) {
 		t->tmcb_hl = tmcb_early_hl.cb_list;
 		memset(&tmcb_early_hl.cb_list, 0, sizeof(struct tmcb_head_list));
 		tmcb_early_hl.msgid = 0;
@@ -66,11 +67,11 @@ void set_early_tmcb_list(struct sip_msg *msg, struct cell *t)
 
 int init_tmcb_lists()
 {
-	req_in_tmcb_hl = (struct tmcb_head_list*)shm_malloc
-		( sizeof(struct tmcb_head_list) );
-	local_req_in_tmcb_hl = (struct tmcb_head_list*)shm_malloc
-		( sizeof(struct tmcb_head_list) );
-	if ((req_in_tmcb_hl==0) || (local_req_in_tmcb_hl==0)) {
+	req_in_tmcb_hl =
+			(struct tmcb_head_list *)shm_malloc(sizeof(struct tmcb_head_list));
+	local_req_in_tmcb_hl =
+			(struct tmcb_head_list *)shm_malloc(sizeof(struct tmcb_head_list));
+	if((req_in_tmcb_hl == 0) || (local_req_in_tmcb_hl == 0)) {
 		SHM_MEM_CRITICAL;
 		goto error;
 	}
@@ -80,13 +81,13 @@ int init_tmcb_lists()
 	local_req_in_tmcb_hl->reg_types = 0;
 	return 1;
 error:
-	if (req_in_tmcb_hl){
+	if(req_in_tmcb_hl) {
 		shm_free(req_in_tmcb_hl);
-		req_in_tmcb_hl=0;
+		req_in_tmcb_hl = 0;
 	}
-	if(local_req_in_tmcb_hl){
+	if(local_req_in_tmcb_hl) {
 		shm_free(local_req_in_tmcb_hl);
-		local_req_in_tmcb_hl=0;
+		local_req_in_tmcb_hl = 0;
 	}
 	return -1;
 }
@@ -96,43 +97,41 @@ void destroy_tmcb_lists()
 {
 	struct tm_callback *cbp, *cbp_tmp;
 
-	if (req_in_tmcb_hl){
-		for( cbp=(struct tm_callback*)req_in_tmcb_hl->first; cbp ; ) {
+	if(req_in_tmcb_hl) {
+		for(cbp = (struct tm_callback *)req_in_tmcb_hl->first; cbp;) {
 			cbp_tmp = cbp;
 			cbp = cbp->next;
-			if (cbp_tmp->param && cbp_tmp->release)
-					cbp_tmp->release( cbp_tmp->param );
-			shm_free( cbp_tmp );
+			if(cbp_tmp->param && cbp_tmp->release)
+				cbp_tmp->release(cbp_tmp->param);
+			shm_free(cbp_tmp);
 		}
 		shm_free(req_in_tmcb_hl);
-		req_in_tmcb_hl=0;
+		req_in_tmcb_hl = 0;
 	}
-	if(local_req_in_tmcb_hl){
-		for( cbp=(struct tm_callback*)local_req_in_tmcb_hl->first; cbp ; ) {
+	if(local_req_in_tmcb_hl) {
+		for(cbp = (struct tm_callback *)local_req_in_tmcb_hl->first; cbp;) {
 			cbp_tmp = cbp;
 			cbp = cbp->next;
-			if (cbp_tmp->param && cbp_tmp->release)
-					cbp_tmp->release( cbp_tmp->param );
-			shm_free( cbp_tmp );
+			if(cbp_tmp->param && cbp_tmp->release)
+				cbp_tmp->release(cbp_tmp->param);
+			shm_free(cbp_tmp);
 		}
 		shm_free(local_req_in_tmcb_hl);
-		local_req_in_tmcb_hl=0;
+		local_req_in_tmcb_hl = 0;
 	}
 }
 
 
-
 /* lockless insert: should be always safe */
-int insert_tmcb(struct tmcb_head_list *cb_list, int types,
-				transaction_cb f, void *param,
-				release_tmcb_param rel_func)
+int insert_tmcb(struct tmcb_head_list *cb_list, int types, transaction_cb f,
+		void *param, release_tmcb_param rel_func)
 {
 	struct tm_callback *cbp;
 	struct tm_callback *old;
 
 
 	/* build a new callback structure */
-	if (!(cbp=shm_malloc( sizeof( struct tm_callback)))) {
+	if(!(cbp = shm_malloc(sizeof(struct tm_callback)))) {
 		SHM_MEM_ERROR;
 		return E_OUT_OF_MEM;
 	}
@@ -143,19 +142,18 @@ int insert_tmcb(struct tmcb_head_list *cb_list, int types,
 	cbp->param = param;
 	cbp->release = rel_func;
 	cbp->types = types;
-	cbp->id=0;
-	old=(struct tm_callback*)cb_list->first;
+	cbp->id = 0;
+	old = (struct tm_callback *)cb_list->first;
 	/* link it into the proper place... */
-	do{
+	do {
 		cbp->next = old;
 		membar_write_atomic_op();
-		old=(void*)atomic_cmpxchg_long((void*)&cb_list->first,
-										(long)old, (long)cbp);
-	}while(old!=cbp->next);
+		old = (void *)atomic_cmpxchg_long(
+				(void *)&cb_list->first, (long)old, (long)cbp);
+	} while(old != cbp->next);
 
 	return 1;
 }
-
 
 
 /* register a callback function 'f' for 'types' mask of events;
@@ -166,34 +164,32 @@ int insert_tmcb(struct tmcb_head_list *cb_list, int types,
  *  Special cases: TMCB_REQUEST_IN & TMCB_LOCAL_REQUEST_IN - must be called
  *                 from mod_init (before forking!).
 */
-int register_tmcb( struct sip_msg* p_msg, struct cell *t, int types,
-				transaction_cb f, void *param,
-				release_tmcb_param rel_func)
+int register_tmcb(struct sip_msg *p_msg, struct cell *t, int types,
+		transaction_cb f, void *param, release_tmcb_param rel_func)
 {
 	//struct cell* t;
 	struct tmcb_head_list *cb_list;
 
 	/* are the callback types valid?... */
-	if ( types<0 || types>TMCB_MAX ) {
-		LM_CRIT("BUG: invalid callback types: mask=%d\n",
-			types);
+	if(types < 0 || types > TMCB_MAX) {
+		LM_CRIT("BUG: invalid callback types: mask=%d\n", types);
 		return E_BUG;
 	}
 	/* we don't register null functions */
-	if (f==0) {
+	if(f == 0) {
 		LM_CRIT("BUG: null callback function\n");
 		return E_BUG;
 	}
 
-	if ((types!=TMCB_MAX) && (types&TMCB_REQUEST_IN)) {
-		if (types!=TMCB_REQUEST_IN) {
+	if((types != TMCB_MAX) && (types & TMCB_REQUEST_IN)) {
+		if(types != TMCB_REQUEST_IN) {
 			LM_CRIT("BUG: callback type TMCB_REQUEST_IN"
-				" can't be register along with types\n");
+					" can't be register along with types\n");
 			return E_BUG;
 		}
 		cb_list = req_in_tmcb_hl;
-	}else if ((types!=TMCB_MAX) && (types & TMCB_LOCAL_REQUEST_IN)) {
-		if (types!=TMCB_LOCAL_REQUEST_IN) {
+	} else if((types != TMCB_MAX) && (types & TMCB_LOCAL_REQUEST_IN)) {
+		if(types != TMCB_LOCAL_REQUEST_IN) {
 			LM_CRIT("BUG: callback type"
 					" TMCB_LOCAL_REQUEST_IN can't be register along with"
 					" other types\n");
@@ -201,14 +197,14 @@ int register_tmcb( struct sip_msg* p_msg, struct cell *t, int types,
 		}
 		cb_list = local_req_in_tmcb_hl;
 	} else {
-		if (!t) {
-			if (!p_msg) {
+		if(!t) {
+			if(!p_msg) {
 				LM_CRIT("BUG: no sip_msg, nor transaction given\n");
 				return E_BUG;
 			}
 			/* look for the transaction */
-			t=get_t();
-			if ( t!=0 && t!=T_UNDEFINED) {
+			t = get_t();
+			if(t != 0 && t != T_UNDEFINED) {
 				cb_list = &(t->tmcb_hl);
 			} else {
 				cb_list = get_early_tmcb_list(p_msg);
@@ -218,43 +214,41 @@ int register_tmcb( struct sip_msg* p_msg, struct cell *t, int types,
 		}
 	}
 
-	return insert_tmcb( cb_list, types, f, param, rel_func );
+	return insert_tmcb(cb_list, types, f, param, rel_func);
 }
 
 
-void run_trans_callbacks_internal(struct tmcb_head_list* cb_lst, int type,
-									struct cell *trans,
-									struct tmcb_params *params)
+void run_trans_callbacks_internal(struct tmcb_head_list *cb_lst, int type,
+		struct cell *trans, struct tmcb_params *params)
 {
 	struct tm_callback *cbp;
 	tm_xlinks_t backup_xd;
 
 	tm_xdata_swap(trans, &backup_xd, 0);
 
-	cbp=(struct tm_callback*)cb_lst->first;
-	while(cbp){
+	cbp = (struct tm_callback *)cb_lst->first;
+	while(cbp) {
 		membar_depends(); /* make sure the cache has the correct cbp contents */
-		if ( (cbp->types)&type ) {
-			DBG("DBG: trans=%p, callback type %d, id %d entered\n",
-				trans, type, cbp->id );
+		if((cbp->types) & type) {
+			DBG("DBG: trans=%p, callback type %d, id %d entered\n", trans, type,
+					cbp->id);
 			params->param = &(cbp->param);
-			cbp->callback( trans, type, params );
+			cbp->callback(trans, type, params);
 		}
-		cbp=cbp->next;
+		cbp = cbp->next;
 	}
 
 	tm_xdata_swap(trans, &backup_xd, 1);
 }
 
 
-
-void run_trans_callbacks( int type , struct cell *trans,
-						struct sip_msg *req, struct sip_msg *rpl, int code )
+void run_trans_callbacks(int type, struct cell *trans, struct sip_msg *req,
+		struct sip_msg *rpl, int code)
 {
 	struct tmcb_params params;
-	if (trans->tmcb_hl.first==0 || ((trans->tmcb_hl.reg_types)&type)==0 )
+	if(trans->tmcb_hl.first == 0 || ((trans->tmcb_hl.reg_types) & type) == 0)
 		return;
-	memset (&params, 0, sizeof(params));
+	memset(&params, 0, sizeof(params));
 	params.req = req;
 	params.rpl = rpl;
 	params.code = code;
@@ -262,65 +256,65 @@ void run_trans_callbacks( int type , struct cell *trans,
 }
 
 
-
-void run_trans_callbacks_with_buf(int type, struct retr_buf* rbuf,
-		struct sip_msg* req, struct sip_msg* repl, short flags)
+void run_trans_callbacks_with_buf(int type, struct retr_buf *rbuf,
+		struct sip_msg *req, struct sip_msg *repl, short flags)
 {
 	struct tmcb_params params;
-	struct cell * trans;
+	struct cell *trans;
 
-	trans=rbuf->my_T;
-	if ( trans==0 || trans->tmcb_hl.first==0 ||
-			((trans->tmcb_hl.reg_types)&type)==0 )
+	trans = rbuf->my_T;
+	if(trans == 0 || trans->tmcb_hl.first == 0
+			|| ((trans->tmcb_hl.reg_types) & type) == 0)
 		return;
 	INIT_TMCB_ONSEND_PARAMS(params, req, repl, rbuf, &rbuf->dst, rbuf->buffer,
-					rbuf->buffer_len, flags, rbuf->branch, rbuf->rbtype);
+			rbuf->buffer_len, flags, rbuf->branch, rbuf->rbtype);
 	/* req, rpl */
 	run_trans_callbacks_internal(&trans->tmcb_hl, type, trans, &params);
 }
 
 
-void run_trans_callbacks_off_params(int type, struct cell* trans,
-		struct tmcb_params* p)
+void run_trans_callbacks_off_params(
+		int type, struct cell *trans, struct tmcb_params *p)
 {
 
-	if (p->t_rbuf==0) return;
-	if ( trans==0 || trans->tmcb_hl.first==0 ||
-			((trans->tmcb_hl.reg_types)&type)==0 )
+	if(p->t_rbuf == 0)
+		return;
+	if(trans == 0 || trans->tmcb_hl.first == 0
+			|| ((trans->tmcb_hl.reg_types) & type) == 0)
 		return;
 	run_trans_callbacks_internal(&trans->tmcb_hl, type, p->t_rbuf->my_T, p);
 }
 
 
-static void run_reqin_callbacks_internal(struct tmcb_head_list* hl,
-							struct cell *trans, struct tmcb_params* params)
+static void run_reqin_callbacks_internal(struct tmcb_head_list *hl,
+		struct cell *trans, struct tmcb_params *params)
 {
 	struct tm_callback *cbp;
 	tm_xlinks_t backup_xd;
 
-	if (hl==0 || hl->first==0) return;
+	if(hl == 0 || hl->first == 0)
+		return;
 
 	tm_xdata_swap(trans, &backup_xd, 0);
 
-	for (cbp=(struct tm_callback*)hl->first; cbp; cbp=cbp->next)  {
-		LM_DBG("trans=%p, callback type %d, id %d entered\n",
-			trans, cbp->types, cbp->id );
+	for(cbp = (struct tm_callback *)hl->first; cbp; cbp = cbp->next) {
+		LM_DBG("trans=%p, callback type %d, id %d entered\n", trans, cbp->types,
+				cbp->id);
 		params->param = &(cbp->param);
-		cbp->callback( trans, cbp->types, params );
+		cbp->callback(trans, cbp->types, params);
 	}
 
 	tm_xdata_swap(trans, &backup_xd, 1);
 }
 
 
-
-void run_reqin_callbacks( struct cell *trans, struct sip_msg *req, int code )
+void run_reqin_callbacks(struct cell *trans, struct sip_msg *req, int code)
 {
 	static struct tmcb_params params;
 
-	if (req_in_tmcb_hl->first==0)
+	if(req_in_tmcb_hl->first == 0)
 		return;
-	memset (&params, 0, sizeof(params));
+	memset(&params, 0, sizeof(params));
 	params.req = req;
 	params.code = code;
 
@@ -328,14 +322,14 @@ void run_reqin_callbacks( struct cell *trans, struct sip_msg *req, int code )
 }
 
 
-void run_local_reqin_callbacks( struct cell *trans, struct sip_msg *req,
-								int code )
+void run_local_reqin_callbacks(
+		struct cell *trans, struct sip_msg *req, int code)
 {
 	static struct tmcb_params params;
 
-	if (local_req_in_tmcb_hl->first==0)
+	if(local_req_in_tmcb_hl->first == 0)
 		return;
-	memset (&params, 0, sizeof(params));
+	memset(&params, 0, sizeof(params));
 	params.req = req;
 	params.code = code;
 

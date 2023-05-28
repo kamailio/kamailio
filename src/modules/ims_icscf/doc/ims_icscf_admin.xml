@@ -45,7 +45,7 @@
     <section>
       <title>External Libraries or Applications</title>
 
-      <para>This modules requires the Kamailio internal IMS library.</para>
+      <para>This module requires the Kamailio internal IMS library.</para>
     </section>
   </section>
 
@@ -135,7 +135,7 @@ modparam("ims_icscf", "cxdx_forced_peer", "hss.ims.smilecoms.com")
     <section>
       <title><varname>cxdx_dest_realm</varname> (string)</title>
 
-      <para>Destination realm to be used in Diameter messags to HSS</para>
+      <para>Destination realm to be used in Diameter messages to HSS</para>
 
       <para><emphasis> Default value is "ims.smilecoms.com".</emphasis></para>
 

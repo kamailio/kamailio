@@ -36,57 +36,54 @@ static int db_mongodb_bind_api(db_func_t *dbb);
 static int mod_init(void);
 
 static cmd_export_t cmds[] = {
-	{"db_bind_api",    (cmd_function)db_mongodb_bind_api,    0, 0, 0, 0},
-	{0, 0, 0, 0, 0, 0}
-};
+		{"db_bind_api", (cmd_function)db_mongodb_bind_api, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0}};
 
 
 /*
  * Exported parameters
  */
-static param_export_t params[] = {
-	{0, 0, 0}
-};
+static param_export_t params[] = {{0, 0, 0}};
 
 
-struct module_exports exports = {	
-	"db_mongodb",		/* module name */
-	DEFAULT_DLFLAGS,	/* dlopen flags */
-	cmds,				/* exported functions */
-	params,				/* exported parameters */
-	0,					/* RPC method exports */
-	0,					/* exported pseudo-variables */
-	0,					/* response handling function */
-	mod_init,			/* module initialization function */
-	0,					/* per-child init function */
-	0					/* module destroy function */
+struct module_exports exports = {
+		"db_mongodb",	 /* module name */
+		DEFAULT_DLFLAGS, /* dlopen flags */
+		cmds,			 /* exported functions */
+		params,			 /* exported parameters */
+		0,				 /* RPC method exports */
+		0,				 /* exported pseudo-variables */
+		0,				 /* response handling function */
+		mod_init,		 /* module initialization function */
+		0,				 /* per-child init function */
+		0				 /* module destroy function */
 };
 
 static int db_mongodb_bind_api(db_func_t *dbb)
 {
-	if(dbb==NULL)
+	if(dbb == NULL)
 		return -1;
 
 	memset(dbb, 0, sizeof(db_func_t));
 
-	dbb->use_table        = db_mongodb_use_table;
-	dbb->init             = db_mongodb_init;
-	dbb->close            = db_mongodb_close;
-	dbb->query            = db_mongodb_query;
-	dbb->fetch_result     = 0; //db_mongodb_fetch_result;
-	dbb->raw_query        = 0; //db_mongodb_raw_query;
-	dbb->free_result      = db_mongodb_free_result;
-	dbb->insert           = db_mongodb_insert;
-	dbb->delete           = db_mongodb_delete; 
-	dbb->update           = db_mongodb_update;
-	dbb->replace          = 0; //db_mongodb_replace;
+	dbb->use_table = db_mongodb_use_table;
+	dbb->init = db_mongodb_init;
+	dbb->close = db_mongodb_close;
+	dbb->query = db_mongodb_query;
+	dbb->fetch_result = 0; //db_mongodb_fetch_result;
+	dbb->raw_query = 0;	   //db_mongodb_raw_query;
+	dbb->free_result = db_mongodb_free_result;
+	dbb->insert = db_mongodb_insert;
+	dbb->delete = db_mongodb_delete;
+	dbb->update = db_mongodb_update;
+	dbb->replace = 0; //db_mongodb_replace;
 
 	return 0;
 }
 
 int mod_register(char *path, int *dlflags, void *p1, void *p2)
 {
-	if(db_api_init()<0)
+	if(db_api_init() < 0)
 		return -1;
 	return 0;
 }
@@ -96,4 +93,3 @@ static int mod_init(void)
 	LM_DBG("module initializing\n");
 	return 0;
 }
-

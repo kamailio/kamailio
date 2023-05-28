@@ -34,8 +34,8 @@
 extern "C" {
 #endif
 
-/* If a notifier publishing watched state registeres after subscibe
- * call, it receives the subscription automaticaly too! */
+/* If a notifier publishing watched state registers after subscribe
+ * call, it receives the subscription automatically too! */
 /*qsa_subscription_t *subscribe(notifier_domain_t *domain, 
 		qsa_subscription_t *params);*/
 qsa_subscription_t *subscribe(notifier_domain_t *domain, 

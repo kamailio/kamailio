@@ -10,21 +10,21 @@ For example right now Kamailio uses the following locking methods, depending on 
 target system:
 	FAST_LOCK - fast inline assembly locks, defined in fast_lock.h. They are currently available for 
 	x86, x86_64, sparc, sparc64, arm , armv6 (no smp mode supported yet), ppc, ppc64, mips, mips64 
-	and alpha . In general if the assembly code exists for a given arhitecture and the compiler 
+	and alpha . In general if the assembly code exists for a given architecture and the compiler 
 	knows inline assembly (for example sun cc does not) FAST_LOCK is prefered. The main 
 	advantage of using FAST_LOCK is very low memory overhead and extremely fast lock/unlock 
-	operations (like 20 times faster then SYSV semaphores on linux & 40 times on solaris). 
+	operations (like 20 times faster than SYSV semaphores on linux & 40 times on solaris). 
 	The only thing that comes close to them are pthread mutexes (which are about 3-4 times slower).
 
 	PTHREAD_MUTEX - uses pthread_mutex_lock/unlock. They are quite fast but they work between 
 	processes only on some systems (they do not work on linux).
 
-	POSIX_SEM  - uses posix semaphores (sem_wait/sem_post). They are slower then the previous 
-	methods but still way faster then SYSV sempahores. Unfortunately they also do not work on 
+	POSIX_SEM  - uses posix semaphores (sem_wait/sem_post). They are slower than the previous 
+	methods but still way faster than SYSV semaphores. Unfortunately they also do not work on 
 	all the systems (e.g. linux).
 	
 	SYSV_SEM - this is the most portable but also the slowest locking method. Another problem is 
-	that the number of semaphores that can be alocated by a process is limited. One also has to 
+	that the number of semaphores that can be allocated by a process is limited. One also has to 
 	free them before exiting.
 
 
@@ -33,7 +33,7 @@ target system:
 
 First of all you have to include locking.h. Then when compiling the code one or all of FAST_LOCK, 
 USE_PTHREAD_MUTEX, USE_PTHREAD_SEM or USE_SYSV_SEM must be defined (the Kamailio Makefile.defs takes 
-care of this, you should need to change it only for new arhitectures or compilers).
+care of this, you should need to change it only for new architectures or compilers).
 
 locking.h defines 2 new types: gen_lock_t and lock_set_t.
 

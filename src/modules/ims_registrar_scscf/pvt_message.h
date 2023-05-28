@@ -41,7 +41,7 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  * 
- */ 
+ */
 
 
 #ifndef PVT_MESSAGE_H
@@ -51,19 +51,20 @@
 #include "../../core/parser/msg_parser.h"
 #include "../tm/tm_load.h"
 
-struct _pv_req_data {
-    struct sip_msg msg;
-    struct sip_msg *tmsgp;
-    unsigned int index;
-    unsigned int label;
-    char *buf;
-    int buf_size;
+struct _pv_req_data
+{
+	struct sip_msg msg;
+	struct sip_msg *tmsgp;
+	unsigned int index;
+	unsigned int label;
+	char *buf;
+	int buf_size;
 };
 
 void pv_tmx_data_init(void);
 
 int pv_t_copy_msg(struct sip_msg *src, struct sip_msg *dst);
 
-struct sip_msg* get_request_from_tx(struct cell* t);
+struct sip_msg *get_request_from_tx(struct cell *t);
 
 #endif /* PVT_MESSAGE_H */

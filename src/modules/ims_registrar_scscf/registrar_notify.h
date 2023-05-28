@@ -56,73 +56,77 @@
 #define MSG_REG_UNSUBSCRIBE_OK "Subscription to REG dropped"
 #define MSG_REG_PUBLISH_OK "Publish to REG saved"
 
-typedef struct _reg_notification {
-    
-    str subscription_state; /**< Subscription-state header value*/
-    str content_type; /**< content type					*/
-    
-    str watcher_contact;
-    str watcher_uri;
-    str presentity_uri;
-    
-    struct udomain* _d;
-    str* impus;
-    int num_impus;
-    
-    unsigned int local_cseq;
-    unsigned int reginfo_s_version;
-    str call_id;
-    str from_tag;
-    str to_tag;
-    str record_route;
-    str sockinfo_str;
-    
-    str *explit_dereg_contact;
-    int num_explit_dereg_contact;
+typedef struct _reg_notification
+{
 
-    struct _reg_notification *next; /**< next notification in the list	*/
-    struct _reg_notification *prev; /**< previous notification in the list	*/
+	str subscription_state; /**< Subscription-state header value*/
+	str content_type;		/**< content type					*/
+
+	str watcher_contact;
+	str watcher_uri;
+	str presentity_uri;
+
+	struct udomain *_d;
+	str *impus;
+	int num_impus;
+
+	unsigned int local_cseq;
+	unsigned int reginfo_s_version;
+	str call_id;
+	str from_tag;
+	str to_tag;
+	str record_route;
+	str sockinfo_str;
+
+	str *explit_dereg_contact;
+	int num_explit_dereg_contact;
+
+	struct _reg_notification *next; /**< next notification in the list	*/
+	struct _reg_notification *prev; /**< previous notification in the list	*/
 } reg_notification;
 
 
-
 /** Notification List Structure */
-typedef struct {
-    gen_lock_t *lock; /**< lock for notifications ops		*/
-    reg_notification *head; /**< first notification in the list	*/
-    reg_notification *tail; /**< last notification in the list	*/
-    gen_sem_t *empty;
-    int size;
+typedef struct
+{
+	gen_lock_t *lock;		/**< lock for notifications ops		*/
+	reg_notification *head; /**< first notification in the list	*/
+	reg_notification *tail; /**< last notification in the list	*/
+	gen_sem_t *empty;
+	int size;
 } reg_notification_list;
 
 /** Events for subscriptions */
-typedef enum {
-    IMS_EVENT_NONE, /**< Generic, no event					*/
-    IMS_EVENT_REG /**< Registration event					*/
+typedef enum
+{
+	IMS_EVENT_NONE, /**< Generic, no event					*/
+	IMS_EVENT_REG	/**< Registration event					*/
 } IMS_Events_enum_t;
 
 extern IMS_Events_enum_t IMS_Events;
 
 /** Event types for "reg" to generated notifications after */
-typedef enum {
-    IMS_REGISTRAR_NONE, /**< no event - donothing 							*/
-    IMS_REGISTRAR_SUBSCRIBE, /**< Initial SUBSCRIBE - just send all data - this should not be treated though */
-    IMS_REGISTRAR_UNSUBSCRIBE, /**< Final UnSUBSCRIBE - just send a NOTIFY which will probably fail */
-    IMS_REGISTRAR_SUBSCRIBE_EXPIRED, /**< The subscribe has expired 						*/
+typedef enum
+{
+	IMS_REGISTRAR_NONE,		 /**< no event - donothing 							*/
+	IMS_REGISTRAR_SUBSCRIBE, /**< Initial SUBSCRIBE - just send all data - this should not be treated though */
+	IMS_REGISTRAR_UNSUBSCRIBE, /**< Final UnSUBSCRIBE - just send a NOTIFY which will probably fail */
+	IMS_REGISTRAR_SUBSCRIBE_EXPIRED, /**< The subscribe has expired 						*/
 
-    //richard we only use contact reg, refresh, expired and unreg
-    IMS_REGISTRAR_CONTACT_REGISTERED, /**< Registered with REGISTER						*/
-    IMS_REGISTRAR_CONTACT_REFRESHED, /**< The expiration was refreshed					*/
-    IMS_REGISTRAR_CONTACT_EXPIRED, /**< A contact has expired and will be removed		*/
-    IMS_REGISTRAR_CONTACT_UNREGISTERED, /**< User unregistered with Expires 0				*/
-    IMS_REGISTRAR_CONTACT_UNREGISTERED_IMPLICIT, /**< User unregistered implicitly, ie not via explicit deregister	*/
-    IMS_REGISTRAR_SUBSEQUENT_SUBSCRIBE,
-    IMS_REGISTRAR_CONTACT_DEREGISTERED, /**< User's registration was terminated with RTR				*/
+	//richard we only use contact reg, refresh, expired and unreg
+	IMS_REGISTRAR_CONTACT_REGISTERED, /**< Registered with REGISTER						*/
+	IMS_REGISTRAR_CONTACT_REFRESHED,  /**< The expiration was refreshed					*/
+	IMS_REGISTRAR_CONTACT_EXPIRED, /**< A contact has expired and will be removed		*/
+	IMS_REGISTRAR_CONTACT_UNREGISTERED, /**< User unregistered with Expires 0				*/
+	IMS_REGISTRAR_CONTACT_UNREGISTERED_IMPLICIT, /**< User unregistered implicitly, ie not via explicit deregister	*/
+	IMS_REGISTRAR_SUBSEQUENT_SUBSCRIBE,
+	IMS_REGISTRAR_CONTACT_DEREGISTERED, /**< User's registration was terminated with RTR				*/
 } IMS_Registrar_events_enum_t;
 
 extern IMS_Registrar_events_enum_t IMS_Registrar_events;
 
-extern reg_notification_list *notification_list; //< List of pending notifications
+extern reg_notification_list
+		*notification_list; //< List of pending notifications
 
 int can_subscribe_to_reg(struct sip_msg *msg, char *str1, char *str2);
 
@@ -132,39 +136,50 @@ int can_publish_reg(struct sip_msg *msg, char *str1, char *str2);
 
 int publish_reg(struct sip_msg *msg, char *str1, char *str2);
 
-int subscribe_reply(struct sip_msg *msg, int code, char *text, int *expires, str *contact);
+int subscribe_reply(
+		struct sip_msg *msg, int code, char *text, int *expires, str *contact);
 
-int event_reg(udomain_t* _d, impurecord_t* r_passed, ucontact_t* c_passed, int event_type, str *presentity_uri, str *watcher_contact, str *contact_uri,
-                str *explit_dereg_contact, int num_explit_dereg_contact);
+int event_reg(udomain_t *_d, impurecord_t *r_passed, ucontact_t *c_passed,
+		int event_type, str *presentity_uri, str *watcher_contact,
+		str *contact_uri, str *explit_dereg_contact,
+		int num_explit_dereg_contact);
 
 
-str generate_reginfo_full(udomain_t* _t, str* impu_list, int new_subscription, str *explit_dereg_contact, str* watcher_contact, int num_explit_dereg_contact, unsigned int reginfo_version);
+str generate_reginfo_full(udomain_t *_t, str *impu_list, int new_subscription,
+		str *explit_dereg_contact, str *watcher_contact,
+		int num_explit_dereg_contact, unsigned int reginfo_version);
 
-str get_reginfo_partial(impurecord_t *r, ucontact_t *c, int event_type, unsigned int reginfo_version);
+str get_reginfo_partial(impurecord_t *r, ucontact_t *c, int event_type,
+		unsigned int reginfo_version);
 
-void create_notifications(udomain_t* _t, impurecord_t* r_passed, ucontact_t* c_passed, str *presentity_uri, str *watcher_contact, str *contact_uri,
-                            str* impus, int num_impus, int event_type, str *explit_dereg_contact, int num_explit_dereg_contact);
+void create_notifications(udomain_t *_t, impurecord_t *r_passed,
+		ucontact_t *c_passed, str *presentity_uri, str *watcher_contact,
+		str *contact_uri, str *impus, int num_impus, int event_type,
+		str *explit_dereg_contact, int num_explit_dereg_contact);
 
 void notification_event_process();
 
 void free_notification(reg_notification *n);
 
-void send_notification(reg_notification * n);
+void send_notification(reg_notification *n);
 
 void add_notification(reg_notification *n);
 
-reg_notification* new_notification(str subscription_state,
-        str content_type, str** impus, int num_impus, reg_subscriber* r, str **explit_dereg_contact, int num_explit_dereg_contact);
+reg_notification *new_notification(str subscription_state, str content_type,
+		str **impus, int num_impus, reg_subscriber *r,
+		str **explit_dereg_contact, int num_explit_dereg_contact);
 
-dlg_t* build_dlg_t_from_notification(reg_notification* n);
+dlg_t *build_dlg_t_from_notification(reg_notification *n);
 
 
 int notify_init();
 void notify_destroy();
 
-int aor_to_contact(str* aor, str* contact);
+int aor_to_contact(str *aor, str *contact);
 int contact_port_ip_match(str *c1, str *c2);
 
-int notify_subscribers(impurecord_t* impurecord, ucontact_t* contact, str *explit_dereg_contact, int num_explit_dereg_contact, int event_type);
+int notify_subscribers(impurecord_t *impurecord, ucontact_t *contact,
+		str *explit_dereg_contact, int num_explit_dereg_contact,
+		int event_type);
 
 #endif //S_CSCF_REGISTRAR_NOTIFY_H_

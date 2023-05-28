@@ -28,16 +28,21 @@
 #include "parser/msg_parser.h"
 #include "action.h"
 
-union lval_u{
+union lval_u
+{
 	pv_spec_t *pvs;
 	avp_spec_t avps;
 };
 
-enum lval_type{
-	LV_NONE, LV_AVP, LV_PVAR
+enum lval_type
+{
+	LV_NONE,
+	LV_AVP,
+	LV_PVAR
 };
 
-struct lvalue{
+struct lvalue
+{
 	enum lval_type type;
 	union lval_u lv;
 };
@@ -45,7 +50,7 @@ struct lvalue{
 /* lval operators */
 #define EQ_T 254 /* k compatibility */
 
-typedef int (*log_assign_action_f)(struct sip_msg* msg, struct lvalue *lv);
+typedef int (*log_assign_action_f)(struct sip_msg *msg, struct lvalue *lv);
 void set_log_assign_action_cb(log_assign_action_f f);
 
 /** eval rve and assign the result to lv
@@ -57,6 +62,6 @@ void set_log_assign_action_cb(log_assign_action_f f);
  * @param rve - rvalue expression
  * @return >= 0 on success (expr. bool value), -1 on error
  */
-int lval_assign(struct run_act_ctx* h, struct sip_msg* msg,
-				struct lvalue* lv, struct rval_expr* rve);
+int lval_assign(struct run_act_ctx *h, struct sip_msg *msg, struct lvalue *lv,
+		struct rval_expr *rve);
 #endif /* __lvalue_h_*/

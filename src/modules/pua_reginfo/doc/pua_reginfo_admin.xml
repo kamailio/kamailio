@@ -17,7 +17,7 @@
 	<section>
 	  <title>Overview</title>
 	    <para> 
-	      This modules publishes information about "reg"-events according to
+	      This module publishes information about "reg"-events according to
               to RFC 3680. This can be used distribute the registration-info
               status to the subscribed watchers.
 	    </para>
@@ -45,7 +45,7 @@
 		which handles offline message storage for an account, would get
 		notified, when the user comes online.
 		</listitem>
-		<listitem>A client could subscribe to it's own registration-status,
+		<listitem>A client could subscribe to its own registration-status,
 		so he would get notified as soon as his account gets administratively
 		unregistered.
 		</listitem>

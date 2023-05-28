@@ -33,34 +33,34 @@
 
 /* leading text for a request accounted from a script */
 #define ACC "ACC: "
-#define ACC_REQUEST ACC"request accounted: "
-#define ACC_REQUEST_LEN (sizeof(ACC_REQUEST)-1)
-#define ACC_MISSED ACC"call missed: "
-#define ACC_MISSED_LEN (sizeof(ACC_MISSED)-1)
-#define ACC_ANSWERED ACC"transaction answered: "
-#define ACC_ANSWERED_LEN (sizeof(ACC_ANSWERED)-1)
-#define ACC_ACKED ACC"request acknowledged: "
-#define ACC_ACKED_LEN (sizeof(ACC_ACKED)-1)
+#define ACC_REQUEST ACC "request accounted: "
+#define ACC_REQUEST_LEN (sizeof(ACC_REQUEST) - 1)
+#define ACC_MISSED ACC "call missed: "
+#define ACC_MISSED_LEN (sizeof(ACC_MISSED) - 1)
+#define ACC_ANSWERED ACC "transaction answered: "
+#define ACC_ANSWERED_LEN (sizeof(ACC_ANSWERED) - 1)
+#define ACC_ACKED ACC "request acknowledged: "
+#define ACC_ACKED_LEN (sizeof(ACC_ACKED) - 1)
 
 /* syslog attribute names */
 #define A_METHOD "method"
-#define A_METHOD_LEN (sizeof(A_METHOD)-1)
+#define A_METHOD_LEN (sizeof(A_METHOD) - 1)
 #define A_FROMTAG "from_tag"
-#define A_FROMTAG_LEN (sizeof(A_FROMTAG)-1)
+#define A_FROMTAG_LEN (sizeof(A_FROMTAG) - 1)
 #define A_TOTAG "to_tag"
-#define A_TOTAG_LEN (sizeof(A_TOTAG)-1)
+#define A_TOTAG_LEN (sizeof(A_TOTAG) - 1)
 #define A_CALLID "call_id"
-#define A_CALLID_LEN (sizeof(A_CALLID)-1)
+#define A_CALLID_LEN (sizeof(A_CALLID) - 1)
 #define A_CODE "code"
-#define A_CODE_LEN (sizeof(A_CODE)-1)
+#define A_CODE_LEN (sizeof(A_CODE) - 1)
 #define A_STATUS "reason"
-#define A_STATUS_LEN (sizeof(A_STATUS)-1)
+#define A_STATUS_LEN (sizeof(A_STATUS) - 1)
 
 #define A_SEPARATOR_CHR ';'
 #define A_SEPARATOR_CHR_2 ' '
 #define A_EQ_CHR '='
 
-#define MAX_SYSLOG_SIZE  65536
+#define MAX_SYSLOG_SIZE 65536
 
 #define MAX_FAILED_FILTER_COUNT 15
 
@@ -70,25 +70,25 @@
  * projects. The value of the flag must be kept synchronized with other flags
  * defined in parser/msg_parser.h!
  */
-#define FL_REQ_UPSTREAM (1<<29)
+#define FL_REQ_UPSTREAM (1 << 29)
 
 extern int acc_extra_size;
 
 void acc_log_init(void);
-int  acc_log_request( struct sip_msg *req);
+int acc_log_request(struct sip_msg *req);
 
 int core2strar(struct sip_msg *req, str *c_vals, int *i_vals, char *t_vals);
 
 int acc_is_db_ready(void);
 
-int  acc_db_init(const str* db_url);
-int  acc_db_init_child(const str* db_url);
+int acc_db_init(const str *db_url);
+int acc_db_init_child(const str *db_url);
 void acc_db_close(void);
-int  acc_db_request( struct sip_msg *req);
-int  acc_get_db_handlers(void **vf, void **vh);
+int acc_db_request(struct sip_msg *req);
+int acc_get_db_handlers(void **vf, void **vh);
 
-int  is_eng_acc_on(sip_msg_t *msg);
-int  is_eng_mc_on(sip_msg_t *msg);
+int is_eng_acc_on(sip_msg_t *msg);
+int is_eng_mc_on(sip_msg_t *msg);
 
 int acc_arrays_alloc(void);
 void acc_arrays_free(void);

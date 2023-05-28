@@ -26,7 +26,7 @@
         source is configurable, two different hash functions are available.
     </para>
     <para>
-        This modules scales up to more than a few million users, and is able to handle
+        This module scales up to more than a few million users, and is able to handle
         more than several hundred thousand routing table entries. We received reports of
         some setups that used more than a million routing table entries. It also supports
         a large number of carriers and domains which can be efficiently looked up in most of
@@ -37,7 +37,7 @@
     <para>
         Routing tables can be reloaded and edited (in config file mode) with the RPC
         interface, the config file is updated according to the changes. This is not
-        implemented for the db interface, because its easier to do the changes
+        implemented for the db interface, because it is easier to do the changes
         directly on the db. But the reload and dump functions work of course here
         as well.
     </para>
@@ -80,7 +80,7 @@
               <emphasis>a database module</emphasis>,
               when a database is used as configuration data source.
               Only SQL based databases are supported, as this module needs the capability to
-              issue raw queries. Its not possible to use the dbtext or db_berkeley module at the moment.
+              issue raw queries. It is not possible to use the dbtext or db_berkeley module at the moment.
             </para>
           </listitem>
           <listitem>
@@ -423,7 +423,7 @@ cr_tree_rewrite_uri(tree, domain)
         </listitem>
         <listitem>
           <para>
-            <emphasis>dstvar</emphasis> - Name of the writaable config variable
+            <emphasis>dstvar</emphasis> - Name of the writable config variable
             (e.g., an AVP) where to store the carrier id.
           </para>
         </listitem>
@@ -887,7 +887,7 @@ domain register {
         <quote>-2</quote> gateways. For any (failure) reply code the respective next
         domain is chosen. After that no more failure routes are available, an error will
         be returned from the <quote>cr_next_domain</quote> function. Not all table
-        columns are show here for brevity.
+        columns are shown here for brevity.
       </para>
       <para>
         For each failure route domain and carrier that is added to the carrierfailureroute
@@ -920,7 +920,7 @@ domain register {
 			does forwarding according some flags, e.g. the customer came from a certain carrier,
 			and has call-forwarding deactivated. In order to use the routing that is
 			specified above, a matching carrierroute table must be provided, that holds
-			domain entries for this routing rules. Not all table columns are show here for
+			domain entries for this routing rules. Not all table columns are shown here for
 			brevity.
 		</para>
 

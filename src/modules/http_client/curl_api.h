@@ -39,8 +39,8 @@ typedef int (*httpcapi_httpconnect_f)(struct sip_msg *msg,
 		const char *contenttype, const str *_post);
 typedef int (*httpcapi_httpquery_f)(
 		struct sip_msg *_m, char *_url, str *_dst, char *_post, char *_hdrs);
-typedef int (*httpcapi_httpquery_c_f)(
-		struct sip_msg *_m, char *_url, str *_dst, char *_post, char *_ctype, char *_hdrs);
+typedef int (*httpcapi_httpquery_c_f)(struct sip_msg *_m, char *_url, str *_dst,
+		char *_post, char *_ctype, char *_hdrs);
 typedef int (*httpcapi_curlcon_exists_f)(str *_name);
 typedef char *(*httpcapi_res_content_type_f)(const str *_name);
 

@@ -20,7 +20,7 @@
 */
 
 #ifndef _APP_PYTHON3_MOD_H
-#define  _APP_PYTHON3_MOD_H
+#define _APP_PYTHON3_MOD_H
 
 #include <Python.h>
 

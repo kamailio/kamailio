@@ -61,8 +61,8 @@ Chapter 1. Admin Guide
 
    This module can delegate processing of SIP requests to a group of
    workers in the configuration file by using
-   event_route[core:pre-routing]. The async workers have to defined with
-   the global parameter. The worker process that received the message
+   event_route[core:pre-routing]. The async workers have to be defined
+   with the global parameter. The worker process that received the message
    internally does the usual execution of the config script, running
    request_route or reply_route.
 
@@ -117,7 +117,7 @@ modparam("sworker", "xdata", "$var(xdata)")
 
 4.1.  sworker_active()
 
-   Return 1 (true) if the processing happens in an asyn process, or -1
+   Return 1 (true) if the processing happens in an async process, or -1
    (false) if the processing is happening in a SIP receiving process.
 
    This function can be used from REQUEST_ROUTE|CORE_REPLY_ROUTE.

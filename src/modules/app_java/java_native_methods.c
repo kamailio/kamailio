@@ -414,7 +414,7 @@ int KamExec(JNIEnv *jenv, char *fname, int argc, char **argv)
 			STRING_ST, argv[3],			  /* param. 4 */
 			STRING_ST, argv[4],			  /* param. 5 */
 			STRING_ST, argv[5]			  /* param. 6 */
-			);
+	);
 
 	if(!act) {
 		LM_ERR("%s: KamExec(): action structure couldn't be created\n",
@@ -1002,6 +1002,7 @@ JNIEXPORT jint JNICALL Java_org_siprouter_CoreMethods_force_1send_1socket(
 	si = (struct socket_id *)pkg_malloc(sizeof(struct socket_id));
 	if(!si) {
 		PKG_MEM_ERROR;
+		pkg_free(nl);
 		return -1;
 	}
 

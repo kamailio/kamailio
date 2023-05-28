@@ -27,7 +27,7 @@
 #define _signals_h
 
 #ifdef USE_SIGACTION
-void (*set_sig_h(int sig, void (*handler) (int) ))(int);
+void (*set_sig_h(int sig, void (*handler)(int)))(int);
 #else
 #define set_sig_h signal
 #endif

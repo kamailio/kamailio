@@ -261,8 +261,8 @@ Release:    %rel
 Packager:   Sergey Safarov <s.safarov@gmail.com>
 License:    GPL-2.0
 Group:      %{PKGGROUP}
-Source:     http://kamailio.org/pub/kamailio/%{ver}/src/%{name}-%{ver}_src.tar.gz
-URL:        http://kamailio.org/
+Source:     https://kamailio.org/pub/kamailio/%{ver}/src/%{name}-%{ver}_src.tar.gz
+URL:        https://kamailio.org/
 Vendor:     kamailio.org
 BuildRoot:  %{_tmppath}/%{name}-%{ver}-buildroot
 Conflicts:  kamailio-acc_json < %ver
@@ -544,7 +544,7 @@ BuildRequires:  libcurl-devel
 %endif
 
 %description   http_async_client
-This module implements protocol functions that use the libcurl to communicate with HTTP servers in asyncronous way.
+This module implements protocol functions that use the libcurl to communicate with HTTP servers in asynchronous way.
 %endif
 
 %package    http_client
@@ -736,7 +736,11 @@ BuildRequires:  zlib-devel
 Requires:   libmysqlclient18
 BuildRequires:  libmysqlclient-devel
 %else
+%if 0%{?rhel} == 6
+BuildRequires:  mysql-devel
+%else
 BuildRequires:  mariadb-devel
+%endif
 %endif
 
 %description    mysql
@@ -1566,6 +1570,7 @@ fi
 %doc %{_docdir}/kamailio/modules/README.kex
 %doc %{_docdir}/kamailio/modules/README.lrkproxy
 %doc %{_docdir}/kamailio/modules/README.mangler
+%doc %{_docdir}/kamailio/modules/README.math
 %doc %{_docdir}/kamailio/modules/README.matrix
 %doc %{_docdir}/kamailio/modules/README.maxfwd
 %doc %{_docdir}/kamailio/modules/README.mediaproxy
@@ -1727,6 +1732,7 @@ fi
 %{_libdir}/kamailio/modules/kex.so
 %{_libdir}/kamailio/modules/lrkproxy.so
 %{_libdir}/kamailio/modules/mangler.so
+%{_libdir}/kamailio/modules/math.so
 %{_libdir}/kamailio/modules/matrix.so
 %{_libdir}/kamailio/modules/maxfwd.so
 %{_libdir}/kamailio/modules/mediaproxy.so

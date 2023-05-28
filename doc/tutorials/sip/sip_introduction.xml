@@ -238,9 +238,9 @@
 		<title>Proxy Server Usage</title>
 		<simpara>
 		    A typical configuration is that each centrally administered entity (a
-		    company, for instance) has it's own SIP proxy server which is used by all
+		    company, for instance) has its own SIP proxy server which is used by all
 		    user agents in the entity. Let's suppose that there are two companies A and
-		    B and each of them has it's own proxy server. <xref linkend="companies"/>
+		    B and each of them has its own proxy server. <xref linkend="companies"/>
 			shows how a session invitation from employee Joe in company A will reach
 			employee Bob in company B.
 		</simpara>
@@ -415,7 +415,7 @@ a=fmtp:101 0-16
 	    identifier and will be described in <xref linkend="sip_dialogs"/>.
 	</simpara>
 	<simpara>
-	    Call-ID header field is a dialog identifier and it's purpose is to identify messages
+	    Call-ID header field is a dialog identifier and its purpose is to identify messages
 	    belonging to the same call. Such messages have the same Call-ID identifier. CSeq is
 	    used to maintain order of requests. Because requests can be sent over an unreliable
 	    transport that can re-order messages, a sequence number must be present in the
@@ -644,7 +644,7 @@ Warning: 392 195.37.77.101:5060 "Noisy feedback tells:
 	    request or response comes, a stateful entity tries to associate the request (or
 	    response) to existing transactions. To be able to do it it must extract a unique
 	    transaction identifier from the message and compare it to identifiers of all
-	    existing transactions. If such a transaction exists then it's state gets updated
+	    existing transactions. If such a transaction exists then its state gets updated
 	    from the message.
 	</simpara>
 	<simpara>

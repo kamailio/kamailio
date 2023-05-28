@@ -779,6 +779,27 @@ modparam("p_usrloc", "UTC_timestamps", 1)
 		</example>
 	</section>
 
+    	<section>
+		<title><varname>use_domain_crc32</varname>(str)</title>
+		<para>
+			Enables or disables the crc32 of domain part for user@domain.
+			If disabled, will calculate crc32 only for user part.
+		</para>
+		<para>
+		<emphasis>
+		    Default value is <quote>1</quote> (enabled).
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>use_domain_crc32</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("p_usrloc", "use_domain_crc32", "0")
+...
+</programlisting>
+	    </example>
+	</section>
+
 </section>
 
     <section>

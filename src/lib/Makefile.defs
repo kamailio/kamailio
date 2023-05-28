@@ -88,11 +88,11 @@ endif
 #		@makedepend -fMakefile.deps -- ${DEFS} ${CFLAGS} ${INCLUDES} -- ${DEP_IN} 2>/dev/null
 #		-@rm -f Makefile.deps.bak
 
-# instalation rules
+# installation rules
 
 ifeq ($(TYPE),lib)
 
-# library instalation
+# library installation
 
 install:	${out_name} install_dirs
 			$(install-lib) ${out_name} $(lib-dir)
@@ -104,7 +104,7 @@ install_dirs:	$(lib-dir) $(include-dir)/$(NAME)
 
 else
 
-# executable instalation
+# executable installation
 
 install:	${out_name} install_dirs
 			$(install-bin) ${out_name} $(bin-dir)

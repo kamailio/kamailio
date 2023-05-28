@@ -34,12 +34,12 @@
 #include <openssl/ssl.h>
 
 
-#define TLS_OP_SSLv2_PLUS   0
-#define TLS_OP_SSLv3_PLUS   (TLS_OP_SSLv2_PLUS   | SSL_OP_NO_SSLv2)
-#define TLS_OP_TLSv1_PLUS   (TLS_OP_SSLv3_PLUS   | SSL_OP_NO_SSLv3)
+#define TLS_OP_SSLv2_PLUS 0
+#define TLS_OP_SSLv3_PLUS (TLS_OP_SSLv2_PLUS | SSL_OP_NO_SSLv2)
+#define TLS_OP_TLSv1_PLUS (TLS_OP_SSLv3_PLUS | SSL_OP_NO_SSLv3)
 
 #ifdef SSL_OP_NO_TLSv1
-#define TLS_OP_TLSv1_1_PLUS (TLS_OP_TLSv1_PLUS   | SSL_OP_NO_TLSv1)
+#define TLS_OP_TLSv1_1_PLUS (TLS_OP_TLSv1_PLUS | SSL_OP_NO_TLSv1)
 
 #ifdef SSL_OP_NO_TLSv1_1
 #define TLS_OP_TLSv1_2_PLUS (TLS_OP_TLSv1_1_PLUS | SSL_OP_NO_TLSv1_1)
@@ -54,31 +54,32 @@
 /**
  * Available TLS methods
  */
-enum tls_method {
+enum tls_method
+{
 	TLS_METHOD_UNSPEC = 0,
 	TLS_USE_SSLv23_cli,
 	TLS_USE_SSLv23_srv,
-	TLS_USE_SSLv23,     /* any SSL/TLS version */
+	TLS_USE_SSLv23, /* any SSL/TLS version */
 	TLS_USE_SSLv2_cli,
 	TLS_USE_SSLv2_srv,
-	TLS_USE_SSLv2,      /* only SSLv2 (deprecated) */
+	TLS_USE_SSLv2, /* only SSLv2 (deprecated) */
 	TLS_USE_SSLv3_cli,
 	TLS_USE_SSLv3_srv,
-	TLS_USE_SSLv3,      /* only SSLv3 (insecure) */
+	TLS_USE_SSLv3, /* only SSLv3 (insecure) */
 	TLS_USE_TLSv1_cli,
 	TLS_USE_TLSv1_srv,
-	TLS_USE_TLSv1,      /* only TLSv1.0 */
+	TLS_USE_TLSv1, /* only TLSv1.0 */
 	TLS_USE_TLSv1_1_cli,
 	TLS_USE_TLSv1_1_srv,
-	TLS_USE_TLSv1_1,    /* only TLSv1.1 */
+	TLS_USE_TLSv1_1, /* only TLSv1.1 */
 	TLS_USE_TLSv1_2_cli,
 	TLS_USE_TLSv1_2_srv,
-	TLS_USE_TLSv1_2,    /* only TLSv1.2 */
+	TLS_USE_TLSv1_2, /* only TLSv1.2 */
 	TLS_USE_TLSv1_3_cli,
 	TLS_USE_TLSv1_3_srv,
-	TLS_USE_TLSv1_3,    /* only TLSv1.3 */
-	TLS_USE_TLSvRANGE,    /* placeholder - TLSvX ranges must be after it */
-	TLS_USE_TLSv1_PLUS,   /* TLSv1.0 or greater */
+	TLS_USE_TLSv1_3,	  /* only TLSv1.3 */
+	TLS_USE_TLSvRANGE,	  /* placeholder - TLSvX ranges must be after it */
+	TLS_USE_TLSv1_PLUS,	  /* TLSv1.0 or greater */
 	TLS_USE_TLSv1_1_PLUS, /* TLSv1.1 or greater */
 	TLS_USE_TLSv1_2_PLUS, /* TLSv1.2 or greater */
 	TLS_USE_TLSv1_3_PLUS, /* TLSv1.3 or greater */
@@ -89,7 +90,8 @@ enum tls_method {
 /**
  * TLS configuration domain type
  */
-enum tls_domain_type {
+enum tls_domain_type
+{
 	TLS_DOMAIN_DEF = (1 << 0), /**< Default domain */
 	TLS_DOMAIN_SRV = (1 << 1), /**< Server domain */
 	TLS_DOMAIN_CLI = (1 << 2), /**< Client domain */
@@ -104,7 +106,8 @@ enum tls_domain_type {
 /**
  * TLS "verify_client" options
  */
-enum tls_verify_client_options {
+enum tls_verify_client_options
+{
 	TLS_VERIFY_CLIENT_OFF = 0,
 	TLS_VERIFY_CLIENT_ON = 1,
 	TLS_VERIFY_CLIENT_OPTIONAL = 2,
@@ -115,11 +118,12 @@ enum tls_verify_client_options {
 /**
  * separate configuration per ip:port
  */
-typedef struct tls_domain {
+typedef struct tls_domain
+{
 	int type;
 	struct ip_addr ip;
 	unsigned short port;
-	SSL_CTX** ctx;
+	SSL_CTX **ctx;
 	str cert_file;
 	str pkey_file;
 	int verify_cert;
@@ -134,20 +138,21 @@ typedef struct tls_domain {
 	int server_name_mode;
 	str server_id;
 	int verify_client;
-	struct tls_domain* next;
+	struct tls_domain *next;
 } tls_domain_t;
 
 
 /**
  * TLS configuration structures
  */
-typedef struct tls_domains_cfg {
-	tls_domain_t* srv_default; /**< Default server domain */
-	tls_domain_t* cli_default; /**< Default client domain */
-	tls_domain_t* srv_list;    /**< Server domain list */
-	tls_domain_t* cli_list;    /**< Client domain list */
-	struct tls_domains_cfg* next; /**< Next element in the garbage list */
-	atomic_t ref_count;        /**< How many connections use this configuration */
+typedef struct tls_domains_cfg
+{
+	tls_domain_t *srv_default;	  /**< Default server domain */
+	tls_domain_t *cli_default;	  /**< Default client domain */
+	tls_domain_t *srv_list;		  /**< Server domain list */
+	tls_domain_t *cli_list;		  /**< Client domain list */
+	struct tls_domains_cfg *next; /**< Next element in the garbage list */
+	atomic_t ref_count; /**< How many connections use this configuration */
 } tls_domains_cfg_t;
 
 
@@ -160,15 +165,14 @@ typedef struct tls_domains_cfg {
  * @param port domain port
  * @return new domain
  */
-tls_domain_t *tls_new_domain(int type, struct ip_addr *ip,
-			     unsigned short port);
+tls_domain_t *tls_new_domain(int type, struct ip_addr *ip, unsigned short port);
 
 
 /**
  * @brief Free all memory used by TLS configuration domain
  * @param d freed domain
  */
-void tls_free_domain(tls_domain_t* d);
+void tls_free_domain(tls_domain_t *d);
 
 
 /**
@@ -176,8 +180,7 @@ void tls_free_domain(tls_domain_t* d);
  * @param d printed domain
  * @return printed domain, with zero termination
  */
-char* tls_domain_str(tls_domain_t* d);
-
+char *tls_domain_str(tls_domain_t *d);
 
 
 /**
@@ -186,7 +189,7 @@ char* tls_domain_str(tls_domain_t* d);
  * Create new configuration structure in new allocated shared memory.
  * @return configuration structure or zero on error
  */
-tls_domains_cfg_t* tls_new_cfg(void);
+tls_domains_cfg_t *tls_new_cfg(void);
 
 
 /**
@@ -195,7 +198,7 @@ tls_domains_cfg_t* tls_new_cfg(void);
  * @param d TLS domain
  * @return 1 if domain already exists, 0 after addition, -1 on error
  */
-int tls_add_domain(tls_domains_cfg_t* cfg, tls_domain_t* d);
+int tls_add_domain(tls_domains_cfg_t *cfg, tls_domain_t *d);
 
 
 /**
@@ -208,8 +211,8 @@ int tls_add_domain(tls_domains_cfg_t* cfg, tls_domain_t* d);
  * @param cli_defaults command line interface defaults
  * @return 0 on success, -1 on error
  */
-int tls_fix_domains_cfg(tls_domains_cfg_t* cfg, tls_domain_t* srv_defaults,
-				tls_domain_t* cli_defaults);
+int tls_fix_domains_cfg(tls_domains_cfg_t *cfg, tls_domain_t *srv_defaults,
+		tls_domain_t *cli_defaults);
 
 
 /**
@@ -221,15 +224,15 @@ int tls_fix_domains_cfg(tls_domains_cfg_t* cfg, tls_domain_t* srv_defaults,
  * @param sname server name
  * @return found configuration or default, if not found
  */
-tls_domain_t* tls_lookup_cfg(tls_domains_cfg_t* cfg, int type,
-			struct ip_addr* ip, unsigned short port, str *sname, str *srvid);
+tls_domain_t *tls_lookup_cfg(tls_domains_cfg_t *cfg, int type,
+		struct ip_addr *ip, unsigned short port, str *sname, str *srvid);
 
 
 /**
  * @brief Free TLS configuration structure
  * @param cfg freed configuration
  */
-void tls_free_cfg(tls_domains_cfg_t* cfg);
+void tls_free_cfg(tls_domains_cfg_t *cfg);
 
 
 /**
@@ -240,6 +243,6 @@ void tls_destroy_cfg(void);
 /**
  * @brief Check if a TLS configuration domain exists
  */
-int ksr_tls_domain_duplicated(tls_domains_cfg_t* cfg, tls_domain_t* d);
+int ksr_tls_domain_duplicated(tls_domains_cfg_t *cfg, tls_domain_t *d);
 
 #endif /* _TLS_DOMAIN_H */

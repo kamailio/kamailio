@@ -26,12 +26,14 @@
 
 typedef void (*async_cbe_t)(void *p);
 
-typedef struct _async_task {
+typedef struct _async_task
+{
 	async_cbe_t exec;
 	void *param;
 } async_task_t;
 
-typedef struct _async_wgroup {
+typedef struct _async_wgroup
+{
 	str name;
 	int workers;
 	int sockets[2];

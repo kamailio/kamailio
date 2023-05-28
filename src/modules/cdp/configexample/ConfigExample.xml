@@ -51,7 +51,7 @@
 >
 	<!--
 		Definition of peers to connect to and accept connections from. For each peer found in here
-		a dedicated receiver process will be forked. All other unkwnown peers will share a single
+		a dedicated receiver process will be forked. All other unknown peers will share a single
 		receiver.
 	-->
 	<Peer FQDN="hss.open-ims.test" Realm="open-ims.test" port="3868" src_addr="192.168.1.1" ip_proto="SCTP"/>

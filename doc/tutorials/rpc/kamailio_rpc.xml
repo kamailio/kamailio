@@ -36,16 +36,16 @@
 		for implementing RPC transports.
 	</para>
 	<para>
-		The RPC transports are implemented by writting a RPC
+		The RPC transports are implemented by writing a RPC
 		transport module. The most used transport modules are
-		<ulink url='http://www.kamailio.org/docs/modules/devel/modules/ctl/ctl.html'>
+		<ulink url='https://www.kamailio.org/docs/modules/devel/modules/ctl/ctl.html'>
 		<emphasis>ctl</emphasis>
 		</ulink>,
-		<ulink url='http://www.kamailio.org/docs/modules/devel/modules/xmlrpc/xmlrpc.html'>
+		<ulink url='https://www.kamailio.org/docs/modules/devel/modules/xmlrpc/xmlrpc.html'>
 		<emphasis>xmlrpc</emphasis>
 		</ulink>
 		and
-		<ulink url='http://www.kamailio.org/docs/modules/devel/modules/jsonrpc-s/jsonrpc-s.html'>
+		<ulink url='https://www.kamailio.org/docs/modules/devel/modules/jsonrpc-s/jsonrpc-s.html'>
 		<emphasis>jsonrpc-s</emphasis>
 		</ulink>.
 	</para>
@@ -911,7 +911,7 @@ static void rpc_register(rpc_t* rpc, void *ctx)
 <section id="rpc.xmlrpc_examples">
 	<title>Examples using xmlrpc</title>
 	<para>See the <varname>xmlrpc</varname> module documentation:
-	<ulink url='http://www.kamailio.org/docs/modules/devel/modules/xmlrpc.html'>modules/xmlrpc/README</ulink>.
+	<ulink url='https://www.kamailio.org/docs/modules/devel/modules/xmlrpc.html'>modules/xmlrpc/README</ulink>.
 	</para>
 </section>
 

@@ -1894,6 +1894,29 @@ if (str_ifind("$rU", "Alice")) {
 		</example>
 	</section>
 
+	<section id="textops.f.str_any_in">
+		<title>
+		<function moreinfo="none">str_any_in(txt, clist)</function>
+		</title>
+		<para>
+			Return 1 (true) if any character in "clist" is found inside "txt".
+			Both paramters can contain variables.
+		</para>
+		<para>
+		This function can be used from ANY_ROUTE.
+		</para>
+		<example>
+		<title><function>str_any_in</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (str_any_in("$hdr(X-Hdr)", ";',:")) {
+    # do interesting stuff here
+}
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="textops.f.set_body_multipart">
 		<title>
 		<function moreinfo="none">set_body_multipart([txt, content_type][, boundary])</function>

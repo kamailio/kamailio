@@ -16,7 +16,7 @@
     <para>
 	The <function>main</function> function in file
 	<filename>main.c</filename> is the first function called upon server
-	startup. It's purpose is to initialize the server and enter main
+	startup. Its purpose is to initialize the server and enter main
 	loop. The server initialization will be described in the following
 	sections.
     </para>
@@ -196,7 +196,7 @@
 		Structure of the configuration file is described using
 		grammar. Grammar is a set of rules describing valid 'order' or
 		'combination' of tokens. If the file isn't conformable with
-		it's grammar, it is syntactically invalid and cannot be further
+		its grammar, it is syntactically invalid and cannot be further
 		processed. In that case an error will be issued and the server
 		will be aborted.
 	    </para>
@@ -377,7 +377,7 @@ cmd = "forward" "(" host ")" { $$ = mk_action(FORWARD_T, STRING_ST, NUMBER_ST, $
 			    </para>
 			</listitem>
 			<listitem>
-			    <para>Reply-route statement has it's own array of linked-lists.</para>
+			    <para>Reply-route statement has its own array of linked-lists.</para>
 			</listitem>
 		    </itemizedlist>
 		</para>		    
@@ -685,7 +685,7 @@ module_stm = "loadmodule" STRING
 	    </itemizedlist>
 	    
 	    <para>
-		The following initialization will be performed in dont fork
+		The following initialization will be performed in dont_fork
 		mode.  (look into function <function>main_loop</function> in
 		file <filename>main.c</filename>.
 	    </para>

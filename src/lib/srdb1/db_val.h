@@ -63,7 +63,7 @@ typedef enum {
 
 /**
  * This structure represents a value in the database. Several datatypes are
- * recognized and converted by the database API. These datatypes are automaticaly
+ * recognized and converted by the database API. These datatypes are automatically
  * recognized, converted from internal database representation and stored in the
  * variable of corresponding type.
  *

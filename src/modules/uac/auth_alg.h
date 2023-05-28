@@ -28,19 +28,13 @@
 #include "auth.h"
 
 
-void uac_calc_HA1( struct uac_credential *crd,
-		struct authenticate_body *auth,
-		str* cnonce,
-		HASHHEX sess_key);
+void uac_calc_HA1(struct uac_credential *crd, struct authenticate_body *auth,
+		str *cnonce, HASHHEX sess_key);
 
-void uac_calc_HA2( str *method, str *uri,
-		struct authenticate_body *auth,
-		HASHHEX hentity,
-		HASHHEX HA2Hex );
+void uac_calc_HA2(str *method, str *uri, struct authenticate_body *auth,
+		HASHHEX hentity, HASHHEX HA2Hex);
 
-void uac_calc_response( HASHHEX ha1, HASHHEX ha2,
-		struct authenticate_body *auth,
-		str* nc, str* cnonce,
-		HASHHEX response);
+void uac_calc_response(HASHHEX ha1, HASHHEX ha2, struct authenticate_body *auth,
+		str *nc, str *cnonce, HASHHEX response);
 
 #endif

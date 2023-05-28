@@ -41,7 +41,8 @@
 
 #include "tmx_pretran.h"
 
-typedef struct _pretran {
+typedef struct _pretran
+{
 	unsigned int hid;
 	unsigned int linked;
 	str callid;
@@ -56,7 +57,8 @@ typedef struct _pretran {
 	struct _pretran *prev;
 } pretran_t;
 
-typedef struct pretran_slot {
+typedef struct pretran_slot
+{
 	pretran_t *plist;
 	gen_lock_t lock;
 } pretran_slot_t;
@@ -75,30 +77,33 @@ int tmx_init_pretran_table(void)
 
 	pn = get_max_procs();
 
-	if(pn<=0)
+	if(pn <= 0)
 		return -1;
-	if(_tmx_ptran_table!=NULL)
+	if(_tmx_ptran_table != NULL)
 		return -1;
 	/* get the highest power of two less than number of processes */
 	n = -1;
-	while (pn >> ++n > 0);
+	while(pn >> ++n > 0)
+		;
 	n--;
-	if(n<=1) n = 2;
-	if(n>8) n = 8;
-	_tmx_ptran_size = 1<<n;
+	if(n <= 1)
+		n = 2;
+	if(n > 8)
+		n = 8;
+	_tmx_ptran_size = 1 << n;
 
-	_tmx_ptran_table = (pretran_slot_t*)shm_malloc(_tmx_ptran_size*sizeof(pretran_slot_t));
+	_tmx_ptran_table = (pretran_slot_t *)shm_malloc(
+			_tmx_ptran_size * sizeof(pretran_slot_t));
 	if(_tmx_ptran_table == NULL) {
 		SHM_MEM_ERROR;
 		return -1;
 	}
-	memset(_tmx_ptran_table, 0, _tmx_ptran_size*sizeof(pretran_slot_t));
-	for(n=0; n<_tmx_ptran_size; n++) {
-		if(lock_init(&_tmx_ptran_table[n].lock)==NULL)
-		{
+	memset(_tmx_ptran_table, 0, _tmx_ptran_size * sizeof(pretran_slot_t));
+	for(n = 0; n < _tmx_ptran_size; n++) {
+		if(lock_init(&_tmx_ptran_table[n].lock) == NULL) {
 			LM_ERR("cannot init the lock %d\n", n);
 			n--;
-			while(n>=0) {
+			while(n >= 0) {
 				lock_destroy(&_tmx_ptran_table[n].lock);
 				n--;
 			}
@@ -116,10 +121,10 @@ int tmx_init_pretran_table(void)
  */
 void tmx_pretran_link_safe(int slotid)
 {
-	if(_tmx_proc_ptran==NULL)
+	if(_tmx_proc_ptran == NULL)
 		return;
 
-	if(_tmx_ptran_table[slotid].plist==NULL) {
+	if(_tmx_ptran_table[slotid].plist == NULL) {
 		_tmx_ptran_table[slotid].plist = _tmx_proc_ptran;
 		_tmx_proc_ptran->linked = 1;
 		return;
@@ -136,18 +141,18 @@ void tmx_pretran_link_safe(int slotid)
  */
 void tmx_pretran_unlink_safe(int slotid)
 {
-	if(_tmx_proc_ptran==NULL)
+	if(_tmx_proc_ptran == NULL)
 		return;
 	if(_tmx_proc_ptran->linked == 0)
 		return;
-	if(_tmx_ptran_table[slotid].plist==NULL) {
+	if(_tmx_ptran_table[slotid].plist == NULL) {
 		_tmx_proc_ptran->prev = _tmx_proc_ptran->next = NULL;
 		_tmx_proc_ptran->linked = 0;
 		return;
 	}
-	if(_tmx_proc_ptran->prev==NULL) {
+	if(_tmx_proc_ptran->prev == NULL) {
 		_tmx_ptran_table[slotid].plist = _tmx_proc_ptran->next;
-		if(_tmx_ptran_table[slotid].plist!=NULL)
+		if(_tmx_ptran_table[slotid].plist != NULL)
 			_tmx_ptran_table[slotid].plist->prev = NULL;
 	} else {
 		_tmx_proc_ptran->prev->next = _tmx_proc_ptran->next;
@@ -166,10 +171,10 @@ void tmx_pretran_unlink(void)
 {
 	int slotid;
 
-	if(_tmx_proc_ptran==NULL)
+	if(_tmx_proc_ptran == NULL)
 		return;
 
-	slotid = _tmx_proc_ptran->hid & (_tmx_ptran_size-1);
+	slotid = _tmx_proc_ptran->hid & (_tmx_ptran_size - 1);
 	lock_get(&_tmx_ptran_table[slotid].lock);
 	tmx_pretran_unlink_safe(slotid);
 	lock_release(&_tmx_ptran_table[slotid].lock);
@@ -194,40 +199,42 @@ int tmx_check_pretran(sip_msg_t *msg)
 	str svbranch = {NULL, 0};
 	pretran_t *it;
 
-	if(_tmx_ptran_table==NULL) {
+	if(_tmx_ptran_table == NULL) {
 		LM_ERR("pretran hash table not initialized yet\n");
 		return -1;
 	}
-	if(get_route_type()!=REQUEST_ROUTE) {
+	if(get_route_type() != REQUEST_ROUTE) {
 		LM_ERR("invalid usage - not in request route\n");
 		return -1;
 	}
-	if(msg->first_line.type!=SIP_REQUEST) {
+	if(msg->first_line.type != SIP_REQUEST) {
 		LM_ERR("invalid usage - not a sip request\n");
 		return -1;
 	}
-	if(parse_headers(msg, HDR_FROM_F|HDR_VIA1_F|HDR_CALLID_F|HDR_CSEQ_F, 0)<0) {
+	if(parse_headers(
+			   msg, HDR_FROM_F | HDR_VIA1_F | HDR_CALLID_F | HDR_CSEQ_F, 0)
+			< 0) {
 		LM_ERR("failed to parse required headers\n");
 		return -1;
 	}
-	if(msg->cseq==NULL || msg->cseq->parsed==NULL) {
+	if(msg->cseq == NULL || msg->cseq->parsed == NULL) {
 		LM_ERR("failed to parse cseq headers\n");
 		return -1;
 	}
-	if(get_cseq(msg)->method_id==METHOD_ACK
-			|| get_cseq(msg)->method_id==METHOD_CANCEL) {
+	if(get_cseq(msg)->method_id == METHOD_ACK
+			|| get_cseq(msg)->method_id == METHOD_CANCEL) {
 		LM_DBG("no pre-transaction management for ACK or CANCEL\n");
 		return -1;
 	}
-	if (msg->via1==0) {
+	if(msg->via1 == 0) {
 		LM_ERR("failed to get Via header\n");
 		return -1;
 	}
-	if (parse_from_header(msg)<0 || get_from(msg)->tag_value.len==0) {
+	if(parse_from_header(msg) < 0 || get_from(msg)->tag_value.len == 0) {
 		LM_ERR("failed to get From header\n");
 		return -1;
 	}
-	if (msg->callid==NULL || msg->callid->body.s==NULL) {
+	if(msg->callid == NULL || msg->callid->body.s == NULL) {
 		LM_ERR("failed to parse callid headers\n");
 		return -1;
 	}
@@ -244,10 +251,10 @@ int tmx_check_pretran(sip_msg_t *msg)
 	trim(&sftag);
 
 	chid = get_hash1_raw(scallid.s, scallid.len);
-	slotid = chid & (_tmx_ptran_size-1);
+	slotid = chid & (_tmx_ptran_size - 1);
 
 	if(unlikely(_tmx_proc_ptran == NULL)) {
-		_tmx_proc_ptran = (pretran_t*)shm_malloc(sizeof(pretran_t));
+		_tmx_proc_ptran = (pretran_t *)shm_malloc(sizeof(pretran_t));
 		if(_tmx_proc_ptran == NULL) {
 			SHM_MEM_ERROR_FMT("pretran structure\n");
 			return -1;
@@ -255,21 +262,22 @@ int tmx_check_pretran(sip_msg_t *msg)
 		memset(_tmx_proc_ptran, 0, sizeof(pretran_t));
 		_tmx_proc_ptran->pid = my_pid();
 	}
-	dsize = scallid.len + scseqnum.len + scseqmet.len
-		+ sftag.len + 4;
-	if(likely(vbr!=NULL)) {
+	dsize = scallid.len + scseqnum.len + scseqmet.len + sftag.len + 4;
+	if(likely(vbr != NULL)) {
 		svbranch = vbr->value;
 		trim(&svbranch);
 		dsize += svbranch.len + 1;
 	}
-	if(dsize<256) dsize = 256;
+	if(dsize < 256)
+		dsize = 256;
 
 	tmx_pretran_unlink();
 
 	if(dsize > _tmx_proc_ptran->dbuf.len) {
-		if(_tmx_proc_ptran->dbuf.s) shm_free(_tmx_proc_ptran->dbuf.s);
-		_tmx_proc_ptran->dbuf.s = (char*)shm_malloc(dsize);
-		if(_tmx_proc_ptran->dbuf.s==NULL) {
+		if(_tmx_proc_ptran->dbuf.s)
+			shm_free(_tmx_proc_ptran->dbuf.s);
+		_tmx_proc_ptran->dbuf.s = (char *)shm_malloc(dsize);
+		if(_tmx_proc_ptran->dbuf.s == NULL) {
 			SHM_MEM_ERROR_FMT("pretran data\n");
 			return -1;
 		}
@@ -283,27 +291,27 @@ int tmx_check_pretran(sip_msg_t *msg)
 	_tmx_proc_ptran->callid.len = scallid.len;
 	_tmx_proc_ptran->callid.s[_tmx_proc_ptran->callid.len] = '\0';
 
-	_tmx_proc_ptran->ftag.s = _tmx_proc_ptran->callid.s
-		+ _tmx_proc_ptran->callid.len + 1;
+	_tmx_proc_ptran->ftag.s =
+			_tmx_proc_ptran->callid.s + _tmx_proc_ptran->callid.len + 1;
 	memcpy(_tmx_proc_ptran->ftag.s, sftag.s, sftag.len);
 	_tmx_proc_ptran->ftag.len = sftag.len;
 	_tmx_proc_ptran->ftag.s[_tmx_proc_ptran->ftag.len] = '\0';
 
-	_tmx_proc_ptran->cseqnum.s = _tmx_proc_ptran->ftag.s
-		+ _tmx_proc_ptran->ftag.len + 1;
+	_tmx_proc_ptran->cseqnum.s =
+			_tmx_proc_ptran->ftag.s + _tmx_proc_ptran->ftag.len + 1;
 	memcpy(_tmx_proc_ptran->cseqnum.s, scseqnum.s, scseqnum.len);
 	_tmx_proc_ptran->cseqnum.len = scseqnum.len;
 	_tmx_proc_ptran->cseqnum.s[_tmx_proc_ptran->cseqnum.len] = '\0';
 
-	_tmx_proc_ptran->cseqmet.s = _tmx_proc_ptran->cseqnum.s
-		+ _tmx_proc_ptran->cseqnum.len + 1;
+	_tmx_proc_ptran->cseqmet.s =
+			_tmx_proc_ptran->cseqnum.s + _tmx_proc_ptran->cseqnum.len + 1;
 	memcpy(_tmx_proc_ptran->cseqmet.s, scseqmet.s, scseqmet.len);
 	_tmx_proc_ptran->cseqmet.len = scseqmet.len;
 	_tmx_proc_ptran->cseqmet.s[_tmx_proc_ptran->cseqmet.len] = '\0';
 
-	if(likely(vbr!=NULL)) {
-		_tmx_proc_ptran->vbranch.s = _tmx_proc_ptran->cseqmet.s
-			+ _tmx_proc_ptran->cseqmet.len + 1;
+	if(likely(vbr != NULL)) {
+		_tmx_proc_ptran->vbranch.s =
+				_tmx_proc_ptran->cseqmet.s + _tmx_proc_ptran->cseqmet.len + 1;
 		memcpy(_tmx_proc_ptran->vbranch.s, svbranch.s, svbranch.len);
 		_tmx_proc_ptran->vbranch.len = svbranch.len;
 		_tmx_proc_ptran->vbranch.s[_tmx_proc_ptran->vbranch.len] = '\0';
@@ -315,7 +323,7 @@ int tmx_check_pretran(sip_msg_t *msg)
 	lock_get(&_tmx_ptran_table[slotid].lock);
 	it = _tmx_ptran_table[slotid].plist;
 	tmx_pretran_link_safe(slotid);
-	for(; it!=NULL; it=it->next) {
+	for(; it != NULL; it = it->next) {
 		if(_tmx_proc_ptran->hid != it->hid
 				|| _tmx_proc_ptran->cseqmetid != it->cseqmetid
 				|| _tmx_proc_ptran->callid.len != it->callid.len
@@ -329,11 +337,12 @@ int tmx_check_pretran(sip_msg_t *msg)
 			/* shortcut - check last char in Via branch
 			 * - kamailio/ser adds there branch index => in case of paralel
 			 *   forking by previous hop, catch it here quickly */
-			if(_tmx_proc_ptran->vbranch.s[it->vbranch.len-1]
-					!= it->vbranch.s[it->vbranch.len-1])
+			if(_tmx_proc_ptran->vbranch.s[it->vbranch.len - 1]
+					!= it->vbranch.s[it->vbranch.len - 1])
 				continue;
-			if(memcmp(_tmx_proc_ptran->vbranch.s,
-						it->vbranch.s, it->vbranch.len)!=0)
+			if(memcmp(_tmx_proc_ptran->vbranch.s, it->vbranch.s,
+					   it->vbranch.len)
+					!= 0)
 				continue;
 			/* shall stop by matching magic cookie?
 			 *  if (vbr && vbr->value.s && vbr->value.len > MCOOKIE_LEN
@@ -342,16 +351,17 @@ int tmx_check_pretran(sip_msg_t *msg)
 			 *  }
 			 */
 		}
-		if(memcmp(_tmx_proc_ptran->callid.s,
-					it->callid.s, it->callid.len)!=0
-				|| memcmp(_tmx_proc_ptran->ftag.s,
-					it->ftag.s, it->ftag.len)!=0
-				|| memcmp(_tmx_proc_ptran->cseqnum.s,
-					it->cseqnum.s, it->cseqnum.len)!=0)
+		if(memcmp(_tmx_proc_ptran->callid.s, it->callid.s, it->callid.len) != 0
+				|| memcmp(_tmx_proc_ptran->ftag.s, it->ftag.s, it->ftag.len)
+						   != 0
+				|| memcmp(_tmx_proc_ptran->cseqnum.s, it->cseqnum.s,
+						   it->cseqnum.len)
+						   != 0)
 			continue;
-		if((it->cseqmetid==METHOD_OTHER || it->cseqmetid==METHOD_UNDEF)
-				&& memcmp(_tmx_proc_ptran->cseqmet.s,
-					it->cseqmet.s, it->cseqmet.len)!=0)
+		if((it->cseqmetid == METHOD_OTHER || it->cseqmetid == METHOD_UNDEF)
+				&& memcmp(_tmx_proc_ptran->cseqmet.s, it->cseqmet.s,
+						   it->cseqmet.len)
+						   != 0)
 			continue;
 		LM_DBG("matched another pre-transaction by pid %d for [%.*s]\n",
 				it->pid, it->callid.len, it->callid.s);
@@ -361,4 +371,3 @@ int tmx_check_pretran(sip_msg_t *msg)
 	lock_release(&_tmx_ptran_table[slotid].lock);
 	return 0;
 }
-

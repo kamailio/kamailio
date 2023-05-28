@@ -22,45 +22,45 @@
 #include "ul_db_api.h"
 #include "../../core/sr_module.h"
 
-int bind_ul_db(ul_db_api_t* api)
+int bind_ul_db(ul_db_api_t *api)
 {
-	if (!api) {
+	if(!api) {
 		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
-	
-	api->insert = (ul_db_insert_t) ul_db_insert;
-	if(api->insert == 0){
+
+	api->insert = (ul_db_insert_t)ul_db_insert;
+	if(api->insert == 0) {
 		LM_ERR("can't bind ul_db_insert\n");
 		return -1;
 	}
 
-	api->update = (ul_db_update_t) ul_db_update;
-	if(api->update == 0){
+	api->update = (ul_db_update_t)ul_db_update;
+	if(api->update == 0) {
 		LM_ERR("can't bind ul_db_update\n");
 		return -1;
 	}
-	
-	api->replace = (ul_db_replace_t) ul_db_replace;
-	if(api->replace == 0){
+
+	api->replace = (ul_db_replace_t)ul_db_replace;
+	if(api->replace == 0) {
 		LM_ERR("can't bind ul_db_replace\n");
 		return -1;
 	}
-	
-	api->delete = (ul_db_delete_t) ul_db_delete;
-	if(api->delete == 0){
+
+	api->delete = (ul_db_delete_t)ul_db_delete;
+	if(api->delete == 0) {
 		LM_ERR("can't bind ul_db_delete\n");
 		return -1;
 	}
-	
-	api->query = (ul_db_query_t) ul_db_query;
-	if(api->query == 0){
+
+	api->query = (ul_db_query_t)ul_db_query;
+	if(api->query == 0) {
 		LM_ERR("can't bind ul_db_query\n");
 		return -1;
 	}
-	
-	api->free_result = (ul_db_free_result_t) ul_db_free_result;
-	if(api->free_result == 0){
+
+	api->free_result = (ul_db_free_result_t)ul_db_free_result;
+	if(api->free_result == 0) {
 		LM_ERR("can't bind ul_db_free_result\n");
 		return -1;
 	}

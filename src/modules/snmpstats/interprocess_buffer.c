@@ -153,7 +153,7 @@ void handleContactCallbacks(ucontact_t *contactInfo, int type, void *param)
 	/* We need to maintain our own copies of the AOR and contact address to
 	 * prevent the corruption of our internal data structures.  
 	 *
-	 * If we do not maintain our own copies, then the AOR and contact adress
+	 * If we do not maintain our own copies, then the AOR and contact address
 	 * pointed to could be removed and reallocated to another thread before
 	 * we get a chance to consume our interprocess buffer.  */
 	convertStrToCharString(contactInfo->aor, &addressOfRecord);
@@ -295,7 +295,7 @@ static void executeInterprocessBufferCmd(interprocessBuffer_t *currentBuffer)
 		currentUser->contactIndex++;
 
 		/* We should do this after we create the row in the snmptable.
-		 * Its easier to delete the SNMP Row than the contact record. */
+		 * It is easier to delete the SNMP Row than the contact record. */
 		if(!insertContactRecord(&(currentUser->contactList),
 				   currentUser->contactIndex, currentBuffer->stringContact)) {
 
@@ -322,7 +322,7 @@ static void executeInterprocessBufferCmd(interprocessBuffer_t *currentBuffer)
 		delContactIndex = deleteContactRecord(
 				&(currentUser->contactList), currentBuffer->stringContact);
 
-		/* This should never happen.  But its probably wise to check and
+		/* This should never happen.  But it is probably wise to check and
 		 * to print out debug messages in case there is a hidden bug.  */
 		if(delContactIndex == 0) {
 

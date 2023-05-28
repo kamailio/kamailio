@@ -30,26 +30,32 @@
 
 #include <sys/socket.h>
 
-#define FAKED_SIP_SESSION_FORMAT "%.*s %.*s SIP/2.0\r\nVia: SIP/2.0/UDP 127.0.0.1\r\nFrom: %.*s%.*s\r\nTo: %.*s;tag=xyz\r\nCall-ID: %.*s\r\nCSeq: 1 %.*s\r\nContent-Length: 0\r\nP-Requested-Units: %i\r\nP-Used-Units: %i\r\nP-Access-Network-Info: %.*s\r\nP-Service-Identifier: %i\r\n\r\n"
+#define FAKED_SIP_SESSION_FORMAT                                           \
+	"%.*s %.*s SIP/2.0\r\nVia: SIP/2.0/UDP 127.0.0.1\r\nFrom: "            \
+	"%.*s%.*s\r\nTo: %.*s;tag=xyz\r\nCall-ID: %.*s\r\nCSeq: 1 "            \
+	"%.*s\r\nContent-Length: 0\r\nP-Requested-Units: %i\r\nP-Used-Units: " \
+	"%i\r\nP-Access-Network-Info: %.*s\r\nP-Service-Identifier: %i\r\n\r\n"
 
-#define FAKED_SIP_SESSION_BUF_LEN	1024
+#define FAKED_SIP_SESSION_BUF_LEN 1024
 char _faked_sip_session_buf[FAKED_SIP_SESSION_BUF_LEN];
 
 str CC_INVITE = {"INVITE", 6};
 str CC_UPDATE = {"UPDATE", 6};
 str CC_BYE = {"BYE", 3};
 
-#define RO_CC_START 	1
-#define RO_CC_INTERIM 	2
-#define RO_CC_STOP 	3
+#define RO_CC_START 1
+#define RO_CC_INTERIM 2
+#define RO_CC_STOP 3
 
 static struct sip_msg _faked_msg;
 
-int getMethod(AAAMessage *msg, str ** method) {
+int getMethod(AAAMessage *msg, str **method)
+{
 	str s;
 	s = get_avp(msg, AVP_IMS_CCR_Type, 0, __FUNCTION__);
-	if (!s.s) return -1;
-	switch (get_4bytes(s.s)) {
+	if(!s.s)
+		return -1;
+	switch(get_4bytes(s.s)) {
 		case RO_CC_START:
 			*method = &CC_INVITE;
 			break;
@@ -64,14 +70,14 @@ int getMethod(AAAMessage *msg, str ** method) {
 			return -1;
 			break;
 	}
-	
+
 	return 1;
-	
 }
 
-int faked_aaa_msg(AAAMessage *ccr, struct sip_msg **msg) {
+int faked_aaa_msg(AAAMessage *ccr, struct sip_msg **msg)
+{
 	int type, size;
-	str * method;
+	str *method;
 	str prefix = {0, 0};
 	str from_uri = getSubscriptionId1(ccr, &type);
 	str to_uri = getCalledParty(ccr);
@@ -82,50 +88,50 @@ int faked_aaa_msg(AAAMessage *ccr, struct sip_msg **msg) {
 	int group = 0;
 	int requested_units = getUnits(ccr, &used_units, &service, &group);
 
-	if (getMethod(ccr, &method) < 0) {
+	if(getMethod(ccr, &method) < 0) {
 		LM_ERR("Failed to get CCR-Type\n");
 		return -1;
 	}
 
-	if (type != AVP_Subscription_Id_Type_SIP_URI) {
+	if(type != AVP_Subscription_Id_Type_SIP_URI) {
 		prefix.s = "tel:";
 		prefix.len = 4;
 	}
-	
+
 
 	memset(_faked_sip_session_buf, 0, FAKED_SIP_SESSION_BUF_LEN);
 	memset(&_faked_msg, 0, sizeof(struct sip_msg));
 
-	size = snprintf(_faked_sip_session_buf, FAKED_SIP_SESSION_BUF_LEN, FAKED_SIP_SESSION_FORMAT,
-		/* First-Line METHOD sip:.... */
-		method->len, method->s, to_uri.len, to_uri.s,
-		/* Prefix */
-		prefix.len, prefix.s,
-		/* From-Header */
-		from_uri.len, from_uri.s,
-		/* To-Header */
-		to_uri.len, to_uri.s,
-		/* Call-ID */
-		callid.len, callid.s,
-		/* CSeq (Method) */
-		method->len, method->s,
-		/* Requested / Used Units */
-		requested_units, used_units,
-		/* P-Access-Network-Info */
-		access_network_info.len, access_network_info.s,
-                /* P-Access-Network-Info */
-		service
-	);
- 
+	size = snprintf(_faked_sip_session_buf, FAKED_SIP_SESSION_BUF_LEN,
+			FAKED_SIP_SESSION_FORMAT,
+			/* First-Line METHOD sip:.... */
+			method->len, method->s, to_uri.len, to_uri.s,
+			/* Prefix */
+			prefix.len, prefix.s,
+			/* From-Header */
+			from_uri.len, from_uri.s,
+			/* To-Header */
+			to_uri.len, to_uri.s,
+			/* Call-ID */
+			callid.len, callid.s,
+			/* CSeq (Method) */
+			method->len, method->s,
+			/* Requested / Used Units */
+			requested_units, used_units,
+			/* P-Access-Network-Info */
+			access_network_info.len, access_network_info.s,
+			/* P-Access-Network-Info */
+			service);
+
 	LM_DBG("fake msg:\n%s\n", _faked_sip_session_buf);
 
 	_faked_msg.buf = _faked_sip_session_buf;
 	_faked_msg.len = size;
 
-	_faked_msg.set_global_address	= default_global_address;
-	_faked_msg.set_global_port	= default_global_port;
+	_faked_msg.set_global_address = default_global_address;
+	_faked_msg.set_global_port = default_global_port;
 
-	if (parse_msg(_faked_msg.buf, _faked_msg.len, &_faked_msg) != 0) {
+	if(parse_msg(_faked_msg.buf, _faked_msg.len, &_faked_msg) != 0) {
 		LM_ERR("parse_msg failed\n");
 		return -1;
 	}
@@ -140,6 +146,6 @@ int faked_aaa_msg(AAAMessage *ccr, struct sip_msg **msg) {
 	_faked_msg.rcv.dst_ip.af = AF_INET;
 	_faked_msg.rcv.dst_ip.len = 4;
 
-	*msg	= &_faked_msg;
+	*msg = &_faked_msg;
 	return 0;
 }

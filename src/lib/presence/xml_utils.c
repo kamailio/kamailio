@@ -136,7 +136,7 @@ int cmp_node(xmlNode *node, const char *name, const char *nspace)
 
 time_t xmltime2time(const char *xt)
 {
-	/* TODO: translate XML time in input parametr to time_t structure */
+	/* TODO: translate XML time in input parameter to time_t structure */
 	ERROR_LOG("can't translate xmltime to time_t: not finished yet!\n");
 	return 0;
 }

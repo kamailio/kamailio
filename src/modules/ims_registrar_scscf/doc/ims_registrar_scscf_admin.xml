@@ -821,7 +821,7 @@ reg_free_contacts("callee");
 
       <itemizedlist>
         <listitem>
-          <para><emphasis>The user agent to it's own state</emphasis></para>
+          <para><emphasis>The user agent to its own state</emphasis></para>
         </listitem>
 
         <listitem>
@@ -896,7 +896,7 @@ if (can_subscribe_to_reg("location")){
 
       <itemizedlist>
         <listitem>
-          <para><emphasis>The user agent to it's own state</emphasis></para>
+          <para><emphasis>The user agent to its own state</emphasis></para>
         </listitem>
 
         <listitem>

@@ -35,16 +35,17 @@
 #include "../../lib/srdb1/db_con.h"
 
 
-struct my_res {
-	MYSQL_RES* res;          /*!< Actual result */
-	MYSQL_ROW row;           /*!< Actual row in the result */
+struct my_res
+{
+	MYSQL_RES *res; /*!< Actual result */
+	MYSQL_ROW row;	/*!< Actual row in the result */
 };
 
 /*
  * Some convenience wrappers
  */
-#define RES_RESULT(db_res)     (((struct my_res*)((db_res)->ptr))->res)
-#define RES_ROW(db_res)        (((struct my_res*)((db_res)->ptr))->row)
+#define RES_RESULT(db_res) (((struct my_res *)((db_res)->ptr))->res)
+#define RES_ROW(db_res) (((struct my_res *)((db_res)->ptr))->row)
 
 
 /*!
@@ -53,7 +54,7 @@ struct my_res {
  * \param _r database result
  * \return 0 on success, negative on failure
  */
-int db_mysql_convert_result(const db1_con_t* _h, db1_res_t* _r);
+int db_mysql_convert_result(const db1_con_t *_h, db1_res_t *_r);
 
 
 /*!
@@ -62,13 +63,13 @@ int db_mysql_convert_result(const db1_con_t* _h, db1_res_t* _r);
  * \param _r database result set
  * \return 0 on success, negative on failure
  */
-int db_mysql_get_columns(const db1_con_t* _h, db1_res_t* _r);
+int db_mysql_get_columns(const db1_con_t *_h, db1_res_t *_r);
 
 
 /*!
  * \brief Allocate new result set with private structure
  * \return db1_res_t object on success, NULL on failure
  */
-db1_res_t* db_mysql_new_result(void);
+db1_res_t *db_mysql_new_result(void);
 
 #endif

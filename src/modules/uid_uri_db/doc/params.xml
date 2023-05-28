@@ -44,8 +44,8 @@ modparam("module", "uri_table", "uri")
 	</example>
     </section>
 
-    <section id="uri_user_column">
-	<title><varname>uri_user_column</varname> (string)</title>
+    <section id="username_column">
+	<title><varname>username_column</varname> (string)</title>
 	<para>
 	    Column holding usernames in the URI table.
 	</para>
@@ -53,10 +53,10 @@ modparam("module", "uri_table", "uri")
 	    Default value is "username".
 	</para>
 	<example>
-	    <title>Set <varname>uri_user_column</varname> parameter</title>
+	    <title>Set <varname>username_column</varname> parameter</title>
 	    <programlisting>
 ...
-modparam("module", "uri_user_column", "username")
+modparam("module", "username_column", "username")
 ...
 	    </programlisting>
 	</example>

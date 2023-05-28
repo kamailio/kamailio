@@ -31,11 +31,12 @@
 #include "rule.h"
 
 #define DEFAULT_ALLOW_FILE "permissions.allow"
-#define DEFAULT_DENY_FILE  "permissions.deny"
+#define DEFAULT_DENY_FILE "permissions.deny"
 
-typedef struct rule_file {
-	rule* rules;    /* Parsed rule set */
-	char* filename; /* The name of the file */
+typedef struct rule_file
+{
+	rule *rules;	/* Parsed rule set */
+	char *filename; /* The name of the file */
 } rule_file_t;
 
 /*
@@ -44,35 +45,37 @@ typedef struct rule_file {
  */
 #define MAX_RULE_FILES 64
 
-extern str perm_db_url;        /* Database URL */
-extern int perm_db_mode;       /* Database usage mode: 0=no cache, 1=cache */
+extern str perm_db_url;		   /* Database URL */
+extern int perm_db_mode;	   /* Database usage mode: 0=no cache, 1=cache */
 extern str perm_trusted_table; /* Name of trusted table */
-extern str perm_source_col;    /* Name of source address column */
-extern str perm_proto_col;     /* Name of protocol column */
-extern str perm_from_col;      /* Name of from pattern column */
-extern str perm_ruri_col;      /* Name of RURI pattern column */
-extern str perm_tag_col;       /* Name of tag column */
+extern str perm_source_col;	   /* Name of source address column */
+extern str perm_proto_col;	   /* Name of protocol column */
+extern str perm_from_col;	   /* Name of from pattern column */
+extern str perm_ruri_col;	   /* Name of RURI pattern column */
+extern str perm_tag_col;	   /* Name of tag column */
 extern str perm_priority_col;  /* Name of priority column */
 extern str perm_address_table; /* Name of address table */
-extern str perm_grp_col;       /* Name of address group column */
+extern str perm_grp_col;	   /* Name of address group column */
 extern str perm_ip_addr_col;   /* Name of ip address column */
-extern str perm_mask_col;      /* Name of mask column */
-extern str perm_port_col;      /* Name of port column */
+extern str perm_mask_col;	   /* Name of mask column */
+extern str perm_port_col;	   /* Name of port column */
 extern int perm_peer_tag_mode; /* Matching mode */
 extern int perm_reload_delta;  /* seconds between RPC reloads */
-extern int perm_trusted_table_interval; /* interval of timer to clean old trusted data */
+extern int
+		perm_trusted_table_interval; /* interval of timer to clean old trusted data */
 
 /* backends to be loaded */
-#define PERM_LOAD_ADDRESSDB	(1<<0)
-#define PERM_LOAD_TRUSTEDDB	(1<<1)
-#define PERM_LOAD_ALLOWFILE	(1<<2)
-#define PERM_LOAD_DENYFILE	(1<<3)
+#define PERM_LOAD_ADDRESSDB (1 << 0)
+#define PERM_LOAD_TRUSTEDDB (1 << 1)
+#define PERM_LOAD_ALLOWFILE (1 << 2)
+#define PERM_LOAD_DENYFILE (1 << 3)
 extern int _perm_load_backends; /* */
 extern time_t *perm_rpc_reload_time;
 
-typedef struct int_or_pvar {
+typedef struct int_or_pvar
+{
 	unsigned int i;
-	pv_spec_t *pvar;  /* zero if int */
+	pv_spec_t *pvar; /* zero if int */
 } int_or_pvar_t;
 
 #define DISABLE_CACHE 0

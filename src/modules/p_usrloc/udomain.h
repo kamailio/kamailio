@@ -37,24 +37,25 @@
 #include "hslot.h"
 
 
-struct hslot;   /*!< Hash table slot */
+struct hslot;	/*!< Hash table slot */
 struct urecord; /*!< Usrloc record */
 
 
 /*! \brief
  * The structure represents a usrloc domain
  */
-struct udomain {
-	str* name;                 /*!< Domain name (NULL terminated) */
-	int size;                  /*!< Hash table size */
-	struct hslot* table;       /*!< Hash table - array of collision slots */
+struct udomain
+{
+	str *name;			 /*!< Domain name (NULL terminated) */
+	int size;			 /*!< Hash table size */
+	struct hslot *table; /*!< Hash table - array of collision slots */
 	/* statistics */
-	stat_var *users;           /*!< no of registered users */
-	stat_var *contacts;        /*!< no of registered contacts */
-	stat_var *expires;         /*!< no of expires */
+	stat_var *users;	/*!< no of registered users */
+	stat_var *contacts; /*!< no of registered contacts */
+	stat_var *expires;	/*!< no of expires */
 	/* for ul_db_layer */
-	int dbt;                   /* type of the database */
-	db1_con_t * dbh;            /* database handle */
+	int dbt;		/* type of the database */
+	db1_con_t *dbh; /* database handle */
 };
 
 
@@ -66,20 +67,20 @@ struct udomain {
  * \param _d new created domain
  * \return 0 on success, -1 on failure
  */
-int new_udomain(str* _n, int _s, udomain_t** _d);
+int new_udomain(str *_n, int _s, udomain_t **_d);
 
 
 /*!
  * \brief Free all memory allocated for the domain
  * \param _d freed domain
  */
-void free_udomain(udomain_t* _d);
+void free_udomain(udomain_t *_d);
 
 
 /*!
  * \brief Print udomain, debugging helper function
  */
-void print_udomain(FILE* _f, udomain_t* _d);
+void print_udomain(FILE *_f, udomain_t *_d);
 
 
 /*!
@@ -96,7 +97,7 @@ int db_timer_udomain(udomain_t* _d);
  * \brief Run timer handler for given domain
  * \param _d domain
  */
-void mem_timer_udomain(udomain_t* _d);
+void mem_timer_udomain(udomain_t *_d);
 
 
 /*!
@@ -106,7 +107,7 @@ void mem_timer_udomain(udomain_t* _d);
  * \param _r new created record
  * \return 0 on success, -1 on failure
  */
-int mem_insert_urecord(udomain_t* _d, str* _aor, struct urecord** _r);
+int mem_insert_urecord(udomain_t *_d, str *_aor, struct urecord **_r);
 
 
 /*!
@@ -114,8 +115,7 @@ int mem_insert_urecord(udomain_t* _d, str* _aor, struct urecord** _r);
  * \param _d domain the record belongs to
  * \param _r deleted record
  */
-void mem_delete_urecord(udomain_t* _d, struct urecord* _r);
-
+void mem_delete_urecord(udomain_t *_d, struct urecord *_r);
 
 
 /*!
@@ -123,21 +123,21 @@ void mem_delete_urecord(udomain_t* _d, struct urecord* _r);
  * \param _d domain
  * \param i slot number
  */
-void lock_ulslot(udomain_t* _d, int i);
+void lock_ulslot(udomain_t *_d, int i);
 
 /*!
  * \brief Release lock for a slot
  * \param _d domain
  * \param i slot number
  */
-void unlock_ulslot(udomain_t* _d, int i);
+void unlock_ulslot(udomain_t *_d, int i);
 
 /* ===== module interface ======= */
 
 /*! \brief
  * Timer handler for given domain
  */
-void lock_udomain(udomain_t* _d, str *_aor);
+void lock_udomain(udomain_t *_d, str *_aor);
 
 
 /*!
@@ -145,8 +145,7 @@ void lock_udomain(udomain_t* _d, str *_aor);
  * \param _d domain
  * \param _aor address of record, uses as hash source for the lock slot
  */
-void unlock_udomain(udomain_t* _d, str *_aor);
-
+void unlock_udomain(udomain_t *_d, str *_aor);
 
 
 /*!
@@ -156,7 +155,7 @@ void unlock_udomain(udomain_t* _d, str *_aor);
  * \param _r new created record
  * \return return 0 on success, -1 on failure
  */
-int insert_urecord(udomain_t* _d, str* _aor, struct urecord** _r);
+int insert_urecord(udomain_t *_d, str *_aor, struct urecord **_r);
 
 
 /*!
@@ -166,7 +165,7 @@ int insert_urecord(udomain_t* _d, str* _aor, struct urecord** _r);
  * \param _r new created record
  * \return 0 if a record was found, 1 if nothing could be found
  */
-int get_urecord(udomain_t* _d, str* _aor, struct urecord** _r);
+int get_urecord(udomain_t *_d, str *_aor, struct urecord **_r);
 
 
 /*!
@@ -178,8 +177,8 @@ int get_urecord(udomain_t* _d, str* _aor, struct urecord** _r);
  * \param _c store pointer to contact structure
  * \return 0 if a record was found, 1 if nothing could be found
  */
-int get_urecord_by_ruid(udomain_t* _d, unsigned int _aorhash,
-		str *_ruid, struct urecord** _r, struct ucontact** _c);
+int get_urecord_by_ruid(udomain_t *_d, unsigned int _aorhash, str *_ruid,
+		struct urecord **_r, struct ucontact **_c);
 
 /*!
  * \brief Delete a urecord from domain
@@ -188,7 +187,7 @@ int get_urecord_by_ruid(udomain_t* _d, unsigned int _aorhash,
  * \param _r deleted record
  * \return 0 on success, -1 if the record could not be deleted
  */
-int delete_urecord(udomain_t* _d, str* _aor, struct urecord* _r);
+int delete_urecord(udomain_t *_d, str *_aor, struct urecord *_r);
 
 
 #endif

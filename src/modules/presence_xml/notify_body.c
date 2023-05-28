@@ -44,8 +44,9 @@ extern str pxml_single_body_priorities;
 extern str pxml_single_body_lookup_element;
 
 str *offline_nbody(str *body);
-str *agregate_xmls(str *pres_user, str *pres_domain, str **body_array, int n);
-str *agregate_xmls_priority(str *pres_user, str *pres_domain, str **body_array, int n);
+str *aggregate_xmls(str *pres_user, str *pres_domain, str **body_array, int n);
+str *aggregate_xmls_priority(
+		str *pres_user, str *pres_domain, str **body_array, int n);
 str *get_final_notify_body(
 		subs_t *subs, str *notify_body, xmlNodePtr rule_node);
 
@@ -113,7 +114,7 @@ str *pres_agg_nbody_empty(str *pres_user, str *pres_domain)
 	body_array->len = strlen(body);
 
 
-	n_body = agregate_xmls(pres_user, pres_domain, &body_array, 1);
+	n_body = aggregate_xmls(pres_user, pres_domain, &body_array, 1);
 	LM_DBG("[n_body]=%p\n", n_body);
 	if(n_body) {
 		LM_DBG("[*n_body]=%.*s\n", n_body->len, n_body->s);
@@ -157,9 +158,9 @@ str *pres_agg_nbody(str *pres_user, str *pres_domain, str **body_array, int n,
 	LM_DBG("[user]=%.*s  [domain]= %.*s\n", pres_user->len, pres_user->s,
 			pres_domain->len, pres_domain->s);
 	if(pxml_force_single_body == 0) {
-		n_body = agregate_xmls(pres_user, pres_domain, body_array, n);
+		n_body = aggregate_xmls(pres_user, pres_domain, body_array, n);
 	} else {
-		n_body = agregate_xmls_priority(pres_user, pres_domain, body_array, n);
+		n_body = aggregate_xmls_priority(pres_user, pres_domain, body_array, n);
 	}
 	if(n_body == NULL && n != 0) {
 		LM_ERR("while aggregating body\n");
@@ -232,7 +233,7 @@ str *get_final_notify_body(subs_t *subs, str *notify_body, xmlNodePtr rule_node)
 	char service_uri_scheme[16];
 	int i = 0, found = 0;
 	str *new_body = NULL;
-	char *class_cont = NULL, *occurence_ID = NULL, *service_uri = NULL;
+	char *class_cont = NULL, *occurrence_ID = NULL, *service_uri = NULL;
 	char *deviceID = NULL;
 	char *content = NULL;
 	char all_name[KSR_FNB_NAME_SIZE + 8];
@@ -342,11 +343,11 @@ str *get_final_notify_body(subs_t *subs, str *notify_body, xmlNodePtr rule_node)
 			else
 				LM_DBG("found class = %s\n", class_cont);
 
-			occurence_ID = xmlNodeGetAttrContentByName(doc_node, "id");
-			if(occurence_ID == NULL)
+			occurrence_ID = xmlNodeGetAttrContentByName(doc_node, "id");
+			if(occurrence_ID == NULL)
 				LM_DBG("no id found\n");
 			else
-				LM_DBG("found id = %s\n", occurence_ID);
+				LM_DBG("found id = %s\n", occurrence_ID);
 
 
 			deviceID = xmlNodeGetNodeContentByName(doc_node, "deviceID", NULL);
@@ -417,16 +418,16 @@ str *get_final_notify_body(subs_t *subs, str *notify_body, xmlNodePtr rule_node)
 						xmlFree(content);
 				}
 				if(xmlStrcasecmp(
-						   provide_node->name, (unsigned char *)"occurence-id")
+						   provide_node->name, (unsigned char *)"occurrence-id")
 								== 0
-						&& occurence_ID) {
+						&& occurrence_ID) {
 					content = (char *)xmlNodeGetContent(provide_node);
 					if(content
 							&& xmlStrcasecmp((unsigned char *)content,
-									   (unsigned char *)occurence_ID)
+									   (unsigned char *)occurrence_ID)
 									   == 0) {
 						found = 1;
-						LM_DBG("found occurenceID= %s\n", occurence_ID);
+						LM_DBG("found occurrenceID= %s\n", occurrence_ID);
 						xmlFree(content);
 						break;
 					}
@@ -493,7 +494,7 @@ done:
 	xmlFreeDoc(doc);
 
 	xmlFree(class_cont);
-	xmlFree(occurence_ID);
+	xmlFree(occurrence_ID);
 	xmlFree(deviceID);
 	xmlFree(service_uri);
 	xmlCleanupParser();
@@ -508,7 +509,7 @@ error:
 	return NULL;
 }
 
-str *agregate_xmls(str *pres_user, str *pres_domain, str **body_array, int n)
+str *aggregate_xmls(str *pres_user, str *pres_domain, str **body_array, int n)
 {
 	int i, j = 0, append;
 	xmlNodePtr p_root = NULL, new_p_root = NULL;
@@ -645,7 +646,8 @@ error:
 	return NULL;
 }
 
-str *agregate_xmls_priority(str *pres_user, str *pres_domain, str **body_array, int n)
+str *aggregate_xmls_priority(
+		str *pres_user, str *pres_domain, str **body_array, int n)
 {
 	int i, j = 0, idx = 0;
 	xmlNodePtr p_root = NULL, new_p_root = NULL;
@@ -684,13 +686,14 @@ str *agregate_xmls_priority(str *pres_user, str *pres_domain, str **body_array, 
 
 	idx = --j;
 	if(strlen(pxml_single_body_priorities.s) > 0
-				&& strlen(pxml_single_body_lookup_element.s) > 0) {
+			&& strlen(pxml_single_body_lookup_element.s) > 0) {
 		p_root = xmlDocGetNodeByName(xml_array[j], "presence", NULL);
 		if(p_root == NULL) {
 			LM_ERR("while getting the xml_tree root\n");
 			goto error;
 		}
-		cur = xmlNodeGetNodeContentByName(p_root, pxml_single_body_lookup_element.s, NULL);
+		cur = xmlNodeGetNodeContentByName(
+				p_root, pxml_single_body_lookup_element.s, NULL);
 		if(cur) {
 			priority = strstr(pxml_single_body_priorities.s, cur);
 		}
@@ -702,8 +705,9 @@ str *agregate_xmls_priority(str *pres_user, str *pres_domain, str **body_array, 
 				goto error;
 			}
 
-			cmp = xmlNodeGetNodeContentByName(new_p_root, pxml_single_body_lookup_element.s, NULL);
-			if(cur != NULL && cmp != NULL && strcasecmp(cur,cmp)) {
+			cmp = xmlNodeGetNodeContentByName(
+					new_p_root, pxml_single_body_lookup_element.s, NULL);
+			if(cur != NULL && cmp != NULL && strcasecmp(cur, cmp)) {
 				char *x1 = strstr(pxml_single_body_priorities.s, cmp);
 				if(x1 > priority) {
 					idx = i;

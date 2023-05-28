@@ -124,7 +124,7 @@
       <para>Max number of subscribes allowed per watcher for each IMPU </para>
       <para><emphasis> Default value is 0. </emphasis></para>
       <example>
-        <title>Set <varname>subscription_expires_range</varname> parameter</title>
+        <title>Set <varname>max_subscribes</varname> parameter</title>
         <programlisting format="linespecific">...
         modparam("ims_usrloc_scscf", "max_subscribes", 2)
         </programlisting>
@@ -279,7 +279,7 @@
       <para>If contact is put into delay delete state, this is how long we delay before deleting </para>
       <para><emphasis> Default value is 30</emphasis></para>
       <example>
-        <title>Set <varname>contact_delete_delay </varname>parameter</title>
+        <title>Set <varname>contact_delete_delay</varname>parameter</title>
         <programlisting format="linespecific">
         modparam("ims_usrloc_scscf", "contact_delete_delay", 32)
 	     </programlisting>

@@ -24,18 +24,19 @@
 
 #include "redis_client.h"
 
-typedef redisc_server_t* (*redisc_get_server_f)(str *name);
+typedef redisc_server_t *(*redisc_get_server_f)(str *name);
 typedef int (*redisc_exec_f)(str *srv, str *res, str *cmd, ...);
-typedef redisReply* (*redisc_exec_argv_f)(redisc_server_t *rsrv, int argc,
+typedef redisReply *(*redisc_exec_argv_f)(redisc_server_t *rsrv, int argc,
 		const char **argv, const size_t *argvlen);
-typedef redisc_reply_t* (*redisc_get_reply_f)(str *name);
+typedef redisc_reply_t *(*redisc_get_reply_f)(str *name);
 typedef int (*redisc_free_reply_f)(str *name);
 
 
 /**
  * @brief NDB_REDIS API structure
  */
-typedef struct ndb_redis_api {
+typedef struct ndb_redis_api
+{
 	redisc_get_server_f get_server;
 	redisc_exec_f exec;
 	redisc_exec_argv_f exec_argv;
@@ -43,7 +44,7 @@ typedef struct ndb_redis_api {
 	redisc_free_reply_f free_reply;
 } ndb_redis_api_t;
 
-typedef int (*bind_ndb_redis_f)(ndb_redis_api_t* api);
+typedef int (*bind_ndb_redis_f)(ndb_redis_api_t *api);
 
 /**
  * @brief Load the NDB_REDIS API
@@ -57,7 +58,7 @@ static inline int ndb_redis_load_api(ndb_redis_api_t *api)
 		LM_ERR("cannot find bind_ndb_redis\n");
 		return -1;
 	}
-	if (bindndbredis(api)==-1) {
+	if(bindndbredis(api) == -1) {
 		LM_ERR("cannot bind ndb_redis api\n");
 		return -1;
 	}

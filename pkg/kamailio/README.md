@@ -65,7 +65,7 @@ Kamailio build project on OBS is at:
 
 ## Gentoo ##
 
-Not actively mentained, still fairly recent updated.
+Not actively maintained, still fairly recent updated.
 
 ## BSD ##
 

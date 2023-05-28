@@ -32,23 +32,23 @@
 
 typedef struct _msrp_citem
 {
-    unsigned int citemid;
+	unsigned int citemid;
 	str sessionid;
 	str peer;
 	str addr;
 	str sock;
 	int conid;
 	int cflags;
-	time_t  expires;
-    struct _msrp_citem *prev;
-    struct _msrp_citem *next;
+	time_t expires;
+	struct _msrp_citem *prev;
+	struct _msrp_citem *next;
 } msrp_citem_t;
 
 typedef struct _msrp_centry
 {
 	unsigned int lsize;
 	msrp_citem_t *first;
-	gen_lock_t lock;	
+	gen_lock_t lock;
 } msrp_centry_t;
 
 typedef struct _msrp_cmap

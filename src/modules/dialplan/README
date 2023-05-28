@@ -230,7 +230,7 @@ Chapter 1. Admin Guide
 
    Example 1.1. Set db_url parameter
 ...
-modparam("dialplan", "db_url", "mysql://user:passwb@localhost/db")
+modparam("dialplan", "db_url", "mysql://user:passwd@localhost/db")
 ...
 
 5.2. table_name (string)
@@ -522,7 +522,7 @@ xlog("translated to var $var(y) \n");
 6.4.  dp_reload()
 
    Reload the translation rules from the database. Note that there is a
-   rate limiting defined by 'reload_delta' paramenter. By default is
+   rate limiting defined by 'reload_delta' parameter. By default is
    allowed maximum one reload in five seconds.
 
    Name: dp_reload
@@ -551,7 +551,7 @@ xlog("translated to var $var(y) \n");
 7.2. dialplan.reload
 
    Perform a reload of the translation rules from the database. Note that
-   there is a rate limiting defined by 'reload_delta' paramenter. By
+   there is a rate limiting defined by 'reload_delta' parameter. By
    default is allowed maximum one reload in five seconds.
 
    Name: dialplan.reload

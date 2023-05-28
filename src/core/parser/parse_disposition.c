@@ -13,8 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  */
@@ -36,23 +36,37 @@
 #include "parse_disposition.h"
 
 
-
 /*! \brief parse a string that supposed to be a disposition and fills up the structure
  * Returns: -1 : error
  *           o : success */
-int parse_disposition( str *s, struct disposition *disp)
+int parse_disposition(str *s, struct disposition *disp)
 {
-	enum { FIND_TYPE, TYPE, END_TYPE, FIND_PARAM, PARAM, END_PARAM, FIND_VAL,
-	       FIND_QUOTED_VAL, QUOTED_VAL, SKIP_QUOTED_VAL, VAL, END_VAL,
-	       F_LF, F_CR, F_CRLF};
+	enum
+	{
+		FIND_TYPE,
+		TYPE,
+		END_TYPE,
+		FIND_PARAM,
+		PARAM,
+		END_PARAM,
+		FIND_VAL,
+		FIND_QUOTED_VAL,
+		QUOTED_VAL,
+		SKIP_QUOTED_VAL,
+		VAL,
+		END_VAL,
+		F_LF,
+		F_CR,
+		F_CRLF
+	};
 	struct disposition_param *disp_p;
 	struct disposition_param *new_p;
-	int  state;
-	int  saved_state;
+	int state;
+	int saved_state;
 	char *tmp;
 	char *end;
 
-	if(s==NULL || s->s==NULL || s->len<=0) {
+	if(s == NULL || s->s == NULL || s->len <= 0) {
 		LM_ERR("invalid parameters\n");
 		return -1;
 	}
@@ -61,11 +75,11 @@ int parse_disposition( str *s, struct disposition *disp)
 	end = s->s + s->len;
 	disp_p = 0;
 
-	for( tmp=s->s; tmp<end; tmp++) {
+	for(tmp = s->s; tmp < end; tmp++) {
 		switch(*tmp) {
 			case ' ':
 			case '\t':
-				switch (state) {
+				switch(state) {
 					case FIND_QUOTED_VAL:
 						disp_p->body.s = tmp;
 						state = QUOTED_VAL;
@@ -89,12 +103,12 @@ int parse_disposition( str *s, struct disposition *disp)
 					case F_LF:
 					case F_CR:
 						/*previous=crlf and now =' '*/
-						state=saved_state;
+						state = saved_state;
 						break;
 				}
 				break;
 			case '\n':
-				switch (state) {
+				switch(state) {
 					case TYPE:
 						disp->type.len = tmp - disp->type.s;
 						saved_state = END_TYPE;
@@ -112,20 +126,20 @@ int parse_disposition( str *s, struct disposition *disp)
 						break;
 					case FIND_TYPE:
 					case FIND_PARAM:
-						saved_state=state;
-						state=F_LF;
+						saved_state = state;
+						state = F_LF;
 						break;
 					case F_CR:
-						state=F_CRLF;
+						state = F_CRLF;
 						break;
 					default:
 						LM_ERR("unexpected char [%c] in status %d: <<%.*s>>.\n",
-							*tmp,state, (int)(tmp-s->s), s->s);
+								*tmp, state, (int)(tmp - s->s), s->s);
 						goto error;
 				}
 				break;
 			case '\r':
-				switch (state) {
+				switch(state) {
 					case TYPE:
 						disp->type.len = tmp - disp->type.s;
 						saved_state = END_TYPE;
@@ -143,22 +157,22 @@ int parse_disposition( str *s, struct disposition *disp)
 						break;
 					case FIND_TYPE:
 					case FIND_PARAM:
-						saved_state=state;
-						state=F_CR;
+						saved_state = state;
+						state = F_CR;
 						break;
 					default:
 						LM_ERR("unexpected char [%c] in status %d: <<%.*s>>.\n",
-							*tmp,state, (int)(tmp-s->s), ZSW(s->s));
+								*tmp, state, (int)(tmp - s->s), ZSW(s->s));
 						goto error;
 				}
 				break;
 			case 0:
-				LM_ERR("nexpected char [%c] in status %d: <<%.*s>>.\n",
-					*tmp,state, (int)(tmp-s->s), ZSW(s->s));
+				LM_ERR("nexpected char [%c] in status %d: <<%.*s>>.\n", *tmp,
+						state, (int)(tmp - s->s), ZSW(s->s));
 				goto error;
 				break;
 			case ';':
-				switch (state) {
+				switch(state) {
 					case FIND_QUOTED_VAL:
 						disp_p->body.s = tmp;
 						state = QUOTED_VAL;
@@ -183,12 +197,12 @@ int parse_disposition( str *s, struct disposition *disp)
 						break;
 					default:
 						LM_ERR("unexpected char [%c] in status %d: <<%.*s>>.\n",
-							*tmp,state, (int)(tmp-s->s), ZSW(s->s));
+								*tmp, state, (int)(tmp - s->s), ZSW(s->s));
 						goto error;
 				}
 				break;
 			case '=':
-				switch (state) {
+				switch(state) {
 					case FIND_QUOTED_VAL:
 						disp_p->body.s = tmp;
 						state = QUOTED_VAL;
@@ -204,12 +218,12 @@ int parse_disposition( str *s, struct disposition *disp)
 						break;
 					default:
 						LM_ERR("unexpected char [%c] in status %d: <<%.*s>>.\n",
-							*tmp,state, (int)(tmp-s->s), ZSW(s->s));
+								*tmp, state, (int)(tmp - s->s), ZSW(s->s));
 						goto error;
 				}
 				break;
 			case '\"':
-				switch (state) {
+				switch(state) {
 					case SKIP_QUOTED_VAL:
 						state = QUOTED_VAL;
 						break;
@@ -223,12 +237,12 @@ int parse_disposition( str *s, struct disposition *disp)
 						break;
 					default:
 						LM_ERR("unexpected char [%c] in status %d: <<%.*s>>.\n",
-							*tmp,state, (int)(tmp-s->s), ZSW(s->s));
+								*tmp, state, (int)(tmp - s->s), ZSW(s->s));
 						goto error;
 				}
 				break;
 			case '\\':
-				switch (state) {
+				switch(state) {
 					case FIND_QUOTED_VAL:
 						disp_p->body.s = tmp;
 						state = SKIP_QUOTED_VAL;
@@ -241,7 +255,7 @@ int parse_disposition( str *s, struct disposition *disp)
 						break;
 					default:
 						LM_ERR("unexpected char [%c] in status %d: <<%.*s>>.\n",
-							*tmp,state, (int)(tmp-s->s), ZSW(s->s));
+								*tmp, state, (int)(tmp - s->s), ZSW(s->s));
 						goto error;
 				}
 				break;
@@ -258,7 +272,7 @@ int parse_disposition( str *s, struct disposition *disp)
 			case '?':
 			case '{':
 			case '}':
-				switch (state) {
+				switch(state) {
 					case FIND_QUOTED_VAL:
 						disp_p->body.s = tmp;
 						state = QUOTED_VAL;
@@ -269,12 +283,12 @@ int parse_disposition( str *s, struct disposition *disp)
 						break;
 					default:
 						LM_ERR("unexpected char [%c] in status %d: <<%.*s>>.\n",
-							*tmp,state, (int)(tmp-s->s), ZSW(s->s));
+								*tmp, state, (int)(tmp - s->s), ZSW(s->s));
 						goto error;
 				}
 				break;
 			default:
-				switch (state) {
+				switch(state) {
 					case SKIP_QUOTED_VAL:
 						state = QUOTED_VAL;
 					case QUOTED_VAL:
@@ -284,14 +298,14 @@ int parse_disposition( str *s, struct disposition *disp)
 						state = TYPE;
 						break;
 					case FIND_PARAM:
-						new_p=(struct disposition_param*)pkg_malloc
-							(sizeof(struct disposition_param));
-						if (new_p==0) {
+						new_p = (struct disposition_param *)pkg_malloc(
+								sizeof(struct disposition_param));
+						if(new_p == 0) {
 							PKG_MEM_ERROR;
 							goto error;
 						}
-						memset(new_p,0,sizeof(struct disposition_param));
-						if (disp_p==0)
+						memset(new_p, 0, sizeof(struct disposition_param));
+						if(disp_p == 0)
 							disp->params = new_p;
 						else
 							disp_p->next = new_p;
@@ -308,11 +322,11 @@ int parse_disposition( str *s, struct disposition *disp)
 						state = QUOTED_VAL;
 						break;
 				}
-		}/*switch*/
-	}/*for*/
+		} /*switch*/
+	}	  /*for*/
 
 	/* check which was the last parser state */
-	switch (state) {
+	switch(state) {
 		case END_PARAM:
 		case END_TYPE:
 		case END_VAL:
@@ -327,8 +341,7 @@ int parse_disposition( str *s, struct disposition *disp)
 			disp_p->body.len = tmp - disp_p->body.s;
 			break;
 		default:
-			LM_ERR("wrong final state (%d)\n",
-				state);
+			LM_ERR("wrong final state (%d)\n", state);
 			goto error;
 	}
 	return 0;
@@ -337,22 +350,20 @@ error:
 }
 
 
-
 /*! \brief Frees the entire disposition structure (params + itself) */
-void free_disposition( struct disposition **disp)
+void free_disposition(struct disposition **disp)
 {
 	struct disposition_param *param;
 
 	/* free the params */
 	while((*disp)->params) {
 		param = (*disp)->params->next;
-		pkg_free( (*disp)->params);
+		pkg_free((*disp)->params);
 		(*disp)->params = param;
 	}
-	pkg_free( *disp );
+	pkg_free(*disp);
 	*disp = 0;
 }
-
 
 
 /*! \brief looks inside the message, gets the Content-Disposition hdr, parse it, builds
@@ -362,42 +373,42 @@ void free_disposition( struct disposition **disp)
  *            0 : success
  *            1 : hdr not found
  */
-int parse_content_disposition( struct sip_msg *msg )
+int parse_content_disposition(struct sip_msg *msg)
 {
 	struct disposition *disp;
 
 	/* look for Content-Disposition header */
-	if (msg->content_disposition==0) {
-		if (parse_headers(msg, HDR_CONTENTDISPOSITION_F, 0)==-1)
+	if(msg->content_disposition == 0) {
+		if(parse_headers(msg, HDR_CONTENTDISPOSITION_F, 0) == -1)
 			goto error;
-		if (msg->content_disposition==0) {
+		if(msg->content_disposition == 0) {
 			DBG("hdr not found\n");
 			return 1;
 		}
 	}
 
 	/* now, we have the header -> look if it isn't already parsed */
-	if (msg->content_disposition->parsed!=0) {
+	if(msg->content_disposition->parsed != 0) {
 		/* already parsed, nothing more to be done */
 		return 0;
 	}
 
 	/* parse the body */
-	disp = (struct disposition*)pkg_malloc(sizeof(struct disposition));
-	if (disp==0) {
+	disp = (struct disposition *)pkg_malloc(sizeof(struct disposition));
+	if(disp == 0) {
 		PKG_MEM_ERROR;
 		goto error;
 	}
-	memset(disp,0,sizeof(struct disposition));
+	memset(disp, 0, sizeof(struct disposition));
 
-	if (parse_disposition( &(msg->content_disposition->body), disp)==-1) {
+	if(parse_disposition(&(msg->content_disposition->body), disp) == -1) {
 		/* error when parsing the body */
-		free_disposition( &disp );
+		free_disposition(&disp);
 		goto error;
 	}
 
 	/* attach the parsed form to the header */
-	msg->content_disposition->parsed = (void*)disp;
+	msg->content_disposition->parsed = (void *)disp;
 
 	return 0;
 error:
@@ -406,18 +417,16 @@ error:
 
 
 /*! \brief Prints recursive a disposition structure */
-void print_disposition( struct disposition *disp)
+void print_disposition(struct disposition *disp)
 {
 	struct disposition_param *param;
 
-	DBG("*** Disposition type=<%.*s>[%d]\n",
-		disp->type.len,disp->type.s,disp->type.len);
-	for( param=disp->params; param; param=param->next) {
+	DBG("*** Disposition type=<%.*s>[%d]\n", disp->type.len, disp->type.s,
+			disp->type.len);
+	for(param = disp->params; param; param = param->next) {
 		DBG("*** Disposition param: <%.*s>[%d]=<%.*s>[%d] is_quoted=%d\n",
-			param->name.len,param->name.s, param->name.len,
-			param->body.len,param->body.s, param->body.len,
-			param->is_quoted);
+				param->name.len, param->name.s, param->name.len,
+				param->body.len, param->body.s, param->body.len,
+				param->is_quoted);
 	}
 }
-
-

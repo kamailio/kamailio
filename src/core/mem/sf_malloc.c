@@ -30,7 +30,7 @@
 #include "../cfg/cfg.h" /* memlog */
 
 #define MAX_POOL_FRAGS 10000 /* max fragments per pool hash bucket */
-#define MIN_POOL_FRAGS 10	/* min fragments per pool hash bucket */
+#define MIN_POOL_FRAGS 10	 /* min fragments per pool hash bucket */
 
 /*useful macros*/
 
@@ -199,11 +199,12 @@ static inline int sfm_check_pool(
 	 *  >= requested size, accept it, else
 	 *  look at misses and current fragments and decide based on them */
 	return (p_id < SFM_POOLS_NO)
-		   && (split || ((qm->pool[p_id].pool_hash[hash].no < MIN_POOL_FRAGS)
-								|| ((qm->pool[p_id].pool_hash[hash].misses
-											> qm->pool[p_id].pool_hash[hash].no)
-										   && (qm->pool[p_id].pool_hash[hash].no
-													  < MAX_POOL_FRAGS))));
+		   && (split
+				   || ((qm->pool[p_id].pool_hash[hash].no < MIN_POOL_FRAGS)
+						   || ((qm->pool[p_id].pool_hash[hash].misses
+									   > qm->pool[p_id].pool_hash[hash].no)
+								   && (qm->pool[p_id].pool_hash[hash].no
+										   < MAX_POOL_FRAGS))));
 }
 
 
@@ -279,11 +280,13 @@ static inline void sfm_insert_free(
 /* size should be already rounded-up */
 static inline
 #ifdef DBG_SF_MALLOC
-void sfm_split_frag(struct sfm_block *qm, struct sfm_frag *frag,
+		void
+		sfm_split_frag(struct sfm_block *qm, struct sfm_frag *frag,
 				unsigned long size, const char *file, const char *func,
 				unsigned int line)
 #else
-void sfm_split_frag(
+		void
+		sfm_split_frag(
 				struct sfm_block *qm, struct sfm_frag *frag, unsigned long size)
 #endif
 {
@@ -295,7 +298,7 @@ void sfm_split_frag(
 #ifdef MEM_FRAG_AVOIDANCE
 	if((rest > (FRAG_OVERHEAD + SF_MALLOC_OPTIMIZE))
 			|| (rest >= (FRAG_OVERHEAD
-								+ size))) { /* the residue fragm. is big enough*/
+						 + size))) { /* the residue fragm. is big enough*/
 		bigger_rest = 1;
 #else
 	if(rest > (FRAG_OVERHEAD + SF_MIN_FRAG_SIZE)) {
@@ -336,8 +339,8 @@ struct sfm_block *sfm_malloc_init(char *address, unsigned long size, int type)
 
 	/* make address and size multiple of 8*/
 	start = (char *)ROUNDUP((unsigned long)address);
-	LM_DBG("SF_OPTIMIZE=%lu, /SF_ROUNDTO=%lu\n",
-			SF_MALLOC_OPTIMIZE, SF_MALLOC_OPTIMIZE / SF_ROUNDTO);
+	LM_DBG("SF_OPTIMIZE=%lu, /SF_ROUNDTO=%lu\n", SF_MALLOC_OPTIMIZE,
+			SF_MALLOC_OPTIMIZE / SF_ROUNDTO);
 	LM_DBG("SF_HASH_SIZE=%lu, sfm_block size=%lu\n", SF_HASH_SIZE,
 			(long)sizeof(struct sfm_block));
 	LM_DBG("sfm_malloc_init(%p, %lu), start=%p\n", address, size, start);
@@ -752,7 +755,7 @@ void sfm_free(struct sfm_block *qm, void *p)
 	MDBG("sfm_free(%p, %p), called from %s: %s(%d)\n", qm, p, file, func, line);
 	if(p > (void *)qm->last_frag || p < (void *)qm->first_frag) {
 		LM_CRIT("BUG: bad pointer %p (out of memory block!) - "
-					"aborting\n",
+				"aborting\n",
 				p);
 		abort();
 	}
@@ -800,7 +803,7 @@ void *sfm_realloc(struct sfm_block *qm, void *p, unsigned long size)
 			func, line);
 	if((p) && (p > (void *)qm->last_frag || p < (void *)qm->first_frag)) {
 		LM_CRIT("BUG: bad pointer %p (out of memory block!) - "
-					"aborting\n",
+				"aborting\n",
 				p);
 		abort();
 	}
@@ -871,8 +874,8 @@ void *sfm_realloc(struct sfm_block *qm, void *p, unsigned long size)
 				if(*pf == 0) {
 					SFM_MAIN_HASH_UNLOCK(qm, hash);
 					/* not found, bad! */
-					LM_WARN("could not find %p in free list (hash=%d)\n",
-							n, hash);
+					LM_WARN("could not find %p in free list (hash=%d)\n", n,
+							hash);
 					/* somebody is in the process of changing it ? */
 					goto not_found;
 				}
@@ -886,8 +889,9 @@ void *sfm_realloc(struct sfm_block *qm, void *p, unsigned long size)
 				/* split it if necessary */
 				if(f->size > size) {
 #ifdef DBG_SF_MALLOC
-					sfm_split_frag(qm, f, size, file, "fragm. from "
-													  "sfm_realloc",
+					sfm_split_frag(qm, f, size, file,
+							"fragm. from "
+							"sfm_realloc",
 							line);
 #else
 					sfm_split_frag(qm, f, size);
@@ -915,8 +919,8 @@ void *sfm_realloc(struct sfm_block *qm, void *p, unsigned long size)
 				if(*pf == 0) {
 					SFM_POOL_UNLOCK(pool, hash);
 					/* not found, bad! */
-					LM_WARN("could not find %p in free list (hash=%d)\n",
-							n, hash);
+					LM_WARN("could not find %p in free list (hash=%d)\n", n,
+							hash);
 					/* somebody is in the process of changing it ? */
 					goto not_found;
 				}
@@ -930,8 +934,9 @@ void *sfm_realloc(struct sfm_block *qm, void *p, unsigned long size)
 				/* split it if necessary */
 				if(f->size > size) {
 #ifdef DBG_SF_MALLOC
-					sfm_split_frag(qm, f, size, file, "fragm. from "
-													  "sfm_realloc",
+					sfm_split_frag(qm, f, size, file,
+							"fragm. from "
+							"sfm_realloc",
 							line);
 #else
 					sfm_split_frag(qm, f, size);
@@ -963,8 +968,7 @@ void *sfm_realloc(struct sfm_block *qm, void *p, unsigned long size)
 	} else {
 /* do nothing */
 #ifdef DBG_SF_MALLOC
-		MDBG("doing nothing, same size: %lu - %lu\n", f->size,
-				size);
+		MDBG("doing nothing, same size: %lu - %lu\n", f->size, size);
 #endif
 	}
 #ifdef DBG_SF_MALLOC
@@ -999,23 +1003,25 @@ void sfm_status(struct sfm_block *qm)
 			if(!FRAG_WAS_USED(f)) {
 				unused++;
 #ifdef DBG_SF_MALLOC
-				LOG(memlog, "unused fragm.: hash = %3d, fragment %p,"
-							" address %p size %lu, created from %s: %s(%ld)\n",
+				LOG(memlog,
+						"unused fragm.: hash = %3d, fragment %p,"
+						" address %p size %lu, created from %s: %s(%ld)\n",
 						h, f, (char *)f + sizeof(struct sfm_frag), f->size,
 						f->file, f->func, f->line);
 #endif
 			};
 		}
 		if(j)
-			LOG(memlog, "hash = %3d fragments no.: %5d, unused: %5d\n\t\t"
-						" bucket size: %9lu - %9lu (first %9lu)\n",
+			LOG(memlog,
+					"hash = %3d fragments no.: %5d, unused: %5d\n\t\t"
+					" bucket size: %9lu - %9lu (first %9lu)\n",
 					h, j, unused, UN_HASH(h),
 					((h <= SF_MALLOC_OPTIMIZE / SF_ROUNDTO) ? 1 : 2)
 							* UN_HASH(h),
 					qm->free_hash[h].first->size);
 		if(j != qm->free_hash[h].no) {
 			LM_CRIT("BUG: different free frag. count: %d!=%ld"
-						" for hash %3d\n",
+					" for hash %3d\n",
 					j, qm->free_hash[h].no, h);
 		}
 		SFM_MAIN_HASH_UNLOCK(qm, h);
@@ -1029,25 +1035,28 @@ void sfm_status(struct sfm_block *qm)
 				if(!FRAG_WAS_USED(f)) {
 					unused++;
 #ifdef DBG_SF_MALLOC
-					LOG(memlog, "[%2d] unused fragm.: hash = %3d, fragment %p,"
-								" address %p size %lu, created from %s: "
-								"%s(%ld)\n",
+					LOG(memlog,
+							"[%2d] unused fragm.: hash = %3d, fragment %p,"
+							" address %p size %lu, created from %s: "
+							"%s(%ld)\n",
 							k, h, f, (char *)f + sizeof(struct sfm_frag),
 							f->size, f->file, f->func, f->line);
 #endif
 				};
 			}
 			if(j)
-				LOG(memlog, "[%2d] hash = %3d fragments no.: %5d, unused: "
-							"%5d\n\t\t bucket size: %9lu - %9lu "
-							"(first %9lu)\n",
+				LOG(memlog,
+						"[%2d] hash = %3d fragments no.: %5d, unused: "
+						"%5d\n\t\t bucket size: %9lu - %9lu "
+						"(first %9lu)\n",
 						k, h, j, unused, UN_HASH(h),
 						((h <= SF_MALLOC_OPTIMIZE / SF_ROUNDTO) ? 1 : 2)
 								* UN_HASH(h),
 						qm->pool[k].pool_hash[h].first->size);
 			if(j != qm->pool[k].pool_hash[h].no) {
-				LOG(L_CRIT, "BUG: sfm_status: [%d] different free frag."
-							" count: %d!=%ld for hash %3d\n",
+				LOG(L_CRIT,
+						"BUG: sfm_status: [%d] different free frag."
+						" count: %d!=%ld for hash %3d\n",
 						k, j, qm->pool[k].pool_hash[h].no, h);
 			}
 			SFM_POOL_UNLOCK(&qm->pool[k], h);
@@ -1101,7 +1110,7 @@ void sfm_info(struct sfm_block *qm, struct mem_info *info)
 			 * on error (not compiled with bookkeeping code) returns (unsigned long)(-1) */
 unsigned long sfm_available(struct sfm_block *qm)
 {
-	/* we don't know how much free memory we have and it's to expensive
+	/* we don't know how much free memory we have and it's too expensive
 				 * to compute it */
 	return ((unsigned long)-1);
 }

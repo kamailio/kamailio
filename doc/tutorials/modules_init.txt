@@ -1,5 +1,5 @@
 
-Kamailio Module intialization description
+Kamailio Module initialization description
 ===========================================
 
 This document is a very brief overview on what possibilities are for a module

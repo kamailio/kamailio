@@ -35,8 +35,8 @@
 #include "../mem/mem.h"
 
 
-char *parse_to(char *const buffer, const char *const end,
-		struct to_body *const to_b)
+char *parse_to(
+		char *const buffer, const char *const end, struct to_body *const to_b)
 {
 	return parse_addr_spec(buffer, end, to_b, 0);
 }

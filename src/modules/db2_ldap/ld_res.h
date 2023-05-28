@@ -39,13 +39,14 @@
 
 #include <ldap.h>
 
-struct ld_res {
+struct ld_res
+{
 	db_drv_t gen;
-	LDAPMessage* msg;
-	LDAPMessage* current;
+	LDAPMessage *msg;
+	LDAPMessage *current;
 };
 
-int ld_res(db_res_t* res);
+int ld_res(db_res_t *res);
 
 /** @} */
 

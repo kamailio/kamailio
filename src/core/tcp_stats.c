@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2010 iptelorg GmbH
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -31,52 +31,58 @@
 struct tcp_counters_h tcp_cnts_h;
 
 
-enum tcp_info_req { TCP_INFO_NONE, TCP_INFO_CONN_NO, TCP_INFO_WR_QUEUE_SZ };
-
-static counter_val_t tcp_info(counter_handle_t h, void* what);
-
-/* tcp counters definitions */
-counter_def_t tcp_cnt_defs[] =  {
-	{&tcp_cnts_h.established, "established", 0, 0, 0,
-		"incremented each time a tcp connection is established."},
-	{&tcp_cnts_h.passive_open, "passive_open", 0, 0, 0,
-		"total number of accepted connections (so far)."},
-	{&tcp_cnts_h.connect_success, "connect_success", 0, 0, 0,
-		"total number of successfully active opened connections"
-			" (successful connect()s)."},
-	{&tcp_cnts_h.connect_failed, "connect_failed", 0, 0, 0,
-		"number of failed active connection attempts."},
-	{&tcp_cnts_h.local_reject, "local_reject", 0, 0, 0,
-		"number of rejected incoming connections."},
-	{&tcp_cnts_h.con_timeout, "con_timeout", 0, 0, 0,
-		"total number of connections that did timeout (idle for too long)."},
-	{&tcp_cnts_h.con_reset, "con_reset", 0, 0, 0,
-		"total number of TCP_RSTs received on established connections."},
-	{&tcp_cnts_h.send_timeout, "send_timeout", 0, 0, 0,
-		"number of send attempts that failed due to a timeout"
-			"(note: works only in tcp async mode)."},
-	{&tcp_cnts_h.sendq_full, "sendq_full", 0, 0, 0,
-		"number of send attempts that failed because of exceeded buffering"
-			"capacity (send queue full, works only in tcp async mode)."},
-	{0, "current_opened_connections", 0,
-		tcp_info, (void*)(long)TCP_INFO_CONN_NO,
-		"number of currently opened connections."},
-	{0, "current_write_queue_size", 0,
-		tcp_info, (void*)(long)TCP_INFO_WR_QUEUE_SZ,
-		"current sum of all the connections write queue sizes."},
-	{0, 0, 0, 0, 0, 0 }
+enum tcp_info_req
+{
+	TCP_INFO_NONE,
+	TCP_INFO_CONN_NO,
+	TCP_INFO_WR_QUEUE_SZ
 };
 
+static counter_val_t tcp_info(counter_handle_t h, void *what);
+
+/* tcp counters definitions */
+counter_def_t tcp_cnt_defs[] = {
+		{&tcp_cnts_h.established, "established", 0, 0, 0,
+				"incremented each time a tcp connection is established."},
+		{&tcp_cnts_h.passive_open, "passive_open", 0, 0, 0,
+				"total number of accepted connections (so far)."},
+		{&tcp_cnts_h.connect_success, "connect_success", 0, 0, 0,
+				"total number of successfully active opened connections"
+				" (successful connect()s)."},
+		{&tcp_cnts_h.connect_failed, "connect_failed", 0, 0, 0,
+				"number of failed active connection attempts."},
+		{&tcp_cnts_h.local_reject, "local_reject", 0, 0, 0,
+				"number of rejected incoming connections."},
+		{&tcp_cnts_h.con_timeout, "con_timeout", 0, 0, 0,
+				"total number of connections that did timeout (idle for too "
+				"long)."},
+		{&tcp_cnts_h.con_reset, "con_reset", 0, 0, 0,
+				"total number of TCP_RSTs received on established "
+				"connections."},
+		{&tcp_cnts_h.send_timeout, "send_timeout", 0, 0, 0,
+				"number of send attempts that failed due to a timeout"
+				"(note: works only in tcp async mode)."},
+		{&tcp_cnts_h.sendq_full, "sendq_full", 0, 0, 0,
+				"number of send attempts that failed because of exceeded "
+				"buffering"
+				"capacity (send queue full, works only in tcp async mode)."},
+		{0, "current_opened_connections", 0, tcp_info,
+				(void *)(long)TCP_INFO_CONN_NO,
+				"number of currently opened connections."},
+		{0, "current_write_queue_size", 0, tcp_info,
+				(void *)(long)TCP_INFO_WR_QUEUE_SZ,
+				"current sum of all the connections write queue sizes."},
+		{0, 0, 0, 0, 0, 0}};
 
 
 /** helper function for some stats (which are kept internally inside tcp).
  */
-static counter_val_t tcp_info(counter_handle_t h, void* what)
+static counter_val_t tcp_info(counter_handle_t h, void *what)
 {
 	enum tcp_info_req w;
 	struct tcp_gen_info ti;
 
-	if (tcp_disable)
+	if(tcp_disable)
 		return 0;
 	w = (int)(long)what;
 	tcp_get_info(&ti);
@@ -97,11 +103,11 @@ static counter_val_t tcp_info(counter_handle_t h, void* what)
  */
 int tcp_stats_init()
 {
-#define TCP_REG_COUNTER(name) \
-	if (counter_register(&tcp_cnts_h.name, "tcp", # name, 0, 0, 0, 0) < 0) \
+#define TCP_REG_COUNTER(name)                                            \
+	if(counter_register(&tcp_cnts_h.name, "tcp", #name, 0, 0, 0, 0) < 0) \
 		goto error;
 
-	if (counter_register_array("tcp", tcp_cnt_defs) < 0)
+	if(counter_register_array("tcp", tcp_cnt_defs) < 0)
 		goto error;
 	return 0;
 error:

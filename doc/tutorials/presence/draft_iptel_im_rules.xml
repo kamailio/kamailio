@@ -30,7 +30,7 @@ storing rules for authorization of instant messages.
 
 <!-- ******************** Documents ********************* -->
 <section id="docs"><title>Instant message authorization documents</title>
-<para>Instant message authorization document is XML document formated according
+<para>Instant message authorization document is XML document formatted according
 to the schema defined in <xref linkend="common_auth"/>. It inherits the MIME
 type of common policy documents defined there - application/auth-policy+xml.
 </para>
@@ -142,7 +142,7 @@ xmlns:im="urn:iptel:xml:ns:im-rules">
 
 <section><title>Usage with XCAP</title>
 <para>This document defines <quote>im-rules</quote> as unique application usage
-ID (AUID) requiered by XCAP specification.
+ID (AUID) required by XCAP specification.
 </para>
 
 <section><title>Naming conventions</title>

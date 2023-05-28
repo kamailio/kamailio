@@ -30,7 +30,7 @@ Build-Depends:
  libmono-2.0-dev [amd64 armel armhf i386 mipsel kfreebsd-amd64 kfreebsd-i386 ppc64 ppc64el s390x],
  libmosquitto-dev,
  libnats-dev,
- libncurses5-dev,
+ libncurses-dev,
  libpcre3-dev,
  libperl-dev,
  libphonenumber-dev (>= 7),
@@ -58,7 +58,7 @@ Build-Depends:
  xsltproc,
  zlib1g-dev,
 Standards-Version: 4.6.0.1
-Homepage: http://www.kamailio.org/
+Homepage: https://www.kamailio.org/
 Vcs-Git: https://github.com/kamailio/kamailio.git
 Vcs-Browser: https://github.com/kamailio/kamailio/
 Rules-Requires-Root: no
@@ -70,7 +70,6 @@ Pre-Depends:
  ${misc:Pre-Depends},
 Depends:
  adduser,
- lsb-base,
  python3,
  ${misc:Depends},
  ${shlibs:Depends},

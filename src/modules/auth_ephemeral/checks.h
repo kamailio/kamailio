@@ -36,10 +36,11 @@ int autheph_check_to0(struct sip_msg *_m);
 int autheph_check_to1(struct sip_msg *_m, char *_username);
 int autheph_check_timestamp(struct sip_msg *_m, char *_username);
 
-typedef enum {
-	CHECK_NO_USER	= -2,
-	CHECK_ERROR	= -1,
-	CHECK_OK	= 1
+typedef enum
+{
+	CHECK_NO_USER = -2,
+	CHECK_ERROR = -1,
+	CHECK_OK = 1
 } autheph_check_result_t;
 
 #endif /* CHECKS_H */

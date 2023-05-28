@@ -31,15 +31,16 @@
 #include "../../core/cfg/cfg.h"
 #include "../../core/str.h"
 
-struct cfg_group_carrierroute {
-	unsigned int	use_domain;
-	unsigned int	fallback_default;
-	unsigned int	fetch_rows;
+struct cfg_group_carrierroute
+{
+	unsigned int use_domain;
+	unsigned int fallback_default;
+	unsigned int fetch_rows;
 };
 
-extern struct cfg_group_carrierroute	default_carrierroute_cfg;
-extern void	*carrierroute_cfg;
-extern cfg_def_t	carrierroute_cfg_def[];
+extern struct cfg_group_carrierroute default_carrierroute_cfg;
+extern void *carrierroute_cfg;
+extern cfg_def_t carrierroute_cfg_def[];
 
 
 #endif

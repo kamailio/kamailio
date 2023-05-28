@@ -22,6 +22,6 @@
 #ifndef _TS_STORE_H
 #define _TS_STORE_H
 
-int ts_store(struct sip_msg* msg, str *puri);
+int ts_store(struct sip_msg *msg, str *puri);
 
 #endif

@@ -30,9 +30,10 @@
 
 #include "../../core/kemi.h"
 
-#define SR_KEMI_RUBY_EXPORT_SIZE	1536
+#define SR_KEMI_RUBY_EXPORT_SIZE 1536
 
-typedef struct sr_kemi_ruby_export {
+typedef struct sr_kemi_ruby_export
+{
 	app_ruby_function pfunc;
 	sr_kemi_t *ket;
 } sr_kemi_ruby_export_t;

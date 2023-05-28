@@ -364,7 +364,7 @@ int acc_radius_send_request(struct sip_msg *req, acc_info_t *inf)
 		snprintf(smicrosec, 18, "%17.6f", tsecmicro);
 		ADD_RAD_AVPAIR(RA_TIME_STAMP, &smicrosec, -1);
 	} else {
-		av_type = (uint32_t)inf->env->ts;
+		av_type = (uint32_t)(uint64_t)inf->env->ts;
 		ADD_RAD_AVPAIR(RA_TIME_STAMP, &av_type, -1);
 	}
 

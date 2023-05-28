@@ -152,13 +152,13 @@ Chapter 1. Admin Guide
 
 1. Overview
 
-   The module contains record routing logic
+   The module contains record routing logic.
 
 2. Dialog support
 
    Kamailio is basically only a transaction stateful proxy, without any
    dialog support build in. There are many features/services which
-   actually requires a dialog awareness, like storing the information in
+   actually require a dialog awareness, like storing the information in
    the dialog creation stage, information which will be used during the
    whole dialog existence.
 
@@ -327,7 +327,7 @@ modparam("rr", "enable_socket_mismatch_warning", 0)
 
 4.6. custom_user_avp (avp string)
 
-   When enable_username is enabled, a call to record_route will add the
+   When add_username is enabled, a call to record_route will add the
    username of the RequestURI to the Record-Route URI. This parameter
    allows you to setup an AVP with which you can customise the username to
    be added in the Record-Route URI.
@@ -614,7 +614,7 @@ add_rr_param(";nat=yes");
 
    The function checks if the URI parameters of the local Route header
    (corresponding to the local server) matches the given regular
-   expression. It must be call after loose_route() (see Section 5.1,
+   expression. It must be called after loose_route() (see Section 5.1,
    “loose_route()”).
 
    Meaning of the parameters is as follows:
@@ -780,7 +780,7 @@ record_route_advertised_address("1.2.3.4:5090");
 
    The function checks for the request “msg” if the URI parameters of the
    local Route header (corresponding to the local server) matches the
-   given regular expression “re”. It must be call after the loose_route
+   given regular expression “re”. It must be called after the loose_route
    was done.
 
    The function returns 0 on success. Otherwise, -1 is returned.
@@ -796,7 +796,7 @@ record_route_advertised_address("1.2.3.4:5090");
    The function checks the flow direction of the request “msg”. As for
    checking it's used the “ftag” Route header parameter, the
    append_fromtag (see ??? module parameter must be enables. Also this
-   must be call only after the loose_route is done.
+   must be called only after the loose_route is done.
 
    The function returns 0 if the “dir” is the same with the request's flow
    direction. Otherwise, -1 is returned.
@@ -808,9 +808,9 @@ record_route_advertised_address("1.2.3.4:5090");
 
 1.6.  get_route_param(msg, name, val)
 
-   The function search in to the “msg”'s Route header parameters the
+   The function searches in the “msg”'s Route header parameters the
    parameter called “name” and returns its value into “val”. It must be
-   call only after the loose_route is done.
+   called only after the loose_route is done.
 
    The function returns 0 if parameter was found (even if it has no
    value). Otherwise, -1 is returned.
@@ -824,7 +824,7 @@ record_route_advertised_address("1.2.3.4:5090");
 
 1.7.  register_rrcb(callback, param)
 
-   The function register a new callback (along with its parameter). The
+   The function registers a new callback (along with its parameter). The
    callback will be called when a loose route will be performed for the
    local address.
 

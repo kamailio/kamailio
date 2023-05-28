@@ -138,7 +138,7 @@ int bdblib_close(bdb_db_p _db_p, str *dirpath)
 
 			if(_tbc->dtp->name.len == dirpath->len
 					&& !strncasecmp(
-							   _tbc->dtp->name.s, dirpath->s, dirpath->len)) {
+							_tbc->dtp->name.s, dirpath->s, dirpath->len)) {
 				DBG("DB %.*s \n", dirpath->len, dirpath->s);
 				_db = _tbc->dtp->db;
 				if(_db)
@@ -229,7 +229,7 @@ int bdblib_reopen(bdb_db_p _db_p, str *dirpath)
 
 			if(_tbc->dtp->name.len == dirpath->len
 					&& !strncasecmp(
-							   _tbc->dtp->name.s, dirpath->s, dirpath->len)) {
+							_tbc->dtp->name.s, dirpath->s, dirpath->len)) {
 				ERR("DB %.*s \n", dirpath->len, dirpath->s);
 				if(!_tbc->dtp->db) {
 					if((rc = db_create(&_db, _env, 0)) != 0) {
@@ -1148,9 +1148,9 @@ int bdblib_valtochar(bdb_table_p tp, db_fld_t *fld, int fld_count, char *kout,
 			if(i == k) {
 				/*
 				 KEY was provided; append to buffer;
-				 _k[j] contains a key, but its a key that 
+				 _k[j] contains a key, but it is a key that 
 				 corresponds to column k of our schema.
-				 now we know its a match, and we dont need
+				 now we know it is a match, and we don't need
 				 index k for anything else
 				*/
 				len = total - sum;

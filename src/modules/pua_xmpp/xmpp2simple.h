@@ -25,6 +25,6 @@
 
 #include "../../core/parser/msg_parser.h"
 
-void pres_Xmpp2Sip(char* xmpp_msg, int type, void *param);
+void pres_Xmpp2Sip(char *xmpp_msg, int type, void *param);
 
 #endif

@@ -47,11 +47,11 @@
 #include "ul_scscf_stats.h"
 
 /*! number of locks */
-int subs_locks_no=4;
+int subs_locks_no = 4;
 /*! global list of locks */
-gen_lock_set_t* subs_locks=0;
+gen_lock_set_t *subs_locks = 0;
 
-extern struct ims_subscription_list* ims_subscription_list;
+extern struct ims_subscription_list *ims_subscription_list;
 
 
 /*!
@@ -63,25 +63,22 @@ int subs_init_locks(void)
 	int i;
 	i = subs_locks_no;
 	do {
-		if ((( subs_locks=lock_set_alloc(i))!=0)&&
-				(lock_set_init(subs_locks)!=0))
-		{
+		if(((subs_locks = lock_set_alloc(i)) != 0)
+				&& (lock_set_init(subs_locks) != 0)) {
 			subs_locks_no = i;
 			LM_INFO("locks array size %d\n", subs_locks_no);
 			return 0;
-
 		}
-		if (subs_locks){
+		if(subs_locks) {
 			lock_set_dealloc(subs_locks);
-			subs_locks=0;
+			subs_locks = 0;
 		}
 		i--;
-		if(i==0)
-		{
+		if(i == 0) {
 			LM_ERR("failed to allocate locks\n");
 			return -1;
 		}
-	} while (1);
+	} while(1);
 }
 
 
@@ -92,10 +89,10 @@ void subs_unlock_locks(void)
 {
 	unsigned int i;
 
-	if (subs_locks==0)
+	if(subs_locks == 0)
 		return;
 
-	for (i=0;i<subs_locks_no;i++) {
+	for(i = 0; i < subs_locks_no; i++) {
 #ifdef GEN_LOCK_T_PREFERED
 		lock_release(&subs_locks->locks[i]);
 #else
@@ -110,7 +107,7 @@ void subs_unlock_locks(void)
  */
 void subs_destroy_locks(void)
 {
-	if (subs_locks !=0){
+	if(subs_locks != 0) {
 		lock_set_destroy(subs_locks);
 		lock_set_dealloc(subs_locks);
 	};
@@ -143,16 +140,16 @@ void subs_release_idx(int idx)
  * \param _s hash slot
  * \param n used to get the slot number (modulo number or locks)
  */
-void subs_init_slot(hslot_sp_t* _s, int n)
+void subs_init_slot(hslot_sp_t *_s, int n)
 {
 	_s->n = 0;
 	_s->first = 0;
 	_s->last = 0;
 
 #ifdef GEN_LOCK_T_PREFERED
-	_s->lock = &subs_locks->locks[n%subs_locks_no];
+	_s->lock = &subs_locks->locks[n % subs_locks_no];
 #else
-	_s->lockidx = n%subs_locks_no;
+	_s->lockidx = n % subs_locks_no;
 #endif
 }
 
@@ -161,11 +158,11 @@ void subs_init_slot(hslot_sp_t* _s, int n)
  * \brief Deinitialize given slot structure
  * \param _s hash slot
  */
-void subs_deinit_slot(hslot_sp_t* _s)
+void subs_deinit_slot(hslot_sp_t *_s)
 {
 	//struct ims_subscription_s* ptr;
 
-	     /* Remove all elements */
+	/* Remove all elements */
 	while(_s->first) {
 		//ptr = _s->first;
 		_s->first = _s->first->next;
@@ -182,9 +179,9 @@ void subs_deinit_slot(hslot_sp_t* _s)
  * \param _s hash slot
  * \param _r added record
  */
-void subs_slot_add(hslot_sp_t* _s, struct ims_subscription_s* _r)
+void subs_slot_add(hslot_sp_t *_s, struct ims_subscription_s *_r)
 {
-	if (_s->n == 0) {
+	if(_s->n == 0) {
 		_s->first = _s->last = _r;
 	} else {
 		_r->prev = _s->last;
@@ -192,7 +189,7 @@ void subs_slot_add(hslot_sp_t* _s, struct ims_subscription_s* _r)
 		_s->last = _r;
 	}
 	_s->n++;
-        counter_inc(ul_scscf_cnts_h.active_subscriptions);
+	counter_inc(ul_scscf_cnts_h.active_subscriptions);
 	_r->slot = _s;
 }
 
@@ -202,15 +199,15 @@ void subs_slot_add(hslot_sp_t* _s, struct ims_subscription_s* _r)
  * \param _s hash slot
  * \param _r removed record
  */
-void subs_slot_rem(hslot_sp_t* _s, struct ims_subscription_s* _r)
+void subs_slot_rem(hslot_sp_t *_s, struct ims_subscription_s *_r)
 {
-	if (_r->prev) {
+	if(_r->prev) {
 		_r->prev->next = _r->next;
 	} else {
 		_s->first = _r->next;
 	}
 
-	if (_r->next) {
+	if(_r->next) {
 		_r->next->prev = _r->prev;
 	} else {
 		_s->last = _r->prev;
@@ -219,9 +216,9 @@ void subs_slot_rem(hslot_sp_t* _s, struct ims_subscription_s* _r)
 	_r->prev = _r->next = 0;
 	_r->slot = 0;
 	_s->n--;
-        counter_add(ul_scscf_cnts_h.active_subscriptions, -1);
-        if (_s->n < 0) {
-            LM_WARN("we should not go negative....\n");
-            _s->n = 0;
-        }
+	counter_add(ul_scscf_cnts_h.active_subscriptions, -1);
+	if(_s->n < 0) {
+		LM_WARN("we should not go negative....\n");
+		_s->n = 0;
+	}
 }

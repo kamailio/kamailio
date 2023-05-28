@@ -25,7 +25,7 @@
 	<section>
 	<title>Dependencies</title>
 	<para>
-	    The module depends on the following modules (in the other words the
+	    The module depends on the following modules (in other words the
 		listed modules must be loaded before this module):
 	    <itemizedlist>
 		<listitem>
@@ -104,7 +104,7 @@ sipt_set_calling($fU, 4, 0, 3);
 			<programlisting format="linespecific">
 ...
 # update the forwarding number to the value in the from header
-sipt_forwarfing($avp(s:forwarding_number), 3);
+sipt_forwarding($avp(s:forwarding_number), 3);
 ...
 </programlisting>
 		</example>
@@ -387,7 +387,7 @@ if($sipt(called_party_number.nai) == 3)
         	<section id="sipt.v.sipt_redirection_number">
 		<title><varname>$sipt(redirection_number) / $sipt_redirection_number</varname></title>
 		<para>
-			Returns number to which redirection will trigered
+			Returns number to which redirection will triggered
 			Returns -1 if there is a parsing error.
 		</para>
 		<example>

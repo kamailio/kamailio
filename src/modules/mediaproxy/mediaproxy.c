@@ -109,7 +109,12 @@ typedef int Bool;
 typedef Bool (*NatTestFunction)(struct sip_msg *msg);
 
 
-typedef enum { TNone = 0, TSupported, TUnsupported } TransportType;
+typedef enum
+{
+	TNone = 0,
+	TSupported,
+	TUnsupported
+} TransportType;
 
 #define RETRY_INTERVAL 10
 #define BUFFER_SIZE 8192
@@ -193,10 +198,10 @@ static str ice_candidate = str_init("none");
 
 static MediaproxySocket mediaproxy_socket = {
 		"/run/mediaproxy/dispatcher.sock", // name
-		-1,									   // sock
+		-1,								   // sock
 		500, // timeout in 500 miliseconds if there is no answer
-		0,   // time of the last failure
-		""   // data
+		0,	 // time of the last failure
+		""	 // data
 };
 
 
@@ -216,8 +221,7 @@ static AVP_Param ice_candidate_avp = {str_init(ICE_CANDIDATE_AVP_SPEC), {0}, 0};
 static cmd_export_t commands[] = {
 		{"engage_media_proxy", (cmd_function)w_EngageMediaProxy, 0, 0, 0,
 				REQUEST_ROUTE | BRANCH_ROUTE},
-		{"use_media_proxy", (cmd_function)w_UseMediaProxy, 0, 0, 0,
-				ANY_ROUTE},
+		{"use_media_proxy", (cmd_function)w_UseMediaProxy, 0, 0, 0, ANY_ROUTE},
 		{"end_media_session", (cmd_function)w_EndMediaSession, 0, 0, 0,
 				ANY_ROUTE},
 		{0, 0, 0, 0, 0, 0}};
@@ -232,16 +236,16 @@ static param_export_t parameters[] = {
 		{"ice_candidate_avp", PARAM_STR, &(ice_candidate_avp.spec)}, {0, 0, 0}};
 
 struct module_exports exports = {
-	"mediaproxy",    /* module name */
-	DEFAULT_DLFLAGS, /* dlopen flags */
-	commands,        /* cmd (cfg function) exports */
-	parameters,      /* param exports */
-	0,               /* RPC method exports */
-	0,               /* pseudo-variables exports */
-	0,               /* response handling function */
-	mod_init,        /* module init function */
-	child_init,      /* per-child init function */
-	0                /* module destroy function */
+		"mediaproxy",	 /* module name */
+		DEFAULT_DLFLAGS, /* dlopen flags */
+		commands,		 /* cmd (cfg function) exports */
+		parameters,		 /* param exports */
+		0,				 /* RPC method exports */
+		0,				 /* pseudo-variables exports */
+		0,				 /* response handling function */
+		mod_init,		 /* module init function */
+		child_init,		 /* per-child init function */
+		0				 /* module destroy function */
 };
 
 
@@ -1584,7 +1588,7 @@ static int use_media_proxy(
 		return status;
 	} else if(status == -2
 			  && !(msg->REPLY_STATUS == 200
-						 && get_method_from_reply(msg) == METHOD_INVITE)) {
+					  && get_method_from_reply(msg) == METHOD_INVITE)) {
 		return -2;
 	}
 	have_sdp = (status == 1);
@@ -1592,7 +1596,7 @@ static int use_media_proxy(
 	if(have_sdp) {
 		if(msg->first_line.type == SIP_REQUEST
 				&& find_line_starting_with(
-						   &sdp, "a=remote-candidates", False)) {
+						&sdp, "a=remote-candidates", False)) {
 			// we don't process requests with a=remote-candidates, this indicates the end of an ICE
 			// negotiation and we must not mangle the SDP.
 			if(ice_data != NULL) {
@@ -1645,20 +1649,21 @@ static int use_media_proxy(
 	signaling_ip = get_signaling_ip(msg);
 	media_relay = get_media_relay(msg);
 
-	len = snprintf(request, sizeof(request), "update\r\n"
-											 "type: %s\r\n"
-											 "dialog_id: %s\r\n"
-											 "call_id: %.*s\r\n"
-											 "cseq: %.*s\r\n"
-											 "from_uri: %.*s\r\n"
-											 "to_uri: %.*s\r\n"
-											 "from_tag: %.*s\r\n"
-											 "to_tag: %.*s\r\n"
-											 "user_agent: %.*s\r\n"
-											 "signaling_ip: %.*s\r\n"
-											 "media_relay: %.*s\r\n"
-											 "%s"
-											 "\r\n",
+	len = snprintf(request, sizeof(request),
+			"update\r\n"
+			"type: %s\r\n"
+			"dialog_id: %s\r\n"
+			"call_id: %.*s\r\n"
+			"cseq: %.*s\r\n"
+			"from_uri: %.*s\r\n"
+			"to_uri: %.*s\r\n"
+			"from_tag: %.*s\r\n"
+			"to_tag: %.*s\r\n"
+			"user_agent: %.*s\r\n"
+			"signaling_ip: %.*s\r\n"
+			"media_relay: %.*s\r\n"
+			"%s"
+			"\r\n",
 			type, dialog_id, callid.len, callid.s, cseq.len, cseq.s,
 			from_uri.len, from_uri.s, to_uri.len, to_uri.s, from_tag.len,
 			from_tag.s, to_tag.len, to_tag.s, user_agent.len, user_agent.s,
@@ -1855,11 +1860,12 @@ static int end_media_session(str callid, str from_tag, str to_tag)
 	char request[2048], *result;
 	int len;
 
-	len = snprintf(request, sizeof(request), "remove\r\n"
-											 "call_id: %.*s\r\n"
-											 "from_tag: %.*s\r\n"
-											 "to_tag: %.*s\r\n"
-											 "\r\n",
+	len = snprintf(request, sizeof(request),
+			"remove\r\n"
+			"call_id: %.*s\r\n"
+			"from_tag: %.*s\r\n"
+			"to_tag: %.*s\r\n"
+			"\r\n",
 			callid.len, callid.s, from_tag.len, from_tag.s, to_tag.len,
 			to_tag.s);
 
@@ -1878,7 +1884,11 @@ static int end_media_session(str callid, str from_tag, str to_tag)
 // Dialog callbacks and helpers
 //
 
-typedef enum { MPInactive = 0, MPActive } MediaProxyState;
+typedef enum
+{
+	MPInactive = 0,
+	MPActive
+} MediaProxyState;
 
 
 static INLINE char *get_dialog_id(struct dlg_cell *dlg)

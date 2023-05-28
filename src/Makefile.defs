@@ -105,9 +105,9 @@ INSTALL_FLAVOUR=$(FLAVOUR)
 
 # version number
 VERSION = 5
-PATCHLEVEL = 7
+PATCHLEVEL = 8
 SUBLEVEL =  0
-EXTRAVERSION = -dev3
+EXTRAVERSION = -dev0
 
 # memory manager switcher
 # 0 - f_malloc (fast malloc)
@@ -181,7 +181,7 @@ LD_EXTRA_OPTS ?=
 
 
 # enable workaround for libssl 1.1+ to set shared mutex attribute
-LIBSSL_SET_MUTEX_SHARED ?=
+LIBSSL_SET_MUTEX_SHARED ?= 1
 ifneq ($(LIBSSL_SET_MUTEX_SHARED), 1)
 
 ifeq ($(CROSS_COMPILE),)
@@ -307,12 +307,8 @@ ifneq (,$(findstring gcc, $(CC_LONGVER)))
 					-e 's/8\.[0-9]$$/8.0+/' \
 					-e 's/9\.[0-9]\..*/9.0+/' \
 					-e 's/9\.[0-9]$$/9.0+/' \
-					-e 's/10\.[0-9]\..*/9.0+/' \
-					-e 's/10\.[0-9]$$/9.0+/' \
-					-e 's/11\.[0-9]\..*/9.0+/' \
-					-e 's/11\.[0-9]$$/9.0+/' \
-					-e 's/12\.[0-9]\..*/9.0+/' \
-					-e 's/12\.[0-9]$$/9.0+/')
+					-e 's/1[0-3]\.[0-9]\..*/9.0+/' \
+					-e 's/1[0-3]\.[0-9]$$/9.0+/')
 ifeq (,$(strip $(filter-out 3.0 3.4 4.x 4.2+ 4.5+ 5.0+ 6.0+ 7.0+ 8.0+ 9.0+,$(CC_SHORTVER))))
 	# dependencies can be generated on-the-fly while compiling *.c
 	CC_MKDEP_OPTS=-MMD -MP
@@ -1741,7 +1737,11 @@ endif
 	# -andrei
 
 ifeq ($(CC_NAME), clang)
+ifeq ($(OS), darwin)
+	LDFLAGS+=-Wl,-E $(PROFILE)
+else
 	LDFLAGS+=-Wl,-O2 -Wl,-E $(PROFILE)
+endif
 	MOD_LDFLAGS:=-shared $(LDFLAGS)
 	LIB_LDFLAGS:=-shared $(LDFLAGS)
 	LIB_SONAME=-Wl,-soname,
@@ -1883,7 +1883,7 @@ ifeq ($(OS), linux)
 	# check for >= 2.2.0
 	ifeq ($(shell [ $(OSREL_N) -ge 2002000 ] && echo has_sigio), has_sigio)
 		ifeq ($(NO_SIGIO),)
-			C_DEFS+=-DHAVE_SIGIO_RT -DSIGINFO64_WORKARROUND
+			C_DEFS+=-DHAVE_SIGIO_RT -DSIGINFO64_WORKAROUND
 		endif
 	endif
 	# check for >= 2.5.70

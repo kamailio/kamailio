@@ -46,4 +46,3 @@ int dbt_is_database(str *_s)
 
 	return 1;
 }
-

@@ -1,6 +1,6 @@
 /*
 shot written by ashhar farhan, is not bound by any licensing at all.
-you are free to use this code as you deem fit. just dont blame the author
+you are free to use this code as you deem fit. Just don't blame the author
 for any problems you may have using it.
 bouquets and brickbats to farhan@hotfoon.com
  */

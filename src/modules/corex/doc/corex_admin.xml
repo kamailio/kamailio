@@ -567,7 +567,7 @@ setxflag("$var(flag)");
 		<section id="corex.f.isxflagset">
 		<title><function moreinfo="none">isxflagset(flag)</function></title>
 		<para>
-			Return true of the extended message (transaction) flag is set.
+			Return true if the extended message (transaction) flag is set.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>

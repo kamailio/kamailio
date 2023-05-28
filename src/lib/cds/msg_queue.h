@@ -40,7 +40,7 @@ extern "C" {
  * Message queue is a structure useful for sending data between processes.
  * It can be synchronized via its own mutex or the synchronization can
  * be left on caller. It can use reference counter which is useful
- * when accessing dynamicaly allocated queue destroyed by its last user.
+ * when accessing dynamically allocated queue destroyed by its last user.
  *
  * \todo To meaningfully use reference counters it is needed to add
  * function for adding new reference to message queue.
@@ -54,12 +54,12 @@ typedef void (*destroy_function_f)(void *);
 /** Structure holding message which can be put
  * into message queue.
  *
- * There is a need to allow destroing the message without knowing its
+ * There is a need to allow destroying the message without knowing its
  * internals (destroying message queue with non-processed messages) and thus
  * the destroy_function able to fully destroy whole data hold by message must
  * be given. It is mostly needed to choose the function manually only for
  * complex data with pointers which content need to be freed too.
- * For simple structures it is set automaticaly during the message creation.
+ * For simple structures it is set automatically during the message creation.
  */
 typedef struct _mq_message_t {
 	/** pointer to data hold by the message */
@@ -122,14 +122,14 @@ typedef struct msg_queue {
 #define get_message_data_len(msg)	(msg ? msg->data_len: 0)
 
 /** The space for data is allocated in messages data
- * (they are automaticaly freed!)! Pointer to allocated
+ * (they are automatically freed!)! Pointer to allocated
  * data bytes is in data variable in the message structure. */
 mq_message_t *create_message_ex(int data_len);
 
 /** Creates message holding data allocated using cds_malloc.
  * Data must be allocated using cds_malloc or there must be
  * set destroy function via \ref set_data_destroy_function
- * because they are automaticaly freed by free_message! */
+ * because they are automatically freed by free_message! */
 mq_message_t *create_message(void *data, int data_len);
 
 /** Sets function which will be called by free_message to destroy data. 
@@ -140,7 +140,7 @@ void set_data_destroy_function(mq_message_t *msg, destroy_function_f func);
 
 /** Initializes message.
  * If auto_free set, data must be allocated using cds_malloc and are
- * automaticaly freed by free_message (and if msg_queue_destroy called) */
+ * automatically freed by free_message (and if msg_queue_destroy called) */
 void init_message_ex(mq_message_t *m, void *data, int data_len, destroy_function_f func);
 
 /** Frees the message and data hold by the message. */
@@ -173,7 +173,7 @@ void msg_queue_init_ref_cnt(msg_queue_t *q, reference_counter_group_t *grp);
 
 /** Destroys message queue if no more references exist. 
  * This function destroys all message queue internal data but doesn't free
- * the message queue itself. It can be useful for staticaly allocated queues
+ * the message queue itself. It can be useful for statically allocated queues
  * or when allocated not using cds_malloc. */
 void msg_queue_destroy(msg_queue_t *q);
 

@@ -354,7 +354,7 @@ typedef int (*get_event_list_t) (str** ev_list);
 </programlisting>
 	<para>
 	This function returns a string representation of the events registered
-	in presence module.( used for Allowed-Events header).
+	in presence module (used for Allowed-Events header).
 	</para>
 </section>
 

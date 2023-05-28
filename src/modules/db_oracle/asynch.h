@@ -35,28 +35,28 @@
 /*
  * parse timeout value for operation in syntax: nnn.mmm (sec/ms)
  */
-int set_timeout(unsigned type, const char* val);
+int set_timeout(unsigned type, const char *val);
 
 /*
  * parse timeout value for reconnect in syntax: nnn.mmm (sec/ms)
  */
-int set_reconnect(unsigned type, const char* val);
+int set_reconnect(unsigned type, const char *val);
 
 
 /*
  * start timelimited operation (if work in synch mode return SUCCESS)
  */
-sword begin_timelimit(ora_con_t* con, int connect);
+sword begin_timelimit(ora_con_t *con, int connect);
 
 /*
  * check completion of timelimited operation (if work in synch mode return 0)
  */
-int wait_timelimit(ora_con_t* con, sword status);
+int wait_timelimit(ora_con_t *con, sword status);
 
 /*
  * close current timelimited operation and disconnect if timeout occurred
  * return true only if work in asynch mode and timeout detect
  */
-int done_timelimit(ora_con_t* con, sword status);
+int done_timelimit(ora_con_t *con, sword status);
 
 #endif /* ASYNCH_H */

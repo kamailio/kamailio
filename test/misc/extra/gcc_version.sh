@@ -1,7 +1,7 @@
 #!/bin/sh
 
 #
-# wrapper arroung gcc, that intercepts --version and reports instead
+# wrapper around gcc, that intercepts --version and reports instead
 # $GCC_VERSION
 #
 

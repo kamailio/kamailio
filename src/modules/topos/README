@@ -171,6 +171,7 @@ Chapter 1. Admin Guide
        requests).
      * database module - to store the data for topology stripping and
        restoring.
+     * topoh module - in case of Call-ID mask for Call-ID masking.
 
 2.2. External Libraries or Applications
 
@@ -228,11 +229,11 @@ modparam("topos", "db_url", "dbdriver://username:password@dbhost/dbname")
 
 3.3. mask_callid (int)
 
-   Note: this functionality is not implemented yet - the parameter is
-   present in order to be in pair with topoh module.
-
-   Whether to replace or not the Call-ID with another unique id generated
-   by Kamailio.
+   Whether to encode the Call-id: header. Some SIP extensions include the
+   Call-id in the SIP message payload or header, so it is safe to not
+   encode Call-id in such cases. Well-known extensions such as call
+   transfer or conference join will be added to work with encoded Call-id.
+   Topoh module should be loaded with use_mode paramerter set to 1
 
    Default value is 0 (do not mask).
 

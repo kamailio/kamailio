@@ -545,7 +545,7 @@ setxflag("$var(flag)");
 
 4.13. isxflagset(flag)
 
-   Return true of the extended message (transaction) flag is set.
+   Return true if the extended message (transaction) flag is set.
 
    Meaning of the parameters is as follows:
      * flag - the index of the flag to be tested. Can be integer or

@@ -32,7 +32,7 @@ dmq_peer_list_t *init_peer_list()
 	dmq_peer_list_t *dmq_peer_list;
 	dmq_peer_list = shm_malloc(sizeof(dmq_peer_list_t));
 	if(dmq_peer_list == NULL) {
-		LM_ERR("no more shm\n");
+		SHM_MEM_ERROR;
 		return NULL;
 	}
 	memset(dmq_peer_list, 0, sizeof(dmq_peer_list_t));
@@ -67,7 +67,7 @@ dmq_peer_t *add_peer(dmq_peer_list_t *peer_list, dmq_peer_t *peer)
 	new_peer = shm_malloc(
 			sizeof(dmq_peer_t) + peer->peer_id.len + peer->description.len);
 	if(new_peer == NULL) {
-		LM_ERR("no more shm\n");
+		SHM_MEM_ERROR;
 		return NULL;
 	}
 	*new_peer = *peer;

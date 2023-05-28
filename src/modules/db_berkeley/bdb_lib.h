@@ -86,7 +86,7 @@ typedef struct
 		long long ll_val;		 /**< long long value            */
 		double double_val;		 /**< double value               */
 		time_t time_val;		 /**< unix time_t value          */
-		const char *string_val;  /**< zero terminated string     */
+		const char *string_val;	 /**< zero terminated string     */
 		str str_val;			 /**< str type string value      */
 		str blob_val;			 /**< binary object data         */
 		unsigned int bitmap_val; /**< Bitmap data type           */
@@ -119,8 +119,8 @@ typedef struct _bdb_table
 	int nkeys;
 	int ro;		  /*db readonly flag*/
 	int logflags; /*flags indication what-where to journal log */
-	FILE *fp;	 /*jlog file pointer */
-	time_t t;	 /*jlog creation time */
+	FILE *fp;	  /*jlog file pointer */
+	time_t t;	  /*jlog creation time */
 	ino_t ino;
 } bdb_table_t, *bdb_table_p;
 

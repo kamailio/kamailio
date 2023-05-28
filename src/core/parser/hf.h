@@ -20,11 +20,10 @@
  */
 
 /** Parser :: parse headers.
- * @file 
+ * @file
  *
  * @ingroup parser
  */
-
 
 
 #ifndef HF_H
@@ -34,9 +33,8 @@
 #include "../comp_defs.h"
 
 
-
 /** header types enum.
- * 
+ *
  * @note
  * if you add a new type:
  *  - make sure it's not greater than 63
@@ -47,67 +45,68 @@
  *  - update get_hdr_field (msg_parser.c)
  */
 
-enum _hdr_types_t {
-	HDR_ERROR_T					= -1   /*!< Error while parsing */,
-	HDR_OTHER_T					=  0   /*!< Some other header field */,
-	HDR_VIA_T					=  1   /*!< Via header field */,
-	HDR_VIA1_T					=  1   /*!< First Via header field */,
-	HDR_VIA2_T					=  2   /*!< only used as flag */,
-	HDR_TO_T					=  3   /*!< To header field */,
-	HDR_FROM_T					=  4   /*!< From header field */,
-	HDR_CSEQ_T					=  5   /*!< CSeq header field */,
-	HDR_CALLID_T				=  6   /*!< Call-Id header field */,
-	HDR_CONTACT_T				=  7   /*!< Contact header field */,
-	HDR_MAXFORWARDS_T			=  8   /*!< MaxForwards header field */,
-	HDR_ROUTE_T					=  9   /*!< Route header field */,
-	HDR_RECORDROUTE_T			= 10   /*!< Record-Route header field */,
-	HDR_CONTENTTYPE_T			= 11   /*!< Content-Type header field */,
-	HDR_CONTENTLENGTH_T			= 12   /*!< Content-Length header field */,
-	HDR_AUTHORIZATION_T			= 13   /*!< Authorization header field */,
-	HDR_EXPIRES_T				= 14   /*!< Expires header field */,
-	HDR_MIN_EXPIRES_T			= 15   /*!< Min-Expires header */,
-	HDR_PROXYAUTH_T				= 16   /*!< Proxy-Authorization hdr field */,
-	HDR_SUPPORTED_T				= 17   /*!< Supported  header field */,
-	HDR_REQUIRE_T				= 18   /*!< Require header */,
-	HDR_PROXYREQUIRE_T			= 19   /*!< Proxy-Require header field */,
-	HDR_UNSUPPORTED_T			= 20   /*!< Unsupported header field */,
-	HDR_ALLOW_T					= 21   /*!< Allow header field */,
-	HDR_EVENT_T					= 22   /*!< Event header field */,
-	HDR_ACCEPT_T				= 23   /*!< Accept header field */,
-	HDR_ACCEPTLANGUAGE_T		= 24   /*!< Accept-Language header field */,
-	HDR_ORGANIZATION_T			= 25   /*!< Organization header field */,
-	HDR_PRIORITY_T				= 26   /*!< Priority header field */,
-	HDR_SUBJECT_T				= 27   /*!< Subject header field */,
-	HDR_USERAGENT_T				= 28   /*!< User-Agent header field */,
-	HDR_SERVER_T				= 29   /*!< Server header field */,
-	HDR_CONTENTDISPOSITION_T	= 30   /*!< Content-Disposition hdr field */,
-	HDR_DIVERSION_T				= 31   /*!< Diversion header field */,
-	HDR_RPID_T					= 32   /*!< Remote-Party-ID header field */,
-	HDR_REFER_TO_T				= 33   /*!< Refer-To header fiels */,
-	HDR_SIPIFMATCH_T			= 34   /*!< SIP-If-Match header field */,
-	HDR_SESSIONEXPIRES_T		= 35   /*!< Session-Expires header */,
-	HDR_MIN_SE_T				= 36   /*!< Min-SE */,
-	HDR_SUBSCRIPTION_STATE_T	= 37   /*!< Subscription-State */,
-	HDR_ACCEPTCONTACT_T			= 38   /*!< Accept-Contact header */,
-	HDR_ALLOWEVENTS_T			= 39   /*!< Allow-Events header */,
-	HDR_CONTENTENCODING_T		= 40   /*!< Content-Encoding header */,
-	HDR_REFERREDBY_T			= 41   /*!< Referred-By header */,
-	HDR_REJECTCONTACT_T			= 42   /*!< Reject-Contact header */,
-	HDR_REQUESTDISPOSITION_T	= 43   /*!< Request-Disposition header */,
-	HDR_WWW_AUTHENTICATE_T		= 44   /*!< WWW-Authenticate header field */,
-	HDR_PROXY_AUTHENTICATE_T	= 45   /*!< Proxy-Authenticate header field */,
-	HDR_DATE_T					= 46   /*!< Date header field */,
-	HDR_IDENTITY_T				= 47   /*!< Identity header field */,
-	HDR_IDENTITY_INFO_T			= 48   /*!< Identity-info header field */,
-	HDR_RETRY_AFTER_T			= 49   /*!< Retry-After header field */,
-	HDR_PPI_T					= 50   /*!< P-Preferred-Identity header field*/,
-	HDR_PAI_T					= 51   /*!< P-Asserted-Identity header field*/,
-	HDR_PATH_T					= 52   /*!< Path header field */,
-	HDR_PRIVACY_T				= 53   /*!< Privacy header field */,
-	HDR_REASON_T				= 54   /**< Reason header field */,
-	HDR_CALLINFO_T				= 55   /*!< Call-Info header field*/,
+enum _hdr_types_t
+{
+	HDR_ERROR_T = -1 /*!< Error while parsing */,
+	HDR_OTHER_T = 0 /*!< Some other header field */,
+	HDR_VIA_T = 1 /*!< Via header field */,
+	HDR_VIA1_T = 1 /*!< First Via header field */,
+	HDR_VIA2_T = 2 /*!< only used as flag */,
+	HDR_TO_T = 3 /*!< To header field */,
+	HDR_FROM_T = 4 /*!< From header field */,
+	HDR_CSEQ_T = 5 /*!< CSeq header field */,
+	HDR_CALLID_T = 6 /*!< Call-Id header field */,
+	HDR_CONTACT_T = 7 /*!< Contact header field */,
+	HDR_MAXFORWARDS_T = 8 /*!< MaxForwards header field */,
+	HDR_ROUTE_T = 9 /*!< Route header field */,
+	HDR_RECORDROUTE_T = 10 /*!< Record-Route header field */,
+	HDR_CONTENTTYPE_T = 11 /*!< Content-Type header field */,
+	HDR_CONTENTLENGTH_T = 12 /*!< Content-Length header field */,
+	HDR_AUTHORIZATION_T = 13 /*!< Authorization header field */,
+	HDR_EXPIRES_T = 14 /*!< Expires header field */,
+	HDR_MIN_EXPIRES_T = 15 /*!< Min-Expires header */,
+	HDR_PROXYAUTH_T = 16 /*!< Proxy-Authorization hdr field */,
+	HDR_SUPPORTED_T = 17 /*!< Supported  header field */,
+	HDR_REQUIRE_T = 18 /*!< Require header */,
+	HDR_PROXYREQUIRE_T = 19 /*!< Proxy-Require header field */,
+	HDR_UNSUPPORTED_T = 20 /*!< Unsupported header field */,
+	HDR_ALLOW_T = 21 /*!< Allow header field */,
+	HDR_EVENT_T = 22 /*!< Event header field */,
+	HDR_ACCEPT_T = 23 /*!< Accept header field */,
+	HDR_ACCEPTLANGUAGE_T = 24 /*!< Accept-Language header field */,
+	HDR_ORGANIZATION_T = 25 /*!< Organization header field */,
+	HDR_PRIORITY_T = 26 /*!< Priority header field */,
+	HDR_SUBJECT_T = 27 /*!< Subject header field */,
+	HDR_USERAGENT_T = 28 /*!< User-Agent header field */,
+	HDR_SERVER_T = 29 /*!< Server header field */,
+	HDR_CONTENTDISPOSITION_T = 30 /*!< Content-Disposition hdr field */,
+	HDR_DIVERSION_T = 31 /*!< Diversion header field */,
+	HDR_RPID_T = 32 /*!< Remote-Party-ID header field */,
+	HDR_REFER_TO_T = 33 /*!< Refer-To header fields */,
+	HDR_SIPIFMATCH_T = 34 /*!< SIP-If-Match header field */,
+	HDR_SESSIONEXPIRES_T = 35 /*!< Session-Expires header */,
+	HDR_MIN_SE_T = 36 /*!< Min-SE */,
+	HDR_SUBSCRIPTION_STATE_T = 37 /*!< Subscription-State */,
+	HDR_ACCEPTCONTACT_T = 38 /*!< Accept-Contact header */,
+	HDR_ALLOWEVENTS_T = 39 /*!< Allow-Events header */,
+	HDR_CONTENTENCODING_T = 40 /*!< Content-Encoding header */,
+	HDR_REFERREDBY_T = 41 /*!< Referred-By header */,
+	HDR_REJECTCONTACT_T = 42 /*!< Reject-Contact header */,
+	HDR_REQUESTDISPOSITION_T = 43 /*!< Request-Disposition header */,
+	HDR_WWW_AUTHENTICATE_T = 44 /*!< WWW-Authenticate header field */,
+	HDR_PROXY_AUTHENTICATE_T = 45 /*!< Proxy-Authenticate header field */,
+	HDR_DATE_T = 46 /*!< Date header field */,
+	HDR_IDENTITY_T = 47 /*!< Identity header field */,
+	HDR_IDENTITY_INFO_T = 48 /*!< Identity-info header field */,
+	HDR_RETRY_AFTER_T = 49 /*!< Retry-After header field */,
+	HDR_PPI_T = 50 /*!< P-Preferred-Identity header field*/,
+	HDR_PAI_T = 51 /*!< P-Asserted-Identity header field*/,
+	HDR_PATH_T = 52 /*!< Path header field */,
+	HDR_PRIVACY_T = 53 /*!< Privacy header field */,
+	HDR_REASON_T = 54 /**< Reason header field */,
+	HDR_CALLINFO_T = 55 /*!< Call-Info header field*/,
 
-	HDR_EOH_T					= 56   /*!< End of message header (lastid + 1) */
+	HDR_EOH_T = 56 /*!< End of message header (lastid + 1) */
 };
 
 
@@ -115,74 +114,74 @@ typedef unsigned long long hdr_flags_t;
 
 /** type to flag conversion.
  * WARNING: HDR_ERROR_T has no corresponding FLAG ! */
-#define HDR_T2F(type)	\
-		(((type)!=HDR_EOH_T)?((hdr_flags_t)1<<(type)):(~(hdr_flags_t)0))
+#define HDR_T2F(type) \
+	(((type) != HDR_EOH_T) ? ((hdr_flags_t)1 << (type)) : (~(hdr_flags_t)0))
 
 /** helper macro for easy defining and keeping in sync the flags enum. */
-#define HDR_F_DEF(name)		HDR_T2F(HDR_##name##_T)
+#define HDR_F_DEF(name) HDR_T2F(HDR_##name##_T)
 
 /** @name flags definitions.
  * (enum won't work with all the compiler (e.g. icc) due to the 64bit size) */
 /*!{ */
-#define HDR_EOH_F					HDR_F_DEF(EOH)
-#define HDR_VIA_F					HDR_F_DEF(VIA)
-#define HDR_VIA1_F					HDR_F_DEF(VIA1)
-#define HDR_VIA2_F					HDR_F_DEF(VIA2)
-#define HDR_TO_F					HDR_F_DEF(TO)
-#define HDR_FROM_F					HDR_F_DEF(FROM)
-#define HDR_CSEQ_F					HDR_F_DEF(CSEQ)
-#define HDR_CALLID_F				HDR_F_DEF(CALLID)
-#define HDR_CONTACT_F				HDR_F_DEF(CONTACT)
-#define HDR_MAXFORWARDS_F			HDR_F_DEF(MAXFORWARDS)
-#define HDR_ROUTE_F					HDR_F_DEF(ROUTE)
-#define HDR_RECORDROUTE_F			HDR_F_DEF(RECORDROUTE)
-#define HDR_CONTENTTYPE_F			HDR_F_DEF(CONTENTTYPE)
-#define HDR_CONTENTLENGTH_F			HDR_F_DEF(CONTENTLENGTH)
-#define HDR_AUTHORIZATION_F			HDR_F_DEF(AUTHORIZATION)
-#define HDR_EXPIRES_F				HDR_F_DEF(EXPIRES)
-#define HDR_MIN_EXPIRES_F			HDR_F_DEF(MIN_EXPIRES)
-#define HDR_PROXYAUTH_F				HDR_F_DEF(PROXYAUTH)
-#define HDR_SUPPORTED_F				HDR_F_DEF(SUPPORTED)
-#define HDR_REQUIRE_F				HDR_F_DEF(REQUIRE)
-#define HDR_PROXYREQUIRE_F			HDR_F_DEF(PROXYREQUIRE)
-#define HDR_UNSUPPORTED_F			HDR_F_DEF(UNSUPPORTED)
-#define HDR_ALLOW_F					HDR_F_DEF(ALLOW)
-#define HDR_EVENT_F					HDR_F_DEF(EVENT)
-#define HDR_ACCEPT_F				HDR_F_DEF(ACCEPT)
-#define HDR_ACCEPTLANGUAGE_F		HDR_F_DEF(ACCEPTLANGUAGE)
-#define HDR_ORGANIZATION_F			HDR_F_DEF(ORGANIZATION)
-#define HDR_PRIORITY_F				HDR_F_DEF(PRIORITY)
-#define HDR_SUBJECT_F				HDR_F_DEF(SUBJECT)
-#define HDR_USERAGENT_F				HDR_F_DEF(USERAGENT)
-#define HDR_SERVER_F				HDR_F_DEF(SERVER)
-#define HDR_CONTENTDISPOSITION_F	HDR_F_DEF(CONTENTDISPOSITION)
-#define HDR_DIVERSION_F				HDR_F_DEF(DIVERSION)
-#define HDR_RPID_F					HDR_F_DEF(RPID)
-#define HDR_REFER_TO_F				HDR_F_DEF(REFER_TO)
-#define HDR_SIPIFMATCH_F			HDR_F_DEF(SIPIFMATCH)
-#define HDR_SESSIONEXPIRES_F		HDR_F_DEF(SESSIONEXPIRES)
-#define HDR_MIN_SE_F				HDR_F_DEF(MIN_SE)
-#define HDR_SUBSCRIPTION_STATE_F	HDR_F_DEF(SUBSCRIPTION_STATE)
-#define HDR_ACCEPTCONTACT_F			HDR_F_DEF(ACCEPTCONTACT)
-#define HDR_ALLOWEVENTS_F			HDR_F_DEF(ALLOWEVENTS)
-#define HDR_CONTENTENCODING_F		HDR_F_DEF(CONTENTENCODING)
-#define HDR_REFERREDBY_F			HDR_F_DEF(REFERREDBY)
-#define HDR_REJECTCONTACT_F			HDR_F_DEF(REJECTCONTACT)
-#define HDR_REQUESTDISPOSITION_F	HDR_F_DEF(REQUESTDISPOSITION)
-#define HDR_WWW_AUTHENTICATE_F		HDR_F_DEF(WWW_AUTHENTICATE)
-#define HDR_PROXY_AUTHENTICATE_F	HDR_F_DEF(PROXY_AUTHENTICATE)
-#define HDR_DATE_F			HDR_F_DEF(DATE)
-#define HDR_IDENTITY_F			HDR_F_DEF(IDENTITY)
-#define HDR_IDENTITY_INFO_F		HDR_F_DEF(IDENTITY_INFO)
-#define HDR_RETRY_AFTER_F			HDR_F_DEF(RETRY_AFTER)
-#define HDR_PPI_F                   HDR_F_DEF(PPI)
-#define HDR_PAI_F                   HDR_F_DEF(PAI)
-#define HDR_PATH_F                  HDR_F_DEF(PATH)
-#define HDR_PRIVACY_F               HDR_F_DEF(PRIVACY)
-#define HDR_REASON_F				HDR_F_DEF(REASON)
-#define HDR_CALLINFO_F				HDR_F_DEF(CALLINFO)
+#define HDR_EOH_F HDR_F_DEF(EOH)
+#define HDR_VIA_F HDR_F_DEF(VIA)
+#define HDR_VIA1_F HDR_F_DEF(VIA1)
+#define HDR_VIA2_F HDR_F_DEF(VIA2)
+#define HDR_TO_F HDR_F_DEF(TO)
+#define HDR_FROM_F HDR_F_DEF(FROM)
+#define HDR_CSEQ_F HDR_F_DEF(CSEQ)
+#define HDR_CALLID_F HDR_F_DEF(CALLID)
+#define HDR_CONTACT_F HDR_F_DEF(CONTACT)
+#define HDR_MAXFORWARDS_F HDR_F_DEF(MAXFORWARDS)
+#define HDR_ROUTE_F HDR_F_DEF(ROUTE)
+#define HDR_RECORDROUTE_F HDR_F_DEF(RECORDROUTE)
+#define HDR_CONTENTTYPE_F HDR_F_DEF(CONTENTTYPE)
+#define HDR_CONTENTLENGTH_F HDR_F_DEF(CONTENTLENGTH)
+#define HDR_AUTHORIZATION_F HDR_F_DEF(AUTHORIZATION)
+#define HDR_EXPIRES_F HDR_F_DEF(EXPIRES)
+#define HDR_MIN_EXPIRES_F HDR_F_DEF(MIN_EXPIRES)
+#define HDR_PROXYAUTH_F HDR_F_DEF(PROXYAUTH)
+#define HDR_SUPPORTED_F HDR_F_DEF(SUPPORTED)
+#define HDR_REQUIRE_F HDR_F_DEF(REQUIRE)
+#define HDR_PROXYREQUIRE_F HDR_F_DEF(PROXYREQUIRE)
+#define HDR_UNSUPPORTED_F HDR_F_DEF(UNSUPPORTED)
+#define HDR_ALLOW_F HDR_F_DEF(ALLOW)
+#define HDR_EVENT_F HDR_F_DEF(EVENT)
+#define HDR_ACCEPT_F HDR_F_DEF(ACCEPT)
+#define HDR_ACCEPTLANGUAGE_F HDR_F_DEF(ACCEPTLANGUAGE)
+#define HDR_ORGANIZATION_F HDR_F_DEF(ORGANIZATION)
+#define HDR_PRIORITY_F HDR_F_DEF(PRIORITY)
+#define HDR_SUBJECT_F HDR_F_DEF(SUBJECT)
+#define HDR_USERAGENT_F HDR_F_DEF(USERAGENT)
+#define HDR_SERVER_F HDR_F_DEF(SERVER)
+#define HDR_CONTENTDISPOSITION_F HDR_F_DEF(CONTENTDISPOSITION)
+#define HDR_DIVERSION_F HDR_F_DEF(DIVERSION)
+#define HDR_RPID_F HDR_F_DEF(RPID)
+#define HDR_REFER_TO_F HDR_F_DEF(REFER_TO)
+#define HDR_SIPIFMATCH_F HDR_F_DEF(SIPIFMATCH)
+#define HDR_SESSIONEXPIRES_F HDR_F_DEF(SESSIONEXPIRES)
+#define HDR_MIN_SE_F HDR_F_DEF(MIN_SE)
+#define HDR_SUBSCRIPTION_STATE_F HDR_F_DEF(SUBSCRIPTION_STATE)
+#define HDR_ACCEPTCONTACT_F HDR_F_DEF(ACCEPTCONTACT)
+#define HDR_ALLOWEVENTS_F HDR_F_DEF(ALLOWEVENTS)
+#define HDR_CONTENTENCODING_F HDR_F_DEF(CONTENTENCODING)
+#define HDR_REFERREDBY_F HDR_F_DEF(REFERREDBY)
+#define HDR_REJECTCONTACT_F HDR_F_DEF(REJECTCONTACT)
+#define HDR_REQUESTDISPOSITION_F HDR_F_DEF(REQUESTDISPOSITION)
+#define HDR_WWW_AUTHENTICATE_F HDR_F_DEF(WWW_AUTHENTICATE)
+#define HDR_PROXY_AUTHENTICATE_F HDR_F_DEF(PROXY_AUTHENTICATE)
+#define HDR_DATE_F HDR_F_DEF(DATE)
+#define HDR_IDENTITY_F HDR_F_DEF(IDENTITY)
+#define HDR_IDENTITY_INFO_F HDR_F_DEF(IDENTITY_INFO)
+#define HDR_RETRY_AFTER_F HDR_F_DEF(RETRY_AFTER)
+#define HDR_PPI_F HDR_F_DEF(PPI)
+#define HDR_PAI_F HDR_F_DEF(PAI)
+#define HDR_PATH_F HDR_F_DEF(PATH)
+#define HDR_PRIVACY_F HDR_F_DEF(PRIVACY)
+#define HDR_REASON_F HDR_F_DEF(REASON)
+#define HDR_CALLINFO_F HDR_F_DEF(CALLINFO)
 
-#define HDR_OTHER_F					HDR_F_DEF(OTHER)
+#define HDR_OTHER_F HDR_F_DEF(OTHER)
 
 /*!} */ /* Doxygen end marker*/
 
@@ -190,13 +189,14 @@ typedef enum _hdr_types_t hdr_types_t;
 
 /** Format: name':' body.
  */
-typedef struct hdr_field {
-	hdr_types_t type;       /*!< Header field type */
-	str name;               /*!< Header field name */
-	str body;               /*!< Header field body (may not include CRLF) */
-	int len;		/*!< length from hdr start until EoHF (incl.CRLF) */
-	void* parsed;           /*!< Parsed data structures */
-	struct hdr_field* next; /*!< Next header field in the list */
+typedef struct hdr_field
+{
+	hdr_types_t type;		/*!< Header field type */
+	str name;				/*!< Header field name */
+	str body;				/*!< Header field body (may not include CRLF) */
+	int len;				/*!< length from hdr start until EoHF (incl.CRLF) */
+	void *parsed;			/*!< Parsed data structures */
+	struct hdr_field *next; /*!< Next header field in the list */
 } hdr_field_t;
 
 
@@ -204,14 +204,15 @@ typedef struct hdr_field {
 typedef void (*hf_parsed_free_f)(void *parsed);
 
 /* structure to hold the function to free the parsed header field */
-typedef struct hdr_parsed {
+typedef struct hdr_parsed
+{
 	hf_parsed_free_f hfree;
 } hf_parsed_t;
 
 /** returns true if the header links allocated memory on parse field. */
-static inline int hdr_allocs_parse(struct hdr_field* hdr)
+static inline int hdr_allocs_parse(struct hdr_field *hdr)
 {
-	switch(hdr->type){
+	switch(hdr->type) {
 		case HDR_ACCEPT_T:
 		case HDR_ALLOW_T:
 		case HDR_AUTHORIZATION_T:
@@ -231,6 +232,7 @@ static inline int hdr_allocs_parse(struct hdr_field* hdr)
 		case HDR_PROXYAUTH_T:
 		case HDR_RECORDROUTE_T:
 		case HDR_REFER_TO_T:
+		case HDR_REQUIRE_T:
 		case HDR_ROUTE_T:
 		case HDR_RPID_T:
 		case HDR_SESSIONEXPIRES_T:
@@ -248,16 +250,16 @@ static inline int hdr_allocs_parse(struct hdr_field* hdr)
 /** frees a hdr_field structure.
  * WARNING: it frees only parsed (and not name.s, body.s)
  */
-void clean_hdr_field(struct hdr_field* const hf);
+void clean_hdr_field(struct hdr_field *const hf);
 
 
 /** frees a hdr_field list.
  * WARNING: frees only ->parsed and ->next
  */
-void free_hdr_field_lst(struct hdr_field* hf);
+void free_hdr_field_lst(struct hdr_field *hf);
 
 /* print content of hdr_field */
-void dump_hdr_field( struct hdr_field const* const hf);
+void dump_hdr_field(struct hdr_field const *const hf);
 
 /**
  * free hdr parsed structure using inner free function

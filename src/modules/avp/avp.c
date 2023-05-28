@@ -57,12 +57,18 @@ MODULE_VERSION
 #define HDR_STR 1
 
 #define PARAM_DELIM '/'
-#define VAL_TYPE_INT (1<<0)
-#define VAL_TYPE_STR (1<<1)
+#define VAL_TYPE_INT (1 << 0)
+#define VAL_TYPE_STR (1 << 1)
 
-typedef struct hdr_name {
-	enum {hdrId, hdrStr} kind;
-	union {
+typedef struct hdr_name
+{
+	enum
+	{
+		hdrId,
+		hdrStr
+	} kind;
+	union
+	{
 		int n;
 		str s;
 	} name;
@@ -71,113 +77,136 @@ typedef struct hdr_name {
 	int val_types;
 } hdr_name_t;
 
-static int xlbuf_size=256;
-static char* xlbuf=NULL;
-static str* xl_nul=NULL;
-static xl_print_log_f* xl_print=NULL;
-static xl_parse_format_f* xl_parse=NULL;
-static xl_elog_free_all_f* xl_free=NULL;
-static xl_get_nulstr_f* xl_getnul=NULL;
+static int xlbuf_size = 256;
+static char *xlbuf = NULL;
+static str *xl_nul = NULL;
+static xl_print_log_f *xl_print = NULL;
+static xl_parse_format_f *xl_parse = NULL;
+static xl_elog_free_all_f *xl_free = NULL;
+static xl_get_nulstr_f *xl_getnul = NULL;
 
 static int mod_init();
-static int set_iattr(struct sip_msg* msg, char* p1, char* p2);
-static int set_sattr(struct sip_msg* msg, char* p1, char* p2);
-static int print_attr(struct sip_msg* msg, char* p1, char* p2);
-static int del_attr(struct sip_msg* msg, char* p1, char* p2);
-static int subst_attr(struct sip_msg* msg, char* p1, char* p2);
-static int flags2attr(struct sip_msg* msg, char* p1, char* p2);
-static int attr2uri(struct sip_msg* msg, char* p1, char* p2);
-static int dump_attrs(struct sip_msg* msg, char* p1, char* p2);
-static int attr_equals(struct sip_msg* msg, char* p1, char* p2);
-static int attr_exists(struct sip_msg* msg, char* p1, char* p2);
-static int attr_equals_xl(struct sip_msg* msg, char* p1, char* p2);
-static int xlset_attr(struct sip_msg* msg, char* p1, char* p2);
-static int xlfix_attr(struct sip_msg* msg, char* p1, char* p2);
-static int insert_req(struct sip_msg* msg, char* p1, char* p2);
-static int append_req(struct sip_msg* msg, char* p1, char* p2);
-static int replace_req(struct sip_msg* msg, char* p1, char* p2);
-static int append_reply(struct sip_msg* msg, char* p1, char* p2);
-static int attr_destination(struct sip_msg* msg, char* p1, char* p2);
-static int xlset_destination(struct sip_msg* msg, char* p1, char* p2);
-static int attr_hdr_body2attrs(struct sip_msg* msg, char* p1, char* p2);
-static int attr_hdr_body2attrs2(struct sip_msg* msg, char* p1, char* p2);
-static int del_attrs(struct sip_msg* msg, char* p1, char* p2);
+static int set_iattr(struct sip_msg *msg, char *p1, char *p2);
+static int set_sattr(struct sip_msg *msg, char *p1, char *p2);
+static int print_attr(struct sip_msg *msg, char *p1, char *p2);
+static int del_attr(struct sip_msg *msg, char *p1, char *p2);
+static int subst_attr(struct sip_msg *msg, char *p1, char *p2);
+static int flags2attr(struct sip_msg *msg, char *p1, char *p2);
+static int attr2uri(struct sip_msg *msg, char *p1, char *p2);
+static int dump_attrs(struct sip_msg *msg, char *p1, char *p2);
+static int attr_equals(struct sip_msg *msg, char *p1, char *p2);
+static int attr_exists(struct sip_msg *msg, char *p1, char *p2);
+static int attr_equals_xl(struct sip_msg *msg, char *p1, char *p2);
+static int xlset_attr(struct sip_msg *msg, char *p1, char *p2);
+static int xlfix_attr(struct sip_msg *msg, char *p1, char *p2);
+static int insert_req(struct sip_msg *msg, char *p1, char *p2);
+static int append_req(struct sip_msg *msg, char *p1, char *p2);
+static int replace_req(struct sip_msg *msg, char *p1, char *p2);
+static int append_reply(struct sip_msg *msg, char *p1, char *p2);
+static int attr_destination(struct sip_msg *msg, char *p1, char *p2);
+static int xlset_destination(struct sip_msg *msg, char *p1, char *p2);
+static int attr_hdr_body2attrs(struct sip_msg *msg, char *p1, char *p2);
+static int attr_hdr_body2attrs2(struct sip_msg *msg, char *p1, char *p2);
+static int del_attrs(struct sip_msg *msg, char *p1, char *p2);
 
-static int set_iattr_fixup(void**, int);
-static int avpid_fixup(void**, int);
-static int subst_attr_fixup(void**, int);
-static int fixup_part(void**, int);
-static int fixup_xl_1(void**, int);
-static int fixup_attr_1_xl_2(void**, int);
-static int fixup_str_1_attr_2(void**, int);
-static int xlfix_attr_fixup(void** param, int param_no);
-static int attr_hdr_body2attrs_fixup(void**, int);
-static int attr_hdr_body2attrs2_fixup(void**, int);
-static int avpgroup_fixup(void**, int);
+static int set_iattr_fixup(void **, int);
+static int avpid_fixup(void **, int);
+static int subst_attr_fixup(void **, int);
+static int fixup_part(void **, int);
+static int fixup_xl_1(void **, int);
+static int fixup_attr_1_xl_2(void **, int);
+static int fixup_str_1_attr_2(void **, int);
+static int xlfix_attr_fixup(void **param, int param_no);
+static int attr_hdr_body2attrs_fixup(void **, int);
+static int attr_hdr_body2attrs2_fixup(void **, int);
+static int avpgroup_fixup(void **, int);
 
 /*
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"set_iattr",         set_iattr,            2, set_iattr_fixup,            0, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
-	{"set_sattr",         set_sattr,            2, fixup_var_str_12,           0, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
-	{"set_attr",          set_sattr,            2, fixup_var_str_12,           0, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
-	{"print_attr",        print_attr,           1, avpid_fixup,                0, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
-	{"del_attr",          del_attr,             1, avpid_fixup,                0, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
-	{"del_attrs",         del_attrs,            1, avpgroup_fixup,             0, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
-	{"subst_attr",        subst_attr,           2, subst_attr_fixup,           0, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
-	{"flags2attr",        flags2attr,           1, avpid_fixup,                0, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
-	{"attr2uri",          attr2uri,             1, fixup_part,                 0, REQUEST_ROUTE | FAILURE_ROUTE},
-	{"attr2uri",          attr2uri,             2, fixup_part,                 0, REQUEST_ROUTE | FAILURE_ROUTE},
-	{"dump_attrs",	      dump_attrs,           0, 0,                          0, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
-	{"dump_attrs",	      dump_attrs,           1, avpgroup_fixup,             0, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
-	{"attr_equals",       attr_equals,          2, fixup_var_str_12,           0, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
-	{"attr_exists",       attr_exists,          1 , fixup_var_str_1,           0, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
-	{"attr_equals_xl",    attr_equals_xl,       2, fixup_attr_1_xl_2,          0, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
-	{"xlset_attr",        xlset_attr,           2, fixup_attr_1_xl_2,          0, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
-	{"xlfix_attr",        xlfix_attr,           1, xlfix_attr_fixup,           0, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
-	{"insert_attr_hf",    insert_req,           2, fixup_str_1_attr_2,         0, REQUEST_ROUTE | FAILURE_ROUTE},
-	{"insert_attr_hf",    insert_req,           1, fixup_str_1_attr_2,         0, REQUEST_ROUTE | FAILURE_ROUTE},
-	{"append_attr_hf",    append_req,           2, fixup_str_1_attr_2,         0, REQUEST_ROUTE | FAILURE_ROUTE},
-	{"append_attr_hf",    append_req,           1, fixup_str_1_attr_2,         0, REQUEST_ROUTE | FAILURE_ROUTE},
-	{"replace_attr_hf",   replace_req,          2, fixup_str_1_attr_2,         0, REQUEST_ROUTE | FAILURE_ROUTE},
-	{"replace_attr_hf",   replace_req,          1, fixup_str_1_attr_2,         0, REQUEST_ROUTE | FAILURE_ROUTE},
-	{"attr_to_reply",     append_reply,         2, fixup_str_1_attr_2,         0, REQUEST_ROUTE | FAILURE_ROUTE},
-	{"attr_to_reply",     append_reply,         1, fixup_str_1_attr_2,         0, REQUEST_ROUTE | FAILURE_ROUTE},
-	{"attr_destination",  attr_destination,     1, avpid_fixup,                0, REQUEST_ROUTE | FAILURE_ROUTE},
-	{"xlset_destination", xlset_destination,    1, fixup_xl_1,                 0, REQUEST_ROUTE},
-	{"hdr_body2attrs",    attr_hdr_body2attrs,  2, attr_hdr_body2attrs_fixup,  0, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
-	{"hdr_body2attrs2",   attr_hdr_body2attrs2, 2, attr_hdr_body2attrs2_fixup, 0, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
-	{0, 0, 0, 0, 0, 0}
-};
+		{"set_iattr", set_iattr, 2, set_iattr_fixup, 0,
+				REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
+		{"set_sattr", set_sattr, 2, fixup_var_str_12, 0,
+				REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
+		{"set_attr", set_sattr, 2, fixup_var_str_12, 0,
+				REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
+		{"print_attr", print_attr, 1, avpid_fixup, 0,
+				REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
+		{"del_attr", del_attr, 1, avpid_fixup, 0,
+				REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
+		{"del_attrs", del_attrs, 1, avpgroup_fixup, 0,
+				REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
+		{"subst_attr", subst_attr, 2, subst_attr_fixup, 0,
+				REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
+		{"flags2attr", flags2attr, 1, avpid_fixup, 0,
+				REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
+		{"attr2uri", attr2uri, 1, fixup_part, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+		{"attr2uri", attr2uri, 2, fixup_part, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+		{"dump_attrs", dump_attrs, 0, 0, 0,
+				REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
+		{"dump_attrs", dump_attrs, 1, avpgroup_fixup, 0,
+				REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
+		{"attr_equals", attr_equals, 2, fixup_var_str_12, 0,
+				REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
+		{"attr_exists", attr_exists, 1, fixup_var_str_1, 0,
+				REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
+		{"attr_equals_xl", attr_equals_xl, 2, fixup_attr_1_xl_2, 0,
+				REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
+		{"xlset_attr", xlset_attr, 2, fixup_attr_1_xl_2, 0,
+				REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
+		{"xlfix_attr", xlfix_attr, 1, xlfix_attr_fixup, 0,
+				REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
+		{"insert_attr_hf", insert_req, 2, fixup_str_1_attr_2, 0,
+				REQUEST_ROUTE | FAILURE_ROUTE},
+		{"insert_attr_hf", insert_req, 1, fixup_str_1_attr_2, 0,
+				REQUEST_ROUTE | FAILURE_ROUTE},
+		{"append_attr_hf", append_req, 2, fixup_str_1_attr_2, 0,
+				REQUEST_ROUTE | FAILURE_ROUTE},
+		{"append_attr_hf", append_req, 1, fixup_str_1_attr_2, 0,
+				REQUEST_ROUTE | FAILURE_ROUTE},
+		{"replace_attr_hf", replace_req, 2, fixup_str_1_attr_2, 0,
+				REQUEST_ROUTE | FAILURE_ROUTE},
+		{"replace_attr_hf", replace_req, 1, fixup_str_1_attr_2, 0,
+				REQUEST_ROUTE | FAILURE_ROUTE},
+		{"attr_to_reply", append_reply, 2, fixup_str_1_attr_2, 0,
+				REQUEST_ROUTE | FAILURE_ROUTE},
+		{"attr_to_reply", append_reply, 1, fixup_str_1_attr_2, 0,
+				REQUEST_ROUTE | FAILURE_ROUTE},
+		{"attr_destination", attr_destination, 1, avpid_fixup, 0,
+				REQUEST_ROUTE | FAILURE_ROUTE},
+		{"xlset_destination", xlset_destination, 1, fixup_xl_1, 0,
+				REQUEST_ROUTE},
+		{"hdr_body2attrs", attr_hdr_body2attrs, 2, attr_hdr_body2attrs_fixup, 0,
+				REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
+		{"hdr_body2attrs2", attr_hdr_body2attrs2, 2, attr_hdr_body2attrs2_fixup,
+				0, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
+		{0, 0, 0, 0, 0, 0}};
 
 
 /*
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"xlbuf_size", PARAM_INT, &xlbuf_size},
-	{0, 0, 0}
-};
+		{"xlbuf_size", PARAM_INT, &xlbuf_size}, {0, 0, 0}};
 
 
 struct module_exports exports = {
-	"avp",
-	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,       	 /* Exported commands */
-	params,     	 /* Exported parameters */
-	0,          	 /* RPC */
-	0,       	 /* pseudo-variables exports */
-	0,          	 /* response function*/
-	mod_init,        /* module initialization function */
-	0,		 /* per-child init function */
-	0	         /* destroy function */
+		"avp", DEFAULT_DLFLAGS, /* dlopen flags */
+		cmds,					/* Exported commands */
+		params,					/* Exported parameters */
+		0,						/* RPC */
+		0,						/* pseudo-variables exports */
+		0,						/* response function*/
+		mod_init,				/* module initialization function */
+		0,						/* per-child init function */
+		0						/* destroy function */
 };
 
 
-static int set_iattr_fixup(void** param, int param_no)
+static int set_iattr_fixup(void **param, int param_no)
 {
-	if (param_no == 1) {
+	if(param_no == 1) {
 		return fixup_var_str_12(param, param_no);
 	} else {
 		return fixup_var_int_12(param, param_no);
@@ -185,21 +214,21 @@ static int set_iattr_fixup(void** param, int param_no)
 }
 
 
-static int get_avp_id(avp_ident_t* id, fparam_t* p, struct sip_msg* msg)
+static int get_avp_id(avp_ident_t *id, fparam_t *p, struct sip_msg *msg)
 {
 	str str_id;
-	avp_t* avp;
+	avp_t *avp;
 	avp_value_t val;
 	int ret;
 
 	switch(p->type) {
 		case FPARAM_AVP:
 			avp = search_avp(p->v.avp, &val, 0);
-			if (!avp) {
+			if(!avp) {
 				DBG("get_avp_id: AVP %s does not exist\n", p->orig);
 				return -1;
 			}
-			if ((avp->flags & AVP_VAL_STR) == 0) {
+			if((avp->flags & AVP_VAL_STR) == 0) {
 				DBG("get_avp_id: Not a string AVP\n");
 				return -1;
 			}
@@ -208,7 +237,8 @@ static int get_avp_id(avp_ident_t* id, fparam_t* p, struct sip_msg* msg)
 
 		case FPARAM_SELECT:
 			ret = run_select(&str_id, p->v.select, msg);
-			if (ret < 0 || ret > 0) return -1;
+			if(ret < 0 || ret > 0)
+				return -1;
 			break;
 
 		case FPARAM_STR:
@@ -224,23 +254,24 @@ static int get_avp_id(avp_ident_t* id, fparam_t* p, struct sip_msg* msg)
 }
 
 
-static int set_iattr(struct sip_msg* msg, char* p1, char* p2)
+static int set_iattr(struct sip_msg *msg, char *p1, char *p2)
 {
 	avp_ident_t avpid;
 	int_str value;
 	int i;
 
-	if (get_avp_id(&avpid, (fparam_t*)p1, msg) < 0) {
+	if(get_avp_id(&avpid, (fparam_t *)p1, msg) < 0) {
 		return -1;
 	}
 
-	if (get_int_fparam(&i, msg, (fparam_t*)p2) < 0) {
-		ERR("Error while obtaining attribute value from '%s'\n", ((fparam_t*)p1)->orig);
+	if(get_int_fparam(&i, msg, (fparam_t *)p2) < 0) {
+		ERR("Error while obtaining attribute value from '%s'\n",
+				((fparam_t *)p1)->orig);
 		return -1;
 	}
 	value.n = i;
 
-	if (add_avp(avpid.flags | AVP_NAME_STR, avpid.name, value) != 0) {
+	if(add_avp(avpid.flags | AVP_NAME_STR, avpid.name, value) != 0) {
 		ERR("add_avp failed\n");
 		return -1;
 	}
@@ -248,21 +279,23 @@ static int set_iattr(struct sip_msg* msg, char* p1, char* p2)
 }
 
 
-static int set_sattr(struct sip_msg* msg, char* p1, char* p2)
+static int set_sattr(struct sip_msg *msg, char *p1, char *p2)
 {
 	avp_ident_t avpid;
 	int_str value;
 
-	if (get_avp_id(&avpid, (fparam_t*)p1, msg) < 0) {
+	if(get_avp_id(&avpid, (fparam_t *)p1, msg) < 0) {
 		return -1;
 	}
 
-	if (get_str_fparam(&value.s, msg, (fparam_t*)p2) < 0) {
-		ERR("Error while obtaining attribute value from '%s'\n", ((fparam_t*)p2)->orig);
+	if(get_str_fparam(&value.s, msg, (fparam_t *)p2) < 0) {
+		ERR("Error while obtaining attribute value from '%s'\n",
+				((fparam_t *)p2)->orig);
 		return -1;
 	}
 
-	if (add_avp(avpid.flags | AVP_NAME_STR | AVP_VAL_STR, avpid.name, value) != 0) {
+	if(add_avp(avpid.flags | AVP_NAME_STR | AVP_VAL_STR, avpid.name, value)
+			!= 0) {
 		ERR("add_avp failed\n");
 		return -1;
 	}
@@ -271,34 +304,35 @@ static int set_sattr(struct sip_msg* msg, char* p1, char* p2)
 }
 
 
-static int avpid_fixup(void** param, int param_no)
+static int avpid_fixup(void **param, int param_no)
 {
-	if (param_no == 1) {
-		if (fix_param(FPARAM_AVP, param) == 0) return 0;
-		ERR("Invalid AVP identifier: '%s'\n", (char*)*param);
+	if(param_no == 1) {
+		if(fix_param(FPARAM_AVP, param) == 0)
+			return 0;
+		ERR("Invalid AVP identifier: '%s'\n", (char *)*param);
 		return -1;
 	}
 	return 0;
 }
 
 
-static int print_attr(struct sip_msg* msg, char* p1, char* p2)
+static int print_attr(struct sip_msg *msg, char *p1, char *p2)
 {
-	fparam_t* fp;
+	fparam_t *fp;
 	int_str value;
 	avp_t *avp;
 
-	fp = (fparam_t*)p1;
+	fp = (fparam_t *)p1;
 
 	avp = search_avp(fp->v.avp, &value, NULL);
-	if (avp == 0) {
+	if(avp == 0) {
 		LOG(L_INFO, "AVP '%s' not found\n", fp->orig);
 		return -1;
 	}
 
-	if (avp->flags & AVP_VAL_STR) {
-		LOG(L_INFO, "AVP: '%s'='%.*s'\n",
-				fp->orig, value.s.len, ZSW(value.s.s));
+	if(avp->flags & AVP_VAL_STR) {
+		LOG(L_INFO, "AVP: '%s'='%.*s'\n", fp->orig, value.s.len,
+				ZSW(value.s.s));
 	} else {
 		LOG(L_INFO, "AVP: '%s'=%ld\n", fp->orig, value.n);
 	}
@@ -306,16 +340,16 @@ static int print_attr(struct sip_msg* msg, char* p1, char* p2)
 }
 
 
-static int del_attr(struct sip_msg* msg, char* p1, char* p2)
+static int del_attr(struct sip_msg *msg, char *p1, char *p2)
 {
-	fparam_t* fp;
-	avp_t* avp;
+	fparam_t *fp;
+	avp_t *avp;
 	struct search_state st;
 
-	fp = (fparam_t*)p1;
+	fp = (fparam_t *)p1;
 
 	avp = search_avp(fp->v.avp, 0, &st);
-	while (avp) {
+	while(avp) {
 		destroy_avp(avp);
 		avp = search_next_avp(&st, 0);
 	}
@@ -323,36 +357,37 @@ static int del_attr(struct sip_msg* msg, char* p1, char* p2)
 }
 
 
-static int del_attrs(struct sip_msg* msg, char* p1, char* p2)
+static int del_attrs(struct sip_msg *msg, char *p1, char *p2)
 {
 	return (reset_avp_list((unsigned long)p1) == 0) ? 1 : -1;
 }
 
 
-static int subst_attr_fixup(void** param, int param_no)
+static int subst_attr_fixup(void **param, int param_no)
 {
-	if (param_no == 1) {
+	if(param_no == 1) {
 		return avpid_fixup(param, 1);
 	}
-	if (param_no == 2) {
-		if (fix_param(FPARAM_SUBST, param) != 0) return -1;
+	if(param_no == 2) {
+		if(fix_param(FPARAM_SUBST, param) != 0)
+			return -1;
 	}
 	return 0;
 }
 
 
-static int subst_attr(struct sip_msg* msg, char* p1, char* p2)
+static int subst_attr(struct sip_msg *msg, char *p1, char *p2)
 {
-	avp_t* avp;
+	avp_t *avp;
 	avp_value_t val;
 	str *res = NULL;
 	int count;
-	avp_ident_t* name = &((fparam_t*)p1)->v.avp;
+	avp_ident_t *name = &((fparam_t *)p1)->v.avp;
 
-	if ((avp = search_avp(*name, &val, NULL))) {
-		if (avp->flags & AVP_VAL_STR) {
-			res = subst_str(val.s.s, msg, ((fparam_t*)p2)->v.subst, &count);
-			if (res == NULL) {
+	if((avp = search_avp(*name, &val, NULL))) {
+		if(avp->flags & AVP_VAL_STR) {
+			res = subst_str(val.s.s, msg, ((fparam_t *)p2)->v.subst, &count);
+			if(res == NULL) {
 				ERR("avp_subst: error while running subst\n");
 				goto error;
 			}
@@ -360,7 +395,8 @@ static int subst_attr(struct sip_msg* msg, char* p1, char* p2)
 			DBG("avp_subst: %d, result %.*s\n", count, res->len, ZSW(res->s));
 			val.s = *res;
 
-			if (add_avp_before(avp, name->flags | AVP_VAL_STR, name->name, val)) {
+			if(add_avp_before(
+					   avp, name->flags | AVP_VAL_STR, name->name, val)) {
 				ERR("avp_subst: error while adding new AVP\n");
 				goto error;
 			}
@@ -373,27 +409,27 @@ static int subst_attr(struct sip_msg* msg, char* p1, char* p2)
 		}
 	} else {
 		ERR("avp_subst: AVP[%.*s] index %d, flags %x not found\n",
-				name->name.s.len, name->name.s.s,
-				name->index, name->flags);
+				name->name.s.len, name->name.s.s, name->index, name->flags);
 		goto error;
 	}
 
 error:
-	if (res) pkg_free(res);
+	if(res)
+		pkg_free(res);
 	return -1;
 }
 
 
-static int flags2attr(struct sip_msg* msg, char* p1, char* p2)
+static int flags2attr(struct sip_msg *msg, char *p1, char *p2)
 {
-	avp_ident_t* id;
+	avp_ident_t *id;
 	int_str value;
 
 	value.n = msg->flags;
 
-	id = &((fparam_t*)p1)->v.avp;
+	id = &((fparam_t *)p1)->v.avp;
 
-	if (add_avp(id->flags, id->name, value) != 0) {
+	if(add_avp(id->flags, id->name, value) != 0) {
 		ERR("add_avp failed\n");
 		return -1;
 	}
@@ -402,46 +438,38 @@ static int flags2attr(struct sip_msg* msg, char* p1, char* p2)
 }
 
 
-static int fixup_part(void** param, int param_no)
+static int fixup_part(void **param, int param_no)
 {
 	int i;
-	fparam_t* fp;
+	fparam_t *fp;
 
-	static struct {
-		char* s;
+	static struct
+	{
+		char *s;
 		int i;
-	} fixup_parse[] = {
-		{"", SET_URI_T},
-		{"prefix", PREFIX_T},
-		{"uri", SET_URI_T},
-		{"username", SET_USER_T},
-		{"user", SET_USER_T},
-		{"usernamepassword", SET_USERPASS_T},
-		{"userpass", SET_USERPASS_T},
-		{"domain", SET_HOST_T},
-		{"host", SET_HOST_T},
-		{"domainport", SET_HOSTPORT_T},
-		{"hostport", SET_HOSTPORT_T},
-		{"port", SET_PORT_T},
-		{"strip", STRIP_T},
-		{"strip_tail", STRIP_TAIL_T},
-		{0, 0}
-	};
+	} fixup_parse[] = {{"", SET_URI_T}, {"prefix", PREFIX_T},
+			{"uri", SET_URI_T}, {"username", SET_USER_T}, {"user", SET_USER_T},
+			{"usernamepassword", SET_USERPASS_T}, {"userpass", SET_USERPASS_T},
+			{"domain", SET_HOST_T}, {"host", SET_HOST_T},
+			{"domainport", SET_HOSTPORT_T}, {"hostport", SET_HOSTPORT_T},
+			{"port", SET_PORT_T}, {"strip", STRIP_T},
+			{"strip_tail", STRIP_TAIL_T}, {0, 0}};
 
-	if (param_no == 1) {
+	if(param_no == 1) {
 		return avpid_fixup(param, 1);
-	} else if (param_no == 2) {
+	} else if(param_no == 2) {
 		/* Create fparam structure */
-		if (fix_param(FPARAM_STRING, param) != 0) return -1;
+		if(fix_param(FPARAM_STRING, param) != 0)
+			return -1;
 
 		/* We will parse the string now and store the value
 		 * as int
 		 */
-		fp = (fparam_t*)*param;
+		fp = (fparam_t *)*param;
 		fp->type = FPARAM_INT;
 
 		for(i = 0; fixup_parse[i].s; i++) {
-			if (!strcasecmp(fp->orig, fixup_parse[i].s)) {
+			if(!strcasecmp(fp->orig, fixup_parse[i].s)) {
 				fp->v.i = fixup_parse[i].i;
 				return 1;
 			}
@@ -454,35 +482,34 @@ static int fixup_part(void** param, int param_no)
 }
 
 
-static int attr2uri(struct sip_msg* msg, char* p1, char* p2)
+static int attr2uri(struct sip_msg *msg, char *p1, char *p2)
 {
 	int_str value;
-	avp_t* avp_entry;
+	avp_t *avp_entry;
 	struct action act;
 	struct run_act_ctx ra_ctx;
 	int pnr;
 	unsigned int u;
 
-	if (p2) {
-		pnr = ((fparam_t*)p2)->v.i;
+	if(p2) {
+		pnr = ((fparam_t *)p2)->v.i;
 	} else {
 		pnr = SET_URI_T;
 	}
 
-	avp_entry = search_avp(((fparam_t*)p1)->v.avp, &value, NULL);
-	if (avp_entry == 0) {
-		ERR("attr2uri: AVP '%s' not found\n", ((fparam_t*)p1)->orig);
+	avp_entry = search_avp(((fparam_t *)p1)->v.avp, &value, NULL);
+	if(avp_entry == 0) {
+		ERR("attr2uri: AVP '%s' not found\n", ((fparam_t *)p1)->orig);
 		return -1;
 	}
 
 	memset(&act, 0, sizeof(act));
 
-	if ((pnr == STRIP_T) || (pnr == STRIP_TAIL_T)) {
+	if((pnr == STRIP_T) || (pnr == STRIP_TAIL_T)) {
 		/* we need integer value for these actions */
-		if (avp_entry->flags & AVP_VAL_STR) {
-			if (str2int(&value.s, &u)) {
-				ERR("not an integer value: %.*s\n",
-						value.s.len, value.s.s);
+		if(avp_entry->flags & AVP_VAL_STR) {
+			if(str2int(&value.s, &u)) {
+				ERR("not an integer value: %.*s\n", value.s.len, value.s.s);
 				return -1;
 			}
 			act.val[0].u.number = u;
@@ -492,7 +519,7 @@ static int attr2uri(struct sip_msg* msg, char* p1, char* p2)
 		act.val[0].type = NUMBER_ST;
 	} else {
 		/* we need string value */
-		if ((avp_entry->flags & AVP_VAL_STR) == 0) {
+		if((avp_entry->flags & AVP_VAL_STR) == 0) {
 			act.val[0].u.string = int2str(value.n, NULL);
 		} else {
 			act.val[0].u.string = value.s.s;
@@ -501,7 +528,7 @@ static int attr2uri(struct sip_msg* msg, char* p1, char* p2)
 	}
 	act.type = pnr;
 	init_run_actions_ctx(&ra_ctx);
-	if (do_action(&ra_ctx, &act, msg) < 0) {
+	if(do_action(&ra_ctx, &act, msg) < 0) {
 		ERR("failed to change ruri part.\n");
 		return -1;
 	}
@@ -513,121 +540,122 @@ static int attr2uri(struct sip_msg* msg, char* p1, char* p2)
  * sends avp list to log in readable form
  *
  */
-static void dump_avp_reverse(avp_t* avp)
+static void dump_avp_reverse(avp_t *avp)
 {
-	str* name;
+	str *name;
 	int_str val;
 
-	if (avp) {
+	if(avp) {
 		/* AVPs are added to front of the list, reverse by recursion */
 		dump_avp_reverse(avp->next);
 
-		name=get_avp_name(avp);
+		name = get_avp_name(avp);
 		get_avp_val(avp, &val);
-		switch(avp->flags&(AVP_NAME_STR|AVP_VAL_STR)) {
+		switch(avp->flags & (AVP_NAME_STR | AVP_VAL_STR)) {
 			case 0:
 				/* avp type ID, int value */
-				LOG(L_INFO,"AVP[%d]=%ld\n", avp->id, val.n);
+				LOG(L_INFO, "AVP[%d]=%ld\n", avp->id, val.n);
 				break;
 
 			case AVP_NAME_STR:
 				/* avp type str, int value */
-				name=get_avp_name(avp);
-				LOG(L_INFO,"AVP[\"%.*s\"]=%ld\n", name->len, name->s, val.n);
+				name = get_avp_name(avp);
+				LOG(L_INFO, "AVP[\"%.*s\"]=%ld\n", name->len, name->s, val.n);
 				break;
 
 			case AVP_VAL_STR:
 				/* avp type ID, str value */
-				LOG(L_INFO,"AVP[%d]=\"%.*s\"\n", avp->id, val.s.len, val.s.s);
+				LOG(L_INFO, "AVP[%d]=\"%.*s\"\n", avp->id, val.s.len, val.s.s);
 				break;
 
-			case AVP_NAME_STR|AVP_VAL_STR:
+			case AVP_NAME_STR | AVP_VAL_STR:
 				/* avp type str, str value */
-				name=get_avp_name(avp);
-				LOG(L_INFO,"AVP[\"%.*s\"]=\"%.*s\"\n", name->len, name->s, val.s.len, val.s.s);
+				name = get_avp_name(avp);
+				LOG(L_INFO, "AVP[\"%.*s\"]=\"%.*s\"\n", name->len, name->s,
+						val.s.len, val.s.s);
 				break;
 		}
 	}
 }
 
 
-static int dump_attrs(struct sip_msg* m, char* x, char* y)
+static int dump_attrs(struct sip_msg *m, char *x, char *y)
 {
 	avp_list_t avp_list;
 	unsigned long flags;
 
-	if (x) {
+	if(x) {
 		flags = (unsigned long)x;
 	} else {
 		flags = AVP_CLASS_ALL | AVP_TRACK_ALL;
 	}
 
 
-	if (flags & AVP_CLASS_GLOBAL) {
+	if(flags & AVP_CLASS_GLOBAL) {
 		avp_list = get_avp_list(AVP_CLASS_GLOBAL);
 		INFO("class=GLOBAL\n");
-		if (!avp_list) {
-			LOG(L_INFO,"INFO: No AVP present\n");
+		if(!avp_list) {
+			LOG(L_INFO, "INFO: No AVP present\n");
 		} else {
 			dump_avp_reverse(avp_list);
 		}
 	}
 
-	if (flags & AVP_CLASS_DOMAIN && flags & AVP_TRACK_FROM) {
+	if(flags & AVP_CLASS_DOMAIN && flags & AVP_TRACK_FROM) {
 		avp_list = get_avp_list(AVP_CLASS_DOMAIN | AVP_TRACK_FROM);
 		INFO("track=FROM class=DOMAIN\n");
-		if (!avp_list) {
-			LOG(L_INFO,"INFO: No AVP present\n");
+		if(!avp_list) {
+			LOG(L_INFO, "INFO: No AVP present\n");
 		} else {
 			dump_avp_reverse(avp_list);
 		}
 	}
 
-	if (flags & AVP_CLASS_DOMAIN && flags & AVP_TRACK_TO) {
+	if(flags & AVP_CLASS_DOMAIN && flags & AVP_TRACK_TO) {
 		avp_list = get_avp_list(AVP_CLASS_DOMAIN | AVP_TRACK_TO);
 		INFO("track=TO class=DOMAIN\n");
-		if (!avp_list) {
-			LOG(L_INFO,"INFO: No AVP present\n");
+		if(!avp_list) {
+			LOG(L_INFO, "INFO: No AVP present\n");
 		} else {
 			dump_avp_reverse(avp_list);
 		}
 	}
 
-	if (flags & AVP_CLASS_USER && flags & AVP_TRACK_FROM) {
+	if(flags & AVP_CLASS_USER && flags & AVP_TRACK_FROM) {
 		avp_list = get_avp_list(AVP_CLASS_USER | AVP_TRACK_FROM);
 		INFO("track=FROM class=USER\n");
-		if (!avp_list) {
-			LOG(L_INFO,"INFO: No AVP present\n");
+		if(!avp_list) {
+			LOG(L_INFO, "INFO: No AVP present\n");
 		} else {
 			dump_avp_reverse(avp_list);
 		}
 	}
 
-	if (flags & AVP_CLASS_USER && flags & AVP_TRACK_TO) {
+	if(flags & AVP_CLASS_USER && flags & AVP_TRACK_TO) {
 		avp_list = get_avp_list(AVP_CLASS_USER | AVP_TRACK_TO);
 		INFO("track=TO class=USER\n");
-		if (!avp_list) {
-			LOG(L_INFO,"INFO: No AVP present\n");
+		if(!avp_list) {
+			LOG(L_INFO, "INFO: No AVP present\n");
 		} else {
 			dump_avp_reverse(avp_list);
 		}
 	}
 
-	if (flags & AVP_CLASS_URI && flags & AVP_TRACK_FROM) {
+	if(flags & AVP_CLASS_URI && flags & AVP_TRACK_FROM) {
 		avp_list = get_avp_list(AVP_CLASS_URI | AVP_TRACK_FROM);
 		INFO("track=FROM class=URI\n");
-		if (!avp_list) {
-			LOG(L_INFO,"INFO: No AVP present\n");
+		if(!avp_list) {
+			LOG(L_INFO, "INFO: No AVP present\n");
 		} else {
 			dump_avp_reverse(avp_list);
 		}
 	}
 
-	if (flags & AVP_CLASS_URI && flags & AVP_TRACK_TO) {
+	if(flags & AVP_CLASS_URI && flags & AVP_TRACK_TO) {
 		avp_list = get_avp_list(AVP_CLASS_URI | AVP_TRACK_TO);
 		INFO("track=TO class=URI\n");
-		if (!avp_list) {
-			LOG(L_INFO,"INFO: No AVP present\n");
+		if(!avp_list) {
+			LOG(L_INFO, "INFO: No AVP present\n");
 		} else {
 			dump_avp_reverse(avp_list);
 		}
@@ -640,35 +668,38 @@ static int dump_attrs(struct sip_msg* m, char* x, char* y)
  *  returns 1 if msg contains an AVP with the given name and value,
  *  returns -1 otherwise
  */
-static int attr_equals(struct sip_msg* msg, char* p1, char* p2)
+static int attr_equals(struct sip_msg *msg, char *p1, char *p2)
 {
 	avp_ident_t avpid;
 	int_str value, avp_value;
-	avp_t* avp;
+	avp_t *avp;
 	struct search_state st;
 
-	if (get_avp_id(&avpid, (fparam_t*)p1, msg) < 0) {
+	if(get_avp_id(&avpid, (fparam_t *)p1, msg) < 0) {
 		return -1;
 	}
 
-	if (p2 && get_str_fparam(&value.s, msg, (fparam_t*)p2) < 0) {
-		ERR("Error while obtaining attribute value from '%s'\n", ((fparam_t*)p2)->orig);
+	if(p2 && get_str_fparam(&value.s, msg, (fparam_t *)p2) < 0) {
+		ERR("Error while obtaining attribute value from '%s'\n",
+				((fparam_t *)p2)->orig);
 		return -1;
 	}
 
 	avp = search_avp(avpid, &avp_value, &st);
-	if (avp == 0) return -1;
+	if(avp == 0)
+		return -1;
 
-	if (!p2) return 1;
+	if(!p2)
+		return 1;
 
-	while (avp != 0) {
-		if (avp->flags & AVP_VAL_STR) {
-			if ((avp_value.s.len == value.s.len) &&
-					!memcmp(avp_value.s.s, value.s.s, avp_value.s.len)) {
+	while(avp != 0) {
+		if(avp->flags & AVP_VAL_STR) {
+			if((avp_value.s.len == value.s.len)
+					&& !memcmp(avp_value.s.s, value.s.s, avp_value.s.len)) {
 				return 1;
 			}
 		} else {
-			if (avp_value.n == str2s(value.s.s, value.s.len, 0)) {
+			if(avp_value.n == str2s(value.s.s, value.s.len, 0)) {
 				return 1;
 			}
 		}
@@ -679,64 +710,68 @@ static int attr_equals(struct sip_msg* msg, char* p1, char* p2)
 }
 
 
-static int attr_exists(struct sip_msg* msg, char* p1, char* p2)
+static int attr_exists(struct sip_msg *msg, char *p1, char *p2)
 {
 	return attr_equals(msg, p1, NULL);
 }
 
 
-static int xl_printstr(struct sip_msg* msg, xl_elog_t* format, char** res, int* res_len)
+static int xl_printstr(
+		struct sip_msg *msg, xl_elog_t *format, char **res, int *res_len)
 {
 	int len;
 
-	if (!format || !res) {
+	if(!format || !res) {
 		LOG(L_ERR, "xl_printstr: Called with null format or res\n");
 		return -1;
 	}
 
-	if (!xlbuf) {
-		xlbuf = pkg_malloc((xlbuf_size+1)*sizeof(char));
-		if (!xlbuf) {
+	if(!xlbuf) {
+		xlbuf = pkg_malloc((xlbuf_size + 1) * sizeof(char));
+		if(!xlbuf) {
 			LOG(L_CRIT, "xl_printstr: No memory left for format buffer\n");
 			return -1;
 		}
 	}
 
 	len = xlbuf_size;
-	if (xl_print(msg, format, xlbuf, &len)<0) {
+	if(xl_print(msg, format, xlbuf, &len) < 0) {
 		LOG(L_ERR, "xl_printstr: Error while formatting result\n");
 		return -1;
 	}
 
-	if ((xl_nul) && (xl_nul->len == len) && !strncmp(xl_nul->s, xlbuf, len)) {
+	if((xl_nul) && (xl_nul->len == len) && !strncmp(xl_nul->s, xlbuf, len)) {
 		return 0;
 	}
 
 	*res = xlbuf;
-	if (res_len) {
-		*res_len=len;
+	if(res_len) {
+		*res_len = len;
 	}
 	return len;
 }
 
 
-static int attr_equals_xl(struct sip_msg* msg, char* p1, char* format)
+static int attr_equals_xl(struct sip_msg *msg, char *p1, char *format)
 {
-	avp_ident_t* avpid;
+	avp_ident_t *avpid;
 	avp_value_t avp_val;
 	struct search_state st;
 	str xl_val;
-	avp_t* avp;
+	avp_t *avp;
 
-	avpid = &((fparam_t*)p1)->v.avp;
+	avpid = &((fparam_t *)p1)->v.avp;
 
-	if (xl_printstr(msg, (xl_elog_t*) format, &xl_val.s, &xl_val.len) > 0) {
-		for (avp = search_avp(*avpid, &avp_val, &st); avp; avp = search_next_avp(&st, &avp_val)) {
-			if (avp->flags & AVP_VAL_STR) {
-				if ((avp_val.s.len == xl_val.len) &&
-						!memcmp(avp_val.s.s, xl_val.s, avp_val.s.len)) return 1;
+	if(xl_printstr(msg, (xl_elog_t *)format, &xl_val.s, &xl_val.len) > 0) {
+		for(avp = search_avp(*avpid, &avp_val, &st); avp;
+				avp = search_next_avp(&st, &avp_val)) {
+			if(avp->flags & AVP_VAL_STR) {
+				if((avp_val.s.len == xl_val.len)
+						&& !memcmp(avp_val.s.s, xl_val.s, avp_val.s.len))
+					return 1;
 			} else {
-				if (avp_val.n == str2s(xl_val.s, xl_val.len, 0)) return 1;
+				if(avp_val.n == str2s(xl_val.s, xl_val.len, 0))
+					return 1;
 			}
 		}
 		return -1;
@@ -749,46 +784,50 @@ static int attr_equals_xl(struct sip_msg* msg, char* p1, char* format)
 /* get the pointer to the xl lib functions */
 static int get_xl_functions(void)
 {
-	if (!xl_print) {
-		xl_print=(xl_print_log_f*)find_export("xprint", NO_SCRIPT, 0);
+	if(!xl_print) {
+		xl_print = (xl_print_log_f *)find_export("xprint", NO_SCRIPT, 0);
 
-		if (!xl_print) {
-			LOG(L_CRIT,"ERROR: cannot find \"xprint\", is module xprint loaded?\n");
+		if(!xl_print) {
+			LOG(L_CRIT, "ERROR: cannot find \"xprint\", is module xprint "
+						"loaded?\n");
 			return -1;
 		}
 	}
 
-	if (!xl_parse) {
-		xl_parse=(xl_parse_format_f*)find_export("xparse", NO_SCRIPT, 0);
+	if(!xl_parse) {
+		xl_parse = (xl_parse_format_f *)find_export("xparse", NO_SCRIPT, 0);
 
-		if (!xl_parse) {
-			LOG(L_CRIT,"ERROR: cannot find \"xparse\", is module xprint loaded?\n");
+		if(!xl_parse) {
+			LOG(L_CRIT, "ERROR: cannot find \"xparse\", is module xprint "
+						"loaded?\n");
 			return -1;
 		}
 	}
 
-	if (!xl_free) {
-		xl_free=(xl_elog_free_all_f*)find_export("xfree", NO_SCRIPT, 0);
+	if(!xl_free) {
+		xl_free = (xl_elog_free_all_f *)find_export("xfree", NO_SCRIPT, 0);
 
-		if (!xl_free) {
-			LOG(L_CRIT,"ERROR: cannot find \"xfree\", is module xprint loaded?\n");
+		if(!xl_free) {
+			LOG(L_CRIT,
+					"ERROR: cannot find \"xfree\", is module xprint loaded?\n");
 			return -1;
 		}
 	}
 
-	if (!xl_nul) {
-		xl_getnul=(xl_get_nulstr_f*)find_export("xnulstr", NO_SCRIPT, 0);
-		if (xl_getnul) {
-			xl_nul=xl_getnul();
+	if(!xl_nul) {
+		xl_getnul = (xl_get_nulstr_f *)find_export("xnulstr", NO_SCRIPT, 0);
+		if(xl_getnul) {
+			xl_nul = xl_getnul();
 		}
 
-		if (!xl_nul){
-			LOG(L_CRIT,"ERROR: cannot find \"xnulstr\", is module xprint loaded?\n");
+		if(!xl_nul) {
+			LOG(L_CRIT, "ERROR: cannot find \"xnulstr\", is module xprint "
+						"loaded?\n");
 			return -1;
 		} else {
-			LOG(L_INFO,"INFO: xprint null is \"%.*s\"\n", xl_nul->len, xl_nul->s);
+			LOG(L_INFO, "INFO: xprint null is \"%.*s\"\n", xl_nul->len,
+					xl_nul->s);
 		}
-
 	}
 
 	return 0;
@@ -797,20 +836,22 @@ static int get_xl_functions(void)
 /*
  * Convert xl format string to xl format description
  */
-static int fixup_xl_1(void** param, int param_no)
+static int fixup_xl_1(void **param, int param_no)
 {
-	xl_elog_t* model;
+	xl_elog_t *model;
 
-	if (get_xl_functions()) return -1;
+	if(get_xl_functions())
+		return -1;
 
-	if (param_no == 1) {
+	if(param_no == 1) {
 		if(*param) {
-			if(xl_parse((char*)(*param), &model)<0) {
-				LOG(L_ERR, "ERROR: xl_fixup: wrong format[%s]\n", (char*)(*param));
+			if(xl_parse((char *)(*param), &model) < 0) {
+				LOG(L_ERR, "ERROR: xl_fixup: wrong format[%s]\n",
+						(char *)(*param));
 				return E_UNSPEC;
 			}
 
-			*param = (void*)model;
+			*param = (void *)model;
 			return 0;
 		} else {
 			LOG(L_ERR, "ERROR: xl_fixup: null format\n");
@@ -821,26 +862,26 @@ static int fixup_xl_1(void** param, int param_no)
 	return 0;
 }
 
-static int fixup_attr_1_xl_2(void** param, int param_no)
+static int fixup_attr_1_xl_2(void **param, int param_no)
 {
-	if (param_no == 1) {
+	if(param_no == 1) {
 		return avpid_fixup(param, 1);
-	} else  if (param_no == 2) {
+	} else if(param_no == 2) {
 		return fixup_xl_1(param, 1);
 	}
 	return 0;
 }
 
 
-static int xlset_attr(struct sip_msg* msg, char* p1, char* format)
+static int xlset_attr(struct sip_msg *msg, char *p1, char *format)
 {
-	avp_ident_t* avpid;
+	avp_ident_t *avpid;
 	avp_value_t val;
 
-	avpid = &((fparam_t*)p1)->v.avp;
+	avpid = &((fparam_t *)p1)->v.avp;
 
-	if (xl_printstr(msg, (xl_elog_t*)format, &val.s.s, &val.s.len) > 0) {
-		if (add_avp(avpid->flags | AVP_VAL_STR, avpid->name, val)) {
+	if(xl_printstr(msg, (xl_elog_t *)format, &val.s.s, &val.s.len) > 0) {
+		if(add_avp(avpid->flags | AVP_VAL_STR, avpid->name, val)) {
 			ERR("xlset_attr:Error adding new AVP\n");
 			return -1;
 		}
@@ -854,48 +895,49 @@ static int xlset_attr(struct sip_msg* msg, char* p1, char* format)
 /*
  * get the xl function pointers and fix up the AVP parameter
  */
-static int xlfix_attr_fixup(void** param, int param_no)
+static int xlfix_attr_fixup(void **param, int param_no)
 {
-	if (get_xl_functions()) return -1;
+	if(get_xl_functions())
+		return -1;
 
-	if (param_no == 1)
+	if(param_no == 1)
 		return avpid_fixup(param, 1);
 
 	return 0;
 }
 
 /* fixes an attribute containing xl formatted string to pure string runtime */
-static int xlfix_attr(struct sip_msg* msg, char* p1, char* p2)
+static int xlfix_attr(struct sip_msg *msg, char *p1, char *p2)
 {
-	avp_t* avp;
-	avp_ident_t* avpid;
+	avp_t *avp;
+	avp_ident_t *avpid;
 	avp_value_t val;
-	xl_elog_t* format=NULL;
-	int ret=-1;
+	xl_elog_t *format = NULL;
+	int ret = -1;
 
-	avpid = &((fparam_t*)p1)->v.avp;
+	avpid = &((fparam_t *)p1)->v.avp;
 
 	/* search the AVP */
 	avp = search_avp(*avpid, &val, 0);
-	if (!avp) {
+	if(!avp) {
 		DBG("xlfix_attr: AVP does not exist\n");
 		goto error;
 	}
-	if ((avp->flags & AVP_VAL_STR) == 0) {
+	if((avp->flags & AVP_VAL_STR) == 0) {
 		DBG("xlfix_attr: Not a string AVP\n");
 		goto error;
 	}
 
 	/* parse the xl syntax -- AVP values are always zero-terminated */
-	if (xl_parse(val.s.s, &format)<0) {
+	if(xl_parse(val.s.s, &format) < 0) {
 		LOG(L_ERR, "ERROR: xlfix_attr: wrong format[%s]\n", val.s.s);
 		goto error;
 	}
 
-	if (xl_printstr(msg, format, &val.s.s, &val.s.len) > 0) {
+	if(xl_printstr(msg, format, &val.s.s, &val.s.len) > 0) {
 		/* we must delete and re-add the AVP again */
 		destroy_avp(avp);
-		if (add_avp(avpid->flags | AVP_VAL_STR, avpid->name, val)) {
+		if(add_avp(avpid->flags | AVP_VAL_STR, avpid->name, val)) {
 			ERR("xlfix_attr:Error adding new AVP\n");
 			goto error;
 		}
@@ -905,44 +947,48 @@ static int xlfix_attr(struct sip_msg* msg, char* p1, char* p2)
 
 error:
 	/* free the parsed xl expression */
-	if (format) xl_free(format);
+	if(format)
+		xl_free(format);
 
 	return ret;
 }
 
 
-static int request_hf_helper(struct sip_msg* msg, str* hf, avp_ident_t* ident, struct lump* anchor, struct search_state* st, int front, int reverse, int reply)
+static int request_hf_helper(struct sip_msg *msg, str *hf, avp_ident_t *ident,
+		struct lump *anchor, struct search_state *st, int front, int reverse,
+		int reply)
 {
-	struct lump* new_anchor;
+	struct lump *new_anchor;
 	static struct search_state state;
-	avp_t* avp;
-	char* s;
+	avp_t *avp;
+	char *s;
 	str fin_val;
 	int len, ret;
 	int_str val;
-	struct hdr_field* pos, *found = NULL;
+	struct hdr_field *pos, *found = NULL;
 
-	if (!anchor && !reply) {
+	if(!anchor && !reply) {
 
-		if (parse_headers(msg, HDR_EOH_F, 0) == -1) {
-			LOG(L_ERR, "ERROR: request_hf_helper: Error while parsing message\n");
+		if(parse_headers(msg, HDR_EOH_F, 0) == -1) {
+			LOG(L_ERR,
+					"ERROR: request_hf_helper: Error while parsing message\n");
 			return -1;
 		}
 
 		pos = msg->headers;
-		while (pos && (pos->type != HDR_EOH_T)) {
-			if ((hf->len == pos->name.len)
+		while(pos && (pos->type != HDR_EOH_T)) {
+			if((hf->len == pos->name.len)
 					&& (!strncasecmp(hf->s, pos->name.s, pos->name.len))) {
 				found = pos;
-				if (front) {
+				if(front) {
 					break;
 				}
 			}
 			pos = pos->next;
 		}
 
-		if (found) {
-			if (front) {
+		if(found) {
+			if(front) {
 				len = found->name.s - msg->buf;
 			} else {
 				len = found->name.s + found->len - msg->buf;
@@ -952,7 +998,7 @@ static int request_hf_helper(struct sip_msg* msg, str* hf, avp_ident_t* ident, s
 		}
 
 		new_anchor = anchor_lump(msg, len, 0, 0);
-		if (new_anchor == 0) {
+		if(new_anchor == 0) {
 			LOG(L_ERR, "ERROR: request_hf_helper: Can't get anchor\n");
 			return -1;
 		}
@@ -960,7 +1006,7 @@ static int request_hf_helper(struct sip_msg* msg, str* hf, avp_ident_t* ident, s
 		new_anchor = anchor;
 	}
 
-	if (!st) {
+	if(!st) {
 		st = &state;
 		avp = search_avp(*ident, NULL, st);
 		ret = -1;
@@ -969,45 +1015,54 @@ static int request_hf_helper(struct sip_msg* msg, str* hf, avp_ident_t* ident, s
 		ret = 1;
 	}
 
-	if (avp) {
-		if (reverse && (request_hf_helper(msg, hf, ident, new_anchor, st, front, reverse, reply) == -1)) {
+	if(avp) {
+		if(reverse
+				&& (request_hf_helper(msg, hf, ident, new_anchor, st, front,
+							reverse, reply)
+						== -1)) {
 			return -1;
 		}
 
 		get_avp_val(avp, &val);
-		if (avp->flags & AVP_VAL_STR) {
+		if(avp->flags & AVP_VAL_STR) {
 			fin_val = val.s;
 		} else {
 			fin_val.s = int2str(val.n, &fin_val.len);
 		}
 
 		len = hf->len + 2 + fin_val.len + 2;
-		s = (char*)pkg_malloc(len);
-		if (!s) {
-			LOG(L_ERR, "ERROR: request_hf_helper: No memory left for data lump\n");
+		s = (char *)pkg_malloc(len);
+		if(!s) {
+			LOG(L_ERR,
+					"ERROR: request_hf_helper: No memory left for data lump\n");
 			return -1;
 		}
 
 		memcpy(s, hf->s, hf->len);
-		memcpy(s + hf->len, ": ", 2 );
-		memcpy(s + hf->len+2, fin_val.s, fin_val.len );
+		memcpy(s + hf->len, ": ", 2);
+		memcpy(s + hf->len + 2, fin_val.s, fin_val.len);
 		memcpy(s + hf->len + 2 + fin_val.len, CRLF, CRLF_LEN);
 
-		if (reply) {
-			if (add_lump_rpl( msg, s, len, LUMP_RPL_HDR | LUMP_RPL_NODUP) == 0) {
+		if(reply) {
+			if(add_lump_rpl(msg, s, len, LUMP_RPL_HDR | LUMP_RPL_NODUP) == 0) {
 				LOG(L_ERR, "ERROR: request_hf_helper: Can't insert RPL lump\n");
 				pkg_free(s);
 				return -1;
 			}
 		} else {
-			if ((front && (insert_new_lump_before(new_anchor, s, len, 0) == 0))
-					|| (!front && (insert_new_lump_after(new_anchor, s, len, 0) == 0))) {
+			if((front && (insert_new_lump_before(new_anchor, s, len, 0) == 0))
+					|| (!front
+							&& (insert_new_lump_after(new_anchor, s, len, 0)
+									== 0))) {
 				LOG(L_ERR, "ERROR: request_hf_helper: Can't insert lump\n");
 				pkg_free(s);
 				return -1;
 			}
 		}
-		if (!reverse && (request_hf_helper(msg, hf, ident, new_anchor, st, front, reverse, reply) == -1)) {
+		if(!reverse
+				&& (request_hf_helper(msg, hf, ident, new_anchor, st, front,
+							reverse, reply)
+						== -1)) {
 			return -1;
 		}
 		return 1;
@@ -1019,29 +1074,30 @@ static int request_hf_helper(struct sip_msg* msg, str* hf, avp_ident_t* ident, s
 }
 
 
-static int fixup_str_1_attr_2(void** param, int param_no)
+static int fixup_str_1_attr_2(void **param, int param_no)
 {
-	if (param_no == 1) {
+	if(param_no == 1) {
 		return fixup_var_str_12(param, 1);
-	} else if (param_no == 2) {
+	} else if(param_no == 2) {
 		return avpid_fixup(param, 1);
 	}
 	return 0;
 }
 
 
-static int insert_req(struct sip_msg* msg, char* p1, char* p2)
+static int insert_req(struct sip_msg *msg, char *p1, char *p2)
 {
 	avp_ident_t ident, *avp;
 	str hf;
 
-	if (get_str_fparam(&hf, msg, (fparam_t*)p1) < 0) {
-		ERR("Error while obtaining attribute value from '%s'\n", ((fparam_t*)p1)->orig);
+	if(get_str_fparam(&hf, msg, (fparam_t *)p1) < 0) {
+		ERR("Error while obtaining attribute value from '%s'\n",
+				((fparam_t *)p1)->orig);
 		return -1;
 	}
 
-	if (p2) {
-		avp = &((fparam_t*)p2)->v.avp;
+	if(p2) {
+		avp = &((fparam_t *)p2)->v.avp;
 	} else {
 		ident.name.s = hf;
 		ident.flags = AVP_NAME_STR;
@@ -1052,18 +1108,19 @@ static int insert_req(struct sip_msg* msg, char* p1, char* p2)
 }
 
 
-static int append_req(struct sip_msg* msg, char* p1, char* p2)
+static int append_req(struct sip_msg *msg, char *p1, char *p2)
 {
 	avp_ident_t ident, *avp;
 	str hf;
 
-	if (get_str_fparam(&hf, msg, (fparam_t*)p1) < 0) {
-		ERR("Error while obtaining attribute value from '%s'\n", ((fparam_t*)p1)->orig);
+	if(get_str_fparam(&hf, msg, (fparam_t *)p1) < 0) {
+		ERR("Error while obtaining attribute value from '%s'\n",
+				((fparam_t *)p1)->orig);
 		return -1;
 	}
 
-	if (p2) {
-		avp = &((fparam_t*)p2)->v.avp;
+	if(p2) {
+		avp = &((fparam_t *)p2)->v.avp;
 	} else {
 		ident.name.s = hf;
 		ident.flags = AVP_NAME_STR;
@@ -1074,27 +1131,28 @@ static int append_req(struct sip_msg* msg, char* p1, char* p2)
 }
 
 
-static int replace_req(struct sip_msg* msg, char* p1, char* p2)
+static int replace_req(struct sip_msg *msg, char *p1, char *p2)
 {
-	struct hdr_field* pos;
+	struct hdr_field *pos;
 	str hf;
 
-	if (get_str_fparam(&hf, msg, (fparam_t*)p1) < 0) {
-		ERR("Error while obtaining attribute value from '%s'\n", ((fparam_t*)p1)->orig);
+	if(get_str_fparam(&hf, msg, (fparam_t *)p1) < 0) {
+		ERR("Error while obtaining attribute value from '%s'\n",
+				((fparam_t *)p1)->orig);
 		return -1;
 	}
 
-	if (parse_headers(msg, HDR_EOH_F, 0) == -1) {
+	if(parse_headers(msg, HDR_EOH_F, 0) == -1) {
 		LOG(L_ERR, "ERROR: replace_req: Error while parsing message\n");
 		return -1;
 	}
 
 	pos = msg->headers;
-	while (pos && (pos->type != HDR_EOH_T)) {
-		if (hf.len == pos->name.len
+	while(pos && (pos->type != HDR_EOH_T)) {
+		if(hf.len == pos->name.len
 				&& !strncasecmp(hf.s, pos->name.s, pos->name.len)) {
-			if (del_lump(msg, pos->name.s - msg->buf, pos->len, 0) == 0) {
-				LOG(L_ERR,"ERROR: Can't insert del lump\n");
+			if(del_lump(msg, pos->name.s - msg->buf, pos->len, 0) == 0) {
+				LOG(L_ERR, "ERROR: Can't insert del lump\n");
 				return -1;
 			}
 		}
@@ -1104,18 +1162,19 @@ static int replace_req(struct sip_msg* msg, char* p1, char* p2)
 }
 
 
-static int append_reply(struct sip_msg* msg, char* p1, char* p2)
+static int append_reply(struct sip_msg *msg, char *p1, char *p2)
 {
 	avp_ident_t ident, *avp;
 	str hf;
 
-	if (get_str_fparam(&hf, msg, (fparam_t*)p1) < 0) {
-		ERR("Error while obtaining attribute value from '%s'\n", ((fparam_t*)p1)->orig);
+	if(get_str_fparam(&hf, msg, (fparam_t *)p1) < 0) {
+		ERR("Error while obtaining attribute value from '%s'\n",
+				((fparam_t *)p1)->orig);
 		return -1;
 	}
 
-	if (p2) {
-		avp = &((fparam_t*)p2)->v.avp;
+	if(p2) {
+		avp = &((fparam_t *)p2)->v.avp;
 	} else {
 		ident.name.s = hf;
 		ident.flags = AVP_NAME_STR;
@@ -1126,11 +1185,11 @@ static int append_reply(struct sip_msg* msg, char* p1, char* p2)
 }
 
 
-static int set_destination(struct sip_msg* msg, str* dest)
+static int set_destination(struct sip_msg *msg, str *dest)
 {
 	name_addr_t nameaddr;
 
-	if (!parse_nameaddr(dest, &nameaddr)) {
+	if(!parse_nameaddr(dest, &nameaddr)) {
 		return set_dst_uri(msg, &nameaddr.uri);
 	} else {
 		/* it is just URI, pass it through */
@@ -1139,14 +1198,14 @@ static int set_destination(struct sip_msg* msg, str* dest)
 }
 
 
-static int attr_destination(struct sip_msg* msg, char* p1, char* p2)
+static int attr_destination(struct sip_msg *msg, char *p1, char *p2)
 {
-	avp_t* avp;
+	avp_t *avp;
 	avp_value_t val;
 
-	if ((avp = search_avp(((fparam_t*)p1)->v.avp, &val, NULL))) {
-		if (avp->flags & AVP_VAL_STR) {
-			if (set_destination(msg, &val.s)) {
+	if((avp = search_avp(((fparam_t *)p1)->v.avp, &val, NULL))) {
+		if(avp->flags & AVP_VAL_STR) {
+			if(set_destination(msg, &val.s)) {
 				LOG(L_ERR, "ERROR: avp_destination: Can't set dst uri\n");
 				return -1;
 			};
@@ -1163,13 +1222,13 @@ static int attr_destination(struct sip_msg* msg, char* p1, char* p2)
 }
 
 
-static int xlset_destination(struct sip_msg* msg, char* format, char* p2)
+static int xlset_destination(struct sip_msg *msg, char *format, char *p2)
 {
 	str val;
 
-	if (xl_printstr(msg, (xl_elog_t*) format, &val.s, &val.len) > 0) {
+	if(xl_printstr(msg, (xl_elog_t *)format, &val.s, &val.len) > 0) {
 		DBG("Setting dest to: '%.*s'\n", val.len, val.s);
-		if (set_destination(msg, &val) == 0) {
+		if(set_destination(msg, &val) == 0) {
 			return 1;
 		}
 	}
@@ -1178,194 +1237,207 @@ static int xlset_destination(struct sip_msg* msg, char* format, char* p2)
 }
 
 
-static int attr_hdr_body2attrs(struct sip_msg* m, char* header_, char* prefix_)
+static int attr_hdr_body2attrs(struct sip_msg *m, char *header_, char *prefix_)
 {
 	char name_buf[50];
-	str *prefix = (str*) prefix_;
-	struct hdr_name *header = (void*) header_;
+	str *prefix = (str *)prefix_;
+	struct hdr_name *header = (void *)header_;
 	struct hdr_field *hf;
 	str s, name, val;
 	int_str name2, val2;
 	int val_type, arr;
-	if (header->kind == HDR_STR) {
-		if (parse_headers(m, HDR_EOH_F, 0) == -1) {
-			LOG(L_ERR, "ERROR: attr_hdr_body2attrs: Error while parsing message\n");
+	if(header->kind == HDR_STR) {
+		if(parse_headers(m, HDR_EOH_F, 0) == -1) {
+			LOG(L_ERR, "ERROR: attr_hdr_body2attrs: Error while parsing "
+					   "message\n");
 			return -1;
 		}
 
-		for (hf=m->headers; hf; hf=hf->next) {
-			if ( (header->name.s.len == hf->name.len)
-					&& (!strncasecmp(header->name.s.s, hf->name.s, hf->name.len)) ) {
+		for(hf = m->headers; hf; hf = hf->next) {
+			if((header->name.s.len == hf->name.len)
+					&& (!strncasecmp(
+							header->name.s.s, hf->name.s, hf->name.len))) {
 				break;
 			}
 		}
-	}
-	else {
-		if (parse_headers(m, header->name.n, 0) == -1) {
-			LOG(L_ERR, "ERROR: attr_hdr_body2attrs: Error while parsing message\n");
+	} else {
+		if(parse_headers(m, header->name.n, 0) == -1) {
+			LOG(L_ERR, "ERROR: attr_hdr_body2attrs: Error while parsing "
+					   "message\n");
 			return -1;
 		}
-		switch (header->name.n) {
+		switch(header->name.n) {
 			//	HDR_xxx:
 			default:
 				hf = NULL;
 				break;
 		}
 	}
-	if (!hf || !hf->body.len)
+	if(!hf || !hf->body.len)
 		return 1;
 
 	// parse body of hf
 	s = hf->body;
 	name_buf[0] = '\0';
-	while (s.len) {
+	while(s.len) {
 		trim_leading(&s);
 		name.s = s.s;
-		while ( s.len &&
-				( (s.s[0] >= 'a' && s.s[0] <= 'z') ||
-					(s.s[0] >= 'A' && s.s[0] <= 'Z') ||
-					(s.s[0] >= '0' && s.s[0] <= '9') ||
-					s.s[0] == '_' || s.s[0] == '-'
-				) ) {
+		while(s.len
+				&& ((s.s[0] >= 'a' && s.s[0] <= 'z')
+						|| (s.s[0] >= 'A' && s.s[0] <= 'Z')
+						|| (s.s[0] >= '0' && s.s[0] <= '9') || s.s[0] == '_'
+						|| s.s[0] == '-')) {
 			s.s++;
 			s.len--;
 		}
-		if (s.s == name.s)
+		if(s.s == name.s)
 			break;
 		name.len = s.s - name.s;
 		trim_leading(&s);
-		if (!s.len)
+		if(!s.len)
 			break;
-		if (s.s[0] == '=') {
+		if(s.s[0] == '=') {
 			s.s++;
 			s.len--;
 			arr = -1;
 
-			while (s.len) {
+			while(s.len) {
 				trim_leading(&s);
 				val_type = 0;
-				if (!s.len)
+				if(!s.len)
 					break;
-				if (s.s[0] == '"') {
+				if(s.s[0] == '"') {
 					s.s++;
 					s.len--;
 					val.s = s.s;
 
 					s.s = q_memchr(s.s, '\"', s.len);
-					if (!s.s)
+					if(!s.s)
 						break;
 					val.len = s.s - val.s;
 					val_type = AVP_VAL_STR;
 					s.s++;
 					s.len -= s.s - val.s;
-				}
-				else {
+				} else {
 					int r;
 					val.s = s.s;
-					if (s.s[0] == '+' || s.s[0] == '-') {
+					if(s.s[0] == '+' || s.s[0] == '-') {
 						s.s++;
 						s.len--;
 					}
-					val2.n = 0; r = 0;
-					while (s.len) {
-						if (s.s[0] == header->field_delimiter || (header->array_delimiter && header->array_delimiter == s.s[0]))
+					val2.n = 0;
+					r = 0;
+					while(s.len) {
+						if(s.s[0] == header->field_delimiter
+								|| (header->array_delimiter
+										&& header->array_delimiter == s.s[0]))
 							goto token_end;
-						switch (s.s[0]) {
+						switch(s.s[0]) {
 							case ' ':
 							case '\t':
 							case '\n':
 							case '\r':
 								goto token_end;
 						}
-						if (!val_type && s.s[0] >= '0' && s.s[0]<= '9') {
+						if(!val_type && s.s[0] >= '0' && s.s[0] <= '9') {
 							r++;
 							val2.n *= 10;
 							val2.n += s.s[0] - '0';
 							// overflow detection ???
-						}
-						else {
+						} else {
 							val_type = AVP_VAL_STR;
 						}
 						s.s++;
 						s.len--;
 					}
-token_end:
-					if (r == 0) val_type = AVP_VAL_STR;
-					if (!val_type && val.s[0] == '-') {
+				token_end:
+					if(r == 0)
+						val_type = AVP_VAL_STR;
+					if(!val_type && val.s[0] == '-') {
 						val2.n = -val2.n;
 					}
 					val.len = s.s - val.s;
 				}
 				trim_leading(&s);
-				if (arr >= 0 || (s.len && header->array_delimiter && header->array_delimiter == s.s[0])) {
+				if(arr >= 0
+						|| (s.len && header->array_delimiter
+								&& header->array_delimiter == s.s[0])) {
 					arr++;
-					if (arr == 100)
+					if(arr == 100)
 						LOG(L_ERR, "ERROR: avp index out of limit\n");
 				}
-				if (val.len && arr < 100) {
-					if (prefix != NULL || arr >= 0) {
-						if ((prefix?prefix->len:0)+name.len+1+((arr>=0)?3/*#99*/:0) > sizeof(name_buf)) {
-							if (arr <= 0)
+				if(val.len && arr < 100) {
+					if(prefix != NULL || arr >= 0) {
+						if((prefix ? prefix->len : 0) + name.len + 1
+										+ ((arr >= 0) ? 3 /*#99*/ : 0)
+								> sizeof(name_buf)) {
+							if(arr <= 0)
 								LOG(L_ERR, "ERROR: avp name too long\n");
 							goto cont;
 						}
 						name2.s.len = 0;
 						name2.s.s = name_buf;
-						if (prefix != NULL) {
-							if (name_buf[0] == '\0') {
+						if(prefix != NULL) {
+							if(name_buf[0] == '\0') {
 								memcpy(&name_buf[0], prefix->s, prefix->len);
 							}
 							name2.s.len += prefix->len;
 						}
-						if (arr <= 0) {
+						if(arr <= 0) {
 							memcpy(&name_buf[name2.s.len], name.s, name.len);
 						}
 						name2.s.len += name.len;
-						if (arr >= 0) {
+						if(arr >= 0) {
 							name_buf[name2.s.len] = '#';
 							name2.s.len++;
-							if (arr >= 10) {
-								name_buf[name2.s.len] = '0'+ (arr / 10);
+							if(arr >= 10) {
+								name_buf[name2.s.len] = '0' + (arr / 10);
 								name2.s.len++;
 							}
-							name_buf[name2.s.len] = '0'+ (arr % 10);
+							name_buf[name2.s.len] = '0' + (arr % 10);
 							name2.s.len++;
 						}
-					}
-					else {
+					} else {
 						name2.s.s = name.s;
 						name2.s.len = name.len;
 					}
-					if ( ((val_type & AVP_VAL_STR) && (header->val_types & VAL_TYPE_STR)) ||
-							((val_type & AVP_VAL_STR) == 0 && (header->val_types & VAL_TYPE_INT))  ) {
-						if (val_type) {
+					if(((val_type & AVP_VAL_STR)
+							   && (header->val_types & VAL_TYPE_STR))
+							|| ((val_type & AVP_VAL_STR) == 0
+									&& (header->val_types & VAL_TYPE_INT))) {
+						if(val_type) {
 							val2.s.s = val.s;
 							val2.s.len = val.len;
-							DBG("DEBUG: attr_hdr_body2attrs: adding avp '%.*s', sval: '%.*s'\n", name2.s.len, (char*) name2.s.s, val.len, val.s);
+							DBG("DEBUG: attr_hdr_body2attrs: adding avp "
+								"'%.*s', sval: '%.*s'\n",
+									name2.s.len, (char *)name2.s.s, val.len,
+									val.s);
 						} else {
-							DBG("DEBUG: attr_hdr_body2attrs: adding avp '%.*s', ival: '%ld'\n", name2.s.len, (char*) name2.s.s, val2.n);
+							DBG("DEBUG: attr_hdr_body2attrs: adding avp "
+								"'%.*s', ival: '%ld'\n",
+									name2.s.len, (char *)name2.s.s, val2.n);
 						}
-						if ( add_avp(AVP_NAME_STR | val_type, name2, val2)!=0) {
-							LOG(L_ERR, "ERROR: attr_hdr_body2attrs: add_avp failed\n");
+						if(add_avp(AVP_NAME_STR | val_type, name2, val2) != 0) {
+							LOG(L_ERR, "ERROR: attr_hdr_body2attrs: add_avp "
+									   "failed\n");
 							return 1;
 						}
 					}
 				}
-cont:
-				if (s.len && header->array_delimiter && header->array_delimiter == s.s[0]) {
+			cont:
+				if(s.len && header->array_delimiter
+						&& header->array_delimiter == s.s[0]) {
 					s.s++;
 					s.len--;
-				}
-				else {
+				} else {
 					break;
 				}
 			};
 		}
-		if (s.len && s.s && s.s[0] == header->field_delimiter) {
+		if(s.len && s.s && s.s[0] == header->field_delimiter) {
 			s.s++;
 			s.len--;
-		}
-		else {
+		} else {
 			break;
 		}
 	}
@@ -1373,7 +1445,8 @@ cont:
 }
 
 
-static int attr_hdr_body2attrs2(struct sip_msg* msg, char* header_, char* prefix_)
+static int attr_hdr_body2attrs2(
+		struct sip_msg *msg, char *header_, char *prefix_)
 {
 	return attr_hdr_body2attrs(msg, header_, prefix_);
 }
@@ -1388,8 +1461,10 @@ static int attr_hdr_body2attrs_fixup(void **param, int param_no)
 	if(param_no == 1) {
 		c = *param;
 		if(*c == '#') {
-			LOG(L_ERR, "attr_hdr_body2attrs_fixup: header name is not "
-						"valid '%s'\n", c);
+			LOG(L_ERR,
+					"attr_hdr_body2attrs_fixup: header name is not "
+					"valid '%s'\n",
+					c);
 			return E_CFG;
 		} else {
 			params = strchr(c, PARAM_DELIM);
@@ -1426,7 +1501,8 @@ static int attr_hdr_body2attrs_fixup(void **param, int param_no)
 					case PARAM_DELIM:
 						break;
 					default:
-						LOG(L_ERR, "attr_hdr_body2attrs_fixup: bad field param "
+						LOG(L_ERR,
+								"attr_hdr_body2attrs_fixup: bad field param "
 								"modifier near '%s'\n",
 								params);
 						pkg_free(h);
@@ -1436,7 +1512,7 @@ static int attr_hdr_body2attrs_fixup(void **param, int param_no)
 			}
 			if(!h->val_types) {
 				LOG(L_ERR, "attr_hdr_body2attrs_fixup: no field param modifier "
-						"specified\n");
+						   "specified\n");
 				pkg_free(h);
 				return E_CFG;
 			}
@@ -1468,11 +1544,11 @@ static int attr_hdr_body2attrs_fixup(void **param, int param_no)
 	return 0;
 }
 
-static int attr_hdr_body2attrs2_fixup(void** param, int param_no)
+static int attr_hdr_body2attrs2_fixup(void **param, int param_no)
 {
 	struct hdr_name *h;
 	int res = attr_hdr_body2attrs_fixup(param, param_no);
-	if (res == 0 && param_no == 1) {
+	if(res == 0 && param_no == 1) {
 		h = *param;
 		h->field_delimiter = ';';
 		h->array_delimiter = ',';
@@ -1481,16 +1557,16 @@ static int attr_hdr_body2attrs2_fixup(void** param, int param_no)
 }
 
 
-static int avpgroup_fixup(void** param, int param_no)
+static int avpgroup_fixup(void **param, int param_no)
 {
 	unsigned long flags;
-	char* s;
+	char *s;
 
-	if (param_no == 1) {
+	if(param_no == 1) {
 		/* Determine the track and class of attributes to be loaded */
-		s = (char*)*param;
+		s = (char *)*param;
 		flags = 0;
-		if (*s != '$' || (strlen(s) != 3 && strlen(s) != 2)) {
+		if(*s != '$' || (strlen(s) != 3 && strlen(s) != 2)) {
 			ERR("Invalid parameter value, $xy expected\n");
 			return -1;
 		}
@@ -1548,23 +1624,23 @@ static int avpgroup_fixup(void** param, int param_no)
 		}
 
 		pkg_free(*param);
-		*param = (void*)flags;
+		*param = (void *)flags;
 		return 1;
 	}
 	return 0;
 }
 
 
-static int select_attr_fixup(str* res, select_t* s, struct sip_msg* msg)
+static int select_attr_fixup(str *res, select_t *s, struct sip_msg *msg)
 {
 	avp_ident_t *avp_ident;
 
-#define SEL_PARAM_IDX	1
+#define SEL_PARAM_IDX 1
 
-	if (! msg) { /* fixup call */
+	if(!msg) { /* fixup call */
 		str attr_name;
 
-		if (s->params[SEL_PARAM_IDX].type != SEL_PARAM_STR) {
+		if(s->params[SEL_PARAM_IDX].type != SEL_PARAM_STR) {
 			ERR("attribute name expected.\n");
 			return -1;
 		}
@@ -1572,19 +1648,20 @@ static int select_attr_fixup(str* res, select_t* s, struct sip_msg* msg)
 		attr_name = s->params[SEL_PARAM_IDX].v.s;
 		DEBUG("fix up for attribute '%.*s'\n", STR_FMT(&attr_name));
 
-		if (! (avp_ident = pkg_malloc(sizeof(avp_ident_t)))) {
+		if(!(avp_ident = pkg_malloc(sizeof(avp_ident_t)))) {
 			ERR("out of mem; requested: %d.\n", (int)sizeof(avp_ident_t));
 			return -1;
 		}
 		memset(avp_ident, 0, sizeof(avp_ident_t));
 
 		/* skip leading `$' */
-		if ((1 < attr_name.len) && (attr_name.s[0] == '$')) {
-			attr_name.len --;
-			attr_name.s ++;
+		if((1 < attr_name.len) && (attr_name.s[0] == '$')) {
+			attr_name.len--;
+			attr_name.s++;
 		}
-		if (parse_avp_ident(&attr_name, avp_ident) < 0) {
-			ERR("failed to parse attribute name: `%.*s'.\n", STR_FMT(&attr_name));
+		if(parse_avp_ident(&attr_name, avp_ident) < 0) {
+			ERR("failed to parse attribute name: `%.*s'.\n",
+					STR_FMT(&attr_name));
 			pkg_free(avp_ident);
 			return -1;
 		}
@@ -1599,7 +1676,7 @@ static int select_attr_fixup(str* res, select_t* s, struct sip_msg* msg)
 #endif
 		avp_ident = s->params[SEL_PARAM_IDX].v.p;
 		ret = search_first_avp(avp_ident->flags, avp_ident->name, &val, NULL);
-		if (ret && ret->flags & AVP_VAL_STR)
+		if(ret && ret->flags & AVP_VAL_STR)
 			*res = val.s;
 	}
 
@@ -1609,18 +1686,21 @@ static int select_attr_fixup(str* res, select_t* s, struct sip_msg* msg)
 }
 
 SELECT_F(select_any_nameaddr)
-	ABSTRACT_F(select_attr);
+ABSTRACT_F(select_attr);
 
-	select_row_t sel_declaration[] = {
-		{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("avp"), select_attr, SEL_PARAM_EXPECTED},
-		{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("attr"), select_attr, SEL_PARAM_EXPECTED},
-		{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("attribute"), select_attr, SEL_PARAM_EXPECTED},
-		{ select_attr, SEL_PARAM_STR, STR_NULL, select_attr_fixup, FIXUP_CALL | CONSUME_NEXT_STR},
+select_row_t sel_declaration[] = {{NULL, SEL_PARAM_STR, STR_STATIC_INIT("avp"),
+										  select_attr, SEL_PARAM_EXPECTED},
+		{NULL, SEL_PARAM_STR, STR_STATIC_INIT("attr"), select_attr,
+				SEL_PARAM_EXPECTED},
+		{NULL, SEL_PARAM_STR, STR_STATIC_INIT("attribute"), select_attr,
+				SEL_PARAM_EXPECTED},
+		{select_attr, SEL_PARAM_STR, STR_NULL, select_attr_fixup,
+				FIXUP_CALL | CONSUME_NEXT_STR},
 
-		{ select_attr_fixup, SEL_PARAM_STR, STR_STATIC_INIT("nameaddr"), select_any_nameaddr, NESTED},
+		{select_attr_fixup, SEL_PARAM_STR, STR_STATIC_INIT("nameaddr"),
+				select_any_nameaddr, NESTED},
 
-		{ NULL, SEL_PARAM_INT, STR_NULL, NULL, 0}
-	};
+		{NULL, SEL_PARAM_INT, STR_NULL, NULL, 0}};
 
 static int mod_init()
 {

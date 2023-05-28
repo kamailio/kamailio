@@ -32,37 +32,38 @@
 /* forward declaration for ucontact_t */
 struct ucontact;
 
-#define UL_CONTACT_INSERT      (1<<0)
-#define UL_CONTACT_UPDATE      (1<<1)
-#define UL_CONTACT_DELETE      (1<<2)
-#define UL_CONTACT_EXPIRE      (1<<3)
-#define ULCB_MAX               ((1<<4)-1)
+#define UL_CONTACT_INSERT (1 << 0)
+#define UL_CONTACT_UPDATE (1 << 1)
+#define UL_CONTACT_DELETE (1 << 2)
+#define UL_CONTACT_EXPIRE (1 << 3)
+#define ULCB_MAX ((1 << 4) - 1)
 
 /*! \brief callback function prototype */
-typedef void (ul_cb) (struct ucontact *c, int type, void *param);
+typedef void(ul_cb)(struct ucontact *c, int type, void *param);
 /*! \brief register callback function prototype */
-typedef int (*register_ulcb_t)( int cb_types, ul_cb f, void *param);
+typedef int (*register_ulcb_t)(int cb_types, ul_cb f, void *param);
 
 
-struct ul_callback {
-	int id;                      /*!< id of this callback - useless */
-	int types;                   /*!< types of events that trigger the callback*/
-	ul_cb* callback;             /*!< callback function */
-	void *param;                 /*!< param to be passed to callback function */
-	struct ul_callback* next;
+struct ul_callback
+{
+	int id;			 /*!< id of this callback - useless */
+	int types;		 /*!< types of events that trigger the callback*/
+	ul_cb *callback; /*!< callback function */
+	void *param;	 /*!< param to be passed to callback function */
+	struct ul_callback *next;
 };
 
-struct ulcb_head_list {
+struct ulcb_head_list
+{
 	struct ul_callback *first;
 	int reg_types;
 };
 
 
-extern struct ulcb_head_list*  ulcb_list;
+extern struct ulcb_head_list *ulcb_list;
 
 
-#define exists_ulcb_type(_types_) \
-	( (ulcb_list->reg_types)&(_types_) )
+#define exists_ulcb_type(_types_) ((ulcb_list->reg_types) & (_types_))
 
 
 int init_ulcb_list(void);
@@ -71,22 +72,21 @@ void destroy_ulcb_list(void);
 
 
 /*! \brief register a callback for several types of events */
-int register_ulcb( int types, ul_cb f, void *param );
+int register_ulcb(int types, ul_cb f, void *param);
 
 /*! \brief run all transaction callbacks for an event type */
-static inline void run_ul_callbacks( int type , struct ucontact *c)
+static inline void run_ul_callbacks(int type, struct ucontact *c)
 {
 	struct ul_callback *cbp;
 
-	for (cbp=ulcb_list->first; cbp; cbp=cbp->next)  {
-		if(cbp->types&type) {
-			LM_DBG("contact=%p, callback type %d/%d, id %d entered\n",
-				c, type, cbp->types, cbp->id );
-			cbp->callback( c, type, cbp->param );
+	for(cbp = ulcb_list->first; cbp; cbp = cbp->next) {
+		if(cbp->types & type) {
+			LM_DBG("contact=%p, callback type %d/%d, id %d entered\n", c, type,
+					cbp->types, cbp->id);
+			cbp->callback(c, type, cbp->param);
 		}
 	}
 }
-
 
 
 #endif

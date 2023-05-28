@@ -412,8 +412,8 @@ route[HTTP_REPLY] {
 5. Pseudo Variables
 
    The $http_req_id read-only variable can be used in REQUEST_ROUTE to
-   retrive the unique identifier for a query after sending it or in the
-   HTTP callback route to retrive the id of the query the reply belongs
+   retrieve the unique identifier for a query after sending it or in the
+   HTTP callback route to retrieve the id of the query the reply belongs
    to. Useful mainly in non-transactional context.
 
    Example 1.17. $http_req_id variable usage

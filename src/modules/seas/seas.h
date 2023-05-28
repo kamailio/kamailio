@@ -22,10 +22,10 @@
 #define _SEAS_H
 #include <arpa/inet.h>
 
-#include "../../core/str.h"/*str*/
-#include "../../core/ip_addr.h"/*ip_addr*/
-#include "../../core/sr_module.h" /*version,etc*/
-#include "../../modules/tm/tm_load.h"/*tm_binds*/
+#include "../../core/str.h"			  /*str*/
+#include "../../core/ip_addr.h"		  /*ip_addr*/
+#include "../../core/sr_module.h"	  /*version,etc*/
+#include "../../modules/tm/tm_load.h" /*tm_binds*/
 #include "ha.h"
 #include "cluster.h"
 #define MAX_AS_NR 5
@@ -65,12 +65,12 @@
 
 #define SPIRAL_FLAG 0x00000001
 
-#define net2hostL(dst,from,index) do{ \
-	memcpy(&(dst),(from)+(index),4); \
-	dst=ntohl(dst); \
-	(index)+=4; \
-}while(0);
-
+#define net2hostL(dst, from, index)          \
+	do {                                     \
+		memcpy(&(dst), (from) + (index), 4); \
+		dst = ntohl(dst);                    \
+		(index) += 4;                        \
+	} while(0);
 
 
 extern char use_stats;
@@ -92,13 +92,15 @@ extern int servlet_pings_lost;
 
 extern struct as_entry *as_table;
 
-struct seas_functions{
+struct seas_functions
+{
 	struct tm_binds tmb;
 	cmd_function t_check_orig_trans;
 };
 
 /*TODO listen_points should be dynamically allocated ?*/
-typedef struct app_server {
+typedef struct app_server
+{
 	int event_fd;
 	int action_fd;
 	str name;
@@ -111,9 +113,10 @@ typedef struct app_server {
 	struct ha jain_pings;
 	struct ha servlet_pings;
 	struct cluster *cluster;
-}as_t, *as_p;
+} as_t, *as_p;
 
-struct cluster{
+struct cluster
+{
 	str name;
 	int num;
 	int registered;
@@ -129,14 +132,16 @@ struct cluster{
  * atomic operation. This way, we prevent having to put a mutex on the array, which would make
  * it slower , as only one process could be accessing it at a time.
  */
-struct as_entry{
+struct as_entry
+{
 	str name;
 	int type;
 	int connected;
-	union{
+	union
+	{
 		struct app_server as;
 		struct cluster cs;
-	}u;
+	} u;
 	struct as_entry *next;
 };
 
@@ -145,18 +150,21 @@ extern struct as_entry *my_as;
 extern struct seas_functions seas_f;
 extern struct as_entry *as_list;
 
-typedef struct as_msg {
+typedef struct as_msg
+{
 	struct cell *transaction;
 	char *msg;
 	int len;
 	int type;
 	int id;
 	struct as_entry *as;
-}as_msg_t,*as_msg_p;
+} as_msg_t, *as_msg_p;
 
-char get_processor_id(struct receive_info *rcv,as_p as);
+char get_processor_id(struct receive_info *rcv, as_p as);
 void seas_sighandler(int signo);
-char* create_as_event_t(struct cell *t,struct sip_msg *msg,char processor_id,int *evt_len,int flags);
-char* create_as_event_sl(struct sip_msg *msg,char processor_id,int *evt_len,int flags);
+char *create_as_event_t(struct cell *t, struct sip_msg *msg, char processor_id,
+		int *evt_len, int flags);
+char *create_as_event_sl(
+		struct sip_msg *msg, char processor_id, int *evt_len, int flags);
 
 #endif

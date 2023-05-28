@@ -295,9 +295,8 @@ ure.
 NULL.
         Parameters count should be exactly the same as signature count.
         Note 1: Arrays representation (symbol '[') is not supported yet.
-        Note 2: You shall use a correct signature, e.g. the following examples o
-f
-        combinations are invalid:
+        Note 2: You shall use a correct signature, e.g. the following examples
+        of combinations are invalid:
         java_method_exec("ExampleMethod", "ZI", "False");
         java_method_exec("ExampleMethod", "LI", "something", "5");
 

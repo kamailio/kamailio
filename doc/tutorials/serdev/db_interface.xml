@@ -65,7 +65,7 @@
 	<section id="bind_dbmod">
 	    <title><function>bind_dbmod</function></title>
 	    <para>
-		This function is special, it's only purpose is to call
+		This function is special, its only purpose is to call
 		<function>find_export</function> function in the
 		<acronym>SER</acronym> core and find addresses of all other
 		functions (starting with db_ prefix). This function

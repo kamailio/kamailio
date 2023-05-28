@@ -26,9 +26,12 @@
 #include "../../core/parser/msg_parser.h"
 
 
-extern struct trusted_list ***perm_trust_table;    /* Pointer to current trusted hash table pointer */
-extern struct trusted_list **perm_trust_table_1;   /* Pointer to trusted hash table 1 */
-extern struct trusted_list **perm_trust_table_2;   /* Pointer to trusted hash table 2 */
+extern struct trusted_list **
+		*perm_trust_table; /* Pointer to current trusted hash table pointer */
+extern struct trusted_list *
+		*perm_trust_table_1; /* Pointer to trusted hash table 1 */
+extern struct trusted_list *
+		*perm_trust_table_2; /* Pointer to trusted hash table 2 */
 
 
 /*
@@ -58,33 +61,33 @@ void clean_trusted(void);
 /*
  * Check if request comes from trusted ip address with matching from URI
  */
-int ki_allow_trusted(sip_msg_t* _msg);
+int ki_allow_trusted(sip_msg_t *_msg);
 
 /*
  * Check if request comes from trusted ip address with matching from URI
  */
-int allow_trusted(struct sip_msg* _msg, char* _s1, char* _s2);
+int allow_trusted(struct sip_msg *_msg, char *_s1, char *_s2);
 
 
 /*
  * Checks based on request's source address, protocol, and From URI
  * if request can be trusted without authentication.
  */
-int allow_trusted_0(struct sip_msg* _msg, char* str1, char* str2);
+int allow_trusted_0(struct sip_msg *_msg, char *str1, char *str2);
 
 
 /*
  * Checks based on source address and protocol given in pvar arguments and
  * and requests's From URI, if request can be trusted without authentication.
  */
-int allow_trusted_2(struct sip_msg* _msg, char* _src_ip_sp, char* _proto_sp);
+int allow_trusted_2(struct sip_msg *_msg, char *_src_ip_sp, char *_proto_sp);
 
 /*
  * Checks based on source address and protocol given in pvar arguments and
  * provided URI, if request can be trusted without authentication.
  */
-int allow_trusted_3(struct sip_msg* _msg, char* _src_ip_sp, char* _proto_sp,
-		char* _from_uri);
+int allow_trusted_3(struct sip_msg *_msg, char *_src_ip_sp, char *_proto_sp,
+		char *_from_uri);
 
 int reload_trusted_table_cmd(void);
 

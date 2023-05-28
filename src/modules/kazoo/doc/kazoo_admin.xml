@@ -371,7 +371,7 @@ modparam("kazoo", "consume_messages_on_reconnect", 0)
 			<section>
 				<title><varname>single_consumer_on_reconnect</varname>(int)</title>
 				<para>When the main loop receives a message from rabbitmq it will defer the
-					execution to a worker in a round-robin manner. this parameter allows to use the
+					execution to a worker in a round-robin manner. This parameter allows to use the
 					same worker when kazoo reconnects to rabbitmq.</para>
 				<para>
 					<emphasis>Default value is 1.</emphasis>

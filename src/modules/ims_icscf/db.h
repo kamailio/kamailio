@@ -42,7 +42,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  * 
  */
- 
+
 /**
  * \file
  * 
@@ -52,22 +52,20 @@
  *  \author Dragos Vingarzan vingarzan -at- fokus dot fraunhofer dot de
  * 
  */
- 
+
 #ifndef I_CSCF_DB_H
 #define I_CSCF_DB_H
 
 #include "../../core/sr_module.h"
 #include "registration.h"
 
-int ims_icscf_db_bind(char* db_url);
-int ims_icscf_db_init(char* db_url,
-	char* db_table_nds,
-	char* db_table_scscf,
-	char* db_table_capabilities);
+int ims_icscf_db_bind(char *db_url);
+int ims_icscf_db_init(char *db_url, char *db_table_nds, char *db_table_scscf,
+		char *db_table_capabilities);
 void ims_icscf_db_close();
 
 int ims_icscf_db_get_nds(str *d[]);
 int ims_icscf_db_get_scscf(scscf_capabilities *cap[]);
-int ims_icscf_db_get_capabilities(scscf_capabilities *cap[],int cap_cnt);
+int ims_icscf_db_get_capabilities(scscf_capabilities *cap[], int cap_cnt);
 
 #endif /* I_CSCF_DB_H */

@@ -178,7 +178,7 @@ Federico Cabiddu
    1.26. Set the “ds_probing_mode” parameter
    1.27. accessing the metrics
    1.28. Set the “ds_ping_latency_stats” parameter
-   1.29. Set the “ds_hash_size” parameter
+   1.29. Set the “ds_latency_estimator_alpha” parameter
    1.30. Set the “ds_hash_size” parameter
    1.31. Set the “ds_hash_expire” parameter
    1.32. Set the “ds_hash_initexpire” parameter
@@ -572,7 +572,8 @@ modparam("dispatcher", "xavp_dst", "_dsdst_")
      * attrs - the attributes - they are added if xavp_dst_mode does not
        have the bit 1 set (value 1).
 
-   Default value is “0” (add all fields).
+   Default value is “0” (add grp, uri, sock, attr and optionally dstid
+   fields).
 
    Example 1.13. Set the “xavp_dst_mode” parameter
 ...
@@ -824,7 +825,7 @@ modparam("dispatcher", "ds_ping_latency_stats", 1)
 
    Default value is “900 => 0.9”.
 
-   Example 1.29. Set the “ds_hash_size” parameter
+   Example 1.29. Set the “ds_latency_estimator_alpha” parameter
 ...
 modparam("dispatcher", "ds_latency_estimator_alpha", 900)
 ...
@@ -1224,7 +1225,7 @@ ds_select_dst("1", "4", "3");
 
    Example 1.48. configuring load balancing with congestion detection
 ...
-# sample of SQL provisionning statements
+# sample of SQL provisioning statements
 INSERT INTO "dispatcher"
 VALUES(1,1,'sip:192.168.0.1:5060',0,12,'rweight=50;weight=50;cc=1;','');
 INSERT INTO "dispatcher"
@@ -1617,10 +1618,9 @@ kamcmd dispatcher.set_state ip 3 all
 5.2.  dispatcher.set_duid_state
 
    Sets the state for a destination by matching on 'duid' attribute. The
-   parameters first two parameter 'state' and 'group' are the same like
-   for RPC command 'dispatcher.set_state'. The third parameter 'duid' is
-   the value to be matched against the 'duid' attribute of dispatcher
-   destinations.
+   first two parameters 'state' and 'group' are the same like for RPC
+   command 'dispatcher.set_state'. The third parameter 'duid' is the value
+   to be matched against the 'duid' attribute of dispatcher destinations.
 
    Example:
 ...
@@ -1815,7 +1815,7 @@ kamctl rpc dispatcher.hash 4 bob server.com
        for new calls until an exiting call via that gateway is terminated.
        If set to 0, then no active call limit is used.>
      * 'weight' - used for weight based load distribution. It must be set
-       to a positive integer value beteen 1 and 100 (inclusive the
+       to a positive integer value between 1 and 100 (inclusive the
        limits), otherwise the destination address is ignored (its weight
        set to 0). The value represents the percent of calls to be sent to
        that gateways. The sum must not exceed 100, otherwise the
@@ -1891,12 +1891,12 @@ r,opt)
 # - don't dispatch REGISTER and presence requests
 #
 # Kamailio SIP Server
-#     - web: http://www.kamailio.org
+#     - web: https://www.kamailio.org
 #     - git: http://github.com/kamailio/
 #
 # Direct your questions about this file to: sr-users@lists.kamailio.org
 #
-# Refer to the Core CookBook at http://www.kamailio.org/dokuwiki/doku.php
+# Refer to the Core CookBook at https://www.kamailio.org/w/documentation/
 # for an explanation of possible statements, functions and parameters.
 #
 # Several features can be enabled using '#!define WITH_FEATURE' directives:

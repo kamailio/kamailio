@@ -57,20 +57,20 @@
  * @param via_len size of the Via header field being inserted
  * @return 0 on success, a negative number on error.
  */
-static int insert_fake_via(sip_msg_t* msg, char* via, int via_len)
+static int insert_fake_via(sip_msg_t *msg, char *via, int via_len)
 {
-	struct via_body* vb = 0;
+	struct via_body *vb = 0;
 
 	via_cnt++;
 	vb = pkg_malloc(sizeof(struct via_body));
-	if (vb == 0){
+	if(vb == 0) {
 		PKG_MEM_ERROR;
 		goto error;
 	}
 	memset(vb, 0, sizeof(struct via_body));
 
 	msg->h_via1 = pkg_malloc(sizeof(hdr_field_t));
-	if (!msg->h_via1) {
+	if(!msg->h_via1) {
 		PKG_MEM_ERROR;
 		goto error;
 	}
@@ -103,12 +103,12 @@ static int insert_fake_via(sip_msg_t* msg, char* via, int via_len)
 	 */
 	via[via_len] = 'a';
 	parse_via(via + 5, via + via_len + 1, vb);
-	if (vb->error == PARSE_ERROR){
+	if(vb->error == PARSE_ERROR) {
 		ERR("Bad via\n");
 		goto error;
 	}
 
-	if (msg->last_header == 0) {
+	if(msg->last_header == 0) {
 		msg->headers = msg->h_via1;
 		msg->last_header = msg->h_via1;
 	} else {
@@ -119,11 +119,11 @@ static int insert_fake_via(sip_msg_t* msg, char* via, int via_len)
 	return 0;
 
 error:
-	if (vb) {
+	if(vb) {
 		free_via_list(vb);
 	}
 
-	if (msg->h_via1) {
+	if(msg->h_via1) {
 		pkg_free(msg->h_via1);
 		msg->h_via1 = 0;
 	}
@@ -131,17 +131,17 @@ error:
 }
 
 
-static int insert_via_lump(sip_msg_t* msg, char* via, int via_len)
+static int insert_via_lump(sip_msg_t *msg, char *via, int via_len)
 {
-	struct lump* anchor;
+	struct lump *anchor;
 
 	anchor = anchor_lump(msg, msg->unparsed - msg->buf, 0, HDR_VIA_T);
-	if (anchor == 0) {
+	if(anchor == 0) {
 		ERR("Unable to create anchor\n");
 		return -1;
 	}
 
-	if (insert_new_lump_after(anchor, via, via_len, HDR_VIA_T) == 0) {
+	if(insert_new_lump_after(anchor, via, via_len, HDR_VIA_T) == 0) {
 		ERR("Unable to insert via lump\n");
 		return -1;
 	}
@@ -157,9 +157,9 @@ static int insert_via_lump(sip_msg_t* msg, char* via, int via_len)
  * The fake Via header field contains the source IP address
  * and port of the TCP/IP connection.
  */
-int create_via(sip_msg_t* msg, char* s1, char* s2)
+int create_via(sip_msg_t *msg, char *s1, char *s2)
 {
-	char* via;
+	char *via;
 	unsigned int via_len;
 	str ip, port;
 	struct hostport hp;
@@ -175,17 +175,17 @@ int create_via(sip_msg_t* msg, char* s1, char* s2)
 
 	init_dst_from_rcv(&dst, &msg->rcv);
 	via = via_builder(&via_len, NULL, &dst, 0, 0, &hp);
-	if (!via) {
+	if(!via) {
 		ERR("Unable to build Via header field\n");
 		return -1;
 	}
 
-	if (insert_fake_via(msg, via, via_len) < 0) {
+	if(insert_fake_via(msg, via, via_len) < 0) {
 		pkg_free(via);
 		return -1;
 	}
 
-	if (insert_via_lump(msg, via, via_len - CRLF_LEN) < 0) {
+	if(insert_via_lump(msg, via, via_len - CRLF_LEN) < 0) {
 		pkg_free(via);
 		return -1;
 	}

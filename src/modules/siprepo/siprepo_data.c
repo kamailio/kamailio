@@ -202,21 +202,35 @@ int siprepo_msg_set(sip_msg_t *msg, str *msgid, int rmode)
 	}
 	memset(it, 0, dsize);
 
-	it->dbuf.s = (char*)it + ROUND_POINTER(sizeof(siprepo_msg_t));
+	it->msgid.s = (char*)it + ROUND_POINTER(sizeof(siprepo_msg_t));
+	it->msgid.len = msgid->len;
+	memcpy(it->msgid.s, msgid->s, msgid->len);
+
+	it->dbuf.s = (char*)it + ROUND_POINTER(sizeof(siprepo_msg_t))
+			+ ROUND_POINTER(msgid->len + 1);
+	it->dbuf.len = msg->len;
+	memcpy(it->dbuf.s, msg->buf, msg->len);
+
 	it->callid.len = scallid.len;
-	it->callid.s = translate_pointer(it->dbuf.s, msg->buf, it->callid.s);
+	it->callid.s = translate_pointer(it->dbuf.s, msg->buf, scallid.s);
 
 	it->cseqmet = get_cseq(msg)->method;
 	trim(&it->cseqmet);
+	it->cseqmet.s = translate_pointer(it->dbuf.s, msg->buf, it->cseqmet.s);
+
 	it->cseqnum = get_cseq(msg)->number;
 	trim(&it->cseqnum);
+	it->cseqnum.s = translate_pointer(it->dbuf.s, msg->buf, it->cseqnum.s);
+
 	it->ftag = get_from(msg)->tag_value;
 	trim(&it->ftag);
+	it->ftag.s = translate_pointer(it->dbuf.s, msg->buf, it->ftag.s);
 
 	vbr = msg->via1->branch;
 	if(likely(vbr!=NULL)) {
 		it->vbranch = vbr->value;
 		trim(&it->vbranch);
+		it->vbranch.s = translate_pointer(it->dbuf.s, msg->buf, it->vbranch.s);
 	}
 
 	it->hid = get_hash1_raw(it->callid.s, it->callid.len);
@@ -228,7 +242,9 @@ int siprepo_msg_set(sip_msg_t *msg, str *msgid, int rmode)
 	it->pid = msg->pid;
 	it->mflags = msg->flags;
 
-	_siprepo_table[slotid].plist->prev = it;
+	if(_siprepo_table[slotid].plist!=NULL) {
+		_siprepo_table[slotid].plist->prev = it;
+	}
 	it->next = _siprepo_table[slotid].plist;
 	_siprepo_table[slotid].plist = it;
 

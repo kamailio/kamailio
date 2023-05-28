@@ -72,7 +72,7 @@ Peter Dunkley
    1.9. Set cors_mode parameter
    1.10. Set verbose_list parameter
    1.11. Set event_callback parameter
-   1.12. Set timer_intervalparameter
+   1.12. Set timer_interval parameter
    1.13. Set rm_delay_intervalparameter
    1.14. ws_handle_handshake usage
    1.15. ws_close usage
@@ -504,7 +504,7 @@ end
 
    Default value is 1.
 
-   Example 1.12. Set timer_intervalparameter
+   Example 1.12. Set timer_interval parameter
 ...
 modparam("websocket", "timer_interval", 5)
 ...

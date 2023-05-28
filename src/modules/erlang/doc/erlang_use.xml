@@ -14,7 +14,7 @@
 	<section>
 		<title>RPC calls from Erlang</title>
 		<para>
-			This module implements the erlang transport and encoding interface for &kamailio; RPCs. It's allow to call any exported RPC in &kamailio;
+			This module implements the erlang transport and encoding interface for &kamailio; RPCs. It's allowed to call any exported RPC in &kamailio;
 			from erlang node.
 		</para>
 		<para>

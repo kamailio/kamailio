@@ -14,8 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
@@ -32,7 +32,8 @@
 /**
  * @brief Simple str type list
  */
-typedef struct str_list {
+typedef struct str_list
+{
 	str s;
 	struct str_list *next;
 } str_list_t;
@@ -49,7 +50,8 @@ typedef struct str_list {
  * @param total length of total characters in list
  * @return extended list
  */
-struct str_list *append_str_list(char *s, int len, struct str_list **last, int *total);
+struct str_list *append_str_list(
+		char *s, int len, struct str_list **last, int *total);
 
 /**
  * @brief Add a new allocated list element with cloned block value to an existing list

@@ -37,7 +37,7 @@ EXTRA_EXCLUDED_MODULES += nats
 ## --EXCLUDED--
 
 
-# Module groups that are packaged in seperate packages (with the name
+# Module groups that are packaged in separate packages (with the name
 # kamailio-$(group_name)-modules).
 # Note: the order is important (should be in dependency order, the one
 # on which other depend first)
@@ -109,59 +109,64 @@ LD_EXTRA_OPTS := $(shell dpkg-buildflags --get LDFLAGS)
 # https://wiki.debian.org/ReproducibleBuilds/
 CC_EXTRA_OPTS += -DVERSION_NODATE
 
-# "function" to get package short name out of a dir/module_name
-# it also transforms db_foo into foo
-mod_name=$(subst db_,,$(lastword $(subst /, ,$(1))))
+BUILD_MODULES   := $(addprefix build_,   $(PACKAGE_GROUPS) $(EXTRA_GROUPS))
+INSTALL_MODULES := $(addprefix install_, $(PACKAGE_GROUPS))
+INSTALL_EXTRA   := $(addprefix install_, $(EXTRA_GROUPS))
 
-define PACKAGE_GRP_BUILD_template
-	# package all the modules in PACKAGE_GROUPS in separate packages
-	$(foreach grp,$(PACKAGE_GROUPS),\
-		$(MAKE) every-module group_include="k$(grp)" quiet=verbose
-	)
-endef
+.PHONY: test_build_all $(BUILD_MODULES) $(INSTALL_MODULES) $(INSTALL_EXTRA)
+test_build_all: configure
+	dh_testdir
+	$(MAKE) all quiet=verbose
 
-define PACKAGE_GRP_INSTALL_template
-	$(foreach grp,$(PACKAGE_GROUPS),\
-		$(MAKE) install-modules-all LIBDIR=$(LIBDIR) group_include="k$(grp)" \
-		BASEDIR=$(D)-$(grp)-modules \
-		cfg_prefix=$(D)-$(grp)-modules \
-		doc-dir=share/doc/$(DEB_SOURCE)-$(grp)-modules quiet=verbose
-		# eliminate duplicate libs
-		-for d in $(DUP_LIBS_DIRS); do \
-			test "$$d" != "$(D)-$(grp)-modules/usr/$(LIBDIR)/kamailio" &&\
-			for r in `find $$d -name 'lib*'|xargs`; do \
-				echo "removing $(grp) lib `basename $$r` present also in $$d";\
-				rm -f $(D)-$(grp)-modules/usr/$(LIBDIR)/kamailio/`basename "$$r"` ; \
-			done ; \
-		done
-		find $(D)-$(grp)-modules -depth -empty -type d -exec rmdir {} \;
-	)
-endef
+$(BUILD_MODULES): test_build_all
+	$(MAKE) every-module group_include="k$(subst build_,,$@)" quiet=verbose
 
-define PACKAGE_EXTRA_BUILD_template
-	# package all the modules in EXTRA_GROUPS in separate packages
-	$(foreach grp,$(EXTRA_GROUPS),\
-		$(MAKE) every-module group_include="k$(grp)" quiet=verbose
-	)
-endef
+test_install_all-stamp: build
+	dh_testdir
+	dh_testroot
+	dh_prep
+	dh_installdirs
+	$(MAKE) install quiet=verbose LIBDIR=$(LIBDIR) group_include="kstandard"
+	touch test_install_all-stamp
 
-define PACKAGE_EXTRA_INSTALL_template
-	$(foreach grp,$(EXTRA_GROUPS),\
-		$(MAKE) install-modules-all LIBDIR=$(LIBDIR) group_include="k$(grp)" \
-		BASEDIR=$(D)-extra-modules \
-		cfg_prefix=$(D)-extra-modules \
-		doc-dir=share/doc/$(DEB_SOURCE)-extra-modules quiet=verbose
-	)
-	# eliminate duplicate libs
-	-for d in $(DUP_LIBS_DIRS); do \
-		test "$$d" != "$(D)-extra-modules/usr/$(LIBDIR)/kamailio" &&\
-		for r in `find $$d -name 'lib*'|xargs`; do \
-			echo "removing extra lib `basename $$r` present also in $$d";\
-			rm -f $(D)-extra-modules/usr/$(LIBDIR)/kamailio/`basename "$$r"` ; \
-		done ; \
+$(INSTALL_MODULES): test_install_all-stamp
+	$(MAKE) install-modules-all \
+	  quiet=verbose \
+	  LIBDIR=$(LIBDIR) \
+	  BASEDIR=$(D)-$(subst install_,,$@)-modules \
+	  cfg_prefix=$(D)-$(subst install_,,$@)-modules \
+	  doc-dir=share/doc/$(DEB_SOURCE)-$(subst install_,,$@)-modules \
+	  group_include="k$(subst install_,,$@)"
+	# Eliminate duplicate libs.
+	for d in $(DUP_LIBS_DIRS); do \
+	  test "$$d" != "$(D)-$${module}-modules/usr/$(LIBDIR)/kamailio" && \
+	  for r in `find $$d -name 'lib*' | xargs`; do \
+	    echo "removing $(subst install_,,$@) lib `basename $$r` present also in $$d"; \
+	    rm -f $(D)-$(subst install_,,$@)-modules/usr/$(LIBDIR)/kamailio/`basename "$$r"`; \
+	  done ; \
 	done
+	# clean empty dirs
+	find $(D)-$(subst install_,,$@)-modules -depth -empty -type d -exec rmdir {} \;
+
+$(INSTALL_EXTRA): test_install_all-stamp
+	$(MAKE) install-modules-all \
+	  quiet=verbose \
+	  LIBDIR=$(LIBDIR) \
+	  BASEDIR=$(D)-extra-modules \
+	  cfg_prefix=$(D)-extra-modules \
+	  doc-dir=share/doc/$(DEB_SOURCE)-extra-modules \
+	  group_include="k$(subst install_,,$@)"
+	# Eliminate duplicate extra libs.
+	for d in $(DUP_LIBS_DIRS); do \
+	  test "$$d" != "$(D)-extra-modules/usr/$(LIBDIR)/kamailio" && \
+	  for r in `find $$d -name 'lib*' | xargs`; do \
+	    echo "removing extra lib `basename $$r` present also in $$d"; \
+	    rm -f $(D)-extra-modules/usr/$(LIBDIR)/kamailio/`basename "$$r"`; \
+	  done ; \
+	done
+	# clean empty dirs
 	find $(D)-extra-modules -depth -empty -type d -exec rmdir {} \;
-endef
+
 
 configure: configure-stamp
 configure-stamp:
@@ -181,33 +186,18 @@ configure-stamp:
 build: build-stamp
 build-arch: build-stamp
 build-indep: build-stamp
-build-stamp: configure-stamp
-	dh_testdir
-	# Add here commands to compile the package.
-	$(MAKE) all quiet=verbose
-	# make groups
-	$(call PACKAGE_GRP_BUILD_template)
-	$(call PACKAGE_EXTRA_BUILD_template)
+build-stamp: configure-stamp $(BUILD_MODULES)
 	touch build-stamp
 
 clean:
 	dh_testdir
 	dh_testroot
-	rm -f build-stamp configure-stamp
+	rm -f build-stamp configure-stamp test_install_all-stamp
 	# Add here commands to clean up after the build process.
 	$(MAKE) maintainer-clean
 	dh_clean
 
-install: build
-	dh_testdir
-	dh_testroot
-	dh_prep
-	dh_installdirs
-	# Add here commands to install the package into debian/kamailio
-	$(MAKE) install group_include="kstandard"
-	# make group packages
-	$(call PACKAGE_GRP_INSTALL_template)
-	$(call PACKAGE_EXTRA_INSTALL_template)
+install: build $(INSTALL_MODULES) $(INSTALL_EXTRA)
 	mv $(D)-berkeley-modules/usr/sbin/kambdb_recover \
 		$(D)-berkeley-bin/usr/sbin/kambdb_recover
 	# install /etc/default/kamailio file

@@ -252,11 +252,11 @@
         adjustment or when the current proxy is part of a cluster which is
         not time-synchronized, it's possible to receive a nonce with
         a creation time in the future. In this case if the difference is
-        greater then the value of <parameter>nonce_auth_max_drift</parameter>
+        greater than the value of <parameter>nonce_auth_max_drift</parameter>
         in seconds, the nonce is  considered stale and the request
         re-challenged. If this were not done, a dramatic time change
         backwards may lead to nonces having been generated before the
-        cange being valid for too long.
+        change being valid for too long.
       </para>
     </refsect2>
 
@@ -272,7 +272,7 @@
         <literal>yes</literal>, the received <parameter>nc</parameter> value
         is remembered and checked against the value used in the previous
         digest response. For a successful authentication the received
-        <parameter>nc</parameter> must be greater then the previously
+        <parameter>nc</parameter> must be greater than the previously
         received one (See RFC 2617 for more details). This will	provide
         protection against replay attacks while still allowing credentials
         caching at the UA side.
@@ -306,21 +306,21 @@
         <serdoc:modparam module="auth">nc_array_order</serdoc:modparam>
         parameters. If this number is exceeded, older entries will be
         overwritten. As long as the maximum rate of challengeable messages
-        per average response time is lower then
+        per average response time is lower than
         <serdoc:modparam module="auth">nc_array_size</serdoc:modparam>,
         the nonce count check should work flawlessly. For optimal
         performance (maximum reuse of cache credentials)
         <serdoc:modparam module="auth">nc_array_size</serdoc:modparam>
         divided by
         <serdoc:modparam module="auth">nid_pool_no</serdoc:modparam>
-        should be lower then the message rate multiplied by the desired
+        should be lower than the message rate multiplied by the desired
         <serdoc:modparam module="auth">nonce_expire</serdoc:modparam>.
         <!-- XXX: Give an example with default nonce_expire and typical
                   RTT. -->
       </para>
       <para>
         The maximum accepted <parameter>nc</parameter> value is 255. If
-        <parameter>nc</parameter> becomes greater then this, the nonce will
+        <parameter>nc</parameter> becomes greater than this, the nonce will
         be considered stale and the UA will be re-challenged.
       </para>
       <para>
@@ -415,7 +415,7 @@
         <serdoc:modparam module="auth">otn_in_flight_order</serdoc:modparam>
         parameters. If this number is exceeded, older entries will be
         overwritten. As long as the maximum rate of challengeable messages
-        per average response time is lower then
+        per average response time is lower than
         <serdoc:modparam module="auth">otn_in_flight_no</serdoc:modparam>,
         the one time nonce check should work flawlessly.
       </para>
@@ -577,7 +577,7 @@
     <title>Additional Integrity Checks</title>
     <para>
       The auth module can perform additional integrity checks on the
-      authentication response inclued in a request by the client.
+      authentication response included in a request by the client.
     </para>
     <para>
       Without the extra checks, the nonce value will be used only to
@@ -598,7 +598,7 @@
       MD5 hash over some selected parts of the message and another secret.
       This will be used to check if these parts of the message are the same
       when a UA retries the request with the authentication response, thus 
-      protecting from replay attacks or at least severly limiting their
+      protecting from replay attacks or at least severely limiting their
       possibility.
     </para>
     <para>

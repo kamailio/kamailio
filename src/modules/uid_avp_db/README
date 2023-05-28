@@ -22,7 +22,7 @@ Jiri Kuthan
               3.4. uid_column (string)
               3.5. username_column (string)
               3.6. did_column (string)
-              3.7. name (string)
+              3.7. name_column (string)
               3.8. value_column (string)
               3.9. type_column (string)
               3.10. flags_column (string)
@@ -59,7 +59,7 @@ Chapter 1. Admin Guide
         3.4. uid_column (string)
         3.5. username_column (string)
         3.6. did_column (string)
-        3.7. name (string)
+        3.7. name_column (string)
         3.8. value_column (string)
         3.9. type_column (string)
         3.10. flags_column (string)
@@ -109,7 +109,7 @@ Chapter 1. Admin Guide
    3.4. uid_column (string)
    3.5. username_column (string)
    3.6. did_column (string)
-   3.7. name (string)
+   3.7. name_column (string)
    3.8. value_column (string)
    3.9. type_column (string)
    3.10. flags_column (string)
@@ -155,7 +155,7 @@ Chapter 1. Admin Guide
 
    Default value is "did".
 
-3.7. name (string)
+3.7. name_column (string)
 
    The name of the column containing attribute names.
 

@@ -51,7 +51,7 @@ class DBText(object):
         self.count = False    # where or not using COUNT()
         self.aliases = {}     # column aliases (SELECT AS)
         self.targets = {}     # target columns-value pairs for INSERT/UPDATE
-        self.args = ''        # query arguments preceeding the ;
+        self.args = ''        # query arguments preceding the ;
         self.command = ''     # which command are we executing
         self.strings = []     # list of string literals parsed from the query
         self.parens = []      # list of parentheses parsed from the query
@@ -86,7 +86,7 @@ class DBText(object):
             self.tokens.pop()  # ORDER
 
         elif 'BY' in self.tokens:
-            raise ParseError('BY must be preceeded by ORDER')
+            raise ParseError('BY must be preceded by ORDER')
 
         Debug('Order by: ' + self.order_by)
 
@@ -438,7 +438,7 @@ class DBText(object):
         self.count = False    # where or not using COUNT()
         self.aliases = {}     # column aliases (SELECT AS)
         self.targets = {}     # target columns-value pairs for INSERT/UPDATE
-        self.args = ''        # query arguments preceeding the ;
+        self.args = ''        # query arguments preceding the ;
         self.command = ''     # which command are we executing
         self.strings = []     # list of string literals parsed from the query
         self.parens = []      # list of parentheses parsed from the query
@@ -566,7 +566,7 @@ class DBText(object):
             if c in delims:
                 if not started:
                     if mode == 'parens' and c != delims[0]:
-                        raise ParseError('Found closing delimeter %s before '
+                        raise ParseError('Found closing delimiter %s before '
                                          'corresponding %s' % (c, delims[0]))
                     started += 1
                     delim = c
@@ -1159,7 +1159,7 @@ class DBText(object):
             Debug('Copying %s to %s' % (temp_file, table_file))
             shutil.copy(self.temp_file.name, self.location + '/' + self.table)
 
-    def _ParsePairs(self, s, delimeter):
+    def _ParsePairs(self, s, delimiter):
         """Parses out name value pairs from a string.
 
         String contains name=value pairs
@@ -1167,7 +1167,7 @@ class DBText(object):
 
         Args:
             s: string
-            delimeter: string
+            delimiter: string
 
         Returns:
             my_dict: dictionary
@@ -1177,7 +1177,7 @@ class DBText(object):
         """
         my_dict = {}
         Debug('parse pairs: [%s]' % s)
-        pairs = s.split(delimeter)
+        pairs = s.split(delimiter)
         for pair in pairs:
             if '=' not in pair:
                 raise ParseError('Invalid condition pair: ' + pair)

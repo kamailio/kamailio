@@ -166,7 +166,7 @@ int msg_queue_init_ex(msg_queue_t *q, int synchronize)
 }
 
 /** \internal Destroys all internal data of message queue and 
- * optionaly frees it if no more references exist. */
+ * optionally frees it if no more references exist. */
 static inline void msg_queue_destroy_and_free(msg_queue_t *q, int do_free)
 {
 	mq_message_t *m,*n;

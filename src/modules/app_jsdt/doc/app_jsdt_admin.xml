@@ -43,7 +43,7 @@
 			and parameter 'load'. Therefore jsdt_run() cannot execute functions
 			from scripts loaded via jsdt_dofile() in config. This is kind of
 			caching mode, avoiding reading file every time, but you must be sure
-			you do not have someting that is executed by default and requires
+			you do not have something that is executed by default and requires
 			access to SIP message. This environment is also used by KEMI
 			framework for the config SIP routing functions.
 		</para>
@@ -91,7 +91,7 @@
 			Set the path to the JavaScript file to be loaded at startup. Then you
 			can use jsdt_run(function, params) to execute a function from the
 			script at runtime. If you use it for KEMI configuration,
-			then it has to include the requited functions.
+			then it has to include the required functions.
 	    </para>
 	    <para>
 		<emphasis>

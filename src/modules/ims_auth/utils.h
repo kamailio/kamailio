@@ -42,7 +42,7 @@
  */
 
 #ifndef UTILS_H
-#define	UTILS_H
+#define UTILS_H
 
 #include "../../core/parser/hf.h"
 #include "../../core/parser/parse_to.h"
@@ -52,12 +52,12 @@
 #include "../../core/parser/parse_content.h"
 #include "../../core/data_lump_rpl.h"
 
-int get_nonce_response(struct sip_msg *msg, str *username, str realm,str *nonce,str *response,
-                enum qop_type *qop,str *qop_str,str *nc,str *cnonce,str *uri, int is_proxy_auth);
-str ims_get_body(struct sip_msg * msg);
+int get_nonce_response(struct sip_msg *msg, str *username, str realm,
+		str *nonce, str *response, enum qop_type *qop, str *qop_str, str *nc,
+		str *cnonce, str *uri, int is_proxy_auth);
+str ims_get_body(struct sip_msg *msg);
 str ims_get_auts(struct sip_msg *msg, str realm, int is_proxy_auth);
 str ims_get_nonce(struct sip_msg *msg, str realm);
 int ims_add_header_rpl(struct sip_msg *msg, str *hdr);
 
-#endif	/* UTILS_H */
-
+#endif /* UTILS_H */

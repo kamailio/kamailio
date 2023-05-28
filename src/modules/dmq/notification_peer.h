@@ -41,7 +41,7 @@ int extract_node_list(dmq_node_list_t *update_list, struct sip_msg *msg);
 str *build_notification_body();
 int build_node_str(dmq_node_t *node, char *buf, int buflen);
 /* request a nodelist from a server
- * this is acomplished by a KDMQ request
+ * this is accomplished by a KDMQ request
  * KDMQ notification@server:port
  * node - the node to send to
  * forward - flag that tells if the node receiving the message is allowed to
