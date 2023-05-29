@@ -1390,7 +1390,7 @@ static int rtpengine_raise_dtmf_event(char *buffer, int len) {
 			pv_val.rs.len = strlen(it->valuestring);
 			pv_val.flags = PV_VAL_STR;
 			
-			if (dtmf_event_callid_pvar->setf(fmsg, &dtmf_event_callid_pvar->pvp, (int)EQ_T, &pv_val) < 0) {					
+			if (dtmf_event_callid_pvar->setf(0, &dtmf_event_callid_pvar->pvp, (int)EQ_T, &pv_val) < 0) {					
 				LM_ERR("error setting pvar <%.*s>\n", dtmf_event_callid_pvar_str.len, dtmf_event_callid_pvar_str.s);
 				return -1;
 			}				
@@ -1400,7 +1400,7 @@ static int rtpengine_raise_dtmf_event(char *buffer, int len) {
 			pv_val.rs.len = strlen(it->valuestring);
 			pv_val.flags = PV_VAL_STR;
 			
-			if (dtmf_event_source_tag_pvar->setf(fmsg, &dtmf_event_source_tag_pvar->pvp, (int)EQ_T, &pv_val) < 0) {					
+			if (dtmf_event_source_tag_pvar->setf(0, &dtmf_event_source_tag_pvar->pvp, (int)EQ_T, &pv_val) < 0) {					
 				LM_ERR("error setting pvar <%.*s>\n", dtmf_event_source_tag_pvar_str.len, dtmf_event_source_tag_pvar_str.s);
 				return -1;
 			}
@@ -1415,7 +1415,7 @@ static int rtpengine_raise_dtmf_event(char *buffer, int len) {
 			pv_val.rs.len = strlen(intbuf);
 			pv_val.flags = PV_VAL_STR;
 			
-			if (dtmf_event_timestamp_pvar->setf(fmsg, &dtmf_event_timestamp_pvar->pvp, (int)EQ_T, &pv_val) < 0) {					
+			if (dtmf_event_timestamp_pvar->setf(0, &dtmf_event_timestamp_pvar->pvp, (int)EQ_T, &pv_val) < 0) {					
 				LM_ERR("error setting pvar <%.*s>\n", dtmf_event_timestamp_pvar_str.len, dtmf_event_timestamp_pvar_str.s);
 				return -1;
 			}
@@ -1430,7 +1430,7 @@ static int rtpengine_raise_dtmf_event(char *buffer, int len) {
 			pv_val.rs.len = strlen(intbuf);
 			pv_val.flags = PV_VAL_STR;
 			
-			if (dtmf_event_pvar->setf(fmsg, &dtmf_event_pvar->pvp, (int)EQ_T, &pv_val) < 0) {					
+			if (dtmf_event_pvar->setf(0, &dtmf_event_pvar->pvp, (int)EQ_T, &pv_val) < 0) {					
 				LM_ERR("error setting pvar <%.*s>\n", dtmf_event_pvar_str.len, dtmf_event_pvar_str.s);
 				return -1;
 			}
