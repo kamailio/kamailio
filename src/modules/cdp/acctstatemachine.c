@@ -221,8 +221,12 @@ int cc_acc_client_stateful_sm_process(
 				case ACC_CC_EV_RECV_ANS_SUCCESS:
 					x->state = ACC_CC_ST_DISCON;
 					//					update_gsu_response_timers(x, msg);
+					x->discon_time = time(0);
+					break;
 				case ACC_CC_EV_RECV_ANS_UNSUCCESS:
 					x->state = ACC_CC_ST_DISCON;
+					x->discon_time = time(0);
+					break;
 				default:
 					LM_DBG("Received event [%d] in state [%d] - cleaning up "
 						   "session regardless\n",
