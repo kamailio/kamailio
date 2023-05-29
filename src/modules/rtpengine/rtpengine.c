@@ -1358,7 +1358,7 @@ end:
 static int rtpengine_raise_dtmf_event(char *buffer, int len) {
 	srjson_doc_t jdoc;
 	srjson_t *it = NULL;
-	struct sip_msg *fmsg;
+	struct sip_msg *fmsg = NULL;
 	struct run_act_ctx ctx;
 	int rtb;	
 
