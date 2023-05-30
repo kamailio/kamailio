@@ -79,7 +79,7 @@ void _cfgt_remove_report(const str *scen)
 	DIR *folder = NULL;
 	struct dirent *next_file = NULL;
 
-	if(_cfgt_get_filename(0, *scen, &dest, &dir) < 0) {
+	if(_cfgt_get_filename(0, *scen, &dest, &dir) < 0 || dest.s == NULL) {
 		LM_ERR("can't build filename for uuid: %.*s\n", scen->len, scen->s);
 		return;
 	}
@@ -124,10 +124,11 @@ void _cfgt_remove_report(const str *scen)
 	}
 
 end:
-	if(filepath.s)
+	if(filepath.s) {
 		pkg_free(filepath.s);
-	if(dest.s)
-		pkg_free(dest.s);
+	}
+
+	pkg_free(dest.s);
 }
 
 int _cfgt_remove_uuid(const str *uuid, int remove_report)
