@@ -672,7 +672,7 @@ int ki_sst_check_min(struct sip_msg *msg, int flag)
 		 * too small. We will take the smaller of the messages
 		 * Session-expires and min-se if stated.
 		 */
-		if (sst_min_se < MIN(minse, se.interval)) {
+		if(sst_min_se > MIN(minse, se.interval)) {
 			/*
 			 * Too small. See if we need to send the 422 and are able
 			 * to send it.
