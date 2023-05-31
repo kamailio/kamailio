@@ -2188,6 +2188,78 @@ modparam("rtpengine", "mos_average_samples_B_pv", "$avp(mos_average_samples_B)")
 		</example>
 	</section>
 
+	<section id="rtpengine.p.dtmf_event_callid">
+		<title><varname>dtmf_event_callid</varname> (string)</title>
+		<para>
+			The name of a pseudovariable to be filled in with the callid of the triggered dtmf event.
+		</para>
+		<para>
+			By default, this parameter is not set.
+		</para>
+		<example>
+		<title>Set <varname>dtmf_event_callid</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "dtmf_event_callid", "$avp(dtmf_event_callid)")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="rtpengine.p.dtmf_event_source_tag">
+		<title><varname>dtmf_event_source_tag</varname> (string)</title>
+		<para>
+			The name of a pseudovariable to be filled in with the source tag that triggered the dtmf event.
+		</para>
+		<para>
+			By default, this parameter is not set.
+		</para>
+		<example>
+		<title>Set <varname>dtmf_event_source_tag</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "dtmf_event_source_tag", "$avp(dtmf_event_source_tag)")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="rtpengine.p.dtmf_event_timestamp">
+		<title><varname>dtmf_event_timestamp</varname> (string)</title>
+		<para>
+			The name of a pseudovariable to be filled in with the timestamp when the dtmf event was triggered.
+		</para>
+		<para>
+			By default, this parameter is not set.
+		</para>
+		<example>
+		<title>Set <varname>dtmf_event_timestamp</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "dtmf_event_timestamp", "$avp(dtmf_event_timestamp)")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section id="rtpengine.p.dtmf_event">
+		<title><varname>dtmf_event</varname> (string)</title>
+		<para>
+			The name of a pseudovariable to be filled in with the triggered DTMF value.
+		</para>
+		<para>
+			By default, this parameter is not set.
+		</para>
+		<example>
+		<title>Set <varname>dtmf_event</varname> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("rtpengine", "dtmf_event", "$avp(dtmf_event)")
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section id="rtpengine.p.control_cmd_tos">
 		<title><varname>control_cmd_tos</varname> (integer)</title>
 		<para>
@@ -2253,7 +2325,28 @@ modparam("rtpengine", "wsapi", "lwsc")
 		</example>
 	</section>
 
-
+	<section id="rtpengine.p.dtmf_events_sock" xreflabel="dtmf_events_sock">
+		<title><varname>dtmf_events_sock</varname> (string)</title>
+		<para>
+		Definition of IPv4/IPv6 UDP socket used to receive dtmf events from RTPEngine.		
+		</para>
+		<para>
+		DTMF events coming from RTPEngine will trigger rtpengine:dtmf-event route. 
+		</para>
+		<para>
+			<emphasis>
+				Default value is <quote>NONE</quote> (disabled).
+			</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>dtmf_events_sock</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("rtpengine", "dtmf_events_sock", "127.0.0.1:2223")
+...
+</programlisting>
+		</example>
+	</section>
 
 	</section>
 
@@ -3485,4 +3578,26 @@ $ &kamcmd; rtpengine.get_hash_total
 
 	</section>
 
+	<section id="rtpengine.ex.event_routes">
+        <title>Event routes</title>
+        <section>
+			<title>
+			<function moreinfo="none">rtpengine:dtmf-event</function>
+			</title>
+			<para>
+			When defined, the module calls event_route[rtpengine:dtmf-event]
+			when a DTMF is received.
+			</para>
+			<programlisting  format="linespecific">
+...
+event_route[rtpengine:dtmf-event] {
+    xlog("L_INFO", "callid: $avp(dtmf_event_callid)\n");
+	xlog("L_INFO", "source_tag: $avp(dtmf_event_source_tag)\n");
+	xlog("L_INFO", "timestamp: $avp(dtmf_event_timestamp)\n");
+	xlog("L_INFO", "dtmf: $avp(dtmf_event)\n");
+}
+...
+			</programlisting>
+		</section>
+    </section>
 </chapter>
