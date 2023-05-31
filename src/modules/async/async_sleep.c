@@ -24,6 +24,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 
 #include "../../core/dprint.h"
 #include "../../core/ut.h"
@@ -271,7 +272,7 @@ int async_sleep(sip_msg_t *msg, int seconds, cfg_action_t *act, str *cbname)
 	return 0;
 }
 
-static unsigned int _async_timer_exec_last_slot = -1;
+static unsigned int _async_timer_exec_last_slot = UINT_MAX;
 
 void async_timer_exec(unsigned int ticks, void *param)
 {
@@ -292,7 +293,7 @@ void async_timer_exec(unsigned int ticks, void *param)
 		return;
 	}
 
-	if(_async_timer_exec_last_slot < 0) {
+	if(_async_timer_exec_last_slot == UINT_MAX) {
 		_async_timer_exec_last_slot = idx;
 	}
 	slot = (_async_timer_exec_last_slot + 1) % ASYNC_RING_SIZE;
