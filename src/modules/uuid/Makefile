@@ -6,7 +6,7 @@ auto_gen=
 NAME=uuid.so
 
 ifeq ($(CROSS_COMPILE),)
-BUILDER = $(shell \
+BUILDER:= $(shell \
 	if pkg-config --exists uuid; then \
 		echo 'pkg-config uuid'; \
 	fi)
