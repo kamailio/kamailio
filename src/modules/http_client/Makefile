@@ -9,7 +9,7 @@ auto_gen=
 NAME=http_client.so
 
 ifeq ($(CROSS_COMPILE),)
-CURL_BUILDER=$(shell \
+CURL_BUILDER:=$(shell \
 	if pkg-config --exists libcurl; then \
 		echo 'pkg-config libcurl'; \
 	else \
