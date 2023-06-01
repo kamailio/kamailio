@@ -231,7 +231,7 @@
       </example>
     </section>
     <section id="ims_usrloc_scscf.p.hash_size">
-      <title>hash_size (string)</title>
+      <title>hash_size (int)</title>
       <para>The number of entries of the hash table used by usrloc </para>
       <para><emphasis> Default value 512</emphasis></para>
       <example>
