@@ -9,7 +9,7 @@ auto_gen=
 NAME=jansson.so
 
 ifeq ($(CROSS_COMPILE),)
-JNS_BUILDER=$(shell \
+JNS_BUILDER:=$(shell \
 	if pkg-config --exists jansson; then \
 		echo 'pkg-config jansson'; \
 	fi)
