@@ -9,7 +9,7 @@ NAME=websocket.so
 EMBEDDED_UTF8_DECODE ?= 0
 
 ifeq ($(CROSS_COMPILE),)
-SSL_BUILDER=$(shell \
+SSL_BUILDER:=$(shell \
 	if pkg-config --exists libssl; then \
 		echo 'pkg-config libssl'; \
 	fi)
