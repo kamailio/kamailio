@@ -9,7 +9,7 @@ auto_gen=
 NAME=lcr.so
 
 ifeq ($(CROSS_COMPILE),)
-PCRE_BUILDER = $(shell \
+PCRE_BUILDER:= $(shell \
 	if pkg-config --exists libcre; then \
 		echo 'pkg-config libpcre'; \
 	else \
