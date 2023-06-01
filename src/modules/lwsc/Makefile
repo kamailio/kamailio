@@ -7,7 +7,7 @@ auto_gen=
 NAME=lwsc.so
 
 ifeq ($(CROSS_COMPILE),)
-LWSC_BUILDER=$(shell \
+LWSC_BUILDER:=$(shell \
 	if pkg-config --exists libwebsockets; then \
 		echo 'pkg-config libwebsockets'; \
 	fi)
