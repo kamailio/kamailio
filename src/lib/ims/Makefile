@@ -11,9 +11,9 @@ BUGFIX_VER=0
 DEFS+=-DSER
 
 ifeq ($(CROSS_COMPILE),)
-XML2CFG=$(shell which xml2-config)
+XML2CFG:=$(shell which xml2-config)
 ifeq ($(XML2CFG),)
-XML2CFG=$(shell \
+XML2CFG:=$(shell \
 	if pkg-config --exists libxml-2.0; then \
 		echo 'pkg-config libxml-2.0'; \
 	fi)
