@@ -16,11 +16,11 @@ LIBSSL_STATIC_SRCLIB ?= no
 LIBSSL_STATIC_SRCPATH ?= /usr/local/src/openssl
 
 ifeq ($(CROSS_COMPILE),)
-SSL_BUILDER=$(shell \
+SSL_BUILDER:=$(shell \
 	if pkg-config --exists libssl; then \
 		echo 'pkg-config libssl'; \
 	fi)
-CRYPTO_BUILDER=$(shell \
+CRYPTO_BUILDER:=$(shell \
 	if pkg-config --exists libcrypto; then \
 		echo 'pkg-config libcrypto'; \
 	fi)
