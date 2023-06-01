@@ -9,7 +9,7 @@ auto_gen=
 NAME=gzcompress.so
 
 ifeq ($(CROSS_COMPILE),)
-	BUILDER = $(shell which pkg-config)
+	BUILDER:= $(shell which pkg-config)
 endif
 
 ifneq ($(BUILDER),)
