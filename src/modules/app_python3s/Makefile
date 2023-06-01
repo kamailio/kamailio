@@ -12,15 +12,15 @@ ifeq ($(PYTHON3),)
 PYTHON3=python
 endif
 
-PYTHON3CONFIG=$(shell which ${PYTHON3}-config)
+PYTHON3CONFIG:=$(shell which ${PYTHON3}-config)
 ifeq ($(PYTHON3CONFIG),)
 python_version_full := $(wordlist 2,4,$(subst ., ,$(shell ${PYTHON3} --version 2>&1)))
 python_version_major := $(word 1,${python_version_full})
 python_version_minor := $(word 2,${python_version_full})
 PYTHON3 = python${python_version_major}.${python_version_minor}
-PYTHON3CONFIG=$(shell which ${PYTHON3}-config)
+PYTHON3CONFIG:=$(shell which ${PYTHON3}-config)
 ifeq ($(PYTHON3CONFIG),)
-PYTHON3CONFIG=${PYTHON3}-config
+PYTHON3CONFIG:=${PYTHON3}-config
 endif
 endif
 
