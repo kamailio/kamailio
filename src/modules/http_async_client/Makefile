@@ -6,7 +6,7 @@ auto_gen=
 NAME=http_async_client.so
 
 ifeq ($(CROSS_COMPILE),)
-CURL_BUILDER=$(shell \
+CURL_BUILDER:=$(shell \
 	if pkg-config --exists libcurl; then \
 		echo 'pkg-config libcurl'; \
 	else \
@@ -32,10 +32,10 @@ endif
 
 ifeq ($(LEVENT_BUILDER),)
 	LEVENTDEFS=-I$(LOCALBASE)/include -I$(SYSBASE)/include
-	LEVENTLIBS=-L$(LOCALBASE)/lib -levent
+	LEVENTLIBS:=-L$(LOCALBASE)/lib -levent
 else
 	LEVENTDEFS = $(shell $(LEVENT_BUILDER) --cflags)
-	LEVENTLIBS = $(shell $(LEVENT_BUILDER) --libs)
+	LEVENTLIBS:= $(shell $(LEVENT_BUILDER) --libs)
 endif
 
 DEFS+=$(CURLDEFS) $(LEVENTDEFS)
