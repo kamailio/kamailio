@@ -6,7 +6,7 @@ auto_gen=
 NAME=kazoo.so
 JLIB=json
 
-BUILDER = $(shell which pkg-config)
+BUILDER:= $(shell which pkg-config)
 ifeq ($(BUILDER),)
 	JSONC=$(shell ls $(SYSBASE)/include/lib/libjson*.so $(LOCALBASE)/lib/libjson*.so 2>/dev/null | grep json-c)
 else
