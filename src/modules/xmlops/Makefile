@@ -9,9 +9,9 @@ NAME=xmlops.so
 LIBS=
 
 ifeq ($(CROSS_COMPILE),)
-PKGCFGTOOL=$(shell which xml2-config)
+PKGCFGTOOL:=$(shell which xml2-config)
 ifeq ($(PKGCFGTOOL),)
-PKGCFGTOOL=$(shell \
+PKGCFGTOOL:=$(shell \
 	if pkg-config --exists libxml-2.0; then \
 		echo 'pkg-config libxml-2.0'; \
 	fi)
