@@ -329,6 +329,23 @@ modparam("ndb_redis", "debug", 1)
 			</programlisting>
 		</example>
 	</section>
+	<section id="ndb_redis.p.ca_path">
+		<title><varname>ac_path</varname> (string)</title>
+		<para>
+			Sets the path where Certificates Authorities certs are stored.
+		</para>
+		<para>
+			Default value: "" (empty).
+		</para>
+		<example>
+			<title>Setting CA path</title>
+			<programlisting format="linespecific">
+...
+modparam("db_redis", "ca_path", "/etc/ssl/certs")
+...
+			</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>

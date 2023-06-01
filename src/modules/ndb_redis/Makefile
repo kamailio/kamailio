@@ -14,10 +14,19 @@ endif
 
 ifeq ($(HIREDIS_BUILDER),)
 	HIREDISDEFS=-I$(LOCALBASE)/include -I$(LOCALBASE)/include/hiredis  -I/usr/include/hiredis
-	HIREDISLIBS=-L$(LOCALBASE)/lib -lhiredis_ssl -lhiredis
+	HIREDISLIBS=-L$(LOCALBASE)/lib
+	ifneq ($(shell ls $(LOCALBASE) | grep libhiredis_ssl.so),)
+		HIREDISDEFS += -DWITH_SSL
+		HIREDISLIBS += -lhiredis_ssl
+	endif
 else
 	HIREDISDEFS = $(shell $(HIREDIS_BUILDER) --cflags)
-	HIREDISLIBS = $(shell $(HIREDIS_BUILDER) --libs) -lhiredis_ssl
+	HIREDISLIBS = $(shell $(HIREDIS_BUILDER) --libs)
+	HIREDISLIBSPATH = $(shell $(HIREDIS_BUILDER) --libs-only-L | cut -c 3-)
+	ifneq ($(shell ls $(HIREDISLIBSPATH) | grep libhiredis_ssl.so),)
+		HIREDISDEFS += -DWITH_SSL
+		HIREDISLIBS += -lhiredis_ssl
+	endif
 
 ifeq (,$(findstring hiredis,$(HIREDISDEFS)))
 	DEFS+=-DWITH_HIREDIS_PATH
@@ -25,7 +34,11 @@ endif
 
 ifeq ($(HIREDISLIBS),-L -lhiredis)
 		HIREDISDEFS = $(shell $(HIREDIS_BUILDER) --cflags) /opt/local/include
-		HIREDISLIBS = -L/opt/local/lib -lhiredis -lhiredis_ssl
+		HIREDISLIBS = -L/opt/local/lib -lhiredis
+		ifneq ($(shell ls /opt/local/lib | grep libhiredis_ssl.so),)
+			HIREDISDEFS += -DWITH_SSL
+			HIREDISLIBS += -lhiredis_ssl
+		endif
 endif
 
 endif
