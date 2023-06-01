@@ -7,7 +7,7 @@ auto_gen=
 NAME=auth_ephemeral.so
 
 ifeq ($(CROSS_COMPILE),)
-SSL_BUILDER=$(shell \
+SSL_BUILDER:=$(shell \
 	if pkg-config --exists libssl; then \
 		echo 'pkg-config libssl'; \
 	fi)
