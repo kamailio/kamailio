@@ -9,7 +9,7 @@ auto_gen=
 NAME=cnxcc.so
 
 ifeq ($(CROSS_COMPILE),)
-HIREDIS_BUILDER = $(shell \
+HIREDIS_BUILDER:= $(shell \
 	if pkg-config --exists hiredis; then \
 		echo 'pkg-config hiredis'; \
 	fi)
@@ -30,7 +30,7 @@ endif
 endif
 
 ifeq ($(CROSS_COMPILE),)
-LEVENT_BUILDER = $(shell \
+LEVENT_BUILDER:= $(shell \
 	if pkg-config --exists libevent; then \
 		echo 'pkg-config libevent'; \
 	fi)
