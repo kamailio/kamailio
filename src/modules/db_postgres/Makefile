@@ -10,7 +10,7 @@ NAME=db_postgres.so
 # CROSS_COMPILE=true
 
 ifeq ($(CROSS_COMPILE),)
-LIBPQ_BUILDER = $(shell \
+LIBPQ_BUILDER:= $(shell \
 	if pkg-config --exists libpq; then \
 		echo 'pkg-config libpq'; \
 	fi)
