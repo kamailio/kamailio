@@ -10,18 +10,15 @@ ifeq ($(CROSS_COMPILE),)
 endif
 
 ifneq ($(BUILDER),)
-SSL_BUILDER=$(shell \
+SSL_BUILDER:=$(shell \
 	if pkg-config --exists libssl; then \
 		echo 'pkg-config libssl'; \
 	fi)
 
-CRYPTO_BUILDER=$(shell \
+CRYPTO_BUILDER:=$(shell \
 	if pkg-config --exists libcrypto; then \
 		echo 'pkg-config libcrypto'; \
 	fi)
-endif
-
-ifneq ($(BUILDER),)
 
 ifneq ($(SSL_BUILDER),)
 	DEFS += $(shell $(SSL_BUILDER) --cflags)
