@@ -6,7 +6,7 @@ auto_gen=
 NAME=ndb_redis.so
 
 ifeq ($(CROSS_COMPILE),)
-HIREDIS_BUILDER = $(shell \
+HIREDIS_BUILDER:= $(shell \
 	if pkg-config --exists hiredis; then \
 		echo 'pkg-config hiredis'; \
 	fi)
