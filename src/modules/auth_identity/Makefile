@@ -4,13 +4,13 @@ auto_gen=
 NAME=auth_identity.so
 
 ifeq ($(CROSS_COMPILE),)
-CURL_BUILDER=$(shell \
+CURL_BUILDER:=$(shell \
 	if pkg-config --exists libcurl; then \
 		echo 'pkg-config libcurl'; \
 	else \
 		which curl-config; \
 	fi)
-SSL_BUILDER=$(shell \
+SSL_BUILDER:=$(shell \
 	if pkg-config --exists libssl; then \
 		echo 'pkg-config libssl'; \
 	fi)
