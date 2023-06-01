@@ -6,7 +6,7 @@ auto_gen=
 NAME=systemdops.so
 
 ifeq ($(CROSS_COMPILE),)
-SYSTEMD_BUILDER=$(shell \
+SYSTEMD_BUILDER:=$(shell \
 	if pkg-config --exists libsystemd; then \
 		echo 'pkg-config libsystemd'; \
 	fi)
