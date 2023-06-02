@@ -29,6 +29,12 @@
 #include "redis_dbase.h"
 #include "redis_table.h"
 
+#ifdef WITH_SSL
+int db_redis_opt_tls = 0;
+char *ca_path = 0;
+#endif
+char *db_pass = 0;
+
 MODULE_VERSION
 
 str redis_keys = str_init("");
@@ -51,7 +57,12 @@ static cmd_export_t cmds[] = {
 static param_export_t params[] = {
 		{"keys", PARAM_STRING | USE_FUNC_PARAM, (void *)keys_param},
 		{"schema_path", PARAM_STR, &redis_schema_path},
-		{"verbosity", PARAM_INT, &db_redis_verbosity}, {0, 0, 0}};
+		{"verbosity", PARAM_INT, &db_redis_verbosity},
+#ifdef WITH_SSL
+		{"opt_tls",	PARAM_INT, &db_redis_opt_tls},
+		{"ca_path", PARAM_STRING, &ca_path },
+#endif
+		{"db_pass", PARAM_STRING, &db_pass},{0, 0, 0}};
 
 
 struct module_exports exports = {
