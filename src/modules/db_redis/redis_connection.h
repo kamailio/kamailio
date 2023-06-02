@@ -28,8 +28,14 @@
 #else
 #ifdef WITH_HIREDIS_PATH
 #include <hiredis/hiredis.h>
+#ifdef WITH_SSL
+#include <hiredis/hiredis_ssl.h>
+#endif
 #else
 #include <hiredis.h>
+#ifdef WITH_SSL
+#include <hiredis_ssl.h>
+#endif
 #endif
 #endif
 
