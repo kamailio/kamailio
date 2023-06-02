@@ -30,8 +30,14 @@
 
 #ifdef WITH_HIREDIS_PATH
 #include <hiredis/hiredis.h>
+#ifdef WITH_SSL
+#include <hiredis/hiredis_ssl.h>
+#endif
 #else
 #include <hiredis.h>
+#ifdef WITH_SSL
+#include <hiredis_ssl.h>
+#endif
 #endif
 
 #include "../../core/str.h"
@@ -76,6 +82,7 @@ typedef struct redisc_server
 	param_t *attrs;
 	char *spec;
 	redisContext *ctxRedis;
+	redisSSLContext *sslCtxRedis;
 	struct redisc_server *next;
 	redisc_piped_cmds_t piped;
 	redisc_srv_disable_t disable;
