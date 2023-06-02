@@ -54,6 +54,9 @@ int redis_allowed_timeouts_param = -1;
 int redis_flush_on_reconnect_param = 0;
 int redis_allow_dynamic_nodes_param = 0;
 int ndb_redis_debug = L_DBG;
+#ifdef WITH_SSL
+char *ca_path = 0;
+#endif
 
 static int w_redis_cmd3(
 		struct sip_msg *msg, char *ssrv, char *scmd, char *sres);
@@ -131,7 +134,12 @@ static param_export_t params[] = {
 		{"allowed_timeouts", INT_PARAM, &redis_allowed_timeouts_param},
 		{"flush_on_reconnect", INT_PARAM, &redis_flush_on_reconnect_param},
 		{"allow_dynamic_nodes", INT_PARAM, &redis_allow_dynamic_nodes_param},
-		{"debug", PARAM_INT, &ndb_redis_debug}, {0, 0, 0}};
+		{"debug", PARAM_INT, &ndb_redis_debug}, 
+#ifdef WITH_SSL
+		{"ca_path", PARAM_STRING, &ca_path},
+#endif
+		{0, 0, 0}
+};
 
 struct module_exports exports = {
 		"ndb_redis", DEFAULT_DLFLAGS, /* dlopen flags */
