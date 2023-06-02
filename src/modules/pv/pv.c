@@ -62,6 +62,8 @@ static tr_export_t mod_trans[] = {
 		tr_parse_line },
 	{ {"urialias", sizeof("urialias")-1}, /* uri alias class */
 		tr_parse_urialias },
+	{{"val", sizeof("val") - 1}, /* val class */
+		tr_parse_val},
 
 	{ { 0, 0 }, 0 }
 };
