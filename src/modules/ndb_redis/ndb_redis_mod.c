@@ -138,8 +138,7 @@ static param_export_t params[] = {
 #ifdef WITH_SSL
 		{"ca_path", PARAM_STRING, &ca_path},
 #endif
-		{0, 0, 0}
-};
+		{0, 0, 0}};
 
 struct module_exports exports = {
 		"ndb_redis", DEFAULT_DLFLAGS, /* dlopen flags */
