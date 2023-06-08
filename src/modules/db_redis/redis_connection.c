@@ -135,7 +135,6 @@ int db_redis_connect(km_redis_con_t *con)
 #ifndef WITH_HIREDIS_CLUSTER
 	db = atoi(con->id->database);
 #endif
-	redisSSLContext *ssl = NULL;
 	reply = NULL;
 
 	if(con->con) {
