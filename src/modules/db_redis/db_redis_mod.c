@@ -59,10 +59,10 @@ static param_export_t params[] = {
 		{"schema_path", PARAM_STR, &redis_schema_path},
 		{"verbosity", PARAM_INT, &db_redis_verbosity},
 #ifdef WITH_SSL
-		{"opt_tls",	PARAM_INT, &db_redis_opt_tls},
-		{"ca_path", PARAM_STRING, &ca_path },
+		{"opt_tls", PARAM_INT, &db_redis_opt_tls},
+		{"ca_path", PARAM_STRING, &ca_path},
 #endif
-		{"db_pass", PARAM_STRING, &db_pass},{0, 0, 0}};
+		{"db_pass", PARAM_STRING, &db_pass}, {0, 0, 0}};
 
 
 struct module_exports exports = {
