@@ -170,7 +170,7 @@ int db_redis_connect(km_redis_con_t *con)
 			LM_ERR("Unable to create Redis SSL Context.\n");
 			goto err;
 		}
-	} 
+	}
 #endif
 
 	host_end = strstr(host_begin, "/");
@@ -214,7 +214,7 @@ int db_redis_connect(km_redis_con_t *con)
 			LM_ERR("Unable to create Redis SSL Context.\n");
 			goto err;
 		}
-	} 
+	}
 #endif
 
 	con->con = redisConnectWithTimeout(con->id->host, con->id->port, tv);
