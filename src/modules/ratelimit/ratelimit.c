@@ -1104,6 +1104,17 @@ static ticks_t rl_timer_handle(ticks_t ticks, struct timer_ln *tl, void *data)
 	return (ticks_t)(-1); /* periodical */
 }
 
+static int ki_rl_check(struct sip_msg *msg)
+{
+	return rl_check(msg, -1);
+}
+
+static int ki_rl_check_pipe(struct sip_msg *msg, int pipe)
+{
+
+	LM_DBG("trying kemi pipe %d\n", pipe);
+	return rl_check(msg, pipe);
+}
 
 /* rpc function documentation */
 static const char *rpc_stats_doc[2] = {
@@ -1347,29 +1358,23 @@ static rpc_export_t rpc_methods[] = {{"rl.stats", rpc_stats, rpc_stats_doc, 0},
 		{"rl.push_load", rpc_push_load, rpc_push_load_doc, 0},
 		{"rl.set_dbg", rpc_set_dbg, rpc_set_dbg_doc, 0}, {0, 0, 0, 0}};
 
+/* clang-format off */
 static sr_kemi_t sr_kemi_ratelimit_exports[] = {
-		{str_init("ratelimit"), str_init("rl_check"), SR_KEMIP_INT, ki_rl_check,
-				{SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
-						SR_KEMIP_NONE, SR_KEMIP_NONE}},
-		{str_init("ratelimit"), str_init("rl_check_pipe"), SR_KEMIP_INT,
-				ki_rl_check_pipe,
-				{SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
-						SR_KEMIP_NONE, SR_KEMIP_NONE}},
-		{{0, 0}, {0, 0}, 0, NULL, {0, 0, 0, 0, 0, 0}}
+	{ str_init("ratelimit"), str_init("rl_check"),
+		SR_KEMIP_INT, ki_rl_check,
+			{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+				SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE}
+	},
+	{ str_init("ratelimit"), str_init("rl_check_pipe"),
+		SR_KEMIP_INT, ki_rl_check_pipe,
+			{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
+				SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE}
+	},
 
+	{ {0, 0}, {0, 0}, 0, NULL, {0, 0, 0, 0, 0, 0} }
 };
+/* clang-format on */
 
-static int ki_rl_check(struct sip_msg *msg)
-{
-	return rl_check(msg, -1);
-}
-
-static int ki_rl_check_pipe(struct sip_msg *msg, int pipe)
-{
-
-	LM_DBG("trying kemi pipe %d\n", pipe);
-	return rl_check(msg, pipe);
-}
 
 int mod_register(char *path, int *dlflags, void *p1, void *p2)
 {
