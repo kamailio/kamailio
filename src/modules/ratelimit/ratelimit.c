@@ -1363,12 +1363,12 @@ static sr_kemi_t sr_kemi_ratelimit_exports[] = {
 	{ str_init("ratelimit"), str_init("rl_check"),
 		SR_KEMIP_INT, ki_rl_check,
 			{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
-				SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE}
+				SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("ratelimit"), str_init("rl_check_pipe"),
 		SR_KEMIP_INT, ki_rl_check_pipe,
 			{ SR_KEMIP_INT, SR_KEMIP_NONE, SR_KEMIP_NONE,
-				SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE}
+				SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 
 	{ {0, 0}, {0, 0}, 0, NULL, {0, 0, 0, 0, 0, 0} }
