@@ -250,12 +250,17 @@ static int ki_jansson_get(sip_msg_t *msg, str *spath, str *sdoc, str *spv)
 /**
  *
  */
+/* clang-format off */
 static sr_kemi_t sr_kemi_jansson_exports[] = {
-		{str_init("jansson"), str_init("get"), SR_KEMIP_INT, ki_jansson_get,
-				{SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE,
-						SR_KEMIP_NONE, SR_KEMIP_NONE}},
+	{ str_init("jansson"), str_init("get"),
+		SR_KEMIP_INT, ki_jansson_get,
+			{SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
+				SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE}
+	},
 
-		{{0, 0}, {0, 0}, 0, NULL, {0, 0, 0, 0, 0, 0}}};
+	{ {0, 0}, {0, 0}, 0, NULL, {0, 0, 0, 0, 0, 0} }
+};
+/* clang-format on */
 
 /**
  *
