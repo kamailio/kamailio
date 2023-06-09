@@ -743,20 +743,27 @@ static int ro_fixup_stop(void **param, int param_no)
 	return 0;
 }
 
+/* clang-format off */
 static sr_kemi_t ims_charging_kemi_exports[] = {
-		{str_init("ims_charging"), str_init("Ro_CCR"), SR_KEMIP_INT, ki_ro_ccr,
-				{SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_STR,
-						SR_KEMIP_STR, SR_KEMIP_NONE}},
-		{str_init("ims_charging"), str_init("Ro_CCR_Stop"), SR_KEMIP_INT,
-				ki_ro_ccr_stop,
-				{SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_STR, SR_KEMIP_NONE,
-						SR_KEMIP_NONE, SR_KEMIP_NONE}},
-		{str_init("ims_charging"), str_init("Ro_set_session_id_avp"),
-				SR_KEMIP_INT, ki_ro_set_session_id_avp,
-				{SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
-						SR_KEMIP_NONE, SR_KEMIP_NONE}},
+	{ str_init("ims_charging"), str_init("Ro_CCR"),
+		SR_KEMIP_INT, ki_ro_ccr,
+			{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_INT,
+				SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_NONE }
+	},
+	{ str_init("ims_charging"), str_init("Ro_CCR_Stop"),
+		SR_KEMIP_INT, ki_ro_ccr_stop,
+			{ SR_KEMIP_STR, SR_KEMIP_INT, SR_KEMIP_STR,
+				SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("ims_charging"), str_init("Ro_set_session_id_avp"),
+		SR_KEMIP_INT, ki_ro_set_session_id_avp,
+			{ SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE,
+				SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 
-		{{0, 0}, {0, 0}, 0, NULL, {0, 0, 0, 0, 0, 0}}};
+	{ {0, 0}, {0, 0}, 0, NULL, {0, 0, 0, 0, 0, 0} }
+};
+/* clang-format on */
 
 int mod_register(char *path, int *dlflags, void *p1, void *p2)
 {
