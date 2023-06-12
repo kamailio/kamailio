@@ -857,11 +857,14 @@ static int ki_dp_translate(
 		return -1;
 	}
 
-	if(input_spv == NULL && output_spv == NULL) {
-		pvs_i = pv_cache_get(&dp_default_param_s);
+	if(input_spv == NULL || input_spv->len <= 0) {
 		pvs_o = pv_cache_get(&dp_default_param_s);
 	} else {
 		pvs_i = pv_cache_get(input_spv);
+	}
+	if(output_spv == NULL || output_spv->len <= 0) {
+		pvs_i = pv_cache_get(&dp_default_param_s);
+	} else {
 		pvs_o = pv_cache_get(output_spv);
 	}
 
