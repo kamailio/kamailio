@@ -362,7 +362,7 @@ modparam("rtpproxy", "extra_id_pv", "$avp(extra_id)")
 
    Example 1.9. Set db_url parameter
 ...
-modparam("rtpproxy", "db_url", "mysql://user:passwb@localhost/database")
+modparam("rtpproxy", "db_url", "mysql://user:passwd@localhost/database")
 ...
 
 4.10. table_name (string)
@@ -501,9 +501,8 @@ rtpproxy_offer();
             different m-lines with different IP-protocols grouped
             together.
           + f - instructs rtpproxy to ignore marks inserted by another
-            rtpproxy in transit to indicate that the session is already
-            goes through another proxy. Allows creating a chain of
-            proxies.
+            rtpproxy in transit to indicate that the session already goes
+            through another proxy. Allows creating a chain of proxies.
           + r - flags that IP address in SDP should be trusted. Without
             this flag, rtpproxy ignores address in the SDP and uses source
             address of the SIP message as media address which is passed to

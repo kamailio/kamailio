@@ -99,7 +99,7 @@ Chapter 1. Admin Guide
 
 3.1. separator (str)
 
-   Separator character used to delimit attributes in time reccurrence
+   Separator character used to delimit attributes in time recurrence
    definitions.
 
    Default value is '|'.
