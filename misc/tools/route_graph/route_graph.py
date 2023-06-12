@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 """
  * $Id$
  *
@@ -232,4 +232,4 @@ if len(e_routes) > 0:
             traverse_routes(1, r)
 
 print()
-
+cfg.close()
