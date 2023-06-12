@@ -37,9 +37,9 @@ static unsigned int MAX_URL_LENGTH = 1023;
 extern int db_redis_verbosity;
 #ifdef WITH_SSL
 extern int db_redis_opt_tls;
-extern char *ca_path;
+extern char *db_redis_ca_path;
 #endif
-extern char *db_pass;
+extern char *db_redis_db_pass;
 
 static void print_query(redis_key_t *query)
 {
@@ -164,7 +164,7 @@ int db_redis_connect(km_redis_con_t *con)
 	if(db_redis_opt_tls != 0) {
 		/* Create SSL context*/
 		redisInitOpenSSL();
-		ssl = redisCreateSSLContext(NULL, ca_path, NULL, NULL, NULL, NULL);
+		ssl = redisCreateSSLContext(NULL, db_redis_ca_path, NULL, NULL, NULL, NULL);
 		if(ssl == NULL) {
 			LM_ERR("Unable to create Redis SSL Context.\n");
 			goto err;
@@ -208,7 +208,7 @@ int db_redis_connect(km_redis_con_t *con)
 	if(db_redis_opt_tls != 0) {
 		/* Create SSL context*/
 		redisInitOpenSSL();
-		ssl = redisCreateSSLContext(NULL, ca_path, NULL, NULL, NULL, NULL);
+		ssl = redisCreateSSLContext(NULL, db_redis_ca_path, NULL, NULL, NULL, NULL);
 		if(ssl == NULL) {
 			LM_ERR("Unable to create Redis SSL Context.\n");
 			goto err;
@@ -236,7 +236,7 @@ int db_redis_connect(km_redis_con_t *con)
 
 	password = con->id->password;
 	if(!password) {
-		password = db_pass;
+		password = db_redis_db_pass;
 	}
 	if(password) {
 		reply = redisCommand(con->con, "AUTH %s", password);
