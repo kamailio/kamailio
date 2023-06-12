@@ -114,12 +114,25 @@ struct module_exports exports = {
  */
 static int mod_init(void)
 {
+	mq_head_t *mh = mq_head_get(NULL);
+
 	if(!mq_head_defined())
 		LM_WARN("no mqueue defined\n");
 
 	if(mqueue_rpc_init() < 0) {
 		LM_ERR("failed to register RPC commands\n");
 		return 1;
+	}
+
+	while(mh != NULL) {
+		if (mh->dbmode == 1 || mh->dbmode == 2) {
+			if(mqueue_db_load_queue(&(mh->name)) < 0) {
+				LM_ERR("error loading mqueue: %.*s from DB\n",
+					mh->name.len, mh->name.s);
+				return 1;
+			}
+		}
+		mh = mh->next;
 	}
 
 	return 0;
@@ -265,15 +278,8 @@ int mq_param(modparam_t type, void *val)
 		free_params(params_list);
 		return -1;
 	}
-	LM_INFO("mqueue param: [%.*s|%d|%d]\n", qname.len, qname.s, dbmode, addmode);
-	if(dbmode == 1 || dbmode == 2) {
-		if(mqueue_db_load_queue(&qname)<0)
-		{
-			LM_ERR("error loading mqueue: %.*s from DB\n", qname.len, qname.s);
-			free_params(params_list);
-			return -1;
-		}
-	}
+	LM_INFO("mqueue param: [%.*s|%d|%d]\n", qname.len, qname.s, dbmode,
+			addmode);
 	mq_set_dbmode(&qname, dbmode);
 	free_params(params_list);
 	return 0;
