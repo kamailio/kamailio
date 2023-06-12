@@ -31,9 +31,9 @@
 
 #ifdef WITH_SSL
 int db_redis_opt_tls = 0;
-char *ca_path = 0;
+char *db_redis_ca_path = 0;
 #endif
-char *db_pass = 0;
+char *db_redis_db_pass = 0;
 
 MODULE_VERSION
 
@@ -60,9 +60,9 @@ static param_export_t params[] = {
 		{"verbosity", PARAM_INT, &db_redis_verbosity},
 #ifdef WITH_SSL
 		{"opt_tls", PARAM_INT, &db_redis_opt_tls},
-		{"ca_path", PARAM_STRING, &ca_path},
+		{"ca_path", PARAM_STRING, &db_redis_ca_path},
 #endif
-		{"db_pass", PARAM_STRING, &db_pass}, {0, 0, 0}};
+		{"db_pass", PARAM_STRING, &db_redis_db_pass}, {0, 0, 0}};
 
 
 struct module_exports exports = {
