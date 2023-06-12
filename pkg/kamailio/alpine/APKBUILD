@@ -31,7 +31,7 @@ makedepends="bison db-dev flex freeradius-client-dev expat-dev
 	confuse-dev ncurses-dev sqlite-dev lua-dev openldap-dev openssl-dev
 	net-snmp-dev libuuid libev-dev jansson-dev json-c-dev libevent-dev
 	linux-headers libmemcached-dev rabbitmq-c-dev hiredis-dev
-	ruby-dev libmaxminddb-dev libunistring-dev mongo-c-driver-dev"
+	ruby-dev libmaxminddb-dev libunistring-dev mongo-c-driver-dev libwebsockets-dev"
 
 install="$pkgname.pre-install $pkgname.pre-upgrade"
 
@@ -137,7 +137,7 @@ _mod_list_tls="auth_identity crypto tls"
 _mod_list_outbound="outbound"
 
 # - modules depending on unistring library
-_mod_list_websocket="websocket"
+_mod_list_websocket="websocket lwsc"
 
 # - modules depending on libval-threads libcrypto libsres libpthread
 _mod_list_dnssec="dnssec"
