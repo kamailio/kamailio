@@ -55,7 +55,7 @@ int redis_flush_on_reconnect_param = 0;
 int redis_allow_dynamic_nodes_param = 0;
 int ndb_redis_debug = L_DBG;
 #ifdef WITH_SSL
-char *ca_path = 0;
+char *ndb_redis_ca_path = 0;
 #endif
 
 static int w_redis_cmd3(
@@ -136,7 +136,7 @@ static param_export_t params[] = {
 		{"allow_dynamic_nodes", INT_PARAM, &redis_allow_dynamic_nodes_param},
 		{"debug", PARAM_INT, &ndb_redis_debug}, 
 #ifdef WITH_SSL
-		{"ca_path", PARAM_STRING, &ca_path},
+		{"ca_path", PARAM_STRING, &ndb_redis_ca_path},
 #endif
 		{0, 0, 0}};
 

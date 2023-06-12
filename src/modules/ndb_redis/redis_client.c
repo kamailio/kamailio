@@ -63,7 +63,7 @@ extern int redis_flush_on_reconnect_param;
 extern int redis_allow_dynamic_nodes_param;
 extern int ndb_redis_debug;
 #ifdef WITH_SSL
-extern char *ca_path;
+extern char *ndb_redis_ca_path;
 #endif
 
 /* backwards compatibility with hiredis < 0.12 */
@@ -237,7 +237,7 @@ int redisc_init(void)
  			/* Create SSL context*/
  			redisInitOpenSSL();
  			rsrv->sslCtxRedis = 
-					redisCreateSSLContext(NULL, NULL, NULL, NULL, NULL, NULL);
+					redisCreateSSLContext(NULL, ndb_redis_ca_path, NULL, NULL, NULL, NULL);
  			if(rsrv->sslCtxRedis == NULL) {
 				LM_ERR("Unable to create Redis TLS Context.\n");
  			}
@@ -599,7 +599,7 @@ int redisc_reconnect_server(redisc_server_t *rsrv)
 		/* Create SSL context*/
 		redisInitOpenSSL();
 		rsrv->sslCtxRedis =
-				redisCreateSSLContext(NULL, NULL, NULL, NULL, NULL, NULL);
+				redisCreateSSLContext(NULL, ndb_redis_ca_path, NULL, NULL, NULL, NULL);
 		if(rsrv->sslCtxRedis == NULL) {
 			LM_ERR("Unable to create Redis TLS Context.\n");
 		}
