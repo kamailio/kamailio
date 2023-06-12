@@ -5,14 +5,14 @@
 #ifndef __license_h_
 #define __license_h_
 
-#define COPYRIGHT  "Copyright 2006 iptelorg GmbH"
+#define COPYRIGHT "Copyright 2006 iptelorg GmbH"
 #define DISCLAIMER \
-"This is free software with ABSOLUTELY NO WARRANTY.\n\
+	"This is free software with ABSOLUTELY NO WARRANTY.\n\
 For details type `warranty'."
 
 
 #define LICENSE \
-"    This program is free software; you can redistribute it and/or modify\n\
+	"    This program is free software; you can redistribute it and/or modify\n\
     it under the terms of the GNU General Public License as published by\n\
     the Free Software Foundation; either version 2 of the License , or\n\
     (at your option) any later version.\n\
