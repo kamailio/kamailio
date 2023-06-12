@@ -262,7 +262,7 @@ static int add_rtpp_node_info(
 		void *ptrs, struct rtpp_node *crt_rtpp, struct rtpp_set *rtpp_list);
 static int rtpp_test_ping(struct rtpp_node *node);
 
-static void rtpengine_dtmf_events_loop();
+static void rtpengine_dtmf_events_loop(void);
 static int rtpengine_raise_dtmf_event(char* buffer, int len);
 
 /* Pseudo-Variables */
@@ -1266,7 +1266,7 @@ static int rtpengine_set_dtmf_events_sock(modparam_t type, void * val)
 	return 0;
 }
 
-static void rtpengine_dtmf_events_loop()
+static void rtpengine_dtmf_events_loop(void)
 {
 	int ret;
 	char *p;
@@ -1292,15 +1292,17 @@ static void rtpengine_dtmf_events_loop()
 	trim(&rtpengine_dtmf_event_sock);
 	rtpengine_dtmf_event_sock.s[rtpengine_dtmf_event_sock.len] = '\0';
 
-	memset(&udp_addr, 0, sizeof(udp_addr));
+	memset(&udp_addr, 0, sizeof(union sockaddr_union));	
 
 	if (rtpengine_dtmf_event_sock.s[0] == '[') {
-		udp_addr.sin6.sin6_family = AF_INET6;
+		udp_addr.sin6.sin6_family = AF_INET6;				
 		udp_addr.sin6.sin6_port = htons(port);
-		ret = inet_pton(AF_INET, rtpengine_dtmf_event_sock.s, &udp_addr.sin6.sin6_addr);
+		udp_addr.sin6.sin6_len = sizeof(struct sockaddr_in6);
+		ret = inet_pton(AF_INET6, rtpengine_dtmf_event_sock.s, &udp_addr.sin6.sin6_addr);
 	} else {
-		udp_addr.sin.sin_family = AF_INET;
+		udp_addr.sin.sin_family = AF_INET;		
 		udp_addr.sin.sin_port = htons(port);
+		udp_addr.sin.sin_len = sizeof(struct sockaddr_in);
 		ret = inet_pton(AF_INET, rtpengine_dtmf_event_sock.s, &udp_addr.sin.sin_addr);
 	}			
 
@@ -1314,9 +1316,9 @@ static void rtpengine_dtmf_events_loop()
 	if(rtpengine_dtmf_event_fd < 0) {
 		LM_ERR("can't create socket\n");
 		return;
-	}
+	}	
 	
-	if (bind(rtpengine_dtmf_event_fd, (struct sockaddr*)&udp_addr.s, sizeof(udp_addr.s)) < 0) {
+	if (bind(rtpengine_dtmf_event_fd, &udp_addr.s, udp_addr.s.sa_len) < 0) {
 		LM_ERR("could not bind dtmf events socket %s:%u (%s:%d)\n", rtpengine_dtmf_event_sock.s, port, strerror(errno), errno);
 		goto end;
 	}
@@ -1347,9 +1349,10 @@ static void rtpengine_dtmf_events_loop()
 		p[ret] = '\0';		
 
 		if (rtpengine_raise_dtmf_event(p, ret) < 0) {
-			LM_ERR("Failed to raise dtmf event\n");
-			shm_free(p);
+			LM_ERR("Failed to raise dtmf event\n");			
 		}
+		
+		shm_free(p);
 	}
 
 end:	
@@ -1374,12 +1377,12 @@ static int rtpengine_raise_dtmf_event(char *buffer, int len) {
 	jdoc.root = srjson_Parse(&jdoc, jdoc.buf.s);
 	if(jdoc.root == NULL) {
 		LM_ERR("invalid json doc [[%s]]\n", jdoc.buf.s);
-		return -1;
+		goto error;
 	}
 
 	if(faked_msg_init()<0) {
-		LM_ERR("Failed to initialize fake msg\n");
-		return -1;
+		LM_ERR("Failed to initialize fake msg\n");		
+		goto error;
 	}		
 	
 	/* iterate over keys */
@@ -1393,7 +1396,7 @@ static int rtpengine_raise_dtmf_event(char *buffer, int len) {
 			
 			if (dtmf_event_callid_pvar->setf(0, &dtmf_event_callid_pvar->pvp, (int)EQ_T, &pv_val) < 0) {					
 				LM_ERR("error setting pvar <%.*s>\n", dtmf_event_callid_pvar_str.len, dtmf_event_callid_pvar_str.s);
-				return -1;
+				goto error;
 			}				
 		} else if(strcmp(it->string, "source_tag") == 0) {
 			pv_value_t pv_val;
@@ -1403,7 +1406,7 @@ static int rtpengine_raise_dtmf_event(char *buffer, int len) {
 			
 			if (dtmf_event_source_tag_pvar->setf(0, &dtmf_event_source_tag_pvar->pvp, (int)EQ_T, &pv_val) < 0) {					
 				LM_ERR("error setting pvar <%.*s>\n", dtmf_event_source_tag_pvar_str.len, dtmf_event_source_tag_pvar_str.s);
-				return -1;
+				goto error;
 			}
 		} else if(strcmp(it->string, "timestamp") == 0) {
 			pv_value_t pv_val;
@@ -1418,7 +1421,7 @@ static int rtpengine_raise_dtmf_event(char *buffer, int len) {
 			
 			if (dtmf_event_timestamp_pvar->setf(0, &dtmf_event_timestamp_pvar->pvp, (int)EQ_T, &pv_val) < 0) {					
 				LM_ERR("error setting pvar <%.*s>\n", dtmf_event_timestamp_pvar_str.len, dtmf_event_timestamp_pvar_str.s);
-				return -1;
+				goto error;
 			}
 		} else if(strcmp(it->string, "event") == 0) {
 			pv_value_t pv_val;
@@ -1433,7 +1436,7 @@ static int rtpengine_raise_dtmf_event(char *buffer, int len) {
 			
 			if (dtmf_event_pvar->setf(0, &dtmf_event_pvar->pvp, (int)EQ_T, &pv_val) < 0) {					
 				LM_ERR("error setting pvar <%.*s>\n", dtmf_event_pvar_str.len, dtmf_event_pvar_str.s);
-				return -1;
+				goto error;
 			}
 		} 
 	}
@@ -1446,10 +1449,14 @@ static int rtpengine_raise_dtmf_event(char *buffer, int len) {
 	set_route_type(rtb);
 	if(ctx.run_flags&DROP_R_F) {
 		LM_ERR("exit due to 'drop' in event route\n");
-		return -1;
+		goto error;
 	}
 
 	return 0;
+
+error:	 
+	srjson_DestroyDoc(&jdoc);
+	return -1;	
 }
 
 static int fixup_set_id(void ** param, int param_no)
