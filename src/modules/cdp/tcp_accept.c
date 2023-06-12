@@ -130,9 +130,13 @@ int create_socket(str ip_proto,int listen_port,str bind_to,unsigned int *sock)
 			goto error;
 		}
 		option = 1;
-		setsockopt(server_sock,SOL_SOCKET,SO_REUSEADDR,&option,sizeof(option));
+		if(setsockopt(server_sock, SOL_SOCKET, SO_REUSEADDR, &option,
+				   sizeof(option))
+				< 0) {
+			LM_WARN("failed to set SO_REUSEADDR option for server socket\n");
+		}
 
-		if (bind( 	server_sock,ainfo->ai_addr,ainfo->ai_addrlen)==-1 ) {
+		if(bind(server_sock, ainfo->ai_addr, ainfo->ai_addrlen) == -1) {
 			LM_ERR("create_socket(): error binding on %s port %s >"
 					" %s\n",host,serv,strerror(errno));
 			goto error;
