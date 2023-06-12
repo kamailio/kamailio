@@ -48,6 +48,7 @@ static int timeoutlogs = -10;	 /*!< for aggregating timeout logs */
 static int *active = NULL;
 static uint16_t *global_id = NULL;
 
+ksr_loglevels_t _ksr_loglevels_pdb = KSR_LOGLEVELS_DEFAULTS;
 
 /*!
  * Generic parameter that holds a string, an int or a pseudo-variable
@@ -103,9 +104,15 @@ static cmd_export_t cmds[] = {
 		{0, 0, 0, 0, 0, 0}};
 
 
-static param_export_t params[] = {{"server", PARAM_STRING, &modp_server},
-		{"timeout", INT_PARAM, &timeout}, {0, 0, 0}};
+/* clang-format off */
+static param_export_t params[] = {
+	{"server", PARAM_STRING, &modp_server},
+	{"timeout", PARAM_INT, &timeout},
+	{"ll_info", PARAM_INT, &_ksr_loglevels_pdb.ll_info},
 
+	{0, 0, 0}
+};
+/* clang-format on */
 
 struct module_exports exports = {
 		"pdb",			 /* module name */
@@ -429,7 +436,7 @@ found:
 		timeoutlogs = -10;
 	}
 	if(gettimeofday(&tnow, NULL) == 0) {
-		LM_INFO("got an answer in %f ms\n",
+		LLM_INFO("got an answer in %f ms\n",
 				((double)(tnow.tv_usec - tstart.tv_usec
 						  + (tnow.tv_sec - tstart.tv_sec) * 1000000))
 						/ 1000);
