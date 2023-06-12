@@ -80,6 +80,7 @@
 #include "../../core/kemi.h"
 #include "../../core/char_msg_val.h"
 #include "../../core/utils/srjson.h"
+#include "../../core/cfg/cfg_struct.h"
 #include "../../modules/tm/tm_load.h"
 #include "../../modules/crypto/api.h"
 #include "../../modules/lwsc/api.h"
@@ -261,7 +262,7 @@ static int add_rtpp_node_info(
 		void *ptrs, struct rtpp_node *crt_rtpp, struct rtpp_set *rtpp_list);
 static int rtpp_test_ping(struct rtpp_node *node);
 
-static void rtpengine_dtmf_events_loop(int rank);
+static void rtpengine_dtmf_events_loop();
 static int rtpengine_raise_dtmf_event(char* buffer, int len);
 
 /* Pseudo-Variables */
@@ -1265,7 +1266,7 @@ static int rtpengine_set_dtmf_events_sock(modparam_t type, void * val)
 	return 0;
 }
 
-static void rtpengine_dtmf_events_loop(int rank)
+static void rtpengine_dtmf_events_loop()
 {
 	int ret;
 	char *p;
@@ -2020,47 +2021,7 @@ static int mod_init(void)
 					media_duration_pvar_str.len, media_duration_pvar_str.s);
 			return -1;
 		}
-	}
-
-	if (dtmf_event_callid_pvar_str.len > 0) {
-		dtmf_event_callid_pvar = pv_cache_get(&dtmf_event_callid_pvar_str);
-		if (dtmf_event_callid_pvar == NULL
-			|| (dtmf_event_callid_pvar->type != PVT_AVP && dtmf_event_callid_pvar->type != PVT_SCRIPTVAR) ) {
-			LM_ERR("dtmf_event_callid_pv: not a valid AVP or VAR definition <%.*s>\n",
-				dtmf_event_callid_pvar_str.len, dtmf_event_callid_pvar_str.s);
-			return -1;
-		}
-	}
-
-	if (dtmf_event_source_tag_pvar_str.len > 0) {
-		dtmf_event_source_tag_pvar = pv_cache_get(&dtmf_event_source_tag_pvar_str);
-		if (dtmf_event_source_tag_pvar == NULL
-			|| (dtmf_event_source_tag_pvar->type != PVT_AVP && dtmf_event_source_tag_pvar->type != PVT_SCRIPTVAR) ) {
-			LM_ERR("dtmf_event_source_tag_pv: not a valid AVP or VAR definition <%.*s>\n",
-				dtmf_event_source_tag_pvar_str.len, dtmf_event_source_tag_pvar_str.s);
-			return -1;
-		}
-	}
-
-	if (dtmf_event_timestamp_pvar_str.len > 0) {
-		dtmf_event_timestamp_pvar = pv_cache_get(&dtmf_event_timestamp_pvar_str);
-		if (dtmf_event_timestamp_pvar == NULL
-			|| (dtmf_event_timestamp_pvar->type != PVT_AVP && dtmf_event_timestamp_pvar->type != PVT_SCRIPTVAR) ) {
-			LM_ERR("dtmf_event_timestamp_pv: not a valid AVP or VAR definition <%.*s>\n",
-				dtmf_event_timestamp_pvar_str.len, dtmf_event_timestamp_pvar_str.s);
-			return -1;
-		}
-	}
-
-	if (dtmf_event_pvar_str.len > 0) {
-		dtmf_event_pvar = pv_cache_get(&dtmf_event_pvar_str);
-		if (dtmf_event_pvar == NULL
-			|| (dtmf_event_pvar->type != PVT_AVP && dtmf_event_pvar->type != PVT_SCRIPTVAR) ) {
-			LM_ERR("event_pv: not a valid AVP or VAR definition <%.*s>\n",
-				dtmf_event_pvar_str.len, dtmf_event_pvar_str.s);
-			return -1;
-		}
-	}
+	}	
 
 	if (rtpp_strings)
 		pkg_free(rtpp_strings);
@@ -2109,8 +2070,52 @@ static int mod_init(void)
 	}
 
 	dtmf_event_rt = route_lookup(&event_rt, "rtpengine:dtmf-event");
-	if (dtmf_event_rt >= 0 && event_rt.rlist[dtmf_event_rt] == 0)
+	if (dtmf_event_rt >= 0 && event_rt.rlist[dtmf_event_rt] == 0) {
 		dtmf_event_rt = -1; /* disable */
+	} else {
+		if (dtmf_event_callid_pvar_str.len > 0) {
+			dtmf_event_callid_pvar = pv_cache_get(&dtmf_event_callid_pvar_str);
+			if (dtmf_event_callid_pvar == NULL
+				|| (dtmf_event_callid_pvar->type != PVT_AVP && dtmf_event_callid_pvar->type != PVT_SCRIPTVAR) ) {
+				LM_ERR("dtmf_event_callid_pv: not a valid AVP or VAR definition <%.*s>\n",
+					dtmf_event_callid_pvar_str.len, dtmf_event_callid_pvar_str.s);
+				return -1;
+			}
+		}
+
+		if (dtmf_event_source_tag_pvar_str.len > 0) {
+			dtmf_event_source_tag_pvar = pv_cache_get(&dtmf_event_source_tag_pvar_str);
+			if (dtmf_event_source_tag_pvar == NULL
+				|| (dtmf_event_source_tag_pvar->type != PVT_AVP && dtmf_event_source_tag_pvar->type != PVT_SCRIPTVAR) ) {
+				LM_ERR("dtmf_event_source_tag_pv: not a valid AVP or VAR definition <%.*s>\n",
+					dtmf_event_source_tag_pvar_str.len, dtmf_event_source_tag_pvar_str.s);
+				return -1;
+			}
+		}
+
+		if (dtmf_event_timestamp_pvar_str.len > 0) {
+			dtmf_event_timestamp_pvar = pv_cache_get(&dtmf_event_timestamp_pvar_str);
+			if (dtmf_event_timestamp_pvar == NULL
+				|| (dtmf_event_timestamp_pvar->type != PVT_AVP && dtmf_event_timestamp_pvar->type != PVT_SCRIPTVAR) ) {
+				LM_ERR("dtmf_event_timestamp_pv: not a valid AVP or VAR definition <%.*s>\n",
+					dtmf_event_timestamp_pvar_str.len, dtmf_event_timestamp_pvar_str.s);
+				return -1;
+			}
+		}
+
+		if (dtmf_event_pvar_str.len > 0) {
+			dtmf_event_pvar = pv_cache_get(&dtmf_event_pvar_str);
+			if (dtmf_event_pvar == NULL
+				|| (dtmf_event_pvar->type != PVT_AVP && dtmf_event_pvar->type != PVT_SCRIPTVAR) ) {
+				LM_ERR("event_pv: not a valid AVP or VAR definition <%.*s>\n",
+					dtmf_event_pvar_str.len, dtmf_event_pvar_str.s);
+				return -1;
+			}
+		}
+
+		register_procs(1);
+		cfg_register_child(1);
+	}
 
 	return 0;
 }
@@ -2377,12 +2382,35 @@ static int mos_label_stats_parse(struct minmax_mos_label_stats *mmls)
 static int child_init(int rank)
 {
 	if(!rtpp_set_list)
-		return 0;
+		return 0;	
 
-	/* do not init sockets for PROC_INIT and main process when fork=yes */
-	if(rank == PROC_INIT || (rank == PROC_MAIN && dont_fork == 0)) {
+	/* do not init sockets for PROC_INIT */
+	if(rank == PROC_INIT) {
 		return 0;
-	}
+	}	
+
+	if(rank == PROC_MAIN) {
+		if(rtpengine_dtmf_event_sock.len > 0) {
+			LM_DBG("Register RTPENGINE DTMF WORKER %d\n", mypid);
+			/* fork worker process */
+			mypid = fork_process(PROC_RPC, "RTPENGINE DTMF WORKER", 1);
+			if(mypid < 0) {
+				LM_ERR("failed to fork RTPENGINE DTMF WORKER process %d\n", mypid);
+				return -1;
+			} else if(mypid == 0) {
+				if(cfg_child_init())
+					return -1;
+				/* this will loop forever */
+				rtpengine_dtmf_events_loop();
+			} 
+
+			return 0;
+		}
+
+		/* do not init sockets for main process when fork=yes */
+		if(dont_fork == 0)
+			return 0;
+	}	
 
 	mypid = getpid();
 
@@ -2401,13 +2429,11 @@ static int child_init(int rank)
 		/* probe rtpengines only in first worker */
 		if(build_rtpp_socks(0, 1))
 			return -1;
-			
-		if (rtpengine_dtmf_event_sock.len > 0)
-			rtpengine_dtmf_events_loop(rank);
-	} else {
-		if(build_rtpp_socks(0, 0))
-			return -1;
-	}
+		else {
+			if(build_rtpp_socks(0, 0))
+				return -1;
+		}					
+	}	
 
 	return 0;
 }
