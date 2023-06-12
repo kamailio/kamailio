@@ -278,12 +278,12 @@ int authorize(struct sip_msg* msg, pv_elem_t* realm, int hftype)
 
 /*
  * This function creates and submits diameter authentication request as per
- * draft-srinivas-aaa-basic-digest-00.txt. 
+ * draft-srinivas-aaa-basic-digest-00.txt.
  * Service type of the request is Authenticate-Only.
  * Returns:
  * 		 1 - success
  * 		-1 - error
- * 			
+ *
  */
 int diameter_authorize(struct hdr_field* hdr, str* p_method, sip_uri_t *uri,
 						sip_uri_t *ruri, unsigned int m_id, rd_buf_t* rb)
@@ -321,6 +321,7 @@ int diameter_authorize(struct hdr_field* hdr, str* p_method, sip_uri_t *uri,
 			if(!(user_name.s))
 			{
 				PKG_MEM_ERROR;
+				AAAFreeMessage(&req);
 				return -1;
 			}
 			memset(user_name.s, 0, user_name.len);
@@ -460,6 +461,7 @@ int diameter_authorize(struct hdr_field* hdr, str* p_method, sip_uri_t *uri,
 	if(!(user_name.s))
 	{
 		PKG_MEM_ERROR;
+		AAAFreeMessage(&req);
 		return -1;
 	}
 	memset(user_name.s, 0, user_name.len);
