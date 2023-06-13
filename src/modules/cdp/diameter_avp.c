@@ -500,11 +500,14 @@ char *AAAConvertAVPToString(AAA_AVP *avp, char *dest, unsigned int destLen)
 			break;
 			//case AAA_AVP_INTEGER64_TYPE:
 		case AAA_AVP_TIME_TYPE:
-		default:
-			LM_WARN("AAAConvertAVPToString: don't know how to print"
-					" this data type [%d] -> tryng hexa\n",
-					avp->type);
 		case AAA_AVP_DATA_TYPE:
+			/* print hexa values */
+			for(i = 0; i < avp->data.len && l < destLen - 1; i++)
+				l += snprintf(dest + l, destLen - l - 1, "%x",
+						((unsigned char *)avp->data.s)[i]);
+			break;
+		default:
+			LM_WARN("unknown avp data type [%d] -> printing hexa\n", avp->type);
 			for(i = 0; i < avp->data.len && l < destLen - 1; i++)
 				l += snprintf(dest + l, destLen - l - 1, "%x",
 						((unsigned char *)avp->data.s)[i]);
