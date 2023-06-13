@@ -82,7 +82,9 @@ typedef struct redisc_server
 	param_t *attrs;
 	char *spec;
 	redisContext *ctxRedis;
+#ifdef WITH_SSL
 	redisSSLContext *sslCtxRedis;
+#endif
 	struct redisc_server *next;
 	redisc_piped_cmds_t piped;
 	redisc_srv_disable_t disable;
