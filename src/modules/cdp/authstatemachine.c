@@ -971,11 +971,12 @@ void Send_ASR(cdp_session_t *s, AAAMessage *msg)
 	AAA_AVP *avp = 0;
 	peer *p = 0;
 	char x[4];
-	LM_DBG("Send_ASR() : sending ASR\n");
+
+	LM_DBG("sending ASR\n");
 	asr = AAACreateRequest(s->application_id, IMS_ASR, Flag_Proxyable, s);
 
 	if(!asr) {
-		LM_ERR("Send_ASR(): error creating ASR!\n");
+		LM_ERR("error creating ASR!\n");
 		return;
 	}
 
@@ -992,14 +993,14 @@ void Send_ASR(cdp_session_t *s, AAAMessage *msg)
 
 	p = get_routing_peer(s, asr);
 	if(!p) {
-		LM_ERR("unable to get routing peer in Send_ASR \n");
-		if(asr)
-			AAAFreeMessage(&asr); //needed in frequency
+		LM_ERR("unable to get routing peer\n");
+		AAAFreeMessage(&asr); //needed in frequency
 	}
 
 	if(!peer_send_msg(p, asr)) {
-		if(asr)
-			AAAFreeMessage(&asr); //needed in frequency
-	} else
+		LM_ERR("unable to send message\n");
+		AAAFreeMessage(&asr); //needed in frequency
+	} else {
 		LM_DBG("success sending ASR\n");
+	}
 }
