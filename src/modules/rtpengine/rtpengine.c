@@ -1452,6 +1452,8 @@ static int rtpengine_raise_dtmf_event(char *buffer, int len) {
 		goto error;
 	}
 
+	srjson_DestroyDoc(&jdoc);
+
 	return 0;
 
 error:
@@ -2394,7 +2396,8 @@ static int child_init(int rank)
 			/* fork worker process */
 			mypid = fork_process(PROC_RPC, "RTPENGINE DTMF WORKER", 1);
 			if(mypid < 0) {
-				LM_ERR("failed to fork RTPENGINE DTMF WORKER process %d\n", mypid);
+				LM_ERR("failed to fork RTPENGINE DTMF WORKER process %d\n",
+						mypid);
 				return -1;
 			} else if(mypid == 0) {
 				if(cfg_child_init())
@@ -2455,7 +2458,7 @@ static void mod_destroy(void)
 		rtpp_no_lock = NULL;
 	}
 
-	if (!rtpp_set_list) {
+	if(!rtpp_set_list) {
 		return;
 	}
 
