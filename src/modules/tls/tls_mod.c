@@ -450,7 +450,8 @@ static int mod_child(int rank)
 									&mod_params, &mod_params) < 0)
 				return -1;
 		}
-#if OPENSSL_VERSION_NUMBER >= 0x010101000L
+#if OPENSSL_VERSION_NUMBER >= 0x010101000L \
+		&& OPENSSL_VERSION_NUMBER < 0x030000000L
 		if(ksr_tls_init_mode&TLS_MODE_FORK_PREPARE) {
 			OPENSSL_fork_prepare();
 		}
@@ -458,7 +459,8 @@ static int mod_child(int rank)
 		return 0;
 	}
 
-#if OPENSSL_VERSION_NUMBER >= 0x010101000L
+#if OPENSSL_VERSION_NUMBER >= 0x010101000L \
+		&& OPENSSL_VERSION_NUMBER < 0x030000000L
 	if(ksr_tls_init_mode&TLS_MODE_FORK_PREPARE) {
 		if(rank==PROC_POSTCHILDINIT) {
 			/*

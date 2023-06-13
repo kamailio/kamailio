@@ -740,7 +740,7 @@ int tls_h_mod_pre_init_f(void)
 	LM_DBG("preparing tls env for modules initialization\n");
 #if OPENSSL_VERSION_NUMBER >= 0x010100000L && !defined(LIBRESSL_VERSION_NUMBER)
 	LM_DBG("preparing tls env for modules initialization (libssl >=1.1)\n");
-	OPENSSL_init_ssl(0, NULL);
+	OPENSSL_init_ssl(OPENSSL_INIT_ATFORK, NULL);
 #else
 	LM_DBG("preparing tls env for modules initialization (libssl <=1.0)\n");
 	SSL_library_init();
