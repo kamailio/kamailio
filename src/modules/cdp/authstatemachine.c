@@ -353,9 +353,14 @@ int auth_client_statefull_sm_process(
 					LM_DBG("In state AUTH_ST_PENDING and received "
 						   "AUTH_EV_RECV_ANS_UNSUCCESS - nothing to do but "
 						   "clean up session\n");
+					cdp_session_cleanup(s, NULL);
+					s = 0;
+					break;
 				case AUTH_EV_SESSION_TIMEOUT:
 				case AUTH_EV_SERVICE_TERMINATED:
 				case AUTH_EV_SESSION_GRACE_TIMEOUT:
+					LM_DBG("in state %d received event %d - clean up session",
+							x->state, event);
 					cdp_session_cleanup(s, NULL);
 					s = 0;
 					break;
