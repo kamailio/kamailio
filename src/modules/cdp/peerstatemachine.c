@@ -929,10 +929,10 @@ void Snd_DWR(peer *p)
 		return;
 	dwr->hopbyhopId = next_hopbyhop();
 	dwr->endtoendId = next_endtoend();
-	if(p->state == I_Open)
-		peer_send_msg(p, dwr);
-	else
-		peer_send_msg(p, dwr);
+	if(p->state == I_Open) {
+		LM_DBG("sending in state I_Open\n");
+	}
+	peer_send_msg(p, dwr);
 }
 
 /**
@@ -981,10 +981,10 @@ void Snd_DPR(peer *p)
 	AAACreateAndAddAVPToMessage(
 			dpr, AVP_Disconnect_Cause, AAA_AVP_FLAG_MANDATORY, 0, x, 4);
 
-	if(p->state == I_Open)
-		peer_send_msg(p, dpr);
-	else
-		peer_send_msg(p, dpr);
+	if(p->state == I_Open) {
+		LM_DBG("sending in state I_Open\n");
+	}
+	peer_send_msg(p, dpr);
 }
 
 /**
