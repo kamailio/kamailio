@@ -949,7 +949,9 @@ int peer_connect(peer *p)
 		{ // Connect with timeout
 			int x;
 			x = fcntl(sock, F_GETFL, 0);
-			fcntl(sock, F_SETFL, x | O_NONBLOCK);
+			if(fcntl(sock, F_SETFL, x | O_NONBLOCK) < 0) {
+				LM_WARN("failed to set O_NONBLOCK on socket %d\n", sock);
+			}
 			int res = connect(sock, ainfo->ai_addr, ainfo->ai_addrlen);
 			if(res < 0) {
 				if(errno == EINPROGRESS) {
