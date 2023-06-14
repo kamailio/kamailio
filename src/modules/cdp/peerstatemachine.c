@@ -1338,6 +1338,11 @@ void Rcv_Process(peer *p, AAAMessage *msg)
 {
 	AAASession *session = 0;
 	int nput = 0;
+
+	if(!msg) {
+		return;
+	}
+
 	if(msg->sessionId)
 		session = cdp_get_session(msg->sessionId->data);
 
@@ -1408,8 +1413,7 @@ void Rcv_Process(peer *p, AAAMessage *msg)
 	}
 	if(!nput && !put_task(p, msg)) {
 		LM_ERR("Rcv_Process(): Queue refused task\n");
-		if(msg)
-			AAAFreeMessage(&msg);
+		AAAFreeMessage(&msg);
 	}
 	//if (msg) LM_ERR("Rcv_Process(): task added to queue command %d, flags %#1x endtoend %u hopbyhop %u\n",msg->commandCode,msg->flags,msg->endtoendId,msg->hopbyhopId);
 
