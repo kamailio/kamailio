@@ -157,6 +157,9 @@ int sm_process(
 				case Timeout:
 					Error(p, p->I_sock);
 					p->state = Closed;
+					LM_ERR("in state %s timeout event %s\n",
+							dp_states[p->state], dp_events[event - 101]);
+					goto error;
 				default:
 					LM_ERR("sm_process(): In state %s invalid event %s\n",
 							dp_states[p->state], dp_events[event - 101]);
@@ -344,6 +347,9 @@ int sm_process(
 					if(p->R_sock >= 0)
 						Error(p, p->R_sock);
 					p->state = Closed;
+					LM_ERR("in state %s timeout event %s\n",
+							dp_states[p->state], dp_events[event - 101]);
+					goto error;
 				default:
 					LM_ERR("sm_process(): In state %s invalid event %s\n",
 							dp_states[p->state], dp_events[event - 101]);
