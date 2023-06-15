@@ -124,8 +124,8 @@ static int make_send_pipe(serviced_peer_t *sp)
 {
 	local_id++;
 	sp->send_pipe_name.s = shm_malloc(sizeof(PIPE_PREFIX) + 64);
-	sprintf(sp->send_pipe_name.s, "%s%d_%d_%d", PIPE_PREFIX, getpid(), local_id,
-			(unsigned int)time(0));
+	sprintf(sp->send_pipe_name.s, "%s%d_%d_%u", PIPE_PREFIX, getpid(), local_id,
+			(unsigned int)(unsigned long long)time(0));
 	sp->send_pipe_name.len = strlen(sp->send_pipe_name.s);
 
 	if(mkfifo(sp->send_pipe_name.s, 0666) < 0) {
