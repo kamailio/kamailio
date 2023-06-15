@@ -78,7 +78,9 @@ static int w_cdp_has_app2(sip_msg_t *msg, char *vendor, char *appid);
 static int w_cdp_has_app(sip_msg_t *msg, char *appid, char *param);
 
 
+/* clang-format off */
 #define EXP_FUNC(NAME) {#NAME, (cmd_function)NAME, NO_SCRIPT, 0, 0}
+/* clang-format on */
 
 /**
  * Exported functions. This is the API available for use from other modules.

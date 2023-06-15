@@ -161,8 +161,10 @@ static void close_send_pipe(serviced_peer_t *sp)
 {
 	int tmp;
 	if(sp->send_pipe_name.s) {
-		close(sp->send_pipe_fd);
-		close(sp->send_pipe_fd_out);
+		if(sp->send_pipe_fd >= 0)
+			close(sp->send_pipe_fd);
+		if(sp->send_pipe_fd_out >= 0)
+			close(sp->send_pipe_fd_out);
 		tmp = remove(sp->send_pipe_name.s);
 		if(tmp == -1) {
 			LM_ERR("could not remove send pipe\n");
