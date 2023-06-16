@@ -52,7 +52,7 @@
 #define CDP_AVP_MODULE base
 
 #if !defined(CDP_AVP_DECLARATION) && !defined(CDP_AVP_EXPORT) \
-		&& !defined(CDP_AVP_INIT) && !defined(CDP_AVP_REFERENCE)
+	&& !defined(CDP_AVP_INIT) && !defined(CDP_AVP_REFERENCE)
 #ifndef _CDP_AVP_BASE_H_1
 #define _CDP_AVP_BASE_H_1
 
@@ -139,373 +139,371 @@
  *  
  *  vendor_id_group - an int value
  *  
- *  avp_name_N	- the name of the Nth parameter. 
- *  	Previously, a cdp_avp_get(<avp_name_N>,<vendor_id_N>,<avp_type_N>,<data_type_N>) must be defined!
- *  
- *  data_type_N	- the respective data type for avp_type_N (same as <data_type_N) 
- *  
- *  The functions generated will return the number of found AVPs inside on success or 0 on error or not found
- *  The prototype of the function will be:
- *  
- *  	int cdp_avp_get_<avp_name_group>_Group(AAA_AVP_LIST list,<data_type_1> *avp_name_1,<data_type_2> *avp_name_2[,<data_type_3> *avp_name_3],AAA_AVP **avp_ptr)
- *  
- *  Note - generally, all data of type str will need to be defined with ..._ptr
- *  Note - Groups must be defined with:
- *  	 cdp_avp_add_ptr(...) and data_type AAA_AVP_LIST*
- *  	 cdp_avp_get(...) and data_type AAA_AVP_LIST 	
- */
+*  avp_name_N	- the name of the Nth parameter. 
+	   *  	Previously, a cdp_avp_get(<avp_name_N>,<vendor_id_N>,<avp_type_N>,<data_type_N>) must be defined!
+	*  
+	   *  data_type_N	- the respective data type for avp_type_N (same as <data_type_N) 
+		  *  
+			 *  The functions generated will return the number of found AVPs inside on success or 0 on error or not found
+				*  The prototype of the function will be:
+	*  
+	   *  	int cdp_avp_get_<avp_name_group>_Group(AAA_AVP_LIST list,<data_type_1> *avp_name_1,<data_type_2> *avp_name_2[,<data_type_3> *avp_name_3],AAA_AVP **avp_ptr)
+		  *  
+			 *  Note - generally, all data of type str will need to be defined with ..._ptr
+				*  Note - Groups must be defined with:
+				   *  	 cdp_avp_add_ptr(...) and data_type AAA_AVP_LIST*
+				   *  	 cdp_avp_get(...) and data_type AAA_AVP_LIST 	
+				   */
 
-cdp_avp_add(Vendor_Id, 0, AAA_AVP_FLAG_MANDATORY, Unsigned32,
-		uint32_t) cdp_avp_get(Vendor_Id, 0, AAA_AVP_FLAG_MANDATORY, Unsigned32,
+/* clang-format off */
+cdp_avp_add(Vendor_Id, 0, AAA_AVP_FLAG_MANDATORY, Unsigned32, uint32_t)
+cdp_avp_get(Vendor_Id, 0, AAA_AVP_FLAG_MANDATORY, Unsigned32, uint32_t)
+
+cdp_avp(Firmware_Revision, 0, AAA_AVP_FLAG_MANDATORY, Unsigned32,
 		uint32_t)
 
-		cdp_avp(Firmware_Revision, 0, AAA_AVP_FLAG_MANDATORY, Unsigned32,
-				uint32_t)
+cdp_avp(Host_IP_Address, 0, AAA_AVP_FLAG_MANDATORY, Address,
+		ip_address)
 
-				cdp_avp(Host_IP_Address, 0, AAA_AVP_FLAG_MANDATORY, Address,
-						ip_address)
+cdp_avp(Supported_Vendor_Id, 0, AAA_AVP_FLAG_MANDATORY,
+		Unsigned32, uint32_t)
 
-						cdp_avp(Supported_Vendor_Id, 0, AAA_AVP_FLAG_MANDATORY,
-								Unsigned32, uint32_t)
+cdp_avp_ptr(Product_Name, 0,
+		AAA_AVP_FLAG_MANDATORY, UTF8String, str)
 
-								cdp_avp_ptr(Product_Name, 0,
-										AAA_AVP_FLAG_MANDATORY, UTF8String, str)
+cdp_avp(Disconnect_Cause, 0,
+		AAA_AVP_FLAG_MANDATORY,
+		Enumerated, int32_t)
 
-										cdp_avp(Disconnect_Cause, 0,
-												AAA_AVP_FLAG_MANDATORY,
-												Enumerated, int32_t)
+cdp_avp_ptr(Origin_Host, 0,
+		AAA_AVP_FLAG_MANDATORY,
+		DiameterIdentity, str)
 
-												cdp_avp_ptr(Origin_Host, 0,
-														AAA_AVP_FLAG_MANDATORY,
-														DiameterIdentity, str)
+cdp_avp_ptr(
+		Origin_Realm, 0,
+		AAA_AVP_FLAG_MANDATORY,
+		DiameterIdentity,
+		str)
 
-														cdp_avp_ptr(
-																Origin_Realm, 0,
-																AAA_AVP_FLAG_MANDATORY,
-																DiameterIdentity,
-																str)
+cdp_avp_ptr(
+		Destination_Host,
+		0,
+		AAA_AVP_FLAG_MANDATORY,
+		DiameterIdentity,
+		str)
 
-																cdp_avp_ptr(
-																		Destination_Host,
-																		0,
-																		AAA_AVP_FLAG_MANDATORY,
-																		DiameterIdentity,
-																		str)
+cdp_avp_ptr(
+		Destination_Realm,
+		0,
+		AAA_AVP_FLAG_MANDATORY,
+		DiameterIdentity,
+		str)
 
-																		cdp_avp_ptr(
-																				Destination_Realm,
-																				0,
-																				AAA_AVP_FLAG_MANDATORY,
-																				DiameterIdentity,
-																				str)
+cdp_avp_ptr(
+		Route_Record,
+		0,
+		AAA_AVP_FLAG_MANDATORY,
+		DiameterIdentity,
+		str)
 
-																				cdp_avp_ptr(
-																						Route_Record,
-																						0,
-																						AAA_AVP_FLAG_MANDATORY,
-																						DiameterIdentity,
-																						str)
+cdp_avp_ptr(
+		Proxy_Host,
+		0,
+		AAA_AVP_FLAG_MANDATORY,
+		DiameterIdentity,
+		str)
 
-																						cdp_avp_ptr(
-																								Proxy_Host,
-																								0,
-																								AAA_AVP_FLAG_MANDATORY,
-																								DiameterIdentity,
-																								str)
+cdp_avp_ptr(
+		Proxy_State,
+		0,
+		AAA_AVP_FLAG_MANDATORY,
+		OctetString,
+		str)
 
-																								cdp_avp_ptr(
-																										Proxy_State,
-																										0,
-																										AAA_AVP_FLAG_MANDATORY,
-																										OctetString,
-																										str)
+cdp_avp_add_ptr(
+		Proxy_Info,
+		0,
+		AAA_AVP_FLAG_MANDATORY,
+		Grouped,
+		AAA_AVP_LIST*)
+cdp_avp_get(
+		Proxy_Info,
+		0,
+		AAA_AVP_FLAG_MANDATORY,
+		Grouped,
+		AAA_AVP_LIST)
 
-																										cdp_avp_add_ptr(
-																												Proxy_Info,
-																												0,
-																												AAA_AVP_FLAG_MANDATORY,
-																												Grouped,
-																												AAA_AVP_LIST
-																														*)
-																												cdp_avp_get(
-																														Proxy_Info,
-																														0,
-																														AAA_AVP_FLAG_MANDATORY,
-																														Grouped,
-																														AAA_AVP_LIST)
+cdp_avp(Auth_Application_Id,
+		0,
+		AAA_AVP_FLAG_MANDATORY,
+		Unsigned32,
+		uint32_t)
 
-																														cdp_avp(Auth_Application_Id,
-																																0,
-																																AAA_AVP_FLAG_MANDATORY,
-																																Unsigned32,
-																																uint32_t)
+cdp_avp(Acct_Application_Id,
+		0,
+		AAA_AVP_FLAG_MANDATORY,
+		Unsigned32,
+		uint32_t)
 
-																																cdp_avp(Acct_Application_Id,
-																																		0,
-																																		AAA_AVP_FLAG_MANDATORY,
-																																		Unsigned32,
-																																		uint32_t)
+cdp_avp(Inband_Security_Id, 0,
+		AAA_AVP_FLAG_MANDATORY,
+		Unsigned32,
+		uint32_t)
 
-																																		cdp_avp(Inband_Security_Id, 0,
-																																				AAA_AVP_FLAG_MANDATORY,
-																																				Unsigned32,
-																																				uint32_t)
+cdp_avp_add_ptr(
+		Vendor_Specific_Application_Id,
+		0,
+		AAA_AVP_FLAG_MANDATORY,
+		Grouped,
+		AAA_AVP_LIST*)
+cdp_avp_get(
+		Vendor_Specific_Application_Id,
+		0,
+		AAA_AVP_FLAG_MANDATORY,
+		Grouped,
+		AAA_AVP_LIST)
+cdp_avp_get3(
+		Vendor_Specific_Application_Id,
+		0,
+		AAA_AVP_FLAG_MANDATORY,
+		Vendor_Id,
+		uint32_t, Auth_Application_Id, uint32_t,
+		Acct_Application_Id,
+		uint32_t)
 
-																																				cdp_avp_add_ptr(
-																																						Vendor_Specific_Application_Id,
-																																						0,
-																																						AAA_AVP_FLAG_MANDATORY,
-																																						Grouped,
-																																						AAA_AVP_LIST
-																																								*)
-																																						cdp_avp_get(
-																																								Vendor_Specific_Application_Id,
-																																								0,
-																																								AAA_AVP_FLAG_MANDATORY,
-																																								Grouped,
-																																								AAA_AVP_LIST)
-																																								cdp_avp_get3(
-																																										Vendor_Specific_Application_Id,
-																																										0,
-																																										AAA_AVP_FLAG_MANDATORY,
-																																										Vendor_Id,
-																																										uint32_t, Auth_Application_Id, uint32_t,
-																																										Acct_Application_Id,
-																																										uint32_t)
+cdp_avp_ptr(
+		Redirect_Host,
+		0,
+		AAA_AVP_FLAG_MANDATORY,
+		DiameterIdentity,
+		str)
 
-																																										cdp_avp_ptr(
-																																												Redirect_Host,
-																																												0,
-																																												AAA_AVP_FLAG_MANDATORY,
-																																												DiameterIdentity,
-																																												str)
+cdp_avp(Redirect_Host_Usage,
+		0,
+		AAA_AVP_FLAG_MANDATORY,
+		Enumerated,
+		int32_t)
 
-																																												cdp_avp(Redirect_Host_Usage,
-																																														0,
-																																														AAA_AVP_FLAG_MANDATORY,
-																																														Enumerated,
-																																														int32_t)
+cdp_avp(Redirect_Max_Cache_Time, 0, AAA_AVP_FLAG_MANDATORY,
+		Unsigned32,
+		uint32_t)
 
-																																														cdp_avp(Redirect_Max_Cache_Time, 0, AAA_AVP_FLAG_MANDATORY,
-																																																Unsigned32,
-																																																uint32_t)
+cdp_avp_ptr(
+		E2E_Sequence,
+		0,
+		AAA_AVP_FLAG_MANDATORY,
+		OctetString,
+		str)
 
-																																																cdp_avp_ptr(
-																																																		E2E_Sequence,
-																																																		0,
-																																																		AAA_AVP_FLAG_MANDATORY,
-																																																		OctetString,
-																																																		str)
+cdp_avp(Result_Code,
+		0,
+		AAA_AVP_FLAG_MANDATORY,
+		Unsigned32,
+		uint32_t)
 
-																																																		cdp_avp(Result_Code,
-																																																				0,
-																																																				AAA_AVP_FLAG_MANDATORY,
-																																																				Unsigned32,
-																																																				uint32_t)
+cdp_avp_ptr(Error_Message, 0,
+		AAA_AVP_FLAG_MANDATORY,
+		UTF8String,
+		str)
 
-																																																				cdp_avp_ptr(Error_Message, 0,
-																																																						AAA_AVP_FLAG_MANDATORY,
-																																																						UTF8String,
-																																																						str)
+cdp_avp_ptr(
+		Error_Reporting_Host,
+		0,
+		AAA_AVP_FLAG_MANDATORY,
+		DiameterIdentity,
+		str)
 
-																																																						cdp_avp_ptr(
-																																																								Error_Reporting_Host,
-																																																								0,
-																																																								AAA_AVP_FLAG_MANDATORY,
-																																																								DiameterIdentity,
-																																																								str)
+cdp_avp_add_ptr(Failed_AVP, 0, AAA_AVP_FLAG_MANDATORY,
+		Grouped,
+		AAA_AVP_LIST*)
+cdp_avp_get(
+		Failed_AVP,
+		0,
+		AAA_AVP_FLAG_MANDATORY,
+		Grouped,
+		AAA_AVP_LIST)
 
-																																																								cdp_avp_add_ptr(Failed_AVP, 0, AAA_AVP_FLAG_MANDATORY,
-																																																										Grouped,
-																																																										AAA_AVP_LIST
-																																																												*)
-																																																										cdp_avp_get(
-																																																												Failed_AVP,
-																																																												0,
-																																																												AAA_AVP_FLAG_MANDATORY,
-																																																												Grouped,
-																																																												AAA_AVP_LIST)
+cdp_avp(Experimental_Result_Code,
+		0,
+		AAA_AVP_FLAG_MANDATORY,
+		Unsigned32,
+		uint32_t)
 
-																																																												cdp_avp(Experimental_Result_Code,
-																																																														0,
-																																																														AAA_AVP_FLAG_MANDATORY,
-																																																														Unsigned32,
-																																																														uint32_t)
+cdp_avp_add_ptr(
+		Experimental_Result,
+		0,
+		AAA_AVP_FLAG_MANDATORY, Grouped, AAA_AVP_LIST *)
+cdp_avp_get(Experimental_Result,
+		0,
+		AAA_AVP_FLAG_MANDATORY,
+		Grouped,
+		AAA_AVP_LIST)
+cdp_avp2(
+		Experimental_Result,
+		0,
+		AAA_AVP_FLAG_MANDATORY,
+		Vendor_Id, uint32_t, Experimental_Result_Code,
+		uint32_t)
 
-																																																														cdp_avp_add_ptr(
-																																																																Experimental_Result,
-																																																																0,
-																																																																AAA_AVP_FLAG_MANDATORY, Grouped, AAA_AVP_LIST *) cdp_avp_get(Experimental_Result,
-																																																																0,
-																																																																AAA_AVP_FLAG_MANDATORY,
-																																																																Grouped,
-																																																																AAA_AVP_LIST)
-																																																																cdp_avp2(
-																																																																		Experimental_Result,
-																																																																		0,
-																																																																		AAA_AVP_FLAG_MANDATORY,
-																																																																		Vendor_Id, uint32_t, Experimental_Result_Code,
-																																																																		uint32_t)
+cdp_avp(Auth_Request_Type,
+		0,
+		AAA_AVP_FLAG_MANDATORY,
+		Enumerated,
+		int32_t)
 
-																																																																		cdp_avp(Auth_Request_Type,
-																																																																				0,
-																																																																				AAA_AVP_FLAG_MANDATORY,
-																																																																				Enumerated,
-																																																																				int32_t)
+cdp_avp_ptr(
+		Session_Id, 0,
+		AAA_AVP_FLAG_MANDATORY,
+		UTF8String,
+		str)
 
-																																																																				cdp_avp_ptr(
-																																																																						Session_Id, 0,
-																																																																						AAA_AVP_FLAG_MANDATORY,
-																																																																						UTF8String,
-																																																																						str)
+cdp_avp(Authorization_Lifetime,
+		0,
+		AAA_AVP_FLAG_MANDATORY,
+		Unsigned32,
+		uint32_t)
 
-																																																																						cdp_avp(Authorization_Lifetime,
-																																																																								0,
-																																																																								AAA_AVP_FLAG_MANDATORY,
-																																																																								Unsigned32,
-																																																																								uint32_t)
+cdp_avp(Auth_Grace_Period,
+		0,
+		AAA_AVP_FLAG_MANDATORY,
+		Unsigned32,
+		uint32_t)
 
-																																																																								cdp_avp(Auth_Grace_Period,
-																																																																										0,
-																																																																										AAA_AVP_FLAG_MANDATORY,
-																																																																										Unsigned32,
-																																																																										uint32_t)
+cdp_avp(Auth_Session_State, 0, AAA_AVP_FLAG_MANDATORY,
+		Enumerated,
+		int32_t)
 
-																																																																										cdp_avp(Auth_Session_State, 0, AAA_AVP_FLAG_MANDATORY,
-																																																																												Enumerated,
-																																																																												int32_t)
+cdp_avp(Re_Auth_Request_Type,
+		0,
+		AAA_AVP_FLAG_MANDATORY,
+		Enumerated,
+		int32_t)
 
-																																																																												cdp_avp(Re_Auth_Request_Type,
-																																																																														0,
-																																																																														AAA_AVP_FLAG_MANDATORY,
-																																																																														Enumerated,
-																																																																														int32_t)
+cdp_avp(Session_Timeout,
+		0,
+		AAA_AVP_FLAG_MANDATORY,
+		Unsigned32,
+		uint32_t)
 
-																																																																														cdp_avp(Session_Timeout,
-																																																																																0,
-																																																																																AAA_AVP_FLAG_MANDATORY,
-																																																																																Unsigned32,
-																																																																																uint32_t)
+cdp_avp_ptr(
+		User_Name,
+		0,
+		AAA_AVP_FLAG_MANDATORY,
+		UTF8String,
+		str)
 
-																																																																																cdp_avp_ptr(
-																																																																																		User_Name,
-																																																																																		0,
-																																																																																		AAA_AVP_FLAG_MANDATORY,
-																																																																																		UTF8String,
-																																																																																		str)
+cdp_avp(Termination_Cause,
+		0,
+		AAA_AVP_FLAG_MANDATORY,
+		Enumerated, int32_t)
 
-																																																																																		cdp_avp(Termination_Cause,
-																																																																																				0,
-																																																																																				AAA_AVP_FLAG_MANDATORY,
-																																																																																				Enumerated, int32_t)
+cdp_avp(Origin_State_Id,
+		0,
+		AAA_AVP_FLAG_MANDATORY,
+		Unsigned32,
+		uint32_t)
 
-																																																																																				cdp_avp(Origin_State_Id,
-																																																																																						0,
-																																																																																						AAA_AVP_FLAG_MANDATORY,
-																																																																																						Unsigned32,
-																																																																																						uint32_t)
+cdp_avp(Session_Binding,
+		0,
+		AAA_AVP_FLAG_MANDATORY,
+		Unsigned32,
+		uint32_t)
 
-																																																																																						cdp_avp(Session_Binding,
-																																																																																								0,
-																																																																																								AAA_AVP_FLAG_MANDATORY,
-																																																																																								Unsigned32,
-																																																																																								uint32_t)
+cdp_avp(Session_Server_Failover,
+		0,
+		AAA_AVP_FLAG_MANDATORY,
+		Enumerated,
+		int32_t)
 
-																																																																																								cdp_avp(Session_Server_Failover,
-																																																																																										0,
-																																																																																										AAA_AVP_FLAG_MANDATORY,
-																																																																																										Enumerated,
-																																																																																										int32_t)
+cdp_avp(Multi_Round_Time_Out,
+		0, AAA_AVP_FLAG_MANDATORY, Unsigned32,
+		uint32_t)
 
-																																																																																										cdp_avp(Multi_Round_Time_Out,
-																																																																																												0, AAA_AVP_FLAG_MANDATORY, Unsigned32,
-																																																																																												uint32_t)
+cdp_avp_ptr(
+		Class,
+		0,
+		AAA_AVP_FLAG_MANDATORY, OctetString,
+		str)
 
-																																																																																												cdp_avp_ptr(
-																																																																																														Class,
-																																																																																														0,
-																																																																																														AAA_AVP_FLAG_MANDATORY, OctetString,
-																																																																																														str)
+cdp_avp(Event_Timestamp, 0, AAA_AVP_FLAG_MANDATORY, Time, time_t)
 
-																																																																																														cdp_avp(Event_Timestamp, 0, AAA_AVP_FLAG_MANDATORY, Time, time_t)
+cdp_avp(Accounting_Record_Type,
+		0,
+		AAA_AVP_FLAG_MANDATORY, Enumerated, int32_t)
 
-																																																																																																cdp_avp(Accounting_Record_Type,
-																																																																																																		0,
-																																																																																																		AAA_AVP_FLAG_MANDATORY, Enumerated, int32_t)
+cdp_avp(Acct_Interim_Interval, 0, AAA_AVP_FLAG_MANDATORY, Unsigned32, uint32_t)
 
-																																																																																																		cdp_avp(Acct_Interim_Interval, 0, AAA_AVP_FLAG_MANDATORY, Unsigned32, uint32_t)
+cdp_avp(Accounting_Record_Number,
+		0,
+		AAA_AVP_FLAG_MANDATORY,
+		Unsigned32,
+		uint32_t)
 
-																																																																																																				cdp_avp(Accounting_Record_Number,
-																																																																																																						0,
-																																																																																																						AAA_AVP_FLAG_MANDATORY,
-																																																																																																						Unsigned32,
-																																																																																																						uint32_t)
+cdp_avp_ptr(Acct_Session_Id, 0, AAA_AVP_FLAG_MANDATORY, OctetString, str)
 
-																																																																																																						cdp_avp_ptr(Acct_Session_Id, 0, AAA_AVP_FLAG_MANDATORY, OctetString, str)
+cdp_avp_ptr(
+		Acct_Multi_Session_Id,
+		0,
+		AAA_AVP_FLAG_MANDATORY,
+		UTF8String, str)
 
-																																																																																																								cdp_avp_ptr(
-																																																																																																										Acct_Multi_Session_Id,
-																																																																																																										0,
-																																																																																																										AAA_AVP_FLAG_MANDATORY,
-																																																																																																										UTF8String, str)
+cdp_avp(Accounting_Sub_Session_Id, 0, AAA_AVP_FLAG_MANDATORY, Unsigned64, uint64_t)
 
-																																																																																																										cdp_avp(Accounting_Sub_Session_Id, 0, AAA_AVP_FLAG_MANDATORY, Unsigned64, uint64_t)
+cdp_avp(Accounting_Realtime_Required, 0, AAA_AVP_FLAG_MANDATORY, Enumerated,
+		int32_t)
 
-																																																																																																												cdp_avp(Accounting_Realtime_Required, 0, AAA_AVP_FLAG_MANDATORY, Enumerated,
-																																																																																																														int32_t)
+cdp_avp_add_ptr(
+		MIP6_Agent_Info,
+		0,
+		AAA_AVP_FLAG_MANDATORY, Grouped,
+		AAA_AVP_LIST*)
+cdp_avp_get(
+		MIP6_Agent_Info, 0, AAA_AVP_FLAG_MANDATORY,
+		Grouped,
+		AAA_AVP_LIST)
 
-																																																																																																														cdp_avp_add_ptr(
-																																																																																																																MIP6_Agent_Info,
-																																																																																																																0,
-																																																																																																																AAA_AVP_FLAG_MANDATORY, Grouped,
-																																																																																																																AAA_AVP_LIST
-																																																																																																																		*)
-																																																																																																																cdp_avp_get(
-																																																																																																																		MIP6_Agent_Info, 0, AAA_AVP_FLAG_MANDATORY,
-																																																																																																																		Grouped,
-																																																																																																																		AAA_AVP_LIST)
+cdp_avp(MIP_Home_Agent_Address,
+		0,
+		AAA_AVP_FLAG_MANDATORY,
+		Address,
+		ip_address)
 
-																																																																																																																		cdp_avp(MIP_Home_Agent_Address,
-																																																																																																																				0,
-																																																																																																																				AAA_AVP_FLAG_MANDATORY,
-																																																																																																																				Address,
-																																																																																																																				ip_address)
+cdp_avp_add_ptr(
+		MIP_Home_Agent_Host,
+		0,
+		AAA_AVP_FLAG_MANDATORY,
+		Grouped, AAA_AVP_LIST *)
+cdp_avp_get(MIP_Home_Agent_Host,
+		0,
+		AAA_AVP_FLAG_MANDATORY,
+		Grouped,
+		AAA_AVP_LIST)
 
-																																																																																																																				cdp_avp_add_ptr(
-																																																																																																																						MIP_Home_Agent_Host,
-																																																																																																																						0,
-																																																																																																																						AAA_AVP_FLAG_MANDATORY,
-																																																																																																																						Grouped, AAA_AVP_LIST *) cdp_avp_get(MIP_Home_Agent_Host,
-																																																																																																																						0,
-																																																																																																																						AAA_AVP_FLAG_MANDATORY,
-																																																																																																																						Grouped,
-																																																																																																																						AAA_AVP_LIST)
+cdp_avp_ptr(
+		MIP6_Home_Link_Prefix,
+		0,
+		AAA_AVP_FLAG_MANDATORY,
+		OctetString,
+		str)
 
-																																																																																																																						cdp_avp_ptr(
-																																																																																																																								MIP6_Home_Link_Prefix,
-																																																																																																																								0,
-																																																																																																																								AAA_AVP_FLAG_MANDATORY,
-																																																																																																																								OctetString,
-																																																																																																																								str)
+cdp_avp(MIP6_Feature_Vector, 0, AAA_AVP_FLAG_MANDATORY, Unsigned64,
+		uint64_t)
 
-																																																																																																																								cdp_avp(MIP6_Feature_Vector, 0, AAA_AVP_FLAG_MANDATORY, Unsigned64,
-																																																																																																																										uint64_t)
-
-																																																																																																																										cdp_avp_ptr(
-																																																																																																																												Service_Selection,
-																																																																																																																												0,
-																																																																																																																												AAA_AVP_FLAG_MANDATORY,
-																																																																																																																												UTF8String,
-																																																																																																																												str)
+cdp_avp_ptr(
+		Service_Selection,
+		0,
+		AAA_AVP_FLAG_MANDATORY,
+		UTF8String,
+		str)
 
 
-/*
- * From here-on you can define/export/init/declare functions which can not be generate with the macros
- */
+	/*
+	 * From here-on you can define/export/init/declare functions which can not be generate with the macros
+	 */
 
 #if defined(CDP_AVP_DEFINITION)
 
-		/*
+	/*
 	 * Put here your supplimentary definitions. Typically:
 	 * 
 	 * int <function1>(param1)
@@ -516,8 +514,8 @@ cdp_avp_add(Vendor_Id, 0, AAA_AVP_FLAG_MANDATORY, Unsigned32,
 	 * 
 	 */
 
-		int cdp_avp_add_Vendor_Specific_Application_Id_Group(AAA_AVP_LIST *list,
-				uint32_t vendor_id, uint32_t auth_app_id, uint32_t acct_app_id)
+int cdp_avp_add_Vendor_Specific_Application_Id_Group(AAA_AVP_LIST *list,
+		uint32_t vendor_id, uint32_t auth_app_id, uint32_t acct_app_id)
 {
 	AAA_AVP_LIST list_grp = {0, 0};
 	if(!cdp_avp_add_Vendor_Id(&list_grp, vendor_id))
@@ -528,24 +526,24 @@ cdp_avp_add(Vendor_Id, 0, AAA_AVP_FLAG_MANDATORY, Unsigned32,
 		goto error;
 	return cdp_avp_add_to_list(
 			list, cdp_avp_new_Grouped(AVP_Vendor_Specific_Application_Id,
-						  AAA_AVP_FLAG_MANDATORY, 0, &list_grp, AVP_FREE_DATA));
+				AAA_AVP_FLAG_MANDATORY, 0, &list_grp, AVP_FREE_DATA));
 error:
 	cdp->AAAFreeAVPList(&list_grp);
 	return 0;
 }
 
 /**
-	 * http://tools.ietf.org/html/rfc3588#section-6.11
-	 * @param list
-	 * @param data
-	 * @return
-	 */
+ * http://tools.ietf.org/html/rfc3588#section-6.11
+ * @param list
+ * @param data
+ * @return
+ */
 int cdp_avp_get_Vendor_Specific_Application_Id_example(AAA_AVP_LIST list,
 		uint32_t *vendor_id, uint32_t *auth_app_id, uint32_t *acct_app_id)
 {
 	AAA_AVP_LIST list_grp = {0, 0};
 	AAA_AVP *avp =
-			cdp_avp_get_from_list(list, AVP_Vendor_Specific_Application_Id, 0);
+		cdp_avp_get_from_list(list, AVP_Vendor_Specific_Application_Id, 0);
 	if(!avp)
 		goto error;
 	cdp_avp_get_Grouped(avp, &list_grp);
@@ -569,49 +567,49 @@ error:
 
 #elif defined(CDP_AVP_EXPORT)
 
-		/*
-	 * Put here your supplimentary exports in the format: 
-	 * 	<function_type1> <nice_function_name1>; 
-	 *  <function_type2> <nice_function_name1>;
-	 *  ...
-	 *  
-	 */
+/*
+ * Put here your supplimentary exports in the format: 
+ * 	<function_type1> <nice_function_name1>; 
+ *  <function_type2> <nice_function_name1>;
+ *  ...
+ *  
+ */
 
-		cdp_avp_add_Vendor_Specific_Application_Id_Group_f
-		add_Vendor_Specific_Application_Id_Group;
+cdp_avp_add_Vendor_Specific_Application_Id_Group_f
+add_Vendor_Specific_Application_Id_Group;
 
 cdp_avp_get_Vendor_Specific_Application_Id_example_f
-		get_Vendor_Specific_Application_Id_example;
+get_Vendor_Specific_Application_Id_example;
 
 
 #elif defined(CDP_AVP_INIT)
 
-		/*
-	 * Put here your supplimentary inits in the format: 
-	 * 	<function1>,
-	 *  <function2>,
-	 *  ...
-	 * 
-	 * Make sure you keep the same order as in export!
-	 * 
-	 */
+/*
+ * Put here your supplimentary inits in the format: 
+ * 	<function1>,
+ *  <function2>,
+ *  ...
+ * 
+ * Make sure you keep the same order as in export!
+ * 
+ */
 
-		cdp_avp_add_Vendor_Specific_Application_Id_Group,
+cdp_avp_add_Vendor_Specific_Application_Id_Group,
 
-		cdp_avp_get_Vendor_Specific_Application_Id_example,
+	cdp_avp_get_Vendor_Specific_Application_Id_example,
 
 
 #elif defined(CDP_AVP_REFERENCE)
-		/*
+	/*
 	 * Put here what you want to get in the reference. Typically:
 	 * <function1>
 	 * <function2>
 	 * ... 
 	 * 
 	 */
-		int CDP_AVP_MODULE.add_Vendor_Specific_Application_Id_Group(
-				AAA_AVP_LIST *list, uint32_t vendor_id, uint32_t auth_app_id,
-				uint32_t acct_app_id);
+int CDP_AVP_MODULE.add_Vendor_Specific_Application_Id_Group(
+		AAA_AVP_LIST *list, uint32_t vendor_id, uint32_t auth_app_id,
+		uint32_t acct_app_id);
 
 int CDP_AVP_MODULE.get_Vendor_Specific_Application_Id_example(AAA_AVP_LIST list,
 		uint32_t *vendor_id, uint32_t *auth_app_id, uint32_t *acct_app_id);
@@ -623,25 +621,25 @@ int CDP_AVP_MODULE.get_Vendor_Specific_Application_Id_example(AAA_AVP_LIST list,
 #else
 
 /*
-	 * Put here your definitions according to the declarations, exports, init, etc above. Typically:
-	 * 
-	 * int <function1(params1);>
-	 * typedef int <*function_type1>(params1);
-	 * 
-	 * int <function2(param2);>
-	 * typedef int <*function_type2>(params2);
-	 * 
-	 * ...
-	 *  
-	 */
+ * Put here your definitions according to the declarations, exports, init, etc above. Typically:
+ * 
+ * int <function1(params1);>
+ * typedef int <*function_type1>(params1);
+ * 
+ * int <function2(param2);>
+ * typedef int <*function_type2>(params2);
+ * 
+ * ...
+ *  
+ */
 
 #ifndef _CDP_AVP_BASE_H_2
 #define _CDP_AVP_BASE_H_2
 
-																																																																																																																												int cdp_avp_add_Vendor_Specific_Application_Id_Group(
-																																																																																																																														AAA_AVP_LIST
-																																																																																																																																*list,
-																																																																																																																														uint32_t vendor_id, uint32_t auth_app_id, uint32_t acct_app_id);
+int cdp_avp_add_Vendor_Specific_Application_Id_Group(
+		AAA_AVP_LIST
+		*list,
+		uint32_t vendor_id, uint32_t auth_app_id, uint32_t acct_app_id);
 typedef int (*cdp_avp_add_Vendor_Specific_Application_Id_Group_f)(
 		AAA_AVP_LIST *list, uint32_t vendor_id, uint32_t auth_app_id,
 		uint32_t acct_app_id);
@@ -661,3 +659,4 @@ typedef int (*cdp_avp_get_Vendor_Specific_Application_Id_example_f)(
 #define CDP_AVP_UNDEF_MACROS
 #include "macros.h"
 #undef CDP_AVP_UNDEF_MACROS
+/* clang-format on */

@@ -155,26 +155,23 @@
  */
 
 
+/* clang-format off */
 cdp_avp(Accounting_Input_Octets, 0, AAA_AVP_FLAG_MANDATORY, Unsigned64,
 		uint64_t)
 
-		cdp_avp(Accounting_Input_Packets, 0, AAA_AVP_FLAG_MANDATORY, Unsigned64,
-				uint64_t)
+cdp_avp(Accounting_Input_Packets, 0, AAA_AVP_FLAG_MANDATORY, Unsigned64,
+		uint64_t)
 
-				cdp_avp(Accounting_Output_Octets, 0, AAA_AVP_FLAG_MANDATORY,
-						Unsigned64, uint64_t)
+cdp_avp(Accounting_Output_Octets, 0, AAA_AVP_FLAG_MANDATORY,
+		Unsigned64, uint64_t)
 
-						cdp_avp(Accounting_Output_Packets, 0,
-								AAA_AVP_FLAG_MANDATORY, Unsigned64, uint64_t)
+cdp_avp(Accounting_Output_Packets, 0, AAA_AVP_FLAG_MANDATORY, Unsigned64,
+		uint64_t)
 
-								cdp_avp_ptr(Filter_Id, 0,
-										AAA_AVP_FLAG_MANDATORY, UTF8String, str)
+cdp_avp_ptr(Filter_Id, 0, AAA_AVP_FLAG_MANDATORY, UTF8String, str)
 
 
-										cdp_avp_ptr(Called_Station_Id, 0,
-												AAA_AVP_FLAG_MANDATORY,
-												UTF8String, str)
-
+cdp_avp_ptr(Called_Station_Id, 0, AAA_AVP_FLAG_MANDATORY, UTF8String, str)
 
 /*
  * From here-on you can define/export/init/declare functions which can not be generate with the macros
@@ -182,17 +179,17 @@ cdp_avp(Accounting_Input_Octets, 0, AAA_AVP_FLAG_MANDATORY, Unsigned64,
 
 #if defined(CDP_AVP_DEFINITION)
 
-		/*
-	 * Put here your supplimentary definitions. Typically:
-	 * 
-	 * int <function1>(param1)
-	 * {
-	 *   code1
-	 * }
-	 * 
-	 * 
-	 */
-		int cdp_avp_add_Framed_IP_Address(AAA_AVP_LIST *list, ip_address ip)
+/*
+ * Put here your supplimentary definitions. Typically:
+ * 
+ * int <function1>(param1)
+ * {
+ *   code1
+ * }
+ * 
+ * 
+ */
+int cdp_avp_add_Framed_IP_Address(AAA_AVP_LIST *list, ip_address ip)
 {
 	if(ip.ai_family != AF_INET) {
 		LOG(L_ERR, "Trying to build from non IPv4 address!\n");
@@ -284,14 +281,14 @@ int cdp_avp_get_Framed_IPv6_Prefix(
 
 #elif defined(CDP_AVP_EXPORT)
 
-		/*
-	 * Put here your supplimentary exports in the format: 
-	 * 	<function_type1> <nice_function_name1>; 
-	 *  <function_type2> <nice_function_name1>;
-	 *  ...
-	 *  
-	 */
-		cdp_avp_add_Framed_IP_Address_f add_Framed_IP_Address;
+/*
+ * Put here your supplimentary exports in the format: 
+ * 	<function_type1> <nice_function_name1>; 
+ *  <function_type2> <nice_function_name1>;
+ *  ...
+ *  
+ */
+cdp_avp_add_Framed_IP_Address_f add_Framed_IP_Address;
 cdp_avp_get_Framed_IP_Address_f get_Framed_IP_Address;
 
 cdp_avp_add_Framed_IPv6_Prefix_f add_Framed_IPv6_Prefix;
@@ -300,19 +297,19 @@ cdp_avp_get_Framed_IPv6_Prefix_f get_Framed_IPv6_Prefix;
 
 #elif defined(CDP_AVP_INIT)
 
-		/*
-	 * Put here your supplimentary inits in the format: 
-	 * 	<function1>,
-	 *  <function2>,
-	 *  ...
-	 * 
-	 * Make sure you keep the same order as in export!
-	 * 
-	 */
-		cdp_avp_add_Framed_IP_Address,
-		cdp_avp_get_Framed_IP_Address,
+/*
+ * Put here your supplimentary inits in the format: 
+ * 	<function1>,
+ *  <function2>,
+ *  ...
+ * 
+ * Make sure you keep the same order as in export!
+ * 
+ */
+cdp_avp_add_Framed_IP_Address,
+cdp_avp_get_Framed_IP_Address,
 
-		cdp_avp_add_Framed_IPv6_Prefix, cdp_avp_get_Framed_IPv6_Prefix,
+cdp_avp_add_Framed_IPv6_Prefix, cdp_avp_get_Framed_IPv6_Prefix,
 
 #elif defined(CDP_AVP_REFERENCE)
 		/*
@@ -322,8 +319,7 @@ cdp_avp_get_Framed_IPv6_Prefix_f get_Framed_IPv6_Prefix;
 	 * ... 
 	 * 
 	 */
-		int CDP_AVP_MODULE.add_Framed_IP_Address(
-				AAA_AVP_LIST *list, ip_address ip);
+int CDP_AVP_MODULE.add_Framed_IP_Address(AAA_AVP_LIST *list, ip_address ip);
 int CDP_AVP_MODULE.get_Framed_IP_Address(
 		AAA_AVP_LIST list, ip_address *ip, AAA_AVP **avp_ptr);
 
@@ -339,17 +335,17 @@ int CDP_AVP_MODULE.get_Framed_IPv6_Prefix(
 #else
 
 /*
-	 * Put here your definitions according to the declarations, exports, init, etc above. Typically:
-	 * 
-	 * int <function1(params1);>
-	 * typedef int <*function_type1>(params1);
-	 * 
-	 * int <function2(param2);>
-	 * typedef int <*function_type2>(params2);
-	 * 
-	 * ...
-	 *  
-	 */
+ * Put here your definitions according to the declarations, exports, init, etc above. Typically:
+ * 
+ * int <function1(params1);>
+ * typedef int <*function_type1>(params1);
+ * 
+ * int <function2(param2);>
+ * typedef int <*function_type2>(params2);
+ * 
+ * ...
+ *  
+ */
 
 
 #ifndef _CDP_AVP_NASAPP_H_2
@@ -384,3 +380,4 @@ typedef int (*cdp_avp_get_Framed_IPv6_Prefix_f)(
 #define CDP_AVP_UNDEF_MACROS
 #include "macros.h"
 #undef CDP_AVP_UNDEF_MACROS
+/* clang-format on */
