@@ -23,10 +23,18 @@ else
 	HIREDISDEFS = $(shell $(HIREDIS_BUILDER) --cflags)
 	HIREDISLIBS = $(shell $(HIREDIS_BUILDER) --libs)
 	HIREDISLIBSPATH = $(shell $(HIREDIS_BUILDER) --libs-only-L | cut -c 3-)
-	ifneq ($(shell ls $(HIREDISLIBSPATH) | grep libhiredis_ssl.so),)
-		HIREDISDEFS += -DWITH_SSL
-		HIREDISLIBS += -lhiredis_ssl
-	endif
+    ifeq ($(HIREDISLIBSPATH),)
+        GCCSEARCHDIRS = $(shell $(CC) -print-search-dirs | grep -Po '^.*libraries: =.*' | cut -d "=" -f2- | tr : ' ')
+        ifneq ($(shell find $(GCCSEARCHDIRS) libhiredis_ssl.so),)
+            HIREDISDEFS += -DWITH_SSL
+            HIREDISLIBS += -lhiredis_ssl
+        endif
+    else
+        ifneq ($(shell ls $(HIREDISLIBSPATH) | grep libhiredis_ssl.so),)
+            HIREDISDEFS += -DWITH_SSL
+            HIREDISLIBS += -lhiredis_ssl
+        endif
+    endif
 
 ifeq (,$(findstring hiredis,$(HIREDISDEFS)))
 	DEFS+=-DWITH_HIREDIS_PATH
