@@ -150,7 +150,7 @@ int db_redis_connect(km_redis_con_t *con)
 	char hosts[MAX_URL_LENGTH];
 	char *host_begin;
 	char *host_end;
-	LM_DBG("connecting to redis cluster at %.*s\n", con->id->url.len, 
+	LM_DBG("connecting to redis cluster at %.*s\n", con->id->url.len,
 			con->id->url.s);
 	host_begin = strstr(con->id->url.s, "redis://");
 	if(host_begin) {
@@ -164,7 +164,8 @@ int db_redis_connect(km_redis_con_t *con)
 	if(db_redis_opt_tls != 0) {
 		/* Create SSL context*/
 		redisInitOpenSSL();
-		ssl = redisCreateSSLContext(NULL, db_redis_ca_path, NULL, NULL, NULL, NULL);
+		ssl = redisCreateSSLContext(
+				NULL, db_redis_ca_path, NULL, NULL, NULL, NULL);
 		if(ssl == NULL) {
 			LM_ERR("Unable to create Redis SSL Context.\n");
 			goto err;
@@ -197,7 +198,7 @@ int db_redis_connect(km_redis_con_t *con)
 #endif
 	status = redisClusterConnect2(con->con);
 	if(status != REDIS_OK) {
-		LM_ERR("cannot open connection to cluster with hosts: %s, error: %s\n", 
+		LM_ERR("cannot open connection to cluster with hosts: %s, error: %s\n",
 				hosts, con->con->errstr);
 		goto err;
 	}
@@ -208,7 +209,8 @@ int db_redis_connect(km_redis_con_t *con)
 	if(db_redis_opt_tls != 0) {
 		/* Create SSL context*/
 		redisInitOpenSSL();
-		ssl = redisCreateSSLContext(NULL, db_redis_ca_path, NULL, NULL, NULL, NULL);
+		ssl = redisCreateSSLContext(
+				NULL, db_redis_ca_path, NULL, NULL, NULL, NULL);
 		if(ssl == NULL) {
 			LM_ERR("Unable to create Redis SSL Context.\n");
 			goto err;
@@ -218,7 +220,7 @@ int db_redis_connect(km_redis_con_t *con)
 
 	con->con = redisConnectWithTimeout(con->id->host, con->id->port, tv);
 	if(!con->con) {
-		LM_ERR("cannot open connection: %.*s\n", con->id->url.len, 
+		LM_ERR("cannot open connection: %.*s\n", con->id->url.len,
 				con->id->url.s);
 		goto err;
 	}
