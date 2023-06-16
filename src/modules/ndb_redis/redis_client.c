@@ -140,14 +140,14 @@ int redisc_init(void)
 						pit->body.s);
 				haspass = 1;
 #ifdef WITH_SSL
-			} else if(pit->name.len==3 
-					&& strncmp(pit->name.s, "tls", 3) == 0) {
+			} else if(pit->name.len == 3 
+					  && strncmp(pit->name.s, "tls", 3) == 0) {
 				snprintf(pass, sizeof(pass) - 1, "%.*s", pit->body.len, 
 						pit->body.s);
 				if(str2int(&pit->body, &enable_ssl) < 0)
 					enable_ssl = 0;
 #endif
-			} else if(pit->name.len == 14 
+			} else if(pit->name.len == 14
 					  && strncmp(pit->name.s, "sentinel_group", 14) == 0) {
 				snprintf(sentinel_group, sizeof(sentinel_group) - 1, "%.*s",
 						pit->body.len, pit->body.s);
@@ -236,8 +236,8 @@ int redisc_init(void)
  		if(enable_ssl) {
  			/* Create SSL context*/
  			redisInitOpenSSL();
- 			rsrv->sslCtxRedis = 
-					redisCreateSSLContext(NULL, ndb_redis_ca_path, NULL, NULL, NULL, NULL);
+ 			rsrv->sslCtxRedis = redisCreateSSLContext(
+					NULL, ndb_redis_ca_path, NULL, NULL, NULL, NULL);
  			if(rsrv->sslCtxRedis == NULL) {
 				LM_ERR("Unable to create Redis TLS Context.\n");
  			}
@@ -251,8 +251,8 @@ int redisc_init(void)
 					redisConnectUnixWithTimeout(unix_sock_path, tv_conn);
 		} else {
 #ifdef WITH_SSL
-			LOG(ndb_redis_debug, "Connecting to %s %s:%d\n", 
-					(enable_ssl) ?"TLS" :"UDP", addr, port);
+			LOG(ndb_redis_debug, "Connecting to %s %s:%d\n",
+					(enable_ssl) ? "TLS" : "UDP", addr, port);
 #else
 			LOG(ndb_redis_debug, "Connecting to %s:%d\n", addr, port);
 #endif
@@ -500,7 +500,7 @@ int redisc_reconnect_server(redisc_server_t *rsrv)
 #ifdef WITH_SSL
  		} else if(pit->name.len == 3 && strncmp(pit->name.s, "tls", 3) == 0) {
 			snprintf(
-					pass, sizeof(pass)-1, "%.*s", pit->body.len, pit->body.s);
+					pass, sizeof(pass) - 1, "%.*s", pit->body.len, pit->body.s);
  			if(str2int(&pit->body, &enable_ssl) < 0)
 				enable_ssl = 0;
 #endif
@@ -598,8 +598,8 @@ int redisc_reconnect_server(redisc_server_t *rsrv)
 	if(enable_ssl) {
 		/* Create SSL context*/
 		redisInitOpenSSL();
-		rsrv->sslCtxRedis =
-				redisCreateSSLContext(NULL, ndb_redis_ca_path, NULL, NULL, NULL, NULL);
+		rsrv->sslCtxRedis = redisCreateSSLContext(
+				NULL, ndb_redis_ca_path, NULL, NULL, NULL, NULL);
 		if(rsrv->sslCtxRedis == NULL) {
 			LM_ERR("Unable to create Redis TLS Context.\n");
 		}
