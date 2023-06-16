@@ -117,9 +117,9 @@ int add_to_tree(pdt_tree_t *pt, str *sp, str *sd)
 
 	if(itn0[strpos(pdt_char_list.s, sp->s[l]) % PDT_NODE_SIZE].domain.s
 			!= NULL) {
-		LM_ERR("prefix already allocated [%.*s/[%.*s]\n", sp->len, sp->s,
+		LM_WARN("prefix already allocated [%.*s/[%.*s]\n", sp->len, sp->s,
 				sd->len, sd->s);
-		return -1;
+		return 0;
 	}
 
 	itn0[strpos(pdt_char_list.s, sp->s[l]) % PDT_NODE_SIZE].domain.s =
