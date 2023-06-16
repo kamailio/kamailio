@@ -134,7 +134,7 @@ static param_export_t params[] = {
 		{"allowed_timeouts", INT_PARAM, &redis_allowed_timeouts_param},
 		{"flush_on_reconnect", INT_PARAM, &redis_flush_on_reconnect_param},
 		{"allow_dynamic_nodes", INT_PARAM, &redis_allow_dynamic_nodes_param},
-		{"debug", PARAM_INT, &ndb_redis_debug}, 
+		{"debug", PARAM_INT, &ndb_redis_debug},
 #ifdef WITH_SSL
 		{"ca_path", PARAM_STRING, &ndb_redis_ca_path},
 #endif
