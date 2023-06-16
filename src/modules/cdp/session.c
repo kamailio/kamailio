@@ -603,8 +603,8 @@ AAASession *AAAMakeSession(int app_id, int type, str session_id)
 	memcpy(id.s, session_id.s, session_id.len);
 	id.len = session_id.len;
 	s = cdp_new_session(id, type);
-	s->application_id = app_id;
 	if(s) {
+		s->application_id = app_id;
 		cdp_add_session(s);
 	}
 	return s;
