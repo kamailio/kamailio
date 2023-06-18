@@ -681,7 +681,7 @@ static int mem_rnd_realloc(unsigned long size, long *diff)
 
 /*
  * Randomly alloc. total_size bytes, in chunks of size between
- * min & max. max - min should be smaller then 4G.
+ * min & max. max - min should be smaller than 4G.
  * @return < 0 if there were some alloc errors, 0 on success.
  */
 static int mem_rnd_leak(
@@ -1020,7 +1020,7 @@ static const char *rpc_mt_free_doc[2] = {
 		" other misctest functions (e.g. mt.mem_alloc or the script "
 		"mt_mem_alloc). Use b|k|m|g to specify the desired size unit."
 		"Returns the number of bytes freed (can be higher or"
-		" smaller then the requested size)",
+		" smaller than the requested size)",
 		0};
 
 
