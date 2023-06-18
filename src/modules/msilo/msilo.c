@@ -99,7 +99,7 @@ MODULE_VERSION
 static db1_con_t *db_con = NULL;
 static db_func_t msilo_dbf;
 
-/** precessed msg list - used for dumping the messages */
+/** processed msg list - used for dumping the messages */
 msg_list ml = NULL;
 
 /** TM bind */
@@ -586,7 +586,7 @@ static int m_store(sip_msg_t *msg, str *owner_s)
 		} else {
 			duri = msg->new_uri;
 		}
-		LM_DBG("NEW R-URI found - check if is AoR!\n");
+		LM_DBG("NEW R-URI found - check if it is AoR!\n");
 		if(parse_uri(duri.s, duri.len, &puri) != 0) {
 			LM_ERR("bad dst R-URI!!\n");
 			goto error;
