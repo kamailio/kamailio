@@ -594,10 +594,6 @@ data_target = $(prefix)/$(data_dir)
 #		extra error checking (trying to free the same pointer
 #		twice, trying to free a pointer alloc'ed with a different
 #		malloc etc.)
-# -DVQ_MALLOC
-#		additional option to PKG_MALLOC which utilizes a fater then
-#		qm version
-#		(not true anymore, q_malloc performs approx. the same)
 # -DQ_MALLOC
 #		custom quick malloc, recommended for debugging
 # -DF_MALLOC
@@ -741,7 +737,6 @@ C_DEFS+= -DSHM_MMAP \
 	 #-DDBG_F_MALLOC \
 	 #-DNO_DEBUG \
 	 #-DEXTRA_DEBUG \
-	 #-DVQ_MALLOC  \
 	 #-DDBG_LOCK \
 	 #-DNOSMP \
 	 #-DNO_LOG \
