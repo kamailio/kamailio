@@ -184,7 +184,7 @@ int create_all(void)
  * file_list --
  * returns a sorted linkedlist of all files in d
  *
- * parmameter d is the directory name
+ * parameter d is the directory name
  * parameter tn is optional,
  * 	if tablename (tn) is specified returns only jnl files for tablename (tn)
  *	else returns a sorted linkedlist of all files in d
@@ -390,13 +390,13 @@ int recover(char* jfn)
 	
 #ifdef EXTRA_DEBUG
 	printf("Processed journal file: %s.\n", jfn);
-	printf("INSERT   %i records.\n",ci);
-	printf("UPDATE   %i records.\n",cu);
-	printf("DELETE   %i records.\n",cd);
-	printf("SKIPed   %i records.\n",cs);
+	printf("INSERT    %i records.\n", ci);
+	printf("UPDATE    %i records.\n", cu);
+	printf("DELETE    %i records.\n", cd);
+	printf("SKIPped   %i records.\n", cs);
 	printf("------------------------\n");
-	printf("Total    %i records.\n",i);
-	
+	printf("Total     %i records.\n", i);
+
 	tim2 = time(NULL);
 	i = tim2 - tim1;
 	printf("took %i sec\n", i);
@@ -472,7 +472,7 @@ int recover_all(int lastn)
 /**
 * extract_key -- uses the internal schema to extract the key from the data
 * 	row that was found in the journal.
-* caller provides inititialize memory for destination key (k).
+* caller provides initialized memory for destination key (k).
 * data is provided ; key is filled in 
 */
 int extract_key(table_p tp, char* k, char* d)

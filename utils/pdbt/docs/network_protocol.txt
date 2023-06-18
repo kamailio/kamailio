@@ -12,7 +12,7 @@ in network byte order (most significant byte first).
 Possible values for the search request:
   * 0: the number could not be found
   * 1-999 the number was found and the result represents its carrier ID
-  * 1000: the number could be found, but its owned from a carriers which is
+  * 1000: the number could be found, but it is owned from a carrier which is
     not interesting for us and belongs to the "other carrier" group
 
 

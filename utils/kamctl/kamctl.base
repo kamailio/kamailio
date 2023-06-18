@@ -579,7 +579,7 @@ USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_mtree"
 
 usage_acc() {
 	echo
-	mecho " -- command 'acc' - manage accounding records"
+	mecho " -- command 'acc' - manage accounting records"
 	echo
 cat <<EOF
  acc initdb .................. init acc table by adding extra columns
