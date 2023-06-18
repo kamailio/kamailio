@@ -214,7 +214,7 @@ mod_list_erlang=erlang
 # - modules depending on systemd library
 mod_list_systemd=log_systemd systemdops
 
-# - modules depending on libnsq (+libev libevbuffsock liblcurl libjson-c) library
+# - modules depending on libnsq (+libev libevbuffsock libcurl libjson-c) library
 mod_list_nsq=nsq
 
 # - modules depending on librabbitmq library
