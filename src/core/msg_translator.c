@@ -2768,7 +2768,7 @@ int branch_builder(unsigned int hash_index,
 }
 
 
-/* uses only the send_info->send_socket, send_info->proto and
+/* uses only the send_info->send_socket, send_info->proto, send_info->id and
  * send_info->comp (so that a send_info used for sending can be passed
  * to this function w/o changes and the correct via will be built) */
 char *via_builder(unsigned int *len, sip_msg_t *msg,

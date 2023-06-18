@@ -2065,7 +2065,7 @@ static int fix_socket_list(struct socket_info **list, int *type_flags)
 				ail = ail_next;
 				continue;
 			}
-			/* 2. check if the extra addresses contain a duplicates for
+			/* 2. check if the extra addresses contain a duplicate for
 			 *  other addresses in the same list */
 			for(tmp_ail = ail->next; tmp_ail;) {
 				tmp_ail_next = tmp_ail->next;
