@@ -545,7 +545,7 @@ static lwsc_endpoint_t *lwsc_get_endpoint(str *wsurl, str *wsproto)
 
 	ep->wsctx = lws_create_context(&ep->crtinfo);
 	if(!ep->wsctx) {
-		LM_ERR("failed to intialize context for ws url [%.*s]\n", wsurl->len,
+		LM_ERR("failed to initialize context for ws url [%.*s]\n", wsurl->len,
 				wsurl->s);
 		goto error;
 	}
