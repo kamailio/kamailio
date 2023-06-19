@@ -21,7 +21,8 @@
 #define _TLS_RAND_H_
 
 #include <openssl/ssl.h>
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L \
+		&& OPENSSL_VERSION_NUMBER < 0x030000000L
 
 #include <openssl/rand.h>
 
