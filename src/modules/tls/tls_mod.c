@@ -510,7 +510,8 @@ static void mod_destroy(void)
 
 int ksr_rand_engine_param(modparam_t type, void *val)
 {
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L \
+		&& OPENSSL_VERSION_NUMBER < 0x030000000L
 	str *reng;
 
 	if(val == NULL) {
@@ -678,7 +679,8 @@ int mod_register(char *path, int *dlflags, void *p1, void *p2)
 
 	register_tls_hooks(&tls_h);
 
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L \
+		&& OPENSSL_VERSION_NUMBER < 0x030000000L
 	LM_DBG("setting cryptorand random engine\n");
 	RAND_set_rand_method(RAND_ksr_cryptorand_method());
 #endif
