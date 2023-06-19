@@ -39,7 +39,7 @@ Yasin Caner
               3.11. matching_mode (int)
               3.12. cseq_delay (int)
               3.13. fetch_rows(int)
-              3.14. hash_size (string)
+              3.14. hash_size (int)
               3.15. subs_hash_size (int)
               3.16. contacts_hash_size (integer)
               3.17. nat_bflag (integer)
@@ -108,7 +108,7 @@ Chapter 1. Admin Guide
         3.11. matching_mode (int)
         3.12. cseq_delay (int)
         3.13. fetch_rows(int)
-        3.14. hash_size (string)
+        3.14. hash_size (int)
         3.15. subs_hash_size (int)
         3.16. contacts_hash_size (integer)
         3.17. nat_bflag (integer)
@@ -157,7 +157,7 @@ Chapter 1. Admin Guide
    3.11. matching_mode (int)
    3.12. cseq_delay (int)
    3.13. fetch_rows(int)
-   3.14. hash_size (string)
+   3.14. hash_size (int)
    3.15. subs_hash_size (int)
    3.16. contacts_hash_size (integer)
    3.17. nat_bflag (integer)
@@ -315,7 +315,7 @@ st/scscf")
 ...
         modparam("ims_usrloc_scscf", "fetch_rows", 3000)
 
-3.14. hash_size (string)
+3.14. hash_size (int)
 
    The number of entries of the hash table used by usrloc
 
