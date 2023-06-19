@@ -40,11 +40,15 @@ static sr_kemi_xval_t _sr_kemi_core_exec_xval;
  */
 static inline sr_kemi_xval_t* sr_kemi_return_int(sr_kemi_t *ket, int ret)
 {
-	_sr_kemi_core_exec_xval.vtype = SR_KEMIP_INT;
-	_sr_kemi_core_exec_xval.v.n = ret;
+	if(ket->rtype & SR_KEMIP_BOOL) {
+		_sr_kemi_core_exec_xval.vtype = SR_KEMIP_BOOL;
+		_sr_kemi_core_exec_xval.v.n = ret;
+	} else {
+		_sr_kemi_core_exec_xval.vtype = SR_KEMIP_INT;
+		_sr_kemi_core_exec_xval.v.n = ret;
+	}
 	return &_sr_kemi_core_exec_xval;
 }
-
 
 /**
  *
