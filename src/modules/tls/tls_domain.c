@@ -30,6 +30,10 @@
 #include <openssl/bn.h>
 #include <openssl/dh.h>
 
+#if OPENSSL_VERSION_NUMBER >= 0x030000000L
+#define OPENSSL_NO_ENGINE
+#endif
+
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
 #include "tls_map.h"

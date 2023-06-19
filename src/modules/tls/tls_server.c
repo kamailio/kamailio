@@ -128,6 +128,9 @@ int tls_run_event_routes(struct tcp_connection *c);
 	#endif /* __SUNPRO_c */
 #endif /* TLS_RD_DEBUG */
 
+#if OPENSSL_VERSION_NUMBER >= 0x030000000L
+#define OPENSSL_NO_ENGINE
+#endif
 
 extern str sr_tls_xavp_cfg;
 

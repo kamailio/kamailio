@@ -87,6 +87,9 @@ int ksr_rand_engine_param(modparam_t type, void* val);
 
 MODULE_VERSION
 
+#if OPENSSL_VERSION_NUMBER >= 0x030000000L
+#define OPENSSL_NO_ENGINE
+#endif
 
 extern str sr_tls_event_callback;
 str sr_tls_xavp_cfg = {0, 0};
