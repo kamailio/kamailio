@@ -571,8 +571,8 @@ modparam("msilo", "use_contact", 0)
 
 3.26. snd_time_avp (str)
 
-   The name of an AVP which may contain the time when to sent the received
-   message as reminder. The AVP is used ony by m_store().
+   The name of an AVP which may contain the time when to send the received
+   message as reminder. The AVP is used only by m_store().
 
    If the parameter is not set, the module does not look for this AVP. If
    the value is set to a valid AVP name, then the module expects in the
