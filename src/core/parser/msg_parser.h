@@ -445,7 +445,7 @@ typedef struct sip_msg
 	 * runing failure handlers - see modules/tm/t_reply.c */
 } sip_msg_t;
 
-/*! \brief pointer to a fakes message which was never received ;
+/*! \brief pointer to a faked message which was never received ;
 	(when this message is "relayed", it is generated out
 	of the original request)
 */

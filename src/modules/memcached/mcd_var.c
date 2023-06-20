@@ -93,7 +93,7 @@ static inline int pv_mcd_key_expiry_split_str(
 }
 
 /*!
- * \brief Checks if the key is avaiable and not too long, hashing it with MD5 if necessary.
+ * \brief Checks if the key is available and not too long, hashing it with MD5 if necessary.
  * \param msg SIP message
  * \param param pseudo-variable input parameter
  * \param key output string name

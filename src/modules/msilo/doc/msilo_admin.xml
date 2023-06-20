@@ -560,8 +560,8 @@ modparam("msilo", "use_contact", 0)
 	<section id="msilo.p.snd_time_avp">
 		<title><varname>snd_time_avp</varname> (str)</title>
 		<para>
-		The name of an AVP which may contain the time when to sent
-		the received message as reminder. The AVP is used ony by m_store().
+		The name of an AVP which may contain the time when to send
+		the received message as reminder. The AVP is used only by m_store().
 		</para>
 		<para>
 		If the parameter is not set, the module does not look for this AVP. If

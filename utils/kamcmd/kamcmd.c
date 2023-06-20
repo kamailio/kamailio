@@ -634,7 +634,7 @@ static int binrpc_errno = 0;
  * returns < 0 on error, reply size on success + initializes in_pkt
  * if ret==-2 (parse error), sets binrpc_errno to the binrpc error
  * error returns: -1 - read error (check errno)
- *                -2 - binrpc parse error (chekc binrpc_errno)
+ *                -2 - binrpc parse error (check binrpc_errno)
  *                -3 - cookie error (the cookied doesn't match)
  *                -4 - message too big */
 static int get_reply(int s, unsigned char *reply_buf, int max_reply_size,

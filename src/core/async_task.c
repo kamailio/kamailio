@@ -143,7 +143,7 @@ int async_task_init(void)
 	int nrg = 0;
 	async_wgroup_t *awg;
 
-	LM_DBG("start initializing asynk task framework\n");
+	LM_DBG("start initializing async task framework\n");
 	if(_async_wgroup_list == NULL || _async_wgroup_list->workers <= 0)
 		return 0;
 
@@ -184,7 +184,7 @@ int async_task_child_init(int rank)
 	if(_async_wgroup_list == NULL || _async_wgroup_list->workers <= 0)
 		return 0;
 
-	LM_DBG("child initializing asynk task framework\n");
+	LM_DBG("child initializing async task framework\n");
 
 	if(rank == PROC_INIT) {
 		if(async_task_init_sockets() < 0) {
@@ -406,7 +406,7 @@ int async_task_push(async_task_t *task)
 
 	len = write(_async_wgroup_list->sockets[1], &task, sizeof(async_task_t *));
 	if(len <= 0) {
-		LM_ERR("failed to pass the task to asynk workers\n");
+		LM_ERR("failed to pass the task to async workers\n");
 		return -1;
 	}
 	LM_DBG("task sent [%p]\n", task);

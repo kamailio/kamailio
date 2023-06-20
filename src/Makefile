@@ -32,7 +32,7 @@ include Makefile.targets
 err_fail?=1
 
 # whether or not to install $(MAIN_NAME).cfg or just $(MAIN_NAME).cfg.default
-# ($(MAIN_NAME).cfg will never be overwritten by make install, this is usefull
+# ($(MAIN_NAME).cfg will never be overwritten by make install, this is useful
 #  when creating packages)
 skip_cfg_install?=
 

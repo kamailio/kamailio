@@ -387,10 +387,10 @@ int main(int argc, char *argv[])
 	shoot(buff, address, lport, rport );
 
 	/* visual studio closes the debug console as soon as the 
-	program terminates. this is to hold the window from collapsing
+	program terminates. This is to hold the window from collapsing
 	Uncomment it if needed.
 	getchar();*/
-	
+
 
 	return 0;
 }

@@ -360,7 +360,7 @@ int timerlog = L_WARN;
    good for trouble-shooting
 */
 int sip_warning = 0;
-/* should localy-generated messages include server's signature?
+/* should locally-generated messages include server's signature?
    be default yes, good for trouble-shooting
 */
 int server_signature=1;
@@ -405,8 +405,8 @@ int disable_core_dump=0; /* by default enabled */
 int open_files_limit=-1; /* don't touch it by default */
 
 /* memory options */
-int shm_force_alloc=0; /* force immediate (on startup) page allocation
-						  (by writting 0 in the pages), useful if
+int shm_force_alloc = 0; /* force immediate (on startup) page allocation
+						  (by writing 0 in the pages), useful if
 						  mlock_pages is also 1 */
 int mlock_pages=0; /* default off, try to disable swapping */
 
@@ -1048,9 +1048,8 @@ static void free_name_lst(struct name_lst* lst)
 }
 
 
-
 /* parse h and returns a name lst (flags are set to SI_IS_MHOMED if
- * h contains more then one name or contains a name surrounded by '(' ')' )
+ * h contains more than one name or contains a name surrounded by '(' ')' )
  * valid formats:    "hostname"
  *                   "(hostname, hostname1, hostname2)"
  *                   "(hostname hostname1 hostname2)"
@@ -1131,7 +1130,7 @@ error:
  * where proto= udp|tcp|tls|sctp
  * @param s  - string (like above)
  * @param host - will be filled with the host part
- *               Note: for multi-homing it wil contain all the addresses
+ *               Note: for multi-homing it will contain all the addresses
  *               (e.g.: "sctp:(1.2.3.4, 5.6.7.8)" => host="(1.2.3.4, 5.6.7.8)")
  * @param hlen - will be filled with the length of the host part.
  * @param port - will be filled with the port if present or 0 if it's not.
@@ -1200,7 +1199,7 @@ int parse_phostport(char* s, char** host, int* hlen,
 		*host=first+1;
 		*hlen=(int)(p-*host);
 	}else{
-		/* valid port => its host:port */
+		/* valid port => it is host:port */
 		*proto=0;
 		*host=s;
 		*hlen=(int)(first-*host);
@@ -1222,14 +1221,13 @@ error_port:
 }
 
 
-
 /** get protocol host, port and MH addresses list from a string representation.
  * parses [proto:]host[:port]  or
  *  [proto:](host_1, host_2, ... host_n)[:port]
  * where proto= udp|tcp|tls|sctp
  * @param s  - string (like above)
  * @param host - will be filled with the host part
- *               Note: for multi-homing it wil contain all the addresses
+ *               Note: for multi-homing it will contain all the addresses
  *               (e.g.: "sctp:(1.2.3.4, 5.6.7.8)" => host="(1.2.3.4, 5.6.7.8)")
  * @param hlen - will be filled with the length of the host part.
  * @param port - will be filled with the port if present or 0 if it's not.
@@ -1247,7 +1245,6 @@ static struct name_lst* parse_phostport_mh(char* s, char** host, int* hlen,
 }
 
 
-
 /** Update \c cfg_file variable to contain full pathname or '-' (for stdin)
  * allocated in system memory. The function updates
  * the value of \c cfg_file global variable to contain full absolute pathname
@@ -1255,7 +1252,7 @@ static struct name_lst* parse_phostport_mh(char* s, char** host, int* hlen,
  * determine the default path to the configuration file if the user did not
  * specify one using the command line option. If \c cfg_file contains an
  * absolute pathname then it is cloned unmodified, if it contains a relative
- * pathanme than the value returned by \c getcwd function will be added at the
+ * pathname then the value returned by \c getcwd function will be added at the
  * beginning. This function must be run before changing its current working
  * directory to / (in daemon mode).
  * @return Zero on success, negative number
@@ -2060,10 +2057,10 @@ int main(int argc, char** argv)
 	/* command line options */
 	options=  ":f:cm:M:dVIhEeb:l:L:n:vKrRDTN:W:w:t:u:g:P:G:SQ:O:a:A:x:X:Y:";
 	/* Handle special command line arguments, that must be treated before
-	 * intializing the various subsystem or before parsing other arguments:
+	 * initializing the various subsystem or before parsing other arguments:
 	 *  - get the startup debug and log_stderr values
-	 *  - look if pkg mem size is overriden on the command line (-M) and get
-	 *    the new value here (before intializing pkg_mem).
+	 *  - look if pkg mem size is overridden on the command line (-M) and get
+	 *    the new value here (before initializing pkg_mem).
 	 *  - look if there is a -h, e.g. -f -h construction won't be caught
 	 *    later
 	 */
@@ -2870,7 +2867,7 @@ try_again:
 	ksr_sockets_index();
 	if (default_core_cfg.dns_try_ipv6 && !(socket_types & SOCKET_T_IPV6)){
 		/* if we are not listening on any ipv6 address => no point
-		 * to try to resovle ipv6 addresses */
+		 * to try to resolve ipv6 addresses */
 		default_core_cfg.dns_try_ipv6=0;
 	}
 	/* print all the listen addresses */
@@ -3111,7 +3108,7 @@ error:
 #ifdef KSR_PTHREAD_MUTEX_SHARED
 
 /**
- * code to set PTHREAD_PROCESS_SHARED attribute for phtread mutex to cope
+ * code to set PTHREAD_PROCESS_SHARED attribute for pthread mutex to cope
  * with libssl 1.1+ thread-only mutex initialization
  */
 

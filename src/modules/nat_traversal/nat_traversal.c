@@ -1168,7 +1168,7 @@ static void __dialog_destroy(
 
 	lock_get(&param->lock);
 
-	// remove all keepalives on unanswered branches. this is neded because
+	// remove all keepalives on unanswered branches. This is needed because
 	// we may transit from early to ended without going through confirmed
 	for(i = 0; i < param->callee_candidates.count; i++) {
 		h = HASH(nat_table, param->callee_candidates.uri[i]);
