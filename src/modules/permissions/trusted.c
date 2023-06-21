@@ -655,7 +655,7 @@ error:
 
 /*
  * Checks based on source address and protocol given in pvar arguments and
- * and requests's From URI, if request can be trusted without authentication.
+ * requests' From URI, if request can be trusted without authentication.
  */
 int allow_trusted_2(struct sip_msg *_msg, char *_src_ip_sp, char *_proto_sp)
 {
@@ -680,7 +680,7 @@ int allow_trusted_2(struct sip_msg *_msg, char *_src_ip_sp, char *_proto_sp)
 
 /*
  * Checks based on source address and protocol given in pvar arguments and
- * and requests's From URI, if request can be trusted without authentication.
+ * requests' From URI, if request can be trusted without authentication.
  */
 int allow_trusted_3(struct sip_msg *_msg, char *_src_ip_sp, char *_proto_sp,
 		char *_from_uri)
