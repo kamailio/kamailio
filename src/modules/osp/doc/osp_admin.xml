@@ -98,7 +98,7 @@ modparam("osp","device_ip","[1.1.1.1]")
     </section>
     <section>
       <title><varname>device_port</varname></title>
-      <para>The device_port (string) parameter is an optional field which includes the SIP port being used by &kamailio; in the peering request (as SourceAlternate type=network) to the peering server. If is not configured, this information is not included in the peering request. This field is useful if multiple &kamailio; are running on the same Linux computer since it enables the peering server to administer different peering policies based on different SIP proxies. This parameter has not been implemented yet.</para>
+      <para>The device_port (string) parameter is an optional field which includes the SIP port being used by &kamailio; in the peering request (as SourceAlternate type=network) to the peering server. If it is not configured, this information is not included in the peering request. This field is useful if multiple &kamailio; are running on the same Linux computer since it enables the peering server to administer different peering policies based on different SIP proxies. This parameter has not been implemented yet.</para>
       <example>
         <title>Setting the device port</title>
         <programlisting format="linespecific">
@@ -234,7 +234,7 @@ modparam("osp","redirection_uri_format",1)
     </section>
     <section>
       <title><varname>source_networkid_avp</varname></title>
-      <para>The source_networkid_avp (string) parameter instructs the OSP module to use the defined AVP to pass the source network ID value. The default value is "$avp(s:_osp_source_networkid_)".  Then the source network ID can be set by "$avp(s:_osp_source_networkid_) = pseudo-variables".  All pseudo variables are described in http://kamailio.org/dokuwiki/doku.php/pseudovariables:1.3.x.</para>
+      <para>The source_networkid_avp (string) parameter instructs the OSP module to use the defined AVP to pass the source network ID value. The default value is "$avp(s:_osp_source_networkid_)".  Then the source network ID can be set by "$avp(s:_osp_source_networkid_) = pseudo-variables".  All pseudo variables are described in https://www.kamailio.org/wikidocs/cookbooks/devel/pseudovariables/.</para>
       <example>
         <title>Setting the source network ID AVP</title>
         <programlisting format="linespecific">

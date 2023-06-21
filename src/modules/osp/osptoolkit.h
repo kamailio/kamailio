@@ -35,7 +35,7 @@
 
 /* 
  * This module implements help functions for the OSP toolkit.
- * Some of the functions maybe impemented by the toolkit in the future.
+ * Some of the functions may be implemented by the toolkit in the future.
  */
 
 /* 

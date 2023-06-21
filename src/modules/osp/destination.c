@@ -239,7 +239,7 @@ osp_dest *ospGetLastOrigDestination(void)
 		if(dest->used == 1) {
 			if(dest->supported == 1) {
 				lastdest = dest;
-				LM_DBG("curent destination '%s'\n", lastdest->host);
+				LM_DBG("current destination '%s'\n", lastdest->host);
 			}
 		} else {
 			break;
