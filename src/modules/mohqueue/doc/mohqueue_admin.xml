@@ -361,7 +361,7 @@ restarted it loses the internal database and clears the external
 one.
       </para>
       <para>
-On a reqular basis it checks the external table that defines the
+On a regular basis it checks the external table that defines the
 queues to see if the definition has changed. It makes this check
 under the following conditions: the queue has not been checked in the
 last 60 seconds <emphasis>AND</emphasis> no call is currently in
