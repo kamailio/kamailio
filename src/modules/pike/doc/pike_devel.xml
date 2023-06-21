@@ -69,7 +69,7 @@ tree root /                \ - 142
 	variable number of hits necessary to block an &ip;.
     </para>
     <para>
-	The maximum number of hits to turn an address red are (n is the address's number of bytes):
+	The maximum number of hits to turn an address red are (n is the address' number of bytes):
     </para>
     <para>
 	1 (first byte) + x (second byte) + (x / 2) * (n - 2) (for the rest of the bytes) + (n - 1)
