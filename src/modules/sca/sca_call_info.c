@@ -1379,7 +1379,7 @@ void sca_call_info_ack_from_handler(sip_msg_t *msg, str *from_aor, str *to_aor)
 		// Polycom's music-on-hold implementation uses an INVITE with
 		// an empty body to get the remote party's SDP info, then INVITEs
 		// a pre-defined URI on a media server, using the remote party's
-		// SDP as the INVITE body. the media server streams hold music to
+		// SDP as the INVITE body. The media server streams hold music to
 		// the remote party.
 		//
 		// because the INVITE that triggers the hold  in this case doesn't
