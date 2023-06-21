@@ -45,6 +45,10 @@
 #include <pthread.h>
 #include <openssl/ssl.h>
 
+#if OPENSSL_VERSION_NUMBER >= 0x030000000L
+#include <openssl/rand.h>
+#endif
+
 #include "../../core/dprint.h"
 #include "../../core/mem/shm_mem.h"
 #include "../../core/tcp_init.h"
@@ -750,7 +754,44 @@ int tls_h_mod_pre_init_f(void)
 	SSL_library_init();
 #endif
 	SSL_load_error_strings();
-	tls_mod_preinitialized=1;
+
+#if OPENSSL_VERSION_NUMBER >= 0x030000000L
+	do {
+		OSSL_LIB_CTX *osslglobal = NULL;
+		EVP_RAND_CTX *randctx = NULL;
+
+		LM_DBG("enabling locking for rand ctx\n");
+
+		osslglobal = OSSL_LIB_CTX_get0_global_default();
+		if(osslglobal == NULL) {
+			LM_ERR("failed to get lib ssl global ctx\n");
+			return -1;
+		}
+
+		randctx = RAND_get0_primary(osslglobal);
+		if(randctx == NULL) {
+			LM_ERR("primary rand ctx is null\n");
+			return -1;
+		}
+		EVP_RAND_enable_locking(randctx);
+
+		randctx = RAND_get0_public(osslglobal);
+		if(randctx == NULL) {
+			LM_ERR("public rand ctx is null\n");
+			return -1;
+		}
+		EVP_RAND_enable_locking(randctx);
+
+		randctx = RAND_get0_private(osslglobal);
+		if(randctx == NULL) {
+			LM_ERR("private rand ctx is null\n");
+			return -1;
+		}
+		EVP_RAND_enable_locking(randctx);
+	} while(0);
+#endif
+
+	tls_mod_preinitialized = 1;
 	return 0;
 }
 
