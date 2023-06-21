@@ -214,7 +214,7 @@ void init_kamailioObjects(void)
  * The following are thresholds used by:
  * 
  * - The alarm monitoring process, to decide when to send out traps.  
- * - All scalars involving alarm status's and thresholds.  
+ * - All scalars involving alarm status' and thresholds.
  *
  * By default they are initialized to -1, which disables alarm checks.
  * These are set through the kamailio.cfg file with the following modparams to
