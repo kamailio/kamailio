@@ -916,7 +916,7 @@ static inline int add_contacts(struct sip_msg *_m, udomain_t *_d, str *_a,
 
 
 /*!\brief
- * Process REGISTER request and save it's contacts
+ * Process REGISTER request and save its contacts
  */
 #define is_cflag_set(_name) (((unsigned int)_cflags) & (_name))
 int save(struct sip_msg *_m, udomain_t *_d, int _cflags, str *_uri)

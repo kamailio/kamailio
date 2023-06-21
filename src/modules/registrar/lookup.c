@@ -331,7 +331,7 @@ int lookup_helper(struct sip_msg *_m, udomain_t *_d, str *_uri, int _mode)
 
 		ptr = r->contacts;
 		ret = -1;
-		/* look first for an un-expired and suported contact */
+		/* look first for an un-expired and supported contact */
 		while(ptr) {
 			if(VALID_CONTACT(ptr, act_time)
 					|| cfg_get(
@@ -377,7 +377,7 @@ int lookup_helper(struct sip_msg *_m, udomain_t *_d, str *_uri, int _mode)
 			return -1;
 		}
 		aor = *ptr->aor;
-		/* test if not expired and contact with suported method */
+		/* test if not expired and contact with supported method */
 		if(ptr) {
 			if(!(VALID_CONTACT(ptr, act_time)
 					   || cfg_get(registrar, registrar_cfg,
