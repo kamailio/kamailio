@@ -209,7 +209,7 @@ static int mod_init(void)
 }
 
 /**
- * Called only once when Kamailio is shuting down to clean up module
+ * Called only once when Kamailio is shutting down to clean up module
  * resources.
  */
 static void mod_destroy()
@@ -346,7 +346,7 @@ static void rms_dialog_manage_loop()
  * The rank will be o for the main process calling this function,
  * or 1 through n for each listener process. The rank can have a negative
  * value if it is a special process calling the child init function.
- * Other then the listeners, the rank will equal one of these values:
+ * Other than the listeners, the rank will equal one of these values:
  * PROC_MAIN      0  Main ser process
  * PROC_TIMER    -1  Timer attendant process
  * PROC_FIFO     -2  FIFO attendant process
@@ -1096,7 +1096,7 @@ static int rms_sip_request_f(struct sip_msg *msg)
 		if(di->bridged_di) { // bridged
 			LM_NOTICE("BYE in brigde mode\n");
 			rms_sip_forward(di, msg, method);
-		} else { // connected localy
+		} else { // connected locally
 			LM_NOTICE("BYE in local mode\n");
 			rms_disconnect(msg);
 			return 1;

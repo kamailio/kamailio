@@ -69,7 +69,7 @@
 				<emphasis>oRTP</emphasis> git clone <ulink url="git://git.linphone.org/ortp.git">git://git.linphone.org/ortp.git</ulink>
 			</para>
 			<para>
-				oRTP is a library implemeting Real-time Transport Protocol (RFC 3550), distributed under GNU GPLv2 or proprietary license.
+				oRTP is a library implementing Real-time Transport Protocol (RFC 3550), distributed under GNU GPLv2 or proprietary license.
 			</para>
 			</listitem>
 			<listitem>
@@ -263,7 +263,7 @@ route {
 	<section id="rtp_media_server.f.rms_play">
 		<title><varname>rms_play</varname> (file, event_route)</title>
 		<para>
-		Play a wav file, a resampler is automaticaly configured to resample
+		Play a wav file, a resampler is automatically configured to resample
 		and convert stereo to mono if needed.
 		</para><para>
 		The second parameter is the event route that will be called when the file was played.
