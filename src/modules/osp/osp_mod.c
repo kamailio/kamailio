@@ -202,7 +202,7 @@ static int ospInitMod(void)
 }
 
 /*
- * Destrroy OSP module
+ * Destroy OSP module
  */
 static void ospDestMod(void)
 {

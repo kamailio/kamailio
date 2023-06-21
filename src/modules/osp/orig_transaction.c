@@ -410,7 +410,7 @@ int ospCheckTranslation(struct sip_msg *msg, char *ignore1, char *ignore2)
 	if(search_first_avp(AVP_NAME_STR, (int_str)OSP_CALLING_NAME, &callingval, 0)
 			!= NULL) {
 		if(callingval.n == 0) {
-			LM_DBG("the calling number does not been translated\n");
+			LM_DBG("the calling number has not been translated\n");
 		} else {
 			LM_DBG("the calling number is translated\n");
 			result = MODULE_RETURNCODE_TRUE;
