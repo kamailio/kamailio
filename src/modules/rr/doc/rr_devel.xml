@@ -97,7 +97,7 @@ record_route_advertised_address("1.2.3.4:5090");
 		<function moreinfo="none">add_rr_param(msg, param)</function>
 		</title>
 		<para>
-		Adds a parameter to the requests's Record-Route URI (param must be in 
+		Adds a parameter to the requests' Record-Route URI (param must be in 
 		<quote>;name=value</quote> format).
 		</para>
 		<para>
