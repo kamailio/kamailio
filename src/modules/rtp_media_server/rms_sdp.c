@@ -269,7 +269,7 @@ PayloadType *rms_sdp_select_payload(rms_sdp_info_t *sdp)
 		payload_type_number = strtok(NULL, " ");
 	}
 	if(!pt->mime_type) {
-		LM_INFO("unsuported codec\n");
+		LM_INFO("unsupported codec\n");
 		shm_free(pt); // payload_type_destroy(pt);
 		return NULL;
 	}
