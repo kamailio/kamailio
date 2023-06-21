@@ -193,7 +193,7 @@ static void send_notifies(db1_res_t *result, int did_col, int resource_uri_col,
 	bstr.s[bstr.len] = '\0';
 
 	/* Allocate an initial buffer for the multipart body.
-	 * This buffer will be reallocated if neccessary */
+	 * This buffer will be reallocated if necessary */
 	buf = pkg_malloc(size * sizeof(char));
 	if(buf == NULL) {
 		ERR_MEM(PKG_MEM_STR);
@@ -248,7 +248,7 @@ static void send_notifies(db1_res_t *result, int did_col, int resource_uri_col,
 			resource_added = 0;
 
 			/* !!!! for now I will include the auth state without checking if
-			 * it has changed - > in future chech if it works */
+			 * it has changed - > in future check if it works */
 		}
 
 		/* add a node in rlmi_doc and if any presence state registered add
@@ -1084,7 +1084,7 @@ void timer_send_notify(unsigned int ticks, void *param)
 }
 
 
-/* function to periodicaly clean the rls_presentity table */
+/* function to periodically clean the rls_presentity table */
 
 void rls_presentity_clean(unsigned int ticks, void *param)
 {

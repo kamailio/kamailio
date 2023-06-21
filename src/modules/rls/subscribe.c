@@ -565,7 +565,7 @@ int rls_handle_subscribe(
 		if(rls_get_service_list(&subs.pres_uri, &subs.watcher_user,
 				   &subs.watcher_domain, &service_node, &doc)
 				< 0) {
-			LM_ERR("while attepmting to get a resource list\n");
+			LM_ERR("while attempting to get a resource list\n");
 			goto error;
 		}
 		if(doc == NULL) {
