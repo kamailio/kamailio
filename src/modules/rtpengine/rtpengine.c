@@ -1412,7 +1412,7 @@ static int rtpengine_raise_dtmf_event(char *buffer, int len) {
 			pv_value_t pv_val;
 			int_str val = {0};
 			char intbuf[32];
-			snprintf(intbuf, sizeof(intbuf), "%lli", SRJSON_GET_INT(it));
+			snprintf(intbuf, sizeof(intbuf), "%lld", SRJSON_GET_LLONG(it));
 			memset(&val, 0, sizeof(val));
 
 			pv_val.rs.s = intbuf;
@@ -1427,7 +1427,7 @@ static int rtpengine_raise_dtmf_event(char *buffer, int len) {
 			pv_value_t pv_val;
 			int_str val = {0};
 			char intbuf[32];
-			snprintf(intbuf, sizeof(intbuf), "%lli", SRJSON_GET_INT(it));
+			snprintf(intbuf, sizeof(intbuf), "%lld", SRJSON_GET_LLONG(it));
 			memset(&val, 0, sizeof(val));
 
 			pv_val.rs.s = intbuf;
