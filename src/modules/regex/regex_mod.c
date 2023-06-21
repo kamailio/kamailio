@@ -230,7 +230,7 @@ static void destroy(void)
 }
 
 
-/*! \brief Convert the file content into regular expresions and store them in pcres */
+/*! \brief Convert the file content into regular expressions and store them in pcres */
 static int load_pcres(int action)
 {
 	int i, j;
@@ -307,7 +307,7 @@ static int load_pcres(int action)
 		}
 
 		llen = strlen(line);
-		/* Check if the patter size is too big (aprox) */
+		/* Check if the pattern size is too big (approx) */
 		if(strlen(patterns[i]) + llen >= group_max_size - 4) {
 			LM_ERR("pattern max file exceeded\n");
 			fclose(f);
@@ -387,7 +387,7 @@ static int load_pcres(int action)
 		pcres_tmp[i] = NULL;
 	}
 
-	/* Compile the patters */
+	/* Compile the patterns */
 	for(i = 0; i < num_pcres_tmp; i++) {
 
 		pcre_tmp = pcre_compile(
