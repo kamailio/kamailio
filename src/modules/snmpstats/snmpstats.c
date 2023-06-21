@@ -166,7 +166,7 @@ struct module_exports exports = {
 /*!
  * The module will fork off a child process to run an snmp command via execve().
  * We need a customized handler to ignore the SIGCHLD when the execve()
- * finishes.  We keep around the child process's pid for the customized
+ * finishes.  We keep around the child process' pid for the customized
  * handler.
  *
  * Specifically, If the process that generated the SIGCHLD doesn't match this
