@@ -167,7 +167,7 @@ int send_full_notify(
 	}
 
 	/* Allocate an initial buffer for the multipart body.
-	 * This buffer will be reallocated if neccessary */
+	 * This buffer will be reallocated if necessary */
 	multipart_body = (str *)pkg_malloc(sizeof(str));
 	if(multipart_body == NULL) {
 		ERR_MEM(PKG_MEM_STR);

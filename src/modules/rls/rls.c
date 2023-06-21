@@ -616,7 +616,7 @@ static int mod_init(void)
 		return -1;
 	}
 	if(lock_init(rls_update_subs_lock) == NULL) {
-		LM_ERR("Failed to init rls_updae_subs_lock\n");
+		LM_ERR("Failed to init rls_update_subs_lock\n");
 		return -1;
 	}
 
@@ -844,7 +844,7 @@ int rls_restore_db_subs(void)
 	if(db_fetch_query(&rls_dbf, rls_fetch_rows, rls_db, 0, 0, 0, result_cols, 0,
 			   n_result_cols, 0, &res)
 			< 0) {
-		LM_ERR("while querrying table\n");
+		LM_ERR("while querying table\n");
 		if(res) {
 			rls_dbf.free_result(rls_db, res);
 			res = NULL;
