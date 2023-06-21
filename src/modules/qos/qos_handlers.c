@@ -67,7 +67,7 @@ static void qos_dialog_rpc_context_CB(
 
 /**
  * A helper function to setup all the callbacks from the dialog module
- * after we find intrest in the dialog.
+ * after we find interest in the dialog.
  *
  * @param did The Dialog ID.
  * @param info The qos information.

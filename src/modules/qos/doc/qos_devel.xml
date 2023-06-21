@@ -24,14 +24,14 @@
 		<itemizedlist>
 		<listitem>
 			<para><emphasis>struct qos_ctx_st* qos</emphasis> - qos to 
-			register callback to. If maybe NULL only for QOSCB_CREATED callback
+			register callback to. It may be NULL only for QOSCB_CREATED callback
 			type, which is not a per qos type.
 			</para>
 		</listitem>
 		<listitem>
 			<para><emphasis>int type</emphasis> - types of callbacks; more
-			types may be register for the same callback function; only 
-			QOSCB_CREATED must be register alone. Possible types:
+			types may be registered for the same callback function; only 
+			QOSCB_CREATED must be registered alone. Possible types:
 			<itemizedlist>
 			<listitem>
 				<para><emphasis>QOSCB_CREATED</emphasis> - called when a new 
