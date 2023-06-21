@@ -1068,7 +1068,7 @@ append_urihf("CC-Diversion: ", "\r\n");
 		<note>
 		<para>
 			The function is also able to distinguish the compact names. For
-			exmaple <quote>From</quote> will match with <quote>f</quote>
+			example <quote>From</quote> will match with <quote>f</quote>.
 		</para>
 		</note>
 		<para>Meaning of the parameters is as follows:</para>

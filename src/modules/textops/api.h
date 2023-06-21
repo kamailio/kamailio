@@ -66,7 +66,7 @@ typedef int (*bind_textops_f)(textops_api_t *);
 int bind_textops(textops_api_t *);
 
 /*
- * Function to be called direclty from other modules to load
+ * Function to be called directly from other modules to load
  * the textops API.
  */
 inline static int load_textops_api(textops_api_t *tob)

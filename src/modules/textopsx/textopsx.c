@@ -1213,7 +1213,7 @@ static int delete_value_lump(
 	struct lump *l;
 	/* TODO: check already existing lumps */
 	if(hf && val->s == hf->body.s
-			&& val->len == hf->body.len) /* check if remove whole haeder? */
+			&& val->len == hf->body.len) /* check if remove whole header? */
 		l = del_lump(msg, hf->name.s - msg->buf, hf->len, 0);
 	else
 		l = del_lump(msg, val->s - msg->buf, val->len, 0);
