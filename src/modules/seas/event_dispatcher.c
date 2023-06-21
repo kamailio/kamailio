@@ -353,7 +353,7 @@ int dispatcher_main_loop(void)
  * address:
  * 	address to which to listen
  * port:
- * 	base port to which to listen. then port+1 will be the socket
+ * 	base port to which to listen. Then port+1 will be the socket
  * 	for action's delivery.
  * fds:
  * 	in fd[0] the action socket will be put.
