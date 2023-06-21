@@ -83,7 +83,7 @@ int load_qos(struct qos_binds *qosb)
  * the script. This function is called only once.
  *
  * Bind to the dialog module and setup the callbacks. Also initialize
- * the shared memory to store our interninal information in.
+ * the shared memory to store our internal information in.
  */
 static int mod_init(void)
 {

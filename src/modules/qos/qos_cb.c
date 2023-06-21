@@ -76,13 +76,13 @@ int register_qoscb(qos_ctx_t *qos, int types, qos_cb f, void *param)
 
 	if(types & QOSCB_CREATED) {
 		if(types != QOSCB_CREATED) {
-			LM_CRIT("QOSCB_CREATED type must be register alone!\n");
+			LM_CRIT("QOSCB_CREATED type must be registered alone!\n");
 			return -1;
 		}
 	} else {
 		if(qos == 0) {
 			LM_CRIT("non-QOSCB_CREATED type "
-					"must be register to a qos (qos missing)!\n");
+					"must be registered to a qos (qos missing)!\n");
 			return -1;
 		}
 	}
