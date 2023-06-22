@@ -437,6 +437,8 @@ static int ki_jwt_verify_key(
 	jwt_valid_t *jwt_valid = NULL;
 	str sparams = STR_NULL;
 	long lval = 0;
+	char *p;
+	str payload = STR_NULL;
 
 	if(key == NULL || key->s == NULL || alg == NULL || alg->s == NULL
 			|| claims == NULL || claims->s == NULL || claims->len <= 0
@@ -505,6 +507,19 @@ static int ki_jwt_verify_key(
 		_jwt_verify_status = jwt_valid_get_status(jwt_valid);
 		LM_ERR("failed to validate jwt: %08x\n", _jwt_verify_status);
 		goto error;
+	}
+
+	payload.s = jwt_dump_str(jwt, 0);
+	payload.len = strlen(payload.s);
+
+	p = q_memchr(payload.s, '.', payload.len);
+	_jwt_result.s = p + 1;
+	_jwt_result.len = payload.s + payload.len - payload.s;
+
+	if(_jwt_result.len <= 0) {
+		LM_ERR("failed to extract payload from decoded jwt\n");
+		_jwt_result.s = NULL;
+		_jwt_result.len = 0;
 	}
 
 	free_params(params_list);
@@ -639,6 +654,7 @@ static int jwt_pv_get(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 {
 	switch(param->pvn.u.isname.name.n) {
 		case 0:
+		case 2:
 			if(_jwt_result.s == NULL)
 				return pv_get_null(msg, param, res);
 			return pv_get_strval(msg, param, res, &_jwt_result);
@@ -658,6 +674,8 @@ static int jwt_pv_parse_name(pv_spec_t *sp, str *in)
 		sp->pvp.pvn.u.isname.name.n = 0;
 	} else if(in->len == 6 && strncmp(in->s, "status", 6) == 0) {
 		sp->pvp.pvn.u.isname.name.n = 1;
+	} else if(in->len == 7 && strncmp(in->s, "payload", 7) == 0) {
+		sp->pvp.pvn.u.isname.name.n = 2;
 	} else {
 		LM_ERR("unknown inner name [%.*s]\n", in->len, in->s);
 		return -1;

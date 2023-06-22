@@ -267,6 +267,11 @@ modparam("jwt", "key_mode", 1)
 			status - the status of verification after a failed jwt_verify().
 			</para>
 			</listitem>
+			<listitem>
+			<para>
+			payload - the decoded payload of JWT after successful jwt_verify().
+			</para>
+			</listitem>
 		</itemizedlist>
 		<example>
 		<title><function>$jwt(name)</function> usage</title>
