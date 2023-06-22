@@ -161,8 +161,13 @@ static int curL_request_url(struct sip_msg *_m, const char *_met,
 	res = curl_easy_setopt(
 			curl, CURLOPT_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS);
 #endif
+
+#if defined(CURL_AT_LEAST_VERSION) && CURL_AT_LEAST_VERSION(7, 85, 0)
+	res = curl_easy_setopt(curl, CURLOPT_REDIR_PROTOCOLS_STR, "http,https");
+#else
 	res = curl_easy_setopt(
 			curl, CURLOPT_REDIR_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS);
+#endif
 
 	if(_met != NULL) {
 		/* Enforce method (GET, PUT, ...) */
