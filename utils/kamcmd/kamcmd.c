@@ -1399,6 +1399,8 @@ void free_cfg_grp_lst()
 	while(grp){
 		last=grp;
 		grp=grp->next;
+		if(last->var_names)
+			free(last->var_names);
 		free(last);
 	}
 	cfg_grp_lst=0;
