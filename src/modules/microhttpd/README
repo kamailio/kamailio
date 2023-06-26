@@ -1,0 +1,81 @@
+MicroHTTPd Module
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+Edited by
+
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
+   Copyright © 2023 asipto.com
+     __________________________________________________________________
+
+   Table of Contents
+
+   1. Admin Guide
+
+        1. Overview
+        2. Dependencies
+
+              2.1. Kamailio Modules
+              2.2. External Libraries or Applications
+
+        3. Parameters
+
+              3.1. listen_port (int)
+
+   List of Examples
+
+   1.1. Set listen_port parameter
+
+Chapter 1. Admin Guide
+
+   Table of Contents
+
+   1. Overview
+   2. Dependencies
+
+        2.1. Kamailio Modules
+        2.2. External Libraries or Applications
+
+   3. Parameters
+
+        3.1. listen_port (int)
+
+1. Overview
+
+   This module implements an embedded HTTP server using libmicrohttpd.
+
+2. Dependencies
+
+   2.1. Kamailio Modules
+   2.2. External Libraries or Applications
+
+2.1. Kamailio Modules
+
+   The following modules must be loaded before this module:
+     * none.
+
+2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed before
+   running Kamailio with this module loaded:
+     * libmicrohhtpd - libmicrohttpd library
+
+3. Parameters
+
+   3.1. listen_port (int)
+
+3.1. listen_port (int)
+
+   Port to listen for HTTP connection.
+
+   Default value is 8280.
+
+   Example 1.1. Set listen_port parameter
+...
+modparam("microhttpd", "listen_port", 8284)
+...
