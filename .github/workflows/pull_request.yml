@@ -28,9 +28,9 @@ jobs:
     strategy:
       matrix:
         include:
-          - distribution: bullseye
+          - distribution: bookworm
             compilier: gcc
-          - distribution: bullseye
+          - distribution: bookworm
             compilier: clang
     steps:
       - uses: actions/checkout@v2
