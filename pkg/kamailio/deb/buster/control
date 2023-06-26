@@ -26,6 +26,7 @@ Build-Depends:
  liblua5.1-0-dev,
  libmaxminddb-dev,
  libmemcached-dev,
+ libmicrohttpd-dev,
  libmnl-dev,
  libmongoc-dev,
  libmono-2.0-dev [amd64 armel armhf i386 mipsel kfreebsd-amd64 kfreebsd-i386 ppc64 ppc64el s390x],
