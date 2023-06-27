@@ -50,7 +50,8 @@
 		</para>
 	</section>
 	</section>
-<section>
+
+	<section>
 	<title>Parameters</title>
 	<section id="microhttpd.p.listen">
 		<title><varname>listen_port</varname> (int)</title>
@@ -71,7 +72,84 @@ modparam("microhttpd", "listen_port", 8284)
 </programlisting>
 		</example>
 	</section>
-
+	<section id="microhttpd.p.event_callback">
+		<title><varname>event_callback</varname> (str)</title>
+		<para>
+			The name of the function in the kemi configuration file (embedded
+			scripting language such as Lua, Python, ...) to be executed instead
+			of event_route[microhttpd:request] block.
+		</para>
+		<para>
+			The function has one string parameter with the value "microhttpd:request".
+		</para>
+		<para>
+		<emphasis>
+			Default value is 'empty' (no function is executed for events).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>event_callback</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("microhttpd", "event_callback", "ksr_microhttpd_event")
+...
+-- event callback function implemented in Lua
+function ksr_microhttpd_event(evname)
+	KSR.info("===== microhttpd module triggered event: " .. evname .. "\n");
+	return 1;
+end
+...
+</programlisting>
+	    </example>
 	</section>
+	</section>
+
+	<section>
+	<title>Functions</title>
+	<section id="microhttpd.f.mhttpd_reply">
+	    <title>
+		<function moreinfo="none">mhttpd_reply(code, reason, ctype, body)</function>
+	    </title>
+	    <para>
+		Send back a reply with content-type and body.
+	    </para>
+		<example>
+		<title><function>mhttpd_reply</function> usage</title>
+		<programlisting format="linespecific">
+...
+event_route[microhttpd:request] {
+    mhttpd_reply("200", "OK", "text/html",
+        "&lt;html&gt;&lt;body&gt;OK&lt;/body&gt;&lt;/html&gt;");
+}
+...
+</programlisting>
+	    </example>
+	</section>
+	</section>
+
+   <section>
+    <title>Event Routes</title>
+    <section id="microhttpd.evr.request">
+        <title>
+        <function moreinfo="none">microhttpd:request</function>
+        </title>
+        <para>
+			The event route is executed when a new HTTP request is received.
+        </para>
+        <programlisting  format="linespecific">
+...
+...
+loadmodule "microhttpd.so
+...
+event_route[microhttpd:request] {
+    xinfo("request: $mhttpd(method) - url: $mhttpd(url) - data: [$mhttpd(data)]\n");
+    mhttpd_reply("200", "OK", "text/html",
+        "&lt;html&gt;&lt;body&gt;OK&lt;/body&gt;&lt;/html&gt;");
+}
+...
+        </programlisting>
+	</section>
+	</section>
+
 </chapter>
 
