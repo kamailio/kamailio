@@ -560,10 +560,10 @@ int jsonrpc_fifo_mod_init(void)
 				LM_ERR("no more pkg\n");
 				return -1;
 			}
-			strcpy(p, runtime_dir);
+			strncpy(p, runtime_dir, len);
 			if(sep)
 				strcat(p, "/");
-			strcat(p, jsonrpc_fifo);
+			strncat(p, jsonrpc_fifo, len - strlen(runtime_dir) - sep);
 			jsonrpc_fifo = p;
 			LM_DBG("fifo path is [%s]\n", jsonrpc_fifo);
 		}

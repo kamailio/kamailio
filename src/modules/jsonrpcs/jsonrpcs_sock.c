@@ -205,10 +205,10 @@ int jsonrpc_dgram_mod_init(void)
 				LM_ERR("no more pkg\n");
 				return -1;
 			}
-			strcpy(p, runtime_dir);
+			strncpy(p, runtime_dir, len);
 			if(sep)
 				strcat(p, "/");
-			strcat(p, jsonrpc_dgram_socket);
+			strncat(p, jsonrpc_dgram_socket, len - strlen(runtime_dir) - sep);
 			jsonrpc_dgram_socket = p;
 			LM_DBG("unix socket path is [%s]\n", jsonrpc_dgram_socket);
 		}
