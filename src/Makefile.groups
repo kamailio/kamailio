@@ -235,6 +235,9 @@ mod_list_nats=nats
 # - modules depending on ruxc library
 mod_list_ruxc=ruxc
 
+# - modules depending on microhttpd library
+mod_list_microhttpd=microhttpd
+
 # - modules depending on secsipid library
 mod_list_secsipid=secsipid secsipid_proc
 
@@ -284,6 +287,7 @@ mod_list_all=$(sort $(mod_list_basic) $(mod_list_extra) \
 			   $(mod_list_stirshaken) \
 			   $(mod_list_tlsa) \
 			   $(mod_list_tls_wolfssl) \
+			   $(mod_list_microhttpd) \
 			   $(mod_list_rtp_media_server)
 
 
@@ -528,6 +532,9 @@ module_group_knats=$(mod_list_nats)
 
 # K ruxc modules
 module_group_kruxc=$(mod_list_ruxc)
+
+# K microhttpd module
+module_group_kmicrohttpd=$(mod_list_microhttpd)
 
 # K secsipid modules
 module_group_ksecsipid=$(mod_list_secsipid)
