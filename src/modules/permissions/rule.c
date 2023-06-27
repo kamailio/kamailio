@@ -1,7 +1,7 @@
 /*
  * PERMISSIONS module
  *
- * Copyright (C) 2003 Miklós Tirpák (mtirpak@sztaki.hu)
+ * Copyright (C) 2003 MiklÃ³s TirpÃ¡k (mtirpak@sztaki.hu)
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -148,7 +148,7 @@ expression *new_expression(char *sv)
 		return 0;
 	}
 
-	strcpy(e->value, sv);
+	strncpy(e->value, sv, EXPRESSION_LENGTH);
 
 	e->reg_value = (regex_t *)pkg_malloc(sizeof(regex_t));
 	if(!e->reg_value) {
