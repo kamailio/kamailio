@@ -262,11 +262,52 @@ int pv_get_mhttpd(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 	}
 }
 
-static int w_mhttpd_send_reply(
-		sip_msg_t *msg, char *pcode, char *preason, char *pctype, char *pbody)
+/**
+ *
+ */
+static int ksr_mhttpd_send_reply(
+		sip_msg_t *msg, int rcode, str *sreason, str *sctype, str *sbody)
 {
 	struct MHD_Response *response;
 	int ret;
+
+	if(_ksr_mhttpd_ctx.connection == NULL) {
+		LM_ERR("no connection available\n");
+		return -1;
+	}
+
+	if(rcode < 100 || rcode >= 700) {
+		LM_ERR("invalid code parameter\n");
+		return -1;
+	}
+	if(sreason->s == NULL || sreason->len == 0) {
+		LM_ERR("invalid reason parameter\n");
+		return -1;
+	}
+	if(sctype->s == NULL) {
+		LM_ERR("invalid content-type parameter\n");
+		return -1;
+	}
+	if(sbody->s == NULL) {
+		LM_ERR("invalid body parameter\n");
+		return -1;
+	}
+
+	response = MHD_create_response_from_buffer(
+			sbody->len, sbody->s, MHD_RESPMEM_PERSISTENT);
+	ret = MHD_queue_response(
+			_ksr_mhttpd_ctx.connection, (unsigned int)rcode, response);
+	MHD_destroy_response(response);
+
+	return (ret == MHD_YES) ? 1 : -1;
+}
+
+/**
+ *
+ */
+static int w_mhttpd_send_reply(
+		sip_msg_t *msg, char *pcode, char *preason, char *pctype, char *pbody)
+{
 	str body = str_init("");
 	str reason = str_init("OK");
 	str ctype = str_init("text/plain");
@@ -286,17 +327,9 @@ static int w_mhttpd_send_reply(
 		LM_ERR("no reply code value\n");
 		return -1;
 	}
-	if(code < 100 || code >= 700) {
-		LM_ERR("invalid code parameter\n");
-		return -1;
-	}
 
 	if(fixup_get_svalue(msg, (gparam_p)preason, &reason) != 0) {
 		LM_ERR("unable to get reason\n");
-		return -1;
-	}
-	if(reason.s == NULL || reason.len == 0) {
-		LM_ERR("invalid reason parameter\n");
 		return -1;
 	}
 
@@ -304,26 +337,13 @@ static int w_mhttpd_send_reply(
 		LM_ERR("unable to get content type\n");
 		return -1;
 	}
-	if(ctype.s == NULL) {
-		LM_ERR("invalid content-type parameter\n");
-		return -1;
-	}
 
 	if(fixup_get_svalue(msg, (gparam_p)pbody, &body) != 0) {
 		LM_ERR("unable to get body\n");
 		return -1;
 	}
-	if(body.s == NULL) {
-		LM_ERR("invalid body parameter\n");
-		return -1;
-	}
 
-	response = MHD_create_response_from_buffer(
-			body.len, body.s, MHD_RESPMEM_PERSISTENT);
-	ret = MHD_queue_response(_ksr_mhttpd_ctx.connection, MHD_HTTP_OK, response);
-	MHD_destroy_response(response);
-
-	return (ret == MHD_YES) ? 1 : -1;
+	return ksr_mhttpd_send_reply(msg, code, &reason, &ctype, &body);
 }
 
 static int fixup_mhttpd_send_reply(void **param, int param_no)
@@ -437,6 +457,11 @@ static int microhttpd_server_run(void)
  */
 /* clang-format off */
 static sr_kemi_t sr_kemi_mhttpd_exports[] = {
+	{ str_init("microhttpd"), str_init("mhttpd_reply"),
+		SR_KEMIP_INT, ksr_mhttpd_send_reply,
+		{ SR_KEMIP_INT, SR_KEMIP_STR, SR_KEMIP_STR,
+			SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
 
 	{ {0, 0}, {0, 0}, 0, NULL, { 0, 0, 0, 0, 0, 0 } }
 };
