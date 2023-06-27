@@ -295,6 +295,13 @@ static int ksr_mhttpd_send_reply(
 
 	response = MHD_create_response_from_buffer(
 			sbody->len, sbody->s, MHD_RESPMEM_PERSISTENT);
+	if(response == NULL) {
+		LM_ERR("failed to create the response\n");
+		return -1;
+	}
+	if(sctype->len > 0) {
+		MHD_add_response_header(response, "Content-Type", sctype->s);
+	}
 	ret = MHD_queue_response(
 			_ksr_mhttpd_ctx.connection, (unsigned int)rcode, response);
 	MHD_destroy_response(response);
