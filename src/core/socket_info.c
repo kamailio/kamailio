@@ -329,10 +329,10 @@ static inline struct socket_info *new_sock_info(char *name,
 	}
 	if(usename != NULL) {
 		si->useinfo.name.len = strlen(usename);
-		si->useinfo.name.s = (char *)pkg_malloc(si->useinfo.name.len + 1);
+		si->useinfo.name.s = (char *)pkg_malloc(si->useinfo.name.len);
 		if(si->useinfo.name.s == 0)
 			goto error;
-		strcpy(si->useinfo.name.s, usename);
+		strncpy(si->useinfo.name.s, usename, si->useinfo.name.len + 1);
 		if(usename[0] == '[' && usename[si->useinfo.name.len - 1] == ']') {
 			si->useinfo.address_str.len = si->useinfo.name.len - 2;
 			p = si->useinfo.name.s + 1;
@@ -354,7 +354,7 @@ static inline struct socket_info *new_sock_info(char *name,
 				(char *)pkg_malloc(si->useinfo.port_no_str.len + 1);
 		if(si->useinfo.port_no_str.s == NULL)
 			goto error;
-		strcpy(si->useinfo.port_no_str.s, p);
+		strncpy(si->useinfo.port_no_str.s, p, si->useinfo.port_no_str.len);
 		si->useinfo.port_no = useport;
 
 		he = resolvehost(si->useinfo.name.s);
