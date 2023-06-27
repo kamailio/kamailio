@@ -1849,6 +1849,7 @@ static int sip_capture(
 	struct timeval tvb;
 	struct timezone tz;
 	char tmp_node[100];
+	str ip;
 
 	LM_DBG("CAPTURE DEBUG...\n");
 
@@ -2249,9 +2250,11 @@ static int sip_capture(
 
 	/* IP source and destination */
 
-	strcpy(buf_ip, ip_addr2a(&msg->rcv.src_ip));
+	ip.s = ip_addr2a(&msg->rcv.src_ip);
+	ip.len = strlen(ip.s);
+	memcpy(buf_ip, ip.s, ip.len);
 	sco.source_ip.s = buf_ip;
-	sco.source_ip.len = strlen(buf_ip);
+	sco.source_ip.len = ip.len;
 	sco.source_port = msg->rcv.src_port;
 
 	/*source ip*/
@@ -2794,7 +2797,7 @@ static int report_capture(sip_msg_t *msg, str *_table, str *_corr, str *_data)
 	struct timezone tz;
 	char tmp_node[100];
 	time_t epoch_time_as_time_t;
-	str corrtmp = STR_NULL, tmp;
+	str corrtmp = STR_NULL, tmp, ip;
 
 
 	_capture_mode_data_t *c = NULL;
@@ -2834,10 +2837,11 @@ static int report_capture(sip_msg_t *msg, str *_table, str *_corr, str *_data)
 	//EMPTY_STR(sco.msg);
 
 	/* IP source and destination */
-
-	strcpy(buf_ip, ip_addr2a(&msg->rcv.src_ip));
+	ip.s = ip_addr2a(&msg->rcv.src_ip);
+	ip.len = strlen(ip.s);
+	memcpy(buf_ip, ip.s, ip.len);
 	sco.source_ip.s = buf_ip;
-	sco.source_ip.len = strlen(buf_ip);
+	sco.source_ip.len = ip.len;
 	sco.source_port = msg->rcv.src_port;
 
 	/*source ip*/
