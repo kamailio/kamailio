@@ -33,11 +33,16 @@
 #include "../../core/mod_fix.h"
 #include "../../core/pvar.h"
 #include "../../core/kemi.h"
+#include "../../core/fmsg.h"
 #include "../../core/cfg/cfg_struct.h"
 
 MODULE_VERSION
 
+static int _microhttpd_listen_port = 8280;
 static int _microhttpd_server_pid = -1;
+
+static int microhttpd_route_no = -1;
+static str microhttpd_event_callback = STR_NULL;
 
 static int microhttpd_server_run(void);
 
@@ -70,6 +75,8 @@ static cmd_export_t cmds[] = {
 };
 
 static param_export_t params[] = {
+	{"listen_port",     PARAM_INT,    &_microhttpd_listen_port},
+	{"event_callback",  PARAM_STR,    &microhttpd_event_callback},
 	{0, 0, 0}
 };
 
@@ -93,6 +100,29 @@ struct module_exports exports = {
  */
 static int mod_init(void)
 {
+	sr_kemi_eng_t *keng = NULL;
+	int route_no = -1;
+
+	if(microhttpd_event_callback.s != NULL
+			&& microhttpd_event_callback.len > 0) {
+		keng = sr_kemi_eng_get();
+		if(keng == NULL) {
+			LM_ERR("failed to find kemi engine\n");
+			return -1;
+		}
+		microhttpd_route_no = -1;
+	} else {
+		route_no = route_lookup(&event_rt, "microhttpd:request");
+		if(route_no == -1) {
+			LM_ERR("failed to find event_route[microhttpd:request]\n");
+			return -1;
+		}
+		if(event_rt.rlist[route_no] == 0) {
+			LM_WARN("event_route[microhttpd:request] is empty\n");
+		}
+		microhttpd_route_no = route_no;
+	}
+
 	/* add space for one extra process */
 	register_procs(1);
 
@@ -135,12 +165,24 @@ static int child_init(int rank)
 
 	return 0;
 }
+
 /**
  * destroy module function
  */
 static void mod_destroy(void)
 {
 }
+
+typedef struct ksr_mhttpd_ctx
+{
+	struct MHD_Connection *connection;
+	str method;
+	str url;
+	str httpversion;
+	str data;
+} ksr_mhttpd_ctx_t;
+
+static ksr_mhttpd_ctx_t _ksr_mhttpd_ctx = {0};
 
 /**
  * parse the name of the $mhttpd(name)
@@ -201,46 +243,83 @@ int pv_get_mhttpd(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 	if(param == NULL) {
 		return -1;
 	}
+	if(_ksr_mhttpd_ctx.connection == NULL) {
+		return pv_get_null(msg, param, res);
+	}
 	switch(param->pvn.u.isname.name.n) {
 		case 0: /* url */
-			return pv_get_null(msg, param, res);
+			return pv_get_strval(msg, param, res, &_ksr_mhttpd_ctx.url);
 		case 1: /* data */
-			return pv_get_null(msg, param, res);
+			return pv_get_strval(msg, param, res, &_ksr_mhttpd_ctx.data);
 		case 2: /* size */
-			return pv_get_null(msg, param, res);
+			return pv_get_sintval(msg, param, res, _ksr_mhttpd_ctx.data.len);
 		case 3: /* method */
-			return pv_get_null(msg, param, res);
+			return pv_get_strval(msg, param, res, &_ksr_mhttpd_ctx.method);
 		case 4: /* version */
-			return pv_get_null(msg, param, res);
+			return pv_get_strval(msg, param, res, &_ksr_mhttpd_ctx.httpversion);
 		default:
 			return pv_get_null(msg, param, res);
 	}
 }
 
-typedef struct ksr_mhttpd_ctx
-{
-	struct MHD_Connection *connection;
-	str method;
-	str url;
-	str httpversion;
-	str data;
-} ksr_mhttpd_ctx_t;
-
-static ksr_mhttpd_ctx_t _ksr_mhttpd_ctx = {0};
-
 static int w_mhttpd_send_reply(
 		sip_msg_t *msg, char *pcode, char *preason, char *pctype, char *pbody)
 {
-	const char *page = "Hello!";
 	struct MHD_Response *response;
 	int ret;
+	str body = str_init("");
+	str reason = str_init("OK");
+	str ctype = str_init("text/plain");
+	int code = 200;
 
 	if(_ksr_mhttpd_ctx.connection == NULL) {
+		LM_ERR("no connection available\n");
+		return -1;
+	}
+
+	if(pcode == 0 || preason == 0 || pctype == 0 || pbody == 0) {
+		LM_ERR("invalid parameters\n");
+		return -1;
+	}
+
+	if(fixup_get_ivalue(msg, (gparam_p)pcode, &code) != 0) {
+		LM_ERR("no reply code value\n");
+		return -1;
+	}
+	if(code < 100 || code >= 700) {
+		LM_ERR("invalid code parameter\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_p)preason, &reason) != 0) {
+		LM_ERR("unable to get reason\n");
+		return -1;
+	}
+	if(reason.s == NULL || reason.len == 0) {
+		LM_ERR("invalid reason parameter\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_p)pctype, &ctype) != 0) {
+		LM_ERR("unable to get content type\n");
+		return -1;
+	}
+	if(ctype.s == NULL) {
+		LM_ERR("invalid content-type parameter\n");
+		return -1;
+	}
+
+	if(fixup_get_svalue(msg, (gparam_p)pbody, &body) != 0) {
+		LM_ERR("unable to get body\n");
+		return -1;
+	}
+	if(body.s == NULL) {
+		LM_ERR("invalid body parameter\n");
 		return -1;
 	}
 
 	response = MHD_create_response_from_buffer(
-			strlen(page), (void *)page, MHD_RESPMEM_PERSISTENT);
+			body.len, body.s, MHD_RESPMEM_PERSISTENT);
 	ret = MHD_queue_response(_ksr_mhttpd_ctx.connection, MHD_HTTP_OK, response);
 	MHD_destroy_response(response);
 
@@ -268,6 +347,11 @@ static enum MHD_Result ksr_microhttpd_request(void *cls,
 		void **ptr)
 {
 	static int _first_callback;
+	sr_kemi_eng_t *keng = NULL;
+	str evname = str_init("microhttpd:request");
+	sip_msg_t *fmsg = NULL;
+	run_act_ctx_t ctx;
+	int rtb;
 
 	if(&_first_callback != *ptr) {
 		/* the first time only the headers are valid,
@@ -292,15 +376,60 @@ static enum MHD_Result ksr_microhttpd_request(void *cls,
 		_ksr_mhttpd_ctx.data.len = 0;
 	}
 
+	LM_DBG("executing event_route[%s] (%d)\n", evname.s, microhttpd_route_no);
+	if(faked_msg_init() < 0) {
+		return MHD_NO;
+	}
+	fmsg = faked_msg_next();
+	rtb = get_route_type();
+	set_route_type(REQUEST_ROUTE);
+	init_run_actions_ctx(&ctx);
+	if(microhttpd_route_no >= 0) {
+		run_top_route(event_rt.rlist[microhttpd_route_no], fmsg, &ctx);
+	} else {
+		keng = sr_kemi_eng_get();
+		if(keng != NULL) {
+			if(sr_kemi_ctx_route(keng, &ctx, fmsg, EVENT_ROUTE,
+					   &microhttpd_event_callback, &evname)
+					< 0) {
+				LM_ERR("error running event route kemi callback\n");
+				return MHD_NO;
+			}
+		}
+	}
+	set_route_type(rtb);
+	if(ctx.run_flags & DROP_R_F) {
+		LM_ERR("exit due to 'drop' in event route\n");
+		return MHD_NO;
+	}
+
 	return MHD_YES;
 }
 
+#define KSR_MICROHTTPD_PAGE               \
+	"<html><head><title>Kamailio</title>" \
+	"</head><body>Thanks for flying Kamailio!</body></html>"
 /**
  *
  */
 static int microhttpd_server_run(void)
 {
-	return -1;
+
+	struct MHD_Daemon *d;
+
+	LM_DBG("preparing to listen on port: %d\n", _microhttpd_listen_port);
+
+	d = MHD_start_daemon(MHD_USE_SELECT_INTERNALLY, _microhttpd_listen_port,
+			NULL, NULL, &ksr_microhttpd_request, KSR_MICROHTTPD_PAGE,
+			MHD_OPTION_END);
+
+	if(d == NULL) {
+		return -1;
+	}
+	while(1) {
+		sleep(10);
+	}
+	return 0;
 }
 
 /**
