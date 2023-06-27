@@ -30,6 +30,7 @@
 #include "../../core/sr_module.h"
 #include "../../core/dprint.h"
 #include "../../core/ut.h"
+#include "../../core/mod_fix.h"
 #include "../../core/pvar.h"
 #include "../../core/kemi.h"
 #include "../../core/cfg/cfg_struct.h"
@@ -39,6 +40,12 @@ MODULE_VERSION
 static int _microhttpd_server_pid = -1;
 
 static int microhttpd_server_run(void);
+
+static int w_mhttpd_send_reply(
+		sip_msg_t *msg, char *pcode, char *preason, char *pctype, char *pbody);
+
+static int fixup_mhttpd_send_reply(void **param, int param_no);
+
 
 static int mod_init(void);
 static int child_init(int);
@@ -56,6 +63,9 @@ static pv_export_t mod_pvs[] = {
 };
 
 static cmd_export_t cmds[] = {
+	{"mhttpd_reply",    (cmd_function)w_mhttpd_send_reply,
+		4, fixup_mhttpd_send_reply,  0, REQUEST_ROUTE|EVENT_ROUTE},
+
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -140,16 +150,32 @@ int pv_parse_mhttpd_name(pv_spec_p sp, str *in)
 	if(sp == NULL || in == NULL || in->len <= 0)
 		return -1;
 	switch(in->len) {
-		case 4:
-			if(strncasecmp(in->s, "path", 4)==0) {
+		case 3:
+			if(strncasecmp(in->s, "url", 3) == 0) {
 				sp->pvp.pvn.u.isname.name.n = 0;
 			} else {
 				goto error;
 			}
 			break;
-		case 6:
-			if(strncasecmp(in->s, "method", 6)==0) {
+		case 4:
+			if(strncasecmp(in->s, "data", 4) == 0) {
 				sp->pvp.pvn.u.isname.name.n = 1;
+			} else if(strncasecmp(in->s, "size", 4) == 0) {
+				sp->pvp.pvn.u.isname.name.n = 2;
+			} else {
+				goto error;
+			}
+			break;
+		case 6:
+			if(strncasecmp(in->s, "method", 6) == 0) {
+				sp->pvp.pvn.u.isname.name.n = 3;
+			} else {
+				goto error;
+			}
+			break;
+		case 7:
+			if(strncasecmp(in->s, "version", 7) == 0) {
+				sp->pvp.pvn.u.isname.name.n = 4;
 			} else {
 				goto error;
 			}
@@ -172,16 +198,102 @@ error:
  */
 int pv_get_mhttpd(sip_msg_t *msg, pv_param_t *param, pv_value_t *res)
 {
-	if(param == NULL)
+	if(param == NULL) {
 		return -1;
+	}
 	switch(param->pvn.u.isname.name.n) {
-		case 1:
+		case 0: /* url */
+			return pv_get_null(msg, param, res);
+		case 1: /* data */
+			return pv_get_null(msg, param, res);
+		case 2: /* size */
+			return pv_get_null(msg, param, res);
+		case 3: /* method */
+			return pv_get_null(msg, param, res);
+		case 4: /* version */
 			return pv_get_null(msg, param, res);
 		default:
 			return pv_get_null(msg, param, res);
 	}
 }
 
+typedef struct ksr_mhttpd_ctx
+{
+	struct MHD_Connection *connection;
+	str method;
+	str url;
+	str httpversion;
+	str data;
+} ksr_mhttpd_ctx_t;
+
+static ksr_mhttpd_ctx_t _ksr_mhttpd_ctx = {0};
+
+static int w_mhttpd_send_reply(
+		sip_msg_t *msg, char *pcode, char *preason, char *pctype, char *pbody)
+{
+	const char *page = "Hello!";
+	struct MHD_Response *response;
+	int ret;
+
+	if(_ksr_mhttpd_ctx.connection == NULL) {
+		return -1;
+	}
+
+	response = MHD_create_response_from_buffer(
+			strlen(page), (void *)page, MHD_RESPMEM_PERSISTENT);
+	ret = MHD_queue_response(_ksr_mhttpd_ctx.connection, MHD_HTTP_OK, response);
+	MHD_destroy_response(response);
+
+	return (ret == MHD_YES) ? 1 : -1;
+}
+
+static int fixup_mhttpd_send_reply(void **param, int param_no)
+{
+	if(param_no == 1) {
+		return fixup_igp_null(param, 1);
+	} else if(param_no == 2) {
+		return fixup_spve_null(param, 1);
+	} else if(param_no == 3) {
+		return fixup_spve_null(param, 1);
+	} else if(param_no == 4) {
+		return fixup_spve_null(param, 1);
+	}
+	return 0;
+}
+
+
+static enum MHD_Result ksr_microhttpd_request(void *cls,
+		struct MHD_Connection *connection, const char *url, const char *method,
+		const char *version, const char *upload_data, size_t *upload_data_size,
+		void **ptr)
+{
+	static int _first_callback;
+
+	if(&_first_callback != *ptr) {
+		/* the first time only the headers are valid,
+		   do not respond in the first round... */
+		*ptr = &_first_callback;
+		return MHD_YES;
+	}
+	*ptr = NULL; /* clear context pointer */
+
+	_ksr_mhttpd_ctx.connection = connection;
+	_ksr_mhttpd_ctx.method.s = (char *)method;
+	_ksr_mhttpd_ctx.method.len = strlen(_ksr_mhttpd_ctx.method.s);
+	_ksr_mhttpd_ctx.url.s = (char *)url;
+	_ksr_mhttpd_ctx.url.len = strlen(_ksr_mhttpd_ctx.url.s);
+	_ksr_mhttpd_ctx.httpversion.s = (char *)version;
+	_ksr_mhttpd_ctx.httpversion.len = strlen(_ksr_mhttpd_ctx.httpversion.s);
+	if(*upload_data_size > 0) {
+		_ksr_mhttpd_ctx.data.s = (char *)upload_data;
+		_ksr_mhttpd_ctx.data.len = (int)(*upload_data_size);
+	} else {
+		_ksr_mhttpd_ctx.data.s = NULL;
+		_ksr_mhttpd_ctx.data.len = 0;
+	}
+
+	return MHD_YES;
+}
 
 /**
  *
