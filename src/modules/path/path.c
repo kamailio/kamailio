@@ -105,7 +105,8 @@ static int prepend_path(
 		sip_msg_t *_m, str *user, path_param_t param, str *add_params)
 {
 	struct lump *l;
-	char *prefix, *suffix, *cp, *dp;
+	char *prefix, *suffix, *dp;
+	str cp = STR_NULL;
 	const char *proto_str;
 	int prefix_len, suffix_len;
 	struct hdr_field *hf;
@@ -115,13 +116,13 @@ static int prepend_path(
 				 + IP_ADDR_MAX_STR_SIZE + 2 + (add_params ? add_params->len : 0)
 				 + path_received_name.len + 1;
 
-	cp = suffix = pkg_malloc(suffix_len);
+	cp.s = suffix = pkg_malloc(suffix_len);
 	if(!suffix) {
 		PKG_MEM_ERROR_FMT("for suffix\n");
 		goto out1;
 	}
 
-	cp += sprintf(cp, ";lr");
+	cp.len = sprintf(cp.s, ";lr");
 
 	if(param & PATH_PARAM_RECEIVED) {
 		if(path_received_format == 0) {
@@ -132,21 +133,25 @@ static int prepend_path(
 				proto_str = NULL;
 			}
 			if(_m->rcv.src_ip.af == AF_INET6) {
-				cp += sprintf(cp, ";%s=sip:[%s]:%hu%s", path_received_name.s,
+				cp.len += snprintf(cp.s + cp.len, suffix_len - cp.len,
+						";%s=sip:[%s]:%hu%s", path_received_name.s,
 						ip_addr2a(&_m->rcv.src_ip), _m->rcv.src_port,
 						proto_str ?: "");
 			} else {
-				cp += sprintf(cp, ";%s=sip:%s:%hu%s", path_received_name.s,
+				cp.len += snprintf(cp.s + cp.len, suffix_len - cp.len,
+						";%s=sip:%s:%hu%s", path_received_name.s,
 						ip_addr2a(&_m->rcv.src_ip), _m->rcv.src_port,
 						proto_str ?: "");
 			}
 		} else {
 			if(_m->rcv.src_ip.af == AF_INET6) {
-				cp += sprintf(cp, ";%s=[%s]~%hu~%d", path_received_name.s,
+				cp.len += snprintf(cp.s + cp.len, suffix_len - cp.len,
+						";%s=[%s]~%hu~%d", path_received_name.s,
 						ip_addr2a(&_m->rcv.src_ip), _m->rcv.src_port,
 						(int)_m->rcv.proto);
 			} else {
-				cp += sprintf(cp, ";%s=%s~%hu~%d", path_received_name.s,
+				cp.len += snprintf(cp.s + cp.len, suffix_len - cp.len,
+						";%s=%s~%hu~%d", path_received_name.s,
 						ip_addr2a(&_m->rcv.src_ip), _m->rcv.src_port,
 						(int)_m->rcv.proto);
 			}
@@ -154,17 +159,18 @@ static int prepend_path(
 	}
 
 	if(param & PATH_PARAM_OB) {
-		cp += sprintf(cp, ";ob");
+		cp.len += sprintf(cp.s + cp.len, ";ob");
 	}
 
 	if(add_params && add_params->len) {
-		cp += sprintf(cp, ";%.*s", add_params->len, add_params->s);
+		cp.len += snprintf(cp.s + cp.len, suffix_len - cp.len, ";%.*s",
+				add_params->len, add_params->s);
 	}
 
 	if(path_enable_r2 == 0) {
-		cp += sprintf(cp, ">\r\n");
+		cp.len += sprintf(cp.s + cp.len, ">\r\n");
 	} else {
-		cp += sprintf(cp, ";r2=on>\r\n");
+		cp.len += sprintf(cp.s + cp.len, ";r2=on>\r\n");
 	}
 
 	prefix_len = PATH_PREFIX_LEN + (user ? user->len : 0) + 2;
@@ -174,7 +180,8 @@ static int prepend_path(
 		goto out2;
 	}
 	if(user && user->len)
-		prefix_len = sprintf(prefix, PATH_PREFIX "%.*s@", user->len, user->s);
+		prefix_len = snprintf(
+				prefix, prefix_len, PATH_PREFIX "%.*s@", user->len, user->s);
 	else
 		prefix_len = sprintf(prefix, PATH_PREFIX);
 
@@ -201,7 +208,7 @@ static int prepend_path(
 			l, (path_sockname_mode) ? SUBST_SND_ALL_EX : SUBST_SND_ALL, 0);
 	if(!l)
 		goto out2;
-	l = insert_new_lump_before(l, suffix, cp - suffix, 0);
+	l = insert_new_lump_before(l, suffix, cp.s - suffix, 0);
 	if(!l)
 		goto out2;
 
@@ -216,10 +223,10 @@ static int prepend_path(
 				l, (path_sockname_mode) ? SUBST_RCV_ALL_EX : SUBST_RCV_ALL, 0);
 		if(!l)
 			goto out1;
-		dp = path_strzdup(suffix, cp - suffix);
+		dp = path_strzdup(suffix, cp.s - suffix);
 		if(dp == NULL)
 			goto out1;
-		l = insert_new_lump_before(l, dp, cp - suffix, 0);
+		l = insert_new_lump_before(l, dp, cp.s - suffix, 0);
 		if(!l)
 			goto out1;
 	}
