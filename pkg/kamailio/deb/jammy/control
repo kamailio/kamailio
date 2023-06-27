@@ -864,6 +864,22 @@ Description: Nats module for the Kamailio SIP server
  NATS is a real time distributed messaging platform, more details about it can be
  found at nats.io.
 
+Package: kamailio-microhttpd-modules
+Architecture: any
+Multi-Arch: same
+Pre-Depends:
+ ${misc:Pre-Depends},
+Depends:
+ kamailio (= ${binary:Version}),
+ ${misc:Depends},
+ ${shlibs:Depends},
+Description: Microhttpd module for the Kamailio SIP server
+ Kamailio is a very fast and flexible SIP (RFC3261)
+ server. Written entirely in C, Kamailio can handle thousands calls
+ per second even on low-budget hardware.
+ .
+ This package provides an embedded HTTP server using libmicrohttpd.
+
 Package: kamailio-extra-modules
 Architecture: any
 Multi-Arch: same

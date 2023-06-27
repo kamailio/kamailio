@@ -864,6 +864,22 @@ Description: Libwebsockets module for the Kamailio SIP server
  This package contains the lwcs module, which provides a client-side WebSockets
  API through libwebsockets.
 
+Package: kamailio-microhttpd-modules
+Architecture: any
+Multi-Arch: same
+Pre-Depends:
+ ${misc:Pre-Depends},
+Depends:
+ kamailio (= ${binary:Version}),
+ ${misc:Depends},
+ ${shlibs:Depends},
+Description: Microhttpd module for the Kamailio SIP server
+ Kamailio is a very fast and flexible SIP (RFC3261)
+ server. Written entirely in C, Kamailio can handle thousands calls
+ per second even on low-budget hardware.
+ .
+ This package provides an embedded HTTP server using libmicrohttpd.
+
 Package: kamailio-extra-modules
 Architecture: any
 Multi-Arch: same

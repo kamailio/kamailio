@@ -81,6 +81,7 @@ PACKAGE_GROUPS += python3
 PACKAGE_GROUPS += mqtt
 PACKAGE_GROUPS += secsipid
 PACKAGE_GROUPS += lwsc
+PACKAGE_GROUPS += microhttpd
 
 # Module groups to be packaged onto kamailio-extra-modules.
 EXTRA_GROUPS += ev
