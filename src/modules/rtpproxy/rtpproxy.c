@@ -1667,7 +1667,7 @@ static int set_rtp_proxy_set_f(struct sip_msg *msg, char *str1, char *str2)
 
 static int rtpproxy_manage(struct sip_msg *msg, char *flags, char *ip)
 {
-	char *cp = NULL;
+	str cp = STR_NULL;
 	char newip[IP_ADDR_MAX_STR_SIZE];
 	int method;
 	int nosdp;
@@ -1696,8 +1696,9 @@ static int rtpproxy_manage(struct sip_msg *msg, char *flags, char *ip)
 		return unforce_rtp_proxy(msg, flags);
 
 	if(ip == NULL) {
-		cp = ip_addr2a(&msg->rcv.dst_ip);
-		strcpy(newip, cp);
+		cp.s = ip_addr2a(&msg->rcv.dst_ip);
+		cp.len = strlen(cp.s);
+		memcpy(newip, cp.s, cp.len);
 	}
 
 	if(msg->msg_flags & FL_SDP_BODY)
@@ -1707,13 +1708,13 @@ static int rtpproxy_manage(struct sip_msg *msg, char *flags, char *ip)
 
 	if(msg->first_line.type == SIP_REQUEST) {
 		if(method == METHOD_ACK && nosdp == 0)
-			return force_rtp_proxy(msg, flags, (cp != NULL) ? newip : ip, 0,
+			return force_rtp_proxy(msg, flags, (cp.s != NULL) ? newip : ip, 0,
 					(ip != NULL) ? 1 : 0);
 		if(method == METHOD_PRACK && nosdp == 0)
-			return force_rtp_proxy(msg, flags, (cp != NULL) ? newip : ip, 1,
+			return force_rtp_proxy(msg, flags, (cp.s != NULL) ? newip : ip, 1,
 					(ip != NULL) ? 1 : 0);
 		if(method == METHOD_UPDATE && nosdp == 0)
-			return force_rtp_proxy(msg, flags, (cp != NULL) ? newip : ip, 1,
+			return force_rtp_proxy(msg, flags, (cp.s != NULL) ? newip : ip, 1,
 					(ip != NULL) ? 1 : 0);
 		if(method == METHOD_INVITE && nosdp == 0) {
 			msg->msg_flags |= FL_SDP_BODY;
@@ -1722,7 +1723,7 @@ static int rtpproxy_manage(struct sip_msg *msg, char *flags, char *ip)
 				tmb.t_gett()->uas.request->msg_flags |= FL_SDP_BODY;
 			if(route_type == FAILURE_ROUTE)
 				return unforce_rtp_proxy(msg, flags);
-			return force_rtp_proxy(msg, flags, (cp != NULL) ? newip : ip, 1,
+			return force_rtp_proxy(msg, flags, (cp.s != NULL) ? newip : ip, 1,
 					(ip != NULL) ? 1 : 0);
 		}
 	} else if(msg->first_line.type == SIP_REPLY) {
@@ -1730,19 +1731,19 @@ static int rtpproxy_manage(struct sip_msg *msg, char *flags, char *ip)
 			return unforce_rtp_proxy(msg, flags);
 		if(nosdp == 0) {
 			if(method == METHOD_PRACK)
-				return force_rtp_proxy(msg, flags, (cp != NULL) ? newip : ip, 0,
-						(ip != NULL) ? 1 : 0);
+				return force_rtp_proxy(msg, flags, (cp.s != NULL) ? newip : ip,
+						0, (ip != NULL) ? 1 : 0);
 			if(method == METHOD_UPDATE)
-				return force_rtp_proxy(msg, flags, (cp != NULL) ? newip : ip, 0,
-						(ip != NULL) ? 1 : 0);
+				return force_rtp_proxy(msg, flags, (cp.s != NULL) ? newip : ip,
+						0, (ip != NULL) ? 1 : 0);
 			if(tmb.t_gett == NULL || tmb.t_gett() == NULL
 					|| tmb.t_gett() == T_UNDEFINED)
-				return force_rtp_proxy(msg, flags, (cp != NULL) ? newip : ip, 0,
-						(ip != NULL) ? 1 : 0);
+				return force_rtp_proxy(msg, flags, (cp.s != NULL) ? newip : ip,
+						0, (ip != NULL) ? 1 : 0);
 			if(tmb.t_gett()->uas.request->msg_flags & FL_SDP_BODY)
-				return force_rtp_proxy(msg, flags, (cp != NULL) ? newip : ip, 0,
-						(ip != NULL) ? 1 : 0);
-			return force_rtp_proxy(msg, flags, (cp != NULL) ? newip : ip, 1,
+				return force_rtp_proxy(msg, flags, (cp.s != NULL) ? newip : ip,
+						0, (ip != NULL) ? 1 : 0);
+			return force_rtp_proxy(msg, flags, (cp.s != NULL) ? newip : ip, 1,
 					(ip != NULL) ? 1 : 0);
 		}
 	}
@@ -1823,15 +1824,16 @@ static int rtpproxy_offer2_f(struct sip_msg *msg, char *param1, char *param2)
 
 static int rtpproxy_answer1_helper_f(struct sip_msg *msg, char *flags)
 {
-	char *cp;
+	str cp = STR_NULL;
 	char newip[IP_ADDR_MAX_STR_SIZE];
 
 	if(msg->first_line.type == SIP_REQUEST)
 		if(msg->first_line.u.request.method_value != METHOD_ACK)
 			return -1;
 
-	cp = ip_addr2a(&msg->rcv.dst_ip);
-	strcpy(newip, cp);
+	cp.s = ip_addr2a(&msg->rcv.dst_ip);
+	cp.len = strlen(cp.s);
+	memcpy(newip, cp.s, cp.len);
 
 	return force_rtp_proxy(msg, flags, newip, 0, 0);
 }
