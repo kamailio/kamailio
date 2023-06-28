@@ -1,6 +1,11 @@
+kamailio (5.8.0~dev1) unstable; urgency=medium
+
+  * version set 5.8.0~dev1
+
+ -- Victor Seva <vseva@debian.org>  Wed, 28 Jun 2023 15:03:56 +0200
+
 kamailio (5.8.0~dev0) unstable; urgency=medium
 
   * version set 5.8.0~dev0
 
  -- Victor Seva <vseva@debian.org>  Thu, 04 May 2023 21:45:08 +0200
-
