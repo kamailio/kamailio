@@ -34,6 +34,7 @@ EXTRA_EXCLUDED_MODULES += dnssec
 EXTRA_EXCLUDED_MODULES += java
 EXTRA_EXCLUDED_MODULES += secsipid
 EXTRA_EXCLUDED_MODULES += nats
+EXTRA_EXCLUDED_MODULES += microhttpd
 ## --EXCLUDED--
 
 
@@ -81,7 +82,6 @@ PACKAGE_GROUPS += rabbitmq
 PACKAGE_GROUPS += python3
 PACKAGE_GROUPS += mqtt
 PACKAGE_GROUPS += lwsc
-PACKAGE_GROUPS += microhttpd
 
 # Module groups to be packaged onto kamailio-extra-modules.
 EXTRA_GROUPS += ev
