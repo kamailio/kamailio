@@ -70,6 +70,16 @@ static gen_lock_t *lock = NULL;
 
 static sr_geoip2_item_t *_sr_geoip2_list = NULL;
 
+MMDB_s *get_geoip_handle(void)
+{
+	return _handle_GeoIP;
+}
+
+gen_lock_t *get_gen_lock(void)
+{
+	return lock;
+}
+
 sr_geoip2_record_t *sr_geoip2_get_record(str *name)
 {
 	sr_geoip2_item_t *it = NULL;
