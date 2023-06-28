@@ -1,3 +1,314 @@
+===================== 2023-06-28 Version 5.7.1 Released =====================
+
+===================== Changes Since Version 5.7.0 ===========================
+
+
+commit aaadeb3a1d75a2525ee2e209c3c41cf1b5a0a6ea
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jun 28 09:37:37 2023 +0200
+
+    Makefile.defs: version set to 5.7.1
+
+commit 8e39591a6a2a94c34ab01844d267642acfbb944b
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jun 28 09:36:40 2023 +0200
+
+    pkg: deb specs updated for v5.7.1
+
+commit 39e18a7f38a06cd4d436e05ab3af5ff2b840f090
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jun 28 09:35:05 2023 +0200
+
+    pkg: version set to 5.7.1 for rpms and alpine specs
+
+commit 402bab6f63b515a13a72ac2dad6e40075ded1479
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Fri Jun 23 09:06:43 2023 +0200
+
+    utils/kamcmd: fix memory leak
+    
+    fixes #3478
+    
+    (cherry picked from commit badc81cb427ba5aaf03ca26e4c2654d58ee08588)
+
+commit 9905c4ffc181f5a3e32bc20965c78542c7f15d12
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jun 21 14:15:24 2023 +0200
+
+    tls: enable locking for rand ctx if libssl version is 3.0+
+    
+    (cherry picked from commit 81be9e78c3731d45734480285d7afc17f8f9e87a)
+
+commit 2bd813b0c4c1b942ee634eca5e68a025be9fab8e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jun 22 14:37:18 2023 +0200
+
+    http_client: fix depecration of CURLOPT_REDIR_PROTOCOLS
+    
+    - GH #3492
+    
+    (cherry picked from commit 4d8263f9be97a541a24cbc6acc9855509640780b)
+
+commit ff0e0d7aafa3905526599e604ff91542529a5b32
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Thu Jun 22 17:29:48 2023 +0200
+
+    tls: fix build for openssl < 1.1.1
+    
+    OPENSSL_INIT_ATFORK was introduced in libssl 1.1.1
+    error introduced at 9d6bfb96528c49e6aaa39aa47be877ca528c3537
+    
+    (cherry picked from commit 82f5fcbf88ee3058bd9da520b528c86393cc422a)
+
+commit 23a121e5d8ffa172f71433c2ef74f323a54e8315
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed Jun 21 09:27:28 2023 +0200
+
+    http_client: fix depecration of CURLOPT_PROTOCOLS and CURLINFO_SIZE_DOWNLOAD
+    
+    - GH #3484
+    
+    (cherry picked from commit b7b3c67fc1205d114fadf360a594930ef69835a3)
+
+commit 8cc9ec410ff359e3d93e994c210977a8baa578c4
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Jun 19 20:12:17 2023 +0200
+
+    tls: disable tls_rand for openssl >= 3.0
+    
+    From https://www.openssl.org/docs/man3.0/man3/RAND_set_rand_method.html
+    
+    > All of the functions described on this page are deprecated.
+    > Applications should instead use RAND_set_DRBG_type(3), EVP_RAND(3) and
+    > EVP_RAND(7).
+    
+    (cherry picked from commit c4b04696a6bfe31fdd65fa56529b0d46f2774067)
+
+commit d4b7333ca126ae7c77ec8f095f8728234d0dfe43
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Mon Jun 19 13:36:53 2023 +0200
+
+    tls: disable engine for openssl >= 3.0
+    
+    From https://www.openssl.org/docs/man3.0/man7/migration_guide.html
+    
+    > The refactoring to support Providers conflicts internally with the APIs
+    > used to support engines, including the ENGINE API and any function that
+    > creates or modifies custom "METHODS"
+    
+    From https://www.openssl.org/docs/man3.0/man3/ENGINE_init.html:
+    
+    > All of the functions described on this page are deprecated. Applications
+    > should instead use the provider APIs.
+    
+    (cherry picked from commit a0a9373ccb3d3da3a1e9e1335d904fcf013d9ebd)
+
+commit 6669c0befcd69f5d5e196c53188bed58a6a9e1c2
+Author: Victor Seva <linuxmaniac@torreviejawireless.org>
+Date:   Tue Jun 13 12:37:21 2023 +0200
+
+    tls: OPENSSL_fork_[prepare|parent|child] deprecated at openssl 3.0
+    
+    From https://www.openssl.org/docs/man3.0/man3/OPENSSL_fork_prepare.html:
+    
+    > OPENSSL_fork_prepare, OPENSSL_fork_parent, OPENSSL_fork_child have been
+    > deprecated since OpenSSL 3.0.
+    >
+    > These methods are currently unused, and as such, no replacement methods
+    > are required or planned.
+    >
+    > OpenSSL has state that should be reset when a process forks. For
+    > example, the entropy pool used to generate random numbers (and therefore
+    > encryption keys) should not be shared across multiple programs. The
+    > OPENSSL_fork_prepare(), OPENSSL_fork_parent(), and OPENSSL_fork_child()
+    > functions are used to reset this internal state.
+    >
+    > OPENSSL_init_crypto(3) will register these functions with the
+    > appropriate handler, when the OPENSSL_INIT_ATFORK flag is used
+    
+    (cherry picked from commit 9d6bfb96528c49e6aaa39aa47be877ca528c3537)
+
+commit f1ebf365e8054fbca260b8574bea502b32435382
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue Jun 20 09:14:48 2023 +0200
+
+    Makefile.groups: added posops to extra group
+    
+    (cherry picked from commit 87959c23aacf4cfa7ed8acd214f70775939c8a01)
+
+commit 85e3a2bce7ba4d8c6e9c167c732dad11706f99d3
+Author: Kaufman <bkaufman@nexvortex.com>
+Date:   Sun Oct 9 11:14:37 2022 -0400
+
+    pkg/docker: submodule update [skip ci]
+
+commit 6005e8e4e3e0d9488693eca1484122dfed303ac6
+Author: Sergey Safarov <s.safarov@gmail.com>
+Date:   Mon Jun 12 22:20:57 2023 +0300
+
+    pkg/kamailio/alpine: packaged lwsc
+    
+    (cherry picked from commit 768dd96da6f52e46bc227d9815f7225b33042295)
+
+commit 3e510ac68a4b9bc99b6ade5cb7cc862adcbb9eb9
+Author: Kamailio Dev <kamailio.dev@kamailio.org>
+Date:   Mon Jun 19 14:17:02 2023 +0200
+
+    modules: readme files regenerated - modules ... [skip ci]
+
+commit 8087b2fed765115bf0fd238c0c987fdbb12e1d31
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jun 19 13:18:59 2023 +0200
+
+    core: kemi - propagate bool as a return value type
+    
+    - some scripting languages differentiate bool false|true vs int 0|1 values
+    
+    (cherry picked from commit f36744cf15c7fcddc7422f97a508cad600ca7d98)
+
+commit 91cb5d0adf887db6a34e2a394ab34aae51f475bf
+Author: Ovidiu Sas <osas@voipembedded.com>
+Date:   Mon Jun 12 12:00:13 2023 -0400
+
+    mqueue: fix documentation to match the code
+    
+    (cherry picked from commit 23d43645332451ec1ec6dab11da777f9c3bfe304)
+
+commit faf7941042c1e00a68f6ac36d14568b35a666dbc
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jun 12 17:16:53 2023 +0200
+
+    cdp: check setsockopt() return code
+    
+    (cherry picked from commit 39f09877e650d66e820ca7eb0d61416818d174fc)
+
+commit a8094a3b0bb73be70500b4cbbfb2e99e00d15243
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jun 12 16:27:46 2023 +0200
+
+    auth_diameter: free req in some cases of errors
+    
+    (cherry picked from commit fb19f0ea4c656afe7b60788efb8804e552fd37f9)
+
+commit 39262e50389d41c50d0e6ff2ae2b0a2521f91640
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jun 12 15:53:38 2023 +0200
+
+    dialplan: restructured condition on input and output params
+    
+    (cherry picked from commit f99b116e876170709ad364ac2b8093969a939d4a)
+
+commit c6af81fad763114c1cec74927787388afffce66d
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon Jun 12 11:16:51 2023 +0200
+
+    Makefile: fixed paths for init.d scripts install on debian and centos
+    
+    - GH #3476
+    
+    (cherry picked from commit c285b16bc066ca4236ee00cf3e7fb24539fa9f2b)
+
+commit 4f3c32e48b79688ab905802c173b981f92c54e56
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Mon Jun 12 08:24:01 2023 +0000
+
+    tools: use python3 for route_graph.py tool, for old systems with both python2/python3, fix file closing
+    
+    (cherry picked from commit 7b1fe0483b684693c7baea9b62b471b64c6e22a9)
+
+commit 14638ef43f9b2ef710ae3a6464fb5db0b9de3377
+Author: Akash Gupta <listen2akash@gmail.com>
+Date:   Sat Jun 10 14:48:03 2023 +0530
+
+    tool: port the route_graph.py script to python version 3.x
+    
+    (cherry picked from commit fa2a69e2ae919b7ba221e87e2001bde83113ce2a)
+
+commit cd665a135e0046b915af7afd9135a2c29a7933df
+Author: Ovidiu Sas <osas@voipembedded.com>
+Date:   Mon Jun 12 00:24:15 2023 -0400
+
+    mqueue: fix support for db_text
+     - db_operations are safe only after db mod_init()
+     - closes #3474
+    
+    (cherry picked from commit 848d55388dda0c135820d9f24950561946249bbc)
+
+commit 9c78c0f55dc2aefa53872b26162ddae5b553d66a
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Thu Jun 1 13:39:47 2023 +0200
+
+    ims_usrloc_scscf: docs - type int for hash_size parameter
+    
+    (cherry picked from commit 1217c9098bc8790e659959a7df97e441e84b54ff)
+
+commit b68cb1ace4d44ba0a471a9fd9a6138f3738efef4
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed May 31 11:53:14 2023 +0200
+
+    async: use _async_timer_exec_last_slot = UINT_MAX for initial value
+    
+    (cherry picked from commit bc544daea2ee4bb568cf0314f6d32b8aa0c81ecc)
+
+commit febfc9722f83d992a3c1643fa373468b73cb3fa0
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed May 31 09:01:13 2023 +0200
+
+    sst: fix condition on sst_min_se for sst_check_min()
+    
+    (cherry picked from commit a059af04ac47fd31238ca4f22ad868529e035c43)
+
+commit 3b6d0bd508d62b6f6cd0176551311d25225bf63e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue May 30 17:00:27 2023 +0200
+
+    cfgt: reworked test on dest.s for freeing
+    
+    (cherry picked from commit b2f99145fa7f4088c80dd3e759372445f93f5492)
+
+commit c29d5299650ddabb9a5b61c7b6a72a69a68c5b9e
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Mon May 29 08:56:19 2023 +0200
+
+    cdp: reworked switch for setting x->state = ACC_CC_ST_DISCON
+    
+    (cherry picked from commit cb6332982edff5fd2f10b6ee41c22388cc9a39b3)
+
+commit e95a79eef0589be2f7d0470bfe6ba19b006730c6
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Wed May 24 21:06:45 2023 +0200
+
+    siprepo: check if list is set on insert
+    
+    (cherry picked from commit 423a818cf6e8f6d672630a0365e13877a173508f)
+
+commit 408643ec916bc00f9f9447952e553d129f8ec896
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Tue May 23 09:41:13 2023 +0200
+
+    ipops: create container items if not found for srv and naptr functions
+    
+    - GH #3419
+    
+    (cherry picked from commit 7971d825361bee29d65fcea69f2978d7af31eeaa)
+
+commit 1c23c2ff23b5c25c943856f5064739794d71bc7f
+Author: Daniel-Constantin Mierla <miconda@gmail.com>
+Date:   Fri Jun 2 21:20:59 2023 +0200
+
+    pv: exported {val} transformation
+    
+    (cherry picked from commit 79b82198075250420cb08d6b5fd5b100ff672606)
+
+commit da7944e2f4c7e6f344d125da325c388e1836662f
+Author: Henning Westerholt <hw@gilawa.com>
+Date:   Thu May 18 10:52:52 2023 +0000
+
+    dispatcher: fix force send socket functionality, was not working in some TCP scenarios
+    
+    (cherry picked from commit 6183319381573e42b882d05ae1748539f7547d8c)
+
+
 ===================== 2023-05-17 Version 5.7.0 Released =====================
 
 ===================== Changes Since Version 5.6.0 ===========================
