@@ -19,6 +19,7 @@
  *
  */
 
+#include <math.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -36,6 +37,10 @@
 
 MODULE_VERSION
 
+#define MAX_GEO_STR_SIZE 512
+#define EARTH_RADIUS (6371.0072 * 0.6214)
+#define TORADS(degrees) (degrees * (M_PI / 180))
+
 static char *geoip2_path = NULL;
 
 static int mod_init(void);
@@ -46,6 +51,29 @@ static int w_geoip2_match(struct sip_msg *msg, char *str1, char *str2);
 static int geoip2_match(sip_msg_t *msg, str *tomatch, str *pvclass);
 static int geoip2_resid_param(modparam_t type, void *val);
 
+static int w_distance(struct sip_msg *msg, char *str1, char *str2, char *str3);
+static int distance(sip_msg_t *msg, str *_ip_addr, double lat, double lon);
+
+static int fixup_distance_param(void **param, int param_no)
+{
+	if(param_no >= 1 && param_no <= 3) {
+		return fixup_spve_null(param, 1);
+	}
+
+	LM_ERR("invalid parameter number <%d>\n", param_no);
+	return -1;
+}
+
+static int fixup_free_distance_param(void **param, int param_no)
+{
+	if(param_no >= 1 && param_no <= 3) {
+		return fixup_free_spve_null(param, 1);
+	}
+
+	LM_ERR("invalid parameter number <%d>\n", param_no);
+	return -1;
+}
+
 static pv_export_t mod_pvs[] = {
 		{{"gip2", sizeof("gip2") - 1}, PVT_OTHER, pv_get_geoip2, 0,
 				pv_parse_geoip2_name, 0, 0, 0},
@@ -53,6 +81,8 @@ static pv_export_t mod_pvs[] = {
 
 static cmd_export_t cmds[] = {{"geoip2_match", (cmd_function)w_geoip2_match, 2,
 									  fixup_spve_spve, 0, ANY_ROUTE},
+		{"distance", (cmd_function)w_distance, 3, fixup_distance_param,
+				fixup_free_distance_param, ANY_ROUTE},
 		{0, 0, 0, 0, 0, 0}};
 
 static param_export_t params[] = {{"path", PARAM_STRING, &geoip2_path},
@@ -145,6 +175,138 @@ static int w_geoip2_match(sip_msg_t *msg, char *target, char *pvname)
 	}
 
 	return geoip2_match(msg, &tomatch, &pvclass);
+}
+
+static int distance(sip_msg_t *msg, str *_ip_addr, double lat, double lon)
+{
+	char ip_addr[MAX_GEO_STR_SIZE] = {0};
+	double lat1, lon1, lat2, lon2, orig_lat2, orig_lon2;
+	double d_lat, d_lon, a, c;
+	int dist = 0;
+	int gai_error, mmdb_error;
+	MMDB_lookup_result_s record;
+	MMDB_entry_data_s entry_data;
+	gen_lock_t *lock = get_gen_lock();
+
+	if(lock == NULL) {
+		LM_ERR("error GeoIP mutex is not initialized\n");
+		return -1;
+	}
+
+	LM_DBG("ip_addr=%.*s lat=%f lon=%f\n", _ip_addr->len, _ip_addr->s, lat,
+			lon);
+
+	strncpy(ip_addr, _ip_addr->s, _ip_addr->len);
+
+	MMDB_s *geoip_handle = get_geoip_handle();
+	if(geoip_handle == NULL) {
+		LM_ERR("error GeoIP handle is not initialized\n");
+		return -1;
+	}
+
+	lock_get(lock);
+	record = MMDB_lookup_string(
+			geoip_handle, (const char *)ip_addr, &gai_error, &mmdb_error);
+
+	LM_DBG("attempt to match: %s\n", ip_addr);
+	if(gai_error || MMDB_SUCCESS != mmdb_error || !record.found_entry) {
+		LM_DBG("no match for: %s\n", ip_addr);
+		lock_release(lock);
+		return -2;
+	}
+
+	if(MMDB_get_value(&record.entry, &entry_data, "location", "latitude", NULL)
+			!= MMDB_SUCCESS) {
+		LM_ERR("no location/latitude for: %s\n", ip_addr);
+		lock_release(lock);
+		return -2;
+	}
+	if(entry_data.has_data && entry_data.type == MMDB_DATA_TYPE_DOUBLE) {
+		orig_lat2 = entry_data.double_value;
+	} else {
+		LM_ERR("wrong format for location/latitude\n");
+		lock_release(lock);
+		return -3;
+	}
+
+	if(MMDB_get_value(&record.entry, &entry_data, "location", "longitude", NULL)
+			!= MMDB_SUCCESS) {
+		LM_ERR("no location/longitude for: %s\n", ip_addr);
+		lock_release(lock);
+		return -2;
+	}
+	lock_release(lock);
+	if(entry_data.has_data && entry_data.type == MMDB_DATA_TYPE_DOUBLE) {
+		orig_lon2 = entry_data.double_value;
+	} else {
+		LM_ERR("wrong format for location/latitude\n");
+		return -3;
+	}
+
+	LM_INFO("for ip_addr=%s the following coordinates: lat=%f lon=%f\n",
+			ip_addr, orig_lat2, orig_lon2);
+
+	lat1 = TORADS(lat);
+	lon1 = TORADS(lon);
+	lat2 = TORADS(orig_lat2);
+	lon2 = TORADS(orig_lon2);
+
+	d_lat = lat2 - lat1;
+	d_lon = lon2 - lon1;
+
+	a = sin(d_lat / 2) * sin(d_lat / 2)
+		+ cos(lat1) * cos(lat2) * sin(d_lon / 2) * sin(d_lon / 2);
+	c = 2 * atan2(sqrt(a), sqrt(1 - a));
+
+	dist = (int)(EARTH_RADIUS * c);
+
+	LM_DBG("lat1=%f lon1=%f lat2=%f lon2=%f distance = %d\n", lat, lon,
+			orig_lat2, orig_lon2, dist);
+
+	return dist;
+}
+
+static int w_distance(struct sip_msg *msg, char *ip_addr_param, char *lat_param,
+		char *lon_param)
+{
+	str ip_addr_str = STR_NULL;
+	str lat_str = STR_NULL;
+	str lon_str = STR_NULL;
+	double lat = 0;
+	double lon = 0;
+	char buf[MAX_GEO_STR_SIZE] = {0};
+
+	if(fixup_get_svalue(msg, (gparam_t *)ip_addr_param, &ip_addr_str) < 0) {
+		LM_ERR("cannot get the IP address\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t *)lat_param, &lat_str) < 0) {
+		LM_ERR("cannot get latitude string\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t *)lon_param, &lon_str) < 0) {
+		LM_ERR("cannot get longitude string\n");
+		return -1;
+	}
+
+	strncpy(buf, lat_str.s, lat_str.len);
+	lat = atof(buf);
+	if(!lat && errno == ERANGE) {
+		LM_ERR("cannot convert string to double: %.*s\n", lat_str.len,
+				lat_str.s);
+		return -1;
+	}
+
+	memset(buf, 0, MAX_GEO_STR_SIZE);
+	strncpy(buf, lon_str.s, lon_str.len);
+	lon = atof(buf);
+	if(!lon && errno == ERANGE) {
+		LM_ERR("cannot convert string to double: %.*s\n", lon_str.len,
+				lon_str.s);
+		return -1;
+	}
+
+	return distance(msg, &ip_addr_str, lat, lon);
 }
 
 static void geoip2_rpc_reload(rpc_t *rpc, void *ctx)
