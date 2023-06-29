@@ -24,6 +24,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <arpa/inet.h>
 
 #include <microhttpd.h>
 
@@ -40,6 +41,7 @@ MODULE_VERSION
 
 static int _microhttpd_listen_port = 8280;
 static int _microhttpd_server_pid = -1;
+static str _microhttpd_listen_addr = str_init("");
 
 static int microhttpd_route_no = -1;
 static str microhttpd_event_callback = STR_NULL;
@@ -76,6 +78,7 @@ static cmd_export_t cmds[] = {
 
 static param_export_t params[] = {
 	{"listen_port",     PARAM_INT,    &_microhttpd_listen_port},
+	{"listen_addr",     PARAM_STR,    &_microhttpd_listen_addr},
 	{"event_callback",  PARAM_STR,    &microhttpd_event_callback},
 	{0, 0, 0}
 };
@@ -443,12 +446,27 @@ static int microhttpd_server_run(void)
 {
 
 	struct MHD_Daemon *d;
+	struct sockaddr_in address;
 
-	LM_DBG("preparing to listen on port: %d\n", _microhttpd_listen_port);
-
-	d = MHD_start_daemon(MHD_USE_SELECT_INTERNALLY, _microhttpd_listen_port,
-			NULL, NULL, &ksr_microhttpd_request, KSR_MICROHTTPD_PAGE,
-			MHD_OPTION_END);
+	if(_microhttpd_listen_addr.len > 0) {
+		address.sin_family = AF_INET;
+		address.sin_port = htons(_microhttpd_listen_port);
+		if(inet_pton(AF_INET, _microhttpd_listen_addr.s, &address.sin_addr)
+				<= 0) {
+			LM_ERR("failed to convert listen address\n");
+			return -1;
+		}
+		LM_DBG("preparing to listen on %s :%d\n", _microhttpd_listen_addr.s,
+				_microhttpd_listen_port);
+		d = MHD_start_daemon(MHD_USE_SELECT_INTERNALLY, _microhttpd_listen_port,
+				NULL, NULL, &ksr_microhttpd_request, KSR_MICROHTTPD_PAGE,
+				MHD_OPTION_SOCK_ADDR, &address, MHD_OPTION_END);
+	} else {
+		LM_DBG("preparing to listen on port: %d\n", _microhttpd_listen_port);
+		d = MHD_start_daemon(MHD_USE_SELECT_INTERNALLY, _microhttpd_listen_port,
+				NULL, NULL, &ksr_microhttpd_request, KSR_MICROHTTPD_PAGE,
+				MHD_OPTION_END);
+	}
 
 	if(d == NULL) {
 		return -1;
