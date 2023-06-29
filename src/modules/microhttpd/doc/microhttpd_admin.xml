@@ -53,7 +53,28 @@
 
 	<section>
 	<title>Parameters</title>
-	<section id="microhttpd.p.listen">
+	<section id="microhttpd.p.listen_addr">
+		<title><varname>listen_addr</varname> (int)</title>
+		<para>
+			IPv4 address to listen for HTTP connection. If not set, then it
+			listens on all local addresses (port has to be specified by
+			listen_port parameter).
+		</para>
+		<para>
+		<emphasis>
+			Default value is "" (empty - not set).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>listen_addr</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("microhttpd", "listen_addr", "127.0.0.1")
+...
+</programlisting>
+		</example>
+	</section>
+	<section id="microhttpd.p.listen_port">
 		<title><varname>listen_port</varname> (int)</title>
 		<para>
 			Port to listen for HTTP connection.
