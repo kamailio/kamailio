@@ -225,7 +225,7 @@ int janssonmod_set(unsigned int append, struct sip_msg* msg, char* type_in,
 		value = json_null();
 
 	} else {
-		ERR("unrecognized input type\n");
+		ERR("unrecognized input type: %.*s\n", type_s.len, type_s.s);
 		goto fail;
 	}
 
