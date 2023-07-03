@@ -155,14 +155,16 @@ static int curL_request_url(struct sip_msg *_m, const char *_met,
 	res = curl_easy_setopt(curl, CURLOPT_URL, _url);
 
 	/* Limit to HTTP and HTTPS protocols */
-#if defined(CURL_AT_LEAST_VERSION) && CURL_AT_LEAST_VERSION(7, 85, 0)
+#if LIBCURL_VERSION_NUM >= 0x075500
+	/* #if defined(CURL_AT_LEAST_VERSION) && CURL_AT_LEAST_VERSION(7, 85, 0) */
 	res = curl_easy_setopt(curl, CURLOPT_PROTOCOLS_STR, "http,https");
 #else
 	res = curl_easy_setopt(
 			curl, CURLOPT_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS);
 #endif
 
-#if defined(CURL_AT_LEAST_VERSION) && CURL_AT_LEAST_VERSION(7, 85, 0)
+#if LIBCURL_VERSION_NUM >= 0x075500
+	/* #if defined(CURL_AT_LEAST_VERSION) && CURL_AT_LEAST_VERSION(7, 85, 0) */
 	res = curl_easy_setopt(curl, CURLOPT_REDIR_PROTOCOLS_STR, "http,https");
 #else
 	res = curl_easy_setopt(
@@ -392,7 +394,9 @@ static int curL_request_url(struct sip_msg *_m, const char *_met,
 
 	if((stat >= 200) && (stat < 500)) {
 		double datasize = 0;
-#if defined(CURL_AT_LEAST_VERSION) && CURL_AT_LEAST_VERSION(7, 55, 0)
+
+#if LIBCURL_VERSION_NUM >= 0x073700
+		/* #if defined(CURL_AT_LEAST_VERSION) && CURL_AT_LEAST_VERSION(7, 55, 0) */
 		curl_off_t dlsize;
 		curl_easy_getinfo(curl, CURLINFO_SIZE_DOWNLOAD_T, &dlsize);
 		download_size = (double)dlsize;
