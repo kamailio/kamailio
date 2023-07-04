@@ -72,7 +72,7 @@ int set_mod_param_regex(char *regex, char *name, modparam_t type, void *val)
 {
 	struct sr_module *t;
 	regex_t preg;
-	int mod_found, len;
+	int mod_found, len, len_param;
 	char *reg;
 	void *ptr, *val2;
 	modparam_t param_type;
@@ -143,15 +143,15 @@ int set_mod_param_regex(char *regex, char *name, modparam_t type, void *val)
 				} else {
 					switch(PARAM_TYPE_MASK(param_type)) {
 						case PARAM_STRING:
-							*((char **)ptr) =
-									pkg_malloc(strlen((char *)val2) + 1);
+							len_param = strlen((char *)val2);
+							*((char **)ptr) = pkg_malloc(len_param + 1);
 							if(!*((char **)ptr)) {
 								PKG_MEM_ERROR;
 								regfree(&preg);
 								pkg_free(reg);
 								return -1;
 							}
-							strcpy(*((char **)ptr), (char *)val2);
+							strncpy(*((char **)ptr), (char *)val2, len_param);
 							break;
 
 						case PARAM_STR:
