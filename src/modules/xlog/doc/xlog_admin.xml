@@ -256,7 +256,7 @@ kamcmd cfg.set_now_int xlog methods_filter 15
 		<title>Set <varname>methods_filter</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("xlog", "long_format", 1)
+modparam("xlog", "methods_filter", 15)
 ...
 </programlisting>
 		</example>
