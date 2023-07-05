@@ -622,12 +622,12 @@ static void rpc_uac_block_callback(struct cell* t, int type,
  * only if reply_wait is set to 1. Otherwise the rpc reply will be sent
  * immediately and it will be success if the parameters were ok and t_uac did
  * not report any error.
- * Note: reply waiting (reply_wait==1) is not yet supported.
  * @param rpc - rpc handle
  * @param  c - rpc current context
  * @param reply_wait - if 1 do not generate a rpc reply until final response
  *                     for the transaction arrives, if 0 immediately send
- *                     an rpc reply (see above).
+ *                     an rpc reply (see above). If 2 blocking wait until
+ *                     final response for the transaction arrives.
  */
 static void rpc_t_uac(rpc_t* rpc, void* c, int reply_wait)
 {
