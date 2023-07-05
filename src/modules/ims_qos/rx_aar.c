@@ -153,7 +153,7 @@ void async_aar_callback(
 		counter_inc(ims_qos_cnts_h.successful_media_aars);
 
 		if(!aaa->sessionId) {
-			LM_ERR("async_aar_callback: NULL AAA sessionId from PCRF!\n");
+			LM_ERR("NULL AAA sessionId from PCRF!\n");
 			goto error;
 		}
 
@@ -316,7 +316,7 @@ void async_aar_reg_callback(
 		}
 
 		if(!aaa->sessionId) {
-			LM_ERR("async_aar_reg_callback: NULL AAA sessionId from PCRF!\n");
+			LM_ERR("NULL AAA sessionId from PCRF!\n");
 			goto error;
 		}
 
