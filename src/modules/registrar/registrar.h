@@ -42,8 +42,8 @@
 extern int
 		contact_max_size; /* configurable using module parameter "contact_max_size" instead of compile time constant */
 #define RECEIVED_MAX_SIZE 255
-#define USERNAME_MAX_SIZE 64
-#define DOMAIN_MAX_SIZE 128
+#define USERNAME_MAX_SIZE 248
+#define DOMAIN_MAX_SIZE 248
 #define CALLID_MAX_SIZE 255
 
 #define PATH_MODE_STRICT 2
