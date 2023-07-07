@@ -34,14 +34,14 @@
 #include "common.h"
 #include "config.h"
 
-#define MAX_AOR_LEN 256
+#define AOR_MAX_SIZE 512
 
 /*! \brief
  * Extract Address of Record
  */
 int extract_aor(str* _uri, str* _a, sip_uri_t *_pu)
 {
-	static char aor_buf[MAX_AOR_LEN];
+	static char aor_buf[AOR_MAX_SIZE];
 	str tmp;
 	sip_uri_t turi;
 	sip_uri_t *puri;
@@ -49,8 +49,8 @@ int extract_aor(str* _uri, str* _a, sip_uri_t *_pu)
 	str *uri;
 	str realm_prefix = {0};
 
-	memset(aor_buf, 0, MAX_AOR_LEN);
-	uri=_uri;
+	memset(aor_buf, 0, AOR_MAX_SIZE);
+	uri = _uri;
 
 	if(_pu!=NULL)
 		puri = _pu;
@@ -63,9 +63,9 @@ int extract_aor(str* _uri, str* _a, sip_uri_t *_pu)
 		return -1;
 	}
 
-	if ( (puri->user.len + puri->host.len + 1) > MAX_AOR_LEN
-	|| puri->user.len > USERNAME_MAX_SIZE
-	||  puri->host.len > DOMAIN_MAX_SIZE ) {
+	if((puri->user.len + puri->host.len + 2) > AOR_MAX_SIZE
+			|| puri->user.len > USERNAME_MAX_SIZE
+			|| puri->host.len > DOMAIN_MAX_SIZE) {
 		rerrno = R_AOR_LEN;
 		LM_ERR("Address Of Record too long\n");
 		return -2;
