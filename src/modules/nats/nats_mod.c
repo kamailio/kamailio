@@ -59,7 +59,9 @@ static param_export_t params[] = {
 
 static cmd_export_t cmds[] = {
 	{"nats_publish", (cmd_function)w_nats_publish_f,
-		  3, fixup_publish_get_value, fixup_publish_get_value_free, ANY_ROUTE},
+		  2, fixup_publish_get_value, fixup_publish_get_value_free, ANY_ROUTE},
+	{"nats_publish", (cmd_function)w_nats_publish_reply_f,
+		  3, fixup_publish_reply_get_value, fixup_publish_reply_get_value_free, ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
