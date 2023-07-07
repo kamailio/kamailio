@@ -32,7 +32,7 @@ int pub_worker = 0;
 
 int fixup_publish_get_value(void **param, int param_no)
 {
-	if(param_no == 1 || param_no == 2 || param_no == 3) {
+	if(param_no == 1 || param_no == 2) {
 		return fixup_spve_null(param, 1);
 	}
 	LM_ERR("invalid parameter number <%d>\n", param_no);
@@ -40,6 +40,25 @@ int fixup_publish_get_value(void **param, int param_no)
 }
 
 int fixup_publish_get_value_free(void **param, int param_no)
+{
+	if(param_no == 1 || param_no == 2) {
+		fixup_free_spve_null(param, 1);
+		return 0;
+	}
+	LM_ERR("invalid parameter number <%d>\n", param_no);
+	return -1;
+}
+
+int fixup_publish_reply_get_value(void **param, int param_no)
+{
+	if(param_no == 1 || param_no == 2 || param_no == 3) {
+		return fixup_spve_null(param, 1);
+	}
+	LM_ERR("invalid parameter number <%d>\n", param_no);
+	return -1;
+}
+
+int fixup_publish_reply_get_value_free(void **param, int param_no)
 {
 	if(param_no == 1 || param_no == 2 || param_no == 3) {
 		fixup_free_spve_null(param, 1);
@@ -84,7 +103,24 @@ static int _w_nats_publish_f(str subj, str payload, str reply, int worker)
 	return 1;
 }
 
-int w_nats_publish_f(sip_msg_t *msg, char *subj, char *payload, char *reply)
+int w_nats_publish_f(sip_msg_t *msg, char *subj, char *payload)
+{
+	str subj_s = STR_NULL;
+	str payload_s = STR_NULL;
+	str reply_s = STR_NULL;
+	if(fixup_get_svalue(msg, (gparam_t *)subj, &subj_s) < 0) {
+		LM_ERR("failed to get subj value\n");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t *)payload, &payload_s) < 0) {
+		LM_ERR("failed to get subj value\n");
+		return -1;
+	}
+	return w_nats_publish(msg, subj_s, payload_s, reply_s);
+}
+
+int w_nats_publish_reply_f(
+		sip_msg_t *msg, char *subj, char *payload, char *reply)
 {
 	str subj_s = STR_NULL;
 	str payload_s = STR_NULL;
