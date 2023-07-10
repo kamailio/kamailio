@@ -168,46 +168,54 @@ int check_message_support(struct sip_msg *msg);
 /** TM callback function */
 static void m_tm_callback(struct cell *t, int type, struct tmcb_params *ps);
 
-static cmd_export_t cmds[] = {{"m_store", (cmd_function)m_store_2, 0, 0, 0,
-									  REQUEST_ROUTE | FAILURE_ROUTE},
-		{"m_store", (cmd_function)m_store_2, 1, fixup_spve_null, 0,
-				REQUEST_ROUTE | FAILURE_ROUTE},
-		{"m_dump", (cmd_function)m_dump_2, 0, 0, 0, REQUEST_ROUTE},
-		{"m_dump", (cmd_function)m_dump_2, 1, fixup_spve_null, 0,
-				REQUEST_ROUTE},
-		{"bind_msilo", (cmd_function)bind_msilo, 1, 0, 0, ANY_ROUTE},
-		{0, 0, 0, 0, 0, 0}};
+/* clang-format off */
+static cmd_export_t cmds[] = {
+	{"m_store", (cmd_function)m_store_2, 0, 0, 0,
+			REQUEST_ROUTE | FAILURE_ROUTE},
+	{"m_store", (cmd_function)m_store_2, 1, fixup_spve_null, 0,
+			REQUEST_ROUTE | FAILURE_ROUTE},
+	{"m_dump", (cmd_function)m_dump_2, 0, 0, 0, REQUEST_ROUTE},
+	{"m_dump", (cmd_function)m_dump_2, 1, fixup_spve_null, 0,
+			REQUEST_ROUTE},
+	{"bind_msilo", (cmd_function)bind_msilo, 1, 0, 0, ANY_ROUTE},
+	{0, 0, 0, 0, 0, 0}
+};
 
 
-static param_export_t params[] = {{"db_url", PARAM_STR, &ms_db_url},
-		{"db_table", PARAM_STR, &ms_db_table},
-		{"from_address", PARAM_STRING, &ms_from},
-		{"contact_hdr", PARAM_STRING, &ms_contact},
-		{"extra_hdrs", PARAM_STRING, &ms_extra_hdrs},
-		{"content_type_hdr", PARAM_STRING, &ms_content_type},
-		{"offline_message", PARAM_STRING, &ms_offline_message},
-		{"reminder", PARAM_STR, &ms_reminder},
-		{"outbound_proxy", PARAM_STR, &ms_outbound_proxy},
-		{"expire_time", INT_PARAM, &ms_expire_time},
-		{"check_time", INT_PARAM, &ms_check_time},
-		{"send_time", INT_PARAM, &ms_send_time},
-		{"clean_period", INT_PARAM, &ms_clean_period},
-		{"use_contact", INT_PARAM, &ms_use_contact},
-		{"sc_mid", PARAM_STR, &sc_mid}, {"sc_from", PARAM_STR, &sc_from},
-		{"sc_to", PARAM_STR, &sc_to}, {"sc_uri_user", PARAM_STR, &sc_uri_user},
-		{"sc_uri_host", PARAM_STR, &sc_uri_host},
-		{"sc_body", PARAM_STR, &sc_body}, {"sc_ctype", PARAM_STR, &sc_ctype},
-		{"sc_exp_time", PARAM_STR, &sc_exp_time},
-		{"sc_inc_time", PARAM_STR, &sc_inc_time},
-		{"sc_snd_time", PARAM_STR, &sc_snd_time},
-		{"sc_stored_hdrs", PARAM_STR, &sc_stored_hdrs},
-		{"snd_time_avp", PARAM_STR, &ms_snd_time_avp_param},
-		{"extra_hdrs_avp", PARAM_STR, &ms_extra_hdrs_avp_param},
-		{"add_date", INT_PARAM, &ms_add_date},
-		{"max_messages", INT_PARAM, &ms_max_messages},
-		{"add_contact", INT_PARAM, &ms_add_contact},
-		{"skip_notification_flag", PARAM_INT, &ms_skip_notification_flag},
-		{0, 0, 0}};
+static param_export_t params[] = {
+	{"db_url", PARAM_STR, &ms_db_url},
+	{"db_table", PARAM_STR, &ms_db_table},
+	{"from_address", PARAM_STRING, &ms_from},
+	{"contact_hdr", PARAM_STRING, &ms_contact},
+	{"extra_hdrs", PARAM_STRING, &ms_extra_hdrs},
+	{"content_type_hdr", PARAM_STRING, &ms_content_type},
+	{"offline_message", PARAM_STRING, &ms_offline_message},
+	{"reminder", PARAM_STR, &ms_reminder},
+	{"outbound_proxy", PARAM_STR, &ms_outbound_proxy},
+	{"expire_time", INT_PARAM, &ms_expire_time},
+	{"check_time", INT_PARAM, &ms_check_time},
+	{"send_time", INT_PARAM, &ms_send_time},
+	{"clean_period", INT_PARAM, &ms_clean_period},
+	{"use_contact", INT_PARAM, &ms_use_contact},
+	{"sc_mid", PARAM_STR, &sc_mid},
+	{"sc_from", PARAM_STR, &sc_from},
+	{"sc_to", PARAM_STR, &sc_to},
+	{"sc_uri_user", PARAM_STR, &sc_uri_user},
+	{"sc_uri_host", PARAM_STR, &sc_uri_host},
+	{"sc_body", PARAM_STR, &sc_body},
+	{"sc_ctype", PARAM_STR, &sc_ctype},
+	{"sc_exp_time", PARAM_STR, &sc_exp_time},
+	{"sc_inc_time", PARAM_STR, &sc_inc_time},
+	{"sc_snd_time", PARAM_STR, &sc_snd_time},
+	{"sc_stored_hdrs", PARAM_STR, &sc_stored_hdrs},
+	{"snd_time_avp", PARAM_STR, &ms_snd_time_avp_param},
+	{"extra_hdrs_avp", PARAM_STR, &ms_extra_hdrs_avp_param},
+	{"add_date", INT_PARAM, &ms_add_date},
+	{"max_messages", INT_PARAM, &ms_max_messages},
+	{"add_contact", INT_PARAM, &ms_add_contact},
+	{"skip_notification_flag", PARAM_INT, &ms_skip_notification_flag},
+	{0, 0, 0}
+};
 
 #ifdef STATISTICS
 #include "../../core/counters.h"
@@ -218,26 +226,30 @@ stat_var *ms_failed_msgs;
 stat_var *ms_dumped_rmds;
 stat_var *ms_failed_rmds;
 
-stat_export_t msilo_stats[] = {{"stored_messages", 0, &ms_stored_msgs},
-		{"dumped_messages", 0, &ms_dumped_msgs},
-		{"failed_messages", 0, &ms_failed_msgs},
-		{"dumped_reminders", 0, &ms_dumped_rmds},
-		{"failed_reminders", 0, &ms_failed_rmds}, {0, 0, 0}};
+stat_export_t msilo_stats[] = {
+	{"stored_messages", 0, &ms_stored_msgs},
+	{"dumped_messages", 0, &ms_dumped_msgs},
+	{"failed_messages", 0, &ms_failed_msgs},
+	{"dumped_reminders", 0, &ms_dumped_rmds},
+	{"failed_reminders", 0, &ms_failed_rmds},
+	{0, 0, 0}
+};
 
 #endif
 /** module exports */
 struct module_exports exports = {
-		"msilo",		 /* module id */
-		DEFAULT_DLFLAGS, /* dlopen flags */
-		cmds,			 /* module's exported functions */
-		params,			 /* module's exported parameters */
-		0,				 /* exported RPC methods */
-		0,				 /* exported pseudo-variables */
-		0,				 /* response handler */
-		mod_init,		 /* module initialization function */
-		child_init,		 /* per-child init function */
-		destroy			 /* module destroy function */
+	"msilo",		 /* module id */
+	DEFAULT_DLFLAGS, /* dlopen flags */
+	cmds,			 /* module's exported functions */
+	params,			 /* module's exported parameters */
+	0,				 /* exported RPC methods */
+	0,				 /* exported pseudo-variables */
+	0,				 /* response handler */
+	mod_init,		 /* module initialization function */
+	child_init,		 /* per-child init function */
+	destroy			 /* module destroy function */
 };
+/* clang-format on */
 
 static int bind_msilo(msilo_api_t *api)
 {
