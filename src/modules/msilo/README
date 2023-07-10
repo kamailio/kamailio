@@ -70,7 +70,8 @@ Juha Heinanen
         4. Functions
 
               4.1. m_store([owner])
-              4.2. m_dump([owner])
+              4.2. m_store_addrs(owner, srcaddr, dstaddr)
+              4.3. m_dump([owner])
 
         5. Statistics
 
@@ -118,8 +119,9 @@ Juha Heinanen
    1.30. Set the “extra_hdrs_avp” parameter
    1.31. Set the “skip_notification_flag” parameter
    1.32. m_store usage
-   1.33. m_dump usage
-   1.34. Kamailio config script - sample msilo usage
+   1.33. m_store_addrs usage
+   1.34. m_dump usage
+   1.35. Kamailio config script - sample msilo usage
 
 Chapter 1. Admin Guide
 
@@ -168,7 +170,8 @@ Chapter 1. Admin Guide
    4. Functions
 
         4.1. m_store([owner])
-        4.2. m_dump([owner])
+        4.2. m_store_addrs(owner, srcaddr, dstaddr)
+        4.3. m_dump([owner])
 
    5. Statistics
 
@@ -655,7 +658,8 @@ m_store(...);
 4. Functions
 
    4.1. m_store([owner])
-   4.2. m_dump([owner])
+   4.2. m_store_addrs(owner, srcaddr, dstaddr)
+   4.3. m_dump([owner])
 
 4.1. m_store([owner])
 
@@ -679,7 +683,28 @@ m_store();
 m_store("$tu");
 ...
 
-4.2. m_dump([owner])
+4.2. m_store_addrs(owner, srcaddr, dstaddr)
+
+   Similar to m_store(), but instead of getting source user address from
+   From-URI and destination user address from To_URI, this function allows
+   to give them via parameters.
+
+   Meaning of the parameters is as follows:
+     * owner - is a string that must contain a SIP URI in whose inbox the
+       message will be stored. It can have any pseudo variable.
+     * srcaddr - is a string that must contain a SIP URI corresponding to
+       From user. It can have any pseudo variable.
+     * dstaddr - is a string that must contain a SIP URI correspinding to
+       To user. It can have any pseudo variable.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+
+   Example 1.33. m_store_addrs usage
+...
+m_store_addrs("sip:$rU@a.com", "sip:$fU@a.com", "sip:$tU@a.com");
+...
+
+4.3. m_dump([owner])
 
    The method sends stored messages for the SIP user that has registered
    to the contact address in the registration. The method should be called
@@ -693,7 +718,7 @@ m_store("$tu");
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.33. m_dump usage
+   Example 1.34. m_dump usage
 ...
 m_dump();
 m_dump("$fu");
@@ -735,7 +760,7 @@ m_dump("$fu");
 
    Next picture displays a sample usage of msilo.
 
-   Example 1.34. Kamailio config script - sample msilo usage
+   Example 1.35. Kamailio config script - sample msilo usage
 ...
 #
 # MSILO usage example
