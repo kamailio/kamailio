@@ -147,11 +147,13 @@ static int ms_skip_notification_flag = -1;
 static int mod_init(void);
 static int child_init(int);
 
-static int m_store(sip_msg_t *masg, str *owner_s);
+static int m_store_addrs(sip_msg_t *msg, str *owner, str *srcaddr, str *dstaddr);
+static int m_store_uri(sip_msg_t *msg, str *owner);
 static int m_dump(sip_msg_t *msg, str *owner_s);
 
-static int m_store_2(struct sip_msg *, char *, char *);
-static int m_dump_2(struct sip_msg *, char *, char *);
+static int m_store1(sip_msg_t *, char *, char *);
+static int m_store3(sip_msg_t *, char *, char *, char *);
+static int m_dump_2(sip_msg_t *, char *, char *);
 
 static void destroy(void);
 
@@ -170,13 +172,16 @@ static void m_tm_callback(struct cell *t, int type, struct tmcb_params *ps);
 
 /* clang-format off */
 static cmd_export_t cmds[] = {
-	{"m_store", (cmd_function)m_store_2, 0, 0, 0,
-			REQUEST_ROUTE | FAILURE_ROUTE},
-	{"m_store", (cmd_function)m_store_2, 1, fixup_spve_null, 0,
-			REQUEST_ROUTE | FAILURE_ROUTE},
+	{"m_store", (cmd_function)m_store1, 0, 0,
+			0, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"m_store", (cmd_function)m_store1, 1, fixup_spve_null,
+			0, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"m_store_addrs", (cmd_function)m_store3, 3, fixup_spve_all,
+			fixup_free_spve_all, REQUEST_ROUTE | FAILURE_ROUTE},
 	{"m_dump", (cmd_function)m_dump_2, 0, 0, 0, REQUEST_ROUTE},
-	{"m_dump", (cmd_function)m_dump_2, 1, fixup_spve_null, 0,
-			REQUEST_ROUTE},
+	{"m_dump", (cmd_function)m_dump_2, 0, 0, 0, REQUEST_ROUTE},
+	{"m_dump", (cmd_function)m_dump_2, 1, fixup_spve_null,
+			0, REQUEST_ROUTE},
 	{"bind_msilo", (cmd_function)bind_msilo, 1, 0, 0, ANY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
@@ -256,7 +261,7 @@ static int bind_msilo(msilo_api_t *api)
 	if(!api) {
 		return -1;
 	}
-	api->m_store = m_store;
+	api->m_store = m_store_uri;
 	api->m_dump = m_dump;
 	return 0;
 }
@@ -516,12 +521,9 @@ static int get_non_mandatory_headers(
 
 /**
  * store message
- * mode = "0" -- look for outgoing URI starting with new_uri
- * 		= "1" -- look for outgoing URI starting with r-uri
- * 		= "2" -- look for outgoing URI only at to header
  */
 
-static int m_store(sip_msg_t *msg, str *owner_s)
+static int m_store_addrs(sip_msg_t *msg, str *owner, str *srcaddr, str *dstaddr)
 {
 	str body, str_hdr, ctaddr;
 	struct to_body *pto, *pfrom;
@@ -581,12 +583,12 @@ static int m_store(sip_msg_t *msg, str *owner_s)
 
 	/* get the owner */
 	memset(&puri, 0, sizeof(struct sip_uri));
-	if(owner_s != NULL) {
-		if(parse_uri(owner_s->s, owner_s->len, &puri) != 0) {
+	if(owner != NULL) {
+		if(parse_uri(owner->s, owner->len, &puri) != 0) {
 			LM_ERR("bad owner SIP address!\n");
 			goto error;
 		} else {
-			LM_DBG("using user id [%.*s]\n", owner_s->len, owner_s->s);
+			LM_DBG("using user id [%.*s]\n", owner->len, owner->s);
 		}
 	} else { /* get it from R-URI */
 		if(msg->new_uri.len <= 0) {
@@ -653,8 +655,13 @@ static int m_store(sip_msg_t *msg, str *owner_s)
 
 	db_vals[nr_keys].type = DB1_STR;
 	db_vals[nr_keys].nul = 0;
-	db_vals[nr_keys].val.str_val.s = pto->uri.s;
-	db_vals[nr_keys].val.str_val.len = pto->uri.len;
+	if(dstaddr == NULL || dstaddr->len <= 0) {
+		db_vals[nr_keys].val.str_val.s = pto->uri.s;
+		db_vals[nr_keys].val.str_val.len = pto->uri.len;
+	} else {
+		db_vals[nr_keys].val.str_val.s = dstaddr->s;
+		db_vals[nr_keys].val.str_val.len = dstaddr->len;
+	}
 
 	nr_keys++;
 
@@ -670,8 +677,13 @@ static int m_store(sip_msg_t *msg, str *owner_s)
 
 	db_vals[nr_keys].type = DB1_STR;
 	db_vals[nr_keys].nul = 0;
-	db_vals[nr_keys].val.str_val.s = pfrom->uri.s;
-	db_vals[nr_keys].val.str_val.len = pfrom->uri.len;
+	if(srcaddr == NULL || srcaddr->len <= 0) {
+		db_vals[nr_keys].val.str_val.s = pfrom->uri.s;
+		db_vals[nr_keys].val.str_val.len = pfrom->uri.len;
+	} else {
+		db_vals[nr_keys].val.str_val.s = srcaddr->s;
+		db_vals[nr_keys].val.str_val.len = srcaddr->len;
+	}
 
 	nr_keys++;
 
@@ -864,10 +876,15 @@ error:
 	return -1;
 }
 
+static int m_store_uri(sip_msg_t *msg, str *owner)
+{
+	return  m_store_addrs(msg, owner, NULL, NULL);
+}
+
 /**
  * store message
  */
-static int m_store_2(struct sip_msg *msg, char *owner, char *s2)
+static int m_store1(struct sip_msg *msg, char *owner, char *s2)
 {
 	str owner_s;
 	if(owner != NULL) {
@@ -875,9 +892,35 @@ static int m_store_2(struct sip_msg *msg, char *owner, char *s2)
 			LM_ERR("invalid owner uri parameter");
 			return -1;
 		}
-		return m_store(msg, &owner_s);
+		return m_store_addrs(msg, &owner_s, NULL, NULL);
 	}
-	return m_store(msg, NULL);
+	return m_store_addrs(msg, NULL, NULL, NULL);
+}
+
+
+/**
+ * store message
+ */
+static int m_store3(sip_msg_t *msg, char *owner, char *srcaddr, char *dstaddr)
+{
+	str owner_s;
+	str srcaddr_s;
+	str dstaddr_s;
+
+	if(fixup_get_svalue(msg, (gparam_t*)owner, &owner_s) != 0) {
+		LM_ERR("invalid owner uri parameter");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)srcaddr, &srcaddr_s) != 0) {
+		LM_ERR("invalid srcaddr uri parameter");
+		return -1;
+	}
+	if(fixup_get_svalue(msg, (gparam_t*)dstaddr, &dstaddr_s) != 0) {
+		LM_ERR("invalid dstaddr uri parameter");
+		return -1;
+	}
+
+	return m_store_addrs(msg, &owner_s, &srcaddr_s, &dstaddr_s);
 }
 
 /**
@@ -885,7 +928,7 @@ static int m_store_2(struct sip_msg *msg, char *owner, char *s2)
  */
 static int ki_m_store(sip_msg_t *msg)
 {
-	return m_store(msg, NULL);
+	return m_store_addrs(msg, NULL, NULL, NULL);
 }
 
 /**
@@ -1549,8 +1592,13 @@ static sr_kemi_t sr_kemi_msilo_exports[] = {
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("msilo"), str_init("mstore_uri"),
-		SR_KEMIP_INT, m_store,
+		SR_KEMIP_INT, m_store_uri,
 		{ SR_KEMIP_STR, SR_KEMIP_NONE, SR_KEMIP_NONE,
+			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
+	},
+	{ str_init("msilo"), str_init("mstore_addrs"),
+		SR_KEMIP_INT, m_store_addrs,
+		{ SR_KEMIP_STR, SR_KEMIP_STR, SR_KEMIP_STR,
 			SR_KEMIP_NONE, SR_KEMIP_NONE, SR_KEMIP_NONE }
 	},
 	{ str_init("msilo"), str_init("mdump"),
