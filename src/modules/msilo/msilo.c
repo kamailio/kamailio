@@ -53,7 +53,7 @@
 #include "api.h"
 
 #define MAX_DEL_KEYS 1
-#define NR_KEYS 11
+#define NR_KEYS 13
 
 static str sc_mid = str_init("id");					/*  0 */
 static str sc_from = str_init("src_addr");			/*  1 */
@@ -66,6 +66,8 @@ static str sc_exp_time = str_init("exp_time");		/*  7 */
 static str sc_inc_time = str_init("inc_time");		/*  8 */
 static str sc_snd_time = str_init("snd_time");		/*  9 */
 static str sc_stored_hdrs = str_init("extra_hdrs"); /* 10 */
+static str sc_callid = str_init("callid");			/* 11 */
+static str sc_status = str_init("status");			/* 12 */
 
 #define SET_STR_VAL(_str, _res, _r, _c)                                       \
 	if(RES_ROWS(_res)[_r].values[_c].nul == 0) {                              \
@@ -213,6 +215,8 @@ static param_export_t params[] = {
 	{"sc_inc_time", PARAM_STR, &sc_inc_time},
 	{"sc_snd_time", PARAM_STR, &sc_snd_time},
 	{"sc_stored_hdrs", PARAM_STR, &sc_stored_hdrs},
+	{"sc_callid", PARAM_STR, &sc_callid},
+	{"sc_status", PARAM_STR, &sc_status},
 	{"snd_time_avp", PARAM_STR, &ms_snd_time_avp_param},
 	{"extra_hdrs_avp", PARAM_STR, &ms_extra_hdrs_avp_param},
 	{"add_date", INT_PARAM, &ms_add_date},
